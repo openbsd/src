@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.87 2010/05/08 10:55:06 stsp Exp $	*/
+/*	$OpenBSD: in6.c,v 1.88 2010/07/08 19:42:46 jsg Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -104,8 +104,6 @@ const struct in6_addr in6addr_intfacelocal_allnodes =
 	IN6ADDR_INTFACELOCAL_ALLNODES_INIT;
 const struct in6_addr in6addr_linklocal_allnodes =
 	IN6ADDR_LINKLOCAL_ALLNODES_INIT;
-const struct in6_addr in6addr_linklocal_allrouters =
-	IN6ADDR_LINKLOCAL_ALLROUTERS_INIT;
 
 const struct in6_addr in6mask0 = IN6MASK0;
 const struct in6_addr in6mask32 = IN6MASK32;
@@ -1326,22 +1324,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	splx(s);
 }
 
-void
-in6_purgeif(struct ifnet *ifp)
-{
-	struct ifaddr *ifa, *nifa;
-
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa)
-	{
-		nifa = TAILQ_NEXT(ifa, ifa_list);
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		in6_purgeaddr(ifa);
-	}
-
-	in6_ifdetach(ifp);
-}
-
 /*
  * SIOC[GAD]LIFADDR.
  *	SIOCGLIFADDR: get first address. (?)
@@ -2110,23 +2092,6 @@ in6_addr2scopeid(struct ifnet *ifp, struct in6_addr *addr)
 	}
 }
 
-int
-in6_is_addr_deprecated(struct sockaddr_in6 *sa6)
-{
-	struct in6_ifaddr *ia;
-
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
-		if (IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
-		    &sa6->sin6_addr) &&
-		    (ia->ia6_flags & IN6_IFF_DEPRECATED) != 0)
-			return (1); /* true */
-
-		/* XXX: do we still have to go thru the rest of the list? */
-	}
-
-	return (0);		/* false */
-}
-
 /*
  * return length of part which dst and src are equal
  * hard coding...
@@ -2458,87 +2423,6 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst)
 	}
 
 	return (ifa_best);
-}
-
-/*
- * return the best address out of the same scope. if no address was
- * found, return the first valid address from designated IF.
- */
-struct in6_ifaddr *
-in6_ifawithifp(struct ifnet *ifp, struct in6_addr *dst)
-{
-	int dst_scope =	in6_addrscope(dst), blen = -1, tlen;
-	struct ifaddr *ifa;
-	struct in6_ifaddr *besta = 0;
-	struct in6_ifaddr *dep[2];	/*last-resort: deprecated*/
-
-	dep[0] = dep[1] = NULL;
-
-	/*
-	 * We first look for addresses in the same scope.
-	 * If there is one, return it.
-	 * If two or more, return one which matches the dst longest.
-	 * If none, return one of global addresses assigned other ifs.
-	 */
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_ANYCAST)
-			continue; /* XXX: is there any case to allow anycast? */
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_NOTREADY)
-			continue; /* don't use this interface */
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DETACHED)
-			continue;
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
-			if (ip6_use_deprecated)
-				dep[0] = (struct in6_ifaddr *)ifa;
-			continue;
-		}
-
-		if (dst_scope == in6_addrscope(IFA_IN6(ifa))) {
-			/*
-			 * call in6_matchlen() as few as possible
-			 */
-			if (besta) {
-				if (blen == -1)
-					blen = in6_matchlen(&besta->ia_addr.sin6_addr, dst);
-				tlen = in6_matchlen(IFA_IN6(ifa), dst);
-				if (tlen > blen) {
-					blen = tlen;
-					besta = (struct in6_ifaddr *)ifa;
-				}
-			} else
-				besta = (struct in6_ifaddr *)ifa;
-		}
-	}
-	if (besta)
-		return (besta);
-
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_ANYCAST)
-			continue; /* XXX: is there any case to allow anycast? */
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_NOTREADY)
-			continue; /* don't use this interface */
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DETACHED)
-			continue;
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
-			if (ip6_use_deprecated)
-				dep[1] = (struct in6_ifaddr *)ifa;
-			continue;
-		}
-
-		return (struct in6_ifaddr *)ifa;
-	}
-
-	/* use the last-resort values, that are, deprecated addresses */
-	if (dep[0])
-		return dep[0];
-	if (dep[1])
-		return dep[1];
-
-	return NULL;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.36 2008/11/25 12:11:45 markus Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.37 2010/07/08 19:42:46 jsg Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -241,7 +241,6 @@ extern int	ip6_forwarding;		/* act as router? */
 extern int	ip6_mforwarding;	/* act as multicast router? */
 extern int	ip6_multipath;		/* use multipath routes */
 extern int	ip6_sendredirect;	/* send ICMPv6 redirect? */
-extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
@@ -256,8 +255,6 @@ extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */
 extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */
-extern int	ip6_sourcecheck;	/* Verify source interface */
-extern int	ip6_sourcecheck_interval; /* Interval between log messages */
 extern int	ip6_accept_rtadv;	/* Acts as a host not a router */
 extern int	ip6_keepfaith;		/* Firewall Aided Internet Translator */
 extern int	ip6_log_interval;
@@ -300,7 +297,6 @@ void	ip6_initpktopts(struct ip6_pktopts *);
 int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
 	    struct ip6_pktopts *, int, int);
 void	ip6_clearpktopts(struct ip6_pktopts *, int);
-int	ip6_optlen(struct inpcb *);
 void	ip6_randomid_init(void);
 u_int32_t ip6_randomid(void);
 

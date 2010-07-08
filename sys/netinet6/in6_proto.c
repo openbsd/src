@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.58 2009/11/05 20:50:14 michele Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.59 2010/07/08 19:42:46 jsg Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -288,7 +288,6 @@ int	ip6_neighborgcthresh = 2048; /* Threshold # of NDP entries for GC */
 int	ip6_maxifprefixes = 16; /* Max acceptable prefixes via RA per IF */
 int	ip6_maxifdefrouters = 16; /* Max acceptable def routers via RA */
 int	ip6_maxdynroutes = 4096; /* Max # of routes created via redirect */
-u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
 
@@ -313,11 +312,5 @@ u_long	rip6_recvspace = RIPV6RCVQ;
 /* ICMPV6 parameters */
 int	icmp6_rediraccept = 1;		/* accept and process redirects */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
-struct timeval icmp6errratelim = { 0, 0 };	/* no ratelimit */
 int	icmp6errppslim = 100;		/* 100pps */
 int	icmp6_nodeinfo = 1;		/* enable/disable NI response */
-
-/* UDP on IP6 parameters */
-int	udp6_sendspace = 9216;		/* really max datagram size */
-int	udp6_recvspace = 40 * (1024 + sizeof(struct sockaddr_in6));
-					/* 40 1K datagrams */

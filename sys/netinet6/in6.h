@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.50 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: in6.h,v 1.51 2010/07/08 19:42:46 jsg Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -224,7 +224,6 @@ extern const struct in6_addr in6addr_loopback;
 #if __BSD_VISIBLE
 extern const struct in6_addr in6addr_intfacelocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allnodes;
-extern const struct in6_addr in6addr_linklocal_allrouters;
 #endif
 
 /*
@@ -783,7 +782,6 @@ int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
 int	in6_localaddr(struct in6_addr *);
 int	in6_addrscope(struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *);
-struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);
 extern void in6_if_up(struct ifnet *);
 void 	in6_get_rand_ifid(struct ifnet *, struct in6_addr *);
 

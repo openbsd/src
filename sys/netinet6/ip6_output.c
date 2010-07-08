@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.114 2010/07/01 02:09:45 reyk Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.115 2010/07/08 19:42:46 jsg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -3165,29 +3165,6 @@ ip6_splithdr(struct mbuf *m, struct ip6_exthdrs *exthdrs)
 	}
 	exthdrs->ip6e_ip6 = m;
 	return 0;
-}
-
-/*
- * Compute IPv6 extension header length.
- */
-int
-ip6_optlen(struct inpcb *inp)
-{
-	int len;
-
-	if (!inp->inp_outputopts6)
-		return 0;
-
-	len = 0;
-#define elen(x) \
-    (((struct ip6_ext *)(x)) ? (((struct ip6_ext *)(x))->ip6e_len + 1) << 3 : 0)
-
-	len += elen(inp->inp_outputopts6->ip6po_hbh);
-	len += elen(inp->inp_outputopts6->ip6po_dest1);
-	len += elen(inp->inp_outputopts6->ip6po_rthdr);
-	len += elen(inp->inp_outputopts6->ip6po_dest2);
-	return len;
-#undef elen
 }
 
 u_int32_t
