@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.55 2010/07/08 08:12:48 thib Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.56 2010/07/08 09:46:50 thib Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -51,6 +51,8 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	if (crypto_drivers == NULL)
 		return EINVAL;
+
+	s = splvm();
 
 	/*
 	 * The algorithm we use here is pretty stupid; just use the
@@ -146,10 +148,10 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	 * XXX layer right about here.
 	 */
 
-	if (hid == -1)
+	if (hid == -1) {
+		splx(s);
 		return EINVAL;
-
-	s = splvm();
+	}
 
 	/* Call the driver initialization routine. */
 	lid = hid; /* Pass the driver ID. */
