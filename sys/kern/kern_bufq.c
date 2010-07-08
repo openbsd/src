@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.12 2010/07/07 10:50:50 dlg Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.13 2010/07/08 23:18:55 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -110,9 +110,6 @@ void
 bufq_requeue(struct bufq *bq, struct buf *bp)
 {
 	mtx_enter(&bq->bufq_mtx);
-	while (bq->bufq_stop) {
-		msleep(&bq->bufq_stop, &bq->bufq_mtx, PRIBIO, "bufqstop", 0);
-	}
 	bufq_requeuev[bq->bufq_type](bq, bp);
 	mtx_leave(&bq->bufq_mtx);
 }
@@ -202,8 +199,6 @@ bufq_disksort_requeue(struct bufq *bq, struct buf *bp)
 
 	bufq = (struct buf *)bq->bufq_data;
 
-	bq->bufq_outstanding++;
-	bp->b_bq = bq;
 	bp->b_actf = bufq->b_actf;
 	bufq->b_actf = bp;
 	if (bp->b_actf == NULL)
@@ -258,8 +253,6 @@ bufq_fifo_requeue(struct bufq *bq, struct buf *bp)
 {
 	struct bufq_fifo_head	*head = bq->bufq_data;
 
-	bq->bufq_outstanding++;
-	bp->b_bq = bq;
 	SIMPLEQ_INSERT_HEAD(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
 }
 
