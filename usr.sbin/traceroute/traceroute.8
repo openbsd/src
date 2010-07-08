@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.43 2010/07/03 04:44:52 guenther Exp $
+.\"	$OpenBSD: traceroute.8,v 1.44 2010/07/08 20:23:03 claudio Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: July 8 2010 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm traceroute
 .Bk -words
-.Op Fl cDdIlnrSv
+.Op Fl cDdIlnrSvx
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
 .Op Fl m Ar max_ttl
@@ -205,6 +205,8 @@ and
 are listed.
 .It Fl w Ar waittime
 Set the time (in seconds) to wait for a response to a probe (default 5).
+.It Fl x
+Print the ICMP extended headers if available.
 .El
 .Pp
 This program attempts to trace the route an IP packet would follow to some
