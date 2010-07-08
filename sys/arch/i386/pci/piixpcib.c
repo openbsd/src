@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpcib.c,v 1.6 2010/04/20 22:05:41 tedu Exp $ */
+/*	$OpenBSD: piixpcib.c,v 1.7 2010/07/08 20:17:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Stefan Sperling <stsp@stsp.in-berlin.de>
@@ -117,7 +117,9 @@ extern void	p3_update_cpuspeed(void);
 struct cfattach piixpcib_ca = {
 	sizeof(struct piixpcib_softc),
 	piixpcib_match,
-	piixpcib_attach
+	piixpcib_attach,
+	NULL,
+	config_activate_children
 };
 
 struct cfdriver piixpcib_cd = {
