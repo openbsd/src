@@ -87,12 +87,12 @@
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7
-./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1
+yes./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1/cc1
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1/collect2
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.55.0
+./usr/lib/libc.so.56.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.11.0
