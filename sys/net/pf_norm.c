@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.122 2010/07/02 02:40:16 blambert Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.123 2010/07/08 19:30:16 sthen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1323,7 +1323,7 @@ int
 pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
-	u_int16_t	*mss;
+	u_int16_t	 mss;
 	int		 thoff;
 	int		 opt, cnt, optlen = 0;
 	u_char		 opts[MAX_TCPOPTLEN];
@@ -1351,13 +1351,14 @@ pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
 		}
 		switch (opt) {
 		case TCPOPT_MAXSEG:
-			mss = (u_int16_t *)(optp + 2);
-			if ((ntohs(*mss)) > maxmss) {
+			bcopy((caddr_t)(optp + 2), (caddr_t)&mss, 2);
+			if (ntohs(mss) > maxmss) {
 				th->th_sum = pf_cksum_fixup(th->th_sum,
-				    *mss, htons(maxmss), 0);
-				*mss = htons(maxmss);
-				m_copyback(m, off + sizeof(*th),
-				    thoff - sizeof(*th), opts, M_NOWAIT);
+				    mss, htons(maxmss), 0);
+				mss = htons(maxmss);
+				m_copyback(m,
+				    off + sizeof(*th) + optp + 2 - opts,
+				    2, &mss, M_NOWAIT);
 				m_copyback(m, off, sizeof(*th), th, M_NOWAIT);
 			}
 			break;
