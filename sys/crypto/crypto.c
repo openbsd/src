@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.54 2010/06/09 19:38:19 thib Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.55 2010/07/08 08:12:48 thib Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -35,7 +35,6 @@ int crypto_drivers_num = 0;
 
 struct pool cryptop_pool;
 struct pool cryptodesc_pool;
-int crypto_pool_initialized = 0;
 
 struct workq *crypto_workq;
 
@@ -52,8 +51,6 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	if (crypto_drivers == NULL)
 		return EINVAL;
-
-	s = splvm();
 
 	/*
 	 * The algorithm we use here is pretty stupid; just use the
@@ -149,10 +146,10 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	 * XXX layer right about here.
 	 */
 
-	if (hid == -1) {
-		splx(s);
+	if (hid == -1)
 		return EINVAL;
-	}
+
+	s = splvm();
 
 	/* Call the driver initialization routine. */
 	lid = hid; /* Pass the driver ID. */
@@ -593,14 +590,6 @@ crypto_getreq(int num)
 	
 	s = splvm();
 
-	if (crypto_pool_initialized == 0) {
-		pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,
-		    0, "cryptop", NULL);
-		pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
-		    0, "cryptodesc", NULL);
-		crypto_pool_initialized = 1;
-	}
-
 	crp = pool_get(&cryptop_pool, PR_NOWAIT);
 	if (crp == NULL) {
 		splx(s);
@@ -626,8 +615,12 @@ crypto_getreq(int num)
 }
 
 void
-init_crypto()
+init_crypto(void)
 {
+	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0, 0,
+	    "cryptop", NULL);
+	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0, 0,
+	    "cryptodesc", NULL);
 	crypto_workq = workq_create("crypto", 1, IPL_HIGH);
 }
 
