@@ -1,4 +1,4 @@
-/*	$OpenBSD: owid.c,v 1.7 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: owid.c,v 1.8 2010/07/08 07:19:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -67,8 +67,7 @@ static const struct onewire_matchfam owid_fams[] = {
 int
 owid_match(struct device *parent, void *match, void *aux)
 {
-	return (onewire_matchbyfam(aux, owid_fams,
-	    sizeof(owid_fams) /sizeof(owid_fams[0])));
+	return (onewire_matchbyfam(aux, owid_fams, nitems(owid_fams)));
 }
 
 void

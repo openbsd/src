@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.7 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.8 2010/07/08 07:19:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -100,8 +100,7 @@ static const struct onewire_matchfam owsbm_fams[] = {
 int
 owsbm_match(struct device *parent, void *match, void *aux)
 {
-	return (onewire_matchbyfam(aux, owsbm_fams,
-	    sizeof(owsbm_fams) /sizeof(owsbm_fams[0])));
+	return (onewire_matchbyfam(aux, owsbm_fams, nitems(owsbm_fams)));
 }
 
 void

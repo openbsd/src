@@ -1,4 +1,4 @@
-/*	$OpenBSD: owctr.c,v 1.2 2010/07/07 16:15:53 deraadt Exp $	*/
+/*	$OpenBSD: owctr.c,v 1.3 2010/07/08 07:19:54 jasper Exp $	*/
 /*
  * Copyright (c) 2010 John L. Scarfone <john@scarfone.net>
  *
@@ -84,8 +84,7 @@ static const struct onewire_matchfam owctr_fams[] = {
 int
 owctr_match(struct device *parent, void *match, void *aux)
 {
-	return (onewire_matchbyfam(aux, owctr_fams,
-		sizeof(owctr_fams) /sizeof(owctr_fams[0])));
+	return (onewire_matchbyfam(aux, owctr_fams, nitems(owctr_fams)));
 }
 
 void

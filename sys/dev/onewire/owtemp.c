@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.14 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.15 2010/07/08 07:19:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -86,8 +86,7 @@ static const struct onewire_matchfam owtemp_fams[] = {
 int
 owtemp_match(struct device *parent, void *match, void *aux)
 {
-	return (onewire_matchbyfam(aux, owtemp_fams,
-	    sizeof(owtemp_fams) /sizeof(owtemp_fams[0])));
+	return (onewire_matchbyfam(aux, owtemp_fams, nitems(owtemp_fams)));
 }
 
 void
