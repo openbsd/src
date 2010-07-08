@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.22 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.23 2010/07/08 20:20:11 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -63,7 +63,11 @@ struct icmp {
 	u_int8_t  icmp_code;		/* type sub code */
 	u_int16_t icmp_cksum;		/* ones complement cksum of struct */
 	union {
-		u_int8_t  ih_pptr;		/* ICMP_PARAMPROB */
+		u_int8_t  ih_pptr;	/* ICMP_PARAMPROB */
+		struct ih_exthdr {	/* RFC4884 extended header */
+			u_int8_t  iex_pad;
+			u_int8_t  iex_length;
+		} ih_exthdr;
 		struct in_addr ih_gwaddr;	/* ICMP_REDIRECT */
 		struct ih_idseq {
 			  n_short icd_id;
@@ -84,6 +88,7 @@ struct icmp {
 		} ih_rtradv;
 	} icmp_hun;
 #define	icmp_pptr	  icmp_hun.ih_pptr
+#define	icmp_length	  icmp_hun.ih_exthdr.iex_length
 #define	icmp_gwaddr	  icmp_hun.ih_gwaddr
 #define	icmp_id		  icmp_hun.ih_idseq.icd_id
 #define	icmp_seq	  icmp_hun.ih_idseq.icd_seq
@@ -113,6 +118,25 @@ struct icmp {
 #define	icmp_mask	  icmp_dun.id_mask
 #define	icmp_data	  icmp_dun.id_data
 };
+
+struct icmp_ext_hdr {
+	u_int8_t  ieh_version;		/* only high nibble used */
+	u_int8_t  ieh_res;		/* reserved, must be zero */
+	u_int16_t ieh_cksum;		/* ones complement cksum of ext hdr */
+};
+
+#define ICMP_EXT_HDR_VERSION	0x20
+#define ICMP_EXT_HDR_VMASK	0xf0
+#define ICMP_EXT_OFFSET		128
+
+struct icmp_ext_obj_hdr {
+	u_int16_t ieo_length;		/* length of obj incl this header */
+	u_int8_t  ieo_cnum;		/* class number */
+	u_int8_t  ieo_ctype;		/* sub class type */
+};
+
+#define ICMP_EXT_MPLS		1
+#define ICMP_EXT_IFINFO		2
 
 /*
  * For IPv6 transition related ICMP errors.
