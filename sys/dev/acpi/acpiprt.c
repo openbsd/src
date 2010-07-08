@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.38 2010/07/01 06:29:32 jordan Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.39 2010/07/08 20:56:31 jordan Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -101,13 +101,21 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 	struct acpiprt_softc *sc = (struct acpiprt_softc *)self;
 	struct acpi_attach_args *aa = aux;
 	struct aml_value res;
-	int i;
+	int i, nbus;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 	sc->sc_bus = acpiprt_getpcibus(sc, sc->sc_devnode);
-
+	nbus = (sc->sc_devnode->parent && sc->sc_devnode->parent->pci) ?
+		sc->sc_devnode->parent->pci->sub : -1;
 	printf(": bus %d (%s)", sc->sc_bus, sc->sc_devnode->parent->name);
+
+	if (nbus != sc->sc_bus) {
+		printf("%s: bus mismatch, new:%d old:%d\n",
+			aml_nodename(sc->sc_devnode),
+			nbus, sc->sc_bus);
+		panic("aiiiee..");
+	}
 
 	if (aml_evalnode(sc->sc_acpi, sc->sc_devnode, 0, NULL, &res)) {
 		printf(": no PCI interrupt routing table\n");
@@ -279,18 +287,13 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 			aml_freevalue(&res);
 			return;
 		}
-		aml_parse_resource(res.length, res.v_buffer,
-		    acpiprt_getirq, &irq);
+		aml_parse_resource(&res, acpiprt_getirq, &irq);
 		aml_freevalue(&res);
 
 		/* Pick a new IRQ if necessary. */
 		if ((irq == 0 || irq == 2 || irq == 13) &&
 		    !aml_evalname(sc->sc_acpi, node, "_PRS", 0, NULL, &res)){
-			if (res.type == AML_OBJTYPE_BUFFER &&
-			    res.length >= 5) {
-				aml_parse_resource(res.length, res.v_buffer,
-				    acpiprt_chooseirq, &irq);
-			}
+			aml_parse_resource(&res, acpiprt_chooseirq, &irq);
 			aml_freevalue(&res);
 		}
 
@@ -396,9 +399,7 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 	 */
 	if (aml_evalname(sc->sc_acpi, parent, "_CRS.", 0, NULL, &res) == 0) {
 		rv = -1;
-		if (res.type == AML_OBJTYPE_BUFFER)
-			aml_parse_resource(res.length, res.v_buffer,
-			    acpiprt_getminbus, &rv);
+		aml_parse_resource(&res, acpiprt_getminbus, &rv);
 		aml_freevalue(&res);
 		if (rv != -1)
 			return rv;
@@ -484,7 +485,7 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 		aml_freevalue(&res);
 		return;
 	}
-	aml_parse_resource(res.length, res.v_buffer, acpiprt_getirq, &irq);
+	aml_parse_resource(&res, acpiprt_getirq, &irq);
 
 	/* Only re-route interrupts when necessary. */
 	if ((sta & STA_ENABLED) && irq == newirq) {
