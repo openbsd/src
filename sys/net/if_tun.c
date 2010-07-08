@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.106 2010/05/06 13:06:40 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.107 2010/07/08 08:40:29 yasuoka Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -574,9 +574,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct tun_softc	*tp = ifp->if_softc;
 	int			 s, len, error;
 	u_int32_t		*af;
-#ifdef PIPEX
-	struct pipex_session	*session;
-#endif
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m0);
@@ -609,8 +606,8 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 #ifdef PIPEX
-	if ((session = pipex_ip_lookup_session(m0, &tp->pipex_iface)) != NULL) {
-		pipex_ip_output(m0, session);
+	if ((m0 = pipex_output(m0, dst->sa_family, sizeof(u_int32_t),
+	    &tp->pipex_iface)) == NULL) {
 		splx(s);
 		return (0);
 	}

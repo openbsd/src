@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.3 2010/07/03 00:16:07 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.4 2010/07/08 08:40:29 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -152,8 +152,7 @@ void                  pipex_iface_stop (struct pipex_iface_context *);
 int                   pipex_notify_close_session(struct pipex_session *session);
 int                   pipex_notify_close_session_all(void);
 
-struct pipex_session  *pipex_ip_lookup_session (struct mbuf *, struct pipex_iface_context *);
-void                  pipex_ip_output (struct mbuf *, struct pipex_session *);
+struct mbuf           *pipex_output (struct mbuf *, int, int, struct pipex_iface_context *);
 struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
 struct mbuf           *pipex_pppoe_input (struct mbuf *, struct pipex_session *);
 struct pipex_session  *pipex_pptp_lookup_session (struct mbuf *);

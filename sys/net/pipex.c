@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.5 2010/07/03 00:16:07 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.6 2010/07/08 08:40:29 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -537,9 +537,12 @@ pipex_lookup_by_ip_address(struct in_addr addr)
 	struct pipex_session *session;
 	struct sockaddr_in pipex_in4, pipex_in4mask;
 
+	bzero(&pipex_in4, sizeof(pipex_in4));
 	pipex_in4.sin_addr = addr;
 	pipex_in4.sin_family = AF_INET;
 	pipex_in4.sin_len = sizeof(pipex_in4);
+
+	bzero(&pipex_in4mask, sizeof(pipex_in4mask));
 	pipex_in4mask.sin_addr.s_addr = htonl(0xFFFFFFFFL);
 	pipex_in4mask.sin_family = AF_INET;
 	pipex_in4mask.sin_len = sizeof(pipex_in4mask);
@@ -773,38 +776,37 @@ pipex_timer(void *ignored_arg)
 /***********************************************************************
  * Common network I/O functions.  (tunnel protocol independent)
  ***********************************************************************/
-struct pipex_session *
-pipex_ip_lookup_session(struct mbuf *m0,
+struct mbuf *
+pipex_output(struct mbuf *m0, int af, int off,
     struct pipex_iface_context *pipex_iface)
 {
 	struct pipex_session *session;
 	struct ip ip;
 
-	/* length check */
-	if (m0->m_pkthdr.len < sizeof(struct ip)) {
-		PIPEX_DBG((NULL, LOG_DEBUG, 
-		    "<%s> packet length is too short", __func__));
-		return (NULL);
+	session = NULL;
+	switch (af) {
+	case AF_INET:
+		if (m0->m_pkthdr.len >= sizeof(struct ip) + off) {
+			m_copydata(m0, off, sizeof(struct ip), (caddr_t)&ip);
+			if (IN_MULTICAST(ip.ip_dst.s_addr))
+				session = pipex_iface->multicast_session;
+			else
+				session = pipex_lookup_by_ip_address(ip.ip_dst);
+		}
+		if (session != NULL) {
+			if (off > 0)
+				m_adj(m0, off);
+
+			pipex_ip_output(m0, session);
+			return (NULL);
+		}
+		break;
 	}
 
-	/* copy ip header info */
-	m_copydata(m0, 0, sizeof(struct ip), (caddr_t)&ip);
-
-	if (IN_MULTICAST(ip.ip_dst.s_addr) && pipex_iface != NULL)
-		return (pipex_iface->multicast_session);
-
-	/* lookup pipex session table */
-	session = pipex_lookup_by_ip_address(ip.ip_dst);
-	if (session == NULL) {
-		PIPEX_DBG((NULL, LOG_DEBUG, "<%s> session not found.",
-		    __func__));
-		return (NULL);
-	}
-
-	return (session);
+	return (m0);
 }
 
-void
+Static void
 pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 {
 	int is_idle;
