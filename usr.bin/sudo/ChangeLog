@@ -1,3 +1,29 @@
+2010-06-29  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* env.c: In unsetenv() check for NULL or empty name as per
+	  POSIX 1003.1-2008
+
+	* env.c: Do not rely on env.env_len when unsetting a variable,
+	  just use the NULL terminator.
+
+2010-06-25  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* env.c: In unsetenv(), do not assign ep early as we may
+	  end up reallocating env.envp which could result in ep
+	  pointing to freed memory if the environ pointer is out
+	  of sync with env.envp.
+
+	* pwutil.c: Ignore case when matching user/group names in
+	  the cache. From Quest sudo.
+
+	* sudo.c: Defer call to sudo_nonunix_groupcheck_cleanup()
+	  until after we have closed the sudoers sources. From Quest
+	  sudo.
+
+	* vasgroups.c: Use warningx() instead of log_error() since
+	  the latter is not available to visudo or testsudoers. This
+	  does mean that they don't end up in syslog.
+
 2010-06-02  Todd C. Miller  <Todd.Miller@courtesan.com>
 
 	* auth/pam.c: Fix OpenPAM detection for newer versions.

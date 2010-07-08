@@ -317,10 +317,10 @@ int
 unsetenv(var)
     const char *var;
 {
-    char **ep = env.envp;
+    char **ep;
     size_t len;
 
-    if (strchr(var, '=') != NULL) {
+    if (var == NULL || *var == '\0' || strchr(var, '=') != NULL) {
 	errno = EINVAL;
 #ifdef UNSETENV_VOID
 	return;
@@ -355,17 +355,18 @@ unsetenv(var)
     }
 
     len = strlen(var);
-    while (*ep != NULL) {
+    for (ep = env.envp; *ep != NULL;) {
 	if (strncmp(var, *ep, len) == 0 && (*ep)[len] == '=') {
-	    /* Found it; shift remainder + NULL over by one and update len. */
-	    memmove(ep, ep + 1,
-		(env.env_len - (ep - env.envp)) * sizeof(char *));
-	    env.env_len--;
+	    /* Found it; shift remainder + NULL over by one. */
+	    char **cur = ep;
+	    while ((*cur = *(cur + 1)) != NULL)
+		cur++;
 	    /* Keep going, could be multiple instances of the var. */
 	} else {
 	    ep++;
 	}
     }
+    env.env_len = ep - env.envp;
 #ifndef UNSETENV_VOID
     return(0);
 #endif
@@ -462,13 +463,14 @@ sudo_putenv(str, dupcheck, overwrite)
 	if (found && overwrite) {
 	    while (*ep != NULL) {
 		if (strncmp(str, *ep, len) == 0) {
-		    memmove(ep, ep + 1,
-			(env.env_len - (ep - env.envp)) * sizeof(char *));
-		    env.env_len--;
+		    char **cur = ep;
+		    while ((*cur = *(cur + 1)) != NULL)
+			cur++;
 		} else {
 		    ep++;
 		}
 	    }
+	    env.env_len = ep - env.envp;
 	}
     }
 

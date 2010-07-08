@@ -30,3 +30,4 @@ s:@timedir@:/var/run/sudo:g
 s:@timeout@:5:g
 s:@tty_tickets@:off:g
 s:@path_info@:off:g
+s:@secure_path@:not set:g
