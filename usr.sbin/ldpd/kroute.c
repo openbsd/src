@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.18 2010/06/30 05:27:56 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.19 2010/07/08 09:41:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -83,7 +83,6 @@ int			 kif_remove(struct kif_node *);
 void			 kif_clear(void);
 struct kif		*kif_update(u_short, int, struct if_data *,
 			    struct sockaddr_dl *);
-int			 kif_validate(u_short);
 
 struct kroute_node	*kroute_match(in_addr_t);
 
@@ -235,12 +234,10 @@ kr_delete_fib(struct kroute_node *kr)
 	if (!(kr->r.flags & F_LDPD_INSERTED))
 		return (0);
 
-	if (kr->r.flags & F_KERNEL) {
-		/* remove F_LDPD_INSERTED flag, route still exists in kernel */
-		kr->r.flags &= ~F_LDPD_INSERTED;
-		return (0);
-	}
+	/* remove F_LDPD_INSERTED flag, route still exists in kernel */
+	kr->r.flags &= ~F_LDPD_INSERTED;
 
+	/* kill MPLS LSP */
 	if (send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r, AF_MPLS) == -1)
 		return (-1);
 
@@ -425,16 +422,8 @@ kr_redist_eval(struct kroute *kr)
 {
 	u_int32_t	 a;
 
-	/* Only static routes are considered for redistribution. */
-	if (!(kr->flags & F_KERNEL))
-		goto dont_redistribute;
-
 	/* Dynamic routes are not redistributable. */
 	if (kr->flags & F_DYNAMIC)
-		goto dont_redistribute;
-
-	/* interface is not up and running so don't announce */
-	if (kr->flags & F_DOWN)
 		goto dont_redistribute;
 
 	/*
@@ -595,16 +584,6 @@ kroute_insert(struct kroute_node *kr)
 	} else
 		krm = kr;
 
-	if (!(kr->r.flags & F_KERNEL)) {
-		kr->r.flags &= ~F_DOWN;
-		return (0);
-	}
-
-	if (kif_validate(kr->r.ifindex))
-		kr->r.flags &= ~F_DOWN;
-	else
-		kr->r.flags |= F_DOWN;
-
 	kr_redistribute(krm);
 	return (0);
 }
@@ -749,10 +728,6 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 	if ((kif = kif_find(ifindex)) == NULL) {
 		if ((kif = kif_insert(ifindex)) == NULL)
 			return (NULL);
-                kif->k.nh_reachable = (flags & IFF_UP) &&
-		    (LINK_STATE_IS_UP(ifd->ifi_link_state) ||
-		    (ifd->ifi_link_state == LINK_STATE_UNKNOWN &&
-		    ifd->ifi_type != IFT_CARP));
 	}
 
 	kif->k.flags = flags;
@@ -772,19 +747,6 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 	}
 
 	return (&kif->k);
-}
-
-int
-kif_validate(u_short ifindex)
-{
-	struct kif_node		*kif;
-
-	if ((kif = kif_find(ifindex)) == NULL) {
-		log_warnx("interface with index %u not found", ifindex);
-		return (1);
-	}
-
-	return (kif->k.nh_reachable);
 }
 
 struct kroute_node *
@@ -819,7 +781,7 @@ protect_lo(void)
 	}
 	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
 	kr->r.prefixlen = 8;
-	kr->r.flags = F_KERNEL|F_CONNECTED;
+	kr->r.flags = F_CONNECTED;
 	kr->r.local_label = NO_LABEL;
 	kr->r.remote_label = NO_LABEL;
 
@@ -886,41 +848,15 @@ void
 if_change(u_short ifindex, int flags, struct if_data *ifd,
     struct sockaddr_dl *sdl)
 {
-	struct kroute_node	*kr, *tkr;
 	struct kif		*kif;
-	u_int8_t		 reachable;
 
 	if ((kif = kif_update(ifindex, flags, ifd, sdl)) == NULL) {
 		log_warn("if_change:  kif_update(%u)", ifindex);
 		return;
 	}
 
-	reachable = (kif->flags & IFF_UP) &&
-	    (LINK_STATE_IS_UP(kif->link_state) ||
-	    (kif->link_state == LINK_STATE_UNKNOWN &&
-	    kif->media_type != IFT_CARP));
-
-	if (reachable == kif->nh_reachable)
-		return;		/* nothing changed wrt nexthop validity */
-
-	kif->nh_reachable = reachable;
-
 	/* notify ldpe about interface link state */
 	main_imsg_compose_ldpe(IMSG_IFINFO, 0, kif, sizeof(struct kif));
-
-	/* update redistribute list */
-	RB_FOREACH(kr, kroute_tree, &krt) {
-		for (tkr = kr; tkr != NULL; tkr = tkr->next) {
-			if (tkr->r.ifindex == ifindex) {
-				if (reachable)
-					tkr->r.flags &= ~F_DOWN;
-				else
-					tkr->r.flags |= F_DOWN;
-
-				kr_redistribute(tkr);
-			}
-		}
-	}
 }
 
 void
@@ -1272,7 +1208,7 @@ rtmsg_process(char *buf, int len)
 
 		prefix.s_addr = 0;
 		prefixlen = 0;
-		flags = F_KERNEL;
+		flags = 0;
 		nexthop.s_addr = 0;
 		mpath = 0;
 		prio = 0;
@@ -1377,11 +1313,6 @@ rtmsg_process(char *buf, int len)
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
 
-				if (kif_validate(kr->r.ifindex))
-					kr->r.flags &= ~F_DOWN;
-				else
-					kr->r.flags |= F_DOWN;
-
 				/* just readd, the RDE will care */
 				kr_redistribute(kr);
 			} else {
@@ -1406,8 +1337,6 @@ add:
 		case RTM_DELETE:
 			if ((kr = kroute_find(prefix.s_addr, prefixlen, prio))
 			    == NULL)
-				continue;
-			if (!(kr->r.flags & F_KERNEL))
 				continue;
 			/* get the correct route */
 			okr = kr;

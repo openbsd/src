@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.23 2010/06/30 05:21:38 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.24 2010/07/08 09:41:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -49,14 +49,12 @@
 #define	LDPD_FLAG_NO_LFIB_UPDATE	0x0001
 
 #define	F_LDPD_INSERTED		0x0001
-#define	F_KERNEL		0x0002
-#define	F_CONNECTED		0x0004
-#define	F_STATIC		0x0008
-#define	F_DYNAMIC		0x0010
-#define	F_DOWN			0x0020
-#define	F_REJECT		0x0040
-#define	F_BLACKHOLE		0x0080
-#define	F_REDISTRIBUTED		0x0100
+#define	F_CONNECTED		0x0002
+#define	F_STATIC		0x0004
+#define	F_DYNAMIC		0x0008
+#define	F_REJECT		0x0010
+#define	F_BLACKHOLE		0x0020
+#define	F_REDISTRIBUTED		0x0040
 
 struct evbuf {
 	struct msgbuf		wbuf;
@@ -294,7 +292,6 @@ struct kif {
 	u_short			 ifindex;
 	u_int8_t		 media_type;
 	u_int8_t		 link_state;
-	u_int8_t		 nh_reachable;	/* for nexthop verification */
 };
 
 /* control data structures */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.10 2010/06/30 05:21:38 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.11 2010/07/08 09:41:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -463,6 +463,8 @@ main_dispatch_lde(int fd, short event, void *bula)
 void
 main_imsg_compose_ldpe(int type, pid_t pid, void *data, u_int16_t datalen)
 {
+	if (iev_ldpe == NULL)
+		return;
 	imsg_compose_event(iev_ldpe, type, 0, pid, -1, data, datalen);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.10 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.11 2010/07/08 09:41:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -282,7 +282,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	struct imsgbuf  *ibuf = &iev->ibuf;
 	struct iface	*iface = NULL;
 	struct kif	*kif;
-	int		 n, link_ok, shut = 0;
+	int		 n, link_new, link_old, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -307,17 +307,24 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			    sizeof(struct kif))
 				fatalx("IFINFO imsg with wrong len");
 			kif = imsg.data;
-			link_ok = (kif->flags & IFF_UP) &&
+			link_new = (kif->flags & IFF_UP) &&
 			    (LINK_STATE_IS_UP(kif->link_state) ||
 			    (kif->link_state == LINK_STATE_UNKNOWN &&
 			    kif->media_type != IFT_CARP));
 
 			LIST_FOREACH(iface, &leconf->iface_list, entry) {
 				if (kif->ifindex == iface->ifindex) {
+					link_old = (iface->flags & IFF_UP) &&
+					    (LINK_STATE_IS_UP(iface->linkstate)
+					    || (iface->linkstate ==
+					    LINK_STATE_UNKNOWN &&
+					    iface->media_type != IFT_CARP));
 					iface->flags = kif->flags;
 					iface->linkstate = kif->link_state;
 
-					if (link_ok) {
+					if (link_new == link_old)
+						continue;
+					if (link_new) {
 						if_fsm(iface, IF_EVT_UP);
 						log_warnx("interface %s up",
 						    iface->name);
