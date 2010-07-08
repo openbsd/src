@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.8,v 1.13 2007/05/31 19:20:22 jmc Exp $
+.\"	$OpenBSD: chroot.8,v 1.14 2010/07/08 06:52:30 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 8 2010 $
 .Dt CHROOT 8
 .Os
 .Sh NAME
@@ -93,11 +93,7 @@ is not set,
 is used.
 .El
 .Sh SEE ALSO
-.Xr chdir 2 ,
-.Xr chroot 2 ,
-.Xr setgid 2 ,
-.Xr setgroups 2 ,
-.Xr setuid 2 ,
+.Xr ldd 1 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
 .Xr environ 7
@@ -105,7 +101,7 @@ is used.
 The
 .Nm
 utility first appeared in
-.Bx 4.4 .
+.Bx 4.3 Reno .
 .Sh CAVEATS
 .Nm
 should never be installed setuid root, as it would then be possible
