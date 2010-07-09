@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.38 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.39 2010/07/09 06:41:17 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -170,9 +170,9 @@ pass5(void)
 			idesc[i].id_fix = FIX;
 	}
 	memset(&cstotal, 0, sizeof(struct csum_total));
-	j = blknum(fs, fs->fs_size + fs->fs_frag - 1);
-	for (i = fs->fs_size; i < j; i++)
-		setbmap(i);
+	dmax = blknum(fs, fs->fs_size + fs->fs_frag - 1);
+	for (d = fs->fs_size; d < dmax; d++)
+		setbmap(d);
 	info_cg = 0;
 	info_maxcg = fs->fs_ncg;
 	info_fn = pass5_info;
