@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.293 2010/04/06 15:27:51 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.294 2010/07/09 00:04:42 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1352,9 +1352,12 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Configure mbuf pool watermarks */
 	/* new Broadcom docs strongly recommend these: */
-	if (BGE_IS_5705_PLUS(sc) &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765) {
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x2a);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0xa0);
+	} else if (BGE_IS_5705_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
@@ -1660,10 +1663,16 @@ bge_blockinit(struct bge_softc *sc)
 	if (BGE_IS_5755_PLUS(sc))
 		val |= BGE_WDMAMODE_STATUS_TAG_FIX;
 
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)
+		val |= BGE_WDMAMODE_BURST_ALL_DATA;
+
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);
 
 	val = BGE_RDMAMODE_ENABLE|BGE_RDMAMODE_ALL_ATTNS;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717)
+		val |= BGE_RDMAMODE_MULT_DMA_RD_DIS;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
@@ -2116,10 +2125,12 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	sc->bge_tx_max_coal_bds = 400;
 
 	/* 5705 limits RX return ring to 512 entries. */
-	if (BGE_IS_5705_PLUS(sc))
-		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT_5705;
-	else
+	if (BGE_IS_5700_FAMILY(sc) ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765)
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
+	else
+		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT_5705;
 
 	/* Set up ifnet structure */
 	ifp = &sc->arpcom.ac_if;
@@ -2188,7 +2199,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
 	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
-		if (BGE_IS_5714_FAMILY(sc))
+		if (BGE_IS_5714_FAMILY(sc) ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717)
 		    sc->bge_flags |= BGE_PHY_FIBER_MII;
 		else
 		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
