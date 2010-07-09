@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.31 2010/06/01 04:33:40 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.32 2010/07/09 17:36:08 drahn Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -277,6 +277,7 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	ln -sf ${TARGET_CANON}-c++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/c++
 	rm -f ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
 	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp#' \
+	    -e 's/@GNUC@//' \
 	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
 	    -e 's/@dollaropt@//' \
 	    ${.CURDIR}/usr.bin/cpp/cpp.sh > ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
@@ -303,6 +304,7 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	ln -sf ${TARGET_CANON}-c++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/c++
 	rm -f ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
 	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp#' \
+	    -e 's/@GNUC@/-D__GNUC__/' \
 	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
 	    -e 's/@dollaropt@//' \
 	    ${.CURDIR}/usr.bin/cpp/cpp.sh > ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
@@ -329,6 +331,7 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	mv -f ${CROSSDIR}/usr/bin/cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp
 	rm -f ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
 	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp#' \
+	    -e 's/@GNUC@/-D__GNUC__/' \
 	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
 	    -e 's/@dollaropt@/-$$/' ${.CURDIR}/usr.bin/cpp/cpp.sh > \
 	    ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
