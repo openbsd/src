@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.48 2008/06/23 20:51:08 ragge Exp $	*/
+/*	$OpenBSD: edit.c,v 1.49 2010/07/09 18:42:14 zinovik Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -331,10 +331,10 @@ cvs_unedit_local(struct cvs_file *cf)
 	char wdir[MAXPATHLEN], sticky[CVS_ENT_MAXLINELEN];
 	RCSNUM *ba_rev;
 
+	cvs_log(LP_TRACE, "cvs_unedit_local(%s)", cf->file_path);
+
 	if (cvs_noexec == 1)
 		return;
-
-	cvs_log(LP_TRACE, "cvs_unedit_local(%s)", cf->file_path);
 
 	cvs_file_classify(cf, cvs_directory_tag);
 
