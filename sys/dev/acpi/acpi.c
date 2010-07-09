@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.173 2010/07/08 20:56:31 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.174 2010/07/09 12:27:02 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -570,11 +570,11 @@ acpi_getpci(struct aml_node *node, void *arg)
 			if (!aml_evalname(sc, node, "_CRS", 0, NULL, &res)) {
 				aml_parse_resource(&res, acpi_getminbus,
 				    &pci->bus);
-				printf("%s post-crs: %d\n", aml_nodename(node), 
+				dnprintf(10, "%s post-crs: %d\n", aml_nodename(node), 
 				    pci->bus);
 			}
 			if (!aml_evalinteger(sc, node, "_BBN", 0, NULL, &val)) {
-				printf("%s post-bbn: %d, %lld\n", aml_nodename(node), 
+				dnprintf(10, "%s post-bbn: %d, %lld\n", aml_nodename(node), 
 				    pci->bus, val);
 				if (pci->bus == -1)
 					pci->bus = val;
