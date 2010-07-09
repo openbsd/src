@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.48 2010/07/06 13:24:35 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.49 2010/07/09 12:39:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,8 @@ struct lsa	*rde_asext_put(struct rroute *);
 int		 comp_asext(struct lsa *, struct lsa *);
 struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
-struct lsa	*orig_intra_lsa_net(struct iface *, struct vertex *);
+struct lsa	*orig_intra_lsa_net(struct area *, struct iface *,
+		 struct vertex *);
 struct lsa	*orig_intra_lsa_rtr(struct area *, struct vertex *);
 void		 append_prefix_lsa(struct lsa **, u_int16_t *,
 		    struct lsa_prefix *);
@@ -754,7 +755,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 			TAILQ_INSERT_TAIL(&iface->ifa_list, ia, entry);
 			area = area_find(rdeconf, iface->area_id);
-			orig_intra_area_prefix_lsas(area);
+			if (area)
+				orig_intra_area_prefix_lsas(area);
 			break;
 		case IMSG_IFADDRDEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -779,7 +781,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				}
 			}
 			area = area_find(rdeconf, iface->area_id);
-			orig_intra_area_prefix_lsas(area);
+			if (area)
+				orig_intra_area_prefix_lsas(area);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==
@@ -1349,20 +1352,16 @@ prefix_tree_add(struct prefix_tree *tree, struct lsa_link *lsa)
 RB_GENERATE(prefix_tree, prefix_node, entry, prefix_compare)
 
 struct lsa *
-orig_intra_lsa_net(struct iface *iface, struct vertex *old)
+orig_intra_lsa_net(struct area *area, struct iface *iface, struct vertex *old)
 {
 	struct lsa		*lsa;
 	struct vertex		*v;
-	struct area		*area;
 	struct rde_nbr		*nbr;
 	struct prefix_node	*node;
 	struct prefix_tree	 tree;
 	int			 num_full_nbr;
 	u_int16_t		 len;
 	u_int16_t		 numprefix;
-
-	if ((area = area_find(rdeconf, iface->area_id)) == NULL)
-		fatalx("interface lost area");
 
 	log_debug("orig_intra_lsa_net: area %s, interface %s",
 	    inet_ntoa(area->id), iface->name);
@@ -1545,7 +1544,7 @@ orig_intra_area_prefix_lsas(struct area *area)
 		    iface->type == IF_TYPE_NBMA) {
 			old = lsa_find(iface, htons(LSA_TYPE_INTRA_A_PREFIX),
 			    htonl(iface->ifindex), rde_router_id());
-			lsa = orig_intra_lsa_net(iface, old);
+			lsa = orig_intra_lsa_net(area, iface, old);
 			if (lsa)
 				lsa_merge(rde_nbr_self(area), lsa, old);
 		}
