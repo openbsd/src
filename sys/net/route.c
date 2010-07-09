@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.123 2010/07/02 00:20:49 jsg Exp $	*/
+/*	$OpenBSD: route.c,v 1.124 2010/07/09 15:44:20 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1151,7 +1151,7 @@ static int			rt_init_done = 0;
 		bzero(&info, sizeof(info));			\
 		info.rti_info[RTAX_DST] = rt_key(r->rtt_rt);	\
 		rtrequest1(RTM_DELETE, &info,			\
-		    r->rtt_rt->rt_priority, NULL, 0 /* XXX */);	\
+		    r->rtt_rt->rt_priority, NULL, r->rtt_tableid);	\
 	}							\
 }
 
@@ -1249,7 +1249,7 @@ rt_timer_remove_all(struct rtentry *rt)
 
 int
 rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
-    struct rttimer *), struct rttimer_queue *queue)
+    struct rttimer *), struct rttimer_queue *queue, u_int rtableid)
 {
 	struct rttimer	*r;
 	long		 current_time;
@@ -1283,6 +1283,7 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 	r->rtt_time = current_time;
 	r->rtt_func = func;
 	r->rtt_queue = queue;
+	r->rtt_tableid = rtableid;
 	LIST_INSERT_HEAD(&rt->rt_timer, r, rtt_link);
 	TAILQ_INSERT_TAIL(&queue->rtq_head, r, rtt_next);
 	r->rtt_queue->rtq_count++;

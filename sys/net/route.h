@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.70 2010/06/29 21:28:37 reyk Exp $	*/
+/*	$OpenBSD: route.h,v 1.71 2010/07/09 15:44:20 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -310,6 +310,7 @@ struct rttimer {
 	void            	(*rtt_func)(struct rtentry *, 
 						 struct rttimer *);
 	time_t          	rtt_time; /* When this timer was registered */
+	u_int			rtt_tableid;	/* routing table id of rtt_rt */
 };
 
 struct rttimer_queue {
@@ -373,7 +374,7 @@ void	 rt_setmetrics(u_long, struct rt_metrics *, struct rt_kmetrics *);
 void	 rt_getmetrics(struct rt_kmetrics *, struct rt_metrics *);
 int      rt_timer_add(struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
-	     struct rttimer_queue *);
+	     struct rttimer_queue *, u_int);
 void	 rt_timer_init(void);
 struct rttimer_queue *
 	 rt_timer_queue_create(u_int);

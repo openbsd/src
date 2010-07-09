@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.112 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.113 2010/07/09 15:44:20 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2346,7 +2346,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 
 		if (newrt) {
 			(void)rt_timer_add(newrt, icmp6_redirect_timeout,
-			    icmp6_redirect_timeout_q);
+			    icmp6_redirect_timeout_q, /* XXX */ 0);
 			rtfree(newrt);
 		}
 	}
@@ -2778,7 +2778,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 		rt = nrt;
 	}
 	error = rt_timer_add(rt, icmp6_mtudisc_timeout,
-			icmp6_mtudisc_timeout_q);
+			icmp6_mtudisc_timeout_q, /* XXX */ 0);
 	if (error) {
 		rtfree(rt);
 		return NULL;
@@ -2801,7 +2801,8 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		info.rti_info[RTAX_DST] = rt_key(rt);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
+		    r->rtt_tableid);
 	} else {
 		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
 			rt->rt_rmx.rmx_mtu = 0;
@@ -2822,7 +2823,8 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		info.rti_info[RTAX_DST] = rt_key(rt);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
+		    r->rtt_tableid);
 	}
 }
 

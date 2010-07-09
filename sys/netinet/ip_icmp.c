@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.90 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.91 2010/07/09 15:44:20 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -597,7 +597,7 @@ reflect:
 		    m->m_pkthdr.rdomain);
 		if (rt != NULL && icmp_redirtimeout != 0) {
 			(void)rt_timer_add(rt, icmp_redirect_timeout,
-			    icmp_redirect_timeout_q);
+			    icmp_redirect_timeout_q, m->m_pkthdr.rdomain);
 		}
 		if (rt != NULL)
 			rtfree(rt);
@@ -907,7 +907,8 @@ icmp_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
 		rtfree(rt);
 		rt = nrt;
 	}
-	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
+	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q,
+	    rtableid);
 	if (error) {
 		rtfree(rt);
 		return (NULL);
@@ -979,7 +980,6 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 	rtfree(rt);
 }
 
-/* XXX only handles table 0 right now */
 void
 icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
@@ -999,13 +999,14 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		info.rti_flags = rt->rt_flags;   
 
 		sa = *(struct sockaddr_in *)rt_key(rt);
-		/* XXX this needs the rtableid */
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
+		    r->rtt_tableid);
 
 		/* Notify TCP layer of increased Path MTU estimate */
 		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
 		if (ctlfunc)
-			(*ctlfunc)(PRC_MTUINC,(struct sockaddr *)&sa, 0, NULL);
+			(*ctlfunc)(PRC_MTUINC,(struct sockaddr *)&sa,
+			    r->rtt_tableid, NULL);
 	} else
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 			rt->rt_rmx.rmx_mtu = 0;
@@ -1032,7 +1033,6 @@ icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
 	return 0;
 }
 
-/* XXX only handles table 0 right now */
 void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
@@ -1048,6 +1048,7 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_flags = rt->rt_flags;   
 
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 
+		    r->rtt_tableid);
 	}
 }
