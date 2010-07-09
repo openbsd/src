@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.54 2009/04/14 21:16:40 jj Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.55 2010/07/09 20:07:05 naddy Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2478,7 +2478,7 @@ rcs_gettok(RCSFILE *rfp)
 		type = RCS_TOK_SCOLON;
 	} else if (ch == ':') {
 		type = RCS_TOK_COLON;
-	} else if (isalpha(ch) || ch == '_' || ch == '$' || ch == '.' || ch == '-') {
+	} else if (isalpha(ch)) {
 		type = RCS_TOK_ID;
 		*(bp++) = ch;
 		for (;;) {
@@ -2486,8 +2486,8 @@ rcs_gettok(RCSFILE *rfp)
 			if (ch == EOF) {
 				type = RCS_TOK_EOF;
 				break;
-			} else if (!isalnum(ch) && ch != '_' && ch != '-' &&
-			    ch != '/' && ch != '.' && ch != '$') {
+			} else if (!isgraph(ch) ||
+			    strchr(rcs_sym_invch, ch) != NULL) {
 				ungetc(ch, pdp->rp_file);
 				break;
 			}

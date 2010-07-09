@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.292 2010/03/30 16:56:32 zinovik Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.293 2010/07/09 20:07:05 naddy Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2339,8 +2339,8 @@ rcs_gettok(RCSFILE *rfp)
 			if (ch == EOF) {
 				type = RCS_TOK_EOF;
 				break;
-			} else if (!isalnum(ch) && ch != '_' && ch != '-' &&
-			    ch != '/' && ch != '+' && ch != '|') {
+			} else if (!isgraph(ch) ||
+			    strchr(rcs_sym_invch, ch) != NULL) {
 				ungetc(ch, pdp->rp_file);
 				break;
 			}
