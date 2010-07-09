@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2010/07/09 08:06:37 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/mount.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-#include <fstab.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -50,7 +49,6 @@ volatile sig_atomic_t returntosingle;
 
 int	argtoi(int, char *, char *, int);
 int	checkfilesys(char *, char *, long, int);
-int	docheck(struct fstab *);
 int	main(int, char *[]);
 
 extern char *__progname;
@@ -140,22 +138,6 @@ argtoi(int flag, char *req, char *str, int base)
 	if (cp == str || *cp)
 		errexit("-%c flag requires a %s\n", flag, req);
 	return (ret);
-}
-
-/*
- * Determine whether a filesystem should be checked.
- */
-int
-docheck(struct fstab *fsp)
-{
-
-	if ((strcmp(fsp->fs_vfstype, "ufs") &&
-	     strcmp(fsp->fs_vfstype, "ffs")) ||
-	    (strcmp(fsp->fs_type, FSTAB_RW) &&
-	     strcmp(fsp->fs_type, FSTAB_RO)) ||
-	    fsp->fs_passno == 0)
-		return (0);
-	return (1);
 }
 
 /*
