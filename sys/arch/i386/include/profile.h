@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.10 2005/01/07 02:03:17 pascoe Exp $	*/
+/*	$OpenBSD: profile.h,v 1.11 2010/07/09 18:44:10 kettenis Exp $	*/
 /*	$NetBSD: profile.h,v 1.6 1995/03/28 18:17:08 jtc Exp $	*/
 
 /*
@@ -38,9 +38,14 @@
 extern void mcount(void) __asm("__mcount");				\
 __weak_alias(mcount,__mcount);						\
 void									\
-mcount()								\
+mcount(void)								\
 {									\
 	int selfpc, frompcindex;					\
+	int eax, ecx, edx;						\
+									\
+	__asm volatile("movl %%eax,%0" : "=g" (eax));			\
+	__asm volatile("movl %%ecx,%0" : "=g" (ecx));			\
+	__asm volatile("movl %%edx,%0" : "=g" (edx));			\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
@@ -54,6 +59,10 @@ mcount()								\
 	__asm __volatile ("movl (%%ebp),%0;movl 4(%0),%0" :		\
 	    "+r" (frompcindex));					\
 	_mcount(frompcindex, selfpc);					\
+									\
+	__asm volatile("movl %0,%%edx" : : "g" (edx));			\
+	__asm volatile("movl %0,%%ecx" : : "g" (ecx));			\
+	__asm volatile("movl %0,%%eax" : : "g" (eax));			\
 }
 
 #ifdef _KERNEL
