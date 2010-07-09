@@ -645,13 +645,9 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/4.2.1
-./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/4.2.1/cc1
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/4.2.1/cc1obj
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/4.2.1/cc1plus
-./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/4.2.1/collect2
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/4.2.1/libgcc.a
-./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/4.2.1/specs
 ./usr/lib/libasn1_pic.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
