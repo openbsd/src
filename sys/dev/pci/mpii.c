@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.31 2010/07/07 10:29:17 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.32 2010/07/09 22:33:21 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1788,6 +1788,8 @@ struct mpii_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct mutex		sc_req_mtx;
+	struct mutex		sc_rep_mtx;
+	u_int			sc_rep_sem;
 
 	u_int8_t		sc_porttype;
 	int			sc_request_depth;
@@ -1893,12 +1895,15 @@ int		mpii_remove_dev(struct mpii_softc *, struct mpii_device *);
 struct mpii_device *mpii_find_dev(struct mpii_softc *, u_int16_t);
 
 void		mpii_start(struct mpii_softc *, struct mpii_ccb *);
-int		mpii_complete(struct mpii_softc *, struct mpii_ccb *, int);
-int		mpii_poll(struct mpii_softc *, struct mpii_ccb *, int);
+int		mpii_poll(struct mpii_softc *, struct mpii_ccb *);
+void		mpii_poll_done(struct mpii_ccb *);
 int		mpii_reply(struct mpii_softc *, struct mpii_reply_descr *);
 
 void		mpii_wait(struct mpii_softc *, struct mpii_ccb *);
 void		mpii_wait_done(struct mpii_ccb *);
+
+int		mpii_sem_enter(struct mpii_softc *);
+int		mpii_sem_leave(struct mpii_softc *);
 
 void		mpii_init_queues(struct mpii_softc *);
 
@@ -2037,6 +2042,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	mtx_init(&sc->sc_req_mtx, IPL_BIO);
+	mtx_init(&sc->sc_rep_mtx, IPL_BIO);
 
 	/* find the appropriate memory base */
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
@@ -2240,41 +2246,75 @@ mpii_detach(struct device *self, int flags)
 	return (0);
 }
 
+int
+mpii_sem_enter(struct mpii_softc *sc)
+{
+	int rv = 1;
+
+	mtx_enter(&sc->sc_rep_mtx);
+	sc->sc_rep_sem++;
+	if (sc->sc_rep_sem > 1)
+		rv = 0;
+	mtx_leave(&sc->sc_rep_mtx);
+
+	return (rv);
+}
+
+int
+mpii_sem_leave(struct mpii_softc *sc)
+{
+	int rv = 1;
+
+	mtx_enter(&sc->sc_rep_mtx);
+	sc->sc_rep_sem--;
+	if (sc->sc_rep_sem > 0)
+		rv = 0;
+	mtx_leave(&sc->sc_rep_mtx);
+
+	return (rv);
+}
 
 int
 mpii_intr(void *arg)
 {
 	struct mpii_softc		*sc = arg;
-	struct mpii_reply_descr		*rdp;
+	struct mpii_reply_descr		*postq = sc->sc_reply_postq_kva, *rdp;
 	int				rv = 0;
 
+	if (!mpii_sem_enter(sc))
+		return (0);
 	do {
-		bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq),
-		    0, 8 * sc->sc_reply_post_qdepth, BUS_DMASYNC_POSTWRITE);
 
-		rdp = &sc->sc_reply_postq_kva[sc->sc_reply_post_host_index];
-		if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
-		    MPII_REPLY_DESCR_UNUSED)
-			break;
-		if (rdp->data == 0xffffffff) {
-			/*
-			 * ioc is still writing to the reply post queue
-			 * race condition - bail!
-			 */
-			printf("%s: ioc is writing a reply @ %d/%d (kva %p)\n",
-			    DEVNAME(sc), sc->sc_reply_post_host_index,
-			    sc->sc_reply_post_qdepth, rdp);
-			break;
+		for (;;) {
+			bus_dmamap_sync(sc->sc_dmat,
+			    MPII_DMA_MAP(sc->sc_reply_postq),
+			    0, 8 * sc->sc_reply_post_qdepth,
+			    BUS_DMASYNC_POSTWRITE);
+
+			rdp = &postq[sc->sc_reply_post_host_index];
+			if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
+			    MPII_REPLY_DESCR_UNUSED)
+				break;
+			if (rdp->data == 0xffffffff) {
+				/*
+				 * ioc is still writing to the reply post queue
+				 * race condition - bail!
+				 */
+				break;
+			}
+
+			mpii_reply(sc, rdp);
+
+			sc->sc_reply_post_host_index =
+			    (sc->sc_reply_post_host_index + 1) %
+			    sc->sc_reply_post_qdepth;
+
+			rv = 1;
 		}
-		mpii_reply(sc, rdp);
-		sc->sc_reply_post_host_index =
-		    (sc->sc_reply_post_host_index + 1) %
-		    sc->sc_reply_post_qdepth;
-		rv |= 1;
-	} while (1);
+		if (rv)
+			mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
 
-	if (rv)
-		mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
+	} while (!mpii_sem_leave(sc));
 
 	return (rv);
 }
@@ -2980,7 +3020,7 @@ mpii_portfacts(struct mpii_softc *sc)
 	pfq->vp_id = 0;
 	pfq->vf_id = 0;
 
-	if (mpii_poll(sc, ccb, 50000) != 0) {
+	if (mpii_poll(sc, ccb) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_portfacts poll\n",
 		    DEVNAME(sc));
 		goto err;
@@ -3078,7 +3118,7 @@ mpii_portenable(struct mpii_softc *sc)
 	peq->function = MPII_FUNCTION_PORT_ENABLE;
 	peq->vf_id = sc->sc_vf_id;
 
-	if (mpii_poll(sc, ccb, 80000) != 0) {
+	if (mpii_poll(sc, ccb) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_portenable poll\n",
 		    DEVNAME(sc));
 		return (1);
@@ -3639,7 +3679,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 
 	ccb->ccb_done = mpii_empty_done;
 	if (ISSET(flags, MPII_PG_POLL)) {
-		if (mpii_poll(sc, ccb, 5000) != 0) {
+		if (mpii_poll(sc, ccb) != 0) {
 			DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_header poll\n",
 			    DEVNAME(sc));
 			return (1);
@@ -3759,7 +3799,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 
 	ccb->ccb_done = mpii_empty_done;
 	if (ISSET(flags, MPII_PG_POLL)) {
-		if (mpii_poll(sc, ccb, 5000) != 0) {
+		if (mpii_poll(sc, ccb) != 0) {
 			DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_header poll\n",
 			    DEVNAME(sc));
 			return (1);
@@ -4163,53 +4203,42 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 }
 
 int
-mpii_complete(struct mpii_softc *sc, struct mpii_ccb *ccb, int timeout)
+mpii_poll(struct mpii_softc *sc, struct mpii_ccb *ccb)
 {
-	struct mpii_reply_descr		*rdp;
-	int				smid = -1;
+	void				(*done)(struct mpii_ccb *);
+	void				*cookie;
+	int				rv = 1;
 
-	DNPRINTF(MPII_D_INTR, "%s: mpii_complete timeout %d\n", DEVNAME(sc),
-	    timeout);
+	DNPRINTF(MPII_D_INTR, "%s: mpii_complete %d\n", DEVNAME(sc));
 
-	timeout *= 100;
+	done = ccb->ccb_done;
+	cookie = ccb->ccb_cookie;
 
-	do {
+	ccb->ccb_done = mpii_poll_done;
+	ccb->ccb_cookie = &rv;
+
+	mpii_start(sc, ccb);
+
+	while (rv == 1) {
 		/* avoid excessive polling */
-		if (!mpii_reply_waiting(sc)) {
-			if (timeout-- == 0)
-				return (1);
+		if (mpii_reply_waiting(sc))
+			mpii_intr(sc);
+		else
 			delay(10);
-			continue;
-		}
+	}
 
-		bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq),
-		    0, 8 * sc->sc_reply_post_qdepth, BUS_DMASYNC_POSTWRITE);
-
-		rdp = &sc->sc_reply_postq_kva[sc->sc_reply_post_host_index];
-		if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
-		    MPII_REPLY_DESCR_UNUSED)
-			continue;
-		if (rdp->data == 0xffffffff) {
-			/*
-			 * ioc is still writing to the reply post queue
-			 * race condition - bail!
-			 */
-			printf("%s: ioc is writing a reply\n", DEVNAME(sc));
-			continue;
-		}
-
-		smid = mpii_reply(sc, rdp);
-
-		DNPRINTF(MPII_D_INTR, "%s: mpii_complete call to mpii_reply"
-		    "returned: %d\n", DEVNAME(sc), smid);
-
-		sc->sc_reply_post_host_index =
-		    (sc->sc_reply_post_host_index + 1) %
-		    sc->sc_reply_post_qdepth;
-		mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
-	} while (ccb->ccb_smid != smid);
+	ccb->ccb_cookie = cookie;
+	done(ccb);
 
 	return (0);
+}
+
+void
+mpii_poll_done(struct mpii_ccb *ccb)
+{
+	int				*rv = ccb->ccb_cookie;
+
+	*rv = 0;
 }
 
 int
@@ -4269,23 +4298,6 @@ mpii_init_queues(struct mpii_softc *sc)
 	sc->sc_reply_post_host_index = 0;
 	mpii_write_reply_free(sc, sc->sc_reply_free_host_index);
 	mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
-}
-
-int
-mpii_poll(struct mpii_softc *sc, struct mpii_ccb *ccb, int timeout)
-{
-	int			error;
-	int			s;
-
-	DNPRINTF(MPII_D_CMD, "%s: mpii_poll: ccb %p cmd 0x%08x\n",
-	    DEVNAME(sc), ccb, ccb->ccb_cmd);
-
-	s = splbio();
-	mpii_start(sc, ccb);
-	error = mpii_complete(sc, ccb, timeout);
-	splx(s);
-
-	return (error);
 }
 
 void
@@ -4413,7 +4425,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	    io->sgl_offset0);
 
 	if (xs->flags & SCSI_POLL) {
-		if (mpii_poll(sc, ccb, xs->timeout) != 0) {
+		if (mpii_poll(sc, ccb) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 		}
