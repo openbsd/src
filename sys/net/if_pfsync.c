@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.148 2010/07/09 09:01:32 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.149 2010/07/09 11:16:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2217,7 +2217,9 @@ pfsync_bulk_update(void *arg)
 			break;
 		}
 
-		if (i > 0 && TAILQ_EMPTY(&sc->sc_qs[PFSYNC_S_UPD])) {
+		if (i > 1 && (sc->sc_if.if_mtu - sc->sc_len) <
+		    sizeof(struct pfsync_state)) {
+			/* we've filled a packet */
 			sc->sc_bulk_next = st;
 			timeout_add(&sc->sc_bulk_tmo, 1);
 			break;
