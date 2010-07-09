@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.147 2010/05/24 02:11:04 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.148 2010/07/09 09:01:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2169,16 +2169,20 @@ pfsync_bulk_start(void)
 {
 	struct pfsync_softc *sc = pfsyncif;
 
-	sc->sc_ureq_received = time_uptime;
-
-	if (sc->sc_bulk_next == NULL)
-		sc->sc_bulk_next = TAILQ_FIRST(&state_list);
-	sc->sc_bulk_last = sc->sc_bulk_next;
-
 	DPFPRINTF(LOG_INFO, "received bulk update request");
 
-	pfsync_bulk_status(PFSYNC_BUS_START);
-	timeout_add(&sc->sc_bulk_tmo, 0);
+	if (TAILQ_EMPTY(&state_list))
+		pfsync_bulk_status(PFSYNC_BUS_END);
+	else {
+		sc->sc_ureq_received = time_uptime;
+
+		if (sc->sc_bulk_next == NULL)
+			sc->sc_bulk_next = TAILQ_FIRST(&state_list);
+		sc->sc_bulk_last = sc->sc_bulk_next;
+
+		pfsync_bulk_status(PFSYNC_BUS_START);
+		timeout_add(&sc->sc_bulk_tmo, 0);
+	}
 }
 
 void
@@ -2193,7 +2197,7 @@ pfsync_bulk_update(void *arg)
 
 	st = sc->sc_bulk_next;
 
-	while (st != sc->sc_bulk_last) {
+	for (;;) {
 		if (st->sync_state == PFSYNC_S_NONE &&
 		    st->timeout < PFTM_MAX &&
 		    st->pfsync_time <= sc->sc_ureq_received) {
@@ -2205,19 +2209,21 @@ pfsync_bulk_update(void *arg)
 		if (st == NULL)
 			st = TAILQ_FIRST(&state_list);
 
+		if (st == sc->sc_bulk_last) {
+			/* we're done */
+			sc->sc_bulk_next = NULL;
+			sc->sc_bulk_last = NULL;
+			pfsync_bulk_status(PFSYNC_BUS_END);
+			break;
+		}
+
 		if (i > 0 && TAILQ_EMPTY(&sc->sc_qs[PFSYNC_S_UPD])) {
 			sc->sc_bulk_next = st;
 			timeout_add(&sc->sc_bulk_tmo, 1);
-			goto out;
+			break;
 		}
 	}
 
-	/* we're done */
-	sc->sc_bulk_next = NULL;
-	sc->sc_bulk_last = NULL;
-	pfsync_bulk_status(PFSYNC_BUS_END);
-
-out:
 	splx(s);
 }
 
