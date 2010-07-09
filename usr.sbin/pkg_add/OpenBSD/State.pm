@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.13 2010/07/04 19:27:26 espie Exp $
+# $OpenBSD: State.pm,v 1.14 2010/07/09 12:42:43 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -172,6 +172,7 @@ sub init
 	my $self = shift;
 	$self->{subst} = OpenBSD::Subst->new;
 	$self->{repo} = OpenBSD::PackageRepositoryFactory->new($self);
+	$self->{export_level} = 1;
 }
 
 sub repo
@@ -324,7 +325,7 @@ sub handle_options
 		${"opt_$k"} = $state->opt($k);
 		push(@EXPORT, "\$opt_$k");
 	}
-	local $Exporter::ExportLevel = 1;
+	local $Exporter::ExportLevel = $state->{export_level};
 	import OpenBSD::State;
 }
 

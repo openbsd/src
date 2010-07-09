@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.35 2010/07/06 12:12:37 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.36 2010/07/09 12:42:43 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -172,6 +172,7 @@ sub init
 	$self->{v} = 0;
 	$self->{wantntogo} = $self->config->istrue("ntogo");
 	$self->SUPER::init(@_);
+	$self->{export_level}++;
 }
 
 sub ntogo
