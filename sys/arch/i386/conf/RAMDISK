@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.169 2010/05/24 21:48:08 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.170 2010/07/09 07:50:33 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -130,10 +130,10 @@ com*	at isapnp?
 #bha*	at pci?
 #bha*	at eisa?		# XXX eisa still runs in isa-compat
 #scsibus* at bha?
-aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
-aha1	at isa? port 0x334	# Adaptec 154[02] SCSI controllers
+#aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
+#aha1	at isa? port 0x334	# Adaptec 154[02] SCSI controllers
 #aha*	at isapnp?
-scsibus* at aha?
+#scsibus* at aha?
 #ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
 #ahc0	at isa?			# Adaptec 284x SCSI controllers
@@ -230,7 +230,7 @@ ep*	at pcmcia?			# PCMCIA based 3c5xx cards
 xl*	at pci?				# 3C9xx ethernet cards
 rl*	at pci?				# RealTek 81[23]9 ethernet
 #epic*	at pci?				# SMC EPIC/100 ethernet
-tl*	at pci?				# Compaq Thunderlan ethernet cards
+#tl*	at pci?				# Compaq Thunderlan ethernet cards
 vr*	at pci?				# VIA Rhine ethernet
 #wb*	at pci?				# Winbond W89C840F ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet

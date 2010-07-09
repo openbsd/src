@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.113 2010/05/24 21:48:08 jsg Exp $
+#	$OpenBSD: RAMDISKB,v 1.114 2010/07/09 07:50:33 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -74,7 +74,7 @@ gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
 amdpcib* at pci?		# AMD 8111 LPC bridge
 glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 
-geodesc* at pci?		# Geode SC1100/SCx200 IAOC
+#geodesc* at pci?		# Geode SC1100/SCx200 IAOC
 
 # ISA PCMCIA controllers
 #pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
@@ -143,8 +143,8 @@ ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
 mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
 scsibus* at mpi?
-gdt*	at pci?			# ICP Vortex GDT RAID controllers
-scsibus* at gdt?
+#gdt*	at pci?			# ICP Vortex GDT RAID controllers
+#scsibus* at gdt?
 #aac*	at pci?			# Adaptec FSA RAID controllers
 #scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
@@ -156,10 +156,10 @@ cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
 scsibus* at cac?
 #ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
 #scsibus* at ciss?
-twe*	at pci?			# 3ware Escalade RAID controllers
-scsibus* at twe?
-iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
-scsibus* at iha?
+#twe*	at pci?			# 3ware Escalade RAID controllers
+#scsibus* at twe?
+#iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
+#scsibus* at iha?
 #isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #scsibus* at isp?
 #aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
@@ -169,8 +169,8 @@ scsibus* at iha?
 #scsibus* at siop?
 #adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
 #scsibus* at adv?
-adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
-scsibus* at adw?
+#adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
+#scsibus* at adw?
 #pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
 #scsibus* at pcscp?
 #sea0	at isa? iomem 0xc8000 irq 5 # Seagate ST0[12] SCSI controllers
@@ -253,7 +253,7 @@ ep*	at pci?				# 3C59x ethernet cards
 #sm*	at pcmcia?			# PCMCIA based sm cards
 #xe*	at pcmcia?			# Xircom ethernet
 #fpa*	at pci?				# DEC DEFPA FDDI cards
-xl*	at pci?				# 3C9xx ethernet cards
+#xl*	at pci?				# 3C9xx ethernet cards
 #rl*	at pci?				# RealTek 81[23]9 ethernet
 #epic*	at pci?				# SMC EPIC/100 ethernet
 #tl*	at pci?				# Compaq Thunderlan ethernet cards
@@ -282,7 +282,7 @@ nfe*	at pci?				# NVIDIA nForce Ethernet
 #ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
-exphy*	at mii?				# 3Com internal PHYs
+#exphy*	at mii?				# 3Com internal PHYs
 inphy*	at mii?				# Intel 82555 PHYs
 iophy*	at mii?				# Intel 82553 PHYs
 icsphy*	at mii?				# ICS 1890 PHYs
