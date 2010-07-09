@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Check.pm,v 1.2 2005/03/05 11:02:35 espie Exp $
+# $OpenBSD: Check.pm,v 1.3 2010/07/09 08:12:49 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@ use strict;
 use warnings;
 package OpenBSD::Makewhatis::Check;
 
-sub found($$)
+sub found
 {
     my ($pattern, $filename) = @_;
     my @candidates = glob $pattern;
@@ -42,14 +42,13 @@ sub found($$)
     }
     return 0;
 }
-# verify_subject($subject, $filename):
+# verify_subject($subject, $filename, $p):
 #
 #   reparse the subject we're about to add, and check whether it makes
 #   sense, e.g., is there a man page around.
-sub verify_subject($$)
+sub verify_subject
 {
-    local $_ = shift;
-    my $filename = shift;
+    my ($_, $filename, $p) = @_;
     if (m/\s*(.*?)\s*\((.*?)\)\s-\s/) {
     	my $man = $1;
 	my $section = $2;
@@ -75,8 +74,8 @@ sub verify_subject($$)
 	    push(@notfound, $func);
 	}
 	if (@notfound > 0) {
-	    print STDERR "Couldn't find ", join(', ', @notfound), 
-	    	" in $filename:\n$_\n" 
+	    $p->errsay("Couldn't find #1 in #2:\n#3",
+	    	join(', ', @notfound), $filename, $_);
 	}
     }
 }

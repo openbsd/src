@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.6 2007/08/22 15:50:05 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.7 2010/07/09 08:12:49 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -17,62 +17,119 @@
 use strict;
 use warnings;
 
+# used to print everything. People using makewhatis internally can
+# override this
+
+package OpenBSD::Makewhatis::Printer;
+sub new
+{
+	my $class = shift;
+	return bless {}, $class;
+}
+
+sub print
+{
+	my $self = shift;
+	print $self->f(@_);
+}
+
+sub errsay
+{
+	my $self = shift;
+	print STDERR $self->f(@_), "\n";
+}
+
+sub fatal
+{
+	my $self = shift;
+	die $self->f(@_);
+}
+
+sub f
+{
+	my $self = shift;
+	if (@_ == 0) {
+		return '';
+	}
+	my $_ = shift;
+	# make it so that #0 is #
+	unshift(@_, '#');
+	s/\#(\d+)/$_[$1]/ge;
+	return $_;
+}
+
+sub picky
+{
+	return shift->{picky};
+}
+
+sub testmode
+{
+	return shift->{testmode};
+}
+
+sub check_dir
+{
+	my ($self, $dir) = @_;
+	unless (-d $dir) {
+	    $self->fatal("#1: #2 is not a directory", $0, $dir);
+	}
+}
+
 package OpenBSD::Makewhatis;
 
-my ($picky, $testmode);
 
-
-# $subjects = scan_manpages(\@list)
+# $subjects = scan_manpages(\@list, $p)
 #
 #   scan a set of manpages, return list of subjects
 #
-sub scan_manpages($)
+sub scan_manpages
 {
-    my $list = shift;
-    local $_;
+    my ($list, $p) = @_;
+    my $_;
     my $done=[];
 
     for (@$list) {
 	my ($file, $subjects);
 	if (m/\.(?:Z|gz)$/) {
 	    unless (open $file, '-|', "gzip -fdc $_") {
-	    	warn "$0: Can't decompress $_\n";
+	    	$p->errsay("#1: can't decompress #2: #3", $0, $_, $!);
 		next;
 	    }
 	    $_ = $`;
 	} else {
 	    unless (open $file, '<', $_) {
-	    	warn "$0: Can't read $_\n";
+	    	$p->errsay("#1: can't read #2: #3", $0, $_, $!);
 		next;
 	    }
 	}
 	if (m/\.(?:[1-9ln][^.]*|tbl)$/) {
 	    require OpenBSD::Makewhatis::Unformated;
 
-	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $_);
+	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $_, $p);
 	} elsif (m/\.0$/) {
 	    require OpenBSD::Makewhatis::Formated;
 
-	    $subjects = OpenBSD::Makewhatis::Formated::handle($file, $_);
+	    $subjects = OpenBSD::Makewhatis::Formated::handle($file, $_, $p);
 	    # in test mode, we try harder
-	} elsif ($testmode) {
+	} elsif ($p->testmode) {
 	    require OpenBSD::Makewhatis::Unformated;
 
-	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $_);
+	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $_, $p);
 	    if (@$subjects == 0) {
 		require OpenBSD::Makewhatis::Formated;
 
-	    	$subjects = OpenBSD::Makewhatis::Formated::handle($file, $_);
+	    	$subjects = OpenBSD::Makewhatis::Formated::handle($file, $_, $p);
 	    }
 	} else {
-	    print STDERR "Can't find type of $_\n";
+	    $p->errsay("Can't find type of #1", $_);
 	    next;
 	}
-	if ($picky) {
+	if ($p->picky) {
 		require OpenBSD::Makewhatis::Check;
 
 		for my $s (@$subjects) {
-			OpenBSD::Makewhatis::Check::verify_subject($s, $_);
+			OpenBSD::Makewhatis::Check::verify_subject($s, $_, $p);
 		}
 	}
 	push @$done, @$subjects;
@@ -80,36 +137,34 @@ sub scan_manpages($)
     return $done;
 }
 
-# build_index($dir)
+# build_index($dir, $p)
 #
 #   build index for $dir
 #
-sub build_index($)
+sub build_index
 {
     require OpenBSD::Makewhatis::Find;
     require OpenBSD::Makewhatis::Whatis;
 
-    my $dir = shift;
+    my ($dir, $p) = @_;
     my $list = OpenBSD::Makewhatis::Find::find_manpages($dir);
-    my $subjects = scan_manpages($list);
-    OpenBSD::Makewhatis::Whatis::write($subjects, $dir);
+    my $subjects = scan_manpages($list, $p);
+    OpenBSD::Makewhatis::Whatis::write($subjects, $dir, $p);
 }
 
-# merge($dir, \@pages)
+# merge($dir, \@pages, $p)
 #
 #   merge set of pages into directory index
 #
-sub merge($$)
+sub merge
 {
 	require OpenBSD::Makewhatis::Whatis;
 
-	my ($mandir, $args) = @_;
-	    
-	unless (-d $mandir) {
-	    die "$0: $mandir: not a directory"
-	}
+	my ($mandir, $args, $p) = @_;
+	$p //= OpenBSD::Makewhatis::Printer->new;
+	$p->check_dir($mandir);
 	my $whatis = "$mandir/whatis.db";
-	my $subjects = scan_manpages($args);
+	my $subjects = scan_manpages($args, $p);
 	if (open(my $old, '<', $whatis)) {
 		while (my $l = <$old>) {
 		    chomp $l;
@@ -117,25 +172,24 @@ sub merge($$)
 		}
 		close($old);
 	}
-	OpenBSD::Makewhatis::Whatis::write($subjects, $mandir);
+	OpenBSD::Makewhatis::Whatis::write($subjects, $mandir, $p);
 }
 
-# remove(dir, \@pages)
+# remove(dir, \@pages, $p)
 #
 #   remove set of pages from directory index
 #
-sub remove($$)
+sub remove
 {
 	require OpenBSD::Makewhatis::Whatis;
 
-	my ($mandir, $args) = @_;
-	unless (-d $mandir) {
-	    die "$0: $mandir: not a directory"
-	}
+	my ($mandir, $args, $p) = @_;
+	$p //= OpenBSD::Makewhatis::Printer->new;
+	$p->check_dir($mandir);
 	my $whatis = "$mandir/whatis.db";
 	open(my $old, '<', $whatis) or
-	    die "$0: can't open $whatis to merge with: $!";
-	my $subjects = scan_manpages($args);
+	    $p->fatal("#1: can't open #2 to merge with: #3", $0, $whatis, $!);
+	my $subjects = scan_manpages($args, $p);
 	my %remove = map {$_ => 1 } @$subjects;
 	$subjects = [];
 	while (my $l = <$old>) {
@@ -143,18 +197,19 @@ sub remove($$)
 	    push(@$subjects, $l) unless defined $remove{$l};
 	}
 	close($old);
-	OpenBSD::Makewhatis::Whatis::write($subjects, $mandir);
+	OpenBSD::Makewhatis::Whatis::write($subjects, $mandir, $p);
 }
 
-# $dirs = default_dirs()
+# $dirs = default_dirs($p)
 #
 #   read list of default directories from man.conf
 #
-sub default_dirs()
+sub default_dirs
 {
+	my $p = shift;
 	my $args=[];
 	open(my $conf, '<', '/etc/man.conf') or 
-	    die "$0: Can't open /etc/man.conf";
+	    $p->fatal("#1: can't open #2: #3", $0, "/etc/man.conf", $!);
 	while (my $l = <$conf>) {
 	    chomp $l;
 	    push(@$args, $1) if $l =~ m/^_whatdb\s+(.*)\/whatis\.db\s*$/;
@@ -167,36 +222,37 @@ sub default_dirs()
 #
 #   glue for front-end, see makewhatis(8)
 #
-sub makewhatis($$)
+sub makewhatis
 {
 	my ($args, $opts) = @_;
+	my $p = OpenBSD::Makewhatis::Printer->new;
 	if (defined $opts->{'p'}) {
-	    $picky = 1;
+	    $p->{picky} = 1;
 	}
 	if (defined $opts->{'t'}) {
-	    $testmode = 1;
-	    my $subjects = scan_manpages($args);
-	    print join("\n", @$subjects), "\n";
+	    $p->{testmode} = 1;
+	    my $subjects = scan_manpages($args, $p);
+	    $p->print("#1", join("\n", @$subjects)."\n");
 	    return;
 	} 
 
 	if (defined $opts->{'d'}) {
-	    merge($opts->{'d'}, $args);
+	    merge($opts->{'d'}, $args, $p);
 	    return;
 	}
 	if (defined $opts->{'u'}) {
-	    remove($opts->{'u'}, $args);
+	    remove($opts->{'u'}, $args, $p);
 	    return;
 	}
 	if (@$args == 0) {
-	    $args = default_dirs();
+	    $args = default_dirs($p);
 	}
 		
 	for my $mandir (@$args) {
 	    if (-d $mandir) {
-		build_index($mandir);
-	    } elsif (-e $mandir || $picky) {
-		print STDERR "$0: $mandir is not a directory\n";
+		build_index($mandir, $p);
+	    } elsif (-e $mandir || $p->picky) {
+	    	$p->errsay("#1: #2 is not a directory", $0, $mandir);
 	    }
 	}
 }

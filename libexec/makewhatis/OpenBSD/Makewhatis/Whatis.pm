@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Whatis.pm,v 1.3 2005/03/05 11:02:35 espie Exp $
+# $OpenBSD: Whatis.pm,v 1.4 2010/07/09 08:12:49 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -31,7 +31,7 @@ use File::Compare;
 #
 sub write
 {
-    my ($list, $dir) = @_;
+    my ($list, $dir, $p) = @_;
     my $f = "$dir/whatis.db";
 
     my ($out, $tempname);
@@ -56,7 +56,7 @@ sub write
 	    chmod 0444, $f;
 	    chown 0, (getgrnam 'bin')[2], $f;
 	} else {
-	    print STDERR "$0: Can't create $f ($!)\n";
+	    $p->errsay("#1: Can't create #2: #3", $0, $f, $!);
 	    unlink($tempname);
 	    exit 1;
 	}
