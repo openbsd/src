@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.56 2010/07/08 21:14:57 landry Exp $
+.\"	$OpenBSD: port-modules.5,v 1.57 2010/07/09 01:24:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 8 2010 $
+.Dd $Mdocdate: July 9 2010 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -476,12 +476,14 @@ MODINTLTOOL_OVERRIDE to them.
 .It www/drupal6
 .It www/mozilla
 Sets PKGNAME, HOMEPAGE, MASTER_SITES, DISTNAME, USE_GMAKE, ONLY_FOR_ARCHS and
-SHARED_ONLY. EXTRACT_SUFX defaults to .tar.bz2.
+SHARED_ONLY.
+EXTRACT_SUFX defaults to .tar.bz2.
 .Pp
 Adds common dependencies to LIB_DEPENDS, WANTLIB, RUN_DEPENDS and
 BUILD_DEPENDS.
-Sets common CONFIGURE_ARGS, MAKE_ENV and CONFIGURE_ENV. Sets MOB variable as
-source directory and MOZ as target directory within do-install.
+Sets common CONFIGURE_ARGS, MAKE_ENV and CONFIGURE_ENV.
+Sets MOB variable as source directory
+and MOZ as target directory within do-install.
 .Pp
 Port Makefile has to set MOZILLA_PROJECT, MOZILLA_CODENAME, MOZILLA_VERSION,
 MOZILLA_BRANCH, MOZILLA_LIBS and MOZILLA_DATADIRS variables.
