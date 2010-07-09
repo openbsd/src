@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.149 2010/07/09 11:16:45 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.150 2010/07/09 12:07:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2047,7 +2047,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 
 	KASSERT(st->sync_state == PFSYNC_S_NONE);
 
-#if 1 || defined(PFSYNC_DEBUG)
+#if defined(PFSYNC_DEBUG)
 	if (sc->sc_len < PFSYNC_MINPKT)
 		panic("pfsync pkt len is too low %d", sc->sc_len);
 #endif
