@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.71 2010/07/08 20:23:03 claudio Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.72 2010/07/09 12:27:09 dhill Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -1129,8 +1129,6 @@ in_cksum(u_short *addr, int len)
 
 /*
  * Construct an Internet address representation.
- * If the nflag has been supplied, give
- * numeric value, otherwise try for symbolic name.
  */
 char *
 inetname(struct in_addr in)
@@ -1140,14 +1138,14 @@ inetname(struct in_addr in)
 	struct hostent *hp;
 	char *cp;
 
-	if (first && !nflag) {
+	if (first) {
 		first = 0;
 		if (gethostname(domain, sizeof domain) == 0 &&
 		    (cp = strchr(domain, '.')) != NULL) {
 			strlcpy(domain, cp + 1, sizeof(domain));
 		}
 	}
-	if (!nflag && in.s_addr != INADDR_ANY) {
+	if (in.s_addr != INADDR_ANY) {
 		hp = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
 		if (hp != NULL) {
 			if ((cp = strchr(hp->h_name, '.')) != NULL &&
