@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.233 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.234 2010/07/09 16:58:06 reyk Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -893,7 +893,8 @@ after_listen:
         s = splnet();
 	if (mtag != NULL) {
 		tdbi = (struct tdb_ident *)(mtag + 1);
-	        tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+	        tdb = gettdb(tdbi->rdomain, tdbi->spi,
+		    &tdbi->dst, tdbi->proto);
 	} else
 		tdb = NULL;
 	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
@@ -962,7 +963,8 @@ after_listen:
 #else
 	if (optp)
 #endif
-		if (tcp_dooptions(tp, optp, optlen, th, m, iphlen, &opti))
+		if (tcp_dooptions(tp, optp, optlen, th, m, iphlen, &opti,
+		    m->m_pkthdr.rdomain))
 			goto drop;
 
 	if (opti.ts_present && opti.ts_ecr) {
@@ -2256,7 +2258,8 @@ drop:
 
 int
 tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
-    struct mbuf *m, int iphlen, struct tcp_opt_info *oi)
+    struct mbuf *m, int iphlen, struct tcp_opt_info *oi,
+    u_int rtableid)
 {
 	u_int16_t mss = 0;
 	int opt, optlen;
@@ -2388,7 +2391,8 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 #endif /* INET6 */
 		}
 
-		tdb = gettdbbysrcdst(0, &src, &dst, IPPROTO_TCP);
+		tdb = gettdbbysrcdst(rtable_l2(rtableid),
+		    0, &src, &dst, IPPROTO_TCP);
 
 		/*
 		 * We don't have an SA for this peer, so we turn off
@@ -3982,7 +3986,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			tb.t_flags |= TF_SIGNATURE;
 #endif
 		tb.t_state = TCPS_LISTEN;
-		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi))
+		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi,
+		    sotoinpcb(so)->inp_rtableid))
 			return (0);
 	} else
 		tb.t_flags = 0;
@@ -4267,7 +4272,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #endif /* INET6 */
 		}
 
-		tdb = gettdbbysrcdst(0, &src, &dst, IPPROTO_TCP);
+		tdb = gettdbbysrcdst(rtable_l2(sc->sc_rtableid),
+		    0, &src, &dst, IPPROTO_TCP);
 		if (tdb == NULL) {
 			if (m)
 				m_freem(m);

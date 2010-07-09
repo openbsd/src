@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.120 2010/07/01 02:09:45 reyk Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.121 2010/07/09 16:58:06 reyk Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -159,6 +159,12 @@ pfkeyv2_create(struct socket *socket)
 	pfkeyv2_socket->socket = socket;
 	pfkeyv2_socket->pid = curproc->p_pid;
 
+	/*
+	 * XXX we should get this from the socket instead but
+	 * XXX rawcb doesn't store the rdomain like inpcb does.
+	 */
+	pfkeyv2_socket->rdomain = rtable_l2(curproc->p_p->ps_rtableid);
+
 	pfkeyv2_sockets = pfkeyv2_socket;
 
 	return (0);
@@ -201,7 +207,7 @@ pfkeyv2_release(struct socket *socket)
  */
 int
 pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
-    u_int8_t satype, int count)
+    u_int8_t satype, int count, u_int rdomain)
 {
 	int i, j, rval;
 	void *p, *buffer = NULL;
@@ -272,7 +278,8 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 		 */
 		for (s = pfkeyv2_sockets; s; s = s->next)
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
-			    (s->socket != socket))
+			    (s->socket != socket) &&
+			    (s->rdomain == rdomain))
 				pfkey_sendup(s->socket, packet, 1);
 
 		/* Done, let's be a bit paranoid */
@@ -286,7 +293,8 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 		 * the specified satype (e.g., all IPSEC-ESP negotiators)
 		 */
 		for (s = pfkeyv2_sockets; s; s = s->next)
-			if (s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) {
+			if ((s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
+			    (s->rdomain == rdomain)) {
 				if (!satype)    /* Just send to everyone registered */
 					pfkey_sendup(s->socket, packet, 1);
 				else {
@@ -316,7 +324,8 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 		/* Send to all registered promiscuous listeners */
 		for (s = pfkeyv2_sockets; s; s = s->next)
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
-			    !(s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED))
+			    !(s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
+			    (s->rdomain == rdomain))
 				pfkey_sendup(s->socket, packet, 1);
 
 		m_freem(packet);
@@ -324,9 +333,10 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 
 	case PFKEYV2_SENDMESSAGE_BROADCAST:
 		/* Send message to all sockets */
-		for (s = pfkeyv2_sockets; s; s = s->next)
-			pfkey_sendup(s->socket, packet, 1);
-
+		for (s = pfkeyv2_sockets; s; s = s->next) {
+			if (s->rdomain == rdomain)
+				pfkey_sendup(s->socket, packet, 1);
+		}
 		m_freem(packet);
 		break;
 	}
@@ -742,7 +752,8 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
 
 		/* Send the message to the specified socket */
 		rval = pfkeyv2_sendmessage(headers,
-		    PFKEYV2_SENDMESSAGE_UNICAST, dump_state->socket, 0, 0);
+		    PFKEYV2_SENDMESSAGE_UNICAST, dump_state->socket, 0, 0,
+		    sa->tdb_rdomain);
 
 		free(buffer, M_PFKEY);
 		if (rval)
@@ -859,6 +870,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	struct sadb_supported *ssup;
 	struct sadb_ident *sid;
 
+	u_int rdomain;
+
 	/* Verify that we received this over a legitimate pfkeyv2 socket */
 	bzero(headers, sizeof(headers));
 
@@ -871,6 +884,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		rval = EINVAL;
 		goto ret;
 	}
+
+	rdomain = pfkeyv2_socket->rdomain;
 
 	/* If we have any promiscuous listeners, send them a copy of the message */
 	if (npromisc) {
@@ -899,9 +914,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			goto ret;
 
 		/* Send to all promiscuous listeners */
-		for (so = pfkeyv2_sockets; so; so = so->next)
-			if (so->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
+		for (so = pfkeyv2_sockets; so; so = so->next) {
+			if ((so->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
+			    (so->rdomain == rdomain))
 				pfkey_sendup(so->socket, packet, 1);
+		}
 
 		/* Paranoid */
 		m_zero(packet);
@@ -934,9 +951,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		/* Find an unused SA identifier */
 		sprng = (struct sadb_spirange *) headers[SADB_EXT_SPIRANGE];
-		sa.tdb_spi = reserve_spi(sprng->sadb_spirange_min,
-		    sprng->sadb_spirange_max, &sa.tdb_src, &sa.tdb_dst,
-		    sa.tdb_sproto, &rval);
+		sa.tdb_spi = reserve_spi(rdomain,
+		    sprng->sadb_spirange_min, sprng->sadb_spirange_max,
+		    &sa.tdb_src, &sa.tdb_dst, sa.tdb_sproto, &rval);
 		if (sa.tdb_spi == 0)
 			goto ret;
 
@@ -989,7 +1006,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		s = spltdb();
 
 		/* Find TDB */
-		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
+		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 
 		/* If there's no such SA, we're done */
@@ -1005,7 +1022,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			int alg;
 
 			/* Create new TDB */
-			freeme = tdb_alloc();
+			freeme = tdb_alloc(rdomain);
 			bzero(&ii, sizeof(struct ipsecinit));
 
 			newsa = (struct tdb *) freeme;
@@ -1150,7 +1167,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		s = spltdb();
 
-		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
+		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 
 		/* We can't add an existing SA! */
@@ -1166,7 +1183,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 
 		/* Allocate and initialize new TDB */
-		freeme = tdb_alloc();
+		freeme = tdb_alloc(rdomain);
 
 		{
 			struct tdb *newsa = (struct tdb *) freeme;
@@ -1262,7 +1279,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			sizeof(struct sadb_address));
 		s = spltdb();
 
-		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
+		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 		if (sa2 == NULL) {
 			rval = ESRCH;
@@ -1298,7 +1315,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		s = spltdb();
 
-		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
+		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 		if (sa2 == NULL) {
 			rval = ESRCH;
@@ -1398,7 +1415,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			for (ipo = TAILQ_FIRST(&ipsec_policy_head);
 			    ipo != NULL; ipo = tmpipo) {
 				tmpipo = TAILQ_NEXT(ipo, ipo_list);
-				if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
+				if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET) &&
+				    ipo->ipo_rdomain == rdomain)
 					ipsec_delete_policy(ipo);
 			}
 			splx(s);
@@ -1412,7 +1430,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 #endif /* TCP_SIGNATURE */
 			s = spltdb();
 
-			tdb_walk(pfkeyv2_flush_walker,
+			tdb_walk(rdomain, pfkeyv2_flush_walker,
 			    (u_int8_t *) &(smsg->sadb_msg_satype));
 
 			splx(s);
@@ -1431,7 +1449,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		dump_state.socket = socket;
 
 		s = spltdb();
-		rval = tdb_walk(pfkeyv2_dump_walker, &dump_state);
+		rval = tdb_walk(rdomain, pfkeyv2_dump_walker, &dump_state);
 		splx(s);
 
 		if (!rval)
@@ -1453,7 +1471,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		s = spltdb();
 
-		tdb1 = gettdb(ssa->sadb_sa_spi, sunionp,
+		tdb1 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
 		if (tdb1 == NULL) {
 			rval = ESRCH;
@@ -1465,7 +1483,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    sizeof(struct sadb_address));
 		sa_proto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL]);
 
-		tdb2 = gettdb(ssa->sadb_sa_spi, sunionp,
+		tdb2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(sa_proto->sadb_protocol_proto));
 		if (tdb2 == NULL) {
 			rval = ESRCH;
@@ -1544,6 +1562,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		s = spltdb();
 
+		/* Set the rdomain that was obtained from the socket */
+		re.re_tableid = rdomain;
+
 		rtalloc((struct route *) &re);
 		if (re.re_rt != NULL) {
 			ipo = ((struct sockaddr_encap *) re.re_rt->rt_gateway)->sen_ipsp;
@@ -1617,6 +1638,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    sizeof(struct sockaddr_encap));
 			bcopy(&encapnetmask, &ipo->ipo_mask,
 			    sizeof(struct sockaddr_encap));
+
+			ipo->ipo_rdomain = rdomain;
 		}
 
 		switch (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_proto) {
@@ -1744,7 +1767,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    (struct sockaddr *)&encapnetmask;
 			info.rti_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
 			if ((rval = rtrequest1(RTM_ADD, &info, RTP_DEFAULT,
-			    NULL, 0)) != 0) {
+			    NULL, rdomain)) != 0) {
 				/* Remove from linked list of policies on TDB */
 				if (ipo->ipo_tdb)
 					TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head,
@@ -1779,6 +1802,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 			for (so = pfkeyv2_sockets; so; so = so->next)
 				if ((so != pfkeyv2_socket) &&
+				    (so->rdomain == rdomain) &&
 				    (!smsg->sadb_msg_seq ||
 				    (smsg->sadb_msg_seq == pfkeyv2_socket->pid)))
 					pfkey_sendup(so->socket, packet, 1);
@@ -1840,7 +1864,7 @@ ret:
 			goto realret;
 	}
 
-	rval = pfkeyv2_sendmessage(headers, mode, socket, 0, 0);
+	rval = pfkeyv2_sendmessage(headers, mode, socket, 0, 0, rdomain);
 
 realret:
 	if (freeme)
@@ -2121,8 +2145,8 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	/* Send the ACQUIRE message to all compliant registered listeners. */
 	if ((rval = pfkeyv2_sendmessage(headers,
-	    PFKEYV2_SENDMESSAGE_REGISTERED, NULL, smsg->sadb_msg_satype, 0))
-	    != 0)
+	    PFKEYV2_SENDMESSAGE_REGISTERED, NULL, smsg->sadb_msg_satype, 0,
+	    ipo->ipo_rdomain)) != 0)
 		goto ret;
 
 	rval = 0;
@@ -2203,7 +2227,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	export_address(&p, (struct sockaddr *) &sa->tdb_dst);
 
 	if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_BROADCAST,
-	    NULL, 0, 0)) != 0)
+	    NULL, 0, 0, sa->tdb_rdomain)) != 0)
 		goto ret;
 
 	rval = 0;
@@ -2415,13 +2439,17 @@ ret:
  * Caller is responsible for setting at least spltdb().
  */
 int
-pfkeyv2_ipo_walk(int (*walker)(struct ipsec_policy *, void *), void *arg)
+pfkeyv2_ipo_walk(u_int rdomain, int (*walker)(struct ipsec_policy *, void *),
+    void *arg)
 {
 	int rval = 0;
 	struct ipsec_policy *ipo;
 
-	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list)
+	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list) {
+		if (ipo->ipo_rdomain != rdomain)
+			continue;
 		rval = walker(ipo, (void *)arg);
+	}
 	return (rval);
 }
 
@@ -2494,6 +2522,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	struct pfkeyv2_sysctl_walk w;
 	int s, error = EINVAL;
+	u_int rdomain;
 
 	if (new)
 		return (EPERM);
@@ -2504,12 +2533,14 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	w.w_where = oldp;
 	w.w_len = oldp ? *oldlenp : 0;
 
+	rdomain = rtable_l2(curproc->p_p->ps_rtableid);
+
 	switch(w.w_op) {
 	case NET_KEY_SADB_DUMP:
 		if ((error = suser(curproc, 0)) != 0)
 			return (error);
 		s = spltdb();
-		error = tdb_walk(pfkeyv2_sysctl_walker, &w);
+		error = tdb_walk(rdomain, pfkeyv2_sysctl_walker, &w);
 		splx(s);
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
@@ -2519,7 +2550,8 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	case NET_KEY_SPD_DUMP:
 		s = spltdb();
-		error = pfkeyv2_ipo_walk(pfkeyv2_sysctl_policydumper, &w);
+		error = pfkeyv2_ipo_walk(rdomain,
+		    pfkeyv2_sysctl_policydumper, &w);
 		splx(s);
 		if (oldp)
 			*oldlenp = w.w_where - oldp;

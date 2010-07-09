@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.42 2010/01/10 12:43:07 markus Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.43 2010/07/09 16:58:06 reyk Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -490,6 +490,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	bcopy(&tdb->tdb_dst, &tdbi->dst, sizeof(union sockaddr_union));
 	tdbi->proto = tdb->tdb_sproto;
 	tdbi->spi = tdb->tdb_spi;
+	tdbi->rdomain = tdb->tdb_rdomain;
 
 	m_tag_prepend(m, mtag);
 
@@ -605,7 +606,8 @@ ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
 	for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_DONE, NULL); mtag;
 	     mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_DONE, mtag)) {
 		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdbp = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		tdbp = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst,
+		    tdbi->proto);
 		if (tdbp == NULL)
 			break;
 

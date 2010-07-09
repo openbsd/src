@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.26 2010/07/02 02:40:16 blambert Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.27 2010/07/09 16:58:06 reyk Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -195,6 +195,7 @@ ipcomp_input(m, tdb, skip, protoff)
 	tc->tc_protoff = protoff;
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = IPPROTO_IPCOMP;
+	tc->tc_rdomain = tdb->tdb_rdomain;
 	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
 	return crypto_dispatch(crp);
@@ -234,7 +235,7 @@ ipcomp_input_cb(op)
 
 	s = spltdb();
 
-	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
 		free(tc, M_XDATA);
 		ipcompstat.ipcomps_notdb++;
@@ -526,6 +527,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_skip = skip;
+	tc->tc_rdomain = tdb->tdb_rdomain;
 	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
 	/* Crypto operation descriptor */
@@ -577,7 +579,7 @@ ipcomp_output_cb(cp)
 
 	s = spltdb();
 
-	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
 		free(tc, M_XDATA);
 		ipcompstat.ipcomps_notdb++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.181 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.182 2010/07/09 16:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2402,7 +2402,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 
 		s = spltdb();
 
-		tdb = gettdb(spi, &dst, proto);
+		tdb = gettdb(ifp->if_rdomain, spi, &dst, proto);
 		if (tdb != NULL && (tdb->tdb_flags & TDBF_INVALID) == 0 &&
 		    tdb->tdb_xform != NULL) {
 			if (tdb->tdb_first_use == 0) {
@@ -2457,7 +2457,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 			switch (af) {
 #ifdef INET
 			case AF_INET:
-				if ((encif = enc_getif(0,
+				if ((encif = enc_getif(tdb->tdb_rdomain,
 				    tdb->tdb_tap)) == NULL ||
 				    pf_test(dir, encif,
 				    &m, NULL) != PF_PASS) {
@@ -2468,7 +2468,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				if ((encif = enc_getif(0,
+				if ((encif = enc_getif(tdb->tdb_rdomain,
 				    tdb->tdb_tap)) == NULL ||
 				    pf_test6(dir, encif,
 				    &m, NULL) != PF_PASS) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.115 2010/07/08 19:42:46 jsg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.116 2010/07/09 16:58:06 reyk Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 			    mtag->m_tag_len, sizeof (struct tdb_ident));
 #endif
 		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst, tdbi->proto);
 		if (tdb == NULL)
 			error = -EINVAL;
 		m_tag_delete(m, mtag);
@@ -283,6 +283,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			if (tdbi->spi == tdb->tdb_spi &&
 			    tdbi->proto == tdb->tdb_sproto &&
+			    tdbi->rdomain == tdb->tdb_rdomain &&
 			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
 			    sizeof(union sockaddr_union))) {
 				splx(s);
@@ -509,7 +510,8 @@ reroute:
 		 * packet gets tunneled?
 		 */
 
-		tdb = gettdb(sspi, &sdst, sproto);
+		tdb = gettdb(rtable_l2(m->m_pkthdr.rdomain),
+		    sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			splx(s);
 			error = EHOSTUNREACH;
@@ -518,7 +520,8 @@ reroute:
 		}
 
 #if NPF > 0
-		if ((encif = enc_getif(0, tdb->tdb_tap)) == NULL ||
+		if ((encif = enc_getif(tdb->tdb_rdomain,
+		    tdb->tdb_tap)) == NULL ||
 		    pf_test6(PF_OUT, encif, &m, NULL) != PF_PASS) {
 			splx(s);
 			error = EHOSTUNREACH;
@@ -1636,8 +1639,8 @@ do { \
 				}
 				tdbip = mtod(m, struct tdb_ident *);
 				s = spltdb();
-				tdb = gettdb(tdbip->spi, &tdbip->dst,
-				    tdbip->proto);
+				tdb = gettdb(tdbip->rdomain, tdbip->spi,
+				    &tdbip->dst, tdbip->proto);
 				if (tdb == NULL)
 					error = ESRCH;
 				else
@@ -1908,6 +1911,8 @@ do { \
 					tdbi.spi = inp->inp_tdb_out->tdb_spi;
 					tdbi.dst = inp->inp_tdb_out->tdb_dst;
 					tdbi.proto = inp->inp_tdb_out->tdb_sproto;
+					tdbi.rdomain =
+					    inp->inp_tdb_out->tdb_rdomain;
 					*mp = m = m_get(M_WAIT, MT_SOOPTS);
 					m->m_len = sizeof(tdbi);
 					bcopy((caddr_t)&tdbi, mtod(m, caddr_t),

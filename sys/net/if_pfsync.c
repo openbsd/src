@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.151 2010/07/09 13:09:34 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.152 2010/07/09 16:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1239,7 +1239,7 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 		goto bad;
 
 	s = spltdb();
-	tdb = gettdb(pt->spi, &pt->dst, pt->sproto);
+	tdb = gettdb(ntohs(pt->rdomain), pt->spi, &pt->dst, pt->sproto);
 	if (tdb) {
 		pt->rpl = ntohl(pt->rpl);
 		pt->cur_bytes = betoh64(pt->cur_bytes);
@@ -2162,6 +2162,7 @@ pfsync_out_tdb(struct tdb *t, void *buf)
 	    RPL_INCR : 0));
 	ut->cur_bytes = htobe64(t->tdb_cur_bytes);
 	ut->sproto = t->tdb_sproto;
+	ut->rdomain = htons(t->tdb_rdomain);
 }
 
 void

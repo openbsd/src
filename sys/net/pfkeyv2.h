@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.57 2010/07/01 02:09:45 reyk Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.58 2010/07/09 16:58:06 reyk Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -412,6 +412,7 @@ struct pfkeyv2_socket
 	int flags;
 	uint32_t pid;
 	uint32_t registration;    /* Increase size if SATYPE_MAX > 31 */
+	uint rdomain;
 };
 
 struct dump_state
@@ -436,14 +437,14 @@ int pfkeyv2_get(struct tdb *, void **, void **, int *);
 int pfkeyv2_policy(struct ipsec_acquire *, void **, void **);
 int pfkeyv2_release(struct socket *);
 int pfkeyv2_send(struct socket *, void *, int);
-int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
+int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int, u_int);
 int pfkeyv2_dump_policy(struct ipsec_policy *, void **, void **, int *);
 int pfkeyv2_dump_walker(struct tdb *, void *, int);
 int pfkeyv2_flush_walker(struct tdb *, void *, int);
 int pfkeyv2_get_proto_alg(u_int8_t, u_int8_t *, int *);
 int pfkeyv2_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pfkeyv2_sysctl_walker(struct tdb *, void *, int);
-int pfkeyv2_ipo_walk(int (*)(struct ipsec_policy *, void *), void *);
+int pfkeyv2_ipo_walk(u_int, int (*)(struct ipsec_policy *, void *), void *);
 int pfkeyv2_sysctl_dump(void *);
 int pfkeyv2_sysctl_policydumper(struct ipsec_policy *, void *);
 

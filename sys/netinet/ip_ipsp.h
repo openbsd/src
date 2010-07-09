@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.143 2010/07/01 02:09:45 reyk Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.144 2010/07/09 16:58:06 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -201,6 +201,7 @@ struct ipsec_policy {
 	u_int8_t		ipo_flags;	/* See IPSP_POLICY_* definitions */
 	u_int8_t		ipo_type;	/* USE/ACQUIRE/... */
 	u_int8_t		ipo_sproto;	/* ESP/AH; if zero, use system dflts */
+	u_int			ipo_rdomain;
 
 	int                     ipo_ref_count;
 
@@ -374,6 +375,8 @@ struct tdb {				/* tunnel descriptor block */
 	u_int16_t	tdb_tag;		/* Packet filter tag */
 	u_int32_t	tdb_tap;		/* Alternate enc(4) interface */
 
+	u_int		tdb_rdomain;		/* Routing domain */
+
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
 
@@ -387,6 +390,7 @@ struct tdb_ident {
 	u_int32_t spi;
 	union sockaddr_union dst;
 	u_int8_t proto;
+	u_int rdomain;
 };
 
 struct tdb_crypto {
@@ -396,6 +400,7 @@ struct tdb_crypto {
 	int			tc_protoff;
 	int			tc_skip;
 	caddr_t			tc_ptr;
+	u_int			tc_rdomain;
 };
 
 struct ipsecinit {
@@ -511,23 +516,23 @@ extern char *ipsp_address(union sockaddr_union);
 
 /* TDB management routines */
 extern void tdb_add_inp(struct tdb *, struct inpcb *, int);
-extern u_int32_t reserve_spi(u_int32_t, u_int32_t, union sockaddr_union *,
-    union sockaddr_union *, u_int8_t, int *);
-extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);
-extern struct tdb *gettdbbyaddr(union sockaddr_union *, u_int8_t,
+extern u_int32_t reserve_spi(u_int, u_int32_t, u_int32_t,
+    union sockaddr_union *, union sockaddr_union *, u_int8_t, int *);
+extern struct tdb *gettdb(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
+extern struct tdb *gettdbbyaddr(u_int, union sockaddr_union *, u_int8_t,
     struct ipsec_ref *, struct ipsec_ref *, struct ipsec_ref *,
     struct mbuf *, int, struct sockaddr_encap *, struct sockaddr_encap *);
-extern struct tdb *gettdbbysrc(union sockaddr_union *, u_int8_t,
+extern struct tdb *gettdbbysrc(u_int, union sockaddr_union *, u_int8_t,
     struct ipsec_ref *, struct ipsec_ref *, struct mbuf *, int,
     struct sockaddr_encap *, struct sockaddr_encap *);
-extern struct tdb *gettdbbysrcdst(u_int32_t, union sockaddr_union *,
+extern struct tdb *gettdbbysrcdst(u_int, u_int32_t, union sockaddr_union *,
     union sockaddr_union *, u_int8_t);
 extern void puttdb(struct tdb *);
 extern void tdb_delete(struct tdb *);
-extern struct tdb *tdb_alloc(void);
+extern struct tdb *tdb_alloc(u_int);
 extern void tdb_free(struct tdb *);
 extern int tdb_init(struct tdb *, u_int16_t, struct ipsecinit *);
-extern int tdb_walk(int (*)(struct tdb *, void *, int), void *);
+extern int tdb_walk(u_int, int (*)(struct tdb *, void *, int), void *);
 
 /* XF_IP4 */
 extern int ipe4_attach(void);

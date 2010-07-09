@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.97 2010/07/01 02:09:45 reyk Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.98 2010/07/09 16:58:06 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -81,7 +81,7 @@
 
 #include "bpfilter.h"
 
-void *ipsec_common_ctlinput(int, struct sockaddr *, void *, int);
+void *ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -201,7 +201,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	s = spltdb();
-	tdbp = gettdb(spi, &dst_address, sproto);
+	tdbp = gettdb(rtable_l2(m->m_pkthdr.rdomain),
+	    spi, &dst_address, sproto);
 	if (tdbp == NULL) {
 		splx(s);
 		DPRINTF(("ipsec_common_input(): could not find SA for "
@@ -240,7 +241,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (sproto != IPPROTO_IPCOMP) {
-		if ((encif = enc_getif(0, tdbp->tdb_tap)) == NULL) {
+		if ((encif = enc_getif(tdbp->tdb_rdomain,
+		    tdbp->tdb_tap)) == NULL) {
 			splx(s);
 			DPRINTF(("ipsec_common_input(): "
 			    "no enc%u interface for SA %s/%08x/%u\n",
@@ -554,6 +556,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		    sizeof(union sockaddr_union));
 		tdbi->proto = tdbp->tdb_sproto;
 		tdbi->spi = tdbp->tdb_spi;
+		tdbi->rdomain = tdbp->tdb_rdomain;
 
 		m_tag_prepend(m, mtag);
 	}
@@ -580,7 +583,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		m->m_flags |= M_TUNNEL;
 
 #if NBPFILTER > 0
-	if ((encif = enc_getif(0, tdbp->tdb_tap)) != NULL) {
+	if ((encif = enc_getif(tdbp->tdb_rdomain, tdbp->tdb_tap)) != NULL) {
 		encif->if_ipackets++;
 		encif->if_ibytes += m->m_pkthdr.len;
 
@@ -772,7 +775,7 @@ ah4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	    sa->sa_len != sizeof(struct sockaddr_in))
 		return (NULL);
 
-	return (ipsec_common_ctlinput(cmd, sa, v, IPPROTO_AH));
+	return (ipsec_common_ctlinput(rdomain, cmd, sa, v, IPPROTO_AH));
 }
 
 /* IPv4 ESP wrapper. */
@@ -861,7 +864,8 @@ ipcomp4_input_cb(struct mbuf *m, ...)
 }
 
 void *
-ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
+ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
+    void *v, int proto)
 {
 	extern u_int ip_mtudisc_timeout;
 	struct ip *ip = v;
@@ -895,7 +899,8 @@ ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
 		bcopy((caddr_t)ip + hlen, &spi, sizeof(u_int32_t));
 
 		s = spltdb();
-		tdbp = gettdb(spi, (union sockaddr_union *)&dst, proto);
+		tdbp = gettdb(rdomain, spi, (union sockaddr_union *)&dst,
+		    proto);
 		if (tdbp == NULL || tdbp->tdb_flags & TDBF_INVALID) {
 			splx(s);
 			return (NULL);
@@ -961,7 +966,7 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	su_src = (union sockaddr_union *)&src;
 
 	s = spltdb();
-	tdbp = gettdbbysrcdst(0, su_src, su_dst, IPPROTO_ESP);
+	tdbp = gettdbbysrcdst(rdomain, 0, su_src, su_dst, IPPROTO_ESP);
 
 	for (; tdbp != NULL; tdbp = tdbp->tdb_snext) {
 		if (tdbp->tdb_sproto == IPPROTO_ESP &&
@@ -993,7 +998,7 @@ esp4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	    sa->sa_len != sizeof(struct sockaddr_in))
 		return (NULL);
 
-	return (ipsec_common_ctlinput(cmd, sa, v, IPPROTO_ESP));
+	return (ipsec_common_ctlinput(rdomain, cmd, sa, v, IPPROTO_ESP));
 }
 #endif /* INET */
 

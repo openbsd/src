@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.61 2010/07/02 03:58:48 david Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.62 2010/07/09 16:58:06 reyk Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -86,6 +86,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	struct sockaddr_encap *ddst;
 	struct ipsec_policy *ipo;
 	int signore = 0, dignore = 0;
+	u_int rdomain = rtable_l2(m->m_pkthdr.rdomain);
 
 	/*
 	 * If there are no flows in place, there's no point
@@ -230,6 +231,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		*error = EAFNOSUPPORT;
 		return NULL;
 	}
+
+	/* Set the rdomain that was obtained from the mbuf */
+	re->re_tableid = rdomain;
 
 	/* Actual SPD lookup. */
 	rtalloc((struct route *) re);
@@ -391,7 +395,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 			/* Find an appropriate SA from the existing ones. */
 			ipo->ipo_tdb =
-			    gettdbbyaddr(dignore ? &sdst : &ipo->ipo_dst,
+			    gettdbbyaddr(rdomain,
+				dignore ? &sdst : &ipo->ipo_dst,
 				ipo->ipo_sproto, ipo->ipo_srcid,
 				ipo->ipo_dstid, ipo->ipo_local_cred, m, af,
 				&ipo->ipo_addr, &ipo->ipo_mask);
@@ -504,7 +509,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				ipo->ipo_last_searched = time_second;
 
 			ipo->ipo_tdb =
-			    gettdbbysrc(dignore ? &ssrc : &ipo->ipo_dst,
+			    gettdbbysrc(rdomain,
+				dignore ? &ssrc : &ipo->ipo_dst,
 				ipo->ipo_sproto, ipo->ipo_srcid,
 				ipo->ipo_dstid, m, af, &ipo->ipo_addr,
 				&ipo->ipo_mask);
@@ -579,7 +585,8 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 		info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&ipo->ipo_mask;
 
 		/* XXX other tables? */
-		err = rtrequest1(RTM_DELETE, &info, RTP_DEFAULT, NULL, 0);
+		err = rtrequest1(RTM_DELETE, &info, RTP_DEFAULT, NULL,
+		    ipo->ipo_rdomain);
 	}
 	if (ipo->ipo_tdb != NULL)
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
@@ -635,6 +642,7 @@ ipsec_add_policy(struct inpcb *inp, int af, int direction)
 	 * policies (for tunnel/transport and ESP/AH), as needed.
 	 */
 	ipon->ipo_sproto = IPPROTO_ESP;
+	ipon->ipo_rdomain = rtable_l2(inp->inp_rtableid);
 
 	TAILQ_INIT(&ipon->ipo_acquires);
 	TAILQ_INSERT_HEAD(&ipsec_policy_head, ipon, ipo_list);
@@ -1001,7 +1009,8 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 				inp->inp_ipo->ipo_last_searched = time_second;
 
 				/* Do we have an SA already established ? */
-				if (gettdbbysrc(&inp->inp_ipo->ipo_dst,
+				if (gettdbbysrc(rtable_l2(inp->inp_rtableid),
+				    &inp->inp_ipo->ipo_dst,
 				    inp->inp_ipo->ipo_sproto,
 				    inp->inp_ipo->ipo_srcid,
 				    inp->inp_ipo->ipo_dstid, m, af,
@@ -1057,7 +1066,8 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 				ipsec_update_policy(inp, inp->inp_ipo, af,
 				    IPSP_DIRECTION_OUT);
 
-				tdb = gettdbbyaddr(&inp->inp_ipo->ipo_dst,
+				tdb = gettdbbyaddr(rtable_l2(inp->inp_rtableid),
+				    &inp->inp_ipo->ipo_dst,
 				    inp->inp_ipo->ipo_sproto,
 				    inp->inp_ipo->ipo_srcid,
 				    inp->inp_ipo->ipo_dstid,
@@ -1073,7 +1083,8 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ipsec_update_policy(inp, &sipon, af,
 			    IPSP_DIRECTION_OUT);
 
-			tdb = gettdbbyaddr(&sipon.ipo_dst, IPPROTO_ESP, NULL,
+			tdb = gettdbbyaddr(rtable_l2(inp->inp_rtableid),
+			    &sipon.ipo_dst, IPPROTO_ESP, NULL,
 			    NULL, NULL, m, af, &sipon.ipo_addr,
 			    &sipon.ipo_mask);
 		}
@@ -1143,6 +1154,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 	tdbi = (struct tdb_ident *)(mtag + 1);
 	tdbi->spi = ipo->ipo_tdb->tdb_spi;
 	tdbi->proto = ipo->ipo_tdb->tdb_sproto;
+	tdbi->rdomain = rtable_l2(inp->inp_rtableid);
 	bcopy(&ipo->ipo_tdb->tdb_dst, &tdbi->dst,
 	    ipo->ipo_tdb->tdb_dst.sa.sa_len);
 	m_tag_prepend(m, mtag);

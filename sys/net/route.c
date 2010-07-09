@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.124 2010/07/09 15:44:20 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.125 2010/07/09 16:58:06 reyk Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@
 #include <netinet/ip_ipsp.h>
 #include <net/if_enc.h>
 
-struct ifaddr	*encap_findgwifa(struct sockaddr *);
+struct ifaddr	*encap_findgwifa(struct sockaddr *, u_int);
 #endif
 
 #define	SA(p) ((struct sockaddr *)(p))
@@ -165,11 +165,11 @@ TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 
 #ifdef IPSEC
 struct ifaddr *
-encap_findgwifa(struct sockaddr *gw)
+encap_findgwifa(struct sockaddr *gw, u_int rdomain)
 {
 	struct ifnet	*encif;
 
-	if ((encif = enc_getif(0, 0)) == NULL)
+	if ((encif = enc_getif(rdomain, 0)) == NULL)
 		return (NULL);
 
 	return (TAILQ_FIRST(&encif->if_addrlist));
@@ -624,7 +624,7 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 	 * enc0.
 	 */
 	if (dst && (dst->sa_family == PF_KEY))
-		return (encap_findgwifa(gateway));
+		return (encap_findgwifa(gateway, rtableid));
 #endif
 
 	if ((flags & RTF_GATEWAY) == 0) {

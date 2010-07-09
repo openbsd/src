@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.42 2010/01/12 23:38:02 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.43 2010/07/09 16:58:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -216,7 +216,7 @@ struct pfsync_tdb {
 	u_int64_t			cur_bytes;
 	u_int8_t			sproto;
 	u_int8_t			updates;
-	u_int8_t			_pad[2];
+	u_int16_t			rdomain;
 } __packed;
 
 /*

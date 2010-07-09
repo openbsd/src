@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.96 2010/07/02 02:40:16 blambert Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.97 2010/07/09 16:58:06 reyk Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -662,6 +662,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		if (tdbi->proto == tdb->tdb_sproto &&
 		    tdbi->spi == tdb->tdb_spi &&
+		    tdbi->rdomain == tdb->tdb_rdomain &&
 		    !bcmp(&tdbi->dst, &tdb->tdb_dst,
 			sizeof(union sockaddr_union)))
 			break;
@@ -721,6 +722,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_ptr = (caddr_t) mtag; /* Save the mtag we've identified. */
+	tc->tc_rdomain = tdb->tdb_rdomain;
 	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
 	if (mtag == NULL)
@@ -767,7 +769,7 @@ ah_input_cb(void *op)
 
 	s = spltdb();
 
-	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
 		free(tc, M_XDATA);
 		ahstat.ahs_notdb++;
@@ -988,7 +990,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #if NBPFILTER > 0
 	struct ifnet *encif;
 
-	if ((encif = enc_getif(0, tdb->tdb_tap)) != NULL) {
+	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) != NULL) {
 		encif->if_opackets++;
 		encif->if_obytes += m->m_pkthdr.len;
 
@@ -1249,6 +1251,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	tc->tc_protoff = protoff;
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
+	tc->tc_rdomain = tdb->tdb_rdomain;
 	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
 	if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
@@ -1289,7 +1292,7 @@ ah_output_cb(void *op)
 
 	s = spltdb();
 
-	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
 		free(tc, M_XDATA);
 		ahstat.ahs_notdb++;
