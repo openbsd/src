@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.17 2010/07/05 18:54:33 zinovik Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.18 2010/07/09 12:17:34 zinovik Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -100,13 +100,13 @@ client_addr_init(struct idm *idm)
                 case AF_INET:
                         sa_in = (struct sockaddr_in *)&h->ss;
                         if (ntohs(sa_in->sin_port) == 0)
-                                sa_in->sin_port = htons(389);
+                                sa_in->sin_port = htons(LDAP_PORT);
                         idm->idm_state = STATE_DNS_DONE;
                         break;
                 case AF_INET6:
                         sa_in6 = (struct sockaddr_in6 *)&h->ss;
                         if (ntohs(sa_in6->sin6_port) == 0)
-                                sa_in6->sin6_port = htons(389);
+                                sa_in6->sin6_port = htons(LDAP_PORT);
                         idm->idm_state = STATE_DNS_DONE;
                         break;
                 default:
