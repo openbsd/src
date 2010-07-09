@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.6 2010/07/08 08:40:29 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.7 2010/07/09 08:36:31 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -297,7 +297,7 @@ Static void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *
 Static void                  pipex_mppe_reduce_key (struct pipex_mppe *);
 Static void                  mppe_key_change (struct pipex_mppe *);
 Static void                  pipex_mppe_input (struct mbuf *, struct pipex_session *);
-Static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *);
+Static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *, uint16_t);
 Static void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
 Static int                   pipex_ccp_output (struct pipex_session *, int, int);
 #endif
