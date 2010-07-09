@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.150 2010/07/09 12:07:21 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.151 2010/07/09 13:09:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2308,13 +2308,12 @@ pfsync_state_in_use(struct pf_state *st)
 	if (sc == NULL)
 		return (0);
 
-	if (st->sync_state != PFSYNC_S_NONE)
+	if (st->sync_state != PFSYNC_S_NONE ||
+	    st == sc->sc_bulk_next ||
+	    st == sc->sc_bulk_last)
 		return (1);
 
-	if (sc->sc_bulk_next == NULL && sc->sc_bulk_last == NULL)
-		return (0);
-
-	return (1);
+	return (0);
 }
 
 void
