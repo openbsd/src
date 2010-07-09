@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.136 2010/03/22 23:17:34 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.137 2010/07/09 08:05:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -866,29 +866,41 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40)) {
 		name = "adm1026";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1131 &&
-	    iicprobew(0x07) == 0xa101 &&
-	    (iicprobew(0x00) & 0xfff0) == 0x0010) {
-		name = "se98";
-	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1131 &&
-	    iicprobew(0x07) == 0xa200 &&
+	    (iicprobew(0x07) & 0xfffc) == 0xa200 &&
 	    (iicprobew(0x00) & 0xfff0) == 0x0010) {
 		name = "se97";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1131 &&
+	    (iicprobew(0x07) & 0xfffc) == 0xa101 &&
+	    (iicprobew(0x00) & 0xfff0) == 0x0010) {
+		name = "se98";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x004d &&
+	    iicprobew(0x07) == 0x3e00 &&
+	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
+		name = "max6604";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
 	    iicprobew(0x07) == 0x0000 &&
 	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
 		name = "mcp9805";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
-	    iicprobew(0x07) == 0x2000 &&
+	    (iicprobew(0x07) & 0xfffc) == 0x2000 &&
 	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
 		name = "mcp98242";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
+	    (iicprobew(0x07) & 0xfffc) == 0x2100 &&
+	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
+		name = "mcp98243";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x11d4 &&
-	    (iicprobew(0x07) & 0xfff0) == 0x0800 &&
+	    iicprobew(0x07) == 0x0800 &&
 	    iicprobew(0x00) == 0x001d) {
 		name = "adt7408";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x104a &&
 	    (iicprobew(0x07) & 0xfffe) == 0x0000 &&
 	    (iicprobew(0x00) == 0x002d || iicprobew(0x00) == 0x002f)) {
 		name = "stts424e02";
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x104a &&
+	    (iicprobew(0x07) & 0xfffe) == 0x0101 &&
+	    (iicprobew(0x00) == 0x002d || iicprobew(0x00) == 0x002f)) {
+		name = "stts424";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1b09 &&
 	    (iicprobew(0x07) & 0xffe0) == 0x0800 &&
 	    iicprobew(0x00) == 0x001f) {
