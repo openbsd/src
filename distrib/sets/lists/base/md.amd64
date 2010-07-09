@@ -87,7 +87,7 @@
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7
-yes./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1
+./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1/cc1
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1/collect2
 ./usr/lib/gcc-lib/amd64-unknown-openbsd4.7/4.2.1/specs
