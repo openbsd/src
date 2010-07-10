@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.96 2010/07/01 09:35:42 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.97 2010/07/10 02:56:16 matthew Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -30,15 +30,10 @@
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
 #include <sys/param.h>
-#include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
 #include <dev/biovar.h>
 #include <dev/softraidvar.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <err.h>
@@ -49,7 +44,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <util.h>
 #include <vis.h>
 #include <readpassphrase.h>
 
