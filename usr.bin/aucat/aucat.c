@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.99 2010/07/06 10:45:01 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.100 2010/07/10 11:56:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -966,7 +966,7 @@ midicat_main(int argc, char **argv)
 	 */
 	if (SLIST_EMPTY(&cfdevs)) {
 		if (SLIST_EMPTY(&cd->mids)) {
-			if (SLIST_EMPTY(&cd->ins) && SLIST_EMPTY(&cd->outs))
+			if (!SLIST_EMPTY(&cd->ins) || !SLIST_EMPTY(&cd->outs))
 			    	cfmid_add(&cd->mids, "default");
 			else {
 				cfstr_add(&cd->opts, cs, DEFAULT_OPT);
