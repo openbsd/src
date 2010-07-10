@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.42 2010/03/24 23:18:17 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.43 2010/07/10 21:29:37 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -464,7 +464,8 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 			case 'n':
 				db_printf("%5d  %5d  %5d  %d  %#10x  "
 				    "%-12.12s  %-16s\n",
-				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
+				    pp ? pp->p_pid : -1,
+				    p->p_pgrp ? p->p_pgrp->pg_id : -1,
 				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
 				    (p->p_wchan && p->p_wmesg) ?
 					p->p_wmesg : "", p->p_comm);
