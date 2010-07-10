@@ -1,10 +1,10 @@
-.\"	$OpenBSD: esp.4,v 1.11 2007/05/31 19:19:56 jmc Exp $
+.\"	$OpenBSD: esp.4,v 1.12 2010/07/10 19:38:39 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 10 2010 $
 .Dt ESP 4 sparc
 .Os
 .Sh NAME
@@ -15,7 +15,7 @@
 .Cd "esp0 at obio0 addr 0xfa000000 level 4 flags 0x00ff000f"
 .Cd ""
 .Cd "dma0 at sbus0                                     " Pq on-board
-.Cd "esp0 at sbus0 flags 0x00ff000f                    " Pq sun4c
+.Cd "esp0 at sbus0 flags 0x00ff000f                    " Pq "sun4c and sun4e"
 .Cd "esp0 at dma0 flags 0x00ff000f                     " Pq sun4m
 .Cd ""
 .Cd "dma* at sbus?                                     " Pq "SBus SCSI"
@@ -25,7 +25,7 @@
 The
 .Nm
 is an on-board or SBus SCSI controller based on the NCR 53c94 chip, found
-on Sun 4/300, sun4c and sun4m workstations.
+on Sun 4/300, sun4c, sun4e and sun4m workstations.
 .Sh DEVICE FLAGS
 .Bl -tag -width "Bits XX-XX" -compact
 .It Bits 0-15

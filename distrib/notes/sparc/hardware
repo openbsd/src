@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.76 2010/02/23 15:52:33 jasper Exp $
+dnl	$OpenBSD: hardware,v 1.77 2010/07/10 19:38:36 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -16,6 +16,10 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SS2: 40MHz version of the SS1
 	- IPX: SS2 in a cube, with cgsix graphics builtin
 	- ELC: SS2-performance built into a B&W monitor
+
+    * sun4e:
+	- SPARCengine 1E: a 6U VME cross between a sun4 and a sun4c,
+	  similar to a Sun 4/300 with an OpenPROM interface.
 
     * sun4m:
 	- 600MP: The original Sun4m machine. This is an mbus machine with
@@ -153,10 +157,10 @@ Supported devices {:-include-:}:
 	- SBus 10/100MBit hme Ethernet cards (hme) [*]
 	- SBus 10/100MBit SunSwift SUNW,fas Ethernet+SCSI cards (hme) [*]
 	- SBus Quad 10/100MBit hme and qfe Ethernet cards (hme) [*]
-	[*] Not supported in sun4c-class machines due to PROM limitations.
+	[*] Not supported in sun4c and sun4e machines due to PROM limitations.
 
     * SCSI controllers:
-	- on-board SCSI controller (sun4c, sun4m, and 4/300) (esp)
+	- on-board SCSI controller (sun4c, sun4e, sun4m, and 4/300) (esp)
 	- SBus SCSI controllers (including 3rd party compatible boards) (esp)
 	- SBus cards containing both AMD Lance le and esp SCSI (esp)
 	- SBus SUNW,fas Ethernet+SCSI cards (esp) [*]
@@ -164,7 +168,7 @@ Supported devices {:-include-:}:
 	- 4/110 "SCSI weird" on-board controller (polled DMA) (sw)
 	- QSP/ISP SCSI controllers (i.e. "PTI,ptisp", "ptisp", "SUNW,isp"
 	  and "QLGC,isp") (isp)
-	[*] Not supported in sun4c-class machines due to PROM limitations.
+	[*] Not supported in sun4c and sun4e machines due to PROM limitations.
 
     * SMD and other disk controllers:
 	- Xylogics 7053 VME SMD disk controller (xd)
@@ -333,4 +337,4 @@ Hardware that we do NOT currently support, but get many questions about:
     * SBus FDDI cards
 
 The supplied GENERIC kernel is the best attempt at a configuration that
-works on the widest range of machines (sun4, sun4c, and sun4m).
+works on the widest range of machines (sun4, sun4c, sun4e and sun4m).

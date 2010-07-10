@@ -1,20 +1,20 @@
-.\"	$OpenBSD: zs.4,v 1.22 2010/06/07 19:54:30 miod Exp $
+.\"	$OpenBSD: zs.4,v 1.23 2010/07/10 19:38:39 miod Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd $Mdocdate: June 7 2010 $
+.Dd $Mdocdate: July 10 2010 $
 .Dt ZS 4 sparc
 .Os
 .Sh NAME
 .Nm zs
 .Nd Zilog 8530 (ZSCC) serial communications driver
 .Sh SYNOPSIS
-.Cd "zs0 at mainbus0                      " Pq sun4c
+.Cd "zs0 at mainbus0                      " Pq "sun4c and sun4e"
 .Cd "zs0 at obio0                         " Pq sun4m
 .Cd "zs0 at obio0 addr 0xf1000000 level 12" Pq sun4
-.Cd "zs1 at mainbus0                      " Pq sun4c
+.Cd "zs1 at mainbus0                      " Pq "sun4c and sun4e"
 .Cd "zs1 at obio0                         " Pq sun4m
 .Cd "zs1 at obio0 addr 0xf0000000 level 12" Pq sun4
 .Cd "zs2 at obio0 addr 0xe0000000 level 12" Pq sun4/300

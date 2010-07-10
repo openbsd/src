@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.70 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.71 2010/07/10 19:38:37 miod Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk.  The normal way
@@ -423,25 +423,15 @@ Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 
-You can find the boot program in `/usr/mdec/boot' in the OpenBSD/MACHINE
-distribution. Unfortunately, it is necessary to install this file
-differently for sun4 and sun4c clients: the sun4 version needs to have its
-`a.out' header stripped off (otherwise the machine will crash), while the
-sun4c version must retain it (otherwise the PROM will complain).
+As an exception to the above rule, sun4e systems make a request for
+`/tftpboot/IP_IN_HEX.SUN4E', i.e. the TFTP filename is in a subdirectory.
 
-Here's an example to illustrate this whole mess:
-
-    server# cd /<client-root-dir>/usr/mdec
-    if client is a sun4:
-	server# set SKIP=1
-	server# set KARCH=SUN4
-    else
-	server# set SKIP=0
-	server# set KARCH=SUN4C
-    server{:-#-:} dd if=boot of=/tftpboot/boot.MACHINE.OpenBSD.$KARCH skip=$SKIP bs=32
-    server# cd /tftpboot
-    server{:-#-:} ln -s boot.MACHINE.OpenBSD.$KARCH 8273900B.$KARCH
-
+You can find the boot program as `boot.net' in the OpenBSD/MACHINE
+distribution. Unfortunately, many, if not all, sun4e PROM have a bug and
+fail to load a file which size is a multiple of 512 bytes. If you are
+trying to netboot a sun4e system, simply append some bytes to the
+file, like this:
+	dd if=/dev/zero bs=32b count=1 >> boot.net
 
 After the boot program has been loaded into memory and given control by
 the PROM, it starts locating the machine's remote root directory through

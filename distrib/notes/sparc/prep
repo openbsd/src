@@ -46,16 +46,16 @@ prevent accidents if you change the SCSI bus configuration or a drive
 is down.
 
 Your OpenBOOT ROM may need some setup.  If you are running OpenBSD on
-a sun4c, or sun4m system, the ROM must be set to "new" command mode.
-If your sun4c or sun4m machine comes up and gives you a `>' prompt
-instead of `ok', type:
+a sun4c, sun4e or sun4m system, the ROM must be set to "new" command
+mode.  If your machine comes up and gives you a `>' prompt instead of
+`ok', type:
 
-    >n
+    > n
     ok setenv sunmon-compat? false
     ok
 
 This is needed because OpenBSD relies on the behaviour of the "new" command
-mode.  OpenBSD will not boot correctly on sun4c or sun4m systems that
+mode.  OpenBSD will not boot correctly on sun4c, sun4e or sun4m systems that
 are not running in "new" command mode.  The sun4 systems such as the 4/110,
 4/200, and 4/300 system do not have a "new" command mode, and will work
 fine as-is.
