@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.44 2010/07/01 16:18:28 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.45 2010/07/10 02:52:38 matthew Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -105,6 +105,8 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 
 	if (screq->cmdlen > sizeof(struct scsi_generic))
 		return (EFAULT);
+	if (screq->datalen > MAXPHYS)
+		return (EINVAL);
 
 	xs = scsi_xs_get(link, 0);
 	if (xs == NULL)
@@ -114,7 +116,12 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	xs->cmdlen = screq->cmdlen;
 
 	if (screq->datalen > 0) {
-		xs->data = malloc(screq->datalen, M_TEMP, M_WAITOK | M_ZERO);
+		xs->data = malloc(screq->datalen, M_TEMP,
+		    M_WAITOK | M_CANFAIL | M_ZERO);
+		if (xs->data == NULL) {
+			err = ENOMEM;
+			goto err;
+		}
 		xs->datalen = screq->datalen;
 	}
 
@@ -184,7 +191,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	}
 
 err:
-	if (screq->datalen > 0)
+	if (xs->data)
 		free(xs->data, M_TEMP);
 	scsi_xs_put(xs);
 
@@ -197,6 +204,9 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	struct scsi_xfer *xs;
 	struct scsi_ata_passthru_12 *cdb;
 	int err = 0;
+
+	if (atareq->datalen > MAXPHYS)
+		return (EINVAL);
 
 	xs = scsi_xs_get(link, 0);
 	if (xs == NULL)
@@ -229,7 +239,12 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	xs->cmdlen = sizeof(*cdb);
 
 	if (atareq->datalen > 0) {
-		xs->data = malloc(atareq->datalen, M_TEMP, M_WAITOK | M_ZERO);
+		xs->data = malloc(atareq->datalen, M_TEMP,
+		    M_WAITOK | M_CANFAIL | M_ZERO);
+		if (xs->data == NULL) {
+			err = ENOMEM;
+			goto err;
+		}
 		xs->datalen = atareq->datalen;
 	}
 
@@ -274,7 +289,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	}
 
 err:
-	if (atareq->datalen > 0)
+	if (xs->data)
 		free(xs->data, M_TEMP);
 	scsi_xs_put(xs);
 
