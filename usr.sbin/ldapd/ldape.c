@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.11 2010/07/01 20:09:34 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.12 2010/07/10 14:27:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -525,6 +525,6 @@ ldape_open_result(struct imsg *imsg)
 		log_warnx("spurious open result");
 		close(imsg->fd);
 	} else
-		namespace_queue_schedule(ns);
+		namespace_queue_schedule(ns, 0);
 }
 

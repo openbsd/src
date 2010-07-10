@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.16 2010/07/01 20:09:34 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.17 2010/07/10 14:27:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -395,7 +395,8 @@ int			 namespace_commit(struct namespace *ns);
 void			 namespace_abort(struct namespace *ns);
 int			 namespace_queue_request(struct namespace *ns,
 				struct request *req);
-void			 namespace_queue_schedule(struct namespace *ns);
+void			 namespace_queue_schedule(struct namespace *ns,
+				unsigned int usec);
 void			 namespace_cancel_conn(struct conn *conn);
 
 int			 namespace_ber2db(struct namespace *ns,

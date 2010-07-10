@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.9 2010/06/29 21:54:38 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.10 2010/07/10 14:27:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -475,6 +475,10 @@ namespace_queue_request(struct namespace *ns, struct request *req)
 
 	TAILQ_INSERT_TAIL(&ns->request_queue, req, next);
 	ns->queued_requests++;
+
+	if (!evtimer_pending(&ns->ev_queue, NULL))
+		namespace_queue_schedule(ns, 250000);
+
 	return 0;
 }
 
@@ -497,18 +501,19 @@ namespace_queue_replay(int fd, short event, void *data)
 	req->replayed = 1;
 	request_dispatch(req);
 	ns->queued_requests--;
+
+	if (!evtimer_pending(&ns->ev_queue, NULL))
+		namespace_queue_schedule(ns, 0);
 }
 
 void
-namespace_queue_schedule(struct namespace *ns)
+namespace_queue_schedule(struct namespace *ns, unsigned int usec)
 {
 	struct timeval	 tv;
 
-	if (!evtimer_pending(&ns->ev_queue, NULL)) {
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		evtimer_add(&ns->ev_queue, &tv);
-	}
+	tv.tv_sec = 0;
+	tv.tv_usec = usec;
+	evtimer_add(&ns->ev_queue, &tv);
 }
 
 /* Cancel all queued requests from the given connection. Drops matching
