@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsi.h,v 1.6 2009/08/27 14:12:27 claudio Exp $ */
+/*	$OpenBSD: iscsi.h,v 1.7 2010/07/10 22:24:14 jordan Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -124,6 +124,10 @@ struct iscsi_pdu_scsi_response {
 	u_int32_t	maxcmdsn;
 
 	u_int32_t	expdatasn;
+
+	u_int32_t	birescount;
+
+	u_int32_t	rescount;
 } __packed;
 
 #define ISCSI_SCSI_F_F			0x80
@@ -173,6 +177,10 @@ struct iscsi_pdu_task_response {
 
 	u_int8_t	ahslen;
 	u_int8_t	datalen[3];
+
+	u_int8_t	_reserved[8];
+
+	u_int32_t	itt;
 
 	u_int8_t	_reserved2[4];
 
@@ -283,13 +291,13 @@ struct iscsi_pdu_async {
 
 	u_int32_t	statsn;
 
-	u_int32_t	expstatsn;
+	u_int32_t	expcmdsn;
 
-	u_int32_t	maxstatsn;
+	u_int32_t	maxcmdsn;
 
 	u_int8_t	event;
 	u_int8_t	vcode;
-	u_int32_t	param[3];
+	u_int16_t	param[3];
 
 	u_int8_t	_reserved3[4];
 } __packed;
