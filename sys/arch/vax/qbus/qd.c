@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.18 2010/06/28 14:13:31 deraadt Exp $	*/
+/*	$OpenBSD: qd.c,v 1.19 2010/07/10 03:06:51 matthew Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -167,7 +167,6 @@ int Qbus_unmap[NQD];		/* Qbus mapper release code */
 struct qdmap qdmap[NQD];	/* QDSS register map structure */
 struct qdflags qdflags[NQD];	/* QDSS register map structure */
 caddr_t qdbase[NQD];		/* base address of each QDSS unit */
-struct buf qdbuf[NQD];		/* buf structs used by strategy */
 short qdopened[NQD];		/* graphics device is open exclusive use */
 
 /*
@@ -1602,8 +1601,7 @@ qdwrite(dev, uio, flag)
 	       /*
 		* this is a DMA xfer from user space 
 		*/
-		return (physio(qd_strategy, &qdbuf[unit],
-		dev, B_WRITE, minphys, uio));
+		return (physio(qd_strategy, NULL, dev, B_WRITE, minphys, uio));
 	}
 	return (ENXIO);
 }
@@ -1631,8 +1629,7 @@ qdread(dev, uio, flag)
 	       /*
 		* this is a bitmap-to-processor xfer 
 		*/
-		return (physio(qd_strategy, &qdbuf[unit],
-		dev, B_READ, minphys, uio));
+		return (physio(qd_strategy, NULL, dev, B_READ, minphys, uio));
 	}
 	return (ENXIO);
 }
