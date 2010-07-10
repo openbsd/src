@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.47 2010/06/29 21:26:09 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.48 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -303,7 +303,7 @@ void		pmap_writetext(unsigned char *, int);
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 boolean_t	pmap_clear_modify4_4c(struct vm_page *);
 boolean_t	pmap_clear_reference4_4c(struct vm_page *);
 int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
@@ -335,7 +335,7 @@ void		pmap_zero_page4m(struct vm_page *);
 void		pmap_changeprot4m(pmap_t, vaddr_t, vm_prot_t, int);
 #endif /* defined SUN4M */
 
-#if !defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
+#if !(defined(SUN4D) || defined(SUN4M)) && (defined(SUN4) || defined(SUN4C) || defined(SUN4E))
 
 #define		pmap_clear_modify	pmap_clear_modify4_4c
 #define		pmap_clear_reference	pmap_clear_reference4_4c
@@ -350,7 +350,7 @@ void		pmap_changeprot4m(pmap_t, vaddr_t, vm_prot_t, int);
 #define		pmap_zero_page		pmap_zero_page4_4c
 #define		pmap_changeprot		pmap_changeprot4_4c
 
-#elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C))
+#elif (defined(SUN4D) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4E))
 
 #define	  	pmap_clear_modify	pmap_clear_modify4m
 #define		pmap_clear_reference	pmap_clear_reference4m

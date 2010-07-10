@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.32 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: esp.c,v 1.33 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ struct ncr53c9x_glue esp_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 struct ncr53c9x_glue esp_glue1 = {
 	esp_rdreg1,
 	esp_wrreg1,
@@ -193,7 +193,7 @@ espmatch(parent, vcf, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (strcmp("SUNW,fas", ra->ra_name) == 0 ||
 		    strcmp("ptscII", ra->ra_name) == 0)
@@ -203,7 +203,7 @@ espmatch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (!sbus_testdma((struct sbus_softc *)parent, ca))
 			return (0);
@@ -261,7 +261,7 @@ espattach(parent, self, aux)
 	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS &&
 	    strcmp("SUNW,fas", ca->ca_ra.ra_name) == 0) {
 		struct dma_softc *dsc;
@@ -387,7 +387,7 @@ espattach(parent, self, aux)
 	/*
 	 * Set up glue for MI code.
 	 */
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS &&
 	    strcmp("ptscII", ca->ca_ra.ra_name) == 0) {
 		sc->sc_glue = &esp_glue1;
@@ -539,7 +539,7 @@ esp_write_reg(sc, reg, val)
 	esc->sc_reg[reg * 4] = v;
 }
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 u_char
 esp_rdreg1(sc, reg)
 	struct ncr53c9x_softc *sc;

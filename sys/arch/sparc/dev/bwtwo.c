@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.37 2010/06/07 19:43:45 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.38 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -240,7 +240,7 @@ bwtwoattach(struct device *parent, struct device *self, void *args)
 
 	case BUS_SBUS:
 obp_name:
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 		nam = getpropstring(node, "model");
 #endif
 		break;
@@ -272,7 +272,7 @@ obp_name:
 	}
 #endif
 
-	if (CPU_ISSUN4COR4M)
+	if (!CPU_ISSUN4)
 		isconsole = node == fbnode;
 
 	sc->sc_phys = ca->ca_ra.ra_reg[0];

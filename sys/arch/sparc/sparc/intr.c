@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.33 2010/07/06 20:40:01 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.34 2010/07/10 19:32:25 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -468,8 +468,8 @@ softintr_establish(int level, void (*fn)(void *), void *arg)
 	 * passed to intreg_set_44c().
 	 */
 	ipl = hw = level;
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4OR4COR4E) {
 		/*
 		 * Select the most suitable of the three available
 		 * softintr levels.
@@ -540,8 +540,9 @@ softintr_schedule(void *arg)
 			raise(0, sih->sih_hw);
 			break;
 #endif
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 		case CPU_SUN4:
+		case CPU_SUN4E:
 		case CPU_SUN4C:
 			intreg_set_44c(sih->sih_hw);
 			break;

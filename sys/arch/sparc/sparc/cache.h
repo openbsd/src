@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.10 2007/01/22 19:39:33 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.11 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
@@ -122,10 +122,10 @@ extern int cache_alias_dist;
 extern int cache_alias_bits;
 
 /* Optimize cache alias macros on single architecture kernels */
-#if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)
+#if (defined(SUN4) || defined(SUN4E)) && !(defined(SUN4C) || defined(SUN4D) || defined(SUN4M))
 #define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4
 #define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4
-#elif !defined(SUN4) && defined(SUN4C) && !defined(SUN4M)
+#elif !(defined(SUN4) || defined(SUN4E)) && defined(SUN4C) && !(defined(SUN4D) || defined(SUN4M))
 #define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4C
 #define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4C
 #else

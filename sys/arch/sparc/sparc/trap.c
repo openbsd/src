@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2008/01/06 21:15:58 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2010/07/10 19:32:25 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -628,7 +628,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	int pc, psr;
 	struct trapframe *tf;
 {
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	struct proc *p;
 	struct vmspace *vm;
 	vaddr_t va;
@@ -760,7 +760,7 @@ out:
 		userret(p);
 		share_fpu(p, tf);
 	}
-#endif /* Sun4/Sun4C */
+#endif /* SUN4 || SUN4C || SUN4E */
 }
 
 #if defined(SUN4M)	/* 4m version of mem_access_fault() follows */

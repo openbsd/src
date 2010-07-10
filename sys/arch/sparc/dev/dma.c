@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.27 2010/06/27 05:52:01 beck Exp $	*/
+/*	$OpenBSD: dma.c,v 1.28 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -111,7 +111,7 @@ dmamatch(parent, vcf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
 	    strcmp("espdma", ra->ra_name))
 		return (0);
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (!sbus_testdma((struct sbus_softc *)parent, ca))
 			return (0);
@@ -133,7 +133,7 @@ dmaattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct dma_softc *sc = (void *)self;
 	int devnode;
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	int node;
 	struct confargs oca;
 	char *name;
@@ -217,7 +217,7 @@ dmaattach(parent, self, aux)
 	if (CPU_ISSUN4)
 		goto espsearch;
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	/* Propagate bootpath */
 	if (ca->ca_ra.ra_bp != NULL &&
 	    (strcmp(ca->ca_ra.ra_bp->name, "espdma") == 0 ||
@@ -238,7 +238,7 @@ dmaattach(parent, self, aux)
 		oca.ca_bustype = BUS_SBUS;
 		(void) config_found(&sc->sc_dev, (void *)&oca, dmaprint);
 	} while ((node = nextsibling(node)) != 0); else
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C || SUN4D || SUN4E || SUN4M */
 
 	if (strcmp(ca->ca_ra.ra_name, "dma") == 0) {
 espsearch:
@@ -413,7 +413,7 @@ ledmamatch(parent, vcf, aux)
 
         if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (!sbus_testdma((struct sbus_softc *)parent, ca))
 		return(0);
 #endif

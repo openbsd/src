@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.16 2007/05/29 09:54:13 sobrado Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.17 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -159,7 +159,10 @@ sbus_attach(parent, self, aux)
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
 	node = ra->ra_node;
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = getpropint(node, "clock-frequency", -1);
+	if (sc->sc_clockfreq <= 0)
+		sc->sc_clockfreq = getpropint(findroot(), "clock-frequency",
+		    25 * 1000 * 1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	/*
@@ -199,6 +202,10 @@ sbus_attach(parent, self, aux)
 	 */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		name = getpropstring(node, "name");
+#ifdef SUN4E
+		if (CPU_ISSUN4E && strcmp(name, "vm") == 0)
+			continue;
+#endif
 		if (!romprop(&oca.ca_ra, name, node))
 			continue;
 
@@ -224,7 +231,7 @@ sbus_translate(dev, ca)
 			ca->ca_slot = SBUS_ABS_TO_SLOT(base);
 			ca->ca_offset = SBUS_ABS_TO_OFFSET(base);
 		} else {
-			if (!CPU_ISSUN4C)
+			if (!CPU_ISSUN4C && !CPU_ISSUN4E)
 				panic("relative sbus addressing not supported");
 			ca->ca_slot = slot = ca->ca_ra.ra_iospace;
 			ca->ca_offset = base;

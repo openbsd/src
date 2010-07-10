@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.24 2010/06/17 16:11:19 miod Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.25 2010/07/10 19:32:25 miod Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -145,7 +145,7 @@ iommu_match(parent, vcf, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4OR4COR4E)
 		return (0);
 	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
 }

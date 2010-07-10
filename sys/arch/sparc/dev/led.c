@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.12 2006/08/01 18:09:40 deraadt Exp $	*/
+/*	$OpenBSD: led.c,v 1.13 2010/07/10 19:32:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -27,7 +27,7 @@
  */
 
 /*
- * Driver for leds on the 4/100, 4/200, 4/300, and 4/600. (sun4 & sun4m)
+ * Driver for leds on the sun4, sun4e, and 4/600 (sun4m) systems.
  */
 
 #include <sys/param.h>
@@ -42,8 +42,10 @@
 
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>
+#include <machine/vmparam.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/cpu.h>
+#include <sparc/sparc/auxioreg.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/dev/led.h>
 
@@ -72,10 +74,10 @@ ledmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-#if defined(SUN4)
+#if defined(SUN4) || defined(SUN4E)
 	struct cfdata *cf = vcf;
 #endif
-#if defined(SUN4) || defined(SUN4M)
+#if defined(SUN4) || defined(SUN4E) || defined(SUN4M)
 	struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -87,16 +89,16 @@ ledmatch(parent, vcf, aux)
 	}
 #endif /* SUN4M */
 
-#if defined(SUN4)
+#if defined(SUN4) || defined(SUN4E)
 	if (ca->ca_bustype == BUS_MAIN) {
 		if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 			return (0);
-		if (CPU_ISSUN4)
+		if (CPU_ISSUN4OR4E)
 			return (1);
 		return (0);
 	}
-#endif /* SUN4 */
-#endif /* SUN4 || SUN4M */
+#endif /* SUN4 || SUN4E*/
+#endif /* SUN4 || SUN4E || SUN4M */
 
 	return (0);
 }
@@ -139,21 +141,26 @@ led_cycle(v)
 	if (sparc_led_blink == 0)
 		sc->sc_index = 0;
 
+	s = splhigh();
+	switch (cputyp) {
+	default:
 #if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		s = splhigh();
+	case CPU_SUN4M:
 		(*sc->sc_reg) = led_pattern[sc->sc_index] | 0xff00;
-		splx(s);
-	}
+		break;
 #endif
-
+#if defined(SUN4E)
+	case CPU_SUN4E:
+		*(volatile u_char *)(AUXREG_VA) = led_pattern[sc->sc_index];
+		break;
+#endif
 #if defined(SUN4)
-	if (CPU_ISSUN4) {
-		s = splhigh();
+	case CPU_SUN4:
 		stba(AC_DIAG_REG, ASI_CONTROL, led_pattern[sc->sc_index]);
-		splx(s);
-	}
+		break;
 #endif
+	}
+	splx(s);
 
 	if (sparc_led_blink != 0) {
 		s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3));

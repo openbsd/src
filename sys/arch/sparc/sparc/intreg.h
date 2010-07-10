@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.h,v 1.10 2010/07/06 20:40:01 miod Exp $	*/
+/*	$OpenBSD: intreg.h,v 1.11 2010/07/10 19:32:25 miod Exp $	*/
 /*	$NetBSD: intreg.h,v 1.6 1997/07/22 20:19:10 pk Exp $ */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <sparc/sparc/vaddrs.h>
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 
 /*
  * sun4c interrupt enable register.
@@ -55,7 +55,8 @@
  * must be mapped early in the boot process (otherwise NMI handling
  * will fail).
  */
-#define	INT_ENABLE_REG_PHYSADR	0xf5000000	/* phys addr in IOspace */
+#define	INT_ENABLE_REG_PHYSADR_44C	0xf5000000
+#define	INT_ENABLE_REG_PHYSADR_4E	0xea000000
 
 /*
  * Bits in interrupt enable register.  Software interrupt requests must
@@ -75,7 +76,7 @@ void	intreg_set_44c(int);	/* set given bits */
 void	intreg_clr_44c(int);	/* clear given bits */
 #endif
 
-#endif /* SUN4 || SUN4C */
+#endif /* SUN4 || SUN4C || SUN4E */
 
 #if defined(SUN4M)
 

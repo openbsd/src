@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.13 2009/01/12 21:11:56 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.14 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ zskbd_attach(parent, self, aux)
 	}
 
 	ss->sc_click = 0;
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (!CPU_ISSUN4) {
 		char *cp = getpropstring(optionsnode, "keyboard-click?");
 

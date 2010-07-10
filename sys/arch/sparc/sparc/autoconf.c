@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.91 2010/07/06 20:40:01 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.92 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -168,6 +168,43 @@ struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 void
 bootstrap()
 {
+#if defined(SUN4C) || defined(SUN4E)
+	/*
+	 * If we are running on a sun4e system, we need to differentiate it
+	 * from sun4c now. Note that we can't use CPU_ISSUN4C here because
+	 * it might have been optimized depending upon the kernel
+	 * configuration.
+	 */
+	if (cputyp == CPU_SUN4C) {
+		char tmpstr[24];
+		u_long pgsiz;
+
+		pgsiz = 0;
+		snprintf(tmpstr, sizeof tmpstr, "pagesize %x l!",
+		    (u_long)&pgsiz);
+		rominterpret(tmpstr);
+		if (pgsiz == 1 << SUN4_PGSHIFT) {
+#if defined(SUN4E)
+			extern int nbpg, pgofset;
+
+			cputyp = CPU_SUN4E;
+			nbpg = 1 << SUN4_PGSHIFT;
+			pgofset = nbpg - 1;
+#else
+			printf("OpenBSD/sparc: this kernel does not support the sun4e\n");
+			romhalt();
+#endif
+		} else {
+#if defined(SUN4C)
+			/* cputyp, nbpg and pgofset already set in locore */
+#else
+			printf("OpenBSD/sparc: this kernel does not support the sun4c\n");
+			romhalt();
+#endif
+		}
+	}
+#endif
+
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		extern void oldmon_w_cmd(u_long, char *);
@@ -312,16 +349,16 @@ bootstrap()
 	}
 #endif /* SUN4M */
 
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4OR4COR4E) {
 		/* Map Interrupt Enable Register */
 		/*
 		 * XXX on non-Sun4, we ought to get the address from
 		 * XXX the `interrupt-enable' node.
 		 */
-		pmap_kenter_pa(INTRREG_VA,
-			   INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-			   VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(INTRREG_VA, PMAP_NC | PMAP_OBIO |
+		    (CPU_ISSUN4E ? INT_ENABLE_REG_PHYSADR_4E :
+		     INT_ENABLE_REG_PHYSADR_44C), VM_PROT_READ | VM_PROT_WRITE);
 		pmap_update(pmap_kernel());
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
@@ -477,13 +514,6 @@ bootpath_fake(bp, cp)
 	nbootpath++; \
 }
 
-#if defined(SUN4)
-	if (CPU_ISSUN4M) {
-		printf("twas brillig..\n");
-		return;
-	}
-#endif
-
 	pp = cp + 2;
 	v0val[0] = v0val[1] = v0val[2] = 0;
 	if (*pp == '(' 					/* for vi: ) */
@@ -573,7 +603,7 @@ bootpath_fake(bp, cp)
 	}
 #endif /* SUN4 */
 
-#if defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4E)
 	/*
 	 * sun4c stuff
 	 */
@@ -621,7 +651,7 @@ bootpath_fake(bp, cp)
 		BP_APPEND(bp, tmpname, target, lun, v0val[2]);
 		return;
 	}
-#endif /* SUN4C */
+#endif /* SUN4C || SUN4E */
 
 
 	/*
@@ -793,8 +823,8 @@ cpu_configure()
 			panic("cpu_configure: ROM hasn't mapped memreg!");
 	}
 #endif
-#if defined(SUN4C)
-	if (CPU_ISSUN4C) {
+#if defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4C || CPU_ISSUN4E) {
 		node = findroot();
 		cp = getpropstring(node, "device_type");
 		if (strcmp(cp, "cpu") != 0)
@@ -819,8 +849,8 @@ cpu_configure()
 	if (CPU_ISSUN4M)
 		intreg_clr_4m(SINTR_MA);
 #endif
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4OR4COR4E)
 		intreg_set_44c(IE_ALLIE);
 #endif
 	(void)spl0();
@@ -1069,7 +1099,7 @@ mainbus_attach(parent, dev, aux)
 	struct confargs oca;
 	register const char *const *ssp, *sp = NULL;
 	struct confargs *ca = aux;
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	register int node0, node;
 	const char *const *openboot_special;
 #define L1A_HACK		/* XXX hack to allow L1-A during autoconf */
@@ -1105,8 +1135,22 @@ mainbus_attach(parent, dev, aux)
 		"virtual-memory",
 		NULL
 	};
-#else
-#define openboot_special4c	((void *)0)
+#endif
+#if defined(SUN4E)
+	static const char *const openboot_special4e[] = {
+		/* find these first (end with empty string) */
+		"memory-error",	/* as early as convenient, in case of error */
+		"eeprom",
+		"counter-timer",
+		"auxiliary-io",
+		"",
+
+		/* ignore these (end with NULL) */
+		"interrupt-enable",
+		"options",
+		"p2bus",	/* memory bus, has `eccmem' child */
+		NULL
+	};
 #endif
 #if defined(SUN4M)
 	static const char *const openboot_special4m[] = {
@@ -1130,8 +1174,6 @@ mainbus_attach(parent, dev, aux)
 		/* we also skip any nodes with device_type == "cpu" */
 		NULL
 	};
-#else
-#define openboot_special4m	((void *)0)
 #endif
 
 	if (CPU_ISSUN4)
@@ -1177,11 +1219,29 @@ mainbus_attach(parent, dev, aux)
 /*
  * The rest of this routine is for OBP machines exclusively.
  */
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 
-	openboot_special = CPU_ISSUN4M
-				? openboot_special4m
-				: openboot_special4c;
+	switch (cputyp) {
+#ifdef SUN4C
+	case CPU_SUN4C:
+		openboot_special = openboot_special4c;
+		break;
+#endif
+#ifdef SUN4E
+	case CPU_SUN4E:
+		openboot_special = openboot_special4e;
+		break;
+#endif
+#ifdef SUN4M
+	case CPU_SUN4M:
+		openboot_special = openboot_special4m;
+		break;
+#endif
+	default:
+		/* panic("can't happen"); */
+		openboot_special = NULL;
+		break;
+	}
 
 	node = ca->ca_ra.ra_node;	/* i.e., the root node */
 
@@ -1201,7 +1261,7 @@ mainbus_attach(parent, dev, aux)
 				config_found(dev, (void *)&oca, mbprint);
 			}
 		}
-	} else if (CPU_ISSUN4C) {
+	} else if (CPU_ISSUN4C || CPU_ISSUN4E) {
 		bzero(&oca, sizeof(oca));
 		oca.ca_ra.ra_node = node;
 		oca.ca_ra.ra_name = "cpu";
@@ -1257,8 +1317,8 @@ mainbus_attach(parent, dev, aux)
 	for (node = node0; node; node = nextsibling(node)) {
 		register const char *cp;
 
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) /* skip the CPUs */
+#if defined(SUN4D) || defined(SUN4M)
+		if (CPU_ISSUN4DOR4M) /* skip the CPUs */
 			if (node_has_property(node, "device_type") &&
 			    !strcmp(getpropstring(node, "device_type"), "cpu"))
 				continue;
@@ -1280,7 +1340,22 @@ mainbus_attach(parent, dev, aux)
 			(void) config_found(dev, (void *)&oca, mbprint);
 		}
 	}
-#endif /* SUN4C || SUN4M */
+
+#if defined(SUN4E)
+	if (CPU_ISSUN4E) {
+		/*
+		 * Attach the leds.
+		 * XXX This is not a natural attachment, but since there
+		 * XXX is more than one led, this does not fit in the usual
+		 * XXX auxio blink framework.
+		 */
+		bzero(&oca, sizeof(oca));
+		oca.ca_bustype = BUS_MAIN;
+		oca.ca_ra.ra_name = "led";
+		config_found(dev, (void *)&oca, mbprint);
+	}
+#endif
+#endif /* SUN4C || SUN4D || SUN4E || SUN4M */
 }
 
 struct cfattach mainbus_ca = {
@@ -1334,8 +1409,8 @@ findzs(zs)
 	}
 #endif
 
-#if defined(SUN4C) || defined(SUN4M)
-	if (CPU_ISSUN4COR4M) {
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
+	if (!CPU_ISSUN4) {
 		int node;
 
 		node = firstchild(findroot());
@@ -1371,10 +1446,15 @@ findzs(zs)
 int
 makememarr(struct memarr *ap, u_int xmax, int which)
 {
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	struct v0mlist *mp;
 	int node, n;
 	char *prop;
+#endif
+
+#ifdef DIAGNOSTIC
+	if (which != MEMARR_AVAILPHYS && which != MEMARR_TOTALPHYS)
+		panic("makememarr");
 #endif
 
 #ifdef DIAGNOSTIC
@@ -1393,7 +1473,7 @@ makememarr(struct memarr *ap, u_int xmax, int which)
 		return 1;
 	}
 #endif
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	switch (n = promvec->pv_romvec_vers) {
 	case 0:
 		/*
@@ -1437,7 +1517,7 @@ makememarr(struct memarr *ap, u_int xmax, int which)
 	if (n <= 0)
 		panic("makememarr: no memory found");
 	return (n);
-#endif	/* SUN4C || SUN4M */
+#endif	/* SUN4C || SUN4D || SUN4E || SUN4M */
 }
 
 /*
@@ -1450,7 +1530,7 @@ getprop(node, name, buf, bufsiz)
 	void *buf;
 	register int bufsiz;
 {
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	register struct nodeops *no;
 	register int len;
 #endif
@@ -1462,7 +1542,7 @@ getprop(node, name, buf, bufsiz)
 	}
 #endif
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	no = promvec->pv_nodeops;
 	len = no->no_proplen(node, name);
 	if (len > bufsiz) {
@@ -1652,7 +1732,7 @@ romgetcursoraddr(rowp, colp)
 void
 romhalt()
 {
-	if (CPU_ISSUN4COR4M)
+	if (!CPU_ISSUN4)
 		*promvec->pv_synchook = NULL;
 
 	promvec->pv_halt();
@@ -1663,7 +1743,7 @@ void
 romboot(str)
 	char *str;
 {
-	if (CPU_ISSUN4COR4M)
+	if (!CPU_ISSUN4)
 		*promvec->pv_synchook = NULL;
 
 	promvec->pv_reboot(str);
@@ -1733,8 +1813,8 @@ device_register(struct device *dev, void *aux)
 		}
 #endif
 
-#if defined(SUN4C)
-		if (CPU_ISSUN4C && dev->dv_xname[0] == 's')
+#if defined(SUN4C) || defined(SUN4E)
+		if ((CPU_ISSUN4C || CPU_ISSUN4E) && dev->dv_xname[0] == 's')
 			target = sd_crazymap(target);
 #endif
 

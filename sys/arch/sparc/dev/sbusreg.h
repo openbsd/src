@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusreg.h,v 1.5 2007/05/29 09:54:15 sobrado Exp $	*/
+/*	$OpenBSD: sbusreg.h,v 1.6 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: sbusreg.h,v 1.3 1997/09/14 19:17:25 pk Exp $ */
 
 /*
@@ -51,11 +51,13 @@
  * in `absolute' and `relative' address flavors, so we have to handle both.
  * Relative addresses do *not* include the slot number.
  */
-#define	SBUS_BASE		0xf8000000
-#define	SBUS_ADDR(slot, off)	(SBUS_BASE + ((slot) << 25) + (off))
+#define	SBUS_PAGE_SHIFT		(13 + PAGE_SHIFT)
+#define	SBUS_BASE		(0 - (4 << SBUS_PAGE_SHIFT))
+#define	SBUS_PAGE_MASK		((1 << SBUS_PAGE_SHIFT) - 1)
+#define	SBUS_ADDR(slot, off)	(SBUS_BASE + ((slot) << SBUS_PAGE_SHIFT) + (off))
 #define	SBUS_ABS(a)		((unsigned)(a) >= SBUS_BASE)
-#define	SBUS_ABS_TO_SLOT(a)	(((a) - SBUS_BASE) >> 25)
-#define	SBUS_ABS_TO_OFFSET(a)	(((a) - SBUS_BASE) & 0x1ffffff)
+#define	SBUS_ABS_TO_SLOT(a)	(((a) - SBUS_BASE) >> SBUS_PAGE_SHIFT)
+#define	SBUS_ABS_TO_OFFSET(a)	(((a) - SBUS_BASE) & SBUS_PAGE_MASK)
 
 struct sbusreg {
 	u_int32_t	sbus_afsr;	/* M-to-S Asynchronous Fault Status */

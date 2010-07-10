@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.156 2010/06/30 20:35:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.157 2010/07/10 19:32:25 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -384,7 +384,7 @@ vaddr_t pagetables_start, pagetables_end;
 static void pmap_page_upload(void);
 void pmap_release(pmap_t);
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 int mmu_has_hole;
 #endif
 
@@ -428,12 +428,12 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 					? setcontext4m(c) \
 					: setcontext4(c)  )
 
-#define	getsegmap(va)		(CPU_ISSUN4C \
-					? lduba(va, ASI_SEGMAP) \
-					: (lduha(va, ASI_SEGMAP) & segfixmask))
-#define	setsegmap(va, pmeg)	(CPU_ISSUN4C \
-					? stba(va, ASI_SEGMAP, pmeg) \
-					: stha(va, ASI_SEGMAP, pmeg))
+#define	getsegmap(va)		(CPU_ISSUN4 \
+					? (lduha(va, ASI_SEGMAP) & segfixmask) \
+					: lduba(va, ASI_SEGMAP))
+#define	setsegmap(va, pmeg)	(CPU_ISSUN4 \
+					? stha(va, ASI_SEGMAP, pmeg) \
+					: stba(va, ASI_SEGMAP, pmeg))
 
 /* 3-level sun4 MMU only: */
 #define	getregmap(va)		((unsigned)lduha((va)+2, ASI_REGMAP) >> 8)
@@ -447,7 +447,7 @@ static __inline void	setpgt4m(int *, int);
 void	setpte4m(vaddr_t va, int pte);
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 #define	getpte4(va)		lda(va, ASI_PTE)
 #define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
 #endif
@@ -483,7 +483,7 @@ int	pv_link4m(struct pvlist *, struct pmap *, vaddr_t, int);
 void	pv_unlink4m(struct pvlist *, struct pmap *, vaddr_t);
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 void	mmu_reservemon4_4c(int *, int *);
 void	pmap_rmk4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
 void	pmap_rmu4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
@@ -497,11 +497,11 @@ int	pv_link4_4c(struct pvlist *, struct pmap *, vaddr_t, int);
 void	pv_unlink4_4c(struct pvlist *, struct pmap *, vaddr_t);
 #endif
 
-#if !defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
+#if !(defined(SUN4D) || defined(SUN4M)) && (defined(SUN4) || defined(SUN4C) || defined(SUN4E))
 #define		pmap_rmk	pmap_rmk4_4c
 #define		pmap_rmu	pmap_rmu4_4c
 
-#elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C))
+#elif (defined(SUN4D) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4E))
 #define		pmap_rmk	pmap_rmk4m
 #define		pmap_rmu	pmap_rmu4m
 
@@ -720,14 +720,14 @@ sparc_protection_init4m(void)
 #define CTX_USABLE(pm,rp)	((pm)->pm_ctx != NULL )
 #endif
 
-#define GAP_WIDEN(pm,vr) do if (CPU_ISSUN4OR4C) {	\
+#define GAP_WIDEN(pm,vr) do if (CPU_ISSUN4OR4COR4E) {	\
 	if (vr + 1 == pm->pm_gap_start)			\
 		pm->pm_gap_start = vr;			\
 	if (vr == pm->pm_gap_end)			\
 		pm->pm_gap_end = vr + 1;		\
 } while (0)
 
-#define GAP_SHRINK(pm,vr) do if (CPU_ISSUN4OR4C) {			\
+#define GAP_SHRINK(pm,vr) do if (CPU_ISSUN4OR4COR4E) {			\
 	int x;							\
 	x = pm->pm_gap_start + (pm->pm_gap_end - pm->pm_gap_start) / 2;	\
 	if (vr > x) {							\
@@ -923,7 +923,7 @@ pmap_pa_exists(paddr_t pa)
  * description of *free* virtual memory.  Rather than invert this, we
  * resort to two magic constants from the PROM vector description file.
  */
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 void
 mmu_reservemon4_4c(nrp, nsp)
 	int *nrp, *nsp;
@@ -941,8 +941,8 @@ mmu_reservemon4_4c(nrp, nsp)
 		prom_vend = eva = OLDMON_ENDVADDR;
 	}
 #endif
-#if defined(SUN4C)
-	if (CPU_ISSUN4C) {
+#if defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4C || CPU_ISSUN4E) {
 		prom_vstart = va = OPENPROM_STARTVADDR;
 		prom_vend = eva = OPENPROM_ENDVADDR;
 	}
@@ -1232,10 +1232,8 @@ mmu_setup4m_L3(pagtblptd, sp)
 /*
  * MMU management.
  */
-struct mmuentry *me_alloc(struct mmuhd *, struct pmap *, int, int);
-void		me_free(struct pmap *, u_int);
-struct mmuentry	*region_alloc(struct mmuhd *, struct pmap *, int);
-void		region_free(struct pmap *, u_int);
+
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E) /* This is old sun MMU stuff */
 
 /*
  * Change contexts.  We need the old context number as well as the new
@@ -1246,10 +1244,14 @@ void		region_free(struct pmap *, u_int);
 #define	CHANGE_CONTEXTS(old, new) \
 	if ((old) != (new)) { \
 		write_user_windows(); \
-		setcontext(new); \
+		setcontext4(new); \
 	}
 
-#if defined(SUN4) || defined(SUN4C) /* This is old sun MMU stuff */
+struct mmuentry *me_alloc(struct mmuhd *, struct pmap *, int, int);
+void		me_free(struct pmap *, u_int);
+struct mmuentry	*region_alloc(struct mmuhd *, struct pmap *, int);
+void		region_free(struct pmap *, u_int);
+
 /*
  * Allocate an MMU entry (i.e., a PMEG).
  * If necessary, steal one from someone else.
@@ -1669,6 +1671,7 @@ printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
 	/* return 0 if we have no PMEGs to load */
 	if (rp->rg_segmap == NULL)
 		return (0);
+
 #if defined(SUN4_MMU3L)
 	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
 		smeg_t smeg;
@@ -1709,7 +1712,7 @@ printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
 	splx(s);
 	return (1);
 }
-#endif /* defined SUN4 or SUN4C */
+#endif /* SUN4 || SUN4C || SUN4E */
 
 /*
  * Allocate a context.  If necessary, steal one from someone else.
@@ -1734,7 +1737,7 @@ ctx_alloc(pm)
 	if (pmapdebug & PDB_CTX_ALLOC)
 		printf("ctx_alloc(%p)\n", pm);
 #endif
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 		gap_start = pm->pm_gap_start;
 		gap_end = pm->pm_gap_end;
 	}
@@ -1762,7 +1765,7 @@ ctx_alloc(pm)
 #endif
 		c->c_pmap->pm_ctx = NULL;
 		doflush = (CACHEINFO.c_vactype != VAC_NONE);
-		if (CPU_ISSUN4OR4C) {
+		if (CPU_ISSUN4OR4COR4E) {
 			if (gap_start < c->c_pmap->pm_gap_start)
 				gap_start = c->c_pmap->pm_gap_start;
 			if (gap_end > c->c_pmap->pm_gap_end)
@@ -1774,7 +1777,7 @@ ctx_alloc(pm)
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 		/*
 		 * Write pmap's region (3-level MMU) or segment table into
 		 * the MMU.
@@ -1899,6 +1902,7 @@ ctx_free(pm)
 		setcontext4m(0);
 #endif
 	} else {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 		oldc = getcontext4();
 		if (CACHEINFO.c_vactype != VAC_NONE) {
 			newc = pm->pm_ctxnum;
@@ -1908,6 +1912,7 @@ ctx_free(pm)
 		} else {
 			CHANGE_CONTEXTS(oldc, 0);
 		}
+#endif
 	}
 
 	c->c_nextfree = ctx_freelist;
@@ -1952,7 +1957,7 @@ ctx_free(pm)
  * status stick.
  */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 
 void
 pv_changepte4_4c(pv0, bis, bic)
@@ -2625,14 +2630,14 @@ pg_flushcache(struct vm_page *pg)
  * At last, pmap code.
  */
 
-#if defined(SUN4) && defined(SUN4C)
+#if (defined(SUN4) || defined(SUN4E)) && defined(SUN4C)
 int nptesg;
 #endif
 
 #if defined(SUN4M)
 static void pmap_bootstrap4m(void *);
 #endif
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 static void pmap_bootstrap4_4c(void *, int, int, int);
 #endif
 
@@ -2656,7 +2661,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	uvmexp.pagesize = nbpg;
 	uvm_setpagesize();
 
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+#if (defined(SUN4) || defined(SUN4E)) && (defined(SUN4C) || defined(SUN4D) || defined(SUN4M))
 	/* In this case NPTESG is not a #define */
 	nptesg = (NBPSG >> uvmexp.pageshift);
 #endif
@@ -2675,8 +2680,8 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 #if defined(SUN4M)
 		pmap_bootstrap4m(p);
 #endif
-	} else if (CPU_ISSUN4OR4C) {
-#if defined(SUN4) || defined(SUN4C)
+	} else if (CPU_ISSUN4OR4COR4E) {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 		pmap_bootstrap4_4c(p, nctx, nregion, nsegment);
 #endif
 	}
@@ -2684,7 +2689,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	pmap_page_upload();
 }
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 void
 pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 {
@@ -2716,6 +2721,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 
 	switch (cputyp) {
 	case CPU_SUN4C:
+	case CPU_SUN4E:
 		mmu_has_hole = 1;
 		break;
 	case CPU_SUN4:
@@ -3094,7 +3100,7 @@ pmap_bootstrap4m(void *top)
 	 */
 	va2pa_offset = (vaddr_t)kernel_text - VA2PA(kernel_text);
 
-#if defined(SUN4) || defined(SUN4C) /* setup 4M fn. ptrs for dual-arch kernel */
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E) /* setup 4M fn. ptrs for dual-arch kernel */
 	pmap_clear_modify_p 	=	pmap_clear_modify4m;
 	pmap_clear_reference_p 	= 	pmap_clear_reference4m;
 	pmap_copy_page_p 	=	pmap_copy_page4m;
@@ -3109,7 +3115,7 @@ pmap_bootstrap4m(void *top)
 	pmap_changeprot_p	=	pmap_changeprot4m;
 	pmap_rmk_p		=	pmap_rmk4m;
 	pmap_rmu_p		=	pmap_rmu4m;
-#endif /* defined Sun4/Sun4c */
+#endif /* SUN4 || SUN4C || SUN4E */
 
 	/*
 	 * Initialize the kernel pmap.
@@ -3560,7 +3566,7 @@ pmap_create()
 	pm->pm_refcount = 1;
 	pm->pm_regmap = urp;
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 		TAILQ_INIT(&pm->pm_seglist);
 #if defined(SUN4_MMU3L)
 		TAILQ_INIT(&pm->pm_reglist);
@@ -3646,7 +3652,7 @@ pmap_release(pm)
 		printf("pmap_release(%p)\n", pm);
 #endif
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 #if defined(SUN4_MMU3L)
 		if (!TAILQ_EMPTY(&pm->pm_reglist))
 			panic("pmap_release: region list not empty");
@@ -3829,7 +3835,7 @@ pmap_kremove(va, len)
  * These are egregiously complicated routines.
  */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 
 /* remove from kernel */
 void
@@ -4026,7 +4032,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 #define	PMAP_RMU_MAGIC	4	/* if > magic, use cache_flush_segment */
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 
 /* remove from user */
 void
@@ -4312,7 +4318,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
  * to read-only (in which case pv_changepte does the trick).
  */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 void
 pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 {
@@ -4984,7 +4990,7 @@ out:
  *	XXX	should have different entry points for changing!
  */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 
 int
 pmap_enter4_4c(pm, va, pa, prot, flags)
@@ -5712,7 +5718,7 @@ pmap_unwire(pm, va)
  * GRR, the vm code knows; we should not have to do this!
  */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 boolean_t
 pmap_extract4_4c(pm, va, pa)
 	struct pmap *pm;
@@ -5848,7 +5854,7 @@ pmap_extract4m(pm, va, pa)
 }
 #endif /* sun4m */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 
 /*
  * Clear the modify bit for the given physical page.
@@ -5994,7 +6000,7 @@ pmap_is_referenced4m(struct vm_page *pg)
  * XXX	might be faster to use destination's context and allow cache to fill?
  */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 
 void
 pmap_zero_page4_4c(struct vm_page *pg)
@@ -6198,7 +6204,7 @@ kvm_setcache(va, npages, cached)
 
 #endif
 	} else {
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 		ctx = getcontext4();
 		setcontext4(0);
 		for (; --npages >= 0; va += NBPG) {
@@ -6241,7 +6247,7 @@ pmap_prefer(foff, vap)
 	vaddr_t va = *vap;
 	long d, m;
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	if (VA_INHOLE(va))
 		va = MMU_HOLE_END;
 #endif
@@ -6258,7 +6264,7 @@ pmap_prefer(foff, vap)
 void
 pmap_remove_holes(struct vm_map *map)
 {
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	if (mmu_has_hole) {
 		vaddr_t shole, ehole;
 
@@ -6285,8 +6291,8 @@ pmap_redzone()
 		return;
 	}
 #endif
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4OR4COR4E) {
 		setpte4(KERNBASE, 0);
 		return;
 	}
@@ -6498,7 +6504,7 @@ pmap_dumpsize()
 	sz = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
 	sz += npmemarr * sizeof(phys_ram_seg_t);
 
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4OR4COR4E)
 		sz += (seginval + 1) * NPTESG * sizeof(int);
 
 	return (atop(sz));
@@ -6521,7 +6527,7 @@ pmap_dumpmmu(dump, blkno)
 	int	i, memsegoffset, pmegoffset;
 	int		buffer[dbtob(1) / sizeof(int)];
 	int		*bp, *ep;
-#if defined(SUN4C) || defined(SUN4)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	int	pmeg;
 #endif
 
@@ -6558,7 +6564,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpup->cputype = cputyp;
 	kcpup->nmemseg = npmemarr;
 	kcpup->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
-	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0; 
+	kcpup->npmeg = (CPU_ISSUN4OR4COR4E) ? seginval + 1 : 0; 
 	kcpup->pmegoffset = pmegoffset =
 		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
 
@@ -6580,7 +6586,7 @@ pmap_dumpmmu(dump, blkno)
 	if (CPU_ISSUN4M)
 		goto out;
 
-#if defined(SUN4C) || defined(SUN4)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	/*
 	 * dump page table entries
 	 *
@@ -6651,8 +6657,8 @@ pmap_writetext(dst, ch)
 		setpgt4m(ptep, pte0);
 	}
 #endif
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4C || CPU_ISSUN4) {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4OR4COR4E) {
 		pte0 = getpte4(va);
 		if ((pte0 & PG_V) == 0) {
 			splx(s);

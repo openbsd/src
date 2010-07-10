@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxreg.c,v 1.14 2007/07/01 19:07:46 miod Exp $	*/
+/*	$OpenBSD: auxreg.c,v 1.15 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
@@ -124,6 +124,7 @@ auxregmatch(struct device *parent, void *cf, void *aux)
 	default:
 		return (0);
 	case CPU_SUN4C:
+	case CPU_SUN4E:
 		return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
 	case CPU_SUN4M:
 		return (strcmp("auxio", ca->ca_ra.ra_name) == 0 ||

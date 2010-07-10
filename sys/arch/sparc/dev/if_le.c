@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.30 2009/10/26 20:17:27 deraadt Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.31 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -407,7 +407,7 @@ lematch(parent, vcf, aux)
 		return (ca->ca_bustype == BUS_OBIO);
 	}
 #endif
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (!sbus_testdma((struct sbus_softc *)parent, ca))
 			return (0);
@@ -428,7 +428,7 @@ leattach(parent, self, aux)
 	struct confargs *ca = aux;
 	int pri;
 	struct bootpath *bp;
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	int sbuschild = strcmp(parent->dv_cfdata->cf_driver->cd_name, "sbus") == 0;
 	int lebufchild = strcmp(parent->dv_cfdata->cf_driver->cd_name, "lebuffer") == 0;
 	int dmachild = strcmp(parent->dv_cfdata->cf_driver->cd_name, "ledma") == 0;
@@ -446,14 +446,14 @@ leattach(parent, self, aux)
 	printf(" pri %d", pri);
 
 	sc->sc_hasifmedia = 1;
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	lesc->sc_lebufchild = lebufchild;
 #endif
 
 	lesc->sc_r1 = (struct lereg1 *)
 		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct lereg1));
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	lebuf = NULL;
 	if (lebufchild) {
 		lebuf = (struct lebuf_softc *)parent;
@@ -506,17 +506,17 @@ leattach(parent, self, aux)
 			    laddr & 0xfffe0000);
 		} /* else */
 #endif	/* solbourne */
-#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
-#if defined(SUN4C) || defined(SUN4M)
-		if (sbuschild && CPU_ISSUN4M)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
+		if (sbuschild && CPU_ISSUN4DOR4M)
 			laddr = (u_long)dvma_malloc_space(MEMSIZE,
 			     &sc->sc_mem, M_NOWAIT, M_SPACE_D24);
 		else
 #endif
 			laddr = (u_long)dvma_malloc(MEMSIZE,
 			     &sc->sc_mem, M_NOWAIT);
-#endif	/* SUN4 || SUN4C || SUN4M */
-#if defined (SUN4M)
+#endif	/* SUN4 || SUN4C || SUN4D || SUN4E || SUN4M */
+#if defined(SUN4D) || defined (SUN4M)
 		if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
 			panic("if_le: Lance buffer crosses 16MB boundary");
 #endif
@@ -533,7 +533,7 @@ leattach(parent, self, aux)
 		else
 #endif
 			sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 		if (dmachild) {
 			lesc->sc_dma = (struct dma_softc *)parent;
 			lesc->sc_dma->sc_le = lesc;
@@ -544,7 +544,7 @@ leattach(parent, self, aux)
 
 	bp = ca->ca_ra.ra_bp;
 	switch (ca->ca_bustype) {
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 #define SAME_LANCE(bp, ca) \
 	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
@@ -554,7 +554,7 @@ leattach(parent, self, aux)
 		    SAME_LANCE(bp, ca))
 			bp->dev = &sc->sc_dev;
 		break;
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C || SUN4D || SUN4E || SUN4M */
 
 	default:
 		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
@@ -581,7 +581,7 @@ leattach(parent, self, aux)
 	sc->sc_hwreset = lehwreset;
 
 	ifmedia_init(&sc->sc_ifmedia, 0, lemediachange, lemediastatus);
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (lebufchild) {
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
 		ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T);

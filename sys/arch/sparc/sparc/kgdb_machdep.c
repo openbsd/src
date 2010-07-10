@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.9 2008/06/26 05:42:13 ray Exp $ */
+/*	$OpenBSD: kgdb_machdep.c,v 1.10 2010/07/10 19:32:25 miod Exp $ */
 /*	$NetBSD: kgdb_machdep.c,v 1.1 1997/08/31 21:22:45 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 	lda(((vaddr_t)va & 0xFFFFF000) | ASI_SRMMUFP_L3, ASI_SRMMUFP)
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 #define	getpte4(va)		lda(va, ASI_PTE)
 #define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
 #endif
@@ -274,8 +274,8 @@ kgdb_acc(vaddr_t va, size_t len)
 				return (0);
 		}
 #endif
-#if defined(SUN4) || defined(SUN4C)
-		if (CPU_ISSUN4C || CPU_ISSUN4) {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+		if (CPU_ISSUN4OR4COR4E) {
 			pte = getpte4(va);
 			if ((pte & PG_V) == 0)
 				return (0);

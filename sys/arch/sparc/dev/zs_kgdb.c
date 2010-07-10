@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs_kgdb.c,v 1.3 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: zs_kgdb.c,v 1.4 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: zs_kgdb.c,v 1.1 1997/10/18 00:00:51 gwr Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
 #define ZSHARD_PRI	6	/* Wired on the CPU board... */
 
-#define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(2))
+#define	ZS_DELAY()		((CPU_ISSUN4C || CPU_ISSUN4E) ? (0) : delay(2))
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {

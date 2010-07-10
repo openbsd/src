@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.51 2010/06/07 19:43:45 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.52 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -82,7 +82,7 @@
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
 #endif
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 #include <machine/bsd_openprom.h>
 #endif
 
@@ -118,7 +118,7 @@ fb_unblank()
 
 #if NWSDISPLAY > 0
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 static int a2int(char *, int);
 #endif
 int	fb_get_console_metrics(int *, int *, int *, int *);
@@ -272,7 +272,7 @@ obpsize:
 	sf->sf_fbsize = sf->sf_height * sf->sf_linebytes;
 }
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 static int
 a2int(char *cp, int deflt)
 {
@@ -313,7 +313,7 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 {
 	struct rasops_info *ri = &sf->sf_ro;
 	int cols, rows;
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	int fw, fh, wt, wl;
 #endif
 
@@ -326,8 +326,8 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 	ri->ri_width = sf->sf_width;
 	ri->ri_height = sf->sf_height;
 
-#if defined(SUN4C) || defined(SUN4M)
-	if (CPU_ISSUN4COR4M) {
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
+	if (!CPU_ISSUN4) {
 		rows = a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 		cols = a2int(getpropstring(optionsnode, "screen-#columns"), 80);
 	}
@@ -369,8 +369,8 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 	 * this chunk.
 	 */
 
-#if defined(SUN4C) || defined(SUN4M)
-	if (CPU_ISSUN4COR4M && isconsole) {
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
+	if (!CPU_ISSUN4 && isconsole) {
 		if (fb_get_console_metrics(&fw, &fh, &wt, &wl) != 0) {
 			/*
 			 * Assume a 12x22 prom font and a centered
@@ -422,7 +422,7 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 
 	rasops_init(ri, rows, cols);
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	/*
 	 * If this is the console display and there is no font change,
 	 * adjust our terminal window to the position of the PROM
@@ -670,7 +670,7 @@ fb_pfour_burner(void *v, u_int enable, u_int flags)
 
 #endif /* SUN4 */
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 int
 fb_get_console_metrics(int *fontwidth, int *fontheight, int *wtop, int *wleft)
 {
@@ -732,6 +732,6 @@ fb_get_console_metrics(int *fontwidth, int *fontheight, int *wtop, int *wleft)
 
 	return (0);
 }
-#endif	/* SUN4C || SUN4M */
+#endif	/* SUN4C || SUN4D || SUN4E || SUN4M */
 
 #endif	/* NWSDISPLAY */

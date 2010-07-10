@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.52 2010/07/03 03:59:17 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.53 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -205,7 +205,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 67: was /dev/cgsix */
 	cdev_notdef(),			/* 68 */
 	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
-#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
 #else
 	cdev_notdef(),			/* 70 */

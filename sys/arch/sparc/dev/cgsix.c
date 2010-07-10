@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.42 2010/06/07 19:43:45 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.43 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -253,7 +253,7 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 	}
 #endif
 
-	if (CPU_ISSUN4COR4M)
+	if (!CPU_ISSUN4)
 		isconsole = node == fbnode;
 
 	fhcrev = (*sc->sc_fhc >> FHC_REV_SHIFT) &

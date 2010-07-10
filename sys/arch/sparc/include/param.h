@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.41 2010/06/29 21:26:09 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.42 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -136,115 +136,125 @@ extern int mmumod;
 #endif /* _KERNEL */
 
 /*
- * Values for the cputyp variable.
+ * Values for the cputyp variable. Order is important!
  */
 #define CPU_SUN4	0
-#define CPU_SUN4C	1
-#define CPU_SUN4M	2
+#define	CPU_SUN4E	1
+#define CPU_SUN4C	2
+#define CPU_SUN4M	3
+#define CPU_SUN4D	4
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.
  * Let compiler optimize away code conditional on constants.
  *
- * On a sun4 machine, the page size is 8192, while on a sun4c and sun4m
- * it is 4096. Therefore, in the (SUN4 && (SUN4C || SUN4M)) cases below,
- * NBPG, PGOFSET and PGSHIFT are defined as variables which are initialized
- * early in locore.s after the machine type has been detected.
+ * On sun4 and sun4e machines, the page size is 8192, while on sun4c, sun4d
+ * and sun4m machines, it is 4096. Therefore, in the common case below, the
+ * various pagesize-related defines are defined as variables which are
+ * initialized early in locore.s after the machine type has been detected.
  *
  * Note that whenever the macros defined below evaluate to expressions
  * involving variables, the kernel will perform slightly worse due to the
  * extra memory references they'll generate.
  */
-#if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#	define PAGE_SIZE	4096
-#	define PAGE_MASK	(PAGE_SIZE - 1)
-#	define PAGE_SHIFT	SUN4CM_PGSHIFT
-#elif defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
-#elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(1)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(0)
-#	define CPU_ISSUN4COR4M	(1)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#	define PAGE_SIZE	4096
-#	define PAGE_MASK	(PAGE_SIZE - 1)
-#	define PAGE_SHIFT	SUN4CM_PGSHIFT
-#elif !defined(SUN4M) && defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
-#elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(1)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(1)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#	define PAGE_SIZE	4096
-#	define PAGE_MASK	(PAGE_SIZE - 1)
-#	define PAGE_SHIFT	SUN4CM_PGSHIFT
-#elif !defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(1)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(0)
-#	define NBPG		8192
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4_PGSHIFT
+#if (defined(SUN4) || defined(SUN4E)) && !(defined(SUN4C) || defined(SUN4D) || defined(SUN4M))
 #	define PAGE_SIZE	8192
 #	define PAGE_MASK	(PAGE_SIZE - 1)
 #	define PAGE_SHIFT	SUN4_PGSHIFT
-#elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#endif
-
-#ifndef	NBPG
+#elif (defined(SUN4C) || defined(SUN4D) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4E))
+#	define PAGE_SIZE	4096
+#	define PAGE_MASK	(PAGE_SIZE - 1)
+#	define PAGE_SHIFT	SUN4CM_PGSHIFT
+#else
 #ifdef	STANDALONE	/* boot blocks */
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
 #	define PAGE_SIZE	nbpg
 #	define PAGE_MASK	pgofset
 #	define PAGE_SHIFT	pgshift
 #else
-#	define NBPG		uvmexp.pagesize
-#	define PGOFSET		uvmexp.pagemask
-#	define PGSHIFT		uvmexp.pageshift
 #	define PAGE_SIZE	uvmexp.pagesize
 #	define PAGE_MASK	uvmexp.pagemask
 #	define PAGE_SHIFT	uvmexp.pageshift
 #endif
+#endif
+#	define NBPG		PAGE_SIZE
+#	define PGOFSET		PAGE_MASK
+#	define PGSHIFT		PAGE_SHIFT
+
+#if defined(SUN4) && !(defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M))
+#	define CPU_ISSUN4	(1)
+#elif defined(SUN4C) && !(defined(SUN4) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M))
+#	define CPU_ISSUN4C	(1)
+#elif defined(SUN4D) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4E) || defined(SUN4M))
+#	define CPU_ISSUN4D	(1)
+#elif defined(SUN4E) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4D) || defined(SUN4M))
+#	define CPU_ISSUN4E	(1)
+#elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4D) || defined(SUN4E))
+#	define CPU_ISSUN4M	(1)
+#elif (defined(SUN4) || defined(SUN4C)) && !(defined(SUN4D) || defined(SUN4E) || defined(SUN4M))
+#	define CPU_ISSUN4OR4C	(1)
+#elif (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && !(defined(SUN4D) || defined(SUN4M))
+#	define CPU_ISSUN4OR4COR4E	(1)
+#elif (defined(SUN4) || defined(SUN4E)) && !(defined(SUN4C) || defined(SUN4D) || defined(SUN4M))
+#	define CPU_ISSUN4OR4E	(1)
+#elif (defined(SUN4C) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4D) || defined(SUN4E))
+#	define CPU_ISSUN4COR4M	(1)
+#elif (defined(SUN4D) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4E))
+#	define CPU_ISSUN4DOR4M	(1)
+#endif
+
+#if !defined(CPU_ISSUN4)
+#if defined(SUN4)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#else
+#	define CPU_ISSUN4	(0)
+#endif
+#endif
+#if !defined(CPU_ISSUN4C)
+#if defined(SUN4C)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#else
+#	define CPU_ISSUN4C	(0)
+#endif
+#endif
+#if !defined(CPU_ISSUN4D)
+#if defined(SUN4D)
+#	define CPU_ISSUN4D	(cputyp == CPU_SUN4D)
+#else
+#	define CPU_ISSUN4D	(0)
+#endif
+#endif
+#if !defined(CPU_ISSUN4E)
+#if defined(SUN4E)
+#	define CPU_ISSUN4E	(cputyp == CPU_SUN4E)
+#else
+#	define CPU_ISSUN4E	(0)
+#endif
+#endif
+#if !defined(CPU_ISSUN4M)
+#if defined(SUN4M)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#else
+#	define CPU_ISSUN4M	(0)
+#endif
+#endif
+
+#if !defined(CPU_ISSUN4OR4C)
+#	define CPU_ISSUN4OR4C	(CPU_ISSUN4 || CPU_ISSUN4C)
+#endif
+#if !defined(CPU_ISSUN4OR4E)
+#	define CPU_ISSUN4OR4E	(cputyp <= CPU_SUN4E)
+				/* (CPU_ISSUN4 || CPU_ISSUN4E) */
+#endif
+#if !defined(CPU_ISSUN4OR4COR4E)
+#	define CPU_ISSUN4OR4COR4E	(cputyp <= CPU_SUN4C)
+				/* (CPU_ISSUN4 || CPU_ISSUN4C || CPU_ISSUN4E) */
+#endif
+#if !defined(CPU_ISSUN4COR4M)
+#	define CPU_ISSUN4COR4M	(CPU_ISSUN4C || CPU_ISSUN4M)
+#endif
+#if !defined(CPU_ISSUN4DOR4M)
+#	define CPU_ISSUN4DOR4M	(cputyp >= CPU_SUN4D)
+				/* (CPU_ISSUN4D || CPU_ISSUN4M) */
 #endif
 
 #endif /* _SPARC_PARAM_H_ */

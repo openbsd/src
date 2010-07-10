@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.87 2010/07/06 20:40:01 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.88 2010/07/10 19:32:25 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -187,11 +187,11 @@ curproc = CPUINFO_VA + CPUINFO_CURPROC
 /*
  * cputyp is the current cpu type, used to distinguish between
  * the many variations of different sun4* machines. It contains
- * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
+ * the value CPU_SUN4, CPU_SUN4C, CPU_SUN4D, CPU_SUN4E or CPU_SUN4M.
  */
 	.globl	_C_LABEL(cputyp)
 _C_LABEL(cputyp):
-	.word	1
+	.word	CPU_SUN4C
 /*
  * cpumod is the current cpu model, used to distinguish between variants
  * in the Sun4 and Sun4M families. See /sys/arch/sparc/include/param.h for
@@ -209,7 +209,7 @@ _C_LABEL(cpumod):
 _C_LABEL(mmumod):
 	.word	0
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 _C_LABEL(cputypval):
 	.asciz	"sun4c"
 	.ascii	"     "
@@ -225,6 +225,7 @@ _C_LABEL(cputypvallen) = _C_LABEL(cputypvar) - _C_LABEL(cputypval)
 	.globl	_C_LABEL(nbpg)
 _C_LABEL(nbpg):
 	.word	0
+	.globl	_C_LABEL(pgofset)
 _C_LABEL(pgofset):
 	.word	0
 
@@ -240,7 +241,7 @@ sun4m_notsup:
 sun4d_notsup:
 	.asciz	"cr .( OpenBSD/sparc: this kernel does not support the sun4d) cr"
 #endif
-#if !defined(SUN4C)
+#if !(defined(SUN4C) || defined(SUN4E))
 sun4c_notsup:
 	.asciz	"cr .( OpenBSD/sparc: this kernel does not support the sun4c) cr"
 #endif
@@ -347,11 +348,13 @@ sun4_notsup:
 #define	ZS_INTERRUPT4M	HARDINT4M(12)
 #endif
 
+	.text
 	.globl	start, _C_LABEL(kernel_text)
 _C_LABEL(kernel_text):
 start:
 /*
- * Put sun4 traptable first, since it needs the most stringent alignment (8192)
+ * Put sun4 and sun4e traptables first, since they need the most stringent
+ * alignment (8192).
  */
 #if defined(SUN4)
 trapbase_sun4:
@@ -612,11 +615,19 @@ trapbase_sun4:
 	STRAP(0xfd)
 	STRAP(0xfe)
 	STRAP(0xff)
+#endif	/* SUN4 */
+
+#if defined(SUN4) && defined(SUN4E)
+	/*
+	 * Make sure the sun4e trap table (which is the same as the sun4c
+	 * table until we support VME interrupts) is properly page-aligned.
+	 */
+	.skip	4096
 #endif
 
-#if defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4E)
 trapbase_sun4c:
-/* trap 0 is special since we cannot receive it */
+	/* trap 0 is special since we cannot receive it */
 	b dostart; nop; nop; nop	! 00 = reset (fake)
 	VTRAP(T_TEXTFAULT, memfault_sun4c)	! 01 = instr. fetch fault
 	TRAP(T_ILLINST)			! 02 = illegal instruction
@@ -1136,14 +1147,21 @@ trapbase_sun4m:
 	STRAP(0xff)
 #endif
 
+#if (defined(SUN4) || defined(SUN4E))
 /*
  * Pad the trap table to max page size.
  * Trap table size is 0x100 * 4instr * 4byte/instr = 4096 bytes;
  * need to .skip 4096 to pad to page size iff. the number of trap tables
  * defined above is odd.
  */
-#if (defined(SUN4) + defined(SUN4C) + defined(SUN4M)) % 2 == 1
+/*
+ * SUN4 && !SUN4E => pad if only one of 4C and 4M is set
+ * SUN4E => pad if 4M is not set
+ */
+#if (!defined(SUN4E) && (defined(SUN4C) + defined(SUN4M)) == 1) || \
+    (defined(SUN4E) && !defined(SUN4M))
 	.skip	4096
+#endif
 #endif
 
 #ifdef DEBUG
@@ -1227,7 +1245,7 @@ Lpanic_red:
  * The code below also assumes that PTE_OF_ADDR is safe in a delay
  * slot; it is, at it merely sets its `pte' register to a temporary value.
  */
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	/* input: addr, output: pte; aux: bad address label */
 #define	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset) \
 	sra	addr, PG_VSHIFT, pte; \
@@ -1289,14 +1307,14 @@ Lpanic_red:
 	cmp	pte, (SRMMU_TEPTE | PPROT_WRITE)
 #endif /* 4m */
 
-#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
+#if (defined(SUN4D) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4E))
 
 #define PTE_OF_ADDR(addr, pte, bad, page_offset, label) \
 	PTE_OF_ADDR4M(addr, pte, bad, page_offset)
 #define CMP_PTE_USER_WRITE(pte, tmp, label)	CMP_PTE_USER_WRITE4M(pte,tmp)
 #define CMP_PTE_USER_READ(pte, tmp, label)	CMP_PTE_USER_READ4M(pte,tmp)
 
-#elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
+#elif (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && !(defined(SUN4D) || defined(SUN4M))
 
 #define PTE_OF_ADDR(addr, pte, bad, page_offset,label) \
 	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset)
@@ -1780,14 +1798,14 @@ memfault_sun4:
 	 sethi	%hi(SER_WRITE), %o5     ! damn SER_WRITE wont fit simm13
 !	or	%lo(SER_WRITE), %o5, %o5! not necessary since %lo is zero
 	or	%o5, %o1, %o1		! set SER_WRITE
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	ba,a	normal_mem_fault
 	 !!nop				! XXX make efficient later
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C || SUN4D || SUN4E || SUN4M */
 #endif /* SUN4 */
 
 memfault_sun4c:
-#if defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4E)
 	TRAP_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
 	
@@ -1882,7 +1900,7 @@ memfault_sun4c:
 	b	return_from_trap
 	 wr	%l0, 0, %psr
 	/* NOTREACHED */
-#endif /* SUN4C */
+#endif /* SUN4C || SUN4E */
 
 #if defined(SUN4M)
 memfault_sun4m:
@@ -2401,9 +2419,9 @@ softintr_common:
 	 * _sparc_interrupt{44c,4m} is exported for paranoia checking
 	 * (see intr.c).
 	 */
-#if defined(SUN4M)
 	.globl	_C_LABEL(sparc_interrupt4m)
 _C_LABEL(sparc_interrupt4m):
+#if defined(SUN4D) || defined(SUN4M)
 	mov	1, %l4
 	sethi	%hi(ICR_PI_PEND), %l5
 	ld	[%l5 + %lo(ICR_PI_PEND)], %l5	! get pending interrupts
@@ -2424,13 +2442,11 @@ _C_LABEL(sparc_interrupt4m):
 	ld	[%l6 + %lo(ICR_PI_PEND)], %g0
 
 	b,a	softintr_common
-#endif
+#endif	/* SUN4D || SUN4M */
 
-#if defined(SUN4) || defined(SUN4C)
+sparc_interrupt_common:
 	.globl	_C_LABEL(sparc_interrupt44c)
 _C_LABEL(sparc_interrupt44c):
-#endif
-sparc_interrupt_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
@@ -2491,25 +2507,6 @@ sparc_interrupt_common:
 	b	5b
 	 std	%l4, [%l3 + IH_COUNT]
 
-#ifdef notyet
-/*
- * Level 12 (ZS serial) interrupt.  Handle it quickly, schedule a
- * software interrupt, and get out.  Do the software interrupt directly
- * if we would just take it on the way out.
- *
- * Input:
- *	%l0 = %psr
- *	%l1 = return pc
- *	%l2 = return npc
- * Internal:
- *	%l3 = zs device
- *	%l4, %l5 = temporary
- *	%l6 = rr3 (or temporary data) + 0x100 => need soft int
- *	%l7 = zs soft status
- */
-zshard:
-#endif /* notyet */
-
 /*
  * Level 15 interrupt.  An async memory error has occurred;
  * take care of it (typically by panicking, but hey...).
@@ -2551,12 +2548,12 @@ nmi_sun4:
 	mov	%g1, %l5		! save g1, g6, g7
 	mov	%g6, %l6
 	mov	%g7, %l7
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4E)
 	b,a	nmi_common
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C */
 #endif
 
-#if defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4E)
 nmi_sun4c:
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
@@ -2586,11 +2583,12 @@ nmi_sun4c:
 	lda	[%o0] ASI_CONTROL, %o3	! async err reg
 	inc	4, %o0
 	lda	[%o0] ASI_CONTROL, %o4	! async virt addr
-#if defined(SUN4M)
+#if defined(SUN4)
 	!!b,a	nmi_common
-#endif /* SUN4M */
-#endif /* SUN4C */
+#endif /* SUN4 */
+#endif /* SUN4C || SUN4E */
 
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 nmi_common:
 	! and call C code
 	call	_C_LABEL(memerr4_4c)
@@ -2610,6 +2608,7 @@ nmi_common:
 	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	b	return_from_trap
 	 wr	%l4, 0, %y		! restore y
+#endif	/* SUN4 || SUN4C || SUN4E */
 
 #if defined(SUN4M)
 nmi_sun4m:
@@ -3439,11 +3438,11 @@ dostart:
 	be	is_sun4
 	 nop
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	mov	%o0, %g7		! save prom vector pointer
 
 	/*
-	 * are we on a sun4c, sun4d or a sun4m?
+	 * are we on a sun4c, sun4d, sun4e or a sun4m?
 	 */
 	ld	[%g7 + PV_NODEOPS], %o4	! node = pv->pv_nodeops->no_nextnode(0)
 	ld	[%o4 + NO_NEXTNODE], %o4
@@ -3468,9 +3467,9 @@ dostart:
 	cmp	%o0, 'm'
 	be	is_sun4m
 	 nop
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C || SUN4D || SUN4E || SUN4M */
 
-	! ``on a sun4e or sun4u?  hell no!''
+	! ``on a sun4u?  hell no!''
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3508,7 +3507,11 @@ is_sun4d:
 	/*NOTREACHED*/
 #endif
 is_sun4c:
-#if defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4E)
+	/*
+	 * Assume sun4c for now; bootstrap() will check for the pagesize
+	 * and will update the page size variables as well as cputyp.
+	 */
 	set	trapbase_sun4c, %g6
 	mov	SUN4CM_PGSHIFT, %g5
 
@@ -3516,7 +3519,7 @@ is_sun4c:
 	stba	%g0, [%g1] ASI_CONTROL
 
 	b	start_havetype
-	 mov	CPU_SUN4C, %g4		! XXX CPU_SUN4
+	 mov	CPU_SUN4C, %g4
 #else
 	RELOCATE(sun4c_notsup, %o0)
 
@@ -3598,7 +3601,7 @@ start_havetype:
 	 * Need different initial mapping functions for different
 	 * types of machines.
 	 */
-#if defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4E)
 	cmp	%g4, CPU_SUN4C
 	bne	1f
 	 set	1 << 18, %l3		! segment size in bytes
@@ -3611,7 +3614,7 @@ start_havetype:
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
 	b,a	startmap_done
 1:
-#endif /* SUN4C */
+#endif /* SUN4C || SUN4E */
 
 #if defined(SUN4)
 	cmp	%g4, CPU_SUN4
@@ -3800,7 +3803,7 @@ startmap_done:
 	call	init_tables
 	 st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	/*
 	 * Some sun4/sun4c models have fewer than 8 windows. For extra
 	 * speed, we do not need to save/restore those windows
@@ -3819,7 +3822,7 @@ noplab:	 nop
 1:
 #endif
 
-#if ((defined(SUN4) || defined(SUN4C)) && defined(SUN4M))
+#if ((defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && (defined(SUN4D) || defined(SUN4M)))
 
 	/*
 	 * Patch instructions at specified labels that start
@@ -3835,7 +3838,7 @@ Lgandul:	nop
 	ld	[%o0 + %lo(Lgandul)], %l0	! %l0 = NOP
 
 	cmp	%g4, CPU_SUN4M
-	bne,a	1f
+	blu,a	1f
 	 nop
 
 	! this should be automated!
@@ -4529,14 +4532,14 @@ Lsw_load:
 	/* p does have a context: just switch to it */
 Lsw_havectx:
 	! context is in %o0
-#if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+#if (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && (defined(SUN4D) || defined(SUN4M))
 	sethi	%hi(_C_LABEL(cputyp)), %o1	! what cpu are we running on?
 	ld	[%o1 + %lo(_C_LABEL(cputyp))], %o1
 	cmp	%o1, CPU_SUN4M
-	be	1f
+	bge	1f
 	 nop
 #endif
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	set	AC_CONTEXT, %o1
 	retl
 	 stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_map.pmap->pm_ctxnum);
@@ -5388,7 +5391,7 @@ ENTRY(loadfpstate)
  * Set and clear bits in the interrupt register.
  */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 /*
  * Since there are no read-modify-write instructions for this,
  * and one of the interrupts is nonmaskable, we must disable traps.
@@ -5420,7 +5423,7 @@ ENTRY(intreg_clr_44c)
 	nop
 	retl
 	 nop
-#endif	/* SUN4 || SUN4C */
+#endif	/* SUN4 || SUN4C || SUN4E */
 
 #if defined(SUN4M)
 /*
@@ -5943,10 +5946,10 @@ ENTRY(microtime)
 #endif
 	sethi	%hi(_C_LABEL(time)), %g2
 
-#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
+#if (defined(SUN4D) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4E))
 	sethi	%hi(TIMERREG_VA+4), %g3
 	or	%g3, %lo(TIMERREG_VA+4), %g3
-#elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
+#elif (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && !(defined(SUN4D) || defined(SUN4M))
 	sethi	%hi(TIMERREG_VA), %g3
 	or	%g3, %lo(TIMERREG_VA), %g3
 #else

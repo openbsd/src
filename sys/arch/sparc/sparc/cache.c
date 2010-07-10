@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.19 2010/06/29 21:24:41 miod Exp $	*/
+/*	$OpenBSD: cache.c,v 1.20 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -89,10 +89,10 @@ sun4_cache_enable()
 {
 	u_int i, lim, ls, ts;
 
-	cache_alias_bits = CPU_ISSUN4
+	cache_alias_bits = CPU_ISSUN4OR4E
 				? CACHE_ALIAS_BITS_SUN4
 				: CACHE_ALIAS_BITS_SUN4C;
-	cache_alias_dist = CPU_ISSUN4
+	cache_alias_dist = CPU_ISSUN4OR4E
 				? CACHE_ALIAS_DIST_SUN4
 				: CACHE_ALIAS_DIST_SUN4C;
 
@@ -357,7 +357,7 @@ turbosparc_cache_enable()
 }
 #endif /* defined(SUN4M) */
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 /*
  * Flush the current context from the cache.
  *
@@ -548,7 +548,7 @@ sun4_cache_flush(base, len)
 			sun4_vcache_flush_context();
 	}
 }
-#endif /* defined(SUN4) || defined(SUN4C) */
+#endif /* SUN4 || SUN4C || SUN4E */
 
 #if defined(SUN4M)
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.25 2010/07/06 20:40:01 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.26 2010/07/10 19:32:24 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -377,8 +377,7 @@ clockattach(parent, self, aux)
 
 	if (CPU_ISSUN4)
 		prop = "mk48t02";
-
-	else if (CPU_ISSUN4COR4M)
+	else if (!CPU_ISSUN4)
 		prop = getpropstring(ra->ra_node, "model");
 
 	printf(": %s (eeprom)\n", prop);
@@ -455,7 +454,7 @@ timermatch(parent, vcf, aux)
 		return (1);
 	}
 
-	if (CPU_ISSUN4C) {
+	if (CPU_ISSUN4C || CPU_ISSUN4E) {
 		return (strcmp("counter-timer", ca->ca_ra.ra_name) == 0);
 	}
 
@@ -492,11 +491,11 @@ timerattach(parent, self, aux)
 		lim = &counterreg_4m->t_limit;
 	}
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 		/*
 		 * This time, we ignore any existing virtual address because
 		 * we have a fixed virtual address for the timer, to make
-		 * microtime() faster (in SUN4/SUN4C kernel only).
+		 * microtime() faster (in SUN4/SUN4C/SUN4E kernel only).
 		 */
 		(void)mapdev(ra->ra_reg, TIMERREG_VA, 0,
 			     sizeof(struct timerreg_4));
@@ -644,7 +643,7 @@ cpu_initclocks()
 		counterreg_4m->t_limit = tmr_ustolim4m(statint);
 	}
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 		timerreg4->t_c10.t_limit = tmr_ustolim(tick);
 		timerreg4->t_c14.t_limit = tmr_ustolim(statint);
 	}
@@ -656,8 +655,8 @@ cpu_initclocks()
 		intreg_clr_4m(SINTR_T);
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4OR4COR4E)
 		intreg_set_44c(IE_L14 | IE_L10);
 #endif
 }
@@ -705,8 +704,8 @@ clockintr(cap)
 		discard = timerreg_4m->t_limit;
 	}
 #endif
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
+	if (CPU_ISSUN4OR4COR4E) {
 		discard = timerreg4->t_c10.t_limit;
 	}
 #endif
@@ -749,7 +748,7 @@ statintr(cap)
 		}
 	}
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 		discard = timerreg4->t_c14.t_limit;
 	}
 	statclock((struct clockframe *)cap);
@@ -769,7 +768,7 @@ statintr(cap)
 		counterreg_4m->t_limit = tmr_ustolim4m(newint);
 	}
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4COR4E) {
 		timerreg4->t_c14.t_limit = tmr_ustolim(newint);
 	}
 	return (1);
