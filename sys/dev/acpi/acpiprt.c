@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.39 2010/07/08 20:56:31 jordan Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.40 2010/07/10 04:59:55 jordan Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -114,7 +114,7 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: bus mismatch, new:%d old:%d\n",
 			aml_nodename(sc->sc_devnode),
 			nbus, sc->sc_bus);
-		panic("aiiiee..");
+		sc->sc_bus = nbus;
 	}
 
 	if (aml_evalnode(sc->sc_acpi, sc->sc_devnode, 0, NULL, &res)) {

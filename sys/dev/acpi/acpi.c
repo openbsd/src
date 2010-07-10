@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.174 2010/07/09 12:27:02 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.175 2010/07/10 04:59:56 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -606,6 +606,10 @@ acpi_getpci(struct aml_node *node, void *arg)
 		aml_nodename(node));
 
 	/* Check if PCI device exists */
+	if (pci->dev > 0x1F || pci->fun > 7) {
+		free(pci, M_DEVBUF);
+		return (1);
+	}
 	tag = pci_make_tag(pc, pci->bus, pci->dev, pci->fun);
 	reg = pci_conf_read(pc, tag, PCI_ID_REG);
 	if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID) {
