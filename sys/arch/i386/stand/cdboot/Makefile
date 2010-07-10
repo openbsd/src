@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2007/11/25 18:25:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2010/07/10 16:11:44 deraadt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -11,7 +11,7 @@ SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic
 INSTALL_STRIP=
 
-LDFLAGS+=-Ttext $(LINKADDR) -N -x -noinhibit-exec
+LDFLAGS+=-Ttext $(LINKADDR) -Z -x -noinhibit-exec
 CLEANFILES+=	crt0.o
 SRCS=	srt0.S
 
@@ -30,6 +30,7 @@ SRCS+=	strlcpy.c moddi3.c divdi3.c qdivrem.c
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD)
 	@$(SIZE) ${PROG}
+	cp ${PROG} ${PROG}.whole
 	if [ -x ${.OBJDIR}/${PROG} ]; then \
 		objcopy -O binary ${PROG} ${.OBJDIR}/.tmp;\
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
