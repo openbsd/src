@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.12 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.13 2010/07/11 10:05:18 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -288,6 +288,19 @@ sub match
 {
 	my ($spec, $library, $base) = @_;
 	return !$spec->no_match($library, $base);
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+
+	if ($a->key ne $b->key) {
+		return undef;
+	}
+	if ($a->major != $b->major) {
+		return $a->major <=> $b->major;
+	}
+	return $a->minor <=> $b->minor;
 }
 
 1;
