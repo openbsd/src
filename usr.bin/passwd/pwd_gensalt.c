@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.26 2007/07/06 13:09:36 thib Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.27 2010/07/11 15:53:12 dhill Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -41,7 +41,6 @@
 #include <login_cap.h>
 
 void	to64(char *, u_int32_t, int n);
-char	*bcrypt_gensalt(u_int8_t);
 int	pwd_gensalt(char *, int, login_cap_t *, char);
 
 #define	YPCIPHER_DEF		"old"
