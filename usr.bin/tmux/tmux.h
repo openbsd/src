@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.233 2010/06/29 05:24:49 tedu Exp $ */
+/* $OpenBSD: tmux.h,v 1.234 2010/07/11 17:06:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -411,6 +411,10 @@ struct msg_environ_data {
 
 struct msg_shell_data {
 	char		shell[MAXPATHLEN];
+};
+
+struct msg_exit_data {
+	int		retcode;
 };
 
 /* Mode key commands. */
@@ -1081,6 +1085,7 @@ struct message_entry {
 struct client {
 	struct imsgbuf	 ibuf;
 	struct event	 event;
+	int		 retcode;
 
 	struct timeval	 creation_time;
 	struct timeval	 activity_time;
