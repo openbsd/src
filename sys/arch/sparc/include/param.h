@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.42 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.43 2010/07/11 14:09:10 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -253,7 +253,7 @@ extern int mmumod;
 #	define CPU_ISSUN4COR4M	(CPU_ISSUN4C || CPU_ISSUN4M)
 #endif
 #if !defined(CPU_ISSUN4DOR4M)
-#	define CPU_ISSUN4DOR4M	(cputyp >= CPU_SUN4D)
+#	define CPU_ISSUN4DOR4M	(cputyp >= CPU_SUN4M)
 				/* (CPU_ISSUN4D || CPU_ISSUN4M) */
 #endif
 
