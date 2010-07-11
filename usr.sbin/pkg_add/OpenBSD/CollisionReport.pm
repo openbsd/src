@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.37 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.38 2010/07/11 07:27:25 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -56,9 +56,9 @@ sub find_collisions
 	return $bypkg;
 }
 
-sub collision_report($$)
+sub collision_report
 {
-	my ($list, $state) = @_;
+	my ($list, $state, $set) = @_;
 
 	my $destdir = $state->{destdir};
 
@@ -74,7 +74,8 @@ sub collision_report($$)
 	my $clueless_bat2;
 	my $found = 0;
 
-	$state->errsay("Collision: the following files already exist");
+	$state->errsay("Collision in #1: the following files already exist",
+	    $set->print);
 	if (!$state->defines('dontfindcollisions')) {
 		my $bypkg = find_collisions(\%todo, $state);
 		for my $pkg (sort keys %$bypkg) {

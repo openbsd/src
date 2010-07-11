@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.60 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.61 2010/07/11 07:27:25 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -298,7 +298,7 @@ sub validate_plists
 	if (@{$state->{colliding}} > 0) {
 		require OpenBSD::CollisionReport;
 
-		OpenBSD::CollisionReport::collision_report($state->{colliding}, $state);
+		OpenBSD::CollisionReport::collision_report($state->{colliding}, $state, $self);
 	}
 	if (defined $state->{overflow}) {
 		$state->vstat->tally;
