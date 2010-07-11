@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.31 2010/07/02 07:55:00 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.32 2010/07/11 23:16:42 chl Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -291,7 +291,6 @@ vinit(void)
 void
 vlex(char *s)
 {
-	value_t *p;
 	char *cp;
 
 	if (strcmp(s, "all") == 0)
