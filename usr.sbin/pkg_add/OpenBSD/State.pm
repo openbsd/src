@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.14 2010/07/09 12:42:43 espie Exp $
+# $OpenBSD: State.pm,v 1.15 2010/07/12 09:31:52 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -225,10 +225,10 @@ sub f
 	if (@_ == 0) {
 		return undef;
 	}
-	my $_ = shift;
+	my ($_, @l) = @_;
 	# make it so that #0 is #
-	unshift(@_, '#');
-	s/\#(\d+)/$_[$1]/ge;
+	unshift(@l, '#');
+	s/\#(\d+)/$l[$1]/ge;
 	return $_;
 }
 
