@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.182 2010/06/03 21:19:06 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.183 2010/07/12 14:35:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2651,8 +2651,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {
-		switch (errno) {
-		case ESRCH:
+		if (errno == ESRCH) {
 			if (hdr.rtm_type == RTM_CHANGE) {
 				hdr.rtm_type = RTM_ADD;
 				goto retry;
@@ -2661,20 +2660,11 @@ retry:
 				    inet_ntoa(kroute->prefix),
 				    kroute->prefixlen);
 				return (0);
-			} else {
-				log_warnx("send_rtmsg: action %u, "
-				    "prefix %s/%u: %s", hdr.rtm_type,
-				    inet_ntoa(kroute->prefix),
-				    kroute->prefixlen, strerror(errno));
-				return (0);
 			}
-			break;
-		default:
-			log_warnx("send_rtmsg: action %u, prefix %s/%u: %s",
-			    hdr.rtm_type, inet_ntoa(kroute->prefix),
-			    kroute->prefixlen, strerror(errno));
-			return (0);
 		}
+		log_warn("send_rtmsg: action %u, prefix %s/%u", hdr.rtm_type,
+		    inet_ntoa(kroute->prefix), kroute->prefixlen);
+		return (0);
 	}
 
 	return (0);
@@ -2767,8 +2757,7 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {
-		switch (errno) {
-		case ESRCH:
+		if (errno == ESRCH) {
 			if (hdr.rtm_type == RTM_CHANGE) {
 				hdr.rtm_type = RTM_ADD;
 				goto retry;
@@ -2777,20 +2766,11 @@ retry:
 				    log_in6addr(&kroute->prefix),
 				    kroute->prefixlen);
 				return (0);
-			} else {
-				log_warnx("send_rt6msg: action %u, "
-				    "prefix %s/%u: %s", hdr.rtm_type,
-				    log_in6addr(&kroute->prefix),
-				    kroute->prefixlen, strerror(errno));
-				return (0);
 			}
-			break;
-		default:
-			log_warnx("send_rt6msg: action %u, prefix %s/%u: %s",
-			    hdr.rtm_type, log_in6addr(&kroute->prefix),
-			    kroute->prefixlen, strerror(errno));
-			return (0);
 		}
+		log_warn("send_rt6msg: action %u, prefix %s/%u", hdr.rtm_type,
+		    log_in6addr(&kroute->prefix), kroute->prefixlen);
+		return (0);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.25 2010/07/06 13:24:35 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.26 2010/07/12 14:35:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1110,8 +1110,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {
-		switch (errno) {
-		case ESRCH:
+		if (errno == ESRCH) {
 			if (hdr.rtm_type == RTM_CHANGE) {
 				hdr.rtm_type = RTM_ADD;
 				goto retry;
@@ -1119,19 +1118,11 @@ retry:
 				log_info("route %s/%u vanished before delete",
 				    log_sockaddr(&prefix), kroute->prefixlen);
 				return (0);
-			} else {
-				log_warn("send_rtmsg: action %u, "
-				    "prefix %s/%u", hdr.rtm_type,
-				    log_sockaddr(&prefix), kroute->prefixlen);
-				return (0);
 			}
-			break;
-		default:
-			log_warn("send_rtmsg: action %u, prefix %s/%u",
-			    hdr.rtm_type, log_sockaddr(&prefix),
-			    kroute->prefixlen);
-			return (0);
 		}
+		log_warn("send_rtmsg: action %u, prefix %s/%u", hdr.rtm_type,
+		    log_sockaddr(&prefix), kroute->prefixlen);
+		return (0);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.21 2010/01/02 14:40:54 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.22 2010/07/12 14:35:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -801,8 +801,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {
-		switch (errno) {
-		case ESRCH:
+		if (errno == ESRCH) {
 			if (hdr.rtm_type == RTM_CHANGE) {
 				hdr.rtm_type = RTM_ADD;
 				goto retry;
@@ -811,22 +810,12 @@ retry:
 				    inet_ntoa(kroute->prefix),
 				    mask2prefixlen(kroute->netmask.s_addr));
 				return (0);
-			} else {
-				log_warnx("send_rtmsg: action %u, "
-				    "prefix %s/%u: %s", hdr.rtm_type,
-				    inet_ntoa(kroute->prefix),
-				    mask2prefixlen(kroute->netmask.s_addr),
-				    strerror(errno));
-				return (0);
 			}
-			break;
-		default:
-			log_warnx("send_rtmsg: action %u, prefix %s/%u: %s",
-			    hdr.rtm_type, inet_ntoa(kroute->prefix),
-			    mask2prefixlen(kroute->netmask.s_addr),
-			    strerror(errno));
-			return (0);
 		}
+		log_warn("send_rtmsg: action %u, prefix %s/%u",
+		    hdr.rtm_type, inet_ntoa(kroute->prefix),
+		    mask2prefixlen(kroute->netmask.s_addr));
+		return (0);
 	}
 
 	return (0);
