@@ -1,4 +1,4 @@
-/*	$OpenBSD: min_heap.h,v 1.1 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: min_heap.h,v 1.2 2010/07/12 18:03:38 nicm Exp $	*/
 
 /*
  * Copyright (c) 2006 Maxim Yegorushkin <maxim.yegorushkin@gmail.com>
@@ -58,7 +58,7 @@ int min_heap_elem_greater(struct event *a, struct event *b)
 }
 
 void min_heap_ctor(min_heap_t* s) { s->p = 0; s->n = 0; s->a = 0; }
-void min_heap_dtor(min_heap_t* s) { free(s->p); }
+void min_heap_dtor(min_heap_t* s) { if(s->p) free(s->p); }
 void min_heap_elem_init(struct event* e) { e->min_heap_idx = -1; }
 int min_heap_empty(min_heap_t* s) { return 0u == s->n; }
 unsigned min_heap_size(min_heap_t* s) { return s->n; }

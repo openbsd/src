@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.14 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: signal.c,v 1.15 2010/07/12 18:03:38 nicm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -186,12 +186,14 @@ _evsignal_set_handler(struct event_base *base,
 	if (sigaction(evsignal, &sa, sig->sh_old[evsignal]) == -1) {
 		event_warn("sigaction");
 		free(sig->sh_old[evsignal]);
+		sig->sh_old[evsignal] = NULL;
 		return (-1);
 	}
 #else
 	if ((sh = signal(evsignal, handler)) == SIG_ERR) {
 		event_warn("signal");
 		free(sig->sh_old[evsignal]);
+		sig->sh_old[evsignal] = NULL;
 		return (-1);
 	}
 	*sig->sh_old[evsignal] = sh;
@@ -346,12 +348,19 @@ evsignal_dealloc(struct event_base *base)
 			_evsignal_restore_handler(base, i);
 	}
 
-	EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[0]);
-	base->sig.ev_signal_pair[0] = -1;
-	EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[1]);
-	base->sig.ev_signal_pair[1] = -1;
+	if (base->sig.ev_signal_pair[0] != -1) {
+		EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[0]);
+		base->sig.ev_signal_pair[0] = -1;
+	}
+	if (base->sig.ev_signal_pair[1] != -1) {
+		EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[1]);
+		base->sig.ev_signal_pair[1] = -1;
+	}
 	base->sig.sh_old_max = 0;
 
 	/* per index frees are handled in evsignal_del() */
-	free(base->sig.sh_old);
+	if (base->sig.sh_old) {
+		free(base->sig.sh_old);
+		base->sig.sh_old = NULL;
+	}
 }

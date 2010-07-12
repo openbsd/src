@@ -1,4 +1,4 @@
-/*	$OpenBSD: evutil.c,v 1.2 2010/04/21 21:02:47 nicm Exp $	*/
+/*	$OpenBSD: evutil.c,v 1.3 2010/07/12 18:03:38 nicm Exp $	*/
 
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
@@ -170,10 +170,17 @@ evutil_make_socket_nonblocking(int fd)
 		ioctlsocket(fd, FIONBIO, (unsigned long*) &nonblocking);
 	}
 #else
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-		event_warn("fcntl(O_NONBLOCK)");
-		return -1;
-}	
+	{
+		int flags;
+		if ((flags = fcntl(fd, F_GETFL, NULL)) < 0) {
+			event_warn("fcntl(%d, F_GETFL)", fd);
+			return -1;
+		}
+		if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+			event_warn("fcntl(%d, F_SETFL)", fd);
+			return -1;
+		}
+	}
 #endif
 	return 0;
 }
