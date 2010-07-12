@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.85 2010/05/10 21:04:54 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.86 2010/07/12 16:26:45 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: July 12 2010 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -400,10 +400,11 @@ are only recognized if they are unquoted and if they are used as the first
 word of a command (i.e. they can't be preceded by parameter assignments or
 redirections):
 .Bd -literal -offset indent
-case     else     function     then      !
-do       esac     if           time      [[
-done     fi       in           until     {
-elif     for      select       while     }
+case   esac       in       while   ]]
+do     fi         name     !       {
+done   for        select   (       }
+elif   function   then     )
+else   if         until    [[
 .Ed
 .Pp
 .Sy Note :
@@ -549,6 +550,60 @@ statement is that of non-conditional
 that is executed; if no non-conditional
 .Ar list
 is executed, the exit status is zero.
+.It Xo select Ar name
+.Oo in Ar word No ... Oc ;
+.No do Ar list ; No done
+.Xc
+The
+.Ic select
+statement provides an automatic method of presenting the user with a menu and
+selecting from it.
+An enumerated list of the specified
+.Ar word Ns (s)
+is printed on standard error, followed by a prompt
+.Po
+.Ev PS3: normally
+.Sq #?\ \&
+.Pc .
+A number corresponding to one of the enumerated words is then read from
+standard input,
+.Ar name
+is set to the selected word (or unset if the selection is not valid),
+.Ev REPLY
+is set to what was read (leading/trailing space is stripped), and
+.Ar list
+is executed.
+If a blank line (i.e. zero or more
+.Ev IFS
+characters) is entered, the menu is reprinted without executing
+.Ar list .
+.Pp
+When
+.Ar list
+completes, the enumerated list is printed if
+.Ev REPLY
+is
+.Dv NULL ,
+the prompt is printed, and so on.
+This process continues until an end-of-file
+is read, an interrupt is received, or a
+.Ic break
+statement is executed inside the loop.
+If
+.Dq in word ...
+is omitted, the positional parameters are used
+(i.e. $1, $2, etc.).
+For historical reasons, open and close braces may be used instead of
+.Ic do
+and
+.Ic done
+e.g.\&
+.Ic select i; { echo $i; } .
+The exit status of a
+.Ic select
+statement is zero if a
+.Ic break
+statement is used to exit the loop, non-zero otherwise.
 .It Xo until Ar list ;
 .No do Ar list ;
 .No done
@@ -590,6 +645,72 @@ Mostly the same as
 (see
 .Sx Functions
 below).
+.It Bq Bq Ar \ \&expression\ \&
+Similar to the
+.Ic test
+and
+.Ic \&[ ... \&]
+commands (described later), with the following exceptions:
+.Bl -bullet -offset indent
+.It
+Field splitting and file name generation are not performed on arguments.
+.It
+The
+.Fl a
+.Pq AND
+and
+.Fl o
+.Pq OR
+operators are replaced with
+.Ql &&
+and
+.Ql || ,
+respectively.
+.It
+Operators (e.g.\&
+.Sq Fl f ,
+.Sq = ,
+.Sq \&! )
+must be unquoted.
+.It
+The second operand of the
+.Sq !=
+and
+.Sq =
+expressions are patterns (e.g. the comparison
+.Ic [[ foobar = f*r ]]
+succeeds).
+.It
+There are two additional binary operators,
+.Ql \*(Lt
+and
+.Ql \*(Gt ,
+which return true if their first string operand is less than, or greater than,
+their second string operand, respectively.
+.It
+The single argument form of
+.Ic test ,
+which tests if the argument has a non-zero length, is not valid; explicit
+operators must always be used e.g. instead of
+.No \&[ Ar str No \&]
+use
+.No \&[[ -n Ar str No \&]] .
+.It
+Parameter, command, and arithmetic substitutions are performed as expressions
+are evaluated and lazy expression evaluation is used for the
+.Ql &&
+and
+.Ql ||
+operators.
+This means that in the following statement,
+.Ic $(\*(Lt foo)
+is evaluated if and only if the file
+.Pa foo
+exists and is readable:
+.Bd -literal -offset indent
+$ [[ -r foo && $(\*(Lt foo) = b*r ]]
+.Ed
+.El
 .El
 .Ss Quoting
 Quoting is used to prevent the shell from treating characters or words

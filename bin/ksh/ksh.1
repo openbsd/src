@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.134 2010/05/10 21:04:54 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.135 2010/07/12 16:26:45 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: July 12 2010 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -449,10 +449,11 @@ are only recognized if they are unquoted and if they are used as the first
 word of a command (i.e. they can't be preceded by parameter assignments or
 redirections):
 .Bd -literal -offset indent
-case     else     function     then      !
-do       esac     if           time      [[
-done     fi       in           until     {
-elif     for      select       while     }
+case   esac       in       until   ((   }
+do     fi         name     while   ))
+done   for        select   !       [[
+elif   function   then     (       ]]
+else   if         time     )       {
 .Ed
 .Pp
 .Sy Note :
