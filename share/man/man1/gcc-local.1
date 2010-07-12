@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.21 2010/05/09 14:07:58 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.22 2010/07/12 16:28:29 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,24 +25,21 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 9 2010 $
+.Dd $Mdocdate: July 12 2010 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
 .Nm gcc-local
 .Nd local modifications to gcc
 .Sh DESCRIPTION
-Some
 .Ox
-platforms use a derivative of
-.Nm gcc 2.95.3 ,
-others use a derivative of
-.Nm gcc 3.3.5 .
-In both cases,
-the
-.Nm gcc
-software comes with specific modifications for
-.Ox .
+uses derivatives of
+.Xr gcc 1
+versions 2.95.3, 3.3.5, or 4.2.1,
+depending on machine architecture.
+In all cases,
+the software comes with specific modifications for
+.Ox :
 .Bl -dash
 .It
 .Nm gcc
