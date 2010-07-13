@@ -1,4 +1,4 @@
-/*	$OpenBSD: attributes.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: attributes.c,v 1.2 2010/07/13 12:54:51 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -132,6 +132,9 @@ ldap_set_values(struct ber_element *elm, struct ber_element *vals)
 	old_vals->be_sub = NULL;
 	ber_link_elements(old_vals, vals->be_sub);
 
+	vals->be_sub = NULL;
+	ber_free_elements(vals);
+
 	return 0;
 }
 
@@ -156,6 +159,9 @@ ldap_merge_values(struct ber_element *elm, struct ber_element *vals)
 		last = last->be_next;
 
 	ber_link_elements(last, vals->be_sub);
+
+	vals->be_sub = NULL;
+	ber_free_elements(vals);
 
 	return 0;
 }

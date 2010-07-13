@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.12 2010/07/06 20:02:33 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.13 2010/07/13 12:54:51 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -216,7 +216,7 @@ ldap_modify(struct request *req)
 	char			*dn;
 	long long		 op;
 	char			*attr;
-	struct ber_element	*mods, *entry, *mod, *vals, *a, *set;
+	struct ber_element	*mods, *entry, *mod, *vals, *a, *set, *prev = NULL;
 	struct namespace	*ns;
 	struct attr_type	*at;
 	struct referrals	*refs;
@@ -258,10 +258,13 @@ ldap_modify(struct request *req)
 	}
 
 	for (mod = mods->be_sub; mod; mod = mod->be_next) {
-		if (ber_scanf_elements(mod, "{E{se", &op, &attr, &vals) != 0) {
+		if (ber_scanf_elements(mod, "{E{ese", &op, &prev, &attr, &vals) != 0) {
 			rc = LDAP_PROTOCOL_ERROR;
+			vals = NULL;
 			goto done;
 		}
+
+		prev->be_next = NULL;
 
 		if (!ns->relax) {
 			at = lookup_attribute(conf->schema, attr);
@@ -282,10 +285,13 @@ ldap_modify(struct request *req)
 
 		switch (op) {
 		case LDAP_MOD_ADD:
-			if (a == NULL)
-				ldap_add_attribute(entry, attr, vals);
-			else
-				ldap_merge_values(a, vals);
+			if (a == NULL) {
+				if (ldap_add_attribute(entry, attr, vals) != NULL)
+					vals = NULL;
+			} else {
+				if (ldap_merge_values(a, vals->be_sub) == 0)
+					vals = NULL;
+			}
 			break;
 		case LDAP_MOD_DELETE:
 			if (vals->be_sub &&
@@ -295,14 +301,22 @@ ldap_modify(struct request *req)
 				ldap_del_attribute(entry, attr);
 			break;
 		case LDAP_MOD_REPLACE:
-			if (vals->be_sub) {
-				if (a == NULL)
-					ldap_add_attribute(entry, attr, vals);
-				else
-					ldap_set_values(a, vals);
+			if (vals->be_sub != NULL) {
+				if (a == NULL) {
+					if (ldap_add_attribute(entry, attr, vals) != NULL)
+						vals = NULL;
+				} else {
+					if (ldap_set_values(a, vals->be_sub) == 0)
+						vals = NULL;
+				}
 			} else if (a == NULL)
 				ldap_del_attribute(entry, attr);
 			break;
+		}
+
+		if (vals != NULL) {
+			ber_free_elements(vals);
+			vals = NULL;
 		}
 	}
 
@@ -329,6 +343,8 @@ ldap_modify(struct request *req)
 		rc = LDAP_OTHER;
 
 done:
+	if (vals != NULL)
+		ber_free_elements(vals);
 	namespace_abort(ns);
 	return ldap_respond(req, rc);
 }
