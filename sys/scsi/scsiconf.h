@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.130 2010/07/01 05:11:18 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.131 2010/07/13 00:30:30 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ struct scsi_xfer {
 	size_t	resid;			/* how much buffer was not touched */
 	int	error;			/* an error value	*/
 	struct	buf *bp;		/* If we need to associate with a buf */
-	struct	scsi_sense_data	sense; /* 32 bytes*/
+	struct	scsi_sense_data	sense;	/* 18 bytes*/
 	u_int8_t status;		/* SCSI status */
 	struct	scsi_generic cmdstore;	/* stash the command in here */
 	/*
