@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2010/07/13 20:47:56 nicm Exp $
+#	$OpenBSD: Makefile,v 1.28 2010/07/13 21:31:17 nicm Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -66,7 +66,7 @@ LTESTS= cvs-initial \
 	cvs-rlog \
 	cvs-rtag-one_more_branch \
 	cvs-export \
-	cvs-merge
+	cvs-update-with-local
 # Known to fail.
 #	cvs-update-for_subdir
 #	cvs-release-dflag
@@ -319,6 +319,22 @@ test-cvs-merge:
 	@cd ${REGRESS_WCOPY}/b/seed && ${CVSCMD} -Q up > /dev/null 2>&1
 	@echo "modified text" > ${REGRESS_WCOPY}/b/seed/seed1.txt
 	@cd ${REGRESS_WCOPY}/b/seed && test `${CVSCMD} -q up | wc -l` -eq 0
+
+test-cvs-update-with-local:
+	@rm -rf ${REGRESS_WCOPY}
+	@mkdir -p ${REGRESS_WCOPY}/a ${REGRESS_WCOPY}/b
+	@cd ${REGRESS_WCOPY}/a; \
+	    ${CVSCMD} -Q -d ${MYCVSROOT} co seed > /dev/null
+	@cd ${REGRESS_WCOPY}/b; \
+	    ${CVSCMD} -Q -d ${MYCVSROOT} co seed > /dev/null
+	@echo "new file" > ${REGRESS_WCOPY}/a/seed/test.txt
+	@cd ${REGRESS_WCOPY}/a/seed && \
+		${CVSCMD} -Q add test.txt > /dev/null && \
+		${CVSCMD} -Q com -m 'a' > /dev/null; 
+	@echo "local file" > ${REGRESS_WCOPY}/b/seed/test.txt
+	@cd ${REGRESS_WCOPY}/b/seed && \
+		${CVSCMD} -Q up 2>&1|grep -q '^C test.txt' && \
+		grep -q '^local file' test.txt
 
 clean:
 	@rm -rf ${CLEANFILES}
