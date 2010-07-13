@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.28 2007/04/08 14:20:26 pedro Exp $      */
+/*      $OpenBSD: ata.c,v 1.29 2010/07/13 16:50:26 deraadt Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -64,7 +64,7 @@ int
 ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
     struct ataparams *prms)
 {
-	char tb[ATAPARAMS_SIZE];
+	char *tb;
 	struct wdc_command wdc_c;
 	int i;
 	u_int16_t *p;
@@ -72,7 +72,6 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 
 	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
-	bzero(tb, sizeof(tb));
 	bzero(&wdc_c, sizeof(struct wdc_command));
 
 	if (drvp->drive_flags & DRIVE_ATA) {
@@ -90,6 +89,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
+
+	tb = malloc(ATAPARAMS_SIZE, M_DEVBUF, M_NOWAIT | M_ZERO); /* XXX dma reachable */
+	if (tb == NULL)
+		return CMD_AGAIN;
 	wdc_c.flags = AT_READ | flags;
 	wdc_c.data = tb;
 	wdc_c.bcount = ATAPARAMS_SIZE;
@@ -97,6 +100,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	if ((ret = wdc_exec_command(drvp, &wdc_c)) != WDC_COMPLETE) {
 		WDCDEBUG_PRINT(("%s: wdc_exec_command failed: %d\n",
 		    __func__, ret), DEBUG_PROBE);
+		free(tb, M_DEVBUF);
 		return CMD_AGAIN;
 	}
 
@@ -104,6 +108,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		WDCDEBUG_PRINT(("%s: IDENTIFY failed: 0x%x\n", __func__,
 		    wdc_c.flags), DEBUG_PROBE);
 
+		free(tb, M_DEVBUF);
 		return CMD_ERR;
 	} else {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -133,8 +138,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		    ((prms->atap_model[0] == 'N' &&
 			prms->atap_model[1] == 'E') ||
 		     (prms->atap_model[0] == 'F' &&
-			 prms->atap_model[1] == 'X')))
+			 prms->atap_model[1] == 'X'))) {
+			free(tb, M_DEVBUF);
 			return CMD_OK;
+		}
 		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
 			p = (u_short *)(prms->atap_model + i);
 			*p = swap16(*p);
@@ -148,6 +155,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 			*p = swap16(*p);
 		}
 
+		free(tb, M_DEVBUF);
 		return CMD_OK;
 	}
 }
