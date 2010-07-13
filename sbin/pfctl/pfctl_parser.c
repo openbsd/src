@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.268 2010/07/03 02:28:57 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.269 2010/07/13 13:11:57 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -860,6 +860,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	if (r->rule_flag & PFRULE_IFBOUND)
 		opts = 1;
 	if (r->rule_flag & PFRULE_STATESLOPPY)
+		opts = 1;
+	if (r->rule_flag & PFRULE_PFLOW)
 		opts = 1;
 	for (i = 0; !opts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
