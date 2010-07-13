@@ -33,10 +33,10 @@
 ./bin/rksh
 ./bin/rm
 ./bin/rmail
-./bin/rmd160
 ./bin/rmdir
 ./bin/sh
 ./bin/sha1
+./bin/sha256
 ./bin/sleep
 ./bin/stty
 ./bin/sum

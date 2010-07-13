@@ -713,7 +713,6 @@
 ./usr/share/man/cat1/rksh.0
 ./usr/share/man/cat1/rlog.0
 ./usr/share/man/cat1/rm.0
-./usr/share/man/cat1/rmd160.0
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
@@ -733,6 +732,7 @@
 ./usr/share/man/cat1/sgi
 ./usr/share/man/cat1/sh.0
 ./usr/share/man/cat1/sha1.0
+./usr/share/man/cat1/sha256.0
 ./usr/share/man/cat1/shar.0
 ./usr/share/man/cat1/size.0
 ./usr/share/man/cat1/skey.0
