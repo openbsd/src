@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.175 2010/07/10 04:59:56 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.176 2010/07/13 21:01:05 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -68,7 +68,7 @@ int acpi_saved_spl;
 
 #define ACPIEN_RETRIES 15
 
-void	acpi_isr_thread(void *);
+void	acpi_thread(void *);
 void	acpi_create_thread(void *);
 
 void 	acpi_pci_match(struct device *, struct pci_attach_args *);
@@ -1603,7 +1603,7 @@ acpi_interrupt(void *arg)
 	}
 
 	if (processed) {
-		sc->sc_wakeup = 0;
+		sc->sc_threadwaiting = 0;
 		wakeup(sc);
 	}
 
@@ -2291,7 +2291,7 @@ acpi_wakeup(void *arg)
 {
 	struct acpi_softc  *sc = (struct acpi_softc *)arg;
 
-	sc->sc_wakeup = 0;
+	sc->sc_threadwaiting = 0;
 	wakeup(sc);
 }
 
@@ -2311,7 +2311,7 @@ acpi_powerdown(void)
 extern int aml_busy;
 
 void
-acpi_isr_thread(void *arg)
+acpi_thread(void *arg)
 {
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
@@ -2329,7 +2329,7 @@ acpi_isr_thread(void *arg)
 		    sc->sc_fadt->flags & FADT_SLP_BUTTON ? 'n' : 'y',
 		    sc->sc_fadt->flags & FADT_PWR_BUTTON ? 'n' : 'y');
 		dnprintf(10, "Enabling acpi interrupts...\n");
-		sc->sc_wakeup = 1;
+		sc->sc_threadwaiting = 1;
 
 		/* Enable Sleep/Power buttons if they exist */
 		flag = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
@@ -2349,10 +2349,10 @@ acpi_isr_thread(void *arg)
 	}
 
 	while (thread->running) {
-		dnprintf(10, "sleep... %d\n", sc->sc_wakeup);
-		while (sc->sc_wakeup)
+		dnprintf(10, "sleep... %d\n", sc->sc_threadwaiting);
+		while (sc->sc_threadwaiting)
 			tsleep(sc, PWAIT, "acpi_idle", 0);
-		sc->sc_wakeup = 1;
+		sc->sc_threadwaiting = 1;
 		dnprintf(10, "wakeup..\n");
 		if (aml_busy)
 			continue;
@@ -2408,7 +2408,7 @@ acpi_create_thread(void *arg)
 {
 	struct acpi_softc *sc = arg;
 
-	if (kthread_create(acpi_isr_thread, sc->sc_thread, NULL, DEVNAME(sc))
+	if (kthread_create(acpi_thread, sc->sc_thread, NULL, DEVNAME(sc))
 	    != 0) {
 		printf("%s: unable to create isr thread, GPEs disabled\n",
 		    DEVNAME(sc));

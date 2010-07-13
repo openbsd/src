@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.58 2010/07/06 20:14:17 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.59 2010/07/13 21:01:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -218,7 +218,7 @@ struct acpi_softc {
 
 	struct gpe_block	*gpe_table;
 
-	int			sc_wakeup;
+	int			sc_threadwaiting;
 	u_int32_t		sc_gpe_sts;
 	u_int32_t		sc_gpe_en;
 	struct acpi_thread	*sc_thread;
