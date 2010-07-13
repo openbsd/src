@@ -1,6 +1,6 @@
-/*	$Id: mdoc_html.c,v 1.24 2010/06/29 17:10:29 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.25 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,6 @@
 #include "mandoc.h"
 #include "out.h"
 #include "html.h"
-#include "regs.h"
 #include "mdoc.h"
 #include "main.h"
 
@@ -69,6 +68,8 @@ static	int		  mdoc_aq_pre(MDOC_ARGS);
 static	int		  mdoc_ar_pre(MDOC_ARGS);
 static	int		  mdoc_bd_pre(MDOC_ARGS);
 static	int		  mdoc_bf_pre(MDOC_ARGS);
+static	void		  mdoc_bk_post(MDOC_ARGS);
+static	int		  mdoc_bk_pre(MDOC_ARGS);
 static	void		  mdoc_bl_post(MDOC_ARGS);
 static	int		  mdoc_bl_pre(MDOC_ARGS);
 static	void		  mdoc_bq_post(MDOC_ARGS);
@@ -233,7 +234,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Fc */ 
 	{mdoc_op_pre, mdoc_op_post}, /* Oo */
 	{NULL, NULL}, /* Oc */
-	{NULL, NULL}, /* Bk */
+	{mdoc_bk_pre, mdoc_bk_post}, /* Bk */
 	{NULL, NULL}, /* Ek */
 	{mdoc_bt_pre, NULL}, /* Bt */
 	{NULL, NULL}, /* Hf */
@@ -433,9 +434,21 @@ print_mdoc_node(MDOC_ARGS)
 		print_text(h, n->string);
 		return;
 	default:
-		if (mdocs[n->tok].pre && !n->end)
+		if (mdocs[n->tok].pre && ENDBODY_NOT == n->end)
 			child = (*mdocs[n->tok].pre)(m, n, h);
 		break;
+	}
+
+	if (HTML_KEEP & h->flags) {
+		if (n->prev && n->prev->line != n->line) {
+			h->flags &= ~HTML_KEEP;
+			h->flags |= HTML_PREKEEP;
+		} else if (NULL == n->prev) {
+			if (n->parent && n->parent->line != n->line) {
+				h->flags &= ~HTML_KEEP;
+				h->flags |= HTML_PREKEEP;
+			}
+		}
 	}
 
 	if (child && n->child)
@@ -449,7 +462,7 @@ print_mdoc_node(MDOC_ARGS)
 		mdoc_root_post(m, n, h);
 		break;
 	default:
-		if (mdocs[n->tok].post && !n->end)
+		if (mdocs[n->tok].post && ENDBODY_NOT == n->end)
 			(*mdocs[n->tok].post)(m, n, h);
 		break;
 	}
@@ -732,17 +745,70 @@ mdoc_op_post(MDOC_ARGS)
 static int
 mdoc_nm_pre(MDOC_ARGS)
 {
-	struct htmlpair	tag;
+	struct htmlpair	 tag;
+	struct roffsu	 su;
+	const char	*cp;
 
-	if (NULL == n->child && NULL == m->name)
-		return(1);
+	/*
+	 * Accomodate for `Nm' being both an element (which may have
+	 * NULL children AND no m->name) and a block.
+	 */
 
-	synopsis_pre(h, n);
+	cp = NULL;
 
-	PAIR_CLASS_INIT(&tag, "name");
-	print_otag(h, TAG_SPAN, 1, &tag);
-	if (NULL == n->child)
-		print_text(h, m->name);
+	if (MDOC_ELEM == n->type) {
+		if (NULL == n->child && NULL == m->name)
+			return(1);
+		synopsis_pre(h, n);
+		PAIR_CLASS_INIT(&tag, "name");
+		print_otag(h, TAG_SPAN, 1, &tag);
+		if (NULL == n->child)
+			print_text(h, m->name);
+	} else if (MDOC_BLOCK == n->type) {
+		synopsis_pre(h, n);
+
+		bufcat_style(h, "clear", "both");
+		if (n->head->child || m->name) {
+			if (n->head->child && MDOC_TEXT == 
+					n->head->child->type)
+				cp = n->head->child->string;
+			if (NULL == cp || '\0' == *cp)
+				cp = m->name;
+
+			SCALE_HS_INIT(&su, (double)strlen(cp));
+			bufcat_su(h, "padding-left", &su);
+		}
+
+		PAIR_STYLE_INIT(&tag, h);
+		print_otag(h, TAG_DIV, 1, &tag);
+	} else if (MDOC_HEAD == n->type) { 
+		if (NULL == n->child && NULL == m->name)
+			return(1);
+
+		if (n->child && MDOC_TEXT == n->child->type)
+			cp = n->child->string;
+		if (NULL == cp || '\0' == *cp)
+			cp = m->name;
+
+		SCALE_HS_INIT(&su, (double)strlen(cp));
+
+		bufcat_style(h, "float", "left");
+		bufcat_su(h, "min-width", &su);
+		SCALE_INVERT(&su);
+		bufcat_su(h, "margin-left", &su);
+
+		PAIR_STYLE_INIT(&tag, h);
+		print_otag(h, TAG_DIV, 1, &tag);
+
+		if (NULL == n->child)
+			print_text(h, m->name);
+	} else if (MDOC_BODY == n->type) {
+		SCALE_HS_INIT(&su, 2);
+		bufcat_su(h, "margin-left", &su);
+		PAIR_STYLE_INIT(&tag, h);
+		print_otag(h, TAG_DIV, 1, &tag);
+	}
+
 	return(1);
 }
 
@@ -1017,7 +1083,7 @@ mdoc_it_head_pre(MDOC_ARGS, enum mdoc_list type, struct roffsu *width)
 static int
 mdoc_it_pre(MDOC_ARGS)
 {
-	int			 i, wp, comp;
+	int			 i, comp;
 	const struct mdoc_node	*bl, *nn;
 	struct roffsu		 width, offs;
 	enum mdoc_list		 type;
@@ -1034,11 +1100,12 @@ mdoc_it_pre(MDOC_ARGS)
 
 	SCALE_HS_INIT(&offs, 0);
 
-	type = bl->data.Bl.type;
-	comp = bl->data.Bl.comp;
+	assert(bl->data.Bl);
+	type = bl->data.Bl->type;
+	comp = bl->data.Bl->comp;
 
-	if (bl->data.Bl.offs)
-		a2offs(bl->data.Bl.offs, &offs);
+	if (bl->data.Bl->offs)
+		a2offs(bl->data.Bl->offs, &offs);
 
 	switch (type) {
 	case (LIST_enum):
@@ -1055,18 +1122,8 @@ mdoc_it_pre(MDOC_ARGS)
 		break;
 	}
 
-	if (bl->data.Bl.width)
-		a2width(bl->data.Bl.width, &width);
-
-	wp = -1;
-	for (i = 0; bl->args && i < (int)bl->args->argc; i++) 
-		switch (bl->args->argv[i].arg) {
-		case (MDOC_Column):
-			wp = i; /* Save for later. */
-			break;
-		default:
-			break;
-		}
+	if (bl->data.Bl->width)
+		a2width(bl->data.Bl->width, &width);
 
 	/* Override width in some cases. */
 
@@ -1091,8 +1148,8 @@ mdoc_it_pre(MDOC_ARGS)
 		for (i = 0; nn && nn != n; nn = nn->next)
 			if (MDOC_BODY == nn->type)
 				i++;
-		if (i < (int)bl->args->argv[wp].sz)
-			a2width(bl->args->argv[wp].value[i], &width);
+		if (i < (int)bl->data.Bl->ncols)
+			a2width(bl->data.Bl->cols[i], &width);
 	}
 
 	if (MDOC_HEAD == n->type)
@@ -1114,7 +1171,8 @@ mdoc_bl_pre(MDOC_ARGS)
 		return(0);
 	if (MDOC_BLOCK != n->type)
 		return(1);
-	if (LIST_enum != n->data.Bl.type)
+	assert(n->data.Bl);
+	if (LIST_enum != n->data.Bl->type)
 		return(1);
 
 	ord = malloc(sizeof(struct ord));
@@ -1138,7 +1196,7 @@ mdoc_bl_post(MDOC_ARGS)
 
 	if (MDOC_BLOCK != n->type)
 		return;
-	if (LIST_enum != n->data.Bl.type)
+	if (LIST_enum != n->data.Bl->type)
 		return;
 
 	ord = h->ords.head;
@@ -1353,10 +1411,11 @@ mdoc_bd_pre(MDOC_ARGS)
 
 	SCALE_VS_INIT(&su, 0);
 
-	if (n->data.Bd.offs)
-		a2offs(n->data.Bd.offs, &su);
+	assert(n->data.Bd);
+	if (n->data.Bd->offs)
+		a2offs(n->data.Bd->offs, &su);
 
-	comp = n->data.Bd.comp;
+	comp = n->data.Bd->comp;
 
 	/* FIXME: -centered, etc. formatting. */
 	/* FIXME: does not respect -offset ??? */
@@ -1383,8 +1442,8 @@ mdoc_bd_pre(MDOC_ARGS)
 		return(1);
 	}
 
-	if (DISP_unfilled != n->data.Bd.type && 
-			DISP_literal != n->data.Bd.type)
+	if (DISP_unfilled != n->data.Bd->type && 
+			DISP_literal != n->data.Bd->type)
 		return(1);
 
 	PAIR_CLASS_INIT(&tag[0], "lit");
@@ -1955,46 +2014,33 @@ mdoc_ap_pre(MDOC_ARGS)
 static int
 mdoc_bf_pre(MDOC_ARGS)
 {
-	int		 i;
 	struct htmlpair	 tag[2];
 	struct roffsu	 su;
 
 	if (MDOC_HEAD == n->type)
 		return(0);
-	else if (MDOC_BLOCK != n->type)
+	else if (MDOC_BODY != n->type)
 		return(1);
 
-	PAIR_CLASS_INIT(&tag[0], "lit");
+	assert(n->data.Bf);
 
-	if (n->head->child) {
-		if ( ! strcmp("Em", n->head->child->string))
-			PAIR_CLASS_INIT(&tag[0], "emph");
-		else if ( ! strcmp("Sy", n->head->child->string))
-			PAIR_CLASS_INIT(&tag[0], "symb");
-		else if ( ! strcmp("Li", n->head->child->string))
-			PAIR_CLASS_INIT(&tag[0], "lit");
-	} else {
-		for (i = 0; n->args && i < (int)n->args->argc; i++) 
-			switch (n->args->argv[i].arg) {
-			case (MDOC_Symbolic):
-				PAIR_CLASS_INIT(&tag[0], "symb");
-				break;
-			case (MDOC_Literal):
-				PAIR_CLASS_INIT(&tag[0], "lit");
-				break;
-			case (MDOC_Emphasis):
-				PAIR_CLASS_INIT(&tag[0], "emph");
-				break;
-			default:
-				break;
-			}
-	}
+	if (FONT_Em == n->data.Bf->font) 
+		PAIR_CLASS_INIT(&tag[0], "emph");
+	else if (FONT_Sy == n->data.Bf->font) 
+		PAIR_CLASS_INIT(&tag[0], "symb");
+	else if (FONT_Li == n->data.Bf->font) 
+		PAIR_CLASS_INIT(&tag[0], "lit");
+	else
+		PAIR_CLASS_INIT(&tag[0], "none");
 
-	/* FIXME: div's have spaces stripped--we want them. */
-
+	/* 
+	 * We want this to be inline-formatted, but needs to be div to
+	 * accept block children. 
+	 */
 	bufcat_style(h, "display", "inline");
 	SCALE_HS_INIT(&su, 1);
-	bufcat_su(h, "margin-right", &su);
+	/* Needs a left-margin for spacing. */
+	bufcat_su(h, "margin-left", &su);
 	PAIR_STYLE_INIT(&tag[1], h);
 	print_otag(h, TAG_DIV, 2, tag);
 	return(1);
@@ -2189,4 +2235,36 @@ mdoc__x_post(MDOC_ARGS)
 
 	h->flags |= HTML_NOSPACE;
 	print_text(h, n->next ? "," : ".");
+}
+
+
+/* ARGSUSED */
+static int
+mdoc_bk_pre(MDOC_ARGS)
+{
+
+	switch (n->type) {
+	case (MDOC_BLOCK):
+		break;
+	case (MDOC_HEAD):
+		return(0);
+	case (MDOC_BODY):
+		h->flags |= HTML_PREKEEP;
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+
+	return(1);
+}
+
+
+/* ARGSUSED */
+static void
+mdoc_bk_post(MDOC_ARGS)
+{
+
+	if (MDOC_BODY == n->type)
+		h->flags &= ~(HTML_KEEP | HTML_PREKEEP);
 }

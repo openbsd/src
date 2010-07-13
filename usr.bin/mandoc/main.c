@@ -1,6 +1,7 @@
-/*	$Id: main.c,v 1.41 2010/07/01 15:36:59 schwarze Exp $ */
+/*	$Id: main.c,v 1.42 2010/07/13 01:09:12 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +28,6 @@
 #include <unistd.h>
 
 #include "mandoc.h"
-#include "regs.h"
 #include "main.h"
 #include "mdoc.h"
 #include "man.h"
@@ -142,13 +142,13 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no title in document",
 	"missing list type",
 	"missing display type",
+	"missing font type",
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
 
 	"generic fatal error",
 
 	"column syntax is inconsistent",
-	"missing font type",
 	"displays may not be nested",
 	"unsupported display type",
 	"blocks badly nested",

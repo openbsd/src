@@ -1,6 +1,6 @@
-/*	$Id: html.h,v 1.6 2010/04/07 23:15:05 schwarze Exp $ */
+/*	$Id: html.h,v 1.7 2010/07/13 01:09:12 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -110,7 +110,9 @@ enum	htmltype {
 struct	html {
 	int		  flags;
 #define	HTML_NOSPACE	 (1 << 0)
-#define	HTML_IGNDELIM	 (1 << 2)
+#define	HTML_IGNDELIM	 (1 << 1)
+#define	HTML_KEEP	 (1 << 2)
+#define	HTML_PREKEEP	 (1 << 3)
 	struct tagq	  tags;
 	struct ordq	  ords;
 	void		 *symtab;

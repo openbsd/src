@@ -1,6 +1,6 @@
-/*	$Id: mdoc.h,v 1.30 2010/06/29 17:10:29 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.31 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -252,7 +252,7 @@ struct 	mdoc_arg {
 enum	mdoc_endbody {
 	ENDBODY_NOT = 0,
 	ENDBODY_SPACE,
-	ENDBODY_NOSPACE,
+	ENDBODY_NOSPACE
 };
 
 enum	mdoc_list {
@@ -279,6 +279,19 @@ enum	mdoc_disp {
 	DISP_literal
 };
 
+enum	mdoc_auth {
+	AUTH__NONE = 0,
+	AUTH_split,
+	AUTH_nosplit
+};
+
+enum	mdoc_font {
+	FONT__NONE = 0,
+	FONT_Em,
+	FONT_Li,
+	FONT_Sy
+};
+
 struct	mdoc_bd {
 	const char	 *offs; /* -offset */
 	enum mdoc_disp	  type; /* -ragged, etc. */
@@ -290,6 +303,16 @@ struct	mdoc_bl {
 	const char	 *offs; /* -offset */
 	enum mdoc_list	  type; /* -tag, -enum, etc. */
 	int		  comp; /* -compact */
+	size_t		  ncols; /* -column arg count */
+	const char	**cols; /* -column val ptr */
+};
+
+struct	mdoc_bf {
+	enum mdoc_font	  font; /* font */
+};
+
+struct	mdoc_an {
+	enum mdoc_auth	  auth; /* -split, etc. */
 };
 
 /* Node in AST. */
@@ -321,8 +344,10 @@ struct	mdoc_node {
 	enum mdoc_endbody end;		/* BODY */
 
 	union {
-		struct mdoc_bl Bl;
-		struct mdoc_bd Bd;
+		struct mdoc_an  An;
+		struct mdoc_bd *Bd;
+		struct mdoc_bf *Bf;
+		struct mdoc_bl *Bl;
 	} data;
 };
 

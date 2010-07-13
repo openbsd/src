@@ -1,6 +1,6 @@
-/*	$Id: man.c,v 1.35 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: man.c,v 1.36 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "mandoc.h"
-#include "regs.h"
 #include "libman.h"
 #include "libmandoc.h"
 

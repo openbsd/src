@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.9 2010/07/01 15:36:59 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.10 2010/07/13 01:09:13 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,9 +17,12 @@
 #ifndef MANDOC_H
 #define MANDOC_H
 
+/*
+ * This contains declarations that are available system-wide.
+ */
+
 #define ASCII_NBRSP	 31  /* non-breaking space */
 #define	ASCII_HYPH	 30  /* breakable hyphen */
-
 
 __BEGIN_DECLS
 
@@ -81,14 +84,13 @@ enum	mandocerr {
 	MANDOCERR_NOTITLE, /* no title in document */
 	MANDOCERR_LISTTYPE, /* missing list type */
 	MANDOCERR_DISPTYPE, /* missing display type */
+	MANDOCERR_FONTTYPE, /* missing font type */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
 
 	MANDOCERR_FATAL, /* ===== end of fatal errors ===== */
 
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
-	/* FIXME: this should be a MANDOCERR_ERROR */
-	MANDOCERR_FONTTYPE, /* missing font type */
 	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_NESTEDDISP, /* displays may not be nested */
 	MANDOCERR_BADDISP, /* unsupported display type */
@@ -107,8 +109,39 @@ enum	mandocerr {
 	MANDOCERR_MAX
 };
 
-typedef	int	(*mandocmsg)(enum mandocerr, 
-			void *, int, int, const char *);
+enum	regs {
+	REG_nS = 0,	/* register: nS */
+	REG__MAX
+};
+
+/*
+ * A single register entity.  If "set" is zero, the value of the
+ * register should be the default one, which is per-register.  It's
+ * assumed that callers know which type in "v" corresponds to which
+ * register value.
+ */
+struct	reg {
+	int		  set; /* whether set or not */
+	union {
+		unsigned  u; /* unsigned integer */
+	} v;
+};
+
+/*
+ * The primary interface to setting register values is in libroff,
+ * although libmdoc and libman from time to time will manipulate
+ * registers (such as `.Sh SYNOPSIS' enabling REG_nS).
+ */
+struct	regset {
+	struct reg	  regs[REG__MAX];
+};
+
+/*
+ * Callback function for warnings, errors, and fatal errors as they
+ * occur in the compilers libroff, libmdoc, and libman.
+ */
+typedef	int		(*mandocmsg)(enum mandocerr, void *,
+				int, int, const char *);
 
 __END_DECLS
 

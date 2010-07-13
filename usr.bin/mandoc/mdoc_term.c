@@ -1,6 +1,7 @@
-/*	$Id: mdoc_term.c,v 1.94 2010/07/01 15:36:59 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.95 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +27,6 @@
 #include "mandoc.h"
 #include "out.h"
 #include "term.h"
-#include "regs.h"
 #include "mdoc.h"
 #include "chars.h"
 #include "main.h"
@@ -53,8 +53,6 @@ static	size_t	  a2width(const struct termp *, const char *);
 static	size_t	  a2height(const struct termp *, const char *);
 static	size_t	  a2offs(const struct termp *, const char *);
 
-static	int	  arg_hasattr(int, const struct mdoc_node *);
-static	int	  arg_getattr(int, const struct mdoc_node *);
 static	void	  print_bvspace(struct termp *,
 			const struct mdoc_node *,
 			const struct mdoc_node *);
@@ -324,25 +322,41 @@ print_mdoc_node(DECL_ARGS)
 
 	if (MDOC_TEXT == n->type)
 		term_word(p, n->string); 
-	else if (termacts[n->tok].pre && !n->end)
+	else if (termacts[n->tok].pre && ENDBODY_NOT == n->end)
 		chld = (*termacts[n->tok].pre)(p, &npair, m, n);
+
+	/*
+	 * Keeps only work until the end of a line.  If a keep was
+	 * invoked in a prior line, revert it to PREKEEP.
+	 */
+
+	if (TERMP_KEEP & p->flags) {
+		if (n->prev && n->prev->line != n->line) {
+			p->flags &= ~TERMP_KEEP;
+			p->flags |= TERMP_PREKEEP;
+		} else if (NULL == n->prev) {
+			if (n->parent && n->parent->line != n->line) {
+				p->flags &= ~TERMP_KEEP;
+				p->flags |= TERMP_PREKEEP;
+			}
+		}
+	}
 
 	if (chld && n->child)
 		print_mdoc_nodelist(p, &npair, m, n->child);
 
 	term_fontpopq(p, font);
 
-	if (MDOC_TEXT != n->type &&
-	    termacts[n->tok].post &&
-	    ! (MDOC_ENDED & n->flags)) {
-		(*termacts[n->tok].post)(p, &npair, m, n);
+	if (MDOC_TEXT != n->type && termacts[n->tok].post && 
+			! (MDOC_ENDED & n->flags)) {
+		(void)(*termacts[n->tok].post)(p, &npair, m, n);
 
 		/*
 		 * Explicit end tokens not only call the post
 		 * handler, but also tell the respective block
 		 * that it must not call the post handler again.
 		 */
-		if (n->end)
+		if (ENDBODY_NOT != n->end)
 			n->pending->flags |= MDOC_ENDED;
 
 		/*
@@ -525,38 +539,6 @@ a2offs(const struct termp *p, const char *v)
 
 
 /*
- * Return 1 if an argument has a particular argument value or 0 if it
- * does not.  See arg_getattr().
- */
-static int
-arg_hasattr(int arg, const struct mdoc_node *n)
-{
-
-	return(-1 != arg_getattr(arg, n));
-}
-
-
-/*
- * Get the index of an argument in a node's argument list or -1 if it
- * does not exist.
- */
-static int
-arg_getattr(int v, const struct mdoc_node *n)
-{
-	int		 i;
-
-	if (NULL == n->args)
-		return(0);
-
-	for (i = 0; i < (int)n->args->argc; i++) 
-		if (n->args->argv[i].arg == v)
-			return(i);
-
-	return(-1);
-}
-
-
-/*
  * Determine how much space to print out before block elements of `It'
  * (and thus `Bl') and `Bd'.  And then go ahead and print that space,
  * too.
@@ -570,9 +552,9 @@ print_bvspace(struct termp *p,
 
 	term_newln(p);
 
-	if (MDOC_Bd == bl->tok && bl->data.Bd.comp)
+	if (MDOC_Bd == bl->tok && bl->data.Bd->comp)
 		return;
-	if (MDOC_Bl == bl->tok && bl->data.Bl.comp)
+	if (MDOC_Bl == bl->tok && bl->data.Bl->comp)
 		return;
 
 	/* Do not vspace directly after Ss/Sh. */
@@ -591,13 +573,13 @@ print_bvspace(struct termp *p,
 
 	/* A `-column' does not assert vspace within the list. */
 
-	if (MDOC_Bl == bl->tok && LIST_column == bl->data.Bl.type)
+	if (MDOC_Bl == bl->tok && LIST_column == bl->data.Bl->type)
 		if (n->prev && MDOC_It == n->prev->tok)
 			return;
 
 	/* A `-diag' without body does not vspace. */
 
-	if (MDOC_Bl == bl->tok && LIST_diag == bl->data.Bl.type)
+	if (MDOC_Bl == bl->tok && LIST_diag == bl->data.Bl->type)
 		if (n->prev && MDOC_It == n->prev->tok) {
 			assert(n->prev->body);
 			if (NULL == n->prev->body->child)
@@ -641,7 +623,7 @@ termp_it_pre(DECL_ARGS)
 {
 	const struct mdoc_node *bl, *nn;
 	char		        buf[7];
-	int		        i, col;
+	int		        i;
 	size_t		        width, offset, ncols, dcol;
 	enum mdoc_list		type;
 
@@ -651,7 +633,8 @@ termp_it_pre(DECL_ARGS)
 	}
 
 	bl = n->parent->parent->parent;
-	type = bl->data.Bl.type;
+	assert(bl->data.Bl);
+	type = bl->data.Bl->type;
 
 	/* 
 	 * First calculate width and offset.  This is pretty easy unless
@@ -661,15 +644,13 @@ termp_it_pre(DECL_ARGS)
 
 	width = offset = 0;
 
-	if (bl->data.Bl.offs)
-		offset = a2offs(p, bl->data.Bl.offs);
+	if (bl->data.Bl->offs)
+		offset = a2offs(p, bl->data.Bl->offs);
 
 	switch (type) {
 	case (LIST_column):
 		if (MDOC_HEAD == n->type)
 			break;
-
-		col = arg_getattr(MDOC_Column, bl);
 
 		/*
 		 * Imitate groff's column handling:
@@ -680,7 +661,8 @@ termp_it_pre(DECL_ARGS)
 		 *   column.
 		 * - For more than 5 columns, add only one column.
 		 */
-		ncols = bl->args->argv[col].sz;
+		ncols = bl->data.Bl->ncols;
+
 		/* LINTED */
 		dcol = ncols < 5 ? term_len(p, 4) : 
 			ncols == 5 ? term_len(p, 3) : term_len(p, 1);
@@ -694,7 +676,7 @@ termp_it_pre(DECL_ARGS)
 				nn->prev && i < (int)ncols; 
 				nn = nn->prev, i++)
 			offset += dcol + a2width
-				(p, bl->args->argv[col].value[i]);
+				(p, bl->data.Bl->cols[i]);
 
 		/*
 		 * When exceeding the declared number of columns, leave
@@ -709,10 +691,10 @@ termp_it_pre(DECL_ARGS)
 		 * Use the declared column widths, extended as explained
 		 * in the preceding paragraph.
 		 */
-		width = a2width(p, bl->args->argv[col].value[i]) + dcol;
+		width = a2width(p, bl->data.Bl->cols[i]) + dcol;
 		break;
 	default:
-		if (NULL == bl->data.Bl.width)
+		if (NULL == bl->data.Bl->width)
 			break;
 
 		/* 
@@ -720,8 +702,8 @@ termp_it_pre(DECL_ARGS)
 		 * number for buffering single arguments.  See the above
 		 * handling for column for how this changes.
 		 */
-		assert(bl->data.Bl.width);
-		width = a2width(p, bl->data.Bl.width) + term_len(p, 2);
+		assert(bl->data.Bl->width);
+		width = a2width(p, bl->data.Bl->width) + term_len(p, 2);
 		break;
 	}
 
@@ -983,7 +965,7 @@ termp_it_post(DECL_ARGS)
 	if (MDOC_BLOCK == n->type)
 		return;
 
-	type = n->parent->parent->parent->data.Bl.type;
+	type = n->parent->parent->parent->data.Bl->type;
 
 	switch (type) {
 	case (LIST_item):
@@ -1137,10 +1119,10 @@ termp_an_post(DECL_ARGS)
 		return;
 	}
 
-	if (arg_hasattr(MDOC_Split, n)) {
+	if (AUTH_split == n->data.An.auth) {
 		p->flags &= ~TERMP_NOSPLIT;
 		p->flags |= TERMP_SPLIT;
-	} else {
+	} else if (AUTH_nosplit == n->data.An.auth) {
 		p->flags &= ~TERMP_SPLIT;
 		p->flags |= TERMP_NOSPLIT;
 	}
@@ -1644,8 +1626,9 @@ termp_bd_pre(DECL_ARGS)
 	} else if (MDOC_HEAD == n->type)
 		return(0);
 
-	if (n->data.Bd.offs)
-		p->offset += a2offs(p, n->data.Bd.offs);
+	assert(n->data.Bd);
+	if (n->data.Bd->offs)
+		p->offset += a2offs(p, n->data.Bd->offs);
 
 	/*
 	 * If -ragged or -filled are specified, the block does nothing
@@ -1655,8 +1638,8 @@ termp_bd_pre(DECL_ARGS)
 	 * lines are allowed.
 	 */
 	
-	if (DISP_literal != n->data.Bd.type && 
-			DISP_unfilled != n->data.Bd.type)
+	if (DISP_literal != n->data.Bd->type && 
+			DISP_unfilled != n->data.Bd->type)
 		return(1);
 
 	tabwidth = p->tabwidth;
@@ -1693,8 +1676,9 @@ termp_bd_post(DECL_ARGS)
 	rm = p->rmargin;
 	rmax = p->maxrmargin;
 
-	if (DISP_literal == n->data.Bd.type || 
-			DISP_unfilled == n->data.Bd.type)
+	assert(n->data.Bd);
+	if (DISP_literal == n->data.Bd->type || 
+			DISP_unfilled == n->data.Bd->type)
 		p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
 
 	p->flags |= TERMP_NOSPACE;
@@ -2019,9 +2003,11 @@ termp_fo_pre(DECL_ARGS)
 		return(1);
 	} 
 
+	if (NULL == n->child)
+		return(0);
+
 	/* XXX: we drop non-initial arguments as per groff. */
 
-	assert(n->child);
 	assert(n->child->string);
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, n->child->string);
@@ -2051,30 +2037,19 @@ termp_fo_post(DECL_ARGS)
 static int
 termp_bf_pre(DECL_ARGS)
 {
-	const struct mdoc_node	*nn;
 
 	if (MDOC_HEAD == n->type)
 		return(0);
 	else if (MDOC_BLOCK != n->type)
 		return(1);
 
-	if (NULL == (nn = n->head->child)) {
-		if (arg_hasattr(MDOC_Emphasis, n))
-			term_fontpush(p, TERMFONT_UNDER);
-		else if (arg_hasattr(MDOC_Symbolic, n))
-			term_fontpush(p, TERMFONT_BOLD);
-		else
-			term_fontpush(p, TERMFONT_NONE);
+	assert(n->data.Bf);
 
-		return(1);
-	} 
-
-	assert(MDOC_TEXT == nn->type);
-	if (0 == strcmp("Em", nn->string))
+	if (FONT_Em == n->data.Bf->font) 
 		term_fontpush(p, TERMFONT_UNDER);
-	else if (0 == strcmp("Sy", nn->string))
+	else if (FONT_Sy == n->data.Bf->font) 
 		term_fontpush(p, TERMFONT_BOLD);
-	else
+	else 
 		term_fontpush(p, TERMFONT_NONE);
 
 	return(1);
@@ -2164,15 +2139,18 @@ termp_bk_pre(DECL_ARGS)
 
 	switch (n->type) {
 	case (MDOC_BLOCK):
-		return(1);
+		break;
 	case (MDOC_HEAD):
 		return(0);
 	case (MDOC_BODY):
 		p->flags |= TERMP_PREKEEP;
-		return(1);
+		break;
 	default:
 		abort();
+		/* NOTREACHED */
 	}
+
+	return(1);
 }
 
 

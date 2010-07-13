@@ -1,6 +1,7 @@
-/*	$Id: term.c,v 1.43 2010/07/03 15:59:05 schwarze Exp $ */
+/*	$Id: term.c,v 1.44 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +27,6 @@
 #include "mandoc.h"
 #include "chars.h"
 #include "out.h"
-#include "regs.h"
 #include "term.h"
 #include "main.h"
 
@@ -374,11 +374,6 @@ res(struct termp *p, const char *word, size_t len)
 	size_t		 sz;
 
 	rhs = chars_a2res(p->symtab, word, len, &sz);
-	if (NULL == rhs) {
-		rhs = roff_getstrn(word, len);
-		if (rhs)
-			sz = strlen(rhs);
-	}
 	if (rhs)
 		encode(p, rhs, sz);
 }
@@ -655,6 +650,7 @@ term_strlen(const struct termp *p, const char *cp)
 }
 
 
+/* ARGSUSED */
 size_t
 term_vspan(const struct termp *p, const struct roffsu *su)
 {
@@ -694,39 +690,11 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 size_t
 term_hspan(const struct termp *p, const struct roffsu *su)
 {
-	double		 r;
+	double		 v;
 
-	/* XXX: CM, IN, and PT are approximations. */
-
-	switch (su->unit) {
-	case (SCALE_CM):
-		r = 4 * su->scale;
-		break;
-	case (SCALE_IN):
-		/* XXX: this is an approximation. */
-		r = 10 * su->scale;
-		break;
-	case (SCALE_PC):
-		r = (10 * su->scale) / 6;
-		break;
-	case (SCALE_PT):
-		r = (10 * su->scale) / 72;
-		break;
-	case (SCALE_MM):
-		r = su->scale / 1000; /* FIXME: double-check. */
-		break;
-	case (SCALE_VS):
-		r = su->scale * 2 - 1; /* FIXME: double-check. */
-		break;
-	default:
-		r = su->scale;
-		break;
-	}
-
-	if (r < 0.0)
-		r = 0.0;
-	return((size_t)/* LINTED */
-			r);
+	v = ((*p->hspan)(p, su));
+	if (v < 0.0)
+		v = 0.0;
+	return((size_t) /* LINTED */
+			v);
 }
-
-

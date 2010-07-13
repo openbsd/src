@@ -1,6 +1,6 @@
-/*	$Id: html.c,v 1.11 2010/06/27 20:28:56 schwarze Exp $ */
+/*	$Id: html.c,v 1.12 2010/07/13 01:09:12 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -389,8 +389,15 @@ print_otag(struct html *h, enum htmltag tag,
 		t = NULL;
 
 	if ( ! (HTML_NOSPACE & h->flags))
-		if ( ! (HTML_CLRLINE & htmltags[tag].flags))
-			putchar(' ');
+		if ( ! (HTML_CLRLINE & htmltags[tag].flags)) {
+			/* Manage keeps! */
+			if ( ! (HTML_KEEP & h->flags)) {
+				if (HTML_PREKEEP & h->flags)
+					h->flags |= HTML_KEEP;
+				putchar(' ');
+			} else
+				printf("&#160;");
+		}
 
 	/* Print out the tag name and attributes. */
 
@@ -480,11 +487,11 @@ print_doctype(struct html *h)
 
 
 void
-print_text(struct html *h, const char *p)
+print_text(struct html *h, const char *word)
 {
 
-	if (*p && 0 == *(p + 1))
-		switch (*p) {
+	if (word[0] && '\0' == word[1])
+		switch (word[0]) {
 		case('.'):
 			/* FALLTHROUGH */
 		case(','):
@@ -507,19 +514,26 @@ print_text(struct html *h, const char *p)
 			break;
 		}
 
-	if ( ! (h->flags & HTML_NOSPACE))
-		putchar(' ');
+	if ( ! (HTML_NOSPACE & h->flags)) {
+		/* Manage keeps! */
+		if ( ! (HTML_KEEP & h->flags)) {
+			if (HTML_PREKEEP & h->flags)
+				h->flags |= HTML_KEEP;
+			putchar(' ');
+		} else
+			printf("&#160;");
+	}
 
-	assert(p);
-	if ( ! print_encode(h, p, 0))
+	assert(word);
+	if ( ! print_encode(h, word, 0))
 		h->flags &= ~HTML_NOSPACE;
 
 	/* 
 	 * Note that we don't process the pipe: the parser sees it as
 	 * punctuation, but we don't in terms of typography.
 	 */
-	if (*p && 0 == *(p + 1))
-		switch (*p) {
+	if (word[0] && '\0' == word[1])
+		switch (word[0]) {
 		case('('):
 			/* FALLTHROUGH */
 		case('['):

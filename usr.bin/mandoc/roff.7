@@ -1,6 +1,7 @@
-.\"	$Id: roff.7,v 1.6 2010/06/27 21:54:42 schwarze Exp $
+.\"	$Id: roff.7,v 1.7 2010/07/13 01:09:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2010 $
+.Dd $Mdocdate: July 13 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -91,11 +92,20 @@ The syntax of this macro is the same as that of
 except that a leading argument must be specified.
 It is ignored, as are its children.
 .Ss \&ds
-Define a string.
-This macro is intended to have two arguments,
-the name of the string to define and its content.
-Currently, it is ignored including its arguments,
-and the number of arguments is not checked.
+Define a reserved word.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&ds No Cm key val
+.Pp
+The
+.Cm key
+and
+.Cm val
+strings are space-separated.
+The
+.Cm key
+values may be invoked in subsequent text by using \e*(NN for two-letter
+pairs, \e*N for one-letter, and \e*[NNN] for arbitrary-length values.
 .Ss \&de1
 The syntax of this macro is the same as that of
 .Sx \&ig ,

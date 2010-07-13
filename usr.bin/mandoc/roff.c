@@ -1,6 +1,7 @@
-/*	$Id: roff.c,v 1.7 2010/07/03 15:59:05 schwarze Exp $ */
+/*	$Id: roff.c,v 1.8 2010/07/13 01:09:13 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,8 +28,8 @@
 #include <stdio.h>
 
 #include "mandoc.h"
-#include "regs.h"
 #include "roff.h"
+#include "libmandoc.h"
 
 #define	RSTACK_MAX	128
 
@@ -60,6 +61,13 @@ enum	roffrule {
 	ROFFRULE_DENY
 };
 
+
+struct	roffstr {
+	char		*name; /* key of symbol */
+	char		*string; /* current value */
+	struct roffstr	*next; /* next in list */
+};
+
 struct	roff {
 	struct roffnode	*last; /* leaf of stack */
 	mandocmsg	 msg; /* err/warn/fatal messages */
@@ -67,6 +75,7 @@ struct	roff {
 	enum roffrule	 rstack[RSTACK_MAX]; /* stack of !`ie' rules */
 	int		 rstackpos; /* position in rstack */
 	struct regset	*regs; /* read/writable registers */
+	struct roffstr	*first_string;
 };
 
 struct	roffnode {
@@ -100,12 +109,6 @@ struct	roffmac {
 	struct roffmac	*next;
 };
 
-struct roffstr {
-	char		*name;
-	char		*string;
-	struct roffstr	*next;
-} *first_string;
-
 static	enum rofferr	 roff_block(ROFF_ARGS);
 static	enum rofferr	 roff_block_text(ROFF_ARGS);
 static	enum rofferr	 roff_block_sub(ROFF_ARGS);
@@ -115,9 +118,16 @@ static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
+static	enum roffrule	 roff_evalcond(const char *, int *);
+static	void		 roff_freestr(struct roff *);
+static	const char	*roff_getstrn(const struct roff *, 
+				const char *, size_t);
 static	enum rofferr	 roff_line(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
-static	enum roffrule	 roff_evalcond(const char *, int *);
+static	int		 roff_res(struct roff *, int, 
+				char **, size_t *, int, int *);
+static	void		 roff_setstr(struct roff *,
+				const char *, const char *);
 
 /* See roff_hash_find() */
 
@@ -267,7 +277,7 @@ roff_free1(struct roff *r)
 
 	while (r->last)
 		roffnode_pop(r);
-	roff_freestr();
+	roff_freestr(r);
 }
 
 
@@ -308,12 +318,86 @@ roff_alloc(struct regset *regs, const mandocmsg msg, void *data)
 }
 
 
+/*
+ * Pre-filter each and every line for reserved words (one beginning with
+ * `\*', e.g., `\*(ab').  These must be handled before the actual line
+ * is processed. 
+ */
+static int
+roff_res(struct roff *r, int ln, char **bufp,
+		size_t *szp, int pos, int *offs)
+{
+	const char	*cp, *cpp, *st, *res;
+	int		 i, maxl;
+	size_t		 nsz;
+	char		*n;
+
+	for (cp = &(*bufp)[pos]; (cpp = strstr(cp, "\\*")); cp++) {
+		cp = cpp + 2;
+		switch (*cp) {
+		case ('('):
+			cp++;
+			maxl = 2;
+			break;
+		case ('['):
+			cp++;
+			maxl = 0;
+			break;
+		default:
+			maxl = 1;
+			break;
+		}
+
+		st = cp;
+
+		for (i = 0; 0 == maxl || i < maxl; i++, cp++) {
+			if ('\0' == *cp)
+				return(1); /* Error. */
+			if (0 == maxl && ']' == *cp)
+				break;
+		}
+
+		res = roff_getstrn(r, st, (size_t)i);
+
+		if (NULL == res) {
+			cp -= maxl ? 1 : 0;
+			continue;
+		}
+
+		nsz = *szp + strlen(res) + 1;
+		n = mandoc_malloc(nsz);
+
+		*n = '\0';
+
+		strlcat(n, *bufp, (size_t)(cpp - *bufp + 1));
+		strlcat(n, res, nsz);
+		strlcat(n, cp + (maxl ? 0 : 1), nsz);
+
+		free(*bufp);
+
+		*bufp = n;
+		*szp = nsz;
+		return(0);
+	}
+
+	return(1);
+}
+
+
 enum rofferr
 roff_parseln(struct roff *r, int ln, char **bufp, 
 		size_t *szp, int pos, int *offs)
 {
 	enum rofft	 t;
 	int		 ppos;
+
+	/*
+	 * Run the reserved-word filter only if we have some reserved
+	 * words to fill in.
+	 */
+
+	if (r->first_string && ! roff_res(r, ln, bufp, szp, pos, offs))
+		return(ROFF_RERUN);
 
 	/*
 	 * First, if a scope is open and we're not a macro, pass the
@@ -325,7 +409,8 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 		t = r->last->tok;
 		assert(roffs[t].text);
 		return((*roffs[t].text)
-				(r, t, bufp, szp, ln, pos, pos, offs));
+				(r, t, bufp, szp, 
+				 ln, pos, pos, offs));
 	} else if ( ! ROFF_CTL((*bufp)[pos]))
 		return(ROFF_CONT);
 
@@ -338,7 +423,8 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 		t = r->last->tok;
 		assert(roffs[t].sub);
 		return((*roffs[t].sub)
-				(r, t, bufp, szp, ln, pos, pos, offs));
+				(r, t, bufp, szp, 
+				 ln, pos, pos, offs));
 	}
 
 	/*
@@ -353,7 +439,8 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 
 	assert(roffs[t].proc);
 	return((*roffs[t].proc)
-			(r, t, bufp, szp, ln, ppos, pos, offs));
+			(r, t, bufp, szp, 
+			 ln, ppos, pos, offs));
 }
 
 
@@ -880,7 +967,7 @@ roff_ds(ROFF_ARGS)
 			*end = '\0';
 	}
 
-	roff_setstr(name, string);
+	roff_setstr(r, name, string);
 	return(ROFF_IGN);
 }
 
@@ -924,73 +1011,53 @@ roff_nr(ROFF_ARGS)
 }
 
 
-char *
-roff_setstr(const char *name, const char *string)
+static void
+roff_setstr(struct roff *r, const char *name, const char *string)
 {
 	struct roffstr	 *n;
 	char		 *namecopy;
 
-	n = first_string;
+	n = r->first_string;
 	while (n && strcmp(name, n->name))
 		n = n->next;
-	if (n) {
-		free(n->string);
-	} else {
-		if (NULL == (namecopy = strdup(name)))
-			return(NULL);
-		if (NULL == (n = malloc(sizeof(struct roffstr)))) {
-			free(n);
-			return(NULL);
-		}
+
+	if (NULL == n) {
+		namecopy = mandoc_strdup(name);
+		n = mandoc_malloc(sizeof(struct roffstr));
 		n->name = namecopy;
-		n->next = first_string;
-		first_string = n;
-	}
-	if (string)
-		n->string = strdup(string);
-	else
-		n->string = NULL;
-	return(n->string);
+		n->next = r->first_string;
+		r->first_string = n;
+	} else
+		free(n->string);
+
+	n->string = string ? strdup(string) : NULL;
 }
 
-char *
-roff_getstr(const char *name)
+
+static const char *
+roff_getstrn(const struct roff *r, const char *name, size_t len)
 {
-	struct roffstr	 *n;
+	const struct roffstr *n;
 
-	n = first_string;
-	while (n && strcmp(name, n->name))
-		n = n->next;
-	if (n)
-		return(n->string);
-	else
-		return(NULL);
-}
-
-char *
-roff_getstrn(const char *name, size_t len)
-{
-	struct roffstr	 *n;
-
-	n = first_string;
+	n = r->first_string;
 	while (n && (strncmp(name, n->name, len) || '\0' != n->name[len]))
 		n = n->next;
-	if (n)
-		return(n->string);
-	else
-		return(NULL);
+
+	return(n ? n->string : NULL);
 }
 
-void
-roff_freestr(void)
+
+static void
+roff_freestr(struct roff *r)
 {
 	struct roffstr	 *n, *nn;
 
-	for (n = first_string; n; n = nn) {
+	for (n = r->first_string; n; n = nn) {
 		free(n->name);
 		free(n->string);
 		nn = n->next;
 		free(n);
 	}
-	first_string = NULL;
+
+	r->first_string = NULL;
 }

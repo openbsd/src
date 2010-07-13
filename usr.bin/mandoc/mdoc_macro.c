@@ -1,6 +1,7 @@
-/*	$Id: mdoc_macro.c,v 1.53 2010/07/01 22:31:52 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.54 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +31,7 @@ enum	rew {	/* see rew_dohalt() */
 	REWIND_THIS,
 	REWIND_MORE,
 	REWIND_LATER,
-	REWIND_ERROR,
+	REWIND_ERROR
 };
 
 static	int	  	blk_full(MACRO_PROT_ARGS);
@@ -410,7 +411,7 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	 * In particular, always skip block end markers,
 	 * and let all blocks rewind Nm children.
 	 */
-	if (p->end || MDOC_Nm == p->tok ||
+	if (ENDBODY_NOT != p->end || MDOC_Nm == p->tok ||
 	    (MDOC_BLOCK == p->type &&
 	    ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)))
 		return(REWIND_MORE);
@@ -566,6 +567,7 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 		    ! mdoc_body_alloc(m, n->line, n->pos, n->tok))
 			return(0);
 	}
+
 	return(1);
 }
 
@@ -650,7 +652,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 		/* Remember the start of our own body. */
 		if (MDOC_BODY == n->type && atok == n->tok) {
-			if ( ! n->end)
+			if (ENDBODY_NOT == n->end)
 				body = n;
 			continue;
 		}
@@ -1146,6 +1148,7 @@ blk_full(MACRO_PROT_ARGS)
 			return(1);
 		}
 	}
+
 	/* Close out scopes to remain in a consistent state. */
 
 	if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))

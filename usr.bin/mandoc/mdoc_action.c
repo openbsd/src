@@ -1,6 +1,6 @@
-/*	$Id: mdoc_action.c,v 1.42 2010/07/01 22:31:52 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.43 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,11 @@
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
+
+/* 
+ * FIXME: this file is deprecated.  All future "actions" should be
+ * pushed into mdoc_validate.c.
+ */
 
 #define	POST_ARGS struct mdoc *m, struct mdoc_node *n
 #define	PRE_ARGS  struct mdoc *m, struct mdoc_node *n
@@ -687,7 +692,7 @@ post_bl_tagwidth(POST_ARGS)
 	n->args->argv[i].value[0] = mandoc_strdup(buf);
 
 	/* Set our width! */
-	n->data.Bl.width = n->args->argv[i].value[0];
+	n->data.Bl->width = n->args->argv[i].value[0];
 	return(1);
 }
 
@@ -710,9 +715,9 @@ post_bl_width(POST_ARGS)
 	 * the macro's width as set in share/tmac/mdoc/doc-common.
 	 */
 
-	if (0 == strcmp(n->data.Bl.width, "Ds"))
+	if (0 == strcmp(n->data.Bl->width, "Ds"))
 		width = 6;
-	else if (MDOC_MAX == (tok = mdoc_hash_find(n->data.Bl.width)))
+	else if (MDOC_MAX == (tok = mdoc_hash_find(n->data.Bl->width)))
 		return(1);
 	else if (0 == (width = mdoc_macro2len(tok))) 
 		return(mdoc_nmsg(m, n, MANDOCERR_BADWIDTH));
@@ -732,7 +737,7 @@ post_bl_width(POST_ARGS)
 	n->args->argv[i].value[0] = mandoc_strdup(buf);
 
 	/* Set our width! */
-	n->data.Bl.width = n->args->argv[i].value[0];
+	n->data.Bl->width = n->args->argv[i].value[0];
 	return(1);
 }
 
@@ -748,7 +753,7 @@ post_bl_head(POST_ARGS)
 	int			 i, c;
 	struct mdoc_node	*np, *nn, *nnp;
 
-	if (LIST_column != n->data.Bl.type)
+	if (LIST_column != n->data.Bl->type)
 		return(1);
 	else if (NULL == n->child)
 		return(1);
@@ -773,6 +778,9 @@ post_bl_head(POST_ARGS)
 	np->args->argv[c].value = mandoc_malloc
 		((size_t)n->nchild * sizeof(char *));
 
+	n->data.Bl->ncols = np->args->argv[c].sz;
+	n->data.Bl->cols = (const char **)np->args->argv[c].value;
+
 	for (i = 0, nn = n->child; nn; i++) {
 		np->args->argv[c].value[i] = nn->string;
 		nn->string = NULL;
@@ -790,8 +798,6 @@ post_bl_head(POST_ARGS)
 static int
 post_bl(POST_ARGS)
 {
-	struct mdoc_node *nn;
-	const char	 *ww;
 
 	if (MDOC_HEAD == n->type)
 		return(post_bl_head(m, n));
@@ -806,28 +812,16 @@ post_bl(POST_ARGS)
 	 * rewritten into real lengths).
 	 */
 
-	ww = n->data.Bl.width;
-
-	if (LIST_tag == n->data.Bl.type && NULL == n->data.Bl.width) {
+	if (LIST_tag == n->data.Bl->type && NULL == n->data.Bl->width) {
 		if ( ! post_bl_tagwidth(m, n))
 			return(0);
-	} else if (NULL != n->data.Bl.width) {
+	} else if (NULL != n->data.Bl->width) {
 		if ( ! post_bl_width(m, n))
 			return(0);
 	} else 
 		return(1);
 
-	assert(n->data.Bl.width);
-
-	/* If it has changed, propogate new width to children. */
-
-	if (ww == n->data.Bl.width)
-		return(1);
-
-	for (nn = n->child; nn; nn = nn->next)
-		if (MDOC_Bl == nn->tok)
-			nn->data.Bl.width = n->data.Bl.width;
-
+	assert(n->data.Bl->width);
 	return(1);
 }
 
@@ -958,9 +952,10 @@ pre_bd(PRE_ARGS)
 	if (MDOC_BODY != n->type)
 		return(1);
 
-	if (DISP_literal == n->data.Bd.type)
+	assert(n->data.Bd);
+	if (DISP_literal == n->data.Bd->type)
 		m->flags |= MDOC_LITERAL;
-	if (DISP_unfilled == n->data.Bd.type)
+	if (DISP_unfilled == n->data.Bd->type)
 		m->flags |= MDOC_LITERAL;
 
 	return(1);

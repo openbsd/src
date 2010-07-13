@@ -1,6 +1,7 @@
-.\"	$Id: mdoc.3,v 1.10 2010/06/29 17:10:29 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.11 2010/07/13 01:09:13 schwarze Exp $
 .\"
-.\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 29 2010 $
+.Dd $Mdocdate: July 13 2010 $
 .Dt MDOC 3
 .Os
 .Sh NAME
@@ -29,7 +30,6 @@
 .Nd mdoc macro compiler library
 .Sh SYNOPSIS
 .In mandoc.h
-.In regs.h
 .In mdoc.h
 .Vt extern const char * const * mdoc_macronames;
 .Vt extern const char * const * mdoc_argnames;
@@ -257,10 +257,10 @@ an empty line will produce a zero-length string.
 Multiple body parts are only found in invocations of
 .Sq \&Bl \-column ,
 where a new body introduces a new phrase.
-.Ss Badly nested blocks
-A special kind of node is available to end the formatting
-associated with a given block before the physical end of that block.
-Such an ENDBODY node has a non-null
+.Ss Badly-nested Blocks
+The ENDBODY node is available to end the formatting associated
+with a given block before the physical end of that block.
+It has a non-null
 .Va end
 field, is of the BODY
 .Va type ,
@@ -297,25 +297,32 @@ BLOCK Ao
 TEXT end
 .Ed
 .Pp
-Here, the formatting of the Ao block extends from TEXT ao to TEXT ac,
-while the formatting of the Bo block extends from TEXT bo to TEXT bc,
-rendering like this in
+Here, the formatting of the
+.Sq \&Ao
+block extends from TEXT ao to TEXT ac,
+while the formatting of the
+.Sq \&Bo
+block extends from TEXT bo to TEXT bc.
+It renders as follows in
 .Fl T Ns Cm ascii
 mode:
+.Pp
 .Dl <ao [bo ac> bc] end
-Support for badly nested blocks is only provided for backward
+.Pp
+Support for badly-nested blocks is only provided for backward
 compatibility with some older
 .Xr mdoc 7
 implementations.
-Using them in new code is stronly discouraged:
-Some frontends, in particular
-.Fl T Ns Cm html ,
-are unable to render them in any meaningful way,
-many other
-.Xr mdoc 7
-implementations do not support them, and even for those that do,
-the behaviour is not well-defined, in particular when using multiple
-levels of badly nested blocks.
+Using badly-nested blocks is
+.Em strongly discouraged :
+the
+.Fl T Ns Cm html
+and
+.Fl T Ns Cm xhtml
+front-ends are unable to render them in any meaningful way.
+Furthermore, behaviour when encountering badly-nested blocks is not
+consistent across troff implementations, especially when using  multiple
+levels of badly-nested blocks.
 .Sh EXAMPLES
 The following example reads lines from stdin and parses them, operating
 on the finished parse tree with

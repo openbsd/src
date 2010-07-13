@@ -1,6 +1,7 @@
-.\"	$Id: mdoc.7,v 1.38 2010/07/01 15:36:59 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.39 2010/07/13 01:09:13 schwarze Exp $
 .\"
-.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 1 2010 $
+.Dd $Mdocdate: July 13 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1063,6 +1064,14 @@ Closes a
 block.  Does not have any tail arguments.
 .Ss \&Bd
 Begins a display block.
+Its syntax is as follows:
+.Bd -ragged -offset indent
+.Pf \. Sx \&Bd
+.Fl type
+.Op Fl offset Ar width
+.Op Fl compact
+.Ed
+.Pp
 A display is collection of macros or text which may be collectively
 offset or justified in a manner different from that
 of the enclosing context.
@@ -1087,9 +1096,9 @@ Centre-justify each line.
 The type must be provided first.
 Secondary arguments are as follows:
 .Bl -tag -width 12n -offset indent
-.It Fl offset Ar width
+.It Fl offset Ar val
 Offset by the value of
-.Ar width ,
+.Ar val ,
 which is interpreted as one of the following, specified in order:
 .Bl -item
 .It
@@ -1100,7 +1109,7 @@ the width of standard indentation;
 twice
 .Ar indent ;
 .Ar left ,
-which has no effect ;
+which has no effect;
 .Ar right ,
 which justifies to the right margin; and
 .Ar center ,
@@ -1121,10 +1130,6 @@ As the calculated string length of the opaque string.
 If not provided an argument, it will be ignored.
 .It Fl compact
 Do not assert a vertical space before the block.
-.It Fl file Ar file
-Prepend the file
-.Ar file
-before any text or macros within the block.
 .El
 .Pp
 Examples:
@@ -1139,28 +1144,75 @@ See also
 and
 .Sx \&Dl .
 .Ss \&Bf
-.Ss \&Bk
-Begins a keep block, containing a collection of macros or text
-to be kept together in the output.
-One argument is required; additional arguments are ignored.
-Currently, the only argument implemented is
-.Fl words ,
-requesting to keep together all words of the contained text
-on the same output line.
-A
-.Fl lines
-argument to keep together all lines of the contained text
-on the same page has been desired for a long time,
-but has never been implemented.
+Change the font mode for a scoped block of text.
+Its syntax is as follows:
+.Bd -ragged -offset indent
+.Pf \. Sx \&Bf
+.Oo
+.Fl emphasis | literal | symbolic |
+.Cm \&Em | \&Li | \&Sy
+.Oc
+.Ed
 .Pp
-Examples:
+The
+.Fl emphasis
+and
+.Cm \&Em
+argument are equivalent, as are
+.Fl symbolic
+and
+.Cm \&Sy,
+and
+.Fl literal
+and
+.Cm \&Li .
+Without an argument, this macro does nothing.
+The font mode continues until broken by a new font mode in a nested
+scope or
+.Sx \&Ef
+is encountered.
+.Pp
+See also
+.Sx \&Li ,
+.Sx \&Ef ,
+and
+.Sx \&Sy .
+.Ss \&Bk
+Begins a collection of macros or text not breaking the line.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&Bk Fl words
+.Pp
+Subsequent arguments are ignored.
+The
+.Fl words
+argument is required.
+.Pp
+Each line within a keep block is kept intact, so the following example
+will not break within each
+.Sx \&Op
+macro line:
 .Bd -literal -offset indent
 \&.Bk \-words
-\&.Op o Ar output_file
+\&.Op Fl f Ar flags
+\&.Op Fl o Ar output
 \&.Ek
 .Ed
+.Pp
+Be careful in using over-long lines within a keep block!
+Doing so will clobber the right margin.
 .Ss \&Bl
 Begins a list composed of one or more list entries.
+Its syntax is as follows:
+.Bd -ragged -offset indent
+.Pf \. Sx \&Bl
+.Fl type
+.Op Fl width Ar val
+.Op Fl offset Ar val
+.Op Fl compact
+.Op HEAD ...
+.Ed
+.Pp
 A list is associated with a type, which is a required argument.
 Other arguments are
 .Fl width ,
@@ -1629,8 +1681,23 @@ See also
 and
 .Sx \&Ux .
 .Ss \&Ec
+Close a scope started by
+.Sx \&Eo .
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&Ec Op Cm TERM
+.Pp
+The
+.Cm TERM
+argument is used as the enclosure tail, for example, specifying \e(rq
+will emulate
+.Sx \&Dc .
 .Ss \&Ed
+End a display context started by
+.Sx \&Bd .
 .Ss \&Ef
+Ends a font mode context started by
+.Sx \&Bf .
 .Ss \&Ek
 Ends a keep context started by
 .Sx \&Bk .
@@ -1651,7 +1718,18 @@ Examples:
 .D1 \&.Em Warnings!
 .D1 \&.Em Remarks :
 .Ss \&En
+This macro is obsolete and not implemented.
 .Ss \&Eo
+An arbitrary enclosure.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&Eo Op Cm TERM
+.Pp
+The
+.Cm TERM
+argument is used as the enclosure head, for example, specifying \e(lq
+will emulate
+.Sx \&Do .
 .Ss \&Er
 Display error constants.
 .Pp
@@ -1662,6 +1740,7 @@ Examples:
 See also
 .Sx \&Dv .
 .Ss \&Es
+This macro is obsolete and not implemented.
 .Ss \&Ev
 Environmental variables such as those specified in
 .Xr environ 7 .
@@ -1712,6 +1791,8 @@ Examples:
 See also
 .Sx \&Fo .
 .Ss \&Fc
+Ends a function context started by
+.Sx \&Fo .
 .Ss \&Fd
 Historically used to document include files.
 This usage has been deprecated in favour of
@@ -1833,7 +1914,24 @@ See also
 and
 .Sx \&Ux .
 .Ss \&Hf
+This macro is obsolete and not implemented.
 .Ss \&Ic
+Designate an internal or interactive command.
+This is similar to
+.Sx \&Cm
+but used for instructions rather than values.
+.Pp
+Examples:
+.D1 \&.Ic hash
+.D1 \&.Ic alias
+.Pp
+Note that using
+.Sx \&Bd No Fl literal
+or
+.Sx \&D1
+is preferred for displaying code; the
+.Sx \&Ic
+macro is used when referring to specific instructions.
 .Ss \&In
 An
 .Qq include
@@ -1956,6 +2054,9 @@ Examples:
 .D1 \&.Lb libz
 .D1 \&.Lb mdoc
 .Ss \&Li
+Denotes text that should be in a literal font mode.
+Note that this is a presentation term and should not be used for
+stylistically decorating technical terms.
 .Ss \&Lk
 Format a hyperlink.
 Its syntax is as follows:
@@ -1969,6 +2070,8 @@ Examples:
 See also
 .Sx \&Mt .
 .Ss \&Lp
+Synonym for
+.Sx \&Pp .
 .Ss \&Ms
 .Ss \&Mt
 Format a
@@ -1981,6 +2084,29 @@ Its syntax is as follows:
 Examples:
 .D1 \&.Mt discuss@manpages.bsd.lv
 .Ss \&Nd
+A one-line description of the manual's content.
+This may only be invoked in the
+.Em SYNOPSIS
+section subsequent the
+.Sx \&Nm
+macro.
+.Pp
+Examples:
+.D1 \&.Sx \&Nd mdoc language reference
+.D1 \&.Sx \&Nd format and display UNIX manuals
+.Pp
+The
+.Sx \&Nd
+macro technically accepts child macros and terminates with a subsequent
+.Sx \&Sh
+invocation.
+Do not assume this behaviour: some
+.Xr whatis 1
+database generators are not smart enough to parse more than the line
+arguments and will display macros verbatim.
+.Pp
+See also
+.Sx \&Nm .
 .Ss \&Nm
 The name of the manual page, or \(em in particular in section 1, 6,
 and 8 pages \(em of an additional command or feature documented in
@@ -2019,6 +2145,12 @@ macro rather than
 .Sx \&Nm
 to mark up the name of the manual page.
 .Ss \&No
+A
+.Qq noop
+macro used to terminate prior macro contexts.
+.Pp
+Examples:
+.D1 \&.Sx \&Fl ab \&No cd \&Fl ef
 .Ss \&Ns
 .Ss \&Nx
 Format the NetBSD version provided as an argument, or a default value if
@@ -2038,8 +2170,30 @@ See also
 and
 .Sx \&Ux .
 .Ss \&Oc
+Closes multi-line
+.Sx \&Oo
+context.
 .Ss \&Oo
+Multi-line version of
+.Sx \&Op .
+.Pp
+Examples:
+.Bd -literal -offset indent
+\&.Oo
+\&.Op Fl flag Ns Ar value
+\&.Oc
+.Ed
 .Ss \&Op
+Command-line option.
+Used when listing options to command-line utilities.
+Prints the argument(s) in brackets.
+.Pp
+Examples:
+.D1 \&.Op \&Fl a \&Ar b
+.D1 \&.Op \&Ar a | b
+.Pp
+See also
+.Sx \&Oo .
 .Ss \&Os
 Document operating system version.
 This is the mandatory third macro of
@@ -2088,11 +2242,43 @@ See also
 and
 .Sx \&Ux .
 .Ss \&Pa
+A file-system path.
+.Pp
+Examples:
+.D1 \&.Pa /usr/bin/mandoc
+.D1 \&.Pa /usr/share/man/man7/mdoc.7
+.Pp
+See also
+.Sx \&Lk .
 .Ss \&Pc
+Close parenthesised context opened by
+.Sx \&Po .
 .Ss \&Pf
+Removes the space
+.Pq Qq prefix
+between its arguments.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. \&Pf Cm prefix suffix
+.Pp
+The
+.Cm suffix
+argument may be a macro.
+.Pp
+Examples:
+.D1 \&.Pf \e. \&Sx \&Pf \&Cm prefix suffix
 .Ss \&Po
+Multi-line version of
+.Sx \&Pq .
 .Ss \&Pp
+Break a paragraph.
+This will assert vertical space between prior and subsequent macros
+and/or text.
 .Ss \&Pq
+Parenthesised enclosure.
+.Pp
+See also
+.Sx \&Po .
 .Ss \&Qc
 .Ss \&Ql
 .Ss \&Qo
@@ -2173,6 +2359,11 @@ See also
 and
 .Sx \&Ox .
 .Ss \&Va
+A variable name.
+.Pp
+Examples:
+.D1 \&.Va foo
+.D1 \&.Va const char *bar ;
 .Ss \&Vt
 A variable type.
 This is also used for indicating global variables in the
@@ -2330,9 +2521,9 @@ Display offsets
 and
 .Fl offset Ar right
 are disregarded in mandoc.
-Furthermore, the
+Furthermore, troff specifies a
 .Fl file Ar file
-argument is not supported in mandoc.
+argument that is not supported in mandoc.
 Lastly, since text is not right-justified in mandoc (or even groff),
 .Fl ragged
 and

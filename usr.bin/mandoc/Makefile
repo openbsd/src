@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.42 2010/06/29 15:49:52 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.43 2010/07/13 01:09:12 schwarze Exp $
 
 .include <bsd.own.mk>
 
-VERSION=1.10.3
+VERSION=1.10.4
 CFLAGS+=-DVERSION=\"${VERSION}\"
 CFLAGS+=-W -Wall -Wstrict-prototypes
 

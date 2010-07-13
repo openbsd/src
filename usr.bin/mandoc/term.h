@@ -1,6 +1,6 @@
-/*	$Id: term.h,v 1.24 2010/06/29 14:41:28 schwarze Exp $ */
+/*	$Id: term.h,v 1.25 2010/07/13 01:09:13 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,25 +42,27 @@ enum	termfont {
 typedef void	(*term_margin)(struct termp *, const void *);
 
 struct	termp_ps {
-	int		  psstate;	/* state of ps output */
+	int		  flags;
 #define	PS_INLINE	 (1 << 0)	/* we're in a word */
 #define	PS_MARGINS	 (1 << 1)	/* we're in the margins */
-	size_t		  pscol;	/* visible column (points) */
-	size_t		  psrow;	/* visible row (points) */
+#define	PS_NEWPAGE	 (1 << 2)	/* new page, no words yet */
+	size_t		  pscol;	/* visible column (AFM units) */
+	size_t		  psrow;	/* visible row (AFM units) */
 	char		 *psmarg;	/* margin buf */
 	size_t		  psmargsz;	/* margin buf size */
 	size_t		  psmargcur;	/* cur index in margin buf */
 	char		  last;		/* character buffer */
 	enum termfont	  lastf;	/* last set font */
+	size_t		  scale;	/* font scaling factor */
 	size_t		  pages;	/* number of pages shown */
-	size_t		  lineheight;	/* each line's height (points) */
-	size_t		  top;		/* body top (points) */
-	size_t		  bottom;	/* body bottom (points) */
-	size_t		  height;	/* total height (points) */
-	size_t		  width;	/* total width (points) */
-	size_t		  left;		/* body left (points) */
-	size_t		  header;	/* header position (points) */
-	size_t		  footer;	/* footer position (points) */
+	size_t		  lineheight;	/* line height (AFM units) */
+	size_t		  top;		/* body top (AFM units) */
+	size_t		  bottom;	/* body bottom (AFM units) */
+	size_t		  height;	/* page height (AFM units */
+	size_t		  width;	/* page width (AFM units) */
+	size_t		  left;		/* body left (AFM units) */
+	size_t		  header;	/* header pos (AFM units) */
+	size_t		  footer;	/* footer pos (AFM units) */
 };
 
 struct	termp {
@@ -103,6 +105,8 @@ struct	termp {
 	void		(*endline)(struct termp *);
 	void		(*advance)(struct termp *, size_t);
 	size_t		(*width)(const struct termp *, char);
+	double		(*hspan)(const struct termp *,
+				const struct roffsu *);
 	const void	 *argf;		/* arg for headf/footf */
 	union {
 		struct termp_ps ps;
