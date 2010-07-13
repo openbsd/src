@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.160 2009/03/24 17:03:32 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.161 2010/07/13 21:33:44 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -429,9 +429,16 @@ cvs_update_local(struct cvs_file *cf)
 		    cf->file_ent->ce_tag != NULL)))
 			flags = CO_SETSTICKY;
 
-		cvs_checkout_file(cf, cf->file_rcsrev, tag, flags);
-		cvs_printf("U %s\n", cf->file_path);
-		cvs_history_add(CVS_HISTORY_UPDATE_CO, cf, NULL);
+		if (cf->file_flags & FILE_ON_DISK && (cf->file_ent == NULL ||
+		    cf->file_ent->ce_type == CVS_ENT_NONE)) {
+			cvs_log(LP_ERR, "move away %s; it is in the way",
+			    cf->file_path);
+			cvs_printf("C %s\n", cf->file_path);
+		} else {
+			cvs_checkout_file(cf, cf->file_rcsrev, tag, flags);
+			cvs_printf("U %s\n", cf->file_path);
+			cvs_history_add(CVS_HISTORY_UPDATE_CO, cf, NULL);
+		}
 		break;
 	case FILE_MERGE:
 		d3rev1 = cf->file_ent->ce_rev;
