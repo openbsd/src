@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_execve.c,v 1.11 2010/06/27 03:14:28 guenther Exp $	*/
+/*	$OpenBSD: uthread_execve.c,v 1.12 2010/07/13 03:10:29 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,16 +46,18 @@ execve(const char *name, char *const * argv, char *const * envp)
 	int		flags;
 	int             i;
 	int             ret;
+	int		err;
 	struct sigaction act;
-	struct sigaction oact;
 	struct itimerval itimer;
+	struct itimerval oitimer;
+	sigset_t	oset;
 
 	/* Disable the interval timer: */
 	itimer.it_interval.tv_sec  = 0;
 	itimer.it_interval.tv_usec = 0;
 	itimer.it_value.tv_sec     = 0;
 	itimer.it_value.tv_usec    = 0;
-	setitimer(_ITIMER_SCHED_TIMER, &itimer, NULL);
+	setitimer(_ITIMER_SCHED_TIMER, &itimer, &oitimer);
 
 	/*
 	 * Enter a loop to set all file descriptors to blocking
@@ -77,40 +79,42 @@ execve(const char *name, char *const * argv, char *const * envp)
 		}
 	}
 
-	/* Enter a loop to adopt the signal actions for the running thread: */
-	for (i = 1; i < NSIG; i++) {
-		/* Check for signals which cannot be caught: */
-		if (i == SIGKILL || i == SIGSTOP) {
-			/* Don't do anything with these signals. */
-		} else {
-			/* Check if ignoring this signal: */
-			if (_thread_sigact[i - 1].sa_handler == SIG_IGN) {
-				/* Continue to ignore this signal: */
-				act.sa_handler = SIG_IGN;
-			} else {
-				/* Use the default handler for this signal: */
-				act.sa_handler = SIG_DFL;
-			}
-
-			/* Copy the mask and flags for this signal: */
-			act.sa_mask = _thread_sigact[i - 1].sa_mask;
-			act.sa_flags = _thread_sigact[i - 1].sa_flags;
-
-			/* Ensure the scheduling signal is masked: */
-			sigaddset(&act.sa_mask, _SCHED_SIGNAL);
-
-			/* Change the signal action for the process: */
-			_thread_sys_sigaction(i, &act, &oact);
-		}
-	}
+#define RESET_SIGNAL(sig) \
+	(_thread_sigact[(sig) - 1].sa_handler == SIG_IGN && \
+	_thread_sys_sigaction((sig), &_thread_sigact[(sig) - 1], NULL) != 0)
+	
+	/* Reset the behavior for the signals that the library uses */
+	if (RESET_SIGNAL(_SCHED_SIGNAL) ||
+	    RESET_SIGNAL(SIGINFO) ||
+	    RESET_SIGNAL(SIGCHLD))
+		PANIC("Cannot reset signal handlers");
 
 	/* Set the signal mask: */
-	_thread_sys_sigprocmask(SIG_SETMASK, &curthread->sigmask, NULL);
+	_thread_sys_sigprocmask(SIG_SETMASK, &curthread->sigmask, &oset);
 
 	/* Execute the process: */
 	ret = _thread_sys_execve(name, argv, envp);
+	err = errno;
+
+	/* execve failed; try to restore the state the thread library needs */
+
+#define REINIT_SIGNAL(sig) \
+	(_thread_sigact[(sig) - 1].sa_handler == SIG_IGN && \
+	_thread_sys_sigaction((sig), &act, NULL) != 0)
+
+	_thread_sys_sigprocmask(SIG_SETMASK, &oset, NULL);
+	sigfillset(&act.sa_mask);
+	act.sa_handler = (void (*) (int)) _thread_sig_handler;
+	act.sa_flags = SA_SIGINFO;
+	if (REINIT_SIGNAL(_SCHED_SIGNAL) ||
+	    REINIT_SIGNAL(SIGINFO) ||
+	    REINIT_SIGNAL(SIGCHLD))
+		PANIC("Cannot reinitialize signal handlers");
+	_thread_nonblock_fds();
+	setitimer(_ITIMER_SCHED_TIMER, &oitimer, NULL);
 
 	/* Return the completion status: */
+	errno = err;
 	return (ret);
 }
 #endif

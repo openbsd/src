@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.25 2010/01/03 23:05:35 fgsch Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.26 2010/07/13 03:10:29 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -161,6 +161,22 @@ _thread_clear_pending(int sig, pthread_t thread)
 		sigdelset(&thread->sigpend, sig);
 }
 
+void
+_thread_nonblock_fds(void)
+{
+	int	i;
+
+	/*
+	 * Go through the file list and set all files to non-blocking
+	 * again in case the child set some of them to block. Sigh.
+	 */
+	for (i = 0; i < _thread_max_fdtsize; i++)
+		if (_thread_fd_table[i] != NULL &&
+		    _thread_fd_table[i]->status_flags != NULL)
+			_thread_sys_fcntl(i, F_SETFL,
+			    (_thread_fd_table[i]->status_flags->flags & ~_FD_NOTSOCK) |
+			    O_NONBLOCK);
+}
 
 /*
  * Process the given signal.   Returns 1 if the signal may be dispatched,
@@ -171,7 +187,6 @@ int
 _thread_sig_handle(int sig, struct sigcontext * scp)
 {
 	struct pthread	*curthread = _get_curthread();
-	int		i;
 	pthread_t	pthread, pthread_next;
 
 	if (sig == SIGINFO)
@@ -179,19 +194,8 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 	else if (sig == _SCHED_SIGNAL)
 		; /* This shouldn't ever occur (should this panic?). */
 	else {
-		if (sig == SIGCHLD) {
-			/*
-			 * Go through the file list and set all files
-			 * to non-blocking again in case the child
-			 * set some of them to block. Sigh.
-			 */
-			for (i = 0; i < _thread_max_fdtsize; i++)
-				if (_thread_fd_table[i] != NULL &&
-				    _thread_fd_table[i]->status_flags != NULL)
-					_thread_sys_fcntl(i, F_SETFL,
-					    (_thread_fd_table[i]->status_flags->flags & ~_FD_NOTSOCK) |
-					    O_NONBLOCK);
-		}
+		if (sig == SIGCHLD)
+			_thread_nonblock_fds();
 
 		/*
 		 * If the handler is SIG_IGN the signal never happened.

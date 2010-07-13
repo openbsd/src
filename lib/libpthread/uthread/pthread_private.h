@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.74 2010/01/03 23:05:35 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.75 2010/07/13 03:10:29 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1132,6 +1132,7 @@ int     _thread_create(pthread_t *, const pthread_attr_t *,
 void    _dispatch_signal(int, struct sigcontext *);
 void    _dispatch_signals(struct sigcontext *);
 void    _thread_signal(pthread_t, int);
+void	_thread_nonblock_fds(void);
 int	_mutex_cv_lock(pthread_mutex_t *);
 int	_mutex_cv_unlock(pthread_mutex_t *);
 int	_mutex_reinit(pthread_mutex_t *);
