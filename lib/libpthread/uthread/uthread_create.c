@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.24 2009/07/25 02:09:20 kurt Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.25 2010/07/13 04:24:46 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -179,7 +179,8 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 			 * Check if the garbage collector thread
 			 * needs to be started.
 			 */
-			f_gc = (TAILQ_FIRST(&_thread_list) == _thread_initial);
+			f_gc = (TAILQ_FIRST(&_thread_list) == _thread_initial
+			    && start_routine != _thread_gc);
 
 			/* Add the thread to the linked list of all threads: */
 			TAILQ_INSERT_HEAD(&_thread_list, new_thread, tle);
