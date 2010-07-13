@@ -6,9 +6,9 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.10 2007/05/31 19:19:29 jmc Exp $
+.\" 	$OpenBSD: mdX.3,v 1.11 2010/07/13 22:34:45 tedu Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 13 2010 $
 .Dt MDX 3
 .Os
 .Sh NAME
@@ -53,10 +53,8 @@ This net result is a
 .Dq fingerprint
 of the input-data, which doesn't disclose the actual input.
 .Pp
-MD4 has been broken; it should only be used where necessary for
+MD4 and MD5 have been broken; they should only be used where necessary for
 backward compatibility.
-MD5 has not yet (1999-02-11) been broken, but recent attacks have cast
-some doubt on its security properties.
 The attacks on both MD4 and MD5
 are both in the nature of finding
 .Dq collisions
@@ -210,8 +208,5 @@ helper functions are derived from code written by Poul-Henning Kamp.
 .Sh BUGS
 Collisions have been found for the full versions of both MD4 and MD5.
 The use of
-.Xr sha1 3 ,
-.Xr sha2 3 ,
-or
-.Xr rmd160 3
+.Xr sha2 3
 is recommended instead.

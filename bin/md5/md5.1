@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.30 2010/07/13 06:57:37 jmc Exp $
+.\"	$OpenBSD: md5.1,v 1.31 2010/07/13 22:34:45 tedu Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -40,7 +40,7 @@ message having a given prespecified target message digest.
 However, collisions have now been produced for
 .Em MD5 ,
 so the use of other message digest functions, such as
-.Xr sha1 1 ,
+.Xr sha256 1 ,
 is now preferred.
 .Pp
 The
@@ -107,5 +107,5 @@ options are processed.
 Since collisions have been found for
 .Em MD5 ,
 the use of
-.Xr sha1 1
+.Xr sha256 1
 is recommended instead.
