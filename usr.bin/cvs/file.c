@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.258 2009/03/28 16:47:33 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.259 2010/07/13 20:47:19 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -956,9 +956,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 						cf->file_status = FILE_MERGE;
 					else
 						cf->file_status = FILE_PATCH;
-				} else if (cf->file_ent->ce_conflict != NULL &&
-				    cf->file_status != FILE_MODIFIED) {
-					cf->file_status = FILE_CONFLICT;
 				}
 			}
 		}
