@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.55 2010/07/09 20:07:05 naddy Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.56 2010/07/13 20:07:24 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -497,7 +497,7 @@ rcs_write(RCSFILE *rfp)
 		if (rdp->rd_log != NULL) {
 			len = strlen(rdp->rd_log);
 			rcs_strprint((const u_char *)rdp->rd_log, len, fp);
-			if (rdp->rd_log[len-1] != '\n')
+			if (len == 0 || rdp->rd_log[len-1] != '\n')
 				fputc('\n', fp);
 		}
 		fputs("@\ntext\n@", fp);
