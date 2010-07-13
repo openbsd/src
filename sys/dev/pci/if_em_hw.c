@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.54 2010/07/02 21:41:59 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.55 2010/07/13 21:55:52 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -561,6 +561,7 @@ em_set_mac_type(struct em_hw *hw)
 		hw->asf_firmware_present = TRUE;
 		break;
 	case em_80003es2lan:
+	case em_82575:
 		hw->swfw_sync_present = TRUE;
 		/* FALLTHROUGH */
 	case em_82571:
@@ -4175,7 +4176,7 @@ em_read_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 	if (hw->mac_type == em_pchlan)
 		return (em_access_phy_reg_hv(hw, reg_addr, phy_data, TRUE));
 
-	if ((hw->mac_type == em_80003es2lan) &&
+	if (((hw->mac_type == em_80003es2lan) || (hw->mac_type == em_82575)) &&
 	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
 		swfw = E1000_SWFW_PHY1_SM;
 	} else {
@@ -4335,7 +4336,7 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 	if (hw->mac_type == em_pchlan)
 		return (em_access_phy_reg_hv(hw, reg_addr, &phy_data, FALSE));
 
-	if ((hw->mac_type == em_80003es2lan) &&
+	if (((hw->mac_type == em_80003es2lan) || (hw->mac_type == em_82575)) &&
 	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
 		swfw = E1000_SWFW_PHY1_SM;
 	} else {
@@ -4548,7 +4549,8 @@ em_phy_hw_reset(struct em_hw *hw)
 	DEBUGOUT("Resetting Phy...\n");
 
 	if (hw->mac_type > em_82543 && hw->mac_type != em_icp_xxxx) {
-		if ((hw->mac_type == em_80003es2lan) &&
+		if (((hw->mac_type == em_80003es2lan) ||
+			(hw->mac_type == em_82575)) &&
 		    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
 			swfw = E1000_SWFW_PHY1_SM;
 		} else {
