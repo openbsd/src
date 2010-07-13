@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.88 2010/01/16 15:45:10 chl Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.89 2010/07/13 18:52:25 otto Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -983,7 +983,10 @@ ffs_dirpref(struct inode *pip)
 	curdirsize = avgndir ? (cgsize - avgbfree * fs->fs_bsize) / avgndir : 0;
 	if (dirsize < curdirsize)
 		dirsize = curdirsize;
-	maxcontigdirs = min(avgbfree * fs->fs_bsize  / dirsize, 255);
+	if (dirsize <= 0)
+		maxcontigdirs = 0;		/* dirsize overflowed */
+	else
+		maxcontigdirs = min(avgbfree * fs->fs_bsize  / dirsize, 255);
 	if (fs->fs_avgfpdir > 0)
 		maxcontigdirs = min(maxcontigdirs,
 				    fs->fs_ipg / fs->fs_avgfpdir);
