@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.h,v 1.42 2010/07/13 11:52:06 djm Exp $ */
+/* $OpenBSD: misc.h,v 1.43 2010/07/13 23:13:16 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@ char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 void	 ms_subtract_diff(struct timeval *, int *);
 void	 ms_to_timeval(struct timeval *, int);
-int	 timing_safe_cmp(const void *, const void *, size_t);
+int	 timingsafe_bcmp(const void *, const void *, size_t);
 
 struct passwd *pwcopy(struct passwd *);
 const char *ssh_gai_strerror(int);
