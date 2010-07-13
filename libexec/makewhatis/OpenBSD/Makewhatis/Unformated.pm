@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Unformated.pm,v 1.5 2010/07/09 08:12:49 espie Exp $
+# $OpenBSD: Unformated.pm,v 1.6 2010/07/13 15:39:03 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -98,7 +98,7 @@ sub handle
 {
     my ($f, $filename, $p) = @_;
     my @lines = ();
-    my %toexpand = ();
+    my %toexpand = (Tm => '(tm)');
     my $so_found = 0;
     my $found_th = 0;
     my $found_old = 0;
