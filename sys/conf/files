@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.496 2010/07/05 23:10:16 tedu Exp $
+#	$OpenBSD: files,v 1.497 2010/07/13 16:47:03 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -731,6 +731,7 @@ file kern/subr_evcount.c
 file kern/subr_extent.c
 file kern/subr_log.c
 file kern/subr_pool.c
+file kern/dma_alloc.c
 file kern/subr_prf.c
 file kern/subr_prof.c
 file kern/subr_userconf.c		boot_config

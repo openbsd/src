@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.34 2010/06/27 03:03:48 thib Exp $	*/
+/*	$OpenBSD: pool.h,v 1.35 2010/07/13 16:47:02 deraadt Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -170,6 +170,11 @@ int		pool_chk(struct pool *, const char *);
 void		pool_walk(struct pool *, int, int (*)(const char *, ...),
 		    void (*)(void *, int, int (*)(const char *, ...)));
 #endif
+
+/* the allocator for dma-able memory is a thin layer on top of pool  */
+void			 dma_alloc_init(void);
+void			*dma_alloc(size_t size, int flags);
+void			 dma_free(void *m, size_t size);
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */
