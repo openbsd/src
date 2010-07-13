@@ -60,8 +60,8 @@
 #define ITHERM_TSE_ENABLE 0xB8
 
 #define ITHERM_CTV_INVALID	0x8000
-#define ITHERM_CTV_INT_MASK	0x1FE0
-#define ITHERM_CTV_FRAC_MASK	0x001F
+#define ITHERM_CTV_INT_MASK	0x3FC0
+#define ITHERM_CTV_FRAC_MASK	0x003F
 
 #define ITHERM_REFRESH_INTERVAL 5
 
@@ -271,6 +271,8 @@ itherm_refresh_sensor_data(struct itherm_softc *sc)
 		data *= 1000000 / 64;
 		sc->sensors[ITHERM_SENSOR_CORETEMP1].value +=
 		    data;
+		itherm_bias_temperature_sensor(
+		    &sc->sensors[ITHERM_SENSOR_CORETEMP1]);
 	}
 
 	/* Core 2 temperature */
@@ -289,6 +291,8 @@ itherm_refresh_sensor_data(struct itherm_softc *sc)
 		data *= 1000000 / 64;
 		sc->sensors[ITHERM_SENSOR_CORETEMP2].value +=
 		    data;
+		itherm_bias_temperature_sensor(
+		    &sc->sensors[ITHERM_SENSOR_CORETEMP2]);
 	}
 
 	/*
