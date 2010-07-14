@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.146 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: route.c,v 1.147 2010/07/14 01:23:04 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1196,6 +1196,7 @@ char *msgtypes[] = {
 	"RTM_DELADDR: address being removed from iface",
 	"RTM_IFINFO: iface status change",
 	"RTM_IFANNOUNCE: iface arrival/departure",
+	"RTM_DESYNC: route socket overflow",
 	NULL
 };
 
@@ -1239,11 +1240,14 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    rtm->rtm_version);
 		return;
 	}
-	printf("%s: len %d, ", msgtypes[rtm->rtm_type], rtm->rtm_msglen);
+	printf("%s: len %d", msgtypes[rtm->rtm_type], rtm->rtm_msglen);
 	switch (rtm->rtm_type) {
+	case RTM_DESYNC:
+		printf("\n");
+		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		(void) printf("if# %d, ", ifm->ifm_index);
+		(void) printf(", if# %d, ", ifm->ifm_index);
 		if (if_indextoname(ifm->ifm_index, ifname) != NULL)
 			printf("name: %s, ", ifname);
 		printf("link: %s, flags:",
@@ -1255,13 +1259,13 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		printf("metric %d, flags:", ifam->ifam_metric);
+		printf(", metric %d, flags:", ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
 		pmsg_addrs((char *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
 		break;
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
-		printf("if# %d, name %s, what: ",
+		printf(", if# %d, name %s, what: ",
 		    ifan->ifan_index, ifan->ifan_name);
 		switch (ifan->ifan_what) {
 		case IFAN_ARRIVAL:
@@ -1277,7 +1281,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf("\n");
 		break;
 	default:
-		printf("priority %d, ", rtm->rtm_priority);
+		printf(", priority %d, ", rtm->rtm_priority);
 		printf("table %u, pid: %ld, seq %d, errno %d\nflags:",
 		    rtm->rtm_tableid, (long)rtm->rtm_pid, rtm->rtm_seq,
 		    rtm->rtm_errno);
