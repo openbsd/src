@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.21 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: reader.c,v 1.22 2010/07/14 13:13:42 nicm Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -1120,12 +1120,8 @@ initialize_grammar(void)
 {
     nitems = 4;
     maxitems = 300;
-    pitem = (bucket **) MALLOC(maxitems*sizeof(bucket *));
+    pitem = (bucket **) CALLOC(maxitems, sizeof(bucket *));
     if (pitem == 0) no_space();
-    pitem[0] = 0;
-    pitem[1] = 0;
-    pitem[2] = 0;
-    pitem[3] = 0;
 
     nrules = 3;
     maxrules = 100;
@@ -1150,9 +1146,11 @@ initialize_grammar(void)
 void
 expand_items(void)
 {
+    int olditems = maxitems;
     maxitems += 300;
     pitem = (bucket **) REALLOC(pitem, maxitems*sizeof(bucket *));
     if (pitem == 0) no_space();
+    memset(pitem + olditems, 0, (maxitems - olditems)*sizeof(bucket *));
 }
 
 
@@ -1242,7 +1240,8 @@ end_rule(void)
     if (!last_was_action && plhs[nrules]->tag)
     {
 	for (i = nitems - 1; pitem[i]; --i) continue;
-	if (pitem[i+1] == 0 || pitem[i+1]->tag != plhs[nrules]->tag)
+	if (i == maxitems - 1 || pitem[i+1] == 0 ||
+	    pitem[i+1]->tag != plhs[nrules]->tag)
 	    default_action_warning();
     }
 
