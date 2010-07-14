@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.74 2010/03/22 19:33:19 schwarze Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.75 2010/07/14 22:15:57 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -479,13 +479,12 @@ files_differ(FILE *f1, FILE *f2, int flags)
 	for (;;) {
 		i = fread(buf1, 1, sizeof(buf1), f1);
 		j = fread(buf2, 1, sizeof(buf2), f2);
+		if ((!i && ferror(f1)) || (!j && ferror(f2)))
+			return (-1);
 		if (i != j)
 			return (1);
-		if (i == 0 && j == 0) {
-			if (ferror(f1) || ferror(f2))
-				return (1);
+		if (i == 0)
 			return (0);
-		}
 		if (memcmp(buf1, buf2, i) != 0)
 			return (1);
 	}
