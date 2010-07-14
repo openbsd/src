@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.296 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: rde.c,v 1.297 2010/07/14 09:00:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -264,11 +264,18 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 			timeout = 0;
 
 		i = PFD_PIPE_COUNT;
-		LIST_FOREACH(mctx, &rde_mrts, entry) {
+		for (mctx = LIST_FIRST(&rde_mrts); mctx != 0; mctx = xmctx) {
+			xmctx = LIST_NEXT(mctx, entry);
 			if (mctx->mrt.wbuf.queued) {
 				pfd[i].fd = mctx->mrt.wbuf.fd;
 				pfd[i].events = POLLOUT;
 				i++;
+			} else if (mctx->mrt.state == MRT_STATE_REMOVE) {
+				close(mctx->mrt.wbuf.fd);
+				LIST_REMOVE(&mctx->ribctx, entry);
+				LIST_REMOVE(mctx, entry);
+				free(mctx);
+				rde_mrt_cnt--;
 			}
 		}
 
@@ -304,19 +311,10 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 
 		for (j = PFD_PIPE_COUNT, mctx = LIST_FIRST(&rde_mrts);
 		    j < i && mctx != 0; j++) {
-			xmctx = LIST_NEXT(mctx, entry);
 			if (pfd[j].fd == mctx->mrt.wbuf.fd &&
 			    pfd[j].revents & POLLOUT)
 				mrt_write(&mctx->mrt);
-			if (mctx->mrt.wbuf.queued == 0 && 
-			    mctx->mrt.state == MRT_STATE_REMOVE) {
-				close(mctx->mrt.wbuf.fd);
-				LIST_REMOVE(&mctx->ribctx, entry);
-				LIST_REMOVE(mctx, entry);
-				free(mctx);
-				rde_mrt_cnt--;
-			}
-			mctx = xmctx;
+			mctx = LIST_NEXT(mctx, entry);
 		}
 
 		rde_update_queue_runner();
