@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.71 2010/07/09 15:44:20 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.72 2010/07/14 00:42:57 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ struct rt_msghdr {
 #define RTM_DELADDR	0xd	/* address being removed from iface */
 #define RTM_IFINFO	0xe	/* iface going up/down etc. */
 #define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
+#define RTM_DESYNC	0x10	/* route socket buffer overflow */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.103 2010/07/09 15:36:54 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.104 2010/07/14 00:42:57 dlg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -82,6 +82,8 @@
 #endif
 
 #include <sys/stdarg.h>
+#include <sys/kernel.h>
+#include <sys/timeout.h>
 
 struct sockaddr		route_dst = { 2, PF_ROUTE, };
 struct sockaddr		route_src = { 2, PF_ROUTE, };
@@ -112,15 +114,30 @@ void		 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 struct routecb {
 	struct rawcb	rcb;
 	unsigned int	msgfilter;
+	unsigned int	flags;
+	struct timeout	timeout;
 };
 #define	sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
 
+/*
+ * These flags and timeout are used for indicating to userland (via a 
+ * RTM_DESYNC msg) when the route socket has overflowed and messages 
+ * have been lost.
+ */
+#define ROUTECB_FLAG_DESYNC	0x1	/* Route socket out of memory */
+#define ROUTECB_FLAG_FLUSH	0x2	/* Wait until socket is empty before 
+					   queueing more packets */
+
+#define ROUTE_DESYNC_RESEND_TIMEOUT	(hz / 5)	/* In hz */
+
+void	rt_senddesync(void *);
 
 int
 route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
 	struct rawcb	*rp;
+	struct routecb	*rop;
 	int		 s, af;
 	int		 error = 0;
 
@@ -136,6 +153,8 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		rp = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
 		so->so_pcb = rp;
+		/* Init the timeout structure */
+		timeout_set(&((struct routecb *)rp)->timeout, rt_senddesync, rp);
 		/*
 		 * Don't call raw_usrreq() in the attach case, because
 		 * we want to allow non-privileged processes to listen
@@ -165,8 +184,22 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		so->so_options |= SO_USELOOPBACK;
 		break;
 
+	case PRU_RCVD:
+		rop = (struct routecb *)rp;
+
+		/*
+		 * If we are in a FLUSH state, check if the buffer is 
+		 * empty so that we can clear the flag.
+		 */
+		if (((rop->flags & ROUTECB_FLAG_FLUSH) != 0) &&
+		    ((sbspace(&rp->rcb_socket->so_rcv) == 
+		    rp->rcb_socket->so_rcv.sb_hiwat)))
+			rop->flags &= ~ROUTECB_FLAG_FLUSH;
+		break;
+
 	case PRU_DETACH:
 		if (rp) {
+			timeout_del(&((struct routecb *)rp)->timeout);
 			af = rp->rcb_proto.sp_protocol;
 			if (af == AF_INET)
 				route_cb.ip_count--;
@@ -234,6 +267,35 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 }
 
 void
+rt_senddesync(void *data)
+{
+	struct rawcb	*rp;
+	struct routecb	*rop;
+	struct mbuf	*desync_mbuf;
+
+	rp = (struct rawcb *)data;
+	rop = (struct routecb *)rp;
+
+	/* If we are in a DESYNC state, try to send a RTM_DESYNC packet */
+	if ((rop->flags & ROUTECB_FLAG_DESYNC) != 0) {
+		/*
+		 * If we fail to alloc memory or if sbappendaddr() 
+		 * fails, re-add timeout and try again.
+		 */
+		desync_mbuf = rt_msg1(RTM_DESYNC, NULL);
+		if ((desync_mbuf != NULL) && 
+		    (sbappendaddr(&rp->rcb_socket->so_rcv, &route_src, 
+		    desync_mbuf, (struct mbuf *)0) != 0)) {
+			rop->flags &= ~ROUTECB_FLAG_DESYNC;
+			sorwakeup(rp->rcb_socket);
+		} else {
+			/* Re-add timeout to try sending msg again */
+			timeout_add(&rop->timeout, ROUTE_DESYNC_RESEND_TIMEOUT);
+		}
+	}
+}
+
+void
 route_input(struct mbuf *m0, ...)
 {
 	struct rawcb *rp;
@@ -286,14 +348,29 @@ route_input(struct mbuf *m0, ...)
 		    mtod(m, struct rt_msghdr *)->rtm_type)))
 			continue;
 
+		/*
+		 * Check to see if the flush flag is set. If so, don't queue 
+		 * any more messages until the flag is cleared.
+		 */
+		if ((rop->flags & ROUTECB_FLAG_FLUSH) != 0)
+			continue;
+
 		if (last) {
 			struct mbuf *n;
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (sbappendaddr(&last->so_rcv, sosrc,
-				    n, (struct mbuf *)0) == 0)
-					/* should notify about lost packet */
+				    n, (struct mbuf *)0) == 0) {
+					/*
+					 * Flag socket as desync'ed and 
+					 * flush required
+					 */
+					sotoroutecb(last)->flags |= 
+					    ROUTECB_FLAG_DESYNC | 
+					    ROUTECB_FLAG_FLUSH;
+					sbflush(&last->so_rcv);
+					rt_senddesync((void *) sotorawcb(last));
 					m_freem(n);
-				else {
+				} else {
 					sorwakeup(last);
 					sockets++;
 				}
@@ -303,9 +380,14 @@ route_input(struct mbuf *m0, ...)
 	}
 	if (last) {
 		if (sbappendaddr(&last->so_rcv, sosrc,
-		    m, (struct mbuf *)0) == 0)
+		    m, (struct mbuf *)0) == 0) {
+			/* Flag socket as desync'ed and flush required */
+			sotoroutecb(last)->flags |= 
+			    ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
+			sbflush(&last->so_rcv);
+			rt_senddesync((void *) sotorawcb(last));
 			m_freem(m);
-		else {
+		} else {
 			sorwakeup(last);
 			sockets++;
 		}
@@ -1319,7 +1401,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 extern	struct domain routedomain;		/* or at least forward */
 
 struct protosw routesw[] = {
-{ SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR|PR_WANTRCVD,
   route_input,	route_output,	raw_ctlinput,	route_ctloutput,
   route_usrreq,
   raw_init,	0,		0,		0,
