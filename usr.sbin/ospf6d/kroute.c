@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.26 2010/07/12 14:35:13 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.27 2010/07/14 17:09:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -696,17 +696,17 @@ protect_lo(void)
 u_int8_t
 mask2prefixlen(struct sockaddr_in6 *sa_in6)
 {
-	u_int8_t	l = 0, i, len;
+	u_int8_t	l = 0, *ap, *ep;
 
 	/*
 	 * sin6_len is the size of the sockaddr so substract the offset of
 	 * the possibly truncated sin6_addr struct.
 	 */
-	len = sa_in6->sin6_len -
-	    (u_int8_t)(&((struct sockaddr_in6 *)NULL)->sin6_addr);
-	for (i = 0; i < len; i++) {
+	ap = (u_int8_t *)&sa_in6->sin6_addr;
+	ep = (u_int8_t *)sa_in6 + sa_in6->sin6_len;
+	for (; ap < ep; ap++) {
 		/* this "beauty" is adopted from sbin/route/show.c ... */
-		switch (sa_in6->sin6_addr.s6_addr[i]) {
+		switch (*ap) {
 		case 0xff:
 			l += 8;
 			break;
