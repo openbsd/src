@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.96 2009/08/25 17:59:45 miod Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.97 2010/07/14 10:31:54 matthew Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  * Types of memory to be allocated
  */
 #define	M_FREE		0	/* should be on free list */
-#define	M_MBUF		1	/* mbuf */
+/* 1 - free */
 #define	M_DEVBUF	2	/* device driver memory */
 #define M_DEBUG		3	/* debug chunk */
 #define	M_PCB		4	/* protocol control block */
@@ -81,7 +81,7 @@
 /* 21 - free */
 #define	M_NFSREQ	22	/* NFS request header */
 #define	M_NFSMNT	23	/* NFS mount structure */
-#define	M_NFSNODE	24	/* NFS vnode private part */
+/* 24 - free */
 #define	M_VNODE		25	/* Dynamically allocated vnodes */
 #define	M_CACHE		26	/* Dynamically allocated cache entries */
 #define	M_DQUOT		27	/* UFS quota entries */
@@ -104,7 +104,7 @@
 /* 47-48 - free */
 #define	M_NETADDR	49	/* Export host address structure */
 #define	M_NFSSVC	50	/* Nfs server structure */
-#define	M_NFSUID	51	/* Nfs uid mapping structure */
+/* 51 - free */
 #define	M_NFSD		52	/* Nfs server daemon structure */
 #define	M_IPMOPTS	53	/* internet multicast options */
 #define	M_IPMADDR	54	/* internet multicast address */
@@ -145,16 +145,14 @@
 /* 109 - free */
 #define M_CREDENTIALS	110	/* IPsec-related credentials and ID info */
 #define M_PACKET_TAGS	111	/* Packet-attached information */
-#define M_1394CTL	112	/* IEEE 1394 control structures */
-#define M_1394DATA	113	/* IEEE 1394 data buffers */
+/* 112-113 - free */
 #define	M_EMULDATA	114	/* Per-process emulation data */
 /* 115-122 - free */
 
 /* KAME IPv6 */
 #define	M_IP6OPT	123	/* IPv6 options */
 #define	M_IP6NDP	124	/* IPv6 Neighbour Discovery */
-#define	M_IP6RR		125	/* IPv6 Router Renumbering Prefix */
-#define	M_RR_ADDR	126	/* IPv6 Router Renumbering Ifid */
+/* 125-126 - free */
 #define	M_TEMP		127	/* misc temporary data buffers */
 
 #define	M_NTFSMNT	128	/* NTFS mount structure */
@@ -187,7 +185,7 @@
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
-	"mbuf",		/* 1 M_MBUF */ \
+	NULL, \
 	"devbuf",	/* 2 M_DEVBUF */ \
 	"debug", 	/* 3 M_DEBUG */ \
 	"pcb",		/* 4 M_PCB */ \
@@ -210,7 +208,7 @@
 	NULL, \
 	"NFS req",	/* 22 M_NFSREQ */ \
 	"NFS mount",	/* 23 M_NFSMNT */ \
-	"NFS node",	/* 24 M_NFSNODE */ \
+	NULL, \
 	"vnodes",	/* 25 M_VNODE */ \
 	"namecache",	/* 26 M_CACHE */ \
 	"UFS quota",	/* 27 M_DQUOT */ \
@@ -237,7 +235,7 @@
 	NULL, \
 	"Export Host",	/* 49 M_NETADDR */ \
 	"NFS srvsock",	/* 50 M_NFSSVC */ \
-	"NFS uid",	/* 51 M_NFSUID */ \
+	NULL, \
 	"NFS daemon",	/* 52 M_NFSD */ \
 	"ip_moptions",	/* 53 M_IPMOPTS */ \
 	"in_multi",	/* 54 M_IPMADDR */ \
@@ -289,15 +287,15 @@
 	NULL, \
 	"IPsec creds",	/* 110 M_CREDENTIALS */ \
 	"packet tags",	/* 111 M_PACKET_TAGS */ \
-	"1394ctl",	/* 112 M_1394CTL */ \
-	"1394data",	/* 113 M_1394DATA */ \
+	NULL, \
+	NULL, \
 	"emuldata",	/* 114 M_EMULDATA */ \
 	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, \
 	"ip6_options",	/* 123 M_IP6OPT */ \
 	"NDP",		/* 124 M_IP6NDP */ \
-	"ip6rr",	/* 125 M_IP6RR */ \
-	"rp_addr",	/* 126 M_RR_ADDR */ \
+	NULL, \
+	NULL, \
 	"temp",		/* 127 M_TEMP */ \
 	"NTFS mount",	/* 128 M_NTFSMNT */ \
 	"NTFS node",	/* 129 M_NTFSNTNODE */ \

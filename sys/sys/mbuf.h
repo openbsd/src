@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.141 2010/07/02 02:40:17 blambert Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.142 2010/07/14 10:31:54 matthew Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -382,7 +382,6 @@ extern	int max_linkhdr;		/* largest link-level header */
 extern	int max_protohdr;		/* largest protocol header */
 extern	int max_hdr;			/* largest link+protocol header */
 extern	int max_datalen;		/* MHLEN - max_hdr */
-extern	int mbtypes[];			/* XXX */
 
 void	mbinit(void);
 struct	mbuf *m_copym2(struct mbuf *, int, int, int);
@@ -447,16 +446,4 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_DIVERT		0x0200 /* pf(4) diverted packet */
 #define PACKET_TAG_PIPEX		0x0400 /* pipex context XXX */
 
-#ifdef MBTYPES
-int mbtypes[] = {				/* XXX */
-	M_FREE,		/* MT_FREE	0	   should be on free list */
-	M_MBUF,		/* MT_DATA	1	   dynamic (data) allocation */
-	M_MBUF,		/* MT_HEADER	2	   packet header */
-	M_MBUF,		/* MT_SONAME	8	   socket name */
-	M_SOOPTS,	/* MT_SOOPTS	10	   socket options */
-	M_FTABLE,	/* MT_FTABLE	11	   fragment reassembly header */
-	M_MBUF,		/* MT_CONTROL	14	   extra-data protocol message */
-	M_MBUF,		/* MT_OOBDATA	15	   expedited data  */
-};
-#endif /* MBTYPES */
 #endif
