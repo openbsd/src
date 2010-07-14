@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.86 2010/07/12 14:35:13 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.87 2010/07/14 01:00:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -360,6 +360,8 @@ void
 kr_fib_reload(void)
 {
 	struct kroute_node	*krn, *kr, *kn;
+
+	log_info("reloading interface list and routing table");
 
 	kr_state.fib_serial++;
 
@@ -1524,6 +1526,13 @@ add:
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);
+			break;
+		case RTM_DESYNC:
+			/*
+			 * We lost some routing packets. Force a reload of
+			 * the kernel route/interface information.
+			 */
+			kr_fib_reload();
 			break;
 		default:
 			/* ignore for now */
