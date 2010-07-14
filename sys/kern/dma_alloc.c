@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_alloc.c,v 1.1 2010/07/13 16:47:03 deraadt Exp $	 */
+/*	$OpenBSD: dma_alloc.c,v 1.2 2010/07/14 00:15:07 deraadt Exp $	 */
 /*
  * Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -49,7 +49,7 @@ dma_alloc_index(size_t sz)
 		if (sz <= (1 << (b + DMA_BUCKET_OFFSET)))
 			return (b);
 #ifdef DEBUG
-	printf("dma_alloc/free: object %d too large\n", sz)
+	printf("dma_alloc/free: object %d too large\n", sz);
 #endif
 	return (-1);
 }
