@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.24 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: video.c,v 1.25 2010/07/14 21:24:33 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/poll.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
@@ -105,7 +106,8 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 		return (EBUSY);
 	sc->sc_open |= VIDEO_OPEN;
 
-	sc->sc_start_read = 0;
+	sc->sc_vidmode = VIDMODE_NONE;
+	sc->sc_frames_ready = 0;
 
 	if (sc->hw_if->open != NULL)
 		return (sc->hw_if->open(sc->hw_hdl, flags, &sc->sc_fsize,
@@ -144,27 +146,35 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 	if (sc->sc_dying)
 		return (EIO);
 
-	/* start the stream */
-	if (sc->hw_if->start_read && !sc->sc_start_read) {
-		error = sc->hw_if->start_read(sc->hw_hdl);
-		if (error)
-			return (error);
-		sc->sc_start_read = 1;
-	}
+	if (sc->sc_vidmode == VIDMODE_MMAP)
+		return (EBUSY);
 
+	/* start the stream if not already started */
+	if (sc->sc_vidmode == VIDMODE_NONE && sc->hw_if->start_read) {
+ 		error = sc->hw_if->start_read(sc->hw_hdl);
+ 		if (error)
+ 			return (error);
+		sc->sc_vidmode = VIDMODE_READ;
+ 	}
+ 
 	DPRINTF(("resid=%d\n", uio->uio_resid));
 
-	/* block userland read until a frame is ready */
-	error = tsleep(sc, PWAIT | PCATCH, "vid_rd", 0);
-	if (error)
-		return (error);
+	if (sc->sc_frames_ready < 1) {
+		/* block userland read until a frame is ready */
+		error = tsleep(sc, PWAIT | PCATCH, "vid_rd", 0);
+		if (sc->sc_dying)
+			error = EIO;
+		if (error)
+			return (error);
+	}
 
-	/* move the frame to userland */
+	/* move no more than 1 frame to userland, as per specification */
 	if (sc->sc_fsize < uio->uio_resid)
 		size = sc->sc_fsize;
 	else
 		size = uio->uio_resid;
 	error = uiomove(sc->sc_fbuffer, size, uio);
+	sc->sc_frames_ready--;
 	if (error)
 		return (error);
 
@@ -247,9 +257,16 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			    (struct v4l2_buffer *)data);
 		break;
 	case VIDIOC_DQBUF:
-		if (sc->hw_if->dqbuf)
-			error = (sc->hw_if->dqbuf)(sc->hw_hdl,
-			    (struct v4l2_buffer *)data);
+		if (!sc->hw_if->dqbuf)
+			break;
+		/* should have called mmap() before now */
+		if (sc->sc_vidmode != VIDMODE_MMAP) {
+			error = EINVAL;
+			break;
+		}
+		error = (sc->hw_if->dqbuf)(sc->hw_hdl,
+		    (struct v4l2_buffer *)data);
+		sc->sc_frames_ready--;
 		break;
 	case VIDIOC_STREAMON:
 		if (sc->hw_if->streamon)
@@ -288,6 +305,48 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	return (error);
 }
 
+int
+videopoll(dev_t dev, int events, struct proc *p)
+{
+	int unit = VIDEOUNIT(dev);
+	struct video_softc *sc;
+	int error, revents = 0;
+
+	if (unit >= video_cd.cd_ndevs ||
+	    (sc = video_cd.cd_devs[unit]) == NULL)
+		return (POLLERR);
+
+	if (sc->sc_dying)
+		return (POLLERR);
+
+	DPRINTF(("%s: events=0x%x\n", __func__, events));
+
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (sc->sc_frames_ready > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+	}
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM))
+			/*
+			 * Start the stream in read() mode if not already
+			 * started.  If the user wanted mmap() mode,
+			 * he should have called mmap() before now.
+			 */
+			if (sc->sc_vidmode == VIDMODE_NONE &&
+			    sc->hw_if->start_read) {
+				error = sc->hw_if->start_read(sc->hw_hdl);
+				if (error)
+					return (POLLERR);
+				sc->sc_vidmode = VIDMODE_READ;
+			}
+			selrecord(p, &sc->sc_rsel);
+	}
+
+	DPRINTF(("%s: revents=0x%x\n", __func__, revents));
+
+	return (revents);
+}
+
 paddr_t
 videommap(dev_t dev, off_t off, int prot)
 {
@@ -314,6 +373,7 @@ videommap(dev_t dev, off_t off, int prot)
 		return (-1);
 	if (pmap_extract(pmap_kernel(), (vaddr_t)p, &pa) == FALSE)
 		panic("videommap: invalid page");
+	sc->sc_vidmode = VIDMODE_MMAP;
 
 #if defined(__powerpc__) || defined(__sparc64__)
 	return (pa);
@@ -342,7 +402,13 @@ video_intr(void *addr)
 	struct video_softc *sc = (struct video_softc *)addr;
 
 	DPRINTF(("video_intr sc=%p\n", sc));
-	wakeup(sc);
+	if (sc->sc_vidmode != VIDMODE_NONE)
+		sc->sc_frames_ready++;
+	else
+		printf("%s: interrupt but no streams!\n", __func__);
+	if (sc->sc_vidmode == VIDMODE_READ)
+		wakeup(sc);
+	selwakeup(&sc->sc_rsel);
 }
 
 int

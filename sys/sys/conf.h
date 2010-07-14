@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.99 2010/07/08 20:15:01 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.100 2010/07/14 21:24:33 jakemsr Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -441,7 +441,7 @@ void	randomattach(void);
 #define cdev_video_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	dev_init(c,n,mmap) }
 
 /* open, close, write, ioctl */
