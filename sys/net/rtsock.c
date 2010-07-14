@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.104 2010/07/14 00:42:57 dlg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.105 2010/07/14 20:56:35 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -367,7 +367,6 @@ route_input(struct mbuf *m0, ...)
 					sotoroutecb(last)->flags |= 
 					    ROUTECB_FLAG_DESYNC | 
 					    ROUTECB_FLAG_FLUSH;
-					sbflush(&last->so_rcv);
 					rt_senddesync((void *) sotorawcb(last));
 					m_freem(n);
 				} else {
@@ -384,7 +383,6 @@ route_input(struct mbuf *m0, ...)
 			/* Flag socket as desync'ed and flush required */
 			sotoroutecb(last)->flags |= 
 			    ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
-			sbflush(&last->so_rcv);
 			rt_senddesync((void *) sotorawcb(last));
 			m_freem(m);
 		} else {
