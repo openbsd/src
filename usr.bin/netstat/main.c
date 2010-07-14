@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.84 2010/06/30 03:32:55 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.85 2010/07/14 23:44:41 dhill Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ main(int argc, char *argv[])
 					break;
 			if (tp->pr_name == 0)
 				continue;
-			printproto(tp, p->p_name, af);
+			printproto(tp, p->p_name, AF_INET);
 		}
 		endprotoent();
 	}
@@ -430,7 +430,7 @@ main(int argc, char *argv[])
 	}
 	if (af == AF_INET6 || af == AF_UNSPEC)
 		for (tp = ip6protox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name, af);
+			printproto(tp, tp->pr_name, AF_INET6);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
