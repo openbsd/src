@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.22 2010/07/14 20:21:55 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.23 2010/07/14 20:44:17 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -850,20 +850,21 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			return;
 		}
 
+		if (letoh32(msg->rm_datalen) < sizeof(struct ether_header)) {
+			ifp->if_ierrors++;
+			printf("%s: urndis_decap invalid ethernet size "
+			    "%d < %d\n",
+			    DEVNAME(sc),
+			    letoh32(msg->rm_datalen),
+			    sizeof(struct ether_header));
+			return;
+		}
+
 		memcpy(mtod(m, char*),
 		    ((char*)&msg->rm_dataoffset + letoh32(msg->rm_dataoffset)),
 		    letoh32(msg->rm_datalen));
 		m->m_pkthdr.len = m->m_len = letoh32(msg->rm_datalen);
 
-		if (m->m_len < sizeof(struct ether_header)) {
-			ifp->if_ierrors++;
-			printf("%s: urndis_decap invalid ethernet size "
-			    "%d < %d\n",
-			    DEVNAME(sc),
-			    m->m_len,
-			    sizeof(struct ether_header));
-			return;
-		}
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
