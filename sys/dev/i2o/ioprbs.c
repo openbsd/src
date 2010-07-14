@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.21 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.22 2010/07/14 06:16:04 matthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -539,7 +539,7 @@ ioprbs_intr(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_rbs_reply *rb = reply;
 	struct ioprbs_ccb *ccb = im->im_dvcontext;
-	struct buf *bp = ccb->ic_xs->bp;
+	struct scsi_xfer *xs = ccb->ic_xs;
 	struct ioprbs_softc *sc = (struct ioprbs_softc *)dv;
 	struct iop_softc *iop = (struct iop_softc *)dv->dv_parent;
 	int err, detail;
@@ -549,7 +549,7 @@ ioprbs_intr(struct device *dv, struct iop_msg *im, void *reply)
 
 	DPRINTF(("ioprbs_intr(%p, %p, %p) ", dv, im, reply));
 
-	timeout_del(&ccb->ic_xs->stimeout);
+	timeout_del(&xs->stimeout);
 
 	err = ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0);
 
@@ -567,18 +567,14 @@ ioprbs_intr(struct device *dv, struct iop_msg *im, void *reply)
 		err = 1;
 	}
 
-	if (bp) {
-		if (err) {
-			bp->b_flags |= B_ERROR;
-			bp->b_error = EIO;
-			bp->b_resid = bp->b_bcount;
-		} else
-			bp->b_resid = bp->b_bcount - letoh32(rb->transfercount);
-	}
+	if (err)
+		xs->error = XS_DRIVER_STUFFUP;
+	else
+		xs->resid = xs->datalen - letoh32(rb->transfercount);
 
 	iop_msg_unmap(iop, im);
 	iop_msg_free(iop, im);
-	scsi_done(ccb->ic_xs);
+	scsi_done(xs);
 	ioprbs_free_ccb(sc, ccb);
 }
 
