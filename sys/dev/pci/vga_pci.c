@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.53 2010/07/02 00:23:42 pirofti Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.54 2010/07/14 11:21:53 matthieu Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -101,6 +101,9 @@
 
 #include "intagp.h"
 #include "drm.h"
+#if defined(__i386__) || defined(__amd64__)
+#include "acpi.h"
+#endif
 
 int	vga_pci_match(struct device *, void *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
@@ -137,7 +140,7 @@ struct cfattach vga_pci_ca = {
 	NULL, vga_pci_activate
 };
 
-#if !defined(SMALL_KERNEL) && (defined (__i386__) || defined (__amd64__))
+#if !defined(SMALL_KERNEL) && NACPI > 0
 int vga_pci_do_post;
 extern int do_real_mode_post;
 
@@ -213,7 +216,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 
-#if !defined(SMALL_KERNEL) && (defined (__i386__) || defined (__amd64__))
+#if !defined(SMALL_KERNEL) && NACPI > 0
 	int prod, vend, subid, subprod, subvend, i;
 #endif
 
@@ -245,7 +248,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("couldn't set up vga POST handler\n");
 #endif
 
-#if !defined(SMALL_KERNEL) && (defined (__i386__) || defined (__amd64__))
+#if !defined(SMALL_KERNEL) && NACPI > 0
 	vend = PCI_VENDOR(pa->pa_id);
 	prod = PCI_PRODUCT(pa->pa_id);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -285,7 +288,7 @@ vga_pci_activate(struct device *self, int act)
 {
 	int rv = 0;
 
-#if defined (X86EMU) && (defined (__i386__) || defined (__amd64__))
+#if defined (X86EMU) && NACPI > 0
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 #endif
 
@@ -294,7 +297,7 @@ vga_pci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-#if defined (X86EMU) && (defined (__i386__) || defined (__amd64__))
+#if defined (X86EMU) && NACPI > 0
 		if (vga_pci_do_post)
 			vga_post_call(sc->sc_posth);
 #endif
