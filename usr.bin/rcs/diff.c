@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.27 2010/07/15 11:10:23 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.28 2010/07/15 18:19:18 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1046,7 +1046,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile, int flags)
 		for (j = 0; j < nc; j++) {
 			if ((c = getc(lb)) == EOF) {
 				if (diff_format == D_RCSDIFF)
-					warn("No newline at end of file");
+					warnx("No newline at end of file");
 				else
 					diff_output("\n\\ No newline at end of "
 					    "file");
