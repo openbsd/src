@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.132 2010/07/14 21:24:33 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.133 2010/07/15 04:46:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2094,6 +2094,11 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 		sc->sc_mmap_cur = 0;
 
 	wakeup(sc);
+
+	/*
+	 * In case userland uses poll(2), signal that we have a frame
+	 * ready to dequeue.
+	 */
 	sc->sc_uplayer_intr(sc->sc_uplayer_arg);
 }
 
