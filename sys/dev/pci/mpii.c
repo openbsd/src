@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.32 2010/07/09 22:33:21 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.33 2010/07/15 23:52:32 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1717,9 +1717,12 @@ struct mpii_ccb_bundle {
 struct mpii_softc;
 
 struct mpii_rcb {
+	SIMPLEQ_ENTRY(mpii_rcb)	rcb_link;
 	void			*rcb_reply;
 	u_int32_t		rcb_reply_dva;
 };
+
+SIMPLEQ_HEAD(mpii_rcb_list, mpii_rcb);
 
 struct mpii_device {
 	int			flags;
@@ -1833,6 +1836,10 @@ struct mpii_softc {
 	struct mpii_dmamem	*sc_reply_freeq;
 	int			sc_reply_free_host_index;
 
+	struct mpii_rcb_list	sc_evt_ack_queue;
+	struct mutex		sc_evt_ack_mtx;
+	struct scsi_iohandler	sc_evt_ack_handler;
+
 	/* scsi ioctl from sd device */
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 
@@ -1935,11 +1942,9 @@ int		mpii_cfg_coalescing(struct mpii_softc *);
 
 int		mpii_eventnotify(struct mpii_softc *);
 void		mpii_eventnotify_done(struct mpii_ccb *);
-void		mpii_eventack(struct mpii_softc *,
-		    struct mpii_msg_event_reply *);
+void		mpii_eventack(void *, void *);
 void		mpii_eventack_done(struct mpii_ccb *);
-void		mpii_event_process(struct mpii_softc *,
-		    struct mpii_msg_reply *);
+void		mpii_event_process(struct mpii_softc *, struct mpii_rcb *);
 void		mpii_event_sas(struct mpii_softc *,
 		    struct mpii_msg_event_reply *);
 void		mpii_event_raid(struct mpii_softc *,
@@ -3061,17 +3066,28 @@ err:
 }
 
 void
-mpii_eventack(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
+mpii_eventack(void *cookie, void *io)
 {
+	struct mpii_softc			*sc = cookie;
+	struct mpii_ccb				*ccb = io;
+	struct mpii_rcb				*rcb, *next;
+	struct mpii_msg_event_reply		*enp;
 	struct mpii_msg_eventack_request	*eaq;
-	struct mpii_ccb				*ccb;
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	if (ccb == NULL) {
-		DNPRINTF(MPII_D_EVT, "%s: mpii_eventack ccb_get\n",
-		    DEVNAME(sc));
+	mtx_enter(&sc->sc_evt_ack_mtx);
+	rcb = SIMPLEQ_FIRST(&sc->sc_evt_ack_queue);
+	if (rcb != NULL) {
+		next = SIMPLEQ_NEXT(rcb, rcb_link);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_evt_ack_queue, rcb_link);
+	}
+	mtx_leave(&sc->sc_evt_ack_mtx);
+
+	if (rcb == NULL) {
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return;
 	}
+
+	enp = (struct mpii_msg_event_reply *)rcb->rcb_reply;
 
 	ccb->ccb_done = mpii_eventack_done;
 	eaq = ccb->ccb_cmd;
@@ -3081,8 +3097,12 @@ mpii_eventack(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 	eaq->event = enp->event;
 	eaq->event_context = enp->event_context;
 
+	mpii_push_reply(sc, rcb);
+
 	mpii_start(sc, ccb);
-	return;
+
+	if (next != NULL)
+		scsi_ioh_add(&sc->sc_evt_ack_handler);
 }
 
 void
@@ -3202,6 +3222,11 @@ mpii_eventnotify(struct mpii_softc *sc)
 		return (1);
 	}
 
+	SIMPLEQ_INIT(&sc->sc_evt_ack_queue);
+	mtx_init(&sc->sc_evt_ack_mtx, IPL_BIO);
+	scsi_ioh_set(&sc->sc_evt_ack_handler, &sc->sc_iopool,
+	    mpii_eventack, sc);
+
 	ccb->ccb_done = mpii_eventnotify_done;
 	enq = ccb->ccb_cmd;
 
@@ -3239,13 +3264,12 @@ void
 mpii_eventnotify_done(struct mpii_ccb *ccb)
 {
 	struct mpii_softc			*sc = ccb->ccb_sc;
+	struct mpii_rcb				*rcb = ccb->ccb_rcb;
 
 	DNPRINTF(MPII_D_EVT, "%s: mpii_eventnotify_done\n", DEVNAME(sc));
 
-	mpii_event_process(sc, ccb->ccb_rcb->rcb_reply);
-
-	mpii_push_reply(sc, ccb->ccb_rcb);
 	scsi_io_put(&sc->sc_iopool, ccb);
+	mpii_event_process(sc, rcb);
 }
 
 void
@@ -3408,11 +3432,11 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 }
 
 void
-mpii_event_process(struct mpii_softc *sc, struct mpii_msg_reply *prm)
+mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 {
 	struct mpii_msg_event_reply		*enp;
 
-	enp = (struct mpii_msg_event_reply *)prm;
+	enp = (struct mpii_msg_event_reply *)rcb->rcb_reply;
 
 	DNPRINTF(MPII_D_EVT, "%s: mpii_event_process: %#x\n", DEVNAME(sc),
 	    letoh32(enp->event));
@@ -3493,8 +3517,13 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_msg_reply *prm)
 		    DEVNAME(sc), letoh32(enp->event));
 	}
 
-	if (enp->ack_required)
-		mpii_eventack(sc, enp);
+	if (enp->ack_required) {
+		mtx_enter(&sc->sc_evt_ack_mtx);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_evt_ack_queue, rcb, rcb_link);
+		mtx_leave(&sc->sc_evt_ack_mtx);
+		scsi_ioh_add(&sc->sc_evt_ack_handler);
+	} else
+		mpii_push_reply(sc, rcb);
 }
 
 void
@@ -3882,10 +3911,8 @@ mpii_reply(struct mpii_softc *sc, struct mpii_reply_descr *rdp)
 		ccb->ccb_state = MPII_CCB_READY;
 		ccb->ccb_rcb = rcb;
 		ccb->ccb_done(ccb);
-	} else {
-		mpii_event_process(sc, rcb->rcb_reply);
-		mpii_push_reply(sc, rcb);
-	}
+	} else
+		mpii_event_process(sc, rcb);
 
 	return (smid);
 }
