@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.63 2010/01/10 10:53:33 jmc Exp $
+.\"	$OpenBSD: csh.1,v 1.64 2010/07/15 20:04:35 schwarze Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: January 10 2010 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -214,7 +214,7 @@ The characters
 .Ql \&; ,
 .Ql < ,
 .Ql > ,
-.Ql ( ,
+.Ql \&( ,
 and
 .Ql \&)
 form separate words.
@@ -277,7 +277,7 @@ waiting for it to terminate by following it with a
 .Ql & .
 .Pp
 Any of the above may be placed in
-.Ql (
+.Ql \&(
 .Ql \&)
 to form a simple command (that
 may be a component of a pipeline, for example).
@@ -576,7 +576,7 @@ character is passed unchanged when it is followed by a blank,
 tab, newline,
 .Ql =
 or
-.Ql ( .
+.Ql \&( .
 (History substitutions also occur when an input line begins with
 .Ql ^ .
 This special abbreviation will be described later.)
@@ -1105,7 +1105,7 @@ only part of a word, even if the command outputs a complete line.
 If a word contains any of the characters
 .Ql * ,
 .Ql \&? ,
-.Ql [ ,
+.Ql \&[ ,
 or
 .Ql { ,
 or begins with the character
@@ -1122,7 +1122,7 @@ Only the metacharacters
 .Ql * ,
 .Ql \&? ,
 and
-.Ql [
+.Ql \&[
 imply pattern matching,
 the characters
 .Ql ~
@@ -1431,7 +1431,7 @@ are syntactically significant to the parser
 .Ql | ,
 .Ql < ,
 .Ql > ,
-.Ql ( ,
+.Ql \&( ,
 and
 .Ql \&)
 .Pc ,
@@ -2323,7 +2323,7 @@ or
 .Ql |
 then at least
 this part of the expression must be placed within
-.Ql (
+.Ql \&(
 .Ql \&) .
 The third form assigns the value of
 .Ar expr

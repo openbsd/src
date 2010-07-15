@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.86 2010/07/12 16:26:45 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.87 2010/07/15 20:04:35 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: July 12 2010 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -182,7 +182,7 @@ characters (space, tab, and newline) or meta-characters
 .Ql \*(Gt ,
 .Ql \*(Ba ,
 .Ql \&; ,
-.Ql ( ,
+.Ql \&( ,
 .Ql \&) ,
 and
 .Ql &
@@ -239,7 +239,7 @@ shell and must be quoted if they are to represent themselves:
 .Ql * ,
 .Ql \&? ,
 and
-.Ql [ .
+.Ql \&[ .
 The first three of these are the above mentioned quoting characters (see
 .Sx Quoting
 below);
@@ -264,7 +264,7 @@ and finally,
 .Ql * ,
 .Ql \&? ,
 and
-.Ql [
+.Ql \&[
 are used in file name generation (see
 .Sx File name patterns
 below).
@@ -447,7 +447,7 @@ and
 .Ql }
 are reserved words, not meta-characters.
 .It Xo case Ar word No in
-.Oo Op (
+.Oo Op \&(
 .Ar \ pattern
 .Op \*(Ba Ar pattern
 .No ... No )
