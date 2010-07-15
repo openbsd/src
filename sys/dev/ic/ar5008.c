@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.9 2010/06/21 19:46:50 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.10 2010/07/15 19:33:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2401,7 +2401,7 @@ ar5008_get_pdadcs(struct athn_softc *sc, uint8_t fbin,
 		while (ss < maxidx && npdadcs < AR_NUM_PDADC_VALUES - 1)
 			pdadcs[npdadcs++] = vpd[ss++];
 
-		if (tgtidx <= maxidx)
+		if (tgtidx < maxidx)
 			continue;
 
 		/* Extrapolate data for maxidx <= ss <= tgtidx. */
