@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.22 2008/10/25 22:30:43 jakemsr Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.23 2010/07/15 03:43:11 jakemsr Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -494,6 +494,9 @@ cs4281_query_encoding(addr, fp)
 	default:
 		return EINVAL;
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
 	return (0);
 }
 
@@ -558,6 +561,8 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 	}
 
 	/* set sample rate */

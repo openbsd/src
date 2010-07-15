@@ -1,4 +1,4 @@
-/*	$OpenBSD: btsco.c,v 1.4 2008/11/25 18:29:27 todd Exp $	*/
+/*	$OpenBSD: btsco.c,v 1.5 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: btsco.c,v 1.22 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -732,10 +732,11 @@ btsco_query_encoding(void *hdl, struct audio_encoding *ae)
 		ae->precision = 16;
 		ae->flags = 0;
 		break;
-
 	default:
 		err = EINVAL;
 	}
+	ae->bps = AUDIO_BPS(ae->precision);
+	ae->msb = 1;
 
 	return err;
 }
@@ -769,6 +770,8 @@ btsco_set_params(void *hdl, int setmode, int usemode,
 		p->sample_rate = 8000;
 		p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		p->precision = 16;
+		p->bps = 2;
+		p->msb = 1;
 		p->channels = 1;
 	}
 	return 0;

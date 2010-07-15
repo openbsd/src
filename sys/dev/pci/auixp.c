@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.24 2009/10/12 19:43:52 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.25 2010/07/15 03:43:11 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -233,52 +233,56 @@ auixp_query_encoding(void *hdl, struct audio_encoding *aep)
 		aep->encoding = AUDIO_ENCODING_ULINEAR;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 1:
 		strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 2:
 		strlcpy(aep->name, AudioEalaw, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ALAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 3:
 		strlcpy(aep->name, AudioEslinear, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 4:
 		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		aep->precision = 16;
 		aep->flags = 0;
-		return (0);
+		break;
 	case 5:
 		strlcpy(aep->name, AudioEulinear_le, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 6:
 		strlcpy(aep->name, AudioEslinear_be, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 7:
 		strlcpy(aep->name, AudioEulinear_be, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	default:
 		return (EINVAL);
 	}
+	aep->bps = AUDIO_BPS(aep->precision);
+	aep->msb = 1;
+
+	return (0);
 }
 
 
@@ -545,6 +549,8 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 		default:
 			return (EINVAL);
 		}
+		play->bps = AUDIO_BPS(play->precision);
+		play->msb = 1;
 
 		temprate = play->sample_rate;
 		error = ac97_set_rate(co->codec_if,
@@ -601,6 +607,8 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 		default:
 			return (EINVAL);
 		}
+		rec->bps = AUDIO_BPS(rec->precision);
+		rec->msb = 1;
 
 		error = ac97_set_rate(co->codec_if, AC97_REG_PCM_LR_ADC_RATE,
 		    &rec->sample_rate);

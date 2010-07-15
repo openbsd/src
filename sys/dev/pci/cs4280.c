@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.33 2009/01/20 20:00:06 grange Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.34 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1106,6 +1106,9 @@ cs4280_query_encoding(addr, fp)
 	default:
 		return (EINVAL);
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
 	return (0);
 }
 
@@ -1199,6 +1202,8 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 	}
 
 	/* set sample rate */

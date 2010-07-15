@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.61 2009/06/27 14:28:39 jmc Exp $
+.\"	$OpenBSD: audio.4,v 1.62 2010/07/15 03:43:11 jakemsr Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 27 2009 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -239,6 +239,8 @@ typedef struct audio_encoding {
 	char name[MAX_AUDIO_DEV_LEN]; /* name of encoding */
 	int encoding;   /* value for encoding parameter */
 	int precision;  /* value for precision parameter */
+	int bps;        /* value for bps parameter */
+	int msb;        /* value for msb parameter */
 	int flags;
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
@@ -388,6 +390,8 @@ struct audio_prinfo {
 	u_int	sample_rate;	/* sample rate in bit/s */
 	u_int	channels;	/* number of channels, usually 1 or 2 */
 	u_int	precision;	/* number of bits/sample */
+	u_int	bps;		/* number of bytes/sample */
+	u_int	msb;		/* data alignment */
 	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
 	u_int	gain;		/* volume level */
 	u_int	port;		/* selected I/O port */
@@ -443,13 +447,17 @@ unsigned linear encoding with big endian byte order
 The
 .Va precision
 parameter describes the number of bits of audio data per sample.
-For sample formats such as 8, 16, and 32-bit, where the number of audio data
-bits is a power of 2,
+The
+.Va bps
+parameter describes the number of bytes of audio data per sample.
+The
+.Va msb
+parameter describes the alignment of the data in the sample.
+It is only meaningful when
 .Va precision
-is also exactly the size of each sample.
-For other sample formats the sample size is the smallest power of
-2 bits that the data can fit into.
-For example the sample size of 20 and 24-bit formats is 32 bits.
+/ NBBY <
+.Va bps .
+A value of 1 means the data is aligned to the most significant bit.
 .Pp
 The
 .Va gain ,

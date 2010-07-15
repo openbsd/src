@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.12 2010/07/02 03:24:50 blambert Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.13 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -262,6 +262,8 @@ mavb_query_encoding(void *hdl, struct audio_encoding *ae)
 	default:
 		return (EINVAL);
 	}
+	ae->bps = AUDIO_BPS(ae->precision);
+	ae->msb = 1;
 
 	return (0);
 }
@@ -374,6 +376,8 @@ mavb_get_default_params(void *hdl, int mode, struct audio_params *p)
 	p->sample_rate = 48000;
 	p->encoding = AUDIO_ENCODING_SLINEAR_BE;
 	p->precision = 16;
+	p->bps = 2;
+	p->msb = 1;
 	p->channels = 2;
 	p->factor = 2;
 	if (mode == AUMODE_PLAY)
@@ -535,6 +539,9 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 		error = mavb_set_play_format(sc, play->encoding);
 		if (error)
 			return (error);
+
+		play->bps = AUDIO_BPS(play->precision);
+		play->msb = 1;
 	}
 
 	if (setmode & AUMODE_RECORD) {
@@ -569,6 +576,9 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 		error = mavb_set_rec_format(sc, rec->encoding);
 		if (error)
 			return (error);
+
+		rec->bps = AUDIO_BPS(rec->precision);
+		rec->msb = 1;
 	}
 
 	return (0);

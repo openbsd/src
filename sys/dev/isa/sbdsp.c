@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.30 2010/04/03 23:22:42 jakemsr Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.31 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -451,7 +451,7 @@ sbdsp_query_encoding(addr, fp)
 	struct audio_encoding *fp;
 {
 	struct sbdsp_softc *sc = addr;
-	int emul;
+	int emul, found = 0;
 
 	emul = ISSB16CLASS(sc) ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
 
@@ -461,27 +461,35 @@ sbdsp_query_encoding(addr, fp)
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
-		return 0;
+		found = 1;
+		break;
 	case 1:
 		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
+		found = 1;
+		break;
 	case 2:
 		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
+		found = 1;
+		break;
 	case 3:
 		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = emul;
-		return 0;
+		found = 1;
+		break;
         }
-        if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
+	if (found) {
+		fp->bps = 1;
+		fp->msb = 1;
+		return 0;
+	} else if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
 		return EINVAL;
 
         switch(fp->index) {
@@ -490,28 +498,30 @@ sbdsp_query_encoding(addr, fp)
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		return 0;
+		break;
 	case 5:
 		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = emul;
-		return 0;
+		break;
 	case 6:
 		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
+		break;
 	case 7:
 		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
+		break;
 	default:
 		return EINVAL;
 	}
+	fp->bps = 2;
+	fp->msb = 1;
 	return 0;
 }
 
@@ -737,6 +747,8 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 
 		p->sw_code = swcode;
 		p->factor = factor;
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 		DPRINTF(("sbdsp_set_params: model=%d, mode=%d, rate=%ld, prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, bmode=%02x, cmdchan=%02x, swcode=%p, factor=%d\n",
 			 sc->sc_model, mode, p->sample_rate, p->precision, p->channels,
 			 p->encoding, tc, m->cmd, bmode, m->cmdchan, swcode, factor));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.6 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.7 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -461,52 +461,56 @@ auacer_query_encoding(void *v, struct audio_encoding *aep)
 		aep->encoding = AUDIO_ENCODING_ULINEAR;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 1:
 		strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 2:
 		strlcpy(aep->name, AudioEalaw, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ALAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 3:
 		strlcpy(aep->name, AudioEslinear, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 4:
 		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		aep->precision = 16;
 		aep->flags = 0;
-		return (0);
+		break;
 	case 5:
 		strlcpy(aep->name, AudioEulinear_le, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 6:
 		strlcpy(aep->name, AudioEslinear_be, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 7:
 		strlcpy(aep->name, AudioEulinear_be, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	default:
 		return (EINVAL);
 	}
+	aep->bps = AUDIO_BPS(aep->precision);
+	aep->msb = 1;
+
+	return (0);
 }
 
 int
@@ -646,6 +650,8 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 
 		if (AC97_IS_FIXED_RATE(sc->codec_if))
 			p->sample_rate = AC97_SINGLE_RATE;

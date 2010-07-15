@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.18 2009/11/13 02:22:19 deraadt Exp $	*/
+/*	$OpenBSD: esa.c,v 1.19 2010/07/15 03:43:11 jakemsr Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -165,19 +165,20 @@ int		esa_suspend(struct esa_softc *);
 int		esa_resume(struct esa_softc *);
 
 static audio_encoding_t esa_encoding[] = {
-	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 0 },
-	{ 1, AudioEmulaw, AUDIO_ENCODING_ULAW, 8,
-		AUDIO_ENCODINGFLAG_EMULATED },
-	{ 2, AudioEalaw, AUDIO_ENCODING_ALAW, 8, AUDIO_ENCODINGFLAG_EMULATED },
-	{ 3, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8,
-		AUDIO_ENCODINGFLAG_EMULATED }, /* XXX: Are you sure? */
-	{ 4, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 0 },
-	{ 5, AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE, 16,
-		AUDIO_ENCODINGFLAG_EMULATED },
-	{ 6, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16,
-		AUDIO_ENCODINGFLAG_EMULATED },
-	{ 7, AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE, 16,
-		AUDIO_ENCODINGFLAG_EMULATED }
+	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 1, 1, 0 },
+	{ 1, AudioEmulaw, AUDIO_ENCODING_ULAW, 8, 1, 1,
+	    AUDIO_ENCODINGFLAG_EMULATED },
+	{ 2, AudioEalaw, AUDIO_ENCODING_ALAW, 8, 1, 1,
+	    AUDIO_ENCODINGFLAG_EMULATED },
+	{ 3, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 1, 1,
+	    AUDIO_ENCODINGFLAG_EMULATED },
+	{ 4, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 0 },
+	{ 5, AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE, 16, 2, 1,
+	    AUDIO_ENCODINGFLAG_EMULATED },
+	{ 6, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16, 2, 1,
+	    AUDIO_ENCODINGFLAG_EMULATED },
+	{ 7, AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE, 16, 2, 1,
+	    AUDIO_ENCODINGFLAG_EMULATED }
 };
 
 #define ESA_NENCODINGS 8
@@ -336,6 +337,8 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 
 		ch->mode = *p;
 	}

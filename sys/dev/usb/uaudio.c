@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.73 2009/12/04 20:50:59 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.74 2010/07/15 03:43:12 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -531,52 +531,56 @@ uaudio_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = flags&HAS_8U ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 1:
 		strlcpy(fp->name, AudioEmulaw, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = flags&HAS_MULAW ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 2:
 		strlcpy(fp->name, AudioEalaw, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = flags&HAS_ALAW ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 3:
 		strlcpy(fp->name, AudioEslinear, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = flags&HAS_8 ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 4:
 		strlcpy(fp->name, AudioEslinear_le, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		return (0);
+		break;
 	case 5:
 		strlcpy(fp->name, AudioEulinear_le, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 6:
 		strlcpy(fp->name, AudioEslinear_be, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 7:
 		strlcpy(fp->name, AudioEulinear_be, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	default:
 		return (EINVAL);
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
+	return (0);
 }
 
 const usb_interface_descriptor_t *
@@ -2221,6 +2225,8 @@ uaudio_get_default_params(void *addr, int mode, struct audio_params *p)
 	p->sample_rate = 44100;
 	p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 	p->precision = 16;
+	p->bps = 2;
+	p->msb = 1;
 	p->channels = 2;
 	p->sw_code = NULL;
 	p->factor = 1;
@@ -2249,6 +2255,9 @@ uaudio_get_default_params(void *addr, int mode, struct audio_params *p)
 	}
 
 	uaudio_match_alt(sc, p, mode, p->encoding, p->precision);
+
+	p->bps = AUDIO_BPS(p->precision);
+	p->msb = 1;
 }
 
 int
@@ -3247,6 +3256,9 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 
 		p->sw_code = swcode;
 		p->factor  = factor;
+
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 
 		if (mode == AUMODE_PLAY)
 			paltidx = i;

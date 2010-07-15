@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.24 2008/10/30 06:22:38 todd Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.25 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -549,6 +549,9 @@ awacs_query_encoding(void *h, struct audio_encoding *ae)
 	default:
 		return (EINVAL);
 	}
+	ae->bps = AUDIO_BPS(ae->precision);
+	ae->msb = 1;
+
 	return (0);
 }
 
@@ -653,6 +656,8 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 	}
 
 	/* Set the speed */

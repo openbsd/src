@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.25 2010/02/22 00:43:30 jakemsr Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.26 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -694,6 +694,8 @@ ce4231_query_encoding(addr, fp)
 	default:
 		err = EINVAL;
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
 	return (err);
 }
 
@@ -780,6 +782,9 @@ ce4231_set_params(addr, setmode, usemode, p, r)
 
 	p->sw_code = pswcode;
 	r->sw_code = rswcode;
+	p->bps = AUDIO_BPS(p->precision);
+	r->bps = AUDIO_BPS(r->precision);
+	p->msb = r->msb = 1;
 
 	sc->sc_format_bits = bits;
 	sc->sc_channels = p->channels;

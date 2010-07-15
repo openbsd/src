@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.34 2010/06/30 11:21:35 jakemsr Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.35 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -1014,6 +1014,9 @@ ad1848_query_encoding(addr, fp)
 	return EINVAL;
 	/*NOTREACHED*/
     }
+    fp->bps = AUDIO_BPS(fp->precision);
+    fp->msb = 1;
+
     return (0);
 }
 
@@ -1101,6 +1104,10 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 
     p->sw_code = pswcode;
     r->sw_code = rswcode;
+    p->bps = AUDIO_BPS(p->precision);
+    r->bps = AUDIO_BPS(r->precision);
+    p->msb = 1;
+    r->msb = 1;
 
     sc->format_bits = bits;
     sc->channels = p->channels;

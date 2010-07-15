@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.173 2010/06/27 21:47:07 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.174 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3871,6 +3871,8 @@ azalia_get_default_params(void *addr, int mode, struct audio_params *params)
 	params->sample_rate = 48000;
 	params->encoding = AUDIO_ENCODING_SLINEAR_LE;
 	params->precision = 16;
+	params->bps = 2;
+	params->msb = 1;
 	params->channels = 2;
 	params->sw_code = NULL;
 	params->factor = 1;
@@ -4008,6 +4010,8 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 		}
 	}
 	par->sw_code = swcode;
+	par->bps = AUDIO_BPS(par->precision);
+	par->msb = 1;
 
 	return (0);
 }
@@ -4377,6 +4381,8 @@ azalia_create_encodings(codec_t *this)
 		this->encs[i].index = i;
 		this->encs[i].encoding = encs[i] & 0xff;
 		this->encs[i].precision = encs[i] >> 8;
+		this->encs[i].bps = AUDIO_BPS(encs[i] >> 8);
+		this->encs[i].msb = 1;
 		this->encs[i].flags = 0;
 		switch (this->encs[i].encoding) {
 		case AUDIO_ENCODING_SLINEAR_LE:

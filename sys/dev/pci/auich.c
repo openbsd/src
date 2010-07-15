@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.82 2010/06/07 23:35:24 ratchov Exp $	*/
+/*	$OpenBSD: auich.c,v 1.83 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -685,6 +685,8 @@ auich_query_encoding(v, aep)
 			aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			aep->precision = 16;
 			aep->flags = 0;
+			aep->bps = 2;
+			aep->msb = 1;
 			return (0);
 		default:
 			return (EINVAL);
@@ -696,52 +698,55 @@ auich_query_encoding(v, aep)
 			aep->encoding = AUDIO_ENCODING_ULINEAR;
 			aep->precision = 8;
 			aep->flags = 0;
-			return (0);
+			break;
 		case 1:
 			strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
 			aep->encoding = AUDIO_ENCODING_ULAW;
 			aep->precision = 8;
 			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 2:
 			strlcpy(aep->name, AudioEalaw, sizeof aep->name);
 			aep->encoding = AUDIO_ENCODING_ALAW;
 			aep->precision = 8;
 			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 3:
 			strlcpy(aep->name, AudioEslinear, sizeof aep->name);
 			aep->encoding = AUDIO_ENCODING_SLINEAR;
 			aep->precision = 8;
 			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 4:
 			strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
 			aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			aep->precision = 16;
 			aep->flags = 0;
-			return (0);
+			break;
 		case 5:
 			strlcpy(aep->name, AudioEulinear_le, sizeof aep->name);
 			aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
 			aep->precision = 16;
 			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 6:
 			strlcpy(aep->name, AudioEslinear_be, sizeof aep->name);
 			aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
 			aep->precision = 16;
 			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 7:
 			strlcpy(aep->name, AudioEulinear_be, sizeof aep->name);
 			aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
 			aep->precision = 16;
 			aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		default:
 			return (EINVAL);
 		}
+		aep->bps = AUDIO_BPS(aep->precision);
+		aep->msb = 1;
+		return (0);
 	}
 }
 
@@ -960,6 +965,8 @@ auich_set_params(v, setmode, usemode, play, rec)
 		default:
 			return (EINVAL);
 		}
+		play->bps = AUDIO_BPS(play->precision);
+		play->msb = 1;
 
 		orate = adj_rate = play->sample_rate;
 		if (sc->sc_ac97rate != 0)
@@ -1145,6 +1152,8 @@ auich_set_params(v, setmode, usemode, play, rec)
 		default:
 			return (EINVAL);
 		}
+		rec->bps = AUDIO_BPS(rec->precision);
+		rec->msb = 1;
 
 		orate = rec->sample_rate;
 		if (sc->sc_ac97rate != 0)

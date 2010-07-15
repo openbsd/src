@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.44 2008/10/25 22:30:43 jakemsr Exp $ */
+/*	$OpenBSD: auvia.c,v 1.45 2010/07/15 03:43:11 jakemsr Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -503,6 +503,8 @@ auvia_query_encoding(void *addr, struct audio_encoding *fp)
 			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			fp->precision = 16;
 			fp->flags = 0;
+			fp->bps = 2;
+			fp->msb = 1;
 			return (0);
 		default:
 			return (EINVAL);
@@ -514,54 +516,59 @@ auvia_query_encoding(void *addr, struct audio_encoding *fp)
 			fp->encoding = AUDIO_ENCODING_ULINEAR;
 			fp->precision = 8;
 			fp->flags = 0;
-			return (0);
+			break;
 		case 1:
 			strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULAW;
 			fp->precision = 8;
 			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 2:
 			strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ALAW;
 			fp->precision = 8;
 			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 3:
 			strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR;
 			fp->precision = 8;
 			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 4:
 			strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			fp->precision = 16;
 			fp->flags = 0;
-			return (0);
+			break;
 		case 5:
 			strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 			fp->precision = 16;
 			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 6:
 			strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 			fp->precision = 16;
 			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		case 7:
 			strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 			fp->precision = 16;
 			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			return (0);
+			break;
 		default:
 			return (EINVAL);
 		}
+		fp->bps = AUDIO_BPS(fp->precision);
+		fp->msb = 1;
+
+		return (0);
 	}
 }
+
 void
 auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 		     struct audio_params *p)
@@ -740,6 +747,9 @@ auvia_set_params(void *addr, int setmode, int usemode,
 			return (EINVAL);
 		}
 		auvia_set_params_sub(sc, ch, p);
+
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 	}
 
 	return 0;

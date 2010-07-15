@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.72 2010/02/25 21:22:42 ratchov Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.73 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -76,6 +76,8 @@ const struct audio_params ac97_audio_default = {
 	48000,		/* sample_rate */
 	AUDIO_ENCODING_SLINEAR_LE, /* encoding */
 	16,		/* precision */
+	2,		/* bps */
+	1,		/* msb */
 	2,		/* channels */
 	NULL,		/* sw_code */
 	1		/* factor */

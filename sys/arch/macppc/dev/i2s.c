@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.17 2008/11/07 19:53:20 todd Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.18 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -57,6 +57,8 @@ struct audio_params i2s_audio_default = {
 	44100,		/* sample_rate */
 	AUDIO_ENCODING_SLINEAR_BE, /* encoding */
 	16,		/* precision */
+	2,		/* bps */
+	1,		/* msb */
 	2,		/* channels */
 	NULL,		/* sw_code */
 	1		/* factor */
@@ -308,6 +310,8 @@ i2s_query_encoding(h, ae)
 		err = EINVAL;
 		break;
 	}
+	ae->bps = AUDIO_BPS(ae->precision);
+	ae->msb = 1;
 	return (err);
 }
 
@@ -456,6 +460,9 @@ i2s_set_params(h, setmode, usemode, play, rec)
 		return EINVAL;
 
 	p->sample_rate = sc->sc_rate;
+
+	p->bps = AUDIO_BPS(p->precision);
+	p->msb = 1;
 
 	return 0;
 }

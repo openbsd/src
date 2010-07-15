@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.21 2008/10/27 07:53:24 jmc Exp $
+.\"	$OpenBSD: audio.9,v 1.22 2010/07/15 03:43:11 jakemsr Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 27 2008 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -93,6 +93,8 @@ struct audio_params {
 	u_long	sample_rate;		/* sample rate */
 	u_int	encoding;		/* mu-law, linear, etc */
 	u_int	precision;		/* bits/sample */
+	u_int	bps;			/* bytes/sample */
+	u_int	msb;			/* data alignment */
 	u_int	channels;		/* mono(1), stereo(2) */
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);

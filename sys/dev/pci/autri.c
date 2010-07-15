@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.24 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: autri.c,v 1.25 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -992,6 +992,8 @@ autri_query_encoding(addr, fp)
 	default:
 		return (EINVAL);
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
 
 	return 0;
 }
@@ -1047,6 +1049,8 @@ autri_set_params(addr, setmode, usemode, play, rec)
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 	}
 
 	return 0;

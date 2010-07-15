@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.10 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.11 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -492,52 +492,55 @@ zaudio_query_encoding(void *hdl, struct audio_encoding *aep)
 		aep->encoding = AUDIO_ENCODING_ULINEAR;
 		aep->precision = 8;
 		aep->flags = 0;
-		return (0);
+		break;
 	case 1:
 		strlcpy(aep->name, AudioEmulaw, sizeof(aep->name));
 		aep->encoding = AUDIO_ENCODING_ULAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 2:
 		strlcpy(aep->name, AudioEalaw, sizeof(aep->name));
 		aep->encoding = AUDIO_ENCODING_ALAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 3:
 		strlcpy(aep->name, AudioEslinear, sizeof(aep->name));
 		aep->encoding = AUDIO_ENCODING_SLINEAR;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 4:
 		strlcpy(aep->name, AudioEslinear_le, sizeof(aep->name));
 		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		aep->precision = 16;
 		aep->flags = 0;
-		return (0);
+		break;
 	case 5:
 		strlcpy(aep->name, AudioEulinear_le, sizeof(aep->name));
 		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 6:
 		strlcpy(aep->name, AudioEslinear_be, sizeof(aep->name));
 		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 7:
 		strlcpy(aep->name, AudioEulinear_be, sizeof(aep->name));
 		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	default:
 		return (EINVAL);
 	}
+	aep->bps = AUDIO_BPS(aep->precision);
+	aep->msb = 1;
+	return (0);
 }
 
 int
@@ -716,6 +719,9 @@ zaudio_set_params(void *hdl, int setmode, int usemode,
 			return (EINVAL);
 		}
 
+		play->bps = AUDIO_BPS(play->precision);
+		play->msb = 1;
+
 		pxa2x0_i2s_setspeed(&sc->sc_i2s, &play->sample_rate);
 	}
 
@@ -751,6 +757,9 @@ zaudio_set_params(void *hdl, int setmode, int usemode,
 		default:
 			return (EINVAL);
 		}
+
+		rec->bps = AUDIO_BPS(rec->precision);
+		rec->msb = 1;
 
 		pxa2x0_i2s_setspeed(sc, &rec->sample_rate);
 	}

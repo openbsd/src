@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.26 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.27 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -464,6 +464,8 @@ harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 	default:
 		err = EINVAL;
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
 	return (err);
 }
 
@@ -558,9 +560,13 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 	else
 		return (EINVAL);
 
-	bits |= harmony_speed_bits(sc, &p->sample_rate);
 	p->sw_code = pswcode;
 	r->sw_code = rswcode;
+	p->bps = AUDIO_BPS(p->precision);
+	r->bps = AUDIO_BPS(r->precision);
+	p->msb = r->msb = 1;
+
+	bits |= harmony_speed_bits(sc, &p->sample_rate);
 	sc->sc_cntlbits = bits;
 	sc->sc_need_commit = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.25 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.26 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -629,6 +629,9 @@ cmpci_query_encoding(void *handle, struct audio_encoding *fp)
 	default:
 		return EINVAL;
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
 	return 0;
 }
 
@@ -638,6 +641,8 @@ cmpci_get_default_params(void *addr, int mode, struct audio_params *params)
 	params->sample_rate = 48000;
 	params->encoding = AUDIO_ENCODING_SLINEAR_LE;
 	params->precision = 16;
+	params->bps = 2;
+	params->msb = 1;
 	params->channels = 2;
 	params->sw_code = NULL;
 	params->factor = 1;
@@ -858,6 +863,8 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 		if (mode & AUMODE_PLAY) {
 			if (sc->sc_play_channel == 1) {
 				cmpci_reg_partial_write_4(sc,

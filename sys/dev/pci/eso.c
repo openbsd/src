@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.31 2010/05/23 11:41:07 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.32 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -676,6 +676,8 @@ eso_query_encoding(void *hdl, struct audio_encoding *fp)
 	default:
 		return (EINVAL);
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
 
 	return (0);
 }
@@ -686,6 +688,8 @@ eso_get_default_params(void *addr, int mode, struct audio_params *params)
 	params->sample_rate = 48000;
 	params->encoding = AUDIO_ENCODING_ULINEAR_LE;
 	params->precision = 16;
+	params->bps = 2;
+	params->msb = 1;
 	params->channels = 2;
 	params->sw_code = NULL;
 	params->factor = 1;
@@ -746,6 +750,8 @@ eso_set_params(void *hdl, int setmode, int usemode,
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 
 		/*
 		 * We'll compute both possible sample rate dividers and pick

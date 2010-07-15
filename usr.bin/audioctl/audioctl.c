@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.20 2009/11/12 07:32:26 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.21 2010/07/15 03:43:12 jakemsr Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -96,6 +96,8 @@ struct field {
 	{ "play.sample_rate",	&info.play.sample_rate,	UINT,	ALIAS },
 	{ "play.channels",	&info.play.channels,	UINT,	0 },
 	{ "play.precision",	&info.play.precision,	UINT,	0 },
+	{ "play.bps",		&info.play.bps,		UINT,	0 },
+	{ "play.msb",		&info.play.msb,		UINT,	0 },
 	{ "play.encoding",	&info.play.encoding,	ENC,	0 },
 	{ "play.gain",		&info.play.gain,	UINT,	0 },
 	{ "play.balance",	&info.play.balance,	UCHAR,	0 },
@@ -116,6 +118,8 @@ struct field {
 	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
 	{ "record.channels",	&info.record.channels,	UINT,	0 },
 	{ "record.precision",	&info.record.precision,	UINT,	0 },
+	{ "record.bps",		&info.record.bps,	UINT,	0 },
+	{ "record.msb",		&info.record.msb,	UINT,	0 },
 	{ "record.encoding",	&info.record.encoding,	ENC,	0 },
 	{ "record.gain",	&info.record.gain,	UINT,	0 },
 	{ "record.balance",	&info.record.balance,	UCHAR,	0 },
@@ -320,8 +324,8 @@ getinfo(int fd)
 			break;
 		if (pos)
 			encbuf[pos++] = ',';
-		snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d%s",
-		    enc.name, enc.precision,
+		snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d:%d:%d%s",
+		    enc.name, enc.precision, enc.bps, enc.msb,
 		    enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
 		pos += strlen(encbuf+pos);
 	}

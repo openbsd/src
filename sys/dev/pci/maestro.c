@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.28 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.29 2010/07/15 03:43:11 jakemsr Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -974,18 +974,18 @@ maestro_query_devinfo(self, cp)
 }
 
 struct audio_encoding maestro_tab[] = { 
-	{0, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 0},
-	{1, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 0},
-	{2, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 0},
-	{3, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16,
+	{0, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 0},
+	{1, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 1, 1, 0},
+	{2, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 1, 1, 0},
+	{3, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16, 2, 1,
 	    AUDIO_ENCODINGFLAG_EMULATED},
-	{4, AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE, 16,
+	{4, AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE, 16, 2, 1,
 	    AUDIO_ENCODINGFLAG_EMULATED},
-	{5, AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE, 16,
+	{5, AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE, 16, 2, 1,
 	    AUDIO_ENCODINGFLAG_EMULATED},
-	{6, AudioEmulaw, AUDIO_ENCODING_ULAW, 8,
+	{6, AudioEmulaw, AUDIO_ENCODING_ULAW, 8, 1, 1,
 	    AUDIO_ENCODINGFLAG_EMULATED},
-	{7, AudioEalaw, AUDIO_ENCODING_ALAW, 8,
+	{7, AudioEalaw, AUDIO_ENCODING_ALAW, 8, 1, 1,
 	    AUDIO_ENCODINGFLAG_EMULATED}
 };
 
@@ -1116,6 +1116,9 @@ maestro_set_params(hdl, setmode, usemode, play, rec)
 		play->sw_code = change_sign16_swap_bytes_le;
 	else if (play->encoding != AUDIO_ENCODING_SLINEAR_LE)
 		return (EINVAL);
+
+	play->bps = AUDIO_BPS(play->precision);
+	play->msb = 1;
 
 	maestro_set_speed(&sc->play, &play->sample_rate);
 	return (0);

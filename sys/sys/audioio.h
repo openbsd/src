@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.20 2008/11/16 23:36:54 jakemsr Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.21 2010/07/15 03:43:12 jakemsr Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -45,6 +45,8 @@ struct audio_prinfo {
 	u_int	sample_rate;	/* sample rate in bit/s */
 	u_int	channels;	/* number of channels, usually 1 or 2 */
 	u_int	precision;	/* number of bits/sample */
+	u_int	bps;		/* number of bytes/sample */
+	u_int	msb;		/* data alignment */
 	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
 	u_int	gain;		/* volume level */
 	u_int	port;		/* selected I/O port */
@@ -144,6 +146,8 @@ typedef struct audio_encoding {
 	char	name[MAX_AUDIO_DEV_LEN];
 	int	encoding;
 	int	precision;
+	int	bps;
+	int	msb;
 	int	flags;
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;

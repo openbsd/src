@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.33 2009/08/26 22:29:09 jasper Exp $	*/
+/*	$OpenBSD: gus.c,v 1.34 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -1573,6 +1573,9 @@ gus_set_params(addr, setmode, usemode, p, r)
 		r->sw_code = p->sw_code = swap_bytes;
 		break;
 	}
+	p->bps = AUDIO_BPS(p->precision);
+	r->bps = AUDIO_BPS(r->precision);
+	p->msb = r->msb = 1;
 
 	return 0;
 }
@@ -3310,6 +3313,9 @@ gus_query_encoding(addr, fp)
 		return(EINVAL);
 		/*NOTREACHED*/
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
 	return (0);
 }
 

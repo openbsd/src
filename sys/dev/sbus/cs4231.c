@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.29 2008/04/21 00:32:43 jakemsr Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.30 2010/07/15 03:43:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -547,6 +547,9 @@ cs4231_query_encoding(void *vsc, struct audio_encoding *fp)
 	default:
 		err = EINVAL;
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
 	return (err);
 }
 
@@ -635,6 +638,9 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 
 	p->sw_code = pswcode;
 	r->sw_code = rswcode;
+	p->bps = AUDIO_BPS(p->precision);
+	r->bps = AUDIO_BPS(r->precision);
+	p->msb = r->msb = 1;
 
 	sc->sc_format_bits = bits;
 	sc->sc_channels = p->channels;

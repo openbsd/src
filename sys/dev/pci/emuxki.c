@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.33 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.34 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -2145,6 +2145,9 @@ emuxki_query_encoding(void *addr, struct audio_encoding *fp)
 	default:
 		return (EINVAL);
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
 	return (0);
 }
 
@@ -2234,6 +2237,8 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 	default:
 		return (EINVAL);
 	}
+	p->bps = AUDIO_BPS(p->precision);
+	p->msb = 1;
 
 	return (emuxki_voice_set_audioparms(voice, p->channels == 2,
 				     b16, p->sample_rate));

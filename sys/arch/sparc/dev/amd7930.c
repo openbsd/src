@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.32 2009/04/10 20:53:51 miod Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.33 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -389,12 +389,13 @@ amd7930_set_params(addr, setmode, usemode, p, r)
 	int setmode, usemode;
 	struct audio_params *p, *r;
 {
-	if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
-	    p->encoding != AUDIO_ENCODING_ULAW ||
-	    p->precision != 8 ||
-	    p->channels != 1) 
-		return (EINVAL);
-	p->sample_rate = 8000;	/* no other rates supported by amd chip */     
+	p->encoding = AUDIO_ENCODING_ULAW;
+	p->precision = 8;
+	p->bps = 1;
+	p->msb = 1;
+	p->channels = 1; 
+	/* no other rates supported by amd chip */
+	p->sample_rate = 8000;
 
 	return (0);
 }  
@@ -409,6 +410,8 @@ amd7930_query_encoding(addr, fp)
 		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
+		fp->bps = 1;
+		fp->msb = 1;
 		fp->flags = 0;
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.23 2008/10/25 22:30:43 jakemsr Exp $       */
+/*      $OpenBSD: neo.c,v 1.24 2010/07/15 03:43:11 jakemsr Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -782,52 +782,56 @@ neo_query_encoding(addr, fp)
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
-		return (0);
+		break;
 	case 1:
 		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 2:
 		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 3:
 		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 4:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		return (0);
+		break;
 	case 5:
 		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 6:
 		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	case 7:
 		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		break;
 	default:
 		return (EINVAL);
 	}
+	fp->bps = AUDIO_BPS(fp->precision);
+	fp->msb = 1;
+
+	return (0);
 }
 
 void
@@ -916,8 +920,9 @@ neo_set_params(addr, setmode, usemode, play, rec)
 		default:
 			return (EINVAL);
 		}
+		p->bps = AUDIO_BPS(p->precision);
+		p->msb = 1;
 	}
-
 
 	return (0);
 }

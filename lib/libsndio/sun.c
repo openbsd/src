@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.37 2010/05/25 06:49:13 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.38 2010/07/15 03:43:11 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -88,9 +88,9 @@ static struct sio_ops sun_ops = {
 static int
 sun_infotoenc(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 {
-	par->msb = 1;
+	par->msb = ai->msb;
 	par->bits = ai->precision;
-	par->bps = SIO_BPS(par->bits);
+	par->bps = ai->bps;
 	switch (ai->encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		par->le = 1;
@@ -267,8 +267,8 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 			continue;
 		}
 		cap->enc[nenc].bits = ae.precision;
-		cap->enc[nenc].bps = SIO_BPS(ae.precision);
-		cap->enc[nenc].msb = 1;
+		cap->enc[nenc].bps = ae.bps;
+		cap->enc[nenc].msb = ae.msb;
 		enc_map |= (1 << nenc);
 		nenc++;
 	}
@@ -639,9 +639,9 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		return 0;
 	}
 	ibpf = (hdl->sio.mode & SIO_REC) ?
-	    aui.record.channels * SIO_BPS(aui.record.precision) : 1;
+	    aui.record.channels * aui.record.bps : 1;
 	obpf = (hdl->sio.mode & SIO_PLAY) ?
-	    aui.play.channels * SIO_BPS(aui.play.precision) : 1;
+	    aui.play.channels * aui.play.bps : 1;
 
 	DPRINTF("sun_setpar: bpf = (%u, %u)\n", ibpf, obpf);
 
