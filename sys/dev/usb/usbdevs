@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.506 2010/07/02 15:32:28 sobrado Exp $
+$OpenBSD: usbdevs,v 1.507 2010/07/15 15:44:55 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -556,6 +556,7 @@ vendor ALTI2		0x1bc9	Alti-2
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor DRESDENELEC	0x1cf1	Dresden Elektronic
 vendor PEGATRON		0x1d4d	Pegatron
+vendor METAGEEK		0x1dd5	MetaGeek
 vendor MODACOM		0x1eb8	Modacom
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
@@ -2513,6 +2514,9 @@ product MELCO WLIUCGN		0x015d	WLI-UC-GN
 /* MetaGeek tagged products */
 product MECANIQUE WISPY		0x083e	MetaGeek Wi-Spy
 product MECANIQUE TELLSTICK	0x0c30	Telldus Tellstick
+
+/* MetaGeek products */
+product METAGEEK WISPY24I	0x2400	Wi-Spy 2.4i
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
