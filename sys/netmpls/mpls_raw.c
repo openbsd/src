@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.6 2010/06/02 15:41:07 claudio Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.7 2010/07/15 13:30:45 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -118,7 +118,7 @@ mpls_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	default:
-		panic("rip_usrreq");
+		panic("mpls_raw_usrreq");
 	}
 
 	return (error);
