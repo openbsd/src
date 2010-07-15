@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.75 2010/07/14 22:15:57 ray Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.76 2010/07/15 18:31:33 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -174,7 +174,7 @@ struct context_vec {
 
 static FILE	*opentemp(const char *);
 static void	 output(char *, FILE *, char *, FILE *, int);
-static void	 check(char *, FILE *, char *, FILE *, int);
+static void	 check(FILE *, FILE *, int);
 static void	 range(int, int, char *);
 static void	 uni_range(int, int);
 static void	 dump_context_vec(FILE *, FILE *, int);
@@ -433,7 +433,7 @@ diffreg(char *file1, char *file2, int flags)
 
 	ixold = xrealloc(ixold, len[0] + 2, sizeof(*ixold));
 	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(*ixnew));
-	check(file1, f1, file2, f2, flags);
+	check(f1, f2, flags);
 	output(file1, f1, file2, f2, flags);
 	if (ostdout != -1) {
 		int wstatus;
@@ -741,7 +741,7 @@ unravel(int p)
  *  2.  collect random access indexes to the two files
  */
 static void
-check(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
+check(FILE *f1, FILE *f2, int flags)
 {
 	int i, j, jackpot, c, d;
 	long ctold, ctnew;
