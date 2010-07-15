@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.12 2010/07/15 19:07:43 damien Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.13 2010/07/15 19:29:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -175,7 +175,7 @@ ar9287_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	uint32_t reg, offset;
 	int i;
 
-	AR_WRITE(sc, AR_PHY_SWITCH_COM, modal->antCtrlCommon & 0xffff);
+	AR_WRITE(sc, AR_PHY_SWITCH_COM, modal->antCtrlCommon);
 
 	for (i = 0; i < AR9287_MAX_CHAINS; i++) {
 		offset = i * 0x1000;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.8 2010/07/15 19:07:43 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.9 2010/07/15 19:29:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -240,7 +240,7 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	modal = &eep->modalHeader[IEEE80211_IS_CHAN_2GHZ(c)];
 
-	AR_WRITE(sc, AR_PHY_SWITCH_COM, modal->antCtrlCommon & 0xffff);
+	AR_WRITE(sc, AR_PHY_SWITCH_COM, modal->antCtrlCommon);
 
 	for (i = 0; i < AR9280_MAX_CHAINS; i++) {
 		if (sc->rxchainmask == 0x5 || sc->txchainmask == 0x5)

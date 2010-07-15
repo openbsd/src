@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.9 2010/07/15 19:07:43 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.10 2010/07/15 19:29:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -182,7 +182,7 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	uint8_t ob[5], db1[5], db2[5];
 	uint8_t txRxAtten;
 
-	AR_WRITE(sc, AR_PHY_SWITCH_COM, modal->antCtrlCommon & 0xffff);
+	AR_WRITE(sc, AR_PHY_SWITCH_COM, modal->antCtrlCommon);
 	AR_WRITE(sc, AR_PHY_SWITCH_CHAIN_0, modal->antCtrlChain);
 
 	reg = AR_READ(sc, AR_PHY_TIMING_CTRL4_0);
