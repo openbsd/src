@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.29 2010/07/15 11:10:23 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.30 2010/07/15 18:23:50 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -859,11 +859,8 @@ preadline(int fd, size_t rlen, off_t off)
 	ssize_t nr;
 
 	line = xmalloc(rlen + 1);
-	if ((nr = pread(fd, line, rlen, off)) < 0) {
-		cvs_log(LP_ERR, "preadline failed");
-		xfree(line);
-		return (NULL);
-	}
+	if ((nr = pread(fd, line, rlen, off)) < 0)
+		fatal("preadline: %s", strerror(errno));
 	line[nr] = '\0';
 	return (line);
 }
