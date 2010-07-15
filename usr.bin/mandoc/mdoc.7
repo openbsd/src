@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.39 2010/07/13 01:09:13 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.40 2010/07/15 23:46:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2010 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2332,6 +2332,18 @@ line.
 .Ss \&Sc
 .Ss \&Sh
 .Ss \&Sm
+Switches the spacing mode for output generated from macros.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&Sm Cm on | off
+.Pp
+By default, spacing is
+.Cm on .
+When switched
+.Cm off ,
+no white space is inserted between macro arguments and between the
+output generated from adjacent macros, but free-form text lines
+still get normal spacing between words and sentences.
 .Ss \&So
 .Ss \&Sq
 .Ss \&Ss
