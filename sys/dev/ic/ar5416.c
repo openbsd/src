@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.8 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.9 2010/07/15 19:07:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -108,8 +108,8 @@ void	ar5008_get_lg_tpow(struct athn_softc *, struct ieee80211_channel *,
 	    uint8_t, const struct ar_cal_target_power_leg *, int, uint8_t[]);
 void	ar5008_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
 	    uint8_t, const struct ar_cal_target_power_ht *, int, uint8_t[]);
-void	ar9280_2_0_olpc_get_pdadcs(struct athn_softc *,
-	    struct ieee80211_channel *, int, uint8_t *, uint8_t *, uint8_t *);
+void	ar9280_olpc_get_pdadcs(struct athn_softc *, struct ieee80211_channel *,
+	    int, uint8_t *, uint8_t *, uint8_t *);
 
 
 int
@@ -482,7 +482,7 @@ ar5416_set_power_calib(struct athn_softc *sc, struct ieee80211_channel *c)
 			offset = i * 0x1000;
 
 		if (sc->flags & ATHN_FLAG_OLPC) {
-			ar9280_2_0_olpc_get_pdadcs(sc, c, i, boundaries,
+			ar9280_olpc_get_pdadcs(sc, c, i, boundaries,
 			    pdadcs, &txgain);
 
 			reg = AR_READ(sc, AR_PHY_TX_PWRCTRL6_0);

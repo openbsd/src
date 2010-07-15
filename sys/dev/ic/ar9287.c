@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.11 2010/06/03 18:02:50 damien Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.12 2010/07/15 19:07:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -119,10 +119,7 @@ ar9287_attach(struct athn_softc *sc)
 	sc->ops.spur_mitigate = ar9280_spur_mitigate;
 	sc->ops.get_spur_chans = ar9287_get_spur_chans;
 	sc->ops.olpc_init = ar9287_olpc_init;
-	if (AR_SREV_9287_11_OR_LATER(sc))
-		sc->ini = &ar9287_1_1_ini;
-	else
-		sc->ini = &ar9287_1_0_ini;
+	sc->ini = &ar9287_1_1_ini;
 	sc->serdes = ar9280_2_0_serdes;
 
 	return (ar5008_attach(sc));
@@ -137,13 +134,8 @@ ar9287_setup(struct athn_softc *sc)
 	if (eep->baseEepHeader.openLoopPwrCntl)
 		sc->flags |= ATHN_FLAG_OLPC;
 
-	if (AR_SREV_9287_11_OR_LATER(sc)) {
-		sc->rx_gain = &ar9287_1_1_rx_gain;
-		sc->tx_gain = &ar9287_1_1_tx_gain;
-	} else {
-		sc->rx_gain = &ar9287_1_0_rx_gain;
-		sc->tx_gain = &ar9287_1_0_tx_gain;
-	}
+	sc->rx_gain = &ar9287_1_1_rx_gain;
+	sc->tx_gain = &ar9287_1_1_tx_gain;
 }
 
 void

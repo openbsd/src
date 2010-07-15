@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.53 2010/06/21 19:56:42 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.54 2010/07/15 19:07:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -153,7 +153,7 @@ int		ar9287_attach(struct athn_softc *);
 int		ar9380_attach(struct athn_softc *);
 int		ar5416_init_calib(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
-int		ar9285_1_2_init_calib(struct athn_softc *,
+int		ar9285_init_calib(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
 int		ar9003_init_calib(struct athn_softc *);
 void		ar9285_pa_calib(struct athn_softc *);
@@ -1206,8 +1206,8 @@ athn_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	if (AR_SREV_9380_10_OR_LATER(sc))
 		error = ar9003_init_calib(sc);
-	else if (AR_SREV_9285_12_OR_LATER(sc))
-		error = ar9285_1_2_init_calib(sc, c, extc);
+	else if (AR_SREV_9285_10_OR_LATER(sc))
+		error = ar9285_init_calib(sc, c, extc);
 	else
 		error = ar5416_init_calib(sc, c, extc);
 	if (error != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.7 2010/05/16 14:34:19 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.8 2010/07/15 19:07:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -74,12 +74,12 @@ void	ar9280_init_from_rom(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9280_spur_mitigate(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
-void	ar9280_2_0_olpc_get_pdadcs(struct athn_softc *,
+void	ar9280_olpc_get_pdadcs(struct athn_softc *,
 	    struct ieee80211_channel *, int, uint8_t *, uint8_t *, uint8_t *);
 void	ar9280_reset_rx_gain(struct athn_softc *, struct ieee80211_channel *);
 void	ar9280_reset_tx_gain(struct athn_softc *, struct ieee80211_channel *);
-void	ar9280_2_0_olpc_init(struct athn_softc *);
-void	ar9280_2_0_olpc_temp_compensation(struct athn_softc *);
+void	ar9280_olpc_init(struct athn_softc *);
+void	ar9280_olpc_temp_compensation(struct athn_softc *);
 
 /* Extern functions. */
 uint8_t	athn_chan2fbin(struct ieee80211_channel *);
@@ -112,15 +112,9 @@ ar9280_attach(struct athn_softc *sc)
 	sc->ops.set_synth = ar9280_set_synth;
 	sc->ops.spur_mitigate = ar9280_spur_mitigate;
 	sc->ops.get_spur_chans = ar5416_get_spur_chans;
-	sc->ops.olpc_init = ar9280_2_0_olpc_init;
-	if (AR_SREV_9280_20_OR_LATER(sc))
-		sc->ini = &ar9280_2_0_ini;
-	else
-		sc->ini = &ar9280_1_0_ini;
-	if (AR_SREV_9280_20_OR_LATER(sc))
-		sc->serdes = ar9280_2_0_serdes;
-	else
-		sc->serdes = ar9280_1_0_serdes;
+	sc->ops.olpc_init = ar9280_olpc_init;
+	sc->ini = &ar9280_2_0_ini;
+	sc->serdes = ar9280_2_0_serdes;
 
 	return (ar5008_attach(sc));
 }
@@ -132,8 +126,7 @@ ar9280_setup(struct athn_softc *sc)
 	uint8_t type;
 
 	/* Determine if open loop power control should be used. */
-	if (AR_SREV_9280_20_OR_LATER(sc) &&
-	    sc->eep_rev >= AR_EEP_MINOR_VER_19 &&
+	if (sc->eep_rev >= AR_EEP_MINOR_VER_19 &&
 	    eep->baseEepHeader.openLoopPwrCntl)
 		sc->flags |= ATHN_FLAG_OLPC;
 
@@ -378,8 +371,7 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		AR_WRITE(sc, AR_PHY_SETTLING, reg);
 	}
 #endif
-	if (AR_SREV_9280_20_OR_LATER(sc) &&
-	    sc->eep_rev >= AR_EEP_MINOR_VER_19) {
+	if (sc->eep_rev >= AR_EEP_MINOR_VER_19) {
 		reg = AR_READ(sc, AR_PHY_CCK_TX_CTRL);
 		reg = RW(reg, AR_PHY_CCK_TX_CTRL_TX_DAC_SCALE_CCK,
 		    MS(modal->miscBits, AR5416_EEP_MISC_TX_DAC_SCALE_CCK));
@@ -410,9 +402,8 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 }
 
 void
-ar9280_2_0_olpc_get_pdadcs(struct athn_softc *sc,
-    struct ieee80211_channel *c, int chain, uint8_t *boundaries,
-    uint8_t *pdadcs, uint8_t *txgain)
+ar9280_olpc_get_pdadcs(struct athn_softc *sc, struct ieee80211_channel *c,
+    int chain, uint8_t *boundaries, uint8_t *pdadcs, uint8_t *txgain)
 {
 	const struct ar5416_eeprom *eep = sc->eep;
 	const struct ar_cal_data_per_freq_olpc *pierdata;
@@ -562,7 +553,7 @@ ar9280_reset_tx_gain(struct athn_softc *sc, struct ieee80211_channel *c)
 }
 
 void
-ar9280_2_0_olpc_init(struct athn_softc *sc)
+ar9280_olpc_init(struct athn_softc *sc)
 {
 	uint32_t reg;
 	int i;
@@ -577,7 +568,7 @@ ar9280_2_0_olpc_init(struct athn_softc *sc)
 }
 
 void
-ar9280_2_0_olpc_temp_compensation(struct athn_softc *sc)
+ar9280_olpc_temp_compensation(struct athn_softc *sc)
 {
 	const struct ar5416_eeprom *eep = sc->eep;
 	int8_t pdadc, txgain, tcomp;
