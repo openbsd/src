@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.54 2010/07/15 19:07:43 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.55 2010/07/15 20:37:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -219,13 +219,9 @@ athn_attach(struct athn_softc *sc)
 	/*
 	 * In HostAP mode, the number of STAs that we can handle is
 	 * limited by the number of entries in the HW key cache.
-	 * TKIP keys consume 2 or 4 entries in the cache.
+	 * TKIP keys consume 2 entries in the cache.
 	 */
-	if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC)
-		ic->ic_max_nnodes = sc->kc_entries / 4;
-	else
-		ic->ic_max_nnodes = sc->kc_entries / 2;
-	ic->ic_max_nnodes -= IEEE80211_WEP_NKID;
+	ic->ic_max_nnodes = (sc->kc_entries / 2) - IEEE80211_WEP_NKID;
 	if (ic->ic_max_nnodes > IEEE80211_CACHE_SIZE)
 		ic->ic_max_nnodes = IEEE80211_CACHE_SIZE;
 
@@ -963,44 +959,16 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			rxmic = &key[16];
 			txmic = &key[24];
 		}
-		if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC) {
-			/* Tx MIC is at entry + 64. */
-			micentry = entry + 64;
-			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
-			    LE_READ_4(&txmic[0]));
-			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), 0);
+		/* Tx+Rx MIC key is at entry + 64. */
+		micentry = entry + 64;
+		AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry), LE_READ_4(&rxmic[0]));
+		AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), LE_READ_2(&txmic[2]));
 
-			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    LE_READ_4(&txmic[4]));
-			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
+		AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry), LE_READ_4(&rxmic[4]));
+		AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), LE_READ_2(&txmic[0]));
 
-			/* Rx MIC key is at entry + 64 + 32. */
-			micentry = entry + 64 + 32;
-			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
-			    LE_READ_4(&rxmic[0]));
-			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), 0);
-
-			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    LE_READ_4(&rxmic[4]));
-			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
-		} else {
-			/* Tx+Rx MIC key is at entry + 64. */
-			micentry = entry + 64;
-			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
-			    LE_READ_4(&rxmic[0]));
-			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
-			    LE_READ_2(&txmic[2]));
-
-			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    LE_READ_4(&rxmic[4]));
-			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry),
-			    LE_READ_2(&txmic[0]));
-
-			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry),
-			    LE_READ_4(&txmic[4]));
-			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
-			    AR_KEYTABLE_TYPE_CLR);
-		}
+		AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), LE_READ_4(&txmic[4]));
+		AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry), AR_KEYTABLE_TYPE_CLR);
 	}
 	AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), LE_READ_4(&key[ 0]));
 	AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), LE_READ_2(&key[ 4]));
@@ -1042,8 +1010,6 @@ athn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		entry = (uintptr_t)k->k_priv;
 		athn_reset_key(sc, entry);
 		athn_reset_key(sc, entry + 64);
-		if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC)
-			athn_reset_key(sc, entry + 64 + 32);
 		break;
 	default:
 		/* Fallback to software crypto for other ciphers. */
@@ -2153,8 +2119,7 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	athn_init_qos(sc);
 
-	if (!(sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC))
-		AR_SETBITS(sc, AR_PCU_MISC, AR_PCU_MIC_NEW_LOC_ENA);
+	AR_SETBITS(sc, AR_PCU_MISC, AR_PCU_MIC_NEW_LOC_ENA);
 
 	if (AR_SREV_9287_13_OR_LATER(sc) && !AR_SREV_9380_10_OR_LATER(sc))
 		ar9287_1_3_setup_async_fifo(sc);

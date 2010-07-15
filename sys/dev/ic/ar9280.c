@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.9 2010/07/15 19:29:00 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.10 2010/07/15 20:37:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -96,9 +96,6 @@ const struct ar_spur_chan *
 int
 ar9280_attach(struct athn_softc *sc)
 {
-	/* AR9280 1.0 needs separate entries for Tx/Rx TKIP MIC. */
-	if (AR_SREV_9280_10(sc))
-		sc->flags |= ATHN_FLAG_SPLIT_TKIP_MIC;
 	sc->eep_base = AR5416_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar5416_eeprom);
 	sc->def_nf = AR9280_PHY_CCA_MAX_GOOD_VALUE;
