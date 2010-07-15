@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.10 2010/07/15 19:29:00 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.11 2010/07/15 20:25:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -229,9 +229,6 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg = RW(reg, AR9280_PHY_RXGAIN_TXRX_MARGIN, modal->rxTxMargin);
 	AR_WRITE(sc, AR_PHY_RXGAIN + offset, reg);
 
-	if (AR_SREV_9285_11(sc))
-		AR_WRITE(sc, AR9285_AN_TOP4, AR9285_AN_TOP4_UNLOCKED);
-
 	if (modal->version >= 3) {
 		/* Setup antenna diversity from ROM. */
 		reg = AR_READ(sc, AR_PHY_MULTICHAIN_GAIN_CTL);
@@ -325,9 +322,6 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	AR_WRITE(sc, AR9285_AN_RF2G4, reg);
 	DELAY(100);
 
-	if (AR_SREV_9285_11(sc))
-		AR_WRITE(sc, AR9285_AN_TOP4, AR9285_AN_TOP4_DEFAULT);
-
 	reg = AR_READ(sc, AR_PHY_SETTLING);
 	reg = RW(reg, AR_PHY_SETTLING_SWITCH, modal->switchSettling);
 	AR_WRITE(sc, AR_PHY_SETTLING, reg);
@@ -392,11 +386,6 @@ ar9285_pa_calib(struct athn_softc *sc)
 	    ((struct ar9285_base_eep_header *)sc->eep)->txGainType ==
 	     AR_EEP_TXGAIN_HIGH_POWER)	/* XXX AR9287? */
 		return;
-
-	if (AR_SREV_9285_11(sc)) {
-		AR_WRITE(sc, AR9285_AN_TOP4, AR9285_AN_TOP4_UNLOCKED);
-		DELAY(10);
-	}
 
 	/* Save registers. */
 	for (i = 0; i < nitems(regs); i++)
@@ -471,13 +460,10 @@ ar9285_pa_calib(struct athn_softc *sc)
 	reg = AR_READ(sc, AR9285_AN_RF2G6);
 	reg = RW(reg, AR9285_AN_RF2G6_CCOMP, ccomp_svg);
 	AR_WRITE(sc, AR9285_AN_RF2G6, reg);
-
-	if (AR_SREV_9285_11(sc))
-		AR_WRITE(sc, AR9285_AN_TOP4, AR9285_AN_TOP4_DEFAULT);
 }
 
 /*
- * Carrier Leakage Calibration (>= AR9285 1.2 only.)
+ * Carrier Leakage Calibration.
  */
 int
 ar9285_cl_cal(struct athn_softc *sc, struct ieee80211_channel *c,
