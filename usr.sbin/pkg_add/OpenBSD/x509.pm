@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: x509.pm,v 1.8 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: x509.pm,v 1.9 2010/07/15 13:38:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -79,11 +79,12 @@ sub print_certificate_info
 
 sub system_quiet
 {
+	my $fh = shift;
 	my $r = fork;
 	if (!defined $r) {
 		return 1;
 	} elsif ($r == 0) {
-		open STDERR, ">/dev/null";
+		open STDERR, ">&", $fh;
 		exec {$_[0]} @_ or return 1;
 	} else {
 		waitpid($r, 0);
@@ -105,17 +106,28 @@ sub check_signature
 	print $fh2 decode_base64($sig->{b64sig});
 	close $fh;
 	close $fh2;
-	if (system_quiet (OpenBSD::Paths->openssl, "smime", "-verify",
+	my ($fh3, $fname3) = mkstemp("/tmp/commandresult.XXXXXXXXX");
+	if (system_quiet ($fh3, OpenBSD::Paths->openssl, "smime", "-verify",
 	    "-binary", "-inform", "DEM", "-in", $fname2, "-content", $fname,
 	    "-CAfile", OpenBSD::Paths->pkgca, "-out", "/dev/null") != 0) {
+	    	close($fh3);
 	    	$state->log("Bad signature");
+		open $fh3, '<', $fname3;
+		while (<$fh3>) {
+			chomp;
+			$state->log("#1", $_);
+		}
+		close($fh3);
+		unlink $fname3;
 		return 0;
 	}
 	if ($state->verbose >= 2) {
 		dump_certificate_info($fname2);
 	}
+	close($fh3);
 	unlink $fname;
 	unlink $fname2;
+	unlink $fname3;
 	return 1;
 }
 
