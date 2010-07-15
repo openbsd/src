@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.18 2009/02/10 19:24:17 jmc Exp $
+.\"	$OpenBSD: ctags.1,v 1.19 2010/07/15 20:51:38 schwarze Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 10 2009 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -141,9 +141,9 @@ Files whose names end in
 are assumed to be lisp files if their
 first non-blank character is
 .Ql \&; ,
-.Ql ( ,
+.Ql \&( ,
 or
-.Ql [ ,
+.Ql \&[ ,
 otherwise, they are
 treated as lex files.
 Other files are first examined to see if they

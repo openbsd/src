@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.15 2010/04/05 16:44:52 deraadt Exp $
+.\"	$OpenBSD: tr.1,v 1.16 2010/07/15 20:51:38 schwarze Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 5 2010 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt TR 1
 .Os
 .Sh NAME
@@ -276,18 +276,18 @@ System V shell scripts should work under this implementation as long as
 the range is intended to map in another range, i.e., the command
 .Dq tr\ [a-z]\ [A-Z]
 will work as it will map the
-.Dq [
+.Dq \&[
 character in
 .Ar string1
 to the
-.Dq [
+.Dq \&[
 character in
 .Ar string2 .
 However, if the shell script is deleting or squeezing characters as in
 the command
 .Dq tr\ -d\ [a-z] ,
 the characters
-.Dq [
+.Dq \&[
 and
 .Dq \]
 will be

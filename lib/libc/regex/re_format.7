@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.14 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: re_format.7,v 1.15 2010/07/15 20:51:38 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)re_format.7	8.3 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt RE_FORMAT 7
 .Os
 .Sh NAME
@@ -214,7 +214,7 @@ and
 .Sq .]
 to make it a collating element (see below).
 With the exception of these and some combinations using
-.Sq [
+.Sq \&[
 (see next paragraphs),
 all other special characters, including
 .Sq \e ,
@@ -539,7 +539,7 @@ The parentheses for nested subexpressions are
 and
 .Sq \e) ,
 with
-.Sq (
+.Sq \&(
 and
 .Sq )\&
 by themselves ordinary characters.
@@ -733,7 +733,7 @@ Having two kinds of REs is a botch.
 The current POSIX spec says that
 .Sq )\&
 is an ordinary character in the absence of an unmatched
-.Sq ( ;
+.Sq \&( ;
 this was an unintentional result of a wording error,
 and change is likely.
 Avoid relying on it.
