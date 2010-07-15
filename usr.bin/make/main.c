@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.93 2010/02/03 20:45:44 miod Exp $ */
+/*	$OpenBSD: main.c,v 1.94 2010/07/15 10:41:11 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -640,7 +640,7 @@ read_all_make_rules(bool noBuiltins, bool read_depend,
 			(void)ReadMakefile("Makefile", d);
 
 	/* read a .depend file, if it exists, and we're not building depend */
-	
+
 	if (read_depend)
 		(void)ReadMakefile(".depend", d);
 }

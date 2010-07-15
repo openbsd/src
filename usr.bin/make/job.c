@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.118 2009/08/16 09:50:13 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.119 2010/07/15 10:37:32 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ struct job_pipe {
 	char buffer[JOB_BUFSIZE];
 	size_t pos;
 };
-	
+
 typedef struct Job_ {
     pid_t 	pid;	    /* The child's process ID */
     GNode	*node;	    /* The target the child is making */
@@ -165,7 +165,7 @@ static LIST	job_pids;	/* a simple list that doesn't move that much */
 
 /* data structure linked to job handling through select */
 static fd_set *output_mask = NULL;	/* File descriptors to look for */
-				 
+
 static fd_set *actual_mask = NULL;	/* actual select argument */
 static int largest_fd = -1;
 static size_t mask_size = 0;
@@ -218,13 +218,13 @@ static void close_job_pipes(Job *);
 
 static void handle_all_jobs_output(void);
 
-/* handle_job_output(job, n, finish): 
+/* handle_job_output(job, n, finish):
  *	n = 0 or 1 (stdout/stderr), set finish to retrieve everything.
  */
 static void handle_job_output(Job *, int, bool);
 
 static void print_partial_buffer(struct job_pipe *, Job *, FILE *, size_t);
-static void print_partial_buffer_and_shift(struct job_pipe *, Job *, FILE *, 
+static void print_partial_buffer_and_shift(struct job_pipe *, Job *, FILE *,
     size_t);
 static bool print_complete_lines(struct job_pipe *, Job *, FILE *, size_t);
 
@@ -269,7 +269,7 @@ print_errors()
 	if (p->n->lineno)
 		Error(" %s %d (%s, line %lu of %s)",
 		    type, p->code, p->n->name, p->n->lineno, p->n->fname);
-	else 
+	else
 		Error(" %s %d (%s)", type, p->code, p->n->name);
 	}
 }
@@ -278,7 +278,7 @@ static void
 banner(Job *job, FILE *out)
 {
 	if (job->node != lastNode) {
-		if (DEBUG(JOBBANNER)) 
+		if (DEBUG(JOBBANNER))
 			(void)fprintf(out, "--- %s ---\n", job->node->name);
 		lastNode = job->node;
 	}
@@ -447,7 +447,7 @@ debug_printf(const char *fmt, ...)
 		va_end(va);
 	}
 }
-	
+
 static void
 close_job_pipes(Job *job)
 {
@@ -464,7 +464,7 @@ close_job_pipes(Job *job)
  *-----------------------------------------------------------------------
  * process_job_status  --
  *	Do processing for the given job including updating
- *	parents and starting new jobs as available/necessary. 
+ *	parents and starting new jobs as available/necessary.
  *
  * Side Effects:
  *	Some nodes may be put on the toBeMade queue.
@@ -484,7 +484,7 @@ process_job_status(Job *job, int status)
 	int reason, code;
 	bool	 done;
 
-	debug_printf("Process %ld (%s) exited with status %d.\n", 
+	debug_printf("Process %ld (%s) exited with status %d.\n",
 	    (long)job->pid, job->node->name, status);
 	/* parse status */
 	if (WIFEXITED(status)) {
@@ -530,13 +530,13 @@ process_job_status(Job *job, int status)
 
 	if (done || DEBUG(JOB)) {
 		if (reason == JOB_EXITED) {
-			debug_printf("Process %ld (%s) exited.\n", 
+			debug_printf("Process %ld (%s) exited.\n",
 			    (long)job->pid, job->node->name);
 			if (code != 0) {
 				banner(job, stdout);
 				(void)fprintf(stdout, "*** Error code %d %s\n",
 				    code,
-				    (job->node->type & OP_IGNORE) ? 
+				    (job->node->type & OP_IGNORE) ?
 				    "(ignored)" : "");
 
 				if (job->node->type & OP_IGNORE) {
@@ -545,7 +545,7 @@ process_job_status(Job *job, int status)
 				}
 			} else if (DEBUG(JOB)) {
 				(void)fprintf(stdout,
-				    "*** %ld (%s) Completed successfully\n", 
+				    "*** %ld (%s) Completed successfully\n",
 				    (long)job->pid, job->node->name);
 			}
 		} else {
@@ -572,7 +572,7 @@ process_job_status(Job *job, int status)
 	}
 	free(job);
 
-	if (errors && !keepgoing && 
+	if (errors && !keepgoing &&
 	    aborting != ABORT_INTERRUPT)
 		aborting = ABORT_ERROR;
 
@@ -580,12 +580,12 @@ process_job_status(Job *job, int status)
 		Finish(errors);
 }
 
-static void 
+static void
 prepare_pipe(struct job_pipe *p, int *fd)
 {
 	p->pos = 0;
 	(void)fcntl(fd[0], F_SETFD, FD_CLOEXEC);
-	p->fd = fd[0]; 
+	p->fd = fd[0];
 	close(fd[1]);
 
 	if (output_mask == NULL || p->fd > largest_fd) {
@@ -595,11 +595,11 @@ prepare_pipe(struct job_pipe *p, int *fd)
 		ofdn = howmany(largest_fd+1, NFDBITS);
 
 		if (fdn != ofdn) {
-			output_mask = emult_realloc(output_mask, fdn, 
+			output_mask = emult_realloc(output_mask, fdn,
 			    sizeof(fd_mask));
-			memset(((char *)output_mask) + ofdn * sizeof(fd_mask), 
+			memset(((char *)output_mask) + ofdn * sizeof(fd_mask),
 			    0, (fdn-ofdn) * sizeof(fd_mask));
-			actual_mask = emult_realloc(actual_mask, fdn, 
+			actual_mask = emult_realloc(actual_mask, fdn,
 			    sizeof(fd_mask));
 			mask_size = fdn * sizeof(fd_mask);
 		}
@@ -612,7 +612,7 @@ prepare_pipe(struct job_pipe *p, int *fd)
 /*-
  *-----------------------------------------------------------------------
  * JobExec --
- *	Execute the shell for the given job. Called from JobStart 
+ *	Execute the shell for the given job. Called from JobStart
  *
  * Side Effects:
  *	A shell is executed, outputs is altered and the Job structure added
@@ -633,7 +633,7 @@ JobExec(Job *job)
 
 	setup_engine(1);
 
-	/* Create the pipe by which we'll get the shell's output. 
+	/* Create the pipe by which we'll get the shell's output.
 	 */
 	if (pipe(fdout) == -1)
 		Punt("Cannot create pipe: %s", strerror(errno));
@@ -703,7 +703,7 @@ JobExec(Job *job)
 
 		(void)fprintf(stdout, "Running %ld (%s)\n", (long)cpid,
 		    job->node->name);
-		for (ln = Lst_First(&job->node->commands); ln != NULL ; 
+		for (ln = Lst_First(&job->node->commands); ln != NULL ;
 		    ln = Lst_Adv(ln))
 		    	fprintf(stdout, "\t%s\n", (char *)Lst_Datum(ln));
 		(void)fflush(stdout);
@@ -928,7 +928,7 @@ print_complete_lines(struct job_pipe *p, Job *job, FILE *out, size_t limit)
  *-----------------------------------------------------------------------
  */
 static void
-handle_pipe(struct job_pipe *p, 
+handle_pipe(struct job_pipe *p,
 	Job *job, FILE *out, bool finish)
 {
 	int nr;		  	/* number of bytes read */
@@ -1000,7 +1000,7 @@ remove_job(LstNode ln, int status)
  * Notes:
  *	We do waits, blocking or not, according to the wisdom of our
  *	caller, until there are no more children to report. For each
- *	job, call process_job_status to finish things off. 
+ *	job, call process_job_status to finish things off.
  *-----------------------------------------------------------------------
  */
 void
@@ -1159,7 +1159,7 @@ Job_Full()
  * Job_Full --
  *	See if the job table is full. It is considered full
  *	if we are in the process of aborting OR if we have
- *	reached/exceeded our quota. 
+ *	reached/exceeded our quota.
  *
  * Results:
  *	true if the job table is full, false otherwise
@@ -1170,14 +1170,14 @@ can_start_job(void)
 {
 	if (Job_Full() || expensive_job)
 		return false;
-	else 
+	else
 		return true;
 }
 
 /*-
  *-----------------------------------------------------------------------
  * Job_Empty --
- *	See if the job table is empty.	
+ *	See if the job table is empty.
  *
  * Results:
  *	true if it is. false if it ain't.
@@ -1312,7 +1312,7 @@ Job_AbortAll(void)
 	aborting = ABORT_ERROR;
 
 	if (nJobs) {
-		for (ln = Lst_First(&runningJobs); ln != NULL; 
+		for (ln = Lst_First(&runningJobs); ln != NULL;
 		    ln = Lst_Adv(ln)) {
 			job = (Job *)Lst_Datum(ln);
 
