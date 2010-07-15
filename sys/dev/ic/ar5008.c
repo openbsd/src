@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.10 2010/07/15 19:33:34 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.11 2010/07/15 19:38:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1792,15 +1792,15 @@ ar5008_bb_load_noisefloor(struct athn_softc *sc)
 	AR_CLRBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NO_UPDATE_NF);
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NF);
 	/* Wait for load to complete. */
-	for (ntries = 0; ntries < 5; ntries++) {
+	for (ntries = 0; ntries < 1000; ntries++) {
 		if (!(AR_READ(sc, AR_PHY_AGC_CONTROL) & AR_PHY_AGC_CONTROL_NF))
 			break;
 		DELAY(50);
 	}
-#ifdef ATHN_DEBUG
-	if (ntries == 5 && athn_debug > 0)
-		printf("failed to load noisefloor values\n");
-#endif
+	if (ntries == 1000) {
+		DPRINTF(("failed to load noisefloor values\n"));
+		return;
+	}
 
 	/* Restore noisefloor values to initial (max) values. */
 	for (i = 0; i < AR_MAX_CHAINS; i++)
