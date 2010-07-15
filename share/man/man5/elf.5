@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.17 2010/05/02 07:25:02 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.18 2010/07/15 16:48:41 jmc Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: May 2 2010 $
+.Dd $Mdocdate: July 15 2010 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -974,7 +974,7 @@ This section is of type
 No attribute types are used.
 .It .note
 This section holds information in the
-.Dq Note Section
+note section
 format described below.
 This section is of type
 .Sy SHT_NOTE .
@@ -1311,6 +1311,36 @@ member.
 This member specifies a constant addend used to compute the value to be
 stored into the relocatable field.
 .El
+.Pp
+The note section is used to hold vendor-specific information that
+may be used to help identify a binary's ABI.
+It should start with an Elf_Note struct,
+followed by the section name and the section description.
+The actual note contents follow thereafter.
+.Bd -literal -offset indent
+typedef struct {
+Elf32_Word namesz;
+Elf32_Word descsz;
+Elf32_Word type;
+} Elf32_Note;
+
+typedef struct {
+Elf64_Half namesz;
+Elf64_Half descsz;
+Elf64_Half type;
+} Elf64_Note;
+.Ed
+.Bl -tag -width "r_offset"
+.It Dv namesz
+Length of the note name, rounded up to a 4-byte boundary.
+.It Dv descsz
+Length of the note description, rounded up to a 4-byte boundary.
+.It Dv type
+A vendor-specific note type.
+.El
+.Pp
+The name and description strings follow the note structure.
+Each string is aligned on a 4-byte boundary.
 .Sh SEE ALSO
 .Xr as 1 ,
 .Xr gdb 1 ,
