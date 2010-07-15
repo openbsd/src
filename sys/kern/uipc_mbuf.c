@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.142 2010/07/14 10:31:54 matthew Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.143 2010/07/15 09:45:09 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -620,17 +620,17 @@ m_copym2(struct mbuf *m, int off, int len, int wait)
 }
 
 struct mbuf *
-m_copym0(struct mbuf *m, int off, int len, int wait, int deep)
+m_copym0(struct mbuf *m0, int off, int len, int wait, int deep)
 {
-	struct mbuf *n, **np;
+	struct mbuf *m, *n, **np;
 	struct mbuf *top;
 	int copyhdr = 0;
 
 	if (off < 0 || len < 0)
 		panic("m_copym0: off %d, len %d", off, len);
-	if (off == 0 && m->m_flags & M_PKTHDR)
+	if (off == 0 && m0->m_flags & M_PKTHDR)
 		copyhdr = 1;
-	if ((m = m_getptr(m, off, &off)) == NULL)
+	if ((m = m_getptr(m0, off, &off)) == NULL)
 		panic("m_copym0: short mbuf chain");
 	np = &top;
 	top = NULL;
@@ -645,7 +645,7 @@ m_copym0(struct mbuf *m, int off, int len, int wait, int deep)
 		if (n == NULL)
 			goto nospace;
 		if (copyhdr) {
-			if (m_dup_pkthdr(n, m))
+			if (m_dup_pkthdr(n, m0))
 				goto nospace;
 			if (len != M_COPYALL)
 				n->m_pkthdr.len = len;
