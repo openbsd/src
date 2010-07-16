@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.115 2010/06/26 23:24:44 guenther Exp $ */
+/*	$OpenBSD: pmap.c,v 1.116 2010/07/16 06:22:31 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1301,11 +1301,8 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
-	int s;
 
-	s = splvm();
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	splx(s);
 	pmap_pinit(pmap);
 	return (pmap);
 }
@@ -1329,7 +1326,6 @@ void
 pmap_destroy(pmap_t pm)
 {
 	int refs;
-	int s;
 
 	/* simple_lock(&pmap->pm_obj.vmobjlock); */
 	refs = --pm->pm_refs;
@@ -1341,9 +1337,7 @@ pmap_destroy(pmap_t pm)
 	 * reference count is zero, free pmap resources and free pmap.
 	 */
 	pmap_release(pm);
-	s = splvm();
 	pool_put(&pmap_pmap_pool, pm);
-	splx(s);
 }
 
 /*
