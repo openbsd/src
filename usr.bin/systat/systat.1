@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.85 2010/03/13 06:35:40 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.86 2010/07/16 16:27:02 lum Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 13 2010 $
+.Dd $Mdocdate: July 16 2010 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -53,8 +53,10 @@ screen display library.
 .Pp
 While
 .Nm
-is running, the screen is divided into differing areas.
-The top line depicts the current system load average.
+is running, the screen is divided into different areas.
+The top line displays the current number of users, the
+three system load average figures over the last 1, 5, and
+15 minute intervals, and the system time.
 The bottom line of the screen is reserved for
 user input and error messages.
 The information displayed in the rest of the screen
@@ -419,10 +421,7 @@ of statistics related to virtual memory usage, process scheduling,
 device interrupts, system name translation caching, disk I/O, etc.
 This view is the default.
 .Pp
-The upper left quadrant of the screen shows the number
-of users logged in and the load average over the last 1, 5,
-and 15 minute intervals.
-Below this line are statistics on memory utilization.
+Below the top line are statistics on memory utilization.
 The first row of the table reports memory usage only among
 active processes, that is, processes that have run in the previous
 twenty seconds.
