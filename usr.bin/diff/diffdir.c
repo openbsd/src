@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.35 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.36 2010/07/16 23:27:58 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -303,7 +303,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
 	else
 		dp->d_status = diffreg(path1, path2, flags);
 	if (!lflag)
-		print_status(dp->d_status, path1, path2, NULL);
+		print_status(dp->d_status, path1, path2, "");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.56 2010/02/21 15:24:01 sobrado Exp $	*/
+/*	$OpenBSD: diff.c,v 1.57 2010/07/16 23:27:58 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -265,7 +265,7 @@ main(int argc, char **argv)
 				err(2, "%s", argv[1]);
 		}
 		print_status(diffreg(argv[0], argv[1], dflags), argv[0], argv[1],
-		    NULL);
+		    "");
 	}
 	exit(status);
 }
@@ -360,39 +360,37 @@ print_status(int val, char *path1, char *path2, char *entry)
 		break;
 	case D_COMMON:
 		printf("Common subdirectories: %s%s and %s%s\n",
-		    path1, entry ? entry : "", path2, entry ? entry : "");
+		    path1, entry, path2, entry);
 		break;
 	case D_BINARY:
 		printf("Binary files %s%s and %s%s differ\n",
-		    path1, entry ? entry : "", path2, entry ? entry : "");
+		    path1, entry, path2, entry);
 		break;
 	case D_DIFFER:
 		if (diff_format == D_BRIEF)
 			printf("Files %s%s and %s%s differ\n",
-			    path1, entry ? entry : "",
-			    path2, entry ? entry : "");
+			    path1, entry, path2, entry);
 		break;
 	case D_SAME:
 		if (sflag)
 			printf("Files %s%s and %s%s are identical\n",
-			    path1, entry ? entry : "",
-			    path2, entry ? entry : "");
+			    path1, entry, path2, entry);
 		break;
 	case D_MISMATCH1:
 		printf("File %s%s is a directory while file %s%s is a regular file\n",
-		    path1, entry ? entry : "", path2, entry ? entry : "");
+		    path1, entry, path2, entry);
 		break;
 	case D_MISMATCH2:
 		printf("File %s%s is a regular file while file %s%s is a directory\n",
-		    path1, entry ? entry : "", path2, entry ? entry : "");
+		    path1, entry, path2, entry);
 		break;
 	case D_SKIPPED1:
 		printf("File %s%s is not a regular file or directory and was skipped\n",
-		    path1, entry ? entry : "");
+		    path1, entry);
 		break;
 	case D_SKIPPED2:
 		printf("File %s%s is not a regular file or directory and was skipped\n",
-		    path2, entry ? entry : "");
+		    path2, entry);
 		break;
 	}
 }
