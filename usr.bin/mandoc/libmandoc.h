@@ -1,6 +1,6 @@
-/*	$Id: libmandoc.h,v 1.6 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: libmandoc.h,v 1.7 2010/07/16 00:34:33 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,7 @@ time_t		 mandoc_a2time(int, const char *);
 #define		 MTIME_REDUCED		(1 << 1)
 #define		 MTIME_MDOCDATE		(1 << 2)
 #define		 MTIME_ISO_8601		(1 << 3)
-int		 mandoc_eos(const char *, size_t);
+int		 mandoc_eos(const char *, size_t, int);
 int		 mandoc_hyph(const char *, const char *);
 
 __END_DECLS

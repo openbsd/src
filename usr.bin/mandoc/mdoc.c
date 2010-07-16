@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.61 2010/07/13 01:09:13 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.62 2010/07/16 00:34:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -717,7 +717,7 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 
 	assert(buf < end);
 
-	if (mandoc_eos(buf+offs, (size_t)(end-buf-offs)))
+	if (mandoc_eos(buf+offs, (size_t)(end-buf-offs), 0))
 		m->last->flags |= MDOC_EOS;
 
 	return(1);
