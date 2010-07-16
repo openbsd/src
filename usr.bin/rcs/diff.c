@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.29 2010/07/15 18:23:50 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.30 2010/07/16 17:53:20 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1209,10 +1209,8 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 	diff_output("***************");
 	if ((flags & D_PROTOTYPE)) {
 		f = match_function(ixold, lowa-1, f1);
-		if (f != NULL) {
-			diff_output(" ");
-			diff_output("%s", f);
-		}
+		if (f != NULL)
+			diff_output(" %s", f);
 	}
 	diff_output("\n*** ");
 	range(lowa, upb, ",");
@@ -1318,10 +1316,8 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 	diff_output(" @@");
 	if ((flags & D_PROTOTYPE)) {
 		f = match_function(ixold, lowa-1, f1);
-		if (f != NULL) {
-			diff_output(" ");
-			diff_output("%s", f);
-		}
+		if (f != NULL)
+			diff_output(" %s", f);
 	}
 	diff_output("\n");
 
