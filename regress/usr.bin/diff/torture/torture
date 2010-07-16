@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-#	$OpenBSD: torture,v 1.1 2003/07/22 18:32:08 otto Exp $
+#	$OpenBSD: torture,v 1.2 2010/07/16 19:58:22 ray Exp $
 #
 # Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 #
@@ -18,7 +18,7 @@
 #
 # Usage: torture file or directory
 #
-# Run a diff/patch/cmp regression on all available cvs revisisons of a
+# Run a diff/patch/cmp regression on all available cvs revisions of a
 # file or recursively on all files in a cvs checkout directory.
 #
 # Run this script on a freshly checked out cvs dir. Local modifications

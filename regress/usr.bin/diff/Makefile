@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2003/08/10 18:32:44 otto Exp $
+# $OpenBSD: Makefile,v 1.6 2010/07/16 19:58:22 ray Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13
 
@@ -18,8 +18,8 @@ EDSKIPCMP=t7 t10 t12
 # t5: files are the same
 # t6: one file with no newline at end, other does contain newline
 # t7: one file with newline at end, the other not
-# t8: revisison 1.1 and 1.54 of kern_malloc.c
-# t9: revisison 1.1 and 1.104 of vfs_syscalls.c
+# t8: revision 1.1 and 1.54 of kern_malloc.c
+# t9: revision 1.1 and 1.104 of vfs_syscalls.c
 # t10: two files with no end of line at the end, line in second file is longer
 # t11: rev 1.3 and 1.36 of usr.bin/ed/ed.1.
 # t12: rev 1.1 and 1.2 of sbin/isakmpd/regress/hmac/Makefile.
