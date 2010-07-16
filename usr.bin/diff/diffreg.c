@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.78 2010/07/16 08:06:00 ray Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.79 2010/07/16 21:47:02 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -382,7 +382,8 @@ diffreg(char *file1, char *file2, int flags)
 			warnx("No more processes");
 			status |= 2;
 			xfree(header);
-			return (D_ERROR);
+			rval = D_ERROR;
+			goto closem;
 		case 0:
 			/* child */
 			if (pfd[0] != STDIN_FILENO) {
