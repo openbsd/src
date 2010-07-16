@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.33 2010/07/15 23:52:32 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.34 2010/07/16 01:23:11 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1843,8 +1843,6 @@ struct mpii_softc {
 	/* scsi ioctl from sd device */
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 
-	struct rwlock		sc_lock;
-
 	int			sc_nsensors;
 	struct ksensor		*sc_sensors;
 	struct ksensordev	sc_sensordev;
@@ -2161,8 +2159,6 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to enable port\n", DEVNAME(sc));
 		goto free_dev;
 	}
-
-	rw_init(&sc->sc_lock, "mpii_lock");
 
 	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &mpii_switch;
