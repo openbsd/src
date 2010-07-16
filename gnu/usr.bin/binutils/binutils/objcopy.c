@@ -2367,7 +2367,10 @@ strip_main (int argc, char *argv[])
       char *tmpname;
 
       if (get_file_size (argv[i]) < 1)
-	continue;
+        {
+          status = 1;
+          continue;
+        }
 
       if (preserve_dates)
 	/* No need to check the return value of stat().
