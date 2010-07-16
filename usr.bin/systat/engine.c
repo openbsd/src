@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.11 2010/01/12 23:22:14 nicm Exp $	 */
+/* $Id: engine.c,v 1.12 2010/07/16 05:22:48 lum Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <term.h>
 #include <unistd.h>
+#include <err.h>
 
 /* XXX These are defined in term.h and conflict with our variable names */
 #ifdef columns
@@ -1328,4 +1329,47 @@ engine_loop(int countmax)
 
 	if (rawmode == 0)
 		endwin();
+}
+
+int
+check_termcap(void)
+{
+	char *term_name;
+	int status;
+	static struct termios screen_settings;
+
+	if (!interactive)
+		/* pretend we have a dumb terminal */
+		return(1);
+
+	/* get the terminal name */
+	term_name = getenv("TERM");
+	if (term_name == NULL)
+		return(1);
+
+	/* now get the termcap entry */
+	if ((status = tgetent(NULL, term_name)) != 1) {
+		if (status == -1)
+			warnx("can't open termcap file");
+		else
+			warnx("no termcap entry for a `%s' terminal", 
+			    term_name);
+
+		/* pretend it's dumb and proceed */
+		return(1);
+	}
+
+	/* "hardcopy" immediately indicates a very stupid terminal */
+	if (tgetflag("hc"))
+		return(1);
+
+        /* get necessary capabilities */
+        if (tgetstr("cl", NULL) == NULL || tgetstr("cm", NULL) == NULL)
+		return(1);
+
+	/* if stdout is not a terminal, pretend we are a dumb terminal */
+	if (tcgetattr(STDOUT_FILENO, &screen_settings) == -1)
+		return(1);
+
+	return(0);
 }

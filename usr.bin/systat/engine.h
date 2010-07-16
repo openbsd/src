@@ -1,4 +1,4 @@
-/* $Id: engine.h,v 1.5 2008/12/07 02:56:06 canacar Exp $	 */
+/* $Id: engine.h,v 1.6 2010/07/16 05:22:48 lum Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -133,6 +133,7 @@ void set_order(const char *opt);
 void next_order(void);
 
 void setup_term(int maxpr);
+int check_termcap(void);
 
 void engine_initialize(void);
 void engine_loop(int countmax);
