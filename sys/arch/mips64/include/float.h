@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.5 2008/09/07 20:36:06 martynas Exp $	*/
+/*	$OpenBSD: float.h,v 1.6 2010/07/17 17:52:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,10 +58,10 @@ __END_DECLS
 #define DBL_EPSILON	2.2204460492503131E-16
 #define DBL_DIG		15
 #define DBL_MIN_EXP	(-1021)
-#define DBL_MIN		2.225073858507201E-308
+#define DBL_MIN		2.2250738585072014E-308
 #define DBL_MIN_10_EXP	(-307)
 #define DBL_MAX_EXP	1024
-#define DBL_MAX		1.797693134862316E+308
+#define DBL_MAX		1.7976931348623157E+308
 #define DBL_MAX_10_EXP	308
 
 #define LDBL_MANT_DIG	113
