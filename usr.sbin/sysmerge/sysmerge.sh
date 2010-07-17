@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.60 2010/07/06 12:02:54 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.61 2010/07/17 06:47:13 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -76,55 +76,6 @@ if [ -z "${FETCH_CMD}" ]; then
 	fi
 	FETCH_CMD="/usr/bin/ftp -V -m -k ${FTP_KEEPALIVE}"
 fi
-
-
-do_pre() {
-	if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
-		if [ -f "/usr/src/etc/Makefile" ]; then
-			SRCDIR=/usr/src
-		else
-			echo " *** Error: please specify a valid path to src or (x)etcXX.tgz"
-			error_rm_wrkdir
-		fi
-	fi
-
-	TEMPROOT="${WRKDIR}/temproot"
-	BKPDIR="${WRKDIR}/backups"
-
-	if [ -z "${BATCHMODE}" -a -n "${DIFFMODE}" ]; then
-		echo "\n===> Running ${0##*/} with the following settings:\n"
-		if [ "${TGZURL}" ]; then
-			echo " etc source:          ${TGZURL}"
-			echo "                      (fetched in ${TGZ})"
-		elif [ "${TGZ}" ]; then
-			echo " etc source:          ${TGZ}"
-		elif [ "${SRCDIR}" ]; then
-			echo " etc source:          ${SRCDIR}"
-		fi
-		if [ "${XTGZURL}" ]; then
-			echo " xetc source:         ${XTGZURL}"
-			echo "                      (fetched in ${XTGZ})"
-		else
-			[ "${XTGZ}" ] && echo " xetc source:         ${XTGZ}"
-		fi
-		echo ""
-		echo " base work directory: ${WRKDIR}"
-		echo " temp root directory: ${TEMPROOT}"
-		echo " backup directory:    ${BKPDIR}"
-		echo ""
-		echo -n "Continue? (y|[n]) "
-		read ANSWER
-		case "${ANSWER}" in
-			y|Y)
-				echo ""
-				;;
-			*)
-				error_rm_wrkdir
-				;;
-		esac
-	fi
-}
-
 
 do_populate() {
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
@@ -219,7 +170,6 @@ do_populate() {
 	done
 }
 
-
 do_install_and_rm() {
 	if [ -f "${5}/${4##*/}" ]; then
 		mkdir -p ${BKPDIR}/${4%/*}
@@ -232,7 +182,6 @@ do_install_and_rm() {
 	fi
 	rm -f "${4}"
 }
-
 
 mm_install() {
 	local INSTDIR
@@ -380,7 +329,6 @@ merge_loop() {
 		done
 	done
 }
-
 
 diff_loop() {
 	if [ "${BATCHMODE}" ]; then
@@ -578,7 +526,6 @@ diff_loop() {
 	done
 }
 
-
 do_compare() {
 	echo "===> Starting comparison"
 
@@ -627,7 +574,6 @@ do_compare() {
 
 	echo "===> Comparison complete"
 }
-
 
 do_post() {
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
@@ -694,7 +640,6 @@ do_post() {
 	rm -f ${DESTDIR}/${DBDIR}/.*.bak
 }
 
-
 while getopts bds:x: arg; do
 	case ${arg} in
 	b)
@@ -749,7 +694,18 @@ while getopts bds:x: arg; do
 done
 
 
-do_pre
+if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
+	if [ -f "/usr/src/etc/Makefile" ]; then
+		SRCDIR=/usr/src
+	else
+		echo " *** Error: please specify a valid path to src or (x)etcXX.tgz"
+		error_rm_wrkdir
+	fi
+fi
+
+TEMPROOT="${WRKDIR}/temproot"
+BKPDIR="${WRKDIR}/backups"
+
 do_populate
 do_compare
 do_post
