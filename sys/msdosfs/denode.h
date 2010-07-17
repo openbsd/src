@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.22 2010/05/16 20:26:39 nicm Exp $	*/
+/*	$OpenBSD: denode.h,v 1.23 2010/07/17 19:27:07 guenther Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -222,8 +222,6 @@ struct denode {
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
 
-#ifdef _KERNEL
-
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
 
@@ -257,6 +255,8 @@ struct defid {
 #endif
 };
 
+
+#ifdef _KERNEL
 /*
  * Prototypes for MSDOSFS vnode operations
  */
