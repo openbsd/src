@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.18 2010/07/12 18:03:38 nicm Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.19 2010/07/17 17:16:47 chl Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -65,6 +65,7 @@
 
 #include "event.h"
 #include "evutil.h"
+#include "./log.h"
 
 struct evbuffer *
 evbuffer_new(void)
