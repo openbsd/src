@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.87 2009/05/24 07:46:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.88 2010/07/17 16:30:01 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1482,7 +1482,7 @@ struct mbuf *
 ieee80211_get_addba_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
     u_int8_t tid, u_int8_t token, u_int16_t status)
 {
-	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
+	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
 	struct mbuf *m;
 	u_int8_t *frm;
 	u_int16_t params;
