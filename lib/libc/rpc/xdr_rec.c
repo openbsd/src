@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_rec.c,v 1.13 2008/12/09 19:40:10 otto Exp $ */
+/*	$OpenBSD: xdr_rec.c,v 1.14 2010/07/17 19:23:10 guenther Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -53,8 +53,9 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
-#include <rpc/svc.h>
 #include <rpc/clnt.h>
+#include <rpc/rpc_msg.h>
+#include <rpc/svc.h>
 
 static bool_t	xdrrec_getlong(XDR *, long *);
 static bool_t	xdrrec_putlong(XDR *, long *);
