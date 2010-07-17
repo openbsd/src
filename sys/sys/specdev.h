@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.25 2008/05/03 14:41:29 thib Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.26 2010/07/17 19:24:58 guenther Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ struct cloneinfo {
 
 extern struct vnode *speclisth[SPECHSZ];
 
+#ifdef	_KERNEL
 /*
  * Prototypes for special file operations on vnodes.
  */
@@ -112,3 +113,4 @@ int	spec_vnoperate(void *);
 /* spec_subr.c */
 int	spec_open_clone(struct vop_open_args *);
 int	spec_close_clone(struct vop_close_args *);
+#endif	/* _KERNEL */
