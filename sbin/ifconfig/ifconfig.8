@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.207 2010/07/16 16:10:20 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.208 2010/07/18 15:37:37 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: July 16 2010 $
+.Dd $Mdocdate: July 18 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -748,7 +748,7 @@ Start the bridge forwarding packets.
 .Op Cm balancing Ar mode
 .Op Cm carpnodes Ar vhid:advskew,vhid:advskew,...
 .Op Cm carpdev Ar iface
-.Op Oo Fl Oc Cm carppeer Ar peer_address
+.Op Oo Fl Oc Ns Cm carppeer Ar peer_address
 .Op Cm pass Ar passphrase
 .Op Cm state Ar state
 .Op Cm vhid Ar host-id
@@ -839,20 +839,20 @@ will begin advertising as master.
 .Bk -words
 .Nm ifconfig
 .Ar wireless-interface
-.Op Oo Fl Oc Cm bssid Ar bssid
-.Op Oo Fl Oc Cm chan Op Ar n
+.Op Oo Fl Oc Ns Cm bssid Ar bssid
+.Op Oo Fl Oc Ns Cm chan Op Ar n
 .Op Oo Fl Oc Ns Cm nwflag Ar flag
-.Op Oo Fl Oc Cm nwid Ar id
-.Op Oo Fl Oc Cm nwkey Ar key
-.Op Oo Fl Oc Cm powersave Op Ar duration
+.Op Oo Fl Oc Ns Cm nwid Ar id
+.Op Oo Fl Oc Ns Cm nwkey Ar key
+.Op Oo Fl Oc Ns Cm powersave Op Ar duration
 .Op Cm scan
-.Op Oo Fl Oc Cm txpower Ar dBm
-.Op Oo Fl Oc Cm wpa
+.Op Oo Fl Oc Ns Cm txpower Ar dBm
+.Op Oo Fl Oc Ns Cm wpa
 .Op Cm wpaakms Ar akm,akm,...
 .Op Cm wpaciphers Ar cipher,cipher,...
 .Op Cm wpagroupcipher Ar cipher
 .Op Cm wpaprotos Ar proto,proto,...
-.Op Oo Fl Oc Cm wpapsk Ar psk
+.Op Oo Fl Oc Ns Cm wpapsk Ar psk
 .Ek
 .nr nS 0
 .Pp
@@ -1089,11 +1089,11 @@ authentication.
 .Bk -words
 .Nm ifconfig
 .Ar inet6-interface
-.Op Oo Fl Oc Cm anycast
-.Op Oo Fl Oc Cm autoconfprivacy
+.Op Oo Fl Oc Ns Cm anycast
+.Op Oo Fl Oc Ns Cm autoconfprivacy
 .Op Cm eui64
 .Op Cm pltime Ar n
-.Op Oo Fl Oc Cm tentative
+.Op Oo Fl Oc Ns Cm tentative
 .Op Cm vltime Ar n
 .Ek
 .nr nS 0
@@ -1199,8 +1199,8 @@ packets entering the MPLS domain.
 .Sh PFLOW
 .Nm ifconfig
 .Ar pflow-interface
-.Op Oo Fl Oc Cm flowdst Ar addr : Ns Ar port
-.Op Oo Fl Oc Cm flowsrc Ar addr
+.Op Oo Fl Oc Ns Cm flowdst Ar addr : Ns Ar port
+.Op Oo Fl Oc Ns Cm flowsrc Ar addr
 .Pp
 The following options are available for a
 .Xr pflow 4
@@ -1232,10 +1232,10 @@ Unset the source address.
 .Bk -words
 .Nm ifconfig
 .Ar pfsync-interface
-.Op Oo Fl Oc Cm defer
+.Op Oo Fl Oc Ns Cm defer
 .Op Cm maxupd Ar n
-.Op Oo Fl Oc Cm syncdev Ar iface
-.Op Oo Fl Oc Cm syncpeer Ar peer_address
+.Op Oo Fl Oc Ns Cm syncdev Ar iface
+.Op Oo Fl Oc Ns Cm syncpeer Ar peer_address
 .Ek
 .nr nS 0
 .Pp
@@ -1286,9 +1286,9 @@ Broadcast the packets using multicast.
 .Op Cm peerkey Ar key
 .Op Cm peername Ar name
 .Op Cm peerproto Ar proto
-.Op Oo Fl Oc Cm pppoeac Ar access-concentrator
+.Op Oo Fl Oc Ns Cm pppoeac Ar access-concentrator
 .Op Cm pppoedev Ar parent-interface
-.Op Oo Fl Oc Cm pppoesvc Ar service
+.Op Oo Fl Oc Ns Cm pppoesvc Ar service
 .Ek
 .nr nS 0
 .Pp
@@ -1470,7 +1470,7 @@ the corresponding routing domain is derived from this table.
 .Nm ifconfig
 .Ar vlan-interface
 .Op Cm vlan Ar vlan-tag
-.Op Oo Fl Oc Cm vlandev Ar parent-interface
+.Op Oo Fl Oc Ns Cm vlandev Ar parent-interface
 .Op Cm vlanprio Ar vlan-priority
 .Ek
 .nr nS 0
