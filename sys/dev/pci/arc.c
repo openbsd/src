@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.89 2010/07/02 20:54:36 mk Exp $ */
+/*	$OpenBSD: arc.c,v 1.90 2010/07/18 12:49:10 mk Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -598,7 +598,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = ARC_MAX_TARGET;
 	sc->sc_link.adapter_buswidth = ARC_MAX_TARGET;
-	sc->sc_link.openings = sc->sc_req_count / ARC_MAX_TARGET;
+	sc->sc_link.openings = sc->sc_req_count;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
