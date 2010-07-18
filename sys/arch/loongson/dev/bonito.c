@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.14 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.15 2010/07/18 13:36:13 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -995,11 +995,15 @@ bonito_io_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	const struct legacy_io_range *r;
+	bus_addr_t rend;
 
 	if (offs < BONITO_PCIIO_LEGACY) {
-		size--;
-		for (r = sys_platform->legacy_io_ranges; r->start != 0; r++)
-			if (offs >= r->start && offs + size <= r->end)
+		if ((r = sys_platform->legacy_io_ranges) == NULL)
+			return ENXIO;
+
+		rend = offs + size - 1;
+		for (; r->start != 0; r++)
+			if (offs >= r->start && rend <= r->end)
 				break;
 
 		if (r->end == 0)

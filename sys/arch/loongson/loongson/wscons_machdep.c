@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.7 2010/05/08 21:59:56 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.8 2010/07/18 13:36:14 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -118,7 +118,9 @@ wscnprobe(struct consdev *cp)
 			continue;
 
 		class = pci_conf_read_early(tag, PCI_CLASS_REG);
-		if (!DEVICE_IS_VGA_PCI(class))
+		if (!DEVICE_IS_VGA_PCI(class) &&
+		    !(PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+		      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC))
 			continue;
 
 		cp->cn_dev = makedev(maj, 0);
@@ -156,7 +158,9 @@ static	int initted;
 			continue;
 
 		class = pci_conf_read_early(tag, PCI_CLASS_REG);
-		if (!DEVICE_IS_VGA_PCI(class))
+		if (!DEVICE_IS_VGA_PCI(class) &&
+		    !(PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+		      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC))
 			continue;
 
 		/*
