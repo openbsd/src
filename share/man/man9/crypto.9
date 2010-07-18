@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.31 2008/06/09 18:55:58 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.32 2010/07/18 07:59:40 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: June 9 2008 $
+.Dd $Mdocdate: July 18 2010 $
 .Dt CRYPTO 9
 .Os
 .Sh NAME
@@ -130,7 +130,7 @@ not use
 The same holds for the framework.
 Thus, a callback mechanism is used
 to notify a consumer that a request has been completed (the
-callback is specified by the consumer on an per-request basis).
+callback is specified by the consumer on a per-request basis).
 The callback is invoked by the framework whether the request was
 successfully completed or not.
 An error indication is provided in the latter case.
@@ -299,19 +299,19 @@ Each descriptor provides
 information about what type of cryptographic operation should be done
 on the input buffer.
 The various fields are:
-.Bl -tag
+.Bl -tag -width "crd_inject"
 .It Fa crd_skip
 The offset in the input buffer where processing should start.
 .It Fa crd_len
 How many bytes, after
-.Fa Fa crd_skip ,
+.Fa crd_skip ,
 should be processed.
 .It Fa crd_inject
 Offset from the beginning of the buffer to insert any results.
 For encryption algorithms, this is where the initialization vector
 (IV) will be inserted when encrypting or where it can be found when
 decrypting (subject to
-.Fa Fa crd_flags ) .
+.Fa crd_flags ) .
 For MAC algorithms, this is where the result of the keyed hash will be
 inserted.
 .It Fa crd_flags
