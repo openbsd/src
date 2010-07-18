@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.256 2010/07/18 18:50:38 naddy Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.257 2010/07/18 21:22:36 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1058,7 +1058,7 @@ Gets automatically incorporated into
 as
 .Sq v${EPOCH}
 to form a full package-name conforming to
-.Xr packages-specs 5 .
+.Xr packages-specs 7 .
 .It Ev ERRORS
 List of errors found while parsing the port's Makefile.
 Display the errors before making any target, and if any error starts with
@@ -1756,7 +1756,7 @@ Gets automatically incorporated into
 as
 .Sq p${REVISION}
 to form a full package-name conforming to
-.Xr packages-specs 5 .
+.Xr packages-specs 7 .
 .It Ev RUN_DEPENDS
 Specification of ports this port needs installed to be functional.
 Same format as BUILD_DEPENDS.
