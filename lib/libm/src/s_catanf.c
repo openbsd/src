@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_catanf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_catanf.c,v 1.2 2010/07/18 18:42:26 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -93,8 +93,8 @@ catanf(float complex z)
 	float complex w;
 	float a, t, x, x2, y;
 
-	x = creal (z);
-	y = cimag (z);
+	x = crealf(z);
+	y = cimagf(z);
 
 	if((x == 0.0f) && (y > 1.0f))
 		goto ovrf;

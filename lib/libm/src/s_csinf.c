@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_csinf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_csinf.c,v 1.2 2010/07/18 18:42:26 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -79,7 +79,7 @@ csinf(float complex z)
 	float complex w;
 	float ch, sh;
 
-	cchshf((float) cimag(z), &ch, &sh);
-	w = sinf(creal(z)) * ch  + (cosf(creal(z)) * sh) * I;
+	cchshf(cimagf(z), &ch, &sh);
+	w = sinf(crealf(z)) * ch  + (cosf(crealf(z)) * sh) * I;
 	return (w);
 }

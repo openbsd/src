@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cexpf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_cexpf.c,v 1.2 2010/07/18 18:42:26 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -61,7 +61,7 @@ cexpf(float complex z)
 	float complex w;
 	float r;
 
-	r = expf( creal(z) );
-	w = r * cosf( cimag(z) ) +  r * sinf( cimag(z) ) * I;
+	r = expf( crealf(z) );
+	w = r * cosf( cimagf(z) ) +  r * sinf( cimagf(z) ) * I;
 	return (w);
 }

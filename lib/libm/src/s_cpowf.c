@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cpowf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_cpowf.c,v 1.2 2010/07/18 18:42:26 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -53,8 +53,8 @@ cpowf(float complex a, float complex z)
 	float complex w;
 	float x, y, r, theta, absa, arga;
 
-	x = creal (z);
-	y = cimag (z);
+	x = crealf(z);
+	y = cimagf(z);
 	absa = cabsf (a);
 	if (absa == 0.0f) {
 		return (0.0f + 0.0f * I);

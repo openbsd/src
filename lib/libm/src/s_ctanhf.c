@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ctanhf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_ctanhf.c,v 1.2 2010/07/18 18:42:26 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -51,8 +51,8 @@ ctanhf(float complex z)
 	float complex w;
 	float x, y, d;
 
-	x = creal(z);
-	y = cimag(z);
+	x = crealf(z);
+	y = cimagf(z);
 	d = coshf (2.0f * x) + cosf (2.0f * y);
 	w = sinhf (2.0f * x) / d  +  (sinf (2.0f * y) / d) * I;
 	return (w);
