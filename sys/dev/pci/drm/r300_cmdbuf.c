@@ -901,8 +901,6 @@ r300_cmd_wait(drm_radeon_private_t * dev_priv, drm_r300_cmd_header_t header)
 	if (!header.wait.flags)
 		return;
 
-	wait_until = 0;
-
 	switch(header.wait.flags) {
 	case R300_WAIT_2D:
 		wait_until = RADEON_WAIT_2D_IDLE;
