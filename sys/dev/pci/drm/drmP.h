@@ -216,14 +216,31 @@ struct drm_buf_entry {
 	int			 seg_count;
 };
 
+struct drm_pending_event {
+	TAILQ_ENTRY(drm_pending_event)	 link;
+	struct drm_event		*event;
+	struct drm_file			*file_priv;
+	void				(*destroy)(struct drm_pending_event *);
+};
+
+struct drm_pending_vblank_event {
+	struct drm_pending_event	base;
+	struct drm_event_vblank		event;
+};
+
+TAILQ_HEAD(drmevlist, drm_pending_event);
+
 struct drm_file {
 	SPLAY_HEAD(drm_obj_tree, drm_handle)	 obj_tree;
+	struct drmevlist			 evlist;
 	struct mutex				 table_lock;
+	struct selinfo				 rsel;
 	SPLAY_ENTRY(drm_file)			 link;
 	int					 authenticated;
 	unsigned long				 ioctl_count;
 	dev_t					 kdev;
 	drm_magic_t				 magic;
+	int					 event_space;
 	int					 flags;
 	int					 master;
 	int					 minor;
@@ -306,6 +323,7 @@ struct drm_vblank_info {
 	int			 vb_num;		/* number of crtcs */
 	u_int32_t		 vb_max;		/* counter reg size */
 	struct drm_vblank {
+		struct drmevlist vbl_events;		/* vblank events */
 		u_int32_t	 vbl_last;		/* Last recieved */
 		u_int32_t	 vbl_count;		/* interrupt no. */
 		int		 vbl_refs;		/* Number of users */
@@ -487,6 +505,7 @@ struct drm_device {
 
 	/* VBLANK support */
 	struct drm_vblank_info	*vblank;		/* One per ctrc */
+	struct mutex		 event_lock;
 
 	pid_t			 buf_pgid;
 
@@ -529,6 +548,8 @@ int	drm_pciprobe(struct pci_attach_args *, const struct drm_pcidev * );
 struct device	*drm_attach_pci(const struct drm_driver_info *, 
 		     struct pci_attach_args *, int, struct device *);
 dev_type_ioctl(drmioctl);
+dev_type_read(drmread);
+dev_type_poll(drmpoll);
 dev_type_open(drmopen);
 dev_type_close(drmclose);
 dev_type_mmap(drmmmap);

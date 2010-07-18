@@ -63,6 +63,8 @@ int	 drm_probe(struct device *, void *, void *);
 int	 drm_detach(struct device *, int);
 int	 drm_activate(struct device *, int);
 int	 drmprint(void *, const char *);
+int	 drm_dequeue_event(struct drm_device *, struct drm_file *, size_t,
+	     struct drm_pending_event **);
 
 int	 drm_getunique(struct drm_device *, void *, struct drm_file *);
 int	 drm_version(struct drm_device *, void *, struct drm_file *);
@@ -161,6 +163,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 
 	rw_init(&dev->dev_lock, "drmdevlk");
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
+	mtx_init(&dev->event_lock, IPL_TTY);
 
 	TAILQ_INIT(&dev->maplist);
 	SPLAY_INIT(&dev->files);
@@ -412,6 +415,8 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	file_priv->kdev = kdev;
 	file_priv->flags = flags;
 	file_priv->minor = minor(kdev);
+	TAILQ_INIT(&file_priv->evlist);
+	file_priv->event_space = 4096; /* 4k for event buffer */
 	DRM_DEBUG("minor = %d\n", file_priv->minor);
 
 	/* for compatibility root is always authenticated */
@@ -456,9 +461,10 @@ err:
 int
 drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 {
-	struct drm_device *dev = drm_get_device_from_kdev(kdev);
-	struct drm_file *file_priv;
-	int retcode = 0;
+	struct drm_device		*dev = drm_get_device_from_kdev(kdev);
+	struct drm_file			*file_priv;
+	struct drm_pending_event	*ev, *evtmp;
+	int				 i, retcode = 0;
 
 	if (dev == NULL)
 		return (ENXIO);
@@ -491,6 +497,25 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 	}
 	if (dev->driver->flags & DRIVER_DMA)
 		drm_reclaim_buffers(dev, file_priv);
+
+	mtx_enter(&dev->event_lock);
+	for (i = 0; i < dev->vblank->vb_num; i++) {
+		struct drmevlist *list = &dev->vblank->vb_crtcs[i].vbl_events;
+		for (ev = TAILQ_FIRST(list); ev != TAILQ_END(list);
+		    ev = evtmp) {
+			evtmp = TAILQ_NEXT(ev, link);
+			if (ev->file_priv == file_priv) {
+				TAILQ_REMOVE(list, ev, link);
+				drm_vblank_put(dev, i);
+				ev->destroy(ev);
+			}
+		}
+	}
+	while ((ev = TAILQ_FIRST(&file_priv->evlist)) != NULL) {
+		TAILQ_REMOVE(&file_priv->evlist, ev, link);
+		ev->destroy(ev);
+	}
+	mtx_leave(&dev->event_lock);
 
 	DRM_LOCK();
 	if (dev->driver->flags & DRIVER_GEM) {
@@ -683,6 +708,118 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		return (dev->driver->ioctl(dev, cmd, data, file_priv));
 	else
 		return (EINVAL);
+}
+
+int
+drmread(dev_t kdev, struct uio *uio, int ioflag)
+{
+	struct drm_device		*dev = drm_get_device_from_kdev(kdev);
+	struct drm_file			*file_priv;
+	struct drm_pending_event	*ev;
+	int		 		 error = 0;
+
+	if (dev == NULL)
+		return (ENXIO);
+
+	DRM_LOCK();
+	file_priv = drm_find_file_by_minor(dev, minor(kdev));
+	DRM_UNLOCK();
+	if (file_priv == NULL)
+		return (ENXIO);
+
+	/*
+	 * The semantics are a little weird here. We will wait until we
+	 * have events to process, but as soon as we have events we will
+	 * only deliver as many as we have.
+	 * Note that events are atomic, if the read buffer will not fit in
+	 * a whole event, we won't read any of it out.
+	 */
+	mtx_enter(&dev->event_lock);
+	while (error == 0 && TAILQ_EMPTY(&file_priv->evlist)) {
+		if (ioflag & IO_NDELAY) {
+			mtx_leave(&dev->event_lock);
+			return (EAGAIN);
+		}
+		error = msleep(&file_priv->evlist, &dev->event_lock,
+		    PWAIT | PCATCH, "drmread", 0);
+	}
+	if (error) {
+		mtx_leave(&dev->event_lock);
+		return (error);
+	}
+	while (drm_dequeue_event(dev, file_priv, uio->uio_resid, &ev)) {
+		MUTEX_ASSERT_UNLOCKED(&dev->event_lock);
+		/* XXX we always destroy the event on error. */
+		error = uiomove(ev->event, ev->event->length, uio);
+		ev->destroy(ev);
+		if (error)
+			break;
+		mtx_enter(&dev->event_lock);
+	}
+	MUTEX_ASSERT_UNLOCKED(&dev->event_lock);
+
+	return (error);
+}
+
+/*
+ * Deqeue an event from the file priv in question. returning 1 if an
+ * event was found. We take the resid from the read as a parameter because
+ * we will only dequeue and event if the read buffer has space to fit the
+ * entire thing.
+ *
+ * We are called locked, but we will *unlock* the queue on return so that
+ * we may sleep to copyout the event.
+ */
+int
+drm_dequeue_event(struct drm_device *dev, struct drm_file *file_priv,
+    size_t resid, struct drm_pending_event **out)
+{
+	struct drm_pending_event	*ev;
+	int				 gotone = 0;
+
+	MUTEX_ASSERT_LOCKED(&dev->event_lock);
+	if ((ev = TAILQ_FIRST(&file_priv->evlist)) == NULL ||
+	    ev->event->length > resid)
+		goto out;
+
+	TAILQ_REMOVE(&file_priv->evlist, ev, link);
+	file_priv->event_space += ev->event->length;
+	*out = ev;
+	gotone = 1;
+
+out:
+	mtx_leave(&dev->event_lock);
+
+	return (gotone);
+}
+
+/* XXX kqfilter ... */
+int
+drmpoll(dev_t kdev, int events, struct proc *p)
+{
+	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
+	struct drm_file		*file_priv;
+	int		 	 revents = 0;
+
+	if (dev == NULL)
+		return (POLLERR);
+
+	DRM_LOCK();
+	file_priv = drm_find_file_by_minor(dev, minor(kdev));
+	DRM_UNLOCK();
+	if (file_priv == NULL)
+		return (POLLERR);
+
+	mtx_enter(&dev->event_lock);
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (!TAILQ_EMPTY(&file_priv->evlist))
+			revents |=  events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &file_priv->rsel);
+	}
+	mtx_leave(&dev->event_lock);
+
+	return (revents);
 }
 
 struct drm_local_map *
