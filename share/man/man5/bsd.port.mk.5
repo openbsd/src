@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.255 2010/07/11 07:19:05 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.256 2010/07/18 18:50:38 naddy Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 11 2010 $
+.Dd $Mdocdate: July 18 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1460,11 +1460,7 @@ Port does not build with systrace enabled build targets.
 List of architectures on which this port builds.
 Can hold both processor-specific information (e.g., m68k), and more
 specific model information (e.g., hp300).
-.It Ev OPSYS
-Always
-.Ox .
-Read-only.
-.It Ev OPSYS_VER
+.It Ev OSREV
 Revision number of
 .Ox .
 Read-only.
@@ -2357,6 +2353,14 @@ creates the whole
 hierarchy under ${WRKOBJDIR}, so
 .Ev OBJMACHINE
 is no longer useful.
+.It Ev OPSYS
+The operating system.
+This ports tree is only used on
+.Ox .
+.It Ev OPSYS_VER
+Use
+.Ev OSREV
+instead.
 .It Ev PACKAGES
 Base location for packages built, renamed
 .Ev PKGREPOSITORYBASE .
@@ -2432,7 +2436,7 @@ focuses on
 .Ev PERMIT_PACKAGE_{FTP,CDROM}
 instead.
 .It Ev SED_PLIST
-old pipeline for creating packing-lists at the ports level.
+Old pipeline for creating packing-lists at the ports level.
 Necessary functionality has been integrated directly into
 .Xr pkg_create 1 .
 .It Ev SCRIPTDIR
