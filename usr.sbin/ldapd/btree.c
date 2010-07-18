@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.27 2010/07/06 20:10:57 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.28 2010/07/18 15:15:40 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -1528,7 +1528,7 @@ btree_read_data(struct btree *bt, struct mpage *mp, struct node *leaf,
 	data->size = leaf->n_dsize;
 	data->free_data = 1;
 	data->mp = NULL;
-	pgno = *(pgno_t *)NODEDATA(leaf);	/* XXX: alignment? */
+	bcopy(NODEDATA(leaf), &pgno, sizeof(pgno));
 	for (sz = 0; sz < data->size; ) {
 		if ((omp = btree_get_mpage(bt, pgno)) == NULL ||
 		    !F_ISSET(omp->page->flags, P_OVERFLOW)) {
