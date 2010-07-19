@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.76 2010/07/19 05:50:37 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.77 2010/07/19 07:57:36 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2241,8 +2241,6 @@ uaudio_round_blocksize(void *addr, int blk)
 	}
 	bpf = max(pbpf, rbpf);
 
-	bpf = (bpf + 15) &~ 15;
-
 	if (blk < bpf)
 		blk = bpf;
 
@@ -2981,8 +2979,7 @@ uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
 	ch->altidx = altidx;
 	ch->maxpktsize = maxpktsize;
 	ch->sample_rate = param->sample_rate;
-	ch->sample_size = param->factor * param->channels *
-	    param->precision / NBBY;
+	ch->sample_size = param->factor * param->channels * param->bps;
 	ch->usb_fps = USB_FRAMES_PER_SECOND;
 
 	/*
