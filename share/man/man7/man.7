@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.2 2010/07/19 22:34:29 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.3 2010/07/19 23:06:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -61,11 +61,11 @@ Blank lines are acceptable; where found, the output will assert a
 vertical space.
 .Ss Comments
 Text following a
-.Sq \e\*" ,
+.Sq \e\*q ,
 whether in a macro or free-form text line, is ignored to the end of
 line.
 A macro line with only a control character and comment escape,
-.Sq \&.\e" ,
+.Sq \&.\e\*q ,
 is also ignored.
 Macro lines with only a control character and optionally whitespace are
 stripped from input.
@@ -106,32 +106,9 @@ Note that macros like
 .Sx \&BR
 open and close a font scope with each argument.
 .Pp
-Text may also be sized with the
-.Sq \es
-escape, whose syntax is one of
-.Sq \es+-n
-for one-digit numerals;
-.Sq \es(+-nn
-or
-.Sq \es+-(nn
-for two-digit numerals; and
-.Sq \es[+-N] ,
-.Sq \es+-[N] ,
-.Sq \es'+-N' ,
-or
-.Sq \es+-'N'
-for arbitrary-digit numerals:
-.Pp
-.D1 \es+1bigger\es-1
-.D1 \es[+10]much bigger\es[-10]
-.D1 \es+(10much bigger\es-(10
-.D1 \es+'100'much much bigger\es-'100'
-.Pp
-Both
-.Sq \es
-and
+The
 .Sq \ef
-attributes are forgotten when entering or exiting a macro block.
+attribute is forgotten when entering or exiting a macro block.
 .Ss Whitespace
 Whitespace consists of the space character.
 In free-form lines, whitespace is preserved within a line; un-escaped
@@ -238,18 +215,14 @@ at least one macro or text node must appear in the document.
 Documents are generally structured as follows:
 .Bd -literal -offset indent
 \&.TH FOO 1 2009-10-10
-\&.
 \&.SH NAME
 \efBfoo\efR \e(en a description goes here
 \&.\e\*q The next is for sections 2 & 3 only.
 \&.\e\*q .SH LIBRARY
-\&.
 \&.SH SYNOPSIS
 \efBfoo\efR [\efB\e-options\efR] arguments...
-\&.
 \&.SH DESCRIPTION
 The \efBfoo\efR utility processes files...
-\&.
 \&.\e\*q .SH IMPLEMENTATION NOTES
 \&.\e\*q The next is for sections 2, 3, & 9 only.
 \&.\e\*q .SH RETURN VALUES
@@ -937,6 +910,9 @@ implementations of the
 language.
 .Pp
 .Bl -dash -compact
+.It
+The \es (font size), \em (font colour), and \eM (font filling colour)
+font decoration escapes are all discarded in mandoc.
 .It
 In quoted literals, GNU troff allowed pair-wise double-quotes to produce
 a standalone double-quote in formatted output.
