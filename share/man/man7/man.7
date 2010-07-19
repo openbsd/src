@@ -1,6 +1,6 @@
-.\"	$OpenBSD: man.7,v 1.1 2010/07/19 21:29:36 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.2 2010/07/19 22:34:29 schwarze Exp $
 .\"
-.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,7 @@ Use the
 .Xr mdoc 7
 language, instead.
 .Pp
-An
+A
 .Nm
 document follows simple rules:  lines beginning with the control
 character
@@ -52,7 +52,7 @@ Other lines are interpreted within the current state.
 .Sh INPUT ENCODING
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the
-space character, and the tabs character.
+space character, and the tab character.
 All manuals must have
 .Ux
 line termination.
@@ -92,7 +92,7 @@ and
 .Ss Text Decoration
 Terms may be text-decorated using the
 .Sq \ef
-escape followed by an indicator: B (bold), I, (italic), R (Roman), or P
+escape followed by an indicator: B (bold), I (italic), R (Roman), or P
 (revert to previous mode):
 .Pp
 .D1 \efBbold\efR \efIitalic\efP
@@ -327,7 +327,7 @@ Documents any usages of environment variables, e.g.,
 .Xr environ 7 .
 .It Em FILES
 Documents files used.
-It's helpful to document both the file and a short description of how
+It's helpful to document both the file name and a short description of how
 the file is used (created, modified, etc.).
 .It Em EXIT STATUS
 Command exit status for section 1, 6, and 8 manuals.
@@ -373,18 +373,19 @@ The history of any manual without a
 section should be described in this section.
 .It Em AUTHORS
 Credits to authors, if applicable, should appear in this section.
-Authors should generally be noted by both name and an e-mail address.
+Authors should generally be noted by both name and email address.
 .It Em CAVEATS
-Explanations of common misuses and misunderstandings should be explained
+Common misuses and misunderstandings should be explained
 in this section.
 .It Em BUGS
-Extant bugs should be described in this section.
+Known bugs, limitations and work-arounds should be described
+in this section.
 .It Em SECURITY CONSIDERATIONS
 Documents any security precautions that operators should consider.
 .El
 .Sh MACRO SYNTAX
 Macros are one to three three characters in length and begin with a
-control character ,
+control character,
 .Sq \&. ,
 at the beginning of the line.
 The
@@ -420,11 +421,11 @@ is equivalent to
 .Sq \&.I foo .
 If next-line macros are invoked consecutively, only the last is used.
 If a next-line macro is followed by a non-next-line macro, an error is
-raised (unless in the case of
+raised, except for
 .Sx \&br ,
 .Sx \&sp ,
-or
-.Sx \&na ) .
+and
+.Sx \&na .
 .Pp
 The syntax is as follows:
 .Bd -literal -offset indent
@@ -687,7 +688,7 @@ and
 Begin an undecorated paragraph.
 The scope of a paragraph is closed by a subsequent paragraph,
 sub-section, section, or end of file.
-The saved paragraph left-margin width is re-set to the default.
+The saved paragraph left-margin width is reset to the default.
 .Pp
 See also
 .Sx \&HP ,
@@ -784,7 +785,7 @@ bold face.
 Begin a section.
 The scope of a section is only closed by another section or the end of
 file.
-The paragraph left-margin width is re-set to the default.
+The paragraph left-margin width is reset to the default.
 .Ss \&SM
 Text is rendered in small size (one point smaller than the default
 font).
@@ -792,7 +793,7 @@ font).
 Begin a sub-section.
 The scope of a sub-section is closed by a subsequent sub-section,
 section, or end of file.
-The paragraph left-margin width is re-set to the default.
+The paragraph left-margin width is reset to the default.
 .Ss \&TH
 Sets the title of the manual page with the following syntax:
 .Bd -filled -offset indent
@@ -801,9 +802,9 @@ Sets the title of the manual page with the following syntax:
 .Op Cm date Op Cm source Op Cm volume
 .Ed
 .Pp
-At least the upper-case document title
+At least the upper-case document
 .Cm title
-and numeric manual section
+and the manual
 .Cm section
 arguments must be provided.
 The
@@ -956,8 +957,19 @@ control character.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr mandoc_char 7
-.Sh AUTHORS
+.Sh HISTORY
 The
+.Nm
+language first appeared as a macro package for the roff typesetting
+system in
+.At v7 .
+It was later rewritten by James Clark as a macro package for groff.
+The stand-alone implementation that is part of the
+.Xr mandoc 1
+utility written by Kristaps Dzonsons appeared in
+.Ox 4.6.
+.Sh AUTHORS
+This
 .Nm
 reference was written by
 .An Kristaps Dzonsons Aq kristaps@bsd.lv .
