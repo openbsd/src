@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.6 2010/04/28 05:16:17 mglocker Exp $
+.\" $OpenBSD: video.4,v 1.7 2010/07/19 08:59:38 mglocker Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2010 $
+.Dd $Mdocdate: July 19 2010 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -249,6 +249,13 @@ When finished stop the video stream via the
 .Xr close 2
 system call.
 .El
+.Pp
+The
+.Xr select 2
+and
+.Xr poll 2
+system calls are supported for this access type.
+They will signal when a frame is ready for reading without blocking.
 .Sh MMAP
 Video data can be accessed via the
 .Xr mmap 2
@@ -284,6 +291,14 @@ Process video data and start over again with step 6.
 .It
 When finished stop the video stream via the VIDIOC_STREAMOFF ioctl command.
 .El
+.Pp
+The
+.Xr select 2
+and
+.Xr poll 2
+system calls are supported for this access type.
+They will signal when at least one frame is ready for dequeuing,
+allowing to call the VIDIOC_DQBUF ioctl command without blocking.
 .Sh FILES
 .Bl -tag -width /dev/video -compact
 .It Pa /dev/video
