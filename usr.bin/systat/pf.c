@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.2 2010/01/19 05:59:20 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.3 2010/07/19 18:57:32 lum Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -19,35 +19,27 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/icmp6.h>
 #include <net/pfvar.h>
-#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <netdb.h>
-#include <stdarg.h>
 #include <errno.h>
 #include <err.h>
-#include <ifaddrs.h>
 #include <unistd.h>
 #include <syslog.h>
-#include <net/pfvar.h>
 #include "pfctl_parser.h"
-#include "engine.h"
 #include "systat.h"
 
 void print_pf(void);
 int read_pf(void);
 int select_pf(void);
+void print_fld_double(field_def *, double);
 
 const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
 const char	*pf_lcounters[LCNT_MAX+1] = LCNT_NAMES;
