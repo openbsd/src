@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.13 2010/07/08 23:18:55 dlg Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.14 2010/07/19 21:39:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #include <sys/disklabel.h>
 
 SLIST_HEAD(, bufq)	bufqs = SLIST_HEAD_INITIALIZER(&bufq);
-struct mutex		bufqs_mtx = MUTEX_INITIALIZER(IPL_BIO);
+struct mutex		bufqs_mtx = MUTEX_INITIALIZER(IPL_NONE);
 int			bufqs_stop;
 
 struct buf *(*bufq_dequeuev[BUFQ_HOWMANY])(struct bufq *, int) = {
@@ -71,6 +71,9 @@ bufq_init(int type)
 	KASSERT(error == 0);
 
 	mtx_enter(&bufqs_mtx);
+	while (bufqs_stop) {
+		msleep(&bufqs_stop, &bufqs_mtx, PRIBIO, "bqinit", 0);
+	}
 	SLIST_INSERT_HEAD(&bufqs, bq, bufq_entries);
 	mtx_leave(&bufqs_mtx);
 
@@ -87,7 +90,7 @@ bufq_destroy(struct bufq *bq)
 
 	mtx_enter(&bufqs_mtx);
 	while (bufqs_stop) {
-		msleep(&bufqs_stop, &bufqs_mtx, PRIBIO, "bufqstop", 0);
+		msleep(&bufqs_stop, &bufqs_mtx, PRIBIO, "bqdest", 0);
 	}
 	SLIST_REMOVE(&bufqs, bq, bufq, bufq_entries);
 	mtx_leave(&bufqs_mtx);
@@ -100,7 +103,7 @@ bufq_queue(struct bufq *bq, struct buf *bp)
 {
 	mtx_enter(&bq->bufq_mtx);
 	while (bq->bufq_stop) {
-		msleep(&bq->bufq_stop, &bq->bufq_mtx, PRIBIO, "bufqstop", 0);
+		msleep(&bq->bufq_stop, &bq->bufq_mtx, PRIBIO, "bqqueue", 0);
 	}
 	bufq_queuev[bq->bufq_type](bq, bp);
 	mtx_leave(&bq->bufq_mtx);
@@ -146,21 +149,18 @@ bufq_quiesce(void)
 {
 	struct bufq		*bq;
 
-restart:
 	mtx_enter(&bufqs_mtx);
 	bufqs_stop = 1;
+	mtx_leave(&bufqs_mtx);
 	SLIST_FOREACH(bq, &bufqs, bufq_entries) {
 		mtx_enter(&bq->bufq_mtx);
 		bq->bufq_stop = 1;
-		if (bq->bufq_outstanding) {
-			mtx_leave(&bufqs_mtx);
+		while (bq->bufq_outstanding) {
 			msleep(&bq->bufq_outstanding, &bq->bufq_mtx,
-			    PRIBIO | PNORELOCK, "bufqqui", 0);
-			goto restart;
+			    PRIBIO, "bqquies", 0);
 		}
 		mtx_leave(&bq->bufq_mtx);
 	}
-	mtx_leave(&bufqs_mtx);
 }
 
 void
