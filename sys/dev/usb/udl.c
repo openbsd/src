@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.58 2010/06/27 01:15:04 maja Exp $ */
+/*	$OpenBSD: udl.c,v 1.59 2010/07/19 15:59:11 maja Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -245,7 +245,7 @@ static const struct udl_type udl_devs[] = {
 	{ { USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_SWDVI },	DL160 },
 	{ { USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_UM7X0 },	DL120 },
 	{ { USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_CONV },	DL160 },
-	{ { USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LUM70 },	DL120 }
+	{ { USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LUM70 },	DL125 }
 };
 #define udl_lookup(v, p) ((struct udl_type *)usb_lookup(udl_devs, v, p))
 
