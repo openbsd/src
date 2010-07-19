@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.87 2010/07/19 19:46:44 espie Exp $
+.\"	$OpenBSD: make.1,v 1.88 2010/07/19 21:43:17 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -723,6 +723,11 @@ the rest of the modifier.
 Quotes every shell meta-character in the variable, so that it can be passed
 safely through recursive invocations of
 .Nm make .
+.It Cm :QL
+Quote list: quotes every shell meta-character in the variable, except
+whitespace, so that it can be passed to a shell's
+.Sq for
+loops.
 .It Cm :R
 Replaces each word in the variable with everything but its suffix.
 .Sm off
@@ -831,11 +836,24 @@ is the substring of
 .Ar old_string
 to be replaced in
 .Ar new_string .
+The right hand side
+.Pq Ar new_string
+may contain variable values, which will be expanded.
+To put an actual single dollar, just double it.
 .El
 .Pp
 All modifiers are BSD extensions, except for the standard
 .At V
 style variable substitution.
+.Pp
+The interpretation of
+.Ar %
+and
+.Ar $
+in
+.At V
+variable substitutions is not mandated by POSIX, though it is
+fairly common.
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
 Makefile inclusion, conditional structures and for loops reminiscent
 of the C programming language are provided in
