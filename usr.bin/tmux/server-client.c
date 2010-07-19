@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.34 2010/07/11 17:06:45 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.35 2010/07/19 18:27:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -695,7 +695,7 @@ server_client_msg_info(struct cmd_ctx *ctx, const char *fmt, ...)
 	vfprintf(ctx->cmdclient->stdout_file, fmt, ap);
 	va_end(ap);
 
-	fputc('\n', ctx->cmdclient->stderr_file);
+	fputc('\n', ctx->cmdclient->stdout_file);
 	fflush(ctx->cmdclient->stdout_file);
 }
 
