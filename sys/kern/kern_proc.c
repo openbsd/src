@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.43 2010/07/10 21:29:37 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.44 2010/07/19 23:00:15 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/acct.h>
 #include <sys/wait.h>
 #include <sys/file.h>
-#include <sys/rwlock.h>
 #include <ufs/ufs/quota.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -62,7 +61,6 @@ u_long pidhash;
 struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
 struct proclist allproc;
-struct rwlock allproclk;
 struct proclist zombproc;
 
 struct pool proc_pool;
@@ -85,7 +83,6 @@ void
 procinit(void)
 {
 	LIST_INIT(&allproc);
-	rw_init(&allproclk, "allproc");
 	LIST_INIT(&zombproc);
 
 

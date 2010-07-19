@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.189 2010/07/10 21:29:37 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.190 2010/07/19 23:00:15 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -163,13 +163,8 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 	switch (name[0]) {
 	case CTL_KERN:
 		fn = kern_sysctl;
-		switch (name[1]) {	/* XXX */
-		case KERN_VNODE:
-		case KERN_FILE:
-		case KERN_FILE2:
+		if (name[1] == KERN_VNODE)	/* XXX */
 			dolock = 0;
-			break;
-		}
 		break;
 	case CTL_HW:
 		fn = hw_sysctl;
@@ -1004,12 +999,10 @@ sysctl_file(char *where, size_t *sizep, struct proc *p)
 	/*
 	 * followed by an array of file structures
 	 */
-	rw_enter_read(&fileheadlk);
 	LIST_FOREACH(fp, &filehead, f_list) {
 		if (buflen < sizeof(struct file)) {
 			*sizep = where - start;
-			error = ENOMEM;
-			goto out;
+			return (ENOMEM);
 		}
 
 		/* Only let the superuser or the owner see some information */
@@ -1023,14 +1016,12 @@ sysctl_file(char *where, size_t *sizep, struct proc *p)
 		}
 		error = copyout(&cfile, where, sizeof (struct file));
 		if (error)
-			goto out;
+			return (error);
 		buflen -= sizeof(struct file);
 		where += sizeof(struct file);
 	}
 	*sizep = where - start;
-out:
-	rw_exit_read(&fileheadlk);
-	return (error);
+	return (0);
 }
 
 #ifndef SMALL_KERNEL
@@ -1234,13 +1225,11 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 			error = EINVAL;
 			break;
 		}
-		rw_enter_read(&fileheadlk);
 		LIST_FOREACH(fp, &filehead, f_list) {
 			if (fp->f_count == 0)
 				continue;
 			FILLIT(fp, NULL, 0, NULL, NULL);
 		}
-		rw_exit_read(&fileheadlk);
 		break;
 	case KERN_FILE_BYPID:
 		/* A arg of -1 indicates all processes */
@@ -1248,7 +1237,6 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 			error = EINVAL;
 			break;
 		}
-		rw_enter_read(&allproclk);
 		LIST_FOREACH(pp, &allproc, p_list) {
 			/* skip system, exiting, embryonic and undead processes */
 			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
@@ -1259,7 +1247,6 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 				continue;
 			}
 			fdp = pp->p_fd;
-			fdplock(fdp);
 			if (pp->p_textvp)
 				FILLIT(NULL, NULL, KERN_FILE_TEXT, pp->p_textvp, pp);
 			if (fdp->fd_cdir)
@@ -1275,12 +1262,9 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 					continue;
 				FILLIT(fp, fdp, i, NULL, pp);
 			}
-			fdpunlock(fdp);
 		}
-		rw_exit_read(&allproclk);
 		break;
 	case KERN_FILE_BYUID:
-		rw_enter_read(&allproclk);
 		LIST_FOREACH(pp, &allproc, p_list) {
 			/* skip system, exiting, embryonic and undead processes */
 			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
@@ -1291,7 +1275,6 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 				continue;
 			}
 			fdp = pp->p_fd;
-			fdplock(fdp);
 			if (fdp->fd_cdir)
 				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
 			if (fdp->fd_rdir)
@@ -1305,9 +1288,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 					continue;
 				FILLIT(fp, fdp, i, NULL, pp);
 			}
-			fdpunlock(fdp);
 		}
-		rw_exit_read(&allproclk);
 		break;
 	default:
 		error = EINVAL;
@@ -1362,7 +1343,6 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 		elem_count = name[4];
 		kproc2 = malloc(sizeof(struct kinfo_proc2), M_TEMP, M_WAITOK);
 	}
-	rw_enter_read(&allproclk);
 	p = LIST_FIRST(&allproc);
 	doingzomb = 0;
 again:
@@ -1479,7 +1459,6 @@ again:
 		*sizep = needed;
 	}
 err:
-	rw_exit_read(&allproclk);
 	if (eproc)
 		free(eproc, M_TEMP);
 	if (kproc2)

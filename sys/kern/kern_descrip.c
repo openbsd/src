@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.83 2010/03/24 23:18:17 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.84 2010/07/19 23:00:15 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
  * Descriptor management.
  */
 struct filelist filehead;	/* head of list of open files */
-struct rwlock fileheadlk;
 int nfiles;			/* actual number of open files */
 
 static __inline void fd_used(struct filedesc *, int);
@@ -88,7 +87,6 @@ filedesc_init(void)
 	pool_init(&fdesc_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
 		&pool_allocator_nointr);
 	LIST_INIT(&filehead);
-	rw_init(&fileheadlk, "filehead");
 }
 
 static __inline int
@@ -827,13 +825,11 @@ restart:
 	nfiles++;
 	fp = pool_get(&file_pool, PR_WAITOK|PR_ZERO);
 	fp->f_iflags = FIF_LARVAL;
-	rw_enter_write(&fileheadlk);
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
 	} else {
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
 	}
-	rw_exit_write(&fileheadlk);
 	p->p_fd->fd_ofiles[i] = fp;
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
@@ -1092,9 +1088,7 @@ closef(struct file *fp, struct proc *p)
 		error = 0;
 
 	/* Free fp */
-	rw_enter_write(&fileheadlk);
 	LIST_REMOVE(fp, f_list);
-	rw_exit_write(&fileheadlk);
 	crfree(fp->f_cred);
 #ifdef DIAGNOSTIC
 	if (fp->f_count != 0 || fp->f_usecount != 1)

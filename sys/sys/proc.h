@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.130 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.131 2010/07/19 23:00:15 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -405,7 +405,6 @@ extern int randompid;			/* fork() should create random pid's */
 
 LIST_HEAD(proclist, proc);
 extern struct proclist allproc;		/* List of all processes. */
-extern struct rwlock allproclk;		/* also used for zombie list */
 extern struct proclist zombproc;	/* List of zombie processes. */
 
 extern struct proc *initproc;		/* Process slots for init, pager. */
