@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.75 2010/07/19 05:08:37 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.76 2010/07/19 05:50:37 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -157,6 +157,7 @@ struct chan {
 #define UAUDIO_FLAG_NO_FRAC	 0x0002	/* don't use fractional samples */
 #define UAUDIO_FLAG_NO_XU	 0x0004	/* has broken extension unit */
 #define UAUDIO_FLAG_BAD_ADC	 0x0008	/* bad audio spec version number */
+#define UAUDIO_FLAG_VENDOR_CLASS 0x0010	/* claims vendor class but works */
 
 struct uaudio_devs {
 	struct usb_devno	 uv_dev;
@@ -166,6 +167,8 @@ struct uaudio_devs {
 		UAUDIO_FLAG_BAD_ADC } ,
 	{ { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495 },
 		UAUDIO_FLAG_BAD_AUDIO },
+	{ { USB_VENDOR_CREATIVE, USB_PRODUCT_CREATIVE_EMU0202 },
+		UAUDIO_FLAG_VENDOR_CLASS },
 	{ { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502 },
 		UAUDIO_FLAG_NO_XU | UAUDIO_FLAG_BAD_ADC },
 	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMNBDLX },
@@ -255,7 +258,7 @@ usbd_status uaudio_process_as
 void	uaudio_add_alt(struct uaudio_softc *, const struct as_info *);
 
 const usb_interface_descriptor_t *uaudio_find_iface
-	(const char *, int, int *, int);
+	(const char *, int, int *, int, int);
 
 void	uaudio_mixer_add_ctl(struct uaudio_softc *, struct mixerctl *);
 char	*uaudio_id_name
@@ -424,6 +427,12 @@ uaudio_match(struct device *parent, void *match, void *aux)
 	if (id->bInterfaceClass == UICLASS_AUDIO &&
 	    id->bInterfaceSubClass == UISUBCLASS_AUDIOCONTROL &&
 	    !(flags & UAUDIO_FLAG_BAD_AUDIO))
+		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
+
+	/* additional quirk devices which we want to attach */
+	if ((flags & UAUDIO_FLAG_VENDOR_CLASS) &&
+	    id->bInterfaceClass == UICLASS_VENDOR &&
+	    id->bInterfaceSubClass == UISUBCLASS_AUDIOCONTROL)
 		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
 	return (UMATCH_NONE);
@@ -626,7 +635,7 @@ uaudio_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 const usb_interface_descriptor_t *
-uaudio_find_iface(const char *buf, int size, int *offsp, int subtype)
+uaudio_find_iface(const char *buf, int size, int *offsp, int subtype, int flags)
 {
 	const usb_interface_descriptor_t *d;
 
@@ -634,8 +643,10 @@ uaudio_find_iface(const char *buf, int size, int *offsp, int subtype)
 		d = (const void *)(buf + *offsp);
 		*offsp += d->bLength;
 		if (d->bDescriptorType == UDESC_INTERFACE &&
-		    d->bInterfaceClass == UICLASS_AUDIO &&
-		    d->bInterfaceSubClass == subtype)
+		    d->bInterfaceSubClass == subtype &&
+		    (d->bInterfaceClass == UICLASS_AUDIO ||
+		    (d->bInterfaceClass == UICLASS_VENDOR &&
+		    (flags & UAUDIO_FLAG_VENDOR_CLASS))))
 			return (d);
 	}
 	return (NULL);
@@ -1768,7 +1779,8 @@ uaudio_identify_as(struct uaudio_softc *sc,
 
 	/* Locate the AudioStreaming interface descriptor. */
 	offs = 0;
-	id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOSTREAM);
+	id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOSTREAM,
+	    sc->sc_quirks);
 	if (id == NULL)
 		return (USBD_INVAL);
 
@@ -1794,7 +1806,8 @@ uaudio_identify_as(struct uaudio_softc *sc,
 			       sc->sc_dev.dv_xname, id->bNumEndpoints);
 			break;
 		}
-		id = uaudio_find_iface(buf, size, &offs,UISUBCLASS_AUDIOSTREAM);
+		id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOSTREAM,
+		    sc->sc_quirks);
 		if (id == NULL)
 			break;
 	}
@@ -1828,7 +1841,8 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 
 	/* Locate the AudioControl interface descriptor. */
 	offs = 0;
-	id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOCONTROL);
+	id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOCONTROL,
+	    sc->sc_quirks);
 	if (id == NULL)
 		return (USBD_INVAL);
 	if (offs + sizeof *acdp > size)
