@@ -1,5 +1,4 @@
-/*	$OpenPackages$ */
-/*	$OpenBSD: lstInsert.c,v 1.19 2007/09/16 09:46:14 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.20 2010/07/19 19:46:44 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*

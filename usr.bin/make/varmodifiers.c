@@ -1,9 +1,8 @@
-/*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.26 2010/07/19 19:30:38 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.27 2010/07/19 19:46:44 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
- * Copyright (c) 1999 Marc Espie.
+ * Copyright (c) 1999-2010 Marc Espie.
  *
  * Extensive code changes for the OpenBSD project.
  *

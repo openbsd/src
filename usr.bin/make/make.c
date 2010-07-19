@@ -1,5 +1,4 @@
-/*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.60 2009/08/16 09:53:43 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.61 2010/07/19 19:46:44 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*

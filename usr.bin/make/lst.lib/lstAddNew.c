@@ -1,5 +1,4 @@
-/*	$OpenPackages$ */
-/*	$OpenBSD: lstAddNew.c,v 1.7 2007/09/16 09:46:14 espie Exp $	*/
+/*	$OpenBSD: lstAddNew.c,v 1.8 2010/07/19 19:46:44 espie Exp $	*/
 /* ex:ts=8 sw=4:
  */
 

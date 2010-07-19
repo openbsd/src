@@ -1,5 +1,4 @@
-/*	$OpenPackages$ */
-/*	$OpenBSD: lstInt.h,v 1.14 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.15 2010/07/19 19:46:44 espie Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*

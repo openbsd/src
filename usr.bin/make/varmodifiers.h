@@ -1,8 +1,7 @@
 #ifndef VARMODIFIERS_H
 #define VARMODIFIERS_H
 
-/* $OpenPackages$ */
-/* $OpenBSD: varmodifiers.h,v 1.11 2010/07/19 19:30:38 espie Exp $ */
+/* $OpenBSD: varmodifiers.h,v 1.12 2010/07/19 19:46:44 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
