@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.55 2010/07/19 19:22:46 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.56 2010/07/19 19:47:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -760,9 +760,8 @@ void
 rt2860_iter_func(void *arg, struct ieee80211_node *ni)
 {
 	struct rt2860_softc *sc = arg;
-	uint8_t wcid;
+	uint8_t wcid = ((struct rt2860_node *)ni)->wcid;
 
-	wcid = RT2860_AID2WCID(ni->ni_associd);
 	ieee80211_amrr_choose(&sc->amrr, ni, &sc->amn[wcid]);
 }
 
@@ -811,7 +810,7 @@ rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 
 	if (isnew && ni->ni_associd != 0) {
 		/* only interested in true associations */
-		wcid = RT2860_AID2WCID(ni->ni_associd);
+		wcid = rn->wcid = IEEE80211_AID(ni->ni_associd);
 
 		/* init WCID table entry */
 		RAL_WRITE_REGION_1(sc, RT2860_WCID_ENTRY(wcid),
@@ -854,10 +853,9 @@ void
 rt2860_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct rt2860_softc *sc = ic->ic_softc;
-	uint8_t wcid;
+	uint8_t wcid = ((struct rt2860_node *)ni)->wcid;
 
 	/* clear Rx WCID search table entry */
-	wcid = RT2860_AID2WCID(ni->ni_associd);
 	RAL_SET_REGION_4(sc, RT2860_WCID_ENTRY(wcid), 0, 2);
 }
 #endif
@@ -868,11 +866,10 @@ rt2860_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
     uint8_t tid)
 {
 	struct rt2860_softc *sc = ic->ic_softc;
+	uint8_t wcid = ((struct rt2860_node *)ni)->wcid;
 	uint32_t tmp;
-	uint8_t wcid;
 
 	/* update BA session mask */
-	wcid = RT2860_AID2WCID(ni->ni_associd);
 	tmp = RAL_READ(sc, RT2860_WCID_ENTRY(wcid) + 4);
 	tmp |= (1 << tid) << 16;
 	RAL_WRITE(sc, RT2860_WCID_ENTRY(wcid) + 4, tmp);
@@ -884,11 +881,10 @@ rt2860_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
     uint8_t tid)
 {
 	struct rt2860_softc *sc = ic->ic_softc;
+	uint8_t wcid = ((struct rt2860_node *)ni)->wcid;
 	uint32_t tmp;
-	uint8_t wcid;
 
 	/* update BA session mask */
-	wcid = RT2860_AID2WCID(ni->ni_associd);
 	tmp = RAL_READ(sc, RT2860_WCID_ENTRY(wcid) + 4);
 	tmp &= ~((1 << tid) << 16);
 	RAL_WRITE(sc, RT2860_WCID_ENTRY(wcid) + 4, tmp);
@@ -1521,8 +1517,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	txwi->flags = 0;
 	/* let HW generate seq numbers for non-QoS frames */
 	txwi->xflags = hasqos ? 0 : RT2860_TX_NSEQ;
-	txwi->wcid = (type == IEEE80211_FC0_TYPE_DATA) ?
-	    RT2860_AID2WCID(ni->ni_associd) : 0xff;
+	txwi->wcid = (type == IEEE80211_FC0_TYPE_DATA) ? rn->wcid : 0xff;
 	txwi->len = htole16(m->m_pkthdr.len);
 	if (rt2860_rates[ridx].phy == IEEE80211_T_DS) {
 		txwi->phy = htole16(RT2860_PHY_CCK);
@@ -2749,7 +2744,7 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		wcid = 0;	/* NB: update WCID0 for group keys */
 		base = RT2860_SKEY(0, k->k_id);
 	} else {
-		wcid = RT2860_AID2WCID(ni->ni_associd);
+		wcid = ((struct rt2860_node *)ni)->wcid;
 		base = RT2860_PKEY(wcid);
 	}
 
@@ -2832,7 +2827,7 @@ rt2860_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	} else {
 		/* remove pairwise key */
-		wcid = RT2860_AID2WCID(ni->ni_associd);
+		wcid = ((struct rt2860_node *)ni)->wcid;
 		attr = RAL_READ(sc, RT2860_WCID_ATTR(wcid));
 		attr &= ~0xf;
 		RAL_WRITE(sc, RT2860_WCID_ATTR(wcid), attr);

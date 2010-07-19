@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.16 2010/04/06 16:41:54 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.17 2010/07/19 19:47:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -97,6 +97,7 @@ struct rt2860_rx_ring {
 
 struct rt2860_node {
 	struct ieee80211_node	ni;
+	uint8_t			wcid;
 	uint8_t			ridx[IEEE80211_RATE_MAXSIZE];
 	uint8_t			ctl_ridx[IEEE80211_RATE_MAXSIZE];
 };
