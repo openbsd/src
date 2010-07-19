@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.53 2010/05/10 18:17:10 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.54 2010/07/19 19:08:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -98,6 +98,8 @@ void		rt2860_iter_func(void *, struct ieee80211_node *);
 void		rt2860_updatestats(struct rt2860_softc *);
 void		rt2860_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
+void		rt2860_node_leave(struct ieee80211com *,
+		    struct ieee80211_node *);
 int		rt2860_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 uint16_t	rt3090_efuse_read_2(struct rt2860_softc *, uint16_t);
@@ -328,6 +330,9 @@ rt2860_attach(void *xsc, int id)
 	ieee80211_ifattach(ifp);
 	ic->ic_node_alloc = rt2860_node_alloc;
 	ic->ic_newassoc = rt2860_newassoc;
+#ifndef IEEE80211_STA_ONLY
+	ic->ic_node_leave = rt2860_node_leave;
+#endif
 	ic->ic_updateslot = rt2860_updateslot;
 	ic->ic_updateedca = rt2860_updateedca;
 	ic->ic_set_key = rt2860_set_key;
@@ -835,6 +840,19 @@ rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 		    rs->rs_rates[i], rn->ridx[i], rn->ctl_ridx[i]));
 	}
 }
+
+#ifndef IEEE80211_STA_ONLY
+void
+rt2860_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct rt2860_softc *sc = ic->ic_softc;
+	uint8_t wcid;
+
+	/* clear Rx WCID search table entry */
+	wcid = RT2860_AID2WCID(ni->ni_associd);
+	RAL_SET_REGION_4(sc, RT2860_WCID_ENTRY(wcid), 0, 2);
+}
+#endif
 
 int
 rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
