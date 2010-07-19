@@ -1,4 +1,4 @@
-/*	$OpenBSD: varname.h,v 1.3 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: varname.h,v 1.4 2010/07/19 19:30:38 espie Exp $	*/
 #ifndef VARNAME_H
 #define VARNAME_H
 /*

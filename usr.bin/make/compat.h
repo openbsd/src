@@ -1,7 +1,7 @@
 #ifndef COMPAT_H
 #define COMPAT_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.h,v 1.1 2001/05/23 12:34:41 espie Exp $ */
+/*	$OpenBSD: compat.h,v 1.2 2010/07/19 19:30:37 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.

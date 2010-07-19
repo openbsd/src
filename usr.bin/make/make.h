@@ -2,7 +2,7 @@
 #define _MAKE_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.h,v 1.36 2007/12/01 15:14:34 espie Exp $ */
+/*	$OpenBSD: make.h,v 1.37 2010/07/19 19:30:37 espie Exp $ */
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*

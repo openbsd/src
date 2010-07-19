@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varname.c,v 1.3 2007/07/09 12:29:45 espie Exp $	*/
+/*	$OpenBSD: varname.c,v 1.4 2010/07/19 19:30:38 espie Exp $	*/
 /*
  * Copyright (c) 2001 Marc Espie.
  *

@@ -2,7 +2,7 @@
 #define _JOB_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.h,v 1.23 2009/05/10 11:07:37 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.24 2010/07/19 19:30:37 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*

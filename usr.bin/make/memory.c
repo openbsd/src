@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: memory.c,v 1.6 2008/03/24 18:03:53 espie Exp $ */
+/* $OpenBSD: memory.c,v 1.7 2010/07/19 19:30:37 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993

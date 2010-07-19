@@ -2,7 +2,7 @@
 #define DEFINES_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: defines.h,v 1.7 2008/11/04 07:22:35 espie Exp $ */
+/*	$OpenBSD: defines.h,v 1.8 2010/07/19 19:30:37 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.

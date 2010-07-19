@@ -1,7 +1,7 @@
 #ifndef STAT_H
 #define STAT_H
 /* $OpenPackages$ */
-/* $OpenBSD: stats.h,v 1.4 2004/05/05 09:10:47 espie Exp $ */
+/* $OpenBSD: stats.h,v 1.5 2010/07/19 19:30:37 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.

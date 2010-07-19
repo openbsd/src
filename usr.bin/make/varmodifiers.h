@@ -2,7 +2,7 @@
 #define VARMODIFIERS_H
 
 /* $OpenPackages$ */
-/* $OpenBSD: varmodifiers.h,v 1.10 2007/09/17 09:28:36 espie Exp $ */
+/* $OpenBSD: varmodifiers.h,v 1.11 2010/07/19 19:30:38 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.

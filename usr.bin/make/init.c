@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: init.c,v 1.4 2007/09/17 12:42:09 espie Exp $ */
+/*	$OpenBSD: init.c,v 1.5 2010/07/19 19:30:37 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.

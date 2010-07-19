@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: cond_int.h,v 1.4 2007/07/08 17:44:20 espie Exp $ */
+/* $OpenBSD: cond_int.h,v 1.5 2010/07/19 19:30:37 espie Exp $ */
 
 /* List of all keywords recognized by the make parser */
 #define COND_IF		"if"

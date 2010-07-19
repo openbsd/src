@@ -2,7 +2,7 @@
 #define _LST_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: lst.h,v 1.27 2008/01/12 13:08:59 espie Exp $ */
+/*	$OpenBSD: lst.h,v 1.28 2010/07/19 19:30:37 espie Exp $ */
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*

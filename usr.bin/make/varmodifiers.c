@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.25 2007/11/03 15:42:11 deraadt Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.26 2010/07/19 19:30:38 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ static char *VarQuote(const char *, const struct Name *, void *);
 static char *VarModify(char *, bool (*)(struct Name *, bool, Buffer, void *), void *);
 
 static void *check_empty(const char **, SymTable *, bool, int);
+static void *check_quote(const char **, SymTable *, bool, int);
 static char *do_upper(const char *, const struct Name *, void *);
 static char *do_lower(const char *, const struct Name *, void *);
 static void *check_shcmd(const char **, SymTable *, bool, int);
@@ -193,7 +194,7 @@ static struct modifier {
 #ifndef MAKE_BOOTSTRAP
 	resubst_mod = {false, get_patternarg, do_regex, NULL, free_patternarg},
 #endif
-	quote_mod = {false, check_empty, VarQuote, NULL , NULL},
+	quote_mod = {false, check_quote, VarQuote, NULL , free},
 	tail_mod = {false, check_empty, NULL, VarTail, NULL},
 	head_mod = {false, check_empty, NULL, VarHead, NULL},
 	suffix_mod = {false, check_empty, NULL, VarSuffix, NULL},
@@ -607,14 +608,13 @@ VarSYSVMatch(struct Name *word, bool addSpace, Buffer buf, void *patp)
 }
 
 void *
-get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED,
-    int endc)
+get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 {
 	VarPattern		*pattern;
 	const char		*cp, *cp2;
+	BUFFER buf;
 	int cnt = 0;
 	char startc = endc == ')' ? '(' : '{';
-
 	for (cp = *p;; cp++) {
 		if (*cp == '=' && cnt == 0)
 			break;
@@ -628,25 +628,41 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED,
 				return NULL;
 		}
 	}
+	Buf_Init(&buf, 0);
 	for (cp2 = cp+1;; cp2++) {
 		if ((*cp2 == ':' || *cp2 == endc) && cnt == 0)
 			break;
-		if (*cp2 == '\0')
+		if (*cp2 == '\0') {
+			Buf_Destroy(&buf);
 			return NULL;
+		}
 		if (*cp2 == startc)
 			cnt++;
 		else if (*cp2 == endc) {
 			cnt--;
-			if (cnt < 0)
+			if (cnt < 0) {
+				Buf_Destroy(&buf);
 				return NULL;
+			}
+		} else if (*cp2 == '$') {
+			if (cp2[1] == '$')
+				cp2++;
+			else {
+				size_t len;
+				(void)Var_ParseBuffer(&buf, cp2, ctxt, err, 
+				    &len);
+				cp2 += len - 1;
+				continue;
+			}
 		}
+		Buf_AddChar(&buf, *cp2);
 	}
 
 	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
 	pattern->lbuffer = pattern->lhs = Str_dupi(*p, cp);
 	pattern->leftLen = cp - *p;
-	pattern->rhs = Str_dupi(cp+1, cp2);
-	pattern->rightLen = cp2 - (cp+1);
+	pattern->rhs = Buf_Retrieve(&buf);
+	pattern->rightLen = Buf_Size(&buf);
 	pattern->flags = 0;
 	*p = cp2;
 	return pattern;
@@ -1043,16 +1059,20 @@ VarGetPattern(SymTable *ctxt, int err, const char **tstr, int delim1,
  *-----------------------------------------------------------------------
  */
 static char *
-VarQuote(const char *str, const struct Name *n UNUSED, void *dummy UNUSED)
+VarQuote(const char *str, const struct Name *n UNUSED, void *islistp)
 {
+	int islist = *((int *)islistp);
 
 	BUFFER	  buf;
 	/* This should cover most shells :-( */
 	static char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
+	char *rep = meta;
+	if (islist)
+		rep += 3;
 
 	Buf_Init(&buf, MAKE_BSIZE);
 	for (; *str; str++) {
-		if (strchr(meta, *str) != NULL)
+		if (strchr(rep, *str) != NULL)
 			Buf_AddChar(&buf, '\\');
 		Buf_AddChar(&buf, *str);
 	}
@@ -1066,6 +1086,22 @@ check_empty(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 	if ((*p)[1] == endc || (*p)[1] == ':') {
 		(*p)++;
 		return dummy_arg;
+	} else
+		return NULL;
+}
+
+static void *
+check_quote(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
+{
+	int *qargs = emalloc(sizeof(int));
+	*qargs = 0;
+	if ((*p)[1] == 'L') {
+		*qargs = 1;
+		(*p)++;
+	}
+	if ((*p)[1] == endc || (*p)[1] == ':') {
+		(*p)++;
+		return qargs;
 	} else
 		return NULL;
 }

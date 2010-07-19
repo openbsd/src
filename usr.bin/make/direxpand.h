@@ -1,6 +1,6 @@
 #ifndef DIREXPAND_H
 #define DIREXPAND_H
-/* $OpenBSD: direxpand.h,v 1.1 2007/09/16 10:14:26 espie Exp $ */
+/* $OpenBSD: direxpand.h,v 1.2 2010/07/19 19:30:37 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor

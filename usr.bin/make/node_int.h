@@ -1,4 +1,4 @@
-/* $OpenBSD: node_int.h,v 1.1 2007/09/16 10:20:17 espie Exp $ */
+/* $OpenBSD: node_int.h,v 1.2 2010/07/19 19:30:37 espie Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Espie.
