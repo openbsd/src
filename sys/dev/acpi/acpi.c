@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.179 2010/07/19 16:57:27 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.180 2010/07/19 16:58:12 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -527,7 +527,7 @@ acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
 	if (aa->aaa_dev == NULL || aa->aaa_node == NULL)
 		return (0);
 	if (_acpi_matchhids(aa->aaa_dev, hids)) {
-		dnprintf(5, "driver %s matches %s\n", driver, hids[i]);
+		dnprintf(5, "driver %s matches %s\n", driver, hids);
 		return (1);
 	}
 	return (0);
