@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.86 2010/07/01 21:19:57 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.87 2010/07/19 09:16:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1181,6 +1181,20 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 	 */
 	lsa->hdr.ls_id = rr->kr.prefix.s_addr;
 	lsa->data.asext.mask = prefixlen2mask(rr->kr.prefixlen);
+
+	if (age == MAX_AGE) {
+		/* inherit metric and ext_tag from the current LSA,
+		 * some routers don't like to get withdraws that are
+		 * different from what they have in their table.
+		 */
+		struct vertex *v;
+		v = lsa_find(NULL, lsa->hdr.type, lsa->hdr.ls_id,
+		    lsa->hdr.adv_rtr);
+		if (v != NULL) {
+			rr->metric = ntohl(v->lsa->data.asext.metric);
+			rr->kr.ext_tag = ntohl(v->lsa->data.asext.ext_tag);
+		}
+	}
 
 	/*
 	 * nexthop -- on connected routes we are the nexthop,
