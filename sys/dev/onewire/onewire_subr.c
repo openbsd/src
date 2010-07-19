@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire_subr.c,v 1.3 2010/07/06 19:59:59 deraadt Exp $	*/
+/*	$OpenBSD: onewire_subr.c,v 1.4 2010/07/19 23:44:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -150,15 +150,21 @@ onewire_crc(const void *buf, int len)
 }
 
 u_int16_t
-onewire_crc16(u_int16_t crc16, u_int8_t data)
+onewire_crc16(const void *buf, int len)
 {
+	const u_int8_t *p = buf;
+	u_int16_t crc = 0;
+	u_int16_t tmpcrc;
 	int idx;
-	u_int16_t newcrc16;
 
-	idx = (crc16 & 0xff) ^ data;
-	newcrc16 = crc16_table_high[idx] << 8;
-	newcrc16 |= crc16_table_low[idx] ^ (crc16 >> 8);
-	return (newcrc16);
+	while (len--) {
+		idx = (crc & 0xff) ^ *p++;
+		tmpcrc = crc16_table_high[idx] << 8;
+		tmpcrc |= crc16_table_low[idx] ^ (crc >> 8);
+		crc = tmpcrc;
+	}
+
+	return (crc);
 }
 
 const char *

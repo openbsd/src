@@ -1,4 +1,4 @@
-/*	$OpenBSD: owctr.c,v 1.3 2010/07/08 07:19:54 jasper Exp $	*/
+/*	$OpenBSD: owctr.c,v 1.4 2010/07/19 23:44:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2010 John L. Scarfone <john@scarfone.net>
  *
@@ -26,6 +26,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
@@ -40,6 +41,12 @@
 /* External counter banks */
 #define DS2423_COUNTER_BANK_A		0x1c0
 #define DS2423_COUNTER_BANK_B		0x1e0
+
+/* Buffer offsets */
+#define DS2423_COUNTER_BUF_COUNTER	35
+#define DS2423_COUNTER_BUF_CRC		43
+
+#define DS2423_COUNTER_BUFSZ		45
 
 struct owctr_softc {
 	struct device		sc_dev;
@@ -153,78 +160,60 @@ owctr_update_counter(void *arg, int bank)
 	struct owctr_softc *sc = arg;
 	u_int32_t counter;
 	u_int16_t crc;
-	int data;
-	int i;
+	u_int8_t *buf;
 
 	rw_enter_write(&sc->sc_lock);
 	onewire_lock(sc->sc_onewire, 0);
 	if (onewire_reset(sc->sc_onewire) != 0)
 		goto done;
 
+	buf = malloc(DS2423_COUNTER_BUFSZ, M_DEVBUF, M_NOWAIT);
+	if (buf == NULL) {
+		printf("%s: malloc() failed\n", sc->sc_dev.dv_xname);
+		goto done;
+	}
+
 	onewire_matchrom(sc->sc_onewire, sc->sc_rom);
-	onewire_write_byte(sc->sc_onewire, DSCTR_CMD_READ_MEMCOUNTER);
-	crc = onewire_crc16(0, DSCTR_CMD_READ_MEMCOUNTER);
-	onewire_write_byte(sc->sc_onewire, bank);
-	crc = onewire_crc16(crc, bank);
-	onewire_write_byte(sc->sc_onewire, bank >> 8);
-	crc = onewire_crc16(crc, bank >> 8);
-	for (i=0; i<32; ++i)
-	{
-		data = onewire_read_byte(sc->sc_onewire);
-		crc = onewire_crc16(crc, data);
-	}
-	data = onewire_read_byte(sc->sc_onewire);
-	crc = onewire_crc16(crc, data);
-	counter = data;
-	data = onewire_read_byte(sc->sc_onewire);
-	crc = onewire_crc16(crc, data);
-	counter |= data << 8;
-	data = onewire_read_byte(sc->sc_onewire);
-	crc = onewire_crc16(crc, data);
-	counter |= data << 16;
-	data = onewire_read_byte(sc->sc_onewire);
-	crc = onewire_crc16(crc, data);
-	counter |= data << 24;
-	for (i=0; i<4; ++i)
-	{
-		onewire_read_byte(sc->sc_onewire);
-		crc = onewire_crc16(crc, data);
-	}
-	data = onewire_read_byte(sc->sc_onewire);
-	crc ^= data;
-	data = onewire_read_byte(sc->sc_onewire);
-	crc ^= data << 8;
-	if ( crc != 0xffff)
-	{
+	buf[0] = DSCTR_CMD_READ_MEMCOUNTER;
+	buf[1] = bank;
+	buf[2] = bank >> 8;
+	onewire_write_byte(sc->sc_onewire, buf[0]);
+	onewire_write_byte(sc->sc_onewire, buf[1]);
+	onewire_write_byte(sc->sc_onewire, buf[2]);
+	onewire_read_block(sc->sc_onewire, &buf[3], DS2423_COUNTER_BUFSZ-3);
+
+	crc = onewire_crc16(buf, DS2423_COUNTER_BUFSZ-2);
+	crc ^= buf[DS2423_COUNTER_BUF_CRC]
+		| (buf[DS2423_COUNTER_BUF_CRC+1] << 8);
+	if ( crc != 0xffff) {
 		printf("%s: invalid CRC\n", sc->sc_dev.dv_xname);
 		if (bank == DS2423_COUNTER_BANK_A) {
 			sc->sc_counterA.value = 0;
 			sc->sc_counterA.status = SENSOR_S_UNKNOWN;
 			sc->sc_counterA.flags |= SENSOR_FUNKNOWN;
-		}
-		else
-		{
+		} else {
 			sc->sc_counterB.value = 0;
 			sc->sc_counterB.status = SENSOR_S_UNKNOWN;
 			sc->sc_counterB.flags |= SENSOR_FUNKNOWN;
 		}
-	}
-	else
-	{
-		if (bank == DS2423_COUNTER_BANK_A)
-		{
+	} else {
+		counter = buf[DS2423_COUNTER_BUF_COUNTER]
+			| (buf[DS2423_COUNTER_BUF_COUNTER+1] << 8)
+			| (buf[DS2423_COUNTER_BUF_COUNTER+2] << 16)
+			| (buf[DS2423_COUNTER_BUF_COUNTER+3] << 24);
+		if (bank == DS2423_COUNTER_BANK_A) {
 			sc->sc_counterA.value = counter;
 			sc->sc_counterA.status = SENSOR_S_UNSPEC;
 			sc->sc_counterA.flags &= ~SENSOR_FUNKNOWN;
-		}
-		else
-		{
+		} else {
 			sc->sc_counterB.value = counter;
 			sc->sc_counterB.status = SENSOR_S_UNSPEC;
 			sc->sc_counterB.flags &= ~SENSOR_FUNKNOWN;
 		}
 	}
+
 	onewire_reset(sc->sc_onewire);
+	free(buf, M_DEVBUF);
 
 done:
 	onewire_unlock(sc->sc_onewire);
