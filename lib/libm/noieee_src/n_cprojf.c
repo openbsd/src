@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cprojf.c,v 1.1 2008/10/07 22:25:53 martynas Exp $	*/
+/*	$OpenBSD: n_cprojf.c,v 1.2 2010/07/19 00:04:07 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -26,6 +26,8 @@ cprojf(float complex z)
 	if (isinf(__real__ z) || isinf(__imag__ z)) {
 		__real__ res = INFINITY;
 		__imag__ res = copysign(0.0, __imag__ z);
+	} else {
+		res = z;
 	}
 
 	return res;
