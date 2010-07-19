@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.54 2010/07/19 19:08:28 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.55 2010/07/19 19:22:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -100,6 +100,10 @@ void		rt2860_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 void		rt2860_node_leave(struct ieee80211com *,
 		    struct ieee80211_node *);
+int		rt2860_ampdu_rx_start(struct ieee80211com *,
+		    struct ieee80211_node *, uint8_t);
+void		rt2860_ampdu_rx_stop(struct ieee80211com *,
+		    struct ieee80211_node *, uint8_t);
 int		rt2860_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 uint16_t	rt3090_efuse_read_2(struct rt2860_softc *, uint16_t);
@@ -332,6 +336,10 @@ rt2860_attach(void *xsc, int id)
 	ic->ic_newassoc = rt2860_newassoc;
 #ifndef IEEE80211_STA_ONLY
 	ic->ic_node_leave = rt2860_node_leave;
+#endif
+#ifndef IEEE80211_NO_HT
+	ic->ic_ampdu_rx_start = rt2860_ampdu_rx_start;
+	ic->ic_ampdu_rx_stop = rt2860_ampdu_rx_stop;
 #endif
 	ic->ic_updateslot = rt2860_updateslot;
 	ic->ic_updateedca = rt2860_updateedca;
@@ -851,6 +859,39 @@ rt2860_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* clear Rx WCID search table entry */
 	wcid = RT2860_AID2WCID(ni->ni_associd);
 	RAL_SET_REGION_4(sc, RT2860_WCID_ENTRY(wcid), 0, 2);
+}
+#endif
+
+#ifndef IEEE80211_NO_HT
+int
+rt2860_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid)
+{
+	struct rt2860_softc *sc = ic->ic_softc;
+	uint32_t tmp;
+	uint8_t wcid;
+
+	/* update BA session mask */
+	wcid = RT2860_AID2WCID(ni->ni_associd);
+	tmp = RAL_READ(sc, RT2860_WCID_ENTRY(wcid) + 4);
+	tmp |= (1 << tid) << 16;
+	RAL_WRITE(sc, RT2860_WCID_ENTRY(wcid) + 4, tmp);
+	return 0;
+}
+
+void
+rt2860_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid)
+{
+	struct rt2860_softc *sc = ic->ic_softc;
+	uint32_t tmp;
+	uint8_t wcid;
+
+	/* update BA session mask */
+	wcid = RT2860_AID2WCID(ni->ni_associd);
+	tmp = RAL_READ(sc, RT2860_WCID_ENTRY(wcid) + 4);
+	tmp &= ~((1 << tid) << 16);
+	RAL_WRITE(sc, RT2860_WCID_ENTRY(wcid) + 4, tmp);
 }
 #endif
 
