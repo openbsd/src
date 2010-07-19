@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.h,v 1.15 2010/04/07 20:52:56 sthen Exp $ */
+/*	$OpenBSD: usb_quirks.h,v 1.16 2010/07/19 05:08:37 jakemsr Exp $ */
 /*	$NetBSD: usb_quirks.h,v 1.20 2001/04/15 09:38:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
@@ -38,15 +38,9 @@ struct usbd_quirks {
 #define UQ_SWAP_UNICODE		0x00000002 /* some Unicode strings swapped */
 #define UQ_MS_REVZ		0x00000004 /* mouse has Z-axis reversed */
 #define UQ_NO_STRINGS		0x00000008 /* string descriptors are broken */
-#define UQ_BAD_ADC		0x00000010 /* bad audio spec version number */
 #define UQ_BUS_POWERED		0x00000020 /* is bus-powered, despite claim */
-#define UQ_BAD_AUDIO		0x00000040 /* claims audio class, but isn't */
 #define UQ_SPUR_BUT_UP		0x00000080 /* spurious mouse button up events */
-#define UQ_AU_NO_XU		0x00000100 /* audio device has broken
-						extension unit */
 #define UQ_POWER_CLAIM		0x00000200 /* hub lies about power status */
-#define UQ_AU_NO_FRAC		0x00000400 /* don't adjust for fractional
-						samples */
 #define UQ_ASSUME_CM_OVER_DATA	0x00001000 /* modem device breaks on cm
 						over data */
 #define UQ_BROKEN_BIDIR		0x00002000 /* printer has broken bidir mode */
