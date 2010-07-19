@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.12 2010/07/16 05:22:48 lum Exp $	 */
+/* $Id: engine.c,v 1.13 2010/07/19 04:41:28 lum Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -198,15 +198,6 @@ end_page(void)
 		refresh();
 	}
 	curr_line = 0;
-}
-
-void
-rawaddstr(char *s)
-{
-	if (rawmode)
-		printf("%s", s);
-	else
-		addstr(s);
 }
 
 /* field output functions */
