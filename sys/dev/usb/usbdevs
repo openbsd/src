@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.507 2010/07/15 15:44:55 sthen Exp $
+$OpenBSD: usbdevs,v 1.508 2010/07/19 05:12:49 jakemsr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1203,6 +1203,7 @@ product CREATIVE NOMAD_II	0x1002	Nomad II
 product CREATIVE NOMAD_IIMG	0x4004	Nomad II MG
 product CREATIVE NOMAD		0x4106	Nomad
 product CREATIVE2 VOIP_BLASTER	0x0258	Voip Blaster
+product CREATIVE EMU0202	0x3f02	E-Mu 0202
 
 /* Cambridge Silicon Radio products */
 product CSR BLUETOOTH		0x0001	Bluetooth
