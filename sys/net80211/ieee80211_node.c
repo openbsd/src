@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.60 2010/06/19 08:33:50 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.61 2010/07/19 18:53:52 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1523,6 +1523,9 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_node_leave_ht(ic, ni);
 #endif
+
+	if (ic->ic_node_leave != NULL)
+		(*ic->ic_node_leave)(ic, ni);
 
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	ni->ni_associd = 0;

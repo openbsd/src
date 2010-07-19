@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.60 2009/05/19 16:09:02 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.61 2010/07/19 18:53:52 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -202,6 +202,8 @@ struct ieee80211com {
 				    enum ieee80211_state, int);
 	void			(*ic_newassoc)(struct ieee80211com *,
 				    struct ieee80211_node *, int);
+	void			(*ic_node_leave)(struct ieee80211com *,
+				    struct ieee80211_node *);
 	void			(*ic_updateslot)(struct ieee80211com *);
 	void			(*ic_updateedca)(struct ieee80211com *);
 	void			(*ic_set_tim)(struct ieee80211com *, int, int);
