@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.60 2010/07/19 16:40:14 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.61 2010/07/19 16:57:27 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -244,6 +244,8 @@ struct acpi_softc {
 
 	int			sc_flags;
 };
+
+extern struct acpi_softc *acpi_softc;
 
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002

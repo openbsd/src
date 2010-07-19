@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.166 2010/07/13 21:01:05 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.167 2010/07/19 16:57:27 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -110,7 +110,6 @@ void			_aml_die(const char *fn, int line, const char *fmt, ...);
 int			aml_intlen = 64;
 struct aml_node		aml_root;
 struct aml_value	*aml_global_lock;
-struct acpi_softc	*dsdt_softc;
 
 /* Perfect Hash key */
 #define HASH_OFF		6904
@@ -466,7 +465,7 @@ acpi_sleep(int ms)
 	else {
 		if (to <= 0)
 			to = 1;
-		while (tsleep(dsdt_softc, PWAIT, "asleep", to) !=
+		while (tsleep(acpi_softc, PWAIT, "asleep", to) !=
 		    EWOULDBLOCK);
 	}
 }
@@ -521,11 +520,11 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 void
 acpi_poll(void *arg)
 {
-	dsdt_softc->sc_poll = 1;
-	dsdt_softc->sc_threadwaiting = 0;
-	wakeup(dsdt_softc);
+	acpi_softc->sc_poll = 1;
+	acpi_softc->sc_threadwaiting = 0;
+	wakeup(acpi_softc);
 
-	timeout_add_sec(&dsdt_softc->sc_dev_timeout, 10);
+	timeout_add_sec(&acpi_softc->sc_dev_timeout, 10);
 }
 
 void
@@ -550,7 +549,7 @@ aml_register_notify(struct aml_node *node, const char *pnpid,
 	SLIST_INSERT_HEAD(&aml_notify_list, pdata, link);
 
 	if (poll && !acpi_poll_enabled)
-		timeout_add_sec(&dsdt_softc->sc_dev_timeout, 10);
+		timeout_add_sec(&acpi_softc->sc_dev_timeout, 10);
 }
 
 void
@@ -735,7 +734,7 @@ aml_lockfield(struct aml_scope *scope, struct aml_value *field)
 
 	/* Spin to acquire lock */
 	while (!st) {
-		st = acpi_acquire_global_lock(&dsdt_softc->sc_facs->global_lock);
+		st = acpi_acquire_global_lock(&acpi_softc->sc_facs->global_lock);
 		/* XXX - yield/delay? */
 	}
 
@@ -755,14 +754,14 @@ aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 		return;
 
 	/* Release lock */
-	st = acpi_release_global_lock(&dsdt_softc->sc_facs->global_lock);
+	st = acpi_release_global_lock(&acpi_softc->sc_facs->global_lock);
 	if (!st)
 		return;
 
 	/* Signal others if someone waiting */
-	x = acpi_read_pmreg(dsdt_softc, ACPIREG_PM1_CNT, 0);
+	x = acpi_read_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0);
 	x |= ACPI_PM1_GBL_RLS;
-	acpi_write_pmreg(dsdt_softc, ACPIREG_PM1_CNT, 0, x);
+	acpi_write_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0, x);
 
 	return;
 }
@@ -1418,7 +1417,7 @@ aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
 
 	/* PCI */
 	pciaddr = 0;
-	if (!aml_evalinteger(dsdt_softc, root, "_ADR", 0, NULL, &tmpres)) {
+	if (!aml_evalinteger(acpi_softc, root, "_ADR", 0, NULL, &tmpres)) {
 		/* Device:Function are bits 16-31,32-47 */
 		pciaddr += (tmpres << 16L);
 		dnprintf(20, "got _adr [%s]\n", aml_nodename(root));
@@ -1428,7 +1427,7 @@ aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
 		return pciaddr;
 	}
 
-	if (!aml_evalinteger(dsdt_softc, root, "_BBN", 0, NULL, &tmpres)) {
+	if (!aml_evalinteger(acpi_softc, root, "_BBN", 0, NULL, &tmpres)) {
 		/* PCI bus is in bits 48-63 */
 		pciaddr += (tmpres << 48L);
 		dnprintf(20, "got _bbn [%s]\n", aml_nodename(root));
@@ -1695,7 +1694,7 @@ int aml_fixup_node(struct aml_node *node, void *arg)
 			return (0);
 		val->v_opregion.iobase =
 		    ACPI_PCI_REG(val->v_opregion.iobase) +
-		    aml_getpciaddr(dsdt_softc, node);
+		    aml_getpciaddr(acpi_softc, node);
 		dnprintf(20, "late ioaddr : %s:%llx\n",
 		    aml_nodename(node), val->v_opregion.iobase);
 	}
@@ -1928,7 +1927,7 @@ aml_xpushscope(struct aml_scope *parent, struct aml_value *range,
 	scope->pos = scope->start;
 	scope->parent = parent;
 	scope->type = type;
-	scope->sc = dsdt_softc;
+	scope->sc = acpi_softc;
 
 	aml_lastscope = scope;
 
@@ -2226,7 +2225,7 @@ void aml_xparsefieldlist(struct aml_scope *, int, int,
 int
 aml_evalhid(struct aml_node *node, struct aml_value *val)
 {
-	if (aml_evalname(dsdt_softc, node, "_HID", 0, NULL, val))
+	if (aml_evalname(acpi_softc, node, "_HID", 0, NULL, val))
 		return (-1);
 
 	/* Integer _HID: convert to EISA ID */
@@ -2244,14 +2243,14 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 {
 	int64_t res;
 
-	if (aml_evalinteger(dsdt_softc, pcidev, "_ADR", 0, NULL, &res) == 0) {
+	if (aml_evalinteger(acpi_softc, pcidev, "_ADR", 0, NULL, &res) == 0) {
 		addr->fun = res & 0xFFFF;
 		addr->dev = res >> 16;
 	}
 	while (pcidev != NULL) {
 		/* HID device (PCI or PCIE root): eval _BBN */
 		if (__aml_search(pcidev, "_HID", 0)) {
-			if (aml_evalinteger(dsdt_softc, pcidev, "_BBN", 0, NULL, &res) == 0) {
+			if (aml_evalinteger(acpi_softc, pcidev, "_BBN", 0, NULL, &res) == 0) {
 				addr->bus = res;
 				break;
 			}
@@ -2326,7 +2325,7 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val, int 
 
 	if (mode == ACPI_IOREAD) {
 		/* Read bits from opregion */
-		acpi_gasio(dsdt_softc, ACPI_IOREAD, type, pi.addr, sz, slen, tbit);
+		acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr, sz, slen, tbit);
 		aml_bufcpy(vbit, 0, tbit, bpos & 7, blen);
 	} else {
 		/* Write bits to opregion */
@@ -2336,13 +2335,13 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val, int 
 		}
 		if (AML_FIELD_UPDATE(flag) == AML_FIELD_PRESERVE && ((bpos|blen) & 7)) {
 			/* If not aligned and preserve, read existing value */
-			acpi_gasio(dsdt_softc, ACPI_IOREAD, type, pi.addr, sz, slen, tbit);
+			acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr, sz, slen, tbit);
 		} else if (AML_FIELD_UPDATE(flag) == AML_FIELD_WRITEASONES) {
 			memset(tbit, 0xFF, tmp.length);
 		}
 		/* Copy target bits, then write to region */
 		aml_bufcpy(tbit, bpos & 7, vbit, 0, blen);
-		acpi_gasio(dsdt_softc, ACPI_IOWRITE, type, pi.addr, sz, slen, tbit);
+		acpi_gasio(acpi_softc, ACPI_IOWRITE, type, pi.addr, sz, slen, tbit);
 
 		aml_xdelref(&val, "fld.write");
 	}
@@ -2496,7 +2495,7 @@ acpi_xmutex_acquire(struct aml_scope *scope, struct aml_value *mtx,
 		mtx->v_mtx.owner = scope;
 		if (mtx == aml_global_lock) {
 			dnprintf(10,"LOCKING GLOBAL\n");
-			err = acpi_acquire_global_lock(&dsdt_softc->sc_facs->global_lock);
+			err = acpi_acquire_global_lock(&acpi_softc->sc_facs->global_lock);
 		}
 		dnprintf(5,"%s acquires mutex %s\n", scope->node->name,
 		    mtx->node->name);
@@ -2515,7 +2514,7 @@ acpi_xmutex_release(struct aml_scope *scope, struct aml_value *mtx)
 
 	if (mtx == aml_global_lock) {
 	  	dnprintf(10,"UNLOCKING GLOBAL\n");
-		err=acpi_release_global_lock(&dsdt_softc->sc_facs->global_lock);
+		err=acpi_release_global_lock(&acpi_softc->sc_facs->global_lock);
 	}
 	dnprintf(5, "%s releases mutex %s\n", scope->node->name,
 	    mtx->node->name);
@@ -3915,7 +3914,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_LOAD:
 		/* Load(Object:NameString, DDBHandle:SuperName) */
-		mscope = aml_load(dsdt_softc, scope, opargs[0], opargs[1]);
+		mscope = aml_load(acpi_softc, scope, opargs[0], opargs[1]);
 		break;
 	case AMLOP_UNLOAD:
 		/* DDBHandle */
@@ -4016,8 +4015,6 @@ acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 {
 	struct aml_scope *scope;
 	struct aml_value res;
-
-	dsdt_softc = sc;
 
 	aml_root.start = start;
 	memset(&res, 0, sizeof(res));
