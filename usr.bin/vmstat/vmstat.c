@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.114 2009/11/22 22:22:14 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.115 2010/07/20 19:43:19 lum Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -138,7 +138,6 @@ main(int argc, char *argv[])
 	const char *errstr;
 	u_int interval = 0;
 	size_t size;
-	gid_t gid;
 
 	while ((c = getopt(argc, argv, "c:fiM:mN:stw:vz")) != -1) {
 		switch (c) {
@@ -188,24 +187,11 @@ main(int argc, char *argv[])
 	if (todo == 0)
 		todo = VMSTAT;
 
-	gid = getgid();
 	if (nlistf != NULL || memf != NULL) {
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
-	}
 
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (nlistf != NULL || memf != NULL) {
 		kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 		if (kd == 0)
 			errx(1, "kvm_openfiles: %s", errbuf);
-
-		if (nlistf == NULL && memf == NULL)
-			if (setresgid(gid, gid, gid) == -1)
-				err(1, "setresgid");
 
 		if ((c = kvm_nlist(kd, namelist)) != 0) {
 
@@ -223,8 +209,7 @@ main(int argc, char *argv[])
 			} else
 				errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 		}
-	} else if (setresgid(gid, gid, gid) == -1)
-		err(1, "setresgid");
+	}
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;
