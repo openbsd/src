@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.36 2010/07/20 12:12:19 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.37 2010/07/20 20:21:02 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -322,8 +322,8 @@ acpitz_refresh(void *arg)
 	/* critical trip points */
 	if (sc->sc_crt != -1 && sc->sc_crt <= sc->sc_tmp) {
 		/* do critical shutdown */
-		printf("%s: Critical temperature, shutting down\n",
-		    DEVNAME(sc));
+		printf("%s: Critical temperature %dC (%dK), shutting down\n",
+		    DEVNAME(sc), KTOC(sc->sc_tmp), sc->sc_tmp);
 		psignal(initproc, SIGUSR2);
 	}
 	if (sc->sc_hot != -1 && sc->sc_hot <= sc->sc_tmp) {
