@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.61 2010/07/17 06:47:13 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.62 2010/07/20 05:35:29 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -651,9 +651,8 @@ while getopts bds:x: arg; do
 	s)
 		if [ -f "${OPTARG}/etc/Makefile" ]; then
 			SRCDIR=${OPTARG}
-		elif [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
-		    awk -F/ '{print $NF}' | \
-		    grep '^etc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
+		elif [ -f "${OPTARG}" ] && \
+			tar tzf ${OPTARG} ./var/db/sysmerge/etcsum > /dev/null 2>&1 ; then
 			TGZ=${OPTARG}
 		elif echo ${OPTARG} | \
 		    grep -qE '^(http|ftp)://.*/etc[0-9][0-9]\.tgz$'; then
@@ -669,9 +668,8 @@ while getopts bds:x: arg; do
 		fi
 		;;
 	x)
-		if [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
-		    awk -F/ '{print $NF}' | \
-		    grep '^xetc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
+		if [ -f "${OPTARG}" ] && \
+			tar tzf ${OPTARG} ./var/db/sysmerge/xetcsum > /dev/null 2>&1 ; then \
 			XTGZ=${OPTARG}
 		elif echo ${OPTARG} | \
 		    grep -qE '^(http|ftp)://.*/xetc[0-9][0-9]\.tgz$'; then
