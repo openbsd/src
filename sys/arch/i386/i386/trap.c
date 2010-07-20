@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.93 2010/07/14 00:15:27 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.94 2010/07/20 00:16:39 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -173,7 +173,7 @@ trap(struct trapframe *frame)
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    frame->tf_trapno, frame->tf_err, frame->f_eip,
+		    frame->tf_trapno, frame->tf_err, frame->tf_eip,
 		    frame->tf_cs, frame->tf_eflags, rcr2(), lapic_tpr);
 		printf("curproc %p\n", curproc);
 	}
