@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.88 2010/07/03 00:41:58 kettenis Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.89 2010/07/20 01:06:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -189,6 +189,7 @@ atascsi_probe(struct scsi_link *link)
 	struct atascsi		*as = link->adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa;
+	struct ata_identify	*identify;
 	int			port, type;
 	int			rv;
 	u_int16_t		cmdset;
@@ -226,8 +227,9 @@ atascsi_probe(struct scsi_link *link)
 	xa = scsi_io_get(&ap->ap_iopool, SCSI_NOSLEEP);
 	if (xa == NULL)
 		panic("no free xfers on a new port");
-	xa->data = &ap->ap_identify;
-	xa->datalen = sizeof(ap->ap_identify);
+	identify = malloc(sizeof(*identify), M_TEMP, M_WAITOK); /* XXX dma reachable */
+	xa->data = identify;
+	xa->datalen = sizeof(*identify);
 	xa->fis->flags = ATA_H2D_FLAGS_CMD;
 	xa->fis->command = (type == ATA_PORT_T_DISK) ?
 	    ATA_C_IDENTIFY : ATA_C_IDENTIFY_PACKET;
@@ -238,8 +240,12 @@ atascsi_probe(struct scsi_link *link)
 	xa->atascsi_private = &ap->ap_iopool;
 	ata_exec(as, xa);
 	rv = ata_polled(xa);
-	if (rv != 0)
+	if (rv != 0) {
+		free(identify, M_TEMP);
 		goto error;
+	}
+	bcopy(identify, &ap->ap_identify, sizeof(ap->ap_identify));
+	free(identify, M_TEMP);
 
 	as->as_ports[port] = ap;
 
