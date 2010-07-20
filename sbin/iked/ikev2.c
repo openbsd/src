@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.21 2010/07/03 16:59:35 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.22 2010/07/20 16:28:22 deraadt Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1320,9 +1320,10 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 	struct iked_transform		*xform;
 	struct iked_proposal		*prop;
 	struct iked_childsa		 csa;
-	ssize_t				 i, length = 0, saplength, ret, n;
+	ssize_t				 length = 0, saplength, ret, n;
 	u_int64_t			 spi64;
 	u_int32_t			 spi32, spi;
+	u_int				 i;
 
 	n = 0;
 	TAILQ_FOREACH(prop, proposals, prop_entry) {
@@ -3259,7 +3260,7 @@ ikev2_valid_proposal(struct iked_proposal *prop,
     struct iked_transform **exf, struct iked_transform **ixf)
 {
 	struct iked_transform	*xform, *encrxf, *integrxf;
-	size_t			 i;
+	u_int			 i;
 
 	switch (prop->prop_protoid) {
 	case IKEV2_SAPROTO_ESP:
