@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.497 2010/07/13 16:47:03 deraadt Exp $
+#	$OpenBSD: files,v 1.498 2010/07/20 15:28:43 matthew Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1089,6 +1089,7 @@ file dev/x86emu/x86emu_util.c		x86emu
 file lib/libkern/mcount.c		gprof
 file lib/libkern/getsn.c
 file lib/libkern/random.c
+file lib/libkern/timingsafe_bcmp.c
 file lib/libkern/arch/${MACHINE_ARCH}/strchr.S | lib/libkern/strchr.c
 file lib/libkern/arch/${MACHINE_ARCH}/strrchr.S | lib/libkern/strrchr.c
 file lib/libkern/arch/${MACHINE_ARCH}/__main.S | lib/libkern/__main.c
