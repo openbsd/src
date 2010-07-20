@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.31 2010/07/20 12:14:10 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.32 2010/07/20 12:15:24 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -58,9 +58,6 @@ void		acpiec_sci_event(struct acpiec_softc *);
 void		acpiec_get_events(struct acpiec_softc *);
 
 int		acpiec_gpehandler(struct acpi_softc *, int, void *);
-
-struct aml_node	*aml_find_name(struct acpi_softc *, struct aml_node *,
-		    const char *);
 
 /* EC Status bits */
 #define		EC_STAT_SMI_EVT	0x40	/* SMI event pending */
