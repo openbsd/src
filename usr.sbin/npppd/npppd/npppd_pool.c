@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_pool.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_pool.c,v 1.4 2010/07/20 20:47:17 miod Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -370,7 +370,7 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 			 * It has issue of address leak when interface address is changed.
 			 * But it will make no problem because there is no situation that
 			 * changing the pool address only in current implementation.
-			 * In opration, It is hard to assume that the pool address is not
+			 * In operation, It is hard to assume that the pool address is not
 			 * changed and the tunnel-end-address is changed periodically.
 			 */
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.h,v 1.7 2007/06/03 20:16:08 millert Exp $	*/
+/*	$OpenBSD: restore.h,v 1.8 2010/07/20 20:47:13 miod Exp $	*/
 /*	$NetBSD: restore.h,v 1.8 1997/07/01 05:37:54 lukem Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ extern long	volno;		/* current volume being read */
 extern long	ntrec;		/* number of TP_BSIZE records per tape block */
 extern time_t	dumptime;	/* time that this dump begins */
 extern time_t	dumpdate;	/* time that this dump was made */
-extern char	command;	/* opration being performed */
+extern char	command;	/* operation being performed */
 extern FILE	*terminal;	/* file descriptor for the terminal input */
 extern char	*tmpdir;	/* where to store temporary files */
 extern int	oldinofmt;	/* reading tape with old format inodes */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.15 2006/06/11 20:43:28 miod Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.16 2010/07/20 20:47:17 miod Exp $	*/
 /*	$NetBSD: fpu_emulate.c,v 1.25 2003/09/22 14:18:34 cl Exp $	*/
 
 /*
@@ -592,7 +592,7 @@ fpu_cmp(fe)
 }
 
 /*
- * arithmetic oprations
+ * arithmetic operations
  */
 int
 fpu_emul_arith(struct fpemu *fe, struct instruction *insn, int *typ)
