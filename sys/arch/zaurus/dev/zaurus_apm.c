@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.15 2010/04/21 03:11:30 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.16 2010/07/20 12:23:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -22,6 +22,7 @@
 #include <sys/timeout.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
+#include <sys/buf.h>
 #include <sys/sysctl.h>
 
 #include <arm/xscale/pxa2x0reg.h>
@@ -567,6 +568,8 @@ zapm_suspend(struct pxa2x0_apm_softc *pxa_sc)
 {
 	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
 
+	bufq_quiesce();
+
 	/* Poll in suspended mode and forget the discharge timeout. */
 	sc->sc_suspended = 1;
 	timeout_del(&sc->sc_poll);
@@ -631,6 +634,7 @@ zapm_resume(struct pxa2x0_apm_softc *pxa_sc)
 #endif
 	}
 
+	bufq_restart();
 	return (wakeup);
 }
 

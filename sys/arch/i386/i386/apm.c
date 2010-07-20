@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.86 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: apm.c,v 1.87 2010/07/20 12:23:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/buf.h>
 #include <sys/event.h>
 #include <sys/mount.h>	/* for vfs_syncwait() proto */
 
@@ -322,6 +323,8 @@ apm_suspend()
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
+	bufq_quiesce();
+
 	dopowerhooks(PWR_SUSPEND);
 
 	if (cold)
@@ -336,6 +339,8 @@ apm_standby()
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
+	bufq_quiesce();
+
 	dopowerhooks(PWR_STANDBY);
 
 	if (cold)
@@ -365,6 +370,7 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 	/* restore hw.setperf */
 	if (cpu_setperf != NULL)
 		cpu_setperf(perflevel);
+	bufq_restart();
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
