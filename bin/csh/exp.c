@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.8 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: exp.c,v 1.9 2010/07/20 02:13:10 deraadt Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 #define NOTEQMATCH 8
 
 static int	exp1(Char ***, bool);
-static int	exp2(Char ***, bool);
+static int	exp2_(Char ***, bool);
 static int	exp2a(Char ***, bool);
 static int	exp2b(Char ***, bool);
 static int	exp2c(Char ***, bool);
@@ -108,7 +108,7 @@ exp0(Char ***vp, bool ignore)
 static int
 exp1(Char ***vp, bool ignore)
 {
-    int p1 = exp2(vp, ignore);
+    int p1 = exp2_(vp, ignore);
 
 #ifdef EDEBUG
     etraci("exp1 p1", p1, vp);
@@ -127,7 +127,7 @@ exp1(Char ***vp, bool ignore)
 }
 
 static int
-exp2(Char ***vp, bool ignore)
+exp2_(Char ***vp, bool ignore)
 {
     int p1 = exp2a(vp, ignore);
 
@@ -138,7 +138,7 @@ exp2(Char ***vp, bool ignore)
 	int p2;
 
 	(*vp)++;
-	p2 = exp2(vp, ignore);
+	p2 = exp2_(vp, ignore);
 #ifdef EDEBUG
 	etraci("exp3 p2", p2, vp);
 #endif
