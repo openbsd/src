@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.49 2010/07/08 20:56:31 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.50 2010/07/20 05:49:53 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -61,8 +61,6 @@ int			aml_find_node(struct aml_node *, const char *,
 			    int (*)(struct aml_node *, void *), void *);
 int			acpi_parse_aml(struct acpi_softc *, u_int8_t *,
 			    u_int32_t);
-int			aml_eval_object(struct acpi_softc *, struct aml_node *,
-			    struct aml_value *, int, struct aml_value *);
 void			aml_register_notify(struct aml_node *, const char *,
 			    int (*)(struct aml_node *, int, void *), void *,
 			    int);
@@ -77,11 +75,7 @@ int			aml_evalname(struct acpi_softc *, struct aml_node *,
 int			aml_evalinteger(struct acpi_softc *, struct aml_node *,
                             const char *, int, struct aml_value *, int64_t *);
 
-void			aml_fixup_dsdt(u_int8_t *, u_int8_t *, int);
 void			aml_create_defaultobjects(void);
-
-int			acpi_mutex_acquire(struct aml_value *, int);
-void			acpi_mutex_release(struct aml_value *);
 
 const char		*aml_nodename(struct aml_node *);
 
