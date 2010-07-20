@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptvar.h,v 1.5 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: dptvar.h,v 1.6 2010/07/20 20:46:18 mk Exp $	*/
 /*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ struct dpt_ccb {
 	int		ccb_hba_status;		/* from status packet */
 	int		ccb_scsi_status;	/* from status packet */
 	int		ccb_id;			/* unique ID of this CCB */
-	TAILQ_ENTRY(dpt_ccb) ccb_chain;		/* link to next CCB */
+	SLIST_ENTRY(dpt_ccb) ccb_chain;		/* link to next CCB */
 #ifdef __NetBSD__
 	struct scsipi_sense_data ccb_sense;	/* SCSI sense data on error */
 	struct scsipi_xfer *ccb_xs;		/* initiating SCSI command */
@@ -88,7 +88,7 @@ struct dpt_softc {
 	int		sc_hbaid[3];	/* ID of HBA on each channel */
 	int		sc_nccbs;	/* number of CCBs available */
 	int		sc_open;	/* device is open */
-	TAILQ_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
+	SLIST_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
 };
 
 int	dpt_intr(void *);

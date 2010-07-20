@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.27 2010/07/20 20:43:27 mk Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.28 2010/07/20 20:46:18 mk Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -315,7 +315,7 @@ dpt_init(sc, intrstr)
 	sc->sc_statpack->sp_ccbid = -1;
 
 	/* Initialize the CCBs */
-	TAILQ_INIT(&sc->sc_free_ccb);
+	SLIST_INIT(&sc->sc_free_ccb);
 	i = dpt_create_ccbs(sc, sc->sc_ccbs, sc->sc_nccbs);
 
 	if (i == 0) {
@@ -655,10 +655,8 @@ dpt_free_ccb(sc, ccb)
 
 	s = splbio();
 	ccb->ccb_flg = 0;
-	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_chain);
 
-	/* Wake anybody waiting for a free ccb */
-	if (TAILQ_NEXT(ccb, ccb_chain) == NULL)
+	if (SLIST_NEXT(ccb, ccb_chain) == NULL)
 		wakeup(&sc->sc_free_ccb);
 	splx(s);
 }
@@ -711,7 +709,7 @@ dpt_create_ccbs(sc, ccbstore, count)
 			break;
 		}
 		ccb->ccb_id = i;
-		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_chain);
+		SLIST_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_chain);
 	}
 
 	return (i);
@@ -733,9 +731,9 @@ dpt_alloc_ccb(sc, flg)
 	s = splbio();
 
 	for (;;) {
-		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+		ccb = SLIST_FIRST(&sc->sc_free_ccb);
 		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_chain);
+			SLIST_REMOVE_HEAD(&sc->sc_free_ccb, ccb_chain);
 			break;
 		}
 #ifdef __NetBSD__
