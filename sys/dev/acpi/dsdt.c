@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.167 2010/07/19 16:57:27 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.168 2010/07/20 12:12:20 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -93,7 +93,6 @@ struct aml_opcode	*aml_findopcode(int);
 
 void			*_acpi_os_malloc(size_t, const char *, int);
 void			_acpi_os_free(void *, const char *, int);
-void			acpi_sleep(int);
 void			acpi_stall(int);
 
 struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
@@ -456,8 +455,9 @@ acpi_walkmem(int sig, const char *lbl)
 }
 
 void
-acpi_sleep(int ms)
+acpi_sleep(int ms, char *reason)
 {
+	static int acpinowait;
 	int to = ms * hz / 1000;
 
 	if (cold)
@@ -465,8 +465,7 @@ acpi_sleep(int ms)
 	else {
 		if (to <= 0)
 			to = 1;
-		while (tsleep(acpi_softc, PWAIT, "asleep", to) !=
-		    EWOULDBLOCK);
+		tsleep(&acpinowait, PWAIT, reason, to);
 	}
 }
 
@@ -3887,7 +3886,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_SLEEP:
 		/* Sleep: i */
-		acpi_sleep(opargs[0]->v_integer);
+		acpi_sleep(opargs[0]->v_integer, "amlsleep");
 		break;
 	case AMLOP_NOTIFY:
 		/* Notify: Si */

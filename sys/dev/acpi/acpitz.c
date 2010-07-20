@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.35 2010/01/13 23:31:25 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.36 2010/07/20 12:12:19 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -442,12 +442,7 @@ acpitz_gettempreading(struct acpitz_softc *sc, char *name)
 			    "debouncing\n", DEVNAME(sc), tmp, name);
 		}
 
-		/* debounce value */
-		if (cold)
-			delay(1000000);
-		else
-			while (tsleep(sc, PWAIT, "tzsleep", hz) !=
-			    EWOULDBLOCK);
+		acpi_sleep(1000, "acpitz");	/* debounce: 1000 msec */
 	}
 	if (i >= ACPITZ_TMP_RETRY) {
 		printf("%s: %s: failed to read %s\n", DEVNAME(sc),
