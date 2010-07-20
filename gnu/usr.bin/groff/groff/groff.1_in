@@ -422,7 +422,7 @@ anonymous ftp from ftp.gnu.org in the directory gnu/groff.
 .BR deroff (@MAN1EXT@),
 .BR groff_font (@MAN5EXT@),
 .BR groff_out (@MAN5EXT@),
-.BR groff_man (@MAN7EXT@),
+.BR man (@MAN7EXT@),
 .BR groff_ms (@MAN7EXT@),
 .BR groff_me (@MAN7EXT@),
 .BR groff_char (@MAN7EXT@),

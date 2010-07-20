@@ -1,4 +1,4 @@
-MAN7=groff_ms.7 groff_man.7 groff_me.7 groff_msafer.7
+MAN7=groff_ms.7 groff_me.7 groff_msafer.7
 
 NORMALFILES=tmac.pic tmac.ps tmac.psnew tmac.psold tmac.pspic \
       tmac.psatk tmac.dvi tmac.tty tmac.tty-char tmac.X tmac.Xps tmac.latin1 \
