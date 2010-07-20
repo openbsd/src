@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.5 2009/12/04 04:59:48 drahn Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.6 2010/07/20 02:08:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -74,7 +74,6 @@ elf_hide(int pfile, char *p)
 	Elf_Phdr       *pphdr;
 	int             i;
 #endif
-	struct stat     sb;
 
 	pexe = p;
 	pehdr = (Elf_Ehdr *) pexe;
@@ -147,8 +146,6 @@ elf_hide(int pfile, char *p)
 
 	load_strtab(pehdr, pexe);
 	load_symtab(pehdr, pexe);
-
-	munmap(pexe, sb.st_size);
 	close(pfile);
 }
 char           *shstrtab;
