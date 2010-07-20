@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.97 2010/06/05 18:52:47 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.98 2010/07/20 19:24:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5676,7 +5676,6 @@ iwn_hw_stop(struct iwn_softc *sc)
 {
 	const struct iwn_hal *hal = sc->sc_hal;
 	int chnl, qid, ntries;
-	uint32_t tmp;
 
 	IWN_WRITE(sc, IWN_RESET, IWN_RESET_NEVO);
 
@@ -5697,8 +5696,7 @@ iwn_hw_stop(struct iwn_softc *sc)
 		for (chnl = 0; chnl < hal->ndmachnls; chnl++) {
 			IWN_WRITE(sc, IWN_FH_TX_CONFIG(chnl), 0);
 			for (ntries = 0; ntries < 200; ntries++) {
-				tmp = IWN_READ(sc, IWN_FH_TX_STATUS);
-				if ((tmp & IWN_FH_TX_STATUS_IDLE(chnl)) ==
+				if (IWN_READ(sc, IWN_FH_TX_STATUS) &
 				    IWN_FH_TX_STATUS_IDLE(chnl))
 					break;
 				DELAY(10);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.40 2010/05/05 19:41:57 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.41 2010/07/20 19:24:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -285,8 +285,7 @@
 #define IWN_FH_TX_CHICKEN_SCHED_RETRY	(1 << 1)
 
 /* Possible flags for register IWN_FH_TX_STATUS. */
-#define IWN_FH_TX_STATUS_IDLE(chnl)					\
-	(1 << ((chnl) + 24) | 1 << ((chnl) + 16))
+#define IWN_FH_TX_STATUS_IDLE(chnl)	(1 << ((chnl) + 16))
 
 /* Possible flags for register IWN_FH_RX_CONFIG. */
 #define IWN_FH_RX_CONFIG_ENA		(1 << 31)
