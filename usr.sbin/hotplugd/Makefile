@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2010/01/30 20:48:53 miod Exp $
+# $OpenBSD: Makefile,v 1.13 2010/07/20 02:05:51 deraadt Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "armish" || ${MACHINE} == "hppa" || \
@@ -13,7 +13,7 @@ SRCS=	hotplugd.c
 
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS+= -Wmissing-declarations -Wredundant-decls
+CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 
 .else
