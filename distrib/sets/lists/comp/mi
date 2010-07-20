@@ -3422,6 +3422,8 @@
 ./usr/share/man/cat3/cgetustr.0
 ./usr/share/man/cat3/check_expire.0
 ./usr/share/man/cat3/chgat.0
+./usr/share/man/cat3/cimag.0
+./usr/share/man/cat3/cimagf.0
 ./usr/share/man/cat3/clear.0
 ./usr/share/man/cat3/clearerr.0
 ./usr/share/man/cat3/clearok.0
@@ -3455,6 +3457,8 @@
 ./usr/share/man/cat3/compress2.0
 ./usr/share/man/cat3/compressBound.0
 ./usr/share/man/cat3/confstr.0
+./usr/share/man/cat3/conj.0
+./usr/share/man/cat3/conjf.0
 ./usr/share/man/cat3/copysign.0
 ./usr/share/man/cat3/copysignf.0
 ./usr/share/man/cat3/copysignl.0
@@ -3464,6 +3468,8 @@
 ./usr/share/man/cat3/cosh.0
 ./usr/share/man/cat3/coshf.0
 ./usr/share/man/cat3/cosl.0
+./usr/share/man/cat3/cproj.0
+./usr/share/man/cat3/cprojf.0
 ./usr/share/man/cat3/crc32.0
 ./usr/share/man/cat3/crc32_combine.0
 ./usr/share/man/cat3/creat.0
