@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.175 2010/04/25 17:38:53 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.176 2010/07/20 15:36:03 matthew Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -392,7 +392,7 @@ carp_hmac_verify(struct carp_vhost_entry *vhe, u_int32_t counter[2],
 
 	for (i = 0; i < HMAC_MAX; i++) { 
 		carp_hmac_generate(vhe, counter, md2, i);
-		if (!bcmp(md, md2, sizeof(md2)))
+		if (!timingsafe_bcmp(md, md2, sizeof(md2)))
 			return (0);
 	}
 	return (1);

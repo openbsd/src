@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.10 2009/09/24 16:03:10 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.11 2010/07/20 15:36:03 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -445,7 +445,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* check that it matches the MIC in received frame */
 	m_copydata(m, moff, IEEE80211_CCMP_MICLEN, mic0);
-	if (memcmp(mic0, b, IEEE80211_CCMP_MICLEN) != 0) {
+	if (timingsafe_bcmp(mic0, b, IEEE80211_CCMP_MICLEN) != 0) {
 		ic->ic_stats.is_ccmp_dec_errs++;
 		m_freem(m0);
 		m_freem(n0);

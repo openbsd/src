@@ -1,4 +1,4 @@
-/*	$OpenBSD: key_wrap.c,v 1.1 2008/08/12 15:43:00 damien Exp $	*/
+/*	$OpenBSD: key_wrap.c,v 1.2 2010/07/20 15:36:03 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -108,5 +108,5 @@ aes_key_unwrap(aes_key_wrap_ctx *ctx, const u_int8_t *C, u_int8_t *P, size_t n)
 	memset(B, 0, sizeof B);
 
 	/* check that A is an appropriate initial value */
-	return memcmp(A, IV, 8) != 0;
+	return timingsafe_bcmp(A, IV, 8) != 0;
 }

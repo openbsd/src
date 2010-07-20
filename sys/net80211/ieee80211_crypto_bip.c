@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_bip.c,v 1.2 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_bip.c,v 1.3 2010/07/20 15:36:03 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -201,7 +201,7 @@ ieee80211_bip_decap(struct ieee80211com *ic, struct mbuf *m0,
 	AES_CMAC_Final(mic, &ctx->cmac);
 
 	/* check that MIC matches the one in MMIE */
-	if (memcmp(mic, mic0, 8) != 0) {
+	if (timingsafe_bcmp(mic, mic0, 8) != 0) {
 		ic->ic_stats.is_cmac_icv_errs++;
 		m_freem(m0);
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.234 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.235 2010/07/20 15:36:03 matthew Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2351,7 +2351,7 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			if (optlen != TCPOLEN_SIGNATURE)
 				continue;
 
-			if (sigp && bcmp(sigp, cp + 2, 16))
+			if (sigp && timingsafe_bcmp(sigp, cp + 2, 16))
 				return (-1);
 
 			sigp = cp + 2;
@@ -2419,7 +2419,7 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 		if (tcp_signature(tdb, tp->pf, m, th, iphlen, 1, sig) < 0)
 			return (-1);
 
-		if (bcmp(sig, sigp, 16)) {
+		if (timingsafe_bcmp(sig, sigp, 16)) {
 			tcpstat.tcps_rcvbadsig++;
 			return (-1);
 		}

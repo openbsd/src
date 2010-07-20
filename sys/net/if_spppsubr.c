@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.80 2010/05/01 08:14:26 mk Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.81 2010/07/20 15:36:03 matthew Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -3903,7 +3903,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 #define SUCCMSG "Welcome!"
 
 		if (value_len != sizeof digest ||
-		    bcmp(digest, value, value_len) != 0) {
+		    timingsafe_bcmp(digest, value, value_len) != 0) {
 			/* action scn, tld */
 			sppp_auth_send(&chap, sp, CHAP_FAILURE, h->ident,
 				       sizeof(FAILMSG) - 1, (u_char *)FAILMSG,

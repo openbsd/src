@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.97 2010/07/09 16:58:06 reyk Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.98 2010/07/20 15:36:03 matthew Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -815,7 +815,7 @@ ah_input_cb(void *op)
 		ptr = (caddr_t) (tc + 1);
 
 		/* Verify authenticator. */
-		if (bcmp(ptr + skip + rplen, calc, ahx->authsize)) {
+		if (timingsafe_bcmp(ptr + skip + rplen, calc, ahx->authsize)) {
 			free(tc, M_XDATA);
 
 			DPRINTF(("ah_input(): authentication failed for "

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.58 2009/02/13 17:24:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.59 2010/07/20 15:36:03 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -485,7 +485,7 @@ ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
 	memset(key->mic, 0, EAPOL_KEY_MIC_LEN);
 	ieee80211_eapol_key_mic(key, kck);
 
-	return memcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
+	return timingsafe_bcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
 }
 
 #ifndef IEEE80211_STA_ONLY

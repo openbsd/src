@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.110 2010/07/09 16:58:06 reyk Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.111 2010/07/20 15:36:03 matthew Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -559,7 +559,7 @@ esp_input_cb(void *op)
 			ptr = (caddr_t) (tc + 1);
 
 			/* Verify authenticator */
-			if (bcmp(ptr, aalg, esph->authsize)) {
+			if (timingsafe_bcmp(ptr, aalg, esph->authsize)) {
 				free(tc, M_XDATA);
 				DPRINTF(("esp_input_cb(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 				espstat.esps_badauth++;

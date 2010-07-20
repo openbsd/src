@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.17 2009/10/30 20:32:25 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.18 2010/07/20 15:36:03 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -454,7 +454,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	/* compute TKIP MIC over decrypted message */
 	ieee80211_tkip_mic(n0, hdrlen, ctx->rxmic, mic);
 	/* check that it matches the MIC in received frame */
-	if (memcmp(mic0, mic, IEEE80211_TKIP_MICLEN) != 0) {
+	if (timingsafe_bcmp(mic0, mic, IEEE80211_TKIP_MICLEN) != 0) {
 		m_freem(m0);
 		m_freem(n0);
 		ic->ic_stats.is_rx_locmicfail++;
