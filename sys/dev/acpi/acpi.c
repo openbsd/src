@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.182 2010/07/20 12:14:10 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.183 2010/07/20 21:37:33 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1668,12 +1668,12 @@ acpi_add_device(struct aml_node *node, void *arg)
 void
 acpi_enable_onegpe(struct acpi_softc *sc, int gpe, int enable)
 {
-	uint8_t mask = (1L << (gpe & 7));
-	uint8_t en;
+	uint8_t mask, en;
 	int s;
 
 	/* Read enabled register */
 	s = spltty();
+	mask = (1L << (gpe & 7));
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN, gpe>>3);
 	dnprintf(50, "%sabling GPE %.2x (current: %sabled) %.2x\n",
 	    enable ? "en" : "dis", gpe, (en & mask) ? "en" : "dis", en);
