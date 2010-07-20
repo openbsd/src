@@ -1,4 +1,4 @@
-/*	$OpenBSD: shapes.c,v 1.8 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: shapes.c,v 1.9 2010/07/20 00:15:20 deraadt Exp $	*/
 /*	$NetBSD: shapes.c,v 1.2 1995/04/22 07:42:44 cgd Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ const struct shape shapes[] = {
 int
 fits_in(const struct shape *shape, int pos)
 {
-	int *o = shape->off;
+	const int *o = shape->off;
 
 	if (board[pos] || board[pos + *o++] || board[pos + *o++] ||
 	    board[pos + *o])
@@ -97,7 +97,7 @@ fits_in(const struct shape *shape, int pos)
 void
 place(const struct shape *shape, int pos, int onoff)
 {
-	int *o = shape->off;
+	const int *o = shape->off;
 
 	board[pos] = onoff;
 	board[pos + *o++] = onoff;
