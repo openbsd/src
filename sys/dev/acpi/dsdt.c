@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.168 2010/07/20 12:12:20 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.169 2010/07/20 12:14:10 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -519,9 +519,13 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 void
 acpi_poll(void *arg)
 {
+	int s;
+
+	s = spltty();
 	acpi_softc->sc_poll = 1;
 	acpi_softc->sc_threadwaiting = 0;
 	wakeup(acpi_softc);
+	splx(s);
 
 	timeout_add_sec(&acpi_softc->sc_dev_timeout, 10);
 }
@@ -743,7 +747,7 @@ aml_lockfield(struct aml_scope *scope, struct aml_value *field)
 void
 aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 {
-	int st, x;
+	int st, x, s;
 
 	if (AML_FIELD_LOCK(field->v_field.flags) != AML_FIELD_LOCK_ON)
 		return;
@@ -758,9 +762,11 @@ aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 		return;
 
 	/* Signal others if someone waiting */
+	s = spltty();
 	x = acpi_read_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0);
 	x |= ACPI_PM1_GBL_RLS;
 	acpi_write_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0, x);
+	splx(s);
 
 	return;
 }

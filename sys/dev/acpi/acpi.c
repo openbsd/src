@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.181 2010/07/20 04:04:00 matthew Exp $ */
+/* $OpenBSD: acpi.c,v 1.182 2010/07/20 12:14:10 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1551,9 +1551,8 @@ int
 acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int32_t processed, sts, en, idx, jdx;
-
-	processed = 0;
+	u_int32_t processed = 0, idx, jdx;
+	u_int8_t sts, en;
 
 #if 0
 	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
@@ -1568,11 +1567,23 @@ acpi_interrupt(void *arg)
 		if (en & sts) {
 			dnprintf(10, "GPE block: %.2x %.2x %.2x\n", idx, sts,
 			    en);
+			/* Mask the GPE until it is serviced */
 			acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx>>3, en & ~sts);
 			for (jdx = 0; jdx < 8; jdx++) {
 				if (en & sts & (1L << jdx)) {
 					/* Signal this GPE */
 					sc->gpe_table[idx+jdx].active = 1;
+
+					/*
+					 * Edge interrupts need their STS bits
+					 * cleared now.  Level interrupts will
+					 * have their STS bits cleared just
+					 * before they are re-enabled.
+					 */
+					if (sc->gpe_table[idx+jdx].edge)
+						acpi_write_pmreg(sc,
+						    ACPIREG_GPE_STS, idx>>3,
+						    1L << jdx);
 					processed = 1;
 				}
 			}
@@ -1584,18 +1595,21 @@ acpi_interrupt(void *arg)
 	if (sts & en) {
 		dnprintf(10,"GEN interrupt: %.4x\n", sts & en);
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en & ~sts);
-		acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, en);
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
-		if (sts & ACPI_PM1_PWRBTN_STS)
+		if (sts & ACPI_PM1_PWRBTN_STS) {
+			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
+			    ACPI_PM1_PWRBTN_STS);
 			sc->sc_powerbtn = 1;
-		if (sts & ACPI_PM1_SLPBTN_STS)
+		}
+		if (sts & ACPI_PM1_SLPBTN_STS) {
+			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
+			    ACPI_PM1_SLPBTN_STS);
 			sc->sc_sleepbtn = 1;
+		}
 		processed = 1;
 	}
 
 	if (processed) {
-		sc->sc_threadwaiting = 0;
-		wakeup(sc);
+		acpi_wakeup(sc);
 	}
 
 	return (processed);
@@ -1656,8 +1670,10 @@ acpi_enable_onegpe(struct acpi_softc *sc, int gpe, int enable)
 {
 	uint8_t mask = (1L << (gpe & 7));
 	uint8_t en;
+	int s;
 
 	/* Read enabled register */
+	s = spltty();
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN, gpe>>3);
 	dnprintf(50, "%sabling GPE %.2x (current: %sabled) %.2x\n",
 	    enable ? "en" : "dis", gpe, (en & mask) ? "en" : "dis", en);
@@ -1666,11 +1682,12 @@ acpi_enable_onegpe(struct acpi_softc *sc, int gpe, int enable)
 	else
 		en &= ~mask;
 	acpi_write_pmreg(sc, ACPIREG_GPE_EN, gpe>>3, en);
+	splx(s);
 }
 
 int
 acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
-    (struct acpi_softc *, int, void *), void *arg, const char *label)
+    (struct acpi_softc *, int, void *), void *arg, int edge)
 {
 	struct gpe_block *ptbl;
 
@@ -1681,9 +1698,10 @@ acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
 		dnprintf(10, "error: GPE %.2x already enabled\n", gpe);
 		return -EBUSY;
 	}
-	dnprintf(50, "Adding GPE handler %.2x (%s)\n", gpe, label);
+	dnprintf(50, "Adding GPE handler %.2x (%s)\n", gpe, edge ? "edge" : "level");
 	ptbl->handler = handler;
 	ptbl->arg = arg;
+	ptbl->edge = edge;
 
 	return (0);
 }
@@ -1692,14 +1710,18 @@ int
 acpi_gpe_level(struct acpi_softc *sc, int gpe, void *arg)
 {
 	struct aml_node *node = arg;
-	uint8_t mask;
+	uint8_t mask, en;
+	int s;
 
 	dnprintf(10, "handling Level-sensitive GPE %.2x\n", gpe);
-	mask = (1L << (gpe & 7));
-
 	aml_evalnode(sc, node, 0, NULL, NULL);
+
+	s = spltty();
+	mask = (1L << (gpe & 7));
 	acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
-	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, mask);
+	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3);
+	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
+	splx(s);
 
 	return (0);
 }
@@ -1709,14 +1731,17 @@ acpi_gpe_edge(struct acpi_softc *sc, int gpe, void *arg)
 {
 
 	struct aml_node *node = arg;
-	uint8_t mask;
+	uint8_t mask, en;
+	int s;
 
 	dnprintf(10, "handling Edge-sensitive GPE %.2x\n", gpe);
-	mask = (1L << (gpe & 7));
-
 	aml_evalnode(sc, node, 0, NULL, NULL);
-	acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
-	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, mask);
+
+	s = spltty();
+	mask = (1L << (gpe & 7));
+	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3);
+	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
+	splx(s);
 
 	return (0);
 }
@@ -1814,10 +1839,10 @@ acpi_init_gpeblock(struct acpi_softc *sc, int reg, int len, int base)
 
 		snprintf(gpestr, sizeof(gpestr), "\\_GPE._L%.2X", base+i);
 		h = aml_searchnode(&aml_root, gpestr);
-		if (acpi_set_gpehandler(sc, base+i, acpi_gpe_level, h, "level") != 0) {
+		if (acpi_set_gpehandler(sc, base+i, acpi_gpe_level, h, 0) != 0) {
 			snprintf(gpestr, sizeof(gpestr), "\\_GPE._E%.2X", base+i);
 			h = aml_searchnode(&aml_root, gpestr);
-			acpi_set_gpehandler(sc, base+i, acpi_gpe_edge, h, "edge");
+			acpi_set_gpehandler(sc, base+i, acpi_gpe_edge, h, 1);
 		}
 	}
 }
@@ -1908,15 +1933,13 @@ acpi_init_gpes(struct acpi_softc *sc)
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
 		gpe = aml_searchname(&aml_root, name);
 		if (gpe != NULL)
-			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe,
-			    "level");
+			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe, 0);
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
 			gpe = aml_searchname(&aml_root, name);
 			if (gpe != NULL)
-				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe,
-				    "edge");
+				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe, 1);
 		}
 	}
 	aml_find_node(&aml_root, "_PRW", acpi_foundprw, sc);
@@ -2313,6 +2336,7 @@ acpi_thread(void *arg)
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
 	u_int32_t gpe;
+	int s;
 
 	/*
 	 * If we have an interrupt handler, we can get notification
@@ -2329,6 +2353,7 @@ acpi_thread(void *arg)
 		sc->sc_threadwaiting = 1;
 
 		/* Enable Sleep/Power buttons if they exist */
+		s = spltty();
 		flag = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 		if (!(sc->sc_fadt->flags & FADT_PWR_BUTTON)) {
 			flag |= ACPI_PM1_PWRBTN_EN;
@@ -2337,6 +2362,7 @@ acpi_thread(void *arg)
 			flag |= ACPI_PM1_SLPBTN_EN;
 		}
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, flag);
+		splx(s);
 
 		/* Enable handled GPEs here */
 		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
@@ -2346,13 +2372,17 @@ acpi_thread(void *arg)
 	}
 
 	while (thread->running) {
-		dnprintf(10, "sleep... %d\n", sc->sc_threadwaiting);
-		while (sc->sc_threadwaiting)
-			tsleep(sc, PWAIT, "acpi_idle", 0);
+		s = spltty();
+		while (sc->sc_threadwaiting) {
+			dnprintf(10, "acpi going to sleep...\n");
+			tsleep(sc, PWAIT, "acpi0", 0);
+		}
 		sc->sc_threadwaiting = 1;
-		dnprintf(10, "wakeup..\n");
-		if (aml_busy)
+		splx(s);
+		if (aml_busy) {
+			printf("skipping %d\n", aml_busy);
 			continue;
+		}
 
 		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
 			struct gpe_block *pgpe = &sc->gpe_table[gpe];
@@ -2365,18 +2395,33 @@ acpi_thread(void *arg)
 			}
 		}
 		if (sc->sc_powerbtn) {
-			sc->sc_powerbtn = 0;
+			uint8_t en;
 
+			sc->sc_powerbtn = 0;
+			dnprintf(1,"power button pressed\n");
 			aml_notify_dev(ACPI_DEV_PBD, 0x80);
 
-			dnprintf(1,"power button pressed\n");
+			/* Reset the latch and re-enable the GPE */
+			s = spltty();
+			en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
+			acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
+			    en | ACPI_PM1_PWRBTN_STS);
+			splx(s);
+
 		}
 		if (sc->sc_sleepbtn) {
-			sc->sc_sleepbtn = 0;
+			uint8_t en;
 
+			sc->sc_sleepbtn = 0;
+			dnprintf(1,"sleep button pressed\n");
 			aml_notify_dev(ACPI_DEV_SBD, 0x80);
 
-			dnprintf(1,"sleep button pressed\n");
+			/* Reset the latch and re-enable the GPE */
+			s = spltty();
+			en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
+			acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
+			    en | ACPI_PM1_SLPBTN_STS);
+			splx(s);
 		}
 
 		/* handle polling here to keep code non-concurrent*/

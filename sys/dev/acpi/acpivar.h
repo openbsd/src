@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.62 2010/07/20 12:12:19 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.63 2010/07/20 12:14:10 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -153,6 +153,7 @@ struct gpe_block {
 	int  (*handler)(struct acpi_softc *, int, void *);
 	void *arg;
 	int   active;
+	int   edge;
 };
 
 struct acpi_devlist {
@@ -310,7 +311,7 @@ void acpi_wakeup(void *);
 int acpi_gasio(struct acpi_softc *, int, int, uint64_t, int, int, void *);
 
 int	acpi_set_gpehandler(struct acpi_softc *, int,
-	    int (*)(struct acpi_softc *, int, void *), void *, const char *);
+	    int (*)(struct acpi_softc *, int, void *), void *, int);
 void	acpi_enable_gpe(struct acpi_softc *, u_int32_t);
 
 int	acpiec_intr(struct acpiec_softc *);

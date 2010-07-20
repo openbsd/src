@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.30 2010/07/20 12:10:51 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.31 2010/07/20 12:14:10 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -284,7 +284,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef SMALL_KERNEL
 	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler,
-	    sc, "acpiec");
+	    sc, 1);
 #endif
 
 	printf("\n");
@@ -309,14 +309,10 @@ int
 acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 {
 	struct acpiec_softc	*sc = arg;
-	u_int8_t		mask, stat;
+	u_int8_t		mask, stat, en;
+	int			s;
 
 	dnprintf(10, "ACPIEC: got gpe\n");
-
-	/* Reset GPE event */
-	mask = (1L << (gpe & 7));
-	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_STS, gpe>>3, mask);
-	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3, mask);
 
 	do {
 		if (sc->sc_gotsci)
@@ -330,6 +326,14 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 		if (stat & EC_STAT_SCI_EVT)
 			sc->sc_gotsci = 1;
 	} while (sc->sc_gotsci);
+
+	/* Unmask the GPE which was blocked at interrupt time */
+	s = spltty();
+	mask = (1L << (gpe & 7));
+	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_STS, gpe>>3, mask);
+	en = acpi_read_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3);
+	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
+	splx(s);
 
 	return (0);
 }
