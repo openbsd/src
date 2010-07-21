@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.48 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.49 2010/07/21 18:48:01 nicm Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -118,11 +118,7 @@ dev_t	pty_getfree(void);
 void	ptmattach(int);
 int	ptmopen(dev_t, int, int, struct proc *);
 int	ptmclose(dev_t, int, int, struct proc *);
-int	ptmread(dev_t, struct uio *, int);
-int	ptmwrite(dev_t, struct uio *, int);
-int	ptmwrite(dev_t, struct uio *, int);
 int	ptmioctl(dev_t, u_long, caddr_t, int, struct proc *p);
-int	ptmpoll(dev_t, int, struct proc *p);
 static int ptm_vn_open(struct nameidata *);
 
 void
@@ -1079,18 +1075,6 @@ ptmclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-ptmread(dev_t dev, struct uio *uio, int ioflag)
-{
-	return (EIO);
-}
-
-int
-ptmwrite(dev_t dev, struct uio *uio, int ioflag)
-{
-	return (EIO);
-}
-
-int
 ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	dev_t newdev, error;
@@ -1221,10 +1205,4 @@ bad:
 	closef(sfp, p);
 	fdpunlock(fdp);
 	return (error);
-}
-
-int
-ptmpoll(dev_t dev, int events, struct proc *p)
-{
-	return (seltrue(dev, events, p));
 }
