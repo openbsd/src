@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.58 2010/07/21 17:01:17 steven Exp $
+.\"	$OpenBSD: port-modules.5,v 1.59 2010/07/21 17:07:27 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -379,7 +379,7 @@ do-build, do-install and post-install can be overridden in the port
 Makefile.
 .It fortran
 .It gcc3
-If COMPILER_VERSION=gcc3 (defined by
+If COMPILER_VERSION is not gcc3 (defined by
 .Pa /usr/share/mk/bsd.own.mk ) ,
 and architecture is in MODGCC3_ARCHES, then the gcc 3.3.6
 compilers will be put at the front of the path.
@@ -387,7 +387,7 @@ By default, only C language support is included by this module.
 If other languages are needed, they must be listed in MODGCC3_LANGS
 (e.g. c++, g77).
 .It gcc4
-If COMPILER_VERSION=gcc4 (defined by
+If COMPILER_VERSION is not gcc4 (defined by
 .Pa /usr/share/mk/bsd.own.mk ) ,
 and architecture is in MODGCC4_ARCHES, then the gcc 4.2 compilers
 will be put at the front of the path.
