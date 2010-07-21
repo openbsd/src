@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.184 2010/07/21 05:03:19 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.185 2010/07/21 15:01:52 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -132,8 +132,7 @@ int acpi_add_device(struct aml_node *node, void *arg);
 #endif /* SMALL_KERNEL */
 
 void	acpi_enable_onegpe(struct acpi_softc *, int, int);
-int	acpi_gpe_level(struct acpi_softc *, int, void *);
-int	acpi_gpe_edge(struct acpi_softc *, int, void *);
+int	acpi_gpe(struct acpi_softc *, int, void *);
 
 struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
 
@@ -1701,38 +1700,19 @@ acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
 }
 
 int
-acpi_gpe_level(struct acpi_softc *sc, int gpe, void *arg)
+acpi_gpe(struct acpi_softc *sc, int gpe, void *arg)
 {
 	struct aml_node *node = arg;
 	uint8_t mask, en;
 	int s;
 
-	dnprintf(10, "handling Level-sensitive GPE %.2x\n", gpe);
+	dnprintf(10, "handling GPE %.2x\n", gpe);
 	aml_evalnode(sc, node, 0, NULL, NULL);
 
 	s = spltty();
 	mask = (1L << (gpe & 7));
-	acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
-	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3);
-	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
-	splx(s);
-
-	return (0);
-}
-
-int
-acpi_gpe_edge(struct acpi_softc *sc, int gpe, void *arg)
-{
-
-	struct aml_node *node = arg;
-	uint8_t mask, en;
-	int s;
-
-	dnprintf(10, "handling Edge-sensitive GPE %.2x\n", gpe);
-	aml_evalnode(sc, node, 0, NULL, NULL);
-
-	s = spltty();
-	mask = (1L << (gpe & 7));
+	if (sc->gpe_table[gpe].edge)
+		acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3);
 	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
 	splx(s);
@@ -1829,13 +1809,13 @@ acpi_init_gpes(struct acpi_softc *sc)
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
 		gpe = aml_searchname(&aml_root, name);
 		if (gpe != NULL)
-			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe, 0);
+			acpi_set_gpehandler(sc, idx, acpi_gpe, gpe, 0);
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
 			gpe = aml_searchname(&aml_root, name);
 			if (gpe != NULL)
-				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe, 1);
+				acpi_set_gpehandler(sc, idx, acpi_gpe, gpe, 1);
 		}
 	}
 	aml_find_node(&aml_root, "_PRW", acpi_foundprw, sc);
