@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.16 2010/06/29 21:13:43 thib Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.17 2010/07/21 14:08:09 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -312,8 +312,9 @@ fpusave_proc(struct proc *p, int save)
 		fpusave_cpu(ci, save);
 		splx(s);
 	} else {
+		oci->ci_fpsaveproc = p;
 		x86_send_ipi(oci,
-	    	save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
+	    	    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 			SPINLOCK_SPIN_HOOK;
 	}

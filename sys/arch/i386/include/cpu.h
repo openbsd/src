@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.110 2010/05/23 22:41:49 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.111 2010/07/21 14:08:09 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -92,6 +92,7 @@ struct cpu_info {
 	 * Private members.
 	 */
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
+	struct proc *ci_fpsaveproc;
 	int ci_fpsaving;		/* save in progress */
 
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */

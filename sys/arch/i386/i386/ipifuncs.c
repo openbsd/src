@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.17 2010/06/26 15:56:40 mlarkin Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.18 2010/07/21 14:08:09 kettenis Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -114,13 +114,15 @@ i386_ipi_halt(struct cpu_info *ci)
 void
 i386_ipi_flush_fpu(struct cpu_info *ci)
 {
-	npxsave_cpu(ci, 0);
+	if (ci->ci_fpsaveproc == ci->ci_fpcurproc)
+		npxsave_cpu(ci, 0);
 }
 
 void
 i386_ipi_synch_fpu(struct cpu_info *ci)
 {
-	npxsave_cpu(ci, 1);
+	if (ci->ci_fpsaveproc == ci->ci_fpcurproc)
+		npxsave_cpu(ci, 1);
 }
 #endif
 
