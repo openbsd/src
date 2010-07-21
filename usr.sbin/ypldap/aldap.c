@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.24 2010/06/14 13:15:22 pyr Exp $ */
-/*	$OpenBSD: aldap.c,v 1.24 2010/06/14 13:15:22 pyr Exp $ */
+/*	$Id: aldap.c,v 1.25 2010/07/21 14:45:59 gilles Exp $ */
+/*	$OpenBSD: aldap.c,v 1.25 2010/07/21 14:45:59 gilles Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -603,7 +603,7 @@ aldap_get_stringset(struct ber_element *elm)
 	if ((ret = calloc(i + 1, sizeof(char *))) == NULL)
 		return NULL;
 
-	for (a = elm, i = 0; a->be_type == BER_TYPE_OCTETSTRING;
+	for (a = elm, i = 0; a != NULL && a->be_type == BER_TYPE_OCTETSTRING;
 	    a = a->be_next, i++) {
 
 		ber_get_string(a, &s);
