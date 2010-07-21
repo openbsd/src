@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.78 2010/07/20 23:46:11 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.79 2010/07/21 03:06:35 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -125,11 +125,13 @@ struct chan {
 	u_int	sample_size;
 	u_int	sample_rate;
 	u_int	bytes_per_frame;
+	u_int	max_bytes_per_frame;
 	u_int	fraction;	/* fraction/1000 is the extra samples/frame */
 	u_int	residue;	/* accumulates the fractional samples */
 	u_int	nframes;	/* # of frames per transfer */
 	u_int   usb_fps;
 	u_int	maxpktsize;
+	u_int	use_maxpkt;	/* whether to always use maxpktsize */
 	u_int	reqms;		/* usb request data duration, in ms */
 
 	u_char	*start;		/* upper layer buffer start */
@@ -319,7 +321,7 @@ usbd_status uaudio_chan_alloc_buffers
 	(struct uaudio_softc *, struct chan *);
 void	uaudio_chan_free_buffers(struct uaudio_softc *, struct chan *);
 void	uaudio_chan_init
-	(struct chan *, int, const struct audio_params *, int);
+	(struct chan *, int, int, const struct audio_params *);
 void	uaudio_chan_set_param(struct chan *, u_char *, u_char *, int);
 void	uaudio_chan_ptransfer(struct chan *);
 void	uaudio_chan_pintr
@@ -2254,19 +2256,17 @@ uaudio_round_blocksize(void *addr, int blk)
 	struct uaudio_softc *sc = addr;
 	int bpf, pbpf, rbpf;
 
-	DPRINTF(("uaudio_round_blocksize: p.bpf=%d r.bpf=%d\n",
-		 sc->sc_playchan.bytes_per_frame,
-		 sc->sc_recchan.bytes_per_frame));
+	DPRINTF(("uaudio_round_blocksize: p.mbpf=%d r.mbpf=%d\n",
+		 sc->sc_playchan.max_bytes_per_frame,
+		 sc->sc_recchan.max_bytes_per_frame));
 
 	pbpf = rbpf = 0;
 	if (sc->sc_mode & AUMODE_PLAY) {
-		pbpf = (sc->sc_playchan.bytes_per_frame +
-		    sc->sc_playchan.sample_size) *
+		pbpf = (sc->sc_playchan.max_bytes_per_frame) *
 		    sc->sc_playchan.nframes;
 	}
 	if (sc->sc_mode & AUMODE_RECORD) {
-		rbpf = (sc->sc_recchan.bytes_per_frame +
-		    sc->sc_recchan.sample_size) *
+		rbpf = (sc->sc_recchan.max_bytes_per_frame) *
 		    sc->sc_recchan.nframes;
 	}
 	bpf = max(pbpf, rbpf);
@@ -2745,7 +2745,10 @@ uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 	void *buf;
 	int i, size;
 
-	size = (ch->bytes_per_frame + ch->sample_size) * ch->nframes;
+	DPRINTF(("%s: max_bytes_per_frame=%d nframes=%d\n", __func__,
+	    ch->max_bytes_per_frame, ch->nframes));
+
+	size = ch->max_bytes_per_frame * ch->nframes;
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++) {
 		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
@@ -3000,13 +3003,26 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
-    int maxpktsize)
+uaudio_chan_init(struct chan *ch, int mode, int altidx,
+    const struct audio_params *param)
 {
+	struct as_info *ai = &ch->sc->sc_alts[altidx];
 	int samples_per_frame;
 
+	ch->use_maxpkt = 0;
+	if (ai->attributes & UA_SED_MAXPACKETSONLY) {
+		DPRINTF(("%s: alt %d needs maxpktsize packets\n",
+		    __func__, altidx));
+		ch->use_maxpkt = 1;
+	}
+	if (mode == AUMODE_RECORD) {
+		DPRINTF(("%s: using maxpktsize packets for record channel\n",
+		    __func__));
+		ch->use_maxpkt = 1;
+	}
+
 	ch->altidx = altidx;
-	ch->maxpktsize = maxpktsize;
+	ch->maxpktsize = UGETW(ai->edesc->wMaxPacketSize);
 	ch->sample_rate = param->sample_rate;
 	ch->sample_size = param->factor * param->channels * param->bps;
 	ch->usb_fps = USB_FRAMES_PER_SECOND;
@@ -3016,8 +3032,13 @@ uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
 	 * make sure the blocksize duration will be > 1 USB frame.
 	 */
 	samples_per_frame = ch->sample_rate / ch->usb_fps;
-	if (ch->maxpktsize == 0) {
+	if (!ch->use_maxpkt) {
 		ch->fraction = ch->sample_rate % ch->usb_fps;
+		if (samples_per_frame * ch->sample_size > ch->maxpktsize) {
+			DPRINTF(("%s: packet size %d too big, max %d\n",
+			    __func__, ch->bytes_per_frame, ch->maxpktsize));
+			samples_per_frame = ch->maxpktsize / ch->sample_size;
+		}
 		ch->bytes_per_frame = samples_per_frame * ch->sample_size;
 		ch->nframes = UAUDIO_MIN_FRAMES;
 	} else {
@@ -3025,11 +3046,18 @@ uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
 		ch->bytes_per_frame = ch->maxpktsize;
 		ch->nframes = UAUDIO_MIN_FRAMES * samples_per_frame *
 		    ch->sample_size / ch->maxpktsize;
-		if (ch->nframes > UAUDIO_MAX_FRAMES)
-			ch->nframes = UAUDIO_MAX_FRAMES;
-		else if (ch->nframes < 1)
-			ch->nframes = 1;
 	}
+	if (ch->nframes > UAUDIO_MAX_FRAMES)
+		ch->nframes = UAUDIO_MAX_FRAMES;
+	else if (ch->nframes < 1)
+		ch->nframes = 1;
+
+	ch->max_bytes_per_frame = ch->bytes_per_frame;
+	if (!ch->use_maxpkt)
+		ch->max_bytes_per_frame += ch->sample_size;
+	if (ch->max_bytes_per_frame > ch->maxpktsize)
+		ch->max_bytes_per_frame = ch->maxpktsize;
+
 	ch->residue = 0;
 }
 
@@ -3280,7 +3308,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 			return (EINVAL);
 		}
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_playchan, paltidx, play, 0);
+		uaudio_chan_init(&sc->sc_playchan, AUMODE_PLAY, paltidx, play);
 	}
 	if (setmode & AUMODE_RECORD) {
 		if (raltidx == -1) {
@@ -3289,8 +3317,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 			return (EINVAL);
 		}
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, rec,
-		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
+		uaudio_chan_init(&sc->sc_recchan, AUMODE_RECORD, raltidx, rec);
 	}
 
 	if ((usemode & AUMODE_PLAY) && sc->sc_playchan.altidx != -1)
