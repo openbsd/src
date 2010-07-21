@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.56 2010/07/13 20:07:24 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.57 2010/07/21 09:22:19 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1344,18 +1344,16 @@ rcs_delta_stats(struct rcs_delta *rdp, int *ladded, int *lremoved)
  * one).  The <msg> argument specifies the log message for that revision, and
  * <date> specifies the revision's date (a value of -1 is
  * equivalent to using the current time).
- * If <username> is NULL, set the author for this revision to the current user.
- * Otherwise, set it to <username>.
+ * If <author> is NULL, set the author for this revision to the current user.
  * Returns 0 on success, or -1 on failure.
  */
 int
 rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
-    const char *username)
+    const char *author)
 {
 	time_t now;
 	struct passwd *pw;
 	struct rcs_delta *ordp, *rdp;
-	uid_t uid;
 
 	if (rev == RCS_HEAD_REV) {
 		if (rf->rf_flags & RCS_CREATE) {
@@ -1373,10 +1371,6 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		}
 	}
 
-	uid = getuid();
-	if ((pw = getpwuid(uid)) == NULL)
-		errx(1, "getpwuid failed");
-
 	rdp = xcalloc(1, sizeof(*rdp));
 
 	TAILQ_INIT(&(rdp->rd_branches));
@@ -1392,12 +1386,12 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		rcsnum_cpy(ordp->rd_num, rdp->rd_next, 0);
 	}
 
-	if (uid == 0)
-		username = getlogin();
-	if (username == NULL || *username == '\0')
-		username = pw->pw_name;
-
-	rdp->rd_author = xstrdup(username);
+	if (!author && !(author = getlogin())) {
+		if (!(pw = getpwuid(getuid())))
+			errx(1, "getpwuid failed");
+		author = pw->pw_name;
+	}
+	rdp->rd_author = xstrdup(author);
 	rdp->rd_state = xstrdup(RCS_STATE_EXP);
 	rdp->rd_log = xstrdup(msg);
 
