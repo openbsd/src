@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.38 2010/07/21 07:11:55 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.39 2010/07/21 07:49:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -379,11 +379,6 @@ delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 /*
  * GPIO pin numbers
  */
-#define AP192K_GPIO_CLK		0x2
-#define AP192K_GPIO_DOUT	0x8
-#define AP192K_GPIO_CSMASK	0x70
-#define AP192K_GPIO_CS(dev)	((dev) << 4)
-
 #define AP192K_GPIO_CLK		0x2
 #define AP192K_GPIO_DOUT	0x8
 #define AP192K_GPIO_CSMASK	0x70
