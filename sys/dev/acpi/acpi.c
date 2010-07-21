@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.183 2010/07/20 21:37:33 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.184 2010/07/21 05:03:19 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1554,12 +1554,6 @@ acpi_interrupt(void *arg)
 	u_int32_t processed = 0, idx, jdx;
 	u_int8_t sts, en;
 
-#if 0
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1,
-	    sc->sc_fadt->gpe1_base);
-#endif
-
 	dnprintf(40, "ACPI Interrupt\n");
 	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
 		sts = acpi_read_pmreg(sc, ACPIREG_GPE_STS, idx>>3);
@@ -1807,110 +1801,12 @@ acpi_find_gpe(struct acpi_softc *sc, int gpe)
 #endif
 }
 
-#if 0
-/* New GPE handling code: Create GPE block */
-void
-acpi_init_gpeblock(struct acpi_softc *sc, int reg, int len, int base)
-{
-	int i, j;
-
-	if (!reg || !len)
-		return;
-	for (i = 0; i < len; i++) {
-		pgpe = acpi_os_malloc(sizeof(gpeblock));
-		if (pgpe == NULL)
-			return;
-
-		/* Allocate GPE Handler Block */
-		pgpe->start = base + i;
-		acpi_bus_space_map(sc->sc_iot, reg+i,     1, 0, &pgpe->sts_ioh);
-		acpi_bus_space_map(sc->sc_iot, reg+i+len, 1, 0, &pgpe->en_ioh);
-		SIMPLEQ_INSERT_TAIL(&sc->sc_gpes, gpe, gpe_link);
-
-		/* Clear pending GPEs */
-		bus_space_write_1(sc->sc_iot, pgpe->sts_ioh, 0, 0xFF);
-		bus_space_write_1(sc->sc_iot, pgpe->en_ioh,  0, 0x00);
-	}
-
-	/* Search for GPE handlers */
-	for (i = 0; i < len*8; i++) {
-		char gpestr[32];
-		struct aml_node *h;
-
-		snprintf(gpestr, sizeof(gpestr), "\\_GPE._L%.2X", base+i);
-		h = aml_searchnode(&aml_root, gpestr);
-		if (acpi_set_gpehandler(sc, base+i, acpi_gpe_level, h, 0) != 0) {
-			snprintf(gpestr, sizeof(gpestr), "\\_GPE._E%.2X", base+i);
-			h = aml_searchnode(&aml_root, gpestr);
-			acpi_set_gpehandler(sc, base+i, acpi_gpe_edge, h, 1);
-		}
-	}
-}
-
-/* Process GPE interrupts */
-int
-acpi_handle_gpes(struct acpi_softc *sc)
-{
-	uint8_t en, sts;
-	int processed, i;
-
-	processed = 0;
-	SIMPLEQ_FOREACH(pgpe, &sc->sc_gpes, gpe_link) {
-		sts = bus_space_read_1(sc->sc_iot, pgpe->sts_ioh, 0);
-		en = bus_space_read_1(sc->sc_iot, pgpe->en_ioh, 0);
-		for (i = 0; i< 8 ; i++) {
-			if (en & sts & (1L << i)) {
-				pgpe->table[i].active = 1;
-				processed = 1;
-			}
-		}
-	}
-	return processed;
-}
-#endif
-
-#if 0
-void
-acpi_add_gpeblock(struct acpi_softc *sc, int reg, int len, int gpe)
-{
-	int idx, jdx;
-	u_int8_t en, sts;
-
-	if (!reg || !len)
-		return;
-	for (idx = 0; idx < len; idx++) {
-		sts = inb(reg + idx);
-		en  = inb(reg + len + idx);
-		printf("-- gpe %.2x-%.2x : en:%.2x sts:%.2x  %.2x\n",
-		    gpe+idx*8, gpe+idx*8+7, en, sts, en&sts);
-		for (jdx = 0; jdx < 8; jdx++) {
-			char gpestr[32];
-			struct aml_node *l, *e;
-
-			if (en & sts & (1L << jdx)) {
-				snprintf(gpestr,sizeof(gpestr), "\\_GPE._L%.2X", gpe+idx*8+jdx);
-				l = aml_searchname(&aml_root, gpestr);
-				snprintf(gpestr,sizeof(gpestr), "\\_GPE._E%.2X", gpe+idx*8+jdx);
-				e = aml_searchname(&aml_root, gpestr);
-				printf("  GPE %.2x active L%x E%x\n", gpe+idx*8+jdx, l, e);
-			}
-		}
-	}
-}
-#endif
-
 void
 acpi_init_gpes(struct acpi_softc *sc)
 {
 	struct aml_node *gpe;
 	char name[12];
 	int  idx, ngpe;
-
-#if 0
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1,
-	    sc->sc_fadt->gpe1_base);
-#endif
 
 	sc->sc_lastgpe = sc->sc_fadt->gpe0_blk_len << 2;
 	if (sc->sc_fadt->gpe1_blk_len) {
