@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.104 2010/07/21 18:48:01 nicm Exp $	*/
+/*	$OpenBSD: conf.h,v 1.105 2010/07/21 23:40:26 nicm Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -605,8 +605,6 @@ cdev_decl(raid);
 cdev_decl(iop);
 
 cdev_decl(ch);
-
-cdev_decl(ss);
 
 bdev_decl(sd);
 cdev_decl(sd);
