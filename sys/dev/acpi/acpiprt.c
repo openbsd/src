@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.40 2010/07/10 04:59:55 jordan Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.41 2010/07/21 15:07:40 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -148,10 +148,10 @@ acpiprt_getirq(union acpi_resource *crs, void *arg)
 	typ = AML_CRSTYPE(crs);
 	switch (typ) {
 	case SR_IRQ:
-		*irq = ffs(aml_letohost16(crs->sr_irq.irq_mask)) - 1;
+		*irq = ffs(letoh16(crs->sr_irq.irq_mask)) - 1;
 		break;
 	case LR_EXTIRQ:
-		*irq = aml_letohost32(crs->lr_extirq.irq[0]);
+		*irq = letoh32(crs->lr_extirq.irq[0]);
 		break;
 	default:
 		printf("unknown interrupt: %x\n", typ);

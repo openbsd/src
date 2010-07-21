@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.169 2010/07/20 12:14:10 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.170 2010/07/21 15:07:40 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -47,7 +47,8 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
-struct acpi_q 		*acpi_maptable(struct acpi_softc *sc, paddr_t, const char *, const char *, 
+struct acpi_q 		*acpi_maptable(struct acpi_softc *sc, paddr_t,
+			    const char *, const char *, 
     			    const char *, int);
 struct aml_scope 	*aml_load(struct acpi_softc *, struct aml_scope *,
     			    struct aml_value *, struct aml_value *);
@@ -69,8 +70,8 @@ int			aml_msb(u_int64_t);
 int			aml_tstbit(const u_int8_t *, int);
 void			aml_setbit(u_int8_t *, int, int);
 
-void		aml_xaddref(struct aml_value *, const char *);
-void		aml_xdelref(struct aml_value **, const char *);
+void			aml_xaddref(struct aml_value *, const char *);
+void			aml_xdelref(struct aml_value **, const char *);
 
 void			aml_bufcpy(void *, int, const void *, int, int);
 
@@ -581,7 +582,8 @@ aml_notify_dev(const char *pnpid, int notify_value)
 			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
 }
 
-void acpi_poll_notify(void)
+void
+acpi_poll_notify(void)
 {
 	struct aml_notify_data	*pdata = NULL;
 
@@ -1565,10 +1567,10 @@ aml_print_resource(union acpi_resource *crs, void *arg)
 	case LR_EXTIRQ:
 		printf("extirq\tflags:%.2x len:%.2x irq:%.4x\n",
 		    crs->lr_extirq.flags, crs->lr_extirq.irq_count,
-		    aml_letohost32(crs->lr_extirq.irq[0]));
+		    letoh32(crs->lr_extirq.irq[0]));
 		break;
 	case SR_IRQ:
-		printf("irq\t%.4x %.2x\n", aml_letohost16(crs->sr_irq.irq_mask),
+		printf("irq\t%.4x %.2x\n", letoh16(crs->sr_irq.irq_mask),
 		    crs->sr_irq.irq_flags);
 		break;
 	case SR_DMA:
