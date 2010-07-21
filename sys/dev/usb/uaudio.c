@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.80 2010/07/21 05:04:57 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.81 2010/07/21 05:54:42 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -134,7 +134,6 @@ struct chan {
 	u_int	nframes;	/* # of frames per transfer */
 	u_int	usb_fps;
 	u_int	maxpktsize;
-	u_int	use_maxpkt;	/* whether to always use maxpktsize */
 	u_int	reqms;		/* usb request data duration, in ms */
 	u_int	hi_speed;
 
@@ -3011,18 +3010,17 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
     const struct audio_params *param)
 {
 	struct as_info *ai = &ch->sc->sc_alts[altidx];
-	int samples_per_frame, ival;
+	int samples_per_frame, ival, use_maxpkt = 0;
 
-	ch->use_maxpkt = 0;
 	if (ai->attributes & UA_SED_MAXPACKETSONLY) {
 		DPRINTF(("%s: alt %d needs maxpktsize packets\n",
 		    __func__, altidx));
-		ch->use_maxpkt = 1;
+		use_maxpkt = 1;
 	}
 	if (mode == AUMODE_RECORD) {
 		DPRINTF(("%s: using maxpktsize packets for record channel\n",
 		    __func__));
-		ch->use_maxpkt = 1;
+		use_maxpkt = 1;
 	}
 
 	ch->altidx = altidx;
@@ -3049,7 +3047,7 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
 	 * make sure the blocksize duration will be > 1 USB frame.
 	 */
 	samples_per_frame = ch->sample_rate / ch->usb_fps;
-	if (!ch->use_maxpkt) {
+	if (!use_maxpkt) {
 		ch->fraction = ch->sample_rate % ch->usb_fps;
 		if (samples_per_frame * ch->sample_size > ch->maxpktsize) {
 			DPRINTF(("%s: packet size %d too big, max %d\n",
@@ -3070,7 +3068,7 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
 		ch->nframes = 1;
 
 	ch->max_bytes_per_frame = ch->bytes_per_frame;
-	if (!ch->use_maxpkt)
+	if (!use_maxpkt)
 		ch->max_bytes_per_frame += ch->sample_size;
 	if (ch->max_bytes_per_frame > ch->maxpktsize)
 		ch->max_bytes_per_frame = ch->maxpktsize;
