@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.185 2010/07/21 15:01:52 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.186 2010/07/21 19:42:05 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1711,7 +1711,7 @@ acpi_gpe(struct acpi_softc *sc, int gpe, void *arg)
 
 	s = spltty();
 	mask = (1L << (gpe & 7));
-	if (sc->gpe_table[gpe].edge)
+	if (!sc->gpe_table[gpe].edge)
 		acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3);
 	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
