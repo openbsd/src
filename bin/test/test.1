@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.27 2010/05/13 05:50:35 jmc Exp $
+.\"	$OpenBSD: test.1,v 1.28 2010/07/21 19:42:20 jmc Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)test.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: May 13 2010 $
+.Dd $Mdocdate: July 21 2010 $
 .Dt TEST 1
 .Os
 .Sh NAME
@@ -290,6 +290,20 @@ True if
 .Ar expression
 is true.
 .El
+.Pp
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -compact
+.It 0
+Expression evaluated to true.
+.It 1
+Expression evaluated to false or expression was
+missing.
+.It \*(Gt1
+An error occurred.
+.El
 .Sh GRAMMAR AMBIGUITY
 The
 .Nm
@@ -302,19 +316,6 @@ are evaluated consistently according to the rules specified in the
 standards document.
 All other cases are subject to the ambiguity in the
 command semantics.
-.Sh RETURN VALUES
-The
-.Nm
-utility exits with one of the following values:
-.Bl -tag -width Ds
-.It 0
-Expression evaluated to true.
-.It 1
-Expression evaluated to false or expression was
-missing.
-.It \*(Gt1
-An error occurred.
-.El
 .Sh SEE ALSO
 .Xr ksh 1
 .Sh STANDARDS
