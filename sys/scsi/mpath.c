@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.17 2010/07/01 03:01:37 matthew Exp $ */
+/*	$OpenBSD: mpath.c,v 1.18 2010/07/21 21:34:12 todd Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -175,7 +175,6 @@ void
 mpath_done(struct scsi_xfer *mxs)
 {
 	struct scsi_xfer *xs = mxs->cookie;
-	int s;
 
 	xs->error = mxs->error;
 	xs->status = mxs->status;
