@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.81 2010/07/21 05:54:42 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.82 2010/07/21 05:57:19 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1602,7 +1602,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	const usb_endpoint_descriptor_audio_t *ed;
 	const usb_endpoint_descriptor_audio_t *epdesc1;
 	const struct usb_audio_streaming_endpoint_descriptor *sed;
-	int format, chan, prec, enc;
+	int format, chan, prec, enc, bps;
 	int dir, type, sync;
 	struct as_info ai;
 	const char *format_str;
@@ -1727,9 +1727,10 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	format = UGETW(asid->wFormatTag);
 	chan = asf1d->bNrChannels;
 	prec = asf1d->bBitResolution;
-	if (prec != 8 && prec != 16 && prec != 24) {
-		printf("%s: ignored setting with precision %d\n",
-		       sc->sc_dev.dv_xname, prec);
+	bps = asf1d->bSubFrameSize;
+	if ((prec != 8 && prec != 16 && prec != 24) || (bps < 1 || bps > 4)) {
+		printf("%s: ignored setting with precision %d bps %d\n",
+		       sc->sc_dev.dv_xname, prec, bps);
 		return (USBD_NORMAL_COMPLETION);
 	}
 	switch (format) {
@@ -3026,7 +3027,7 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
 	ch->altidx = altidx;
 	ch->maxpktsize = UGETW(ai->edesc->wMaxPacketSize);
 	ch->sample_rate = param->sample_rate;
-	ch->sample_size = param->factor * param->channels * param->bps;
+	ch->sample_size = param->channels * param->bps;
 	ch->usb_fps = USB_FRAMES_PER_SECOND;
 	ch->hi_speed = ch->sc->sc_udev->speed == USB_SPEED_HIGH;
 	if (ch->hi_speed) {
