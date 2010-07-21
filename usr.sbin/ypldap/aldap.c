@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.25 2010/07/21 14:45:59 gilles Exp $ */
-/*	$OpenBSD: aldap.c,v 1.25 2010/07/21 14:45:59 gilles Exp $ */
+/*	$Id: aldap.c,v 1.26 2010/07/21 17:32:12 martinh Exp $ */
+/*	$OpenBSD: aldap.c,v 1.26 2010/07/21 17:32:12 martinh Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -689,7 +689,7 @@ ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 		if ((elm = ber_add_set(prev)) == NULL)
 			goto callfail;
 		root = elm;
-		ber_set_header(elm, BER_CLASS_APP, type);
+		ber_set_header(elm, BER_CLASS_CONTEXT, type);
 
 		if (*++cp != '(')		/* opening `(` of filter */
 			goto syntaxfail;
@@ -707,7 +707,7 @@ ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 	case '!':		/* NOT */
 		if ((root = ber_add_sequence(prev)) == NULL)
 			goto callfail;
-		ber_set_header(root, BER_CLASS_APP, LDAP_FILT_NOT);
+		ber_set_header(root, BER_CLASS_CONTEXT, LDAP_FILT_NOT);
 
 		cp++;				/* now points to sub-filter */
 		if ((elm = ldap_do_parse_search_filter(root, &cp)) == NULL)
