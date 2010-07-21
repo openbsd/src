@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.79 2010/07/21 03:06:35 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.80 2010/07/21 05:04:57 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -52,6 +52,8 @@
 #include <sys/device.h>
 #include <sys/poll.h>
 
+#include <machine/bus.h>
+
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
@@ -61,6 +63,7 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 
 #include <dev/usb/uaudioreg.h>
 
@@ -126,13 +129,14 @@ struct chan {
 	u_int	sample_rate;
 	u_int	bytes_per_frame;
 	u_int	max_bytes_per_frame;
-	u_int	fraction;	/* fraction/1000 is the extra samples/frame */
+	u_int	fraction;	/* fraction/usb_fps is the extra samples/frame */
 	u_int	residue;	/* accumulates the fractional samples */
 	u_int	nframes;	/* # of frames per transfer */
-	u_int   usb_fps;
+	u_int	usb_fps;
 	u_int	maxpktsize;
 	u_int	use_maxpkt;	/* whether to always use maxpktsize */
 	u_int	reqms;		/* usb request data duration, in ms */
+	u_int	hi_speed;
 
 	u_char	*start;		/* upper layer buffer start */
 	u_char	*end;		/* upper layer buffer end */
@@ -3007,7 +3011,7 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
     const struct audio_params *param)
 {
 	struct as_info *ai = &ch->sc->sc_alts[altidx];
-	int samples_per_frame;
+	int samples_per_frame, ival;
 
 	ch->use_maxpkt = 0;
 	if (ai->attributes & UA_SED_MAXPACKETSONLY) {
@@ -3026,6 +3030,19 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
 	ch->sample_rate = param->sample_rate;
 	ch->sample_size = param->factor * param->channels * param->bps;
 	ch->usb_fps = USB_FRAMES_PER_SECOND;
+	ch->hi_speed = ch->sc->sc_udev->speed == USB_SPEED_HIGH;
+	if (ch->hi_speed) {
+		ch->usb_fps *= 8;
+		/*
+		 * Polling interval is considered a frame, as opposed to
+		 * micro-frame being a frame.
+		 */
+		ival = ch->sc->sc_alts[altidx].edesc->bInterval;
+		if (ival > 0 && ival <= 4)
+			ch->usb_fps >>= (ival - 1);
+		DPRINTF(("%s: detected USB high-speed with ival %d\n",
+		    __func__, ival));
+	}
 
 	/*
 	 * Use UAUDIO_MIN_FRAMES here, so uaudio_round_blocksize() can
@@ -3059,6 +3076,8 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
 		ch->max_bytes_per_frame = ch->maxpktsize;
 
 	ch->residue = 0;
+	DPRINTF(("%s: residual sample fraction: %d/%d\n", __func__,
+	    ch->fraction, ch->usb_fps));
 }
 
 void
