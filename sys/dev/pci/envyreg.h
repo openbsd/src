@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.14 2010/03/07 18:55:45 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.15 2010/07/21 07:11:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -74,14 +74,6 @@
 #define ENVY_CCI_GPIODATA	0x20
 #define ENVY_CCI_GPIOMASK	0x21
 #define ENVY_CCI_GPIODIR	0x22
-
-/*
- * GPIO pin numbers
- */
-#define ENVY_GPIO_CLK		0x2
-#define ENVY_GPIO_DOUT		0x8
-#define ENVY_GPIO_CSMASK	0x70
-#define ENVY_GPIO_CS(dev)	((dev) << 4)
 
 /*
  * EEPROM bytes signification

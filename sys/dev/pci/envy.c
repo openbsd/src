@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.37 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: envy.c,v 1.38 2010/07/21 07:11:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -115,6 +115,9 @@ enum ac97_host_flags envy_ac97_flags_codec(void *);
 
 void delta_init(struct envy_softc *);
 void delta_codec_write(struct envy_softc *, int, int, int);
+
+void ap192k_init(struct envy_softc *);
+void ap192k_codec_write(struct envy_softc *, int, int, int);
 
 void revo51_init(struct envy_softc *);
 void revo51_codec_write(struct envy_softc *, int, int, int);
@@ -281,6 +284,12 @@ struct envy_card envy_cards[] = {
 		julia_codec_write,
 		julia_eeprom
 	}, {
+		PCI_ID_CODE(0x1412, 0x3632),
+		"M-Audio Audiophile 192k",
+		2, &unkenvy_codec, 2, &ak4358_dac,
+		ap192k_init,
+		ap192k_codec_write
+	}, {
 		PCI_ID_CODE(0x1412, 0x3631),
 		"M-Audio Revolution 5.1",
 		2, &ak5365_adc, 6, &ak4358_dac,
@@ -305,6 +314,14 @@ struct envy_card envy_cards[] = {
 /*
  * M-Audio Delta specific code
  */
+
+/*
+ * GPIO pin numbers
+ */
+#define DELTA_GPIO_CLK		0x2
+#define DELTA_GPIO_DOUT		0x8
+#define DELTA_GPIO_CSMASK	0x70
+#define DELTA_GPIO_CS(dev)	((dev) << 4)
 
 void
 delta_init(struct envy_softc *sc)
@@ -332,25 +349,84 @@ delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 	int bits, i, reg;
 
 	reg = envy_gpio_getstate(sc);
-	reg &= ~ENVY_GPIO_CSMASK;
-	reg |=  ENVY_GPIO_CS(dev);
+	reg &= ~DELTA_GPIO_CSMASK;
+	reg |=  DELTA_GPIO_CS(dev);
 	envy_gpio_setstate(sc, reg);
 	delay(1);
 
 	bits  = 0xa000 | (addr << 8) | data;
 	for (i = 0; i < 16; i++) {
-		reg &= ~(ENVY_GPIO_CLK | ENVY_GPIO_DOUT);
-		reg |= (bits & 0x8000) ? ENVY_GPIO_DOUT : 0;
+		reg &= ~(DELTA_GPIO_CLK | DELTA_GPIO_DOUT);
+		reg |= (bits & 0x8000) ? DELTA_GPIO_DOUT : 0;
 		envy_gpio_setstate(sc, reg);
 		delay(1);
 
-		reg |= ENVY_GPIO_CLK;
+		reg |= DELTA_GPIO_CLK;
 		envy_gpio_setstate(sc, reg);
 		delay(1);
 		bits <<= 1;
 	}
 
-	reg |= ENVY_GPIO_CSMASK;
+	reg |= DELTA_GPIO_CSMASK;
+	envy_gpio_setstate(sc, reg);
+	delay(1);
+}
+
+/*
+ * M-Audio Audiophile 192 specific code
+ */
+
+/*
+ * GPIO pin numbers
+ */
+#define AP192K_GPIO_CLK		0x2
+#define AP192K_GPIO_DOUT	0x8
+#define AP192K_GPIO_CSMASK	0x70
+#define AP192K_GPIO_CS(dev)	((dev) << 4)
+
+#define AP192K_GPIO_CLK		0x2
+#define AP192K_GPIO_DOUT	0x8
+#define AP192K_GPIO_CSMASK	0x70
+#define AP192K_GPIO_CS(dev)	((dev) << 4)
+
+void
+ap192k_init(struct envy_softc *sc)
+{
+	int i;
+
+	envy_codec_write(sc, 0, 0, 0);	/* reset */
+	delay(300);
+	envy_codec_write(sc, 0, 0, 0x87);	/* i2s mode */
+	for (i = 0; i < sc->card->noch; i++) {
+		sc->shadow[0][AK4358_ATT(i)] = 0xff;
+	}
+}
+
+void
+ap192k_codec_write(struct envy_softc *sc, int dev, int addr, int data)
+{
+	int bits, i, reg;
+
+	reg = envy_gpio_getstate(sc);
+	reg &= ~AP192K_GPIO_CSMASK;
+	reg |=  AP192K_GPIO_CS(dev);
+	envy_gpio_setstate(sc, reg);
+	delay(1);
+
+	bits  = 0xa000 | (addr << 8) | data;
+	for (i = 0; i < 16; i++) {
+		reg &= ~(AP192K_GPIO_CLK | AP192K_GPIO_DOUT);
+		reg |= (bits & 0x8000) ? AP192K_GPIO_DOUT : 0;
+		envy_gpio_setstate(sc, reg);
+		delay(1);
+
+		reg |= AP192K_GPIO_CLK;
+		envy_gpio_setstate(sc, reg);
+		delay(1);
+		bits <<= 1;
+	}
+
+	reg |= AP192K_GPIO_CSMASK;
 	envy_gpio_setstate(sc, reg);
 	delay(1);
 }
@@ -359,6 +435,8 @@ delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
  * M-Audio Revolution 5.1 specific code
  */
 
+#define REVO51_GPIO_CLK		0x2
+#define REVO51_GPIO_DOUT	0x8
 #define REVO51_GPIO_CSMASK	0x30
 #define REVO51_GPIO_CS(dev)	((dev) ? 0x10 : 0x20)
 #define REVO51_MUTE		0x400000
@@ -413,12 +491,12 @@ revo51_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 
 		bits  = 0xa000 | (addr << 8) | data;
 		for (mask = 0x8000; mask != 0; mask >>= 1) {
-			reg &= ~(ENVY_GPIO_CLK | ENVY_GPIO_DOUT);
-			reg |= (bits & mask) ? ENVY_GPIO_DOUT : 0;
+			reg &= ~(REVO51_GPIO_CLK | REVO51_GPIO_DOUT);
+			reg |= (bits & mask) ? REVO51_GPIO_DOUT : 0;
 			envy_gpio_setstate(sc, reg);
 			delay(1);
 
-			reg |= ENVY_GPIO_CLK;
+			reg |= REVO51_GPIO_CLK;
 			envy_gpio_setstate(sc, reg);
 			delay(1);
 		}
