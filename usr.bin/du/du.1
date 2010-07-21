@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.26 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: du.1,v 1.27 2010/07/21 20:02:29 jmc Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: July 21 2010 $
 .Dt DU 1
 .Os
 .Sh NAME
@@ -121,6 +121,8 @@ Files having multiple hard links are counted (and displayed) a single
 time per
 .Nm
 execution.
+.Pp
+.Ex -std du
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE

@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.40 2010/07/02 23:40:09 krw Exp $
+.\" $OpenBSD: at.1,v 1.41 2010/07/21 20:02:29 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 2 2010 $
+.Dd $Mdocdate: July 21 2010 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -297,6 +297,17 @@ An empty
 .Pa /var/cron/at.deny
 means that every user is allowed to use these commands.
 This is the default configuration.
+.Pp
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It 0
+Jobs were successfully submitted, removed, or listed.
+.It \*(Gt0
+An error occurred.
+.El
 .Sh FILES
 .Bl -tag -width /var/cron/at.allow -compact
 .It Pa /var/cron/atjobs

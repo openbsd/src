@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.1,v 1.16 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: ar.1,v 1.17 2010/07/21 20:02:29 jmc Exp $
 .\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ar.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: July 21 2010 $
 .Dt AR 1
 .Os
 .Sh NAME
@@ -297,9 +297,7 @@ into the archive; this will fail if the user is not the owner of the
 extracted file or the superuser.
 .El
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std ar
 .Sh ENVIRONMENT
 .Bl -tag -width indent -compact
 .It Ev TMPDIR
