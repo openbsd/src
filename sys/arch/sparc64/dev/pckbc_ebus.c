@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.10 2008/07/29 04:20:35 miod Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.11 2010/07/21 20:10:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -184,7 +184,7 @@ pckbc_ebus_attach(parent, self, aux)
 	psc->id = t;
 
 	printf("\n");
-	pckbc_attach(psc);
+	pckbc_attach(psc, 0);
 }
 
 int

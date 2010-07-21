@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.21 2010/01/12 20:31:22 drahn Exp $ */
+/* $OpenBSD: pckbc.c,v 1.22 2010/07/21 20:10:17 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -285,8 +285,9 @@ pckbc_attach_slot(sc, slot)
 }
 
 void
-pckbc_attach(sc)
+pckbc_attach(sc, flags)
 	struct pckbc_softc *sc;
+	int flags;
 {
 	struct pckbc_internal *t;
 	bus_space_tag_t iot;
@@ -348,8 +349,8 @@ pckbc_attach(sc)
 		haskbd = 1;
 	}
 #endif /* 0 */
-	if (haskbd == 0) {
 #if defined(__i386__) || defined(__amd64__)
+	if (haskbd == 0 && !ISSET(flags, PCKBCF_FORCE_KEYBOARD_PRESENT)) {
 		/*
 		 * If there is no keyboard present, yet we are the console,
 		 * we might be on a legacy-free PC where the PS/2 emulated
@@ -365,8 +366,8 @@ pckbc_attach(sc)
 			pckbc_console = 0;
 			wscn_input_init(1);
 		}
-#endif
 	}
+#endif
 
 	/*
 	 * Check aux port ok.

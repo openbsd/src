@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.25 2010/07/08 19:29:25 deraadt Exp $ */
+/* $OpenBSD: pckbd.c,v 1.26 2010/07/21 20:10:17 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -336,8 +336,12 @@ pckbdprobe(parent, match, aux)
 		 * be no PS/2 connector at all; in that case, do not
 		 * even try to attach; ukbd will take over as console.
 		 */
-		if (res == ENXIO)
-			return 0;
+		if (res == ENXIO) {
+			/* check cf_flags from parent */
+			struct cfdata *cf = parent->dv_cfdata;
+			if (!ISSET(cf->cf_flags, PCKBCF_FORCE_KEYBOARD_PRESENT))
+				return 0;
+		}
 #endif
 		return (pckbd_is_console(pa->pa_tag, pa->pa_slot) ? 1 : 0);
 	}

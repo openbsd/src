@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_isa.c,v 1.5 2007/10/01 15:34:48 krw Exp $	*/
+/*	$OpenBSD: pckbc_isa.c,v 1.6 2010/07/21 20:10:17 miod Exp $	*/
 /*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ pckbc_isa_attach(parent, self, aux)
 {
 	struct pckbc_isa_softc *isc = (void *)self;
 	struct pckbc_softc *sc = &isc->sc_pckbc;
+	struct cfdata *cf = self->dv_cfdata;
 	struct isa_attach_args *ia = aux;
 	struct pckbc_internal *t;
 	bus_space_tag_t iot;
@@ -162,7 +163,7 @@ pckbc_isa_attach(parent, self, aux)
 	printf("\n");
 
 	/* Finish off the attach. */
-	pckbc_attach(sc);
+	pckbc_attach(sc, cf->cf_flags);
 }
 
 void
