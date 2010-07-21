@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 2007/09/12 18:18:27 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 2010/07/21 15:40:04 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ cdev_decl(bios);
 #define	cdev_acpi_init(c,n) {\
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, selfalse, \
 	(dev_type_mmap((*))) enodev, 0, D_KQFILTER, dev_init(c,n,kqfilter) }
 cdev_decl(acpi);
 
