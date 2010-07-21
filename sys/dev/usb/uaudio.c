@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.82 2010/07/21 05:57:19 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.83 2010/07/21 10:16:07 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -163,6 +163,8 @@ struct chan {
 #define UAUDIO_FLAG_NO_XU	 0x0004	/* has broken extension unit */
 #define UAUDIO_FLAG_BAD_ADC	 0x0008	/* bad audio spec version number */
 #define UAUDIO_FLAG_VENDOR_CLASS 0x0010	/* claims vendor class but works */
+#define UAUDIO_FLAG_DEPENDENT	 0x0020	/* play and record params must equal */
+#define UAUDIO_FLAG_EMU0202	 0x0040
 
 struct uaudio_devs {
 	struct usb_devno	 uv_dev;
@@ -173,7 +175,8 @@ struct uaudio_devs {
 	{ { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495 },
 		UAUDIO_FLAG_BAD_AUDIO },
 	{ { USB_VENDOR_CREATIVE, USB_PRODUCT_CREATIVE_EMU0202 },
-		UAUDIO_FLAG_VENDOR_CLASS },
+		UAUDIO_FLAG_VENDOR_CLASS | UAUDIO_FLAG_EMU0202 |
+		UAUDIO_FLAG_DEPENDENT },
 	{ { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502 },
 		UAUDIO_FLAG_NO_XU | UAUDIO_FLAG_BAD_ADC },
 	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMNBDLX },
@@ -317,6 +320,7 @@ void	uaudio_ctl_set
 	(struct uaudio_softc *, int, struct mixerctl *, int, int);
 
 usbd_status uaudio_set_speed(struct uaudio_softc *, int, u_int);
+void	uaudio_set_speed_emu0202(struct chan *ch);
 
 usbd_status uaudio_chan_open(struct uaudio_softc *, struct chan *);
 void	uaudio_chan_close(struct uaudio_softc *, struct chan *);
@@ -2293,9 +2297,11 @@ int
 uaudio_get_props(void *addr)
 {
 	struct uaudio_softc *sc = addr;
-	int props;
+	int props = 0;
 
-	props = AUDIO_PROP_INDEPENDENT;
+	if (!(sc->sc_quirks & UAUDIO_FLAG_DEPENDENT))
+		props |= AUDIO_PROP_INDEPENDENT;
+
 	if ((sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD)) ==
 	    (AUMODE_PLAY | AUMODE_RECORD))
 		props |= AUDIO_PROP_FULLDUPLEX;
@@ -2706,6 +2712,9 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 			DPRINTF(("uaudio_chan_open: set_speed failed err=%s\n",
 				 usbd_errstr(err)));
 	}
+
+	if (sc->sc_quirks & UAUDIO_FLAG_EMU0202)
+		uaudio_set_speed_emu0202(ch);
 
 	ch->pipe = 0;
 	ch->sync_pipe = 0;
@@ -3372,4 +3381,30 @@ uaudio_set_speed(struct uaudio_softc *sc, int endpt, u_int speed)
 	data[2] = speed >> 16;
 
 	return (usbd_do_request(sc->sc_udev, &req, data));
+}
+
+void
+uaudio_set_speed_emu0202(struct chan *ch)
+{
+	usb_device_request_t req;
+	int rates[6] = { 44100, 48000, 88200, 96000, 176400, 192000 };
+	int i;
+	u_int8_t data[1];
+
+	for (i = 0; i < 6; i++)
+		if (rates[i] >= ch->sample_rate)
+			break;
+	if (i >= 6) {
+		DPRINTF(("%s: unhandled rate %d\n", __func__, ch->sample_rate));
+		i = 0;
+	}
+
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = SET_CUR;
+	USETW2(req.wValue, 0x03, 0);
+	USETW2(req.wIndex, 12, ch->sc->sc_ac_iface);
+	USETW(req.wLength, 1);
+	data[0] = i;
+
+	usbd_do_request(ch->sc->sc_udev, &req, data);
 }
