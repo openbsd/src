@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.55 2010/07/15 20:37:38 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.56 2010/07/21 14:01:58 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2700,4 +2700,24 @@ athn_stop(struct ifnet *ifp, int disable)
 	/* For CardBus, power down the socket. */
 	if (disable && sc->sc_disable != NULL)
 		sc->sc_disable(sc);
+}
+
+void
+athn_suspend(struct athn_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	athn_stop(ifp, 1);
+}
+
+void
+athn_resume(struct athn_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	if (ifp->if_flags & IFF_UP) {
+		athn_init(ifp);
+		if (ifp->if_flags & IFF_RUNNING)
+			athn_start(ifp);
+	}
 }

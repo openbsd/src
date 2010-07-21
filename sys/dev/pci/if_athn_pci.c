@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.6 2010/05/16 15:06:22 damien Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.7 2010/07/21 14:01:58 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -71,13 +71,15 @@ struct athn_pci_softc {
 int	athn_pci_match(struct device *, void *, void *);
 void	athn_pci_attach(struct device *, struct device *, void *);
 int	athn_pci_detach(struct device *, int);
+int	athn_pci_activate(struct device *, int);
 void	athn_pci_disable_aspm(struct athn_softc *);
 
 struct cfattach athn_pci_ca = {
 	sizeof (struct athn_pci_softc),
 	athn_pci_match,
 	athn_pci_attach,
-	athn_pci_detach
+	athn_pci_detach,
+	athn_pci_activate
 };
 
 static const struct pci_matchid athn_pci_devices[] = {
@@ -190,6 +192,23 @@ athn_pci_detach(struct device *self, int flags)
 	}
 	if (psc->sc_mapsize > 0)
 		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->sc_mapsize);
+
+	return (0);
+}
+
+int
+athn_pci_activate(struct device *self, int act)
+{
+	struct athn_softc *sc = (struct athn_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		athn_suspend(sc);
+		break;
+	case DVACT_RESUME:
+		athn_resume(sc);
+		break;
+	}
 
 	return (0);
 }

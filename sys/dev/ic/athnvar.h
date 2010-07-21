@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.19 2010/07/15 20:37:38 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.20 2010/07/21 14:01:58 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -555,4 +555,6 @@ struct athn_softc {
 
 extern int	athn_attach(struct athn_softc *);
 extern void	athn_detach(struct athn_softc *);
+extern void	athn_suspend(struct athn_softc *);
+extern void	athn_resume(struct athn_softc *);
 extern int	athn_intr(void *);
