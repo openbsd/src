@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.41 2010/07/21 15:07:40 deraadt Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.42 2010/07/21 19:35:15 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -168,7 +168,7 @@ acpiprt_pri[16] = {
 	2,			/* Serial Port B */
 	5,			/* Parallel Port / Generic */
 	2,			/* Floppy Disk */
-	4, 			/* Parallel Port / Generic */
+	4,			/* Parallel Port / Generic */
 	1,			/* RTC */
 	6,			/* Generic */
 	7,			/* Generic */

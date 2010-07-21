@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.26 2010/07/08 20:56:31 jordan Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.27 2010/07/21 19:35:15 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -36,8 +36,8 @@ extern int aml_pc(uint8_t *);
 
 extern const char *aml_mnem(int opcode, uint8_t *);
 extern const char *aml_nodename(struct aml_node *);
-extern void aml_disasm(struct aml_scope *scope, int lvl, 
-    void (*dbprintf)(void *, const char *, ...), 
+extern void aml_disasm(struct aml_scope *scope, int lvl,
+    void (*dbprintf)(void *, const char *, ...),
     void *arg);
 
 const char		*db_aml_objtype(struct aml_value *);
@@ -46,7 +46,7 @@ int			db_parse_name(void);
 void			db_aml_dump(int, u_int8_t *);
 void			db_aml_showvalue(struct aml_value *);
 void			db_aml_walktree(struct aml_node *);
-void 			db_disprint(void *, const char *, ...);
+void			db_disprint(void *, const char *, ...);
 
 const char		*db_aml_fieldacc(int);
 const char		*db_aml_fieldlock(int);
@@ -171,7 +171,7 @@ db_aml_showvalue(struct aml_value *value)
 		    aml_mnem(value->v_field.type, NULL),
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
-		db_printf("  buffer: %s\n", 
+		db_printf("  buffer: %s\n",
 		    aml_nodename(value->v_field.ref1->node));
 		break;
 	case AML_OBJTYPE_OPREGION:
@@ -299,7 +299,7 @@ void db_disprint(void *arg, const char *fmt, ...)
 {
 	va_list ap;
 	char    stre[64];
-	
+
 	va_start(ap,fmt);
 	vsnprintf(stre, sizeof(stre), fmt, ap);
 	va_end(ap);

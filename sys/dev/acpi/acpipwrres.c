@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.3 2010/06/27 09:13:36 jordan Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.4 2010/07/21 19:35:15 deraadt Exp $ */
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -83,7 +83,7 @@ acpipwrres_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata		*cf = match;
 
-	if (aaa->aaa_name == NULL || strcmp(aaa->aaa_name, 
+	if (aaa->aaa_name == NULL || strcmp(aaa->aaa_name,
 	    cf->cf_driver->cd_name) != 0 || aaa->aaa_table != NULL)
 		return (0);
 
@@ -110,16 +110,16 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {
 		sc->sc_state = (int)aml_val2int(&res);
-		if (sc->sc_state != ACPIPWRRES_ON && 
+		if (sc->sc_state != ACPIPWRRES_ON &&
 		    sc->sc_state != ACPIPWRRES_OFF)
 			sc->sc_state = ACPIPWRRES_UNK;
-	} else 
+	} else
 		sc->sc_state = ACPIPWRRES_UNK;
 	DPRINTF(("%s: state = %d\n", DEVNAME(sc), sc->sc_state));
 	if (aml_evalnode(sc->sc_acpi, aaa->aaa_node, 0, NULL, &res) == 0) {
 		sc->sc_level = res.v_powerrsrc.pwr_level;
 		sc->sc_order = res.v_powerrsrc.pwr_order;
-		DPRINTF(("%s: level = %d, order %d\n", DEVNAME(sc), 
+		DPRINTF(("%s: level = %d, order %d\n", DEVNAME(sc),
 		    sc->sc_level, sc->sc_order));
 		aml_freevalue(&res);
 	}
@@ -136,13 +136,13 @@ int
 acpipwrres_notify(struct aml_node *node, int notify, void *arg)
 {
 	int				fmatch = 0;
-	struct acpipwrres_consumer 	*cons;
+	struct acpipwrres_consumer	*cons;
 	struct acpipwrres_softc		*sc = arg;
 	struct aml_value		res;
 
 	memset(&res, 0, sizeof res);
 
-	TAILQ_FOREACH(cons, &sc->sc_cons, cs_link) 
+	TAILQ_FOREACH(cons, &sc->sc_cons, cs_link)
 		if (cons->cs_node == node) {
 			fmatch = 1;
 			break;
@@ -179,7 +179,7 @@ acpipwrres_foundcons(struct aml_node *node, void *arg)
 	int				i = 0;
 	struct acpipwrres_consumer	*cons;
 	struct aml_node			*pnode;
-	struct acpipwrres_softc 	*sc = (struct acpipwrres_softc *)arg;
+	struct acpipwrres_softc		*sc = (struct acpipwrres_softc *)arg;
 	struct aml_value		res;
 
 	extern struct aml_node	aml_root;
@@ -191,14 +191,14 @@ acpipwrres_foundcons(struct aml_node *node, void *arg)
 		return (-1);
 	} else {
 		DPRINTF(("%s: node name %s\n", DEVNAME(sc), aml_nodename(node)));
-		if (!strcmp(node->name, "_PRW"))  
+		if (!strcmp(node->name, "_PRW"))
 			i = 2;          /* _PRW first two values are ints */
 		for (; i < res.length; i++) {
 			pnode = aml_searchname(&aml_root,
 			    res.v_package[i]->v_string);
 			if (pnode == sc->sc_devnode) {
 				DPRINTF(("%s: consumer match\n", DEVNAME(sc)));
-				cons = malloc(sizeof *cons, M_DEVBUF, 
+				cons = malloc(sizeof *cons, M_DEVBUF,
 				    M_WAITOK | M_ZERO);
 				cons->cs_node = pnode;
 				TAILQ_INSERT_HEAD(&sc->sc_cons, cons, cs_link);

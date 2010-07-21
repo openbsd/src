@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.51 2010/07/21 15:07:40 deraadt Exp $ */
+/* $OpenBSD: dsdt.h,v 1.52 2010/07/21 19:35:15 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -46,7 +46,7 @@ int64_t			aml_val2int(struct aml_value *);
 struct aml_node		*aml_searchname(struct aml_node *, const void *);
 struct aml_node		*aml_searchrel(struct aml_node *, const void *);
 
-struct aml_value 	*aml_getstack(struct aml_scope *, int);
+struct aml_value	*aml_getstack(struct aml_scope *, int);
 struct aml_value	*aml_allocint(uint64_t);
 struct aml_value	*aml_allocstr(const char *);
 struct aml_value	*aml_allocvalue(int, int64_t, const void *);
@@ -233,8 +233,8 @@ void			aml_foreachpkg(struct aml_value *, int,
 const char		*aml_val_to_string(const struct aml_value *);
 
 int			valid_acpihdr(void *, int, const char *);
-void			aml_disasm(struct aml_scope *scope, int lvl, 
-			    void (*dbprintf)(void *, const char *, ...), 
+void			aml_disasm(struct aml_scope *scope, int lvl,
+			    void (*dbprintf)(void *, const char *, ...),
 			    void *arg);
 int			aml_xgetpci(struct aml_node *, int64_t *);
 int			aml_evalhid(struct aml_node *, struct aml_value *);

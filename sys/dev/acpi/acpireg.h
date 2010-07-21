@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.22 2010/06/29 22:08:29 jordan Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.23 2010/07/21 19:35:15 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -396,8 +396,8 @@ struct acpi_facs {
 	u_int8_t	reserved[31];
 } __packed;
 
-/* 
- * Intel ACPI DMA Remapping Entries 
+/*
+ * Intel ACPI DMA Remapping Entries
  */
 struct acpidmar_devpath {
 	uint8_t		device;
@@ -406,10 +406,10 @@ struct acpidmar_devpath {
 
 struct acpidmar_devscope {
 	uint8_t		type;
-#define DMAR_ENDPOINT 			0x1
-#define DMAR_BRIDGE 			0x2
-#define DMAR_IOAPIC 			0x3
-#define DMAR_HPET 			0x4
+#define DMAR_ENDPOINT			0x1
+#define DMAR_BRIDGE			0x2
+#define DMAR_IOAPIC			0x3
+#define DMAR_HPET			0x4
 	uint8_t		length;
 	uint16_t	reserved;
 	uint8_t		enumid;
@@ -454,10 +454,10 @@ struct acpidmar_atsr {
 union acpidmar_entry {
 	struct {
 		uint16_t	type;
-#define DMAR_DRHD 			0x0
-#define DMAR_RMRR 			0x1
-#define DMAR_ATSR 			0x2
-#define DMAR_RHSA 			0x3
+#define DMAR_DRHD			0x0
+#define DMAR_RMRR			0x1
+#define DMAR_ATSR			0x2
+#define DMAR_RHSA			0x3
 		uint16_t	length;
 	} __packed;
 	struct acpidmar_drhd	drhd;
@@ -474,8 +474,8 @@ struct acpi_dmar {
 	/* struct acpidmar_entry[]; */
 } __packed;
 
-/* 
- * AMD I/O Virtualization Remapping Entries 
+/*
+ * AMD I/O Virtualization Remapping Entries
  */
 union acpi_ivhd_entry {
 	uint8_t		type;

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.11 2009/11/23 15:17:45 deraadt Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.12 2010/07/21 19:35:15 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -54,10 +54,10 @@ struct acpihpet_softc {
 };
 
 struct cfattach acpihpet_ca = {
-	sizeof(struct acpihpet_softc), 
-	acpihpet_match, 
-	acpihpet_attach, 
-	NULL, 
+	sizeof(struct acpihpet_softc),
+	acpihpet_match,
+	acpihpet_attach,
+	NULL,
 	acpihpet_activate
 };
 
@@ -78,8 +78,8 @@ acpihpet_activate(struct device *self, int act)
 	}
 
 	return 0;
-}		
-			
+}
+
 int
 acpihpet_match(struct device *parent, void *match, void *aux)
 {

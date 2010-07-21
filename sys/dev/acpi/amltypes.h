@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.37 2010/07/08 20:56:31 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.38 2010/07/21 19:35:15 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -313,7 +313,7 @@ struct aml_value {
 			int               synclvl;
 			int               savelvl;
 			int               count;
-		  	char              ownername[5];
+			char              ownername[5];
 			struct aml_scope *owner;
 			struct aml_waitq_head    waiters;
 		} Vmutex;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.5 2009/06/19 06:23:03 kettenis Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.6 2010/07/21 19:35:15 deraadt Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -61,9 +61,9 @@ struct acpivout_softc {
 
 	int	sc_dod;
 	int	sc_vout_type;
-#define ACPIVOUT_OTHER	 	0
+#define ACPIVOUT_OTHER		0
 #define ACPIVOUT_VGA		1
-#define ACPIVOUT_TV 		2
+#define ACPIVOUT_TV		2
 #define ACPIVOUT_DVI		3
 #define ACPIVOUT_LCD		4
 

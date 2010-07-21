@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.37 2010/07/20 20:21:02 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.38 2010/07/21 19:35:15 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -144,7 +144,7 @@ acpitz_init(struct acpitz_softc *sc, int flag)
 
 	/* Read device lists */
 	if (flag & ACPITZ_DEVLIST) {
-		if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSL", 
+		if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSL",
 		     0, NULL, &res)) {
 			acpi_freedevlist(&sc->sc_psl);
 			acpi_getdevlist(&sc->sc_psl, sc->sc_devnode, &res, 0);
@@ -155,7 +155,7 @@ acpitz_init(struct acpitz_softc *sc, int flag)
 			if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, name,
 			    0, NULL, &res)) {
 				acpi_freedevlist(&sc->sc_alx[i]);
-				acpi_getdevlist(&sc->sc_alx[i], 
+				acpi_getdevlist(&sc->sc_alx[i],
 				    sc->sc_devnode, &res, 0);
 				aml_freevalue(&res);
 			}
@@ -334,14 +334,14 @@ acpitz_refresh(void *arg)
 	/* passive cooling */
 	if (sc->sc_lasttmp != -1 && sc->sc_tc1 != -1 && sc->sc_tc2 != -1 &&
 	    sc->sc_psv != -1) {
-	    	dnprintf(30, "%s: passive cooling: lasttmp: %d tc1: %d "
+		dnprintf(30, "%s: passive cooling: lasttmp: %d tc1: %d "
 		    "tc2: %d psv: %d\n", DEVNAME(sc), sc->sc_lasttmp,
 		    sc->sc_tc1, sc->sc_tc2, sc->sc_psv);
 
 		nperf = acpitz_perflevel;
 		if (sc->sc_psv <= sc->sc_tmp) {
 			/* Passive cooling enabled */
-			dnprintf(1, "%s: enabling passive %d %d\n", 
+			dnprintf(1, "%s: enabling passive %d %d\n",
 			    DEVNAME(sc), sc->sc_tmp, sc->sc_psv);
 			if (!sc->sc_pse)
 				sc->sc_acpi->sc_pse++;
@@ -353,12 +353,12 @@ acpitz_refresh(void *arg)
 			/* Depending on trend, slow down/speed up */
 			if (trend > 0)
 				nperf -= PERFSTEP;
-			else 
+			else
 				nperf += PERFSTEP;
 		}
 		else {
 			/* Passive cooling disabled, increase % */
-			dnprintf(1, "%s: disabling passive %d %d\n", 
+			dnprintf(1, "%s: disabling passive %d %d\n",
 			    DEVNAME(sc), sc->sc_tmp, sc->sc_psv);
 			if (sc->sc_pse)
 				sc->sc_acpi->sc_pse--;
