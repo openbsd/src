@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.102 2010/07/18 21:01:06 oga Exp $	*/
+/*	$OpenBSD: conf.h,v 1.103 2010/07/21 18:43:59 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -247,14 +247,14 @@ extern struct cdevsw cdevsw[];
 
 /* open, close, read, write, ioctl, mmap */
 #define cdev_crypto_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, selfalse, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, write, ioctl */
 #define cdev_systrace_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, selfalse, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, write, ioctl, tty, poll, kqfilter */

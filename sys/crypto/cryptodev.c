@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.72 2010/07/20 09:06:38 matthew Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.73 2010/07/21 18:44:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -651,18 +651,6 @@ cryptoclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-cryptoread(dev_t dev, struct uio *uio, int ioflag)
-{
-	return (EIO);
-}
-
-int
-cryptowrite(dev_t dev, struct uio *uio, int ioflag)
-{
-	return (EIO);
-}
-
-int
 cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct file *f;
@@ -692,12 +680,6 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 	return (error);
-}
-
-int
-cryptopoll(dev_t dev, int events, struct proc *p)
-{
-	return (seltrue(dev, events, p));
 }
 
 struct csession *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.52 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.53 2010/07/21 18:44:01 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -57,10 +57,7 @@ void	systraceattach(int);
 
 int	systraceopen(dev_t, int, int, struct proc *);
 int	systraceclose(dev_t, int, int, struct proc *);
-int	systraceread(dev_t, struct uio *, int);
-int	systracewrite(dev_t, struct uio *, int);
 int	systraceioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	systracepoll(dev_t, int, struct proc *);
 
 uid_t	systrace_seteuid(struct proc *,  uid_t);
 gid_t	systrace_setegid(struct proc *,  gid_t);
@@ -533,24 +530,6 @@ systraceclose(dev, flag, mode, p)
 }
 
 int
-systraceread(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
-{
-	return (EIO);
-}
-
-int
-systracewrite(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
-{
-	return (EIO);
-}
-
-int
 systraceioctl(dev, cmd, data, flag, p)
 	dev_t	dev;
 	u_long	cmd;
@@ -593,15 +572,6 @@ systraceioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	return (error);
-}
-
-int
-systracepoll(dev, events, p)
-	dev_t	dev;
-	int	events;
-	struct proc *p;
-{
-	return (seltrue(dev, events, p));
 }
 
 void
