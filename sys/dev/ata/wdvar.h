@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.12 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.13 2010/07/21 02:04:41 matthew Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -62,7 +62,6 @@ struct ata_bio {
 #define TIMEOUT   4 /* device timed out */
 #define ERR_NODEV 5 /* device bas been detached */
     u_int8_t r_error; /* copy of error register */
-    daddr64_t badsect[127];    /* 126 plus trailing -1 marker */
     struct wd_softc *wd;
 };
 
