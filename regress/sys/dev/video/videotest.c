@@ -1,4 +1,4 @@
-/*	$OpenBSD: videotest.c,v 1.1 2010/07/22 11:53:24 mglocker Exp $ */
+/*	$OpenBSD: videotest.c,v 1.2 2010/07/22 11:55:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2010 Marcus Glocker <mglocker@openbsd.org>
@@ -30,8 +30,8 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/videoio.h>
 
 #include <err.h>
