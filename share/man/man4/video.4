@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.7 2010/07/19 08:59:38 mglocker Exp $
+.\" $OpenBSD: video.4,v 1.8 2010/07/22 13:32:24 mglocker Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2010 $
+.Dd $Mdocdate: July 22 2010 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -114,16 +114,34 @@ struct v4l2_requestbuffers {
 .Ed
 .It VIDIOC_QUERYBUF (struct v4l2_buffer *)
 Query the status of a buffer.
-.Pp
-Same structure as for VIDIOC_REQBUFS.
+.Bd -literal
+struct v4l2_buffer {
+	u_int32_t		index;
+	enum v4l2_buf_type	type;
+	u_int32_t		bytesused;
+	u_int32_t		flags;
+	enum v4l2_field		field;
+	struct timeval		timestamp;
+	struct v4l2_timecode	timecode;
+	u_int32_t		sequence;
+	enum v4l2_memory	memory;
+	union {
+		u_int32_t	offset;
+		unsigned long	userptr;
+	} m;
+	u_int32_t		length;
+	u_int32_t		input;
+	u_int32_t		reserved;
+};
+.Ed
 .It VIDIOC_QBUF (struct v4l2_buffer *)
 Add a buffer to the queue.
 .Pp
-Same structure as for VIDIOC_REQBUFS.
+Same structure as for VIDIOC_QUERYBUF.
 .It VIDIOC_DQBUF (struct v4l2_buffer *)
 Remove a buffer from the queue.
 .Pp
-Same structure as for VIDIOC_REQBUFS.
+Same structure as for VIDIOC_QUERYBUF.
 .It VIDIOC_STREAMON (int *)
 Start video stream.
 .It Dv VIDIOC_STREAMOFF (int *)
@@ -272,7 +290,8 @@ Request desired number of buffers via the VIDIOC_REQBUFS ioctl command.
 The maximum number of available buffers is normally limited by the hardware
 driver.
 .It
-Map the buffers via the
+Get the length and offset for the previously requested buffers via the
+VIDIOC_QUERYBUF ioctl command and map the buffers via the
 .Xr mmap 2
 system call.
 .It
