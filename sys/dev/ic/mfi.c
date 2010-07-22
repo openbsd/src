@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.109 2010/07/01 03:20:38 matthew Exp $ */
+/* $OpenBSD: mfi.c,v 1.110 2010/07/22 04:40:41 matthew Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -946,7 +946,7 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 	pf->mpf_sense_addr_lo = htole32(ccb->ccb_psense);
 
 	memset(pf->mpf_cdb, 0, 16);
-	memcpy(pf->mpf_cdb, &xs->cmdstore, xs->cmdlen);
+	memcpy(pf->mpf_cdb, xs->cmd, xs->cmdlen);
 
 	ccb->ccb_done = mfi_scsi_xs_done;
 	ccb->ccb_cookie = xs;
