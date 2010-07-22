@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.19 2009/10/05 20:01:40 jsg Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.20 2010/07/22 18:11:16 deraadt Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -69,6 +69,16 @@ struct pciide_softc {
 	 */
 	bus_size_t		sc_dma_maxsegsz;
 	bus_size_t		sc_dma_boundary;
+
+	/*
+	 * Used as a register save space by pciide_activate()
+	 * 
+	 * sc_save[] is for the 6 pci regs starting at PCI_MAPREG_END + 0x18 --
+	 * most IDE chipsets need a subset of those saved.  sc_save2 is for
+	 * up to 6 other registers, which specific chips might need saved.
+	 */
+	pcireg_t		sc_save[6];
+	pcireg_t		sc_save2[6];
 
 	/* Chip description */
 	const struct pciide_product_desc *sc_pp;

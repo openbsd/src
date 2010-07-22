@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.308 2010/04/20 06:59:47 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.309 2010/07/22 18:11:16 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1409,14 +1409,66 @@ int
 pciide_activate(struct device *self, int act)
 {
 	int rv = 0;
+	struct pciide_softc *sc = (struct pciide_softc *)self;
+	int i;
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
+
+		for (i = 0; i < nitems(sc->sc_save); i++)
+			sc->sc_save[i] = pci_conf_read(sc->sc_pc,
+			    sc->sc_tag, PCI_MAPREG_END + 0x18 + (i * 4));
+
+		if (sc->sc_pp->chip_map == sch_chip_map) {
+			sc->sc_save2[0] = pci_conf_read(sc->sc_pc,
+			    sc->sc_tag, SCH_D0TIM);
+			sc->sc_save2[1] = pci_conf_read(sc->sc_pc,
+			    sc->sc_tag, SCH_D1TIM);
+		} else if (sc->sc_pp->chip_map == piixsata_chip_map) {
+			sc->sc_save2[0] = pciide_pci_read(sc->sc_pc,
+			    sc->sc_tag, ICH5_SATA_MAP);
+			sc->sc_save2[1] = pciide_pci_read(sc->sc_pc,
+			    sc->sc_tag, ICH5_SATA_PI);
+			sc->sc_save2[2] = pciide_pci_read(sc->sc_pc,
+			    sc->sc_tag, ICH_SATA_PCS);
+		} else if (sc->sc_pp->chip_map == piix_chip_map) {
+			/* nothing to save */
+		} else if (sc->sc_pp->chip_map == phison_chip_map) {
+			/* nothing to save */
+		}
+		break;
 	case DVACT_RESUME:
+		for (i = 0; i < nitems(sc->sc_save); i++)
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    PCI_MAPREG_END + 0x18 + (i * 4),
+			    sc->sc_save[i]);
+
+		if (sc->sc_pp->chip_map == sch_chip_map) {
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    SCH_D0TIM, sc->sc_save2[0]);
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    SCH_D1TIM, sc->sc_save2[1]);
+		} else if (sc->sc_pp->chip_map == piixsata_chip_map) {
+			pciide_pci_write(sc->sc_pc, sc->sc_tag,
+			    ICH5_SATA_MAP, sc->sc_save2[0]);
+			pciide_pci_write(sc->sc_pc, sc->sc_tag,
+			    ICH5_SATA_PI, sc->sc_save2[1]);
+			pciide_pci_write(sc->sc_pc, sc->sc_tag,
+			    ICH_SATA_PCS, sc->sc_save2[2]);
+		} else if (sc->sc_pp->chip_map == piix_chip_map) {
+			/* nothing more to restore */
+		} else if (sc->sc_pp->chip_map == phison_chip_map) {
+			/* nothing more to restore */
+		} else {
+			printf("%s: restore for unknown chip map %x\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    sc->sc_pp->ide_product);
+		}
+
 		rv = config_activate_children(self, act);
 		break;
 	}
-
 	return (rv);
 }
 
