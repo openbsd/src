@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.23 2007/10/31 12:34:57 chl Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.24 2010/07/22 19:31:53 blambert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -55,15 +55,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define	REPLACE_GETOPT		/* use this getopt as the system getopt(3) */
-
-#ifdef REPLACE_GETOPT
 int	opterr = 1;		/* if error message should be printed */
 int	optind = 1;		/* index into parent argv vector */
 int	optopt = '?';		/* character checked for validity */
 int	optreset;		/* reset getopt */
 char    *optarg;		/* argument associated with option */
-#endif
 
 #define PRINT_ERROR	((opterr) && (*options != ':'))
 
@@ -467,7 +463,6 @@ start:
 	return (optchar);
 }
 
-#ifdef REPLACE_GETOPT
 /*
  * getopt --
  *	Parse argc/argv argument vector.
@@ -488,7 +483,6 @@ getopt(int nargc, char * const *nargv, const char *options)
 	 */
 	return (getopt_internal(nargc, nargv, options, NULL, NULL, 0));
 }
-#endif /* REPLACE_GETOPT */
 
 /*
  * getopt_long --
