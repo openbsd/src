@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.87 2010/06/28 18:50:37 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.88 2010/07/22 00:41:55 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
-int	arp_inuse, arp_allocated, arp_intimer;
+int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.22 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.23 2010/07/22 00:41:29 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -104,8 +104,6 @@ void	apic_set_redir(struct ioapic_softc *, int);
 void	apic_vectorset(struct ioapic_softc *, int, int, int);
 
 void	apic_stray(int);
-
-int apic_verbose = 0;
 
 int ioapic_bsp_id = 0;
 int ioapic_cold = 1;

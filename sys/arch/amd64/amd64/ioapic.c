@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.18 2009/08/13 13:24:48 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.19 2010/07/22 00:41:29 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -99,8 +99,6 @@ void ioapic_hwunmask(struct pic *, int);
 void ioapic_addroute(struct pic *, struct cpu_info *, int, int, int);
 void ioapic_delroute(struct pic *, struct cpu_info *, int, int, int);
 void apic_set_redir(struct ioapic_softc *, int, int, struct cpu_info *);
-
-int apic_verbose = 0;
 
 int ioapic_bsp_id = 0;
 int ioapic_cold = 1;
