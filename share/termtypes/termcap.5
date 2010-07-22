@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.23 2010/01/03 14:31:01 schwarze Exp $
+.\"	$OpenBSD: termcap.5,v 1.24 2010/07/22 10:21:52 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: July 22 2010 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ lines.
 .It "dN	num	(o)	Milliseconds"
 .Sy \&nl
 delay needed (default 0).
-.It "DO	str	(NP*)	Move cursor down:
+.It "DO	str	(NP*)	Move cursor down"
 .Ar n
 lines.
 .It "do	str		Down one line."
@@ -736,7 +736,7 @@ and the Lear Siegler
 .Tn ADM Ns \-3
 is described as
 .Bd -literal -offset indent
-l3\||\|adm3\||\|3\||\|LSI \s-1ADM\s0-3:\e
+l3\||\|adm3\||\|3\||\|LSI ADM-3:\e
 :am:bl=^G:cl=^Z:co#80:cr=^M:do=^J:le=^H:li#24:sf=^J:
 .Ed
 .Ss Parameterized Strings
@@ -828,7 +828,7 @@ is safe to send.
 This turns out to be essential for the Ann Arbor 4080.)
 .Pp
 A final example is the Lear Siegler
-.Tn ADM Ns \-3a,
+.Tn ADM Ns \-3a ,
 which offsets row and column
 by a blank character, thus
 .Dq Li cm=\eE=%+ %+\ \& .
@@ -1172,7 +1172,7 @@ rather than maintaining extra attribute bits for each character cell,
 instead deposit special
 .Dq cookies ,
 or
-.Dq garbage characters ,,
+.Dq garbage characters ,
 when they receive mode-setting sequences,
 which affect the display algorithm.
 .Pp
@@ -1242,13 +1242,13 @@ If there are function keys such as f0, f1, ..., f9, the codes they send
 can be given as
 .Sy \&k0 ,
 .Sy \&k1 ,
-...,
+\&...,
 .Sy \&k9 .
 If these keys have labels other than the default f0 through f9, the labels
 can be given as
 .Sy \&l0 ,
 .Sy \&l1 ,
-...,
+\&...,
 .Sy \&l9 .
 The codes transmitted by certain other special keys can be given:
 .Sy \&kH
