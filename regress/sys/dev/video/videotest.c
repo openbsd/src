@@ -1,4 +1,4 @@
-/*	$OpenBSD: videotest.c,v 1.2 2010/07/22 11:55:26 mglocker Exp $ */
+/*	$OpenBSD: videotest.c,v 1.3 2010/07/22 11:58:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2010 Marcus Glocker <mglocker@openbsd.org>
@@ -399,7 +399,7 @@ test_capture(char *dev_name, char *dev_full, int access, int use_poll)
 				/* insert dynamic huffmann table to mjpeg */
 				jpeg_insert_dht(buf, n1, img, &img_len);
 
-				strncat(filename, ".jpg", 4);
+				strlcat(filename, ".jpg", sizeof(filename));
 				break;
 			case V4L2_PIX_FMT_YUYV:
 				printf("Convertion for YUYV not supported!\n");
@@ -407,7 +407,7 @@ test_capture(char *dev_name, char *dev_full, int access, int use_poll)
 				img_len = n1;
 				memcpy(img, buf, img_len);
 
-				strncat(filename, ".raw", 4);
+				strlcat(filename, ".raw", sizeof(filename));
 				break;
 			default:
 				break;
