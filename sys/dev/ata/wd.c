@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.85 2010/06/28 08:35:46 jsing Exp $ */
+/*	$OpenBSD: wd.c,v 1.86 2010/07/22 18:10:37 mlarkin Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -399,6 +399,18 @@ wdactivate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		wd_flushcache(wd, AT_POLL);
 		wd_standby(wd, AT_POLL);
+		break;
+	case DVACT_RESUME:
+		/*
+		 * Do two resets separated by a small delay. The
+		 * first wakes the controller, the second resets
+		 * the channel
+		 */
+		wdc_disable_intr(wd->drvp->chnl_softc);
+		wdc_reset_channel(wd->drvp);
+		delay(10000);
+		wdc_reset_channel(wd->drvp);
+		wdc_enable_intr(wd->drvp->chnl_softc);
 		break;
 	}
 	return (rv);
