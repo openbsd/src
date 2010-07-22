@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.186 2010/07/21 19:42:05 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.187 2010/07/22 14:19:47 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -58,94 +58,84 @@
 #include "wsdisplay.h"
 
 #ifdef ACPI_DEBUG
-int acpi_debug = 16;
+int	acpi_debug = 16;
 #endif
-int acpi_enabled;
-int acpi_poll_enabled;
-int acpi_hasprocfvs;
-int acpi_thinkpad_enabled;
-int acpi_saved_spl;
+
+int	acpi_poll_enabled;
+int	acpi_hasprocfvs;
 
 #define ACPIEN_RETRIES 15
 
-void	acpi_thread(void *);
-void	acpi_create_thread(void *);
-
 void 	acpi_pci_match(struct device *, struct pci_attach_args *);
-
 int	acpi_match(struct device *, void *, void *);
 void	acpi_attach(struct device *, struct device *, void *);
 int	acpi_submatch(struct device *, void *, void *);
 int	acpi_print(void *, const char *);
-void	acpi_handle_suspend_failure(struct acpi_softc *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
+
+int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
+
+int	_acpi_matchhids(const char *, const char *[]);
+
+int	acpi_inidev(struct aml_node *, void *);
+int	acpi_foundprt(struct aml_node *, void *);
+
+struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *,
+	    const char *, const char *, int);
+
+#ifndef SMALL_KERNEL
+
+int	acpi_thinkpad_enabled;
+int	acpi_saved_spl;
+int	acpi_enabled;
+
+int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
+	    const char *driver);
+
+void	acpi_thread(void *);
+void	acpi_create_thread(void *);
+void	acpi_init_pm(struct acpi_softc *);
+void	acpi_init_states(struct acpi_softc *);
+
+void	acpi_handle_suspend_failure(struct acpi_softc *);
+void	acpi_init_gpes(struct acpi_softc *);
 
 int	acpi_founddock(struct aml_node *, void *);
 int	acpi_foundpss(struct aml_node *, void *);
 int	acpi_foundhid(struct aml_node *, void *);
 int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundtmp(struct aml_node *, void *);
-int	acpi_foundprt(struct aml_node *, void *);
 int	acpi_foundprw(struct aml_node *, void *);
 int	acpi_foundvideo(struct aml_node *, void *);
-int	acpi_inidev(struct aml_node *, void *);
 
-int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
+int	acpi_foundide(struct aml_node *node, void *arg);
+int	acpiide_notify(struct aml_node *, int, void *);
+void	wdcattach(struct channel_softc *);
+int	wdcdetach(struct channel_softc *, int);
+int	is_ejectable_bay(struct aml_node *node);
+int	is_ata(struct aml_node *node);
+int	is_ejectable(struct aml_node *node);
 
-void	acpi_init_states(struct acpi_softc *);
-void	acpi_init_gpes(struct acpi_softc *);
-void	acpi_init_pm(struct acpi_softc *);
-
-int acpi_foundide(struct aml_node *node, void *arg);
-int acpiide_notify(struct aml_node *, int, void *);
-
-int	_acpi_matchhids(const char *, const char *[]);
-int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
-	    const char *driver);
-
-struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *,
-	    const char *, const char *, int);
-
-void  wdcattach(struct channel_softc *);
-int   wdcdetach(struct channel_softc *, int);
-
-struct idechnl
-{
+struct idechnl {
 	struct acpi_softc *sc;
-	int64_t 	addr;
-	int64_t 	chnl;
-	int64_t 	sta;
+	int64_t		addr;
+	int64_t		chnl;
+	int64_t		sta;
 };
 
-int is_ejectable_bay(struct aml_node *node);
-int is_ata(struct aml_node *node);
-int is_ejectable(struct aml_node *node);
-
-#ifndef SMALL_KERNEL
 void	acpi_resume(struct acpi_softc *, int);
 void	acpi_susp_resume_gpewalk(struct acpi_softc *, int, int);
-#endif /* SMALL_KERNEL */
+int	acpi_add_device(struct aml_node *node, void *arg);
 
-#ifndef SMALL_KERNEL
-int acpi_add_device(struct aml_node *node, void *arg);
-#endif /* SMALL_KERNEL */
-
+struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
 void	acpi_enable_onegpe(struct acpi_softc *, int, int);
 int	acpi_gpe(struct acpi_softc *, int, void *);
 
-struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
+#endif /* SMALL_KERNEL */
 
 /* XXX move this into dsdt softc at some point */
 extern struct aml_node aml_root;
-
-/* XXX do we need this? */
-void	acpi_filtdetach(struct knote *);
-int	acpi_filtread(struct knote *, long);
-
-struct filterops acpiread_filtops = {
-	1, NULL, acpi_filtdetach, acpi_filtread
-};
 
 struct cfattach acpi_ca = {
 	sizeof(struct acpi_softc), acpi_match, acpi_attach, NULL,
@@ -157,12 +147,9 @@ struct cfdriver acpi_cd = {
 };
 
 struct acpi_softc *acpi_softc;
-int acpi_evindex;
 
 #define acpi_bus_space_map	_bus_space_map
 #define acpi_bus_space_unmap	_bus_space_unmap
-
-#define pch(x) (((x)>=' ' && (x)<='z') ? (x) : ' ')
 
 int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
@@ -366,114 +353,6 @@ acpi_foundprt(struct aml_node *node, void *arg)
 }
 
 int
-is_ata(struct aml_node *node)
-{
-	return (aml_searchname(node, "_GTM") != NULL ||
-	    aml_searchname(node, "_GTF") != NULL ||
-	    aml_searchname(node, "_STM") != NULL ||
-	    aml_searchname(node, "_SDD") != NULL);
-}
-
-int
-is_ejectable(struct aml_node *node)
-{
-	return (aml_searchname(node, "_EJ0") != NULL);
-}
-
-int
-is_ejectable_bay(struct aml_node *node)
-{
-	return ((is_ata(node) || is_ata(node->parent)) && is_ejectable(node));
-}
-
-int
-acpiide_notify(struct aml_node *node, int ntype, void *arg)
-{
-	struct idechnl 		*ide = arg;
-	struct acpi_softc 	*sc = ide->sc;
-	struct pciide_softc 	*wsc;
-	struct device 		*dev;
-	int 			b,d,f;
-	int64_t 		sta;
-
-	if (aml_evalinteger(sc, node, "_STA", 0, NULL, &sta) != 0)
-		return (0);
-
-	dnprintf(10, "IDE notify! %s %d status:%llx\n", aml_nodename(node),
-	    ntype, sta);
-
-	/* Walk device list looking for IDE device match */
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (strcmp(dev->dv_cfdata->cf_driver->cd_name, "pciide"))
-			continue;
-
-		wsc = (struct pciide_softc *)dev;
-		pci_decompose_tag(NULL, wsc->sc_tag, &b, &d, &f);
-		if (b != ACPI_PCI_BUS(ide->addr) ||
-		    d != ACPI_PCI_DEV(ide->addr) ||
-		    f != ACPI_PCI_FN(ide->addr))
-			continue;
-		dnprintf(10, "Found pciide: %s %x.%x.%x channel:%llx\n",
-		    dev->dv_xname, b,d,f, ide->chnl);
-
-		if (sta == 0 && ide->sta)
-			wdcdetach(
-			    &wsc->pciide_channels[ide->chnl].wdc_channel, 0);
-		else if (sta && !ide->sta)
-			wdcattach(
-			    &wsc->pciide_channels[ide->chnl].wdc_channel);
-		ide->sta = sta;
-	}
-	return (0);
-}
-
-int
-acpi_foundide(struct aml_node *node, void *arg)
-{
-	struct acpi_softc 	*sc = arg;
-	struct aml_node 	*pp;
-	struct idechnl 		*ide;
-	union amlpci_t 		pi;
-	int 			lvl;
-
-	/* Check if this is an ejectable bay */
-	if (!is_ejectable_bay(node))
-		return (0);
-
-	ide = malloc(sizeof(struct idechnl), M_DEVBUF, M_NOWAIT | M_ZERO);
-	ide->sc = sc;
-
-	/* GTM/GTF can be at 2/3 levels:  pciX.ideX.channelX[.driveX] */
-	lvl = 0;
-	for (pp=node->parent; pp; pp=pp->parent) {
-		lvl++;
-		if (aml_searchname(pp, "_HID"))
-			break;
-	}
-
-	/* Get PCI address and channel */
-	if (lvl == 3) {
-		aml_evalinteger(sc, node->parent, "_ADR", 0, NULL,
-		    &ide->chnl);
-		aml_rdpciaddr(node->parent->parent, &pi);
-		ide->addr = pi.addr;
-	} else if (lvl == 4) {
-		aml_evalinteger(sc, node->parent->parent, "_ADR", 0, NULL,
-		    &ide->chnl);
-		aml_rdpciaddr(node->parent->parent->parent, &pi);
-		ide->addr = pi.addr;
-	}
-	dnprintf(10, "%s %llx channel:%llx\n",
-	    aml_nodename(node), ide->addr, ide->chnl);
-
-	aml_evalinteger(sc, node, "_STA", 0, NULL, &ide->sta);
-	dnprintf(10, "Got Initial STA: %llx\n", ide->sta);
-
-	aml_register_notify(node, "acpiide", acpiide_notify, ide, 0);
-	return (0);
-}
-
-int
 acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct bios_attach_args	*ba = aux;
@@ -518,6 +397,7 @@ _acpi_matchhids(const char *hid, const char *hids[])
 	return (0);
 }
 
+#ifndef SMALL_KERNEL
 int
 acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
     const char *driver)
@@ -531,6 +411,7 @@ acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
 	}
 	return (0);
 }
+#endif /* SMALL_KERNEL */
 
 /* Map ACPI device node to PCI */
 int
@@ -733,8 +614,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_facs = (struct acpi_facs *)handle.va;
 
-	acpi_enabled = 1;
-
 	/* Create opcode hashtable */
 	aml_hashopcodes();
 
@@ -787,6 +666,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* some devices require periodic polling */
 	timeout_set(&sc->sc_dev_timeout, acpi_poll, sc);
+
+	acpi_enabled = 1;
 #endif /* SMALL_KERNEL */
 
 	/*
@@ -821,7 +702,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		    wentry->q_state);
 	}
 	printf("\n");
-
 
 	/*
 	 * ACPI is enabled now -- attach timer
@@ -939,7 +819,8 @@ acpi_print(void *aux, const char *pnp)
 }
 
 struct acpi_q *
-acpi_maptable(struct acpi_softc *sc, paddr_t addr, const char *sig, const char *oem, const char *tbl, int flag)
+acpi_maptable(struct acpi_softc *sc, paddr_t addr, const char *sig,
+    const char *oem, const char *tbl, int flag)
 {
 	static int tblid;
 	struct acpi_mem_map handle;
@@ -1013,7 +894,7 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 		for (i = 0; i < ntables; i++)
 			acpi_maptable(sc, xsdt->table_offsets[i], NULL, NULL,
 			    NULL, 1);
-		
+
 		free(sdt, M_DEVBUF);
 	} else {
 		struct acpi_rsdt *rsdt;
@@ -1037,235 +918,6 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 	}
 
 	return (0);
-}
-
-int
-acpiopen(dev_t dev, int flag, int mode, struct proc *p)
-{
-	int error = 0;
-#ifndef SMALL_KERNEL
-	struct acpi_softc *sc;
-	int s;
-
-	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
-		return (ENXIO);
-
-	s = spltty();
-	switch (APMDEV(dev)) {
-	case APMDEV_CTL:
-		if (!(flag & FWRITE)) {
-			error = EINVAL;
-			break;
-		}
-		if (sc->sc_flags & SCFLAG_OWRITE) {
-			error = EBUSY;
-			break;
-		}
-		sc->sc_flags |= SCFLAG_OWRITE;
-		break;
-	case APMDEV_NORMAL:
-		if (!(flag & FREAD) || (flag & FWRITE)) {
-			error = EINVAL;
-			break;
-		}
-		sc->sc_flags |= SCFLAG_OREAD;
-		break;
-	default:
-		error = ENXIO;
-		break;
-	}
-	splx(s);
-#else
-	error = ENXIO;
-#endif
-	return (error);
-}
-
-int
-acpiclose(dev_t dev, int flag, int mode, struct proc *p)
-{
-	int error = 0;
-#ifndef SMALL_KERNEL
-	struct acpi_softc *sc;
-	int s;
-
-	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
-		return (ENXIO);
-
-	s = spltty();
-	switch (APMDEV(dev)) {
-	case APMDEV_CTL:
-		sc->sc_flags &= ~SCFLAG_OWRITE;
-		break;
-	case APMDEV_NORMAL:
-		sc->sc_flags &= ~SCFLAG_OREAD;
-		break;
-	default:
-		error = ENXIO;
-		break;
-	}
-	splx(s);
-#else
-	error = ENXIO;
-#endif
-	return (error);
-}
-
-int
-acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-{
-	int error = 0;
-#ifndef SMALL_KERNEL
-	struct acpi_softc *sc;
-	struct acpi_ac *ac;
-	struct acpi_bat *bat;
-	struct apm_power_info *pi = (struct apm_power_info *)data;
-	int bats;
-	unsigned int remaining, rem, minutes, rate;
-	int s;
-
-	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
-		return (ENXIO);
-
-	s = spltty();
-	/* fake APM */
-	switch (cmd) {
-	case APM_IOC_SUSPEND:
-	case APM_IOC_STANDBY:
-		sc->sc_sleepmode = ACPI_STATE_S3;
-		acpi_wakeup(sc);
-		break;
-	case APM_IOC_GETPOWER:
-		/* A/C */
-		pi->ac_state = APM_AC_UNKNOWN;
-		SLIST_FOREACH(ac, &sc->sc_ac, aac_link) {
-			if (ac->aac_softc->sc_ac_stat == PSR_ONLINE)
-				pi->ac_state = APM_AC_ON;
-			else if (ac->aac_softc->sc_ac_stat == PSR_OFFLINE)
-				if (pi->ac_state == APM_AC_UNKNOWN)
-					pi->ac_state = APM_AC_OFF;
-		}
-
-		/* battery */
-		pi->battery_state = APM_BATT_UNKNOWN;
-		pi->battery_life = 0;
-		pi->minutes_left = 0;
-		bats = 0;
-		remaining = rem = 0;
-		minutes = 0;
-		rate = 0;
-		SLIST_FOREACH(bat, &sc->sc_bat, aba_link) {
-			if (bat->aba_softc->sc_bat_present == 0)
-				continue;
-
-			if (bat->aba_softc->sc_bif.bif_last_capacity == 0)
-				continue;
-
-			bats++;
-			rem = (bat->aba_softc->sc_bst.bst_capacity * 100) /
-			    bat->aba_softc->sc_bif.bif_last_capacity;
-			if (rem > 100)
-				rem = 100;
-			remaining += rem;
-
-			if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
-				continue;
-			else if (bat->aba_softc->sc_bst.bst_rate > 1)
-				rate = bat->aba_softc->sc_bst.bst_rate;
-
-			minutes += bat->aba_softc->sc_bst.bst_capacity;
-		}
-
-		if (bats == 0) {
-			pi->battery_state = APM_BATTERY_ABSENT;
-			pi->battery_life = 0;
-			pi->minutes_left = (unsigned int)-1;
-			break;
-		}
-
-		if (pi->ac_state == APM_AC_ON || rate == 0)
-			pi->minutes_left = (unsigned int)-1;
-		else
-			pi->minutes_left = 60 * minutes / rate;
-
-		/* running on battery */
-		pi->battery_life = remaining / bats;
-		if (pi->battery_life > 50)
-			pi->battery_state = APM_BATT_HIGH;
-		else if (pi->battery_life > 25)
-			pi->battery_state = APM_BATT_LOW;
-		else
-			pi->battery_state = APM_BATT_CRITICAL;
-
-		break;
-
-	default:
-		error = ENOTTY;
-	}
-
-	splx(s);
-#else
-	error = ENXIO;
-#endif /* SMALL_KERNEL */
-	return (error);
-}
-
-void
-acpi_filtdetach(struct knote *kn)
-{
-#ifndef SMALL_KERNEL
-	struct acpi_softc *sc = kn->kn_hook;
-	int s;
-
-	s = spltty();
-	SLIST_REMOVE(sc->sc_note, kn, knote, kn_selnext);
-	splx(s);
-#endif
-}
-
-int
-acpi_filtread(struct knote *kn, long hint)
-{
-#ifndef SMALL_KERNEL
-	/* XXX weird kqueue_scan() semantics */
-	if (hint && !kn->kn_data)
-		kn->kn_data = hint;
-#endif
-	return (1);
-}
-
-int
-acpikqfilter(dev_t dev, struct knote *kn)
-{
-#ifndef SMALL_KERNEL
-	struct acpi_softc *sc;
-	int s;
-
-	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
-		return (ENXIO);
-
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		kn->kn_fop = &acpiread_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	kn->kn_hook = sc;
-
-	s = spltty();
-	SLIST_INSERT_HEAD(sc->sc_note, kn, kn_selnext);
-	splx(s);
-
-	return (0);
-#else
-	return (1);
-#endif
 }
 
 /* Read from power management register */
@@ -1510,8 +1162,115 @@ acpi_map_pmregs(struct acpi_softc *sc)
 	}
 }
 
-/* move all stuff that doesn't go on the boot media in here */
 #ifndef SMALL_KERNEL
+int
+is_ata(struct aml_node *node)
+{
+	return (aml_searchname(node, "_GTM") != NULL ||
+	    aml_searchname(node, "_GTF") != NULL ||
+	    aml_searchname(node, "_STM") != NULL ||
+	    aml_searchname(node, "_SDD") != NULL);
+}
+
+int
+is_ejectable(struct aml_node *node)
+{
+	return (aml_searchname(node, "_EJ0") != NULL);
+}
+
+int
+is_ejectable_bay(struct aml_node *node)
+{
+	return ((is_ata(node) || is_ata(node->parent)) && is_ejectable(node));
+}
+
+int
+acpiide_notify(struct aml_node *node, int ntype, void *arg)
+{
+	struct idechnl 		*ide = arg;
+	struct acpi_softc 	*sc = ide->sc;
+	struct pciide_softc 	*wsc;
+	struct device 		*dev;
+	int 			b,d,f;
+	int64_t 		sta;
+
+	if (aml_evalinteger(sc, node, "_STA", 0, NULL, &sta) != 0)
+		return (0);
+
+	dnprintf(10, "IDE notify! %s %d status:%llx\n", aml_nodename(node),
+	    ntype, sta);
+
+	/* Walk device list looking for IDE device match */
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (strcmp(dev->dv_cfdata->cf_driver->cd_name, "pciide"))
+			continue;
+
+		wsc = (struct pciide_softc *)dev;
+		pci_decompose_tag(NULL, wsc->sc_tag, &b, &d, &f);
+		if (b != ACPI_PCI_BUS(ide->addr) ||
+		    d != ACPI_PCI_DEV(ide->addr) ||
+		    f != ACPI_PCI_FN(ide->addr))
+			continue;
+		dnprintf(10, "Found pciide: %s %x.%x.%x channel:%llx\n",
+		    dev->dv_xname, b,d,f, ide->chnl);
+
+		if (sta == 0 && ide->sta)
+			wdcdetach(
+			    &wsc->pciide_channels[ide->chnl].wdc_channel, 0);
+		else if (sta && !ide->sta)
+			wdcattach(
+			    &wsc->pciide_channels[ide->chnl].wdc_channel);
+		ide->sta = sta;
+	}
+	return (0);
+}
+
+int
+acpi_foundide(struct aml_node *node, void *arg)
+{
+	struct acpi_softc 	*sc = arg;
+	struct aml_node 	*pp;
+	struct idechnl 		*ide;
+	union amlpci_t 		pi;
+	int 			lvl;
+
+	/* Check if this is an ejectable bay */
+	if (!is_ejectable_bay(node))
+		return (0);
+
+	ide = malloc(sizeof(struct idechnl), M_DEVBUF, M_NOWAIT | M_ZERO);
+	ide->sc = sc;
+
+	/* GTM/GTF can be at 2/3 levels:  pciX.ideX.channelX[.driveX] */
+	lvl = 0;
+	for (pp=node->parent; pp; pp=pp->parent) {
+		lvl++;
+		if (aml_searchname(pp, "_HID"))
+			break;
+	}
+
+	/* Get PCI address and channel */
+	if (lvl == 3) {
+		aml_evalinteger(sc, node->parent, "_ADR", 0, NULL,
+		    &ide->chnl);
+		aml_rdpciaddr(node->parent->parent, &pi);
+		ide->addr = pi.addr;
+	} else if (lvl == 4) {
+		aml_evalinteger(sc, node->parent->parent, "_ADR", 0, NULL,
+		    &ide->chnl);
+		aml_rdpciaddr(node->parent->parent->parent, &pi);
+		ide->addr = pi.addr;
+	}
+	dnprintf(10, "%s %llx channel:%llx\n",
+	    aml_nodename(node), ide->addr, ide->chnl);
+
+	aml_evalinteger(sc, node, "_STA", 0, NULL, &ide->sta);
+	dnprintf(10, "Got Initial STA: %llx\n", ide->sta);
+
+	aml_register_notify(node, "acpiide", acpiide_notify, ide, 0);
+	return (0);
+}
+
 void
 acpi_reset(void)
 {
@@ -1854,7 +1613,6 @@ acpi_init_pm(struct acpi_softc *sc)
 	sc->sc_sst = aml_searchname(&aml_root, "_SI_._SST");
 }
 
-#ifndef SMALL_KERNEL
 void
 acpi_susp_resume_gpewalk(struct acpi_softc *sc, int state,
     int wake_gpe_state)
@@ -1888,7 +1646,6 @@ acpi_susp_resume_gpewalk(struct acpi_softc *sc, int state,
 		}
 	}
 }
-#endif /* ! SMALL_KERNEL */
 
 int
 acpi_sleep_state(struct acpi_softc *sc, int state)
@@ -1973,7 +1730,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	return (-1);
 }
 
-#ifndef SMALL_KERNEL
 void
 acpi_resume(struct acpi_softc *sc, int state)
 {
@@ -2046,18 +1802,6 @@ acpi_resume(struct acpi_softc *sc, int state)
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
 }
-#endif /* ! SMALL_KERNEL */
-
-int
-acpi_record_event(struct acpi_softc *sc, u_int type)
-{
-	if ((sc->sc_flags & SCFLAG_OPEN) == 0)
-		return (1);
-
-	acpi_evindex++;
-	KNOTE(sc->sc_note, APM_EVENT_COMPOSE(type, acpi_evindex));
-	return (0);
-}
 
 void
 acpi_handle_suspend_failure(struct acpi_softc *sc)
@@ -2068,7 +1812,6 @@ acpi_handle_suspend_failure(struct acpi_softc *sc)
 	cold = 0;
 	enable_intr();
 	splx(acpi_saved_spl);
-
 
 	/* Tell ACPI to go back to S0 */
 	memset(&env, 0, sizeof(env));
@@ -2135,14 +1878,12 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	acpi_saved_spl = splhigh();
 	disable_intr();
 	cold = 1;
-#ifndef SMALL_KERNEL
 	if (state == ACPI_STATE_S3)
 		if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
 			acpi_handle_suspend_failure(sc);
 			error = ENXIO;
 			goto fail;
 		}
-#endif /* ! SMALL_KERNEL */
 
 	/* _PTS(state) */
 	if (sc->sc_pts)
@@ -2203,14 +1944,12 @@ acpi_powerdown(void)
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 }
 
-
-extern int aml_busy;
-
 void
 acpi_thread(void *arg)
 {
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
+	extern int aml_busy;
 	u_int32_t gpe;
 	int s;
 
@@ -2256,7 +1995,7 @@ acpi_thread(void *arg)
 		sc->sc_threadwaiting = 1;
 		splx(s);
 		if (aml_busy) {
-			printf("skipping %d\n", aml_busy);
+			panic("thread woke up to find aml was busy");
 			continue;
 		}
 
@@ -2306,7 +2045,6 @@ acpi_thread(void *arg)
 			acpi_poll_notify();
 		}
 
-#ifndef SMALL_KERNEL
 		if (sc->sc_sleepmode) {
 			int sleepmode = sc->sc_sleepmode;
 
@@ -2314,7 +2052,6 @@ acpi_thread(void *arg)
 			acpi_sleep_state(sc, sleepmode);
 			continue;
 		}
-#endif /* SMALL_KERNEL */
 	}
 	free(thread, M_DEVBUF);
 
@@ -2327,11 +2064,9 @@ acpi_create_thread(void *arg)
 	struct acpi_softc *sc = arg;
 
 	if (kthread_create(acpi_thread, sc->sc_thread, NULL, DEVNAME(sc))
-	    != 0) {
+	    != 0)
 		printf("%s: unable to create isr thread, GPEs disabled\n",
 		    DEVNAME(sc));
-		return;
-	}
 }
 
 int
@@ -2493,4 +2228,260 @@ acpi_foundvideo(struct aml_node *node, void *arg)
 
 	return (0);
 }
+
+int
+acpiopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+	int error = 0;
+	struct acpi_softc *sc;
+	int s;
+
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
+		return (ENXIO);
+
+	s = spltty();
+	switch (APMDEV(dev)) {
+	case APMDEV_CTL:
+		if (!(flag & FWRITE)) {
+			error = EINVAL;
+			break;
+		}
+		if (sc->sc_flags & SCFLAG_OWRITE) {
+			error = EBUSY;
+			break;
+		}
+		sc->sc_flags |= SCFLAG_OWRITE;
+		break;
+	case APMDEV_NORMAL:
+		if (!(flag & FREAD) || (flag & FWRITE)) {
+			error = EINVAL;
+			break;
+		}
+		sc->sc_flags |= SCFLAG_OREAD;
+		break;
+	default:
+		error = ENXIO;
+		break;
+	}
+	splx(s);
+	return (error);
+}
+
+int
+acpiclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	int error = 0;
+	struct acpi_softc *sc;
+	int s;
+
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
+		return (ENXIO);
+
+	s = spltty();
+	switch (APMDEV(dev)) {
+	case APMDEV_CTL:
+		sc->sc_flags &= ~SCFLAG_OWRITE;
+		break;
+	case APMDEV_NORMAL:
+		sc->sc_flags &= ~SCFLAG_OREAD;
+		break;
+	default:
+		error = ENXIO;
+		break;
+	}
+	splx(s);
+	return (error);
+}
+
+int
+acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	int error = 0;
+	struct acpi_softc *sc;
+	struct acpi_ac *ac;
+	struct acpi_bat *bat;
+	struct apm_power_info *pi = (struct apm_power_info *)data;
+	int bats;
+	unsigned int remaining, rem, minutes, rate;
+	int s;
+
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
+		return (ENXIO);
+
+	s = spltty();
+	/* fake APM */
+	switch (cmd) {
+	case APM_IOC_SUSPEND:
+	case APM_IOC_STANDBY:
+		sc->sc_sleepmode = ACPI_STATE_S3;
+		acpi_wakeup(sc);
+		break;
+	case APM_IOC_GETPOWER:
+		/* A/C */
+		pi->ac_state = APM_AC_UNKNOWN;
+		SLIST_FOREACH(ac, &sc->sc_ac, aac_link) {
+			if (ac->aac_softc->sc_ac_stat == PSR_ONLINE)
+				pi->ac_state = APM_AC_ON;
+			else if (ac->aac_softc->sc_ac_stat == PSR_OFFLINE)
+				if (pi->ac_state == APM_AC_UNKNOWN)
+					pi->ac_state = APM_AC_OFF;
+		}
+
+		/* battery */
+		pi->battery_state = APM_BATT_UNKNOWN;
+		pi->battery_life = 0;
+		pi->minutes_left = 0;
+		bats = 0;
+		remaining = rem = 0;
+		minutes = 0;
+		rate = 0;
+		SLIST_FOREACH(bat, &sc->sc_bat, aba_link) {
+			if (bat->aba_softc->sc_bat_present == 0)
+				continue;
+
+			if (bat->aba_softc->sc_bif.bif_last_capacity == 0)
+				continue;
+
+			bats++;
+			rem = (bat->aba_softc->sc_bst.bst_capacity * 100) /
+			    bat->aba_softc->sc_bif.bif_last_capacity;
+			if (rem > 100)
+				rem = 100;
+			remaining += rem;
+
+			if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
+				continue;
+			else if (bat->aba_softc->sc_bst.bst_rate > 1)
+				rate = bat->aba_softc->sc_bst.bst_rate;
+
+			minutes += bat->aba_softc->sc_bst.bst_capacity;
+		}
+
+		if (bats == 0) {
+			pi->battery_state = APM_BATTERY_ABSENT;
+			pi->battery_life = 0;
+			pi->minutes_left = (unsigned int)-1;
+			break;
+		}
+
+		if (pi->ac_state == APM_AC_ON || rate == 0)
+			pi->minutes_left = (unsigned int)-1;
+		else
+			pi->minutes_left = 60 * minutes / rate;
+
+		/* running on battery */
+		pi->battery_life = remaining / bats;
+		if (pi->battery_life > 50)
+			pi->battery_state = APM_BATT_HIGH;
+		else if (pi->battery_life > 25)
+			pi->battery_state = APM_BATT_LOW;
+		else
+			pi->battery_state = APM_BATT_CRITICAL;
+
+		break;
+
+	default:
+		error = ENOTTY;
+	}
+
+	splx(s);
+	return (error);
+}
+
+void	acpi_filtdetach(struct knote *);
+int	acpi_filtread(struct knote *, long);
+
+struct filterops acpiread_filtops = {
+	1, NULL, acpi_filtdetach, acpi_filtread
+};
+
+int acpi_evindex;
+
+int
+acpi_record_event(struct acpi_softc *sc, u_int type)
+{
+	if ((sc->sc_flags & SCFLAG_OPEN) == 0)
+		return (1);
+
+	acpi_evindex++;
+	KNOTE(sc->sc_note, APM_EVENT_COMPOSE(type, acpi_evindex));
+	return (0);
+}
+
+void
+acpi_filtdetach(struct knote *kn)
+{
+	struct acpi_softc *sc = kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(sc->sc_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+acpi_filtread(struct knote *kn, long hint)
+{
+	/* XXX weird kqueue_scan() semantics */
+	if (hint && !kn->kn_data)
+		kn->kn_data = hint;
+	return (1);
+}
+
+int
+acpikqfilter(dev_t dev, struct knote *kn)
+{
+	struct acpi_softc *sc;
+	int s;
+
+	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
+	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
+		return (ENXIO);
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &acpiread_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(sc->sc_note, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+#else /* SMALL_KERNEL */
+
+int
+acpiopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+	return (ENXIO);
+}
+
+int
+acpiclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	return (ENXIO);
+}
+
+int
+acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	return (ENXIO);
+}
+
+int
+acpikqfilter(dev_t dev, struct knote *kn)
+{
+	return (1);
+}
+
 #endif /* SMALL_KERNEL */

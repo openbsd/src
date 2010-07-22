@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.171 2010/07/21 19:35:15 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.172 2010/07/22 14:19:47 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -394,11 +394,26 @@ struct acpi_memblock {
 	LIST_ENTRY(acpi_memblock) link;
 #endif
 };
-#ifdef ACPI_MEMDEBUG
-LIST_HEAD(, acpi_memblock) acpi_memhead;
-#endif
 
-int acpi_memsig;
+#ifdef ACPI_MEMDEBUG
+LIST_HEAD(, acpi_memblock)	acpi_memhead;
+int				acpi_memsig;
+
+int
+acpi_walkmem(int sig, const char *lbl)
+{
+	struct acpi_memblock *sptr;
+
+	printf("--- walkmem:%s %x --- %x bytes alloced\n", lbl, sig, acpi_nalloc);
+	LIST_FOREACH(sptr, &acpi_memhead, link) {
+		if (sptr->sig < sig)
+			break;
+		printf("%.4x Alloc %.8lx bytes @ %s:%d\n",
+			sptr->sig, sptr->size, sptr->fn, sptr->line);
+	}
+	return acpi_memsig;
+}
+#endif /* ACPI_MEMDEBUG */
 
 void *
 _acpi_os_malloc(size_t size, const char *fn, int line)
@@ -436,23 +451,6 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 		dnprintf(99, "free: %x %s:%d\n", sptr, fn, line);
 		free(sptr, M_ACPI);
 	}
-}
-
-int
-acpi_walkmem(int sig, const char *lbl)
-{
-#ifdef ACPI_MEMDEBUG
-	struct acpi_memblock *sptr;
-
-	printf("--- walkmem:%s %x --- %x bytes alloced\n", lbl, sig, acpi_nalloc);
-	LIST_FOREACH(sptr, &acpi_memhead, link) {
-		if (sptr->sig < sig)
-			break;
-		printf("%.4x Alloc %.8lx bytes @ %s:%d\n",
-			sptr->sig, sptr->size, sptr->fn, sptr->line);
-	}
-#endif
-	return acpi_memsig;
 }
 
 void
@@ -569,6 +567,7 @@ aml_notify(struct aml_node *node, int notify_value)
 			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
 }
 
+#ifndef SMALL_KERNEL
 void
 aml_notify_dev(const char *pnpid, int notify_value)
 {
@@ -591,6 +590,7 @@ acpi_poll_notify(void)
 		if (pdata->cbproc && pdata->poll)
 			pdata->cbproc(pdata->node, 0, pdata->cbarg);
 }
+#endif
 
 /*
  * @@@: Namespace functions
@@ -1414,8 +1414,6 @@ aml_parseend(struct aml_scope *scope)
  * @@@: Opcode utility functions
  */
 
-int amlop_delay;
-
 u_int64_t
 aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
 {
@@ -1714,6 +1712,7 @@ aml_postparse()
 	aml_walknodes(&aml_root, AML_WALK_PRE, aml_fixup_node, NULL);
 }
 
+#ifndef SMALL_KERNEL
 const char *
 aml_val_to_string(const struct aml_value *val)
 {
@@ -1742,6 +1741,7 @@ aml_val_to_string(const struct aml_value *val)
 
 	return (buffer);
 }
+#endif /* SMALL_KERNEL */
 
 /*
  * XXX: NEW PARSER CODE GOES HERE
@@ -1775,20 +1775,6 @@ int		aml_ccrlen(union acpi_resource *, void *);
 
 void		aml_xstore(struct aml_scope *, struct aml_value *, int64_t,
     struct aml_value *);
-
-int
-valid_acpihdr(void *buf, int len, const char *sig)
-{
-	struct acpi_table_header *hdr = buf;
-
-	if (sig && strncmp(hdr->signature, sig, 4))
-		return (0);
-	if (len < hdr->length)
-		return (0);
-	if (acpi_checksum(hdr, hdr->length) != 0)
-		return (0);
-	return (1);
-}
 
 /*
  * Reference Count functions
@@ -4146,7 +4132,10 @@ aml_searchrel(struct aml_node *root, const void *vname)
 	return NULL;
 }
 
-void acpi_getdevlist(struct acpi_devlist_head *list, struct aml_node *root,
+#ifndef SMALL_KERNEL
+
+void
+acpi_getdevlist(struct acpi_devlist_head *list, struct aml_node *root,
     struct aml_value *pkg, int off)
 {
 	struct acpi_devlist *dl;
@@ -4175,3 +4164,4 @@ acpi_freedevlist(struct acpi_devlist_head *list)
 		acpi_os_free(dl);
 	}
 }
+#endif /* SMALL_KERNEL */

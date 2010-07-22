@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.53 2010/07/22 13:46:42 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.54 2010/07/22 14:19:47 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -51,7 +51,6 @@ struct aml_value	*aml_getstack(struct aml_scope *, int);
 struct aml_value	*aml_allocvalue(int, int64_t, const void *);
 void			aml_freevalue(struct aml_value *);
 void			aml_notify(struct aml_node *, int);
-void			aml_notify_dev(const char *, int);
 void			aml_showvalue(struct aml_value *, int);
 void			aml_walkroot(void);
 void			aml_walktree(struct aml_node *);
@@ -241,7 +240,6 @@ void			aml_walknodes(struct aml_node *, int,
 			    int (*)(struct aml_node *, void *), void *);
 
 void			aml_postparse(void);
-void			acpi_poll_notify(void);
 
 void			aml_hashopcodes(void);
 
@@ -250,7 +248,6 @@ void			aml_foreachpkg(struct aml_value *, int,
 
 const char		*aml_val_to_string(const struct aml_value *);
 
-int			valid_acpihdr(void *, int, const char *);
 void			aml_disasm(struct aml_scope *scope, int lvl,
 			    void (*dbprintf)(void *, const char *, ...),
 			    void *arg);
@@ -276,8 +273,13 @@ union amlpci_t {
 int			aml_rdpciaddr(struct aml_node *pcidev,
 			    union amlpci_t *);
 
+#ifndef SMALL_KERNEL
 void			acpi_getdevlist(struct acpi_devlist_head *,
 			    struct aml_node *, struct aml_value *, int);
+void			acpi_poll_notify(void);
+void			aml_notify_dev(const char *, int);
+#endif
+
 void			acpi_freedevlist(struct acpi_devlist_head *);
 
 #endif /* __DEV_ACPI_DSDT_H__ */
