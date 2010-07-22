@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.42 2010/07/22 04:59:31 matthew Exp $ */
+/*	$OpenBSD: safte.c,v 1.43 2010/07/22 05:21:02 matthew Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -397,7 +397,7 @@ void
 safte_read_encstat(void *arg)
 {
 	struct safte_readbuf_cmd *cmd;
-	struct safte_sensor*s;
+	struct safte_sensor *s;
 	struct safte_softc *sc = (struct safte_softc *)arg;
 	struct scsi_xfer *xs;
 	int error, i, flags = 0;
@@ -408,8 +408,10 @@ safte_read_encstat(void *arg)
 	if (cold)
 		flags |= SCSI_AUTOCONF;
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
-	if (xs == NULL)
+	if (xs == NULL) {
+		rw_exit_write(&sc->sc_lock);
 		return;
+	}
 	xs->cmd->opcode = READ_BUFFER;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = sc->sc_encbuf;
