@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.14 2009/08/13 23:45:35 deraadt Exp $	*/
+/*	$OpenBSD: systat.h,v 1.15 2010/07/22 12:33:29 giovanni Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -35,6 +35,7 @@
 #ifndef _SYSTAT_H_
 #define _SYSTAT_H_
 
+#include <netinet/in.h>
 #include <sys/cdefs.h>
 #include <fcntl.h>
 #include <kvm.h>
@@ -89,6 +90,9 @@ int initnfs(void);
 
 void error(const char *fmt, ...);
 void nlisterr(struct nlist []);
+
+const char *inetname(struct in_addr);
+const char *inet6name(struct in6_addr *);
 
 #endif
 

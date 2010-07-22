@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.14 2009/11/23 21:30:14 henning Exp $	 */
+/* $Id: pftop.c,v 1.15 2010/07/22 12:33:29 giovanni Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -708,11 +708,16 @@ unmask(struct pf_addr * m, u_int8_t af)
 void
 tb_print_addr(struct pf_addr * addr, struct pf_addr * mask, int af)
 {
-	static char buf[48];
-	const char *bf;
-
-	bf = inet_ntop(af, addr, buf, sizeof(buf));
-	tbprintf("%s", bf);
+        	switch (af) {
+        	case AF_INET: {
+			tbprintf("%s", inetname(addr->v4));
+			break;
+        	}
+        	case AF_INET6: {
+			tbprintf("%s", inet6name(&addr->v6));
+			break;
+        	}
+	}
 
 	if (mask != NULL) {
 		if (!PF_AZERO(mask, af))

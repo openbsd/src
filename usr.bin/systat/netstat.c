@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.32 2008/12/07 02:56:06 canacar Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.33 2010/07/22 12:33:29 giovanni Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -92,9 +92,7 @@ struct netinfo {
 #define nif_faddr6 f.nif_faddr6
 
 static void enter(struct inpcb *, struct socket *, int, char *);
-static const char *inetname(struct in_addr);
 static void inetprint(struct in_addr *, int, char *, field_def *);
-static const char *inet6name(struct in6_addr *);
 static void inet6print(struct in6_addr *, int, char *, field_def *);
 static void shownetstat(struct netinfo *p);
 
@@ -424,53 +422,6 @@ inet6print(struct in6_addr *in6, int port, char *proto, field_def *fld)
 		tbprintf(":%d", ntohs((u_short)port));
 
 	print_fld_tb(fld);
-}
-
-static const char *
-inet6name(struct in6_addr *in6)
-{
-	static char line[NI_MAXHOST];
-	struct sockaddr_in6 sin6;
-	int flags;
-
-	flags = nflag ? NI_NUMERICHOST : 0;
-	if (IN6_IS_ADDR_UNSPECIFIED(in6))
-		return "*";
-	memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_len = sizeof(struct sockaddr_in6);
-	sin6.sin6_addr = *in6;
-	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-	    line, sizeof(line), NULL, 0, flags) == 0)
-		return line;
-	return "?";
-}
-
-static const char *
-inetname(struct in_addr in)
-{
-	static char line[NI_MAXHOST];
-	struct sockaddr_in si;
-	int flags, e;
-
-	flags = nflag ? NI_NUMERICHOST : 0;
-	if (in.s_addr == INADDR_ANY)
-		return "*";
-
-	memset(&si, 0, sizeof(si));
-	si.sin_family = AF_INET;
-	si.sin_len = sizeof(struct sockaddr_in);
-	si.sin_addr = in;
-
-	e = getnameinfo((struct sockaddr *)&si, si.sin_len,
-			line, sizeof(line), NULL, 0, flags);
-
-	if (e == 0)
-		return line;
-
-	error("Lookup: %s", gai_strerror(e));
-
-	return "?";
 }
 
 int
