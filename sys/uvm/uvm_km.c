@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.84 2010/07/15 00:14:17 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.85 2010/07/22 17:31:39 thib Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -675,8 +675,6 @@ uvm_km_valloc_wait(struct vm_map *map, vsize_t size)
 {
 	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
 }
-
-int uvm_km_pages_free; /* number of pages currently on free list */
 
 #if defined(__HAVE_PMAP_DIRECT)
 /*

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.115 2010/07/20 19:43:19 lum Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.116 2010/07/22 17:31:39 thib Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1031,18 +1031,6 @@ dopool_sysctl(void)
 
 	inuse /= 1024;
 	total /= 1024;
-	if (nlistf == NULL && memf == NULL) {
-		int mib[] = { CTL_VM, VM_KMPAGESFREE };
-		size_t size = sizeof(kmfp);
-
-		if (sysctl(mib, 2, &kmfp, &size, NULL, 0) < 0) {
-			warn("could not read uvm.kmpagesfree");
-			return;
-		}
-	} else {
-		kread(X_KMPAGESFREE, &kmfp, sizeof(kmfp));
-	}
-	total += kmfp * (getpagesize() / 1024);
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (double)(100 * inuse) / total);
 }

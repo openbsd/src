@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.28 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.29 2010/07/22 17:31:39 thib Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ uvm_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	struct vmtotal vmtotals;
 	int rv, t;
 	struct _ps_strings _ps = { PS_STRINGS };
-	extern int uvm_km_pages_free;
 
 	switch (name[0]) {
 	case VM_SWAPENCRYPT:
@@ -230,9 +229,6 @@ uvm_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	case VM_USPACE:
 		return (sysctl_rdint(oldp, oldlenp, newp, USPACE));
-
-	case VM_KMPAGESFREE:
-		return (sysctl_rdint(oldp, oldlenp, newp, uvm_km_pages_free));
 
 	default:
 		return (EOPNOTSUPP);

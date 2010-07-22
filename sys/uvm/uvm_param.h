@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_param.h,v 1.14 2008/02/17 20:33:47 kettenis Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.15 2010/07/22 17:31:39 thib Exp $	*/
 /*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
@@ -112,8 +112,7 @@ typedef int	boolean_t;
 #define	VM_VNODEMIN	9
 #define	VM_MAXSLP	10
 #define	VM_USPACE	11
-#define	VM_KMPAGESFREE	12
-#define	VM_MAXID	13		/* number of valid vm ids */
+#define	VM_MAXID	12		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -128,7 +127,6 @@ typedef int	boolean_t;
 	{ "vnodemin", CTLTYPE_INT }, \
 	{ "maxslp", CTLTYPE_INT }, \
 	{ "uspace", CTLTYPE_INT }, \
-	{ "kmpagesfree", CTLTYPE_INT }, \
 }
 
 struct _ps_strings {
