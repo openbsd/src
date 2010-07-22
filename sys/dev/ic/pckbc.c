@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.22 2010/07/21 20:10:17 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.23 2010/07/22 14:27:44 deraadt Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -756,6 +756,26 @@ pckbc_cleanup(self)
 	/* reset KBC? */
 
 	splx(s);
+}
+
+/*
+ * Reset the keyboard controller in a violent fashion; normally done
+ * after suspend/resume when we do not trust the machine.
+ */
+void
+pckbc_reset(struct pckbc_softc *sc)
+{
+	struct pckbc_internal *t = sc->id;
+	bus_space_tag_t iot = t->t_iot;
+	bus_space_handle_t ioh_d = t->t_ioh_d, ioh_c = t->t_ioh_c;
+
+	pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	/* KBC selftest */
+	if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0)
+		return;
+	pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	(void)pckbc_put8042cmd(t);
+	pckbcintr_internal(t->t_sc->id, t->t_sc);
 }
 
 /*
