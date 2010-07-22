@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.21 2010/07/22 10:22:37 kettenis Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.22 2010/07/22 14:42:43 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -181,6 +181,7 @@ struct wpi_softc {
 
 	int			sc_tx_timer;
 	void			*powerhook;
+	struct workq_task	sc_resume_wqt;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

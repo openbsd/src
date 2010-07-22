@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.101 2010/07/22 10:22:37 kettenis Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.102 2010/07/22 14:42:43 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -32,6 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/workq.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -74,6 +75,8 @@ void		wpi_attach(struct device *, struct device *, void *);
 void		wpi_radiotap_attach(struct wpi_softc *);
 #endif
 int		wpi_detach(struct device *, int);
+int		wpi_activate(struct device *, int);
+void		wpi_resume(void *, void *);
 void		wpi_power(int, void *);
 int		wpi_nic_lock(struct wpi_softc *);
 int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
@@ -161,7 +164,8 @@ struct cfdriver wpi_cd = {
 };
 
 struct cfattach wpi_ca = {
-	sizeof (struct wpi_softc), wpi_match, wpi_attach, wpi_detach
+	sizeof (struct wpi_softc), wpi_match, wpi_attach, wpi_detach,
+	wpi_activate
 };
 
 int
@@ -387,6 +391,32 @@ wpi_detach(struct device *self, int flags)
 	return 0;
 }
 
+int
+wpi_activate(struct device *self, int act)
+{
+	struct wpi_softc *sc = (struct wpi_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			wpi_stop(ifp, 1);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    wpi_resume, sc, NULL);
+		break;
+	}
+
+	return (0);
+}
+
+void
+wpi_resume(void *arg1, void *arg2)
+{
+	wpi_power(PWR_RESUME, arg1);
+}
+
 void
 wpi_power(int why, void *arg)
 {
@@ -404,12 +434,16 @@ wpi_power(int why, void *arg)
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
 
 	s = splnet();
+	sc->sc_flags |= WPI_FLAG_BUSY;
+
 	ifp = &sc->sc_ic.ic_if;
 	if (ifp->if_flags & IFF_UP) {
 		ifp->if_init(ifp);
 		if (ifp->if_flags & IFF_RUNNING)
 			ifp->if_start(ifp);
 	}
+
+	sc->sc_flags &= ~WPI_FLAG_BUSY;
 	splx(s);
 }
 
