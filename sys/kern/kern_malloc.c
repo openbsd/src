@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.83 2010/07/02 01:25:05 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.84 2010/07/22 06:30:13 matthew Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -107,7 +107,9 @@ u_int	nkmempages_min = 0;
 u_int	nkmempages_max = 0;
 
 struct kmembuckets bucket[MINBUCKET + 16];
+#ifdef KMEMSTATS
 struct kmemstats kmemstats[M_LAST];
+#endif
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 char buckstring[16 * sizeof("123456,")];
