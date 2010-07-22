@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.41 2010/07/22 00:31:06 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.42 2010/07/22 04:59:31 matthew Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -141,7 +141,7 @@ safte_match(struct device *parent, void *match, void *aux)
 		flags |= SCSI_AUTOCONF;
 	xs = scsi_xs_get(sa->sa_sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
-		return (ENOMEM);
+		return (0);
 	xs->cmd->opcode = INQUIRY;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)&inqbuf;
@@ -158,12 +158,13 @@ safte_match(struct device *parent, void *match, void *aux)
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	if (error == 0) {
-		if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0)
-			return (2);
-	}
+	if (error)
+		return (0);
 
-	return (error);
+	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0)
+		return (2);
+
+	return (0);
 }
 
 void
