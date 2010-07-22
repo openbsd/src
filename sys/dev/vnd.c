@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.99 2010/07/01 17:48:33 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.100 2010/07/22 14:34:06 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -660,24 +660,29 @@ vndiodone(struct buf *bp)
 		DNPRINTF(VDB_IO, "vndiodone: vbp %p error %d\n", vbp,
 		    vbp->vb_buf.b_error);
 
-		pbp->b_flags |= B_ERROR;
-		/* XXX does this matter here? */
-		(&vbp->vb_buf)->b_flags |= B_RAW;
-		pbp->b_error = biowait(&vbp->vb_buf);
+		pbp->b_flags |= (B_ERROR|B_INVAL);
+		pbp->b_error = vbp->vb_buf.b_error;
+		pbp->b_iodone = NULL;
+		biodone(pbp);
+		goto out;
 	}
+
 	pbp->b_resid -= vbp->vb_buf.b_bcount;
+
+	if (pbp->b_resid == 0) {
+		DNPRINTF(VDB_IO, "vndiodone: pbp %p iodone\n", pbp);
+		biodone(pbp);
+	}
+
+out:
 	putvndbuf(vbp);
+
 	if (vnd->sc_tab.b_active) {
 		disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid),
 		    (pbp->b_flags & B_READ));
 		if (!vnd->sc_tab.b_actf)
 			vnd->sc_tab.b_active--;
 	}
-	if (pbp->b_resid == 0) {
-		DNPRINTF(VDB_IO, "vndiodone: pbp %p iodone\n", pbp);
-		biodone(pbp);
-	}
-
 }
 
 /* ARGSUSED */
