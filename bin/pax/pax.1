@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.58 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: pax.1,v 1.59 2010/07/22 08:09:29 jmc Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: July 22 2010 $
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -1033,6 +1033,17 @@ options are specified along with the
 .Fl n
 option, a file is not considered selected unless it is newer
 than the file to which it is compared.
+.Pp
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width 2n -offset indent -compact
+.It 0
+All files were processed successfully.
+.It 1
+An error occurred.
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev TMPDIR
@@ -1092,15 +1103,6 @@ files with the same name found in the source file tree
 .Pp
 .Dl "$ pax -r -w -v -Y -Z home /backup"
 .Sh DIAGNOSTICS
-.Nm
-will exit with one of the following values:
-.Bl -tag -width 2n -offset indent
-.It 0
-All files were processed successfully.
-.It 1
-An error occurred.
-.El
-.Pp
 Whenever
 .Nm
 cannot create a file or a link when reading an archive or cannot

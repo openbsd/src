@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.51 2008/12/27 13:35:34 sobrado Exp $
+.\"	$OpenBSD: tar.1,v 1.52 2010/07/22 08:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,9 +23,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.51 2008/12/27 13:35:34 sobrado Exp $
+.\"	$OpenBSD: tar.1,v 1.52 2010/07/22 08:09:29 jmc Exp $
 .\"
-.Dd $Mdocdate: December 27 2008 $
+.Dd $Mdocdate: July 22 2010 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -280,6 +280,17 @@ The options
 .Op Fl 014578
 can be used to select one of the compiled-in backup devices,
 .Pa /dev/rstN .
+.Pp
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width 2n -offset indent -compact
+.It 0
+All files were processed successfully.
+.It 1
+An error occurred.
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev TMPDIR
@@ -332,15 +343,6 @@ Note that the glob pattern has been quoted to avoid expansion by the shell:
 For more detailed examples, see
 .Xr pax 1 .
 .Sh DIAGNOSTICS
-.Nm
-will exit with one of the following values:
-.Bl -tag -width 2n -offset indent
-.It 0
-All files were processed successfully.
-.It 1
-An error occurred.
-.El
-.Pp
 Whenever
 .Nm
 cannot create a file or a link when extracting an archive or cannot
