@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.86 2010/07/22 18:10:37 mlarkin Exp $ */
+/*	$OpenBSD: wd.c,v 1.87 2010/07/22 21:40:46 kettenis Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -1231,7 +1231,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	} else {
 		wdc_c.flags = AT_WAIT;
 	}
-	wdc_c.timeout = 1000; /* 1s timeout */
+	wdc_c.timeout = 30000; /* 30s timeout */
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: standby command didn't complete\n",
 		    wd->sc_dev.dv_xname);
