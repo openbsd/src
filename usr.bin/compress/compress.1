@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.43 2009/04/18 18:21:54 naddy Exp $
+.\"	$OpenBSD: compress.1,v 1.44 2010/07/22 07:38:56 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 18 2009 $
+.Dd $Mdocdate: July 22 2010 $
 .Dt COMPRESS 1
 .Os
 .Sh NAME
@@ -309,8 +309,25 @@ coding (as used in the historical command compact), and takes less
 time to compute.
 .Pp
 The
-.Nm compress ,
-.Nm uncompress ,
+.Nm compress
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -compact
+.It 0
+Success.
+.It 1
+An error occurred.
+.It 2
+At least one of the specified files was not compressed since
+.Fl f
+was not specified and compression would have resulted in a size
+increase.
+.It \*(Gt2
+An error occurred.
+.El
+.Pp
+The
+.Nm uncompress
 and
 .Nm zcat
 utilities exit with 0 on success; 1 if an error occurred;
