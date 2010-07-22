@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.71 2010/07/07 21:32:50 sthen Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.72 2010/07/22 17:16:10 pirofti Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/ic/comreg.h>
 
-const struct puc_device_description puc_devices[] = {
+const struct puc_device_description puc_devs[] = {
 	/*
 	 * XXX no entry because I have no data:
 	 * XXX Dolphin Peripherals 4006 (single parallel)
