@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.104 2010/07/01 05:11:18 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.105 2010/07/22 00:31:06 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1372,24 +1372,35 @@ done:
 int
 st_read(struct st_softc *st, char *buf, int size, int flags)
 {
-	struct scsi_rw_tape cmd;
+	struct scsi_rw_tape *cmd;
+	struct scsi_xfer *xs;
+	int error;
 
-	/*
-	 * If it's a null transfer, return immediately
-	 */
 	if (size == 0)
 		return 0;
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = READ;
+
+	xs = scsi_xs_get(st->sc_link, flags | SCSI_DATA_IN);
+	if (xs == NULL)
+		return (ENOMEM);
+	xs->cmd->opcode = READ;
+	xs->cmdlen = sizeof(*cmd);
+	xs->data = buf;
+	xs->datalen = size;
+	xs->retries = 0;
+	xs->timeout = ST_IO_TIME;
+
+	cmd = (struct scsi_rw_tape *)xs->cmd;
 	if (st->flags & ST_FIXEDBLOCKS) {
-		cmd.byte2 |= SRW_FIXED;
+		cmd->byte2 |= SRW_FIXED;
 		_lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
-		    cmd.len);
+		    cmd->len);
 	} else
-		_lto3b(size, cmd.len);
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) buf, size, 0, ST_IO_TIME, NULL,
-	    flags | SCSI_DATA_IN);
+		_lto3b(size, cmd->len);
+
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+
+	return (error);
 }
 
 /*
@@ -1398,38 +1409,35 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 int
 st_read_block_limits(struct st_softc *st, int flags)
 {
-	struct scsi_block_limits cmd;
 	struct scsi_block_limits_data block_limits;
+	struct scsi_block_limits *cmd;
 	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_xfer *xs;
 	int error;
 
-	/*
-	 * First check if we have it all loaded
-	 */
 	if ((sc_link->flags & SDEV_MEDIA_LOADED))
-		return 0;
+		return (0);
 
-	/*
-	 * do a 'Read Block Limits'
-	 */
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = READ_BLOCK_LIMITS;
+	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
+	if (xs == NULL)
+		return (ENOMEM);
+	xs->cmd->opcode = READ_BLOCK_LIMITS;
+	xs->cmdlen = sizeof(*cmd);
+	xs->data = (void *)&block_limits;
+	xs->datalen = sizeof(block_limits);
+	xs->timeout = ST_CTL_TIME;
 
-	/*
-	 * do the command, update the global values
-	 */
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) &block_limits, sizeof(block_limits),
-	    SCSI_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
-	if (error)
-		return error;
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
 
-	st->blkmin = _2btol(block_limits.min_length);
-	st->blkmax = _3btol(block_limits.max_length);
+	if (error == 0) {
+		st->blkmin = _2btol(block_limits.min_length);
+		st->blkmax = _3btol(block_limits.max_length);
+		SC_DEBUG(sc_link, SDEV_DB3,
+		    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
+	}
 
-	SC_DEBUG(sc_link, SDEV_DB3,
-	    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
-	return 0;
+	return (error);
 }
 
 /*
@@ -1613,30 +1621,38 @@ st_mode_select(struct st_softc *st, int flags)
 int
 st_erase(struct st_softc *st, int full, int flags)
 {
-	struct scsi_erase cmd;
-	int tmo;
+	struct scsi_erase *cmd;
+	struct scsi_xfer *xs;
+	int error;
+
+	xs = scsi_xs_get(st->sc_link, flags);
+	if (xs == NULL)
+		return (ENOMEM);
+	xs->cmd->opcode = ERASE;
+	xs->cmdlen = sizeof(*cmd);
 
 	/*
 	 * Full erase means set LONG bit in erase command, which asks
 	 * the drive to erase the entire unit.  Without this bit, we're
 	 * asking the drive to write an erase gap.
 	 */
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = ERASE;
+	cmd = (struct scsi_erase *)xs->cmd;
 	if (full) {
-		cmd.byte2 = SE_IMMED|SE_LONG;
-		tmo = ST_SPC_TIME;
+		cmd->byte2 = SE_IMMED|SE_LONG;
+		xs->timeout = ST_SPC_TIME;
 	} else {
-		cmd.byte2 = SE_IMMED;
-		tmo = ST_IO_TIME;
+		cmd->byte2 = SE_IMMED;
+		xs->timeout = ST_IO_TIME;
 	}
 
 	/*
 	 * XXX We always do this asynchronously, for now.  How long should
 	 * we wait if we want to (eventually) to it synchronously?
 	 */
-	return (scsi_scsi_cmd(st->sc_link, (struct scsi_generic *)&cmd,
-	    sizeof(cmd), 0, 0, SCSI_RETRIES, tmo, NULL, flags));
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+
+	return (error);
 }
 
 /*
@@ -1645,7 +1661,8 @@ st_erase(struct st_softc *st, int full, int flags)
 int
 st_space(struct st_softc *st, int number, u_int what, int flags)
 {
-	struct scsi_space cmd;
+	struct scsi_space *cmd;
+	struct scsi_xfer *xs;
 	int error;
 
 	switch (what) {
@@ -1708,13 +1725,19 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 	if (number == 0)
 		return 0;
 
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = SPACE;
-	cmd.byte2 = what;
-	_lto3b(number, cmd.number);
+	xs = scsi_xs_get(st->sc_link, flags);
+	if (xs == NULL)
+		return (ENOMEM);
+	xs->cmd->opcode = SPACE;
 
-	error = scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, ST_SPC_TIME, NULL, flags);
+	cmd = (struct scsi_space *)xs->cmd;
+	cmd->byte2 = what;
+	_lto3b(number, cmd->number);
+	xs->cmdlen = sizeof(*cmd);
+	xs->timeout = ST_SPC_TIME;
+
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
 
 	if (error != 0) {
 		st->media_fileno = -1;
@@ -1750,15 +1773,20 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 int
 st_write_filemarks(struct st_softc *st, int number, int flags)
 {
-	struct scsi_write_filemarks cmd;
+	struct scsi_write_filemarks *cmd;
+	struct scsi_xfer *xs;
 	int error;
 
-	/*
-	 * It's hard to write a negative number of file marks.
-	 * Don't try.
-	 */
 	if (number < 0)
-		return EINVAL;
+		return (EINVAL);
+
+	xs = scsi_xs_get(st->sc_link, flags);
+	if (xs == NULL)
+		return (ENOMEM);
+	xs->cmd->opcode = WRITE_FILEMARKS;
+	xs->cmdlen = sizeof(*cmd);
+	xs->timeout = ST_IO_TIME * 4;
+
 	switch (number) {
 	case 0:		/* really a command to sync the drive's buffers */
 		break;
@@ -1771,14 +1799,14 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		break;
 	default:
 		st->flags &= ~(ST_PER_ACTION | ST_WRITTEN);
+		break;
 	}
 
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = WRITE_FILEMARKS;
-	_lto3b(number, cmd.number);
+	cmd = (struct scsi_write_filemarks *)xs->cmd;
+	_lto3b(number, cmd->number);
 
-	error = scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, ST_IO_TIME * 4, NULL, flags);
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
 
 	if (error != 0) {
 		st->media_fileno = -1;
@@ -1827,36 +1855,44 @@ st_check_eod(struct st_softc *st, int position, int *nmarks, int flags)
 int
 st_load(struct st_softc *st, u_int type, int flags)
 {
-	struct scsi_load cmd;
+	struct scsi_load *cmd;
+	struct scsi_xfer *xs;
+	int error, nmarks;
 
 	st->media_fileno = -1;
 	st->media_blkno = -1;
 
 	if (type != LD_LOAD) {
-		int error;
-		int nmarks;
-
 		error = st_check_eod(st, FALSE, &nmarks, flags);
 		if (error)
-			return error;
+			return (error);
 	}
+
 	if (st->quirks & ST_Q_IGNORE_LOADS) {
 		if (type == LD_LOAD) {
 			/*
 			 * If we ignore loads, at least we should try a rewind.
 			 */
-			return st_rewind(st, 0, flags);
+			return (st_rewind(st, 0, flags));
 		}
 		return (0);
 	}
 
 
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = LOAD;
-	cmd.how = type;
+	xs = scsi_xs_get(st->sc_link, flags);
+	if (xs == NULL)
+		return (ENOMEM);
+	xs->cmd->opcode = LOAD;
+	xs->cmdlen = sizeof(*cmd);
+	xs->timeout = ST_SPC_TIME;
 
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, SCSI_RETRIES, ST_SPC_TIME, NULL, flags);
+	cmd = (struct scsi_load *)xs->cmd;
+	cmd->how = type;
+
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+
+	return (error);
 }
 
 /*
@@ -1865,22 +1901,27 @@ st_load(struct st_softc *st, u_int type, int flags)
 int
 st_rewind(struct st_softc *st, u_int immediate, int flags)
 {
-	struct scsi_rewind cmd;
-	int error;
-	int nmarks;
+	struct scsi_rewind *cmd;
+	struct scsi_xfer *xs;
+	int error, nmarks;
 
 	error = st_check_eod(st, FALSE, &nmarks, flags);
 	if (error)
-		return error;
+		return (error);
 	st->flags &= ~ST_PER_ACTION;
 
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = REWIND;
-	cmd.byte2 = immediate;
+	xs = scsi_xs_get(st->sc_link, flags);
+	if (xs == NULL)
+		return (ENOMEM);
+	xs->cmd->opcode = REWIND;
+	xs->cmdlen = sizeof(*cmd);
+	xs->timeout = immediate ? ST_CTL_TIME : ST_SPC_TIME;
 
-	error = scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, SCSI_RETRIES,
-	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
+	cmd = (struct scsi_rewind *)xs->cmd;
+	cmd->byte2 = immediate;
+
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
 
 	if (error == 0) {
 		st->media_fileno = 0;
