@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.184 2010/07/22 00:31:06 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.185 2010/07/22 05:21:58 matthew Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 	int error;
 
 	if (sc_link->flags & SDEV_UMASS)
-		error = EJUSTRETURN;
+		return (EJUSTRETURN);
 
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
