@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.2,v 1.9 2004/04/21 08:11:15 jmc Exp $
+.\"	$OpenBSD: csh.2,v 1.10 2010/07/22 08:30:29 jmc Exp $
 .\"	$NetBSD: csh.2,v 1.3 1995/03/21 09:03:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -56,7 +56,7 @@ read commands from a file
 .I \&.login
 also in your home directory.
 This file contains commands which you wish to do each time you log in
-to the \s-2UNIX\s0 system.
+to the UNIX system.
 My
 .I \&.login
 file looks something like:
@@ -75,7 +75,7 @@ if (\-e $mail) then
 endif
 .DE
 .PP
-This file contains several commands to be executed by \s-2UNIX\s0
+This file contains several commands to be executed by UNIX
 each time I log in.
 The first is a
 .I set
@@ -113,7 +113,7 @@ character to ^U.
 .PP
 Next I set the shell variable `time' to `15' causing the shell to automatically
 print out statistics lines for commands which execute for at least 15 seconds
-of \s-2CPU\s+2 time.  The variable `history' is set to 10 indicating that
+of CPU time.  The variable `history' is set to 10 indicating that
 I want the shell to remember the last 10 commands I type in its
 .I "history list" ,
 (described later).
@@ -134,7 +134,7 @@ When I log off (by giving the
 command) the shell
 will print `logout' and execute commands from the file `.logout'
 if it exists in my home directory.
-After that the shell will terminate and \s-2UNIX\s0 will log
+After that the shell will terminate and UNIX will log
 me off the system.
 If the system is not going down, I will receive a new login message.
 In any case, after the `logout' message the shell is committed to terminating
@@ -418,7 +418,7 @@ they can be referenced.  There is a way to refer to a previous command
 by searching for a string which appeared in it, and there are other,
 less useful, ways to select arguments to include in a new command.
 A complete description of all these mechanisms
-is given in the C shell manual pages in the \s-2UNIX\s0 Programmer's Manual.
+is given in the C shell manual pages in the UNIX Programmer's Manual.
 .NH 2
 Aliases
 .PP
@@ -654,7 +654,7 @@ variable.  In the previous example this would mean that the
 `Done' message might have come right in the middle of the message to
 Bill.
 Background jobs are unaffected by any signals from the keyboard like
-the \s-2STOP\s0, \s-2INTERRUPT\s0, or \s-2QUIT\s0 signals mentioned earlier.
+the STOP, INTERRUPT, or QUIT signals mentioned earlier.
 .PP
 Jobs are recorded in a table inside the shell until they terminate.
 In this table, the shell remembers the command names, arguments, and the
@@ -696,7 +696,7 @@ a new command, leaving the job running simultaneously.
 As mentioned in section 1.8, foreground jobs become
 .I suspended
 by typing ^Z,
-which sends a \s-2STOP\s0 signal to the currently running
+which sends a STOP signal to the currently running
 foreground job.  A background job can become suspended by using the
 .I stop
 command described below.  When jobs are suspended they merely stop
@@ -813,7 +813,7 @@ The
 .I bg
 command runs a suspended job in the background.  It is usually used
 after stopping the currently running foreground job with the
-\s-2STOP\s0 signal.  The combination of the \s-2STOP\s0 signal and the
+STOP signal.  The combination of the STOP signal and the
 .I bg
 command changes a foreground job into a background job.
 The
@@ -1104,7 +1104,7 @@ is an implied change of working directory, even though no cd command was
 issued.  In the above example the `ed' job was still in `/home/bill/project'
 even though the shell had changed to `/home/bill'.
 A similar warning is given when such a foreground job
-terminates or is suspended (using the \s-2STOP\s0 signal) since
+terminates or is suspended (using the STOP signal) since
 the return to the shell again implies a change of working directory.
 .DS
 % fg
@@ -1221,7 +1221,7 @@ Thus
 .DS
 setenv TERM adm3a
 .DE
-will set the value of the environment variable \s-2TERM\s0
+will set the value of the environment variable TERM
 to
 `adm3a'.
 A user program
@@ -1253,7 +1253,7 @@ file which you wish to take effect right away.
 The
 .I time
 command can be used to cause a command to be timed no matter how much
-\s-2CPU\s0 time it takes.
+CPU time it takes.
 Thus
 .DS
 % time cp /etc/rc /home/bill/rc
@@ -1278,7 +1278,7 @@ The word count command
 on the other hand used 0.1 seconds of user time and 0.1 seconds of system
 time in less than a second of elapsed time.
 The percentage `13%' indicates that over the period when it was active
-the command `wc' used an average of 13 percent of the available \s-2CPU\s0
+the command `wc' used an average of 13 percent of the available CPU
 cycles of the machine.
 .PP
 The
@@ -1300,7 +1300,7 @@ One useful feature which is discussed later is the
 built-in command which can be used to run the same command
 sequence with a number of different arguments.
 .PP
-If you intend to use \s-2UNIX\s0 a lot you should look through
+If you intend to use UNIX a lot you should look through
 the rest of this document and the csh manual pages (section1) to become familiar
 with the other facilities which are available to you.
 .bp

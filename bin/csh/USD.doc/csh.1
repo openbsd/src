@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.9 2004/04/21 08:11:15 jmc Exp $
+.\"	$OpenBSD: csh.1,v 1.10 2010/07/22 08:30:29 jmc Exp $
 .\"	$NetBSD: csh.1,v 1.3 1995/03/21 09:03:33 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -59,14 +59,14 @@ It incorporates good features of other shells and a
 .I history
 mechanism similar to the
 .I redo
-of \s-2INTERLISP\s0.
+of INTERLISP.
 While incorporating many features of other shells which make
 writing shell programs (shell scripts) easier,
 most of the features unique to
 .I csh
-are designed more for the interactive \s-2UNIX\s0 user.
+are designed more for the interactive UNIX user.
 .PP
-\s-2UNIX\s0
+UNIX
 users who have read a general introduction to the system
 will find a valuable basic explanation of the shell here.
 Simple terminal interaction with
@@ -89,7 +89,7 @@ A
 is a command language interpreter.
 .I Csh
 is the name of one particular command interpreter on
-\s-2UNIX\s0.
+UNIX.
 The primary purpose of
 .I csh
 is to translate command lines typed at a terminal into
@@ -99,10 +99,10 @@ is a user program just like any you might write.
 Hopefully,
 .I csh
 will be a very useful program for you
-in interacting with the \s-2UNIX\s0 system.
+in interacting with the UNIX system.
 .PP
 In addition to this document, you will want to refer to a copy
-of the \s-2UNIX\s0 User Reference Manual.
+of the UNIX User Reference Manual.
 The
 .I csh
 documentation in section 1 of the manual provides a full description of all
@@ -113,7 +113,7 @@ Many words in this document are shown in
 .I italics .
 These are important words;
 names of commands, and words which have special meaning in discussing
-the shell and \s-2UNIX\s0.
+the shell and UNIX.
 Many of the words are defined in a glossary at the end of this document.
 If you don't know what is meant by a word, you should look
 for it in the glossary.
@@ -145,7 +145,7 @@ The basic notion of commands
 A
 .I shell
 in
-\s-2UNIX\s0
+UNIX
 acts mostly as a medium through which other
 .I programs
 are invoked.
@@ -159,7 +159,7 @@ systems both by the fact that it is just a user program, and by the fact
 that it is used almost exclusively as a mechanism for invoking other programs.
 .PP
 .I Commands
-in the \s-2UNIX\s0 system consist of a list of strings or
+in the UNIX system consist of a list of strings or
 .I words
 interpreted as a
 .I "command name"
@@ -228,7 +228,7 @@ that mail had completed
 and signaled us that it was ready to read from the terminal again by
 printing another `% ' prompt.
 .PP
-This is the essential pattern of all interaction with \s-2UNIX\s0
+This is the essential pattern of all interaction with UNIX
 through the shell.
 A complete command is typed at the terminal, the shell executes
 the command and when this execution completes, it prompts for a new command.
@@ -259,7 +259,7 @@ to set the erase character to tset's default setting for this character
 .NH 2
 Flag arguments
 .PP
-A useful notion in \s-2UNIX\s0 is that of a
+A useful notion in UNIX is that of a
 .I flag
 argument.
 While many arguments to commands specify file names or user names,
@@ -282,14 +282,14 @@ causes
 .I ls
 to also give, for each file the size of the file in blocks of 512
 characters.
-The manual section for each command in the \s-2UNIX\s0 reference manual
+The manual section for each command in the UNIX reference manual
 gives the available options for each command.
 The
 .I ls
 command has a large number of useful and interesting options.
 Most other commands have either no options or only one or two options.
 It is hard to remember options of commands which are not used very
-frequently, so most \s-2UNIX\s0 utilities perform only one or two functions
+frequently, so most UNIX utilities perform only one or two functions
 rather than having a large number of hard to remember options.
 .NH 2
 Output to files
@@ -352,10 +352,10 @@ character, this `scratch' character denotes the fact that the file will
 be a scratch file.*
 .FS
 *Note that if your erase character is a `#', you will have to precede the
-`#' with a `\e'.  The fact that the `#' character is the old (pre-\s-2CRT\s0)
+`#' with a `\e'.  The fact that the `#' character is the old (pre-CRT)
 standard erase character means that it seldom appears in a file name, and
 allows this convention to be used for scratch files.  If you are using a
-\s-2CRT\s0, your erase character should be a ^H, as we demonstrated
+CRT, your erase character should be a ^H, as we demonstrated
 in section 1.1 how this could be set up.
 .FE
 The system will remove such files after a couple of days,
@@ -518,7 +518,7 @@ routing of information to the line printer.
 Filenames
 .PP
 Many commands to be executed will need the names of files as arguments.
-\s-2UNIX\s0
+UNIX
 .I pathnames
 consist of a number of
 .I components
@@ -792,26 +792,26 @@ the system will print a copy of a list of all users of the system
 on your terminal.
 This is likely to continue for several minutes unless you stop it.
 You can send an
-\s-2INTERRUPT\s0
+INTERRUPT
 .I signal
 to the
 .I cat
 command by typing ^C on your terminal.*
 .FS
-*On some older Unix systems the \s-2DEL\s0 or \s-2RUBOUT\s0 key
+*On some older Unix systems the DEL or RUBOUT key
 has the same effect. "stty all" will tell you the `intr' key value.
 .FE
 Since
 .I cat
 does not take any precautions to avoid or otherwise handle this signal,
 the
-\s-2INTERRUPT\s0
+INTERRUPT
 will cause it to terminate.
 The shell notices that
 .I cat
 has terminated and prompts you again with `% '.
-If you hit \s-2INTERRUPT\s0 again, the shell will just
-repeat its prompt since it handles \s-2INTERRUPT\s0 signals
+If you hit INTERRUPT again, the shell will just
+repeat its prompt since it handles INTERRUPT signals
 and chooses to continue to execute commands rather than terminating
 like
 .I cat
@@ -824,7 +824,7 @@ Thus the
 program in the first example above was terminated when we typed a ^D
 which generates an end-of-file from the standard input.
 The shell also terminates when it gets an end-of-file, printing `logout';
-\s-2UNIX\s0 then logs you off the system.
+UNIX then logs you off the system.
 Since this means that typing too many ^D's can accidentally log us off,
 the shell has a mechanism for preventing this.
 This
@@ -857,17 +857,17 @@ and the
 command would have received an end-of-file from it and terminated.
 Using a pipe here is more complicated than redirecting input
 so we would more likely use the first form.
-These commands could also have been stopped by sending an \s-2INTERRUPT\s0.
+These commands could also have been stopped by sending an INTERRUPT.
 .PP
 Another possibility for stopping a command is to suspend its execution
 temporarily, with the possibility of continuing execution later.  This is
-done by sending a \s-2STOP\s0 signal via typing a ^Z.
+done by sending a STOP signal via typing a ^Z.
 This signal causes all commands running on the terminal
 (usually one, but more if a pipeline is executing) to become suspended.
 The shell notices that the command(s) have been suspended, types
 `Suspended', and then prompts for a new command.
 The previously executing command has been suspended, but otherwise
-unaffected by the \s-2STOP\s0 signal.  Any other commands can be executed
+unaffected by the STOP signal.  Any other commands can be executed
 while the original command remains suspended.  The suspended command can
 be continued using the
 .I fg
@@ -915,14 +915,14 @@ program typed EOT.  The
 command will show which commands are suspended.
 The ^Z should only be typed at the beginning of a line since
 everything typed on the current line is discarded when a signal is sent
-from the keyboard.  This also happens on \s-2INTERRUPT\s0, and \s-2QUIT\s0
+from the keyboard.  This also happens on INTERRUPT, and QUIT
 signals.  More information on
 suspending jobs and controlling them is given in
 section 2.6.
 .PP
 If you write or run programs which are not fully debugged, then it may
 be necessary to stop them somewhat ungracefully.
-This can be done by sending them a \s-2QUIT\s0
+This can be done by sending them a QUIT
 signal, sent by typing a ^\e.
 This will usually provoke the shell to produce a message like:
 .DS
@@ -930,14 +930,14 @@ Quit (core dumped)
 .DE
 indicating that a file
 `core' has been created containing information about the running program's
-state when it terminated due to the \s-2QUIT\s0 signal.
+state when it terminated due to the QUIT signal.
 You can examine this file yourself, or forward information to the
 maintainer of the program telling him/her where the
 .I "core file"
 is.
 .PP
 If you run background commands (as explained in section 2.6) then these
-commands will ignore \s-2INTERRUPT\s0 and \s-2QUIT\s0 signals at the
+commands will ignore INTERRUPT and QUIT signals at the
 terminal.  To stop them you must use the
 .I kill
 command.  See section 2.6 for an example.
@@ -990,7 +990,7 @@ about the way in which it operates.
 The remaining sections will go yet further into the internals of the
 shell, but you will surely want to try using the
 shell before you go any further.
-To try it you can log in to \s-2UNIX\s0 and type the following
+To try it you can log in to UNIX and type the following
 command to the system:
 .DS
 chsh -s /bin/csh myname
