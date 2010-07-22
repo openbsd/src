@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2010/07/01 02:15:08 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2010/07/22 17:16:45 jsg Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -2199,9 +2199,11 @@ create_ike(char *name, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		}
 	}
 
-	if (filter->tag)
-		strlcpy(pol.pol_tag, filter->tag, sizeof(pol.pol_tag));
-	pol.pol_tap = filter->tap;
+	if (filter != NULL) {
+		if (filter->tag)
+			strlcpy(pol.pol_tag, filter->tag, sizeof(pol.pol_tag));
+		pol.pol_tap = filter->tap;
+	}
 
 	if (peers == NULL) {
 		if (pol.pol_flags & IKED_POLICY_ACTIVE) {
