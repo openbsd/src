@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.176 2010/07/22 00:31:06 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.177 2010/07/22 04:54:24 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1713,7 +1713,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 	u_int8_t buf[20];
 	int error;
 
-	xs = scsi_xs_get(sc->sc_link, SCSI_DATA_IN);
+	xs = scsi_xs_get(sc->sc_link, 0);
 	if (xs == NULL)
 		return (ENOMEM);
 	xs->cmdlen = sizeof(*cmd);
@@ -1728,6 +1728,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		xs->cmd->bytes[8] = 8;
 		xs->cmd->bytes[9] = 0 | (0 << 6);
 		xs->datalen = 8;
+		xs->flags |= SCSI_DATA_IN;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1741,6 +1742,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		xs->cmd->bytes[8] = 16;
 		xs->cmd->bytes[9] = 1 | (a->lsc.agid << 6);
 		xs->datalen = 16;
+		xs->flags |= SCSI_DATA_IN;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1753,6 +1755,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		xs->cmd->bytes[8] = 12;
 		xs->cmd->bytes[9] = 2 | (a->lsk.agid << 6);
 		xs->datalen = 12;
+		xs->flags |= SCSI_DATA_IN;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1767,6 +1770,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		xs->cmd->bytes[8] = 12;
 		xs->cmd->bytes[9] = 4 | (a->lstk.agid << 6);
 		xs->datalen = 12;
+		xs->flags |= SCSI_DATA_IN;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1784,6 +1788,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		xs->cmd->bytes[8] = 8;
 		xs->cmd->bytes[9] = 5 | (a->lsasf.agid << 6);
 		xs->datalen = 8;
+		xs->flags |= SCSI_DATA_IN;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1799,6 +1804,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		buf[1] = 14;
 		dvd_copy_challenge(&buf[4], a->hsc.chal);
 		xs->datalen = 16;
+		xs->flags |= SCSI_DATA_OUT;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1814,6 +1820,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		buf[1] = 10;
 		dvd_copy_key(&buf[4], a->hsk.key);
 		xs->datalen = 12;
+		xs->flags |= SCSI_DATA_OUT;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1839,6 +1846,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		xs->cmd->bytes[8] = 8;
 		xs->cmd->bytes[9] = 8 | (0 << 6);
 		xs->datalen = 8;
+		xs->flags |= SCSI_DATA_IN;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1859,6 +1867,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 		buf[1] = 6;
 		buf[4] = a->hrpcs.pdrc;
 		xs->datalen = 8;
+		xs->flags |= SCSI_DATA_OUT;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
