@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.1 2010/06/29 21:34:11 thib Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.2 2010/07/22 12:47:40 thib Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -832,17 +832,17 @@ ENTRY(aesni_ctr_enc)
 	jb .Lctr_enc_loop1
 .align 4
 .Lctr_enc_loop4:
+	call _aesni_inc
 	movaps IV, STATE1
-	call _aesni_inc
 	movups (INP), IN1
+	call _aesni_inc
 	movaps IV, STATE2
-	call _aesni_inc
 	movups 0x10(INP), IN2
+	call _aesni_inc
 	movaps IV, STATE3
-	call _aesni_inc
 	movups 0x20(INP), IN3
-	movaps IV, STATE4
 	call _aesni_inc
+	movaps IV, STATE4
 	movups 0x30(INP), IN4
 	call _aesni_enc4
 	pxor IN1, STATE1

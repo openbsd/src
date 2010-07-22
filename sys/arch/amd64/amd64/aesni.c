@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.7 2010/07/08 08:15:18 thib Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.8 2010/07/22 12:47:40 thib Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -46,7 +46,7 @@ struct aesni_sess {
 	uint32_t		 ses_dkey[4 * (AES_MAXROUNDS + 1)];
 	uint32_t		 ses_klen;
 	uint8_t			 ses_nonce[AESCTR_NONCESIZE];
-	uint8_t			 ses_iv[16];
+	uint8_t			 ses_iv[EALG_MAX_BLOCK_LEN];
 	int			 ses_sid;
 	int		 	 ses_used;
 	struct swcr_data	*ses_swd;
@@ -411,19 +411,25 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	else
 		bcopy(buf, crp->crp_buf + crd->crd_skip, crd->crd_len);
 
-	/* Copy out last block for use as next session IV for CBC */
-	if (crd->crd_alg == CRYPTO_AES_CBC && crd->crd_flags & CRD_F_ENCRYPT) {
-		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copydata((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - ivlen, ivlen,
-			    ses->ses_iv);
-		else if (crp->crp_flags & CRYPTO_F_IOV)
-			cuio_copydata((struct uio *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - ivlen, ivlen,
-			    ses->ses_iv);
-		else
-			bcopy(crp->crp_buf + crd->crd_skip +
-			    crd->crd_len - ivlen, ses->ses_iv, ivlen);
+	/*
+	 * Copy out last block for use as next session IV for CBC,
+	 * generate new IV for CTR.
+	 */
+	if (crd->crd_flags & CRD_F_ENCRYPT) {
+		if (crd->crd_alg == CRYPTO_AES_CBC) {
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata((struct mbuf *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
+				    ses->ses_iv);
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copydata((struct uio *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
+				    ses->ses_iv);
+			else
+				bcopy(crp->crp_buf + crd->crd_skip +
+				    crd->crd_len - ivlen, ses->ses_iv, ivlen);
+		} else if (crd->crd_alg == CRYPTO_AES_CTR)
+			arc4random_buf(ses->ses_iv, ivlen);
 	}
 
 out:
