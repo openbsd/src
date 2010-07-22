@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.100 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.101 2010/07/22 10:22:37 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1963,6 +1963,15 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s, error = 0;
 
 	s = splnet();
+	/*
+	 * Prevent processes from entering this function while another
+	 * process is tsleep'ing in it.
+	 */
+	if (sc->sc_flags & WPI_FLAG_BUSY) {
+		splx(s);
+		return EBUSY;
+	}
+	sc->sc_flags |= WPI_FLAG_BUSY;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -2022,6 +2031,7 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 	}
 
+	sc->sc_flags &= ~WPI_FLAG_BUSY;
 	splx(s);
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.20 2009/11/17 20:35:53 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.21 2010/07/22 10:22:37 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -142,6 +142,7 @@ struct wpi_softc {
 
 	u_int			sc_flags;
 #define WPI_FLAG_HAS_5GHZ	(1 << 0)
+#define WPI_FLAG_BUSY		(1 << 1)
 
 	/* Shared area. */
 	struct wpi_dma_info	shared_dma;
