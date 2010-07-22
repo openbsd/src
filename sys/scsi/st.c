@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.105 2010/07/22 00:31:06 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.106 2010/07/22 05:26:34 matthew Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1726,8 +1726,11 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 		return 0;
 
 	xs = scsi_xs_get(st->sc_link, flags);
-	if (xs == NULL)
+	if (xs == NULL) {
+		st->media_fileno = -1;
+		st->media_blkno = -1;
 		return (ENOMEM);
+	}
 	xs->cmd->opcode = SPACE;
 
 	cmd = (struct scsi_space *)xs->cmd;
@@ -1781,8 +1784,11 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		return (EINVAL);
 
 	xs = scsi_xs_get(st->sc_link, flags);
-	if (xs == NULL)
+	if (xs == NULL) {
+		st->media_fileno = -1;
+		st->media_blkno = -1;
 		return (ENOMEM);
+	}
 	xs->cmd->opcode = WRITE_FILEMARKS;
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_IO_TIME * 4;
