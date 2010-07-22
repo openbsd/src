@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.177 2010/07/22 04:54:24 matthew Exp $	*/
+/*	$OpenBSD: cd.c,v 1.178 2010/07/22 15:59:46 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1590,6 +1590,7 @@ cd_read_subchannel(struct cd_softc *sc, int mode, int format, int track,
 	xs->datalen = len;
 	xs->timeout = 5000;
 
+	cmd = (struct scsi_read_subchannel *)xs->cmd;
 	if (mode == CD_MSF_FORMAT)
 		cmd->byte2 |= CD_MSF;
 	cmd->byte3 = SRS_SUBQ;
@@ -1889,7 +1890,7 @@ dvd_read_physical(struct cd_softc *sc, union dvd_struct *s)
 	u_int8_t buf[4 + 4 * 20], *bufp;
 	int error, i;
 
-	xs = scsi_xs_get(xs->sc_link, SCSI_DATA_IN);
+	xs = scsi_xs_get(sc->sc_link, SCSI_DATA_IN);
 	if (xs == NULL)
 		return (ENOMEM);
 	xs->cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
@@ -1973,21 +1974,22 @@ dvd_read_disckey(struct cd_softc *sc, union dvd_struct *s)
 	struct scsi_xfer *xs;
 	int error;
 
-	xs = scsi_xs_get(sc->sc_link, SCSI_DATA_IN);
-	if (xs == NULL)
+	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK | M_ZERO);
+	if (buf == NULL)
 		return (ENOMEM);
+
+	xs = scsi_xs_get(sc->sc_link, SCSI_DATA_IN);
+	if (xs == NULL) {
+		free(buf, M_TEMP);
+		return (ENOMEM);
+	}
 	xs->cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)buf;
 	xs->datalen = sizeof(*buf);
 	xs->timeout = 30000;
 
-	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK | M_ZERO);
-	if (buf == NULL) {
-		scsi_xs_put(xs);
-		return (ENOMEM);
-	}
-
+	cmd = (struct scsi_read_dvd_structure *)xs->cmd;
 	cmd->format = s->type;
 	cmd->agid = s->disckey.agid << 6;
 	_lto2b(sizeof(*buf), cmd->length);
@@ -2044,20 +2046,20 @@ dvd_read_manufact(struct cd_softc *sc, union dvd_struct *s)
 	struct scsi_xfer *xs;
 	int error;
 
-	xs = scsi_xs_get(sc->sc_link, SCSI_DATA_IN);
-	if (xs == NULL)
+	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK | M_ZERO);
+	if (buf == NULL)
 		return (ENOMEM);
+
+	xs = scsi_xs_get(sc->sc_link, SCSI_DATA_IN);
+	if (xs == NULL) {
+		free(buf, M_TEMP);
+		return (ENOMEM);
+	}
 	xs->cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)buf;
 	xs->datalen = sizeof(*buf);
 	xs->timeout = 30000;
-
-	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK | M_ZERO);
-	if (buf == NULL) {
-		scsi_xs_put(xs);
-		return (ENOMEM);
-	}
 
 	cmd = (struct scsi_read_dvd_structure *)xs->cmd;
 	cmd->format = s->type;

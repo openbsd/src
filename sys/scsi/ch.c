@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.41 2010/07/22 00:31:06 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.42 2010/07/22 15:59:47 matthew Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -385,6 +385,7 @@ ch_move(sc, cm)
 	xs->retries = CHRETRIES;
 	xs->timeout = 100000;
 
+	cmd = (struct scsi_move_medium *)xs->cmd;
 	_lto2b(sc->sc_picker, cmd->tea);
 	_lto2b(fromelem, cmd->src);
 	_lto2b(toelem, cmd->dst);
@@ -445,6 +446,7 @@ ch_exchange(sc, ce)
 	xs->retries = CHRETRIES;
 	xs->timeout = 100000;
 
+	cmd = (struct scsi_exchange_medium *)xs->cmd;
 	_lto2b(sc->sc_picker, cmd->tea);
 	_lto2b(src, cmd->src);
 	_lto2b(dst1, cmd->fdst);
@@ -494,6 +496,7 @@ ch_position(sc, cp)
 	xs->retries = CHRETRIES;
 	xs->timeout = 100000;
 
+	cmd = (struct scsi_position_to_element *)xs->cmd;
 	_lto2b(sc->sc_picker, cmd->tea);
 	_lto2b(dst, cmd->dst);
 	if (cp->cp_flags & CP_INVERT)

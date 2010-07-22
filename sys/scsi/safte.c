@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.43 2010/07/22 05:21:02 matthew Exp $ */
+/*	$OpenBSD: safte.c,v 1.44 2010/07/22 15:59:47 matthew Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -603,6 +603,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	xs->retries = 2; 
 	xs->timeout = 30000;
 
+	cmd = (struct safte_writebuf_cmd *)xs->cmd;
 	cmd->flags |= SAFTE_WR_MODE;
 	cmd->length = htobe16(sizeof(struct safte_slotop));
 
