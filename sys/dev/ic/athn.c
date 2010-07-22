@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.56 2010/07/21 14:01:58 kettenis Exp $	*/
+/*	$OpenBSD: athn.c,v 1.57 2010/07/22 10:19:37 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2707,7 +2707,8 @@ athn_suspend(struct athn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	athn_stop(ifp, 1);
+	if (ifp->if_flags & IFF_RUNNING)
+		athn_stop(ifp, 1);
 }
 
 void
