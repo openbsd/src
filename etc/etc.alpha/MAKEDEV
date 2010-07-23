@@ -548,11 +548,11 @@ all)
 	R fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ch0
 	R bio hotplug ptm local wscons pci0 pci1 pci2 pci3 iop0 iop1
 	R uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	R tuner0 radio0 music0 speaker video0 audio0 audio1 audio2 uk0
-	R random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
-	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 ttyB0
-	R ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 crypto pf systrace wd0 wd1 wd2
-	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R tuner0 radio0 music0 speaker video0 video1 audio0 audio1
+	R audio2 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00
+	R tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6
+	R ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 crypto pf systrace
+	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

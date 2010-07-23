@@ -478,7 +478,7 @@ all)
 	R bpf7 bpf8 bpf9 pty0 diskmap vscsi0 nnpfs0 ch0 ttya hotplug
 	R ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1
 	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 radio0 music0
-	R video0 audio0 audio1 audio2 uk0 random lkm crypto pf
+	R video0 video1 audio0 audio1 audio2 uk0 random lkm crypto pf
 	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
 	R fd
 	;;

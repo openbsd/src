@@ -456,9 +456,9 @@ all)
 	R vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0
 	R tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
 	R bpf7 bpf8 bpf9 pty0 pty1 pty2 diskmap vscsi0 nnpfs0 hotplug
-	R ptm local wscons pci0 pci1 pci2 pci3 uall video0 audio0
-	R audio1 audio2 uk0 random tty00 tty01 tty02 tty03 apm crypto
-	R pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R ptm local wscons pci0 pci1 pci2 pci3 uall video0 video1
+	R audio0 audio1 audio2 uk0 random tty00 tty01 tty02 tty03 apm
+	R crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
