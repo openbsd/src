@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.98 2010/07/20 19:24:31 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.99 2010/07/23 06:43:00 phessler Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -33,6 +33,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
+#include <sys/workq.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -104,6 +105,8 @@ void		iwn_sensor_attach(struct iwn_softc *);
 void		iwn_radiotap_attach(struct iwn_softc *);
 #endif
 int		iwn_detach(struct device *, int);
+int		iwn_activate(struct device *, int);
+void		iwn_resume(void *, void *);
 void		iwn_power(int, void *);
 int		iwn_nic_lock(struct iwn_softc *);
 int		iwn_eeprom_lock(struct iwn_softc *);
@@ -331,7 +334,8 @@ struct cfdriver iwn_cd = {
 };
 
 struct cfattach iwn_ca = {
-	sizeof (struct iwn_softc), iwn_match, iwn_attach, iwn_detach
+	sizeof (struct iwn_softc), iwn_match, iwn_attach, iwn_detach,
+	iwn_activate
 };
 
 int
@@ -737,6 +741,32 @@ iwn_detach(struct device *self, int flags)
 	return 0;
 }
 
+int
+iwn_activate(struct device *self, int act)
+{
+	struct iwn_softc *sc = (struct iwn_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			iwn_stop(ifp, 1);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    iwn_resume, sc, NULL);
+		break;
+	}
+
+	return (0);
+}
+
+void
+iwn_resume(void *arg1, void *arg2)
+{
+	iwn_power(PWR_RESUME, arg1);
+}
+
 void
 iwn_power(int why, void *arg)
 {
@@ -754,12 +784,16 @@ iwn_power(int why, void *arg)
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
 
 	s = splnet();
+	sc->sc_flags |= IWN_FLAG_BUSY;
+
 	ifp = &sc->sc_ic.ic_if;
 	if (ifp->if_flags & IFF_UP) {
 		ifp->if_init(ifp);
 		if (ifp->if_flags & IFF_RUNNING)
 			ifp->if_start(ifp);
 	}
+
+	sc->sc_flags &= ~IWN_FLAG_BUSY;
 	splx(s);
 }
 
