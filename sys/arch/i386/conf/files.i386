@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.197 2010/07/05 22:52:03 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.198 2010/07/23 16:14:54 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -25,7 +25,7 @@ file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/via.c
-file	arch/i386/i386/amd64errata.c
+file	arch/i386/i386/amd64errata.c	!small_kernel
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/longrun.c	!small_kernel
 file	arch/i386/i386/mem.c
