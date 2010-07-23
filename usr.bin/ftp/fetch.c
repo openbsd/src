@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.101 2010/07/03 00:21:14 halex Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.102 2010/07/23 22:27:16 halex Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -150,7 +150,7 @@ url_encode(const char *path)
 
 	epath = epathp = malloc(new_length + 1);	/* One more for '\0'. */
 	if (epath == NULL)
-		return NULL;
+		err(1, "Can't allocate memory for URL encoding");
 
 	/*
 	 * Second pass:
@@ -177,7 +177,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 {
 	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path, ststr[4];
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
-	char *epath;
+	char *epath, *redirurl, *loctail;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
 	struct addrinfo hints, *res0, *res;
 	const char * volatile savefile;
@@ -191,6 +191,8 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	size_t len, wlen;
 #ifndef SMALL
 	char *sslpath = NULL, *sslhost = NULL;
+	char *locbase, *full_host = NULL;
+	const char *scheme;
 	int ishttpsurl = 0;
 	SSL_CTX *ssl_ctx = NULL;
 #endif /* !SMALL */
@@ -202,18 +204,26 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	newline = strdup(origline);
 	if (newline == NULL)
 		errx(1, "Can't allocate memory to parse URL");
-	if (strncasecmp(newline, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+	if (strncasecmp(newline, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		host = newline + sizeof(HTTP_URL) - 1;
-	else if (strncasecmp(newline, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
+#ifndef SMALL
+		scheme = HTTP_URL;
+#endif /* !SMALL */
+	} else if (strncasecmp(newline, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 		host = newline + sizeof(FTP_URL) - 1;
 		isftpurl = 1;
+#ifndef SMALL
+		scheme = FTP_URL;
+#endif /* !SMALL */
 	} else if (strncasecmp(newline, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 		host = newline + sizeof(FILE_URL) - 1;
 		isfileurl = 1;
 #ifndef SMALL
+		scheme = FILE_URL;
 	} else if (strncasecmp(newline, HTTPS_URL, sizeof(HTTPS_URL) - 1) == 0) {
 		host = newline + sizeof(HTTPS_URL) - 1;
 		ishttpsurl = 1;
+		scheme = HTTPS_URL;
 #endif /* !SMALL */
 	} else
 		errx(1, "url_get: Invalid URL '%s'", newline);
@@ -433,6 +443,10 @@ noslash:
 	    (hosttail[1] == '\0' || hosttail[1] == ':')) {
 		host++;
 		*hosttail++ = '\0';
+#ifndef SMALL
+		if (asprintf(&full_host, "[%s]", host) == -1)
+			errx(1, "Cannot allocate memory for hostname");
+#endif /* !SMALL */
 	} else
 		hosttail = host;
 
@@ -441,6 +455,9 @@ noslash:
 		*portnum++ = '\0';
 
 #ifndef SMALL
+	if (full_host == NULL)
+		if ((full_host = strdup(host)) == NULL)
+			errx(1, "Cannot allocate memory for hostname");
 	if (debug)
 		fprintf(ttyout, "host %s, port %s, path %s, save as %s.\n",
 		    host, portnum, path, savefile);
@@ -562,8 +579,6 @@ again:
 #endif /* !SMALL */
 
 	epath = url_encode(path);
-	if (epath == NULL)
-		return (-1);
 	if (proxyurl) {
 		if (verbose)
 			fprintf(ttyout, " (via %s)\n", proxyurl);
@@ -743,18 +758,58 @@ again:
 		} else if (isredirect &&
 		    strncasecmp(cp, LOCATION, sizeof(LOCATION) - 1) == 0) {
 			cp += sizeof(LOCATION) - 1;
+			free(proxyurl);
+			free(cookie);
+			if (strstr(cp, "://") == NULL) {
+#ifdef SMALL
+				errx(1, "Relative redirect not supported");
+#else /* SMALL */
+				if (*cp == '/') {
+					locbase = NULL;
+					cp++;
+				} else {
+					locbase = strdup(path);
+					if (locbase == NULL)
+						errx(1, "Can't allocate memory"
+						    " for location base");
+					loctail = strchr(locbase, '#');
+					if (loctail != NULL)
+						*loctail = '\0';
+					loctail = strchr(locbase, '?');
+					if (loctail != NULL)
+						*loctail = '\0';
+					loctail = strrchr(locbase, '/');
+					if (loctail == NULL) {
+						free(locbase);
+						locbase = NULL;
+					} else
+						loctail[1] = '\0';
+				}
+				/* Contruct URL from relative redirect */
+				if (asprintf(&redirurl, "%s%s%s%s/%s%s",
+				    scheme, full_host,
+				    portnum ? ":" : "",
+				    portnum ? portnum : "",
+				    locbase ? locbase : "",
+				    cp) == -1)
+					errx(1, "Cannot build "
+					    "redirect URL");
+				free(locbase);
+#endif /* SMALL */
+			} else if ((redirurl = strdup(cp)) == NULL)
+				errx(1, "Cannot allocate memory for URL");
+			loctail = strchr(redirurl, '#');
+			if (loctail != NULL)
+				*loctail = '\0';
 			if (verbose)
-				fprintf(ttyout, "Redirected to %s\n", cp);
+				fprintf(ttyout, "Redirected to %s\n", redirurl);
 			if (fin != NULL)
 				fclose(fin);
 			else if (s != -1)
 				close(s);
-			free(proxyurl);
-			free(newline);
-			free(cookie);
-			rval = url_get(cp, proxyenv, savefile);
-			free(buf);
-			return (rval);
+			rval = url_get(redirurl, proxyenv, savefile);
+			free(redirurl);
+			goto cleanup_url_get;
 		}
 	}
 
@@ -862,6 +917,7 @@ cleanup_url_get:
 		SSL_shutdown(ssl);
 		SSL_free(ssl);
 	}
+	free(full_host);
 #endif /* !SMALL */
 	if (fin != NULL)
 		fclose(fin);
