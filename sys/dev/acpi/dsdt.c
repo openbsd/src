@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.172 2010/07/22 14:19:47 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.173 2010/07/23 18:38:46 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4101,6 +4101,8 @@ struct aml_node *
 aml_searchname(struct aml_node *root, const void *vname)
 {
 	char *name = (char *)vname;
+	char  nseg[AML_NAMESEG_LEN + 1];
+	int   i;
 
 	dnprintf(25,"Searchname: %s:%s = ", aml_nodename(root), vname);
 	if (*name == AMLOP_ROOTCHAR) {
@@ -4108,8 +4110,13 @@ aml_searchname(struct aml_node *root, const void *vname)
 		name++;
 	}
 	while (*name != 0) {
-		root = __aml_search(root, name, 0);
-		name += (name[4] == '.') ? 5 : 4;
+		/* Ugh.. we can have short names here: append '_' */
+		strlcpy(nseg, "____", sizeof(nseg));
+		for (i=0; i < AML_NAMESEG_LEN && *name && *name != '.'; i++)
+			nseg[i] = *name++;
+		if (*name == '.')
+			name++;
+		root = __aml_search(root, nseg, 0);
 	}
 	dnprintf(25,"%p %s\n", root, aml_nodename(root));
 	return root;
