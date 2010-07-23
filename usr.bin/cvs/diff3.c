@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.51 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.52 2010/07/23 08:31:19 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -264,7 +264,7 @@ cvs_merge_file(struct cvs_file *cf, int verbose)
 	for (i = 0; i < 3; i++)
 		fclose(fp[i]);
 
-	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
+	worklist_run(&temp_files, worklist_unlink);
 
 	xfree(path1);
 	xfree(path2);
@@ -375,7 +375,7 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 			if (dlp->l_lineno == start)
 				break;
 			if (dlp->l_lineno > start) {
-				dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
+				dlp = TAILQ_PREV(dlp, tqh, l_list);
 			} else if (dlp->l_lineno < start) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				if (ndlp->l_lineno > start)
@@ -389,7 +389,7 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 
 
 		if (op == 'c') {
-			insert_after = TAILQ_PREV(dlp, cvs_tqh, l_list);
+			insert_after = TAILQ_PREV(dlp, tqh, l_list);
 			for (i = 0; i <= (end - start); i++) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);

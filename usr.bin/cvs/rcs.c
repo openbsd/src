@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.295 2010/07/21 09:22:17 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.296 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -399,7 +399,7 @@ rcs_write(RCSFILE *rfp)
 		fatal("fdopen %s: %s", fn, strerror(saved_errno));
 	}
 
-	cvs_worklist_add(fn, &temp_files);
+	worklist_add(fn, &temp_files);
 
 	if (rfp->rf_head != NULL)
 		rcsnum_tostr(rfp->rf_head, numbuf, sizeof(numbuf));
@@ -496,9 +496,8 @@ rcs_write(RCSFILE *rfp)
 				fputc('\n', fp);
 		}
 		fputs("@\ntext\n@", fp);
-		if (rdp->rd_text != NULL) {
+		if (rdp->rd_text != NULL)
 			rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
-		}
 		fputs("@\n", fp);
 	}
 
@@ -1065,7 +1064,7 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines,
 			if (dlp->l_lineno == lineno)
 				break;
 			if (dlp->l_lineno > lineno) {
-				dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
+				dlp = TAILQ_PREV(dlp, tqh, l_list);
 			} else if (dlp->l_lineno < lineno) {
 				if (((ndlp = TAILQ_NEXT(dlp, l_list)) == NULL) ||
 				    ndlp->l_lineno > lineno)
@@ -1090,7 +1089,7 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines,
 				/* last line is gone - reset dlp */
 				if (dlp == NULL) {
 					ndlp = TAILQ_LAST(&(dlines->l_lines),
-					    cvs_tqh);
+					    tqh);
 					dlp = ndlp;
 				}
 			}
@@ -1333,7 +1332,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	 * When the first revision got specified, prevrdp will be NULL.
 	 */
 	prevrdp = (struct rcs_delta *)TAILQ_NEXT(rdp, rd_list);
-	nextrdp = (struct rcs_delta *)TAILQ_PREV(rdp, cvs_tqh, rd_list);
+	nextrdp = (struct rcs_delta *)TAILQ_PREV(rdp, tqh, rd_list);
 
 	newdeltatext = NULL;
 	prevbuf = NULL;
@@ -3148,7 +3147,7 @@ rcs_rev_write_stmp(RCSFILE *rfp,  RCSNUM *rev, char *template, int mode)
 	if ((fd = mkstemp(template)) == -1)
 		fatal("mkstemp: `%s': %s", template, strerror(errno));
 
-	cvs_worklist_add(template, &temp_files);
+	worklist_add(template, &temp_files);
 	rcs_rev_write_fd(rfp, rev, fd, mode);
 
 	if (lseek(fd, 0, SEEK_SET) < 0)

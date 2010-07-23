@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.150 2008/06/21 15:39:15 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.151 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -73,7 +73,7 @@ int		cvs_getopt(int, char **);
 __dead void	usage(void);
 static void	cvs_read_rcfile(void);
 
-struct cvs_wklhead temp_files;
+struct wklhead temp_files;
 
 void sighandler(int);
 volatile sig_atomic_t cvs_quit = 0;
@@ -104,10 +104,10 @@ void
 cvs_cleanup(void)
 {
 	cvs_log(LP_TRACE, "cvs_cleanup: removing locks");
-	cvs_worklist_run(&repo_locks, cvs_worklist_unlink);
+	worklist_run(&repo_locks, worklist_unlink);
 
 	cvs_log(LP_TRACE, "cvs_cleanup: removing temp files");
-	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
+	worklist_run(&temp_files, worklist_unlink);
 
 	if (cvs_server_path != NULL) {
 		if (cvs_rmdir(cvs_server_path) == -1)

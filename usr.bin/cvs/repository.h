@@ -25,7 +25,7 @@
 #define REPOSITORY_DODIRS	0x01
 #define REPOSITORY_IS_ATTIC	0x02
 
-extern struct cvs_wklhead repo_locks;
+extern struct wklhead repo_locks;
 
 void	cvs_repository_unlock(const char *);
 void	cvs_repository_lock(const char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.c,v 1.6 2007/02/22 06:42:10 otto Exp $	*/
+/*	$OpenBSD: worklist.c,v 1.7 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -33,17 +33,17 @@
  * adds a path to a worklist.
  */
 void
-cvs_worklist_add(const char *path, struct cvs_wklhead *worklist)
+worklist_add(const char *path, struct wklhead *worklist)
 {
 	size_t len;
-	struct cvs_worklist *wkl;
+	struct worklist *wkl;
 	sigset_t old, new;
 
 	wkl = xcalloc(1, sizeof(*wkl));
 
 	len = strlcpy(wkl->wkl_path, path, sizeof(wkl->wkl_path));
 	if (len >= sizeof(wkl->wkl_path))
-		fatal("path truncation in cvs_worklist_add");
+		fatal("path truncation in worklist_add");
 
 	sigfillset(&new);
 	sigprocmask(SIG_BLOCK, &new, &old);
@@ -53,18 +53,18 @@ cvs_worklist_add(const char *path, struct cvs_wklhead *worklist)
 
 /*
  * run over the given worklist, calling cb for each element.
- * this is just like cvs_worklist_clean(), except we block signals first.
+ * this is just like worklist_clean(), except we block signals first.
  */
 void
-cvs_worklist_run(struct cvs_wklhead *list, void (*cb)(struct cvs_worklist *))
+worklist_run(struct wklhead *list, void (*cb)(struct worklist *))
 {
 	sigset_t old, new;
-	struct cvs_worklist *wkl;
+	struct worklist *wkl;
 
 	sigfillset(&new);
 	sigprocmask(SIG_BLOCK, &new, &old);
 
-	cvs_worklist_clean(list, cb);
+	worklist_clean(list, cb);
 
 	while ((wkl = SLIST_FIRST(list)) != NULL) {
 		SLIST_REMOVE_HEAD(list, wkl_list);
@@ -78,16 +78,16 @@ cvs_worklist_run(struct cvs_wklhead *list, void (*cb)(struct cvs_worklist *))
  * pass elements to the specified callback, which has to be signal safe.
  */
 void
-cvs_worklist_clean(struct cvs_wklhead *list, void (*cb)(struct cvs_worklist *))
+worklist_clean(struct wklhead *list, void (*cb)(struct worklist *))
 {
-	struct cvs_worklist *wkl;
+	struct worklist *wkl;
 
 	SLIST_FOREACH(wkl, list, wkl_list)
 	    cb(wkl);
 }
 
 void
-cvs_worklist_unlink(struct cvs_worklist *wkl)
+worklist_unlink(struct worklist *wkl)
 {
 	(void)unlink(wkl->wkl_path);
 }

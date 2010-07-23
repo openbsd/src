@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.57 2010/07/21 09:22:19 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.58 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -404,7 +404,7 @@ rcs_write(RCSFILE *rfp)
 		err(1, "%s", fn);
 	}
 
-	rcs_worklist_add(fn, &rcs_temp_files);
+	worklist_add(fn, &temp_files);
 
 	if (rfp->rf_head != NULL)
 		rcsnum_tostr(rfp->rf_head, numbuf, sizeof(numbuf));
@@ -1083,7 +1083,7 @@ rcs_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 			if (dlp->l_lineno == lineno)
 				break;
 			if (dlp->l_lineno > lineno) {
-				dlp = TAILQ_PREV(dlp, rcs_tqh, l_list);
+				dlp = TAILQ_PREV(dlp, tqh, l_list);
 			} else if (dlp->l_lineno < lineno) {
 				if (((ndlp = TAILQ_NEXT(dlp, l_list)) == NULL) ||
 				    ndlp->l_lineno > lineno)
@@ -1103,7 +1103,7 @@ rcs_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 				/* last line is gone - reset dlp */
 				if (dlp == NULL) {
 					ndlp = TAILQ_LAST(&(dlines->l_lines),
-					    rcs_tqh);
+					    tqh);
 					dlp = ndlp;
 				}
 			}
@@ -1442,7 +1442,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	 * When the first revision got specified, prevrdp will be NULL.
 	 */
 	prevrdp = (struct rcs_delta *)TAILQ_NEXT(rdp, rd_list);
-	nextrdp = (struct rcs_delta *)TAILQ_PREV(rdp, rcs_tqh, rd_list);
+	nextrdp = (struct rcs_delta *)TAILQ_PREV(rdp, tqh, rd_list);
 
 	newdeltatext = prevbuf = nextbuf = NULL;
 

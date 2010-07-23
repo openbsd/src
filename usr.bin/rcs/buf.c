@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.13 2007/05/29 00:19:10 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.14 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -374,7 +374,7 @@ rcs_buf_write_stmp(BUF *b, char *template)
 	if ((fd = mkstemp(template)) == -1)
 		err(1, "%s", template);
 
-	rcs_worklist_add(template, &rcs_temp_files);
+	worklist_add(template, &temp_files);
 
 	if (rcs_buf_write_fd(b, fd) == -1) {
 		(void)unlink(template);

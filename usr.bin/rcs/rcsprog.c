@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.147 2009/02/15 12:58:01 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.148 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -60,7 +60,7 @@ struct rcs_prog {
 	{ "merge",	merge_main,	merge_usage	},
 };
 
-struct rcs_wklhead rcs_temp_files;
+struct wklhead temp_files;
 
 void sighdlr(int);
 static void  rcs_attach_symbol(RCSFILE *, const char *);
@@ -69,7 +69,7 @@ static void  rcs_attach_symbol(RCSFILE *, const char *);
 void
 sighdlr(int sig)
 {
-	rcs_worklist_clean(&rcs_temp_files, rcs_worklist_unlink);
+	worklist_clean(&temp_files, worklist_unlink);
 	_exit(1);
 }
 
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 
 	ret = -1;
 	rcs_optind = 1;
-	SLIST_INIT(&rcs_temp_files);
+	SLIST_INIT(&temp_files);
 
 	cmd_argc = build_cmd(&cmd_argv, argv, argc);
 
@@ -151,7 +151,7 @@ main(int argc, char **argv)
 		}
 
 	/* clean up temporary files */
-	rcs_worklist_run(&rcs_temp_files, rcs_worklist_unlink);
+	worklist_run(&temp_files, worklist_unlink);
 
 	exit(ret);
 }

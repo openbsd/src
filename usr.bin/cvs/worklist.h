@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.h,v 1.6 2007/02/22 06:42:10 otto Exp $	*/
+/*	$OpenBSD: worklist.h,v 1.7 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,17 +29,17 @@
 
 #include <sys/param.h>
 
-struct cvs_worklist {
-	char					wkl_path[MAXPATHLEN];
-	volatile SLIST_ENTRY(cvs_worklist)	wkl_list;
+struct worklist {
+	char				wkl_path[MAXPATHLEN];
+	volatile SLIST_ENTRY(worklist)	wkl_list;
 };
 
-SLIST_HEAD(cvs_wklhead, cvs_worklist);
+SLIST_HEAD(wklhead, worklist);
 
-void cvs_worklist_add(const char *, struct cvs_wklhead *);
-void cvs_worklist_run(struct cvs_wklhead *, void (*cb)(struct cvs_worklist *));
-void cvs_worklist_clean(struct cvs_wklhead *, void (*cb)(struct cvs_worklist *));
+void worklist_add(const char *, struct wklhead *);
+void worklist_run(struct wklhead *, void (*cb)(struct worklist *));
+void worklist_clean(struct wklhead *, void (*cb)(struct worklist *));
 
-void cvs_worklist_unlink(struct cvs_worklist *);
+void worklist_unlink(struct worklist *);
 
 #endif

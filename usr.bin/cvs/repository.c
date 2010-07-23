@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.22 2009/03/26 22:54:37 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.23 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -25,7 +25,7 @@
 
 #include "cvs.h"
 
-struct cvs_wklhead repo_locks;
+struct wklhead repo_locks;
 
 void
 cvs_repository_unlock(const char *repo)
@@ -37,7 +37,7 @@ cvs_repository_unlock(const char *repo)
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", repo, CVS_LOCK);
 
 	/* XXX - this ok? */
-	cvs_worklist_run(&repo_locks, cvs_worklist_unlink);
+	worklist_run(&repo_locks, worklist_unlink);
 }
 
 void
@@ -91,7 +91,7 @@ cvs_repository_lock(const char *repo, int wantlock)
 	}
 
 	(void)close(i);
-	cvs_worklist_add(fpath, &repo_locks);
+	worklist_add(fpath, &repo_locks);
 }
 
 void

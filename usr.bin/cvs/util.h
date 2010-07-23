@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.26 2008/06/12 07:16:14 joris Exp $	*/
+/*	$OpenBSD: util.h,v 1.27 2010/07/23 08:31:19 ray Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -54,11 +54,11 @@ struct cvs_line {
 	TAILQ_ENTRY(cvs_line)	 l_list;
 };
 
-TAILQ_HEAD(cvs_tqh, cvs_line);
+TAILQ_HEAD(tqh, cvs_line);
 
 struct cvs_lines {
 	int		l_nblines;
-	struct cvs_tqh	l_lines;
+	struct tqh	l_lines;
 };
 
 struct cvs_argvector {
