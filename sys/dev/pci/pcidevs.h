@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1565 2010/07/18 17:10:52 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1566 2010/07/23 08:19:52 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4794,7 +4794,7 @@
 
 /* Silicon Integrated System products */
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 AGP */
-#define	PCI_PRODUCT_SIS_86C202	0x0002		/* 86C202 VGA */
+#define	PCI_PRODUCT_SIS_86C202	0x0002		/* 86C202 AGP */
 #define	PCI_PRODUCT_SIS_648FX	0x0003		/* 648FX AGP */
 #define	PCI_PRODUCT_SIS_PPB_1	0x0004		/* PCI-PCI */
 #define	PCI_PRODUCT_SIS_86C205_1	0x0005		/* 86C205 */
