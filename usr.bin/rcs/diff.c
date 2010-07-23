@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.30 2010/07/16 17:53:20 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.31 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1377,7 +1377,7 @@ diff_output(const char *fmt, ...)
 	if (i == -1)
 		err(1, "diff_output");
 	if (diffbuf != NULL)
-		rcs_buf_append(diffbuf, str, strlen(str));
+		buf_append(diffbuf, str, strlen(str));
 	else
 		printf("%s", str);
 	xfree(str);

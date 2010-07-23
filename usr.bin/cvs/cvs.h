@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.177 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.178 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -356,7 +356,7 @@ const char	*cvs_var_get(const char *);
 void		 cvs_cleanup(void);
 
 /* date.y */
-time_t		 cvs_date_parse(const char *);
+time_t		 date_parse(const char *);
 
 /* entries.c */
 struct cvs_ent	*cvs_ent_parse(const char *);

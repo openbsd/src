@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.60 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.61 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -69,7 +69,7 @@ cvs_annotate(int argc, char **argv)
 		switch (ch) {
 		case 'D':
 			dateflag = optarg;
-			cvs_specified_date = cvs_date_parse(dateflag);
+			cvs_specified_date = date_parse(dateflag);
 			break;
 		case 'f':
 			force_head = 1;
@@ -156,8 +156,8 @@ cvs_annotate_local(struct cvs_file *cf)
 	int i;
 	char date[10], rnum[13], *p;
 	RCSNUM *bnum, *rev;
-	struct cvs_line *line;
-	struct cvs_line **alines;
+	struct rcs_line *line;
+	struct rcs_line **alines;
 
 	cvs_log(LP_TRACE, "cvs_annotate_local(%s)", cf->file_path);
 

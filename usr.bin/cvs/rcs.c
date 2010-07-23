@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.296 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.297 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -211,8 +211,8 @@ static struct rcs_key {
 #define RCS_NKEYS	(sizeof(rcs_keys)/sizeof(rcs_keys[0]))
 
 static RCSNUM	*rcs_get_revision(const char *, RCSFILE *);
-int		rcs_patch_lines(struct cvs_lines *, struct cvs_lines *,
-		    struct cvs_line **, struct rcs_delta *);
+int		rcs_patch_lines(struct rcs_lines *, struct rcs_lines *,
+		    struct rcs_line **, struct rcs_delta *);
 static void	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
@@ -232,8 +232,8 @@ static int	rcs_pushtok(RCSFILE *, const char *, int);
 static void	rcs_growbuf(RCSFILE *);
 static void	rcs_strprint(const u_char *, size_t, FILE *);
 
-static void	rcs_kwexp_line(char *, struct rcs_delta *, struct cvs_lines *,
-		    struct cvs_line *, int mode);
+static void	rcs_kwexp_line(char *, struct rcs_delta *, struct rcs_lines *,
+		    struct rcs_line *, int mode);
 
 static int rcs_ignore_keys = 0;
 
@@ -1025,12 +1025,12 @@ rcs_comment_set(RCSFILE *file, const char *comment)
 }
 
 int
-rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines,
-    struct cvs_line **alines, struct rcs_delta *rdp)
+rcs_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines,
+    struct rcs_line **alines, struct rcs_delta *rdp)
 {
 	u_char op;
 	char *ep;
-	struct cvs_line *lp, *dlp, *ndlp;
+	struct rcs_line *lp, *dlp, *ndlp;
 	int i, lineno, nbln;
 	u_char tmp;
 
@@ -1136,8 +1136,8 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines,
 void
 rcs_delta_stats(struct rcs_delta *rdp, int *ladded, int *lremoved)
 {
-	struct cvs_lines *plines;
-	struct cvs_line *lp;
+	struct rcs_lines *plines;
+	struct rcs_line *lp;
 	int added, i, lineno, nbln, removed;
 	char op, *ep;
 	u_char tmp;
@@ -1339,7 +1339,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	path_tmp1 = path_tmp2 = NULL;
 
 	if (prevrdp != NULL && nextrdp != NULL) {
-		newdiff = cvs_buf_alloc(64);
+		newdiff = buf_alloc(64);
 
 		/* calculate new diff */
 		(void)xasprintf(&path_tmp1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
@@ -2504,8 +2504,8 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, BUF *bp)
 	if (rdp->rd_text != NULL)
 		xfree(rdp->rd_text);
 
-	len = cvs_buf_len(bp);
-	dtext = cvs_buf_release(bp);
+	len = buf_len(bp);
+	dtext = buf_release(bp);
 	bp = NULL;
 
 	if (len != 0) {
@@ -2709,10 +2709,10 @@ rcs_get_revision(const char *revstr, RCSFILE *rfp)
  * rcs_rev_getlines()
  *
  * Get the entire contents of revision <frev> from the RCSFILE <rfp> and
- * return it as a pointer to a struct cvs_lines.
+ * return it as a pointer to a struct rcs_lines.
  */
-struct cvs_lines *
-rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
+struct rcs_lines *
+rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct rcs_line ***alines)
 {
 	size_t plen;
 	int annotate, done, i, nextroot;
@@ -2720,8 +2720,8 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 	struct rcs_branch *brp;
 	struct rcs_delta *hrdp, *prdp, *rdp, *trdp;
 	u_char *patch;
-	struct cvs_line *line, *nline;
-	struct cvs_lines *dlines, *plines;
+	struct rcs_line *line, *nline;
+	struct rcs_lines *dlines, *plines;
 
 	if (rfp->rf_head == NULL ||
 	    (hrdp = rcs_findrev(rfp, rfp->rf_head)) == NULL)
@@ -2759,7 +2759,7 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 				i++;
 			}
 
-			*alines = xcalloc(i + 1, sizeof(struct cvs_line *));
+			*alines = xcalloc(i + 1, sizeof(struct rcs_line *));
 			(*alines)[i] = NULL;
 			annotate = ANNOTATE_NOW;
 
@@ -2815,7 +2815,7 @@ again:
 				i++;
 			}
 
-			*alines = xcalloc(i + 1, sizeof(struct cvs_line *));
+			*alines = xcalloc(i + 1, sizeof(struct rcs_line *));
 			(*alines)[i] = NULL;
 			annotate = ANNOTATE_NOW;
 
@@ -2891,7 +2891,7 @@ done:
 }
 
 void
-rcs_annotate_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
+rcs_annotate_getlines(RCSFILE *rfp, RCSNUM *frev, struct rcs_line ***alines)
 {
 	size_t plen;
 	int i, nextroot;
@@ -2899,8 +2899,8 @@ rcs_annotate_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp, *trdp;
 	u_char *patch;
-	struct cvs_line *line;
-	struct cvs_lines *dlines, *plines;
+	struct rcs_line *line;
+	struct rcs_lines *dlines, *plines;
 
 	if (!RCSNUM_ISBRANCHREV(frev))
 		fatal("rcs_annotate_getlines: branch revision expected");
@@ -2992,7 +2992,7 @@ rcs_annotate_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 		if (line->l_line != NULL)
 			i++;
 	}
-	*alines = xcalloc(i + 1, sizeof(struct cvs_line *));
+	*alines = xcalloc(i + 1, sizeof(struct rcs_line *));
 	(*alines)[i] = NULL;
 
 	i = 0;
@@ -3015,13 +3015,13 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 {
 	int expmode, expand;
 	struct rcs_delta *rdp;
-	struct cvs_lines *lines;
-	struct cvs_line *lp, *nlp;
+	struct rcs_lines *lines;
+	struct rcs_line *lp, *nlp;
 	BUF *bp;
 
 	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev, NULL);
-	bp = cvs_buf_alloc(1024 * 16);
+	bp = buf_alloc(1024 * 16);
 
 	if (!(mode & RCS_KWEXP_NONE)) {
 		if (rfp->rf_expand != NULL)
@@ -3048,7 +3048,7 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 			rcs_kwexp_line(rfp->rf_path, rdp, lines, lp, expmode);
 
 		do {
-			cvs_buf_append(bp, lp->l_line, lp->l_len);
+			buf_append(bp, lp->l_line, lp->l_len);
 		} while ((lp = TAILQ_NEXT(lp, l_list)) != nlp);
 	}
 
@@ -3071,8 +3071,8 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int _fd, int mode)
 	size_t ret;
 	int expmode, expand;
 	struct rcs_delta *rdp;
-	struct cvs_lines *lines;
-	struct cvs_line *lp, *nlp;
+	struct rcs_lines *lines;
+	struct rcs_line *lp, *nlp;
 	extern int print_stdout;
 
 	expand = 0;
@@ -3157,8 +3157,8 @@ rcs_rev_write_stmp(RCSFILE *rfp,  RCSNUM *rev, char *template, int mode)
 }
 
 static void
-rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
-    struct cvs_line *line, int mode)
+rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
+    struct rcs_line *line, int mode)
 {
 	BUF *tmpbuf;
 	int kwtype;
@@ -3350,7 +3350,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 			/* order does not matter anymore below */
 			if (kwtype & RCS_KW_LOG) {
 				char linebuf[256];
-				struct cvs_line *cur, *lp;
+				struct rcs_line *cur, *lp;
 				char *logp, *l_line, *prefix, *q, *sprefix;
 				size_t i;
 
@@ -3490,28 +3490,28 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				fatal("rcs_kwexp_line: truncated");
 
 		/* Concatenate everything together. */
-		tmpbuf = cvs_buf_alloc(len + strlen(expbuf));
+		tmpbuf = buf_alloc(len + strlen(expbuf));
 		/* Append everything before keyword. */
-		cvs_buf_append(tmpbuf, line->l_line,
+		buf_append(tmpbuf, line->l_line,
 		    start - line->l_line);
 		/* Append keyword. */
-		cvs_buf_puts(tmpbuf, expbuf);
+		buf_puts(tmpbuf, expbuf);
 		/* Point c to end of keyword. */
-		tlen = cvs_buf_len(tmpbuf) - 1;
+		tlen = buf_len(tmpbuf) - 1;
 		/* Append everything after keyword. */
-		cvs_buf_append(tmpbuf, end,
+		buf_append(tmpbuf, end,
 		    line->l_line + line->l_len - end);
-		c = cvs_buf_get(tmpbuf) + tlen;
+		c = buf_get(tmpbuf) + tlen;
 		/* Point fin to end of data. */
-		fin = cvs_buf_get(tmpbuf) + cvs_buf_len(tmpbuf) - 1;
+		fin = buf_get(tmpbuf) + buf_len(tmpbuf) - 1;
 		/* Recalculate new length. */
-		len = cvs_buf_len(tmpbuf);
+		len = buf_len(tmpbuf);
 
 		/* tmpbuf is now ready, convert to string */
 		if (line->l_needsfree)
 			xfree(line->l_line);
 		line->l_len = len;
-		line->l_line = cvs_buf_release(tmpbuf);
+		line->l_line = buf_release(tmpbuf);
 		line->l_needsfree = 1;
 	}
 }

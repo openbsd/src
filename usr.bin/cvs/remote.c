@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.28 2009/04/07 21:27:45 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.29 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -219,8 +219,8 @@ cvs_remote_send_file_buf(char *file, BUF *bp, mode_t mode)
 	if (cvs_server_active != 1)
 		fatal("cvs_remote_send_file_buf is server only");
 
-	len = cvs_buf_len(bp);
-	data = cvs_buf_release(bp);
+	len = buf_len(bp);
+	data = buf_release(bp);
 
 	cvs_modetostr(mode, buf, sizeof(buf));
 	cvs_remote_output(buf);

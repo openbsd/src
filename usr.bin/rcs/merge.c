@@ -1,4 +1,4 @@
-/*	$OpenBSD: merge.c,v 1.6 2007/04/26 21:49:33 sobrado Exp $	*/
+/*	$OpenBSD: merge.c,v 1.7 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -102,13 +102,13 @@ merge_main(int argc, char **argv)
 		status = 0;
 
 	if (flags & PIPEOUT)
-		rcs_buf_write_fd(bp, STDOUT_FILENO);
+		buf_write_fd(bp, STDOUT_FILENO);
 	else {
 		/* XXX */
-		if (rcs_buf_write(bp, argv[0], 0644) < 0)
-			warnx("rcs_buf_write failed");
+		if (buf_write(bp, argv[0], 0644) < 0)
+			warnx("buf_write failed");
 	}
-	rcs_buf_free(bp);
+	buf_free(bp);
 
 	return (status);
 }

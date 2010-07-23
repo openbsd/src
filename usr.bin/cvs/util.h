@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.27 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: util.h,v 1.28 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -44,19 +44,19 @@ void	  cvs_freeargv(char **, int);
 int	  cvs_exec(char *, const char *, int);
 u_int	  cvs_revision_select(RCSFILE *, char *);
 
-struct cvs_line {
+struct rcs_line {
 	struct rcs_delta	*l_delta;
 	u_char			*l_line;
 	size_t			 l_len;
 	int			 l_lineno;
 	int			 l_lineno_orig;
 	int			 l_needsfree;
-	TAILQ_ENTRY(cvs_line)	 l_list;
+	TAILQ_ENTRY(rcs_line)	 l_list;
 };
 
-TAILQ_HEAD(tqh, cvs_line);
+TAILQ_HEAD(tqh, rcs_line);
 
-struct cvs_lines {
+struct rcs_lines {
 	int		l_nblines;
 	struct tqh	l_lines;
 };
@@ -66,8 +66,8 @@ struct cvs_argvector {
 	char **argv;
 };
 
-struct cvs_lines	*cvs_splitlines(u_char *, size_t);
-void			cvs_freelines(struct cvs_lines *);
+struct rcs_lines	*cvs_splitlines(u_char *, size_t);
+void			cvs_freelines(struct rcs_lines *);
 struct cvs_argvector	*cvs_strsplit(char *, const char *);
 void			cvs_argv_destroy(struct cvs_argvector *);
 int			cvs_yesno(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.8 2009/07/14 14:09:46 jsg Exp $	*/
+/*	$OpenBSD: diff.h,v 1.9 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -63,9 +63,8 @@
  *
  *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
  */
-
-#ifndef RCS_DIFF_H
-#define RCS_DIFF_H
+#ifndef DIFF_H
+#define DIFF_H
 
 #include <sys/queue.h>
 
@@ -125,4 +124,4 @@ extern RCSNUM	*diff_rev1;
 extern RCSNUM	*diff_rev2;
 extern regex_t	*diff_ignore_re;
 
-#endif	/* RCS_DIFF_H */
+#endif	/* DIFF_H */

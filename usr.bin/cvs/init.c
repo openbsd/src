@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.36 2009/03/25 21:19:20 joris Exp $	*/
+/*	$OpenBSD: init.c,v 1.37 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -177,7 +177,7 @@ init_mkfile(char *path, const char **content)
 	if ((file = rcs_open(rpath, fd, rcsflags, 0444)) == NULL)
 		fatal("failed to create RCS file for `%s'", path);
 
-	b = cvs_buf_load(path);
+	b = buf_load(path);
 
 	if (rcs_rev_add(file, RCS_HEAD_REV, "initial checkin", -1, NULL) == -1)
 		fatal("init_mkfile: failed to add new revision");

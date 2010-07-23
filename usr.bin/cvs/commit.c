@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.149 2009/06/07 08:39:13 ray Exp $	*/
+/*	$OpenBSD: commit.c,v 1.150 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -237,54 +237,54 @@ cvs_commit_loginfo(char *repo)
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		fatal("Can't get working directory");
 
-	buf = cvs_buf_alloc(1024);
+	buf = buf_alloc(1024);
 
 	cvs_trigger_loginfo_header(buf, repo);
 
 	if (!RB_EMPTY(&files_added)) {
-		cvs_buf_puts(buf, "Added Files:");
+		buf_puts(buf, "Added Files:");
 
 		RB_FOREACH(cf, cvs_flisthead, &files_added) {
-			cvs_buf_putc(buf, '\n');
-			cvs_buf_putc(buf, '\t');
-			cvs_buf_puts(buf, cf->file_path);
+			buf_putc(buf, '\n');
+			buf_putc(buf, '\t');
+			buf_puts(buf, cf->file_path);
 		}
 
-		cvs_buf_putc(buf, '\n');
+		buf_putc(buf, '\n');
 	}
 
 	if (!RB_EMPTY(&files_modified)) {
-		cvs_buf_puts(buf, "Modified Files:");
+		buf_puts(buf, "Modified Files:");
 
 		RB_FOREACH(cf, cvs_flisthead, &files_modified) {
-			cvs_buf_putc(buf, '\n');
-			cvs_buf_putc(buf, '\t');
-			cvs_buf_puts(buf, cf->file_path);
+			buf_putc(buf, '\n');
+			buf_putc(buf, '\t');
+			buf_puts(buf, cf->file_path);
 		}
 
-		cvs_buf_putc(buf, '\n');
+		buf_putc(buf, '\n');
 	}
 
 	if (!RB_EMPTY(&files_removed)) {
-		cvs_buf_puts(buf, "Removed Files:");
+		buf_puts(buf, "Removed Files:");
 
 		RB_FOREACH(cf, cvs_flisthead, &files_removed) {
-			cvs_buf_putc(buf, '\n');
-			cvs_buf_putc(buf, '\t');
-			cvs_buf_puts(buf, cf->file_path);
+			buf_putc(buf, '\n');
+			buf_putc(buf, '\t');
+			buf_puts(buf, cf->file_path);
 		}
 
-		cvs_buf_putc(buf, '\n');
+		buf_putc(buf, '\n');
 	}
 
-	cvs_buf_puts(buf, "Log Message:\n");
+	buf_puts(buf, "Log Message:\n");
 
-	cvs_buf_puts(buf, logmsg);
+	buf_puts(buf, logmsg);
 
-	cvs_buf_putc(buf, '\n');
-	cvs_buf_putc(buf, '\0');
+	buf_putc(buf, '\n');
+	buf_putc(buf, '\0');
 
-	loginfo = cvs_buf_release(buf);
+	loginfo = buf_release(buf);
 }
 
 void
@@ -610,7 +610,7 @@ cvs_commit_local(struct cvs_file *cf)
 	} else if (onbranch == 1) {
 		b = commit_diff(cf, crev, 1);
 	} else {
-		b = cvs_buf_load_fd(cf->fd);
+		b = buf_load_fd(cf->fd);
 	}
 
 	if (isnew == 0 && onbranch == 0) {
@@ -736,9 +736,9 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_ADDED) {
-		b = cvs_buf_load_fd(cf->fd);
-		fd1 = cvs_buf_write_stmp(b, p1, NULL);
-		cvs_buf_free(b);
+		b = buf_load_fd(cf->fd);
+		fd1 = buf_write_stmp(b, p1, NULL);
+		buf_free(b);
 	} else {
 		fd1 = rcs_rev_write_stmp(cf->file_rcs, rev, p1, 0);
 	}
@@ -746,7 +746,7 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
 	fd2 = rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
 
-	b = cvs_buf_alloc(128);
+	b = buf_alloc(128);
 
 	diff_format = D_RCSDIFF;
 
@@ -785,9 +785,9 @@ commit_desc_set(struct cvs_file *cf)
 	if ((fd = open(desc_path, O_RDONLY)) == -1)
 		return;
 
-	bp = cvs_buf_load_fd(fd);
-	cvs_buf_putc(bp, '\0');
-	desc = cvs_buf_release(bp);
+	bp = buf_load_fd(fd);
+	buf_putc(bp, '\0');
+	desc = buf_release(bp);
 
 	rcs_desc_set(cf->file_rcs, desc);
 

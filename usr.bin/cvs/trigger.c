@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.17 2009/03/19 09:55:19 joris Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.18 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -71,10 +71,10 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 		}
 	}
 	if (quote)
-		cvs_buf_putc(buf, '"');
+		buf_putc(buf, '"');
 	if (oldstyle) {
-		cvs_buf_puts(buf, repo);
-		cvs_buf_putc(buf, ' ');
+		buf_puts(buf, repo);
+		buf_putc(buf, ' ');
 	}
 
 	if (*format == '\0')
@@ -84,16 +84,16 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 	 * check like this, add only uses loginfo for directories anyway
 	 */
 	if (cvs_cmdop == CVS_OP_ADD) {
-		cvs_buf_puts(buf, "- New directory");
+		buf_puts(buf, "- New directory");
 		if (quote)
-			cvs_buf_putc(buf, '"');
+			buf_putc(buf, '"');
 		return (0);
 	}
 
 	if (cvs_cmdop == CVS_OP_IMPORT) {
-		cvs_buf_puts(buf, "- Imported sources");
+		buf_puts(buf, "- Imported sources");
 		if (quote)
-			cvs_buf_putc(buf, '"');
+			buf_putc(buf, '"');
 		return (0);
 	}
 
@@ -155,10 +155,10 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 			}
 
 			if (val != NULL)
-				cvs_buf_puts(buf, val);
+				buf_puts(buf, val);
 
 			if (*(++p) != '\0')
-				cvs_buf_putc(buf, ',');
+				buf_putc(buf, ',');
 		}
 
 		if (fi != NULL)
@@ -170,11 +170,11 @@ expand_args(BUF *buf, struct file_info_list *file_info, const char *repo,
 		    *format == 'p' || *format == 'r' || *format == 't'))
 			break;
 
-		cvs_buf_putc(buf, ' ');
+		buf_putc(buf, ' ');
 	}
 
 	if (quote)
-		cvs_buf_putc(buf, '"');
+		buf_putc(buf, '"');
 
 	return 0;
 }
@@ -190,14 +190,14 @@ expand_var(BUF *buf, const char *var)
 			cvs_log(LP_ERR, "no such user variable ${=%s}", var);
 			return (1);
 		}
-		cvs_buf_puts(buf, val);
+		buf_puts(buf, val);
 	} else {
 		if (strcmp(var, "CVSEDITOR") == 0 ||
 		    strcmp(var, "EDITOR") == 0 ||
 		    strcmp(var, "VISUAL") == 0)
-			cvs_buf_puts(buf, cvs_editor);
+			buf_puts(buf, cvs_editor);
 		else if (strcmp(var, "CVSROOT") == 0)
-			cvs_buf_puts(buf, current_cvsroot->cr_dir);
+			buf_puts(buf, current_cvsroot->cr_dir);
 		else if (strcmp(var, "USER") == 0) {
 			pw = getpwuid(geteuid());
 			if (pw == NULL) {
@@ -205,7 +205,7 @@ expand_var(BUF *buf, const char *var)
 				    "caller ID");
 				return (1);
 			}
-			cvs_buf_puts(buf, pw->pw_name);
+			buf_puts(buf, pw->pw_name);
 		} else if (strcmp(var, "RCSBIN") == 0) {
 			cvs_log(LP_ERR, "RCSBIN internal variable is no "
 			    "longer supported");
@@ -261,13 +261,13 @@ parse_cmd(int type, char *cmd, const char *repo,
 	if (*p == '%')
 		return (NULL);
 
-	buf = cvs_buf_alloc(1024);
+	buf = buf_alloc(1024);
 
 	p = cmd;
 again:
 	for (; *p != '\0'; p++) {
 		if ((pos = strcspn(p, "$%")) != 0) {
-			cvs_buf_append(buf, p, pos);
+			buf_append(buf, p, pos);
 			p += pos;
 		}
 
@@ -332,14 +332,14 @@ again:
 		goto again;
 	}
 
-	cvs_buf_putc(buf, '\0');
-	return (cvs_buf_release(buf));
+	buf_putc(buf, '\0');
+	return (buf_release(buf));
 
 bad:
 	if (q != NULL)
 		xfree(q);
 	cvs_log(LP_NOTICE, "%s contains malformed command '%s'", file, cmd);
-	cvs_buf_free(buf);
+	buf_free(buf);
 	return (NULL);
 }
 
@@ -552,19 +552,19 @@ cvs_trigger_loginfo_header(BUF *buf, char *repo)
 		    strerror(errno));
 	}
 
-	cvs_buf_puts(buf, "Update of ");
-	cvs_buf_puts(buf, current_cvsroot->cr_dir);
-	cvs_buf_putc(buf, '/');
-	cvs_buf_puts(buf, repo);
-	cvs_buf_putc(buf, '\n');
+	buf_puts(buf, "Update of ");
+	buf_puts(buf, current_cvsroot->cr_dir);
+	buf_putc(buf, '/');
+	buf_puts(buf, repo);
+	buf_putc(buf, '\n');
 
-	cvs_buf_puts(buf, "In directory ");
-	cvs_buf_puts(buf, hostname);
-	cvs_buf_puts(buf, ":");
-	cvs_buf_puts(buf, dirname(pwd));
-	cvs_buf_putc(buf, '/');
-	cvs_buf_puts(buf, repo);
-	cvs_buf_putc(buf, '\n');
-	cvs_buf_putc(buf, '\n');
+	buf_puts(buf, "In directory ");
+	buf_puts(buf, hostname);
+	buf_puts(buf, ":");
+	buf_puts(buf, dirname(pwd));
+	buf_putc(buf, '/');
+	buf_puts(buf, repo);
+	buf_putc(buf, '\n');
+	buf_putc(buf, '\n');
 }
 

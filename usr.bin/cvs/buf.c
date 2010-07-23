@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.75 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.76 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,18 +44,19 @@
 		b->cb_size += len;					\
 	} while (0);
 
-struct cvs_buf {
+struct buf {
 	u_char	*cb_buf;
 	size_t	 cb_size;
 	size_t	 cb_len;
 };
 
 BUF *
-cvs_buf_alloc(size_t len)
+buf_alloc(size_t len)
 {
 	BUF *b;
 
 	b = xmalloc(sizeof(*b));
+	/* Postpone creation of zero-sized buffers */
 	if (len > 0)
 		b->cb_buf = xcalloc(1, len);
 	else
@@ -68,44 +69,44 @@ cvs_buf_alloc(size_t len)
 }
 
 BUF *
-cvs_buf_load(const char *path)
+buf_load(const char *path)
 {
 	int fd;
 	BUF *bp;
 
 	if ((fd = open(path, O_RDONLY, 0600)) == -1)
-		fatal("cvs_buf_load: failed to load '%s' : %s", path,
+		fatal("buf_load: failed to load '%s' : %s", path,
 		    strerror(errno));
 
-	bp = cvs_buf_load_fd(fd);
+	bp = buf_load_fd(fd);
 	(void)close(fd);
 	return (bp);
 }
 
 BUF *
-cvs_buf_load_fd(int fd)
+buf_load_fd(int fd)
 {
 	struct stat st;
 	BUF *buf;
 
 	if (fstat(fd, &st) == -1)
-		fatal("cvs_buf_load_fd: fstat: %s", strerror(errno));
+		fatal("buf_load_fd: fstat: %s", strerror(errno));
 
 	if (lseek(fd, 0, SEEK_SET) == -1)
-		fatal("cvs_buf_load_fd: lseek: %s", strerror(errno));
+		fatal("buf_load_fd: lseek: %s", strerror(errno));
 
 	if (st.st_size > SIZE_MAX)
-		fatal("cvs_buf_load_fd: file size too big");
-	buf = cvs_buf_alloc(st.st_size);
+		fatal("buf_load_fd: file size too big");
+	buf = buf_alloc(st.st_size);
 	if (atomicio(read, fd, buf->cb_buf, buf->cb_size) != buf->cb_size)
-		fatal("cvs_buf_load_fd: read: %s", strerror(errno));
+		fatal("buf_load_fd: read: %s", strerror(errno));
 	buf->cb_len = buf->cb_size;
 
 	return (buf);
 }
 
 void
-cvs_buf_free(BUF *b)
+buf_free(BUF *b)
 {
 	if (b->cb_buf != NULL)
 		xfree(b->cb_buf);
@@ -113,7 +114,7 @@ cvs_buf_free(BUF *b)
 }
 
 u_char *
-cvs_buf_release(BUF *b)
+buf_release(BUF *b)
 {
 	u_char *tmp;
 
@@ -123,7 +124,7 @@ cvs_buf_release(BUF *b)
 }
 
 void
-cvs_buf_putc(BUF *b, int c)
+buf_putc(BUF *b, int c)
 {
 	u_char *bp;
 
@@ -137,13 +138,13 @@ cvs_buf_putc(BUF *b, int c)
 }
 
 void
-cvs_buf_puts(BUF *b, const char *str)
+buf_puts(BUF *b, const char *str)
 {
-	cvs_buf_append(b, str, strlen(str));
+	buf_append(b, str, strlen(str));
 }
 
 void
-cvs_buf_append(BUF *b, const void *data, size_t len)
+buf_append(BUF *b, const void *data, size_t len)
 {
 	size_t left;
 	u_char *bp, *bep;
@@ -162,13 +163,13 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
 }
 
 size_t
-cvs_buf_len(BUF *b)
+buf_len(BUF *b)
 {
 	return (b->cb_len);
 }
 
 int
-cvs_buf_write_fd(BUF *b, int fd)
+buf_write_fd(BUF *b, int fd)
 {
 	if (atomicio(vwrite, fd, b->cb_buf, b->cb_len) != b->cb_len)
 		return (-1);
@@ -176,7 +177,7 @@ cvs_buf_write_fd(BUF *b, int fd)
 }
 
 int
-cvs_buf_write(BUF *b, const char *path, mode_t mode)
+buf_write(BUF *b, const char *path, mode_t mode)
 {
 	int fd;
 open:
@@ -187,9 +188,9 @@ open:
 			fatal("open: `%s': %s", path, strerror(errno));
 	}
 
-	if (cvs_buf_write_fd(b, fd) == -1) {
+	if (buf_write_fd(b, fd) == -1) {
 		(void)unlink(path);
-		fatal("cvs_buf_write: cvs_buf_write_fd: `%s'", path);
+		fatal("buf_write: buf_write_fd: `%s'", path);
 	}
 
 	if (fchmod(fd, mode) < 0)
@@ -201,39 +202,39 @@ open:
 }
 
 int
-cvs_buf_write_stmp(BUF *b, char *template, struct timeval *tv)
+buf_write_stmp(BUF *b, char *template, struct timeval *tv)
 {
 	int fd;
 
 	if ((fd = mkstemp(template)) == -1)
 		fatal("mkstemp: `%s': %s", template, strerror(errno));
 
-	if (cvs_buf_write_fd(b, fd) == -1) {
+	if (buf_write_fd(b, fd) == -1) {
 		(void)unlink(template);
-		fatal("cvs_buf_write_stmp: cvs_buf_write_fd: `%s'", template);
+		fatal("buf_write_stmp: buf_write_fd: `%s'", template);
 	}
 
 	if (tv != NULL) {
 		if (futimes(fd, tv) == -1)
-			fatal("cvs_buf_write_stmp: futimes failed");
+			fatal("buf_write_stmp: futimes failed");
 	}
 
 	worklist_add(template, &temp_files);
 
 	if (lseek(fd, 0, SEEK_SET) < 0)
-		fatal("cvs_buf_write_stmp: lseek: %s", strerror(errno));
+		fatal("buf_write_stmp: lseek: %s", strerror(errno));
 
 	return (fd);
 }
 
 u_char *
-cvs_buf_get(BUF *bp)
+buf_get(BUF *bp)
 {
 	return (bp->cb_buf);
 }
 
 int
-cvs_buf_differ(const BUF *b1, const BUF *b2)
+buf_differ(const BUF *b1, const BUF *b2)
 {
 	if (b1->cb_len != b2->cb_len)
 		return (1);

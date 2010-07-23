@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.108 2010/04/04 17:11:11 zinovik Exp $	*/
+/*	$OpenBSD: add.c,v 1.109 2010/07/23 21:46:04 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -210,19 +210,19 @@ cvs_add_loginfo(char *repo)
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		fatal("Can't get working directory");
 
-	buf = cvs_buf_alloc(1024);
+	buf = buf_alloc(1024);
 
 	cvs_trigger_loginfo_header(buf, repo);
 
-	cvs_buf_puts(buf, "Log Message:\nDirectory ");
-	cvs_buf_puts(buf, current_cvsroot->cr_dir);
-	cvs_buf_putc(buf, '/');
-	cvs_buf_puts(buf, repo);
-	cvs_buf_puts(buf, " added to the repository\n");
+	buf_puts(buf, "Log Message:\nDirectory ");
+	buf_puts(buf, current_cvsroot->cr_dir);
+	buf_putc(buf, '/');
+	buf_puts(buf, repo);
+	buf_puts(buf, " added to the repository\n");
 
-	cvs_buf_putc(buf, '\0');
+	buf_putc(buf, '\0');
 
-	loginfo = cvs_buf_release(buf);
+	loginfo = buf_release(buf);
 }
 
 void
@@ -283,7 +283,7 @@ cvs_add_tobranch(struct cvs_file *cf, char *tag)
 	if ((rdp = rcs_findrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
 		fatal("cvs_add_tobranch: cannot find newly added revision");
 
-	bp = cvs_buf_alloc(1);
+	bp = buf_alloc(1);
 
 	if (rcs_deltatext_set(cf->file_rcs,
 	    cf->file_rcs->rf_head, bp) == -1)

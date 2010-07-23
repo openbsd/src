@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.31 2010/07/16 17:53:20 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.32 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -204,7 +204,7 @@ const char *diff_file1 = NULL;
 const char *diff_file2 = NULL;
 RCSNUM *diff_rev1 = NULL;
 RCSNUM *diff_rev2 = NULL;
-char diffargs[128];
+char diffargs[512];
 static struct stat stb1, stb2;
 static char *ifdefname, *ignore_pats;
 regex_t ignore_re;
@@ -1446,7 +1446,7 @@ diff_output(const char *fmt, ...)
 	if (i == -1)
 		fatal("diff_output: could not allocate memory");
 	if (diffbuf != NULL)
-		cvs_buf_puts(diffbuf, str);
+		buf_puts(diffbuf, str);
 	else
 		cvs_printf("%s", str);
 	xfree(str);

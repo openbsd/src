@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.156 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.157 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -97,10 +97,10 @@ cvs_diff(int argc, char **argv)
 			break;
 		case 'D':
 			if (date1 == -1 && rev1 == NULL) {
-				date1 = cvs_date_parse(optarg);
+				date1 = date_parse(optarg);
 				dateflag1 = optarg;
 			} else if (date2 == -1 && rev2 == NULL) {
-				date2 = cvs_date_parse(optarg);
+				date2 = date_parse(optarg);
 				dateflag2 = optarg;
 			} else {
 				fatal("no more than 2 revisions/dates can"
@@ -495,14 +495,14 @@ cvs_diff_local(struct cvs_file *cf)
 		} else {
 			if (fstat(cf->fd, &st) == -1)
 				fatal("fstat failed %s", strerror(errno));
-			b1 = cvs_buf_load_fd(cf->fd);
+			b1 = buf_load_fd(cf->fd);
 
 			tv2[0].tv_sec = st.st_mtime;
 			tv2[0].tv_usec = 0;
 			tv2[1] = tv2[0];
 
-			fd2 = cvs_buf_write_stmp(b1, p2, tv2);
-			cvs_buf_free(b1);
+			fd2 = buf_write_stmp(b1, p2, tv2);
+			buf_free(b1);
 		}
 	}
 

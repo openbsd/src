@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.101 2009/06/27 16:55:31 martynas Exp $	*/
+/*	$OpenBSD: import.c,v 1.102 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -183,7 +183,7 @@ cvs_import(int argc, char **argv)
 		import_printf("\nNo conflicts created by this import.\n\n");
 	}
 
-	loginfo = cvs_buf_release(logbuf);
+	loginfo = buf_release(logbuf);
 	logbuf = NULL;
 
 	line_list = cvs_trigger_getlines(CVS_PATH_LOGINFO, import_repository);
@@ -209,7 +209,7 @@ import_printf(const char *fmt, ...)
 	va_end(vap);
 
 	cvs_printf("%s", str);
-	cvs_buf_puts(logbuf, str);
+	buf_puts(logbuf, str);
 
 	xfree(str);
 }
@@ -265,29 +265,29 @@ import_loginfo(char *repo)
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		fatal("Can't get working directory");
 
-	logbuf = cvs_buf_alloc(1024);
+	logbuf = buf_alloc(1024);
 	cvs_trigger_loginfo_header(logbuf, repo);
 
-	cvs_buf_puts(logbuf, "Log Message:\n");
-	cvs_buf_puts(logbuf, logmsg);
+	buf_puts(logbuf, "Log Message:\n");
+	buf_puts(logbuf, logmsg);
 	if (logmsg[0] != '\0' && logmsg[strlen(logmsg) - 1] != '\n')
-		cvs_buf_putc(logbuf, '\n');
-	cvs_buf_putc(logbuf, '\n');
+		buf_putc(logbuf, '\n');
+	buf_putc(logbuf, '\n');
 
-	cvs_buf_puts(logbuf, "Status:\n\n");
+	buf_puts(logbuf, "Status:\n\n");
 
-	cvs_buf_puts(logbuf, "Vendor Tag:\t");
-	cvs_buf_puts(logbuf, vendor_tag);
-	cvs_buf_putc(logbuf, '\n');
-	cvs_buf_puts(logbuf, "Release Tags:\t");
+	buf_puts(logbuf, "Vendor Tag:\t");
+	buf_puts(logbuf, vendor_tag);
+	buf_putc(logbuf, '\n');
+	buf_puts(logbuf, "Release Tags:\t");
 
 	for (i = 0; i < tagcount ; i++) {
-		cvs_buf_puts(logbuf, "\t\t");
-		cvs_buf_puts(logbuf, release_tags[i]);
-		cvs_buf_putc(logbuf, '\n');
+		buf_puts(logbuf, "\t\t");
+		buf_puts(logbuf, release_tags[i]);
+		buf_putc(logbuf, '\n');
 	}
-	cvs_buf_putc(logbuf, '\n');
-	cvs_buf_putc(logbuf, '\n');
+	buf_putc(logbuf, '\n');
+	buf_putc(logbuf, '\n');
 }
 
 static void
@@ -322,7 +322,7 @@ import_new(struct cvs_file *cf)
 	if ((branch = rcsnum_parse(import_branch)) == NULL)
 		fatal("import_new: failed to parse branch");
 
-	bp = cvs_buf_load_fd(cf->fd);
+	bp = buf_load_fd(cf->fd);
 
 	if ((brev = rcsnum_brtorev(branch)) == NULL)
 		fatal("import_new: failed to get first branch revision");
@@ -397,11 +397,11 @@ import_update(struct cvs_file *cf)
 		fatal("import_update: rcsnum_parse failed");
 
 	b1 = rcs_rev_getbuf(cf->file_rcs, rev, RCS_KWEXP_NONE);
-	b2 = cvs_buf_load_fd(cf->fd);
+	b2 = buf_load_fd(cf->fd);
 
-	ret = cvs_buf_differ(b1, b2);
-	cvs_buf_free(b1);
-	cvs_buf_free(b2);
+	ret = buf_differ(b1, b2);
+	buf_free(b1);
+	buf_free(b2);
 	if (ret == 0) {
 		import_tag(cf, brev, rev);
 		rcsnum_free(brev);
@@ -463,13 +463,13 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 	BUF *b1, *b2;
 	int fd1, fd2;
 
-	b2 = cvs_buf_alloc(128);
+	b2 = buf_alloc(128);
 
-	b1 = cvs_buf_load_fd(cf->fd);
+	b1 = buf_load_fd(cf->fd);
 
 	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-	fd1 = cvs_buf_write_stmp(b1, p1, NULL);
-	cvs_buf_free(b1);
+	fd1 = buf_write_stmp(b1, p1, NULL);
+	buf_free(b1);
 
 	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
 	fd2 = rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);

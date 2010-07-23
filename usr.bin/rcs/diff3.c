@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.29 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.30 2010/07/23 21:46:05 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -126,7 +126,7 @@ static int last[4];
 static int eflag = 3;	/* default -E for compatibility with former RCS */
 static int oflag = 1;	/* default -E for compatibility with former RCS */
 static int debug  = 0;
-static char f1mark[256], f3mark[256];	/* markers for -E and -X */
+static char f1mark[MAXPATHLEN], f3mark[MAXPATHLEN];	/* markers for -E and -X */
 
 static int duplicate(struct range *, struct range *);
 static int edit(struct diff *, int, int);
@@ -166,45 +166,45 @@ merge_diff3(char **av, int flags)
 	if ((flags & MERGE_EFLAG) && !(flags & MERGE_OFLAG))
 		oflag = 0;
 
-	if ((b1 = rcs_buf_load(av[0], BUF_AUTOEXT)) == NULL)
+	if ((b1 = buf_load(av[0], BUF_AUTOEXT)) == NULL)
 		goto out;
-	if ((b2 = rcs_buf_load(av[1], BUF_AUTOEXT)) == NULL)
+	if ((b2 = buf_load(av[1], BUF_AUTOEXT)) == NULL)
 		goto out;
-	if ((b3 = rcs_buf_load(av[2], BUF_AUTOEXT)) == NULL)
+	if ((b3 = buf_load(av[2], BUF_AUTOEXT)) == NULL)
 		goto out;
 
-	d1 = rcs_buf_alloc(128, BUF_AUTOEXT);
-	d2 = rcs_buf_alloc(128, BUF_AUTOEXT);
-	diffb = rcs_buf_alloc(128, BUF_AUTOEXT);
+	d1 = buf_alloc(128, BUF_AUTOEXT);
+	d2 = buf_alloc(128, BUF_AUTOEXT);
+	diffb = buf_alloc(128, BUF_AUTOEXT);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", rcs_tmpdir);
 
-	rcs_buf_write_stmp(b1, path1);
-	rcs_buf_write_stmp(b2, path2);
-	rcs_buf_write_stmp(b3, path3);
+	buf_write_stmp(b1, path1);
+	buf_write_stmp(b2, path2);
+	buf_write_stmp(b3, path3);
 
-	rcs_buf_free(b2);
+	buf_free(b2);
 	b2 = NULL;
 
 	if ((diffreg(path1, path3, d1, D_FORCEASCII) == D_ERROR) ||
 	    (diffreg(path2, path3, d2, D_FORCEASCII) == D_ERROR)) {
-		rcs_buf_free(diffb);
+		buf_free(diffb);
 		diffb = NULL;
 		goto out;
 	}
 
 	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d1, dp13);
+	buf_write_stmp(d1, dp13);
 
-	rcs_buf_free(d1);
+	buf_free(d1);
 	d1 = NULL;
 
 	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d2, dp23);
+	buf_write_stmp(d2, dp23);
 
-	rcs_buf_free(d2);
+	buf_free(d2);
 	d2 = NULL;
 
 	argc = 0;
@@ -217,15 +217,15 @@ merge_diff3(char **av, int flags)
 
 	diff3_conflicts = diff3_internal(argc, argv, av[0], av[2]);
 	if (diff3_conflicts < 0) {
-		rcs_buf_free(diffb);
+		buf_free(diffb);
 		diffb = NULL;
 		goto out;
 	}
 
-	plen = rcs_buf_len(diffb);
-	patch = rcs_buf_release(diffb);
-	dlen = rcs_buf_len(b1);
-	data = rcs_buf_release(b1);
+	plen = buf_len(diffb);
+	patch = buf_release(diffb);
+	dlen = buf_len(b1);
+	data = buf_release(b1);
 
 	if ((diffb = rcs_patchfile(data, dlen, patch, plen, ed_patch_lines)) == NULL)
 		goto out;
@@ -235,13 +235,13 @@ merge_diff3(char **av, int flags)
 
 out:
 	if (b2 != NULL)
-		rcs_buf_free(b2);
+		buf_free(b2);
 	if (b3 != NULL)
-		rcs_buf_free(b3);
+		buf_free(b3);
 	if (d1 != NULL)
-		rcs_buf_free(d1);
+		buf_free(d1);
 	if (d2 != NULL)
-		rcs_buf_free(d2);
+		buf_free(d2);
 
 	(void)unlink(path1);
 	(void)unlink(path2);
@@ -287,7 +287,7 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 	rcsnum_tostr(rev1, r1, sizeof(r1));
 	rcsnum_tostr(rev2, r2, sizeof(r2));
 
-	if ((b1 = rcs_buf_load(workfile, BUF_AUTOEXT)) == NULL)
+	if ((b1 = buf_load(workfile, BUF_AUTOEXT)) == NULL)
 		goto out;
 
 	if (!(flags & QUIET))
@@ -300,38 +300,38 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
-	d1 = rcs_buf_alloc(128, BUF_AUTOEXT);
-	d2 = rcs_buf_alloc(128, BUF_AUTOEXT);
-	diffb = rcs_buf_alloc(128, BUF_AUTOEXT);
+	d1 = buf_alloc(128, BUF_AUTOEXT);
+	d2 = buf_alloc(128, BUF_AUTOEXT);
+	diffb = buf_alloc(128, BUF_AUTOEXT);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", rcs_tmpdir);
 
-	rcs_buf_write_stmp(b1, path1);
-	rcs_buf_write_stmp(b2, path2);
-	rcs_buf_write_stmp(b3, path3);
+	buf_write_stmp(b1, path1);
+	buf_write_stmp(b2, path2);
+	buf_write_stmp(b3, path3);
 
-	rcs_buf_free(b2);
+	buf_free(b2);
 	b2 = NULL;
 
 	if ((diffreg(path1, path3, d1, D_FORCEASCII) == D_ERROR) ||
 	    (diffreg(path2, path3, d2, D_FORCEASCII) == D_ERROR)) {
-		rcs_buf_free(diffb);
+		buf_free(diffb);
 		diffb = NULL;
 		goto out;
 	}
 
 	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d1, dp13);
+	buf_write_stmp(d1, dp13);
 
-	rcs_buf_free(d1);
+	buf_free(d1);
 	d1 = NULL;
 
 	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d2, dp23);
+	buf_write_stmp(d2, dp23);
 
-	rcs_buf_free(d2);
+	buf_free(d2);
 	d2 = NULL;
 
 	argc = 0;
@@ -344,15 +344,15 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 
 	diff3_conflicts = diff3_internal(argc, argv, workfile, r2);
 	if (diff3_conflicts < 0) {
-		rcs_buf_free(diffb);
+		buf_free(diffb);
 		diffb = NULL;
 		goto out;
 	}
 
-	plen = rcs_buf_len(diffb);
-	patch = rcs_buf_release(diffb);
-	dlen = rcs_buf_len(b1);
-	data = rcs_buf_release(b1);
+	plen = buf_len(diffb);
+	patch = buf_release(diffb);
+	dlen = buf_len(b1);
+	data = buf_release(b1);
 
 	if ((diffb = rcs_patchfile(data, dlen, patch, plen, ed_patch_lines)) == NULL)
 		goto out;
@@ -362,13 +362,13 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 
 out:
 	if (b2 != NULL)
-		rcs_buf_free(b2);
+		buf_free(b2);
 	if (b3 != NULL)
-		rcs_buf_free(b3);
+		buf_free(b3);
 	if (d1 != NULL)
-		rcs_buf_free(d1);
+		buf_free(d1);
 	if (d2 != NULL)
-		rcs_buf_free(d2);
+		buf_free(d2);
 
 	(void)unlink(path1);
 	(void)unlink(path2);
@@ -449,14 +449,18 @@ ed_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 		/* Skip blank lines */
 		if (lp->l_len < 2)
 			continue;
+
 		/* NUL-terminate line buffer for strtol() safety. */
 		tmp = lp->l_line[lp->l_len - 1];
 		lp->l_line[lp->l_len - 1] = '\0';
+
 		/* len - 1 is NUL terminator so we use len - 2 for 'op' */
 		op = lp->l_line[lp->l_len - 2];
 		start = (int)strtol(lp->l_line, &ep, 10);
+
 		/* Restore the last byte of the buffer */
 		lp->l_line[lp->l_len - 1] = tmp;
+
 		if (op == 'a') {
 			if (start > dlines->l_nblines ||
 			    start < 0 || *ep != 'a')
@@ -585,6 +589,7 @@ readin(char *name, struct diff **dd)
 		(*dd)[i].old.from = (*dd)[i-1].old.to;
 		(*dd)[i].new.from = (*dd)[i-1].new.to;
 	}
+
 	(void)fclose(fp[0]);
 
 	return (i);
@@ -903,8 +908,7 @@ edscript(int n)
 		(void)fseek(fp[2], (long)de[n].new.from, SEEK_SET);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
 			j = k > BUFSIZ ? BUFSIZ : k;
-			if (fread(block, 1, (size_t)j,
-			    fp[2]) != (size_t)j)
+			if (fread(block, 1, j, fp[2]) != j)
 				return (-1);
 			block[j] = '\0';
 			diff_output("%s", block);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.33 2008/05/10 20:23:24 joris Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.34 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -337,7 +337,7 @@ rcs_prompt(const char *prompt)
 	size_t len;
 	char *buf;
 
-	bp = rcs_buf_alloc(0, BUF_AUTOEXT);
+	bp = buf_alloc(0, BUF_AUTOEXT);
 	if (isatty(STDIN_FILENO))
 		(void)fprintf(stderr, "%s", prompt);
 	if (isatty(STDIN_FILENO))
@@ -348,14 +348,14 @@ rcs_prompt(const char *prompt)
 		if (buf[0] == '.' && (len == 1 || buf[1] == '\n'))
 			break;
 		else
-			rcs_buf_append(bp, buf, len);
+			buf_append(bp, buf, len);
 
 		if (isatty(STDIN_FILENO))
 			(void)fprintf(stderr, ">> ");
 	}
-	rcs_buf_putc(bp, '\0');
+	buf_putc(bp, '\0');
 
-	return (rcs_buf_release(bp));
+	return (buf_release(bp));
 }
 
 u_int
@@ -451,10 +451,10 @@ rcs_set_description(RCSFILE *file, const char *in)
 
 	/* Description is in file <in>. */
 	if (in != NULL && *in != '-') {
-		if ((bp = rcs_buf_load(in, BUF_AUTOEXT)) == NULL)
+		if ((bp = buf_load(in, BUF_AUTOEXT)) == NULL)
 			return (-1);
-		rcs_buf_putc(bp, '\0');
-		content = rcs_buf_release(bp);
+		buf_putc(bp, '\0');
+		content = buf_release(bp);
 	/* Description is in <in>. */
 	} else if (in != NULL)
 		/* Skip leading `-'. */
@@ -535,11 +535,11 @@ rcs_patchfile(u_char *data, size_t dlen, u_char *patch, size_t plen,
 		return (NULL);
 	}
 
-	res = rcs_buf_alloc(1024, BUF_AUTOEXT);
+	res = buf_alloc(1024, BUF_AUTOEXT);
 	TAILQ_FOREACH(lp, &dlines->l_lines, l_list) {
 		if (lp->l_line == NULL)
 			continue;
-		rcs_buf_append(res, lp->l_line, lp->l_len);
+		buf_append(res, lp->l_line, lp->l_len);
 	}
 
 	rcs_freelines(dlines);

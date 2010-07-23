@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.62 2009/02/15 12:55:18 joris Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.63 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -227,7 +227,7 @@ rlog_select_daterev(RCSFILE *rcsfile, char *date)
 
 		if (last == NULL) {
 			flags |= RLOG_DATE_SINGLE;
-			firstdate = rcs_date_parse(first);
+			firstdate = date_parse(first);
 			delim = '\0';
 			last = "\0";
 		} else {
@@ -237,33 +237,33 @@ rlog_select_daterev(RCSFILE *rcsfile, char *date)
 
 		if (delim == '>' && *last == '\0') {
 			flags |= RLOG_DATE_EARLIER;
-			firstdate = rcs_date_parse(first);
+			firstdate = date_parse(first);
 		}
 
 		if (delim == '>' && *first == '\0' && *last != '\0') {
 			flags |= RLOG_DATE_LATER;
-			firstdate = rcs_date_parse(last);
+			firstdate = date_parse(last);
 		}
 
 		if (delim == '<' && *last == '\0') {
 			flags |= RLOG_DATE_LATER;
-			firstdate = rcs_date_parse(first);
+			firstdate = date_parse(first);
 		}
 
 		if (delim == '<' && *first == '\0' && *last != '\0') {
 			flags |= RLOG_DATE_EARLIER;
-			firstdate = rcs_date_parse(last);
+			firstdate = date_parse(last);
 		}
 
 		if (*first != '\0' && *last != '\0') {
 			flags |= RLOG_DATE_RANGE;
 
 			if (delim == '<') {
-				firstdate = rcs_date_parse(first);
-				lastdate = rcs_date_parse(last);
+				firstdate = date_parse(first);
+				lastdate = date_parse(last);
 			} else {
-				firstdate = rcs_date_parse(last);
-				lastdate = rcs_date_parse(first);
+				firstdate = date_parse(last);
+				lastdate = date_parse(first);
 			}
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.39 2008/06/19 19:03:25 tobias Exp $	*/
+/*	$OpenBSD: history.c,v 1.40 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -130,23 +130,23 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	case CVS_HISTORY_CHECKOUT:
 	case CVS_HISTORY_EXPORT:
 		/*
-		 * cvs_buf_alloc uses xcalloc(), so we are safe even
+		 * buf_alloc uses xcalloc(), so we are safe even
 		 * if neither cvs_specified_tag nor cvs_specified_date
 		 * have been supplied.
 		 */
-		buf = cvs_buf_alloc(128);
+		buf = buf_alloc(128);
 		if (cvs_specified_tag != NULL) {
-			cvs_buf_puts(buf, cvs_specified_tag);
+			buf_puts(buf, cvs_specified_tag);
 			if (cvs_specified_date != -1)
-				cvs_buf_putc(buf, ':');
+				buf_putc(buf, ':');
 		}
 		if (cvs_specified_date != -1) {
 			gmtime_r(&cvs_specified_date, &datetm);
 			strftime(timebuf, sizeof(timebuf),
 			    "%Y.%m.%d.%H.%M.%S", &datetm);
-			cvs_buf_puts(buf, timebuf);
+			buf_puts(buf, timebuf);
 		}
-		rev = cvs_buf_release(buf);
+		rev = buf_release(buf);
 		break;
 	case CVS_HISTORY_UPDATE_MERGED:
 	case CVS_HISTORY_UPDATE_MERGED_ERR:

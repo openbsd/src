@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.53 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.54 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -62,7 +62,7 @@ cvs_logmsg_read(const char *path)
 		fatal("cvs_logmsg_read: %s: file size too big", path);
 
 	lbuf = NULL;
-	bp = cvs_buf_alloc(st.st_size);
+	bp = buf_alloc(st.st_size);
 	while ((buf = fgetln(fp, &len))) {
 		if (buf[len - 1] == '\n') {
 			buf[len - 1] = '\0';
@@ -78,8 +78,8 @@ cvs_logmsg_read(const char *path)
 		    sizeof(CVS_LOGMSG_PREFIX) - 1))
 			continue;
 
-		cvs_buf_append(bp, buf, len);
-		cvs_buf_putc(bp, '\n');
+		buf_append(bp, buf, len);
+		buf_putc(bp, '\n');
 	}
 
 	if (lbuf != NULL)
@@ -87,8 +87,8 @@ cvs_logmsg_read(const char *path)
 
 	(void)fclose(fp);
 
-	cvs_buf_putc(bp, '\0');
-	return (cvs_buf_release(bp));
+	buf_putc(bp, '\0');
+	return (buf_release(bp));
 }
 
 char *

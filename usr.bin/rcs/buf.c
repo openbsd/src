@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.14 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.15 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #define BUF_INCR	128
 
-struct rcs_buf {
+struct buf {
 	u_int	cb_flags;
 
 	/* buffer handle, buffer size, and data length */
@@ -52,17 +52,17 @@ struct rcs_buf {
 
 #define SIZE_LEFT(b)	(b->cb_size - b->cb_len)
 
-static void	rcs_buf_grow(BUF *, size_t);
+static void	buf_grow(BUF *, size_t);
 
 /*
- * rcs_buf_alloc()
+ * buf_alloc()
  *
  * Create a new buffer structure and return a pointer to it.  This structure
- * uses dynamically-allocated memory and must be freed with rcs_buf_free(),
+ * uses dynamically-allocated memory and must be freed with buf_free(),
  * once the buffer is no longer needed.
  */
 BUF *
-rcs_buf_alloc(size_t len, u_int flags)
+buf_alloc(size_t len, u_int flags)
 {
 	BUF *b;
 
@@ -81,7 +81,7 @@ rcs_buf_alloc(size_t len, u_int flags)
 }
 
 /*
- * rcs_buf_load()
+ * buf_load()
  *
  * Open the file specified by <path> and load all of its contents into a
  * buffer.
@@ -89,7 +89,7 @@ rcs_buf_alloc(size_t len, u_int flags)
  * Sets errno on error.
  */
 BUF *
-rcs_buf_load(const char *path, u_int flags)
+buf_load(const char *path, u_int flags)
 {
 	int fd;
 	ssize_t ret;
@@ -110,7 +110,7 @@ rcs_buf_load(const char *path, u_int flags)
 		errno = EFBIG;
 		goto out;
 	}
-	buf = rcs_buf_alloc(st.st_size, flags);
+	buf = buf_alloc(st.st_size, flags);
 	for (bp = buf->cb_buf; ; bp += (size_t)ret) {
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
@@ -118,7 +118,7 @@ rcs_buf_load(const char *path, u_int flags)
 			int saved_errno;
 
 			saved_errno = errno;
-			rcs_buf_free(buf);
+			buf_free(buf);
 			buf = NULL;
 			errno = saved_errno;
 			goto out;
@@ -141,13 +141,8 @@ out:
 	return (buf);
 }
 
-/*
- * rcs_buf_free()
- *
- * Free the buffer <b> and all associated data.
- */
 void
-rcs_buf_free(BUF *b)
+buf_free(BUF *b)
 {
 	if (b->cb_buf != NULL)
 		xfree(b->cb_buf);
@@ -155,14 +150,14 @@ rcs_buf_free(BUF *b)
 }
 
 /*
- * rcs_buf_release()
+ * buf_release()
  *
  * Free the buffer <b>'s structural information but do not free the contents
  * of the buffer.  Instead, they are returned and should be freed later using
  * free().
  */
 void *
-rcs_buf_release(BUF *b)
+buf_release(BUF *b)
 {
 	void *tmp;
 
@@ -172,33 +167,33 @@ rcs_buf_release(BUF *b)
 }
 
 /*
- * rcs_buf_get()
+ * buf_get()
  */
 u_char *
-rcs_buf_get(BUF *b)
+buf_get(BUF *b)
 {
 	return (b->cb_buf);
 }
 
 /*
- * rcs_buf_empty()
+ * buf_empty()
  *
  * Empty the contents of the buffer <b> and reset pointers.
  */
 void
-rcs_buf_empty(BUF *b)
+buf_empty(BUF *b)
 {
 	memset(b->cb_buf, 0, b->cb_size);
 	b->cb_len = 0;
 }
 
 /*
- * rcs_buf_putc()
+ * buf_putc()
  *
  * Append a single character <c> to the end of the buffer <b>.
  */
 void
-rcs_buf_putc(BUF *b, int c)
+buf_putc(BUF *b, int c)
 {
 	u_char *bp;
 
@@ -206,9 +201,9 @@ rcs_buf_putc(BUF *b, int c)
 	if (bp == (b->cb_buf + b->cb_size)) {
 		/* extend */
 		if (b->cb_flags & BUF_AUTOEXT)
-			rcs_buf_grow(b, (size_t)BUF_INCR);
+			buf_grow(b, (size_t)BUF_INCR);
 		else
-			errx(1, "rcs_buf_putc failed");
+			errx(1, "buf_putc failed");
 
 		/* the buffer might have been moved */
 		bp = b->cb_buf + b->cb_len;
@@ -218,19 +213,19 @@ rcs_buf_putc(BUF *b, int c)
 }
 
 /*
- * rcs_buf_getc()
+ * buf_getc()
  *
  * Return u_char at buffer position <pos>.
  *
  */
 u_char
-rcs_buf_getc(BUF *b, size_t pos)
+buf_getc(BUF *b, size_t pos)
 {
 	return (b->cb_buf[pos]);
 }
 
 /*
- * rcs_buf_append()
+ * buf_append()
  *
  * Append <len> bytes of data pointed to by <data> to the buffer <b>.  If the
  * buffer is too small to accept all data, it will attempt to append as much
@@ -239,7 +234,7 @@ rcs_buf_getc(BUF *b, size_t pos)
  * Returns the number of bytes successfully appended to the buffer.
  */
 size_t
-rcs_buf_append(BUF *b, const void *data, size_t len)
+buf_append(BUF *b, const void *data, size_t len)
 {
 	size_t left, rlen;
 	u_char *bp, *bep;
@@ -251,7 +246,7 @@ rcs_buf_append(BUF *b, const void *data, size_t len)
 
 	if (left < len) {
 		if (b->cb_flags & BUF_AUTOEXT) {
-			rcs_buf_grow(b, len - left);
+			buf_grow(b, len - left);
 			bp = b->cb_buf + b->cb_len;
 		} else
 			rlen = bep - bp;
@@ -264,11 +259,11 @@ rcs_buf_append(BUF *b, const void *data, size_t len)
 }
 
 /*
- * rcs_buf_fappend()
+ * buf_fappend()
  *
  */
 size_t
-rcs_buf_fappend(BUF *b, const char *fmt, ...)
+buf_fappend(BUF *b, const char *fmt, ...)
 {
 	size_t ret;
 	int n;
@@ -280,31 +275,31 @@ rcs_buf_fappend(BUF *b, const char *fmt, ...)
 	va_end(vap);
 
 	if (n == -1)
-		errx(1, "rcs_buf_fappend: failed to format data");
+		errx(1, "buf_fappend: failed to format data");
 
-	ret = rcs_buf_append(b, str, n);
+	ret = buf_append(b, str, n);
 	xfree(str);
 	return (ret);
 }
 
 /*
- * rcs_buf_len()
+ * buf_len()
  *
  * Returns the size of the buffer that is being used.
  */
 size_t
-rcs_buf_len(BUF *b)
+buf_len(BUF *b)
 {
 	return (b->cb_len);
 }
 
 /*
- * rcs_buf_write_fd()
+ * buf_write_fd()
  *
  * Write the contents of the buffer <b> to the specified <fd>
  */
 int
-rcs_buf_write_fd(BUF *b, int fd)
+buf_write_fd(BUF *b, int fd)
 {
 	u_char *bp;
 	size_t len;
@@ -329,13 +324,13 @@ rcs_buf_write_fd(BUF *b, int fd)
 }
 
 /*
- * rcs_buf_write()
+ * buf_write()
  *
  * Write the contents of the buffer <b> to the file whose path is given in
  * <path>.  If the file does not exist, it is created with mode <mode>.
  */
 int
-rcs_buf_write(BUF *b, const char *path, mode_t mode)
+buf_write(BUF *b, const char *path, mode_t mode)
 {
 	int fd;
  open:
@@ -346,9 +341,9 @@ rcs_buf_write(BUF *b, const char *path, mode_t mode)
 			err(1, "%s", path);
 	}
 
-	if (rcs_buf_write_fd(b, fd) == -1) {
+	if (buf_write_fd(b, fd) == -1) {
 		(void)unlink(path);
-		errx(1, "rcs_buf_write: rcs_buf_write_fd: `%s'", path);
+		errx(1, "buf_write: buf_write_fd: `%s'", path);
 	}
 
 	if (fchmod(fd, mode) < 0)
@@ -360,14 +355,14 @@ rcs_buf_write(BUF *b, const char *path, mode_t mode)
 }
 
 /*
- * rcs_buf_write_stmp()
+ * buf_write_stmp()
  *
  * Write the contents of the buffer <b> to a temporary file whose path is
  * specified using <template> (see mkstemp.3). NB. This function will modify
  * <template>, as per mkstemp
  */
 void
-rcs_buf_write_stmp(BUF *b, char *template)
+buf_write_stmp(BUF *b, char *template)
 {
 	int fd;
 
@@ -376,22 +371,22 @@ rcs_buf_write_stmp(BUF *b, char *template)
 
 	worklist_add(template, &temp_files);
 
-	if (rcs_buf_write_fd(b, fd) == -1) {
+	if (buf_write_fd(b, fd) == -1) {
 		(void)unlink(template);
-		errx(1, "rcs_buf_write_stmp: rcs_buf_write_fd: `%s'", template);
+		errx(1, "buf_write_stmp: buf_write_fd: `%s'", template);
 	}
 
 	(void)close(fd);
 }
 
 /*
- * rcs_buf_grow()
+ * buf_grow()
  *
  * Grow the buffer <b> by <len> bytes.  The contents are unchanged by this
  * operation regardless of the result.
  */
 static void
-rcs_buf_grow(BUF *b, size_t len)
+buf_grow(BUF *b, size_t len)
 {
 	b->cb_buf = xrealloc(b->cb_buf, 1, b->cb_size + len);
 	b->cb_size += len;

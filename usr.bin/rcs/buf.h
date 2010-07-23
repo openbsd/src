@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.9 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: buf.h,v 1.10 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,11 +27,11 @@
  * -----------------
  *
  * This code provides an API to generic memory buffer management.  All
- * operations are performed on a rcs_buf structure, which is kept opaque to the
+ * operations are performed on a buf structure, which is kept opaque to the
  * API user in order to avoid corruption of the fields and make sure that only
  * the internals can modify the fields.
  *
- * The first step is to allocate a new buffer using the rcs_buf_alloc()
+ * The first step is to allocate a new buffer using the buf_alloc()
  * function, which returns a pointer to a new buffer.
  */
 
@@ -43,21 +43,21 @@
 /* flags */
 #define BUF_AUTOEXT	1	/* autoextend on append */
 
-typedef struct rcs_buf BUF;
+typedef struct buf BUF;
 
-BUF		*rcs_buf_alloc(size_t, u_int);
-BUF		*rcs_buf_load(const char *, u_int);
-void		 rcs_buf_free(BUF *);
-void		*rcs_buf_release(BUF *);
-u_char		 rcs_buf_getc(BUF *, size_t);
-void		 rcs_buf_empty(BUF *);
-size_t		 rcs_buf_append(BUF *, const void *, size_t);
-size_t		 rcs_buf_fappend(BUF *, const char *, ...)
+BUF		*buf_alloc(size_t, u_int);
+BUF		*buf_load(const char *, u_int);
+void		 buf_free(BUF *);
+void		*buf_release(BUF *);
+u_char		 buf_getc(BUF *, size_t);
+void		 buf_empty(BUF *);
+size_t		 buf_append(BUF *, const void *, size_t);
+size_t		 buf_fappend(BUF *, const char *, ...)
 		     __attribute__((format(printf, 2, 3)));
-void		 rcs_buf_putc(BUF *, int);
-size_t		 rcs_buf_len(BUF *);
-int		 rcs_buf_write_fd(BUF *, int);
-int		 rcs_buf_write(BUF *, const char *, mode_t);
-void		 rcs_buf_write_stmp(BUF *, char *);
-u_char		*rcs_buf_get(BUF *b);
+void		 buf_putc(BUF *, int);
+size_t		 buf_len(BUF *);
+int		 buf_write_fd(BUF *, int);
+int		 buf_write(BUF *, const char *, mode_t);
+void		 buf_write_stmp(BUF *, char *);
+u_char		*buf_get(BUF *b);
 #endif	/* BUF_H */

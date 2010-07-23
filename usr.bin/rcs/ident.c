@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.26 2009/10/15 10:08:43 sobrado Exp $	*/
+/*	$OpenBSD: ident.c,v 1.27 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -119,19 +119,19 @@ ident_line(FILE *fp)
 	BUF *bp;
 	size_t len;
 
-	bp = rcs_buf_alloc(512, BUF_AUTOEXT);
+	bp = buf_alloc(512, BUF_AUTOEXT);
 
 	while ((c = getc(fp)) != VALDELIM) {
 		if (c == EOF)
 			goto out;
 
 		if (isalpha(c))
-			rcs_buf_putc(bp, c);
+			buf_putc(bp, c);
 		else
 			goto out;
 	}
 
-	rcs_buf_putc(bp, VALDELIM);
+	buf_putc(bp, VALDELIM);
 
 	while ((c = getc(fp)) != KEYDELIM) {
 		if (c == EOF)
@@ -140,26 +140,26 @@ ident_line(FILE *fp)
 		if (c == '\n')
 			goto out;
 
-		rcs_buf_putc(bp, c);
+		buf_putc(bp, c);
 	}
 
-	len = rcs_buf_len(bp);
-	if (rcs_buf_getc(bp, len - 1) != ' ')
+	len = buf_len(bp);
+	if (buf_getc(bp, len - 1) != ' ')
 		goto out;
 
 	/* append trailing KEYDELIM */
-	rcs_buf_putc(bp, c);
+	buf_putc(bp, c);
 
 	/* Append newline for printing. */
-	rcs_buf_putc(bp, '\n');
+	buf_putc(bp, '\n');
 	printf("     %c", KEYDELIM);
 	fflush(stdout);
-	rcs_buf_write_fd(bp, STDOUT_FILENO);
+	buf_write_fd(bp, STDOUT_FILENO);
 
 	found++;
 out:
 	if (bp != NULL)
-		rcs_buf_free(bp);
+		buf_free(bp);
 }
 
 void

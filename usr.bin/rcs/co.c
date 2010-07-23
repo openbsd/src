@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.110 2009/02/25 23:16:20 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.111 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -262,7 +262,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	rcsdate = givendate = -1;
 	if (date != NULL)
-		givendate = rcs_date_parse(date);
+		givendate = date_parse(date);
 
 	if (file->rf_ndelta == 0 && !(flags & QUIET))
 		(void)fprintf(stderr,
@@ -303,7 +303,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list) {
 			if (date != NULL) {
 				fdate = asctime(&rdp->rd_date);
-				rcsdate = rcs_date_parse(fdate);
+				rcsdate = date_parse(fdate);
 				if (givendate <= rcsdate)
 					continue;
 			}
@@ -354,7 +354,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			return (-1);
 		}
 	} else {
-		bp = rcs_buf_alloc(1, 0);
+		bp = buf_alloc(1, 0);
 	}
 
 	/*
@@ -463,16 +463,16 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	}
 
 	if (flags & PIPEOUT)
-		rcs_buf_write_fd(bp, STDOUT_FILENO);
+		buf_write_fd(bp, STDOUT_FILENO);
 	else {
 		(void)unlink(dst);
 
 		if ((fd = open(dst, O_WRONLY|O_CREAT|O_TRUNC, mode)) < 0)
 			err(1, "%s", dst);
 
-		if (rcs_buf_write_fd(bp, fd) < 0) {
+		if (buf_write_fd(bp, fd) < 0) {
 			warnx("failed to write revision to file");
-			rcs_buf_free(bp);
+			buf_free(bp);
 			(void)close(fd);
 			return (-1);
 		}
@@ -492,7 +492,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		(void)close(fd);
 	}
 
-	rcs_buf_free(bp);
+	buf_free(bp);
 
 	return (0);
 }
@@ -546,13 +546,13 @@ checkout_file_has_diffs(RCSFILE *rfp, RCSNUM *frev, const char *dst)
 	}
 
 	(void)xasprintf(&tempfile, "%s/diff.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(bp, tempfile);
-	rcs_buf_empty(bp);
+	buf_write_stmp(bp, tempfile);
+	buf_empty(bp);
 
 	diff_format = D_RCSDIFF;
 	ret = diffreg(dst, tempfile, bp, D_FORCEASCII);
 
-	rcs_buf_free(bp);
+	buf_free(bp);
 	unlink(tempfile);
 	xfree(tempfile);
 

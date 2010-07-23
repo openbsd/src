@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.75 2007/07/03 00:56:23 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.76 2010/07/23 21:46:05 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -316,7 +316,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 	tv[1].tv_sec = tv[0].tv_sec;
 
-	if ((b2 = rcs_buf_load(filename, BUF_AUTOEXT)) == NULL) {
+	if ((b2 = buf_load(filename, BUF_AUTOEXT)) == NULL) {
 		warnx("failed to load file: `%s'", filename);
 		goto out;
 	}
@@ -332,18 +332,18 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	tv2[1].tv_sec = t;
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b1, path1);
+	buf_write_stmp(b1, path1);
 
-	rcs_buf_free(b1);
+	buf_free(b1);
 	b1 = NULL;
 
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		warn("utimes");
 
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b2, path2);
+	buf_write_stmp(b2, path2);
 
-	rcs_buf_free(b2);
+	buf_free(b2);
 	b2 = NULL;
 
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
@@ -355,9 +355,9 @@ out:
 	if (fd != -1)
 		(void)close(fd);
 	if (b1 != NULL)
-		rcs_buf_free(b1);
+		buf_free(b1);
 	if (b2 != NULL)
-		rcs_buf_free(b2);
+		buf_free(b2);
 	if (path1 != NULL)
 		xfree(path1);
 	if (path2 != NULL)
@@ -413,18 +413,18 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 		fprintf(stderr, "%s -r%s -r%s\n", diffargs, rbuf1, rbuf2);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b1, path1);
+	buf_write_stmp(b1, path1);
 
-	rcs_buf_free(b1);
+	buf_free(b1);
 	b1 = NULL;
 
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		warn("utimes");
 
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b2, path2);
+	buf_write_stmp(b2, path2);
 
-	rcs_buf_free(b2);
+	buf_free(b2);
 	b2 = NULL;
 
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
@@ -434,9 +434,9 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 
 out:
 	if (b1 != NULL)
-		rcs_buf_free(b1);
+		buf_free(b1);
 	if (b2 != NULL)
-		rcs_buf_free(b2);
+		buf_free(b2);
 	if (path1 != NULL)
 		xfree(path1);
 	if (path2 != NULL)

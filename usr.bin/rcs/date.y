@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.7 2010/07/23 09:14:58 ray Exp $	*/
+/*	$OpenBSD: date.y,v 1.8 2010/07/23 21:46:05 ray Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -805,12 +805,12 @@ difftm(struct tm *a, struct tm *b)
 }
 
 /*
- * rcs_date_parse()
+ * date_parse()
  *
  * Returns the number of seconds since the Epoch corresponding to the date.
  */
 time_t
-rcs_date_parse(const char *p)
+date_parse(const char *p)
 {
 	struct tm	gmt, tm;
 	time_t		Start, tod, nowtime, tz;
@@ -819,7 +819,7 @@ rcs_date_parse(const char *p)
 
 	if (time(&nowtime) == -1 || !gmtime_r(&nowtime, &gmt) ||
 	    !localtime_r(&nowtime, &tm))
-		errx(1, "cvs_date_parse failed");
+		errx(1, "date_parse failed");
 
 	tz = difftm(&gmt, &tm) / 60;
 
@@ -884,7 +884,7 @@ main(int argc, char **argv)
 	(void)printf("Enter date, or blank line to exit.\n\t> ");
 	(void)fflush(stdout);
 	while (fgets(buff, sizeof(buff), stdin) && buff[0]) {
-		d = rcs_date_parse(buff);
+		d = date_parse(buff);
 		if (d == -1)
 			(void)printf("Bad format - couldn't convert.\n");
 		else
