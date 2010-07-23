@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.207 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.208 2010/07/23 23:59:32 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -924,6 +924,7 @@ checkin_keywordscan(BUF *data, RCSNUM **rev, time_t *date, char **author,
 		/* XXX - Not binary safe. */
 		buf_putc(buf, '\0');
 		checkin_parsekeyword(buf_get(buf), rev, date, author, state);
+		buf_free(buf);
 loopend:;
 	}
 	if (kwstr == NULL)
