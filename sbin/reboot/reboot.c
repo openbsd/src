@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.30 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.31 2010/07/23 20:14:23 millert Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	int ch, howto, lflag, nflag, pflag, qflag;
 	char *p, *user;
+	sigset_t mask;
 
 	p = __progname;
 
@@ -191,6 +192,13 @@ main(int argc, char *argv[])
 				howto |= RB_POWERDOWN;
 		}
 	}
+
+	/*
+	 * Point of no return, block all signals so we are sure to
+	 * reach the call to reboot(2) unmolested.
+	 */
+	sigfillset(&mask);
+	sigprocmask(SIG_BLOCK, &mask, NULL);
 
 	/* Send a SIGTERM first, a chance to save the buffers. */
 	if (kill(-1, SIGTERM) == -1) {
