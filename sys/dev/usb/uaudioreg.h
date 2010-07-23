@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudioreg.h,v 1.13 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: uaudioreg.h,v 1.14 2010/07/23 19:59:09 jakemsr Exp $ */
 /*	$NetBSD: uaudioreg.h,v 1.11 2002/10/23 02:32:37 christos Exp $	*/
 
 /*
@@ -65,6 +65,7 @@ typedef struct {
 	uByte		bRefresh;
 	uByte		bSynchAddress;
 } __packed usb_endpoint_descriptor_audio_t;
+#define USB_ENDPOINT_DESCRIPTOR_AUDIO_SIZE 9
 
 struct usb_audio_control_descriptor {
 	uByte		bLength;
