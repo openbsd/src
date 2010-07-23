@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.6 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: date.y,v 1.7 2010/07/23 09:14:58 ray Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -812,39 +812,24 @@ difftm(struct tm *a, struct tm *b)
 time_t
 rcs_date_parse(const char *p)
 {
-	struct tm	gmt, *gmt_ptr, *tm;
-	struct timeb	ftz, *now;
-	time_t		Start, tod, nowtime;
+	struct tm	gmt, tm;
+	time_t		Start, tod, nowtime, tz;
 
 	yyInput = p;
 
-	now = &ftz;
-	(void)time(&nowtime);
+	if (time(&nowtime) == -1 || !gmtime_r(&nowtime, &gmt) ||
+	    !localtime_r(&nowtime, &tm))
+		errx(1, "cvs_date_parse failed");
 
-	gmt_ptr = gmtime(&nowtime);
-	if (gmt_ptr != NULL) {
-		/* Make a copy, in case localtime modifies *tm (I think
-		 * that comment now applies to *gmt_ptr, but I am too
-		 * lazy to dig into how gmtime and locatime allocate the
-		 * structures they return pointers to).
-		 */
-		gmt = *gmt_ptr;
-	}
+	tz = difftm(&gmt, &tm) / 60;
 
-	if (!(tm = localtime(&nowtime)))
-		return (-1);
+	if (tm.tm_isdst)
+		tz += 60;
 
-	if (gmt_ptr != NULL)
-		ftz.timezone = difftm(&gmt, tm) / 60;
-
-	if (tm->tm_isdst)
-		ftz.timezone += 60;
-
-	tm = localtime(&nowtime);
-	yyYear = tm->tm_year + 1900;
-	yyMonth = tm->tm_mon + 1;
-	yyDay = tm->tm_mday;
-	yyTimezone = now->timezone;
+	yyYear = tm.tm_year + 1900;
+	yyMonth = tm.tm_mon + 1;
+	yyDay = tm.tm_mday;
+	yyTimezone = tz;
 	yyDSTmode = DSTmaybe;
 	yyHour = 0;
 	yyMinutes = 0;
@@ -870,8 +855,8 @@ rcs_date_parse(const char *p)
 	} else {
 		Start = nowtime;
 		if (!yyHaveRel)
-			Start -= ((tm->tm_hour * 60L + tm->tm_min) * 60L) +
-			    tm->tm_sec;
+			Start -= ((tm.tm_hour * 60L + tm.tm_min) * 60L) +
+			    tm.tm_sec;
 	}
 
 	Start += yyRelSeconds;
