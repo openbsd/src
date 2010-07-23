@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.32 2010/07/20 12:15:24 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.33 2010/07/23 20:19:21 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -380,7 +380,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 {
 	struct aml_value	res;
 	bus_size_t		ec_sc, ec_data;
-	int			type1, type2;
+	int			dtype, ctype;
 	char			*buf;
 	int			size, ret;
 	int64_t			gpe;
@@ -409,7 +409,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	size = res.length;
 	buf = res.v_buffer;
 
-	ret = acpiec_getregister(buf, size, &type1, &ec_data);
+	ret = acpiec_getregister(buf, size, &dtype, &ec_data);
 	if (ret <= 0) {
 		dnprintf(10, "%s: failed to read DATA from _CRS\n",
 		    DEVNAME(sc));
@@ -420,7 +420,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	buf += ret;
 	size -= ret;
 
-	ret = acpiec_getregister(buf, size, &type2,  &ec_sc);
+	ret = acpiec_getregister(buf, size, &ctype,  &ec_sc);
 	if (ret <= 0) {
 		dnprintf(10, "%s: failed to read S/C from _CRS\n",
 		    DEVNAME(sc));
@@ -443,7 +443,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	dnprintf(10, "%s: Data: 0x%x, S/C: 0x%x\n",
 	    DEVNAME(sc), ec_data, ec_sc);
 
-	if (type1 == GAS_SYSTEM_IOSPACE)
+	if (ctype == GAS_SYSTEM_IOSPACE)
 		sc->sc_cmd_bt = aa->aaa_iot;
 	else
 		sc->sc_cmd_bt = aa->aaa_memt;
@@ -453,7 +453,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 		return (1);
 	}
 
-	if (type2 == GAS_SYSTEM_IOSPACE)
+	if (dtype == GAS_SYSTEM_IOSPACE)
 		sc->sc_data_bt = aa->aaa_iot;
 	else
 		sc->sc_data_bt = aa->aaa_memt;
