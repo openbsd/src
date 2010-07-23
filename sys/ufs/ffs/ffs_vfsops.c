@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.124 2010/06/29 14:48:08 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.125 2010/07/23 17:31:54 ray Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -282,9 +282,9 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			if (fs->fs_clean == 0) {
 #if 0
 				/*
-				 * It is safe mount unclean file system
+				 * It is safe to mount an unclean file system
 				 * if it was previously mounted with softdep
-				 * but we may loss space and must
+				 * but we may lose space and must
 				 * sometimes run fsck manually.
 				 */
 				if (fs->fs_flags & FS_DOSOFTDEP)
@@ -761,9 +761,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (fs->fs_clean == 0) {
 #if 0
 		/*
-		 * It is safe mount unclean file system
+		 * It is safe to mount an unclean file system
 		 * if it was previously mounted with softdep
-		 * but we may loss space and must
+		 * but we may lose space and must
 		 * sometimes run fsck manually.
 		 */
 		if (fs->fs_flags & FS_DOSOFTDEP)
