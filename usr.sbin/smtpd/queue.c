@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.88 2010/06/10 19:34:51 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.89 2010/07/23 22:23:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -1309,9 +1309,7 @@ queue_bounce_event(int fd, short event, void *p)
 out:
 	log_debug("%s: %d: last event", runqs[Q_BOUNCE].name, s->id);
 
-	if (*status == '5' || *status == '6')
-		fatalx("queue: smtp refused bounce");
-	if (*status == '2') {
+	if (*status == '2' || *status == '5' || *status == '6') {
 		while ((action = SLIST_FIRST(&s->batch->actions))) {
 			SLIST_REMOVE_HEAD(&s->batch->actions, entry);
 			queue_be_action_delete(s->batch->content->id,
