@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.15 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.16 2010/07/23 07:47:13 jsg Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -42,11 +42,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

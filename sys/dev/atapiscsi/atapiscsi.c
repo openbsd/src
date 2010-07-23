@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.92 2010/07/01 03:20:38 matthew Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.93 2010/07/23 07:47:13 jsg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -15,12 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE

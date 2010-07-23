@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_sis_reg.h,v 1.7 2004/10/17 18:16:12 grange Exp $	*/
+/*	$OpenBSD: pciide_sis_reg.h,v 1.8 2010/07/23 07:47:13 jsg Exp $	*/
 /*	$NetBSD: pciide_sis_reg.h,v 1.6 2000/05/15 08:46:01 bouyer Exp $	*/
 
 /*
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphyreg.h,v 1.2 2002/05/04 11:30:06 fgsch Exp $	*/
+/*	$OpenBSD: tlphyreg.h,v 1.3 2010/07/23 07:47:13 jsg Exp $	*/
 /*	$NetBSD: tlphyreg.h,v 1.1 1998/08/10 23:59:58 thorpej Exp $	*/
 
 /*
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
