@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1565 2010/07/18 17:10:52 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1566 2010/07/23 08:19:52 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4789,7 +4789,7 @@ product SILAN 8139D		0x8139	8139D
 
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201 AGP
-product SIS 86C202		0x0002	86C202 VGA
+product SIS 86C202		0x0002	86C202 AGP
 product SIS 648FX		0x0003	648FX AGP
 product SIS PPB_1		0x0004	PCI-PCI
 product SIS 86C205_1		0x0005	86C205
