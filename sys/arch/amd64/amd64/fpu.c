@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.18 2010/07/23 14:56:31 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.19 2010/07/23 15:10:16 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -210,7 +210,7 @@ fpudna(struct cpu_info *ci)
 	 * was using the FPU, save their state.
 	 */
 	if (ci->ci_fpcurproc != NULL && ci->ci_fpcurproc != p) {
-		fpusave_cpu(ci, 1);
+		fpusave_cpu(ci, ci->ci_fpcurproc != &proc0);
 		uvmexp.fpswtch++;
 	}
 	splx(s);
@@ -332,19 +332,15 @@ fpusave_proc(struct proc *p, int save)
 void
 fpu_kernel_enter(void)
 {
-	struct cpu_info	*oci, *ci = curcpu();
-	struct proc	*p = curproc;
+	struct cpu_info	*ci = curcpu();
 	uint32_t	 cw;
 	int		 s;
 
-	KASSERT(p != NULL && (p->p_flag & P_SYSTEM));
-
 	/*
-	 * Fast path. If we were the last proc on the FPU,
-	 * there is no work to do besides clearing TS.
+	 * Fast path.  If the kernel was using the FPU before, there
+	 * is no work to do besides clearing TS.
 	 */
-	if (ci->ci_fpcurproc == p) {
-		p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	if (ci->ci_fpcurproc == &proc0) {
 		clts();
 		return;
 	}
@@ -356,22 +352,12 @@ fpu_kernel_enter(void)
 		uvmexp.fpswtch++;
 	}
 
-	/*
-	 * If we were switched away to the other cpu, cleanup
-	 * an fpcurproc pointer.
-	 */
-	oci = p->p_addr->u_pcb.pcb_fpcpu;
-	if (oci != NULL && oci != ci && oci->ci_fpcurproc == p)
-		oci->ci_fpcurproc = NULL;
-
 	/* Claim the FPU */
-	ci->ci_fpcurproc = p;
-	p->p_addr->u_pcb.pcb_fpcpu = ci;
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	ci->ci_fpcurproc = &proc0;
 
 	splx(s);
 
-	/* Disables DNA exceptions */
+	/* Disable DNA exceptions */
 	clts();
 
 	/* Initialize the FPU */
@@ -385,9 +371,6 @@ fpu_kernel_enter(void)
 void
 fpu_kernel_exit(void)
 {
-	/*
-	 * Nothing to do.
-	 * TS is restored on a context switch automatically
-	 * as long as we use hardware assisted task switching.
-	 */
+	/* Enable DNA exceptions */
+	stts();
 }
