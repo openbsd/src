@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.24 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.25 2010/07/23 07:21:02 matthew Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -62,7 +62,9 @@
 #endif
 
 struct evcount clk_count;
+#ifdef MULTIPROCESSOR
 struct evcount ipi_count;
+#endif
 
 void	lapic_delay(int);
 static u_int32_t lapic_gettick(void);
@@ -220,7 +222,9 @@ void
 lapic_boot_init(paddr_t lapic_base)
 {
 	static u_int64_t clk_irq = 0;
+#ifdef MULTIPROCESSOR
 	static u_int64_t ipi_irq = 0;
+#endif
 
 	lapic_map(lapic_base);
 
@@ -241,7 +245,9 @@ lapic_boot_init(paddr_t lapic_base)
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 
 	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
+#ifdef MULTIPROCESSOR
 	evcount_attach(&ipi_count, "ipi", (void *)&ipi_irq, &evcount_intr);
+#endif
 }
 
 static __inline u_int32_t
@@ -453,6 +459,7 @@ i82489_icr_wait(void)
 	}
 }
 
+#ifdef MULTIPROCESSOR
 int
 x86_ipi_init(int target)
 {
@@ -498,6 +505,7 @@ x86_ipi(int vec, int target, int dl)
 
 	return result;
 }
+#endif /* MULTIPROCESSOR */
 
 
 /*
