@@ -1,4 +1,4 @@
-# $OpenBSD: usr_sbin_named,v 1.5 2004/05/13 04:50:04 sturm Exp $
+# $OpenBSD: usr_sbin_named,v 1.6 2010/07/23 03:13:51 ray Exp $
 #
 # Policy for named that uses named user and chroots to /var/named
 # This policy works for the default configuration of named.
@@ -28,6 +28,7 @@ Policy: /usr/sbin/named, Emulation: native
 	native-fsread: filename eq "/etc/named.keys" then permit
 	native-fsread: filename eq "/etc/pwd.db" then permit
 	native-fsread: filename eq "/etc/rndc.key" then permit
+	native-fsread: filename eq "/etc/root.hint" then permit
 	native-fsread: filename eq "/etc/spwd.db" then deny[eperm]
 	native-fsread: filename match "/master" then permit
 	native-fsread: filename match "/slave" then permit
@@ -63,6 +64,7 @@ Policy: /usr/sbin/named, Emulation: native
 	native-mquery: permit
 	native-munmap: permit
 	native-nanosleep: permit
+	native-pipe: permit
 	native-pread: permit
 	native-read: permit
 	native-recvmsg: permit
@@ -74,6 +76,8 @@ Policy: /usr/sbin/named, Emulation: native
 	native-seteuid: uid eq "70" and uname eq "named" then permit
 	native-setgid: gid eq "70" then permit
 	native-setgroups: permit
+	native-setresgid: permit
+	native-setresuid: permit
 	native-setrlimit: permit
 	native-setsid: permit
 	native-setsockopt: permit
