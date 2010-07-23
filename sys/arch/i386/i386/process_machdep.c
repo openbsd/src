@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.22 2007/05/08 20:26:54 deraadt Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.23 2010/07/23 14:56:31 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -134,17 +134,9 @@ process_xmm_to_s87(const struct savexmm *sxmm, struct save87 *s87)
 void
 process_fninit_xmm(struct savexmm *sxmm)
 {
-	/*
-	 * The initial control word was already set by setregs(), so
-	 * save it temporarily.
-	 */
-	uint32_t mxcsr = sxmm->sv_env.en_mxcsr;
-	uint16_t cw = sxmm->sv_env.en_cw;
-
-	/* XXX Don't zero XMM regs? */
 	memset(sxmm, 0, sizeof(*sxmm));
-	sxmm->sv_env.en_cw = cw;
-	sxmm->sv_env.en_mxcsr = mxcsr;
+	sxmm->sv_env.en_cw = __OpenBSD_NPXCW__;
+	sxmm->sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	sxmm->sv_env.en_sw = 0x0000;
 	sxmm->sv_env.en_tw = 0x00;
 }
@@ -199,14 +191,8 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 		if (i386_use_fxsave) {
 			process_fninit_xmm(&frame->sv_xmm);
 		} else {
-			/*
-			 * The initial control word was already set by
-			 * setregs(), so save it temporarily.
-			 */
-			uint16_t cw = frame->sv_87.sv_env.en_cw;
-
 			memset(&frame->sv_87, 0, sizeof(frame->sv_87));
-			frame->sv_87.sv_env.en_cw = cw;
+			frame->sv_87.sv_env.en_cw = __OpenBSD_NPXCW__;
 			frame->sv_87.sv_env.en_sw = 0x0000;
 			frame->sv_87.sv_env.en_tw = 0xffff;
 		}

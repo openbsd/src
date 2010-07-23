@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.6 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.7 2010/07/23 14:56:31 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -131,23 +131,13 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 		fpusave_proc(p, 1);
 	} else {
-		u_int16_t cw;
-		u_int32_t mxcsr, mxcsr_mask;
-
-		/*
-		 * Fake a FNINIT.
-		 * The initial control word was already set by setregs(), so
-		 * save it temporarily.
-		 */
-		cw = frame->fx_fcw;
-		mxcsr = frame->fx_mxcsr;
-		mxcsr_mask = frame->fx_mxcsr_mask;
+		/* Fake a FNINIT. */
 		memset(frame, 0, sizeof(*regs));
-		frame->fx_fcw = cw;
+		frame->fx_fcw = __INITIAL_NPXCW__;
 		frame->fx_fsw = 0x0000;
 		frame->fx_ftw = 0xff;
-		frame->fx_mxcsr = mxcsr;
-		frame->fx_mxcsr_mask = mxcsr_mask;
+		frame->fx_mxcsr = __INITIAL_MXCSR__;
+		frame->fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 

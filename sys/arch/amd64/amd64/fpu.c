@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.17 2010/07/21 14:08:09 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.18 2010/07/23 14:56:31 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -188,6 +188,7 @@ x86fpflags_to_siginfo(u_int32_t flags)
 void
 fpudna(struct cpu_info *ci)
 {
+	struct savefpu *sfp;
 	struct proc *p;
 	int s;
 
@@ -235,10 +236,14 @@ fpudna(struct cpu_info *ci)
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
 
+	sfp = &p->p_addr->u_pcb.pcb_savefpu;
+
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
 		fninit();
-		fldcw(&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw);
-		ldmxcsr(&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_mxcsr);
+		bzero(&sfp->fp_fxsave, sizeof(sfp->fp_fxsave));
+		sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
+		sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+		fxrstor(&sfp->fp_fxsave);
 		p->p_md.md_flags |= MDP_USEDFPU;
 	} else {
 		static double	zero = 0.0;
@@ -249,7 +254,7 @@ fpudna(struct cpu_info *ci)
 		 */
 		fnclex();
 		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
-		fxrstor(&p->p_addr->u_pcb.pcb_savefpu);
+		fxrstor(sfp);
 	}
 }
 
