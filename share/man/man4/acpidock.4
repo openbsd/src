@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidock.4,v 1.3 2009/06/03 00:16:40 deraadt Exp $
+.\"	$OpenBSD: acpidock.4,v 1.4 2010/07/24 22:18:58 mk Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 3 2009 $
+.Dd $Mdocdate: July 24 2010 $
 .Dt ACPIDOCK 4
 .Os
 .Sh NAME
@@ -39,9 +39,17 @@ then reacted upon.
 For undocking, this event is usually triggered by pressing a button on
 the docking station or using a special keyboard combination; for docking,
 the machine usually just has to be inserted.
+.Pp
+The
+.Nm
+driver sets up a sensor that indicates docking state that can be
+used with
+.Xr sensorsd 8
+to perform events when docking or undocking.
 .Sh SEE ALSO
 .Xr acpi 4 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr sensorsd 8
 .Sh HISTORY
 The
 .Nm
