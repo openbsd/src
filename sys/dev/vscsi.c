@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.16 2010/07/24 11:53:44 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.17 2010/07/24 20:15:31 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -167,22 +167,23 @@ vscsi_cmd(struct scsi_xfer *xs)
 	struct vscsi_softc		*sc = link->adapter_softc;
 	struct vscsi_ccb		*ccb = xs->io;
 	int				polled = ISSET(xs->flags, SCSI_POLL);
-	int				running = 1;
+	int				running = 0;
 
 	if (ISSET(xs->flags, SCSI_POLL) && ISSET(xs->flags, SCSI_NOSLEEP)) {
 		printf("%s: POLL && NOSLEEP for 0x%02x\n", DEVNAME(sc),
 		    xs->cmd->opcode);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
+		return;
 	}
 
 	ccb->ccb_xs = xs;
 
 	mtx_enter(&sc->sc_state_mtx);
-	if (sc->sc_state == VSCSI_S_RUNNING)
+	if (sc->sc_state == VSCSI_S_RUNNING) {
+		running = 1;
 		TAILQ_INSERT_TAIL(&sc->sc_ccb_i2t, ccb, ccb_entry);
-	else
-		running = 0;
+	}
 	mtx_leave(&sc->sc_state_mtx);
 
 	if (!running) {
