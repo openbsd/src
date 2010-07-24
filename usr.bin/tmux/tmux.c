@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.84 2010/07/11 17:06:45 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.85 2010/07/24 19:25:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -532,7 +532,10 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (setenv("EVENT_NOKQUEUE", "1", 1) != 0)
+		fatal("setenv");
 	ev_base = event_init();
+	unsetenv("EVENT_NOKQUEUE");
 	set_signals(main_signal);
 
 	/* Initialise the client socket/start the server. */
