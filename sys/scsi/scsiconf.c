@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.161 2010/07/01 05:11:18 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.162 2010/07/24 04:01:52 matthew Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -282,9 +282,6 @@ scsibusdetach(struct device *dev, int type)
 		return (error);
 
 	KASSERT(SLIST_EMPTY(&sb->sc_link));
-
-	/* Free shared data. */
-	scsi_deinit();
 
 	return (0);
 }

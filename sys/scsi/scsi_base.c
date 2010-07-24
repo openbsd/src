@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.185 2010/07/22 05:21:58 matthew Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.186 2010/07/24 04:01:52 matthew Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -63,7 +63,6 @@ void	scsi_xs_sync_done(struct scsi_xfer *);
 #define	DECODE_ASC_ASCQ		2
 #define DECODE_SKSV		3
 
-int			scsi_running = 0;
 struct pool		scsi_xfer_pool;
 struct pool		scsi_plug_pool;
 
@@ -106,8 +105,11 @@ void scsi_io_get_done(void *, void *);
 void
 scsi_init()
 {
-	if (scsi_running++)
+	static int scsi_init_done;
+
+	if (scsi_init_done)
 		return;
+	scsi_init_done = 1;
 
 #if defined(SCSI_DELAY) && SCSI_DELAY > 0
 	/* Historical. Older buses may need a moment to stabilize. */
@@ -185,13 +187,6 @@ scsi_plug_detach(void *xsc, void *xp)
 		scsi_detach_lun(sc, p->target, p->lun, p->how);
 
 	pool_put(&scsi_plug_pool, p);
-}
-
-void
-scsi_deinit()
-{
-	if (--scsi_running)
-		return;
 }
 
 int
