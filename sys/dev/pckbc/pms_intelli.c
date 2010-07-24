@@ -1,4 +1,4 @@
-/* $OpenBSD: pms_intelli.c,v 1.2 2007/10/17 01:32:46 deraadt Exp $ */
+/* $OpenBSD: pms_intelli.c,v 1.3 2010/07/24 10:35:34 deraadt Exp $ */
 /* $NetBSD: psm_intelli.c,v 1.8 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -44,7 +44,11 @@ struct pmsi_softc {		/* driver status information */
 	pckbc_tag_t sc_kbctag;
 	int sc_kbcslot;
 
-	int sc_enabled;		/* input enabled? */
+	int sc_state;
+#define PMSI_STATE_DISABLED	0
+#define PMSI_STATE_ENABLED	1
+#define PMSI_STATE_SUSPENDED	2
+
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
 	signed char dx, dy;
@@ -54,14 +58,17 @@ struct pmsi_softc {		/* driver status information */
 
 int pmsiprobe(struct device *, void *, void *);
 void pmsiattach(struct device *, struct device *, void *);
+int pmsiactivate(struct device *, int);
 void pmsiinput(void *, int);
 
 struct cfattach pmsi_ca = {
-	sizeof(struct pmsi_softc), pmsiprobe, pmsiattach,
+	sizeof(struct pmsi_softc), pmsiprobe, pmsiattach, NULL,
+	pmsiactivate
 };
 
-int	pmsi_enable(void *);
+int	pmsi_change_state(struct pmsi_softc *, int);
 int	pmsi_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	pmsi_enable(void *);
 void	pmsi_disable(void *);
 
 const struct wsmouse_accessops pmsi_accessops = {
@@ -196,7 +203,7 @@ pmsiattach(parent, self, aux)
 	/*
 	 * Attach the wsmouse, saving a handle to it.
 	 * Note that we don't need to check this pointer against NULL
-	 * here or in pmsintr, because if this fails pms_enable() will
+	 * here or in pmsintr, because if this fails pmsi_enable() will
 	 * never be called, so pmsiinput() will never be called.
 	 */
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
@@ -210,46 +217,96 @@ pmsiattach(parent, self, aux)
 }
 
 int
-pmsi_enable(v)
-	void *v;
+pmsiactivate(struct device *self, int act)
 {
-	struct pmsi_softc *sc = v;
-	u_char cmd[1];
+	struct pmsi_softc *sc = (struct pmsi_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (sc->sc_state == PMSI_STATE_ENABLED)
+			pmsi_change_state(sc, PMSI_STATE_SUSPENDED);
+		break;
+	case DVACT_RESUME:
+		if (sc->sc_state == PMSI_STATE_SUSPENDED)
+			pmsi_change_state(sc, PMSI_STATE_ENABLED);
+		break;
+	}
+	return (0);
+}
+
+int
+pmsi_change_state(struct pmsi_softc *sc, int newstate)
+{
+	u_char cmd[1], resp[2];
 	int res;
 
-	if (sc->sc_enabled)
-		return EBUSY;
+	switch (newstate) {
+	case PMSI_STATE_ENABLED:
+		if (sc->sc_state == PMSI_STATE_ENABLED)
+			return EBUSY;
+		sc->inputstate = 0;
+		sc->oldbuttons = 0;
 
-	sc->sc_enabled = 1;
-	sc->inputstate = 0;
-	sc->oldbuttons = 0;
+		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
+		pckbc_flush(sc->sc_kbctag, sc->sc_kbcslot);
 
-	cmd[0] = PMS_DEV_ENABLE;
-	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
-	if (res)
-		printf("pmsi_enable: command error\n");
+		/* reset the device */
+		cmd[0] = PMS_RESET;
+		res = pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		    cmd, 1, 2, resp, 1);
+#ifdef DEBUG
+		if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
+			printf("pmsiattach: reset error\n");
+			return;
+		}
+#endif
+		res = pmsi_setintellimode(sc->sc_kbctag, sc->sc_kbcslot);
+#ifdef DEBUG
+		if (res) {
+			printf("pmsiattach: error setting intelli mode\n");
+			return;
+		}
+#endif
 
+		cmd[0] = PMS_DEV_ENABLE;
+		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		    cmd, 1, 0, 1, 0);
+		if (res)
+			printf("pmsi_enable: command error\n");
+		sc->sc_state = newstate;
+		break;
+	case PMSI_STATE_DISABLED:
+
+		/* FALLTHROUGH */
+	case PMSI_STATE_SUSPENDED:
+	        cmd[0] = PMS_DEV_DISABLE;
+	        res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		    cmd, 1, 0, 1, 0);
+	        if (res)
+	                printf("pmsi_disable: command error\n");
+	        pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+		sc->sc_state = newstate;
+		break;
+	}
 	return 0;
 }
 
-void
-pmsi_disable(v)
-	void *v;
+int
+pmsi_enable(void *v)
 {
 	struct pmsi_softc *sc = v;
-	u_char cmd[1];
-	int res;
 
-	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
-	if (res)
-		printf("pmsi_disable: command error\n");
+	return pmsi_change_state(sc, PMSI_STATE_ENABLED);
+}
 
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
-	sc->sc_enabled = 0;
+void
+pmsi_disable(void *v)
+{
+	struct pmsi_softc *sc = v;
+
+	pmsi_change_state(sc, PMSI_STATE_DISABLED);
 }
 
 int
@@ -283,7 +340,7 @@ pmsi_ioctl(v, cmd, data, flag, p)
 		    2, 0, 1, 0);
 		
 		if (i)
-			printf("pms_ioctl: SET_RES command error\n");
+			printf("pmsi_ioctl: SET_RES command error\n");
 		break;
 		
 	default:
@@ -305,7 +362,7 @@ int data;
 	signed char dz;
 	u_int changed;
 
-	if (!sc->sc_enabled) {
+	if (sc->sc_state != PMSI_STATE_ENABLED) {
 		/* Interrupts are not expected.  Discard the byte. */
 		return;
 	}
