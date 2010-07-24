@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 2010/07/24 21:27:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -20,24 +20,46 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/time.h>
+#include <sys/timetc.h>
+
+#include <machine/iomod.h>
+#include <machine/reg.h>
 
 #include <dev/clock_subr.h>
+
+u_long	cpu_hzticks;
+
+u_int	itmr_get_timecount(struct timecounter *);
+
+struct timecounter itmr_timecounter = {
+	itmr_get_timecount, NULL, 0xffffffff, 0, "itmr", 0, NULL
+};
 
 void
 cpu_initclocks()
 {
+	struct cpu_info *ci = curcpu();
+	u_long __itmr;
 
+	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
+
+	itmr_timecounter.tc_frequency = PAGE0->mem_10msec * 100;
+	tc_init(&itmr_timecounter);
+
+	__itmr = mfctl(CR_ITMR);
+	ci->ci_itmr = __itmr;
+	__itmr += cpu_hzticks;
+	mtctl(__itmr, CR_ITMR);
 }
 
 void
 setstatclockrate(int newhz)
 {
-
+	/* nothing we can do */
 }
 
-void
-microtime(struct timeval *tv)
+u_int
+itmr_get_timecount(struct timecounter *tc)
 {
-
+	return (mfctl(CR_ITMR));
 }
