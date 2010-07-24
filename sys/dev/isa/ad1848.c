@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.36 2010/07/23 11:47:50 jakemsr Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.37 2010/07/24 22:48:28 jakemsr Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -184,9 +184,9 @@ static void
 ad_set_MCE(struct ad1848_softc *sc, int state)
 {
 	if (state)
-	sc->MCE_bit = MODE_CHANGE_ENABLE;
+		sc->MCE_bit = MODE_CHANGE_ENABLE;
 	else
-	sc->MCE_bit = 0;
+		sc->MCE_bit = 0;
 
 	ADWRITE(sc, AD1848_IADDR, sc->MCE_bit);
 }
@@ -209,10 +209,10 @@ wait_for_calibration(struct ad1848_softc *sc)
 	 */
 	timeout = AD1848_TIMO;
 	while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
-	timeout--;
+		timeout--;
 
 	if (ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
-	DPRINTF(("ad1848: Auto calibration timed out(1).\n"));
+		DPRINTF(("ad1848: Auto calibration timed out(1).\n"));
 
 	if (!(sc->sc_flags & AD1848_FLAG_32REGS)) {
 		timeout = AD1848_TIMO;
