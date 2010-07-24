@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.48 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.49 2010/07/24 01:10:12 ray Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -109,9 +109,6 @@ static bool	reverse_flag_specified = false;
 /* buffer holding the name of the rejected patch file. */
 static char	rejname[NAME_MAX + 1];
 
-/* buffer for stderr */
-static char	serrbuf[BUFSIZ];
-
 /* how many input lines have been irretractibly output */
 static LINENUM	last_frozen_line = 0;
 
@@ -150,7 +147,8 @@ main(int argc, char *argv[])
 	const	char *tmpdir;
 	char	*v;
 
-	setbuf(stderr, serrbuf);
+	setlinebuf(stdout);
+	setlinebuf(stderr);
 	for (i = 0; i < MAXFILEC; i++)
 		filearg[i] = NULL;
 
