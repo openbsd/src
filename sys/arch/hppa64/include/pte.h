@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.2 2010/07/24 14:30:04 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.3 2010/07/24 16:25:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -56,6 +56,9 @@
 #define	PTE_PG4M	0x0000000000000005UL
 #define	PTE_PG16M	0x0000000000000006UL
 #define	PTE_PG64M	0x0000000000000007UL
+
+#define	PTE_PAGE_SHIFT(pte)	(12 + (2 * ((pte) & PTE_PG64M)))
+#define	PTE_PAGE_SIZE(pte)	(1 << PTE_PAGE_SHIFT(pte))
 
 #define	PTE_GETBITS(pte)	((pte) >> 48)
 #define	PTE_BITS \

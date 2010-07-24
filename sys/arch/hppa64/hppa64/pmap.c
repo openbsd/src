@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2010/07/02 22:47:54 jsing Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 2010/07/24 16:25:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1057,6 +1057,7 @@ pmap_extract(pmap, va, pap)
 	paddr_t *pap;
 {
 	pt_entry_t pte;
+	vaddr_t mask;
 
 	DPRINTF(PDB_FOLLOW|PDB_EXTRACT, ("pmap_extract(%p, %lx)\n", pmap, va));
 
@@ -1065,8 +1066,10 @@ pmap_extract(pmap, va, pap)
 	simple_unlock(&pmap->pm_lock);
 
 	if (pte) {
-		if (pap)
-			*pap = PTE_PAGE(pte) | (va & PAGE_MASK);
+		if (pap) {
+			mask = PTE_PAGE_SIZE(pte) - 1;
+			*pap = PTE_PAGE(pte) | (va & mask);
+		}
 		return (TRUE);
 	}
 
