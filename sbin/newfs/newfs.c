@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.86 2010/07/02 22:02:48 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.87 2010/07/24 00:28:41 tedu Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_ASYNC,
 	MOPT_UPDATE,
+	MOPT_FORCE,
 	{ NULL },
 };
 
