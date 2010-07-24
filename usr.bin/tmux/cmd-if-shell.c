@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.8 2010/07/11 17:06:45 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.9 2010/07/24 20:11:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -109,8 +109,7 @@ cmd_if_shell_free(void *data)
 	if (ctx->cmdclient != NULL) {
 		ctx->cmdclient->references--;
 		exitdata.retcode = ctx->cmdclient->retcode;
-		server_write_client(
-		    ctx->cmdclient, MSG_EXIT, &exitdata, sizeof exitdata);
+		ctx->cmdclient->flags |= CLIENT_EXIT;
 	}
 	if (ctx->curclient != NULL)
 		ctx->curclient->references--;

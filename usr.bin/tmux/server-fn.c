@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.39 2010/06/27 00:22:22 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.40 2010/07/24 20:11:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -395,7 +395,7 @@ server_destroy_session(struct session *s)
 			continue;
 		if (s_new == NULL) {
 			c->session = NULL;
-			server_write_client(c, MSG_EXIT, NULL, 0);
+			c->flags |= CLIENT_EXIT;
 		} else {
 			c->session = s_new;
 			server_redraw_client(c);
