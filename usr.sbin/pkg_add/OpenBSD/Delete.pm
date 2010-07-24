@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.105 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Delete.pm,v 1.106 2010/07/24 10:49:01 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -52,7 +52,8 @@ sub manpages_unindex
 			$state->say("Removing manpages in #1: #2",
 			    $destdir.$k, join(@l)) if $state->verbose >= 2;
 		} else {
-			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
+			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l,
+			    $state); };
 			if ($@) {
 				$state->errsay("Error in makewhatis: #1", $@);
 			}
@@ -309,6 +310,8 @@ package OpenBSD::PackingElement::DirBase;
 sub prepare_for_deletion
 {
 	my ($self, $state, $pkgname) = @_;
+	my $fname = $state->{destdir}.$self->fullname;
+	$state->vstat->remove_directory($fname);
 	return unless $self->{noshadow};
 	$state->{noshadow}->{$state->{destdir}.$self->fullname} = 1;
 }
