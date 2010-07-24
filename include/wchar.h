@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.10 2009/01/13 18:18:31 kettenis Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.11 2010/07/24 09:58:39 guenther Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -138,7 +138,6 @@ size_t	wcslcat(wchar_t *, const wchar_t *, size_t);
 size_t	wcslcpy(wchar_t *, const wchar_t *, size_t);
 int	wcswidth(const wchar_t *, size_t);
 int	wctob(wint_t);
-int	wcscoll(const wchar_t *, const wchar_t *);
 int	wcwidth(wchar_t);
 
 double wcstod(const wchar_t * __restrict, wchar_t ** __restrict);
