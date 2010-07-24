@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.39 2009/11/07 23:01:38 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.40 2010/07/24 12:18:55 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -254,7 +254,7 @@ extern	struct cpu_info cpu_info_store;
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the Alpha, we use
+ * machine state in an opaque clockframe.  On the Alpha, we use
  * what we push on an interrupt (a trapframe).
  */
 struct clockframe {
