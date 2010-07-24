@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.15 2010/07/23 09:41:16 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.16 2010/07/24 11:53:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -70,7 +70,6 @@ struct vscsi_softc {
 	struct vscsi_ccb_list	sc_ccb_i2t;
 	struct vscsi_ccb_list	sc_ccb_t2i;
 	int			sc_ccb_tag;
-	struct mutex		sc_ccb_mtx;
 	struct mutex		sc_poll_mtx;
 	struct rwlock		sc_ioc_lock;
 
@@ -102,8 +101,6 @@ struct scsi_adapter vscsi_switch = {
 	vscsi_probe,
 	NULL
 };
-
-int		vscsi_running(struct vscsi_softc *);
 
 int		vscsi_i2t(struct vscsi_softc *, struct vscsi_ioc_i2t *);
 int		vscsi_data(struct vscsi_softc *, struct vscsi_ioc_data *, int);
@@ -144,7 +141,6 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->sc_ccb_i2t);
 	TAILQ_INIT(&sc->sc_ccb_t2i);
-	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	mtx_init(&sc->sc_poll_mtx, IPL_BIO);
 	mtx_init(&sc->sc_sel_mtx, IPL_BIO);
 	rw_init(&sc->sc_ioc_lock, "vscsiioc");
@@ -164,18 +160,6 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 	    &saa, scsiprint);
 }
 
-int
-vscsi_running(struct vscsi_softc *sc)
-{
-	int				running;
-
-	mtx_enter(&sc->sc_state_mtx);
-	running = (sc->sc_state == VSCSI_S_RUNNING);
-	mtx_leave(&sc->sc_state_mtx);
-
-	return (running);
-}
-
 void
 vscsi_cmd(struct scsi_xfer *xs)
 {
@@ -183,25 +167,29 @@ vscsi_cmd(struct scsi_xfer *xs)
 	struct vscsi_softc		*sc = link->adapter_softc;
 	struct vscsi_ccb		*ccb = xs->io;
 	int				polled = ISSET(xs->flags, SCSI_POLL);
-
-	if (!vscsi_running(sc)) {
-		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
-		return;
-	}
+	int				running = 1;
 
 	if (ISSET(xs->flags, SCSI_POLL) && ISSET(xs->flags, SCSI_NOSLEEP)) {
 		printf("%s: POLL && NOSLEEP for 0x%02x\n", DEVNAME(sc),
 		    xs->cmd->opcode);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		return;
 	}
 
 	ccb->ccb_xs = xs;
-	mtx_enter(&sc->sc_ccb_mtx);
-	TAILQ_INSERT_TAIL(&sc->sc_ccb_i2t, ccb, ccb_entry);
-	mtx_leave(&sc->sc_ccb_mtx);
+
+	mtx_enter(&sc->sc_state_mtx);
+	if (sc->sc_state == VSCSI_S_RUNNING)
+		TAILQ_INSERT_TAIL(&sc->sc_ccb_i2t, ccb, ccb_entry);
+	else
+		running = 0;
+	mtx_leave(&sc->sc_state_mtx);
+
+	if (!running) {
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return;
+	}
 
 	selwakeup(&sc->sc_sel);
 
@@ -232,11 +220,13 @@ int
 vscsi_probe(struct scsi_link *link)
 {
 	struct vscsi_softc		*sc = link->adapter_softc;
+	int				rv;
 
-	if (!vscsi_running(sc))
-		return (ENXIO);
+	mtx_enter(&sc->sc_state_mtx);
+	rv = (sc->sc_state == VSCSI_S_RUNNING) ? 0 : ENXIO;
+	mtx_leave(&sc->sc_state_mtx);
 
-	return (0);
+	return (rv);
 }
 
 int
@@ -328,11 +318,11 @@ vscsi_i2t(struct vscsi_softc *sc, struct vscsi_ioc_i2t *i2t)
 	struct scsi_xfer		*xs;
 	struct scsi_link		*link;
 
-	mtx_enter(&sc->sc_ccb_mtx);
+	mtx_enter(&sc->sc_state_mtx);
 	ccb = TAILQ_FIRST(&sc->sc_ccb_i2t);
 	if (ccb != NULL)
 		TAILQ_REMOVE(&sc->sc_ccb_i2t, ccb, ccb_entry);
-	mtx_leave(&sc->sc_ccb_mtx);
+	mtx_leave(&sc->sc_state_mtx);
 
 	if (ccb == NULL)
 		return (EAGAIN);
@@ -462,10 +452,10 @@ vscsipoll(dev_t dev, int events, struct proc *p)
 	int				revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {
-		mtx_enter(&sc->sc_ccb_mtx);
+		mtx_enter(&sc->sc_state_mtx);
 		if (!TAILQ_EMPTY(&sc->sc_ccb_i2t))
 			revents |= events & (POLLIN | POLLRDNORM);
-		mtx_leave(&sc->sc_ccb_mtx);
+		mtx_leave(&sc->sc_state_mtx);
 	}
 
 	if (revents == 0) {
@@ -516,10 +506,10 @@ filt_vscsiread(struct knote *kn, long hint)
 	struct vscsi_softc *sc = (struct vscsi_softc *)kn->kn_hook;
 	int event = 0;
 
-	mtx_enter(&sc->sc_ccb_mtx);
+	mtx_enter(&sc->sc_state_mtx);
 	if (!TAILQ_EMPTY(&sc->sc_ccb_i2t))
 		event = 1;
-	mtx_leave(&sc->sc_ccb_mtx);
+	mtx_leave(&sc->sc_state_mtx);
 
 	return (event);
 }
