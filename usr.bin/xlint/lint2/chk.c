@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.16 2007/05/26 00:36:04 krw Exp $	*/
+/*	$OpenBSD: chk.c,v 1.17 2010/07/24 22:17:03 guenther Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.16 2007/05/26 00:36:04 krw Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.17 2010/07/24 22:17:03 guenther Exp $";
 #endif
 
 #include <stdlib.h>
@@ -83,6 +83,9 @@ inittyp(void)
 		{ UNSIGN,   { 0, 0, 0,
 				      SIGNED, UNSIGN,
 				      0, 0, 0, 0, 0, "unsigned" } },
+		{ BOOL,     { sizeof (_Bool) * CHAR_BIT, CHAR_BIT, 1,
+				      BOOL, BOOL,
+				      1, 1, 0, 1, 1, "_Bool" } },
 		{ CHAR,	    { CHAR_BIT, CHAR_BIT, 20,
 				      SCHAR, UCHAR,
 				      1, 0, 0, 1, 1, "char" } },
@@ -125,6 +128,18 @@ inittyp(void)
 		{ LDOUBLE,  { sizeof (ldbl_t) * CHAR_BIT, 10 * CHAR_BIT, -1,
 				      LDOUBLE, LDOUBLE,
 				      0, 0, 1, 1, 1, "long double" } },
+		{ COMPLEX,  { sizeof (_Complex float) * CHAR_BIT,
+				      8 * CHAR_BIT, -1,
+				      COMPLEX, COMPLEX,
+				      0, 0, 1, 1, 1, "float _Complex" } },
+		{ DCOMPLEX, { sizeof (double _Complex) * CHAR_BIT,
+				      16 * CHAR_BIT, -1,
+				      DCOMPLEX, DCOMPLEX,
+				      0, 0, 1, 1, 1, "double _Complex" } },
+		{ LDCOMPLEX,{ sizeof (long double _Complex) * CHAR_BIT,
+				      20 * CHAR_BIT, -1,
+				      LDCOMPLEX, LDCOMPLEX,
+				      0, 0, 1, 1, 1, "long double _Complex" } },
 		{ VOID,     { -1, -1, -1,
 				      VOID, VOID,
 				      0, 0, 0, 0, 0, "void" } },

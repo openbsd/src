@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.13 2006/04/18 02:59:40 cloder Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.14 2010/07/24 22:17:03 guenther Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -224,6 +224,7 @@ typedef	struct sym {
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function
 					 definitions */
+		op_t	_s_op;	/* op type (only for operators) */
 	} u;
 	struct	sym *s_link;	/* next symbol with same hash value */
 	struct	sym **s_rlink;	/* pointer to s_link of prev. symbol */
@@ -236,6 +237,7 @@ typedef	struct sym {
 #define	s_etyp	u._s_et
 #define	s_tspec	u._s_tsp
 #define	s_tqual	u._s_tqu
+#define	s_op	u._s_op
 #define	s_args	u._s_args
 
 /*
@@ -294,9 +296,10 @@ typedef	struct tnode {
  *
  */
 typedef	struct dinfo {
-	tspec_t	d_atyp;		/* VOID, CHAR, INT, FLOAT or DOUBLE */
-	tspec_t	d_smod;		/* SIGNED or UNSIGN */
-	tspec_t	d_lmod;		/* SHORT, LONG or QUAD */
+	tspec_t	d_atyp;		/* NOTSPEC, VOID, CHAR, INT, FLOAT or DOUBLE */
+	tspec_t	d_smod;		/* sign: NOTSPEC, SIGNED or UNSIGN */
+	tspec_t	d_lmod;		/* length: NOTSPEC, SHORT, LONG or QUAD */
+	tspec_t	d_dmod;		/* domain: NOTSPEC, COMPLEX or IMAGINARY */
 	scl_t	d_scl;		/* storage class */
 	type_t	*d_type;	/* after deftyp() pointer to the type used
 				   for all declarators */

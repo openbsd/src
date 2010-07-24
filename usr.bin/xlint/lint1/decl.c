@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.24 2007/11/27 16:22:14 martynas Exp $	*/
+/*	$OpenBSD: decl.c,v 1.25 2010/07/24 22:17:03 guenther Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.24 2007/11/27 16:22:14 martynas Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.25 2010/07/24 22:17:03 guenther Exp $";
 #endif
 
 #include <sys/param.h>
@@ -97,6 +97,9 @@ initdecl(void)
 		{ UNSIGN,   { 0, 0, 0,
 			      SIGNED, UNSIGN,
 			      0, 0, 0, 0, 0, "unsigned" } },
+		{ BOOL,	    { sizeof (_Bool) * CHAR_BIT, CHAR_BIT, 1,
+			      BOOL, BOOL,
+			      1, 1, 0, 1, 1, "_Bool" } },
 		{ CHAR,	    { CHAR_BIT, CHAR_BIT, 20,
 			      SCHAR, UCHAR,
 			      1, 0, 0, 1, 1, "char" } },
@@ -139,6 +142,32 @@ initdecl(void)
 		{ LDOUBLE,  { sizeof (ldbl_t) * CHAR_BIT, 10 * CHAR_BIT, -1,
 			      LDOUBLE, LDOUBLE,
 			      0, 0, 1, 1, 1, "long double" } },
+		{ COMPLEX,  { sizeof (float _Complex) * CHAR_BIT,
+			      8 * CHAR_BIT, -1,
+			      COMPLEX, COMPLEX,
+			      0, 0, 1, 1, 3, "float _Complex" } },
+		{ DCOMPLEX, { sizeof (double _Complex) * CHAR_BIT,
+			      16 * CHAR_BIT, -1,
+			      DCOMPLEX, DCOMPLEX,
+			      0, 0, 1, 1, 3, "double _Complex" } },
+		{ LDCOMPLEX,{ sizeof (long double _Complex) * CHAR_BIT,
+			      20 * CHAR_BIT, -1,
+			      LDCOMPLEX, LDCOMPLEX,
+			      0, 0, 1, 1, 3, "long double _Complex" } },
+#if 0
+		{ IMAGINARY,{ sizeof (float _Imaginary) * CHAR_BIT,
+			      4 * CHAR_BIT, -1,
+			      IMAGINARY, IMAGINARY,
+			      0, 0, 1, 1, 2, "float _Imaginary" } },
+		{ DIMAGINARY,{ sizeof (double _Imaginary) * CHAR_BIT,
+			      8 * CHAR_BIT, -1,
+			      DIMAGINARY, DIMAGINARY,
+			      0, 0, 1, 1, 2, "double _Imaginary" } },
+		{ LDIMAGINARY,{ sizeof (long double _Imaginary) * CHAR_BIT,
+			      10 * CHAR_BIT, -1,
+			      LDIMAGINARY, LDIMAGINARY,
+			      0, 0, 1, 1, 2, "long double _Imaginary" } },
+#endif
 		{ VOID,     { -1, -1, -1,
 			      VOID, VOID,
 			      0, 0, 0, 0, 0, "void" } },
@@ -179,6 +208,7 @@ initdecl(void)
 	typetab = xcalloc(NTSPEC, sizeof (type_t));
 	for (i = 0; i < NTSPEC; i++)
 		typetab[i].t_tspec = NOTSPEC;
+	typetab[BOOL].t_tspec = BOOL;
 	typetab[CHAR].t_tspec = CHAR;
 	typetab[SCHAR].t_tspec = SCHAR;
 	typetab[UCHAR].t_tspec = UCHAR;
@@ -193,6 +223,12 @@ initdecl(void)
 	typetab[FLOAT].t_tspec = FLOAT;
 	typetab[DOUBLE].t_tspec = DOUBLE;
 	typetab[LDOUBLE].t_tspec = LDOUBLE;
+	typetab[COMPLEX].t_tspec = COMPLEX;
+	typetab[DCOMPLEX].t_tspec = DCOMPLEX;
+	typetab[LDCOMPLEX].t_tspec = LDCOMPLEX;
+	typetab[IMAGINARY].t_tspec = IMAGINARY;
+	typetab[DIMAGINARY].t_tspec = DIMAGINARY;
+	typetab[LDIMAGINARY].t_tspec = LDIMAGINARY;
 	typetab[VOID].t_tspec = VOID;
 	/*
 	 * Next two are not real types. They are only used by the parser
@@ -203,7 +239,7 @@ initdecl(void)
 }
 
 /*
- * Returns a shared type structure vor arithmetic types and void.
+ * Returns a shared type structure for arithmetic types and void.
  *
  * It's important to duplicate this structure (using duptyp() or tduptyp())
  * if it is to be modified (adding qualifiers or anything else).
@@ -327,7 +363,8 @@ addtype(type_t *tp)
 
 	if (tp->t_typedef) {
 		if (dcs->d_type != NULL || dcs->d_atyp != NOTSPEC ||
-		    dcs->d_lmod != NOTSPEC || dcs->d_smod != NOTSPEC) {
+		    dcs->d_lmod != NOTSPEC || dcs->d_smod != NOTSPEC ||
+		    dcs->d_dmod != NOTSPEC) {
 			/*
 			 * something like "typedef int a; int a b;"
 			 * This should not happen with current grammar.
@@ -346,13 +383,15 @@ addtype(type_t *tp)
 		 * struct/union/enum with anything else is not allowed
 		 */
 		if (dcs->d_type != NULL || dcs->d_atyp != NOTSPEC ||
-		    dcs->d_lmod != NOTSPEC || dcs->d_smod != NOTSPEC) {
+		    dcs->d_lmod != NOTSPEC || dcs->d_smod != NOTSPEC ||
+		    dcs->d_dmod != NOTSPEC) {
 			/*
 			 * remember that an error must be reported in
 			 * deftyp().
 			 */
 			dcs->d_terr = 1;
-			dcs->d_atyp = dcs->d_lmod = dcs->d_smod = NOTSPEC;
+			dcs->d_atyp = dcs->d_smod = dcs->d_lmod =
+			    dcs->d_dmod = NOTSPEC;
 		}
 		dcs->d_type = tp;
 		return;
@@ -401,6 +440,15 @@ addtype(type_t *tp)
 			/* more than one, print error in deftyp() */
 			dcs->d_terr = 1;
 		dcs->d_lmod = t;
+	} else if (t == COMPLEX || t == IMAGINARY) {
+		/*
+		 * remember specifiers "_Complex" and "_Imaginary" in
+		 * dcs->d_dmod
+		 */
+		if (dcs->d_dmod != NOTSPEC)
+			/* more than one, print error in deftyp() */
+			dcs->d_terr = 1;
+		dcs->d_dmod = t;
 	} else {
 		/*
 		 * remember specifiers "void", "char", "int", "float" or
@@ -447,7 +495,8 @@ tdeferr(type_t *td, tspec_t t)
 		break;
 	case LONG:
 		if (t2 == INT || t2 == UINT || t2 == LONG || t2 == ULONG ||
-		    t2 == FLOAT || t2 == DOUBLE) {
+		    t2 == FLOAT || t2 == DOUBLE || t2 == COMPLEX ||
+		    t2 == IMAGINARY) {
 			/* modifying typedef with ... */
 			warning(5, "long");
 			if (t2 == INT) {
@@ -462,6 +511,14 @@ tdeferr(type_t *td, tspec_t t)
 				td = gettyp(DOUBLE);
 			} else if (t2 == DOUBLE) {
 				td = gettyp(LDOUBLE);
+			} else if (t2 == COMPLEX) {
+				td = gettyp(DCOMPLEX);
+			} else if (t2 == DCOMPLEX) {
+				td = gettyp(LDCOMPLEX);
+			} else if (t2 == IMAGINARY) {
+				td = gettyp(DIMAGINARY);
+			} else if (t2 == DIMAGINARY) {
+				td = gettyp(LDIMAGINARY);
 			}
 			td = duptyp(td);
 			td->t_typedef = 1;
@@ -657,7 +714,7 @@ setasm(void)
 void
 clrtyp(void)
 {
-	dcs->d_atyp = dcs->d_smod = dcs->d_lmod = NOTSPEC;
+	dcs->d_atyp = dcs->d_smod = dcs->d_lmod = dcs->d_dmod = NOTSPEC;
 	dcs->d_scl = NOSCL;
 	dcs->d_type = NULL;
 	dcs->d_const = dcs->d_volatile = 0;
@@ -665,6 +722,33 @@ clrtyp(void)
 	dcs->d_mscl = dcs->d_terr = 0;
 	dcs->d_nedecl = 0;
 	dcs->d_notyp = 0;
+}
+
+/*
+ * Merge the domain (_Complex or _Imaginary) into a type.  Returns non-zero
+ * if the merge doesn't make sense.  e.g., no "int _Complex".
+ */
+int
+mergedomain(tspec_t *tp, tspec_t domain)
+{
+	if (domain == NOTSPEC)
+		return (0);
+	if (domain != COMPLEX && domain != IMAGINARY)
+		lerror("mergedomain()");
+	switch (*tp) {
+	case FLOAT:
+		*tp = domain;
+		break;
+	case DOUBLE:
+		*tp = domain == COMPLEX ? DCOMPLEX : DIMAGINARY;
+		break;
+	case LDOUBLE:
+		*tp = domain == COMPLEX ? LDCOMPLEX : LDIMAGINARY;
+		break;
+	default:
+		return (1);
+	}
+	return (0);
 }
 
 /*
@@ -676,13 +760,15 @@ clrtyp(void)
 void
 deftyp(void)
 {
-	tspec_t	t, s, l;
+	tspec_t	t, s, l, d;
 	type_t	*tp;
 	scl_t	scl;
 
-	t = dcs->d_atyp;		/* CHAR, INT, FLOAT, DOUBLE, VOID */
+	t = dcs->d_atyp;		/* BOOL, CHAR, INT, FLOAT,
+					   DOUBLE, VOID */
 	s = dcs->d_smod;		/* SIGNED, UNSIGNED */
 	l = dcs->d_lmod;		/* SHORT, LONG, QUAD */
+	d = dcs->d_dmod;		/* COMPLEX, IMAGINARY */
 	tp = dcs->d_type;
 	scl = dcs->d_scl;
 
@@ -699,6 +785,8 @@ deftyp(void)
 		case NOTSPEC:
 			t = INT;
 			/* FALLTHROUGH */
+		case BOOL:
+			break;
 		case INT:
 			if (s == NOTSPEC)
 				s = SIGNED;
@@ -728,6 +816,8 @@ deftyp(void)
 		default:
 			lerror("deftyp() 2");
 		}
+		if (mergedomain(&t, d))
+			dcs->d_terr = 1;
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 			dcs->d_terr = 1;
 			l = s = NOTSPEC;
@@ -1059,7 +1149,7 @@ decl1str(sym_t *dsym)
 				warning(34);
 			}
 		} else if (t != INT && t != UINT && t != LONG &&
-		    t != ULONG && t != QUAD && t != UQUAD) {
+		    t != ULONG && t != QUAD && t != UQUAD && t != BOOL) {
 			/* illegal bit-field type */
 			error(35);
 			sz = tp->t_flen;
@@ -1985,6 +2075,8 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
 		if (promot) {
 			if (t == FLOAT) {
 				t = DOUBLE;
+			} else if (t == BOOL) {
+				t = INT;
 			} else if (t == CHAR || t == SCHAR) {
 				t = INT;
 			} else if (t == UCHAR) {
@@ -1994,6 +2086,10 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
 			} else if (t == USHORT) {
 				/* CONSTCOND */
 				t = INT_MAX < USHRT_MAX ? UINT : INT;
+			} else if (t == COMPLEX) {
+				t = DCOMPLEX;
+			} else if (t == IMAGINARY) {
+				t = DIMAGINARY;
 			}
 		}
 
@@ -2087,9 +2183,11 @@ mnoarg(type_t *tp, int *warn)
 			*warn = 1;
 	}
 	for (arg = tp->t_args; arg != NULL; arg = arg->s_nxt) {
-		if ((t = arg->s_type->t_tspec) == FLOAT ||
+		if ((t = arg->s_type->t_tspec) == FLOAT || t == BOOL ||
 		    t == CHAR || t == SCHAR || t == UCHAR ||
-		    t == SHORT || t == USHORT) {
+		    t == SHORT || t == USHORT || t == COMPLEX ||
+		    t == DCOMPLEX || t == LDCOMPLEX || t == IMAGINARY ||
+		    t == DIMAGINARY || t == LDIMAGINARY) {
 			if (warn != NULL)
 				*warn = 1;
 		}

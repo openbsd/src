@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.46 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: tree.c,v 1.47 2010/07/24 22:17:03 guenther Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.46 2007/10/17 20:10:44 chl Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.47 2010/07/24 22:17:03 guenther Exp $";
 #endif
 
 #include <stdlib.h>
@@ -203,6 +203,10 @@ initmtab(void)
 		    "PUSH" } },
 		{ RETURN, { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,
 		    "RETURN" } },
+		{ REAL, { 0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,
+		    "__real__" } },
+		{ IMAG, { 0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,
+		    "__imag__" } },
 		{ INIT,   { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,
 		    "INIT" } },
 		{ FARG,   { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,
@@ -629,6 +633,17 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	case QUEST:
 		ntn = mktnode(op, rn->tn_type, ln, rn);
 		break;
+	case REAL:
+	case IMAG:
+		rtp = ln->tn_type;
+		if (rtp->t_tspec == COMPLEX)
+			rtp = gettyp(FLOAT);
+		else if (rtp->t_tspec == DCOMPLEX)
+			rtp = gettyp(DOUBLE);
+		else if (rtp->t_tspec == LDCOMPLEX)
+			rtp = gettyp(LDOUBLE);
+		ntn = mktnode(op, rtp, ln, rn);
+		break;
 	default:
 		rtp = mp->m_logop ? gettyp(INT) : ln->tn_type;
 		if (!mp->m_binary && rn != NULL)
@@ -747,6 +762,9 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (mp->m_rqint) {
+		if (op == COMPL && iscomplex(lt)) {
+			/* use of '~' for complex conjugation is a GNUism */
+		} else
 		/* integer types required */
 		if (!isityp(lt) || (mp->m_binary && !isityp(rt))) {
 			incompat(op, lt, rt);
@@ -1434,6 +1452,8 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 		} else {
 			lerror("mktnode() 2");
 		}
+	} else if (op == REAL || op == IMAG) {
+		ntn->tn_lvalue = ln->tn_lvalue;
 	}
 
 	return (ntn);
@@ -1715,6 +1735,10 @@ iiconv(op_t op, farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 	if (op == CVT)
 		return;
 
+	/* logical ops return int, so silently convert int to _Bool */
+	if (ot == INT && nt == BOOL)
+		return;
+
 	if (rank(nt) < rank(ot)) {
 		/* coercion from greater to lesser width */
 		if (op == FARG) {
@@ -1842,6 +1866,8 @@ cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 
 	if (ot == FLOAT || ot == DOUBLE || ot == LDOUBLE) {
 		switch (nt) {
+		case BOOL:
+			max = 1;		min = 0;		break;
 		case CHAR:
 			max = CHAR_MAX;		min = CHAR_MIN;		break;
 		case UCHAR:
@@ -1873,11 +1899,21 @@ cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 			/* Already an error because of float --> ptr */
 		case LDOUBLE:
 			max = LDBL_MAX;		min = -LDBL_MAX;	break;
+		case COMPLEX:
+			max = FLT_MAX;		min = -FLT_MAX;		break;
+		case DCOMPLEX:
+			max = DBL_MAX;		min = -DBL_MAX;		break;
+		case LDCOMPLEX:
+			max = LDBL_MAX;		min = -LDBL_MAX;	break;
+		case IMAGINARY:
+		case DIMAGINARY:
+		case LDIMAGINARY:
+			max = 0;		min = 0;		break;
 		default:
 			lerror("cvtcon() 1");
 		}
 		if (v->v_ldbl > max || v->v_ldbl < min) {
-			if (nt == LDOUBLE)
+			if (nt == LDOUBLE || nt == LDCOMPLEX)
 				lerror("cvtcon() 2");
 			if (op == FARG) {
 				/* %s arg #%d: conv. of %s to %s is out of range */
@@ -1900,15 +1936,18 @@ cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 				(u_quad_t)v->v_ldbl : (quad_t)v->v_ldbl;
 		}
 	} else {
-		if (nt == FLOAT) {
+		if (nt == FLOAT || nt == COMPLEX) {
 			nv->v_ldbl = (ot == PTR || isutyp(ot)) ?
 			       (float)(u_quad_t)v->v_quad : (float)v->v_quad;
-		} else if (nt == DOUBLE) {
+		} else if (nt == DOUBLE || nt == DCOMPLEX) {
 			nv->v_ldbl = (ot == PTR || isutyp(ot)) ?
 			       (double)(u_quad_t)v->v_quad : (double)v->v_quad;
-		} else if (nt == LDOUBLE) {
+		} else if (nt == LDOUBLE || nt == LDCOMPLEX) {
 			nv->v_ldbl = (ot == PTR || isutyp(ot)) ?
 			       (ldbl_t)(u_quad_t)v->v_quad : (ldbl_t)v->v_quad;
+		} else if (nt == IMAGINARY || nt == DIMAGINARY ||
+		    nt == LDIMAGINARY) {
+			nv->v_ldbl = 0;
 		} else {
 			rchk = 1;		/* Check for lost precision. */
 			nv->v_quad = v->v_quad;
@@ -2200,6 +2239,7 @@ tyname(type_t *tp)
 		t = ENUM;
 
 	switch (t) {
+	case BOOL:	s = "_Bool";			break;
 	case CHAR:	s = "char";			break;
 	case UCHAR:	s = "unsigned char";		break;
 	case SCHAR:	s = "signed char";		break;
@@ -2214,6 +2254,12 @@ tyname(type_t *tp)
 	case FLOAT:	s = "float";			break;
 	case DOUBLE:	s = "double";			break;
 	case LDOUBLE:	s = "long double";		break;
+	case COMPLEX:	s = "float _Complex";		break;
+	case DCOMPLEX:	s = "double _Complex";		break;
+	case LDCOMPLEX:	s = "long double _Complex";	break;
+	case IMAGINARY:	 s = "float _Imaginary";	break;
+	case DIMAGINARY: s = "double _Imaginary";	break;
+	case LDIMAGINARY:s = "long double _Imaginary";	break;
 	case PTR:	s = "pointer";			break;
 	case ENUM:	s = "enum";			break;
 	case STRUCT:	s = "struct";			break;
@@ -2757,6 +2803,9 @@ fold(tnode_t *tn)
 	case OR:
 		q = utyp ? ul | ur : sl | sr;
 		break;
+	case REAL:
+	case IMAG:
+		q = sl;
 	default:
 		lerror("fold() 5");
 	}
@@ -2897,6 +2946,10 @@ foldflt(tnode_t *tn)
 	case NE:
 		v->v_quad = l != r;
 		break;
+	case REAL:
+	case IMAG:
+		v->v_ldbl = l;
+		break;
 	default:
 		lerror("foldflt() 4");
 	}
@@ -2933,6 +2986,8 @@ bldszoftrm(tnode_t *tn)
 	case STAR:
 	case NAME:
 	case STRING:
+	case REAL:
+	case IMAG:
 		break;
 	default:
 		warning(312, modtab[tn->tn_op].m_name);
@@ -3504,6 +3559,8 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 	case XORASS:
 	case SHLASS:
 	case SHRASS:
+	case REAL:
+	case IMAG:
 		if (ln->tn_op == NAME && (reached || rchflg)) {
 			sc = ln->tn_sym->s_scl;
 			/*

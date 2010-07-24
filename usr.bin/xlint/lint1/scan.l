@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.31 2007/09/05 16:32:17 fgsch Exp $	*/
+/*	$OpenBSD: scan.l,v 1.32 2010/07/24 22:17:03 guenther Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.31 2007/09/05 16:32:17 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.32 2010/07/24 22:17:03 guenther Exp $";
 #endif
 
 #include <stdlib.h>
@@ -91,6 +91,7 @@ OD	[0-7]
 HD	[0-9A-Fa-f]
 EX	([eE][+-]?[0-9]+)
 HEX	([pP][+-]?[0-9]+)
+FSUFF	([fFlL][iIjJ]?|[iIjJ][fFlL]?)?
 
 %%
 
@@ -98,12 +99,12 @@ HEX	([pP][+-]?[0-9]+)
 0{OD}*[lLuU]*			return (icon(8));
 {NZD}{D}*[lLuU]*		return (icon(10));
 0[xX]{HD}+[lLuU]*		return (icon(16));
-{D}+\.{D}*{EX}?[fFlL]?		|
-{D}+{EX}[fFlL]?			|
-\.{D}+{EX}?[fFlL]?		return (fcon());
-0[xX]{HD}+\.{HD}*{HEX}[fFlL]?	|
-0[xX]{HD}+{HEX}[fFlL]?		|
-0[xX]\.{HD}+{HEX}[fFlL]?	return (fhexcon());
+{D}+\.{D}*{EX}?{FSUFF}		|
+{D}+{EX}{FSUFF}			|
+\.{D}+{EX}?{FSUFF}		return (fcon());
+0[xX]{HD}+\.{HD}*{HEX}{FSUFF}	|
+0[xX]{HD}+{HEX}{FSUFF}		|
+0[xX]\.{HD}+{HEX}{FSUFF}	return (fhexcon());
 "="				return (operator(T_ASSIGN, ASSIGN));
 "*="				return (operator(T_OPASS, MULASS));
 "/="				return (operator(T_OPASS, DIVASS));
@@ -189,6 +190,7 @@ static	struct	kwtab {
 		scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 		tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
 		tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
+		op_t	kw_op;		/* operator if kw_token T_UNOP */
 	} kw_u;
 	u_int	kw_stdc : 1;	/* STDC keyword */
 	u_int	kw_gcc : 1;	/* GCC keyword */
@@ -198,9 +200,12 @@ static	struct	kwtab {
 	{ "__asm__",		T_ASM,		{ 0 },		0, 0 },
 	{ "__attribute__",	T_ATTRIBUTE,	{ 0 },		0, 0 },
 	{ "auto",		T_SCLASS,	{ AUTO },	0, 0 },
+	{ "_Bool",		T_TYPE,		{ BOOL },	1, 0 },
 	{ "break",		T_BREAK,	{ 0 },		0, 0 },
 	{ "case",		T_CASE,		{ 0 },		0, 0 },
 	{ "char",		T_TYPE,		{ CHAR },	0, 0 },
+	{ "_Complex",		T_TYPE,		{ COMPLEX },	1, 0 },
+	{ "__complex__",	T_TYPE,		{ COMPLEX },	0, 1 },
 	{ "const",		T_QUAL,		{ CONST },	1, 0 },
 	{ "__const__",		T_QUAL,		{ CONST },	0, 0 },
 	{ "__const",		T_QUAL,		{ CONST },	0, 0 },
@@ -215,12 +220,15 @@ static	struct	kwtab {
 	{ "for",		T_FOR,		{ 0 },		0, 0 },
 	{ "goto",		T_GOTO,		{ 0 },		0, 0 },
 	{ "if",			T_IF,		{ 0 },		0, 0 },
+	{ "__imag__",		T_UNOP,		{ IMAG },	0, 0 /*1*/ },
+/*	{ "_Imaginary",		T_TYPE,		{ IMAGINARY },	1, 0 }, */
 	{ "inline",		T_SCLASS,	{ INLINE },	1, 0 },
 	{ "__inline__",		T_SCLASS,	{ INLINE },	0, 0 },
 	{ "__inline",		T_SCLASS,	{ INLINE },	0, 0 },
 	{ "int",		T_TYPE,		{ INT },	0, 0 },
 	{ "__lint_equal__",	T_LEQUAL,	{ 0 },		0, 0 },
 	{ "long",		T_TYPE,		{ LONG },	0, 0 },
+	{ "__real__",		T_UNOP,		{ REAL },	0, 0 /*1*/ },
 	{ "register",		T_SCLASS,	{ REG },	0, 0 },
 	{ "__restrict",		T_QUAL,		{ RESTRICT },	0, 0 },
 	{ "__restrict__",	T_QUAL,		{ RESTRICT },	0, 0 },
@@ -247,6 +255,7 @@ static	struct	kwtab {
 #define kw_scl		kw_u.kw_scl
 #define kw_tspec	kw_u.kw_tspec
 #define kw_tqual	kw_u.kw_tqual
+#define kw_op		kw_u.kw_op
 
 /* Symbol table */
 static	sym_t	*symtab[HSHSIZ1];
@@ -292,6 +301,8 @@ initscan(void)
 			sym->s_scl = kw->kw_scl;
 		} else if (kw->kw_token == T_QUAL) {
 			sym->s_tqual = kw->kw_tqual;
+		} else if (kw->kw_token == T_UNOP) {
+			sym->s_op = kw->kw_op;
 		}
 		h = hash(sym->s_name);
 		if ((sym->s_link = symtab[h]) != NULL)
@@ -444,6 +455,8 @@ keyw(sym_t *sym)
 		yylval.y_tspec = sym->s_tspec;
 	} else if (t == T_QUAL) {
 		yylval.y_tqual = sym->s_tqual;
+	} else if (t == T_UNOP) {
+		yylval.y_op = sym->s_op;
 	}
 	return (t);
 }
@@ -627,6 +640,7 @@ fcon(void)
 	const	char *cp;
 	int	len;
 	tspec_t typ;
+	tspec_t	domain = NOTSPEC;
 	char	c, *eptr;
 	double	d;
 	float	f;
@@ -634,14 +648,28 @@ fcon(void)
 	cp = yytext;
 	len = yyleng;
 
-	if ((c = cp[len - 1]) == 'f' || c == 'F') {
+	c = cp[len - 1];
+	if (c == 'i' || c == 'I' || c == 'j' || c == 'J') {
+		domain = COMPLEX;		/* XXX should be IMAGINARY */
+		len--;
+		c = cp[len - 1];
+	}
+	if (c == 'f' || c == 'F') {
 		typ = FLOAT;
 		len--;
+		c = cp[len - 1];
 	} else if (c == 'l' || c == 'L') {
 		typ = LDOUBLE;
 		len--;
+		c = cp[len - 1];
 	} else {
 		typ = DOUBLE;
+	}
+	if (c == 'i' || c == 'I' || c == 'j' || c == 'J') {
+		if (domain != NOTSPEC)
+			lerror("fcon() 2");	/* can't happen */
+		domain = COMPLEX;		/* XXX should be IMAGINARY */
+		len--;
 	}
 
 	errno = 0;
@@ -661,12 +689,15 @@ fcon(void)
 		}
 	}
 
-	(yylval.y_val = xcalloc(1, sizeof (val_t)))->v_tspec = typ;
+	yylval.y_val = xcalloc(1, sizeof (val_t));
 	if (typ == FLOAT) {
 		yylval.y_val->v_ldbl = f;
 	} else {
 		yylval.y_val->v_ldbl = d;
 	}
+	if (mergedomain(&typ, domain))
+		lerror("fcon() 3");
+	yylval.y_val->v_tspec = typ;
 
 	return (T_CON);
 }
@@ -684,6 +715,7 @@ fhexcon(void)
 	const	char *cp;
 	int	len;
 	tspec_t typ;
+	tspec_t	domain = NOTSPEC;
 	char	c;
 	double	d;
 	float	f;
@@ -691,14 +723,28 @@ fhexcon(void)
 	cp = yytext;
 	len = yyleng;
 
-	if ((c = cp[len - 1]) == 'f' || c == 'F') {
+	c = cp[len - 1];
+	if (c == 'i' || c == 'I' || c == 'j' || c == 'J') {
+		domain = COMPLEX;		/* XXX should be IMAGINARY */
+		len--;
+		c = cp[len - 1];
+	}
+	if (c == 'f' || c == 'F') {
 		typ = FLOAT;
 		len--;
+		c = cp[len - 1];
 	} else if (c == 'l' || c == 'L') {
 		typ = LDOUBLE;
 		len--;
+		c = cp[len - 1];
 	} else {
 		typ = DOUBLE;
+	}
+	if (c == 'i' || c == 'I' || c == 'j' || c == 'J') {
+		if (domain != NOTSPEC)
+			lerror("fhexcon() 1");	/* can't happen */
+		domain = COMPLEX;		/* XXX should be IMAGINARY */
+		len--;
 	}
 
 	/* arbitrary value, until strtod can cope */
@@ -708,12 +754,15 @@ fhexcon(void)
 		f = (float)d;
 	}
 
-	(yylval.y_val = xcalloc(1, sizeof (val_t)))->v_tspec = typ;
+	yylval.y_val = xcalloc(1, sizeof (val_t));
 	if (typ == FLOAT) {
 		yylval.y_val->v_ldbl = f;
 	} else {
 		yylval.y_val->v_ldbl = d;
 	}
+	if (mergedomain(&typ, domain))
+		lerror("fhexcon() 2");
+	yylval.y_val->v_tspec = typ;
 
 	return (T_CON);
 }

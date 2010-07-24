@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.15 2006/05/29 20:47:22 cloder Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.16 2010/07/24 22:17:03 guenther Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -138,6 +138,7 @@ extern	void	pushdecl(scl_t);
 extern	void	popdecl(void);
 extern	void	setasm(void);
 extern	void	clrtyp(void);
+extern	int	mergedomain(tspec_t *, tspec_t);
 extern	void	deftyp(void);
 extern	int	length(type_t *, const char *);
 extern	int	getbound(type_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.9 2005/12/01 05:06:40 cloder Exp $	*/
+/*	$OpenBSD: read.c,v 1.10 2010/07/24 22:17:03 guenther Exp $	*/
 /*	$NetBSD: read.c,v 1.2 1995/07/03 21:24:59 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.9 2005/12/01 05:06:40 cloder Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.10 2010/07/24 22:17:03 guenther Exp $";
 #endif
 
 #include <stdio.h>
@@ -517,6 +517,9 @@ inptype(const char *cp, const char **epp)
 	}
 
 	switch (c) {
+	case 'B':
+		tp->t_tspec = BOOL;
+		break;
 	case 'C':
 		tp->t_tspec = s == 's' ? SCHAR : (s == 'u' ? UCHAR : CHAR);
 		break;
@@ -534,6 +537,14 @@ inptype(const char *cp, const char **epp)
 		break;
 	case 'D':
 		tp->t_tspec = s == 's' ? FLOAT : (s == 'l' ? LDOUBLE : DOUBLE);
+		break;
+	case 'X':
+		tp->t_tspec = s == 's' ? COMPLEX : (s == 'l' ?
+		    LDCOMPLEX : DCOMPLEX);
+		break;
+	case 'J':
+		tp->t_tspec = s == 's' ? IMAGINARY : (s == 'l' ?
+		    LDIMAGINARY : DIMAGINARY);
 		break;
 	case 'V':
 		tp->t_tspec = VOID;
@@ -649,6 +660,9 @@ gettlen(const char *cp, const char **epp)
 	t = NOTSPEC;
 
 	switch (c) {
+	case 'B':
+		t = BOOL;
+		break;
 	case 'C':
 		if (s == 's') {
 			t = SCHAR;
@@ -693,6 +707,24 @@ gettlen(const char *cp, const char **epp)
 			t = LDOUBLE;
 		} else if (s == '\0') {
 			t = DOUBLE;
+		}
+		break;
+	case 'X':
+		if (s == 's') {
+			t = COMPLEX;
+		} else if (s == 'l') {
+			t = LDCOMPLEX;
+		} else if (s == '\0') {
+			t = DCOMPLEX;
+		}
+		break;
+	case 'J':
+		if (s == 's') {
+			t = IMAGINARY;
+		} else if (s == 'l') {
+			t = LDIMAGINARY;
+		} else if (s == '\0') {
+			t = DIMAGINARY;
 		}
 		break;
 	case 'V':
