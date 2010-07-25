@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.178 2010/07/22 15:59:46 matthew Exp $	*/
+/*	$OpenBSD: cd.c,v 1.179 2010/07/25 05:35:42 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1958,7 +1958,7 @@ dvd_read_copyright(struct cd_softc *sc, union dvd_struct *s)
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	if (error) {
+	if (error == 0) {
 		s->copyright.cpst = buf[4];
 		s->copyright.rmi = buf[5];
 	}
