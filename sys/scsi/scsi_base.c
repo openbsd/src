@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.186 2010/07/24 04:01:52 matthew Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.187 2010/07/25 15:39:32 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -806,6 +806,8 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 	struct scsi_xfer *xs;
 	int error;
 
+	bzero(buf, buflen);
+
 	if (sc_link->flags & SDEV_UMASS)
 		return (EJUSTRETURN);
 
@@ -823,8 +825,6 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 	cmd->flags = SI_EVPD;
 	cmd->pagecode = page;
 	_lto2b(buflen, cmd->length);
-
-	bzero(buf, buflen);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
