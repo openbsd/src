@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.10 2009/06/09 02:56:38 krw Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.11 2010/07/25 21:43:38 deraadt Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -123,6 +123,7 @@ extern void lapic_boot_init(paddr_t);
 extern void lapic_set_lvt(void);
 extern void lapic_enable(void);
 extern void lapic_calibrate_timer(struct cpu_info *ci);
+extern void lapic_startclock(void);
 extern void lapic_initclocks(void);
 
 #endif

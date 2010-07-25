@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2007/08/02 16:40:27 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2010/07/25 21:43:38 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -154,42 +154,16 @@ mc146818_write(void *sc, u_int reg, u_int datum)
 struct mutex timer_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 
 u_long rtclock_tval;
-int rtclock_init;
-
-/* minimal initialization, enough for delay() */
-void
-initrtclock(void)
-{
-	u_long tval;
-
-	/*
-	 * Compute timer_count, the count-down count the timer will be
-	 * set to.  Also, correctly round
-	 * this by carrying an extra bit through the division.
-	 */
-	tval = (TIMER_FREQ * 2) / (u_long) hz;
-	tval = (tval / 2) + (tval & 0x1);
-
-	mtx_enter(&timer_mutex);
-	/* initialize 8253 clock */
-	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-
-	/* Correct rounding will buy us a better precision in timekeeping */
-	outb(IO_TIMER1+TIMER_CNTR0, tval % 256);
-	outb(IO_TIMER1+TIMER_CNTR0, tval / 256);
-
-	rtclock_tval = tval;
-	rtclock_init = 1;
-	mtx_leave(&timer_mutex);
-}
 
 void
-startrtclock(void)
+startclocks(void)
 {
 	int s;
 
-	if (!rtclock_init)
-		initrtclock();
+	mtx_enter(&timer_mutex);
+	rtclock_tval = TIMER_DIV(hz);
+	i8254_startclock();
+	mtx_leave(&timer_mutex);
 
 	/* Check diagnostic status */
 	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0)	/* XXX softc */
@@ -269,10 +243,6 @@ i8254_delay(int n)
 		24, 25, 27, 28, 29, 30,
 	};
 
-	/* allow DELAY() to be used before startrtclock() */
-	if (!rtclock_init)
-		initrtclock();
-
 	/*
 	 * Read the counter first, so that the rest of the setup overhead is
 	 * counted.
@@ -340,14 +310,21 @@ rtcdrain(void *v)
 void
 i8254_initclocks(void)
 {
-	static struct timeout rtcdrain_timeout;
-
 	stathz = 128;
 	profhz = 1024;
 
 	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
 	    0, "clock");
-	isa_intr_establish(NULL, 8, IST_PULSE, IPL_CLOCK, rtcintr, 0, "rtc");
+	isa_intr_establish(NULL, 8, IST_PULSE, IPL_CLOCK, rtcintr,
+	    0, "rtc");
+
+	rtcstart();			/* start the mc146818 clock */
+}
+
+void
+rtcstart(void)
+{
+	static struct timeout rtcdrain_timeout;
 
 	mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);
 	mc146818_write(NULL, MC_REGB, MC_REGB_24HR | MC_REGB_PIE);
@@ -637,23 +614,26 @@ i8254_inittimecounter(void)
 void
 i8254_inittimecounter_simple(void)
 {
-	u_long tval = 0x8000;
-
 	i8254_timecounter.tc_get_timecount = i8254_simple_get_timecount;
 	i8254_timecounter.tc_counter_mask = 0x7fff;
-
         i8254_timecounter.tc_frequency = TIMER_FREQ;
 
 	mtx_enter(&timer_mutex);
-	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
-	outb(IO_TIMER1 + TIMER_CNTR0, tval & 0xff);
-	outb(IO_TIMER1 + TIMER_CNTR0, tval >> 8);
-
-	rtclock_tval = tval;
-	rtclock_init = 1;
+	rtclock_tval = 0x8000;
+	i8254_startclock();
 	mtx_leave(&timer_mutex);
 
 	tc_init(&i8254_timecounter);
+}
+
+void
+i8254_startclock(void)
+{
+	u_long tval = rtclock_tval;
+
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
+	outb(IO_TIMER1 + TIMER_CNTR0, tval & 0xff);
+	outb(IO_TIMER1 + TIMER_CNTR0, tval >> 8);
 }
 
 u_int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.117 2010/07/23 14:56:31 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.118 2010/07/25 21:43:38 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -315,6 +315,7 @@ cpu_startup(void)
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
+	startclocks();
 
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
@@ -1697,11 +1698,6 @@ void
 cpu_initclocks(void)
 {
 	(*initclock_func)();
-
-	if (initclock_func == i8254_initclocks)
-		i8254_inittimecounter();
-	else
-		i8254_inittimecounter_simple();
 }
 
 void

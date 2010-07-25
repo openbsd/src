@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.40 2010/07/06 06:25:56 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.41 2010/07/25 21:43:38 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -255,7 +255,8 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 
 #if NLAPIC > 0
 	lapic_enable();
-	lapic_initclocks();
+	if (initclock_func == lapic_initclocks)
+		lapic_startclock();
 	lapic_set_lvt();
 #endif
 
@@ -268,7 +269,9 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
-	initrtclock();
+	i8254_startclock();
+	if (initclock_func == i8254_initclocks)
+		rtcstart();		/* in i8254 mode, rtc is profclock */
 	inittodr(time_second);
 
 	return (0);

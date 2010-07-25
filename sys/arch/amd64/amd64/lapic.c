@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.25 2010/07/23 07:21:02 matthew Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.26 2010/07/25 21:43:38 deraadt Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -278,7 +278,7 @@ lapic_clockintr(void *arg, struct intrframe frame)
 }
 
 void
-lapic_initclocks(void)
+lapic_startclock(void)
 {
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
@@ -293,9 +293,17 @@ lapic_initclocks(void)
 	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
 }
 
+void
+lapic_initclocks(void)
+{
+	lapic_startclock();
+
+	i8254_inittimecounter_simple();
+}
+
+
 extern int gettick(void);	/* XXX put in header file */
 extern u_long rtclock_tval; /* XXX put in header file */
-extern void (*initclock_func)(void); /* XXX put in header file */
 
 /*
  * Calibrate the local apic count-down timer (which is running at

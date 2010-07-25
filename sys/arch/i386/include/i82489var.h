@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.10 2009/06/03 00:49:12 art Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.11 2010/07/25 21:43:37 deraadt Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -119,6 +119,7 @@ extern void (*apichandler[])(void);
 struct cpu_info;
 
 extern void lapic_boot_init(paddr_t);
+extern void lapic_startclock(void);
 extern void lapic_initclocks(void);
 extern void lapic_set_lvt(void);
 extern void lapic_set_softvectors(void);

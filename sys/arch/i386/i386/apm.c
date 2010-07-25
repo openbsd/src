@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.87 2010/07/20 12:23:00 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.88 2010/07/25 21:43:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -356,8 +356,10 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 
 	apm_resumes = APM_RESUME_HOLDOFF;
 
-	/* they say that some machines may require reinitializing the clock */
-	initrtclock();
+	/* they say that some machines may require reinitializing the clocks */
+	i8254_startclock();
+	if (initclock_func == i8254_initclocks)
+		rtcstart();		/* in i8254 mode, rtc is profclock */
 
 	inittodr(time_second);
 	/* lower bit in cx means pccard was powered down */

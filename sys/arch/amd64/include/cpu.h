@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.52 2010/07/21 14:08:09 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.53 2010/07/25 21:43:38 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -290,10 +290,12 @@ void	proc_trampoline(void);
 void	child_trampoline(void);
 
 /* clock.c */
-void	initrtclock(void);
-void	startrtclock(void);
+extern void (*initclock_func)(void);
+void	startclocks(void);
+void	rtcstart(void);
 void	i8254_delay(int);
 void	i8254_initclocks(void);
+void	i8254_startclock(void);
 void	i8254_inittimecounter(void);
 void	i8254_inittimecounter_simple(void);
 
