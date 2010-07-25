@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.54 2010/07/03 04:44:51 guenther Exp $
+.\"     $OpenBSD: nc.1,v 1.55 2010/07/25 07:51:39 guenther Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: July 25 2010 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -317,7 +317,7 @@ when it might be necessary to verify what data a server is sending
 in response to commands issued by the client.
 For example, to retrieve the home page of a web site:
 .Bd -literal -offset indent
-$ echo -n "GET / HTTP/1.0\er\en\er\en" | nc host.example.com 80
+$ printf "GET / HTTP/1.0\er\en\er\en" | nc host.example.com 80
 .Ed
 .Pp
 Note that this also displays the headers sent by the web server.
