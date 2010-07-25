@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.44 2010/07/13 01:09:13 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.45 2010/07/25 18:05:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -88,10 +88,9 @@ static	int		  pre_RS(DECL_ARGS);
 static	int		  pre_SH(DECL_ARGS);
 static	int		  pre_SS(DECL_ARGS);
 static	int		  pre_TP(DECL_ARGS);
-static	int		  pre_br(DECL_ARGS);
-static	int		  pre_fi(DECL_ARGS);
 static	int		  pre_ign(DECL_ARGS);
-static	int		  pre_nf(DECL_ARGS);
+static	int		  pre_in(DECL_ARGS);
+static	int		  pre_literal(DECL_ARGS);
 static	int		  pre_sp(DECL_ARGS);
 
 static	void		  post_IP(DECL_ARGS);
@@ -102,7 +101,7 @@ static	void		  post_SS(DECL_ARGS);
 static	void		  post_TP(DECL_ARGS);
 
 static	const struct termact termacts[MAN_MAX] = {
-	{ pre_br, NULL, MAN_NOTEXT }, /* br */
+	{ pre_sp, NULL, MAN_NOTEXT }, /* br */
 	{ NULL, NULL, 0 }, /* TH */
 	{ pre_SH, post_SH, 0 }, /* SH */
 	{ pre_SS, post_SS, 0 }, /* SS */
@@ -126,8 +125,8 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ NULL, NULL, MAN_NOTEXT }, /* na */
 	{ pre_I, NULL, 0 }, /* i */
 	{ pre_sp, NULL, MAN_NOTEXT }, /* sp */
-	{ pre_nf, NULL, 0 }, /* nf */
-	{ pre_fi, NULL, 0 }, /* fi */
+	{ pre_literal, NULL, 0 }, /* nf */
+	{ pre_literal, NULL, 0 }, /* fi */
 	{ NULL, NULL, 0 }, /* r */
 	{ NULL, NULL, 0 }, /* RE */
 	{ pre_RS, post_RS, 0 }, /* RS */
@@ -135,9 +134,10 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_ign, NULL, 0 }, /* UC */
 	{ pre_ign, NULL, 0 }, /* PD */
  	{ pre_sp, NULL, MAN_NOTEXT }, /* Sp */
- 	{ pre_nf, NULL, 0 }, /* Vb */
- 	{ pre_fi, NULL, 0 }, /* Ve */
+ 	{ pre_literal, NULL, 0 }, /* Vb */
+ 	{ pre_literal, NULL, 0 }, /* Ve */
 	{ pre_ign, NULL, 0 }, /* AT */
+	{ pre_in, NULL, MAN_NOTEXT }, /* in */
 };
 
 
@@ -245,22 +245,24 @@ pre_I(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-pre_fi(DECL_ARGS)
+pre_literal(DECL_ARGS)
 {
 
-	mt->fl &= ~MANT_LITERAL;
+	term_newln(p);
+	switch (n->tok) {
+	case (MAN_Vb):
+		/* FALLTHROUGH */
+	case (MAN_nf):
+		mt->fl |= MANT_LITERAL;
+		return(MAN_Vb != n->tok);
+	default:
+		mt->fl &= ~MANT_LITERAL;
+		break;
+	}
+
 	return(1);
 }
 
-
-/* ARGSUSED */
-static int
-pre_nf(DECL_ARGS)
-{
-
-	mt->fl |= MANT_LITERAL;
-	return(MAN_Vb != n->tok);
-}
 
 
 /* ARGSUSED */
@@ -349,17 +351,40 @@ pre_B(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-pre_sp(DECL_ARGS)
+pre_in(DECL_ARGS)
 {
-	size_t		 i, len;
+	int		 len, less;
+	size_t		 v;
+	const char	*cp;
 
-	len = n->child ? 
-		a2height(p, n->child->string) : term_len(p, 1);
+	term_newln(p);
 
-	if (0 == len)
-		term_newln(p);
-	for (i = 0; i <= len; i++)
-		term_vspace(p);
+	if (NULL == n->child) {
+		p->offset = mt->offset;
+		return(0);
+	}
+
+	cp = n->child->string;
+	less = 0;
+
+	if ('-' == *cp)
+		less = -1;
+	else if ('+' == *cp)
+		less = 1;
+	else
+		cp--;
+
+	if ((len = a2width(p, ++cp)) < 0)
+		return(0);
+
+	v = (size_t)len;
+
+	if (less < 0)
+		p->offset -= p->offset > v ? v : p->offset;
+	else if (less > 0)
+		p->offset += v;
+	else 
+		p->offset = v;
 
 	return(0);
 }
@@ -367,10 +392,24 @@ pre_sp(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-pre_br(DECL_ARGS)
+pre_sp(DECL_ARGS)
 {
+	size_t		 i, len;
 
-	term_newln(p);
+	switch (n->tok) {
+	case (MAN_br):
+		len = 0;
+		break;
+	default:
+		len = n->child ? a2height(p, n->child->string) : 1;
+		break;
+	}
+
+	if (0 == len)
+		term_newln(p);
+	for (i = 0; i < len; i++)
+		term_vspace(p);
+
 	return(0);
 }
 

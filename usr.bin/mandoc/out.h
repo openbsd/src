@@ -1,6 +1,6 @@
-/*	$Id: out.h,v 1.5 2010/06/27 20:28:56 schwarze Exp $ */
+/*	$Id: out.h,v 1.6 2010/07/25 18:05:54 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,13 +37,13 @@ enum	roffscale {
 
 enum	roffdeco {
 	DECO_NONE,
-	DECO_SPECIAL,
-	DECO_RESERVED,
+	DECO_SPECIAL, /* special character */
+	DECO_SSPECIAL, /* single-char special */
+	DECO_RESERVED, /* reserved word */
 	DECO_BOLD,
 	DECO_ITALIC,
 	DECO_ROMAN,
 	DECO_PREVIOUS,
-	DECO_SIZE,
 	DECO_NOSPACE,
 	DECO_FONT, /* font */
 	DECO_FFONT, /* font family */

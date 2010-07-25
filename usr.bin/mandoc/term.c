@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.44 2010/07/13 01:09:13 schwarze Exp $ */
+/*	$Id: term.c,v 1.45 2010/07/25 18:05:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,7 +30,8 @@
 #include "term.h"
 #include "main.h"
 
-static	void		  spec(struct termp *, const char *, size_t);
+static	void		  spec(struct termp *, enum roffdeco,
+				const char *, size_t);
 static	void		  res(struct termp *, const char *, size_t);
 static	void		  buffera(struct termp *, const char *, size_t);
 static	void		  bufferc(struct termp *, char);
@@ -356,14 +357,16 @@ term_vspace(struct termp *p)
 
 
 static void
-spec(struct termp *p, const char *word, size_t len)
+spec(struct termp *p, enum roffdeco d, const char *word, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2ascii(p->symtab, word, len, &sz);
+	rhs = chars_spec2str(p->symtab, word, len, &sz);
 	if (rhs) 
 		encode(p, rhs, sz);
+	else if (DECO_SSPECIAL == d)
+		encode(p, word, len);
 }
 
 
@@ -373,7 +376,7 @@ res(struct termp *p, const char *word, size_t len)
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2res(p->symtab, word, len, &sz);
+	rhs = chars_res2str(p->symtab, word, len, &sz);
 	if (rhs)
 		encode(p, rhs, sz);
 }
@@ -499,14 +502,13 @@ term_word(struct termp *p, const char *word)
 
 	p->flags &= ~TERMP_SENTENCE;
 
-	/* FIXME: use strcspn. */
-
 	while (*word) {
-		if ('\\' != *word) {
-			encode(p, word, 1);
-			word++;
+		if ((ssz = strcspn(word, "\\")) > 0)
+			encode(p, word, ssz);
+
+		word += ssz;
+		if ('\\' != *word)
 			continue;
-		}
 
 		seq = ++word;
 		sz = a2roffdeco(&deco, &seq, &ssz);
@@ -516,7 +518,9 @@ term_word(struct termp *p, const char *word)
 			res(p, seq, ssz);
 			break;
 		case (DECO_SPECIAL):
-			spec(p, seq, ssz);
+			/* FALLTHROUGH */
+		case (DECO_SSPECIAL):
+			spec(p, deco, seq, ssz);
 			break;
 		case (DECO_BOLD):
 			term_fontrepl(p, TERMFONT_BOLD);
@@ -543,7 +547,7 @@ term_word(struct termp *p, const char *word)
 	 * Note that we don't process the pipe: the parser sees it as
 	 * punctuation, but we don't in terms of typography.
 	 */
-	if (sv[0] && 0 == sv[1])
+	if (sv[0] && '\0' == sv[1])
 		switch (sv[0]) {
 		case('('):
 			/* FALLTHROUGH */

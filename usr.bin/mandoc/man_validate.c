@@ -1,6 +1,6 @@
-/*	$Id: man_validate.c,v 1.27 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.28 2010/07/25 18:05:54 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mandoc.h"
 #include "libman.h"
@@ -78,9 +79,9 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, NULL }, /* I */
 	{ NULL, NULL }, /* IR */
 	{ NULL, NULL }, /* RI */
-	{ NULL, posts_eq0 }, /* na */
+	{ NULL, posts_eq0 }, /* na */ /* FIXME: should warn only. */
 	{ NULL, NULL }, /* i */
-	{ NULL, posts_le1 }, /* sp */
+	{ NULL, posts_le1 }, /* sp */ /* FIXME: should warn only. */
 	{ pres_bline, posts_eq0 }, /* nf */
 	{ pres_bline, posts_eq0 }, /* fi */
 	{ NULL, NULL }, /* r */
@@ -89,10 +90,11 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, NULL }, /* DT */
 	{ NULL, NULL }, /* UC */
 	{ NULL, NULL }, /* PD */
-	{ NULL, posts_le1 }, /* Sp */
-	{ pres_bline, posts_le1 }, /* Vb */
+	{ NULL, posts_le1 }, /* Sp */ /* FIXME: should warn only. */
+	{ pres_bline, posts_le1 }, /* Vb */ /* FIXME: should warn only. */
 	{ pres_bline, posts_eq0 }, /* Ve */
 	{ NULL, NULL }, /* AT */
+	{ NULL, NULL }, /* in */
 };
 
 
@@ -202,27 +204,37 @@ check_text(CHKARGS)
 {
 	char		*p;
 	int		 pos, c;
-
-	assert(n->string);
+	size_t		 sz;
 
 	for (p = n->string, pos = n->pos + 1; *p; p++, pos++) {
-		if ('\\' == *p) {
-			c = mandoc_special(p);
-			if (c) {
-				p += c - 1;
-				pos += c - 1;
-				continue;
-			}
+		sz = strcspn(p, "\t\\");
+		p += (int)sz;
 
-			c = man_pmsg(m, n->line, pos, MANDOCERR_BADESCAPE);
-			if ( ! (MAN_IGN_ESCAPE & m->pflags) && ! c)
-				return(c);
+		if ('\0' == *p)
+			break;
+
+		pos += (int)sz;
+
+		if ('\t' == *p) {
+			if (MAN_LITERAL & m->flags)
+				continue;
+			if (man_pmsg(m, n->line, pos, MANDOCERR_BADTAB))
+				continue;
+			return(0);
 		}
 
-		if ('\t' == *p || isprint((u_char)*p) || ASCII_HYPH == *p) 
+		/* Check the special character. */
+
+		c = mandoc_special(p);
+		if (c) {
+			p += c - 1;
+			pos += c - 1;
 			continue;
-		if ( ! man_pmsg(m, n->line, pos, MANDOCERR_BADCHAR))
-			return(0);
+		}
+
+		c = man_pmsg(m, n->line, pos, MANDOCERR_BADESCAPE);
+		if ( ! (MAN_IGN_ESCAPE & m->pflags) && ! c)
+			return(c);
 	}
 
 	return(1);

@@ -1,6 +1,6 @@
-/*	$Id: out.c,v 1.5 2010/06/27 20:28:56 schwarze Exp $ */
+/*	$Id: out.c,v 1.6 2010/07/25 18:05:54 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,26 +24,6 @@
 #include <time.h>
 
 #include "out.h"
-
-/* See a2roffdeco(). */
-#define	C2LIM(c, l) do { \
-	(l) = 1; \
-	if ('[' == (c) || '\'' == (c)) \
-		(l) = 0; \
-	else if ('(' == (c)) \
-		(l) = 2; } \
-	while (/* CONSTCOND */ 0)
-
-/* See a2roffdeco(). */
-#define	C2TERM(c, t) do { \
-	(t) = 0; \
-	if ('\'' == (c)) \
-		(t) = 1; \
-	else if ('[' == (c)) \
-		(t) = 2; \
-	else if ('(' == (c)) \
-		(t) = 3; } \
-	while (/* CONSTCOND */ 0)
 
 /* 
  * Convert a `scaling unit' to a consistent form, or fail.  Scaling
@@ -132,6 +112,7 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 		return(0);
 	}
 
+	/* FIXME: do this in the caller. */
 	if ((dst->scale = atof(buf)) < 0)
 		dst->scale = 0;
 	dst->unit = unit;
@@ -181,213 +162,153 @@ time2a(time_t t, char *dst, size_t sz)
 }
 
 
-/* 
- * Returns length of parsed string (the leading "\" should NOT be
- * included).  This can be zero if the current character is the nil
- * terminator.  "d" is set to the type of parsed decorator, which may
- * have an adjoining "word" of size "sz" (e.g., "(ab" -> "ab", 2).
- */
 int
-a2roffdeco(enum roffdeco *d,
-		const char **word, size_t *sz)
+a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 {
-	int		 j, term, lim;
-	char		 set;
-	const char	*wp, *sp;
+	int		 i, j, lim;
+	char		 term, c;
+	const char	*wp;
 
 	*d = DECO_NONE;
+	lim = i = 0;
+	term = '\0';
 	wp = *word;
 
-	switch ((set = *wp)) {
-	case ('\0'):
-		return(0);
-
+	switch ((c = wp[i++])) {
 	case ('('):
-		if ('\0' == *(++wp))
-			return(1);
-		if ('\0' == *(wp + 1))
-			return(2);
-
 		*d = DECO_SPECIAL;
-		*sz = 2;
-		*word = wp;
-		return(3);
-
+		lim = 2;
+		break;
 	case ('F'):
 		/* FALLTHROUGH */
 	case ('f'):
-		/*
-		 * FIXME: this needs work and consolidation (it should
-		 * follow the sequence that special characters do, for
-		 * one), but isn't a priority at the moment.  Note, for
-		 * one, that in reality \fB != \FB, although here we let
-		 * these slip by.
-		 */
-		switch (*(++wp)) {
-		case ('\0'):
-			return(1);
+		*d = 'F' == c ? DECO_FFONT : DECO_FONT;
+
+		switch (wp[i++]) {
+		case ('('):
+			lim = 2;
+			break;
+		case ('['):
+			term = ']';
+			break;
 		case ('3'):
 			/* FALLTHROUGH */
 		case ('B'):
 			*d = DECO_BOLD;
-			return(2);
+			return(i);
 		case ('2'):
 			/* FALLTHROUGH */
 		case ('I'):
 			*d = DECO_ITALIC;
-			return(2);
+			return(i);
 		case ('P'):
 			*d = DECO_PREVIOUS;
-			return(2);
+			return(i);
 		case ('1'):
 			/* FALLTHROUGH */
 		case ('R'):
 			*d = DECO_ROMAN;
-			return(2);
-		case ('('):
-			if ('\0' == *(++wp))
-				return(2);
-			if ('\0' == *(wp + 1))
-				return(3);
-
-			*d = 'F' == set ? DECO_FFONT : DECO_FONT;
-			*sz = 2;
-			*word = wp;
-			return(4);
-		case ('['):
-			*word = ++wp;
-			for (j = 0; *wp && ']' != *wp; wp++, j++)
-				/* Loop... */ ;
-
-			if ('\0' == *wp)
-				return(j + 2);
-
-			*d = 'F' == set ? DECO_FFONT : DECO_FONT;
-			*sz = (size_t)j;
-			return(j + 3);
+			return(i);
 		default:
+			i--;
+			lim = 1;
 			break;
 		}
-
-		*d = 'F' == set ? DECO_FFONT : DECO_FONT;
-		*sz = 1;
-		*word = wp;
-		return(2);
-
+		break;
+	case ('M'):
+		/* FALLTHROUGH */
+	case ('m'):
+		/* FALLTHROUGH */
 	case ('*'):
-		switch (*(++wp)) {
-		case ('\0'):
-			return(1);
+		if ('*' == c)
+			*d = DECO_RESERVED;
 
+		switch (wp[i++]) {
 		case ('('):
-			if ('\0' == *(++wp))
-				return(2);
-			if ('\0' == *(wp + 1))
-				return(3);
-
-			*d = DECO_RESERVED;
-			*sz = 2;
-			*word = wp;
-			return(4);
-
+			lim = 2;
+			break;
 		case ('['):
-			*word = ++wp;
-			for (j = 0; *wp && ']' != *wp; wp++, j++)
-				/* Loop... */ ;
-
-			if ('\0' == *wp)
-				return(j + 2);
-
-			*d = DECO_RESERVED;
-			*sz = (size_t)j;
-			return(j + 3);
-
+			term = ']';
+			break;
 		default:
+			i--;
+			lim = 1;
 			break;
 		}
-
-		*d = DECO_RESERVED;
-		*sz = 1;
-		*word = wp;
-		return(2);
-
+		break;
 	case ('s'):
-		sp = wp;
-		if ('\0' == *(++wp))
-			return(1);
+		if ('+' == wp[i] || '-' == wp[i])
+			i++;
 
-		C2LIM(*wp, lim);
-		C2TERM(*wp, term);
+		j = ('s' != wp[i - 1]);
 
-		if (term) 
-			wp++;
-
-		*word = wp;
-
-		if (*wp == '+' || *wp == '-')
-			++wp;
-
-		switch (*wp) {
-		case ('\''):
-			/* FALLTHROUGH */
-		case ('['):
-			/* FALLTHROUGH */
+		switch (wp[i++]) {
 		case ('('):
-			if (term) 
-				return((int)(wp - sp));
-
-			C2LIM(*wp, lim);
-			C2TERM(*wp, term);
-			wp++;
+			lim = 2;
 			break;
+		case ('['):
+			term = ']';
+			break;
+		case ('\''):
+			term = '\'';
+			break;
+		case ('0'):
+			j++;
+			/* FALLTHROUGH */
 		default:
+			i--;
+			lim = 1;
 			break;
 		}
 
-		if ( ! isdigit((u_char)*wp))
-			return((int)(wp - sp));
-
-		for (j = 0; isdigit((u_char)*wp); j++) {
-			if (lim && j >= lim)
-				break;
-			++wp;
-		}
-
-		if (term && term < 3) {
-			if (1 == term && *wp != '\'')
-				return((int)(wp - sp));
-			if (2 == term && *wp != ']')
-				return((int)(wp - sp));
-			++wp;
-		}
-
-		*d = DECO_SIZE;
-		return((int)(wp - sp));
-
+		if ('+' == wp[i] || '-' == wp[i]) {
+			if (j++)
+				return(i);
+			i++;
+		} 
+		
+		if (0 == j)
+			return(i);
+		break;
 	case ('['):
-		*word = ++wp;
-
-		for (j = 0; *wp && ']' != *wp; wp++, j++)
-			/* Loop... */ ;
-
-		if ('\0' == *wp)
-			return(j + 1);
-
 		*d = DECO_SPECIAL;
-		*sz = (size_t)j;
-		return(j + 2);
-
+		term = ']';
+		break;
 	case ('c'):
 		*d = DECO_NOSPACE;
-		*sz = 1;
-		return(1);
-
+		return(i);
 	default:
+		*d = DECO_SSPECIAL;
+		i--;
+		lim = 1;
 		break;
 	}
 
-	*d = DECO_SPECIAL;
-	*word = wp;
-	*sz = 1;
-	return(1);
+	assert(term || lim);
+	*word = &wp[i];
+
+	if (term) {
+		j = i;
+		while (wp[i] && wp[i] != term)
+			i++;
+		if ('\0' == wp[i]) {
+			*d = DECO_NONE;
+			return(i);
+		}
+
+		assert(i >= j);
+		*sz = (size_t)(i - j);
+
+		return(i + 1);
+	}
+
+	assert(lim > 0);
+	*sz = (size_t)lim;
+
+	for (j = 0; wp[i] && j < lim; j++)
+		i++;
+	if (j < lim)
+		*d = DECO_NONE;
+
+	return(i);
 }

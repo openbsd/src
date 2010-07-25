@@ -1,6 +1,6 @@
-/*	$Id: man_macro.c,v 1.19 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.20 2010/07/25 18:05:54 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,6 +79,7 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* Vb */
 	{ in_line_eoln, 0 }, /* Ve */
 	{ in_line_eoln, 0 }, /* AT */
+	{ in_line_eoln, 0 }, /* in */
 };
 
 const	struct man_macro * const man_macros = __man_macros;
@@ -286,6 +287,7 @@ blk_close(MACRO_PROT_ARGS)
 }
 
 
+/* ARGSUSED */
 int
 blk_exp(MACRO_PROT_ARGS)
 {
@@ -337,6 +339,7 @@ blk_exp(MACRO_PROT_ARGS)
  * scopes, such as `SH' closing out an `SS', are defined in the rew
  * routines.
  */
+/* ARGSUSED */
 int
 blk_imp(MACRO_PROT_ARGS)
 {
@@ -394,6 +397,7 @@ blk_imp(MACRO_PROT_ARGS)
 }
 
 
+/* ARGSUSED */
 int
 in_line_eoln(MACRO_PROT_ARGS)
 {

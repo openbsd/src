@@ -1,6 +1,6 @@
-/*	$Id: chars.h,v 1.4 2010/05/26 02:39:58 schwarze Exp $ */
+/*	$Id: chars.h,v 1.5 2010/07/25 18:05:54 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,8 +25,10 @@ enum	chars {
 };
 
 void		 *chars_init(enum chars);
-const char	 *chars_a2ascii(void *, const char *, size_t, size_t *);
-const char	 *chars_a2res(void *, const char *, size_t, size_t *);
+const char	 *chars_spec2str(void *, const char *, size_t, size_t *);
+int		  chars_spec2cp(void *, const char *, size_t);
+const char	 *chars_res2str(void *, const char *, size_t, size_t *);
+int		  chars_res2cp(void *, const char *, size_t);
 void		  chars_free(void *);
 
 __END_DECLS

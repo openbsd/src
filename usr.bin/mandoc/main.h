@@ -1,6 +1,6 @@
-/*	$Id: main.h,v 1.6 2010/06/29 15:49:52 schwarze Exp $ */
+/*	$Id: main.h,v 1.7 2010/07/25 18:05:54 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,8 +44,9 @@ void		  tree_man(void *, const struct man *);
 void		 *ascii_alloc(char *);
 void		  ascii_free(void *);
 
+void		 *pdf_alloc(char *);
 void		 *ps_alloc(char *);
-void		  ps_free(void *);
+void		  pspdf_free(void *);
 
 void		  terminal_mdoc(void *, const struct mdoc *);
 void		  terminal_man(void *, const struct man *);

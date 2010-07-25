@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.31 2010/07/13 01:09:13 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.32 2010/07/25 18:05:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -155,35 +155,36 @@ enum	mdoct {
 
 /* What follows is a list of ALL possible macro arguments. */
 
-/* FIXME: make this into an enum. */
-#define	MDOC_Split	 0
-#define	MDOC_Nosplit	 1
-#define	MDOC_Ragged	 2
-#define	MDOC_Unfilled	 3
-#define	MDOC_Literal	 4
-#define	MDOC_File	 5
-#define	MDOC_Offset	 6
-#define	MDOC_Bullet	 7
-#define	MDOC_Dash	 8
-#define	MDOC_Hyphen	 9
-#define	MDOC_Item	 10
-#define	MDOC_Enum	 11
-#define	MDOC_Tag	 12
-#define	MDOC_Diag	 13
-#define	MDOC_Hang	 14
-#define	MDOC_Ohang	 15
-#define	MDOC_Inset	 16
-#define	MDOC_Column	 17
-#define	MDOC_Width	 18
-#define	MDOC_Compact	 19
-#define	MDOC_Std	 20
-#define	MDOC_Filled	 21
-#define	MDOC_Words	 22
-#define	MDOC_Emphasis	 23
-#define	MDOC_Symbolic	 24
-#define	MDOC_Nested	 25
-#define	MDOC_Centred	 26
-#define	MDOC_ARG_MAX	 27
+enum	mdocargt {
+	MDOC_Split,
+	MDOC_Nosplit,
+	MDOC_Ragged,
+	MDOC_Unfilled,
+	MDOC_Literal,
+	MDOC_File,
+	MDOC_Offset,
+	MDOC_Bullet,
+	MDOC_Dash,
+	MDOC_Hyphen,
+	MDOC_Item,
+	MDOC_Enum,
+	MDOC_Tag,
+	MDOC_Diag,
+	MDOC_Hang,
+	MDOC_Ohang,
+	MDOC_Inset,
+	MDOC_Column,
+	MDOC_Width,
+	MDOC_Compact,
+	MDOC_Std,
+	MDOC_Filled,
+	MDOC_Words,
+	MDOC_Emphasis,
+	MDOC_Symbolic,
+	MDOC_Nested,
+	MDOC_Centred,
+	MDOC_ARG_MAX
+};
 
 /* Type of a syntax node. */
 enum	mdoc_type {
@@ -236,7 +237,7 @@ struct	mdoc_meta {
 
 /* An argument to a macro (multiple values = `It -column'). */
 struct	mdoc_argv {
-	int	  	  arg;
+	enum mdocargt  	  arg;
 	int		  line;
 	int		  pos;
 	size_t		  sz;

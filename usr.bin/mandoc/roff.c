@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.8 2010/07/13 01:09:13 schwarze Exp $ */
+/*	$Id: roff.c,v 1.9 2010/07/25 18:05:54 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -124,8 +124,8 @@ static	const char	*roff_getstrn(const struct roff *,
 				const char *, size_t);
 static	enum rofferr	 roff_line(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
-static	int		 roff_res(struct roff *, int, 
-				char **, size_t *, int, int *);
+static	int		 roff_res(struct roff *, 
+				char **, size_t *, int);
 static	void		 roff_setstr(struct roff *,
 				const char *, const char *);
 
@@ -324,14 +324,14 @@ roff_alloc(struct regset *regs, const mandocmsg msg, void *data)
  * is processed. 
  */
 static int
-roff_res(struct roff *r, int ln, char **bufp,
-		size_t *szp, int pos, int *offs)
+roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 {
 	const char	*cp, *cpp, *st, *res;
 	int		 i, maxl;
 	size_t		 nsz;
 	char		*n;
 
+	/* LINTED */
 	for (cp = &(*bufp)[pos]; (cpp = strstr(cp, "\\*")); cp++) {
 		cp = cpp + 2;
 		switch (*cp) {
@@ -396,7 +396,7 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 * words to fill in.
 	 */
 
-	if (r->first_string && ! roff_res(r, ln, bufp, szp, pos, offs))
+	if (r->first_string && ! roff_res(r, bufp, szp, pos))
 		return(ROFF_RERUN);
 
 	/*

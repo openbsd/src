@@ -1,6 +1,6 @@
-/*	$Id: man_action.c,v 1.23 2010/06/06 18:08:41 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.24 2010/07/25 18:05:54 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -70,6 +70,7 @@ const	struct actions man_actions[MAN_MAX] = {
 	{ post_nf }, /* Vb */
 	{ post_fi }, /* Ve */
 	{ post_AT }, /* AT */
+	{ NULL }, /* in */
 };
 
 
