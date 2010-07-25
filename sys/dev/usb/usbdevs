@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.508 2010/07/19 05:12:49 jakemsr Exp $
+$OpenBSD: usbdevs,v 1.509 2010/07/25 11:20:06 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2556,6 +2556,7 @@ product MSI BLUETOOTH_3		0xa97a	Bluetooth
 
 /* Microdia / Sonix Techonology Co., Ltd. products */
 product MICRODIA YUREX		0x1010	YUREX
+product	MICRODIA CAM_1		0x62c0	CAM_1
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
