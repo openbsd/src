@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.106 2010/07/24 10:49:01 espie Exp $
+# $OpenBSD: Delete.pm,v 1.107 2010/07/25 05:20:34 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -311,7 +311,7 @@ sub prepare_for_deletion
 {
 	my ($self, $state, $pkgname) = @_;
 	my $fname = $state->{destdir}.$self->fullname;
-	$state->vstat->remove_directory($fname);
+#	$state->vstat->remove_directory($fname);
 	return unless $self->{noshadow};
 	$state->{noshadow}->{$state->{destdir}.$self->fullname} = 1;
 }
