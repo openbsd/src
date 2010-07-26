@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.3 2010/07/19 23:06:29 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.4 2010/07/26 20:49:12 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2010 $
+.Dd $Mdocdate: July 26 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ The
 attribute is forgotten when entering or exiting a macro block.
 .Ss Whitespace
 Whitespace consists of the space character.
-In free-form lines, whitespace is preserved within a line; un-escaped
+In free-form lines, whitespace is preserved within a line; unescaped
 trailing spaces are stripped from input (unless in a literal context).
 Blank free-form lines, which may include spaces, are permitted and
 rendered as an empty line.
@@ -190,23 +190,25 @@ this differs from
 which, if a unit is not provided, will instead interpret the string as
 literal text.
 .Ss Sentence Spacing
-When composing a manual, make sure that your sentences end at the end of
+When composing a manual, make sure that sentences end at the end of
 a line.
 By doing so, front-ends will be able to apply the proper amount of
 spacing after the end of sentence (unescaped) period, exclamation mark,
 or question mark followed by zero or more non-sentence closing
-delimiters (
-.Ns Sq \&) ,
+delimiters
+.Po
+.Sq \&) ,
 .Sq \&] ,
 .Sq \&' ,
-.Sq \&" ) .
+.Sq \&"
+.Pc .
 .Sh MANUAL STRUCTURE
 Each
 .Nm
-document must contain contains at least the
+document must contain the
 .Sx \&TH
 macro describing the document's section and title.
-It may occur anywhere in the document, although conventionally, it
+It may occur anywhere in the document, although conventionally it
 appears as the first macro.
 .Pp
 Beyond
@@ -291,10 +293,7 @@ Implementation-specific notes should be kept here.
 This is useful when implementing standard functions that may have side
 effects or notable algorithmic implications.
 .It Em RETURN VALUES
-This section is the dual of
-.Em EXIT STATUS ,
-which is used for commands.
-It documents the return values of functions in sections 2, 3, and 9.
+This section documents the return values of functions in sections 2, 3, and 9.
 .It Em ENVIRONMENT
 Documents any usages of environment variables, e.g.,
 .Xr environ 7 .
@@ -303,10 +302,8 @@ Documents files used.
 It's helpful to document both the file name and a short description of how
 the file is used (created, modified, etc.).
 .It Em EXIT STATUS
-Command exit status for section 1, 6, and 8 manuals.
-This section is the dual of
-.Em RETURN VALUES ,
-which is used for functions.
+This section documents the command exit status for
+section 1, 6, and 8 utilities.
 Historically, this information was described in
 .Em DIAGNOSTICS ,
 a practise that is now discouraged.
@@ -314,7 +311,7 @@ a practise that is now discouraged.
 Example usages.
 This often contains snippets of well-formed,
 well-tested invocations.
-Make doubly sure that your examples work properly!
+Make sure that examples work properly!
 .It Em DIAGNOSTICS
 Documents error conditions.
 This is most useful in section 4 manuals.
@@ -351,13 +348,13 @@ Authors should generally be noted by both name and email address.
 Common misuses and misunderstandings should be explained
 in this section.
 .It Em BUGS
-Known bugs, limitations and work-arounds should be described
+Known bugs, limitations, and work-arounds should be described
 in this section.
 .It Em SECURITY CONSIDERATIONS
 Documents any security precautions that operators should consider.
 .El
 .Sh MACRO SYNTAX
-Macros are one to three three characters in length and begin with a
+Macros are one to three characters in length and begin with a
 control character,
 .Sq \&. ,
 at the beginning of the line.
@@ -444,8 +441,8 @@ These macros should not be used for portable
 .Nm
 manuals.
 .Ss Block Macros
-Block macros are comprised of a head and body.
-Like for in-line macros, the head is scoped to the current line and, in
+Block macros comprise a head and body.
+As with in-line macros, the head is scoped to the current line and, in
 one circumstance, the next line (the next-line stipulations as in
 .Sx Line Macros
 apply here as well).
@@ -602,8 +599,8 @@ See also
 and
 .Sx \&r .
 .Ss \&IB
-Text is rendered alternately in italics and bold face.  Whitespace
-between arguments is omitted in output.
+Text is rendered alternately in italics and bold face.
+Whitespace between arguments is omitted in output.
 .Pp
 See
 .Sx \&BI
@@ -626,7 +623,7 @@ Begin an indented paragraph with the following syntax:
 The
 .Cm width
 argument defines the width of the left margin and is defined by
-.Sx Scaling Widths ,
+.Sx Scaling Widths .
 It's saved for later paragraph left-margins; if unspecified, the saved or
 default width is used.
 .Pp
@@ -943,7 +940,7 @@ It was later rewritten by James Clark as a macro package for groff.
 The stand-alone implementation that is part of the
 .Xr mandoc 1
 utility written by Kristaps Dzonsons appeared in
-.Ox 4.6.
+.Ox 4.6 .
 .Sh AUTHORS
 This
 .Nm
