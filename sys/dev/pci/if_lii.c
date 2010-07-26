@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.26 2010/02/08 12:28:42 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.27 2010/07/26 22:21:59 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -122,6 +122,7 @@ struct lii_softc {
 
 int	lii_match(struct device *, void *, void *);
 void	lii_attach(struct device *, struct device *, void *);
+int	lii_activate(struct device *, int);
 
 struct cfdriver lii_cd = {
 	0,
@@ -132,7 +133,9 @@ struct cfdriver lii_cd = {
 struct cfattach lii_ca = {
 	sizeof(struct lii_softc),
 	lii_match,
-	lii_attach
+	lii_attach,
+	NULL,
+	lii_activate
 };
 
 int	lii_reset(struct lii_softc *);
@@ -281,6 +284,28 @@ deintr:
 unmap:
 	bus_space_unmap(sc->sc_mmiot, sc->sc_mmioh, sc->sc_mmios);
 	return;
+}
+
+int
+lii_activate(struct device *self, int act)
+{
+	struct lii_softc *sc = (struct lii_softc *)self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			lii_stop(ifp);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		rv = config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			lii_init(ifp);
+		break;
+	}
+	return rv;
 }
 
 int
