@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.13 2010/07/03 11:36:17 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.14 2010/07/26 07:28:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -519,7 +519,7 @@ sub parse_and_run
 	}
 
 	if ($state->verbose) {
-		$state->setops('cdfMURsS');
+		$state->setopts('cdfMURsS');
 	}
 
 	if ($state->opt('K') && !$state->opt('L')) {
