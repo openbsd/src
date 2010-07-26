@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.142 2010/07/06 12:12:37 espie Exp $
+# $OpenBSD: Update.pm,v 1.143 2010/07/26 23:28:06 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -70,7 +70,8 @@ sub add_location
 
 sub progress_message
 {
-	my ($self, $state, $msg) = @_;
+	my ($self, $state, @r) = @_;
+	my $msg = $state->f(@r);
 	if ($state->{wantntogo}) {
 		$msg .= " (".$state->ntogo.")";
 	}
@@ -187,8 +188,8 @@ sub process_handle
 			$h->{update_found} = $h;
 			$set->move_kept($h);
 
-			$self->progress_message($state,
-			    "No need to update $pkgname");
+			$self->progress_message($state, 
+			    "No need to update #1", $pkgname);
 
 			return 0;
 		}
@@ -232,7 +233,7 @@ sub process_hint
 	my $k = OpenBSD::Search::FilterLocation->keep_most_recent;
 	# first try to find us exactly
 
-	$state->progress->message("Looking for $hint_name");
+	$self->progress_message($state, "Looking for #1", $hint_name);
 	$l = $set->match_locations(OpenBSD::Search::Exact->new($hint_name), $k);
 	if (@$l == 0) {
 		my $t = $hint_name;
