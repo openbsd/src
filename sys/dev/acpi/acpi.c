@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.188 2010/07/26 11:29:23 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.189 2010/07/26 17:25:44 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2505,6 +2505,4 @@ acpikqfilter(dev_t dev, struct knote *kn)
 {
 	return (1);
 }
-
->>>>>>> 1.187
 #endif /* SMALL_KERNEL */
