@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.240 2010/06/28 20:24:39 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.241 2010/07/26 19:21:24 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1895,11 +1895,12 @@ em_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			em_stop(sc, 0);
 		/* We have no children atm, but we will soon */
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-		em_stop(sc, 0);
 		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			em_init(sc);
