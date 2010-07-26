@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.80 2010/07/15 20:51:38 schwarze Exp $
+.\" 	$OpenBSD: ftp.1,v 1.81 2010/07/26 21:31:34 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: July 15 2010 $
+.Dd $Mdocdate: July 26 2010 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -51,8 +51,8 @@
 .Oc Ar host Oo : Ar port
 .Oc No / Ar file Oo /
 .Oc
-.Ar ...
 .Sm on
+.Ar ...
 .Nm ftp
 .Op Fl C
 .Op Fl c Ar cookie
@@ -60,8 +60,8 @@
 .Sm off
 .No http:// Ar host Oo : Ar port
 .Oc No / Ar file
-.Ar ...
 .Sm on
+.Ar ...
 .Nm ftp
 .Op Fl C
 .Op Fl c Ar cookie
@@ -69,22 +69,23 @@
 .Sm off
 .No https:// Ar host Oo : Ar port
 .Oc No / Ar file
-.Ar ...
 .Sm on
+.Ar ...
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
 .Sm off
-.No file: Ar
+.No file: Ar file
 .Sm on
+.Ar ...
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
 .Sm off
 .Ar host : No / Ar file Oo /
 .Oc
-.Ar ...
 .Sm on
+.Ar ...
 .Sh DESCRIPTION
 .Nm
 is the user interface to the
