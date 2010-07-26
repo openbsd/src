@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.23 2009/07/23 01:38:16 cnst Exp $
+#	$OpenBSD: files.acpi,v 1.24 2010/07/26 11:29:23 pirofti Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -75,6 +75,11 @@ file	dev/acpi/acpiasus.c		acpiasus
 device	acpithinkpad
 attach	acpithinkpad at acpi
 file	dev/acpi/acpithinkpad.c		acpithinkpad
+
+# Sony support
+device	acpisony
+attach	acpisony at acpi
+file	dev/acpi/acpisony.c		acpisony
 
 # ACPI video
 define	acpivideo {}

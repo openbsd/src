@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.187 2010/07/22 14:19:47 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.188 2010/07/26 11:29:23 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -108,6 +108,7 @@ int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundtmp(struct aml_node *, void *);
 int	acpi_foundprw(struct aml_node *, void *);
 int	acpi_foundvideo(struct aml_node *, void *);
+int	acpi_foundsony(struct aml_node *node, void *arg);
 
 int	acpi_foundide(struct aml_node *node, void *arg);
 int	acpiide_notify(struct aml_node *, int, void *);
@@ -761,6 +762,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach docks */
 	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
+
+	/* check if we're running on a sony */
+	aml_find_node(&aml_root, "GBRT", acpi_foundsony, sc);
 
 	/* attach video only if this is not a stinkpad */
 	if (!acpi_thinkpad_enabled)
@@ -2230,6 +2234,24 @@ acpi_foundvideo(struct aml_node *node, void *arg)
 }
 
 int
+acpi_foundsony(struct aml_node *node, void *arg)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)arg;
+	struct device *self = (struct device *)arg;
+	struct acpi_attach_args aaa;
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_name = "acpisony";
+
+	config_found(self, &aaa, acpi_print);
+
+	return 0;
+}
+
+int
 acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int error = 0;
@@ -2484,4 +2506,5 @@ acpikqfilter(dev_t dev, struct knote *kn)
 	return (1);
 }
 
+>>>>>>> 1.187
 #endif /* SMALL_KERNEL */
