@@ -158,7 +158,7 @@ Common Var(warn_switch_enum)
 Warn about all enumerated switches missing a specific case
 
 Wsystem-headers
-Common Var(warn_system_headers)
+Common Var(warn_system_headers) Init(1)
 Do not suppress warnings from system headers
 
 Wuninitialized
