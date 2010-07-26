@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivideo.c,v 1.5 2009/06/04 17:16:00 pirofti Exp $	*/
+/*	$OpenBSD: acpivideo.c,v 1.6 2010/07/26 17:46:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
@@ -58,6 +58,8 @@ void	acpivideo_get_dod(struct acpivideo_softc *);
 int	acpi_foundvout(struct aml_node *, void *);
 int	acpivideo_print(void *, const char *);
 
+int	acpivideo_getpcibus(struct acpivideo_softc *, struct aml_node *);
+
 struct cfattach acpivideo_ca = {
 	sizeof(struct acpivideo_softc), acpivideo_match, acpivideo_attach
 };
@@ -89,6 +91,9 @@ acpivideo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aaa->aaa_node;
 
 	printf(": %s\n", sc->sc_devnode->name);
+
+	if (acpivideo_getpcibus(sc, sc->sc_devnode) == -1)
+		return;
 
 	aml_register_notify(sc->sc_devnode, aaa->aaa_dev,
 	    acpivideo_notify, sc, ACPIDEV_NOPOLL);
@@ -229,4 +234,12 @@ acpivideo_get_dod(struct acpivideo_softc * sc)
 	DPRINTF(("\n"));
 
 	aml_freevalue(&res);
+}
+
+int
+acpivideo_getpcibus(struct acpivideo_softc *sc, struct aml_node *node)
+{
+	/* Check if parent device has PCI mapping */
+	return (node->parent && node->parent->pci) ?
+		node->parent->pci->sub : -1;
 }
