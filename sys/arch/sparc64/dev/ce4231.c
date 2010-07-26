@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.26 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.27 2010/07/26 20:06:12 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -62,48 +62,32 @@
 #include <dev/ic/cs4231reg.h>
 
 /* Mixer classes and mixer knobs */
-#define	CSAUDIO_DAC_LVL		0
-#define	CSAUDIO_LINE_IN_LVL	1
-#define	CSAUDIO_MIC_LVL		2
-#define	CSAUDIO_CD_LVL		3
-#define	CSAUDIO_MONITOR_LVL	4
-#define	CSAUDIO_LINE_IN_MUTE	5
-#define	CSAUDIO_DAC_MUTE	6
-#define	CSAUDIO_CD_MUTE		7
-#define	CSAUDIO_MIC_MUTE	8
-#define	CSAUDIO_MONITOR_MUTE	9
-#define	CSAUDIO_REC_LVL		10
-#define	CSAUDIO_RECORD_SOURCE	11
-#define	CSAUDIO_INPUT_CLASS	12
-#define	CSAUDIO_OUTPUT_CLASS	13
-#define	CSAUDIO_RECORD_CLASS	14
-/* The dac can output to these destinations, which *do* have mute
- * controls, but share levels with the main DAC
- */
-#define CSAUDIO_DAC_MONO_MUTE	15
-#define CSAUDIO_DAC_LINE_MUTE	16
-#define CSAUDIO_DAC_HDPH_MUTE	17
-
-/* Physical volume/attenuation registers, array indexes for
- * sc->sc_volume/sc->sc_mute
- *
- * Based upon my Sun blade 1000:
- * AUX2 is usually CD in
- * MONO is usually a mic
- */
-#define	CSPORT_AUX2		0
-#define	CSPORT_AUX1		1
-#define	CSPORT_DAC		2
-#define	CSPORT_LINEIN		3
-#define	CSPORT_MONO		4
-#define	CSPORT_MONITOR		5
-#define CSPORT_ADC		6
+#define CSAUDIO_INPUT_CLASS	0
+#define CSAUDIO_OUTPUT_CLASS	1
+#define CSAUDIO_RECORD_CLASS	2
+#define CSAUDIO_DAC_LVL		3
+#define CSAUDIO_DAC_MUTE	4
+#define CSAUDIO_OUTPUTS		5
+#define CSAUDIO_CD_LVL		6
+#define CSAUDIO_CD_MUTE		7
+#define CSAUDIO_LINE_IN_LVL	8
+#define CSAUDIO_LINE_IN_MUTE	9
+#define CSAUDIO_MONITOR_LVL	10
+#define CSAUDIO_MONITOR_MUTE	11
+#define CSAUDIO_REC_LVL		12
+#define CSAUDIO_RECORD_SOURCE	13
+#define CSAUDIO_MIC_PREAMP	14
 
 /* Recording sources */
-#define LINE_IN_PORT	0
-#define AUX1_IN_PORT	1
-#define MIC_IN_PORT	2
-#define DAC_IN_PORT	3
+#define REC_PORT_LINE	0
+#define REC_PORT_CD	1
+#define REC_PORT_MIC	2
+#define REC_PORT_MIX	3
+
+/* Output ports. */
+#define OUT_PORT_LINE	0x1
+#define OUT_PORT_HP	0x2
+#define OUT_PORT_SPKR	0x4
 
 /* Bits on the ADC reg that determine recording source */
 #define CS_REC_SRC_BITS 0xc0
@@ -116,11 +100,7 @@
 
 #define	CS_TIMEOUT	90000
 
-#define	CS_PC_LINEMUTE	XCTL1_ENABLE
-#define	CS_PC_HDPHMUTE	XCTL1_ENABLE
 #define	CS_AFS_PI	0x10
-#define MONO_INPUT_MUTE 0x80
-#define MIX_MUTE	0x00
 
 /* Read/write CS4231 direct registers */
 #define CS_WRITE(sc,r,v)	\
@@ -146,8 +126,9 @@ int	ce4231_cintr(void *);
 int	ce4231_pintr(void *);
 
 int	ce4231_set_speed(struct ce4231_softc *, u_long *);
-void	ce4231_setup_output(struct ce4231_softc *sc);
-void	ce4231_setup_input(struct ce4231_softc *sc);
+
+void	ce4231_set_outputs(struct ce4231_softc *, int);
+int	ce4231_get_outputs(struct ce4231_softc *);
 
 void		ce4231_write(struct ce4231_softc *, u_int8_t, u_int8_t);
 u_int8_t	ce4231_read(struct ce4231_softc *, u_int8_t);
@@ -238,6 +219,7 @@ ce4231_attach(parent, self, aux)
 {
 	struct ebus_attach_args *ea = aux;
 	struct ce4231_softc *sc = (struct ce4231_softc *)self;
+	mixer_ctrl_t cp;
 	int node;
 
 	node = ea->ea_node;
@@ -306,13 +288,36 @@ ce4231_attach(parent, self, aux)
 
 	audio_attach_mi(&ce4231_sa_hw_if, sc, &sc->sc_dev);
 
-	/* Default to all dacouts unmuted, reasonable volume */
-	sc->sc_monoout_enable = 1;
-	sc->sc_lineout_enable = 1;
-	sc->sc_hdphout_enable = 1;
-	sc->sc_mute[CSPORT_DAC] = 1; /* dac itself not muted */
-	sc->sc_volume[CSPORT_DAC].left = 192;
-	sc->sc_volume[CSPORT_DAC].right = 192;
+	/* Enable mode 2. */
+	ce4231_write(sc, SP_MISC_INFO, ce4231_read(sc, SP_MISC_INFO) | MODE2);
+
+	/* Attenuate DAC, CD and line-in.  -22.5 dB for all. */
+	cp.dev = CSAUDIO_DAC_LVL;
+	cp.type = AUDIO_MIXER_VALUE;
+	cp.un.value.num_channels = 2;
+	cp.un.value.level[AUDIO_MIXER_LEVEL_LEFT] = 195;
+	cp.un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 195;
+	ce4231_set_port(sc, &cp);
+
+	cp.dev = CSAUDIO_CD_LVL;
+	cp.un.value.level[AUDIO_MIXER_LEVEL_LEFT] = 135;
+	cp.un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 135;
+	ce4231_set_port(sc, &cp);
+
+	cp.dev = CSAUDIO_LINE_IN_LVL;
+	ce4231_set_port(sc, &cp);
+
+	/* Unmute DAC, CD and line-in */
+	cp.dev = CSAUDIO_DAC_MUTE;
+	cp.type = AUDIO_MIXER_ENUM;
+	cp.un.ord = 0;
+	ce4231_set_port(sc, &cp);
+
+	cp.dev = CSAUDIO_CD_MUTE;
+	ce4231_set_port(sc, &cp);
+
+	cp.dev = CSAUDIO_LINE_IN_MUTE;
+	ce4231_set_port(sc, &cp);
 
 	/* XXX get real burst... */
 	sc->sc_burst = EBDCSR_BURST_8;
@@ -446,174 +451,10 @@ ce4231_open(addr, flags)
 	if (tries == 0)
 		printf("%s: timeout waiting for reset\n", sc->sc_dev.dv_xname);
 
-	/* Turn on cs4231 mode */
-	ce4231_write(sc, SP_MISC_INFO,
-	    ce4231_read(sc, SP_MISC_INFO) | MODE2);
-
-	ce4231_setup_output(sc);
-	ce4231_setup_input(sc);
-
 	ce4231_write(sc, SP_PIN_CONTROL,
 	    ce4231_read(sc, SP_PIN_CONTROL) | INTERRUPT_ENABLE);
 
 	return (0);
-}
-
-/* Set volume/attenuation values and mute settings for outputs */
-void
-ce4231_setup_output(sc)
-	struct ce4231_softc *sc;
-{
-	u_int8_t pc, mi, rm = 0, lm = 0;
-
-
-	/* DAC-output attenuation */
-	DPRINTF(("ce4231_setup_output: DAC out = %d, %d\n",
-	    sc->sc_volume[CSPORT_DAC].left,
-	    sc->sc_volume[CSPORT_DAC].right));
-	lm = (255 - sc->sc_volume[CSPORT_DAC].left) >> 2;
-	rm = (255 - sc->sc_volume[CSPORT_DAC].right) >> 2;
-
-	/* DAC out mute setting */
-	if (!sc->sc_mute[CSPORT_DAC]) {
-		DPRINTF(("ce4231_setup_output: DAC out muted\n"));
-		lm = lm | OUTPUT_MUTE;
-		rm = rm | OUTPUT_MUTE;
-	}
-
-	/* Commit DAC-out settings */
-	ce4231_write(sc, SP_LEFT_OUTPUT_CONTROL, lm);
-	ce4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, rm);
-
-	/* Mono DAC-out mute settings */
-	mi = ce4231_read(sc, CS_MONO_IO_CONTROL) & ~MONO_OUTPUT_MUTE;
-	if (!sc->sc_monoout_enable) {
-		DPRINTF(("ce4231_setup_output: DAC mono output is disabled\n"));
-		mi = mi | MONO_OUTPUT_MUTE;
-	}
-
-	/* Merge in mono input settings, as in same 8 bits */
-	mi = mi | (ce4231_read(sc, CS_MONO_IO_CONTROL) & MONO_INPUT_MUTE);
-
-	/* Commit mono dacout settings */
-	ce4231_write(sc, CS_MONO_IO_CONTROL, mi);
-
-	/* Line and headphone dacout mutes */
-	pc = (ce4231_read(sc, SP_PIN_CONTROL) &
-	    ~CS_PC_HDPHMUTE) & ~CS_PC_LINEMUTE;
-	if (!sc->sc_lineout_enable) {
-		DPRINTF(("ce4231_setup_output: DAC line output is disabled\n"));
-		pc = pc | CS_PC_LINEMUTE;
-	}
-	if (!sc->sc_hdphout_enable) {
-		DPRINTF(("ce4231_setup_output: DAC hdph output is disabled\n"));
-		pc = pc | CS_PC_HDPHMUTE;
-	}
-
-	/* Commit line/headphone DAC-out settings */
-	ce4231_write(sc, SP_PIN_CONTROL, pc);
-}
-
-/* Set volume/attenuation values and mute settings for outputs */
-void
-ce4231_setup_input(sc)
-	struct ce4231_softc *sc;
-{
-
-	u_int8_t line_l, line_r, mono, aux2_l, aux2_r, monitor,
-	    adc_l, adc_r;
-
-	/* Line-in gain */
-	DPRINTF(("ce4231_setup_input: line in gain = %d,%d\n",
-	    sc->sc_volume[CSPORT_LINEIN].left,
-	    sc->sc_volume[CSPORT_LINEIN].right));
-	line_l = sc->sc_volume[CSPORT_LINEIN].left >> 3;
-	line_r = sc->sc_volume[CSPORT_LINEIN].right >> 3;
-	DPRINTF(("ce4231_setup_input: line-in gain (on card) = %d,%d\n",
-	    line_l, line_r));
-
-	/* Line-in mute */
-	if (!sc->sc_mute[CSPORT_LINEIN]) {
-		DPRINTF(("ce4231_setup_input: line-in mute is enabled\n"));
-		line_l = line_l | CS_PC_LINEMUTE;
-		line_r = line_r| CS_PC_LINEMUTE;
-	}
-
-	/* Commit line-in settings to card */
-	ce4231_write(sc, CS_LEFT_LINE_CONTROL, line_l);
-	ce4231_write(sc, CS_RIGHT_LINE_CONTROL, line_r);
-
-	/* Mono-in attenuation */
-	DPRINTF(("ce4231_setup_input: mono-in gain = %d\n",
-	    sc->sc_volume[CSPORT_MONO].left));
-	mono = (255 - sc->sc_volume[CSPORT_MONO].left) >> 4;
-	DPRINTF(("ce4231_setup_input: mono-in attenuation (on card) = %d\n",
-	    mono));
-
-	/* Mono-in mute */
-	if (!sc->sc_mute[CSPORT_MONO]) {
-		DPRINTF(("ce4231_setup_input: mono-in mute is enabled\n"));
-		mono = mono | MONO_INPUT_MUTE;
-	}
-
-	/* Merge in mono dacout setting, as in the same 8 bits */
-	mono = mono | (ce4231_read(sc, CS_MONO_IO_CONTROL) & MONO_OUTPUT_MUTE);
-
-	/* Commit mono-in settings */
-	ce4231_write(sc, CS_MONO_IO_CONTROL, mono);
-
-	/* CD/aux2 gain */
-	DPRINTF(("ce4231_setup_input: cd/aux2 gain = %d,%d\n",
-	    sc->sc_volume[CSPORT_AUX2].left,
-	    sc->sc_volume[CSPORT_AUX2].right));
-	aux2_l = sc->sc_volume[CSPORT_AUX2].left >> 3;
-	aux2_r = sc->sc_volume[CSPORT_AUX2].right >> 3;
-	DPRINTF(("ce4231_setup_input: cd/aux2 gain (on card) = %d,%d\n",
-	    aux2_l, aux2_r));
-
-	/* CD/aux2-input mute */
-	if (!sc->sc_mute[CSPORT_AUX2]) {
-		DPRINTF(("ce4231_setup_input: cd/aux2-in mute is enabled\n"));
-		aux2_l = aux2_l | AUX_INPUT_MUTE;
-		aux2_r = aux2_r | AUX_INPUT_MUTE;
-	}
-
-	/* Commit cd/aux2 settings */
-	ce4231_write(sc, SP_LEFT_AUX2_CONTROL, aux2_l);
-	ce4231_write(sc, SP_RIGHT_AUX2_CONTROL, aux2_r);
-
-	/* Monitor attenuation */
-	DPRINTF(("ce4231_setup_input: monitor gain = %d\n",
-	    sc->sc_volume[CSPORT_MONITOR].left));
-	monitor = (0xff - sc->sc_volume[CSPORT_MONITOR].left) & MIX_ATTEN_MASK;
-	DPRINTF(("ce4231_setup_input: monitor attenuation (on card) = %d\n",
-	    monitor >> 2));
-
-	/* Monitor mute */
-	if (!sc->sc_mute[CSPORT_MONITOR]) {
-		monitor |= DIGITAL_MIX1_ENABLE;
-	}
-
-	/* Commit monitor settings */
-	ce4231_write(sc, SP_DIGITAL_MIX, monitor);
-
-	/* ADC-in gain */
-	DPRINTF(("ce4231_setup_input: adc gain = %d,%d\n",
-	    sc->sc_volume[CSPORT_ADC].left,
-	    sc->sc_volume[CSPORT_ADC].right));
-	adc_l = sc->sc_volume[CSPORT_ADC].left >> 4;
-	adc_r = sc->sc_volume[CSPORT_ADC].right >> 4;
-	DPRINTF(("ce4231_setup_input: adc gain (on card)  = %d,%d\n",
-	    adc_l, adc_r));
-
-	/* Record source is one of *_INPUT_PORT */
-	adc_l = adc_l | (sc->sc_rec_src << 6);
-	adc_r = adc_r | (sc->sc_rec_src << 6);
-
-	ce4231_write(sc, SP_LEFT_INPUT_CONTROL, adc_l);
-	ce4231_write(sc, SP_RIGHT_INPUT_CONTROL, adc_r);
-
-	return;
 }
 
 void
@@ -907,549 +748,465 @@ ce4231_getdev(addr, retp)
 	return (0);
 }
 
-int
-ce4231_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+void
+ce4231_set_outputs(struct ce4231_softc *sc, int mask)
 {
-	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
-	int error = EINVAL;
+	u_int8_t val;
 
-	DPRINTF(("ce4231_set_port: port=%d type=%d\n", cp->dev, cp->type));
+	val = ce4231_read(sc, CS_MONO_IO_CONTROL) & ~MONO_OUTPUT_MUTE;
+	if (!(mask & OUT_PORT_SPKR))
+		val |= MONO_OUTPUT_MUTE;
+	ce4231_write(sc, CS_MONO_IO_CONTROL, val);
 
-	/* XXX a lot of duplicated code here, sometime in the future
-	 * make a function like:
-	 * set_soft_volume(struct ce4231_softc *sc, mixer_ctrl_t *cp);
-	 */
-
-	switch (cp->dev) {
-	case CSAUDIO_DAC_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1) {
-			sc->sc_volume[CSPORT_DAC].left =
-				cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-			sc->sc_volume[CSPORT_DAC].right =
-				cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		} else if (cp->un.value.num_channels == 2) {
-			sc->sc_volume[CSPORT_DAC].left =
-				cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			sc->sc_volume[CSPORT_DAC].right =
-				cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-		} else
-			break;
-		ce4231_setup_output(sc);
-		error = 0;
-		break;
-	case CSAUDIO_LINE_IN_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1) {
-			sc->sc_volume[CSPORT_LINEIN].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-			sc->sc_volume[CSPORT_LINEIN].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		} else if (cp->un.value.num_channels == 2) {
-			sc->sc_volume[CSPORT_LINEIN].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			sc->sc_volume[CSPORT_LINEIN].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-		} else
-			break;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	case CSAUDIO_MIC_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1) {
-			sc->sc_volume[CSPORT_MONO].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-			sc->sc_volume[CSPORT_MONO].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		} else if (cp->un.value.num_channels == 2) {
-			sc->sc_volume[CSPORT_MONO].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			sc->sc_volume[CSPORT_MONO].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-		} else
-			break;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	case CSAUDIO_CD_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1) {
-			sc->sc_volume[CSPORT_AUX2].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-			sc->sc_volume[CSPORT_AUX2].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		} else if (cp->un.value.num_channels == 2) {
-			sc->sc_volume[CSPORT_AUX2].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			sc->sc_volume[CSPORT_AUX2].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-		} else
-			break;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	case CSAUDIO_MONITOR_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE ||
-		    cp->un.value.num_channels != 1)
-		    	break;
-		sc->sc_volume[CSPORT_MONITOR].left =
-		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		ce4231_setup_input(sc);
-		error = 0;
-
-		break;
-	case CSAUDIO_LINE_IN_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_mute[CSPORT_LINEIN] = cp->un.ord ? 1 : 0;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	case CSAUDIO_DAC_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_mute[CSPORT_DAC] = cp->un.ord ? 1 : 0;
-		ce4231_setup_output(sc);
-		error = 0;
-		break;
-	case CSAUDIO_CD_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_mute[CSPORT_AUX2] = cp->un.ord ? 1 : 0;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	case CSAUDIO_MIC_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_mute[CSPORT_MONO] = cp->un.ord ? 1 : 0;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	case CSAUDIO_MONITOR_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_mute[CSPORT_MONITOR] = cp->un.ord ? 1 : 0;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	case CSAUDIO_DAC_MONO_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_monoout_enable = cp->un.ord ? 1 : 0;
-		ce4231_setup_output(sc);
-		error = 0;
-		break;
-	case CSAUDIO_DAC_LINE_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_lineout_enable = cp->un.ord ? 1 : 0;
-		ce4231_setup_output(sc);
-		error = 0;
-		break;
-	case CSAUDIO_DAC_HDPH_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_hdphout_enable = cp->un.ord ? 1 : 0;
-		ce4231_setup_output(sc);
-		error = 0;
-		break;
-	case CSAUDIO_REC_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1) {
-			sc->sc_volume[CSPORT_ADC].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-			sc->sc_volume[CSPORT_ADC].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		} else if (cp->un.value.num_channels == 2) {
-			sc->sc_volume[CSPORT_ADC].left =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			sc->sc_volume[CSPORT_ADC].right =
-			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-		} else
-			break;
-		ce4231_setup_input(sc);
-		error = 0;
-
-		break;
-
-	case CSAUDIO_RECORD_SOURCE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		sc->sc_rec_src = cp->un.ord;
-		ce4231_setup_input(sc);
-		error = 0;
-		break;
-	}
-
-	return (error);
+	val = ce4231_read(sc, SP_PIN_CONTROL) & ~(XCTL0_ENABLE | XCTL1_ENABLE);
+	if (!(mask & OUT_PORT_LINE))
+		val |= XCTL0_ENABLE;
+	if (!(mask & OUT_PORT_HP))
+		val |= XCTL1_ENABLE;
+	ce4231_write(sc, SP_PIN_CONTROL, val);
 }
 
 int
-ce4231_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+ce4231_get_outputs(struct ce4231_softc *sc)
+{
+	int mask = 0;
+	u_int8_t val;
+
+	if (!(ce4231_read(sc, CS_MONO_IO_CONTROL) & MONO_OUTPUT_MUTE))
+		mask |= OUT_PORT_SPKR;
+
+	val = ce4231_read(sc, SP_PIN_CONTROL);
+	if (!(val & XCTL0_ENABLE))
+		mask |= OUT_PORT_LINE;
+	if (!(val & XCTL1_ENABLE))
+		mask |= OUT_PORT_HP;
+
+	return (mask);
+}
+
+int
+ce4231_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
-	int error = EINVAL;
+	u_int8_t l, r;
+
+	DPRINTF(("ce4231_set_port: dev=%d type=%d\n", cp->dev, cp->type));
 
 	switch (cp->dev) {
+
 	case CSAUDIO_DAC_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1)
-			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    255 - ((ce4231_read(sc, SP_LEFT_OUTPUT_CONTROL) &
-			    OUTPUT_ATTEN_BITS) << 2);
-		else if (cp->un.value.num_channels == 2) {
-			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    255 - ((ce4231_read(sc, SP_LEFT_OUTPUT_CONTROL) &
-			    OUTPUT_ATTEN_BITS) << 2);
-			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    255 - ((ce4231_read(sc, SP_RIGHT_OUTPUT_CONTROL) &
-			    OUTPUT_ATTEN_BITS) << 2);
-		} else
-			break;
-		error = 0;
+			return (EINVAL);
+		l = ce4231_read(sc, SP_LEFT_OUTPUT_CONTROL) &
+		    OUTPUT_ATTEN_MASK;
+		r = ce4231_read(sc, SP_RIGHT_OUTPUT_CONTROL) &
+		    OUTPUT_ATTEN_MASK;
+		l |= (AUDIO_MAX_GAIN -
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT]) >> 2;
+		r |= (AUDIO_MAX_GAIN -
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]) >> 2;
+		ce4231_write(sc, SP_LEFT_OUTPUT_CONTROL, l);
+		ce4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, r);
 		break;
-	case CSAUDIO_LINE_IN_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1)
-			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    (ce4231_read(sc, CS_LEFT_LINE_CONTROL) &
-			    LINE_INPUT_ATTEN_BITS) << 3;
-		else if (cp->un.value.num_channels == 2) {
-			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    (ce4231_read(sc, CS_LEFT_LINE_CONTROL) &
-			    LINE_INPUT_ATTEN_BITS) << 3;
-			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    (ce4231_read(sc, CS_RIGHT_LINE_CONTROL) &
-			    LINE_INPUT_ATTEN_BITS) << 3;
-		} else
-			break;
-		error = 0;
+	case CSAUDIO_DAC_MUTE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		l = ce4231_read(sc, SP_LEFT_OUTPUT_CONTROL) & ~OUTPUT_MUTE;
+		r = ce4231_read(sc, SP_RIGHT_OUTPUT_CONTROL) & ~OUTPUT_MUTE;
+		if (cp->un.ord) {
+			l |= OUTPUT_MUTE;
+			r |= OUTPUT_MUTE;
+		}
+		ce4231_write(sc, SP_LEFT_OUTPUT_CONTROL, l);
+		ce4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, r);
 		break;
-	case CSAUDIO_MIC_LVL:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1) {
-			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    (255 - (ce4231_read(sc, CS_MONO_IO_CONTROL) &
-			    MONO_INPUT_ATTEN_BITS)) << 4;
-		} else
-			break;
-		error = 0;
+
+	case CSAUDIO_OUTPUTS:
+		if (cp->type != AUDIO_MIXER_SET)
+			return (EINVAL);
+		ce4231_set_outputs(sc, cp->un.mask);
 		break;
+
 	case CSAUDIO_CD_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1)
-			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    (ce4231_read(sc, SP_LEFT_AUX2_CONTROL) &
-			    LINE_INPUT_ATTEN_BITS) << 3;
-		else if (cp->un.value.num_channels == 2) {
-			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    (ce4231_read(sc, SP_LEFT_AUX2_CONTROL) &
-			    LINE_INPUT_ATTEN_BITS) << 3;
-			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    (ce4231_read(sc, SP_RIGHT_AUX2_CONTROL) &
-			    LINE_INPUT_ATTEN_BITS) << 3;
-		} else
-			break;
-		error = 0;
+			return (EINVAL);
+		l = ce4231_read(sc, SP_LEFT_AUX1_CONTROL) &
+		    AUX_INPUT_ATTEN_MASK;
+		r = ce4231_read(sc, SP_RIGHT_AUX1_CONTROL) &
+		    AUX_INPUT_ATTEN_MASK;
+		l |= (AUDIO_MAX_GAIN -
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT]) >> 3;
+		r |= (AUDIO_MAX_GAIN -
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]) >> 3;
+		ce4231_write(sc, SP_LEFT_AUX1_CONTROL, l);
+		ce4231_write(sc, SP_RIGHT_AUX1_CONTROL, r);
 		break;
+	case CSAUDIO_CD_MUTE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		l = ce4231_read(sc, SP_LEFT_AUX1_CONTROL) & ~AUX_INPUT_MUTE;
+		r = ce4231_read(sc, SP_RIGHT_AUX1_CONTROL) & ~AUX_INPUT_MUTE;
+		if (cp->un.ord) {
+			l |= AUX_INPUT_MUTE;
+			r |= AUX_INPUT_MUTE;
+		}
+		ce4231_write(sc, SP_LEFT_AUX1_CONTROL, l);
+		ce4231_write(sc, SP_RIGHT_AUX1_CONTROL, r);
+		break;
+
+	case CSAUDIO_LINE_IN_LVL:
+		if (cp->type != AUDIO_MIXER_VALUE)
+			return (EINVAL);
+		l = ce4231_read(sc, CS_LEFT_LINE_CONTROL) &
+		    LINE_INPUT_ATTEN_MASK;
+		r = ce4231_read(sc, CS_RIGHT_LINE_CONTROL) &
+		    LINE_INPUT_ATTEN_MASK;
+		l |= (AUDIO_MAX_GAIN -
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT]) >> 3;
+		r |= (AUDIO_MAX_GAIN -
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]) >> 3;
+		ce4231_write(sc, CS_LEFT_LINE_CONTROL, l);
+		ce4231_write(sc, CS_RIGHT_LINE_CONTROL, r);
+		break;
+	case CSAUDIO_LINE_IN_MUTE:
+		l = ce4231_read(sc, CS_LEFT_LINE_CONTROL) & ~LINE_INPUT_MUTE;
+		r = ce4231_read(sc, CS_RIGHT_LINE_CONTROL) & ~LINE_INPUT_MUTE;
+		if (cp->un.ord) {
+			l |= LINE_INPUT_MUTE;
+			r |= LINE_INPUT_MUTE;
+		}
+		ce4231_write(sc, CS_LEFT_LINE_CONTROL, l);
+		ce4231_write(sc, CS_RIGHT_LINE_CONTROL, r);
+		break;
+
 	case CSAUDIO_MONITOR_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
+			return (EINVAL);
 		if (cp->un.value.num_channels != 1)
-			break;
-		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-		    (0xff & MIX_ATTEN_MASK) -
-		    (ce4231_read(sc, SP_DIGITAL_MIX) & MIX_ATTEN_MASK);
-		error = 0;
-		break;
-	case CSAUDIO_LINE_IN_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, CS_LEFT_LINE_CONTROL) &
-		    CS_PC_LINEMUTE ? 0 : 1;
-		error = 0;
-		break;
-	case CSAUDIO_DAC_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, SP_LEFT_OUTPUT_CONTROL) &
-		    OUTPUT_MUTE ? 0 : 1;
-		error = 0;
-		break;
-	case CSAUDIO_CD_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, SP_LEFT_AUX2_CONTROL) &
-		    AUX_INPUT_MUTE ? 0 : 1;
-		error = 0;
-		break;
-	case CSAUDIO_MIC_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, CS_MONO_IO_CONTROL) &
-		    MONO_INPUT_MUTE ? 0 : 1;
-		error = 0;
+			return (EINVAL);
+		l = ce4231_read(sc, SP_DIGITAL_MIX) & ~MIX_ATTEN_MASK;
+		l |= (AUDIO_MAX_GAIN -
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]) &
+		    MIX_ATTEN_MASK;
+		ce4231_write(sc, SP_DIGITAL_MIX, l);
 		break;
 	case CSAUDIO_MONITOR_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, SP_DIGITAL_MIX) &
-		    DIGITAL_MIX1_ENABLE ? 0 : 1;
-		error = 0;
+			return (EINVAL);
+		l = ce4231_read(sc, SP_DIGITAL_MIX) & ~DIGITAL_MIX1_ENABLE;
+		if (!cp->un.ord)
+			l |= DIGITAL_MIX1_ENABLE;
+		ce4231_write(sc, SP_DIGITAL_MIX, l);
 		break;
-	case CSAUDIO_DAC_MONO_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, CS_MONO_IO_CONTROL) &
-		    MONO_OUTPUT_MUTE ? 0 : 1;
-		error = 0;
-		break;
-	case CSAUDIO_DAC_LINE_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, SP_PIN_CONTROL) & CS_PC_LINEMUTE
-		    ? 0 : 1;
-		error = 0;
-		break;
-	case CSAUDIO_DAC_HDPH_MUTE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-		cp->un.ord = ce4231_read(sc, SP_PIN_CONTROL) & CS_PC_HDPHMUTE
-		    ? 0 : 1;
-		error = 0;
-		break;
+
 	case CSAUDIO_REC_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
-			break;
-		if (cp->un.value.num_channels == 1) {
-			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    ce4231_read(sc, SP_LEFT_INPUT_CONTROL) << 4;
-		} else if (cp->un.value.num_channels == 2) {
-			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    ce4231_read(sc, SP_LEFT_INPUT_CONTROL) << 4;
-			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    ce4231_read(sc, SP_RIGHT_INPUT_CONTROL) << 4;
-		} else
-			break;
-		error = 0;
+			return (EINVAL);
+		l = ce4231_read(sc, SP_LEFT_INPUT_CONTROL) & INPUT_GAIN_MASK;
+		r = ce4231_read(sc, SP_RIGHT_INPUT_CONTROL) & INPUT_GAIN_MASK;
+		l = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] >> 4;
+		r = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] >> 4;
+		ce4231_write(sc, SP_LEFT_INPUT_CONTROL, l);
+		ce4231_write(sc, SP_RIGHT_INPUT_CONTROL, r);
 		break;
 	case CSAUDIO_RECORD_SOURCE:
 		if (cp->type != AUDIO_MIXER_ENUM)
-			break;
-
-		/* AUX in disabled for now until we know what it does */
-		if (cp->un.ord == AUX1_IN_PORT)
-			break;
-
-		cp->un.ord = ce4231_read(sc, SP_LEFT_INPUT_CONTROL &
-		    CS_REC_SRC_BITS) >> 6;
-		error = 0;
+			return (EINVAL);
+		l = ce4231_read(sc, SP_LEFT_INPUT_CONTROL) & INPUT_SOURCE_MASK;
+		r = ce4231_read(sc, SP_RIGHT_INPUT_CONTROL) & INPUT_SOURCE_MASK;
+		l |= cp->un.ord << 6;
+		r |= cp->un.ord << 6;
+		ce4231_write(sc, SP_LEFT_INPUT_CONTROL, l);
+		ce4231_write(sc, SP_RIGHT_INPUT_CONTROL, r);
 		break;
+
+	case CSAUDIO_MIC_PREAMP:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		l = ce4231_read(sc, SP_LEFT_INPUT_CONTROL) &
+		    ~INPUT_MIC_GAIN_ENABLE;
+		r = ce4231_read(sc, SP_RIGHT_INPUT_CONTROL) &
+		    ~INPUT_MIC_GAIN_ENABLE;
+		if (cp->un.ord) {
+			l |= INPUT_MIC_GAIN_ENABLE;
+			r |= INPUT_MIC_GAIN_ENABLE;
+		}
+		ce4231_write(sc, SP_LEFT_INPUT_CONTROL, l);
+		ce4231_write(sc, SP_RIGHT_INPUT_CONTROL, r);
+		break;
+
+	default:
+		return (EINVAL);
 	}
-	return (error);
+
+	return (0);
 }
 
 int
-ce4231_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+ce4231_get_port(void *addr, mixer_ctrl_t *cp)
 {
+	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
+
+	DPRINTF(("ce4231_get_port: port=%d type=%d\n", cp->dev, cp->type));
+
+	switch (cp->dev) {
+
+	case CSAUDIO_DAC_LVL:
+		if (cp->type != AUDIO_MIXER_VALUE)
+			return (EINVAL);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    AUDIO_MAX_GAIN - ((ce4231_read(sc, SP_LEFT_OUTPUT_CONTROL) &
+		    OUTPUT_ATTEN_BITS) << 2);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    AUDIO_MAX_GAIN - ((ce4231_read(sc, SP_RIGHT_OUTPUT_CONTROL) &
+		    OUTPUT_ATTEN_BITS) << 2);
+		break;
+	case CSAUDIO_DAC_MUTE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		cp->un.ord = (ce4231_read(sc, SP_LEFT_OUTPUT_CONTROL) &
+		    OUTPUT_MUTE) ? 1 : 0;
+		break;
+
+	case CSAUDIO_OUTPUTS:
+		if (cp->type != AUDIO_MIXER_SET)
+			return (EINVAL);
+		cp->un.mask = ce4231_get_outputs(sc);
+		break;
+
+	case CSAUDIO_CD_LVL:
+		if (cp->type != AUDIO_MIXER_VALUE)
+			return (EINVAL);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    AUDIO_MAX_GAIN - ((ce4231_read(sc, SP_LEFT_AUX1_CONTROL) &
+		    AUX_INPUT_ATTEN_BITS) << 3);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    AUDIO_MAX_GAIN - ((ce4231_read(sc, SP_RIGHT_AUX1_CONTROL) &
+		    AUX_INPUT_ATTEN_BITS) << 3);
+		break;
+	case CSAUDIO_CD_MUTE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		cp->un.ord = (ce4231_read(sc, SP_LEFT_AUX1_CONTROL) &
+		    AUX_INPUT_MUTE) ? 1 : 0;
+		break;
+
+	case CSAUDIO_LINE_IN_LVL:
+		if (cp->type != AUDIO_MIXER_VALUE)
+			return (EINVAL);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    AUDIO_MAX_GAIN - ((ce4231_read(sc, CS_LEFT_LINE_CONTROL) &
+		    LINE_INPUT_ATTEN_BITS) << 3);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    AUDIO_MAX_GAIN - ((ce4231_read(sc, CS_RIGHT_LINE_CONTROL) &
+		    LINE_INPUT_ATTEN_BITS) << 3);
+		break;
+	case CSAUDIO_LINE_IN_MUTE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		cp->un.ord = (ce4231_read(sc, CS_LEFT_LINE_CONTROL) &
+		    LINE_INPUT_MUTE) ? 1 : 0;
+		break;
+
+	case CSAUDIO_MONITOR_LVL:
+		if (cp->type != AUDIO_MIXER_VALUE)
+			return (EINVAL);
+		if (cp->un.value.num_channels != 1)
+			return (EINVAL);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
+		    AUDIO_MAX_GAIN - (ce4231_read(sc, SP_DIGITAL_MIX) &
+		    MIX_ATTEN_MASK);
+		break;
+	case CSAUDIO_MONITOR_MUTE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		cp->un.ord = (ce4231_read(sc, SP_DIGITAL_MIX) &
+		    DIGITAL_MIX1_ENABLE) ? 0 : 1;
+		break;
+
+	case CSAUDIO_REC_LVL:
+		if (cp->type != AUDIO_MIXER_VALUE)
+			return (EINVAL);
+		cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    (ce4231_read(sc, SP_LEFT_INPUT_CONTROL) &
+		    ~INPUT_GAIN_MASK) << 4;
+		cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    (ce4231_read(sc, SP_RIGHT_INPUT_CONTROL) &
+		    ~INPUT_GAIN_MASK) << 4;
+		break;
+	case CSAUDIO_RECORD_SOURCE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		cp->un.ord = (ce4231_read(sc, SP_LEFT_INPUT_CONTROL) &
+		    CS_REC_SRC_BITS) >> 6;
+		break;
+
+	case CSAUDIO_MIC_PREAMP:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		cp->un.ord = (ce4231_read(sc, SP_LEFT_INPUT_CONTROL) &
+		    INPUT_MIC_GAIN_ENABLE) ? 1 : 0;
+		break;
+
+	default:
+		return (EINVAL);
+	}
+	return (0);
+}
+
+int
+ce4231_query_devinfo(void *addr, mixer_devinfo_t *dip)
+{
+	size_t nsize = MAX_AUDIO_DEV_LEN;
 	int err = 0;
 
 	switch (dip->index) {
-	case CSAUDIO_MIC_LVL:		/* Mono/microphone mixer */
-		dip->type = AUDIO_MIXER_VALUE;
+	case CSAUDIO_INPUT_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = CSAUDIO_MIC_MUTE;
-		strlcpy(dip->label.name, AudioNmicrophone,
-		    sizeof(dip->label.name));
-		dip->un.v.num_channels = 1;
-		strlcpy(dip->un.v.units.name, AudioNvolume,
-		    sizeof(dip->un.v.units.name));
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioCinputs, nsize);
 		break;
-	case CSAUDIO_DAC_LVL:		/* DAC out */
+	case CSAUDIO_OUTPUT_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioCoutputs, nsize);
+		break;
+	case CSAUDIO_RECORD_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = CSAUDIO_RECORD_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioCrecord, nsize);
+		break;
+
+	case CSAUDIO_DAC_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_DAC_MUTE;
-		strlcpy(dip->label.name, AudioNdac, sizeof(dip->label.name));
+		strlcpy(dip->label.name, AudioNdac, nsize);
 		dip->un.v.num_channels = 2;
-		strlcpy(dip->un.v.units.name, AudioNvolume,
-		    sizeof(dip->un.v.units.name));
+		dip->un.v.delta = 4;
+		strlcpy(dip->un.v.units.name, AudioNvolume, nsize);
 		break;
-	case CSAUDIO_LINE_IN_LVL:	/* Line */
-		dip->type = AUDIO_MIXER_VALUE;
-		dip->mixer_class = CSAUDIO_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = CSAUDIO_LINE_IN_MUTE;
-		strlcpy(dip->label.name, AudioNline, sizeof(dip->label.name));
-		dip->un.v.num_channels = 2;
-		strlcpy(dip->un.v.units.name, AudioNvolume,
-		    sizeof(dip->un.v.units.name));
+	case CSAUDIO_DAC_MUTE:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
+		dip->prev = CSAUDIO_DAC_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioNmute, nsize);
+		goto onoff;
+
+	case CSAUDIO_OUTPUTS:
+		dip->type = AUDIO_MIXER_SET;
+		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioNoutput, nsize);
+		dip->un.s.num_mem = 3;
+		strlcpy(dip->un.s.member[0].label.name, AudioNline, nsize);
+		dip->un.s.member[0].mask = OUT_PORT_LINE;
+		strlcpy(dip->un.s.member[1].label.name, AudioNheadphone, nsize);
+		dip->un.s.member[1].mask = OUT_PORT_HP;
+		strlcpy(dip->un.s.member[2].label.name, AudioNspeaker, nsize);
+		dip->un.s.member[2].mask = OUT_PORT_SPKR;
 		break;
-	case CSAUDIO_CD_LVL:		/* CD */
+
+	case CSAUDIO_CD_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_CD_MUTE;
-		strlcpy(dip->label.name, AudioNcd, sizeof(dip->label.name));
+		strlcpy(dip->label.name, AudioNcd, nsize);
 		dip->un.v.num_channels = 2;
-		strlcpy(dip->un.v.units.name, AudioNvolume,
-		    sizeof(dip->un.v.units.name));
+		dip->un.v.delta = 8;
+		strlcpy(dip->un.v.units.name, AudioNvolume, nsize);
+		break;
+	case CSAUDIO_CD_MUTE:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = CSAUDIO_INPUT_CLASS;
+		dip->prev = CSAUDIO_CD_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioNmute, nsize);
+		goto onoff;
+
+	case CSAUDIO_LINE_IN_LVL:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = CSAUDIO_INPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = CSAUDIO_LINE_IN_MUTE;
+		strlcpy(dip->label.name, AudioNline, nsize);
+		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
+		strlcpy(dip->un.v.units.name, AudioNvolume, nsize);
 		break;
 	case CSAUDIO_LINE_IN_MUTE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->prev = CSAUDIO_LINE_IN_LVL;
 		dip->next = AUDIO_MIXER_LAST;
-		goto mute;
-	case CSAUDIO_DAC_MUTE:
-		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
-		dip->prev = CSAUDIO_DAC_LVL;
-		dip->next = CSAUDIO_DAC_MONO_MUTE;
-		goto mute;
-	case CSAUDIO_CD_MUTE:
-		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = CSAUDIO_INPUT_CLASS;
-		dip->prev = CSAUDIO_CD_LVL;
-		dip->next = AUDIO_MIXER_LAST;
-		goto mute;
-	case CSAUDIO_MIC_MUTE:
-		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = CSAUDIO_INPUT_CLASS;
-		dip->prev = CSAUDIO_MIC_LVL;
-		dip->next = AUDIO_MIXER_LAST;
-		goto mute;
-	case CSAUDIO_MONITOR_LVL:	/* Monitor level */
+		strlcpy(dip->label.name, AudioNmute, nsize);
+		goto onoff;
+
+	case CSAUDIO_MONITOR_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CSAUDIO_MONITOR_MUTE;
-		strlcpy(dip->label.name, AudioNmonitor,
-		    sizeof(dip->label.name));
+		strlcpy(dip->label.name, AudioNmonitor, nsize);
 		dip->un.v.num_channels = 1;
-		strlcpy(dip->un.v.units.name, AudioNvolume,
-		    sizeof(dip->un.v.units.name));
+		dip->un.v.delta = 4;
+		strlcpy(dip->un.v.units.name, AudioNvolume, nsize);
 		break;
 	case CSAUDIO_MONITOR_MUTE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
 		dip->prev = CSAUDIO_MONITOR_LVL;
 		dip->next = AUDIO_MIXER_LAST;
-		goto mute;
-	case CSAUDIO_DAC_MONO_MUTE: /* The DAC has a mono out, usually spkr */
-		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
-		dip->prev = CSAUDIO_DAC_MUTE;
-		dip->next = CSAUDIO_DAC_LINE_MUTE;
-		/* Custom name, as we already have a mute in this class */
-		strlcpy(dip->label.name, "monomute", sizeof(dip->label.name));
-		goto mute1;
-	case CSAUDIO_DAC_LINE_MUTE:
-		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
-		dip->prev = CSAUDIO_DAC_MONO_MUTE;
-		dip->next = CSAUDIO_DAC_HDPH_MUTE;
-		/* Custom name */
-		strlcpy(dip->label.name, "linemute", sizeof(dip->label.name));
-		goto mute1;
-	case CSAUDIO_DAC_HDPH_MUTE:
-		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
-		dip->prev = CSAUDIO_DAC_LINE_MUTE;
-		dip->next = CSAUDIO_MONITOR_LVL;
-		/* Custom name */
-		strlcpy(dip->label.name, "hdphmute", sizeof(dip->label.name));
-		goto mute1;
-	mute:
-		strlcpy(dip->label.name, AudioNmute, sizeof(dip->label.name));
-	mute1:
-		dip->un.e.num_mem = 2;
-		strlcpy(dip->un.e.member[0].label.name, AudioNon,
-		    sizeof(dip->un.e.member[0].label.name));
-		dip->un.e.member[0].ord = 0;
-		strlcpy(dip->un.e.member[1].label.name, AudioNoff,
-		    sizeof(dip->un.e.member[1].label.name));
-		dip->un.e.member[1].ord = 1;
-		break;
+		strlcpy(dip->label.name, AudioNmute, nsize);
+		goto onoff;
+
 	case CSAUDIO_REC_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = CSAUDIO_RECORD_SOURCE;
-		strlcpy(dip->label.name, AudioNrecord,
-		    sizeof(dip->label.name));
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioNvolume, nsize);
 		dip->un.v.num_channels = 2;
-		strlcpy(dip->un.v.units.name, AudioNvolume,
-		    sizeof(dip->un.v.units.name));
+		dip->un.v.delta = 16;
+		strlcpy(dip->un.v.units.name, AudioNvolume, nsize);
 		break;
 	case CSAUDIO_RECORD_SOURCE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;
-		dip->prev = CSAUDIO_REC_LVL;
-		dip->next = AUDIO_MIXER_LAST;
-		strlcpy(dip->label.name, AudioNsource,
-		    sizeof(dip->label.name));
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioNsource, nsize);
 		dip->un.e.num_mem = 4;
-
-		strlcpy(dip->un.e.member[0].label.name, AudioNline,
-		    sizeof(dip->un.e.member[0].label.name));
-		dip->un.e.member[0].ord = LINE_IN_PORT;
-
-		strlcpy(dip->un.e.member[1].label.name, "aux",
-		    sizeof(dip->un.e.member[1].label.name));
-		dip->un.e.member[1].ord = AUX1_IN_PORT;
-
-		strlcpy(dip->un.e.member[2].label.name, AudioNmicrophone,
-		    sizeof(dip->un.e.member[2].label.name));
-		dip->un.e.member[2].ord = MIC_IN_PORT;
-
-		strlcpy(dip->un.e.member[3].label.name, AudioNdac,
-		    sizeof(dip->un.e.member[3].label.name));
-		dip->un.e.member[3].ord = DAC_IN_PORT;
-
+		strlcpy(dip->un.e.member[0].label.name, AudioNline, nsize);
+		dip->un.e.member[0].ord = REC_PORT_LINE;
+		strlcpy(dip->un.e.member[1].label.name, AudioNcd, nsize);
+		dip->un.e.member[1].ord = REC_PORT_CD;
+		strlcpy(dip->un.e.member[2].label.name, AudioNmicrophone, nsize);
+		dip->un.e.member[2].ord = REC_PORT_MIC;
+		strlcpy(dip->un.e.member[3].label.name, AudioNmixerout, nsize);
+		dip->un.e.member[3].ord = REC_PORT_MIX;
 		break;
-	case CSAUDIO_INPUT_CLASS:	/* Input class descriptor */
-		dip->type = AUDIO_MIXER_CLASS;
-		dip->mixer_class = CSAUDIO_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
-		strlcpy(dip->label.name, AudioCinputs,
-		    sizeof(dip->label.name));
-		break;
-	case CSAUDIO_OUTPUT_CLASS:	/* Output class descriptor */
-		dip->type = AUDIO_MIXER_CLASS;
-		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
-		strlcpy(dip->label.name, AudioCoutputs,
-		    sizeof(dip->label.name));
-		break;
-	case CSAUDIO_RECORD_CLASS:	/* Record class descriptor */
-		dip->type = AUDIO_MIXER_CLASS;
+
+	case CSAUDIO_MIC_PREAMP:
+		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
-		strlcpy(dip->label.name, AudioCrecord,
-		    sizeof(dip->label.name));
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		snprintf(dip->label.name, nsize, "%s_%s", AudioNmicrophone,
+		   AudioNpreamp);
+		goto onoff;
+
+onoff:
+		dip->un.e.num_mem = 2;
+		strlcpy(dip->un.e.member[0].label.name, AudioNon, nsize);
+		dip->un.e.member[0].ord = 1;
+		strlcpy(dip->un.e.member[1].label.name, AudioNoff, nsize);
+		dip->un.e.member[1].ord = 0;
 		break;
+
 	default:
 		err = ENXIO;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231var.h,v 1.9 2009/12/01 23:17:11 edd Exp $	*/
+/*	$OpenBSD: ce4231var.h,v 1.10 2010/07/26 20:06:12 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -71,13 +71,6 @@ struct ce4231_softc {
 	void	*sc_rarg;		/* arg for sc_rintr() */
 	void	(*sc_pintr)(void *);	/* output completion intr handler */
 	void	*sc_parg;		/* arg for sc_pintr() */
-
-	char		sc_mute[CS4231_LVLS];	/* which devs are muted */
-	u_int8_t	sc_monoout_enable; /* whether the mono dacout is on */
-	u_int8_t	sc_lineout_enable; /* whether the line dacout is on */
-	u_int8_t	sc_hdphout_enable; /* whether the cans dacout is on */
-	u_int8_t	sc_rec_src;	   /* recording src */
-	struct	cs_volume sc_volume[CS4231_LVLS];	/* software volume */
 
 	int sc_format_bits;
 	int sc_speed_bits;
