@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.15 2010/07/12 09:31:52 espie Exp $
+# $OpenBSD: State.pm,v 1.16 2010/07/26 23:27:28 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -87,7 +87,7 @@ sub istrue
 {
 	my ($self, $k) = @_;
 	my $v = $self->value($k);
-	if (defined $v && $v =~ /^(?:1|yes|y|on|true|t)$/) {
+	if (defined $v && $v =~ /^yes$/i) {
 		return 1;
 	} else {
 		return 0;
@@ -431,7 +431,7 @@ sub unlink
 	my $r = unlink @_;
 	if ($r != @_) {
 		$self->say("rm #1 failed: removed only #2 targets, #3",
-		    join(' ', @_), $r, $1);
+		    join(' ', @_), $r, $!);
 	} elsif ($verbose) {
 		$self->say("rm #1", join(' ', @_));
 	}
