@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.14 2009/06/04 00:24:01 blambert Exp $	*/
+/*	$OpenBSD: uio.h,v 1.15 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ struct uio {
 	size_t	uio_resid;	/* residual i/o count */
 	enum	uio_seg uio_segflg; /* see above */
 	enum	uio_rw uio_rw;	/* see above */
-	struct	proc *uio_procp;/* associated process or NULL */
+	struct	proc *uio_procp;/* associated thread or NULL */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.69 2010/07/08 20:15:03 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.70 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -476,12 +476,12 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		if (tmp <= 0) {
 			tmp = -tmp;
 		} else {
-			struct proc *p1 = pfind(tmp);
-			if (p1 == 0) {
+			struct process *pr = prfind(tmp);
+			if (pr == NULL) {
 				error = ESRCH;
 				break;
 			}
-			tmp = p1->p_pgrp->pg_id;
+			tmp = pr->ps_pgrp->pg_id;
 		}
 		error = (*fp->f_ops->fo_ioctl)
 			(fp, TIOCSPGRP, (caddr_t)&tmp, p);

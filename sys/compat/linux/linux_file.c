@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.23 2006/09/25 07:12:57 otto Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.24 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -190,7 +190,8 @@ linux_sys_open(p, v, retval)
 	 * terminal yet, and the O_NOCTTY flag is not set, try to make
 	 * this the controlling terminal.
 	 */ 
-        if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
+        if (!(fl & O_NOCTTY) && SESS_LEADER(p->p_p) &&
+	    !(p->p_p->ps_flags & PS_CONTROLT)) {
                 struct filedesc *fdp = p->p_fd;
                 struct file     *fp;
 
@@ -417,13 +418,13 @@ linux_sys_fcntl(p, v, retval)
 		if ((long)arg <= 0) {
 			pgid = -(long)arg;
 		} else {
-			struct proc *p1 = pfind((long)arg);
-			if (p1 == 0)
+			struct process *pr = prfind((long)arg);
+			if (pr == 0)
 				return (ESRCH);
-			pgid = (long)p1->p_pgrp->pg_id;
+			pgid = (long)pr->ps_pgrp->pg_id;
 		}
 		pgrp = pgfind(pgid);
-		if (pgrp == NULL || pgrp->pg_session != p->p_session)
+		if (pgrp == NULL || pgrp->pg_session != p->p_p->ps_session)
 			return EPERM;
 		tp->t_pgrp = pgrp;
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.40 2010/01/10 03:37:50 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.41 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,9 +303,9 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 		 * gather eproc
 		 */
 		eproc.e_paddr = p;
-		if (KREAD(kd, (u_long)proc.p_pgrp, &pgrp)) {
+		if (KREAD(kd, (u_long)process.ps_pgrp, &pgrp)) {
 			_kvm_err(kd, kd->program, "can't read pgrp at %x",
-			    proc.p_pgrp);
+			    process.ps_pgrp);
 			return (-1);
 		}
 		eproc.e_sess = pgrp.pg_session;
@@ -316,7 +316,7 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 			    pgrp.pg_session);
 			return (-1);
 		}
-		if ((proc.p_flag & P_CONTROLT) && sess.s_ttyp != NULL) {
+		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL) {
 			if (KREAD(kd, (u_long)sess.s_ttyp, &tty)) {
 				_kvm_err(kd, kd->program,
 				    "can't read tty at %x", sess.s_ttyp);
@@ -337,7 +337,7 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 		} else
 			eproc.e_tdev = NODEV;
 		eproc.e_flag = sess.s_ttyvp ? EPROC_CTTY : 0;
-		if (sess.s_leader == p)
+		if (sess.s_leader == proc.p_p)
 			eproc.e_flag |= EPROC_SLEADER;
 		if (proc.p_wmesg)
 			(void)kvm_read(kd, (u_long)proc.p_wmesg,
@@ -356,11 +356,12 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 			break;
 
 		case KERN_PROC_TTY:
-			if ((proc.p_flag & P_CONTROLT) == 0 ||
+			if ((process.ps_flags & PS_CONTROLT) == 0 ||
 			    eproc.e_tdev != (dev_t)arg)
 				continue;
 			break;
 		}
+		proc.p_flag |= process.ps_flags;
 		bcopy(&proc, &bp->kp_proc, sizeof(proc));
 		bcopy(&eproc, &bp->kp_eproc, sizeof(eproc));
 		++bp;

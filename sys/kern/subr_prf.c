@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.74 2008/06/27 17:23:24 miod Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.75 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -357,12 +357,12 @@ kputchar(int c, int flags, struct tty *tp)
 void
 uprintf(const char *fmt, ...)
 {
-	struct proc *p = curproc;
+	struct process *pr = curproc->p_p;
 	va_list ap;
 
-	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
+	if (pr->ps_flags & PS_CONTROLT && pr->ps_session->s_ttyvp) {
 		va_start(ap, fmt);
-		kprintf(fmt, TOTTY, p->p_session->s_ttyp, NULL, ap);
+		kprintf(fmt, TOTTY, pr->ps_session->s_ttyp, NULL, ap);
 		va_end(ap);
 	}
 }
@@ -380,6 +380,7 @@ uprintf(const char *fmt, ...)
 
 /*
  * tprintf_open: get a tprintf handle on a process "p"
+ * XXX change s/proc/process
  *
  * => returns NULL if process can't be printed to
  */
@@ -387,10 +388,11 @@ uprintf(const char *fmt, ...)
 tpr_t
 tprintf_open(struct proc *p)
 {
+	struct process *pr = p->p_p;
 
-	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
-		SESSHOLD(p->p_session);
-		return ((tpr_t) p->p_session);
+	if (pr->ps_flags & PS_CONTROLT && pr->ps_session->s_ttyvp) {
+		SESSHOLD(pr->ps_session);
+		return ((tpr_t)pr->ps_session);
 	}
 	return ((tpr_t) NULL);
 }

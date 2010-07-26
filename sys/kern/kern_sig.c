@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.115 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.116 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 	if (p == q)
 		return (1);		/* process can always signal itself */
 
-	if (signum == SIGCONT && q->p_session == p->p_session)
+	if (signum == SIGCONT && q->p_p->ps_session == p->p_p->ps_session)
 		return (1);		/* SIGCONT in session */
 
 	/*
@@ -620,6 +620,7 @@ int
 killpg1(struct proc *cp, int signum, int pgid, int all)
 {
 	struct proc *p;
+	struct process *pr;
 	struct pcred *pc = cp->p_cred;
 	struct pgrp *pgrp;
 	int nfound = 0;
@@ -641,13 +642,14 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 			/*
 			 * zero pgid means send to my process group.
 			 */
-			pgrp = cp->p_pgrp;
+			pgrp = cp->p_p->ps_pgrp;
 		else {
 			pgrp = pgfind(pgid);
 			if (pgrp == NULL)
 				return (ESRCH);
 		}
-		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
+		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist) {
+			p = pr->ps_mainproc;
 			if (p->p_pid <= 1 || p->p_flag & (P_SYSTEM|P_THREAD) ||
 			    !cansignal(cp, pc, p, signum))
 				continue;
@@ -659,14 +661,14 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 	return (nfound ? 0 : ESRCH);
 }
 
-#define CANDELIVER(uid, euid, p) \
+#define CANDELIVER(uid, euid, pr) \
 	(euid == 0 || \
-	(uid) == (p)->p_cred->p_ruid || \
-	(uid) == (p)->p_cred->p_svuid || \
-	(uid) == (p)->p_ucred->cr_uid || \
-	(euid) == (p)->p_cred->p_ruid || \
-	(euid) == (p)->p_cred->p_svuid || \
-	(euid) == (p)->p_ucred->cr_uid)
+	(uid) == (pr)->ps_cred->p_ruid || \
+	(uid) == (pr)->ps_cred->p_svuid || \
+	(uid) == (pr)->ps_cred->pc_ucred->cr_uid || \
+	(euid) == (pr)->ps_cred->p_ruid || \
+	(euid) == (pr)->ps_cred->p_svuid || \
+	(euid) == (pr)->ps_cred->pc_ucred->cr_uid)
 
 /*
  * Deliver signum to pgid, but first check uid/euid against each
@@ -676,7 +678,7 @@ void
 csignal(pid_t pgid, int signum, uid_t uid, uid_t euid)
 {
 	struct pgrp *pgrp;
-	struct proc *p;
+	struct process *pr;
 
 	if (pgid == 0)
 		return;
@@ -684,14 +686,14 @@ csignal(pid_t pgid, int signum, uid_t uid, uid_t euid)
 		pgid = -pgid;
 		if ((pgrp = pgfind(pgid)) == NULL)
 			return;
-		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
-			if (CANDELIVER(uid, euid, p))
-				psignal(p, signum);
+		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist)
+			if (CANDELIVER(uid, euid, pr))
+				prsignal(pr, signum);
 	} else {
-		if ((p = pfind(pgid)) == NULL)
+		if ((pr = prfind(pgid)) == NULL)
 			return;
-		if (CANDELIVER(uid, euid, p))
-			psignal(p, signum);
+		if (CANDELIVER(uid, euid, pr))
+			prsignal(pr, signum);
 	}
 }
 
@@ -714,13 +716,12 @@ gsignal(int pgid, int signum)
 void
 pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 {
-	struct proc *p;
+	struct process *pr;
 
 	if (pgrp)
-		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
-			if ((checkctty == 0 || p->p_flag & P_CONTROLT) &&
-			    (p->p_flag & P_THREAD) == 0)
-				psignal(p, signum);
+		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist)
+			if (checkctty == 0 || pr->ps_flags & PS_CONTROLT)
+				prsignal(pr, signum);
 }
 
 /*
@@ -866,7 +867,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * the action is default; don't stop the process below
 			 * if sleeping, and don't clear any pending SIGCONT.
 			 */
-			if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0)
+			if (prop & SA_TTYSTOP && p->p_p->ps_pgrp->pg_jobc == 0)
 				return;
 		}
 	}
@@ -1031,7 +1032,7 @@ run:
 out:
 	SCHED_UNLOCK(s);
 	if (wakeparent)
-		wakeup(p->p_pptr);
+		wakeup(p->p_p->ps_pptr);
 }
 
 /*
@@ -1136,7 +1137,7 @@ issignal(struct proc *p)
 			 */
 			if (prop & SA_STOP) {
 				if (p->p_flag & P_TRACED ||
-		    		    (p->p_pgrp->pg_jobc == 0 &&
+		    		    (p->p_p->ps_pgrp->pg_jobc == 0 &&
 				    prop & SA_TTYSTOP))
 					break;	/* == ignore */
 				p->p_xstat = signum;
@@ -1226,9 +1227,9 @@ proc_stop_sweep(void *v)
 			continue;
 		atomic_clearbits_int(&p->p_flag, P_STOPPED);
 
-		if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
-			psignal(p->p_pptr, SIGCHLD);
-		wakeup(p->p_pptr);
+		if ((p->p_p->ps_pptr->ps_mainproc->p_flag & P_NOCLDSTOP) == 0)
+			prsignal(p->p_p->ps_pptr, SIGCHLD);
+		wakeup(p->p_p->ps_pptr);
 	}
 }
 

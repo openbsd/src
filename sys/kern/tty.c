@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.87 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: tty.c,v 1.88 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -719,6 +719,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 	extern int nlinesw;
+	struct process *pr = p->p_p;
 	int s, error;
 
 	/* If the ioctl involves modification, hang if in the background. */
@@ -747,13 +748,13 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSETP:
 	case  TIOCSLTC:
 #endif
-		while (isbackground(p, tp) &&
+		while (isbackground(pr, tp) &&
 		    (p->p_flag & P_PPWAIT) == 0 &&
 		    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
 		    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
-			if (p->p_pgrp->pg_jobc == 0)
+			if (pr->ps_pgrp->pg_jobc == 0)
 				return (EIO);
-			pgsignal(p->p_pgrp, SIGTTOU, 1);
+			pgsignal(pr->ps_pgrp, SIGTTOU, 1);
 			error = ttysleep(tp, &lbolt, TTOPRI | PCATCH,
 			    ttybg, 0);
 			if (error)
@@ -841,7 +842,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		splx(s);
 		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
-		if (!isctty(p, tp) && suser(p, 0))
+		if (!isctty(pr, tp) && suser(p, 0))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
 		break;
@@ -901,7 +902,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 				tp->t_ospeed = t->c_ospeed;
 				if (t->c_ospeed == 0 && tp->t_session &&
 				    tp->t_session->s_leader)
-					psignal(tp->t_session->s_leader,
+					prsignal(tp->t_session->s_leader,
 					    SIGHUP);
 			}
 			ttsetwater(tp);
@@ -970,7 +971,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSTI:			/* simulate terminal input */
 		if (p->p_ucred->cr_uid && (flag & FREAD) == 0)
 			return (EPERM);
-		if (p->p_ucred->cr_uid && !isctty(p, tp))
+		if (p->p_ucred->cr_uid && !isctty(pr, tp))
 			return (EACCES);
 		(*linesw[tp->t_line].l_rint)(*(u_char *)data, tp);
 		break;
@@ -984,26 +985,26 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case TIOCSCTTY:			/* become controlling tty */
 		/* Session ctty vnode pointer set in vnode layer. */
-		if (!SESS_LEADER(p) ||
-		    ((p->p_session->s_ttyvp || tp->t_session) &&
-		     (tp->t_session != p->p_session)))
+		if (!SESS_LEADER(pr) ||
+		    ((pr->ps_session->s_ttyvp || tp->t_session) &&
+		     (tp->t_session != pr->ps_session)))
 			return (EPERM);
 		if (tp->t_session)
 			SESSRELE(tp->t_session);
-		SESSHOLD(p->p_session);
-		tp->t_session = p->p_session;
-		tp->t_pgrp = p->p_pgrp;
-		p->p_session->s_ttyp = tp;
-		atomic_setbits_int(&p->p_flag, P_CONTROLT);
+		SESSHOLD(pr->ps_session);
+		tp->t_session = pr->ps_session;
+		tp->t_pgrp = pr->ps_pgrp;
+		pr->ps_session->s_ttyp = tp;
+		atomic_setbits_int(&pr->ps_flags, PS_CONTROLT);
 		break;
 	case TIOCSPGRP: {		/* set pgrp of tty */
 		struct pgrp *pgrp = pgfind(*(int *)data);
 
-		if (!isctty(p, tp))
+		if (!isctty(pr, tp))
 			return (ENOTTY);
 		else if (pgrp == NULL)
 			return (EINVAL);
-		else if (pgrp->pg_session != p->p_session)
+		else if (pgrp->pg_session != pr->ps_session)
 			return (EPERM);
 		tp->t_pgrp = pgrp;
 		break;
@@ -1363,7 +1364,7 @@ ttymodem(struct tty *tp, int flag)
 		if (ISSET(tp->t_state, TS_ISOPEN) &&
 		    !ISSET(tp->t_cflag, CLOCAL)) {
 			if (tp->t_session && tp->t_session->s_leader)
-				psignal(tp->t_session->s_leader, SIGHUP);
+				prsignal(tp->t_session->s_leader, SIGHUP);
 			ttyflush(tp, FREAD | FWRITE);
 			return (0);
 		}
@@ -1392,7 +1393,7 @@ nullmodem(struct tty *tp, int flag)
 		if (ISSET(tp->t_state, TS_ISOPEN) &&
 		    !ISSET(tp->t_cflag, CLOCAL)) {
 			if (tp->t_session && tp->t_session->s_leader)
-				psignal(tp->t_session->s_leader, SIGHUP);
+				prsignal(tp->t_session->s_leader, SIGHUP);
 			ttyflush(tp, FREAD | FWRITE);
 			return (0);
 		}
@@ -1440,6 +1441,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 {
 	struct timeout *stime = NULL;
 	struct proc *p = curproc;
+	struct process *pr = p->p_p;
 	int s, first, error = 0;
 	u_char *cc = tp->t_cc;
 	struct clist *qp;
@@ -1459,14 +1461,14 @@ loop:	lflag = tp->t_lflag;
 	/*
 	 * Hang process if it's in the background.
 	 */
-	if (isbackground(p, tp)) {
+	if (isbackground(pr, tp)) {
 		if ((p->p_sigignore & sigmask(SIGTTIN)) ||
 		   (p->p_sigmask & sigmask(SIGTTIN)) ||
-		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0) {
+		    p->p_flag & P_PPWAIT || pr->ps_pgrp->pg_jobc == 0) {
 			error = EIO;
 			goto out;
 		}
-		pgsignal(p->p_pgrp, SIGTTIN, 1);
+		pgsignal(pr->ps_pgrp, SIGTTIN, 1);
 		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
 		if (error)
 			goto out;
@@ -1678,6 +1680,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	u_char *cp = NULL;
 	int cc, ce, obufcc = 0;
 	struct proc *p;
+	struct process *pr;
 	int i, hiwat, error, s;
 	size_t cnt;
 	u_char obuf[OBUFSIZ];
@@ -1713,15 +1716,16 @@ loop:
 	 * Hang the process if it's in the background.
 	 */
 	p = curproc;
-	if (isbackground(p, tp) &&
+	pr = p->p_p;
+	if (isbackground(pr, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
 	    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
 	    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
-		if (p->p_pgrp->pg_jobc == 0) {
+		if (pr->ps_pgrp->pg_jobc == 0) {
 			error = EIO;
 			goto out;
 		}
-		pgsignal(p->p_pgrp, SIGTTOU, 1);
+		pgsignal(pr->ps_pgrp, SIGTTOU, 1);
 		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
 		if (error)
 			goto out;
@@ -2079,7 +2083,8 @@ ttsetwater(struct tty *tp)
 void
 ttyinfo(struct tty *tp)
 {
-	struct proc *p, *pick;
+	struct process *pr;
+	struct proc *pick;
 	struct timeval utime, stime;
 	int tmp;
 
@@ -2094,16 +2099,16 @@ ttyinfo(struct tty *tp)
 		ttyprintf(tp, "not a controlling terminal\n");
 	else if (tp->t_pgrp == NULL)
 		ttyprintf(tp, "no foreground process group\n");
-	else if ((p = LIST_FIRST(&tp->t_pgrp->pg_members)) == NULL)
+	else if ((pr = LIST_FIRST(&tp->t_pgrp->pg_members)) == NULL)
 		ttyprintf(tp, "empty foreground process group\n");
 	else {
 		int pctcpu;
 		long rss;
 
 		/* Pick interesting process. */
-		for (pick = NULL; p != 0; p = LIST_NEXT(p, p_pglist))
-			if (proc_compare(pick, p))
-				pick = p;
+		for (pick = NULL; pr != NULL; pr = LIST_NEXT(pr, ps_pglist))
+			if (proc_compare(pick, pr->ps_mainproc))
+				pick = pr->ps_mainproc;
 
 		/* Calculate percentage cpu, resident set size. */
 		pctcpu = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;

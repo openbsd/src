@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.22 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.23 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -216,8 +216,9 @@ acct_process(struct proc *p)
 	acct.ac_gid = p->p_cred->p_rgid;
 
 	/* (7) The terminal from which the process was started */
-	if ((p->p_flag & P_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
-		acct.ac_tty = p->p_pgrp->pg_session->s_ttyp->t_dev;
+	if ((p->p_p->ps_flags & PS_CONTROLT) &&
+	    p->p_p->ps_pgrp->pg_session->s_ttyp)
+		acct.ac_tty = p->p_p->ps_pgrp->pg_session->s_ttyp->t_dev;
 	else
 		acct.ac_tty = NODEV;
 

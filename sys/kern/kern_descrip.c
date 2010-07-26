@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.84 2010/07/19 23:00:15 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.85 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -389,12 +389,12 @@ restart:
 		if ((long)SCARG(uap, arg) <= 0) {
 			SCARG(uap, arg) = (void *)(-(long)SCARG(uap, arg));
 		} else {
-			struct proc *p1 = pfind((long)SCARG(uap, arg));
-			if (p1 == 0) {
+			struct process *pr1 = prfind((long)SCARG(uap, arg));
+			if (pr1 == 0) {
 				error = ESRCH;
 				break;
 			}
-			SCARG(uap, arg) = (void *)(long)p1->p_pgrp->pg_id;
+			SCARG(uap, arg) = (void *)(long)pr1->ps_pgrp->pg_id;
 		}
 		error = ((*fp->f_ops->fo_ioctl)
 			(fp, TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));

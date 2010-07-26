@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.190 2010/07/19 23:00:15 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.191 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1316,6 +1316,7 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 	struct kinfo_proc2 *kproc2 = NULL;
 	struct eproc *eproc = NULL;
 	struct proc *p;
+	struct process *pr;
 	char *dp;
 	int arg, buflen, doingzomb, elem_size, elem_count;
 	int error, needed, type, op;
@@ -1354,7 +1355,8 @@ again:
 			continue;
 
 		/* XXX skip processes in the middle of being zapped */
-		if (p->p_pgrp == NULL)
+		pr = p->p_p;
+		if (pr->ps_pgrp == NULL)
 			continue;
 
 		/*
@@ -1370,20 +1372,20 @@ again:
 
 		case KERN_PROC_PGRP:
 			/* could do this by traversing pgrp */
-			if (p->p_pgrp->pg_id != (pid_t)arg)
+			if (pr->ps_pgrp->pg_id != (pid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_SESSION:
-			if (p->p_session->s_leader == NULL ||
-			    p->p_session->s_leader->p_pid != (pid_t)arg)
+			if (pr->ps_session->s_leader == NULL ||
+			    pr->ps_session->s_leader->ps_pid != (pid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_TTY:
-			if ((p->p_flag & P_CONTROLT) == 0 ||
-			    p->p_session->s_ttyp == NULL ||
-			    p->p_session->s_ttyp->t_dev != (dev_t)arg)
+			if ((pr->ps_flags & PS_CONTROLT) == 0 ||
+			    pr->ps_session->s_ttyp == NULL ||
+			    pr->ps_session->s_ttyp->t_dev != (dev_t)arg)
 				continue;
 			break;
 
@@ -1475,7 +1477,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	struct tty *tp;
 
 	ep->e_paddr = p;
-	ep->e_sess = p->p_pgrp->pg_session;
+	ep->e_sess = p->p_p->ps_pgrp->pg_session;
 	ep->e_pcred = *p->p_cred;
 	ep->e_ucred = *p->p_ucred;
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
@@ -1495,13 +1497,13 @@ fill_eproc(struct proc *p, struct eproc *ep)
 		ep->e_pstats = *p->p_stats;
 		ep->e_pstats_valid = 1;
 	}
-	if (p->p_pptr)
-		ep->e_ppid = p->p_pptr->p_pid;
+	if (p->p_p->ps_pptr)
+		ep->e_ppid = p->p_p->ps_pptr->ps_pid;
 	else
 		ep->e_ppid = 0;
-	ep->e_pgid = p->p_pgrp->pg_id;
-	ep->e_jobc = p->p_pgrp->pg_jobc;
-	if ((p->p_flag & P_CONTROLT) &&
+	ep->e_pgid = p->p_p->ps_pgrp->pg_id;
+	ep->e_jobc = p->p_p->ps_pgrp->pg_jobc;
+	if ((p->p_p->ps_flags & PS_CONTROLT) &&
 	     (tp = ep->e_sess->s_ttyp)) {
 		ep->e_tdev = tp->t_dev;
 		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
@@ -1509,7 +1511,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	} else
 		ep->e_tdev = NODEV;
 	ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
-	if (SESS_LEADER(p))
+	if (SESS_LEADER(p->p_p))
 		ep->e_flag |= EPROC_SLEADER;
 	strncpy(ep->e_wmesg, p->p_wmesg ? p->p_wmesg : "", WMESGLEN);
 	ep->e_wmesg[WMESGLEN] = '\0';
@@ -1529,19 +1531,21 @@ fill_eproc(struct proc *p, struct eproc *ep)
 void
 fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 {
+	struct process *pr = p->p_p;
+	struct session *s = pr->ps_session;
 	struct tty *tp;
 	struct timeval ut, st;
 
-	FILL_KPROC2(ki, strlcpy, p, p->p_p, p->p_cred, p->p_ucred, p->p_pgrp,
-	    p, p->p_session, p->p_vmspace, p->p_p->ps_limit, p->p_stats);
+	FILL_KPROC2(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
+	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_stats);
 
 	/* stuff that's too painful to generalize into the macros */
-	if (p->p_pptr)
-		ki->p_ppid = p->p_pptr->p_pid;
-	if (p->p_session->s_leader)
-		ki->p_sid = p->p_session->s_leader->p_pid;
+	if (pr->ps_pptr)
+		ki->p_ppid = pr->ps_pptr->ps_pid;
+	if (s->s_leader)
+		ki->p_sid = s->s_leader->ps_pid;
 
-	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
+	if ((pr->ps_flags & PS_CONTROLT) && (tp = s->s_ttyp)) {
 		ki->p_tdev = tp->t_dev;
 		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : -1;
 		ki->p_tsess = PTRTOINT64(tp->t_session);

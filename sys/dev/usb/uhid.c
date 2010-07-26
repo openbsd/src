@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.47 2009/11/23 11:10:16 yuo Exp $ */
+/*	$OpenBSD: uhid.c,v 1.48 2010/07/26 01:56:27 guenther Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -81,10 +81,10 @@ struct uhid_softc {
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	struct proc *sc_async;	/* process that wants SIGIO */
-	u_char sc_state;	/* driver state */
-#define	UHID_ASLP	0x01	/* waiting for device data */
-#define UHID_IMMED	0x02	/* return read data immediately */
+	struct process *sc_async;	/* process that wants SIGIO */
+	u_char sc_state;		/* driver state */
+#define	UHID_ASLP	0x01		/* waiting for device data */
+#define UHID_IMMED	0x02		/* return read data immediately */
 
 	int sc_refcnt;
 	u_char sc_dying;
@@ -236,7 +236,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 	selwakeup(&sc->sc_rsel);
 	if (sc->sc_async != NULL) {
 		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
-		psignal(sc->sc_async, SIGIO);
+		prsignal(sc->sc_async, SIGIO);
 	}
 }
 
@@ -427,7 +427,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		if (*(int *)addr) {
 			if (sc->sc_async != NULL)
 				return (EBUSY);
-			sc->sc_async = p;
+			sc->sc_async = p->p_p;
 			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", p));
 		} else
 			sc->sc_async = NULL;
@@ -437,7 +437,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 	case TIOCSPGRP:
 		if (sc->sc_async == NULL)
 			return (EINVAL);
-		if (*(int *)addr != sc->sc_async->p_pgid)
+		if (*(int *)addr != sc->sc_async->ps_pgid)
 			return (EPERM);
 		break;
 

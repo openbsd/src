@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.28 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: tty.h,v 1.29 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -228,13 +228,13 @@ struct speedtab {
 #define	TTY_FE		0x01000000	/* Framing error or BREAK condition */
 #define	TTY_PE		0x02000000	/* Parity error */
 
-/* Is tp controlling terminal for p? */
-#define	isctty(p, tp)							\
-	((p)->p_session == (tp)->t_session && (p)->p_flag & P_CONTROLT)
+/* Is tp controlling terminal for pr? */
+#define	isctty(pr, tp)							\
+	((pr)->ps_session == (tp)->t_session && (pr)->ps_flags & PS_CONTROLT)
 
-/* Is p in background of tp? */
-#define	isbackground(p, tp)						\
-	(isctty((p), (tp)) && (p)->p_pgrp != (tp)->t_pgrp)
+/* Is pr in background of tp? */
+#define	isbackground(pr, tp)						\
+	(isctty((pr), (tp)) && (pr)->ps_pgrp != (tp)->t_pgrp)
 
 /*
  * ttylist_head is defined here so that user-land has access to it.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.104 2010/06/29 00:28:14 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.105 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ struct kinfo_proc2 {
 
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
-#define FILL_KPROC2(kp, copy_str, p, pr, pc, uc, pg, paddr, sess, vm, lim, ps) \
+#define FILL_KPROC2(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, ps) \
 do {									\
 	memset((kp), 0, sizeof(*(kp)));					\
 									\
@@ -509,11 +509,11 @@ do {									\
 	(kp)->p_limit = PTRTOINT64((pr)->ps_limit);			\
 	(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);			\
 	(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);			\
-	(kp)->p_sess = PTRTOINT64((p)->p_session);			\
+	(kp)->p_sess = PTRTOINT64((pr)->ps_session);			\
 	(kp)->p_ru = PTRTOINT64((p)->p_ru);				\
 									\
 	(kp)->p_exitsig = (p)->p_exitsig;				\
-	(kp)->p_flag = (p)->p_flag | P_INMEM;				\
+	(kp)->p_flag = (p)->p_flag | (pr)->ps_flags | P_INMEM;		\
 									\
 	(kp)->p_pid = (p)->p_pid;					\
 	(kp)->p__pgid = (pg)->pg_id;					\
@@ -564,7 +564,7 @@ do {									\
 									\
 	if ((sess)->s_ttyvp)						\
 		(kp)->p_eflag |= EPROC_CTTY;				\
-	if ((sess)->s_leader == (paddr))				\
+	if ((sess)->s_leader == (praddr))				\
 		(kp)->p_eflag |= EPROC_SLEADER;				\
 									\
 	if ((p)->p_stat != SIDL && !P_ZOMBIE(p)) {			\

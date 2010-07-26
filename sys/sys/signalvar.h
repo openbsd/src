@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.18 2009/11/27 19:47:45 guenther Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.19 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -164,6 +164,7 @@ void	pgsignal(struct pgrp *pgrp, int sig, int checkctty);
 void	postsig(int sig);
 void	psignal(struct proc *p, int sig);
 void	ptsignal(struct proc *p, int sig, enum signal_type type);
+#define prsignal(pr,sig)	ptsignal((pr)->ps_mainproc, (sig), SPROCESS)
 void	siginit(struct proc *p);
 void	trapsignal(struct proc *p, int sig, u_long code, int type,
 	    union sigval val);

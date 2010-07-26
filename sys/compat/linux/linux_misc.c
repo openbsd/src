@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.64 2010/06/30 21:54:35 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.65 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1223,16 +1223,16 @@ linux_sys_getpgid(p, v, retval)
 	struct linux_sys_getpgid_args /* {
 		syscallarg(int) pid;
 	} */ *uap = v;
-	struct proc *targp;
+	struct process *targpr;
 
 	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != p->p_pid) {
-		if ((targp = pfind(SCARG(uap, pid))) == 0)
+		if ((targpr = prfind(SCARG(uap, pid))) == 0)
 			return ESRCH;
 	}
 	else
-		targp = p;
+		targpr = p->p_p;
 
-	retval[0] = targp->p_pgid;
+	retval[0] = targpr->ps_pgid;
 	return 0;
 }
 

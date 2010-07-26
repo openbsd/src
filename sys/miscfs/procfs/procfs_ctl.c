@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.21 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.22 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  */
 #define TRACE_WAIT_P(curp, p) \
 	((p)->p_stat == SSTOP && \
-	 (p)->p_pptr == (curp) && \
+	 (p)->p_p->ps_pptr == (curp)->p_p && \
 	 ISSET((p)->p_flag, P_TRACED))
 
 #ifdef PTRACE
@@ -137,9 +137,9 @@ procfs_control(struct proc *curp, struct proc *p, int op)
 		 */
 		atomic_setbits_int(&p->p_flag, P_TRACED);
 		p->p_xstat = 0;		/* XXX ? */
-		if (p->p_pptr != curp) {
-			p->p_oppid = p->p_pptr->p_pid;
-			proc_reparent(p, curp);
+		if (p->p_p->ps_pptr != curp->p_p) {
+			p->p_oppid = p->p_p->ps_pptr->ps_pid;
+			proc_reparent(p->p_p, curp->p_p);
 		}
 		psignal(p, SIGSTOP);
 		return (0);
@@ -187,12 +187,12 @@ procfs_control(struct proc *curp, struct proc *p, int op)
 		atomic_clearbits_int(&p->p_flag, P_TRACED);
 
 		/* give process back to original parent */
-		if (p->p_oppid != p->p_pptr->p_pid) {
-			struct proc *pp;
+		if (p->p_oppid != p->p_p->ps_pptr->ps_pid) {
+			struct process *ppr;
 
-			pp = pfind(p->p_oppid);
-			if (pp)
-				proc_reparent(p, pp);
+			ppr = prfind(p->p_oppid);
+			if (ppr)
+				proc_reparent(p->p_p, ppr);
 		}
 
 		p->p_oppid = 0;
@@ -232,7 +232,7 @@ procfs_control(struct proc *curp, struct proc *p, int op)
 			while (error == 0 &&
 					(p->p_stat != SSTOP) &&
 					ISSET(p->p_flag, P_TRACED) &&
-					(p->p_pptr == curp)) {
+					(p->p_p->ps_pptr == curp->p_p)) {
 				error = tsleep(p, PWAIT|PCATCH, "procfsx", 0);
 			}
 			if (error == 0 && !TRACE_WAIT_P(curp, p))

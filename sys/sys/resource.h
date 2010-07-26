@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.7 2003/12/11 23:02:30 millert Exp $	*/
+/*	$OpenBSD: resource.h,v 1.8 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 
 #define	RUSAGE_SELF	0
 #define	RUSAGE_CHILDREN	-1
+#define	RUSAGE_THREAD	1
 
 struct	rusage {
 	struct timeval ru_utime;	/* user time used */
@@ -110,8 +111,9 @@ struct loadavg {
 
 #ifdef _KERNEL
 extern struct loadavg averunnable;
+struct process;
 int	dosetrlimit(struct proc *, u_int, struct rlimit *);
-int	donice(struct proc *, struct proc *, int);
+int	donice(struct proc *, struct process *, int);
 
 #else
 #include <sys/cdefs.h>

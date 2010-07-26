@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.2 2010/06/29 16:39:23 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.3 2010/07/26 01:56:27 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 	struct pcred pcred;
 	struct ucred ucred;
 	struct proc proc, proc2;
-	struct process process;
+	struct process process, process2;
 	struct pgrp pgrp;
 	struct tty tty;
 	struct vmspace vm, *vmp;
@@ -139,9 +139,9 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			    pcred.pc_ucred);
 			return (-1);
 		}
-		if (KREAD(kd, (u_long)proc.p_pgrp, &pgrp)) {
+		if (KREAD(kd, (u_long)process.ps_pgrp, &pgrp)) {
 			_kvm_err(kd, kd->program, "can't read pgrp at %x",
-			    proc.p_pgrp);
+			    process.ps_pgrp);
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)pgrp.pg_session, &sess)) {
@@ -149,16 +149,23 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			    pgrp.pg_session);
 			return (-1);
 		}
-		if ((proc.p_flag & P_CONTROLT) && sess.s_ttyp != NULL &&
+		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL &&
 		    KREAD(kd, (u_long)sess.s_ttyp, &tty)) {
 			_kvm_err(kd, kd->program,
 			    "can't read tty at %x", sess.s_ttyp);
 			return (-1);
 		}
-		if (proc.p_pptr) {
-			if (KREAD(kd, (u_long)proc.p_pptr, &proc2)) {
+		if (process.ps_pptr) {
+			if (KREAD(kd, (u_long)process.ps_pptr, &process2)) {
 				_kvm_err(kd, kd->program,
-				    "can't read proc at %x", proc.p_pptr);
+				    "can't read process at %x",
+				    process.ps_pptr);
+				return (-1);
+			}
+			if (KREAD(kd, (u_long)process2.ps_mainproc, &proc2)) {
+				_kvm_err(kd, kd->program,
+				    "can't read proc at %x",
+				    process2.ps_mainproc);
 				return (-1);
 			}
 			parent_pid = proc2.p_pid;
@@ -166,9 +173,15 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		else
 			parent_pid = 0;
 		if (sess.s_leader) {
-			if (KREAD(kd, (u_long)sess.s_leader, &proc2)) {
+			if (KREAD(kd, (u_long)sess.s_leader, &process2)) {
 				_kvm_err(kd, kd->program,
 				    "can't read proc at %x", sess.s_leader);
+				return (-1);
+			}
+			if (KREAD(kd, (u_long)process2.ps_mainproc, &proc2)) {
+				_kvm_err(kd, kd->program,
+				    "can't read proc at %x",
+				    process2.ps_mainproc);
 				return (-1);
 			}
 			leader_pid = proc2.p_pid;
@@ -189,12 +202,12 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 
 		case KERN_PROC_SESSION:
 			if (sess.s_leader == NULL ||
-			    leader_pid == (pid_t)arg)
+			    leader_pid != (pid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_TTY:
-			if ((proc.p_flag & P_CONTROLT) == 0 ||
+			if ((process.ps_flags & PS_CONTROLT) == 0 ||
 			    sess.s_ttyp == NULL ||
 			    tty.t_dev != (dev_t)arg)
 				continue;
@@ -253,16 +266,16 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
 		FILL_KPROC2(&kp, do_copy_str, &proc, &process, &pcred, &ucred,
-		    &pgrp, p, &sess, vmp, limp, ps);
+		    &pgrp, p, proc.p_p, &sess, vmp, limp, ps);
 #undef do_copy_str
 
 		/* stuff that's too painful to generalize into the macros */
 		kp.p_ppid = parent_pid;
 		kp.p_sid = leader_pid;
-		if ((proc.p_flag & P_CONTROLT) && sess.s_ttyp != NULL) {
+		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL) {
 			kp.p_tdev = tty.t_dev;
 			if (tty.t_pgrp != NULL &&
-			    tty.t_pgrp != proc.p_pgrp &&
+			    tty.t_pgrp != process.ps_pgrp &&
 			    KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
 				_kvm_err(kd, kd->program,
 				    "can't read tpgrp at &x", tty.t_pgrp);
