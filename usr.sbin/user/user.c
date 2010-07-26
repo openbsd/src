@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.77 2009/02/08 11:37:43 chl Exp $ */
+/* $OpenBSD: user.c,v 1.78 2010/07/26 10:55:17 miod Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -429,23 +429,31 @@ modify_gid(char *group, char *newent)
 		if (cc > 0 && buf[cc - 1] != '\n' && !feof(from)) {
 			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
-			warn("%s: line `%s' too long (%d bytes), skipping",
+			warnx("%s: line `%s' too long (%d bytes), skipping",
 			    _PATH_GROUP, buf, cc);
 			continue;
 		}
 		if ((colon = strchr(buf, ':')) == NULL) {
-			warn("badly formed entry `%s'", buf);
-			continue;
-		}
-		entc = (int)(colon - buf);
-		if (entc == groupc && strncmp(group, buf, entc) == 0) {
-			if (newent == NULL) {
+			/*
+			 * The only valid entry with no column is the all-YP
+			 * line.
+			 */
+			if (strcmp(buf, "+\n") != 0) {
+				warnx("badly formed entry `%.*s'", cc - 1, buf);
 				continue;
-			} else {
-				cc = strlcpy(buf, newent, sizeof(buf));
-				if (cc >= sizeof(buf)) {
-					warnx("group `%s' entry too long", newent);
-					return (0);
+			}
+		} else {
+			entc = (int)(colon - buf);
+			if (entc == groupc && strncmp(group, buf, entc) == 0) {
+				if (newent == NULL) {
+					continue;
+				} else {
+					cc = strlcpy(buf, newent, sizeof(buf));
+					if (cc >= sizeof(buf)) {
+						warnx("group `%s' entry too long",
+						    newent);
+						return (0);
+					}
 				}
 			}
 		}
@@ -533,7 +541,7 @@ append_group(char *user, int ngroups, const char **groups)
 		if (cc > 0 && buf[cc - 1] != '\n' && !feof(from)) {
 			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
-			warn("%s: line `%s' too long (%d bytes), skipping",
+			warnx("%s: line `%s' too long (%d bytes), skipping",
 			    _PATH_GROUP, buf, cc);
 			continue;
 		}
@@ -1245,7 +1253,7 @@ rm_user_from_groups(char *login_name)
 		if (cc > 0 && buf[cc - 1] != '\n' && !feof(from)) {
 			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
-			warn("%s: line `%s' too long (%d bytes), skipping",
+			warnx("%s: line `%s' too long (%d bytes), skipping",
 			    _PATH_GROUP, buf, cc);
 			continue;
 		}
@@ -1320,7 +1328,7 @@ is_local(char *name, const char *file)
 		if (cc > 0 && buf[cc - 1] != '\n' && !feof(fp)) {
 			while (fgetc(fp) != '\n' && !feof(fp))
 				cc++;
-			warn("%s: line `%s' too long (%d bytes), skipping",
+			warnx("%s: line `%s' too long (%d bytes), skipping",
 			    file, buf, cc);
 			continue;
 		}
