@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.135 2010/07/26 07:12:21 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.136 2010/07/26 22:17:13 mk Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -331,6 +331,13 @@ struct uvideo_devs {
 	{
 	    /* Needs to fix dwMaxVideoFrameSize */
 	    { USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_CAM_1 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE
+	},
+	{
+	    /* Needs to fix dwMaxVideoFrameSize */
+	    { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_LIFECAM },
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE
