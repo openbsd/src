@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.55 2010/03/01 02:09:44 krw Exp $
+.\" $OpenBSD: cdio.1,v 1.56 2010/07/26 21:14:39 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 1 2010 $
+.Dd $Mdocdate: July 26 2010 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -38,8 +38,7 @@
 .Sh SYNOPSIS
 .Nm cdio
 .Op Fl sv
-.Oo Fl d Ar host :
-.Ar port Oc
+.Op Fl d Ar host : Ns Ar port
 .Op Fl f Ar device
 .Op Ar command args ...
 .Sh DESCRIPTION
@@ -74,7 +73,7 @@ Silent mode.
 Do not print table headers or human-readable comments.
 .It Fl v
 Verbose mode.
-A second occurence of
+A second occurrence of
 .Fl v
 causes even more information to be printed.
 .El
