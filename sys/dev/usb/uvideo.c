@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.134 2010/07/26 07:01:08 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.135 2010/07/26 07:12:21 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -310,7 +310,7 @@ struct uvideo_devs {
 	},
 	{
 	    /* Has a non-standard streaming header protocol */
-	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ISIGHT_1},
+	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ISIGHT_1 },
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_ISIGHT_STREAM_HEADER
@@ -323,7 +323,7 @@ struct uvideo_devs {
 	},
 	{
 	    /* Needs to fix dwMaxVideoFrameSize */
-	    { USB_VENDOR_CHENSOURCE, USB_PRODUCT_CHENSOURCE_CM12402},
+	    { USB_VENDOR_CHENSOURCE, USB_PRODUCT_CHENSOURCE_CM12402 },
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE
@@ -1115,8 +1115,7 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 
 	/*
 	 * On some broken device, dwMaxVideoFrameBufferSize is not correct.
-	 * So fix it by frame width/height.
-	 *   XXX: YUV2 format only
+	 * So fix it by frame width/height (XXX YUV2 format only).
 	 */
 	if (sc->sc_quirk &&
 	    sc->sc_quirk->flags & UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE &&
@@ -1468,7 +1467,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 
 		/*
 		 * On some broken device, the above value is not correct.
-		 * So fix it by frame width/height (XXX:YUV2 format only)
+		 * So fix it by frame width/height (XXX YUV2 format only).
 		 */
 		if (sc->sc_quirk &&
 		    sc->sc_quirk->flags &
