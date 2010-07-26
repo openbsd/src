@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.27 2010/07/26 20:06:12 jakemsr Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.28 2010/07/26 23:17:19 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -99,8 +99,6 @@
 #endif
 
 #define	CS_TIMEOUT	90000
-
-#define	CS_AFS_PI	0x10
 
 /* Read/write CS4231 direct registers */
 #define CS_WRITE(sc,r,v)	\
@@ -432,7 +430,6 @@ ce4231_open(addr, flags)
 		return (EBUSY);
 
 	sc->sc_open = 1;
-	sc->sc_locked = 0;
 	sc->sc_rintr = 0;
 	sc->sc_rarg = 0;
 	sc->sc_pintr = 0;
@@ -721,7 +718,6 @@ ce4231_halt_output(addr)
 	    P_READ(sc, EBDMA_DCSR) & ~EBDCSR_DMAEN);
 	ce4231_write(sc, SP_INTERFACE_CONFIG,
 	    ce4231_read(sc, SP_INTERFACE_CONFIG) & (~PLAYBACK_ENABLE));
-	sc->sc_locked = 0;
 	return (0);
 }
 
@@ -735,7 +731,6 @@ ce4231_halt_input(addr)
 	    C_READ(sc, EBDMA_DCSR) & ~EBDCSR_DMAEN);
 	ce4231_write(sc, SP_INTERFACE_CONFIG,
 	    ce4231_read(sc, SP_INTERFACE_CONFIG) & (~CAPTURE_ENABLE));
-	sc->sc_locked = 0;
 	return (0);
 }
 
@@ -1224,12 +1219,17 @@ ce4231_get_props(addr)
 /*
  * Hardware interrupt handler
  */
-int
-ce4231_cintr(v)
-	void *v;
-{
-	return (0);
-}
+/*
+ * Don't bother with the AD1848_STATUS register.  It's interrupt bit gets
+ * set for both recording and playback interrupts.  But we have separate
+ * handlers for playback and recording, and if we clear the status in
+ * one handler while there is an interrupt pending for the other direction
+ * as well, we'll never notice the interrupt for the other direction.
+ *
+ * Instead rely solely on CS_IRQ_STATUS, which has separate bits for
+ * playback and recording interrupts.  Also note that resetting
+ * AD1848_STATUS clears the interrupt bits in CS_IRQ_STATUS.
+ */
 
 int
 ce4231_pintr(v)
@@ -1237,19 +1237,18 @@ ce4231_pintr(v)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)v;
 	u_int32_t csr;
-	u_int8_t reg, status;
+	u_int8_t reg;
 	struct cs_dma *p;
+	struct cs_chdma *chdma = &sc->sc_pchdma;
 	int r = 0;
 
 	csr = P_READ(sc, EBDMA_DCSR);
-	status = CS_READ(sc, AD1848_STATUS);
-	if (status & (INTERRUPT_STATUS | SAMPLE_ERROR)) {
-		reg = ce4231_read(sc, CS_IRQ_STATUS);
-		if (reg & CS_AFS_PI) {
-			ce4231_write(sc, SP_LOWER_BASE_COUNT, 0xff);
-			ce4231_write(sc, SP_UPPER_BASE_COUNT, 0xff);
-		}
-		CS_WRITE(sc, AD1848_STATUS, 0);
+
+	reg = ce4231_read(sc, CS_IRQ_STATUS);
+	if (reg & CS_IRQ_PI) {
+		ce4231_write(sc, SP_LOWER_BASE_COUNT, 0xff);
+		ce4231_write(sc, SP_UPPER_BASE_COUNT, 0xff);
+		ce4231_write(sc, CS_IRQ_STATUS, reg & ~CS_IRQ_PI);
 	}
 
 	P_WRITE(sc, EBDMA_DCSR, csr);
@@ -1260,24 +1259,76 @@ ce4231_pintr(v)
 	if ((csr & EBDCSR_TC) || ((csr & EBDCSR_A_LOADED) == 0)) {
 		u_long nextaddr, togo;
 
-		p = sc->sc_nowplaying;
-		togo = sc->sc_playsegsz - sc->sc_playcnt;
+		p = chdma->cur_dma;
+		togo = chdma->segsz - chdma->count;
 		if (togo == 0) {
 			nextaddr = (u_int32_t)p->dmamap->dm_segs[0].ds_addr;
-			sc->sc_playcnt = togo = sc->sc_blksz;
+			chdma->count = togo = chdma->blksz;
 		} else {
-			nextaddr = sc->sc_lastaddr;
-			if (togo > sc->sc_blksz)
-				togo = sc->sc_blksz;
-			sc->sc_playcnt += togo;
+			nextaddr = chdma->lastaddr;
+			if (togo > chdma->blksz)
+				togo = chdma->blksz;
+			chdma->count += togo;
 		}
 
 		P_WRITE(sc, EBDMA_DCNT, togo);
 		P_WRITE(sc, EBDMA_DADDR, nextaddr);
-		sc->sc_lastaddr = nextaddr + togo;
+		chdma->lastaddr = nextaddr + togo;
 
 		if (sc->sc_pintr != NULL)
 			(*sc->sc_pintr)(sc->sc_parg);
+		r = 1;
+	}
+
+	return (r);
+}
+
+int
+ce4231_cintr(v)
+	void *v;
+{
+	struct ce4231_softc *sc = (struct ce4231_softc *)v;
+	u_int32_t csr;
+	u_int8_t reg;
+	struct cs_dma *p;
+	struct cs_chdma *chdma = &sc->sc_rchdma;
+	int r = 0;
+
+	csr = C_READ(sc, EBDMA_DCSR);
+
+	reg = ce4231_read(sc, CS_IRQ_STATUS);
+	if (reg & CS_IRQ_CI) {
+		ce4231_write(sc, CS_LOWER_REC_CNT, 0xff);
+		ce4231_write(sc, CS_UPPER_REC_CNT, 0xff);
+		ce4231_write(sc, CS_IRQ_STATUS, reg & ~CS_IRQ_CI);
+	}
+
+	C_WRITE(sc, EBDMA_DCSR, csr);
+
+	if (csr & EBDCSR_INT)
+		r = 1;
+
+	if ((csr & EBDCSR_TC) || ((csr & EBDCSR_A_LOADED) == 0)) {
+		u_long nextaddr, togo;
+
+		p = chdma->cur_dma;
+		togo = chdma->segsz - chdma->count;
+		if (togo == 0) {
+			nextaddr = (u_int32_t)p->dmamap->dm_segs[0].ds_addr;
+			chdma->count = togo = chdma->blksz;
+		} else {
+			nextaddr = chdma->lastaddr;
+			if (togo > chdma->blksz)
+				togo = chdma->blksz;
+			chdma->count += togo;
+		}
+
+		C_WRITE(sc, EBDMA_DCNT, togo);
+		C_WRITE(sc, EBDMA_DADDR, nextaddr);
+		chdma->lastaddr = nextaddr + togo;
+
+		if (sc->sc_rintr != NULL)
+			(*sc->sc_rintr)(sc->sc_rarg);
 		r = 1;
 	}
 
@@ -1368,16 +1419,10 @@ ce4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 {
 	struct ce4231_softc *sc = addr;
 	struct cs_dma *p;
+	struct cs_chdma *chdma = &sc->sc_pchdma;
 	u_int32_t csr;
 	vaddr_t n;
 
-	if (sc->sc_locked != 0) {
-		printf("%s: trigger_output: already running\n",
-		    sc->sc_dev.dv_xname);
-		return (EINVAL);
-	}
-
-	sc->sc_locked = 1;
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
@@ -1395,14 +1440,14 @@ ce4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	 * Do only `blksize' at a time, so audio_pint() is kept
 	 * synchronous with us...
 	 */
-	sc->sc_blksz = blksize;
-	sc->sc_nowplaying = p;
-	sc->sc_playsegsz = n;
+	chdma->cur_dma = p;
+	chdma->blksz = blksize;
+	chdma->segsz = n;
 
-	if (n > sc->sc_blksz)
-		n = sc->sc_blksz;
+	if (n > chdma->blksz)
+		n = chdma->blksz;
 
-	sc->sc_playcnt = n;
+	chdma->count = n;
 
 	csr = P_READ(sc, EBDMA_DCSR);
 	if (csr & EBDCSR_DMAEN) {
@@ -1425,7 +1470,7 @@ ce4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 		ce4231_write(sc, SP_INTERFACE_CONFIG,
 		    ce4231_read(sc, SP_INTERFACE_CONFIG) | PLAYBACK_ENABLE);
 	}
-	sc->sc_lastaddr = p->dmamap->dm_segs[0].ds_addr + n;
+	chdma->lastaddr = p->dmamap->dm_segs[0].ds_addr + n;
 
 	return (0);
 }
@@ -1438,5 +1483,60 @@ ce4231_trigger_input(addr, start, end, blksize, intr, arg, param)
 	void *arg;
 	struct audio_params *param;
 {
-	return (ENXIO);
+	struct ce4231_softc *sc = addr;
+	struct cs_dma *p;
+	struct cs_chdma *chdma = &sc->sc_rchdma;
+	u_int32_t csr;
+	vaddr_t n;
+
+	sc->sc_rintr = intr;
+	sc->sc_rarg = arg;
+
+	for (p = sc->sc_dmas; p->addr != start; p = p->next)
+		/*EMPTY*/;
+	if (p == NULL) {
+		printf("%s: trigger_input: bad addr: %p\n",
+		    sc->sc_dev.dv_xname, start);
+		return (EINVAL);
+	}
+
+	n = (char *)end - (char *)start;
+
+	/*
+	 * Do only `blksize' at a time, so audio_rint() is kept
+	 * synchronous with us...
+	 */
+	chdma->cur_dma = p;
+	chdma->blksz = blksize;
+	chdma->segsz = n;
+
+	if (n > chdma->blksz)
+		n = chdma->blksz;
+
+	chdma->count = n;
+
+	csr = C_READ(sc, EBDMA_DCSR);
+	if (csr & EBDCSR_DMAEN) {
+		C_WRITE(sc, EBDMA_DCNT, (u_long)n);
+		C_WRITE(sc, EBDMA_DADDR,
+		    (u_long)p->dmamap->dm_segs[0].ds_addr);
+	} else {
+		C_WRITE(sc, EBDMA_DCSR, EBDCSR_RESET);
+		C_WRITE(sc, EBDMA_DCSR, sc->sc_burst);
+
+		C_WRITE(sc, EBDMA_DCNT, (u_long)n);
+		C_WRITE(sc, EBDMA_DADDR,
+		    (u_long)p->dmamap->dm_segs[0].ds_addr);
+
+		C_WRITE(sc, EBDMA_DCSR, sc->sc_burst | EBDCSR_WRITE |
+		    EBDCSR_DMAEN | EBDCSR_INTEN | EBDCSR_CNTEN | EBDCSR_NEXTEN);
+
+		ce4231_write(sc, CS_LOWER_REC_CNT, 0xff);
+		ce4231_write(sc, CS_UPPER_REC_CNT, 0xff);
+		ce4231_write(sc, SP_INTERFACE_CONFIG,
+		    ce4231_read(sc, SP_INTERFACE_CONFIG) | CAPTURE_ENABLE);
+	}
+	chdma->lastaddr = p->dmamap->dm_segs[0].ds_addr + n;
+
+	return (0);
 }
