@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.28 2009/08/13 14:24:47 jasper Exp $ */
+/* $OpenBSD: if_bce.c,v 1.29 2010/07/27 21:35:51 todd Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -166,6 +166,7 @@ do {									\
 
 int	bce_probe(struct device *, void *, void *);
 void	bce_attach(struct device *, struct device *, void *);
+int	bce_activate(struct device *, int);
 int	bce_ioctl(struct ifnet *, u_long, caddr_t);
 void	bce_start(struct ifnet *);
 void	bce_watchdog(struct ifnet *);
@@ -202,7 +203,7 @@ int             bcedebug = 0;
 #endif
 
 struct cfattach bce_ca = {
-	sizeof(struct bce_softc), bce_probe, bce_attach
+	sizeof(struct bce_softc), bce_probe, bce_attach, NULL, bce_activate
 };
 struct cfdriver bce_cd = {
 	NULL, "bce", DV_IFNET
@@ -427,6 +428,28 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	timeout_set(&sc->bce_timeout, bce_tick, sc);
+}
+
+int
+bce_activate(struct device *self, int act)
+{
+	struct bce_softc *sc = (struct bce_softc *)self;
+	struct ifnet *ifp = &sc->bce_ac.ac_if;
+
+	switch(act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			bce_stop(ifp, 1);
+		break;
+	case DVACT_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			bce_init(ifp);
+			bce_start(ifp);
+		}
+		break;
+	}
+
+	return (0);
 }
 
 /* handle media, and ethernet requests */
