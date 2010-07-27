@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.13 2010/05/19 14:39:07 oga Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.14 2010/07/27 00:03:03 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -81,6 +81,7 @@
 int	ale_match(struct device *, void *, void *);
 void	ale_attach(struct device *, struct device *, void *);
 int	ale_detach(struct device *, int);
+int	ale_activate(struct device *, int);
 
 int	ale_miibus_readreg(struct device *, int, int);
 void	ale_miibus_writereg(struct device *, int, int, int);
@@ -123,7 +124,8 @@ const struct pci_matchid ale_devices[] = {
 };
 
 struct cfattach ale_ca = {
-	sizeof (struct ale_softc), ale_match, ale_attach
+	sizeof (struct ale_softc), ale_match, ale_attach, NULL,
+	ale_activate
 };
 
 struct cfdriver ale_cd = {
@@ -597,6 +599,27 @@ ale_detach(struct device *self, int flags)
 	return (0);
 }
 
+int
+ale_activate(struct device *self, int act)
+{
+	struct ale_softc *sc = (struct ale_softc *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			ale_stop(sc);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		rv = config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			ale_init(ifp);
+		break;
+	}
+	return rv;
+}
 
 int
 ale_dma_alloc(struct ale_softc *sc)
