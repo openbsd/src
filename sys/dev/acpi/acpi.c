@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.194 2010/07/27 22:58:48 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.195 2010/07/27 23:33:21 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -749,7 +749,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	aml_find_node(&aml_root, "_PRT", acpi_foundprt, sc);
 
 #ifndef SMALL_KERNEL
-	 /* XXX EC needs to be attached first on some systems */
 	aml_find_node(&aml_root, "_HID", acpi_foundec, sc);
 
 	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
