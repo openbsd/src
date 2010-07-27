@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.187 2010/07/25 15:39:32 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.188 2010/07/27 04:17:10 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -90,6 +90,11 @@ void			scsi_link_close(struct scsi_link *);
 
 int			scsi_sem_enter(struct mutex *, u_int *);
 int			scsi_sem_leave(struct mutex *, u_int *);
+
+/* ioh/xsh queue state */
+#define RUNQ_IDLE       0
+#define RUNQ_LINKQ      1
+#define RUNQ_POOLQ      2
 
 /* synchronous api for allocating an io. */
 struct scsi_io_mover {
@@ -253,7 +258,7 @@ void
 scsi_ioh_set(struct scsi_iohandler *ioh, struct scsi_iopool *iopl,
     void (*handler)(void *, void *), void *cookie)
 {
-	ioh->entry.state = RUNQ_IDLE;
+	ioh->q_state = RUNQ_IDLE;
 	ioh->pool = iopl;
 	ioh->handler = handler;
 	ioh->cookie = cookie;
@@ -265,16 +270,16 @@ scsi_ioh_add(struct scsi_iohandler *ioh)
 	struct scsi_iopool *iopl = ioh->pool;
 
 	mtx_enter(&iopl->mtx);
-	switch (ioh->entry.state) {
+	switch (ioh->q_state) {
 	case RUNQ_IDLE:
-		TAILQ_INSERT_TAIL(&iopl->queue, &ioh->entry, e);
-		ioh->entry.state = RUNQ_POOLQ;
+		TAILQ_INSERT_TAIL(&iopl->queue, ioh, q_entry);
+		ioh->q_state = RUNQ_POOLQ;
 		break;
 #ifdef DIAGNOSTIC
 	case RUNQ_POOLQ:
 		break;
 	default:
-		panic("scsi_ioh_add: unexpected state %u", ioh->entry.state);
+		panic("scsi_ioh_add: unexpected state %u", ioh->q_state);
 #endif
 	}
 	mtx_leave(&iopl->mtx);
@@ -289,16 +294,16 @@ scsi_ioh_del(struct scsi_iohandler *ioh)
 	struct scsi_iopool *iopl = ioh->pool;
 
 	mtx_enter(&iopl->mtx);
-	switch (ioh->entry.state) {
+	switch (ioh->q_state) {
 	case RUNQ_POOLQ:
-		TAILQ_REMOVE(&iopl->queue, &ioh->entry, e);
-		ioh->entry.state = RUNQ_IDLE;
+		TAILQ_REMOVE(&iopl->queue, ioh, q_entry);
+		ioh->q_state = RUNQ_IDLE;
 		break;
 #ifdef DIAGNOSTIC
 	case RUNQ_IDLE:
 		break;
 	default:
-		panic("scsi_ioh_del: unexpected state %u", ioh->entry.state);
+		panic("scsi_ioh_del: unexpected state %u", ioh->q_state);
 #endif
 	}
 
@@ -315,10 +320,10 @@ scsi_ioh_deq(struct scsi_iopool *iopl)
 	struct scsi_iohandler *ioh = NULL;
 
 	mtx_enter(&iopl->mtx);
-	ioh = (struct scsi_iohandler *)TAILQ_FIRST(&iopl->queue);
+	ioh = TAILQ_FIRST(&iopl->queue);
 	if (ioh != NULL) {
-		TAILQ_REMOVE(&iopl->queue, &ioh->entry, e);
-		ioh->entry.state = RUNQ_IDLE;
+		TAILQ_REMOVE(&iopl->queue, ioh, q_entry);
+		ioh->q_state = RUNQ_IDLE;
 	}
 	mtx_leave(&iopl->mtx);
 
@@ -430,9 +435,9 @@ scsi_xsh_add(struct scsi_xshandler *xsh)
 	struct scsi_link *link = xsh->link;
 
 	mtx_enter(&link->pool->mtx);
-	if (xsh->ioh.entry.state == RUNQ_IDLE) {
-		TAILQ_INSERT_TAIL(&link->queue, &xsh->ioh.entry, e);
-		xsh->ioh.entry.state = RUNQ_LINKQ;
+	if (xsh->ioh.q_state == RUNQ_IDLE) {
+		TAILQ_INSERT_TAIL(&link->queue, &xsh->ioh, q_entry);
+		xsh->ioh.q_state = RUNQ_LINKQ;
 	}
 	mtx_leave(&link->pool->mtx);
 
@@ -446,20 +451,20 @@ scsi_xsh_del(struct scsi_xshandler *xsh)
 	struct scsi_link *link = xsh->link;
 
 	mtx_enter(&link->pool->mtx);
-	switch (xsh->ioh.entry.state) {
+	switch (xsh->ioh.q_state) {
 	case RUNQ_IDLE:
 		break;
 	case RUNQ_LINKQ:
-		TAILQ_REMOVE(&link->queue, &xsh->ioh.entry, e);
+		TAILQ_REMOVE(&link->queue, &xsh->ioh, q_entry);
 		break;
 	case RUNQ_POOLQ:
-		TAILQ_REMOVE(&link->pool->queue, &xsh->ioh.entry, e);
+		TAILQ_REMOVE(&link->pool->queue, &xsh->ioh, q_entry);
 		link->openings++;
 		break;
 	default:
-		panic("unexpected xsh state %u", xsh->ioh.entry.state);
+		panic("unexpected xsh state %u", xsh->ioh.q_state);
 	}
-	xsh->ioh.entry.state = RUNQ_IDLE;
+	xsh->ioh.q_state = RUNQ_IDLE;
 	mtx_leave(&link->pool->mtx);
 }
 
@@ -470,7 +475,7 @@ scsi_xsh_del(struct scsi_xshandler *xsh)
 void
 scsi_xsh_runqueue(struct scsi_link *link)
 {
-	struct scsi_runq_entry *entry;
+	struct scsi_iohandler *ioh;
 	int runq;
 
 	if (!scsi_sem_enter(&link->pool->mtx, &link->running))
@@ -480,12 +485,12 @@ scsi_xsh_runqueue(struct scsi_link *link)
 
 		mtx_enter(&link->pool->mtx);
 		while (link->openings &&
-		    ((entry = TAILQ_FIRST(&link->queue)) != NULL)) {
+		    ((ioh = TAILQ_FIRST(&link->queue)) != NULL)) {
 			link->openings--;
 
-			TAILQ_REMOVE(&link->queue, entry, e);
-			TAILQ_INSERT_TAIL(&link->pool->queue, entry, e);
-			entry->state = RUNQ_POOLQ;
+			TAILQ_REMOVE(&link->queue, ioh, q_entry);
+			TAILQ_INSERT_TAIL(&link->pool->queue, ioh, q_entry);
+			ioh->q_state = RUNQ_POOLQ;
 
 			runq = 1;
 		}
