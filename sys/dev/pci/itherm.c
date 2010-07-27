@@ -225,7 +225,7 @@ itherm_activate(struct device *self, int act)
 {
 	struct itherm_softc *sc = (struct itherm_softc *)self;
 
-	switch(act) {
+	switch (act) {
 	case DVACT_RESUME:
 		itherm_enable(sc);
 	}
