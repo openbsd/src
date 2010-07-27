@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.166 2010/06/30 23:44:06 halex Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.167 2010/07/27 00:07:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -363,7 +363,6 @@ writelabel(int f, char *boot, struct disklabel *lp)
 {
 #if NUMBOOT > 0
 	int writeable;
-	off_t sectoffset = 0;
 #endif
 
 #if NUMBOOT > 0
@@ -390,12 +389,8 @@ writelabel(int f, char *boot, struct disklabel *lp)
 				return (1);
 			}
 		}
-		if (verbose)
-			printf("writing label to block %lld (0x%qx)\n",
-			    (long long)sectoffset/DEV_BSIZE,
-			    (long long)sectoffset/DEV_BSIZE);
 		if (!donothing) {
-			if (lseek(f, sectoffset, SEEK_SET) < 0) {
+			if (lseek(f, 0, SEEK_SET) < 0) {
 				perror("lseek");
 				return (1);
 			}
