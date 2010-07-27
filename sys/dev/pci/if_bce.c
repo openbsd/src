@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.29 2010/07/27 21:35:51 todd Exp $ */
+/* $OpenBSD: if_bce.c,v 1.30 2010/07/27 21:40:40 deraadt Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -436,7 +436,7 @@ bce_activate(struct device *self, int act)
 	struct bce_softc *sc = (struct bce_softc *)self;
 	struct ifnet *ifp = &sc->bce_ac.ac_if;
 
-	switch(act) {
+	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			bce_stop(ifp, 1);
