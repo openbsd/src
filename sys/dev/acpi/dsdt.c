@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.174 2010/07/27 02:00:36 krw Exp $ */
+/* $OpenBSD: dsdt.c,v 1.175 2010/07/27 23:36:35 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1743,9 +1743,6 @@ aml_val_to_string(const struct aml_value *val)
 }
 #endif /* SMALL_KERNEL */
 
-/*
- * XXX: NEW PARSER CODE GOES HERE
- */
 int aml_error;
 
 struct aml_value *aml_gettgt(struct aml_value *, int);
