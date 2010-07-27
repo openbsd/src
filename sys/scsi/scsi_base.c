@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.188 2010/07/27 04:17:10 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.189 2010/07/27 04:41:56 matthew Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2353,3 +2353,40 @@ scsi_show_mem(u_char *address, int num)
 }
 #endif /* SCSIDEBUG */
 
+void
+scsi_cmd_rw_decode(struct scsi_generic *cmd, u_int64_t *blkno,
+    u_int32_t *nblks)
+{
+	switch (cmd->opcode) {
+	case READ_COMMAND:
+	case WRITE_COMMAND: {
+		struct scsi_rw *rw = (struct scsi_rw *)cmd;
+		*blkno = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
+		*nblks = rw->length ? rw->length : 0x100;
+		break;
+	}
+	case READ_BIG:
+	case WRITE_BIG: {
+		struct scsi_rw_big *rwb = (struct scsi_rw_big *)cmd;
+		*blkno = _4btol(rwb->addr);
+		*nblks = _2btol(rwb->length);
+		break;
+	}
+	case READ_12:
+	case WRITE_12: {
+		struct scsi_rw_12 *rw12 = (struct scsi_rw_12 *)cmd;
+		*blkno = _4btol(rw12->addr);
+		*nblks = _4btol(rw12->length);
+		break;
+	}
+	case READ_16:
+	case WRITE_16: {
+		struct scsi_rw_16 *rw16 = (struct scsi_rw_16 *)cmd;
+		*blkno = _8btol(rw16->addr);
+		*nblks = _4btol(rw16->length);
+		break;
+	}
+	default:
+		panic("scsi_cmd_rw_decode: bad opcode 0x%02x", cmd->opcode);
+	}
+}

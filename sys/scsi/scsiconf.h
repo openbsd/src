@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.134 2010/07/27 04:17:10 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.135 2010/07/27 04:41:56 matthew Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -630,6 +630,11 @@ int	mpath_path_detach(struct scsi_link *, int);
 
 void	mpath_path_activate(struct scsi_link *);
 void	mpath_path_deactivate(struct scsi_link *);
+
+/*
+ * Utility functions for SCSI HBA emulation.
+ */
+void	scsi_cmd_rw_decode(struct scsi_generic *, u_int64_t *, u_int32_t *);
 
 #endif /* _KERNEL */
 #endif /* SCSI_SCSICONF_H */

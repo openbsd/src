@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.89 2010/07/20 01:06:54 deraadt Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.90 2010/07/27 04:41:56 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -372,19 +372,21 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	struct atascsi_port	*ap = as->as_ports[link->target];
 	struct ata_xfer		*xa = xs->io;
 	int			flags = 0;
-	struct scsi_rw		*rw;
-	struct scsi_rw_big	*rwb;
 	struct ata_fis_h2d	*fis;
 	u_int64_t		lba;
 	u_int32_t		sector_count;
 
 	switch (xs->cmd->opcode) {
-	case READ_BIG:
 	case READ_COMMAND:
+	case READ_BIG:
+	case READ_12:
+	case READ_16:
 		flags = ATA_F_READ;
 		break;
-	case WRITE_BIG:
 	case WRITE_COMMAND:
+	case WRITE_BIG:
+	case WRITE_12:
+	case WRITE_16:
 		flags = ATA_F_WRITE;
 		/* deal with io outside the switch */
 		break;
@@ -427,14 +429,10 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	}
 
 	xa->flags = flags;
-	if (xs->cmdlen == 6) {
-		rw = (struct scsi_rw *)xs->cmd;
-		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
-		sector_count = rw->length ? rw->length : 0x100;
-	} else {
-		rwb = (struct scsi_rw_big *)xs->cmd;
-		lba = _4btol(rwb->addr);
-		sector_count = _2btol(rwb->length);
+	scsi_cmd_rw_decode(xs->cmd, &lba, &sector_count);
+	if ((lba >> 48) != 0 || (sector_count >> 16) != 0) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
 	}
 
 	fis = xa->fis;
