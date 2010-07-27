@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.34 2010/07/23 20:21:58 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.35 2010/07/27 05:17:36 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -245,6 +245,11 @@ acpiec_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
+	struct acpi_ecdt 	*ecdt = aa->aaa_table;
+
+	/* Check for early ECDT table attach */
+	if (ecdt && !memcmp(ecdt->hdr.signature, ECDT_SIG, sizeof(ECDT_SIG) - 1))
+		return (1);
 
 	/* sanity */
 	return (acpi_matchhids(aa, acpiec_hids, cf->cf_driver->cd_name));
@@ -384,6 +389,25 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	char			*buf;
 	int			size, ret;
 	int64_t			gpe;
+	struct acpi_ecdt	*ecdt = aa->aaa_table;
+	extern struct aml_node   aml_root;
+
+	/* Check if this is ECDT initialization */
+	if (ecdt) {
+		/* Get GPE, Data and Control segments */
+		sc->sc_gpe = ecdt->gpe_bit;
+
+		ctype = ecdt->ec_control.address_space_id;
+		ec_sc = ecdt->ec_control.address;
+
+		dtype = ecdt->ec_data.address_space_id;
+		ec_data = ecdt->ec_data.address;
+
+		/* Get devnode from header */
+		sc->sc_devnode = aml_searchname(&aml_root, ecdt->ec_id);
+
+		goto ecdtdone;
+	}
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_GPE", 0, NULL, &gpe)) {
 		dnprintf(10, "%s: no _GPE\n", DEVNAME(sc));
@@ -439,6 +463,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	aml_freevalue(&res);
 
 	/* XXX: todo - validate _CRS checksum? */
+ecdtdone:
 
 	dnprintf(10, "%s: Data: 0x%x, S/C: 0x%x\n",
 	    DEVNAME(sc), ec_data, ec_sc);

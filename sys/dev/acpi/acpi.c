@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.189 2010/07/26 17:25:44 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.190 2010/07/27 05:17:36 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2125,6 +2125,10 @@ acpi_foundec(struct aml_node *node, void *arg)
 	}
 
 	if (strcmp(dev, ACPI_DEV_ECD))
+		return 0;
+
+	/* Check if we're already attached */
+	if (sc->sc_ec && sc->sc_ec->sc_devnode == node->parent)
 		return 0;
 
 	memset(&aaa, 0, sizeof(aaa));
