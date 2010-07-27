@@ -1,4 +1,4 @@
-/*	$OpenBSD: daemon.c,v 1.6 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: daemon.c,v 1.7 2010/07/27 22:29:09 marco Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ daemon(int nochdir, int noclose)
 		(void)dup2(fd, STDOUT_FILENO);
 		(void)dup2(fd, STDERR_FILENO);
 		if (fd > 2)
-			(void)close (fd);
+			(void)close(fd);
 	}
 	return (0);
 }
