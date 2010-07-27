@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.173 2010/07/23 18:38:46 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.174 2010/07/27 02:00:36 krw Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -328,7 +328,7 @@ aml_findopcode(int opcode)
 	return NULL;
 }
 
-#ifndef SMALL_KERNEL
+#if defined(DDB) || !defined(SMALL_KERNEL)
 const char *
 aml_mnem(int opcode, uint8_t *pos)
 {
@@ -363,7 +363,7 @@ aml_mnem(int opcode, uint8_t *pos)
 	}
 	return ("xxx");
 }
-#endif /* SMALL_KERNEL */
+#endif /* defined(DDB) || !defined(SMALL_KERNEL) */
 
 struct aml_notify_data {
 	struct aml_node		*node;
@@ -2612,7 +2612,7 @@ aml_xstore(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 	aml_freevalue(&tmp);
 }
 
-#ifndef SMALL_KERNEL
+#ifdef DDB
 /* Disassembler routines */
 void aml_disprintf(void *arg, const char *fmt, ...);
 
@@ -2979,7 +2979,7 @@ aml_disasm(struct aml_scope *scope, int lvl,
 		dbprintf(arg,"\n");
 	}
 }
-#endif /* SMALL_KERNEL */
+#endif /* DDB */
 
 int aml_busy;
 
