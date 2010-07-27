@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.339 2010/07/13 12:28:13 sthen Exp $
+#	$OpenBSD: rc,v 1.340 2010/07/27 08:37:33 martinh Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -716,6 +716,10 @@ fi
 
 if [ X"${lpd_flags}" != X"NO" ]; then
 	echo -n ' lpd';			lpd ${lpd_flags}
+fi
+
+if [ X"${ldapd_flags}" != X"NO" ]; then
+	echo -n ' ldapd';		/usr/sbin/ldapd ${ldapd_flags};
 fi
 
 # We call sendmail with a full path so that SIGHUP works.
