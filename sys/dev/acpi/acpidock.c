@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.41 2010/07/23 18:38:46 jordan Exp $ */
+/* $OpenBSD: acpidock.c,v 1.42 2010/07/27 01:21:19 jordan Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -226,6 +226,9 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 		break;
 
 	case ACPIDOCK_EVENT_EJECT:
+	case ACPIDOCK_EVENT_DEVCHECK:
+		/* ACPI Spec says eject button press generates
+		 * a Notify(Device, 1); */
 		TAILQ_FOREACH(n, &sc->sc_deps_h, entries)
 			acpidock_eject(sc, n->node);
 		acpidock_dockctl(sc, 0);
