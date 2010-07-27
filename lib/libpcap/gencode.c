@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.33 2010/06/26 16:47:07 henning Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.34 2010/07/27 04:13:34 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -99,6 +99,13 @@ static void free_reg(int);
 
 static struct block *root;
 
+/* initialization code used for variable link header */
+static struct slist *init_code = NULL;
+
+/* Flags and registers for variable link type handling */
+static int variable_nl;
+static int nl_reg, iphl_reg;
+
 /*
  * We divy out chunks of memory rather than call malloc each time so
  * we don't have to worry about leaking memory.  It's probably
@@ -126,7 +133,9 @@ static void backpatch(struct block *, struct block *);
 static void merge(struct block *, struct block *);
 static struct block *gen_cmp(u_int, u_int, bpf_int32);
 static struct block *gen_cmp_gt(u_int, u_int, bpf_int32);
+static struct block *gen_cmp_nl(u_int, u_int, bpf_int32);
 static struct block *gen_mcmp(u_int, u_int, bpf_int32, bpf_u_int32);
+static struct block *gen_mcmp_nl(u_int, u_int, bpf_int32, bpf_u_int32);
 static struct block *gen_bcmp(u_int, u_int, const u_char *);
 static struct block *gen_uncond(int);
 static __inline struct block *gen_true(void);
@@ -421,6 +430,22 @@ finish_parse(p)
 	p->sense = !p->sense;
 	backpatch(p, gen_retblk(0));
 	root = p->head;
+
+	/* prepend initialization code to root */
+	if (init_code != NULL && root != NULL) {
+		sappend(init_code, root->stmts);
+		root->stmts = init_code;
+		init_code = NULL;
+	}
+
+	if (iphl_reg != -1) {
+		free_reg(iphl_reg);
+		iphl_reg = -1;
+	}
+	if (nl_reg != -1) {
+		free_reg(nl_reg);
+		nl_reg = -1;
+	}
 }
 
 void
@@ -506,6 +531,24 @@ gen_mcmp(offset, size, v, mask)
 	return b;
 }
 
+/* Like gen_mcmp with 'dynamic off_nl' added to the offset */
+static struct block *
+gen_mcmp_nl(offset, size, v, mask)
+	u_int offset, size;
+	bpf_int32 v;
+	bpf_u_int32 mask;
+{
+	struct block *b = gen_cmp_nl(offset, size, v);
+	struct slist *s;
+
+	if (mask != 0xffffffff) {
+		s = new_stmt(BPF_ALU|BPF_AND|BPF_K);
+		s->s.k = mask;
+		b->stmts->next = s;
+	}
+	return b;
+}
+
 static struct block *
 gen_bcmp(offset, size, v)
 	register u_int offset, size;
@@ -555,11 +598,84 @@ static u_int off_nl_nosnap;
 
 static int linktype;
 
+/* Generate code to load the dynamic 'off_nl' to the X register */
+static struct slist *
+nl2X_stmt(void)
+{
+	struct slist *s, *tmp;
+
+	if (nl_reg == -1) {
+		switch (linktype) {
+		case DLT_PFLOG:
+			/* The pflog header contains PFLOG_REAL_HDRLEN
+			   which does NOT include the padding. Round
+			   up to the nearest dword boundary */
+			s = new_stmt(BPF_LD|BPF_B|BPF_ABS);
+			s->s.k = 0;
+
+			tmp = new_stmt(BPF_ALU|BPF_ADD|BPF_K);
+			tmp->s.k = 3;
+			sappend(s, tmp);
+
+			tmp = new_stmt(BPF_ALU|BPF_AND|BPF_K);
+			tmp->s.k = 0xf6;
+			sappend(s, tmp);
+
+			nl_reg = alloc_reg();
+			tmp = new_stmt(BPF_ST);
+			tmp->s.k = nl_reg;
+			sappend(s, tmp);
+
+			break;
+		default:
+			bpf_error("Unknown header size for link type 0x%x",
+				  linktype);
+		}
+
+		if (init_code == NULL)
+			init_code = s;
+		else
+			sappend(init_code, s);
+	}
+
+	s = new_stmt(BPF_LDX|BPF_MEM);
+	s->s.k = nl_reg;
+
+	return s;
+}
+
+/* Like gen_cmp but adds the dynamic 'off_nl' to the offset */
+static struct block *
+gen_cmp_nl(offset, size, v)
+	u_int offset, size;
+	bpf_int32 v;
+{
+	struct slist *s, *tmp;
+	struct block *b;
+
+	if (variable_nl) {
+		s = nl2X_stmt();
+		tmp = new_stmt(BPF_LD|BPF_IND|size);
+		tmp->s.k = offset;
+		sappend(s, tmp);
+	} else {
+		s = new_stmt(BPF_LD|BPF_ABS|size);
+		s->s.k = offset + off_nl;
+	}
+	b = new_block(JMP(BPF_JEQ));
+	b->stmts = s;
+	b->s.k = v;
+
+	return b;
+}
+
 static void
 init_linktype(type)
 	int type;
 {
 	linktype = type;
+	init_code = NULL;
+	nl_reg = iphl_reg = -1;
 
 	switch (type) {
 
@@ -660,8 +776,8 @@ init_linktype(type)
 
 	case DLT_PFLOG:
 		off_linktype = 0;
-		/* XXX read from header? */
-		off_nl = PFLOG_HDRLEN;
+		variable_nl = 1;
+		off_nl = 0;
 		return;
 
 	case DLT_PFSYNC:
@@ -849,7 +965,7 @@ gen_hostop(addr, mask, dir, proto, src_off, dst_off)
 		    linktype);
 	}
 	b0 = gen_linktype(proto);
-	b1 = gen_mcmp(offset, BPF_W, (bpf_int32)addr, mask);
+	b1 = gen_mcmp_nl(offset, BPF_W, (bpf_int32)addr, mask);
 	gen_and(b0, b1);
 	return b1;
 }
@@ -896,12 +1012,12 @@ gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
 	/* this order is important */
 	a = (u_int32_t *)addr;
 	m = (u_int32_t *)mask;
-	b1 = gen_mcmp(offset + 12, BPF_W, ntohl(a[3]), ntohl(m[3]));
-	b0 = gen_mcmp(offset + 8, BPF_W, ntohl(a[2]), ntohl(m[2]));
+	b1 = gen_mcmp_nl(offset + 12, BPF_W, ntohl(a[3]), ntohl(m[3]));
+	b0 = gen_mcmp_nl(offset + 8, BPF_W, ntohl(a[2]), ntohl(m[2]));
 	gen_and(b0, b1);
-	b0 = gen_mcmp(offset + 4, BPF_W, ntohl(a[1]), ntohl(m[1]));
+	b0 = gen_mcmp_nl(offset + 4, BPF_W, ntohl(a[1]), ntohl(m[1]));
 	gen_and(b0, b1);
-	b0 = gen_mcmp(offset + 0, BPF_W, ntohl(a[0]), ntohl(m[0]));
+	b0 = gen_mcmp_nl(offset + 0, BPF_W, ntohl(a[0]), ntohl(m[0]));
 	gen_and(b0, b1);
 	b0 = gen_linktype(proto);
 	gen_and(b0, b1);
@@ -1047,26 +1163,26 @@ gen_dnhostop(addr, dir, base_off)
 	}
 	b0 = gen_linktype(ETHERTYPE_DN);
 	/* Check for pad = 1, long header case */
-	tmp = gen_mcmp(base_off + 2, BPF_H,
-	    (bpf_int32)ntohs(0x0681), (bpf_int32)ntohs(0x07FF));
-	b1 = gen_cmp(base_off + 2 + 1 + offset_lh,
+	tmp = gen_mcmp_nl(base_off + 2, BPF_H,
+		       (bpf_int32)ntohs(0x0681), (bpf_int32)ntohs(0x07FF));
+	b1 = gen_cmp_nl(base_off + 2 + 1 + offset_lh,
 	    BPF_H, (bpf_int32)ntohs(addr));
 	gen_and(tmp, b1);
 	/* Check for pad = 0, long header case */
-	tmp = gen_mcmp(base_off + 2, BPF_B, (bpf_int32)0x06, (bpf_int32)0x7);
-	b2 = gen_cmp(base_off + 2 + offset_lh, BPF_H, (bpf_int32)ntohs(addr));
+	tmp = gen_mcmp_nl(base_off + 2, BPF_B, (bpf_int32)0x06, (bpf_int32)0x7);
+	b2 = gen_cmp_nl(base_off + 2 + offset_lh, BPF_H, (bpf_int32)ntohs(addr));
 	gen_and(tmp, b2);
 	gen_or(b2, b1);
 	/* Check for pad = 1, short header case */
-	tmp = gen_mcmp(base_off + 2, BPF_H,
-	    (bpf_int32)ntohs(0x0281), (bpf_int32)ntohs(0x07FF));
-	b2 = gen_cmp(base_off + 2 + 1 + offset_sh,
+	tmp = gen_mcmp_nl(base_off + 2, BPF_H,
+		       (bpf_int32)ntohs(0x0281), (bpf_int32)ntohs(0x07FF));
+	b2 = gen_cmp_nl(base_off + 2 + 1 + offset_sh,
 	    BPF_H, (bpf_int32)ntohs(addr));
 	gen_and(tmp, b2);
 	gen_or(b2, b1);
 	/* Check for pad = 0, short header case */
-	tmp = gen_mcmp(base_off + 2, BPF_B, (bpf_int32)0x02, (bpf_int32)0x7);
-	b2 = gen_cmp(base_off + 2 + offset_sh, BPF_H, (bpf_int32)ntohs(addr));
+	tmp = gen_mcmp_nl(base_off + 2, BPF_B, (bpf_int32)0x02, (bpf_int32)0x7);
+	b2 = gen_cmp_nl(base_off + 2 + offset_sh, BPF_H, (bpf_int32)ntohs(addr));
 	gen_and(tmp, b2);
 	gen_or(b2, b1);
 
@@ -1096,15 +1212,15 @@ gen_host(addr, mask, proto, dir)
 
 	case Q_IP:
 		return gen_hostop(addr, mask, dir, ETHERTYPE_IP,
-				  off_nl + 12, off_nl + 16);
+				  12, 16);
 
 	case Q_RARP:
 		return gen_hostop(addr, mask, dir, ETHERTYPE_REVARP,
-				  off_nl + 14, off_nl + 24);
+				  14, 24);
 
 	case Q_ARP:
 		return gen_hostop(addr, mask, dir, ETHERTYPE_ARP,
-				  off_nl + 14, off_nl + 24);
+				  14, 24);
 
 	case Q_TCP:
 		bpf_error("'tcp' modifier applied to host");
@@ -1131,7 +1247,7 @@ gen_host(addr, mask, proto, dir)
 		bpf_error("ATALK host filtering not implemented");
 
 	case Q_DECNET:
-		return gen_dnhostop(addr, dir, off_nl);
+		return gen_dnhostop(addr, dir, 0);
 
 	case Q_SCA:
 		bpf_error("SCA host filtering not implemented");
@@ -1229,7 +1345,7 @@ gen_host6(addr, mask, proto, dir)
 
 	case Q_IPV6:
 		return gen_hostop6(addr, mask, dir, ETHERTYPE_IPV6,
-				  off_nl + 8, off_nl + 24);
+				   8, 24);
 
 	case Q_ICMPV6:
 		bpf_error("'icmp6' modifier applied to host");
@@ -1430,12 +1546,19 @@ gen_proto_abbrev(proto)
 static struct block *
 gen_ipfrag()
 {
-	struct slist *s;
+	struct slist *s, *tmp;
 	struct block *b;
 
 	/* not ip frag */
-	s = new_stmt(BPF_LD|BPF_H|BPF_ABS);
-	s->s.k = off_nl + 6;
+	if (variable_nl) {
+		s = nl2X_stmt();
+		tmp = new_stmt(BPF_LD|BPF_H|BPF_IND);
+		tmp->s.k = 6;
+		sappend(s, tmp);
+	} else {
+		s = new_stmt(BPF_LD|BPF_H|BPF_ABS);
+		s->s.k = off_nl + 6;
+	}
 	b = new_block(JMP(BPF_JSET));
 	b->s.k = 0x1fff;
 	b->stmts = s;
@@ -1444,19 +1567,71 @@ gen_ipfrag()
 	return b;
 }
 
+/* For dynamic off_nl, the BPF_LDX|BPF_MSH instruction does not work
+   This function generates code to set X to the start of the IP payload
+   X = off_nl + IP header_len.
+*/
+static struct slist *
+iphl_to_x(void)
+{
+	struct slist *s, *tmp;
+
+	/* XXX clobbers A if variable_nl*/
+	if (variable_nl) {
+		if (iphl_reg == -1) {
+			/* X <- off_nl */
+			s = nl2X_stmt();
+
+			/* A = p[X+0] */
+			tmp = new_stmt(BPF_LD|BPF_B|BPF_IND);
+			tmp->s.k = 0;
+			sappend(s, tmp);
+
+			/* A = A & 0x0f */
+			tmp = new_stmt(BPF_ALU|BPF_AND|BPF_K);
+			tmp->s.k = 0x0f;
+			sappend(s, tmp);
+
+			/* A = A << 2 */
+			tmp = new_stmt(BPF_ALU|BPF_LSH|BPF_K);
+			tmp->s.k = 2;
+			sappend(s, tmp);
+
+			/* A = A + X (add off_nl again to compansate) */
+			sappend(s, new_stmt(BPF_ALU|BPF_ADD|BPF_X));
+			
+			/* MEM[iphl_reg] = A */
+			iphl_reg = alloc_reg();
+			tmp = new_stmt(BPF_ST);
+			tmp->s.k = iphl_reg;
+			sappend(s, tmp);
+
+			sappend(init_code, s);
+		}
+		s = new_stmt(BPF_LDX|BPF_MEM);
+		s->s.k = iphl_reg;
+
+	} else {
+		s = new_stmt(BPF_LDX|BPF_MSH|BPF_B);
+		s->s.k = off_nl;
+	}
+
+	return s;
+}
+
 static struct block *
 gen_portatom(off, v)
 	int off;
 	bpf_int32 v;
 {
-	struct slist *s;
+	struct slist *s, *tmp;
 	struct block *b;
 
-	s = new_stmt(BPF_LDX|BPF_MSH|BPF_B);
-	s->s.k = off_nl;
+	s = iphl_to_x();
 
-	s->next = new_stmt(BPF_LD|BPF_IND|BPF_H);
-	s->next->s.k = off_nl + off;
+	tmp = new_stmt(BPF_LD|BPF_IND|BPF_H);
+	tmp->s.k = off_nl + off;	/* off_nl == 0 if variable_nl */
+	sappend(s, tmp);
 
 	b = new_block(JMP(BPF_JEQ));
 	b->stmts = s;
@@ -1471,7 +1646,7 @@ gen_portatom6(off, v)
 	int off;
 	bpf_int32 v;
 {
-	return gen_cmp(off_nl + 40 + off, BPF_H, v);
+	return gen_cmp_nl(40 + off, BPF_H, v);
 }
 #endif/*INET6*/
 
@@ -1482,7 +1657,7 @@ gen_portop(port, proto, dir)
 	struct block *b0, *b1, *tmp;
 
 	/* ip proto 'proto' */
-	tmp = gen_cmp(off_nl + 9, BPF_B, (bpf_int32)proto);
+	tmp = gen_cmp_nl(9, BPF_B, (bpf_int32)proto);
 	b0 = gen_ipfrag();
 	gen_and(tmp, b0);
 
@@ -1554,7 +1729,7 @@ gen_portop6(port, proto, dir)
 	struct block *b0, *b1, *tmp;
 
 	/* ip proto 'proto' */
-	b0 = gen_cmp(off_nl + 6, BPF_B, (bpf_int32)proto);
+	b0 = gen_cmp_nl(6, BPF_B, (bpf_int32)proto);
 
 	switch (dir) {
 	case Q_SRC:
@@ -1666,6 +1841,11 @@ gen_protochain(v, proto, dir)
 
 	memset(s, 0, sizeof(s));
 	fix2 = fix3 = fix4 = fix5 = 0;
+
+	if (variable_nl) {
+		bpf_error("'gen_protochain' not supported for variable DLTs");
+		/*NOTREACHED*/
+	}
 
 	switch (proto) {
 	case Q_IP:
@@ -1966,7 +2146,7 @@ gen_proto(v, proto, dir)
 	case Q_IP:
 		b0 = gen_linktype(ETHERTYPE_IP);
 #ifndef CHASE_CHAIN
-		b1 = gen_cmp(off_nl + 9, BPF_B, (bpf_int32)v);
+		b1 = gen_cmp_nl(9, BPF_B, (bpf_int32)v);
 #else
 		b1 = gen_protochain(v, Q_IP);
 #endif
@@ -2040,7 +2220,7 @@ gen_proto(v, proto, dir)
 	case Q_IPV6:
 		b0 = gen_linktype(ETHERTYPE_IPV6);
 #ifndef CHASE_CHAIN
-		b1 = gen_cmp(off_nl + 6, BPF_B, (bpf_int32)v);
+		b1 = gen_cmp_nl(6, BPF_B, (bpf_int32)v);
 #else
 		b1 = gen_protochain(v, Q_IPV6);
 #endif
@@ -2560,9 +2740,16 @@ gen_load(proto, index, size)
 	case Q_IPV6:
 #endif
 		/* XXX Note that we assume a fixed link header here. */
-		s = xfer_to_x(index);
+		if (variable_nl) {
+			s = nl2X_stmt();
+			sappend(s, xfer_to_a(index));
+			sappend(s, new_stmt(BPF_ALU|BPF_ADD|BPF_X));
+			sappend(s, new_stmt(BPF_MISC|BPF_TAX));
+		} else {
+			s = xfer_to_x(index);
+		}
 		tmp = new_stmt(BPF_LD|BPF_IND|size);
-		tmp->s.k = off_nl;
+		tmp->s.k = off_nl;	/* off_nl == 0 for variable_nl */
 		sappend(s, tmp);
 		sappend(index->s, s);
 
@@ -2578,13 +2765,12 @@ gen_load(proto, index, size)
 	case Q_IGMP:
 	case Q_IGRP:
 	case Q_PIM:
-		s = new_stmt(BPF_LDX|BPF_MSH|BPF_B);
-		s->s.k = off_nl;
+		s = iphl_to_x();
 		sappend(s, xfer_to_a(index));
 		sappend(s, new_stmt(BPF_ALU|BPF_ADD|BPF_X));
 		sappend(s, new_stmt(BPF_MISC|BPF_TAX));
 		sappend(s, tmp = new_stmt(BPF_LD|BPF_IND|size));
-		tmp->s.k = off_nl;
+		tmp->s.k = off_nl;	/* off_nl is 0 if variable_nl */
 		sappend(index->s, s);
 
 		gen_and(gen_proto_abbrev(proto), b = gen_ipfrag());
@@ -2874,8 +3060,8 @@ gen_broadcast(proto)
 	case Q_IP:
 		b0 = gen_linktype(ETHERTYPE_IP);
 		hostmask = ~netmask;
-		b1 = gen_mcmp(off_nl + 16, BPF_W, (bpf_int32)0, hostmask);
-		b2 = gen_mcmp(off_nl + 16, BPF_W,
+		b1 = gen_mcmp_nl(16, BPF_W, (bpf_int32)0, hostmask);
+		b2 = gen_mcmp_nl(16, BPF_W,
 			      (bpf_int32)(~0 & hostmask), hostmask);
 		gen_or(b1, b2);
 		gen_and(b0, b2);
@@ -2920,7 +3106,7 @@ gen_multicast(proto)
 
 	case Q_IP:
 		b0 = gen_linktype(ETHERTYPE_IP);
-		b1 = gen_cmp(off_nl + 16, BPF_B, (bpf_int32)224);
+		b1 = gen_cmp_nl(16, BPF_B, (bpf_int32)224);
 		b1->s.code = JMP(BPF_JGE);
 		gen_and(b0, b1);
 		return b1;
@@ -2928,7 +3114,7 @@ gen_multicast(proto)
 #ifdef INET6
 	case Q_IPV6:
 		b0 = gen_linktype(ETHERTYPE_IPV6);
-		b1 = gen_cmp(off_nl + 24, BPF_B, (bpf_int32)255);
+		b1 = gen_cmp_nl(24, BPF_B, (bpf_int32)255);
 		gen_and(b0, b1);
 		return b1;
 #endif /* INET6 */
@@ -3163,6 +3349,11 @@ gen_vlan(vlan_num)
 	int vlan_num;
 {
 	struct	block	*b0;
+
+	if (variable_nl) {
+		bpf_error("'vlan' not supported for variable DLTs");
+		/*NOTREACHED*/
+	}
 
 	/*
 	 * Change the offsets to point to the type and data fields within
