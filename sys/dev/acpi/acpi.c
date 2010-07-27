@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.193 2010/07/27 22:57:48 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.194 2010/07/27 22:58:48 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1726,8 +1726,8 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	for (retries = 1000; retries > 0; retries--) {
 		rega = acpi_read_pmreg(sc, ACPIREG_PM1A_STS, 0);
 		regb = acpi_read_pmreg(sc, ACPIREG_PM1B_STS, 0);
-		if (rega & ACPI_PM1_WAK_STS ||
-		    regb & ACPI_PM1_WAK_STS)
+		if ((rega & ACPI_PM1_WAK_STS) ||
+		    (regb & ACPI_PM1_WAK_STS))
 			break;
 		DELAY(10);
 	}
