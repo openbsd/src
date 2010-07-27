@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.123 2010/07/14 19:24:27 naddy Exp $	*/
+/*	$OpenBSD: re.c,v 1.124 2010/07/27 20:53:39 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1942,7 +1942,7 @@ re_init(struct ifnet *ifp)
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
-	re_stop(ifp, 0);
+	re_stop(ifp);
 
 	/*
 	 * Enable C+ RX and TX mode, as well as RX checksum offload.
@@ -2118,7 +2118,7 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				re_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				re_stop(ifp, 1);
+				re_stop(ifp);
 		}
 		break;
 	case SIOCGIFMEDIA:
@@ -2163,7 +2163,7 @@ re_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 void
-re_stop(struct ifnet *ifp, int disable)
+re_stop(struct ifnet *ifp)
 {
 	struct rl_softc *sc;
 	int	i;
