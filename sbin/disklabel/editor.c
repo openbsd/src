@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.240 2010/06/30 21:11:20 halex Exp $	*/
+/*	$OpenBSD: editor.c,v 1.241 2010/07/27 00:49:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -521,7 +521,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct diskchunk *chunks;
 	daddr64_t secs, chunkstart, chunksize, cylsecs, totsecs, xtrasecs;
 	char **partmp;
-	int i, j, lastalloc, index = 0, fragsize;
+	int i, j, lastalloc, index = 0, fragsize, partno;
 	int64_t physmem;
 
 	/* How big is the OpenBSD portion of the disk?  */
@@ -589,6 +589,7 @@ again:
 				break;
 		if (j == MAXPARTITIONS)
 			return;
+		partno = j;
 		pp = &lp->d_partitions[j];
 		partmp = &mountpoints[j];
 		ap = &alloc[i];
@@ -672,6 +673,7 @@ cylinderalign:
 			pp->p_fstype = FS_SWAP;
 		else {
 			pp->p_fstype = FS_BSDFFS;
+			get_bsize(lp, partno);
 			free(*partmp);
 			if ((*partmp = strdup(ap->mp)) == NULL)
 				errx(4, "out of memory");
@@ -1962,17 +1964,19 @@ get_fsize(struct disklabel *lp, int partno)
 int
 get_bsize(struct disklabel *lp, int partno)
 {
-	u_int64_t ui, bsize, frag, fsize;
+	u_int64_t adj, ui, bsize, frag, fsize;
 	struct partition *pp = &lp->d_partitions[partno];
 
-	if (!expert || pp->p_fstype != FS_BSDFFS)
+	if (pp->p_fstype != FS_BSDFFS)
 		return (0);
 
 	/* Avoid dividing by zero... */
 	if (pp->p_fragblock == 0)
 		return(1);
 
-	bsize = DISKLABELV1_FFS_BSIZE(pp->p_fragblock);
+	if (!expert)
+		goto align;
+
 	fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 
@@ -2002,6 +2006,24 @@ get_bsize(struct disklabel *lp, int partno)
 			break;
 	}
 	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(ui / frag, frag);
+
+align:
+#ifndef SUN_CYLCHECK
+	bsize = (DISKLABELV1_FFS_FRAG(pp->p_fragblock) *
+	    DISKLABELV1_FFS_FSIZE(pp->p_fragblock)) / lp->d_secsize;
+	if (DL_GETPOFFSET(pp) != starting_sector) {
+		/* Can't change offset of first partition. */
+		adj = bsize - (DL_GETPOFFSET(pp) % bsize);
+		if (adj != 0 && adj != bsize) {
+			DL_SETPOFFSET(pp, DL_GETPOFFSET(pp) + adj);
+			DL_SETPSIZE(pp, DL_GETPSIZE(pp) - adj);
+		}
+	}
+	/* Always align end. */
+	adj = (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp)) % bsize;
+	if (adj > 0)
+		DL_SETPSIZE(pp, DL_GETPSIZE(pp) - adj);
+#endif
 	return(0);
 }
 
