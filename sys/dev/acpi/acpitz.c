@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.38 2010/07/21 19:35:15 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.39 2010/07/27 04:28:36 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -400,29 +400,12 @@ acpitz_refresh(void *arg)
 int
 acpitz_getreading(struct acpitz_softc *sc, char *name)
 {
-	struct aml_value	res, *ref;
-	int			rv = -1;
+	u_int64_t		val;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res)) {
-		dnprintf(10, "%s: acpitz_getreading: no %s\n", DEVNAME(sc),
-		    name);
-		goto out;
-	}
-	if (res.type == AML_OBJTYPE_STRING) {
-		struct aml_node *node;
-		node = aml_searchrel(sc->sc_devnode, res.v_string);
-		if (node == NULL)
-			goto out;
-		ref = node->value;
-	} else
-		ref = &res;
-	if (ref->type == AML_OBJTYPE_OBJREF) {
-		ref = ref->v_objref.ref;
-	}
-	rv = aml_val2int(ref);
-out:
-	aml_freevalue(&res);
-	return (rv);
+	if (!aml_evalinteger(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &val))
+		return (val);
+
+	return (-1);
 }
 
 int
