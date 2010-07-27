@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.55 2010/07/22 08:09:29 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.56 2010/07/27 09:27:35 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: July 27 2010 $
 .Dt ED 1
 .Os
 .Sh NAME
@@ -346,9 +346,9 @@ If
 is not specified, then the default filename is used.
 Any lines in the buffer are deleted before the new file is read.
 The current address is set to the last line read.
-.It Ic e No ! Ns Ar command
+.It Ic e No \&! Ns Ar command
 Edits the standard output of
-.No ! Ns Ar command ,
+.No \&! Ns Ar command ,
 (see
 .Ic \&! Ns Ar command
 below).
@@ -503,9 +503,9 @@ then the default filename is set to
 .Ar file .
 Otherwise, the default filename is unchanged.
 The current address is set to the last line read.
-.It ($) Ns Ic r No ! Ns Ar command
+.It ($) Ns Ic r No \&! Ns Ar command
 Reads to after the addressed line the standard output of
-.Pf ! Ns Ar command ,
+.No \&! Ns Ar command ,
 (see
 .Ic \&! Ns Ar command
 below).
@@ -664,9 +664,9 @@ Writes the addressed lines to
 and then executes a
 .Ic q
 command.
-.It (1,$) Ns Ic w No ! Ns Ar command
+.It (1,$) Ns Ic w No \&! Ns Ar command
 Writes the addressed lines to the standard input of
-.Pf ! Ns Ar command ,
+.No \&! Ns Ar command ,
 (see
 .Ic \&! Ns Ar command
 below).
