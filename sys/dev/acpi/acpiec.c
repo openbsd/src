@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.38 2010/07/27 22:32:51 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.39 2010/07/27 22:57:22 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -184,7 +184,7 @@ acpiec_read_1(struct acpiec_softc *sc, u_int8_t addr)
 void
 acpiec_write_1(struct acpiec_softc *sc, u_int8_t addr, u_int8_t data)
 {
-	if ((acpiec_status(sc) & EC_STAT_SCI_EVT)  == EC_STAT_SCI_EVT)
+	if ((acpiec_status(sc) & EC_STAT_SCI_EVT) == EC_STAT_SCI_EVT)
 		sc->sc_gotsci = 1;
 
 	acpiec_write_cmd(sc, EC_CMD_WR);
@@ -246,10 +246,13 @@ acpiec_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
 	struct acpi_ecdt	*ecdt = aa->aaa_table;
+	struct acpi_softc	*acpisc = (struct acpi_softc *)parent;
 
 	/* Check for early ECDT table attach */
 	if (ecdt && !memcmp(ecdt->hdr.signature, ECDT_SIG, sizeof(ECDT_SIG) - 1))
 		return (1);
+	if (acpisc->sc_ec)
+		return (0);
 
 	/* sanity */
 	return (acpi_matchhids(aa, acpiec_hids, cf->cf_driver->cd_name));
@@ -264,10 +267,6 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	if (sc->sc_acpi->sc_ec != NULL) {
-		printf(": Only single EC is supported\n");
-		return;
-	}
 	sc->sc_acpi->sc_ec = sc;
 
 	if (acpiec_getcrs(sc, aa)) {
@@ -333,8 +332,8 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 	s = spltty();
 	mask = (1L << (gpe & 7));
 	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_STS, gpe>>3, mask);
-	en = acpi_read_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3);
-	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
+	en = acpi_read_pmreg(acpi_sc, ACPIREG_GPE_EN, gpe>>3);
+	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN, gpe>>3, en | mask);
 	splx(s);
 
 	return (0);
@@ -444,7 +443,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	buf += ret;
 	size -= ret;
 
-	ret = acpiec_getregister(buf, size, &ctype,  &ec_sc);
+	ret = acpiec_getregister(buf, size, &ctype, &ec_sc);
 	if (ret <= 0) {
 		dnprintf(10, "%s: failed to read S/C from _CRS\n",
 		    DEVNAME(sc));
