@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.5 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.6 2010/07/27 22:39:59 deraadt Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -79,6 +79,7 @@
 int	alc_match(struct device *, void *, void *);
 void	alc_attach(struct device *, struct device *, void *);
 int	alc_detach(struct device *, int);
+int	alc_activate(struct device *, int);
 
 int	alc_init(struct ifnet *);
 void	alc_start(struct ifnet *);
@@ -128,7 +129,8 @@ const struct pci_matchid alc_devices[] = {
 };
 
 struct cfattach alc_ca = {
-	sizeof (struct alc_softc), alc_match, alc_attach
+	sizeof (struct alc_softc), alc_match, alc_attach, NULL,
+	alc_activate
 };
 
 struct cfdriver alc_cd = {
@@ -673,6 +675,28 @@ alc_detach(struct device *self, int flags)
 	}
 
 	return (0);
+}
+
+int
+alc_activate(struct device *self, int act)
+{
+	struct alc_softc *sc = (struct alc_softc *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			alc_stop(sc);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		rv = config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			alc_init(ifp);
+		break;
+	}
+	return rv;
 }
 
 int
