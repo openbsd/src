@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.192 2010/07/27 22:11:44 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.193 2010/07/27 22:57:48 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1716,6 +1716,9 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	 */
 	acpi_cpu_flush(sc, state);
 
+	/*
+	 * XXX The following sequence is probably not right. 
+	 */
 	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, 0, rega);
 	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, 0, regb);
 
