@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.87 2010/07/26 10:59:32 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.88 2010/07/27 09:09:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -696,7 +696,7 @@ sub parse_problems
 			next if m/^421\s+/o;
 		}
 		if ($notyet) {
-			print STDERR "Error from $url:\n" if $notyet;
+			$self->{state}->errsay("Error from #1", $url);
 			$notyet = 0;
 		}
 		if (m/^421\s+/o ||
@@ -707,7 +707,7 @@ sub parse_problems
 		if (m/^550\s+/o) {
 			$self->{lasterror} = 550;
 		}
-		print STDERR  $_;
+		$self->{state}->errprint("#1", $_);
 	}
 	CORE::close($fh);
 	$self->SUPER::parse_problems($filename, $hint, $object);
