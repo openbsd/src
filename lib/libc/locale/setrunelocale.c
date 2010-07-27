@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.4 2008/06/26 05:42:05 ray Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.5 2010/07/27 16:59:04 stsp Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -151,10 +151,11 @@ found:
 
 	rl->rl_citrus_ctype = NULL;
 
-	if (strcmp(rl->rl_encoding, _CITRUS_DEFAULT_CTYPE_NAME) != 0) {
+	if (_citrus_ctype_open(&rl->rl_citrus_ctype, rl->rl_encoding)) {
 		_NukeRune(rl);
 		return EINVAL;
 	}
+
 	/* register it */
 	lt = malloc(sizeof(struct localetable));
 	if (lt == NULL) {

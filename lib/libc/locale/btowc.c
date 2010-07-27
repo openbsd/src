@@ -1,8 +1,7 @@
-/*      $OpenBSD: citrus_ctype.h,v 1.2 2010/07/27 16:59:03 stsp Exp $       */
-/*      $NetBSD: citrus_ctype.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $        */
+/*	$OpenBSD: btowc.c,v 1.1 2010/07/27 16:59:03 stsp Exp $ */
 
 /*-
- * Copyright (c)2002 Citrus Project,
+ * Copyright (c) 2002, 2003 Tim J. Robbins.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,14 +24,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-#ifndef _CITRUS_CTYPE_H_
-#define _CITRUS_CTYPE_H_
+#include <sys/cdefs.h>
 
-#include "citrus_ctype_local.h"
+#include <stdio.h>
+#include <string.h>
+#include <wchar.h>
 
-extern struct _citrus_ctype_rec _citrus_ctype_none;
+wint_t
+btowc(int c)
+{
+	mbstate_t mbs;
+	char cc;
+	wchar_t wc;
 
-#endif
+	if (c == EOF)
+		return (WEOF);
+	/*
+	 * We expect mbrtowc() to return 0 or 1, hence the check for n > 1
+	 * which detects error return values as well as "impossible" byte
+	 * counts.
+	 */
+	memset(&mbs, 0, sizeof(mbs));
+	cc = (char)c;
+	if (mbrtowc(&wc, &cc, 1, &mbs) > 1)
+		return (WEOF);
+	return (wc);
+}

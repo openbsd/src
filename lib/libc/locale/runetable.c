@@ -43,6 +43,8 @@
 #include <wchar.h>
 #include "rune.h"
 #include "rune_local.h"
+#include "citrus_ctype.h"
+#include "citrus_none.h"
 #include <stdlib.h>
 
 _RuneLocale _DefaultRuneLocale = {
@@ -378,7 +380,7 @@ _RuneLocale _DefaultRuneLocale = {
     { 0, NULL },
     NULL, 0,
     "646",
-   0,
+   &_citrus_ctype_none,
     {
 	    { NULL, NULL, NULL },
 	    { NULL, NULL, NULL },

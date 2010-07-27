@@ -1,8 +1,7 @@
-/*	$OpenBSD: mbrtowc_sb.c,v 1.4 2005/11/27 20:03:06 cloder Exp $	*/
-/*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
+/*	$OpenBSD: wcstombs.c,v 1.1 2010/07/27 16:59:04 stsp Exp $ */
 
-/*
- * Copyright (c) 1991 The Regents of the University of California.
+/*-
+ * Copyright (c) 2002-2004 Tim J. Robbins.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,14 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -30,35 +26,20 @@
  * SUCH DAMAGE.
  */
 
-#include <errno.h>
+#include <sys/cdefs.h>
+
+#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wchar.h>
 
-/*ARGSUSED*/
 size_t
-mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+wcstombs(char * __restrict s, const wchar_t * __restrict pwcs, size_t n)
 {
+	mbstate_t mbs;
+	const wchar_t *pwcsp;
 
-	/* pwc may be NULL */
-	/* s may be NULL */
-	/* ps appears to be unused */
-
-	if (s == NULL)
-		return 0;
-	if (n == 0)
-		return (size_t)-1;
-	if (pwc)
-		*pwc = (wchar_t)(unsigned char)*s;
-	return (*s != '\0');
+	memset(&mbs, 0, sizeof(mbs));
+	pwcsp = pwcs;
+	return (wcsrtombs(s, &pwcsp, n, &mbs));
 }
-
-int
-mbtowc(wchar_t *pwc, const char *s, size_t n)
-{
-
-	/* pwc may be NULL */
-	/* s may be NULL */
-
-	return mbrtowc(pwc, s, n, NULL);
-}
-

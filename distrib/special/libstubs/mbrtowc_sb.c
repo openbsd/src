@@ -1,8 +1,8 @@
-/*      $OpenBSD: citrus_ctype.h,v 1.2 2010/07/27 16:59:03 stsp Exp $       */
-/*      $NetBSD: citrus_ctype.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $        */
+/*	$OpenBSD: mbrtowc_sb.c,v 1.1 2010/07/27 16:59:03 stsp Exp $	*/
+/*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
-/*-
- * Copyright (c)2002 Citrus Project,
+/*
+ * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,11 +13,14 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -25,14 +28,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-#ifndef _CITRUS_CTYPE_H_
-#define _CITRUS_CTYPE_H_
+#include <errno.h>
+#include <stdlib.h>
+#include <wchar.h>
 
-#include "citrus_ctype_local.h"
+/*ARGSUSED*/
+size_t
+mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+{
 
-extern struct _citrus_ctype_rec _citrus_ctype_none;
+	/* pwc may be NULL */
+	/* s may be NULL */
+	/* ps appears to be unused */
 
-#endif
+	if (s == NULL)
+		return 0;
+	if (n == 0)
+		return (size_t)-2;
+	if (pwc)
+		*pwc = (wchar_t)(unsigned char)*s;
+	return (*s != '\0');
+}
+
+int
+mbtowc(wchar_t *pwc, const char *s, size_t n)
+{
+
+	/* pwc may be NULL */
+	/* s may be NULL */
+
+	return mbrtowc(pwc, s, n, NULL);
+}
+

@@ -1,5 +1,5 @@
-/*      $OpenBSD: citrus_ctype.h,v 1.2 2010/07/27 16:59:03 stsp Exp $       */
-/*      $NetBSD: citrus_ctype.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $        */
+/*	$OpenBSD: multibyte.h,v 1.1 2010/07/27 16:59:04 stsp Exp $ */
+/*	$NetBSD: multibyte.h,v 1.5 2009/01/11 02:46:28 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -25,14 +25,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-#ifndef _CITRUS_CTYPE_H_
-#define _CITRUS_CTYPE_H_
+#ifndef _MULTIBYTE_H_
+#define _MULTIBYTE_H_
 
-#include "citrus_ctype_local.h"
+typedef struct _RuneStatePriv {
+	_RuneLocale	*__runelocale;
+	char		__private __attribute__((__aligned__));
+} _RuneStatePriv;
 
-extern struct _citrus_ctype_rec _citrus_ctype_none;
+typedef union _RuneState {
+	mbstate_t		__pad;
+	struct _RuneStatePriv	__priv;
+#define rs_runelocale		__priv.__runelocale
+#define rs_private		__priv.__private
+} _RuneState;
+#define _RUNE_STATE_PRIVSIZE	(sizeof(mbstate_t)-offsetof(_RuneStatePriv, __private))
 
-#endif
+#define _ps_to_runestate(ps)	((_RuneState *)(void *)(ps))
+#define _ps_to_runelocale(ps)	(_ps_to_runestate(ps)->rs_runelocale)
+#define _ps_to_private(ps)	((void *)&_ps_to_runestate(ps)->rs_private)
+	
+#endif /*_MULTIBYTE_H_*/

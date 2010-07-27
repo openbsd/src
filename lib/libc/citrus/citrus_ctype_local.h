@@ -1,6 +1,4 @@
-#ifndef _CITRUS_CTYPE_LOCAL_H_
-#define _CITRUS_CTYPE_LOCAL_H_
-/*      $OpenBSD: citrus_ctype_local.h,v 1.1 2005/08/07 10:16:23 espie Exp $       */
+/*      $OpenBSD: citrus_ctype_local.h,v 1.2 2010/07/27 16:59:03 stsp Exp $       */
 /*      $NetBSD: citrus_ctype_local.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $  */
 
 /*-
@@ -30,7 +28,57 @@
  *
  */
 
-#define _CITRUS_DEFAULT_CTYPE_NAME      "NONE"
+#ifndef _CITRUS_CTYPE_LOCAL_H_
+#define _CITRUS_CTYPE_LOCAL_H_
+
+#define _CITRUS_CTYPE_DECLS(_e_)					\
+size_t	_citrus_##_e_##_ctype_mbrtowc(wchar_t * __restrict,		\
+				      const char * __restrict, size_t,	\
+				      void * __restrict);		\
+int	_citrus_##_e_##_ctype_mbsinit(const void * __restrict);		\
+size_t	_citrus_##_e_##_ctype_mbsrtowcs(wchar_t * __restrict,		\
+					const char ** __restrict,	\
+					size_t, void * __restrict);	\
+size_t	_citrus_##_e_##_ctype_wcrtomb(char * __restrict, wchar_t,	\
+				      void * __restrict);		\
+size_t	_citrus_##_e_##_ctype_wcsrtombs(char * __restrict,		\
+					const wchar_t ** __restrict,	\
+					size_t, void * __restrict);	\
+
+#define _CITRUS_CTYPE_DEF_OPS(_e_)					\
+struct _citrus_ctype_ops_rec _citrus_##_e_##_ctype_ops = {		\
+	/* co_mbrtowc */	&_citrus_##_e_##_ctype_mbrtowc,		\
+	/* co_mbsinit */	&_citrus_##_e_##_ctype_mbsinit,		\
+	/* co_mbsrtowcs */	&_citrus_##_e_##_ctype_mbsrtowcs,	\
+	/* co_wcrtomb */	&_citrus_##_e_##_ctype_wcrtomb,		\
+	/* co_wcsrtombs */	&_citrus_##_e_##_ctype_wcsrtombs,	\
+}
+
+typedef size_t	(*_citrus_ctype_mbrtowc_t)
+	(wchar_t * __restrict, const char * __restrict,
+	size_t, void * __restrict);
+typedef int	(*_citrus_ctype_mbsinit_t) (const void * __restrict);
+typedef size_t	(*_citrus_ctype_mbsrtowcs_t)
+	(wchar_t * __restrict, const char ** __restrict,
+	 size_t, void * __restrict);
+typedef size_t	(*_citrus_ctype_wcrtomb_t)
+	(char * __restrict, wchar_t, void * __restrict);
+typedef size_t	(*_citrus_ctype_wcsrtombs_t)
+	(char * __restrict, const wchar_t ** __restrict,
+	 size_t, void * __restrict);
+
+struct _citrus_ctype_ops_rec {
+	_citrus_ctype_mbrtowc_t		co_mbrtowc;
+	_citrus_ctype_mbsinit_t		co_mbsinit;
+	_citrus_ctype_mbsrtowcs_t	co_mbsrtowcs;
+	_citrus_ctype_wcrtomb_t		co_wcrtomb;
+	_citrus_ctype_wcsrtombs_t	co_wcsrtombs;
+};
+
+#define _CITRUS_DEFAULT_CTYPE_NAME	"NONE"
+
+struct _citrus_ctype_rec {
+	struct _citrus_ctype_ops_rec	*cc_ops;
+};
 
 #endif
-

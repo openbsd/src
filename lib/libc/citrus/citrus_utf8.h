@@ -1,5 +1,5 @@
-/*      $OpenBSD: citrus_ctype.h,v 1.2 2010/07/27 16:59:03 stsp Exp $       */
-/*      $NetBSD: citrus_ctype.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $        */
+/*	$OpenBSD */
+/*	$NetBSD: citrus_utf8.h,v 1.2 2003/06/25 09:51:49 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -25,14 +25,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-#ifndef _CITRUS_CTYPE_H_
-#define _CITRUS_CTYPE_H_
+#ifndef _CITRUS_UTF8_H_
+#define _CITRUS_UTF8_H_
 
-#include "citrus_ctype_local.h"
+extern struct _citrus_ctype_ops_rec	_citrus_utf8_ctype_ops;
 
-extern struct _citrus_ctype_rec _citrus_ctype_none;
+#define _CITRUS_UTF8_MB_CUR_MAX	4
+
+_CITRUS_CTYPE_DECLS(utf8);
 
 #endif

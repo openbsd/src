@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2010/02/03 20:49:00 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2010/07/27 16:59:03 stsp Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/locale ${LIBCSRCDIR}/locale
 
-SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
-	localeconv.c nl_langinfo.c setlocale.c iswctype.c mbrtowc_sb.c \
-	multibyte_sb.c __mb_cur_max.c \
-	wcstof.c wcstod.c wcstold.c \
-	wcstol.c wcstoul.c wcstoll.c wcstoull.c wcstoimax.c wcstoumax.c \
+SRCS+=	btowc.c _def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
+	localeconv.c nl_langinfo.c setlocale.c iswctype.c __mb_cur_max.c \
+	mblen.c mbrlen.c mbstowcs.c mbtowc.c multibyte_citrus.c wcscoll.c \
+	wcstombs.c wctob.c wctomb.c wcstof.c wcstod.c wcstold.c wcstol.c \
+	wcstoul.c wcstoll.c wcstoull.c wcstoimax.c wcstoumax.c \
 	setrunelocale.c runeglue.c rune.c runetable.c ___runetype_mb.c \
-	_wctrans.c
+	_wctrans.c wcsxfrm.c
 
 MAN+=	nl_langinfo.3 setlocale.3 iswalnum.3 towlower.3 \
 	btowc.3 mblen.3 mbrlen.3 mbrtowc.3 mbsinit.3 mbsrtowcs.3 \
@@ -37,4 +37,4 @@ MLINKS+=setlocale.3 localeconv.3 \
 	wcstol.3 wcstoimax.3 \
 	wcstol.3 wcstoumax.3
 
-CFLAGS+=-I${.CURDIR}
+CFLAGS+=-I${.CURDIR} -I${LIBCSRCDIR}/citrus
