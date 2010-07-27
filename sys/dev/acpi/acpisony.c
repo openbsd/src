@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisony.c,v 1.1 2010/07/26 11:29:23 pirofti Exp $ */
+/* $OpenBSD: acpisony.c,v 1.2 2010/07/27 06:12:50 deraadt Exp $ */
 /*
  * Copyright (c) 2010 Paul Irofti <pirofti@openbsd.org>
  *
@@ -254,7 +254,7 @@ acpisony_find_offset(struct acpisony_softc *sc, int key)
 	arg.type = AML_OBJTYPE_INTEGER;
 
 	for (arg.v_integer = 0x20; arg.v_integer < 0x30; arg.v_integer++) {
-		aml_evalname(sc->sc_acpi, sc->sc_devnode, "SN00", 1, &arg, &res);	
+		aml_evalname(sc->sc_acpi, sc->sc_devnode, "SN00", 1, &arg, &res);
 		val = aml_val2int(&res);
 		aml_freevalue(&res);
 		if (val == key) {
@@ -274,7 +274,7 @@ acpisony_set_hotkey(struct acpisony_softc *sc, int key, int val)
 
 	bzero(&arg, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
-	
+
 	off = acpisony_find_offset(sc, key);
 	DPRINTF(("off = %X\n", off));
 	if (off < 0)

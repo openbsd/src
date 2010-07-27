@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.35 2010/07/27 05:17:36 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.36 2010/07/27 06:12:50 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -245,7 +245,7 @@ acpiec_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
-	struct acpi_ecdt 	*ecdt = aa->aaa_table;
+	struct acpi_ecdt	*ecdt = aa->aaa_table;
 
 	/* Check for early ECDT table attach */
 	if (ecdt && !memcmp(ecdt->hdr.signature, ECDT_SIG, sizeof(ECDT_SIG) - 1))
