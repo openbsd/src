@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.190 2010/07/27 05:17:36 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.191 2010/07/27 16:20:17 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1897,6 +1897,13 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			error = ENXIO;
 			goto fail;
 		}
+
+	/* Reset the indicator lights to "sleeping" */
+	if (sc->sc_sst) {
+		env.v_integer = ACPI_SST_SLEEPING;
+		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
+	}
+	env.v_integer = state;
 
 	sc->sc_state = state;
 	/* _GTS(state) */
