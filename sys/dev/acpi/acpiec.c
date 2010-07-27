@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.37 2010/07/27 21:55:54 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.38 2010/07/27 22:32:51 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -390,7 +390,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	int			size, ret;
 	int64_t			gpe;
 	struct acpi_ecdt	*ecdt = aa->aaa_table;
-	extern struct aml_node   aml_root;
+	extern struct aml_node	aml_root;
 
 	/* Check if this is ECDT initialization */
 	if (ecdt) {
