@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.191 2010/07/27 16:20:17 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.192 2010/07/27 22:11:44 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1500,9 +1500,8 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	struct acpi_wakeq *wq;
 
 	wq = malloc(sizeof(struct acpi_wakeq), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (wq == NULL) {
+	if (wq == NULL)
 		return 0;
-	}
 
 	wq->q_wakepkg = malloc(sizeof(struct aml_value), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
@@ -1516,13 +1515,12 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	wq->q_gpe = -1;
 
 	/* Get GPE of wakeup device, and lowest sleep level */
-	if (wq->q_wakepkg->type == AML_OBJTYPE_PACKAGE && wq->q_wakepkg->length >= 2) {
-	  if (wq->q_wakepkg->v_package[0]->type == AML_OBJTYPE_INTEGER) {
-	    wq->q_gpe = wq->q_wakepkg->v_package[0]->v_integer;
-	  }
-	  if (wq->q_wakepkg->v_package[1]->type == AML_OBJTYPE_INTEGER) {
-	    wq->q_state = wq->q_wakepkg->v_package[1]->v_integer;
-	  }
+	if (wq->q_wakepkg->type == AML_OBJTYPE_PACKAGE &&
+	    wq->q_wakepkg->length >= 2) {
+		if (wq->q_wakepkg->v_package[0]->type == AML_OBJTYPE_INTEGER)
+			wq->q_gpe = wq->q_wakepkg->v_package[0]->v_integer;
+		if (wq->q_wakepkg->v_package[1]->type == AML_OBJTYPE_INTEGER)
+			wq->q_state = wq->q_wakepkg->v_package[1]->v_integer;
 	}
 	SIMPLEQ_INSERT_TAIL(&sc->sc_wakedevs, wq, q_next);
 	return 0;
