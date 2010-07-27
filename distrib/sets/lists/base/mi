@@ -2670,6 +2670,7 @@
 ./usr/share/locale/en_US.ISO8859-15
 ./usr/share/locale/en_US.ISO8859-15/LC_CTYPE
 ./usr/share/locale/en_US.UTF-8
+./usr/share/locale/en_US.UTF-8/LC_CTYPE
 ./usr/share/locale/es_ES.ISO8859-1
 ./usr/share/locale/es_ES.ISO8859-1/LC_CTYPE
 ./usr/share/locale/es_ES.ISO8859-15
