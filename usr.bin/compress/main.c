@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.75 2009/04/18 18:21:54 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.76 2010/07/28 23:52:01 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.75 2009/04/18 18:21:54 naddy Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.76 2010/07/28 23:52:01 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -482,7 +482,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 				return (WARNING);
 			}
 		}
-		ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR);
+		ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
 	}
 	if (ofd < 0) {
 		if (verbose >= 0)
