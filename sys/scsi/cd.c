@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.180 2010/07/25 16:34:41 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.181 2010/07/28 23:47:43 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1835,7 +1835,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 	case DVD_INVALIDATE_AGID:
 		xs->cmd->opcode = GPCMD_REPORT_KEY;
 		xs->cmd->bytes[9] = 0x3f | (a->lsa.agid << 6);
-		xs->datalen = 16;
+		xs->data = NULL;
 
 		error = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
