@@ -1,5 +1,5 @@
-.\" 	$OpenBSD: hcreate.3,v 1.5 2008/06/26 05:42:05 ray Exp $
-.\" 	$NetBSD: hcreate.3,v 1.6 2003/04/16 13:34:46 wiz Exp $
+.\" 	$OpenBSD: hcreate.3,v 1.6 2010/07/28 09:00:20 ray Exp $
+.\" 	$NetBSD: hcreate.3,v 1.8 2010/05/01 06:18:03 jruoho Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: July 28 2010 $
 .Dt HCREATE 3
 .Os
 .Sh NAME
@@ -84,15 +84,18 @@ hash table indicating the address of an item.
 The
 .Fa item
 argument is of type
-.Dv ENTRY ,
-a structural type which contains the following members:
+.Vt ENTRY ,
+defined in the
+.In search.h
+header.
+This is a structure type that contains two pointers:
 .Pp
-.Bl -tag -compact -offset indent -width voidX*dataXX
+.Bl -tag -compact -offset indent -width "void *data "
 .It Fa char *key
-comparison key.
+comparison key
 .It Fa void *data
 pointer to data associated with
-.Fa key .
+.Fa key
 .El
 .Pp
 The key comparison function used by
@@ -103,7 +106,7 @@ is
 The
 .Fa action
 argument is of type
-.Dv ACTION ,
+.Vt ACTION ,
 an enumeration type which defines the following values:
 .Bl -tag -offset indent -width ENTERXX
 .It Dv ENTER
@@ -124,6 +127,30 @@ key must not be modified during the lifetime of the hash table.
 Search the hash table without inserting
 .Fa item .
 .El
+.Pp
+Note that the comparison
+.Fa key
+must be allocated using
+.Xr malloc 3
+or
+.Xr calloc 3
+if action is
+.Dv ENTER
+and
+.Fn hdestroy
+will be called.
+This is because
+.Fn hdestroy
+will call
+.Xr free 3
+for each comparison
+.Fa key
+(but not
+.Fa data ) .
+Typically the comparison
+.Fa key
+is allocated by using
+.Xr strdup 3 .
 .Sh RETURN VALUES
 If successful, the
 .Fn hcreate
@@ -170,8 +197,13 @@ Insufficient memory is available.
 .Xr malloc 3 ,
 .Xr strcmp 3
 .Sh STANDARDS
-These functions conform to
-.St -p1003.1-2004 .
+The
+.Fn hcreate ,
+.Fn hdestroy
+and
+.Fn hsearch
+functions conform to
+.St -xpg4.2 .
 .Sh HISTORY
 The
 .Fn hcreate ,
@@ -180,5 +212,28 @@ and
 .Fn hsearch
 functions first appeared in
 .At V .
-.Sh BUGS
+.Sh CAVEATS
+At least the following limitations can be mentioned:
+.Bl -bullet
+.It
 The interface permits the use of only one hash table at a time.
+.It
+Individual hash table entries can be added, but not deleted.
+.It
+The standard is indecipherable about the
+internal memory usage of the functions,
+mentioning only that
+.Do
+.Fn hcreate
+and
+.Fn hsearch
+functions may use
+.Fn malloc
+to allocate space
+.Dc .
+This limits the portability of the functions,
+given that other implementations may not
+.Xr free 3
+the buffer pointed by
+.Fa key .
+.El
