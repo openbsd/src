@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.13 2010/07/13 12:54:51 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.14 2010/07/28 10:06:19 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -258,7 +258,7 @@ ldap_modify(struct request *req)
 	}
 
 	for (mod = mods->be_sub; mod; mod = mod->be_next) {
-		if (ber_scanf_elements(mod, "{E{ese", &op, &prev, &attr, &vals) != 0) {
+		if (ber_scanf_elements(mod, "{E{ese(", &op, &prev, &attr, &vals) != 0) {
 			rc = LDAP_PROTOCOL_ERROR;
 			vals = NULL;
 			goto done;
@@ -289,7 +289,7 @@ ldap_modify(struct request *req)
 				if (ldap_add_attribute(entry, attr, vals) != NULL)
 					vals = NULL;
 			} else {
-				if (ldap_merge_values(a, vals->be_sub) == 0)
+				if (ldap_merge_values(a, vals) == 0)
 					vals = NULL;
 			}
 			break;
@@ -301,15 +301,16 @@ ldap_modify(struct request *req)
 				ldap_del_attribute(entry, attr);
 			break;
 		case LDAP_MOD_REPLACE:
-			if (vals->be_sub != NULL) {
+			if (vals->be_sub != NULL &&
+			    vals->be_sub->be_type != BER_TYPE_EOC) {
 				if (a == NULL) {
 					if (ldap_add_attribute(entry, attr, vals) != NULL)
 						vals = NULL;
 				} else {
-					if (ldap_set_values(a, vals->be_sub) == 0)
+					if (ldap_set_values(a, vals) == 0)
 						vals = NULL;
 				}
-			} else if (a == NULL)
+			} else if (a != NULL)
 				ldap_del_attribute(entry, attr);
 			break;
 		}
