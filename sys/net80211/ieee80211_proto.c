@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.42 2010/06/05 15:54:35 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.43 2010/07/28 21:24:52 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -781,10 +781,16 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 	switch (nstate) {
 	case IEEE80211_S_INIT:
+		/*
+		 * If mgt = -1, driver is already partway down, so do
+		 * not send management frames.
+		 */
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 			break;
 		case IEEE80211_S_RUN:
+			if (mgt == -1)
+				goto justcleanup;
 			switch (ic->ic_opmode) {
 			case IEEE80211_M_STA:
 				IEEE80211_SEND_MGMT(ic, ni,
@@ -809,6 +815,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 			}
 			/* FALLTHROUGH */
 		case IEEE80211_S_ASSOC:
+			if (mgt == -1)
+				goto justcleanup;
 			switch (ic->ic_opmode) {
 			case IEEE80211_M_STA:
 				IEEE80211_SEND_MGMT(ic, ni,
@@ -832,6 +840,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_SCAN:
+justcleanup:
 #ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 				timeout_del(&ic->ic_rsn_timeout);
