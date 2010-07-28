@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.13 2010/07/03 16:59:35 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.14 2010/07/28 15:45:04 jsg Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -460,7 +460,7 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	if (!((sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr) ||
 	    (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDi))) {
 		log_debug("%s: unexpected id payload", __func__);
-		return (-1);
+		return (0);
 	}
 
 	idp = &msg->msg_parent->msg_id;
