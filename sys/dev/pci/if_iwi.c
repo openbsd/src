@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.103 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.104 2010/07/28 21:21:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/workq.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -73,6 +74,8 @@ const struct pci_matchid iwi_devices[] = {
 
 int		iwi_match(struct device *, void *, void *);
 void		iwi_attach(struct device *, struct device *, void *);
+int		iwi_activate(struct device *, int);
+void		iwi_resume(void *, void *);
 void		iwi_power(int, void *);
 int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
@@ -141,7 +144,8 @@ int iwi_debug = 0;
 #endif
 
 struct cfattach iwi_ca = {
-	sizeof (struct iwi_softc), iwi_match, iwi_attach
+	sizeof (struct iwi_softc), iwi_match, iwi_attach, NULL,
+	iwi_activate
 };
 
 int
@@ -332,16 +336,44 @@ fail:	while (--ac >= 0)
 	iwi_free_cmd_ring(sc, &sc->cmdq);
 }
 
+int
+iwi_activate(struct device *self, int act)
+{
+	struct iwi_softc *sc = (struct iwi_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			iwi_stop(ifp, 0);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    iwi_resume, sc, NULL);
+		break;
+	}
+
+	return (0);
+}
+
+void
+iwi_resume(void *arg1, void *arg2)
+{
+	iwi_power(PWR_RESUME, arg1);
+}
+
 void
 iwi_power(int why, void *arg)
 {
 	struct iwi_softc *sc = arg;
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t data;
 	int s;
 
-	if (why != PWR_RESUME)
+	if (why != PWR_RESUME) {
+		iwi_stop(ifp, 0);
 		return;
+	}
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -349,12 +381,8 @@ iwi_power(int why, void *arg)
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
 	s = splnet();
-	ifp = &sc->sc_ic.ic_if;
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
-	}
+	if (ifp->if_flags & IFF_UP)
+		iwi_init(ifp);
 	splx(s);
 }
 

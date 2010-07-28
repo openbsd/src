@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.102 2010/07/22 14:42:43 kettenis Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.103 2010/07/28 21:21:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -400,7 +400,7 @@ wpi_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
-			wpi_stop(ifp, 1);
+			wpi_stop(ifp, 0);
 		break;
 	case DVACT_RESUME:
 		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
@@ -421,12 +421,14 @@ void
 wpi_power(int why, void *arg)
 {
 	struct wpi_softc *sc = arg;
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t reg;
 	int s;
 
-	if (why != PWR_RESUME)
+	if (why != PWR_RESUME) {
+		wpi_stop(ifp, 0);
 		return;
+	}
 
 	/* Clear device-specific "PCI retry timeout" register (41h). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -436,7 +438,6 @@ wpi_power(int why, void *arg)
 	s = splnet();
 	sc->sc_flags |= WPI_FLAG_BUSY;
 
-	ifp = &sc->sc_ic.ic_if;
 	if (ifp->if_flags & IFF_UP) {
 		ifp->if_init(ifp);
 		if (ifp->if_flags & IFF_RUNNING)

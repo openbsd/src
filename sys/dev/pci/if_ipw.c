@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.86 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.87 2010/07/28 21:21:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -64,6 +64,8 @@
 
 int		ipw_match(struct device *, void *, void *);
 void		ipw_attach(struct device *, struct device *, void *);
+int		ipw_activate(struct device *, int);
+void		ipw_resume(void *, void *);
 void		ipw_power(int, void *);
 int		ipw_dma_alloc(struct ipw_softc *);
 void		ipw_release(struct ipw_softc *);
@@ -132,7 +134,8 @@ int ipw_debug = 0;
 #endif
 
 struct cfattach ipw_ca = {
-	sizeof (struct ipw_softc), ipw_match, ipw_attach
+	sizeof (struct ipw_softc), ipw_match, ipw_attach, NULL,
+	ipw_activate
 };
 
 int
@@ -291,27 +294,51 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
+int
+ipw_activate(struct device *self, int act)
+{
+	struct ipw_softc *sc = (struct ipw_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			ipw_stop(ifp, 0);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    ipw_resume, sc, NULL);
+		break;
+	}
+
+	return (0);
+}
+
+void
+ipw_resume(void *arg1, void *arg2)
+{
+	ipw_power(PWR_RESUME, arg1);
+}
+
 void
 ipw_power(int why, void *arg)
 {
 	struct ipw_softc *sc = arg;
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t data;
 
-	if (why != PWR_RESUME)
+	if (why != PWR_RESUME) {
+		ipw_stop(ifp, 0);
 		return;
+	}
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
-	ifp = &sc->sc_ic.ic_if;
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
-	}
+	if (ifp->if_flags & IFF_UP)
+		ipw_init(ifp);
 }
 
 int
