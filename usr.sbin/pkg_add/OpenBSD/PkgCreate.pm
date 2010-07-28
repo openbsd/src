@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.21 2010/07/09 12:42:43 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.22 2010/07/28 12:19:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -621,9 +621,9 @@ sub add_signature
 
 sub create_archive
 {
-	my ($self, $filename, $dir) = @_;
+	my ($self, $state, $filename, $dir) = @_;
 	open(my $fh, "|-", OpenBSD::Paths->gzip, "-f", "-o", $filename);
-	return  OpenBSD::Ustar->new($fh, $dir);
+	return  OpenBSD::Ustar->new($fh, $state, $dir);
 }
 
 sub sign_existing_package
@@ -639,7 +639,7 @@ sub sign_existing_package
 	$self->add_signature($plist, $cert, $privkey);
 	$plist->save;
 	my $tmp = OpenBSD::Temp::permanent_file(".", "pkg");
-	my $wrarc = $self->create_archive($tmp, ".");
+	my $wrarc = $self->create_archive($state, $tmp, ".");
 	$plist->copy_over($wrarc, $true_package);
 	$wrarc->close;
 	$true_package->wipe_info;
@@ -774,7 +774,8 @@ sub create_package
 	local $SIG{'HUP'} = $h;
 	local $SIG{'KILL'} = $h;
 	local $SIG{'TERM'} = $h;
-	$state->{archive} = $self->create_archive($wname, $plist->infodir);
+	$state->{archive} = $self->create_archive($state, $wname, 
+	    $plist->infodir);
 	$state->set_status("archiving");
 	$state->progress->visit_with_size($plist, 'create_package', $state);
 	$state->end_status;
@@ -944,7 +945,8 @@ sub parse_and_run
 	}
 
 	if ($state->opt('n')) {
-		$state->{archive} = OpenBSD::Ustar->new(undef, $plist->infodir);
+		$state->{archive} = OpenBSD::Ustar->new(undef, $state, 
+		    $plist->infodir);
 		$plist->pretend_to_archive($state);
 	} else {
 		$self->create_package($state, $plist, $wname);

@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.14 2010/06/30 10:51:04 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.15 2010/07/28 12:19:54 espie Exp $
 
 =head1 NAME
 
@@ -10,7 +10,7 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
     # for reading
 
     open(my $in, "<", $arcnameforreading) or die;
-    $rdarc = OpenBSD::Ustar->new($in, $destdir);
+    $rdarc = OpenBSD::Ustar->new($in, $state, $destdir);
     while (my $o = $rdarc->next) {
     	# decide whether we want to extract it, change object attributes
 	$o->create;
@@ -19,7 +19,7 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
 
     # for writing
     open(my $out, ">", $arcnameforwriting) or die;
-    $wrarc = OpenBSD::Ustar->new($fh, $destdir);
+    $wrarc = OpenBSD::Ustar->new($fh, $state, $destdir);
     # loop
     	my $o = $wrarc->prepare($filename);
 	# tweak some entry parameters
@@ -29,9 +29,9 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
 
     # for copying
     open(my $in, "<", $arcnameforreading) or die;
-    $rdarc = OpenBSD::Ustar->new($in, $destdir);
+    $rdarc = OpenBSD::Ustar->new($in, $state, $destdir);
     open(my $out, ">", $arcnameforwriting) or die;
-    $wrarc = OpenBSD::Ustar->new($fh, $destdir);
+    $wrarc = OpenBSD::Ustar->new($fh, $state, $destdir);
     while (my $o = $rdarc->next) {
     	$o->copy($wrarc);
     }
@@ -49,6 +49,9 @@ C<new>. For archive reading, the filehandle should support
 C<read>. C<OpenBSD::Ustar> does not rely on C<seek> or C<rewind> in order
 to be usable on pipe outputs. For archive writing, the filehandle should
 support C<print>.
+
+Error messages and fatal errors will be handled through the C<$state> object,
+which should conform to C<OpenBSD::State(3p)> (uses C<errsay> and C<fatal>).
 
 Note that read and write support are mutually exclusive, though there is
 no need to specify the mode used at creation time; it is implicitly

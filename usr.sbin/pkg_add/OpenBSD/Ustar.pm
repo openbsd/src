@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.60 2010/07/04 19:34:47 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.61 2010/07/28 12:19:54 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -55,17 +55,23 @@ my $buffsize = 2 * 1024 * 1024;
 
 sub new
 {
-	my ($class, $fh, $destdir) = @_;
+	my ($class, $fh, $state, $destdir) = @_;
 
 	$destdir = '' unless defined $destdir;
 
 	return bless { 
 	    fh => $fh, 
 	    swallow => 0, 
+	    state => $state,
 	    key => {}, 
 	    destdir => $destdir} , $class;
 }
 
+sub fatal
+{
+	my ($self, $msg, @args) = $_;
+	$self->{state}->fatal("Ustar: $msg", @args);
+}
 
 sub new_object
 {
@@ -87,10 +93,10 @@ sub skip
 		}
 		my $actual = read($self->{fh}, $temp, $toread);
 		if (!defined $actual) {
-			die "Error while skipping archive: $!";
+			$self->fatal("Error while skipping archive: #1", $!);
 		}
 		if ($actual == 0) {
-			die "Premature end of archive in header: $!";
+			$self->fatal("Premature end of archive in header: #1", $!);
 		}
 		$self->{swallow} -= $actual;
 	}
@@ -115,7 +121,7 @@ sub next
 	my $header;
 	my $n = read $self->{fh}, $header, 512;
 	return if (defined $n) and $n == 0;
-	die "Error while reading header"
+	$self->fatal("Error while reading header")
 	    unless defined $n and $n == 512;
 	if ($header eq "\0"x512) {
 		return $self->next;
@@ -125,14 +131,14 @@ sub next
 	$linkname, $magic, $version, $uname, $gname, $major, $minor,
 	$prefix, $pad) = unpack(USTAR_HEADER, $header);
 	if ($magic ne "ustar\0" || $version ne '00') {
-		die "Not an ustar archive header";
+		$self->fatal("Not an ustar archive header");
 	}
 	# verify checksum
 	my $value = $header;
 	substr($value, 148, 8) = " "x8;
 	my $ck2 = unpack("%C*", $value);
 	if ($ck2 != oct($chksum)) {
-		die "Bad archive checksum";
+		$self->fatal("Bad archive checksum");
 	}
 	$name =~ s/\0*$//o;
 	$mode = oct($mode) & 0xfff;
@@ -168,7 +174,7 @@ sub next
 	if (defined $types->{$type}) {
 		$types->{$type}->new($result);
 	} else {
-		die "Unsupported type $type";
+		$self->fatal("Unsupported type #1", $type);
 	}
 	# adjust swallow
 	$self->{swallow} = $size;
@@ -234,19 +240,19 @@ sub mkheader
 		$linkname = '';
 	}
 	if (length $prefix > MAXPREFIX) {
-		die "Prefix too long $prefix";
+		$archive->fatal("Prefix too long #1", $prefix);
 	}
 	if (length $name > MAXFILENAME) {
-		die "Name too long $name";
+		$archive->fatal("Name too long #1", $name);
 	}
 	if (length $linkname > MAXLINKNAME) {
-		die "Linkname too long $linkname";
+		$archive->fatal("Linkname too long #1", $linkname);
 	}
 	if (length $uname > MAXUSERNAME) {
-		die "Username too long $uname";
+		$archive->fatal("Username too long #1", $uname);
 	}
 	if (length $gname > MAXGROUPNAME) {
-		die "Groupname too long $gname";
+		$archive->fatal("Groupname too long #1", $gname);
 	}
 	my $header;
 	my $cksum = ' 'x8;
@@ -318,8 +324,9 @@ sub prepare
 
 sub pad
 {
-	my $fh = $_[0]->{fh};
-	print $fh "\0"x1024 or die "Error writing to archive: $!";
+	my $self = shift;
+	my $fh = $self->{fh};
+	print $fh "\0"x1024 or $self->fatal("Error writing to archive: #1", $!);
 }
 
 sub close
@@ -351,12 +358,25 @@ sub new
 {
 	my ($class, $object) = @_;
 
-	if ($object->{size} != 0) {
-		die "Bad archive: non null size for arbitrary entry";
-	}
 	bless $object, $class;
+	if ($object->{size} != 0) {
+		$object->fatal("Bad archive: non null size for #1", 
+		    $class );
+	}
+	return $object;
 }
 
+sub fatal
+{
+	my ($self, @args) = @_;
+	$self->{archive}->fatal(@args);
+}
+
+sub errsay
+{
+	my ($self, @args) = @_;
+	$self->{archive}->{state}->errsay(@args);
+}
 sub todo
 {
 	my ($self, $toread) = @_;
@@ -400,7 +420,7 @@ sub write
 
 	$arc->{padout} = 1;
 	my $header = $arc->mkheader($self, $self->type);
-	print $out $header or die "Error writing to archive: $!";
+	print $out $header or $self->fatal("Error writing to archive: #1", $!);
 	$self->write_contents($arc);
 	my $k = $self->{key};
 	if (!defined $arc->{key}->{$k}) {
@@ -440,7 +460,7 @@ sub copy
 	$self->resolve_links($wrarc);
 	$wrarc->{padout} = 1;
 	my $header = $wrarc->mkheader($self, $self->type);
-	print $out $header or die "Error writing to archive: $!";
+	print $out $header or $self->fatal("Error writing to archive: #1", $!);
 
 	$self->copy_contents($wrarc);
 }
@@ -479,8 +499,8 @@ sub create
 		$linkname=$self->{cwd}.'/'.$linkname;
 	}
 	link $self->{destdir}.$linkname, $self->{destdir}.$self->name or
-	    die "Can't link $self->{destdir}$linkname to $self->{destdir}",
-	    	$self->name, ": $!";
+	    $self->fatal("Can't link #1#2 to #1#3: #4",
+	    	$self->{destdir}, $linkname, $self->name, $!);
 }
 
 sub resolve_links
@@ -492,7 +512,7 @@ sub resolve_links
 		$self->{linkname} = $arc->{key}->{$k};
 	} else {
 		print join("\n", keys(%{$arc->{key}})), "\n";
-		die "Can't copy link over: original for $k NOT available";
+		$self->fatal("Can't copy link over: original for #1 NOT available", $k);
 	}
 }
 
@@ -509,8 +529,8 @@ sub create
 	my $self = shift;
 	$self->make_basedir($self->name);
 	symlink $self->{linkname}, $self->{destdir}.$self->name or
-	    die "Can't symlink $self->{linkname} to $self->{destdir}",
-	    	$self->name, ": $!";
+	    $self->fatal("Can't symlink #1 to #2#3: #4",
+	    	$self->{linkname}, $self->{destdir}, $self->name, $!);
 }
 
 sub isLink() { 1 }
@@ -527,7 +547,7 @@ sub create
 	$self->make_basedir($self->name);
 	require POSIX;
 	POSIX::mkfifo($self->{destdir}.$self->name, $self->{mode}) or
-	    die "Can't create fifo ", $self->name,": $!";
+	    $self->fatal("Can't create fifo #1: #2", $self->name, $!);
 	$self->set_modes;
 }
 
@@ -646,7 +666,8 @@ sub create
 	my $buffer;
 	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->name);
 	if (!defined $out) {
-		die "Can't write to $self->{destdir}", $self->name, ": $!";
+		$self->fatal("Can't write to #1#2: #3", $self->{destdir}, 
+		    $self->name, $!);
 	}
 	my $toread = $self->{size};
 	while ($toread > 0) {
@@ -654,22 +675,22 @@ sub create
 		$maxread = $toread if $maxread > $toread;
 		my $actual = read($self->{archive}->{fh}, $buffer, $maxread);
 		if (!defined $actual) {
-			die "Error reading from archive: $!";
+			$self->fatal("Error reading from archive: #1", $!);
 		}
 		if ($actual == 0) {
-			die "Premature end of archive";
+			$self->fatal("Premature end of archive");
 		}
 		$self->{archive}->{swallow} -= $actual;
 		unless ($out->write($buffer)) {
-			die "Error writing to $self->{destdir}", $self->name,
-			    ": $!";
+			$self->fatal("Error writing to #1#2: #3",
+			    $self->{destdir}, $self->name, $!);
 		}
 
 		$toread -= $actual;
 		$self->todo($toread);
 	}
-	$out->close or die "Error closing $self->{destdir}", $self->name,
-	    ": $!";
+	$out->close or $self->fatal("Error closing #1#2: #3",
+	    $self->{destdir}, $self->name, $!);
 	$self->set_modes;
 }
 
@@ -681,10 +702,10 @@ sub contents
 
 	my $actual = read($self->{archive}->{fh}, $buffer, $toread);
 	if (!defined $actual) {
-		die "Error reading from archive: $!";
+		$self->fatal("Error reading from archive: #1", $!);
 	}
 	if ($actual != $toread) {
-		die "Error: short read from archive";
+		$self->fatal("Error: short read from archive");
 	}
 	$self->{archive}->{swallow} -= $actual;
 	return $buffer;
@@ -696,7 +717,8 @@ sub write_contents
 	my $filename = $self->{realname};
 	my $size = $self->{size};
 	my $out = $arc->{fh};
-	open my $fh, "<", $filename or die "Can't read file $filename: $!";
+	open my $fh, "<", $filename or $self->fatal("Can't read file #1: #2",
+	    $filename, $!);
 
 	my $buffer;
 	my $toread = $size;
@@ -705,13 +727,13 @@ sub write_contents
 		$maxread = $toread if $maxread > $toread;
 		my $actual = read($fh, $buffer, $maxread);
 		if (!defined $actual) {
-			die "Error reading from file: $!";
+			$self->fatal("Error reading from file: #1", $!);
 		}
 		if ($actual == 0) {
-			die "Premature end of file";
+			$self->fatal("Premature end of file");
 		}
 		unless (print $out $buffer) {
-			die "Error writing to archive: $!";
+			$self->fatal("Error writing to archive: #1", $!);
 		}
 
 		$toread -= $actual;
@@ -719,7 +741,7 @@ sub write_contents
 	}
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512) or
-		    die "Error writing to archive: $!";
+		    $self->fatal("Error writing to archive: #1", $!);
 	}
 }
 
@@ -735,21 +757,21 @@ sub copy_contents
 		$maxread = $toread if $maxread > $toread;
 		my $actual = read($self->{archive}->{fh}, $buffer, $maxread);
 		if (!defined $actual) {
-			die "Error reading from archive: $!";
+			$self->fatal("Error reading from archive: #1", $!);
 		}
 		if ($actual == 0) {
-			die "Premature end of archive";
+			$self->fatal("Premature end of archive");
 		}
 		$self->{archive}->{swallow} -= $actual;
 		unless (print $out $buffer) {
-			die "Error writing to archive $!";
+			$self->fatal("Error writing to archive #1", $!);
 		}
 
 		$toread -= $actual;
 	}
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512) or
-		    die "Error writing to archive: $!";
+		    $self->fatal("Error writing to archive: #1", $!);
 	}
 	$self->alias($arc, $self->name);
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.17 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.18 2010/07/28 12:19:54 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -68,30 +68,29 @@ sub verify_modes
 
 	if (!defined $item->{owner} && !$o->isSymLink) {
 	    if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
-		    print STDERR "Error: no \@owner for ",
-			$item->fullname, " (", $o->{uname}, ")\n";
+		    $o->errsay("Error: no \@owner for #1 (#2)",
+			$item->fullname, $o->{uname});
 	    		$result = 0;
 	    }
 	}
 	if (!defined $item->{group} && !$o->isSymLink) {
 	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
 		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWGRP)) != 0) {
-		    print STDERR "Error: no \@group for ",
-			$item->fullname, " (", $o->{uname},
-			"), which has mode ",
-			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
+		    $o->errsay("Error: no \@group for #1 (#2), which has mode #3",
+			$item->fullname, $o->{uname},
+			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)));
 	    		$result = 0;
 		} else {
-		    print STDERR "Warning: no \@group for ",
-			$item->fullname, " (", $o->{gname}, ")\n";
+		    $o->errsay("Warning: no \@group for #1 (#2)",
+			$item->fullname, $o->{gname});
 	    	}
 	    }
 	}
 	if (!defined $item->{mode} && $o->isFile) {
 	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
-		    print STDERR "Error: weird mode for ",
-			$item->fullname, ": ",
-			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
+		    $o->errsay("Error: weird mode for #1: #2",
+			$item->fullname,
+			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)));
 	    		$result = 0;
 	    }
 	}
@@ -122,10 +121,12 @@ sub prepare_long
 	my $filename = $item->name;
 	my $entry = $self->prepare($filename);
 	if (!defined $entry->{uname}) {
-		die "No user name for ", $entry->name, " (uid ", $entry->{uid}, ")";
+		$self->fatal("No user name for #1 (uid #2)", 
+		    $entry->name, $entry->{uid});
 	}
 	if (!defined $entry->{gname}) {
-		die "No group name for ", $entry->name, " (gid ", $entry->{gid}. ")";
+		$self->fatal("No group name for #1 (uid #2)", 
+		    $entry->name, $entry->{gid});
 	}
 	my ($prefix, $name) = split_name($entry->name);
 	if (length($name) > MAXFILENAME || length($prefix) > MAXPREFIX) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.22 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.23 2010/07/28 12:19:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -28,7 +28,7 @@ sub new
 {
 	my ($class, $repository, $name, $arch) = @_;
 
-	my $self = { repository => $repository, name => $repository->canonicalize($name)};
+	my $self = { repository => $repository, name => $repository->canonicalize($name), state => $repository->{state} };
 	if (defined $arch) {
 		$self->{arch} = $arch;
 	}
@@ -86,7 +86,7 @@ sub _opened
 		return;
 	}
 	require OpenBSD::Ustar;
-	my $archive = new OpenBSD::Ustar $fh;
+	my $archive = OpenBSD::Ustar->new($fh, $self->{state});
 	$self->{_archive} = $archive;
 
 	if (defined $self->{_current}) {
