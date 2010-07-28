@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.32 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.33 2010/07/28 21:19:30 nicm Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -198,7 +198,7 @@ static char	*match_function(const long *, int, FILE *);
 static char	*preadline(int, size_t, off_t);
 
 static int Tflag;
-static int context = 3;
+int diff_context = 3;
 int diff_format = D_NORMAL;
 const char *diff_file1 = NULL;
 const char *diff_file2 = NULL;
@@ -1011,8 +1011,8 @@ proceed:
 				diff_head();
 
 			anychange = 1;
-		} else if (a > context_vec_ptr->b + (2 * context) + 1 &&
-		    c > context_vec_ptr->d + (2 * context) + 1) {
+		} else if (a > context_vec_ptr->b + (2 * diff_context) + 1 &&
+		    c > context_vec_ptr->d + (2 * diff_context) + 1) {
 			/*
 			 * If this change is more than 'context' lines from the
 			 * previous change, dump the record and reset it.
@@ -1270,10 +1270,10 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = MAX(1, cvp->a - context);
-	upb = MIN(len[0], context_vec_ptr->b + context);
-	lowc = MAX(1, cvp->c - context);
-	upd = MIN(len[1], context_vec_ptr->d + context);
+	lowa = MAX(1, cvp->a - diff_context);
+	upb = MIN(len[0], context_vec_ptr->b + diff_context);
+	lowc = MAX(1, cvp->c - diff_context);
+	upd = MIN(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("***************");
 	if ((flags & D_PROTOTYPE)) {
@@ -1373,10 +1373,10 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = MAX(1, cvp->a - context);
-	upb = MIN(len[0], context_vec_ptr->b + context);
-	lowc = MAX(1, cvp->c - context);
-	upd = MIN(len[1], context_vec_ptr->d + context);
+	lowa = MAX(1, cvp->a - diff_context);
+	upb = MIN(len[0], context_vec_ptr->b + diff_context);
+	lowc = MAX(1, cvp->c - diff_context);
+	upd = MIN(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("@@ -");
 	uni_range(lowa, upb);
