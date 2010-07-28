@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.189 2010/07/27 04:41:56 matthew Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.190 2010/07/28 01:53:12 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -658,8 +658,6 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	xs->datalen = sizeof(*rdcap);
 	xs->timeout = 20000;
 
-	bzero(rdcap, sizeof(*rdcap));
-
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
@@ -697,8 +695,6 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	xs->data = (void *)rdcap16;
 	xs->datalen = sizeof(*rdcap16);
 	xs->timeout = 20000;
-
-	bzero(rdcap16, sizeof(*rdcap16));
 
 	cmd = (struct scsi_read_capacity_16 *)xs->cmd;
 	cmd->byte2 = SRC16_SERVICE_ACTION;
