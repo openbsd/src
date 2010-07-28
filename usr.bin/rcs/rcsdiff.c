@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.76 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.77 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -316,7 +316,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 	tv[1].tv_sec = tv[0].tv_sec;
 
-	if ((b2 = buf_load(filename, BUF_AUTOEXT)) == NULL) {
+	if ((b2 = buf_load(filename)) == NULL) {
 		warnx("failed to load file: `%s'", filename);
 		goto out;
 	}

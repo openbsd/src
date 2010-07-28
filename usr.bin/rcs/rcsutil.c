@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.34 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.35 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -337,7 +337,7 @@ rcs_prompt(const char *prompt)
 	size_t len;
 	char *buf;
 
-	bp = buf_alloc(0, BUF_AUTOEXT);
+	bp = buf_alloc(0);
 	if (isatty(STDIN_FILENO))
 		(void)fprintf(stderr, "%s", prompt);
 	if (isatty(STDIN_FILENO))
@@ -451,7 +451,7 @@ rcs_set_description(RCSFILE *file, const char *in)
 
 	/* Description is in file <in>. */
 	if (in != NULL && *in != '-') {
-		if ((bp = buf_load(in, BUF_AUTOEXT)) == NULL)
+		if ((bp = buf_load(in)) == NULL)
 			return (-1);
 		buf_putc(bp, '\0');
 		content = buf_release(bp);
@@ -535,7 +535,7 @@ rcs_patchfile(u_char *data, size_t dlen, u_char *patch, size_t plen,
 		return (NULL);
 	}
 
-	res = buf_alloc(1024, BUF_AUTOEXT);
+	res = buf_alloc(1024);
 	TAILQ_FOREACH(lp, &dlines->l_lines, l_list) {
 		if (lp->l_line == NULL)
 			continue;

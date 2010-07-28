@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.15 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.16 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,8 +42,6 @@
 #define BUF_INCR	128
 
 struct buf {
-	u_int	cb_flags;
-
 	/* buffer handle, buffer size, and data length */
 	u_char	*cb_buf;
 	size_t	 cb_size;
@@ -62,7 +60,7 @@ static void	buf_grow(BUF *, size_t);
  * once the buffer is no longer needed.
  */
 BUF *
-buf_alloc(size_t len, u_int flags)
+buf_alloc(size_t len)
 {
 	BUF *b;
 
@@ -73,7 +71,6 @@ buf_alloc(size_t len, u_int flags)
 	else
 		b->cb_buf = NULL;
 
-	b->cb_flags = flags;
 	b->cb_size = len;
 	b->cb_len = 0;
 
@@ -89,7 +86,7 @@ buf_alloc(size_t len, u_int flags)
  * Sets errno on error.
  */
 BUF *
-buf_load(const char *path, u_int flags)
+buf_load(const char *path)
 {
 	int fd;
 	ssize_t ret;
@@ -110,7 +107,7 @@ buf_load(const char *path, u_int flags)
 		errno = EFBIG;
 		goto out;
 	}
-	buf = buf_alloc(st.st_size, flags);
+	buf = buf_alloc(st.st_size);
 	for (bp = buf->cb_buf; ; bp += (size_t)ret) {
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
@@ -200,10 +197,7 @@ buf_putc(BUF *b, int c)
 	bp = b->cb_buf + b->cb_len;
 	if (bp == (b->cb_buf + b->cb_size)) {
 		/* extend */
-		if (b->cb_flags & BUF_AUTOEXT)
-			buf_grow(b, (size_t)BUF_INCR);
-		else
-			errx(1, "buf_putc failed");
+		buf_grow(b, BUF_INCR);
 
 		/* the buffer might have been moved */
 		bp = b->cb_buf + b->cb_len;
@@ -228,8 +222,7 @@ buf_getc(BUF *b, size_t pos)
  * buf_append()
  *
  * Append <len> bytes of data pointed to by <data> to the buffer <b>.  If the
- * buffer is too small to accept all data, it will attempt to append as much
- * data as possible, or if the BUF_AUTOEXT flag is set for the buffer, it
+ * buffer is too small to accept all data, it
  * will get resized to an appropriate size to accept all data.
  * Returns the number of bytes successfully appended to the buffer.
  */
@@ -245,11 +238,8 @@ buf_append(BUF *b, const void *data, size_t len)
 	rlen = len;
 
 	if (left < len) {
-		if (b->cb_flags & BUF_AUTOEXT) {
-			buf_grow(b, len - left);
-			bp = b->cb_buf + b->cb_len;
-		} else
-			rlen = bep - bp;
+		buf_grow(b, len - left);
+		bp = b->cb_buf + b->cb_len;
 	}
 
 	memcpy(bp, data, rlen);

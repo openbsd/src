@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.111 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.112 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -354,7 +354,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			return (-1);
 		}
 	} else {
-		bp = buf_alloc(1, 0);
+		bp = buf_alloc(1);
 	}
 
 	/*

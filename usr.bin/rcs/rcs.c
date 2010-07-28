@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.59 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.60 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1190,12 +1190,12 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 
 	len = rdp->rd_tlen;
 	if (len == 0) {
-		rbuf = buf_alloc(1, 0);
+		rbuf = buf_alloc(1);
 		buf_empty(rbuf);
 		return (rbuf);
 	}
 
-	rbuf = buf_alloc(len, BUF_AUTOEXT);
+	rbuf = buf_alloc(len);
 	buf_append(rbuf, rdp->rd_text, len);
 
 	isbranch = 0;
@@ -1455,7 +1455,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 		if ((nextbuf = rcs_getrev(rf, nextrdp->rd_num)) == NULL)
 			errx(1, "error getting revision");
 
-		newdiff = buf_alloc(64, BUF_AUTOEXT);
+		newdiff = buf_alloc(64);
 
 		/* calculate new diff */
 		(void)xasprintf(&path_tmp1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
@@ -2832,7 +2832,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 					errx(1, "rcs_expand_keywords: string truncated");
 
 			/* Concatenate everything together. */
-			tmpbuf = buf_alloc(len + strlen(expbuf), BUF_AUTOEXT);
+			tmpbuf = buf_alloc(len + strlen(expbuf));
 			/* Append everything before keyword. */
 			buf_append(tmpbuf, buf_get(newbuf),
 			    start - (unsigned char *)buf_get(newbuf));

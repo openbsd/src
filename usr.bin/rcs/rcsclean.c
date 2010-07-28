@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.51 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.52 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -165,7 +165,7 @@ rcsclean_file(char *fname, const char *rev_str)
 		warnx("failed to get needed revision");
 		goto out;
 	}
-	if ((b2 = buf_load(fname, 0)) == NULL) {
+	if ((b2 = buf_load(fname)) == NULL) {
 		warnx("failed to load `%s'", fname);
 		goto out;
 	}

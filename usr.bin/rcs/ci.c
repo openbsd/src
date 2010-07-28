@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.208 2010/07/23 23:59:32 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.209 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -348,7 +348,7 @@ checkin_diff_file(struct checkin_params *pb)
 	b1 = b2 = b3 = NULL;
 	path1 = path2 = NULL;
 
-	if ((b1 = buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
+	if ((b1 = buf_load(pb->filename)) == NULL) {
 		warnx("failed to load file: `%s'", pb->filename);
 		goto out;
 	}
@@ -358,11 +358,7 @@ checkin_diff_file(struct checkin_params *pb)
 		goto out;
 	}
 	b2 = rcs_kwexp_buf(b2, pb->file, pb->frev);
-
-	if ((b3 = buf_alloc(128, BUF_AUTOEXT)) == NULL) {
-		warnx("failed to allocated buffer for diff");
-		goto out;
-	}
+	b3 = buf_alloc(128);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	buf_write_stmp(b1, path1);
@@ -451,7 +447,7 @@ checkin_update(struct checkin_params *pb)
 	pb->frev = pb->file->rf_head;
 
 	/* Load file contents */
-	if ((bp = buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
+	if ((bp = buf_load(pb->filename)) == NULL)
 		return (-1);
 
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
@@ -627,7 +623,7 @@ checkin_init(struct checkin_params *pb)
 	}
 
 	/* Load file contents */
-	if ((bp = buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
+	if ((bp = buf_load(pb->filename)) == NULL)
 		return (-1);
 
 	/* Get default values from working copy if -k specified */
@@ -918,7 +914,7 @@ checkin_keywordscan(BUF *data, RCSNUM **rev, time_t *date, char **author,
 		}
 
 		len = c - start + 1;
-		buf = buf_alloc(len + 1, 0);
+		buf = buf_alloc(len + 1);
 		buf_append(buf, start, len);
 
 		/* XXX - Not binary safe. */

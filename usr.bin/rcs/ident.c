@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.27 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: ident.c,v 1.28 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -119,7 +119,7 @@ ident_line(FILE *fp)
 	BUF *bp;
 	size_t len;
 
-	bp = buf_alloc(512, BUF_AUTOEXT);
+	bp = buf_alloc(512);
 
 	while ((c = getc(fp)) != VALDELIM) {
 		if (c == EOF)

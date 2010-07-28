@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.10 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: buf.h,v 1.11 2010/07/28 09:07:11 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,13 +40,10 @@
 
 #include <sys/types.h>
 
-/* flags */
-#define BUF_AUTOEXT	1	/* autoextend on append */
-
 typedef struct buf BUF;
 
-BUF		*buf_alloc(size_t, u_int);
-BUF		*buf_load(const char *, u_int);
+BUF		*buf_alloc(size_t);
+BUF		*buf_load(const char *);
 void		 buf_free(BUF *);
 void		*buf_release(BUF *);
 u_char		 buf_getc(BUF *, size_t);

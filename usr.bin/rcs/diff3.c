@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.30 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.31 2010/07/28 09:07:11 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -166,16 +166,16 @@ merge_diff3(char **av, int flags)
 	if ((flags & MERGE_EFLAG) && !(flags & MERGE_OFLAG))
 		oflag = 0;
 
-	if ((b1 = buf_load(av[0], BUF_AUTOEXT)) == NULL)
+	if ((b1 = buf_load(av[0])) == NULL)
 		goto out;
-	if ((b2 = buf_load(av[1], BUF_AUTOEXT)) == NULL)
+	if ((b2 = buf_load(av[1])) == NULL)
 		goto out;
-	if ((b3 = buf_load(av[2], BUF_AUTOEXT)) == NULL)
+	if ((b3 = buf_load(av[2])) == NULL)
 		goto out;
 
-	d1 = buf_alloc(128, BUF_AUTOEXT);
-	d2 = buf_alloc(128, BUF_AUTOEXT);
-	diffb = buf_alloc(128, BUF_AUTOEXT);
+	d1 = buf_alloc(128);
+	d2 = buf_alloc(128);
+	diffb = buf_alloc(128);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
@@ -287,7 +287,7 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 	rcsnum_tostr(rev1, r1, sizeof(r1));
 	rcsnum_tostr(rev2, r2, sizeof(r2));
 
-	if ((b1 = buf_load(workfile, BUF_AUTOEXT)) == NULL)
+	if ((b1 = buf_load(workfile)) == NULL)
 		goto out;
 
 	if (!(flags & QUIET))
@@ -300,9 +300,9 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
-	d1 = buf_alloc(128, BUF_AUTOEXT);
-	d2 = buf_alloc(128, BUF_AUTOEXT);
-	diffb = buf_alloc(128, BUF_AUTOEXT);
+	d1 = buf_alloc(128);
+	d2 = buf_alloc(128);
+	diffb = buf_alloc(128);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
