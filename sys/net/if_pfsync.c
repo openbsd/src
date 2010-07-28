@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.153 2010/07/25 23:36:31 jsg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.154 2010/07/28 06:52:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2258,6 +2258,9 @@ void
 pfsync_bulk_fail(void *arg)
 {
 	struct pfsync_softc *sc = arg;
+	int s;
+
+	s = splsoftnet();
 
 	if (sc->sc_bulk_tries++ < PFSYNC_MAX_BULKTRIES) {
 		/* Try again */
@@ -2275,6 +2278,8 @@ pfsync_bulk_fail(void *arg)
 		pfsync_sync_ok = 1;
 		DPFPRINTF(LOG_ERR, "failed to receive bulk update");
 	}
+
+	splx(s);
 }
 
 void
