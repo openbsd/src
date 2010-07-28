@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.175 2010/07/27 23:36:35 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.176 2010/07/28 16:00:29 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -609,14 +609,10 @@ __aml_search(struct aml_node *root, uint8_t *nameseg, int create)
 	/* XXX: Replace with SLIST/SIMPLEQ routines */
 	if (root == NULL)
 		return NULL;
-	//rw_enter_read(&aml_nslock);
 	SIMPLEQ_FOREACH(node, &root->son, sib) {
-		if (!strncmp(node->name, nameseg, AML_NAMESEG_LEN)) {
-			//rw_exit_read(&aml_nslock);
+		if (!strncmp(node->name, nameseg, AML_NAMESEG_LEN))
 			return node;
-		}
 	}
-	//rw_exit_read(&aml_nslock);
 	if (create) {
 		node = acpi_os_malloc(sizeof(struct aml_node));
 		memcpy((void *)node->name, nameseg, AML_NAMESEG_LEN);
@@ -626,9 +622,6 @@ __aml_search(struct aml_node *root, uint8_t *nameseg, int create)
 
 		SIMPLEQ_INIT(&node->son);
 		SIMPLEQ_INSERT_TAIL(&root->son, node, sib);
-
-		//rw_enter_write(&aml_nslock);
-		//rw_exit_write(&aml_nslock);
 	}
 	return node;
 }
