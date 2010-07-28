@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.76 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Replace.pm,v 1.77 2010/07/28 15:06:14 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -180,7 +180,7 @@ sub check_plist_exec
 	return 1 if @{$state->{journal}} == 0;
 
 	$state->errsay(($new ? "New": "Old").
-	    " package #1 contains potentially unsafe operations", $plist->pkgname);
+	    " package #1 will run the following commands", $plist->pkgname);
 	for my $i (@{$state->{journal}}) {
 		if ($new) {
 			$state->errsay("+ #1", $i);
