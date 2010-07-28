@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.196 2010/07/28 07:32:16 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.197 2010/07/28 14:39:43 marco Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -183,7 +183,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		/* read/write from I/O registers */
 		ioaddr = address;
 		if (acpi_bus_space_map(sc->sc_iot, ioaddr, len, 0, &ioh) != 0) {
-			printf("unable to map iospace\n");
+			printf("%s: unable to map iospace\n", DEVNAME(sc));
 			return (-1);
 		}
 		for (reg = 0; reg < len; reg += access_size) {
@@ -206,8 +206,9 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 					    sc->sc_iot, ioh, reg);
 					break;
 				default:
-					printf("rdio: invalid size %d\n", access_size);
-					break;
+					printf("%s: rdio: invalid size %d\n",
+					    DEVNAME(sc), access_size);
+					return (-1);
 				}
 			} else {
 				switch (access_size) {
@@ -228,8 +229,9 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 					    *(uint32_t *)(pb+reg));
 					break;
 				default:
-					printf("wrio: invalid size %d\n", access_size);
-					break;
+					printf("%s: wrio: invalid size %d\n",
+					    DEVNAME(sc), access_size);
+					return (-1);
 				}
 			}
 
@@ -271,9 +273,12 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			pb++;
 		}
 		break;
+
 	case GAS_EMBEDDED:
-		if (sc->sc_ec == NULL)
-			break;
+		if (sc->sc_ec == NULL) {
+			printf("%s: WARNING EC not initialized\n", DEVNAME(sc));
+			return (-1);
+		}
 #ifndef SMALL_KERNEL
 		if (iodir == ACPI_IOREAD)
 			acpiec_read(sc->sc_ec, (u_int8_t)address, len, buffer);
