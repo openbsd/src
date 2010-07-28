@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.61 2010/07/28 12:19:54 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.62 2010/07/28 15:05:33 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -69,7 +69,7 @@ sub new
 
 sub fatal
 {
-	my ($self, $msg, @args) = $_;
+	my ($self, $msg, @args) = @_;
 	$self->{state}->fatal("Ustar: $msg", @args);
 }
 
@@ -360,8 +360,7 @@ sub new
 
 	bless $object, $class;
 	if ($object->{size} != 0) {
-		$object->fatal("Bad archive: non null size for #1", 
-		    $class );
+		$object->fatal("Bad archive: non null size for #1", $class);
 	}
 	return $object;
 }
