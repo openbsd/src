@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2010/07/03 03:59:16 krw Exp $ */
+/*	$OpenBSD: conf.c,v 1.8 2010/07/28 21:44:41 nicm Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,12 +85,6 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 /*
  *	Character devices.
  */
-
-/* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
 
 #define mmread mmrw
 #define mmwrite mmrw

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.36 2010/05/18 22:26:09 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.37 2010/07/28 21:44:41 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -95,6 +95,7 @@ void	filt_timerexpire(void *knx);
 int	filt_timerattach(struct knote *kn);
 void	filt_timerdetach(struct knote *kn);
 int	filt_timer(struct knote *kn, long hint);
+void	filt_seltruedetach(struct knote *kn);
 
 struct filterops kqread_filtops =
 	{ 1, NULL, filt_kqdetach, filt_kqueue };
@@ -375,6 +376,35 @@ filt_seltrue(struct knote *kn, long hint)
 	 */
 	kn->kn_data = 0;
 	return (1);
+}
+
+/*
+ * This provides full kqfilter entry for device switch tables, which
+ * has same effect as filter using filt_seltrue() as filter method.
+ */
+void
+filt_seltruedetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+const struct filterops seltrue_filtops =
+	{ 1, NULL, filt_seltruedetach, filt_seltrue };
+
+int
+seltrue_kqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &seltrue_filtops;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 int
