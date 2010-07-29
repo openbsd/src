@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.39 2010/07/27 22:57:22 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.40 2010/07/29 18:32:26 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -267,12 +267,12 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	sc->sc_acpi->sc_ec = sc;
-
 	if (acpiec_getcrs(sc, aa)) {
 		printf(": Failed to read resource settings\n");
 		return;
 	}
+
+	sc->sc_acpi->sc_ec = sc;
 
 	if (acpiec_reg(sc)) {
 		printf(": Failed to register address space\n");
