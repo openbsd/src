@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_misc.c,v 1.7 2010/07/29 14:06:26 blambert Exp $	*/
+/*	$OpenBSD: l2cap_misc.c,v 1.8 2010/07/29 14:40:47 blambert Exp $	*/
 /*	$NetBSD: l2cap_misc.c,v 1.6 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
@@ -34,10 +34,10 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/pool.h>
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
