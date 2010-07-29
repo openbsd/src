@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: citrus_utf8.h,v 1.2 2010/07/29 00:50:10 stsp Exp $ */
 /*	$NetBSD: citrus_utf8.h,v 1.2 2003/06/25 09:51:49 tshiozak Exp $	*/
 
 /*-
