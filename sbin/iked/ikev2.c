@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.22 2010/07/20 16:28:22 deraadt Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.23 2010/07/29 14:41:21 jsg Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2369,7 +2369,7 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 	if (!ibuf_length(sa->sa_rnonce)) {
 		if (!ibuf_length(msg->msg_nonce)) {
 			log_debug("%s: invalid peer nonce", __func__);
-			return (01);
+			return (-1);
 		}
 		if ((sa->sa_rnonce = ibuf_dup(msg->msg_nonce)) == NULL) {
 			log_debug("%s: failed to get peer nonce", __func__);
@@ -2380,7 +2380,7 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 	if (!ibuf_length(sa->sa_dhrexchange)) {
 		if (!ibuf_length(msg->msg_ke)) {
 			log_debug("%s: invalid peer dh exchange", __func__);
-			return (01);
+			return (-1);
 		}
 		if ((ssize_t)ibuf_length(msg->msg_ke) !=
 		    dh_getlen(sa->sa_dhgroup)) {
