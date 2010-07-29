@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.174 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.175 2010/07/29 01:39:03 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -159,6 +159,7 @@ typedef struct azalia_t {
 	codec_t *codecs;
 	int ncodecs;		/* number of codecs */
 	int codecno;		/* index of the using codec */
+	int detached;		/* nonzero if audio(4) is not attached */
 
 	azalia_dma_t corb_dma;
 	int corb_entries;
@@ -524,6 +525,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 err_exit:
 	printf("%s: initialization failure, detaching\n", XNAME(sc));
 	azalia_pci_detach(self, 0);
+	sc->detached = 1;
 }
 
 int
@@ -1327,6 +1329,9 @@ azalia_suspend(azalia_t *az)
 {
 	int err;
 
+	if (az->detached)
+		return 0;
+
 	/* disable unsolicited responses */
 	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) & ~HDA_GCTL_UNSOL);
 
@@ -1423,6 +1428,9 @@ azalia_resume(azalia_t *az)
 {
 	pcireg_t v;
 	int err;
+
+	if (az->detached)
+		return 0;
 
 	/* enable back-to-back */
 	v = pci_conf_read(az->pc, az->tag, PCI_COMMAND_STATUS_REG);
