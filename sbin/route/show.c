@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.86 2010/05/19 13:07:15 chl Exp $	*/
+/*	$OpenBSD: show.c,v 1.87 2010/07/29 16:35:40 bluhm Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ char	*label_print(struct sockaddr *);
 
 extern int nflag;
 extern int Fflag;
+extern int verbose;
 
 #define PLEN  (LONG_BIT / 4 + 2) /* XXX this is also defined in netstat.h */
 
@@ -248,10 +249,13 @@ pr_rthdr(int af)
 		    "Flags", "Refs", "Use", "Mtu", "Prio", "Interface");
 		break;
 	default:
-		printf("%-*.*s %-*.*s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
+		printf("%-*.*s %-*.*s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s",
 		    WID_DST(af), WID_DST(af), "Destination",
 		    WID_GW(af), WID_GW(af), "Gateway",
 		    "Flags", "Refs", "Use", "Mtu", "Prio", "Iface");
+		if (verbose)
+			printf(" %s", "Label");
+		putchar('\n');
 		break;
 	}
 }
@@ -314,8 +318,11 @@ p_rtentry(struct rt_msghdr *rtm)
 	else
 		printf("%5s ", "-");
 	putchar((rtm->rtm_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
-	printf("  %2d %.16s", rtm->rtm_priority,
+	printf("  %2d %-5.16s", rtm->rtm_priority,
 	    if_indextoname(rtm->rtm_index, ifbuf));
+	if (verbose && rti_info[RTAX_LABEL])
+		printf(" %s", ((struct sockaddr_rtlabel *)
+		    rti_info[RTAX_LABEL])->sr_label);
 	putchar('\n');
 }
 
