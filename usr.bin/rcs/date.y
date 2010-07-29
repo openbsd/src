@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.8 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: date.y,v 1.9 2010/07/29 18:52:45 ray Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -525,7 +525,7 @@ ToSeconds(time_t Hours, time_t Minutes, time_t	Seconds, MERIDIAN Meridian)
 			Hours = 0;
 		return ((Hours + 12) * 60L + Minutes) * 60L + Seconds;
 	default:
-		abort();
+		return (-1);
 	}
 	/* NOTREACHED */
 }
@@ -819,7 +819,7 @@ date_parse(const char *p)
 
 	if (time(&nowtime) == -1 || !gmtime_r(&nowtime, &gmt) ||
 	    !localtime_r(&nowtime, &tm))
-		errx(1, "date_parse failed");
+		return -1;
 
 	tz = difftm(&gmt, &tm) / 60;
 
