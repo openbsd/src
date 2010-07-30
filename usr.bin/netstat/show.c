@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.32 2010/07/29 16:35:40 bluhm Exp $	*/
+/*	$OpenBSD: show.c,v 1.33 2010/07/30 12:55:12 bluhm Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ pr_rthdr(int af, int Aflag)
 		    WID_DST(af), WID_DST(af), "Destination",
 		    WID_GW(af), WID_GW(af), "Gateway",
 		    "Flags", "Refs", "Use", "Mtu", "Prio", "Iface");
-		if (vflag)
+		if (vflag && !Aflag)
 			printf(" %s", "Label");
 		putchar('\n');
 		break;
