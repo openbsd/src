@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.59 2010/02/03 20:49:01 miod Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.60 2010/07/30 19:23:38 ckuethe Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -248,7 +248,7 @@ beforeinstall:
 
 realinstall:
 #	ranlib lib${LIB}.a
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
+	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
@@ -256,7 +256,7 @@ realinstall:
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if (${DEBUGLIBS:L} == "yes")
 #	ranlib lib${LIB}_g.a
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_g.a ${DESTDIR}${LIBDIR}/debug/lib${LIB}.a
 .if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/debug/lib${LIB}.a
@@ -265,7 +265,7 @@ realinstall:
 .endif
 .if !defined(NOPROFILE)
 #	ranlib lib${LIB}_p.a
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 .if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
@@ -274,7 +274,7 @@ realinstall:
 .endif
 .if !defined(NOPIC) && (${MACHINE_CPU} != "mips64") 
 #	ranlib lib${LIB}_pic.a
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
 .if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
@@ -282,7 +282,7 @@ realinstall:
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
-	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
 .endif
 .if defined(WANTLINT) && ${WANTLINT:L} != "no"
