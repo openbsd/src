@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.162 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: update.c,v 1.163 2010/07/30 21:47:18 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -78,7 +78,8 @@ cvs_update(int argc, char **argv)
 			break;
 		case 'D':
 			dateflag = optarg;
-			cvs_specified_date = date_parse(dateflag);
+			if ((cvs_specified_date = date_parse(dateflag)) == -1)
+				fatal("invalid date: %s", dateflag);
 			reset_tag = 0;
 			break;
 		case 'd':
@@ -592,7 +593,10 @@ update_join_file(struct cvs_file *cf)
 
 	if ((p = strchr(jrev2, ':')) != NULL) {
 		(*p++) = '\0';
-		cvs_specified_date = date_parse(p);
+		if ((cvs_specified_date = date_parse(p)) == -1) {
+			cvs_printf("invalid date: %s", p);
+			goto out;
+		}
 	}
 
 	rev2 = rcs_translate_tag(jrev2, cf->file_rcs);
@@ -601,7 +605,10 @@ update_join_file(struct cvs_file *cf)
 	if (jrev1 != NULL) {
 		if ((p = strchr(jrev1, ':')) != NULL) {
 			(*p++) = '\0';
-			cvs_specified_date = date_parse(p);
+			if ((cvs_specified_date = date_parse(p)) == -1) {
+				cvs_printf("invalid date: %s", p);
+				goto out;
+			}
 		}
 
 		rev1 = rcs_translate_tag(jrev1, cf->file_rcs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.158 2010/07/28 21:19:30 nicm Exp $	*/
+/*	$OpenBSD: diff.c,v 1.159 2010/07/30 21:47:18 ray Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -106,10 +106,12 @@ cvs_diff(int argc, char **argv)
 			break;
 		case 'D':
 			if (date1 == -1 && rev1 == NULL) {
-				date1 = date_parse(optarg);
+				if ((date1 = date_parse(optarg)) == -1)
+					fatal("invalid date: %s", optarg);
 				dateflag1 = optarg;
 			} else if (date2 == -1 && rev2 == NULL) {
-				date2 = date_parse(optarg);
+				if ((date2 = date_parse(optarg)) == -1)
+					fatal("invalid date: %s", optarg);
 				dateflag2 = optarg;
 			} else {
 				fatal("no more than 2 revisions/dates can"

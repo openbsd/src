@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.112 2010/07/28 09:07:11 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.113 2010/07/30 21:47:18 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -261,8 +261,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	RCSNUM *rev;
 
 	rcsdate = givendate = -1;
-	if (date != NULL)
-		givendate = date_parse(date);
+	if (date != NULL && (givendate = date_parse(date)) == -1) {
+		warnx("invalid date: %s", date);
+		return -1;
+	}
 
 	if (file->rf_ndelta == 0 && !(flags & QUIET))
 		(void)fprintf(stderr,
@@ -303,7 +305,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list) {
 			if (date != NULL) {
 				fdate = asctime(&rdp->rd_date);
-				rcsdate = date_parse(fdate);
+				if ((rcsdate = date_parse(fdate)) == -1) {
+					warnx("invalid date: %s", fdate);
+					return -1;
+				}
 				if (givendate <= rcsdate)
 					continue;
 			}

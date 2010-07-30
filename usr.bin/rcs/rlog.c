@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.63 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.64 2010/07/30 21:47:18 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -227,7 +227,8 @@ rlog_select_daterev(RCSFILE *rcsfile, char *date)
 
 		if (last == NULL) {
 			flags |= RLOG_DATE_SINGLE;
-			firstdate = date_parse(first);
+			if ((firstdate = date_parse(first)) == -1)
+				return -1;
 			delim = '\0';
 			last = "\0";
 		} else {
@@ -237,22 +238,26 @@ rlog_select_daterev(RCSFILE *rcsfile, char *date)
 
 		if (delim == '>' && *last == '\0') {
 			flags |= RLOG_DATE_EARLIER;
-			firstdate = date_parse(first);
+			if ((firstdate = date_parse(first)) == -1)
+				return -1;
 		}
 
 		if (delim == '>' && *first == '\0' && *last != '\0') {
 			flags |= RLOG_DATE_LATER;
-			firstdate = date_parse(last);
+			if ((firstdate = date_parse(last)) == -1)
+				return -1;
 		}
 
 		if (delim == '<' && *last == '\0') {
 			flags |= RLOG_DATE_LATER;
-			firstdate = date_parse(first);
+			if ((firstdate = date_parse(first)) == -1)
+				return -1;
 		}
 
 		if (delim == '<' && *first == '\0' && *last != '\0') {
 			flags |= RLOG_DATE_EARLIER;
-			firstdate = date_parse(last);
+			if ((firstdate = date_parse(last)) == -1)
+				return -1;
 		}
 
 		if (*first != '\0' && *last != '\0') {
@@ -265,6 +270,8 @@ rlog_select_daterev(RCSFILE *rcsfile, char *date)
 				firstdate = date_parse(last);
 				lastdate = date_parse(first);
 			}
+			if (firstdate == -1 || lastdate == -1)
+				return -1;
 		}
 
 		TAILQ_FOREACH(rdp, &(rcsfile->rf_delta), rd_list) {
@@ -343,9 +350,10 @@ rlog_file(const char *fname, RCSFILE *file)
 
 	if (rflag == 1)
 		nrev = rcs_rev_select(file, revisions);
-	else if (dflag == 1)
-		nrev = rlog_select_daterev(file, rlog_dates);
-	else
+	else if (dflag == 1) {
+		if ((nrev = rlog_select_daterev(file, rlog_dates)) == -1)
+			errx(1, "invalid date: %s", rlog_dates);
+	} else
 		nrev = file->rf_ndelta;
 
 	if ((workfile = basename(fname)) == NULL)

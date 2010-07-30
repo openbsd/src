@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.61 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.62 2010/07/30 21:47:18 ray Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -69,7 +69,8 @@ cvs_annotate(int argc, char **argv)
 		switch (ch) {
 		case 'D':
 			dateflag = optarg;
-			cvs_specified_date = date_parse(dateflag);
+			if ((cvs_specified_date = date_parse(dateflag)) == -1)
+				fatal("invalid date: %s", dateflag);
 			break;
 		case 'f':
 			force_head = 1;

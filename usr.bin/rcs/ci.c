@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.209 2010/07/28 09:07:11 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.210 2010/07/30 21:47:18 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -136,7 +136,7 @@ checkin_main(int argc, char **argv)
 		case 'd':
 			if (rcs_optarg == NULL)
 				pb.date = DATE_MTIME;
-			else if ((pb.date = date_parse(rcs_optarg)) <= 0)
+			else if ((pb.date = date_parse(rcs_optarg)) == -1)
 				errx(1, "invalid date");
 			break;
 		case 'f':
@@ -994,7 +994,7 @@ checkin_parsekeyword(char *keystring, RCSNUM **rev, time_t *date,
 		if (i < 5)
 			break;
 		(void)xasprintf(&datestring, "%s %s", tokens[3], tokens[4]);
-		if ((*date = date_parse(datestring)) <= 0)
+		if ((*date = date_parse(datestring)) == -1)
 			errx(1, "could not parse date");
 		xfree(datestring);
 
@@ -1021,7 +1021,7 @@ checkin_parsekeyword(char *keystring, RCSNUM **rev, time_t *date,
 		if (i < 3)
 			break;
 		(void)xasprintf(&datestring, "%s %s", tokens[1], tokens[2]);
-		if ((*date = date_parse(datestring)) <= 0)
+		if ((*date = date_parse(datestring)) == -1)
 			errx(1, "could not parse date");
 		xfree(datestring);
 		break;
