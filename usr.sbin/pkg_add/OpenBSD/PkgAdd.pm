@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.9 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.10 2010/07/30 10:06:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -828,6 +828,8 @@ sub install_set
 
 	$set = $set->real_set;
 
+	$state->progress->set_header('Checking packages');
+
 	if ($set->{finished}) {
 		return ();
 	}
@@ -1056,7 +1058,7 @@ sub main
 {
 	my ($self, $state) = @_;
 
-	$state->progress->set_header("Checking packages");
+	$state->progress->set_header('');
 	if ($state->{allow_replacing}) {
 		do_quirks($state);
 	}
