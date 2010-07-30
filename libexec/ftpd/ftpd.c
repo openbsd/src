@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.189 2010/06/18 06:02:57 tobias Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.190 2010/07/30 11:02:56 ray Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -740,21 +740,23 @@ user(char *name)
 		    checkuser(_PATH_FTPUSERS, "anonymous"))
 			reply(530, "User %s access denied.", name);
 		else if ((pw = sgetpwnam("ftp", NULL)) != NULL) {
-			guest = 1;
-			askpasswd = 1;
-			lc = login_getclass(pw->pw_class);
-			if ((as = auth_open()) == NULL ||
+			if ((lc = login_getclass(pw->pw_class)) == NULL ||
+			    (as = auth_open()) == NULL ||
 			    auth_setpwd(as, pw) != 0 ||
 			    auth_setoption(as, "FTPD_HOST", host) < 0) {
 				if (as) {
 					auth_close(as);
 					as = NULL;
 				}
-				login_close(lc);
-				lc = NULL;
+				if (lc) {
+					login_close(lc);
+					lc = NULL;
+				}
 				reply(421, "Local resource failure");
 				return;
 			}
+			guest = 1;
+			askpasswd = 1;
 			reply(331,
 			"Guest login ok, send your email address as password.");
 		} else
