@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.98 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.99 2010/07/31 21:43:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -147,7 +147,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_bl_pre, termp_bl_post }, /* Bl */
 	{ NULL, NULL }, /* El */
 	{ termp_it_pre, termp_it_post }, /* It */
-	{ NULL, NULL }, /* Ad */ 
+	{ termp_under_pre, NULL }, /* Ad */ 
 	{ termp_an_pre, termp_an_post }, /* An */
 	{ termp_under_pre, NULL }, /* Ar */
 	{ termp_cd_pre, NULL }, /* Cd */
@@ -1617,8 +1617,7 @@ termp_fa_pre(DECL_ARGS)
 static int
 termp_bd_pre(DECL_ARGS)
 {
-	size_t			 tabwidth;
-	size_t			 rm, rmax;
+	size_t			 tabwidth, rm, rmax;
 	const struct mdoc_node	*nn;
 
 	if (MDOC_BLOCK == n->type) {

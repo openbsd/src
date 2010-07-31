@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.26 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.27 2010/07/31 21:43:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1453,14 +1453,11 @@ mdoc_bd_pre(MDOC_ARGS)
 	print_otag(h, TAG_DIV, 2, tag);
 
 	for (nn = n->child; nn; nn = nn->next) {
-		h->flags |= HTML_NOSPACE;
+		if (nn->prev && nn->prev->line < nn->line) {
+			print_text(h, "\n");
+			h->flags |= HTML_NOSPACE;
+		}
 		print_mdoc_node(m, nn, h);
-		if (NULL == nn->next)
-			continue;
-		if (nn->prev && nn->prev->line < nn->line)
-			print_text(h, "\n");
-		else if (NULL == nn->prev)
-			print_text(h, "\n");
 	}
 
 	return(0);

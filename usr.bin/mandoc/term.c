@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.45 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: term.c,v 1.46 2010/07/31 21:43:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,7 +33,6 @@
 static	void		  spec(struct termp *, enum roffdeco,
 				const char *, size_t);
 static	void		  res(struct termp *, const char *, size_t);
-static	void		  buffera(struct termp *, const char *, size_t);
 static	void		  bufferc(struct termp *, char);
 static	void		  adjbuf(struct termp *p, size_t);
 static	void		  encode(struct termp *, const char *, size_t);
@@ -238,10 +237,10 @@ term_flushln(struct termp *p)
 			if ('\t' == p->buf[i])
 				break;
 			if (' ' == p->buf[i]) {
-				while (' ' == p->buf[i]) {
-					vbl += (*p->width)(p, p->buf[i]);
+				j = i;
+				while (' ' == p->buf[i])
 					i++;
-				}
+				vbl += (i - j) * (*p->width)(p, ' ');
 				break;
 			}
 			if (ASCII_NBRSP == p->buf[i]) {
@@ -499,6 +498,8 @@ term_word(struct termp *p, const char *word)
 
 	if ( ! (p->flags & TERMP_NONOSPACE))
 		p->flags &= ~TERMP_NOSPACE;
+	else
+		p->flags |= TERMP_NOSPACE;
 
 	p->flags &= ~TERMP_SENTENCE;
 
@@ -578,18 +579,6 @@ adjbuf(struct termp *p, size_t sz)
 
 
 static void
-buffera(struct termp *p, const char *word, size_t sz)
-{
-
-	if (p->col + sz >= p->maxcols) 
-		adjbuf(p, p->col + sz);
-
-	memcpy(&p->buf[(int)p->col], word, sz);
-	p->col += sz;
-}
-
-
-static void
 bufferc(struct termp *p, char c)
 {
 
@@ -613,23 +602,31 @@ encode(struct termp *p, const char *word, size_t sz)
 	 */
 
 	if (TERMFONT_NONE == (f = term_fonttop(p))) {
-		buffera(p, word, sz);
+		if (p->col + sz >= p->maxcols) 
+			adjbuf(p, p->col + sz);
+		memcpy(&p->buf[(int)p->col], word, sz);
+		p->col += sz;
 		return;
 	}
 
+	/* Pre-buffer, assuming worst-case. */
+
+	if (p->col + 1 + (sz * 3) >= p->maxcols)
+		adjbuf(p, p->col + 1 + (sz * 3));
+
 	for (i = 0; i < (int)sz; i++) {
 		if ( ! isgraph((u_char)word[i])) {
-			bufferc(p, word[i]);
+			p->buf[(int)p->col++] = word[i];
 			continue;
 		}
 
 		if (TERMFONT_UNDER == f)
-			bufferc(p, '_');
+			p->buf[(int)p->col++] = '_';
 		else
-			bufferc(p, word[i]);
+			p->buf[(int)p->col++] = word[i];
 
-		bufferc(p, 8);
-		bufferc(p, word[i]);
+		p->buf[(int)p->col++] = 8;
+		p->buf[(int)p->col++] = word[i];
 	}
 }
 

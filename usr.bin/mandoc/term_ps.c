@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.7 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.8 2010/07/31 21:43:07 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -384,6 +384,7 @@ static	void		  ps_printf(struct termp *, const char *, ...);
 static	void		  ps_putchar(struct termp *, char);
 static	void		  ps_setfont(struct termp *, enum termfont);
 static	struct termp	 *pspdf_alloc(char *);
+static	void		  pdf_obj(struct termp *, size_t);
 
 
 void *
@@ -391,10 +392,9 @@ pdf_alloc(char *outopts)
 {
 	struct termp	*p;
 
-	if (NULL == (p = pspdf_alloc(outopts)))
-		return(p);
+	if (NULL != (p = pspdf_alloc(outopts)))
+		p->type = TERMTYPE_PDF;
 
-	p->type = TERMTYPE_PDF;
 	return(p);
 }
 
@@ -404,10 +404,9 @@ ps_alloc(char *outopts)
 {
 	struct termp	*p;
 
-	if (NULL == (p = pspdf_alloc(outopts)))
-		return(p);
+	if (NULL != (p = pspdf_alloc(outopts)))
+		p->type = TERMTYPE_PS;
 
-	p->type = TERMTYPE_PS;
 	return(p);
 }
 
@@ -522,6 +521,8 @@ pspdf_free(void *arg)
 
 	if (p->engine.ps.psmarg)
 		free(p->engine.ps.psmarg);
+	if (p->engine.ps.pdfobjs)
+		free(p->engine.ps.pdfobjs);
 
 	term_free(p);
 }
@@ -563,8 +564,6 @@ ps_printf(struct termp *p, const char *fmt, ...)
 	va_end(ap);
 
 	p->engine.ps.psmargcur = strlen(p->engine.ps.psmarg);
-	p->engine.ps.pdfbytes += /* LINTED */
-		len < 0 ? 0 : (size_t)len;
 }
 
 
@@ -590,51 +589,73 @@ ps_putchar(struct termp *p, char c)
 
 
 static void
+pdf_obj(struct termp *p, size_t obj)
+{
+
+	assert(obj > 0);
+
+	if ((obj - 1) >= p->engine.ps.pdfobjsz) {
+		p->engine.ps.pdfobjsz = obj + 128;
+		p->engine.ps.pdfobjs = realloc
+			(p->engine.ps.pdfobjs, 
+			 p->engine.ps.pdfobjsz * sizeof(size_t));
+		if (NULL == p->engine.ps.pdfobjs) {
+			perror(NULL);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	p->engine.ps.pdfobjs[(int)obj - 1] = p->engine.ps.pdfbytes;
+	ps_printf(p, "%zu 0 obj\n", obj);
+}
+
+
+static void
 ps_closepage(struct termp *p)
 {
 	int		 i;
-	size_t		 len;
+	size_t		 len, base;
+
+	/*
+	 * Close out a page that we've already flushed to output.  In
+	 * PostScript, we simply note that the page must be showed.  In
+	 * PDF, we must now create the Length, Resource, and Page node
+	 * for the page contents.
+	 */
 
 	assert(p->engine.ps.psmarg && p->engine.ps.psmarg[0]);
 	ps_printf(p, "%s", p->engine.ps.psmarg);
 
-	if (TERMTYPE_PS == p->type) {
-		ps_printf(p, "showpage\n");
-	} else {
+	if (TERMTYPE_PS != p->type) {
 		ps_printf(p, "ET\n");
+
 		len = p->engine.ps.pdfbytes - p->engine.ps.pdflastpg;
-		ps_printf(p, "endstream\n");
-		ps_printf(p, "endobj\n");
-		ps_printf(p, "%zu 0 obj\n", 
-				p->engine.ps.pdfbody +
-				(p->engine.ps.pages + 1) * 4 + 1);
-		ps_printf(p, "%zu\n", len);
-		ps_printf(p, "endobj\n");
-		ps_printf(p, "%zu 0 obj\n", 
-				p->engine.ps.pdfbody +
-				(p->engine.ps.pages + 1) * 4 + 2);
-		ps_printf(p, "<<\n");
-		ps_printf(p, "/ProcSet [/PDF /Text]\n");
+		base = p->engine.ps.pages * 4 + p->engine.ps.pdfbody;
+
+		ps_printf(p, "endstream\nendobj\n");
+
+		/* Length of content. */
+		pdf_obj(p, base + 1);
+		ps_printf(p, "%zu\nendobj\n", len);
+
+		/* Resource for content. */
+		pdf_obj(p, base + 2);
+		ps_printf(p, "<<\n/ProcSet [/PDF /Text]\n");
 		ps_printf(p, "/Font <<\n");
 		for (i = 0; i < (int)TERMFONT__MAX; i++) 
 			ps_printf(p, "/F%d %d 0 R\n", i, 3 + i);
-		ps_printf(p, ">>\n");
-		ps_printf(p, ">>\n");
-		ps_printf(p, "%zu 0 obj\n", 
-				p->engine.ps.pdfbody +
-				(p->engine.ps.pages + 1) * 4 + 3);
+		ps_printf(p, ">>\n>>\n");
+
+		/* Page node. */
+		pdf_obj(p, base + 3);
 		ps_printf(p, "<<\n");
 		ps_printf(p, "/Type /Page\n");
 		ps_printf(p, "/Parent 2 0 R\n");
-		ps_printf(p, "/Resources %zu 0 R\n",
-				p->engine.ps.pdfbody +
-				(p->engine.ps.pages + 1) * 4 + 2);
-		ps_printf(p, "/Contents %zu 0 R\n",
-				p->engine.ps.pdfbody +
-				(p->engine.ps.pages + 1) * 4);
-		ps_printf(p, ">>\n");
-		ps_printf(p, "endobj\n");
-	}
+		ps_printf(p, "/Resources %zu 0 R\n", base + 2);
+		ps_printf(p, "/Contents %zu 0 R\n", base);
+		ps_printf(p, ">>\nendobj\n");
+	} else
+		ps_printf(p, "showpage\n");
 
 	p->engine.ps.pages++;
 	p->engine.ps.psrow = p->engine.ps.top;
@@ -647,7 +668,7 @@ ps_closepage(struct termp *p)
 static void
 ps_end(struct termp *p)
 {
-	size_t		 i, xref;
+	size_t		 i, xref, base;
 
 	/*
 	 * At the end of the file, do one last showpage.  This is the
@@ -668,9 +689,8 @@ ps_end(struct termp *p)
 		return;
 	} 
 
-	ps_printf(p, "2 0 obj\n");
-	ps_printf(p, "<<\n");
-	ps_printf(p, "/Type /Pages\n");
+	pdf_obj(p, 2);
+	ps_printf(p, "<<\n/Type /Pages\n");
 	ps_printf(p, "/MediaBox [0 0 %zu %zu]\n",
 			(size_t)AFM2PNT(p, p->engine.ps.width),
 			(size_t)AFM2PNT(p, p->engine.ps.height));
@@ -679,33 +699,31 @@ ps_end(struct termp *p)
 	ps_printf(p, "/Kids [");
 
 	for (i = 0; i < p->engine.ps.pages; i++)
-		ps_printf(p, " %zu 0 R", 
-				p->engine.ps.pdfbody +
-				(i + 1) * 4 + 3);
-	ps_printf(p, "]\n");
-	ps_printf(p, ">>\n");
-	ps_printf(p, "endobj\n");
-	ps_printf(p, "%zu 0 obj\n",
-			p->engine.ps.pdfbody +
-			(p->engine.ps.pages * 4) + 4);
+		ps_printf(p, " %zu 0 R", i * 4 +
+				p->engine.ps.pdfbody + 3);
+
+	base = (p->engine.ps.pages - 1) * 4 + 
+		p->engine.ps.pdfbody + 4;
+
+	ps_printf(p, "]\n>>\nendobj\n");
+	pdf_obj(p, base);
 	ps_printf(p, "<<\n");
 	ps_printf(p, "/Type /Catalog\n");
 	ps_printf(p, "/Pages 2 0 R\n");
 	ps_printf(p, ">>\n");
 	xref = p->engine.ps.pdfbytes;
 	ps_printf(p, "xref\n");
-	ps_printf(p, "0 %zu\n",
-			p->engine.ps.pdfbody +
-			(p->engine.ps.pages * 4) + 5);
-	ps_printf(p, "0000000000 65535 f\n");
+	ps_printf(p, "0 %zu\n", base + 1);
+	ps_printf(p, "0000000000 65535 f \n");
+
+	for (i = 0; i < base; i++)
+		ps_printf(p, "%.10zu 00000 n \n", 
+				p->engine.ps.pdfobjs[(int)i]);
+
 	ps_printf(p, "trailer\n");
 	ps_printf(p, "<<\n");
-	ps_printf(p, "/Size %zu\n", 
-			p->engine.ps.pdfbody +
-			(p->engine.ps.pages * 4) + 5);
-	ps_printf(p, "/Root %zu 0 R\n", 
-			p->engine.ps.pdfbody +
-			(p->engine.ps.pages * 4) + 4);
+	ps_printf(p, "/Size %zu\n", base + 1);
+	ps_printf(p, "/Root %zu 0 R\n", base);
 	ps_printf(p, "/Info 1 0 R\n");
 	ps_printf(p, ">>\n");
 	ps_printf(p, "startxref\n");
@@ -730,7 +748,7 @@ ps_begin(struct termp *p)
 		p->engine.ps.psmarg[0] = '\0';
 	}
 
-	p->engine.ps.pdfbytes = 0;
+	/*p->engine.ps.pdfbytes = 0;*/
 	p->engine.ps.psmargcur = 0;
 	p->engine.ps.flags = PS_MARGINS;
 	p->engine.ps.pscol = p->engine.ps.left;
@@ -780,14 +798,14 @@ ps_begin(struct termp *p)
 		ps_printf(p, "\n%%%%EndComments\n");
 	} else {
 		ps_printf(p, "%%PDF-1.1\n");
-		ps_printf(p, "1 0 obj\n");
+		pdf_obj(p, 1);
 		ps_printf(p, "<<\n");
 		ps_printf(p, "/Creator mandoc-%s\n", VERSION);
 		ps_printf(p, ">>\n");
 		ps_printf(p, "endobj\n");
 
 		for (i = 0; i < (int)TERMFONT__MAX; i++) {
-			ps_printf(p, "%d 0 obj\n", i + 3);
+			pdf_obj(p, (size_t)i + 3);
 			ps_printf(p, "<<\n");
 			ps_printf(p, "/Type /Font\n");
 			ps_printf(p, "/Subtype /Type1\n");
@@ -824,13 +842,12 @@ ps_pletter(struct termp *p, int c)
 					fonts[(int)p->engine.ps.lastf].name, 
 					p->engine.ps.scale);
 		} else {
-			ps_printf(p, "%zu 0 obj\n", 
-					p->engine.ps.pdfbody +
-					(p->engine.ps.pages + 1) * 4);
+			pdf_obj(p, p->engine.ps.pdfbody + 
+					p->engine.ps.pages * 4);
 			ps_printf(p, "<<\n");
 			ps_printf(p, "/Length %zu 0 R\n", 
-					p->engine.ps.pdfbody +
-					(p->engine.ps.pages + 1) * 4 + 1);
+					p->engine.ps.pdfbody + 1 +
+					p->engine.ps.pages * 4);
 			ps_printf(p, ">>\nstream\n");
 		}
 		p->engine.ps.pdflastpg = p->engine.ps.pdfbytes;

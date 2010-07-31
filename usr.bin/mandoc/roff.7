@@ -1,4 +1,4 @@
-.\"	$Id: roff.7,v 1.7 2010/07/13 01:09:13 schwarze Exp $
+.\"	$Id: roff.7,v 1.8 2010/07/31 21:43:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2010 $
+.Dd $Mdocdate: July 31 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -106,6 +106,15 @@ The
 .Cm key
 values may be invoked in subsequent text by using \e*(NN for two-letter
 pairs, \e*N for one-letter, and \e*[NNN] for arbitrary-length values.
+.Pp
+If
+.Cm val
+is begun with a double-quote mark, the mark is passed over.
+.Cm val
+consists of
+.Em all
+text following this point, including whitespace and trailing
+double-quotes.
 .Ss \&de1
 The syntax of this macro is the same as that of
 .Sx \&ig ,
