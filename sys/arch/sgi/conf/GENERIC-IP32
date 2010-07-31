@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.20 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.21 2010/07/31 21:24:55 ratchov Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -208,11 +208,7 @@ audio*		at emu?
 audio*		at envy?
 audio*		at mavb?
 
-# OPL[23] FM synthesizers
-opl*		at cmpci?
-
 # MIDI support
-midi*		at opl?
 midi*		at eap?
 
 #### WS Console

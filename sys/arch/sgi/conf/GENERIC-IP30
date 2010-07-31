@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.29 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.30 2010/07/31 21:24:55 ratchov Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -215,11 +215,7 @@ audio*		at eap?
 audio*		at emu?
 audio*		at envy?
 
-# OPL[23] FM synthesizers
-opl*		at cmpci?
-
 # MIDI support
-midi*		at opl?
 midi*		at eap?
 
 #### Keyboard and Mouse
