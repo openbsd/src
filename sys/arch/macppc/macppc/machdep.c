@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 2010/06/27 13:28:46 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.120 2010/07/31 21:15:05 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -637,6 +637,8 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)))
 		return error;
 	tf = trapframe(p);
+	sc.sc_frame.srr1 &= ~PSL_VEC;
+	sc.sc_frame.srr1 |= (tf->srr1 & PSL_VEC);
 	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
 		return EINVAL;
 	bcopy(&sc.sc_frame, tf, sizeof *tf);
