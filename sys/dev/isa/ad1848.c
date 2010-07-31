@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.37 2010/07/24 22:48:28 jakemsr Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.38 2010/07/31 08:08:18 ratchov Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ wait_for_calibration(struct ad1848_softc *sc)
 void ad1848_dump_regs(struct ad1848_softc *);
 
 void
-ad1848_dump_regs(ad1848_softc *sc)
+ad1848_dump_regs(struct ad1848_softc *sc)
 {
 	int i;
 	u_char r;
