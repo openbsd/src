@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.218 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: if.c,v 1.219 2010/07/31 20:48:32 blambert Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
