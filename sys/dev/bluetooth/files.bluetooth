@@ -1,4 +1,4 @@
-#	$OpenBSD: files.bluetooth,v 1.6 2008/11/24 22:31:19 uwe Exp $
+#	$OpenBSD: files.bluetooth,v 1.7 2010/07/31 16:04:50 miod Exp $
 #
 # Config file and device description for machine-independent Bluetooth code.
 # Included by ports that support Bluetooth host controllers.
@@ -17,12 +17,12 @@ attach bthidev at bthub
 file dev/bluetooth/bthidev.c		bthidev
 
 # HID Mice
-device btms: hid, wsmousedev
+device btms: hid, hidms, wsmousedev
 attach btms at bthidbus
 file dev/bluetooth/btms.c		btms
 
 # HID Keyboard
-device btkbd: hid, wskbddev
+device btkbd: hid, hidkbd, wskbddev
 attach btkbd at bthidbus
 file dev/bluetooth/btkbd.c		btkbd
 

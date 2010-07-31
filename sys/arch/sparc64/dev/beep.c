@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.4 2008/01/24 14:54:49 robert Exp $	*/
+/*	$OpenBSD: beep.c,v 1.5 2010/07/31 16:04:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -45,9 +45,9 @@
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
-#include "ukbd.h"
-#if NUKBD > 0
-#include <dev/usb/ukbdvar.h>
+#include "hidkbd.h"
+#if NHIDKBD > 0
+#include <dev/usb/hidkbdvar.h>
 #endif
 
 #define	BEEP_CTRL		0
@@ -87,7 +87,7 @@ struct cfdriver beep_cd = {
 	NULL, "beep", DV_DULL
 };
 
-#if NUKBD > 0
+#if NHIDKBD > 0
 void beep_stop(void *);
 void beep_bell(void *, u_int, u_int, u_int, int);
 #endif
@@ -154,9 +154,9 @@ beep_attach(parent, self, aux)
 
 	printf(": clock %sMHz\n", clockfreq(sc->sc_clk));
 
-#if NUKBD > 0
+#if NHIDKBD > 0
 	timeout_set(&sc->sc_to, beep_stop, sc);
-	ukbd_hookup_bell(beep_bell, sc);
+	hidkbd_hookup_bell(beep_bell, sc);
 #endif
 }
 
@@ -200,7 +200,7 @@ beep_setfreq(struct beep_softc *sc, int freq)
 	    (sc->sc_freqs[i].reg >>  0) & 0xff);
 }
 
-#if NUKBD > 0
+#if NHIDKBD > 0
 void
 beep_stop(void *vsc)
 {
@@ -244,4 +244,4 @@ beep_bell(void *vsc, u_int pitch, u_int period, u_int volume, int poll)
 	}
 	splx(s);
 }
-#endif /* NUKBD > 0 */
+#endif /* NHIDKBD > 0 */

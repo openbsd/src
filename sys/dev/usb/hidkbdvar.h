@@ -1,13 +1,13 @@
-/*	$OpenBSD: ukbdvar.h,v 1.5 2010/07/31 16:04:50 miod Exp $ */
-/*	$NetBSD: ukbdvar.h,v 1.2 2000/06/01 14:29:00 augustss Exp $	*/
+/*	$OpenBSD: hidkbdvar.h,v 1.1 2010/07/31 16:04:50 miod Exp $	*/
+/*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
-/*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Lennart Augustsson (lennart@augustsson.net) at
+ * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,9 +31,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_USB_UKBDVAR_H_
-#define	_DEV_USB_UKBDVAR_H_
-
-int	ukbd_cnattach(void);
-
-#endif /* _DEV_USB_UKBDVAR_H_ */
+void	hidkbd_hookup_bell(void (*)(void *, u_int, u_int, u_int, int), void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btms.c,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: btms.c,v 1.5 2010/07/31 16:04:50 miod Exp $	*/
 /*	$NetBSD: btms.c,v 1.8 2008/09/09 03:54:56 cube Exp $	*/
 
 /*
@@ -62,10 +62,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * based on dev/usb/ums.c
- */
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -84,32 +80,12 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#define MAX_BUTTONS	31
-#define BUTTON(n)	(1 << (((n) == 1 || (n) == 2) ? 3 - (n) : (n)))
-#define NOTMOUSE(f)	(((f) & (HIO_CONST | HIO_RELATIVE)) != HIO_RELATIVE)
+#include <dev/usb/hidmsvar.h>
 
 struct btms_softc {
-	struct bthidev		 sc_hidev;	/* device+ */
-
-	struct device		*sc_wsmouse;	/* child */
-	int			 sc_enabled;
-	uint16_t		 sc_flags;
-
-	/* locators */
-	struct hid_location	 sc_loc_x;
-	struct hid_location	 sc_loc_y;
-	struct hid_location	 sc_loc_z;
-	struct hid_location	 sc_loc_w;
-	struct hid_location	 sc_loc_button[MAX_BUTTONS];
-
-	int			 sc_num_buttons;
-	uint32_t		 sc_buttons;
+	struct bthidev		sc_hidev;
+	struct hidms		sc_ms;
 };
-
-/* sc_flags */
-#define BTMS_REVZ		(1 << 0)	/* reverse Z direction */
-#define BTMS_HASZ		(1 << 1)	/* has Z direction */
-#define BTMS_HASW		(1 << 2)	/* has W direction */
 
 /* autoconf(9) methods */
 int	btms_match(struct device *, void *, void *);
@@ -125,6 +101,7 @@ const struct cfattach btms_ca = {
 	btms_match,
 	btms_attach,
 	btms_detach,
+	/* XXX activate */
 };
 
 /* wsmouse(4) accessops */
@@ -158,189 +135,66 @@ void
 btms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
+	struct hidms *ms = &sc->sc_ms;
 	struct bthidev_attach_args *ba = aux;
-	struct wsmousedev_attach_args wsma;
-	struct hid_location *zloc;
-	uint32_t flags;
-	int i, hl;
 
-	ba->ba_input = btms_input;
+	ba->ba_input = btms_input;			/* XXX ugly */
 
-	/* control the horizontal */
-	hl = hid_locate(ba->ba_desc, ba->ba_dlen,
-	    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X), ba->ba_id, hid_input,
-	    &sc->sc_loc_x, &flags);
-
-	if (hl == 0 || NOTMOUSE(flags)) {
-		printf("\n%s: X report 0x%04x not supported\n",
-		    sc->sc_hidev.sc_dev.dv_xname, flags);
-
+	if (hidms_setup(self, ms, 0, ba->ba_id, ba->ba_desc, ba->ba_dlen) != 0)
 		return;
-	}
 
-	/* control the vertical */
-	hl = hid_locate(ba->ba_desc, ba->ba_dlen,
-	    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y), ba->ba_id, hid_input,
-	    &sc->sc_loc_y, &flags);
-
-	if (hl == 0 || NOTMOUSE(flags)) {
-		printf("\n%s: Y report 0x%04x not supported\n",
-		    sc->sc_hidev.sc_dev.dv_xname, flags);
-
-		return;
-	}
-
-	/* Try the wheel first as the Z activator since it's tradition. */
-	hl = hid_locate(ba->ba_desc, ba->ba_dlen,
-	    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL), ba->ba_id, hid_input,
-	    &sc->sc_loc_z, &flags);
-
-	zloc = &sc->sc_loc_z;
-	if (hl) {
-		if (NOTMOUSE(flags)) {
-			printf("\n%s: Wheel report 0x%04x ignored\n",
-			    sc->sc_hidev.sc_dev.dv_xname, flags);
-
-			/* ignore Bad Z coord */
-			sc->sc_loc_z.size = 0;
-		} else {
-			sc->sc_flags |= BTMS_HASZ;
-			/* Wheels need the Z axis reversed. */
-			sc->sc_flags ^= BTMS_REVZ;
-			/* Put Z on the W coordinate */
-			zloc = &sc->sc_loc_w;
-		}
-	}
-
-	hl = hid_locate(ba->ba_desc, ba->ba_dlen,
-	    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z), ba->ba_id, hid_input,
-	    zloc, &flags);
-
-	/*
-	 * The horizontal component of the scrollball can also be given by
-	 * Application Control Pan in the Consumer page, so if we didnt see
-	 * any Z then check that.
-	 */
-	if (!hl) {
-		hl = hid_locate(ba->ba_desc, ba->ba_dlen,
-		    HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN), ba->ba_id, hid_input,
-		    zloc, &flags);
-	}
-
-	if (hl) {
-		if (NOTMOUSE(flags))
-			zloc->size = 0;	/* ignore Z */
-		else {
-			if (sc->sc_flags & BTMS_HASZ)
-				sc->sc_flags |= BTMS_HASW;
-			else
-				sc->sc_flags |= BTMS_HASZ;
-		}
-	}
-
-	for (i = 1 ; i <= MAX_BUTTONS ; i++) {
-		hl = hid_locate(ba->ba_desc, ba->ba_dlen,
-		    HID_USAGE2(HUP_BUTTON, i), ba->ba_id, hid_input,
-		    &sc->sc_loc_button[i - 1], NULL);
-
-		if (hl == 0)
-			break;
-	}
-	sc->sc_num_buttons = i - 1;
-
-	printf(": %d button%s%s%s%s.\n", sc->sc_num_buttons,
-	    sc->sc_num_buttons == 1 ? "" : "s",
-	    sc->sc_flags & BTMS_HASW ? ", W" : "",
-	    sc->sc_flags & BTMS_HASZ ? " and Z dir" : "",
-	    sc->sc_flags & BTMS_HASW ? "s" : "");
-
-	wsma.accessops = &btms_wsmouse_accessops;
-	wsma.accesscookie = sc;
-
-	sc->sc_wsmouse = config_found((struct device *)sc,
-	    &wsma, wsmousedevprint);
+	hidms_attach(ms, &btms_wsmouse_accessops);
 }
 
 int
 btms_detach(struct device *self, int flags)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
-	int err = 0;
+	struct hidms *ms = &sc->sc_ms;
 
-	if (sc->sc_wsmouse != NULL) {
-		err = config_detach(sc->sc_wsmouse, flags);
-		sc->sc_wsmouse = NULL;
-	}
-
-	return err;
+	return hidms_detach(ms, flags);
 }
 
 int
 btms_wsmouse_enable(void *self)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
+	struct hidms *ms = &sc->sc_ms;
 
-	if (sc->sc_enabled)
-		return EBUSY;
-
-	sc->sc_enabled = 1;
-	return 0;
+	return hidms_enable(ms);
 }
 
 int
 btms_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	/* struct btms_softc *sc = (struct btms_softc *)self; */
+	struct btms_softc *sc = (struct btms_softc *)self;
+	struct hidms *ms = &sc->sc_ms;
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_BLUETOOTH;
 		return 0;
+	default:
+		return hidms_ioctl(ms, cmd, data, flag, p);
 	}
-
-	return -1;
 }
 
 void
 btms_wsmouse_disable(void *self)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
+	struct hidms *ms = &sc->sc_ms;
 
-	sc->sc_enabled = 0;
+	hidms_disable(ms);
 }
 
 void
 btms_input(struct bthidev *self, uint8_t *data, int len)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
-	int dx, dy, dz, dw;
-	uint32_t buttons;
-	int i, s;
+	struct hidms *ms = &sc->sc_ms;
 
-	if (sc->sc_wsmouse == NULL || sc->sc_enabled == 0)
-		return;
-
-	dx =  hid_get_data(data, &sc->sc_loc_x);
-	dy = -hid_get_data(data, &sc->sc_loc_y);
-	dz =  hid_get_data(data, &sc->sc_loc_z);
-	dw =  hid_get_data(data, &sc->sc_loc_w);
-
-	if (sc->sc_flags & BTMS_REVZ)
-		dz = -dz;
-
-	buttons = 0;
-	for (i = 0 ; i < sc->sc_num_buttons ; i++)
-		if (hid_get_data(data, &sc->sc_loc_button[i]))
-			buttons |= BUTTON(i);
-
-	if (dx != 0 || dy != 0 || dz != 0 || dw != 0 ||
-	    buttons != sc->sc_buttons) {
-		sc->sc_buttons = buttons;
-
-		s = spltty();
-		wsmouse_input(sc->sc_wsmouse, buttons, dx, dy, dz, dw,
-		    WSMOUSE_INPUT_DELTA);
-		splx(s);
-	}
+	if (ms->sc_enabled != 0)
+		hidms_input(ms, data, len);
 }
