@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.86 2010/07/23 19:59:09 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.87 2010/07/31 02:52:16 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -439,32 +439,54 @@ uaudio_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
+	const usb_interface_descriptor_t *cd_id;
+	usb_config_descriptor_t *cdesc;
 	struct uaudio_devs *quirk;
-	int flags;
+	const char *buf;
+	int flags = 0, size, offs;
 
-	if (uaa->iface == NULL)
-		return (UMATCH_NONE);
-
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL)
+	if (uaa->iface == NULL || uaa->device == NULL)
 		return (UMATCH_NONE);
 
 	quirk = uaudio_lookup(uaa->vendor, uaa->product);
 	if (quirk)
 		flags = quirk->flags;
 
-	if (id->bInterfaceClass == UICLASS_AUDIO &&
-	    id->bInterfaceSubClass == UISUBCLASS_AUDIOCONTROL &&
-	    !(flags & UAUDIO_FLAG_BAD_AUDIO))
-		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
+	if (flags & UAUDIO_FLAG_BAD_AUDIO)
+		return (UMATCH_NONE);
 
-	/* additional quirk devices which we want to attach */
-	if ((flags & UAUDIO_FLAG_VENDOR_CLASS) &&
-	    id->bInterfaceClass == UICLASS_VENDOR &&
-	    id->bInterfaceSubClass == UISUBCLASS_AUDIOCONTROL)
-		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (id == NULL)
+		return (UMATCH_NONE);
 
-	return (UMATCH_NONE);
+	if (!(id->bInterfaceClass == UICLASS_AUDIO ||
+	    ((flags & UAUDIO_FLAG_VENDOR_CLASS) &&
+	    id->bInterfaceClass == UICLASS_VENDOR)))
+		return (UMATCH_NONE);
+
+	if (id->bInterfaceSubClass != UISUBCLASS_AUDIOCONTROL)
+		return (UMATCH_NONE);
+
+	cdesc = usbd_get_config_descriptor(uaa->device);
+	if (cdesc == NULL)
+		return (UMATCH_NONE);
+
+	size = UGETW(cdesc->wTotalLength);
+	buf = (const char *)cdesc;
+
+	offs = 0;
+	cd_id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOSTREAM,
+	    flags);
+	if (cd_id == NULL)
+		return (UMATCH_NONE);
+
+	offs = 0;
+	cd_id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOCONTROL,
+	    flags);
+	if (cd_id == NULL)
+		return (UMATCH_NONE);
+
+	return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 }
 
 void
