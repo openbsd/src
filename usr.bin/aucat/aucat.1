@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.72 2010/07/06 10:45:01 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.73 2010/07/31 08:48:01 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2010 $
+.Dd $Mdocdate: July 31 2010 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -530,33 +530,6 @@ actions in the MIDI sequencer.
 Note that the sequencer must use
 .Va aucat:0
 as the MTC source, i.e. the audio server, not the audio player.
-.Sh LEGACY MODE
-If neither
-.Fl i
-nor
-.Fl o
-are specified,
-.Nm
-will run in legacy mode, and won't convert sample formats or sampling rates.
-In legacy mode, all options except
-.Fl f
-are ignored, and all other arguments are assumed to be names of files.
-In legacy mode
-.Nm
-reads files sequentially, and writes them to the specified device.
-If a Sun .au header is detected it is skipped over and not copied to
-the audio device.
-.Nm
-will attempt to parse the format, number of channels and sample rate
-from Sun .au file headers.
-However, only alaw and ulaw formats are supported for .au files.
-Other formats will be interpreted as ulaw.
-If a Microsoft .wav header (RIFF) is detected it is interpreted
-to select the right audio encoding for playback and the data chunk of the
-file is copied to the audio device.
-If the device does not support the encoding,
-.Nm
-will exit with an error.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICE" -compact
 .It Ev AUDIODEVICE

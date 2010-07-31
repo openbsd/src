@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.101 2010/07/10 12:28:17 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.102 2010/07/31 08:48:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -430,8 +430,7 @@ aucat_main(int argc, char **argv)
 	char base[PATH_MAX], path[PATH_MAX];
 	unsigned mode, rate;
 	const char *str;
-	char *legacy_path;
-	int autostart, legacy;
+	int autostart;
 	struct dev *d, *dnext;
 	unsigned active;
 	unsigned nsock, nfile;
@@ -444,8 +443,6 @@ aucat_main(int argc, char **argv)
 	d_flag = 0;
 	l_flag = 0;
 	n_flag = 0;
-	legacy = 1;
-	legacy_path = NULL;
 	SLIST_INIT(&cfdevs);
 	nfile = nsock = 0;
 
@@ -495,59 +492,47 @@ aucat_main(int argc, char **argv)
 			d_flag = 1;
 			break;
 		case 'n':
-			legacy = 0;
 			n_flag = 1;
 			break;
 		case 'u':
-			legacy = 0;
 			u_flag = 1;
 			break;
 		case 'U':
-			legacy = 0;
 			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
 			if (str)
 				errx(1, "%s: unit number is %s", optarg, str);
 			break;
 		case 'm':
-			legacy = 0;
 			cs->mode = opt_mode();
 			cd->mode = cs->mode;
 			break;
 		case 'h':
-			legacy = 0;
 			cs->hdr = opt_hdr();
 			break;
 		case 'x':
-			legacy = 0;
 			cs->xrun = opt_xrun();
 			break;
 		case 'j':
-			legacy = 0;
 			cs->join = opt_onoff();
 			break;
 		case 't':
-			legacy = 0;
 			cs->mmc = opt_mmc();
 			break;
 		case 'c':
-			legacy = 0;
 			opt_ch(&cs->ipar);
 			cd->opar.cmin = cs->ipar.cmin;
 			cd->opar.cmax = cs->ipar.cmax;
 			break;
 		case 'C':
-			legacy = 0;
 			opt_ch(&cs->opar);
 			cd->ipar.cmin = cs->opar.cmin;
 			cd->ipar.cmax = cs->opar.cmax;
 			break;
 		case 'e':
-			legacy = 0;
 			opt_enc(&cs->ipar);
 			aparams_copyenc(&cs->opar, &cs->ipar);
 			break;
 		case 'r':
-			legacy = 0;
 			rate = strtonum(optarg, RATE_MIN, RATE_MAX, &str);
 			if (str)
 				errx(1, "%s: rate is %s", optarg, str);
@@ -555,49 +540,39 @@ aucat_main(int argc, char **argv)
 			cd->ipar.rate = cd->opar.rate = rate;
 			break;
 		case 'v':
-			legacy = 0;
 			cs->vol = strtonum(optarg, 0, MIDI_MAXCTL, &str);
 			if (str)
 				errx(1, "%s: volume is %s", optarg, str);
 			break;
 		case 'i':
-			legacy = 0;
 			cfstr_add(&cd->ins, cs, optarg);
 			nfile++;
 			break;
 		case 'o':
-			legacy = 0;
 			cfstr_add(&cd->outs, cs, optarg);
 			nfile++;
 			break;
 		case 's':
-			legacy = 0;
 			cfstr_add(&cd->opts, cs, optarg);
 			nsock++;
 			break;
 		case 'a':
-			legacy = 0;
 			cd->hold = opt_onoff();
 			break;
 		case 'q':
-			legacy = 0;
 			cfmid_add(&cd->mids, optarg);
 			break;
 		case 'b':
-			legacy = 0;
 			cd->bufsz = strtonum(optarg, 1, RATE_MAX * 5, &str);
 			if (str)
 				errx(1, "%s: buffer size is %s", optarg, str);
 			break;
 		case 'z':
-			legacy = 0;
 			cd->round = strtonum(optarg, 1, SHRT_MAX, &str);
 			if (str)
 				errx(1, "%s: block size is %s", optarg, str);
 			break;
 		case 'f':
-			legacy = 0;
-			legacy_path = optarg;
 			if (SLIST_EMPTY(&cd->opts) &&
 			    SLIST_EMPTY(&cd->ins) &&
 			    SLIST_EMPTY(&cd->outs)) {
@@ -607,7 +582,6 @@ aucat_main(int argc, char **argv)
 			cfdev_add(&cfdevs, cd, optarg);
 			break;
 		case 'l':
-			legacy = 0;
 			l_flag = 1;
 			autostart = 0;
 			break;
@@ -624,15 +598,8 @@ aucat_main(int argc, char **argv)
 		debug_level = 1;
 #endif
 	if (argc > 0) {
-		if (!legacy) {
-			aucat_usage();
-			exit(1);
-		}
-		for (c = 0; c < argc; c++)
-			if (legacy_play(legacy_path, argv[c]) != 0) {
-				errx(1, "%s: could not play\n", argv[c]);
-			}
-		exit(0);
+		aucat_usage();
+		exit(1);
 	}
 
 	/*

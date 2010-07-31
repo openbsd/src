@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.13 2010/06/04 06:15:28 ratchov Exp $
+#	$OpenBSD: Makefile,v 1.14 2010/07/31 08:48:01 ratchov Exp $
 
 PROG=	aucat
 SRCS=	aucat.c abuf.c aparams.c aproc.c dev.c midi.c file.c headers.c \
-	siofile.c miofile.c sock.c pipe.c listen.c opt.c wav.c legacy.c dbg.c
+	siofile.c miofile.c sock.c pipe.c listen.c opt.c wav.c dbg.c
 MAN=	aucat.1 midicat.1
 LINKS=  ${BINDIR}/aucat ${BINDIR}/midicat
 CFLAGS+= -Wall -Wstrict-prototypes -Wundef -DDEBUG
