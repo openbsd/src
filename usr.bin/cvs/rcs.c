@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.297 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.298 2010/07/31 11:37:37 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2783,6 +2783,13 @@ again:
 			trdp = rcs_findrev(rfp, rdp->rd_next);
 			if (trdp == NULL)
 				fatal("failed to grab next revision");
+		} else {
+			/*
+			 * XXX Fail, although the caller does not always do the
+			 * right thing (eg cvs diff when the tree is ahead of
+			 * the repository).
+			 */
+			break;
 		}
 
 		if (rdp->rd_tlen == 0) {
