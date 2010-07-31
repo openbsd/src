@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.213 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: GENERIC,v 1.214 2010/07/31 08:33:20 ratchov Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -331,7 +331,6 @@ isapnp0	at	isa?
 mcclock* at isa? port 0x70
 pcppi*	at isa?				# PC prog. periph. interface
 spkr0	at pcppi?			# IBM BASIC emulation
-midi*	at pcppi?
 pckbc*	at isa?				# PC keyboard controller
 pckbd*	at pckbc?			# PC keyboard (kbd port)
 pms*	at pckbc?			# PS/2-style mouse (aux port)
@@ -404,12 +403,7 @@ fms*	at pci?				# Forte Media FM801
 auvia*	at pci?				# VIA VT82C686A
 ##
 
-# OPL[23] FM synthesizers
-opl*	at eso?
-opl*	at cmpci?
-
 # MIDI support
-midi*	at opl?				# OPL FM synth
 midi*	at eap?
 
 #Audio Support

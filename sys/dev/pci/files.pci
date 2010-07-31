@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.273 2010/07/03 01:02:25 mlarkin Exp $
+#	$OpenBSD: files.pci,v 1.274 2010/07/31 08:33:20 ratchov Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -116,9 +116,6 @@ device	eso {}: audio, auconv, mulaw, midibus
 attach	eso at pci
 file	dev/pci/eso.c			eso
 
-attach	opl at eso with opl_eso
-file	dev/pci/opl_eso.c		opl_eso
-
 # Acer Labs M5455
 device	auacer: audio, auconv, mulaw, ac97
 attach	auacer at pci
@@ -179,9 +176,6 @@ file	dev/pci/esa.c			esa
 device	yds {}: audio, auconv, mulaw, ac97, firmload
 attach	yds at pci
 file	dev/pci/yds.c			yds
-
-attach	opl at yds with opl_yds
-file	dev/pci/opl_yds.c		opl_yds
 
 # Forte Media FM801
 device	fms: audio, auconv, mulaw, ac97, midibus, tea5757, radiobus
@@ -570,9 +564,6 @@ file	dev/pci/if_iwn.c		iwn
 device	cmpci {}: audio, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
-
-attach	opl at cmpci with opl_cmpci
-file	dev/pci/opl_cmpci.c		opl_cmpci
 
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 attach	iha at pci with iha_pci

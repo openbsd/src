@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.24 2009/07/09 10:14:41 eric Exp $
+.\" $OpenBSD: midi.4,v 1.25 2010/07/31 08:33:20 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2009 $
+.Dd $Mdocdate: July 31 2010 $
 .Dt MIDI 4
 .Os
 .Sh NAME
@@ -24,8 +24,6 @@
 .Cd "midi* at autri?"
 .Cd "midi* at eap?"
 .Cd "midi* at mpu?"
-.Cd "midi* at opl?"
-.Cd "midi* at pcppi?"
 .Cd "midi* at sb?"
 .Cd "midi* at umidi?"
 .Cd "midi* at ym?"
@@ -222,8 +220,6 @@ The device is already open by another process.
 .Xr autri 4 ,
 .Xr eap 4 ,
 .Xr mpu 4 ,
-.Xr opl 4 ,
-.Xr pcppi 4 ,
 .Xr sb 4 ,
 .Xr sequencer 4 ,
 .Xr umidi 4 ,

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.295 2010/07/27 00:40:19 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.296 2010/07/31 08:33:20 ratchov Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -558,14 +558,7 @@ yds*	at pci? flags 0x0000		# Yamaha YMF Audio
 emu*	at pci?				# SB Live!
 mpu*	at isa? port 0x330
 
-# OPL[23] FM synthesizers
-#opl*	at eso?
-opl*	at yds?
-opl*	at cmpci?
-
 # MIDI support
-midi*	at pcppi?		# MIDI interface to the PC speaker
-midi*	at opl?			# OPL FM synth
 #midi*	at autri?
 midi*	at eap?
 midi*	at mpu?

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.690 2010/07/26 11:29:23 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.691 2010/07/31 08:33:20 ratchov Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -737,18 +737,8 @@ ym*	at isapnp?
 mpu*	at isapnp?
 mpu*	at isa? port 0x300		# generic MPU, Yamaha SW60XG
 
-# OPL[23] FM synthesizers
-#opl0	at isa? port 0x388	# use only if not attached to sound card
-opl*	at eso?
-opl*	at sb?
-opl*	at ess?
-opl*	at yds?
-opl*	at cmpci?
-
 # MIDI support
-midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB MPU401 port
-midi*	at opl?			# OPL FM synth
 midi*	at ym?
 midi*	at mpu?
 midi*	at autri?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.498 2010/07/20 15:28:43 matthew Exp $
+#	$OpenBSD: files,v 1.499 2010/07/31 08:33:19 ratchov Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -15,7 +15,6 @@ define	atascsi {}
 define	ifmedia
 define	mii {[phy = -1]}
 define	midibus {}
-define	midisyn
 define	radiobus {}
 define	i2cbus {}
 define	gpiobus {}
@@ -324,11 +323,6 @@ file	dev/ic/pckbc.c			pckbc needs-flag
 device	pcfiic: i2cbus
 file	dev/ic/pcf8584.c		pcfiic
 
-# OPL2/OPL3 FM synth driver
-device	opl: midibus, midisyn
-file	dev/ic/opl.c			opl
-file	dev/ic/oplinstrs.c		opl
-
 # AC-97 CODECs
 define	ac97
 file	dev/ic/ac97.c			ac97
@@ -605,7 +599,6 @@ file dev/ic/lm700x.c			lm700x
 file dev/ic/tc921x.c			tc921x
 file dev/ic/pt2254a.c			pt2254a
 file dev/midi.c				midi | midibus		needs-flag
-file dev/midisyn.c			midisyn
 file dev/mulaw.c			mulaw
 file dev/sequencer.c			sequencer		needs-flag
 file dev/systrace.c			systrace		needs-flag

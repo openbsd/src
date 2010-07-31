@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcppi.4,v 1.10 2008/01/26 23:07:55 jmc Exp $
+.\" $OpenBSD: pcppi.4,v 1.11 2010/07/31 08:33:20 ratchov Exp $
 .\" $NetBSD: pcppi.4,v 1.5 2001/10/02 20:37:00 augustss Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 26 2008 $
+.Dd $Mdocdate: July 31 2010 $
 .Dt PCPPI 4
 .Os
 .Sh NAME
@@ -34,7 +34,6 @@
 .Sh SYNOPSIS
 .Cd "pcppi*   at isa?"
 .Cd "spkr0    at pcppi?"
-.Cd "midi*    at pcppi?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,9 +53,7 @@ driver provides its child devices with the ability to output simple
 tones through the PC speaker.
 The
 .Xr speaker 4
-and
-.Xr midi 4
-devices use this to synthesize sounds.
+device use this to synthesize sounds.
 It also provides helper functions to the
 .Xr pckbd 4
 driver as a substitute for a
@@ -65,6 +62,5 @@ because the PC keyboard hardware doesn't provide this.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
-.Xr midi 4 ,
 .Xr pckbd 4 ,
 .Xr speaker 4
