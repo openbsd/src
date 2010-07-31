@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: ppp.h,v 1.4 2010/07/31 09:33:09 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -558,12 +558,7 @@ struct _npppd_ppp {
 			 */
 			logged_no_address:1,
 			logged_rcvd:5;
-#ifdef	NPPPD_USE_CLIENT_AUTH
-/** Length of client authentication ID */
-#define	NPPPD_CLIENT_AUTH_ID_MAXLEN		32
-	char		client_auth_id[NPPPD_CLIENT_AUTH_ID_MAXLEN + 1];
-	int		has_client_auth_id;
-#endif
+
 	/*
 	 * Statistical informations
 	 */
@@ -772,7 +767,6 @@ void         ppp_reset_idle_timeout(npppd_ppp *);
 void        ppp_process_radius_framed_ip (npppd_ppp *, RADIUS_PACKET *);
 int         ppp_set_radius_attrs_for_authreq (npppd_ppp *, radius_req_setting *, RADIUS_PACKET *);
 #endif
-void         ppp_set_client_auth_id(npppd_ppp *, const char *);
 
 void  	  ccp_init (ccp *, npppd_ppp *);
 void      ipcp_init (ipcp *, npppd_ppp *);

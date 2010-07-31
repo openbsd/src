@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: ppp.c,v 1.5 2010/07/31 09:33:09 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.5 2010/07/31 09:33:09 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -1084,29 +1084,5 @@ ppp_on_network_pipex(npppd_ppp *_this)
 		_this->pipex_started = 1;
 	}
 	/* else wait CCP or IPCP */
-}
-#endif
-
-#ifdef	NPPPD_USE_CLIENT_AUTH
-#ifdef USE_NPPPD_LINKID
-#include "linkid.h"
-#endif
-/** Set client authentication Id */
-void
-ppp_set_client_auth_id(npppd_ppp *_this, const char *client_auth_id)
-{
-	PPP_ASSERT(_this != NULL);
-	PPP_ASSERT(client_auth_id != NULL);
-	PPP_ASSERT(strlen(client_auth_id) <= NPPPD_CLIENT_AUTH_ID_MAXLEN);
-
-	strlcpy(_this->client_auth_id, client_auth_id,
-	    sizeof(_this->client_auth_id));
-	_this->has_client_auth_id = 1;
-#ifdef USE_NPPPD_LINKID
-	linkid_purge(_this->ppp_framed_ip_address);
-#endif
-	ppp_log(_this, LOG_NOTICE,
-	    "Set client authentication id successfully.  linkid=\"%s\" client_auth_id=%s",
-	    _this->username, client_auth_id);
 }
 #endif

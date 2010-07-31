@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $
+ * $Id: npppd.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -84,10 +84,6 @@ __COPYRIGHT(
 #endif
 #include "net_utils.h"
 #include "time_utils.h"
-
-#ifdef USE_NPPPD_LINKID
-#include "linkid.h"
-#endif
 
 #ifdef USE_NPPPD_ARP
 #include "npppd_arp.h"
@@ -382,9 +378,6 @@ npppd_init(npppd *_this, const char *config_file)
 	fprintf(pidfp, "%u\n", _this->pid);
 	fclose(pidfp);
 	pidfp = NULL;
-#ifdef USE_NPPPD_LINKID
-	linkid_sock_init();
-#endif
 #ifdef USE_NPPPD_ARP
 	arp_set_strictintfnetwork(npppd_config_str_equali(_this, "arpd.strictintfnetwork", "true", ARPD_STRICTINTFNETWORK_DEFAULT));
 	if (npppd_config_str_equali(_this, "arpd.enabled", "true", ARPD_DEFAULT) == 1)
@@ -424,9 +417,6 @@ npppd_stop(npppd *_this)
 #endif
 #ifdef	USE_NPPPD_NPPPD_CTL
 	npppd_ctl_stop(&_this->ctl);
-#endif
-#ifdef USE_NPPPD_LINKID
-	linkid_sock_fini();
 #endif
 #ifdef USE_NPPPD_ARP
         arp_sock_fini();
@@ -1264,10 +1254,6 @@ npppd_release_ip(npppd *_this, npppd_ppp *ppp)
 
 	if (!ppp_ip_assigned(ppp))
 		return;
-
-#ifdef USE_NPPPD_LINKID
-	linkid_purge(ppp->ppp_framed_ip_address);
-#endif
 
 	npppd_set_ip_enabled(_this, ppp, 0);
 	npppd_pool_release_ip(ppp->assigned_pool, ppp);

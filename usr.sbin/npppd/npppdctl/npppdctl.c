@@ -1,4 +1,4 @@
-/* $OpenBSD: npppdctl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppdctl.c,v 1.5 2010/07/31 09:33:09 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppdctl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: npppdctl.c,v 1.5 2010/07/31 09:33:09 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -82,7 +82,6 @@ static void        on_exit (void);
 static void        npppd_who (int);
 static void        npppd_disconnect (const char *);
 static const char  *eat_null (const char *);
-static void        npppd_ctl_termid_authen(const char *, const char *);
 static void        npppd_ctl_common(int);
 static void        print_who(struct npppd_who *);
 static void        print_stat(struct npppd_who *);
@@ -96,10 +95,8 @@ usage(void)
 
 	fprintf(stderr,
 	"usage: %s [-slnuh] [-d ppp_user] [-r rcvbuf_sz] [-p npppd_ctl_path]\n"
-	"       %s -c [-r rcvbuf_sz] {ppp_id | ip} auth_id\n"
 	"usage: %s -R\n"
 	    "\t-R: Reset the routing table.\n"
-	    "\t-c: Set the client auth's auth-id.\n"
 	    "\t-d: Disconnect specified user.\n"
 	    "\t-h: Show this usage.\n"
 	    "\t-l: Use long line to display information.\n"
@@ -121,7 +118,7 @@ on_signal(int notused)
 int
 main(int argc, char *argv[])
 {
-	int ch, sflag, fdgramsock, cflag, rtflag;
+	int ch, sflag, fdgramsock, rtflag;
 	const char *path = DEFAULT_NPPPD_CTL_SOCK_PATH;
 	const char *disconn;
 	struct sockaddr_un sun;
@@ -130,8 +127,8 @@ main(int argc, char *argv[])
 
 	progname = basename(argv[0]);
 	disconn = NULL;
-	sflag = cflag = rtflag = 0;
-	while ((ch = getopt(argc, argv, "lcd:sunhp:r:R")) != -1) {
+	sflag = rtflag = 0;
+	while ((ch = getopt(argc, argv, "ld:sunhp:r:R")) != -1) {
 		switch (ch) {
 		case 'n':
 			nflag = 1;
@@ -144,9 +141,6 @@ main(int argc, char *argv[])
 			break;
 		case 'u':
 			uflag = 1;
-			break;
-		case 'c':
-			cflag = 1;
 			break;
 		case 'l':
 			lflag = 1;
@@ -221,13 +215,7 @@ main(int argc, char *argv[])
 		npppd_who(1);
 	else if (rtflag)
 		npppd_ctl_common(NPPPD_CTL_CMD_RESET_ROUTING_TABLE);
-	else if (cflag > 0) {
-		if (argc < 2) {
-			usage();
-			exit(1);
-		}
-		npppd_ctl_termid_authen(argv[0], argv[1]);
-	} else
+	else
 		npppd_who(0);
 
 	close(sock);
@@ -403,52 +391,6 @@ eat_null(const char *str)
 	if (str == NULL || *str == '\0')
 		return "<none>";
 	return str;
-}
-
-static void
-npppd_ctl_termid_authen(const char *ppp_key, const char *authid)
-{
-	int sz;
-	char *ep;
-	long lval;
-	struct npppd_ctl_termid_set_auth_request req = {
-		.command = NPPPD_CTL_CMD_TERMID_SET_AUTH,
-		.reserved = 0,
-	};
-	u_char buf[BUFSIZ];
-	struct in_addr ip4;
-
-	if (inet_pton(AF_INET, ppp_key, &ip4) == 1) {
-		req.ppp_key_type = NPPPD_CTL_PPP_FRAMED_IP_ADDRESS;
-		req.ppp_key.framed_ip_address.s_addr = ip4.s_addr;
-	} else {
-		errno = 0;
-		lval = strtol(ppp_key, &ep, 10);
-		if (ppp_key[0] == '\0' || *ep != '\0') {
-			fprintf(stderr, "not a number: %s\n", ppp_key);
-			exit(1);
-		}
-		if ((errno == ERANGE && (lval == LONG_MAX|| lval == LONG_MIN))||
-		    lval > UINT_MAX) {
-			fprintf(stderr, "out of range: %s\n",
-			    ppp_key);
-			exit(1);
-		}
-		req.ppp_key_type = NPPPD_CTL_PPP_ID;
-		req.ppp_key.id = lval;
-	}
-	strlcpy(req.authid, authid, sizeof(req.authid));
-
-	if (sendto(sock, &req, sizeof(req), 0, (struct sockaddr *)&peersock,
-	    sizeof(peersock)) < 0) {
-		err(1 ,"sendto() failed");
-	}
-
-	if ((sz = recv(sock, buf, sizeof(buf), 0)) <= 0)
-		err(1, "recv");
-	buf[sz] = '\0';
-
-	printf("%s\n", buf);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_ctl.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_ctl.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
  * This file provides to open UNIX domain socket which located in
  * /var/run/npppd_ctl and accept commmands from the npppdctl command.
  */
-/* $Id: npppd_ctl.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: npppd_ctl.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -355,74 +355,6 @@ user_end:
 			npppd_ctl_log(_this, LOG_ERR,
 			    "sendto() failed in %s: %m", __func__);
 		}
-		break;
-	    }
-	/*
-	 * related to client authentication
-	 */
-	case NPPPD_CTL_CMD_TERMID_SET_AUTH: {
-#ifndef	NPPPD_USE_CLIENT_AUTH
-		npppd_ctl_log(_this, LOG_ERR,
-		    "NPPPD_CTL_CMD_TERMID_SET_AUTH is requested, but "
-		    "the terminal authentication is disabled.");
-		goto fail;
-#else
-		struct npppd_ctl_termid_set_auth_request *req;
-		npppd_ppp *ppp;
-
-		req = (struct npppd_ctl_termid_set_auth_request *)pkt;
-		if (pktlen < sizeof(struct npppd_ctl_termid_set_auth_request)) {
-			npppd_ctl_log(_this, LOG_ERR,
-			    "NPPPD_CTL_CMD_TERMID_SET_AUTH is requested, but "
-			    "the request is invalid.");
-			goto fail;
-		}
-
-		ppp = NULL;
-
-		switch (req->ppp_key_type) {
-		case NPPPD_CTL_PPP_ID:
-			if ((ppp = npppd_get_ppp_by_id(npppd_get_npppd(),
-			    req->ppp_key.id)) == NULL) {
-				npppd_ctl_log(_this, LOG_ERR,
-				    "NPPPD_CTL_CMD_TERMID_SET_AUTH is "
-				    "requested, but the requested ppp(id=%d) "
-				    "is not found.", req->ppp_key.id);
-				goto fail;
-			}
-
-			break;
-		case NPPPD_CTL_PPP_FRAMED_IP_ADDRESS:
-			if ((ppp = npppd_get_ppp_by_ip(npppd_get_npppd(),
-			    req->ppp_key.framed_ip_address)) == NULL) {
-				npppd_ctl_log(_this, LOG_ERR,
-				    "NPPPD_CTL_CMD_TERMID_SET_AUTH is "
-				    "requested, but the requested ppp(ip=%s) "
-				    "is not found.",
-				    inet_ntoa(req->ppp_key.framed_ip_address));
-				goto fail;
-			}
-			break;
-		default:
-			npppd_ctl_log(_this, LOG_ERR,
-			    "NPPPD_CTL_CMD_TERMID_SET_AUTH is requested, but "
-			    "the ppp_key_type is invalid.");
-			goto fail;
-		}
-		NPPPD_CTL_ASSERT(ppp != NULL);
-
-		ppp_set_client_auth_id(ppp, req->authid);
-		strlcpy(respbuf,
-		    "Set the client authentication information successfully.",
-		    sizeof(respbuf));
-
-		if (sendto(_this->sock, respbuf, strlen(respbuf), 0, peer,
-		    peer->sa_len) < 0) {
-			npppd_ctl_log(_this, LOG_ERR,
-			    "sendto() failed in %s: %m", __func__);
-
-		}
-#endif
 		break;
 	    }
 	case NPPPD_CTL_CMD_RESET_ROUTING_TABLE:
