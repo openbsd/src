@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.76 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.77 2010/07/31 16:28:31 zinovik Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,17 +38,16 @@
 #include "buf.h"
 
 #define BUF_INCR	128
-#define BUF_GROW(bp, len)						\
-	do {								\
-		b->cb_buf = xrealloc(b->cb_buf, 1, b->cb_size + len);	\
-		b->cb_size += len;					\
-	} while (0);
 
 struct buf {
 	u_char	*cb_buf;
 	size_t	 cb_size;
 	size_t	 cb_len;
 };
+
+#define SIZE_LEFT(b)	(b->cb_size - b->cb_len)
+
+static void	buf_grow(BUF *, size_t);
 
 BUF *
 buf_alloc(size_t len)
@@ -130,7 +129,7 @@ buf_putc(BUF *b, int c)
 
 	bp = b->cb_buf + b->cb_len;
 	if (bp == (b->cb_buf + b->cb_size)) {
-		BUF_GROW(b, BUF_INCR);
+		buf_grow(b, BUF_INCR);
 		bp = b->cb_buf + b->cb_len;
 	}
 	*bp = (u_char)c;
@@ -147,17 +146,14 @@ void
 buf_append(BUF *b, const void *data, size_t len)
 {
 	size_t left;
-	u_char *bp, *bep;
+	u_char *bp;
+
+	left = SIZE_LEFT(b);
+
+	if (left < len)
+		buf_grow(b, len - left);
 
 	bp = b->cb_buf + b->cb_len;
-	bep = b->cb_buf + b->cb_size;
-	left = bep - bp;
-
-	if (left < len) {
-		BUF_GROW(b, len - left);
-		bp = b->cb_buf + b->cb_len;
-	}
-
 	memcpy(bp, data, len);
 	b->cb_len += len;
 }
@@ -240,4 +236,17 @@ buf_differ(const BUF *b1, const BUF *b2)
 		return (1);
 
 	return (memcmp(b1->cb_buf, b2->cb_buf, b1->cb_len));
+}
+
+/*
+ * buf_grow()
+ *
+ * Grow the buffer <b> by <len> bytes.  The contents are unchanged by this
+ * operation regardless of the result.
+ */
+static void
+buf_grow(BUF *b, size_t len)
+{
+	b->cb_buf = xrealloc(b->cb_buf, 1, b->cb_size + len);
+	b->cb_size += len;
 }
