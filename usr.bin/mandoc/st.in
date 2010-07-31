@@ -1,6 +1,6 @@
-/*	$Id: st.in,v 1.6 2010/05/08 00:48:07 schwarze Exp $ */
+/*	$Id: st.in,v 1.7 2010/07/31 23:42:04 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,8 @@
  * the formatted output string.
  *
  * Be sure to escape strings.
+ *
+ * REMEMBER TO ADD NEW STANDARDS TO MDOC.7!
  */
 
 LINE("-p1003.1-88",	"IEEE Std 1003.1-1988 (\\(lqPOSIX\\(rq)")
