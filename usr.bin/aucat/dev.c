@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.62 2010/07/06 01:12:45 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.63 2010/07/31 08:46:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1152,7 +1152,6 @@ dev_clear(struct dev *d)
 	}
 	if (APROC_OK(d->submon)) {
 #ifdef DEBUG
-		dbg_puts("clearing monitor\n");
 		if (!LIST_EMPTY(&d->submon->outs)) {
 			dbg_puts("monitoring end not idle, can't clear device\n");
 			dbg_panic();
