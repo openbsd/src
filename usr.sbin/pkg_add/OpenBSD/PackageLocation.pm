@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.23 2010/07/28 12:19:54 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.24 2010/07/31 11:17:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,7 +66,7 @@ OpenBSD::Auto::cache(pkgname,
 OpenBSD::Auto::cache(update_info,
     sub {
 	my $self = shift;
-	return $self->grabPlist(\&OpenBSD::PackingList::UpdateInfoOnly);
+	return $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly);
     });
 
 
@@ -202,6 +202,13 @@ sub grabPlist
 	} else {
 		return;
 	}
+}
+
+sub forget
+{
+	my $self = shift;
+	$self->wipe_info;
+	$self->close_now;
 }
 
 sub wipe_info

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.23 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Handle.pm,v 1.24 2010/07/31 11:17:22 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -38,12 +38,12 @@ sub cleanup
 	$self->{error} //= $error;
 	$self->{errorinfo} //= $errorinfo;
 	if (defined $self->location) {
-		if (defined $self->{error} &&
-		    $self->{error} == ALREADY_INSTALLED) {
-			$self->location->close_now;
-		} elsif (defined $self->{error} &&
-		    $self->{error} == CANT_INSTALL) {
-			$self->location->close_with_client_error;
+		if (defined $self->{error}) {
+			if ($self->{error} == BAD_PACKAGE) {
+				$self->location->close_with_client_error;
+			} else {
+				$self->location->close_now;
+			}
 		}
 		$self->location->wipe_info;
 	}
@@ -185,7 +185,7 @@ sub get_plist
 	if ($state->verbose >= 2) {
 		$state->say("#1parsing #2", $state->deptree_header($pkg), $pkg);
 	}
-	my $plist = $location->grabPlist;
+	my $plist = $location->plist;
 	unless (defined $plist) {
 		$state->say("Can't find CONTENTS from #1", $location->url);
 		$location->close_with_client_error;
