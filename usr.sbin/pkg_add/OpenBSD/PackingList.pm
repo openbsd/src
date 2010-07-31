@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.108 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.109 2010/07/31 11:30:50 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -223,7 +223,7 @@ sub DependOnly
 			while (<$fh>) {
 			    if (m/^\@(?:depend|wantlib|define-tag)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
+			    } elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
 				    last;
 			    }
 			}
@@ -244,7 +244,7 @@ sub ExtraInfoOnly
 			while (<$fh>) {
 			    if (m/^\@(?:pkgpath)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
+			    } elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
 				    last;
 			    }
 			}
@@ -265,7 +265,7 @@ sub UpdateInfoOnly
 			while (<$fh>) {
 			    if (m/^\@(?:depend|wantlib|conflict|option|pkgpath|url)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
+			    } elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
 				    last;
 			    }
 			}
@@ -309,7 +309,7 @@ sub ConflictOnly
 			while (<$fh>) {
 			    if (m/^\@(?:conflict|option|name)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:depend|wantlib|groups|users|cwd)\b/o) {
+			    } elsif (m/^\@(?:depend|wantlib|newgroup|newuser|cwd)\b/o) {
 				    last;
 			    }
 			}
