@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.39 2010/07/21 07:49:48 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.40 2010/07/31 16:52:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -381,20 +381,31 @@ delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
  */
 #define AP192K_GPIO_CLK		0x2
 #define AP192K_GPIO_DOUT	0x8
-#define AP192K_GPIO_CSMASK	0x70
+#define AP192K_GPIO_CSMASK	0x30
 #define AP192K_GPIO_CS(dev)	((dev) << 4)
-
+#define AP192K_GPIO_ADC_PWR	0x800
+#define AP192K_GPIO_MUTE	0x400000
 void
 ap192k_init(struct envy_softc *sc)
 {
-	int i;
+	int i, reg;
 
+	/* AK4358 */
 	envy_codec_write(sc, 0, 0, 0);	/* reset */
 	delay(300);
 	envy_codec_write(sc, 0, 0, 0x87);	/* i2s mode */
+	delay(1);
 	for (i = 0; i < sc->card->noch; i++) {
 		sc->shadow[0][AK4358_ATT(i)] = 0xff;
 	}
+
+	/* ADC */
+	delay(1);
+	reg = envy_gpio_getstate(sc);
+	reg &= ~AP192K_GPIO_ADC_PWR;
+	envy_gpio_setstate(sc, reg);
+	reg |= AP192K_GPIO_ADC_PWR;
+	envy_gpio_setstate(sc, reg);
 }
 
 void
