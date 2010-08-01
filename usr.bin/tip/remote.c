@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.32 2010/07/11 23:16:42 chl Exp $	*/
+/*	$OpenBSD: remote.c,v 1.33 2010/08/01 20:27:51 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -87,66 +87,72 @@ getremote(char *host)
 		exit(3);
 	}
 
-	if (cgetstr(bp, "dv", &strval) < 0)
-		strval = NULL;
-	vsetstr(DEVICE, strval);
-	if (cgetstr(bp, "cm", &strval) < 0)
-		strval = NULL;
-	vsetstr(CONNECT, strval);
-	if (cgetstr(bp, "di", &strval) < 0)
-		strval = NULL;
-	vsetstr(DISCONNECT, strval);
-	if (cgetstr(bp, "el", &strval) < 0)
-		strval = NULL;
-	vsetstr(EOL, strval);
-	if (cgetstr(bp, "ie", &strval) < 0)
-		strval = NULL;
-	vsetstr(EOFREAD, strval);
-	if (cgetstr(bp, "oe", &strval) < 0)
-		strval = NULL;
-	vsetstr(EOFWRITE, strval);
-	if (cgetstr(bp, "ex", &strval) < 0)
-		strval = NULL;
-	vsetstr(EXCEPTIONS, strval);
-	if (cgetstr(bp, "re", &strval) < 0)
-		strval = NULL;
-	vsetstr(RECORD, strval);
-	if (cgetstr(bp, "pa", &strval) < 0)
-		strval = NULL;
-	vsetstr(PARITY, strval);
-
-	if (cgetstr(bp, "es", &strval) >= 0 && strval != NULL)
-		vsetstr(ESCAPE, strval);
-	if (cgetstr(bp, "fo", &strval) >= 0 && strval != NULL)
-		vsetstr(FORCE, strval);
-	if (cgetstr(bp, "pr", &strval) >= 0 && strval != NULL)
-		vsetstr(PROMPT, strval);
-	if (cgetstr(bp, "rc", &strval) >= 0 && strval != NULL)
+	/* String options. Use if not already set. */
+	if (vgetstr(DEVICE) == NULL && cgetstr(bp, "dv", &strval) >= 0)
+		vsetstr(DEVICE, strval);
+	if (vgetstr(CONNECT) == NULL && cgetstr(bp, "cm", &strval) >= 0)
+		vsetstr(CONNECT, strval);
+	if (vgetstr(DISCONNECT) == NULL && cgetstr(bp, "di", &strval) >= 0)
+		vsetstr(DISCONNECT, strval);
+	if (vgetstr(EOL) == NULL && cgetstr(bp, "el", &strval) >= 0)
+		vsetstr(EOL, strval);
+	if (vgetstr(EOFREAD) == NULL && cgetstr(bp, "ie", &strval) >= 0)
+		vsetstr(EOFREAD, strval);
+	if (vgetstr(EOFWRITE) == NULL && cgetstr(bp, "oe", &strval) >= 0)
+		vsetstr(EOFWRITE, strval);
+	if (vgetstr(EXCEPTIONS) == NULL && cgetstr(bp, "ex", &strval) >= 0)
+		vsetstr(EXCEPTIONS, strval);
+	if (vgetstr(RECORD) == NULL && cgetstr(bp, "re", &strval) >= 0)
 		vsetstr(RECORD, strval);
+	if (vgetstr(PARITY) == NULL && cgetstr(bp, "pa", &strval) >= 0)
+		vsetstr(PARITY, strval);
 
-	if (!vgetnum(BAUDRATE)) {
-		if (cgetnum(bp, "br", &val) == -1)
+	/* Numbers with default values. Set if currently zero (XXX ugh). */
+	if (vgetnum(BAUDRATE) == 0) {
+		if (cgetnum(bp, "br", &val) < 0)
 			vsetnum(BAUDRATE, DEFBR);
 		else
 			vsetnum(BAUDRATE, val);
 	}
-	if (!vgetnum(LINEDISC)) {
-		if (cgetnum(bp, "ld", &val) == -1)
+	if (vgetnum(LINEDISC) == 0) { /* XXX relies on TTYDISC == 0 */
+		if (cgetnum(bp, "ld", &val) < 0)
 			vsetnum(LINEDISC, TTYDISC);
 		else
 			vsetnum(LINEDISC, val);
 	}
-	if (cgetnum(bp, "fs", &val) == -1)
-		vsetnum(FRAMESIZE, DEFFS);
-	else
-		vsetnum(FRAMESIZE, val);
-	if (vgetstr(DEVICE) == NULL) {
-		fprintf(stderr, "%s: missing device spec\n", host);
-		exit(3);
+	if (vgetnum(FRAMESIZE) == 0) {
+		if (cgetnum(bp, "fs", &val) < 0)
+			vsetnum(FRAMESIZE, DEFFS);
+		else
+			vsetnum(FRAMESIZE, val);
 	}
 
-	vsetstr(HOST, host);
-	if (cgetflag("hd"))
+	/* Numbers - default values already set in vinit() or zero. */
+	if (cgetnum(bp, "es", &val) >= 0)
+		vsetnum(ESCAPE, val);
+	if (cgetnum(bp, "fo", &val) >= 0)
+		vsetnum(FORCE, val);
+	if (cgetnum(bp, "pr", &val) >= 0)
+		vsetnum(PROMPT, val);
+	if (cgetnum(bp, "rc", &val) >= 0)
+		vsetnum(RAISECHAR, val);
+
+	/* Numbers - default is zero. */
+	if (cgetnum(bp, "dl", &val) < 0)
+		vsetnum(LDELAY, 0);
+	else
+		vsetnum(LDELAY, val);
+	if (cgetnum(bp, "cl", &val) < 0)
+		vsetnum(CDELAY, 0);
+	else
+		vsetnum(CDELAY, val);
+	if (cgetnum(bp, "et", &val) < 0)
+		vsetnum(ETIMEOUT, 0);
+	else
+		vsetnum(ETIMEOUT, val);
+
+	/* Flag options. */
+	if (cgetflag("hd")) /* XXX overrides command line */
 		vsetnum(HALFDUPLEX, 1);
 	if (cgetflag("ra"))
 		vsetnum(RAISE, 1);
@@ -160,9 +166,9 @@ getremote(char *host)
 		vsetnum(SCRIPT, 1);
 	if (cgetflag("tb"))
 		vsetnum(TABEXPAND, 1);
-	if (cgetflag("vb"))
+	if (cgetflag("vb")) /* XXX overrides command line */
 		vsetnum(VERBOSE, 1);
-	if (cgetflag("nv"))
+	if (cgetflag("nv")) /* XXX overrides command line */
 		vsetnum(VERBOSE, 0);
 	if (cgetflag("ta"))
 		vsetnum(TAND, 1);
@@ -176,22 +182,16 @@ getremote(char *host)
 		vsetnum(DC, 1);
 	if (cgetflag("hf"))
 		vsetnum(HARDWAREFLOW, 1);
+
 	if (vgetstr(RECORD) == NULL)
 		vsetstr(RECORD, "tip.record");
 	if (vgetstr(EXCEPTIONS) == NULL)
 		vsetstr(EXCEPTIONS, "\t\n\b\f");
-	if (cgetnum(bp, "dl", &val) == -1)
-		vsetnum(LDELAY, 0);
-	else
-		vsetnum(LDELAY, val);
-	if (cgetnum(bp, "cl", &val) == -1)
-		vsetnum(CDELAY, 0);
-	else
-		vsetnum(CDELAY, val);
-	if (cgetnum(bp, "et", &val) == -1)
-		vsetnum(ETIMEOUT, 0);
-	else
-		vsetnum(ETIMEOUT, val);
 
+	vsetstr(HOST, host);
+	if (vgetstr(DEVICE) == NULL) {
+		fprintf(stderr, "%s: missing device spec\n", host);
+		exit(3);
+	}
 	return (vgetstr(DEVICE));
 }
