@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.5 2010/07/31 21:51:33 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.6 2010/08/01 20:47:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2010 $
+.Dd $Mdocdate: August 1 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -338,11 +338,9 @@ If not adhering to any standards, the
 .Em HISTORY
 section should be used.
 .It Em HISTORY
-The history of any manual without a
-.Em STANDARDS
-section should be described in this section.
+A brief history of the subject, including where support first appeared.
 .It Em AUTHORS
-Credits to authors, if applicable, should appear in this section.
+Credits to the person or persons who wrote the code and/or documentation.
 Authors should generally be noted by both name and email address.
 .It Em CAVEATS
 Common misuses and misunderstandings should be explained
@@ -939,8 +937,10 @@ newline before macro output; in mandoc, it is an alias for the standard
 control character.
 .El
 .Sh SEE ALSO
+.Xr man 1 ,
 .Xr mandoc 1 ,
-.Xr mandoc_char 7
+.Xr mandoc_char 7 ,
+.Xr mdoc 7
 .Sh HISTORY
 The
 .Nm

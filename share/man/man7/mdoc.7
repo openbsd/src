@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.44 2010/08/01 20:37:51 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.45 2010/08/01 20:47:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -560,11 +560,9 @@ section should be used instead.
 See
 .Sx \&St .
 .It Em HISTORY
-The history of any manual without a
-.Em STANDARDS
-section should be described in this section.
+A brief history of the subject, including where support first appeared.
 .It Em AUTHORS
-Credits to authors, if applicable, should appear in this section.
+Credits to the person or persons who wrote the code and/or documentation.
 Authors should generally be noted by both name and email address.
 .Pp
 See
@@ -2257,7 +2255,7 @@ any
 file.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Os Op Cm system
+.D1 Pf \. Sx \&Os Op Cm system Op Cm version
 .Pp
 The optional
 .Cm system
@@ -2859,8 +2857,10 @@ prior to unknown arguments of
 older groff did nothing.
 .El
 .Sh SEE ALSO
+.Xr man 1 ,
 .Xr mandoc 1 ,
-.Xr mandoc_char 7
+.Xr mandoc_char 7 ,
+.Xr mdoc.samples 7
 .Sh AUTHORS
 The
 .Nm
