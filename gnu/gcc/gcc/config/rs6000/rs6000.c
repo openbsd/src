@@ -13475,17 +13475,22 @@ rs6000_return_addr (int count, rtx frame)
      don't try to be too clever here.  */
   if (count != 0 || (DEFAULT_ABI != ABI_AIX && flag_pic))
     {
+      rtx x;
       cfun->machine->ra_needs_full_frame = 1;
 
-      return
-	gen_rtx_MEM
-	  (Pmode,
-	   memory_address
-	   (Pmode,
-	    plus_constant (copy_to_reg
-			   (gen_rtx_MEM (Pmode,
-					 memory_address (Pmode, frame))),
-			   RETURN_ADDRESS_OFFSET)));
+      if (count == 0)
+	{
+	  gcc_assert (frame == frame_pointer_rtx);
+	  x = arg_pointer_rtx;
+	}
+      else
+        {
+	  x = memory_address (Pmode, frame);
+	  x = copy_to_reg (gen_rtx_MEM (Pmode, x));
+	}
+
+      x = plus_constant (x, RETURN_ADDRESS_OFFSET);
+      return gen_rtx_MEM (Pmode, memory_address (Pmode, x));
     }
 
   cfun->machine->ra_need_lr = 1;
