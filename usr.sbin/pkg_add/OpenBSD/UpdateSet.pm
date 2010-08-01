@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.61 2010/07/11 07:27:25 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.62 2010/08/01 10:03:24 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -286,6 +286,8 @@ sub validate_plists
 	$state->{problems} = 0;
 	delete $state->{overflow};
 
+	$state->{current_set} = $self;
+
 	for my $o ($self->older_to_do) {
 		require OpenBSD::Delete;
 		OpenBSD::Delete::validate_plist($o->{plist}, $state);
@@ -318,6 +320,18 @@ sub validate_plists
 	} else {
 		$state->vstat->synchronize;
 		return 1;
+	}
+}
+
+sub cleanup_old_shared
+{
+	my ($set, $state) = @_;
+	my $h = $set->{old_shared};
+
+	for my $d (sort {$b cmp $a} keys %$h) {
+		OpenBSD::SharedItems::wipe_directory($state, $h, $d) ||
+		    $state->fatal("Can't continue");
+		delete $state->{recorder}{dirs}{$d};
 	}
 }
 

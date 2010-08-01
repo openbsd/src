@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.61 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.62 2010/08/01 10:03:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -59,6 +59,7 @@ sub none
 }
 
 }
+
 {
 package OpenBSD::Vstat::Object::None;
 our @ISA = qw(OpenBSD::Vstat::Object);
@@ -75,6 +76,28 @@ sub new
 {
 	return $none;
 }
+}
+
+{
+package OpenBSD::Vstat::Object::Directory;
+our @ISA = qw(OpenBSD::Vstat::Object);
+
+sub new
+{
+	my ($class, $fname, $set, $o) = @_;
+	bless { name => $fname, set => $set, o => $o }, $class;
+}
+
+# XXX directories don't do anything until you test for their presence.
+# which only happens if you want to replace a directory with a file.
+sub exists
+{
+	my $self = shift;
+	require OpenBSD::SharedItems;
+
+	return OpenBSD::SharedItems::check_shared($self->{set}, $self->{o});
+}
+
 }
 
 package OpenBSD::Vstat;
@@ -186,6 +209,17 @@ sub remove_first
 	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object->none;
 	return defined($size) ? $self->account_for($name, -$size) : undef;
 }
+
+# since directories may become files during updates, we may have to remove
+# them early, so we need to record them: store exactly as much info as needed
+# for SharedItems.
+sub remove_directory
+{
+	my ($self, $name, $o) = @_;
+	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object::Directory->new($name, 
+	    $self->{state}->{current_set}, $o);
+}
+
 
 sub tally
 {

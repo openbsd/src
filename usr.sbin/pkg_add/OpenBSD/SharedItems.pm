@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.26 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.27 2010/08/01 10:03:24 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -34,11 +34,51 @@ sub find_items_in_installed_packages
 	    sub {
 		my $e = shift;
 		my $plist = OpenBSD::PackingList->from_installation($e,
-		    \&OpenBSD::PackingList::SharedItemsOnly) or next;
+		    \&OpenBSD::PackingList::SharedItemsOnly) or return;
 		return if !defined $plist;
 		$plist->record_shared($db, $e);
 	    });
 	return $db;
+}
+
+sub check_shared
+{
+	my ($set, $o) = @_;
+	if (!defined $set->{db}) {
+		$set->{db} = OpenBSD::SharedItemsRecorder->new;
+		for my $pkg (installed_packages()) {
+			next if $set->{older}{$pkg};
+			my $plist = OpenBSD::PackingList->from_installation($pkg,
+			    \&OpenBSD::PackingList::SharedItemsOnly) or next;
+			next if !defined $plist;
+			$plist->record_shared($set->{db}, $pkg);
+		}
+	}
+	if (defined $set->{db}{dirs}{$o->fullname}) {
+		return 1;
+	} else {
+		push(@{$set->{old_shared}{$o->fullname}}, $o);
+		return 0;
+	}
+}
+
+sub wipe_directory
+{
+	my ($state, $h, $d) = @_;
+
+	my $realname = $state->{destdir}.$d;
+
+	for my $i (@{$h->{$d}}) {
+		$state->log->set_context($i->{pkgname});
+		$i->cleanup($state);
+	}
+	if (!rmdir $realname) {
+		$state->log("Error deleting directory #1: #2",
+		    $realname, $!)
+			unless $state->{dirs_okay}->{$d};
+		return 0;
+	}
+	return 1;
 }
 
 sub cleanup
@@ -68,15 +108,7 @@ sub cleanup
 				$i->reload($state);
 			}
 		} else {
-			for my $i (@{$h->{$d}}) {
-				$state->log->set_context($i->{pkgname});
-				$i->cleanup($state);
-			}
-			if (!rmdir $realname) {
-				$state->log("Error deleting directory #1: #2",
-				    $realname, $!)
-					unless $state->{dirs_okay}->{$d};
-			}
+			wipe_directory($state, $h, $d);
 		}
 		$done++;
 	}
