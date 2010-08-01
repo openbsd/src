@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.24 2010/04/29 12:35:14 jsing Exp $	*/
+/*	$OpenBSD: clock.c,v 1.25 2010/08/01 09:01:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -58,7 +58,7 @@ struct timecounter itmr_timecounter = {
 };
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_long __itmr;
@@ -136,8 +136,7 @@ cpu_hardclock(void *v)
  * initialize the system time from the time of day clock
  */
 void
-inittodr(t)
-	time_t t;
+inittodr(time_t t)
 {
 	struct pdc_tod tod PDC_ALIGNMENT;
 	int 	error, tbad = 0;
@@ -188,8 +187,7 @@ resettodr()
 }
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing we can do */
 }
