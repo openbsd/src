@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.8 2007/12/09 20:54:01 jmc Exp $
+.\" $OpenBSD: rwlock.9,v 1.9 2010/08/01 14:21:10 blambert Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2007 $
+.Dd $Mdocdate: August 1 2010 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -44,6 +44,12 @@
 .Fn rw_exit_read "struct rwlock *rwl"
 .Ft void
 .Fn rw_exit_write "struct rwlock *rwl"
+.Ft void
+.Fn rw_assert_wrlock "struct rwlock *rwl"
+.Ft void
+.Fn rw_assert_rdlock "struct rwlock *rwl"
+.Ft void
+.Fn rw_assert_unlocked "struct rwlock *rwl"
 .Sh DESCRIPTION
 The
 .Nm
@@ -112,6 +118,15 @@ Read locks can be acquired while the write lock is not held, and may coexist in
 distinct processes at any time.
 A write lock, however, can only be acquired when there are no read locks held,
 granting exclusive access to a single process.
+.Pp
+The
+.Fn rw_assert_wrlock ,
+.Fn rw_assert_rdlock ,
+and
+.Fn rw_assert_unlocked
+functions check the status
+.Fa rwl ,
+panicking if it is not write-, read-, or unlocked, respectively.
 .Sh SEE ALSO
 .Xr lockmgr 9 ,
 .Xr mutex 9 ,
