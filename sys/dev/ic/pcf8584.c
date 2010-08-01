@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584.c,v 1.10 2010/04/30 15:18:29 kettenis Exp $ */
+/*	$OpenBSD: pcf8584.c,v 1.11 2010/08/01 18:48:41 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -275,8 +275,9 @@ void
 pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], 1,
-	    BUS_SPACE_BARRIER_WRITE);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, 4,
+	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[PCF_S1]);
 }
 
 void
