@@ -327,9 +327,6 @@
 ./usr/include/dev/ic/ns16550reg.h
 ./usr/include/dev/ic/oosiopreg.h
 ./usr/include/dev/ic/oosiopvar.h
-./usr/include/dev/ic/opl3sa3reg.h
-./usr/include/dev/ic/oplreg.h
-./usr/include/dev/ic/oplvar.h
 ./usr/include/dev/ic/osiopreg.h
 ./usr/include/dev/ic/osiopvar.h
 ./usr/include/dev/ic/p9000.h
@@ -450,7 +447,6 @@
 ./usr/include/dev/isa/wssvar.h
 ./usr/include/dev/isa/ymvar.h
 ./usr/include/dev/midi_if.h
-./usr/include/dev/midisynvar.h
 ./usr/include/dev/midivar.h
 ./usr/include/dev/mii
 ./usr/include/dev/mii/acphyreg.h
@@ -817,6 +813,9 @@
 ./usr/include/dev/usb/ehcivar.h
 ./usr/include/dev/usb/ezload.h
 ./usr/include/dev/usb/hid.h
+./usr/include/dev/usb/hidkbdsc.h
+./usr/include/dev/usb/hidkbdvar.h
+./usr/include/dev/usb/hidmsvar.h
 ./usr/include/dev/usb/if_atureg.h
 ./usr/include/dev/usb/if_auereg.h
 ./usr/include/dev/usb/if_axereg.h
@@ -6563,6 +6562,9 @@
 ./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/rssadapt.0
 ./usr/share/man/cat9/runtime.0
+./usr/share/man/cat9/rw_assert_rdlock.0
+./usr/share/man/cat9/rw_assert_unlocked.0
+./usr/share/man/cat9/rw_assert_wrlock.0
 ./usr/share/man/cat9/rw_enter.0
 ./usr/share/man/cat9/rw_enter_read.0
 ./usr/share/man/cat9/rw_enter_write.0
