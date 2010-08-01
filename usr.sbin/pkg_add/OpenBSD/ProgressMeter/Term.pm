@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.12 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Term.pm,v 1.13 2010/08/01 10:26:27 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -157,7 +157,6 @@ sub _show
 		$d.="|$extra";
 		$prefix++;
 	}
-	return if $d eq $self->{lastdisplay} && !$self->{continued};
 	if ($self->{width} > length($d)) {
 		if ($self->{cleareol}) {
 			$d .= $self->{cleareol};
@@ -165,6 +164,9 @@ sub _show
 			$d .= ' 'x($self->{width} - length($d) - 1);
 		}
 	}
+
+	return if $d eq $self->{lastdisplay} && !$self->{continued};
+
 	if (!$self->{continued} && defined $self->{hpa}) {
 		if (defined $stars && defined $self->{stars}) {
 			$prefix += $self->{stars};
