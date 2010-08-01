@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.11 2010/05/07 18:47:29 kettenis Exp $
+# $OpenBSD: Makefile,v 1.12 2010/08/01 21:23:02 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -186,7 +186,7 @@ OBJ_GRPS =	STD DIV
 # Floating point emulation functions
 #
 .if ${TARGET_ARCH} == "armNOT_YET" || ${TARGET_ARCH} == "powerpc" || \
-    ${TARGET_ARCH} == "sparc64"
+    ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "sparc64"
 
 FPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES -DFLOAT
 DPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES
