@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.177 2010/07/01 23:20:13 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.178 2010/08/01 14:20:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1137,9 +1137,8 @@ $fpusw_nosave
 	fldds     0(r17), fr0	/* fr0 must be restored last */
 
 	mfctl	cr29, r1
-	stw	r17, CI_FPU_STATE(r1)
-	mfctl	cr30, r17
-	stw	r1, HFP_CPU(r17)
+	stw	r9, CI_FPU_STATE(r1)
+	stw	r1, HFP_CPU(r9)
 	sync
 
 $fpusw_done
