@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_ctype.c,v 1.1 2010/07/27 16:59:03 stsp Exp $ */
+/*	$OpenBSD: citrus_ctype.c,v 1.2 2010/08/01 02:49:07 chl Exp $ */
 /*	$NetBSD: citrus_ctype.c,v 1.5 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wchar.h>
 #include "citrus_ctype.h"
 #include "citrus_none.h"
@@ -44,6 +45,7 @@ struct _citrus_ctype_rec _citrus_ctype_utf8 = {
 	&_citrus_utf8_ctype_ops,	/* cc_ops */
 };
 
+int
 _citrus_ctype_open(struct _citrus_ctype_rec **rcc, char const *encname)
 {
 	if (!strcmp(encname, "NONE")) {
