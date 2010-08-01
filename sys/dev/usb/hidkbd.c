@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.2 2010/07/31 16:12:37 miod Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.3 2010/08/01 21:37:08 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -221,7 +221,7 @@ hidkbd_detach(struct hidkbd *kbd, int flags)
 {
 	int rv = 0;
 
-	DPRINTF(("hidkbd_detach: sc=%p flags=%d\n", sc, flags));
+	DPRINTF(("hidkbd_detach: sc=%p flags=%d\n", kbd->sc_device, flags));
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	timeout_del(&kbd->sc_rawrepeat_ch);
@@ -336,7 +336,7 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 	 */
 	if (hidkbdtrace) {
 		struct hidkbdtraceinfo *p = &hidkbdtracedata[hidkbdtraceindex];
-		p->unit = kbd->sc_hdev.sc_dev.dv_unit;
+		p->unit = kbd->sc_device->dv_unit;
 		microtime(&p->tv);
 		p->ud = *ud;
 		if (++hidkbdtraceindex >= HIDKBDTRACESIZE)
@@ -597,35 +597,53 @@ hidkbd_parse_desc(struct hidkbd *kbd, int id, void *desc, int dlen)
 			continue;
 
 		DPRINTF(("hidkbd: imod=%d usage=0x%x flags=0x%x pos=%d size=%d "
-			 "cnt=%d\n", imod,
+			 "cnt=%d", imod,
 			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
-			if (h.loc.size != 1)
-				return ("bad modifier size");
-			/* Single item */
+			/* modifier reports should be one bit each */
+			if (h.loc.size != 1) {
+				DPRINTF((": bad modifier size\n"));
+				continue;
+			}
+			/* single item */
 			if (imod < MAXMOD) {
 				kbd->sc_modloc[imod] = h.loc;
 				kbd->sc_mods[imod].mask = 1 << imod;
 				kbd->sc_mods[imod].key = HID_GET_USAGE(h.usage);
 				imod++;
-			} else
-				return ("too many modifier keys");
+			} else {
+				/* ignore extra modifiers */
+				DPRINTF((": too many modifier keys\n"));
+			}
 		} else {
-			/* Array */
-			if (h.loc.size != 8)
-				return ("key code size != 8");
-			if (h.loc.count > MAXKEYCODE)
-				return ("too many key codes");
-			if (h.loc.pos % 8 != 0)
-				return ("key codes not on byte boundary");
-			if (kbd->sc_nkeycode != 0)
-				return ("multiple key code arrays\n");
+			/* keys array should be in bytes, on a byte boundary */
+			if (h.loc.size != 8) {
+				DPRINTF((": key code size != 8\n"));
+				continue;
+			}
+			if (h.loc.pos % 8 != 0) {
+				DPRINTF((": array not on byte boundary"));
+				continue;
+			}
+			if (kbd->sc_nkeycode != 0) {
+				DPRINTF((": ignoring multiple arrays\n"));
+				continue;
+			}
 			kbd->sc_keycodeloc = h.loc;
-			kbd->sc_nkeycode = h.loc.count;
+			if (h.loc.count > MAXKEYCODE) {
+				DPRINTF((": ignoring extra key codes"));
+				kbd->sc_nkeycode = MAXKEYCODE;
+			} else
+				kbd->sc_nkeycode = h.loc.count;
 		}
+		DPRINTF(("\n"));
 	}
 	kbd->sc_nmod = imod;
 	hid_end_parse(d);
+
+	/* don't attach if no keys... */
+	if (kbd->sc_nkeycode == 0)
+		return "no usable key codes array";
 
 	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_NUM_LOCK),
 	    id, hid_output, &kbd->sc_numloc, NULL);
