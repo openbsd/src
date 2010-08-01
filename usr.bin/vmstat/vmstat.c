@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.116 2010/07/22 17:31:39 thib Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.117 2010/08/01 02:51:03 chl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -988,7 +988,7 @@ dopool(void)
 void
 dopool_sysctl(void)
 {
-	int mib[4], npools, i, kmfp;
+	int mib[4], npools, i;
 	long total = 0, inuse = 0;
 	struct pool pool;
 	size_t size;
