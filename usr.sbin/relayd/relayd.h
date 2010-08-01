@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.136 2010/05/26 13:56:08 nicm Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.137 2010/08/01 22:18:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -536,6 +536,7 @@ struct relay_config {
 	int			 dstmode;
 	int			 dstretry;
 	objid_t			 dsttable;
+	objid_t			 backuptable;
 	struct sockaddr_storage	 ss;
 	struct sockaddr_storage	 dstss;
 	struct sockaddr_storage	 dstaf;
@@ -556,6 +557,7 @@ struct relay {
 	struct bufferevent	*rl_dstbev;
 
 	struct table		*rl_dsttable;
+	struct table		*rl_backuptable;
 	u_int32_t		 rl_dstkey;
 	struct host		*rl_dsthost[RELAY_MAXHOSTS];
 	int			 rl_dstnhosts;

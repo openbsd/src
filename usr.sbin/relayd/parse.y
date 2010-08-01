@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.143 2010/02/24 15:44:18 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.144 2010/08/01 22:18:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1213,6 +1213,11 @@ relay		: RELAY STRING	{
 				    "or table", rlay->rl_conf.name);
 				YYERROR;
 			}
+			if (rlay->rl_backuptable == NULL) {
+				rlay->rl_conf.backuptable =
+				    conf->sc_empty_table.conf.id;
+				rlay->rl_backuptable = &conf->sc_empty_table;
+			}
 			if (rlay->rl_conf.proto == EMPTY_ID) {
 				rlay->rl_proto = &conf->sc_proto_default;
 				rlay->rl_conf.proto = conf->sc_proto_default.id;
@@ -1362,16 +1367,21 @@ forwardspec	: STRING port retry	{
 			rlay->rl_conf.dstretry = $3;
 		}
 		| tablespec	{
-			if (rlay->rl_dsttable) {
-				yyerror("table already specified");
+			if (rlay->rl_backuptable) {
+				yyerror("only one backup table is allowed");
 				purge_table(conf->sc_tables, $1);
 				YYERROR;
 			}
-
-			rlay->rl_dsttable = $1;
-			rlay->rl_dsttable->conf.flags |= F_USED;
-			rlay->rl_conf.dsttable = $1->conf.id;
-			rlay->rl_conf.dstport = $1->conf.port;
+			if (rlay->rl_dsttable) {
+				rlay->rl_backuptable = $1;
+				rlay->rl_backuptable->conf.flags |= F_USED;
+				rlay->rl_conf.backuptable = $1->conf.id;
+			} else {
+				rlay->rl_dsttable = $1;
+				rlay->rl_dsttable->conf.flags |= F_USED;
+				rlay->rl_conf.dsttable = $1->conf.id;
+				rlay->rl_conf.dstport = $1->conf.port;
+			}
 		}
 		;
 

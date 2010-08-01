@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.64 2010/05/14 11:13:36 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.65 2010/08/01 22:18:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -584,6 +584,15 @@ relays:
 		    rlay->rl_dsttable, sizeof(*rlay->rl_dsttable));
 		if (!(rlay->rl_dsttable->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry)
+				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host));
+
+		if (rlay->rl_conf.backuptable == EMPTY_TABLE)
+			continue;
+		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
+		    rlay->rl_backuptable, sizeof(*rlay->rl_backuptable));
+		if (!(rlay->rl_backuptable->conf.flags & F_DISABLE))
+			TAILQ_FOREACH(host, &rlay->rl_backuptable->hosts, entry)
 				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
 				    0, 0, -1, host, sizeof(*host));
 	}

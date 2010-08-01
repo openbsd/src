@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.121 2010/05/26 13:56:08 nicm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.122 2010/08/01 22:18:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2123,9 +2123,11 @@ relay_from_table(struct rsession *con)
 	u_int32_t		 p = con->se_hashkey;
 	int			 idx = 0;
 
-	if (table->conf.check && !table->up) {
+	if (table->conf.check && !table->up && !rlay->rl_backuptable->up) {
 		log_debug("relay_from_table: no active hosts");
 		return (-1);
+	} else if (!table->up && rlay->rl_backuptable->up) {
+		table = rlay->rl_backuptable;
 	}
 
 	switch (rlay->rl_conf.dstmode) {
