@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.7 2007/11/15 17:14:00 marco Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.8 2010/08/02 16:57:53 marco Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -174,6 +174,33 @@ struct smbios_board {
 	u_int16_t	handle;		/* chassis handle */
 	u_int8_t	type;		/* board type */
 	u_int8_t	noc;		/* number of contained objects */
+} __packed;
+
+/*
+ * SMBIOS Structure Type 3 "System Wnclosure or Chassis"
+ * DMTF Specification DSP0134
+ */
+struct smbios_enclosure {
+	/* SMBIOS spec  2.0+ */
+	u_int8_t	vendor;		/* string */
+	u_int8_t	type;
+	u_int8_t	version;	/* string */
+	u_int8_t	serial;		/* string */
+	u_int8_t	asset_tag;	/* string */
+	/* SMBIOS spec  2.1+ */
+	u_int8_t	boot_state;
+	u_int8_t	psu_state;
+	u_int8_t	thermal_state;
+	u_int8_t	security_status;
+	/* SMBIOS spec 2.3+ */
+	u_int16_t	oem_defined;
+	u_int8_t	height;
+	u_int8_t	no_power_cords;
+	u_int8_t	no_contained_element;
+	u_int8_t	reclen_contained_element;
+	u_int8_t	contained_elements;
+	/* SMBIOS spec 2.7+ */
+	u_int8_t	sku;		/* string */
 } __packed;
 
 /*
