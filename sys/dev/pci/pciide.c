@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.314 2010/08/02 05:14:34 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.315 2010/08/02 13:50:33 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -8648,7 +8648,7 @@ jmicron_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	WDCDEBUG_PRINT(("%s: new conf register 0x%x\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname, conf), DEBUG_PROBE);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, NFORCE_CONF, conf);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, JMICRON_CONF, conf);
 }
 
 void
