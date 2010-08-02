@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.58 2010/07/19 05:08:37 jakemsr Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.59 2010/08/02 13:58:37 miod Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -138,8 +138,6 @@ const struct usbd_quirk_entry {
 	ANY, { UQ_MS_BAD_CLASS | UQ_MS_LEADING_BYTE }},
  { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_WLNOTEBOOK2,
 	ANY, { UQ_MS_BAD_CLASS | UQ_MS_LEADING_BYTE }},
- { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_WLINTELLIMOUSE,
-	ANY, { UQ_MS_LEADING_BYTE }},
 
  { 0, 0, 0, { 0 } }
 };
