@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.296 2010/07/27 21:56:11 todd Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.297 2010/08/02 19:36:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3740,9 +3740,7 @@ bge_power(int why, void *xsc)
 
 	if (why == PWR_RESUME) {
 		ifp = &sc->arpcom.ac_if;
-		if (ifp->if_flags & IFF_UP) {
+		if (ifp->if_flags & IFF_UP)
 			bge_init(xsc);
-			bge_start(ifp);
-		}
 	}
 }
