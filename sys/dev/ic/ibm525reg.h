@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibm525reg.h,v 1.1 2005/07/19 09:34:14 miod Exp $	*/
+/*	$OpenBSD: ibm525reg.h,v 1.2 2010/08/02 20:55:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  *
@@ -176,7 +176,7 @@
  * Pixel clock encoding
  */
 #define	MHZ_TO_PLL(m) \
-	(m) < 32 ? 0x00 | (4 * (m) - 65) : \
-	  (m) < 64 ? 0x40 | (2 * (m) - 65) : \
-	    (m) < 128 ? 0x80 | ((m) - 65) : \
-	      0xc0 | ((m) / 2 - 65)
+	((m) < 32 ? 0x00 | (4 * (m) - 65) : \
+	   (m) < 64 ? 0x40 | (2 * (m) - 65) : \
+	     (m) < 128 ? 0x80 | ((m) - 65) : \
+	       0xc0 | ((m) / 2 - 65))
