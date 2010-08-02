@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.691 2010/07/31 08:33:20 ratchov Exp $
+#	$OpenBSD: GENERIC,v 1.692 2010/08/02 14:13:23 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -828,6 +828,7 @@ option ONEWIREVERBOSE
 owid*	at onewire?		# ID
 owsbm*	at onewire?		# Smart Battery Monitor
 owtemp* at onewire?		# Temperature
+owctr*	at onewire?		# Counter device
 
 pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
