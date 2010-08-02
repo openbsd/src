@@ -10,7 +10,6 @@
 ./usr/include/arm/armreg.h
 ./usr/include/arm/asm.h
 ./usr/include/arm/atomic.h
-./usr/include/arm/blockio.h
 ./usr/include/arm/bus.h
 ./usr/include/arm/cdefs.h
 ./usr/include/arm/conf.h

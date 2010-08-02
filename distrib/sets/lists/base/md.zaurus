@@ -695,7 +695,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/armreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/asm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/atomic.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/blockio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/bus.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/cdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/conf.ph
