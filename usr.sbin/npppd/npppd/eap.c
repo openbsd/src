@@ -1,4 +1,4 @@
-/* $OpenBSD: eap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: eap.c,v 1.4 2010/08/02 09:29:53 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  *	    RADIUS (Remote Authentication Dial In User Service) Support For
  *	    Extensible Authentication Protocol (EAP). B. Aboba, P. Calhoun.
  */
-/* $Id: eap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: eap.c,v 1.4 2010/08/02 09:29:53 jsg Exp $ */
 
 /* FIXME: This must be rewritten. */
 
@@ -590,8 +590,8 @@ eap_recv_from_radius(void *context, RADIUS_PACKET *pkt, int flags)
 		goto auth_failed;
         }
 
-        if(!(flags && RADIUS_REQUST_CHECK_AUTHENTICTOR_NO_CHECK) &&
-            !(flags && RADIUS_REQUST_CHECK_AUTHENTICTOR_OK)){
+        if(!(flags & RADIUS_REQUST_CHECK_AUTHENTICTOR_NO_CHECK) &&
+            !(flags & RADIUS_REQUST_CHECK_AUTHENTICTOR_OK)){
                 /* discard */
                 eap_log(_this, LOG_WARNING, "Header has invalid authticator");
 		notify_reason = "bad authenticator";
