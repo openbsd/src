@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.22 2010/03/01 19:00:47 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.23 2010/08/02 10:17:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -44,6 +44,8 @@ const char *str2busdevfunc(const char *, int *, int *, int *);
 int pci_nfuncs(int, int);
 int pci_read(int, int, int, u_int32_t, u_int32_t *);
 void dump_caplist(int, int, int, u_int8_t);
+void dump_pcie_linkspeed(int, int, int, uint8_t);
+void print_pcie_ls(uint8_t);
 int dump_rom(int, int, int);
 int dump_vga_bios(void);
 
@@ -266,6 +268,50 @@ probe(int bus, int dev, int func)
 }
 
 void
+print_pcie_ls(uint8_t speed)
+{
+	switch (speed) {
+	case 1:
+		printf("2.5");
+		break;
+	case 2:
+		printf("5.0");
+		break;
+	default:
+		printf("unknown (%d)", speed);
+	}
+}
+
+void
+dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
+{
+	u_int32_t creg, sreg;
+	u_int8_t cap, cwidth, cspeed, swidth, sspeed;
+
+	if (pci_read(bus, dev, func, ptr + PCI_PCIE_LCAP, &creg) != 0)
+		return;
+
+	if (pci_read(bus, dev, func, ptr + PCI_PCIE_LCSR, &sreg) != 0)
+		return;
+	sreg = sreg >> 16;
+
+	cwidth = (creg >> 4) & 0x3f;
+	swidth = (sreg >> 4) & 0x3f;
+	cspeed = creg & 0x0f;
+	sspeed = sreg & 0x0f;
+	
+	if (cwidth == 0)
+		return;
+
+	printf("\t        Link Speed: ");
+	print_pcie_ls(sspeed);
+	printf(" / ");
+	print_pcie_ls(cspeed);
+
+	printf(" Gb/s Link Width: x%d / x%d\n", swidth, cwidth);
+}
+
+void
 dump_caplist(int bus, int dev, int func, u_int8_t ptr)
 {
 	u_int32_t reg;
@@ -287,6 +333,8 @@ dump_caplist(int bus, int dev, int func, u_int8_t ptr)
 		if (cap > PCI_CAPNAMES_MAX)
 			cap = 0;
 		printf("%s\n", pci_capnames[cap]);
+		if (cap == PCI_CAP_PCIEXPRESS)
+			dump_pcie_linkspeed(bus, dev, func, ptr);
 		ptr = PCI_CAPLIST_NEXT(reg);
 	}
 }
