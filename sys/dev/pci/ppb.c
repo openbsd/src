@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.42 2010/06/30 05:14:39 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.43 2010/08/02 03:22:26 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -571,7 +571,7 @@ ppb_intr(void *arg)
 
 	/*
 	 * XXX ignore hotplug events while in autoconf.  On some
-	 * machines with onboard re(4), we gat a bogus hotplug remove
+	 * machines with onboard re(4), we get a bogus hotplug remove
 	 * event when we reset that device.  Ignoring that event makes
 	 * sure we will not try to forcibly detach re(4) when it isn't
 	 * ready to deal with that.
