@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.32 2010/07/31 16:04:50 miod Exp $ */
+/*	$OpenBSD: ums.c,v 1.33 2010/08/02 23:17:34 miod Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	struct hidms *ms = &sc->sc_ms;
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	int size;
+	int size, repid;
 	void *desc;
 	u_int32_t quirks;
 
@@ -124,6 +124,10 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 
 	quirks = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
 	uhidev_get_report_desc(uha->parent, &desc, &size);
+	repid = uha->reportid;
+	sc->sc_hdev.sc_isize = hid_report_size(desc, size, hid_input, repid);
+	sc->sc_hdev.sc_osize = hid_report_size(desc, size, hid_output, repid);
+	sc->sc_hdev.sc_fsize = hid_report_size(desc, size, hid_feature, repid);
 
 	if (hidms_setup(self, ms, quirks, uha->reportid, desc, size) != 0)
 		return;
@@ -221,12 +225,17 @@ ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ums_softc *sc = v;
 	struct hidms *ms = &sc->sc_ms;
+	int rc;
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_USB;
 		return 0;
 	default:
-		return hidms_ioctl(ms, cmd, data, flag, p);
+		rc = uhidev_ioctl(&sc->sc_hdev, cmd, data, flag, p);
+		if (rc != -1)
+			return rc;
+		else
+			return hidms_ioctl(ms, cmd, data, flag, p);
 	}
 }

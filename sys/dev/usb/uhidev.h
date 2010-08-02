@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.10 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.11 2010/08/02 23:17:34 miod Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -71,6 +71,10 @@ struct uhidev {
 	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
+
+	int sc_isize;
+	int sc_osize;
+	int sc_fsize;
 };
 
 struct uhidev_attach_arg {
@@ -84,6 +88,7 @@ struct uhidev_attach_arg {
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
 int uhidev_open(struct uhidev *);
 void uhidev_close(struct uhidev *);
+int uhidev_ioctl(struct uhidev *, u_long, caddr_t, int, struct proc *);
 usbd_status uhidev_set_report(struct uhidev *scd, int type, void *data,int len);
 void uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len);
 usbd_status uhidev_get_report(struct uhidev *scd, int type, void *data,int len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.52 2010/07/31 16:04:50 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.53 2010/08/02 23:17:34 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -180,7 +180,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	usb_hid_descriptor_t *hid;
 	u_int32_t qflags;
-	int dlen;
+	int dlen, repid;
 	void *desc;
 	kbd_t layout = (kbd_t)-1;
 
@@ -189,8 +189,13 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
 	uhidev_get_report_desc(uha->parent, &desc, &dlen);
+	repid = uha->reportid;
+	sc->sc_hdev.sc_isize = hid_report_size(desc, dlen, hid_input, repid);
+	sc->sc_hdev.sc_osize = hid_report_size(desc, dlen, hid_output, repid);
+	sc->sc_hdev.sc_fsize = hid_report_size(desc, dlen, hid_feature, repid);
+
 	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
-	if (hidkbd_attach(self, kbd, 1, qflags, uha->reportid, desc, dlen) != 0)
+	if (hidkbd_attach(self, kbd, 1, qflags, repid, desc, dlen) != 0)
 		return;
 
 	if (uha->uaa->vendor == USB_VENDOR_TOPRE &&
@@ -320,6 +325,7 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ukbd_softc *sc = v;
 	struct hidkbd *kbd = &sc->sc_kbd;
+	int rc;
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -329,7 +335,11 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ukbd_set_leds(v, *(int *)data);
 		return (0);
 	default:
-		return hidkbd_ioctl(kbd, cmd, data, flag, p);
+		rc = uhidev_ioctl(&sc->sc_hdev, cmd, data, flag, p);
+		if (rc != -1)
+			return rc;
+		else
+			return hidkbd_ioctl(kbd, cmd, data, flag, p);
 	}
 }
 
