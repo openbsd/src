@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpm.c,v 1.6 2006/12/12 23:14:27 dim Exp $	*/
+/*	$OpenBSD: gscpm.c,v 1.7 2010/08/02 03:51:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 #ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
