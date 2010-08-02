@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.91 2010/07/03 02:08:35 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.92 2010/08/02 02:03:21 matthew Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1491,8 +1491,7 @@ ufs_readlink(void *v)
 	isize = DIP(ip, size);
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
 	    (vp->v_mount->mnt_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
-		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
-		return (0);
+		return (uiomove((char *)SHORTLINK(ip), isize, ap->a_uio));
 	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
 }
