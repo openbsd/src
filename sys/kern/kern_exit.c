@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.96 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.97 2010/08/02 19:54:07 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -298,8 +298,8 @@ exit1(struct proc *p, int rv, int flags)
 	p->p_pctcpu = 0;
 
 	if ((p->p_flag & P_THREAD) == 0) {
-		/* notify interested parties of our demise */
-		KNOTE(&pr->ps_klist, NOTE_EXIT);
+		/* notify interested parties of our demise and clean up */
+		knote_processexit(pr);
 
 		/*
 		 * Notify parent that we're gone.  If we have P_NOZOMBIE
