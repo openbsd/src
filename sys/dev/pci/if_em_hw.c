@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.55 2010/07/13 21:55:52 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.56 2010/08/03 16:39:33 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -176,7 +176,9 @@ int32_t		em_access_phy_debug_regs_hv(struct em_hw *, uint32_t,
 int32_t		em_access_phy_reg_hv(struct em_hw *, uint32_t, uint16_t *,
 		    boolean_t);
 int32_t		em_oem_bits_config_pchlan(struct em_hw *, boolean_t);
-
+void		em_power_up_serdes_link_82575(struct em_hw *);
+int32_t		em_get_pcs_speed_and_duplex_82575(struct em_hw *, uint16_t *,
+    uint16_t *);
 
 /* IGP cable length table */
 static const uint16_t 
@@ -590,13 +592,35 @@ em_set_mac_type(struct em_hw *hw)
 void
 em_set_media_type(struct em_hw *hw)
 {
-	uint32_t status;
+	uint32_t status, ctrl_ext;
 	DEBUGFUNC("em_set_media_type");
 
 	if (hw->mac_type != em_82543) {
 		/* tbi_compatibility is only valid on 82543 */
 		hw->tbi_compatibility_en = FALSE;
 	}
+
+	if (hw->mac_type == em_82575) {
+		hw->media_type = em_media_type_copper;
+	
+		ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
+		switch (ctrl_ext & E1000_CTRL_EXT_LINK_MODE_MASK) {
+		case E1000_CTRL_EXT_LINK_MODE_SGMII:
+			ctrl_ext |= E1000_CTRL_I2C_ENA;
+			break;
+		case E1000_CTRL_EXT_LINK_MODE_1000BASE_KX:
+		case E1000_CTRL_EXT_LINK_MODE_PCIE_SERDES:
+			hw->media_type = em_media_type_internal_serdes;
+			ctrl_ext |= E1000_CTRL_I2C_ENA;
+			break;
+		default:
+			ctrl_ext &= ~E1000_CTRL_I2C_ENA;
+			break;
+		}
+		E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
+		return;
+	}
+
 	switch (hw->device_id) {
 	case E1000_DEV_ID_82545GM_SERDES:
 	case E1000_DEV_ID_82546GB_SERDES:
@@ -1308,7 +1332,8 @@ em_adjust_serdes_amplitude(struct em_hw *hw)
 	int32_t  ret_val;
 	DEBUGFUNC("em_adjust_serdes_amplitude");
 
-	if (hw->media_type != em_media_type_internal_serdes)
+	if (hw->media_type != em_media_type_internal_serdes ||
+	    hw->mac_type == em_82575)
 		return E1000_SUCCESS;
 
 	switch (hw->mac_type) {
@@ -1512,6 +1537,26 @@ em_setup_link(struct em_hw *hw)
 	return ret_val;
 }
 
+void
+em_power_up_serdes_link_82575(struct em_hw *hw)
+{
+	uint32_t reg;
+
+	/* Enable PCS to turn on link */
+	reg = E1000_READ_REG(hw, PCS_CFG0);
+	reg |= E1000_PCS_CFG_PCS_EN;
+	E1000_WRITE_REG(hw, PCS_CFG0, reg);
+
+	/* Power up the laser */
+	reg = E1000_READ_REG(hw, CTRL_EXT);
+	reg &= ~E1000_CTRL_EXT_SDP3_DATA;
+	E1000_WRITE_REG(hw, CTRL_EXT, reg);
+
+	/* flush the write to verify completion */
+	E1000_WRITE_FLUSH(hw);
+	delay(5);
+}
+
 /******************************************************************************
  * Sets up link for a fiber based or serdes based adapter
  *
@@ -1524,7 +1569,7 @@ em_setup_link(struct em_hw *hw)
 static int32_t
 em_setup_fiber_serdes_link(struct em_hw *hw)
 {
-	uint32_t ctrl;
+	uint32_t ctrl, reg;
 	uint32_t status;
 	uint32_t txcw = 0;
 	uint32_t i;
@@ -1538,8 +1583,13 @@ em_setup_fiber_serdes_link(struct em_hw *hw)
 	 * Therefore, we ensure loopback mode is disabled during
 	 * initialization.
 	 */
-	if (hw->mac_type == em_82571 || hw->mac_type == em_82572)
+	if (hw->mac_type == em_82571 || hw->mac_type == em_82572 ||
+	    hw->mac_type == em_82575)
 		E1000_WRITE_REG(hw, SCTL, E1000_DISABLE_SERDES_LOOPBACK);
+
+	if (hw->mac_type == em_82575)
+		em_power_up_serdes_link_82575(hw);
+		
 	/*
 	 * On adapters with a MAC newer than 82544, SWDP 1 will be set when
 	 * the optics detect a signal. On older adapters, it will be cleared
@@ -1557,6 +1607,16 @@ em_setup_fiber_serdes_link(struct em_hw *hw)
 
 	/* Take the link out of reset */
 	ctrl &= ~(E1000_CTRL_LRST);
+
+	if (hw->mac_type == em_82575) {
+		/* set both sw defined pins on 82575/82576*/
+		ctrl |= E1000_CTRL_SWDPIN0 | E1000_CTRL_SWDPIN1;
+
+		/* Set switch control to serdes energy detect */
+		reg = E1000_READ_REG(hw, CONNSW);
+		reg |= E1000_CONNSW_ENRGSRC;
+		E1000_WRITE_REG(hw, CONNSW, reg);
+	}
 
 	/* Adjust VCO speed to improve BER performance */
 	ret_val = em_set_vco_speed(hw);
@@ -3380,6 +3440,16 @@ em_check_for_link(struct em_hw *hw)
 	int32_t  ret_val;
 	uint16_t phy_data;
 	DEBUGFUNC("em_check_for_link");
+	uint16_t speed, duplex;
+
+	if (hw->mac_type == em_82575 &&
+	    hw->media_type != em_media_type_copper) {
+		ret_val = em_get_pcs_speed_and_duplex_82575(hw, &speed,
+		    &duplex);
+		hw->get_link_status = hw->serdes_link_down;
+
+		return (ret_val);
+	}
 
 	ctrl = E1000_READ_REG(hw, CTRL);
 	status = E1000_READ_REG(hw, STATUS);
@@ -3638,6 +3708,52 @@ em_check_for_link(struct em_hw *hw)
 	return E1000_SUCCESS;
 }
 
+int32_t
+em_get_pcs_speed_and_duplex_82575(struct em_hw *hw, uint16_t *speed,
+    uint16_t *duplex)
+{
+	uint32_t pcs;
+
+	hw->serdes_link_down = TRUE;
+	*speed = 0;
+	*duplex = 0;
+
+	/*
+	 * Read the PCS Status register for link state. For non-copper mode,
+	 * the status register is not accurate. The PCS status register is
+	 * used instead.
+	 */
+	pcs = E1000_READ_REG(hw, PCS_LSTAT);
+
+	/*
+	 * The link up bit determines when link is up on autoneg. The sync ok
+	 * gets set once both sides sync up and agree upon link. Stable link
+	 * can be determined by checking for both link up and link sync ok
+	 */
+	if ((pcs & E1000_PCS_LSTS_LINK_OK) && (pcs & E1000_PCS_LSTS_SYNK_OK)) {
+		hw->serdes_link_down = FALSE;
+	
+		/* Detect and store PCS speed */
+		if (pcs & E1000_PCS_LSTS_SPEED_1000) {
+			*speed = SPEED_1000;
+		} else if (pcs & E1000_PCS_LSTS_SPEED_100) {
+			*speed = SPEED_100;
+		} else {
+			*speed = SPEED_10;
+		}
+
+		/* Detect and store PCS duplex */
+		if (pcs & E1000_PCS_LSTS_DUPLEX_FULL) {
+			*duplex = FULL_DUPLEX;
+		} else {
+			*duplex = HALF_DUPLEX;
+		}
+	}
+
+	return (0);
+}
+
+
 /******************************************************************************
  * Detects the current speed and duplex settings of the hardware.
  *
@@ -3652,6 +3768,9 @@ em_get_speed_and_duplex(struct em_hw *hw, uint16_t *speed, uint16_t *duplex)
 	int32_t  ret_val;
 	uint16_t phy_data;
 	DEBUGFUNC("em_get_speed_and_duplex");
+
+	if (hw->mac_type == em_82575 && hw->media_type != em_media_type_copper)
+		return em_get_pcs_speed_and_duplex_82575(hw, speed, duplex);
 
 	if (hw->mac_type >= em_82543) {
 		status = E1000_READ_REG(hw, STATUS);
@@ -4963,6 +5082,14 @@ em_detect_gig_phy(struct em_hw *hw)
 		hw->phy_type = em_phy_undefined;
 		return E1000_SUCCESS;
 	}
+
+	if ((hw->media_type == em_media_type_internal_serdes ||
+	    hw->media_type == em_media_type_fiber) &&
+	    hw->mac_type == em_82575) {
+		hw->phy_type = em_phy_undefined;
+		return E1000_SUCCESS;
+	}
+
 	/*
 	 * Up to 82543 (incl), we need reset the phy, or it might not get
 	 * detected
