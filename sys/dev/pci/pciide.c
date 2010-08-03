@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.315 2010/08/02 13:50:33 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.316 2010/08/03 21:53:02 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1454,7 +1454,8 @@ pciide_activate(struct device *self, int act)
 		    sc->sc_pp->chip_map == phison_chip_map ||
 		    sc->sc_pp->chip_map == ixp_chip_map ||
 		    sc->sc_pp->chip_map == acard_chip_map ||
-		    sc->sc_pp->chip_map == default_chip_map) {
+		    sc->sc_pp->chip_map == default_chip_map ||
+		    sc->sc_pp->chip_map == apollo_chip_map) {
 			/* nothing to restore -- uses only 0x40 - 0x56 */
 		} else if (sc->sc_pp->chip_map == sch_chip_map) {
 			pci_conf_write(sc->sc_pc, sc->sc_tag,
