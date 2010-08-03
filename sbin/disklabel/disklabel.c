@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.167 2010/07/27 00:07:26 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.168 2010/08/03 00:08:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -265,11 +265,13 @@ main(int argc, char *argv[])
 	case RESTORE:
 		if (argc < 2 || argc > 3)
 			usage();
+		readlabel(f);
 #if NUMBOOT > 0
 		if (installboot && argc == 3)
 			makelabel(argv[2], NULL, &lab);
 #endif
 		lp = makebootarea(bootarea, &lab, f);
+		*lp = lab;
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
 		error = getasciilabel(t, lp);
@@ -481,7 +483,7 @@ readlabel(int f)
 	if (cflag && ioctl(f, DIOCRLDINFO) < 0)
 		err(4, "ioctl DIOCRLDINFO");
 
-	if (dflag | aflag) {
+	if ((op == RESTORE) || dflag || aflag) {
 		if (ioctl(f, DIOCGPDINFO, &lab) < 0)
 			err(4, "ioctl DIOCGPDINFO");
 	} else {
