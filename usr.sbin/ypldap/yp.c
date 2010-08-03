@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.5 2010/05/06 11:55:01 ajacoutot Exp $ */
+/*	$OpenBSD: yp.c,v 1.6 2010/08/03 08:24:23 pyr Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -91,6 +91,7 @@ yp_enable_events(void)
 				fatal(NULL);
 			event_set(&ye->ye_event, i, EV_READ, yp_fd_event, NULL);
 			event_add(&ye->ye_event, NULL);
+			TAILQ_INSERT_TAIL(&env->sc_yp->yd_events, ye, ye_entry);
 		}
 	}
 }
