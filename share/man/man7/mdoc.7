@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.45 2010/08/01 20:47:52 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.46 2010/08/03 00:07:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2010 $
+.Dd $Mdocdate: August 3 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -28,9 +28,11 @@ language is used to format
 .Bx
 .Ux
 manuals.
-In this reference document, we describe its syntax, structure, and
+This reference document describes its syntax, structure, and
 usage.
-Our reference implementation is mandoc; the
+The reference implementation is
+.Xr mandoc 1 ;
+the
 .Sx COMPATIBILITY
 section describes compatibility with other troff \-mdoc implementations.
 .Pp
@@ -61,7 +63,7 @@ line.
 A macro line with only a control character and comment escape,
 .Sq \&.\e\*q ,
 is also ignored.
-Macro lines with only a control character and optionally whitespace are
+Macro lines with only a control character and optional whitespace are
 stripped from input.
 .Ss Reserved Characters
 Within a macro line, the following characters are reserved:
@@ -107,7 +109,7 @@ for two-character sequences; an open-bracket
 .Sq \&[
 for n-character sequences (terminated at a close-bracket
 .Sq \&] ) ;
-or a single one-character sequence.
+or a single one character sequence.
 See
 .Xr mandoc_char 7
 for a complete list.
@@ -120,7 +122,7 @@ and
 .Ss Text Decoration
 Terms may be text-decorated using the
 .Sq \ef
-escape followed by an indicator: B (bold), I, (italic), R (Roman), or P
+escape followed by an indicator: B (bold), I (italic), R (Roman), or P
 (revert to previous mode):
 .Pp
 .D1 \efBbold\efR \efIitalic\efP
@@ -172,7 +174,7 @@ and
 .Pq vertical bar .
 .Ss Whitespace
 Whitespace consists of the space character.
-In free-form lines, whitespace is preserved within a line; un-escaped
+In free-form lines, whitespace is preserved within a line; unescaped
 trailing spaces are stripped from input (unless in a literal context).
 Blank free-form lines, which may include whitespace, are only permitted
 within literal contexts.
@@ -183,7 +185,7 @@ If arguments are quoted, whitespace within the quotes is retained.
 Macro arguments may be quoted with double-quotes to group
 space-delimited terms or to retain blocks of whitespace.
 A quoted argument begins with a double-quote preceded by whitespace.
-The next double-quote not pair-wise adjacent to another double-quote
+The next double-quote not pairwise adjacent to another double-quote
 terminates the literal, regardless of surrounding whitespace.
 .Pp
 Note that any quoted text, even if it would cause a macro invocation
@@ -276,7 +278,7 @@ is necessarily non-portable across output media.
 See
 .Sx COMPATIBILITY .
 .Ss Sentence Spacing
-When composing a manual, make sure that your sentences end at the end of
+When composing a manual, make sure that sentences end at the end of
 a line.
 By doing so, front-ends will be able to apply the proper amount of
 spacing after the end of sentence (unescaped) period, exclamation mark,
@@ -288,7 +290,8 @@ delimiters (
 .Sq \&" ) .
 .Pp
 The proper spacing is also intelligently preserved if a sentence ends at
-the boundary of a macro line, e.g.,
+the boundary of a macro line.
+For example:
 .Pp
 .D1 \&Xr mandoc 1 \.
 .D1 \&Fl T \&Ns \&Cm ascii \.
@@ -361,19 +364,19 @@ utility processes files ...
 \&.\e\*q .Sh SECURITY CONSIDERATIONS
 .Ed
 .Pp
-The sections in a
+The sections in an
 .Nm
 document are conventionally ordered as they appear above.
 Sections should be composed as follows:
 .Bl -ohang -offset Ds
 .It Em NAME
-The name(s) and a one-line description of the documented material.
+The name(s) and a one line description of the documented material.
 The syntax for this as follows:
 .Bd -literal -offset indent
-\&.Nm name0
-\&.Nm name1
+\&.Nm name0 ,
+\&.Nm name1 ,
 \&.Nm name2
-\&.Nd a one-line description
+\&.Nd a one line description
 .Ed
 .Pp
 The
@@ -445,7 +448,7 @@ section, particularly
 and
 .Sx \&Ft .
 All of these macros are output on their own line.
-If two such dissimilar macros are pair-wise invoked (except for
+If two such dissimilar macros are pairwise invoked (except for
 .Sx \&Ft
 before
 .Sx \&Fo
@@ -471,9 +474,9 @@ or
 .Sx \&Ss
 macro or the end of an enclosing block, whichever comes first.
 .It Em DESCRIPTION
-This expands upon the brief, one-line description in
+This expands upon the brief, one line description in
 .Em NAME .
-It usually contains a break-down of the options (if documenting a
+It usually contains a breakdown of the options (if documenting a
 command), such as:
 .Bd -literal -offset indent
 The arguments are as follows:
@@ -489,10 +492,8 @@ Implementation-specific notes should be kept here.
 This is useful when implementing standard functions that may have side
 effects or notable algorithmic implications.
 .It Em RETURN VALUES
-This section is the dual of
-.Em EXIT STATUS ,
-which is used for commands.
-It documents the return values of functions in sections 2, 3, and 9.
+This section documents the
+return values of functions in sections 2, 3, and 9.
 .Pp
 See
 .Sx \&Rv .
@@ -513,10 +514,8 @@ the file is used (created, modified, etc.).
 See
 .Sx \&Pa .
 .It Em EXIT STATUS
-Command exit status for section 1, 6, and 8 manuals.
-This section is the dual of
-.Em RETURN VALUES ,
-which is used for functions.
+This section documents the
+command exit status for section 1, 6, and 8 utilities.
 Historically, this information was described in
 .Em DIAGNOSTICS ,
 a practise that is now discouraged.
@@ -526,7 +525,7 @@ See
 .It Em EXAMPLES
 Example usages.
 This often contains snippets of well-formed, well-tested invocations.
-Make doubly sure that your examples work properly!
+Make sure that examples work properly!
 .It Em DIAGNOSTICS
 Documents error conditions.
 This is most useful in section 4 manuals.
@@ -769,7 +768,7 @@ If a number (or inequality) of arguments is
 .Pq n ,
 then the macro accepts an arbitrary number of arguments.
 .Bd -literal -offset indent
-\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB \(lbres...\(rb
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB \(lBres...\(rB
 
 \&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB Yc...
 
@@ -1159,7 +1158,7 @@ and
 argument are equivalent, as are
 .Fl symbolic
 and
-.Cm \&Sy,
+.Cm \&Sy ,
 and
 .Fl literal
 and
@@ -1393,7 +1392,7 @@ and
 .Sx \&Ux .
 .Ss \&Bt
 Prints
-.Dq is currently in beta test.
+.Dq is currently in beta test .
 .Ss \&Bx
 Format the BSD version provided as an argument, or a default value if no
 argument is provided.
@@ -1925,7 +1924,9 @@ See also
 and
 .Sx \&Fo .
 .Ss \&Fx
-Format the FreeBSD version provided as an argument, or a default value
+Format the
+.Fx
+version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
@@ -1954,7 +1955,7 @@ Examples:
 .D1 \&.Ic alias
 .Pp
 Note that using
-.Sx \&Bd No Fl literal
+.Sx \&Bd Fl literal
 or
 .Sx \&D1
 is preferred for displaying code; the
@@ -2126,7 +2127,7 @@ Its syntax is as follows:
 Examples:
 .D1 \&.Mt discuss@manpages.bsd.lv
 .Ss \&Nd
-A one-line description of the manual's content.
+A one line description of the manual's content.
 This may only be invoked in the
 .Em SYNOPSIS
 section subsequent the
@@ -2206,7 +2207,9 @@ See also
 and
 .Sx \&Sm .
 .Ss \&Nx
-Format the NetBSD version provided as an argument, or a default value if
+Format the
+.Nx
+version provided as an argument, or a default value if
 no argument is provided.
 .Pp
 Examples:
@@ -2278,7 +2281,9 @@ Unknown usage.
 .Em Remarks :
 this macro has been deprecated.
 .Ss \&Ox
-Format the OpenBSD version provided as an argument, or a default value
+Format the
+.Ox
+version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
@@ -2598,7 +2603,7 @@ Examples:
 .D1 \&.Tn IBM
 .Ss \&Ud
 Prints out
-.Dq currently under development.
+.Dq currently under development .
 .Ss \&Ux
 Format the UNIX name.
 Accepts no argument.
@@ -2798,7 +2803,7 @@ Furthermore, the
 .Sq f
 scaling unit, while accepted, is rendered as the default unit.
 .It
-In quoted literals, groff allowed pair-wise double-quotes to produce a
+In quoted literals, groff allowed pairwise double-quotes to produce a
 standalone double-quote in formatted output.
 This idiosyncratic behaviour is not applicable in mandoc.
 .It
