@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.125 2010/08/03 04:10:16 matthew Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.126 2010/08/03 06:30:19 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -884,7 +884,7 @@ incore(struct vnode *vp, daddr64_t blkno)
 		bp = NULL;
 
 	splx(s);
-	return(NULL);
+	return (bp);
 }
 
 /*
