@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.1 2009/11/04 09:43:11 jsing Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.2 2010/08/03 10:08:03 jsg Exp $ */
 /*
  * Copyright (c) 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -860,7 +860,7 @@ gtp_v1_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 	u_char *p = (u_char *)cp;
 
 	TCHECK(gh->flags);
-	if ((gh->flags && GTPV1_HDR_PROTO_TYPE) == 0) {
+	if ((gh->flags & GTPV1_HDR_PROTO_TYPE) == 0) {
 		printf(" GTPv1'");
 		gtp_proto = GTP_V1_PRIME_PROTO;
 		gtp_v1_print_prime(p, (struct gtp_v1_prime_hdr *)gh);
