@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.241 2010/07/26 19:21:24 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.242 2010/08/03 16:21:52 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1816,7 +1816,8 @@ em_setup_interface(struct em_softc *sc)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+	if (sc->hw.mac_type != em_82575)
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
 #ifdef EM_CSUM_OFFLOAD
