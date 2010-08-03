@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.amd64/MAKEDEV.md,v 1.41 2010/07/03 03:59:15 krw Exp 
-#	OpenBSD: MAKEDEV.common,v 1.49 2010/07/21 23:40:26 nicm Exp 
+#	OpenBSD: MAKEDEV.common,v 1.51 2010/08/03 20:12:01 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -439,6 +439,7 @@ ttyU[0-9a-zA-Z])
 uall)
 	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
 	R uhid2 uhid3 uscanner0 urio0 usb0 usb1 usb2 usb3 usb4 usb5
+	R usb6 usb7
 	;;
 
 lpt*|lpa*)
