@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.83 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.84 2010/08/03 22:58:58 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -433,6 +433,7 @@ auich_attach(parent, self, aux)
 	sc->dmat = pa->pa_dmat;
 
 	if (pci_intr_map(pa, &ih)) {
+		printf(": can't map interrupt\n");
 		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
 		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 		return;
