@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_none.c,v 1.1 2010/07/27 16:59:03 stsp Exp $ */
+/*	$OpenBSD: citrus_none.c,v 1.2 2010/08/03 11:23:37 stsp Exp $ */
 /*	$NetBSD: citrus_none.c,v 1.18 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -83,20 +83,14 @@ _citrus_none_ctype_mbsrtowcs(wchar_t * __restrict pwcs,
 	if (!s || !*s)
 		return 0;
 
-	if (n != 0) {
-		if (pwcs != NULL) {
-			do {
-				if ((*pwcs++ = (wchar_t)(unsigned char)*(*s)++) == 0)
-					break;
-				count++;
-			} while (--n != 0);
-		} else {
-			do {
-				if (((wchar_t)*(*s)++) == 0)
-					break;
-				count++;
-			} while (--n != 0);
-		}
+	if (pwcs == NULL)
+		return strlen(*s);
+
+	while (n > 0) {
+		if ((*pwcs++ = (wchar_t)(unsigned char)*(*s)++) == 0)
+			break;
+		count++;
+		n--;
 	}
 	
 	return count;
