@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.13 2010/08/01 10:26:27 espie Exp $
+# $OpenBSD: Term.pm,v 1.14 2010/08/03 17:31:52 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -165,9 +165,17 @@ sub _show
 		}
 	}
 
-	return if $d eq $self->{lastdisplay} && !$self->{continued};
+	if ($self->{continued}) {
+		print "\r$d";
+		$self->{continued} = 0;
+		$self->{lastdisplay} = $d;
+		return;
+	}
 
-	if (!$self->{continued} && defined $self->{hpa}) {
+	return if $d eq $self->{lastdisplay};
+
+
+	if (defined $self->{hpa}) {
 		if (defined $stars && defined $self->{stars}) {
 			$prefix += $self->{stars};
 		}
@@ -179,7 +187,6 @@ sub _show
 		print "\r$d";
 	}
 	$self->{lastdisplay} = $d;
-	$self->{continued} = 0;
 }
 
 sub message
