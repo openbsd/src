@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.27 2010/08/01 10:03:24 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.28 2010/08/03 14:10:12 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -69,7 +69,7 @@ sub wipe_directory
 	my $realname = $state->{destdir}.$d;
 
 	for my $i (@{$h->{$d}}) {
-		$state->log->set_context($i->{pkgname});
+		$state->log->set_context('-'.$i->{pkgname});
 		$i->cleanup($state);
 	}
 	if (!rmdir $realname) {
@@ -104,7 +104,7 @@ sub cleanup
 		my $realname = $state->{destdir}.$d;
 		if ($remaining->{dirs}->{$realname}) {
 			for my $i (@{$h->{$d}}) {
-				$state->log->set_context($i->{pkgname});
+				$state->log->set_context('-'.$i->{pkgname});
 				$i->reload($state);
 			}
 		} else {
@@ -119,7 +119,7 @@ sub cleanup
 			$state->system(OpenBSD::Paths->userdel, '--',
 			    $user);
 		} else {
-			$state->log->set_context($pkgname);
+			$state->log->set_context('-'.$pkgname);
 			$state->log("You should also run /usr/sbin/userdel #1", $user);
 		}
 		$done++;
@@ -131,7 +131,7 @@ sub cleanup
 			$state->system(OpenBSD::Paths->groupdel, '--',
 			    $group);
 		} else {
-			$state->log->set_context($pkgname);
+			$state->log->set_context('-'.$pkgname);
 			$state->log("You should also run /usr/sbin/groupdel #1", $group);
 		}
 		$done++;

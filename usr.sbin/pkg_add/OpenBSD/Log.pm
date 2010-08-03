@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Log.pm,v 1.3 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Log.pm,v 1.4 2010/08/03 14:10:12 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -65,10 +65,16 @@ sub errsay
 	push(@{$self->{erroutput}}, $self->f(@_)."\n");
 }
 
+sub specialsort
+{
+	return ((sort grep { /^\-/ } @_), (sort grep { /^\+/} @_),
+	    (sort grep { !/^[\-+]/ } @_));
+}
+
 sub dump
 {
 	my $self = shift;
-	for my $ctxt (sort keys %{$self->{errmessages}}) {
+	for my $ctxt (specialsort keys %{$self->{errmessages}}) {
 		my $msgs = $self->{errmessages}->{$ctxt};
 		if (@$msgs > 0) {
 			$self->{p}->errsay("--- #1 -------------------", $ctxt);
@@ -76,7 +82,7 @@ sub dump
 		}
 	}
 	$self->{errmessages} = {};
-	for my $ctxt (sort keys %{$self->{messages}}) {
+	for my $ctxt (specialsort keys %{$self->{messages}}) {
 		my $msgs = $self->{messages}->{$ctxt};
 		if (@$msgs > 0) {
 			$self->{p}->say("--- #1 -------------------", $ctxt);
