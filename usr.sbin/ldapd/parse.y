@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2010/06/30 22:16:53 martinh Exp $ */
+/*	$OpenBSD: parse.y,v 1.9 2010/08/03 18:42:40 henning Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -609,9 +609,10 @@ top:
 					return (0);
 				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
-				else if (next == '\n')
+				else if (next == '\n') {
+					file->lineno++;
 					continue;
-				else
+				} else
 					lungetc(next);
 			} else if (c == quotec) {
 				*p = '\0';
