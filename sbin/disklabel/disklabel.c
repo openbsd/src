@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.168 2010/08/03 00:08:30 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.169 2010/08/03 00:19:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1175,38 +1175,22 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			}
 			continue;
 		}
-		if (!strcmp(cp, "rpm")) {
-			/* ignore */
+
+		/* Ignore fields that are no longer in the disklabel. */
+		if (!strcmp(cp, "rpm") ||
+		    !strcmp(cp, "interleave") ||
+		    !strcmp(cp, "trackskew") ||
+		    !strcmp(cp, "cylinderskew") ||
+		    !strcmp(cp, "headswitch") ||
+		    !strcmp(cp, "track-to-track seek"))
 			continue;
-		}
-		if (!strcmp(cp, "interleave")) {
-			/* ignore */
+
+		/* Ignore fields that are forcibly set when label is read. */
+		if (!strcmp(cp, "total sectors") ||
+		    !strcmp(cp, "boundstart") ||
+		    !strcmp(cp, "boundend"))
 			continue;
-		}
-		if (!strcmp(cp, "trackskew")) {
-			/* ignore */
-			continue;
-		}
-		if (!strcmp(cp, "cylinderskew")) {
-			/* ignore */
-			continue;
-		}
-		if (!strcmp(cp, "headswitch")) {
-			/* ignore */
-			continue;
-		}
-		if (!strcmp(cp, "track-to-track seek")) {
-			/* ignore */
-			continue;
-		}
-		if (!strcmp(cp, "boundstart")) {
-			/* ignore */
-			continue;
-		}
-		if (!strcmp(cp, "boundend")) {
-			/* ignore */
-			continue;
-		}
+
 		if ('a' <= *cp && *cp <= 'z' && cp[1] == '\0') {
 			unsigned int part = *cp - 'a';
 
