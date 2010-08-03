@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.104 2010/07/28 21:21:38 deraadt Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.105 2010/08/03 18:26:25 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -381,8 +381,12 @@ iwi_power(int why, void *arg)
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
 	s = splnet();
+	sc->sc_flags |= IWI_FLAG_BUSY;
+
 	if (ifp->if_flags & IFF_UP)
 		iwi_init(ifp);
+
+	sc->sc_flags &= ~IWI_FLAG_BUSY;
 	splx(s);
 }
 
@@ -1478,6 +1482,15 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s, error = 0;
 
 	s = splnet();
+	/*
+	 * Prevent processes from entering this function while another
+	 * process is tsleep'ing in it.
+	 */
+	if (sc->sc_flags & IWI_FLAG_BUSY) {
+		splx(s);
+		return EBUSY;
+	}
+	sc->sc_flags |= IWI_FLAG_BUSY;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1531,6 +1544,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 
+	sc->sc_flags &= ~IWI_FLAG_BUSY;
 	splx(s);
 	return error;
 }
@@ -1558,7 +1572,7 @@ iwi_stop_master(struct iwi_softc *sc)
 	tmp = CSR_READ_4(sc, IWI_CSR_RST);
 	CSR_WRITE_4(sc, IWI_CSR_RST, tmp | IWI_RST_PRINCETON_RESET);
 
-	sc->flags &= ~IWI_FLAG_FW_INITED;
+	sc->sc_flags &= ~IWI_FLAG_FW_INITED;
 }
 
 int
@@ -2300,7 +2314,7 @@ iwi_init(struct ifnet *ifp)
 	}
 
 	free(data, M_DEVBUF);
-	sc->flags |= IWI_FLAG_FW_INITED;
+	sc->sc_flags |= IWI_FLAG_FW_INITED;
 
 	if ((error = iwi_config(sc)) != 0) {
 		printf("%s: device configuration failed\n",

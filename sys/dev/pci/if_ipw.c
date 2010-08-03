@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.87 2010/07/28 21:21:38 deraadt Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.88 2010/08/03 18:26:25 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -326,6 +326,7 @@ ipw_power(int why, void *arg)
 	struct ipw_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t data;
+	int s;
 
 	if (why != PWR_RESUME) {
 		ipw_stop(ifp, 0);
@@ -337,8 +338,14 @@ ipw_power(int why, void *arg)
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
+	s = splnet();
+	sc->sc_flags |= IPW_FLAG_BUSY;
+
 	if (ifp->if_flags & IFF_UP)
 		ipw_init(ifp);
+
+	sc->sc_flags &= ~IPW_FLAG_BUSY;
+	splx(s);
 }
 
 int
@@ -1388,6 +1395,15 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s, error = 0;
 
 	s = splnet();
+	/*
+	 * Prevent processes from entering this function while another
+	 * process is tsleep'ing in it.
+	 */
+	if (sc->sc_flags & IPW_FLAG_BUSY) {
+		splx(s);
+		return EBUSY;
+	}
+	sc->sc_flags |= IPW_FLAG_BUSY;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1441,6 +1457,7 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 
+	sc->sc_flags &= ~IPW_FLAG_BUSY;
 	splx(s);
 	return error;
 }
@@ -1504,7 +1521,7 @@ ipw_stop_master(struct ipw_softc *sc)
 	tmp = CSR_READ_4(sc, IPW_CSR_RST);
 	CSR_WRITE_4(sc, IPW_CSR_RST, tmp | IPW_RST_PRINCETON_RESET);
 
-	sc->flags &= ~IPW_FLAG_FW_INITED;
+	sc->sc_flags &= ~IPW_FLAG_FW_INITED;
 }
 
 int
@@ -2025,7 +2042,7 @@ ipw_init(struct ifnet *ifp)
 		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
 		goto fail2;
 	}
-	sc->flags |= IPW_FLAG_FW_INITED;
+	sc->sc_flags |= IPW_FLAG_FW_INITED;
 	free(fw.data, M_DEVBUF);
 
 	/* retrieve information tables base addresses */

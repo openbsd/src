@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.103 2010/07/28 21:21:38 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.104 2010/08/03 18:26:25 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -438,11 +438,8 @@ wpi_power(int why, void *arg)
 	s = splnet();
 	sc->sc_flags |= WPI_FLAG_BUSY;
 
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
-	}
+	if (ifp->if_flags & IFF_UP)
+		wpi_init(ifp);
 
 	sc->sc_flags &= ~WPI_FLAG_BUSY;
 	splx(s);
