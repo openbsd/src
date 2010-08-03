@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.197 2010/07/28 14:39:43 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.198 2010/08/03 16:32:40 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2036,7 +2036,7 @@ acpi_thread(void *arg)
 			s = spltty();
 			en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 			acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
-			    en | ACPI_PM1_PWRBTN_STS);
+			    en | ACPI_PM1_PWRBTN_EN);
 			splx(s);
 
 		}
@@ -2051,7 +2051,7 @@ acpi_thread(void *arg)
 			s = spltty();
 			en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 			acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
-			    en | ACPI_PM1_SLPBTN_STS);
+			    en | ACPI_PM1_SLPBTN_EN);
 			splx(s);
 		}
 
