@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.88 2010/05/24 21:23:23 sthen Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.89 2010/08/03 16:11:57 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2227,7 +2227,7 @@ bnx_get_media(struct bnx_softc *sc)
 	} else if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT)
 		sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
 
-	if (sc->bnx_phy_flags && BNX_PHY_SERDES_FLAG) {
+	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG) {
 		sc->bnx_flags |= BNX_NO_WOL_FLAG;
 
 		if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709)
