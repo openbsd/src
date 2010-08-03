@@ -1536,6 +1536,8 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   BACKLIGHT_DUTY_CYCLE_SHIFT		(0)
 #define   BACKLIGHT_DUTY_CYCLE_MASK		(0xffff)
 
+#define BLC_HIST_CTL		0x61260
+
 /* TV port control */
 #define TV_CTL			0x68000
 /** Enables the TV encoder */
