@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.182 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.183 2010/08/03 14:07:27 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1622,7 +1622,7 @@ sub prepare
 			chomp;
 			next if m/^\+\-+\s*$/o;
 			s/^[+-] //o;
-			$state->log($_);
+			$state->log("#1", $_);
 		}
 	} else {
 		$state->errsay("Can't open #1: #2", $fname, $!);
