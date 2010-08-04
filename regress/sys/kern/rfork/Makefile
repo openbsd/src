@@ -1,6 +1,9 @@
-#	$OpenBSD: Makefile,v 1.7 2002/03/12 15:19:28 art Exp $
+#	$OpenBSD: Makefile,v 1.8 2010/08/04 06:06:31 guenther Exp $
 
-SUBDIR=rfmem rfcfdg rfnowait rfsharefd madness rfmem-stack
+SUBDIR=rfcfdg rfnowait rfsharefd kqueue
+
+# RFMEM requires something like rfork_thread() to fix up the stack
+#SUBDIR=rfmem madness rfmem-stack
 
 install:
 
