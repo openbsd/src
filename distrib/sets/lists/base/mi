@@ -3211,6 +3211,7 @@
 ./usr/share/zoneinfo/America/Atikokan
 ./usr/share/zoneinfo/America/Atka
 ./usr/share/zoneinfo/America/Bahia
+./usr/share/zoneinfo/America/Bahia_Banderas
 ./usr/share/zoneinfo/America/Barbados
 ./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Belize
@@ -3661,6 +3662,7 @@
 ./usr/share/zoneinfo/Pacific/Apia
 ./usr/share/zoneinfo/Pacific/Auckland
 ./usr/share/zoneinfo/Pacific/Chatham
+./usr/share/zoneinfo/Pacific/Chuuk
 ./usr/share/zoneinfo/Pacific/Easter
 ./usr/share/zoneinfo/Pacific/Efate
 ./usr/share/zoneinfo/Pacific/Enderbury
@@ -3686,6 +3688,7 @@
 ./usr/share/zoneinfo/Pacific/Pago_Pago
 ./usr/share/zoneinfo/Pacific/Palau
 ./usr/share/zoneinfo/Pacific/Pitcairn
+./usr/share/zoneinfo/Pacific/Pohnpei
 ./usr/share/zoneinfo/Pacific/Ponape
 ./usr/share/zoneinfo/Pacific/Port_Moresby
 ./usr/share/zoneinfo/Pacific/Rarotonga
@@ -3804,6 +3807,7 @@
 ./usr/share/zoneinfo/posix/America/Atikokan
 ./usr/share/zoneinfo/posix/America/Atka
 ./usr/share/zoneinfo/posix/America/Bahia
+./usr/share/zoneinfo/posix/America/Bahia_Banderas
 ./usr/share/zoneinfo/posix/America/Barbados
 ./usr/share/zoneinfo/posix/America/Belem
 ./usr/share/zoneinfo/posix/America/Belize
@@ -4254,6 +4258,7 @@
 ./usr/share/zoneinfo/posix/Pacific/Apia
 ./usr/share/zoneinfo/posix/Pacific/Auckland
 ./usr/share/zoneinfo/posix/Pacific/Chatham
+./usr/share/zoneinfo/posix/Pacific/Chuuk
 ./usr/share/zoneinfo/posix/Pacific/Easter
 ./usr/share/zoneinfo/posix/Pacific/Efate
 ./usr/share/zoneinfo/posix/Pacific/Enderbury
@@ -4279,6 +4284,7 @@
 ./usr/share/zoneinfo/posix/Pacific/Pago_Pago
 ./usr/share/zoneinfo/posix/Pacific/Palau
 ./usr/share/zoneinfo/posix/Pacific/Pitcairn
+./usr/share/zoneinfo/posix/Pacific/Pohnpei
 ./usr/share/zoneinfo/posix/Pacific/Ponape
 ./usr/share/zoneinfo/posix/Pacific/Port_Moresby
 ./usr/share/zoneinfo/posix/Pacific/Rarotonga
@@ -4398,6 +4404,7 @@
 ./usr/share/zoneinfo/right/America/Atikokan
 ./usr/share/zoneinfo/right/America/Atka
 ./usr/share/zoneinfo/right/America/Bahia
+./usr/share/zoneinfo/right/America/Bahia_Banderas
 ./usr/share/zoneinfo/right/America/Barbados
 ./usr/share/zoneinfo/right/America/Belem
 ./usr/share/zoneinfo/right/America/Belize
@@ -4848,6 +4855,7 @@
 ./usr/share/zoneinfo/right/Pacific/Apia
 ./usr/share/zoneinfo/right/Pacific/Auckland
 ./usr/share/zoneinfo/right/Pacific/Chatham
+./usr/share/zoneinfo/right/Pacific/Chuuk
 ./usr/share/zoneinfo/right/Pacific/Easter
 ./usr/share/zoneinfo/right/Pacific/Efate
 ./usr/share/zoneinfo/right/Pacific/Enderbury
@@ -4873,6 +4881,7 @@
 ./usr/share/zoneinfo/right/Pacific/Pago_Pago
 ./usr/share/zoneinfo/right/Pacific/Palau
 ./usr/share/zoneinfo/right/Pacific/Pitcairn
+./usr/share/zoneinfo/right/Pacific/Pohnpei
 ./usr/share/zoneinfo/right/Pacific/Ponape
 ./usr/share/zoneinfo/right/Pacific/Port_Moresby
 ./usr/share/zoneinfo/right/Pacific/Rarotonga
