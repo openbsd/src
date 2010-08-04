@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.97 2008/02/17 10:36:32 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.98 2010/08/04 18:09:45 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -429,7 +429,7 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
 			 1);
 	else if (strcmp(qme_p ,"-AES-128") == 0)
-		conf_set(tr, sect, "KEY_LENGTH", "128,192:128", 0, 1);
+		conf_set(tr, sect, "KEY_LENGTH", "128,128:128", 0, 1);
 	else if (strcmp(qme_p ,"-AES-192") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", "192,192:192", 0, 1);
         else if (strcmp(qme_p ,"-AES-256") == 0)
