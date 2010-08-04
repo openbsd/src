@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.90 2010/07/24 19:25:32 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.91 2010/08/04 19:46:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -139,11 +139,8 @@ server_start(char *path)
 		fatal("daemon failed");
 
 	/* event_init() was called in our parent, need to reinit. */
-	if (setenv("EVENT_NOKQUEUE", "1", 1) != 0)
-		fatal("setenv");
 	if (event_reinit(ev_base) != 0)
 		fatal("event_reinit failed");
-	unsetenv("EVENT_NOKQUEUE");
 	clear_signals();
 
 	logfile("server");
