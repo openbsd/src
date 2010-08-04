@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.176 2010/07/28 16:00:29 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.177 2010/08/04 18:11:55 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1407,33 +1407,6 @@ aml_parseend(struct aml_scope *scope)
  * @@@: Opcode utility functions
  */
 
-u_int64_t
-aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
-{
-	int64_t tmpres;
-	u_int64_t pciaddr;
-
-	/* PCI */
-	pciaddr = 0;
-	if (!aml_evalinteger(acpi_softc, root, "_ADR", 0, NULL, &tmpres)) {
-		/* Device:Function are bits 16-31,32-47 */
-		pciaddr += (tmpres << 16L);
-		dnprintf(20, "got _adr [%s]\n", aml_nodename(root));
-	} else {
-		/* Mark invalid */
-		pciaddr += (0xFFFF << 16L);
-		return pciaddr;
-	}
-
-	if (!aml_evalinteger(acpi_softc, root, "_BBN", 0, NULL, &tmpres)) {
-		/* PCI bus is in bits 48-63 */
-		pciaddr += (tmpres << 48L);
-		dnprintf(20, "got _bbn [%s]\n", aml_nodename(root));
-	}
-	dnprintf(20, "got pciaddr: %s:%llx\n", aml_nodename(root), pciaddr);
-	return pciaddr;
-}
-
 /*
  * @@@: Opcode functions
  */
@@ -1685,16 +1658,6 @@ int aml_fixup_node(struct aml_node *node, void *arg)
 	} else if (val->type == AML_OBJTYPE_PACKAGE) {
 		for (i = 0; i < val->length; i++)
 			aml_fixup_node(node, val->v_package[i]);
-	} else if (val->type == AML_OBJTYPE_OPREGION) {
-		if (val->v_opregion.iospace != GAS_PCI_CFG_SPACE)
-			return (0);
-		if (ACPI_PCI_FN(val->v_opregion.iobase) != 0xFFFF)
-			return (0);
-		val->v_opregion.iobase =
-		    ACPI_PCI_REG(val->v_opregion.iobase) +
-		    aml_getpciaddr(acpi_softc, node);
-		dnprintf(20, "late ioaddr : %s:%llx\n",
-		    aml_nodename(node), val->v_opregion.iobase);
 	}
 	return (0);
 }
