@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.54 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.55 2010/08/04 19:48:33 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -74,6 +74,7 @@ int rt2661_debug = 1;
 #define DPRINTFN(n, x)
 #endif
 
+void		rt2661_attachhook(void *);
 int		rt2661_alloc_tx_ring(struct rt2661_softc *,
 		    struct rt2661_tx_ring *, int);
 void		rt2661_reset_tx_ring(struct rt2661_softc *,
@@ -144,8 +145,7 @@ void		rt2661_read_eeprom(struct rt2661_softc *);
 int		rt2661_bbp_init(struct rt2661_softc *);
 int		rt2661_init(struct ifnet *);
 void		rt2661_stop(struct ifnet *, int);
-int		rt2661_load_microcode(struct rt2661_softc *, const uint8_t *,
-		    int);
+int		rt2661_load_microcode(struct rt2661_softc *);
 void		rt2661_rx_tune(struct rt2661_softc *);
 #ifdef notyet
 void		rt2661_radar_start(struct rt2661_softc *);
@@ -186,9 +186,8 @@ rt2661_attach(void *xsc, int id)
 {
 	struct rt2661_softc *sc = xsc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	uint32_t val;
-	int error, ac, i, ntries;
+	int error, ac, ntries;
 
 	sc->sc_id = id;
 
@@ -241,6 +240,51 @@ rt2661_attach(void *xsc, int id)
 		printf("%s: could not allocate Rx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto fail2;
+	}
+
+	if (rootvp == NULL)
+		mountroothook_establish(rt2661_attachhook, sc);
+	else
+		rt2661_attachhook(sc);
+
+	sc->sc_powerhook = powerhook_establish(rt2661_power, sc);
+	if (sc->sc_powerhook == NULL) {
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
+	}
+
+	return 0;
+
+fail2:	rt2661_free_tx_ring(sc, &sc->mgtq);
+fail1:	while (--ac >= 0)
+		rt2661_free_tx_ring(sc, &sc->txq[ac]);
+	return ENXIO;
+}
+
+void
+rt2661_attachhook(void *xsc)
+{
+	struct rt2661_softc *sc = xsc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	const char *name = NULL;	/* make lint happy */
+	int i, error;
+
+	switch (sc->sc_id) {
+	case PCI_PRODUCT_RALINK_RT2561:
+		name = "ral-rt2561";
+		break;
+	case PCI_PRODUCT_RALINK_RT2561S:
+		name = "ral-rt2561s";
+		break;
+	case PCI_PRODUCT_RALINK_RT2661:
+		name = "ral-rt2661";
+		break;
+	}
+	if ((error = loadfirmware(name, &sc->ucode, &sc->ucsize)) != 0) {
+		printf("%s: error %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return;
 	}
 
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
@@ -328,19 +372,6 @@ rt2661_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2661_TX_RADIOTAP_PRESENT);
 #endif
-
-	sc->sc_powerhook = powerhook_establish(rt2661_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-	}
-
-	return 0;
-
-fail2:	rt2661_free_tx_ring(sc, &sc->mgtq);
-fail1:	while (--ac >= 0)
-		rt2661_free_tx_ring(sc, &sc->txq[ac]);
-	return ENXIO;
 }
 
 int
@@ -364,7 +395,28 @@ rt2661_detach(void *xsc)
 	rt2661_free_tx_ring(sc, &sc->mgtq);
 	rt2661_free_rx_ring(sc, &sc->rxq);
 
+	if (sc->ucode != NULL)
+		free(sc->ucode, M_DEVBUF);
+
 	return 0;
+}
+
+void
+rt2661_suspend(void *xsc)
+{
+	struct rt2661_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	if (ifp->if_flags & IFF_RUNNING)
+		rt2661_stop(ifp, 0);
+}
+
+void
+rt2661_resume(void *xsc)
+{
+	struct rt2661_softc *sc = xsc;
+
+	rt2661_power(PWR_RESUME, sc);
 }
 
 int
@@ -2404,11 +2456,8 @@ rt2661_init(struct ifnet *ifp)
 {
 	struct rt2661_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	const char *name = NULL;	/* make lint happy */
-	uint8_t *ucode;
-	size_t size;
 	uint32_t tmp, sta[3];
-	int i, ntries, error;
+	int i, ntries;
 
 	/* for CardBus, power on the socket */
 	if (!(sc->sc_flags & RT2661_ENABLED)) {
@@ -2422,36 +2471,11 @@ rt2661_init(struct ifnet *ifp)
 
 	rt2661_stop(ifp, 0);
 
-	if (!(sc->sc_flags & RT2661_FWLOADED)) {
-		switch (sc->sc_id) {
-		case PCI_PRODUCT_RALINK_RT2561:
-			name = "ral-rt2561";
-			break;
-		case PCI_PRODUCT_RALINK_RT2561S:
-			name = "ral-rt2561s";
-			break;
-		case PCI_PRODUCT_RALINK_RT2661:
-			name = "ral-rt2661";
-			break;
-		}
-
-		if ((error = loadfirmware(name, &ucode, &size)) != 0) {
-			printf("%s: error %d, could not read firmware %s\n",
-			    sc->sc_dev.dv_xname, error, name);
-			rt2661_stop(ifp, 1);
-			return EIO;
-		}
-
-		if (rt2661_load_microcode(sc, ucode, size) != 0) {
-			printf("%s: could not load 8051 microcode\n",
-			    sc->sc_dev.dv_xname);
-			free(ucode, M_DEVBUF);
-			rt2661_stop(ifp, 1);
-			return EIO;
-		}
-
-		free(ucode, M_DEVBUF);
-		sc->sc_flags |= RT2661_FWLOADED;
+	if (rt2661_load_microcode(sc) != 0) {
+		printf("%s: could not load 8051 microcode\n",
+		    sc->sc_dev.dv_xname);
+		rt2661_stop(ifp, 1);
+		return EIO;
 	}
 
 	/* initialize Tx rings */
@@ -2614,13 +2638,13 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	if (disable && sc->sc_disable != NULL) {
 		if (sc->sc_flags & RT2661_ENABLED) {
 			(*sc->sc_disable)(sc);
-			sc->sc_flags &= ~(RT2661_ENABLED | RT2661_FWLOADED);
+			sc->sc_flags &= ~RT2661_ENABLED;
 		}
 	}
 }
 
 int
-rt2661_load_microcode(struct rt2661_softc *sc, const uint8_t *ucode, int size)
+rt2661_load_microcode(struct rt2661_softc *sc)
 {
 	int ntries;
 
@@ -2634,7 +2658,7 @@ rt2661_load_microcode(struct rt2661_softc *sc, const uint8_t *ucode, int size)
 
 	/* write 8051's microcode */
 	RAL_WRITE(sc, RT2661_MCU_CNTL_CSR, RT2661_MCU_RESET | RT2661_MCU_SEL);
-	RAL_WRITE_REGION_1(sc, RT2661_MCU_CODE_BASE, ucode, size);
+	RAL_WRITE_REGION_1(sc, RT2661_MCU_CODE_BASE, sc->ucode, sc->ucsize);
 	RAL_WRITE(sc, RT2661_MCU_CNTL_CSR, RT2661_MCU_RESET);
 
 	/* kick 8051's ass */
@@ -2906,14 +2930,11 @@ rt2661_power(int why, void *arg)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	DPRINTF(("%s: rt2661_power(%d)\n", sc->sc_dev.dv_xname, why));
-
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		rt2661_stop(ifp, 1);
-		sc->sc_flags &= ~RT2661_FWLOADED; 
+		rt2661_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 		break;
@@ -2922,8 +2943,6 @@ rt2661_power(int why, void *arg)
 			rt2661_init(ifp);	
 			if (sc->sc_power != NULL)
 				(*sc->sc_power)(sc, why);
-			if (ifp->if_flags & IFF_RUNNING)
-				rt2661_start(ifp);
 		}
 		break;
 	}

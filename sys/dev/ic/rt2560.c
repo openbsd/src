@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.48 2010/05/19 15:27:35 oga Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.49 2010/08/04 19:48:33 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -332,6 +332,24 @@ rt2560_detach(void *xsc)
 	rt2560_free_rx_ring(sc, &sc->rxq);
 
 	return 0;
+}
+
+void
+rt2560_suspend(void *xsc)
+{
+	struct rt2560_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	if (ifp->if_flags & IFF_RUNNING)
+		rt2560_stop(ifp, 0);
+}
+
+void
+rt2560_resume(void *xsc)
+{
+	struct rt2560_softc *sc = xsc;
+
+	rt2560_power(PWR_RESUME, sc);
 }
 
 int
@@ -2717,13 +2735,11 @@ rt2560_power(int why, void *arg)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	DPRINTF(("%s: rt2560_power(%d)\n", sc->sc_dev.dv_xname, why));
-
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		rt2560_stop(ifp, 1);
+		rt2560_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 		break;
@@ -2732,8 +2748,6 @@ rt2560_power(int why, void *arg)
 			rt2560_init(ifp);
 			if (sc->sc_power != NULL)
 				(*sc->sc_power)(sc, why);
-			if (ifp->if_flags & IFF_RUNNING)
-				rt2560_start(ifp);
 		}
 		break;
 	}

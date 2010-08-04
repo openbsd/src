@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.10 2009/08/10 17:47:23 damien Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.11 2010/08/04 19:48:33 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -109,13 +109,15 @@ struct rt2661_softc {
 	int				sc_id;
 	int				sc_flags;
 #define RT2661_ENABLED		(1 << 0)
-#define RT2661_FWLOADED		(1 << 1)
-#define RT2661_UPDATE_SLOT	(1 << 2)
-#define RT2661_SET_SLOTTIME	(1 << 3)
+#define RT2661_UPDATE_SLOT	(1 << 1)
+#define RT2661_SET_SLOTTIME	(1 << 2)
 
 	int				sc_tx_timer;
 
 	struct ieee80211_channel	*sc_curchan;
+
+	u_char				*ucode;
+	size_t				ucsize;
 
 	uint8_t				rf_rev;
 
@@ -178,4 +180,6 @@ struct rt2661_softc {
 
 int	rt2661_attach(void *, int);
 int	rt2661_detach(void *);
+void	rt2661_suspend(void *);
+void	rt2661_resume(void *);
 int	rt2661_intr(void *);
