@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.198 2010/08/03 16:32:40 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.199 2010/08/04 17:35:39 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1594,6 +1594,7 @@ acpi_init_states(struct acpi_softc *sc)
 	char name[8];
 	int i;
 
+	printf("\n%s: sleep states", DEVNAME(sc));
 	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
 		snprintf(name, sizeof(name), "_S%d_", i);
 		sc->sc_sleeptype[i].slp_typa = -1;
@@ -1602,6 +1603,7 @@ acpi_init_states(struct acpi_softc *sc)
 			if (res.type == AML_OBJTYPE_PACKAGE) {
 				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
 				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
+				printf(" S%d", i);
 			}
 			aml_freevalue(&res);
 		}
