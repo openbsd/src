@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.58 2010/08/04 17:50:38 deraadt Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.59 2010/08/04 18:29:43 matthew Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -317,6 +317,7 @@ vga_pci_activate(struct device *self, int act)
 			printf("%s: reposting video using BIOS.  Is this neccessary?\n",
 			    sc->sc_dev.dv_xname);
 			vga_post_call(sc->sc_posth);
+		}
 #endif
 		rv = config_activate_children(self, act);
 		break;
