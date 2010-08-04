@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.242 2010/08/03 16:21:52 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.243 2010/08/04 17:10:34 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1648,12 +1648,11 @@ em_allocate_pci_resources(struct em_softc *sc)
 	 * can confuse the system
 	 */
 	if(sc->hw.mac_type == em_icp_xxxx) {
-		uint8_t offset;
+		int offset;
 		pcireg_t val;
 		
 		if (!pci_get_capability(sc->osdep.em_pa.pa_pc, 
-		    sc->osdep.em_pa.pa_tag, PCI_CAP_ID_ST, (int*) &offset, 
-		    &val)) {
+		    sc->osdep.em_pa.pa_tag, PCI_CAP_ID_ST, &offset, &val)) {
 			return (0);
 		}
 		offset += PCI_ST_SMIA_OFFSET;
