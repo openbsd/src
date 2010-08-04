@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keysign.c,v 1.31 2010/08/04 05:42:47 djm Exp $ */
+/* $OpenBSD: ssh-keysign.c,v 1.32 2010/08/04 06:08:40 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 {
 	Buffer b;
 	Options options;
-	Key *keys[2], *key;
+	Key *keys[2], *key = NULL;
 	struct passwd *pw;
 	int key_fd[2], i, found, version = 2, fd;
 	u_char *signature, *data;
