@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.59 2010/08/04 18:29:43 matthew Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.60 2010/08/04 23:23:36 deraadt Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -164,36 +164,28 @@ static const struct vga_device_description vga_devs[] = {
 	 * vga_pci (i.e. the x86emulator) or with a locore call to the video
 	 * bios.
 	 */
-	{	/* Sony VGN-P530H */
-	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,	
-	    	PCI_VENDOR_SONY, 0x9039 },
-	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
+	{	/* All machines with Intel US15W (until more evidence) */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
 	},
+	{	/* All machines with Intel US15L (until more evidence) */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15L_IGD,
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
+	},
+
 	{	/* Thinkpad T510 (and similar models) */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
 	    	0x17aa, 0x215a },
 	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
 	},
-	{	/* Lenovo ThinkPad X100e */
-	    {	PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3200_2,
-		0x17aa, 0x21b2 },
-	    {	0xffff, 0xffff, 0xffff, 0xffff}, 1, 0
+
+	{	/* All ATI video until further notice */
+	    {	PCI_VENDOR_ATI, 0x0000,
+		0x0000, 0x0000 },
+	    {	0xffff, 0x0000, 0x0000, 0x0000}, 1, 0
 	},
-	{	/* Gateway LT3103u (ATI Radeon X1250/RS690) */
-	    {	PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1250IGP,
-		0x1025, 0x028c },
-	    {	0xffff, 0xffff, 0xffff, 0xffff}, 1, 0
-	},
-	{	/* Thinkpad T43p with ATI FireGL (M24) */
-	    {	PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_M24GL,
-		0x1014, 0x0570 },
-	    {	0xffff, 0xffff, 0xffff, 0xffff}, 1, 0
-	},
-	{	/* HP Pavilion dv7-3160us with ATI Radeon HD4500 */
-	    {	PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4500_M,
-		0x103c, 0x3639 },
-	    {	0xffff, 0xffff, 0xffff, 0xffff}, 1, 0
-	}
 };
 #endif
 
