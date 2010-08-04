@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.4 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.5 2010/08/04 05:55:29 guenther Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -79,7 +79,7 @@ do_process(void)
 			didchild = 1;
 			ASSX((pid_t)ke.data == pid);
 			pid2 = ke.ident;
-			fprintf(stderr, "child %d\n", pid2);
+			fprintf(stderr, "child %d (from %d)\n", pid2, pid);
 			break;
 		case NOTE_FORK:
 			didfork = 1;
@@ -99,13 +99,29 @@ do_process(void)
 
 	/* Both children now sleeping. */
 
-	ASSX(didchild == didfork == 1);
+	ASSX(didchild == 1);
+	ASSX(didfork == 1);
 	
 	kill(pid2, SIGUSR1);	/* sync 2.1 */
 	kill(pid, SIGUSR1);	/* sync 2 */
 
 	if (wait(&status) < 0)
 		err(1, "wait");
+
+	/* make sure we get an exit note */
+	ASS(kevent(kq, NULL, 0, &ke, 1, &ts) == 1,
+	    warnx("didn't receive event"));
+	ASSX(ke.filter == EVFILT_PROC);
+	switch (ke.fflags) {
+	case NOTE_EXIT:
+		didchild = 1;
+		ASSX((pid_t)ke.ident == pid);
+		fprintf(stderr, "exit %d\n", pid);
+		break;
+	default:
+		errx(1, "kevent returned weird event 0x%x pid %d",
+		    ke.fflags, (pid_t)ke.ident);
+	}
 
 	if (!WIFEXITED(status))
 		errx(1, "child didn't exit?");
