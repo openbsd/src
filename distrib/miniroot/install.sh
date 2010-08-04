@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.207 2010/04/06 21:01:20 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.208 2010/08/04 07:07:41 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -290,7 +290,9 @@ if [[ -n $user ]]; then
 
 	mkdir -p /mnt/home/$user
 	(cd /mnt/etc/skel; cp -pR . /mnt/home/$user)
-	cp -p /mnt/var/mail/root /mnt/var/mail/$user
+	( umask 077 &&
+		sed "s,^To: root\$,To: ${username} <${user}>," \
+		/mnt/var/mail/root > /mnt/var/mail/$user )
 	chown -R 1000.10 /mnt/home/$user /mnt/var/mail/$user
 	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${user}@
 w
