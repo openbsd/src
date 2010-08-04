@@ -1,5 +1,5 @@
-# $OpenBSD: asia,v 1.53 2010/04/05 15:32:20 millert Exp $
-# @(#)asia	8.59
+# $OpenBSD: asia,v 1.54 2010/08/04 18:08:13 millert Exp $
+# @(#)asia	8.60
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -567,6 +567,28 @@ Zone	Asia/Hong_Kong	7:36:36 -	LMT	1904 Oct 30
 # was still controlled by Japan.  This is hard to believe, but we don't
 # have any other information.
 
+# From smallufo (2010-04-03):
+# According to Taiwan's CWB,
+# <a href="http://www.cwb.gov.tw/V6/astronomy/cdata/summert.htm">
+# http://www.cwb.gov.tw/V6/astronomy/cdata/summert.htm
+# </a>
+# Taipei has DST in 1979 between July 1st and Sep 30.
+
+# From Arthur David Olson (2010-04-07):
+# Here's Google's translation of the table at the bottom of the "summert.htm" page:
+# Decade 	                                                    Name                      Start and end date
+# Republic of China 34 years to 40 years (AD 1945-1951 years) Summer Time               May 1 to September 30 
+# 41 years of the Republic of China (AD 1952)                 Daylight Saving Time      March 1 to October 31 
+# Republic of China 42 years to 43 years (AD 1953-1954 years) Daylight Saving Time      April 1 to October 31 
+# In the 44 years to 45 years (AD 1955-1956 years)            Daylight Saving Time      April 1 to September 30 
+# Republic of China 46 years to 48 years (AD 1957-1959)       Summer Time               April 1 to September 30 
+# Republic of China 49 years to 50 years (AD 1960-1961)       Summer Time               June 1 to September 30 
+# Republic of China 51 years to 62 years (AD 1962-1973 years) Stop Summer Time 
+# Republic of China 63 years to 64 years (1974-1975 AD)       Daylight Saving Time      April 1 to September 30 
+# Republic of China 65 years to 67 years (1976-1978 AD)       Stop Daylight Saving Time 
+# Republic of China 68 years (AD 1979)                        Daylight Saving Time      July 1 to September 30 
+# Republic of China since 69 years (AD 1980)                  Stop Daylight Saving Time
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Taiwan	1945	1951	-	May	1	0:00	1:00	D
 Rule	Taiwan	1945	1951	-	Oct	1	0:00	0	S
@@ -577,8 +599,9 @@ Rule	Taiwan	1955	1961	-	Oct	1	0:00	0	S
 Rule	Taiwan	1960	1961	-	Jun	1	0:00	1:00	D
 Rule	Taiwan	1974	1975	-	Apr	1	0:00	1:00	D
 Rule	Taiwan	1974	1975	-	Oct	1	0:00	0	S
-Rule	Taiwan	1980	only	-	Jun	30	0:00	1:00	D
-Rule	Taiwan	1980	only	-	Sep	30	0:00	0	S
+Rule	Taiwan	1979	only	-	Jun	30	0:00	1:00	D
+Rule	Taiwan	1979	only	-	Sep	30	0:00	0	S
+
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Taipei	8:06:00 -	LMT	1896 # or Taibei or T'ai-pei
 			8:00	Taiwan	C%sT

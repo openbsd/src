@@ -1,6 +1,6 @@
-# $OpenBSD: leapseconds,v 1.22 2009/07/20 14:12:43 millert Exp $
+# $OpenBSD: leapseconds,v 1.23 2010/08/04 18:08:13 millert Exp $
 # <pre>
-# @(#)leapseconds	8.9
+# @(#)leapseconds	8.10
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -61,9 +61,9 @@ Leap	2008	Dec	31	23:59:60	+	S
 # FAX       : 33 (0) 1 40 51 22 91
 # Internet  : services.iers@obspm.fr
 #
-# Paris, 4 July 2009
+# Paris, 14 July 2010
 #
-# Bulletin C 38
+# Bulletin C 40
 #
 # To authorities responsible
 # for the measurement and
@@ -71,9 +71,9 @@ Leap	2008	Dec	31	23:59:60	+	S
 #
 # INFORMATION ON UTC - TAI
 #
-# NO positive leap second will be introduced at the end of December 2009.
+# NO positive leap second will be introduced at the end of December 2010.
 # The difference between Coordinated Universal Time UTC and the
-# International Atomic Time TAI is :		
+# International Atomic Time TAI is :
 #
 # from 2009 January 1, 0h UTC, until further notice : UTC-TAI = -34 s
 #
@@ -83,6 +83,6 @@ Leap	2008	Dec	31	23:59:60	+	S
 # will be no time step at the next possible date.
 #
 # Daniel GAMBIS
-# Director			
+# Director
 # Earth Orientation Center of IERS
 # Observatoire de Paris, France
