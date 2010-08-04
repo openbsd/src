@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.14 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.15 2010/08/04 16:47:01 sthen Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -425,7 +425,8 @@ ospf_decode_v2(register const struct ospfhdr *op,
 			sep = '/';
 		}
 		TCHECK(op->ospf_db.db_seq);
-		printf(" S %X", (u_int32_t)ntohl(op->ospf_db.db_seq));
+		printf(" mtu %u S %X", ntohs(op->ospf_db.db_mtu),
+		    (u_int32_t)ntohl(op->ospf_db.db_seq));
 
 		if (vflag) {
 			/* Print all the LS adv's */

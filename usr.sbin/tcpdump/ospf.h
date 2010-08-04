@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.9 2007/06/14 03:23:49 reyk Exp $	*/
+/*	$OpenBSD: ospf.h,v 1.10 2010/08/04 16:47:01 sthen Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -193,7 +193,7 @@ struct ospfhdr {
 
 	/* Database Description packet */
 	struct {
-	    u_char db_zero[2];
+	    u_int16_t db_mtu;
 	    u_char db_options;
 	    u_char db_flags;
 	    u_int32_t db_seq;
