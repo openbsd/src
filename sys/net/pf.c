@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.695 2010/07/02 02:40:16 blambert Exp $ */
+/*	$OpenBSD: pf.c,v 1.696 2010/08/05 17:21:19 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1640,7 +1640,7 @@ pf_change_a6(struct pf_addr *a, u_int16_t *c, struct pf_addr *an, u_int8_t u)
 
 int
 pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
-    int *icmp_dir, int *multi, u_int16_t *icmpid, u_int16_t *icmptype)
+    int *icmp_dir, int *multi, u_int16_t *virtual_id, u_int16_t *virtual_type)
 {
 	/*
 	 * ICMP types marked with PF_OUT are typically responses to
@@ -1651,140 +1651,176 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
 	*multi = PF_ICMP_MULTI_LINK;
 
 	/* Queries (and responses) */
-	switch (type) {
-	case ICMP_ECHO:
-		*icmp_dir = PF_IN;
-	case ICMP_ECHOREPLY:
-		*icmptype = ICMP_ECHO;
-		*icmpid = pd->hdr.icmp->icmp_id;
-		break;
+	switch (pd->af) {
+#ifdef INET
+	case AF_INET:
+		switch (type) {
+		case ICMP_ECHO:
+			*icmp_dir = PF_IN;
+		case ICMP_ECHOREPLY:
+			*virtual_type = ICMP_ECHO;
+			*virtual_id = pd->hdr.icmp->icmp_id;
+			break;
 
-	case ICMP_TSTAMP:
-		*icmp_dir = PF_IN;
-	case ICMP_TSTAMPREPLY:
-		*icmptype = ICMP_TSTAMP;
-		*icmpid = pd->hdr.icmp->icmp_id;
-		break;
+		case ICMP_TSTAMP:
+			*icmp_dir = PF_IN;
+		case ICMP_TSTAMPREPLY:
+			*virtual_type = ICMP_TSTAMP;
+			*virtual_id = pd->hdr.icmp->icmp_id;
+			break;
 
-	case ICMP_IREQ:
-		*icmp_dir = PF_IN;
-	case ICMP_IREQREPLY:
-		*icmptype = ICMP_IREQ;
-		*icmpid = pd->hdr.icmp->icmp_id;
-		break;
+		case ICMP_IREQ:
+			*icmp_dir = PF_IN;
+		case ICMP_IREQREPLY:
+			*virtual_type = ICMP_IREQ;
+			*virtual_id = pd->hdr.icmp->icmp_id;
+			break;
 
-	case ICMP_MASKREQ:
-		*icmp_dir = PF_IN;
-	case ICMP_MASKREPLY:
-		*icmptype = ICMP_MASKREQ;
-		*icmpid = pd->hdr.icmp->icmp_id;
-		break;
+		case ICMP_MASKREQ:
+			*icmp_dir = PF_IN;
+		case ICMP_MASKREPLY:
+			*virtual_type = ICMP_MASKREQ;
+			*virtual_id = pd->hdr.icmp->icmp_id;
+			break;
 
-	case ICMP_IPV6_WHEREAREYOU:
-		*icmp_dir = PF_IN;
-	case ICMP_IPV6_IAMHERE:
-		*icmptype = ICMP_IPV6_WHEREAREYOU;
-		*icmpid = 0; /* Nothing sane to match on! */
-		break;
+		case ICMP_IPV6_WHEREAREYOU:
+			*icmp_dir = PF_IN;
+		case ICMP_IPV6_IAMHERE:
+			*virtual_type = ICMP_IPV6_WHEREAREYOU;
+			*virtual_id = 0; /* Nothing sane to match on! */
+			break;
 
-	case ICMP_MOBILE_REGREQUEST:
-		*icmp_dir = PF_IN;
-	case ICMP_MOBILE_REGREPLY:
-		*icmptype = ICMP_MOBILE_REGREQUEST;
-		*icmpid = 0; /* Nothing sane to match on! */
-		break;
+		case ICMP_MOBILE_REGREQUEST:
+			*icmp_dir = PF_IN;
+		case ICMP_MOBILE_REGREPLY:
+			*virtual_type = ICMP_MOBILE_REGREQUEST;
+			*virtual_id = 0; /* Nothing sane to match on! */
+			break;
 
-	case ICMP_ROUTERSOLICIT:
-		*icmp_dir = PF_IN;
-	case ICMP_ROUTERADVERT:
-		*icmptype = ICMP_ROUTERSOLICIT;
-		*icmpid = 0; /* Nothing sane to match on! */
-		break;
+		case ICMP_ROUTERSOLICIT:
+			*icmp_dir = PF_IN;
+		case ICMP_ROUTERADVERT:
+			*virtual_type = ICMP_ROUTERSOLICIT;
+			*virtual_id = 0; /* Nothing sane to match on! */
+			break;
 
+		/* These ICMP types map to other connections */
+		case ICMP_UNREACH:
+		case ICMP_SOURCEQUENCH:
+		case ICMP_REDIRECT:
+		case ICMP_TIMXCEED:
+		case ICMP_PARAMPROB:
+			/* These will not be used, but set them anyway */
+			*icmp_dir = PF_IN;
+			*virtual_type = type;
+			*virtual_id = 0;
+			HTONS(*virtual_type);
+			return (1);  /* These types match to another state */
+
+		/*
+		 * All remaining ICMP types get their own states,
+		 * and will only match in one direction.
+		 */
+		default:
+			*icmp_dir = PF_IN;
+			*virtual_type = type;
+			*virtual_id = 0;
+			break;
+		}
+		break;
+#endif /* INET */
 #ifdef INET6
-	case ICMP6_ECHO_REQUEST:
-		*icmp_dir = PF_IN;
-	case ICMP6_ECHO_REPLY:
-		*icmptype = ICMP6_ECHO_REQUEST;
-		*icmpid = pd->hdr.icmp6->icmp6_id;
+	case AF_INET6:
+		switch (type) {
+		case ICMP6_ECHO_REQUEST:
+			*icmp_dir = PF_IN;
+		case ICMP6_ECHO_REPLY:
+			*virtual_type = ICMP6_ECHO_REQUEST;
+			*virtual_id = pd->hdr.icmp6->icmp6_id;
+			break;
+
+		case MLD_LISTENER_QUERY:
+			*icmp_dir = PF_IN;
+		case MLD_LISTENER_REPORT: {
+			struct mld_hdr *mld = (void *)pd->hdr.icmp6;
+
+			*virtual_type = MLD_LISTENER_QUERY;
+			/* generate fake id for these messages */
+			*virtual_id = (mld->mld_addr.s6_addr32[0] ^
+				mld->mld_addr.s6_addr32[1] ^
+				mld->mld_addr.s6_addr32[2] ^
+				mld->mld_addr.s6_addr32[3]) & 0xffff;
+			break;
+		}
+
+		/*
+		 * ICMP6_FQDN and ICMP6_NI query/reply are the same type as
+		 * ICMP6_WRU
+		 */
+		case ICMP6_WRUREQUEST:
+			*icmp_dir = PF_IN;
+		case ICMP6_WRUREPLY:
+			*virtual_type = ICMP6_WRUREQUEST;
+			*virtual_id = 0; /* Nothing sane to match on! */
+			break;
+
+		case MLD_MTRACE:
+			*icmp_dir = PF_IN;
+		case MLD_MTRACE_RESP:
+			*virtual_type = MLD_MTRACE;
+			*virtual_id = 0; /* Nothing sane to match on! */
+			break;
+
+		case ND_NEIGHBOR_SOLICIT:
+			*icmp_dir = PF_IN;
+		case ND_NEIGHBOR_ADVERT: {
+			struct nd_neighbor_solicit *nd = (void *)pd->hdr.icmp6;
+
+			*virtual_type = ND_NEIGHBOR_SOLICIT;
+			*multi = PF_ICMP_MULTI_SOLICITED;
+			/* generate fake id for these messages */
+			*virtual_id = (nd->nd_ns_target.s6_addr32[0] ^
+				nd->nd_ns_target.s6_addr32[1] ^
+				nd->nd_ns_target.s6_addr32[2] ^
+				nd->nd_ns_target.s6_addr32[3]) & 0xffff;
+			break;
+		}
+
+		/*
+		 * These ICMP types map to other connections.
+		 * ND_REDIRECT can't be in this list because the triggering
+		 * packet header is optional.
+		 */
+		case ICMP6_DST_UNREACH:
+		case ICMP6_PACKET_TOO_BIG:
+		case ICMP6_TIME_EXCEEDED:
+		case ICMP6_PARAM_PROB:
+			/* These will not be used, but set them anyway */
+			*icmp_dir = PF_IN;
+			*virtual_type = type;
+			*virtual_id = 0;
+			HTONS(*virtual_type);
+			return (1);  /* These types match to another state */
+		/*
+		 * All remaining ICMP6 types get their own states,
+		 * and will only match in one direction.
+		 */
+		default:
+			*icmp_dir = PF_IN;
+			*virtual_type = type;
+			*virtual_id = 0;
+			break;
+		}
 		break;
-
-	case MLD_LISTENER_QUERY:
-		*icmp_dir = PF_IN;
-	case MLD_LISTENER_REPORT: {
-		struct mld_hdr *mld = (void *)pd->hdr.icmp6;
-
-		*icmptype = MLD_LISTENER_QUERY;
-		/* generate fake id for these messages */
-		*icmpid = (mld->mld_addr.s6_addr32[0] ^
-			mld->mld_addr.s6_addr32[1] ^
-			mld->mld_addr.s6_addr32[2] ^
-			mld->mld_addr.s6_addr32[3]) & 0xffff;
-		break;
-	}
-
-	/* ICMP6_FQDN and ICMP6_NI query/reply are the same type as ICMP6_WRU */
-	case ICMP6_WRUREQUEST:
-		*icmp_dir = PF_IN;
-	case ICMP6_WRUREPLY:
-		*icmptype = ICMP6_WRUREQUEST;
-		*icmpid = 0; /* Nothing sane to match on! */
-		break;
-
-	case MLD_MTRACE:
-		*icmp_dir = PF_IN;
-	case MLD_MTRACE_RESP:
-		*icmptype = MLD_MTRACE;
-		*icmpid = 0; /* Nothing sane to match on! */
-		break;
-
-	case ND_NEIGHBOR_SOLICIT:
-		*icmp_dir = PF_IN;
-	case ND_NEIGHBOR_ADVERT: {
-		struct nd_neighbor_solicit *nd = (void *)pd->hdr.icmp6;
-
-		*icmptype = ND_NEIGHBOR_SOLICIT;
-		*multi = PF_ICMP_MULTI_SOLICITED;
-		/* generate fake id for these messages */
-		*icmpid = (nd->nd_ns_target.s6_addr32[0] ^
-			nd->nd_ns_target.s6_addr32[1] ^
-			nd->nd_ns_target.s6_addr32[2] ^
-			nd->nd_ns_target.s6_addr32[3]) & 0xffff;
-		break;
-	}
-
 #endif /* INET6 */
-	/* These ICMP types map to other connections */
-	case ICMP_UNREACH:
-	case ICMP_SOURCEQUENCH:
-	case ICMP_REDIRECT:
-	case ICMP_TIMXCEED:
-	case ICMP_PARAMPROB:
-#ifdef INET6
-	/*
-	 * ICMP6_TIME_EXCEEDED is the same type as ICMP_UNREACH
-	 * ND_REDIRECT can't be in this list because the triggering packet
-	 * header is optional.
-	 */
-	case ICMP6_PACKET_TOO_BIG:
-#endif /* INET6 */
-		/* These will not be used, but set them anyways */
-		*icmp_dir = PF_IN;
-		*icmptype = type;
-		*icmpid = 0;
-		return (1);	/* These types are matched to other state */
-	/*
-	 * All remaining ICMP types get their own states,
-	 * and will only match in one direction.
-	 */
 	default:
 		*icmp_dir = PF_IN;
-		*icmptype = type;
-		*icmpid = 0;
+		*virtual_type = type;
+		*virtual_id = 0;
 		break;
 	}
-	HTONS(*icmptype);
-	return (0);
+	HTONS(*virtual_type);
+	return (0);  /* These types match to their own state */
 }
 
 void
@@ -4605,14 +4641,14 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 				if (PF_ANEQ(pd2.src,
 				    &nk->addr[pd2.sidx], pd2.af) ||
-				    (virtual_type == ICMP_ECHO &&
+				    (virtual_type == htons(ICMP_ECHO) &&
 				    nk->port[iidx] != iih.icmp_id))
 					pf_change_icmp(pd2.src,
-					    (virtual_type == ICMP_ECHO) ?
+					    (virtual_type == htons(ICMP_ECHO)) ?
 					    &iih.icmp_id : NULL,
 					    daddr, &nk->addr[pd2.sidx],
-					    (virtual_type == ICMP_ECHO) ?
-					    nk->port[iidx] : NULL, NULL,
+					    (virtual_type == htons(ICMP_ECHO)) ?
+					    nk->port[iidx] : 0, NULL,
 					    pd2.ip_sum, icmpsum,
 					    pd->ip_sum, 0, AF_INET);
 
@@ -4678,14 +4714,17 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 				if (PF_ANEQ(pd2.src,
 				    &nk->addr[pd2.sidx], pd2.af) ||
-			 	    ((virtual_type == ICMP6_ECHO_REQUEST) &&
+			 	    ((virtual_type ==
+				    htons(ICMP6_ECHO_REQUEST)) &&
 				    nk->port[pd2.sidx] != iih.icmp6_id))
 					pf_change_icmp(pd2.src,
-					    (virtual_type == ICMP6_ECHO_REQUEST)
+					    (virtual_type ==
+					    htons(ICMP6_ECHO_REQUEST))
 					    ? &iih.icmp6_id : NULL,
 					    daddr, &nk->addr[pd2.sidx],
-					    (virtual_type == ICMP6_ECHO_REQUEST)
-					    ? nk->port[iidx] : NULL, NULL,
+					    (virtual_type ==
+					    htons(ICMP6_ECHO_REQUEST))
+					    ? nk->port[iidx] : 0, NULL,
 					    pd2.ip_sum, icmpsum,
 					    pd->ip_sum, 0, AF_INET6);
 
