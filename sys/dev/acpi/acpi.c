@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.201 2010/08/05 16:57:03 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.202 2010/08/05 17:00:50 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1977,7 +1977,7 @@ acpi_thread(void *arg)
 	 * so let us enable some events we can forward to userland
 	 */
 	if (sc->sc_interrupt) {
-		int16_t flag;
+		int16_t en;
 
 		dnprintf(1,"slpbtn:%c  pwrbtn:%c\n",
 		    sc->sc_fadt->flags & FADT_SLP_BUTTON ? 'n' : 'y',
@@ -1987,14 +1987,12 @@ acpi_thread(void *arg)
 
 		/* Enable Sleep/Power buttons if they exist */
 		s = spltty();
-		flag = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
-		if (!(sc->sc_fadt->flags & FADT_PWR_BUTTON)) {
-			flag |= ACPI_PM1_PWRBTN_EN;
-		}
-		if (!(sc->sc_fadt->flags & FADT_SLP_BUTTON)) {
-			flag |= ACPI_PM1_SLPBTN_EN;
-		}
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, flag);
+		en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
+		if (!(sc->sc_fadt->flags & FADT_PWR_BUTTON))
+			en |= ACPI_PM1_PWRBTN_EN;
+		if (!(sc->sc_fadt->flags & FADT_SLP_BUTTON))
+			en |= ACPI_PM1_SLPBTN_EN;
+		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
 		splx(s);
 
 		/* Enable handled GPEs here */
