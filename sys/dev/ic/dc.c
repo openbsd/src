@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.115 2010/07/02 15:47:54 blambert Exp $	*/
+/*	$OpenBSD: dc.c,v 1.116 2010/08/05 07:57:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -144,8 +144,6 @@ void dc_tick(void *);
 void dc_tx_underrun(struct dc_softc *);
 void dc_start(struct ifnet *);
 int dc_ioctl(struct ifnet *, u_long, caddr_t);
-void dc_init(void *);
-void dc_stop(struct dc_softc *, int);
 void dc_watchdog(struct ifnet *);
 int dc_ifmedia_upd(struct ifnet *);
 void dc_ifmedia_sts(struct ifnet *, struct ifmediareq *);

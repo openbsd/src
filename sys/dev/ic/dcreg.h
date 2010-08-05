@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.45 2009/08/10 20:29:54 deraadt Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.46 2010/08/05 07:57:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1049,6 +1049,10 @@ struct dc_eblock_reset {
 extern void dc_attach(struct dc_softc *);
 extern int dc_detach(struct dc_softc *);
 extern int dc_intr(void *);
+
+void dc_init(void *);
+void dc_stop(struct dc_softc *, int);
+
 extern void dc_reset(struct dc_softc *);
 extern void dc_eeprom_width(struct dc_softc *);
 extern void dc_read_srom(struct dc_softc *, int);
