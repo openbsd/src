@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.29 2010/08/05 19:23:06 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.30 2010/08/05 20:11:32 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -143,7 +143,7 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		 * _LID method.  0 means the lid is closed and we
 		 * should go to sleep.
 		 */
-		if (acpi_lid_suspend)
+		if (acpi_lid_suspend == 0)
 			break;
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
 		    "_LID", 0, NULL, &lid))
