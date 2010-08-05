@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.112 2010/07/25 21:43:37 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.113 2010/08/05 21:10:09 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -456,7 +456,8 @@ void	vm86_gpfault(struct proc *, int);
 #define CPU_SSE			14	/* supports SSE */
 #define CPU_SSE2		15	/* supports SSE2 */
 #define CPU_XCRYPT		16	/* supports VIA xcrypt in userland */
-#define CPU_MAXID		17	/* number of valid machdep ids */
+#define CPU_LIDSUSPEND		17	/* lid close causes a suspend */
+#define CPU_MAXID		18	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -476,6 +477,7 @@ void	vm86_gpfault(struct proc *, int);
 	{ "sse", CTLTYPE_INT }, \
 	{ "sse2", CTLTYPE_INT }, \
 	{ "xcrypt", CTLTYPE_INT }, \
+	{ "lidsuspend", CTLTYPE_INT }, \
 }
 
 /*

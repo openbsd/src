@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2010/07/25 21:43:38 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 2010/08/05 21:10:10 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -178,6 +178,7 @@ paddr_t lo32_paddr;
 paddr_t tramp_pdirpa;
 
 int kbd_reset;
+int lid_suspend;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -530,6 +531,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 	case CPU_XCRYPT:
 		return (sysctl_rdint(oldp, oldlenp, newp, amd64_has_xcrypt));
+	case CPU_LIDSUSPEND:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &lid_suspend));
 	default:
 		return (EOPNOTSUPP);
 	}
