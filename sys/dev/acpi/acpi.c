@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.200 2010/08/05 16:13:03 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.201 2010/08/05 16:57:03 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1697,10 +1697,10 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	int retries;
 
 	/* Clear WAK_STS bit */
-	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 1, ACPI_PM1_WAK_STS);
+	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, ACPI_PM1_WAK_STS);
 
 	/* Disable BM arbitration */
-	acpi_write_pmreg(sc, ACPIREG_PM2_CNT, 1, ACPI_PM2_ARB_DIS);
+	acpi_write_pmreg(sc, ACPIREG_PM2_CNT, 0, ACPI_PM2_ARB_DIS);
 
 	/* Write SLP_TYPx values */
 	rega = acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, 0);
@@ -1754,7 +1754,7 @@ acpi_resume(struct acpi_softc *sc, int state)
 	acpi_write_pmreg(sc, ACPIREG_PM1_CNT, 0, ACPI_PM1_SCI_EN);
 
 	/* Clear fixed event status */
-	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 1,
+	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 	    ACPI_PM1_ALL_STS);
 
 	if (sc->sc_bfs)
@@ -1923,7 +1923,7 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 		}
 
 	/* Clear fixed event status */
-	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 1,
+	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 	    ACPI_PM1_ALL_STS);
 
 	/* Enable wake GPEs */
