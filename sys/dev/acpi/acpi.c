@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.202 2010/08/05 17:00:50 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.203 2010/08/05 17:26:57 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2030,7 +2030,7 @@ acpi_thread(void *arg)
 
 			sc->sc_powerbtn = 0;
 			dnprintf(1,"power button pressed\n");
-			aml_notify_dev(ACPI_DEV_PBD, 0x80);
+			sc->sc_powerdown = 1;
 
 			/* Reset the latch and re-enable the GPE */
 			s = spltty();
@@ -2059,6 +2059,13 @@ acpi_thread(void *arg)
 		if (sc->sc_poll) {
 			sc->sc_poll = 0;
 			acpi_poll_notify();
+		}
+
+		if (sc->sc_powerdown) {
+			sc->sc_powerdown = 0;
+
+			/* XXX put a knob in front of this */
+			psignal(initproc, SIGUSR2);
 		}
 
 		if (sc->sc_sleepmode) {

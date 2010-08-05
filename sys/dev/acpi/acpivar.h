@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.63 2010/07/20 12:14:10 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.64 2010/08/05 17:26:57 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -209,6 +209,7 @@ struct acpi_softc {
 	int			sc_sleepbtn;
 
 	int			sc_sleepmode;
+	int			sc_powerdown;
 
 	struct {
 		int slp_typa;
