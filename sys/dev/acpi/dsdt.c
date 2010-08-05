@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.177 2010/08/04 18:11:55 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.178 2010/08/05 15:46:20 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1471,6 +1471,7 @@ char *aml_valid_osi[] = {
 	"Windows 2001 SP3",
 	"Windows 2001 SP4",
 	"Windows 2006",
+	"Windows 2009",
 	NULL
 };
 
