@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.308 2010/07/13 23:13:16 djm Exp $ */
+/* $OpenBSD: channels.c,v 1.309 2010/08/05 13:08:42 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1632,13 +1632,14 @@ channel_handle_wfd(Channel *c, fd_set *readset, fd_set *writeset)
 {
 	struct termios tio;
 	u_char *data = NULL, *buf;
-	u_int dlen;
+	u_int dlen, olen = 0;
 	int len;
 
 	/* Send buffered output data to the socket. */
 	if (c->wfd != -1 &&
 	    FD_ISSET(c->wfd, writeset) &&
 	    buffer_len(&c->output) > 0) {
+		olen = buffer_len(&c->output);
 		if (c->output_filter != NULL) {
 			if ((buf = c->output_filter(c, &data, &dlen)) == NULL) {
 				debug2("channel %d: filter stops", c->self);
@@ -1657,7 +1658,6 @@ channel_handle_wfd(Channel *c, fd_set *readset, fd_set *writeset)
 
 		if (c->datagram) {
 			/* ignore truncated writes, datagrams might get lost */
-			c->local_consumed += dlen + 4;
 			len = write(c->wfd, buf, dlen);
 			xfree(data);
 			if (len < 0 && (errno == EINTR || errno == EAGAIN))
@@ -1669,7 +1669,7 @@ channel_handle_wfd(Channel *c, fd_set *readset, fd_set *writeset)
 					chan_write_failed(c);
 				return -1;
 			}
-			return 1;
+			goto out;
 		}
 
 		len = write(c->wfd, buf, dlen);
@@ -1703,10 +1703,10 @@ channel_handle_wfd(Channel *c, fd_set *readset, fd_set *writeset)
 			}
 		}
 		buffer_consume(&c->output, len);
-		if (compat20 && len > 0) {
-			c->local_consumed += len;
-		}
 	}
+ out:
+	if (compat20 && olen > 0)
+		c->local_consumed += olen - buffer_len(&c->output);
 	return 1;
 }
 
@@ -2150,6 +2150,14 @@ channel_output_poll(void)
 
 					data = buffer_get_string(&c->input,
 					    &dlen);
+					if (dlen > c->remote_window ||
+					    dlen > c->remote_maxpacket) {
+						debug("channel %d: datagram "
+						    "too big for channel",
+						    c->self);
+						xfree(data);
+						continue;
+					}
 					packet_start(SSH2_MSG_CHANNEL_DATA);
 					packet_put_int(c->remote_id);
 					packet_put_string(data, dlen);
@@ -2235,7 +2243,7 @@ channel_input_data(int type, u_int32_t seq, void *ctxt)
 {
 	int id;
 	char *data;
-	u_int data_len;
+	u_int data_len, win_len;
 	Channel *c;
 
 	/* Get the channel number and verify it. */
@@ -2251,6 +2259,9 @@ channel_input_data(int type, u_int32_t seq, void *ctxt)
 
 	/* Get the data. */
 	data = packet_get_string_ptr(&data_len);
+	win_len = data_len;
+	if (c->datagram)
+		win_len += 4;  /* string length header */
 
 	/*
 	 * Ignore data for protocol > 1.3 if output end is no longer open.
@@ -2261,23 +2272,23 @@ channel_input_data(int type, u_int32_t seq, void *ctxt)
 	 */
 	if (!compat13 && c->ostate != CHAN_OUTPUT_OPEN) {
 		if (compat20) {
-			c->local_window -= data_len;
-			c->local_consumed += data_len;
+			c->local_window -= win_len;
+			c->local_consumed += win_len;
 		}
 		return;
 	}
 
 	if (compat20) {
-		if (data_len > c->local_maxpacket) {
+		if (win_len > c->local_maxpacket) {
 			logit("channel %d: rcvd big packet %d, maxpack %d",
-			    c->self, data_len, c->local_maxpacket);
+			    c->self, win_len, c->local_maxpacket);
 		}
-		if (data_len > c->local_window) {
+		if (win_len > c->local_window) {
 			logit("channel %d: rcvd too much data %d, win %d",
-			    c->self, data_len, c->local_window);
+			    c->self, win_len, c->local_window);
 			return;
 		}
-		c->local_window -= data_len;
+		c->local_window -= win_len;
 	}
 	if (c->datagram)
 		buffer_put_string(&c->output, data, data_len);
