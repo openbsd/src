@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.23 2010/07/22 14:27:44 deraadt Exp $ */
+/* $OpenBSD: pckbc.c,v 1.24 2010/08/05 13:50:00 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -69,7 +69,7 @@ struct pckbc_slotdata {
 	struct pckbc_devcmd cmds[NCMD];
 };
 
-#define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
+#define CMD_IN_QUEUE(q) (!TAILQ_EMPTY(&(q)->cmdqueue))
 
 void pckbc_init_slotdata(struct pckbc_slotdata *);
 int pckbc_attach_slot(struct pckbc_softc *, pckbc_slot_t);
@@ -796,14 +796,15 @@ pckbc_start(t, slot)
 			if (cmd->status)
 				printf("pckbc_start: command error\n");
 
-			TAILQ_REMOVE(&q->cmdqueue, cmd, next);
-			if (cmd->flags & KBC_CMDFLAG_SYNC)
+			if (cmd->flags & KBC_CMDFLAG_SYNC) {
 				wakeup(cmd);
-			else {
+				cmd = TAILQ_NEXT(cmd, next);
+			} else {
+				TAILQ_REMOVE(&q->cmdqueue, cmd, next);
 				timeout_del(&t->t_cleanup);
 				TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
+				cmd = TAILQ_FIRST(&q->cmdqueue);
 			}
-			cmd = TAILQ_FIRST(&q->cmdqueue);
 		} while (cmd);
 		return;
 	}
@@ -863,14 +864,16 @@ pckbc_cmdresponse(t, slot, data)
 		return (0);
 
 	/* dequeue: */
-	TAILQ_REMOVE(&q->cmdqueue, cmd, next);
-	if (cmd->flags & KBC_CMDFLAG_SYNC)
+	if (cmd->flags & KBC_CMDFLAG_SYNC) {
 		wakeup(cmd);
-	else {
+		cmd = TAILQ_NEXT(cmd, next);
+	} else {
+		TAILQ_REMOVE(&q->cmdqueue, cmd, next);
 		timeout_del(&t->t_cleanup);
 		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
+		cmd = TAILQ_FIRST(&q->cmdqueue);
 	}
-	if (!CMD_IN_QUEUE(q))
+	if (cmd == NULL)
 		return (1);
 restart:
 	pckbc_start(t, slot);
@@ -932,8 +935,10 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 		if ((res = tsleep(nc, 0, "kbccmd", 1*hz))) {
 			TAILQ_REMOVE(&q->cmdqueue, nc, next);
 			pckbc_cleanup(t);
-		} else
+		} else {
+			TAILQ_REMOVE(&q->cmdqueue, nc, next);
 			res = nc->status;
+		}
 	} else
 		timeout_add_sec(&t->t_cleanup, 1);
 
