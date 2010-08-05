@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthidev.h,v 1.3 2008/02/24 21:46:19 uwe Exp $ */
+/*	$OpenBSD: bthidev.h,v 1.4 2010/08/05 13:13:17 miod Exp $ */
 /*	$NetBSD: bthidev.h,v 1.4 2007/11/03 17:41:03 plunky Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ struct bthidev_attach_args {
 	void		(*ba_feature)	/* feature method */
 			(struct bthidev *, uint8_t *, int);
 	int		(*ba_output)	/* output method */
-			(struct bthidev *, uint8_t *, int);
+			(struct bthidev *, uint8_t *, int, int);
 };
 
 #endif /* _KERNEL */

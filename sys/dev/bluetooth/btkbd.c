@@ -1,4 +1,4 @@
-/*	$OpenBSD: btkbd.c,v 1.6 2010/07/31 16:04:50 miod Exp $	*/
+/*	$OpenBSD: btkbd.c,v 1.7 2010/08/05 13:13:17 miod Exp $	*/
 /*	$NetBSD: btkbd.c,v 1.10 2008/09/09 03:54:56 cube Exp $	*/
 
 /*
@@ -90,7 +90,8 @@ struct btkbd_softc {
 	struct bthidev		 sc_hidev;	/* device */
 	struct hidkbd		 sc_kbd;	/* keyboard state */
 	int			(*sc_output)	/* output method */
-				(struct bthidev *, uint8_t *, int);
+				(struct bthidev *, uint8_t *, int, int);
+	int			 sc_inintr;
 };
 
 /* autoconf(9) methods */
@@ -188,7 +189,7 @@ btkbd_set_leds(void *self, int leds)
 	if (hidkbd_set_leds(kbd, leds, &report) != 0) {
 		if (sc->sc_output != NULL)
 			(*sc->sc_output)(&sc->sc_hidev, &report,
-			    sizeof(report));
+			    sizeof(report), sc->sc_inintr);
 	}
 }
 
@@ -216,6 +217,9 @@ btkbd_input(struct bthidev *self, uint8_t *data, int len)
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 	struct hidkbd *kbd = &sc->sc_kbd;
 
-	if (kbd->sc_enabled != 0)
+	if (kbd->sc_enabled != 0) {
+		sc->sc_inintr = 1;
 		hidkbd_input(kbd, data, len);
+		sc->sc_inintr = 0;
+	}
 }
