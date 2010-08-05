@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.45 2010/05/19 15:27:35 oga Exp $ */
+/*	$OpenBSD: sili.c,v 1.46 2010/08/05 20:21:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -221,6 +221,19 @@ sili_detach(struct sili_softc *sc, int flags)
 		sili_ports_free(sc);
 
 	return (0);
+}
+
+void
+sili_resume(struct sili_softc *sc)
+{
+	int i;
+
+	/* bounce the controller */
+	sili_write(sc, SILI_REG_GC, SILI_REG_GC_GR);
+	sili_write(sc, SILI_REG_GC, 0x0);
+
+	for (i = 0; i < sc->sc_nports; i++)
+		sili_ata_probe(sc, i);
 }
 
 u_int32_t

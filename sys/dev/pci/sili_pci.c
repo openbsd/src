@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.10 2009/05/13 08:35:29 jsg Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.11 2010/08/05 20:21:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -37,6 +37,7 @@
 int	sili_pci_match(struct device *, void *, void *);
 void	sili_pci_attach(struct device *, struct device *, void *);
 int	sili_pci_detach(struct device *, int);
+int	sili_pci_activate(struct device *, int);
 
 struct sili_pci_softc {
 	struct sili_softc	psc_sili;
@@ -51,7 +52,8 @@ struct cfattach sili_pci_ca = {
 	sizeof(struct sili_pci_softc),
 	sili_pci_match,
 	sili_pci_attach,
-	sili_pci_detach
+	sili_pci_detach,
+	sili_pci_activate
 };
 
 struct sili_device {
@@ -195,4 +197,23 @@ sili_pci_detach(struct device *self, int flags)
 	}
 
 	return (0);
+}
+
+int
+sili_pci_activate(struct device *self, int act)
+{
+	struct sili_softc		*sc = (struct sili_softc *)self;
+	int				 rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		sili_resume(sc);
+		rv = config_activate_children(self, act);
+		break;
+	}
+
+	return (rv);
 }
