@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.199 2010/08/04 17:35:39 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.200 2010/08/05 16:13:03 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1318,7 +1318,7 @@ acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
 	u_int32_t processed = 0, idx, jdx;
-	u_int8_t sts, en;
+	u_int16_t sts, en;
 
 	dnprintf(40, "ACPI Interrupt\n");
 	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
@@ -2028,7 +2028,7 @@ acpi_thread(void *arg)
 			}
 		}
 		if (sc->sc_powerbtn) {
-			uint8_t en;
+			uint16_t en;
 
 			sc->sc_powerbtn = 0;
 			dnprintf(1,"power button pressed\n");
@@ -2043,7 +2043,7 @@ acpi_thread(void *arg)
 
 		}
 		if (sc->sc_sleepbtn) {
-			uint8_t en;
+			uint16_t en;
 
 			sc->sc_sleepbtn = 0;
 			dnprintf(1,"sleep button pressed\n");
