@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.94 2010/07/14 23:54:14 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.95 2010/08/05 10:22:15 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -28,6 +28,10 @@ Costa Rica:
     http://mirrors.ucr.ac.cr/OpenBSD
     ftp://mirrors.ucr.ac.cr/OpenBSD
 
+Denmark:
+    http://ftp.openbsd.dk/pub/OpenBSD (Aalborg)
+    ftp://ftp.openbsd.dk/pub/OpenBSD (Aalborg)
+
 Estonia:
     http://ftp.aso.ee/pub/OpenBSD (Tallinn)
     ftp://ftp.aso.ee/pub/OpenBSD (Tallinn)
@@ -49,6 +53,8 @@ Germany:
     ftp://openbsd.informatik.uni-erlangen.de/pub/OpenBSD (Erlangen)
     http://ftp.spline.de/pub/OpenBSD (Berlin)
     ftp://ftp.spline.de/pub/OpenBSD (Berlin)
+    http://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
+    ftp://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
     http://ftp.bytemine.net/pub/OpenBSD (Oldenburg)
     ftp://ftp.bytemine.net/pub/OpenBSD (Oldenburg)
     http://ftp.halifax.rwth-aachen.de/openbsd (Aachen)
@@ -93,6 +99,10 @@ Slovenia:
     http://www.obsd.si/pub/OpenBSD (Ljubljana)
     ftp://ftp.obsd.si/pub/OpenBSD (Ljubljana)
 
+South Africa:
+    http://mirror.is.co.za/mirror/ftp.openbsd.org (Johannesburg)
+    ftp://ftp.is.co.za/mirror/ftp.openbsd.org (Johannesburg)
+
 Spain:
     http://ftp.udc.es/OpenBSD (A Coruna)
     ftp://ftp.udc.es/pub/OpenBSD (A Coruna)
@@ -128,6 +138,8 @@ USA:
     ftp://ftp5.usa.openbsd.org/pub/OpenBSD (Redwood City, CA)
     http://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO)
     ftp://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO)
+    http://osmirrors.cerias.purdue.edu/pub/OpenBSD (West Lafayette, IN)
+    ftp://osmirrors.cerias.purdue.edu/pub/OpenBSD (West Lafayette, IN)
     http://mirrors.24-7-solutions.net/pub/OpenBSD (New York, NY)
     ftp://mirrors.24-7-solutions.net/pub/OpenBSD (New York, NY)
     http://openbsd.mirrors.tds.net/pub/OpenBSD (Madison, WI)
@@ -140,6 +152,8 @@ USA:
     ftp://openbsd.mirror.frontiernet.net/pub/OpenBSD (Rochester, NY)
     http://mirror.rit.edu/pub/OpenBSD (Rochester, NY)
     ftp://mirror.rit.edu/pub/OpenBSD (Rochester, NY)
+    http://ftp.lambdaserver.com/pub/OpenBSD (Chicago, Illinois)
+    ftp://ftp.lambdaserver.com/pub/OpenBSD (Chicago, Illinois)
 
 
 Additionally, the file ftp://ftp.OpenBSD.org/pub/OpenBSD/ftplist
