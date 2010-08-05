@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -412,7 +412,7 @@ return ret;
 int
 copy_EncKrbCredPart(const EncKrbCredPart *from, EncKrbCredPart *to)
 {
-if(((&(to)->ticket_info)->val = malloc((&(from)->ticket_info)->len * sizeof(*(&(to)->ticket_info)->val))) == NULL && (&(from)->ticket_info)->len != 0)
+if(((&(to)->ticket_info)->val = calloc((&(from)->ticket_info)->len, sizeof(*(&(to)->ticket_info)->val))) == NULL && (&(from)->ticket_info)->len != 0)
 return ENOMEM;
 for((&(to)->ticket_info)->len = 0; (&(to)->ticket_info)->len < (&(from)->ticket_info)->len; (&(to)->ticket_info)->len++){
 if(copy_KrbCredInfo(&(&(from)->ticket_info)->val[(&(to)->ticket_info)->len], &(&(to)->ticket_info)->val[(&(to)->ticket_info)->len])) return ENOMEM;

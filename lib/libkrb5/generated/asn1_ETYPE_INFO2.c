@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -105,7 +105,7 @@ return ret;
 int
 copy_ETYPE_INFO2(const ETYPE_INFO2 *from, ETYPE_INFO2 *to)
 {
-if(((to)->val = malloc((from)->len * sizeof(*(to)->val))) == NULL && (from)->len != 0)
+if(((to)->val = calloc((from)->len, sizeof(*(to)->val))) == NULL && (from)->len != 0)
 return ENOMEM;
 for((to)->len = 0; (to)->len < (from)->len; (to)->len++){
 if(copy_ETYPE_INFO2_ENTRY(&(from)->val[(to)->len], &(to)->val[(to)->len])) return ENOMEM;

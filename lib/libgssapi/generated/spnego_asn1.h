@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libgssapi/../../kerberosV/src/lib/gssapi/spnego.asn1 */
+/* Generated from /home/src/src/lib/libgssapi/../../kerberosV/src/lib/gssapi/spnego.asn1 */
 /* Do not edit */
 
 #ifndef __spnego_asn1_h__
@@ -6,8 +6,6 @@
 
 #include <stddef.h>
 #include <time.h>
-
-time_t timegm (struct tm*);
 
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__

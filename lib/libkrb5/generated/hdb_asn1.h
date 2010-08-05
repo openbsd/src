@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
 /* Do not edit */
 
 #ifndef __hdb_asn1_h__
@@ -6,8 +6,6 @@
 
 #include <stddef.h>
 #include <time.h>
-
-time_t timegm (struct tm*);
 
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__

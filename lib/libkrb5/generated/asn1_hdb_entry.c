@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -767,7 +767,7 @@ if(copy_Principal((from)->principal, (to)->principal)) return ENOMEM;
 }else
 (to)->principal = NULL;
 *(&(to)->kvno) = *(&(from)->kvno);
-if(((&(to)->keys)->val = malloc((&(from)->keys)->len * sizeof(*(&(to)->keys)->val))) == NULL && (&(from)->keys)->len != 0)
+if(((&(to)->keys)->val = calloc((&(from)->keys)->len, sizeof(*(&(to)->keys)->val))) == NULL && (&(from)->keys)->len != 0)
 return ENOMEM;
 for((&(to)->keys)->len = 0; (&(to)->keys)->len < (&(from)->keys)->len; (&(to)->keys)->len++){
 if(copy_Key(&(&(from)->keys)->val[(&(to)->keys)->len], &(&(to)->keys)->val[(&(to)->keys)->len])) return ENOMEM;
@@ -813,7 +813,7 @@ if(copy_HDBFlags(&(from)->flags, &(to)->flags)) return ENOMEM;
 if((from)->etypes) {
 (to)->etypes = malloc(sizeof(*(to)->etypes));
 if((to)->etypes == NULL) return ENOMEM;
-if((((to)->etypes)->val = malloc(((from)->etypes)->len * sizeof(*((to)->etypes)->val))) == NULL && ((from)->etypes)->len != 0)
+if((((to)->etypes)->val = calloc(((from)->etypes)->len, sizeof(*((to)->etypes)->val))) == NULL && ((from)->etypes)->len != 0)
 return ENOMEM;
 for(((to)->etypes)->len = 0; ((to)->etypes)->len < ((from)->etypes)->len; ((to)->etypes)->len++){
 *(&((to)->etypes)->val[((to)->etypes)->len]) = *(&((from)->etypes)->val[((to)->etypes)->len]);

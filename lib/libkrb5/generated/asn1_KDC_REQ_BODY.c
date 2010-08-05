@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -746,7 +746,7 @@ if(copy_KerberosTime((from)->rtime, (to)->rtime)) return ENOMEM;
 }else
 (to)->rtime = NULL;
 *(&(to)->nonce) = *(&(from)->nonce);
-if(((&(to)->etype)->val = malloc((&(from)->etype)->len * sizeof(*(&(to)->etype)->val))) == NULL && (&(from)->etype)->len != 0)
+if(((&(to)->etype)->val = calloc((&(from)->etype)->len, sizeof(*(&(to)->etype)->val))) == NULL && (&(from)->etype)->len != 0)
 return ENOMEM;
 for((&(to)->etype)->len = 0; (&(to)->etype)->len < (&(from)->etype)->len; (&(to)->etype)->len++){
 if(copy_ENCTYPE(&(&(from)->etype)->val[(&(to)->etype)->len], &(&(to)->etype)->val[(&(to)->etype)->len])) return ENOMEM;
@@ -766,7 +766,7 @@ if(copy_EncryptedData((from)->enc_authorization_data, (to)->enc_authorization_da
 if((from)->additional_tickets) {
 (to)->additional_tickets = malloc(sizeof(*(to)->additional_tickets));
 if((to)->additional_tickets == NULL) return ENOMEM;
-if((((to)->additional_tickets)->val = malloc(((from)->additional_tickets)->len * sizeof(*((to)->additional_tickets)->val))) == NULL && ((from)->additional_tickets)->len != 0)
+if((((to)->additional_tickets)->val = calloc(((from)->additional_tickets)->len, sizeof(*((to)->additional_tickets)->val))) == NULL && ((from)->additional_tickets)->len != 0)
 return ENOMEM;
 for(((to)->additional_tickets)->len = 0; ((to)->additional_tickets)->len < ((from)->additional_tickets)->len; ((to)->additional_tickets)->len++){
 if(copy_Ticket(&((from)->additional_tickets)->val[((to)->additional_tickets)->len], &((to)->additional_tickets)->val[((to)->additional_tickets)->len])) return ENOMEM;

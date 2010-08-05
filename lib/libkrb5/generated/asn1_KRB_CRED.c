@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -296,7 +296,7 @@ copy_KRB_CRED(const KRB_CRED *from, KRB_CRED *to)
 {
 *(&(to)->pvno) = *(&(from)->pvno);
 if(copy_MESSAGE_TYPE(&(from)->msg_type, &(to)->msg_type)) return ENOMEM;
-if(((&(to)->tickets)->val = malloc((&(from)->tickets)->len * sizeof(*(&(to)->tickets)->val))) == NULL && (&(from)->tickets)->len != 0)
+if(((&(to)->tickets)->val = calloc((&(from)->tickets)->len, sizeof(*(&(to)->tickets)->val))) == NULL && (&(from)->tickets)->len != 0)
 return ENOMEM;
 for((&(to)->tickets)->len = 0; (&(to)->tickets)->len < (&(from)->tickets)->len; (&(to)->tickets)->len++){
 if(copy_Ticket(&(&(from)->tickets)->val[(&(to)->tickets)->len], &(&(to)->tickets)->val[(&(to)->tickets)->len])) return ENOMEM;

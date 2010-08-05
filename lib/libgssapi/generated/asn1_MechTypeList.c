@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libgssapi/../../kerberosV/src/lib/gssapi/spnego.asn1 */
+/* Generated from /home/src/src/lib/libgssapi/../../kerberosV/src/lib/gssapi/spnego.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -105,7 +105,7 @@ return ret;
 int
 copy_MechTypeList(const MechTypeList *from, MechTypeList *to)
 {
-if(((to)->val = malloc((from)->len * sizeof(*(to)->val))) == NULL && (from)->len != 0)
+if(((to)->val = calloc((from)->len, sizeof(*(to)->val))) == NULL && (from)->len != 0)
 return ENOMEM;
 for((to)->len = 0; (to)->len < (from)->len; (to)->len++){
 if(copy_MechType(&(from)->val[(to)->len], &(to)->val[(to)->len])) return ENOMEM;

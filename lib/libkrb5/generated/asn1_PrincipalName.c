@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -198,7 +198,7 @@ int
 copy_PrincipalName(const PrincipalName *from, PrincipalName *to)
 {
 if(copy_NAME_TYPE(&(from)->name_type, &(to)->name_type)) return ENOMEM;
-if(((&(to)->name_string)->val = malloc((&(from)->name_string)->len * sizeof(*(&(to)->name_string)->val))) == NULL && (&(from)->name_string)->len != 0)
+if(((&(to)->name_string)->val = calloc((&(from)->name_string)->len, sizeof(*(&(to)->name_string)->val))) == NULL && (&(from)->name_string)->len != 0)
 return ENOMEM;
 for((&(to)->name_string)->len = 0; (&(to)->name_string)->len < (&(from)->name_string)->len; (&(to)->name_string)->len++){
 if(copy_general_string(&(&(from)->name_string)->val[(&(to)->name_string)->len], &(&(to)->name_string)->val[(&(to)->name_string)->len])) return ENOMEM;

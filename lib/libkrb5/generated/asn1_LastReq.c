@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -197,7 +197,7 @@ return ret;
 int
 copy_LastReq(const LastReq *from, LastReq *to)
 {
-if(((to)->val = malloc((from)->len * sizeof(*(to)->val))) == NULL && (from)->len != 0)
+if(((to)->val = calloc((from)->len, sizeof(*(to)->val))) == NULL && (from)->len != 0)
 return ENOMEM;
 for((to)->len = 0; (to)->len < (from)->len; (to)->len++){
 if(copy_LR_TYPE(&(&(from)->val[(to)->len])->lr_type, &(&(to)->val[(to)->len])->lr_type)) return ENOMEM;

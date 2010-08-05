@@ -1,4 +1,4 @@
-/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/src/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -198,7 +198,7 @@ int
 copy_PA_SAM_CHALLENGE_2(const PA_SAM_CHALLENGE_2 *from, PA_SAM_CHALLENGE_2 *to)
 {
 if(copy_PA_SAM_CHALLENGE_2_BODY(&(from)->sam_body, &(to)->sam_body)) return ENOMEM;
-if(((&(to)->sam_cksum)->val = malloc((&(from)->sam_cksum)->len * sizeof(*(&(to)->sam_cksum)->val))) == NULL && (&(from)->sam_cksum)->len != 0)
+if(((&(to)->sam_cksum)->val = calloc((&(from)->sam_cksum)->len, sizeof(*(&(to)->sam_cksum)->val))) == NULL && (&(from)->sam_cksum)->len != 0)
 return ENOMEM;
 for((&(to)->sam_cksum)->len = 0; (&(to)->sam_cksum)->len < (&(from)->sam_cksum)->len; (&(to)->sam_cksum)->len++){
 if(copy_Checksum(&(&(from)->sam_cksum)->val[(&(to)->sam_cksum)->len], &(&(to)->sam_cksum)->val[(&(to)->sam_cksum)->len])) return ENOMEM;
