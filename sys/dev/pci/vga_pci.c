@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.60 2010/08/04 23:23:36 deraadt Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.61 2010/08/06 18:32:38 marco Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -178,6 +178,11 @@ static const struct vga_device_description vga_devs[] = {
 	{	/* Thinkpad T510 (and similar models) */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
 	    	0x17aa, 0x215a },
+	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
+	},
+	{	/* HP G62 (and similar models) */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
+	    	0x103c, 0x1425 },
 	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
 	},
 
