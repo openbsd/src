@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.316 2010/08/03 21:53:02 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.317 2010/08/06 02:47:27 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1450,6 +1450,7 @@ pciide_activate(struct device *self, int act)
 			    sc->sc_save[i]);
 
 		if (sc->sc_pp->chip_map == default_chip_map ||
+		    sc->sc_pp->chip_map == sata_chip_map ||
 		    sc->sc_pp->chip_map == piix_chip_map ||
 		    sc->sc_pp->chip_map == phison_chip_map ||
 		    sc->sc_pp->chip_map == ixp_chip_map ||
