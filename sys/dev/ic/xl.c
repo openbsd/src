@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.89 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: xl.c,v 1.90 2010/08/06 02:45:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -161,8 +161,6 @@ int xl_intr(void *);
 void xl_start(struct ifnet *);
 void xl_start_90xB(struct ifnet *);
 int xl_ioctl(struct ifnet *, u_long, caddr_t);
-void xl_init(void *);
-void xl_stop(struct xl_softc *);
 void xl_freetxrx(struct xl_softc *);
 void xl_watchdog(struct ifnet *);
 void xl_shutdown(void *);
