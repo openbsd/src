@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.176 2010/08/06 00:08:49 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.177 2010/08/06 04:43:20 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1411,6 +1411,8 @@ azalia_resume_codec(codec_t *this)
 		}
 		if (w->type == COP_AWTYPE_PIN_COMPLEX)
 			azalia_widget_init_pin(w, this);
+		if (this->qrks & AZ_QRK_WID_MASK)
+			azalia_codec_widget_quirks(this, w->nid);
 	}
 
 	if (this->qrks & AZ_QRK_GPIO_MASK) {
