@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.204 2010/08/06 14:20:14 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.205 2010/08/06 21:12:27 marco Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1809,6 +1809,9 @@ acpi_resume(struct acpi_softc *sc, int state)
 		}
 	}
 
+	/* disable _LID for wakeup */
+	acpibtn_disable_psw();
+
 	/* Reset the indicator lights to "working" */
 	if (sc->sc_sst) {
 		env.v_integer = ACPI_SST_WORKING;
@@ -1849,6 +1852,9 @@ acpi_handle_suspend_failure(struct acpi_softc *sc)
 			    DEVNAME(sc));
 		}
 	}
+
+	/* disable _LID for wakeup */
+	acpibtn_disable_psw();
 
 	/* Reset the indicator lights to "working" */
 	if (sc->sc_sst) {
@@ -1918,6 +1924,9 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			error = ENXIO;
 			goto fail;
 		}
+
+	/* enable _LID for wakeup */
+	acpibtn_enable_psw();
 
 	/* Reset the indicator lights to "sleeping" */
 	if (sc->sc_sst) {
