@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.142 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: com.c,v 1.143 2010/08/06 21:04:14 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -564,6 +564,110 @@ compwroff(struct com_softc *sc)
 		break;
 #endif
 	}
+}
+
+void
+com_resume(struct com_softc *sc)
+{
+	struct tty *tp = sc->sc_tty;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int ospeed;
+
+	if (!tp || !ISSET(tp->t_state, TS_ISOPEN))
+		return;
+
+	/*
+	 * Wake up the sleepy heads.
+	 */
+	switch (sc->sc_uarttype) {
+	case COM_UART_ST16650:
+	case COM_UART_ST16650V2:
+		bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
+		bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
+		bus_space_write_1(iot, ioh, com_ier, 0);
+		bus_space_write_1(iot, ioh, com_efr, 0);
+		bus_space_write_1(iot, ioh, com_lcr, 0);
+		break;
+	case COM_UART_TI16750:
+		bus_space_write_1(iot, ioh, com_ier, 0);
+		break;
+	case COM_UART_PXA2X0:
+		bus_space_write_1(iot, ioh, com_ier, IER_EUART);
+		break;
+	}
+
+	ospeed = comspeed(sc->sc_frequency, tp->t_ospeed);
+
+	if (ospeed != 0) {
+		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr | LCR_DLAB);
+		bus_space_write_1(iot, ioh, com_dlbl, ospeed);
+		bus_space_write_1(iot, ioh, com_dlbh, ospeed >> 8);
+		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
+	} else {
+		bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
+	}
+
+	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+		u_int8_t fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST;
+		u_int8_t lcr;
+
+		if (tp->t_ispeed <= 1200)
+			fifo |= FIFO_TRIGGER_1;
+		else if (tp->t_ispeed <= 38400)
+			fifo |= FIFO_TRIGGER_4;
+		else
+			fifo |= FIFO_TRIGGER_8;
+		if (sc->sc_uarttype == COM_UART_TI16750) {
+			fifo |= FIFO_ENABLE_64BYTE;
+			lcr = bus_space_read_1(iot, ioh, com_lcr);
+			bus_space_write_1(iot, ioh, com_lcr,
+			    lcr | LCR_DLAB);
+		}
+
+		/*
+		 * (Re)enable and drain FIFOs.
+		 *
+		 * Certain SMC chips cause problems if the FIFOs are
+		 * enabled while input is ready. Turn off the FIFO
+		 * if necessary to clear the input. Test the input
+		 * ready bit after enabling the FIFOs to handle races
+		 * between enabling and fresh input.
+		 *
+		 * Set the FIFO threshold based on the receive speed.
+		 */
+		for (;;) {
+			bus_space_write_1(iot, ioh, com_fifo, 0);
+			delay(100);
+			(void) bus_space_read_1(iot, ioh, com_data);
+			bus_space_write_1(iot, ioh, com_fifo, fifo |
+			    FIFO_RCV_RST | FIFO_XMT_RST);
+			delay(100);
+			if(!ISSET(bus_space_read_1(iot, ioh,
+			    com_lsr), LSR_RXRDY))
+				break;
+		}
+		if (sc->sc_uarttype == COM_UART_TI16750)
+			bus_space_write_1(iot, ioh, com_lcr, lcr);
+	}
+
+	/* Flush any pending I/O. */
+	while (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
+		(void) bus_space_read_1(iot, ioh, com_data);
+
+	/* You turn me on, baby! */
+	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+
+#ifdef COM_PXA2X0
+	if (sc->sc_uarttype == COM_UART_PXA2X0 &&
+	    ISSET(sc->sc_hwflags, COM_HW_SIR)) {
+		bus_space_write_1(iot, ioh, com_isr, ISR_RECV);
+#ifdef __zaurus__
+		scoop_set_irled(1);
+#endif
+	}
+#endif
 }
 
 void

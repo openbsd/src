@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.17 2010/06/26 23:24:45 guenther Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.18 2010/08/06 21:07:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -54,12 +54,14 @@
 
 #define	com_lcr		com_cfcr
 
-int com_puc_match(struct device *, void *, void *);
-void com_puc_attach(struct device *, struct device *, void *);
-int com_puc_detach(struct device *, int );
+int	com_puc_match(struct device *, void *, void *);
+void	com_puc_attach(struct device *, struct device *, void *);
+int	com_puc_detach(struct device *, int);
+int	com_puc_activate(struct device *, int);
 
 struct cfattach com_puc_ca = {
-	sizeof(struct com_softc), com_puc_match, com_puc_attach, com_puc_detach
+	sizeof(struct com_softc), com_puc_match,
+	com_puc_attach, com_puc_detach, com_puc_activate
 };
 
 int
@@ -117,4 +119,20 @@ int
 com_puc_detach(struct device *self, int flags)
 {
 	return com_detach(self, flags);
+}
+
+int
+com_puc_activate(struct device *self, int act)
+{
+	struct com_softc *sc = (struct com_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		com_resume(sc);
+		break;
+	}
+
+	return (0);
 }

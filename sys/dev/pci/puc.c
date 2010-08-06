@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.17 2010/07/22 17:16:10 pirofti Exp $	*/
+/*	$OpenBSD: puc.c,v 1.18 2010/08/06 21:04:14 kettenis Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ void	*puc_pci_intr_establish(struct puc_attach_args *, int,
 
 struct cfattach puc_pci_ca = {
 	sizeof(struct puc_pci_softc), puc_pci_match,
-	puc_pci_attach, puc_pci_detach
+	puc_pci_attach, puc_pci_detach, config_activate_children
 };
 
 struct cfdriver puc_cd = {
