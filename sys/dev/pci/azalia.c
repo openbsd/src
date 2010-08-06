@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.177 2010/08/06 04:43:20 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.178 2010/08/06 05:34:50 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1483,6 +1483,8 @@ azalia_save_mixer(codec_t *this)
 
 	for (i = 0; i < this->nmixers; i++) {
 		m = &this->mixers[i];
+		if (m->nid == this->playvols.master)
+			continue;
 		mc.dev = i;
 		mc.type = m->devinfo.type;
 		azalia_mixer_get(this, m->nid, m->target, &mc);
@@ -1515,6 +1517,8 @@ azalia_restore_mixer(codec_t *this)
 
 	for (i = 0; i < this->nmixers; i++) {
 		m = &this->mixers[i];
+		if (m->nid == this->playvols.master)
+			continue;
 		mc.dev = i;
 		mc.type = m->devinfo.type;
 		switch (mc.type) {
