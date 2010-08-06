@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.90 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.91 2010/08/06 03:02:24 mlarkin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -69,6 +69,7 @@
 
 int	nfe_match(struct device *, void *, void *);
 void	nfe_attach(struct device *, struct device *, void *);
+int	nfe_activate(struct device *, int);
 void	nfe_power(int, void *);
 void	nfe_miibus_statchg(struct device *);
 int	nfe_miibus_readreg(struct device *, int, int);
@@ -106,7 +107,8 @@ void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
 void	nfe_tick(void *);
 
 struct cfattach nfe_ca = {
-	sizeof (struct nfe_softc), nfe_match, nfe_attach
+	sizeof (struct nfe_softc), nfe_match, nfe_attach, NULL,
+	nfe_activate
 };
 
 struct cfdriver nfe_cd = {
@@ -171,6 +173,28 @@ nfe_match(struct device *dev, void *match, void *aux)
 	return pci_matchbyid((struct pci_attach_args *)aux, nfe_devices,
 	    sizeof (nfe_devices) / sizeof (nfe_devices[0]));
 }
+
+int
+nfe_activate(struct device *self, int act)
+{
+	struct nfe_softc *sc = (struct nfe_softc *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			nfe_stop(ifp, 0);
+		config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			nfe_init(ifp);
+		break;
+	}
+	return (0);
+}
+
 
 void
 nfe_attach(struct device *parent, struct device *self, void *aux)
