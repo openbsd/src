@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.98 2010/05/19 15:27:35 oga Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.99 2010/08/06 05:24:16 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -104,9 +104,11 @@
 
 int sis_probe(struct device *, void *, void *);
 void sis_attach(struct device *, struct device *, void *);
+int sis_activate(struct device *, int);
 
 struct cfattach sis_ca = {
-	sizeof(struct sis_softc), sis_probe, sis_attach
+	sizeof(struct sis_softc), sis_probe, sis_attach, NULL,
+	sis_activate
 };
 
 struct cfdriver sis_cd = {
@@ -1149,6 +1151,27 @@ fail_2:
 
 fail_1:
 	bus_space_unmap(sc->sis_btag, sc->sis_bhandle, size);
+}
+
+int
+sis_activate(struct device *self, int act)
+{
+	struct sis_softc *sc = (struct sis_softc *)self;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			sis_stop(sc);
+		config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			sis_init(sc);
+		break;
+	}
+	return (0);
 }
 
 /*
