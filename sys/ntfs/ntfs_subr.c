@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.18 2009/08/13 16:00:53 jasper Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.19 2010/08/06 00:00:41 miod Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1517,9 +1517,11 @@ ntfs_writentvattr_plain(
 					return (error);
 				}
 			}
-			if (uio)
-				uiomove(bp->b_data + off, tocopy, uio);
-			else
+			if (uio) {
+				error = uiomove(bp->b_data + off, tocopy, uio);
+				if (error != 0)
+					break;
+			} else
 				memcpy(bp->b_data + off, data, tocopy);
 			bawrite(bp);
 			data = data + tocopy;
@@ -1531,7 +1533,7 @@ ntfs_writentvattr_plain(
 		}
 	}
 
-	if (left) {
+	if (left && error == 0) {
 		printf("ntfs_writentvattr_plain: POSSIBLE RUN ERROR\n");
 		error = EINVAL;
 	}
@@ -1624,8 +1626,10 @@ ntfs_readntvattr_plain(
 						return (error);
 					}
 					if (uio) {
-						uiomove(bp->b_data + off,
+						error = uiomove(bp->b_data + off,
 							tocopy, uio);
+						if (error != 0)
+							break;
 					} else {
 						memcpy(data, bp->b_data + off,
 							tocopy);
@@ -1650,22 +1654,27 @@ ntfs_readntvattr_plain(
 				off = 0;
 				if (uio) {
 					size_t remains = tocopy;
-					for(; remains; remains--)
-						uiomove("", 1, uio);
+					for(; remains; remains--) {
+						error = uiomove("", 1, uio);
+						if (error != 0)
+							break;
+					}
 				} else 
 					bzero(data, tocopy);
 				data = data + tocopy;
 			}
 			cnt++;
+			if (error != 0)
+				break;
 		}
-		if (left) {
+		if (left && error == 0) {
 			printf("ntfs_readntvattr_plain: POSSIBLE RUN ERROR\n");
 			error = E2BIG;
 		}
 	} else {
 		ddprintf(("ntfs_readnvattr_plain: data is in mft record\n"));
 		if (uio) 
-			uiomove(vap->va_datap + roff, rsize, uio);
+			error = uiomove(vap->va_datap + roff, rsize, uio);
 		else
 			memcpy(rdata, vap->va_datap + roff, rsize);
 		*initp += rsize;
@@ -1792,14 +1801,17 @@ ntfs_readattr(
 
 			if (init == ntfs_cntob(NTFS_COMPUNIT_CL)) {
 				if (uio)
-					uiomove(cup + off, tocopy, uio);
+					error = uiomove(cup + off, tocopy, uio);
 				else
 					memcpy(data, cup + off, tocopy);
 			} else if (init == 0) {
 				if (uio) {
 					size_t remains = tocopy;
-					for(; remains; remains--)
-						uiomove("", 1, uio);
+					for(; remains; remains--) {
+						error = uiomove("", 1, uio);
+						if (error != 0)
+							break;
+					}
 				}
 				else
 					bzero(data, tocopy);
@@ -1808,10 +1820,12 @@ ntfs_readattr(
 				if (error)
 					break;
 				if (uio)
-					uiomove(uup + off, tocopy, uio);
+					error = uiomove(uup + off, tocopy, uio);
 				else
 					memcpy(data, uup + off, tocopy);
 			}
+			if (error)
+				break;
 
 			left -= tocopy;
 			data = data + tocopy;

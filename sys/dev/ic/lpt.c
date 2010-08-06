@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.6 2010/06/26 23:24:44 guenther Exp $ */
+/*	$OpenBSD: lpt.c,v 1.7 2010/08/06 00:00:41 miod Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -373,7 +373,9 @@ lptwrite(dev, uio, flags)
 	int error = 0;
 
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
-		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
+		error = uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
+		if (error != 0)
+			return error;
 		sc->sc_count = n;
 		error = lptpushbytes(sc);
 		if (error) {

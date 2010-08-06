@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.50 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.51 2010/08/06 00:00:41 miod Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -464,7 +464,9 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 				if (pti->pt_send & TIOCPKT_IOCTL) {
 					cc = MIN(uio->uio_resid,
 						sizeof(tp->t_termios));
-					uiomove(&tp->t_termios, cc, uio);
+					error = uiomove(&tp->t_termios, cc, uio);
+					if (error)
+						return (error);
 				}
 				pti->pt_send = 0;
 				return (0);
