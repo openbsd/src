@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.66 2010/07/27 21:56:11 todd Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.67 2010/08/06 13:09:52 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -80,6 +80,7 @@ struct agp_i810_softc {
 	struct agp_gatt		*gatt;
 	struct vga_pci_bar	*map;
 	struct vga_pci_bar	*gtt_map;
+	u_int32_t		*gtt_backup;	/* saved gtt for suspend */
 	bus_dmamap_t		 scrib_dmamap;
 	bus_addr_t		 isc_apaddr;
 	bus_size_t		 isc_apsize;	/* current aperture size */
@@ -298,6 +299,14 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		goto out;
 	}
 
+	/*
+	 * Backup array to save gtt contents on suspend since we may lose
+	 * BAR contents. Most agp drivers do not have this problem since the
+	 * GTT ptes are in dma memory.
+	 */
+	isc->gtt_backup = malloc(sizeof(*isc->gtt_backup) *
+	    (isc->isc_apsize / 4096), M_AGP, M_NOWAIT | M_ZERO); 
+
 	switch (isc->chiptype) {
 	case CHIP_I810:
 		/* Some i810s have on-chip memory called dcache */
@@ -510,10 +519,55 @@ int
 agp_i810_activate(struct device *arg, int act)
 {
 	struct agp_i810_softc *isc = (struct agp_i810_softc *)arg;
+	bus_space_tag_t bst = isc->map->bst;
+	bus_space_handle_t bsh = isc->map->bsh;
+	bus_size_t offset;
+
+	if (isc->chiptype == CHIP_I915 ||
+	    isc->chiptype == CHIP_G33 ||
+	    isc->chiptype == CHIP_PINEVIEW) {
+		bst = isc->gtt_map->bst;
+		bsh = isc->gtt_map->bsh;
+	}
+
+	switch(isc->chiptype) {
+	case CHIP_I915:
+	case CHIP_G33:
+	case CHIP_PINEVIEW:
+		offset = 0;
+		break;
+	case CHIP_I965:
+		offset = AGP_I965_GTT;
+		break;
+	case CHIP_G4X:
+	case CHIP_IRONLAKE:
+		offset = AGP_G4X_GTT;
+		break;
+	default:
+		offset = AGP_I810_GTT;
+		break;
+	}
 
 	switch (act) {
+	case DVACT_SUSPEND:
+		/*
+		 * most agp-like drivers have the GTT ptes in dma memory, so
+		 * just need the setup to be repeated on resume.
+		 * in this case the gtt is held in a BAR, and thus we should
+		 * restore the data on resume to make sure that we
+		 * don't lose any state that we are depending on.
+		 */
+		if (isc->gtt_backup != NULL) {
+			bus_space_read_region_4(bst, bsh, offset,
+			    isc->gtt_backup, isc->isc_apsize / 4096);
+		}
+		break;
 	case DVACT_RESUME:
 		agp_i810_configure(isc);
+		if (isc->gtt_backup != NULL) {
+			bus_space_write_region_4(bst, bsh, offset,
+			    isc->gtt_backup, isc->isc_apsize / 4096);
+		}
 		break;
 	}
 
