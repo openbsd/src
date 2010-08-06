@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.178 2010/08/06 05:34:50 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.179 2010/08/06 05:57:48 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1451,6 +1451,9 @@ azalia_resume(azalia_t *az)
 	err = azalia_init(az, 1);
 	if (err)
 		return err;
+
+	/* enable unsolicited responses on the controller */
+	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) | HDA_GCTL_UNSOL);
 
 	err = azalia_resume_codec(&az->codecs[az->codecno]);
 	if (err)
