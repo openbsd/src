@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.203 2010/08/05 17:26:57 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.204 2010/08/06 14:20:14 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1354,16 +1354,30 @@ acpi_interrupt(void *arg)
 	en  = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 	if (sts & en) {
 		dnprintf(10,"GEN interrupt: %.4x\n", sts & en);
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en & ~sts);
+		sts &= en;
 		if (sts & ACPI_PM1_PWRBTN_STS) {
+			/* Mask and acknowledge */
+			en &= ~ACPI_PM1_PWRBTN_EN;
+			acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
 			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 			    ACPI_PM1_PWRBTN_STS);
+			sts &= ~ACPI_PM1_PWRBTN_STS;
 			sc->sc_powerbtn = 1;
 		}
 		if (sts & ACPI_PM1_SLPBTN_STS) {
+			/* Mask and acknowledge */
+			en &= ~ACPI_PM1_SLPBTN_EN;
+			acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
 			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 			    ACPI_PM1_SLPBTN_STS);
+			sts &= ~ACPI_PM1_SLPBTN_STS;
 			sc->sc_sleepbtn = 1;
+		}
+		if (sts) {
+			printf("%s: PM1 stuck (en 0x%x st 0x%x), clearing\n",
+			    sc->sc_dev.dv_xname, en, sts);
+			acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en & ~sts);
+			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, sts);
 		}
 		processed = 1;
 	}
