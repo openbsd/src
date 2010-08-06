@@ -247,6 +247,11 @@ struct inteldrm_softc {
 	u32 saveCACHE_MODE_0;
 	u32 saveD_STATE;
 	u32 saveDSPCLK_GATE_D;
+	u32 saveDSPCLK_GATE;
+	u32 saveRENCLK_GATE_D1;
+	u32 saveRENCLK_GATE_D2;
+	u32 saveRAMCLK_GATE_D;
+	u32 saveDEUC;
 	u32 saveMI_ARB_STATE;
 	u32 saveSWF0[16];
 	u32 saveSWF1[16];

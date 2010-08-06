@@ -5633,6 +5633,32 @@ inteldrm_save_state(struct inteldrm_softc *dev_priv)
 		dev_priv->saveIMR = I915_READ(IMR);
 	}
 
+	/* Clock gating state */
+	if (IS_IRONLAKE(dev_priv)) {
+		dev_priv->saveDSPCLK_GATE_D = I915_READ(PCH_DSPCLK_GATE_D);
+		dev_priv->saveDSPCLK_GATE = I915_READ(ILK_DSPCLK_GATE);
+	} else if (IS_G4X(dev_priv)) {
+		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
+		dev_priv->saveRENCLK_GATE_D2 = I915_READ(RENCLK_GATE_D2);
+		dev_priv->saveRAMCLK_GATE_D = I915_READ(RAMCLK_GATE_D);
+		dev_priv->saveDSPCLK_GATE_D = I915_READ(DSPCLK_GATE_D);
+	} else if (IS_I965GM(dev_priv)) {
+		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
+		dev_priv->saveRENCLK_GATE_D2 = I915_READ(RENCLK_GATE_D2);
+		dev_priv->saveDSPCLK_GATE_D = I915_READ(DSPCLK_GATE_D);
+		dev_priv->saveRAMCLK_GATE_D = I915_READ(RAMCLK_GATE_D);
+		dev_priv->saveDEUC = I915_READ16(DEUC);
+	} else if (IS_I965G(dev_priv)) {
+		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
+		dev_priv->saveRENCLK_GATE_D2 = I915_READ(RENCLK_GATE_D2);
+	} else if (IS_I9XX(dev_priv)) {
+		dev_priv->saveD_STATE = I915_READ(D_STATE);
+	} else if (IS_I85X(dev_priv) || IS_I865G(dev_priv)) {
+		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
+	} else if (IS_I830(dev_priv)) {
+		dev_priv->saveDSPCLK_GATE_D = I915_READ(DSPCLK_GATE_D);
+	}
+
 	/* Cache mode state */
 	dev_priv->saveCACHE_MODE_0 = I915_READ(CACHE_MODE_0);
 
@@ -5704,8 +5730,30 @@ inteldrm_restore_state(struct inteldrm_softc *dev_priv)
 	}
 
 	/* Clock gating state */
-	I915_WRITE (D_STATE, dev_priv->saveD_STATE);
-	I915_WRITE (DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
+	if (IS_IRONLAKE(dev_priv)) {
+		I915_WRITE(PCH_DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
+		I915_WRITE(ILK_DSPCLK_GATE, dev_priv->saveDSPCLK_GATE);
+	} if (IS_G4X(dev_priv)) {
+		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
+		I915_WRITE(RENCLK_GATE_D2, dev_priv->saveRENCLK_GATE_D2);
+		I915_WRITE(RAMCLK_GATE_D, dev_priv->saveRAMCLK_GATE_D);
+		I915_WRITE(DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
+	} else if (IS_I965GM(dev_priv)) {
+		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
+		I915_WRITE(RENCLK_GATE_D2, dev_priv->saveRENCLK_GATE_D2);
+		I915_WRITE(DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
+		I915_WRITE(RAMCLK_GATE_D, dev_priv->saveRAMCLK_GATE_D);
+		I915_WRITE16(DEUC, dev_priv->saveDEUC);
+	} else if (IS_I965G(dev_priv)) {
+		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
+		I915_WRITE(RENCLK_GATE_D2, dev_priv->saveRENCLK_GATE_D2);
+	} else if (IS_I9XX(dev_priv)) {
+		I915_WRITE(D_STATE, dev_priv->saveD_STATE);
+	} else if (IS_I85X(dev_priv) || IS_I865G(dev_priv)) {
+		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
+	} else if (IS_I830(dev_priv)) {
+		I915_WRITE(DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
+	}
 
 	/* Cache mode state */
 	I915_WRITE (CACHE_MODE_0, dev_priv->saveCACHE_MODE_0 | 0xffff0000);
