@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.92 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.93 2010/08/06 05:26:24 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/workq.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
@@ -288,13 +289,11 @@ void		 bwi_get_clock_freq(struct bwi_softc *,
 		     struct bwi_clock_freq *);
 int		 bwi_set_clock_mode(struct bwi_softc *, enum bwi_clock_mode);
 int		 bwi_set_clock_delay(struct bwi_softc *);
-int		 bwi_init(struct ifnet *);
 int		 bwi_ioctl(struct ifnet *, u_long, caddr_t);
 void		 bwi_start(struct ifnet *);
 void		 bwi_watchdog(struct ifnet *);
 void		 bwi_newstate_begin(struct bwi_softc *, enum ieee80211_state);
 void		 bwi_init_statechg(struct bwi_softc *, int);
-int		 bwi_stop(struct bwi_softc *, int);
 int		 bwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int		 bwi_media_change(struct ifnet *);
 void		 bwi_iter_func(void *, struct ieee80211_node *);

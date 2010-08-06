@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.10 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.11 2010/08/06 05:26:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -24,6 +24,7 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
+#include <sys/workq.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -60,6 +61,8 @@ void		bwi_pci_attach(struct device *, struct device *, void *);
 int		bwi_pci_detach(struct device *, int);
 void		bwi_pci_conf_write(void *, uint32_t, uint32_t);
 uint32_t	bwi_pci_conf_read(void *, uint32_t);
+int		bwi_pci_activate(struct device *, int);
+void		bwi_resume(void *, void *);
 
 struct bwi_pci_softc {
 	struct bwi_softc	 psc_bwi;
@@ -73,7 +76,7 @@ struct bwi_pci_softc {
 
 struct cfattach bwi_pci_ca = {
 	sizeof(struct bwi_pci_softc), bwi_pci_match, bwi_pci_attach,
-	bwi_pci_detach
+	bwi_pci_detach, bwi_pci_activate
 };
 
 const struct pci_matchid bwi_pci_devices[] = {
@@ -173,6 +176,37 @@ bwi_pci_detach(struct device *self, int flags)
 	pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
 
 	return (0);
+}
+
+int
+bwi_pci_activate(struct device *self, int act)
+{
+	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
+	struct bwi_softc *sc = &psc->psc_bwi;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			bwi_stop(sc, 1);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    bwi_resume, sc, NULL);
+		break;
+	}
+
+	return (0);
+}
+
+void
+bwi_resume(void *arg1, void *arg2)
+{
+	struct bwi_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	if (ifp->if_flags & IFF_UP)
+		bwi_init(ifp);
 }
 
 void
