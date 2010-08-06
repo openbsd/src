@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.101 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.102 2010/08/06 14:11:42 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -147,9 +147,7 @@ void fxp_mediastatus(struct ifnet *, struct ifmediareq *);
 void fxp_scb_wait(struct fxp_softc *);
 void fxp_start(struct ifnet *);
 int fxp_ioctl(struct ifnet *, u_long, caddr_t);
-void fxp_init(void *);
 void fxp_load_ucode(struct fxp_softc *);
-void fxp_stop(struct fxp_softc *, int, int);
 void fxp_watchdog(struct ifnet *);
 int fxp_add_rfabuf(struct fxp_softc *, struct mbuf *);
 int fxp_mdi_read(struct device *, int, int);
