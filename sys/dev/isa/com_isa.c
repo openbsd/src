@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isa.c,v 1.5 2009/12/15 21:58:55 fgsch Exp $	*/
+/*	$OpenBSD: com_isa.c,v 1.6 2010/08/06 21:08:26 deraadt Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -74,9 +74,11 @@
 
 int com_isa_probe(struct device *, void *, void *);
 void com_isa_attach(struct device *, struct device *, void *);
+int com_isa_activate(struct device *, int);
 
 struct cfattach com_isa_ca = {
-        sizeof(struct com_softc), com_isa_probe, com_isa_attach
+        sizeof(struct com_softc), com_isa_probe, com_isa_attach, NULL,
+	com_isa_activate
 };
 
 int
@@ -175,3 +177,18 @@ com_isa_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
+int
+com_isa_activate(struct device *self, int act)
+{
+	struct com_softc *sc = (struct com_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		com_resume(sc);
+		break;
+	}
+
+	return (0);
+}
