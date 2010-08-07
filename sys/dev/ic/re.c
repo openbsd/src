@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.125 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: re.c,v 1.126 2010/08/07 23:56:42 naddy Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2178,12 +2178,7 @@ re_stop(struct ifnet *ifp)
 
 	mii_down(&sc->sc_mii);
 
-	if (sc->rl_flags & RL_FLAG_CMDSTOP)
-		CSR_WRITE_1(sc, RL_COMMAND, RL_CMD_STOPREQ | RL_CMD_TX_ENB |
-		    RL_CMD_RX_ENB);
-	else
-		CSR_WRITE_1(sc, RL_COMMAND, 0x00);
-	DELAY(1000);
+	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
 	CSR_WRITE_2(sc, RL_ISR, 0xFFFF);
 
