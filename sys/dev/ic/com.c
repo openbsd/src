@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.143 2010/08/06 21:04:14 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.144 2010/08/07 15:50:23 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -574,8 +574,13 @@ com_resume(struct com_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int ospeed;
 
-	if (!tp || !ISSET(tp->t_state, TS_ISOPEN))
+	if (!tp || !ISSET(tp->t_state, TS_ISOPEN)) {
+#ifdef COM_CONSOLE
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			cominit(iot, ioh, comconsrate, comconsfreq);
+#endif
 		return;
+	}
 
 	/*
 	 * Wake up the sleepy heads.
