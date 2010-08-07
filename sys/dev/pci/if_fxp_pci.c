@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.53 2010/08/06 14:11:48 deraadt Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.54 2010/08/07 07:04:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -46,6 +46,7 @@
 #include <sys/socket.h>
 #include <sys/timeout.h>
 #include <sys/syslog.h>
+#include <sys/workq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -82,11 +83,13 @@ int fxp_pci_match(struct device *, void *, void *);
 void fxp_pci_attach(struct device *, struct device *, void *);
 int fxp_pci_detach(struct device *, int);
 int fxp_pci_activate(struct device *, int);
+void fxp_pci_resume(void *, void *);
 
 struct fxp_pci_softc {
 	struct fxp_softc	psc_softc;
 	pci_chipset_tag_t	psc_pc;
 	bus_size_t		psc_mapsize;
+	struct workq_task	psc_resume_wqt;
 };
 
 struct cfattach fxp_pci_ca = {
@@ -281,20 +284,30 @@ fxp_pci_detach(struct device *self, int flags)
 int
 fxp_pci_activate(struct device *self, int act)
 {
-	struct fxp_softc *sc = (struct fxp_softc *)self;
+	struct fxp_pci_softc *psc = (void *)self;
+	struct fxp_softc *sc = &psc->psc_softc;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
-			fxp_stop(sc, 1, 1);
+			fxp_stop(sc, 1, 0);
 		config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		config_activate_children(self, act);
-		if (ifp->if_flags & IFF_UP)
-			fxp_init(ifp);
+		if (ifp->if_flags & IFF_RUNNING)
+			workq_queue_task(NULL, &psc->psc_resume_wqt, 0,
+			    fxp_pci_resume, sc, NULL);
 		break;
 	}
 	return (0);
+}
+
+void
+fxp_pci_resume(void *arg1, void *arg2)
+{
+	struct fxp_softc *sc = arg1;
+
+	fxp_init(sc);
 }
