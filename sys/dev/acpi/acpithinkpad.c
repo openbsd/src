@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.23 2010/07/06 20:14:17 deraadt Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.24 2010/08/07 16:21:20 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -283,10 +283,8 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case THINKPAD_BUTTON_SUSPEND:
 #ifndef SMALL_KERNEL
-			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ)) {
+			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
 				sc->sc_acpi->sc_sleepmode = ACPI_STATE_S3;
-				acpi_wakeup(sc->sc_acpi);
-			}
 #endif
 			handled = 1;
 			break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisony.c,v 1.2 2010/07/27 06:12:50 deraadt Exp $ */
+/* $OpenBSD: acpisony.c,v 1.3 2010/08/07 16:21:20 deraadt Exp $ */
 /*
  * Copyright (c) 2010 Paul Irofti <pirofti@openbsd.org>
  *
@@ -197,10 +197,8 @@ acpisony_notify(struct aml_node *node, int notify, void *arg)
 	case SONY_NOTIFY_SUSPEND_PRESSED:
 		DPRINTF(("suspend-pressed\n"));
 #ifndef SMALL_KERNEL
-		if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ)) {
+		if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
 			sc->sc_acpi->sc_sleepmode = ACPI_STATE_S3;
-			acpi_wakeup(sc->sc_acpi);
-		}
 #endif
 		break;
 	case SONY_NOTIFY_SUSPEND_RELEASED:

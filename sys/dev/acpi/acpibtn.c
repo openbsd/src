@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.32 2010/08/06 21:12:27 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.33 2010/08/07 16:21:20 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -197,10 +197,8 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		case 0x80:
 sleep:
 			/* Request to go to sleep */
-			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ)) {
+			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
 				sc->sc_acpi->sc_sleepmode = ACPI_STATE_S3;
-				acpi_wakeup(sc->sc_acpi);
-			}
 			break;
 		}
 #endif /* SMALL_KERNEL */
