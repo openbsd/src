@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.180 2010/08/07 20:48:55 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.181 2010/08/07 20:52:36 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3852,13 +3852,13 @@ azalia_stream_intr(stream_t *this)
 		swpos = this->swpos + this->blk;
 
 		if (hwpos >= swpos + this->blk) {
-			printf("stream %d: swpos %lu hwpos %lu, adding intr\n",
-			    this->number, swpos, hwpos);
+			DPRINTF(("%s: stream %d: swpos %lu hwpos %lu, adding intr\n",
+			    __func__, this->number, swpos, hwpos));
 			this->intr(this->intr_arg);
 			this->swpos += this->blk;
 		} else if (swpos >= hwpos + this->blk) {
-			printf("stream %d: swpos %lu hwpos %lu, ignoring intr\n",
-			    this->number, swpos, hwpos);
+			DPRINTF(("%s: stream %d: swpos %lu hwpos %lu, ignoring intr\n",
+			    __func__, this->number, swpos, hwpos));
 			return (1);
 		}
 		this->intr(this->intr_arg);
