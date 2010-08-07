@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.145 2010/08/03 18:42:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.146 2010/08/07 17:59:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2610,8 +2610,10 @@ table_inherit(struct table *tb)
 		return (NULL);
 	}
 	(void)strlcpy(tb->conf.name, pname, sizeof(tb->conf.name));
-	if ((oldtb = table_findbyconf(conf, tb)) != NULL)
+	if ((oldtb = table_findbyconf(conf, tb)) != NULL) {
+		purge_table(NULL, tb);
 		return (oldtb);
+	}
 
 	/* Create a new table */
 	tb->conf.id = ++last_table_id;
@@ -2624,9 +2626,6 @@ table_inherit(struct table *tb)
 
 	/* Inherit global table options */
 	bcopy(&dsttb->conf.timeout, &tb->conf.timeout, sizeof(struct timeval));
-	tb->conf.skip_cnt = dsttb->conf.skip_cnt;
-	strlcpy(tb->conf.demote_group, dsttb->conf.demote_group,
-	    sizeof(tb->conf.demote_group));
 
 	/* Copy the associated hosts */
 	TAILQ_INIT(&tb->hosts);
