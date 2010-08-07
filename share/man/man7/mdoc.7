@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.46 2010/08/03 00:07:57 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.47 2010/08/07 19:22:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2010 $
+.Dd $Mdocdate: August 7 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -149,7 +149,7 @@ recommended for
 which encourages semantic annotation.
 .Ss Predefined Strings
 Historically,
-.Xr groff 1
+troff
 also defined a set of package-specific
 .Dq predefined strings ,
 which, like
@@ -347,7 +347,7 @@ utility processes files ...
 \&.\e\*q The next is for sections 1, 6, 7, & 8 only.
 \&.\e\*q .Sh ENVIRONMENT
 \&.\e\*q .Sh FILES
-\&.\e\*q The next is for sections 1 & 8 only.
+\&.\e\*q The next is for sections 1, 6 & 8 only.
 \&.\e\*q .Sh EXIT STATUS
 \&.\e\*q .Sh EXAMPLES
 \&.\e\*q The next is for sections 1, 4, 6, 7, & 8 only.
@@ -418,8 +418,8 @@ generally structured as follows:
 .Pp
 For the second, function calls (sections 2, 3, 9):
 .Bd -literal -offset indent
-\&.Vt extern const char *global;
 \&.In header.h
+\&.Vt extern const char *global;
 \&.Ft "char *"
 \&.Fn foo "const char *src"
 \&.Ft "char *"
@@ -570,7 +570,7 @@ See
 Common misuses and misunderstandings should be explained
 in this section.
 .It Em BUGS
-Known bugs, limitations and work-arounds should be described
+Known bugs, limitations, and work-arounds should be described
 in this section.
 .It Em SECURITY CONSIDERATIONS
 Documents any security precautions that operators should consider.
@@ -876,10 +876,6 @@ referring to book titles.
 Publication city or location of an
 .Sx \&Rs
 block.
-.Pp
-.Em Remarks :
-this macro is not implemented in
-.Xr groff 1 .
 .Ss \&%D
 Publication date of an
 .Sx \&Rs
@@ -2676,7 +2672,7 @@ is followed by non-punctuation, an
 .Sx \&Ns
 is inserted into the token stream.
 This behaviour is for compatibility with
-.Xr groff 1 .
+GNU troff.
 .Pp
 Examples:
 .D1 \&.Xr mandoc 1
@@ -2720,6 +2716,10 @@ Heirloom troff, the other significant troff implementation accepting
 \-mdoc, is similar to historic groff.
 .Pp
 .Bl -dash -compact
+.It
+The
+.Sq \&%C
+macro is not implemented in GNU troff.
 .It
 An empty
 .Sq \&Dd
