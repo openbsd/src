@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.258 2010/08/07 08:33:35 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.259 2010/08/07 19:40:45 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1661,7 +1661,8 @@ when packing-lists change without a REVISION bump.
 This directory is never cleaned during normal operation.
 .Sq make clean=plist
 should only ever be used during debugging by port maintainers.
-Defaults to empty.
+Defaults to 
+.Pa ${PORTSDIR}/plist/${MACHINE_ARCH} .
 .It Ev PREFERRED_CIPHERS
 List of cryptographic ciphers to use, in order of preference.
 Default is
