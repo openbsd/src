@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.56 2010/07/21 19:35:15 deraadt Exp $ */
+/* $OpenBSD: acpibat.c,v 1.57 2010/08/07 16:55:38 canacar Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <sys/sensors.h>
 
 #include <machine/bus.h>
+#include <machine/apmvar.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -279,6 +280,7 @@ acpibat_refresh(void *arg)
 		sc->sc_sens[7].status = SENSOR_S_UNSPEC;
 		sc->sc_sens[7].flags = 0;
 	}
+	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 }
 
 int

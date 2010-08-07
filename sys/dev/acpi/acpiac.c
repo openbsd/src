@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.27 2009/03/11 20:37:46 jordan Exp $ */
+/* $OpenBSD: acpiac.c,v 1.28 2010/08/07 16:55:38 canacar Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -16,11 +16,13 @@
  */
 
 #include <sys/param.h>
+#include <sys/event.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/apmvar.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -95,6 +97,7 @@ acpiac_refresh(void *arg)
 
 	acpiac_getsta(sc);
 	sc->sc_sens[0].value = sc->sc_ac_stat;
+	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 }
 
 int
