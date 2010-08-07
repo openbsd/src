@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2008/09/02 12:55:44 djm Exp $
+#	$OpenBSD: Makefile,v 1.3 2010/08/07 19:46:58 matthew Exp $
 
 DIR=${.CURDIR}/../../../../sys
 
 PROG=	key_wrap_test
-SRCS+=	rijndael.c key_wrap.c key_wrap_test.c
+SRCS+=	rijndael.c key_wrap.c key_wrap_test.c timingsafe_bcmp.c
 CDIAGFLAGS=	-Wall
 CDIAGFLAGS+=	-Werror
 CDIAGFLAGS+=	-Wpointer-arith
@@ -19,7 +19,7 @@ REGRESS_TARGETS=	run-regress-${PROG}
 
 CFLAGS+=	-I${DIR}
 
-.PATH:	${DIR}/crypto/
+.PATH:	${DIR}/crypto/ ${DIR}/lib/libkern/
 
 run-regress-${PROG}: ${PROG}
 	./${PROG} | diff - ${.CURDIR}/${PROG}.txt
