@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.206 2010/08/07 15:48:26 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.207 2010/08/07 17:12:16 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -933,10 +933,9 @@ int
 acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 {
 	bus_space_handle_t ioh;
-	bus_size_t size, __size;
+	bus_size_t size;
 	int regval;
 
-	__size = 0;
 	/* Special cases: 1A/1B blocks can be OR'ed together */
 	switch (reg) {
 	case ACPIREG_PM1_EN:
@@ -949,7 +948,6 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, offset) |
 		    acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
 	case ACPIREG_GPE_STS:
-		__size = 1;
 		dnprintf(50, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset,
 		    sc->sc_fadt->gpe0_blk_len>>1, sc->sc_fadt->gpe1_blk_len>>1);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
@@ -957,7 +955,6 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 		}
 		break;
 	case ACPIREG_GPE_EN:
-		__size = 1;
 		dnprintf(50, "read GPE_EN   offset: %.2x %.2x %.2x\n",
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1);
@@ -973,10 +970,8 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	regval = 0;
 	ioh = sc->sc_pmregs[reg].ioh;
 	size = sc->sc_pmregs[reg].size;
-	if (__size)
-		size = __size;
-	if (size > 4)
-		size = 4;
+	if (size > sc->sc_pmregs[reg].access)
+		size = sc->sc_pmregs[reg].access;
 
 	switch (size) {
 	case 1:
@@ -1001,9 +996,8 @@ void
 acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 {
 	bus_space_handle_t ioh;
-	bus_size_t size, __size;
+	bus_size_t size;
 
-	__size = 0;
 	/* Special cases: 1A/1B blocks can be written with same value */
 	switch (reg) {
 	case ACPIREG_PM1_EN:
@@ -1019,7 +1013,6 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 		acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, offset, regval);
 		break;
 	case ACPIREG_GPE_STS:
-		__size = 1;
 		dnprintf(50, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n",
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1, regval);
@@ -1028,7 +1021,6 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 		}
 		break;
 	case ACPIREG_GPE_EN:
-		__size = 1;
 		dnprintf(50, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n",
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1, regval);
@@ -1044,10 +1036,9 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 
 	ioh = sc->sc_pmregs[reg].ioh;
 	size = sc->sc_pmregs[reg].size;
-	if (__size)
-		size = __size;
-	if (size > 4)
-		size = 4;
+	if (size > sc->sc_pmregs[reg].access)
+		size = sc->sc_pmregs[reg].access;
+
 	switch (size) {
 	case 1:
 		bus_space_write_1(sc->sc_iot, ioh, offset, regval);
@@ -1069,16 +1060,17 @@ void
 acpi_map_pmregs(struct acpi_softc *sc)
 {
 	bus_addr_t addr;
-	bus_size_t size;
+	bus_size_t size, access;
 	const char *name;
 	int reg;
 
 	for (reg = 0; reg < ACPIREG_MAXREG; reg++) {
 		size = 0;
+		access = 0;
 		switch (reg) {
 		case ACPIREG_SMICMD:
 			name = "smi";
-			size = 1;
+			size = access = 1;
 			addr = sc->sc_fadt->smi_cmd;
 			break;
 		case ACPIREG_PM1A_STS:
@@ -1086,6 +1078,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			name = "pm1a_sts";
 			size = sc->sc_fadt->pm1_evt_len >> 1;
 			addr = sc->sc_fadt->pm1a_evt_blk;
+			access = 2;
 			if (reg == ACPIREG_PM1A_EN && addr) {
 				addr += size;
 				name = "pm1a_en";
@@ -1095,12 +1088,14 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			name = "pm1a_cnt";
 			size = sc->sc_fadt->pm1_cnt_len;
 			addr = sc->sc_fadt->pm1a_cnt_blk;
+			access = 2;
 			break;
 		case ACPIREG_PM1B_STS:
 		case ACPIREG_PM1B_EN:
 			name = "pm1b_sts";
 			size = sc->sc_fadt->pm1_evt_len >> 1;
 			addr = sc->sc_fadt->pm1b_evt_blk;
+			access = 2;
 			if (reg == ACPIREG_PM1B_EN && addr) {
 				addr += size;
 				name = "pm1b_en";
@@ -1110,11 +1105,13 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			name = "pm1b_cnt";
 			size = sc->sc_fadt->pm1_cnt_len;
 			addr = sc->sc_fadt->pm1b_cnt_blk;
+			access = 2;
 			break;
 		case ACPIREG_PM2_CNT:
 			name = "pm2_cnt";
 			size = sc->sc_fadt->pm2_cnt_len;
 			addr = sc->sc_fadt->pm2_cnt_blk;
+			access = size;
 			break;
 #if 0
 		case ACPIREG_PM_TMR:
@@ -1122,6 +1119,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			name = "pm_tmr";
 			size = sc->sc_fadt->pm_tmr_len;
 			addr = sc->sc_fadt->pm_tmr_blk;
+			access = 4;
 			break;
 #endif
 		case ACPIREG_GPE0_STS:
@@ -1129,6 +1127,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			name = "gpe0_sts";
 			size = sc->sc_fadt->gpe0_blk_len >> 1;
 			addr = sc->sc_fadt->gpe0_blk;
+			access = 1;
 
 			dnprintf(20, "gpe0 block len : %x\n",
 			    sc->sc_fadt->gpe0_blk_len >> 1);
@@ -1144,6 +1143,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			name = "gpe1_sts";
 			size = sc->sc_fadt->gpe1_blk_len >> 1;
 			addr = sc->sc_fadt->gpe1_blk;
+			access = 1;
 
 			dnprintf(20, "gpe1 block len : %x\n",
 			    sc->sc_fadt->gpe1_blk_len >> 1);
@@ -1166,6 +1166,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			sc->sc_pmregs[reg].name = name;
 			sc->sc_pmregs[reg].size = size;
 			sc->sc_pmregs[reg].addr = addr;
+			sc->sc_pmregs[reg].access = min(access, 4);
 		}
 	}
 }
