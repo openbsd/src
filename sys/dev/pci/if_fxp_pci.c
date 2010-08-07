@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.54 2010/08/07 07:04:35 deraadt Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.55 2010/08/07 07:08:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -296,7 +296,7 @@ fxp_pci_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		config_activate_children(self, act);
-		if (ifp->if_flags & IFF_RUNNING)
+		if (ifp->if_flags & IFF_UP)
 			workq_queue_task(NULL, &psc->psc_resume_wqt, 0,
 			    fxp_pci_resume, sc, NULL);
 		break;
