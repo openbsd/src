@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.132 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.133 2010/08/07 10:26:58 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -587,7 +587,7 @@ sub solve_depends
 	$self->{deplist} = {};
 	delete $self->{installed};
 
-	for my $package ($self->{set}->newer) {
+	for my $package ($self->{set}->newer, $self->{set}->kept) {
 		$package->{before} = [];
 		for my $dep (@{$package->{plist}->{depend}}) {
 			my $v = $self->solve_dependency($state, $dep, $package);
