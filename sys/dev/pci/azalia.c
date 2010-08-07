@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.179 2010/08/06 05:57:48 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.180 2010/08/07 20:48:55 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1459,7 +1459,7 @@ azalia_resume(azalia_t *az)
 	if (err)
 		return err;
 
-	err = azalia_codec_enable_unsol(&az->codecs[az->codecno], 1);
+	err = azalia_codec_enable_unsol(&az->codecs[az->codecno]);
 	if (err)
 		return err;
 
