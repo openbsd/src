@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.114 2010/07/24 10:49:01 espie Exp $
+# $OpenBSD: Add.pm,v 1.115 2010/08/07 21:19:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -80,14 +80,18 @@ sub record_partial_installation
 	my $last = $n->{state}->{lastfile};
 	if (defined $last && defined($last->{d})) {
 
-	    my $old = $last->{d};
-	    my $lastname = $last->realname($state);
-	    $last->{d} = $last->compute_digest($lastname, $old);
-	    if (!$old->equals($last->{d})) {
-		$state->say("Adjusting #1 for #2 from #3 to #4",
-		    $old->keyword, $lastname, $old->stringize,
-		    $last->{d}->stringize);
-	    }
+		my $old = $last->{d};
+		my $lastname = $last->realname($state);
+		if (-f $lastname) {
+			$last->{d} = $last->compute_digest($lastname, $old);
+			if (!$old->equals($last->{d})) {
+				$state->say("Adjusting #1 for #2 from #3 to #4",
+				    $old->keyword, $lastname, $old->stringize,
+				    $last->{d}->stringize);
+			}
+		} else {
+			undef $last->{d};
+		}
 	}
 	register_installation($n);
 	return $borked;
