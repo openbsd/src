@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.15 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.16 2010/08/07 19:31:23 oga Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -47,7 +47,24 @@
 
 #include <machine/bus.h>
 
+struct agp_via_softc {
+	struct device		 dev;
+	struct agp_softc	*agpdev;
+	struct agp_gatt		*gatt;
+	int			*regs;
+	pci_chipset_tag_t	 vsc_pc;
+	pcitag_t		 vsc_tag;
+	bus_addr_t		 vsc_apaddr;
+	bus_size_t		 vsc_apsize;
+	pcireg_t		 vsc_regapsize;
+	pcireg_t		 vsc_regattbase;
+	pcireg_t                 vsc_reggartctl;
+};
+
 void	agp_via_attach(struct device *, struct device *, void *);
+int	agp_via_activate(struct device *, int);
+void	agp_via_save(struct agp_via_softc *);
+void	agp_via_restore(struct agp_via_softc *);
 int	agp_via_probe(struct device *, void *, void *);
 bus_size_t agp_via_get_aperture(void *);
 int	agp_via_set_aperture(void *, bus_size_t);
@@ -61,19 +78,9 @@ const struct agp_methods agp_via_methods = {
 	agp_via_flush_tlb,
 };
 
-struct agp_via_softc {
-	struct device		 dev;
-	struct agp_softc	*agpdev;
-	struct agp_gatt		*gatt;
-	int			*regs;
-	pci_chipset_tag_t	 vsc_pc;
-	pcitag_t		 vsc_tag;
-	bus_addr_t		 vsc_apaddr;
-	bus_size_t		 vsc_apsize;
-};
-
 struct cfattach viaagp_ca = {
-        sizeof(struct agp_via_softc), agp_via_probe, agp_via_attach
+	sizeof(struct agp_via_softc), agp_via_probe, agp_via_attach,
+	NULL, agp_via_activate
 };
 
 struct cfdriver viaagp_cd = {
@@ -202,6 +209,50 @@ agp_via_detach(struct agp_softc *sc)
 	return (0);
 }
 #endif
+
+int
+agp_via_activate(struct device *arg, int act)
+{
+	struct agp_via_softc *vsc = (struct agp_via_softc *)arg;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		agp_via_save(vsc);
+		break;
+	case DVACT_RESUME:
+		agp_via_restore(vsc);
+		break;
+	}
+
+	return (0);
+}
+
+void
+agp_via_save(struct agp_via_softc *vsc)
+{
+	vsc->vsc_regapsize = pci_conf_read(vsc->vsc_pc, vsc->vsc_tag,
+	    vsc->regs[REG_APSIZE]);
+	vsc->vsc_regattbase = pci_conf_read(vsc->vsc_pc, vsc->vsc_tag,
+	    vsc->regs[REG_ATTBASE]);
+	vsc->vsc_reggartctl = pci_conf_read(vsc->vsc_pc, vsc->vsc_tag,
+	    vsc->regs[REG_GARTCTRL]);
+}
+void
+agp_via_restore(struct agp_via_softc *vsc)
+{
+
+	/* aperture size */
+	pci_conf_write(vsc->vsc_pc, vsc->vsc_tag, vsc->regs[REG_APSIZE],
+	    vsc->vsc_regapsize);
+	/* GATT address and enable */
+	pci_conf_write(vsc->vsc_pc, vsc->vsc_tag, vsc->regs[REG_ATTBASE],
+	    vsc->vsc_regattbase);
+	/* Turn it all back on. */
+	pci_conf_write(vsc->vsc_pc, vsc->vsc_tag, vsc->regs[REG_GARTCTRL],
+	    vsc->vsc_reggartctl);
+	/* flush the tlb, just in case */
+	agp_via_flush_tlb(vsc);
+}
 
 bus_size_t
 agp_via_get_aperture(void *sc)
