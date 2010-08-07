@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.16 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.17 2010/08/07 17:44:09 oga Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -63,10 +63,17 @@ struct agp_intel_softc {
 		CHIP_I850,
 		CHIP_I865
 	}			 chiptype; 
+	/* registers saved during a suspend/resume cycle. */
+	pcireg_t		 savectrl;
+	pcireg_t		 savecmd;
+	pcireg_t		 savecfg;
 };
 
 
 void	agp_intel_attach(struct device *, struct device *, void *);
+int	agp_intel_activate(struct device *, int);
+void	agp_intel_save(struct agp_intel_softc *);
+void	agp_intel_restore(struct agp_intel_softc *);
 int	agp_intel_probe(struct device *, void *, void *);
 bus_size_t agp_intel_get_aperture(void *);
 int	agp_intel_set_aperture(void *, bus_size_t);
@@ -75,7 +82,8 @@ void	agp_intel_unbind_page(void *, bus_addr_t);
 void	agp_intel_flush_tlb(void *);
 
 struct cfattach intelagp_ca = {
-	sizeof(struct agp_intel_softc), agp_intel_probe, agp_intel_attach
+	sizeof(struct agp_intel_softc), agp_intel_probe, agp_intel_attach,
+	NULL, agp_intel_activate
 };
 
 struct cfdriver intelagp_cd = {
@@ -255,6 +263,114 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	isc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_intel_methods,
 	    isc->isc_apaddr, isc->isc_apsize, &isc->dev);
 	return;
+}
+
+int
+agp_intel_activate(struct device *arg, int act)
+{
+	struct agp_intel_softc *isc = (struct agp_intel_softc *)arg;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		agp_intel_save(isc);
+		break;
+	case DVACT_RESUME:
+		agp_intel_restore(isc);
+		break;
+	}
+
+	return (0);
+}
+
+void
+agp_intel_save(struct agp_intel_softc *isc)
+{
+
+	if (isc->chiptype != CHIP_I443) {
+		isc->savectrl = pci_conf_read(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_AGPCTRL);
+	}
+
+	switch (isc->chiptype) {
+	case CHIP_I845:
+	case CHIP_I865:
+		isc->savecmd = pci_conf_read(isc->isc_pc, isc->isc_tag,
+		    AGP_I840_MCHCFG);
+
+		break;
+	case CHIP_I840:
+	case CHIP_I850:
+		isc->savecmd = pci_conf_read(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_AGPCMD);
+		isc->savecfg = pci_conf_read(isc->isc_pc, isc->isc_tag,
+		    AGP_I840_MCHCFG);
+
+		break;
+	default:
+		isc->savecfg = pci_conf_read(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_NBXCFG);
+	}
+}
+
+void
+agp_intel_restore(struct agp_intel_softc *isc)
+{
+	/*
+	 * reset size now just in case, if it worked before then sanity
+	 * checking will not fail
+	 */
+	(void)agp_intel_set_aperture(isc, isc->isc_apsize);
+
+	/* Install the gatt. */
+	pci_conf_write(isc->isc_pc, isc->isc_tag, AGP_INTEL_ATTBASE,
+	    isc->gatt->ag_physical);
+	
+	/* Enable the GLTB and setup the control register. */
+	switch (isc->chiptype) {
+	case CHIP_I443:
+		pci_conf_write(isc->isc_pc, isc->isc_tag, AGP_INTEL_AGPCTRL,
+		    AGPCTRL_AGPRSE | AGPCTRL_GTLB);
+		break;
+	default:
+		pci_conf_write(isc->isc_pc, isc->isc_tag, AGP_INTEL_AGPCTRL,
+		    isc->savectrl);
+	}
+
+	/* Enable things, clear errors etc. */
+	switch (isc->chiptype) {
+	case CHIP_I845:
+	case CHIP_I865:
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_I840_MCHCFG, isc->savecmd);
+		break;
+	case CHIP_I840:
+	case CHIP_I850:
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_AGPCMD, isc->savecmd);
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_I840_MCHCFG, isc->savecfg);
+		break;
+	default:
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_NBXCFG, isc->savecfg);
+	}
+
+	/* Clear Error status */
+	switch (isc->chiptype) {
+	case CHIP_I840:
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_I8XX_ERRSTS, 0xc000);
+		break;
+	case CHIP_I845:
+	case CHIP_I850:
+	case CHIP_I865:
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_I8XX_ERRSTS, 0x00ff);
+		break;
+	default:
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_ERRSTS, 0x70);
+	}
 }
 
 #if 0
