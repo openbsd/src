@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.14 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.15 2010/08/07 18:09:09 oga Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -55,9 +55,13 @@ struct agp_sis_softc {
 	pcitag_t		 ssc_tag;
 	bus_addr_t		 ssc_apaddr;
 	bus_size_t		 ssc_apsize;
+	pcireg_t		 ssc_winctrl; /* saved over suspend/resume */
 };
 
 void	agp_sis_attach(struct device *, struct device *, void *);
+int	agp_sis_activate(struct device *, int);
+void	agp_sis_save(struct agp_sis_softc *);
+void	agp_sis_restore(struct agp_sis_softc *);
 int	agp_sis_probe(struct device *, void *, void *);
 bus_size_t agp_sis_get_aperture(void *);
 int	agp_sis_set_aperture(void *, bus_size_t);
@@ -66,7 +70,8 @@ void	agp_sis_unbind_page(void *, bus_addr_t);
 void	agp_sis_flush_tlb(void *);
 
 struct cfattach sisagp_ca = {
-        sizeof(struct agp_sis_softc), agp_sis_probe, agp_sis_attach
+	sizeof(struct agp_sis_softc), agp_sis_probe, agp_sis_attach,
+	NULL, agp_sis_activate
 };
 
 struct cfdriver sisagp_cd = {
@@ -168,6 +173,45 @@ agp_sis_detach(struct agp_softc *sc)
 	return (0);
 }
 #endif
+
+int
+agp_sis_activate(struct device *arg, int act)
+{
+	struct agp_sis_softc *ssc = (struct agp_sis_softc *)arg;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		agp_sis_save(ssc);
+		break;
+	case DVACT_RESUME:
+		agp_sis_restore(ssc);
+		break;
+	}
+
+	return (0);
+}
+
+void
+agp_sis_save(struct agp_sis_softc *ssc)
+{
+	ssc->ssc_winctrl = pci_conf_read(ssc->ssc_pc, ssc->ssc_tag,
+	    AGP_SIS_WINCTRL);
+}
+
+void
+agp_sis_restore(struct agp_sis_softc *ssc)
+{
+	/* Install the gatt. */
+	pci_conf_write(ssc->ssc_pc, ssc->ssc_tag, AGP_SIS_ATTBASE,
+	    ssc->gatt->ag_physical);
+	
+	/*
+	 * Enable the aperture, reset the aperture size and enable and
+	 * auto-tlb-inval.
+	 */
+	pci_conf_write(ssc->ssc_pc, ssc->ssc_tag, AGP_SIS_WINCTRL,
+	    ssc->ssc_winctrl);
+}
 
 bus_size_t
 agp_sis_get_aperture(void *sc)
