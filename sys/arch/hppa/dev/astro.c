@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.11 2010/05/24 15:04:53 deraadt Exp $	*/
+/*	$OpenBSD: astro.c,v 1.12 2010/08/07 03:50:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -669,7 +669,7 @@ iommu_iomap_translate(struct iommu_map_state *ims, paddr_t pa)
 	e = SPLAY_FIND(iommu_page_tree, &ipm->ipm_tree, &pe);
 
 	if (e == NULL) {
-		panic("couldn't find pa %lx\n", pa);
+		panic("couldn't find pa %lx", pa);
 		return 0;
 	}
 

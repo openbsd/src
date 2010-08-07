@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.20 2010/06/30 19:06:16 mk Exp $	*/
+/*	$OpenBSD: uha.c,v 1.21 2010/08/07 03:50:01 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -286,7 +286,7 @@ uha_done(sc, mscp)
 	 * into the xfer and call whoever started it
 	 */
 	if ((mscp->flags & MSCP_ALLOC) == 0) {
-		panic("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		panic("%s: exiting ccb not allocated!", sc->sc_dev.dv_xname);
 		return;
 	}
 	if (xs->error == XS_NOERROR) {

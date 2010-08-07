@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.51 2009/12/17 16:30:47 beck Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.52 2010/08/07 03:50:02 krw Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ nfs_inactive(void *v)
 		return(0);
 #ifdef DIAGNOSTIC
 	if (ap->a_vp->v_data == NULL)
-		panic("NULL v_data (no nfsnode set up?) in vnode %p\n",
+		panic("NULL v_data (no nfsnode set up?) in vnode %p",
 		    ap->a_vp);
 #endif
 	np = VTONFS(ap->a_vp);
@@ -228,7 +228,7 @@ nfs_reclaim(void *v)
 		return(0);
 #ifdef DIAGNOSTIC
 	if (ap->a_vp->v_data == NULL)
-		panic("NULL v_data (no nfsnode set up?) in vnode %p\n",
+		panic("NULL v_data (no nfsnode set up?) in vnode %p",
 		    ap->a_vp);
 #endif
 	nmp = VFSTONFS(vp->v_mount);

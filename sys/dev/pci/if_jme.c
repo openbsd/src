@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.22 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.23 2010/08/07 03:50:02 krw Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1072,7 +1072,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	if (maxsegs > JME_MAXTXSEGS)
 		maxsegs = JME_MAXTXSEGS;
 	if (maxsegs < (sc->jme_txd_spare - 1))
-		panic("%s: not enough segments %d\n", sc->sc_dev.dv_xname,
+		panic("%s: not enough segments %d", sc->sc_dev.dv_xname,
 		    maxsegs);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, txd->tx_dmamap,
@@ -1501,7 +1501,7 @@ jme_txeof(struct jme_softc *sc)
 		txd = &sc->jme_cdata.jme_txdesc[cons];
 
 		if (txd->tx_m == NULL)
-			panic("%s: freeing NULL mbuf!\n", sc->sc_dev.dv_xname);
+			panic("%s: freeing NULL mbuf!", sc->sc_dev.dv_xname);
 
 		status = letoh32(txd->tx_desc->flags);
 		if ((status & JME_TD_OWN) == JME_TD_OWN)
@@ -1536,7 +1536,7 @@ jme_txeof(struct jme_softc *sc)
 		txd->tx_m = NULL;
 		sc->jme_cdata.jme_tx_cnt -= txd->tx_ndesc;
 		if (sc->jme_cdata.jme_tx_cnt < 0)
-			panic("%s: Active Tx desc counter was garbled\n",
+			panic("%s: Active Tx desc counter was garbled",
 			    sc->sc_dev.dv_xname);
 		txd->tx_ndesc = 0;
 	}

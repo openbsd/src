@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.84 2010/06/28 18:50:37 claudio Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.85 2010/08/07 03:50:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -830,7 +830,7 @@ pfr_create_kentry(struct pfr_addr *ad)
 			pfi_kif_ref(ke->pfrke_rkif, PFI_KIF_REF_ROUTE);
 		break;
 	default:
-		panic("unknown pfrke_type %d\n", ke->pfrke_type);
+		panic("unknown pfrke_type %d", ke->pfrke_type);
 		break;
 	}
 

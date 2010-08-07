@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.190 2010/07/28 01:53:12 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.191 2010/08/07 03:50:02 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1252,9 +1252,9 @@ scsi_xs_sync(struct scsi_xfer *xs)
 
 #ifdef DIAGNOSTIC
 	if (xs->cookie != NULL)
-		panic("xs->cookie != NULL in scsi_xs_sync\n");
+		panic("xs->cookie != NULL in scsi_xs_sync");
 	if (xs->done != NULL)
-		panic("xs->done != NULL in scsi_xs_sync\n");
+		panic("xs->done != NULL in scsi_xs_sync");
 #endif
 
 	/*

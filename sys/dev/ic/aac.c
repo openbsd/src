@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.47 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.48 2010/08/07 03:50:01 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -423,7 +423,7 @@ aac_add_container(struct aac_softc *sc, struct aac_mntinforesp *mir, int f)
 		co = (struct aac_container *)malloc(sizeof *co, M_DEVBUF,
 		       M_NOWAIT);
 		if (co == NULL)
-			panic("Out of memory?!\n");
+			panic("Out of memory?!");
 		bzero(co, sizeof *co);
 		AAC_DPRINTF(AAC_D_MISC,
 			    ("%s: id %x  name '%.16s'  size %u  type %d\n", 
@@ -547,7 +547,7 @@ aac_detach(device_t dev)
 	}
 
 	if (sc->aifflags & AAC_AIFFLAGS_RUNNING)
-		panic("Cannot shutdown AIF thread\n");
+		panic("Cannot shutdown AIF thread");
 
 	if ((error = aac_shutdown(dev)))
 		return(error);
@@ -769,7 +769,7 @@ aac_startio(struct aac_softc *sc)
 		 * catastrophic since it means that bus_dmamap_load() failed.
 		 */
 		if (aac_map_command(cm) != 0)
-			panic("aac: error mapping command %p\n", cm);
+			panic("aac: error mapping command %p", cm);
 
 		AAC_DPRINTF(AAC_D_CMD, ("\n%s: another command",
 					sc->aac_dev.dv_xname));
@@ -1006,7 +1006,7 @@ aac_bio_command(struct aac_softc *sc, struct aac_command **cmp)
 		opcode = WRITE_COMMAND;
 		break;
 	default:
-		panic("%s: invalid opcode %#x\n", sc->aac_dev.dv_xname,
+		panic("%s: invalid opcode %#x", sc->aac_dev.dv_xname,
 		      xs->cmd->opcode);
 	}
 

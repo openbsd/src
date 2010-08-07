@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.29 2010/01/21 21:30:42 miod Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.30 2010/08/07 03:50:02 krw Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -1309,7 +1309,7 @@ urtw_get_rfchip(struct urtw_softc *sc)
 	return (0);
 
 fail:
-	panic("unsupported RF chip %d\n", data & 0xff);
+	panic("unsupported RF chip %d", data & 0xff);
 	/* NOTREACHED */
 }
 
@@ -1978,7 +1978,7 @@ urtw_led_ctl(struct urtw_softc *sc, int mode)
 		error = urtw_led_mode3(sc, mode);
 		break;
 	default:
-		panic("unsupported LED mode %d\n", sc->sc_strategy);
+		panic("unsupported LED mode %d", sc->sc_strategy);
 		/* NOTREACHED */
 	}
 
@@ -2055,7 +2055,7 @@ urtw_update_msr(struct urtw_softc *sc)
 			data |= URTW_MSR_LINK_STA;
 			break;
 		default:
-			panic("unsupported operation mode 0x%x\n",
+			panic("unsupported operation mode 0x%x",
 			    ic->ic_opmode);
 			/* NOTREACHED */
 		}

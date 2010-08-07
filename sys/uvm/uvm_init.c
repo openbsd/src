@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.27 2010/07/13 16:49:16 deraadt Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.28 2010/08/07 03:50:02 krw Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -164,14 +164,14 @@ uvm_init(void)
 	if (uvm_map(kernel_map, &kvm_start, 3 * PAGE_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
 	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED)))
-		panic("uvm_init: cannot reserve dead beef @0x%x\n", DEADBEEF0);
+		panic("uvm_init: cannot reserve dead beef @0x%x", DEADBEEF0);
 #endif
 #ifdef DEADBEEF1
 	kvm_start = trunc_page(DEADBEEF1) - PAGE_SIZE;
 	if (uvm_map(kernel_map, &kvm_start, 3 * PAGE_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
 	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED)))
-		panic("uvm_init: cannot reserve dead beef @0x%x\n", DEADBEEF1);
+		panic("uvm_init: cannot reserve dead beef @0x%x", DEADBEEF1);
 #endif
 	/*
 	 * init anonymous memory systems

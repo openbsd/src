@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.4 2010/04/28 16:20:28 syuu Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.5 2010/08/07 03:50:01 krw Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -82,7 +82,7 @@ mips64_ipi_init(void)
 
 	error = hw_ipi_intr_establish(mips64_ipi_intr, cpuid);
 	if (error)
-		panic("hw_ipi_intr_establish failed:%d\n", error);
+		panic("hw_ipi_intr_establish failed:%d", error);
 }
 
 /*

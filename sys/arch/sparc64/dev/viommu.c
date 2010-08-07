@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.9 2010/04/20 23:26:59 deraadt Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.10 2010/08/07 03:50:01 krw Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ viommu_enter(struct iommu_state *is, struct strbuf_ctl *sb, bus_addr_t va,
 
 	page_list[0] = trunc_page(pa);
 	if (!pmap_extract(pmap_kernel(), (vaddr_t)page_list, &addr))
-		panic("viommu_enter: pmap_extract failed\n");
+		panic("viommu_enter: pmap_extract failed");
 	err = hv_pci_iommu_map(is->is_devhandle, tsbid, 1, attr,
 	    addr, &nmapped);
 	if (err != H_EOK || nmapped != 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.4 2010/07/02 05:04:33 jsing Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.5 2010/08/07 03:50:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -62,7 +62,7 @@ fpu_proc(struct proc *p, int save)
 	if (fpuci != ci) {
 
 		if (hppa_ipi_send(fpuci, HPPA_IPI_FPU_SAVE))
-			panic("FPU shootdown failed!\n");
+			panic("FPU shootdown failed!");
 
 		/*
 		 * The sync is essential here since the volatile on hfp_cpu
@@ -109,7 +109,7 @@ fpu_cpu_save(int save)
 
 #ifdef DIAGNOSTIC
 	if (fpuci != ci)
-		panic("FPU context is not on this CPU (%p != %p)\n",
+		panic("FPU context is not on this CPU (%p != %p)",
 		    ci, hfp->hfp_cpu);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.59 2010/05/19 15:27:35 oga Exp $  */
+/*	$OpenBSD: pgt.c,v 1.60 2010/08/07 03:50:01 krw Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2675,7 +2675,7 @@ badopmode:
 		DPRINTF(("IEEE80211_MODE_AUTO\n"));
 		break;
 	default:
-		panic("unknown mode %d\n", ic->ic_curmode);
+		panic("unknown mode %d", ic->ic_curmode);
 	}
 
 	switch (sc->sc_80211_ioc_auth) {

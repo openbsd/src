@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.10 2010/05/24 15:04:53 deraadt Exp $	*/
+/*	$OpenBSD: apic.c,v 1.11 2010/08/07 03:50:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -110,7 +110,7 @@ apic_attach(struct elroy_softc *sc)
 	sc->sc_irq = malloc(sc->sc_nints * sizeof(int), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (sc->sc_irq == NULL)
-		panic("apic_attach: cannot allocate irq table\n");
+		panic("apic_attach: cannot allocate irq table");
 
 	apic_get_int_tbl(sc);
 

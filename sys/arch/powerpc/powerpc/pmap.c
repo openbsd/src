@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.116 2010/07/16 06:22:31 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.117 2010/08/07 03:50:01 krw Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -243,7 +243,7 @@ pmap_hash_lock(int entry)
 		if (pmap_hash_lock_word & (1 << entry)) {
 			attempt++;
 			if(attempt >0x20000000)
-				panic("unable to obtain lock on entry %d\n",
+				panic("unable to obtain lock on entry %d",
 				    entry);
 			continue;
 		}
@@ -793,7 +793,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
-		panic("pted not preallocated in pmap_kernel() va %lx pa %lx\n",
+		panic("pted not preallocated in pmap_kernel() va %lx pa %lx",
 		    va, pa);
 	}
 

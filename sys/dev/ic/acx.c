@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.95 2009/09/13 14:42:52 krw Exp $ */
+/*	$OpenBSD: acx.c,v 1.96 2010/08/07 03:50:01 krw Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2197,7 +2197,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 	int error;
 
 	if (txbuf->tb_mbuf != NULL)
-		panic("free TX buf has mbuf installed\n");
+		panic("free TX buf has mbuf installed");
 
 	error = 0;
 

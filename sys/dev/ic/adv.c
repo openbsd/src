@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.32 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.33 2010/08/07 03:50:01 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -852,7 +852,7 @@ adv_narrow_isr_callback(sc, qdonep)
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		panic("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		panic("%s: exiting ccb not allocated!", sc->sc_dev.dv_xname);
 		return;
 	}
 	/*

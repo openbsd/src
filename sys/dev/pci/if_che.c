@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.8 2007/05/30 05:11:53 reyk Exp $ */
+/*	$OpenBSD: if_che.c,v 1.9 2010/08/07 03:50:02 krw Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -528,7 +528,7 @@ che_read_flash_multi4(struct cheg_softc *sc, u_int addr, u_int32_t *datap,
 	int rv;
 
 	if (addr + count * sizeof(u_int32_t) > CHE_SF_SIZE || (addr & 3))
-		panic("%s: che_read_flash_multi4 bad params\n", DEVNAME(sc));
+		panic("%s: che_read_flash_multi4 bad params", DEVNAME(sc));
 
 	addr = swap32(addr) | CHE_SF_RD_DATA;
 

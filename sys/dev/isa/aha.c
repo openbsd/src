@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.72 2010/07/02 02:29:45 tedu Exp $	*/
+/*	$OpenBSD: aha.c,v 1.73 2010/08/07 03:50:01 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1415,7 +1415,7 @@ aha_timeout(arg)
 	 */
 	aha_collect_mbo(sc);
 	if (ccb->flags & CCB_SENDING)
-		panic("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		panic("%s: not taking commands!", sc->sc_dev.dv_xname);
 #endif
 
 	/*

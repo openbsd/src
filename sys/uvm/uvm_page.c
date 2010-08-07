@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.101 2010/06/27 03:03:49 thib Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.102 2010/08/07 03:50:02 krw Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -267,7 +267,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
 		n = vm_physmem[lcv].end - vm_physmem[lcv].start;
 		if (n > pagecount) {
-			panic("uvm_page_init: lost %ld page(s) in init\n",
+			panic("uvm_page_init: lost %ld page(s) in init",
 			    (long)(n - pagecount));
 			    /* XXXCDC: shouldn't happen? */
 			/* n = pagecount; */

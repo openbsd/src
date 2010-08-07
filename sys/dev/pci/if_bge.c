@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.297 2010/08/02 19:36:13 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.298 2010/08/07 03:50:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -832,7 +832,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i)
 		r->bge_bd.bge_len = dmap->dm_segs[0].ds_len;
 		break;
 	default:
-		panic("%s: %d segments\n", __func__, dmap->dm_nsegs);
+		panic("%s: %d segments", __func__, dmap->dm_nsegs);
 	}
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,

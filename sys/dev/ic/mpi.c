@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.155 2010/07/06 07:18:18 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.156 2010/08/07 03:50:01 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -871,7 +871,7 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 			break;
 
 		default:
-			panic("%s: unsupported context reply\n",
+			panic("%s: unsupported context reply",
 			    DEVNAME(sc));
 		}
 	}
@@ -2416,7 +2416,7 @@ mpi_fwupload(struct mpi_softc *sc)
 	}
 
 	if (ccb->ccb_rcb == NULL)
-		panic("%s: unable to do fw upload\n", DEVNAME(sc));
+		panic("%s: unable to do fw upload", DEVNAME(sc));
 	upp = ccb->ccb_rcb->rcb_reply;
 
 	if (letoh16(upp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
@@ -2540,7 +2540,7 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 		mpi_wait(sc, ccb);
 
 	if (ccb->ccb_rcb == NULL)
-		panic("%s: unable to fetch config header\n", DEVNAME(sc));
+		panic("%s: unable to fetch config header", DEVNAME(sc));
 	cp = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPI_D_MISC, "%s:  action: 0x%02x msg_length: %d function: "

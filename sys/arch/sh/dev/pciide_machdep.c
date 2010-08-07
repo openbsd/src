@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.1 2006/10/16 21:46:02 drahn Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.2 2010/08/07 03:50:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -53,12 +53,12 @@ void *
 pciide_machdep_compat_intr_establish(struct device *dev,
     struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
-	panic("pciide_machdep_compat_intr_establish called\n");
+	panic("pciide_machdep_compat_intr_establish called");
 	return (NULL);
 }
 
 void
 pciide_machdep_compat_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
-	panic("pciide_machdep_compat_intr_disestablish called\n");
+	panic("pciide_machdep_compat_intr_disestablish called");
 }

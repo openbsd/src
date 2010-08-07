@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.18 2010/07/02 09:20:26 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.19 2010/08/07 03:50:01 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -239,7 +239,7 @@ sr_raidp_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 die:
 		splx(s); /* XXX */
 		panic("%s: %s: %s: invalid chunk state transition "
-		    "%d -> %d\n", DEVNAME(sd->sd_sc),
+		    "%d -> %d", DEVNAME(sd->sd_sc),
 		    sd->sd_meta->ssd_devname,
 		    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname,
 		    old_state, new_state);
@@ -359,7 +359,7 @@ sr_raidp_set_vol_state(struct sr_discipline *sd)
 
 	default:
 die:
-		panic("%s: %s: invalid volume state transition %d -> %d\n",
+		panic("%s: %s: invalid volume state transition %d -> %d",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 		    old_state, new_state);
 		/* NOTREACHED */

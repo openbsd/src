@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.60 2010/04/09 19:24:17 jasper Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.61 2010/08/07 03:50:01 krw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -666,7 +666,7 @@ openpic_send_ipi(struct cpu_info *ci, int id)
 		id = 1;
 		break;
 	default:
-		panic("invalid ipi send to cpu %d %d\n", ci->ci_cpuid, id);
+		panic("invalid ipi send to cpu %d %d", ci->ci_cpuid, id);
 	}
 		
 		

@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.3 2010/02/12 05:31:11 drahn Exp $ */
+/* $OpenBSD: prcm.c,v 1.4 2010/08/07 03:50:01 krw Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -258,7 +258,7 @@ prcm_setclock(int clock, int speed)
 
 		bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKSEL_PER, reg);
 	} else
-		panic("prcm_setclock invalid clock %d\n", clock);
+		panic("prcm_setclock invalid clock %d", clock);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.6 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.7 2010/08/07 03:50:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -525,7 +525,7 @@ raptor_init(struct raptor_softc *sc)
 		    I128_BUF_CTRL, I128_BC_PSIZ_32B);
 		break;
 	default:
-		panic("unsupported depth\n");
+		panic("unsupported depth");
 		break;
 	}
 

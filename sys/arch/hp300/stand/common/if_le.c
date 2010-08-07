@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/;
+/*	$OpenBSD: if_le.c,v 1.6 2010/08/07 03:50:01 krw Exp $	*/;
 /*	$NetBSD: if_le.c,v 1.9 1997/01/30 10:32:54 thorpej Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ le_error(int unit, char *str, u_short stat)
 	if (stat & LE_MISS)
 		le_stats[unit].missed++;
 	if (stat & LE_MERR) {
-		panic("le%d: memory error in '%s'\n", unit, str);
+		panic("le%d: memory error in '%s'", unit, str);
 	}
 }
 

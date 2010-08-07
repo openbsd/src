@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.38 2009/11/21 18:09:31 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.39 2010/08/07 03:50:02 krw Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -734,7 +734,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 			}
 		if ((ic->ic_ibss_chan == NULL) || isclr(ic->ic_chan_active,
 		    ieee80211_chan2ieee(ic, ic->ic_ibss_chan)))
-			panic("Bad IBSS channel %u\n",
+			panic("Bad IBSS channel %u",
 			    ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 	}
 

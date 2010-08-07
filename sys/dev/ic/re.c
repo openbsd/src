@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.124 2010/07/27 20:53:39 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.125 2010/08/07 03:50:01 krw Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2306,7 +2306,7 @@ re_config_imtype(struct rl_softc *sc, int imtype)
 		break;
 
 	default:
-		panic("%s: unknown imtype %d\n",
+		panic("%s: unknown imtype %d",
 		      sc->sc_dev.dv_xname, imtype);
 	}
 }
@@ -2339,7 +2339,7 @@ re_setup_intr(struct rl_softc *sc, int enable_intrs, int imtype)
 		break;
 
 	default:
-		panic("%s: unknown imtype %d\n",
+		panic("%s: unknown imtype %d",
 		      sc->sc_dev.dv_xname, imtype);
 	}
 }

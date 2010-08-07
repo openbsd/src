@@ -1,4 +1,4 @@
-/*	$OpenBSD: vrng.c,v 1.3 2009/01/17 22:38:05 kettenis Exp $	*/
+/*	$OpenBSD: vrng.c,v 1.4 2010/08/07 03:50:01 krw Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -119,7 +119,7 @@ vrng_attach(struct device *parent, struct device *self, void *aux)
 		ctl[3].rng_wait_cnt = 0x3e;
 
 		if (!pmap_extract(pmap_kernel(), (vaddr_t)&ctl, &addr))
-			panic("vrng_attach: pmap_extract failed\n");
+			panic("vrng_attach: pmap_extract failed");
 
 		err = hv_rng_ctl_write(addr, RNG_STATE_CONFIGURED, 0, &delta);
 		if (err != H_EOK)
@@ -142,7 +142,7 @@ vrng_rnd(void *v)
 	int err;
 
 	if (!pmap_extract(pmap_kernel(), (vaddr_t)&rnd, &addr))
-		panic("vrng_rnd: pmap_extract failed\n");
+		panic("vrng_rnd: pmap_extract failed");
 	err = hv_rng_data_read(addr, &delta);
 	if (err == H_EOK) {
 #if 0

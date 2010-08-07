@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.25 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.26 2010/08/07 03:50:01 krw Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -739,13 +739,13 @@ bha_done(sc, ccb)
 	 */
 #ifdef BHADIAG
 	if (ccb->flags & CCB_SENDING) {
-		panic("%s: exiting ccb still in transit!\n",
+		panic("%s: exiting ccb still in transit!",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		panic("%s: exiting ccb not allocated!\n",
+		panic("%s: exiting ccb not allocated!",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -1453,7 +1453,7 @@ bha_timeout(arg)
 	 */
 	bha_collect_mbo(sc);
 	if (ccb->flags & CCB_SENDING)
-		panic("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		panic("%s: not taking commands!", sc->sc_dev.dv_xname);
 #endif
 
 	/*

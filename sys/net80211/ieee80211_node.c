@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.61 2010/07/19 18:53:52 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.62 2010/08/07 03:50:02 krw Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1475,7 +1475,7 @@ ieee80211_node_leave_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (!(ni->ni_flags & IEEE80211_NODE_ERP)) {
 #ifdef DIAGNOSTIC
 		if (ic->ic_nonerpsta == 0) {
-			panic("bogus non-ERP station count %d\n",
+			panic("bogus non-ERP station count %d",
 			    ic->ic_nonerpsta);
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.120 2010/07/31 21:15:05 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.121 2010/08/07 03:50:01 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1045,7 +1045,7 @@ intr_send_ipi_t *intr_send_ipi_func = ppc_no_send_ipi;
 void
 ppc_no_send_ipi(struct cpu_info *ci, int id)
 {
-	panic("ppc_send_ipi called: no ipi function\n");
+	panic("ppc_send_ipi called: no ipi function");
 }
 
 void

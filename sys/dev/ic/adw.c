@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.46 2010/06/28 18:31:01 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.47 2010/08/07 03:50:01 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -1044,7 +1044,7 @@ adw_isr_callback(sc, scsiq)
 	TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		panic("%s: unallocated ccb found on pending list!\n",
+		panic("%s: unallocated ccb found on pending list!",
 		    sc->sc_dev.dv_xname);
 		adw_free_ccb(sc, ccb);
 		return;

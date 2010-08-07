@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.41 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.42 2010/08/07 03:50:01 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ ahb_send_mbox(sc, opcode, ecb)
 		delay(10);
 	}
 	if (!wait)
-		panic("%s: board not responding\n", sc->sc_dev.dv_xname);
+		panic("%s: board not responding", sc->sc_dev.dv_xname);
 
 	/* don't know this will work */
 	bus_space_write_4(iot, ioh, MBOXOUT0, KVTOPHYS(ecb));
@@ -397,7 +397,7 @@ ahb_send_immed(sc, target, cmd)
 		delay(10);
 	}
 	if (!wait)
-		panic("%s: board not responding\n", sc->sc_dev.dv_xname);
+		panic("%s: board not responding", sc->sc_dev.dv_xname);
 
 	/* don't know this will work */
 	bus_space_write_4(iot, ioh, MBOXOUT0, cmd);

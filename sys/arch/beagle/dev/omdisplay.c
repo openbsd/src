@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.2 2010/08/07 03:50:01 krw Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -1010,7 +1010,7 @@ omdisplay_initialize(struct omdisplay_softc *sc,
 		mode = DISPC_GFX_ATTRIBUTES_GFXFMT_24;
 		break;
 	default:
-		panic("invalid depth %d\n", geom->depth);
+		panic("invalid depth %d", geom->depth);
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_dcioh, DISPC_GFX_ATTRIBUTES,
 	    DISPC_GFX_ATTRIBUTES_GFXENABLE | mode |

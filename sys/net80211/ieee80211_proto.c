@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.43 2010/07/28 21:24:52 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.44 2010/08/07 03:50:02 krw Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -967,7 +967,7 @@ justcleanup:
 		case IEEE80211_S_SCAN:		/* adhoc/hostap mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */
 			if (ni->ni_txrate >= ni->ni_rates.rs_nrates)
-				panic("%s: bogus xmit rate %u setup\n",
+				panic("%s: bogus xmit rate %u setup",
 				    __func__, ni->ni_txrate);
 			if (ifp->if_flags & IFF_DEBUG) {
 				printf("%s: %s with %s ssid ",
