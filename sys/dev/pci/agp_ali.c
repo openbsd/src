@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.11 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.12 2010/08/07 18:15:38 oga Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -56,9 +56,14 @@ struct agp_ali_softc {
 	pcitag_t		 asc_tag;
 	bus_addr_t		 asc_apaddr;
 	bus_size_t		 asc_apsize;
+	pcireg_t		 asc_attbase;
+	pcireg_t		 asc_tlbctrl;
 };
 
 void	agp_ali_attach(struct device *, struct device *, void *);
+int	agp_ali_activate(struct device *, int);
+void	agp_ali_save(struct agp_ali_softc *);
+void	agp_ali_restore(struct agp_ali_softc *);
 int	agp_ali_probe(struct device *, void *, void *);
 bus_size_t agp_ali_get_aperture(void *);
 int	agp_ali_set_aperture(void *sc, bus_size_t);
@@ -67,7 +72,8 @@ void	agp_ali_unbind_page(void *, bus_addr_t);
 void	agp_ali_flush_tlb(void *);
 
 struct cfattach aliagp_ca = {
-        sizeof(struct agp_ali_softc), agp_ali_probe, agp_ali_attach
+	sizeof(struct agp_ali_softc), agp_ali_probe, agp_ali_attach,
+	NULL, agp_ali_activate
 };
 
 struct cfdriver aliagp_cd = {
@@ -171,6 +177,45 @@ agp_ali_detach(struct agp_softc *sc)
 	return (0);
 }
 #endif
+
+int
+agp_ali_activate(struct device *arg, int act)
+{
+	struct agp_ali_softc *asc = (struct agp_ali_softc *)arg;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		agp_ali_save(asc);
+		break;
+	case DVACT_RESUME:
+		agp_ali_restore(asc);
+		break;
+	}
+
+	return (0);
+}
+
+void
+agp_ali_save(struct agp_ali_softc *asc)
+{
+	asc->asc_attbase = pci_conf_read(asc->asc_pc, asc->asc_tag,
+	    AGP_ALI_ATTBASE);
+	asc->asc_tlbctrl = pci_conf_read(asc->asc_pc, asc->asc_tag,
+	    AGP_ALI_TLBCTRL);
+}
+
+void
+agp_ali_restore(struct agp_ali_softc *asc)
+{
+
+	/* Install the gatt and aperture size. */
+	pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_ALI_ATTBASE,
+	    asc->asc_attbase);
+	
+	/* Enable the TLB. */
+	pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_ALI_TLBCTRL,
+	    asc->asc_tlbctrl);
+}
 
 #define M 1024*1024
 
