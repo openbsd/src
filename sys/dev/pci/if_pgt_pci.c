@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.11 2009/06/02 04:03:39 jsg Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.12 2010/08/07 16:16:18 kettenis Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -147,8 +147,13 @@ pgt_pci_detach(struct device *self, int flags)
 	struct pgt_pci_softc *psc = (struct pgt_pci_softc *)self;
 	struct pgt_softc *sc = &psc->sc_pgt;
 
-	pgt_detach(sc);
-	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	if (psc->sc_ih != NULL) {
+		pgt_detach(sc);
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	}
+	if (psc->sc_mapsize > 0)
+		bus_space_unmap(sc->sc_iotag, sc->sc_iohandle,
+		    psc->sc_mapsize);
 
 	return (0);
 }
