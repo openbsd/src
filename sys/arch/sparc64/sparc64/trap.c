@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2009/01/20 21:22:31 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.65 2010/08/07 00:13:09 krw Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -467,7 +467,7 @@ trap(tf, type, pc, tstate)
 dopanic:
 			trap_trace_dis = 1;
 
-			panic("trap type 0x%x (%s): pc=%lx npc=%lx pstate=%b\n",
+			panic("trap type 0x%x (%s): pc=%lx npc=%lx pstate=%b",
 			    type, type < N_TRAP_TYPES ? trap_type[type] : T,
 			    pc, (long)tf->tf_npc, pstate, PSTATE_BITS);
 			/* NOTREACHED */
@@ -925,7 +925,7 @@ kfault:
 				extern int trap_trace_dis;
 				trap_trace_dis = 1; /* Disable traptrace for printf */
 				(void) splhigh();
-				panic("kernel data fault: pc=%lx addr=%lx\n",
+				panic("kernel data fault: pc=%lx addr=%lx",
 				    pc, addr);
 				/* NOTREACHED */
 			}
@@ -1007,7 +1007,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 
 			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
-			panic("data fault: pc=%lx addr=%lx sfsr=%b\n",
+			panic("data fault: pc=%lx addr=%lx sfsr=%b",
 				(u_long)pc, (long)sfva, sfsr, SFSR_BITS);
 			/* NOTREACHED */
 		}
@@ -1073,7 +1073,7 @@ text_access_fault(tf, type, pc, sfsr)
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
-		panic("kernel text_access_fault: pc=%lx va=%lx\n", pc, va);
+		panic("kernel text_access_fault: pc=%lx va=%lx", pc, va);
 		/* NOTREACHED */
 	} else
 		p->p_md.md_tf = tf;
@@ -1106,7 +1106,7 @@ text_access_fault(tf, type, pc, sfsr)
 			extern int trap_trace_dis;
 			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
-			panic("kernel text fault: pc=%llx\n", (unsigned long long)pc);
+			panic("kernel text fault: pc=%llx", (unsigned long long)pc);
 			/* NOTREACHED */
 		}
 		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
@@ -1181,7 +1181,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
-		panic("kernel text error: pc=%lx sfsr=%b\n", pc, sfsr, SFSR_BITS);
+		panic("kernel text error: pc=%lx sfsr=%b", pc, sfsr, SFSR_BITS);
 		/* NOTREACHED */
 	} else
 		p->p_md.md_tf = tf;
@@ -1215,7 +1215,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			extern int trap_trace_dis;
 			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
-			panic("kernel text error: pc=%lx sfsr=%b\n", pc,
+			panic("kernel text error: pc=%lx sfsr=%b", pc,
 			    sfsr, SFSR_BITS);
 			/* NOTREACHED */
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.107 2010/01/02 01:20:38 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.108 2010/08/07 00:13:09 krw Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -684,7 +684,7 @@ sun4v_set_soft_state(int state, const char *desc)
 		return;
 
 	if (!pmap_extract(pmap_kernel(), (vaddr_t)desc, &pa))
-		panic("sun4v_set_soft_state: pmap_extract failed\n");
+		panic("sun4v_set_soft_state: pmap_extract failed");
 
 	err = hv_soft_state_set(state, pa);
 	if (err != H_EOK)
