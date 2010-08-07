@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.205 2010/08/06 21:12:27 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.206 2010/08/07 15:48:26 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2092,10 +2092,21 @@ acpi_thread(void *arg)
 		}
 
 		if (sc->sc_sleepmode) {
+			struct acpi_ac *ac;
+			struct acpi_bat *bat;
 			int sleepmode = sc->sc_sleepmode;
 
 			sc->sc_sleepmode = 0;
 			acpi_sleep_state(sc, sleepmode);
+
+			/* AC and battery information needs refreshing */
+			SLIST_FOREACH(ac, &sc->sc_ac, aac_link)
+				aml_notify(ac->aac_softc->sc_devnode,
+				    0x80);
+			SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
+				aml_notify(bat->aba_softc->sc_devnode,
+				    0x80);
+
 			continue;
 		}
 	}
