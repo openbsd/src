@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.17 2010/08/07 17:44:09 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.18 2010/08/07 20:47:24 deraadt Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -168,6 +168,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	default:
 		isc->chiptype = CHIP_INTEL;
+		break;
 	}
 
 	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
@@ -215,6 +216,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		pci_conf_write(isc->isc_pc, isc->isc_tag, AGP_INTEL_AGPCTRL,
 		    pci_conf_read(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_AGPCTRL) | AGPCTRL_GTLB);
+		break;
 	}
 
 	/* Enable things, clear errors etc. */
@@ -241,6 +243,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		reg &= ~NBXCFG_APAE;
 		reg |=  NBXCFG_AAGN;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_INTEL_NBXCFG, reg);
+		break;
 	}
 
 	/* Clear Error status */
@@ -309,6 +312,7 @@ agp_intel_save(struct agp_intel_softc *isc)
 	default:
 		isc->savecfg = pci_conf_read(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_NBXCFG);
+		break;
 	}
 }
 
@@ -334,6 +338,7 @@ agp_intel_restore(struct agp_intel_softc *isc)
 	default:
 		pci_conf_write(isc->isc_pc, isc->isc_tag, AGP_INTEL_AGPCTRL,
 		    isc->savectrl);
+		break;
 	}
 
 	/* Enable things, clear errors etc. */
@@ -353,6 +358,7 @@ agp_intel_restore(struct agp_intel_softc *isc)
 	default:
 		pci_conf_write(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_NBXCFG, isc->savecfg);
+		break;
 	}
 
 	/* Clear Error status */
@@ -370,6 +376,7 @@ agp_intel_restore(struct agp_intel_softc *isc)
 	default:
 		pci_conf_write(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_ERRSTS, 0x70);
+		break;
 	}
 }
 
@@ -482,5 +489,6 @@ agp_intel_flush_tlb(void *sc)
 		    0x2200);
 		pci_conf_write(isc->isc_pc, isc->isc_tag, AGP_INTEL_AGPCTRL,
 		    0x2280);
+		break;
 	}
 }
