@@ -1,0 +1,10 @@
+SUM test suite:
+0 0 
+97 1 a
+16556 1 abc
+26423 1 message digest
+53553 1 abcdefghijklmnopqrstuvwxyz
+54802 1 abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq
+25587 1 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+21845 1 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+62769 977 one million 'a' characters
