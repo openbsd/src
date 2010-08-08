@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.11 2010/08/06 05:26:24 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.12 2010/08/08 12:02:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -62,7 +62,7 @@ int		bwi_pci_detach(struct device *, int);
 void		bwi_pci_conf_write(void *, uint32_t, uint32_t);
 uint32_t	bwi_pci_conf_read(void *, uint32_t);
 int		bwi_pci_activate(struct device *, int);
-void		bwi_resume(void *, void *);
+void		bwi_pci_resume(void *, void *);
 
 struct bwi_pci_softc {
 	struct bwi_softc	 psc_bwi;
@@ -192,7 +192,7 @@ bwi_pci_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-		    bwi_resume, sc, NULL);
+		    bwi_pci_resume, sc, NULL);
 		break;
 	}
 
@@ -200,7 +200,7 @@ bwi_pci_activate(struct device *self, int act)
 }
 
 void
-bwi_resume(void *arg1, void *arg2)
+bwi_pci_resume(void *arg1, void *arg2)
 {
 	struct bwi_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
