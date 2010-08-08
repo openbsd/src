@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.20 2010/06/29 22:14:57 mlarkin Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.21 2010/08/08 04:19:24 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ void	ehci_pci_attach(struct device *, struct device *, void *);
 int	ehci_pci_detach(struct device *, int);
 int	ehci_pci_activate(struct device *, int);
 void	ehci_pci_givecontroller(struct ehci_pci_softc *);
-void	ehci_pci_takecontroller(struct ehci_pci_softc *);
+void	ehci_pci_takecontroller(struct ehci_pci_softc *, int);
 void	ehci_pci_shutdown(void *);
 
 struct cfattach ehci_pci_ca = {
@@ -208,7 +208,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
 
-	ehci_pci_takecontroller(sc);
+	ehci_pci_takecontroller(sc, 0);
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
@@ -237,7 +237,7 @@ ehci_pci_activate(struct device *self, int act)
 	/* On resume, take ownership from the BIOS */
 	switch (act) {
 	case DVACT_RESUME:
-		ehci_pci_takecontroller(sc);
+		ehci_pci_takecontroller(sc, 1);
 		break;
 	}
 
@@ -285,7 +285,7 @@ ehci_pci_givecontroller(struct ehci_pci_softc *sc)
 #endif
 
 void
-ehci_pci_takecontroller(struct ehci_pci_softc *sc)
+ehci_pci_takecontroller(struct ehci_pci_softc *sc, int silent)
 {
 	u_int32_t cparams, eec, legsup;
 	int eecp, i;
@@ -310,7 +310,7 @@ ehci_pci_takecontroller(struct ehci_pci_softc *sc)
 					break;
 				DELAY(1000);
 			}
-			if (legsup & EHCI_LEGSUP_BIOSOWNED)
+			if (silent == 00 && (legsup & EHCI_LEGSUP_BIOSOWNED))
 				printf("%s: timed out waiting for BIOS\n",
 				    sc->sc.sc_bus.bdev.dv_xname);
 		}
