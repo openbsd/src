@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.10 2010/08/05 17:30:28 marco Exp $
+.\"	$OpenBSD: acpidump.8,v 1.11 2010/08/08 14:40:19 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.9 2001/09/05 19:21:25 dd Exp $
 .\"
-.Dd $Mdocdate: August 5 2010 $
+.Dd $Mdocdate: August 8 2010 $
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -37,9 +37,11 @@
 .Nd dump ACPI tables
 .Sh SYNOPSIS
 .Nm
-.Op Fl o Ar prefix_for_output
+.Fl o Ar prefix_for_output
 .Sh DESCRIPTION
-Store ACPI tables from physical memory into files specified by
+The
+.Nm
+command stores ACPI tables from physical memory into files specified by
 .Ar prefix_for_output .
 The files generated will
 be of the form <prefix>.<sig>.<id>.
@@ -47,6 +49,7 @@ be of the form <prefix>.<sig>.<id>.
 is the signature of the ACPI Table;
 .Dq id
 is unique for each table.
+.Pp
 Additionally a file called <prefix>.headers will be created that contains
 additional human readable information pertaining to this specific dump.
 .Sh FILES

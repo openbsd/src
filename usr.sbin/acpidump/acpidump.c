@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.6 2010/08/05 17:30:28 marco Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.7 2010/08/08 14:40:19 jmc Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -515,7 +515,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "%s [-o prefix_for_output]\n", __progname);
+	fprintf(stderr, "%s -o prefix_for_output\n", __progname);
 	exit(1);
 }
 
