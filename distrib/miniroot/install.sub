@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.615 2010/08/05 10:45:32 halex Exp $
+#	$OpenBSD: install.sub,v 1.616 2010/08/08 17:02:14 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -68,6 +68,7 @@
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
 #	MDMTDEVS    - '/^[cms]t[0-9][0-9]* /s/ .*//p'
+#	MDAPMDEV    - '' assumed if not provided
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
 . install.md
 
@@ -1754,6 +1755,12 @@ server $1
 	if [[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]]; then
 		echo "xdm_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
+	fi
+
+	if [[ -n $MDAPMD ]]; then
+		[[ $MDAPMD == y || -n $(egrep "$MDAPMD" /var/run/dmesg.boot) ]] && \
+			echo "apmd_flags=		# enabled during install" \
+				>>/mnt/etc/rc.conf.local
 	fi
 
 	if [[ $defcons == y ]]; then
