@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.25 2010/08/08 17:02:14 krw Exp $
+#	$OpenBSD: install.md,v 1.26 2010/08/08 21:06:06 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 #
 
 MDXDM=y
-MDAPMD=y
 
 md_installboot() {
 }
