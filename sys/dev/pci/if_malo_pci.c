@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_pci.c,v 1.4 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: if_malo_pci.c,v 1.5 2010/08/08 16:36:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -24,6 +24,7 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
+#include <sys/workq.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -58,6 +59,8 @@
 int	malo_pci_match(struct device *, void *, void *);
 void	malo_pci_attach(struct device *, struct device *, void *);
 int	malo_pci_detach(struct device *, int);
+int	malo_pci_activate(struct device *, int);
+void	malo_pci_resume(void *, void *);
 
 struct malo_pci_softc {
 	struct malo_softc	sc_malo;
@@ -71,7 +74,7 @@ struct malo_pci_softc {
 
 struct cfattach malo_pci_ca = {
 	sizeof(struct malo_pci_softc), malo_pci_match, malo_pci_attach,
-	malo_pci_detach
+	malo_pci_detach, malo_pci_activate
 };
 
 const struct pci_matchid malo_pci_devices[] = {
@@ -150,4 +153,35 @@ malo_pci_detach(struct device *self, int flags)
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
 	return (0);
+}
+
+int
+malo_pci_activate(struct device *self, int act)
+{
+	struct malo_pci_softc *psc = (struct malo_pci_softc *)self;
+	struct malo_softc *sc = &psc->sc_malo;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			malo_stop(sc);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    malo_pci_resume, sc, NULL);
+		break;
+}
+
+	return (0);
+}
+
+void
+malo_pci_resume(void *arg1, void *arg2)
+{
+	struct malo_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	if (ifp->if_flags & IFF_UP)
+		malo_init(ifp);
 }
