@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.148 2010/08/07 20:48:56 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.149 2010/08/08 05:25:30 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1726,8 +1726,8 @@ azalia_mixer_get(const codec_t *this, nid_t nid, int target,
 	}
 
 	else {
-		printf("%s: internal error in %s: target=%x\n",
-		    XNAME(this), __func__, target);
+		DPRINTF(("%s: internal error in %s: target=%x\n",
+		    XNAME(this), __func__, target));
 		return -1;
 	}
 	return 0;
@@ -2245,8 +2245,8 @@ azalia_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 	}
 
 	else {
-		printf("%s: internal error in %s: target=%x\n",
-		    XNAME(this), __func__, target);
+		DPRINTF(("%s: internal error in %s: target=%x\n",
+		    XNAME(this), __func__, target));
 		return -1;
 	}
 	return 0;
@@ -2266,7 +2266,7 @@ azalia_mixer_from_device_value(const codec_t *this, nid_t nid, int target,
 		steps = COP_AMPCAP_NUMSTEPS(this->w[nid].outamp_cap);
 		ctloff = COP_AMPCAP_CTLOFF(this->w[nid].outamp_cap);
 	} else {
-		printf("%s: unknown target: %d\n", __func__, target);
+		DPRINTF(("%s: unknown target: %d\n", __func__, target));
 		steps = 255;
 	}
 	dv -= ctloff;
@@ -2292,7 +2292,7 @@ azalia_mixer_to_device_value(const codec_t *this, nid_t nid, int target,
 		steps = COP_AMPCAP_NUMSTEPS(this->w[nid].outamp_cap);
 		ctloff = COP_AMPCAP_CTLOFF(this->w[nid].outamp_cap);
 	} else {
-		printf("%s: unknown target: %d\n", __func__, target);
+		DPRINTF(("%s: unknown target: %d\n", __func__, target));
 		steps = 255;
 	}
 	if (uv <= AUDIO_MIN_GAIN || steps == 0)

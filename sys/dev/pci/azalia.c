@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.182 2010/08/08 04:10:25 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.183 2010/08/08 05:25:30 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -696,7 +696,7 @@ azalia_reset(azalia_t *az)
 	}
 	DPRINTF(("%s: reset counter = %d\n", __func__, i));
 	if (i <= 0) {
-		printf("%s: reset failure\n", XNAME(az));
+		DPRINTF(("%s: reset failure\n", XNAME(az)));
 		return(ETIMEDOUT);
 	}
 	DELAY(1000);
@@ -709,7 +709,7 @@ azalia_reset(azalia_t *az)
 	}
 	DPRINTF(("%s: reset counter = %d\n", __func__, i));
 	if (i <= 0) {
-		printf("%s: reset-exit failure\n", XNAME(az));
+		DPRINTF(("%s: reset-exit failure\n", XNAME(az)));
 		return(ETIMEDOUT);
 	}
 	DELAY(1000);
@@ -941,7 +941,7 @@ azalia_halt_corb(azalia_t *az)
 				break;
 		}
 		if (i <= 0) {
-			printf("%s: CORB is running\n", XNAME(az));
+			DPRINTF(("%s: CORB is running\n", XNAME(az)));
 			return EBUSY;
 		}
 	}
@@ -986,7 +986,7 @@ azalia_init_corb(azalia_t *az, int resuming)
 			break;
 	}
 	if (i <= 0) {
-		printf("%s: CORBRP reset failure\n", XNAME(az));
+		DPRINTF(("%s: CORBRP reset failure\n", XNAME(az)));
 		return -1;
 	}
 	DPRINTF(("%s: CORBWP=%d; size=%d\n", __func__,
@@ -1039,7 +1039,7 @@ azalia_halt_rirb(azalia_t *az)
 				break;
 		}
 		if (i <= 0) {
-			printf("%s: RIRB is running\n", XNAME(az));
+			DPRINTF(("%s: RIRB is running\n", XNAME(az)));
 			return(EBUSY);
 		}
 	}
@@ -1158,7 +1158,7 @@ azalia_set_command(azalia_t *az, int caddr, nid_t nid, uint32_t control,
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, CORBCTL) & HDA_CORBCTL_CORBRUN) == 0) {
-		printf("%s: CORB is not running.\n", XNAME(az));
+		DPRINTF(("%s: CORB is not running.\n", XNAME(az)));
 		return(-1);
 	}
 #endif
@@ -1184,7 +1184,7 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, RIRBCTL) & HDA_RIRBCTL_RIRBDMAEN) == 0) {
-		printf("%s: RIRB is not running.\n", XNAME(az));
+		DPRINTF(("%s: RIRB is not running.\n", XNAME(az)));
 		return(-1);
 	}
 #endif
@@ -1200,7 +1200,7 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 			i--;
 		}
 		if (i <= 0) {
-			printf("%s: RIRB time out\n", XNAME(az));
+			DPRINTF(("%s: RIRB time out\n", XNAME(az)));
 			return(ETIMEDOUT);
 		}
 		if (++az->rirb_rp >= az->rirb_entries)
@@ -1397,8 +1397,8 @@ azalia_resume_codec(codec_t *this)
 	err = azalia_comresp(this, this->audiofunc, CORB_SET_POWER_STATE,
  	    CORB_PS_D0, &result);
 	if (err) {
-		printf("%s: power audio func error: result=0x%8.8x\n",
-		    __func__, result);
+		DPRINTF(("%s: power audio func error: result=0x%8.8x\n",
+		    __func__, result));
 	}
 	DELAY(100);
 
@@ -1504,8 +1504,8 @@ azalia_save_mixer(codec_t *this)
 		case AUDIO_MIXER_CLASS:
 			break;
 		default:
-			printf("%s: invalid mixer type in mixer %d\n",
-			    __func__, mc.dev);
+			DPRINTF(("%s: invalid mixer type in mixer %d\n",
+			    __func__, mc.dev));
 			break;
 		}
 	}
@@ -1537,8 +1537,8 @@ azalia_restore_mixer(codec_t *this)
 		case AUDIO_MIXER_CLASS:
 			break;
 		default:
-			printf("%s: invalid mixer type in mixer %d\n",
-			    __func__, mc.dev);
+			DPRINTF(("%s: invalid mixer type in mixer %d\n",
+			    __func__, mc.dev));
 			continue;
 		}
 		azalia_mixer_set(this, m->nid, m->target, &mc);
@@ -3697,7 +3697,7 @@ azalia_stream_reset(stream_t *this)
 			break;
 	}
 	if (i <= 0) {
-		printf("%s: stream reset failure 1\n", XNAME(this->az));
+		DPRINTF(("%s: stream reset failure 1\n", XNAME(this->az)));
 		return -1;
 	}
 
@@ -3710,7 +3710,7 @@ azalia_stream_reset(stream_t *this)
 			break;
 	}
 	if (i <= 0) {
-		printf("%s: stream reset failure 2\n", XNAME(this->az));
+		DPRINTF(("%s: stream reset failure 2\n", XNAME(this->az)));
 		return -1;
 	}
 
@@ -3751,7 +3751,7 @@ azalia_stream_start(stream_t *this)
 
 	err = azalia_stream_reset(this);
 	if (err) {
-		printf("%s: stream reset failed\n", "azalia");
+		DPRINTF(("%s: stream reset failed\n", "azalia"));
 		return err;
 	}
 
@@ -3834,8 +3834,8 @@ azalia_stream_intr(stream_t *this)
 	    HDA_SD_STS_DESE | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS);
 
 	if (sts & (HDA_SD_STS_DESE | HDA_SD_STS_FIFOE))
-		printf("%s: stream %d: sts=%b\n", XNAME(this->az),
-		    this->number, sts, HDA_SD_STS_BITS);
+		DPRINTF(("%s: stream %d: sts=%b\n", XNAME(this->az),
+		    this->number, sts, HDA_SD_STS_BITS));
 
 	if (sts & HDA_SD_STS_BCIS) {
 		hwpos = STR_READ_4(this, LPIB) + this->pos_offs;
