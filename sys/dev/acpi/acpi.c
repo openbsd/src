@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.208 2010/08/08 02:23:20 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.209 2010/08/08 20:45:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -552,6 +552,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_memt = ba->ba_memt;
+
+	rw_init(&sc->sc_lck, "acpilk");
 
 	acpi_softc = sc;
 
@@ -2027,11 +2029,15 @@ acpi_thread(void *arg)
 		}
 	}
 
+	rw_enter_write(&sc->sc_lck);
+
 	while (thread->running) {
 		s = spltty();
 		while (sc->sc_threadwaiting) {
 			dnprintf(10, "acpi going to sleep...\n");
+			rw_exit_write(&sc->sc_lck);
 			tsleep(sc, PWAIT, "acpi0", 0);
+			rw_enter_write(&sc->sc_lck);
 		}
 		sc->sc_threadwaiting = 1;
 		splx(s);

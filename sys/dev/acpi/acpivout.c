@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.6 2010/07/21 19:35:15 deraadt Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.7 2010/08/08 20:45:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -336,7 +336,9 @@ acpivout_get_param(struct wsdisplay_param *dp)
 		if (sc != NULL && sc->sc_bcl_len != 0) {
 			dp->min = 0;
 			dp->max =  sc->sc_bcl[sc->sc_bcl_len - 1];
+			rw_enter_write(&sc->sc_acpi->sc_lck);
 			dp->curval = acpivout_get_brightness(sc);
+			rw_exit_write(&sc->sc_acpi->sc_lck);
 			if (dp->curval != -1)
 				return 0;
 		}
@@ -363,8 +365,10 @@ acpivout_set_param(struct wsdisplay_param *dp)
 				break;
 		}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
+			rw_enter_write(&sc->sc_acpi->sc_lck);
 			exact = acpivout_find_brightness(sc, dp->curval);
 			acpivout_set_brightness(sc, exact);
+			rw_exit_write(&sc->sc_acpi->sc_lck);
 			return 0;
 		}
 		return -1;
