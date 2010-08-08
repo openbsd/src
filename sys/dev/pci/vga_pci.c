@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.62 2010/08/08 17:21:07 miod Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.63 2010/08/08 19:33:35 miod Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -328,7 +328,7 @@ vga_pci_activate(struct device *self, int act)
 #if defined (X86EMU)
 		if (vga_pci_do_post) {
 #ifdef obnoxious
-			printf("%s: reposting video using BIOS.  Is this neccessary?\n",
+			printf("%s: reposting video using BIOS.  Is this necessary?\n",
 			    sc->sc_dev.dv_xname);
 #endif
 			vga_post_call(sc->sc_posth);
