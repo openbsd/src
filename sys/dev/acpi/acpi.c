@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.207 2010/08/07 17:12:16 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.208 2010/08/08 02:23:20 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -84,6 +84,8 @@ int	acpi_foundprt(struct aml_node *, void *);
 struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *,
 	    const char *, const char *, int);
 
+void	acpi_init_states(struct acpi_softc *);
+
 #ifndef SMALL_KERNEL
 
 int	acpi_thinkpad_enabled;
@@ -96,7 +98,6 @@ int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
 void	acpi_thread(void *);
 void	acpi_create_thread(void *);
 void	acpi_init_pm(struct acpi_softc *);
-void	acpi_init_states(struct acpi_softc *);
 
 void	acpi_handle_suspend_failure(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
@@ -655,10 +656,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Perform post-parsing fixups */
 	aml_postparse();
 
-#ifndef SMALL_KERNEL
 	/* Find available sleeping states */
 	acpi_init_states(sc);
 
+#ifndef SMALL_KERNEL
 	/* Find available sleep/resume related methods. */
 	acpi_init_pm(sc);
 #endif /* SMALL_KERNEL */
@@ -1171,6 +1172,29 @@ acpi_map_pmregs(struct acpi_softc *sc)
 	}
 }
 
+void
+acpi_init_states(struct acpi_softc *sc)
+{
+	struct aml_value res;
+	char name[8];
+	int i;
+
+	printf("\n%s: sleep states", DEVNAME(sc));
+	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
+		snprintf(name, sizeof(name), "_S%d_", i);
+		sc->sc_sleeptype[i].slp_typa = -1;
+		sc->sc_sleeptype[i].slp_typb = -1;
+		if (aml_evalname(sc, &aml_root, name, 0, NULL, &res) == 0) {
+			if (res.type == AML_OBJTYPE_PACKAGE) {
+				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
+				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
+				printf(" S%d", i);
+			}
+			aml_freevalue(&res);
+		}
+	}
+}
+
 #ifndef SMALL_KERNEL
 int
 is_ata(struct aml_node *node)
@@ -1600,29 +1624,6 @@ acpi_init_gpes(struct acpi_softc *sc)
 	}
 	aml_find_node(&aml_root, "_PRW", acpi_foundprw, sc);
 	sc->sc_maxgpe = ngpe;
-}
-
-void
-acpi_init_states(struct acpi_softc *sc)
-{
-	struct aml_value res;
-	char name[8];
-	int i;
-
-	printf("\n%s: sleep states", DEVNAME(sc));
-	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
-		snprintf(name, sizeof(name), "_S%d_", i);
-		sc->sc_sleeptype[i].slp_typa = -1;
-		sc->sc_sleeptype[i].slp_typb = -1;
-		if (aml_evalname(sc, &aml_root, name, 0, NULL, &res) == 0) {
-			if (res.type == AML_OBJTYPE_PACKAGE) {
-				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
-				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
-				printf(" S%d", i);
-			}
-			aml_freevalue(&res);
-		}
-	}
 }
 
 void
