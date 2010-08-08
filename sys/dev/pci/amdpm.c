@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.24 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.25 2010/08/08 04:49:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -178,6 +178,7 @@ struct amdpm_softc {
 
 int	amdpm_match(struct device *, void *, void *);
 void	amdpm_attach(struct device *, struct device *, void *);
+int	amdpm_activate(struct device *, int);
 void	amdpm_rnd_callout(void *);
 
 int	amdpm_i2c_acquire_bus(void *, int);
@@ -188,7 +189,8 @@ int	amdpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 int	amdpm_intr(void *);
 
 struct cfattach amdpm_ca = {
-	sizeof(struct amdpm_softc), amdpm_match, amdpm_attach
+	sizeof(struct amdpm_softc), amdpm_match, amdpm_attach, NULL,
+	amdpm_activate
 };
 
 struct cfdriver amdpm_cd = {
@@ -310,6 +312,28 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
+}
+
+int
+amdpm_activate(struct device *self, int act)
+{
+	struct amdpm_softc *sc = (struct amdpm_softc *)self;
+
+	switch (act) {
+	case DVACT_RESUME:
+		if (timeout_initialized(&sc->sc_rnd_ch)) {
+			pcireg_t cfg_reg;
+
+			/* Restart the AMD PBC768_PMC/8111_PMC RNG */
+			cfg_reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    AMDPM_CONFREG);
+			pci_conf_write(sc->sc_pc, sc->sc_tag, 
+			    AMDPM_CONFREG, cfg_reg | AMDPM_RNGEN);
+		
+		}
+		break;
+	}
+	return (0);
 }
 
 void
