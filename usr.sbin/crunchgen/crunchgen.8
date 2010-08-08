@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.8,v 1.4 2008/11/24 18:03:22 jmc Exp $
+.\"	$OpenBSD: crunchgen.8,v 1.5 2010/08/08 20:22:31 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -25,7 +25,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd $Mdocdate: November 24 2008 $
+.Dd $Mdocdate: August 8 2010 $
 .Dt CRUNCHGEN 8
 .Os
 .Sh NAME
@@ -42,12 +42,12 @@
 .Op Fl m Ar makefile-name
 .Op Fl O Ar objdir-name
 .Ar conf-file
+.Ek
 .Nm crunchgen
 .Fl h
 .Op Fl f Ar keep-list-file
 .Op Fl k Ar keep-symbol
 .Ar object-file ...
-.Ek
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
 together into a single executable.
