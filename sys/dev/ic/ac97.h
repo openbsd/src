@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.23 2008/10/23 21:50:01 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.24 2010/08/08 20:37:33 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -79,10 +79,13 @@ struct ac97_codec_if_vtbl {
 };
 
 struct ac97_codec_if {
+	struct ac97_softc *as;
+	void (*initfunc)(struct ac97_softc *, int);
 	struct ac97_codec_if_vtbl *vtbl;
 };
 
 int ac97_attach(struct ac97_host_if *);
+int ac97_resume(struct ac97_host_if *, struct ac97_codec_if *);
 int ac97_set_rate(struct ac97_codec_if *, int, u_long *);
 void ac97_get_default_params(struct audio_params *);
 

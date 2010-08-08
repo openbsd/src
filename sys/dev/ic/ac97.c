@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.73 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.74 2010/08/08 20:37:33 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -346,11 +346,11 @@ void	ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock);
 u_int16_t ac97_get_extcaps(struct ac97_codec_if *codec_if);
 int	ac97_add_port(struct ac97_softc *as, struct ac97_source_info *src);
 
-void	ac97_ad1885_init(struct ac97_softc *);
-void	ac97_ad1886_init(struct ac97_softc *);
-void	ac97_ad198x_init(struct ac97_softc *);
-void	ac97_alc650_init(struct ac97_softc *);
-void	ac97_cx20468_init(struct ac97_softc *);
+void	ac97_ad1885_init(struct ac97_softc *, int);
+void	ac97_ad1886_init(struct ac97_softc *, int);
+void	ac97_ad198x_init(struct ac97_softc *, int);
+void	ac97_alc650_init(struct ac97_softc *, int);
+void	ac97_cx20468_init(struct ac97_softc *, int);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -371,7 +371,7 @@ const struct ac97_codecid {
 	u_int8_t rev;
 	u_int8_t shift;	/* no use yet */
 	char * const name;
-	void (*init)(struct ac97_softc *);
+	void (*init)(struct ac97_softc *, int);
 }  ac97_ad[] = {
 	{ 0x03, 0xff, 0, 0,	"AD1819" },
 	{ 0x40, 0xff, 0, 0,	"AD1881" },
@@ -805,13 +805,14 @@ ac97_attach(struct ac97_host_if *host_if)
 	u_int16_t extstat, rate;
 	mixer_ctrl_t ctl;
 	int error, i;
-	void (*initfunc)(struct ac97_softc *);
+	void (*initfunc)(struct ac97_softc *, int);
 
 	initfunc = NULL;
 
 	if (!(as = malloc(sizeof(*as), M_DEVBUF, M_NOWAIT | M_ZERO)))
 		return (ENOMEM);
 
+	as->codec_if.as = as;
 	as->codec_if.vtbl = &ac97civ;
 	as->host_if = host_if;
 
@@ -931,8 +932,9 @@ ac97_attach(struct ac97_host_if *host_if)
 	DELAY(900 * 1000);
 
 	/* use initfunc for specific device */
+	as->codec_if.initfunc = initfunc;
 	if (initfunc != NULL)
-		initfunc(as);
+		initfunc(as, 0);
 
 	/* Just enable the DAC and master volumes by default */
 	bzero(&ctl, sizeof(ctl));
@@ -956,6 +958,59 @@ ac97_attach(struct ac97_host_if *host_if)
 	ctl.dev = ac97_get_portnum_by_name(&as->codec_if, AudioCrecord,
 	    AudioNsource, NULL);
 	ac97_mixer_set_port(&as->codec_if, &ctl);
+
+	return (0);
+}
+
+int
+ac97_resume(struct ac97_host_if *host_if, struct ac97_codec_if *codec_if)
+{
+	struct ac97_softc *as = codec_if->as;
+	u_int16_t val, extstat;
+
+	host_if->reset(host_if->arg);
+	DELAY(1000);
+
+	host_if->write(host_if->arg, AC97_REG_POWER, 0);
+	host_if->write(host_if->arg, AC97_REG_RESET, 0);
+	DELAY(10000);
+
+	codec_if->vtbl->restore_ports(codec_if);
+
+	if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
+			  | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
+			  | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
+			  | AC97_EXT_AUDIO_LDAC)) {
+
+		ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &extstat);
+		extstat &= ~AC97_EXT_AUDIO_DRA;
+
+		if (as->ext_id & AC97_EXT_AUDIO_VRM)
+			extstat |= AC97_EXT_AUDIO_VRM;
+
+		if (as->ext_id & AC97_EXT_AUDIO_LDAC)
+			extstat |= AC97_EXT_AUDIO_LDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_SDAC)
+			extstat |= AC97_EXT_AUDIO_SDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_CDAC)
+			extstat |= AC97_EXT_AUDIO_CDAC;
+
+		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
+			extstat &= ~AC97_EXT_AUDIO_SPSA_MASK;
+			extstat |= AC97_EXT_AUDIO_SPSA34;
+			ac97_read(as, AC97_REG_SPDIF_CTRL, &val);
+			val = (val & ~AC97_SPDIF_SPSR_MASK) |
+			    AC97_SPDIF_SPSR_48K;
+			ac97_write(as, AC97_REG_SPDIF_CTRL, val);
+		}
+		if (as->ext_id & AC97_EXT_AUDIO_VRA)
+			extstat |= AC97_EXT_AUDIO_VRA;
+		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, extstat);
+	}
+
+	/* use initfunc for specific device */
+	if (as->codec_if.initfunc != NULL)
+		as->codec_if.initfunc(as, 1);
 
 	return (0);
 }
@@ -1368,9 +1423,12 @@ ac97_mixer_get_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
  */
 
 void
-ac97_ad1885_init(struct ac97_softc *as)
+ac97_ad1885_init(struct ac97_softc *as, int resuming)
 {
 	int i;
+
+	if (resuming)
+		return;
 
 	for (i = 0; i < as->num_source_info; i++) {
 		if (as->source_info[i].reg == AC97_REG_HEADPHONE_VOLUME)
@@ -1383,13 +1441,13 @@ ac97_ad1885_init(struct ac97_softc *as)
 #define AC97_AD1886_JACK_SENSE	0x72
 
 void
-ac97_ad1886_init(struct ac97_softc *as)
+ac97_ad1886_init(struct ac97_softc *as, int resuming)
 {
 	ac97_write(as, AC97_AD1886_JACK_SENSE, 0x0010);
 }
 
 void
-ac97_ad198x_init(struct ac97_softc *as)
+ac97_ad198x_init(struct ac97_softc *as, int resuming)
 {
 	int i;
 	u_int16_t misc;
@@ -1397,6 +1455,9 @@ ac97_ad198x_init(struct ac97_softc *as)
 	ac97_read(as, AC97_AD_REG_MISC, &misc);
 	ac97_write(as, AC97_AD_REG_MISC,
 	    misc|AC97_AD_MISC_HPSEL|AC97_AD_MISC_LOSEL);
+
+	if (resuming)
+		return;
 
 	for (i = 0; i < as->num_source_info; i++) {
 		if (as->source_info[i].reg == AC97_REG_SURR_MASTER)
@@ -1407,7 +1468,7 @@ ac97_ad198x_init(struct ac97_softc *as)
 }
 
 void
-ac97_alc650_init(struct ac97_softc *as)
+ac97_alc650_init(struct ac97_softc *as, int resuming)
 {
 	u_int16_t misc;
 
@@ -1416,6 +1477,9 @@ ac97_alc650_init(struct ac97_softc *as)
 		misc &= ~AC97_ALC650_MISC_PIN47;
 	misc &= ~AC97_ALC650_MISC_VREFDIS;
 	ac97_write(as, AC97_ALC650_REG_MISC, misc);
+
+	if (resuming)
+		return;
 
 	struct ac97_source_info sources[3] = {
 		{ AudioCoutputs, AudioNsurround, "lineinjack",
@@ -1437,7 +1501,7 @@ ac97_alc650_init(struct ac97_softc *as)
 }
 
 void
-ac97_cx20468_init(struct ac97_softc *as)
+ac97_cx20468_init(struct ac97_softc *as, int resuming)
 {
 	u_int16_t misc;
 
