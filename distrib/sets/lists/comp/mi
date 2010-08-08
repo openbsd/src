@@ -6100,6 +6100,8 @@
 ./usr/share/man/cat9/MGET.0
 ./usr/share/man/cat9/MGETHDR.0
 ./usr/share/man/cat9/MH_ALIGN.0
+./usr/share/man/cat9/MUTEX_ASSERT_LOCKED.0
+./usr/share/man/cat9/MUTEX_ASSERT_UNLOCKED.0
 ./usr/share/man/cat9/M_ALIGN.0
 ./usr/share/man/cat9/M_LEADINGSPACE.0
 ./usr/share/man/cat9/M_PREPEND.0
