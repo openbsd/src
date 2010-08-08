@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iostat.8,v 1.23 2007/05/31 19:20:25 jmc Exp $
+.\"	$OpenBSD: iostat.8,v 1.24 2010/08/08 12:36:50 jmc Exp $
 .\"	$NetBSD: iostat.8,v 1.10 1996/10/25 18:21:57 scottr Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 8 2010 $
 .Dt IOSTAT 8
 .Os
 .Sh NAME
@@ -79,9 +79,9 @@ Unless the
 .Fl I
 flag is in effect, the first display is for the time since a reboot and
 each subsequent report is for the time period since the last display.
-If no
-.Ar wait
-interval is specified, the default is 1 second.
+If no repeat
+.Ar count
+is specified, the default is infinity.
 .It Fl D
 Show alternate disk statistics.
 Displays kilobytes transferred, number of
@@ -117,9 +117,9 @@ flags are used.
 Pause
 .Ar wait
 seconds between each display.
-If no repeat
-.Ar count
-is specified, the default is infinity.
+If no
+.Ar wait
+interval is specified, the default is 1 second.
 .El
 .Pp
 .Nm
