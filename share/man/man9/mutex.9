@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.13 2010/08/07 20:30:21 oga Exp $
+.\" $OpenBSD: mutex.9,v 1.14 2010/08/08 12:39:05 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 7 2010 $
+.Dd $Mdocdate: August 8 2010 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ The
 and
 .Fn MUTEX_ASSERT_UNLOCKED
 macros may be used to assert that a mutex is held locked or unlocked by
-the current cpu.
+the current CPU.
 .Sh SEE ALSO
 .Xr lockmgr 9 ,
 .Xr rwlock 9 ,
