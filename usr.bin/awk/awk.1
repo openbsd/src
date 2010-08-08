@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.34 2010/01/10 10:53:33 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.35 2010/08/08 13:26:48 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -23,7 +23,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2010 $
+.Dd $Mdocdate: August 8 2010 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -201,53 +201,60 @@ can be used to escape a newline between tokens.
 .Pp
 An action is a sequence of statements.
 A statement can be one of the following:
-.Bd -unfilled -offset indent
-.Ic if ( Xo
-.Ar expression ) statement \&
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Xo Ic if ( Ar expression ) Ar statement
 .Op Ic else Ar statement
 .Xc
-.Ic while ( Ar expression ) statement
-.Ic for ( Xo
-.Ar expression ; expression ; expression ) statement
+.It Ic while ( Ar expression ) Ar statement
+.It Xo Ic for
+.No ( Ar expression ; expression ; expression ) statement
 .Xc
-.Ic for ( Xo
-.Ar var Ic in Ar array ) statement
+.It Xo Ic for
+.No ( Ar var Ic in Ar array ) statement
 .Xc
-.Ic do Ar statement Ic while ( Ar expression )
-.Ic break
-.Ic continue
-.Ic { Oo Ar statement ... Oc Ic \& }
-.Ar expression Xo
-.No "# commonly" \&
-.Ar var Ic = Ar expression
+.It Xo Ic do
+.Ar statement Ic while ( Ar expression )
 .Xc
-.Ic print Xo
+.It Ic break
+.It Ic continue
+.It Xo Ic {
+.Op Ar statement ...
+.Ic }
+.Xc
+.It Xo Ar expression
+.No # commonly
+.Ar var No = Ar expression
+.Xc
+.It Xo Ic print
 .Op Ar expression-list
 .Op > Ns Ar expression
 .Xc
-.Ic printf Ar format Xo
+.It Xo Ic printf Ar format
 .Op Ar ... , expression-list
 .Op > Ns Ar expression
 .Xc
-.Ic return Op Ar expression
-.Ic next Xo
-.No "# skip remaining patterns on this input line"
+.It Ic return Op Ar expression
+.It Xo Ic next
+.No # skip remaining patterns on this input line
 .Xc
-.Ic nextfile Xo
-.No "# skip rest of this file, open next, start at top"
+.It Xo Ic nextfile
+.No # skip rest of this file, open next, start at top
 .Xc
-.Ic delete Ar array Ns Xo
-.Ic \&[ Ns Ar expression Ns Ic \&]
-.No \& "# delete an array element"
+.It Xo Ic delete
+.Sm off
+.Ar array Ic \&[ Ar expression Ic \&]
+.Sm on
+.No # delete an array element
 .Xc
-.Ic delete Ar array Xo
-.No "# delete all elements of array"
+.It Xo Ic delete Ar array
+.No # delete all elements of array
 .Xc
-.Ic exit Xo
+.It Xo Ic exit
 .Op Ar expression
-.No \& "# exit immediately; status is" Ar expression
+.No # exit immediately; status is Ar expression
 .Xc
-.Ed
+.El
 .Pp
 Statements are terminated by
 semicolons, newlines or right braces.
@@ -339,15 +346,16 @@ from an occurrence of the first pattern
 through an occurrence of the second.
 .Pp
 A relational expression is one of the following:
-.Bd -unfilled -offset indent
-.Ar expression matchop regular-expression
-.Ar expression relop expression
-.Ar expression Ic in Ar array-name
-.Ic \&( Ns Xo
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Ar expression matchop regular-expression
+.It Ar expression relop expression
+.It Ar expression Ic in Ar array-name
+.It Xo Ic \&( Ns
 .Ar expr , expr , \&... Ns Ic \&) in
-.Ar \& array-name
+.Ar array-name
 .Xc
-.Ed
+.El
 .Pp
 where a
 .Ar relop
