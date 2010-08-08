@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.42 2010/08/03 16:55:06 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.43 2010/08/08 17:25:41 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -223,8 +223,6 @@ acpiec_read(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 		buffer[reg] = acpiec_read_1(sc, addr + reg);
 	acpiec_burst_disable(sc);
 	sc->sc_ecbusy = 0;
-	if (sc->sc_gotsci)
-		acpiec_sci_event(sc);
 }
 
 void
@@ -244,8 +242,6 @@ acpiec_write(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 		acpiec_write_1(sc, addr + reg, buffer[reg]);
 	acpiec_burst_disable(sc);
 	sc->sc_ecbusy = 0;
-	if (sc->sc_gotsci)
-		acpiec_sci_event(sc);
 }
 
 int
@@ -321,10 +317,11 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 	u_int8_t		mask, stat, en;
 	int			s;
 
+	KASSERT(sc->sc_ecbusy == 0);
 	dnprintf(10, "ACPIEC: got gpe\n");
 
 	do {
-		if (sc->sc_gotsci && !sc->sc_ecbusy)
+		if (sc->sc_gotsci)
 			acpiec_sci_event(sc);
 
 		stat = acpiec_status(sc);
