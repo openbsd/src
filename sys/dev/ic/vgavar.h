@@ -1,4 +1,4 @@
-/* $OpenBSD: vgavar.h,v 1.9 2009/02/01 14:37:22 miod Exp $ */
+/* $OpenBSD: vgavar.h,v 1.10 2010/08/08 17:21:05 miod Exp $ */
 /* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
 
 /*
@@ -39,6 +39,19 @@ struct vga_handle {
 #define vh_memt vh_ph.ph_memt
 #define vh_ioh_6845 vh_ph.ph_ioh_6845
 #define vh_memh vh_ph.ph_memh
+
+struct vgascreen {
+	struct pcdisplayscreen pcs;
+	LIST_ENTRY(vgascreen) next;
+
+	/* videostate */
+	struct vga_config *cfg;
+	/* font data */
+	struct vgafont *fontset1, *fontset2;
+
+	int mindispoffset, maxdispoffset;
+	int vga_rollover;
+};
 
 struct vga_config {
 	struct vga_handle hdl;
@@ -168,10 +181,12 @@ static inline void _vga_gdc_write(vh, reg, val)
 	pcdisplay_6845_write(&(vh)->vh_ph, reg, val)
 
 int	vga_common_probe(bus_space_tag_t, bus_space_tag_t);
-void	vga_common_attach(struct device *, bus_space_tag_t,
-			       bus_space_tag_t, int);
-void	vga_extended_attach(struct device *, bus_space_tag_t,
-    bus_space_tag_t, int, paddr_t (*)(void *, off_t, int));
+struct vga_config *
+	vga_common_attach(struct device *, bus_space_tag_t, bus_space_tag_t,
+	    int);
+struct vga_config *
+	vga_extended_attach(struct device *, bus_space_tag_t, bus_space_tag_t,
+	    int, paddr_t (*)(void *, off_t, int));
 int	vga_is_console(bus_space_tag_t, int);
 int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 

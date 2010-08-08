@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.61 2010/08/06 18:32:38 marco Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.62 2010/08/08 17:21:07 miod Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -63,6 +63,9 @@
  */
 
 #include "vga.h"
+#if defined(__i386__) || defined(__amd64__)
+#include "acpi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +104,6 @@
 
 #include "intagp.h"
 #include "drm.h"
-#if defined(__i386__) || defined(__amd64__)
-#include "acpi.h"
-#endif
 
 int	vga_pci_match(struct device *, void *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
@@ -121,8 +121,13 @@ int	vga_drm_print(void *, const char *);
 #endif
 
 #ifdef VESAFB
-int vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
-int vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
+int	vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
+int	vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
+#endif
+
+#if !defined(SMALL_KERNEL) && NACPI > 0
+void	vga_save_state(struct vga_pci_softc *);
+void	vga_restore_state(struct vga_pci_softc *);
 #endif
 
 
@@ -243,16 +248,18 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (vesabios_softc != NULL && vesabios_softc->sc_nmodes > 0) {
 		sc->sc_textmode = vesafb_get_mode(sc);
 		printf(", vesafb\n");
-		vga_extended_attach(self, pa->pa_iot, pa->pa_memt,
+		sc->sc_vc = vga_extended_attach(self, pa->pa_iot, pa->pa_memt,
 		    WSDISPLAY_TYPE_PCIVGA, vga_pci_mmap);
 		return;
 	}
 #endif
 	printf("\n");
-	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
+	sc->sc_vc = vga_common_attach(self, pa->pa_iot, pa->pa_memt,
 	    WSDISPLAY_TYPE_PCIVGA);
 
 	vga_pci_bar_init(sc, pa);
+
+#if !defined(SMALL_KERNEL) && NACPI > 0
 
 #ifdef X86EMU
 	if ((sc->sc_posth = vga_post_init(pa->pa_bus, pa->pa_device,
@@ -260,7 +267,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("couldn't set up vga POST handler\n");
 #endif
 
-#if !defined(SMALL_KERNEL) && NACPI > 0
 	vend = PCI_VENDOR(pa->pa_id);
 	prod = PCI_PRODUCT(pa->pa_id);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -300,21 +306,35 @@ vga_pci_activate(struct device *self, int act)
 {
 	int rv = 0;
 
-#if defined (X86EMU) && NACPI > 0
+#if !defined(SMALL_KERNEL) && NACPI > 0
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 #endif
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
+#if !defined(SMALL_KERNEL) && NACPI > 0
+		/*
+		 * Save the common vga state. This should theoretically only
+		 * be necessary if we intend to POST, but it is preferrable
+		 * to do it unconditionnaly, as many systems do not restore
+		 * this state correctly upon resume.
+		 */
+		vga_save_state(sc);
+#endif
 		break;
 	case DVACT_RESUME:
-#if defined (X86EMU) && NACPI > 0
+#if !defined(SMALL_KERNEL) && NACPI > 0
+#if defined (X86EMU)
 		if (vga_pci_do_post) {
+#ifdef obnoxious
 			printf("%s: reposting video using BIOS.  Is this neccessary?\n",
 			    sc->sc_dev.dv_xname);
+#endif
 			vga_post_call(sc->sc_posth);
 		}
+#endif
+		vga_restore_state(sc);
 #endif
 		rv = config_activate_children(self, act);
 		break;
@@ -593,3 +613,138 @@ vga_pci_bar_unmap(struct vga_pci_bar *bar)
 			bus_space_unmap(bar->bst, bar->bsh, bar->size);
 	}
 }
+
+#if !defined(SMALL_KERNEL) && NACPI > 0
+void
+vga_save_state(struct vga_pci_softc *sc)
+{
+	struct vga_config *vc = sc->sc_vc;
+	struct vga_handle *vh;
+	struct vgascreen *scr;
+	size_t i;
+	char *buf;
+
+	if (vc == NULL)
+		return;
+
+	vh = &vc->hdl;
+
+	/*
+	 * Save sequencer registers
+	 */
+	vga_ts_write(vh, syncreset, 1);	/* stop sequencer */
+	buf = (char *)&sc->sc_save_ts;
+	*buf++ = 0;
+	for (i = 1; i < sizeof(sc->sc_save_ts); i++)
+		*buf++ = _vga_ts_read(vh, i);
+	vga_ts_write(vh, syncreset, 3);	/* start sequencer */
+	/* pretend screen is not blanked */
+	sc->sc_save_ts.mode &= ~0x20;
+	sc->sc_save_ts.mode |= 0x80;
+
+	/*
+	 * Save CRTC registers
+	 */
+	buf = (char *)&sc->sc_save_crtc;
+	for (i = 0; i < sizeof(sc->sc_save_crtc); i++)
+		*buf++ = _pcdisplay_6845_read(&vh->vh_ph, i);
+
+	/*
+	 * Save ATC registers
+	 */
+	buf = (char *)&sc->sc_save_atc;
+	for (i = 0; i < sizeof(sc->sc_save_atc); i++)
+		*buf++ = _vga_attr_read(vh, i);
+
+	/*
+	 * Save GDC registers
+	 */
+	buf = (char *)&sc->sc_save_gdc;
+	for (i = 0; i < sizeof(sc->sc_save_gdc); i++)
+		*buf++ = _vga_gdc_read(vh, i);
+
+	vga_save_palette(vc);
+
+	/* XXX should also save font data */
+
+	/*
+	 * Save current screen contents if we have backing store for it,
+	 * and intend to POST on resume.
+	 * XXX Since we don't allocate backing store unless the second VT is
+	 * XXX created, we could theoretically have no backing store available
+	 * XXX at this point.
+	 */
+	if (vga_pci_do_post) {
+		scr = vc->active;
+		if (scr != NULL && scr->pcs.active && scr->pcs.mem != NULL)
+			bus_space_read_region_2(vh->vh_memt, vh->vh_memh,
+			    scr->pcs.dispoffset, scr->pcs.mem,
+			    scr->pcs.type->ncols * scr->pcs.type->nrows);
+	}
+}
+
+void
+vga_restore_state(struct vga_pci_softc *sc)
+{
+	struct vga_config *vc = sc->sc_vc;
+	struct vga_handle *vh;
+	struct vgascreen *scr;
+	size_t i;
+	char *buf;
+
+	if (vc == NULL)
+		return;
+
+	vh = &vc->hdl;
+
+	/*
+	 * Restore sequencer registers
+	 */
+	vga_ts_write(vh, syncreset, 1);	/* stop sequencer */
+	buf = (char *)&sc->sc_save_ts + 1;
+	for (i = 1; i < sizeof(sc->sc_save_ts); i++)
+		_vga_ts_write(vh, i, *buf++);
+	vga_ts_write(vh, syncreset, 3);	/* start sequencer */
+
+	/*
+	 * Restore CRTC registers
+	 */
+	/* unprotect registers 00-07 */
+	vga_6845_write(vh, vsynce,
+	    vga_6845_read(vh, vsynce) & ~0x80);
+	buf = (char *)&sc->sc_save_crtc;
+	for (i = 0; i < sizeof(sc->sc_save_crtc); i++)
+		_pcdisplay_6845_write(&vh->vh_ph, i, *buf++);
+
+	/*
+	 * Restore ATC registers
+	 */
+	buf = (char *)&sc->sc_save_atc;
+	for (i = 0; i < sizeof(sc->sc_save_atc); i++)
+		_vga_attr_write(vh, i, *buf++);
+
+	/*
+	 * Restore GDC registers
+	 */
+	buf = (char *)&sc->sc_save_gdc;
+	for (i = 0; i < sizeof(sc->sc_save_gdc); i++)
+		_vga_gdc_write(vh, i, *buf++);
+
+	vga_restore_palette(vc);
+
+	/*
+	 * Restore current screen contents if we have backing store for it,
+	 * and have POSTed on resume.
+	 * XXX Since we don't allocate backing store unless the second VT is
+	 * XXX created, we could theoretically have no backing store available
+	 * XXX at this point.
+	 */
+	if (vga_pci_do_post) {
+		scr = vc->active;
+		if (scr != NULL && scr->pcs.active && scr->pcs.mem != NULL)
+			bus_space_write_region_2(vh->vh_memt, vh->vh_memh,
+			    scr->pcs.dispoffset, scr->pcs.mem,
+			    scr->pcs.type->ncols * scr->pcs.type->nrows);
+	}
+}
+#endif

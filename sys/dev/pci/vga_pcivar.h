@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pcivar.h,v 1.13 2009/06/06 04:38:18 pirofti Exp $ */
+/* $OpenBSD: vga_pcivar.h,v 1.14 2010/08/08 17:21:07 miod Exp $ */
 /* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
@@ -54,9 +54,16 @@ struct vga_pci_bar {
 	
 struct vga_pci_softc {
 	struct device sc_dev;
+	struct vga_config *sc_vc;
 
 	struct pci_attach_args pa;
 	struct vga_pci_bar *bars[VGA_PCI_MAX_BARS];
+#if NACPI > 0
+	struct reg_vgats sc_save_ts;
+	struct reg_mc6845 sc_save_crtc;
+	struct reg_vgaattr sc_save_atc;
+	struct reg_vgagdc sc_save_gdc;
+#endif
 #ifdef X86EMU
 	struct vga_post *sc_posth;
 #endif
@@ -84,10 +91,10 @@ struct	vga_pci_bar *vga_pci_bar_map(struct vga_pci_softc *, int,
 void	vga_pci_bar_unmap(struct vga_pci_bar*);
 
 #ifdef VESAFB
-int vesafb_find_mode(struct vga_pci_softc *, int, int, int);
-void vesafb_set_mode(struct vga_pci_softc *, int);
-int vesafb_get_mode(struct vga_pci_softc *);
-int vesafb_get_supported_depth(struct vga_pci_softc *);
+int	vesafb_find_mode(struct vga_pci_softc *, int, int, int);
+void	vesafb_set_mode(struct vga_pci_softc *, int);
+int	vesafb_get_mode(struct vga_pci_softc *);
+int	vesafb_get_supported_depth(struct vga_pci_softc *);
 #endif
 
 #endif /* _PCI_VGA_PCIVAR_H_ */

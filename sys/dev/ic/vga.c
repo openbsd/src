@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.52 2009/09/05 14:09:35 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.53 2010/08/08 17:21:05 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -94,21 +94,6 @@ static struct vgafont {
 	0, 256,
 #endif
 	0
-};
-
-struct vgascreen {
-	struct pcdisplayscreen pcs;
-
-	LIST_ENTRY(vgascreen) next;
-
-	struct vga_config *cfg;
-
-	/* videostate */
-	struct vgafont *fontset1, *fontset2;
-	/* font data */
-
-	int mindispoffset, maxdispoffset;
-	int vga_rollover;
 };
 
 int vgaconsole, vga_console_type, vga_console_attached;
@@ -522,9 +507,6 @@ vga_init(vc, iot, memt)
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
-#if 0
-	callout_init(&vc->vc_switch_callout);
-#endif
 
 	vc->vc_fonts[0] = &vga_builtinfont;
 	for (i = 1; i < 8; i++)
@@ -535,16 +517,16 @@ vga_init(vc, iot, memt)
 	vga_save_palette(vc);
 }
 
-void
+struct vga_config *
 vga_common_attach(self, iot, memt, type)
 	struct device *self;
 	bus_space_tag_t iot, memt;
 	int type;
 {
-	vga_extended_attach(self, iot, memt, type, NULL);
+	return vga_extended_attach(self, iot, memt, type, NULL);
 }
 
-void
+struct vga_config *
 vga_extended_attach(self, iot, memt, type, map)
 	struct device *self;
 	bus_space_tag_t iot, memt;
@@ -563,7 +545,7 @@ vga_extended_attach(self, iot, memt, type, map)
 	} else {
 		vc = malloc(sizeof(*vc), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (vc == NULL)
-			return;
+			return NULL;
 		vga_init(vc, iot, memt);
 	}
 
@@ -578,6 +560,8 @@ vga_extended_attach(self, iot, memt, type, map)
 	aa.defaultscreens = 0;
 
         config_found_sm(self, &aa, wsemuldisplaydevprint, displaysubmatch);
+
+	return vc;
 }
 
 int
