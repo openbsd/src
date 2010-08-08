@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.169 2010/08/03 00:19:42 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.170 2010/08/08 05:24:46 tedu Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -188,10 +188,12 @@ main(int argc, char *argv[])
 			op = WRITE;
 			break;
 		case 'p':
-			if (strchr("bckmgt", optarg[0]) == NULL ||
-			    optarg[1] != '\0')
-				usage();
-			print_unit = optarg[0];
+			if (strchr("bckmgtBCKMGT", optarg[0]) == NULL ||
+			    optarg[1] != '\0') {
+				fprintf(stderr, "Valid units are bckmgt\n");
+				exit(1);
+			}
+			print_unit = tolower(optarg[0]);
 			break;
 		case 'n':
 			donothing++;
