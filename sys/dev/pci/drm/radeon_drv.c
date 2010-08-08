@@ -37,6 +37,7 @@
 int	radeondrm_probe(struct device *, void *, void *);
 void	radeondrm_attach(struct device *, struct device *, void *);
 int	radeondrm_detach(struct device *, int);
+int	radeondrm_activate(struct device *, int);
 int	radeondrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 int radeon_no_wb;
@@ -662,9 +663,40 @@ radeondrm_detach(struct device *self, int flags)
 	return (0);
 }
 
+int
+radeondrm_activate(struct device *arg, int act)
+{
+	struct drm_radeon_private *dev_priv = (struct drm_radeon_private *)arg;
+	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		/* Interrupts still not supported on r600 */
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600 ||
+		    dev->irq_enabled == 0)
+			return (0);
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690)
+			RADEON_WRITE(R500_DxMODE_INT_MASK, 0);
+		RADEON_WRITE(RADEON_GEN_INT_CNTL, 0);
+		break;
+	case DVACT_RESUME:
+		/* Interrupts still not supported on r600 */
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600 ||
+		    dev->irq_enabled == 0)
+			return (0);
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690)
+			RADEON_WRITE(R500_DxMODE_INT_MASK,
+			    dev_priv->r500_disp_irq_reg);
+		RADEON_WRITE(RADEON_GEN_INT_CNTL, dev_priv->irq_enable_reg);
+		break;
+	}
+
+	return (0);
+}
+
 struct cfattach radeondrm_ca = {
         sizeof (drm_radeon_private_t), radeondrm_probe, radeondrm_attach, 
-	radeondrm_detach
+	radeondrm_detach, radeondrm_activate
 }; 
 
 struct cfdriver radeondrm_cd = {
