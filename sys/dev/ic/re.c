@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.126 2010/08/07 23:56:42 naddy Exp $	*/
+/*	$OpenBSD: re.c,v 1.127 2010/08/08 21:00:31 krw Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -773,7 +773,7 @@ done:
 	sc->rl_testmode = 0;
 	sc->rl_flags &= ~RL_FLAG_LINK;
 	ifp->if_flags &= ~IFF_PROMISC;
-	re_stop(ifp, 1);
+	re_stop(ifp);
 	if (m0 != NULL)
 		m_freem(m0);
 	DPRINTF(("leaving re_diag\n"));
