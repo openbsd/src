@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.241 2010/07/27 00:49:42 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.242 2010/08/09 17:31:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -726,7 +726,8 @@ editor_resize(struct disklabel *lp, char *p)
 		fputs("Cannot resize spoofed partition\n", stderr);
 		return;
 	}
-	secs = getuint(lp, "resize", "amount to grow (+) or shrink (-)",
+	secs = getuint(lp, "grow (+) or shrink (-) (with unit)",
+	    "amount to grow (+) or shrink (-) partition including unit",
 	    0, editor_countfree(lp), 0, DO_CONVERSIONS);
 
 	if (secs == 0 || secs == -1) {
