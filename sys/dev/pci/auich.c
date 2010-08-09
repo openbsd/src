@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.85 2010/08/08 20:37:33 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.86 2010/08/09 05:43:48 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -204,6 +204,8 @@ struct auich_softc {
 		void (*intr)(void *);
 		void *arg;
 		int running;
+		size_t size;
+		uint32_t ap;
 	} pcmo, pcmi, mici;
 
 	struct auich_dma *sc_pdma;	/* play */
@@ -1604,6 +1606,10 @@ auich_intr_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 			ring->intr(ring->arg);
 		else
 			printf("auich_intr: got progress with intr==NULL\n");
+
+		ring->ap += blksize;
+		if (ring->ap >= ring->size)
+			ring->ap = 0;
 	}
 	ring->qptr = qptr;
 
@@ -1639,7 +1645,7 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 		return -1;
 
 	size = (size_t)((caddr_t)end - (caddr_t)start);
-
+	sc->pcmo.size = size;
 	sc->pcmo.intr = intr;
 	sc->pcmo.arg = arg;
 
@@ -1687,7 +1693,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 		return -1;
 
 	size = (size_t)((caddr_t)end - (caddr_t)start);
-
+	sc->pcmi.size = size;
 	sc->pcmi.intr = intr;
 	sc->pcmi.arg = arg;
 
@@ -1887,6 +1893,16 @@ auich_resume(struct auich_softc *sc)
 			control |= sc->sc_pcm6;
 		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, control);
 
+		if (ring->intr) {
+			while (ring->ap != 0) {
+				ring->intr(ring->arg);
+				ring->ap += ring->blksize;
+				if (ring->ap >= ring->size)
+					ring->ap = 0;
+			}
+			ring->p = ring->start;
+		}
+
 		bus_space_write_4(sc->iot, sc->aud_ioh,
 		    AUICH_PCMO + AUICH_BDBAR, sc->sc_cddma + AUICH_PCMO_OFF(0));
 		auich_trigger_pipe(sc, AUICH_PCMO, ring);
@@ -1896,6 +1912,17 @@ auich_resume(struct auich_softc *sc)
 	if (ring->running) {
 		rate = sc->last_rrate;
 		ac97_set_rate(sc->codec_if, AC97_REG_PCM_LR_ADC_RATE, &rate);
+
+		if (ring->intr) {
+			while (ring->ap != 0) {
+				ring->intr(ring->arg);
+				ring->ap += ring->blksize;
+				if (ring->ap >= ring->size)
+					ring->ap = 0;
+			}
+			ring->p = ring->start;
+		}
+
 		bus_space_write_4(sc->iot, sc->aud_ioh,
 		    AUICH_PCMI + AUICH_BDBAR, sc->sc_cddma + AUICH_PCMI_OFF(0));
 		auich_trigger_pipe(sc, AUICH_PCMI, ring);
@@ -1905,6 +1932,17 @@ auich_resume(struct auich_softc *sc)
 	if (ring->running) {
 		rate = sc->last_rrate;
 		ac97_set_rate(sc->codec_if, AC97_REG_PCM_MIC_ADC_RATE, &rate);
+
+		if (ring->intr) {
+			while (ring->ap != 0) {
+				ring->intr(ring->arg);
+				ring->ap += ring->blksize;
+				if (ring->ap >= ring->size)
+					ring->ap = 0;
+			}
+			ring->p = ring->start;
+		}
+
 		bus_space_write_4(sc->iot, sc->aud_ioh,
 		    AUICH_MICI + AUICH_BDBAR, sc->sc_cddma + AUICH_MICI_OFF(0));
 		auich_trigger_pipe(sc, AUICH_MICI, ring);
