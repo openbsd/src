@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.12 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.13 2010/08/10 22:05:36 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -56,6 +56,6 @@ extern char *__progname;
 void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s pathname\n", __progname);
+	(void)fprintf(stderr, "usage: %s pathname\n", __progname);
 	exit(1);
 }
