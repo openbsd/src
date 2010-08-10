@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.242 2010/08/09 17:31:45 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.243 2010/08/10 23:35:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1130,8 +1130,8 @@ getuint(struct disklabel *lp, char *prompt, char *helpstring,
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	u_int64_t rval = oval;
+	int64_t mult = 1;
 	size_t n;
-	int mult = 1;
 	double d, percent = 1.0;
 
 	/* We only care about the remainder */
@@ -1173,17 +1173,23 @@ getuint(struct disklabel *lp, char *prompt, char *helpstring,
 					break;
 				case 'k':
 					if (lp->d_secsize > 1024)
-						mult = -lp->d_secsize / 1024;
+						mult = -lp->d_secsize / 1024LL;
 					else
-						mult = 1024 / lp->d_secsize;
+						mult = 1024LL / lp->d_secsize;
 					buf[--n] = '\0';
 					break;
 				case 'm':
-					mult = 1048576 / lp->d_secsize;
+					mult = (1024LL * 1024) / lp->d_secsize;
 					buf[--n] = '\0';
 					break;
 				case 'g':
-					mult = 1073741824 / lp->d_secsize;
+					mult = (1024LL * 1024 * 1024) /
+					    lp->d_secsize;
+					buf[--n] = '\0';
+					break;
+				case 't':
+					mult = (1024LL * 1024 * 1024 * 1024) /
+					    lp->d_secsize;
 					buf[--n] = '\0';
 					break;
 				case '%':
