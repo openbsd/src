@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.43 2010/07/25 21:43:37 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.44 2010/08/10 02:23:31 marco Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -35,28 +35,28 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  */
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -111,7 +111,7 @@ int	clockintr(void *);
 int	gettick(void);
 int	rtcget(mc_todregs *);
 void	rtcput(mc_todregs *);
-int 	hexdectodec(int);
+int	hexdectodec(int);
 int	dectohexdec(int);
 int	rtcintr(void *);
 void	rtcdrain(void *);
@@ -190,11 +190,11 @@ rtcdrain(void *v)
 	if (to != NULL)
 		timeout_del(to);
 
-	/* 
-	 * Drain any un-acknowledged RTC interrupts. 
-	 * See comment in cpu_initclocks(). 
+	/*
+	 * Drain any un-acknowledged RTC interrupts.
+	 * See comment in cpu_initclocks().
 	 */
-  	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
+	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
 		; /* Nothing. */
 }
 
@@ -230,8 +230,8 @@ rtcintr(void *arg)
 		psratio = profhz / stathz;
 	}
 
-	/* 
-	 * If rtcintr is 'late', next intr may happen immediately. 
+	/*
+	 * If rtcintr is 'late', next intr may happen immediately.
 	 * Get them all. (Also, see comment in cpu_initclocks().)
 	 */
 	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF) {
@@ -342,7 +342,7 @@ i8254_delay(int n)
 	if (n < 0)
 		return;
 	__asm __volatile("mul %2\n\tdiv %3"
-			 : "=a" (n) 
+			 : "=a" (n)
 			 : "0" (n), "r" (TIMER_FREQ), "r" (1000000)
 			 : "%edx", "cc");
 #else
@@ -426,7 +426,7 @@ rtcget(mc_todregs *regs)
 		return (-1);
 	MC146818_GETTOD(NULL, regs);			/* XXX softc */
 	return (0);
-}	
+}
 
 void
 rtcput(mc_todregs *regs)
@@ -575,7 +575,7 @@ inittodr(time_t base)
 
 
 	/*
-	 * If time_t is 32 bits, then the "End of Time" is 
+	 * If time_t is 32 bits, then the "End of Time" is
 	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
 	 * This code copes with RTC's past the end of time if time_t
 	 * is an int32 or less. Needed because sometimes RTCs screw
