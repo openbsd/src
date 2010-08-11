@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.76 2008/08/12 22:48:31 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.77 2010/08/11 13:11:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -43,7 +43,7 @@
 static const char *biosdisk_err(u_int);
 static int biosdisk_errno(u_int);
 
-static int CHS_rw (int, int, int, int, int, int, void *);
+int CHS_rw (int, int, int, int, int, int, void *);
 static int EDD_rw (int, int, u_int64_t, u_int32_t, void *);
 
 static daddr_t findopenbsd(bios_diskinfo_t *, daddr_t, const char **, int *);
@@ -185,7 +185,7 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 /*
  * Read/Write a block from given place using the BIOS.
  */
-static __inline int
+int
 CHS_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void *buf)
 {
 	int rv;
