@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.42 2010/04/20 14:54:58 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.43 2010/08/11 11:35:09 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -1843,9 +1843,27 @@ ixgbe_initialize_transmit_units(struct ix_softc *sc)
 		    (txhwb & 0x00000000ffffffffULL));
 		IXGBE_WRITE_REG(hw, IXGBE_TDWBAH(i),
 		    (txhwb >> 32));
-		txctrl = IXGBE_READ_REG(hw, IXGBE_DCA_TXCTRL(i));
+
+		/* Disable Head Writeback */
+		switch (hw->mac.type) {
+		case ixgbe_mac_82598EB:
+			txctrl = IXGBE_READ_REG(hw, IXGBE_DCA_TXCTRL(i));
+			break;
+		case ixgbe_mac_82599EB:
+		default:
+			txctrl = IXGBE_READ_REG(hw, IXGBE_DCA_TXCTRL_82599(i));
+			break;
+		}
 		txctrl &= ~IXGBE_DCA_TXCTRL_TX_WB_RO_EN;
-		IXGBE_WRITE_REG(hw, IXGBE_DCA_TXCTRL(i), txctrl);
+		switch (hw->mac.type) {
+		case ixgbe_mac_82598EB:
+			IXGBE_WRITE_REG(hw, IXGBE_DCA_TXCTRL(i), txctrl);
+			break;
+		case ixgbe_mac_82599EB:
+		default:
+			IXGBE_WRITE_REG(hw, IXGBE_DCA_TXCTRL_82599(i), txctrl);
+			break;
+		}
 
 		/* Setup the HW Tx Head and Tail descriptor pointers */
 		IXGBE_WRITE_REG(hw, IXGBE_TDH(i), 0);
