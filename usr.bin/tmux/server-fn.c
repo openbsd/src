@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.40 2010/07/24 20:11:59 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.41 2010/08/11 07:36:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -281,7 +281,7 @@ server_link_window(struct session *src, struct winlink *srcwl,
 		dstwl = winlink_find_by_index(&dst->windows, dstidx);
 	if (dstwl != NULL) {
 		if (dstwl->window == srcwl->window)
-			return (0);
+			return (-1);
 		if (killflag) {
 			/*
 			 * Can't use session_detach as it will destroy session
