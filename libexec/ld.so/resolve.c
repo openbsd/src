@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.50 2010/07/01 19:25:44 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.51 2010/08/11 01:14:27 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -303,15 +303,16 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 	return ret;
 }
 
-uint32_t _dl_searchnum = 0;
+int _dl_searchnum = 0;
 void
 _dl_newsymsearch(void)
 {
 	_dl_searchnum += 1;
 
 	if (_dl_searchnum < 0) {
-		/* if the signed number roll over, reset
-		 * all counters so we dont get accidental collision
+		/*
+		 * If the signed number rolls over, reset all counters so
+		 * we dont get accidental collision.
 		 */
 		elf_object_t *walkobj;
 		for (walkobj = _dl_objects;
