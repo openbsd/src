@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.44 2010/08/10 02:23:31 marco Exp $	*/
+/*	$OpenBSD: clock.c,v 1.45 2010/08/11 21:22:44 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -417,6 +417,12 @@ rtcstart(void)
 
 	timeout_set(&rtcdrain_timeout, rtcdrain, (void *)&rtcdrain_timeout);
 	timeout_add(&rtcdrain_timeout, 1);
+}
+
+void
+rtcstop(void)
+{
+	mc146818_write(NULL, MC_REGB, MC_REGB_24HR);
 }
 
 int
