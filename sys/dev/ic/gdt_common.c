@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.51 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.52 2010/08/11 02:18:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -587,6 +587,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 	bus_dmamap_t xfer;
 	int error;
 	int s;
+	int polled;
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_scsi_cmd "));
 
@@ -615,6 +616,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		ccb = NULL;
 		link = xs->sc_link;
 		target = link->target;
+		polled = ISSET(xs->flags, SCSI_POLL);
  
 		if (!gdt_polling && !(xs->flags & SCSI_POLL) &&
 		    sc->sc_test_busy(sc)) {
@@ -759,7 +761,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 					splx(s);
 					return;
 				}
-				scsi_done(xs);
 			}
 		}
 
@@ -767,7 +768,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		/*
 		 * Don't process the queue if we are polling.
 		 */
-		if (xs->flags & SCSI_POLL) {
+		if (polled) {
 			break;
 		}
 	}
@@ -1155,8 +1156,11 @@ gdt_intr(void *arg)
 	sync_val = gdt_sync_event(sc, ctx.service, ctx.istatus, xs);
 
  finish:
-
 	switch (sync_val) {
+	case 0:
+		if (xs && gdt_from_wait)
+			scsi_done(xs);
+		break;
 	case 1:
 		scsi_done(xs);
 		break;
