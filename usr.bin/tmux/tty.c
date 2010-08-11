@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.88 2010/06/05 16:47:11 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.89 2010/08/11 07:34:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -578,7 +578,9 @@ tty_write(void (*cmdfn)(
 			continue;
 
 		if (c->session->curw->window == wp->window) {
-			if (c->tty.flags & TTY_FREEZE || c->tty.term == NULL)
+			if (c->tty.term == NULL)
+				continue;
+			if (c->tty.flags & (TTY_FREEZE|TTY_BACKOFF))
 				continue;
 			cmdfn(&c->tty, ctx);
 		}
