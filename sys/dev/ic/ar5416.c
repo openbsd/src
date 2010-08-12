@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.10 2010/07/15 19:29:00 damien Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.11 2010/08/12 16:34:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -128,7 +128,6 @@ ar5416_attach(struct athn_softc *sc)
 	sc->ops.set_synth = ar5416_set_synth;
 	sc->ops.spur_mitigate = ar5416_spur_mitigate;
 	sc->ops.get_spur_chans = ar5416_get_spur_chans;
-	sc->ops.olpc_init = NULL;
 	if (AR_SREV_9160_10_OR_LATER(sc))
 		sc->ini = &ar9160_ini;
 	else
