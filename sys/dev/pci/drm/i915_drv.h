@@ -447,8 +447,8 @@ struct inteldrm_obj {
 	struct drm_obj				 obj;
 
 	/** This object's place on the active/flushing/inactive lists */
-	TAILQ_ENTRY(inteldrm_obj)	 	 list;
-	TAILQ_ENTRY(inteldrm_obj)	 	 write_list;
+	TAILQ_ENTRY(inteldrm_obj)		 list;
+	TAILQ_ENTRY(inteldrm_obj)		 write_list;
 	struct i915_gem_list			*current_list;
 	/* GTT binding. */
 	bus_dmamap_t				 dmamap;
@@ -457,7 +457,7 @@ struct inteldrm_obj {
 	bus_addr_t				 gtt_offset;
 	u_int32_t				*bit_17;
 	/* extra flags to bus_dma */
-	int					 dma_flags; 
+	int					 dma_flags;
 	/* Fence register for this object. needed for tiling. */
 	int					 fence_reg;
 	/** refcount for times pinned this object in GTT space */
@@ -2248,11 +2248,11 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define DSPARB			0x70030
 #define   DSPARB_CSTART_MASK	(0x7f << 7)
 #define   DSPARB_CSTART_SHIFT	7
-#define   DSPARB_BSTART_MASK	(0x7f)		 
+#define   DSPARB_BSTART_MASK	(0x7f)
 #define   DSPARB_BSTART_SHIFT	0
 /*
  * The two pipe frame counter registers are not synchronized, so
- * reading a stable value is somewhat tricky. The following code 
+ * reading a stable value is somewhat tricky. The following code
  * should work:
  *
  *  do {
@@ -2992,7 +2992,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
  */
 #define I915_INTERRUPT_ENABLE_FIX		\
 	(I915_DISPLAY_PIPE_A_EVENT_INTERRUPT |	\
-    	I915_DISPLAY_PIPE_B_EVENT_INTERRUPT |	\
+	I915_DISPLAY_PIPE_B_EVENT_INTERRUPT |	\
 	I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT)
 
 /* Interrupts that we mask and unmask at runtime */
@@ -3019,18 +3019,18 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define PCH_SPLIT_HOTPLUG_INTR_VAR	(0)
 #define PCH_SPLIT_HOTPLUG_ENABLE_MASK	\
 	(PCH_SPLIT_HOTPLUG_INTR_FIX | PCH_SPLIT_HOTPLUG_INTR_VAR)
-	
-#define PCH_SPLIT_HOTPLUG_MASK	
+
+#define PCH_SPLIT_HOTPLUG_MASK
 
 
 #define	printeir(val)	printf("%s: error reg: %b\n", __func__, val,	\
 	"\20\x10PTEERR\x2REFRESHERR\x1INSTERR")
-	
+
 /*
  * With the i45 and later, Y tiling got adjusted so that it was 32 128-byte
  * rows, which changes the alignment requirements and fence programming.
  */
-#define HAS_128_BYTE_Y_TILING(dev_priv) (IS_I9XX(dev_priv) && 	\
+#define HAS_128_BYTE_Y_TILING(dev_priv) (IS_I9XX(dev_priv) &&	\
 	!(IS_I915G(dev_priv) || IS_I915GM(dev_priv)))
 
 #define PRIMARY_RINGBUFFER_SIZE         (128*1024)
@@ -3074,7 +3074,7 @@ inteldrm_is_active(struct inteldrm_obj *obj_priv)
 }
 
 static __inline int
-inteldrm_is_dirty(struct inteldrm_obj *obj_priv)	
+inteldrm_is_dirty(struct inteldrm_obj *obj_priv)
 {
 	return (obj_priv->obj.do_flags & I915_DIRTY);
 }

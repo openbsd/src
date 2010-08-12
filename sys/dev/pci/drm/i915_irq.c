@@ -203,8 +203,8 @@ i915_enable_vblank(struct drm_device *dev, int pipe)
 	if (HAS_PCH_SPLIT(dev_priv))
 		ironlake_enable_display_irq(dev_priv, (pipe == 0) ?
 		    DE_PIPEA_VBLANK : DE_PIPEB_VBLANK);
-	else 
-		i915_enable_pipestat(dev_priv, pipe, (IS_I965G(dev_priv) ? 
+	else
+		i915_enable_pipestat(dev_priv, pipe, (IS_I965G(dev_priv) ?
 		    PIPE_START_VBLANK_INTERRUPT_ENABLE :
 		    PIPE_VBLANK_INTERRUPT_ENABLE));
 	mtx_leave(&dev_priv->user_irq_lock);
@@ -222,7 +222,7 @@ i915_disable_vblank(struct drm_device *dev, int pipe)
 		ironlake_disable_display_irq(dev_priv, (pipe == 0) ?
 		    DE_PIPEA_VBLANK : DE_PIPEB_VBLANK);
 	else
-		i915_disable_pipestat(dev_priv, pipe, 
+		i915_disable_pipestat(dev_priv, pipe,
 		    PIPE_START_VBLANK_INTERRUPT_ENABLE |
 		    PIPE_VBLANK_INTERRUPT_ENABLE);
 	mtx_leave(&dev_priv->user_irq_lock);
@@ -255,7 +255,7 @@ i915_driver_irq_install(struct drm_device *dev)
 	 * Enable some error detection, note the instruction error mask
 	 * bit is reserved, so we leave it masked.
 	 */
-	I915_WRITE(EMR, IS_G4X(dev_priv) ? 
+	I915_WRITE(EMR, IS_G4X(dev_priv) ?
 	    ~(GM45_ERROR_PAGE_TABLE | GM45_ERROR_MEM_PRIV |
 	    GM45_ERROR_CP_PRIV | I915_ERROR_MEMORY_REFRESH) :
 	    ~(I915_ERROR_PAGE_TABLE | I915_ERROR_MEMORY_REFRESH));
@@ -301,7 +301,7 @@ ironlake_irq_install(struct inteldrm_softc *dev_priv)
 	 * Everything is turned off now and everything acked.
 	 * now we can set everything up
 	 */
-	
+
 	I915_WRITE(DEIIR, I915_READ(DEIIR));
 	I915_WRITE(DEIMR, dev_priv->irq_mask_reg);
 	I915_WRITE(DEIER, PCH_SPLIT_DISPLAY_ENABLE_MASK);

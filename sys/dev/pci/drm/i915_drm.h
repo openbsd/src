@@ -255,7 +255,7 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_ALLOW_BATCHBUFFER     2
 #define I915_PARAM_LAST_DISPATCH         3
 #define I915_PARAM_CHIPSET_ID            4
-#define I915_PARAM_HAS_GEM           	 5
+#define I915_PARAM_HAS_GEM		 5
 #define I915_PARAM_NUM_FENCES_AVAIL      6
 #define I915_PARAM_HAS_EXECBUF2          9
 

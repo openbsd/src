@@ -327,7 +327,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	struct inteldrm_softc	*dev_priv = (struct inteldrm_softc *)self;
 	struct pci_attach_args	*pa = aux, bpa;
 	struct vga_pci_bar	*bar;
-	struct drm_device 	*dev;
+	struct drm_device	*dev;
 	const struct drm_pcidev	*id_entry;
 	int			 i;
 
@@ -349,7 +349,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent, 
+	dev_priv->regs = vga_pci_bar_map((struct vga_pci_softc *)parent,
 	    bar->addr, 0, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
@@ -431,7 +431,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (dev_priv->flags & (CHIP_I915G|CHIP_I915GM|CHIP_I945G|CHIP_I945GM)) {
 		i915_alloc_ifp(dev_priv, &bpa);
 	} else if (IS_I965G(dev_priv) || IS_G33(dev_priv)) {
-		i965_alloc_ifp(dev_priv, &bpa);	
+		i965_alloc_ifp(dev_priv, &bpa);
 	} else {
 		int nsegs;
 		/*
@@ -730,7 +730,7 @@ inteldrm_read_hws(struct inteldrm_softc *dev_priv, int reg)
 	}
 
 	bus_dmamap_sync(tag, map, 0, PAGE_SIZE, BUS_DMASYNC_POSTREAD);
-	
+
 	val = ((volatile u_int32_t *)(dev_priv->hw_status_page))[reg];
 	bus_dmamap_sync(tag, map, 0, PAGE_SIZE, BUS_DMASYNC_PREREAD);
 
@@ -893,7 +893,7 @@ i915_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 		goto nope;
 
 	pci_conf_write(bpa->pa_pc, bpa->pa_tag, I915_IFPADDR, addr | 0x1);
-	
+
 	return;
 
 nope:
@@ -928,7 +928,7 @@ i965_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 	    upper_32_bits(addr));
 	pci_conf_write(bpa->pa_pc, bpa->pa_tag, I965_IFPADDR,
 	    (addr & 0xffffffff) | 0x1);
-	
+
 	return;
 
 nope:
@@ -1159,8 +1159,8 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 	struct drm_obj			*obj;
 	struct inteldrm_obj		*obj_priv;
 	char				*vaddr;
-	bus_space_handle_t	 	 bsh;
-	bus_size_t		 	 bsize;
+	bus_space_handle_t		 bsh;
+	bus_size_t			 bsize;
 	voff_t				 offset;
 	int				 ret;
 
@@ -1229,10 +1229,10 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 	struct drm_i915_gem_pwrite	*args = data;
 	struct drm_obj			*obj;
 	struct inteldrm_obj		*obj_priv;
-	char 				*vaddr;
-	bus_space_handle_t	 	 bsh;
-	bus_size_t		 	 bsize;
-	off_t			 	 offset;
+	char				*vaddr;
+	bus_space_handle_t		 bsh;
+	bus_size_t			 bsize;
+	off_t				 offset;
 	int				 ret = 0;
 
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
@@ -1308,7 +1308,7 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 	if ((write_domain | read_domains)  & ~I915_GEM_DOMAIN_GTT ||
 	    (write_domain != 0 && read_domains != write_domain))
 		return (EINVAL);
-		
+
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
 	if (obj == NULL)
 		return (EBADF);
@@ -1419,7 +1419,7 @@ i915_gem_object_move_off_active(struct drm_obj *obj)
 
 	MUTEX_ASSERT_LOCKED(&dev_priv->list_lock);
 	DRM_OBJ_ASSERT_LOCKED(obj);
-	
+
 	obj_priv->last_rendering_seqno = 0;
 	/* if we have a fence register, then reset the seqno */
 	if (obj_priv->fence_reg != I915_FENCE_REG_NONE) {
@@ -1533,7 +1533,7 @@ inteldrm_process_flushing(struct inteldrm_softc *dev_priv,
 				 */
 				i915_gem_get_fence_reg(obj, 1);
 			}
-				
+
 		}
 	}
 	mtx_leave(&dev_priv->list_lock);
@@ -2323,7 +2323,7 @@ i915_gem_object_put_fence_reg(struct drm_obj *obj, int interruptible)
 	if (obj_priv->fence_reg == I915_FENCE_REG_NONE)
 		return (0);
 
-	/* 
+	/*
 	 * If the last execbuffer we did on the object needed a fence then
 	 * we must emit a flush.
 	 */
@@ -2358,7 +2358,7 @@ i915_gem_object_put_fence_reg(struct drm_obj *obj, int interruptible)
 
 		if (obj_priv->fence_reg < 8)
 			fence_reg = FENCE_REG_830_0 + obj_priv->fence_reg * 4;
-		else 
+		else
 			fence_reg = FENCE_REG_945_8 +
 			    (obj_priv->fence_reg - 8) * 4;
 		I915_WRITE(fence_reg , 0);
@@ -2403,7 +2403,6 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 	 * sleep in binding and flushing.
 	 */
 	drm_unlock_obj(obj);
-	
 
 	if (obj_priv->dmamap != NULL &&
 	    (obj_priv->gtt_offset & (i915_gem_get_gtt_alignment(obj) - 1) ||
@@ -2488,7 +2487,6 @@ error:
 	DRM_READUNLOCK();
 	pmap_update(ufi->orig_map->pmap);
 	return ((ret == EIO) ?  VM_PAGER_REFAULT : VM_PAGER_ERROR);
-		
 }
 
 void
@@ -2548,7 +2546,7 @@ i915_gem_object_bind_to_gtt(struct drm_obj *obj, bus_size_t alignment,
 
  search_free:
 	/*
-	 * the helper function wires the uao then binds it to the aperture for 
+	 * the helper function wires the uao then binds it to the aperture for
 	 * us, so all we have to do is set up the dmamap then load it.
 	 */
 	ret = drm_gem_load_uao(dev_priv->agpdmat, obj_priv->dmamap, obj->uao,
@@ -2598,7 +2596,7 @@ error:
 
 /*
  * Flush the GPU write domain for the object if dirty, then wait for the
- * rendering to complete. When this returns it is safe to unbind from the 
+ * rendering to complete. When this returns it is safe to unbind from the
  * GTT or access from the CPU.
  */
 int
@@ -2634,7 +2632,7 @@ i915_gem_object_flush_gpu_write_domain(struct drm_obj *obj, int pipelined,
 	return (ret);
 }
 
-/* 
+/*
  * Moves a single object to the GTT and possibly write domain.
  *
  * This function returns when the move is complete, including waiting on
@@ -2981,7 +2979,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 			ret = EBADF;
 			goto err;
 		}
-			
+
 		target_obj_priv = (struct inteldrm_obj *)target_obj;
 
 		/* The target buffer should have appeared before us in the
@@ -3159,7 +3157,7 @@ i915_gem_ring_throttle(struct drm_device *dev, struct drm_file *file_priv)
 #if 0
 	struct inteldrm_file	*intel_file = (struct inteldrm_file *)file_priv;
 	u_int32_t		 seqno;
-#endif 
+#endif
 	int			 ret = 0;
 
 	return ret;
@@ -3424,7 +3422,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 			atomic_clearbits_int(&obj->do_flags,
 			    I915_FENCED_EXEC);
 		}
-			
+
 		i915_gem_object_move_to_active(object_list[i]);
 		drm_unlock_obj(obj);
 	}
@@ -3734,7 +3732,7 @@ i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
 	/* if the object is no longer bound, discard its backing storage */
 	if (i915_obj_purgeable(obj_priv) && obj_priv->dmamap == NULL)
 		inteldrm_purge_obj(obj);
-		
+
 	args->retained = !i915_obj_purged(obj_priv);
 
 out:
@@ -3821,7 +3819,7 @@ i915_gem_idle(struct inteldrm_softc *dev_priv)
 	int			 ret;
 
 	DRM_LOCK();
-	if (dev_priv->mm.suspended || dev_priv->ring.ring_obj == NULL) { 
+	if (dev_priv->mm.suspended || dev_priv->ring.ring_obj == NULL) {
 		DRM_UNLOCK();
 		return (0);
 	}
@@ -4325,7 +4323,7 @@ inteldrm_hangcheck(void *arg)
 			wakeup(dev_priv);
 			inteldrm_error(dev_priv);
 			return;
-		} 
+		}
 	} else {
 		dev_priv->mm.hang_cnt = 0;
 	}
@@ -4408,7 +4406,7 @@ i915_list_remove(struct inteldrm_obj *obj_priv)
 #define	DEVEN_MCHBAR_EN	(1 << 28)
 
 
-/* 
+/*
  * Check the MCHBAR on the host bridge is enabled, and if not allocate it.
  * we do not need to actually map it because we access the bar through it's
  * mirror on the IGD, however, if it is disabled or not allocated then
@@ -4591,7 +4589,7 @@ inteldrm_detect_bit_6_swizzle(struct inteldrm_softc *dev_priv,
 			swizzle_y = I915_BIT_6_SWIZZLE_UNKNOWN;
 		}
 
-		inteldrm_teardown_mchbar(dev_priv, bpa, need_disable);	
+		inteldrm_teardown_mchbar(dev_priv, bpa, need_disable);
 	} else {
 		/* The 965, G33, and newer, have a very flexible memory
 		 * configuration. It will enable dual-channel mode
@@ -4702,7 +4700,7 @@ i915_gem_bit_17_swizzle(struct drm_obj *obj)
 
 }
 
-void 
+void
 i915_gem_save_bit_17_swizzle(struct drm_obj *obj)
 {
 	struct drm_device	*dev = obj->dev;
@@ -4895,7 +4893,7 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 		obj_priv->tiling_mode = args->tiling_mode;
 		obj_priv->stride = args->stride;
 	}
-	 
+
 out:
 	drm_unhold_and_unref(obj);
 
@@ -5541,9 +5539,9 @@ inteldrm_restore_display(struct inteldrm_softc *dev_priv)
 		I915_WRITE(CURSIZE, dev_priv->saveCURSIZE);
 
 	/* CRT state */
-	if (IS_IRONLAKE(dev_priv)) 
+	if (IS_IRONLAKE(dev_priv))
 		I915_WRITE(PCH_ADPA, dev_priv->saveADPA);
-	else 
+	else
 		I915_WRITE(ADPA, dev_priv->saveADPA);
 
 	/* LVDS state */
@@ -5569,7 +5567,7 @@ inteldrm_restore_display(struct inteldrm_softc *dev_priv)
 		I915_WRITE(PCH_PP_CONTROL, dev_priv->savePP_CONTROL);
 		I915_WRITE(MCHBAR_RENDER_STANDBY,
 			   dev_priv->saveMCHBAR_RENDER_STANDBY);
-	} else { 
+	} else {
 		I915_WRITE(PFIT_PGM_RATIOS, dev_priv->savePFIT_PGM_RATIOS);
 		I915_WRITE(BLC_PWM_CTL, dev_priv->saveBLC_PWM_CTL);
 		I915_WRITE(BLC_HIST_CTL, dev_priv->saveBLC_HIST_CTL);
@@ -5713,7 +5711,7 @@ inteldrm_restore_state(struct inteldrm_softc *dev_priv)
 			for (i = 0; i < 8; i++)
 				I915_WRITE(FENCE_REG_945_8 + (i * 4), dev_priv->saveFENCE[i+8]);
 	}
-	
+
 	inteldrm_restore_display(dev_priv);
 
 	/* Interrupt state */
@@ -5771,7 +5769,7 @@ inteldrm_restore_state(struct inteldrm_softc *dev_priv)
 	return 0;
 }
 
-/* 
+/*
  * Reset the chip after a hang (965 only)
  *
  * The procedure that should be followed is relatively simple:
@@ -5822,7 +5820,7 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 	 if (dev_priv->mm.suspended == 0) {
 		struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 		if (inteldrm_start_ring(dev_priv) != 0)
-			panic("can't restart ring, we're fucked"); 
+			panic("can't restart ring, we're fucked");
 
 		/* put the hardware status page back */
 		if (I915_NEED_GFX_HWS(dev_priv))
@@ -5847,7 +5845,7 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 }
 
 /*
- * Debug code from here. 
+ * Debug code from here.
  */
 #ifdef WATCH_INACTIVE
 void
@@ -5901,7 +5899,6 @@ i915_gem_seqno_info(int kdev)
 		printf("Current sequence: hws uninitialized\n");
 	}
 }
-
 
 void
 i915_interrupt_info(int kdev)
@@ -5964,7 +5961,7 @@ i915_gem_fence_regs_info(int kdev)
 void
 i915_hws_info(int kdev)
 {
-	struct drm_device 	*dev = drm_get_device_from_kdev(kdev);
+	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
 	struct inteldrm_softc	*dev_priv = dev->dev_private;
 	int i;
 	volatile u32 *hws;
