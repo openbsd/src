@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.59 2010/08/11 07:27:36 ray Exp $	*/
+/*	$OpenBSD: athn.c,v 1.60 2010/08/12 16:32:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1141,17 +1141,26 @@ athn_iter_func(void *arg, struct ieee80211_node *ni)
 void
 athn_calib_to(void *arg)
 {
+	extern int ticks;
 	struct athn_softc *sc = arg;
+	struct athn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s;
 
 	s = splnet();
+
+	if ((sc->flags & ATHN_FLAG_OLPC) &&
+	    sc->olpc_ticks + 30 * hz < ticks) {
+		/* Compensate for temperature changes. */
+		sc->olpc_ticks = ticks;
+		ops->olpc_temp_compensation(sc);
+	}
+
 #ifdef notyet
 	/* XXX ANI. */
 	athn_ani_monitor(sc);
-	/* XXX OLPC temperature compensation. */
 
-	sc->ops.next_calib(sc);
+	ops->next_calib(sc);
 #endif
 	if (ic->ic_fixed_rate == -1) {
 		if (ic->ic_opmode == IEEE80211_M_STA)

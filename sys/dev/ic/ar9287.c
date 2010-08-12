@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.13 2010/07/15 19:29:00 damien Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.14 2010/08/12 16:32:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -119,6 +119,7 @@ ar9287_attach(struct athn_softc *sc)
 	sc->ops.spur_mitigate = ar9280_spur_mitigate;
 	sc->ops.get_spur_chans = ar9287_get_spur_chans;
 	sc->ops.olpc_init = ar9287_olpc_init;
+	sc->ops.olpc_temp_compensation = ar9287_olpc_temp_compensation;
 	sc->ini = &ar9287_1_1_ini;
 	sc->serdes = ar9280_2_0_serdes;
 

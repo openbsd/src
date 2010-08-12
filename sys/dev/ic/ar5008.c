@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.11 2010/07/15 19:38:40 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.12 2010/08/12 16:32:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2293,8 +2293,12 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	ar5008_set_phy(sc, c, extc);
 	ar5008_init_chains(sc);
 
-	if (sc->flags & ATHN_FLAG_OLPC)
+	if (sc->flags & ATHN_FLAG_OLPC) {
+		extern int ticks;
+		sc->olpc_ticks = ticks;
 		ops->olpc_init(sc);
+	}
+
 	ops->set_txpower(sc, c, extc);
 
 	if (!AR_SINGLE_CHIP(sc))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.11 2010/08/12 16:04:51 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.12 2010/08/12 16:32:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -110,6 +110,7 @@ ar9280_attach(struct athn_softc *sc)
 	sc->ops.spur_mitigate = ar9280_spur_mitigate;
 	sc->ops.get_spur_chans = ar5416_get_spur_chans;
 	sc->ops.olpc_init = ar9280_olpc_init;
+	sc->ops.olpc_temp_compensation = ar9280_olpc_temp_compensation;
 	sc->ini = &ar9280_2_0_ini;
 	sc->serdes = ar9280_2_0_serdes;
 
