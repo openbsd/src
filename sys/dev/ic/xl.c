@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.90 2010/08/06 02:45:53 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.91 2010/08/12 14:21:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -179,7 +179,6 @@ void xl_setmode(struct xl_softc *, int);
 void xl_iff(struct xl_softc *);
 void xl_iff_90x(struct xl_softc *);
 void xl_iff_905b(struct xl_softc *);
-void xl_reset(struct xl_softc *);
 int xl_list_rx_init(struct xl_softc *);
 int xl_list_tx_init(struct xl_softc *);
 int xl_list_tx_init_90xB(struct xl_softc *);
