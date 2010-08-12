@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.24 2010/07/31 11:17:22 espie Exp $
+# $OpenBSD: Handle.pm,v 1.25 2010/08/12 20:36:13 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -38,12 +38,10 @@ sub cleanup
 	$self->{error} //= $error;
 	$self->{errorinfo} //= $errorinfo;
 	if (defined $self->location) {
-		if (defined $self->{error}) {
-			if ($self->{error} == BAD_PACKAGE) {
-				$self->location->close_with_client_error;
-			} else {
-				$self->location->close_now;
-			}
+		if (defined $self->{error} && $self->{error} == BAD_PACKAGE) {
+			$self->location->close_with_client_error;
+		} else {
+			$self->location->close_now;
 		}
 		$self->location->wipe_info;
 	}
