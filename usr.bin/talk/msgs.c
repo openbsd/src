@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.9 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.10 2010/08/12 23:31:29 tedu Exp $	*/
 /*	$NetBSD: msgs.c,v 1.3 1994/12/09 02:14:22 jtc Exp $	*/
 
 /*
@@ -42,11 +42,10 @@
 #define MSG_INTERVAL 4
 
 char	*current_state;
-int	current_line = 0;
+int	current_line;
 
 void
-disp_msg(dummy)
-	int dummy;
+disp_msg(int dummy)
 {
 	message(current_state);
 }
@@ -60,7 +59,7 @@ start_msgs(void)
 	signal(SIGALRM, disp_msg);
 	itimer.it_value.tv_sec = itimer.it_interval.tv_sec = MSG_INTERVAL;
 	itimer.it_value.tv_usec = itimer.it_interval.tv_usec = 0;
-	setitimer(ITIMER_REAL, &itimer, (struct itimerval *)0);
+	setitimer(ITIMER_REAL, &itimer, NULL);
 }
 
 void
@@ -70,6 +69,6 @@ end_msgs(void)
 
 	timerclear(&itimer.it_value);
 	timerclear(&itimer.it_interval);
-	setitimer(ITIMER_REAL, &itimer, (struct itimerval *)0);
+	setitimer(ITIMER_REAL, &itimer, NULL);
 	signal(SIGALRM, SIG_DFL);
 }

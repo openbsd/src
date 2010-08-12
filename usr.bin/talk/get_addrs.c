@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_addrs.c,v 1.8 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: get_addrs.c,v 1.9 2010/08/12 23:31:29 tedu Exp $	*/
 /*	$NetBSD: get_addrs.c,v 1.3 1994/12/09 02:14:14 jtc Exp $	*/
 
 /*
@@ -37,8 +37,7 @@
 #include "talk_ctl.h"
 
 void
-get_addrs(my_machine_name, his_machine_name)
-	char *my_machine_name, *his_machine_name;
+get_addrs(char *my_machine_name, char *his_machine_name)
 {
 	struct hostent *hp;
 	struct servent *sp;
@@ -48,7 +47,7 @@ get_addrs(my_machine_name, his_machine_name)
 	hp = gethostbyname(my_machine_name);
 	if (hp == NULL)
 		errx(1, "%s: %s", my_machine_name, hstrerror(h_errno));
-	bcopy(hp->h_addr, (char *)&my_machine_addr, hp->h_length);
+	bcopy(hp->h_addr, &my_machine_addr, hp->h_length);
 	/*
 	 * If the callee is on-machine, just copy the
 	 * network address, otherwise do a lookup...
@@ -57,7 +56,7 @@ get_addrs(my_machine_name, his_machine_name)
 		hp = gethostbyname(his_machine_name);
 		if (hp == NULL)
 			errx(1, "%s: %s", his_machine_name, hstrerror(h_errno));
-		bcopy(hp->h_addr, (char *) &his_machine_addr, hp->h_length);
+		bcopy(hp->h_addr, &his_machine_addr, hp->h_length);
 	} else
 		his_machine_addr = my_machine_addr;
 	/* find the server's port */

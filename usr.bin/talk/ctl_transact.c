@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.11 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.12 2010/08/12 23:31:29 tedu Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -45,11 +45,7 @@
  * of time
  */
 void
-ctl_transact(target, msg, type, rp)
-	struct in_addr target;
-	CTL_MSG msg;
-	int type;
-	CTL_RESPONSE *rp;
+ctl_transact(struct in_addr target, CTL_MSG msg, int type, CTL_RESPONSE *rp)
 {
 	struct pollfd pfd[1];
 	int nready, cc;

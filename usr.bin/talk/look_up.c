@@ -1,4 +1,4 @@
-/*	$OpenBSD: look_up.c,v 1.11 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: look_up.c,v 1.12 2010/08/12 23:31:29 tedu Exp $	*/
 /*	$NetBSD: look_up.c,v 1.3 1994/12/09 02:14:21 jtc Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ check_local(void)
 			    sizeof (response.addr)) != -1)
 			return (1);
 	} while (errno == EINTR);
+
 	if (errno == ECONNREFUSED) {
 		/*
 		 * The caller gave up, but his invitation somehow
@@ -94,11 +95,9 @@ look_for_invite(CTL_RESPONSE *rp)
 	ctl_transact(his_machine_addr, msg, LOOK_UP, rp);
 	/* the switch is for later options, such as multiple invitations */
 	switch (rp->answer) {
-
 	case SUCCESS:
 		msg.id_num = htonl(rp->id_num);
 		return (1);
-
 	default:
 		/* there wasn't an invitation waiting for us */
 		return (0);

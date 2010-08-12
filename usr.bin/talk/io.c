@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.17 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.18 2010/08/12 23:31:29 tedu Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 
 #define A_LONG_TIME 1000000
 
-volatile sig_atomic_t gotwinch = 0;
+volatile sig_atomic_t gotwinch;
 
 /*
  * The routine to do the actual talking
