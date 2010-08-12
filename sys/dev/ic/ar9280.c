@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.10 2010/07/15 20:37:38 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.11 2010/08/12 16:04:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -427,11 +427,14 @@ ar9280_olpc_get_pdadcs(struct athn_softc *sc, struct ieee80211_channel *c,
 	pwr = (pierdata[lo].pwrPdg[0][0] + pierdata[hi].pwrPdg[0][0]) / 2;
 	pwr /= 2;	/* Convert to dB. */
 
-	pcdac = pierdata[hi].pcdac[0][0];	/* XXX lo??? */
+	pcdac = pierdata[hi].pcdac[0][0];
 	for (idx = 0; idx < AR9280_TX_GAIN_TABLE_SIZE - 1; idx++)
-		if (pcdac > sc->tx_gain_tbl[idx])
+		if (pcdac <= sc->tx_gain_tbl[idx])
 			break;
 	*txgain = idx;
+
+	DPRINTFN(3, ("fbin=%d lo=%d hi=%d pwr=%d pcdac=%d txgain=%d\n",
+	    fbin, lo, hi, pwr, pcdac, idx));
 
 	for (i = 0; i < AR_NUM_PDADC_VALUES; i++)
 		pdadcs[i] = (i < pwr) ? 0x00 : 0xff;
