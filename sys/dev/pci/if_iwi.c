@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.105 2010/08/03 18:26:25 kettenis Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.106 2010/08/12 15:03:59 oga Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -381,12 +381,15 @@ iwi_power(int why, void *arg)
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
 	s = splnet();
+	while (sc->sc_flags & IWI_FLAG_BUSY)
+		tsleep(&sc->sc_flags, 0, "iwipwr", 0);
 	sc->sc_flags |= IWI_FLAG_BUSY;
 
 	if (ifp->if_flags & IFF_UP)
 		iwi_init(ifp);
 
 	sc->sc_flags &= ~IWI_FLAG_BUSY;
+	wakeup(&sc->sc_flags);
 	splx(s);
 }
 
@@ -1486,9 +1489,11 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	 * Prevent processes from entering this function while another
 	 * process is tsleep'ing in it.
 	 */
-	if (sc->sc_flags & IWI_FLAG_BUSY) {
+	while (sc->sc_flags & IWI_FLAG_BUSY && error == 0)
+		error = tsleep(&sc->sc_flags, PCATCH, "iwiioc", 0);
+	if (error) {
 		splx(s);
-		return EBUSY;
+		return error;
 	}
 	sc->sc_flags |= IWI_FLAG_BUSY;
 
@@ -1545,6 +1550,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	sc->sc_flags &= ~IWI_FLAG_BUSY;
+	wakeup(&sc->sc_flags);
 	splx(s);
 	return error;
 }
