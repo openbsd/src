@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.17 2010/04/20 22:05:44 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.18 2010/08/12 04:05:03 tedu Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ ntfs_inactive(ap)
 		vprint("ntfs_inactive: pushing active", vp);
 #endif
 
-	VOP__UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, 0, p);
 
 	/* XXX since we don't support any filesystem changes
 	 * right now, nothing more needs to be done
@@ -658,7 +658,7 @@ ntfs_lookup(ap)
 		dprintf(("ntfs_lookup: faking .. directory in %d\n",
 			 dip->i_number));
 
-		VOP__UNLOCK(dvp, 0, p);
+		VOP_UNLOCK(dvp, 0, p);
 		cnp->cn_flags |= PDIRUNLOCK;
 
 		error = ntfs_ntvattrget(ntmp, dip, NTFS_A_NAME, NULL, 0, &vap);
@@ -671,13 +671,13 @@ ntfs_lookup(ap)
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
-			if (VN_LOCK(dvp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			error = VN_LOCK(dvp, LK_EXCLUSIVE, p);
+			error = vn_lock(dvp, LK_EXCLUSIVE, p);
 			if (error) {
 				vput( *(ap->a_vpp) );
 				return (error);
@@ -695,7 +695,7 @@ ntfs_lookup(ap)
 			VTONT(*ap->a_vpp)->i_number));
 
 		if(!lockparent || (cnp->cn_flags & ISLASTCN) == 0) {
-			VOP__UNLOCK(dvp, 0, p);
+			VOP_UNLOCK(dvp, 0, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 	}

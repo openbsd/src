@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.19 2010/08/06 00:00:41 miod Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.20 2010/08/12 04:05:03 tedu Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -204,7 +204,7 @@ ntfs_ntvattrget(
 	}
 	/* Scan $ATTRIBUTE_LIST for requested attribute */
 	len = lvap->va_datalen;
-	alpool = (caddr_t) malloc(len, M_TEMP, M_WAITOK);
+	alpool = malloc(len, M_TEMP, M_WAITOK);
 	error = ntfs_readntvattr_plain(ntmp, ip, lvap, 0, len, alpool, &len,
 			NULL);
 	if (error)
@@ -282,8 +282,7 @@ ntfs_loadntnode(
 
 	dprintf(("ntfs_loadntnode: loading ino: %d\n",ip->i_number));
 
-	mfrp = (struct filerec *) malloc(ntfs_bntob(ntmp->ntm_bpmftrec),
-	       M_TEMP, M_WAITOK);
+	mfrp = malloc(ntfs_bntob(ntmp->ntm_bpmftrec), M_TEMP, M_WAITOK);
 
 	if (ip->i_number < NTFS_SYSNODESNUM) {
 		struct buf     *bp;
@@ -302,7 +301,7 @@ ntfs_loadntnode(
 			goto out;
 		}
 		memcpy(mfrp, bp->b_data, ntfs_bntob(ntmp->ntm_bpmftrec));
-		bqrelse(bp);
+		brelse(bp);
 	} else {
 		struct vnode   *vp;
 
@@ -584,8 +583,7 @@ ntfs_attrtontvattr(
 		vap->va_allocated = rap->a_r.a_datalen;
 		vap->va_vcnstart = 0;
 		vap->va_vcnend = ntfs_btocn(vap->va_allocated);
-		vap->va_datap = (caddr_t) malloc(vap->va_datalen,
-		       M_NTFSRDATA, M_WAITOK);
+		vap->va_datap = malloc(vap->va_datalen, M_NTFSRDATA, M_WAITOK);
 		memcpy(vap->va_datap, (caddr_t) rap + rap->a_r.a_dataoff,
 		       rap->a_r.a_datalen);
 	}
@@ -626,8 +624,8 @@ ntfs_runtovrun(
 		off += (run[off] & 0xF) + ((run[off] >> 4) & 0xF) + 1;
 		cnt++;
 	}
-	cn = (cn_t *) malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
-	cl = (cn_t *) malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
+	cn = malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
+	cl = malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
 
 	off = 0;
 	cnt = 0;
@@ -831,7 +829,7 @@ ntfs_ntlookupattr(
 		adp = ntmp->ntm_ad;
 		for (i = 0; i < ntmp->ntm_adnum; i++, adp++){
 			if (syslen != adp->ad_namelen || 
-			   strncmp(sys, adp->ad_name, syslen) != 0)
+			    strncmp(sys, adp->ad_name, syslen) != 0)
 				continue;
 
 			*attrtype = adp->ad_type;
@@ -842,8 +840,8 @@ ntfs_ntlookupattr(
 
     out:
 	if (namelen) {
-		*attrname = (char *) malloc(namelen, M_TEMP, M_WAITOK);
-		memcpy((*attrname), name, namelen);
+		*attrname = malloc(namelen + 1, M_TEMP, M_WAITOK);
+		memcpy(*attrname, name, namelen);
 		(*attrname)[namelen] = '\0';
 		*attrtype = NTFS_A_DATA;
 	}
@@ -910,7 +908,7 @@ ntfs_ntlookupfile(
 	blsize = vap->va_a_iroot->ir_size;
 	dprintf(("ntfs_ntlookupfile: blksz: %d\n", blsize));
 
-	rdbuf = (caddr_t) malloc(blsize, M_TEMP, M_WAITOK);
+	rdbuf = malloc(blsize, M_TEMP, M_WAITOK);
 
     loop:
 	rdsize = vap->va_datalen;
@@ -1188,8 +1186,8 @@ ntfs_ntreaddir(
 
 	if (fp->f_dirblbuf == NULL) {
 		fp->f_dirblsz = vap->va_a_iroot->ir_size;
-		fp->f_dirblbuf = (caddr_t) malloc(
-		       MAX(vap->va_datalen,fp->f_dirblsz), M_NTFSDIR, M_WAITOK);
+		fp->f_dirblbuf = malloc(MAX(vap->va_datalen,fp->f_dirblsz),
+		    M_NTFSDIR, M_WAITOK);
 	}
 
 	blsize = fp->f_dirblsz;
@@ -1204,7 +1202,7 @@ ntfs_ntreaddir(
 			error = ENOTDIR;
 			goto fail;
 		}
-		bmp = (u_int8_t *) malloc(bmvap->va_datalen, M_TEMP, M_WAITOK);
+		bmp = malloc(bmvap->va_datalen, M_TEMP, M_WAITOK);
 		error = ntfs_readattr(ntmp, ip, NTFS_A_INDXBITMAP, "$I30", 0,
 				       bmvap->va_datalen, bmp, NULL);
 		if (error)

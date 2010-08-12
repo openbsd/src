@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.8 2010/06/06 12:04:27 miod Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.9 2010/08/12 04:05:03 tedu Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -283,11 +283,6 @@ struct ntfsmount {
 #define ntfs_bntob(bn)	(int32_t)((bn) * (ntmp)->ntm_bps)
 
 typedef int (vop_t)(void *);
-#define HASHINIT(a, b, c, d)	hashinit((a), (b), (c), (d))
-#define bqrelse(bp)		brelse(bp)
-#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))
-#define VGET(a, b, c)		vget((a), (b), (c))
-#define VN_LOCK(a, b, c)	vn_lock((a), (b), (c))
 
 #if defined(NTFS_DEBUG)
 extern int ntfs_debug;
