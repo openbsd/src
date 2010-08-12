@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.243 2010/08/10 23:35:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.244 2010/08/12 23:32:07 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1616,7 +1616,6 @@ set_bounds(struct disklabel *lp)
 void
 set_uid(struct disklabel *lp)
 {
-	u_int uid[8];
 	char *s;
 	int i;
 
@@ -1836,7 +1835,7 @@ mpsave(struct disklabel *lp)
 	/* Sort mountpoints so we don't try to mount /usr/local before /usr */
 	qsort((void *)mi, MAXPARTITIONS, sizeof(struct mountinfo), micmp);
 
-	if (fp = fopen(fstabfile, "w")) {
+	if ((fp = fopen(fstabfile, "w"))) {
 		for (i = 0; i < MAXPARTITIONS && mi[i].mountpoint; i++) {
 			j =  mi[i].partno;
 			fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev, 'a' + j,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.170 2010/08/08 05:24:46 tedu Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.171 2010/08/12 23:32:07 tedu Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -115,8 +115,6 @@ int	getasciilabel(FILE *, struct disklabel *);
 int	cmplabel(struct disklabel *, struct disklabel *);
 void	usage(void);
 u_int64_t getnum(char *, u_int64_t, u_int64_t, const char **);
-void	uid_print(FILE *, struct disklabel *);
-int	uid_parse(struct disklabel *, char *);
 
 int
 main(int argc, char *argv[])
@@ -597,7 +595,6 @@ void
 makedisktab(FILE *f, struct disklabel *lp)
 {
 	int i;
-	char *did = "\\\n\t:";
 	struct partition *pp;
 
 	if (lp->d_packname[0])
