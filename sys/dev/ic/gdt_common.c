@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.52 2010/08/11 02:18:25 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.53 2010/08/12 00:26:55 matthew Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -1086,7 +1086,7 @@ gdt_intr(void *arg)
 	struct gdt_intr_ctx ctx;
 	int chain = 1;
 	int sync_val = 0;
-	struct scsi_xfer *xs;
+	struct scsi_xfer *xs = NULL;
 	int prev_cmd;
 	struct gdt_ccb *ccb;
 
