@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.106 2010/08/12 15:03:59 oga Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.107 2010/08/12 16:59:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -353,7 +353,7 @@ iwi_activate(struct device *self, int act)
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -1489,9 +1489,9 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	 * Prevent processes from entering this function while another
 	 * process is tsleep'ing in it.
 	 */
-	while (sc->sc_flags & IWI_FLAG_BUSY && error == 0)
+	while ((sc->sc_flags & IWI_FLAG_BUSY) && error == 0)
 		error = tsleep(&sc->sc_flags, PCATCH, "iwiioc", 0);
-	if (error) {
+	if (error != 0) {
 		splx(s);
 		return error;
 	}

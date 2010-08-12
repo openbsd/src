@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.89 2010/08/12 15:03:59 oga Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.90 2010/08/12 16:59:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -311,7 +311,7 @@ ipw_activate(struct device *self, int act)
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -1402,9 +1402,9 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	 * Prevent processes from entering this function while another
 	 * process is tsleep'ing in it.
 	 */
-	while (sc->sc_flags & IPW_FLAG_BUSY && error == 0)
+	while ((sc->sc_flags & IPW_FLAG_BUSY) && error == 0)
 		error = tsleep(&sc->sc_flags, PCATCH, "ipwioc", 0);
-	if (error) {
+	if (error != 0) {
 		splx(s);
 		return error;
 	}
