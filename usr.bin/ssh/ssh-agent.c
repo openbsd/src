@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.166 2010/04/16 01:47:26 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.167 2010/08/12 23:34:38 tedu Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1068,7 +1068,7 @@ main(int ac, char **av)
 	setegid(getgid());
 	setgid(getgid());
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 
 	while ((ch = getopt(ac, av, "cdksa:t:")) != -1) {
 		switch (ch) {
