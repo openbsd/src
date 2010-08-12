@@ -652,7 +652,7 @@ inteldrm_ironlake_intr(void *arg)
 	I915_WRITE(DEIIR, de_iir);
 
 done:
-	I915_WRITE(DEIIR, de_ier);
+	I915_WRITE(DEIER, de_ier);
 	(void)I915_READ(DEIER);
 
 	return (ret);
