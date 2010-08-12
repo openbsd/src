@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.17 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: paste.c,v 1.18 2010/08/12 05:02:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -58,8 +58,8 @@ main(int argc, char *argv[])
 	int ch, seq;
 
 	seq = 0;
-	while ((ch = getopt(argc, argv, "d:s")) != -1)
-		switch(ch) {
+	while ((ch = getopt(argc, argv, "d:s")) != -1) {
+		switch (ch) {
 		case 'd':
 			delimcnt = tr(delim = optarg);
 			break;
@@ -70,6 +70,7 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -135,8 +136,8 @@ parallel(char **argv)
 					putchar(ch);
 				continue;
 			}
-			if (*(buf + len - 1) == '\n')
-				*(buf + len - 1) = '\0';
+			if (buf[len - 1] == '\n')
+				buf[len - 1] = '\0';
 			else {
 				if ((lbuf = malloc(len + 1)) == NULL)
 					err(1, "malloc");
@@ -183,8 +184,8 @@ sequential(char **argv)
 		}
 		if ((buf = fgetln(fp, &len))) {
 			for (cnt = 0, dp = delim;;) {
-				if (*(buf + len - 1) == '\n')
-					*(buf + len - 1) = '\0';
+				if (buf[len - 1] == '\n')
+					buf[len - 1] = '\0';
 				else {
 					if ((lbuf = malloc(len + 1)) == NULL)
 						err(1, "malloc");
@@ -217,9 +218,9 @@ tr(char *arg)
 	int cnt;
 	char ch, *p;
 
-	for (p = arg, cnt = 0; (ch = *p++); ++arg, ++cnt)
-		if (ch == '\\')
-			switch(ch = *p++) {
+	for (p = arg, cnt = 0; (ch = *p++); ++arg, ++cnt) {
+		if (ch == '\\') {
+			switch (ch = *p++) {
 			case 'n':
 				*arg = '\n';
 				break;
@@ -232,12 +233,14 @@ tr(char *arg)
 			default:
 				*arg = ch;
 				break;
+			}
 		} else
 			*arg = ch;
+	}
 
 	if (!cnt)
 		errx(1, "no delimiters specified");
-	return(cnt);
+	return (cnt);
 }
 
 void
