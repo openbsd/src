@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.16 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: dol.c,v 1.17 2010/08/12 02:00:27 kevlo Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -862,8 +862,9 @@ heredoc(Char *term)
 	 * Check for EOF or compare to terminator -- before expansion
 	 */
 	if (c < 0 || eq(lbuf, term)) {
-	    (void) write(0, short2str(obuf), (size_t) (BUFSIZ - ocnt));
-	    (void) lseek(0, (off_t) 0, SEEK_SET);
+	    (void) write(STDIN_FILENO, short2str(obuf), 
+	        (size_t) (BUFSIZ - ocnt));
+	    (void) lseek(STDIN_FILENO, (off_t) 0, SEEK_SET);
 	    return;
 	}
 
@@ -876,7 +877,7 @@ heredoc(Char *term)
 	    for (lbp = lbuf; (c = *lbp++) != '\0';) {
 		*obp++ = c;
 		if (--ocnt == 0) {
-		    (void) write(0, short2str(obuf), BUFSIZ);
+		    (void) write(STDIN_FILENO, short2str(obuf), BUFSIZ);
 		    obp = obuf;
 		    ocnt = BUFSIZ;
 		}
@@ -940,14 +941,14 @@ heredoc(Char *term)
 	    for (mbp = *vp; *mbp; mbp++) {
 		*obp++ = *mbp & TRIM;
 		if (--ocnt == 0) {
-		    (void) write(0, short2str(obuf), BUFSIZ);
+		    (void) write(STDIN_FILENO, short2str(obuf), BUFSIZ);
 		    obp = obuf;
 		    ocnt = BUFSIZ;
 		}
 	    }
 	    *obp++ = '\n';
 	    if (--ocnt == 0) {
-		(void) write(0, short2str(obuf), BUFSIZ);
+		(void) write(STDIN_FILENO, short2str(obuf), BUFSIZ);
 		obp = obuf;
 		ocnt = BUFSIZ;
 	    }

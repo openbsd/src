@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.27 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.28 2010/08/12 02:00:28 kevlo Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -980,7 +980,7 @@ register char *s;
     if (say_next) {
 	say_next = 0;
 	s = clean(s,0);
-	write(2, s, strlen(s));
+	write(STDERR_FILENO, s, strlen(s));
         free(s);
 	return;
     }
@@ -1157,7 +1157,7 @@ int c;
 
     usleep(10000);		/* inter-character typing delay (?) */
 
-    status = write(1, &ch, 1);
+    status = write(STDOUT_FILENO, &ch, 1);
 
     switch (status) {
     case 1:
@@ -1264,12 +1264,12 @@ int n;
 	    break;
 	/* fall through */
     case '\n':
-	write(2, "\n", 1);
+	write(STDERR_FILENO, "\n", 1);
 	need_lf = 0;
 	break;
     default:
 	s = character(n);
-	write(2, s, strlen(s));
+	write(STDERR_FILENO, s, strlen(s));
 	need_lf = 1;
 	break;
     }

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.20 2008/11/12 16:01:08 sobrado Exp $
+ *	$Id: pppctl.c,v 1.21 2010/08/12 02:00:28 kevlo Exp $
  */
 
 #include <sys/types.h>
@@ -109,7 +109,7 @@ Receive(int fd, int display)
                     last = prompt;
                 if (last) {
                     last++;
-                    write(1, Buffer, last-Buffer);
+                    write(STDOUT_FILENO, Buffer, last-Buffer);
                 }
             }
             prompt = prompt == NULL ? Buffer : prompt+1;
@@ -125,7 +125,7 @@ Receive(int fd, int display)
                     snprintf(Buffer, sizeof Buffer, "passwd %s\n", passwd);
                     memset(passwd, '\0', strlen(passwd));
                     if (display & REC_VERBOSE)
-                        write(1, Buffer, strlen(Buffer));
+                        write(STDOUT_FILENO, Buffer, strlen(Buffer));
                     write(fd, Buffer, strlen(Buffer));
                     memset(Buffer, '\0', strlen(Buffer));
                     return Receive(fd, display & ~REC_PASSWD);
@@ -142,7 +142,7 @@ Receive(int fd, int display)
                 flush = sizeof Buffer / 2;
             else
                 flush = last - Buffer + 1;
-            write(1, Buffer, flush);
+            write(STDOUT_FILENO, Buffer, flush);
             strlcpy(Buffer, Buffer + flush, sizeof Buffer);
             len -= flush;
         }
@@ -167,7 +167,7 @@ check_fd(int sig)
     if (poll(pfd, 1, 0) > 0) {
       len = read(data, buf, sizeof buf);
       if (len > 0)
-        write(1, buf, len);
+        write(STDOUT_FILENO, buf, len);
       else
         longjmp(pppdead, -1);
     }
@@ -467,7 +467,7 @@ main(int argc, char **argv)
                     Buffer[sizeof(Buffer)-2] = '\0';
                     strlcat(Buffer, "\n", sizeof Buffer);
                     if (verbose)
-                        write(1, Buffer, strlen(Buffer));
+                        write(STDOUT_FILENO, Buffer, strlen(Buffer));
                     write(fd, Buffer, strlen(Buffer));
                     if (Receive(fd, verbose | REC_SHOW) != 0) {
                         fprintf(stderr, "Connection closed\n");

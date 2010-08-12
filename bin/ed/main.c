@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2010/08/12 02:00:28 kevlo Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -150,8 +150,8 @@ top:
 		struct stat sb;
 
 		/* assert: pipes show up as fifo's when fstat'd */
-		if (fstat(0, &sb) || !S_ISFIFO(sb.st_mode)) {
-			if (lseek(0, 0, SEEK_CUR)) {
+		if (fstat(STDIN_FILENO, &sb) || !S_ISFIFO(sb.st_mode)) {
+			if (lseek(STDIN_FILENO, 0, SEEK_CUR)) {
 				interactive = 1;
 				setlinebuf(stdout);
 			}
@@ -1436,7 +1436,7 @@ handle_winch(int signo)
 	struct winsize ws;		/* window size structure */
 
 	sigflags &= ~(1 << (signo - 1));
-	if (ioctl(0, TIOCGWINSZ, &ws) >= 0) {
+	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) >= 0) {
 		if (ws.ws_row > 2)
 			rows = ws.ws_row - 2;
 		if (ws.ws_col > 8)
