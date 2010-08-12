@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2010/08/12 15:26:34 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
-	setcdevname(filesys, preen);
+	setcdevname(filesys, NULL, preen);
 	if (debug && preen)
 		pwarn("starting\n");
 	switch (setup(filesys)) {

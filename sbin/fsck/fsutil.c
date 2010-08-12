@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.17 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.18 2010/08/12 15:26:34 jsing Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include "fsutil.h"
 
 static const char *dev = NULL;
+static const char *origdev = NULL;
 static int hot = 0;
 static int preen = 0;
 
@@ -53,9 +54,10 @@ extern char *__progname;
 static void vmsg(int, const char *, va_list);
 
 void
-setcdevname(const char *cd, int pr)
+setcdevname(const char *cd, const char *ocd, int pr)
 {
 	dev = cd;
+	origdev = ocd;
 	preen = pr;
 }
 
@@ -86,16 +88,23 @@ errexit(const char *fmt, ...)
 static void
 vmsg(int fatal, const char *fmt, va_list ap)
 {
-	if (!fatal && preen)
-		(void) printf("%s: ", dev);
+	if (!fatal && preen) {
+		if (origdev)
+			printf("%s (%s): ", dev, origdev);
+		else
+			printf("%s: ", dev);
+	}
 
 	(void) vprintf(fmt, ap);
 	
 	if (fatal && preen) {
-		(void) printf("\n");
-		(void) printf(
-		    "%s: UNEXPECTED INCONSISTENCY; RUN %s MANUALLY.\n",
-		    dev, __progname);
+		printf("\n");
+		if (origdev)
+			printf("%s (%s): ", dev, origdev);
+		else
+			printf("%s: ", dev);
+		printf("UNEXPECTED INCONSISTENCY; RUN %s MANUALLY.\n",
+		    __progname);
 		exit(8);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2010/08/12 15:26:34 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while (argc-- > 0) {
-		setcdevname(*argv, preen);
+		setcdevname(*argv, NULL, preen);
 		erg = checkfilesys(*argv++);
 		if (erg > ret)
 			ret = erg;

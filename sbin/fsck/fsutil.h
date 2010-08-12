@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.h,v 1.5 2006/05/27 22:30:09 thib Exp $	*/
+/*	$OpenBSD: fsutil.h,v 1.6 2010/08/12 15:26:34 jsing Exp $	*/
 /*	$NetBSD: fsutil.h,v 1.3 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char *rawname(char *);
 char *unrawname(char *);
 char *blockcheck(char *);
 const char *cdevname(void);
-void setcdevname(const char *, int);
+void setcdevname(const char *, const char *, int);
 int  hotroot(void);
 void *emalloc(size_t);
 void *erealloc(void *, size_t);

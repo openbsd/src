@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.45 2010/06/15 14:25:09 jsing Exp $	*/
+/*	$OpenBSD: setup.c,v 1.46 2010/08/12 15:26:34 jsing Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@ int calcsb(char *, int, struct fs *);
 static struct disklabel *getdisklabel(char *, int);
 static int readsb(int);
 static int cmpsb(struct fs *, struct fs *);
+static char rdevname[MAXPATHLEN];
 
 long numdirs, listmax, inplast;
 
@@ -91,6 +92,11 @@ setup(char *dev)
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
+	if (strncmp(dev, realdev, PATH_MAX) != 0) {
+		blockcheck(unrawname(realdev));
+		strlcpy(rdevname, realdev, sizeof(rdevname));
+		setcdevname(rdevname, dev, preen);
+	}
 	if (fstat(fsreadfd, &statb) < 0) {
 		printf("Can't stat %s: %s\n", realdev, strerror(errno));
 		close(fsreadfd);
@@ -103,10 +109,11 @@ setup(char *dev)
 			return (0);
 		}
 	}
-	if (strncmp(dev, realdev, PATH_MAX) != 0)
-		blockcheck(unrawname(realdev));
-	if (preen == 0)
+	if (preen == 0) {
 		printf("** %s", realdev);
+		if (strncmp(dev, realdev, PATH_MAX) != 0)
+			printf(" (%s)", dev);
+	}
 	if (nflag || (fswritefd = opendev(dev, O_WRONLY, 0, NULL)) < 0) {
 		fswritefd = -1;
 		if (preen)
