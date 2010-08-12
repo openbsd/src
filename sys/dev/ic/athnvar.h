@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.21 2010/08/12 16:32:31 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.22 2010/08/12 16:51:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -532,6 +532,7 @@ struct athn_softc {
 	int				nf_hist_cur;
 	int16_t				nf_priv[AR_MAX_CHAINS];
 	int16_t				nf_ext_priv[AR_MAX_CHAINS];
+	int				pa_calib_ticks;
 
 	struct athn_calib		calib;
 	struct athn_ani			ani;

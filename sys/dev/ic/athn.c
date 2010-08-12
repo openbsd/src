@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.60 2010/08/12 16:32:31 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.61 2010/08/12 16:51:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1149,9 +1149,16 @@ athn_calib_to(void *arg)
 
 	s = splnet();
 
+	/* Do periodic (every 4 minutes) PA calibration. */
+	if (AR_SREV_9285_11_OR_LATER(sc) &&
+	    sc->pa_calib_ticks + 240 * hz < ticks) {
+		sc->pa_calib_ticks = ticks;
+		ar9285_pa_calib(sc);
+	}
+
+	/* Do periodic (every 30 seconds) temperature compensation. */
 	if ((sc->flags & ATHN_FLAG_OLPC) &&
 	    sc->olpc_ticks + 30 * hz < ticks) {
-		/* Compensate for temperature changes. */
 		sc->olpc_ticks = ticks;
 		ops->olpc_temp_compensation(sc);
 	}
@@ -1190,9 +1197,11 @@ athn_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	if (!AR_SREV_9380_10_OR_LATER(sc)) {
 		/* Do PA calibration. */
-		if (AR_SREV_9285_11_OR_LATER(sc))
+		if (AR_SREV_9285_11_OR_LATER(sc)) {
+			extern int ticks;
+			sc->pa_calib_ticks = ticks;
 			ar9285_pa_calib(sc);
-
+		}
 		/* Do noisefloor calibration. */
 		ops->noisefloor_calib(sc);
 	}
