@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.210 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.211 2010/08/13 06:46:08 dlg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -842,7 +842,6 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	int mhlen, firstlen;
 	struct mbuf **mnext;
 	int fragments = 0;
-	int s;
 	int error = 0;
 
 	ip = mtod(m, struct ip *);
@@ -939,24 +938,6 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	} else
 		ip->ip_sum = in_cksum(m, hlen);
 sendorfree:
-	/*
-	 * If there is no room for all the fragments, don't queue
-	 * any of them.
-	 *
-	 * Queue them anyway on virtual interfaces
-	 * (vlan, etc) with queue length 1 and hope the
-	 * underlying interface can cope.
-	 */
-	if (ifp != NULL && ifp->if_snd.ifq_maxlen != 1) {
-		s = splnet();
-		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
-		    error == 0) {
-			error = ENOBUFS;
-			ipstat.ips_odropped++;
-			IFQ_INC_DROPS(&ifp->if_snd);
-		}
-		splx(s);
-	}
 	if (error) {
 		for (m = m0; m; m = m0) {
 			m0 = m->m_nextpkt;
