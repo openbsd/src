@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.133 2010/08/07 10:26:58 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.134 2010/08/13 11:12:43 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -533,7 +533,7 @@ sub solve_dependency
 		}
 		$v = find_candidate($dep->spec, $self->{set}->older_names);
 		if ($v) {
-			push(@{$self->{bad}}, $dep);
+			push(@{$self->{bad}}, $dep->{pattern});
 			return $v;
 		}
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
@@ -602,14 +602,13 @@ sub solve_depends
 sub check_depends
 {
 	my $self = shift;
-	my @bad = (@{$self->{bad}});
 
 	for my $dep ($self->dependencies) {
-		push(@bad, $dep)
+		push(@{$self->{bad}}, $dep)
 		    unless is_installed($dep) or
 		    	defined $self->{set}->{newer}->{$dep};
 	}
-	return @bad;
+	return $self->{bad};
 }
 
 sub dump

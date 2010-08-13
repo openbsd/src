@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.13 2010/08/07 09:37:44 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.14 2010/08/13 11:12:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -877,11 +877,11 @@ sub install_set
 	}
 
 	# verify dependencies have been installed
-	my @baddeps = $set->solver->check_depends;
+	my $baddeps = $set->solver->check_depends;
 
-	if (@baddeps) {
+	if (@$baddeps) {
 		$state->errsay("Can't install #1: can't resolve #2",
-		    $set->print, join(',', map {$_->{pattern}} @baddeps));
+		    $set->print, join(',', @$baddeps));
 		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL,"bad dependencies");
 		$state->tracker->cant($set);
