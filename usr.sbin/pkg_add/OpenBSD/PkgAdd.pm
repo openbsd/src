@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.14 2010/08/13 11:12:43 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.15 2010/08/13 11:13:25 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -991,6 +991,7 @@ sub process_parameters
 		while (<$f>) {
 			chomp;
 			s/\s.*//;
+			s/\.tgz$//;
 			push(@{$state->{setlist}},
 			    $state->updateset->$add_hints($_));
 		}
