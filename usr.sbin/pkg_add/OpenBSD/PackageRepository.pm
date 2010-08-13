@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.88 2010/07/27 09:09:43 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.89 2010/08/13 11:12:04 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -531,7 +531,7 @@ sub open_pipe
 	if ($pid) {
 		$object->{pid} = $pid;
 	} else {
-		open(STDIN, '<&', $rdfh) or 
+		open(STDIN, '<&', $rdfh) or
 		    $self->{state}->fatal("Bad dup: #1", $!);
 		close($rdfh);
 		close($wrfh);
@@ -546,7 +546,7 @@ sub open_pipe
 		undef $SIG{'WINCH'};
 		undef $SIG{'CONT'};
 		open STDERR, '>', $object->{errors};
-		open(STDOUT, '>&', $wrfh) or 
+		open(STDOUT, '>&', $wrfh) or
 		    $self->{state}->fatal("Bad dup: #1", $!);
 		close($rdfh);
 		close($wrfh);
