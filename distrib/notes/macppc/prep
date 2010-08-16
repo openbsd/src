@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.17 2007/08/02 17:33:12 david Exp $
+dnl	$OpenBSD: prep,v 1.18 2010/08/16 14:39:21 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Open Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -32,6 +32,8 @@ the right is highlighted on the lower bank.  Now hold the
 System Identifier button for two seconds.  For more details, read:
 http://docs.info.apple.com/article.html?artnum=75489
 
+dnl XXX Move the boot commands to install in sections (booting from network,
+dnl XXX booting from cd-rom, etc)
 Important Open Firmware command examples:
 
 boot cd:,ofwboot /OSREV/MACHINE/bsd.rd
@@ -39,9 +41,11 @@ boot cd:,ofwboot /OSREV/MACHINE/bsd.rd
 		OpenBSD CD-ROM in the CD/DVD drive)
 
 boot enet:,ofwboot /bsd.rd
-		(netboot from a pre-configured bootp/tftp/nfs
-		server containing the "ofwboot" and "bsd.rd"
-		files at the root directory of the tftp server)
+		(netboot from a pre-configured dhcp/tftp/nfs
+		server; "ofwboot" will be obtained from the tftp server,
+		while "bsd.rd" will be obtained from the NFS server,
+		as specified by the "next-server" and "root-path" dhcp
+		options)
 
 boot ide1:,ofwboot /bsd
 		(After installation, boot /bsd from the slave
