@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.10 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: apci.c,v 1.11 2010/08/16 14:50:16 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.2 1997/10/04 17:20:15 thorpej Exp $	*/
 
 /*-
@@ -102,6 +102,8 @@ apciprobe(struct consdev *cp)
 		cp->cn_pri = CN_HIGHPRI;
 	else
 		cp->cn_pri = CN_LOWPRI;
+
+	apcicnaddr = (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
 }
 
 void
