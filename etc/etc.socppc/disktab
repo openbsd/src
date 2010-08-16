@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.4 2010/07/02 20:33:54 tedu Exp $
+# $OpenBSD: disktab,v 1.5 2010/08/16 14:29:17 kettenis Exp $
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:nc#16:nt#2:ns#256:\
@@ -7,5 +7,5 @@ rdroot|ramdiskroot|RAM-disk root FS image:\
 
 miniroot|Installation root FS image:\
 	:ty=simulated:se#512:nc#8:nt#16:ns#63:\
-	:ta=4.2BSD:oa#1008:pa#7056:fa#512:ba#4096:\
+	:ta=4.2BSD:oa#1024:pa#7040:fa#512:ba#4096:\
 	:ob#0:pb#0:oc#0:pc#8064:ti=boot:oi#63:pi#512:
