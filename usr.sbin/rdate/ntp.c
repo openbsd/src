@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.29 2006/09/17 17:03:56 ckuethe Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.30 2010/08/16 11:09:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -282,7 +282,7 @@ write_packet(int fd, struct ntp_data *data)
 	 * the transmit field intelligible.
 	 */
 
-	*(u_int64_t *)(packet + NTP_TRANSMIT) = data->xmitck;
+	bcopy(&data->xmitck, (packet + NTP_TRANSMIT), sizeof(data->xmitck));
 
 	data->originate = current_time(JAN_1970);
 
@@ -424,7 +424,7 @@ unpack_ntp(struct ntp_data *data, u_char *packet)
 	data->transmit = d / NTP_SCALE;
 
 	/* See write_packet for why this isn't an endian problem. */
-	data->recvck = *(u_int64_t *)(packet + NTP_ORIGINATE);
+	bcopy((packet + NTP_ORIGINATE), &data->recvck, sizeof(data->recvck));
 }
 
 /*
