@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.28 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.29 2010/08/17 21:37:11 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -181,14 +181,15 @@ onecol(int argc, char *argv[])
     int ips;
     int ops;
     int cps;
-    char *obuf;
+    char *obuf = NULL;
     char *lbuf;
     char *nbuf;
-    char *hbuf;
+    char *hbuf = NULL;
     char *ohbuf;
     FILE *inf;
     char *fname;
     int mor;
+    int error = 1;
 
     if (nmwd)
 	num = nmwd + 1;
@@ -199,18 +200,14 @@ onecol(int argc, char *argv[])
     /*
      * allocate line buffer
      */
-    if ((obuf = malloc((unsigned)LBUF + off)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((obuf = malloc((unsigned)(LBUF + off)*sizeof(char))) == NULL)
+	goto oomem;
 
     /*
      * allocate header buffer
      */
-    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((hbuf = malloc((unsigned)(HDBUF + offst)*sizeof(char))) == NULL)
+	goto oomem;
 
     ohbuf = hbuf + offst;
     nbuf = obuf + offst;
@@ -258,7 +255,7 @@ onecol(int argc, char *argv[])
 		    if (cnt >= 0) {
 			if (!lrgln)
 			    if (!linecnt && prhead(hbuf, fname, ++pagecnt))
-			         return(1);
+			         goto out;
 
 			/*
 			 * start new line or continue a long one
@@ -267,10 +264,10 @@ onecol(int argc, char *argv[])
 			    if (num)
 				addnum(nbuf, num, ++lncnt);
 			    if (otln(obuf,cnt+off, &ips, &ops, mor))
-				return(1);
+				goto out;
 			} else
 			    if (otln(lbuf, cnt, &ips, &ops, mor))
-				return(1);
+				goto out;
 
 			/*
 			 * if line bigger than buffer, get more
@@ -296,7 +293,7 @@ onecol(int argc, char *argv[])
 		 * fill to end of page
 		 */
 		if (prtail(lines - linecnt, lrgln))
-		    return(1);
+		    goto out;
 
 		/*
 		 * unless END continue
@@ -318,10 +315,21 @@ onecol(int argc, char *argv[])
     /*
      * If we didn't process all the files, return error
      */
-    if (eoptind < argc)
-	return(1);
-    else
-	return(0);
+    if (eoptind < argc) {
+	goto out;
+    } else {
+	error = 0;
+	goto out;
+    }
+
+oomem:
+    mfail();
+out:
+    free(obuf);
+    free(hbuf);
+    if (inf != NULL && inf != stdin)
+	(void)fclose(inf);
+    return error;
 }
 
 /*
@@ -332,51 +340,48 @@ int
 vertcol(int argc, char *argv[])
 {
     char *ptbf;
-    char **lstdat;
+    char **lstdat = NULL;
     int i;
     int j;
     int pln;
-    int *indy;
+    int *indy = NULL;
     int cnt;
     int rc;
     int cvc;
-    int *lindy;
+    int *lindy = NULL;
     int lncnt;
     int stp;
     int pagecnt;
     int col = colwd + 1;
     int mxlen = pgwd + offst + 1;
     int mclcnt = clcnt - 1;
-    struct vcol *vc;
+    struct vcol *vc = NULL;
     int mvc;
     int tvc;
     int cw = nmwd + 1;
     int fullcol;
-    char *buf;
-    char *hbuf;
+    char *buf = NULL;
+    char *hbuf = NULL;
     char *ohbuf;
     char *fname;
-    FILE *inf;
+    FILE *inf = NULL;
     int ips = 0;
     int cps = 0;
     int ops = 0;
     int mor = 0;
+    int error = 1;
 
     /*
      * allocate page buffer
      */
-    if ((buf = calloc((unsigned)lines, mxlen)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((buf = calloc((unsigned)lines, mxlen)) == NULL)
+	goto oomem;
 
     /*
      * allocate page header
      */
-    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL)
+	goto oomem;
 
     ohbuf = hbuf + offst;
     if (offst)
@@ -386,30 +391,22 @@ vertcol(int argc, char *argv[])
      * col pointers when no headers
      */
     mvc = lines * clcnt;
-    if ((vc=(struct vcol *)calloc((unsigned)mvc, sizeof(struct vcol))) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((vc=(struct vcol *)calloc((unsigned)mvc, sizeof(struct vcol))) == NULL)
+	goto oomem;
 
     /*
      * pointer into page where last data per line is located
      */
-    if ((lstdat = (char **)calloc((unsigned)lines, sizeof(char *))) == NULL){
-	mfail();
-	return(1);
-    }
+    if ((lstdat = (char **)calloc((unsigned)lines, sizeof(char *))) == NULL)
+	goto oomem;
 
     /*
      * fast index lookups to locate start of lines
      */
-    if ((indy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL) {
-	mfail();
-	return(1);
-    }
-    if ((lindy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((indy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL)
+	goto oomem;
+    if ((lindy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL)
+	goto oomem;
 
     if (nmwd)
 	fullcol = col + cw;
@@ -541,7 +538,7 @@ vertcol(int argc, char *argv[])
 		 */
 		if (vc[0].cnt >= 0) {
 		    if (prhead(hbuf, fname, ++pagecnt))
-		    	return(1);
+		    	goto out;
 
 		    /*
 		     * check to see if "last" page needs to be reordered
@@ -556,7 +553,7 @@ vertcol(int argc, char *argv[])
 			    ips = 0;
 			    ops = 0;
 			    if (offst && otln(buf,offst,&ips,&ops,1))
-				return(1);
+				goto out;
 			    tvc = i;
 
 			    for (j = 0; j < clcnt; ++j) {
@@ -581,7 +578,7 @@ vertcol(int argc, char *argv[])
 				    cnt = fullcol;
 
 				if (otln(vc[tvc].pt, cnt, &ips, &ops, 1))
-				    return(1);
+				    goto out;
 				tvc += pln;
 				if (tvc > cvc)
 				    break;
@@ -590,7 +587,7 @@ vertcol(int argc, char *argv[])
 			     * terminate line
 			     */
 			    if (otln(buf, 0, &ips, &ops, 0))
-				return(1);
+				goto out;
 			}
 
 		    } else {
@@ -615,7 +612,7 @@ vertcol(int argc, char *argv[])
 				ips = 0;
 				ops = 0;
 				if (otln(ptbf, j, &ips, &ops, 0))
-				    return(1);
+				    goto out;
 			    }
 			}
 		    }
@@ -625,7 +622,7 @@ vertcol(int argc, char *argv[])
 		 * pad to end of page
 		 */
 		if (prtail((lines - pln), 0))
-		    return(1);
+		    goto out;
 
 		/*
 		 * if FORM continue
@@ -645,10 +642,25 @@ vertcol(int argc, char *argv[])
 	    (void)fclose(inf);
     }
 
-    if (eoptind < argc)
-	return(1);
-    else
-	return(0);
+    if (eoptind < argc){
+	goto out;
+    } else {
+	error = 0;
+	goto out;
+    }
+
+oomem:
+    mfail();
+out:
+    free(buf);
+    free(hbuf);
+    free(vc);
+    free(lstdat);
+    free(lindy);
+    if (inf != NULL && inf != stdin)
+	(void)fclose(inf);
+    return error;
+
 }
 
 /*
@@ -667,28 +679,25 @@ horzcol(int argc, char *argv[])
     int rc;
     int lncnt;
     int pagecnt;
-    char *buf;
-    char *hbuf;
+    char *buf = NULL;
+    char *hbuf = NULL;
     char *ohbuf;
     char *fname;
-    FILE *inf;
+    FILE *inf = NULL;
     int cps = 0;
     int mor = 0;
     int ips = 0;
     int ops = 0;
+    int error = 1;
 
-    if ((buf = malloc((unsigned)pgwd + offst + 1)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((buf = malloc((unsigned)pgwd + offst + 1)) == NULL)
+	goto oomem;
 
     /*
      * page header
      */
-    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL)
+	goto oomem;
 
     ohbuf = hbuf + offst;
     if (offst) {
@@ -739,7 +748,7 @@ horzcol(int argc, char *argv[])
 			rc = inln(inf,ptbf,colwd,&cnt,&cps,1, &mor);
 			if (cnt >= 0) {
 			    if (!i && !j && prhead(hbuf, fname, ++pagecnt))
-			        return(1);
+			        goto out;
 
 			    ptbf += cnt;
 			    lstdat = ptbf;
@@ -769,7 +778,7 @@ horzcol(int argc, char *argv[])
 		     */
 		    if (j) {
 			if (otln(buf, lstdat-buf, &ips, &ops, 0))
-			    return(1);
+			    goto out;
 		    }
 
 		    if (rc != NORMAL)
@@ -797,9 +806,21 @@ horzcol(int argc, char *argv[])
 	if (inf != stdin)
 	    (void)fclose(inf);
     }
-    if (eoptind < argc)
-	return(1);
-    return(0);
+    if (eoptind < argc){
+	goto out;
+    } else {
+	error = 0;
+	goto out;
+    }
+
+oomem:
+    mfail();
+out:
+    free(buf);
+    free(hbuf);
+    if (inf != NULL && inf != stdin)
+	(void)fclose(inf);
+    return error;
 }
 
 struct ferrlist {
@@ -872,44 +893,40 @@ mulfile(int argc, char *argv[])
     int cnt;
     char *lstdat;
     int i;
-    FILE **fbuf;
+    FILE **fbuf = NULL;
     int actf;
     int lncnt;
     int col;
     int pagecnt;
     int fproc;
-    char *buf;
-    char *hbuf;
+    char *buf = NULL;
+    char *hbuf = NULL;
     char *ohbuf;
     char *fname;
     int ips = 0;
     int cps = 0;
     int ops = 0;
     int mor = 0;
+    int error = 1;
 
     /*
      * array of FILE *, one for each operand
      */
-    if ((fbuf = (FILE **)calloc((unsigned)clcnt, sizeof(FILE *))) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((fbuf = (FILE **)calloc((unsigned)clcnt, sizeof(FILE *))) == NULL)
+	goto oomem;
 
     /*
      * array of int *, one for each operand
      */
-    if ((rc = (int *)calloc((unsigned)clcnt, sizeof(int))) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((rc = (int *)calloc((unsigned)clcnt, sizeof(int))) == NULL)
+	goto oomem;
 
     /*
      * page header
      */
-    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL)
+	goto oomem;
+
     ohbuf = hbuf + offst;
 
     /*
@@ -938,7 +955,7 @@ mulfile(int argc, char *argv[])
     if (j)
 	clcnt = j;
     else
-	return(1);
+	goto out;
 
     /*
      * calculate page boundaries based on open file count
@@ -952,17 +969,16 @@ mulfile(int argc, char *argv[])
     }
     if (colwd < 1) {
 	ferrout("pr: page width too small for %d columns\n", clcnt);
-	return(1);
+	goto out;
     }
     col = colwd + 1;
 
     /*
      * line buffer
      */
-    if ((buf = malloc((unsigned)pgwd + offst + 1)) == NULL) {
-	mfail();
-	return(1);
-    }
+    if ((buf = malloc((unsigned)pgwd + offst + 1)) == NULL)
+	goto oomem;
+
     if (offst) {
 	(void)memset(buf, (int)' ', offst);
 	(void)memset(hbuf, (int)' ', offst);
@@ -1053,13 +1069,13 @@ mulfile(int argc, char *argv[])
 		 */
 		if (fproc != 0) {
 		    if (!i && prhead(hbuf, fname, ++pagecnt))
-			return(1);
+			goto out;
 
 		    /*
 		     * output line
 		     */
 		    if (otln(buf, lstdat-buf, &ips, &ops, 0))
-			return(1);
+			goto out;
 		} else
 		    break;
 	    }
@@ -1080,9 +1096,26 @@ mulfile(int argc, char *argv[])
 	if (actf <= 0)
 	break;
     }
-    if (eoptind < argc)
-	return(1);
-    return(0);
+    if (eoptind < argc){
+	goto out;
+    } else {
+	error = 0;
+	goto out;
+    }
+
+oomem:
+	mfail();
+out:
+    if (fbuf) {
+	for (j = 0; j < clcnt; j++) {
+	    if (fbuf[j] && fbuf[j] != stdin)
+		(void)fclose(fbuf[j]);
+	}
+	free(fbuf);
+    }
+    free(hbuf);
+    free(buf);
+    return error;
 }
 
 /*
