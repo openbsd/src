@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_fdintr.s,v 1.12 2009/04/10 20:53:54 miod Exp $	*/
+/*	$OpenBSD: bsd_fdintr.s,v 1.13 2010/08/17 20:05:08 miod Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -187,7 +187,7 @@ _C_LABEL(fdchwintr):
 
 	! tally interrupt
 	ldd	[R_fdc + FDC_COUNT], %l4
-	inccc	%l4
+	inccc	%l5
 	addx	%l4, 0, %l4
 	std	%l4, [R_fdc + FDC_COUNT]
 
@@ -307,6 +307,9 @@ ssi:
 	! set software interrupt
 	! enter here with status in %l7
 	st	%l7, [R_fdc + FDC_ISTATUS]
+	ld	[R_fdc + FDC_SIH], %l6
+	mov	1, %l7
+	st	%l7, [%l6 + SIH_PENDING]
 	FD_SET_SWINTR
 
 x:

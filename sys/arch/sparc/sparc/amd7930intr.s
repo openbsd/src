@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930intr.s,v 1.10 2009/04/10 20:53:54 miod Exp $	*/
+/*	$OpenBSD: amd7930intr.s,v 1.11 2010/08/17 20:05:08 miod Exp $	*/
 /*	$NetBSD: amd7930intr.s,v 1.10 1997/03/11 01:03:07 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
@@ -136,6 +136,9 @@ _C_LABEL(amd7930_trap):
 	bne	1f				! if (d == e)
 	 st	R_data, [%l7 + AU_RDATA]
 
+	ld	[%l7 + AU_SWIH], %l5
+	mov	1, %l6
+	st	%l6, [%l5 + SIH_PENDING]
 	AUDIO_SET_SWINTR
 
 1:
@@ -157,6 +160,9 @@ _C_LABEL(amd7930_trap):
 	bne	2f				! if (d == e)
 	 st	R_data, [%l7 + AU_PDATA]
 
+	ld	[%l7 + AU_SWIH], %l5
+	mov	1, %l6
+	st	%l6, [%l5 + SIH_PENDING]
 	AUDIO_SET_SWINTR
 
 2:

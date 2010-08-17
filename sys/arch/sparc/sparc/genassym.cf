@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.21 2009/04/10 20:53:54 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.22 2010/08/17 20:05:08 miod Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -190,6 +190,7 @@ member	au_rend
 member	au_pdata
 member	au_pend
 member	AU_COUNT	au_ih.ih_count.ec_count
+member	au_swih
 
 struct	amd7930		AMD_
 member	ir
@@ -223,3 +224,4 @@ member	FDC_NSTAT	fdcio_nstat
 member	FDC_DATA	fdcio_data
 member	FDC_TC		fdcio_tc
 member	FDC_COUNT	fdcio_ih.ih_count.ec_count
+member	FDC_SIH		fdcio_sih

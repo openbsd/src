@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.72 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.73 2010/08/17 20:05:06 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -139,7 +139,6 @@ enum fdc_state {
 /* software state, per controller */
 struct fdc_softc {
 	struct device	sc_dev;		/* boilerplate */
-	void		*sc_sih;	/* softintr cookie */
 	caddr_t		sc_reg;
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
@@ -164,6 +163,7 @@ struct fdc_softc {
 #define sc_nstat	sc_io.fdcio_nstat
 #define sc_status	sc_io.fdcio_status
 #define	sc_hih		sc_io.fdcio_ih
+#define	sc_sih		sc_io.fdcio_sih
 	struct timeout	fdctimeout_to;
 	struct timeout	fdcpseudointr_to;
 };
