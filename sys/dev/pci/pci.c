@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.80 2010/07/02 04:03:31 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.81 2010/08/17 19:14:52 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -56,12 +56,12 @@ int pciactivate(struct device *, int);
 				    sizeof(pcireg_t))
 struct pci_dev {
 	LIST_ENTRY(pci_dev) pd_next;
-	struct device *pd_dev;
 	pcitag_t pd_tag;        /* pci register tag */
 	pcireg_t pd_csr;
 	pcireg_t pd_bhlc;
 	pcireg_t pd_int;
 	pcireg_t pd_map[NMAPREG];
+	int pd_pmcsr_state;
 };
 
 #ifdef APERTURE
@@ -211,25 +211,52 @@ pcipower(int why, void *arg)
 {
 	struct pci_softc *sc = (struct pci_softc *)arg;
 	struct pci_dev *pd;
-	pcireg_t reg;
+	pcireg_t bhlc, csr, reg;
 	int i;
 
 	LIST_FOREACH(pd, &sc->sc_devs, pd_next) {
+		/*
+		 * Only handle header type 0 here; PCI-PCI bridges and
+		 * CardBus bridges need special handling, which will
+		 * be done in their specific drivers.
+		 */
+		bhlc = pci_conf_read(sc->sc_pc, pd->pd_tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlc) != 0)
+			continue;
+    
 		if (why != PWR_RESUME) {
 			for (i = 0; i < NMAPREG; i++)
-			       pd->pd_map[i] = pci_conf_read(sc->sc_pc,
-				   pd->pd_tag, PCI_MAPREG_START + (i * 4));
+				pd->pd_map[i] = pci_conf_read(sc->sc_pc,
+				    pd->pd_tag, PCI_MAPREG_START + (i * 4));
 			pd->pd_csr = pci_conf_read(sc->sc_pc, pd->pd_tag,
-			   PCI_COMMAND_STATUS_REG);
+			    PCI_COMMAND_STATUS_REG);
 			pd->pd_bhlc = pci_conf_read(sc->sc_pc, pd->pd_tag,
-			   PCI_BHLC_REG);
+			    PCI_BHLC_REG);
 			pd->pd_int = pci_conf_read(sc->sc_pc, pd->pd_tag,
-			   PCI_INTERRUPT_REG);
+			    PCI_INTERRUPT_REG);
+
+			/*
+			 * Place the device into D3.  The PCI Power
+			 * Management spec says we should disable I/O
+			 * and memory space as well as bus mastering
+			 * before we do so.
+			 */
+			csr = pd->pd_csr;
+			csr &= ~PCI_COMMAND_IO_ENABLE;
+			csr &= ~PCI_COMMAND_MEM_ENABLE;
+			csr &= ~PCI_COMMAND_MASTER_ENABLE;
+			pci_conf_write(sc->sc_pc, pd->pd_tag,
+			    PCI_COMMAND_STATUS_REG, csr);
+			pd->pd_pmcsr_state = pci_get_powerstate(sc->sc_pc,
+			    pd->pd_tag);
+			pci_set_powerstate(sc->sc_pc, pd->pd_tag,
+			    PCI_PMCSR_STATE_D3);
 		} else {
+			pci_set_powerstate(sc->sc_pc, pd->pd_tag,
+			    pd->pd_pmcsr_state);
 			for (i = 0; i < NMAPREG; i++)
 				pci_conf_write(sc->sc_pc, pd->pd_tag,
-				    PCI_MAPREG_START + (i * 4),
-					pd->pd_map[i]);
+				    PCI_MAPREG_START + (i * 4), pd->pd_map[i]);
 			reg = pci_conf_read(sc->sc_pc, pd->pd_tag,
 			    PCI_COMMAND_STATUS_REG);
 			pci_conf_write(sc->sc_pc, pd->pd_tag,
@@ -360,23 +387,13 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		if (ret != 0 && pap != NULL)
 			*pap = pa;
 	} else {
+		pd = malloc(sizeof *pd, M_DEVBUF, M_ZERO | M_WAITOK);
+		pd->pd_tag = tag;
+		LIST_INSERT_HEAD(&sc->sc_devs, pd, pd_next);
+
 		if ((dev = config_found_sm(&sc->sc_dev, &pa, pciprint,
-		    pcisubmatch))) {
-			pcireg_t reg;
-
+		    pcisubmatch)))
 			pci_dev_postattach(dev, &pa);
-
-			/* skip header type != 0 */
-			reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
-			if (PCI_HDRTYPE_TYPE(reg) != 0)
-				return(0);
-			if (!(pd = malloc(sizeof *pd, M_DEVBUF,
-			    M_NOWAIT)))
-				return(0);
-			pd->pd_tag = tag;
-			pd->pd_dev = dev;
-			LIST_INSERT_HEAD(&sc->sc_devs, pd, pd_next);
-		}
 	}
 
 	return (ret);
@@ -463,6 +480,19 @@ pci_find_device(struct pci_attach_args *pa,
 			return (1);
 	}
 	return (0);
+}
+
+int
+pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+	int offset;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, 0)) {
+		reg = pci_conf_read(pc, tag, offset + PCI_PMCSR);
+		return (reg & PCI_PMCSR_STATE_MASK);
+	}
+	return (PCI_PMCSR_STATE_D0);
 }
 
 int
