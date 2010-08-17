@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.511 2010/07/29 12:32:04 maja Exp $
+$OpenBSD: usbdevs,v 1.512 2010/08/17 21:42:54 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3543,7 +3543,7 @@ product TESTO 556		0x0009	556/560 USB interface
 product TESTO SERIAL_1		0x000a	USB adapter
 product TESTO SERIAL_2		0xf001	USB to serial converter
 
-/* Texas Intel products */
+/* Texas Instruments products */
 product TI UTUSB41		0x1446	UT-USB41 hub
 product TI TUSB2046		0x2046	TUSB2046 hub
 product TI TUSB3410		0x3410	TUSB3410
