@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2009/04/21 09:12:29 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2010/08/17 19:17:14 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/vax/compile/GENERIC/bsd \
@@ -12,6 +12,6 @@ bsd:
 bootblocks:
 	mopa.out ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}/boot.mop
 
-MDEXT=	bsd bsd.rd boot.mop
+MDEXT=	bsd bsd.rd boot.mop cd${OSrev}.iso install${OSrev}.iso floppy${OSrev}.fs
 
 .PHONY: bsd bootblocks

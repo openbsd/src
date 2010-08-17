@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2009/04/21 09:12:29 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2010/08/17 19:17:14 deraadt Exp $
 
 kernels: bsd bsd.mp bootblocks
 	cp ${.CURDIR}/../sys/arch/sparc64/compile/GENERIC/bsd \
@@ -19,8 +19,8 @@ bsd.mp:
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/*boot* ${RELEASEDIR}
 
-MDEXT=	bsd bsd.mp bsd.rd cd${OSrev}.iso miniroot${OSrev}.fs \
-	floppy${OSrev}.fs floppyB${OSrev}.fs \
+MDEXT=	bsd bsd.mp bsd.rd cd${OSrev}.iso install${OSrev}.iso \
+	miniroot${OSrev}.fs floppy${OSrev}.fs floppyB${OSrev}.fs \
 	bootblk installboot ofwboot ofwboot.net
 
 .PHONY: bsd bsd.mp bootblocks
