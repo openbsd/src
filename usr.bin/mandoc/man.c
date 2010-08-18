@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.38 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: man.c,v 1.39 2010/08/18 01:17:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,7 +17,6 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -477,23 +476,14 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 
 	ppos = i;
 
-	/* Copy the first word into a nil-terminated buffer. */
+	/*
+	 * Copy the first word into a nil-terminated buffer.
+	 * Stop copying when a tab, space, or eoln is encountered.
+	 */
 
-	for (j = 0; j < 4; j++, i++) {
-		if ('\0' == (mac[j] = buf[i]))
-			break;
-		else if (' ' == buf[i])
-			break;
-
-		/* Check for invalid characters. */
-
-		if (isgraph((u_char)buf[i]))
-			continue;
-		if ( ! man_pmsg(m, ln, i, MANDOCERR_BADCHAR))
-			return(0);
-		i--;
-	}
-
+	j = 0;
+	while (j < 4 && '\0' != buf[i] && ' ' != buf[i] && '\t' != buf[i])
+		mac[j++] = buf[i++];
 	mac[j] = '\0';
 
 	if (j == 4 || j < 1) {
