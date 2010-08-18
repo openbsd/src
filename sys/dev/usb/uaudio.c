@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.87 2010/07/31 02:52:16 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.88 2010/08/18 22:53:10 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -591,20 +591,18 @@ int
 uaudio_detach(struct device *self, int flags)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
-	struct chan *pchan = &sc->sc_playchan;
-	struct chan *rchan = &sc->sc_recchan;
-	int ms, rv = 0;
+	int rv = 0;
 
 	/*
-	 * sc_alts may be NULL if uaudio_identify_as() failed
+	 * sc_alts may be NULL if uaudio_identify_as() failed, in
+	 * which case uaudio_attach() didn't finish and there's
+	 * nothing to detach.
 	 */
 	if (sc->sc_alts == NULL)
-		return rv;
+		return (rv);
 
 	/* Wait for outstanding requests to complete. */
-	ms = max(sc->sc_alts[pchan->altidx].sc_busy ? pchan->reqms : 0,
-	    sc->sc_alts[rchan->altidx].sc_busy ? rchan->reqms : 0);
-	usbd_delay_ms(sc->sc_udev, UAUDIO_NCHANBUFS * ms);
+	uaudio_drain(sc);
 
 	if (sc->sc_audiodev != NULL)
 		rv = config_detach(sc->sc_audiodev, flags);
@@ -2237,11 +2235,13 @@ uaudio_drain(void *addr)
 	struct uaudio_softc *sc = addr;
 	struct chan *pchan = &sc->sc_playchan;
 	struct chan *rchan = &sc->sc_recchan;
-	int ms;
+	int ms = 0;
 
 	/* Wait for outstanding requests to complete. */
-	ms = max(sc->sc_alts[pchan->altidx].sc_busy ? pchan->reqms : 0,
-	    sc->sc_alts[rchan->altidx].sc_busy ? rchan->reqms : 0);
+	if (pchan->altidx != -1 && sc->sc_alts[pchan->altidx].sc_busy)
+		ms = max(ms, pchan->reqms);
+	if (rchan->altidx != -1 && sc->sc_alts[rchan->altidx].sc_busy)
+		ms = max(ms, rchan->reqms);
 	usbd_delay_ms(sc->sc_udev, UAUDIO_NCHANBUFS * ms);
 
 	return (0);
