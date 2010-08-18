@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.100 2010/08/04 18:52:55 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.101 2010/08/18 01:45:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -2115,23 +2115,25 @@ termp_li_pre(DECL_ARGS)
 static int
 termp_lk_pre(DECL_ARGS)
 {
-	const struct mdoc_node *nn;
+	const struct mdoc_node *nn, *sv;
 
 	term_fontpush(p, TERMFONT_UNDER);
-	nn = n->child;
+
+	nn = sv = n->child;
 
 	if (NULL == nn->next)
 		return(1);
 
-	term_word(p, nn->string);
+	for (nn = nn->next; nn; nn = nn->next) 
+		term_word(p, nn->string);
+
 	term_fontpop(p);
 
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ":");
 
 	term_fontpush(p, TERMFONT_BOLD);
-	for (nn = nn->next; nn; nn = nn->next) 
-		term_word(p, nn->string);
+	term_word(p, sv->string);
 	term_fontpop(p);
 
 	return(0);
