@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.178 2010/08/01 14:20:41 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.179 2010/08/18 21:01:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -3058,16 +3058,5 @@ sigcode_call
 	ldi	SYS_exit, t1
 ALTENTRY(esigcode)
 EXIT(sigcode)
-
-
-#ifdef COMPAT_LINUX
-ENTRY(linux_sigcode,0)
-
-	/* TODO linux signal trampoline */
-	bv	0(rp)
-	nop
-ALTENTRY(linux_esigcode)
-EXIT(linux_sigcode)
-#endif /* COMPAT_LINUX */
 
 	.end

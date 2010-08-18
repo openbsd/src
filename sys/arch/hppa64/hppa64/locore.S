@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2008/07/28 19:08:46 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2010/08/18 21:01:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -363,13 +363,6 @@ gateway_page
 	nop
 
 	.align	256
-#ifdef	COMPAT_LINUX
-	gate,n	$linux_syscall, %r0	/* TODO linux syscall fix */
-	nop
-
-$linux_syscall
-	nop
-#endif
 
 $bsd_syscall
 	mfctl	%eiem, %r1
