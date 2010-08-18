@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.70 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.71 2010/08/18 17:42:12 marco Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	/*
 	 * if tracing, save a copy of iovec
 	 */
-	if (KTRPOINT(p, KTR_GENIO))  {
+	if (KTRPOINT(p, KTR_GENIO)) {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		bcopy(auio.uio_iov, ktriov, iovlen);
 	}
@@ -205,7 +205,7 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	fp->f_rbytes += cnt;
 #ifdef KTRACE
 	if (ktriov != NULL) {
-		if (error == 0) 
+		if (error == 0)
 			ktrgenio(p, fd, UIO_READ, ktriov, cnt,
 			    error);
 		free(ktriov, M_TEMP);
@@ -341,7 +341,7 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	/*
 	 * if tracing, save a copy of iovec
 	 */
-	if (KTRPOINT(p, KTR_GENIO))  {
+	if (KTRPOINT(p, KTR_GENIO)) {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		bcopy(auio.uio_iov, ktriov, iovlen);
 	}
@@ -361,7 +361,7 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	fp->f_wbytes += cnt;
 #ifdef KTRACE
 	if (ktriov != NULL) {
-		if (error == 0) 
+		if (error == 0)
 			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
@@ -630,7 +630,7 @@ done:
 		putbits(ex, 2);
 #undef putbits
 	}
-	
+
 	if (pibits[0] != (fd_set *)&bits[0])
 		free(pibits[0], M_TEMP);
 	return (error);
@@ -773,7 +773,7 @@ pollout(struct pollfd *pl, struct pollfd *upl, u_int nfds)
 {
 	int error = 0;
 	u_int i = 0;
-	
+
 	while (!error && i++ < nfds) {
 		error = copyout(&pl->revents, &upl->revents,
 		    sizeof(upl->revents));
@@ -809,7 +809,7 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 
 	sz = sizeof(struct pollfd) * nfds;
-	
+
 	/* optimize for the default case, of a small nfds value */
 	if (sz > sizeof(pfds))
 		pl = (struct pollfd *) malloc(sz, M_TEMP, M_WAITOK);
