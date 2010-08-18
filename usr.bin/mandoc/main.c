@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.43 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: main.c,v 1.44 2010/08/18 01:03:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -451,6 +451,7 @@ fdesc(struct curparse *curp)
 	struct buf	 ln, blk;
 	int		 i, pos, lnn, lnn_start, with_mmap, of;
 	enum rofferr	 re;
+	unsigned char	 c;
 	struct man	*man;
 	struct mdoc	*mdoc;
 	struct roff	*roff;
@@ -493,8 +494,8 @@ fdesc(struct curparse *curp)
 			 * writers: use special characters.
 			 */
 
-			if ( ! isgraph((u_char)blk.buf[i]) &&
-					! isblank((u_char)blk.buf[i])) {
+			c = (unsigned char) blk.buf[i];
+			if ( ! (isascii(c) && (isgraph(c) || isblank(c)))) {
 				if ( ! mmsg(MANDOCERR_BADCHAR, curp, 
 						lnn_start, pos, 
 						"ignoring byte"))
