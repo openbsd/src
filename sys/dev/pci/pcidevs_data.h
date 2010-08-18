@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1567 2010/07/31 19:49:56 krw Exp 
+ *	OpenBSD: pcidevs,v 1.1568 2010/08/18 19:34:37 damien Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5166,6 +5166,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGLAPCIGT,
 	    "CG-LAPCIGT",
+	},
+	{
+	    PCI_VENDOR_COREGA2, PCI_PRODUCT_COREGA2_RTL8192E_1,
+	    "RTL8192E",
+	},
+	{
+	    PCI_VENDOR_COREGA2, PCI_PRODUCT_COREGA2_RTL8190P_1,
+	    "RTL8190P",
+	},
+	{
+	    PCI_VENDOR_COREGA2, PCI_PRODUCT_COREGA2_RTL8190P_2,
+	    "RTL8190P",
+	},
+	{
+	    PCI_VENDOR_COREGA2, PCI_PRODUCT_COREGA2_RTL8192E_2,
+	    "RTL8192E",
 	},
 	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
@@ -15604,6 +15620,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8185",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8190P,
+	    "RTL8190P",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8192E,
+	    "RTL8192E",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8187SE,
 	    "8187SE",
 	},
@@ -18858,6 +18882,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_DYNALINK,
 	    "Dynalink",
+	},
+	{
+	    PCI_VENDOR_COREGA2,
+	    "Corega",
 	},
 	{
 	    PCI_VENDOR_RHINO,
