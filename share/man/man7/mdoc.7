@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.47 2010/08/07 19:22:50 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.48 2010/08/18 01:59:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 7 2010 $
+.Dd $Mdocdate: August 18 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2095,7 +2095,7 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Lk Cm uri Op Cm name
 .Pp
 Examples:
-.D1 \&.Lk http://bsd.lv "The BSD.lv Project"
+.D1 \&.Lk http://bsd.lv \*qThe BSD.lv Project\*q
 .D1 \&.Lk http://bsd.lv
 .Pp
 See also
@@ -2717,9 +2717,13 @@ Heirloom troff, the other significant troff implementation accepting
 .Pp
 .Bl -dash -compact
 .It
+groff only accepts a single
+.Sq \&Lk
+link-name argument; the remainder is misformatted.
+.It
 The
 .Sq \&%C
-macro is not implemented in GNU troff.
+macro is not implemented in groff.
 .It
 An empty
 .Sq \&Dd
