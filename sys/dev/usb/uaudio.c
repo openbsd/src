@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.88 2010/08/18 22:53:10 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.89 2010/08/18 22:54:58 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -608,7 +608,7 @@ uaudio_detach(struct device *self, int flags)
 		rv = config_detach(sc->sc_audiodev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
+	    &sc->sc_dev);
 
 	return (rv);
 }
@@ -3272,7 +3272,7 @@ uaudio_chan_init(struct chan *ch, int mode, int altidx,
 		ch->nsync_frames = UAUDIO_MAX_FRAMES;
 	}
 	DPRINTF(("%s: residual sample fraction: %d/%d\n", __func__,
-	    ch->fraction, ch->usb_fps));
+	    ch->fraction, ch->frac_denom));
 }
 
 void
