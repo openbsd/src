@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.36 2010/07/25 18:05:54 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.37 2010/08/18 01:35:01 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2010 $
+.Dd $Mdocdate: August 18 2010 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -381,11 +381,6 @@ Each input and output format is separately noted.
 .Bl -bullet -compact
 .It
 The
-.Sq \e~
-special character doesn't produce expected behaviour in
-.Fl T Ns Cm ascii .
-.It
-The
 .Sq \&Bd \-literal
 and
 .Sq \&Bd \-unfilled
@@ -422,11 +417,6 @@ macro in
 has no effect.
 .It
 Words aren't hyphenated.
-.It
-In normal mode (not a literal block), blocks of spaces aren't preserved,
-so double spaces following sentence closure are reduced to a single space;
-.Xr groff 1
-retains spaces.
 .It
 Sentences are unilaterally monospaced.
 .El
