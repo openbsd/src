@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2008/08/30 01:16:30 brad Exp $
+# $Id: Makefile,v 1.7 2010/08/18 20:21:53 david Exp $
 
 KRBDEPTH=..
 .include "../Makefile.inc"
@@ -21,7 +21,7 @@ all: $(info)
 
 install: $(info)
 	$(INSTALL-INFO) ${.OBJDIR}/$(info) $(infodir)/dir
-	${INSTALL} ${INSTALL_COPY} -m 444 -o ${BINOWN} -g ${BINGRP} -p ${.OBJDIR}/$(info) $(infodir)
+	${INSTALL} ${INSTALL_COPY} -m 444 -o ${BINOWN} -g ${BINGRP} ${.OBJDIR}/$(info) $(infodir)
 
 $(info): $(SRCS)
 	${MAKEINFO} --no-split -I${KRB5SRC}/doc -o ${.OBJDIR}/$@ ${KRB5SRC}/doc/heimdal.texi
