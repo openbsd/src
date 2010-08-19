@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.14 2010/06/14 23:06:13 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.15 2010/08/19 18:29:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	case 0:
 		/* Child process. */
 		close(pipe_fd[0]);
-		clear_signals();
+		clear_signals(1);
 
 		if (dup2(pipe_fd[1], STDIN_FILENO) == -1)
 			_exit(1);
