@@ -1,6 +1,6 @@
-/*	$OpenBSD: print-gtp.c,v 1.2 2010/08/03 10:08:03 jsg Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.3 2010/08/19 15:26:38 jsing Exp $ */
 /*
- * Copyright (c) 2009 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +34,7 @@
  *     ETSI GSM 12.15 - GPRS Charging (GTPv0')
  *
  *     3GPP TS 23.003 - Numbering, addressing and identification
+ *     3GPP TS 24.008 - Core network protocols
  *     3GPP TS 29.002 - Mobile Application Part (MAP) specification
  *     3GPP TS 29.060 - GPRS Tunnelling Protocol (GTPv1-C/GTPv1-U)
  *     3GPP TS 32.295 - Charging Data Record (CDR) transfer (GTPv1')
@@ -62,6 +63,7 @@ void	gtp_print(register const u_char *, u_int, u_short, u_short);
 void	gtp_decode_ie(register const u_char *, u_short, int);
 void	gtp_print_tbcd(register const u_char *, u_int);
 void	gtp_print_user_address(register const u_char *, u_int);
+void	gtp_print_apn(register const u_char *, u_int);
 void	gtp_print_str(const char **, u_int);
 
 void	gtp_v0_print(const u_char *, u_int, u_short, u_short);
@@ -434,6 +436,38 @@ gtp_print_user_address(register const u_char *cp, u_int len)
 		printf(" (org 0x%x, type 0x%x)", org, type);
 }
 
+/*
+ * Decode and print an Access Point Name. Format is detailed in
+ * 3GPP 24.008 section 10.5.6.1 and 3GPP 23.003 section 9.1.
+ */
+void
+gtp_print_apn(register const u_char *cp, u_int len)
+{
+	u_char label[100];
+	u_int8_t llen;
+
+	if (len < 1 || len > 100)
+		return;
+
+	while (len > 0) {
+
+		llen = (u_int8_t)cp[0];
+		if (llen > 99)
+			return;
+
+		bcopy(cp + 1, label, llen);
+		label[llen] = '\0';
+		printf("%s", label);
+
+		cp += llen + 1;
+		len -= llen + 1;
+
+		if (len > 0)
+			printf(".");
+
+	}	
+}
+
 /* Print string from array. */
 void
 gtp_print_str(const char **strs, u_int index)
@@ -723,7 +757,6 @@ gtp_v0_print_tlv(register const u_char *cp, u_int value)
 {
 	u_int8_t data;
 	u_int16_t *lenp, *seqno, len;
-	u_char *buf;
 	int ielen = -1;
 
 	/* Get length of IE. */
@@ -758,14 +791,8 @@ gtp_v0_print_tlv(register const u_char *cp, u_int value)
 	case GTPV0_TLV_ACCESS_POINT_NAME:
 
 		/* 09.60 7.9.21 - Access Point Name. */
-		printf("AP Name:");
-		len = (u_int8_t)cp[0];
-		if ((buf = malloc(len + 1)) != NULL) {
-			bcopy(cp + 1, buf, len);
-			buf[len] = '\0';
-			printf(": %s", buf);
-			free(buf);
-		}
+		printf("AP Name: ");
+		gtp_print_apn(cp, len);
 		break;
 
 	case GTPV0_TLV_PROTOCOL_CONFIG_OPTIONS:
@@ -861,8 +888,8 @@ gtp_v1_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 
 	TCHECK(gh->flags);
 	if ((gh->flags & GTPV1_HDR_PROTO_TYPE) == 0) {
-		printf(" GTPv1'");
 		gtp_proto = GTP_V1_PRIME_PROTO;
+		printf(" GTPv1'");
 		gtp_v1_print_prime(p, (struct gtp_v1_prime_hdr *)gh);
 		return;
 	}
@@ -1324,7 +1351,6 @@ gtp_v1_print_tlv(register const u_char *cp, u_int value)
 {
 	u_int8_t data;
 	u_int16_t *lenp, *seqno, len;
-	u_char *buf;
 	int ielen = -1;
 
 	/* Get length of IE. */
@@ -1358,14 +1384,8 @@ gtp_v1_print_tlv(register const u_char *cp, u_int value)
 	case GTPV1_TLV_ACCESS_POINT_NAME:
 
 		/* 29.060 7.7.30 - Access Point Name. */
-		printf("AP Name");
-		len = (u_int8_t)cp[0];
-		if ((buf = malloc(len + 1)) != NULL) {
-			bcopy(cp + 1, buf, len);
-			buf[len] = '\0';
-			printf(": %s", buf);
-			free(buf);
-		}
+		printf("AP Name: ");
+		gtp_print_apn(cp, len);
 		break;
 
 	case GTPV1_TLV_PROTOCOL_CONFIG_OPTIONS:
