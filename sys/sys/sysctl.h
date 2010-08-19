@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.105 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.106 2010/08/19 18:14:13 kettenis Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -189,7 +189,8 @@ struct ctlname {
 #define	KERN_CACHEPCT		72	/* buffer cache % of physmem */
 #define	KERN_FILE2		73	/* struct: file entries */
 #define	KERN_RTHREADS		74	/* kernel rthreads support enabled */
-#define	KERN_MAXID		75	/* number of valid kern ids */
+#define	KERN_CONSDEV		75	/* dev_t: console terminal device */
+#define	KERN_MAXID		76	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -267,6 +268,7 @@ struct ctlname {
 	{ "bufcachepercent", CTLTYPE_INT }, \
 	{ "file2", CTLTYPE_STRUCT }, \
 	{ "rthreads", CTLTYPE_INT }, \
+	{ "consdev", CTLTYPE_STRUCT }, \
 }
 
 /*
