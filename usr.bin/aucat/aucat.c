@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.102 2010/07/31 08:48:01 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.103 2010/08/19 06:31:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -277,10 +277,7 @@ cfstr_add(struct cfstrlist *list, struct cfstr *templ, char *path)
 	struct cfstr *cs;
 	unsigned hdr;
 
-	if (strcmp(path, "-") == 0) {
-		path = NULL;
-		hdr = HDR_RAW;
-	} else if (templ->hdr == HDR_AUTO) {
+	if (templ->hdr == HDR_AUTO) {
 		len = strlen(path);
 		if (len >= 4 && strcasecmp(path + len - 4, ".wav") == 0)
 			hdr = HDR_WAV;
@@ -722,6 +719,8 @@ aucat_main(int argc, char **argv)
 			SLIST_REMOVE_HEAD(&cd->ins, entry);
 			if (!cs->mmc)
 				autostart = 1;
+			if (strcmp(cs->path, "-") == 0)
+				cs->path = NULL;
 			if (!wav_new_in(&wav_ops, d, cs->mode & MODE_PLAY,
 				cs->path, cs->hdr, &cs->ipar, cs->xrun,
 				cs->vol, cs->mmc, cs->join))
@@ -733,6 +732,8 @@ aucat_main(int argc, char **argv)
 			SLIST_REMOVE_HEAD(&cd->outs, entry);
 			if (!cs->mmc)
 				autostart = 1;
+			if (strcmp(cs->path, "-") == 0)
+				cs->path = NULL;
 			if (!wav_new_out(&wav_ops, d, cs->mode & MODE_RECMASK,
 				cs->path, cs->hdr, &cs->opar, cs->xrun,
 				cs->mmc, cs->join))
