@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.22 2010/07/02 18:05:28 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.23 2010/08/19 17:54:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -65,8 +65,6 @@ int	sdmmc_set_bus_width(struct sdmmc_function *);
 #ifdef SDMMC_IOCTL
 int	sdmmc_ioctl(struct device *, u_long, caddr_t);
 #endif
-
-#define DEVNAME(sc)	SDMMCDEVNAME(sc)
 
 #ifdef SDMMC_DEBUG
 int sdmmcdebug = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.17 2009/11/11 21:59:16 jasper Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.18 2010/08/19 17:54:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -95,13 +95,13 @@ sdmmc_io_enable(struct sdmmc_softc *sc)
 	/* Parse the additional bits in the I/O OCR value. */
 	if (!ISSET(card_ocr, SD_IO_OCR_MEM_PRESENT)) {
 		/* SDIO card without memory (not a "combo card"). */
-		DPRINTF(("%s: no memory present\n", SDMMCDEVNAME(sc)));
+		DPRINTF(("%s: no memory present\n", DEVNAME(sc)));
 		CLR(sc->sc_flags, SMF_MEM_MODE);
 	}
 	sc->sc_function_count = SD_IO_OCR_NUM_FUNCTIONS(card_ocr);
 	if (sc->sc_function_count == 0) {
 		/* Useless SDIO card without any I/O functions. */
-		DPRINTF(("%s: no I/O functions\n", SDMMCDEVNAME(sc)));
+		DPRINTF(("%s: no I/O functions\n", DEVNAME(sc)));
 		CLR(sc->sc_flags, SMF_IO_MODE);
 		return 0;
 	}
@@ -111,7 +111,7 @@ sdmmc_io_enable(struct sdmmc_softc *sc)
 	host_ocr = sdmmc_chip_host_ocr(sc->sct, sc->sch);
 	if (sdmmc_set_bus_power(sc, host_ocr, card_ocr) != 0) {
 		printf("%s: can't supply voltage requested by card\n",
-		    SDMMCDEVNAME(sc));
+		    DEVNAME(sc));
 		return 1;
 	}
 
@@ -120,7 +120,7 @@ sdmmc_io_enable(struct sdmmc_softc *sc)
 
 	/* Send the new OCR value until all cards are ready. */
 	if (sdmmc_io_send_op_cond(sc, host_ocr, NULL) != 0) {
-		printf("%s: can't send I/O OCR\n", SDMMCDEVNAME(sc));
+		printf("%s: can't send I/O OCR\n", DEVNAME(sc));
 		return 1;
 	}
 	return 0;
@@ -141,7 +141,7 @@ sdmmc_io_scan(struct sdmmc_softc *sc)
 	sf0 = sdmmc_function_alloc(sc);
 	sf0->number = 0;
 	if (sdmmc_set_relative_addr(sc, sf0) != 0) {
-		printf("%s: can't set I/O RCA\n", SDMMCDEVNAME(sc));
+		printf("%s: can't set I/O RCA\n", DEVNAME(sc));
 		SET(sf0->flags, SFF_ERROR);
 		return;
 	}
@@ -150,7 +150,7 @@ sdmmc_io_scan(struct sdmmc_softc *sc)
 
 	/* Verify that the RCA has been set by selecting the card. */
 	if (sdmmc_select_card(sc, sf0) != 0) {
-		printf("%s: can't select I/O RCA %d\n", SDMMCDEVNAME(sc),
+		printf("%s: can't select I/O RCA %d\n", DEVNAME(sc),
 		    sf0->rca);
 		SET(sf0->flags, SFF_ERROR);
 		return;
@@ -178,7 +178,7 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		    CCCR_BUS_WIDTH_1);
 
 		if (sdmmc_read_cis(sf, &sf->cis) != 0) {
-			printf("%s: can't read CIS\n", SDMMCDEVNAME(sc));
+			printf("%s: can't read CIS\n", DEVNAME(sc));
 			SET(sf->flags, SFF_ERROR);
 			return 1;
 		}

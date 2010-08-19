@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.27 2010/07/02 18:05:28 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.28 2010/08/19 17:54:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -51,8 +51,6 @@ struct sdhc_host {
 	u_int16_t intr_status;		/* soft interrupt status */
 	u_int16_t intr_error_status;	/* soft error status */
 };
-
-#define HDEVNAME(hp)	((hp)->sc->sc_dev.dv_xname)
 
 /* flag values */
 #define SHF_USE_DMA		0x0001
@@ -553,7 +551,7 @@ sdhc_wait_state(struct sdhc_host *hp, u_int32_t mask, u_int32_t value)
 			return 0;
 		sdmmc_delay(10000);
 	}
-	DPRINTF(0,("%s: timeout waiting for %x (state=%b)\n", HDEVNAME(hp),
+	DPRINTF(0,("%s: timeout waiting for %x (state=%b)\n", DEVNAME(hp->sc),
 	    value, state, SDHC_PRESENT_STATE_BITS));
 	return ETIMEDOUT;
 }
@@ -612,7 +610,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
 
 	DPRINTF(1,("%s: cmd %u done (flags=%#x error=%d)\n",
-	    HDEVNAME(hp), cmd->c_opcode, cmd->c_flags, cmd->c_error));
+	    DEVNAME(hp->sc), cmd->c_opcode, cmd->c_flags, cmd->c_error));
 	SET(cmd->c_flags, SCF_ITSDONE);
 }
 
@@ -627,7 +625,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	int s;
 	
 	DPRINTF(1,("%s: start cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
-	    "proc=\"%s\"\n", HDEVNAME(hp), cmd->c_opcode, cmd->c_arg,
+	    "proc=\"%s\"\n", DEVNAME(hp->sc), cmd->c_opcode, cmd->c_arg,
 	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
 	    curproc->p_comm : ""));
 
@@ -643,14 +641,14 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		if (cmd->c_datalen % blksize > 0) {
 			/* XXX: Split this command. (1.7.4) */
 			printf("%s: data not a multiple of %d bytes\n",
-			    HDEVNAME(hp), blksize);
+			    DEVNAME(hp->sc), blksize);
 			return EINVAL;
 		}
 	}
 
 	/* Check limit imposed by 9-bit block count. (1.7.2) */
 	if (blkcount > SDHC_BLOCK_COUNT_MAX) {
-		printf("%s: too much data\n", HDEVNAME(hp));
+		printf("%s: too much data\n", DEVNAME(hp->sc));
 		return EINVAL;
 	}
 
@@ -705,7 +703,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	/* XXX: Set DMA start address if SHF_USE_DMA is set. */
 
 	DPRINTF(1,("%s: cmd=%#x mode=%#x blksize=%d blkcount=%d\n",
-	    HDEVNAME(hp), command, mode, blksize, blkcount));
+	    DEVNAME(hp->sc), command, mode, blksize, blkcount));
 
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
@@ -735,7 +733,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	error = 0;
 	datalen = cmd->c_datalen;
 
-	DPRINTF(1,("%s: resp=%#x datalen=%d\n", HDEVNAME(hp),
+	DPRINTF(1,("%s: resp=%#x datalen=%d\n", DEVNAME(hp->sc),
 	    MMC_R1(cmd->c_resp), datalen));
 
 #ifdef SDHC_DEBUG
@@ -743,7 +741,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	if ((cmd->c_opcode == 52 || cmd->c_opcode == 53) &&
 	    ISSET(MMC_R1(cmd->c_resp), 0xcb00))
 		printf("%s: CMD52/53 error response flags %#x\n",
-		    HDEVNAME(hp), MMC_R1(cmd->c_resp) & 0xff00);
+		    DEVNAME(hp->sc), MMC_R1(cmd->c_resp) & 0xff00);
 #endif
 
 	while (datalen > 0) {
@@ -775,7 +773,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	SET(cmd->c_flags, SCF_ITSDONE);
 
 	DPRINTF(1,("%s: data transfer done (error=%d)\n",
-	    HDEVNAME(hp), cmd->c_error));
+	    DEVNAME(hp->sc), cmd->c_error));
 }
 
 void
@@ -821,7 +819,7 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 {
 	int timo;
 
-	DPRINTF(1,("%s: software reset reg=%#x\n", HDEVNAME(hp), mask));
+	DPRINTF(1,("%s: software reset reg=%#x\n", DEVNAME(hp->sc), mask));
 
 	HWRITE1(hp, SDHC_SOFTWARE_RESET, mask);
 	for (timo = 10; timo > 0; timo--) {
@@ -831,7 +829,7 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
 	}
 	if (timo == 0) {
-		DPRINTF(1,("%s: timeout reg=%#x\n", HDEVNAME(hp),
+		DPRINTF(1,("%s: timeout reg=%#x\n", DEVNAME(hp->sc),
 		    HREAD1(hp, SDHC_SOFTWARE_RESET)));
 		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
 		return (ETIMEDOUT);
@@ -860,7 +858,7 @@ sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
 	}
 	hp->intr_status &= ~status;
 
-	DPRINTF(2,("%s: intr status %#x error %#x\n", HDEVNAME(hp), status,
+	DPRINTF(2,("%s: intr status %#x error %#x\n", DEVNAME(hp->sc), status,
 	    hp->intr_error_status));
 	
 	/* Command timeout has higher priority than command complete. */
@@ -899,7 +897,7 @@ sdhc_intr(void *arg)
 
 		/* Acknowledge the interrupts we are about to handle. */
 		HWRITE2(hp, SDHC_NINTR_STATUS, status);
-		DPRINTF(2,("%s: interrupt status=%b\n", HDEVNAME(hp),
+		DPRINTF(2,("%s: interrupt status=%b\n", DEVNAME(hp->sc),
 		    status, SDHC_NINTR_STATUS_BITS));
 
 		/* Claim this interrupt. */
@@ -915,7 +913,7 @@ sdhc_intr(void *arg)
 			error = HREAD2(hp, SDHC_EINTR_STATUS);
 			HWRITE2(hp, SDHC_EINTR_STATUS, error);
 			DPRINTF(2,("%s: error interrupt, status=%b\n",
-			    HDEVNAME(hp), error, SDHC_EINTR_STATUS_BITS));
+			    DEVNAME(hp->sc), error, SDHC_EINTR_STATUS_BITS));
 
 			if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR|
 			    SDHC_DATA_TIMEOUT_ERROR)) {
@@ -946,7 +944,7 @@ sdhc_intr(void *arg)
 		 * Service SD card interrupts.
 		 */
 		if (ISSET(status, SDHC_CARD_INTERRUPT)) {
-			DPRINTF(0,("%s: card interrupt\n", HDEVNAME(hp)));
+			DPRINTF(0,("%s: card interrupt\n", DEVNAME(hp->sc)));
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 			sdmmc_card_intr(hp->sdmmc);
 		}

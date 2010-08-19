@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.15 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.16 2010/08/19 17:54:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -98,8 +98,6 @@ int sbt_debug = 0;
 #define DPRINTF(s)	do {} while (0)
 #define DNPRINTF(n, s)	do {} while (0)
 #endif
-
-#define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
 
 struct cfattach sbt_ca = {
 	sizeof(struct sbt_softc), sbt_match, sbt_attach, sbt_detach

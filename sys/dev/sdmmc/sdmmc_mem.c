@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.14 2010/02/10 23:33:08 drahn Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.15 2010/08/19 17:54:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -76,7 +76,7 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 		}
 		if (!ISSET(sc->sc_flags, SMF_SD_MODE)) {
 			DPRINTF(("%s: can't read memory OCR\n",
-			    SDMMCDEVNAME(sc)));
+			    DEVNAME(sc)));
 			return 1;
 		} else {
 			/* Not a "combo" card. */
@@ -89,7 +89,7 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 	host_ocr = sdmmc_chip_host_ocr(sc->sct, sc->sch);
 	if (sdmmc_set_bus_power(sc, host_ocr, card_ocr) != 0) {
 		DPRINTF(("%s: can't supply voltage requested by card\n",
-		    SDMMCDEVNAME(sc)));
+		    DEVNAME(sc)));
 		return 1;
 	}
 
@@ -103,7 +103,7 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 
 	/* Send the new OCR value until all cards are ready. */
 	if (sdmmc_mem_send_op_cond(sc, host_ocr, NULL) != 0) {
-		DPRINTF(("%s: can't send memory OCR\n", SDMMCDEVNAME(sc)));
+		DPRINTF(("%s: can't send memory OCR\n", DEVNAME(sc)));
 		return 1;
 	}
 	return 0;
@@ -141,7 +141,7 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 			/* No more cards there. */
 			break;
 		} else if (error != 0) {
-			DPRINTF(("%s: can't read CID\n", SDMMCDEVNAME(sc)));
+			DPRINTF(("%s: can't read CID\n", DEVNAME(sc)));
 			break;
 		}
 
@@ -166,7 +166,7 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 		 * querying it for its RCA in the case of SD.
 		 */
 		if (sdmmc_set_relative_addr(sc, sf) != 0) {
-			printf("%s: can't set mem RCA\n", SDMMCDEVNAME(sc));
+			printf("%s: can't set mem RCA\n", DEVNAME(sc));
 			sdmmc_function_free(sf);
 			break;
 		}
@@ -175,7 +175,7 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 		/* Verify that the RCA has been set by selecting the card. */
 		if (sdmmc_select_card(sc, sf) != 0) {
 			printf("%s: can't select mem RCA %d\n",
-			    SDMMCDEVNAME(sc), sf->rca);
+			    DEVNAME(sc), sf->rca);
 			sdmmc_function_free(sf);
 			break;
 		}
@@ -216,7 +216,7 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 		}
 
 #ifdef SDMMC_DEBUG
-		printf("%s: CID: ", SDMMCDEVNAME(sc));
+		printf("%s: CID: ", DEVNAME(sc));
 		sdmmc_print_cid(&sf->cid);
 #endif
 	}
@@ -246,7 +246,7 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 			break;
 		default:
 			printf("%s: unknown SD CSD structure version 0x%x\n",
-			    SDMMCDEVNAME(sc), csd->csdver);
+			    DEVNAME(sc), csd->csdver);
 			return 1;
 			break;
 		}
@@ -256,7 +256,7 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		if (csd->csdver != MMC_CSD_CSDVER_1_0 &&
 		    csd->csdver != MMC_CSD_CSDVER_2_0) {
 			printf("%s: unknown MMC CSD structure version 0x%x\n",
-			    SDMMCDEVNAME(sc), csd->csdver);
+			    DEVNAME(sc), csd->csdver);
 			return 1;
 		}
 
@@ -306,7 +306,7 @@ sdmmc_decode_cid(struct sdmmc_softc *sc, sdmmc_response resp,
 			break;
 		default:
 			printf("%s: unknown MMC version %d\n",
-			    SDMMCDEVNAME(sc), sf->csd.mmcver);
+			    DEVNAME(sc), sf->csd.mmcver);
 			return 1;
 		}
 	}
@@ -398,7 +398,7 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	cmd.c_opcode = MMC_SET_BLOCKLEN;
 	cmd.c_arg = sf->csd.sector_size;
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
-	DPRINTF(("%s: read_bl_len=%d sector_size=%d\n", SDMMCDEVNAME(sc),
+	DPRINTF(("%s: read_bl_len=%d sector_size=%d\n", DEVNAME(sc),
 	    1 << sf->csd.read_bl_len, sf->csd.sector_size));
 
 	return sdmmc_mmc_command(sc, &cmd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.16 2009/04/07 16:35:52 blambert Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.17 2010/08/19 17:54:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -153,7 +153,7 @@ struct sdmmc_function {
  */
 struct sdmmc_softc {
 	struct device sc_dev;		/* base device */
-#define SDMMCDEVNAME(sc)	((sc)->sc_dev.dv_xname)
+#define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
 	sdmmc_chipset_tag_t sct;	/* host controller chipset tag */
 	sdmmc_chipset_handle_t sch;	/* host controller chipset handle */
 	int sc_flags;

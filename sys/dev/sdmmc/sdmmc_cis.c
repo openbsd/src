@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_cis.c,v 1.3 2009/11/11 21:59:16 jasper Exp $	*/
+/*	$OpenBSD: sdmmc_cis.c,v 1.4 2010/08/19 17:54:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -71,7 +71,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 	reg = (int)sdmmc_cisptr(sf);
 	if (reg < SD_IO_CIS_START ||
 	    reg >= (SD_IO_CIS_START+SD_IO_CIS_SIZE-16)) {
-		printf("%s: bad CIS ptr %#x\n", SDMMCDEVNAME(sf->sc), reg);
+		printf("%s: bad CIS ptr %#x\n", DEVNAME(sf->sc), reg);
 		return 1;
 	}
 
@@ -83,7 +83,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 			if (tplcode != 0xff)
 				printf("%s: CIS parse error at %d, "
 				    "tuple code %#x, length %d\n",
-				    SDMMCDEVNAME(sf->sc), reg, tplcode, tpllen);
+				    DEVNAME(sf->sc), reg, tplcode, tpllen);
 			break;
 		}
 
@@ -91,7 +91,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 		case SD_IO_CISTPL_FUNCID:
 			if (tpllen < 2) {
 				printf("%s: bad CISTPL_FUNCID length\n",
-				    SDMMCDEVNAME(sf->sc));
+				    DEVNAME(sf->sc));
 				reg += tpllen;
 				break;
 			}
@@ -101,7 +101,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 		case SD_IO_CISTPL_MANFID:
 			if (tpllen < 4) {
 				printf("%s: bad CISTPL_MANFID length\n",
-				    SDMMCDEVNAME(sf->sc));
+				    DEVNAME(sf->sc));
 				reg += tpllen;
 				break;
 			}
@@ -113,7 +113,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 		case SD_IO_CISTPL_VERS_1:
 			if (tpllen < 2) {
 				printf("%s: CISTPL_VERS_1 too short\n",
-				    SDMMCDEVNAME(sf->sc));
+				    DEVNAME(sf->sc));
 				reg += tpllen;
 				break;
 			}
@@ -142,7 +142,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 			break;
 		default:
 			DPRINTF(("%s: unknown tuple code %#x, length %d\n",
-			    SDMMCDEVNAME(sf->sc), tplcode, tpllen));
+			    DEVNAME(sf->sc), tplcode, tpllen));
 			reg += tpllen;
 			break;
 		}
@@ -157,10 +157,10 @@ sdmmc_print_cis(struct sdmmc_function *sf)
 	struct sdmmc_cis *cis = &sf->cis;
 	int i;
 
-	printf("%s: CIS version %d.%d\n", SDMMCDEVNAME(sf->sc),
+	printf("%s: CIS version %d.%d\n", DEVNAME(sf->sc),
 	    cis->cis1_major, cis->cis1_minor);
 
-	printf("%s: CIS info: ", SDMMCDEVNAME(sf->sc));
+	printf("%s: CIS info: ", DEVNAME(sf->sc));
 	for (i = 0; i < 4; i++) {
 		if (cis->cis1_info[i] == NULL)
 			break;
@@ -171,9 +171,9 @@ sdmmc_print_cis(struct sdmmc_function *sf)
 	printf("\n");
 
 	printf("%s: Manufacturer code 0x%x, product 0x%x\n",
-	    SDMMCDEVNAME(sf->sc), cis->manufacturer, cis->product);
+	    DEVNAME(sf->sc), cis->manufacturer, cis->product);
 
-	printf("%s: function %d: ", SDMMCDEVNAME(sf->sc), sf->number);
+	printf("%s: function %d: ", DEVNAME(sf->sc), sf->number);
 	switch (sf->cis.function) {
 	case SDMMC_FUNCTION_WLAN:
 		printf("wireless network adapter");
