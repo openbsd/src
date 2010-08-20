@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.12 2010/07/01 16:47:58 maja Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.13 2010/08/20 00:20:55 fgsch Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -63,24 +63,26 @@ struct field_pc {
 	int max, min, cur;
 };
 
-struct field *field_by_name(struct field *, char *);
-struct field *field_by_value(struct field *, void *);
-void pr_field(const char *, struct field *, const char *);
-void rd_field(struct field *, char *, int);
-int name2ksym(char *);
-char *ksym2name(int);
-void ksymenc(int);
+struct field *
+	field_by_name(struct field *, char *);
+struct field *
+	field_by_value(struct field *, void *);
+void	pr_field(const char *, struct field *, const char *);
+void	rd_field(struct field *, char *, int);
+int	name2ksym(char *);
+char *	ksym2name(int);
+void	ksymenc(int);
 keysym_t ksym_upcase(keysym_t);
-void keyboard_get_values(const char *,int);
-int keyboard_put_values(const char *,int);
-int keyboard_next_device(int *);
-void mouse_get_values(const char *,int);
-int mouse_put_values(const char *,int);
-int mouse_next_device(int *);
-void display_get_values(const char *,int);
-int display_put_values(const char *,int);
-int display_next_device(int *);
-int yyparse(void);
-void yyerror(char *);
-int yylex(void);
-void map_scan_setinput(char *);
+void	keyboard_get_values(int);
+int	keyboard_put_values(int);
+char *	keyboard_next_device(int);
+void	mouse_get_values(int);
+int	mouse_put_values(int);
+char *	mouse_next_device(int);
+void	display_get_values(int);
+int	display_put_values(int);
+char *	display_next_device(int);
+int	yyparse(void);
+void	yyerror(char *);
+int	yylex(void);
+void	map_scan_setinput(char *);

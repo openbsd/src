@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.15 2010/07/01 16:47:58 maja Exp $	*/
+/*	$OpenBSD: display.c,v 1.16 2010/08/20 00:20:55 fgsch Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -72,7 +72,7 @@ struct field display_field_tab[] = {
 #define	fillioctl(n)	{ cmd = n; cmd_str = #n; }
 
 void
-display_get_values(const char *pre, int fd)
+display_get_values(int fd)
 {
 	struct wsdisplay_addscreendata gscr;
 	struct wsdisplay_param param;
@@ -178,7 +178,7 @@ display_get_values(const char *pre, int fd)
 }
 
 int
-display_put_values(const char *pre, int fd)
+display_put_values(int fd)
 {
 	struct wsdisplay_param param;
 	struct wsdisplay_burner burners;
@@ -261,23 +261,14 @@ display_put_values(const char *pre, int fd)
 	return 0;
 }
 
-int
-display_next_device(int *index)
+char *
+display_next_device(int index)
 {
-	char devname[20];
-	int fd = -1;
+	static char devname[20];
 
-	snprintf(devname, sizeof(devname), "/dev/tty%c0", *index + 'C');
+	if (index > 7)
+		return (NULL);
 
-	if (*index > 7) {
-		*index = -1;
-		return(fd);
-	}
-
-	if ((fd = open(devname, O_WRONLY)) < 0 &&
-	    (fd = open(devname, O_RDONLY)) < 0) {
-		if (errno != ENXIO)
-			*index = -1;
-	}
-	return(fd);
+	snprintf(devname, sizeof(devname), "/dev/tty%c0", index + 'C');
+	return (devname);
 }

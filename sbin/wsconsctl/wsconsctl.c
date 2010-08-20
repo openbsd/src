@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.25 2010/07/01 16:47:58 maja Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.26 2010/08/20 00:20:55 fgsch Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -32,6 +32,7 @@
 
 #include <fcntl.h>
 #include <err.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,14 +45,14 @@ extern struct field keyboard_field_tab[];
 extern struct field mouse_field_tab[];
 extern struct field display_field_tab[];
 
-void usage(char *);
+void	usage(void);
 
 struct vartypesw {
-	const char *name;
+	const	char *name;
 	struct field *field_tab;
-	void (*getval)(const char *pre, int);
-	int (*putval)(const char *pre, int);
-	int (*nextdev)(int *);
+	void	(*getval)(int);
+	int	(*putval)(int);
+	char *	(*nextdev)(int);
 } typesw[] = {
 	{ "keyboard", keyboard_field_tab,
 	  keyboard_get_values, keyboard_put_values, keyboard_next_device },
@@ -65,18 +66,14 @@ struct vartypesw {
 struct vartypesw *tab_by_name(const char *, int *);
 
 void
-usage(char *msg)
+usage()
 {
-	if (msg != NULL)
-		fprintf(stderr, "%s: %s\n", __progname, msg);
-
 	fprintf(stderr,
 	    "usage: %s [-an]\n"
 	    "       %s [-n] [-f file] name ...\n"
 	    "       %s [-n] [-f file] name=value ...\n"
 	    "       %s [-n] [-f file] name+=value ...\n",
 	    __progname, __progname, __progname, __progname);
-
 	exit(1);
 }
 
@@ -87,6 +84,7 @@ main(int argc, char *argv[])
 	struct vartypesw *sw = NULL;
 	char *getsep = "=", *setsep = " -> ", *p;
 	char *wdev = NULL;
+	char *device;
 	struct field *f;
 	char devname[20];
 
@@ -105,7 +103,7 @@ main(int argc, char *argv[])
 			/* compat */
 			break;
 		default:
-			usage(NULL);
+			usage();
 		}
 	}
 
@@ -113,209 +111,173 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc > 0 && aflag != 0)
-		usage("excess arguments after -a");
+		errx(1, "excess arguments after -a");
 	if (argc == 0)
 		aflag = 1;
 
 	if (aflag != 0) {
 		for (sw = typesw; sw->name; sw++) {
-			devidx = 0;
-			while (devidx >= 0) {
-				devfd = (*sw->nextdev)(&devidx);
-				if (devidx < 0)
-					continue;
+			for (devidx = 0;; devidx++) {
+				device = (*sw->nextdev)(devidx);
+				if (!device ||
+				    ((devfd = open(device, O_WRONLY)) < 0 &&
+				     (devfd = open(device, O_RDONLY)) < 0)) {
+					if (!device || errno != ENXIO) {
+						if (device && errno != ENOENT) {
+							warn("%s", device);
+							error = 1;	
+						}
+						break;
+					} else
+						continue;
+				}
 
 				if (devidx == 0)
-					snprintf(devname,
-						 sizeof(devname),
-						 "%s",
-						 sw->name);
+					snprintf(devname, sizeof(devname),
+					    "%s", sw->name);
 				else
-					snprintf(devname,
-						 sizeof(devname),
-						 "%s%d",
-						 sw->name,
-						 devidx);
-				devidx++;
-
-				if (devfd < 0)
-					continue;
+					snprintf(devname, sizeof(devname),
+					    "%s%d", sw->name, devidx);
 
 				for (f = sw->field_tab; f->name; f++)
-					if ((f->flags & (FLG_NOAUTO|FLG_WRONLY)) == 0)
+					if (!(f->flags &
+					    (FLG_NOAUTO|FLG_WRONLY)))
 						f->flags |= FLG_GET;
-				(*sw->getval)(devname, devfd);
+				(*sw->getval)(devfd);
 				for (f = sw->field_tab; f->name; f++)
 					if (f->flags & FLG_DEAD)
 						continue;
 					else if (f->flags & FLG_NOAUTO)
-						warnx("Use explicit arg to view %s.%s.",
-						      devname, f->name);
+						warnx("Use explicit arg to "
+						    "view %s.%s.",
+						    devname, f->name);
 					else if (f->flags & FLG_GET)
 						pr_field(devname, f, getsep);
 			}
 		}
 	} else if (argc > 0) {
 		for (i = 0; i < argc; i++) {
-			p = strchr(argv[i], '=');
-			if (p == NULL) {
-				sw = tab_by_name(argv[i], &devidx);
-				if (!sw)
-					continue;
+			sw = tab_by_name(argv[i], &devidx);
+			if (!sw)
+				continue;
 
-				devfd = (*sw->nextdev)(&devidx);
-				if (devidx < 0) {
+			if (!wdev)
+				device = (*sw->nextdev)(devidx);
+			else
+				device = wdev;
+
+			if (!device ||
+			    ((devfd = open(device, O_WRONLY)) < 0 &&
+			     (devfd = open(device, O_RDONLY)) < 0)) {
+				if (!device) {
 					const char *c = strchr(argv[i], '.');
 					int k;
 					if (!c)
 						c = strchr(argv[i], '\0');
 					k = c - argv[i];
-					warnx("%*.*s: no such variable", k, k, argv[i]);
-					continue;
-				}
+					warnx("%*.*s: no such variable",
+					    k, k, argv[i]);
+				} else
+					warn("%s", device);
+				error = 1;
+				continue;
+			}
 
-				if (devidx == 0)
-					snprintf(devname,
-						 sizeof(devname),
-						 "%s",
-						 sw->name);
-				else
-					snprintf(devname,
-						 sizeof(devname),
-						 "%s%d",
-						 sw->name,
-						 devidx);
+			if (devidx == 0)
+				snprintf(devname, sizeof(devname),
+				    "%s", sw->name);
+			else
+				snprintf(devname, sizeof(devname),
+				    "%s%d", sw->name, devidx);
 
-				if (wdev != NULL &&
-				    (devfd = open(wdev, O_WRONLY)) < 0 &&
-				    (devfd = open(wdev, O_RDONLY)) < 0) {
-					warn("open: %s", wdev);
-					error = 1;
-					continue;
-				}
-
-				if (devfd < 0)
-					continue;
-
-				if (!strchr(argv[i],'.')) {
-
+			p = strchr(argv[i], '=');
+			if (p == NULL) {
+				if (!strchr(argv[i], '.')) {
 					for (f = sw->field_tab; f->name; f++)
-						if ((f->flags & (FLG_NOAUTO|FLG_WRONLY)) == 0)
+						if (!(f->flags &
+						    (FLG_NOAUTO|FLG_WRONLY)))
 							f->flags |= FLG_GET;
-					(*sw->getval)(devname, devfd);
+					(*sw->getval)(devfd);
 					for (f = sw->field_tab; f->name; f++)
 						if (f->flags & FLG_DEAD)
 							continue;
 						else if (f->flags & FLG_NOAUTO)
-							warnx("Use explicit arg to view %s.%s.",
-							      devname, f->name);
+							warnx("Use explicit "
+							    "arg to view "
+							    "%s.%s.",
+							    devname, f->name);
 						else if (f->flags & FLG_GET)
-							pr_field(devname, f, getsep);
-
+							pr_field(devname, f,
+							    getsep);
 					continue;
 				}
 
 				f = field_by_name(sw->field_tab, argv[i]);
 				if (f->flags & FLG_DEAD)
 					continue;
-				if ((f->flags & FLG_WRONLY) != 0) {
+				if ((f->flags & FLG_WRONLY)) {
 					warnx("%s: write only", argv[i]);
 					continue;
 				}
 				f->flags |= FLG_GET;
-				(*sw->getval)(devname, devfd);
+				(*sw->getval)(devfd);
 				if (f->flags & FLG_DEAD)
 					continue;
 				pr_field(devname, f, getsep);
-
-				continue;
-			}
-			if (!strchr(argv[i],'.') ||
-			    (strchr(argv[i],'.') > p)) {
-				warnx("%s: illegal variable name", argv[i]);
-				continue;
-			}
-			if (p > argv[i] &&
-			    (*(p - 1) == '+' || *(p - 1) == '-')) {
-				do_merge = *(p - 1);
-				*(p - 1) = '\0';
-			} else
-				do_merge = 0;
-			*p++ = '\0';
-
-			sw = tab_by_name(argv[i], &devidx);
-			if (!sw)
-				continue;
-
-			devfd = (*sw->nextdev)(&devidx);
-			if (devidx < 0) {
-				const char *c = strchr(argv[i], '.');
-				int k;
-				if (!c)
-					c = strchr(argv[i], '\0');
-				k = c - argv[i];
-				warnx("%*.*s: no such variable", k, k, argv[i]);
-				continue;
-			}
-
-			if (devidx == 0)
-				snprintf(devname,
-					 sizeof(devname),
-					 "%s",
-					 sw->name);
-			else
-				snprintf(devname,
-					 sizeof(devname),
-					 "%s%d",
-					 sw->name,
-					 devidx);
-
-			if (wdev != NULL &&
-			    (devfd = open(wdev, O_WRONLY)) < 0 &&
-			    (devfd = open(wdev, O_RDONLY)) < 0) {
-				warn("open: %s", wdev);
-				error = 1;
-				continue;
-			}
-
-			if (devfd < 0)
-				continue;
-
-			f = field_by_name(sw->field_tab, argv[i]);
-			if (f->flags & FLG_DEAD)
-				continue;
-			if ((f->flags & FLG_RDONLY) != 0) {
-				warnx("%s: read only", argv[i]);
-				continue;
-			}
-			if (do_merge || f->flags & FLG_INIT) {
-				if ((f->flags & FLG_MODIFY) == 0)
-					errx(1, "%s: can only be set",
-					     argv[i]);
-				f->flags |= FLG_GET;
-				(*sw->getval)(devname, devfd);
-				f->flags &= ~FLG_GET;
-			}
-			rd_field(f, p, do_merge);
-			f->flags |= FLG_SET;
-			putval = (*sw->putval)(devname, devfd);
-			f->flags &= ~FLG_SET;
-			if (putval != 0 || f->flags & (FLG_DEAD | FLG_NOAUTO))
-				continue;
-			if (f->flags & FLG_WRONLY) {
-				pr_field(devname, f, setsep);
 			} else {
-				f->flags |= FLG_GET;
-				(*sw->getval)(devname, devfd);
+				if (!strchr(argv[i], '.') ||
+				    (strchr(argv[i], '.') > p)) {
+					warnx("%s: illegal variable name",
+					    argv[i]);
+					continue;
+				}
+				if (p > argv[i] &&
+				    (*(p - 1) == '+' || *(p - 1) == '-')) {
+					do_merge = *(p - 1);
+					*(p - 1) = '\0';
+				} else
+					do_merge = 0;
+				*p++ = '\0';
+
+				f = field_by_name(sw->field_tab, argv[i]);
 				if (f->flags & FLG_DEAD)
 					continue;
-				pr_field(devname, f, setsep);
+				if (f->flags & FLG_RDONLY) {
+					warnx("%s: read only", argv[i]);
+					continue;
+				}
+				if (do_merge || f->flags & FLG_INIT) {
+					if (!(f->flags & FLG_MODIFY))
+						errx(1, "%s: can only be set",
+						    argv[i]);
+					f->flags |= FLG_GET;
+					(*sw->getval)(devfd);
+					f->flags &= ~FLG_GET;
+				}
+				rd_field(f, p, do_merge);
+				f->flags |= FLG_SET;
+				putval = (*sw->putval)(devfd);
+				f->flags &= ~FLG_SET;
+				if (putval != 0 ||
+				    f->flags & (FLG_DEAD|FLG_NOAUTO))
+					continue;
+				if (f->flags & FLG_WRONLY) {
+					pr_field(devname, f, setsep);
+				} else {
+					f->flags |= FLG_GET;
+					(*sw->getval)(devfd);
+					if (f->flags & FLG_DEAD)
+						continue;
+					pr_field(devname, f, setsep);
+				}
 			}
+
+			close(devfd);
 		}
 	} else
-		usage(NULL);
+		usage();
 
-	return (error);
+	exit(error);
 }
 
 struct vartypesw *
@@ -331,7 +293,7 @@ tab_by_name(const char *var, int *idx)
 			break;
 
 	if (!p)
-		p=strchr(var, '\0');
+		p = strchr(var, '\0');
 
 	if (!sw->name) {
 		i = p - var;
@@ -345,15 +307,15 @@ tab_by_name(const char *var, int *idx)
 		i = 0;
 		while (c < p) {
 			if (*c >= '0' && *c <= '9')
-				i=i*10 + *c - '0';
+				i = i * 10 + *c - '0';
 			else
-				i=-1;
+				i = -1;
 			c++;
 		}
 		if (i < 0 || i > 32) {
 			i = p - var;
 			warnx("%*.*s: no such variable", i, i, var);
-			return(NULL);
+			return (NULL);
 		}
 	} else
 		i = 0;

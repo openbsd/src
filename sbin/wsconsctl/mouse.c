@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.10 2010/07/01 16:47:58 maja Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.11 2010/08/20 00:20:55 fgsch Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -56,7 +56,7 @@ struct field mouse_field_tab[] = {
 };
 
 void
-mouse_get_values(const char *pre, int fd)
+mouse_get_values(int fd)
 {
 	if (field_by_value(mouse_field_tab, &mstype)->flags & FLG_GET)
 		if (ioctl(fd, WSMOUSEIO_GTYPE, &mstype) < 0)
@@ -84,7 +84,7 @@ mouse_get_values(const char *pre, int fd)
 }
 
 int
-mouse_put_values(const char *pre, int fd)
+mouse_put_values(int fd)
 {
 	if (field_by_value(mouse_field_tab, &resolution)->flags & FLG_SET) {
 		if (ioctl(fd, WSMOUSEIO_SRES, &resolution) < 0) {
@@ -111,12 +111,13 @@ mouse_put_values(const char *pre, int fd)
 		}
 	}
 	if (field_by_value(mouse_field_tab, &wmcoords)->flags & FLG_SET) {
-		if (ioctl(fd, WSMOUSEIO_GCALIBCOORDS, &wmcoords_save) < 0) 
+		if (ioctl(fd, WSMOUSEIO_GCALIBCOORDS, &wmcoords_save) < 0) {
 			if (errno == ENOTTY)
 				field_by_value(mouse_field_tab,
 				    &wmcoords)->flags |= FLG_DEAD;
 			else
 				warn("WSMOUSEIO_GCALIBCOORDS");
+		}
 		wmcoords.samplelen = wmcoords_save.samplelen;
 		if (ioctl(fd, WSMOUSEIO_SCALIBCOORDS, &wmcoords) < 0) {
 			if (errno == ENOTTY) {
@@ -132,18 +133,11 @@ mouse_put_values(const char *pre, int fd)
 	return 0;
 }
 
-int
-mouse_next_device(int *index)
+char *
+mouse_next_device(int index)
 {
-	char devname[20];
-	int fd;
+	static char devname[20];
 
-	snprintf(devname, sizeof(devname), "/dev/wsmouse%d", *index);
-
-	if ((fd = open(devname, O_WRONLY)) < 0 &&
-	    (fd = open(devname, O_RDONLY)) < 0) {
-		if (errno != ENXIO)
-			*index = -1;
-	}
-	return(fd);
+	snprintf(devname, sizeof(devname), "/dev/wsmouse%d", index);
+	return (devname);
 }

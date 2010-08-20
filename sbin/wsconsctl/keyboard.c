@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.9 2010/07/01 16:47:58 maja Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.10 2010/08/20 00:20:55 fgsch Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -70,7 +70,7 @@ struct field keyboard_field_tab[] = {
 };
 
 void
-keyboard_get_values(const char *pre, int fd)
+keyboard_get_values(int fd)
 {
 	if (field_by_value(keyboard_field_tab, &kbtype)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
@@ -134,7 +134,7 @@ keyboard_get_values(const char *pre, int fd)
 }
 
 int
-keyboard_put_values(const char *pre, int fd)
+keyboard_put_values(int fd)
 {
 	bell.which = 0;
 	if (field_by_value(keyboard_field_tab, &bell.pitch)->flags & FLG_SET)
@@ -207,18 +207,11 @@ keyboard_put_values(const char *pre, int fd)
 	return 0;
 }
 
-int
-keyboard_next_device(int *index)
+char *
+keyboard_next_device(int index)
 {
-	char devname[20];
-	int fd;
+	static char devname[20];
 
-	snprintf(devname, sizeof(devname), "/dev/wskbd%d", *index);
-
-	if ((fd = open(devname, O_WRONLY)) < 0 &&
-	    (fd = open(devname, O_RDONLY)) < 0) {
-		if (errno != ENXIO)
-			*index = -1;
-	}
-	return(fd);
+	snprintf(devname, sizeof(devname), "/dev/wskbd%d", index);
+	return (devname);
 }
