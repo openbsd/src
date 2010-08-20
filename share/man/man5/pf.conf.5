@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.476 2010/05/19 13:51:37 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.477 2010/08/20 13:01:43 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2010 $
+.Dd $Mdocdate: August 20 2010 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -434,7 +434,7 @@ The implicit
 rule that is used when a packet does not match any rules does not
 allow IP options.
 .Pp
-.It Ar divert-packet Aq Ar port
+.It Ar divert-packet Ar port Aq Ar port
 Used to send matching packets to
 .Xr divert 4
 sockets bound to port
@@ -2631,7 +2631,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  ( "no" | "keep" | "modulate" | "synproxy" ) "state"
                  [ "(" state-opts ")" ] | "scrub" "(" scrubopts ")" |
                  "fragment" | "allow-opts" |
-		 "divert-packet" port | "divert-reply" |
+		 "divert-packet" "port" port | "divert-reply" |
 		 "divert-to" host "port" port |
                  "label" string | "tag" string | [ ! ] "tagged" string |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
