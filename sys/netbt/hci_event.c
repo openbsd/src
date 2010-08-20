@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_event.c,v 1.8 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: hci_event.c,v 1.9 2010/08/20 17:00:40 jsg Exp $	*/
 /*	$NetBSD: hci_event.c,v 1.18 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
@@ -265,7 +265,8 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 			break;
 
 		DPRINTFN(1,
-		    "CommandStatus opcode (%03x|%04x) failed (status=0x%02x)\n",
+		    "(%s) CommandStatus opcode (%03x|%04x)"
+		    " failed (status=0x%02x)\n",
 		    device_xname(unit->hci_dev),
 		    HCI_OGF(ep.opcode), HCI_OCF(ep.opcode),
 		    ep.status);
