@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.45 2010/08/20 00:53:35 schwarze Exp $ */
+/*	$Id: main.c,v 1.46 2010/08/20 08:13:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -536,14 +536,6 @@ fdesc(struct curparse *curp)
 		}
 	}
 
-	/*
-	 * With -Wstop and warnings or errors of at least
-	 * the requested level, do not produce output.
-	 */
-
-	if (MANDOCLEVEL_OK != exit_status && curp->wstop)
-		goto cleanup;
-
 	/* NOTE a parser may not have been assigned, yet. */
 
 	if ( ! (man || mdoc)) {
@@ -566,6 +558,14 @@ fdesc(struct curparse *curp)
 		assert(MANDOCLEVEL_FATAL <= exit_status);
 		goto cleanup;
 	}
+
+	/*
+	 * With -Wstop and warnings or errors of at least
+	 * the requested level, do not produce output.
+	 */
+
+	if (MANDOCLEVEL_OK != exit_status && curp->wstop)
+		goto cleanup;
 
 	/* If unset, allocate output dev now (if applicable). */
 
