@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.182 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.183 2010/08/20 02:48:31 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -704,7 +704,7 @@ in_iawithaddr(struct in_addr ina, struct mbuf *m, u_int rdomain)
 				if (m)
 					m->m_flags |= M_BCAST;
 				return ia;
-			    }
+			}
 		}
 	}
 
