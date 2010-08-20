@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.9 2010/07/31 16:04:50 miod Exp $ */
+/* $OpenBSD: pcppi.c,v 1.10 2010/08/20 02:34:15 deraadt Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -179,7 +179,8 @@ pcppi_attach(parent, self, aux)
 #endif
 
 	pa.pa_cookie = sc;
-	while (config_found(self, &pa, 0));
+	while (config_found(self, &pa, 0))
+		;
 }
 
 void
