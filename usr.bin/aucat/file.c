@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.21 2010/07/10 12:32:45 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.22 2010/08/20 06:56:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,6 +46,7 @@
  *
  */
 
+#include <sys/time.h>
 #include <sys/types.h>
 
 #include <err.h>
@@ -55,6 +56,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "abuf.h"
 #include "aproc.h"
@@ -357,7 +359,7 @@ file_poll(void)
 		}
 	}
 	f = LIST_FIRST(&file_list);
-	while (f != LIST_END(&file_list)) {
+	while (f != NULL) {
 		if (f->pfd == NULL) {
 			f = LIST_NEXT(f, entry);
 			continue;
