@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.44 2010/08/18 01:03:22 schwarze Exp $ */
+/*	$Id: main.c,v 1.45 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -64,17 +64,8 @@ enum	outt {
 struct	curparse {
 	const char	 *file;		/* Current parse. */
 	int		  fd;		/* Current parse. */
-	int		  wflags;
-	/* FIXME: set by max error */
-#define	WARN_WALL	 (1 << 0)	/* All-warnings mask. */
-#define	WARN_WERR	 (1 << 2)	/* Warnings->errors. */
-	int		  fflags;
-#define	FL_IGN_SCOPE	 (1 << 0) 	/* Ignore scope errors. */
-#define	FL_NIGN_ESCAPE	 (1 << 1) 	/* Don't ignore bad escapes. */
-#define	FL_NIGN_MACRO	 (1 << 2) 	/* Don't ignore bad macros. */
-#define	FL_IGN_ERRORS	 (1 << 4)	/* Ignore failed parse. */
-#define	FL_STRICT	  FL_NIGN_ESCAPE | \
-			  FL_NIGN_MACRO /* ignore nothing */
+	enum mandoclevel  wlevel;	/* Ignore messages below this. */
+	int		  wstop;	/* Stop after a file with a warning. */
 	enum intt	  inttype;	/* which parser to use */
 	struct man	 *man;		/* man parser */
 	struct mdoc	 *mdoc;		/* mdoc parser */
@@ -86,6 +77,26 @@ struct	curparse {
 	out_free	  outfree;	/* free output ptr */
 	void		 *outdata;	/* data for output */
 	char		  outopts[BUFSIZ]; /* buf of output opts */
+};
+
+static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
+	"SUCCESS",
+	"RESERVED",
+	"WARNING",
+	"ERROR",
+	"FATAL",
+	"BADARG",
+	"SYSERR"
+};
+
+static	const enum mandocerr	mandoclimits[MANDOCLEVEL_MAX] = {
+	MANDOCERR_OK,
+	MANDOCERR_WARNING,
+	MANDOCERR_WARNING,
+	MANDOCERR_ERROR,
+	MANDOCERR_FATAL,
+	MANDOCERR_MAX,
+	MANDOCERR_MAX
 };
 
 static	const char * const	mandocerrs[MANDOCERR_MAX] = {
@@ -164,28 +175,23 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no document body",
 	"no document prologue",
 	"utsname system call failed",
-	"memory exhausted",
+	"static buffer exhausted",
 };
 
 static	void		  fdesc(struct curparse *);
 static	void		  ffile(const char *, struct curparse *);
-static	int		  foptions(int *, char *);
-static	struct man	 *man_init(struct curparse *);
-static	struct mdoc	 *mdoc_init(struct curparse *);
-static	struct roff	 *roff_init(struct curparse *);
 static	int		  moptions(enum intt *, char *);
 static	int		  mmsg(enum mandocerr, void *, 
 				int, int, const char *);
-static	int		  pset(const char *, int, struct curparse *,
+static	void		  pset(const char *, int, struct curparse *,
 				struct man **, struct mdoc **);
 static	int		  toptions(struct curparse *, char *);
 static	void		  usage(void) __attribute__((noreturn));
 static	void		  version(void) __attribute__((noreturn));
-static	int		  woptions(int *, char *);
+static	int		  woptions(struct curparse *, char *);
 
 static	const char	 *progname;
-static	int		  with_fatal;
-static	int		  with_error;
+static	enum mandoclevel  exit_status = MANDOCLEVEL_OK;
 
 int
 main(int argc, char *argv[])
@@ -203,17 +209,14 @@ main(int argc, char *argv[])
 
 	curp.inttype = INTT_AUTO;
 	curp.outtype = OUTT_ASCII;
+	curp.wlevel  = MANDOCLEVEL_FATAL;
 
 	/* LINTED */
-	while (-1 != (c = getopt(argc, argv, "f:m:O:T:VW:")))
+	while (-1 != (c = getopt(argc, argv, "m:O:T:VW:")))
 		switch (c) {
-		case ('f'):
-			if ( ! foptions(&curp.fflags, optarg))
-				return(EXIT_FAILURE);
-			break;
 		case ('m'):
 			if ( ! moptions(&curp.inttype, optarg))
-				return(EXIT_FAILURE);
+				return(MANDOCLEVEL_BADARG);
 			break;
 		case ('O'):
 			(void)strlcat(curp.outopts, optarg, BUFSIZ);
@@ -221,11 +224,11 @@ main(int argc, char *argv[])
 			break;
 		case ('T'):
 			if ( ! toptions(&curp, optarg))
-				return(EXIT_FAILURE);
+				return(MANDOCLEVEL_BADARG);
 			break;
 		case ('W'):
-			if ( ! woptions(&curp.wflags, optarg))
-				return(EXIT_FAILURE);
+			if ( ! woptions(&curp, optarg))
+				return(MANDOCLEVEL_BADARG);
 			break;
 		case ('V'):
 			version();
@@ -247,8 +250,7 @@ main(int argc, char *argv[])
 
 	while (*argv) {
 		ffile(*argv, &curp);
-
-		if (with_fatal && !(curp.fflags & FL_IGN_ERRORS))
+		if (MANDOCLEVEL_OK != exit_status && curp.wstop)
 			break;
 		++argv;
 	}
@@ -262,8 +264,7 @@ main(int argc, char *argv[])
 	if (curp.roff)
 		roff_free(curp.roff);
 
-	return((with_fatal || with_error) ? 
-			EXIT_FAILURE :  EXIT_SUCCESS);
+	return(exit_status);
 }
 
 
@@ -272,7 +273,7 @@ version(void)
 {
 
 	(void)printf("%s %s\n", progname, VERSION);
-	exit(EXIT_SUCCESS);
+	exit(MANDOCLEVEL_OK);
 }
 
 
@@ -283,53 +284,7 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-V] [-foption] "
 			"[-mformat] [-Ooption] [-Toutput] "
 			"[-Werr] [file...]\n", progname);
-	exit(EXIT_FAILURE);
-}
-
-
-static struct man *
-man_init(struct curparse *curp)
-{
-	int		 pflags;
-
-	/* Defaults from mandoc.1. */
-
-	pflags = MAN_IGN_MACRO | MAN_IGN_ESCAPE;
-
-	if (curp->fflags & FL_NIGN_MACRO)
-		pflags &= ~MAN_IGN_MACRO;
-	if (curp->fflags & FL_NIGN_ESCAPE)
-		pflags &= ~MAN_IGN_ESCAPE;
-
-	return(man_alloc(&curp->regs, curp, pflags, mmsg));
-}
-
-
-static struct roff *
-roff_init(struct curparse *curp)
-{
-
-	return(roff_alloc(&curp->regs, mmsg, curp));
-}
-
-
-static struct mdoc *
-mdoc_init(struct curparse *curp)
-{
-	int		 pflags;
-
-	/* Defaults from mandoc.1. */
-
-	pflags = MDOC_IGN_MACRO | MDOC_IGN_ESCAPE;
-
-	if (curp->fflags & FL_IGN_SCOPE)
-		pflags |= MDOC_IGN_SCOPE;
-	if (curp->fflags & FL_NIGN_ESCAPE)
-		pflags &= ~MDOC_IGN_ESCAPE;
-	if (curp->fflags & FL_NIGN_MACRO)
-		pflags &= ~MDOC_IGN_MACRO;
-
-	return(mdoc_alloc(&curp->regs, curp, pflags, mmsg));
+	exit(MANDOCLEVEL_BADARG);
 }
 
 
@@ -340,7 +295,7 @@ ffile(const char *file, struct curparse *curp)
 	curp->file = file;
 	if (-1 == (curp->fd = open(curp->file, O_RDONLY, 0))) {
 		perror(curp->file);
-		with_fatal = 1;
+		exit_status = MANDOCLEVEL_SYSERR;
 		return;
 	}
 
@@ -351,24 +306,16 @@ ffile(const char *file, struct curparse *curp)
 }
 
 
-static int
+static void
 resize_buf(struct buf *buf, size_t initial)
 {
-	void *tmp;
-	size_t sz;
 
-	if (buf->sz == 0)
-		sz = initial;
-	else
-		sz = 2 * buf->sz;
-	tmp = realloc(buf->buf, sz);
-	if (NULL == tmp) {
+	buf->sz = buf->sz ? 2 * buf->sz : initial;
+	buf->buf = realloc(buf->buf, buf->sz);
+	if (NULL == buf->buf) {
 		perror(NULL);
-		return(0);
+		exit(MANDOCLEVEL_SYSERR);
 	}
-	buf->buf = tmp;
-	buf->sz = sz;
-	return(1);
 }
 
 
@@ -381,7 +328,6 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 
 	if (-1 == fstat(curp->fd, &st)) {
 		perror(curp->file);
-		with_fatal = 1;
 		return(0);
 	}
 
@@ -396,7 +342,6 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 		if (st.st_size >= (1U << 31)) {
 			fprintf(stderr, "%s: input too large\n", 
 					curp->file);
-			with_fatal = 1;
 			return(0);
 		}
 		*with_mmap = 1;
@@ -423,8 +368,7 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 						curp->file);
 				break;
 			}
-			if (! resize_buf(fb, 65536))
-				break;
+			resize_buf(fb, 65536);
 		}
 		ssz = read(curp->fd, fb->buf + (int)off, fb->sz - off);
 		if (ssz == 0) {
@@ -440,7 +384,6 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 
 	free(fb->buf);
 	fb->buf = NULL;
-	with_fatal = 1;
 	return(0);
 }
 
@@ -467,13 +410,15 @@ fdesc(struct curparse *curp)
 	 * memory mapped.  ln is a line buffer and grows on-demand.
 	 */
 
-	if ( ! read_whole_file(curp, &blk, &with_mmap))
+	if ( ! read_whole_file(curp, &blk, &with_mmap)) {
+		exit_status = MANDOCLEVEL_SYSERR;
 		return;
+	}
 
 	if (NULL == curp->roff) 
-		curp->roff = roff_init(curp);
-	if (NULL == (roff = curp->roff))
-		goto bailout;
+		curp->roff = roff_alloc(&curp->regs, curp, mmsg);
+	assert(curp->roff);
+	roff = curp->roff;
 
 	for (i = 0, lnn = 1; i < (int)blk.sz;) {
 		pos = 0;
@@ -496,10 +441,8 @@ fdesc(struct curparse *curp)
 
 			c = (unsigned char) blk.buf[i];
 			if ( ! (isascii(c) && (isgraph(c) || isblank(c)))) {
-				if ( ! mmsg(MANDOCERR_BADCHAR, curp, 
-						lnn_start, pos, 
-						"ignoring byte"))
-					goto bailout;
+				mmsg(MANDOCERR_BADCHAR, curp, 
+				    lnn_start, pos, "ignoring byte");
 				i++;
 				continue;
 			}
@@ -507,8 +450,7 @@ fdesc(struct curparse *curp)
 			/* Trailing backslash is like a plain character. */
 			if ('\\' != blk.buf[i] || i + 1 == (int)blk.sz) {
 				if (pos >= (int)ln.sz)
-					if (! resize_buf(&ln, 256))
-						goto bailout;
+					resize_buf(&ln, 256);
 				ln.buf[pos++] = blk.buf[i++];
 				continue;
 			}
@@ -540,16 +482,14 @@ fdesc(struct curparse *curp)
 			}
 			/* Some other escape sequence, copy and continue. */
 			if (pos + 1 >= (int)ln.sz)
-				if (! resize_buf(&ln, 256))
-					goto bailout;
+				resize_buf(&ln, 256);
 
 			ln.buf[pos++] = blk.buf[i++];
 			ln.buf[pos++] = blk.buf[i++];
 		}
 
  		if (pos >= (int)ln.sz)
-			if (! resize_buf(&ln, 256))
-				goto bailout;
+			resize_buf(&ln, 256);
 		ln.buf[pos] = '\0';
 
 		/*
@@ -567,10 +507,12 @@ fdesc(struct curparse *curp)
 					&ln.buf, &ln.sz, of, &of);
 		} while (ROFF_RERUN == re);
 
-		if (ROFF_IGN == re)
+		if (ROFF_IGN == re) {
 			continue;
-		else if (ROFF_ERR == re)
-			goto bailout;
+		} else if (ROFF_ERR == re) {
+			assert(MANDOCLEVEL_FATAL <= exit_status);
+			goto cleanup;
+		}
 
 		/*
 		 * If input parsers have not been allocated, do so now.
@@ -580,32 +522,50 @@ fdesc(struct curparse *curp)
 		 */
 
 		if ( ! (man || mdoc))
-			if ( ! pset(ln.buf + of, pos - of, curp, &man, &mdoc))
-				goto bailout;
+			pset(ln.buf + of, pos - of, curp, &man, &mdoc);
 
 		/* Lastly, push down into the parsers themselves. */
 
-		if (man && ! man_parseln(man, lnn_start, ln.buf, of))
-			goto bailout;
-		if (mdoc && ! mdoc_parseln(mdoc, lnn_start, ln.buf, of))
-			goto bailout;
+		if (man && ! man_parseln(man, lnn_start, ln.buf, of)) {
+			assert(MANDOCLEVEL_FATAL <= exit_status);
+			goto cleanup;
+		}
+		if (mdoc && ! mdoc_parseln(mdoc, lnn_start, ln.buf, of)) {
+			assert(MANDOCLEVEL_FATAL <= exit_status);
+			goto cleanup;
+		}
 	}
+
+	/*
+	 * With -Wstop and warnings or errors of at least
+	 * the requested level, do not produce output.
+	 */
+
+	if (MANDOCLEVEL_OK != exit_status && curp->wstop)
+		goto cleanup;
 
 	/* NOTE a parser may not have been assigned, yet. */
 
 	if ( ! (man || mdoc)) {
 		fprintf(stderr, "%s: Not a manual\n", curp->file);
-		goto bailout;
+		exit_status = MANDOCLEVEL_FATAL;
+		goto cleanup;
 	}
 
 	/* Clean up the parse routine ASTs. */
 
-	if (mdoc && ! mdoc_endparse(mdoc))
-		goto bailout;
-	if (man && ! man_endparse(man))
-		goto bailout;
-	if (roff && ! roff_endparse(roff))
-		goto bailout;
+	if (mdoc && ! mdoc_endparse(mdoc)) {
+		assert(MANDOCLEVEL_FATAL <= exit_status);
+		goto cleanup;
+	}
+	if (man && ! man_endparse(man)) {
+		assert(MANDOCLEVEL_FATAL <= exit_status);
+		goto cleanup;
+	}
+	if (roff && ! roff_endparse(roff)) {
+		assert(MANDOCLEVEL_FATAL <= exit_status);
+		goto cleanup;
+	}
 
 	/* If unset, allocate output dev now (if applicable). */
 
@@ -681,14 +641,10 @@ fdesc(struct curparse *curp)
 		free(blk.buf);
 
 	return;
-
- bailout:
-	with_fatal = 1;
-	goto cleanup;
 }
 
 
-static int
+static void
 pset(const char *buf, int pos, struct curparse *curp,
 		struct man **man, struct mdoc **mdoc)
 {
@@ -706,40 +662,39 @@ pset(const char *buf, int pos, struct curparse *curp,
 		for (i = 1; buf[i]; i++)
 			if (' ' != buf[i] && '\t' != buf[i])
 				break;
-		if (0 == buf[i])
-			return(1);
+		if ('\0' == buf[i])
+			return;
 	}
 
 	switch (curp->inttype) {
 	case (INTT_MDOC):
 		if (NULL == curp->mdoc) 
-			curp->mdoc = mdoc_init(curp);
-		if (NULL == (*mdoc = curp->mdoc))
-			return(0);
-		return(1);
+			curp->mdoc = mdoc_alloc(&curp->regs, curp, mmsg);
+		assert(curp->mdoc);
+		*mdoc = curp->mdoc;
+		return;
 	case (INTT_MAN):
 		if (NULL == curp->man) 
-			curp->man = man_init(curp);
-		if (NULL == (*man = curp->man))
-			return(0);
-		return(1);
+			curp->man = man_alloc(&curp->regs, curp, mmsg);
+		assert(curp->man);
+		*man = curp->man;
+		return;
 	default:
 		break;
 	}
 
 	if (pos >= 3 && 0 == memcmp(buf, ".Dd", 3))  {
 		if (NULL == curp->mdoc) 
-			curp->mdoc = mdoc_init(curp);
-		if (NULL == (*mdoc = curp->mdoc))
-			return(0);
-		return(1);
+			curp->mdoc = mdoc_alloc(&curp->regs, curp, mmsg);
+		assert(curp->mdoc);
+		*mdoc = curp->mdoc;
+		return;
 	} 
 
 	if (NULL == curp->man) 
-		curp->man = man_init(curp);
-	if (NULL == (*man = curp->man))
-		return(0);
-	return(1);
+		curp->man = man_alloc(&curp->regs, curp, mmsg);
+	assert(curp->man);
+	*man = curp->man;
 }
 
 
@@ -770,8 +725,7 @@ toptions(struct curparse *curp, char *arg)
 		curp->outtype = OUTT_ASCII;
 	else if (0 == strcmp(arg, "lint")) {
 		curp->outtype = OUTT_LINT;
-		curp->wflags |= WARN_WALL;
-		curp->fflags |= FL_STRICT;
+		curp->wlevel  = MANDOCLEVEL_WARNING;
 	}
 	else if (0 == strcmp(arg, "tree"))
 		curp->outtype = OUTT_TREE;
@@ -793,71 +747,37 @@ toptions(struct curparse *curp, char *arg)
 
 
 static int
-foptions(int *fflags, char *arg)
+woptions(struct curparse *curp, char *arg)
 {
 	char		*v, *o;
-	const char	*toks[8];
+	const char	*toks[6]; 
 
-	toks[0] = "ign-scope";
-	toks[1] = "no-ign-escape";
-	toks[2] = "no-ign-macro";
-	toks[3] = "ign-errors";
-	toks[4] = "strict";
-	toks[5] = "ign-escape";
-	toks[6] = NULL;
+	toks[0] = "stop";
+	toks[1] = "all";
+	toks[2] = "warning";
+	toks[3] = "error";
+	toks[4] = "fatal";
+	toks[5] = NULL;
 
 	while (*arg) {
 		o = arg;
 		switch (getsubopt(&arg, UNCONST(toks), &v)) {
 		case (0):
-			*fflags |= FL_IGN_SCOPE;
+			curp->wstop = 1;
 			break;
 		case (1):
-			*fflags |= FL_NIGN_ESCAPE;
-			break;
+			/* FALLTHROUGH */
 		case (2):
-			*fflags |= FL_NIGN_MACRO;
+			curp->wlevel = MANDOCLEVEL_WARNING;
 			break;
 		case (3):
-			*fflags |= FL_IGN_ERRORS;
+			curp->wlevel = MANDOCLEVEL_ERROR;
 			break;
 		case (4):
-			*fflags |= FL_STRICT;
-			break;
-		case (5):
-			*fflags &= ~FL_NIGN_ESCAPE;
+			curp->wlevel = MANDOCLEVEL_FATAL;
 			break;
 		default:
-			fprintf(stderr, "%s: Bad argument\n", o);
-			return(0);
-		}
-	}
-
-	return(1);
-}
-
-
-static int
-woptions(int *wflags, char *arg)
-{
-	char		*v, *o;
-	const char	*toks[3]; 
-
-	toks[0] = "all";
-	toks[1] = "error";
-	toks[2] = NULL;
-
-	while (*arg) {
-		o = arg;
-		switch (getsubopt(&arg, UNCONST(toks), &v)) {
-		case (0):
-			*wflags |= WARN_WALL;
-			break;
-		case (1):
-			*wflags |= WARN_WERR;
-			break;
-		default:
-			fprintf(stderr, "%s: Bad argument\n", o);
+			fprintf(stderr, "-W%s: Bad argument\n", o);
 			return(0);
 		}
 	}
@@ -870,37 +790,24 @@ static int
 mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 {
 	struct curparse *cp;
-	const char *level;
-	int rc;
+	enum mandoclevel level;
+
+	level = MANDOCLEVEL_FATAL;
+	while (t < mandoclimits[level])
+		level--;
 
 	cp = (struct curparse *)arg;
-	level = NULL;
-	rc = 1;
+	if (level < cp->wlevel)
+		return(1);
 
-	if (t >= MANDOCERR_FATAL) {
-		with_fatal = 1;
-		level = "FATAL";
-		rc = 0;
-	} else {
-		if ( ! (WARN_WALL & cp->wflags))
-			return(1);
-		if (t >= MANDOCERR_ERROR) {
-			with_error = 1;
-			level = "ERROR";
-		}
-		if (WARN_WERR & cp->wflags) {
-			with_fatal = 1;
-			rc = 0;
-		}
-	}
-
-	fprintf(stderr, "%s:%d:%d:", cp->file, ln, col + 1);
-	if (level)
-		fprintf(stderr, " %s:", level);
-	fprintf(stderr, " %s", mandocerrs[t]);
+	fprintf(stderr, "%s:%d:%d: %s: %s",
+	    cp->file, ln, col + 1, mandoclevels[level], mandocerrs[t]);
 	if (msg)
 		fprintf(stderr, ": %s", msg);
 	fputc('\n', stderr);
 
-	return(rc);
+	if (exit_status < level)
+		exit_status = level;
+	
+	return(level < MANDOCLEVEL_FATAL);
 }

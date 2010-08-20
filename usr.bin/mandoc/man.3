@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.14 2010/08/18 02:46:37 schwarze Exp $
+.\"	$Id: man.3,v 1.15 2010/08/20 00:53:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2010 $
+.Dd $Mdocdate: August 20 2010 $
 .Dt MAN 3
 .Os
 .Sh NAME
@@ -35,7 +35,6 @@
 .Fo man_alloc
 .Fa "struct regset *regs"
 .Fa "void *data"
-.Fa "int pflags"
 .Fa "mandocmsg msgs"
 .Fc
 .Ft int
@@ -172,10 +171,6 @@ The
 .Fa data
 pointer is passed to
 .Fa msgs .
-The
-.Fa pflags
-arguments are defined in
-.Pa man.h .
 Returns NULL on failure.
 If non-NULL, the pointer must be freed with
 .Fn man_free .
@@ -298,7 +293,7 @@ int line;
 
 bzero(&regs, sizeof(struct regset));
 line = 1;
-man = man_alloc(&regs, NULL, 0, NULL);
+man = man_alloc(&regs, NULL, NULL);
 buf = NULL;
 alloc_len = 0;
 

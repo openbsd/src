@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.24 2010/07/13 01:09:12 schwarze Exp $ */
+/*	$Id: libman.h,v 1.25 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,7 +27,6 @@ enum	man_next {
 struct	man {
 	void		*data; /* private application data */
 	mandocmsg	 msg; /* output message handler */
-	int		 pflags; /* parse flags (see man.h) */
 	int		 flags; /* parse flags */
 #define	MAN_HALT	(1 << 0) /* badness happened: die */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */

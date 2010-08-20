@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.41 2010/07/13 01:09:12 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.42 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,6 @@ struct	mdoc {
 #define	MDOC_PPHRASE	 (1 << 5) /* within a partial phrase */
 #define	MDOC_FREECOL	 (1 << 6) /* `It' invocation should close */
 #define	MDOC_SYNOPSIS	 (1 << 7) /* SYNOPSIS-style formatting */
-	int		  pflags;
 	enum mdoc_next	  next; /* where to put the next node */
 	struct mdoc_node *last; /* the last node parsed */
 	struct mdoc_node *first; /* the first node parsed */

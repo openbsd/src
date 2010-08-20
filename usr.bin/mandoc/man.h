@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.25 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: man.h,v 1.26 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -97,9 +97,6 @@ struct	man_node {
 	struct man_node	*body;
 };
 
-#define	MAN_IGN_MACRO	 (1 << 0)
-#define	MAN_IGN_ESCAPE	 (1 << 2)
-
 extern	const char *const *man_macronames;
 
 __BEGIN_DECLS
@@ -107,7 +104,7 @@ __BEGIN_DECLS
 struct	man;
 
 void	 	  man_free(struct man *);
-struct	man	 *man_alloc(struct regset *, void *, int, mandocmsg);
+struct	man	 *man_alloc(struct regset *, void *, mandocmsg);
 void		  man_reset(struct man *);
 int	 	  man_parseln(struct man *, int, char *, int);
 int		  man_endparse(struct man *);

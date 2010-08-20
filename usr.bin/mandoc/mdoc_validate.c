@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.67 2010/07/31 21:43:07 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.68 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -477,12 +477,8 @@ check_text(struct mdoc *m, int ln, int pos, char *p)
 		if (c) {
 			p += c - 1;
 			pos += c - 1;
-			continue;
-		}
-
-		c = mdoc_pmsg(m, ln, pos, MANDOCERR_BADESCAPE);
-		if ( ! (MDOC_IGN_ESCAPE & m->pflags) && ! c)
-			return(c);
+		} else
+			mdoc_pmsg(m, ln, pos, MANDOCERR_BADESCAPE);
 	}
 
 	return(1);

@@ -1,4 +1,4 @@
-/*	$Id: roff.h,v 1.3 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: roff.h,v 1.4 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,7 +29,7 @@ __BEGIN_DECLS
 struct	roff;
 
 void	 	  roff_free(struct roff *);
-struct	roff	 *roff_alloc(struct regset *, mandocmsg, void *);
+struct	roff	 *roff_alloc(struct regset *, void *, mandocmsg);
 void		  roff_reset(struct roff *);
 enum	rofferr	  roff_parseln(struct roff *, int, 
 			char **, size_t *, int, int *);

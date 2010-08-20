@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.28 2010/08/07 17:26:11 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.29 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1179,7 +1179,7 @@ mdoc_bl_pre(MDOC_ARGS)
 	ord = malloc(sizeof(struct ord));
 	if (NULL == ord) {
 		perror(NULL);
-		exit(EXIT_FAILURE);
+		exit(MANDOCLEVEL_SYSERR);
 	}
 	ord->cookie = n;
 	ord->pos = 1;

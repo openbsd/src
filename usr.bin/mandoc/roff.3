@@ -1,4 +1,4 @@
-.\"	$Id: roff.3,v 1.4 2010/07/13 01:09:13 schwarze Exp $
+.\"	$Id: roff.3,v 1.5 2010/08/20 00:53:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2010 $
+.Dd $Mdocdate: August 20 2010 $
 .Dt ROFF 3
 .Os
 .Sh NAME
@@ -31,8 +31,8 @@
 .Ft "struct roff *"
 .Fo roff_alloc
 .Fa "struct regset *regs"
-.Fa "mandocmsg msgs"
 .Fa "void *data"
+.Fa "mandocmsg msgs"
 .Fc
 .Ft int
 .Fn roff_endparse "struct roff *roff"
@@ -111,10 +111,6 @@ The
 .Fa data
 pointer is passed to
 .Fa msgs .
-The
-.Fa pflags
-arguments are defined in
-.Pa roff.h .
 Returns NULL on failure.
 If non-NULL, the pointer must be freed with
 .Fn roff_free .

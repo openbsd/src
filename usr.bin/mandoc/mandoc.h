@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.11 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.12 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,6 +25,17 @@
 #define	ASCII_HYPH	 30  /* breakable hyphen */
 
 __BEGIN_DECLS
+
+enum	mandoclevel {
+	MANDOCLEVEL_OK = 0,
+	MANDOCLEVEL_RESERVED,
+	MANDOCLEVEL_WARNING,
+	MANDOCLEVEL_ERROR,
+	MANDOCLEVEL_FATAL,
+	MANDOCLEVEL_BADARG,
+	MANDOCLEVEL_SYSERR,
+	MANDOCLEVEL_MAX
+};
 
 enum	mandocerr {
 	MANDOCERR_OK,
@@ -105,7 +116,7 @@ enum	mandocerr {
 	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
 	MANDOCERR_UTSNAME, /* utsname system call failed */
-	MANDOCERR_MEM, /* memory exhausted */
+	MANDOCERR_MEM, /* static buffer exhausted */
 
 	MANDOCERR_MAX
 };

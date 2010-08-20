@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.10 2010/07/31 21:43:07 schwarze Exp $ */
+/*	$Id: roff.c,v 1.11 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -160,7 +160,7 @@ static	void		 roff_free1(struct roff *);
 static	enum rofft	 roff_hash_find(const char *);
 static	void		 roff_hash_init(void);
 static	void		 roffnode_cleanscope(struct roff *);
-static	int		 roffnode_push(struct roff *, 
+static	void		 roffnode_push(struct roff *, 
 				enum rofft, int, int);
 static	void		 roffnode_pop(struct roff *);
 static	enum rofft	 roff_parse(const char *, int *);
@@ -250,16 +250,12 @@ roffnode_pop(struct roff *r)
  * Push a roff node onto the instruction stack.  This must later be
  * removed with roffnode_pop().
  */
-static int
+static void
 roffnode_push(struct roff *r, enum rofft tok, int line, int col)
 {
 	struct roffnode	*p;
 
-	if (NULL == (p = calloc(1, sizeof(struct roffnode)))) {
-		(*r->msg)(MANDOCERR_MEM, r->data, line, col, NULL);
-		return(0);
-	}
-
+	p = mandoc_calloc(1, sizeof(struct roffnode));
 	p->tok = tok;
 	p->parent = r->last;
 	p->line = line;
@@ -267,7 +263,6 @@ roffnode_push(struct roff *r, enum rofft tok, int line, int col)
 	p->rule = p->parent ? p->parent->rule : ROFFRULE_DENY;
 
 	r->last = p;
-	return(1);
 }
 
 
@@ -299,15 +294,11 @@ roff_free(struct roff *r)
 
 
 struct roff *
-roff_alloc(struct regset *regs, const mandocmsg msg, void *data)
+roff_alloc(struct regset *regs, void *data, const mandocmsg msg)
 {
 	struct roff	*r;
 
-	if (NULL == (r = calloc(1, sizeof(struct roff)))) {
-		(*msg)(MANDOCERR_MEM, data, 0, 0, NULL);
-		return(0);
-	}
-
+	r = mandoc_calloc(1, sizeof(struct roff));
 	r->regs = regs;
 	r->msg = msg;
 	r->data = data;
@@ -634,8 +625,7 @@ roff_block(ROFF_ARGS)
 			pos++;
 	}
 
-	if ( ! roffnode_push(r, tok, ln, ppos))
-		return(ROFF_ERR);
+	roffnode_push(r, tok, ln, ppos);
 
 	if ('\0' == (*bufp)[pos])
 		return(ROFF_IGN);
@@ -657,12 +647,7 @@ roff_block(ROFF_ARGS)
 	if (1 == sz && '.' == (*bufp)[sv])
 		return(ROFF_IGN);
 
-	r->last->end = malloc(sz + 1);
-
-	if (NULL == r->last->end) {
-		(*r->msg)(MANDOCERR_MEM, r->data, ln, pos, NULL);
-		return(ROFF_ERR);
-	}
+	r->last->end = mandoc_malloc(sz + 1);
 
 	memcpy(r->last->end, *bufp + sv, sz);
 	r->last->end[(int)sz] = '\0';
@@ -889,8 +874,7 @@ roff_cond(ROFF_ARGS)
 		return(ROFF_ERR);
 	}
 
-	if ( ! roffnode_push(r, tok, ln, ppos))
-		return(ROFF_ERR);
+	roffnode_push(r, tok, ln, ppos);
 
 	r->last->rule = rule;
 

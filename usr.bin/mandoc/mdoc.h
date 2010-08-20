@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.32 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.33 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -352,10 +352,6 @@ struct	mdoc_node {
 	} data;
 };
 
-#define	MDOC_IGN_SCOPE	 (1 << 0) /* Ignore scope violations. */
-#define	MDOC_IGN_ESCAPE	 (1 << 1) /* Ignore bad escape sequences. */
-#define	MDOC_IGN_MACRO	 (1 << 2) /* Ignore unknown macros. */
-
 /* See mdoc.3 for documentation. */
 
 extern	const char *const *mdoc_macronames;
@@ -368,7 +364,7 @@ struct	mdoc;
 /* See mdoc.3 for documentation. */
 
 void	 	  mdoc_free(struct mdoc *);
-struct	mdoc	 *mdoc_alloc(struct regset *, void *, int, mandocmsg);
+struct	mdoc	 *mdoc_alloc(struct regset *, void *, mandocmsg);
 void		  mdoc_reset(struct mdoc *);
 int	 	  mdoc_parseln(struct mdoc *, int, char *, int);
 const struct mdoc_node *mdoc_node(const struct mdoc *);

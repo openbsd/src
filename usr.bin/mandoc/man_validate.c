@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.28 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.29 2010/08/20 00:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -229,12 +229,8 @@ check_text(CHKARGS)
 		if (c) {
 			p += c - 1;
 			pos += c - 1;
-			continue;
-		}
-
-		c = man_pmsg(m, n->line, pos, MANDOCERR_BADESCAPE);
-		if ( ! (MAN_IGN_ESCAPE & m->pflags) && ! c)
-			return(c);
+		} else
+			man_pmsg(m, n->line, pos, MANDOCERR_BADESCAPE);
 	}
 
 	return(1);

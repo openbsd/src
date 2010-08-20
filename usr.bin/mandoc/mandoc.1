@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.37 2010/08/18 01:35:01 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.38 2010/08/20 00:53:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2010 $
+.Dd $Mdocdate: August 20 2010 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -23,11 +23,10 @@
 .Sh SYNOPSIS
 .Nm mandoc
 .Op Fl V
-.Op Fl f Ns Ar option
 .Op Fl m Ns Ar format
 .Op Fl O Ns Ar option
 .Op Fl T Ns Ar output
-.Op Fl W Ns Ar err
+.Op Fl W Ns Ar level
 .Op Ar file...
 .Sh DESCRIPTION
 The
@@ -37,11 +36,6 @@ utility formats
 manual pages for display.
 The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl f Ns Ar option
-Comma-separated compiler options.
-See
-.Sx Compiler Options
-for details.
 .It Fl m Ns Ar format
 Input format.
 See
@@ -60,18 +54,41 @@ Defaults to
 .Fl T Ns Cm ascii .
 .It Fl V
 Print version and exit.
-.It Fl W Ns Ar err
-Comma-separated warning options.
-Use
+.It Fl W Ns Ar level
+Specify the minimum message
+.Ar level
+to be reported on the standard error output and to affect the exit status.
+The
+.Ar level
+can be
+.Cm warning ,
+.Cm error ,
+or
+.Cm fatal .
+The default is
+.Fl W Ns Cm fatal ;
 .Fl W Ns Cm all
-to print warnings,
-.Fl W Ns Cm error
-for warnings to be considered errors and cause utility
-termination.
-Multiple
-.Fl W
-arguments may be comma-separated, such as
-.Fl W Ns Cm error , Ns Cm all .
+is an alias for
+.Fl W Ns Cm warning .
+See
+.Sx EXIT STATUS
+and
+.Sx DIAGNOSTICS
+for details.
+.Pp
+The special option
+.Fl W Ns Cm stop
+tells
+.Nm
+to exit after parsing a file that causes warnings or errors of at least
+the requested level.
+No formatted output will be produced from that file.
+If both a
+.Ar level
+and
+.Cm stop
+are requested, they can be joined with a comma, for example
+.Fl W Ns Cm error , Ns Cm stop .
 .It Ar file
 Read input from zero or more files.
 If unspecified, reads from stdin.
@@ -91,8 +108,6 @@ text from stdin, implying
 and produces
 .Fl T Ns Cm ascii
 output.
-.Pp
-.Ex -std mandoc
 .Ss Input Formats
 The
 .Nm
@@ -136,39 +151,6 @@ specified and
 or
 .Fl m Ns Cm an
 is specified, then this format is used exclusively.
-.Ss Compiler Options
-Default
-.Xr mdoc 7
-and
-.Xr man 7
-compilation behaviour may be overridden with the
-.Fl f
-flag.
-.Bl -tag -width Ds
-.It Fl f Ns Cm ign-errors
-When parsing multiple files, don't halt when one errors out.
-Useful with
-.Fl T Ns Cm lint
-over a large set of manuals passed on the command line.
-.It Fl f Ns Cm ign-escape
-Ignore invalid escape sequences.
-This is the default, but the option can be used to override an earlier
-.Fl f Ns Cm strict .
-.It Fl f Ns Cm ign-scope
-When rewinding the scope of a block macro, forces the compiler to ignore
-scope violations.
-This can seriously mangle the resulting tree.
-.Pq mdoc only
-.It Fl f Ns Cm no-ign-escape
-Do not ignore invalid escape sequences.
-.It Fl f Ns Cm no-ign-macro
-Do not ignore unknown macros at the start of input lines.
-.It Fl f Ns Cm strict
-Implies
-.Fl f Ns Cm no-ign-escape
-and
-.Fl f Ns Cm no-ign-macro .
-.El
 .Ss Output Formats
 The
 .Nm
@@ -189,9 +171,7 @@ See
 .It Fl T Ns Cm lint
 Parse only: produce no output.
 Implies
-.Fl W Ns Cm all
-and
-.Fl f Ns Cm strict .
+.Fl W Ns Cm warning .
 .It Fl T Ns Cm pdf
 Produce PDF output.
 See
@@ -352,10 +332,51 @@ See
 .Sx HTML Output
 for details; beyond generating XHTML tags instead of HTML tags, these
 output modes are identical.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values, controlled by the message
+.Ar level
+associated with the
+.Fl W
+option:
+.Pp
+.Bl -tag -width Ds -compact
+.It 0
+No warnings or errors occurred, or those that did were ignored because
+they were lower than the requested
+.Ar level .
+.It 2
+At least one warning occurred, but no error, and
+.Fl W Ns Cm warning
+was specified.
+.It 3
+At least one parsing error occurred, but no fatal error, and
+.Fl W Ns Cm error
+or
+.Fl W Ns Cm warning
+was specified.
+.It 4
+A fatal parsing error occurred.
+.It 5
+Invalid command line arguments were specified.
+No input files have been read.
+.It 6
+An operating system error occurred, for example memory exhaustion or an
+error accessing input files.
+Such errors cause
+.Nm
+to exit at once, possibly in the middle of parsing or formatting a file.
+.El
+.Pp
+Note that selecting
+.Fl T Ns Cm lint
+output mode implies
+.Fl W Ns Cm warning .
 .Sh EXAMPLES
 To page manuals to the terminal:
 .Pp
-.D1 $ mandoc \-Wall,error \-fstrict mandoc.1 2\*(Gt&1 | less
+.D1 $ mandoc \-Wall,stop mandoc.1 2\*(Gt&1 | less
 .D1 $ mandoc mandoc.1 mdoc.3 mdoc.7 | less
 .Pp
 To produce HTML manuals with
@@ -366,11 +387,74 @@ as the style-sheet:
 .Pp
 To check over a large set of manuals:
 .Pp
-.Dl $ mandoc \-Tlint \-fign-errors `find /usr/src -name \e*\e.[1-9]`
+.Dl $ mandoc \-Tlint `find /usr/src -name \e*\e.[1-9]`
 .Pp
 To produce a series of PostScript manuals for A4 paper:
 .Pp
 .D1 $ mandoc \-Tps \-Opaper=a4 mdoc.7 man.7 \*(Gt manuals.ps
+.Sh DIAGNOSTICS
+Standard error messages reporting parsing errors are prefixed by
+.Pp
+.Sm off
+.D1 Ar file : line : column : \ level :
+.Sm on
+.Pp
+where the fields have the following meanings:
+.Bl -tag -width "column"
+.It Ar file
+The name of the input file causing the message.
+.It Ar line
+The line number in that input file.
+Line numbering starts at 1.
+.It Ar column
+The column number in that input file.
+Column numbering starts at 1.
+If the issue is caused by a word, the column number usually
+points to the first character of the word.
+.It Ar level
+The message level, printed in capital letters.
+.El
+.Pp
+Message levels have the following meanings:
+.Bl -tag -width "warning"
+.It Cm fatal
+The parser is unable to parse a given input file at all.
+No formatted output is produced from that input file.
+.It Cm error
+An input file contains syntax that cannot be safely interpreted,
+either because it is invalid or because
+.Nm
+does not implement it yet.
+By discarding part of the input or inserting missing tokens,
+the parser is able to continue, and the error does not prevent
+generation of formatted output, but typically, preparing that
+output involves information loss, broken document structure
+or unintended formatting.
+.It Cm warning
+An input file uses obsolete, discouraged or non-portable syntax.
+All the same, the meaning of the input is unambiguous and a correct
+rendering can be produced.
+Documents causing warnings may render poorly when using other
+formatting tools instead of
+.Nm .
+.El
+.Pp
+Messages of the
+.Cm warning
+and
+.Cm error
+levels are hidden unless their level, or a lower level, is requested using a
+.Fl W
+option or
+.Fl T Ns Cm lint
+output mode.
+.Pp
+The
+.Nm
+utility may also print messages related to invalid command line arguments
+or operating system errors, for example when memory is exhausted or
+input files cannot be read.  Such messages do not carry the prefix
+described above.
 .Sh COMPATIBILITY
 This section summarises
 .Nm
