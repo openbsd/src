@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.81 2010/07/08 20:15:01 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.82 2010/08/20 22:03:22 matthew Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -213,8 +213,8 @@ int	copyin(const void *, void *, size_t)
 int	copyout(const void *, void *, size_t);
 
 struct timeval;
-int	hzto(struct timeval *);
-int	tvtohz(struct timeval *);
+int	hzto(const struct timeval *);
+int	tvtohz(const struct timeval *);
 void	realitexpire(void *);
 
 struct clockframe;

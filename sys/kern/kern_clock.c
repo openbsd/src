@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.70 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.71 2010/08/20 22:03:22 matthew Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -317,7 +317,7 @@ hardclock(struct clockframe *frame)
  * compute the second argument to timeout_add() from an absolute time.
  */
 int
-hzto(struct timeval *tv)
+hzto(const struct timeval *tv)
 {
 	struct timeval now;
 	unsigned long ticks;
@@ -369,7 +369,7 @@ hzto(struct timeval *tv)
  * Compute number of hz in the specified amount of time.
  */
 int
-tvtohz(struct timeval *tv)
+tvtohz(const struct timeval *tv)
 {
 	unsigned long ticks;
 	long sec, usec;
