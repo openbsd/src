@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.12 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: vis.c,v 1.13 2010/08/21 19:00:50 djm Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -53,8 +53,11 @@ main(int argc, char *argv[])
 	FILE *fp;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "nwctsobfF:ld")) != -1)
+	while ((ch = getopt(argc, argv, "anwctshobfF:ld")) != -1)
 		switch((char)ch) {
+		case 'a':
+			eflags |= VIS_ALL;
+			break;
 		case 'n':
 			none++;
 			break;
@@ -69,6 +72,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			eflags |= VIS_SAFE;
+			break;
+		case 'h':
+			eflags |= VIS_HEX;
 			break;
 		case 'o':
 			eflags |= VIS_OCTAL;
@@ -169,7 +175,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-bcflnostw] [-F foldwidth] [file ...]\n",
+	fprintf(stderr, "usage: %s [-abcfhlnostw] [-F foldwidth] [file ...]\n",
 	    __progname);
 	exit(1);
 }
