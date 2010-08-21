@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.59 2010/08/02 13:58:37 miod Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.60 2010/08/21 17:31:49 jasper Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -110,6 +110,7 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY800,	    ANY,   { UQ_BROKEN_BIDIR }},
 
  { USB_VENDOR_APC, USB_PRODUCT_APC_UPSPRO500,		ANY,	{ UQ_BAD_HID }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_SPEAKERS,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C120,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C550AVR,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C1500EITWRK,	ANY,	{ UQ_BAD_HID }},
