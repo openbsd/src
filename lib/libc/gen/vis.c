@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.19 2005/09/01 17:15:49 millert Exp $ */
+/*	$OpenBSD: vis.c,v 1.20 2010/08/21 18:59:15 djm Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,13 +46,15 @@
 		(c) == '\007' || (c) == '\r' ||				\
 		isgraph((u_char)(c)))))
 
+static const char hexdigits[] = "0123456789abcdef";
+
 /*
  * vis - visually encode characters
  */
 char *
 vis(char *dst, int c, int flag, int nextc)
 {
-	if (isvisible(c)) {
+	if (isvisible(c) && (flag & VIS_ALL) == 0) {
 		*dst++ = c;
 		if (c == '\\' && (flag & VIS_NOSLASH) == 0)
 			*dst++ = '\\';
@@ -104,12 +106,19 @@ vis(char *dst, int c, int flag, int nextc)
 			goto done;
 		}
 	}
-	if (((c & 0177) == ' ') || (flag & VIS_OCTAL) ||
+	if (((c & 0177) == ' ') || (flag & (VIS_OCTAL|VIS_HEX)) ||
 	    ((flag & VIS_GLOB) && (c == '*' || c == '?' || c == '[' || c == '#'))) {
-		*dst++ = '\\';
-		*dst++ = ((u_char)c >> 6 & 07) + '0';
-		*dst++ = ((u_char)c >> 3 & 07) + '0';
-		*dst++ = ((u_char)c & 07) + '0';
+		if ((flag & VIS_HEX) != 0) {
+			*dst++ = '\\';
+			*dst++ = 'x';
+			*dst++ = hexdigits[((u_char)c >> 4 & 0xf)];
+			*dst++ = hexdigits[((u_char)c & 0xf)];
+		} else {
+			*dst++ = '\\';
+			*dst++ = ((u_char)c >> 6 & 07) + '0';
+			*dst++ = ((u_char)c >> 3 & 07) + '0';
+			*dst++ = ((u_char)c & 07) + '0';
+		}
 		goto done;
 	}
 	if ((flag & VIS_NOSLASH) == 0)
