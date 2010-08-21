@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfXX_exec.c,v 1.7 2008/07/05 22:59:14 kettenis Exp $	*/
+/*	$OpenBSD: elfXX_exec.c,v 1.8 2010/08/21 17:09:49 jsing Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -44,25 +44,15 @@
  *	[promdev[{:|,}partition]]/[filename] [flags]
  */
 
-#define CONCAT(x,y)	__CONCAT(x,y)
-#define CAT3(s,m,e)	CONCAT(s,CONCAT(m,e))
-#define	MEG	(1024*1024)
+#define	ELFSIZE		64
+#define	MB		(1024 * 1024)
 
-#if 0
-int	CAT3(elf,ELFSIZE,_exec)(int, CAT3(Elf,ELFSIZE,_Ehdr) *, u_int64_t *, void **, void **);
-#endif
-#define ELF_ALIGN(x)	(((x)+7)&(~7))
+#define ELF_ALIGN(x)	(((x) + 7) & (~7))
 
 int
-CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
-	int fd;
-	CAT3(Elf,ELFSIZE,_Ehdr) *elf;
-	u_int64_t *entryp;
-	void **ssymp;
-	void **esymp;
-{
-	CAT3(Elf,ELFSIZE,_Shdr) *shp;
-	CAT3(Elf,ELFSIZE,_Off) off;
+elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp){ 
+	Elf_Shdr *shp;
+	Elf_Off off;
 	void *addr;
 	size_t size;
 	u_int align;
@@ -79,8 +69,9 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	printf("Booting %s\n", opened_name);
 
 	for (i = 0; i < elf->e_phnum; i++) {
-		CAT3(Elf,ELFSIZE,_Phdr) phdr;
-		size = lseek(fd, (size_t)(elf->e_phoff + sizeof(phdr) * i), SEEK_SET);
+		Elf_Phdr phdr;
+		size = lseek(fd, (size_t)(elf->e_phoff + sizeof(phdr) * i),
+		    SEEK_SET);
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
@@ -99,10 +90,10 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 		 * alignment.  Make sure BSS is extended to a 4MB boundary, too.
 		 */
 		align = phdr.p_align;
-		if ((phdr.p_vaddr & (4*MEG-1)) == 0)
-			align = 4*MEG;
+		if ((phdr.p_vaddr & (4 * MB - 1)) == 0)
+			align = 4 * MB;
 		if (phdr.p_filesz < phdr.p_memsz)
-			phdr.p_memsz = roundup(phdr.p_memsz, 4*MEG);
+			phdr.p_memsz = roundup(phdr.p_memsz, 4 * MB);
 		phdr.p_memsz = roundup(phdr.p_memsz, NBPG);
 		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, align) ==
 		    (void *)-1)
@@ -129,11 +120,11 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	/*
 	 * Compute the size of the symbol table.
 	 */
-	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + (elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
-	shp = addr = alloc(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	size = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf_Shdr));
+	shp = addr = alloc(elf->e_shnum * sizeof(Elf_Shdr));
 	(void)lseek(fd, (off_t)elf->e_shoff, SEEK_SET);
-	if (read(fd, addr, (size_t)(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)))) !=
-	    elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr))) {
+	if (read(fd, addr, (size_t)(elf->e_shnum * sizeof(Elf_Shdr))) !=
+	    elf->e_shnum * sizeof(Elf_Shdr)) {
 		printf("read section headers: %s\n", strerror(errno));
 		return (1);
 	}
@@ -159,21 +150,19 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	 * Copy the headers.
 	 */
 	elf->e_phoff = 0;
-	elf->e_shoff = sizeof(CAT3(Elf,ELFSIZE,_Ehdr));
+	elf->e_shoff = sizeof(Elf_Ehdr);
 	elf->e_phentsize = 0;
 	elf->e_phnum = 0;
-	bcopy(elf, addr, sizeof(CAT3(Elf,ELFSIZE,_Ehdr)));
-	bcopy(shp, addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr)), 
-	      elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
-	free(shp, elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	bcopy(elf, addr, sizeof(Elf_Ehdr));
+	bcopy(shp, addr + sizeof(Elf_Ehdr), elf->e_shnum * sizeof(Elf_Shdr));
+	free(shp, elf->e_shnum * sizeof(Elf_Shdr));
 	*ssymp = addr;
 
 	/*
 	 * Now load the symbol sections themselves.
 	 */
-	shp = addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr));
-	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) +
-		(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	shp = addr + sizeof(Elf_Ehdr);
+	size = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf_Shdr));
 	size = ELF_ALIGN(size);
 	addr += size;
 	off = size;
