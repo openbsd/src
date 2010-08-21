@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.16 2009/11/04 12:03:57 jsing Exp $	*/
+/*	$OpenBSD: boot.c,v 1.17 2010/08/21 17:22:42 jsing Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -267,7 +267,7 @@ loadfile(int fd, char *args)
 }
 
 #ifdef SPARC_BOOT_ELF
-#include "elfXX_exec.c"
+#include "elf64_exec.c"
 #endif /* SPARC_BOOT_ELF */
 
 int
