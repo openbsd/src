@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.16 2010/05/25 20:57:07 jmc Exp $
+.\"	$OpenBSD: pdisk.8,v 1.17 2010/08/21 06:46:52 ray Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -19,7 +19,7 @@
 .\" NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2010 $
+.Dd $Mdocdate: August 21 2010 $
 .Dt PDISK 8
 .Os
 .Sh NAME
@@ -32,9 +32,10 @@
 .Sh DESCRIPTION
 .Nm
 is a menu driven program which partitions disks using the standard Apple
-disk partitioning scheme described in "Inside Macintosh: Devices".
+disk partitioning scheme described in 
+.Dq Inside Macintosh: Devices .
 It does not support the Intel/DOS partitioning scheme supported by
-.Em fdisk .
+.Xr fdisk 1 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -63,7 +64,7 @@ It can be specified either by its full pathname or an abbreviated disk form.
 In its abbreviated form, the path to the device, the
 .Sq r
 denoting
-.Qq raw device ,
+.Dq raw device ,
 and the partition letter, can all be omitted.
 For example, the first IDE disk can be specified as either
 .Pa /dev/rwd0c ,
