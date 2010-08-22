@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.42 2010/06/28 22:10:42 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.43 2010/08/22 16:09:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -297,7 +297,8 @@ client_dispatch(void)
 			client_exitmsg = "detached";
 			break;
 		case MSG_EXIT:
-			if (datalen != 0)
+			if (datalen != 0 &&
+			    datalen != sizeof (struct msg_exit_data))
 				fatalx("bad MSG_EXIT size");
 
 			client_write_server(MSG_EXITING, NULL, 0);
