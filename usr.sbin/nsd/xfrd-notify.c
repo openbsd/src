@@ -95,17 +95,13 @@ init_notify_send(rbtree_t* tree, netio_type* netio, region_type* region,
 	not->notify_send_handler.fd = -1;
 	not->notify_send_handler.timeout = 0;
 	not->notify_send_handler.user_data = not;
-	not->notify_send_handler.event_types = 
+	not->notify_send_handler.event_types =
 		NETIO_EVENT_READ|NETIO_EVENT_TIMEOUT;
 	not->notify_send_handler.event_handler = xfrd_handle_notify_send;
-		netio_add_handler(netio, &not->notify_send_handler);
-
-#ifdef TSIG
-		tsig_create_record_custom(&not->notify_tsig, region, 0, 0, 4);
-#endif /* TSIG */
-		not->notify_current = 0;
-
-		rbtree_insert(tree, (rbnode_t*)not);
+	netio_add_handler(netio, &not->notify_send_handler);
+	tsig_create_record_custom(&not->notify_tsig, region, 0, 0, 4);
+	not->notify_current = 0;
+	rbtree_insert(tree, (rbnode_t*)not);
 }
 
 static int
@@ -170,11 +166,9 @@ xfrd_notify_send_udp(struct notify_zone_t* zone, buffer_type* packet)
 		ANCOUNT_SET(packet, 1);
 		xfrd_write_soa_buffer(packet, zone->apex, zone->current_soa);
 	}
-#ifdef TSIG
 	if(zone->notify_current->key_options) {
 		xfrd_tsig_sign_request(packet, &zone->notify_tsig, zone->notify_current);
 	}
-#endif /* TSIG */
 	buffer_flip(packet);
 	zone->notify_send_handler.fd = xfrd_send_udp(zone->notify_current,
 		packet, zone->options->outgoing_interface);

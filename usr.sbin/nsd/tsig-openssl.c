@@ -9,7 +9,7 @@
 
 #include <config.h>
 
-#if defined(TSIG) && defined(HAVE_SSL)
+#if defined(HAVE_SSL)
 
 #include "tsig-openssl.h"
 #include "tsig.h"
@@ -124,4 +124,4 @@ tsig_openssl_finalize()
 	EVP_cleanup();
 }
 
-#endif /* defined(TSIG) && defined(HAVE_SSL) */
+#endif /* defined(HAVE_SSL) */

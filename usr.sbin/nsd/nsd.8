@@ -1,17 +1,17 @@
-.TH "NSD" "8" "Apr 14, 2010" "NLnet Labs" "NSD 3.2.5"
+.TH "NSD" "8" "@date@" "NLnet Labs" "NSD @version@"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .LP
 .B nsd
-\- Name Server Daemon (NSD) version 3.2.5.
+\- Name Server Daemon (NSD) version @version@.
 .SH "SYNOPSIS"
 .LP
 .B nsd
 .RB [ \-4 ] 
 .RB [ \-6 ] 
 .RB [ \-a 
-.IR ip\-address ]
+.IR ip\-address[@port] ]
 .RB [ \-c
 .IR configfile ]
 .RB [ \-d ] 
@@ -60,7 +60,7 @@ must be generated beforehand with zonec(8). By default,
 .B NSD 
 will bind to all local interfaces available. Use the 
 .B \-a
-.I ip\-address
+.I ip\-address[@port]
 option to specify a single particular interface address to be
 bound. If this option is given more than once,
 .B NSD
@@ -93,16 +93,17 @@ Only listen to IPv4 connections.
 .B \-6
 Only listen to IPv6 connections.
 .TP
-.B \-a\fI ip\-address
+.B \-a\fI ip\-address[@port]
 Listen to the specified
 .IR ip\-address .
 The
 .I ip\-address
 must be specified in numeric format (using the standard IPv4 or IPv6
-notation). This flag can be specified multiple times to listen to
+notation). Optionally, a port number can be given.
+This flag can be specified multiple times to listen to
 multiple IP addresses. If this flag is not specified, 
 .B NSD
-listens to all IP addresses.
+listens to the wildcard interface.
 .TP
 .B \-c\fI configfile
 Read specified 

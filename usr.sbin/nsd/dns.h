@@ -146,7 +146,7 @@ typedef enum nsd_rc nsd_rc_type;
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255
 
-#define MAXRDATALEN	64      /* This is more than enough, think multiple TXT.  */
+#define MAXRDATALEN	64      /* This is more than enough, think multiple TXT. */
 #define MAX_RDLENGTH	65535
 
 /* Maximum size of a single RR.  */
@@ -215,8 +215,8 @@ struct rrtype_descriptor
 	uint16_t    type;	/* RR type */
 	const char *name;	/* Textual name.  */
 	int         token;	/* Parser token.  */
-	uint8_t     minimum;	/* Minimum number of RDATAs.  */
-	uint8_t     maximum;	/* Maximum number of RDATAs.  */
+	uint32_t    minimum;	/* Minimum number of RDATAs.  */
+	uint32_t    maximum;	/* Maximum number of RDATAs.  */
 	uint8_t     wireformat[MAXRDATALEN]; /* rdata_wireformat_type */
 	uint8_t     zoneformat[MAXRDATALEN]; /* rdata_zoneformat_type  */
 };

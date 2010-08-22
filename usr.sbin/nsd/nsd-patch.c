@@ -57,7 +57,7 @@ list_xfr(FILE *in)
 		return;
 	}
 	skiplen = len - (sizeof(uint32_t)*3 + sizeof(uint16_t) + strlen(zone_name));
-	fprintf(stdout, "zone %s transfer id %x serial %d timestamp %u.%u: "
+	fprintf(stdout, "zone %s transfer id %x serial %u timestamp %u.%u: "
 			"seq_nr %d of %d bytes\n", zone_name, id, new_serial,
 		timestamp[0], timestamp[1], seq_nr, skiplen);
 

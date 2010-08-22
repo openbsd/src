@@ -217,7 +217,6 @@ read_rrset(namedb_type *db,
 		rrset->zone->ns_rrset = rrset;
 	}
 
-#ifdef DNSSEC
 	if (rrset_rrtype(rrset) == TYPE_RRSIG && owner == rrset->zone->apex) {
 		for (i = 0; i < rrset->rr_count; ++i) {
 			if (rr_rrsig_type_covered(&rrset->rrs[i]) == TYPE_SOA) {
@@ -226,7 +225,6 @@ read_rrset(namedb_type *db,
 			}
 		}
 	}
-#endif
 	return rrset;
 }
 

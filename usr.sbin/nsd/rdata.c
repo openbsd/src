@@ -87,11 +87,17 @@ rdata_dns_name_to_string(buffer_type *output, rdata_atom_type rdata,
 			buffer_printf(output, ".");
 
 		for (i = 1; i <= length; ++i) {
-			char ch = (char) data[i+offset];
-			if (isprint((int)ch))
-				buffer_printf(output, "%c", ch);
-			else
-				buffer_printf(output, "\\%03u", (unsigned) ch);
+			uint8_t ch = data[i+offset];
+
+			if (ch=='.' || ch==';' || ch=='(' || ch==')' || ch=='\\') {
+				buffer_printf(output, "\\%c", (char) ch);
+			} else if (!isgraph((int) ch)) {
+				buffer_printf(output, "\\%03u", (unsigned int) ch);
+			} else if (isprint((int) ch)) {
+				buffer_printf(output, "%c", (char) ch);
+			} else {
+				buffer_printf(output, "\\%03u", (unsigned int) ch);
+			}
 		}
 		/* next label */
 		offset = offset+length+1;
@@ -549,7 +555,7 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 				rdata_atom_type **rdatas)
 {
 	size_t end = buffer_position(packet) + data_size;
-	ssize_t i;
+	size_t i;
 	rdata_atom_type temp_rdatas[MAXRDATALEN];
 	rrtype_descriptor_type *descriptor = rrtype_descriptor_by_type(rrtype);
 	region_type *temp_region;
@@ -687,7 +693,7 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 	*rdatas = (rdata_atom_type *) region_alloc_init(
 		region, temp_rdatas, i * sizeof(rdata_atom_type));
 	region_destroy(temp_region);
-	return i;
+	return (ssize_t)i;
 }
 
 size_t

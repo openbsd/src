@@ -173,9 +173,7 @@ struct xfrd_zone {
 	uint32_t msg_old_serial, msg_new_serial; /* host byte order */
 	size_t msg_rr_count;
 	uint8_t msg_is_ixfr; /* 1:IXFR detected. 2:middle IXFR SOA seen. */
-#ifdef TSIG
 	tsig_record_type tsig; /* tsig state for IXFR/AXFR */
-#endif
 };
 
 enum xfrd_packet_result {
@@ -255,10 +253,8 @@ struct buffer* xfrd_get_temp_buffer();
 /*
  * TSIG sign outgoing request. Call if acl has a key.
  */
-#ifdef TSIG
 void xfrd_tsig_sign_request(buffer_type* packet, struct tsig_record* tsig,
         acl_options_t* acl);
-#endif
 
 /* handle incoming soa information (NSD is running it, time acquired=guess).
    Pass soa=NULL,acquired=now if NSD has nothing loaded for the zone

@@ -10,9 +10,6 @@
 #ifndef	_NSD_H_
 #define	_NSD_H_
 
-/* disable NSID no matter what, there is no typecode yet */
-#undef NSID
-
 #include <signal.h>
 
 #include "dns.h"

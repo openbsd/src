@@ -176,12 +176,10 @@ query_create(region_type *region, uint16_t *compressed_dname_offsets,
 	query->packet = buffer_create(region, QIOBUFSZ);
 	region_add_cleanup(region, query_cleanup, query);
 	query->compressed_dname_offsets_size = compressed_dname_size;
-#ifdef TSIG
 	tsig_create_record(&query->tsig, region);
 	query->tsig_prepare_it = 1;
 	query->tsig_update_it = 1;
 	query->tsig_sign_it = 1;
-#endif /* TSIG */
 	return query;
 }
 
@@ -205,12 +203,10 @@ query_reset(query_type *q, size_t maxlen, int is_tcp)
 	q->reserved_space = 0;
 	buffer_clear(q->packet);
 	edns_init_record(&q->edns);
-#ifdef TSIG
 	tsig_init_record(&q->tsig, NULL, NULL);
 	q->tsig_prepare_it = 1;
 	q->tsig_update_it = 1;
 	q->tsig_sign_it = 1;
-#endif /* TSIG */
 	q->tcp = is_tcp;
 	q->qname = NULL;
 	q->qtype = 0;
@@ -355,7 +351,6 @@ process_edns(nsd_type* nsd, struct query *q)
  * Processes TSIG.
  * Sets error when tsig does not verify on the query.
  */
-#ifdef TSIG
 static nsd_rc_type
 process_tsig(struct query* q)
 {
@@ -380,7 +375,6 @@ process_tsig(struct query* q)
 	}
 	return NSD_RC_OK;
 }
-#endif /* TSIG */
 
 /*
  * Check notify acl and forward to xfrd (or return an error).
@@ -403,7 +397,6 @@ answer_notify(struct nsd* nsd, struct query *query)
 	if(!nsd->this_child) /* we are in debug mode or something */
 		return query_error(query, NSD_RC_SERVFAIL);
 
-#ifdef TSIG
 	if(!tsig_find_rr(&query->tsig, query->packet)) {
 		DEBUG(DEBUG_XFRD,2, (LOG_ERR, "bad tsig RR format"));
 		return query_error(query, NSD_RC_FORMAT);
@@ -411,7 +404,6 @@ answer_notify(struct nsd* nsd, struct query *query)
 	rc = process_tsig(query);
 	if(rc != NSD_RC_OK)
 		return query_error(query, rc);
-#endif /* TSIG */
 
 	/* check if it passes acl */
 	if((acl_num = acl_check_incoming(zone_opt->allow_notify, query,
@@ -1220,9 +1212,7 @@ query_prepare_response(query_type *q)
 	 * Reserve space for the EDNS records if required.
 	 */
 	q->reserved_space = edns_reserved_space(&q->edns);
-#ifdef TSIG
 	q->reserved_space += tsig_reserved_space(&q->tsig);
-#endif /* TSIG */
 
 	/* Update the flags.  */
 	flags = FLAGS(q->packet);
@@ -1292,7 +1282,6 @@ query_process(query_type *q, nsd_type *nsd)
 	}
 
 	arcount = ARCOUNT(q->packet);
-#ifdef TSIG
 	if (arcount > 0) {
 		/* see if tsig is before edns record */
 		if (!tsig_parse_rr(&q->tsig, q->packet))
@@ -1300,12 +1289,10 @@ query_process(query_type *q, nsd_type *nsd)
 		if(q->tsig.status != TSIG_NOT_PRESENT)
 			--arcount;
 	}
-#endif /* TSIG */
 	if (arcount > 0) {
 		if (edns_parse_record(&q->edns, q->packet))
 			--arcount;
 	}
-#ifdef TSIG
 	if (arcount > 0 && q->tsig.status == TSIG_NOT_PRESENT) {
 		/* see if tsig is after the edns record */
 		if (!tsig_parse_rr(&q->tsig, q->packet))
@@ -1313,7 +1300,6 @@ query_process(query_type *q, nsd_type *nsd)
 		if(q->tsig.status != TSIG_NOT_PRESENT)
 			--arcount;
 	}
-#endif /* TSIG */
 	if (arcount > 0) {
 		return query_formerr(q);
 	}
@@ -1328,12 +1314,10 @@ query_process(query_type *q, nsd_type *nsd)
 	/* Remove trailing garbage.  */
 	buffer_set_limit(q->packet, buffer_position(q->packet));
 
-#ifdef TSIG
 	rc = process_tsig(q);
 	if (rc != NSD_RC_OK) {
 		return query_error(q, rc);
 	}
-#endif /* TSIG */
 	rc = process_edns(nsd, q);
 	if (rc != NSD_RC_OK) {
 		/* We should not return FORMERR, but BADVERS (=16).
@@ -1377,8 +1361,6 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		break;
 	case EDNS_OK:
 		buffer_write(q->packet, edns->ok, OPT_LEN);
-		/* check if nsid data should be written */
-#ifdef NSID
 		if (nsd->nsid_len > 0 && q->edns.nsid == 1 &&
 				!query_overflow_nsid(q, nsd->nsid_len)) {
 			/* rdata length */
@@ -1391,12 +1373,7 @@ query_add_optional(query_type *q, nsd_type *nsd)
 			/* fill with NULLs */
 			buffer_write(q->packet, edns->rdata_none, OPT_RDATA);
 		}
-#else
-		buffer_write(q->packet, edns->rdata_none, OPT_RDATA);
-#endif /* NSID */
-
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) + 1);
-
 		STATUP(nsd, edns);
 		break;
 	case EDNS_ERROR:
@@ -1407,7 +1384,6 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		break;
 	}
 
-#ifdef TSIG
 	if (q->tsig.status != TSIG_NOT_PRESENT) {
 		if (q->tsig.status == TSIG_ERROR ||
 			q->tsig.error_code != TSIG_ERROR_NOERROR) {
@@ -1428,5 +1404,4 @@ query_add_optional(query_type *q, nsd_type *nsd)
 			}
 		}
 	}
-#endif /* TSIG */
 }
