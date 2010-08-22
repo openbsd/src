@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.6 2010/08/01 20:47:52 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.7 2010/08/22 11:39:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2010 $
+.Dd $Mdocdate: August 22 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -917,24 +917,39 @@ language.
 .Pp
 .Bl -dash -compact
 .It
-The \es (font size), \em (font colour), and \eM (font filling colour)
-font decoration escapes are all discarded in mandoc.
-.It
 In quoted literals, GNU troff allowed pair-wise double-quotes to produce
 a standalone double-quote in formatted output.
 It is not known whether this behaviour is exhibited by other formatters.
+.It
+troff suppresses a newline before
+.Sq \(aq
+macro output; in mandoc, it is an alias for the standard
+.Sq \&.
+control character.
+.It
+The
+.Sq \eh
+.Pq horizontal position ,
+.Sq \ev
+.Pq vertical position ,
+.Sq \em
+.Pq text colour ,
+.Sq \eM
+.Pq text filling colour ,
+and
+.Sq \es
+.Pq text size
+.Sx Text Decoration
+escapes are all discarded in mandoc.
+.It
+The
+.Sq \ef
+scaling unit is accepted by mandoc, but rendered as the default unit.
 .It
 The
 .Sx \&sp
 macro does not accept negative values in mandoc.
 In GNU troff, this would result in strange behaviour.
-.It
-The
-.Sq \(aq
-macro control character, in GNU troff (and prior troffs) suppresses a
-newline before macro output; in mandoc, it is an alias for the standard
-.Sq \&.
-control character.
 .El
 .Sh SEE ALSO
 .Xr man 1 ,
