@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.39 2009/11/12 05:42:09 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.40 2010/08/22 21:28:32 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -92,14 +92,15 @@ int check_callit(struct sockaddr_in *, u_long, u_long);
 struct pmaplist *find_service(u_long, u_long, u_long);
 
 struct pmaplist *pmaplist;
-int debugging = 0;
+int debugging;
 
 SVCXPRT *ludpxprt, *ltcpxprt;
 
 int
 main(int argc, char *argv[])
 {
-	int sock, lsock, c, on = 1, len = sizeof(struct sockaddr_in);
+	int sock, lsock, c, on = 1;
+	socklen_t len = sizeof(struct sockaddr_in);
 	struct sockaddr_in addr, laddr;
 	struct pmaplist *pml;
 	struct passwd *pw;
@@ -107,32 +108,30 @@ main(int argc, char *argv[])
 
 	while ((c = getopt(argc, argv, "d")) != -1) {
 		switch (c) {
-
 		case 'd':
 			debugging = 1;
 			break;
-
 		default:
-			(void) fprintf(stderr, "usage: %s [-d]\n", argv[0]);
+			(void)fprintf(stderr, "usage: %s [-d]\n", argv[0]);
 			exit(1);
 		}
 	}
 
 	if (!debugging && daemon(0, 0)) {
-		(void) fprintf(stderr, "portmap: fork: %s", strerror(errno));
+		(void)fprintf(stderr, "portmap: fork: %s", strerror(errno));
 		exit(1);
 	}
 
-	openlog("portmap", LOG_NDELAY | (debugging ? LOG_PID | LOG_PERROR : LOG_PID),
-	    LOG_DAEMON);
+	openlog("portmap", LOG_NDELAY | (debugging ? LOG_PID | LOG_PERROR :
+	    LOG_PID), LOG_DAEMON);
 
-	bzero((char *)&addr, sizeof addr);
+	bzero(&addr, sizeof addr);
 	addr.sin_addr.s_addr = 0;
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(PMAPPORT);
 
-	bzero((char *)&laddr, sizeof laddr);
+	bzero(&laddr, sizeof laddr);
 	laddr.sin_addr.s_addr = 0;
 	laddr.sin_family = AF_INET;
 	laddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -148,7 +147,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if ((xprt = svcudp_create(sock)) == (SVCXPRT *)NULL) {
+	if ((xprt = svcudp_create(sock)) == NULL) {
 		syslog(LOG_ERR, "couldn't do udp_create");
 		exit(1);
 	}
@@ -163,13 +162,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if ((ludpxprt = svcudp_create(lsock)) == (SVCXPRT *)NULL) {
+	if ((ludpxprt = svcudp_create(lsock)) == NULL) {
 		syslog(LOG_ERR, "couldn't do udp_create");
 		exit(1);
 	}
 
 	/* make an entry for ourself */
-	pml = (struct pmaplist *)malloc((u_int)sizeof(struct pmaplist));
+	pml = malloc(sizeof(struct pmaplist));
 	if (pml == NULL) {
 		syslog(LOG_ERR, "out of memory");
 		exit(1);
@@ -190,8 +189,8 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "cannot bind tcp: %m");
 		exit(1);
 	}
-	if ((xprt = svctcp_create(sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE))
-	    == (SVCXPRT *)NULL) {
+	if ((xprt = svctcp_create(sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE)) ==
+	    NULL) {
 		syslog(LOG_ERR, "couldn't do tcp_create");
 		exit(1);
 	}
@@ -206,13 +205,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	if ((ltcpxprt = svctcp_create(lsock, RPCSMALLMSGSIZE,
-	    RPCSMALLMSGSIZE)) == (SVCXPRT *)NULL) {
+	    RPCSMALLMSGSIZE)) == NULL) {
 		syslog(LOG_ERR, "couldn't do tcp_create");
 		exit(1);
 	}
 
 	/* make an entry for ourself */
-	pml = (struct pmaplist *)malloc((u_int)sizeof(struct pmaplist));
+	pml = malloc(sizeof(struct pmaplist));
 	if (pml == NULL) {
 		syslog(LOG_ERR, "out of memory");
 		exit(1);
@@ -224,17 +223,19 @@ main(int argc, char *argv[])
 	pml->pml_next = pmaplist;
 	pmaplist = pml;
 
-
 	if ((pw = getpwnam("_portmap")) == NULL) {
 		syslog(LOG_ERR, "no such user _portmap");
 		exit(1);
 	}
 	if (chroot("/var/empty") == -1) {
-		syslog(LOG_ERR, "cannot chdir to /var/empty.");
+		syslog(LOG_ERR, "cannot chroot to /var/empty.");
+		exit(1);
+	}
+	if (chdir("/") == -1) {
+		syslog(LOG_ERR, "cannot chdir to new /.");
 		exit(1);
 	}
 
-	chdir("/");
 	if (pw) {
 		if (setgroups(1, &pw->pw_gid) == -1 ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
@@ -293,23 +294,21 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 	struct pmaplist *pml, *prevpml, *fnd;
 	struct sockaddr_in *fromsin;
 	long ans = 0, port;
-	caddr_t t;
+	void *t;
 
 	fromsin = svc_getcaller(xprt);
 
 	if (debugging)
-		(void) fprintf(stderr, "server: about to do a switch\n");
+		(void)fprintf(stderr, "server: about to do a switch\n");
 	switch (rqstp->rq_proc) {
-
 	case PMAPPROC_NULL:
 		/*
 		 * Null proc call
 		 */
-		if (!svc_sendreply(xprt, xdr_void, (caddr_t)0) && debugging) {
+		if (!svc_sendreply(xprt, xdr_void, NULL) && debugging) {
 			abort();
 		}
 		break;
-
 	case PMAPPROC_SET:
 		/*
 		 * Set a program,version to port mapping
@@ -360,7 +359,7 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 		/*
 		 * add to END of list
 		 */
-		pml = (struct pmaplist *)malloc(sizeof(struct pmaplist));
+		pml = malloc(sizeof(struct pmaplist));
 		if (pml == NULL) {
 			syslog(LOG_ERR, "out of memory");
 			svcerr_systemerr(xprt);
@@ -378,14 +377,13 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 			fnd->pml_next = pml;
 		}
 		ans = 1;
-	done:
+done:
 		if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
 		    debugging) {
-			(void) fprintf(stderr, "svc_sendreply\n");
+			(void)fprintf(stderr, "svc_sendreply\n");
 			abort();
 		}
 		break;
-
 	case PMAPPROC_UNSET:
 		/*
 		 * Remove a program,version to port mapping.
@@ -419,7 +417,7 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 
 			/* found it; pml moves forward, prevpml stays */
 			ans = 1;
-			t = (caddr_t)pml;
+			t = pml;
 			pml = pml->pml_next;
 			if (prevpml == NULL)
 				pmaplist = pml;
@@ -433,7 +431,6 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 			abort();
 		}
 		break;
-
 	case PMAPPROC_GETPORT:
 		/*
 		 * Lookup the mapping for a program,version and return its port
@@ -453,7 +450,6 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 			abort();
 		}
 		break;
-
 	case PMAPPROC_DUMP:
 		/*
 		 * Return the current set of mapped program,version
@@ -468,7 +464,6 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 			abort();
 		}
 		break;
-
 	case PMAPPROC_CALLIT:
 		/*
 		 * Calls a procedure on the local machine.  If the requested
@@ -479,7 +474,6 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 		 */
 		callit(rqstp, xprt);
 		break;
-
 	default:
 		svcerr_noproc(xprt);
 		break;
@@ -555,7 +549,7 @@ xdr_len_opaque_parms(XDR *xdrs, struct rmtcallargs *cap)
 
 	beginpos = lowpos = pos = xdr_getpos(xdrs);
 	highpos = lowpos + ARGSIZE;
-	while ((int)(highpos - lowpos) >= 0) {
+	while (highpos >= lowpos) {
 		currpos = (lowpos + highpos) / 2;
 		if (xdr_setpos(xdrs, currpos)) {
 			pos = currpos;
@@ -626,7 +620,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 		exit(1);
 
 	client = clntudp_create(&me, a.rmt_prog, a.rmt_vers, timeout, &so);
-	if (client != (CLIENT *)NULL) {
+	if (client != NULL) {
 		if (rqstp->rq_cred.oa_flavor == AUTH_UNIX)
 			client->cl_auth = authunix_create(au->aup_machname,
 			    au->aup_uid, au->aup_gid, au->aup_len, au->aup_gids);
@@ -669,8 +663,8 @@ check_callit(struct sockaddr_in *addr, u_long prog, u_long aproc)
 	    (prog == MOUNTPROG && aproc == MOUNTPROC_MNT) ||
 	    (prog == YPPROG && aproc != YPPROC_DOMAIN_NONACK)) {
 		syslog(LOG_WARNING,
-		    "callit prog %d aproc %d (might be from %s)",
-		    (int)prog, (int)aproc, inet_ntoa(addr->sin_addr));
+		    "callit prog %ld aproc %ld (might be from %s)",
+		    prog, aproc, inet_ntoa(addr->sin_addr));
 		return (FALSE);
 	}
 	return (TRUE);
