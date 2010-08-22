@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.32 2010/07/06 13:15:32 bluhm Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.33 2010/08/22 20:27:52 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -424,6 +424,7 @@ void
 ospfe_dispatch_rde(int fd, short event, void *bula)
 {
 	struct lsa_hdr		 lsa_hdr;
+	struct lsa_link		 lsa_link;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct nbr		*nbr;
@@ -524,6 +525,18 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				    }
 				}
 			} else if (lsa_hdr.type == htons(LSA_TYPE_LINK)) {
+				/*
+				 * Save link-LSA options of neighbor.
+				 * This is needed to originate network-LSA.
+				 */
+				if (l - sizeof(lsa_hdr) < sizeof(lsa_link))
+					fatalx("ospfe_dispatch_rde: "
+					    "bad imsg link size");
+				memcpy(&lsa_link, (char *)imsg.data +
+				    sizeof(lsa_hdr), sizeof(lsa_link));
+				nbr->link_options = lsa_link.opts &
+				    htonl(LSA_24_MASK);
+
 				/*
 				 * flood on interface only
 				 */
@@ -967,7 +980,7 @@ orig_net_lsa(struct iface *iface)
 		if (nbr->state & NBR_STA_FULL) {
 			if (ibuf_add(buf, &nbr->id, sizeof(nbr->id)))
 				fatal("orig_net_lsa: ibuf_add failed");
-			lsa_net.opts |= nbr->options;
+			lsa_net.opts |= nbr->link_options;
 			num_rtr++;
 		}
 
