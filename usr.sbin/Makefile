@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.151 2010/06/07 08:39:43 reyk Exp $
+#	$OpenBSD: Makefile,v 1.152 2010/08/22 20:22:06 jakob Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
 	ftp-proxy gpioctl hostapd hotplugd httpd ifstated ikectl inetd iostat \
 	kgmon kvm_mkdb ldapd ldapctl ldpd ldpctl lpr mailwrapper map-mbone \
 	memconfig mksuncd mopd mrinfo mrouted mtrace mtree ndp netgroup_mkdb \
-	ntpd openssl ospfctl ospfd ospf6d ospf6ctl pcidump pkg_add popa3d \
+	nsd ntpd openssl ospfctl ospfd ospf6d ospf6ctl pcidump pkg_add popa3d \
 	portmap ppp pppd pppoe procmap pstat pwd_mkdb quot quotaon rarpd \
 	rbootd rdate rdconfig relayctl relayd repquota rip6query ripctl ripd \
 	rmt route6d rpc.bootparamd rpc.lockd rpc.statd rtadvd rtsold rwhod \
