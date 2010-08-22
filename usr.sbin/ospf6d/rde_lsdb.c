@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.34 2010/07/01 19:47:04 bluhm Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.35 2010/08/22 20:55:10 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -827,7 +827,11 @@ lsa_refresh(struct vertex *v)
 	u_int16_t	 len;
 
 	/* refresh LSA by increasing sequence number by one */
-	v->lsa->hdr.age = htons(DEFAULT_AGE);
+	if (v->self && ntohs(v->lsa->hdr.age) >= MAX_AGE)
+		/* self originated network that is currently beeing removed */
+		v->lsa->hdr.age = htons(MAX_AGE);
+	else
+		v->lsa->hdr.age = htons(DEFAULT_AGE);
 	seqnum = ntohl(v->lsa->hdr.seq_num);
 	if (seqnum++ == MAX_SEQ_NUM)
 		/* XXX fix me */
@@ -931,7 +935,7 @@ lsa_equal(struct lsa *a, struct lsa *b)
 		return (0);
 	if (a->hdr.len != b->hdr.len)
 		return (0);
-	/* LSA with age MAX_AGE are never equal */
+	/* LSAs with age MAX_AGE are never equal */
 	if (a->hdr.age == htons(MAX_AGE) || b->hdr.age == htons(MAX_AGE))
 		return (0);
 	if (memcmp(&a->data, &b->data, ntohs(a->hdr.len) -

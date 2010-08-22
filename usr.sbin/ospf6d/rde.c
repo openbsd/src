@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.49 2010/07/09 12:39:46 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.50 2010/08/22 20:55:10 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1574,7 +1574,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 {
 	struct lsa	*lsa;
 	u_int32_t	 ext_tag;
-	u_int16_t	 len, ext_off = 0;
+	u_int16_t	 len, ext_off;
 
 	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_asext) +
 	    LSA_PREFIXSIZE(rr->kr.prefixlen);
@@ -1586,8 +1586,8 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 	 * XXX for now we don't do this.
 	 */
 
+	ext_off = len;
 	if (rr->kr.ext_tag) {
-		ext_off = len;
 		len += sizeof(ext_tag);
 	}
 	if ((lsa = calloc(1, len)) == NULL)
@@ -1603,19 +1603,40 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
 	lsa->hdr.len = htons(len);
 
-	lsa->data.asext.metric = htonl(rr->metric);
 	lsa->data.asext.prefix.prefixlen = rr->kr.prefixlen;
 	memcpy((char *)lsa + sizeof(struct lsa_hdr) + sizeof(struct lsa_asext),
 	    &rr->kr.prefix, LSA_PREFIXSIZE(rr->kr.prefixlen));
 
-	if (rr->kr.ext_tag) {
-		lsa->data.asext.prefix.options |= LSA_ASEXT_T_FLAG;
-		ext_tag = htonl(rr->kr.ext_tag);
-		memcpy((char *)lsa + ext_off, &ext_tag, sizeof(ext_tag));
-	}
-
 	lsa->hdr.ls_id = lsa_find_lsid(&asext_tree, lsa->hdr.type,
 	    lsa->hdr.adv_rtr, comp_asext, lsa);
+
+	if (age == MAX_AGE) {
+		/* inherit metric and ext_tag from the current LSA,
+		 * some routers don't like to get withdraws that are
+		 * different from what they have in their table.
+		 */
+		struct vertex *v;
+		v = lsa_find(NULL, lsa->hdr.type, lsa->hdr.ls_id,
+		    lsa->hdr.adv_rtr);
+		if (v != NULL) {
+			rr->metric = ntohl(v->lsa->data.asext.metric);
+			if (rr->metric & LSA_ASEXT_T_FLAG) {
+				memcpy(&ext_tag, (char *)v->lsa + ext_off,
+				    sizeof(ext_tag));
+				rr->kr.ext_tag = ntohl(ext_tag);
+			}
+			rr->metric &= LSA_METRIC_MASK;
+		}
+	}
+
+	if (rr->kr.ext_tag) {
+		lsa->data.asext.metric = htonl(rr->metric | LSA_ASEXT_T_FLAG);
+		ext_tag = htonl(rr->kr.ext_tag);
+		memcpy((char *)lsa + ext_off, &ext_tag, sizeof(ext_tag));
+	} else {
+		lsa->data.asext.metric = htonl(rr->metric);
+	}
+
 	lsa->hdr.ls_chksum = 0;
 	lsa->hdr.ls_chksum =
 	    htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
