@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.20 2010/07/06 13:24:35 bluhm Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.21 2010/08/22 21:15:25 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,8 +54,6 @@ int		check_child(pid_t, const char *);
 
 void	main_dispatch_ospfe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
-
-void	ospf_redistribute_default(int);
 
 int	ospf_reload(void);
 int	ospf_sendboth(enum imsg_type, void *, u_int16_t);
@@ -281,9 +279,6 @@ main(int argc, char *argv[])
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
-
-	/* redistribute default */
-	ospf_redistribute_default(IMSG_NETWORK_ADD);
 
 	event_dispatch();
 
@@ -517,10 +512,11 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 {
 	struct redistribute	*r;
 	struct in6_addr		 ina, inb;
+	u_int8_t		 is_default = 0;
 
-	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
+	/* only allow ::/0 via REDIST_DEFAULT */
 	if (IN6_IS_ADDR_UNSPECIFIED(&kr->prefix) && kr->prefixlen == 0)
-		return (0);
+		is_default = 1;
 
 	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
@@ -536,6 +532,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			 * so that link local addresses can be redistributed
 			 * via a rtlabel.
 			 */
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_STATIC) {
@@ -544,6 +542,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			}
 			break;
 		case REDIST_CONNECTED:
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_CONNECTED) {
@@ -554,10 +554,26 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 		case REDIST_ADDR:
 			if (kr->flags & F_DYNAMIC)
 				continue;
-			inet6applymask(&ina, &kr->prefix, kr->prefixlen);
+
+			if (IN6_IS_ADDR_UNSPECIFIED(&r->addr) &&
+			    r->prefixlen == 0) {
+				if (is_default) {
+					*metric = r->metric;
+					return (r->type & REDIST_NO ? 0 : 1);
+				} else
+					return (0);
+			}
+
+			inet6applymask(&ina, &kr->prefix, r->prefixlen);
 			inet6applymask(&inb, &r->addr, r->prefixlen);
 			if (IN6_ARE_ADDR_EQUAL(&ina, &inb) &&
 			    kr->prefixlen >= r->prefixlen) {
+				*metric = r->metric;
+				return (r->type & REDIST_NO ? 0 : 1);
+			}
+			break;
+		case REDIST_DEFAULT:
+			if (is_default) {
 				*metric = r->metric;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
@@ -566,19 +582,6 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 	}
 
 	return (0);
-}
-
-void
-ospf_redistribute_default(int type)
-{
-	struct rroute	rr;
-
-	if (!(ospfd_conf->redistribute & REDISTRIBUTE_DEFAULT))
-		return;
-
-	bzero(&rr, sizeof(rr));
-	rr.metric = ospfd_conf->defaultmetric;
-	main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
 }
 
 int

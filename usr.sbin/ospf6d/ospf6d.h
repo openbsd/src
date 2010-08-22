@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.21 2010/07/01 18:57:21 bluhm Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.22 2010/08/22 21:15:25 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -57,9 +57,6 @@
 #define	F_STATIC		0x0020
 #define	F_DYNAMIC		0x0040
 #define	F_REDISTRIBUTED		0x0100
-
-#define REDISTRIBUTE_ON		0x01
-#define REDISTRIBUTE_DEFAULT	0x02
 
 struct imsgev {
 	struct imsgbuf		 ibuf;
@@ -345,6 +342,7 @@ enum {
 #define	REDIST_LABEL		0x04
 #define	REDIST_ADDR		0x08
 #define	REDIST_NO		0x10
+#define	REDIST_DEFAULT		0x20
 
 struct redistribute {
 	SIMPLEQ_ENTRY(redistribute)	entry;
@@ -362,7 +360,6 @@ struct ospfd_conf {
 	LIST_HEAD(, vertex)	cand_list;
 	SIMPLEQ_HEAD(, redistribute) redist_list;
 
-	u_int32_t		defaultmetric;
 	u_int32_t		opts;
 #define OSPFD_OPT_VERBOSE	0x00000001
 #define OSPFD_OPT_VERBOSE2	0x00000002
