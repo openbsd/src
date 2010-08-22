@@ -19,9 +19,6 @@
 /* Pathname to the NSD diff transfer journal file. */
 #undef DIFFFILE
 
-/* Define this to enable DNSSEC (RFCs 4033, 4034, and 4035) support. */
-#undef DNSSEC
-
 /* Define to the default maximum message length with EDNS. */
 #undef EDNS_MAX_MESSAGE_LEN
 
@@ -137,8 +134,8 @@
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
-/* Define to 1 if you have the `mmap,' function. */
-#undef HAVE_MMAP_
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
 
 /* Define to 1 if you have the `munmap' function. */
 #undef HAVE_MUNMAP
@@ -296,7 +293,7 @@
 /* Define to the maximum message length to pass to syslog. */
 #undef MAXSYSLOGMSGLEN
 
-/* Define to the maximum interfaces to serve. */
+/* Define to the maximum ip-addresses to serve. */
 #undef MAX_INTERFACES
 
 /* Define if memcmp() does not compare unsigned bytes */
@@ -307,9 +304,6 @@
 
 /* Define this to enable NSEC3 support. */
 #undef NSEC3
-
-/* Define this to enable NSID support. */
-#undef NSID
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -322,9 +316,6 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
@@ -358,9 +349,6 @@
 
 /* Define to the default tcp timeout. */
 #undef TCP_TIMEOUT
-
-/* Define this to enable TSIG support. */
-#undef TSIG
 
 /* Define to the default maximum udp message length. */
 #undef UDP_MAX_MESSAGE_LEN
@@ -473,8 +461,14 @@
 /* Define "socklen_t" to "int" if "socklen_t" is missing */
 #undef socklen_t
 
+/* Fallback member name for socket family in struct sockaddr_storage */
+#undef ss_family
+
 /* Define "ssize_t" to "int" if "ssize_t" is missing */
 #undef ssize_t
+
+/* Define "suseconds_t" to "time_t" if "suseconds_t" is missing */
+#undef suseconds_t
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef uid_t
