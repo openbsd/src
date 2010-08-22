@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.27 2010/06/28 18:50:37 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.28 2010/08/22 17:02:04 mpf Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -472,13 +472,22 @@ rn_lexobetter(void *m_arg, void *n_arg)
 {
 	u_char *mp = m_arg, *np = n_arg, *lim;
 
+	/*
+	 * Longer masks might not really be lexicographically better,
+	 * but longer masks always have precedence since they must be checked
+	 * first. The netmasks were normalized before calling this function and
+	 * don't have unneeded trailing zeros.
+	 */
 	if (*mp > *np)
-		return 1;  /* not really, but need to check longer one first */
-	if (*mp == *np)
-		for (lim = mp + *mp; mp < lim;)
-			if (*mp++ > *np++)
-				return 1;
-	return 0;
+		return 1;
+	if (*mp < *np)
+		return 0;
+	/*
+	 * Must return the first difference between the masks
+	 * to ensure deterministic sorting.
+	 */
+	lim = mp + *mp;
+	return (memcmp(mp, np, *lim) > 0);
 }
 
 static struct radix_mask *
