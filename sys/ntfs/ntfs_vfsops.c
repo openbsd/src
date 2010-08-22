@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.19 2010/08/12 04:05:03 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.20 2010/08/22 21:23:07 tedu Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -66,13 +66,6 @@
 #include <ntfs/ntfs_vfsops.h>
 #include <ntfs/ntfs_ihash.h>
 #include <ntfs/ntfsmount.h>
-#endif
-
-#ifdef MALLOC_DEFINE
-MALLOC_DEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
-MALLOC_DEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
-MALLOC_DEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
-MALLOC_DEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 #endif
 
 #if defined(__FreeBSD__)
@@ -150,7 +143,6 @@ ntfs_init (
 	struct vfsconf *vcp )
 {
 	ntfs_nthashinit();
-	ntfs_toupper_init();
 	return 0;
 }
 
@@ -412,14 +404,14 @@ ntfs_mountfs(devvp, mp, argsp, p)
 
 	/* read the Unicode lowercase --> uppercase translation table,
 	 * if necessary */
-	if ((error = ntfs_toupper_use(mp, ntmp, p)))
+	if ((error = ntfs_load_toupper(mp, ntmp)))
 		goto out1;
 
 	/*
 	 * Scan $BitMap and count free clusters
 	 */
 	error = ntfs_calccfree(ntmp, &ntmp->ntm_cfree);
-	if(error)
+	if (error)
 		goto out1;
 
 	/*
@@ -568,9 +560,6 @@ ntfs_unmount(
 		NOCRED, p);
 
 	vput(ntmp->ntm_devvp);
-
-	/* free the toupper table, if this has been last mounted ntfs volume */
-	ntfs_toupper_unuse(p);
 
 	dprintf(("ntfs_umount: freeing memory...\n"));
 	mp->mnt_data = NULL;
