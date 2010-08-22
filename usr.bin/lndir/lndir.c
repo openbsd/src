@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.18 2006/11/15 22:23:11 miod Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.19 2010/08/22 21:25:37 tedu Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
 /*
@@ -61,8 +61,8 @@ in this Software without prior written authorization from the X Consortium.
 
 extern char *__progname;
 
-int silent = 0;			/* -silent */
-int ignore_links = 0;		/* -ignorelinks */
+int silent;			/* -silent */
+int ignore_links;		/* -ignorelinks */
 
 char *rcurdir;
 char *curdir;
@@ -77,7 +77,7 @@ struct except {
 	struct except *next;
 };
 
-struct except *exceptions = (struct except *)NULL;
+struct except *exceptions;
 
 int
 main(int argc, char *argv[])
@@ -146,7 +146,7 @@ equivalent(char *lname, char *rname)
 			memmove(s + 1, ns, strlen(ns) + 1);
 		}
 	}
-	return(strcmp(lname, rname) == 0);
+	return (strcmp(lname, rname) == 0);
 }
 
 void
@@ -154,11 +154,11 @@ addexcept(char *name)
 {
 	struct except *new;
 
-	new = (struct except *)malloc(sizeof(struct except));
-	if (new == (struct except *)NULL)
+	new = malloc(sizeof(struct except));
+	if (new == NULL)
 		err(1, NULL);
 	new->name = strdup(name);
-	if (new->name == (char *)NULL)
+	if (new->name == NULL)
 		err(1, NULL);
 
 	new->next = exceptions;
@@ -179,7 +179,8 @@ addexcept(char *name)
 int
 dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 {
-	char buf[MAXPATHLEN + 1], symbuf[MAXPATHLEN + 1], basesym[MAXPATHLEN + 1];
+	char buf[MAXPATHLEN + 1], symbuf[MAXPATHLEN + 1];
+	char basesym[MAXPATHLEN + 1];
 	int n_dirs, symlen, basesymlen = -1;
 	struct stat sb, sc;
 	struct except *cur;
@@ -226,7 +227,8 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 				/* directory */
 				n_dirs--;
 				if (dp->d_name[0] == '.' &&
-				    (dp->d_name[1] == '\0' || (dp->d_name[1] == '.' &&
+				    (dp->d_name[1] == '\0' ||
+				    (dp->d_name[1] == '.' &&
 				    dp->d_name[2] == '\0')))
 					continue;
 				if (!strcmp(dp->d_name, "RCS"))
@@ -242,7 +244,8 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 				curdir = silent ? buf : NULL;
 				if (!silent)
 					printf("%s:\n", buf);
-				if (stat(dp->d_name, &sc) < 0 && errno == ENOENT) {
+				if (stat(dp->d_name, &sc) < 0 &&
+				    errno == ENOENT) {
 					if (mkdir(dp->d_name, 0777) < 0 ||
 					    stat(dp->d_name, &sc) < 0) {
 						warn("%s", dp->d_name);
@@ -253,7 +256,8 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 				if (readlink(dp->d_name, symbuf,
 				    sizeof(symbuf) - 1) >= 0) {
 					fprintf(stderr,
-					    "%s: is a link instead of a directory\n",
+					    "%s: is a link instead of a "
+					    "directory\n",
 					    dp->d_name);
 					curdir = rcurdir = ocurdir;
 					continue;
@@ -279,11 +283,12 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 		/*
 		 * The option to ignore links exists mostly because
 		 * checking for them slows us down by 10-20%.
-		 * But it is off by default because this really is a useful check.
+		 * But it is off by default because this is a useful check.
 		 */
 		if (!ignore_links) {
 			/* see if the file in the base tree was a symlink */
-			basesymlen = readlink(buf, basesym, sizeof(basesym) - 1);
+			basesymlen = readlink(buf, basesym,
+			    sizeof(basesym) - 1);
 			if (basesymlen >= 0)
 				basesym[basesymlen] = '\0';
 		}
@@ -293,10 +298,12 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 			 * Link exists in new tree.  Print message if
 			 * it doesn't match.
 			 */
-			if (!equivalent(basesymlen>=0 ? basesym : buf, symbuf))
+			if (!equivalent(basesymlen >= 0 ? basesym : buf,
+			    symbuf))
 				fprintf(stderr,"%s: %s\n", dp->d_name, symbuf);
 		} else {
-			if (symlink(basesymlen>=0 ? basesym : buf, dp->d_name) < 0)
+			if (symlink(basesymlen >= 0 ? basesym : buf,
+			    dp->d_name) < 0)
 				warn("%s", dp->d_name);
 		}
 next:
@@ -304,13 +311,13 @@ next:
 	}
 
 	closedir(df);
-	return(0);
+	return (0);
 }
 
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-is] [-e exceptfile] fromdir [todir]\n",
+	fprintf(stderr, "usage: %s [-is] [-e exceptfile] fromdir [todir]\n",
 	    __progname);
 	exit(1);
 }
