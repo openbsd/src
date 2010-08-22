@@ -177,7 +177,6 @@ notify_host(int udp_s, struct query* q, struct query *answer,
 	close(udp_s);
 }
 
-#ifdef TSIG
 static tsig_key_type*
 add_key(region_type* region, const char* opt, tsig_algorithm_type** algo)
 {
@@ -241,7 +240,6 @@ add_key(region_type* region, const char* opt, tsig_algorithm_type** algo)
 	tsig_add_key(key);
 	return key;
 }
-#endif /* TSIG */
 
 int
 main (int argc, char *argv[])
@@ -258,19 +256,15 @@ main (int argc, char *argv[])
 	const char *port = UDP_PORT;
 	const char *local_port = NULL;
 	region_type *region = region_create(xalloc, free);
-#ifdef TSIG
 	tsig_key_type *tsig_key = 0;
 	tsig_record_type tsig;
 	tsig_algorithm_type* algo = NULL;
-#endif /* TSIG */
 
 	log_init("nsd-notify");
-#ifdef TSIG
 	if(!tsig_init(region)) {
 		log_msg(LOG_ERR, "could not init tsig\n");
 		exit(1);
 	}
-#endif /* TSIG */
 
 	srandom((unsigned long) getpid() * (unsigned long) time(NULL));
 
@@ -296,12 +290,8 @@ main (int argc, char *argv[])
 			port = optarg;
 			break;
 		case 'y':
-#ifdef TSIG
 			if (!(tsig_key = add_key(region, optarg, &algo)))
 				exit(1);
-#else
-			log_msg(LOG_ERR, "option -y given but TSIG not enabled");
-#endif /* TSIG */
 			break;
 		case 'z':
 			zone = dname_parse(region, optarg);
@@ -340,7 +330,6 @@ main (int argc, char *argv[])
 	buffer_write(q.packet, dname_name(zone), zone->name_size);
 	buffer_write_u16(q.packet, TYPE_SOA);
 	buffer_write_u16(q.packet, CLASS_IN);
-#ifdef TSIG
 	if(tsig_key) {
 		assert(algo);
 		tsig_create_record(&tsig, region);
@@ -352,7 +341,6 @@ main (int argc, char *argv[])
 		tsig_append_rr(&tsig, q.packet);
 		ARCOUNT_SET(q.packet, ARCOUNT(q.packet) + 1);
 	}
-#endif
 	buffer_flip(q.packet);
 
 	/* initialize buffer for ack */
@@ -394,7 +382,7 @@ main (int argc, char *argv[])
 		}
 
 		for (res = res0; res; res = res->ai_next) {
-			if (res->ai_addrlen > sizeof(q.addr)) {
+			if (res->ai_addrlen > (socklen_t)sizeof(q.addr)) {
 				continue;
 			}
 

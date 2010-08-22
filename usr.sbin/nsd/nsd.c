@@ -42,9 +42,7 @@
 
 #include "nsd.h"
 #include "options.h"
-#ifdef TSIG
 #include "tsig.h"
-#endif /* TSIG */
 
 /* The server handler... */
 static struct nsd nsd;
@@ -63,38 +61,36 @@ usage (void)
 	fprintf(stderr, "Name Server Daemon.\n\n");
 	fprintf(stderr,
 		"Supported options:\n"
-		"  -4              Only listen to IPv4 connections.\n"
-		"  -6              Only listen to IPv6 connections.\n"
-		"  -a ip-address   Listen to the specified incoming IP address (may be\n"
-		"                  specified multiple times).\n"
-		"  -c configfile   Read specified configfile instead of %s.\n"
-		"  -d              Enable debug mode (do not fork as a daemon process).\n"
+		"  -4                   Only listen to IPv4 connections.\n"
+		"  -6                   Only listen to IPv6 connections.\n"
+		"  -a ip-address[@port] Listen to the specified incoming IP address (and port)\n"
+		"                       May be specified multiple times).\n"
+		"  -c configfile        Read specified configfile instead of %s.\n"
+		"  -d                   Enable debug mode (do not fork as a daemon process).\n"
 #ifndef NDEBUG
-		"  -F facilities   Specify the debug facilities.\n"
+		"  -F facilities        Specify the debug facilities.\n"
 #endif /* NDEBUG */
-		"  -f database     Specify the database to load.\n"
-		"  -h              Print this help information.\n"
+		"  -f database          Specify the database to load.\n"
+		"  -h                   Print this help information.\n"
 		, CONFIGFILE);
 	fprintf(stderr,
-		"  -i identity     Specify the identity when queried for id.server CHAOS TXT.\n"
-#ifdef NSID
-		"  -I nsid         Specify the NSID. This must be a hex string.\n"
-#endif /* NSID */
+		"  -i identity          Specify the identity when queried for id.server CHAOS TXT.\n"
+		"  -I nsid              Specify the NSID. This must be a hex string.\n"
 #ifndef NDEBUG
-		"  -L level        Specify the debug level.\n"
+		"  -L level             Specify the debug level.\n"
 #endif /* NDEBUG */
-		"  -l filename     Specify the log file.\n"
-		"  -N server-count The number of servers to start.\n"
-		"  -n tcp-count    The maximum number of TCP connections per server.\n"
-		"  -P pidfile      Specify the PID file to write.\n"
-		"  -p port         Specify the port to listen to.\n"
-		"  -s seconds      Dump statistics every SECONDS seconds.\n"
-		"  -t chrootdir    Change root to specified directory on startup.\n"
+		"  -l filename          Specify the log file.\n"
+		"  -N server-count      The number of servers to start.\n"
+		"  -n tcp-count         The maximum number of TCP connections per server.\n"
+		"  -P pidfile           Specify the PID file to write.\n"
+		"  -p port              Specify the port to listen to.\n"
+		"  -s seconds           Dump statistics every SECONDS seconds.\n"
+		"  -t chrootdir         Change root to specified directory on startup.\n"
 		);
 	fprintf(stderr,
-		"  -u user         Change effective uid to the specified user.\n"
-		"  -V level        Specify verbosity level.\n"
-		"  -v              Print version information.\n"
+		"  -u user              Change effective uid to the specified user.\n"
+		"  -V level             Specify verbosity level.\n"
+		"  -v                   Print version information.\n"
 		);
 	fprintf(stderr, "Version %s. Report bugs to <%s>.\n",
 		PACKAGE_VERSION, PACKAGE_BUGREPORT);
@@ -142,6 +138,23 @@ file_inside_chroot(const char* fname, const char* chr)
 	else if (fname && fname[0] != '/')
 		return 1; /* don't strip, file rotation ok */
 	return 0; /* don't strip, don't try file rotation */
+}
+
+void
+get_ip_port_frm_str(const char* arg, const char** hostname,
+        const char** port)
+{
+        /* parse src[@port] option */
+        char* delim = NULL;
+	if (arg) {
+		delim = strchr(arg, '@');
+	}
+
+        if (delim) {
+                *delim = '\0';
+                *port = delim+1;
+        }
+        *hostname = arg;
 }
 
 
@@ -465,7 +478,6 @@ main(int argc, char *argv[])
 			nsd.identity = optarg;
 			break;
 		case 'I':
-#ifdef NSID
 			if (nsd.nsid_len != 0) {
 				/* can only be given once */
 				break;
@@ -478,7 +490,6 @@ main(int argc, char *argv[])
 			if (hex_pton(optarg, nsd.nsid, nsd.nsid_len) == -1) {
 				error("hex string cannot be parsed '%s' in NSID.", optarg);
 			}
-#endif /* NSID */
                        break;
 		case 'l':
 			nsd.log_filename = optarg;
@@ -680,7 +691,6 @@ main(int argc, char *argv[])
 #endif /* IPV6 MTU) */
 #endif /* defined(INET6) */
 
-#ifdef NSID
 	if (nsd.nsid_len == 0 && nsd.options->nsid) {
 		if (strlen(nsd.options->nsid) % 2 != 0) {
 			error("the NSID must be a hex string of an even length.");
@@ -691,12 +701,11 @@ main(int argc, char *argv[])
 			error("hex string cannot be parsed '%s' in NSID.", nsd.options->nsid);
 		}
 	}
-
 	edns_init_nsid(&nsd.edns_ipv4, nsd.nsid_len);
 #if defined(INET6)
 	edns_init_nsid(&nsd.edns_ipv6, nsd.nsid_len);
 #endif /* defined(INET6) */
-#endif /* NSID */
+
 	/* Number of child servers to fork.  */
 	nsd.children = (struct nsd_child *) region_alloc(
 		nsd.region, nsd.child_count * sizeof(struct nsd_child));
@@ -749,13 +758,16 @@ main(int argc, char *argv[])
 	/* Set up the address info structures with real interface/port data */
 	for (i = 0; i < nsd.ifs; ++i) {
 		int r;
+		const char* node = NULL;
+		const char* service = NULL;
 
 		/* We don't perform name-lookups */
 		if (nodes[i] != NULL)
 			hints[i].ai_flags |= AI_NUMERICHOST;
+		get_ip_port_frm_str(nodes[i], &node, &service);
 
 		hints[i].ai_socktype = SOCK_DGRAM;
-		if ((r=getaddrinfo(nodes[i], udp_port, &hints[i], &nsd.udp[i].addr)) != 0) {
+		if ((r=getaddrinfo(node, (service?service:udp_port), &hints[i], &nsd.udp[i].addr)) != 0) {
 #ifdef INET6
 			if(nsd.grab_ip6_optional && hints[0].ai_family == AF_INET6) {
 				log_msg(LOG_WARNING, "No IPv6, fallback to IPv4. getaddrinfo: %s",
@@ -770,7 +782,7 @@ main(int argc, char *argv[])
 		}
 
 		hints[i].ai_socktype = SOCK_STREAM;
-		if ((r=getaddrinfo(nodes[i], tcp_port, &hints[i], &nsd.tcp[i].addr)) != 0) {
+		if ((r=getaddrinfo(node, (service?service:tcp_port), &hints[i], &nsd.tcp[i].addr)) != 0) {
 			error("cannot parse address '%s': getaddrinfo: %s %s",
 				nodes[i]?nodes[i]:"(null)",
 				gai_strerror(r),
@@ -813,11 +825,11 @@ main(int argc, char *argv[])
 	/* endpwent(); */
 #endif /* HAVE_GETPWNAM */
 
-#ifdef TSIG
 	if(!tsig_init(nsd.region))
 		error("init tsig failed");
+#if defined(HAVE_SSL)
 	key_options_tsig_add(nsd.options);
-#endif /* TSIG */
+#endif
 
 	/* Relativize the pathnames for chroot... */
 	if (nsd.chrootdir) {

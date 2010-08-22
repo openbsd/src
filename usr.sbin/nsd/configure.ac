@@ -4,10 +4,9 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.5,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.6,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
-CFLAGS="$CFLAGS"
 AC_AIX
 
 dnl
@@ -241,7 +240,7 @@ fi
 ])dnl
 
 # Checks for typedefs, structures, and compiler characteristics.
-CHECK_COMPILER_FLAG(O2, [], [ CFLAGS="-g" ])
+CHECK_COMPILER_FLAG(O2, [], [ CFLAGS=`echo $CFLAGS | sed -e "s/-O2//g"` ])
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_UID_T
@@ -446,6 +445,7 @@ AC_LIBGTOP_CHECK_TYPE(uint64_t, unsigned long long)
 AC_LIBGTOP_CHECK_TYPE(socklen_t, int)
 AC_LIBGTOP_CHECK_TYPE(sig_atomic_t, int)
 AC_LIBGTOP_CHECK_TYPE(ssize_t, int)
+AC_LIBGTOP_CHECK_TYPE(suseconds_t, time_t)
 
 AC_CHECK_TYPE(in_addr_t, [], [AC_DEFINE([in_addr_t], [uint32_t], [in_addr_t])], [
 #if HAVE_SYS_TYPES_H
@@ -454,6 +454,7 @@ AC_CHECK_TYPE(in_addr_t, [], [AC_DEFINE([in_addr_t], [uint32_t], [in_addr_t])], 
 #if HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif])
+ACX_CHECK_SS_FAMILY
 
 # Checks for library functions.
 AC_FUNC_CHOWN
@@ -528,11 +529,11 @@ AC_DEFINE_UNQUOTED([FACILITY], $facility, [Define to the default facility for sy
 dnl
 dnl Determine the maximum number of interfaces that are allowed
 dnl
-max_interfaces=8
-AC_ARG_WITH([max_interfaces],
-	AC_HELP_STRING([--with-max_interfaces=number], [Limit on the number of ip-addresses that may be specified]),
-	[max_interfaces=$withval])
-AC_DEFINE_UNQUOTED([MAX_INTERFACES], $max_interfaces, [Define to the maximum interfaces to serve.])
+max_ips=8
+AC_ARG_WITH([max_ips],
+	AC_HELP_STRING([--with-max-ips=number], [Limit on the number of ip-addresses that may be specified]),
+	[max_ips=$withval])
+AC_DEFINE_UNQUOTED([MAX_INTERFACES], $max_ips, [Define to the maximum ip-addresses to serve.])
 
 dnl
 dnl Determine the default tcp timeout
@@ -564,15 +565,6 @@ case "$enable_ipv6" in
 		;;
 esac
 
-AC_ARG_ENABLE(dnssec, AC_HELP_STRING([--disable-dnssec], [Disable DNSSEC support.]))
-case "$enable_dnssec" in
-        no)
-                ;;
-        yes|*)
-		AC_DEFINE_UNQUOTED([DNSSEC], [], [Define this to enable DNSSEC (RFCs 4033, 4034, and 4035) support.])
-		;;
-esac
-
 AC_ARG_ENABLE(bind8-stats, AC_HELP_STRING([--enable-bind8-stats], [Enables BIND8 like NSTATS & XSTATS]))
 
 case "$enable_bind8_stats" in
@@ -595,18 +587,8 @@ case "$enable_checking" in
                 ;;
 esac
 
-AC_ARG_ENABLE(tsig, AC_HELP_STRING([--disable-tsig], [Disable TSIG support]))
-case "$enable_tsig" in
-        no)
-		;;
-        yes|*)
-                CHECK_SSL
-                if test x_$HAVE_SSL != x_yes; then
-                   AC_MSG_ERROR(SSL is required to enable TSIG support.  Use --with-ssl to specify the location of the SSL libraries or --disable-tsig to disable TSIG support.)
-                fi
-                AC_DEFINE([TSIG], [], [Define this to enable TSIG support.])
-                ;;
-esac
+# we need SSL for TSIG (and maybe also for NSEC3).
+CHECK_SSL
 
 AC_ARG_ENABLE(nsec3, AC_HELP_STRING([--disable-nsec3], [Disable NSEC3 support]))
 case "$enable_nsec3" in
@@ -617,21 +599,12 @@ case "$enable_nsec3" in
                 ;;
 esac
 
-AC_ARG_ENABLE(nsid, AC_HELP_STRING([--disable-nsid], [Disable NSID support]))
-case "$enable_nsid" in
-        no)
-                ;;
-        yes|*)
-                AC_DEFINE([NSID], [], [Define this to enable NSID support.])
-                ;;
-esac
-
 AC_ARG_ENABLE(mmap, AC_HELP_STRING([--enable-mmap], [Use mmap instead of malloc. Experimental.]))
 case "$enable_mmap" in
         yes)
 		AC_CHECK_HEADERS([sys/mman.h])
 		AC_LIBGTOP_CHECK_TYPE(uintptr_t, void*)
-		AC_CHECK_FUNCS([mmap, munmap])
+		AC_CHECK_FUNCS([mmap munmap])
 		AC_DEFINE_UNQUOTED([USE_MMAP_ALLOC], [], [Define this to enable mmap instead of malloc. Experimental.])
 		;;
         no|*)

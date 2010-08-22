@@ -1219,11 +1219,9 @@ process_rr(void)
 		zc_error_prev_line("CNAME and other data at the same name");
 	}
 
-#ifdef DNSSEC
 	if (rr->type == TYPE_RRSIG && rr_rrsig_type_covered(rr) == TYPE_SOA) {
 		rrset->zone->is_secure = 1;
 	}
-#endif
 
 	/* Check we have SOA */
 	if (zone->soa_rrset == NULL) {

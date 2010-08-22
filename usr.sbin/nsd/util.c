@@ -261,11 +261,16 @@ mmap_alloc(size_t size)
 	void *base;
 
 	size += MMAP_ALLOC_HEADER_SIZE;
+#ifdef HAVE_MMAP
 	base = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (base == MAP_FAILED) {
 		log_msg(LOG_ERR, "mmap failed: %s", strerror(errno));
 		exit(1);
 	}
+#else /* !HAVE_MMAP */
+	log_msg(LOG_ERR, "mmap failed: don't have mmap");
+	exit(1);
+#endif /* HAVE_MMAP */
 
 	*((size_t*) base) = size;
 	return (void*)((uintptr_t)base + MMAP_ALLOC_HEADER_SIZE);
@@ -283,10 +288,15 @@ mmap_free(void *ptr)
 	base = (void*)((uintptr_t)ptr - MMAP_ALLOC_HEADER_SIZE);
 	size = *((size_t*) base);
 
+#ifdef HAVE_MUNMAP
 	if (munmap(base, size) == -1) {
 		log_msg(LOG_ERR, "munmap failed: %s", strerror(errno));
 		exit(1);
 	}
+#else /* !HAVE_MUNMAP */
+	log_msg(LOG_ERR, "munmap failed: don't have munmap");
+	exit(1);
+#endif /* HAVE_MUNMAP */
 }
 
 #endif /* USE_MMAP_ALLOC */

@@ -184,7 +184,6 @@ to_alarm(int ATTR_UNUSED(sig))
 	timeout_flag = 1;
 }
 
-#ifdef TSIG
 /*
  * Read a line from IN.  If successful, the line is stripped of
  * leading and trailing whitespace and non-zero is returned.
@@ -292,7 +291,6 @@ read_tsig_key(region_type *region,
 
 	return key;
 }
-#endif /* TSIG */
 
 /*
  * Read SIZE bytes from the socket into BUF.  Keep reading unless an
@@ -783,10 +781,8 @@ main(int argc, char *argv[])
 	int default_family = DEFAULT_AI_FAMILY;
 	struct sigaction mysigaction;
 	FILE *zone_file;
-#ifdef TSIG
 	const char *tsig_key_filename = NULL;
 	tsig_key_type *tsig_key = NULL;
-#endif /* TSIG */
 	axfr_state_type state;
 
 	log_init("nsd-xfer");
@@ -859,12 +855,8 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'T':
-#ifdef TSIG
 			tsig_key_filename = optarg;
 			break;
-#else
-			log_msg(LOG_ERR, "option -T given but TSIG not enabled");
-#endif /* TSIG */
 		case 'v':
 			++state.verbose;
 			break;
@@ -885,7 +877,6 @@ main(int argc, char *argv[])
 	if (argc == 0 || !zone_filename || !state.zone)
 		usage();
 
-#ifdef TSIG
 	if (tsig_key_filename) {
 		tsig_algorithm_type *tsig_algo = NULL;
 		tsig_key = read_tsig_key(
@@ -902,7 +893,6 @@ main(int argc, char *argv[])
 		tsig_create_record(state.tsig, region);
 		tsig_init_record(state.tsig, tsig_algo, tsig_key);
 	}
-#endif /* TSIG */
 
 	mysigaction.sa_handler = to_alarm;
 	sigfillset(&mysigaction.sa_mask);
@@ -946,7 +936,7 @@ main(int argc, char *argv[])
 		}
 
 		for (res = res0; res; res = res->ai_next) {
-			if (res->ai_addrlen > sizeof(q.addr))
+			if (res->ai_addrlen > (socklen_t)sizeof(q.addr))
 				continue;
 
 			/*

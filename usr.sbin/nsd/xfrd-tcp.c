@@ -309,11 +309,9 @@ xfrd_tcp_xfr(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 	zone->query_id = ID(tcp->packet);
 	zone->msg_seq_nr = 0;
 	zone->msg_rr_count = 0;
-#ifdef TSIG
 	if(zone->master->key_options && zone->master->key_options->tsig_key) {
 		xfrd_tsig_sign_request(tcp->packet, &zone->tsig, zone->master);
 	}
-#endif /* TSIG */
 	buffer_flip(tcp->packet);
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "sent tcp query with ID %d", zone->query_id));
 	tcp->msglen = buffer_limit(tcp->packet);
