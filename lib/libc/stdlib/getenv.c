@@ -1,4 +1,4 @@
-/*	$OpenBSD: getenv.c,v 1.9 2009/06/03 15:52:16 millert Exp $ */
+/*	$OpenBSD: getenv.c,v 1.10 2010/08/23 22:31:50 millert Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +36,9 @@ char *__findenv(const char *name, int len, int *offset);
 /*
  * __findenv --
  *	Returns pointer to value associated with name, if any, else NULL.
+ *	Starts searching within the environmental array at offset.
  *	Sets offset to be the offset of the name/value combination in the
- *	environmental array, for use by setenv(3) and unsetenv(3).
+ *	environmental array, for use by putenv(3), setenv(3) and unsetenv(3).
  *	Explicitly removes '=' in argument name.
  *
  *	This routine *should* be a static; don't use it.
@@ -52,7 +53,7 @@ __findenv(const char *name, int len, int *offset)
 
 	if (name == NULL || environ == NULL)
 		return (NULL);
-	for (p = environ; (cp = *p) != NULL; ++p) {
+	for (p = environ + *offset; (cp = *p) != NULL; ++p) {
 		for (np = name, i = len; i && *cp; i--)
 			if (*cp++ != *np++)
 				break;
@@ -71,7 +72,7 @@ __findenv(const char *name, int len, int *offset)
 char *
 getenv(const char *name)
 {
-	int offset;
+	int offset = 0;
 	const char *np;
 
 	for (np = name; *np && *np != '='; ++np)

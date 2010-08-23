@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.12 2010/06/29 04:09:34 naddy Exp $ */
+/*	$OpenBSD: setenv.c,v 1.13 2010/08/23 22:31:50 millert Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -47,7 +47,7 @@ putenv(char *str)
 {
 	char **P, *cp;
 	size_t cnt;
-	int offset;
+	int offset = 0;
 
 	for (cp = str; *cp && *cp != '='; ++cp)
 		;
@@ -57,7 +57,13 @@ putenv(char *str)
 	}
 
 	if (__findenv(str, (int)(cp - str), &offset) != NULL) {
-		environ[offset] = str;
+		environ[offset++] = str;
+		/* could be set multiple times */
+		while (__findenv(str, (int)(cp - str), &offset)) {
+			for (P = &environ[offset];; ++P)
+				if (!(*P = *(P + 1)))
+					break;
+		}
 		return (0);
 	}
 
@@ -84,9 +90,9 @@ putenv(char *str)
 int
 setenv(const char *name, const char *value, int rewrite)
 {
-	char *C;
+	char *C, **P;
 	const char *np;
-	int l_value, offset;
+	int l_value, offset = 0;
 
 	for (np = name; *np && *np != '='; ++np)
 		;
@@ -99,6 +105,7 @@ setenv(const char *name, const char *value, int rewrite)
 
 	l_value = strlen(value);
 	if ((C = __findenv(name, (int)(np - name), &offset)) != NULL) {
+		int tmpoff = offset + 1;
 		if (!rewrite)
 			return (0);
 #if 0 /* XXX - existing entry may not be writable */
@@ -108,9 +115,14 @@ setenv(const char *name, const char *value, int rewrite)
 			return (0);
 		}
 #endif
+		/* could be set multiple times */
+		while (__findenv(name, (int)(np - name), &tmpoff)) {
+			for (P = &environ[tmpoff];; ++P)
+				if (!(*P = *(P + 1)))
+					break;
+		}
 	} else {					/* create new slot */
 		size_t cnt;
-		char **P;
 
 		for (P = environ; *P != NULL; P++)
 			;
@@ -143,7 +155,7 @@ unsetenv(const char *name)
 {
 	char **P;
 	const char *np;
-	int offset;
+	int offset = 0;
 
 	if (!name || !*name) {
 		errno = EINVAL;
