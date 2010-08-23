@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.62 2010/07/28 15:05:33 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.63 2010/08/23 05:36:20 kili Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -401,7 +401,7 @@ sub set_modes
 	my $self = shift;
 	chown $self->{uid}, $self->{gid}, $self->{destdir}.$self->name;
 	chmod $self->{mode}, $self->{destdir}.$self->name;
-	utime $self->{mtime}, $self->{mtime}, $self->{destdir}.$self->name;
+	utime time, $self->{mtime}, $self->{destdir}.$self->name;
 }
 
 sub make_basedir
