@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.73 2010/08/23 16:55:07 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.74 2010/08/23 16:56:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -253,6 +253,9 @@ int	xbridge_space_region_io(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_size_t, bus_space_handle_t *);
 int	xbridge_space_region_mem(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_size_t, bus_space_handle_t *);
+
+void	xbridge_space_barrier(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t, int);
 
 int	xbridge_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
@@ -544,6 +547,7 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	xb->xb_mem_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
 	xb->xb_mem_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
 	xb->xb_mem_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
+	xb->xb_mem_bus_space->_space_barrier = xbridge_space_barrier;
 
 	bcopy(xb->xb_regt, xb->xb_io_bus_space, sizeof(*xb->xb_io_bus_space));
 	xb->xb_io_bus_space->bus_private = xb;
@@ -559,6 +563,7 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	xb->xb_io_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
 	xb->xb_io_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
 	xb->xb_io_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
+	xb->xb_io_bus_space->_space_barrier = xbridge_space_barrier;
 
 	xb->xb_dmat = malloc(sizeof (*xb->xb_dmat), M_DEVBUF, M_NOWAIT);
 	if (xb->xb_dmat == NULL)
@@ -1585,6 +1590,50 @@ xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
 
 	*nbshp = bsh + offset;
 	return 0;
+}
+
+void
+xbridge_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
+    bus_size_t len, int flags)
+{
+	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
+	bus_addr_t bpa, start, end;
+	uint d, devmin, devmax;
+
+	__asm__ __volatile__ ("sync" ::: "memory");
+
+	if (flags & BUS_SPACE_BARRIER_WRITE) {
+		/*
+		 * Try to figure out which device we are working for, and
+		 * flush its PCI write buffer.
+		 * This is ugly; we really need to be able to provide a
+		 * different bus_space_tag_t to each slot, to be able
+		 * to tell them apart.
+		 */
+		if (t->_space_map == xbridge_space_map_devio) {
+			bpa = (bus_addr_t)h - xb->xb_regt->bus_base;
+			for (d = 0; d < xb->xb_nslots; d++) {
+				start = PIC_DEVIO_OFFS(xb->xb_busno, d);
+				end = start + BRIDGE_DEVIO_SIZE(d);
+				if (bpa >= start && bpa < end)
+					break;
+			}
+			devmin = d;
+			devmax = d + 1;
+			/* should not happen */
+			if (d == xb->xb_nslots) {
+				devmin = 0;
+				devmax = xb->xb_nslots;
+			}
+		} else {
+			/* nothing better came up my sleeve... */
+			devmin = 0;
+			devmax = xb->xb_nslots;
+		}
+		for (d = devmin; d < devmax; d++)
+			xbridge_read_reg(xb, BRIDGE_DEVICE_WBFLUSH(d));
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.23 2010/04/04 11:24:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.24 2010/08/23 16:56:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -83,6 +83,8 @@ struct mips_bus_space {
 	int		(*_space_subregion)(bus_space_tag_t, bus_space_handle_t,
 			  bus_size_t, bus_size_t, bus_space_handle_t *);
 	void *		(*_space_vaddr)(bus_space_tag_t, bus_space_handle_t);
+	void		(*_space_barrier)(bus_space_tag_t, bus_space_handle_t,
+			  bus_size_t, bus_size_t, int);
 };
 
 #define	bus_space_read_1(t, h, o) (*(t)->_space_read_1)((t), (h), (o))
@@ -293,8 +295,16 @@ bus_space_copy_8(void *v, bus_space_handle_t h1, bus_size_t o1,
  *	    bus_size_t len, int flags);
  *
  */
-#define bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+static __inline void
+bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
+    bus_size_t len, int flags)
+{
+	if (t->_space_barrier != NULL)
+		(*(t)->_space_barrier)(t, h, offs, len, flags);
+	else
+		__asm__ __volatile__ ("sync" ::: "memory");
+}
+
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
 

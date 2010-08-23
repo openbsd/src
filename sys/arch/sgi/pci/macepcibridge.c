@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.38 2010/04/06 19:12:34 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.39 2010/08/23 16:56:18 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -131,7 +131,8 @@ bus_space_t mace_pcibbus_mem_tag = {
 	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
 	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
-	mace_pcib_space_vaddr
+	mace_pcib_space_vaddr,
+	NULL
 };
 
 bus_space_t mace_pcibbus_io_tag = {
@@ -145,7 +146,8 @@ bus_space_t mace_pcibbus_io_tag = {
 	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
 	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
-	mace_pcib_space_vaddr
+	mace_pcib_space_vaddr,
+	NULL
 };
 
 /*
