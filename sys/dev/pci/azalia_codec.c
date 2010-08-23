@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.149 2010/08/08 05:25:30 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.150 2010/08/23 15:48:24 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1421,8 +1421,10 @@ azalia_codec_enable_unsol(codec_t *this)
 		w = &this->w[this->playvols.master];
 		err = azalia_comresp(this, w->nid, CORB_GET_VOLUME_KNOB,
 		    0, &result);
-		if (err)
+		if (err) {
+			DPRINTF(("%s: get volume knob error\n", __func__));
 			return err;
+		}
 
 		/* current level */
 		this->playvols.hw_step = CORB_VKNOB_VOLUME(result);
@@ -1432,15 +1434,25 @@ azalia_codec_enable_unsol(codec_t *this)
 		result &= ~(CORB_VKNOB_DIRECT);
 		err = azalia_comresp(this, w->nid, CORB_SET_VOLUME_KNOB,
 		    result, NULL);
-		if (err)
-			return err;
+		if (err) {
+			DPRINTF(("%s: set volume knob error\n", __func__));
+			/* XXX If there was an error setting indirect
+			 * mode, do not return an error.  However, do not
+			 * enable unsolicited responses either.  Most
+			 * likely the volume knob doesn't work right.
+			 * Perhaps it's simply not wired/enabled.
+			 */
+			return 0;
+		}
 
 		/* enable unsolicited responses */
 		result = CORB_UNSOL_ENABLE | AZ_TAG_PLAYVOL;
 		err = azalia_comresp(this, w->nid,
 		    CORB_SET_UNSOLICITED_RESPONSE, result, NULL);
-		if (err)
+		if (err) {
+			DPRINTF(("%s: set vknob unsol resp error\n", __func__));
 			return err;
+		}
 	}
 
 	return 0;
