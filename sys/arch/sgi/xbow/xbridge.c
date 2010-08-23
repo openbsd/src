@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.72 2010/05/09 18:36:07 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.73 2010/08/23 16:55:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -696,27 +696,7 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 	int skip;
 	int s;
 
-	/* Disable interrupts on this bridge (especially error interrupts) */
-	xbridge_write_reg(xb, BRIDGE_IER, 0);
-	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
-	s = splhigh();
-
 	xbridge_decompose_tag(cookie, tag, &bus, &dev, &fn);
-	if (bus != 0) {
-		xbridge_write_reg(xb, BRIDGE_PCI_CFG,
-		    (bus << 16) | (dev << 11));
-		pa = xb->xb_regh + BRIDGE_PCI_CFG1_SPACE;
-	} else {
-		if (ISSET(xb->xb_flags, XF_PIC)) {
-			/*
-			 * On PIC, device 0 in configuration space is the
-			 * PIC itself, device slots are offset by one.
-			 */
-			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE +
-			    ((dev + 1) << 12);
-		} else
-			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE + (dev << 12);
-	}
 
 	/*
 	 * IOC3 devices only implement a subset of the PCI configuration
@@ -758,14 +738,37 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 	}
 
 	if (skip == 0) {
+		/*
+		 * Disable interrupts on this bridge (especially error
+		 * interrupts).
+		 */
+		s = splhigh();
+		xbridge_write_reg(xb, BRIDGE_IER, 0);
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+
+		if (bus != 0) {
+			xbridge_write_reg(xb, BRIDGE_PCI_CFG,
+			    (bus << 16) | (dev << 11));
+			pa = xb->xb_regh + BRIDGE_PCI_CFG1_SPACE;
+		} else {
+			/*
+			 * On PIC, device 0 in configuration space is the
+			 * PIC itself, device slots are offset by one.
+			 */
+			if (ISSET(xb->xb_flags, XF_PIC))
+				dev++;
+			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE + (dev << 12);
+		}
+
 		pa += (fn << 8) + offset;
 		if (guarded_read_4(pa, &data) != 0)
 			data = 0xffffffff;
+
+		xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+		splx(s);
 	}
 
-	splx(s);
-	xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
-	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 	return data;
 }
 
@@ -778,27 +781,7 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 	int skip;
 	int s;
 
-	/* Disable interrupts on this bridge (especially error interrupts) */
-	xbridge_write_reg(xb, BRIDGE_IER, 0);
-	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
-	s = splhigh();
-
 	xbridge_decompose_tag(cookie, tag, &bus, &dev, &fn);
-	if (bus != 0) {
-		xbridge_write_reg(xb, BRIDGE_PCI_CFG,
-		    (bus << 16) | (dev << 11));
-		pa = xb->xb_regh + BRIDGE_PCI_CFG1_SPACE;
-	} else {
-		if (ISSET(xb->xb_flags, XF_PIC)) {
-			/*
-			 * On PIC, device 0 in configuration space is the
-			 * PIC itself, device slots are offset by one.
-			 */
-			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE +
-			    ((dev + 1) << 12);
-		} else
-			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE + (dev << 12);
-	}
 
 	/*
 	 * IOC3 devices only implement a subset of the PCI configuration
@@ -837,13 +820,35 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 	}
 
 	if (skip == 0) {
+		/*
+		 * Disable interrupts on this bridge (especially error
+		 * interrupts).
+		 */
+		s = splhigh();
+		xbridge_write_reg(xb, BRIDGE_IER, 0);
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+
+		if (bus != 0) {
+			xbridge_write_reg(xb, BRIDGE_PCI_CFG,
+			    (bus << 16) | (dev << 11));
+			pa = xb->xb_regh + BRIDGE_PCI_CFG1_SPACE;
+		} else {
+			/*
+			 * On PIC, device 0 in configuration space is the
+			 * PIC itself, device slots are offset by one.
+			 */
+			if (ISSET(xb->xb_flags, XF_PIC))
+				dev++;
+			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE + (dev << 12);
+		}
+
 		pa += (fn << 8) + offset;
 		guarded_write_4(pa, data);
-	}
 
-	splx(s);
-	xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
-	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+		xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
+		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+		splx(s);
+	}
 }
 
 int
@@ -3580,7 +3585,7 @@ xbridge_rbus_parent_mem(struct pci_attach_args *pa)
 	 * resources, return a valid body which will fail requests.
 	 */
 	if (rb == NULL)
-		rb = rbus_new_body(pa->pa_iot, NULL, NULL, 0, 0, 0,
+		rb = rbus_new_body(pa->pa_iot, NULL, 0, 0, 0,
 		    RBUS_SPACE_INVALID);
 
 	return rb;
