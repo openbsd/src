@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.11 2009/09/02 14:05:05 dlg Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.12 2010/08/23 04:49:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -27,8 +27,11 @@
 #include <sys/workq.h>
 
 struct workq {
-	int		wq_flags;
-#define WQ_F_RUNNING		(1<<0)
+	enum {
+		WQ_S_CREATED,
+		WQ_S_RUNNING,
+		WQ_S_DESTROYED
+	}		wq_state;
 	int		wq_running;
 	int		wq_max;
 	const char	*wq_name;
@@ -39,7 +42,7 @@ struct workq {
 
 struct pool	workq_task_pool;
 struct workq	workq_syswq = {
-	WQ_F_RUNNING,
+	WQ_S_CREATED,
 	0,
 	1,
 	"syswq"
@@ -49,7 +52,6 @@ struct workq	workq_syswq = {
 #define WQT_F_POOL	(1 << 31)
 
 void			workq_init(void); /* called in init_main.c */
-void			workq_init_syswq(void *);
 void			workq_create_thread(void *);
 struct workq_task *	workq_next_task(struct workq *);
 void			workq_thread(void *);
@@ -63,19 +65,7 @@ workq_init(void)
 
 	mtx_init(&workq_syswq.wq_mtx, IPL_HIGH);
 	SIMPLEQ_INIT(&workq_syswq.wq_tasklist);
-	kthread_create_deferred(workq_init_syswq, NULL);
-}
-
-void
-workq_init_syswq(void *arg)
-{
-	mtx_enter(&workq_syswq.wq_mtx);
-	if (kthread_create(workq_thread, &workq_syswq, NULL, "%s",
-	    workq_syswq.wq_name) != 0)
-		panic("unable to create system work queue thread");
-
-	workq_syswq.wq_running++;
-	mtx_leave(&workq_syswq.wq_mtx);
+	kthread_create_deferred(workq_create_thread, &workq_syswq);
 }
 
 struct workq *
@@ -87,7 +77,7 @@ workq_create(const char *name, int maxqs, int ipl)
 	if (wq == NULL)
 		return (NULL);
 
-	wq->wq_flags = WQ_F_RUNNING;
+	wq->wq_state = WQ_S_CREATED;
 	wq->wq_running = 0;
 	wq->wq_max = maxqs;
 	wq->wq_name = name;
@@ -105,13 +95,25 @@ void
 workq_destroy(struct workq *wq)
 {
 	mtx_enter(&wq->wq_mtx);
+	switch (wq->wq_state) {
+	case WQ_S_CREATED:
+		/* wq is still referenced by workq_create_thread */
+		wq->wq_state = WQ_S_DESTROYED;
+		mtx_leave(&wq->wq_mtx);
+		return;
 
-	wq->wq_flags &= ~WQ_F_RUNNING;
+	case WQ_S_RUNNING:
+		wq->wq_state = WQ_S_DESTROYED;
+		break;
+
+	default:
+		panic("unexpected %s wq state %d", wq->wq_name, wq->wq_state);
+	}
+
 	while (wq->wq_running != 0) {
 		wakeup(wq);
 		msleep(&wq->wq_running, &wq->wq_mtx, PWAIT, "wqdestroy", 0);
 	}
-
 	mtx_leave(&wq->wq_mtx);
 
 	free(wq, M_DEVBUF);
@@ -155,19 +157,43 @@ void
 workq_create_thread(void *arg)
 {
 	struct workq		*wq = arg;
-	int			i;
 	int			rv;
 
 	mtx_enter(&wq->wq_mtx);
-	for (i = wq->wq_running; i < wq->wq_max; i++) {
+
+	switch (wq->wq_state) {
+	case WQ_S_DESTROYED:
+		mtx_leave(&wq->wq_mtx);
+		free(wq, M_DEVBUF);
+		return;
+
+	case WQ_S_CREATED:
+		wq->wq_state = WQ_S_RUNNING;
+		break;
+
+	default:
+		panic("unexpected %s wq state %d", wq->wq_name, wq->wq_state);
+	}
+
+	do {
+		wq->wq_running++;
+		mtx_leave(&wq->wq_mtx);
+
 		rv = kthread_create(workq_thread, wq, NULL, "%s", wq->wq_name);
+		
+		mtx_enter(&wq->wq_mtx);
 		if (rv != 0) {
-			printf("unable to create thread for \"%s\" workq\n",
+			printf("unable to create workq thread for \"%s\"\n",
 			    wq->wq_name);
+
+			wq->wq_running--;
+			/* could have been destroyed during kthread_create */
+			if (wq->wq_state == WQ_S_DESTROYED &&
+			    wq->wq_running == 0)
+				wakeup_one(&wq->wq_running);
 			break;
 		}
-		wq->wq_running++;
-	}
+	} while (wq->wq_running < wq->wq_max);
 	mtx_leave(&wq->wq_mtx);
 }
 
@@ -184,7 +210,7 @@ workq_next_task(struct workq *wq)
 		if (wqt != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&wq->wq_tasklist, wqt_entry);
 			break;
-		} else if (wq->wq_flags & WQ_F_RUNNING)
+		} else if (wq->wq_state == WQ_S_RUNNING)
 			msleep(wq, &wq->wq_mtx, PWAIT, "bored", 0);
 		else {
 			if (--wq->wq_running == 0)
