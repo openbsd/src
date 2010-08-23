@@ -2205,6 +2205,13 @@
 ./usr/sbin/named-checkzone
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
+./usr/sbin/nsd
+./usr/sbin/nsd-checkconf
+./usr/sbin/nsd-notify
+./usr/sbin/nsd-patch
+./usr/sbin/nsd-xfer
+./usr/sbin/nsd-zonec
+./usr/sbin/nsdc
 ./usr/sbin/nslookup
 ./usr/sbin/nsupdate
 ./usr/sbin/ntpd

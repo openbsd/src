@@ -2542,6 +2542,7 @@
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
 ./usr/share/man/cat5/newsyslog.conf.0
+./usr/share/man/cat5/nsd.conf.0
 ./usr/share/man/cat5/ntpd.conf.0
 ./usr/share/man/cat5/ospf6d.conf.0
 ./usr/share/man/cat5/ospfd.conf.0
@@ -2921,6 +2922,13 @@
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
 ./usr/share/man/cat8/nologin.0
+./usr/share/man/cat8/nsd-checkconf.0
+./usr/share/man/cat8/nsd-notify.0
+./usr/share/man/cat8/nsd-patch.0
+./usr/share/man/cat8/nsd-xfer.0
+./usr/share/man/cat8/nsd-zonec.0
+./usr/share/man/cat8/nsd.0
+./usr/share/man/cat8/nsdc.0
 ./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/ntpd.0
