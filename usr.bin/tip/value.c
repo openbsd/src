@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.32 2010/07/11 23:16:42 chl Exp $	*/
+/*	$OpenBSD: value.c,v 1.33 2010/08/23 19:05:08 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -239,6 +239,19 @@ vinit(void)
 	int		 written;
 	FILE		*fp;
 
+	/* Clear the table and set the defaults. */
+	for (vp = vtable; vp->v_name != NULL; vp++) {
+		vp->v_string = NULL;
+		vp->v_number = 0;
+	}
+	vsetnum(BEAUTIFY, 1);
+	vsetnum(ESCAPE, '~');
+	vsetnum(FORCE, CTRL('p'));
+	vsetnum(PROMPT, '\n');
+	vsetnum(TAND, 1);
+	vsetnum(VERBOSE, 1);
+	vsetstr(LOG, _PATH_ACULOG);
+
 	/* Read environment variables. */
 	if ((cp = getenv("HOME")) != NULL)
 		vsetstr(HOME, cp);
@@ -253,19 +266,6 @@ vinit(void)
 		vsetstr(SHELL, cp);
 	else
 		vsetstr(SHELL, _PATH_BSHELL);
-
-	/* Clear the table and set the defaults. */
-	for (vp = vtable; vp->v_name != NULL; vp++) {
-		vp->v_string = NULL;
-		vp->v_number = 0;
-	}
-	vsetnum(BEAUTIFY, 1);
-	vsetnum(ESCAPE, '~');
-	vsetnum(FORCE, CTRL('p'));
-	vsetnum(PROMPT, '\n');
-	vsetnum(TAND, 1);
-	vsetnum(VERBOSE, 1);
-	vsetstr(LOG, _PATH_ACULOG);
 
 	/* Read the .tiprc file in the HOME directory. */
 	written = snprintf(file, sizeof(file), "%s/.tiprc", vgetstr(HOME));
