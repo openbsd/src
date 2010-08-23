@@ -1,5 +1,7 @@
-$OpenBSD: README,v 1.7 2008/03/31 14:16:53 millert Exp $
-@(#)README	8.2
+$OpenBSD: README,v 1.8 2010/08/23 22:35:34 millert Exp $
+@(#)README	8.3
+This file is in the public domain, so clarified as of
+2009-05-17 by Arthur David Olson.
 
 "What time is it?" -- Richard Deacon as The King
 "Any time you want it to be." -- Frank Baxter as The Scientist

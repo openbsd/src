@@ -1,6 +1,7 @@
-$OpenBSD: Theory,v 1.13 2007/06/30 13:20:42 millert Exp $
-@(#)Theory	8.2
-
+$OpenBSD: Theory,v 1.14 2010/08/23 22:35:34 millert Exp $
+@(#)Theory	8.4
+This file is in the public domain, so clarified as of
+2009-05-17 by Arthur David Olson.
 
 ----- Outline -----
 
@@ -9,7 +10,6 @@ $OpenBSD: Theory,v 1.13 2007/06/30 13:20:42 millert Exp $
 	Time zone abbreviations
 	Calendrical issues
 	Time and time zones on Mars
-
 
 ----- Time and date functions -----
 
@@ -361,10 +361,10 @@ abbreviations like `EST'; this avoids the ambiguity.
 Calendrical issues are a bit out of scope for a time zone database,
 but they indicate the sort of problems that we would run into if we
 extended the time zone database further into the past.  An excellent
-resource in this area is Edward M. Reingold and Nachum Dershowitz,
-<a href="http://emr.cs.uiuc.edu/home/reingold/calendar-book/second-edition/">
-Calendrical Calculations: The Millennium Edition
-</a>, Cambridge University Press (2001).  Other information and
+resource in this area is Nachum Dershowitz and Edward M. Reingold,
+<a href="http://emr.cs.iit.edu/home/reingold/calendar-book/third-edition/">
+Calendrical Calculations: Third Edition
+</a>, Cambridge University Press (2008).  Other information and
 sources are given below.  They sometimes disagree.
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asctime.c,v 1.15 2007/02/06 19:35:16 millert Exp $ */
+/*	$OpenBSD: asctime.c,v 1.16 2010/08/23 22:35:34 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -82,6 +82,11 @@ int				bufsize;
 	char			year[INT_STRLEN_MAXIMUM(int) + 2];
 	int			len;
 
+	if (timeptr == NULL) {
+		errno = EINVAL;
+		strlcpy(buf, "??? ??? ?? ??:??:?? ????\n", bufsize);
+		return buf;
+	}
 	if (timeptr->tm_wday < 0 || timeptr->tm_wday >= DAYSPERWEEK)
 		wn = "???";
 	else	wn = wday_name[timeptr->tm_wday];

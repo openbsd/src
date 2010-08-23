@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.31 2008/01/07 01:09:37 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.32 2010/08/23 22:35:34 millert Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -8,11 +8,7 @@
 #include "locale.h"
 #include "tzfile.h"
 
-#ifdef notyet
 #define	ZIC_VERSION	'2'
-#else
-#define	ZIC_VERSION	'\0'
-#endif
 
 typedef int_fast64_t	zic_t;
 
@@ -159,7 +155,7 @@ static void 	stringzone(char * result, size_t size,
 			const struct zone * zp, int ntzones);
 static void	setboundaries(void);
 static zic_t	tadd(zic_t t1, long t2);
-static void	usage(void);
+static void	usage(FILE *stream, int status);
 static void	writezone(const char * name, const char * string);
 static int	yearistype(int year, const char * type);
 
@@ -457,11 +453,11 @@ const char * const	string;
 }
 
 static void
-usage(void)
+usage(FILE *stream, int status)
 {
-	(void) fprintf(stderr, _("usage: %s [-v] [-d directory] [-L leapsecondfilename] [-l timezone]\n\t[-p timezone] [-y command] [filename ...]\n"),
+	(void) fprintf(stream, _("usage: %s [-v] [-d directory] [-L leapsecondfilename] [-l timezone]\n\t[-p timezone] [-y command] [filename ...]\n"),
 		progname);
-	exit(EXIT_FAILURE);
+	exit(status);
 }
 
 static const char *	psxrules;
@@ -498,7 +494,7 @@ char *	argv[];
 	while ((c = getopt(argc, argv, "d:l:p:L:vy:")) != -1)
 		switch (c) {
 			default:
-				usage();
+				usage(stderr, EXIT_FAILURE);
 			case 'd':
 				if (directory == NULL)
 					directory = optarg;
@@ -554,7 +550,7 @@ _("%s: More than one -L option specified\n"),
 				break;
 		}
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
-		usage();	/* usage message by request */
+		usage(stderr, EXIT_FAILURE);	/* usage message by request */
 	if (directory == NULL)
 		directory = TZDIR;
 	if (yitcommand == NULL)
@@ -1554,11 +1550,7 @@ const char * const	string;
 			exit(EXIT_FAILURE);
 		}
 	}
-#ifdef notyet
 	for (pass = 1; pass <= 2; ++pass) {
-#else
-	pass = 1; {
-#endif
 		register int	thistimei, thistimecnt;
 		register int	thisleapi, thisleapcnt;
 		register int	thistimelim, thisleaplim;
@@ -1701,9 +1693,7 @@ const char * const	string;
 			if (writetype[i])
 				(void) putc(ttisgmts[i], fp);
 	}
-#ifdef notyet
 	(void) fprintf(fp, "\n%s\n", string);
-#endif
 	if (ferror(fp) || fclose(fp)) {
 		(void) fprintf(stderr, _("%s: Error writing %s\n"),
 			progname, fullname);
@@ -1916,7 +1906,7 @@ const int			zonecount;
 		if (stdrp != NULL && stdrp->r_hiyear == 2037)
 			return;
 	}
-	if (stdrp == NULL && zp->z_nrules != 0)
+	if (stdrp == NULL && (zp->z_nrules != 0 || zp->z_stdoff != 0))
 		return;
 	abbrvar = (stdrp == NULL) ? "" : stdrp->r_abbrvar;
 	doabbr(result, size, zp->z_format, abbrvar, FALSE, TRUE);
@@ -1994,7 +1984,7 @@ const int			zonecount;
 	min_year = max_year = EPOCH_YEAR;
 	if (leapseen) {
 		updateminmax(leapminyear);
-		updateminmax(leapmaxyear);
+		updateminmax(leapmaxyear + (leapmaxyear < INT_MAX));
 	}
 	for (i = 0; i < zonecount; ++i) {
 		zp = &zpfirst[i];

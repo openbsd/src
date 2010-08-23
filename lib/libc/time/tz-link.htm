@@ -18,8 +18,12 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	8.16
+@(#)tz-link.htm	8.30
 </address>
+<p>
+This file is in the public domain, so clarified as of
+2009-05-17 by Arthur David Olson.
+</p>
 <p>
 Please send corrections to this web page to the
 <a href="mailto:tz@elsie.nci.nih.gov">time zone mailing list</a>.</p>
@@ -36,8 +40,8 @@ href="http://en.wikipedia.org/wiki/Coordinated_Universal_Time"><abbr
 title="Coordinated Universal Time">UTC</abbr></a> offsets, and
 <a href="http://en.wikipedia.org/wiki/Daylight_saving">daylight-saving</a>
 rules.
-This database (often called <code>tz</code> or <a
-href="http://en.wikipedia.org/wiki/Zoneinfo"><code>zoneinfo</code></a>)
+This database (often called <code>zoneinfo</code> or <a
+href="http://en.wikipedia.org/wiki/TZ_database"><code>tz</code></a>)
 is used by several implementations,
 including
 <a href="http://www.gnu.org/software/libc/">the
@@ -85,6 +89,8 @@ the code is in the file <code>tzcode<var>C</var>.tar.gz</code>,
 where <code><var>C</var></code> is the code's version;
 similarly, the data are in <code>tzdata<var>D</var>.tar.gz</code>,
 where <code><var>D</var></code> is the data's version.
+Each version is a four-digit year followed by lower-case letters
+(a through z, then za through zz, then zza through zzz, and so on).
 The following <a
 href="http://en.wikipedia.org/wiki/Unix_shell">shell</a> commands download
 these files to a <abbr>GNU</abbr>/Linux or similar host;
@@ -110,10 +116,7 @@ retrieve the <a
 href="ftp://elsie.nci.nih.gov/pub/tzarchive.gz">full archive of old
 messages</a> (in gzip compressed format), or retrieve <a
 href="ftp://munnari.oz.au/pub/oldtz">archived older versions of code
-and data</a>; there is also a smaller <a
-href="http://public.planetmirror.com/pub/timezone"><abbr
-title="Hypertext Transfer Protocol">HTTP</abbr>
-mirror</a>.</p>
+and data</a>.</p>
 <p>
 The Web has several other sources for time zone and daylight saving time data.
 Here are some recent links that may be of interest.
@@ -123,6 +126,14 @@ Here are some recent links that may be of interest.
 These are listed roughly in ascending order of complexity and fanciness.
 </p>
 <ul>
+<li>
+<a href="http://permatime.com">
+Permatime</a>
+is a service for generating and viewing links that refer to a
+particular point in time and can be displayed in multiple timezones.
+It uses the ruby tzinfo gem. 
+(From Tim Diggins, 2009-11-03.)
+</li>
 <li><a href="http://twiki.org/cgi-bin/xtra/tzdatepick.html">Date and Time Gateway</a>
 lets you see the <code>TZ</code> values directly.</li>
 <li><a
@@ -140,6 +151,9 @@ difference versus time for any pair of locations.</li>
 <li>The <a href="http://worldtimeengine.com/">World Time Engine</a>
 also contains data about time zone boundaries; it supports queries via place
 names and shows location maps.</li>
+<li><a href="http://simpletimerclocks.mozdev.org/">Simple Timer + Clocks</a>
+is a Firefox add-on which uses a timezone data file generated from the
+tz data files.</li>
 </ul>
 <h2>Other time zone database formats</h2>
 <ul>
@@ -218,7 +232,7 @@ contains a class
 <code>org.joda.time.tz.ZoneInfoCompiler</code> that compiles
 <code>tz</code> source into a Joda-specific binary format. Joda Time
 is freely available under a <abbr>BSD</abbr>-style license.</li>
-<li><a href="http://sourceforge.net/projects/pytz">PyTZ - Python Time
+<li><a href="http://pytz.sourceforge.net">PyTZ - Python Time
 Zone Library</a> compiles <code>tz</code> source into
 <a href="http://python.org/">Python</a>.
 It is freely available under a <abbr>BSD</abbr>-style license.</li>
@@ -296,6 +310,12 @@ licenses</a> to <code>tz</code> contributors.</li>
 <li><a
 href="http://worldtimeexplorer.com/">World Time Explorer</a> is a
 Microsoft Windows program.</li>
+<li>
+<a href="http://www.toriasoft.com">
+WorldClock for Windows and Windows Mobile</a>
+lets users "see the time in up to 25 locations in the world at once."
+(From Hans Nieuwenhuis, 2009-11-02.)
+</li>
 </ul>
 <h2>Other time zone databases</h2>
 <ul>
@@ -331,6 +351,17 @@ href="http://unicode.org/cldr/data/diff/supplemental/windows_tzid.html">Windows
 &rarr; Tzid table</a> maintained by the <abbr
 title="Common Locale Data Repository">CLDR</abbr> data mentioned
 below.</li>
+<li>
+<a href="http://code.google.com/p/tzdata/">
+http://code.google.com/p/tzdata/
+</a>
+provides programming-language-specific representations of timezone
+data. Currently this includes XML, PHP, Ruby, Javascript, JSON and CSV
+formatted data. The repository is updated as soon as the FTP
+distribution is updated. All data can be downloaded as a zip and/or it
+can be obtained/synced via anonymous SVN. Data is made available under
+the MIT license. (From Rich Tibbett.)
+</li>
 </ul>
 <h2>Maps</h2>
 <ul>
@@ -356,10 +387,9 @@ but the maps are more up to date.</li>
 </ul>
 <h2>Time zone boundaries</h2>
 <ul>
-<li><a href="http://efele.net/maps/tz/us/">A map of the TZ timezones in
-the US</a> contains a <a
+<li><a href="http://efele.net/maps/tz/">TZ timezone maps</a> contains a <a
 href="http://en.wikipedia.org/wiki/Shapefile">shapefile</a> of the
-<code>tz</code> regions in the US.</li>
+<code>tz</code> regions in the world.</li>
 <li><a href="http://statoids.com/statoids.html">Administrative Divisions
 of Countries ("Statoids")</a> contains detailed lists of
 <code>tz</code>-related zone subdivision data.</li>
@@ -555,7 +585,7 @@ and Klepczynski's proposal to discontinue leap seconds</a>,
 discussed further in
 <a href="http://www.cl.cam.ac.uk/~mgk25/time/metrologia-leapsecond.pdf">The
 leap second: its history and possible future</a>.
-The <a href="http://aas.org/policy/LeapSecondCommittee.html"><abbr
+The (now disbanded) <a href="http://members.aas.org/comms/leap.cfm"><abbr
 title="American Astronomical Society">AAS</abbr> Leap Second
 Committee</a> has solicited input on this proposal.
 <a href="http://www.ucolick.org/~sla/leapsecs/">The

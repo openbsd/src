@@ -1,8 +1,8 @@
-/*	$OpenBSD: zdump.c,v 1.21 2007/12/29 22:26:51 millert Exp $ */
+/*	$OpenBSD: zdump.c,v 1.22 2010/08/23 22:35:34 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
-** Feb 14, 2003 by Arthur David Olson.
-static char	elsieid[] = "@(#)zdump.c	8.6";
+** 2009-05-17 by Arthur David Olson.
+*/
 
 /*
 ** This code has been made independent of the rest of the time
@@ -235,6 +235,16 @@ const char * const	zone;
 	warned = TRUE;
 }
 
+static void
+usage(stream, status)
+FILE * const	stream;
+const int	status;
+{
+	(void) fprintf(stream,
+_("usage: %s [-v] [-c [loyear,]hiyear] zonename ...\n"), progname);
+	exit(status);
+}
+
 int
 main(argc, argv)
 int	argc;
@@ -275,10 +285,7 @@ char *	argv[];
 		else	cutarg = optarg;
 	if ((c != EOF && c != -1) ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
-			(void) fprintf(stderr,
-_("usage: %s [-v] [-c [loyear,]hiyear] zonename ...\n"),
-				progname);
-			exit(EXIT_FAILURE);
+			usage(stderr, EXIT_FAILURE);
 	}
 	if (vflag) {
 		if (cutarg != NULL) {
@@ -349,13 +356,9 @@ _("usage: %s [-v] [-c [loyear,]hiyear] zonename ...\n"),
 			strlcpy(buf, abbr(&tm), sizeof buf);
 		}
 		for ( ; ; ) {
-			if (t >= cuthitime)
+			if (t >= cuthitime || t >= cuthitime - SECSPERHOUR * 12)
 				break;
 			newt = t + SECSPERHOUR * 12;
-			if (newt >= cuthitime)
-				break;
-			if (newt <= t)
-				break;
 			newtmp = localtime(&newt);
 			if (newtmp != NULL)
 				newtm = *newtmp;

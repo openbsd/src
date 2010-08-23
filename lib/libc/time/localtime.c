@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.34 2008/03/31 14:16:53 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.35 2010/08/23 22:35:34 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -272,22 +272,6 @@ settzname(void)
 		return;
 	}
 #endif /* defined ALL_STATE */
-	for (i = 0; i < sp->typecnt; ++i) {
-		register const struct ttinfo * const	ttisp = &sp->ttis[i];
-
-		tzname[ttisp->tt_isdst] =
-			&sp->chars[ttisp->tt_abbrind];
-#ifdef USG_COMPAT
-		if (ttisp->tt_isdst)
-			daylight = 1;
-		if (i == 0 || !ttisp->tt_isdst)
-			timezone = -(ttisp->tt_gmtoff);
-#endif /* defined USG_COMPAT */
-#ifdef ALTZONE
-		if (i == 0 || ttisp->tt_isdst)
-			altzone = -(ttisp->tt_gmtoff);
-#endif /* defined ALTZONE */
-	}
 	/*
 	** And to get the latest zone names into tzname. . .
 	*/
@@ -298,6 +282,16 @@ settzname(void)
 
 		tzname[ttisp->tt_isdst] =
 			&sp->chars[ttisp->tt_abbrind];
+#ifdef USG_COMPAT
+		if (ttisp->tt_isdst)
+			daylight = 1;
+		if (!ttisp->tt_isdst)
+			timezone = -(ttisp->tt_gmtoff);
+#endif /* defined USG_COMPAT */
+#ifdef ALTZONE
+		if (ttisp->tt_isdst)
+			altzone = -(ttisp->tt_gmtoff);
+#endif /* defined ALTZONE */
 	}
 	/*
 	** Finally, scrub the abbreviations.
@@ -348,6 +342,7 @@ register const int		doextend;
 					4 * TZ_MAX_TIMES];
 	} u;
 
+	sp->goback = sp->goahead = FALSE;
 	if (name != NULL && issetugid() != 0)
 		if ((name[0] == ':' && (strchr(name, '/') || strstr(name, ".."))) ||
 		    name[0] == '/' || strchr(name, '.'))
@@ -557,7 +552,6 @@ register const int		doextend;
 					sp->ttis[sp->typecnt++] = ts.ttis[1];
 			}
 	}
-	sp->goback = sp->goahead = FALSE;
 	if (sp->timecnt > 1) {
 		for (i = 1; i < sp->timecnt; ++i)
 			if (typesequiv(sp, sp->types[i], sp->types[0]) &&
@@ -1156,7 +1150,7 @@ tzsetwall_basic(void)
 
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
-		lclptr = (struct state *) malloc(sizeof *lclptr);
+		lclptr = (struct state *) calloc(1, sizeof *lclptr);
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
 			return;
@@ -1203,7 +1197,7 @@ tzset_basic(void)
 
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
-		lclptr = (struct state *) malloc(sizeof *lclptr);
+		lclptr = (struct state *) calloc(1, sizeof *lclptr);
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
 			return;
@@ -1381,7 +1375,7 @@ struct tm * const	tmp;
 	if (!gmt_is_set) {
 		gmt_is_set = TRUE;
 #ifdef ALL_STATE
-		gmtptr = (struct state *) malloc(sizeof *gmtptr);
+		gmtptr = (struct state *) calloc(1, sizeof *gmtptr);
 		if (gmtptr != NULL)
 #endif /* defined ALL_STATE */
 			gmtload(gmtptr);
@@ -1923,6 +1917,10 @@ const long		offset;
 	int				types[TZ_MAX_TYPES];
 	int				okay;
 
+	if (tmp == NULL) {
+		errno = EINVAL;
+		return WRONG;
+	}
 	if (tmp->tm_isdst > 1)
 		tmp->tm_isdst = 1;
 	t = time2(tmp, funcp, offset, &okay);
@@ -1999,7 +1997,8 @@ time_t
 timelocal(tmp)
 struct tm * const	tmp;
 {
-	tmp->tm_isdst = -1;	/* in case it wasn't initialized */
+	if (tmp != NULL)
+		tmp->tm_isdst = -1;	/* in case it wasn't initialized */
 	return mktime(tmp);
 }
 
@@ -2007,7 +2006,8 @@ time_t
 timegm(tmp)
 struct tm * const	tmp;
 {
-	tmp->tm_isdst = 0;
+	if (tmp != NULL)
+		tmp->tm_isdst = 0;
 	return time1(tmp, gmtsub, 0L);
 }
 
@@ -2016,7 +2016,8 @@ timeoff(tmp, offset)
 struct tm * const	tmp;
 const long		offset;
 {
-	tmp->tm_isdst = 0;
+	if (tmp != NULL)
+		tmp->tm_isdst = 0;
 	return time1(tmp, gmtsub, offset);
 }
 
