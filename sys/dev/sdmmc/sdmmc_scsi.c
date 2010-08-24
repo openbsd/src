@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.24 2010/08/19 17:54:12 jasper Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.25 2010/08/24 14:52:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -97,7 +97,7 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	struct sdmmc_scsi_softc *scbus;
 	struct sdmmc_function *sf;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	rw_assert_wrlock(&sc->sc_lock);
 
 	scbus = malloc(sizeof *scbus, M_DEVBUF, M_WAITOK | M_ZERO);
 
@@ -159,7 +159,7 @@ sdmmc_scsi_detach(struct sdmmc_softc *sc)
 	struct sdmmc_ccb *ccb;
 	int s;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	rw_assert_wrlock(&sc->sc_lock);
 
 	scbus = sc->sc_scsibus;
 	if (scbus == NULL)

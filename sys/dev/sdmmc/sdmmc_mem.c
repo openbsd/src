@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.15 2010/08/19 17:54:12 jasper Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.16 2010/08/24 14:52:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -52,7 +52,7 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 	u_int32_t host_ocr;
 	u_int32_t card_ocr;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	rw_assert_wrlock(&sc->sc_lock);
 
 	/* Set host mode to SD "combo" card or SD memory-only. */
 	SET(sc->sc_flags, SMF_SD_MODE|SMF_MEM_MODE);
@@ -122,7 +122,7 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 	int error;
 	int i;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	rw_assert_wrlock(&sc->sc_lock);
 
 	/*
 	 * CMD2 is a broadcast command understood by SD cards and MMC
@@ -331,7 +331,7 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int error = 0;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	rw_assert_wrlock(&sc->sc_lock);
 
 	if (sdmmc_select_card(sc, sf) != 0 ||
 	    sdmmc_mem_set_blocklen(sc, sf) != 0)
@@ -350,7 +350,7 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr,
 	int error;
 	int i;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	rw_assert_wrlock(&sc->sc_lock);
 
 	/*
 	 * If we change the OCR value, retry the command until the OCR
@@ -392,7 +392,7 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	struct sdmmc_command cmd;
 
-	SDMMC_ASSERT_LOCKED(sc);
+	rw_assert_wrlock(&sc->sc_lock);
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_opcode = MMC_SET_BLOCKLEN;
@@ -412,7 +412,7 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	struct sdmmc_command cmd;
 	int error;
 
-	SDMMC_LOCK(sc);
+	rw_enter_write(&sc->sc_lock);
 
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		goto err;
@@ -456,7 +456,7 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 
 err:
-	SDMMC_UNLOCK(sc);
+	rw_exit(&sc->sc_lock);
 	return error;
 }
 
@@ -468,7 +468,7 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	struct sdmmc_command cmd;
 	int error;
 
-	SDMMC_LOCK(sc);
+	rw_enter_write(&sc->sc_lock);
 
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		goto err;
@@ -511,6 +511,6 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 
 err:
-	SDMMC_UNLOCK(sc);
+	rw_exit(&sc->sc_lock);
 	return error;
 }

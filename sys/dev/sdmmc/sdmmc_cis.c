@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_cis.c,v 1.4 2010/08/19 17:54:12 jasper Exp $	*/
+/*	$OpenBSD: sdmmc_cis.c,v 1.5 2010/08/24 14:52:23 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -39,7 +39,7 @@ sdmmc_cisptr(struct sdmmc_function *sf)
 {
 	u_int32_t cisptr = 0;
 
-	SDMMC_ASSERT_LOCKED(sf->sc);
+	rw_assert_wrlock(&sf->sc->sc_lock);
 
 	/* XXX where is the per-function CIS pointer register? */
 	if (sf->number != 0)
@@ -60,7 +60,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 	u_int8_t tplcode;
 	u_int8_t tpllen;
 
-	SDMMC_ASSERT_LOCKED(sf->sc);
+	rw_assert_wrlock(&sf->sc->sc_lock);
 
 	bzero(cis, sizeof *cis);
 
