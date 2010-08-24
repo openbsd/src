@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.125 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.126 2010/08/24 15:50:16 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -832,14 +832,6 @@ makeroute:
 		if (prio == 0)
 			prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
 		rt->rt_priority = prio;	/* init routing priority */
-		if ((LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
-		    ifa->ifa_ifp->if_link_state == LINK_STATE_UNKNOWN) &&
-		    ifa->ifa_ifp->if_flags & IFF_UP)
-			rt->rt_flags |= RTF_UP;
-		else {
-			rt->rt_flags &= ~RTF_UP;
-			rt->rt_priority |= RTP_DOWN;
-		}
 		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_GATEWAY], tableid)) {
@@ -854,15 +846,26 @@ makeroute:
 			Bcopy(info->rti_info[RTAX_DST], ndst,
 			    info->rti_info[RTAX_DST]->sa_len);
 #ifndef SMALL_KERNEL
-		/* do not permit exactly the same dst/mask/gw pair */
-		if (rn_mpath_capable(rnh) &&
-		    rt_mpath_conflict(rnh, rt, info->rti_info[RTAX_NETMASK],
-		    info->rti_flags & RTF_MPATH)) {
-			if (rt->rt_gwroute)
-				rtfree(rt->rt_gwroute);
-			Free(rt_key(rt));
-			pool_put(&rtentry_pool, rt);
-			senderr(EEXIST);
+		if (rn_mpath_capable(rnh)) {
+			/* do not permit exactly the same dst/mask/gw pair */
+			if (rt_mpath_conflict(rnh, rt,
+			    info->rti_info[RTAX_NETMASK],
+			    info->rti_flags & RTF_MPATH)) {
+				if (rt->rt_gwroute)
+					rtfree(rt->rt_gwroute);
+				Free(rt_key(rt));
+				pool_put(&rtentry_pool, rt);
+				senderr(EEXIST);
+			}
+			/* check the link state since the table supports it */
+			if ((LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
+			    ifa->ifa_ifp->if_link_state == LINK_STATE_UNKNOWN)
+			    && ifa->ifa_ifp->if_flags & IFF_UP)
+				rt->rt_flags |= RTF_UP;
+			else {
+				rt->rt_flags &= ~RTF_UP;
+				rt->rt_priority |= RTP_DOWN;
+			}
 		}
 #endif
 
