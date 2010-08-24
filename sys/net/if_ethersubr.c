@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.145 2010/07/02 00:49:43 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.146 2010/08/24 14:43:56 blambert Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -282,10 +282,12 @@ ether_output(ifp0, m0, dst, rt0)
 			if (rt->rt_gwroute == 0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway,
-			    RT_REPORT, ifp->if_rdomain);
-				if ((rt = rt->rt_gwroute) == 0)
+				rtfree(rt);
+				rt = rt0;
+			lookup:
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway,
+				    RT_REPORT, ifp->if_rdomain);
+				if ((rt = rt->rt_gwroute) == NULL)
 					senderr(EHOSTUNREACH);
 			}
 		}

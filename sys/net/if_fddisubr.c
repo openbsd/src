@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.59 2010/05/07 13:33:16 claudio Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.60 2010/08/24 14:43:56 blambert Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -189,10 +189,12 @@ fddi_output(ifp0, m0, dst, rt0)
 			if (rt->rt_gwroute == 0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway,
-			    RT_REPORT, ifp->if_rdomain);
-				if ((rt = rt->rt_gwroute) == 0)
+				rtfree(rt);
+				rt = rt0;
+			lookup:
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway,
+				    RT_REPORT, ifp->if_rdomain);
+				if ((rt = rt->rt_gwroute) == NULL)
 					senderr(EHOSTUNREACH);
 			}
 		}

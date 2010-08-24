@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.31 2010/05/07 13:33:16 claudio Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.32 2010/08/24 14:43:56 blambert Exp $       */
 
 /*
  *
@@ -171,10 +171,12 @@ atm_output(ifp, m0, dst, rt0)
 			if (rt->rt_gwroute == 0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway,
-			    RT_REPORT, ifp->if_rdomain);
-				if ((rt = rt->rt_gwroute) == 0)
+				rtfree(rt);
+				rt = rt0;
+			lookup:
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway,
+				    RT_REPORT, ifp->if_rdomain);
+				if ((rt = rt->rt_gwroute) == NULL)
 					senderr(EHOSTUNREACH);
 			}
 		}
