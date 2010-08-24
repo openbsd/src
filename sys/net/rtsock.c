@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.105 2010/07/14 20:56:35 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.106 2010/08/24 12:45:08 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ route_input(struct mbuf *m0, ...)
 	struct routecb *rop;
 	struct mbuf *m = m0;
 	int sockets = 0;
-	struct socket *last;
+	struct socket *last = NULL;
 	va_list ap;
 	struct sockproto *proto;
 	struct sockaddr *sosrc, *sodst;
@@ -319,7 +319,6 @@ route_input(struct mbuf *m0, ...)
 		return;
 	}
 
-	last = 0;
 	LIST_FOREACH(rp, &rawcb, rcb_list) {
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
