@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.1,v 1.14 2010/08/21 19:00:50 djm Exp $
+.\"	$OpenBSD: vis.1,v 1.15 2010/08/24 23:49:06 djm Exp $
 .\"	$NetBSD: vis.1,v 1.5 1994/11/17 07:56:00 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)vis.1	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 21 2010 $
+.Dd $Mdocdate: August 24 2010 $
 .Dt VIS 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd display non-printable characters in a visual format
 .Sh SYNOPSIS
 .Nm vis
-.Op Fl abcfhlnostw
+.Op Fl abcflnostw
 .Op Fl F Ar foldwidth
 .Op Ar
 .Sh DESCRIPTION
@@ -91,9 +91,6 @@ typically don't work with partial lines.
 Like
 .Fl F ,
 except output is always folded to 80 columns.
-.It Fl h
-Request a format which displays non-printable characters as
-a hexadecimal number, \exdd.
 .It Fl l
 Mark newlines with the visible sequence
 .Ql \e$ ,

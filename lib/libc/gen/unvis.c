@@ -1,4 +1,4 @@
-/*	$OpenBSD: unvis.c,v 1.13 2010/08/21 18:59:15 djm Exp $ */
+/*	$OpenBSD: unvis.c,v 1.14 2010/08/24 23:49:06 djm Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,25 +42,8 @@
 #define	S_CTRL		4	/* control char started (^) */
 #define	S_OCTAL2	5	/* octal digit 2 */
 #define	S_OCTAL3	6	/* octal digit 3 */
-#define	S_HEX1		7	/* hex digit 1 */
-#define	S_HEX2		8	/* hex digit 2 */
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
-#define	ishex(c)	((((u_char)(c)) >= '0' && ((u_char)(c)) <= '9') || \
-			 (((u_char)(c)) >= 'a' && ((u_char)(c)) <= 'f') || \
-			 (((u_char)(c)) >= 'A' && ((u_char)(c)) <= 'F'))
-
-static u_int
-dehex(u_int c)
-{
-	if (c >= '0' && c <= '9')
-		return c - '0';
-	if (c >= 'a' && c <= 'f')
-		return 10 + c - 'a';
-	if (c >= 'A' && c <= 'F')
-		return 10 + c - 'A';
-	return 0;
-}
 
 /*
  * unvis - decode characters previously encoded by vis
@@ -70,8 +53,7 @@ unvis(char *cp, char c, int *astate, int flag)
 {
 
 	if (flag & UNVIS_END) {
-		if (*astate == S_OCTAL2 || *astate == S_OCTAL3 ||
-		    *astate == S_HEX1 || *astate == S_HEX2) {
+		if (*astate == S_OCTAL2 || *astate == S_OCTAL3) {
 			*astate = S_GROUND;
 			return (UNVIS_VALID);
 		} 
@@ -95,9 +77,6 @@ unvis(char *cp, char c, int *astate, int flag)
 			*cp = c;
 			*astate = S_GROUND;
 			return (UNVIS_VALID);
-		case 'x':
-			*astate = S_HEX1;
-			return (0);
 		case '0': case '1': case '2': case '3':
 		case '4': case '5': case '6': case '7':
 			*cp = (c - '0');
@@ -205,32 +184,6 @@ unvis(char *cp, char c, int *astate, int flag)
 		*astate = S_GROUND;
 		if (isoctal(c)) {
 			*cp = (*cp << 3) + (c - '0');
-			return (UNVIS_VALID);
-		}
-		/*
-		 * we were done, push back passed char
-		 */
-		return (UNVIS_VALIDPUSH);
-
-	case S_HEX1:	/* first possible hex digit */
-		if (ishex(c)) {
-			/* 
-			 * yes - and maybe a second
-			 */
-			*cp = dehex(c);
-			*astate = S_HEX2;	
-			return (0);
-		} 
-		/* 
-		 * no - done with current sequence, push back passed char 
-		 */
-		*astate = S_GROUND;
-		return (UNVIS_VALIDPUSH);
-
-	case S_HEX2:	/* second possible hex digit */
-		*astate = S_GROUND;
-		if (ishex(c)) {
-			*cp = ((u_int)*cp << 4) + dehex(c);
 			return (UNVIS_VALID);
 		}
 		/*

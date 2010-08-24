@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.h,v 1.12 2010/08/23 02:07:50 djm Exp $	*/
+/*	$OpenBSD: vis.h,v 1.13 2010/08/24 23:49:06 djm Exp $	*/
 /*	$NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
  */
 #define	VIS_OCTAL	0x01	/* use octal \ddd format */
 #define	VIS_CSTYLE	0x02	/* use \[nrft0..] where appropriate */
-#define	VIS_HEX		0x200	/* use hex \xdd format */
 
 /*
  * to alter set of characters encoded (default is to encode all
