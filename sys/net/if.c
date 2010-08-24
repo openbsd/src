@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.219 2010/07/31 20:48:32 blambert Exp $	*/
+/*	$OpenBSD: if.c,v 1.220 2010/08/24 16:00:16 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1496,6 +1496,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		/* remove all routing entries when switching domains */
 		/* XXX hell this is ugly */
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
+			int s = splnet();
 			rt_if_remove(ifp);
 #ifdef INET
 			rti_delete(ifp);
@@ -1525,6 +1526,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 				IFAFREE(ifa);
 			}
 #endif
+			splx(s);
 		}
 
 		/* Add interface to the specified rdomain */
