@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.220 2010/08/24 16:00:16 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.221 2010/08/24 16:13:32 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1323,7 +1323,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			splx(s);
 		}
 		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
-			(ifr->ifr_flags &~ IFF_CANTCHANGE);
+			(ifr->ifr_flags & ~IFF_CANTCHANGE);
 		if (ifp->if_ioctl)
 			(void) (*ifp->if_ioctl)(ifp, cmd, data);
 		break;
@@ -1372,7 +1372,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 
 		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
-			(ifr->ifr_flags &~ IFXF_CANTCHANGE);
+			(ifr->ifr_flags & ~IFXF_CANTCHANGE);
 		rt_ifmsg(ifp);
 		break;
 
