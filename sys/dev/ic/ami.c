@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.212 2010/07/01 03:20:38 matthew Exp $	*/
+/*	$OpenBSD: ami.c,v 1.213 2010/08/25 00:47:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -492,11 +492,7 @@ ami_attach(struct ami_softc *sc)
 		sc->sc_maxcmds -= AMI_MAXIOCTLCMDS + AMI_MAXPROCS *
 		    AMI_MAXRAWCMDS * sc->sc_channels;
 
-		if (sc->sc_nunits)
-			sc->sc_link.openings =
-			    sc->sc_maxcmds / sc->sc_nunits;
-		else
-			sc->sc_link.openings = sc->sc_maxcmds;
+		sc->sc_link.openings = sc->sc_maxcmds;
 	}
 
 	ami_freemem(sc, am);
@@ -581,7 +577,7 @@ ami_attach(struct ami_softc *sc)
 
 		rsc->sc_softc = sc;
 		rsc->sc_channel = rsc - sc->sc_rawsoftcs;
-		rsc->sc_link.openings = AMI_MAXRAWCMDS;
+		rsc->sc_link.openings = sc->sc_maxcmds;
 		rsc->sc_link.adapter_softc = rsc;
 		rsc->sc_link.adapter = &ami_raw_switch;
 		rsc->sc_proctarget = -1;
