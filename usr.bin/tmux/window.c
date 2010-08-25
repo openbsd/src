@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.54 2010/08/19 18:29:01 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.55 2010/08/25 19:19:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -495,6 +495,8 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 void
 window_pane_destroy(struct window_pane *wp)
 {
+	window_pane_reset_mode(wp);
+
 	if (wp->fd != -1) {
 		close(wp->fd);
 		bufferevent_free(wp->event);
@@ -502,7 +504,6 @@ window_pane_destroy(struct window_pane *wp)
 
 	input_free(wp);
 
-	window_pane_reset_mode(wp);
 	screen_free(&wp->base);
 	if (wp->saved_grid != NULL)
 		grid_destroy(wp->saved_grid);
