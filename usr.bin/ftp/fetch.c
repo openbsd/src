@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.102 2010/07/23 22:27:16 halex Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.103 2010/08/25 20:32:37 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -758,8 +758,6 @@ again:
 		} else if (isredirect &&
 		    strncasecmp(cp, LOCATION, sizeof(LOCATION) - 1) == 0) {
 			cp += sizeof(LOCATION) - 1;
-			free(proxyurl);
-			free(cookie);
 			if (strstr(cp, "://") == NULL) {
 #ifdef SMALL
 				errx(1, "Relative redirect not supported");
