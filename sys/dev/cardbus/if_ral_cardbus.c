@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.18 2010/04/05 14:14:02 damien Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.19 2010/08/25 21:37:59 kettenis Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -31,6 +31,7 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
+#include <sys/workq.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -59,21 +60,29 @@
 static struct ral_opns {
 	int	(*attach)(void *, int);
 	int	(*detach)(void *);
+	void	(*suspend)(void *);
+	void	(*resume)(void *);
 	int	(*intr)(void *);
 
 }  ral_rt2560_opns = {
 	rt2560_attach,
 	rt2560_detach,
+	rt2560_suspend,
+	rt2560_resume,
 	rt2560_intr
 
 }, ral_rt2661_opns = {
 	rt2661_attach,
 	rt2661_detach,
+	rt2661_suspend,
+	rt2661_resume,
 	rt2661_intr
 
 }, ral_rt2860_opns = {
 	rt2860_attach,
 	rt2860_detach,
+	rt2860_suspend,
+	rt2860_resume,
 	rt2860_intr
 };
 
@@ -94,15 +103,18 @@ struct ral_cardbus_softc {
 	pcireg_t		sc_bar_val;
 	int			sc_intrline;
 	pci_chipset_tag_t	sc_pc;
+	struct workq_task	sc_resume_wqt;
 };
 
 int	ral_cardbus_match(struct device *, void *, void *);
 void	ral_cardbus_attach(struct device *, struct device *, void *);
 int	ral_cardbus_detach(struct device *, int);
+int	ral_cardbus_activate(struct device *, int);
 
 struct cfattach ral_cardbus_ca = {
 	sizeof (struct ral_cardbus_softc), ral_cardbus_match,
-	ral_cardbus_attach, ral_cardbus_detach
+	ral_cardbus_attach, ral_cardbus_detach,
+	ral_cardbus_activate
 };
 
 static const struct pci_matchid ral_cardbus_devices[] = {
@@ -133,8 +145,8 @@ static const struct pci_matchid ral_cardbus_devices[] = {
 
 int	ral_cardbus_enable(struct rt2560_softc *);
 void	ral_cardbus_disable(struct rt2560_softc *);
-void	ral_cardbus_power(struct rt2560_softc *, int);
 void	ral_cardbus_setup(struct ral_cardbus_softc *);
+void	ral_cardbus_resume(void *, void *);
 
 int
 ral_cardbus_match(struct device *parent, void *match, void *aux)
@@ -180,7 +192,6 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* power management hooks */
 	sc->sc_enable = ral_cardbus_enable;
 	sc->sc_disable = ral_cardbus_disable;
-	sc->sc_power = ral_cardbus_power;
 
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
@@ -231,6 +242,25 @@ ral_cardbus_detach(struct device *self, int flags)
 }
 
 int
+ral_cardbus_activate(struct device *self, int act)
+{
+	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
+	struct rt2560_softc *sc = &csc->sc_sc;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		(*csc->sc_opns->suspend)(sc);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &csc->sc_resume_wqt, 0,
+		    ral_cardbus_resume, csc, NULL);
+		break;
+	}
+
+	return 0;
+}
+
+int
 ral_cardbus_enable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
@@ -274,17 +304,6 @@ ral_cardbus_disable(struct rt2560_softc *sc)
 }
 
 void
-ral_cardbus_power(struct rt2560_softc *sc, int why)
-{
-	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
-
-	if (why == PWR_RESUME) {
-		/* kick the PCI configuration registers */
-		ral_cardbus_setup(csc);
-	}
-}
-
-void
 ral_cardbus_setup(struct ral_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -307,4 +326,16 @@ ral_cardbus_setup(struct ral_cardbus_softc *csc)
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(pc, csc->sc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
+}
+
+void
+ral_cardbus_resume(void *arg1, void *arg2)
+{
+	struct ral_cardbus_softc *csc = arg1;
+	struct rt2560_softc *sc = &csc->sc_sc;
+	int s;
+
+	s = splnet();
+	(*csc->sc_opns->resume)(sc);
+	splx(s);
 }

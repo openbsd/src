@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.55 2010/08/04 19:48:33 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.56 2010/08/25 21:37:59 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -408,7 +408,7 @@ rt2661_suspend(void *xsc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	if (ifp->if_flags & IFF_RUNNING)
-		rt2661_stop(ifp, 0);
+		rt2661_stop(ifp, 1);
 }
 
 void

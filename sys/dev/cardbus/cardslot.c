@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.13 2010/01/13 09:10:33 jsg Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.14 2010/08/25 21:37:59 kettenis Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -68,7 +68,8 @@ STATIC int cardslot_16_print(void *, const char *);
 STATIC int cardslot_16_submatch(struct device *, void *,void *);
 
 struct cfattach cardslot_ca = {
-	sizeof(struct cardslot_softc), cardslotmatch, cardslotattach
+	sizeof(struct cardslot_softc), cardslotmatch, cardslotattach,
+	NULL, config_activate_children
 };
 
 struct cfdriver cardslot_cd = {

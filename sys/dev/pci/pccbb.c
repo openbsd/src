@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.76 2010/06/30 19:46:30 blambert Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.77 2010/08/25 21:37:59 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -176,7 +176,8 @@ void	cb_show_regs(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
 #endif
 
 struct cfattach cbb_pci_ca = {
-	sizeof(struct pccbb_softc), pcicbbmatch, pccbbattach
+	sizeof(struct pccbb_softc), pcicbbmatch, pccbbattach, NULL,
+	config_activate_children
 };
 
 static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
