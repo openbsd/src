@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.72 2010/07/14 00:42:57 dlg Exp $	*/
+/*	$OpenBSD: route.h,v 1.73 2010/08/25 14:07:24 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -355,7 +355,6 @@ extern const struct sockaddr_rtin rt_defmask4;
 struct	socket;
 void	 route_init(void);
 int	 rtable_add(u_int);
-void	 rtable_addif(struct ifnet *, u_int);
 u_int	 rtable_l2(u_int);
 void	 rtable_l2set(u_int, u_int);
 int	 rtable_exists(u_int);

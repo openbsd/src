@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.126 2010/08/24 15:50:16 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.127 2010/08/25 14:07:24 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ rtable_init(struct radix_node_head ***table, u_int id)
 
 	if ((p = malloc(sizeof(void *) * (rtafidx_max + 1), M_RTABLE,
 	    M_NOWAIT|M_ZERO)) == NULL)
-		return (-1);
+		return (ENOMEM);
 
 	/* 2nd pass: attach */
 	for (dom = domains; dom != NULL; dom = dom->dom_next)
@@ -220,7 +220,7 @@ route_init(void)
 		if (dom->dom_rtattach)
 			af2rtafidx[dom->dom_family] = rtafidx_max++;
 
-	if (rtable_add(0) == -1)
+	if (rtable_add(0) != 0)
 		panic("route_init rtable_add");
 }
 
@@ -230,17 +230,17 @@ rtable_add(u_int id)	/* must be called at splsoftnet */
 	void	*p, *q;
 
 	if (id > RT_TABLEID_MAX)
-		return (-1);
+		return (EINVAL);
 
 	if (id == 0 || id > rtbl_id_max) {
 		size_t	newlen = sizeof(void *) * (id+1);
 		size_t	newlen2 = sizeof(u_int) * (id+1);
 
 		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
-			return (-1);
+			return (ENOMEM);
 		if ((q = malloc(newlen2, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL) {
 			free(p, M_RTABLE);
-			return (-1);
+			return (ENOMEM);
 		}
 		if (rt_tables) {
 			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
@@ -254,26 +254,10 @@ rtable_add(u_int id)	/* must be called at splsoftnet */
 	}
 
 	if (rt_tables[id] != NULL)	/* already exists */
-		return (-1);
+		return (EEXIST);
 
 	rt_tab2dom[id] = 0;	/* use main table/domain by default */
 	return (rtable_init(&rt_tables[id], id));
-}
-
-void
-rtable_addif(struct ifnet *ifp, u_int id)
-{
-	/* make sure that the routing table exists */
-	if (!rtable_exists(id)) {
-		if (rtable_add(id) == -1)
-			panic("rtable_addif: rtable_add");
-	}
-	if (id != rtable_l2(id)) {
-		/* XXX we should probably flush the table */
-		rtable_l2set(id, id);
-	}
-
-	ifp->if_rdomain = id;
 }
 
 u_int

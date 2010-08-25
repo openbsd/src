@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.106 2010/08/24 12:45:08 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.107 2010/08/25 14:07:24 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -459,10 +459,8 @@ route_output(struct mbuf *m, ...)
 	tableid = rtm->rtm_tableid;
 	if (!rtable_exists(tableid)) {
 		if (rtm->rtm_type == RTM_ADD) {
-			if (rtable_add(tableid)) {
-				error = EINVAL;
+			if ((error = rtable_add(tableid)) != NULL)
 				goto flush;
-			}
 		} else {
 			error = EINVAL;
 			goto flush;
