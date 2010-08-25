@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.221 2010/08/24 16:13:32 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.222 2010/08/25 13:06:09 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1509,6 +1509,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #endif
 #ifdef INET6
 			in6_ifdetach(ifp);
+			ifp->if_xflags |= IFXF_NOINET6;
 #endif
 #ifdef INET
 			for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
