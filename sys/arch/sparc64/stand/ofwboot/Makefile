@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2010/08/21 17:22:42 jsing Exp $
+#	$OpenBSD: Makefile,v 1.16 2010/08/25 12:53:38 jsing Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -14,7 +14,8 @@ PROG?=		ofwboot
 NOMAN=		ja, man!
 
 .PATH:		${S}/arch/sparc64/sparc64
-SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
+SRCS=		srt0.s Locore.c alloc.c boot.c elf64_exec.c net.c netif_of.c \
+		ofdev.c vers.c
 
 .PATH:		${S}/lib/libkern/arch/sparc64 ${S}/lib/libkern
 SRCS+=		strlcpy.c strcmp.c strlcat.c strlen.c
@@ -45,9 +46,7 @@ CPPFLAGS+=	-DRELOC=0x${RELOC}
 #
 # XXXXX FIXME
 #
-CPPFLAGS+=	-DSPARC_BOOT_ELF
 CPPFLAGS+=	-DSPARC_BOOT_UFS
-CPPFLAGS+=	-DSPARC_BOOT_NFS
 #CPPFLAGS+=	-DSPARC_BOOT_HSFS
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
@@ -63,8 +62,5 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}
-
-# Explicit dependency for this.
-boot.o: boot.c elf64_exec.c
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.1 2010/08/21 17:22:42 jsing Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.2 2010/08/25 12:53:38 jsing Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -49,6 +49,13 @@
 
 #define ELF_ALIGN(x)	(((x) + 7) & (~7))
 
+#include <lib/libsa/stand.h>
+
+#include <sys/param.h>
+#include <sys/exec_elf.h>
+
+#include "openfirm.h"
+
 int
 elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp){ 
 	Elf_Shdr *shp;
@@ -63,11 +70,6 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 	 * Don't display load address for ELF; it's encoded in
 	 * each section.
 	 */
-#ifdef DEBUG
-	printf("elf%d_exec: ", ELFSIZE);
-#endif
-	printf("Booting %s\n", opened_name);
-
 	for (i = 0; i < elf->e_phnum; i++) {
 		Elf_Phdr phdr;
 		size = lseek(fd, (size_t)(elf->e_phoff + sizeof(phdr) * i),
@@ -84,6 +86,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		printf("%s%lu@0x%lx", first ? "" : "+", (u_long)phdr.p_filesz,
 		    (u_long)phdr.p_vaddr);
 		(void)lseek(fd, (size_t)phdr.p_offset, SEEK_SET);
+
 		/* 
 		 * If the segment's VA is aligned on a 4MB boundary, align its
 		 * request 4MB aligned physical memory.  Otherwise use default
@@ -107,7 +110,8 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 
 		/* Zero BSS. */
 		if (phdr.p_filesz < phdr.p_memsz) {
-			printf("+%lu@0x%lx", (u_long)phdr.p_memsz - phdr.p_filesz,
+			printf("+%lu@0x%lx",
+			    (u_long)phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
 			bzero((void *)(long)phdr.p_vaddr + phdr.p_filesz,
 			    (size_t)phdr.p_memsz - phdr.p_filesz);

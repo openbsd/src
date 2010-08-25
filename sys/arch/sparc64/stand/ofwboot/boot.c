@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.17 2010/08/21 17:22:42 jsing Exp $	*/
+/*	$OpenBSD: boot.c,v 1.18 2010/08/25 12:53:38 jsing Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -82,10 +82,7 @@ char bootfile[128];
 int boothowto;
 int debug;
 
-
-#ifdef SPARC_BOOT_ELF
 int	elf64_exec(int, Elf64_Ehdr *, u_int64_t *, void **, void **);
-#endif
 
 #if 0
 static void
@@ -213,9 +210,7 @@ int
 loadfile(int fd, char *args)
 {
 	union {
-#ifdef SPARC_BOOT_ELF
 		Elf64_Ehdr elf64;
-#endif
 	} hdr;
 	int rval;
 	u_int64_t entry = 0;
@@ -240,13 +235,11 @@ loadfile(int fd, char *args)
 	}
 
 	/* Determine file type, load kernel. */
-#ifdef SPARC_BOOT_ELF
 	if (bcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
+		printf("Booting %s\n", opened_name);
 		rval = elf64_exec(fd, &hdr.elf64, &entry, &ssym, &esym);
-	} else
-#endif
-	{
+	} else {
 		rval = 1;
 		printf("unknown executable format\n");
 	}
@@ -265,10 +258,6 @@ loadfile(int fd, char *args)
 	close(fd);
 	return (rval);
 }
-
-#ifdef SPARC_BOOT_ELF
-#include "elf64_exec.c"
-#endif /* SPARC_BOOT_ELF */
 
 int
 main()
