@@ -365,7 +365,6 @@
 ./usr/bin/more
 ./usr/bin/mset
 ./usr/bin/msgs
-./usr/bin/nawk
 ./usr/bin/nc
 ./usr/bin/neqn
 ./usr/bin/netstat
