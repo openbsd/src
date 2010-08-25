@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.222 2010/08/25 13:06:09 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.223 2010/08/25 13:57:07 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1488,11 +1488,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		    ifr->ifr_rdomainid > RT_TABLEID_MAX)
 			return (EINVAL);
 
-		/* Let devices like enc(4) enforce the rdomain */
-		if ((error = (*ifp->if_ioctl)(ifp, cmd, data)) != ENOTTY)
-			return (error);
-		error = 0;
-
 		/* remove all routing entries when switching domains */
 		/* XXX hell this is ugly */
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
@@ -1529,6 +1524,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #endif
 			splx(s);
 		}
+
+		/* Let devices like enc(4) enforce the rdomain */
+		if ((error = (*ifp->if_ioctl)(ifp, cmd, data)) != ENOTTY)
+			return (error);
+		error = 0;
 
 		/* Add interface to the specified rdomain */
 		rtable_addif(ifp, ifr->ifr_rdomainid);
