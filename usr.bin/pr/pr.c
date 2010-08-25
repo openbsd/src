@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.29 2010/08/17 21:37:11 jasper Exp $	*/
+/*	$OpenBSD: pr.c,v 1.30 2010/08/25 18:20:11 chl Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -186,7 +186,7 @@ onecol(int argc, char *argv[])
     char *nbuf;
     char *hbuf = NULL;
     char *ohbuf;
-    FILE *inf;
+    FILE *inf = NULL;
     char *fname;
     int mor;
     int error = 1;
