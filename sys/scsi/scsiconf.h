@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.135 2010/07/27 04:41:56 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.136 2010/08/25 00:31:35 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -599,6 +599,8 @@ void			scsi_sense_print_debug(struct scsi_xfer *);
  */
 void	scsi_iopool_init(struct scsi_iopool *, void *,
 	    void *(*)(void *), void (*)(void *, void *));
+void	scsi_iopool_destroy(struct scsi_iopool *);
+void	scsi_link_shutdown(struct scsi_link *);
 
 void *	scsi_io_get(struct scsi_iopool *, int);
 void	scsi_io_put(struct scsi_iopool *, void *);

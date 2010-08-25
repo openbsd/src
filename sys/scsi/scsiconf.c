@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.162 2010/07/24 04:01:52 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.163 2010/08/25 00:31:35 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -487,9 +487,12 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	if (((flags & DETACH_FORCE) == 0) && (link->flags & SDEV_OPEN))
 		return (EBUSY);
 
-	/* detaching a device from scsibus is a four step process... */
+	/* detaching a device from scsibus is a five step process... */
 
-	/* 1. detach the device */
+	/* 1. wake up processes sleeping for an xs */
+	scsi_link_shutdown(link);
+
+	/* 2. detach the device */
 #if NMPATH > 0
 	if (link->device_softc == NULL)
 		rv = mpath_path_detach(link, flags);
@@ -500,15 +503,17 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	if (rv != 0)
 		return (rv);
 
-	/* 2. if its using the openings io allocator, clean it up */
-	if (ISSET(link->flags, SDEV_OWN_IOPL))
+	/* 3. if its using the openings io allocator, clean it up */
+	if (ISSET(link->flags, SDEV_OWN_IOPL)) {
+		scsi_iopool_destroy(link->pool);
 		free(link->pool, M_DEVBUF);
+	}
 
-	/* 3. free up its state in the adapter */
+	/* 4. free up its state in the adapter */
 	if (alink->adapter->dev_free != NULL)
 		alink->adapter->dev_free(link);
 
-	/* 4. free up its state in the midlayer */
+	/* 5. free up its state in the midlayer */
 	if (link->id != NULL)
 		devid_free(link->id);
 	scsi_remove_link(sc, link);

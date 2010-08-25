@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.191 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.192 2010/08/25 00:31:35 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -92,17 +92,23 @@ int			scsi_sem_enter(struct mutex *, u_int *);
 int			scsi_sem_leave(struct mutex *, u_int *);
 
 /* ioh/xsh queue state */
-#define RUNQ_IDLE       0
-#define RUNQ_LINKQ      1
-#define RUNQ_POOLQ      2
+#define RUNQ_IDLE	0
+#define RUNQ_LINKQ	1
+#define RUNQ_POOLQ	2
 
 /* synchronous api for allocating an io. */
 struct scsi_io_mover {
 	struct mutex mtx;
 	void *io;
+	u_int done;
 };
+#define SCSI_IO_MOVER_INITIALIZER { MUTEX_INITIALIZER(IPL_BIO), NULL, 0 }
+
+void scsi_move(struct scsi_io_mover *);
+void scsi_move_done(void *, void *);
 
 void scsi_io_get_done(void *, void *);
+void scsi_xs_get_done(void *, void *);
 
 /*
  * Called when a scsibus is attached to initialize global data.
@@ -233,6 +239,32 @@ scsi_iopool_init(struct scsi_iopool *iopl, void *iocookie,
 	TAILQ_INIT(&iopl->queue);
 	iopl->running = 0;
 	mtx_init(&iopl->mtx, IPL_BIO);
+}
+
+void
+scsi_iopool_destroy(struct scsi_iopool *iopl)
+{
+	struct scsi_runq sleepers = TAILQ_HEAD_INITIALIZER(sleepers);
+	struct scsi_iohandler *ioh = NULL;
+
+	mtx_enter(&iopl->mtx);
+	while ((ioh = TAILQ_FIRST(&iopl->queue)) != NULL) {
+		TAILQ_REMOVE(&iopl->queue, ioh, q_entry);
+		ioh->q_state = RUNQ_IDLE;
+
+		if (ioh->handler == scsi_io_get_done)
+			TAILQ_INSERT_TAIL(&sleepers, ioh, q_entry);
+#ifdef DIAGNOSTIC
+		else
+			panic("scsi_iopool_destroy: scsi_iohandler on pool");
+#endif
+	}
+	mtx_leave(&iopl->mtx);
+
+	while ((ioh = TAILQ_FIRST(&sleepers)) != NULL) {
+		TAILQ_REMOVE(&sleepers, ioh, q_entry);
+		ioh->handler(ioh->cookie, NULL);
+	}
 }
 
 void *
@@ -368,13 +400,38 @@ scsi_ioh_runqueue(struct scsi_iopool *iopl)
 }
 
 /*
+ * move an io from a runq to a proc thats waiting for an io.
+ */
+
+void
+scsi_move(struct scsi_io_mover *m)
+{
+	mtx_enter(&m->mtx);
+	while (!m->done)
+		msleep(m, &m->mtx, PRIBIO, "scsiiomv", 0);
+	mtx_leave(&m->mtx);
+}
+
+void
+scsi_move_done(void *cookie, void *io)
+{
+	struct scsi_io_mover *m = cookie;
+
+	mtx_enter(&m->mtx);
+	m->io = io;
+	m->done = 1;
+	wakeup_one(m);
+	mtx_leave(&m->mtx);
+}
+
+/*
  * synchronous api for allocating an io.
  */
 
 void *
 scsi_io_get(struct scsi_iopool *iopl, int flags)
 {
-	struct scsi_io_mover m = { MUTEX_INITIALIZER(IPL_BIO), NULL };
+	struct scsi_io_mover m = SCSI_IO_MOVER_INITIALIZER;
 	struct scsi_iohandler ioh;
 	void *io;
 
@@ -388,11 +445,7 @@ scsi_io_get(struct scsi_iopool *iopl, int flags)
 	/* otherwise sleep until we get one */
 	scsi_ioh_set(&ioh, iopl, scsi_io_get_done, &m);
 	scsi_ioh_add(&ioh);
-
-	mtx_enter(&m.mtx);
-	while (m.io == NULL)
-		msleep(&m, &m.mtx, PRIBIO, "scsiio", 0);
-	mtx_leave(&m.mtx);
+	scsi_move(&m);
 
 	return (m.io);
 }
@@ -400,12 +453,7 @@ scsi_io_get(struct scsi_iopool *iopl, int flags)
 void
 scsi_io_get_done(void *cookie, void *io)
 {
-	struct scsi_io_mover *m = cookie;
-
-	mtx_enter(&m->mtx);
-	m->io = io;
-	wakeup_one(m);
-	mtx_leave(&m->mtx);
+	scsi_move_done(cookie, io);
 }
 
 void
@@ -433,6 +481,9 @@ void
 scsi_xsh_add(struct scsi_xshandler *xsh)
 {
 	struct scsi_link *link = xsh->link;
+
+	if (ISSET(link->state, SDEV_S_DYING))
+		return;
 
 	mtx_enter(&link->pool->mtx);
 	if (xsh->ioh.q_state == RUNQ_IDLE) {
@@ -484,7 +535,7 @@ scsi_xsh_runqueue(struct scsi_link *link)
 		runq = 0;
 
 		mtx_enter(&link->pool->mtx);
-		while (link->openings &&
+		while (!ISSET(link->state, SDEV_S_DYING) && link->openings &&
 		    ((ioh = TAILQ_FIRST(&link->queue)) != NULL)) {
 			link->openings--;
 
@@ -532,33 +583,98 @@ struct scsi_xfer *
 scsi_xs_get(struct scsi_link *link, int flags)
 {
 	struct scsi_xshandler xsh;
-	struct scsi_io_mover m = { MUTEX_INITIALIZER(IPL_BIO), NULL };
+	struct scsi_io_mover m = SCSI_IO_MOVER_INITIALIZER;
+
+	struct scsi_iopool *iopl = link->pool;
 	void *io;
 
-	if (scsi_link_open(link)) {
-		io = scsi_io_get(link->pool, flags);
-		if (io == NULL) {
-			scsi_link_close(link);
-			return (NULL);
-		}
-	} else {
+	if (ISSET(link->state, SDEV_S_DYING))
+		return (NULL);
+
+	/* really custom xs handler to avoid scsi_xsh_ioh */
+	scsi_ioh_set(&xsh.ioh, iopl, scsi_xs_get_done, &m);
+	xsh.link = link;
+
+	if (!scsi_link_open(link)) {
 		if (ISSET(flags, SCSI_NOSLEEP))
 			return (NULL);
 
-		/* really custom xs handler to avoid scsi_xsh_ioh */
-		scsi_ioh_set(&xsh.ioh, link->pool, scsi_io_get_done, &m);
-		xsh.link = link;
 		scsi_xsh_add(&xsh);
+		scsi_move(&m);
+		if (m.io == NULL)
+			return (NULL);
 
-		mtx_enter(&m.mtx);
-		while (m.io == NULL)
-			msleep(&m, &m.mtx, PRIBIO, "scsixs", 0);
-		mtx_leave(&m.mtx);
+		io = m.io;
+	} else if ((io = iopl->io_get(iopl->iocookie)) == NULL) {
+		if (ISSET(flags, SCSI_NOSLEEP)) {
+			scsi_link_close(link);
+			return (NULL);
+		}
+
+		scsi_ioh_add(&xsh.ioh);
+		scsi_move(&m);
+		if (m.io == NULL)
+			return (NULL);
 
 		io = m.io;
 	}
 
 	return (scsi_xs_io(link, io, flags));
+}
+
+void
+scsi_xs_get_done(void *cookie, void *io)
+{
+	scsi_move_done(cookie, io);
+}
+
+void
+scsi_link_shutdown(struct scsi_link *link)
+{
+	struct scsi_runq sleepers = TAILQ_HEAD_INITIALIZER(sleepers);
+	struct scsi_iopool *iopl = link->pool;
+	struct scsi_iohandler *ioh;
+	struct scsi_xshandler *xsh;
+
+	mtx_enter(&iopl->mtx);
+	while ((ioh = TAILQ_FIRST(&link->queue)) != NULL) {
+		TAILQ_REMOVE(&link->queue, ioh, q_entry);
+		ioh->q_state = RUNQ_IDLE;
+
+		if (ioh->handler == scsi_xs_get_done)
+			TAILQ_INSERT_TAIL(&sleepers, ioh, q_entry);
+#ifdef DIAGNOSTIC
+		else
+			panic("scsi_link_shutdown: scsi_xshandler on link");
+#endif
+	}
+
+	ioh = TAILQ_FIRST(&iopl->queue);
+	while (ioh != NULL) {
+		xsh = (struct scsi_xshandler *)ioh;
+		ioh = TAILQ_NEXT(ioh, q_entry);
+
+#ifdef DIAGNOSTIC
+		if (xsh->ioh.handler == scsi_xsh_ioh &&
+		    xsh->link == link)
+			panic("scsi_link_shutdown: scsi_xshandler on pool");
+#endif
+
+		if (xsh->ioh.handler == scsi_xs_get_done &&
+		    xsh->link == link) {
+			TAILQ_REMOVE(&iopl->queue, &xsh->ioh, q_entry);
+			xsh->ioh.q_state = RUNQ_IDLE;
+			link->openings++;
+
+			TAILQ_INSERT_TAIL(&sleepers, &xsh->ioh, q_entry);
+		}
+	}
+	mtx_leave(&iopl->mtx);
+
+	while ((ioh = TAILQ_FIRST(&sleepers)) != NULL) {
+		TAILQ_REMOVE(&sleepers, ioh, q_entry);
+		ioh->handler(ioh->cookie, NULL);
+	}
 }
 
 int
