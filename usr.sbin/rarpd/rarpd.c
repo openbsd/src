@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.50 2010/08/26 17:07:46 jsg Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.51 2010/08/26 18:25:38 jsg Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -24,8 +24,6 @@
 
 /*
  * rarpd - Reverse ARP Daemon
- *
- * usage:	rarpd [-adflt] interface
  */
 
 #include <stdio.h>
