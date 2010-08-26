@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2009/04/17 15:59:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2010/08/26 01:35:44 krw Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -57,9 +57,6 @@ ${CDROM}: bsd ${CDBOOT}
 	    -V "OpenBSD/hppa ${OSREV} boot-only CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
 	dd if=${CDBOOT} of=${.OBJDIR}/${CDROM} bs=32k count=1 conv=notrunc
-	vnconfig -v -c ${VND} ${.OBJDIR}/${CDROM}
-	disklabel -w ${VND} fakecdrom "OpenBSD/hppa    "
-	vnconfig -u ${VND}
 	dd if=/dev/zero bs=64k count=1 >> ${.OBJDIR}/${CDROM}
 
 obsd:

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2010/08/26 01:35:44 krw Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -37,9 +37,6 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
 	dd if=${DESTDIR}/usr/mdec/cdboot of=${.OBJDIR}/${CDROM} \
 	    bs=32k count=1 conv=notrunc
-	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
-	disklabel -w svnd0 fakecdrom "OpenBSD/${MACHINE}    "
-	vnconfig -u svnd0
 	dd if=/dev/zero bs=64k count=1 >> ${.OBJDIR}/${CDROM}
 
 install:
