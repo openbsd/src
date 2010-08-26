@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.7 2010/02/28 21:35:41 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.8 2010/08/26 18:57:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -29,6 +29,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/ic/vgareg.h>
+#include <dev/isa/isareg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -101,6 +103,7 @@ int	smfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	smfb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 paddr_t	smfb_mmap(void *, off_t, int);
+void	smfb_burner(void *, uint, uint);
 
 struct wsdisplay_accessops smfb_accessops = {
 	smfb_ioctl,
@@ -111,7 +114,7 @@ struct wsdisplay_accessops smfb_accessops = {
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	NULL	/* burner */
+	smfb_burner
 };
 
 int	smfb_setup(struct smfb *, vaddr_t, vaddr_t);
@@ -124,6 +127,9 @@ int	smfb_do_cursor(struct rasops_info *);
 int	smfb_erasecols(void *, int, int, int, long);
 int	smfb_eraserows(void *, int, int, long);
 int	smfb_wait(struct smfb *);
+
+uint8_t	smfb_mmio_read(struct smfb *, uint);
+void	smfb_mmio_write(struct smfb *, uint, uint8_t);
 
 void	smfb_attach_common(struct smfb_softc *, int);
 
@@ -304,6 +310,27 @@ smfb_mmap(void *v, off_t offset, int prot)
 
 	pa = XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset;
 	return atop(pa);
+}
+
+void
+smfb_burner(void *v, uint on, uint flg)
+{
+	struct smfb_softc *sc = (struct smfb_softc *)v;
+	struct smfb *fb = sc->sc_fb;
+
+	if (fb->is5xx) {
+		/* XXX TBD */
+	} else {
+		if (on) {
+			smfb_mmio_write(fb, 0x31,
+			    smfb_mmio_read(fb, 0x31) | 0x01);
+		} else {
+			smfb_mmio_write(fb, 0x21,
+			    smfb_mmio_read(fb, 0x21) | 0x30);
+			smfb_mmio_write(fb, 0x31,
+			    smfb_mmio_read(fb, 0x31) & ~0x01);
+		}
+	}
 }
 
 /*
@@ -527,9 +554,7 @@ smfb_wait(struct smfb *fb)
 			    VSC_FIFO_EMPTY)
 				return 0;
 		} else {
-			fb->mmio[0x3c4] = 0x16;
-			(void)fb->mmio[0x3c4];	/* posted write */
-			reg = fb->mmio[0x3c5];
+			reg = smfb_mmio_read(fb, 0x16);
 			if ((reg & 0x18) == 0x10)
 				return 0;
 		}
@@ -537,6 +562,23 @@ smfb_wait(struct smfb *fb)
 	}
 
 	return EBUSY;
+}
+
+uint8_t
+smfb_mmio_read(struct smfb *fb, uint regno)
+{
+	fb->mmio[IO_VGA + VGA_TS_INDEX] = regno;
+	(void)fb->mmio[IO_VGA + VGA_TS_INDEX];	/* posted write */
+	return fb->mmio[IO_VGA + VGA_TS_DATA];
+}
+
+void
+smfb_mmio_write(struct smfb *fb, uint regno, uint8_t value)
+{
+	fb->mmio[IO_VGA + VGA_TS_INDEX] = regno;
+	(void)fb->mmio[IO_VGA + VGA_TS_INDEX];	/* posted write */
+	fb->mmio[IO_VGA + VGA_TS_DATA] = value;
+	(void)fb->mmio[IO_VGA + VGA_TS_DATA];	/* posted write */
 }
 
 /*
@@ -557,7 +599,7 @@ smfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
 	int rc, is5xx;
 
 	/* filter out unrecognized devices */
-	switch(id) {
+	switch (id) {
 	default:
 		return ENODEV;
 	case PCI_ID_CODE(PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM712):
