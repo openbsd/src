@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.85 2010/07/22 17:31:39 thib Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.86 2010/08/26 16:08:24 thib Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -89,14 +89,15 @@
  * up the locking and protection of the kernel address space into smaller
  * chunks.
  *
- * the vm system has several standard kernel submaps, including:
- *   kmem_map => contains only wired kernel memory for the kernel
- *		malloc.   *** access to kmem_map must be protected
- *		by splvm() because we are allowed to call malloc()
- *		at interrupt time ***
- *   pager_map => used to map "buf" structures into kernel space
- *   exec_map => used during exec to handle exec args
- *   etc...
+ * The VM system has several standard kernel submaps:
+ *   kmem_map: Contains only wired kernel memory for malloc(9).
+ *	       Note: All access to this map must be protected by splvm as
+ *	       calls to malloc(9) are allowed in interrupt handlers.
+ *   exec_map: Memory to hold arguments to system calls are allocated from
+ *	       this map.
+ *	       XXX: This is primeraly used to artificially limit the number
+ *	       of concurrent processes doing an exec.
+ *   phys_map: Buffers for vmapbuf (physio) are allocated from this map.
  *
  * the kernel allocates its private memory out of special uvm_objects whose
  * reference count is set to UVM_OBJ_KERN (thus indicating that the objects
