@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rarpd.8,v 1.17 2008/05/23 15:23:53 sobrado Exp $
+.\"	$OpenBSD: rarpd.8,v 1.18 2010/08/26 17:07:46 jsg Exp $
 .\"	$NetBSD: rarpd.8,v 1.7 1998/04/15 15:06:06 mrg Exp $
 .\"
 .\" Copyright (c) 1988-1990 The Regents of the University of California.
@@ -19,9 +19,9 @@
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-.\" @(#) $Id: rarpd.8,v 1.17 2008/05/23 15:23:53 sobrado Exp $
+.\" @(#) $Id: rarpd.8,v 1.18 2010/08/26 17:07:46 jsg Exp $
 .\"
-.Dd $Mdocdate: May 23 2008 $
+.Dd $Mdocdate: August 26 2010 $
 .Dt RARPD 8
 .Os
 .Sh NAME
@@ -30,11 +30,11 @@
 .Sh SYNOPSIS
 .Nm rarpd
 .Op Fl adflt
-.Ar interface
+.Ar if0 Op Ar ... ifN
 .Sh DESCRIPTION
 .Nm
 services Reverse ARP requests on the Ethernet connected to
-.Ar interface .
+the specified interfaces.
 Upon receiving a request,
 .Nm
 maps the target hardware address to an IP address via its name, which
@@ -58,9 +58,7 @@ The options are as follows:
 Listen on all the Ethernets attached to the system.
 If
 .Fl a
-is omitted, an
-.Ar interface
-must be specified.
+is omitted, a list of interfaces must be specified.
 .It Fl d
 Run in debug mode, with all the output to stderr.
 This option implies the
