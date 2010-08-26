@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1569 2010/08/23 00:09:16 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1570 2010/08/26 10:12:18 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6302,6 +6302,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_USB,
 	    "USB",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_ILO3_SERIAL,
+	    "iLO3 Serial",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_ILO3_SLAVE,
+	    "iLO3 Slave",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_ILO3_MGMT,
+	    "iLO3 Management",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_ILO3_WATCHDOG,
+	    "iLO3 Watchdog",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_IPMI,
@@ -15186,6 +15202,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8548,
 	    "PEX 8548",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8612,
+	    "PEX 8612",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8616,

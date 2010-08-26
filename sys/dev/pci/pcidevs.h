@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1569 2010/08/23 00:09:16 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1570 2010/08/26 10:12:18 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2135,6 +2135,10 @@
 #define	PCI_PRODUCT_HP_HPSAP712M	0x324a		/* Smart Array P712m */
 #define	PCI_PRODUCT_HP_HPSAP711M	0x324b		/* Smart Array P711m */
 #define	PCI_PRODUCT_HP_USB	0x3300		/* USB */
+#define	PCI_PRODUCT_HP_ILO3_SERIAL	0x3301		/* iLO3 Serial */
+#define	PCI_PRODUCT_HP_ILO3_SLAVE	0x3306		/* iLO3 Slave */
+#define	PCI_PRODUCT_HP_ILO3_MGMT	0x3307		/* iLO3 Management */
+#define	PCI_PRODUCT_HP_ILO3_WATCHDOG	0x3308		/* iLO3 Watchdog */
 #define	PCI_PRODUCT_HP_IPMI	0x3302		/* IPMI */
 
 /* Hifn products */
@@ -4552,6 +4556,7 @@
 #define	PCI_PRODUCT_PLX_PEX_8533	0x8533		/* PEX 8533 */
 #define	PCI_PRODUCT_PLX_PEX_8547	0x8547		/* PEX 8547 */
 #define	PCI_PRODUCT_PLX_PEX_8548	0x8548		/* PEX 8548 */
+#define	PCI_PRODUCT_PLX_PEX_8612	0x8612		/* PEX 8612 */
 #define	PCI_PRODUCT_PLX_PEX_8616	0x8616		/* PEX 8616 */
 #define	PCI_PRODUCT_PLX_PEX_8624	0x8624		/* PEX 8624 */
 #define	PCI_PRODUCT_PLX_PEX_8648	0x8648		/* PEX 8648 */
