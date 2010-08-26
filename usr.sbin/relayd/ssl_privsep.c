@@ -1,4 +1,4 @@
-/*      $OpenBSD: ssl_privsep.c,v 1.7 2009/04/02 14:30:51 reyk Exp $    */
+/*      $OpenBSD: ssl_privsep.c,v 1.8 2010/08/26 13:00:19 marco Exp $    */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -6,21 +6,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,10 +35,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -50,7 +50,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -85,7 +85,7 @@ X509_LOOKUP_METHOD x509_mem_lookup = {
 	"Load cert from memory",
 	NULL,			/* new */
 	NULL,			/* free */
-	NULL, 			/* init */
+	NULL,			/* init */
 	NULL,			/* shutdown */
 	ssl_by_mem_ctrl,	/* ctrl */
 	NULL,			/* get_by_subject */
@@ -193,7 +193,7 @@ int
 ssl_ctx_load_verify_memory(SSL_CTX *ctx, char *buf, off_t len)
 {
 	X509_LOOKUP		*lu;
-	struct iovec	 	 iov;
+	struct iovec		 iov;
 
 	if ((lu = X509_STORE_add_lookup(ctx->cert_store,
 	    &x509_mem_lookup)) == NULL)
