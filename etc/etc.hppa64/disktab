@@ -1,11 +1,6 @@
-#	$OpenBSD: disktab,v 1.2 2010/07/02 20:33:54 tedu Exp $
+#	$OpenBSD: disktab,v 1.3 2010/08/26 21:46:55 krw Exp $
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:nc#20:nt#2:ns#128:\
 	:ta=4.2BSD:oa#0:pa#5120:fa#1024:ba#8192:\
 	:ob#0:pb#0:oc#0:pc#5120:
-
-fakecdrom|Fake image for Bootable CDROM:\
-	:ty=removable:se#512:nt#1:rm#350:ns#640:nc#2048:\
-	:pa#1310720:oa#0:ba#8192:fa#1024:ta=ISO9660:\
-	:pc#1310720:oc#0:bc#8192:fc#1024:tc=ISO9660:
