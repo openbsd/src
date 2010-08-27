@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.6 2010/06/01 03:09:41 drahn Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.7 2010/08/27 05:04:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -516,7 +516,6 @@ ommmc_power(int why, void *arg)
 #endif
 
 	switch(why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		/* XXX poll for command completion or suspend command
 		 * in progress */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.11 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.12 2010/08/27 05:04:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -282,7 +282,6 @@ zaudio_power(int why, void *arg)
 	struct zaudio_softc *sc = arg;
 
 	switch (why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		timeout_del(&sc->sc_to);
 		zaudio_standby(sc);

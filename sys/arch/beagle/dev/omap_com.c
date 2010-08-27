@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/* $OpenBSD: omap_com.c,v 1.2 2010/08/27 05:04:08 deraadt Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -131,7 +131,6 @@ omapuart_power(int why, void *arg)
 
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		break;
 	case PWR_RESUME:
 		if (sc->enabled) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.41 2010/07/02 03:13:42 tedu Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.42 2010/08/27 05:04:12 deraadt Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -916,7 +916,6 @@ ray_power(int why, void *arg)
 			sc->sc_flags |= RAY_FLAGS_RESUMEINIT;
 		}
 		break;
-	case PWR_STANDBY:
 	default:
 		break;
 	}

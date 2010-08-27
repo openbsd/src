@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.21 2006/11/29 12:13:54 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.22 2010/08/27 05:04:11 deraadt Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -402,7 +402,6 @@ lcd_power(int why, void *v)
 
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		lcd_set_brightness(0);
 		pxa2x0_lcd_power(why, v);
 		break;

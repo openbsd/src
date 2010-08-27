@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.22 2007/05/27 16:12:11 matthieu Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.23 2010/08/27 05:04:06 deraadt Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -851,7 +851,6 @@ pxa2x0_lcd_power(int why, void *v)
 
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		pxa2x0_lcd_suspend(sc);
 		break;
 

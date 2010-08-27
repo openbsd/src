@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.9 2008/11/22 17:05:35 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.10 2010/08/27 05:04:06 deraadt Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ pxauart_power(int why, void *arg)
 
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 #ifdef __zaurus__
 		if (sc->enabled && ISSET(sc->sc_hwflags, COM_HW_SIR))
 			scoop_set_irled(0);

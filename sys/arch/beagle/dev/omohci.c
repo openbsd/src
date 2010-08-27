@@ -1,4 +1,4 @@
-/*	$OpenBSD: omohci.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/*	$OpenBSD: omohci.c,v 1.2 2010/08/27 05:04:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -288,7 +288,6 @@ omohci_power(int why, void *arg)
 	s = splhardusb();
 	sc->sc.sc_bus.use_polling++;
 	switch (why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		ohci_power(why, &sc->sc);
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.18 2008/11/25 14:55:44 drahn Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.19 2010/08/27 05:04:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -454,7 +454,6 @@ scoop_power(int why, void *arg)
 	struct scoop_softc *sc = arg;
 
 	switch (why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		/*
 		 * Nothing should use the scoop from this point on.

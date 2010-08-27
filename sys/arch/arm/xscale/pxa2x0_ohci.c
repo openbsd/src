@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.21 2007/06/14 19:18:49 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.22 2010/08/27 05:04:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -178,7 +178,6 @@ pxaohci_power(int why, void *arg)
 	s = splhardusb();
 	sc->sc.sc_bus.use_polling++;
 	switch (why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		ohci_power(why, &sc->sc);
 		pxa2x0_clkman_config(CKEN_USBHC, 0);

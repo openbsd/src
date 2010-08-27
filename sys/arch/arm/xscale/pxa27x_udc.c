@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.24 2010/06/07 16:34:20 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.25 2010/08/27 05:04:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -252,7 +252,6 @@ pxaudc_power(int why, void *arg)
 
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		pxaudc_disable(sc);
 		break;
 
