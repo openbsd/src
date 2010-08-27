@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.191 2010/08/01 16:53:57 tobias Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.192 2010/08/27 12:00:21 lum Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -172,9 +172,6 @@ static	volatile sig_atomic_t recvurg;
 int	allow_severity = LOG_INFO;
 int	deny_severity = LOG_NOTICE;
 #endif	/* TCPWRAPPERS */
-
-char	*ident = NULL;
-
 
 int epsvall = 0;
 
@@ -1109,11 +1106,6 @@ pass(char *passwd)
 	if (motd != NULL)
 		free(motd);
 	if (guest) {
-		if (ident != NULL)
-			free(ident);
-		ident = strdup(passwd);
-		if (ident == NULL)
-			fatal("Ran out of memory.");
 		reply(230, "Guest login ok, access restrictions apply.");
 #ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
