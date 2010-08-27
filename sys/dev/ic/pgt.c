@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.63 2010/08/27 17:08:00 jsg Exp $  */
+/*	$OpenBSD: pgt.c,v 1.64 2010/08/27 20:06:39 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -59,6 +59,7 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/workq.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -192,7 +193,8 @@ int	 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq);
 void	 pgt_dma_free(struct pgt_softc *);
 void	 pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq);
 void	 pgt_shutdown(void *);
-void	 pgt_power(int, void *);
+void	 pgt_powerhook(int, void *);
+void	 pgt_resume(void *, void *);
 
 void
 pgt_write_memory_barrier(struct pgt_softc *sc)
@@ -2034,7 +2036,7 @@ pgt_net_attach(struct pgt_softc *sc)
         if (sc->sc_shutdown_hook == NULL)
                 printf("%s: WARNING: unable to establish shutdown hook\n",
                     sc->sc_dev.dv_xname);
-        sc->sc_power_hook = powerhook_establish(pgt_power, sc);
+        sc->sc_power_hook = powerhook_establish(pgt_powerhook, sc);
         if (sc->sc_power_hook == NULL)
                 printf("%s: WARNING: unable to establish power hook\n",
                     sc->sc_dev.dv_xname);
@@ -3312,39 +3314,51 @@ pgt_shutdown(void *arg)
 	pgt_stop(sc, SC_DYING);
 }
 
-void
-pgt_power(int why, void *arg)
+int
+pgt_activate(struct device *self, int act)
 {
-	struct pgt_softc *sc = arg;
+	struct pgt_softc *sc = (struct pgt_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s;
 
 	DPRINTF(("%s: %s(%d)\n", sc->sc_dev.dv_xname, __func__, why));
 
-	s = splnet();
-
-	switch (why) {
-	case PWR_SUSPEND:
-		pgt_stop(sc, SC_NEEDS_RESET);
-		pgt_update_hw_from_sw(sc, 0, 0);
-
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-
-		pgt_stop(sc, SC_NEEDS_RESET);
-		pgt_update_hw_from_sw(sc, 0, 0);
-
-		if ((ifp->if_flags & IFF_UP) &&
-		    !(ifp->if_flags & IFF_RUNNING)) {
-			pgt_init(ifp);
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING) {
+			pgt_stop(sc, SC_NEEDS_RESET);
 			pgt_update_hw_from_sw(sc, 0, 0);
 		}
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, act);
+		break;
+	case DVACT_RESUME:
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    pgt_resume, sc, NULL);
 		break;
 	}
+	return 0;
+}
 
-	splx(s);
+void
+pgt_resume(void *arg1, void *arg2)
+{
+	struct pgt_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	if (sc->sc_power != NULL)
+		(*sc->sc_power)(sc, DVACT_RESUME);
+
+	pgt_stop(sc, SC_NEEDS_RESET);
+	pgt_update_hw_from_sw(sc, 0, 0);
+
+	if (ifp->if_flags & IFF_UP) {
+		pgt_init(ifp);
+		pgt_update_hw_from_sw(sc, 0, 0);
+	}
+}
+
+void
+pgt_powerhook(int why, void *arg)
+{
+	pgt_activate(arg, why);
 }

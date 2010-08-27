@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtvar.h,v 1.11 2006/10/09 21:04:05 mglocker Exp $  */
+/*	$OpenBSD: pgtvar.h,v 1.12 2010/08/27 20:06:39 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -210,11 +210,14 @@ struct pgt_softc {
 #define sc_txtap		sc_txtapu.th
 	int			sc_txtap_len;
 #endif
+
+	struct workq_task	sc_resume_wqt;
 };
 
 int	pgt_intr(void *);
 void	pgt_attach(void *);
 int	pgt_detach(struct pgt_softc *);
+int	pgt_activate(struct device *, int);
 
 static __inline int
 pgt_queue_is_rx(enum pgt_queue pq)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.12 2010/08/07 16:16:18 kettenis Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.13 2010/08/27 20:06:39 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
+#include <sys/workq.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -69,7 +70,7 @@ struct pgt_pci_softc {
 
 struct cfattach pgt_pci_ca = {
 	sizeof(struct pgt_pci_softc), pgt_pci_match, pgt_pci_attach,
-	pgt_pci_detach
+	pgt_pci_detach, pgt_activate
 };
 
 const struct pci_matchid pgt_pci_devices[] = {
