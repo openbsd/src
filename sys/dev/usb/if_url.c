@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.55 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_url.c,v 1.56 2010/08/27 07:08:22 deraadt Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -40,7 +40,6 @@
  * TODO:
  *	Interrupt Endpoint support
  *	External PHYs
- *	powerhook() support?
  */
 
 #include "bpfilter.h"
