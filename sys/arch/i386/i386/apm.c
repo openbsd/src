@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.89 2010/08/27 04:09:11 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.90 2010/08/27 19:10:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -317,6 +317,8 @@ apm_power_print(struct apm_softc *sc, struct apmregs *regs)
 #endif
 }
 
+int apm_saved_spl;
+
 void
 apm_suspend()
 {
@@ -325,6 +327,8 @@ apm_suspend()
 #endif /* NWSDISPLAY > 0 */
 	bufq_quiesce();
 
+	apm_saved_spl = splhigh();
+	disable_intr();
 	dopowerhooks(PWR_SUSPEND);
 
 	if (cold)
@@ -341,6 +345,8 @@ apm_standby()
 #endif /* NWSDISPLAY > 0 */
 	bufq_quiesce();
 
+	apm_saved_spl = splhigh();
+	disable_intr();
 	dopowerhooks(PWR_SUSPEND);
 
 	if (cold)
@@ -356,6 +362,9 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 
 	apm_resumes = APM_RESUME_HOLDOFF;
 
+	/* Some machines resume with interrupts on */
+	disable_intr();
+
 	/* they say that some machines may require reinitializing the clocks */
 	i8254_startclock();
 	if (initclock_func == i8254_initclocks)
@@ -363,7 +372,12 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 
 	inittodr(time_second);
 	/* lower bit in cx means pccard was powered down */
+
 	dopowerhooks(PWR_RESUME);
+
+	enable_intr();
+	splx(apm_saved_spl);
+
 	apm_record_event(sc, regs->bx);
 
 	/* acknowledge any rtc interrupt we may have missed */
