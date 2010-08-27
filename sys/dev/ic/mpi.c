@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.156 2010/08/07 03:50:01 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.157 2010/08/27 05:30:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2147,12 +2147,12 @@ mpi_cfg_coalescing(struct mpi_softc *sc)
 	}
 
 	DNPRINTF(MPI_D_MISC, "%s: IOC page 1\n", DEVNAME(sc));
-	DNPRINTF(MPI_D_MISC, "%s:  flags: 0x08%x\n", DEVNAME(sc),
+	DNPRINTF(MPI_D_MISC, "%s:  flags: 0x%08x\n", DEVNAME(sc),
 	    letoh32(pg.flags));
 	DNPRINTF(MPI_D_MISC, "%s:  coalescing_timeout: %d\n", DEVNAME(sc),
 	    letoh32(pg.coalescing_timeout));
 	DNPRINTF(MPI_D_MISC, "%s:  coalescing_depth: %d pci_slot_num: %d\n",
-	    DEVNAME(sc), pg.coalescing_timeout, pg.pci_slot_num);
+	    DEVNAME(sc), pg.coalescing_depth, pg.pci_slot_num);
 
 	flags = letoh32(pg.flags);
 	if (!ISSET(flags, MPI_CFG_IOC_1_REPLY_COALESCING))
