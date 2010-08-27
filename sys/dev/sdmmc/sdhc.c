@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.29 2010/08/27 04:09:20 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.30 2010/08/27 15:41:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -248,18 +248,15 @@ err:
 	return (error);
 }
 
-/*
- * Power hook established by or called from attachment driver.
- */
-void
-sdhc_power(int why, void *arg)
+int
+sdhc_activate(struct device *self, int act)
 {
-	struct sdhc_softc *sc = arg;
+	struct sdhc_softc *sc = (struct sdhc_softc *)self;
 	struct sdhc_host *hp;
 	int n, i;
 
-	switch(why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 		/* XXX poll for command completion or suspend command
 		 * in progress */
 
@@ -269,11 +266,9 @@ sdhc_power(int why, void *arg)
 			for (i = 0; i < sizeof hp->regs; i++)
 				hp->regs[i] = HREAD1(hp, i);
 		}
-		config_activate_children((struct device *)sc,
-		    DVACT_SUSPEND);
+		config_activate_children((struct device *)sc, act);
 		break;
-
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		/* Restore the host controller state. */
 		for (n = 0; n < sc->sc_nhosts; n++) {
 			hp = sc->sc_host[n];
@@ -281,10 +276,16 @@ sdhc_power(int why, void *arg)
 			for (i = 0; i < sizeof hp->regs; i++)
 				HWRITE1(hp, i, hp->regs[i]);
 		}
-		config_activate_children((struct device *)sc,
-		    DVACT_RESUME);
+		config_activate_children((struct device *)sc, act);
 		break;
 	}
+	return (0);
+}
+
+void
+sdhc_powerhook(int why, void *arg)
+{
+	sdhc_activate(arg, why);
 }
 
 /*
