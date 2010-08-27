@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.31 2010/08/12 14:21:55 kettenis Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.32 2010/08/27 15:43:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -91,7 +91,7 @@
 int xl_pci_match(struct device *, void *, void *);
 void xl_pci_attach(struct device *, struct device *, void *);
 int xl_pci_detach(struct device *, int);
-int xl_pci_activate(struct device *, int);
+int xl_activate(struct device *, int);
 void xl_pci_intr_ack(struct xl_softc *);
 
 struct xl_pci_softc {
@@ -103,7 +103,7 @@ struct xl_pci_softc {
 
 struct cfattach xl_pci_ca = {
 	sizeof(struct xl_pci_softc), xl_pci_match, xl_pci_attach, xl_pci_detach,
-	xl_pci_activate
+	xl_activate
 };
 
 const struct pci_matchid xl_pci_devices[] = {
@@ -334,31 +334,6 @@ xl_pci_detach(struct device *self, int flags)
 		bus_space_unmap(sc->xl_btag, sc->xl_bhandle, psc->psc_iosize);
 	if (psc->psc_funsize > 0)
 		bus_space_unmap(sc->xl_funct, sc->xl_funch, psc->psc_funsize);
-	return (0);
-}
-
-int
-xl_pci_activate(struct device *self, int act)
-{
-	struct xl_pci_softc *psc = (void *)self;
-	struct xl_softc *sc = &psc->psc_softc;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	switch (act) {
-	case DVACT_SUSPEND:
-		if (ifp->if_flags & IFF_RUNNING) {
-			xl_reset(sc);
-			xl_stop(sc);
-		}
-		config_activate_children(self, act);
-		break;
-	case DVACT_RESUME:
-		xl_reset(sc);
-		config_activate_children(self, act);
-		if (ifp->if_flags & IFF_UP)
-			xl_init(sc);
-		break;
-	}
 	return (0);
 }
 

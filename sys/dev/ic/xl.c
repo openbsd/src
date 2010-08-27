@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.91 2010/08/12 14:21:55 kettenis Exp $	*/
+/*	$OpenBSD: xl.c,v 1.92 2010/08/27 15:43:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -193,26 +193,36 @@ int xl_miibus_readreg(struct device *, int, int);
 void xl_miibus_writereg(struct device *, int, int, int);
 void xl_miibus_statchg(struct device *);
 
-void xl_power(int, void *);
+void xl_powerhook(int, void *);
+
+int
+xl_activate(struct device *self, int act)
+{
+	struct xl_softc *sc = (struct xl_softc *)self;
+	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING) {
+			xl_reset(sc);
+			xl_stop(sc);
+		}
+		config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		xl_reset(sc);
+		config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			xl_init(sc);
+		break;
+	}
+	return (0);
+}
 
 void
-xl_power(int why, void *arg)
+xl_powerhook(int why, void *arg)
 {
-	struct xl_softc *sc = arg;
-	struct ifnet *ifp;
-	int s;
-
-	s = splnet();
-	if (why != PWR_RESUME)
-		xl_stop(sc);
-	else {
-		ifp = &sc->sc_arpcom.ac_if;
-		if (ifp->if_flags & IFF_UP) {
-			xl_reset(sc);
-			xl_init(sc);
-		}
-	}
-	splx(s);
+	xl_activate(arg, why);
 }
 
 /*
@@ -2673,7 +2683,7 @@ xl_attach(struct xl_softc *sc)
 	ether_ifattach(ifp);
 
 	sc->sc_sdhook = shutdownhook_establish(xl_shutdown, sc);
-	sc->sc_pwrhook = powerhook_establish(xl_power, sc);
+	sc->sc_pwrhook = powerhook_establish(xl_powerhook, sc);
 }
 
 int
