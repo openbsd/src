@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.107 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.108 2010/08/27 20:09:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -77,7 +77,7 @@ void		wpi_radiotap_attach(struct wpi_softc *);
 int		wpi_detach(struct device *, int);
 int		wpi_activate(struct device *, int);
 void		wpi_resume(void *, void *);
-void		wpi_power(int, void *);
+void		wpi_powerhook(int, void *);
 int		wpi_nic_lock(struct wpi_softc *);
 int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
 int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
@@ -328,7 +328,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
 
-	sc->powerhook = powerhook_establish(wpi_power, sc);
+	sc->powerhook = powerhook_establish(wpi_powerhook, sc);
 
 	return;
 
@@ -413,21 +413,10 @@ wpi_activate(struct device *self, int act)
 void
 wpi_resume(void *arg1, void *arg2)
 {
-	wpi_power(PWR_RESUME, arg1);
-}
-
-void
-wpi_power(int why, void *arg)
-{
-	struct wpi_softc *sc = arg;
+	struct wpi_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t reg;
 	int s;
-
-	if (why != PWR_RESUME) {
-		wpi_stop(ifp, 0);
-		return;
-	}
 
 	/* Clear device-specific "PCI retry timeout" register (41h). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -445,6 +434,12 @@ wpi_power(int why, void *arg)
 	sc->sc_flags &= ~WPI_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
 	splx(s);
+}
+
+void
+wpi_powerhook(int why, void *arg)
+{
+	wpi_activate(arg, why);
 }
 
 int

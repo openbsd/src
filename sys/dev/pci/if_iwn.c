@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.103 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.104 2010/08/27 20:09:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -107,7 +107,7 @@ void		iwn_radiotap_attach(struct iwn_softc *);
 int		iwn_detach(struct device *, int);
 int		iwn_activate(struct device *, int);
 void		iwn_resume(void *, void *);
-void		iwn_power(int, void *);
+void		iwn_powerhook(int, void *);
 int		iwn_nic_lock(struct iwn_softc *);
 int		iwn_eeprom_lock(struct iwn_softc *);
 int		iwn_init_otprom(struct iwn_softc *);
@@ -569,7 +569,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	timeout_set(&sc->calib_to, iwn_calib_timeout, sc);
 
-	sc->powerhook = powerhook_establish(iwn_power, sc);
+	sc->powerhook = powerhook_establish(iwn_powerhook, sc);
 
 	return;
 
@@ -763,21 +763,10 @@ iwn_activate(struct device *self, int act)
 void
 iwn_resume(void *arg1, void *arg2)
 {
-	iwn_power(PWR_RESUME, arg1);
-}
-
-void
-iwn_power(int why, void *arg)
-{
-	struct iwn_softc *sc = arg;
+	struct iwn_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t reg;
 	int s;
-
-	if (why != PWR_RESUME) {
-		iwn_stop(ifp, 0);
-		return;
-	}
 
 	/* Clear device-specific "PCI retry timeout" register (41h). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -795,6 +784,12 @@ iwn_power(int why, void *arg)
 	sc->sc_flags &= ~IWN_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
 	splx(s);
+}
+
+void
+iwn_powerhook(int why, void *arg)
+{
+	iwn_activate(arg, why);
 }
 
 int

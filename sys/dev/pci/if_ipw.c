@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.91 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.92 2010/08/27 20:09:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -66,7 +66,7 @@ int		ipw_match(struct device *, void *, void *);
 void		ipw_attach(struct device *, struct device *, void *);
 int		ipw_activate(struct device *, int);
 void		ipw_resume(void *, void *);
-void		ipw_power(int, void *);
+void		ipw_powerhook(int, void *);
 int		ipw_dma_alloc(struct ipw_softc *);
 void		ipw_release(struct ipw_softc *);
 int		ipw_media_change(struct ifnet *);
@@ -277,7 +277,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_send_mgmt = ipw_send_mgmt;
 	ieee80211_media_init(ifp, ipw_media_change, ipw_media_status);
 
-	sc->powerhook = powerhook_establish(ipw_power, sc);
+	sc->powerhook = powerhook_establish(ipw_powerhook, sc);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
@@ -316,21 +316,10 @@ ipw_activate(struct device *self, int act)
 void
 ipw_resume(void *arg1, void *arg2)
 {
-	ipw_power(PWR_RESUME, arg1);
-}
-
-void
-ipw_power(int why, void *arg)
-{
-	struct ipw_softc *sc = arg;
+	struct ipw_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t data;
 	int s;
-
-	if (why != PWR_RESUME) {
-		ipw_stop(ifp, 0);
-		return;
-	}
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -348,6 +337,12 @@ ipw_power(int why, void *arg)
 	sc->sc_flags &= ~IPW_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
 	splx(s);
+}
+
+void
+ipw_powerhook(int why, void *arg)
+{
+	ipw_activate(arg, why);
 }
 
 int
