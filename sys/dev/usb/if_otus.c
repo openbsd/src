@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.17 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -366,7 +366,6 @@ otus_attachhook(void *xsc)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = otus_init;
 	ifp->if_ioctl = otus_ioctl;
 	ifp->if_start = otus_start;
 	ifp->if_watchdog = otus_watchdog;

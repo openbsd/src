@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.23 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.24 2010/08/27 17:08:00 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -606,7 +606,6 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = jme_init;
 	ifp->if_ioctl = jme_ioctl;
 	ifp->if_start = jme_start;
 	ifp->if_watchdog = jme_watchdog;

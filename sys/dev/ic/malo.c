@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.91 2010/08/08 16:36:33 deraadt Exp $ */
+/*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -347,7 +347,6 @@ malo_attach(struct malo_softc *sc)
 
 	/* setup interface */
 	ifp->if_softc = sc;
-	ifp->if_init = malo_init;
 	ifp->if_ioctl = malo_ioctl;
 	ifp->if_start = malo_start;
 	ifp->if_watchdog = malo_watchdog;

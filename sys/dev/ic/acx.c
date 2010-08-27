@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.96 2010/08/07 03:50:01 krw Exp $ */
+/*	$OpenBSD: acx.c,v 1.97 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -289,7 +289,6 @@ acx_attach(struct acx_softc *sc)
 	}
 
 	ifp->if_softc = sc;
-	ifp->if_init = acx_init;
 	ifp->if_ioctl = acx_ioctl;
 	ifp->if_start = acx_start;
 	ifp->if_watchdog = acx_watchdog;

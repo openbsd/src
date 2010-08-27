@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.70 2010/04/29 07:42:52 jasper Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.71 2010/08/27 17:08:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -545,7 +545,6 @@ run_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = run_init;
 	ifp->if_ioctl = run_ioctl;
 	ifp->if_start = run_start;
 	ifp->if_watchdog = run_watchdog;

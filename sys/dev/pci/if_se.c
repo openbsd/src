@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.2 2010/04/02 22:42:55 jsg Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.3 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -628,7 +628,6 @@ se_attach(parent, self, aux)
 	ifp->if_start = se_start;
 	ifp->if_watchdog = se_watchdog;
 	ifp->if_baudrate = IF_Mbps(100);
-	ifp->if_init = se_init;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);

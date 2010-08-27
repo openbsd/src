@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.12 2009/06/06 12:06:28 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.13 2010/08/27 17:08:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -323,6 +323,7 @@ struct urtw_softc {
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
+	int				(*sc_init)(struct ifnet *);
 	struct urtw_rf			sc_rf;
 
 	struct usb_task			sc_task;

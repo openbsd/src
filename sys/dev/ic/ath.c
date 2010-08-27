@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.88 2010/08/27 04:09:18 deraadt Exp $  */
+/*      $OpenBSD: ath.c,v 1.89 2010/08/27 17:08:00 jsg Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -350,7 +350,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ifp->if_watchdog = ath_watchdog;
 	ifp->if_ioctl = ath_ioctl;
 #ifndef __OpenBSD__
-	ifp->if_init = ath_init;
 	ifp->if_stop = ath_stop;		/* XXX */
 #endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, ATH_TXBUF * ATH_TXDESC);

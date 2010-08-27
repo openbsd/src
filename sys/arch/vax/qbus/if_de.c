@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.8 2007/05/10 17:59:26 deraadt Exp $ */
+/*	$OpenBSD: if_de.c,v 1.9 2010/08/27 17:08:01 jsg Exp $ */
 /*	$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $	*/
 
 /*
@@ -230,7 +230,6 @@ deattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI;
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
-	ifp->if_init = deinit;
 	ifp->if_stop = destop;
 	IFQ_SET_READY(&ifp->if_snd);
 

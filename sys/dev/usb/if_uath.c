@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.42 2010/06/29 07:12:31 matthew Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.43 2010/08/27 17:08:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -391,7 +391,6 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = uath_init;
 	ifp->if_ioctl = uath_ioctl;
 	ifp->if_start = uath_start;
 	ifp->if_watchdog = uath_watchdog;

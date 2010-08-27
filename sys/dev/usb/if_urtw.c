@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.30 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.31 2010/08/27 17:08:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -724,9 +724,9 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	if (sc->sc_hwrev & URTW_HWREV_8187) {
-		ifp->if_init = urtw_init;
+		sc->sc_init = urtw_init;
 	} else {
-		ifp->if_init = urtw_8187b_init;
+		sc->sc_init = urtw_8187b_init;
 	}
 	ifp->if_ioctl = urtw_ioctl;
 	ifp->if_start = urtw_start;
@@ -1028,6 +1028,7 @@ urtw_free_tx_data_list(struct urtw_softc *sc)
 int
 urtw_media_change(struct ifnet *ifp)
 {
+	struct urtw_softc *sc = ifp->if_softc;
 	int error;
 
 	error = ieee80211_media_change(ifp);
@@ -1036,7 +1037,7 @@ urtw_media_change(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING))
-		ifp->if_init(ifp);
+		sc->sc_init(ifp);
 
 	return (0);
 }
@@ -2412,7 +2413,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				urtw_set_multi(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
-					ifp->if_init(ifp);
+					sc->sc_init(ifp);
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -2455,7 +2456,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) ==
 		    (IFF_RUNNING | IFF_UP))
-			ifp->if_init(ifp);
+			sc->sc_init(ifp);
 		error = 0;
 	}
 

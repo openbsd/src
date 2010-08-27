@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.91 2010/08/06 03:02:24 mlarkin Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.92 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -338,7 +338,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = nfe_ioctl;
 	ifp->if_start = nfe_start;
 	ifp->if_watchdog = nfe_watchdog;
-	ifp->if_init = nfe_init;
 	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, NFE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);

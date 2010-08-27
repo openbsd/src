@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.127 2010/08/08 21:00:31 krw Exp $	*/
+/*	$OpenBSD: re.c,v 1.128 2010/08/27 17:08:00 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1104,7 +1104,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_ioctl = re_ioctl;
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
-	ifp->if_init = re_init;
 	if ((sc->rl_flags & RL_FLAG_NOJUMBO) == 0)
 		ifp->if_hardmtu = RL_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);

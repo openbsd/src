@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.62 2010/08/27 04:09:18 deraadt Exp $  */
+/*	$OpenBSD: pgt.c,v 1.63 2010/08/27 17:08:00 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1891,7 +1891,6 @@ pgt_net_attach(struct pgt_softc *sc)
 		return (error);
 
 	ifp->if_softc = sc;
-	ifp->if_init = pgt_init;
 	ifp->if_ioctl = pgt_ioctl;
 	ifp->if_start = pgt_start;
 	ifp->if_watchdog = pgt_watchdog;

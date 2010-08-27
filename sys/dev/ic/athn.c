@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.62 2010/08/18 18:58:01 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.63 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -330,7 +330,6 @@ athn_attach(struct athn_softc *sc)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = athn_init;
 	ifp->if_ioctl = athn_ioctl;
 	ifp->if_start = athn_start;
 	ifp->if_watchdog = athn_watchdog;

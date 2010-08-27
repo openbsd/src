@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.81 2009/11/22 22:13:51 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.82 2010/08/27 17:08:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -398,7 +398,6 @@ zyd_complete_attach(struct zyd_softc *sc)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = zyd_init;
 	ifp->if_ioctl = zyd_ioctl;
 	ifp->if_start = zyd_start;
 	ifp->if_watchdog = zyd_watchdog;

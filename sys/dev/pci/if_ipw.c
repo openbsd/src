@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.90 2010/08/12 16:59:29 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.91 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -263,7 +263,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = ipw_init;
 	ifp->if_ioctl = ipw_ioctl;
 	ifp->if_start = ipw_start;
 	ifp->if_watchdog = ipw_watchdog;

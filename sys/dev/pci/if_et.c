@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.20 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.21 2010/08/27 17:08:00 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -251,7 +251,6 @@ et_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = et_init;
 	ifp->if_ioctl = et_ioctl;
 	ifp->if_start = et_start;
 	ifp->if_watchdog = et_watchdog;

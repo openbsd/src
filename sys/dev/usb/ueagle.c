@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.26 2010/06/05 13:06:57 damien Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.27 2010/08/27 17:08:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -214,7 +214,6 @@ ueagle_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_SIMPLEX;
-	ifp->if_init = ueagle_init;
 	ifp->if_ioctl = ueagle_ioctl;
 	ifp->if_start = ueagle_start;
 	IFQ_SET_READY(&ifp->if_snd);

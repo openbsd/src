@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.102 2010/08/12 16:59:29 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.103 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -533,7 +533,6 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = iwn_init;
 	ifp->if_ioctl = iwn_ioctl;
 	ifp->if_start = iwn_start;
 	ifp->if_watchdog = iwn_watchdog;

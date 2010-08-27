@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.11 2010/05/19 14:39:07 oga Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.12 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -228,7 +228,6 @@ age_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = age_init;
 	ifp->if_ioctl = age_ioctl;
 	ifp->if_start = age_start;
 	ifp->if_watchdog = age_watchdog;

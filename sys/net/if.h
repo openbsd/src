@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.117 2010/06/26 19:49:54 claudio Exp $	*/
+/*	$OpenBSD: if.h,v 1.118 2010/08/27 17:08:01 jsg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -274,8 +274,6 @@ struct ifnet {				/* and the entries */
 	void	(*if_start)(struct ifnet *);
 					/* ioctl routine */
 	int	(*if_ioctl)(struct ifnet *, u_long, caddr_t);
-					/* init routine */
-	int	(*if_init)(struct ifnet *);
 					/* stop routine */
 	int	(*if_stop)(struct ifnet *, int);
 					/* timer routine */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.60 2010/08/27 16:06:25 kettenis Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.61 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -357,7 +357,6 @@ rt2860_attachhook(void *xsc)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = rt2860_init;
 	ifp->if_ioctl = rt2860_ioctl;
 	ifp->if_start = rt2860_start;
 	ifp->if_watchdog = rt2860_watchdog;

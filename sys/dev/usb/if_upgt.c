@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.50 2010/08/27 17:08:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -421,7 +421,6 @@ upgt_attach_hook(void *arg)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = upgt_init;
 	ifp->if_ioctl = upgt_ioctl;
 	ifp->if_start = upgt_start;
 	ifp->if_watchdog = upgt_watchdog;

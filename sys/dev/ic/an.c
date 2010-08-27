@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.57 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: an.c,v 1.58 2010/08/27 17:08:00 jsg Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -275,7 +275,6 @@ an_attach(struct an_softc *sc)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = an_ioctl;
 	ifp->if_start = an_start;
-	ifp->if_init = an_init;
 	ifp->if_watchdog = an_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 

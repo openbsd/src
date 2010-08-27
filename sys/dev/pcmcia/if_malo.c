@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.69 2010/07/02 03:13:42 tedu Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.70 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -301,7 +301,6 @@ cmalo_attach(void *arg)
 	/* setup interface */
 	ifp->if_softc = sc;
 	ifp->if_ioctl = cmalo_ioctl;
-	ifp->if_init = cmalo_init;
 	ifp->if_start = cmalo_start;
 	ifp->if_watchdog = cmalo_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.224 2010/08/25 14:07:24 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.225 2010/08/27 17:08:01 jsg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ int	ifqmaxlen = IFQ_MAXLEN;
 void	if_detach_queues(struct ifnet *, struct ifqueue *);
 void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
-int	if_detached_init(struct ifnet *);
 void	if_detached_watchdog(struct ifnet *);
 
 int	if_getgroup(caddr_t, struct ifnet *);
@@ -521,7 +520,6 @@ if_detach(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_start = if_detached_start;
 	ifp->if_ioctl = if_detached_ioctl;
-	ifp->if_init = if_detached_init;
 	ifp->if_watchdog = if_detached_watchdog;
 
 	/* Call detach hooks, ie. to remove vlan interfaces */
@@ -1797,12 +1795,6 @@ int
 if_detached_ioctl(struct ifnet *ifp, u_long a, caddr_t b)
 {
 	return ENODEV;
-}
-
-int
-if_detached_init(struct ifnet *ifp)
-{
-	return (ENXIO);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.6 2010/07/27 22:39:59 deraadt Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.7 2010/08/27 17:08:00 jsg Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -589,7 +589,6 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = alc_init;
 	ifp->if_ioctl = alc_ioctl;
 	ifp->if_start = alc_start;
 	ifp->if_watchdog = alc_watchdog;
