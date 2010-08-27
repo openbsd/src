@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.78 2009/11/24 00:28:22 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.79 2010/08/27 04:09:19 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3605,9 +3605,6 @@ rtw_power(int why, void *arg)
 
 	s = splnet();
 	switch (why) {
-	case PWR_STANDBY:
-		/* XXX do nothing. */
-		break;
 	case PWR_SUSPEND:
 		rtw_stop(ifp, 1);
 		if (sc->sc_power != NULL)

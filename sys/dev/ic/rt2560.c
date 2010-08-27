@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.50 2010/08/25 21:37:59 kettenis Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.51 2010/08/27 04:09:18 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2738,7 +2738,6 @@ rt2560_power(int why, void *arg)
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		rt2560_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);

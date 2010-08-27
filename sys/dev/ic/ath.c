@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.87 2010/08/04 21:02:24 deraadt Exp $  */
+/*      $OpenBSD: ath.c,v 1.88 2010/08/27 04:09:18 deraadt Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -498,7 +498,6 @@ ath_power(int why, void *arg)
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		ath_suspend(sc, why);
 		break;
 	case PWR_RESUME:

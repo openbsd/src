@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.75 2010/05/01 19:43:57 jsg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.76 2010/08/27 04:09:21 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -697,7 +697,6 @@ uhci_power(int why, void *v)
 
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);

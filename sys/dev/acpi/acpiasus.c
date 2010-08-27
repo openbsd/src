@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.9 2010/07/06 06:26:25 deraadt Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.10 2010/08/27 04:09:17 deraadt Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -223,7 +223,6 @@ acpiasus_power(int why, void *arg)
 	struct aml_value ret;
 
 	switch (why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		break;
 	case PWR_RESUME:

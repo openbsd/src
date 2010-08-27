@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.19 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: esa.c,v 1.20 2010/08/27 04:09:19 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1611,7 +1611,6 @@ esa_powerhook(int why, void *hdl)
 
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		esa_suspend(sc);
 		break;
 	case PWR_RESUME:

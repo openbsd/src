@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.61 2010/08/07 16:16:18 kettenis Exp $  */
+/*	$OpenBSD: pgt.c,v 1.62 2010/08/27 04:09:18 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -3325,7 +3325,6 @@ pgt_power(int why, void *arg)
 	s = splnet();
 
 	switch (why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		pgt_stop(sc, SC_NEEDS_RESET);
 		pgt_update_hw_from_sw(sc, 0, 0);

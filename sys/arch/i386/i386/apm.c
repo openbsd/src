@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.88 2010/07/25 21:43:35 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.89 2010/08/27 04:09:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -341,7 +341,7 @@ apm_standby()
 #endif /* NWSDISPLAY > 0 */
 	bufq_quiesce();
 
-	dopowerhooks(PWR_STANDBY);
+	dopowerhooks(PWR_SUSPEND);
 
 	if (cold)
 		vfs_syncwait(0);

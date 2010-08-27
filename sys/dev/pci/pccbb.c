@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.77 2010/08/25 21:37:59 kettenis Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.78 2010/08/27 04:09:20 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -2828,7 +2828,7 @@ pccbb_powerhook(int why, void *arg)
 
 	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
 
-	if (why == PWR_SUSPEND || why == PWR_STANDBY) {
+	if (why == PWR_SUSPEND) {
 		DPRINTF(("%s: power: why %d stopping intr\n",
 		    sc->sc_dev.dv_xname, why));
 		if (sc->sc_pil_intr_enable) {

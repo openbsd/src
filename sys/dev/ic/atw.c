@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.69 2009/08/16 18:03:48 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.70 2010/08/27 04:09:18 deraadt Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3994,9 +3994,6 @@ atw_power(int why, void *arg)
 
 	s = splnet();
 	switch (why) {
-	case PWR_STANDBY:
-		/* XXX do nothing. */
-		break;
 	case PWR_SUSPEND:
 		atw_stop(ifp, 1);
 		if (sc->sc_power != NULL)

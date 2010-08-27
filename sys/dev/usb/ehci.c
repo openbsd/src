@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.106 2009/11/26 12:27:48 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.107 2010/08/27 04:09:20 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1074,7 +1074,6 @@ ehci_power(int why, void *v)
 	s = splhardusb();
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		sc->sc_bus.use_polling++;
 
 		for (i = 1; i <= sc->sc_noport; i++) {

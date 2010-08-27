@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.28 2010/08/19 17:54:12 jasper Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.29 2010/08/27 04:09:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -259,7 +259,6 @@ sdhc_power(int why, void *arg)
 	int n, i;
 
 	switch(why) {
-	case PWR_STANDBY:
 	case PWR_SUSPEND:
 		/* XXX poll for command completion or suspend command
 		 * in progress */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.95 2010/05/01 19:43:57 jsg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.96 2010/08/27 04:09:20 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -997,7 +997,6 @@ ohci_power(int why, void *v)
 	s = splhardusb();
 	switch (why) {
 	case PWR_SUSPEND:
-	case PWR_STANDBY:
 		sc->sc_bus.use_polling++;
 		reg = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
 		if (sc->sc_control == 0) {
