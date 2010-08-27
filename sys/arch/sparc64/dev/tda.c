@@ -1,4 +1,4 @@
-/*	$OpenBSD: tda.c,v 1.6 2010/05/20 22:13:45 edd Exp $ */
+/*	$OpenBSD: tda.c,v 1.7 2010/08/27 18:58:57 robert Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -39,7 +39,7 @@
 #define TDA_PSFAN_ON            0x1f
 #define TDA_PSFAN_OFF           0x00
 
-/* Internal and External temperature senor numbers */
+/* Internal and External temperature sensor numbers */
 #define SENSOR_TEMP_EXT		0
 #define SENSOR_TEMP_INT		1
 
