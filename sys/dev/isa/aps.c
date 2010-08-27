@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.19 2009/05/24 16:40:18 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.20 2010/08/27 16:45:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -139,19 +139,19 @@ struct aps_softc {
 
 int	 aps_match(struct device *, void *, void *);
 void	 aps_attach(struct device *, struct device *, void *);
+int	 aps_activate(struct device *, int);
 
 int	 aps_init(bus_space_tag_t, bus_space_handle_t);
 int	 aps_read_data(struct aps_softc *);
 void	 aps_refresh_sensor_data(struct aps_softc *);
 void	 aps_refresh(void *);
-void	 aps_power(int, void *);
+void	 aps_powerhook(int, void *);
 int	 aps_do_io(bus_space_tag_t, bus_space_handle_t,
 		   unsigned char *, int, int);
 
 struct cfattach aps_ca = {
 	sizeof(struct aps_softc),
-	aps_match,
-	aps_attach
+	aps_match, aps_attach, NULL, aps_activate
 };
 
 struct cfdriver aps_cd = {
@@ -349,7 +349,7 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sensordev_install(&sc->sensordev);
 
-	powerhook_establish(aps_power, (void *)sc);
+	powerhook_establish(aps_powerhook, (void *)sc);
 
 	/* Refresh sensor data every 0.5 seconds */
 	timeout_set(&aps_timeout, aps_refresh, sc);
@@ -484,28 +484,38 @@ aps_refresh(void *arg)
 	timeout_add_msec(&aps_timeout, 500);
 }
 
-void
-aps_power(int why, void *arg)
+int
+aps_activate(struct device *self, int act)
 {
-	struct aps_softc *sc = (struct aps_softc *)arg;
+	struct aps_softc *sc = (struct aps_softc *)self;
 	bus_space_tag_t iot = sc->aps_iot;
 	bus_space_handle_t ioh = sc->aps_ioh;
 	unsigned char iobuf[16];
 
-	if (why != PWR_RESUME) {
+	switch (act) {
+	case DVACT_SUSPEND:
 		timeout_del(&aps_timeout);
-		return;
-	}
-	/*
-	 * Redo the init sequence on resume, because APS is 
-	 * as forgetful as it is deaf.
-	 */
+		break;
+	case DVACT_RESUME:
+		/*
+		 * Redo the init sequence on resume, because APS is 
+		 * as forgetful as it is deaf.
+		 */
 
-	/* get APS mode */
-	iobuf[APS_CMD] = 0x13;
-	if (aps_do_io(iot, ioh, iobuf, APS_WRITE_0, APS_READ_1)
-	    || aps_init(iot, ioh))
-		printf("aps: failed to wake up\n");
-	else
-		timeout_add_msec(&aps_timeout, 500);
+		/* get APS mode */
+		iobuf[APS_CMD] = 0x13;
+		if (aps_do_io(iot, ioh, iobuf, APS_WRITE_0, APS_READ_1) ||
+		    aps_init(iot, ioh))
+			printf("aps: failed to wake up\n");
+		else
+			timeout_add_msec(&aps_timeout, 500);
+		break;
+	}
+	return (0);
+}
+
+void
+aps_powerhook(int why, void *arg)
+{
+	aps_activate(arg, why);
 }
