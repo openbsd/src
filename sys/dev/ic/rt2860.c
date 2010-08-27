@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.59 2010/08/27 04:09:18 deraadt Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.60 2010/08/27 16:06:25 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -436,8 +436,10 @@ void
 rt2860_resume(void *xsc)
 {
 	struct rt2860_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	rt2860_power(PWR_RESUME, sc);
+	if (ifp->if_flags & IFF_UP)
+		rt2860_init(ifp);
 }
 
 int
@@ -3867,22 +3869,15 @@ void
 rt2860_power(int why, void *arg)
 {
 	struct rt2860_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
-		rt2860_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
+		rt2860_suspend(sc);
 		break;
 	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			rt2860_init(ifp);
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-		}
+		rt2860_resume(sc);
 		break;
 	}
 	splx(s);

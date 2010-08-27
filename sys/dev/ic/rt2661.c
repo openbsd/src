@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.57 2010/08/27 04:09:18 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.58 2010/08/27 16:06:25 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -415,8 +415,10 @@ void
 rt2661_resume(void *xsc)
 {
 	struct rt2661_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	rt2661_power(PWR_RESUME, sc);
+	if (ifp->if_flags & IFF_UP)
+		rt2661_init(ifp);	
 }
 
 int
@@ -2927,22 +2929,15 @@ void
 rt2661_power(int why, void *arg)
 {
 	struct rt2661_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
-		rt2661_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
+		rt2661_suspend(sc);
 		break;
 	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			rt2661_init(ifp);	
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-		}
+		rt2661_resume(sc);
 		break;
 	}
 	splx(s);

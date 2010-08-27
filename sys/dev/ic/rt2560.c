@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.51 2010/08/27 04:09:18 deraadt Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.52 2010/08/27 16:06:25 kettenis Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -348,8 +348,10 @@ void
 rt2560_resume(void *xsc)
 {
 	struct rt2560_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	rt2560_power(PWR_RESUME, sc);
+	if (ifp->if_flags & IFF_UP)
+		rt2560_init(ifp);
 }
 
 int
@@ -2732,22 +2734,15 @@ void
 rt2560_power(int why, void *arg)
 {
 	struct rt2560_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
-		rt2560_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
+		rt2560_suspend(sc);
 		break;
 	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			rt2560_init(ifp);
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-		}
+		rt2560_resume(sc);
 		break;
 	}
 	splx(s);

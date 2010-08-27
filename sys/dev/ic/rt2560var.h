@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560var.h,v 1.7 2010/08/04 19:48:33 damien Exp $  */
+/*	$OpenBSD: rt2560var.h,v 1.8 2010/08/27 16:06:25 kettenis Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -104,7 +104,6 @@ struct rt2560_softc {
 
 	int			(*sc_enable)(struct rt2560_softc *);
 	void			(*sc_disable)(struct rt2560_softc *);
-	void			(*sc_power)(struct rt2560_softc *, int);
 
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_st;
