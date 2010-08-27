@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.26 2010/08/27 05:04:12 deraadt Exp $ */
+/* $OpenBSD: auixp.c,v 1.27 2010/08/27 16:26:35 deraadt Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -135,15 +135,6 @@ int	auixp_allocmem(struct auixp_softc *, size_t, size_t,
 int	auixp_freemem(struct auixp_softc *, struct auixp_dma *);
 paddr_t	auixp_mappage(void *, void *, off_t, int);
 void	auixp_get_default_params(void *, int, struct audio_params *);
-
-
-/* power management (do we support that already?) */
-#if 0
-void	auixp_powerhook(int, void *);
-int	auixp_suspend(struct auixp_softc *);
-int	auixp_resume(struct auixp_softc *);
-#endif
-
 
 /* Supporting subroutines */
 int	auixp_init(struct auixp_softc *);
@@ -1251,7 +1242,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	int len;
 
 	sc = (struct auixp_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1316,27 +1306,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-
-	/* XXX set up power hooks; not implemented yet XXX */
-
-	len = 1;	/* shut up gcc */
-#ifdef notyet
-	/* create suspend save area */
-	len = sizeof(u_int16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
-	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
-	sc->savemem = (u_int16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->savemem == NULL) {
-		printf("%s: unable to allocate suspend buffer\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	sc->powerhook = powerhook_establish(auixp_powerhook, sc);
-	if (sc->powerhook == NULL)
-		printf("%s: WARNING: unable to establish powerhook\n",
-		    sc->sc_dev.dv_xname);
-
-#endif
 
 	/*
 	 * delay further configuration of codecs and audio after interrupts
@@ -1456,10 +1425,6 @@ auixp_detach(struct device *self, int flags)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-
-	if (sc->savemem)
-		free(sc->savemem, M_DEVBUF);
-
 	return 0;
 }
 
@@ -1844,39 +1809,3 @@ auixp_init(struct auixp_softc *sc)
 
 	return 0;
 }
-
-#if 0
-void
-auixp_powerhook(int why, void *hdl)
-{
-	struct auixp_softc *sc;
-
-	sc = (struct auixp_softc *)hdl;
-	switch (why) {
-	case PWR_SUSPEND:
-		auixp_suspend(sc);
-		break;
-	case PWR_RESUME:
-		auixp_resume(sc);
-/* XXX fix me XXX */
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		break;
-	}
-}
-
-int
-auixp_suspend(struct auixp_softc *sc)
-{
-
-	/* XXX no power functions yet XXX */
-	return 0;
-}
-
-int
-auixp_resume(struct auixp_softc *sc)
-{
-
-	/* XXX no power functions yet XXX */
-	return 0;
-}
-#endif /* 0 */
