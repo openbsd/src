@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.24 2010/07/15 03:43:11 jakemsr Exp $       */
+/*      $OpenBSD: neo.c,v 1.25 2010/08/27 18:49:40 deraadt Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -179,6 +179,7 @@ static void	 nm_wrbuf(struct neo_softc *, int, u_int32_t, int);
 
 int	neo_match(struct device *, void *, void *);
 void	neo_attach(struct device *, struct device *, void *);
+int	neo_activate(struct device *, int);
 int	neo_intr(void *);
 
 int	neo_open(void *, int);
@@ -207,7 +208,7 @@ void	neo_free(void *, void *, int);
 size_t	neo_round_buffersize(void *, int, size_t);
 int	neo_get_props(void *);
 void	neo_set_mixer(struct neo_softc *sc, int a, int d);
-void    neo_power(int why, void *arg);
+void    neo_powerhook(int why, void *arg);
 
 
 struct cfdriver neo_cd = {
@@ -216,7 +217,8 @@ struct cfdriver neo_cd = {
 
 
 struct cfattach neo_ca = {
-	sizeof(struct neo_softc), neo_match, neo_attach
+	sizeof(struct neo_softc), neo_match, neo_attach, NULL,
+	neo_activate
 };
 
 
@@ -619,25 +621,34 @@ neo_attach(parent, self, aux)
 	if ((error = ac97_attach(&sc->host_if)) != 0)
 		return;
 
-	sc->powerhook = powerhook_establish(neo_power, sc);
+	sc->powerhook = powerhook_establish(neo_powerhook, sc);
 
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
 
 	return;
 }
 
-void
-neo_power(int why, void *addr)
+int
+neo_activate(struct device *self, int act)
 {
-	struct neo_softc *sc = (struct neo_softc *)addr;
+	struct neo_softc *sc = (struct neo_softc *)self;
 
-	if (why == PWR_RESUME) {
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
 		nm_init(sc);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+		break;
 	}
+	return 0;
 }
 
-
+void
+neo_powerhook(int why, void *addr)
+{
+	neo_activate(addr, why);
+}
 
 int
 neo_match(parent, match, aux)
