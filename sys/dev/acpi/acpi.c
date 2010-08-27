@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.209 2010/08/08 20:45:18 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.210 2010/08/27 20:31:55 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -796,6 +796,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_thread = malloc(sizeof(struct acpi_thread), M_DEVBUF, M_WAITOK);
 	sc->sc_thread->sc = sc;
 	sc->sc_thread->running = 1;
+
+	/* Enable PCI Power Management. */
+	pci_dopm = 1;
 
 	acpi_attach_machdep(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.81 2010/08/17 19:14:52 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.82 2010/08/27 20:31:55 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -49,8 +49,10 @@
 int pcimatch(struct device *, void *, void *);
 void pciattach(struct device *, struct device *, void *);
 int pcidetach(struct device *, int);
-void pcipower(int, void *);
+void pcipowerhook(int, void *);
 int pciactivate(struct device *, int);
+void pci_suspend(struct pci_softc *);
+void pci_resume(struct pci_softc *);
 
 #define NMAPREG			((PCI_MAPREG_END - PCI_MAPREG_START) / \
 				    sizeof(pcireg_t))
@@ -82,6 +84,8 @@ struct proc *pci_vga_proc;
 struct pci_softc *pci_vga_pci;
 pcitag_t pci_vga_tag;
 int	pci_vga_count;
+
+int	pci_dopm;
 
 int	pciprint(void *, const char *);
 int	pcisubmatch(struct device *, void *, void *);
@@ -158,7 +162,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	LIST_INIT(&sc->sc_devs);
-	sc->sc_powerhook = powerhook_establish(pcipower, sc);
+	sc->sc_powerhook = powerhook_establish(pcipowerhook, sc);
 
 	sc->sc_iot = pba->pba_iot;
 	sc->sc_memt = pba->pba_memt;
@@ -195,10 +199,10 @@ pciactivate(struct device *self, int act)
 	switch (act) {
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
-		pcipower(PWR_SUSPEND, self);	
+		pci_suspend((struct pci_softc *)self);
 		break;
 	case DVACT_RESUME:
-		pcipower(PWR_RESUME, self);
+		pci_resume((struct pci_softc *)self);
 		rv = config_activate_children(self, act);
 		break;
 	}
@@ -207,11 +211,23 @@ pciactivate(struct device *self, int act)
 
 /* save and restore the pci config space */
 void
-pcipower(int why, void *arg)
+pcipowerhook(int why, void *arg)
 {
-	struct pci_softc *sc = (struct pci_softc *)arg;
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_suspend(arg);
+		break;
+	case PWR_RESUME:
+		pci_resume(arg);
+		break;
+	}
+}
+
+void
+pci_suspend(struct pci_softc *sc)
+{
 	struct pci_dev *pd;
-	pcireg_t bhlc, csr, reg;
+	pcireg_t bhlc, csr;
 	int i;
 
 	LIST_FOREACH(pd, &sc->sc_devs, pd_next) {
@@ -223,18 +239,19 @@ pcipower(int why, void *arg)
 		bhlc = pci_conf_read(sc->sc_pc, pd->pd_tag, PCI_BHLC_REG);
 		if (PCI_HDRTYPE_TYPE(bhlc) != 0)
 			continue;
-    
-		if (why != PWR_RESUME) {
-			for (i = 0; i < NMAPREG; i++)
-				pd->pd_map[i] = pci_conf_read(sc->sc_pc,
-				    pd->pd_tag, PCI_MAPREG_START + (i * 4));
-			pd->pd_csr = pci_conf_read(sc->sc_pc, pd->pd_tag,
-			    PCI_COMMAND_STATUS_REG);
-			pd->pd_bhlc = pci_conf_read(sc->sc_pc, pd->pd_tag,
-			    PCI_BHLC_REG);
-			pd->pd_int = pci_conf_read(sc->sc_pc, pd->pd_tag,
-			    PCI_INTERRUPT_REG);
 
+		/* Save registers that may get lost. */
+		for (i = 0; i < NMAPREG; i++)
+			pd->pd_map[i] = pci_conf_read(sc->sc_pc, pd->pd_tag,
+			    PCI_MAPREG_START + (i * 4));
+		pd->pd_csr = pci_conf_read(sc->sc_pc, pd->pd_tag,
+		    PCI_COMMAND_STATUS_REG);
+		pd->pd_bhlc = pci_conf_read(sc->sc_pc, pd->pd_tag,
+		    PCI_BHLC_REG);
+		pd->pd_int = pci_conf_read(sc->sc_pc, pd->pd_tag,
+		    PCI_INTERRUPT_REG);
+
+		if (pci_dopm) {
 			/*
 			 * Place the device into D3.  The PCI Power
 			 * Management spec says we should disable I/O
@@ -251,22 +268,45 @@ pcipower(int why, void *arg)
 			    pd->pd_tag);
 			pci_set_powerstate(sc->sc_pc, pd->pd_tag,
 			    PCI_PMCSR_STATE_D3);
-		} else {
+		}
+	}
+}
+
+void
+pci_resume(struct pci_softc *sc)
+{
+	struct pci_dev *pd;
+	pcireg_t bhlc, reg;
+	int i;
+
+	LIST_FOREACH(pd, &sc->sc_devs, pd_next) {
+		/*
+		 * Only handle header type 0 here; PCI-PCI bridges and
+		 * CardBus bridges need special handling, which will
+		 * be done in their specific drivers.
+		 */
+		bhlc = pci_conf_read(sc->sc_pc, pd->pd_tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlc) != 0)
+			continue;
+
+		if (pci_dopm) {
+			/* Restore power. */
 			pci_set_powerstate(sc->sc_pc, pd->pd_tag,
 			    pd->pd_pmcsr_state);
-			for (i = 0; i < NMAPREG; i++)
-				pci_conf_write(sc->sc_pc, pd->pd_tag,
-				    PCI_MAPREG_START + (i * 4), pd->pd_map[i]);
-			reg = pci_conf_read(sc->sc_pc, pd->pd_tag,
-			    PCI_COMMAND_STATUS_REG);
-			pci_conf_write(sc->sc_pc, pd->pd_tag,
-			    PCI_COMMAND_STATUS_REG,
-			    (reg & 0xffff0000) | (pd->pd_csr & 0x0000ffff));
-			pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_BHLC_REG,
-			    pd->pd_bhlc);
-			pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_INTERRUPT_REG,
-			    pd->pd_int);
 		}
+
+		/* Restore the registers saved above. */
+		for (i = 0; i < NMAPREG; i++)
+			pci_conf_write(sc->sc_pc, pd->pd_tag,
+			    PCI_MAPREG_START + (i * 4), pd->pd_map[i]);
+		reg = pci_conf_read(sc->sc_pc, pd->pd_tag,
+		    PCI_COMMAND_STATUS_REG);
+		pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_COMMAND_STATUS_REG,
+		    (reg & 0xffff0000) | (pd->pd_csr & 0x0000ffff));
+		pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_BHLC_REG,
+		    pd->pd_bhlc);
+		pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_INTERRUPT_REG,
+		    pd->pd_int);
 	}
 }
 
