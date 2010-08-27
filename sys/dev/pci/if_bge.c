@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.298 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.299 2010/08/27 19:48:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -151,7 +151,7 @@ int bge_intr(void *);
 void bge_start(struct ifnet *);
 int bge_ioctl(struct ifnet *, u_long, caddr_t);
 void bge_init(void *);
-void bge_power(int, void *);
+void bge_powerhook(int, void *);
 void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
 void bge_stop(struct bge_softc *);
 void bge_watchdog(struct ifnet *);
@@ -2265,7 +2265,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	sc->sc_shutdownhook = shutdownhook_establish(bge_shutdown, sc);
-	sc->sc_powerhook = powerhook_establish(bge_power, sc);	
+	sc->sc_powerhook = powerhook_establish(bge_powerhook, sc);
 	
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
 	timeout_set(&sc->bge_rxtimeout, bge_rxtick, sc);
@@ -2296,14 +2296,16 @@ bge_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		config_activate_children(self, act);
 		if (ifp->if_flags & IFF_RUNNING)
 			bge_stop(sc);
 		break;
 	case DVACT_RESUME:
-		bge_power(PWR_RESUME, self);
+		if (ifp->if_flags & IFF_UP)
+			bge_init(sc);
+		config_activate_children(self, act);
 		break;
 	}
-
 	return (0);
 }
 
@@ -3733,14 +3735,7 @@ bge_link_upd(struct bge_softc *sc)
 }
 
 void
-bge_power(int why, void *xsc)
+bge_powerhook(int why, void *arg)
 {
-	struct bge_softc *sc = (struct bge_softc *)xsc;
-	struct ifnet *ifp;
-
-	if (why == PWR_RESUME) {
-		ifp = &sc->arpcom.ac_if;
-		if (ifp->if_flags & IFF_UP)
-			bge_init(xsc);
-	}
+	bge_activate(arg, why);
 }
