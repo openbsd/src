@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfbreg.h,v 1.4 2010/02/18 22:45:28 miod Exp $	*/
+/*	$OpenBSD: smfbreg.h,v 1.5 2010/08/27 12:48:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -28,6 +28,7 @@
 
 #define	SM5XX_DPR_BASE			0x00100000
 #define	SM7XX_DPR_BASE			0x00408000
+#define	SMXXX_DPR_SIZE			0x00004000
 
 #define	DPR_SRC_COORDS			0x00
 #define	DPR_DST_COORDS			0x04
@@ -70,3 +71,4 @@
  */
 
 #define	SM7XX_MMIO_BASE			0x00700000
+#define	SM7XX_MMIO_SIZE			0x00004000
