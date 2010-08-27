@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.55 2009/08/13 14:24:47 jasper Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.56 2010/08/27 08:24:53 deraadt Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -65,7 +65,6 @@ const struct pci_matchid ixgb_devices[] = {
 int  ixgb_probe(struct device *, void *, void *);
 void ixgb_attach(struct device *, struct device *, void *);
 int  ixgb_intr(void *);
-void ixgb_power(int, void *);
 void ixgb_start(struct ifnet *);
 int  ixgb_ioctl(struct ifnet *, u_long, caddr_t);
 void ixgb_watchdog(struct ifnet *);
@@ -245,7 +244,6 @@ ixgb_attach(struct device *parent, struct device *self, void *aux)
 	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
 
 	INIT_DEBUGOUT("ixgb_attach: end");
-	sc->sc_powerhook = powerhook_establish(ixgb_power, sc);
 	return;
 
 err_hw_init:
@@ -255,19 +253,6 @@ err_rx_desc:
 err_tx_desc:
 err_pci:
 	ixgb_free_pci_resources(sc);
-}
-
-void
-ixgb_power(int why, void *arg)
-{
-	struct ixgb_softc *sc = (struct ixgb_softc *)arg;
-	struct ifnet *ifp;
-
-	if (why == PWR_RESUME) {
-		ifp = &sc->interface_data.ac_if;
-		if (ifp->if_flags & IFF_UP)
-			ixgb_init(sc);
-	}
 }
 
 /*********************************************************************

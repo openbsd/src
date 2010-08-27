@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.43 2010/08/11 11:35:09 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.44 2010/08/27 08:24:53 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -77,7 +77,6 @@ const struct pci_matchid ixgbe_devices[] = {
 int	ixgbe_probe(struct device *, void *, void *);
 void	ixgbe_attach(struct device *, struct device *, void *);
 int	ixgbe_detach(struct device *, int);
-void	ixgbe_power(int, void *);
 void	ixgbe_start(struct ifnet *);
 void	ixgbe_start_locked(struct tx_ring *, struct ifnet *);
 int	ixgbe_ioctl(struct ifnet *, u_long, caddr_t);
@@ -294,8 +293,6 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	ctrl_ext |= IXGBE_CTRL_EXT_DRV_LOAD;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_CTRL_EXT, ctrl_ext);
 
-	sc->powerhook = powerhook_establish(ixgbe_power, sc);
-
 	printf(", address %s\n", ether_sprintf(sc->hw.mac.addr));
 
 	INIT_DEBUGOUT("ixgbe_attach: end");
@@ -344,19 +341,6 @@ ixgbe_detach(struct device *self, int flags)
 	ixgbe_free_receive_structures(sc);
 
 	return (0);
-}
-
-void
-ixgbe_power(int why, void *arg)
-{
-	struct ix_softc *sc = (struct ix_softc *)arg;
-	struct ifnet *ifp;
-
-	if (why == PWR_RESUME) {
-		ifp = &sc->arpcom.ac_if;
-		if (ifp->if_flags & IFF_UP)
-			ixgbe_init(sc);
-	}
 }
 
 /*********************************************************************
