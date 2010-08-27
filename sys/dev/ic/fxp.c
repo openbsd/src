@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.102 2010/08/06 14:11:42 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.103 2010/08/27 18:25:47 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/timeout.h>
+#include <sys/workq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -282,34 +283,46 @@ fxp_write_eeprom(struct fxp_softc *sc, u_short *data, int offset, int words)
  * Operating system-specific autoconfiguration glue
  *************************************************************/
 
-void	fxp_power(int, void *);
-
 struct cfdriver fxp_cd = {
 	NULL, "fxp", DV_IFNET
 };
 
-/*
- * Power handler routine. Called when the system is transitioning
- * into/out of power save modes.  The main purpose of this routine
- * is to shut off receiver DMA so it doesn't clobber kernel memory
- * at the wrong time.
- */
-void
-fxp_power(int why, void *arg)
-{
-	struct fxp_softc *sc = arg;
-	struct ifnet *ifp;
-	int s;
+void	fxp_powerhook(int, void *);
 
-	s = splnet();
-	if (why != PWR_RESUME)
-		fxp_stop(sc, 0, 0);
-	else {
-		ifp = &sc->sc_arpcom.ac_if;
+int
+fxp_activate(struct device *self, int act)
+{
+	struct fxp_softc *sc = (struct fxp_softc *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;	
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			fxp_stop(sc, 1, 0);
+		config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
-			fxp_init(sc);
+			workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+			    fxp_resume, sc, NULL);
+		break;
 	}
-	splx(s);
+	return 0;
+}
+
+void
+fxp_resume(void *arg1, void *arg2)
+{
+	struct fxp_softc *sc = arg1;
+
+	fxp_init(sc);
+}
+
+void
+fxp_powerhook(int why, void *arg)
+{
+	fxp_activate(arg, why);
 }
 
 /*************************************************************
@@ -500,7 +513,7 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	 * doing so could allow DMA to corrupt kernel memory during the
 	 * reboot before the driver initializes.
 	 */
-	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
+	sc->sc_powerhook = powerhook_establish(fxp_powerhook, sc);
 
 	/*
 	 * Initialize timeout for statistics update.

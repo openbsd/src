@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.27 2010/03/27 21:40:13 jsg Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.28 2010/08/27 18:25:46 deraadt Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
+#include <sys/workq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
