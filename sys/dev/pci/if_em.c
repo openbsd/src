@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.244 2010/08/08 12:53:16 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.245 2010/08/27 15:56:09 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -170,8 +170,8 @@ void em_attach(struct device *, struct device *, void *);
 void em_defer_attach(struct device*);
 int  em_detach(struct device *, int);
 int  em_activate(struct device *, int);
+void em_powerhook(int, void *);
 int  em_intr(void *);
-void em_power(int, void *);
 void em_start(struct ifnet *);
 int  em_ioctl(struct ifnet *, u_long, caddr_t);
 void em_watchdog(struct ifnet *);
@@ -507,7 +507,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.icp_xxxx_is_link_up = FALSE;
 
 	INIT_DEBUGOUT("em_attach: end");
-	sc->sc_powerhook = powerhook_establish(em_power, sc);
+	sc->sc_powerhook = powerhook_establish(em_powerhook, sc);
 	return;
 
 err_mac_addr:
@@ -518,19 +518,6 @@ err_rx_desc:
 err_tx_desc:
 err_pci:
 	em_free_pci_resources(sc);
-}
-
-void
-em_power(int why, void *arg)
-{
-	struct em_softc *sc = (struct em_softc *)arg;
-	struct ifnet *ifp;
-
-	if (why == PWR_RESUME) {
-		ifp = &sc->interface_data.ac_if;
-		if (ifp->if_flags & IFF_UP)
-			em_init(sc);
-	}
 }
 
 /*********************************************************************
@@ -1906,6 +1893,12 @@ em_activate(struct device *self, int act)
 		break;
 	}
 	return rv;
+}
+
+void
+em_powerhook(int why, void *arg)
+{
+	em_activate(arg, why);
 }
 
 /*********************************************************************
