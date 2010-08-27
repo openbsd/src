@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.34 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: yds.c,v 1.35 2010/08/27 18:50:57 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ static	int ac97_id2;
 
 int	yds_match(struct device *, void *, void *);
 void	yds_attach(struct device *, struct device *, void *);
+int	yds_activate(struct device *, int);
 int	yds_intr(void *);
 
 static void nswaph(u_int32_t *p, int wcount);
@@ -145,7 +146,8 @@ void YWRITE4(struct yds_softc *sc,bus_size_t r,u_int32_t x)
 	bus_space_write_region_4((sc)->memt, (sc)->memh, (r), (x), (c) / 4)
 
 struct cfattach yds_ca = {
-	sizeof(struct yds_softc), yds_match, yds_attach
+	sizeof(struct yds_softc), yds_match, yds_attach, NULL,
+	yds_activate
 };
 
 struct cfdriver yds_cd = {
@@ -1802,31 +1804,26 @@ yds_get_props(addr)
 		AUDIO_PROP_FULLDUPLEX);
 }
 
-void
-yds_powerhook(why, self)
-	int why;
-	void *self;
+int
+yds_activate(struct device *self, int act)
 {
 	struct yds_softc *sc = (struct yds_softc *)self;
 
-	if (why != PWR_RESUME) {
-		/* Power down */
-		DPRINTF(("yds: power down\n"));
-		sc->suspend = why;
-
-	} else {
-		/* Wake up */
-		DPRINTF(("yds: power resume\n"));
-		if (sc->suspend == PWR_RESUME) {
-			printf("%s: resume without suspend?\n",
-				sc->sc_dev.dv_xname);
-			sc->suspend = why;
-			return;
-		}
-		sc->suspend = why;
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
 		yds_init(sc);
 		(sc->sc_codec[0].codec_if->vtbl->restore_ports)(sc->sc_codec[0].codec_if);
+		break;
 	}
+	return 0;
+}
+
+void
+yds_powerhook(int why, void *self)
+{
+	yds_activate(self, why);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autrivar.h,v 1.3 2003/03/09 01:52:14 tedu Exp $	*/
+/*	$OpenBSD: autrivar.h,v 1.4 2010/08/27 18:50:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -86,8 +86,6 @@ struct autri_softc {
 
 	u_int32_t		sc_class;
 	int			sc_revision;
-
-	int			sc_old_power;
 
 	/*
 	 * Play/record status

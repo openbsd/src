@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.25 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: autri.c,v 1.26 2010/08/27 18:50:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -72,6 +72,7 @@ int autridebug = 0;
 
 int	autri_match(struct device *, void *, void *);
 void	autri_attach(struct device *, struct device *, void *);
+int	autri_activate(struct device *, int);
 int	autri_intr(void *);
 
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
@@ -117,7 +118,8 @@ struct cfdriver autri_cd = {
 };
 
 struct cfattach autri_ca = {
-	sizeof(struct autri_softc), autri_match, autri_attach
+	sizeof(struct autri_softc), autri_match, autri_attach, NULL,
+	autri_activate
 };
 
 int	autri_open(void *, int);
@@ -616,22 +618,30 @@ autri_attach(parent, self, aux)
 	midi_attach_mi(&autri_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	sc->sc_old_power = PWR_RESUME;
 	powerhook_establish(autri_powerhook, sc);
+}
+
+int
+autri_activate(struct device *self, int act)
+{
+	struct autri_softc *sc = (struct autri_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		autri_init(sc);
+		/*autri_reset_codec(&sc->sc_codec);*/
+		(sc->sc_codec.codec_if->vtbl->restore_ports)(sc->sc_codec.codec_if);
+		break;
+	}
+	return 0;
 }
 
 void
 autri_powerhook(int why,void *addr)
 {
-	struct autri_softc *sc = addr;
-
-	if (why == PWR_RESUME && sc->sc_old_power == PWR_SUSPEND) {
-		DPRINTF(("PWR_RESUME\n"));
-		autri_init(sc);
-		/*autri_reset_codec(&sc->sc_codec);*/
-		(sc->sc_codec.codec_if->vtbl->restore_ports)(sc->sc_codec.codec_if);
-	}
-	sc->sc_old_power = why;
+	autri_activate(addr, why);
 }
 
 int

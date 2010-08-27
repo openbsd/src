@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.23 2010/07/15 03:43:11 jakemsr Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.24 2010/08/27 18:50:57 deraadt Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -140,7 +140,6 @@ struct cs4281_softc {
 	struct ac97_host_if host_if;
 
         /* Power Management */
-        char	sc_suspend;
         void	*sc_powerhook;		/* Power hook */
 	u_int16_t ac97_reg[CS4281_SAVE_REG_MAX + 1];   /* Save ac97 registers */
 };
@@ -158,6 +157,7 @@ struct cs4281_softc {
 
 int cs4281_match(struct device *, void *, void *);
 void cs4281_attach(struct device *, struct device *, void *);
+int cs4281_activate(struct device *, int);
 int cs4281_intr(void *);
 int cs4281_query_encoding(void *, struct audio_encoding *);
 int cs4281_set_params(void *, int, int, struct audio_params *,
@@ -183,7 +183,7 @@ int cs4281_read_codec(void *, u_int8_t , u_int16_t *);
 int cs4281_write_codec(void *, u_int8_t, u_int16_t);
 void cs4281_reset_codec(void *);
 
-void cs4281_power(int, void *);
+void cs4281_powerhook(int, void *);
 
 int cs4281_mixer_set_port(void *, mixer_ctrl_t *);
 int cs4281_mixer_get_port(void *, mixer_ctrl_t *);
@@ -256,7 +256,8 @@ struct midi_hw_if cs4281_midi_hw_if = {
 #endif
 
 struct cfattach clct_ca = {
-	sizeof(struct cs4281_softc), cs4281_match, cs4281_attach
+	sizeof(struct cs4281_softc), cs4281_match, cs4281_attach, NULL,
+	cs4281_activate
 };
 
 struct cfdriver clct_cd = {
@@ -368,8 +369,7 @@ cs4281_attach(parent, self, aux)
 	midi_attach_mi(&cs4281_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(cs4281_power, sc);
+	sc->sc_powerhook = powerhook_establish(cs4281_powerhook, sc);
 }
 
 
@@ -1131,18 +1131,14 @@ cs4281_init(sc)
 	return (0);
 }
 
-void
-cs4281_power(why, v)
-	int why;
-	void *v;
+int
+cs4281_activate(struct device *self, int act)
 {
-	struct cs4281_softc *sc = (struct cs4281_softc *)v;
+	struct cs4281_softc *sc = (struct cs4281_softc *)self;
 	int i;
 
-	DPRINTF(("%s: cs4281_power why=%d\n", sc->sc_dev.dv_xname, why));
-	if (why != PWR_RESUME) {
-		sc->sc_suspend = why;
-
+	switch (act) {
+	case DVACT_SUSPEND:
 		cs4281_halt_output(sc);
 		cs4281_halt_input(sc);
 		/* Save AC97 registers */
@@ -1153,13 +1149,8 @@ cs4281_power(why, v)
 		}
 		/* should I powerdown here ? */
 		cs4281_write_codec(sc, AC97_REG_POWER, CS4281_POWER_DOWN_ALL);
-	} else {
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("cs4281_power: odd, resume without suspend.\n");
-			sc->sc_suspend = why;
-			return;
-		}
-		sc->sc_suspend = why;
+		break;
+	case DVACT_RESUME:
 		cs4281_init(sc);
 		cs4281_reset_codec(sc);
 
@@ -1169,7 +1160,15 @@ cs4281_power(why, v)
 				continue;
 			cs4281_write_codec(sc, 2*i, sc->ac97_reg[i>>1]);
 		}
+		break;
 	}
+	return 0;
+}
+
+void
+cs4281_powerhook(int why, void *v)
+{
+	cs4281_activate(v, why);
 }
 
 void

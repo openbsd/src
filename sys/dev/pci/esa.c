@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.20 2010/08/27 04:09:19 deraadt Exp $	*/
+/*	$OpenBSD: esa.c,v 1.21 2010/08/27 18:50:57 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -102,6 +102,7 @@ struct audio_device esa_device = {
 int		esa_match(struct device *, void *, void *);
 void		esa_attach(struct device *, struct device *, void *);
 int		esa_detach(struct device *, int);
+int		esa_activate(struct device *, int);
 
 /* audio(9) functions */
 int		esa_open(void *, int);
@@ -219,7 +220,7 @@ struct cfdriver esa_cd = {
 
 struct cfattach esa_ca = {
 	sizeof(struct esa_softc), esa_match, esa_attach,
-	esa_detach, /*esa_activate*/ NULL
+	esa_detach, esa_activate
 };
 
 /*
@@ -1604,20 +1605,27 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 	return;
 }
 
-void
-esa_powerhook(int why, void *hdl)
+int
+esa_activate(struct device *self, int act)
 {
-	struct esa_softc *sc = (struct esa_softc *)hdl;
+	struct esa_softc *sc = (struct esa_softc *)self;
 
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 		esa_suspend(sc);
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		esa_resume(sc);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 		break;
 	}
+	return 0;
+}
+
+void
+esa_powerhook(int why, void *hdl)
+{
+	esa_activate(hdl, why);
 }
 
 int

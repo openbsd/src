@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.29 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.30 2010/08/27 18:50:57 deraadt Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -475,6 +475,7 @@ void	salloc_insert(salloc_t, struct salloc_head *,
 
 int	maestro_match(struct device *, void *, void *);
 void	maestro_attach(struct device *, struct device *, void *);
+int	maestro_activate(struct device *, int);
 int	maestro_intr(void *);
 
 int	maestro_open(void *, int);
@@ -542,7 +543,8 @@ struct cfdriver maestro_cd = {
 };
 
 struct cfattach maestro_ca = {
-	sizeof (struct maestro_softc), maestro_match, maestro_attach
+	sizeof (struct maestro_softc), maestro_match, maestro_attach,
+	NULL, maestro_activate
 };
 
 struct audio_hw_if maestro_hw_if = {
@@ -767,7 +769,6 @@ maestro_attach(parent, self, aux)
 	audio_attach_mi(&maestro_hw_if, sc, &sc->dev);
 
 	/* Hook power changes */
-	sc->suspend = PWR_RESUME;
 	sc->powerhook = powerhook_establish(maestro_powerhook, sc);
 
 	return;
@@ -1504,17 +1505,15 @@ maestro_initcodec(self)
  * Power management interface
  */
 
-void
-maestro_powerhook(why, self)
-	int why;
-	void *self;
+int
+maestro_activate(struct device *self, int act)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 
-	if (why != PWR_RESUME) {
+	switch (act) {
+	case DVACT_SUSPEND:
 		/* Power down device on shutdown. */
 		DPRINTF(("maestro: power down\n"));
-		sc->suspend = why;
 		if (sc->record.mode & MAESTRO_RUNNING) {
 		    	sc->record.current = wp_apu_read(sc, sc->record.num, APUREG_CURPTR);
 			maestro_channel_stop(&sc->record);
@@ -1533,16 +1532,10 @@ maestro_powerhook(why, self)
 		bus_space_write_4(sc->iot, sc->ioh, PORT_RINGBUS_CTRL, 0);
 		DELAY(1);
 		maestro_power(sc, PPMI_D3);
-	} else {
+		break;
+	case DVACT_RESUME:
 		/* Power up device on resume. */
 		DPRINTF(("maestro: power resume\n"));
-		if (sc->suspend == PWR_RESUME) {
-			printf("%s: resume without suspend?\n",
-			    sc->dev.dv_xname);
-			sc->suspend = why;
-			return;
-		}
-		sc->suspend = why;
 		maestro_power(sc, PPMI_D0);
 		DELAY(100000);
 		maestro_init(sc);
@@ -1554,7 +1547,15 @@ maestro_powerhook(why, self)
 		if (sc->record.mode & MAESTRO_RUNNING)
 			maestro_channel_start(&sc->record);
 		maestro_update_timer(sc);
+		break;
 	}
+	return 0;
+}
+
+void
+maestro_powerhook(int why, void *v)
+{
+	maestro_activate(v, why);
 }
 
 void

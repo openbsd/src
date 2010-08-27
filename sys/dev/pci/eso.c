@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.32 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: eso.c,v 1.33 2010/08/27 18:50:57 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -90,10 +90,12 @@ struct eso_dma {
 
 int eso_match(struct device *, void *, void *);
 void eso_attach(struct device *, struct device *, void *);
+int eso_activate(struct device *, int);
 void eso_defer(struct device *);
 
 struct cfattach eso_ca = {
-	sizeof (struct eso_softc), eso_match, eso_attach
+	sizeof (struct eso_softc), eso_match, eso_attach, NULL,
+	eso_activate
 };
 
 struct cfdriver eso_cd = {
@@ -2057,12 +2059,13 @@ eso_set_gain(struct eso_softc *sc, uint port)
 	    sc->sc_gain[port][ESO_LEFT], sc->sc_gain[port][ESO_RIGHT]));
 }
 
-void
-eso_powerhook(int why, void *self)
+int
+eso_activate(struct device *self, int act)
 {
 	struct eso_softc *sc = (struct eso_softc *)self;	
 
-	if (why != PWR_RESUME) {
+	switch (act) {
+	case DVACT_SUSPEND:
 		eso_halt_output(sc);
 		eso_halt_input(sc);
 
@@ -2074,7 +2077,18 @@ eso_powerhook(int why, void *self)
 
 		/* shut down dma */
 		pci_conf_write(sc->sc_pa.pa_pc,
-			       sc->sc_pa.pa_tag, ESO_PCI_DDMAC, 0);
-	} else
+		    sc->sc_pa.pa_tag, ESO_PCI_DDMAC, 0);
+		break;
+	case DVACT_RESUME:
 		eso_setup(sc, 0);
+		break;
+	}
+	return 0;
+}
+
+void
+eso_powerhook(int why, void *self)
+{
+	eso_activate(self, why);
+
 }

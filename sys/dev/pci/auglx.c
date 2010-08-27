@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.4 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.5 2010/08/27 18:50:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -199,7 +199,6 @@ struct auglx_softc {
 
 	/* power mgmt */
 	void			*sc_powerhook;
-	int			 sc_suspend;
 	u_int16_t		 sc_ext_ctrl;
 
 	int			 sc_dmamap_flags;
@@ -280,6 +279,7 @@ struct audio_hw_if auglx_hw_if = {
 
 int	auglx_match(struct device *, void *, void *);
 void	auglx_attach(struct device *, struct device *, void *);
+int	auglx_activate(struct device *, int);
 int	auglx_intr(void *);
 
 int	auglx_attach_codec(void *, struct ac97_codec_if *);
@@ -289,7 +289,8 @@ void	auglx_reset_codec(void *);
 enum ac97_host_flags	auglx_flags_codec(void *);
 
 struct cfattach auglx_ca = {
-	sizeof(struct auglx_softc), auglx_match, auglx_attach
+	sizeof(struct auglx_softc), auglx_match, auglx_attach, NULL,
+	auglx_activate
 };
 
 const struct pci_matchid auglx_devices[] = {
@@ -360,7 +361,6 @@ auglx_attach(struct device *parent, struct device *self, void *aux)
 	audio_attach_mi(&auglx_hw_if, sc, &sc->sc_dev);
 
 	/* Watch for power changes */
-	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auglx_powerhook, sc);
 
 }
@@ -1345,27 +1345,27 @@ auglx_free_prd(struct auglx_softc *sc, struct auglx_ring *bm)
 	bus_dmamem_free(sc->sc_dmat, &bm->seg, bm->nsegs);
 }
 
-void
-auglx_powerhook(int why, void *self)
+int
+auglx_activate(struct device *self, int act)
 {
-	struct auglx_softc *sc = self;
+	struct auglx_softc *sc = (struct auglx_softc *)self;
 
-	if (why != PWR_RESUME) {
-		/* Power down */
-		sc->sc_suspend = why;
+	switch (act) {
+	case DVACT_SUSPEND:
 		auglx_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &sc->sc_ext_ctrl);
-	} else {
-		/* Wake up */
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("%s: resume without suspend?\n",
-			    sc->sc_dev.dv_xname);
-			sc->sc_suspend = why;
-			return;
-		}
-		sc->sc_suspend = why;
+		break;
+	case DVACT_RESUME:
 		auglx_reset_codec(sc);
 		delay(1000);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 		auglx_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->sc_ext_ctrl);
+		break;
 	}
+	return 0;
+}
+
+void
+auglx_powerhook(int why, void *self)
+{
+	auglx_activate(self, why);
 }

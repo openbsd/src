@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.7 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.8 2010/08/27 18:50:56 deraadt Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -121,7 +121,6 @@ struct auacer_softc {
 
 	/* Power Management */
 	void *sc_powerhook;
-	int sc_suspend;
 };
 
 #define READ1(sc, a) bus_space_read_1(sc->iot, sc->aud_ioh, a)
@@ -150,10 +149,12 @@ struct cfdriver auacer_cd = {
 
 int	auacer_match(struct device *, void *, void *);
 void	auacer_attach(struct device *, struct device *, void *); 
+int	auacer_activate(struct device *, int);
 int	auacer_intr(void *); 
 
 struct cfattach auacer_ca = {
-        sizeof(struct auacer_softc), auacer_match, auacer_attach
+        sizeof(struct auacer_softc), auacer_match, auacer_attach, NULL,
+	auacer_activate
 };
 
 int	auacer_open(void *, int);
@@ -296,8 +297,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
-	/* Watch for power change */
-	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auacer_powerhook, sc);
 
 	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
@@ -1082,27 +1081,25 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	return (error);
 }
 
-void
-auacer_powerhook(int why, void *addr)
+int
+auacer_activate(struct device *self, int act)
 {
-	struct auacer_softc *sc = (struct auacer_softc *)addr;
+	struct auacer_softc *sc = (struct auacer_softc *)self;
 
-	if (why != PWR_RESUME) {
-		/* Power down */
-		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
-		sc->sc_suspend = why;
-	} else {
-		/* Wake up */
-		DPRINTF(1, ("%s: power resume\n", sc->sc_dev.dv_xname));
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("%s: resume without suspend.\n",
-			    sc->sc_dev.dv_xname);
-			sc->sc_suspend = why;
-			return;
-		}
-		sc->sc_suspend = why;
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
 		auacer_reset_codec(sc);
 		delay(1000);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+		break;
 	}
+	return 0;
+}
+
+void
+auacer_powerhook(int why, void *addr)
+{
+	auacer_activate(addr, why);
 }
