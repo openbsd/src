@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.92 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.93 2010/08/27 19:56:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -70,7 +70,7 @@
 int	nfe_match(struct device *, void *, void *);
 void	nfe_attach(struct device *, struct device *, void *);
 int	nfe_activate(struct device *, int);
-void	nfe_power(int, void *);
+void	nfe_powerhook(int, void *);
 void	nfe_miibus_statchg(struct device *);
 int	nfe_miibus_readreg(struct device *, int, int);
 void	nfe_miibus_writereg(struct device *, int, int, int);
@@ -380,23 +380,13 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_tick_ch, nfe_tick, sc);
 
-	sc->sc_powerhook = powerhook_establish(nfe_power, sc);
+	sc->sc_powerhook = powerhook_establish(nfe_powerhook, sc);
 }
 
 void
-nfe_power(int why, void *arg)
+nfe_powerhook(int why, void *arg)
 {
-	struct nfe_softc *sc = arg;
-	struct ifnet *ifp;
-
-	if (why == PWR_RESUME) {
-		ifp = &sc->sc_arpcom.ac_if;
-		if (ifp->if_flags & IFF_UP) {
-			nfe_init(ifp);
-			if (ifp->if_flags & IFF_RUNNING)
-				nfe_start(ifp);
-		}
-	}
+	nfe_activate(arg, why);
 }
 
 void
