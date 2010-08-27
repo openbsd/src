@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.19 2010/07/27 17:34:26 deraadt Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.20 2010/08/27 20:21:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -85,7 +85,6 @@
 int rl_pci_match(struct device *, void *, void *);
 void rl_pci_attach(struct device *, struct device *, void *);
 int rl_pci_detach(struct device *, int);
-int rl_pci_activate(struct device *, int);
 
 struct rl_pci_softc {
 	struct rl_softc		psc_softc;
@@ -95,7 +94,7 @@ struct rl_pci_softc {
 
 struct cfattach rl_pci_ca = {
 	sizeof(struct rl_pci_softc), rl_pci_match, rl_pci_attach, rl_pci_detach,
-	rl_pci_activate
+	rl_activate
 };
 
 const struct pci_matchid rl_pci_devices[] = {
@@ -202,29 +201,4 @@ rl_pci_detach(struct device *self, int flags)
 	bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->psc_mapsize);
 
 	return (0);
-}
-
-int
-rl_pci_activate(struct device *self, int act)
-{
-	struct rl_pci_softc *psc = (struct rl_pci_softc *)self;
-	struct rl_softc	*sc = &psc->psc_softc;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int rv = 0;
-	extern void rl_stop(struct rl_softc *);
-	extern void rl_init(struct rl_softc *);
-
-	switch (act) {
-	case DVACT_SUSPEND:
-		if (ifp->if_flags & IFF_RUNNING)
-			rl_stop(sc);
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_RESUME:
-		rv = config_activate_children(self, act);
-		if (ifp->if_flags & IFF_UP)
-			rl_init(sc);
-		break;
-	}
-	return rv;
 }
