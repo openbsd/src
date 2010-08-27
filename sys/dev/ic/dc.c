@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.116 2010/08/05 07:57:04 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.117 2010/08/27 19:54:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,7 +130,7 @@
 #include <dev/ic/dcreg.h>
 
 int dc_intr(void *);
-void dc_power(int, void *);
+void dc_powerhook(int, void *);
 struct dc_type *dc_devtype(void *);
 int dc_newbuf(struct dc_softc *, int, struct mbuf *);
 int dc_encap(struct dc_softc *, struct mbuf *, u_int32_t *);
@@ -1814,7 +1814,7 @@ hasmac:
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->sc_pwrhook = powerhook_establish(dc_power, sc);
+	sc->sc_pwrhook = powerhook_establish(dc_powerhook, sc);
 
 fail:
 	return;
@@ -3124,22 +3124,31 @@ dc_stop(struct dc_softc *sc, int softonly)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
-void
-dc_power(int why, void *arg)
+int
+dc_activate(struct device *self, int act)
 {
-	struct dc_softc *sc = arg;
-	struct ifnet *ifp;
-	int s;
+	struct dc_softc *sc = (struct dc_softc *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	s = splnet();
-	if (why != PWR_RESUME)
-		dc_stop(sc, 0);
-	else {
-		ifp = &sc->sc_arpcom.ac_if;
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			dc_stop(sc, 0);
+		config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			dc_init(sc);
+		break;
 	}
-	splx(s);
+	return (0);
+}
+
+void
+dc_powerhook(int why, void *arg)
+{
+	dc_activate(arg, why);
 }
 
 int

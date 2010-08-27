@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.46 2010/08/05 07:57:04 deraadt Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.47 2010/08/27 19:54:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1048,6 +1048,7 @@ struct dc_eblock_reset {
 
 extern void dc_attach(struct dc_softc *);
 extern int dc_detach(struct dc_softc *);
+extern int dc_activate(struct device *, int);
 extern int dc_intr(void *);
 
 void dc_init(void *);

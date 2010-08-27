@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.66 2010/08/05 07:57:05 deraadt Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.67 2010/08/27 19:54:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -125,7 +125,6 @@ struct dc_type dc_devs[] = {
 int dc_pci_match(struct device *, void *, void *);
 void dc_pci_attach(struct device *, struct device *, void *);
 int dc_pci_detach(struct device *, int);
-int dc_pci_activate(struct device *, int);
 void dc_pci_acpi(struct device *, void *);
 
 struct dc_pci_softc {
@@ -574,29 +573,7 @@ dc_pci_detach(struct device *self, int flags)
 	return (0);
 }
 
-int
-dc_pci_activate(struct device *self, int act)
-{
-	struct dc_pci_softc *psc = (void *)self;
-	struct dc_softc *sc = &psc->psc_softc;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	switch (act) {
-	case DVACT_SUSPEND:
-		if (ifp->if_flags & IFF_RUNNING)
-			dc_stop(sc, 0);
-		config_activate_children(self, act);
-		break;
-	case DVACT_RESUME:
-		config_activate_children(self, act);
-		if (ifp->if_flags & IFF_UP)
-			dc_init(sc);
-		break;
-	}
-	return (0);
-}
-
 struct cfattach dc_pci_ca = {
 	sizeof(struct dc_softc), dc_pci_match, dc_pci_attach, dc_pci_detach,
-	dc_pci_activate
+	dc_activate
 };
