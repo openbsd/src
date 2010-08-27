@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.89 2010/08/27 17:08:00 jsg Exp $  */
+/*      $OpenBSD: ath.c,v 1.90 2010/08/27 19:44:43 deraadt Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -162,25 +162,30 @@ struct cfdriver ath_cd = {
 	NULL, "ath", DV_IFNET
 };
 
-#if 0
 int
 ath_activate(struct device *self, int act)
 {
 	struct ath_softc *sc = (struct ath_softc *)self;
-	int rv = 0, s;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING) {
+			ath_stop(ifp);
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, act);
+		}
 		break;
-	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->sc_ic.ic_if);
+	case DVACT_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			ath_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				ath_start(ifp);
+		}
 		break;
 	}
-	splx(s);
-	return rv;
+	return 0;
 }
-#endif
 
 int
 ath_enable(struct ath_softc *sc)
@@ -424,7 +429,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_powerhook = powerhook_establish(ath_power, sc);
+	sc->sc_powerhook = powerhook_establish(ath_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf(": WARNING: unable to establish power hook\n");
 
@@ -487,49 +492,9 @@ ath_detach(struct ath_softc *sc, int flags)
 }
 
 void
-ath_power(int why, void *arg)
+ath_powerhook(int why, void *arg)
 {
-	struct ath_softc *sc = arg;
-	int s;
-
-	DPRINTF(ATH_DEBUG_ANY, ("ath_power(%d)\n", why));
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-		ath_suspend(sc, why);
-		break;
-	case PWR_RESUME:
-		ath_resume(sc, why);
-		break;
-	}
-	splx(s);
-}
-
-void
-ath_suspend(struct ath_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-
-	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
-
-	ath_stop(ifp);
-	if (sc->sc_power != NULL)
-		(*sc->sc_power)(sc, why);
-}
-
-void
-ath_resume(struct ath_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-
-	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
-
-	if (ifp->if_flags & IFF_UP) {
-		ath_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ath_start(ifp);
-	}
+	ath_activate(arg, why);
 }
 
 int
