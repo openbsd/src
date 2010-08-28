@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.27 2010/07/22 14:26:38 deraadt Exp $ */
+/* $OpenBSD: pckbd.c,v 1.28 2010/08/28 12:49:57 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -769,7 +769,7 @@ pckbd_scancode_translate(struct pckbd_internal *id, int datain)
 	if (id->t_extended1 == 2 && datain == 0x14)
 		return 0x1d | id->t_releasing;
 	else if (id->t_extended1 == 1 && datain == 0x77)
-		return 0x77 | id->t_releasing;
+		return 0x45 | id->t_releasing;
 
 	if (id->t_extended != 0) {
 		if (datain >= sizeof pckbd_xtbl_ext)
@@ -848,7 +848,7 @@ pckbd_decode(id, datain, type, dataout)
 	} else {
 		/* Always ignore typematic keys */
 		if (key == id->t_lastchar)
-			return(0);
+			return 0;
 		id->t_lastchar = key;
 		*type = WSCONS_EVENT_KEY_DOWN;
 	}
