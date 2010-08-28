@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.10 2010/08/27 04:09:17 deraadt Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.11 2010/08/28 17:59:17 deraadt Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,8 +55,6 @@ struct acpiasus_softc {
 
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
-
-	void			*sc_powerhook;
 };
 
 #define ASUS_NOTIFY_WIRELESSON		0x10
@@ -89,14 +87,15 @@ int	acpiasus_match(struct device *, void *, void *);
 void	acpiasus_attach(struct device *, struct device *, void *);
 void	acpiasus_init(struct device *);
 int	acpiasus_notify(struct aml_node *, int, void *);
-void	acpiasus_power(int, void *);
+int	acpiasus_activate(struct device *, int);
 
 #if NAUDIO > 0 && NWSKBD > 0
 extern int wskbd_set_mixervolume(long dir);
 #endif
 
 struct cfattach acpiasus_ca = {
-	sizeof(struct acpiasus_softc), acpiasus_match, acpiasus_attach
+	sizeof(struct acpiasus_softc), acpiasus_match, acpiasus_attach,
+	acpiasus_activate
 };
 
 struct cfdriver acpiasus_cd = {
@@ -122,8 +121,6 @@ acpiasus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
-
-	sc->sc_powerhook = powerhook_establish(acpiasus_power, sc);
 
 	printf("\n");
 
@@ -215,18 +212,18 @@ acpiasus_notify(struct aml_node *node, int notify, void *arg)
 	return 0;
 }
 
-void
-acpiasus_power(int why, void *arg)
+int
+acpiasus_activate(struct device *self, int act)
 {
-	struct acpiasus_softc *sc = (struct acpiasus_softc *)arg;
+	struct acpiasus_softc *sc = (struct acpiasus_softc *)self;
 	struct aml_value cmd;
 	struct aml_value ret;
 
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 		break;
-	case PWR_RESUME:
-		acpiasus_init(arg);
+	case DVACT_RESUME:
+		acpiasus_init(self);
 
 		bzero(&cmd, sizeof(cmd));
 		cmd.type = AML_OBJTYPE_INTEGER;
@@ -239,4 +236,5 @@ acpiasus_power(int why, void *arg)
 			aml_freevalue(&ret);
 		break;
 	}
+	return (0);
 }
