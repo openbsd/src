@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.17 2010/07/01 21:40:32 oga Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.18 2010/08/28 22:27:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1410,6 +1410,7 @@ uvm_pmr_use_inc(paddr_t low, paddr_t high)
 	uvm_pmr_split(low);
 	uvm_pmr_split(high);
 
+	sz = 0;
 	uvm_lock_fpageq();
 	/* Increase use count on segments in range. */
 	RB_FOREACH(pmr, uvm_pmemrange_addr, &uvm.pmr_control.addr) {
