@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.40 2009/12/07 19:22:38 oga Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.41 2010/08/28 16:39:18 miod Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -926,8 +926,8 @@ static const keysym_t pckbd_keydesc_si[]=
     KC(48),  KS_b,		KS_B,		KS_braceleft,
     KC(49),  KS_n,		KS_N,		KS_braceright,
     KC(50),  KS_m,		KS_M,		KS_section,
-    KC(51),  KS_comma,		KS_semicolon,
-    KC(52),  KS_period,		KS_colon,
+    KC(51),  KS_comma,		KS_semicolon,	KS_less,
+    KC(52),  KS_period,		KS_colon,	KS_greater,
     KC(53),  KS_minus,		KS_underscore,
     KC(86),  KS_less,		KS_greater,
     KC(184), KS_Mode_switch,	KS_Multi_key,
