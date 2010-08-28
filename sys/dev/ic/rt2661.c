@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.59 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.60 2010/08/28 18:08:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -156,7 +156,7 @@ int		rt2661_prepare_beacon(struct rt2661_softc *);
 #endif
 void		rt2661_enable_tsf_sync(struct rt2661_softc *);
 int		rt2661_get_rssi(struct rt2661_softc *, uint8_t);
-void		rt2661_power(int, void *);
+void		rt2661_powerhook(int, void *);
 
 static const struct {
 	uint32_t	reg;
@@ -247,7 +247,7 @@ rt2661_attach(void *xsc, int id)
 	else
 		rt2661_attachhook(sc);
 
-	sc->sc_powerhook = powerhook_establish(rt2661_power, sc);
+	sc->sc_powerhook = powerhook_establish(rt2661_powerhook, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -2925,7 +2925,7 @@ rt2661_get_rssi(struct rt2661_softc *sc, uint8_t raw)
 }
 
 void
-rt2661_power(int why, void *arg)
+rt2661_powerhook(int why, void *arg)
 {
 	struct rt2661_softc *sc = arg;
 	int s;

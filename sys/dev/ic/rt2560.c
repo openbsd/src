@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.53 2010/08/27 17:08:00 jsg Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.54 2010/08/28 18:08:07 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -148,7 +148,7 @@ void		rt2560_read_eeprom(struct rt2560_softc *);
 int		rt2560_bbp_init(struct rt2560_softc *);
 int		rt2560_init(struct ifnet *);
 void		rt2560_stop(struct ifnet *, int);
-void		rt2560_power(int, void *);
+void		rt2560_powerhook(int, void *);
 
 static const struct {
 	uint32_t	reg;
@@ -295,7 +295,7 @@ rt2560_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2560_TX_RADIOTAP_PRESENT);
 #endif
 
-	sc->sc_powerhook = powerhook_establish(rt2560_power, sc);
+	sc->sc_powerhook = powerhook_establish(rt2560_powerhook, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -2730,7 +2730,7 @@ rt2560_stop(struct ifnet *ifp, int disable)
 }
 
 void
-rt2560_power(int why, void *arg)
+rt2560_powerhook(int why, void *arg)
 {
 	struct rt2560_softc *sc = arg;
 	int s;

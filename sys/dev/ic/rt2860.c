@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.61 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.62 2010/08/28 18:08:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -166,7 +166,7 @@ void		rt2860_switch_chan(struct rt2860_softc *,
 int		rt2860_setup_beacon(struct rt2860_softc *);
 #endif
 void		rt2860_enable_tsf_sync(struct rt2860_softc *);
-void		rt2860_power(int, void *);
+void		rt2860_powerhook(int, void *);
 
 static const struct {
 	uint32_t	reg;
@@ -277,7 +277,7 @@ rt2860_attach(void *xsc, int id)
 	else
 		rt2860_attachhook(sc);
 
-	sc->sc_powerhook = powerhook_establish(rt2860_power, sc);
+	sc->sc_powerhook = powerhook_establish(rt2860_powerhook, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -3865,7 +3865,7 @@ rt2860_enable_tsf_sync(struct rt2860_softc *sc)
 }
 
 void
-rt2860_power(int why, void *arg)
+rt2860_powerhook(int why, void *arg)
 {
 	struct rt2860_softc *sc = arg;
 	int s;
