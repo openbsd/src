@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.36 2010/07/31 16:13:28 miod Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.37 2010/08/28 16:40:32 miod Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
  *	OpenBSD: makemap.awk,v 1.11 2010/07/31 16:12:37 miod Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.40 2009/12/07 19:22:38 oga Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.41 2010/08/28 16:39:18 miod Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -984,8 +984,8 @@ static const keysym_t ukbd_keydesc_si[]=
     KC(51),	KS_L2_ccaron,	KS_L2_Ccaron,
     KC(52),	KS_L2_cacute,	KS_L2_Cacute,	KS_ssharp,
     KC(53),	KS_cedilla,	KS_diaeresis,
-    KC(54),	KS_comma,	KS_semicolon,
-    KC(55),	KS_period,	KS_colon,
+    KC(54),	KS_comma,	KS_semicolon,	KS_less,
+    KC(55),	KS_period,	KS_colon,	KS_greater,
     KC(56),	KS_minus,	KS_underscore,
     KC(100),	KS_less,	KS_greater,
     KC(230),	KS_Mode_switch,	KS_Multi_key,
