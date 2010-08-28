@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.181 2010/07/28 23:47:43 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.182 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -161,8 +161,6 @@ struct cfdriver cd_cd = {
 	NULL, "cd", DV_DISK
 };
 
-struct dkdriver cddkdriver = { cdstrategy };
-
 const struct scsi_inquiry_pattern cd_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "",         "",                 ""},
@@ -217,7 +215,6 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize disk structures.
 	 */
-	sc->sc_dk.dk_driver = &cddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
 

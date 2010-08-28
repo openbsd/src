@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.45 2010/05/23 10:49:19 dlg Exp $	*/
+/*	$OpenBSD: xy.c,v 1.46 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -207,12 +207,6 @@ struct xyc_attach_args {	/* this is the "aux" args to xyattach */
 	int	fullmode;	/* submit mode */
 	int	booting;	/* are we booting or not? */
 };
-
-/*
- * dkdriver
- */
-
-struct dkdriver xydkdriver = { xystrategy };
 
 /*
  * start: disk label fix code (XXX)
@@ -504,7 +498,6 @@ xyattach(parent, self, aux)
 	 * to start with a clean slate.
 	 */
 	bzero(&xy->sc_dk, sizeof(xy->sc_dk));
-	xy->sc_dk.dk_driver = &xydkdriver;
 	xy->sc_dk.dk_name = xy->sc_dev.dv_xname;
 
 	/* if booting, init the xy_softc */

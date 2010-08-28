@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.16 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: presto.c,v 1.17 2010/08/28 20:23:22 matthew Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -82,10 +82,6 @@ struct cfdriver presto_cd = {
 	NULL, "presto", DV_DULL
 };
 
-struct dkdriver	presto_dk = {
-	prestostrategy,
-};
-
 int
 presto_match(struct device *parent, void *vcf, void *aux)
 {
@@ -164,7 +160,6 @@ presto_attach(struct device *parent, struct device *self, void *args)
 	    *(u_int8_t *)(sc->sc_mem + 0x0b), *(u_int8_t *)(sc->sc_mem + 0x0f));
 #endif
 
-	sc->sc_dk.dk_driver = &presto_dk;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dk);
 }

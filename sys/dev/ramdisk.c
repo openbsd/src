@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.46 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.47 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -126,7 +126,6 @@ struct cfattach rd_ca = {
 };
 
 void rdstrategy(struct buf *bp);
-struct dkdriver rddkdriver = { rdstrategy };
 
 int   ramdisk_ndevs;
 void *ramdisk_devs[RD_MAX_UNITS];
@@ -205,7 +204,6 @@ rd_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	sc->sc_dk.dk_driver = &rddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dk);
 }

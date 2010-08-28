@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.15 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: flash.c,v 1.16 2010/08/28 20:23:22 matthew Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -95,8 +95,6 @@ struct cfdriver flash_cd = {
 	NULL, "flash", DV_DISK
 };
 
-struct dkdriver flashdkdriver = { flashstrategy };
-
 void
 flashattach(struct flash_softc *sc, struct flash_ctl_tag *tag,
     void *cookie)
@@ -158,7 +156,6 @@ flashattach(struct flash_softc *sc, struct flash_ctl_tag *tag,
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	sc->sc_dk.dk_driver = &flashdkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dk);
 

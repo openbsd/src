@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.205 2010/08/03 19:37:17 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.206 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -111,8 +111,6 @@ struct cfdriver sd_cd = {
 	NULL, "sd", DV_DISK
 };
 
-struct dkdriver sddkdriver = { sdstrategy };
-
 const struct scsi_inquiry_pattern sd_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "",         "",                 ""},
@@ -173,7 +171,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize disk structures.
 	 */
-	sc->sc_dk.dk_driver = &sddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.88 2010/07/23 07:47:13 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.89 2010/08/28 20:23:22 matthew Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -176,8 +176,6 @@ int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 void  wd_flushcache(struct wd_softc *, int);
 void  wd_standby(struct wd_softc *, int);
 void  wd_shutdown(void *);
-
-struct dkdriver wddkdriver = { wdstrategy };
 
 /* XXX: these should go elsewhere */
 cdev_decl(wd);
@@ -362,7 +360,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize disk structures.
 	 */
-	wd->sc_dk.dk_driver = &wddkdriver;
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	wd->sc_bufq = bufq_init(BUFQ_DEFAULT);
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);

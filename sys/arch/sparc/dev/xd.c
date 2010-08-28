@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.48 2010/05/23 10:49:19 dlg Exp $	*/
+/*	$OpenBSD: xd.c,v 1.49 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -267,12 +267,6 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	fullmode;	/* submit mode */
 	int	booting;	/* are we booting or not? */
 };
-
-/*
- * dkdriver
- */
-
-struct dkdriver xddkdriver = {xdstrategy};
 
 /*
  * start: disk label fix code (XXX)
@@ -562,7 +556,6 @@ xdattach(parent, self, aux)
 	 * to start with a clean slate.
 	 */
 	bzero(&xd->sc_dk, sizeof(xd->sc_dk));
-	xd->sc_dk.dk_driver = &xddkdriver;
 	xd->sc_dk.dk_name = xd->sc_dev.dv_xname;
 
 	/* if booting, init the xd_softc */

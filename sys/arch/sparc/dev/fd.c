@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.73 2010/08/17 20:05:06 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.74 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -243,8 +243,6 @@ int fd_get_parms(struct fd_softc *);
 void fdstrategy(struct buf *);
 void fdstart(struct fd_softc *);
 int fdprint(void *, const char *);
-
-struct dkdriver fddkdriver = { fdstrategy };
 
 struct	fd_type *fd_nvtotype(char *, int, int);
 void	fd_set_motor(struct fdc_softc *fdc);
@@ -644,7 +642,6 @@ fdattach(parent, self, aux)
 	 * Initialize and attach the disk structure.
 	 */
 	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
-	fd->sc_dk.dk_driver = &fddkdriver;
 	disk_attach(&fd->sc_dk);
 
 	/*

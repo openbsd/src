@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.100 2010/07/22 14:34:06 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.101 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -152,8 +152,6 @@ struct vnd_softc {
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
-
-struct dkdriver vnddkdriver = { vndstrategy };
 
 /* called by main() at boot time */
 void	vndattach(int);
@@ -867,7 +865,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    vnd->sc_vp, (unsigned long long)vnd->sc_size);
 
 		/* Attach the disk. */
-		vnd->sc_dk.dk_driver = &vnddkdriver;
 		vnd->sc_dk.dk_name = vnd->sc_dev.dv_xname;
 		disk_attach(&vnd->sc_dk);
 

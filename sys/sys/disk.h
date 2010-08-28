@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.21 2010/05/03 15:27:28 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.22 2010/08/28 20:23:22 matthew Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -100,8 +100,6 @@ struct disk {
 	int		dk_blkshift;	/* shift to convert DEV_BSIZE to blks*/
 	int		dk_byteshift;	/* shift to convert bytes to blks */
 
-	struct	dkdriver *dk_driver;	/* pointer to driver */
-
 	/*
 	 * Disk label information.  Storage for the in-core disk label
 	 * must be dynamically allocated, otherwise the size of this
@@ -109,19 +107,6 @@ struct disk {
 	 */
 	daddr64_t	dk_labelsector;		/* sector containing label */
 	struct disklabel *dk_label;	/* label */
-};
-
-struct dkdriver {
-	void	(*d_strategy)(struct buf *);
-#ifdef notyet
-	int	(*d_open)(dev_t dev, int ifmt, int, struct proc *);
-	int	(*d_close)(dev_t dev, int, int ifmt, struct proc *);
-	int	(*d_ioctl)(dev_t dev, u_long cmd, caddr_t data, int fflag,
-				struct proc *);
-	int	(*d_dump)(dev_t);
-	void	(*d_start)(struct buf *, daddr64_t);
-	int	(*d_mklabel)(struct disk *);
-#endif
 };
 
 /* states */
