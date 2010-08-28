@@ -1,4 +1,4 @@
-/* $OpenBSD: vgavar.h,v 1.10 2010/08/08 17:21:05 miod Exp $ */
+/* $OpenBSD: vgavar.h,v 1.11 2010/08/28 12:48:14 miod Exp $ */
 /* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
 
 /*
@@ -91,9 +91,8 @@ static inline void _vga_gdc_write(struct vga_handle *, int, u_int8_t);
 #define	vga_enable(vh) \
 	vga_raw_write(vh, 0, 0x20);
 
-static inline u_int8_t _vga_attr_read(vh, reg)
-	struct vga_handle *vh;
-	int reg;
+static inline u_int8_t
+_vga_attr_read(struct vga_handle *vh, int reg)
 {
 	u_int8_t res;
 
@@ -111,10 +110,8 @@ static inline u_int8_t _vga_attr_read(vh, reg)
 	return (res);
 }
 
-static inline void _vga_attr_write(vh, reg, val)
-	struct vga_handle *vh;
-	int reg;
-	u_int8_t val;
+static inline void
+_vga_attr_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 	/* reset state */
 	(void) bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, 10);
@@ -128,35 +125,29 @@ static inline void _vga_attr_write(vh, reg, val)
 	vga_enable(vh);
 }
 
-static inline u_int8_t _vga_ts_read(vh, reg)
-	struct vga_handle *vh;
-	int reg;
+static inline u_int8_t
+_vga_ts_read(struct vga_handle *vh, int reg)
 {
 	vga_raw_write(vh, VGA_TS_INDEX, reg);
 	return (vga_raw_read(vh, VGA_TS_DATA));
 }
 
-static inline void _vga_ts_write(vh, reg, val)
-	struct vga_handle *vh;
-	int reg;
-	u_int8_t val;
+static inline void
+_vga_ts_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 	vga_raw_write(vh, VGA_TS_INDEX, reg);
 	vga_raw_write(vh, VGA_TS_DATA, val);
 }
 
-static inline u_int8_t _vga_gdc_read(vh, reg)
-	struct vga_handle *vh;
-	int reg;
+static inline u_int8_t
+_vga_gdc_read(struct vga_handle *vh, int reg)
 {
 	vga_raw_write(vh, VGA_GDC_INDEX, reg);
 	return (vga_raw_read(vh, VGA_GDC_DATA));
 }
 
-static inline void _vga_gdc_write(vh, reg, val)
-	struct vga_handle *vh;
-	int reg;
-	u_int8_t val;
+static inline void
+_vga_gdc_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 	vga_raw_write(vh, VGA_GDC_INDEX, reg);
 	vga_raw_write(vh, VGA_GDC_DATA, val);

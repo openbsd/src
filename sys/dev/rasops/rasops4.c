@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops4.c,v 1.9 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: rasops4.c,v 1.10 2010/08/28 12:48:14 miod Exp $	*/
 /*	$NetBSD: rasops4.c,v 1.4 2001/11/15 09:48:15 lukem Exp $	*/
 
 /*-
@@ -62,8 +62,7 @@ static int	stamp_mutex;	/* XXX see note in README */
  * Initialize rasops_info struct for this colordepth.
  */
 void
-rasops4_init(ri)
-	struct rasops_info *ri;
+rasops4_init(struct rasops_info *ri)
 {
 	rasops_masks_init();
 
@@ -97,11 +96,7 @@ rasops4_init(ri)
  * Paint a single character. This is the generic version, this is ugly.
  */
 int
-rasops4_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, width, fs, rs, fb, bg, fg, lmask, rmask;
 	struct rasops_info *ri;
@@ -214,11 +209,7 @@ rasops4_putchar(cookie, row, col, uc, attr)
  * Put a single character. This is the generic version.
  */
 int
-rasops4_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 
 	/* XXX punt */
@@ -230,9 +221,7 @@ rasops4_putchar(cookie, row, col, uc, attr)
  * Recompute the blitting stamp.
  */
 void
-rasops4_makestamp(ri, attr)
-	struct rasops_info *ri;
-	long attr;
+rasops4_makestamp(struct rasops_info *ri, long attr)
 {
 	int i, fg, bg;
 
@@ -259,11 +248,7 @@ rasops4_makestamp(ri, attr)
  * Put a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops4_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs, rs;
@@ -335,11 +320,7 @@ rasops4_putchar8(cookie, row, col, uc, attr)
  * Put a single character. This is for 12-pixel wide fonts.
  */
 int
-rasops4_putchar12(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs, rs;
@@ -414,11 +395,7 @@ rasops4_putchar12(cookie, row, col, uc, attr)
  * Put a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops4_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs, rs;

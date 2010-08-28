@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.25 2010/08/08 13:50:24 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.26 2010/08/28 12:48:14 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -108,9 +108,7 @@ const char *pckbc_slot_names[] = { "kbd", "aux" };
 #define	KBD_DELAY	DELAY(8)
 
 static inline int
-pckbc_wait_output(iot, ioh_c)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh_c;
+pckbc_wait_output(bus_space_tag_t iot, bus_space_handle_t ioh_c)
 {
 	u_int i;
 
@@ -123,10 +121,7 @@ pckbc_wait_output(iot, ioh_c)
 }
 
 int
-pckbc_send_cmd(iot, ioh_c, val)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh_c;
-	u_char val;
+pckbc_send_cmd(bus_space_tag_t iot, bus_space_handle_t ioh_c, u_char val)
 {
 	if (!pckbc_wait_output(iot, ioh_c))
 		return (0);
@@ -135,11 +130,8 @@ pckbc_send_cmd(iot, ioh_c, val)
 }
 
 int
-pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh_d, ioh_c;
-	pckbc_slot_t slot;
-	int checkaux;
+pckbc_poll_data1(bus_space_tag_t iot, bus_space_handle_t ioh_d,
+    bus_space_handle_t ioh_c, pckbc_slot_t slot, int checkaux)
 {
 	int i;
 	u_char stat;
@@ -177,8 +169,7 @@ pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
  * Get the current command byte.
  */
 static int
-pckbc_get8042cmd(t)
-	struct pckbc_internal *t;
+pckbc_get8042cmd(struct pckbc_internal *t)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_d = t->t_ioh_d;
@@ -199,8 +190,7 @@ pckbc_get8042cmd(t)
  * Pass command byte to keyboard controller (8042).
  */
 static int
-pckbc_put8042cmd(t)
-	struct pckbc_internal *t;
+pckbc_put8042cmd(struct pckbc_internal *t)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_d = t->t_ioh_d;
@@ -215,10 +205,7 @@ pckbc_put8042cmd(t)
 }
 
 static int
-pckbc_send_devcmd(t, slot, val)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	u_char val;
+pckbc_send_devcmd(struct pckbc_internal *t, pckbc_slot_t slot, u_char val)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_d = t->t_ioh_d;
@@ -235,9 +222,7 @@ pckbc_send_devcmd(t, slot, val)
 }
 
 int
-pckbc_is_console(iot, addr)
-	bus_space_tag_t iot;
-	bus_addr_t addr;
+pckbc_is_console(bus_space_tag_t iot, bus_addr_t addr)
 {
 	if (pckbc_console && !pckbc_console_attached &&
 	    pckbc_consdata.t_iot == iot &&
@@ -247,10 +232,7 @@ pckbc_is_console(iot, addr)
 }
 
 int
-pckbc_submatch_locators(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pckbc_submatch_locators(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pckbc_attach_args *pa = aux;
@@ -262,10 +244,7 @@ pckbc_submatch_locators(parent, match, aux)
 }
 
 int
-pckbc_submatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pckbc_submatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 
@@ -275,10 +254,7 @@ pckbc_submatch(parent, match, aux)
 }
 
 int
-pckbc_attach_slot(sc, slot, force)
-	struct pckbc_softc *sc;
-	pckbc_slot_t slot;
-	int force;
+pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot, int force)
 {
 	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
@@ -300,9 +276,7 @@ pckbc_attach_slot(sc, slot, force)
 }
 
 void
-pckbc_attach(sc, flags)
-	struct pckbc_softc *sc;
-	int flags;
+pckbc_attach(struct pckbc_softc *sc, int flags)
 {
 	struct pckbc_internal *t;
 	bus_space_tag_t iot;
@@ -458,9 +432,7 @@ nomouse:
 }
 
 int
-pckbcprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+pckbcprint(void *aux, const char *pnp)
 {
 	struct pckbc_attach_args *pa = aux;
 
@@ -470,8 +442,7 @@ pckbcprint(aux, pnp)
 }
 
 void
-pckbc_init_slotdata(q)
-	struct pckbc_slotdata *q;
+pckbc_init_slotdata(struct pckbc_slotdata *q)
 {
 	int i;
 	TAILQ_INIT(&q->cmdqueue);
@@ -484,9 +455,7 @@ pckbc_init_slotdata(q)
 }
 
 void
-pckbc_flush(self, slot)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
+pckbc_flush(pckbc_tag_t self, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = self;
 
@@ -495,9 +464,7 @@ pckbc_flush(self, slot)
 }
 
 int
-pckbc_poll_data(self, slot)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
+pckbc_poll_data(pckbc_tag_t self, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = self;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
@@ -519,10 +486,7 @@ pckbc_poll_data(self, slot)
  * return nonzero on success
  */
 int
-pckbc_xt_translation(self, slot, on)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_xt_translation(pckbc_tag_t self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = self;
 	int ison;
@@ -565,10 +529,7 @@ static struct pckbc_portcmd {
 };
 
 void
-pckbc_slot_enable(self, slot, on)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_slot_enable(pckbc_tag_t self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_portcmd *cmd;
@@ -588,10 +549,7 @@ pckbc_slot_enable(self, slot, on)
 }
 
 void
-pckbc_set_poll(self, slot, on)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_set_poll(pckbc_tag_t self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 
@@ -619,10 +577,8 @@ pckbc_set_poll(self, slot, on)
  * to be called at spltty()
  */
 static void
-pckbc_poll_cmd1(t, slot, cmd)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	struct pckbc_devcmd *cmd;
+pckbc_poll_cmd1(struct pckbc_internal *t, pckbc_slot_t slot,
+    struct pckbc_devcmd *cmd)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_d = t->t_ioh_d;
@@ -701,13 +657,8 @@ pckbc_poll_cmd1(t, slot, cmd)
 
 /* for use in autoconfiguration */
 int
-pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	u_char *cmd;
-	int len, responselen;
-	u_char *respbuf;
-	int slow;
+pckbc_poll_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
+    int responselen, u_char *respbuf, int slow)
 {
 	struct pckbc_devcmd nc;
 
@@ -732,8 +683,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
  * Clean up a command queue, throw away everything.
  */
 void
-pckbc_cleanqueue(q)
-	struct pckbc_slotdata *q;
+pckbc_cleanqueue(struct pckbc_slotdata *q)
 {
 	struct pckbc_devcmd *cmd;
 #ifdef PCKBCDEBUG
@@ -757,8 +707,7 @@ pckbc_cleanqueue(q)
  * XXX could be less invasive.
  */
 void
-pckbc_cleanup(self)
-	void *self;
+pckbc_cleanup(void *self)
 {
 	struct pckbc_internal *t = self;
 	int s;
@@ -807,9 +756,7 @@ pckbc_reset(struct pckbc_softc *sc)
  * to be called at spltty()
  */
 void
-pckbc_start(t, slot)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
+pckbc_start(struct pckbc_internal *t, pckbc_slot_t slot)
 {
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	struct pckbc_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
@@ -846,10 +793,7 @@ pckbc_start(t, slot)
  * to be called at spltty()
  */
 int
-pckbc_cmdresponse(t, slot, data)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	u_char data;
+pckbc_cmdresponse(struct pckbc_internal *t, pckbc_slot_t slot, u_char data)
 {
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	struct pckbc_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
@@ -908,12 +852,8 @@ restart:
  * Put command into the device's command queue, return zero or errno.
  */
 int
-pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	u_char *cmd;
-	int len, responselen, sync;
-	u_char *respbuf;
+pckbc_enqueue_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
+    int responselen, int sync, u_char *respbuf)
 {
 	struct pckbc_internal *t = self;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
@@ -978,12 +918,8 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 }
 
 void
-pckbc_set_inputhandler(self, slot, func, arg, name)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	pckbc_inputfcn func;
-	void *arg;
-	char *name;
+pckbc_set_inputhandler(pckbc_tag_t self, pckbc_slot_t slot, pckbc_inputfcn func,
+    void *arg, char *name)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;
@@ -1002,8 +938,7 @@ pckbc_set_inputhandler(self, slot, func, arg, name)
 }
 
 void
-pckbc_poll(v)
-	void *v;
+pckbc_poll(void *v)
 {
 	struct pckbc_internal *t = v;
 	int s;
@@ -1015,8 +950,7 @@ pckbc_poll(v)
 }
 
 int
-pckbcintr(vsc)
-	void *vsc;
+pckbcintr(void *vsc)
 {
 	struct pckbc_softc *sc = (struct pckbc_softc *)vsc;
 
@@ -1024,9 +958,7 @@ pckbcintr(vsc)
 }
 
 int
-pckbcintr_internal(t, sc)
-	struct pckbc_internal *t;
-	struct pckbc_softc *sc;
+pckbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 {
 	u_char stat;
 	pckbc_slot_t slot;
@@ -1081,12 +1013,8 @@ pckbcintr_internal(t, sc)
 }
 
 int
-pckbc_cnattach(iot, addr, cmd_offset, slot, flags)
-	bus_space_tag_t iot;
-	bus_addr_t addr;
-	bus_size_t cmd_offset;
-	pckbc_slot_t slot;
-	int flags;
+pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr, bus_size_t cmd_offset,
+    pckbc_slot_t slot, int flags)
 {
 	bus_space_handle_t ioh_d, ioh_c;
 	int res = 0;

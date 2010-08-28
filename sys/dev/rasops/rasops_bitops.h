@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops_bitops.h,v 1.5 2009/09/05 14:09:35 miod Exp $ */
+/*	$OpenBSD: rasops_bitops.h,v 1.6 2010/08/28 12:48:14 miod Exp $ */
 /* 	$NetBSD: rasops_bitops.h,v 1.6 2000/04/12 14:22:30 pk Exp $	*/
 
 /*-
@@ -37,10 +37,7 @@
  * Erase columns.
  */
 int
-NAME(erasecols)(cookie, row, col, num, attr)
-	void *cookie;
-	int row, col, num;
-	long attr;
+NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 {
 	int lmask, rmask, lclr, rclr, clr;
 	struct rasops_info *ri;
@@ -116,8 +113,7 @@ NAME(erasecols)(cookie, row, col, num, attr)
  * Actually paint the cursor.
  */
 int
-NAME(do_cursor)(ri)
-	struct rasops_info *ri;
+NAME(do_cursor)(struct rasops_info *ri)
 {
 	int lmask, rmask, height, row, col, num;
 	int32_t *dp, *rp;
@@ -159,9 +155,7 @@ NAME(do_cursor)(ri)
  * Copy columns. Ick!
  */
 int
-NAME(copycols)(cookie, row, src, dst, num)
-	void *cookie;
-	int row, src, dst, num;
+NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 {
 	int tmp, lmask, rmask, height, lnum, rnum, sb, db, cnt, full;
 	int32_t *sp, *dp, *srp, *drp;

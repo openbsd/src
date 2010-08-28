@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.144 2010/08/07 15:50:23 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.145 2010/08/28 12:48:14 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1553,8 +1553,7 @@ void	com_fifo_probe(struct com_softc *);
 
 #if defined(COM_CONSOLE) || defined(KGDB)
 void
-com_enable_debugport(sc)
-	struct com_softc *sc;
+com_enable_debugport(struct com_softc *sc)
 {
 	int s;
 
@@ -1576,8 +1575,7 @@ com_enable_debugport(sc)
 #endif	/* COM_CONSOLE || KGDB */
 
 void
-com_attach_subr(sc)
-	struct com_softc *sc;
+com_attach_subr(struct com_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;

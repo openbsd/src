@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.10 2009/03/29 21:53:52 sthen Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.11 2010/08/28 12:48:14 miod Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -123,8 +123,7 @@ const struct wsdisplay_accessops pcdisplay_accessops = {
 };
 
 static int
-pcdisplay_probe_col(iot, memt)
-	bus_space_tag_t iot, memt;
+pcdisplay_probe_col(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	bus_space_handle_t memh, ioh_6845;
 	u_int16_t oldval, val;
@@ -147,8 +146,7 @@ pcdisplay_probe_col(iot, memt)
 }
 
 static int
-pcdisplay_probe_mono(iot, memt)
-	bus_space_tag_t iot, memt;
+pcdisplay_probe_mono(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	bus_space_handle_t memh, ioh_6845;
 	u_int16_t oldval, val;
@@ -171,10 +169,8 @@ pcdisplay_probe_mono(iot, memt)
 }
 
 static void
-pcdisplay_init(dc, iot, memt, mono)
-	struct pcdisplay_config *dc;
-	bus_space_tag_t iot, memt;
-	int mono;
+pcdisplay_init(struct pcdisplay_config *dc, bus_space_tag_t iot,
+    bus_space_tag_t memt, int mono)
 {
 	struct pcdisplay_handle *ph = &dc->dc_ph;
 	int cpos;
@@ -214,10 +210,7 @@ pcdisplay_init(dc, iot, memt, mono)
 }
 
 int
-pcdisplay_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pcdisplay_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int mono;
@@ -253,9 +246,7 @@ pcdisplay_match(parent, match, aux)
 }
 
 void
-pcdisplay_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcdisplay_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct pcdisplay_softc *sc = (struct pcdisplay_softc *)self;
@@ -296,8 +287,7 @@ pcdisplay_attach(parent, self, aux)
 
 
 int
-pcdisplay_cnattach(iot, memt)
-	bus_space_tag_t iot, memt;
+pcdisplay_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	int mono;
 
@@ -320,8 +310,7 @@ pcdisplay_cnattach(iot, memt)
 }
 
 static int
-pcdisplay_is_console(iot)
-	bus_space_tag_t iot;
+pcdisplay_is_console(bus_space_tag_t iot)
 {
 	if (pcdisplayconsole &&
 	    !pcdisplay_console_attached &&
@@ -331,12 +320,7 @@ pcdisplay_is_console(iot)
 }
 
 static int
-pcdisplay_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pcdisplay_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	/*
 	 * XXX "do something!"
@@ -345,21 +329,14 @@ pcdisplay_ioctl(v, cmd, data, flag, p)
 }
 
 static paddr_t
-pcdisplay_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+pcdisplay_mmap(void *v, off_t offset, int prot)
 {
 	return (-1);
 }
 
 static int
-pcdisplay_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *defattrp;
+pcdisplay_alloc_screen(void *v, const struct wsscreen_descr *type,
+    void **cookiep, int *curxp, int *curyp, long *defattrp)
 {
 	struct pcdisplay_softc *sc = v;
 
@@ -375,9 +352,7 @@ pcdisplay_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 }
 
 static void
-pcdisplay_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+pcdisplay_free_screen(void *v, void *cookie)
 {
 	struct pcdisplay_softc *sc = v;
 
@@ -388,12 +363,8 @@ pcdisplay_free_screen(v, cookie)
 }
 
 static int
-pcdisplay_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+pcdisplay_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 #ifdef DIAGNOSTIC
 	struct pcdisplay_softc *sc = v;
@@ -405,11 +376,7 @@ pcdisplay_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 static int
-pcdisplay_alloc_attr(id, fg, bg, flags, attrp)
-	void *id;
-	int fg, bg;
-	int flags;
-	long *attrp;
+pcdisplay_alloc_attr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	if (flags & WSATTR_REVERSE)
 		*attrp = FG_BLACK | BG_LIGHTGREY;
@@ -419,10 +386,7 @@ pcdisplay_alloc_attr(id, fg, bg, flags, attrp)
 }
 
 static void
-pcdisplay_unpack_attr(id, attr, fg, bg, ul)
-	void *id;
-	long attr;
-	int *fg, *bg, *ul;
+pcdisplay_unpack_attr(void *id, long attr, int *fg, int *bg, int *ul)
 {
 	if (attr == (FG_BLACK | BG_LIGHTGREY)) {
 		*fg = WSCOL_BLACK;

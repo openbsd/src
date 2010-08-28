@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.10 2009/09/05 14:09:35 miod Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.11 2010/08/28 12:48:14 miod Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -50,23 +50,19 @@ struct pcdisplay_handle {
 	bus_space_handle_t ph_ioh_6845, ph_memh;
 };
 
-static inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *,
-						 int);
+static inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *, int);
 static inline void _pcdisplay_6845_write(struct pcdisplay_handle *,
 					      int, u_int8_t);
 
-static inline u_int8_t _pcdisplay_6845_read(ph, reg)
-	struct pcdisplay_handle *ph;
-	int reg;
+static inline u_int8_t
+_pcdisplay_6845_read(struct pcdisplay_handle *ph, int reg)
 {
 	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_INDEX, reg);
 	return (bus_space_read_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_DATA));
 }
 
-static inline void _pcdisplay_6845_write(ph, reg, val)
-	struct pcdisplay_handle *ph;
-	int reg;
-	u_int8_t val;
+static inline void
+_pcdisplay_6845_write(struct pcdisplay_handle *ph, int reg, u_int8_t val)
 {
 	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_INDEX, reg);
 	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_DATA, val);

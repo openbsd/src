@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops24.c,v 1.8 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: rasops24.c,v 1.9 2010/08/28 12:48:14 miod Exp $	*/
 /*	$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -74,8 +74,7 @@ static int	stamp_mutex;	/* XXX see note in readme */
  * Initialize rasops_info struct for this colordepth.
  */
 void
-rasops24_init(ri)
-	struct rasops_info *ri;
+rasops24_init(struct rasops_info *ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
@@ -113,11 +112,7 @@ rasops24_init(ri)
  * XXX this bites - we should use masks.
  */
 int
-rasops24_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int fb, width, height, cnt, clr[2];
 	struct rasops_info *ri;
@@ -196,9 +191,7 @@ rasops24_putchar(cookie, row, col, uc, attr)
  * Recompute the blitting stamp.
  */
 void
-rasops24_makestamp(ri, attr)
-	struct rasops_info *ri;
-	long attr;
+rasops24_makestamp(struct rasops_info *ri, long attr)
 {
 	u_int fg, bg, c1, c2, c3, c4;
 	int i;
@@ -239,11 +232,7 @@ rasops24_makestamp(ri, attr)
  * Put a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops24_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -321,11 +310,7 @@ rasops24_putchar8(cookie, row, col, uc, attr)
  * Put a single character. This is for 12-pixel wide fonts.
  */
 int
-rasops24_putchar12(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -410,11 +395,7 @@ rasops24_putchar12(cookie, row, col, uc, attr)
  * Put a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops24_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -507,10 +488,7 @@ rasops24_putchar16(cookie, row, col, uc, attr)
  * Erase rows. This is nice and easy due to alignment.
  */
 int
-rasops24_eraserows(cookie, row, num, attr)
-	void *cookie;
-	int row, num;
-	long attr;
+rasops24_eraserows(void *cookie, int row, int num, long attr)
 {
 	int n9, n3, n1, cnt, stride, delta;
 	u_int32_t *dp, clr, stamp[3];
@@ -611,10 +589,7 @@ rasops24_eraserows(cookie, row, num, attr)
  * Erase columns.
  */
 int
-rasops24_erasecols(cookie, row, col, num, attr)
-	void *cookie;
-	int row, col, num;
-	long attr;
+rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	int n12, n4, height, cnt, slop, clr, stamp[3];
 	struct rasops_info *ri;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops15.c,v 1.7 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: rasops15.c,v 1.8 2010/08/28 12:48:14 miod Exp $	*/
 /*	$NetBSD: rasops15.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -69,8 +69,7 @@ static int	stamp_mutex;	/* XXX see note in readme */
  * Initialize rasops_info struct for this colordepth.
  */
 void
-rasops15_init(ri)
-	struct rasops_info *ri;
+rasops15_init(struct rasops_info *ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
@@ -106,11 +105,7 @@ rasops15_init(ri)
  * Paint a single character.
  */
 int
-rasops15_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int fb, width, height, cnt, clr[2];
 	struct rasops_info *ri;
@@ -182,9 +177,7 @@ rasops15_putchar(cookie, row, col, uc, attr)
  * Recompute the (2x2)x1 blitting stamp.
  */
 void
-rasops15_makestamp(ri, attr)
-	struct rasops_info *ri;
-	long attr;
+rasops15_makestamp(struct rasops_info *ri, long attr)
 {
 	int32_t fg, bg;
 	int i;
@@ -212,11 +205,7 @@ rasops15_makestamp(ri, attr)
  * Paint a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops15_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -292,11 +281,7 @@ rasops15_putchar8(cookie, row, col, uc, attr)
  * Paint a single character. This is for 12-pixel wide fonts.
  */
 int
-rasops15_putchar12(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -376,11 +361,7 @@ rasops15_putchar12(cookie, row, col, uc, attr)
  * Paint a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops15_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.9 2009/09/05 14:49:20 miod Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.10 2010/08/28 12:48:14 miod Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -74,11 +74,8 @@ struct wsemul_dumb_emuldata {
 struct wsemul_dumb_emuldata wsemul_dumb_console_emuldata;
 
 void *
-wsemul_dumb_cnattach(type, cookie, ccol, crow, defattr)
-	const struct wsscreen_descr *type;
-	void *cookie;
-	int ccol, crow;
-	long defattr;
+wsemul_dumb_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
+    int crow, long defattr)
 {
 	struct wsemul_dumb_emuldata *edp;
 	const struct wsdisplay_emulops *emulops;
@@ -102,13 +99,8 @@ wsemul_dumb_cnattach(type, cookie, ccol, crow, defattr)
 }
 
 void *
-wsemul_dumb_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
-	int console;
-	const struct wsscreen_descr *type;
-	void *cookie;
-	int ccol, crow;
-	void *cbcookie;
-	long defattr;
+wsemul_dumb_attach(int console, const struct wsscreen_descr *type, void *cookie,
+    int ccol, int crow, void *cbcookie, long defattr)
 {
 	struct wsemul_dumb_emuldata *edp;
 
@@ -133,11 +125,7 @@ wsemul_dumb_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 }
 
 u_int
-wsemul_dumb_output(cookie, data, count, kernel)
-	void *cookie;
-	const u_char *data;
-	u_int count;
-	int kernel; /* ignored */
+wsemul_dumb_output(void *cookie, const u_char *data, u_int count, int kernel)
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
 	u_int processed = 0;
@@ -297,18 +285,13 @@ wsemul_dumb_output(cookie, data, count, kernel)
 }
 
 int
-wsemul_dumb_translate(cookie, in, out)
-	void *cookie;
-	keysym_t in;
-	const char **out;
+wsemul_dumb_translate(void *cookie, keysym_t in, const char **out)
 {
 	return (0);
 }
 
 void
-wsemul_dumb_detach(cookie, crowp, ccolp)
-	void *cookie;
-	u_int *crowp, *ccolp;
+wsemul_dumb_detach(void *cookie, u_int *crowp, u_int *ccolp)
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
 
@@ -319,9 +302,7 @@ wsemul_dumb_detach(cookie, crowp, ccolp)
 }
 
 void
-wsemul_dumb_resetop(cookie, op)
-	void *cookie;
-	enum wsemul_resetops op;
+wsemul_dumb_resetop(void *cookie, enum wsemul_resetops op)
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
 

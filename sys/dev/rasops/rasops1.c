@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops1.c,v 1.7 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: rasops1.c,v 1.8 2010/08/28 12:48:14 miod Exp $	*/
 /*	$NetBSD: rasops1.c,v 1.11 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -53,8 +53,7 @@ int	rasops1_putchar16(void *, int, int col, u_int, long);
  * Initialize rasops_info struct for this colordepth.
  */
 void
-rasops1_init(ri)
-	struct rasops_info *ri;
+rasops1_init(struct rasops_info *ri)
 {
 	rasops_masks_init();
 
@@ -83,11 +82,7 @@ rasops1_init(ri)
  * Paint a single character. This is the generic version, this is ugly.
  */
 int
-rasops1_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	u_int fs, rs, fb, bg, fg, lmask, rmask;
 	u_int32_t height, width;
@@ -233,11 +228,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
  * Paint a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops1_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, fs, rs, bg, fg;
 	struct rasops_info *ri;
@@ -300,11 +291,7 @@ rasops1_putchar8(cookie, row, col, uc, attr)
  * Paint a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops1_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops1_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, fs, rs, bg, fg;
 	struct rasops_info *ri;

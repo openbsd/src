@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops8.c,v 1.9 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: rasops8.c,v 1.10 2010/08/28 12:48:14 miod Exp $	*/
 /*	$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -68,8 +68,7 @@ static int	stamp_mutex;	/* XXX see note in README */
  * Initialize a 'rasops_info' descriptor for this depth.
  */
 void
-rasops8_init(ri)
-	struct rasops_info *ri;
+rasops8_init(struct rasops_info *ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
@@ -94,11 +93,7 @@ rasops8_init(ri)
  * Put a single character.
  */
 int
-rasops8_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int width, height, cnt, fs, fb;
 	u_char *dp, *rp, *fr, clr[2];
@@ -167,9 +162,7 @@ rasops8_putchar(cookie, row, col, uc, attr)
  * Recompute the 4x1 blitting stamp.
  */
 void
-rasops8_makestamp(ri, attr)
-	struct rasops_info *ri;
-	long attr;
+rasops8_makestamp(struct rasops_info *ri, long attr)
 {
 	int32_t fg, bg;
 	int i;
@@ -201,11 +194,7 @@ rasops8_makestamp(ri, attr)
  * Put a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops8_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs;
@@ -273,11 +262,7 @@ rasops8_putchar8(cookie, row, col, uc, attr)
  * Put a single character. This is for 12-pixel wide fonts.
  */
 int
-rasops8_putchar12(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs;
@@ -348,11 +333,7 @@ rasops8_putchar12(cookie, row, col, uc, attr)
  * Put a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops8_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs;

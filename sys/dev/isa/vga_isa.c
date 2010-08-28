@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_isa.c,v 1.8 2002/03/14 01:26:56 millert Exp $ */
+/* $OpenBSD: vga_isa.c,v 1.9 2010/08/28 12:48:14 miod Exp $ */
 /* $NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp $ */
 
 /*
@@ -60,10 +60,7 @@ struct cfattach vga_isa_ca = {
 };
 
 int
-vga_isa_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+vga_isa_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -87,9 +84,7 @@ vga_isa_match(parent, match, aux)
 }
 
 void
-vga_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vga_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 #if 0
@@ -103,8 +98,7 @@ vga_isa_attach(parent, self, aux)
 }
 
 int
-vga_isa_cnattach(iot, memt)
-	bus_space_tag_t iot, memt;
+vga_isa_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_ISAVGA, 1));
 }

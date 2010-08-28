@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.8 2009/09/05 14:09:35 miod Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.9 2010/08/28 12:48:14 miod Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -41,8 +41,7 @@
 #include <dev/wscons/wsdisplayvar.h>
 
 void
-pcdisplay_cursor_reset(scr)
-	struct pcdisplayscreen *scr;
+pcdisplay_cursor_reset(struct pcdisplayscreen *scr)
 {
 #ifdef PCDISPLAY_SOFTCURSOR
 	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
@@ -51,9 +50,7 @@ pcdisplay_cursor_reset(scr)
 }
 
 void
-pcdisplay_cursor_init(scr, existing)
-	struct pcdisplayscreen *scr;
-	int existing;
+pcdisplay_cursor_init(struct pcdisplayscreen *scr, int existing)
 {
 #ifdef PCDISPLAY_SOFTCURSOR
 	bus_space_tag_t memt;
@@ -84,9 +81,7 @@ pcdisplay_cursor_init(scr, existing)
 }
 
 int
-pcdisplay_cursor(id, on, row, col)
-	void *id;
-	int on, row, col;
+pcdisplay_cursor(void *id, int on, int row, int col)
 {
 #ifdef PCDISPLAY_SOFTCURSOR
 	struct pcdisplayscreen *scr = id;
@@ -146,9 +141,7 @@ pcdisplay_cursor(id, on, row, col)
 
 #if 0
 unsigned int
-pcdisplay_mapchar_simple(id, uni)
-	void *id;
-	int uni;
+pcdisplay_mapchar_simple(void *id, int uni)
 {
 	if (uni < 128)
 		return (uni);
@@ -158,11 +151,7 @@ pcdisplay_mapchar_simple(id, uni)
 #endif
 
 int
-pcdisplay_putchar(id, row, col, c, attr)
-	void *id;
-	int row, col;
-	u_int c;
-	long attr;
+pcdisplay_putchar(void *id, int row, int col, u_int c, long attr)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
@@ -181,10 +170,7 @@ pcdisplay_putchar(id, row, col, c, attr)
 }
 
 int
-pcdisplay_getchar(id, row, col, cell)
-	void *id;
-	int row, col;
-	struct wsdisplay_charcell *cell;
+pcdisplay_getchar(void *id, int row, int col, struct wsdisplay_charcell *cell)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
@@ -208,9 +194,7 @@ pcdisplay_getchar(id, row, col, cell)
 }
 
 int
-pcdisplay_copycols(id, row, srccol, dstcol, ncols)
-	void *id;
-	int row, srccol, dstcol, ncols;
+pcdisplay_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
@@ -233,10 +217,7 @@ pcdisplay_copycols(id, row, srccol, dstcol, ncols)
 }
 
 int
-pcdisplay_erasecols(id, row, startcol, ncols, fillattr)
-	void *id;
-	int row, startcol, ncols;
-	long fillattr;
+pcdisplay_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
@@ -260,9 +241,7 @@ pcdisplay_erasecols(id, row, startcol, ncols, fillattr)
 }
 
 int
-pcdisplay_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+pcdisplay_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
@@ -286,10 +265,7 @@ pcdisplay_copyrows(id, srcrow, dstrow, nrows)
 }
 
 int
-pcdisplay_eraserows(id, startrow, nrows, fillattr)
-	void *id;
-	int startrow, nrows;
-	long fillattr;
+pcdisplay_eraserows(void *id, int startrow, int nrows, long fillattr)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
