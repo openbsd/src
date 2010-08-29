@@ -1,6 +1,21 @@
-/*	$OpenBSD: ukbd.c,v 1.53 2010/08/02 23:17:34 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.54 2010/08/29 15:28:11 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
+/*
+ * Copyright (c) 2010 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -110,10 +125,14 @@ const kbd_t ukbd_countrylayout[1 + HCC_MAX] = {
 };
 
 struct ukbd_softc {
-	struct uhidev	sc_hdev;
-	struct hidkbd	sc_kbd;
-	u_char		sc_dying;
-	int		sc_spl;
+	struct uhidev		sc_hdev;
+	struct hidkbd		sc_kbd;
+
+	int			sc_spl;
+
+	u_char			sc_dying;
+
+	void			(*sc_munge)(void *, uint8_t *, u_int);
 };
 
 void	ukbd_cngetc(void *, u_int *, int *);
@@ -155,6 +174,16 @@ const struct cfattach ukbd_ca = {
 	ukbd_activate, 
 };
 
+struct ukbd_translation {
+	uint8_t original;
+	uint8_t translation;
+};
+
+#ifdef __loongson__
+void	ukbd_gdium_munge(void *, uint8_t *, u_int);
+#endif
+uint8_t	ukbd_translate(const struct ukbd_translation *, size_t, uint8_t);
+
 int
 ukbd_match(struct device *parent, void *match, void *aux)
 {
@@ -165,7 +194,7 @@ ukbd_match(struct device *parent, void *match, void *aux)
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
-			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD)))
+	    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD)))
 		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS);
@@ -220,6 +249,12 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+#ifdef __loongson__
+	if (uha->uaa->vendor == USB_VENDOR_CYPRESS &&
+	    uha->uaa->product == USB_PRODUCT_CYPRESS_LPRDK)
+		sc->sc_munge = ukbd_gdium_munge;
+#endif
 
 	if (kbd->sc_console_keyboard) {
 		extern struct wskbd_mapdata ukbd_keymapdata;
@@ -280,8 +315,11 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	struct ukbd_softc *sc = (struct ukbd_softc *)addr;
 	struct hidkbd *kbd = &sc->sc_kbd;
 
-	if (kbd->sc_enabled != 0)
+	if (kbd->sc_enabled != 0) {
+		if (sc->sc_munge != NULL)
+			(*sc->sc_munge)(sc, (uint8_t *)ibuf, len);
 		hidkbd_input(kbd, (uint8_t *)ibuf, len);
+	}
 }
 
 int
@@ -393,3 +431,80 @@ ukbd_cnattach(void)
 	hidkbd_is_console = 1;
 	return (0);
 }
+
+uint8_t
+ukbd_translate(const struct ukbd_translation *table, size_t tsize,
+    uint8_t keycode)
+{
+	for (; tsize != 0; table++, tsize--)
+		if (table->original == keycode)
+			return table->translation;
+	return 0;
+}
+
+#ifdef __loongson__
+/*
+ * Software Fn- translation for Gdium Liberty keyboard.
+ */
+#define	GDIUM_FN_CODE	0x82
+void
+ukbd_gdium_munge(void *vsc, uint8_t *ibuf, u_int ilen)
+{
+	struct ukbd_softc *sc = vsc;
+	struct hidkbd *kbd = &sc->sc_kbd;
+	uint8_t *pos, *spos, *epos, xlat;
+	int fn;
+
+	static const struct ukbd_translation gdium_fn_trans[] = {
+#ifdef notyet
+		{ 58, 0 },	/* F1 -> toggle camera */
+		{ 59, 0 },	/* F2 -> toggle wireless */
+#endif
+		{ 60, 127 },	/* F3 -> audio mute */
+		{ 61, 128 },	/* F4 -> audio raise */
+		{ 62, 129 },	/* F5 -> audio lower */
+#ifdef notyet
+		{ 63, 0 },	/* F6 -> toggle ext. video */
+		{ 64, 0 },	/* F7 -> toggle mouse */
+		{ 65, 0 },	/* F8 -> brightness up */
+		{ 66, 0 },	/* F9 -> brightness down */
+		{ 67, 0 },	/* F10 -> suspend */
+		{ 68, 0 },	/* F11 -> user1 */
+		{ 69, 0 },	/* F12 -> user2 */
+		{ 70, 0 },	/* print screen -> sysrq */
+#endif
+		{ 76, 71 },	/* delete -> scroll lock */
+		{ 81, 78 },	/* down -> page down */
+		{ 82, 75 }	/* up -> page up */
+	};
+
+	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
+	epos = spos + kbd->sc_nkeycode;
+
+	/*
+	 * Check for Fn key being down and remove it from the report.
+	 */
+
+	fn = 0;
+	for (pos = spos; pos != epos; pos++)
+		if (*pos == GDIUM_FN_CODE) {
+			fn = 1;
+			*pos = 0;
+			break;
+		}
+
+	/*
+	 * Rewrite keycodes on the fly to perform Fn-key translation.
+	 * Keycodes without a translation are passed unaffected.
+	 */
+
+	if (fn != 0)
+		for (pos = spos; pos != epos; pos++) {
+			xlat = ukbd_translate(gdium_fn_trans,
+			    nitems(gdium_fn_trans), *pos);
+			if (xlat != 0)
+				*pos = xlat;
+		}
+
+}
+#endif
