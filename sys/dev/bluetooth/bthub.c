@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthub.c,v 1.4 2008/02/24 21:46:19 uwe Exp $	*/
+/*	$OpenBSD: bthub.c,v 1.5 2010/08/29 15:12:28 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/vnode.h>
 
 #include <netbt/bluetooth.h>
@@ -156,6 +157,15 @@ bthubioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct btdev_attach_args *bd;
 	int err;
+
+	switch (cmd) {
+	case BTDEV_ATTACH:
+	case BTDEV_DETACH:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
+	default:
+		break;
+	}
 
 	switch (cmd) {
 	case BTDEV_ATTACH:
