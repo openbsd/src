@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.27 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.28 2010/08/29 23:06:53 deraadt Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ int	wdc_obio_detach(struct device *, int);
 
 struct cfattach wdc_obio_ca = {
 	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach,
-	    wdc_obio_detach, wdcactivate
+	    wdc_obio_detach, config_activate_children
 };
 
 int	wdc_obio_dma_init(void *, int, int, void *, size_t, int);
