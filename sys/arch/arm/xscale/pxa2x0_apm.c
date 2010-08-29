@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.32 2010/03/30 17:40:55 oga Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.33 2010/08/29 02:02:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/rwlock.h>
 #include <sys/mount.h>		/* for vfs_syncwait() */
 #include <sys/proc.h>
+#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
@@ -338,6 +339,8 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 	 */
 	/* XXX ifdef NPXAUDC > 0 */
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PSSR, PSSR_OTGPH);
+
+	bufq_restart();
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
