@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.107 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.108 2010/08/29 18:40:33 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -694,22 +694,6 @@ wdcprobe(struct channel_softc *chp)
 	wdcdebug_mask = savedmask;
 #endif
 	return (ret_value);
-}
-
-/*
- * Call activate routine of underlying devices.
- */
-int
-wdcactivate(struct device *self, int act)
-{
-	int error = 0;
-	int s;
-
-	s = splbio();
-	config_activate_children(self, act);
-	splx(s);
-
-	return (error);
 }
 
 void

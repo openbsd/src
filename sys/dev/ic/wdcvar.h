@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.45 2010/05/09 15:46:17 jasper Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.46 2010/08/29 18:40:33 deraadt Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -262,7 +262,6 @@ struct wdc_xfer {
 int   wdcprobe(struct channel_softc *);
 void  wdcattach(struct channel_softc *);
 int   wdcdetach(struct channel_softc *, int);
-int   wdcactivate(struct device *, int);
 int   wdcintr(void *);
 void  wdc_exec_xfer(struct channel_softc *, struct wdc_xfer *);
 struct wdc_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
