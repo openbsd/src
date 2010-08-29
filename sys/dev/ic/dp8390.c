@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.42 2010/04/20 20:42:54 deraadt Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.43 2010/08/29 18:01:21 deraadt Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -61,9 +61,6 @@ static __inline__ int	dp8390_write_mbuf(struct dp8390_softc *,
 			    struct mbuf *, int);
 
 static int		dp8390_test_mem(struct dp8390_softc *);
-
-int	dp8390_enable(struct dp8390_softc *);
-void	dp8390_disable(struct dp8390_softc *);
 
 #ifdef DEBUG
 int	dp8390_debug = 0;

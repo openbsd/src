@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390var.h,v 1.11 2006/10/20 18:12:50 brad Exp $	*/
+/*	$OpenBSD: dp8390var.h,v 1.12 2010/08/29 18:01:21 deraadt Exp $	*/
 /*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
@@ -159,6 +159,8 @@ void	dp8390_watchdog(struct ifnet *);
 void	dp8390_reset(struct dp8390_softc *);
 void	dp8390_init(struct dp8390_softc *);
 void	dp8390_stop(struct dp8390_softc *);
+int	dp8390_enable(struct dp8390_softc *);
+void	dp8390_disable(struct dp8390_softc *);
 
 int	dp8390_mediachange(struct ifnet *);
 void	dp8390_mediastatus(struct ifnet *, struct ifmediareq *);
