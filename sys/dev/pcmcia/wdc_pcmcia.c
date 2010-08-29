@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.21 2009/10/13 19:33:17 pirofti Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.22 2010/08/29 18:41:24 deraadt Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -466,13 +466,13 @@ wdc_pcmcia_activate(self, act)
 		}
 
 		wdcreset(&sc->wdc_channel, VERBOSE);
-		rv = wdcactivate(self, act);
+		rv = config_activate_children(self, act);
 		break;
 
 	case DVACT_DEACTIVATE:
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 		pcmcia_function_disable(sc->sc_pf);
-		rv = wdcactivate(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	}
 	splx(s);
