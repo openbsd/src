@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.210 2010/08/27 20:31:55 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.211 2010/08/29 18:41:12 jasper Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2406,8 +2406,12 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case APM_IOC_SUSPEND:
 	case APM_IOC_STANDBY:
-		sc->sc_sleepmode = ACPI_STATE_S3;
-		acpi_wakeup(sc);
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+		} else {
+			sc->sc_sleepmode = ACPI_STATE_S3;
+			acpi_wakeup(sc);
+		}
 		break;
 	case APM_IOC_GETPOWER:
 		/* A/C */
