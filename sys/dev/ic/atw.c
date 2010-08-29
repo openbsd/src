@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.70 2010/08/27 04:09:18 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.71 2010/08/29 16:46:58 deraadt Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -846,7 +846,7 @@ atw_attach(struct atw_softc *sc)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(atw_power, sc);
+	sc->sc_powerhook = powerhook_establish(atw_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -3978,36 +3978,43 @@ atw_start(struct ifnet *ifp)
 	}
 }
 
-/*
- * atw_power:
- *
- *	Power management (suspend/resume) hook.
- */
-void
-atw_power(int why, void *arg)
+int
+atw_activate(struct device *self, int act)
 {
-	struct atw_softc *sc = arg;
+	struct atw_softc *sc = (struct atw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s;
 
-	DPRINTF(sc, ("%s: atw_power(%d,)\n", sc->sc_dev.dv_xname, why));
-
-	s = splnet();
-	switch (why) {
+	switch (act) {
 	case PWR_SUSPEND:
-		atw_stop(ifp, 1);
+		if (ifp->if_flags & IFF_RUNNING)
+			atw_stop(ifp, 1);
 		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
+			(*sc->sc_power)(sc, act);
 		break;
 	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			atw_init(ifp);
-		}
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    atw_resume, sc, NULL);
 		break;
 	}
-	splx(s);
+	return 0;
+}
+
+void
+atw_resume(void *arg1, void *arg2)
+{
+	struct atw_softc *sc = (struct atw_softc *)arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	if (sc->sc_power != NULL)
+		(*sc->sc_power)(sc, DVACT_RESUME);
+	if (ifp->if_flags & IFF_UP)
+		atw_init(ifp);
+}
+
+void
+atw_powerhook(int why, void *arg)
+{
+	atw_activate(arg, why);
 }
 
 /*

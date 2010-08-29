@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.79 2010/08/27 04:09:19 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.80 2010/08/29 16:46:58 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3593,32 +3593,35 @@ rtw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	ieee80211_media_status(ifp, imr);
 }
 
-void
-rtw_power(int why, void *arg)
+int
+rtw_activate(struct device *self, int act)
 {
-	struct rtw_softc *sc = arg;
+	struct rtw_softc *sc = (struct rtw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s;
 
-	DPRINTF(sc, RTW_DEBUG_PWR,
-	    ("%s: rtw_power(%d,)\n", sc->sc_dev.dv_xname, why));
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-		rtw_stop(ifp, 1);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING) {
+			rtw_stop(ifp, 1);
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, act);
+		}
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP) {
 			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
+				(*sc->sc_power)(sc, act);
 			rtw_init(ifp);
 		}
 		break;
 	}
-	splx(s);
+	return 0;
+}
+
+void
+rtw_powerhook(int why, void *arg)
+{
+	rtw_activate(arg, why);
 }
 
 void
@@ -3629,7 +3632,7 @@ rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	hooks->rh_power = powerhook_establish(rtw_power, arg);
+	hooks->rh_power = powerhook_establish(rtw_powerhook, arg);
 	if (hooks->rh_power == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    dvname);

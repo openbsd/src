@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.21 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.22 2010/08/29 16:46:58 deraadt Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/timeout.h>
+#include <sys/workq.h>
 
 /*
  * Some misc. statics, useful for debugging.
@@ -278,6 +279,8 @@ struct atw_softc {
 		struct atw_tx_radiotap_header	tap;
 		u_int8_t			pad[64];
 	} sc_txtapu;
+
+	struct workq_task	sc_resume_wqt;
 };
 
 #define sc_rxtap	sc_rxtapu.tap
@@ -438,6 +441,7 @@ int	atw_detach(struct atw_softc *);
 int	atw_activate(struct device *, int);
 int	atw_intr(void *arg);
 int	atw_enable(struct atw_softc *);
-void	atw_power(int, void *);
+void	atw_powerhook(int, void *);
+void	atw_resume(void *, void *);
 
 #endif /* _DEV_IC_ATWVAR_H_ */
