@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.110 2010/07/22 04:40:41 matthew Exp $ */
+/* $OpenBSD: mfi.c,v 1.111 2010/08/29 23:23:31 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -901,9 +901,21 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 	}
 
-	if (hdr->mfh_cmd_status != MFI_STAT_OK) {
+	switch (hdr->mfh_cmd_status) {
+	case MFI_STAT_OK:
+		xs->resid = 0;
+		break;
+
+	case MFI_STAT_SCSI_DONE_WITH_ERROR:
+		xs->error = XS_SENSE;
+		xs->resid = 0;
+		memset(&xs->sense, 0, sizeof(xs->sense));
+		memcpy(&xs->sense, ccb->ccb_sense, sizeof(xs->sense));
+		break;
+
+	default:
 		xs->error = XS_DRIVER_STUFFUP;
-		DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done stuffup %#x\n",
+		printf("%s: mfi_scsi_xs_done stuffup %#x\n",
 		    DEVNAME(sc), hdr->mfh_cmd_status);
 
 		if (hdr->mfh_scsi_status != 0) {
@@ -916,9 +928,8 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb)
 			    sizeof(struct scsi_sense_data));
 			xs->error = XS_SENSE;
 		}
+		break;
 	}
-
-	xs->resid = 0;
 
 	mfi_put_ccb(ccb);
 	scsi_done(xs);
