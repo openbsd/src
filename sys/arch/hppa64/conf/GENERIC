@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2010/08/18 21:01:14 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.22 2010/08/30 18:56:18 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,8 +15,6 @@ maxusers	80			# estimated number of users
 
 option		DEBUG
 option		USER_PCICONF	# user-space PCI configuration
-
-#option		PROCFS		# /proc
 
 config	bsd swap generic
 

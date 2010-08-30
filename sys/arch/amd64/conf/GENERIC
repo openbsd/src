@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.300 2010/08/08 14:27:43 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.301 2010/08/30 18:56:18 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,8 +21,6 @@ option		MTRR		# CPU memory range attributes control
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
-
-#option		PROCFS		# /proc
 
 #option		NTFS		# Experimental NTFS support
 

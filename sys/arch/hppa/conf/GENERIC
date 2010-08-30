@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.137 2010/08/18 21:01:14 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.138 2010/08/30 18:56:17 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,8 +28,6 @@ option		HP8700_CPU		# PCXW2 (in 32bit mode)
 option		FPEMUL
 option		USELEDS		# blink 'em
 option		USER_PCICONF	# user-space PCI configuration
-
-#option		PROCFS		# /proc
 
 config	bsd swap generic
 
