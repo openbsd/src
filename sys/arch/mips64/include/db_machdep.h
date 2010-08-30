@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.8 2005/04/19 15:23:37 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.9 2010/08/30 08:52:10 syuu Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -73,5 +73,15 @@ db_addr_t	next_instr_address(db_addr_t, boolean_t);
 
 int db_inst_type(int);
 void db_machine_init(void);
+
+int db_enter_ddb(void);
+void db_startcpu(int);
+void db_stopcpu(int);
+
+extern struct mutex ddb_mp_mutex;
+
+#define DDB_STATE_NOT_RUNNING	0
+#define DDB_STATE_RUNNING	1
+#define DDB_STATE_EXITING	2
 
 #endif	/* !_MIPS_DB_MACHDEP_H_ */

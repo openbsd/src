@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.58 2010/04/28 16:20:28 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.59 2010/08/30 08:52:10 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -412,6 +412,12 @@ struct cpu_info {
 	u_long		ci_flags;		/* flags; see below */
 	struct intrhand	ci_ipiih;
 #endif
+	volatile int    ci_ddb;
+#define	CI_DDB_RUNNING		0
+#define	CI_DDB_SHOULDSTOP	1
+#define	CI_DDB_STOPPED		2
+#define	CI_DDB_ENTERDDB		3
+#define	CI_DDB_INDDB		4
 };
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
@@ -430,9 +436,7 @@ extern struct cpu_info *cpu_info_list;
 #define MAXCPUS				4
 extern struct cpu_info *getcurcpu(void);
 extern void setcurcpu(struct cpu_info *);
-#ifdef DEBUG
 extern struct cpu_info *get_cpu_info(int);
-#endif
 #define curcpu() getcurcpu()
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
 #define cpu_number()			(curcpu()->ci_cpuid)
@@ -447,7 +451,8 @@ vaddr_t alloc_contiguous_pages(size_t);
 
 #define MIPS64_IPI_NOP		0x00000001
 #define MIPS64_IPI_RENDEZVOUS	0x00000002
-#define MIPS64_NIPIS		2	/* must not exceed 32 */
+#define MIPS64_IPI_DDB		0x00000004
+#define MIPS64_NIPIS		3	/* must not exceed 32 */
 
 void	mips64_ipi_init(void);
 void	mips64_send_ipi(unsigned int, unsigned int);
@@ -460,6 +465,7 @@ void	smp_rendezvous_cpus(unsigned long, void (*)(void *), void *arg);
 #define	CPU_IS_PRIMARY(ci)		1
 #define cpu_number()			0
 #define cpu_unidle(ci)
+#define get_cpu_info(i)			(&cpu_info_primary)
 #endif
 
 void cpu_startclock(struct cpu_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.28 2010/05/10 22:14:43 kettenis Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.29 2010/08/30 08:52:10 syuu Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -46,6 +46,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_run.h>
 
 #define MIPS_JR_RA        0x03e00008      /* instruction code for jr ra */
 
@@ -66,8 +67,24 @@ int   kdb_trap(int, struct trap_frame *);
 void db_trap_trace_cmd(db_expr_t, int, db_expr_t, char *);
 void db_dump_tlb_cmd(db_expr_t, int, db_expr_t, char *);
 
+
+#ifdef MULTIPROCESSOR
+struct mutex ddb_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
+volatile int ddb_state = DDB_STATE_NOT_RUNNING;
+volatile cpuid_t ddb_active_cpu;
+boolean_t        db_switch_cpu;
+long             db_switch_to_cpu;
+#endif
+
 int   db_active = 0;
 db_regs_t ddb_regs;
+
+#ifdef MULTIPROCESSOR
+void db_cpuinfo_cmd(db_expr_t, int, db_expr_t, char *);
+void db_startproc_cmd(db_expr_t, int, db_expr_t, char *);
+void db_stopproc_cmd(db_expr_t, int, db_expr_t, char *);
+void db_ddbproc_cmd(db_expr_t, int, db_expr_t, char *);
+#endif
 
 struct db_variable db_regs[] = {
     { "at",  (long *)&ddb_regs.ast,     FCN_NULL },
@@ -136,18 +153,135 @@ kdb_trap(type, fp)
 		}
 		printf("stopped on non ddb fault\n");
 	}
+	
+#ifdef MULTIPROCESSOR
+	mtx_enter(&ddb_mp_mutex);
+	if (ddb_state == DDB_STATE_EXITING)
+		ddb_state = DDB_STATE_NOT_RUNNING;
+	mtx_leave(&ddb_mp_mutex);
+	
+	while (db_enter_ddb()) {
+#endif
+		bcopy((void *)fp, (void *)&ddb_regs, NUMSAVEREGS * sizeof(register_t));
 
-	bcopy((void *)fp, (void *)&ddb_regs, NUMSAVEREGS * sizeof(register_t));
-
-	db_active++;
-	cnpollc(TRUE);
-	db_trap(type, 0);
-	cnpollc(FALSE);
-	db_active--;
-
-	bcopy((void *)&ddb_regs, (void *)fp, NUMSAVEREGS * sizeof(register_t));
+		db_active++;
+		cnpollc(TRUE);
+		db_trap(type, 0);
+		cnpollc(FALSE);
+		db_active--;
+		
+		bcopy((void *)&ddb_regs, (void *)fp, NUMSAVEREGS * sizeof(register_t));
+#ifdef MULTIPROCESSOR
+		if (!db_switch_cpu)
+			ddb_state = DDB_STATE_EXITING;
+	}
+#endif
 	return(TRUE);
 }
+
+#ifdef MULTIPROCESSOR
+int
+db_enter_ddb(void)
+{
+	int i;
+	struct cpu_info *ci = curcpu();
+	mtx_enter(&ddb_mp_mutex);
+
+#ifdef DEBUG
+	printf("db_enter_ddb %d: state %x pause %x\n", ci->ci_cpuid,
+	    ddb_state, ci->ci_ddb);
+#endif
+	/* If we are first in, grab ddb and stop all other CPUs */
+	if (ddb_state == DDB_STATE_NOT_RUNNING) {
+		ddb_active_cpu = cpu_number();
+		ddb_state = DDB_STATE_RUNNING;
+		ci->ci_ddb = CI_DDB_INDDB;
+		for (i = 0; i < ncpus; i++) {
+			if (i != cpu_number() &&
+			    get_cpu_info(i)->ci_ddb != CI_DDB_STOPPED) {
+				get_cpu_info(i)->ci_ddb = CI_DDB_SHOULDSTOP;
+				mips64_send_ipi(get_cpu_info(i)->ci_cpuid, MIPS64_IPI_DDB);
+			}
+		}
+		mtx_leave(&ddb_mp_mutex);
+		return (1);
+	}
+
+	/* Leaving ddb completely.  Start all other CPUs and return 0 */
+	if (ddb_active_cpu == cpu_number() && ddb_state == DDB_STATE_EXITING) {
+		for (i = 0; i < ncpus; i++) {
+			get_cpu_info(i)->ci_ddb = CI_DDB_RUNNING;
+		}
+		mtx_leave(&ddb_mp_mutex);
+		return (0);
+	}
+
+	/* We are switching to another CPU. ddb_ddbproc_cmd() has made sure
+	 * it is waiting for ddb, we just have to set ddb_active_cpu. */
+	if (ddb_active_cpu == cpu_number() && db_switch_cpu) {
+		ci->ci_ddb = CI_DDB_SHOULDSTOP;
+		db_switch_cpu = 0;
+		ddb_active_cpu = db_switch_to_cpu;
+		get_cpu_info(db_switch_to_cpu)->ci_ddb = CI_DDB_ENTERDDB;
+	}
+
+	/* Wait until we should enter ddb or resume */
+	while (ddb_active_cpu != cpu_number() &&
+	    ci->ci_ddb != CI_DDB_RUNNING) {
+		if (ci->ci_ddb == CI_DDB_SHOULDSTOP)
+			ci->ci_ddb = CI_DDB_STOPPED;
+		mtx_leave(&ddb_mp_mutex);
+		/* Busy wait without locking, we will confirm with lock later */
+		while (ddb_active_cpu != cpu_number() &&
+		    ci->ci_ddb != CI_DDB_RUNNING)
+			;	/* Do nothing */
+		mtx_enter(&ddb_mp_mutex);
+	}
+
+	/* Either enter ddb or exit */
+	if (ddb_active_cpu == cpu_number() && ddb_state == DDB_STATE_RUNNING) {
+		ci->ci_ddb = CI_DDB_INDDB;
+		mtx_leave(&ddb_mp_mutex);
+		return (1);
+	} else {
+		mtx_leave(&ddb_mp_mutex);
+		return (0);
+	}
+}
+
+
+void
+db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	int i;
+
+	for (i = 0; i < ncpus; i++) {
+		db_printf("%c%4d: ", (i == cpu_number()) ? '*' : ' ',
+		    get_cpu_info(i)->ci_cpuid);
+		switch(get_cpu_info(i)->ci_ddb) {
+		case CI_DDB_RUNNING:
+			db_printf("running\n");
+			break;
+		case CI_DDB_SHOULDSTOP:
+			db_printf("stopping\n");
+			break;
+		case CI_DDB_STOPPED:
+			db_printf("stopped\n");
+			break;
+		case CI_DDB_ENTERDDB:
+			db_printf("entering ddb\n");
+			break;
+		case CI_DDB_INDDB:
+			db_printf("ddb\n");
+			break;
+		default:
+			db_printf("? (%d)\n",
+			    get_cpu_info(i)->ci_ddb);
+			break;
+		}
+	}
+}
+#endif
 
 void
 db_read_bytes(addr, size, data)
@@ -434,15 +568,120 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 struct db_command mips_db_command_table[] = {
 	{ "tlb",	db_dump_tlb_cmd,	0,	NULL },
 	{ "trap",	db_trap_trace_cmd,	0,	NULL },
+#ifdef MULTIPROCESSOR
+	{ "cpuinfo",    db_cpuinfo_cmd,         0,      NULL },
+	{ "startcpu",   db_startproc_cmd,       0,      NULL },
+	{ "stopcpu",    db_stopproc_cmd,        0,      NULL },
+	{ "ddbcpu",     db_ddbproc_cmd,         0,      NULL },
+#endif   
 	{ NULL,		NULL,			0,	NULL }
 };
 
 void
 db_machine_init()
 {
+#ifdef MULTIPROCESSOR
+	int i;
+#endif
+
 extern char *ssym;
 	db_machine_commands_install(mips_db_command_table);
+#ifdef MULTIPROCESSOR
+	for (i = 0; i < ncpus; i++) {
+		get_cpu_info(i)->ci_ddb = CI_DDB_RUNNING;
+	}
+#endif
 	if (ssym != NULL) {
 		ddb_init();	/* Init symbols */
 	}
 }
+
+
+#ifdef MULTIPROCESSOR
+void
+db_ddbproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	int cpu_n;
+
+	if (have_addr) {
+		cpu_n = addr;
+		if (cpu_n >= 0 && cpu_n < ncpus &&
+		    cpu_n != cpu_number()) {
+			db_stopcpu(cpu_n);
+			db_switch_to_cpu = cpu_n;
+			db_switch_cpu = 1;
+			db_cmd_loop_done = 1;
+		} else {
+			db_printf("Invalid cpu %d\n", (int)addr);
+		}
+	} else {
+		db_printf("CPU not specified\n");
+	}
+}
+
+void
+db_startproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	int cpu_n;
+
+	if (have_addr) {
+		cpu_n = addr;
+		if (cpu_n >= 0 && cpu_n < ncpus &&
+		    cpu_n != cpu_number())
+			db_startcpu(cpu_n);
+		else
+			db_printf("Invalid cpu %d\n", (int)addr);
+	} else {
+		for (cpu_n = 0; cpu_n < ncpus; cpu_n++) {
+			if (cpu_n != cpu_number()) {
+				db_startcpu(cpu_n);
+			}
+		}
+	}
+}
+
+void
+db_stopproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	int cpu_n;
+	
+	if (have_addr) {
+		cpu_n = addr;
+		if (cpu_n >= 0 && cpu_n < ncpus &&
+		    cpu_n != cpu_number())
+			db_stopcpu(cpu_n);
+		else
+			db_printf("Invalid cpu %d\n", (int)addr);
+	} else {
+		for (cpu_n = 0; cpu_n < ncpus; cpu_n++) {
+			if (cpu_n != cpu_number()) {
+				db_stopcpu(cpu_n);
+			}
+		}
+	}
+}
+
+void
+db_startcpu(int cpu)
+{
+	if (cpu != cpu_number() && cpu < ncpus) {
+		mtx_enter(&ddb_mp_mutex);
+		get_cpu_info(cpu)->ci_ddb = CI_DDB_RUNNING;
+		mtx_leave(&ddb_mp_mutex);
+	}
+}   
+
+void
+db_stopcpu(int cpu)
+{
+	mtx_enter(&ddb_mp_mutex);
+	if (cpu != cpu_number() && cpu < ncpus &&
+	    get_cpu_info(cpu)->ci_ddb != CI_DDB_STOPPED) {
+		get_cpu_info(cpu)->ci_ddb = CI_DDB_SHOULDSTOP;  
+		mtx_leave(&ddb_mp_mutex);
+		mips64_send_ipi(cpu, MIPS64_IPI_DDB);
+	} else {
+		mtx_leave(&ddb_mp_mutex);
+	}
+}
+#endif

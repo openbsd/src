@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2010/08/07 03:50:01 krw Exp $ */
+/*	$OpenBSD: cpu.c,v 1.32 2010/08/30 08:52:10 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -368,7 +368,6 @@ save_fpu(void)
 }
 
 #ifdef MULTIPROCESSOR
-#ifdef DEBUG
 struct cpu_info *
 get_cpu_info(int cpuno)
 {
@@ -381,7 +380,6 @@ get_cpu_info(int cpuno)
 	}
 	return NULL;
 }
-#endif
 
 void
 cpu_boot_secondary_processors(void)
