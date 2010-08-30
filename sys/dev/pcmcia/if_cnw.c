@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.20 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.21 2010/08/30 20:33:18 deraadt Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -860,9 +860,7 @@ cnw_activate(dev, act)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)dev;
         struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int s;
 
-	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
@@ -870,14 +868,14 @@ cnw_activate(dev, act)
 		    cnw_intr, sc, sc->sc_dev.dv_xname);
 		cnw_init(sc);
 		break;
-
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_RUNNING; /* XXX no cnw_stop() ? */
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
 		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
-	splx(s);
 	return (0);
 }

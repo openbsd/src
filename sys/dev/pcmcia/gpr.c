@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.14 2009/10/29 08:03:16 fgsch Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.15 2010/08/30 20:33:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -247,13 +247,13 @@ gpr_activate(struct device *dev, int act)
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_TTY,
 		    gpr_intr, sc, sc->sc_dev.dv_xname);
 		break;
-
 	case DVACT_DEACTIVATE:
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
 		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
-
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.68 2009/10/13 19:33:16 pirofti Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.69 2010/08/30 20:33:18 deraadt Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/tree.h>
+#include <sys/workq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -76,6 +77,7 @@ int	wi_pcmcia_match(struct device *, void *, void *);
 void	wi_pcmcia_attach(struct device *, struct device *, void *);
 int	wi_pcmcia_detach(struct device *, int);
 int	wi_pcmcia_activate(struct device *, int);
+void	wi_pcmcia_resume(void *, void *);
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
@@ -83,6 +85,7 @@ struct wi_pcmcia_softc {
 	struct pcmcia_io_handle	sc_pcioh;
 	int			sc_io_window;
 	struct pcmcia_function	*sc_pf;
+	struct workq_task	sc_resume_wqt;
 };
 
 struct cfattach wi_pcmcia_ca = {
@@ -472,28 +475,57 @@ wi_pcmcia_activate(struct device *dev, int act)
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s;
 
-	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(psc->sc_pf);
 		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
 		    wi_intr, sc, sc->sc_dev.dv_xname);
-		wi_cor_reset(sc);
-		wi_init(sc);
+		workq_queue_task(NULL, &psc->sc_resume_wqt, 0,
+		    wi_pcmcia_resume, sc, NULL);
 		break;
-
-	case DVACT_DEACTIVATE:
+	case DVACT_SUSPEND:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			wi_stop(sc);
 		sc->wi_flags &= ~WI_FLAGS_INITIALIZED;
 		if (sc->sc_ih != NULL)
 			pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
+		pcmcia_function_disable(psc->sc_pf);
+		break;
+	case DVACT_RESUME:
+		pcmcia_function_enable(psc->sc_pf);
+		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
+		    wi_intr, sc, sc->sc_dev.dv_xname);
+		workq_queue_task(NULL, &psc->sc_resume_wqt, 0,
+		    wi_pcmcia_resume, sc, NULL);
+		break;
+	case DVACT_DEACTIVATE:
+		if (sc->sc_ih != NULL)
+			pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
 		pcmcia_function_disable(psc->sc_pf);
 		break;
 	}
-	splx(s);
 	return (0);
+}
+
+void
+wi_pcmcia_resume(void *arg1, void *arg2)
+{
+	struct wi_softc *sc = (struct wi_softc *)arg1;
+	int s;
+
+	s = splnet();
+	while (sc->wi_flags & WI_FLAGS_BUSY)
+		tsleep(&sc->wi_flags, 0, "wipwr", 0);
+	sc->wi_flags |= WI_FLAGS_BUSY;
+
+	wi_cor_reset(sc);
+	wi_init(sc);
+
+	sc->wi_flags &= ~WI_FLAGS_BUSY;
+	wakeup(&sc->wi_flags);
+	splx(s);
 }

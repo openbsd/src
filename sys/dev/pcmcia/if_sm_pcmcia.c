@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.29 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.30 2010/08/30 20:33:18 deraadt Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -252,9 +252,7 @@ sm_pcmcia_activate(dev, act)
 {
 	struct sm_pcmcia_softc *sc = (struct sm_pcmcia_softc *)dev;
 	struct ifnet *ifp = &sc->sc_smc.sc_arpcom.ac_if;
-	int s;
 
-	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
@@ -262,16 +260,16 @@ sm_pcmcia_activate(dev, act)
 		    smc91cxx_intr, sc, sc->sc_smc.sc_dev.dv_xname);
 		smc91cxx_init(&sc->sc_smc);
 		break;
-
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			smc91cxx_stop(&sc->sc_smc);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
 		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
-	splx(s);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.50 2010/06/26 23:24:45 guenther Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.51 2010/08/30 20:33:18 deraadt Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -210,22 +210,32 @@ com_pcmcia_activate(dev, act)
 	int act;
 {
 	struct com_pcmcia_softc *sc = (void *) dev;
-	int s;
 
-	s = spltty();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_TTY,
 		    comintr, sc, sc->sc_com.sc_dev.dv_xname);
 		break;
-
+	case DVACT_SUSPEND:
+		if (sc->sc_ih)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
+		pcmcia_function_disable(sc->sc_pf);
+		break;
+	case DVACT_RESUME:
+		pcmcia_function_enable(sc->sc_pf);
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_TTY,
+		    comintr, sc, sc->sc_com.sc_dev.dv_xname);
+		com_resume(&sc->sc_com);
+		break;
 	case DVACT_DEACTIVATE:
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
 		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
-	splx(s);
 	return (0);
 }
 

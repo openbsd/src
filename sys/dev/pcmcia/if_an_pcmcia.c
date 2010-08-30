@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.20 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.21 2010/08/30 20:33:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -130,7 +130,6 @@ an_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
-	sc->sc_enabled = 1;
 
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc,
 	    sc->sc_dev.dv_xname);
@@ -146,7 +145,6 @@ an_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_enabled = 0;
 	psc->sc_state = AN_PCMCIA_ATTACHED;
 }
 
@@ -176,9 +174,7 @@ an_pcmcia_activate(struct device *dev, int act)
 	struct an_softc *sc = &psc->sc_an;
 	struct ieee80211com	*ic = &sc->sc_ic;
 	struct ifnet		*ifp = &ic->ic_if;
-	int s;
 
-	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(psc->sc_pf);
@@ -186,16 +182,15 @@ an_pcmcia_activate(struct device *dev, int act)
 		    an_intr, sc, sc->sc_dev.dv_xname);
 		an_init(ifp);
 		break;
-
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			an_stop(ifp, 1);
-		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih)
+			pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		sc->sc_ih = NULL;
 		pcmcia_function_disable(psc->sc_pf);
 		break;
 	}
-
-	splx(s);
 	return (0);
 }

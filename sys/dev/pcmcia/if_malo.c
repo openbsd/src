@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.70 2010/08/27 17:08:00 jsg Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.71 2010/08/30 20:33:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/malloc.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
+#include <sys/workq.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -71,6 +72,7 @@ int	malo_pcmcia_match(struct device *, void *, void *);
 void	malo_pcmcia_attach(struct device *, struct device *, void *);
 int	malo_pcmcia_detach(struct device *, int);
 int	malo_pcmcia_activate(struct device *, int);
+void	malo_pcmcia_resume(void *, void *);
 
 void	cmalo_attach(void *);
 int	cmalo_ioctl(struct ifnet *, u_long, caddr_t);
@@ -236,28 +238,62 @@ malo_pcmcia_activate(struct device *dev, int act)
 	struct malo_softc *sc = &psc->sc_malo;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	int s;
 
-	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(psc->sc_pf);
 		psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
 		    cmalo_intr, sc, sc->sc_dev.dv_xname);
-		cmalo_init(ifp);
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    malo_pcmcia_resume, sc, NULL);
+		break;
+	case DVACT_SUSPEND:
+		if ((sc->sc_flags & MALO_DEVICE_ATTACHED) &&
+		    (ifp->if_flags & IFF_RUNNING))
+			cmalo_stop(sc);
+		if (psc->sc_ih)
+			pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		psc->sc_ih = NULL;
+		pcmcia_function_disable(psc->sc_pf);
+		break;
+	case DVACT_RESUME:
+		pcmcia_function_enable(psc->sc_pf);
+		psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
+		    cmalo_intr, sc, sc->sc_dev.dv_xname);
+		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+		    malo_pcmcia_resume, sc, NULL);
 		break;
 	case DVACT_DEACTIVATE:
-		ifp->if_timer = 0;
-		if (ifp->if_flags & IFF_RUNNING)
-			cmalo_stop(sc);
-		if (psc->sc_ih != NULL)
+		if ((sc->sc_flags & MALO_DEVICE_ATTACHED) &&
+		    (ifp->if_flags & IFF_RUNNING))
+			cmalo_stop(sc);		/* XXX tries to touch regs */
+		if (psc->sc_ih)
 			pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		psc->sc_ih = NULL;
 		pcmcia_function_disable(psc->sc_pf);
 		break;
 	}
-	splx(s);
-
 	return (0);
+}
+
+void
+malo_pcmcia_resume(void *arg1, void *arg2)
+{
+	struct malo_softc *sc = arg1;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	int s;
+	
+	s = splnet();
+	while (sc->sc_flags & MALO_BUSY)
+		tsleep(&sc->sc_flags, 0, "malopwr", 0);
+	sc->sc_flags |= MALO_BUSY;
+
+	cmalo_init(ifp);
+
+	sc->sc_flags &= ~MALO_BUSY;
+	wakeup(&sc->sc_flags);
+	splx(s);
 }
 
 /*
@@ -350,6 +386,17 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int i, j, s, error = 0;
 
 	s = splnet();
+	/*
+	 * Prevent processes from entering this function while another
+	 * process is tsleep'ing in it.
+	 */
+	while ((sc->sc_flags & MALO_BUSY) && error == 0)
+		error = tsleep(&sc->sc_flags, PCATCH, "maloioc", 0);
+	if (error != 0) {
+		splx(s);
+		return error;
+	}
+	sc->sc_flags |= MALO_BUSY;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -430,6 +477,8 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 
+	sc->sc_flags &= ~MALO_BUSY;
+	wakeup(&sc->sc_flags);
 	splx(s);
 
 	return (error);
@@ -587,7 +636,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		for (i = 0; i < bsize / 2; i++)
 			MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
-                MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE,
+		MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE,
 		    MALO_VAL_CMD_DL_OVER);
 
 		/* poll for an acknowledgement */
@@ -648,8 +697,8 @@ cmalo_init(struct ifnet *ifp)
 	sc->sc_flags &= ~MALO_ASSOC_FAILED;
 
 	/* get current channel */
-        ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-        sc->sc_curchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+	sc->sc_curchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	DPRINTF(1, "%s: current channel is %d\n",
 	    sc->sc_dev.dv_xname, sc->sc_curchan);
 
@@ -704,7 +753,7 @@ void
 cmalo_stop(struct malo_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-        struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &ic->ic_if;
 
 	/* device down */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -715,6 +764,7 @@ cmalo_stop(struct malo_softc *sc)
 	/* reset device */
 	cmalo_cmd_set_reset(sc);
 	sc->sc_flags &= ~MALO_FW_LOADED;
+	ifp->if_timer = 0;
 
 	DPRINTF(1, "%s: device down\n", sc->sc_dev.dv_xname);
 }
