@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.18 2009/08/23 19:54:06 jasper Exp $
+#	$OpenBSD: airport,v 1.19 2010/08/30 00:42:48 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -1960,6 +1960,7 @@ YYU:Kapuskasing, Ontario, Canada
 YYY:Mont-Joli, Quebec, Canada
 YYZ:Lester B. Pearson Toronto International, Ontario, Canada
 YZF:Yellowknife, Northwest Territories, Canada
+YZP:Sandspit, British Columbia, Canada
 YZR:Sarnia, Ontario, Canada
 YZT:Port Hardy, British Columbia, Canada
 YZV:Sept-Iles, Quebec, Canada
