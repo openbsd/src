@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.22 2010/08/27 05:04:11 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.23 2010/08/30 21:35:57 deraadt Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -62,8 +62,9 @@
 
 #include <dev/rasops/rasops.h>
 
-void	lcd_attach(struct device *, struct device *, void *);
 int	lcd_match(struct device *, void *, void *);
+void	lcd_attach(struct device *, struct device *, void *);
+int	lcd_activate(struct device *, int);
 int	lcd_cnattach(void (*)(u_int, int));
 
 /*
@@ -107,7 +108,8 @@ const struct wsdisplay_accessops lcd_accessops = {
 };
 
 struct cfattach lcd_pxaip_ca = {
-	sizeof (struct pxa2x0_lcd_softc), lcd_match, lcd_attach
+	sizeof (struct pxa2x0_lcd_softc), lcd_match, lcd_attach, NULL,
+	lcd_activate
 };
 
 struct cfdriver lcd_cd = {
@@ -161,7 +163,7 @@ void	lcd_set_brightness_internal(int);
 int	lcd_get_backlight(void);
 void	lcd_set_backlight(int);
 void	lcd_blank(int);
-void	lcd_power(int, void *);
+void	lcd_powerhook(int, void *);
 
 int
 lcd_match(struct device *parent, void *cf, void *aux)
@@ -192,7 +194,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
 
-	(void)powerhook_establish(lcd_power, sc);
+	(void)powerhook_establish(lcd_powerhook, sc);
 }
 
 int
@@ -396,19 +398,27 @@ lcd_blank(int blank)
 	}
 }
 
-void
-lcd_power(int why, void *v)
+int
+lcd_activate(struct device *self, int act)
 {
+	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
 
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 		lcd_set_brightness(0);
-		pxa2x0_lcd_power(why, v);
+		pxa2x0_lcd_suspend(sc);
 		break;
-
-	case PWR_RESUME:
-		pxa2x0_lcd_power(why, v);
+	case DVACT_RESUME:
+		pxa2x0_lcd_resume(sc);
 		lcd_set_brightness(lcd_get_brightness());
 		break;
 	}
+	return 0;
 }
+
+void
+lcd_powerhook(int why, void *v)
+{
+	lcd_activate(v, why);
+}
+

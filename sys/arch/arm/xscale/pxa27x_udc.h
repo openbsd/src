@@ -65,3 +65,4 @@ struct pxaudc_softc {
 int		 pxaudc_match(void);
 void		 pxaudc_attach(struct pxaudc_softc *, void *);
 int		 pxaudc_detach(struct pxaudc_softc *, int);
+int		 pxaudc_activate(struct pxaudc_softc *, int);

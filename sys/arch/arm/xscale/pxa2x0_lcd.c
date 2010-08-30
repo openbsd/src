@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.23 2010/08/27 05:04:06 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.24 2010/08/30 21:35:55 deraadt Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -841,21 +841,5 @@ pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *sc)
 		pxa2x0_lcd_initialize(sc->iot, sc->ioh, sc->geometry,
 		    pxa2x0_clkman_config);
 		pxa2x0_lcd_start_dma(sc->iot, sc->ioh, sc->active);
-	}
-}
-
-void
-pxa2x0_lcd_power(int why, void *v)
-{
-	struct pxa2x0_lcd_softc *sc = v;
-
-	switch (why) {
-	case PWR_SUSPEND:
-		pxa2x0_lcd_suspend(sc);
-		break;
-
-	case PWR_RESUME:
-		pxa2x0_lcd_resume(sc);
-		break;
 	}
 }

@@ -37,6 +37,7 @@
 int	zaurus_udc_match(struct device *, void *, void *);
 void	zaurus_udc_attach(struct device *, struct device *, void *);
 int	zaurus_udc_detach(struct device *, int);
+int	zaurus_udc_activate(struct device *, int);
 int	zaurus_udc_is_host(void);
 
 struct cfattach pxaudc_zaurus_ca = {
@@ -44,6 +45,7 @@ struct cfattach pxaudc_zaurus_ca = {
 	zaurus_udc_match,
 	zaurus_udc_attach,
 	zaurus_udc_detach,
+	zaurus_udc_activate
 };
 
 int
@@ -94,4 +96,12 @@ zaurus_udc_detach(struct device *self, int flags)
 	struct pxaudc_softc *sc = (struct pxaudc_softc *)self;
 
 	return pxaudc_detach(sc, flags);
+}
+
+int
+zaurus_udc_activate(struct device *self, int act)
+{
+	struct pxaudc_softc *sc = (struct pxaudc_softc *)self;
+
+	return pxaudc_activate(sc, act);
 }

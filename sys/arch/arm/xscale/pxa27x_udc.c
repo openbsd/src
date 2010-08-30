@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.25 2010/08/27 05:04:06 deraadt Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.26 2010/08/30 21:35:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -52,7 +52,7 @@ struct pxaudc_pipe {
 //	LIST_ENTRY(pxaudc_pipe)	 list;
 };
 
-void		 pxaudc_power(int, void *);
+void		 pxaudc_powerhook(int, void *);
 
 void		 pxaudc_enable(struct pxaudc_softc *);
 void		 pxaudc_disable(struct pxaudc_softc *);
@@ -200,7 +200,7 @@ pxaudc_attach(struct pxaudc_softc *sc, void *aux)
 		return;
 	}
 
-	sc->sc_powerhook = powerhook_establish(pxaudc_power, sc);
+	sc->sc_powerhook = powerhook_establish(pxaudc_powerhook, sc);
 
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &pxaudc_bus_methods;
@@ -245,20 +245,26 @@ pxaudc_detach(struct pxaudc_softc *sc, int flags)
 	return (0);
 }
 
-void
-pxaudc_power(int why, void *arg)
+int
+pxaudc_activate(struct pxaudc_softc *self, int act)
 {
-	struct pxaudc_softc		*sc = (struct pxaudc_softc *)arg;
+	struct pxaudc_softc *sc = (struct pxaudc_softc *)self;
 
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 		pxaudc_disable(sc);
 		break;
-
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		pxaudc_enable(sc);
 		break;
 	}
+	return 0;
+}
+
+void
+pxaudc_powerhook(int why, void *arg)
+{
+	pxaudc_activate(arg, why);
 }
 
 /*

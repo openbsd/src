@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.12 2010/08/27 05:04:11 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.13 2010/08/30 21:35:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -56,7 +56,8 @@
 int	zaudio_match(struct device *, void *, void *);
 void	zaudio_attach(struct device *, struct device *, void *);
 int	zaudio_detach(struct device *, int);
-void	zaudio_power(int, void *);
+int	zaudio_activate(struct device *, int);
+void	zaudio_powerhook(int, void *);
 
 #define ZAUDIO_OP_SPKR	0
 #define ZAUDIO_OP_HP	1
@@ -97,7 +98,7 @@ struct zaudio_softc {
 
 struct cfattach zaudio_ca = {
 	sizeof(struct zaudio_softc), zaudio_match, zaudio_attach,
-	zaudio_detach
+	zaudio_detach, zaudio_activate
 };
 
 struct cfdriver zaudio_cd = {
@@ -199,7 +200,7 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 	struct pxaip_attach_args	*pxa = aux;
 	int err;
 
-	sc->sc_powerhook = powerhook_establish(zaudio_power, sc);
+	sc->sc_powerhook = powerhook_establish(zaudio_powerhook, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf(": unable to establish powerhook\n");
 		return;
@@ -276,23 +277,29 @@ zaudio_detach(struct device *self, int flags)
 	return (0);
 }
 
-void
-zaudio_power(int why, void *arg)
+int
+zaudio_activate(struct device *self, int act)
 {
-	struct zaudio_softc *sc = arg;
+	struct zaudio_softc *sc = (struct zaudio_softc *)self;
 
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 		timeout_del(&sc->sc_to);
 		zaudio_standby(sc);
 		break;
-
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		pxa2x0_i2s_init(&sc->sc_i2s);
 		pxa2x0_i2c_init(&sc->sc_i2c);
 		zaudio_init(sc);
 		break;
 	}
+	return 0;
+}
+
+void
+zaudio_powerhook(int why, void *arg)
+{
+	zaudio_activate(arg, why);
 }
 
 void

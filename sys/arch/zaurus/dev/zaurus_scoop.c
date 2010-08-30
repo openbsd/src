@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.19 2010/08/27 05:04:11 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.20 2010/08/30 21:35:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -46,9 +46,11 @@ struct scoop_softc {
 
 int	scoopmatch(struct device *, void *, void *);
 void	scoopattach(struct device *, struct device *, void *);
+int	scoop_activate(struct device *, int);
 
 struct cfattach scoop_ca = {
-	sizeof (struct scoop_softc), scoopmatch, scoopattach
+	sizeof (struct scoop_softc), scoopmatch, scoopattach, NULL,
+	scoop_activate
 };
 
 struct cfdriver scoop_cd = {
@@ -67,7 +69,7 @@ void	scoop0_set_card_power(enum card, int);
 
 struct timeout	scoop_checkdisk;
 void	scoop_timeout(void *);
-void	scoop_power(int, void *);
+void	scoop_powerhook(int, void *);
 
 int
 scoopmatch(struct device *parent, void *match, void *aux)
@@ -120,7 +122,7 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 
 	printf(": PCMCIA/GPIO controller\n");
 
-	sc->sc_powerhook = powerhook_establish(scoop_power, sc);
+	sc->sc_powerhook = powerhook_establish(scoop_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		panic("Unable to establish %s powerhook",
 		    sc->sc_dev.dv_xname);
@@ -448,13 +450,13 @@ scoop_timeout(void *v)
 	timeout_add(&scoop_checkdisk, hz/25);
 }
 
-void
-scoop_power(int why, void *arg)
+int
+scoop_activate(struct device *self, int act)
 {
-	struct scoop_softc *sc = arg;
+	struct scoop_softc *sc = (struct scoop_softc *)self;
 
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 		/*
 		 * Nothing should use the scoop from this point on.
 		 * No timeouts, no interrupts (even though interrupts
@@ -466,11 +468,18 @@ scoop_power(int why, void *arg)
 			scoop_suspend();
 		}
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		if (sc->sc_dev.dv_unit == 0) {
 			scoop_resume();
 			sc->sc_suspended = 0;
 		}
 		break;
 	}
+	return 0;
+}
+
+void
+scoop_powerhook(int why, void *arg)
+{
+	scoop_activate(arg, why);
 }

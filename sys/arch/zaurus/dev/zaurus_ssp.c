@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
+/*	$OpenBSD: zaurus_ssp.c,v 1.7 2010/08/30 21:35:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -45,6 +45,7 @@ struct zssp_softc {
 int	zssp_match(struct device *, void *, void *);
 void	zssp_attach(struct device *, struct device *, void *);
 void	zssp_init(void);
+int	zssp_activate(struct device *, int);
 void	zssp_powerhook(int, void *);
 
 int	zssp_read_max1111(u_int32_t);
@@ -52,7 +53,8 @@ u_int32_t zssp_read_ads7846(u_int32_t);
 void	zssp_write_lz9jg18(u_int32_t);
 
 struct cfattach zssp_ca = {
-	sizeof (struct zssp_softc), zssp_match, zssp_attach
+	sizeof (struct zssp_softc), zssp_match, zssp_attach, NULL,
+	zssp_activate
 };
 
 struct cfdriver zssp_cd = {
@@ -108,16 +110,23 @@ zssp_init(void)
 	pxa2x0_gpio_set_function(GPIO_TG_CS_C3000, GPIO_OUT|GPIO_SET);
 }
 
+int
+zssp_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		zssp_init();
+		break;
+	}
+	return 0;
+}
+
 void
 zssp_powerhook(int why, void *arg)
 {
-	int s;
-
-	if (why == PWR_RESUME) {
-		s = splhigh();
-		zssp_init();
-		splx(s);
-	}
+	zssp_activate(arg, why);
 }
 
 /*

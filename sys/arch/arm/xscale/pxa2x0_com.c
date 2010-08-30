@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.10 2010/08/27 05:04:06 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.11 2010/08/30 21:35:55 deraadt Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -63,10 +63,12 @@
 
 int	pxauart_match(struct device *, void *, void *);
 void	pxauart_attach(struct device *, struct device *, void *);
-void	pxauart_power(int why, void *);
+int	pxauart_activate(struct device *, int);
+void	pxauart_powerhook(int why, void *);
 
 struct cfattach com_pxaip_ca = {
-        sizeof (struct com_softc), pxauart_match, pxauart_attach
+        sizeof (struct com_softc), pxauart_match, pxauart_attach, NULL,
+	pxauart_activate
 };
 
 int
@@ -144,25 +146,25 @@ pxauart_attach(struct device *parent, struct device *self, void *aux)
 	(void)pxa2x0_intr_establish(pxa->pxa_intr, IPL_TTY, comintr,
 	    sc, sc->sc_dev.dv_xname);
 
-	(void)powerhook_establish(&pxauart_power, sc);
+	(void)powerhook_establish(pxauart_powerhook, sc);
 }
 
-void
-pxauart_power(int why, void *arg)
+int
+pxauart_activate(struct device *self, int act)
 {
-	struct com_softc *sc = arg;
+	struct com_softc *sc = (struct com_softc *)self;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp = sc->sc_tty;
 
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
 #ifdef __zaurus__
 		if (sc->enabled && ISSET(sc->sc_hwflags, COM_HW_SIR))
 			scoop_set_irled(0);
 #endif
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		if (sc->enabled) {
 			sc->sc_initialize = 1;
 			comparam(tp, &tp->t_termios);
@@ -178,4 +180,11 @@ pxauart_power(int why, void *arg)
 		}
 		break;
 	}
+	return 0;
+}
+
+void
+pxauart_powerhook(int why, void *arg)
+{
+	pxauart_activate(arg, why);
 }
