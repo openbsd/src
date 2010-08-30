@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.105 2010/08/18 14:04:16 jasper Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.106 2010/08/30 16:53:28 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -792,6 +792,8 @@ disk_construct(struct disk *diskp, char *lockname)
 void
 disk_attach(struct disk *diskp)
 {
+	struct device *dv;
+	dev_t *dev;
 
 	if (!ISSET(diskp->dk_flags, DKF_CONSTRUCTED))
 		disk_construct(diskp, diskp->dk_name);
@@ -817,6 +819,14 @@ disk_attach(struct disk *diskp)
 	TAILQ_INSERT_TAIL(&disklist, diskp, dk_link);
 	++disk_count;
 	disk_change = 1;
+
+	/*
+	 * Lookup and store device number for later use.
+	 */
+	dev = &diskp->dk_devno;
+	dv = parsedisk(diskp->dk_name, strlen(diskp->dk_name), RAW_PART, dev);
+	if (dv == NULL)
+		diskp->dk_devno = NODEV;
 
 	if (softraid_disk_attach)
 		softraid_disk_attach(diskp, 1);
