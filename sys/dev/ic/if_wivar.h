@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.29 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.30 2010/08/30 20:42:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -139,6 +139,7 @@ struct wi_softc	{
 #define WI_FLAGS_BUS_USB		0x0400
 #define WI_FLAGS_HAS_ENH_SECURITY	0x0800
 #define WI_FLAGS_TXPOWER		0x1000
+#define WI_FLAGS_BUSY			0x2000
 
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname

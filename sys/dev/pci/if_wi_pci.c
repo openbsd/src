@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.46 2010/08/27 18:29:44 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.47 2010/08/30 20:42:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -187,7 +187,18 @@ wi_pci_resume(void *arg1, void *arg2)
 {
 	struct wi_softc *sc = (struct wi_softc *)arg1;
 
+	int s;
+
+	s = splnet();
+	while (sc->wi_flags & WI_FLAGS_BUSY)
+		tsleep(&sc->wi_flags, 0, "wipwr", 0);
+	sc->wi_flags |= WI_FLAGS_BUSY;
+
 	wi_init(sc);
+
+	sc->wi_flags &= ~WI_FLAGS_BUSY;
+	wakeup(&sc->wi_flags);
+	splx(s);
 }
 
 void

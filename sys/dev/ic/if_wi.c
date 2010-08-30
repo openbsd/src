@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.148 2010/07/02 02:40:15 blambert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.149 2010/08/30 20:42:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1544,28 +1544,36 @@ STATIC int
 wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	int			s, error = 0, i, j, len;
-	struct wi_softc		*sc;
-	struct ifreq		*ifr;
+	struct wi_softc		*sc = ifp->if_softc;
+	struct ifreq		*ifr = (struct ifreq *)data;
 	struct proc		*p = curproc;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct wi_scan_res	*res;
 	struct wi_scan_p2_hdr	*p2;
 	struct wi_req		*wreq = NULL;
 	u_int32_t		flags;
-
 	struct ieee80211_nwid		*nwidp = NULL;
 	struct ieee80211_nodereq_all	*na;
 	struct ieee80211_bssid		*bssid;
 
 	s = splnet();
-
-	sc = ifp->if_softc;
-	ifr = (struct ifreq *)data;
-
 	if (!(sc->wi_flags & WI_FLAGS_ATTACHED)) {
-		splx(s);
-		return(ENODEV);
+		error = ENODEV;
+		goto fail;
 	}
+
+	/*
+	 * Prevent processes from entering this function while another
+	 * process is tsleep'ing in it.
+	 */
+	while ((sc->wi_flags & WI_FLAGS_BUSY) && error == 0)
+		error = tsleep(&sc->wi_flags, PCATCH, "wiioc", 0);
+	if (error != 0) {
+		splx(s);
+		return error;
+	}
+	sc->wi_flags |= WI_FLAGS_BUSY;
+
 
 	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p\n",
 	    command, data));
@@ -2032,6 +2040,9 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	if (nwidp)
 		free(nwidp, M_DEVBUF);
 
+fail:
+	sc->wi_flags &= ~WI_FLAGS_BUSY;
+	wakeup(&sc->wi_flags);
 	splx(s);
 	return(error);
 }
