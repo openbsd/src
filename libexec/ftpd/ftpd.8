@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.65 2007/05/31 19:19:39 jmc Exp $
+.\"	$OpenBSD: ftpd.8,v 1.66 2010/08/30 07:06:54 lum Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 30 2010 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -444,6 +444,8 @@ for a real user (should always be anonymous).
 Either a system login name or the value given for
 .Dq email address
 if an anonymous user.
+.It service name
+The network service name (always ftp).
 .It unused
 Unused field containing a
 .Sq 0 ,
