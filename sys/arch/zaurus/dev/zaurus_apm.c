@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.17 2010/08/29 02:02:26 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.18 2010/08/30 21:37:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -641,6 +641,7 @@ void
 zapm_poweroff(void)
 {
 	struct pxa2x0_apm_softc *sc;
+	int s;
 
 	KASSERT(apm_cd.cd_ndevs > 0 && apm_cd.cd_devs[0] != NULL);
 	sc = apm_cd.cd_devs[0];
@@ -649,7 +650,8 @@ zapm_poweroff(void)
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 
-	dopowerhooks(PWR_SUSPEND);
+	s = splhigh();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
 	/* XXX enable charging during suspend */
 
@@ -665,14 +667,15 @@ zapm_poweroff(void)
 
 	do {
 		pxa2x0_apm_sleep(sc);
-	}
-	while (!zapm_resume(sc));
+	} while (!zapm_resume(sc));
 
 	zapm_restart();
 
 	/* NOTREACHED */
-	dopowerhooks(PWR_RESUME);
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
+	splx(s);
 
+	bufq_restart();
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */

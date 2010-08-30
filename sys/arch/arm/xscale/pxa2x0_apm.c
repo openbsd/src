@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.33 2010/08/29 02:02:25 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.34 2010/08/30 21:37:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -306,13 +306,13 @@ apm_power_info(struct pxa2x0_apm_softc *sc,
 void
 apm_suspend(struct pxa2x0_apm_softc *sc)
 {
+	int s;
+
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 
 	resettodr();
-
-	dopowerhooks(PWR_SUSPEND);
 
 	if (cold)
 		vfs_syncwait(0);
@@ -322,14 +322,21 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 	else
 		sc->sc_suspend(sc);
 
+	s = splhigh();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+	splx(s);
+
 	pxa2x0_apm_sleep(sc);
 }
 
 void
 apm_resume(struct pxa2x0_apm_softc *sc)
 {
+	int s;
 
-	dopowerhooks(PWR_RESUME);
+	s = splhigh();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
+	splx(s);
 
 	inittodr(0);
 
