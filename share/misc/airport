@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.20 2010/08/30 12:12:59 jasper Exp $
+#	$OpenBSD: airport,v 1.21 2010/08/30 21:49:29 jasper Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -23,113 +23,112 @@ ABS:Abu Simbel, Egypt
 ABX:Albury, New South Wales, Australia
 ABY:Southwest Georgia Regional, Albany, GA, USA
 ABZ:Aberdeen, Aberdeen, Scotland, United Kingdom
-ACA:Alvarez International, Acapulco, Guerrero, Mexico
-ACC:Kotoka, Accra, Ghana
+ACA:General Juan N. Alvarez International, Acapulco, Guerrero, Mexico
+ACC:Kotoka International, Accra, Ghana
 ACE:Lanzarote, Lanzarote, Canary Islands, Spain
 ACI:The Blaye, Alderney, Channel Islands, United Kingdom
-ACK:Nantucket, MA, USA
+ACK:Nantucket Memorial, MA, USA
 ACT:Madison Cooper, Waco, TX, USA
 ACV:Arcata/Eureka, California, USA
-ACY:Atlantic City International, Atlantic City /Atlantic Cty, NJ, USA
+ACY:Atlantic City International, Atlantic City, NJ, USA
 ADA:Adana, Turkey
 ADB:Adnam Menderes, Izmir, Turkey
 ADD:Bole, Addis Ababa, Ethiopia
-ADJ:Civil, Amman, Jordan
+ADJ:Marka, Amman, Jordan
 ADL:Adelaide, Adelaide, South Australia, Australia
 ADQ:Kodiak, AK, USA
-ADZ:San Andres Island, Colombia
-AEP:Jorge Newberry, Buenos Aires, Buenos Aires, Argentina
+ADZ:Gustavo Rojas Pinilla International, San Andres Island, Colombia
+AEP:Jorge Newberry, Buenos Aires, Argentina
 AES:Vigra, Aalesund, Norway
 AET:Allakaket, AK, USA
 AEX:Alexandria International, LA, USA
 AEY:Akureyri, Iceland
-AGA:Inezgane, Agadir, Morocco
-AGB:Muehlhausen, Augsburg, Germany
-AGC:Pittsburgh/Allegheny County, Pennsylvania, USA
+AGA:Agadir/Al Massira, Agadir, Morocco
+AGB:Augsburg, Germany
+AGC:Allegheny County, Pennsylvania, USA
 AGF:La Garenne, Agen, France
 AGH:Angelholm/Helsingborg, Scania, Sweden
-AGP:Malaga, Spain
+AGP:Pablo Ruiz Picasso, Malaga, Spain
 AGR:Kheria, Agra, India
-AGS:Bush Field, Augusta, GA, USA
+AGS:Augusta Regional/Bush Field, Augusta, GA, USA
 AGU:Aguascalientes, Aguascalientes, Mexico
-AHN:Athens, GA, USA
+AHN:Athens-Ben Epps, Athens, GA, USA
 AHO:Fertilia, Alghero, Sardinia, Italy
 AIA:Alliance, NE, USA
 AIN:Wainwright, AK, USA
-AIY:Atlantic City International, New Jersey, USA
 AJA:Campo Dell Oro, Ajaccio, Corsica, France
-AJN:Anjouan, Comoros
+AJN:Ouani, Anjouan, Comoros
 AJR:Arvidsjaur, Sweden
-AJU:Aracaju, Sergipe, Brazil
+AJU:Santa Maria, Aracaju, Sergipe, Brazil
 AKJ:Asahikawa, Asahikawa, Japan
 AKL:Auckland, New Zealand
-ALA:Almaty, Kazakhstan
-ALB:Albany, New York, USA
-ALC:Alicante, Spain
-ALE:Alpine Texas, Alpine, TX, USA
+ALA:Almaty International, Kazakhstan
+ALB:Albany International, New York, USA
+ALC:El Altet, Alicante, Spain
+ALE:Alpine/Casparis, Alpine, TX, USA
 ALF:Elvebakken, Alta, Norway
 ALG:Houari Boumedienne, Algiers, Algeria
-ALM:Alamogordo, NM, USA
-ALO:Waterloo Municipal, IA, USA
+ALM:Alamogordo/White Sands, NM, USA
+ALO:Waterloo Regional, IA, USA
 ALP:Nejrab, Aleppo, Syria
-ALS:Bergman Field, Alamosa, CO, USA
-ALW:Walla Walla, WA, USA
-ALY:Alexandria, Alexandria, Egypt
-AMA:Amarillo International, TX, USA
-AMD:Ahmedabad, India
+ALS:San Luis Valley Regional/Bergman Field, Alamosa, CO, USA
+ALW:Walla Walla Regional, WA, USA
+ALY:Alexandria International, Alexandria, Egypt
+AMA:Rick Husband Amarillo International, TX, USA
+AMD:Sardar Vallabhbhai Patel International, Ahmedabad, India
 AMI:Selaparang, Mataram, Indonesia
 AMM:Queen Alia International, Amman, Jordan
 AMQ:Pattimura, Ambon, Indonesia
 AMS:Schiphol, Amsterdam, Netherlands
-ANB:Municipal, Anniston, AL, USA
-ANC:Anchorage International, Alaska, USA
-ANF:Cerro Moreno, Antofagasta, Chile
+ANB:Anniston Metropolitan, Anniston, AL, USA
+ANC:Ted Stevens Anchorage International, Alaska, USA
+ANF:Cerro Moreno International, Antofagasta, Chile
 ANI:Aniak, AK, USA
-ANK:Ankara, Turkey
-ANR:Deurne, Antwerp, Belgium
-ANU:Vc Bird International, Saint Johns / Antigua, Antigua And Barbuda
+ANK:Etimesgut, Ankara, Turkey
+ANR:Antwerp International, Antwerp, Belgium
+ANU:V.C. Bird International, Saint Johns / Antigua, Antigua And Barbuda
 ANV:Anvik, AK, USA
 AOI:Falconara, Ancona, Italy
 AOJ:Aomori, Japan
 AOK:Karpathos, Karpathos, Greece
-AOO:Blair County, Altoona / Martinsburg, PA, USA
+AOO:Altoona/Blair County, Altoona, PA, USA
 AOR:Sultan Abdul Halim, Alor Setar, Malaysia
-APF:Naples, FL, USA
-APL:NampulaMozambique
+APF:Naples Municipal, FL, USA
+APL:Nampula, Mozambique
 APN:Alpena Regional, MI, USA
-APW:Faleolo, Apia, Samoa
-AQJ:Aqaba, Jordan
+APW:Faleolo International, Apia, Samoa
+AQJ:King Hussain International, Aqaba, Jordan
 AQP:Rodriguez Ballon, Arequipa, Peru
-ARH:Arkhangelsk, Arkhangelsk, Russia
-ARI:Chacalluta, Arica, Chile
+ARH:Talagi, Arkhangelsk, Russia
+ARI:Chacalluta International, Arica, Chile
 ARM:Armidale, Armidale, New South Wales, Australia
-ARN:Arlanda, Stockholm, Sweden
-ART:Watertown, Watertown, NY, USA
-ASD:Andros Town, Bahamas
-ASE:Pitkin County Sardy Field, Aspen, CO, USA
+ARN:Stockholm/Arlanda, Stockholm, Sweden
+ART:Watertown International, Watertown, NY, USA
+ASD:Andros Town International, Bahamas
+ASE:Pitkin County/Sardy Field, Aspen, CO, USA
 ASM:Asmara Intl/Yohannes Iv, Asmara, Eritrea
 ASP:Alice Springs, Alice Springs, Northern Territory, Australia
 ASU:Silvio Pettirossi, Asuncion, Paraguay
-ASW:Daraw, Aswan, Egypt
+ASW:Aswan International, Aswan, Egypt
 ATC:Arthurs Town, Bahamas
-ATH:Hellinikon, Athens, Greece
+ATH:Athens Eleftherios Venizelos Internationa, Athens, Greece
 ATL:Atlanta William B. Hartsfield International, Georgia, USA
-ATW:Outagamie County, Appleton, WI, USA
-ATY:Watertown, SD, USA
+ATW:Outagamie County Regional, Appleton, WI, USA
+ATY:Watertown Regional, SD, USA
 AUA:Reina Beatrix, Aruba, Aruba
-AUC:Arauca, Colombia
+AUC:Santiago Perez, Arauca, Colombia
 AUG:Maine State, Augusta, ME, USA
 AUH:Abu Dhabi International, Abu Dhabi, United Arab Emirates
 AUS:Austin-Bergstrom International, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
-AVN:Caumont, Avignon, France
+AVN:Avignon/Caumont, Avignon, France
 AVP:Wilkes-Barre/Scranton International Airport, Pennsylvania, USA
 AVV:Avalon Airport, Victoria, Australia
-AXA:Anguilla
-AXD:Alexandroupolis, Alexandroupolis, Greece
+AXA:Wallblake, The Valley, Anguilla
+AXD:Alexandroupolis International, Alexandroupolis, Greece
 AYQ:Connellan, Ayers Rock, Northern Territory, Australia
 AYT:Antalya, Antalya, Turkey
-AZO:Kalamazoo/Battle Creek Intl, Kalamazoo, MI, USA
+AZO:Kalamazoo/Battle Creek International, Kalamazoo, MI, USA
 BAH:Bahrain International Bahrain, Bahrain, Bahrain
 BAK:Baku, Baku, Azerbaijan
 BAL:Nearest Air Service Through Diyarbakir, Batman, Turkey
