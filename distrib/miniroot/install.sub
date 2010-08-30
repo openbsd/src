@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.617 2010/08/08 21:06:06 krw Exp $
+#	$OpenBSD: install.sub,v 1.618 2010/08/30 09:52:07 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1194,8 +1194,8 @@ ftp_time() {
 #	and FTPOPTS must be global.
 install_url() {
 	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _mirror
-	local _server_ip_var=_${_url_type}_server_ip \
-		_server_dir_var=_${_url_type}_server_dir
+	eval local _server_ip=\$_${_url_type}_server_ip \
+		_server_dir=\$_${_url_type}_server_dir
 
 	waitftplist
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
@@ -1208,7 +1208,7 @@ install_url() {
 		sed -n "s,^${_url_type}://"'\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*\),\1,p' \
 			$SERVERLISTALL > $SERVERLIST
 		set -- $(sed q $SERVERLIST)
-		eval $_server_ip_var=\${1%%/*}
+		_server_ip=${1%%/*}
 	else
 		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
 		_prompt="Server? (hostname or 'done')"
@@ -1216,8 +1216,7 @@ install_url() {
 
 	# Get server IP address or hostname
 	while :; do
-		eval resp=\$$_server_ip_var
-		ask_until "$_prompt" "$resp"
+		ask_until "$_prompt" "$_server_ip"
 		case $resp in
 		done)	return ;;
 		"?")	[[ -s $SERVERLIST ]] || continue
@@ -1229,23 +1228,24 @@ install_url() {
 			[[ -s $SERVERLIST ]] || continue
 			set -- $(sed -n "${resp}p" $SERVERLIST)
 			[[ $# -lt 1 ]] && { echo "There is no line $resp." ; continue ; }
-			eval $_server_ip_var=\${1%%/*}
+			_server_ip=${1%%/*}
 			# Repeat loop to get user to confirm server address.
 			;;
 		+([A-Za-z0-9\:.\[\]_-]))
-			eval $_server_ip_var=\$resp
+			_server_ip=$resp
 			break
 			;;
 		*)	echo "'$resp' is not a valid hostname."
 			;;
 		esac
 	done
+	eval _${_url_type}_server_ip=$_server_ip
 
 	# Get directory info from *last* line starting with the server
 	# name. This means the last install from a mirror will not keep
 	# the specific directory info. But an install from a local
 	# server *will* remember the specific directory info.
-	set -- $(eval grep -s "^\$$_server_ip_var" $SERVERLIST | sed '$!d')
+	set -- $(sed "/^$_server_ip/x;\$!d;x" $SERVERLIST)
 	resp=${1#*/}
 	# If there is no directory specified, don't use the server name!
 	[[ $resp == "$1" ]] && resp=
@@ -1256,7 +1256,8 @@ install_url() {
 	fi
 
 	ask_until "Server directory?" "${resp:-pub/OpenBSD/$FTPSETDIR}"
-	eval $_server_dir_var=\$resp
+	_server_dir=$resp
+	eval _${_url_type}_server_dir=$_server_dir
 
 	if [[ $_url_type == ftp ]]; then
 		# Get login name, setting IFS to nothing so trailing or
@@ -1284,7 +1285,7 @@ install_url() {
 	if [[ $_url_type == ftp && $_ftp_server_login != anonymous ]]; then
 		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_passwd")@
 	fi
-	eval _url_base=\$_url_base\$$_server_ip_var/\$$_server_dir_var
+	_url_base=$_url_base$_server_ip/$_server_dir
 
 	# XXX Workaround for problems ftp'ing out from a v6 only host.
 	ifconfig lo0 127.0.0.1
@@ -1304,7 +1305,7 @@ install_url() {
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from
-	eval installedfrom=$_url_type://\$$_server_ip_var/\$$_server_dir_var
+	installedfrom=$_url_type://$_server_ip/$_server_dir
 
 	# Bake a package path if we installed from a mirror
 	if [[ -n $_mirror ]]; then
