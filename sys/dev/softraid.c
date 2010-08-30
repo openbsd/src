@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.210 2010/07/03 03:04:55 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.211 2010/08/30 17:32:40 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -170,8 +170,8 @@ struct scsi_adapter sr_switch = {
 };
 
 /* native metadata format */
-int			sr_meta_native_bootprobe(struct sr_softc *,
-			    struct device *, struct sr_metadata_list_head *);
+int			sr_meta_native_bootprobe(struct sr_softc *, dev_t,
+			    struct sr_metadata_list_head *);
 #define SR_META_NOTCLAIMED	(0)
 #define SR_META_CLAIMED		(1)
 int			sr_meta_native_probe(struct sr_softc *,
@@ -874,7 +874,7 @@ done:
 }
 
 int
-sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
+sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
     struct sr_metadata_list_head *mlh)
 {
 	struct vnode		*vn;
@@ -883,23 +883,19 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	struct sr_discipline	*fake_sd = NULL;
 	struct sr_metadata_list *mle;
 	char			devname[32];
-	dev_t			dev, devr;
-	int			error, i, majdev;
+	dev_t			chrdev, rawdev;
+	int			error, i;
 	int			rv = SR_META_NOTCLAIMED;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_native_bootprobe\n", DEVNAME(sc));
-
-	majdev = findblkmajor(dv);
-	if (majdev == -1)
-		goto done;
-	dev = MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
 
 	/*
 	 * Use character raw device to avoid SCSI complaints about missing
 	 * media on removable media devices.
 	 */
-	dev = MAKEDISKDEV(major(blktochr(dev)), dv->dv_unit, RAW_PART);
-	if (cdevvp(dev, &vn)) {
+	chrdev = blktochr(devno);
+	rawdev = MAKEDISKDEV(major(chrdev), DISKUNIT(devno), RAW_PART);
+	if (cdevvp(rawdev, &vn)) {
 		printf("%s:, sr_meta_native_bootprobe: can't allocate vnode\n",
 		    DEVNAME(sc));
 		goto done;
@@ -957,8 +953,8 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 			continue;
 
 		/* open partition */
-		devr = MAKEDISKDEV(majdev, dv->dv_unit, i);
-		if (bdevvp(devr, &vn)) {
+		rawdev = MAKEDISKDEV(major(devno), DISKUNIT(devno), i);
+		if (bdevvp(rawdev, &vn)) {
 			printf("%s:, sr_meta_native_bootprobe: can't allocate "
 			    "vnode for partition\n", DEVNAME(sc));
 			goto done;
@@ -972,7 +968,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 			continue;
 		}
 
-		if (sr_meta_native_read(fake_sd, devr, md, NULL)) {
+		if (sr_meta_native_read(fake_sd, rawdev, md, NULL)) {
 			printf("%s: native bootprobe could not read native "
 			    "metadata\n", DEVNAME(sc));
 			VOP_CLOSE(vn, FREAD, NOCRED, 0);
@@ -987,8 +983,8 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 			continue;
 		}
 
-		sr_meta_getdevname(sc, devr, devname, sizeof(devname));
-		if (sr_meta_validate(fake_sd, devr, md, NULL) == 0) {
+		sr_meta_getdevname(sc, rawdev, devname, sizeof(devname));
+		if (sr_meta_validate(fake_sd, rawdev, md, NULL) == 0) {
 			if (md->ssdi.ssd_vol_flags & BIOC_SCNOAUTOASSEMBLE) {
 				DNPRINTF(SR_D_META, "%s: don't save %s\n",
 				    DEVNAME(sc), devname);
@@ -998,7 +994,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 				    M_WAITOK | M_ZERO);
 				bcopy(md, &mle->sml_metadata,
 				    SR_META_SIZE * 512);
-				mle->sml_mm = devr;
+				mle->sml_mm = rawdev;
 				SLIST_INSERT_HEAD(mlh, mle, sml_link);
 				rv = SR_META_CLAIMED;
 			}
@@ -1021,7 +1017,9 @@ done:
 int
 sr_boot_assembly(struct sr_softc *sc)
 {
-	struct device		*dv;
+	struct disk		*dk;
+	struct sr_disk_head	sdklist;
+	struct sr_disk		*sdk;
 	struct bioc_createraid	bc;
 	struct sr_metadata_list_head mlh, kdh;
 	struct sr_metadata_list *mle, *mlenext, *mle1, *mle2;
@@ -1039,22 +1037,44 @@ sr_boot_assembly(struct sr_softc *sc)
 
 	DNPRINTF(SR_D_META, "%s: sr_boot_assembly\n", DEVNAME(sc));
 
+	SLIST_INIT(&sdklist);
 	SLIST_INIT(&mlh);
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-		if (dv->dv_class != DV_DISK)
+	dk = TAILQ_FIRST(&disklist);
+	while (dk != TAILQ_END()) {
+
+		/* See if this disk has been checked. */
+		SLIST_FOREACH(sdk, &sdklist, sdk_link)
+			if (sdk->sdk_devno == dk->dk_devno)
+				break;
+
+		if (sdk != NULL) {
+			dk = TAILQ_NEXT(dk, dk_link);
 			continue;
+		}
+
+		/* Add this disk to the list that we've checked. */
+		sdk = malloc(sizeof(struct sr_disk), M_DEVBUF,
+		    M_NOWAIT | M_CANFAIL | M_ZERO);
+		if (sdk == NULL)
+			goto unwind;
+		sdk->sdk_devno = dk->dk_devno;
+		SLIST_INSERT_HEAD(&sdklist, sdk, sdk_link);
 
 		/* Only check sd(4) and wd(4) devices. */
-		if (strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") &&
-		    strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd"))
+		if (strncmp(dk->dk_name, "sd", 2) &&
+		    strncmp(dk->dk_name, "wd", 2)) {
+			dk = TAILQ_NEXT(dk, dk_link);
 			continue;
+		}
 
 		/* native softraid uses partitions */
-		if (sr_meta_native_bootprobe(sc, dv, &mlh) == SR_META_CLAIMED)
-			continue;
+		sr_meta_native_bootprobe(sc, dk->dk_devno, &mlh);
 
-		/* probe non-native disks */
+		/* probe non-native disks if native failed. */
+
+		/* Restart scan since we may have slept. */
+		dk = TAILQ_FIRST(&disklist);
 	}
 
 	/*
@@ -1319,6 +1339,12 @@ unwind:
 		free(mle, M_DEVBUF);
 	}
 	SLIST_INIT(&mlh);
+
+	while (!SLIST_EMPTY(&sdklist)) {
+		sdk = SLIST_FIRST(&sdklist);
+		SLIST_REMOVE_HEAD(&sdklist, sdk_link);
+		free(sdk, M_DEVBUF);
+	}
 
 	if (devs)
 		free(devs, M_DEVBUF);

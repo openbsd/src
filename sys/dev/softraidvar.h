@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.94 2010/07/02 09:26:05 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.95 2010/08/30 17:32:40 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -52,6 +52,12 @@
 struct sr_uuid {
 	u_int8_t		sui_id[SR_UUID_MAX];
 } __packed;
+
+struct sr_disk {
+	dev_t			sdk_devno;
+	SLIST_ENTRY(sr_disk) 	sdk_link;
+};
+SLIST_HEAD(sr_disk_head, sr_disk);
 
 struct sr_metadata {
 	struct sr_meta_invariant {
