@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_voyager.c,v 1.1 2010/02/26 14:53:11 miod Exp $	*/
+/*	$OpenBSD: ohci_voyager.c,v 1.2 2010/08/30 21:30:17 deraadt Exp $	*/
 /*	OpenBSD: ohci_pci.c,v 1.33 2008/06/26 05:42:17 ray Exp 	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
@@ -176,7 +176,7 @@ ohci_voyager_attach_deferred(struct device *self)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
+	sc->sc.sc_powerhook = powerhook_establish(ohci_powerhook, &sc->sc);
 	if (sc->sc.sc_powerhook == NULL)
 		printf("%s: unable to establish powerhook\n",
 		    sc->sc.sc_bus.bdev.dv_xname);

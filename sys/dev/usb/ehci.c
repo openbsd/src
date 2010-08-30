@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.107 2010/08/27 04:09:20 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.108 2010/08/30 21:30:15 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ struct ehci_pipe {
 
 u_int8_t		ehci_reverse_bits(u_int8_t, int);
 
-void		ehci_power(int, void *);
+void		ehci_powerhook(int, void *);
 
 usbd_status	ehci_open(usbd_pipe_handle);
 void		ehci_poll(struct usbd_bus *);
@@ -419,7 +419,7 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
 
-	sc->sc_powerhook = powerhook_establish(ehci_power, sc);
+	sc->sc_powerhook = powerhook_establish(ehci_powerhook, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
 
@@ -1029,51 +1029,18 @@ int
 ehci_activate(struct device *self, int act)
 {
 	struct ehci_softc *sc = (struct ehci_softc *)self;
-	int rv = 0;
+	u_int32_t cmd, hcr;
+	int i, rv = 0;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
 		sc->sc_dying = 1;
 		break;
 	case DVACT_SUSPEND:
-		ehci_power(PWR_SUSPEND, sc);
-		break;
-	case DVACT_RESUME:
-		ehci_power(PWR_RESUME, sc);
-		rv = config_activate_children(self, act);
-		break;
-	}
-	return (rv);
-}
-
-/*
- * Handle suspend/resume.
- *
- * We need to switch to polling mode here, because this routine is
- * called from an interrupt context.  This is all right since we
- * are almost suspended anyway.
- */
-void
-ehci_power(int why, void *v)
-{
-	ehci_softc_t *sc = v;
-	u_int32_t cmd, hcr;
-	int s, i;
-
-#ifdef EHCI_DEBUG
-	DPRINTF(("ehci_power: sc=%p, why=%d\n", sc, why));
-	if (ehcidebug > 0)
-		ehci_dump_regs(sc);
-#endif
-
-	s = splhardusb();
-	switch (why) {
-	case PWR_SUSPEND:
 		sc->sc_bus.use_polling++;
 
 		for (i = 1; i <= sc->sc_noport; i++) {
@@ -1115,8 +1082,7 @@ ehci_power(int why, void *v)
 
 		sc->sc_bus.use_polling--;
 		break;
-
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		sc->sc_bus.use_polling++;
 
 		/* restore things in case the bios sucks */
@@ -1166,15 +1132,16 @@ ehci_power(int why, void *v)
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 
 		sc->sc_bus.use_polling--;
+		rv = config_activate_children(self, act);
 		break;
 	}
-	splx(s);
+	return (rv);
+}
 
-#ifdef EHCI_DEBUG
-	DPRINTF(("ehci_power: sc=%p\n", sc));
-	if (ehcidebug > 0)
-		ehci_dump_regs(sc);
-#endif
+void
+ehci_powerhook(int why, void *v)
+{
+	ehci_activate(v, why);
 }
 
 /*

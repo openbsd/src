@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.34 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.35 2010/08/30 21:30:15 deraadt Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ ohci_pci_attach_deferred(struct device *self)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
+	sc->sc.sc_powerhook = powerhook_establish(ohci_powerhook, &sc->sc);
 	if (sc->sc.sc_powerhook == NULL)
 		printf("%s: unable to establish powerhook\n",
 		    sc->sc.sc_bus.bdev.dv_xname);

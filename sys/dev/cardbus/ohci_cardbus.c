@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.15 2010/03/27 21:40:13 jsg Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.16 2010/08/30 21:30:14 deraadt Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
+	sc->sc.sc_powerhook = powerhook_establish(ohci_powerhook, &sc->sc);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,

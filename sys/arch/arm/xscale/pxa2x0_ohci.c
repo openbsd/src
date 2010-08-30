@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.22 2010/08/27 05:04:06 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.23 2010/08/30 21:30:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -40,7 +40,8 @@
 int	pxaohci_match(struct device *, void *, void *);
 void	pxaohci_attach(struct device *, struct device *, void *);
 int	pxaohci_detach(struct device *, int);
-void	pxaohci_power(int, void *);
+int	pxaohci_activate(struct device *, int);
+void	pxaohci_powerhook(int, void *);
 
 struct pxaohci_softc {
 	ohci_softc_t	sc;
@@ -126,7 +127,7 @@ unsupported:
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(pxaohci_power, sc);
+	sc->sc.sc_powerhook = powerhook_establish(pxaohci_powerhook, sc);
 	if (sc->sc.sc_powerhook == NULL)
 		printf("%s: cannot establish powerhook\n",
 		    sc->sc.sc_bus.bdev.dv_xname);
@@ -169,28 +170,33 @@ pxaohci_detach(struct device *self, int flags)
 }
 
 
-void
-pxaohci_power(int why, void *arg)
+int
+pxaohci_activate(struct device *self, int act)
 {
-	struct pxaohci_softc		*sc = (struct pxaohci_softc *)arg;
-	int				s;
+	struct pxaohci_softc *sc = (struct pxaohci_softc *)self;
 
-	s = splhardusb();
-	sc->sc.sc_bus.use_polling++;
-	switch (why) {
-	case PWR_SUSPEND:
-		ohci_power(why, &sc->sc);
+	switch (act) {
+	case DVACT_SUSPEND:
+		sc->sc.sc_bus.use_polling++;
+		ohci_powerhook(act, &sc->sc);
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
+		sc->sc.sc_bus.use_polling--;
 		break;
-
-	case PWR_RESUME:
+	case DVACT_RESUME:
+		sc->sc.sc_bus.use_polling++;
 		pxa2x0_clkman_config(CKEN_USBHC, 1);
 		pxaohci_enable(sc);
-		ohci_power(why, &sc->sc);
+		ohci_powerhook(act, &sc->sc);
+		sc->sc.sc_bus.use_polling--;
 		break;
 	}
-	sc->sc.sc_bus.use_polling--;
-	splx(s);
+	return 0;
+}
+
+void
+pxaohci_powerhook(int why, void *arg)
+{
+	pxaohci_activate(arg, why);
 }
 
 void
