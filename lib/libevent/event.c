@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.24 2010/07/12 18:03:38 nicm Exp $	*/
+/*	$OpenBSD: event.c,v 1.25 2010/08/30 07:54:29 nicm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -281,9 +281,14 @@ event_reinit(struct event_base *base)
 	int res = 0;
 	struct event *ev;
 
+#if 0
+	/* Right now, reinit always takes effect, since even if the
+	   backend doesn't require it, the signal socketpair code does.
+	*/
 	/* check if this event mechanism requires reinit */
 	if (!evsel->need_reinit)
 		return (0);
+#endif
 
 	/* prevent internal delete */
 	if (base->sig.ev_signal_added) {
@@ -296,7 +301,7 @@ event_reinit(struct event_base *base)
 			    EVLIST_ACTIVE);
 		base->sig.ev_signal_added = 0;
 	}
-	
+
 	if (base->evsel->dealloc != NULL)
 		base->evsel->dealloc(base, base->evbase);
 	evbase = base->evbase = evsel->init(base);
