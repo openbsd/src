@@ -1,25 +1,28 @@
-#	$OpenBSD: airport,v 1.19 2010/08/30 00:42:48 deraadt Exp $
+#	$OpenBSD: airport,v 1.20 2010/08/30 12:12:59 jasper Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
-# 
+#
 # Some of this information from the Airport Search Engine at
 # http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
 # available at http://www.mapping.com/airportcodes.html
 #
+# Only use the IATA airport codes.
+#
 # Airport Code : Airport
-AAE:Les Salines, Annaba, Algeria
+AAA:Anaa, Anaa, French Polynesia
+AAE:Rabah Bitat, Annaba, Algeria
 AAL:Aalborg, Denmark
-AAR:Tirstrup, Aarhus, Denmark
-ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
-ABI:Municipal, Abilene, TX, USA
-ABJ:Port Bouet, Abidjan, Cote D'ivoire
+AAR:Aarhus, Aarhus, Denmark
+ABE:Lehigh Valley International, Pennsylvania, USA
+ABI:Abilene Regional, Abilene, TX, USA
+ABJ:Port Bouet, Abidjan, Cote d'ivoire
 ABL:Ambler, AK, USA
-ABM:Bamaga, Queensland, Australia
+ABM:Northern Peninsula, Queensland, Australia
 ABQ:Albuquerque International, New Mexico, USA
 ABR:Aberdeen Regional, SD, USA
 ABS:Abu Simbel, Egypt
 ABX:Albury, New South Wales, Australia
-ABY:Dougherty County, Albany, GA, USA
-ABZ:Dyce, Aberdeen, Scotland, United Kingdom
+ABY:Southwest Georgia Regional, Albany, GA, USA
+ABZ:Aberdeen, Aberdeen, Scotland, United Kingdom
 ACA:Alvarez International, Acapulco, Guerrero, Mexico
 ACC:Kotoka, Accra, Ghana
 ACE:Lanzarote, Lanzarote, Canary Islands, Spain
@@ -630,7 +633,6 @@ GYE:Simon Bolivar, Guayaquil, Ecuador
 GYM:Guaymas, Sonora, Mexico
 GYY:Gary, IN, USA
 HAD:Halmstad, Halland, Sweden
-HAG:The Hague, Netherlands
 HAH:Moroni (Hahaya), Comoros
 HAJ:Langenhagen, Hanover, Germany
 HAK:Haikou, China
@@ -1403,7 +1405,7 @@ RST:Rochester Municipal, MN, USA
 RSU:Yosu, South Korea
 RSW:Ft. Meyers Southwest Florida Regional, USA
 RTB:Roatan, Roatan, Honduras
-RTM:Rotterdam, Netherlands
+RTM:Rotterdam The Hague, Rotterdam, Netherlands
 RUH:King Khaled Intl, Riyadh, Saudi Arabia
 RUI:Ruidoso, NM, USA
 RUT:Rutland, VT, USA
