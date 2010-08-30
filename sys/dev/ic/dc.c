@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.117 2010/08/27 19:54:02 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.118 2010/08/30 23:25:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -3129,20 +3129,21 @@ dc_activate(struct device *self, int act)
 {
 	struct dc_softc *sc = (struct dc_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int rv;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			dc_stop(sc, 0);
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			dc_init(sc);
 		break;
 	}
-	return (0);
+	return rv;
 }
 
 void
