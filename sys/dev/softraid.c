@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.211 2010/08/30 17:32:40 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.212 2010/08/30 19:05:08 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1041,7 +1041,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	SLIST_INIT(&mlh);
 
 	dk = TAILQ_FIRST(&disklist);
-	while (dk != TAILQ_END()) {
+	while (dk != TAILQ_END(&disklist)) {
 
 		/* See if this disk has been checked. */
 		SLIST_FOREACH(sdk, &sdklist, sdk_link)
