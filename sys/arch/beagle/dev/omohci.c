@@ -1,4 +1,4 @@
-/*	$OpenBSD: omohci.c,v 1.2 2010/08/27 05:04:08 deraadt Exp $ */
+/*	$OpenBSD: omohci.c,v 1.3 2010/08/30 21:32:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -95,7 +95,8 @@
 int	omohci_match(struct device *, void *, void *);
 void	omohci_attach(struct device *, struct device *, void *);
 int	omohci_detach(struct device *, int);
-void	omohci_power(int, void *);
+int	omohci_activate(struct device *, int);
+void	omohci_powerhook(int, void *);
 
 struct omohci_softc {
 	ohci_softc_t	sc;
@@ -112,7 +113,7 @@ void	omohci_disable(struct omohci_softc *);
 
 struct cfattach omohci_ca = {
         sizeof (struct omohci_softc), omohci_match, omohci_attach,
-	omohci_detach, ohci_activate
+	omohci_detach, omohci_detach
 };
 
 int
@@ -224,7 +225,7 @@ omohci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(omohci_power, sc);
+	sc->sc.sc_powerhook = powerhook_establish(omohci_powerhook, sc);
 	if (sc->sc.sc_powerhook == NULL)
 		printf("%s: cannot establish powerhook\n",
 		    sc->sc.sc_bus.bdev.dv_xname);
@@ -279,32 +280,38 @@ omohci_detach(struct device *self, int flags)
 }
 
 
-void
-omohci_power(int why, void *arg)
+int
+omohci_activate(struct device *self, int act)
 {
-	struct omohci_softc		*sc = (struct omohci_softc *)arg;
-	int				s;
+	struct omohci_softc *sc = (struct omohci_softc *)self;
 
-	s = splhardusb();
-	sc->sc.sc_bus.use_polling++;
-	switch (why) {
-	case PWR_SUSPEND:
+	switch (act) {
+	case DVACT_SUSPEND:
+		sc->sc.sc_bus.use_polling++;
 		ohci_power(why, &sc->sc);
 #if 0
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
 #endif
+		sc->sc.sc_bus.use_polling--;
 		break;
 
-	case PWR_RESUME:
+	case DVACT_RESUME:
+		sc->sc.sc_bus.use_polling++;
 #if 0
 		pxa2x0_clkman_config(CKEN_USBHC, 1);
 #endif
 		omohci_enable(sc);
 		ohci_power(why, &sc->sc);
+		sc->sc.sc_bus.use_polling--;
 		break;
 	}
-	sc->sc.sc_bus.use_polling--;
-	splx(s);
+	return 0;
+}
+
+int
+omohci_powerhook(int why, void *arg)
+{
+	omohci_activate(arg, why);
 }
 
 void

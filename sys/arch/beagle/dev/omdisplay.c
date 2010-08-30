@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.3 2010/08/27 05:04:08 deraadt Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.4 2010/08/30 21:32:20 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -424,6 +424,7 @@ struct omdisplay_softc {
 
 int omdisplay_match(struct device *parent, void *v, void *aux);
 void omdisplay_attach(struct device *parent, struct device *self, void *args);
+int omdisplay_activate(struct device *, int);
 int omdisplay_ioctl(void *v, u_long cmd, caddr_t data, int flag,
     struct proc *p);
 void omdisplay_burner(void *v, u_int on, u_int flags);
@@ -440,7 +441,7 @@ void omdisplay_set_backlight(int on);
 void omdisplay_blank(int blank);
 void omdisplay_suspend(struct omdisplay_softc *sc);
 void omdisplay_resume(struct omdisplay_softc *sc);
-void omdisplay_power(int why, void *v);
+void omdisplay_powerhook(int why, void *v);
 void omdisplay_initialize(struct omdisplay_softc *sc,
     struct omdisplay_panel_data *geom);
 void omdisplay_setup_rasops(struct omdisplay_softc *sc,
@@ -457,7 +458,8 @@ int omdisplay_intr(void *v);
 void omdisplay_dumpreg(struct omdisplay_softc *sc);
 
 struct cfattach	omdisplay_ca = {
-	sizeof (struct omdisplay_softc), omdisplay_match, omdisplay_attach
+	sizeof (struct omdisplay_softc), omdisplay_match, omdisplay_attach,
+	NULL, omdisplay_activate
 };
 
 struct cfdriver omdisplay_cd = {
@@ -573,7 +575,7 @@ omdisplay_attach(struct device *parent, struct device *self, void *args)
 	/* backlight? */
 
 	/* powerhook? */
-	sc->sc_ph = powerhook_establish(omdisplay_power, sc);
+	sc->sc_ph = powerhook_establish(omdisplay_powerhook, sc);
 }
 
 
@@ -864,24 +866,28 @@ omdisplay_resume(struct omdisplay_softc *sc)
 }
 
 void
-omdisplay_power(int why, void *v)
+omdisplay_activate(struct device *self, int act)
 {
-	struct omdisplay_softc *sc = v;
+	struct omdisplay_softc *sc = (struct omdisplay_softc *)self;
 
-        switch (why) {
-        case PWR_SUSPEND:
-                omdisplay_set_brightness(0);
+	switch (act) {
+	case DVACT_SUSPEND:
+		omdisplay_set_brightness(0);
 		omdisplay_suspend(sc);
-                break;
-
-        case PWR_RESUME:
+		break;
+	case DVACT_RESUME:
 		omdisplay_resume(sc);
-                omdisplay_set_brightness(omdisplay_get_brightness());
-                break;
-        }
+		omdisplay_set_brightness(omdisplay_get_brightness());
+		break;
+	}
+	return 0;
 }
 
-
+void
+omdisplay_powerhook(int why, void *v)
+{
+	return omdisplay_activate(v, why);
+}
 
 void
 omdisplay_initialize(struct omdisplay_softc *sc,

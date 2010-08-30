@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.2 2010/08/27 05:04:08 deraadt Exp $ */
+/*	$OpenBSD: omehci.c,v 1.3 2010/08/30 21:32:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -40,7 +40,8 @@
 int	omehci_match(struct device *, void *, void *);
 void	omehci_attach(struct device *, struct device *, void *);
 int	omehci_detach(struct device *, int);
-void	omehci_power(int, void *);
+int	omehci_activate(struct device *, int);
+void	omehci_powerhook(int, void *);
 
 struct omehci_softc {
 	ehci_softc_t	sc;
@@ -52,7 +53,7 @@ void	omehci_disable(struct omehci_softc *);
 
 struct cfattach omehci_ca = {
         sizeof (struct omehci_softc), omehci_match, omehci_attach,
-	omehci_detach, ehci_activate
+	omehci_detach, omehci_activate
 };
 
 int
@@ -137,7 +138,7 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if 0
-	sc->sc.sc_powerhook = powerhook_establish(omehci_power, sc);
+	sc->sc.sc_powerhook = powerhook_establish(omehci_powerhook, sc);
 	if (sc->sc.sc_powerhook == NULL)
 		printf("%s: cannot establish powerhook\n", devname);
 #endif
@@ -182,35 +183,38 @@ omehci_detach(struct device *self, int flags)
 	return (0);
 }
 
+int
+omehci_activate(struct device *self, int act)
+{
+	struct omehci_softc *sc = (struct omehci_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		sc->sc.sc_bus.use_polling++;
+#if 0
+		ohci_powerhook(act, &sc->sc);
+		prcm_disableclock(PRCM_CLK_EN_USB);
+#endif
+		sc->sc.sc_bus.use_polling--;
+		break;
+	case DVACT_RESUME:
+		sc->sc.sc_bus.use_polling++;
+		prcm_enableclock(PRCM_CLK_EN_USB);
+#if 0
+		omehci_enable(sc);
+		ohci_powerhook(act, &sc->sc);
+#endif
+		sc->sc.sc_bus.use_polling--;
+		break;
+	}
+	return 0;
+}
 
 #if 0
 void
-omehci_power(int why, void *arg)
+omehci_powerhook(int why, void *arg)
 {
-	struct omehci_softc		*sc = (struct omehci_softc *)arg;
-	int				s;
-
-	s = splhardusb();
-	sc->sc.sc_bus.use_polling++;
-	switch (why) {
-	case PWR_SUSPEND:
-		ohci_power(why, &sc->sc);
-#if 0
-		prcm_disableclock(PRCM_CLK_EN_USB);
-#endif
-		break;
-
-	case PWR_RESUME:
-		prcm_enableclock(PRCM_CLK_EN_USB);
-
-#if 0
-		omehci_enable(sc);
-#endif
-		ohci_power(why, &sc->sc);
-		break;
-	}
-	sc->sc.sc_bus.use_polling--;
-	splx(s);
+	omehci_activate(arg, why);
 }
 #endif
 
