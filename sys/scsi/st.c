@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.106 2010/07/22 05:26:34 matthew Exp $	*/
+/*	$OpenBSD: st.c,v 1.107 2010/08/30 02:47:56 matthew Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1382,7 +1382,6 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 	xs = scsi_xs_get(st->sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = READ;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = buf;
 	xs->datalen = size;
@@ -1390,6 +1389,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 	xs->timeout = ST_IO_TIME;
 
 	cmd = (struct scsi_rw_tape *)xs->cmd;
+	cmd->opcode = READ;
 	if (st->flags & ST_FIXEDBLOCKS) {
 		cmd->byte2 |= SRW_FIXED;
 		_lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
@@ -1421,11 +1421,13 @@ st_read_block_limits(struct st_softc *st, int flags)
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = READ_BLOCK_LIMITS;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)&block_limits;
 	xs->datalen = sizeof(block_limits);
 	xs->timeout = ST_CTL_TIME;
+
+	cmd = (struct scsi_block_limits *)xs->cmd;
+	cmd->opcode = READ_BLOCK_LIMITS;
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -1628,7 +1630,6 @@ st_erase(struct st_softc *st, int full, int flags)
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = ERASE;
 	xs->cmdlen = sizeof(*cmd);
 
 	/*
@@ -1637,6 +1638,7 @@ st_erase(struct st_softc *st, int full, int flags)
 	 * asking the drive to write an erase gap.
 	 */
 	cmd = (struct scsi_erase *)xs->cmd;
+	cmd->opcode = ERASE;
 	if (full) {
 		cmd->byte2 = SE_IMMED|SE_LONG;
 		xs->timeout = ST_SPC_TIME;
@@ -1731,9 +1733,9 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 		st->media_blkno = -1;
 		return (ENOMEM);
 	}
-	xs->cmd->opcode = SPACE;
 
 	cmd = (struct scsi_space *)xs->cmd;
+	cmd->opcode = SPACE;
 	cmd->byte2 = what;
 	_lto3b(number, cmd->number);
 	xs->cmdlen = sizeof(*cmd);
@@ -1789,7 +1791,6 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		st->media_blkno = -1;
 		return (ENOMEM);
 	}
-	xs->cmd->opcode = WRITE_FILEMARKS;
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_IO_TIME * 4;
 
@@ -1809,6 +1810,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 	}
 
 	cmd = (struct scsi_write_filemarks *)xs->cmd;
+	cmd->opcode = WRITE_FILEMARKS;
 	_lto3b(number, cmd->number);
 
 	error = scsi_xs_sync(xs);
@@ -1888,11 +1890,11 @@ st_load(struct st_softc *st, u_int type, int flags)
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = LOAD;
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_SPC_TIME;
 
 	cmd = (struct scsi_load *)xs->cmd;
+	cmd->opcode = LOAD;
 	cmd->how = type;
 
 	error = scsi_xs_sync(xs);
@@ -1919,11 +1921,11 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = REWIND;
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = immediate ? ST_CTL_TIME : ST_SPC_TIME;
 
 	cmd = (struct scsi_rewind *)xs->cmd;
+	cmd->opcode = REWIND;
 	cmd->byte2 = immediate;
 
 	error = scsi_xs_sync(xs);

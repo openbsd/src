@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.49 2010/08/02 23:00:54 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.50 2010/08/30 02:47:56 matthew Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -280,7 +280,6 @@ ses_read_config(struct ses_softc *sc)
 		free(buf, M_DEVBUF);
 		return (1);
 	}
-	xs->cmd->opcode = RECEIVE_DIAGNOSTIC;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = buf;
 	xs->datalen = SES_BUFLEN;
@@ -288,6 +287,7 @@ ses_read_config(struct ses_softc *sc)
 	xs->timeout = 3000;
 
 	cmd = (struct ses_scsi_diag *)xs->cmd;
+	cmd->opcode = RECEIVE_DIAGNOSTIC;
 	cmd->flags |= SES_DIAG_PCV;
 	cmd->pgcode = SES_PAGE_CONFIG;
 	cmd->length = htobe16(SES_BUFLEN);
@@ -376,7 +376,6 @@ ses_read_status(struct ses_softc *sc)
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
 		return (1);
-	xs->cmd->opcode = RECEIVE_DIAGNOSTIC;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = sc->sc_buf;
 	xs->datalen = sc->sc_buflen;
@@ -384,6 +383,7 @@ ses_read_status(struct ses_softc *sc)
 	xs->timeout = 3000;
 
 	cmd = (struct ses_scsi_diag *)xs->cmd;
+	cmd->opcode = RECEIVE_DIAGNOSTIC;
 	cmd->flags |= SES_DIAG_PCV;
 	cmd->pgcode = SES_PAGE_STATUS;
 	cmd->length = htobe16(sc->sc_buflen);
@@ -607,7 +607,6 @@ ses_write_config(struct ses_softc *sc)
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_OUT | SCSI_SILENT);
 	if (xs == NULL)
 		return (1);
-	xs->cmd->opcode = SEND_DIAGNOSTIC;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = sc->sc_buf;
 	xs->datalen = sc->sc_buflen;
@@ -615,6 +614,7 @@ ses_write_config(struct ses_softc *sc)
 	xs->timeout = 3000;
 
 	cmd = (struct ses_scsi_diag *)xs->cmd;
+	cmd->opcode = SEND_DIAGNOSTIC;
 	cmd->flags |= SES_DIAG_PF;
 	cmd->length = htobe16(sc->sc_buflen);
 

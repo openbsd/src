@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.44 2010/07/22 15:59:47 matthew Exp $ */
+/*	$OpenBSD: safte.c,v 1.45 2010/08/30 02:47:56 matthew Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -142,7 +142,6 @@ safte_match(struct device *parent, void *match, void *aux)
 	xs = scsi_xs_get(sa->sa_sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		return (0);
-	xs->cmd->opcode = INQUIRY;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)&inqbuf;
 	xs->datalen = length;
@@ -150,6 +149,7 @@ safte_match(struct device *parent, void *match, void *aux)
 	xs->timeout = 10000;
 
 	cmd = (struct scsi_inquiry *)xs->cmd;
+	cmd->opcode = INQUIRY;
 	_lto2b(length, cmd->length);
 
 	memset(&inqbuf, 0, sizeof(inqbuf));
@@ -270,7 +270,6 @@ safte_read_config(struct safte_softc *sc)
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
 		return (1);
-	xs->cmd->opcode = READ_BUFFER;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)&config;
 	xs->datalen = sizeof(config);
@@ -278,6 +277,7 @@ safte_read_config(struct safte_softc *sc)
 	xs->timeout = 30000;
 
 	cmd = (struct safte_readbuf_cmd *)xs->cmd;
+	cmd->opcode = READ_BUFFER;
 	cmd->flags |= SAFTE_RD_MODE;
 	cmd->bufferid = SAFTE_RD_CONFIG;
 	cmd->length = htobe16(sizeof(config));
@@ -412,7 +412,6 @@ safte_read_encstat(void *arg)
 		rw_exit_write(&sc->sc_lock);
 		return;
 	}
-	xs->cmd->opcode = READ_BUFFER;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = sc->sc_encbuf;
 	xs->datalen = sc->sc_encbuflen;
@@ -420,6 +419,7 @@ safte_read_encstat(void *arg)
 	xs->timeout = 30000;
 
 	cmd = (struct safte_readbuf_cmd *)xs->cmd;
+	cmd->opcode = READ_BUFFER;
 	cmd->flags |= SAFTE_RD_MODE;
 	cmd->bufferid = SAFTE_RD_ENCSTAT;
 	cmd->length = htobe16(sc->sc_encbuflen);
@@ -596,7 +596,6 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 		free(op, M_TEMP);
 		return (ENOMEM);
 	}
-	xs->cmd->opcode = WRITE_BUFFER;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)op;
 	xs->datalen = sizeof(*op);
@@ -604,6 +603,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	xs->timeout = 30000;
 
 	cmd = (struct safte_writebuf_cmd *)xs->cmd;
+	cmd->opcode = WRITE_BUFFER;
 	cmd->flags |= SAFTE_WR_MODE;
 	cmd->length = htobe16(sizeof(struct safte_slotop));
 

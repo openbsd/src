@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.192 2010/08/25 00:31:35 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.193 2010/08/30 02:47:56 matthew Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -768,11 +768,13 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 		free(rdcap, M_TEMP);
 		return (0);
 	}
-	xs->cmd->opcode = READ_CAPACITY;
 	xs->cmdlen = sizeof(*cmd10);
 	xs->data = (void *)rdcap;
 	xs->datalen = sizeof(*rdcap);
 	xs->timeout = 20000;
+
+	cmd10 = (struct scsi_read_capacity *)xs->cmd;
+	cmd10->opcode = READ_CAPACITY;
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -806,13 +808,13 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 		free(rdcap16, M_TEMP);
 		goto exit;
 	}
-	xs->cmd->opcode = READ_CAPACITY_16;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)rdcap16;
 	xs->datalen = sizeof(*rdcap16);
 	xs->timeout = 20000;
 
 	cmd = (struct scsi_read_capacity_16 *)xs->cmd;
+	cmd->opcode = READ_CAPACITY_16;
 	cmd->byte2 = SRC16_SERVICE_ACTION;
 	_lto4b(sizeof(*rdcap16), cmd->length);
 
@@ -855,10 +857,12 @@ scsi_test_unit_ready(struct scsi_link *sc_link, int retries, int flags)
 	xs = scsi_xs_get(sc_link, flags);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = TEST_UNIT_READY;
 	xs->cmdlen = sizeof(*cmd);
 	xs->retries = retries;
 	xs->timeout = 10000;
+
+	cmd = (struct scsi_test_unit_ready *)xs->cmd;
+	cmd->opcode = TEST_UNIT_READY;
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -931,7 +935,6 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = INQUIRY;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = buf;
 	xs->datalen = buflen;
@@ -939,6 +942,7 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 	xs->timeout = 10000;
 
 	cmd = (struct scsi_inquiry *)xs->cmd;
+	cmd->opcode = INQUIRY;
 	cmd->flags = SI_EVPD;
 	cmd->pagecode = page;
 	_lto2b(buflen, cmd->length);
@@ -965,12 +969,12 @@ scsi_prevent(struct scsi_link *sc_link, int type, int flags)
 	xs = scsi_xs_get(sc_link, flags);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = PREVENT_ALLOW;
 	xs->cmdlen = sizeof(*cmd);
 	xs->retries = 2;
 	xs->timeout = 5000;
 
 	cmd = (struct scsi_prevent *)xs->cmd;
+	cmd->opcode = PREVENT_ALLOW;
 	cmd->how = type;
 
 	error = scsi_xs_sync(xs);
@@ -992,12 +996,12 @@ scsi_start(struct scsi_link *sc_link, int type, int flags)
 	xs = scsi_xs_get(sc_link, flags);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = START_STOP;
 	xs->cmdlen = sizeof(*cmd);
 	xs->retries = 2;
 	xs->timeout = (type == SSS_START) ? 30000 : 10000;
 
 	cmd = (struct scsi_start_stop *)xs->cmd;
+	cmd->opcode = START_STOP;
 	cmd->how = type;
 
 	error = scsi_xs_sync(xs);
@@ -1017,7 +1021,6 @@ scsi_mode_sense(struct scsi_link *sc_link, int byte2, int page,
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = MODE_SENSE;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = len;
@@ -1031,6 +1034,7 @@ scsi_mode_sense(struct scsi_link *sc_link, int byte2, int page,
 	bzero(data, len);
 
 	cmd = (struct scsi_mode_sense *)xs->cmd;
+	cmd->opcode = MODE_SENSE;
 	cmd->byte2 = byte2;
 	cmd->page = page;
 
@@ -1058,7 +1062,6 @@ scsi_mode_sense_big(struct scsi_link *sc_link, int byte2, int page,
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = MODE_SENSE_BIG;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = len;
@@ -1072,6 +1075,7 @@ scsi_mode_sense_big(struct scsi_link *sc_link, int byte2, int page,
 	bzero(data, len);
 
 	cmd = (struct scsi_mode_sense_big *)xs->cmd;
+	cmd->opcode = MODE_SENSE_BIG;
 	cmd->byte2 = byte2;
 	cmd->page = page;
 
@@ -1234,13 +1238,13 @@ scsi_mode_select(struct scsi_link *sc_link, int byte2,
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_OUT);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = MODE_SELECT;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = len;
 	xs->timeout = timeout;
 
 	cmd = (struct scsi_mode_select *)xs->cmd;
+	cmd->opcode = MODE_SELECT;
 	cmd->byte2 = byte2;
 	cmd->length = len;
 
@@ -1269,13 +1273,13 @@ scsi_mode_select_big(struct scsi_link *sc_link, int byte2,
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_OUT);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = MODE_SELECT_BIG;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = len;
 	xs->timeout = timeout;
 
 	cmd = (struct scsi_mode_select_big *)xs->cmd;
+	cmd->opcode = MODE_SELECT_BIG;
 	cmd->byte2 = byte2;
 	_lto2b(len, cmd->length);
 
@@ -1303,7 +1307,6 @@ scsi_report_luns(struct scsi_link *sc_link, int selectreport,
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmd->opcode = REPORT_LUNS;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = datalen;
@@ -1312,6 +1315,7 @@ scsi_report_luns(struct scsi_link *sc_link, int selectreport,
 	bzero(data, datalen);
 
 	cmd = (struct scsi_report_luns *)xs->cmd;
+	cmd->opcode = REPORT_LUNS;
 	cmd->selectreport = selectreport;
 	_lto4b(datalen, cmd->length);
 
