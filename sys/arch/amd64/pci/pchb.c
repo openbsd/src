@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.35 2010/08/07 06:10:04 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.36 2010/08/31 16:16:12 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -276,10 +276,11 @@ int
 pchbactivate(struct device *self, int act)
 {
 	struct pchb_softc *sc = (struct pchb_softc *)self;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		/* re-enable RNG, if we have it */
@@ -288,12 +289,11 @@ pchbactivate(struct device *self, int act)
 			    I82802_RNG_HWST,
 			    bus_space_read_1(sc->sc_bt, sc->sc_bh,
 			    I82802_RNG_HWST) | I82802_RNG_HWST_ENABLE);
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	}
-	return (0);
+	return (rv);
 }
-
 
 int
 pchb_print(void *aux, const char *pnp)
