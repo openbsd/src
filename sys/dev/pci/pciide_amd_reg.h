@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_amd_reg.h,v 1.8 2004/09/24 07:38:38 grange Exp $ 	*/
+/*	$OpenBSD: pciide_amd_reg.h,v 1.9 2010/08/31 12:50:51 miod Exp $ 	*/
 /*	$NetBSD: pciide_amd_reg.h,v 1.2 2000/07/06 15:08:11 bouyer Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 
 /*
  * Registers definitions for AMD 756 PCI IDE controller.  Documentation
- * available at: http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf
+ * available at: http://support.amd.com/us/ChipsetMotherboard_TechDocs/22548.pdf
  */
 
 /* Chip revisions */
@@ -72,6 +72,9 @@
 
 static const int8_t amd756_pio_set[] = {0x0a, 0x0a, 0x0a, 0x02, 0x02};
 static const int8_t amd756_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
+
+/* Cycle time and address setup time */
+#define	AMD756_CYCLE_ADDR_TIME	0x4c
 
 /* Ultra-DMA/33 control */
 #define AMD756_UDMA 0x50
