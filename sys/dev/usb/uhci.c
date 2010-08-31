@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.77 2010/08/30 21:30:17 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.78 2010/08/31 03:50:15 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1146,13 +1146,8 @@ uhci_intr(void *arg)
 
 	if (sc->sc_dying)
 		return (0);
-
-	if (sc->sc_bus.use_polling) {
-#ifdef DIAGNOSTIC
-		DPRINTFN(16, ("uhci_intr: ignored interrupt while polling\n"));
-#endif
+	if (sc->sc_bus.use_polling)
 		return (0);
-	}
 	return (uhci_intr1(sc));
 }
 
