@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.38 2010/08/02 23:17:34 miod Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.39 2010/08/31 16:38:42 deraadt Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -336,17 +336,19 @@ int
 uhidev_activate(struct device *self, int act)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
-	int i, rv = 0;
+	int i, rv = 0, r;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-
 	case DVACT_DEACTIVATE:
 		for (i = 0; i < sc->sc_nrepid; i++)
-			if (sc->sc_subdevs[i] != NULL)
-				rv |= config_deactivate(
-					&sc->sc_subdevs[i]->sc_dev);
+			if (sc->sc_subdevs[i] != NULL) {
+				r = config_deactivate(
+				    &sc->sc_subdevs[i]->sc_dev);
+				if (r)
+					rv = r;
+			}
 		sc->sc_dying = 1;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.62 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: usb.c,v 1.63 2010/08/31 16:38:42 deraadt Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -790,18 +790,20 @@ usb_activate(struct device *self, int act)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
 	usbd_device_handle dev = sc->sc_port.device;
-	int i, rv = 0;
+	int i, rv = 0, r;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		if (dev != NULL && dev->cdesc != NULL &&
 		    dev->subdevs != NULL) {
-			for (i = 0; dev->subdevs[i]; i++)
-				rv |= config_deactivate(dev->subdevs[i]);
+			for (i = 0; dev->subdevs[i]; i++) {
+				r = config_deactivate(dev->subdevs[i]);
+				if (r)
+					rv = r;
+			}
 		}
 		break;
 	}
