@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.33 2010/03/27 21:40:13 jsg Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.34 2010/08/31 17:01:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -93,7 +93,7 @@ void dc_cardbus_setup(struct dc_cardbus_softc *csc);
 
 struct cfattach dc_cardbus_ca = {
 	sizeof(struct dc_cardbus_softc), dc_cardbus_match, dc_cardbus_attach,
-	    dc_cardbus_detach
+	dc_cardbus_detach, dc_activate
 };
 
 const struct pci_matchid dc_cardbus_devices[] = {
