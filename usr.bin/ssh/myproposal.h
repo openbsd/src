@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.25 2010/04/16 01:47:26 djm Exp $ */
+/* $OpenBSD: myproposal.h,v 1.26 2010/08/31 11:54:45 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -23,17 +23,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #define KEX_DEFAULT_KEX		\
+	"ecdh-sha2-nistp521," \
+	"ecdh-sha2-nistp256," \
+	"ecdh-sha2-nistp384," \
 	"diffie-hellman-group-exchange-sha256," \
 	"diffie-hellman-group-exchange-sha1," \
 	"diffie-hellman-group14-sha1," \
 	"diffie-hellman-group1-sha1"
+
 #define	KEX_DEFAULT_PK_ALG	\
-				"ssh-rsa-cert-v01@openssh.com," \
-				"ssh-dss-cert-v01@openssh.com," \
-				"ssh-rsa-cert-v00@openssh.com," \
-				"ssh-dss-cert-v00@openssh.com," \
-				"ssh-rsa,ssh-dss"
+	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
+	"ecdsa-sha2-nistp384-cert-v01@openssh.com," \
+	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
+	"ssh-rsa-cert-v01@openssh.com," \
+	"ssh-dss-cert-v01@openssh.com," \
+	"ssh-rsa-cert-v00@openssh.com," \
+	"ssh-dss-cert-v00@openssh.com," \
+	"ecdsa-sha2-nistp256," \
+	"ecdsa-sha2-nistp384," \
+	"ecdsa-sha2-nistp521," \
+	"ssh-rsa," \
+	"ssh-dss"
 
 #define	KEX_DEFAULT_ENCRYPT \
 	"aes128-ctr,aes192-ctr,aes256-ctr," \
