@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.9 2010/08/27 12:48:54 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.10 2010/08/31 10:24:46 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -90,13 +90,16 @@ int	smfb_pci_match(struct device *, void *, void *);
 void	smfb_pci_attach(struct device *, struct device *, void *);
 int	smfb_voyager_match(struct device *, void *, void *);
 void	smfb_voyager_attach(struct device *, struct device *, void *);
+int	smfb_activate(struct device *, int);
 
 const struct cfattach smfb_pci_ca = {
-	sizeof(struct smfb_softc), smfb_pci_match, smfb_pci_attach
+	sizeof(struct smfb_softc), smfb_pci_match, smfb_pci_attach,
+	NULL, smfb_activate
 };
 
 const struct cfattach smfb_voyager_ca = {
-	sizeof(struct smfb_softc), smfb_voyager_match, smfb_voyager_attach
+	sizeof(struct smfb_softc), smfb_voyager_match, smfb_voyager_attach,
+	smfb_activate
 };
 
 struct cfdriver smfb_cd = {
@@ -691,6 +694,23 @@ smfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
 	ri = &smfbcn.ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&smfbcn.wsd, ri, 0, 0, defattr);
+
+	return 0;
+}
+
+int
+smfb_activate(struct device *self, int act)
+{
+	struct smfb_softc *sc = (struct smfb_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		smfb_burner(sc, 0, 0);
+		break;
+	case DVACT_RESUME:
+		smfb_burner(sc, 1, 0);
+		break;
+	}
 
 	return 0;
 }

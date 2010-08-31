@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.11 2010/07/31 16:04:46 miod Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.12 2010/08/31 10:24:46 pirofti Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -28,6 +28,10 @@
 #include <machine/bus.h>
 #include <dev/isa/isavar.h>
 
+#include <loongson/dev/bonitoreg.h>
+#include <loongson/dev/kb3310var.h>
+#include <loongson/dev/glxreg.h>
+
 #include "apm.h"
 #include "pckbd.h"
 #include "hidkbd.h"
@@ -41,6 +45,12 @@
 struct cfdriver ykbec_cd = {
 	NULL, "ykbec", DV_DULL,
 };
+
+#ifdef KB3310_DEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
 
 #define IO_YKBEC		0x381
 #define IO_YKBECSIZE		0x3
@@ -80,6 +90,12 @@ struct ykbec_softc {
 	struct timeout		sc_bell_tmo;
 #endif
 };
+
+static struct ykbec_softc *ykbec_sc;
+static int ykbec_chip_config;
+static int ykbec_apmspl;
+
+extern void loongson_set_isa_imr(uint);
 
 int	ykbec_match(struct device *, void *, void *);
 void	ykbec_attach(struct device *, struct device *, void *);
@@ -187,6 +203,7 @@ ykbec_attach(struct device *parent, struct device *self, void *aux)
 	hidkbd_hookup_bell(ykbec_bell, sc);
 #endif
 #endif
+	ykbec_sc = sc;
 }
 
 void
@@ -272,6 +289,28 @@ ykbec_read16(struct ykbec_softc *mcsc, u_int reg)
 
 #define	REG_BEEP_CONTROL		0xf4d0
 #define	BEEP_ENABLE			(1<<0)
+
+#define REG_PMUCFG			0xff0c
+#define PMUCFG_STOP_MODE		(1<<7)
+#define PMUCFG_IDLE_MODE		(1<<6)
+#define PMUCFG_LPC_WAKEUP		(1<<5)
+#define PMUCFG_RESET_8051		(1<<4)
+#define PMUCFG_SCI_WAKEUP		(1<<3)
+#define PMUCFG_WDT_WAKEUP		(1<<2)
+#define PMUCFG_GPWU_WAKEUP		(1<<1)
+#define PMUCFG_IRQ_IDLE			(1<<0)
+
+#define REG_USB0			0xf461
+#define REG_USB1			0xf462
+#define REG_USB2			0xf463
+#define USB_FLAG_ON			1
+#define USB_FLAG_OFF			0
+
+#define REG_FAN_CONTROL			0xf4d2
+#define	REG_FAN_ON			1
+#define REG_FAN_OFF			0
+
+#define YKBEC_SCI_IRQ			0xa
 
 #ifdef DEBUG
 void
@@ -399,6 +438,70 @@ ykbec_apminfo(struct apm_power_info *info)
 {
 	 bcopy(&ykbec_apmdata, info, sizeof(struct apm_power_info));
 	 return 0;
+}
+
+int
+ykbec_suspend()
+{
+	struct ykbec_softc *sc = ykbec_sc;
+	int ctrl;
+
+	/* IRQ */
+	DPRINTF(("IRQ\n"));
+	ykbec_apmspl = splhigh();
+	/* enable isa irq 1 and 12 (PS/2 input devices) */
+	loongson_set_isa_imr(0xffff & ~(1 << 1) & ~(1 << 12));
+
+	/* USB */
+	DPRINTF(("USB\n"));
+	ykbec_write(sc, REG_USB0, USB_FLAG_OFF); 
+	ykbec_write(sc, REG_USB1, USB_FLAG_OFF); 
+	ykbec_write(sc, REG_USB2, USB_FLAG_OFF); 
+
+	/* EC */
+	DPRINTF(("REG_PMUCFG\n"));
+	ctrl = PMUCFG_SCI_WAKEUP | PMUCFG_WDT_WAKEUP | PMUCFG_GPWU_WAKEUP |
+	    PMUCFG_LPC_WAKEUP | PMUCFG_STOP_MODE | PMUCFG_RESET_8051;
+	ykbec_write(sc, REG_PMUCFG, ctrl);
+
+	/* FAN */
+	DPRINTF(("FAN\n"));
+	ykbec_write(sc, REG_FAN_CONTROL, REG_FAN_OFF);
+
+	/* CPU */
+	DPRINTF(("CPU\n"));
+	ykbec_chip_config = REGVAL(LOONGSON_CHIP_CONFIG0);
+	REGVAL(LOONGSON_CHIP_CONFIG0) = ykbec_chip_config & ~0x7;
+	(void)REGVAL(LOONGSON_CHIP_CONFIG0);
+
+	return 0;
+}
+
+int
+ykbec_resume()
+{
+	struct ykbec_softc *sc = ykbec_sc;
+
+	/* IRQ */
+	DPRINTF(("IRQ\n"));
+	splx(ykbec_apmspl);
+
+	/* CPU */
+	DPRINTF(("CPU\n"));
+	REGVAL(LOONGSON_CHIP_CONFIG0) = ykbec_chip_config;
+	(void)REGVAL(LOONGSON_CHIP_CONFIG0);
+
+	/* FAN */
+	DPRINTF(("FAN\n"));
+	ykbec_write(sc, REG_FAN_CONTROL, REG_FAN_ON);
+
+	/* USB */
+	DPRINTF(("USB\n"));
+	ykbec_write(sc, REG_USB0, USB_FLAG_ON); 
+	ykbec_write(sc, REG_USB1, USB_FLAG_ON); 
+	ykbec_write(sc, REG_USB2, USB_FLAG_ON); 
+
+	return 0;
 }
 #endif
 

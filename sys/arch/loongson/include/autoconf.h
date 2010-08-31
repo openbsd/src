@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2010/05/08 21:59:56 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.8 2010/08/31 10:24:46 pirofti Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -64,6 +64,8 @@ struct platform {
 
 	void				(*powerdown)(void);
 	void				(*reset)(void);
+	int				(*suspend)(void);
+	int				(*resume)(void);
 };
 
 extern const struct platform *sys_platform;

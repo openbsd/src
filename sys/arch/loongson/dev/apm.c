@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.3 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: apm.c,v 1.4 2010/08/31 10:24:46 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -41,13 +41,14 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/event.h>
+#include <sys/mount.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/apmvar.h>
 
-
+#include <loongson/dev/kb3310var.h>
 
 #if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
@@ -81,6 +82,9 @@ void filt_apmrdetach(struct knote *kn);
 int filt_apmread(struct knote *kn, long hint);
 int apmkqfilter(dev_t dev, struct knote *kn);
 int apm_getdefaultinfo(struct apm_power_info *);
+
+int apm_suspend(void);
+int apm_resume(void);
 
 struct filterops apmread_filtops =
 	{ 1, NULL, filt_apmrdetach, filt_apmread};
@@ -213,8 +217,13 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case APM_IOC_SUSPEND:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
-		else
-			error = EOPNOTSUPP; /* XXX */
+		else if (sys_platform->suspend == NULL ||
+		    sys_platform->resume == NULL)
+			error = EOPNOTSUPP;
+		else {
+			if (!(error = apm_suspend()))
+				error = apm_resume();
+		}
 		break;
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
@@ -259,8 +268,13 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case APM_IOC_SUSPEND_REQ:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
-		else
-			error = EOPNOTSUPP; /* XXX */
+		else if (sys_platform->suspend == NULL ||
+		    sys_platform->resume == NULL)
+			error = EOPNOTSUPP;
+		else {
+			if (!(error = apm_suspend()))
+				error = apm_resume();
+		}
 		break;
 	default:
 		error = ENOTTY;
@@ -348,4 +362,31 @@ apm_record_event(u_int event, const char *src, const char *msg)
 	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(event, apm_evindex));
 
 	return (0);
+}
+
+int
+apm_suspend()
+{
+	int s;
+
+	s = splhigh();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+	splx(s);
+
+	if (cold)
+		vfs_syncwait(0);
+
+	return sys_platform->suspend();
+}
+
+int
+apm_resume()
+{
+	int s;
+
+	s = splhigh();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
+	splx(s);
+
+	return sys_platform->resume();
 }
