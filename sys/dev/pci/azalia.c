@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.185 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.186 2010/08/31 17:26:57 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -36,7 +36,6 @@
  *
  *
  * TO DO:
- *  - power hook
  *  - multiple codecs (needed?)
  *  - multiple streams (needed?)
  */
