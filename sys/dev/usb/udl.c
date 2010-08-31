@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.60 2010/07/29 12:37:16 maja Exp $ */
+/*	$OpenBSD: udl.c,v 1.61 2010/08/31 17:00:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -491,6 +491,7 @@ udl_activate(struct device *self, int act)
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_DEACTIVATE:
+		/* XXX sc->sc_dying = 1; */
 		break;
 	}
 
