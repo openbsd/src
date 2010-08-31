@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.78 2010/08/31 03:50:15 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.79 2010/08/31 16:47:36 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -529,10 +529,6 @@ uhci_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
 	case DVACT_SUSPEND:
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
@@ -588,6 +584,10 @@ uhci_activate(struct device *self, int act)
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
 #endif
+		break;
+	case DVACT_DEACTIVATE:
+		if (sc->sc_child != NULL)
+			rv = config_deactivate(sc->sc_child);
 		break;
 	}
 	return (rv);
