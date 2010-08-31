@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.17 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.18 2010/08/31 16:20:48 deraadt Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -499,24 +499,15 @@ int
 ubt_activate(struct device *self, int act)
 {
 	struct ubt_softc *sc = (struct ubt_softc *)self;
-	int error = 0;
-
-	DPRINTFN(1, "sc=%p, act=%d\n", sc, act);
 
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;
-
-	default:
-		error = EOPNOTSUPP;
-		break;
 	}
-
-	return error;
+	return (0);
 }
 
 /* set ISOC configuration */
