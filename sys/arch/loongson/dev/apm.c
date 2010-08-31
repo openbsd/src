@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.4 2010/08/31 10:24:46 pirofti Exp $	*/
+/*	$OpenBSD: apm.c,v 1.5 2010/08/31 17:35:12 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include "apm.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +41,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/buf.h>
 #include <sys/event.h>
 #include <sys/mount.h>
 
@@ -47,6 +49,8 @@
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/apmvar.h>
+
+#include <dev/wscons/wsdisplayvar.h>
 
 #include <loongson/dev/kb3310var.h>
 
@@ -369,6 +373,11 @@ apm_suspend()
 {
 	int s;
 
+#if NSWDISPLAY > 0
+	wsdisplay_suspend();
+#endif
+	bufq_quiesce();
+
 	s = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 	splx(s);
@@ -382,11 +391,18 @@ apm_suspend()
 int
 apm_resume()
 {
-	int s;
+	int s, rv;
 
 	s = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
 	splx(s);
 
-	return sys_platform->resume();
+	rv = sys_platform->resume();
+
+	bufq_restart();
+#if NWSDISPLAY > 0
+	wsdisplay_resume();
+#endif
+	
+	return rv;
 }
