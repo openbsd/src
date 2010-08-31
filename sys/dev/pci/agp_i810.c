@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.67 2010/08/06 13:09:52 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.68 2010/08/31 19:20:55 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -91,7 +91,7 @@ struct agp_i810_softc {
 };
 
 void	agp_i810_attach(struct device *, struct device *, void *);
-int	agp_i810_activate(struct device *arg, int act);
+int	agp_i810_activate(struct device *, int);
 void	agp_i810_configure(struct agp_i810_softc *);
 int	agp_i810_probe(struct device *, void *, void *);
 int	agp_i810_get_chiptype(struct pci_attach_args *);
