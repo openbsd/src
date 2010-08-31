@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.87 2010/08/27 18:50:56 deraadt Exp $	*/
+/*	$OpenBSD: auich.c,v 1.88 2010/08/31 06:12:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -565,23 +565,23 @@ int
 auich_activate(struct device *self, int act)
 {
 	struct auich_softc *sc = (struct auich_softc *)self;
-	int ret = 0;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return ret;
-	case DVACT_DEACTIVATE:
-		if (sc->audiodev != NULL)
-			ret = config_deactivate(sc->audiodev);
-		return ret;
+		break;
 	case DVACT_SUSPEND:
 		auich_suspend(sc);
-		return ret;
+		break;
 	case DVACT_RESUME:
 		auich_resume(sc);
-		return ret;
+		break;
+	case DVACT_DEACTIVATE:
+		if (sc->audiodev != NULL)
+			rv = config_deactivate(sc->audiodev);
+		break;
 	}
-	return EOPNOTSUPP;
+	return (rv);
 }
 
 int
