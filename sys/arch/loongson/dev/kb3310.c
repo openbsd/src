@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.12 2010/08/31 10:24:46 pirofti Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.13 2010/08/31 12:22:38 miod Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -450,7 +450,7 @@ ykbec_suspend()
 	DPRINTF(("IRQ\n"));
 	ykbec_apmspl = splhigh();
 	/* enable isa irq 1 and 12 (PS/2 input devices) */
-	loongson_set_isa_imr(0xffff & ~(1 << 1) & ~(1 << 12));
+	loongson_set_isa_imr((1 << 1) | (1 << 12));
 
 	/* USB */
 	DPRINTF(("USB\n"));
