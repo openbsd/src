@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.78 2010/08/27 04:09:20 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.79 2010/08/31 17:41:46 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ struct cfdriver cbb_cd = {
 
 int	pcicbbmatch(struct device *, void *, void *);
 void	pccbbattach(struct device *, struct device *, void *);
+int	pccbbactivate(struct device *, int);
 int	pccbbintr(void *);
 void	pccbb_shutdown(void *);
 void	pci113x_insert(void *);
@@ -177,7 +178,7 @@ void	cb_show_regs(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
 
 struct cfattach cbb_pci_ca = {
 	sizeof(struct pccbb_softc), pcicbbmatch, pccbbattach, NULL,
-	config_activate_children
+	pccbbactivate
 };
 
 static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
@@ -2818,42 +2819,41 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 	}
 }
 
-void
-pccbb_powerhook(int why, void *arg)
+int
+pccbbactivate(struct device *self, int act)
 {
-	struct pccbb_softc *sc = arg;
+	struct pccbb_softc *sc = (struct pccbb_softc *)self;
 	u_int32_t reg;
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
 	bus_space_handle_t base_memh = sc->sc_base_memh;
+	int rv = 0;
 
-	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
+	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 
-	if (why == PWR_SUSPEND) {
 		DPRINTF(("%s: power: why %d stopping intr\n",
 		    sc->sc_dev.dv_xname, why));
 		if (sc->sc_pil_intr_enable) {
 			(void)pccbbintr_function(sc);
 		}
 		sc->sc_pil_intr_enable = 0;
+		break;
+	case DVACT_RESUME:
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_SOCKBASE,
+		    sc->sc_sockbase);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BUSNUM,
+		    sc->sc_busnum);
 
-		/* ToDo: deactivate or suspend child devices */
-
-	}
-
-	if (why == PWR_RESUME) {
-		if (pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
-			/* BIOS did not recover this register */
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    PCI_SOCKBASE, sc->sc_sockbase);
-		if (pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BUSNUM) == 0)
-			/* BIOS did not recover this register */
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    PCI_BUSNUM, sc->sc_busnum);
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 		/* Card detect intr is turned on. */
 		reg |= CB_SOCKET_MASK_CD;
 		bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
+
 		/* reset interrupt */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
 		bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT, reg);
@@ -2865,10 +2865,18 @@ pccbb_powerhook(int why, void *arg)
 		 */
 		(void)pccbbintr(sc);
 
+		rv = config_activate_children(self, act);
+
 		sc->sc_pil_intr_enable = 1;
 		DPRINTF(("%s: power: RESUME enabling intr\n",
 		    sc->sc_dev.dv_xname));
-
-		/* ToDo: activate or wakeup child devices */
+		break;
 	}
+	return (rv);
+}
+
+void
+pccbb_powerhook(int why, void *arg)
+{
+	pccbbactivate(arg, why);
 }
