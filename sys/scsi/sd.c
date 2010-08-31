@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.206 2010/08/28 20:23:22 matthew Exp $	*/
+/*	$OpenBSD: sd.c,v 1.207 2010/08/31 16:34:38 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -273,12 +273,6 @@ sdactivate(struct device *self, int act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-
-	case DVACT_DEACTIVATE:
-		sc->flags |= SDF_DYING;
-		bufq_drain(sc->sc_bufq);
-		break;
-
 	case DVACT_SUSPEND:
 		/*
 		 * Stop the disk.  Stopping the disk should flush the
@@ -290,13 +284,15 @@ sdactivate(struct device *self, int act)
 		scsi_start(sc->sc_link, SSS_STOP,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
 		break;
-
 	case DVACT_RESUME:
 		scsi_start(sc->sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
 		break;
+	case DVACT_DEACTIVATE:
+		sc->flags |= SDF_DYING;
+		bufq_drain(sc->sc_bufq);
+		break;
 	}
-
 	return (rv);
 }
 
