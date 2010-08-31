@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.319 2010/08/31 12:50:51 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.320 2010/08/31 16:02:25 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1441,15 +1441,6 @@ pciide_activate(struct device *self, int act)
 			    sc->sc_tag, NFORCE_PIOTIM);
 			sc->sc_save2[2] = pci_conf_read(sc->sc_pc,
 			    sc->sc_tag, NFORCE_UDMATIM);
-		} else if (sc->sc_pp->chip_map == amd756_chip_map) {
-			sc->sc_save2[0] = pci_conf_read(sc->sc_pc,
-			    sc->sc_tag, AMD756_CHANSTATUS_EN);
-			sc->sc_save2[1] = pci_conf_read(sc->sc_pc,
-			    sc->sc_tag, AMD756_DATATIM);
-			sc->sc_save2[2] = pci_conf_read(sc->sc_pc,
-			    sc->sc_tag, AMD756_CYCLE_ADDR_TIME);
-			sc->sc_save2[3] = pci_conf_read(sc->sc_pc,
-			    sc->sc_tag, AMD756_UDMA);
 		}
 		break;
 	case DVACT_RESUME:
@@ -1461,6 +1452,7 @@ pciide_activate(struct device *self, int act)
 		if (sc->sc_pp->chip_map == default_chip_map ||
 		    sc->sc_pp->chip_map == sata_chip_map ||
 		    sc->sc_pp->chip_map == piix_chip_map ||
+		    sc->sc_pp->chip_map == amd756_chip_map ||
 		    sc->sc_pp->chip_map == phison_chip_map ||
 		    sc->sc_pp->chip_map == ixp_chip_map ||
 		    sc->sc_pp->chip_map == acard_chip_map ||
@@ -1497,15 +1489,6 @@ pciide_activate(struct device *self, int act)
 			    NFORCE_PIOTIM, sc->sc_save2[1]);
 			pci_conf_write(sc->sc_pc, sc->sc_tag,
 			    NFORCE_UDMATIM, sc->sc_save2[2]);
-		} else if (sc->sc_pp->chip_map == amd756_chip_map) {
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    AMD756_CHANSTATUS_EN, sc->sc_save2[0]);
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    AMD756_DATATIM, sc->sc_save2[1]);
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    AMD756_CYCLE_ADDR_TIME, sc->sc_save2[2]);
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    AMD756_UDMA, sc->sc_save2[3]);
 		} else {
 			printf("%s: restore for unknown chip map %x\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
