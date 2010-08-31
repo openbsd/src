@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.183 2010/08/30 02:47:56 matthew Exp $	*/
+/*	$OpenBSD: cd.c,v 1.184 2010/08/31 16:41:24 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -115,6 +115,8 @@ struct cd_softc {
 	struct scsi_xshandler sc_xsh;
 	struct timeout sc_timeout;
 	void *sc_cdpwrhook;		/* our power hook */
+
+	struct workq_task sc_resume_wqt;
 };
 
 void	cdstart(struct scsi_xfer *);
@@ -147,6 +149,7 @@ int	dvd_read_manufact(struct cd_softc *, union dvd_struct *);
 int	dvd_read_struct(struct cd_softc *, union dvd_struct *);
 
 void	cd_powerhook(int why, void *arg);
+void	cd_resume(void *, void *);
 
 #if defined(__macppc__)
 int	cd_eject(void);
@@ -249,7 +252,15 @@ cdactivate(struct device *self, int act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-
+	case DVACT_RESUME:
+		/*
+		 * When resuming, hardware may have forgotten we locked it. So if
+		 * there are any open partitions, lock the CD.
+		 */
+		if (sc->sc_dk.dk_openmask != 0)
+			workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
+			    cd_resume, sc, NULL);
+		break;			
 	case DVACT_DEACTIVATE:
 		sc->sc_flags |= CDF_DYING;
 		bufq_drain(sc->sc_bufq);
@@ -258,6 +269,24 @@ cdactivate(struct device *self, int act)
 	return (rv);
 }
 
+void
+cd_resume(void *arg1, void *arg2)
+{
+	struct cd_softc *sc = arg1;
+
+	scsi_prevent(sc->sc_link, PR_PREVENT,
+	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
+	    SCSI_SILENT);
+}
+
+void
+cd_powerhook(int why, void *arg)
+{
+	struct cd_softc *sc = arg;
+
+	if (why == DVACT_RESUME && sc->sc_dk.dk_openmask != 0)
+		cd_resume(sc, NULL);
+}
 
 int
 cddetach(struct device *self, int flags)
@@ -2100,21 +2129,6 @@ dvd_read_struct(struct cd_softc *sc, union dvd_struct *s)
 	default:
 		return (EINVAL);
 	}
-}
-
-void
-cd_powerhook(int why, void *arg)
-{
-	struct cd_softc *sc = arg;
-
-	/*
-	 * When resuming, hardware may have forgotten we locked it. So if
-	 * there are any open partitions, lock the CD.
-	 */
-	if (why == PWR_RESUME && sc->sc_dk.dk_openmask != 0)
-		scsi_prevent(sc->sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_SILENT);
 }
 
 int
