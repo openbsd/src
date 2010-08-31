@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.49 2010/08/22 11:39:18 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.50 2010/08/31 17:51:31 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2010 $
+.Dd $Mdocdate: August 31 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -331,8 +331,9 @@ file:
 \&.Sh NAME
 \&.Nm foo
 \&.Nd a description goes here
-\&.\e\*q The next is for sections 2, 3, & 9 only.
 \&.\e\*q .Sh LIBRARY
+\&.\e\*q For sections 2, 3, & 9 only.
+\&.\e\*q Not used in OpenBSD.
 \&.Sh SYNOPSIS
 \&.Nm foo
 \&.Op Fl options
@@ -342,18 +343,19 @@ The
 \&.Nm
 utility processes files ...
 \&.\e\*q .Sh IMPLEMENTATION NOTES
-\&.\e\*q The next is for sections 2, 3, & 9 only.
+\&.\e\*q Not used in OpenBSD.
 \&.\e\*q .Sh RETURN VALUES
-\&.\e\*q The next is for sections 1, 6, 7, & 8 only.
+\&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q .Sh ENVIRONMENT
+\&.\e\*q For sections 1, 6, 7, & 8 only.
 \&.\e\*q .Sh FILES
-\&.\e\*q The next is for sections 1, 6 & 8 only.
 \&.\e\*q .Sh EXIT STATUS
+\&.\e\*q For sections 1 & 8 only.
 \&.\e\*q .Sh EXAMPLES
-\&.\e\*q The next is for sections 1, 4, 6, 7, & 8 only.
 \&.\e\*q .Sh DIAGNOSTICS
-\&.\e\*q The next is for sections 2, 3, & 9 only.
+\&.\e\*q For sections 1, 4, 6, 7, & 8 only.
 \&.\e\*q .Sh ERRORS
+\&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q .Sh SEE ALSO
 \&.\e\*q .Xr foobar 1
 \&.\e\*q .Sh STANDARDS
@@ -362,6 +364,7 @@ utility processes files ...
 \&.\e\*q .Sh CAVEATS
 \&.\e\*q .Sh BUGS
 \&.\e\*q .Sh SECURITY CONSIDERATIONS
+\&.\e\*q Not used in OpenBSD.
 .Ed
 .Pp
 The sections in an

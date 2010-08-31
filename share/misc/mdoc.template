@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
+.\"	$OpenBSD: mdoc.template,v 1.11 2010/08/31 17:51:31 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
 .\"
@@ -19,16 +19,18 @@ The
 .Nm
 utility processes files ...
 .\" The following requests should be uncommented and used where appropriate.
-.\" This next request is for sections 2, 3, and 9 function return values only.
 .\" .Sh RETURN VALUES
-.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" For sections 2, 3, and 9 function return values only.
 .\" .Sh ENVIRONMENT
+.\" For sections 1, 6, 7 & 8 only.
 .\" .Sh FILES
+.\" .Sh EXIT STATUS
+.\" For sections 1 & 8 only.
 .\" .Sh EXAMPLES
-.\" This next request is for sections 1, 4, 6, and 8 only.
 .\" .Sh DIAGNOSTICS
-.\" The next request is for sections 2, 3, and 9 error and signal handling only.
+.\" For sections 1, 4, 6, 7, and 8 only.
 .\" .Sh ERRORS
+.\" For sections 2, 3, and 9 error and signal handling only.
 .\" .Sh SEE ALSO
 .\" .Xr foobar 1
 .\" .Sh STANDARDS

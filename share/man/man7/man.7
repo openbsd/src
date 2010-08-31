@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.7 2010/08/22 11:39:18 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.8 2010/08/31 17:51:31 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2010 $
+.Dd $Mdocdate: August 31 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -221,23 +221,25 @@ Documents are generally structured as follows:
 \efBfoo\efR \e(en a description goes here
 \&.\e\*q The next is for sections 2 & 3 only.
 \&.\e\*q .SH LIBRARY
+\&.\e\*q Not used in OpenBSD.
 \&.SH SYNOPSIS
 \efBfoo\efR [\efB\e-options\efR] arguments...
 \&.SH DESCRIPTION
 The \efBfoo\efR utility processes files...
 \&.\e\*q .SH IMPLEMENTATION NOTES
-\&.\e\*q The next is for sections 2, 3, & 9 only.
+\&.\e\*q Not used in OpenBSD.
 \&.\e\*q .SH RETURN VALUES
-\&.\e\*q The next is for sections 1, 6, 7, & 8 only.
+\&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q .SH ENVIRONMENT
+\&.\e\*q For sections 1, 6, 7, & 8 only.
 \&.\e\*q .SH FILES
-\&.\e\*q The next is for sections 1 & 8 only.
 \&.\e\*q .SH EXIT STATUS
+\&.\e\*q For sections 1 & 8 only.
 \&.\e\*q .SH EXAMPLES
-\&.\e\*q The next is for sections 1, 4, 6, 7, & 8 only.
 \&.\e\*q .SH DIAGNOSTICS
-\&.\e\*q The next is for sections 2, 3, & 9 only.
+\&.\e\*q For sections 1, 4, 6, 7, & 8 only.
 \&.\e\*q .SH ERRORS
+\&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q .SH SEE ALSO
 \&.\e\*q .BR foo ( 1 )
 \&.\e\*q .SH STANDARDS
@@ -246,6 +248,7 @@ The \efBfoo\efR utility processes files...
 \&.\e\*q .SH CAVEATS
 \&.\e\*q .SH BUGS
 \&.\e\*q .SH SECURITY CONSIDERATIONS
+\&.\e\*q Not used in OpenBSD.
 .Ed
 .Pp
 The sections in a
