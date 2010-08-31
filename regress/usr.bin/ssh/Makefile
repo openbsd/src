@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.54 2010/06/27 19:19:56 phessler Exp $
+#	$OpenBSD: Makefile,v 1.55 2010/08/31 12:24:25 djm Exp $
 
-REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
+REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
 
-CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub copy.1 copy.2
+CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub copy.1 copy.2 \
+		t8.out t8.out.pub t9.out t9.out.pub
 
 LTESTS= 	connect \
 		proxy-connect \
@@ -103,6 +104,20 @@ t7.out:
 t7: t7.out
 	ssh-keygen -lf t7.out > /dev/null
 	ssh-keygen -Bf t7.out > /dev/null
+
+t8.out:
+	ssh-keygen -q -t dsa -N '' -f $@
+
+t8: t8.out
+	ssh-keygen -lf t8.out > /dev/null
+	ssh-keygen -Bf t8.out > /dev/null
+
+t9.out:
+	ssh-keygen -q -t ecdsa -N '' -f $@
+
+t9: t9.out
+	ssh-keygen -lf t9.out > /dev/null
+	ssh-keygen -Bf t9.out > /dev/null
 
 .for t in ${LTESTS} ${INTEROP_TESTS}
 t-${t}:
