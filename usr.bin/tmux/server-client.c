@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.39 2010/08/19 17:20:26 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.40 2010/08/31 22:46:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,6 +30,7 @@
 void	server_client_handle_key(int, struct mouse_event *, void *);
 void	server_client_repeat_timer(int, short, void *);
 void	server_client_check_exit(struct client *);
+void	server_client_check_backoff(struct client *);
 void	server_client_check_redraw(struct client *);
 void	server_client_set_title(struct client *);
 void	server_client_reset_state(struct client *);
