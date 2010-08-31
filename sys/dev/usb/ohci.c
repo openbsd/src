@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.97 2010/08/30 21:30:16 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.98 2010/08/31 16:59:47 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -333,11 +333,6 @@ ohci_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
-	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		sc->sc_dying = 1;
-		break;
 	case DVACT_SUSPEND:
 		sc->sc_bus.use_polling++;
 		reg = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
@@ -391,6 +386,11 @@ ohci_activate(struct device *self, int act)
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 		sc->sc_control = sc->sc_intre = sc->sc_ival = 0;
 		sc->sc_bus.use_polling--;
+		break;
+	case DVACT_DEACTIVATE:
+		if (sc->sc_child != NULL)
+			rv = config_deactivate(sc->sc_child);
+		sc->sc_dying = 1;
 		break;
 	}
 	return (rv);
