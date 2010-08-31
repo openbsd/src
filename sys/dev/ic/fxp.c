@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.103 2010/08/27 18:25:47 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.104 2010/08/31 16:29:10 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -294,21 +294,22 @@ fxp_activate(struct device *self, int act)
 {
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;	
+	int rv;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			fxp_stop(sc, 1, 0);
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
 			    fxp_resume, sc, NULL);
 		break;
 	}
-	return 0;
+	return (rv);
 }
 
 void

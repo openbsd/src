@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.92 2010/08/27 15:43:41 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.93 2010/08/31 16:29:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -200,6 +200,7 @@ xl_activate(struct device *self, int act)
 {
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
+	int rv;
 
 	switch (act) {
 	case DVACT_SUSPEND:
@@ -207,16 +208,16 @@ xl_activate(struct device *self, int act)
 			xl_reset(sc);
 			xl_stop(sc);
 		}
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		xl_reset(sc);
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			xl_init(sc);
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 void

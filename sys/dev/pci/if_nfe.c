@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.93 2010/08/27 19:56:23 deraadt Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.94 2010/08/31 16:27:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -179,20 +179,21 @@ nfe_activate(struct device *self, int act)
 {
 	struct nfe_softc *sc = (struct nfe_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			nfe_stop(ifp, 0);
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			nfe_init(ifp);
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 
