@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.15 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.16 2010/08/31 17:13:44 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -606,6 +606,9 @@ ale_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			ale_stop(sc);
@@ -617,7 +620,7 @@ ale_activate(struct device *self, int act)
 			ale_init(ifp);
 		break;
 	}
-	return rv;
+	return (rv);
 }
 
 int

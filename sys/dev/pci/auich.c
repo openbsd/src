@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.88 2010/08/31 06:12:28 deraadt Exp $	*/
+/*	$OpenBSD: auich.c,v 1.89 2010/08/31 17:13:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -569,6 +569,9 @@ auich_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		/* XXX to be filled by jakemsr */
 		break;
 	case DVACT_SUSPEND:
 		auich_suspend(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.320 2010/08/31 16:02:25 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.321 2010/08/31 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1407,6 +1407,9 @@ pciide_activate(struct device *self, int act)
 	int i;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 

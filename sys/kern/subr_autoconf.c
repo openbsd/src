@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.61 2010/06/30 22:05:44 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.62 2010/08/31 17:13:48 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -778,12 +778,13 @@ config_activate_children(struct device *parent, int act)
 		case DVACT_ACTIVATE:
 			rv = config_activate(d);
 			break;
-		case DVACT_DEACTIVATE:
-			rv = config_deactivate(d);
-			break;
 		case DVACT_SUSPEND:
 		case DVACT_RESUME:
+		case DVACT_QUIESCE:
 			rv = config_suspend(d, act);
+			break;
+		case DVACT_DEACTIVATE:
+			rv = config_deactivate(d);
 			break;
 		}
 		if (rv == 0)

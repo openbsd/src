@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.31 2010/08/31 16:25:28 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.32 2010/08/31 17:13:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -256,6 +256,9 @@ sdhc_activate(struct device *self, int act)
 	int n, i, rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		/* XXX poll for command completion or suspend command
 		 * in progress */

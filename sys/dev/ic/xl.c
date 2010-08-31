@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.93 2010/08/31 16:29:56 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.94 2010/08/31 17:13:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -203,6 +203,9 @@ xl_activate(struct device *self, int act)
 	int rv;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING) {
 			xl_reset(sc);

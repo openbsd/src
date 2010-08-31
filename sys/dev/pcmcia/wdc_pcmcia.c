@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.23 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.24 2010/08/31 17:13:47 deraadt Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -440,6 +440,9 @@ wdc_pcmcia_activate(self, act)
 			    wdcintr, &sc->wdc_channel, sc->sc_wdcdev.sc_dev.dv_xname);
 			wdcreset(&sc->wdc_channel, VERBOSE);
 		}
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:

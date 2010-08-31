@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.72 2010/08/27 20:22:13 deraadt Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.73 2010/08/31 17:13:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1258,6 +1258,9 @@ rl_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			rl_stop(sc);
@@ -1269,7 +1272,7 @@ rl_activate(struct device *self, int act)
 			rl_init(sc);
 		break;
 	}
-	return rv;
+	return (rv);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.41 2009/11/23 14:12:10 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.42 2010/08/31 17:13:48 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ enum devclass {
 #define	DVACT_DEACTIVATE	1	/* deactivate the device */
 #define	DVACT_SUSPEND		2	/* suspend the device */
 #define	DVACT_RESUME		3	/* resume the device */
+#define	DVACT_QUIESCE		4	/* warn the device about suspend */
 
 struct device {
 	enum	devclass dv_class;	/* this device's classification */

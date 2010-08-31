@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.184 2010/08/31 06:12:28 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.185 2010/08/31 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -541,6 +541,9 @@ azalia_pci_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		/* XXX to be filled by jakemsr */
 		break;
 	case DVACT_SUSPEND:
 		azalia_suspend(sc);

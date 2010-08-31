@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.63 2010/08/08 19:33:35 miod Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.64 2010/08/31 17:13:44 deraadt Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -311,6 +311,9 @@ vga_pci_activate(struct device *self, int act)
 #endif
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 #if !defined(SMALL_KERNEL) && NACPI > 0

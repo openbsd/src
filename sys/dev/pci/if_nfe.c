@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.94 2010/08/31 16:27:09 deraadt Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.95 2010/08/31 17:13:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -182,6 +182,9 @@ nfe_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			nfe_stop(ifp, 0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.211 2010/08/29 18:41:12 jasper Exp $ */
+/* $OpenBSD: acpi.c,v 1.212 2010/08/31 17:13:46 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1912,6 +1912,7 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 #endif /* NWSDISPLAY > 0 */
 
 	bufq_quiesce();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
 
 	acpi_saved_spl = splhigh();
 	disable_intr();

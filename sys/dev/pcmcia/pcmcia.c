@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.40 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.41 2010/08/31 17:13:47 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -143,15 +143,7 @@ pcmcia_activate(struct device *self, int act)
 	case DVACT_ACTIVATE:
 		/* No children yet */
 		break;
-	case DVACT_DEACTIVATE:
-		for (pf = SIMPLEQ_FIRST(&sc->card.pf_head); pf != NULL;
-		     pf = SIMPLEQ_NEXT(pf, pf_list)) {
-			if (SIMPLEQ_FIRST(&pf->cfe_head) == NULL ||
-			    pf->child == NULL)
-				continue;
-			config_deactivate(pf->child);
-		}
-		break;
+	case DVACT_QUIESCE:
 	case DVACT_SUSPEND:
 	case DVACT_RESUME:
 		for (pf = SIMPLEQ_FIRST(&sc->card.pf_head); pf != NULL;
@@ -162,8 +154,17 @@ pcmcia_activate(struct device *self, int act)
 			config_suspend(pf->child, act);
 		}
 		break;
+	case DVACT_DEACTIVATE:
+		for (pf = SIMPLEQ_FIRST(&sc->card.pf_head); pf != NULL;
+		     pf = SIMPLEQ_NEXT(pf, pf_list)) {
+			if (SIMPLEQ_FIRST(&pf->cfe_head) == NULL ||
+			    pf->child == NULL)
+				continue;
+			config_deactivate(pf->child);
+		}
+		break;
 	}
-	return 0;
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.36 2010/08/31 16:16:12 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.37 2010/08/31 17:13:46 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -279,6 +279,9 @@ pchbactivate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.100 2010/08/31 16:26:19 deraadt Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.101 2010/08/31 17:13:44 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1161,6 +1161,9 @@ sis_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			sis_stop(sc);
