@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.13 2010/08/31 10:24:46 pirofti Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.14 2010/09/01 04:52:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -44,6 +44,7 @@
 #include <loongson/dev/kb3310var.h>
 
 #include "com.h"
+#include "ykbec.h"
 
 #if NCOM > 0
 #include <sys/termios.h>
@@ -195,8 +196,10 @@ const struct platform yeeloong_platform = {
 
 	.powerdown = yeeloong_powerdown,
 	.reset = lemote_reset,
+#if NYKBEC > 0
 	.suspend = ykbec_suspend,
 	.resume = ykbec_resume
+#endif
 };
 
 /*
