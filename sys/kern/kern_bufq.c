@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.16 2010/09/01 19:23:05 kettenis Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.17 2010/09/01 19:30:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -230,7 +230,7 @@ bufq_done(struct bufq *bq, struct buf *bp)
 	mtx_enter(&bq->bufq_mtx);
 	bq->bufq_outstanding--;
 	KASSERT(bq->bufq_outstanding >= 0);
-	if (bq->bufq_outstanding == 0 /* XXX and quiesced */)
+	if (bq->bufq_stop && bq->bufq_outstanding == 0)
 		wakeup(&bq->bufq_outstanding);
 	mtx_leave(&bq->bufq_mtx);
 	bp->b_bq = NULL;
