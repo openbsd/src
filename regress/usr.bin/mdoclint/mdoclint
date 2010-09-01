@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.17 2010/08/31 17:58:16 jmc Exp $
-# $NetBSD: mdoclint,v 1.26 2008/11/22 14:47:28 wiz Exp $
+# $OpenBSD: mdoclint,v 1.18 2010/09/01 17:32:53 jmc Exp $
+# $NetBSD: mdoclint,v 1.12 2010/08/30 12:20:44 wiz Exp $
 #
-# Copyright (c) 2001-2008 Thomas Klausner
+# Copyright (c) 2001-2010 Thomas Klausner
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -144,7 +144,7 @@ my $valid_date_re;
 		    mvme68k mvmeppc netwinder news68k newsmips next68k
 		    pc532 playstation2 pmax pmppc prep sandpoint sbmips
 		    sgimips shark sparc sparc64 sun2 sun3 vax walnut
-		    x68k x86_64));
+		    x68k x86 x86_64 xen));
 	}
 	my $a = join('|', @arches);
 	$arches_re = qr{(?:$a)}o;
@@ -160,7 +160,7 @@ my $valid_date_re;
 		$valid_date_re = qr{\$Mdocdate\b};
 	}
 	if (NETBSD) {
-		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[012345678])$}o;
+		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[0-9]|2010)$}o;
 	}
 }
 
@@ -347,7 +347,7 @@ sub process_line
 		# nothing else to do
 		return "$_\n";
 	}
-	if (/\$NetBSD\b.*\$/o) {
+	if (/[\$]NetBSD\b.*\$/o) {
 		$s->{nxrcsidseen} = 1;
 		# nothing else to do
 		return "$_\n";
