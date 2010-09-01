@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.36 2006/10/29 13:41:10 mbalmer Exp $
+#	$OpenBSD: inter.phone,v 1.37 2010/09/01 07:42:07 jasper Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -10986,16 +10986,22 @@
 599:9:Curacao:Netherlands Antilles
 670:::Saipan
 671:::Guam
+672:::Australian External Territories
 673:2:Bandar Seri Begawan:Brunei
 674:::Nauru
 675:::Papua New Guinea
 676:::Tonga Islands
 678:::Vanuatu
 679:::Fiji Islands
+680:::Palau
+681:::Wallis and Futuna
 682:::Cook Islands
 684:::American Samoa
+685:::Samoa
+686:::Kiribati (Gilbert Islands)
 687:::New Caledonia
 689:::French Polynesia (Moorea & Tahiti)
+690:::Tokelau
 691:320:Ponape:Micronesia, Fed. States of
 691:330:Truk:Micronesia, Fed. States of
 691:350:Yap:Micronesia, Fed. States of
