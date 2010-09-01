@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpctl.8,v 1.5 2010/05/10 18:46:07 sthen Exp $
+.\"	$OpenBSD: ldpctl.8,v 1.6 2010/09/01 13:59:17 claudio Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: September 1 2010 $
 .Dt LDPCTL 8
 .Os
 .Sh NAME
@@ -38,17 +38,17 @@ for
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
-.It Cm lfib couple
+.It Cm fib couple
 Insert the learned routes into the Label Forwarding Information Base a.k.a.
 the kernel routing table.
-.It Cm lfib decouple
+.It Cm fib decouple
 Remove the learned routes from the Label Forwarding Information Base a.k.a.
 the kernel routing table.
 .It Cm log brief
 Disable verbose debug logging.
 .It Cm log verbose
 Enable verbose debug logging.
-.It Cm show lfib Op Ar destination | filter
+.It Cm show fib Op Ar destination | filter
 Show the Label Forwarding Information Base.
 .Ar destination
 can be specified to show the route matching a destination IP address.

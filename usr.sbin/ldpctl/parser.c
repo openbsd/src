@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2010/01/13 11:33:12 jsg Exp $ */
+/*	$OpenBSD: parser.c,v 1.4 2010/09/01 13:59:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -51,27 +51,27 @@ struct token {
 };
 
 static const struct token t_main[];
-static const struct token t_lfib[];
+static const struct token t_fib[];
 static const struct token t_show[];
 static const struct token t_show_iface[];
 static const struct token t_show_db[];
 static const struct token t_show_area[];
 static const struct token t_show_nbr[];
 static const struct token t_show_lib[];
-static const struct token t_show_lfib[];
+static const struct token t_show_fib[];
 static const struct token t_log[];
 
 static const struct token t_main[] = {
 /*	{KEYWORD,	"reload",	RELOAD,		NULL}, */
-	{KEYWORD,	"lfib",		LFIB,		t_lfib},
+	{KEYWORD,	"fib",		FIB,		t_fib},
 	{KEYWORD,	"show",		SHOW,		t_show},
 	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
-static const struct token t_lfib[] = {
-	{ KEYWORD,	"couple",	LFIB_COUPLE,	NULL},
-	{ KEYWORD,	"decouple",	LFIB_DECOUPLE,	NULL},
+static const struct token t_fib[] = {
+	{ KEYWORD,	"couple",	FIB_COUPLE,	NULL},
+	{ KEYWORD,	"decouple",	FIB_DECOUPLE,	NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -80,7 +80,7 @@ static const struct token t_show[] = {
 	{KEYWORD,	"interfaces",	SHOW_IFACE,	t_show_iface},
 	{KEYWORD,	"neighbor",	SHOW_NBR,	t_show_nbr},
 	{KEYWORD,	"lib",		SHOW_LIB,	t_show_lib},
-	{KEYWORD,	"lfib",		SHOW_LFIB,	t_show_lfib},
+	{KEYWORD,	"fib",		SHOW_FIB,	t_show_fib},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -105,11 +105,11 @@ static const struct token t_log[] = {
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
-static const struct token t_show_lfib[] = {
+static const struct token t_show_fib[] = {
 	{NOTOKEN,	"",		NONE,			NULL},
-	{KEYWORD,	"interface",	SHOW_LFIB_IFACE,	t_show_iface},
-	{FLAG,		"connected",	F_CONNECTED,		t_show_lfib},
-	{FLAG,		"static",	F_STATIC,		t_show_lfib},
+	{KEYWORD,	"interface",	SHOW_FIB_IFACE,		t_show_iface},
+	{FLAG,		"connected",	F_CONNECTED,		t_show_fib},
+	{FLAG,		"static",	F_STATIC,		t_show_fib},
 	{ADDRESS,	"",		NONE,			NULL},
 	{ENDTOKEN,	"",		NONE,			NULL}
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.11 2010/07/08 09:42:32 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.12 2010/09/01 13:59:17 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,10 +45,10 @@ int		 show_interface_msg(struct imsg *);
 int		 get_ifms_type(int);
 int		 show_lib_msg(struct imsg *);
 int		 show_nbr_msg(struct imsg *);
-void		 show_lfib_head(void);
-int		 show_lfib_msg(struct imsg *);
+void		 show_fib_head(void);
+int		 show_fib_msg(struct imsg *);
 void		 show_interface_head(void);
-int		 show_lfib_interface_msg(struct imsg *);
+int		 show_fib_interface_msg(struct imsg *);
 const char	*get_media_descr(int);
 void		 print_baudrate(u_int64_t);
 
@@ -121,16 +121,16 @@ main(int argc, char *argv[])
 		    "Nexthop", "Local Label", "Remote Label", "In Use");
 		imsg_compose(ibuf, IMSG_CTL_SHOW_LIB, 0, 0, -1, NULL, 0);
 		break;
-	case SHOW_LFIB:
+	case SHOW_FIB:
 		if (!res->addr.s_addr)
 			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0, -1,
 			    &res->flags, sizeof(res->flags));
 		else
 			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0, -1,
 			    &res->addr, sizeof(res->addr));
-		show_lfib_head();
+		show_fib_head();
 		break;
-	case SHOW_LFIB_IFACE:
+	case SHOW_FIB_IFACE:
 		if (*res->ifname)
 			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1,
 			    res->ifname, sizeof(res->ifname));
@@ -138,16 +138,16 @@ main(int argc, char *argv[])
 			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
 		show_interface_head();
 		break;
-	case LFIB:
-		errx(1, "lfib couple|decouple");
+	case FIB:
+		errx(1, "fib couple|decouple");
 		break;
-	case LFIB_COUPLE:
-		imsg_compose(ibuf, IMSG_CTL_LFIB_COUPLE, 0, 0, -1, NULL, 0);
+	case FIB_COUPLE:
+		imsg_compose(ibuf, IMSG_CTL_FIB_COUPLE, 0, 0, -1, NULL, 0);
 		printf("couple request sent.\n");
 		done = 1;
 		break;
-	case LFIB_DECOUPLE:
-		imsg_compose(ibuf, IMSG_CTL_LFIB_DECOUPLE, 0, 0, -1, NULL, 0);
+	case FIB_DECOUPLE:
+		imsg_compose(ibuf, IMSG_CTL_FIB_DECOUPLE, 0, 0, -1, NULL, 0);
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
@@ -193,16 +193,16 @@ main(int argc, char *argv[])
 			case SHOW_LIB:
 				done = show_lib_msg(&imsg);
 				break;
-			case SHOW_LFIB:
-				done = show_lfib_msg(&imsg);
+			case SHOW_FIB:
+				done = show_fib_msg(&imsg);
 				break;
-			case SHOW_LFIB_IFACE:
-				done = show_lfib_interface_msg(&imsg);
+			case SHOW_FIB_IFACE:
+				done = show_fib_interface_msg(&imsg);
 				break;
 			case NONE:
-			case LFIB:
-			case LFIB_COUPLE:
-			case LFIB_DECOUPLE:
+			case FIB:
+			case FIB_COUPLE:
+			case FIB_DECOUPLE:
 			case LOG_VERBOSE:
 			case LOG_BRIEF:
 			case RELOAD:
@@ -388,7 +388,7 @@ show_nbr_msg(struct imsg *imsg)
 }
 
 void
-show_lfib_head(void)
+show_fib_head(void)
 {
 	printf("Flags: C = Connected, S = Static\n");
 	printf(" %-4s %-20s %-17s %-17s %s\n", "Prio", "Destination",
@@ -396,7 +396,7 @@ show_lfib_head(void)
 }
 
 int
-show_lfib_msg(struct imsg *imsg)
+show_fib_msg(struct imsg *imsg)
 {
 	struct kroute		*k;
 	char			*p;
@@ -462,7 +462,7 @@ show_interface_head(void)
 }
 
 int
-show_lfib_interface_msg(struct imsg *imsg)
+show_fib_interface_msg(struct imsg *imsg)
 {
 	struct kif	*k;
 	int		 ifms_type;
