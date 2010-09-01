@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.31 2010/06/02 13:32:13 dlg Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.32 2010/09/01 01:38:12 dlg Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
 struct sd_softc {
 	struct device		sc_dev;
 	struct disk		sc_dk;
-	struct bufq		*sc_bufq;
+	struct bufq		sc_bufq;
 
 	int			flags;
 #define	SDF_LOCKED	0x01

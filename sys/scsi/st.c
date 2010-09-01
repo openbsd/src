@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.107 2010/08/30 02:47:56 matthew Exp $	*/
+/*	$OpenBSD: st.c,v 1.108 2010/09/01 01:38:12 dlg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ struct st_softc {
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
 
-	struct bufq *sc_bufq;
+	struct bufq sc_bufq;
 	struct timeout sc_timeout;
 	struct scsi_xshandler sc_xsh;
 };
@@ -331,7 +331,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	    &st->sc_xsh);
 	
 	/* Set up the buf queue for this device. */
-	st->sc_bufq = bufq_init(BUFQ_FIFO);
+	bufq_init(&st->sc_bufq, BUFQ_FIFO);
 
 	/* Start up with media position unknown. */
 	st->media_fileno = -1;
@@ -357,7 +357,7 @@ stactivate(struct device *self, int act)
 
 	case DVACT_DEACTIVATE:
 		st->flags |= ST_DYING;
-		bufq_drain(st->sc_bufq);
+		bufq_drain(&st->sc_bufq);
 		break;
 	}
 
@@ -370,7 +370,7 @@ stdetach(struct device *self, int flags)
 	struct st_softc *st = (struct st_softc *)self;
 	int bmaj, cmaj, mn;
 
-	bufq_drain(st->sc_bufq);
+	bufq_drain(&st->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = STUNIT(self->dv_unit);
@@ -390,7 +390,7 @@ stdetach(struct device *self, int flags)
 			vdevgone(cmaj, mn, mn + 3, VCHR);
 		}
 
-	bufq_destroy(st->sc_bufq);
+	bufq_destroy(&st->sc_bufq);
 
 	return (0);
 }
@@ -877,7 +877,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_QUEUE(st->sc_bufq, bp);
+	bufq_queue(&st->sc_bufq, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -922,13 +922,13 @@ ststart(struct scsi_xfer *xs)
 	    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
 		/* make sure that one implies the other.. */
 		sc_link->flags &= ~SDEV_MEDIA_LOADED;
-		bufq_drain(st->sc_bufq);
+		bufq_drain(&st->sc_bufq);
 		scsi_xs_put(xs);
 		return;
 	}
 
 	for (;;) {
-		bp = BUFQ_DEQUEUE(st->sc_bufq);
+		bp = bufq_dequeue(&st->sc_bufq);
 		if (bp == NULL) {
 			scsi_xs_put(xs);
 			return;
@@ -1041,7 +1041,7 @@ ststart(struct scsi_xfer *xs)
 	 */
 	if (ISSET(st->flags, ST_WAITING))
 		CLR(st->flags, ST_WAITING);
-	else if (BUFQ_PEEK(st->sc_bufq))
+	else if (bufq_peek(&st->sc_bufq))
 		scsi_xsh_add(&st->sc_xsh);
 }
 
@@ -1060,7 +1060,7 @@ st_buf_done(struct scsi_xfer *xs)
 
 	case XS_NO_CCB:
 		/* The adapter is busy, requeue the buf and try it later. */
-		BUFQ_REQUEUE(st->sc_bufq, bp);
+		bufq_requeue(&st->sc_bufq, bp);
 		scsi_xs_put(xs);
 		SET(st->flags, ST_WAITING); /* dont let ststart xsh_add */
 		timeout_add(&st->sc_timeout, 1);

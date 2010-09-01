@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.207 2010/08/31 16:34:38 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.208 2010/09/01 01:38:12 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -172,7 +172,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 * Initialize disk structures.
 	 */
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
+	bufq_init(&sc->sc_bufq, BUFQ_DEFAULT);
 
 	if ((sc_link->flags & SDEV_ATAPI) && (sc_link->flags & SDEV_REMOVABLE))
 		sc_link->quirks |= SDEV_NOSYNCCACHE;
@@ -302,7 +302,7 @@ sddetach(struct device *self, int flags)
 	struct sd_softc *sc = (struct sd_softc *)self;
 	int bmaj, cmaj, mn;
 
-	bufq_drain(sc->sc_bufq);
+	bufq_drain(&sc->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
@@ -319,7 +319,7 @@ sddetach(struct device *self, int flags)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
 	/* Detach disk. */
-	bufq_destroy(sc->sc_bufq);
+	bufq_destroy(&sc->sc_bufq);
 	disk_detach(&sc->sc_dk);
 
 	return (0);
@@ -574,7 +574,7 @@ sdstrategy(struct buf *bp)
 		goto done;
 
 	/* Place it in the queue of disk activities for this disk. */
-	BUFQ_QUEUE(sc->sc_bufq, bp);
+	bufq_queue(&sc->sc_bufq, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -676,12 +676,12 @@ sdstart(struct scsi_xfer *xs)
 		return;
 	}
 	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
-		bufq_drain(sc->sc_bufq);
+		bufq_drain(&sc->sc_bufq);
 		scsi_xs_put(xs);
 		return;
 	}
 
-	bp = BUFQ_DEQUEUE(sc->sc_bufq);
+	bp = bufq_dequeue(&sc->sc_bufq);
 	if (bp == NULL) {
 		scsi_xs_put(xs);
 		return;
@@ -732,7 +732,7 @@ sdstart(struct scsi_xfer *xs)
 	/* move onto the next io */
 	if (ISSET(sc->flags, SDF_WAITING))
 		CLR(sc->flags, SDF_WAITING);
-	else if (BUFQ_PEEK(sc->sc_bufq) != NULL)
+	else if (bufq_peek(&sc->sc_bufq) != NULL)
 		scsi_xsh_add(&sc->sc_xsh);
 }
 
@@ -753,7 +753,7 @@ sd_buf_done(struct scsi_xfer *xs)
 		/* The adapter is busy, requeue the buf and try it later. */
 		disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
 		    bp->b_flags & B_READ);
-		BUFQ_REQUEUE(sc->sc_bufq, bp);
+		bufq_requeue(&sc->sc_bufq, bp);
 		scsi_xs_put(xs);
 		SET(sc->flags, SDF_WAITING);
 		timeout_add(&sc->sc_timeout, 1);

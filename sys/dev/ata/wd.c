@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.90 2010/08/31 17:00:32 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.91 2010/09/01 01:38:12 dlg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -116,7 +116,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct bufq	*sc_bufq;
+	struct bufq sc_bufq;
 
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
@@ -361,7 +361,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	 * Initialize disk structures.
 	 */
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
-	wd->sc_bufq = bufq_init(BUFQ_DEFAULT);
+	bufq_init(&wd->sc_bufq, BUFQ_DEFAULT);
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
 	if (wd->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
@@ -416,7 +416,7 @@ wddetach(struct device *self, int flags)
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
-	while ((bp = BUFQ_DEQUEUE(sc->sc_bufq)) != NULL) {
+	while ((bp = bufq_dequeue(&sc->sc_bufq)) != NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -438,7 +438,7 @@ wddetach(struct device *self, int flags)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
 	/* Detach disk. */
-	bufq_destroy(sc->sc_bufq);
+	bufq_destroy(&sc->sc_bufq);
 	disk_detach(&sc->sc_dk);
 
 	return (0);
@@ -489,7 +489,7 @@ wdstrategy(struct buf *bp)
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
 	/* Queue transfer on drive, activate drive and controller if idle. */
-	BUFQ_QUEUE(wd->sc_bufq, bp);
+	bufq_queue(&wd->sc_bufq, bp);
 	s = splbio();
 	wdstart(wd);
 	splx(s);
@@ -521,7 +521,7 @@ wdstart(void *arg)
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		if ((bp = BUFQ_DEQUEUE(wd->sc_bufq)) == NULL)
+		if ((bp = bufq_dequeue(&wd->sc_bufq)) == NULL)
 			return;
 		/*
 		 * Make the command. First lock the device

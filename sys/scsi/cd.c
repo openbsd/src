@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.184 2010/08/31 16:41:24 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.185 2010/09/01 01:38:12 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct cd_softc {
 		u_int32_t blksize;
 		daddr64_t disksize;	/* total number sectors */
 	} sc_params;
-	struct bufq	*sc_bufq;
+	struct bufq	sc_bufq;
 	struct scsi_xshandler sc_xsh;
 	struct timeout sc_timeout;
 	void *sc_cdpwrhook;		/* our power hook */
@@ -219,7 +219,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	 * Initialize disk structures.
 	 */
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
+	bufq_init(&sc->sc_bufq, BUFQ_DEFAULT);
 
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
@@ -263,7 +263,7 @@ cdactivate(struct device *self, int act)
 		break;			
 	case DVACT_DEACTIVATE:
 		sc->sc_flags |= CDF_DYING;
-		bufq_drain(sc->sc_bufq);
+		bufq_drain(&sc->sc_bufq);
 		break;
 	}
 	return (rv);
@@ -294,7 +294,7 @@ cddetach(struct device *self, int flags)
 	struct cd_softc *sc = (struct cd_softc *)self;
 	int bmaj, cmaj, mn;
 
-	bufq_drain(sc->sc_bufq);
+	bufq_drain(&sc->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
@@ -311,7 +311,7 @@ cddetach(struct device *self, int flags)
 		powerhook_disestablish(sc->sc_cdpwrhook);
 
 	/* Detach disk. */
-	bufq_destroy(sc->sc_bufq);
+	bufq_destroy(&sc->sc_bufq);
 	disk_detach(&sc->sc_dk);
 
 	return (0);
@@ -556,7 +556,7 @@ cdstrategy(struct buf *bp)
 		goto done;
 
 	/* Place it in the queue of disk activities for this disk. */
-	BUFQ_QUEUE(sc->sc_bufq, bp);	
+	bufq_queue(&sc->sc_bufq, bp);	
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -622,12 +622,12 @@ cdstart(struct scsi_xfer *xs)
 	 * re-opened
 	 */
 	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-		bufq_drain(sc->sc_bufq);
+		bufq_drain(&sc->sc_bufq);
 		scsi_xs_put(xs);
 		return;
 	}
 
-	bp = BUFQ_DEQUEUE(sc->sc_bufq);
+	bp = bufq_dequeue(&sc->sc_bufq);
 	if (bp == NULL) {
 		scsi_xs_put(xs);
  		return;
@@ -691,7 +691,7 @@ cdstart(struct scsi_xfer *xs)
 
 	if (ISSET(sc->sc_flags, CDF_WAITING))
 		CLR(sc->sc_flags, CDF_WAITING);
-	else if (BUFQ_PEEK(sc->sc_bufq))
+	else if (bufq_peek(&sc->sc_bufq))
 		scsi_xsh_add(&sc->sc_xsh);
 }
 
@@ -712,7 +712,7 @@ cd_buf_done(struct scsi_xfer *xs)
 		/* The adapter is busy, requeue the buf and try it later. */
 		disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
 		    bp->b_flags & B_READ);
-		BUFQ_REQUEUE(sc->sc_bufq, bp);
+		bufq_requeue(&sc->sc_bufq, bp);
 		scsi_xs_put(xs);
 		SET(sc->sc_flags, CDF_WAITING);
 		timeout_add(&sc->sc_timeout, 1);
