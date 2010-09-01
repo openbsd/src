@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.49 2010/06/29 21:12:01 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.50 2010/09/01 04:44:26 dlg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ struct scsi_inquiry {
 #define SI_PG_SUPPORTED	0x00
 #define SI_PG_SERIAL	0x80
 #define SI_PG_DEVID	0x83
+#define SI_PG_ATA	0x89
 	u_int8_t length[2];
 	u_int8_t control;
 };
