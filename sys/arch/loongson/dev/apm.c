@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.5 2010/08/31 17:35:12 pirofti Exp $	*/
+/*	$OpenBSD: apm.c,v 1.6 2010/09/01 13:10:42 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -87,6 +87,7 @@ int filt_apmread(struct knote *kn, long hint);
 int apmkqfilter(dev_t dev, struct knote *kn);
 int apm_getdefaultinfo(struct apm_power_info *);
 
+int apm_saved_spl;
 int apm_suspend(void);
 int apm_resume(void);
 
@@ -371,16 +372,13 @@ apm_record_event(u_int event, const char *src, const char *msg)
 int
 apm_suspend()
 {
-	int s;
-
 #if NSWDISPLAY > 0
 	wsdisplay_suspend();
 #endif
 	bufq_quiesce();
 
-	s = splhigh();
+	apm_saved_spl = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
-	splx(s);
 
 	if (cold)
 		vfs_syncwait(0);
@@ -391,13 +389,12 @@ apm_suspend()
 int
 apm_resume()
 {
-	int s, rv;
+	int rv;
 
-	s = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
-	splx(s);
 
 	rv = sys_platform->resume();
+	splx(apm_saved_spl);
 
 	bufq_restart();
 #if NWSDISPLAY > 0

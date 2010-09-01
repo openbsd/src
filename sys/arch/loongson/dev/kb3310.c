@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.13 2010/08/31 12:22:38 miod Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.14 2010/09/01 13:10:42 pirofti Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -93,7 +93,6 @@ struct ykbec_softc {
 
 static struct ykbec_softc *ykbec_sc;
 static int ykbec_chip_config;
-static int ykbec_apmspl;
 
 extern void loongson_set_isa_imr(uint);
 
@@ -446,9 +445,6 @@ ykbec_suspend()
 	struct ykbec_softc *sc = ykbec_sc;
 	int ctrl;
 
-	/* IRQ */
-	DPRINTF(("IRQ\n"));
-	ykbec_apmspl = splhigh();
 	/* enable isa irq 1 and 12 (PS/2 input devices) */
 	loongson_set_isa_imr((1 << 1) | (1 << 12));
 
@@ -481,10 +477,6 @@ int
 ykbec_resume()
 {
 	struct ykbec_softc *sc = ykbec_sc;
-
-	/* IRQ */
-	DPRINTF(("IRQ\n"));
-	splx(ykbec_apmspl);
 
 	/* CPU */
 	DPRINTF(("CPU\n"));
