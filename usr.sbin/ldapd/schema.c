@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.8 2010/07/02 05:23:40 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.9 2010/09/01 18:30:48 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1170,7 +1170,7 @@ schema_dump_attribute(struct attr_type *at, char *buf, size_t size)
 		return -1;
 
 	if (at->desc != NULL)
-		if (strlcat(buf, " DESC ", size) >= size ||
+		if (strlcat(buf, " DESC '", size) >= size ||
 		    strlcat(buf, at->desc, size) >= size ||
 		    strlcat(buf, "'", size) >= size)
 			return -1;
