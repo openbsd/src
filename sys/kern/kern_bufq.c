@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.15 2010/09/01 01:38:12 dlg Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.16 2010/09/01 19:23:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -244,7 +244,11 @@ bufq_quiesce(void)
 	mtx_enter(&bufqs_mtx);
 	bufqs_stop = 1;
 	mtx_leave(&bufqs_mtx);
-	SLIST_FOREACH(bq, &bufqs, bufq_entries) { /* XXX */
+	/*
+	 * We can safely walk the list since it can't be modified as
+	 * long as bufqs_stop is non-zero.
+	 */
+	SLIST_FOREACH(bq, &bufqs, bufq_entries) {
 		mtx_enter(&bq->bufq_mtx);
 		bq->bufq_stop = 1;
 		while (bq->bufq_outstanding) {
