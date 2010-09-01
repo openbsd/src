@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.29 2010/07/26 09:27:14 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.30 2010/09/01 12:13:21 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -89,7 +89,7 @@ struct page {				/* represents an on-disk page */
 #define NUMKEYSP(p)	 (((p)->lower - PAGEHDRSZ) >> 1)
 #define NUMKEYS(mp)	 (((mp)->page->lower - PAGEHDRSZ) >> 1)
 #define SIZELEFT(mp)	 (indx_t)((mp)->page->upper - (mp)->page->lower)
-#define PAGEFILL(bt, mp) ((float)((bt)->head.psize - PAGEHDRSZ - SIZELEFT(mp)) / \
+#define PAGEFILL(bt, mp) (1000 * ((bt)->head.psize - PAGEHDRSZ - SIZELEFT(mp)) / \
 				((bt)->head.psize - PAGEHDRSZ))
 #define IS_LEAF(mp)	 F_ISSET((mp)->page->flags, P_LEAF)
 #define IS_BRANCH(mp)	 F_ISSET((mp)->page->flags, P_BRANCH)
@@ -2434,7 +2434,7 @@ btree_merge(struct btree *bt, struct mpage *src, struct mpage *dst)
 	}
 
 	DPRINTF("dst page %u now has %lu keys (%.1f%% filled)",
-	    dst->pgno, NUMKEYS(dst), PAGEFILL(bt, dst) * 100);
+	    dst->pgno, NUMKEYS(dst), (float)PAGEFILL(bt, dst) / 10);
 
 	/* Unlink the src page from parent.
 	 */
@@ -2457,7 +2457,7 @@ btree_merge(struct btree *bt, struct mpage *src, struct mpage *dst)
 	return btree_rebalance(bt, src->parent);
 }
 
-#define FILL_THRESHOLD	 0.25
+#define FILL_THRESHOLD	 250
 
 static int
 btree_rebalance(struct btree *bt, struct mpage *mp)
@@ -2474,7 +2474,7 @@ btree_rebalance(struct btree *bt, struct mpage *mp)
 
 	DPRINTF("rebalancing %s page %u (has %lu keys, %.1f%% full)",
 	    IS_LEAF(mp) ? "leaf" : "branch",
-	    mp->pgno, NUMKEYS(mp), PAGEFILL(bt, mp) * 100);
+	    mp->pgno, NUMKEYS(mp), (float)PAGEFILL(bt, mp) / 10);
 
 	if (PAGEFILL(bt, mp) >= FILL_THRESHOLD) {
 		DPRINTF("no need to rebalance page %u, above fill threshold",
@@ -2539,7 +2539,7 @@ btree_rebalance(struct btree *bt, struct mpage *mp)
 	neighbor->parent = parent;
 
 	DPRINTF("found neighbor page %u (%lu keys, %.1f%% full)",
-	    neighbor->pgno, NUMKEYS(neighbor), PAGEFILL(bt, neighbor) * 100);
+	    neighbor->pgno, NUMKEYS(neighbor), (float)PAGEFILL(bt, neighbor) / 10);
 
 	/* If the neighbor page is above threshold and has at least two
 	 * keys, move one key from it.
