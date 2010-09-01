@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.108 2010/09/01 01:38:12 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.109 2010/09/01 23:24:03 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -2036,6 +2036,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		 * If no data was transferred, return immediately
 		 */
 		if (xs->resid >= xs->datalen) {
+			xs->resid = xs->datalen;
 			if (st->flags & ST_EIO_PENDING)
 				return EIO;
 			if (st->flags & ST_AT_FILEMARK) {
