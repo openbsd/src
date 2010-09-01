@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.4 2010/01/02 21:29:56 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.5 2010/09/01 13:54:54 claudio Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2010 $
+.Dd $Mdocdate: September 1 2010 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ Global settings concerns the main behaviour of the daemon.
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic lfib-update
+.Ic fib-update
 .Pq Ic yes Ns \&| Ns Ic no
 .Xc
 If set to

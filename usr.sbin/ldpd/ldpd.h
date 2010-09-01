@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.24 2010/07/08 09:41:05 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.25 2010/09/01 13:54:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -46,7 +46,7 @@
 #define	MAX_RTSOCK_BUF		128 * 1024
 #define	LDP_BACKLOG		128
 
-#define	LDPD_FLAG_NO_LFIB_UPDATE	0x0001
+#define	LDPD_FLAG_NO_FIB_UPDATE	0x0001
 
 #define	F_LDPD_INSERTED		0x0001
 #define	F_CONNECTED		0x0002
@@ -75,8 +75,8 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE,
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_LIB,
-	IMSG_CTL_LFIB_COUPLE,
-	IMSG_CTL_LFIB_DECOUPLE,
+	IMSG_CTL_FIB_COUPLE,
+	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_KROUTE,
 	IMSG_CTL_KROUTE_ADDR,
 	IMSG_CTL_IFINFO,
@@ -393,8 +393,8 @@ int		 kr_init(int);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);
-void		 kr_lfib_couple(void);
-void		 kr_lfib_decouple(void);
+void		 kr_fib_couple(void);
+void		 kr_fib_decouple(void);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);

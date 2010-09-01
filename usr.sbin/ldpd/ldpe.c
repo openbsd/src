@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.11 2010/07/08 09:41:05 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.12 2010/09/01 13:54:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -51,7 +51,6 @@ void	 recv_packet(int, short, void *);
 struct ldpd_conf	*leconf = NULL, *nconf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_lde;
-int			 oe_nofib;
 
 /* ARGSUSED */
 void
@@ -143,8 +142,6 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	session_socket_blockmode(xconf->ldp_session_socket, BM_NONBLOCK);
 
 	leconf = xconf;
-	if (leconf->flags & LDPD_FLAG_NO_LFIB_UPDATE)
-		oe_nofib = 1;
 
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
 		fatal("getpwnam");
@@ -506,15 +503,6 @@ u_int32_t
 ldpe_router_id(void)
 {
 	return (leconf->rtr_id.s_addr);
-}
-
-void
-ldpe_fib_update(int type)
-{
-	if (type == IMSG_CTL_LFIB_COUPLE)
-		oe_nofib = 0;
-	if (type == IMSG_CTL_LFIB_DECOUPLE)
-		oe_nofib = 1;
 }
 
 void

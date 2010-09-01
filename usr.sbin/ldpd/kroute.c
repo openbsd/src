@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.20 2010/07/12 14:35:13 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.21 2010/09/01 13:54:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -272,7 +272,7 @@ kr_delete(struct kroute *kroute)
 void
 kr_shutdown(void)
 {
-	kr_lfib_decouple();
+	kr_fib_decouple();
 
 	if (flag_all_routers) {
 		kr_state.fib_sync = 1;	/* force removal of mulitcast route */
@@ -285,7 +285,7 @@ kr_shutdown(void)
 }
 
 void
-kr_lfib_couple(void)
+kr_fib_couple(void)
 {
 	struct kroute_node	*kr;
 
@@ -309,7 +309,7 @@ kr_lfib_couple(void)
 }
 
 void
-kr_lfib_decouple(void)
+kr_fib_decouple(void)
 {
 	struct kroute_node	*kr;
 	u_int32_t		 rl;
