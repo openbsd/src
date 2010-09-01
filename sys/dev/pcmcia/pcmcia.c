@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.41 2010/08/31 17:13:47 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.42 2010/09/01 11:45:42 miod Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -248,7 +248,8 @@ pcmcia_card_attach(dev)
 		if (pf->child) {
 			attached++;
 
-			if ((pf->pf_flags & PFF_FAKE) == 0)
+			if ((pf->pf_flags & (PFF_FAKE | PFF_ENABLED)) ==
+			    PFF_ENABLED)
 				DPRINTF(("%s: function %d CCR at %d offset %lx"
 					": %x %x %x %x, %x %x %x %x, %x\n",
 					sc->dev.dv_xname, pf->number,
