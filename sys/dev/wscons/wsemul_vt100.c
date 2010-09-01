@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.26 2009/09/05 14:49:20 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.27 2010/09/01 21:17:16 nicm Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -396,7 +396,6 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 		break;
 	case ASCII_CR:
 		edp->ccol = 0;
-		edp->flags &= ~VTFL_LASTCHAR;
 		break;
 	case ASCII_HT:
 		if (edp->tabs) {
@@ -461,6 +460,9 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 		rc = wsemul_vt100_nextline(edp);
 		break;
 	}
+
+	if (COLS_LEFT != 0)
+		edp->flags &= ~VTFL_LASTCHAR;
 
 	return rc;
 }
@@ -593,6 +595,9 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 		break;
 	}
+
+	if (COLS_LEFT != 0)
+		edp->flags &= ~VTFL_LASTCHAR;
 
 	if (rc != 0)
 		return rc;
@@ -933,6 +938,9 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	}
 
+	if (COLS_LEFT != 0)
+		edp->flags &= ~VTFL_LASTCHAR;
+
 	edp->state = VT100_EMUL_STATE_NORMAL;
 	return 0;
 }
@@ -982,6 +990,9 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 		newstate = VT100_EMUL_STATE_NORMAL;
 		break;
 	}
+
+	if (COLS_LEFT != 0)
+		edp->flags &= ~VTFL_LASTCHAR;
 
 	edp->state = newstate;
 	return 0;
