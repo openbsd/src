@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.5 2010/07/01 02:19:11 martinh Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.6 2010/09/01 17:34:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -39,7 +39,7 @@
 void		 usage(void);
 void		 ldapd_sig_handler(int fd, short why, void *data);
 void		 ldapd_sigchld_handler(int sig, short why, void *data);
-void		 ldapd_dispatch_ldape(int fd, short event, void *ptr);
+static void	 ldapd_imsgev(struct imsgev *iev, int code, struct imsg *imsg);
 static void	 ldapd_auth_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_open_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_log_verbose(struct imsg *imsg);
@@ -217,9 +217,7 @@ main(int argc, char *argv[])
 
 	if ((iev_ldape = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("calloc");
-	imsg_init(&iev_ldape->ibuf, pipe_parent2ldap[0]);
-	iev_ldape->handler = ldapd_dispatch_ldape;
-	imsg_event_add(iev_ldape);
+	imsgev_init(iev_ldape, pipe_parent2ldap[0], NULL, ldapd_imsgev);
 
 	event_dispatch();
 	log_debug("ldapd: exiting");
@@ -227,97 +225,38 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-void
-imsg_event_add(struct imsgev *iev)
+static void
+ldapd_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 {
-	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
-		iev->events |= EV_WRITE;
-
-	if (event_initialized(&iev->ev))
-		event_del(&iev->ev);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
-	event_add(&iev->ev, NULL);
-}
-
-int
-imsg_compose_event(struct imsgev *iev, u_int16_t type,
-    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
-{
-	int     ret;
-
-	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
-	    pid, fd, data, datalen)) != -1)
-		imsg_event_add(iev);
-	return (ret);
-}
-
-int
-imsg_event_handle(struct imsgev *iev, short event)
-{
-	ssize_t			 n = 0;
-
-	if ((event & ~(EV_READ | EV_WRITE)) != 0)
-		fatalx("unknown event");
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(&iev->ibuf)) == -1)
-			fatal("imsg_read error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return -1;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&iev->ibuf.w) == -1)
-			fatal("msgbuf_write");
-		imsg_event_add(iev);
-	}
-
-	return (n == 0) ? 1 : 0;
-}
-
-void
-ldapd_dispatch_ldape(int fd, short event, void *ptr)
-{
-	struct imsgev		*iev = ptr;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	if (imsg_event_handle(iev, event) != 0)
-		return;
-
-	ibuf = &iev->ibuf;
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ldapd_dispatch_ldape: imsg_read error");
-		if (n == 0)
-			break;
-
-		log_debug("ldapd_dispatch_ldape: imsg type %u", imsg.hdr.type);
-
-		switch (imsg.hdr.type) {
+	switch (code) {
+	case IMSGEV_IMSG:
+		log_debug("%s: got imsg %i on fd %i",
+		    __func__, imsg->hdr.type, iev->ibuf.fd);
+		switch (imsg->hdr.type) {
 		case IMSG_LDAPD_AUTH:
-			ldapd_auth_request(iev, &imsg);
+			ldapd_auth_request(iev, imsg);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			ldapd_log_verbose(&imsg);
+			ldapd_log_verbose(imsg);
 			break;
 		case IMSG_LDAPD_OPEN:
-			ldapd_open_request(iev, &imsg);
+			ldapd_open_request(iev, imsg);
 			break;
 		default:
-			log_debug("ldapd_dispatch_ldape: unexpected imsg %d",
-			    imsg.hdr.type);
+			log_debug("%s: unexpected imsg %d",
+			    __func__, imsg->hdr.type);
 			break;
 		}
-		imsg_free(&imsg);
+		break;
+	case IMSGEV_EREAD:
+	case IMSGEV_EWRITE:
+	case IMSGEV_EIMSG:
+		fatal("imsgev read/write error");
+		break;
+	case IMSGEV_DONE:
+		event_loopexit(NULL);
+		break;
 	}
-	imsg_event_add(iev);
 }
 
 static void
@@ -338,7 +277,7 @@ ldapd_auth_request(struct imsgev *iev, struct imsg *imsg)
 	ares.fd = areq->fd;
 	ares.msgid = areq->msgid;
 	bzero(areq, sizeof(*areq));
-	imsg_compose_event(iev, IMSG_LDAPD_AUTH_RESULT, 0, 0, -1, &ares,
+	imsgev_compose(iev, IMSG_LDAPD_AUTH_RESULT, 0, 0, -1, &ares,
 	    sizeof(ares));
 }
 
@@ -350,7 +289,7 @@ ldapd_log_verbose(struct imsg *imsg)
 	if (imsg->hdr.len != sizeof(verbose) + IMSG_HEADER_SIZE)
 		fatal("invalid size of log verbose request");
 
-	memcpy(&verbose, imsg->data, sizeof(verbose));
+	bcopy(imsg->data, &verbose, sizeof(verbose));
 	log_verbose(verbose);
 }
 
@@ -381,7 +320,7 @@ ldapd_open_request(struct imsgev *iev, struct imsg *imsg)
 	if (fd == -1)
 		log_warn("%s", oreq->path);
 
-	imsg_compose_event(iev, IMSG_LDAPD_OPEN_RESULT, 0, 0, fd, oreq,
+	imsgev_compose(iev, IMSG_LDAPD_OPEN_RESULT, 0, 0, fd, oreq,
 	    sizeof(*oreq));
 }
 

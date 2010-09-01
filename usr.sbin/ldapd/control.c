@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2010/07/06 20:10:57 martinh Exp $	*/
+/*	$OpenBSD: control.c,v 1.6 2010/09/01 17:34:15 martinh Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -43,6 +43,7 @@ struct ctl_connlist ctl_conns;
 
 struct ctl_conn	*control_connbyfd(int);
 void		 control_close(int);
+static void	 control_imsgev(struct imsgev *iev, int code, struct imsg *imsg);
 
 void
 control_init(struct control_sock *cs)
@@ -140,14 +141,9 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 	}
 
-	imsg_init(&c->iev.ibuf, connfd);
-	c->iev.handler = control_dispatch_imsg;
-	c->iev.events = EV_READ;
-	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
-	    c->iev.handler, cs);
-	event_add(&c->iev.ev, NULL);
-
+	log_debug("accepted control fd %i", connfd);
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
+	imsgev_init(&c->iev, connfd, cs, control_imsgev);
 }
 
 struct ctl_conn *
@@ -172,11 +168,9 @@ control_close(int fd)
 		return;
 	}
 
-	msgbuf_clear(&c->iev.ibuf.w);
+	log_debug("close control fd %i", c->iev.ibuf.fd);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
-
-	event_del(&c->iev.ev);
-	close(c->iev.ibuf.fd);
+	imsgev_clear(&c->iev);
 	free(c);
 }
 
@@ -187,7 +181,7 @@ send_stats(struct imsgev *iev)
 	const struct btree_stat	*st;
 	struct ns_stat		 nss;
 
-	imsg_compose(&iev->ibuf, IMSG_CTL_STATS, 0, iev->ibuf.pid, -1,
+	imsgev_compose(iev, IMSG_CTL_STATS, 0, iev->ibuf.pid, -1,
 	    &stats, sizeof(stats));
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
@@ -201,97 +195,56 @@ send_stats(struct imsgev *iev)
 		if ((st = btree_stat(ns->indx_db)) != NULL)
 			bcopy(st, &nss.indx_stat, sizeof(nss.indx_stat));
 
-		imsg_compose(&iev->ibuf, IMSG_CTL_NSSTATS, 0, iev->ibuf.pid, -1,
+		imsgev_compose(iev, IMSG_CTL_NSSTATS, 0, iev->ibuf.pid, -1,
 		    &nss, sizeof(nss));
 	}
 
-	imsg_compose(&iev->ibuf, IMSG_CTL_END, 0, iev->ibuf.pid, -1, NULL, 0);
+	imsgev_compose(iev, IMSG_CTL_END, 0, iev->ibuf.pid, -1, NULL, 0);
 
 	return 0;
 }
 
-/* ARGSUSED */
-void
-control_dispatch_imsg(int fd, short event, void *arg)
+static void
+control_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 {
-	int			 n, verbose;
-	struct control_sock	*cs = arg;
+	struct control_sock	*cs;
 	struct ctl_conn		*c;
-	struct imsg		 imsg;
+	int			 fd, verbose;
+
+	cs = iev->data;
+	fd = iev->ibuf.fd;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warnx("control_dispatch_imsg: fd %d: not found", fd);
+		log_warnx("%s: fd %d: not found", __func__, fd);
 		return;
 	}
 
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&c->iev.ibuf.w) < 0) {
-			control_close(fd);
-			return;
-		}
-		imsg_event_add(&c->iev);
-	}
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
-			control_close(fd);
-			return;
-		}
-	} else
+	if (code != IMSGEV_IMSG) {
+		control_close(fd);
 		return;
-
-	for (;;) {
-		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
-			control_close(fd);
-			return;
-		}
-
-		if (n == 0)
-			break;
-
-		log_debug("control_dispatch_imsg: imsg type %u", imsg.hdr.type);
-
-		if (cs->cs_restricted || (c->flags & CTL_CONN_LOCKED)) {
-			switch (imsg.hdr.type) {
-			case IMSG_CTL_STATS:
-				break;
-			default:
-				log_debug("control_dispatch_imsg: "
-				    "client requested restricted command");
-				imsg_free(&imsg);
-				control_close(fd);
-				return;
-			}
-		}
-
-		switch (imsg.hdr.type) {
-		case IMSG_CTL_STATS:
-			if (send_stats(&c->iev) == -1) {
-				log_debug("control_dispatch_imsg: "
-				    "failed to send statistics");
-				imsg_free(&imsg);
-				control_close(fd);
-				return;
-			}
-			break;
-		case IMSG_CTL_LOG_VERBOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(verbose))
-				break;
-
-			bcopy(imsg.data, &verbose, sizeof(verbose));
-			imsg_compose_event(iev_ldapd, IMSG_CTL_LOG_VERBOSE,
-			    0, 0, -1, &verbose, sizeof(verbose));
-
-			log_verbose(verbose);
-			break;
-		default:
-			log_debug("control_dispatch_imsg: "
-			    "error handling imsg %d", imsg.hdr.type);
-			break;
-		}
-		imsg_free(&imsg);
 	}
 
-	imsg_event_add(&c->iev);
+	log_debug("%s: got imsg %i on fd %i", __func__, imsg->hdr.type, fd);
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_STATS:
+		if (send_stats(iev) == -1) {
+			log_debug("%s: failed to send statistics", __func__);
+			control_close(fd);
+		}
+		break;
+	case IMSG_CTL_LOG_VERBOSE:
+		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(verbose))
+			break;
+
+		bcopy(imsg->data, &verbose, sizeof(verbose));
+		imsgev_compose(iev_ldapd, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
+		    &verbose, sizeof(verbose));
+
+		log_verbose(verbose);
+		break;
+	default:
+		log_warnx("%s: unexpected imsg %d", __func__, imsg->hdr.type);
+		break;
+	}
 }
 

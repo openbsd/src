@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.17 2010/07/10 14:27:15 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.18 2010/09/01 17:34:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -35,6 +35,7 @@
 #include "aldap.h"
 #include "schema.h"
 #include "btree.h"
+#include "imsgev.h"
 
 #define CONFFILE		 "/etc/ldapd.conf"
 #define LDAPD_USER		 "_ldapd"
@@ -297,14 +298,6 @@ struct ns_stat {
 	char			 suffix[256];
 	struct btree_stat	 data_stat;
 	struct btree_stat	 indx_stat;
-};
-
-struct imsgev {
-	struct imsgbuf		 ibuf;
-	void			(*handler)(int, short, void *);
-	struct event		 ev;
-	void			*data;
-	short			 events;
 };
 
 struct ctl_conn {

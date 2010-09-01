@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.12 2010/07/10 14:27:15 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.13 2010/09/01 17:34:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -33,9 +33,10 @@
 #include "ldapd.h"
 
 void			 ldape_sig_handler(int fd, short why, void *data);
-void			 ldape_dispatch_ldapd(int fd, short event, void *ptr);
 static void		 ldape_auth_result(struct imsg *imsg);
 static void		 ldape_open_result(struct imsg *imsg);
+static void		 ldape_imsgev(struct imsgev *iev, int code,
+			    struct imsg *imsg);
 
 int			 ldap_starttls(struct request *req);
 void			 send_ldap_extended_response(struct conn *conn,
@@ -364,9 +365,7 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	/* Initialize parent imsg events. */
 	if ((iev_ldapd = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("calloc");
-	imsg_init(&iev_ldapd->ibuf, pipe_parent2ldap[1]);
-	iev_ldapd->handler = ldape_dispatch_ldapd;
-	imsg_event_add(iev_ldapd);
+	imsgev_init(iev_ldapd, pipe_parent2ldap[1], NULL, ldape_imsgev);
 
 	/* Initialize control socket. */
 	bzero(&csock, sizeof(csock));
@@ -444,39 +443,35 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	_exit(0);
 }
 
-void
-ldape_dispatch_ldapd(int fd, short event, void *ptr)
+static void
+ldape_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 {
-	struct imsgev		*iev = ptr;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	if (imsg_event_handle(iev, event) != 0)
-		return;
-
-	ibuf = &iev->ibuf;
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ldape_dispatch_ldapd: imsg_read error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
+	switch (code) {
+	case IMSGEV_IMSG:
+		log_debug("%s: got imsg %i on fd %i",
+		    __func__, imsg->hdr.type, iev->ibuf.fd);
+		switch (imsg->hdr.type) {
 		case IMSG_LDAPD_AUTH_RESULT:
-			ldape_auth_result(&imsg);
+			ldape_auth_result(imsg);
 			break;
 		case IMSG_LDAPD_OPEN_RESULT:
-			ldape_open_result(&imsg);
+			ldape_open_result(imsg);
 			break;
 		default:
-			log_debug("ldape_dispatch_ldapd: unexpected imsg %d",
-			    imsg.hdr.type);
+			log_debug("%s: unexpected imsg %d",
+			    __func__, imsg->hdr.type);
 			break;
 		}
-		imsg_free(&imsg);
+		break;
+	case IMSGEV_EREAD:
+	case IMSGEV_EWRITE:
+	case IMSGEV_EIMSG:
+		fatal("imsgev read/write error");
+		break;
+	case IMSGEV_DONE:
+		event_loopexit(NULL);
+		break;
 	}
-	imsg_event_add(iev);
 }
 
 static void
