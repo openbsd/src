@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.36 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.37 2010/09/01 19:14:25 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ vgafb_mmap(void *v, off_t offset, int prot)
 		else if (offset >= 0x10040000 && offset < 0x10080000)
 			/* 256KB of iohc */
 			h = vc->vc_ioh_c;
-		else if (offset >= 0x18880000 && offset < 0x100c0000)
+		else if (offset >= 0x10080000 && offset < 0x100c0000)
 			/* 256KB of iohd */
 			h = vc->vc_ioh_d;
 		else if (offset >= 0x20000000 && offset < 0x20000000+vc->mmiosize)
@@ -374,7 +374,6 @@ vgafb_mmap(void *v, off_t offset, int prot)
 		    (offset < vc->mmiobase+vc->mmiosize)) {
 			/* allow mmapping of mmio space */
 			h = offset;
-			
 		} else {
 			h = -1;
 		}
