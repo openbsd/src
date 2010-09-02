@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.298 2010/07/31 11:37:37 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.299 2010/09/02 00:21:41 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1212,8 +1212,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 				return (-1);
 			if (rf->rf_head != NULL)
 				xfree(rf->rf_head);
-			rf->rf_head = rcsnum_alloc();
-			rcsnum_cpy(rev, rf->rf_head, 0);
+			rf->rf_head = rev;
 		} else if (rf->rf_head == NULL) {
 			return (-1);
 		} else {
