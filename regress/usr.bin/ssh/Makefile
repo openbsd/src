@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.55 2010/08/31 12:24:25 djm Exp $
+#	$OpenBSD: Makefile,v 1.56 2010/09/02 16:12:55 markus Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
 
@@ -46,6 +46,7 @@ LTESTS= 	connect \
 		localcommand \
 		forcecommand \
 		portnum \
+		keytype \
 		cert-hostkey \
 		cert-userkey
 
