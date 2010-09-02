@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.25 2010/09/01 13:54:54 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.26 2010/09/02 14:34:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -144,12 +144,9 @@ enum iface_type {
 #define	NBR_STA_OPENREC		0x0008
 #define	NBR_STA_OPENSENT	0x0010
 #define	NBR_STA_OPER		0x0020
-#define	NBR_STA_ACTIVE		(~NBR_STA_DOWN)
-#define	NBR_STA_SESSION		(NBR_STA_PRESENT | NBR_STA_PRESENT | \
-				NBR_STA_INITIAL | NBR_STA_OPENREC | \
-				NBR_STA_OPER | NBR_STA_OPENSENT | \
-				NBR_STA_ACTIVE)
-#define	NBR_STA_UP		(NBR_STA_PRESENT | NBR_STA_SESSION)
+#define	NBR_STA_SESSION		(NBR_STA_PRESENT | NBR_STA_INITIAL | \
+				NBR_STA_OPENREC | NBR_STA_OPENSENT | \
+				NBR_STA_OPER)
 
 /* neighbor events */
 enum nbr_event {

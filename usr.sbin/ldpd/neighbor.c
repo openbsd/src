@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.18 2010/06/30 01:47:11 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.19 2010/09/02 14:34:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -67,7 +67,7 @@ struct {
     /* current state	event that happened	action to take		resulting state */
 /* Discovery States */
     {NBR_STA_DOWN,	NBR_EVT_HELLO_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_PRESENT},
-    {NBR_STA_UP,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	0},
+    {NBR_STA_SESSION,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	0},
 /* Passive Role */
     {NBR_STA_PRESENT,	NBR_EVT_SESSION_UP,	NBR_ACT_SESSION_EST,	NBR_STA_INITIAL},
     {NBR_STA_INITIAL,	NBR_EVT_INIT_RCVD,	NBR_ACT_INIT_SEND,	NBR_STA_OPENREC},
@@ -79,7 +79,7 @@ struct {
     {NBR_STA_OPER,	NBR_EVT_PDU_RCVD,	NBR_ACT_RST_KTIMEOUT,	0},
 /* Session Close */
     {NBR_STA_SESSION,	NBR_EVT_CLOSE_SESSION,	NBR_ACT_CLOSE_SESSION,	NBR_STA_PRESENT},
-    {NBR_STA_UP,	NBR_EVT_DOWN,		NBR_ACT_CLOSE_SESSION,	},
+    {NBR_STA_SESSION,	NBR_EVT_DOWN,		NBR_ACT_CLOSE_SESSION,	},
     {-1,		NBR_EVT_NOTHING,	NBR_ACT_NOTHING,	0},
 };
 
@@ -308,7 +308,7 @@ nbr_find_peerid(u_int32_t peerid)
 struct nbr *
 nbr_find_ip(struct iface *iface, u_int32_t rtr_id)
 {
-	struct nbr	*nbr = NULL;
+	struct nbr	*nbr;
 
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr->addr.s_addr == rtr_id)
@@ -321,7 +321,7 @@ nbr_find_ip(struct iface *iface, u_int32_t rtr_id)
 struct nbr *
 nbr_find_ldpid(struct iface *iface, u_int32_t rtr_id, u_int16_t lspace)
 {
-	struct nbr	*nbr = NULL;
+	struct nbr	*nbr;
 
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr->id.s_addr == rtr_id && nbr->lspace == lspace)
