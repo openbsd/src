@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.591 2010/08/03 18:42:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.592 2010/09/02 14:01:04 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -152,7 +152,7 @@ enum	{ PF_STATE_OPT_MAX, PF_STATE_OPT_NOSYNC, PF_STATE_OPT_SRCTRACK,
 	    PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_CONN,
 	    PF_STATE_OPT_MAX_SRC_CONN_RATE, PF_STATE_OPT_MAX_SRC_NODES,
 	    PF_STATE_OPT_OVERLOAD, PF_STATE_OPT_STATELOCK,
-	    PF_STATE_OPT_TIMEOUT, PF_STATE_OPT_SLOPPY, 
+	    PF_STATE_OPT_TIMEOUT, PF_STATE_OPT_SLOPPY,
 	    PF_STATE_OPT_PFLOW };
 
 enum	{ PF_SRCTRACK_NONE, PF_SRCTRACK, PF_SRCTRACK_GLOBAL, PF_SRCTRACK_RULE };
@@ -822,7 +822,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 				pf_anchor_setup(&r,
 				    &pf->astack[pf->asd]->ruleset,
 				    $2 ? $2 : pf->alast->name);
-		
+
 				if (r.anchor == NULL)
 					err(1, "anchorrule: unable to "
 					    "create ruleset");
@@ -2060,7 +2060,7 @@ pfrule		: action dir logquick interface af proto fromto
 				if (($8.rroute.rdr = calloc(1,
 				    sizeof(*$8.rroute.rdr))) == NULL)
 					err(1, "$8.rroute.rdr");
-				$8.rroute.rdr->host = $8.route.host;	
+				$8.rroute.rdr->host = $8.route.host;
 			}
 			if ($8.queues.qname != NULL) {
 				if (strlcpy(r.qname, $8.queues.qname,
@@ -2103,7 +2103,7 @@ pfrule		: action dir logquick interface af proto fromto
 					r.divert.addr =
 					    $8.divert.addr->addr.v.a.addr;
 				}
-			}	
+			}
 			r.divert_packet.port = $8.divert_packet.port;
 
 			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, &$8.rroute, $6,
@@ -4549,7 +4549,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		return (1);
 	} else if (i == 1) {	/* only one address */
 		for (h = rs->rdr->host; h != NULL; h = h->next)
-			if (!h->af || !r->af || r->af == h->af) 
+			if (!h->af || !r->af || r->af == h->af)
 				break;
 		rpool->addr = h->addr;
 		if (!allow_if && h->ifname) {
@@ -4559,7 +4559,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		if (h->ifname && strlcpy(rpool->ifname, h->ifname,
 		    sizeof(rpool->ifname)) >= sizeof(rpool->ifname))
 			errx(1, "collapse_redirspec: strlcpy");
-		
+
 		return (0);
 	} else {		/* more than one address */
 		if (rs->pool_opts.type &&
@@ -4850,7 +4850,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 				    ":0 in a binat-to rule");
 				error++;
 			}
-			if (PF_AZERO(&r->src.addr.v.a.mask, af) || 
+			if (PF_AZERO(&r->src.addr.v.a.mask, af) ||
 			    PF_AZERO(&r->nat.addr.v.a.mask, af)) {
 				yyerror ("source and redir addresess must have "
 				    "a matching network mask in binat-rule");
@@ -5333,7 +5333,7 @@ top:
 		if (next == '=')
 			return (NE);
 		lungetc(next);
-		break;		
+		break;
 	case '<':
 		next = lgetc(0);
 		if (next == '>') {

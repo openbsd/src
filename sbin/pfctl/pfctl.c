@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.301 2010/08/11 10:03:29 jsg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.302 2010/09/02 14:01:04 sobrado Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -669,7 +669,7 @@ int
 pfctl_id_kill_states(int dev, const char *iface, int opts)
 {
 	struct pfioc_state_kill psk;
-	
+
 	if (state_killers != 2 || (strlen(state_kill[1]) == 0)) {
 		warnx("no id specified");
 		usage();
@@ -762,7 +762,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	 * Truncate a trailing / and * on an anchorname before searching for
 	 * the ruleset, this is syntactic sugar that doesn't actually make it
 	 * to the kernel.
-	 */ 
+	 */
 	if ((p = strrchr(anchorname, '/')) != NULL &&
 	    p[1] == '*' && p[2] == '\0') {
 		p[0] = '\0';
@@ -1072,12 +1072,12 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 
 	rs = &pf->anchor->ruleset;
 	if (anchor_call[0] && r->anchor == NULL) {
-		/* 
+		/*
 		 * Don't make non-brace anchors part of the main anchor pool.
 		 */
 		if ((r->anchor = calloc(1, sizeof(*r->anchor))) == NULL)
 			err(1, "pfctl_add_rule: calloc");
-		
+
 		pf_init_ruleset(&r->anchor->ruleset);
 		r->anchor->ruleset.anchor = r->anchor;
 		if (strlcpy(r->anchor->path, anchor_call,
@@ -1436,7 +1436,7 @@ pfctl_init_options(struct pfctl *pf)
 	if (sysctl(mib, 2, &mem, &size, NULL, 0) == -1)
 		err(1, "sysctl");
 	if (mem <= 100*1024*1024)
-		pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT_SMALL; 
+		pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT_SMALL;
 
 	pf->debug = LOG_ERR;
 	pf->debug_set = 0;
@@ -1912,7 +1912,7 @@ pfctl_state_load(int dev, const char *file)
 				err(1, "DIOCADDSTATE");
 			}
 		}
-	} 
+	}
 
 	fclose(f);
 }

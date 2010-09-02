@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.114 2010/01/27 15:36:17 todd Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.115 2010/09/02 14:01:04 sobrado Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 
 	login_close(lc);
 
-	if (strcmp(shell, PATH_AUTHPF_SHELL) && 
+	if (strcmp(shell, PATH_AUTHPF_SHELL) &&
 	    strcmp(shell, PATH_AUTHPF_SHELL_NOIP)) {
 		syslog(LOG_ERR, "wrong shell for user %s, uid %u",
 		    pw->pw_name, pw->pw_uid);
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 		pidfp = NULL;
 		pidfd = -1;
 	} while (1);
-	
+
 	/* whack the group list */
 	gid = getegid();
 	if (setgroups(1, &gid) == -1) {
@@ -498,7 +498,7 @@ allowed_luser(struct passwd *pw)
 		matched = 0;
 
 		while ((buf = fgetln(f, &len))) {
-			
+
 			if (buf[len - 1] == '\n')
 				buf[len - 1] = '\0';
 			else {
@@ -515,7 +515,7 @@ allowed_luser(struct passwd *pw)
 					matched++;
 			} else if (buf[0] == '%') {
 				/* check group membership */
-				int cnt; 
+				int cnt;
 				struct group *group;
 
 				if ((group = getgrnam(buf + 1)) == NULL) {
@@ -531,7 +531,7 @@ allowed_luser(struct passwd *pw)
 					    pw->pw_gid, groups, &ngroups);
 					gl_init++;
 				}
-			
+
 				for ( cnt = 0; cnt < ngroups; cnt++) {
 					if (group->gr_gid == groups[cnt]) {
 						matched++;

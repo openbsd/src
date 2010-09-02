@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.269 2010/07/13 13:11:57 sthen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.270 2010/09/02 14:01:04 sobrado Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -328,11 +328,11 @@ const char *
 loglevel_to_string(int level)
 {
 	CODE *c;
-	
+
 	for (c = prioritynames; c->c_name; c++)
 		if (c->c_val == level)
 			return (c->c_name);
-	
+
 	return ("unknown");
 }
 
@@ -1447,7 +1447,7 @@ host(const char *s)
 	if ((if_name = strrchr(ps, '@')) != NULL) {
 		if_name[0] = '\0';
 		if_name++;
-	} 
+	}
 
 	if ((p = strrchr(ps, '/')) != NULL) {
 		if ((r = strdup(ps)) == NULL)
