@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.107 2010/08/25 14:07:24 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.108 2010/09/02 09:38:05 blambert Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -320,6 +320,8 @@ route_input(struct mbuf *m0, ...)
 	}
 
 	LIST_FOREACH(rp, &rawcb, rcb_list) {
+		if (rp->rcb_socket->so_state & SS_CANTRCVMORE)
+			continue;
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
 		if (rp->rcb_proto.sp_protocol  &&
