@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.50 2010/09/01 04:44:26 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.51 2010/09/02 11:54:44 dlg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -263,8 +263,7 @@ struct scsi_inquiry_data {
 struct scsi_vpd_hdr {
 	u_int8_t device;
 	u_int8_t page_code;
-	u_int8_t reserved;
-	u_int8_t page_length;
+	u_int8_t page_length[2];
 };
 
 struct scsi_vpd_serial {

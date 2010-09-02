@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.90 2010/07/27 04:41:56 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.91 2010/09/02 11:54:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -612,7 +612,7 @@ atascsi_disk_vpd_supported(struct scsi_xfer *xs)
 
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_SUPPORTED;
-	pg.hdr.page_length = sizeof(pg.list);
+	_lto2b(sizeof(pg.list), pg.hdr.page_length);
 	pg.list[0] = SI_PG_SUPPORTED;
 	pg.list[1] = SI_PG_SERIAL;
 	pg.list[2] = SI_PG_DEVID;
@@ -636,7 +636,7 @@ atascsi_disk_vpd_serial(struct scsi_xfer *xs)
 
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_SERIAL;
-	pg.hdr.page_length = sizeof(ap->ap_identify.serial);
+	_lto2b(sizeof(ap->ap_identify.serial), pg.hdr.page_length);
 	ata_swapcopy(ap->ap_identify.serial, pg.serial,
 	    sizeof(ap->ap_identify.serial));
 
@@ -688,7 +688,7 @@ atascsi_disk_vpd_ident(struct scsi_xfer *xs)
 
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_DEVID;
-	pg.hdr.page_length = pg_len;
+	_lto2b(pg_len, pg.hdr.page_length);
 	pg_len += sizeof(pg.hdr);
 
 	bcopy(&pg, xs->data, MIN(pg_len, xs->datalen));
@@ -707,7 +707,7 @@ atascsi_disk_vpd_limits(struct scsi_xfer *xs)
 	bzero(&pg, sizeof(pg));
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_DISK_LIMITS;
-	pg.hdr.page_length = SI_PG_DISK_LIMITS_LEN_THIN;
+	_lto2b(SI_PG_DISK_LIMITS_LEN_THIN, pg.hdr.page_length);
 
 	_lto2b(1 << ata_identify_block_l2p_exp(&ap->ap_identify),
 	    pg.optimal_xfer_granularity);
@@ -728,7 +728,7 @@ atascsi_disk_vpd_info(struct scsi_xfer *xs)
 	bzero(&pg, sizeof(pg));
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_DISK_INFO;
-	pg.hdr.page_length = sizeof(pg) - sizeof(pg.hdr);
+	_lto2b(sizeof(pg) - sizeof(pg.hdr), pg.hdr.page_length);
 
 	_lto2b(letoh16(ap->ap_identify.rpm), pg.rpm);
 	pg.form_factor = letoh16(ap->ap_identify.form) & ATA_ID_FORM_MASK;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.164 2010/08/31 17:13:48 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.165 2010/09/02 11:54:44 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -1124,6 +1124,7 @@ scsi_devid(struct scsi_link *link)
 		u_int8_t list[32];
 	} __packed pg;
 	int pg80 = 0, pg83 = 0, i;
+	size_t len;
 
 	if (link->id != NULL)
 		return;
@@ -1133,7 +1134,8 @@ scsi_devid(struct scsi_link *link)
 		    scsi_autoconf) != 0)
 			return;
 
-		for (i = 0; i < MIN(sizeof(pg.list), pg.hdr.page_length); i++) {
+		len = MIN(sizeof(pg.list), _2btol(pg.hdr.page_length));
+		for (i = 0; i < len; i++) {
 			switch (pg.list[i]) {
 			case SI_PG_SERIAL:
 				pg80 = 1;
@@ -1169,7 +1171,7 @@ scsi_devid_pg83(struct scsi_link *link)
 	if (rv != 0)
 		return (rv);
 
-	len = sizeof(hdr) + hdr.page_length;
+	len = sizeof(hdr) + _2btol(hdr.page_length);
 	pg = malloc(len, M_TEMP, M_WAITOK);
 
 	rv = scsi_inquire_vpd(link, pg, len, SI_PG_DEVID, scsi_autoconf);

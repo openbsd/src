@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.213 2010/08/25 00:47:52 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.214 2010/09/02 11:54:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2001,8 +2001,8 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 		if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
 			bcopy(vpdbuf.serial, ser, sizeof ser - 1);
 			ser[sizeof ser - 1] = '\0';
-			if (vpdbuf.hdr.page_length < sizeof ser)
-				ser[vpdbuf.hdr.page_length] = '\0';
+			if (_2btol(vpdbuf.hdr.page_length) < sizeof ser)
+				ser[_2btol(vpdbuf.hdr.page_length)] = '\0';
 			strlcpy(bd->bd_serial, ser, sizeof(bd->bd_serial));
 		}
 
@@ -2247,8 +2247,9 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 			if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
 				bcopy(vpdbuf.serial, ser, sizeof ser - 1);
 				ser[sizeof ser - 1] = '\0';
-				if (vpdbuf.hdr.page_length < sizeof ser)
-					ser[vpdbuf.hdr.page_length] = '\0';
+				if (_2btol(vpdbuf.hdr.page_length) < sizeof ser)
+					ser[_2btol(vpdbuf.hdr.page_length)] =
+					    '\0';
 				strlcpy(bd->bd_serial, ser,
 				    sizeof(bd->bd_serial));
 			}
