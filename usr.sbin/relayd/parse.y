@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.146 2010/08/07 17:59:02 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.147 2010/09/02 14:03:22 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -610,7 +610,7 @@ tableopts_l	: tableopts tableopts_l
 		| tableopts
 		;
 
-tableopts	: CHECK tablecheck 
+tableopts	: CHECK tablecheck
 		| port			{
 			if ($1.op != PF_OP_EQ) {
 				yyerror("invalid port");
@@ -1039,7 +1039,7 @@ protonode	: nodetype APPEND STRING TO STRING nodeopts		{
 				fatal("out of memory");
 			free($3);
 			proto->lateconnect++;
-		}		
+		}
 		| nodetype FILTER					{
 			node.action = NODE_ACTION_FILTER;
 			node.key = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.147 2010/07/14 01:23:04 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.148 2010/09/02 14:03:21 sobrado Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ newroute(int argc, char **argv)
 				if (!--argc)
 					usage(1+*argv);
 				if (af != AF_INET && af != AF_INET6)
-					errx(1, "-mplslabel requires " 
+					errx(1, "-mplslabel requires "
 					    "-inet or -inet6");
 				getmplslabel(*++argv, 0);
 				mpls_flags = MPLS_OP_PUSH;
@@ -1405,7 +1405,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		    routename(mpls));
 	}
 	printf("   priority: %u (%s)\n", rtm->rtm_priority,
-	   priorityname(rtm->rtm_priority)); 
+	   priorityname(rtm->rtm_priority));
 	printf("      flags: ");
 	bprintf(stdout, rtm->rtm_flags, routeflags);
 	printf("\n");

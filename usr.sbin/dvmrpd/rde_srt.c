@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.24 2009/09/06 09:52:14 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.25 2010/09/02 14:03:21 sobrado Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -376,7 +376,7 @@ srt_check_route(struct route_report *rr, int connected)
 
 	if (rr->metric < INFINITY_METRIC) {
 		/* If it is our current nexthop it cannot be a
-		 * downstream router */ 
+		 * downstream router */
 		if (nbr_ip != nbr_report)
 			if ((ds_nbr = srt_find_ds(rn, nbr_report)))
 				srt_delete_ds(rn, ds_nbr, iface);

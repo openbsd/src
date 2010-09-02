@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.160 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.161 2010/09/02 14:03:21 sobrado Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -924,7 +924,7 @@ show_nexthop_msg(struct imsg *imsg)
 			} else if (asprintf(&s1, ", %s", get_linkstate(
 			    p->kif.media_type, p->kif.link_state)) == -1)
 					err(1, NULL);
-			if (asprintf(&s, "%s (%s%s)", p->kif.ifname, 
+			if (asprintf(&s, "%s (%s%s)", p->kif.ifname,
 			    p->kif.flags & IFF_UP ? "UP" : "DOWN", s1) == -1)
 				err(1, NULL);
 			printf("%-15s", s);
@@ -1236,7 +1236,7 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr)
 		case ATTR_AGGREGATOR:
 			memcpy(&as, data, sizeof(as));
 			memcpy(&id, data + sizeof(as), sizeof(id));
-			printf("    Aggregator: %s [%s]\n", 
+			printf("    Aggregator: %s [%s]\n",
 			    log_as(ntohl(as)), inet_ntoa(id));
 			break;
 		case ATTR_ORIGINATOR_ID:
@@ -1416,11 +1416,11 @@ show_ext_community(u_char *data, u_int16_t len)
 		case EXT_COMMUNITY_OPAQUE:
 			memcpy(&ext, data + i, sizeof(ext));
 			ext = betoh64(ext) & 0xffffffffffffLL;
-			printf("%s 0x%llx", log_ext_subtype(subtype), ext); 
+			printf("%s 0x%llx", log_ext_subtype(subtype), ext);
 			break;
 		default:
 			memcpy(&ext, data + i, sizeof(ext));
-			printf("0x%llx", betoh64(ext)); 
+			printf("0x%llx", betoh64(ext));
 		}
 		if (i + 8 < len)
 			printf(", ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.297 2010/07/14 09:00:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.298 2010/09/02 14:03:21 sobrado Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1703,7 +1703,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 		/*
 		 * Neither RFC4364 nor RFC3107 specify the format of the
 		 * nexthop in an explicit way. The quality of RFC went down
-		 * the toilet the larger the the number got. 
+		 * the toilet the larger the the number got.
 		 * RFC4364 is very confusing about VPN-IPv4 address and the
 		 * VPN-IPv4 prefix that carries also a MPLS label.
 		 * So the nexthop is a 12-byte address with a 64bit RD and
@@ -2150,11 +2150,11 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 {
 	struct rde_peer		*peer;
 
-	if (req->flags & F_CTL_ADJ_IN || 
+	if (req->flags & F_CTL_ADJ_IN ||
 	    !(req->flags & (F_CTL_ADJ_IN|F_CTL_ADJ_OUT))) {
 		if (req->peerid && req->peerid != p->aspath->peer->conf.id)
 			return;
-		if (req->type == IMSG_CTL_SHOW_RIB_AS && 
+		if (req->type == IMSG_CTL_SHOW_RIB_AS &&
 		    !aspath_match(p->aspath->aspath, req->as.type, req->as.as))
 			return;
 		if (req->type == IMSG_CTL_SHOW_RIB_COMMUNITY &&
@@ -2713,7 +2713,7 @@ rde_generate_updates(u_int16_t ribid, struct prefix *new, struct prefix *old)
 
 	/*
 	 * If old is != NULL we know it was active and should be removed.
-	 * If new is != NULL we know it is reachable and then we should 
+	 * If new is != NULL we know it is reachable and then we should
 	 * generate an update.
 	 */
 	if (old == NULL && new == NULL)
@@ -2846,7 +2846,7 @@ rde_update6_queue_runner(u_int8_t aid)
 				b = queue_buf + r;
 				break;
 			}
-				
+
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 			    0, -1, b, len) == -1)

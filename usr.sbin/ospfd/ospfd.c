@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.74 2010/05/14 08:30:18 sthen Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.75 2010/09/02 14:03:22 sobrado Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -743,7 +743,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 				SIMPLEQ_REMOVE_HEAD(&a->redist_list, entry);
 				free(r);
 			}
-			
+
 			while ((r = SIMPLEQ_FIRST(&xa->redist_list)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&xa->redist_list, entry);
 				SIMPLEQ_INSERT_TAIL(&a->redist_list, r, entry);

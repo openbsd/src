@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.257 2010/08/03 18:42:40 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.258 2010/09/02 14:03:21 sobrado Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2388,7 +2388,7 @@ top:
 		if (next == '=')
 			return (NE);
 		lungetc(next);
-		break;		
+		break;
 	case '<':
 		next = lgetc(0);
 		if (next == '=')

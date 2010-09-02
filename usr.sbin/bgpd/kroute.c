@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.183 2010/07/12 14:35:13 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.184 2010/09/02 14:03:21 sobrado Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1152,7 +1152,7 @@ kr_net_reload(u_int rtableid, struct network_head *nh)
 		} else
 			TAILQ_INSERT_TAIL(&kt->krn, n, entry);
 	}
-	
+
 	for (n = TAILQ_FIRST(&kt->krn); n != NULL; n = xn) {
 		xn = TAILQ_NEXT(n, entry);
 		if (n->net.old) {
@@ -1637,7 +1637,7 @@ kroute6_find(struct ktable *kt, const struct in6_addr *prefix,
 		while (tmp) {
 			if (kroute6_compare(&s, tmp) == 0)
 				kn6 = tmp;
-			else 
+			else
 				break;
 			tmp = RB_PREV(kroute6_tree, &kt->krt6, kn6);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.310 2010/06/27 19:53:34 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.311 2010/09/02 14:03:21 sobrado Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -174,7 +174,7 @@ setup_listeners(u_int *la_cnt)
 }
 
 pid_t
-session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2], 
+session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
     int pipe_s2rctl[2])
 {
 	int			 nfds, timeout;
@@ -369,7 +369,7 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		if (ctl_queued < SESSION_CTL_QUEUE_MAX)
 			/*
 			 * Do not act as unlimited buffer. Don't read in more
-			 * messages if the ctl sockets are getting full. 
+			 * messages if the ctl sockets are getting full.
 			 */
 			pfd[PFD_PIPE_ROUTE_CTL].events = POLLIN;
 		pfd[PFD_SOCK_CTL].fd = csock;
