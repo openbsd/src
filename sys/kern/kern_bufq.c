@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.17 2010/09/01 19:30:59 kettenis Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.18 2010/09/02 07:05:39 matthew Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -47,15 +47,6 @@ struct buf	*bufq_disksort_dequeue(void *);
 void		 bufq_disksort_requeue(void *, struct buf *);
 int		 bufq_disksort_peek(void *);
 
-struct bufq_impl bufq_impl_disksort = {
-	bufq_disksort_create,
-	bufq_disksort_destroy,
-	bufq_disksort_queue,
-	bufq_disksort_dequeue,
-	bufq_disksort_requeue,
-	bufq_disksort_peek
-};
-
 void		*bufq_fifo_create(void);
 void		 bufq_fifo_destroy(void *);
 void		 bufq_fifo_queue(void *, struct buf *);
@@ -63,18 +54,23 @@ struct buf	*bufq_fifo_dequeue(void *);
 void		 bufq_fifo_requeue(void *, struct buf *);
 int		 bufq_fifo_peek(void *);
 
-struct bufq_impl bufq_impl_fifo = {
-	bufq_fifo_create,
-	bufq_fifo_destroy,
-	bufq_fifo_queue,
-	bufq_fifo_dequeue,
-	bufq_fifo_requeue,
-	bufq_fifo_peek
-};
-
-struct bufq_impl *bufq_impls[BUFQ_HOWMANY] = {
-	&bufq_impl_disksort,
-	&bufq_impl_fifo
+const struct bufq_impl bufq_impls[BUFQ_HOWMANY] = {
+	{
+		bufq_disksort_create,
+		bufq_disksort_destroy,
+		bufq_disksort_queue,
+		bufq_disksort_dequeue,
+		bufq_disksort_requeue,
+		bufq_disksort_peek
+	},
+	{
+		bufq_fifo_create,
+		bufq_fifo_destroy,
+		bufq_fifo_queue,
+		bufq_fifo_dequeue,
+		bufq_fifo_requeue,
+		bufq_fifo_peek
+	}
 };
 
 int
@@ -85,7 +81,7 @@ bufq_init(struct bufq *bq, int type)
 
 	mtx_init(&bq->bufq_mtx, IPL_BIO);
 	bq->bufq_type = type;
-	bq->bufq_impl = bufq_impls[type];
+	bq->bufq_impl = &bufq_impls[type];
 	bq->bufq_data = bq->bufq_impl->impl_create();
 	if (bq->bufq_data == NULL) {
 		/*
@@ -120,7 +116,7 @@ bufq_switch(struct bufq *bq, int type)
 	if (ret)
 		return (0);
 
-	data = bufq_impls[type]->impl_create();
+	data = bufq_impls[type].impl_create();
 	if (data == NULL)
 		return (ENOMEM);
 
@@ -129,19 +125,19 @@ bufq_switch(struct bufq *bq, int type)
 		odata = bq->bufq_data;
 		otype = bq->bufq_type;
 
-		while ((bp = bufq_impls[otype]->impl_dequeue(odata)) != NULL)
-			bufq_impls[type]->impl_queue(data, bp);
+		while ((bp = bufq_impls[otype].impl_dequeue(odata)) != NULL)
+			bufq_impls[type].impl_queue(data, bp);
 
 		bq->bufq_data = data;
 		bq->bufq_type = type;
-		bq->bufq_impl = bufq_impls[type];
+		bq->bufq_impl = &bufq_impls[type];
 	} else {
 		otype = type;
 		odata = data;
 	}
 	mtx_leave(&bq->bufq_mtx);
 
-	bufq_impls[otype]->impl_destroy(odata);
+	bufq_impls[otype].impl_destroy(odata);
 
 	return (0);
 }

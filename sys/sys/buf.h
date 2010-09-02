@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.71 2010/09/01 01:38:12 dlg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.72 2010/09/02 07:05:39 matthew Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct bufq {
 	u_int			 bufq_outstanding;
 	int			 bufq_stop;
 	int			 bufq_type;
-	struct bufq_impl	*bufq_impl;
+	const struct bufq_impl	*bufq_impl;
 };
 
 int		 bufq_init(struct bufq *, int);
