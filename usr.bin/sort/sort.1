@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.38 2010/06/28 15:28:52 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.39 2010/09/03 11:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 28 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -364,27 +364,6 @@ option is still supported, except for
 which has no
 .Fl k
 equivalent.
-.Pp
-The
-.Nm
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width flag -compact
-.It 0
-Normal behavior.
-.It 1
-The input file is not sorted and
-.Fl C
-or
-.Fl c
-was given, or there are duplicate keys and
-.Fl Cu
-or
-.Fl cu
-was given.
-.It 2
-An error occurred.
-.El
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev TMPDIR
@@ -405,6 +384,27 @@ temporary name for
 if
 .Ar output
 already exists
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+Normal behavior.
+.It 1
+The input file is not sorted and
+.Fl C
+or
+.Fl c
+was given, or there are duplicate keys and
+.Fl Cu
+or
+.Fl cu
+was given.
+.It 2
+An error occurred.
 .El
 .Sh SEE ALSO
 .Xr comm 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipcs.1,v 1.20 2010/07/22 07:38:56 jmc Exp $
+.\"	$OpenBSD: ipcs.1,v 1.21 2010/09/03 11:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt IPCS 1
 .Os
 .Sh NAME
@@ -120,14 +120,14 @@ or
 .Fl s
 options are specified, information about all active IPC facilities is
 listed.
-.Pp
-.Ex -std ipcs
 .Sh RESTRICTIONS
 System data structures may change while
 .Nm
 is running; the output of
 .Nm
 is not guaranteed to be consistent.
+.Sh EXIT STATUS
+.Ex -std ipcs
 .Sh SEE ALSO
 .Xr ipcrm 1
 .Sh STANDARDS

@@ -1,4 +1,4 @@
-.\" $OpenBSD: diff.1,v 1.38 2010/08/18 16:25:20 schwarze Exp $
+.\" $OpenBSD: diff.1,v 1.39 2010/09/03 11:09:28 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)diff.1	8.1 (Berkeley) 6/30/93
 .\"
-.Dd $Mdocdate: August 18 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt DIFF 1
 .Os
 .Sh NAME
@@ -451,12 +451,12 @@ Temporary file used when comparing a device or the standard input.
 Note that the temporary file is unlinked as soon as it is created
 so it will not show up in a directory listing.
 .El
-.Sh DIAGNOSTICS
+.Sh EXIT STATUS
 The
 .Nm
 utility exits with one of the following values:
 .Pp
-.Bl -tag -width Ds -compact -offset indent
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 No differences were found.
 .It 1

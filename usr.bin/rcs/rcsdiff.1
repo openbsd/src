@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsdiff.1,v 1.29 2010/04/07 09:39:14 lum Exp $
+.\"	$OpenBSD: rcsdiff.1,v 1.30 2010/09/03 11:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: April 7 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt RCSDIFF 1
 .Os
 .Sh NAME
@@ -106,6 +106,19 @@ are to be created.
 The default is set to
 .Pa /tmp .
 .El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+No differences were found.
+.It 1
+Differences were found.
+.It 2
+An error occurred.
+.El
 .Sh EXAMPLES
 Compare the latest revision of the default branch with the content of
 working file
@@ -118,19 +131,6 @@ Compare revision 1.7 and 1.8 of file
 and ignore differences in keyword values:
 .Pp
 .Dl $ rcsdiff -kk -r1.7 -r1.8 foo.c
-.Sh DIAGNOSTICS
-The
-.Nm
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width Ds -compact -offset indent
-.It 0
-No differences were found.
-.It 1
-Differences were found.
-.It 2
-An error occurred.
-.El
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr co 1 ,

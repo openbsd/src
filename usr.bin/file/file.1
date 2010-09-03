@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.31 2010/01/02 20:15:15 schwarze Exp $
+.\" $OpenBSD: file.1,v 1.32 2010/09/03 11:09:28 jmc Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) Ian F. Darwin 1986-1995.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 2 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -329,8 +329,6 @@ Print the version of the program and exit.
 .It Fl z , -uncompress
 Try to look inside compressed files.
 .El
-.Pp
-.Ex -std file
 .Sh ENVIRONMENT
 The environment variable
 .Dv MAGIC
@@ -361,6 +359,8 @@ options.
 .It Pa /etc/magic
 default list of magic numbers
 .El
+.Sh EXIT STATUS
+.Ex -std file
 .Sh SEE ALSO
 .Xr hexdump 1 ,
 .Xr od 1 ,

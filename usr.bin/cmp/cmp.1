@@ -1,4 +1,4 @@
-.\"     $OpenBSD: cmp.1,v 1.14 2009/02/08 17:15:09 jmc Exp $
+.\"     $OpenBSD: cmp.1,v 1.15 2010/09/03 11:09:28 jmc Exp $
 .\"     $NetBSD: cmp.1,v 1.4 1995/09/08 03:22:55 tls Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cmp.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt CMP 1
 .Os
 .Sh NAME
@@ -80,11 +80,11 @@ or octal value by preceding it with a leading
 .Dq 0x
 or
 .Dq 0 .
-.Pp
+.Sh EXIT STATUS
 The
 .Nm
 utility exits with one of the following values:
-.Bl -tag -width 4n
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 The files are identical.
 .It 1

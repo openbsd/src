@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ci.1,v 1.35 2007/08/26 21:35:43 sobrado Exp $
+.\"	$OpenBSD: ci.1,v 1.36 2010/09/03 11:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: August 26 2007 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt CI 1
 .Os
 .Sh NAME
@@ -179,8 +179,6 @@ used in the
 .Fl d
 option.
 .El
-.Pp
-.Ex -std ci
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT
 .It Ev RCSINIT
@@ -192,6 +190,8 @@ are to be created.
 The default is set to
 .Pa /tmp .
 .El
+.Sh EXIT STATUS
+.Ex -std ci
 .Sh SEE ALSO
 .Xr co 1 ,
 .Xr ident 1 ,

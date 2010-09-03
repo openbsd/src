@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whereis.1,v 1.11 2007/08/14 17:41:10 sobrado Exp $
+.\"	$OpenBSD: whereis.1,v 1.12 2010/09/03 11:09:29 jmc Exp $
 .\"	$NetBSD: whereis.1,v 1.4 1995/08/31 21:54:51 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)whereis.1	8.3 (Berkeley) 4/27/95
 .\"
-.Dd $Mdocdate: August 14 2007 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt WHEREIS 1
 .Os
 .Sh NAME
@@ -58,12 +58,12 @@ If the
 flag is given,
 .Nm
 will return a list of all matches instead of just the first match.
-.Pp
+.Sh EXIT STATUS
 The
 .Nm
 utility exits with one of the following values:
 .Pp
-.Bl -tag -width 4n -compact
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 All names were successfully resolved.
 .It 1

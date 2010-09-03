@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cap_mkdb.1,v 1.16 2009/01/04 11:19:55 sobrado Exp $
+.\"	$OpenBSD: cap_mkdb.1,v 1.17 2010/09/03 11:09:28 jmc Exp $
 .\"	$NetBSD: cap_mkdb.1,v 1.4 1995/03/26 03:59:36 glass Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)cap_mkdb.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 4 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt CAP_MKDB 1
 .Os
 .Sh NAME
@@ -99,8 +99,6 @@ in a key/data pair of the second type.
 The data field of this key/data pair is used to look up a key/data
 pair of the first type which has the real data associated with the
 name.
-.Pp
-.Ex -std cap_mkdb
 .Sh FILES
 .Bl -tag -width /usr/share/misc/terminfo.db -compact
 .It Pa /usr/share/misc/termcap
@@ -113,6 +111,8 @@ terminal information database
 symbolic link to
 .Pa /usr/share/misc/termcap
 .El
+.Sh EXIT STATUS
+.Ex -std cap_mkdb
 .Sh SEE ALSO
 .Xr dbopen 3 ,
 .Xr getcap 3 ,

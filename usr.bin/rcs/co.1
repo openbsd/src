@@ -1,4 +1,4 @@
-.\"	$OpenBSD: co.1,v 1.28 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: co.1,v 1.29 2010/09/03 11:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt CO 1
 .Os
 .Sh NAME
@@ -133,14 +133,14 @@ used in the
 .Fl d
 option.
 .El
-.Pp
-.Ex -std co
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT
 .It Ev RCSINIT
 If set, this variable should contain a list of space-delimited options that
 are prepended to the argument list.
 .El
+.Sh EXIT STATUS
+.Ex -std co
 .Sh EXAMPLES
 Retrieve the latest revision of file
 .Pa foo.c

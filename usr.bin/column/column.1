@@ -1,4 +1,4 @@
-.\"	$OpenBSD: column.1,v 1.12 2008/03/11 16:50:05 jmc Exp $
+.\"	$OpenBSD: column.1,v 1.13 2010/09/03 11:09:28 jmc Exp $
 .\"	$NetBSD: column.1,v 1.3 1995/03/26 09:08:28 glass Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)column.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 11 2008 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt COLUMN 1
 .Os
 .Sh NAME
@@ -72,8 +72,6 @@ Useful for pretty-printing displays.
 .It Fl x
 Fill columns before filling rows.
 .El
-.Pp
-.Ex -std column
 .Sh ENVIRONMENT
 .Bl -tag -width COLUMNS
 .It Ev COLUMNS
@@ -82,6 +80,8 @@ The environment variable
 is used to determine the size of
 the screen if no other information is available.
 .El
+.Sh EXIT STATUS
+.Ex -std column
 .Sh EXAMPLES
 List the current working directory's contents, in detail,
 with nicely formatted headings for each of the fields:

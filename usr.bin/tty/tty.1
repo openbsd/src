@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.1,v 1.13 2009/02/08 17:15:10 jmc Exp $
+.\"	$OpenBSD: tty.1,v 1.14 2010/09/03 11:09:29 jmc Exp $
 .\"	$NetBSD: tty.1,v 1.4 1994/12/07 00:46:55 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)tty.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt TTY 1
 .Os
 .Sh NAME
@@ -65,11 +65,11 @@ option is deprecated in favor of the
 .Dq Li "test -t 0"
 command.
 .El
-.Pp
+.Sh EXIT STATUS
 The
 .Nm
 utility exits 0 if the standard input is a terminal, 1 if the standard input
-is not a terminal, or >1 if an error occurred.
+is not a terminal, or \*(Gt1 if an error occurred.
 .Sh SEE ALSO
 .Xr stty 1 ,
 .Xr test 1 ,

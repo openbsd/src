@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.44 2010/07/22 07:38:56 jmc Exp $
+.\"	$OpenBSD: compress.1,v 1.45 2010/09/03 11:09:28 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt COMPRESS 1
 .Os
 .Sh NAME
@@ -307,12 +307,12 @@ Compression is generally much better than that achieved by Huffman
 coding (as used in the historical command pack), or adaptive Huffman
 coding (as used in the historical command compact), and takes less
 time to compute.
-.Pp
+.Sh EXIT STATUS
 The
 .Nm compress
 utility exits with one of the following values:
 .Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 Success.
 .It 1

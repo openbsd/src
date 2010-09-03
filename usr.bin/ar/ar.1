@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.1,v 1.17 2010/07/21 20:02:29 jmc Exp $
+.\"	$OpenBSD: ar.1,v 1.18 2010/09/03 11:09:28 jmc Exp $
 .\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ar.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: July 21 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt AR 1
 .Os
 .Sh NAME
@@ -296,8 +296,6 @@ The file permissions will be set to those of the file when it was entered
 into the archive; this will fail if the user is not the owner of the
 extracted file or the superuser.
 .El
-.Pp
-.Ex -std ar
 .Sh ENVIRONMENT
 .Bl -tag -width indent -compact
 .It Ev TMPDIR
@@ -310,6 +308,8 @@ default temporary file directory
 .It Pa ar.XXXXXXXXXX
 temporary file names
 .El
+.Sh EXIT STATUS
+.Ex -std ar
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr ranlib 1 ,

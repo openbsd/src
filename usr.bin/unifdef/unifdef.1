@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.16 2007/05/31 19:20:19 jmc Exp $
+.\"	$OpenBSD: unifdef.1,v 1.17 2010/09/03 11:09:29 jmc Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .\"	$dotat: things/unifdef.1,v 1.26 2002/09/24 19:44:12 fanf2 Exp $
 .\" $FreeBSD: src/usr.bin/unifdef/unifdef.1,v 1.15 2002/09/24 19:48:39 fanf Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt UNIFDEF 1
 .Os
 .Sh NAME
@@ -256,6 +256,11 @@ utility works nicely with the
 .Fl D Ns Ar sym
 option of
 .Xr diff 1 .
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 if the output is an exact copy of the input,
+1 if not, and 2 if in trouble.
 .Sh DIAGNOSTICS
 .Bl -item
 .It
@@ -277,11 +282,6 @@ Premature
 .Tn EOF
 in comment.
 .El
-.Pp
-The
-.Nm
-utility exits 0 if the output is an exact copy of the input,
-1 if not, and 2 if in trouble.
 .Sh SEE ALSO
 .Xr cpp 1 ,
 .Xr diff 1

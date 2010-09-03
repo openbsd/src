@@ -1,4 +1,4 @@
-.\"	$OpenBSD: who.1,v 1.23 2010/07/21 20:02:29 jmc Exp $
+.\"	$OpenBSD: who.1,v 1.24 2010/09/03 11:09:29 jmc Exp $
 .\"	$NetBSD: who.1,v 1.5 1994/12/07 04:28:47 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)who.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 21 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt WHO 1
 .Os
 .Sh NAME
@@ -115,14 +115,14 @@ and
 Logouts produce an output line without any user name.
 For more information on the special characters, see
 .Xr utmp 5 .
-.Pp
-.Ex -std who
 .Sh FILES
 .Bl -tag -width /var/log/wtmp.[0-6] -compact
 .It Pa /var/run/utmp
 .It Pa /var/log/wtmp
 .It Pa /var/log/wtmp.[0-6]
 .El
+.Sh EXIT STATUS
+.Ex -std who
 .Sh SEE ALSO
 .Xr last 1 ,
 .Xr mesg 1 ,

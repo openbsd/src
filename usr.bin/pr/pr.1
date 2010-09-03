@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.20 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: pr.1,v 1.21 2010/09/03 11:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt PR 1
 .Os
 .Sh NAME
@@ -352,13 +352,7 @@ and
 .Fl n
 require that both arguments, if present, not be separated from the option
 letter.
-.Sh ERRORS
-If
-.Nm pr
-receives an interrupt while printing to a terminal, it
-flushes all accumulated error messages to the screen before
-terminating.
-.Pp
+.Sh EXIT STATUS
 The
 .Nm pr
 utility exits 0 on success, and 1 if an error occurs.
@@ -366,6 +360,12 @@ utility exits 0 on success, and 1 if an error occurs.
 Error messages are written to standard error during the printing
 process (if output is redirected) or after all successful
 file printing is complete (when printing to a terminal).
+.Sh ERRORS
+If
+.Nm pr
+receives an interrupt while printing to a terminal, it
+flushes all accumulated error messages to the screen before
+terminating.
 .Sh NOTES
 The interpretation of
 .Em <form-feed> Ns s

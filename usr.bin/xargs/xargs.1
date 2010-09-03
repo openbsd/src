@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.25 2010/03/25 01:03:57 schwarze Exp $
+.\"	$OpenBSD: xargs.1,v 1.26 2010/09/03 11:09:29 jmc Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 25 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt XARGS 1
 .Os
 .Sh NAME
@@ -276,11 +276,11 @@ is terminated by a signal,
 or an invocation of
 .Ar utility
 exits with a value of 255.
-.Sh DIAGNOSTICS
+.Sh EXIT STATUS
 .Nm
 exits with one of the following values:
 .Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 All invocations of
 .Ar utility
