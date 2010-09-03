@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expr.1,v 1.20 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: expr.1,v 1.21 2010/09/03 10:00:40 jmc Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
@@ -27,7 +27,7 @@ Characters special to the command interpreter must be escaped.
 Operators are listed below in order of increasing precedence.
 Operators with equal precedence are grouped within { } symbols.
 .Bl -tag -width indent
-.It Ar expr1 Li | Ar expr2
+.It Ar expr1 | expr2
 Returns the evaluation of
 .Ar expr1
 if it is neither an empty string nor zero;
@@ -106,24 +106,27 @@ The expression is invalid.
 An error occurred (such as memory allocation failure).
 .El
 .Sh EXAMPLES
-.Li $ a=`expr $a + 1`
-.Pp
 Add 1 to the variable
-.Va a .
-.Pp
-.Li $ expr "//$a" \&: '.*/\e(.*\e)'
+.Va a :
+.Bd -literal -offset indent
+$ a=`expr $a + 1`
+.Ed
 .Pp
 Return the filename portion of a pathname stored
 in variable
 .Va a .
 The
 .Ql //
-characters act to eliminate ambiguity with the division operator.
-.Pp
-.Li $ expr $a \&: '.*'
+characters act to eliminate ambiguity with the division operator:
+.Bd -literal -offset indent
+$ expr "//$a" \&: '.*/\e(.*\e)'
+.Ed
 .Pp
 Return the number of characters in variable
-.Va a .
+.Va a :
+.Bd -literal -offset indent
+$ expr $a \&: '.*'
+.Ed
 .Sh SEE ALSO
 .Xr test 1 ,
 .Xr re_format 7
