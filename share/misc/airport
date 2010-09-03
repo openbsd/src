@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.21 2010/08/30 21:49:29 jasper Exp $
+#	$OpenBSD: airport,v 1.22 2010/09/03 14:14:56 jasper Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -129,145 +129,143 @@ AXD:Alexandroupolis International, Alexandroupolis, Greece
 AYQ:Connellan, Ayers Rock, Northern Territory, Australia
 AYT:Antalya, Antalya, Turkey
 AZO:Kalamazoo/Battle Creek International, Kalamazoo, MI, USA
-BAH:Bahrain International Bahrain, Bahrain, Bahrain
-BAK:Baku, Baku, Azerbaijan
-BAL:Nearest Air Service Through Diyarbakir, Batman, Turkey
-BAQ:E Cortissoz, Barranquilla, Colombia
-BAR:Baker Island, Baker & Howland Islands
+BAH:Bahrain International, Bahrain, Bahrain
+BAK:Heydar Aliyev, Baku, Azerbaijan
+BAL:Batman, Batman, Turkey
+BAQ:Ernesto Cortissoz International, Barranquilla, Colombia
 BAX:Barnaul, Russia
-BBI:Bhubaneswar, Bhubaneswar, India
+BBI:Biju Patnaik, Bhubaneswar, India
 BBK:Kasane, Kasane, Botswana
-BBU:Baneasa, Bucharest, Romania
-BCD:Bacolod, Philippines
+BBU:Bucharest Aurel Vlaicu/Baneasa, Bucharest, Romania
+BCD:New Bacolod-Silay, Bacolod, Philippines
 BCN:Barcelona, Spain
-BDA:Bermuda, BM
-BDA:Kindley Airfield/Civil Air Terminal, Bermuda/Hamilton, Bermuda
+BDA:Bermuda International,Ferry Reach, Bermuda
 BDJ:Syamsudin Noor, Banjarmasin, Indonesia
-BDL:Hartford/Springfield Bradley International, Connecticut, USA
+BDL:Bradley International, Hartford, Connecticut, USA
 BDO:Husein Sastranegara, Bandung, Indonesia
 BDQ:Vadodara, Vadodara, India
-BDR:Sikorsky Memorial, Bridgeport, CT, USA
-BED:Bedford, MA, USA
-BEH:Ross Field, Benton Harbor, MI, USA
+BDR:Igor I. Sikorsky Memorial, Bridgeport, CT, USA
+BED:Laurence G. Hanscom,Bedford, MA, USA
+BEH:Southwest Michigan Regional, Benton Harbor, MI, USA
 BEI:Beica, Ethiopia
-BEL:Val De Cans, Belem, Para, Brazil
+BEL:Val De Caes International, Belem, Para, Brazil
 BEO:Belmont, Newcastle, New South Wales, Australia
-BER:Schoenefeld, Berlin, Germany
-BES:Guipavas, Brest, France
+BER:Berling/Brandenburg, Berlin, Germany
+BES:Brest/Bretagne, Brest, France
 BET:Bethel, AK, USA
 BEW:Beira, Mozambique
-BEY:Beirut International, Lebanon
+BEY:Beirut Rafic Hariri International, Lebanon
 BFD:Bradford Regional, PA, USA
-BFF:William B Heiling Field, Scottsbluff, NE, USA
+BFF:Western Nebraska Regional/William B. Heilig Field, Scottsbluff, NE, USA
 BFI:Seattle Kings County International/Boeing Field, Washington, USA
 BFL:Meadows Field, Bakersfield, CA, USA
-BFN:Jbm Hertzog, Bloemfontein, South Africa
+BFN:Bloemfontein International, Bloemfontein, South Africa
 BFS:Belfast International, Belfast, Northern Ireland, United Kingdom
-BGA:Palo Negro, Bucaramanga, Colombia
-BGF:Bangui, Central African Republic
+BGA:Palonegro, Bucaramanga, Colombia
+BGF:Bangui M'Poko International, Bangui, Central African Republic
 BGI:Grantley Adams International, Bridgetown, Barbados
-BGK:Big Creek, Belize
-BGM:Edwin Alink Field, Binghamton/Endicott/Johnson City, NY, USA
-BGO:Flesland, Bergen, Norway
-BGR:Bangor International, Maine, USA
-BGT:All Airports around Baghdad, Iraq
+BGK:Big Creek, Big Creek, Belize
+BGM:Greater Binghamton/Edwin Alink Field, Binghamton, NY, USA
+BGO:Bergen Flesland, Bergen, Norway
+BGR:Bangor International, Bangor, Maine, USA
+BGT:Bagdad, Bagdad, Arizona
+BGW:Baghdad International, Baghdad, Iraq
 BGY:Orio Al Serio, Milan, Italy
-BHB:Bar Harbor, ME, USA
-BHD:Belfast Harbor, Belfast, Northern Ireland, United Kingdom
-BHI:Commandante, Bahia Blanca, Buenos Aires, Argentina
+BHB:Hancock County/Bar Harbor, Bar Harbor, ME, USA
+BHD:George Best Belfast City, Belfast, Northern Ireland, United Kingdom
+BHI:Commandante Espora, Bahia Blanca, Buenos Aires, Argentina
 BHK:Bukhara, Uzbekistan
-BHM:Seibels/Bryan, Birmingham, AL, USA
+BHM:Birmingham-Shuttlesworth International, Birmingham, AL, USA
 BHQ:Broken Hill, Broken Hill, New South Wales, Australia
-BHS:Raglan, Bathurst, New South Wales, Australia
-BHX:Birmingham, United Kingdom
+BHS:Bathhurst, Bathurst, New South Wales, Australia
+BHX:Birmingham International, Birmingham, United Kingdom
 BHZ:All Airports around Belo Horizonte, MG, Brazil
-BIA:Poretta, Bastia, Corsica, France
-BIK:Mokmer, Biak, Indonesia
+BIA:Bastia/Poretta, Bastia, Corsica, France
+BIK:Frans Kaisiepo, Biak, Indonesia
 BIL:Billings Logan International, Montana, USA
-BIM:Bimini Island International, Bimini, Bahamas
-BIO:Sondica, Bilbao, Spain
-BIQ:Parme, Biarritz, France
+BIM:South Bimini, Bimini, Bahamas
+BIO:Bilbao, Bilbao, Spain
+BIQ:Biarritz-Anglet-Bayonne, Biarritz, France
 BIS:Bismarck Municipal, North Dakota, USA
-BJI:Bemidji Municipal, MN, USA
-BJL:Yundum International, Banjul, Gambia
-BJX:Del Bajio, Leon/Guanajuato, Guanajuato, Mexico
-BKI:Kota Kinabalu, Kota Kinabalu, Sabah, Malaysia
+BJI:Bemidji Regional, Bemidji, MN, USA
+BJL:Banjul International, Banjul, Gambia
+BJX:Del Bajio International, Leon/Guanajuato, Guanajuato, Mexico
+BKI:Kota Kinabalu International, Kota Kinabalu, Sabah, Malaysia
 BKK:Suvarnabhumi Airport, Bangkok, Thailand
-BKL:Cleveland Lakefront, Ohio, USA
-BKO:Senou, Bamako, Mali
-BKW:Beckley, WV, USA
-BKX:Brookings Municipal, SD, USA
-BLA:Gral Jose Antonio Anzoategui, Barcelona, Venezuela
+BKL:Bruke Lakefront, Cleveland, Ohio, USA
+BKO:Senou International, Bamako, Mali
+BKW:Raleigh County Memorial, Beckley, WV, USA
+BKX:Brookings Regional, SD, USA
+BLA:General Jose Antonio Anzoategui International, Barcelona, Venezuela
 BLE:Borlange, Dalecarlia, Sweden
-BLF:Bluefield, WV, USA
+BLF:Mercer County, Bluefield, WV, USA
 BLI:Bellingham International, WA, USA
-BLK:Blackpool, England, United Kingdom
+BLK:Blackpool International, Blackpool, England, United Kingdom
 BLL:Billund, Denmark
 BLQ:Guglielmo Marconi, Bologna, Italy
-BLR:Hindustan, Bangalore, India
-BLZ:Chileka, Blantyre, Malawi
+BLR:Bengaluru International, Bangalore, India
+BLZ:Chileka International, Blantyre, Malawi
 BMA:Stockholm-Bromma, Uppland, Sweden
 BMG:Monroe County, Bloomington, IN, USA
-BMI:Normal, Bloomington, IL, USA
-BNA:Nashville Metro, Tennessee, USA
+BMI:Central Illinois Regional, Bloomington, IL, USA
+BNA:Nashville International,, Nashville Tennessee, USA
 BNE:Brisbane International, Queensland, Australia
-BNJ:Train Main Railroad Station, Bonn, Germany
-BNN:Bronnoy, Bronnoysund, Norway
+BNJ:Hangelar, Bonn, Germany
+BNN:Bronnoysun, Bronnoysund, Norway
 BNS:Barinas, Venezuela
 BOD:Merignac, Bordeaux, France
-BOG:Eldorado, Bogota, Colombia
+BOG:El Dorado International, Bogota, Colombia
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
 BOJ:Burgas, Bulgaria
-BOM:Bombay, India
-BON:Flamingo Field, Bonaire, Netherlands Antilles
+BOM:Chhatrapati Shivaji International, Mumbai, India
+BON:Flamingo International, Bonaire, Netherlands Antilles
 BOO:Bodo, Norway
-BOS:Boston Logan International, Massachusetts, USA
 BOS:Logan International, Boston, MA, USA
 BPS:Porto Seguro, Bahia, Brazil
-BPT:Jefferson County, Beaumont, Texas, USA
-BQB:Belbek, Simferopol, Ukraine
-BQK:Glynco Jetport, Brunswick, GA, USA
-BQN:Aguadilla, PR, USA
+BPT:Southeast Texas Regional, Beaumont, Texas, USA
+BQB:Busselton Regional, Busselton, Western Australia, Australia
+BQK:Brunswick Golden Isles, Brunswick, GA, USA
+BQN:Rafael Hernandez, Aguadilla, PR, USA
 BRC:International, San Carlos De Bariloche, Rio Negro, Argentina
-BRD:Brainerd, MN, USA
+BRD:Brainerd Lakes Regional, Brainerd, MN, USA
 BRE:Bremen, Germany
-BRI:Bari, Italy
-BRL:Burlington Municipal, IA, USA
-BRM:Barquisimeto, Barquisimeto, Venezuela
+BRI:Bari Palese, Bari, Italy
+BRL:Southeast Iowas Regional, Burlington, IA, USA
+BRM:Jacinto Lara International, Barquisimeto, Venezuela
 BRN:Belp, Berne, Switzerland
-BRO:South Padre Island Intl, Brownsville, TX, USA
+BRO:South Padre Island International, Brownsville, TX, USA
 BRQ:Turany, Brno, Czech Republic
 BRR:North Bay, Barra / Hebrides Islands, Scotland, United Kingdom
-BRS:Bristol, Bristol, England, United Kingdom
+BRS:Bristol International, Bristol, England, United Kingdom
 BRT:Bathurst Island, Northern Territory, Australia
-BRU:National, Brussels, Belgium
-BRW:Barrow, AK, USA
-BSB:International, Brasilia, Distrito Federal, Brazil
+BRU:Zaventem, Brussels, Belgium
+BRW:Wiley Post-Will Rogers Memorial, AK, USA
+BSB:Presidente Juscelino Kubitschek Intl., Brasilia, Distrito Federal, Brazil
 BSD:Baoshan, China
 BSK:Biskra, Algeria
 BSL:Basel/Mulhouse Euroairport, Switzerland
-BTM:Butte, MT, USA
-BTR:Baton Rouge, Louisiana, USA
-BTS:Ivanka, Bratislava, Slovakia
+BTM:Bert Mooney, Butte, MT, USA
+BTR:Baton Rouge Metropolitan/Ryan Field, Baton Rouge, Louisiana, USA
+BTS:M. R. Stefanik, Bratislava, Slovakia
 BTU:Bintulu, Sarawak, Malaysia
-BTV:Burlington International, Vermont, USA
-BUD:Ferihegy, Budapest, Hungary
+BTV:Burlington International, Burlington, Vermont, USA
+BUD:Budapest Ferihegy International, Budapest, Hungary
 BUE:All Airports around Buenos Aires, Argentina
-BUF:Buffalo International, New York, USA
+BUF:Buffalo Niagara International, New York, USA
 BUH:All Airports around Bucharest, Romania
-BUQ:Bulawayo, Bulawayo, Zimbabwe
-BUR:Burbank/Glendale/Pasadena, California, USA
+BUQ:Joshua Mqabuko Nkomo International, Bulawayo, Zimbabwe
+BUR:Bob Hope, Burbank, California, USA
 BUZ:Bushehr, Bushehr, Iran
-BVB:Boa Vista, Roraima, Brazil
+BVB:Boa Vista International, Boa Vista, Roraima, Brazil
 BVI:Birdsville, Birdsville, Queensland, Australia
 BWA:Bhairawa, Bhairawa, Nepal
 BWI:Baltimore-Washington International, Maryland, USA
 BWN:Brunei International, Bandar Seri Begawan, Brunei Darussalam
 BWU:Bankstown, New South Wales, Australia
-BXN:Imsik, Bodrum, Turkey
+BXN:Bodrum-Imsik, Bodrum, Turkey
 BXU:Butuan, Butuan, Philippines
 BYU:Bindlacher Berg, Bayreuth, Germany
-BZE:Belize International, Belize City, Belize
+BZE:Philip S. W. Goldson International, Belize City, Belize
 BZN:Gallatin Field, Bozeman, MT, USA
 CAE:Columbia Metropolitan, South Carolina, USA
 CAG:Elmas, Cagliari, Sardinia, Italy
@@ -1682,6 +1680,7 @@ UIB:Quibdo, Colombia
 UIN:Baldwin Field, Quincy, IL, USA
 UIO:Mariscal, Quito, Ecuador
 UIP:Pluguffan, Quimper, France
+UKS:Sevastopol International, Sevastopol, Ukraine
 ULN:Ulan Bator, Mongolia
 ULY:Ulyanovsk, Russia
 UME:Umea-Alvik, Sweden
