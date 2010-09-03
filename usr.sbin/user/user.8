@@ -1,4 +1,4 @@
-.\" $OpenBSD: user.8,v 1.17 2009/01/21 16:56:02 sobrado Exp $
+.\" $OpenBSD: user.8,v 1.18 2010/09/03 11:22:36 jmc Exp $
 .\" $NetBSD: user.8,v 1.9 2001/06/05 11:31:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 21 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt USER 8
 .Os
 .Sh NAME
@@ -109,8 +109,6 @@ and
 commands.
 .Pp
 For a full explanation of the options, please see the relevant manual page.
-.Pp
-.Ex -std user
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/skel/.[A-z]*
@@ -121,6 +119,8 @@ Configuration file for
 .Xr group 8
 and those backend commands
 .El
+.Sh EXIT STATUS
+.Ex -std user
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr group 5 ,

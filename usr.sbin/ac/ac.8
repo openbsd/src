@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ac.8,v 1.21 2010/07/04 10:17:25 millert Exp $
+.\"	$OpenBSD: ac.8,v 1.22 2010/09/03 11:22:36 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Simon J. Gerraty
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 4 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt AC 8
 .Os
 .Sh NAME
@@ -115,8 +115,6 @@ for more information.
 No login or connect time accounting is performed if
 .Pa /var/log/wtmp
 does not exist.
-.Pp
-.Ex -std ac
 .Sh FILES
 .Bl -tag -width "/var/log/wtmp.[0-7]XX" -compact
 .It Pa /var/log/wtmp
@@ -124,6 +122,8 @@ connect time accounting file
 .It Pa /var/log/wtmp.[0-7]
 rotated files
 .El
+.Sh EXIT STATUS
+.Ex -std ac
 .Sh EXAMPLES
 Allow times recorded in
 .Pa modems

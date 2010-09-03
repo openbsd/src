@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.34 2010/07/15 20:51:38 schwarze Exp $
+.\"	$OpenBSD: mtree.8,v 1.35 2010/09/03 11:22:36 jmc Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 15 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -285,7 +285,12 @@ Empty lines and lines whose first non-whitespace character is a hash
 mark
 .Pq Sq #
 are ignored.
-.Pp
+.Sh FILES
+.Bl -tag -width /etc/mtree -compact
+.It Pa /etc/mtree
+system specification directory
+.El
+.Sh EXIT STATUS
 The
 .Nm mtree
 utility exits with a status of 0 on success, 1 if any error occurred,
@@ -293,11 +298,6 @@ and 2 if the file hierarchy did not match the specification.
 A status of 2 is converted to a status of 0 if the
 .Fl U
 option is used.
-.Sh FILES
-.Bl -tag -width /etc/mtree -compact
-.It Pa /etc/mtree
-system specification directory
-.El
 .Sh EXAMPLES
 To detect system binaries that have been
 .Dq trojan horsed ,

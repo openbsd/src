@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sa.8,v 1.17 2007/05/31 19:20:29 jmc Exp $
+.\"	$OpenBSD: sa.8,v 1.18 2010/09/03 11:22:36 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt SA 8
 .Os
 .Sh NAME
@@ -205,8 +205,6 @@ flag is specified, only the
 and
 .Fl s
 flags are honored.
-.Pp
-.Ex -std sa
 .Sh FILES
 .Bl -tag -width /var/account/usracct -compact
 .It Pa /var/account/acct
@@ -216,6 +214,8 @@ per-command accounting summary database
 .It Pa /var/account/usracct
 per-user accounting summary database
 .El
+.Sh EXIT STATUS
+.Ex -std sa
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
 .Xr acct 5 ,

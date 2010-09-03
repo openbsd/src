@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.23 2009/01/21 16:56:03 sobrado Exp $
+.\" $OpenBSD: usermod.8,v 1.24 2010/09/03 11:22:36 jmc Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 21 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -208,12 +208,12 @@ This is run in the background, and,
 at very large sites could take several minutes.
 Until this update is completed, the password file is unavailable for other
 updates and the new information is not available to programs.
-.Pp
-.Ex -std usermod
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .El
+.Sh EXIT STATUS
+.Ex -std usermod
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr group 5 ,
