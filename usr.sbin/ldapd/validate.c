@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.8 2010/09/03 09:39:17 martinh Exp $ */
+/*	$OpenBSD: validate.c,v 1.9 2010/09/03 09:53:24 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -95,16 +95,6 @@ validate_attribute(struct attr_type *at, struct ber_element *vals)
 	return LDAP_SUCCESS;
 }
 
-static const char *
-attribute_equality(struct attr_type *at)
-{
-	if (at == NULL)
-		return NULL;
-	if (at->equality != NULL)
-		return at->equality;
-	return attribute_equality(at->sup);
-}
-
 /* FIXME: doesn't handle escaped characters.
  */
 static int
@@ -158,7 +148,7 @@ validate_dn(const char *dn, struct ber_element *entry)
 			log_debug("naming attribute %s is obsolete", na);
 			goto fail;
 		}
-		if (attribute_equality(at) == NULL) {
+		if (at->equality == NULL) {
 			log_debug("naming attribute %s doesn't define equality",
 			    na);
 			goto fail;

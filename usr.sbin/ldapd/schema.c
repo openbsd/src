@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.10 2010/09/03 09:39:17 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.11 2010/09/03 09:53:24 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -798,6 +798,27 @@ schema_parse_attributetype(struct schema *schema)
 		schema_err(schema, "%s: no syntax defined", ATTR_NAME(attr));
 		goto fail;
 	}
+
+	/* If the attribute type doesn't explicitly define equality, check
+	 * if any superior attribute type does.
+	 */
+	sup = attr->sup;
+	while (attr->equality == NULL && sup != NULL) {
+		attr->equality = sup->equality;
+		sup = sup->sup;
+	} 
+	/* Same thing with ordering matching rule. */
+	sup = attr->sup;
+	while (attr->ordering == NULL && sup != NULL) {
+		attr->ordering = sup->ordering;
+		sup = sup->sup;
+	} 
+	/* ...and substring matching rule. */
+	sup = attr->sup;
+	while (attr->substr == NULL && sup != NULL) {
+		attr->substr = sup->substr;
+		sup = sup->sup;
+	} 
 
 	return 0;
 
