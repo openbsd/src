@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.299 2010/09/02 00:21:41 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.300 2010/09/03 08:37:52 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -269,7 +269,7 @@ rcs_open(const char *path, int fd, int flags, ...)
 	rfp->rf_path = xstrdup(path);
 	rfp->rf_flags = flags | RCS_SLOCK | RCS_SYNCED;
 	rfp->rf_mode = fmode;
-	rfp->fd = fd;
+	rfp->rf_fd = fd;
 	rfp->rf_dead = 0;
 
 	TAILQ_INIT(&(rfp->rf_delta));
@@ -1640,7 +1640,7 @@ rcs_parse_init(RCSFILE *rfp)
 
 	pdp->rp_pttype = RCS_TOK_ERR;
 
-	if ((pdp->rp_file = fdopen(rfp->fd, "r")) == NULL)
+	if ((pdp->rp_file = fdopen(rfp->rf_fd, "r")) == NULL)
 		fatal("fdopen: `%s'", rfp->rf_path);
 
 	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);
@@ -1658,8 +1658,8 @@ rcs_parse_init(RCSFILE *rfp)
 
 	if (rfp->rf_flags & RCS_PARSE_FULLY) {
 		rcs_parse_deltatexts(rfp, NULL);
-		(void)close(rfp->fd);
-		rfp->fd = -1;
+		(void)close(rfp->rf_fd);
+		rfp->rf_fd = -1;
 	}
 
 	rfp->rf_flags |= RCS_SYNCED;

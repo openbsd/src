@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.95 2010/08/31 20:42:45 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.96 2010/09/03 08:37:52 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -169,7 +169,7 @@ struct rcs_delta {
 
 
 typedef struct rcs_file {
-	int	fd;
+	int	 rf_fd;
 	int	 rf_dead;
 	char	*rf_path;
 	mode_t	 rf_mode;
