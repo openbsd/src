@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.29 2010/07/22 08:09:29 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.30 2010/09/03 09:53:20 jmc Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,9 +23,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.29 2010/07/22 08:09:29 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.30 2010/09/03 09:53:20 jmc Exp $
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt CPIO 1
 .Os
 .Sh NAME
@@ -240,21 +240,21 @@ Be verbose about operations.
 List filenames as they are copied.
 .El
 .El
-.Pp
-The
-.Nm
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width Ds -compact
-.It 0
-All files were processed successfully.
-.It 1
-An error occurred.
-.El
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev TMPDIR
 Path in which to store temporary files.
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+All files were processed successfully.
+.It 1
+An error occurred.
 .El
 .Sh DIAGNOSTICS
 Whenever

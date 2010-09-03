@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.43 2009/06/04 14:59:26 jmc Exp $
+.\"	$OpenBSD: df.1,v 1.44 2010/09/03 09:53:20 jmc Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt DF 1
 .Os
 .Sh NAME
@@ -124,8 +124,6 @@ and
 .Fl k .
 Where more than one of these options is specified,
 the last option given overrides the others.
-.Pp
-.Ex -std df
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
@@ -138,6 +136,8 @@ or
 options are not specified, the block counts will be displayed in units of that
 size block.
 .El
+.Sh EXIT STATUS
+.Ex -std df
 .Sh EXAMPLES
 Output, in a strict format suitable for portable scripts, disk space
 statistics for the

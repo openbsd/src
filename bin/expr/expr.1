@@ -1,10 +1,10 @@
-.\"	$OpenBSD: expr.1,v 1.19 2010/07/22 08:09:29 jmc Exp $
+.\"	$OpenBSD: expr.1,v 1.20 2010/09/03 09:53:20 jmc Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt EXPR 1
 .Os
 .Sh NAME
@@ -90,12 +90,12 @@ expr X'' : 'X$'
 .El
 .Pp
 Parentheses are used for grouping in the usual manner.
-.Pp
+.Sh EXIT STATUS
 The
 .Nm
 utility exits with one of the following values:
 .Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 The expression is neither an empty string nor 0.
 .It 1

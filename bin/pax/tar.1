@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.52 2010/07/22 08:09:29 jmc Exp $
+.\"	$OpenBSD: tar.1,v 1.53 2010/09/03 09:53:20 jmc Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,9 +23,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.52 2010/07/22 08:09:29 jmc Exp $
+.\"	$OpenBSD: tar.1,v 1.53 2010/09/03 09:53:20 jmc Exp $
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -280,17 +280,6 @@ The options
 .Op Fl 014578
 can be used to select one of the compiled-in backup devices,
 .Pa /dev/rstN .
-.Pp
-The
-.Nm
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width 2n -offset indent -compact
-.It 0
-All files were processed successfully.
-.It 1
-An error occurred.
-.El
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev TMPDIR
@@ -303,6 +292,17 @@ Default tape device to use instead of
 .Bl -tag -width "/dev/rst0"
 .It Pa /dev/rst0
 default archive name
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+All files were processed successfully.
+.It 1
+An error occurred.
 .El
 .Sh EXAMPLES
 Create an archive on the default tape drive, containing the files named
