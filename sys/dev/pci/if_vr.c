@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.105 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.106 2010/09/03 18:14:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1562,6 +1562,10 @@ vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r)
 	d = r->vr_ptr;
 	d->vr_data = htole32(r->vr_map->dm_segs[0].ds_addr);
 	d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
+	    sc->sc_listmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
 	d->vr_status = htole32(VR_RXSTAT);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
