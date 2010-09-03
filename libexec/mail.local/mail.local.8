@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.local.8,v 1.28 2009/01/19 09:46:59 sobrado Exp $
+.\"	$OpenBSD: mail.local.8,v 1.29 2010/09/03 11:35:08 jmc Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
 .\"
-.Dd $Mdocdate: January 19 2009 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt MAIL.LOCAL 8
 .Os
 .Sh NAME
@@ -105,8 +105,6 @@ If the
 service is returned by
 .Xr getservbyname 3 ,
 the biff server is notified of delivered mail.
-.Pp
-.Ex -std mail.local
 .Sh ENVIRONMENT
 .Bl -tag -width indent
 .It Ev TZ
@@ -119,6 +117,8 @@ temporary files
 .It Pa /var/mail/user
 user's mailbox directory
 .El
+.Sh EXIT STATUS
+.Ex -std mail.local
 .Sh SEE ALSO
 .Xr biff 1 ,
 .Xr mail 1 ,

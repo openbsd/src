@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lockspool.1,v 1.10 2008/10/01 20:33:07 millert Exp $
+.\"	$OpenBSD: lockspool.1,v 1.11 2010/09/03 11:35:08 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2008 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt LOCKSPOOL 1
 .Os
 .Sh NAME
@@ -57,15 +57,15 @@ when it needs to lock the user's mail spool.
 Closing the pipe will cause
 .Nm
 to release the lock.
-.Pp
-The
-.Nm
-utility exits 0 on success, and 1 if an error occurs.
 .Sh FILES
 .Bl -tag -width /var/mail/username.lock -compact
 .It Pa /var/mail/username.lock
 user's mail lock file
 .El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success, and 1 if an error occurs.
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mail.local 8 ,
