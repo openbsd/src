@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modunload.8,v 1.14 2008/08/02 09:17:47 jmc Exp $
+.\"	$OpenBSD: modunload.8,v 1.15 2010/09/03 10:08:22 jmc Exp $
 .\"	$NetBSD: modunload.8,v 1.3 1995/03/18 14:56:49 cgd Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 2 2008 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt MODUNLOAD 8
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ Specify the name of a shell script or program that will be executed if the
 module is successfully unloaded.
 This program is passed no arguments.
 .El
-.Sh DIAGNOSTICS
+.Sh EXIT STATUS
 The
 .Nm
 utility exits 0 on success or with a non-zero status if an error occurred.
