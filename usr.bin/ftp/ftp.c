@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.80 2010/07/02 22:01:10 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.81 2010/09/03 03:49:37 lum Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -1995,6 +1995,7 @@ void
 abort_remote(FILE *din)
 {
 	char buf[BUFSIZ];
+	nfds_t nfds;
 	int nfnd;
 	struct pollfd pfd[2];
 	sig_t oldintr;
@@ -2020,13 +2021,13 @@ abort_remote(FILE *din)
 	(void)fflush(cout);
 	pfd[0].fd = fileno(cin);
 	pfd[0].events = POLLIN;
-	nfnd = 1;
+	nfds = 1;
 	if (din) {
 		pfd[1].fd = fileno(din);
 		pfd[1].events = POLLIN;
-		nfnd++;
+		nfds++;
 	}
-	if ((nfnd = poll(pfd, nfnd, 10 * 1000)) <= 0) {
+	if ((nfnd = poll(pfd, nfds, 10 * 1000)) <= 0) {
 		if (nfnd < 0)
 			warn("abort");
 		if (ptabflg)
