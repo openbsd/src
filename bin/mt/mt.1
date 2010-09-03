@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.27 2007/11/03 09:05:33 jmc Exp $
+.\"	$OpenBSD: mt.1,v 1.28 2010/09/03 13:14:55 jmc Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 3 2007 $
+.Dd $Mdocdate: September 3 2010 $
 .Dt MT 1
 .Os
 .Sh NAME
@@ -159,10 +159,6 @@ The
 .Ev TAPE
 variable is ignored by
 .Nm eject .
-.Pp
-.Nm
-returns a 0 exit status when the operation(s) were successful,
-1 if the command was unrecognized, and 2 if an operation failed.
 .Sh ENVIRONMENT
 If the following environment variable exists, it is utilized by
 .Nm mt .
@@ -185,6 +181,10 @@ raw magnetic tape interface
 .It Pa /usr/src/sys/scsi/scsi_tape.h
 list of SCSI2 density codes
 .El
+.Sh EXIT STATUS
+.Nm
+returns a 0 exit status when the operation(s) were successful,
+1 if the command was unrecognized, and 2 if an operation failed.
 .Sh EXAMPLES
 Eject the first CD device.
 This will work even if there is no CD in the drive:
