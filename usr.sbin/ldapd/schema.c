@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.9 2010/09/01 18:30:48 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.10 2010/09/03 09:39:17 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -122,7 +122,8 @@ lookup_object(struct schema *schema, char *oid_or_name)
 	return lookup_object_by_name(schema, oid_or_name);
 }
 
-/* Looks up a symbolic OID, optionally with a suffix OID, so if
+/*
+ * Looks up a symbolic OID, optionally with a suffix OID, so if
  *   SYMBOL = 1.2.3.4
  * then
  *   SYMBOL:5.6 = 1.2.3.4.5.6
@@ -130,7 +131,7 @@ lookup_object(struct schema *schema, char *oid_or_name)
  * Returned string must be freed by the caller.
  * Modifies the name argument.
  */
-static char *
+char *
 lookup_symbolic_oid(struct schema *schema, char *name)
 {
 	struct symoid	*symoid, find;
@@ -154,8 +155,7 @@ lookup_symbolic_oid(struct schema *schema, char *name)
 	if (colon == NULL)
 		return strdup(symoid->oid);
 
-	/* Expand SYMBOL:OID.
-	 */
+	/* Expand SYMBOL:OID. */
 	sz = strlen(symoid->oid) + 1 + strlen(colon + 1) + 1;
 	if ((oid = malloc(sz)) == NULL) {
 		log_warnx("malloc");
@@ -169,7 +169,8 @@ lookup_symbolic_oid(struct schema *schema, char *name)
 	return oid;
 }
 
-/* Push a symbol-OID pair on the tree. Name and OID must be valid pointers
+/*
+ * Push a symbol-OID pair on the tree. Name and OID must be valid pointers
  * during the lifetime of the tree.
  */
 static struct symoid *
@@ -666,7 +667,7 @@ fail:
 static int
 schema_parse_attributetype(struct schema *schema)
 {
-	struct attr_type	*attr = NULL, *prev;
+	struct attr_type	*attr = NULL, *prev, *sup;
 	struct name_list	*xnames;
 	char			*kw = NULL, *arg = NULL;
 	int			 token, ret = 0, c;
@@ -733,15 +734,23 @@ schema_parse_attributetype(struct schema *schema)
 			if (schema_lex(schema, &attr->substr) != STRING)
 				goto fail;
 		} else if (strcasecmp(kw, "SYNTAX") == 0) {
-			if (schema_lex(schema, &attr->syntax) != STRING ||
-			    !is_oidstr(attr->syntax))
+			if (schema_lex(schema, &arg) != STRING ||
+			    !is_oidstr(arg))
 				goto fail;
+
+			if ((attr->syntax = syntax_lookup(arg)) == NULL) {
+				schema_err(schema, "syntax not supported: %s",
+				    arg);
+				goto fail;
+			}
+
 			if ((c = schema_getc(schema, 0)) == '{') {
 				if (schema_lex(schema, NULL) != STRING ||
 				    schema_lex(schema, NULL) != '}')
 					goto fail;
 			} else
 				schema_ungetc(schema, c);
+			free(arg);
 		} else if (strcasecmp(kw, "SINGLE-VALUE") == 0) {
 			attr->single = 1;
 		} else if (strcasecmp(kw, "COLLECTIVE") == 0) {
@@ -775,6 +784,19 @@ schema_parse_attributetype(struct schema *schema)
 			goto fail;
 		}
 		free(kw);
+	}
+
+	/* Check that a syntax is defined, either directly or
+	 * indirectly via a superior attribute type.
+	 */
+	sup = attr->sup;
+	while (attr->syntax == NULL && sup != NULL) {
+		attr->syntax = sup->syntax;
+		sup = sup->sup;
+	} 
+	if (attr->syntax == NULL) {
+		schema_err(schema, "%s: no syntax defined", ATTR_NAME(attr));
+		goto fail;
 	}
 
 	return 0;
@@ -1200,7 +1222,7 @@ schema_dump_attribute(struct attr_type *at, char *buf, size_t size)
 
 	if (at->syntax != NULL)
 		if (strlcat(buf, " SYNTAX ", size) >= size ||
-		    strlcat(buf, at->syntax, size) >= size)
+		    strlcat(buf, at->syntax->oid, size) >= size)
 			return -1;
 
 	if (at->single && strlcat(buf, " SINGLE-VALUE", size) >= size)

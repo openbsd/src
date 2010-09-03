@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.7 2010/07/01 06:15:55 martinh Exp $ */
+/*	$OpenBSD: validate.c,v 1.8 2010/09/03 09:39:17 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -51,6 +51,7 @@ validate_attribute(struct attr_type *at, struct ber_element *vals)
 {
 	int			 nvals = 0;
 	struct ber_element	*elm;
+	char			*val;
 
 	if (vals == NULL) {
 		log_debug("missing values");
@@ -63,7 +64,7 @@ validate_attribute(struct attr_type *at, struct ber_element *vals)
 	}
 
 	for (elm = vals->be_sub; elm != NULL; elm = elm->be_next) {
-		if (elm->be_type != BER_TYPE_OCTETSTRING) {
+		if (ber_get_string(elm, &val) == -1) {
 			log_debug("attribute value not an octet-string");
 			return LDAP_PROTOCOL_ERROR;
 		}
@@ -72,6 +73,14 @@ validate_attribute(struct attr_type *at, struct ber_element *vals)
 			log_debug("multiple values for single-valued"
 			    " attribute %s", ATTR_NAME(at));
 			return LDAP_CONSTRAINT_VIOLATION;
+		}
+
+		if (at->syntax->is_valid != NULL &&
+		    !at->syntax->is_valid(conf->schema, val, elm->be_len)) {
+			log_debug("%s: invalid syntax", ATTR_NAME(at));
+			log_debug("syntax = %s", at->syntax->desc);
+			log_debug("value: [%.*s]", elm->be_len, val);
+			return LDAP_INVALID_SYNTAX;
 		}
 	}
 
