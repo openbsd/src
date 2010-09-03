@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.12 2010/08/12 16:32:31 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.13 2010/09/03 15:40:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -133,6 +133,17 @@ ar9280_setup(struct athn_softc *sc)
 	    (sc->eep_rev <= AR_EEP_MINOR_VER_16 ||
 	     eep->baseEepHeader.fastClk5g))
 		sc->flags |= ATHN_FLAG_FAST_PLL_CLOCK;
+
+	/*
+	 * Determine if initialization value for AR_AN_TOP2 must be fixed.
+	 * This is required for some AR9220 devices such as Ubiquiti SR71-12.
+	 */
+	if (AR_SREV_9280_20(sc) &&
+	    sc->eep_rev > AR_EEP_MINOR_VER_10 &&
+	    !eep->baseEepHeader.pwdclkind) {
+		DPRINTF(("AR_AN_TOP2 fixup required\n"));
+		sc->flags |= ATHN_FLAG_AN_TOP2_FIXUP;
+	}
 
 	if (AR_SREV_9280_20(sc)) {
 		/* Check if we have a valid rxGainType field in ROM. */
@@ -310,14 +321,6 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		reg |= AR_AN_TOP2_LOCALBIAS;
 	else
 		reg &= ~AR_AN_TOP2_LOCALBIAS;
-	/* Fix for dual-band devices. */
-	if (sc->eep_rev > AR_EEP_MINOR_VER_10 &&
-	    (eep->baseEepHeader.opCapFlags & AR_OPFLAGS_11A)) {
-		if (eep->baseEepHeader.pwdclkind)
-			reg |= AR_AN_TOP2_PWDCLKIND;
-		else
-			reg &= ~AR_AN_TOP2_PWDCLKIND;
-	}
 	AR_WRITE(sc, AR_AN_TOP2, reg);
 	DELAY(100);
 
@@ -428,6 +431,7 @@ ar9280_olpc_get_pdadcs(struct athn_softc *sc, struct ieee80211_channel *c,
 	pwr = (pierdata[lo].pwrPdg[0][0] + pierdata[hi].pwrPdg[0][0]) / 2;
 	pwr /= 2;	/* Convert to dB. */
 
+	/* Find power control digital-to-analog converter (PCDAC) value. */
 	pcdac = pierdata[hi].pcdac[0][0];
 	for (idx = 0; idx < AR9280_TX_GAIN_TABLE_SIZE - 1; idx++)
 		if (pcdac <= sc->tx_gain_tbl[idx])
@@ -437,6 +441,7 @@ ar9280_olpc_get_pdadcs(struct athn_softc *sc, struct ieee80211_channel *c,
 	DPRINTFN(3, ("fbin=%d lo=%d hi=%d pwr=%d pcdac=%d txgain=%d\n",
 	    fbin, lo, hi, pwr, pcdac, idx));
 
+	/* Fill phase domain analog-to-digital converter (PDADC) table. */
 	for (i = 0; i < AR_NUM_PDADC_VALUES; i++)
 		pdadcs[i] = (i < pwr) ? 0x00 : 0xff;
 

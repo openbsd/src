@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.22 2010/08/12 16:51:30 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.23 2010/09/03 15:40:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -437,6 +437,7 @@ struct athn_softc {
 #define ATHN_FLAG_11A			(1 << 8)
 #define ATHN_FLAG_11G			(1 << 9)
 #define ATHN_FLAG_11N			(1 << 10)
+#define ATHN_FLAG_AN_TOP2_FIXUP		(1 << 11)
 
 	uint8_t				ngpiopins;
 	int				led_pin;

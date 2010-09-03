@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.12 2010/08/12 16:32:31 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.13 2010/09/03 15:40:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2222,7 +2222,13 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 	DPRINTFN(4, ("writing modal init vals\n"));
 	for (i = 0; i < ini->nregs; i++) {
-		AR_WRITE(sc, ini->regs[i], pvals[i]);
+		uint32_t val = pvals[i];
+
+		/* Fix AR_AN_TOP2 initialization value if required. */
+		if (ini->regs[i] == AR_AN_TOP2 &&
+		    (sc->flags & ATHN_FLAG_AN_TOP2_FIXUP))
+			val &= ~AR_AN_TOP2_PWDCLKIND;
+		AR_WRITE(sc, ini->regs[i], val);
 		if (AR_IS_ANALOG_REG(ini->regs[i]))
 			DELAY(100);
 		if ((i & 0x1f) == 0)
@@ -2346,6 +2352,7 @@ ar5008_get_pdadcs(struct athn_softc *sc, uint8_t fbin,
 		    hipier->pwr[i][nicepts - 1]);
 	}
 
+	/* Fill phase domain analog-to-digital converter (PDADC) table. */
 	npdadcs = 0;
 	for (i = 0; i < nxpdgains; i++) {
 		if (i != nxpdgains - 1)
@@ -2462,7 +2469,7 @@ ar5008_get_lg_tpow(struct athn_softc *sc, struct ieee80211_channel *c,
 		    tgt[lo].bChannel, tgt[lo].tPow2x[i],
 		    tgt[hi].bChannel, tgt[hi].tPow2x[i]);
 	}
-	/* XXX Apply conformance test limit. */
+	/* XXX Apply conformance testing limit. */
 }
 
 #ifndef IEEE80211_NO_HT
@@ -2494,7 +2501,7 @@ ar5008_get_ht_tpow(struct athn_softc *sc, struct ieee80211_channel *c,
 		    tgt[lo].bChannel, tgt[lo].tPow2x[i],
 		    tgt[hi].bChannel, tgt[hi].tPow2x[i]);
 	}
-	/* XXX Apply conformance test limit. */
+	/* XXX Apply conformance testing limit. */
 }
 #endif
 
