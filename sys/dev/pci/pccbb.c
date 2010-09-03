@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.79 2010/08/31 17:41:46 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.80 2010/09/03 21:45:11 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -369,10 +369,9 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	struct pccbb_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t busreg, reg, sock_base;
+	pcireg_t reg;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_addr_t sockbase;
 	int flags;
 
 	pccbb_attach_hook(parent, self, pa);
@@ -392,18 +391,15 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * MAP socket registers and ExCA registers on memory-space
-	 * When no valid address is set on socket base registers (on pci
-	 * config space), get it not polite way.
 	 */
-	sock_base = pci_conf_read(pc, pa->pa_tag, PCI_SOCKBASE);
-
 	if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL, 0)) {
+	    &sc->sc_base_memt, &sc->sc_base_memh, NULL, NULL, 0)) {
 		printf("can't map registers\n");
 		return;
 	}
 
-	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
+	sc->sc_sockbase = pci_conf_read(pc, pa->pa_tag, PCI_SOCKBASE);
+	sc->sc_busnum = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 
 #if defined CBB_DEBUG
 	{
@@ -420,8 +416,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_function = pa->pa_function;
-	sc->sc_sockbase = sock_base;
-	sc->sc_busnum = busreg;
 	sc->sc_intrtag = pa->pa_intrtag;
 	sc->sc_intrpin = pa->pa_intrpin;
 
@@ -457,7 +451,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	 * When bus number isn't set correctly, give up using 32-bit CardBus
 	 * mode.
 	 */
-	if (((busreg >> 8) & 0xff) == 0) {
+	if (((sc->sc_busnum >> 8) & 0xff) == 0) {
 		printf(", CardBus support disabled");
 		sc->sc_pcmcia_flags |= PCCBB_PCMCIA_16BITONLY;
 	}
@@ -1640,13 +1634,6 @@ cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
 }
 #endif
 
-#if 0
-int
-pccbb_new_pcmcia_io_alloc(pcmcia_chipset_handle_t pch,
-    bus_addr_t start, bus_size_t size, bus_size_t align, bus_addr_t mask,
-    int speed, int flags,
-    bus_space_handle_t * iohp)
-#endif
 /*
  * int pccbb_pcmcia_io_alloc(pcmcia_chipset_handle_t pch,
  *                                  bus_addr_t start, bus_size_t size,
@@ -2115,12 +2102,6 @@ pccbb_pcmcia_card_detect(pcmcia_chipset_handle_t pch)
 	return pccbb_detect_card(sc) == 1 ? 1 : 0;
 }
 
-#if 0
-int
-pccbb_new_pcmcia_mem_alloc(pcmcia_chipset_handle_t pch,
-    bus_addr_t start, bus_size_t size, bus_size_t align, int speed, int flags,
-    bus_space_tag_t * memtp bus_space_handle_t * memhp)
-#endif
 /*
  * int pccbb_pcmcia_mem_alloc(pcmcia_chipset_handle_t pch,
  *                                   bus_size_t size,
