@@ -73,7 +73,7 @@
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
 ./usr/lib/libgssapi.so.5.0
-./usr/lib/libiberty.so.10.0
+./usr/lib/libiberty.so.10.1
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
 ./usr/lib/libkvm.so.9.1
