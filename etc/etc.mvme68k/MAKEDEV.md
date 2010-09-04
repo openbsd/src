@@ -1,6 +1,6 @@
 define(MACHINE,mvme68k)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.28 2010/07/03 03:59:15 krw Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.29 2010/09/04 12:18:03 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -148,8 +148,8 @@ _DEV(ch, 44)
 _DEV(st, 20, 7)
 _TITLE(term)
 _DEV(mvme_czs, 12)
-_DEV(mvme_tzs, 12)
 _DEV(cl, 13)
+_DEV(mvme_tzs, 12)
 _DEV(ttyd, 14)
 _DEV(ttyw, 30)
 _TITLE(pty)
@@ -161,9 +161,11 @@ _DEV(lp, 28)
 _TITLE(spec)
 _DEV(bio, 27)
 _DEV(bpf, 22)
+_DEV(diskmap, 54)
 _DEV(fdesc, 21)
 _DEV(flash, 11)
 _DEV(lkm, 24)
+_DEV(nnpfs, 51)
 _DEV(nvram, 10)
 _DEV(pf, 39)
 _DEV(rnd, 40)
@@ -173,9 +175,7 @@ _DEV(tun, 23)
 _DEV(uk, 41)
 _DEV(vmel, 31)
 _DEV(vmes, 32)
-_DEV(nnpfs, 51)
 _DEV(vscsi, 53)
-_DEV(diskmap, 54)
 dnl
 divert(__mddivert)dnl
 dnl

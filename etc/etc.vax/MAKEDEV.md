@@ -1,6 +1,6 @@
 define(MACHINE,vax)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.41 2010/07/03 03:59:15 krw Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.42 2010/09/04 12:18:04 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -92,8 +92,8 @@ _TITLE(dis)
 _DEV(ccd, 54, 17)
 _DEV(cd, 61, 22)
 _DEV(flo, 54, 16)
-_DEV(hk, 11, 3)
 _DEV(hd, 58, 19)
+_DEV(hk, 11, 3)
 _DEV(hp, 4, 0)
 _DEV(ra, 9, 9)
 _DEV(raid, 73, 25)
@@ -123,24 +123,24 @@ _DEV(pty, 21)
 _DEV(tty, 20)
 dnl _TITLE(prn)
 _TITLE(cons)
-_DEV(wscons)
 _DEV(wsdisp, 68)
+_DEV(wscons)
 _DEV(wskbd, 69)
 _TITLE(point)
 _DEV(wsmouse, 70)
 _TITLE(spec)
 _DEV(bio, 72)
 _DEV(bpf, 56)
+_DEV(diskmap, 79)
 _DEV(fdesc, 53)
 _DEV(lkm, 28)
+_DEV(nnpfs, 74)
 _DEV(pf, 42)
 _DEV(rnd, 67)
 _DEV(systrace, 49)
 _DEV(tun, 57)
 _DEV(uk, 65)
-_DEV(nnpfs, 74)
 _DEV(vscsi, 78)
-_DEV(diskmap, 79)
 dnl
 divert(__mddivert)dnl
 dnl

@@ -1,6 +1,6 @@
 define(MACHINE,socppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.10 2010/07/03 03:59:15 krw Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.11 2010/09/04 12:18:04 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -42,15 +42,15 @@ _DEV(ptm, 77)
 _DEV(pty, 5)
 _DEV(tty, 4)
 _TITLE(cons)
-_DEV(wscons)
 _DEV(wsdisp, 67)
+_DEV(wscons)
 _DEV(wskbd, 68)
 _DEV(wsmux, 70)
 _TITLE(point)
 _DEV(wsmouse, 69)
 _TITLE(usb)
-_DEV(uall)
 _DEV(ttyU, 66)
+_DEV(uall)
 _DEV(ugen, 63)
 _DEV(uhid, 62)
 _DEV(ulpt, 64)
@@ -65,11 +65,13 @@ dnl _DEV(bktr, 75)
 _DEV(bpf, 22)
 _DEV(bthub, 81)
 _DEV(cry, 47)
+_DEV(diskmap, 82)
 _DEV(fdesc, 21)
-_DEV(hotplug, 78)
 _DEV(gpio, 79)
+_DEV(hotplug, 78)
 _DEV(iop, 73)
 _DEV(lkm, 24)
+_DEV(nnpfs, 51)
 _DEV(pci, 71)
 _DEV(pf, 39)
 _DEV(radio, 76)
@@ -79,9 +81,7 @@ _DEV(tun, 23)
 dnl _DEV(tuner, 75)
 _DEV(uk, 41)
 _DEV(vi, 44)
-_DEV(nnpfs, 51)
 _DEV(vscsi, 78)
-_DEV(diskmap, 82)
 dnl
 divert(__mddivert)dnl
 dnl
