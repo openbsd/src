@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.21 2010/08/22 21:23:07 tedu Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.22 2010/09/04 21:35:58 tedu Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -55,6 +56,13 @@
 int ntfs_debug = NTFS_DEBUG;
 #endif
 
+#ifdef MALLOC_DEFINE
+MALLOC_DEFINE(M_NTFSNTVATTR, "NTFS vattr", "NTFS file attribute information");
+MALLOC_DEFINE(M_NTFSRDATA, "NTFS res data", "NTFS resident data");
+MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
+MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
+#endif
+
 /* Local struct used in ntfs_ntlookupfile() */
 struct ntfs_lookup_ctx {
 	u_int32_t	aoff;
@@ -68,10 +76,13 @@ static int ntfs_findvattr(struct ntfsmount *, struct ntnode *, struct ntvattr **
 static int ntfs_uastricmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
 static int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
 
-/* table for mapping Unicode chars into uppercase */
+/* table for mapping Unicode chars into uppercase; it's filled upon first
+ * ntfs mount, freed upon last ntfs umount */
 static wchar *ntfs_toupper_tab;
 #define NTFS_U28(ch)		((((ch) & 0xE0) == 0) ? '_' : (ch) & 0xFF)
 #define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[(unsigned char)(ch)])
+struct rwlock ntfs_toupper_lock = RWLOCK_INITIALIZER("ntfs_toupper");
+static signed int ntfs_toupper_usecount;
 
 /* support macro for ntfs_ntvattrget() */
 #define NTFS_AALPCMP(aalp,type,name,namelen) (				\
@@ -1965,15 +1976,31 @@ ntfs_runtocn(
 #endif
 
 /*
- * if the ntfs_toupper_tab[] is not filled already
- * read the data from the filesystem we are currently mounting
+ * this initializes toupper table & dependant variables to be ready for
+ * later work
+ */
+void
+ntfs_toupper_init()
+{
+	ntfs_toupper_tab = (wchar *) NULL;
+	ntfs_toupper_usecount = 0;
+}
+
+/*
+ * if the ntfs_toupper_tab[] is filled already, just raise use count;
+ * otherwise read the data from the filesystem we are currently mounting
  */
 int
-ntfs_load_toupper(struct mount *mp, struct ntfsmount *ntmp)
+ntfs_toupper_use(mp, ntmp, p)
+	struct mount *mp;
+	struct ntfsmount *ntmp;
+	struct proc *p;
 {
 	int error = 0;
-	wchar *buf = NULL;
 	struct vnode *vp;
+
+	/* get exclusive access */
+	rw_enter_write(&ntfs_toupper_lock);
 
 	/* only read the translation data from a file if it hasn't been
 	 * read already */
@@ -1985,23 +2012,45 @@ ntfs_load_toupper(struct mount *mp, struct ntfsmount *ntmp)
 	 * XXX for now, just the first 256 entries are used anyway,
 	 * so don't bother reading more
 	 */
-	buf = malloc(256 * sizeof(wchar), M_NTFSRDATA, M_WAITOK);
+	ntfs_toupper_tab = malloc(256 * 256 * sizeof(wchar), M_NTFSRDATA,
+	    M_WAITOK);
 
 	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
 		goto out;
-	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL, 0,
-	    256 * sizeof(wchar), ntfs_toupper_tab, NULL);
+	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
+			0, 256*256*sizeof(wchar), (char *) ntfs_toupper_tab,
+			NULL);
 	vput(vp);
 
-	/* check we didn't lose a race */
-	if (!ntfs_toupper_tab) {
-		ntfs_toupper_tab = buf;
-		buf = NULL;
-	}
-
-out:
-	if (buf)
-		free(buf, M_NTFSRDATA);
-
+    out:
+	ntfs_toupper_usecount++;
+	rw_exit_write(&ntfs_toupper_lock);
 	return (error);
+}
+
+/*
+ * lower the use count and if it reaches zero, free the memory
+ * tied by toupper table
+ */
+void
+ntfs_toupper_unuse(p)
+	struct proc *p;
+{
+	/* get exclusive access */
+	rw_enter_write(&ntfs_toupper_lock);
+
+	ntfs_toupper_usecount--;
+	if (ntfs_toupper_usecount == 0) {
+		free(ntfs_toupper_tab, M_NTFSRDATA);
+		ntfs_toupper_tab = NULL;
+	}
+#ifdef DIAGNOSTIC
+	else if (ntfs_toupper_usecount < 0) {
+		panic("ntfs_toupper_unuse(): use count negative: %d",
+			ntfs_toupper_usecount);
+	}
+#endif
+	
+	/* release the lock */
+	rw_exit_write(&ntfs_toupper_lock);
 }
