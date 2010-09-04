@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.16 2010/09/04 12:59:27 miod Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.17 2010/09/04 13:13:17 miod Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -280,10 +280,8 @@ pcmcia_scan_cis(dev, fct, arg)
 					}
 					sum = 0;
 					for (i = 0; i < length; i++)
-						sum +=
-						    bus_space_read_1(tuple.memt,
-						    tuple.memh, addr +
-						    (i << tuple.addrshift));
+						sum += pcmcia_cis_read_1(&tuple,
+						    addr + i);
 					if (cksum != (sum & 0xff)) {
 						DPRINTF((" failed sum=%x\n",
 						    sum));
