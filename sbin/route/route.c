@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.148 2010/09/02 14:03:21 sobrado Exp $	*/
+/*	$OpenBSD: route.c,v 1.149 2010/09/04 08:06:09 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1512,12 +1512,21 @@ bprintf(FILE *fp, int b, char *s)
 }
 
 int
+keycmp(const void *key, const void *kt)
+{
+	return (strcmp(key, ((struct keytab *)kt)->kt_cp));
+}
+
+int
 keyword(char *cp)
 {
-	struct keytab *kt = keywords;
+	struct keytab *kt;
 
-	while (kt->kt_cp && strcmp(kt->kt_cp, cp))
-		kt++;
+	kt = bsearch(cp, keywords, sizeof(keywords)/sizeof(keywords[0]),
+	    sizeof(keywords[0]), keycmp);
+	if (!kt)
+		return (0);
+
 	return (kt->kt_i);
 }
 

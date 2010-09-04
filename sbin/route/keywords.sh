@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.24 2009/12/01 16:16:46 reyk Exp $
+# $OpenBSD: keywords.sh,v 1.25 2010/09/04 08:06:09 blambert Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -8,7 +8,8 @@
 # This program requires "new" awk (or GNU awk).
 awk=${AWK:-awk}
 
-cat << _EOF_ > _keywords.t1
+# the following must be sorted
+cat << _EOF_ | sort > _keywords.t1
 add
 blackhole
 change
@@ -106,8 +107,7 @@ $awk '{
 	printf("\t{ \"%s\",\tK_%s },\n", $1, $2);
 }' < _keywords.t2
 
-echo '	{ 0, 0 }
-};
+echo '};
 ' # tail
 
 
