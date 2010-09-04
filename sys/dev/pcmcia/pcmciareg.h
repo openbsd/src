@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciareg.h,v 1.6 2003/06/26 00:35:07 mickey Exp $	*/
+/*	$OpenBSD: pcmciareg.h,v 1.7 2010/09/04 12:59:27 miod Exp $	*/
 /*	$NetBSD: pcmciareg.h,v 1.6 1998/08/13 15:00:02 nathanw Exp $	*/
 
 /*
@@ -241,3 +241,17 @@
 #define	PCMCIA_CCR_IOSIZE			0x12
 
 #define	PCMCIA_CCR_SIZE				0x14
+
+/*
+ * Indirect CIS registers (in common space)
+ */
+
+#define	PCMCIA_INDR_CONTROL			0x02
+#define	PCMCIA_ICR_ATTR					0x00
+#define	PCMCIA_ICR_COMMON				0x01
+#define	PCMCIA_ICR_AUTOINCREMENT			0x02
+#define	PCMCIA_ICR_BYTELANE				0x04
+#define	PCMCIA_INDR_ADDRESS			0x04
+#define	PCMCIA_INDR_DATA			0x08
+
+#define	PCMCIA_INDR_SIZE			0x0a

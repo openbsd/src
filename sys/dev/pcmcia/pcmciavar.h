@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.20 2005/11/23 11:39:37 mickey Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.21 2010/09/04 12:59:27 miod Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -193,7 +193,10 @@ struct pcmcia_attach_args {
 struct pcmcia_tuple {
 	unsigned int	code;
 	unsigned int	length;
-	u_long		mult;
+	unsigned int	addrshift;
+	unsigned int	flags;
+#define	PTF_INDIRECT	0x01
+	bus_size_t	indirect_ptr;
 	bus_size_t	ptr;
 	bus_space_tag_t	memt;
 	bus_space_handle_t memh;
@@ -204,9 +207,7 @@ void	pcmcia_check_cis_quirks(struct pcmcia_softc *);
 void	pcmcia_print_cis(struct pcmcia_softc *);
 int	pcmcia_scan_cis(struct device * dev,
 	    int (*) (struct pcmcia_tuple *, void *), void *);
-
-#define	pcmcia_cis_read_1(tuple, idx0)					\
-	(bus_space_read_1((tuple)->memt, (tuple)->memh, (tuple)->mult*(idx0)))
+uint8_t	pcmcia_cis_read_1(struct pcmcia_tuple *, bus_size_t);
 
 #define	pcmcia_tuple_read_1(tuple, idx1)				\
 	(pcmcia_cis_read_1((tuple), ((tuple)->ptr+(2+(idx1)))))

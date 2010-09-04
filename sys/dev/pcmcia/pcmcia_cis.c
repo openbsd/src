@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.15 2007/09/11 13:39:34 gilles Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.16 2010/09/04 12:59:27 miod Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -59,6 +59,28 @@ struct cis_state {
 
 int	pcmcia_parse_cis_tuple(struct pcmcia_tuple *, void *);
 
+uint8_t
+pcmcia_cis_read_1(struct pcmcia_tuple *tuple, bus_size_t idx)
+{
+	if (tuple->flags & PTF_INDIRECT) {
+		bus_space_write_1(tuple->memt, tuple->memh,
+		    tuple->indirect_ptr + PCMCIA_INDR_CONTROL, PCMCIA_ICR_ATTR);
+		idx <<= tuple->addrshift;
+		bus_space_write_1(tuple->memt, tuple->memh,
+		    tuple->indirect_ptr + PCMCIA_INDR_ADDRESS + 0, idx >> 0);
+		bus_space_write_1(tuple->memt, tuple->memh,
+		    tuple->indirect_ptr + PCMCIA_INDR_ADDRESS + 1, idx >> 8);
+		bus_space_write_1(tuple->memt, tuple->memh,
+		    tuple->indirect_ptr + PCMCIA_INDR_ADDRESS + 2, idx >> 16);
+		bus_space_write_1(tuple->memt, tuple->memh,
+		    tuple->indirect_ptr + PCMCIA_INDR_ADDRESS + 3, idx >> 24);
+		return bus_space_read_1(tuple->memt, tuple->memh,
+		    tuple->indirect_ptr + PCMCIA_INDR_DATA);
+	} else
+		return bus_space_read_1(tuple->memt, tuple->memh,
+		    idx << tuple->addrshift);
+}
+
 void
 pcmcia_read_cis(sc)
 	struct pcmcia_softc *sc;
@@ -99,6 +121,7 @@ pcmcia_scan_cis(dev, fct, arg)
 	int window;
 	struct pcmcia_mem_handle pcmh;
 	struct pcmcia_tuple tuple;
+	int indirect_present;
 	int longlink_present;
 	int longlink_common;
 	u_long longlink_addr;
@@ -140,8 +163,10 @@ pcmcia_scan_cis(dev, fct, arg)
 
 	DPRINTF(("cis mem map %x\n", (unsigned int) tuple.memh));
 
-	tuple.mult = 2;
+	tuple.addrshift = 1;
+	tuple.flags = 0;
 
+	indirect_present = 0;
 	longlink_present = 1;
 	longlink_common = 1;
 	longlink_addr = 0;
@@ -159,8 +184,8 @@ pcmcia_scan_cis(dev, fct, arg)
 			 * (This check may not be sufficient for
 			 * malicious cards.)
 			 */
-			if (tuple.mult * tuple.ptr >= PCMCIA_CIS_SIZE - 1
-			    - 32 /* ad hoc value */ ) {
+			if ((tuple.ptr << tuple.addrshift) >=
+			    PCMCIA_CIS_SIZE - 1 - 32 /* ad hoc value */) {
 				DPRINTF(("CISTPL_END (too long CIS)\n"));
 				tuple.code = PCMCIA_CISTPL_END;
 				goto cis_end;
@@ -194,6 +219,10 @@ pcmcia_scan_cis(dev, fct, arg)
 
 			tuple.length = pcmcia_cis_read_1(&tuple, tuple.ptr + 1);
 			switch (tuple.code) {
+			case PCMCIA_CISTPL_INDIRECT:
+				indirect_present = 1;
+				DPRINTF(("CISTPL_INDIRECT\n"));
+				break;
 			case PCMCIA_CISTPL_LONGLINK_A:
 			case PCMCIA_CISTPL_LONGLINK_C:
 				if (tuple.length < 4) {
@@ -253,8 +282,8 @@ pcmcia_scan_cis(dev, fct, arg)
 					for (i = 0; i < length; i++)
 						sum +=
 						    bus_space_read_1(tuple.memt,
-						    tuple.memh,
-						    addr + tuple.mult * i);
+						    tuple.memh, addr +
+						    (i << tuple.addrshift));
 					if (cksum != (sum & 0xff)) {
 						DPRINTF((" failed sum=%x\n",
 						    sum));
@@ -386,7 +415,29 @@ pcmcia_scan_cis(dev, fct, arg)
 		while (1) {
 			pcmcia_chip_mem_unmap(pct, pch, window);
 
-			if (longlink_present) {
+			if (indirect_present) {
+				/*
+				 * Indirect CIS data needs to be obtained
+				 * from specific registers accessible at
+				 * a fixed location in the common window,
+				 * but otherwise is similar to longlink
+				 * in attribute memory.
+				 */
+
+				pcmcia_chip_mem_map(pct, pch, PCMCIA_MEM_COMMON,
+				    0, PCMCIA_INDR_SIZE,
+				    &pcmh, &tuple.indirect_ptr, &window);
+
+				DPRINTF(("cis mem map %x ind %x\n",
+				    (unsigned int) tuple.memh,
+				    (unsigned int) tuple.indirect_ptr));
+
+				tuple.addrshift = 1;
+				tuple.flags |= PTF_INDIRECT;
+				tuple.ptr = 0;
+				longlink_present = 0;
+				indirect_present = 0;
+			} else if (longlink_present) {
 				/*
 				 * if the longlink is to attribute memory,
 				 * then it is unindexed.  That is, if the
@@ -411,7 +462,7 @@ pcmcia_scan_cis(dev, fct, arg)
 				DPRINTF(("cis mem map %x\n",
 				    (unsigned int) tuple.memh));
 
-				tuple.mult = longlink_common ? 1 : 2;
+				tuple.addrshift = longlink_common ? 0 : 1;
 				longlink_present = 0;
 				longlink_common = 1;
 				longlink_addr = 0;
@@ -433,7 +484,7 @@ pcmcia_scan_cis(dev, fct, arg)
 
 				/* set parse state, and point at the next one */
 
-				tuple.mult = mfc[mfc_index].common ? 1 : 2;
+				tuple.addrshift = mfc[mfc_index].common ? 0 : 1;
 
 				mfc_index++;
 			} else {
