@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2009/10/12 22:32:19 robert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 2010/09/04 14:39:05 miod Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR)/src -I$(.CURDIR)/include -I$(.OBJDIR)
@@ -11,6 +11,7 @@ HOST_FILES!=	cat $(.OBJDIR)/needed-list 2>/dev/null||true
 
 # XXX remove oldhashtab.c once gcc 2.95 is no longer used
 SRCS=		argv.c choose-temp.c concat.c cplus-dem.c cp-demangle.c \
+		cp-demint.c \
 		dyn-string.c fdmatch.c fopen_unlocked.c \
 		getopt.c getopt1.c getpwd.c getruntime.c \
 		hashtab.c hex.c fibheap.c partition.c \
