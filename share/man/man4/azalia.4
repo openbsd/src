@@ -1,4 +1,4 @@
-.\"	$OpenBSD: azalia.4,v 1.25 2009/11/25 08:05:01 jmc Exp $
+.\"	$OpenBSD: azalia.4,v 1.26 2010/09/04 16:12:48 jmc Exp $
 .\"	$NetBSD: azalia.4,v 1.2 2005/06/22 04:19:09 kent Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 25 2009 $
+.Dd $Mdocdate: September 4 2010 $
 .Dt AZALIA 4
 .Os
 .Sh NAME
@@ -112,7 +112,6 @@ Generally, if there is no property, the mixer item is an amplifier gain
 control.
 .Pp
 The following are the widget type names used in mixer control names:
-.Pp
 .Bl -tag -width "SPDIF-in"
 .It Cm dac
 Digital to analog converter, usually used for playback.
@@ -131,7 +130,6 @@ is the default dac for the built-in speakers in a laptop,
 will convert channels 0 and 1 when a stereo audio stream is being played.
 This is to allow simultaneous stereo playback on both the built-in speakers
 and a line or headphone jack.
-.Pp
 .It Cm dig-dac
 Digital output converter, usually an S/PDIF transmitter.
 The audio stream channels these widgets will convert are encoded into
@@ -139,7 +137,6 @@ their name in the form of <start channel>:<end channel>.
 For example,
 .Cm dig-dac-0:1
 converts channels 0 and 1 (stereo).
-.Pp
 .It Cm adc
 Analog to digital converter, usually used for recording.
 The audio stream channels these widgets will convert are encoded into
@@ -147,7 +144,6 @@ their name in the form of <start channel>:<end channel>.
 For example,
 .Cm adc-0:1
 converts channels 0 and 1 (stereo).
-.Pp
 .It Cm dig-adc
 Digital input converter, usually an S/PDIF receiver.
 The audio stream channels these widgets will convert are encoded into
@@ -155,7 +151,6 @@ their name in the form of <start channel>:<end channel>.
 For example,
 .Cm dig-adc-0:1
 converts channels 0 and 1 (stereo).
-.Pp
 .It Cm mix
 Sums multiple audio sources into a single stream, but
 sometimes only used for amplifier or mute properties.
@@ -163,78 +158,58 @@ The property part of a mix widget mixer control name may be
 the name of another widget.
 Such a mixer item controls the input level from the widget in the
 property part of the name.
-.Pp
 .It Cm sel
 Selects a single audio source, but sometimes used only for amplifier
 or mute properties.
-.Pp
 .It Cm pow
 Controls power state for a group of widgets.
-.Pp
 .It Cm volume
 Interprets data from external controls, such as a volume knob.
-.Pp
 .It Cm beep
 Creates a tone at a certain frequency.
-.Pp
 .It Cm line
 Pin complex for a line-level jack that is normally used for analog audio
 output.
 The name may also be appended with a color abbreviation such as -grn (green),
 -blk (black), -org (orange), or -gry (grey), to help differentiate jacks.
-.Pp
 .It Cm spkr
 Pin complex for a speaker, often built into the machine.
-.Pp
 .It Cm hp
 Pin complex for a jack that is normally used for output to a headphone.
-.Pp
 .It Cm cd
 Pin complex for analog audio input from a CD device.
-.Pp
 .It Cm SPDIF
 Pin complex for an S/PDIF output connector.
-.Pp
 .It Cm line-in
 Pin complex for a line-level jack that is normally used for analog audio input.
-.Pp
 .It Cm aux
 Pin complex for an auxiliary analog audio input.
-.Pp
 .It Cm mic
 Pin complex for analog audio input from a microphone, either a jack or built
 into the machine.
-.Pp
 .It Cm SPDIF-in
 Pin complex for an S/PDIF input connector.
-.Pp
 .It Cm beep
 Pin complex for analog audio input from a beep generator.
 .El
 .Pp
 The following are the property names used in mixer control names:
-.Pp
 .Bl -tag -width "source"
 .It Cm mute
 Mutes input or output audio stream.
-.Pp
 .It Cm source
 Selects input source.
 Can either select a single source or multiple sources.
 Sometimes these controls may only have a single choice, but they are
 provided to show how audio streams move through the codec.
-.Pp
 .It Cm dir
 Selects pin direction and input VRef signal.
 VRef is represented in percent of the analog voltage rail.
 For example, 'input-vr80' means input direction with 80% VRef.
-.Pp
 .It Cm boost
 Enables/disables low impedance amplifier, usually for use with headphones.
-.Pp
 .It Cm eapd
 Powers on/off external amplifier circuitry.
-.Pp
 .It Cm sense
 Reports current jack sense state.
 .El
@@ -250,7 +225,6 @@ A pin mutes the speaker by sending a signal when it senses that something
 has been plugged into its jack.
 If a pin supports both input and output operation, the pin will only mute
 the speaker when plugged into if that pin is configured for output.
-.Pp
 .It Cm outputs.master.slaves
 List of widgets with amplifier gain or mute controls that are configured
 with the parameters used for
@@ -264,15 +238,12 @@ is in the list and has an input amplifier gain control, setting
 to 200 will set
 .Cm inputs.dac
 to 200.
-.Pp
 .It Cm outputs.master
 Amplifier gain control for widgets listed in
 .Cm outputs.master.slaves .
-.Pp
 .It Cm outputs.master.mute
 Mute control for widgets listed in
 .Cm outputs.master.slaves .
-.Pp
 .It Cm record.volume.slaves
 List of widgets with amplifier gain or mute controls that are configured
 with the parameters used for
@@ -286,19 +257,15 @@ is in the list and has an input amplifier gain control, setting
 to 200 will set
 .Cm record.adc
 to 200.
-.Pp
 .It Cm record.volume
 Amplifier gain control for widgets listed in
 .Cm record.volume.slaves .
-.Pp
 .It Cm record.volume.mute
 Mute control for widgets listed in
 .Cm record.volume.slaves .
-.Pp
 .It Cm outputs.mode
 Controls whether the digital or analog converters and pins will be
 used for playback.
-.Pp
 .It Cm record.mode
 Controls whether the digital or analog converters and pins will be
 used for recording.
