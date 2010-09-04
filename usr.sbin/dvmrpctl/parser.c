@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.4 2009/11/13 20:09:54 jsg Exp $ */
+/*	$OpenBSD: parser.c,v 1.5 2010/09/04 21:31:04 tedu Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -107,18 +107,21 @@ static const struct token t_log[] = {
 };
 
 
-static struct parse_result	res;
+static void show_valid_args(const struct token *);
+static const struct token *match_token(const char *, const struct token *,
+    struct parse_result *);
 
 struct parse_result *
 parse(int argc, char *argv[])
 {
+	static struct parse_result	res;
 	const struct token	*table = t_main;
 	const struct token	*match;
 
 	bzero(&res, sizeof(res));
 
 	while (argc >= 0) {
-		if ((match = match_token(argv[0], table)) == NULL) {
+		if ((match = match_token(argv[0], table, &res)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
 			return (NULL);
@@ -141,8 +144,9 @@ parse(int argc, char *argv[])
 	return (&res);
 }
 
-const struct token *
-match_token(const char *word, const struct token *table)
+static const struct token *
+match_token(const char *word, const struct token *table,
+    struct parse_result *res)
 {
 	u_int			 i, match;
 	const struct token	*t = NULL;
@@ -163,7 +167,7 @@ match_token(const char *word, const struct token *table)
 				match++;
 				t = &table[i];
 				if (t->value)
-					res.action = t->value;
+					res->action = t->value;
 			}
 			break;
 		case FLAG:
@@ -171,35 +175,35 @@ match_token(const char *word, const struct token *table)
 			    strlen(word)) == 0) {
 				match++;
 				t = &table[i];
-				res.flags |= t->value;
+				res->flags |= t->value;
 			}
 			break;
 		case ADDRESS:
-			if (parse_addr(word, &res.addr)) {
+			if (parse_addr(word, &res->addr)) {
 				match++;
 				t = &table[i];
 				if (t->value)
-					res.action = t->value;
+					res->action = t->value;
 			}
 			break;
 		case PREFIX:
-			if (parse_prefix(word, &res.addr, &res.prefixlen)) {
+			if (parse_prefix(word, &res->addr, &res->prefixlen)) {
 				match++;
 				t = &table[i];
 				if (t->value)
-					res.action = t->value;
+					res->action = t->value;
 			}
 			break;
 		case IFNAME:
 			if (!match && word != NULL && strlen(word) > 0) {
-				if (strlcpy(res.ifname, word,
-				    sizeof(res.ifname)) >=
-				    sizeof(res.ifname))
+				if (strlcpy(res->ifname, word,
+				    sizeof(res->ifname)) >=
+				    sizeof(res->ifname))
 					err(1, "interface name too long");
 				match++;
 				t = &table[i];
 				if (t->value)
-					res.action = t->value;
+					res->action = t->value;
 			}
 			break;
 
@@ -221,7 +225,7 @@ match_token(const char *word, const struct token *table)
 	return (t);
 }
 
-void
+static void
 show_valid_args(const struct token *table)
 {
 	int	i;

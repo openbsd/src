@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.14 2010/06/01 23:06:23 jacekm Exp $	*/
+/*	$OpenBSD: parser.c,v 1.15 2010/09/04 21:31:04 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -121,18 +121,21 @@ static const struct token t_log[] = {
 	{ENDTOKEN,	"",			NONE,      	NULL}
 };
 
-static struct parse_result	res;
+static const struct token *match_token(const char *, const struct token [],
+    struct parse_result *res);
+static void show_valid_args(const struct token []);
 
 struct parse_result *
 parse(int argc, char *argv[])
 {
+	static struct parse_result	res;
 	const struct token	*table = t_main;
 	const struct token	*match;
 
 	bzero(&res, sizeof(res));
 
 	while (argc >= 0) {
-		if ((match = match_token(argv[0], table)) == NULL) {
+		if ((match = match_token(argv[0], table, &res)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
 			return (NULL);
@@ -155,8 +158,9 @@ parse(int argc, char *argv[])
 	return (&res);
 }
 
-const struct token *
-match_token(const char *word, const struct token table[])
+static const struct token *
+match_token(const char *word, const struct token table[],
+    struct parse_result *res)
 {
 	u_int			 i, match;
 	const struct token	*t = NULL;
@@ -177,7 +181,7 @@ match_token(const char *word, const struct token table[])
 				match++;
 				t = &table[i];
 				if (t->value)
-					res.action = t->value;
+					res->action = t->value;
 			}
 			break;
 		case VARIABLE:
@@ -185,8 +189,8 @@ match_token(const char *word, const struct token table[])
 				match++;
 				t = &table[i];
 				if (t->value) {
-					res.action = t->value;
-					res.data = word;
+					res->action = t->value;
+					res->data = word;
 				}
 			}
 			break;
@@ -208,7 +212,7 @@ match_token(const char *word, const struct token table[])
 	return (t);
 }
 
-void
+static void
 show_valid_args(const struct token table[])
 {
 	int	i;
