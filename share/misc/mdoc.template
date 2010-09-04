@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.template,v 1.11 2010/08/31 17:51:31 jmc Exp $
+.\"	$OpenBSD: mdoc.template,v 1.12 2010/09/04 08:00:15 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
 .\"
@@ -25,7 +25,7 @@ utility processes files ...
 .\" For sections 1, 6, 7 & 8 only.
 .\" .Sh FILES
 .\" .Sh EXIT STATUS
-.\" For sections 1 & 8 only.
+.\" For sections 1, 6, & 8 only.
 .\" .Sh EXAMPLES
 .\" .Sh DIAGNOSTICS
 .\" For sections 1, 4, 6, 7, and 8 only.
