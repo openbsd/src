@@ -45,21 +45,21 @@
 #	st*	SCSI tape drives
 # Terminal ports:
 #	cua[a-z]*	Zilog 8530 serial ports
-#	tty[a-z]*	Zilog 8530 serial ports
-#	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	magma*	Magma multiport cards
 #	spif*	"spif" multiport cards
+#	tty[0-7][0-9a-f]	NS16x50 serial ports
+#	tty[a-z]*	Zilog 8530 serial ports
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Printers:
 #	bpp*	Parallel port
-#	bppmag[mno]	Magma parallel port
 #	bpp[jkl]	"spif" parallel port
+#	bppmag[mno]	Magma parallel port
 # Console ports:
-#	wscons	Minimal wscons devices
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
@@ -69,17 +69,17 @@
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	openprom	PROM settings
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -226,16 +226,8 @@ std)
 	M openprom	c 70 0	640 kmem
 	;;
 
-diskmap)
-	M diskmap c 129 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 128 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 uk*)
@@ -267,6 +259,10 @@ openprom)
 	M openprom c 70 0  
 	;;
 
+nnpfs*)
+	M nnpfs$U c 51 $U 600
+	;;
+
 lkm)
 	M lkm c 112 0 640 _lkm
 	;;
@@ -275,6 +271,10 @@ fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
+	;;
+
+diskmap)
+	M diskmap c 129 0 640 operator
 	;;
 
 bpf*)
@@ -314,6 +314,20 @@ wskbd[0-9]*)
 	M wskbd$U c 79 $U 600
 	;;
 
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyIcfg ttyI0 ttyI1 ttyI2 ttyI3 ttyI4 ttyI5
+	R ttyI6 ttyI7 ttyI8 ttyI9 ttyIa ttyIb ttyHcfg ttyH0 ttyH1
+	R ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7 ttyH8 ttyH9 ttyHa ttyHb
+	R ttyGcfg ttyG0 ttyG1 ttyG2 ttyG3 ttyG4 ttyG5 ttyG6 ttyG7
+	R ttyG8 ttyG9 ttyGa ttyGb ttyFcfg ttyF0 ttyF1 ttyF2 ttyF3
+	R ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9 ttyFa ttyFb ttyEcfg
+	R ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8 ttyE9
+	R ttyEa ttyEb ttyDcfg ttyD0 ttyD1 ttyD2 ttyD3 ttyD4 ttyD5
+	R ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb ttyCcfg ttyC0 ttyC1
+	R ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
+	;;
+
 tty[C-J]*)
 	U=${i##tty[C-J]}
 	case $i in
@@ -331,20 +345,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 78 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyIcfg ttyI0 ttyI1 ttyI2 ttyI3 ttyI4 ttyI5
-	R ttyI6 ttyI7 ttyI8 ttyI9 ttyIa ttyIb ttyHcfg ttyH0 ttyH1
-	R ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7 ttyH8 ttyH9 ttyHa ttyHb
-	R ttyGcfg ttyG0 ttyG1 ttyG2 ttyG3 ttyG4 ttyG5 ttyG6 ttyG7
-	R ttyG8 ttyG9 ttyGa ttyGb ttyFcfg ttyF0 ttyF1 ttyF2 ttyF3
-	R ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9 ttyFa ttyFb ttyEcfg
-	R ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8 ttyE9
-	R ttyEa ttyEb ttyDcfg ttyD0 ttyD1 ttyD2 ttyD3 ttyD4 ttyD5
-	R ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb ttyCcfg ttyC0 ttyC1
-	R ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 bpp*)
@@ -375,6 +375,27 @@ pty*)
 
 ptm)
 	M ptm c 125 0 666
+	;;
+
+tty[a-z])
+	u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	e) n=4;;
+	f) n=5;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c 12 $n 660 dialer uucp
+	;;
+
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 36 $o 660 dialer uucp
+	M cua$U c 36 $(($o+128)) 660 dialer uucp
 	;;
 
 spif*)
@@ -412,27 +433,6 @@ magma*)
 	done
 	M bpp${nam}0 c 101 $(($offset+0)) 600
 	M bpp${nam}1 c 101 $(($offset+1)) 600
-	;;
-
-tty[0-7][0-9a-f])
-	U=${i#tty*}
-	o=$(h2d $U)
-	M tty$U c 36 $o 660 dialer uucp
-	M cua$U c 36 $(($o+128)) 660 dialer uucp
-	;;
-
-tty[a-z])
-	u=${i#tty*}
-	case $u in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=2 ;;
-	d) n=3 ;;
-	e) n=4;;
-	f) n=5;;
-	*) echo unknown tty device $i ;;
-	esac
-	M tty$u c 12 $n 660 dialer uucp
 	;;
 
 cua[a-z])

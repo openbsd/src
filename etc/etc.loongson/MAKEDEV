@@ -46,15 +46,15 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	wscons	Minimal wscons devices
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
 #	wsmouse*	wscons mice
 # USB devices:
-#	uall	All USB devices
 #	ttyU*	USB serial ports
+#	uall	All USB devices
 #	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
@@ -65,9 +65,12 @@
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
+#	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	hotplug	devices hot plugging
+#	nnpfs*	NNPFS filesystem node
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
@@ -75,10 +78,7 @@
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
-#	nnpfs*	NNPFS filesystem node
-#	bthub*	Bluetooth Hubs
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -218,20 +218,8 @@ std)
 	M klog		c 6 0 600
 	;;
 
-diskmap)
-	M diskmap c 70 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 69 $U 600
-	;;
-
-bthub*)
-	M bthub$U c 68 $U
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 video*)
@@ -269,6 +257,10 @@ pci*)
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
+nnpfs*)
+	M nnpfs$U c 51 $U 600
+	;;
+
 hotplug)
 	M hotplug c 67 $U 400
 	;;
@@ -279,8 +271,16 @@ fd)
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
+diskmap)
+	M diskmap c 70 0 640 operator
+	;;
+
 crypto)
 	M crypto c 47 0
+	;;
+
+bthub*)
+	M bthub$U c 68 $U
 	;;
 
 bpf*)
@@ -332,16 +332,16 @@ ugen*)
 	done
 	;;
 
+uall)
+	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
+	R uhid2 uhid3 urio0 usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	;;
+
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
 	M ttyU$U c 66 $o 660 dialer uucp
 	M cuaU$U c 66 $(($o+128)) 660 dialer uucp
-	;;
-
-uall)
-	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
-	R uhid2 uhid3 urio0 usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	;;
 
 wsmouse[0-9]*)
@@ -355,6 +355,12 @@ wsmux|wsmouse|wskbd)
 
 wskbd[0-9]*)
 	M wskbd$U c 26 $U 600
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 tty[C-J]*)
@@ -374,12 +380,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 25 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
-	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)

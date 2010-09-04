@@ -45,8 +45,8 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	wscons	Minimal wscons devices
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
@@ -54,17 +54,17 @@
 # Special purpose devices:
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	lcd	front panel LCD display
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -205,16 +205,8 @@ std)
 	;;
 
 
-diskmap)
-	M diskmap c 54 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 53 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 uk*)
@@ -242,6 +234,10 @@ pf*)
 	M pf c 39 0 600
 	;;
 
+nnpfs*)
+	M nnpfs$U c 51 $U 600
+	;;
+
 lkm)
 	M lkm c 24 0 640 _lkm
 	;;
@@ -254,6 +250,10 @@ fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
+	;;
+
+diskmap)
+	M diskmap c 54 0 640 operator
 	;;
 
 bpf*)
@@ -277,6 +277,12 @@ wskbd[0-9]*)
 	M wskbd$U c 14 $U 600
 	;;
 
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
+	;;
+
 tty[C-J]*)
 	U=${i##tty[C-J]}
 	case $i in
@@ -294,12 +300,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 13 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
-	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)

@@ -33,8 +33,8 @@
 #	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
-#	hk*	UNIBUS RK06 and RK07 disks
 #	hd*	HDC9224 disks
+#	hk*	UNIBUS RK06 and RK07 disks
 #	hp*	MASSBUS disks
 #	ra*	MSCP disks
 #	raid*	RAIDframe disk devices
@@ -63,24 +63,24 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	wscons	Minimal wscons devices
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Special purpose devices:
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -274,16 +274,8 @@ ht*|tm*|mt*|ts*|ut*)
 	umask 77
 	;;
 
-diskmap)
-	M diskmap c 79 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 78 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 74 $U 600
 	;;
 
 uk*)
@@ -311,6 +303,10 @@ pf*)
 	M pf c 42 0 600
 	;;
 
+nnpfs*)
+	M nnpfs$U c 74 $U 600
+	;;
+
 lkm)
 	M lkm c 28 0 640 _lkm
 	;;
@@ -319,6 +315,10 @@ fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 53 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
+	;;
+
+diskmap)
+	M diskmap c 79 0 640 operator
 	;;
 
 bpf*)
@@ -335,6 +335,12 @@ wsmouse[0-9]*)
 
 wskbd[0-9]*)
 	M wskbd$U c 69 $U 600
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6
+	R ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 tty[C-J]*)
@@ -354,12 +360,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 68 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6
-	R ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)

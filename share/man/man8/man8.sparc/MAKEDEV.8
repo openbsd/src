@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.53 2010/07/22 00:59:57 deraadt Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.54 2010/09/04 12:18:42 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
 .\"	OpenBSD: etc.sparc/MAKEDEV.md,v 1.43 2010/07/03 03:59:15 krw Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.49 2010/07/21 23:40:26 nicm Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.51 2010/08/03 20:12:01 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 4 2010 $
 .Dt MAKEDEV 8 sparc
 .Os
 .Sh NAME
@@ -123,12 +123,6 @@ SCSI tape drives, see
 .It Ar cua[a-z]*
 Zilog 8530 serial ports, see
 .Xr zs 4 .
-.It Ar tty[a-z]*
-Zilog 8530 serial ports, see
-.Xr zs 4 .
-.It Ar tty[0-7][0-9a-f]
-NS16x50 serial ports, see
-.Xr com 4 .
 .It Ar magma*
 Magma multiport cards, see
 .Xr magma 4 .
@@ -136,6 +130,12 @@ Magma multiport cards, see
 .Dq spif
 multiport cards, see
 .Xr spif 4 .
+.It Ar tty[0-7][0-9a-f]
+NS16x50 serial ports, see
+.Xr com 4 .
+.It Ar tty[a-z]*
+Zilog 8530 serial ports, see
+.Xr zs 4 .
 .El
 .Pp
 .Sy Pseudo terminals
@@ -156,23 +156,23 @@ Set of 62 slave pseudo terminals, see
 .It Ar bpp*
 Parallel port, see
 .Xr bpp 4 .
-.It Ar bppmag[mno]
-Magma parallel port, see
-.Xr magma 4 .
 .It Ar bpp[jkl]
 .Dq spif
 parallel port, see
 .Xr spif 4 .
+.It Ar bppmag[mno]
+Magma parallel port, see
+.Xr magma 4 .
 .El
 .Pp
 .Sy Console ports
 .Bl -tag -width tenletters -compact
-.It Ar wscons
-Minimal wscons devices, see
-.Xr wscons 4 .
 .It Ar ttyC-J*
 wscons display devices, see
 .Xr wsdisplay 4 .
+.It Ar wscons
+Minimal wscons devices, see
+.Xr wscons 4 .
 .It Ar wskbd*
 wscons keyboards, see
 .Xr wskbd 4 .
@@ -202,12 +202,18 @@ ioctl tunnel pseudo-device, see
 .It Ar bpf*
 Berkeley Packet Filter, see
 .Xr bpf 4 .
+.It Ar diskmap
+Disk mapper, see
+.Xr diskmap 4 .
 .It Ar fd
 fd/* nodes, see
 .Xr fd 4 .
 .It Ar lkm
 Loadable kernel modules interface, see
 .Xr lkm 4 .
+.It Ar nnpfs*
+NNPFS filesystem node, see
+.Xr mount_nnpfs 8 .
 .It Ar openprom
 PROM settings, see
 .Xr openprom 4 .
@@ -226,15 +232,9 @@ Network tunnel driver, see
 .It Ar uk*
 Unknown SCSI devices, see
 .Xr uk 4 .
-.It Ar nnpfs*
-NNPFS filesystem node, see
-.Xr mount_nnpfs 8 .
 .It Ar vscsi*
 Virtual SCSI controller, see
 .Xr vscsi 8 .
-.It Ar diskmap
-Disk mapper, see
-.Xr diskmap 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

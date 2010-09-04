@@ -40,8 +40,8 @@
 #	st*	SCSI tape drives
 # Terminal ports:
 #	cuaa-d	On-board call-up devices
-#	ttya-d	On-board serial ports
 #	tty0*	CL-CD2400 serial ports
+#	ttya-d	On-board serial ports
 #	ttyd*	MC68681 serial ports
 #	ttyw*	WG CL-CD2400 serial ports
 # Pseudo terminals:
@@ -53,9 +53,11 @@
 # Special purpose devices:
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	flash0	On-board flash memory
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	nvram0	On-board non-volatile memory
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
@@ -65,9 +67,7 @@
 #	uk*	Unknown SCSI devices
 #	vmel0	VMEbus D32 space
 #	vmes0	VMEbus D16 space
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -208,16 +208,8 @@ std)
 	;;
 
 
-diskmap)
-	M diskmap c 54 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 53 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 vmes0)
@@ -261,6 +253,10 @@ nvram0)
 	M nvram0 c 10 0 640 kmem
 	;;
 
+nnpfs*)
+	M nnpfs$U c 51 $U 600
+	;;
+
 lkm)
 	M lkm c 24 0 640 _lkm
 	;;
@@ -273,6 +269,10 @@ fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
+	;;
+
+diskmap)
+	M diskmap c 54 0 640 operator
 	;;
 
 bpf*)
@@ -339,17 +339,6 @@ ttyd[01])
 	esac
 	;;
 
-tty0*)
-	u=${i#tty0*}
-	case $u in
-	0|1|2|3)
-		M tty0$u c 13 $u 660 dialer uucp
-		M cua0$u c 13 $(($u+128)) 660 dialer uucp
-		;;
-	*) echo unknown tty device $i ;;
-	esac
-	;;
-
 tty[a-z])
 	u=${i#tty*}
 	case $u in
@@ -363,6 +352,17 @@ tty[a-z])
 	a|b|c|d)
 		M tty$u c 12 $n 660 dialer uucp
 		;;
+	esac
+	;;
+
+tty0*)
+	u=${i#tty0*}
+	case $u in
+	0|1|2|3)
+		M tty0$u c 13 $u 660 dialer uucp
+		M cua0$u c 13 $(($u+128)) 660 dialer uucp
+		;;
+	*) echo unknown tty device $i ;;
 	esac
 	;;
 

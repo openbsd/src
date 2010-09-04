@@ -47,14 +47,14 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	wscons	Minimal wscons devices
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 #	wsmouse*	wscons mice
 #	wsmux	wscons keyboard/mouse mux devices
 # USB devices:
-#	uall	All USB devices
 #	ttyU*	USB serial ports
+#	uall	All USB devices
 #	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
@@ -65,28 +65,28 @@
 #	apm	Power management device
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
-#	hotplug	devices hot plugging
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
+#	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
+#	hotplug	devices hot plugging
 #	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
 #	music*	MIDI sequencer
+#	nnpfs*	NNPFS filesystem node
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	radio*	FM tuner devices
-#	rmidi*	Raw MIDI devices
 #	*random	In-kernel random data source
+#	rmidi*	Raw MIDI devices
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
 #	systrace*	System call tracing device
 #	tuner*	Tuner devices
 #	video*	Video V4L2 devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	bthub*	Bluetooth Hubs
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -231,20 +231,8 @@ std)
 	M klog		c 6 0 600
 	;;
 
-diskmap)
-	M diskmap c 102 0 640 operator
-	;;
-
-bthub*)
-	M bthub$U c 101 $U
-	;;
-
 vscsi*)
 	M vscsi$U c 100 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 video*)
@@ -268,6 +256,10 @@ tun*)
 	M tun$U c 33 $U 600
 	;;
 
+rmidi*)
+	M rmidi$U c 57 $U 666
+	;;
+
 *random)
 	n=0
 	for pre in " " s u a
@@ -275,10 +267,6 @@ tun*)
 		M ${pre}random c 40 $n 644
 		n=$(($n+1))
 	done
-	;;
-
-rmidi*)
-	M rmidi$U c 57 $U 666
 	;;
 
 radio*)
@@ -293,6 +281,10 @@ pf*)
 pci*)
 	M pci$U	c 88 $U 600
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
+	;;
+
+nnpfs*)
+	M nnpfs$U c 51 $U 600
 	;;
 
 music*)
@@ -310,14 +302,26 @@ iop*)
 	M iop$U c 73 $U 660
 	;;
 
+hotplug)
+	M hotplug c 37 $U 400
+	;;
+
 fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
+diskmap)
+	M diskmap c 102 0 640 operator
+	;;
+
 crypto)
 	M crypto c 47 0
+	;;
+
+bthub*)
+	M bthub$U c 101 $U
 	;;
 
 bpf*)
@@ -326,10 +330,6 @@ bpf*)
 
 bktr*)
 	M bktr$U c 75 $U 644
-	;;
-
-hotplug)
-	M hotplug c 37 $U 400
 	;;
 
 bio)
@@ -381,17 +381,17 @@ ugen*)
 	done
 	;;
 
+uall)
+	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
+	R uhid2 uhid3 uscanner0 urio0 usb0 usb1 usb2 usb3 usb4 usb5
+	R usb6 usb7
+	;;
+
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
 	M ttyU$U c 68 $o 660 dialer uucp
 	M cuaU$U c 68 $(($o+128)) 660 dialer uucp
-	;;
-
-uall)
-	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
-	R uhid2 uhid3 uscanner0 urio0 usb0 usb1 usb2 usb3 usb4 usb5
-	R usb6 usb7
 	;;
 
 wsmux|wsmouse|wskbd)
@@ -405,6 +405,12 @@ wsmouse[0-9]*)
 
 wskbd[0-9]*)
 	M wskbd$U c 61 $U 600
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 tty[C-J]*)
@@ -424,12 +430,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 60 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
-	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)

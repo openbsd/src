@@ -41,8 +41,8 @@
 #	ch*	SCSI media changers
 #	st*	SCSI tape drives
 # Terminal ports:
-#	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	cua[a-z]*	Zilog 8530 serial ports
+#	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	tty[a-z]*	Zilog 8530 serial ports
 # Pseudo terminals:
 #	ptm	pty master device
@@ -72,11 +72,13 @@
 #	bpf*	Berkeley Packet Filter
 #	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
-#	hotplug	devices hot plugging
 #	gpio*	General Purpose Input/Output
+#	hotplug	devices hot plugging
 #	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	radio*	FM tuner devices
@@ -86,9 +88,7 @@
 #	tuner*	Tuner devices
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -231,16 +231,8 @@ std)
 	;;
 
 
-diskmap)
-	M diskmap c 84 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 83 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 video*)
@@ -287,6 +279,10 @@ pci*)
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
+nnpfs*)
+	M nnpfs$U c 51 $U 600
+	;;
+
 lkm)
 	M lkm c 24 0 640 _lkm
 	;;
@@ -295,18 +291,22 @@ iop*)
 	M iop$U c 73 $U 660
 	;;
 
-gpio*)
-	M gpio$U c 79 $U 600
-	;;
-
 hotplug)
 	M hotplug c 78 $U 400
+	;;
+
+gpio*)
+	M gpio$U c 79 $U 600
 	;;
 
 fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
+	;;
+
+diskmap)
+	M diskmap c 84 0 640 operator
 	;;
 
 crypto)
@@ -461,6 +461,13 @@ tty[a-z])
 	M tty$u c 7 $n 660 dialer uucp
 	;;
 
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 26 $o 660 dialer uucp
+	M cua$U c 26 $(($o+128)) 660 dialer uucp
+	;;
+
 cua[a-z])
 	u=${i#cua*}
 	case $u in
@@ -469,13 +476,6 @@ cua[a-z])
 	*) echo unknown cua device $i ;;
 	esac
 	M cua$u c 7 $(($n+128)) 660 dialer uucp
-	;;
-
-tty[0-7][0-9a-f])
-	U=${i#tty*}
-	o=$(h2d $U)
-	M tty$U c 26 $o 660 dialer uucp
-	M cua$U c 26 $(($o+128)) 660 dialer uucp
 	;;
 
 st*)

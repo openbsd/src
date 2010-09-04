@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.22 2010/07/22 00:59:56 deraadt Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.23 2010/09/04 12:18:42 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
 .\"	OpenBSD: etc.armish/MAKEDEV.md,v 1.19 2010/07/03 03:59:15 krw Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.49 2010/07/21 23:40:26 nicm Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.51 2010/08/03 20:12:01 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 4 2010 $
 .Dt MAKEDEV 8 armish
 .Os
 .Sh NAME
@@ -132,12 +132,12 @@ Set of 62 slave pseudo terminals, see
 .Pp
 .Sy Console ports
 .Bl -tag -width tenletters -compact
-.It Ar wscons
-Minimal wscons devices, see
-.Xr wscons 4 .
 .It Ar ttyC-J*
 wscons display devices, see
 .Xr wsdisplay 4 .
+.It Ar wscons
+Minimal wscons devices, see
+.Xr wscons 4 .
 .It Ar wskbd*
 wscons keyboards, see
 .Xr wskbd 4 .
@@ -151,12 +151,12 @@ wscons keyboard/mouse mux devices, see
 .Pp
 .Sy USB devices
 .Bl -tag -width tenletters -compact
-.It Ar uall
-All USB devices, see
-.Xr usb 4 .
 .It Ar ttyU*
 USB serial ports, see
 .Xr ucom 4 .
+.It Ar uall
+All USB devices, see
+.Xr usb 4 .
 .It Ar ugen*
 Generic USB devices, see
 .Xr ugen 4 .
@@ -188,21 +188,27 @@ Audio devices, see
 .It Ar bio
 ioctl tunnel pseudo-device, see
 .Xr bio 4 .
-.It Ar hotplug
-devices hot plugging, see
-.Xr hotplug 4 .
 .It Ar bktr*
 Video frame grabbers, see
 .Xr bktr 4 .
 .It Ar bpf*
 Berkeley Packet Filter, see
 .Xr bpf 4 .
+.It Ar bthub*
+Bluetooth Hubs, see
+.Xr bthub 4 .
 .It Ar crypto
 Hardware crypto access driver, see
 .Xr crypto 4 .
+.It Ar diskmap
+Disk mapper, see
+.Xr diskmap 4 .
 .It Ar fd
 fd/* nodes, see
 .Xr fd 4 .
+.It Ar hotplug
+devices hot plugging, see
+.Xr hotplug 4 .
 .It Ar iop*
 I2O controller devices, see
 .Xr iop 4 .
@@ -212,6 +218,9 @@ Loadable kernel modules interface, see
 .It Ar music*
 MIDI sequencer, see
 .Xr music 4 .
+.It Ar nnpfs*
+NNPFS filesystem node, see
+.Xr mount_nnpfs 8 .
 .It Ar pci*
 PCI bus devices, see
 .Xr pci 4 .
@@ -221,12 +230,12 @@ Packet Filter, see
 .It Ar radio*
 FM tuner devices, see
 .Xr radio 4 .
-.It Ar rmidi*
-Raw MIDI devices, see
-.Xr midi 4 .
 .It Ar *random
 In-kernel random data source, see
 .Xr random 4 .
+.It Ar rmidi*
+Raw MIDI devices, see
+.Xr midi 4 .
 .It Ar tun*
 Network tunnel driver, see
 .Xr tun 4 .
@@ -242,18 +251,9 @@ Tuner devices, see
 .It Ar video*
 Video V4L2 devices, see
 .Xr video 4 .
-.It Ar nnpfs*
-NNPFS filesystem node, see
-.Xr mount_nnpfs 8 .
 .It Ar vscsi*
 Virtual SCSI controller, see
 .Xr vscsi 8 .
-.It Ar bthub*
-Bluetooth Hubs, see
-.Xr bthub 4 .
-.It Ar diskmap
-Disk mapper, see
-.Xr diskmap 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

@@ -42,10 +42,11 @@
 #	ch*	SCSI media changers
 #	st*	SCSI tape drives
 # Terminal ports:
-#	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	cua[a-z]*	Zilog 8530 serial port
-#	tty[a-z]*	Zilog 8530 serial port
+#	magma*	Magma multiport cards
 #	spif*	"spif" multiport cards
+#	tty[0-7][0-9a-f]	NS16x50 serial ports
+#	tty[a-z]*	Zilog 8530 serial port
 #	ttyh*	Sab82532 serial devices
 #	ttyV*	virtual console concentrator
 # Pseudo terminals:
@@ -54,21 +55,21 @@
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
 #	console	PROM console
-#	wscons	Minimal wscons devices
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Printers:
 #	bpp*	Parallel port
-#	bppmag[mno]	Magma parallel port
 #	bpp[jkl]	"spif" parallel port
+#	bppmag[mno]	Magma parallel port
 #	lpa*	Polled printer port
 #	lpt*	IEEE 1284 centronics printer
 # USB devices:
-#	uall	All USB devices
 #	ttyU*	USB serial ports
+#	uall	All USB devices
 #	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
@@ -79,12 +80,14 @@
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
+#	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	hotplug	devices hot plugging
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	openprom	PROM settings
-#	magma*	Magma multiport cards
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
@@ -93,10 +96,7 @@
 #	uk*	Unknown SCSI devices
 #	uperf	Performance counters
 #	video*	Video V4L2 devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	bthub*	Bluetooth Hubs
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -243,20 +243,8 @@ std)
 	M mdesc		c 70 1 640 kmem
 	;;
 
-diskmap)
-	M diskmap c 130 0 640 operator
-	;;
-
-bthub*)
-	M bthub$U c 129 $U
-	;;
-
 vscsi*)
 	M vscsi$U c 128 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 video*)
@@ -298,27 +286,12 @@ pci*)
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
-magma*)
-	case $U in
-	0)	offset=0  nam=m;;
-	1)	offset=16 nam=n;;
-	2)	offset=32 nam=o;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=$(($U*64))
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 71 $(($offset+$n)) 660 dialer uucp
-		n=$(($n+1))
-	done
-	M bpp${nam}0 c 72 $(($offset+0)) 600
-	M bpp${nam}1 c 72 $(($offset+1)) 600
-	;;
-
 openprom)
 	M openprom c 70 0  
+	;;
+
+nnpfs*)
+	M nnpfs$U c 51 $U 600
 	;;
 
 lkm)
@@ -335,8 +308,16 @@ fd)
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
+diskmap)
+	M diskmap c 130 0 640 operator
+	;;
+
 crypto)
 	M crypto c 75 0
+	;;
+
+bthub*)
+	M bthub$U c 129 $U
 	;;
 
 bpf*)
@@ -387,17 +368,17 @@ ugen*)
 	done
 	;;
 
+uall)
+	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
+	R uhid2 uhid3 uscanner0 urio0 usb0 usb1 usb2 usb3 usb4 usb5
+	R usb6 usb7
+	;;
+
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
 	M ttyU$U c 95 $o 660 dialer uucp
 	M cuaU$U c 95 $(($o+128)) 660 dialer uucp
-	;;
-
-uall)
-	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
-	R uhid2 uhid3 uscanner0 urio0 usb0 usb1 usb2 usb3 usb4 usb5
-	R usb6 usb7
 	;;
 
 lpt*|lpa*)
@@ -425,6 +406,22 @@ wskbd[0-9]*)
 	M wskbd$U c 79 $U 600
 	;;
 
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyJcfg ttyJ0 ttyJ1 ttyJ2 ttyJ3 ttyJ4 ttyJ5
+	R ttyJ6 ttyJ7 ttyJ8 ttyJ9 ttyJa ttyJb ttyIcfg ttyI0 ttyI1
+	R ttyI2 ttyI3 ttyI4 ttyI5 ttyI6 ttyI7 ttyI8 ttyI9 ttyIa ttyIb
+	R ttyHcfg ttyH0 ttyH1 ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7
+	R ttyH8 ttyH9 ttyHa ttyHb ttyGcfg ttyG0 ttyG1 ttyG2 ttyG3
+	R ttyG4 ttyG5 ttyG6 ttyG7 ttyG8 ttyG9 ttyGa ttyGb ttyFcfg
+	R ttyF0 ttyF1 ttyF2 ttyF3 ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9
+	R ttyFa ttyFb ttyEcfg ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5
+	R ttyE6 ttyE7 ttyE8 ttyE9 ttyEa ttyEb ttyDcfg ttyD0 ttyD1
+	R ttyD2 ttyD3 ttyD4 ttyD5 ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb
+	R ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7
+	R ttyC8 ttyC9 ttyCa ttyCb
+	;;
+
 tty[C-J]*)
 	U=${i##tty[C-J]}
 	case $i in
@@ -442,22 +439,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 78 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyJcfg ttyJ0 ttyJ1 ttyJ2 ttyJ3 ttyJ4 ttyJ5
-	R ttyJ6 ttyJ7 ttyJ8 ttyJ9 ttyJa ttyJb ttyIcfg ttyI0 ttyI1
-	R ttyI2 ttyI3 ttyI4 ttyI5 ttyI6 ttyI7 ttyI8 ttyI9 ttyIa ttyIb
-	R ttyHcfg ttyH0 ttyH1 ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7
-	R ttyH8 ttyH9 ttyHa ttyHb ttyGcfg ttyG0 ttyG1 ttyG2 ttyG3
-	R ttyG4 ttyG5 ttyG6 ttyG7 ttyG8 ttyG9 ttyGa ttyGb ttyFcfg
-	R ttyF0 ttyF1 ttyF2 ttyF3 ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9
-	R ttyFa ttyFb ttyEcfg ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5
-	R ttyE6 ttyE7 ttyE8 ttyE9 ttyEa ttyEb ttyDcfg ttyD0 ttyD1
-	R ttyD2 ttyD3 ttyD4 ttyD5 ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb
-	R ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7
-	R ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)
@@ -496,6 +477,25 @@ ttyh*)
 	M ttyh$U c 77 $U 660 dialer uucp
 	;;
 
+tty[a-z])
+	u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c 12 $n 660 dialer uucp
+	;;
+
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 36 $o 660 dialer uucp
+	M cua$U c 36 $(($o+128)) 660 dialer uucp
+	;;
+
 spif*)
 	case $U in
 	0)	offset=0  nam=j;;
@@ -514,16 +514,23 @@ spif*)
 	M bpp${nam}0 c 109 $(($offset+0)) 600
 	;;
 
-tty[a-z])
-	u=${i#tty*}
-	case $u in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=2 ;;
-	d) n=3 ;;
-	*) echo unknown tty device $i ;;
+magma*)
+	case $U in
+	0)	offset=0  nam=m;;
+	1)	offset=16 nam=n;;
+	2)	offset=32 nam=o;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
 	esac
-	M tty$u c 12 $n 660 dialer uucp
+	offset=$(($U*64))
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 71 $(($offset+$n)) 660 dialer uucp
+		n=$(($n+1))
+	done
+	M bpp${nam}0 c 72 $(($offset+0)) 600
+	M bpp${nam}1 c 72 $(($offset+1)) 600
 	;;
 
 cua[a-z])
@@ -536,13 +543,6 @@ cua[a-z])
 	*) echo unknown cua device $i ;;
 	esac
 	M cua$u c 12 $(($n+128)) 660 dialer uucp
-	;;
-
-tty[0-7][0-9a-f])
-	U=${i#tty*}
-	o=$(h2d $U)
-	M tty$U c 36 $o 660 dialer uucp
-	M cua$U c 36 $(($o+128)) 660 dialer uucp
 	;;
 
 st*)

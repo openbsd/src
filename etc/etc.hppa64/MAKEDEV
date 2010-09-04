@@ -47,22 +47,23 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	wscons	Minimal wscons devices
 #	ttyC-J*	wscons display devices
+#	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Printers:
 #	lpt*	IEEE 1284 centronics printer
-# USB devices:
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	pci*	PCI bus devices
 #	pdc	PDC device
 #	pf*	Packet Filter
@@ -71,9 +72,7 @@
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -219,16 +218,8 @@ std)
 	M pdc		c 22 0 640 operator
 	;;
 
-diskmap)
-	M diskmap c 47 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 46 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 32 $U 600
 	;;
 
 video*)
@@ -266,6 +257,10 @@ pci*)
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
+nnpfs*)
+	M nnpfs$U c 32 $U 600
+	;;
+
 lkm)
 	M lkm c 19 0 640 _lkm
 	;;
@@ -274,6 +269,10 @@ fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 16 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
+	;;
+
+diskmap)
+	M diskmap c 47 0 640 operator
 	;;
 
 crypto)
@@ -320,6 +319,12 @@ wskbd[0-9]*)
 	M wskbd$U c 28 $U 600
 	;;
 
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
+	;;
+
 tty[C-J]*)
 	U=${i##tty[C-J]}
 	case $i in
@@ -337,12 +342,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 27 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
-	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)

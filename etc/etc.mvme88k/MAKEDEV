@@ -49,20 +49,20 @@
 # Special purpose devices:
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
+#	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
+#	nnpfs*	NNPFS filesystem node
 #	nvram0	On-board non-volatile memory
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
 #	sram0	On-board static memory
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
+#	uk*	Unknown SCSI devices
 #	vmel0	VMEbus D32 space
 #	vmes0	VMEbus D16 space
-#	uk*	Unknown SCSI devices
-#	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
-#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -203,20 +203,8 @@ std)
 	;;
 
 
-diskmap)
-	M diskmap c 54 0 640 operator
-	;;
-
 vscsi*)
 	M vscsi$U c 53 $U 600
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
-	;;
-
-uk*)
-	M uk$U c 41 $U 640 operator
 	;;
 
 vmes0)
@@ -225,6 +213,10 @@ vmes0)
 
 vmel0)
 	M vmel0 c 31 0 640 kmem
+	;;
+
+uk*)
+	M uk$U c 41 $U 640 operator
 	;;
 
 tun*)
@@ -256,6 +248,10 @@ nvram0)
 	M nvram0 c 10 0 640 kmem
 	;;
 
+nnpfs*)
+	M nnpfs$U c 51 $U 600
+	;;
+
 lkm)
 	M lkm c 24 0 640 _lkm
 	;;
@@ -264,6 +260,10 @@ fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
+	;;
+
+diskmap)
+	M diskmap c 54 0 640 operator
 	;;
 
 bpf*)

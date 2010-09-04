@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.39 2010/07/22 00:59:57 deraadt Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.40 2010/09/04 12:18:42 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
 .\"	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.28 2010/07/03 03:59:15 krw Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.49 2010/07/21 23:40:26 nicm Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.51 2010/08/03 20:12:01 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 4 2010 $
 .Dt MAKEDEV 8 mvme68k
 .Os
 .Sh NAME
@@ -108,12 +108,12 @@ SCSI tape drives, see
 .It Ar cuaa-d
 On-board call-up devices, see
 .Xr zs 4 .
-.It Ar ttya-d
-On-board serial ports, see
-.Xr zs 4 .
 .It Ar tty0*
 CL-CD2400 serial ports, see
 .Xr cl 4 .
+.It Ar ttya-d
+On-board serial ports, see
+.Xr zs 4 .
 .It Ar ttyd*
 MC68681 serial ports.
 .It Ar ttyw*
@@ -147,6 +147,9 @@ ioctl tunnel pseudo-device, see
 .It Ar bpf*
 Berkeley Packet Filter, see
 .Xr bpf 4 .
+.It Ar diskmap
+Disk mapper, see
+.Xr diskmap 4 .
 .It Ar fd
 fd/* nodes, see
 .Xr fd 4 .
@@ -156,6 +159,9 @@ On-board flash memory, see
 .It Ar lkm
 Loadable kernel modules interface, see
 .Xr lkm 4 .
+.It Ar nnpfs*
+NNPFS filesystem node, see
+.Xr mount_nnpfs 8 .
 .It Ar nvram0
 On-board non-volatile memory, see
 .Xr nvram 4 .
@@ -183,15 +189,9 @@ VMEbus D32 space, see
 .It Ar vmes0
 VMEbus D16 space, see
 .Xr vmes 4 .
-.It Ar nnpfs*
-NNPFS filesystem node, see
-.Xr mount_nnpfs 8 .
 .It Ar vscsi*
 Virtual SCSI controller, see
 .Xr vscsi 8 .
-.It Ar diskmap
-Disk mapper, see
-.Xr diskmap 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact
