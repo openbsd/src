@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_sereg.h,v 1.2 2010/04/02 22:42:55 jsg Exp $	*/
+/*	$OpenBSD: if_sereg.h,v 1.3 2010/09/04 12:47:00 miod Exp $	*/
 
 /*-
- * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
+ * Copyright (c) 2008, 2009, 2010 Nikolay Denev <ndenev@gmail.com>
  * Copyright (c) 2007, 2008 Alexander Pohoyda <alexander.pohoyda@gmx.net>
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -34,8 +34,234 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/sys/dev/sge/if_sgereg.h,v 1.7 2010/07/08 18:22:49 yongari Exp $
  */
+
+#define	TX_CTL			0x00
+#define	TX_DESC			0x04
+#define	Reserved0		0x08
+#define	TX_NEXT			0x0c
+
+#define	RX_CTL			0x10
+#define	RX_DESC			0x14
+#define	Reserved1		0x18
+#define	RX_NEXT			0x1c
+
+#define	IntrStatus		0x20
+#define	IntrMask		0x24
+#define	IntrControl		0x28
+#define	IntrTimer		0x2c
+
+#define	PMControl		0x30
+#define	Reserved2		0x34
+#define	ROMControl		0x38
+#define	ROMInterface		0x3c
+#define	StationControl		0x40
+#define	GMIIControl		0x44
+#define	GMacIOCR		0x48
+#define	GMacIOCTL		0x4c
+#define	TxMacControl		0x50
+#define	TxMacTimeLimit		0x54
+#define	RGMIIDelay		0x58
+#define	Reserved3		0x5c
+#define	RxMacControl		0x60	/* 1  WORD */
+#define	RxMacAddr		0x62	/* 6x BYTE */
+#define	RxHashTable		0x68	/* 1 LONG */
+#define	RxHashTable2		0x6c	/* 1 LONG */
+#define	RxWakeOnLan		0x70
+#define	RxWakeOnLanData		0x74
+#define	RxMPSControl		0x78
+#define	Reserved4		0x7c
+
+/*
+ * IntrStatus Register Content
+ */
+#define	INTR_SOFT		0x40000000
+#define	INTR_TIMER		0x20000000
+#define	INTR_PAUSE_FRAME	0x00080000
+#define	INTR_MAGIC_FRAME	0x00040000
+#define	INTR_WAKE_FRAME		0x00020000
+#define	INTR_LINK		0x00010000
+#define	INTR_RX_IDLE		0x00000080
+#define	INTR_RX_DONE		0x00000040
+#define	INTR_TXQ1_IDLE		0x00000020
+#define	INTR_TXQ1_DONE		0x00000010
+#define	INTR_TX_IDLE		0x00000008
+#define	INTR_TX_DONE		0x00000004
+#define	INTR_RX_HALT		0x00000002
+#define	INTR_TX_HALT		0x00000001
+
+#define	SE_INTRS							\
+	(INTR_RX_IDLE | INTR_RX_DONE | INTR_TXQ1_IDLE |			\
+	 INTR_TXQ1_DONE |INTR_TX_IDLE | INTR_TX_DONE |			\
+	 INTR_TX_HALT | INTR_RX_HALT)
+
+/*
+ * RxStatusDesc Register Content
+ */
+#define	RxRES			0x00200000
+#define	RxCRC			0x00080000
+#define	RxRUNT			0x00100000
+#define	RxRWT			0x00400000
+
+/*
+ * RX_CTL Register Content
+ */
+#define	RX_CTL_POLL		0x00000010
+#define	RX_CTL_ENB		0x00000001
+
+/*
+ * TX_CTL Register Content
+ */
+#define	TX_CTL_POLL		0x00000010
+#define	TX_CTL_ENB		0x00000001
+
+/*
+ * RxMacControl Register Content
+ */
+#define	AcceptBroadcast		0x0800
+#define	AcceptMulticast		0x0400
+#define	AcceptMyPhys		0x0200
+#define	AcceptAllPhys		0x0100
+#define	AcceptErr		0x0020
+#define	AcceptRunt		0x0010
+#define	RXMAC_STRIP_VLAN	0x0020
+#define	RXMAC_STRIP_FCS		0x0010
+#define	RXMAC_PAD_ENB		0x0004
+#define	RXMAC_CSUM_ENB		0x0002
+
+#define	SE_RX_PAD_BYTES	10
+
+/* Station control register. */
+#define	SC_LOOPBACK		0x80000000
+#define	SC_RGMII		0x00008000
+#define	SC_FDX			0x00001000
+#define	SC_SPEED_MASK		0x00000c00
+#define	SC_SPEED_10		0x00000400
+#define	SC_SPEED_100		0x00000800
+#define	SC_SPEED_1000		0x00000c00
+
+/*
+ * Gigabit Media Independent Interface CTL register
+ */
+#define	GMI_DATA		0xffff0000
+#define	GMI_DATA_SHIFT		16
+#define	GMI_REG			0x0000f800
+#define	GMI_REG_SHIFT		11
+#define	GMI_PHY			0x000007c0
+#define	GMI_PHY_SHIFT		6
+#define	GMI_OP_WR		0x00000020
+#define	GMI_OP_RD		0x00000000
+#define	GMI_REQ			0x00000010
+#define	GMI_MDIO		0x00000008
+#define	GMI_MDDIR		0x00000004
+#define	GMI_MDC			0x00000002
+#define	GMI_MDEN		0x00000001
+
+/* Tx descriptor command bits. */
+#define	TDC_OWN			0x80000000
+#define	TDC_INTR		0x40000000
+#define	TDC_THOL3		0x30000000
+#define	TDC_THOL2		0x20000000
+#define	TDC_THOL1		0x10000000
+#define	TDC_THOL0		0x00000000
+#define	TDC_LS			0x08000000
+#define	TDC_IP_CSUM		0x04000000
+#define	TDC_TCP_CSUM		0x02000000
+#define	TDC_UDP_CSUM		0x01000000
+#define	TDC_BST			0x00800000
+#define	TDC_EXT			0x00400000
+#define	TDC_DEF			0x00200000
+#define	TDC_BKF			0x00100000
+#define	TDC_CRS			0x00080000
+#define	TDC_COL			0x00040000
+#define	TDC_CRC			0x00020000
+#define	TDC_PAD			0x00010000
+#define	TDC_VLAN_MASK		0x0000FFFF
+
+#define	SE_TX_INTR_FRAMES	32
+
+/*
+ * TX descriptor status bits.
+ */
+#define	TDS_OWC			0x00080000
+#define	TDS_ABT			0x00040000
+#define	TDS_FIFO		0x00020000
+#define	TDS_CRS			0x00010000
+#define	TDS_COLLS		0x0000ffff
+#define	SE_TX_ERROR(x)		((x) & (TDS_OWC | TDS_ABT | TDS_FIFO | TDS_CRS))
+#define	TX_ERR_BITS		"\20"				\
+				"\21CRS\22FIFO\23ABT\24OWC"
+
+/* Rx descriptor command bits. */
+#define	RDC_OWN			0x80000000
+#define	RDC_INTR		0x40000000
+#define	RDC_IP_CSUM		0x20000000
+#define	RDC_TCP_CSUM		0x10000000
+#define	RDC_UDP_CSUM		0x08000000
+#define	RDC_IP_CSUM_OK		0x04000000
+#define	RDC_TCP_CSUM_OK		0x02000000
+#define	RDC_UDP_CSUM_OK		0x01000000
+#define	RDC_WAKEUP		0x00400000
+#define	RDC_MAGIC		0x00200000
+#define	RDC_PAUSE		0x00100000
+#define	RDC_BCAST		0x000c0000
+#define	RDC_MCAST		0x00080000
+#define	RDC_UCAST		0x00040000
+#define	RDC_CRCOFF		0x00020000
+#define	RDC_PREADD		0x00010000
+#define	RDC_VLAN_MASK		0x0000FFFF
+
+/*
+ * RX descriptor status bits
+ */
+#define	RDS_VLAN		0x80000000
+#define	RDS_DESCS		0x3f000000
+#define	RDS_ABORT		0x00800000
+#define	RDS_SHORT		0x00400000
+#define	RDS_LIMIT		0x00200000
+#define	RDS_MIIER		0x00100000
+#define	RDS_OVRUN		0x00080000
+#define	RDS_NIBON		0x00040000
+#define	RDS_COLON		0x00020000
+#define	RDS_CRCOK		0x00010000
+#define	SE_RX_ERROR(x)							\
+        ((x) & (RDS_COLON | RDS_NIBON | RDS_OVRUN | RDS_MIIER |		\
+	RDS_LIMIT | RDS_SHORT | RDS_ABORT))
+#define	SE_RX_NSEGS(x)		(((x) & RDS_DESCS) >> 24)
+#define	RX_ERR_BITS 		"\20"					\
+				"\21CRCOK\22COLON\23NIBON\24OVRUN"	\
+				"\25MIIER\26LIMIT\27SHORT\30ABORT"	\
+				"\40VLAN"
+
+#define	RING_END		0x80000000
+#define	SE_RX_BYTES(x)		((x) & 0xFFFF)
+#define	SE_INC(x, y)		(x) = (((x) + 1) % y)
+
+/* Taken from Solaris driver */
+#define	EI_DATA			0xffff0000
+#define	EI_DATA_SHIFT		16
+#define	EI_OFFSET		0x0000fc00
+#define	EI_OFFSET_SHIFT		10
+#define	EI_OP			0x00000300
+#define	EI_OP_SHIFT		8
+#define	EI_OP_RD		(2 << EI_OP_SHIFT)
+#define	EI_OP_WR		(1 << EI_OP_SHIFT)
+#define	EI_REQ			0x00000080
+#define	EI_DO			0x00000008
+#define	EI_DI			0x00000004
+#define	EI_CLK			0x00000002
+#define	EI_CS			0x00000001
+
+/*
+ * EEPROM Addresses
+ */
+#define	EEPROMSignature		0x00
+#define	EEPROMCLK		0x01
+#define	EEPROMInfo		0x02
+#define	EEPROMMACAddr		0x03
+
+#define	SE_TIMEOUT		1000
 
 struct se_desc {
 	volatile u_int32_t	se_sts_size;
@@ -43,247 +269,3 @@ struct se_desc {
 	volatile u_int32_t	se_ptr;
 	volatile u_int32_t	se_flags;
 };
-
-#define SE_RX_RING_CNT		1000 /* [8, 1024] */
-#define SE_TX_RING_CNT		1000 /* [8, 8192] */
-
-#define SE_RX_RING_SZ		(SE_RX_RING_CNT * sizeof(struct se_desc))
-#define SE_TX_RING_SZ		(SE_TX_RING_CNT * sizeof(struct se_desc))
-
-struct se_list_data {
-	struct se_desc	*se_rx_ring;
-	struct se_desc	*se_tx_ring;
-	bus_dmamap_t		se_rx_dmamap;
-	bus_dmamap_t		se_tx_dmamap;
-};
-
-struct se_chain_data {
-	struct mbuf		*se_rx_mbuf[SE_RX_RING_CNT];
-	struct mbuf		*se_tx_mbuf[SE_TX_RING_CNT];
-	bus_dmamap_t		se_rx_map[SE_RX_RING_CNT];
-	bus_dmamap_t		se_tx_map[SE_TX_RING_CNT];
-	int			se_rx_prod;
-	int			se_tx_prod;
-	int			se_tx_cons;
-	int			se_tx_cnt;
-};
-
-struct se_softc {
-    	struct device		sc_dev;
-	void			*sc_ih;
-	struct ifnet		*se_ifp;	/* interface info */
-	struct resource		*se_res[2];
-	void			*se_intrhand;
-	mii_data_t		sc_mii;
-	struct arpcom		arpcom;
-
-	u_int8_t		se_link;
-
-	bus_space_handle_t	se_bhandle;
-	bus_space_tag_t		se_btag;
-	bus_dma_tag_t		se_tag;
-
-	struct se_list_data	se_ldata;
-	struct se_chain_data	se_cdata;
-
-	struct timeout		se_timeout;
-	int			in_tick;
-	int			se_watchdog_timer;
-	int			se_stopped;
-};
-
-
-#define SE_PCI_LOMEM		0x10
-
-enum sis19x_registers {
-	TxControl		= 0x00,
-	TxDescStartAddr		= 0x04,
-	Reserved0		= 0x08, // unused
-	TxNextDescAddr		= 0x0c,	// unused
-
-	RxControl		= 0x10,
-	RxDescStartAddr		= 0x14,
-	Reserved1		= 0x18, // unused
-	RxNextDescAddr		= 0x1c,	// unused
-
-	IntrStatus		= 0x20,
-	IntrMask		= 0x24,
-	IntrControl		= 0x28,
-	IntrTimer		= 0x2c,	// unused
-
-	PMControl		= 0x30,	// unused
-	Reserved2		= 0x34, // unused
-	ROMControl		= 0x38,
-	ROMInterface		= 0x3c,
-	StationControl		= 0x40,
-	GMIIControl		= 0x44,
-	GMacIOCR		= 0x48,
-	GMacIOCTL		= 0x4c,
-	TxMacControl		= 0x50,
-	TxMacTimeLimit		= 0x54,
-	RGMIIDelay		= 0x58,
-	Reserved3		= 0x5c,
-	RxMacControl		= 0x60, // 1  WORD
-	RxMacAddr		= 0x62, // 6x BYTE
-	RxHashTable		= 0x68, // 1 LONG
-	RxHashTable2		= 0x6c, // 1 LONG
-	RxWakeOnLan		= 0x70,
-	RxWakeOnLanData		= 0x74,
-	RxMPSControl		= 0x78,
-	Reserved4		= 0x7c,
-};
-
-enum sis19x_register_content {
-	/* IntrStatus */
-	SoftInt			= 0x40000000,	// unused
-	Timeup			= 0x20000000,	// unused
-	PauseFrame		= 0x00080000,	// unused
-	MagicPacket		= 0x00040000,	// unused
-	WakeupFrame		= 0x00020000,	// unused
-	LinkChange		= 0x00010000,
-	RxQEmpty		= 0x00000080,			//! RXIDLE
-	RxQInt			= 0x00000040,			//! RXDONE
-	TxQ1Empty		= 0x00000020,	// unused
-	TxQ1Int			= 0x00000010,	// unused
-	TxQEmpty		= 0x00000008,			//! TXIDLE
-	TxQInt			= 0x00000004,			//! TXDONE
-	RxHalt			= 0x00000002,			//! RXHALT
-	TxHalt			= 0x00000001,			//! TXHALT
-
-	/* RxStatusDesc */
-	RxRES			= 0x00200000,	// unused
-	RxCRC			= 0x00080000,
-	RxRUNT			= 0x00100000,	// unused
-	RxRWT			= 0x00400000,	// unused
-
-	/* {Rx/Tx}CmdBits */
-	CmdReset		= 0x10,
-	CmdRxEnb		= 0x01, /* Linux does not use it, but 0x8 */
-	CmdTxEnb		= 0x01,
-
-	/* RxMacControl */
-	AcceptBroadcast		= 0x0800,
-	AcceptMulticast		= 0x0400,
-	AcceptMyPhys		= 0x0200,
-	AcceptAllPhys		= 0x0100,
-	AcceptErr		= 0x0020,	// unused
-	AcceptRunt		= 0x0010,	// unused
-};
-
-/*
- * register space access macros
- */
-#define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->se_btag, sc->se_bhandle, reg, val)
-#define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->se_btag, sc->se_bhandle, reg, val)
-
-#define CSR_READ_4(sc, reg)	\
-	bus_space_read_4(sc->se_btag, sc->se_bhandle, reg)
-#define CSR_READ_2(sc, reg)	\
-	bus_space_read_2(sc->se_btag, sc->se_bhandle, reg)
-
-#define SE_PCI_COMMIT()	CSR_READ_4(sc, IntrControl)
-
-#define SE_SETBIT(_sc, _reg, x)				\
-	CSR_WRITE_4(_sc, _reg, CSR_READ_4(_sc, _reg) | (x))
-
-#define SE_CLRBIT(_sc, _reg, x)				\
-	CSR_WRITE_4(_sc, _reg, CSR_READ_4(_sc, _reg) & ~(x))
-
-#define DISABLE_INTERRUPTS(sc)	CSR_WRITE_4(sc, IntrMask, 0x0)
-#define ENABLE_INTERRUPTS(sc)	CSR_WRITE_4(sc, IntrMask, RxQEmpty | RxQInt | \
-					    TxQInt | RxHalt | TxHalt)
-
-
-/*
- * Gigabit Media Independent Interface CTL register
- */
-#define	GMI_DATA	0xffff0000
-#define	GMI_DATA_SHIFT	16
-#define	GMI_REG		0x0000f800
-#define	GMI_REG_SHIFT	11
-#define	GMI_PHY		0x000007c0
-#define	GMI_PHY_SHIFT	6
-#define	GMI_OP		0x00000020
-#define	GMI_OP_SHIFT		5
-#define	GMI_OP_WR	(1 << GMI_OP_SHIFT)
-#define	GMI_OP_RD	(0 << GMI_OP_SHIFT)
-#define	GMI_REQ		0x00000010
-#define	GMI_MDIO	0x00000008 	/* not used */
-#define	GMI_MDDIR	0x00000004	/* not used */
-#define	GMI_MDC		0x00000002	/* not used */
-#define	GMI_MDEN	0x00000001	/* not used */
-
-enum CommandStatus {
-	OWNbit		= 0x80000000,
-	INTbit		= 0x40000000,
-	IPbit		= 0x20000000,
-	TCPbit		= 0x10000000,
-	UDPbit		= 0x08000000,
-	DEFbit		= 0x00200000,
-	CRCbit		= 0x00020000,
-	PADbit		= 0x00010000,
-};
-
-
-/*
- * RX descriptor status bits
- */
-#define	RDS_TAGON	0x80000000
-#define	RDS_DESCS	0x3f000000
-#define	RDS_ABORT	0x00800000
-#define	RDS_SHORT	0x00400000
-#define	RDS_LIMIT	0x00200000
-#define	RDS_MIIER	0x00100000
-#define	RDS_OVRUN	0x00080000
-#define	RDS_NIBON	0x00040000
-#define	RDS_COLON	0x00020000
-#define	RDS_CRCOK	0x00010000
-#define	RX_ERR_BITS \
-	(RDS_COLON | RDS_NIBON | RDS_OVRUN | RDS_MIIER | \
-	 RDS_LIMIT | RDS_SHORT | RDS_ABORT)
-
-#define RING_END		0x80000000
-
-#define SE_RXSIZE(x)		letoh32((x)->se_sts_size & 0x0000ffff)
-#define SE_RXSTATUS(x)		letoh32((x)->se_sts_size & 0xffff0000)
-
-#undef SE_OWNDESC
-#define SE_OWNDESC(x)		((x)->se_cmdsts & OWNbit)
-
-#define SE_INC(x, y)		(x) = (((x) == ((y)-1)) ? 0 : (x)+1)
-
-
-/*
- * TX descriptor status bits
- */
-#define	TDS_OWC		0x00080000
-#define	TDS_ABT		0x00040000
-#define	TDS_FIFO	0x00020000
-#define	TDS_CRS		0x00010000
-#define	TDS_COLLS	0x0000ffff
-#define TX_ERR_BITS 	(TDS_OWC | TDS_ABT | TDS_FIFO | TDS_CRS)
-
-/* Taken from Solaris driver */
-#define	EI_DATA		0xffff0000 
-#define	EI_DATA_SHIFT	16
-#define	EI_OFFSET	0x0000fc00
-#define	EI_OFFSET_SHIFT	10
-#define	EI_OP		0x00000300 
-#define	EI_OP_SHIFT	8 
-#define	EI_OP_RD	(2 << EI_OP_SHIFT)
-#define	EI_OP_WR	(1 << EI_OP_SHIFT)
-#define	EI_REQ		0x00000080
-#define	EI_DO		0x00000008	/* not used */
-#define	EI_DI		0x00000004	/* not used */
-#define	EI_CLK		0x00000002	/* not used */
-#define	EI_CS		0x00000001
-
-/*
- * EEPROM Addresses
- */
-#define	EEPROMSignature	0x00
-#define	EEPROMCLK	0x01
-#define	EEPROMInfo	0x02
-#define	EEPROMMACAddr	0x03

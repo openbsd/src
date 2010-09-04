@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_se.c,v 1.3 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.4 2010/09/04 12:47:00 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
+ * Copyright (c) 2008, 2009, 2010 Nikolay Denev <ndenev@gmail.com>
  * Copyright (c) 2007, 2008 Alexander Pohoyda <alexander.pohoyda@gmx.net>
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -35,10 +36,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 /*
- * SiS 190 Fast Ethernet PCI NIC driver.
+ * SiS 190/191 PCI Ethernet NIC driver.
  *
  * Adapted to SiS 190 NIC by Alexander Pohoyda based on the original
  * SiS 900 driver by Bill Paul, using SiS 190/191 Solaris driver by
@@ -48,310 +47,430 @@
  *
  * Ported to OpenBSD by Christopher Zimmermann 2009/10
  *
- * It should be easy to adapt this driver to SiS 191 Gigabit Ethernet
- * PCI NIC.
+ * Adapted to SiS 191 NIC by Nikolay Denev with further ideas from the
+ * Linux and Solaris drivers.
  */
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/sockio.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
+#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 
+#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 
-#include "if_sereg.h"
+#include <dev/pci/if_sereg.h>
+
+#define SE_RX_RING_CNT		256 /* [8, 1024] */
+#define SE_TX_RING_CNT		256 /* [8, 8192] */
+#define	SE_RX_BUF_ALIGN		sizeof(uint64_t)
+
+#define SE_RX_RING_SZ		(SE_RX_RING_CNT * sizeof(struct se_desc))
+#define SE_TX_RING_SZ		(SE_TX_RING_CNT * sizeof(struct se_desc))
+
+struct se_list_data {
+	struct se_desc		*se_rx_ring;
+	struct se_desc		*se_tx_ring;
+	bus_dmamap_t		se_rx_dmamap;
+	bus_dmamap_t		se_tx_dmamap;
+};
+
+struct se_chain_data {
+	struct mbuf		*se_rx_mbuf[SE_RX_RING_CNT];
+	struct mbuf		*se_tx_mbuf[SE_TX_RING_CNT];
+	bus_dmamap_t		se_rx_map[SE_RX_RING_CNT];
+	bus_dmamap_t		se_tx_map[SE_TX_RING_CNT];
+	uint			se_rx_prod;
+	uint			se_tx_prod;
+	uint			se_tx_cons;
+	uint			se_tx_cnt;
+};
+
+struct se_softc {
+    	struct device		 sc_dev;
+	void			*sc_ih;
+	bus_space_tag_t		 sc_iot;
+	bus_space_handle_t	 sc_ioh;
+	bus_dma_tag_t		 sc_dmat;
+
+	struct mii_data		 sc_mii;
+	struct arpcom		 sc_ac;
+
+	struct se_list_data	 se_ldata;
+	struct se_chain_data	 se_cdata;
+
+	struct timeout		 sc_tick_tmo;
+
+	int			 sc_flags;
+#define	SE_FLAG_FASTETHER	0x0001
+#define	SE_FLAG_RGMII		0x0010
+#define	SE_FLAG_LINK		0x8000
+};
 
 /*
  * Various supported device vendors/types and their names.
  */
 const struct pci_matchid se_devices[] = {
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190 },
-	/* Gigabit variant not supported yet. */
-	/*{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_191 }*/
+	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_191 }
 };
 
-int se_probe(struct device *, void *, void *);
-void se_attach(struct device *, struct device *, void *);
+int	se_match(struct device *, void *, void *);
+void	se_attach(struct device *, struct device *, void *);
+int	se_activate(struct device *, int);
 
-struct cfattach se_ca = {
-	sizeof(struct se_softc), se_probe, se_attach
+const struct cfattach se_ca = {
+	sizeof(struct se_softc),
+	se_match, se_attach, NULL, se_activate
 };
 
 struct cfdriver se_cd = {
 	0, "se", DV_IFNET
 };
 
-int	se_get_mac_addr_cmos	(struct se_softc *, caddr_t);
-int	se_get_mac_addr_eeprom	(struct se_softc *, caddr_t);
-int	se_isabridge_match	(struct pci_attach_args *);
-uint16_t se_read_eeprom	(struct se_softc *, int);
-void	miibus_cmd		(struct se_softc *, u_int32_t);
-int	se_miibus_readreg	(struct device *, int, int);
-void	se_miibus_writereg	(struct device *, int, int, int);
-void	se_miibus_statchg	(struct device *);
+uint32_t
+	se_miibus_cmd(struct se_softc *, uint32_t);
+int	se_miibus_readreg(struct device *, int, int);
+void	se_miibus_writereg(struct device *, int, int, int);
+void	se_miibus_statchg(struct device *);
 
-int	se_ifmedia_upd		(struct ifnet *);
-void	se_ifmedia_sts		(struct ifnet *, struct ifmediareq *);
+int	se_newbuf(struct se_softc *, uint);
+void	se_discard_rxbuf(struct se_softc *, uint);
+int	se_encap(struct se_softc *, struct mbuf *, uint *);
+void	se_rxeof(struct se_softc *);
+void	se_txeof(struct se_softc *);
+int	se_intr(void *);
+void	se_tick(void *);
+void	se_start(struct ifnet *);
+int	se_ioctl(struct ifnet *, u_long, caddr_t);
+int	se_init(struct ifnet *);
+void	se_stop(struct se_softc *);
+void	se_watchdog(struct ifnet *);
+int	se_ifmedia_upd(struct ifnet *);
+void	se_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-int	se_ioctl		(struct ifnet *, u_long, caddr_t);
+int	se_pcib_match(struct pci_attach_args *);
+int	se_get_mac_addr_apc(struct se_softc *, uint8_t *);
+int	se_get_mac_addr_eeprom(struct se_softc *, uint8_t *);
+uint16_t
+	se_read_eeprom(struct se_softc *, int);
 
-void	se_setmulti		(struct se_softc *);
-uint32_t se_mchash		(struct se_softc *, const uint8_t *);
+void	se_iff(struct se_softc *);
+void	se_reset(struct se_softc *);
+int	se_list_rx_init(struct se_softc *);
+int	se_list_rx_free(struct se_softc *);
+int	se_list_tx_init(struct se_softc *);
+int	se_list_tx_free(struct se_softc *);
 
-int	se_newbuf		(struct se_softc *, u_int32_t,
- 				struct mbuf *);
-int	se_encap		(struct se_softc *,
- 				struct mbuf *, u_int32_t *);
-int	se_init		(struct ifnet *);
-int	se_list_rx_init	(struct se_softc *);
-int	se_list_rx_free	(struct se_softc *);
-int	se_list_tx_init	(struct se_softc *);
-int	se_list_tx_free	(struct se_softc *);
+/*
+ * Register space access macros.
+ */
 
-int	se_intr		(void *);
-void	se_rxeof		(struct se_softc *);
-void	se_txeof		(struct se_softc *);
+#define	CSR_WRITE_4(sc, reg, val) \
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, reg, val)
+#define	CSR_WRITE_2(sc, reg, val) \
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, reg, val)
+#define	CSR_WRITE_1(sc, reg, val) \
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, reg, val)
 
-void	se_tick		(void *);
-void	se_watchdog		(struct ifnet *);
-
-void	se_start		(struct ifnet *);
-void	se_reset		(struct se_softc *);
-void	se_stop		(struct se_softc *);
-void	se_shutdown		(void *);
-
+#define	CSR_READ_4(sc, reg) \
+	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, reg)
+#define	CSR_READ_2(sc, reg) \
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, reg)
+#define	CSR_READ_1(sc, reg) \
+	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, reg)
 
 /*
  * Read a sequence of words from the EEPROM.
  */
 uint16_t
-se_read_eeprom(sc, offset)
-	struct se_softc	*sc;
-	int			offset;
+se_read_eeprom(struct se_softc *sc, int offset)
 {
-	uint32_t	ret, val, i;
-        int             s;
+	uint32_t val;
+	int i;
 
 	KASSERT(offset <= EI_OFFSET);
 
-	s = splnet();
-
-	val = EI_REQ | EI_OP_RD | (offset << EI_OFFSET_SHIFT);
-	CSR_WRITE_4(sc, ROMInterface, val);
+	CSR_WRITE_4(sc, ROMInterface,
+	    EI_REQ | EI_OP_RD | (offset << EI_OFFSET_SHIFT));
 	DELAY(500);
-
-	for (i = 0; ((ret = CSR_READ_4(sc, ROMInterface)) & EI_REQ) != 0; i++) {
-	    if (i > 1000) {
-		/* timeout */
-		printf("EEPROM read timeout %d\n", i);
-		splx(s);
-		return (0xffff);
-	    }
-	    DELAY(100);
+	for (i = 0; i < SE_TIMEOUT; i++) {
+		val = CSR_READ_4(sc, ROMInterface);
+		if ((val & EI_REQ) == 0)
+			break;
+		DELAY(100);
+	}
+	if (i == SE_TIMEOUT) {
+		printf("%s: EEPROM read timeout: 0x%08x\n",
+		    sc->sc_dev.dv_xname, val);
+		return 0xffff;
 	}
 
-	splx(s);
-	return ((ret & EI_DATA) >> EI_DATA_SHIFT);
+	return (val & EI_DATA) >> EI_DATA_SHIFT;
 }
 
 int
-se_isabridge_match(struct pci_attach_args *pa)
+se_get_mac_addr_eeprom(struct se_softc *sc, uint8_t *dest)
 {
-	const struct pci_matchid device_ids[] = {
-	    { PCI_VENDOR_SIS, PCI_PRODUCT_SIS_965},
-	    { PCI_VENDOR_SIS, PCI_PRODUCT_SIS_966},
-	    { PCI_VENDOR_SIS, PCI_PRODUCT_SIS_968},
-	};
-
-	return (pci_matchbyid(pa, device_ids,
-		    sizeof(device_ids)/sizeof(device_ids[0])));
-}
-
-int
-se_get_mac_addr_cmos(sc, dest)
-	struct se_softc	*sc;
-	caddr_t			dest;
-{
-	struct pci_attach_args	isa_bridge;
-	u_int32_t reg, tmp;
-	int i, s;
-
-	if (!pci_find_device(&isa_bridge, se_isabridge_match)) {
-	    printf("Could not find ISA bridge to retrieve MAC address.\n");
-	    return -1;
-	}
-
-	s = splnet();
-
-	/* Enable port 78h & 79h to access APC Registers.
-	 * Taken from linux driver. */
-	tmp = pci_conf_read(isa_bridge.pa_pc, isa_bridge.pa_tag, 0x48);
-	reg = tmp & ~0x02;
-	pci_conf_write(isa_bridge.pa_pc, isa_bridge.pa_tag, 0x48, reg);
-	delay(50);
-	reg = pci_conf_read(isa_bridge.pa_pc, isa_bridge.pa_tag, 0x48);
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-	    bus_space_write_1(isa_bridge.pa_iot, 0x0, 0x78, 0x9 + i);
-	    *(dest + i) = bus_space_read_1(isa_bridge.pa_iot, 0x0, 0x79);
-	}
-
-	bus_space_write_1(isa_bridge.pa_iot, 0x0, 0x78, 0x12);
-	reg = bus_space_read_1(isa_bridge.pa_iot, 0x0, 0x79);
-
-	pci_conf_write(isa_bridge.pa_pc, isa_bridge.pa_tag, 0x48, tmp);
-
-	/* XXX: pci_dev_put(isa_bridge) ? */
-	splx(s);
-	return 0;
-}
-
-int
-se_get_mac_addr_eeprom(sc, dest)
-	struct se_softc	*sc;
-	caddr_t			dest;
-{
-	uint16_t	val, i;
+	uint16_t val;
+	int i;
 
 	val = se_read_eeprom(sc, EEPROMSignature);
-	if (val == 0xffff || val == 0x0000)
-	    return (1);
-
-	for (i = 0; i < ETHER_ADDR_LEN; i += 2) {
-	    val = se_read_eeprom(sc, EEPROMMACAddr + i/2);
-	    dest[i + 0] = (uint8_t) val;
-	    dest[i + 1] = (uint8_t) (val >> 8);
+	if (val == 0xffff || val == 0x0000) {
+		printf("%s: invalid EEPROM signature : 0x%04x\n",
+		    sc->sc_dev.dv_xname, val);
+		return (EINVAL);
 	}
 
+	for (i = 0; i < ETHER_ADDR_LEN; i += 2) {
+		val = se_read_eeprom(sc, EEPROMMACAddr + i / 2);
+		dest[i + 0] = (uint8_t)val;
+		dest[i + 1] = (uint8_t)(val >> 8);
+	}
+
+	if ((se_read_eeprom(sc, EEPROMInfo) & 0x80) != 0)
+		sc->sc_flags |= SE_FLAG_RGMII;
 	return (0);
 }
 
-void
-miibus_cmd(sc, ctl)
-    	struct se_softc	*sc;
-	u_int32_t		ctl;
+/*
+ * For SiS96x, APC CMOS RAM is used to store Ethernet address.
+ * APC CMOS RAM is accessed through ISA bridge.
+ */
+#if defined(__amd64__) || defined(__i386__)
+int
+se_pcib_match(struct pci_attach_args *pa)
 {
-	uint32_t	i;
-        int             s;
+	const struct pci_matchid apc_devices[] = {
+		{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_965 },
+		{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_966 },
+		{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_968 }
+	};
 
-	s = splnet();
-	CSR_WRITE_4(sc, GMIIControl, ctl);
-	DELAY(10);
+	return pci_matchbyid(pa, apc_devices, nitems(apc_devices));
+}
+#endif
 
-	for (i = 0; (CSR_READ_4(sc, GMIIControl) & GMI_REQ) != 0; i++)
-	{
-	    if (i > 1000) {
-		/* timeout */
-		printf("MIIBUS timeout\n");
-		splx(s);
-		return;
-	    }
-	    DELAY(100);
+int
+se_get_mac_addr_apc(struct se_softc *sc, uint8_t *dest)
+{
+#if defined(__amd64__) || defined(__i386__)
+	struct pci_attach_args pa;
+	pcireg_t reg;
+	bus_space_handle_t ioh;
+	int rc, i;
+
+	if (pci_find_device(&pa, se_pcib_match) == 0) {
+		printf("\n%s: couldn't find PCI-ISA bridge\n",
+		    sc->sc_dev.dv_xname);
+		return EINVAL;
 	}
-        splx(s);
-        return;
+
+	/* Enable port 0x78 and 0x79 to access APC registers. */
+	reg = pci_conf_read(pa.pa_pc, pa.pa_tag, 0x48);
+	pci_conf_write(pa.pa_pc, pa.pa_tag, 0x48, reg & ~0x02);
+	DELAY(50);
+	(void)pci_conf_read(pa.pa_pc, pa.pa_tag, 0x48);
+
+	/* XXX this abuses bus_space implementation knowledge */
+	rc = _bus_space_map(pa.pa_iot, 0x78, 2, 0, &ioh);
+	if (rc == 0) {
+		/* Read stored Ethernet address. */
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			bus_space_write_1(pa.pa_iot, ioh, 0, 0x09 + i);
+			dest[i] = bus_space_read_1(pa.pa_iot, ioh, 1);
+		}
+		bus_space_write_1(pa.pa_iot, ioh, 0, 0x12);
+		if ((bus_space_read_1(pa.pa_iot, ioh, 1) & 0x80) != 0)
+			sc->sc_flags |= SE_FLAG_RGMII;
+		_bus_space_unmap(pa.pa_iot, ioh, 2, NULL);
+	} else
+		rc = EINVAL;
+
+	/* Restore access to APC registers. */
+	pci_conf_write(pa.pa_pc, pa.pa_tag, 0x48, reg);
+
+	return rc;
+#endif
+	return EINVAL;
+}
+
+uint32_t
+se_miibus_cmd(struct se_softc *sc, uint32_t ctrl)
+{
+	int i;
+	uint32_t val;
+
+	CSR_WRITE_4(sc, GMIIControl, ctrl);
+	DELAY(10);
+	for (i = 0; i < SE_TIMEOUT; i++) {
+		val = CSR_READ_4(sc, GMIIControl);
+		if ((val & GMI_REQ) == 0)
+			return val;
+		DELAY(10);
+	}
+
+	return GMI_REQ;
 }
 
 int
-se_miibus_readreg(self, phy, reg)
-	struct device		*self;
-	int			phy, reg;
+se_miibus_readreg(struct device *self, int phy, int reg)
 {
-	struct se_softc	*sc = (struct se_softc *)self;
-	miibus_cmd(sc, (phy << GMI_PHY_SHIFT) |
-		(reg << GMI_REG_SHIFT) | GMI_OP_RD | GMI_REQ);
-	return ((CSR_READ_4(sc, GMIIControl) & GMI_DATA) >> GMI_DATA_SHIFT);
+	struct se_softc *sc = (struct se_softc *)self;
+	uint32_t ctrl, val;
+
+	ctrl = (phy << GMI_PHY_SHIFT) | (reg << GMI_REG_SHIFT) |
+	    GMI_OP_RD | GMI_REQ;
+	val = se_miibus_cmd(sc, ctrl);
+	if ((val & GMI_REQ) != 0) {
+		printf("%s: PHY read timeout : %d\n",
+		    sc->sc_dev.dv_xname, reg);
+		return 0;
+	}
+	return (val & GMI_DATA) >> GMI_DATA_SHIFT;
 }
 
 void
-se_miibus_writereg(self, phy, reg, data)
-	struct device		*self;
-	int			phy, reg, data;
+se_miibus_writereg(struct device *self, int phy, int reg, int data)
 {
-	struct se_softc	*sc = (struct se_softc *)self;
-	miibus_cmd(sc, (((uint32_t) data) << GMI_DATA_SHIFT) |
-		(((uint32_t) phy) << GMI_PHY_SHIFT) |
-		(reg << GMI_REG_SHIFT) | GMI_OP_WR | GMI_REQ);
+	struct se_softc *sc = (struct se_softc *)self;
+	uint32_t ctrl, val;
+
+	ctrl = (phy << GMI_PHY_SHIFT) | (reg << GMI_REG_SHIFT) |
+	    GMI_OP_WR | (data << GMI_DATA_SHIFT) | GMI_REQ;
+	val = se_miibus_cmd(sc, ctrl);
+	if ((val & GMI_REQ) != 0) {
+		printf("%s: PHY write timeout : %d\n",
+		    sc->sc_dev.dv_xname, reg);
+	}
 }
 
 void
-se_miibus_statchg(self)
-	struct device		*self;
+se_miibus_statchg(struct device *self)
 {
-	struct se_softc	*sc = (struct se_softc *)self;
+	struct se_softc *sc = (struct se_softc *)self;
+#ifdef SE_DEBUG
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+#endif
+	struct mii_data *mii = &sc->sc_mii;
+	uint32_t ctl, speed;
 
-	se_init(sc->se_ifp);
-}
-
-u_int32_t
-se_mchash(sc, addr)
-	struct se_softc	*sc;
-	const uint8_t		*addr;
-{
-	return (ether_crc32_be(addr, ETHER_ADDR_LEN) >> 26);
+	speed = 0;
+	sc->sc_flags &= ~SE_FLAG_LINK;
+	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
+	    (IFM_ACTIVE | IFM_AVALID)) {
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_10_T:
+#ifdef SE_DEBUG
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: 10baseT link\n", ifp->if_xname);
+#endif
+			sc->sc_flags |= SE_FLAG_LINK;
+			speed = SC_SPEED_10;
+			break;
+		case IFM_100_TX:
+#ifdef SE_DEBUG
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: 100baseTX link\n", ifp->if_xname);
+#endif
+			sc->sc_flags |= SE_FLAG_LINK;
+			speed = SC_SPEED_100;
+			break;
+		case IFM_1000_T:
+#ifdef SE_DEBUG
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: 1000baseT link\n", ifp->if_xname);
+#endif
+			if ((sc->sc_flags & SE_FLAG_FASTETHER) == 0) {
+				sc->sc_flags |= SE_FLAG_LINK;
+				speed = SC_SPEED_1000;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	if ((sc->sc_flags & SE_FLAG_LINK) == 0) {
+#ifdef SE_DEBUG
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: no link\n", ifp->if_xname);
+#endif
+		return;
+	}
+	/* Reprogram MAC to resolved speed/duplex/flow-control paramters. */
+	ctl = CSR_READ_4(sc, StationControl);
+	ctl &= ~(0x0f000000 | SC_FDX | SC_SPEED_MASK);
+	if (speed == SC_SPEED_1000)
+		ctl |= 0x07000000;
+	else
+		ctl |= 0x04000000;
+#ifdef notyet
+	if ((sc->sc_flags & SE_FLAG_GMII) != 0)
+		ctl |= 0x03000000;
+#endif
+	ctl |= speed;
+	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0)
+		ctl |= SC_FDX;
+	CSR_WRITE_4(sc, StationControl, ctl);
+	if ((sc->sc_flags & SE_FLAG_RGMII) != 0) {
+		CSR_WRITE_4(sc, RGMIIDelay, 0x0441);
+		CSR_WRITE_4(sc, RGMIIDelay, 0x0440);
+	}
 }
 
 void
-se_setmulti(sc)
-	struct se_softc	*sc;
+se_iff(struct se_softc *sc)
 {
-	struct ifnet		*ifp = sc->se_ifp;
-	struct arpcom		*ac = &sc->arpcom;
-	struct ether_multi	*enm;
-	struct ether_multistep	step;
-	uint32_t		hashes[2] = { 0, 0 }, rxfilt;
-	//struct ifmultiaddr	*ifma;
+	struct arpcom *ac = &sc->sc_ac;
+	struct ifnet *ifp = &ac->ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t crc, hashes[2];
+	uint16_t rxfilt;
 
-	rxfilt = AcceptMyPhys | 0x0052;
-
-	if (ifp->if_flags & IFF_PROMISC) {
-	    rxfilt |= AcceptAllPhys;
+	rxfilt = CSR_READ_2(sc, RxMacControl);
+	rxfilt &= ~(AcceptBroadcast | AcceptAllPhys | AcceptMulticast);
+	rxfilt |= AcceptMyPhys;
+	if ((ifp->if_flags & IFF_BROADCAST) != 0)
+		rxfilt |= AcceptBroadcast;
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if ((ifp->if_flags & IFF_PROMISC) != 0)
+			rxfilt |= AcceptAllPhys;
+		rxfilt |= AcceptMulticast;
+		hashes[0] = hashes[1] = 0xffffffff;
 	} else {
-	    rxfilt &= ~AcceptAllPhys;
-	}
-
-	if (ifp->if_flags & IFF_BROADCAST) {
-	    rxfilt |= AcceptBroadcast;
-	} else {
-	    rxfilt &= ~AcceptBroadcast;
-	}
-
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-allmulti:
-	    rxfilt |= AcceptMulticast;
-	    CSR_WRITE_2(sc, RxMacControl, rxfilt);
-	    CSR_WRITE_4(sc, RxHashTable, 0xFFFFFFFF);
-	    CSR_WRITE_4(sc, RxHashTable2, 0xFFFFFFFF);
-	    return;
-	}
-
-	/* now program new ones */
-	//TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-	    if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		goto allmulti;
-	    }
-
-	    int bit_nr = se_mchash(sc, LLADDR((struct sockaddr_dl *)
-				    enm->enm_addrlo));
-	    hashes[bit_nr >> 5] |= 1 << (bit_nr & 31);
-	    rxfilt |= AcceptMulticast;
-	    ETHER_NEXT_MULTI(step, enm);
+		rxfilt |= AcceptMulticast;
+		/* Now program new ones. */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		hashes[0] = hashes[1] = 0;
+		while (enm != NULL) {
+			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+			hashes[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
 	CSR_WRITE_2(sc, RxMacControl, rxfilt);
@@ -360,22 +479,24 @@ allmulti:
 }
 
 void
-se_reset(sc)
-	struct se_softc	*sc;
+se_reset(struct se_softc *sc)
 {
 	CSR_WRITE_4(sc, IntrMask, 0);
 	CSR_WRITE_4(sc, IntrStatus, 0xffffffff);
 
-	CSR_WRITE_4(sc, TxControl, 0x00001a00);
-	CSR_WRITE_4(sc, RxControl, 0x00001a1d);
-
+	/* Soft reset. */
 	CSR_WRITE_4(sc, IntrControl, 0x8000);
-	SE_PCI_COMMIT();
+	CSR_READ_4(sc, IntrControl);
 	DELAY(100);
-	CSR_WRITE_4(sc, IntrControl, 0x0);
+	CSR_WRITE_4(sc, IntrControl, 0);
+	/* Stop MAC. */
+	CSR_WRITE_4(sc, TX_CTL, 0x1a00);
+	CSR_WRITE_4(sc, RX_CTL, 0x1a00);
 
 	CSR_WRITE_4(sc, IntrMask, 0);
 	CSR_WRITE_4(sc, IntrStatus, 0xffffffff);
+
+	CSR_WRITE_4(sc, GMIIControl, 0);
 }
 
 /*
@@ -383,251 +504,187 @@ se_reset(sc)
  * IDs against our list and return a device name if we find a match.
  */
 int
-se_probe(parent, match, aux)
-    	struct device		*parent;
-	void			*match;
-	void			*aux;
+se_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, se_devices,
-	    sizeof(se_devices)/sizeof(se_devices[0])));
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+
+	return pci_matchbyid(pa, se_devices, nitems(se_devices));
 }
 
 /*
- * Attach the interface. Allocate softc structures, do ifmedia
- * setup and ethernet/BPF attach.
+ * Attach the interface. Do ifmedia setup and ethernet/BPF attach.
  */
 void
-se_attach(parent, self, aux)
-	struct device		*parent;
-	struct device		*self;
-	void			*aux;
+se_attach(struct device *parent, struct device *self, void *aux)
 {
-	const char		*intrstr = NULL;
-	struct se_softc	*sc = (struct se_softc *)self;
-	struct pci_attach_args	*pa = aux;
-	pci_chipset_tag_t	pc = pa->pa_pc;
-	pci_intr_handle_t	ih;
-	bus_size_t		size;
-	struct ifnet		*ifp;
-	bus_dma_segment_t	seg;
-	int			nseg;
-	struct se_list_data	*ld;
+	struct se_softc *sc = (struct se_softc *)self;
+	struct arpcom *ac = &sc->sc_ac;
+	struct ifnet *ifp = &ac->ac_if;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	uint8_t eaddr[ETHER_ADDR_LEN];
+	const char *intrstr;
+	pci_intr_handle_t ih;
+	bus_size_t iosize;
+	bus_dma_segment_t seg;
+	struct se_list_data *ld;
 	struct se_chain_data *cd;
-	int			i, error = 0;
+	int nseg;
+	uint i;
+	int rc;
 
-	ld = &sc->se_ldata;
-	cd = &sc->se_cdata;
-
-	/* TODO: What about power management ? */
-
-	/*
-	 * Handle power management nonsense.
-	 */
-#if 0
-/* power management registers */
-#define SIS_PCI_CAPID		0x50 /* 8 bits */
-#define SIS_PCI_NEXTPTR		0x51 /* 8 bits */
-#define SIS_PCI_PWRMGMTCAP	0x52 /* 16 bits */
-#define SIS_PCI_PWRMGMTCTRL	0x54 /* 16 bits */
-
-#define SIS_PSTATE_MASK		0x0003
-#define SIS_PSTATE_D0		0x0000
-#define SIS_PSTATE_D1		0x0001
-#define SIS_PSTATE_D2		0x0002
-#define SIS_PSTATE_D3		0x0003
-#define SIS_PME_EN		0x0010
-#define SIS_PME_STATUS		0x8000
-#define SIS_PCI_INTLINE		0x3C
-#define SIS_PCI_LOMEM		0x14
-	command = pci_conf_read(pc, pa->pa_tag, SIS_PCI_CAPID) & 0x000000FF;
-	if (command == 0x01) {
-
-		command = pci_conf_read(pc, pa->pa_tag, SIS_PCI_PWRMGMTCTRL);
-		if (command & SIS_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, SIS_PCI_LOIO);
-			membase = pci_conf_read(pc, pa->pa_tag, SIS_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, SIS_PCI_INTLINE);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode -- setting to D0\n",
-			    sc->sc_dev.dv_xname, command & SIS_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, SIS_PCI_PWRMGMTCTRL, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, SIS_PCI_LOIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, SIS_PCI_LOMEM, membase);
-			pci_conf_write(pc, pa->pa_tag, SIS_PCI_INTLINE, irq);
-		}
-	}
-#endif
+	printf(": ");
 
 	/*
 	 * Map control/status registers.
 	 */
 
-	/* Map IO */
-	if ((error = pci_mapreg_map(
-			pa,
-			SE_PCI_LOMEM,
-			PCI_MAPREG_TYPE_MEM, 0,
-			&sc->se_btag,
-			&sc->se_bhandle,
-			NULL,
-			&size,
-			0)))
-	{
-	    printf(": can't map i/o space (code %d)\n", error);
-	    return;
- 	}
-
-	/* Allocate interrupt */
-	if (pci_intr_map(pa, &ih)) {
-	    printf(": couldn't map interrupt\n");
-	    goto intfail;
+	rc = pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize, 0);
+	if (rc != 0) {
+		printf("can't map i/o space\n");
+		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, se_intr, sc,
+
+	if (pci_intr_map(pa, &ih)) {
+		printf("can't map interrupt\n");
+		goto fail1;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, se_intr, sc,
 	    self->dv_xname);
 	if (sc->sc_ih == NULL) {
-	    printf(": couldn't establish interrupt");
-	    if (intrstr != NULL)
-		printf(" at %s", intrstr);
-	    printf("\n");
-	    goto intfail;
+		printf("can't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto fail1;
 	}
+
+	printf("%s", intrstr);
+
+	if (pa->pa_id == PCI_ID_CODE(PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190))
+		sc->sc_flags |= SE_FLAG_FASTETHER;
 
 	/* Reset the adapter. */
 	se_reset(sc);
 
-	/*
-	 * Get MAC address from the EEPROM.
-	 */
-	if (se_get_mac_addr_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr) &&
-	    se_get_mac_addr_cmos(sc, (caddr_t)&sc->arpcom.ac_enaddr)
-	   )
-	    goto fail;
-
-	printf(": %s, address %s\n", intrstr,
-	    ether_sprintf(sc->arpcom.ac_enaddr));
+	/* Get MAC address from the EEPROM. */
+	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, 0x70) & (0x01 << 24)) != 0)
+		se_get_mac_addr_apc(sc, eaddr);
+	else
+		se_get_mac_addr_eeprom(sc, eaddr);
+	printf(", address %s\n", ether_sprintf(eaddr));
+	bcopy(eaddr, ac->ac_enaddr, ETHER_ADDR_LEN);
 
 	/*
 	 * Now do all the DMA mapping stuff
 	 */
 
-	sc->se_tag = pa->pa_dmat;
+	sc->sc_dmat = pa->pa_dmat;
+	ld = &sc->se_ldata;
+	cd = &sc->se_cdata;
 
 	/* First create TX/RX busdma maps. */
 	for (i = 0; i < SE_RX_RING_CNT; i++) {
-	    error = bus_dmamap_create(sc->se_tag, MCLBYTES, 1, MCLBYTES,
+		rc = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 		    0, BUS_DMA_NOWAIT, &cd->se_rx_map[i]);
-	    if (error) {
-		printf("cannot init the RX map array!\n");
-		goto fail;
-	    }
+		if (rc != 0) {
+			printf("%s: cannot init the RX map array\n",
+			    self->dv_xname);
+			goto fail2;
+		}
 	}
 
 	for (i = 0; i < SE_TX_RING_CNT; i++) {
-	    error = bus_dmamap_create(sc->se_tag, MCLBYTES, 1, MCLBYTES,
+		rc = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 		    0, BUS_DMA_NOWAIT, &cd->se_tx_map[i]);
-	    if (error) {
-		printf("cannot init the TX map array!\n");
-		goto fail;
-	    }
+		if (rc != 0) {
+			printf("%s: cannot init the TX map array\n",
+			    self->dv_xname);
+			goto fail2;
+		}
 	}
 
-
 	/*
-	 * Now allocate a tag for the DMA descriptor lists and a chunk
-	 * of DMA-able memory based on the tag.  Also obtain the physical
-	 * addresses of the RX and TX ring, which we'll need later.
-	 * All of our lists are allocated as a contiguous block
-	 * of memory.
+	 * Now allocate a chunk of DMA-able memory for RX and TX ring
+	 * descriptors, as a contiguous block of memory.
+	 * XXX fix deallocation upon error
 	 */
 
 	/* RX */
-
-	error = bus_dmamem_alloc(sc->se_tag, SE_RX_RING_SZ, PAGE_SIZE, 0,
-		&seg, 1, &nseg, BUS_DMA_NOWAIT);
-	if (error) {
-	    printf("no memory for rx list buffers!\n");
-	    goto fail;
+	rc = bus_dmamem_alloc(sc->sc_dmat, SE_RX_RING_SZ, PAGE_SIZE, 0,
+	    &seg, 1, &nseg, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: no memory for RX descriptors\n", self->dv_xname);
+		goto fail2;
 	}
 
-	error = bus_dmamem_map(sc->se_tag, &seg, nseg, SE_RX_RING_SZ,
-		(caddr_t *)&ld->se_rx_ring, BUS_DMA_NOWAIT);
-	if (error) {
-	    printf("can't map rx list buffers!\n");
-	    goto fail;
+	rc = bus_dmamem_map(sc->sc_dmat, &seg, nseg, SE_RX_RING_SZ,
+	    (caddr_t *)&ld->se_rx_ring, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: can't map RX descriptors\n", self->dv_xname);
+		goto fail2;
 	}
 
-	error = bus_dmamap_create(sc->se_tag, SE_RX_RING_SZ, 1,
-		SE_RX_RING_SZ, 0, BUS_DMA_NOWAIT, &ld->se_rx_dmamap);
-	if (error) {
-	    printf("can't alloc rx list map!\n");
-	    goto fail;
+	rc = bus_dmamap_create(sc->sc_dmat, SE_RX_RING_SZ, 1,
+	    SE_RX_RING_SZ, 0, BUS_DMA_NOWAIT, &ld->se_rx_dmamap);
+	if (rc != 0) {
+		printf("%s: can't alloc RX DMA map\n", self->dv_xname);
+		goto fail2;
 	}
 
-	error = bus_dmamap_load(sc->se_tag, ld->se_rx_dmamap,
-		(caddr_t)ld->se_rx_ring, SE_RX_RING_SZ,
-		NULL, BUS_DMA_NOWAIT);
-	if (error) {
-	    printf("can't load rx ring mapping!\n");
-	    bus_dmamem_unmap(sc->se_tag,
+	rc = bus_dmamap_load(sc->sc_dmat, ld->se_rx_dmamap,
+	    (caddr_t)ld->se_rx_ring, SE_RX_RING_SZ, NULL, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: can't load RX DMA map\n", self->dv_xname);
+		bus_dmamem_unmap(sc->sc_dmat,
 		    (caddr_t)ld->se_rx_ring, SE_RX_RING_SZ);
-	    bus_dmamap_destroy(sc->se_tag, ld->se_rx_dmamap);
-	    bus_dmamem_free(sc->se_tag, &seg, nseg);
-	    goto fail;
+		bus_dmamap_destroy(sc->sc_dmat, ld->se_rx_dmamap);
+		bus_dmamem_free(sc->sc_dmat, &seg, nseg);
+		goto fail2;
 	}
 
 	/* TX */
-
-	error = bus_dmamem_alloc(sc->se_tag, SE_TX_RING_SZ, PAGE_SIZE, 0,
-		&seg, 1, &nseg, BUS_DMA_NOWAIT);
-	if (error) {
-	    printf("no memory for tx list buffers!\n");
-	    goto fail;
+	rc = bus_dmamem_alloc(sc->sc_dmat, SE_TX_RING_SZ, PAGE_SIZE, 0,
+	    &seg, 1, &nseg, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: no memory for TX descriptors\n", self->dv_xname);
+		goto fail2;
 	}
 
-	error = bus_dmamem_map(sc->se_tag, &seg, nseg, SE_TX_RING_SZ,
-		(caddr_t *)&ld->se_tx_ring, BUS_DMA_NOWAIT);
-	if (error) {
-	    printf("can't map tx list buffers!\n");
-	    goto fail;
+	rc = bus_dmamem_map(sc->sc_dmat, &seg, nseg, SE_TX_RING_SZ,
+	    (caddr_t *)&ld->se_tx_ring, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: can't map TX descriptors\n", self->dv_xname);
+		goto fail2;
 	}
 
-	error = bus_dmamap_create(sc->se_tag, SE_TX_RING_SZ, 1,
-		SE_TX_RING_SZ, 0, BUS_DMA_NOWAIT, &ld->se_tx_dmamap);
-	if (error) {
-	    printf("can't alloc tx list map!\n");
-	    goto fail;
+	rc = bus_dmamap_create(sc->sc_dmat, SE_TX_RING_SZ, 1,
+	    SE_TX_RING_SZ, 0, BUS_DMA_NOWAIT, &ld->se_tx_dmamap);
+	if (rc != 0) {
+		printf("%s: can't alloc TX DMA map\n", self->dv_xname);
+		goto fail2;
 	}
 
-	error = bus_dmamap_load(sc->se_tag, ld->se_tx_dmamap,
-		(caddr_t)ld->se_tx_ring, SE_TX_RING_SZ,
-		NULL, BUS_DMA_NOWAIT);
-	if (error) {
-	    printf("can't load tx ring mapping!\n");
-	    bus_dmamem_unmap(sc->se_tag,
+	rc = bus_dmamap_load(sc->sc_dmat, ld->se_tx_dmamap,
+	    (caddr_t)ld->se_tx_ring, SE_TX_RING_SZ, NULL, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: can't load TX DMA map\n", self->dv_xname);
+		bus_dmamem_unmap(sc->sc_dmat,
 		    (caddr_t)ld->se_tx_ring, SE_TX_RING_SZ);
-	    bus_dmamap_destroy(sc->se_tag, ld->se_tx_dmamap);
-	    bus_dmamem_free(sc->se_tag, &seg, nseg);
-	    goto fail;
+		bus_dmamap_destroy(sc->sc_dmat, ld->se_tx_dmamap);
+		bus_dmamem_free(sc->sc_dmat, &seg, nseg);
+		goto fail2;
 	}
 
-	timeout_set(&sc->se_timeout, se_tick, sc);
+	timeout_set(&sc->sc_tick_tmo, se_tick, sc);
 
-	sc->se_ifp = ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = se_ioctl;
 	ifp->if_start = se_start;
 	ifp->if_watchdog = se_watchdog;
-	ifp->if_baudrate = IF_Mbps(100);
 	IFQ_SET_MAXLEN(&ifp->if_snd, SE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -640,15 +697,18 @@ se_attach(parent, self, aux)
 	sc->sc_mii.mii_readreg = se_miibus_readreg;
 	sc->sc_mii.mii_writereg = se_miibus_writereg;
 	sc->sc_mii.mii_statchg = se_miibus_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0,
-			se_ifmedia_upd,se_ifmedia_sts);
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	ifmedia_init(&sc->sc_mii.mii_media, 0, se_ifmedia_upd,
+	    se_ifmedia_sts);
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-	    ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-	    ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+		/* No PHY attached */
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
+		    0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-	    ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	/*
 	 * Call MI attach routine.
@@ -656,66 +716,70 @@ se_attach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	shutdownhook_establish(se_shutdown, sc);
-
 	return;
 
-fail:
-	pci_intr_disestablish(pc, sc->sc_ih);
-
-intfail:
-	bus_space_unmap(sc->se_btag, sc->se_bhandle, size);
+fail2:
+	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+fail1:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 }
 
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-se_shutdown(v)
-	void			*v;
+int
+se_activate(struct device *self, int act)
 {
-	struct se_softc	*sc = (struct se_softc *)v;
+	struct se_softc *sc = (struct se_softc *)self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int rc = 0;
 
-	se_reset(sc);
-	se_stop(sc);
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			se_stop(sc);
+		rc = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		rc = config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			(void)se_init(ifp);
+		break;
+	}
+
+	return rc;
 }
-
-
 
 /*
  * Initialize the TX descriptors.
  */
 int
-se_list_tx_init(sc)
-	struct se_softc	*sc;
+se_list_tx_init(struct se_softc *sc)
 {
-	struct se_list_data	*ld = &sc->se_ldata;
-	struct se_chain_data	*cd = &sc->se_cdata;
+	struct se_list_data *ld = &sc->se_ldata;
+	struct se_chain_data *cd = &sc->se_cdata;
 
 	bzero(ld->se_tx_ring, SE_TX_RING_SZ);
-	ld->se_tx_ring[SE_TX_RING_CNT - 1].se_flags |= RING_END;
-	cd->se_tx_prod = cd->se_tx_cons = cd->se_tx_cnt = 0;
+	ld->se_tx_ring[SE_TX_RING_CNT - 1].se_flags = htole32(RING_END);
+	cd->se_tx_prod = 0;
+	cd->se_tx_cons = 0;
+	cd->se_tx_cnt = 0;
 
-	return (0);
+	return 0;
 }
 
 int
-se_list_tx_free(sc)
-	struct se_softc	*sc;
+se_list_tx_free(struct se_softc *sc)
 {
-	struct se_chain_data	*cd = &sc->se_cdata;
-	int		i;
+	struct se_chain_data *cd = &sc->se_cdata;
+	uint i;
 
 	for (i = 0; i < SE_TX_RING_CNT; i++) {
-	    if (cd->se_tx_mbuf[i] != NULL) {
-		bus_dmamap_unload(sc->se_tag, cd->se_tx_map[i]);
-		m_free(cd->se_tx_mbuf[i]);
-		cd->se_tx_mbuf[i] = NULL;
-	    }
+		if (cd->se_tx_mbuf[i] != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, cd->se_tx_map[i]);
+			m_free(cd->se_tx_mbuf[i]);
+			cd->se_tx_mbuf[i] = NULL;
+		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -724,101 +788,102 @@ se_list_tx_free(sc)
  * has RING_END flag set.
  */
 int
-se_list_rx_init(sc)
-	struct se_softc	*sc;
+se_list_rx_init(struct se_softc *sc)
 {
-	struct se_list_data	*ld = &sc->se_ldata;
-	struct se_chain_data	*cd = &sc->se_cdata;
-	int		i;
+	struct se_list_data *ld = &sc->se_ldata;
+	struct se_chain_data *cd = &sc->se_cdata;
+	uint i;
 
 	bzero(ld->se_rx_ring, SE_RX_RING_SZ);
 	for (i = 0; i < SE_RX_RING_CNT; i++) {
-	    if (se_newbuf(sc, i, NULL) == ENOBUFS) {
-		printf("unable to allocate MBUFs, %d\n", i);
-		return (ENOBUFS);
-	    }
+		if (se_newbuf(sc, i) != 0)
+			return ENOBUFS;
 	}
 
-	ld->se_rx_ring[SE_RX_RING_CNT - 1].se_flags |= RING_END;
+	ld->se_rx_ring[SE_RX_RING_CNT - 1].se_flags |= htole32(RING_END);
 	cd->se_rx_prod = 0;
 
-	return (0);
+	return 0;
 }
 
 int
-se_list_rx_free(sc)
-	struct se_softc	*sc;
+se_list_rx_free(struct se_softc *sc)
 {
-	struct se_chain_data	*cd = &sc->se_cdata;
-	int		i;
+	struct se_chain_data *cd = &sc->se_cdata;
+	uint i;
 
 	for (i = 0; i < SE_RX_RING_CNT; i++) {
-	    if (cd->se_rx_mbuf[i] != NULL) {
-		bus_dmamap_unload(sc->se_tag, cd->se_rx_map[i]);
-		m_free(cd->se_rx_mbuf[i]);
-		cd->se_rx_mbuf[i] = NULL;
-	    }
+		if (cd->se_rx_mbuf[i] != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, cd->se_rx_map[i]);
+			m_free(cd->se_rx_mbuf[i]);
+			cd->se_rx_mbuf[i] = NULL;
+		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 int
-se_newbuf(sc, i, m)
-	struct se_softc	*sc;
-	u_int32_t		i;
-	struct mbuf		*m;
+se_newbuf(struct se_softc *sc, uint i)
 {
-	struct se_list_data	*ld = &sc->se_ldata;
-	struct se_chain_data	*cd = &sc->se_cdata;
-        /*struct ifnet		*ifp = sc->se_ifp;*/
-	int			error, alloc;
+#ifdef SE_DEBUG
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+#endif
+	struct se_list_data *ld = &sc->se_ldata;
+	struct se_chain_data *cd = &sc->se_cdata;
+	struct se_desc *desc;
+	struct mbuf *m;
+	int rc;
 
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (m == NULL) {
-	    m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
-	    if (m == NULL) {
-		printf("unable to get new MBUF\n");
-		return (ENOBUFS);
-	    }
-	    cd->se_rx_mbuf[i] = m;
-	    alloc = 1;
-	} else {
-	    m->m_data = m->m_ext.ext_buf;
-	    alloc = 0;
+#ifdef SE_DEBUG
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: MCLGETI failed\n", ifp->if_xname);
+#endif
+		return ENOBUFS;
 	}
-
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m_adj(m, SE_RX_BUF_ALIGN);
 
-	if (alloc) {
-	    error = bus_dmamap_load_mbuf(sc->se_tag, cd->se_rx_map[i],
-					 m, BUS_DMA_NOWAIT);
-	    if (error) {
-		printf("unable to map and load the MBUF\n");
+	rc = bus_dmamap_load_mbuf(sc->sc_dmat, cd->se_rx_map[i],
+	    m, BUS_DMA_NOWAIT);
+	KASSERT(cd->se_rx_map[i]->dm_nsegs == 1);
+	if (rc != 0) {
 		m_freem(m);
-		return (ENOBUFS);
-	    }
+		return ENOBUFS;
 	}
 
-	/* This is used both to initialize the newly created RX
-	 * descriptor as well as for re-initializing it for reuse. */
-	ld->se_rx_ring[i].se_sts_size = 0;
-	ld->se_rx_ring[i].se_cmdsts =
-		htole32(OWNbit | INTbit | IPbit | TCPbit | UDPbit);
-	ld->se_rx_ring[i].se_ptr =
-		htole32(cd->se_rx_map[i]->dm_segs[0].ds_addr);
-	ld->se_rx_ring[i].se_flags =
-		htole32(cd->se_rx_map[i]->dm_segs[0].ds_len)
-		| (i == SE_RX_RING_CNT - 1 ? RING_END : 0);
-	KASSERT(cd->se_rx_map[i]->dm_nsegs == 1);
+	cd->se_rx_mbuf[i] = m;
+	desc = &ld->se_rx_ring[i];
+	desc->se_sts_size = 0;
+	desc->se_cmdsts = htole32(RDC_OWN | RDC_INTR);
+	desc->se_ptr = htole32((uint32_t)cd->se_rx_map[i]->dm_segs[0].ds_addr);
+	desc->se_flags = htole32(cd->se_rx_map[i]->dm_segs[0].ds_len);
+	if (i == SE_RX_RING_CNT - 1)
+		desc->se_flags |= htole32(RING_END);
 
-	bus_dmamap_sync(sc->se_tag, cd->se_rx_map[i], 0,
-			cd->se_rx_map[i]->dm_mapsize,
-			BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, cd->se_rx_map[i], 0,
+	    cd->se_rx_map[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	return (0);
+	return 0;
+}
+
+void
+se_discard_rxbuf(struct se_softc *sc, uint i)
+{
+	struct se_list_data *ld = &sc->se_ldata;
+	struct se_desc *desc;
+
+	desc = &ld->se_rx_ring[i];
+	desc->se_sts_size = 0;
+	desc->se_cmdsts = htole32(RDC_OWN | RDC_INTR);
+	desc->se_flags = htole32(MCLBYTES - SE_RX_BUF_ALIGN);
+	if (i == SE_RX_RING_CNT - 1)
+		desc->se_flags |= htole32(RING_END);
 }
 
 /*
@@ -826,77 +891,71 @@ se_newbuf(sc, i, m)
  * the higher level protocols.
  */
 void
-se_rxeof(sc)
-	struct se_softc	*sc;
+se_rxeof(struct se_softc *sc)
 {
-        struct mbuf		*m, *m0;
-        struct ifnet		*ifp = sc->se_ifp;
-	struct se_list_data	*ld = &sc->se_ldata;
-	struct se_chain_data	*cd = &sc->se_cdata;
-	struct se_desc	*cur_rx;
-	u_int32_t		i, rxstat, total_len = 0;
+	struct mbuf *m;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct se_list_data *ld = &sc->se_ldata;
+	struct se_chain_data *cd = &sc->se_cdata;
+	struct se_desc *cur_rx;
+	uint32_t rxinfo, rxstat;
+	uint i;
 
-	for (i = cd->se_rx_prod; !SE_OWNDESC(&ld->se_rx_ring[i]);
-	    SE_INC(i, SE_RX_RING_CNT))
-	{
-	    bus_dmamap_sync(sc->se_tag, cd->se_rx_map[i], 0,
-			    cd->se_rx_map[i]->dm_mapsize,
-			    BUS_DMASYNC_POSTREAD);
+	for (i = cd->se_rx_prod; ; SE_INC(i, SE_RX_RING_CNT)) {
+		cur_rx = &ld->se_rx_ring[i];
+		rxinfo = letoh32(cur_rx->se_cmdsts);
+		if ((rxinfo & RDC_OWN) != 0)
+			break;
+		rxstat = letoh32(cur_rx->se_sts_size);
+		bus_dmamap_sync(sc->sc_dmat, cd->se_rx_map[i], 0,
+		    cd->se_rx_map[i]->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
 
-	    cur_rx = &ld->se_rx_ring[i];
-	    rxstat = SE_RXSTATUS(cur_rx);
-	    total_len = SE_RXSIZE(cur_rx);
-	    m = cd->se_rx_mbuf[i];
-
-	    /*
-	     * If an error occurs, update stats, clear the
-	     * status word and leave the mbuf cluster in place:
-	     * it should simply get re-used next time this descriptor
-	     * comes up in the ring.
-	     */
-	    if (rxstat & RX_ERR_BITS) {
-		printf("error_bits=%#x\n", rxstat);
-		ifp->if_ierrors++;
-		/* TODO: better error differentiation */
-		se_newbuf(sc, i, m);
-		continue;
-	    }
-
-	    /* No errors; receive the packet. */
-	    cd->se_rx_mbuf[i] = NULL; /* XXX neccessary? */
-#ifndef __STRICT_ALIGNMENT
-	    if (se_newbuf(sc, i, NULL) == 0) {
-		m->m_pkthdr.len = m->m_len = total_len;
-	    } else
-#endif
-	    {
-		/* ETHER_ALIGN is 2 */
-		m0 = m_devget(mtod(m, char *), total_len,
-		    2, ifp, NULL);
-		se_newbuf(sc, i, m);
-		if (m0 == NULL) {
-		    printf("unable to copy MBUF\n");
-		    ifp->if_ierrors++;
-		    continue;
+		/*
+		 * If an error occurs, update stats, clear the
+		 * status word and leave the mbuf cluster in place:
+		 * it should simply get re-used next time this descriptor
+		 * comes up in the ring.
+		 */
+		if ((rxstat & RDS_CRCOK) == 0 || SE_RX_ERROR(rxstat) != 0 ||
+		    SE_RX_NSEGS(rxstat) != 1) {
+			/* XXX We don't support multi-segment frames yet. */
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: rx error %b\n",
+				    ifp->if_xname, rxstat, RX_ERR_BITS);
+			se_discard_rxbuf(sc, i);
+			ifp->if_ierrors++;
+			continue;
 		}
-		m = m0;
-	    }
 
-	    ifp->if_ipackets++;
-	    m->m_pkthdr.rcvif = ifp;
+		/* No errors; receive the packet. */
+		m = cd->se_rx_mbuf[i];
+		if (se_newbuf(sc, i) != 0) {
+			se_discard_rxbuf(sc, i);
+			ifp->if_iqdrops++;
+			continue;
+		}
+		/*
+		 * Account for 10 bytes auto padding which is used
+		 * to align IP header on a 32bit boundary.  Also note,
+		 * CRC bytes are automatically removed by the hardware.
+		 */
+		m->m_data += SE_RX_PAD_BYTES;
+		m->m_pkthdr.len = m->m_len =
+		    SE_RX_BYTES(rxstat) - SE_RX_PAD_BYTES;
+
+		ifp->if_ipackets++;
+		m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-	    if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
-
-	    /* pass it on. */
-	    ether_input_mbuf(ifp, m);
+		ether_input_mbuf(ifp, m);
 	}
 
 	cd->se_rx_prod = i;
 }
-
 
 /*
  * A frame was downloaded to the chip. It's safe for us to clean up
@@ -904,129 +963,123 @@ se_rxeof(sc)
  */
 
 void
-se_txeof(sc)
-	struct se_softc	*sc;
+se_txeof(struct se_softc *sc)
 {
-	struct ifnet		*ifp = sc->se_ifp;
-	struct se_list_data	*ld = &sc->se_ldata;
-	struct se_chain_data	*cd = &sc->se_cdata;
-	struct se_desc	*cur_tx;
-	u_int32_t		i, txstat;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct se_list_data *ld = &sc->se_ldata;
+	struct se_chain_data *cd = &sc->se_cdata;
+	struct se_desc *cur_tx;
+	uint32_t txstat;
+	uint i;
 
 	/*
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been transmitted.
 	 */
-	for (i = cd->se_tx_cons; cd->se_tx_cnt > 0 &&
-	       !SE_OWNDESC(&ld->se_tx_ring[i]);
-	    cd->se_tx_cnt--, SE_INC(i, SE_TX_RING_CNT))
-	{
-	    cur_tx = &ld->se_tx_ring[i];
-	    txstat = letoh32(cur_tx->se_cmdsts);
-	    bus_dmamap_sync(sc->se_tag, cd->se_tx_map[i], 0,
+	for (i = cd->se_tx_cons; cd->se_tx_cnt > 0;
+	    cd->se_tx_cnt--, SE_INC(i, SE_TX_RING_CNT)) {
+		cur_tx = &ld->se_tx_ring[i];
+		txstat = letoh32(cur_tx->se_cmdsts);
+		if ((txstat & TDC_OWN) != 0)
+			break;
+
+		ifp->if_flags &= ~IFF_OACTIVE;
+
+		if (SE_TX_ERROR(txstat) != 0) {
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: tx error %b\n",
+				    ifp->if_xname, txstat, TX_ERR_BITS);
+			ifp->if_oerrors++;
+			/* TODO: better error differentiation */
+		} else
+			ifp->if_opackets++;
+
+		if (cd->se_tx_mbuf[i] != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, cd->se_tx_map[i], 0,
 			    cd->se_tx_map[i]->dm_mapsize,
 			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, cd->se_tx_map[i]);
+			m_free(cd->se_tx_mbuf[i]);
+			cd->se_tx_mbuf[i] = NULL;
+		}
 
-	    /* current slot is transferred now */
-
-	    if (txstat & TX_ERR_BITS) {
-		printf("error_bits=%#x\n", txstat);
-		ifp->if_oerrors++;
-		/* TODO: better error differentiation */
-	    }
-
-	    ifp->if_opackets++;
-	    if (cd->se_tx_mbuf[i] != NULL) {
-		bus_dmamap_unload(sc->se_tag, cd->se_tx_map[i]);
-		m_free(cd->se_tx_mbuf[i]);
-		cd->se_tx_mbuf[i] = NULL;
-	    }
-	    cur_tx->se_sts_size = 0;
-	    cur_tx->se_cmdsts = 0;
-	    cur_tx->se_ptr = 0;
-	    cur_tx->se_flags &= RING_END;
+		cur_tx->se_sts_size = 0;
+		cur_tx->se_cmdsts = 0;
+		cur_tx->se_ptr = 0;
+		cur_tx->se_flags &= RING_END;
 	}
 
-	if (i != cd->se_tx_cons) {
-	    /* we freed up some buffers */
-	    cd->se_tx_cons = i;
-	    ifp->if_flags &= ~IFF_OACTIVE;
-	}
-
-	sc->se_watchdog_timer = (cd->se_tx_cnt == 0) ? 0 : 5;
+	cd->se_tx_cons = i;
+	if (cd->se_tx_cnt == 0)
+		ifp->if_timer = 0;
 }
 
 void
-se_tick(xsc)
-	void			*xsc;
+se_tick(void *xsc)
 {
-	struct se_softc	*sc = xsc;
-	struct mii_data		*mii;
-	struct ifnet		*ifp = sc->se_ifp;
-        int                     s;
+	struct se_softc *sc = xsc;
+	struct mii_data *mii;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int s;
 
 	s = splnet();
-
-	sc->in_tick = 1;
-
 	mii = &sc->sc_mii;
 	mii_tick(mii);
-
-	se_watchdog(ifp);
-
-	if (!sc->se_link && mii->mii_media_status & IFM_ACTIVE &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
-	{
-	    sc->se_link++;
-	    if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		se_start(ifp);
+	if ((sc->sc_flags & SE_FLAG_LINK) == 0) {
+		se_miibus_statchg(&sc->sc_dev);
+		if ((sc->sc_flags & SE_FLAG_LINK) != 0 &&
+		    !IFQ_IS_EMPTY(&ifp->if_snd))
+			se_start(ifp);
 	}
+	splx(s);
 
-	timeout_add_sec(&sc->se_timeout, 1);
-
-	sc->in_tick = 0;
-
-        splx(s);
-        return;
+	timeout_add_sec(&sc->sc_tick_tmo, 1);
 }
 
 int
-se_intr(arg)
-	void			*arg;
+se_intr(void *arg)
 {
-	struct se_softc	*sc = arg;
-	struct ifnet		*ifp = sc->se_ifp;
-	int			status;
-	int			claimed = 0;
+	struct se_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	uint32_t status;
 
-	if (sc->se_stopped)	/* Most likely shared interrupt */
-	    return (claimed);
-
-	DISABLE_INTERRUPTS(sc);
+	status = CSR_READ_4(sc, IntrStatus);
+	if (status == 0xffffffff || (status & SE_INTRS) == 0) {
+		/* Not ours. */
+		return 0;
+	}
+	/* Ack interrupts/ */
+	CSR_WRITE_4(sc, IntrStatus, status);
+	/* Disable further interrupts. */
+	CSR_WRITE_4(sc, IntrMask, 0);
 
 	for (;;) {
-	    /* Reading the ISR register clears all interrupts. */
-	    status = CSR_READ_4(sc, IntrStatus);
-	    if ((status == 0xffffffff) || (status == 0x0))
-		break;
-
-	    claimed = 1; /* XXX just a guess to put this here */
-
-	    CSR_WRITE_4(sc, IntrStatus, status);
-
-	    if (status & TxQInt)
-		se_txeof(sc);
-
-	    if (status & RxQInt)
-		se_rxeof(sc);
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			break;
+		if ((status & (INTR_RX_DONE | INTR_RX_IDLE)) != 0) {
+			se_rxeof(sc);
+			/* Wakeup Rx MAC. */
+			if ((status & INTR_RX_IDLE) != 0)
+				CSR_WRITE_4(sc, RX_CTL,
+				    0x1a00 | 0x000c | RX_CTL_POLL | RX_CTL_ENB);
+		}
+		if ((status & (INTR_TX_DONE | INTR_TX_IDLE)) != 0)
+			se_txeof(sc);
+		status = CSR_READ_4(sc, IntrStatus);
+		if ((status & SE_INTRS) == 0)
+			break;
+		/* Ack interrupts. */
+		CSR_WRITE_4(sc, IntrStatus, status);
 	}
 
-	ENABLE_INTERRUPTS(sc);
+	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+		/* Re-enable interrupts */
+		CSR_WRITE_4(sc, IntrMask, SE_INTRS);
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			se_start(ifp);
+	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-	    se_start(ifp);
-
-	return (claimed);
+	return 1;
 }
 
 /*
@@ -1034,90 +1087,88 @@ se_intr(arg)
  * pointers to the fragment pointers.
  */
 int
-se_encap(sc, m_head, txidx)
-	struct se_softc	*sc;
-	struct mbuf		*m_head;
-	u_int32_t		*txidx;
+se_encap(struct se_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 {
-	struct mbuf		*m;
-	struct se_list_data	*ld = &sc->se_ldata;
-	struct se_chain_data	*cd = &sc->se_cdata;
-	int			error, i, cnt = 0;
+#ifdef SE_DEBUG
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+#endif
+	struct mbuf *m;
+	struct se_list_data *ld = &sc->se_ldata;
+	struct se_chain_data *cd = &sc->se_cdata;
+	struct se_desc *desc;
+	uint i, cnt = 0;
+	int rc;
 
 	/*
 	 * If there's no way we can send any packets, return now.
 	 */
-	if (SE_TX_RING_CNT - cd->se_tx_cnt < 2)
-	    return (ENOBUFS);
-
-#if 1
-	if (m_defrag(m_head, M_DONTWAIT)) {
-	    printf("unable to defragment MBUFs\n");
-	    return (ENOBUFS);
-	}
-#else
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
-	if (m == NULL) {
-	    printf("se_encap: unable to allocate MBUF\n");
-	    return (ENOBUFS);
-	}
-	m_copydata(m_head, 0, m_head->m_pkthdr.len, mtod(m, caddr_t));
-	m->m_pkthdr.len = m->m_len = m_head->m_pkthdr.len;
-	map = cd->se_tx_map[i];
-	error = bus_dmamap_load_mbuf(sc->se_tag, map,
-				     m, BUS_DMA_NOWAIT);
-	if (error) {
-	    printf("unable to load the MBUF\n");
-	    return (ENOBUFS);
-	}
+	if (SE_TX_RING_CNT - cd->se_tx_cnt < 2) {
+#ifdef SE_DEBUG
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: encap failed, not enough TX desc\n",
+			    ifp->if_xname);
 #endif
-	
+		return ENOBUFS;
+	}
+
+	if (m_defrag(m_head, M_DONTWAIT) != 0) {
+#ifdef SE_DEBUG
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: m_defrag failed\n", ifp->if_xname);
+#endif
+		return ENOBUFS;	/* XXX should not be fatal */
+	}
+
 	/*
- 	 * Start packing the mbufs in this chain into
+	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
- 	 * of fragments or hit the end of the mbuf chain.
+	 * of fragments or hit the end of the mbuf chain.
 	 */
 	i = *txidx;
 
 	for (m = m_head; m != NULL; m = m->m_next) {
-	    if (m->m_len == 0)
-		continue;
-	    if ((SE_TX_RING_CNT - (cd->se_tx_cnt + cnt)) < 2)
-		return (ENOBUFS);
-	    cd->se_tx_mbuf[i] = m;
-	    error = bus_dmamap_load_mbuf(sc->se_tag, cd->se_tx_map[i],
-					 m, BUS_DMA_NOWAIT);
-	    if (error) {
-		printf("unable to load the MBUF\n");
-		return (ENOBUFS);
-	    }
+		if (m->m_len == 0)
+			continue;
+		if ((SE_TX_RING_CNT - (cd->se_tx_cnt + cnt)) < 2) {
+#ifdef SE_DEBUG
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: encap failed, not enough TX desc\n",
+				    ifp->if_xname);
+#endif
+			return ENOBUFS;
+		}
+		cd->se_tx_mbuf[i] = m;
+		rc = bus_dmamap_load_mbuf(sc->sc_dmat, cd->se_tx_map[i],
+		    m, BUS_DMA_NOWAIT);
+		if (rc != 0)
+			return ENOBUFS;
+		KASSERT(cd->se_tx_map[i]->dm_nsegs == 1);
+		bus_dmamap_sync(sc->sc_dmat, cd->se_tx_map[i], 0,
+		    cd->se_tx_map[i]->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 
-	    ld->se_tx_ring[i].se_sts_size =
-		    htole32(cd->se_tx_map[i]->dm_segs->ds_len);
-	    ld->se_tx_ring[i].se_cmdsts =
-		    htole32(OWNbit | INTbit | PADbit | CRCbit | DEFbit);
-	    ld->se_tx_ring[i].se_ptr =
-		    htole32(cd->se_tx_map[i]->dm_segs->ds_addr);
-	    ld->se_tx_ring[i].se_flags |=
-		    htole32(cd->se_tx_map[i]->dm_segs->ds_len);
-	    KASSERT(cd->se_tx_map[i]->dm_nsegs == 1);
+		desc = &ld->se_tx_ring[i];
+		desc->se_sts_size = htole32(cd->se_tx_map[i]->dm_segs->ds_len);
+		desc->se_ptr =
+		    htole32((uint32_t)cd->se_tx_map[i]->dm_segs->ds_addr);
+		desc->se_flags = htole32(cd->se_tx_map[i]->dm_segs->ds_len);
+		if (i == SE_TX_RING_CNT - 1)
+			desc->se_flags |= htole32(RING_END);
+		desc->se_cmdsts = htole32(TDC_OWN | TDC_INTR | TDC_DEF |
+		    TDC_CRC | TDC_PAD | TDC_BST);
 
-	    bus_dmamap_sync(sc->se_tag, cd->se_tx_map[i], 0,
-			    cd->se_tx_map[i]->dm_mapsize,
-			    BUS_DMASYNC_PREWRITE);
-	    SE_INC(i, SE_TX_RING_CNT);
-	    cnt++;
+		SE_INC(i, SE_TX_RING_CNT);
+		cnt++;
 	}
 
-	if (m != NULL) {
-	    printf("unable to encap all MBUFs\n");
-	    return (ENOBUFS);
-	}
+	/* can't happen */
+	if (m != NULL)
+		return ENOBUFS;
 
 	cd->se_tx_cnt += cnt;
 	*txidx = i;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1127,147 +1178,121 @@ se_encap(sc, m_head, txidx)
  * physical addresses.
  */
 void
-se_start(ifp)
-	struct ifnet		*ifp;
+se_start(struct ifnet *ifp)
 {
-	struct se_softc	*sc = ifp->if_softc;
-	struct mbuf		*m_head = NULL;
-	struct se_chain_data	*cd = &sc->se_cdata;
-	u_int32_t		i, queued = 0;
+	struct se_softc *sc = ifp->if_softc;
+	struct mbuf *m_head = NULL;
+	struct se_chain_data *cd = &sc->se_cdata;
+	uint i, queued = 0;
 
-	if (!sc->se_link) {
-	    return;
-	}
-
-	if (ifp->if_flags & IFF_OACTIVE) {
-	    return;
+	if ((sc->sc_flags & SE_FLAG_LINK) == 0 ||
+	    (ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
+#ifdef SE_DEBUG
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: can't tx, flags 0x%x 0x%04x\n",
+			    ifp->if_xname, sc->sc_flags, (uint)ifp->if_flags);
+#endif
+		return;
 	}
 
 	i = cd->se_tx_prod;
 
 	while (cd->se_tx_mbuf[i] == NULL) {
-	    IFQ_POLL(&ifp->if_snd, m_head);
-	    if (m_head == NULL)
-		break;
+		IFQ_POLL(&ifp->if_snd, m_head);
+		if (m_head == NULL)
+			break;
 
-	    if (se_encap(sc, m_head, &i)) {
-		ifp->if_flags |= IFF_OACTIVE;
-		break;
-	    }
+		if (se_encap(sc, m_head, &i) != 0) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
-	    /* now we are committed to transmit the packet */
-	    IFQ_DEQUEUE(&ifp->if_snd, m_head);
-	    queued++;
+		/* now we are committed to transmit the packet */
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		queued++;
 
-	    /*
-	     * If there's a BPF listener, bounce a copy of this frame
-	     * to him.
-	     */
+		/*
+		 * If there's a BPF listener, bounce a copy of this frame
+		 * to him.
+		 */
 #if NBPFILTER > 0
-	    if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 
-	if (queued) {
-	    /* Transmit */
-	    cd->se_tx_prod = i;
-	    SE_SETBIT(sc, TxControl, CmdReset);
-
-	    /*
-	     * Set a timeout in case the chip goes out to lunch.
-	     */
-	    sc->se_watchdog_timer = 5;
+	if (queued > 0) {
+		/* Transmit */
+		cd->se_tx_prod = i;
+		CSR_WRITE_4(sc, TX_CTL, 0x1a00 | TX_CTL_ENB | TX_CTL_POLL);
+		ifp->if_timer = 5;
 	}
 }
 
-/* TODO: Find out right return codes */
 int
-se_init(ifp)
-	struct ifnet		*ifp;
+se_init(struct ifnet *ifp)
 {
-	struct se_softc	*sc = ifp->if_softc;
-	int			s;
+	struct se_softc *sc = ifp->if_softc;
+	uint16_t rxfilt;
+	int i;
 
-	s = splnet();
+	splassert(IPL_NET);
+
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		return 0;
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	se_stop(sc);
-	sc->se_stopped = 0;
+	se_reset(sc);
 
 	/* Init circular RX list. */
 	if (se_list_rx_init(sc) == ENOBUFS) {
-	    printf("initialization failed: no "
-		   "memory for rx buffers\n");
-	    se_stop(sc);
-	    splx(s);
-	    return 1;
+		se_stop(sc);	/* XXX necessary? */
+		return ENOBUFS;
 	}
 
 	/* Init TX descriptors. */
 	se_list_tx_init(sc);
 
-	se_reset(sc);
-
 	/*
 	 * Load the address of the RX and TX lists.
 	 */
-	CSR_WRITE_4(sc, TxDescStartAddr,
-			sc->se_ldata.se_tx_dmamap->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, RxDescStartAddr,
-			sc->se_ldata.se_rx_dmamap->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, TX_DESC,
+	    (uint32_t)sc->se_ldata.se_tx_dmamap->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, RX_DESC,
+	    (uint32_t)sc->se_ldata.se_rx_dmamap->dm_segs[0].ds_addr);
 
-/* 	CSR_WRITE_4(sc, PMControl, 0xffc00000); */
-	CSR_WRITE_4(sc, Reserved2, 0);
+	CSR_WRITE_4(sc, TxMacControl, 0x60);
+	CSR_WRITE_4(sc, RxWakeOnLan, 0);
+	CSR_WRITE_4(sc, RxWakeOnLanData, 0);
+	CSR_WRITE_2(sc, RxMPSControl, ETHER_MAX_LEN + SE_RX_PAD_BYTES);
 
-	CSR_WRITE_4(sc, IntrStatus, 0xffffffff);
-	DISABLE_INTERRUPTS(sc);
-
-
-	/*
-	 * Default is 100Mbps.
-	 * A bit strange: 100Mbps is 0x1801 elsewhere -- FR 2005/06/09
-	 */
-	CSR_WRITE_4(sc, StationControl, 0x04001801); // 1901
-
-	CSR_WRITE_4(sc, GMacIOCR, 0x0);
-	CSR_WRITE_4(sc, GMacIOCTL, 0x0);
-
-	CSR_WRITE_4(sc, TxMacControl, 0x2364);		/* 0x60 */
-	CSR_WRITE_4(sc, TxMacTimeLimit, 0x000f);
-	CSR_WRITE_4(sc, RGMIIDelay, 0x0);
-	CSR_WRITE_4(sc, Reserved3, 0x0);
-
-	CSR_WRITE_4(sc, RxWakeOnLan, 0x80ff0000);
-	CSR_WRITE_4(sc, RxWakeOnLanData, 0x80ff0000);
-	CSR_WRITE_4(sc, RxMPSControl, 0x0);
-	CSR_WRITE_4(sc, Reserved4, 0x0);
-
-	SE_PCI_COMMIT();
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		CSR_WRITE_1(sc, RxMacAddr + i, sc->sc_ac.ac_enaddr[i]);
+	/* Configure RX MAC. */
+	rxfilt = RXMAC_STRIP_FCS | RXMAC_PAD_ENB | RXMAC_CSUM_ENB;
+	CSR_WRITE_2(sc, RxMacControl, rxfilt);
+	se_iff(sc);
 
 	/*
-	 * Load the multicast filter.
+	 * Clear and enable interrupts.
 	 */
-	se_setmulti(sc);
-
-	/*
-	 * Enable interrupts.
-	 */
-	ENABLE_INTERRUPTS(sc);
+	CSR_WRITE_4(sc, IntrStatus, 0xFFFFFFFF);
+	CSR_WRITE_4(sc, IntrMask, SE_INTRS);
 
 	/* Enable receiver and transmitter. */
-	SE_SETBIT(sc, TxControl, CmdTxEnb | CmdReset);
-	SE_SETBIT(sc, RxControl, CmdRxEnb | CmdReset);
+	CSR_WRITE_4(sc, TX_CTL, 0x1a00 | TX_CTL_ENB);
+	CSR_WRITE_4(sc, RX_CTL, 0x1a00 | 0x000c | RX_CTL_POLL | RX_CTL_ENB);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	if (!sc->in_tick)
-	    timeout_add_sec(&sc->se_timeout, 1);
+	sc->sc_flags &= ~SE_FLAG_LINK;
+	mii_mediachg(&sc->sc_mii);
+	timeout_add_sec(&sc->sc_tick_tmo, 1);
 
-	splx(s);
 	return 0;
 }
 
@@ -1275,34 +1300,29 @@ se_init(ifp)
  * Set media options.
  */
 int
-se_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+se_ifmedia_upd(struct ifnet *ifp)
 {
-	struct se_softc	*sc = ifp->if_softc;
-	struct mii_data		*mii;
+	struct se_softc *sc = ifp->if_softc;
+	struct mii_data *mii;
 
 	mii = &sc->sc_mii;
-	sc->se_link = 0;
+	sc->sc_flags &= ~SE_FLAG_LINK;
 	if (mii->mii_instance) {
-	    struct mii_softc	*miisc;
-	    LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
-		mii_phy_reset(miisc);
+		struct mii_softc *miisc;
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
 	}
-	mii_mediachg(mii);
-
-	return (0);
+	return mii_mediachg(mii);
 }
 
 /*
  * Report current media status.
  */
 void
-se_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+se_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct se_softc	*sc = ifp->if_softc;
-	struct mii_data		*mii;
+	struct se_softc *sc = ifp->if_softc;
+	struct mii_data *mii;
 
 	mii = &sc->sc_mii;
 	mii_pollstat(mii);
@@ -1311,71 +1331,74 @@ se_ifmedia_sts(ifp, ifmr)
 }
 
 int
-se_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+se_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	struct se_softc	*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *) data;
-	struct mii_data		*mii;
-	int			s, error = 0;
+	struct se_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *) data;
+#ifdef INET
+	struct ifaddr *ifa = (struct ifaddr *)data;
+#endif
+	int s, rc = 0;
 
 	s = splnet();
 
 	switch (command) {
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			rc = se_init(ifp);
+		if (rc == 0) {
+#ifdef INET
+			if (ifa->ifa_addr->sa_family == AF_INET)
+				arp_ifinit(&sc->sc_ac, ifa);
+#endif
+		}
+		break;
 	case SIOCSIFFLAGS:
-	    if (ifp->if_flags & IFF_UP)
-		se_init(ifp);
-	    else if (ifp->if_flags & IFF_RUNNING)
-		se_stop(sc);
-	    error = 0;
-	    break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	    se_setmulti(sc);
-	    error = 0;
-	    break;
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				rc = ENETRESET;
+			else
+				rc = se_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				se_stop(sc);
+		}
+		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-	    mii = &sc->sc_mii;
-	    error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
-	    break;
+		rc = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
+		break;
 	default:
-	    error = ether_ioctl(ifp, &sc->arpcom, command, data);
-	    break;
+		rc = ether_ioctl(ifp, &sc->sc_ac, command, data);
+		break;
+	}
+
+	if (rc == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			se_iff(sc);
+		rc = 0;
 	}
 
 	splx(s);
-	return (error);
+	return rc;
 }
 
 void
-se_watchdog(ifp)
-	struct ifnet		*ifp;
+se_watchdog(struct ifnet *ifp)
 {
-	struct se_softc	*sc = ifp->if_softc;
-        int                     s;
+	struct se_softc *sc = ifp->if_softc;
+	int s;
 
-	if (sc->se_stopped)
-	    return;
-
-	if (sc->se_watchdog_timer == 0 || --sc->se_watchdog_timer >0)
-	    return;
-
-	printf("watchdog timeout\n");
-	sc->se_ifp->if_oerrors++;
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
+	ifp->if_oerrors++;
 
 	s = splnet();
-	se_stop(sc);
-	se_reset(sc);
+	ifp->if_flags &= ~IFF_RUNNING;
 	se_init(ifp);
-
-	if (!IFQ_IS_EMPTY(&sc->se_ifp->if_snd))
-	    se_start(sc->se_ifp);
-
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+		se_start(ifp);
 	splx(s);
-        return;
 }
 
 /*
@@ -1383,44 +1406,27 @@ se_watchdog(ifp)
  * RX and TX lists.
  */
 void
-se_stop(sc)
-	struct se_softc	*sc;
+se_stop(struct se_softc *sc)
 {
-	struct ifnet		*ifp = sc->se_ifp;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
-	if (sc->se_stopped)
-	    return;
-
-	sc->se_watchdog_timer = 0;
-
-	timeout_del(&sc->se_timeout);
-
+	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	timeout_del(&sc->sc_tick_tmo);
+	mii_down(&sc->sc_mii);
 
-	DISABLE_INTERRUPTS(sc);
+	CSR_WRITE_4(sc, IntrMask, 0);
+	CSR_READ_4(sc, IntrMask);
+	CSR_WRITE_4(sc, IntrStatus, 0xffffffff);
+	/* Stop TX/RX MAC. */
+	CSR_WRITE_4(sc, TX_CTL, 0x1a00);
+	CSR_WRITE_4(sc, RX_CTL, 0x1a00);
+	/* XXX Can we assume active DMA cycles gone? */
+	DELAY(2000);
+	CSR_WRITE_4(sc, IntrMask, 0);
+	CSR_WRITE_4(sc, IntrStatus, 0xffffffff);
 
-	CSR_WRITE_4(sc, IntrControl, 0x8000);
-	SE_PCI_COMMIT();
-	DELAY(100);
-	CSR_WRITE_4(sc, IntrControl, 0x0);
-
-	SE_CLRBIT(sc, TxControl, CmdTxEnb);
-	SE_CLRBIT(sc, RxControl, CmdRxEnb);
-	DELAY(100);
-	CSR_WRITE_4(sc, TxDescStartAddr, 0);
-	CSR_WRITE_4(sc, RxDescStartAddr, 0);
-
-	sc->se_link = 0;
-
-	/*
-	 * Free data in the RX lists.
-	 */
+	sc->sc_flags &= ~SE_FLAG_LINK;
 	se_list_rx_free(sc);
-
-	/*
-	 * Free the TX list buffers.
-	 */
 	se_list_tx_free(sc);
-
-	sc->se_stopped = 1;
 }
