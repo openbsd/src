@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciio.h,v 1.6 2010/04/21 18:55:40 kettenis Exp $	*/
+/*	$OpenBSD: pciio.h,v 1.7 2010/09/05 18:14:33 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1997, Stefan Esser <se@FreeBSD.ORG>
@@ -73,5 +73,6 @@ struct pci_vga {
 #define	PCIOCGETROM	_IOWR('p', 5, struct pci_rom)
 #define	PCIOCGETVGA	_IOWR('p', 6, struct pci_vga)
 #define	PCIOCSETVGA	_IOWR('p', 7, struct pci_vga)
+#define	PCIOCREADMASK	_IOWR('p', 8, struct pci_io)
 
 #endif /* !_SYS_PCIIO_H_ */

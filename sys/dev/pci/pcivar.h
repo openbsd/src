@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.61 2010/08/27 20:31:55 kettenis Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.62 2010/09/05 18:14:33 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ int pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 const char *pci_findvendor(pcireg_t);
 const char *pci_findproduct(pcireg_t);
 int	pci_find_device(struct pci_attach_args *pa,
-			int (*match)(struct pci_attach_args *));
+	    int (*match)(struct pci_attach_args *));
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
 int	pci_detach_devices(struct pci_softc *, int);

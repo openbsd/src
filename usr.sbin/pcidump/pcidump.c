@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.23 2010/08/02 10:17:10 jsg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.24 2010/09/05 18:14:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -43,6 +43,7 @@ void hexdump(int, int, int, int);
 const char *str2busdevfunc(const char *, int *, int *, int *);
 int pci_nfuncs(int, int);
 int pci_read(int, int, int, u_int32_t, u_int32_t *);
+int pci_readmask(int, int, int, u_int32_t, u_int32_t *);
 void dump_caplist(int, int, int, u_int8_t);
 void dump_pcie_linkspeed(int, int, int, uint8_t);
 void print_pcie_ls(uint8_t);
@@ -344,16 +345,18 @@ dump_type0(int bus, int dev, int func)
 {
 	const char *memtype;
 	u_int64_t mem;
-	u_int32_t reg;
+	u_int64_t mask;
+	u_int32_t reg, reg1;
 	int bar;
 
 	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += 0x4) {
-		if (pci_read(bus, dev, func, bar, &reg) != 0)
+		if (pci_read(bus, dev, func, bar, &reg) != 0 ||
+		    pci_readmask(bus, dev, func, bar, &reg1) != 0)
 			warn("unable to read PCI_MAPREG 0x%02x", bar);
 
 		printf("\t0x%04x: BAR ", bar);
 
-		if (reg == 0x0) {
+		if (reg == 0 && reg1 == 0) {
 			printf("empty (%08x)\n", reg);
 			continue;
 		}
@@ -371,28 +374,34 @@ dump_type0(int bus, int dev, int func)
 			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 				printf("%s ", memtype);
 
-				printf("addr: 0x%08x\n",
-				    PCI_MAPREG_MEM_ADDR(reg));
+				printf("addr: 0x%08x/0x%08x\n",
+				    PCI_MAPREG_MEM_ADDR(reg),
+				    PCI_MAPREG_MEM_SIZE(reg1));
 
 				break;
 			case PCI_MAPREG_MEM_TYPE_64BIT:
 				mem = reg;
+				mask = reg1;
 				bar += 0x04;
-				if (pci_read(bus, dev, func, bar, &reg) != 0)
+				if (pci_read(bus, dev, func, bar, &reg) != 0 ||
+				    pci_readmask(bus, dev, func, bar, &reg1) != 0)
 					warn("unable to read 0x%02x", bar);
 
 				mem |= (u_int64_t)reg << 32;
+				mask |= (u_int64_t)reg1 << 32;
 
-				printf("64bit addr: 0x%016llx\n",
-				    PCI_MAPREG_MEM64_ADDR(mem));
+				printf("64bit addr: 0x%016llx/0x%08llx\n",
+				    PCI_MAPREG_MEM64_ADDR(mem),
+				    PCI_MAPREG_MEM64_SIZE(mask));
 
 				break;
 			}
 			break;
 
 		case PCI_MAPREG_TYPE_IO:
-			printf("io addr: 0x%08x\n",
-			    PCI_MAPREG_IO_ADDR(reg));
+			printf("io addr: 0x%08x/0x%04x\n",
+			    PCI_MAPREG_IO_ADDR(reg),
+			    PCI_MAPREG_IO_SIZE(reg1));
 			break;
 		}
 	}
@@ -650,6 +659,28 @@ pci_read(int bus, int dev, int func, u_int32_t reg, u_int32_t *val)
 	io.pi_width = 4;
 
 	rv = ioctl(pcifd, PCIOCREAD, &io);
+	if (rv != 0)
+		return (rv);
+
+	*val = io.pi_data;
+
+	return (0);
+}
+
+int
+pci_readmask(int bus, int dev, int func, u_int32_t reg, u_int32_t *val)
+{
+	struct pci_io io;
+	int rv;
+
+	bzero(&io, sizeof(io));
+	io.pi_sel.pc_bus = bus;
+	io.pi_sel.pc_dev = dev;
+	io.pi_sel.pc_func = func;
+	io.pi_reg = reg;
+	io.pi_width = 4;
+
+	rv = ioctl(pcifd, PCIOCREADMASK, &io);
 	if (rv != 0)
 		return (rv);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.83 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.84 2010/09/05 18:14:33 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ struct pci_dev {
 	pcireg_t pd_bhlc;
 	pcireg_t pd_int;
 	pcireg_t pd_map[NMAPREG];
+	pcireg_t pd_mask[NMAPREG];
 	int pd_pmcsr_state;
 };
 
@@ -358,7 +359,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	struct pci_attach_args pa;
 	struct pci_dev *pd;
 	struct device *dev;
-	pcireg_t id, csr, class, intr, bhlcr;
+	pcireg_t id, class, intr, bhlcr;
 	int ret = 0, pin, bus, device, function;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
@@ -368,7 +369,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		return (0);
 
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
 	/* Invalid vendor ID value? */
@@ -430,9 +430,47 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		if (ret != 0 && pap != NULL)
 			*pap = pa;
 	} else {
+		pcireg_t address, csr;
+		int i, reg, reg_start, reg_end;
+		int s;
+
 		pd = malloc(sizeof *pd, M_DEVBUF, M_ZERO | M_WAITOK);
 		pd->pd_tag = tag;
 		LIST_INSERT_HEAD(&sc->sc_devs, pd, pd_next);
+
+		switch (PCI_HDRTYPE_TYPE(bhlcr)) {
+		case 0:
+			reg_start = PCI_MAPREG_START;
+			reg_end = PCI_MAPREG_END;
+			break;
+		case 1: /* PCI-PCI bridge */
+			reg_start = PCI_MAPREG_START;
+			reg_end = PCI_MAPREG_PPB_END;
+			break;
+		case 2: /* PCI-CardBus bridge */
+			reg_start = PCI_MAPREG_START;
+			reg_end = PCI_MAPREG_PCB_END;
+			break;
+		default:
+			return (0);
+		}
+
+		s = splhigh();
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		if (csr & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
+			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr &
+			    ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE));
+
+		for (reg = reg_start, i = 0; reg < reg_end; reg += 4, i++) {
+			address = pci_conf_read(pc, tag, reg);
+			pci_conf_write(pc, tag, reg, 0xffffffff);
+			pd->pd_mask[i] = pci_conf_read(pc, tag, reg);
+			pci_conf_write(pc, tag, reg, address);
+		}
+
+		if (csr & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
+			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+		splx(s);
 
 		if ((dev = config_found_sm(&sc->sc_dev, &pa, pciprint,
 		    pcisubmatch)))
@@ -509,7 +547,7 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 
 int
 pci_find_device(struct pci_attach_args *pa,
-		int (*match)(struct pci_attach_args *))
+    int (*match)(struct pci_attach_args *))
 {
 	extern struct cfdriver pci_cd;
 	struct device *pcidev;
@@ -903,6 +941,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case PCIOCREAD:
+	case PCIOCREADMASK:
 		break;
 	case PCIOCWRITE:
 		if (!(flag & FWRITE))
@@ -970,6 +1009,30 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		}
 		break;
+
+	case PCIOCREADMASK:
+	{
+		io = (struct pci_io *)data;
+		struct pci_dev *pd;
+		int dev, func, i;
+
+		if (io->pi_width != 4 || io->pi_reg & 0x3 ||
+		    io->pi_reg < PCI_MAPREG_START ||
+		    io->pi_reg >= PCI_MAPREG_END)
+			return (EINVAL);
+
+		error = ENODEV;
+		LIST_FOREACH(pd, &pci->sc_devs, pd_next) {
+			pci_decompose_tag(pc, pd->pd_tag, NULL, &dev, &func);
+			if (dev == sel->pc_dev && func == sel->pc_func) {
+				i = (io->pi_reg - PCI_MAPREG_START) / 4;
+				io->pi_data = pd->pd_mask[i];
+				error = 0;
+				break;
+			}
+		}
+		break;
+	}
 
 	case PCIOCGETROMLEN:
 	case PCIOCGETROM:
