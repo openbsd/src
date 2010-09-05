@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.5 2010/09/04 21:31:04 tedu Exp $ */
+/*	$OpenBSD: parser.c,v 1.6 2010/09/05 12:16:23 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -117,7 +117,7 @@ static const struct token t_log[] = {
 
 static const struct token *match_token(const char *, const struct token *,
     struct parse_result *);
-static void show_valid_args(const struct token *table)
+static void show_valid_args(const struct token *table);
 
 struct parse_result *
 parse(int argc, char *argv[])
