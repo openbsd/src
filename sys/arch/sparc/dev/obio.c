@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.21 2010/06/07 19:54:33 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.22 2010/09/05 18:10:10 kettenis Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -425,10 +425,10 @@ vmebus_translate(dev, ca, bustype)
 	for (j = 0; j < sc->sc_nrange; j++) {
 		if (sc->sc_range[j].cspace == cspace) {
 #if notyet
-			(int)ca->ca_ra.ra_paddr +=
+			ca->ca_ra.ra_paddr +=
 				sc->sc_range[j].poffset;
 #endif
-			(int)ca->ca_ra.ra_iospace =
+			ca->ca_ra.ra_iospace =
 				sc->sc_range[j].pspace;
 			break;
 		}

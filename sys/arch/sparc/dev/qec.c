@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.18 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: qec.c,v 1.19 2010/09/05 18:10:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -248,9 +248,9 @@ qec_translate(sc, ca)
 
 		for (j = 0; j < sc->sc_nrange; j++) {
 			if (sc->sc_range[j].cspace == cspace) {
-				(int)ca->ca_ra.ra_reg[i].rr_paddr +=
+				ca->ca_ra.ra_reg[i].rr_paddr +=
 					sc->sc_range[j].poffset;
-				(int)ca->ca_ra.ra_reg[i].rr_iospace =
+				ca->ca_ra.ra_reg[i].rr_iospace =
 					sc->sc_range[j].pspace;
 				break;
 			}
