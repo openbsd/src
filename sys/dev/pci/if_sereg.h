@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sereg.h,v 1.3 2010/09/04 12:47:00 miod Exp $	*/
+/*	$OpenBSD: if_sereg.h,v 1.4 2010/09/05 12:42:54 miod Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2010 Nikolay Denev <ndenev@gmail.com>
@@ -264,8 +264,8 @@
 #define	SE_TIMEOUT		1000
 
 struct se_desc {
-	volatile u_int32_t	se_sts_size;
-	volatile u_int32_t	se_cmdsts;
-	volatile u_int32_t	se_ptr;
-	volatile u_int32_t	se_flags;
+	u_int32_t	se_sts_size;
+	u_int32_t	se_cmdsts;
+	u_int32_t	se_ptr;
+	u_int32_t	se_flags;
 };

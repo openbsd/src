@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.4 2010/09/04 12:47:00 miod Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.5 2010/09/05 12:42:54 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -758,6 +758,8 @@ se_list_tx_init(struct se_softc *sc)
 
 	bzero(ld->se_tx_ring, SE_TX_RING_SZ);
 	ld->se_tx_ring[SE_TX_RING_CNT - 1].se_flags = htole32(RING_END);
+	bus_dmamap_sync(sc->sc_dmat, ld->se_tx_dmamap, 0, SE_TX_RING_SZ,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	cd->se_tx_prod = 0;
 	cd->se_tx_cons = 0;
 	cd->se_tx_cnt = 0;
@@ -783,9 +785,7 @@ se_list_tx_free(struct se_softc *sc)
 }
 
 /*
- * Initialize the RX descriptors and allocate mbufs for them. Note that
- * we arrange the descriptors in a closed ring, so that the last descriptor
- * has RING_END flag set.
+ * Initialize the RX descriptors and allocate mbufs for them.
  */
 int
 se_list_rx_init(struct se_softc *sc)
@@ -795,12 +795,13 @@ se_list_rx_init(struct se_softc *sc)
 	uint i;
 
 	bzero(ld->se_rx_ring, SE_RX_RING_SZ);
+	bus_dmamap_sync(sc->sc_dmat, ld->se_rx_dmamap, 0, SE_RX_RING_SZ,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	for (i = 0; i < SE_RX_RING_CNT; i++) {
 		if (se_newbuf(sc, i) != 0)
 			return ENOBUFS;
 	}
 
-	ld->se_rx_ring[SE_RX_RING_CNT - 1].se_flags |= htole32(RING_END);
 	cd->se_rx_prod = 0;
 
 	return 0;
@@ -856,6 +857,8 @@ se_newbuf(struct se_softc *sc, uint i)
 		m_freem(m);
 		return ENOBUFS;
 	}
+	bus_dmamap_sync(sc->sc_dmat, cd->se_rx_map[i], 0,
+	    cd->se_rx_map[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	cd->se_rx_mbuf[i] = m;
 	desc = &ld->se_rx_ring[i];
@@ -865,9 +868,8 @@ se_newbuf(struct se_softc *sc, uint i)
 	desc->se_flags = htole32(cd->se_rx_map[i]->dm_segs[0].ds_len);
 	if (i == SE_RX_RING_CNT - 1)
 		desc->se_flags |= htole32(RING_END);
-
-	bus_dmamap_sync(sc->sc_dmat, cd->se_rx_map[i], 0,
-	    cd->se_rx_map[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, ld->se_rx_dmamap, i * sizeof(*desc),
+	    sizeof(*desc), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return 0;
 }
@@ -884,6 +886,8 @@ se_discard_rxbuf(struct se_softc *sc, uint i)
 	desc->se_flags = htole32(MCLBYTES - SE_RX_BUF_ALIGN);
 	if (i == SE_RX_RING_CNT - 1)
 		desc->se_flags |= htole32(RING_END);
+	bus_dmamap_sync(sc->sc_dmat, ld->se_rx_dmamap, i * sizeof(*desc),
+	    sizeof(*desc), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 /*
@@ -901,15 +905,14 @@ se_rxeof(struct se_softc *sc)
 	uint32_t rxinfo, rxstat;
 	uint i;
 
+	bus_dmamap_sync(sc->sc_dmat, ld->se_rx_dmamap, 0, SE_RX_RING_SZ,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	for (i = cd->se_rx_prod; ; SE_INC(i, SE_RX_RING_CNT)) {
 		cur_rx = &ld->se_rx_ring[i];
 		rxinfo = letoh32(cur_rx->se_cmdsts);
 		if ((rxinfo & RDC_OWN) != 0)
 			break;
 		rxstat = letoh32(cur_rx->se_sts_size);
-		bus_dmamap_sync(sc->sc_dmat, cd->se_rx_map[i], 0,
-		    cd->se_rx_map[i]->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD);
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -929,6 +932,8 @@ se_rxeof(struct se_softc *sc)
 		}
 
 		/* No errors; receive the packet. */
+		bus_dmamap_sync(sc->sc_dmat, cd->se_rx_map[i], 0,
+		    cd->se_rx_map[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		m = cd->se_rx_mbuf[i];
 		if (se_newbuf(sc, i) != 0) {
 			se_discard_rxbuf(sc, i);
@@ -976,6 +981,8 @@ se_txeof(struct se_softc *sc)
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been transmitted.
 	 */
+	bus_dmamap_sync(sc->sc_dmat, ld->se_tx_dmamap, 0, SE_TX_RING_SZ,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	for (i = cd->se_tx_cons; cd->se_tx_cnt > 0;
 	    cd->se_tx_cnt--, SE_INC(i, SE_TX_RING_CNT)) {
 		cur_tx = &ld->se_tx_ring[i];
@@ -1006,7 +1013,10 @@ se_txeof(struct se_softc *sc)
 		cur_tx->se_sts_size = 0;
 		cur_tx->se_cmdsts = 0;
 		cur_tx->se_ptr = 0;
-		cur_tx->se_flags &= RING_END;
+		cur_tx->se_flags &= htole32(RING_END);
+		bus_dmamap_sync(sc->sc_dmat, ld->se_tx_dmamap,
+		    i * sizeof(*cur_tx), sizeof(*cur_tx),
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
 	cd->se_tx_cons = i;
@@ -1144,8 +1154,7 @@ se_encap(struct se_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 			return ENOBUFS;
 		KASSERT(cd->se_tx_map[i]->dm_nsegs == 1);
 		bus_dmamap_sync(sc->sc_dmat, cd->se_tx_map[i], 0,
-		    cd->se_tx_map[i]->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
+		    cd->se_tx_map[i]->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 		desc = &ld->se_tx_ring[i];
 		desc->se_sts_size = htole32(cd->se_tx_map[i]->dm_segs->ds_len);
@@ -1156,6 +1165,9 @@ se_encap(struct se_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 			desc->se_flags |= htole32(RING_END);
 		desc->se_cmdsts = htole32(TDC_OWN | TDC_INTR | TDC_DEF |
 		    TDC_CRC | TDC_PAD | TDC_BST);
+		bus_dmamap_sync(sc->sc_dmat, ld->se_tx_dmamap,
+		    i * sizeof(*desc), sizeof(*desc),
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		SE_INC(i, SE_TX_RING_CNT);
 		cnt++;
