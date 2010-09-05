@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.3 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: emul.c,v 1.4 2010/09/05 18:08:52 kettenis Exp $	*/
 /*	$NetBSD: emul.c,v 1.3 1997/07/29 09:42:01 fair Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #define GPR(tf, i)	((int32_t *) &tf->tf_global)[i]
 #define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
 #define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
+#define FPRSET(p, i, v)	p->p_md.md_fpstate->fs_regs[i] = (v)
 
 static __inline int readgpreg(struct trapframe *, int, void *);
 static __inline int readfpreg(struct proc *, int, void *);
@@ -115,7 +116,7 @@ writefpreg(p, i, val)
 	int i;
 	const void *val;
 {
-	FPR(p, i) = *(const int32_t *) val;
+	FPRSET(p, i, *(const int32_t *) val);
 	return 0;
 }
 
