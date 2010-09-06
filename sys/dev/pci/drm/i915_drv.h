@@ -140,6 +140,13 @@ struct inteldrm_softc {
 	int			 fence_reg_start; /* 4 by default */
 	int			 num_fence_regs; /* 8 pre-965, 16 post */
 
+#define	INTELDRM_QUIET		0x01 /* suspend close, get off the hardware */
+#define	INTELDRM_WEDGED		0x02 /* chipset hung pending reset */
+#define	INTELDRM_SUSPENDED	0x04 /* in vt switch, no commands */
+	int			 sc_flags; /* quiet, suspended, hung */
+	/* number of ioctls + faults in flight */
+	int			 entries;
+
 	/* protects inactive, flushing, active and exec locks */
 	struct mutex		 list_lock;
 

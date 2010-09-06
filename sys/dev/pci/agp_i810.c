@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.68 2010/08/31 19:20:55 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.69 2010/09/06 15:00:50 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -80,7 +80,6 @@ struct agp_i810_softc {
 	struct agp_gatt		*gatt;
 	struct vga_pci_bar	*map;
 	struct vga_pci_bar	*gtt_map;
-	u_int32_t		*gtt_backup;	/* saved gtt for suspend */
 	bus_dmamap_t		 scrib_dmamap;
 	bus_addr_t		 isc_apaddr;
 	bus_size_t		 isc_apsize;	/* current aperture size */
@@ -298,14 +297,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't find GMCH\n");
 		goto out;
 	}
-
-	/*
-	 * Backup array to save gtt contents on suspend since we may lose
-	 * BAR contents. Most agp drivers do not have this problem since the
-	 * GTT ptes are in dma memory.
-	 */
-	isc->gtt_backup = malloc(sizeof(*isc->gtt_backup) *
-	    (isc->isc_apsize / 4096), M_AGP, M_NOWAIT | M_ZERO); 
 
 	switch (isc->chiptype) {
 	case CHIP_I810:
@@ -548,26 +539,13 @@ agp_i810_activate(struct device *arg, int act)
 		break;
 	}
 
+	/*
+	 * Anything kept in agp over a suspend/resume cycle (and thus by X
+	 * over a vt switch cycle) is undefined upon resume.
+	 */
 	switch (act) {
-	case DVACT_SUSPEND:
-		/*
-		 * most agp-like drivers have the GTT ptes in dma memory, so
-		 * just need the setup to be repeated on resume.
-		 * in this case the gtt is held in a BAR, and thus we should
-		 * restore the data on resume to make sure that we
-		 * don't lose any state that we are depending on.
-		 */
-		if (isc->gtt_backup != NULL) {
-			bus_space_read_region_4(bst, bsh, offset,
-			    isc->gtt_backup, isc->isc_apsize / 4096);
-		}
-		break;
 	case DVACT_RESUME:
 		agp_i810_configure(isc);
-		if (isc->gtt_backup != NULL) {
-			bus_space_write_region_4(bst, bsh, offset,
-			    isc->gtt_backup, isc->isc_apsize / 4096);
-		}
 		break;
 	}
 

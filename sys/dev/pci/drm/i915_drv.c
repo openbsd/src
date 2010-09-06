@@ -65,6 +65,7 @@ void	inteldrm_attach(struct device *, struct device *, void *);
 int	inteldrm_detach(struct device *, int);
 int	inteldrm_activate(struct device *, int);
 int	inteldrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
+int	inteldrm_doioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	inteldrm_intr(void *);
 int	inteldrm_ironlake_intr(void *);
 void	inteldrm_lastclose(struct drm_device *);
@@ -81,6 +82,7 @@ int	inteldrm_fault(struct drm_obj *, struct uvm_faultinfo *, off_t,
 void	inteldrm_wipe_mappings(struct drm_obj *);
 void	inteldrm_purge_obj(struct drm_obj *);
 void	inteldrm_set_max_obj_size(struct inteldrm_softc *);
+void	inteldrm_quiesce(struct inteldrm_softc *);
 
 /* For reset and suspend */
 int	inteldrm_save_state(struct inteldrm_softc *);
@@ -159,7 +161,7 @@ int	i915_gem_init_ringbuffer(struct inteldrm_softc *);
 int	inteldrm_start_ring(struct inteldrm_softc *);
 void	i915_gem_cleanup_ringbuffer(struct inteldrm_softc *);
 int	i915_gem_ring_throttle(struct drm_device *, struct drm_file *);
-int	i915_gem_evict_inactive(struct inteldrm_softc *);
+int	i915_gem_evict_inactive(struct inteldrm_softc *, int);
 int	i915_gem_get_relocs_from_user(struct drm_i915_gem_exec_object2 *,
 	    u_int32_t, struct drm_i915_gem_relocation_entry **);
 int	i915_gem_put_relocs_to_user(struct drm_i915_gem_exec_object2 *,
@@ -535,11 +537,17 @@ inteldrm_activate(struct device *arg, int act)
 	struct inteldrm_softc	*dev_priv = (struct inteldrm_softc *)arg;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		inteldrm_quiesce(dev_priv);
+		break;
 	case DVACT_SUSPEND:
 		inteldrm_save_state(dev_priv);
 		break;
 	case DVACT_RESUME:
 		inteldrm_restore_state(dev_priv);
+		/* entrypoints can stop sleeping now */
+		atomic_clearbits_int(&dev_priv->sc_flags, INTELDRM_QUIET);
+		wakeup(&dev_priv->flags);
 		break;
 	}
 
@@ -557,6 +565,27 @@ struct cfdriver inteldrm_cd = {
 
 int
 inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
+    struct drm_file *file_priv)
+{
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
+	int			 error = 0;
+
+	while ((dev_priv->sc_flags & INTELDRM_QUIET) && error == 0)
+		error = tsleep(&dev_priv->flags, PCATCH, "intelioc", 0);
+	if (error)
+		return (error);
+	dev_priv->entries++;
+
+	error = inteldrm_doioctl(dev, cmd, data, file_priv);
+
+	dev_priv->entries--;
+	if (dev_priv->sc_flags & INTELDRM_QUIET)
+		wakeup(&dev_priv->entries);
+	return (error);
+}
+
+int
+inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
     struct drm_file *file_priv)
 {
 	struct inteldrm_softc	*dev_priv = dev->dev_private;
@@ -1956,7 +1985,8 @@ i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size,
 		 * everything and start again. (This should be rare.)
 		 */
 		if (!TAILQ_EMPTY(&dev_priv->mm.inactive_list))
-			return (i915_gem_evict_inactive(dev_priv));
+			return (i915_gem_evict_inactive(dev_priv,
+			    interruptible));
 		else
 			return (i915_gem_evict_everything(dev_priv,
 			    interruptible));
@@ -2024,7 +2054,7 @@ i915_gem_evict_everything(struct inteldrm_softc *dev_priv, int interruptible)
 		return (ENOMEM);
 
 	if ((ret = i915_wait_request(dev_priv, seqno, interruptible)) != 0 ||
-	    (ret = i915_gem_evict_inactive(dev_priv)) != 0)
+	    (ret = i915_gem_evict_inactive(dev_priv, interruptible)) != 0)
 		return (ret);
 
 	/*
@@ -2379,12 +2409,37 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
     vm_prot_t access_type, int flags)
 {
 	struct drm_device	*dev = obj->dev;
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
 	struct inteldrm_obj	*obj_priv = (struct inteldrm_obj *)obj;
 	paddr_t			 paddr;
 	int			 lcv, ret;
 	int			 write = !!(access_type & VM_PROT_WRITE);
 	vm_prot_t		 mapprot;
 	boolean_t		 locked = TRUE;
+
+	/* Are we about to suspend?, if so wait until we're done */
+	if (dev_priv->sc_flags & INTELDRM_QUIET) {
+		/* we're about to sleep, unlock the map etc */
+		uvmfault_unlockall(ufi, NULL, &obj->uobj, NULL);
+		while (dev_priv->sc_flags & INTELDRM_QUIET)
+			tsleep(&dev_priv->flags, 0, "intelflt", 0);
+		dev_priv->entries++;
+		/*
+		 * relock so we're in the same state we would be in if we
+		 * were not quiesced before
+		 */
+		locked = uvmfault_relock(ufi);
+		if (locked) {
+			drm_lock_obj(obj);
+		} else {
+			dev_priv->entries--;
+			if (dev_priv->sc_flags & INTELDRM_QUIET)
+				wakeup(&dev_priv->entries);
+			return (VM_PAGER_REFAULT);
+		}
+	} else {
+		dev_priv->entries++;
+	}
 
 	if (rw_enter(&dev->dev_lock, RW_NOSLEEP | RW_READ) != 0) {
 		uvmfault_unlockall(ufi, NULL, &obj->uobj, NULL);
@@ -2396,6 +2451,9 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 	if (locked)
 		drm_hold_object_locked(obj);
 	else { /* obj already unlocked */
+		dev_priv->entries--;
+		if (dev_priv->sc_flags & INTELDRM_QUIET)
+			wakeup(&dev_priv->entries);
 		return (VM_PAGER_REFAULT);
 	}
 
@@ -2467,26 +2525,33 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    NULL, NULL);
 			DRM_READUNLOCK();
+			dev_priv->entries--;
+			if (dev_priv->sc_flags & INTELDRM_QUIET)
+				wakeup(&dev_priv->entries);
 			uvm_wait("intelflt");
 			return (VM_PAGER_REFAULT);
 		}
 	}
-	drm_unhold_object(obj);
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
-	DRM_READUNLOCK();
-	pmap_update(ufi->orig_map->pmap);
-	return (VM_PAGER_OK);
-
 error:
-	/*
-	 * EIO means we're wedged so when we reset the gpu this will
-	 * work, so don't segfault. XXX only on resettable chips
-	 */
 	drm_unhold_object(obj);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
 	DRM_READUNLOCK();
+	dev_priv->entries--;
+	if (dev_priv->sc_flags & INTELDRM_QUIET)
+		wakeup(&dev_priv->entries);
 	pmap_update(ufi->orig_map->pmap);
-	return ((ret == EIO) ?  VM_PAGER_REFAULT : VM_PAGER_ERROR);
+	if (ret == EIO) {
+		/*
+		 * EIO means we're wedged, so upon resetting the gpu we'll
+		 * be alright and can refault. XXX only on resettable chips.
+		 */
+		ret = VM_PAGER_REFAULT;
+	} else if (ret) {
+		ret = VM_PAGER_ERROR;
+	} else {
+		ret = VM_PAGER_OK;
+	}
+	return (ret);
 }
 
 void
@@ -3783,7 +3848,7 @@ i915_gem_free_object(struct drm_obj *obj)
 
 /* Clear out the inactive list and unbind everything in it. */
 int
-i915_gem_evict_inactive(struct inteldrm_softc *dev_priv)
+i915_gem_evict_inactive(struct inteldrm_softc *dev_priv, int interruptible)
 {
 	struct inteldrm_obj	*obj_priv;
 	int			 ret = 0;
@@ -3800,7 +3865,7 @@ i915_gem_evict_inactive(struct inteldrm_softc *dev_priv)
 		mtx_leave(&dev_priv->list_lock);
 
 		drm_hold_object(&obj_priv->obj);
-		ret = i915_gem_object_unbind(&obj_priv->obj, 1);
+		ret = i915_gem_object_unbind(&obj_priv->obj, interruptible);
 		drm_unhold_and_unref(&obj_priv->obj);
 
 		mtx_enter(&dev_priv->list_lock);
@@ -3810,6 +3875,35 @@ i915_gem_evict_inactive(struct inteldrm_softc *dev_priv)
 	mtx_leave(&dev_priv->list_lock);
 
 	return (ret);
+}
+
+void
+inteldrm_quiesce(struct inteldrm_softc *dev_priv)
+{
+	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
+	/*
+	 * Right now we depend on X vt switching, so we should be
+	 * already suspended, but fallbacks may fault, etc.
+	 * Since we can't readback the gtt to reset what we have, make
+	 * sure that everything is unbound.
+	 */
+	KASSERT(dev_priv->mm.suspended);
+	KASSERT(dev_priv->ring.ring_obj == NULL);
+	atomic_setbits_int(&dev_priv->sc_flags, INTELDRM_QUIET);
+	while (dev_priv->entries)
+		tsleep(&dev_priv->entries, 0, "intelquiet", 0);
+	/*
+	 * nothing should be dirty WRT the chip, only stuff that's bound
+	 * for gtt mapping. Nothing should be pinned over vt switch, if it
+	 * is then rendering corruption will occur due to api misuse, shame.
+	 */
+	KASSERT(TAILQ_EMPTY(&dev_priv->mm.flushing_list));
+	KASSERT(TAILQ_EMPTY(&dev_priv->mm.active_list));
+	/* Disabled because root could panic the kernel if this was enabled */
+	/* KASSERT(dev->pin_count == 0); */
+
+	/* can't fail since uninterruptible */
+	(void)i915_gem_evict_inactive(dev_priv, 0);
 }
 
 int
@@ -4285,7 +4379,7 @@ inteldrm_hung(void *arg, void *reset_type)
 	mtx_leave(&dev_priv->list_lock);
 
 	/* unbind everything */
-	(void)i915_gem_evict_inactive(dev_priv);
+	(void)i915_gem_evict_inactive(dev_priv, 0);
 
 	if (HAS_RESET(dev_priv))
 		dev_priv->mm.wedged = 0;
