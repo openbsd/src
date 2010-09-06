@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.28 2010/02/28 21:37:54 miod Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.29 2010/09/06 12:30:35 kettenis Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -320,7 +320,7 @@ pci_mapreg_info(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 }
 
 int
-pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
+pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int flags,
     bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep,
     bus_size_t *sizep, bus_size_t maxsize)
 {
@@ -329,11 +329,10 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
 	bus_addr_t base;
 	bus_size_t size;
 	pcireg_t csr;
-	int flags;
 	int rv;
 
 	if ((rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg, type,
-	    &base, &size, &flags)) != 0)
+	    &base, &size, NULL)) != 0)
 		return (rv);
 #if !defined(__sparc64__)
 	if (base == 0) {
@@ -393,7 +392,7 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
 		size = maxsize;
 	}
 
-	if (bus_space_map(tag, base, size, busflags | flags, &handle))
+	if (bus_space_map(tag, base, size, flags, &handle))
 		return (1);
 
 	if (tagp != NULL)
