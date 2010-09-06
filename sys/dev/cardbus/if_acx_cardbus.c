@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.18 2010/03/27 21:40:13 jsg Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.19 2010/09/06 19:20:21 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -272,7 +272,7 @@ acx_cardbus_power(struct acx_softc *sc, int why)
 {
 	struct acx_cardbus_softc *csc = (struct acx_cardbus_softc *)sc;
 
-	if (why == PWR_RESUME) {
+	if (why == DVACT_RESUME) {
 		/* kick the PCI configuration registers */
 		acx_cardbus_setup(csc);
 	}

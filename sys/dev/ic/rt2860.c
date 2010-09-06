@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.62 2010/08/28 18:08:07 deraadt Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.63 2010/09/06 19:20:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3872,10 +3872,10 @@ rt2860_powerhook(int why, void *arg)
 
 	s = splnet();
 	switch (why) {
-	case PWR_SUSPEND:
+	case DVACT_SUSPEND:
 		rt2860_suspend(sc);
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		rt2860_resume(sc);
 		break;
 	}

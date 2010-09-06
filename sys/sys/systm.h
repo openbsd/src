@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.83 2010/08/27 04:09:21 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.84 2010/09/06 19:20:24 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -300,8 +300,6 @@ void	dohooks(struct hook_desc_head *, int);
 void	*powerhook_establish(void (*)(int, void *), void *);
 void	powerhook_disestablish(void *);
 void	dopowerhooks(int);
-#define PWR_RESUME 3
-#define PWR_SUSPEND 2
 
 struct uio;
 int	uiomove(void *, int, struct uio *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.18 2010/03/27 21:40:13 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.19 2010/09/06 19:20:21 deraadt Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -383,7 +383,7 @@ rtw_cardbus_power(struct rtw_softc *sc, int why)
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
 	    ("%s: rtw_cardbus_power\n", sc->sc_dev.dv_xname));
 
-	if (why == PWR_RESUME)
+	if (why == DVACT_RESUME)
 		rtw_enable(sc);
 }
 

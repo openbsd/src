@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.32 2008/06/12 16:15:49 marco Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.33 2010/09/06 19:20:24 deraadt Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ dopowerhooks(int why)
 	int s;
 
 	s = splhigh();
-	if (why == PWR_RESUME) {
+	if (why == DVACT_RESUME) {
 		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}

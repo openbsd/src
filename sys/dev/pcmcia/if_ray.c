@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.43 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.44 2010/09/06 19:20:23 deraadt Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -899,11 +899,11 @@ ray_power(int why, void *arg)
 	/* can't do this until power hooks are called from thread */
 	sc = arg;
 	switch (why) {
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		if ((sc->sc_flags & RAY_FLAGS_RESUMEINIT))
 			ray_init(sc);
 		break;
-	case PWR_SUSPEND:
+	case DVACT_SUSPEND:
 		if ((sc->sc_if.if_flags & IFF_RUNNING)) {
 			ray_stop(sc);
 			sc->sc_flags |= RAY_FLAGS_RESUMEINIT;

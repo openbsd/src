@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.35 2010/08/27 18:50:57 deraadt Exp $	*/
+/*	$OpenBSD: yds.c,v 1.36 2010/09/06 19:20:23 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -822,7 +822,7 @@ yds_attachhook(void *xsc)
 	audio_attach_mi(&yds_hw_if, sc, &sc->sc_dev);
 
 	/* Watch for power changes */
-	sc->suspend = PWR_RESUME;
+	sc->suspend = DVACT_RESUME;
 	sc->powerhook = powerhook_establish(yds_powerhook, sc);
 
 	yds_configure_legacy(sc);

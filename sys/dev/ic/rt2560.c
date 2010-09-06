@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.55 2010/09/06 18:22:00 kettenis Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.56 2010/09/06 19:20:21 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2740,10 +2740,10 @@ rt2560_powerhook(int why, void *arg)
 
 	s = splnet();
 	switch (why) {
-	case PWR_SUSPEND:
+	case DVACT_SUSPEND:
 		rt2560_suspend(sc);
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		rt2560_resume(sc);
 		break;
 	}

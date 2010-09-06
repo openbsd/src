@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.84 2010/09/05 18:14:33 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.85 2010/09/06 19:20:23 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -218,10 +218,10 @@ void
 pcipowerhook(int why, void *arg)
 {
 	switch (why) {
-	case PWR_SUSPEND:
+	case DVACT_SUSPEND:
 		pci_suspend(arg);
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		pci_resume(arg);
 		break;
 	}

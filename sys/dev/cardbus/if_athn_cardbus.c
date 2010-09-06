@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.9 2010/05/16 15:06:22 damien Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.10 2010/09/06 19:20:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -212,7 +212,7 @@ athn_cardbus_power(struct athn_softc *sc, int why)
 {
 	struct athn_cardbus_softc *csc = (struct athn_cardbus_softc *)sc;
 
-	if (why == PWR_RESUME) {
+	if (why == DVACT_RESUME) {
 		/* Restore the PCI configuration registers. */
 		athn_cardbus_setup(csc);
 	}

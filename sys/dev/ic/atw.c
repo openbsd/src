@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.71 2010/08/29 16:46:58 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.72 2010/09/06 19:20:21 deraadt Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3985,13 +3985,13 @@ atw_activate(struct device *self, int act)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	switch (act) {
-	case PWR_SUSPEND:
+	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			atw_stop(ifp, 1);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, act);
 		break;
-	case PWR_RESUME:
+	case DVACT_RESUME:
 		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
 		    atw_resume, sc, NULL);
 		break;

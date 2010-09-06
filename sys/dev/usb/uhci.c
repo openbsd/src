@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.79 2010/08/31 16:47:36 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.80 2010/09/06 19:20:24 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -507,7 +507,7 @@ uhci_init(uhci_softc_t *sc)
 	sc->sc_bus.methods = &uhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
 
-	sc->sc_suspend = PWR_RESUME;
+	sc->sc_suspend = DVACT_RESUME;
 	sc->sc_powerhook = powerhook_establish(uhci_powerhook, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
 
@@ -552,7 +552,7 @@ uhci_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 #ifdef DIAGNOSTIC
-		if (sc->sc_suspend == PWR_RESUME)
+		if (sc->sc_suspend == DVACT_RESUME)
 			printf("uhci_powerhook: weird, resume without suspend.\n");
 #endif
 		sc->sc_bus.use_polling++;
@@ -1172,7 +1172,7 @@ uhci_intr1(uhci_softc_t *sc)
 	}
 #endif
 
-	if (sc->sc_suspend != PWR_RESUME) {
+	if (sc->sc_suspend != DVACT_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
 		       sc->sc_bus.bdev.dv_xname);
 		UWRITE2(sc, UHCI_STS, status); /* acknowledge the ints */

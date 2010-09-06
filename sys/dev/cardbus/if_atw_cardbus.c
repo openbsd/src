@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.18 2010/03/27 21:40:13 jsg Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.19 2010/09/06 19:20:21 deraadt Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -312,7 +312,7 @@ atw_cardbus_disable(struct atw_softc *sc)
 void
 atw_cardbus_power(struct atw_softc *sc, int why)
 {
-	if (why == PWR_RESUME)
+	if (why == DVACT_RESUME)
 		atw_enable(sc);
 }
 
