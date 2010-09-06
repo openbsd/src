@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.11 2010/05/08 16:54:08 oga Exp $	*/
+/*	$OpenBSD: pte.h,v 1.12 2010/09/06 14:44:19 jasper Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define	PG_UC		(PG_WT | PG_N)	/* hard UC */
 
 /*
- * various short-hand protection codes
+ * various shorthand protection codes
  */
 
 #define	PG_KR		0x00000000	/* kernel read-only */

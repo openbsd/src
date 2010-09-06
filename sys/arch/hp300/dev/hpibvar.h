@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpibvar.h,v 1.10 2005/11/18 00:09:15 miod Exp $	*/
+/*	$OpenBSD: hpibvar.h,v 1.11 2010/09/06 14:44:18 jasper Exp $	*/
 /*	$NetBSD: hpibvar.h,v 1.10 1997/03/31 07:34:25 scottr Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ struct hpibbus_attach_args {
 	int	ha_punit;		/* physical unit on slave */
 };
 
-/* Locator short-hand */
+/* Locator shorthand */
 #define	hpibbuscf_slave		cf_loc[0]
 #define	hpibbuscf_punit		cf_loc[1]
 
