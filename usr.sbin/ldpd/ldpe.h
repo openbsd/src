@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.10 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.11 2010/09/06 08:28:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -160,19 +160,15 @@ int	 nbr_fsm(struct nbr *, enum nbr_event);
 void	 nbr_itimer(int, short, void *);
 void	 nbr_start_itimer(struct nbr *);
 void	 nbr_stop_itimer(struct nbr *);
-void	 nbr_reset_itimer(struct nbr *);
 void	 nbr_ktimer(int, short, void *);
 void	 nbr_start_ktimer(struct nbr *);
 void	 nbr_stop_ktimer(struct nbr *);
-void	 nbr_reset_ktimer(struct nbr *);
 void	 nbr_ktimeout(int, short, void *);
 void	 nbr_start_ktimeout(struct nbr *);
 void	 nbr_stop_ktimeout(struct nbr *);
-void	 nbr_reset_ktimeout(struct nbr *);
 void	 nbr_idtimer(int, short, void *);
 void	 nbr_start_idtimer(struct nbr *);
 void	 nbr_stop_idtimer(struct nbr *);
-void	 nbr_reset_idtimer(struct nbr *);
 int	 nbr_pending_idtimer(struct nbr *);
 
 int	 nbr_act_session_establish(struct nbr *, int);

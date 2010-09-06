@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.19 2010/09/02 14:34:04 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.20 2010/09/06 08:28:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -137,16 +137,14 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 	switch (nbr_fsm_tbl[i].action) {
 	case NBR_ACT_RST_ITIMER:
-		nbr_reset_itimer(nbr);
-		break;
 	case NBR_ACT_STRT_ITIMER:
 		nbr_start_itimer(nbr);
 		break;
 	case NBR_ACT_RST_KTIMEOUT:
-		nbr_reset_ktimeout(nbr);
+		nbr_start_ktimeout(nbr);
 		break;
 	case NBR_ACT_RST_KTIMER:
-		nbr_reset_ktimer(nbr);
+		nbr_start_ktimer(nbr);
 		break;
 	case NBR_ACT_STRT_KTIMER:
 		nbr_act_session_operational(nbr);
@@ -365,18 +363,6 @@ nbr_stop_itimer(struct nbr *nbr)
 		fatal("nbr_stop_itimer");
 }
 
-void
-nbr_reset_itimer(struct nbr *nbr)
-{
-	struct timeval	tv;
-
-	timerclear(&tv);
-	tv.tv_sec = nbr->holdtime;
-
-	if (evtimer_add(&nbr->inactivity_timer, &tv) == -1)
-		fatal("nbr_reset_itimer");
-}
-
 /* Keepalive timer: timer to send keepalive message to neighbors */
 
 void
@@ -414,20 +400,6 @@ nbr_stop_ktimer(struct nbr *nbr)
 		fatal("nbr_stop_ktimer");
 }
 
-void
-nbr_reset_ktimer(struct nbr *nbr)
-{
-	struct timeval	tv;
-
-	timerclear(&tv);
-
-	/* XXX: just to be sure it will send three keepalives per period */
-	tv.tv_sec = (time_t)(nbr->keepalive / KEEPALIVE_PER_PERIOD);
-
-	if (evtimer_add(&nbr->keepalive_timer, &tv) == -1)
-		fatal("nbr_reset_ktimer");
-}
-
 /* Keepalive timeout: if the nbr hasn't sent keepalive */
 
 void
@@ -460,18 +432,6 @@ nbr_stop_ktimeout(struct nbr *nbr)
 {
 	if (evtimer_del(&nbr->keepalive_timeout) == -1)
 		fatal("nbr_stop_ktimeout");
-}
-
-void
-nbr_reset_ktimeout(struct nbr *nbr)
-{
-	struct timeval	tv;
-
-	timerclear(&tv);
-	tv.tv_sec = nbr->keepalive;
-
-	if (evtimer_add(&nbr->keepalive_timeout, &tv) == -1)
-		fatal("nbr_reset_ktimeout");
 }
 
 /* Init delay timer: timer to retry to iniziatize session */
@@ -513,19 +473,6 @@ nbr_pending_idtimer(struct nbr *nbr)
 		return (1);
 
 	return (0);
-}
-
-
-void
-nbr_reset_idtimer(struct nbr *nbr)
-{
-	struct timeval	tv;
-
-	timerclear(&tv);
-	tv.tv_sec = INIT_DELAY_TMR;
-
-	if (evtimer_add(&nbr->initdelay_timer, &tv) == -1)
-		fatal("nbr_reset_idtimer");
 }
 
 int
@@ -572,7 +519,6 @@ nbr_act_session_establish(struct nbr *nbr, int active)
 		send_init(nbr);
 		nbr_fsm(nbr, NBR_EVT_INIT_SENT);
 	}
-
 
 	return (0);
 }
