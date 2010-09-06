@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2009/08/08 12:20:30 fgsch Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2010/09/06 17:35:57 naddy Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.cat1 lynx.1
@@ -11,7 +11,7 @@ OPT=-O1
 .endif
 
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS} ${OPT}"
-CONFIGURE_ARGS= --with-ssl=/usr --enable-ipv6 --enable-debug
+CONFIGURE_ARGS= --with-ssl=/usr --enable-widec --enable-ipv6 --enable-debug
 HTMLDIR=	/usr/share/doc/html
 HELPFILES=	keystrokes/alt_edit_help.html keystrokes/bookmark_help.html \
 		keystrokes/cookie_help.html keystrokes/dired_help.html \
