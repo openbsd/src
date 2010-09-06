@@ -3880,7 +3880,6 @@ i915_gem_evict_inactive(struct inteldrm_softc *dev_priv, int interruptible)
 void
 inteldrm_quiesce(struct inteldrm_softc *dev_priv)
 {
-	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
 	/*
 	 * Right now we depend on X vt switching, so we should be
 	 * already suspended, but fallbacks may fault, etc.
