@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2010/05/13 19:27:24 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.56 2010/09/06 17:36:49 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1020,7 +1020,7 @@ pmap_create(void)
 	}
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
-	pmap->pm_flags = 0;
+	pmap->pm_cpus = 0;
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
@@ -1074,6 +1074,12 @@ pmap_destroy(struct pmap *pmap)
 	/*
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
+
+#ifdef DIAGNOSTIC
+	if (pmap->pm_cpus != 0)
+		printf("pmap_destroy: pmap %p cpus=0x%lx\n",
+		    (void *)pmap, pmap->pm_cpus);
+#endif
 
 	/*
 	 * remove it from global list of pmaps
@@ -1129,15 +1135,16 @@ pmap_activate(struct proc *p)
 	pcb->pcb_pmap = pmap;
 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
-	if (p == curproc)
+	if (p == curproc) {
 		lcr3(pcb->pcb_cr3);
+
+		/*
+		 * mark the pmap in use by this processor.
+		 */
+		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
+	}
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
-
-	/*
-	 * mark the pmap in use by this processor.
-	 */
-	x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 }
 
 /*
