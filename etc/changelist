@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.68 2010/06/29 17:17:53 nicm Exp $
+#	$OpenBSD: changelist,v 1.69 2010/09/06 17:10:19 naddy Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -129,6 +129,8 @@
 /etc/ssh/ssh_config
 +/etc/ssh/ssh_host_dsa_key
 /etc/ssh/ssh_host_dsa_key.pub
++/etc/ssh/ssh_host_ecdsa_key
+/etc/ssh/ssh_host_ecdsa_key.pub
 +/etc/ssh/ssh_host_key
 /etc/ssh/ssh_host_key.pub
 +/etc/ssh/ssh_host_rsa_key

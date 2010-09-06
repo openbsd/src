@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.88 2010/06/07 14:15:27 jsg Exp $
+#	$OpenBSD: special,v 1.89 2010/09/06 17:10:19 naddy Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -96,6 +96,8 @@ ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel
 ssh_host_dsa_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_dsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
+ssh_host_ecdsa_key	type=file mode=0600 uname=root gname=wheel optional
+ssh_host_ecdsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_rsa_key	type=file mode=0600 uname=root gname=wheel optional
