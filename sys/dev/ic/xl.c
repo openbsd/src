@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.94 2010/08/31 17:13:47 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.95 2010/09/06 16:01:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -200,7 +200,7 @@ xl_activate(struct device *self, int act)
 {
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
-	int rv;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_QUIESCE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.105 2010/08/31 17:13:46 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.106 2010/09/06 16:01:52 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ fxp_activate(struct device *self, int act)
 {
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;	
-	int rv;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_QUIESCE:
