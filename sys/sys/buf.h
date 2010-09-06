@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.72 2010/09/02 07:05:39 matthew Exp $	*/
+/*	$OpenBSD: buf.h,v 1.73 2010/09/06 16:33:41 thib Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/mutex.h>
+#include <sys/workq.h>
 
 #define NOLIST ((struct buf *)0x87654321)
 
@@ -105,10 +106,18 @@ struct bufq_fifo {
 	SIMPLEQ_ENTRY(buf)	bqf_entries;
 };
 
+/* Abuse bufq_fifo, for swapping to regular files. */
+struct bufq_swapreg {
+	SIMPLEQ_ENTRY(buf)	bqf_entries;
+	struct workq_task	bqf_wqtask;
+
+};
+
 /* bufq link in struct buf */
 union bufq_data {
 	struct bufq_disksort	bufq_data_disksort;
 	struct bufq_fifo	bufq_data_fifo;
+	struct bufq_swapreg	bufq_swapreg;
 };
 
 /*

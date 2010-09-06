@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.94 2010/07/03 20:28:51 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.95 2010/09/06 16:33:41 thib Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -138,7 +138,8 @@ struct swapdev {
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
-	struct buf		swd_tab;	/* buffer list */
+	int			swd_active;	/* # of active i/o reqs */
+	struct bufq		swd_bufq;
 	struct ucred		*swd_cred;	/* cred for file access */
 #ifdef UVM_SWAP_ENCRYPT
 #define SWD_KEY_SHIFT		7		/* One key per 0.5 MByte */
@@ -241,7 +242,8 @@ static int swap_on(struct proc *, struct swapdev *);
 static int swap_off(struct proc *, struct swapdev *);
 
 static void sw_reg_strategy(struct swapdev *, struct buf *, int);
-static void sw_reg_iodone(struct buf *);
+void sw_reg_iodone(struct buf *);
+void sw_reg_iodone_internal(void *, void *);
 static void sw_reg_start(struct swapdev *);
 
 static int uvm_swap_io(struct vm_page **, int, int, int);
@@ -968,6 +970,7 @@ swap_on(struct proc *p, struct swapdev *sdp)
 		else
 #endif /* defined(NFSCLIENT) */
 			sdp->swd_maxactive = 8; /* XXX */
+		bufq_init(&sdp->swd_bufq, BUFQ_FIFO);
 		break;
 
 	default:
@@ -1372,10 +1375,9 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 
 		nbp->vb_xfer = vnx;	/* patch it back in to vnx */
 
-		/*
-		 * Just sort by block number
-		 */
+		/* XXX: In case the underlying bufq is disksort: */
 		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
+
 		s = splbio();
 		if (vnx->vx_error != 0) {
 			putvndbuf(nbp);
@@ -1386,8 +1388,8 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		/* assoc new buffer with underlying vnode */
 		bgetvp(vp, &nbp->vb_buf);
 
-		/* sort it in and start I/O if we are not over our limit */
-		disksort(&sdp->swd_tab, &nbp->vb_buf);
+		/* start I/O if we are not over our limit */
+		bufq_queue(&sdp->swd_bufq, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
 
@@ -1413,29 +1415,25 @@ out: /* Arrive here at splbio */
 	splx(s);
 }
 
-/*
- * sw_reg_start: start an I/O request on the requested swapdev
- *
- * => reqs are sorted by disksort (above)
- */
+/* sw_reg_start: start an I/O request on the requested swapdev. */
 static void
 sw_reg_start(struct swapdev *sdp)
 {
 	struct buf	*bp;
 	UVMHIST_FUNC("sw_reg_start"); UVMHIST_CALLED(pdhist);
 
-	/* recursion control */
+	/* XXX: recursion control */
 	if ((sdp->swd_flags & SWF_BUSY) != 0)
 		return;
 
 	sdp->swd_flags |= SWF_BUSY;
 
-	while (sdp->swd_tab.b_active < sdp->swd_maxactive) {
-		bp = sdp->swd_tab.b_actf;
+	while (sdp->swd_active < sdp->swd_maxactive) {
+		bp = bufq_dequeue(&sdp->swd_bufq);
 		if (bp == NULL)
 			break;
-		sdp->swd_tab.b_actf = bp->b_actf;
-		sdp->swd_tab.b_active++;
+
+		sdp->swd_active++;
 
 		UVMHIST_LOG(pdhist,
 		    "sw_reg_start:  bp %p vp %p blkno 0x%lx cnt 0x%lx",
@@ -1452,15 +1450,31 @@ sw_reg_start(struct swapdev *sdp)
  * sw_reg_iodone: one of our i/o's has completed and needs post-i/o cleanup
  *
  * => note that we can recover the vndbuf struct by casting the buf ptr
+ *
+ * XXX:
+ * We only put this onto a workq here, because of the maxactive game since
+ * it basically requires us to call back into VOP_STRATEGY() (where we must
+ * be able to sleep) via sw_reg_start().
  */
-static void
+void
 sw_reg_iodone(struct buf *bp)
 {
-	struct vndbuf *vbp = (struct vndbuf *) bp;
+	struct bufq_swapreg	*bq;
+
+	bq = (struct bufq_swapreg *)&bp->b_bufq;
+
+	workq_queue_task(NULL, &bq->bqf_wqtask, 0,
+	    (workq_fn)sw_reg_iodone_internal, bp, NULL);
+}
+
+void
+sw_reg_iodone_internal(void *arg0, void *unused)
+{
+	struct vndbuf *vbp = (struct vndbuf *)arg0;
 	struct vndxfer *vnx = vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;		/* parent buffer */
 	struct swapdev	*sdp = vnx->vx_sdp;
-	int resid;
+	int resid, s;
 	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=0x%lx addr=%p",
@@ -1468,7 +1482,7 @@ sw_reg_iodone(struct buf *bp)
 	UVMHIST_LOG(pdhist, "  cnt=%lx resid=%lx",
 	    vbp->vb_buf.b_bcount, vbp->vb_buf.b_resid, 0, 0);
 
-	splassert(IPL_BIO);
+	s = splbio();
 
 	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
 	pbp->b_resid -= resid;
@@ -1519,8 +1533,9 @@ sw_reg_iodone(struct buf *bp)
 	/*
 	 * done!   start next swapdev I/O if one is pending
 	 */
-	sdp->swd_tab.b_active--;
+	sdp->swd_active--;
 	sw_reg_start(sdp);
+	splx(s);
 }
 
 
