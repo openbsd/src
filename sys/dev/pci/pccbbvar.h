@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.15 2010/01/13 09:10:33 jsg Exp $	*/
+/*	$OpenBSD: pccbbvar.h,v 1.16 2010/09/06 18:34:34 kettenis Exp $	*/
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -139,14 +139,27 @@ struct pccbb_softc {
 	int sc_chipset;			/* chipset id */
 	int sc_ints_on;
 
+	pcireg_t sc_csr;
+	pcireg_t sc_bhlcr;
+	pcireg_t sc_int;
+
 	pcireg_t sc_sockbase;		/* Socket base register */
 	pcireg_t sc_busnum;		/* bus number */
+
+	pcireg_t sc_sysctrl;
+	pcireg_t sc_cbctrl;
+	pcireg_t sc_mfunc;
 
 	/* CardBus stuff */
 	struct cardslot_softc *sc_csc;
 
 	struct pccbb_win_chain_head sc_memwindow;
 	struct pccbb_win_chain_head sc_iowindow;
+
+	pcireg_t sc_membase[2];
+	pcireg_t sc_memlimit[2];
+	pcireg_t sc_iobase[2];
+	pcireg_t sc_iolimit[2];
 
 	/* pcmcia stuff */
 	struct pcic_handle sc_pcmcia_h;
