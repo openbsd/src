@@ -214,6 +214,7 @@
 ./usr/lib/libevent_pic.a
 ./usr/lib/libexpat_pic.a
 ./usr/lib/libform_pic.a
+./usr/lib/libformw_pic.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libiberty_pic.a
 ./usr/lib/libkadm5clnt_pic.a
@@ -223,13 +224,16 @@
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libmenu_pic.a
+./usr/lib/libmenuw_pic.a
 ./usr/lib/libmilter_pic.a
 ./usr/lib/libncurses_pic.a
+./usr/lib/libncursesw_pic.a
 ./usr/lib/libobjc_pic.a
 ./usr/lib/libocurses_pic.a
 ./usr/lib/libossaudio_pic.a
 ./usr/lib/libotermcap_pic.a
 ./usr/lib/libpanel_pic.a
+./usr/lib/libpanelw_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libperl_pic.a
 ./usr/lib/libpthread_pic.a

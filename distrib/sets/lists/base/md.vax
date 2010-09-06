@@ -8,6 +8,10 @@
 ./usr/lib/gcc-lib/vax-unknown-openbsd4.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/vax-unknown-openbsd4.8/2.95.3/include
 ./usr/lib/gcc-lib/vax-unknown-openbsd4.8/2.95.3/specs
+./usr/lib/libformw.so.5.0
+./usr/lib/libmenuw.so.5.0
+./usr/lib/libncursesw.so.12.0
+./usr/lib/libpanelw.so.5.0
 ./usr/libdata/perl5/site_perl/vax-openbsd
 ./usr/libdata/perl5/site_perl/vax-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/a.out.ph
