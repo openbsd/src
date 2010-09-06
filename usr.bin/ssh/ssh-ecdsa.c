@@ -98,6 +98,7 @@ ssh_ecdsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
 	u_int len, dlen;
 	int rlen, ret;
 	Buffer b, bb;
+	char *ktype;
 
 	if (key == NULL || key->ecdsa == NULL ||
 	    (key->type != KEY_ECDSA && key->type != KEY_ECDSA_CERT)) {
@@ -106,7 +107,6 @@ ssh_ecdsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
 	}
 
 	/* fetch signature */
-	char *ktype;
 	buffer_init(&b);
 	buffer_append(&b, signature, signaturelen);
 	ktype = buffer_get_string(&b, NULL);
