@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.9 2009/02/14 18:38:19 miod Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.10 2010/09/06 08:00:31 jsg Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -64,20 +64,20 @@
  */
 #define	SAVEPCB(reg) \
 	add	#SF_SIZE, reg ; \
-	sts.l	mach,	@-/**/reg ; \
-	sts.l	macl,	@-/**/reg ; \
-	stc.l	r7_bank,@-/**/reg ; \
-	stc.l	sr,	@-/**/reg ; \
-	stc.l	r6_bank,@-/**/reg ; \
-	sts.l	pr,	@-/**/reg ; \
-	mov.l	r8,	@-/**/reg ; \
-	mov.l	r9,	@-/**/reg ; \
-	mov.l	r10,	@-/**/reg ; \
-	mov.l	r11,	@-/**/reg ; \
-	mov.l	r12,	@-/**/reg ; \
-	mov.l	r13,	@-/**/reg ; \
-	mov.l	r14,	@-/**/reg ; \
-	mov.l	r15,	@-/**/reg
+	sts.l	mach,	@-##reg ; \
+	sts.l	macl,	@-##reg ; \
+	stc.l	r7_bank,@-##reg ; \
+	stc.l	sr,	@-##reg ; \
+	stc.l	r6_bank,@-##reg ; \
+	sts.l	pr,	@-##reg ; \
+	mov.l	r8,	@-##reg ; \
+	mov.l	r9,	@-##reg ; \
+	mov.l	r10,	@-##reg ; \
+	mov.l	r11,	@-##reg ; \
+	mov.l	r12,	@-##reg ; \
+	mov.l	r13,	@-##reg ; \
+	mov.l	r14,	@-##reg ; \
+	mov.l	r15,	@-##reg
 
 /*
  * Save floating point registers to a fpreg structure.
@@ -88,43 +88,43 @@
 	sts	fpscr,	tmp2 ; \
 	add	#(FP_SIZE - 124), reg ; \
 	mov	#0,	tmp; \
-	mov.l	tmp2,	@-/**/reg ; \
+	mov.l	tmp2,	@-##reg ; \
 	lds	tmp,	fpscr; \
-	sts.l	fpul,	@-/**/reg ; \
+	sts.l	fpul,	@-##reg ; \
 	frchg; \
-	fmov.s	fr15,	@-/**/reg ; \
-	fmov.s	fr14,	@-/**/reg ; \
-	fmov.s	fr13,	@-/**/reg ; \
-	fmov.s	fr12,	@-/**/reg ; \
-	fmov.s	fr11,	@-/**/reg ; \
-	fmov.s	fr10,	@-/**/reg ; \
-	fmov.s	fr9,	@-/**/reg ; \
-	fmov.s	fr8,	@-/**/reg ; \
-	fmov.s	fr7,	@-/**/reg ; \
-	fmov.s	fr6,	@-/**/reg ; \
-	fmov.s	fr5,	@-/**/reg ; \
-	fmov.s	fr4,	@-/**/reg ; \
-	fmov.s	fr3,	@-/**/reg ; \
-	fmov.s	fr2,	@-/**/reg ; \
-	fmov.s	fr1,	@-/**/reg ; \
-	fmov.s	fr0,	@-/**/reg ; \
+	fmov.s	fr15,	@-##reg ; \
+	fmov.s	fr14,	@-##reg ; \
+	fmov.s	fr13,	@-##reg ; \
+	fmov.s	fr12,	@-##reg ; \
+	fmov.s	fr11,	@-##reg ; \
+	fmov.s	fr10,	@-##reg ; \
+	fmov.s	fr9,	@-##reg ; \
+	fmov.s	fr8,	@-##reg ; \
+	fmov.s	fr7,	@-##reg ; \
+	fmov.s	fr6,	@-##reg ; \
+	fmov.s	fr5,	@-##reg ; \
+	fmov.s	fr4,	@-##reg ; \
+	fmov.s	fr3,	@-##reg ; \
+	fmov.s	fr2,	@-##reg ; \
+	fmov.s	fr1,	@-##reg ; \
+	fmov.s	fr0,	@-##reg ; \
 	frchg; \
-	fmov.s	fr15,	@-/**/reg ; \
-	fmov.s	fr14,	@-/**/reg ; \
-	fmov.s	fr13,	@-/**/reg ; \
-	fmov.s	fr12,	@-/**/reg ; \
-	fmov.s	fr11,	@-/**/reg ; \
-	fmov.s	fr10,	@-/**/reg ; \
-	fmov.s	fr9,	@-/**/reg ; \
-	fmov.s	fr8,	@-/**/reg ; \
-	fmov.s	fr7,	@-/**/reg ; \
-	fmov.s	fr6,	@-/**/reg ; \
-	fmov.s	fr5,	@-/**/reg ; \
-	fmov.s	fr4,	@-/**/reg ; \
-	fmov.s	fr3,	@-/**/reg ; \
-	fmov.s	fr2,	@-/**/reg ; \
-	fmov.s	fr1,	@-/**/reg ; \
-	fmov.s	fr0,	@-/**/reg ; \
+	fmov.s	fr15,	@-##reg ; \
+	fmov.s	fr14,	@-##reg ; \
+	fmov.s	fr13,	@-##reg ; \
+	fmov.s	fr12,	@-##reg ; \
+	fmov.s	fr11,	@-##reg ; \
+	fmov.s	fr10,	@-##reg ; \
+	fmov.s	fr9,	@-##reg ; \
+	fmov.s	fr8,	@-##reg ; \
+	fmov.s	fr7,	@-##reg ; \
+	fmov.s	fr6,	@-##reg ; \
+	fmov.s	fr5,	@-##reg ; \
+	fmov.s	fr4,	@-##reg ; \
+	fmov.s	fr3,	@-##reg ; \
+	fmov.s	fr2,	@-##reg ; \
+	fmov.s	fr1,	@-##reg ; \
+	fmov.s	fr0,	@-##reg ; \
 	lds	tmp2,	fpscr
 
 /*
@@ -134,41 +134,41 @@
 #define	LOADFP(reg, tmp) \
 	mov	#0,	tmp; \
 	lds	tmp,	fpscr; \
-	fmov.s	@/**/reg/**/+, fr0 ; \
-	fmov.s	@/**/reg/**/+, fr1 ; \
-	fmov.s	@/**/reg/**/+, fr2 ; \
-	fmov.s	@/**/reg/**/+, fr3 ; \
-	fmov.s	@/**/reg/**/+, fr4 ; \
-	fmov.s	@/**/reg/**/+, fr5 ; \
-	fmov.s	@/**/reg/**/+, fr6 ; \
-	fmov.s	@/**/reg/**/+, fr7 ; \
-	fmov.s	@/**/reg/**/+, fr8 ; \
-	fmov.s	@/**/reg/**/+, fr9 ; \
-	fmov.s	@/**/reg/**/+, fr10 ; \
-	fmov.s	@/**/reg/**/+, fr11 ; \
-	fmov.s	@/**/reg/**/+, fr12 ; \
-	fmov.s	@/**/reg/**/+, fr13 ; \
-	fmov.s	@/**/reg/**/+, fr14 ; \
-	fmov.s	@/**/reg/**/+, fr15 ; \
+	fmov.s	@##reg##+, fr0 ; \
+	fmov.s	@##reg##+, fr1 ; \
+	fmov.s	@##reg##+, fr2 ; \
+	fmov.s	@##reg##+, fr3 ; \
+	fmov.s	@##reg##+, fr4 ; \
+	fmov.s	@##reg##+, fr5 ; \
+	fmov.s	@##reg##+, fr6 ; \
+	fmov.s	@##reg##+, fr7 ; \
+	fmov.s	@##reg##+, fr8 ; \
+	fmov.s	@##reg##+, fr9 ; \
+	fmov.s	@##reg##+, fr10 ; \
+	fmov.s	@##reg##+, fr11 ; \
+	fmov.s	@##reg##+, fr12 ; \
+	fmov.s	@##reg##+, fr13 ; \
+	fmov.s	@##reg##+, fr14 ; \
+	fmov.s	@##reg##+, fr15 ; \
 	frchg; \
-	fmov.s	@/**/reg/**/+, fr0 ; \
-	fmov.s	@/**/reg/**/+, fr1 ; \
-	fmov.s	@/**/reg/**/+, fr2 ; \
-	fmov.s	@/**/reg/**/+, fr3 ; \
-	fmov.s	@/**/reg/**/+, fr4 ; \
-	fmov.s	@/**/reg/**/+, fr5 ; \
-	fmov.s	@/**/reg/**/+, fr6 ; \
-	fmov.s	@/**/reg/**/+, fr7 ; \
-	fmov.s	@/**/reg/**/+, fr8 ; \
-	fmov.s	@/**/reg/**/+, fr9 ; \
-	fmov.s	@/**/reg/**/+, fr10 ; \
-	fmov.s	@/**/reg/**/+, fr11 ; \
-	fmov.s	@/**/reg/**/+, fr12 ; \
-	fmov.s	@/**/reg/**/+, fr13 ; \
-	fmov.s	@/**/reg/**/+, fr14 ; \
-	fmov.s	@/**/reg/**/+, fr15 ; \
-	lds.l	@/**/reg/**/+, fpul ; \
-	lds.l	@/**/reg/**/+, fpscr
+	fmov.s	@##reg##+, fr0 ; \
+	fmov.s	@##reg##+, fr1 ; \
+	fmov.s	@##reg##+, fr2 ; \
+	fmov.s	@##reg##+, fr3 ; \
+	fmov.s	@##reg##+, fr4 ; \
+	fmov.s	@##reg##+, fr5 ; \
+	fmov.s	@##reg##+, fr6 ; \
+	fmov.s	@##reg##+, fr7 ; \
+	fmov.s	@##reg##+, fr8 ; \
+	fmov.s	@##reg##+, fr9 ; \
+	fmov.s	@##reg##+, fr10 ; \
+	fmov.s	@##reg##+, fr11 ; \
+	fmov.s	@##reg##+, fr12 ; \
+	fmov.s	@##reg##+, fr13 ; \
+	fmov.s	@##reg##+, fr14 ; \
+	fmov.s	@##reg##+, fr15 ; \
+	lds.l	@##reg##+, fpul ; \
+	lds.l	@##reg##+, fpscr
 
 	.text
 	.align 5	/* align cache line size (32B) */
