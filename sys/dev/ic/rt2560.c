@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.54 2010/08/28 18:08:07 deraadt Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.55 2010/09/06 18:22:00 kettenis Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1337,7 +1337,10 @@ rt2560_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t r;
 
-	if ((r = RAL_READ(sc, RT2560_CSR7)) == 0)
+	r = RAL_READ(sc, RT2560_CSR7);
+	if (__predict_false(r == 0xffffffff))
+		return 0;	/* device likely went away */
+	if (r == 0)
 		return 0;	/* not for us */
 
 	/* disable interrupts */
