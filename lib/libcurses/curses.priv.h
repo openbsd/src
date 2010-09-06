@@ -1,4 +1,4 @@
-/* $OpenBSD: curses.priv.h,v 1.33 2010/01/12 23:21:59 nicm Exp $ */
+/* $OpenBSD: curses.priv.h,v 1.34 2010/09/06 17:26:17 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -36,7 +36,7 @@
 
 
 /*
- * $Id: curses.priv.h,v 1.33 2010/01/12 23:21:59 nicm Exp $
+ * $Id: curses.priv.h,v 1.34 2010/09/06 17:26:17 nicm Exp $
  *
  *	curses.priv.h
  *
@@ -262,6 +262,7 @@ color_t;
 
 #if USE_WIDEC_SUPPORT
 #define _nc_bkgd    _bkgrnd
+#define _XOPEN_SOURCE_EXTENDED 1
 #else
 #undef _XOPEN_SOURCE_EXTENDED
 #define _nc_bkgd    _bkgd

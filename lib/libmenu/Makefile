@@ -1,3 +1,5 @@
+# $OpenBSD: Makefile,v 1.13 2010/09/06 17:26:17 nicm Exp $
+
 LIB=	menu
 WANTLINT=
 SRCS=	m_attribs.c m_cursor.c m_driver.c m_format.c \
@@ -45,5 +47,17 @@ includes:
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
+
+.include <bsd.own.mk>
+
+afterinstall:
+	-cd ${DESTDIR}${LIBDIR}; \
+	for i in ${_LIBS}; do \
+	    ln -f $$i `echo $$i | sed 's/menu/menuw/'`; \
+	done
+.if (${DEBUGLIBS:L} == "yes")
+	-cd ${DESTDIR}${LIBDIR}/debug; \
+	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/menu/menuw/'`.a
+.endif
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/* $OpenBSD: ncurses_cfg.h,v 1.24 2010/01/12 23:21:59 nicm Exp $ */
+/* $OpenBSD: ncurses_cfg.h,v 1.25 2010/09/06 17:26:17 nicm Exp $ */
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -33,7 +33,7 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
  ****************************************************************************/
 /*
- * $Id: ncurses_cfg.h,v 1.24 2010/01/12 23:21:59 nicm Exp $
+ * $Id: ncurses_cfg.h,v 1.25 2010/09/06 17:26:17 nicm Exp $
  *
  * This is a template-file used to generate the "ncurses_cfg.h" file.
  *
@@ -58,6 +58,7 @@
 #define GCC_UNUSED __attribute__((__unused__))
 #define HAVE_BIG_CORE 1
 #define HAVE_BSD_CGETENT 1
+#define HAVE_BTOWC 1
 #define HAVE_CURSES_VERSION 1
 #define HAVE_DIRENT_H 1
 #define HAVE_ERRNO 1
@@ -80,6 +81,12 @@
 #define HAVE_LINK 1
 #define HAVE_LOCALE_H 1
 #define HAVE_LONG_FILE_NAMES 1
+#define HAVE_MBLEN 1
+#define HAVE_MBRLEN 1
+#define HAVE_MBRTOWC 1
+#define HAVE_MBSRTOWCS 1
+#define HAVE_MBSTOWCS 1
+#define HAVE_MBTOWC 1
 #define HAVE_MEMORY_H 1
 #define HAVE_MENU_H 1
 #define HAVE_MKSTEMP 1
@@ -88,6 +95,7 @@
 #define HAVE_PANEL_H 1
 #define HAVE_POLL 1
 #define HAVE_POLL_H 1
+#define HAVE_PUTWC 1
 #define HAVE_REGEX_H_FUNCS 1
 #define HAVE_REMOVE 1
 #define HAVE_REMOVE 1
@@ -130,6 +138,10 @@
 #define HAVE_USE_DEFAULT_COLORS 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_VSSCANF 1
+#define HAVE_WCSRTOMBS 1
+#define HAVE_WCSTOMBS 1
+#define HAVE_WCTOB 1
+#define HAVE_WCTOMB 1
 #define HAVE_WCTYPE_H 1
 #define HAVE_WORKING_POLL 1
 #define HAVE_WRESIZE 1
@@ -140,6 +152,7 @@
 #define NCURSES_PATHSEP ':'
 #define NCURSES_VERSION_STRING "5.7.20081102"
 #define NDEBUG 1
+#define NEED_WCHAR_H 1
 #define PURE_TERMINFO 0
 #define RETSIGTYPE void
 #define SIG_ATOMIC_T volatile sig_atomic_t
@@ -152,12 +165,13 @@
 #define TYPEOF_CHTYPE long
 #define USE_ASSUMED_COLOR 1
 #define USE_DATABASE 1
-#define USE_GETCAP 1 
+#define USE_GETCAP 1
 #define USE_HASHMAP 1
 #define USE_HOME_TERMINFO 1
 #define USE_LINKS 1
 #define USE_OPENPTY_HEADER <util.h>
 #define USE_ROOT_ENVIRON 1
+#define USE_WIDEC_SUPPORT 1
 #define USE_XTERM_PTY 1
 /* #define HAVE_LIBFORM 1 */
 /* #define HAVE_LIBMENU 1 */

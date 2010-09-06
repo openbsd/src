@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2010/01/12 23:22:08 nicm Exp $
+# $OpenBSD: Makefile,v 1.9 2010/09/06 17:26:17 nicm Exp $
 
 LIB=	panel
 WANTLINT=
@@ -19,5 +19,17 @@ includes:
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
+
+.include <bsd.own.mk>
+
+afterinstall:
+	-cd ${DESTDIR}${LIBDIR}; \
+	for i in ${_LIBS}; do \
+	    ln -f $$i `echo $$i | sed 's/panel/panelw/'`; \
+	done
+.if (${DEBUGLIBS:L} == "yes")
+	-cd ${DESTDIR}${LIBDIR}/debug; \
+	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/panel/panelw/'`.a
+.endif
 
 .include <bsd.lib.mk>

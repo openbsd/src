@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2010/01/12 23:21:58 nicm Exp $
+#	$OpenBSD: Makefile,v 1.60 2010/09/06 17:26:17 nicm Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -10,7 +10,8 @@ FALLBACK_LIST=
 AWK?=	/usr/bin/awk
 
 # Search in subdirs
-.PATH:	${.CURDIR}/base ${.CURDIR}/tinfo ${.CURDIR}/trace ${.CURDIR}/tty
+.PATH:	${.CURDIR}/base ${.CURDIR}/tinfo ${.CURDIR}/trace ${.CURDIR}/tty \
+	${.CURDIR}/widechar
 
 LIB=    curses
 WANTLINT=
@@ -53,6 +54,12 @@ SRCS+=	lib_trace.c lib_traceatr.c lib_tracebits.c lib_tracechr.c \
 # tty
 SRCS+=	hardscroll.c hashmap.c lib_mvcur.c lib_tstp.c lib_twait.c \
 	lib_vidattr.c tty_update.c
+# widechar
+SRCS+=  charable.c lib_add_wch.c lib_box_set.c lib_cchar.c lib_erasewchar.c \
+	lib_get_wch.c lib_get_wstr.c lib_hline_set.c lib_in_wch.c \
+	lib_in_wchnstr.c lib_ins_wch.c lib_inwstr.c lib_key_name.c \
+	lib_pecho_wchar.c lib_slk_wset.c lib_unget_wch.c lib_vid_attr.c \
+	lib_vline_set.c lib_wacs.c lib_wunctrl.c
 
 HOSTCFLAGS?=	${CFLAGS}
 HOSTLDFLAGS?=	${LDFLAGS}
@@ -65,7 +72,8 @@ MAN=	curs_addch.3tbl curs_addchstr.3 curs_addstr.3 curs_attr.3tbl \
 	curs_delch.3 curs_deleteln.3 \
 	curs_extend.3 \
 	curs_getch.3tbl curs_getstr.3 curs_getyx.3 \
-	curs_inch.3tbl curs_inchstr.3 curs_initscr.3 curs_inopts.3 curs_insch.3 curs_insstr.3 curs_instr.3 \
+	curs_inch.3tbl curs_inchstr.3 curs_initscr.3 curs_inopts.3 \
+	curs_insch.3 curs_insstr.3 curs_instr.3 \
 	curs_kernel.3 \
 	curs_legacy.3 \
 	curs_mouse.3tbl curs_move.3 \
@@ -76,6 +84,9 @@ MAN=	curs_addch.3tbl curs_addchstr.3 curs_addstr.3 curs_attr.3tbl \
 	curs_termattrs.3 curs_touch.3 \
 	curs_util.3 \
 	curs_window.3 \
+	curs_add_wch.3 curs_add_wchstr.3 curs_addwstr.3 curs_get_wch.3 \
+	curs_get_wstr.3 curs_in_wch.3 curs_in_wchstr.3 curs_ins_wch.3 \
+	curs_ins_wstr.3 curs_inwstr.3 \
 	default_colors.3 define_key.3 \
 	key_defined.3 keybound.3 keyok.3 \
 	curses.3tbl \
@@ -83,8 +94,8 @@ MAN=	curs_addch.3tbl curs_addchstr.3 curs_addstr.3 curs_attr.3tbl \
 	term.5tbl term.7 termcap.3 terminfo.3 terminfo.5tbl \
 	wresize.3
 
-MLINKS+=curses.3 ncurses.3
-MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
+MLINKS+= curses.3 ncurses.3
+MLINKS+= curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_addch.3 mvwaddch.3 curs_addch.3 echochar.3 curs_addch.3 \
 	wechochar.3 curs_addchstr.3 addchstr.3 curs_addchstr.3 addchnstr.3 \
 	curs_addchstr.3 waddchstr.3 curs_addchstr.3 waddchnstr.3 \
@@ -192,7 +203,7 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	mvderwin.3 curs_window.3 dupwin.3 curs_window.3 wsyncup.3 \
 	curs_window.3 syncok.3 curs_window.3 wcursyncup.3 \
 	curs_window.3 wsyncdown.3
-MLINKS+=curs_extend.3 curses_version.3 curs_extend.3 use_extended_names.3 \
+MLINKS+= curs_extend.3 curses_version.3 curs_extend.3 use_extended_names.3 \
 	default_colors.3 assume_default_colors.3 \
 	default_colors.3 use_default_colors.3
 MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
@@ -221,6 +232,41 @@ MLINKS+= curs_opaque.3 is_cleared.3 curs_opaque.3 is_idcok.3 \
 	curs_opaque.3 is_nodelay.3 curs_opaque.3 is_notimeout.3 \
 	curs_opaque.3 is_scrollok.3 curs_opaque.3 is_syncok.3 \
 	curs_opaque.3 wgetparent.3 curs_opaque.3 wgetscrreg.3
+MLINKS+= resizeterm.3 is_term_resized.3 resizeterm.3 resize_term.3
+MLINKS+= curs_add_wch.3 add_wch.3 curs_add_wch.3 wadd_wch.3 \
+	curs_add_wch.3 mvadd_wch.3 curs_add_wch.3 mvwadd_wch.3 \
+	curs_add_wch.3 echo_wchar.3 curs_add_wch.3 wecho_wchar.3
+MLINKS+= curs_add_wchstr.3 add_wchstr.3 curs_add_wchstr.3 add_wchnstr.3 \
+	curs_add_wchstr.3 wadd_wchstr.3 curs_add_wchstr.3 wadd_wchnstr.3 \
+	curs_add_wchstr.3 mvadd_wchstr.3 curs_add_wchstr.3 mvadd_wchnstr.3 \
+	curs_add_wchstr.3 mvwadd_wchstr.3 curs_add_wchstr.3 mvwadd_wchnstr.3
+MLINKS+= curs_addwstr.3 addwstr.3 curs_addwstr.3 addnwstr.3 \
+	curs_addwstr.3 waddwstr.3 curs_addwstr.3 waddnwstr.3 \
+	curs_addwstr.3 mvaddwstr.3 curs_addwstr.3 mvaddnwstr.3 \
+	curs_addwstr.3 mvwaddwstr.3 curs_addwstr.3 mvwaddnwstr.3
+MLINKS+= curs_get_wch.3 get_wch.3 curs_get_wch.3 wget_wch.3 \
+	curs_get_wch.3 mvget_wch.3 curs_get_wch.3 mvwget_wch.3 \
+	curs_get_wch.3 unget_wch.3
+MLINKS+= curs_get_wstr.3 get_wstr.3 curs_get_wstr.3 getn_wstr.3 \
+	curs_get_wstr.3 wget_wstr.3 curs_get_wstr.3 wgetn_wstr.3 \
+	curs_get_wstr.3 mvget_wstr.3 curs_get_wstr.3 mvgetn_wstr.3 \
+	curs_get_wstr.3 mvwget_wstr.3 curs_get_wstr.3 mvwgetn_wstr.3
+MLINKS+= curs_in_wch.3 in_wch.3 curs_in_wch.3 mvin_wch.3 \
+	curs_in_wch.3 mvwin_wch.3 curs_in_wch.3 win_wch.3
+MLINKS+= curs_in_wchstr.3 in_wchstr.3 curs_in_wchstr.3 in_wchnstr.3 \
+	curs_in_wchstr.3 win_wchstr.3 curs_in_wchstr.3 win_wchnstr.3 \
+	curs_in_wchstr.3 mvin_wchstr.3 curs_in_wchstr.3 mvin_wchnstr.3 \
+	curs_in_wchstr.3 mvwin_wchstr.3 curs_in_wchstr.3 mvwin_wchnstr.3
+MLINKS+= curs_ins_wch.3 ins_wch.3 curs_ins_wch.3 mvins_wch.3 \
+	curs_ins_wch.3 mvwins_wch.3 curs_ins_wch.3 wins_wch.3
+MLINKS+= curs_ins_wstr.3 ins_wstr.3 curs_ins_wstr.3 ins_nwstr.3 \
+	curs_ins_wstr.3 wins_wstr.3 curs_ins_wstr.3 wins_nwstr.3 \
+	curs_ins_wstr.3 mvins_wstr.3 curs_ins_wstr.3 mvins_nwstr.3 \
+	curs_ins_wstr.3 mvwins_wstr.3 curs_ins_wstr.3 mvwins_nwstr.3
+MLINKS+= curs_inwstr.3 inwstr.3 curs_inwstr.3 innwstr.3 \
+	curs_inwstr.3 winwstr.3 curs_inwstr.3 winnwstr.3 \
+	curs_inwstr.3 mvinwstr.3 curs_inwstr.3 mvinnwstr.3 \
+	curs_inwstr.3 mvwinwstr.3 curs_inwstr.3 mvwinnwstr.3
 
 GENERATED= init_keytry.h codes.c comp_captab.c expanded.c fallback.c \
 	keys.list lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
@@ -298,12 +344,14 @@ afterinstall:
 	    ln -f $$i `echo $$i | sed 's/curses/termlib/'`; \
 	    ln -f $$i `echo $$i | sed 's/curses/termcap/'`; \
 	    ln -f $$i `echo $$i | sed 's/curses/ncurses/'`; \
+	    ln -f $$i `echo $$i | sed 's/curses/ncursesw/'`; \
 	done
 .if (${DEBUGLIBS:L} == "yes")
 	-cd ${DESTDIR}${LIBDIR}/debug; \
 	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/termlib/'`.a; \
 	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/termcap/'`.a; \
-	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/ncurses/'`.a
+	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/ncurses/'`.a; \
+	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/ncursesw/'`.a
 .endif
 
 .include <bsd.lib.mk>
