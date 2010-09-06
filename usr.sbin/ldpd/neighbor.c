@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.20 2010/09/06 08:28:44 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.21 2010/09/06 08:36:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -440,6 +440,9 @@ void
 nbr_idtimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
+
+	if (ntohl(nbr->addr.s_addr) >= ntohl(nbr->iface->addr.s_addr))
+		return;
 
 	log_debug("nbr_idtimer: neighbor ID %s peerid %lu", inet_ntoa(nbr->id),
 	    nbr->peerid);
