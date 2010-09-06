@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.13 2009/03/10 15:03:17 oga Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.14 2010/09/06 19:05:48 kettenis Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ struct bus_dma_tag eisa_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
+	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,

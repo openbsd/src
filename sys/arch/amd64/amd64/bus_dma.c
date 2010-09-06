@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.32 2010/05/20 05:46:53 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.33 2010/09/06 19:05:48 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -404,7 +404,6 @@ void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
     bus_size_t size, int op)
 {
-
 	/* Nothing to do here. */
 }
 

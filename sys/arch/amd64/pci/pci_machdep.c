@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.35 2010/07/08 20:56:31 jordan Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.36 2010/09/06 19:05:48 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -125,7 +125,7 @@ struct bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	NULL,
+	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
