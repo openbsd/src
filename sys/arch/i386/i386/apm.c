@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.90 2010/08/27 19:10:59 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.91 2010/09/06 15:42:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -326,10 +326,11 @@ apm_suspend()
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 	bufq_quiesce();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
 
 	apm_saved_spl = splhigh();
 	disable_intr();
-	dopowerhooks(PWR_SUSPEND);
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
 	if (cold)
 		vfs_syncwait(0);
@@ -344,10 +345,11 @@ apm_standby()
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 	bufq_quiesce();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
 
 	apm_saved_spl = splhigh();
 	disable_intr();
-	dopowerhooks(PWR_SUSPEND);
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
 	if (cold)
 		vfs_syncwait(0);
@@ -363,6 +365,7 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 	apm_resumes = APM_RESUME_HOLDOFF;
 
 	/* Some machines resume with interrupts on */
+	(void) splhigh();
 	disable_intr();
 
 	/* they say that some machines may require reinitializing the clocks */
@@ -373,7 +376,7 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 	inittodr(time_second);
 	/* lower bit in cx means pccard was powered down */
 
-	dopowerhooks(PWR_RESUME);
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
 
 	enable_intr();
 	splx(apm_saved_spl);
