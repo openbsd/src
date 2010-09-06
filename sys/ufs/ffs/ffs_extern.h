@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.34 2009/08/14 13:05:08 jasper Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.35 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -94,7 +94,9 @@ struct mbuf;
 struct cg;
 struct vop_vfree_args;
 
-__BEGIN_DECLS
+extern struct vops	ffs_vops;
+extern struct vops	ffs_specvops;
+extern struct vops	ffs_fifovops;
 
 /* ffs_alloc.c */
 int ffs_alloc(struct inode *, daddr64_t, daddr64_t , int, struct ucred *,
@@ -186,13 +188,9 @@ void  softdep_setup_allocindir_page(struct inode *, daddr64_t,
 void  softdep_fsync_mountdev(struct vnode *, int);
 int   softdep_sync_metadata(struct vop_fsync_args *);
 int   softdep_fsync(struct vnode *);
-__END_DECLS
 
-extern int (**ffs_vnodeop_p)(void *);
-extern int (**ffs_specop_p)(void *);
 #ifdef FIFO
-extern int (**ffs_fifoop_p)(void *);
-#define FFS_FIFOOPS ffs_fifoop_p
+#define FFS_FIFOOPS &ffs_fifovops
 #else
 #define FFS_FIFOOPS NULL
 #endif

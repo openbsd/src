@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.55 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.56 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -69,21 +69,6 @@ extern struct lock ufs_hashlock;
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
-
-extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
-extern struct vnodeopv_desc ext2fs_specop_opv_desc;
-#ifdef FIFO
-extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
-#endif
-
-struct vnodeopv_desc *ext2fs_vnodeopv_descs[] = {
-	&ext2fs_vnodeop_opv_desc,
-	&ext2fs_specop_opv_desc,
-#ifdef FIFO
-	&ext2fs_fifoop_opv_desc,
-#endif
-	NULL,
-};
 
 const struct vfsops ext2fs_vfsops = {
 	ext2fs_mount,
@@ -826,7 +811,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (0);
 
 	/* Allocate a new vnode/inode. */
-	if ((error = getnewvnode(VT_EXT2FS, mp, ext2fs_vnodeop_p, &vp)) != 0) {
+	if ((error = getnewvnode(VT_EXT2FS, mp, &ext2fs_vops, &vp)) != 0) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -905,7 +890,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ext2fs_vinit(mp, ext2fs_specop_p, EXT2FS_FIFOOPS, &vp);
+	error = ext2fs_vinit(mp, &ext2fs_specvops, EXT2FS_FIFOOPS, &vp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.46 2010/07/03 03:45:16 thib Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.47 2010/09/06 23:44:10 thib Exp $  */
 
 /*
  *  Portions of this code are:
@@ -254,33 +254,21 @@ speedup_syncer(void)
 	return 0;
 }
 
-/*
- * Routine to create and manage a filesystem syncer vnode.
- */
-#define sync_close nullop
+/* Routine to create and manage a filesystem syncer vnode. */
 int   sync_fsync(void *);
 int   sync_inactive(void *);
-#define sync_reclaim nullop
-#define sync_lock vop_generic_lock
-#define sync_unlock vop_generic_unlock
 int   sync_print(void *);
-#define sync_islocked vop_generic_islocked
 
-int (**sync_vnodeop_p)(void *);
-struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
-      { &vop_default_desc, eopnotsupp },
-      { &vop_close_desc, sync_close },
-      { &vop_fsync_desc, sync_fsync },
-      { &vop_inactive_desc, sync_inactive },
-      { &vop_reclaim_desc, sync_reclaim },
-      { &vop_lock_desc, sync_lock },
-      { &vop_unlock_desc, sync_unlock },
-      { &vop_print_desc, sync_print },
-      { &vop_islocked_desc, sync_islocked },
-      { (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
-};
-struct vnodeopv_desc sync_vnodeop_opv_desc = {
-	&sync_vnodeop_p, sync_vnodeop_entries
+struct vops sync_vops = {
+	.vop_default	= eopnotsupp,
+	.vop_close	= nullop,
+	.vop_fsync	= sync_fsync,
+	.vop_inactive	= sync_inactive,
+	.vop_reclaim	= nullop,
+	.vop_lock	= vop_generic_lock,
+	.vop_unlock	= vop_generic_unlock,
+	.vop_islocked	= vop_generic_islocked,
+	.vop_print	= sync_print
 };
 
 /*
@@ -294,7 +282,7 @@ vfs_allocate_syncvnode(struct mount *mp)
 	int error;
 
 	/* Allocate a new vnode */
-	if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0) {
+	if ((error = getnewvnode(VT_VFS, mp, &sync_vops, &vp)) != 0) {
 		mp->mnt_syncer = NULL;
 		return (error);
 	}

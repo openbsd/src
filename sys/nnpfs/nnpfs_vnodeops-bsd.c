@@ -1393,42 +1393,34 @@ nnpfs_pushdirty(struct vnode *vp, struct ucred *cred, d_thread_t *p)
 }
 
 
-
-static struct vnodeopv_entry_desc nnpfs_vnodeop_entries[] = {
-    {&vop_default_desc, (vop_t *) nnpfs_eopnotsupp},
+struct vops nnpfs_vops = {
+        .vop_default    = (vop_t *)nnpfs_eopnotsupp,
 #ifdef HAVE_VOP_LOOKUP
-#ifdef HAVE_KERNEL_VFS_CACHE_LOOKUP
-    {&vop_lookup_desc, (vop_t *) vfs_cache_lookup },
-#else
-    {&vop_lookup_desc, (vop_t *) nnpfs_lookup },
-#endif
-#endif
-#ifdef HAVE_VOP_CACHEDLOOKUP
-    {&vop_cachedlookup_desc, (vop_t *) nnpfs_cachedlookup },
+        .vop_lookup     = (vop_t *)nnpfs_lookup,
 #endif
 #ifdef HAVE_VOP_OPEN
-    {&vop_open_desc, (vop_t *) nnpfs_open },
+        .vop_open       = (vop_t *)nnpfs_open,
 #endif
 #ifdef HAVE_VOP_FSYNC
-    {&vop_fsync_desc, (vop_t *) nnpfs_fsync },
+        .vop_fsync      = (vop_t *)nnpfs_fsync,
 #endif
 #ifdef HAVE_VOP_CLOSE
-    {&vop_close_desc, (vop_t *) nnpfs_close },
+        .vop_close      = (vop_t *)nnpfs_close,
 #endif
 #ifdef HAVE_VOP_READ
-    {&vop_read_desc, (vop_t *) nnpfs_read },
+        .vop_read       = (vop_t *)nnpfs_read,
 #endif
 #ifdef HAVE_VOP_WRITE
-    {&vop_write_desc, (vop_t *) nnpfs_write },
+        .vop_write      = (vop_t *)nnpfs_write,
 #endif
 #ifdef HAVE_VOP_MMAP
-    {&vop_mmap_desc, (vop_t *) nnpfs_mmap },
+        .vop_bwrite     = (vop_t *)nnpfs_bwrite,
 #endif
 #ifdef HAVE_VOP_BMAP
-    {&vop_bmap_desc, (vop_t *) nnpfs_bmap },
+	.vop_bmap	= (vop_t *)nnpfs_bmap,
 #endif
 #ifdef HAVE_VOP_IOCTL
-    {&vop_ioctl_desc, (vop_t *) nnpfs_ioctl },
+	.vop_ioctl	= (vop_t *)nnpfs_ioctl,
 #endif
 #ifdef HAVE_VOP_SELECT
     {&vop_select_desc, (vop_t *) nnpfs_select },
@@ -1437,61 +1429,61 @@ static struct vnodeopv_entry_desc nnpfs_vnodeop_entries[] = {
     {&vop_seek_desc, (vop_t *) nnpfs_seek },
 #endif
 #ifdef HAVE_VOP_POLL
-    {&vop_poll_desc, (vop_t *) nnpfs_poll },
+	.vop_poll	= (vop_t *)nnpfs_poll,
 #endif
 #ifdef HAVE_VOP_GETATTR
-    {&vop_getattr_desc, (vop_t *) nnpfs_getattr },
+	.vop_getattr	= (vop_t *)nnpfs_getattr,
 #endif
 #ifdef HAVE_VOP_SETATTR
-    {&vop_setattr_desc, (vop_t *) nnpfs_setattr },
+	.vop_setattr	= (vop_t *)nnpfs_setattr,
 #endif
 #ifdef HAVE_VOP_ACCESS
-    {&vop_access_desc, (vop_t *) nnpfs_access },
+	.vop_access	= (vop_t *)nnpfs_access,
 #endif
 #ifdef HAVE_VOP_CREATE
-    {&vop_create_desc, (vop_t *) nnpfs_create },
+	.vop_create	= (vop_t *)nnpfs_create,
 #endif
 #ifdef HAVE_VOP_REMOVE
-    {&vop_remove_desc, (vop_t *) nnpfs_remove },
+	.vop_remove	= (vop_t *)nnpfs_remove,
 #endif
 #ifdef HAVE_VOP_LINK
-    {&vop_link_desc, (vop_t *) nnpfs_link },
+	.vop_link	= (vop_t *)nnpfs_link,
 #endif
 #ifdef HAVE_VOP_RENAME
-    {&vop_rename_desc, (vop_t *) nnpfs_rename },
+	.vop_rename	= (vop_t *)nnpfs_rename,
 #endif
 #ifdef HAVE_VOP_MKDIR
-    {&vop_mkdir_desc, (vop_t *) nnpfs_mkdir },
+	.vop_mkdir	= (vop_t *)nnpfs_mkdir,
 #endif
 #ifdef HAVE_VOP_RMDIR
-    {&vop_rmdir_desc, (vop_t *) nnpfs_rmdir },
+	.vop_rmdir	= (vop_t *)nnpfs_rmdir,
 #endif
 #ifdef HAVE_VOP_READDIR
-    {&vop_readdir_desc, (vop_t *) nnpfs_readdir },
+	.vop_readdir	= (vop_t *)nnpfs_readdir,
 #endif
 #ifdef HAVE_VOP_SYMLINK
-    {&vop_symlink_desc, (vop_t *) nnpfs_symlink },
+	.vop_symlink	= (vop_t *)nnpfs_symlink,
 #endif
 #ifdef HAVE_VOP_READLINK
-    {&vop_readlink_desc, (vop_t *) nnpfs_readlink },
+	.vop_readlink	= (vop_t *)nnpfs_readlink,
 #endif
 #ifdef HAVE_VOP_INACTIVE
-    {&vop_inactive_desc, (vop_t *) nnpfs_inactive },
+	.vop_inactive	= (vop_t *)nnpfs_inactive,
 #endif
 #ifdef HAVE_VOP_RECLAIM
-    {&vop_reclaim_desc, (vop_t *) nnpfs_reclaim },
+	.vop_reclaim	= (vop_t *)nnpfs_reclaim,
 #endif
 #ifdef HAVE_VOP_LOCK
-    {&vop_lock_desc, (vop_t *) nnpfs_lock },
+	.vop_lock	= (vop_t *)nnpfs_lock,
 #endif
 #ifdef HAVE_VOP_UNLOCK
-    {&vop_unlock_desc, (vop_t *) nnpfs_unlock },
+	.vop_unlock	= (vop_t *)nnpfs_unlock,
 #endif
 #ifdef HAVE_VOP_ISLOCKED
-    {&vop_islocked_desc, (vop_t *) nnpfs_islocked },
+	.vop_islocked	= (vop_t *)nnpfs_islocked,
 #endif
 #ifdef HAVE_VOP_ABORTOP
-    {&vop_abortop_desc, (vop_t *) nnpfs_abortop },
+	.vop_abortop	= (vop_t *)nnpfs_abortop,
 #endif
 #ifdef HAVE_VOP_GETPAGES
     {&vop_getpages_desc, (vop_t *) nnpfs_getpages },
@@ -1500,13 +1492,13 @@ static struct vnodeopv_entry_desc nnpfs_vnodeop_entries[] = {
     {&vop_putpages_desc, (vop_t *) nnpfs_putpages },
 #endif
 #ifdef HAVE_VOP_REVOKE
-    {&vop_revoke_desc, (vop_t *) nnpfs_revoke },
+	.vop_revoke	= (vop_t *)nnpfs_revoke,
 #endif
 #ifdef HAVE_VOP_PRINT
-    {&vop_print_desc, (vop_t *) nnpfs_print}, 
+	.vop_print	= (vop_t *)nnpfs_print,
 #endif
 #ifdef HAVE_VOP_ADVLOCK
-    {&vop_advlock_desc, (vop_t *) nnpfs_advlock },
+	.vop_advlock	= (vop_t *)nnpfs_advlock,
 #endif
 #ifdef HAVE_VOP_PAGEIN
     {&vop_pagein_desc, (vop_t *) nnpfs_pagein },
@@ -1524,14 +1516,6 @@ static struct vnodeopv_entry_desc nnpfs_vnodeop_entries[] = {
     {&vop_getvobject_desc, (vop_t *) nnpfs_getvobject },
 #endif
 #ifdef HAVE_VOP_PATHCONF
-    {&vop_pathconf_desc, (vop_t *) nnpfs_pathconf },
+	.vop_pathconf	= (vop_t *)nnpfs_pathconf,
 #endif
-    {(struct vnodeop_desc *) NULL, (int (*) (void *)) NULL}
 };
-
-struct vnodeopv_desc nnpfs_vnodeop_opv_desc =
-{&nnpfs_vnodeop_p, nnpfs_vnodeop_entries};
-
-#ifdef VNODEOP_SET
-VNODEOP_SET(nnpfs_vnodeop_opv_desc);
-#endif

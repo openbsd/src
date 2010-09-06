@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.39 2009/08/27 23:14:47 jolan Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.40 2010/09/06 23:44:10 thib Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -57,30 +57,26 @@
 
 int udf_bmap_internal(struct unode *, off_t, daddr64_t *, uint32_t *);
 
-int (**udf_vnodeop_p)(void *);
-struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
-	{ &vop_default_desc, eopnotsupp },
-	{ &vop_access_desc, udf_access },
-	{ &vop_bmap_desc, udf_bmap },
-	{ &vop_lookup_desc, udf_lookup },
-	{ &vop_getattr_desc, udf_getattr },
-	{ &vop_open_desc, udf_open },
-	{ &vop_close_desc, udf_close },
-	{ &vop_ioctl_desc, udf_ioctl },
-	{ &vop_read_desc, udf_read },
-	{ &vop_readdir_desc, udf_readdir },
-	{ &vop_readlink_desc, udf_readlink },
-	{ &vop_inactive_desc, udf_inactive },
-	{ &vop_reclaim_desc, udf_reclaim },
-	{ &vop_strategy_desc, udf_strategy },
-	{ &vop_lock_desc, udf_lock },
-	{ &vop_unlock_desc, udf_unlock },
-	{ &vop_islocked_desc, udf_islocked },
-	{ &vop_print_desc, udf_print },
-	{ NULL, NULL }
+struct vops udf_vops = {
+	.vop_default	= eopnotsupp,
+	.vop_access	= udf_access,
+	.vop_bmap	= udf_bmap,
+	.vop_lookup	= udf_lookup,
+	.vop_getattr	= udf_getattr,
+	.vop_open	= udf_open,
+	.vop_close	= udf_close,
+	.vop_ioctl	= udf_ioctl,
+	.vop_read	= udf_read,
+	.vop_readdir	= udf_readdir,
+	.vop_readlink	= udf_readlink,
+	.vop_inactive	= udf_inactive,
+	.vop_reclaim	= udf_reclaim,
+	.vop_strategy	= udf_strategy,
+	.vop_lock	= udf_lock,
+	.vop_unlock	= udf_unlock,
+	.vop_islocked	= udf_islocked,
+	.vop_print	= udf_print
 };
-struct vnodeopv_desc udf_vnodeop_opv_desc =
-	{ &udf_vnodeop_p, udf_vnodeop_entries };
 
 #define UDF_INVALID_BMAP	-1
 
@@ -165,7 +161,7 @@ udf_allocv(struct mount *mp, struct vnode **vpp, struct proc *p)
 	int error;
 	struct vnode *vp;
 
-	error = getnewvnode(VT_UDF, mp, udf_vnodeop_p, &vp);
+	error = getnewvnode(VT_UDF, mp, &udf_vops, &vp);
 	if (error) {
 		printf("udf_allocv: failed to allocate new vnode\n");
 		return (error);
@@ -895,7 +891,7 @@ udf_strategy(void *v)
 		splx(s);
 	} else {
 		bp->b_dev = vp->v_rdev;
-		VOCALL(up->u_devvp->v_op, VOFFSET(vop_strategy), ap);
+		(up->u_devvp->v_op->vop_strategy)(ap);
 	}
 
 	return (0);

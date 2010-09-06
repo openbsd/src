@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.53 2010/08/02 02:03:22 matthew Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.54 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1255,91 +1255,126 @@ ext2fs_reclaim(void *v)
 }
 
 /* Global vfs data structures for ext2fs. */
-int (**ext2fs_vnodeop_p)(void *);
-struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
-	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, ext2fs_lookup },
-	{ &vop_create_desc, ext2fs_create },
-	{ &vop_mknod_desc, ext2fs_mknod },
-	{ &vop_open_desc, ext2fs_open },
-	{ &vop_close_desc, ufs_close },
-	{ &vop_access_desc, ext2fs_access },
-	{ &vop_getattr_desc, ext2fs_getattr },
-	{ &vop_setattr_desc, ext2fs_setattr },
-	{ &vop_read_desc, ext2fs_read },
-	{ &vop_write_desc, ext2fs_write },
-	{ &vop_ioctl_desc, ufs_ioctl },
-	{ &vop_poll_desc, ufs_poll },
-	{ &vop_kqfilter_desc, vop_generic_kqfilter },
-	{ &vop_fsync_desc, ext2fs_fsync },
-	{ &vop_remove_desc, ext2fs_remove },
-	{ &vop_link_desc, ext2fs_link },
-	{ &vop_rename_desc, ext2fs_rename },
-	{ &vop_mkdir_desc, ext2fs_mkdir },
-	{ &vop_rmdir_desc, ext2fs_rmdir },
-	{ &vop_symlink_desc, ext2fs_symlink },
-	{ &vop_readdir_desc, ext2fs_readdir },
-	{ &vop_readlink_desc, ext2fs_readlink },
-	{ &vop_abortop_desc, vop_generic_abortop },
-	{ &vop_inactive_desc, ext2fs_inactive },
-	{ &vop_reclaim_desc, ext2fs_reclaim },
-	{ &vop_lock_desc, ufs_lock },
-	{ &vop_unlock_desc, ufs_unlock },
-	{ &vop_bmap_desc, ext2fs_bmap },
-	{ &vop_strategy_desc, ufs_strategy },
-	{ &vop_print_desc, ufs_print },
-	{ &vop_islocked_desc, ufs_islocked },
-	{ &vop_pathconf_desc, ufs_pathconf },
-	{ &vop_advlock_desc, ext2fs_advlock },
-	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ NULL, NULL }
+struct vops ext2fs_vops = {
+        .vop_default    = eopnotsupp,
+        .vop_lookup     = ext2fs_lookup,
+        .vop_create     = ext2fs_create,
+        .vop_mknod      = ext2fs_mknod,
+        .vop_open       = ext2fs_open,
+        .vop_close      = ufs_close,
+        .vop_access     = ext2fs_access,
+        .vop_getattr    = ext2fs_getattr,
+        .vop_setattr    = ext2fs_setattr,
+        .vop_read       = ext2fs_read,
+        .vop_write      = ext2fs_write,
+        .vop_ioctl      = ufs_ioctl,
+        .vop_poll       = ufs_poll,
+        .vop_kqfilter   = vop_generic_kqfilter,
+        .vop_fsync      = ext2fs_fsync,
+        .vop_remove     = ext2fs_remove,
+        .vop_link       = ext2fs_link,
+        .vop_rename     = ext2fs_rename,
+        .vop_mkdir      = ext2fs_mkdir,
+        .vop_rmdir      = ext2fs_rmdir,
+        .vop_symlink    = ext2fs_symlink,
+        .vop_readdir    = ext2fs_readdir,
+        .vop_readlink   = ext2fs_readlink,
+        .vop_abortop    = vop_generic_abortop,
+        .vop_inactive   = ext2fs_inactive,
+        .vop_reclaim    = ext2fs_reclaim,
+        .vop_lock       = ufs_lock,
+        .vop_unlock     = ufs_unlock,
+        .vop_bmap       = ext2fs_bmap,
+        .vop_strategy   = ufs_strategy,
+        .vop_print      = ufs_print,
+        .vop_islocked   = ufs_islocked,
+        .vop_pathconf   = ufs_pathconf,
+        .vop_advlock    = ext2fs_advlock,
+        .vop_bwrite     = vop_generic_bwrite
 };
-struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
-	{ &ext2fs_vnodeop_p, ext2fs_vnodeop_entries };
 
-int (**ext2fs_specop_p)(void *);
-struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
-	{ &vop_default_desc, spec_vnoperate },
-	{ &vop_close_desc, ufsspec_close },
-	{ &vop_access_desc, ext2fs_access },
-	{ &vop_getattr_desc, ext2fs_getattr },
-	{ &vop_setattr_desc, ext2fs_setattr },
-	{ &vop_read_desc, ufsspec_read },
-	{ &vop_write_desc, ufsspec_write },
-	{ &vop_fsync_desc, ext2fs_fsync },
-	{ &vop_inactive_desc, ext2fs_inactive },
-	{ &vop_reclaim_desc, ext2fs_reclaim },
-	{ &vop_lock_desc, ufs_lock },
-	{ &vop_unlock_desc, ufs_unlock },
-	{ &vop_print_desc, ufs_print },
-	{ &vop_islocked_desc, ufs_islocked },
-	{ NULL, NULL }
+struct vops ext2fs_specvops = {
+        .vop_default    = eopnotsupp,
+        .vop_close      = ufsspec_close,
+        .vop_access     = ext2fs_access,
+        .vop_getattr    = ext2fs_getattr,
+        .vop_setattr    = ext2fs_setattr,
+        .vop_read       = ufsspec_read,
+        .vop_write      = ufsspec_write,
+        .vop_fsync      = ext2fs_fsync,
+        .vop_inactive   = ext2fs_inactive,
+        .vop_reclaim    = ext2fs_reclaim,
+        .vop_lock       = ufs_lock,
+        .vop_unlock     = ufs_unlock,
+        .vop_print      = ufs_print,
+        .vop_islocked   = ufs_islocked,
+
+        /* XXX: Keep in sync with spec_vops. */
+	.vop_lookup	= vop_generic_lookup,
+	.vop_create	= spec_badop,
+	.vop_mknod	= spec_badop,
+	.vop_open	= spec_open,
+	.vop_ioctl	= spec_ioctl,
+	.vop_poll	= spec_poll,
+	.vop_kqfilter	= spec_kqfilter,
+	.vop_revoke	= vop_generic_revoke,
+	.vop_remove	= spec_badop,
+	.vop_link	= spec_badop,
+	.vop_rename	= spec_badop,
+	.vop_mkdir	= spec_badop,
+	.vop_rmdir	= spec_badop,
+	.vop_symlink	= spec_badop,
+	.vop_readdir	= spec_badop,
+	.vop_readlink	= spec_badop,
+	.vop_abortop	= spec_badop,
+	.vop_bmap	= vop_generic_bmap,
+	.vop_strategy	= spec_strategy,
+	.vop_pathconf	= spec_pathconf,
+	.vop_advlock	= spec_advlock,
+	.vop_bwrite	= vop_generic_bwrite,
 };
-struct vnodeopv_desc ext2fs_specop_opv_desc =
-	{ &ext2fs_specop_p, ext2fs_specop_entries };
 
 #ifdef FIFO
-int (**ext2fs_fifoop_p)(void *);
-struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
-	{ &vop_default_desc, fifo_vnoperate },
-	{ &vop_close_desc, ufsfifo_close },
-	{ &vop_access_desc, ext2fs_access },
-	{ &vop_getattr_desc, ext2fs_getattr },
-	{ &vop_setattr_desc, ext2fs_setattr },
-	{ &vop_read_desc, ufsfifo_read },
-	{ &vop_write_desc, ufsfifo_write },
-	{ &vop_fsync_desc, ext2fs_fsync },
-	{ &vop_inactive_desc, ext2fs_inactive },
-	{ &vop_reclaim_desc, ext2fsfifo_reclaim },
-	{ &vop_lock_desc, ufs_lock },
-	{ &vop_unlock_desc, ufs_unlock },
-	{ &vop_print_desc, ufs_print },
-	{ &vop_islocked_desc, ufs_islocked },
-	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ NULL, NULL }
+struct vops ext2fs_fifovops = {
+        .vop_default    = eopnotsupp,
+        .vop_close      = ufsfifo_close,
+        .vop_access     = ufsfifo_close,
+        .vop_getattr    = ext2fs_getattr,
+        .vop_setattr    = ext2fs_setattr,
+        .vop_read       = ufsfifo_read,
+        .vop_write      = ufsfifo_write,
+        .vop_fsync      = ext2fs_fsync,
+        .vop_inactive   = ext2fs_inactive,
+        .vop_reclaim    = ext2fsfifo_reclaim,
+        .vop_lock       = ufs_lock,
+        .vop_unlock     = ufs_unlock,
+        .vop_print      = ufs_print,
+        .vop_islocked   = ufs_islocked,
+        .vop_bwrite     = vop_generic_bwrite,
+
+        /* XXX: Keep in sync with fifo_vops */
+	.vop_lookup	= vop_generic_lookup,
+	.vop_create	= fifo_badop,
+	.vop_mknod	= fifo_badop,
+	.vop_open	= fifo_open,
+	.vop_ioctl	= fifo_ioctl,
+	.vop_poll	= fifo_poll,
+	.vop_kqfilter	= fifo_kqfilter,
+	.vop_revoke	= vop_generic_revoke,
+	.vop_remove	= fifo_badop,
+	.vop_link	= fifo_badop,
+	.vop_rename	= fifo_badop,
+	.vop_mkdir	= fifo_badop,
+	.vop_rmdir	= fifo_badop,
+	.vop_symlink	= fifo_badop,
+	.vop_readdir	= fifo_badop,
+	.vop_readlink	= fifo_badop,
+	.vop_abortop	= fifo_badop,
+	.vop_bmap	= vop_generic_bmap,
+	.vop_strategy	= fifo_badop,
+	.vop_pathconf	= fifo_pathconf,
+	.vop_advlock	= fifo_advlock,
 };
-struct vnodeopv_desc ext2fs_fifoop_opv_desc =
-	{ &ext2fs_fifoop_p, ext2fs_fifoop_entries };
 
 int
 ext2fsfifo_reclaim(void *v)

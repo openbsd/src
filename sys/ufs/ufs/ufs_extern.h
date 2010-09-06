@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.29 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.30 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@ struct vattr;
 struct vfsconf;
 struct vnode;
 
-__BEGIN_DECLS
 int	 ufs_access(void *);
 int	 ufs_advlock(void *);
 int	 ufs_bmap(void *);
@@ -76,7 +75,6 @@ int	 ufs_readdir(void *);
 int	 ufs_readlink(void *);
 int	 ufs_remove(void *);
 int	 ufs_rename(void *);
-#define  ufs_revoke  vop_generic_revoke
 int	 ufs_rmdir(void *);
 int	 ufs_poll(void *);
 int	 ufs_kqfilter(void *);
@@ -132,8 +130,7 @@ int ufs_check_export(struct mount *, struct mbuf *, int *,
 		struct ucred **);
 
 /* ufs_vnops.c */
-int ufs_vinit(struct mount *, int (**)(void *),
-	      int (**)(void *), struct vnode **);
+int ufs_vinit(struct mount *, struct vops *, struct vops *, struct vnode **);
 int ufs_makeinode(int, struct vnode *, struct vnode **,
 		  struct componentname *);
 
@@ -151,5 +148,3 @@ void  softdep_setup_directory_change(struct buf *, struct inode *,
           struct inode *, long, int);
 void  softdep_change_linkcnt(struct inode *, int);
 int   softdep_slowdown(struct vnode *);
-
-__END_DECLS

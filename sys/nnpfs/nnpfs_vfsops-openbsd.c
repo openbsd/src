@@ -44,7 +44,15 @@ RCSID("$arla: nnpfs_vfsops-openbsd.c,v 1.16 2003/06/02 18:26:50 lha Exp $");
 #include <nnpfs/nnpfs_vfsops-bsd.h>
 #include <nnpfs/nnpfs_vnodeops.h>
 
-static vop_t **nnpfs_dead_vnodeop_p;
+
+struct vops nnpfs_deadvops = {
+	.vop_default	= (vop_t *)nnpfs_eopnotsupp,
+	.vop_lookup	= (vop_t *)nnpfs_dead_lookup,
+	.vop_reclaim	= (vop_t *)nnpfs_returnzero,
+	.vop_lock	= vop_generic_lock,
+	.vop_unlock	= vop_generic_unlock,
+	.vop_islocked	= vop_generic_islocked
+};
 
 int
 nnpfs_make_dead_vnode(struct mount *mp, struct vnode **vpp)
@@ -52,31 +60,13 @@ nnpfs_make_dead_vnode(struct mount *mp, struct vnode **vpp)
     NNPFSDEB(XDEBNODE, ("make_dead_vnode mp = %lx\n",
 		      (unsigned long)mp));
 
-    return getnewvnode(VT_NON, mp, nnpfs_dead_vnodeop_p, vpp);
+    return getnewvnode(VT_NON, mp, &nnpfs_deadvops, vpp);
 }
-
-static struct vnodeopv_entry_desc nnpfs_dead_vnodeop_entries[] = {
-    {&vop_default_desc, (vop_t *) nnpfs_eopnotsupp},
-    {&vop_lookup_desc,	(vop_t *) nnpfs_dead_lookup},
-    {&vop_reclaim_desc, (vop_t *) nnpfs_returnzero},
-    {&vop_lock_desc,	(vop_t *) vop_generic_lock},
-    {&vop_unlock_desc,	(vop_t *) vop_generic_unlock},
-    {&vop_islocked_desc,(vop_t *) vop_generic_islocked},
-    {NULL, NULL}};
-
-static struct vnodeopv_desc nnpfs_dead_vnodeop_opv_desc =
-{&nnpfs_dead_vnodeop_p, nnpfs_dead_vnodeop_entries};
-
-extern struct vnodeopv_desc nnpfs_vnodeop_opv_desc;
 
 static int
 nnpfs_init(struct vfsconf *vfs)
 {
     NNPFSDEB(XDEBVFOPS, ("nnpfs_init\n"));
-    vfs_opv_init_explicit(&nnpfs_vnodeop_opv_desc);
-    vfs_opv_init_default(&nnpfs_vnodeop_opv_desc);
-    vfs_opv_init_explicit(&nnpfs_dead_vnodeop_opv_desc);
-    vfs_opv_init_default(&nnpfs_dead_vnodeop_opv_desc);
     return 0;
 }
 

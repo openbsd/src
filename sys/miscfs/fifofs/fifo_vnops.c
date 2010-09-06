@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.31 2009/08/13 15:00:14 jasper Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.32 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -61,57 +61,44 @@ struct fifoinfo {
 	long		fi_writers;
 };
 
-int (**fifo_vnodeop_p)(void *);
-struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
-	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, vop_generic_lookup },
-	{ &vop_create_desc, fifo_badop },
-	{ &vop_mknod_desc, fifo_badop },
-	{ &vop_open_desc, fifo_open },
-	{ &vop_close_desc, fifo_close },
-	{ &vop_access_desc, fifo_ebadf },
-	{ &vop_getattr_desc, fifo_ebadf },
-	{ &vop_setattr_desc, fifo_ebadf },
-	{ &vop_read_desc, fifo_read },
-	{ &vop_write_desc, fifo_write },
-	{ &vop_ioctl_desc, fifo_ioctl },
-	{ &vop_poll_desc, fifo_poll },
-	{ &vop_kqfilter_desc, fifo_kqfilter },
-	{ &vop_revoke_desc, vop_generic_revoke },
-	{ &vop_fsync_desc, nullop },
-	{ &vop_remove_desc, fifo_badop },
-	{ &vop_link_desc, fifo_badop },
-	{ &vop_rename_desc, fifo_badop },
-	{ &vop_mkdir_desc, fifo_badop },
-	{ &vop_rmdir_desc, fifo_badop },
-	{ &vop_symlink_desc, fifo_badop },
-	{ &vop_readdir_desc, fifo_badop },
-	{ &vop_readlink_desc, fifo_badop },
-	{ &vop_abortop_desc, fifo_badop },
-	{ &vop_inactive_desc, fifo_inactive },
-	{ &vop_reclaim_desc, fifo_reclaim },
-	{ &vop_lock_desc, vop_generic_lock },
-	{ &vop_unlock_desc, vop_generic_unlock },
-	{ &vop_bmap_desc, vop_generic_bmap },
-	{ &vop_strategy_desc, fifo_badop },
-	{ &vop_print_desc, fifo_print },
-	{ &vop_islocked_desc, vop_generic_islocked },
-	{ &vop_pathconf_desc, fifo_pathconf },
-	{ &vop_advlock_desc, fifo_advlock },
-	{ &vop_bwrite_desc, nullop },
-	{ NULL, NULL }
+struct vops fifo_vops = {
+	.vop_default	= eopnotsupp,
+	.vop_lookup	= vop_generic_lookup,
+	.vop_create	= fifo_badop,
+	.vop_mknod	= fifo_badop,
+	.vop_open	= fifo_open,
+	.vop_close	= fifo_close,
+	.vop_access	= fifo_ebadf,
+	.vop_getattr	= fifo_ebadf,
+	.vop_setattr	= fifo_ebadf,
+	.vop_read	= fifo_read,
+	.vop_write	= fifo_write,
+	.vop_ioctl	= fifo_ioctl,
+	.vop_poll	= fifo_poll,
+	.vop_kqfilter	= fifo_kqfilter,
+	.vop_revoke	= vop_generic_revoke,
+	.vop_fsync	= nullop,
+	.vop_remove	= fifo_badop,
+	.vop_link	= fifo_badop,
+	.vop_rename	= fifo_badop,
+	.vop_mkdir	= fifo_badop,
+	.vop_rmdir	= fifo_badop,
+	.vop_symlink	= fifo_badop,
+	.vop_readdir	= fifo_badop,
+	.vop_readlink	= fifo_badop,
+	.vop_abortop	= fifo_badop,
+	.vop_inactive	= fifo_inactive,
+	.vop_reclaim	= fifo_reclaim,
+	.vop_lock	= vop_generic_lock,
+	.vop_unlock	= vop_generic_unlock,
+	.vop_bmap	= vop_generic_bmap,
+	.vop_strategy	= fifo_badop,
+	.vop_print	= fifo_print,
+	.vop_islocked	= vop_generic_islocked,
+	.vop_pathconf	= fifo_pathconf,
+	.vop_advlock	= fifo_advlock,
+	.vop_bwrite	= nullop
 };
-
-struct vnodeopv_desc fifo_vnodeop_opv_desc =
-	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
-
-int
-fifo_vnoperate(void *v)
-{
-	struct vop_generic_args *ap = v;
-
-	return (VOCALL(fifo_vnodeop_p, ap->a_desc->vdesc_offset, ap));
-}
 
 void	filt_fifordetach(struct knote *kn);
 int	filt_fiforead(struct knote *kn, long hint);

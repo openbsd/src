@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.47 2009/08/13 15:00:14 jasper Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.48 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -138,45 +138,41 @@ static pid_t atopid(const char *, u_int);
 /*
  * procfs vnode operations.
  */
-int (**procfs_vnodeop_p)(void *);
-struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
-	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, procfs_lookup },
-	{ &vop_create_desc, procfs_badop },
-	{ &vop_mknod_desc, procfs_badop },
-	{ &vop_open_desc, procfs_open },
-	{ &vop_close_desc, procfs_close },
-	{ &vop_access_desc, procfs_access },
-	{ &vop_getattr_desc, procfs_getattr },
-	{ &vop_setattr_desc, procfs_setattr },
-	{ &vop_read_desc, procfs_rw },
-	{ &vop_write_desc, procfs_rw },
-	{ &vop_ioctl_desc, procfs_ioctl },
-	{ &vop_poll_desc, procfs_poll },
-	{ &vop_fsync_desc, procfs_badop},
-	{ &vop_remove_desc, procfs_badop },
-	{ &vop_link_desc, procfs_link },
-	{ &vop_rename_desc, procfs_badop },
-	{ &vop_mkdir_desc, procfs_badop },
-	{ &vop_rmdir_desc, procfs_badop },
-	{ &vop_symlink_desc, procfs_symlink },
-	{ &vop_readdir_desc, procfs_readdir },
-	{ &vop_readlink_desc, procfs_readlink },
-	{ &vop_abortop_desc, vop_generic_abortop },
-	{ &vop_inactive_desc, procfs_inactive },
-	{ &vop_reclaim_desc, procfs_reclaim },
-	{ &vop_lock_desc, nullop },
-	{ &vop_unlock_desc, nullop },
-	{ &vop_bmap_desc, vop_generic_bmap },
-	{ &vop_strategy_desc, procfs_badop },
-	{ &vop_print_desc, procfs_print },
-	{ &vop_islocked_desc, nullop },
-	{ &vop_pathconf_desc, procfs_pathconf },
-	{ &vop_advlock_desc, procfs_badop },
-	{ NULL, NULL }
+struct vops procfs_vops = {
+	.vop_default	= eopnotsupp,
+	.vop_lookup	= procfs_lookup,
+	.vop_create	= procfs_badop,
+	.vop_mknod	= procfs_badop,
+	.vop_open	= procfs_open,
+	.vop_close	= procfs_close,
+	.vop_access	= procfs_access,
+	.vop_getattr	= procfs_getattr,
+	.vop_setattr	= procfs_setattr,
+	.vop_read	= procfs_rw,
+	.vop_write	= procfs_rw,
+	.vop_ioctl	= procfs_ioctl,
+	.vop_poll	= procfs_poll,
+	.vop_fsync	= procfs_badop,
+	.vop_remove	= procfs_badop,
+	.vop_link	= procfs_link,
+	.vop_rename	= procfs_badop,
+	.vop_mkdir	= procfs_badop,
+	.vop_rmdir	= procfs_badop,
+	.vop_symlink	= procfs_symlink,
+	.vop_readdir	= procfs_readdir,
+	.vop_readlink	= procfs_readlink,
+	.vop_abortop	= vop_generic_abortop,
+	.vop_inactive	= procfs_inactive,
+	.vop_reclaim	= procfs_reclaim,
+	.vop_lock	= nullop,
+	.vop_unlock	= nullop,
+	.vop_bmap	= vop_generic_bmap,
+	.vop_strategy	= procfs_badop,
+	.vop_print	= procfs_print,
+	.vop_islocked	= nullop,
+	.vop_pathconf	= procfs_pathconf,
+	.vop_advlock	= procfs_badop,
 };
-struct vnodeopv_desc procfs_vnodeop_opv_desc =
-	{ &procfs_vnodeop_p, procfs_vnodeop_entries };
 /*
  * set things up for doing i/o on
  * the pfsnode (vp).  (vp) is locked

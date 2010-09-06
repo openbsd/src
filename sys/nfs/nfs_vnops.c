@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.130 2010/05/19 08:31:23 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.131 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -83,98 +83,129 @@
 
 void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
 
-/*
- * Global vfs data structures for nfs
- */
-int (**nfsv2_vnodeop_p)(void *);
-struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
-	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, nfs_lookup },
-	{ &vop_create_desc, nfs_create },
-	{ &vop_mknod_desc, nfs_mknod },
-	{ &vop_open_desc, nfs_open },
-	{ &vop_close_desc, nfs_close },
-	{ &vop_access_desc, nfs_access },
-	{ &vop_getattr_desc, nfs_getattr },
-	{ &vop_setattr_desc, nfs_setattr },
-	{ &vop_read_desc, nfs_read },
-	{ &vop_write_desc, nfs_write },
-	{ &vop_ioctl_desc, nfs_ioctl },
-	{ &vop_poll_desc, nfs_poll },
-	{ &vop_kqfilter_desc, nfs_kqfilter },
-	{ &vop_revoke_desc, vop_generic_revoke },
-	{ &vop_fsync_desc, nfs_fsync },
-	{ &vop_remove_desc, nfs_remove },
-	{ &vop_link_desc, nfs_link },
-	{ &vop_rename_desc, nfs_rename },
-	{ &vop_mkdir_desc, nfs_mkdir },
-	{ &vop_rmdir_desc, nfs_rmdir },
-	{ &vop_symlink_desc, nfs_symlink },
-	{ &vop_readdir_desc, nfs_readdir },
-	{ &vop_readlink_desc, nfs_readlink },
-	{ &vop_abortop_desc, vop_generic_abortop },
-	{ &vop_inactive_desc, nfs_inactive },
-	{ &vop_reclaim_desc, nfs_reclaim },
-	{ &vop_lock_desc, vop_generic_lock },
-	{ &vop_unlock_desc, vop_generic_unlock },
-	{ &vop_bmap_desc, nfs_bmap },
-	{ &vop_strategy_desc, nfs_strategy },
-	{ &vop_print_desc, nfs_print },
-	{ &vop_islocked_desc, vop_generic_islocked },
-	{ &vop_pathconf_desc, nfs_pathconf },
-	{ &vop_advlock_desc, nfs_advlock },
-	{ &vop_bwrite_desc, nfs_bwrite },
-	{ NULL, NULL }
+/* Global vfs data structures for nfs. */
+struct vops nfs_vops = {
+        .vop_default    = eopnotsupp,
+        .vop_lookup     = nfs_lookup,
+        .vop_create     = nfs_create,
+        .vop_mknod      = nfs_mknod,
+        .vop_open       = nfs_open,
+        .vop_close      = nfs_close,
+        .vop_access     = nfs_access,
+        .vop_getattr    = nfs_getattr,
+        .vop_setattr    = nfs_setattr,
+        .vop_read       = nfs_read,
+        .vop_write      = nfs_write,
+        .vop_ioctl      = nfs_ioctl,
+        .vop_poll       = nfs_poll,
+        .vop_kqfilter   = nfs_kqfilter,
+        .vop_revoke     = vop_generic_revoke,
+        .vop_fsync      = nfs_fsync,
+        .vop_remove     = nfs_remove,
+        .vop_link       = nfs_link,
+        .vop_rename     = nfs_rename,
+        .vop_mkdir      = nfs_mkdir,
+        .vop_rmdir      = nfs_rmdir,
+        .vop_symlink    = nfs_symlink,
+        .vop_readdir    = nfs_readdir,
+        .vop_readlink   = nfs_readlink,
+        .vop_abortop    = vop_generic_abortop,
+        .vop_inactive   = nfs_inactive,
+        .vop_reclaim    = nfs_reclaim,
+        .vop_lock       = vop_generic_lock,     /* XXX: beck@ must fix this. */
+        .vop_unlock     = vop_generic_unlock,
+        .vop_bmap       = nfs_bmap,
+        .vop_strategy   = nfs_strategy,
+        .vop_print      = nfs_print,
+        .vop_islocked   = vop_generic_islocked,
+        .vop_pathconf   = nfs_pathconf,
+        .vop_advlock    = nfs_advlock,
+        .vop_bwrite     = nfs_bwrite
 };
-struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
-	{ &nfsv2_vnodeop_p, nfsv2_vnodeop_entries };
 
-/*
- * Special device vnode ops
- */
-int (**spec_nfsv2nodeop_p)(void *);
-struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
-	{ &vop_default_desc, spec_vnoperate },
-	{ &vop_close_desc, nfsspec_close },
-	{ &vop_access_desc, nfsspec_access },
-	{ &vop_getattr_desc, nfs_getattr },
-	{ &vop_setattr_desc, nfs_setattr },
-	{ &vop_read_desc, nfsspec_read },
-	{ &vop_write_desc, nfsspec_write },
-	{ &vop_fsync_desc, nfs_fsync },
-	{ &vop_inactive_desc, nfs_inactive },
-	{ &vop_reclaim_desc, nfs_reclaim },
-	{ &vop_lock_desc, vop_generic_lock },
-	{ &vop_unlock_desc, vop_generic_unlock },
-	{ &vop_print_desc, nfs_print },
-	{ &vop_islocked_desc, vop_generic_islocked },
-	{ NULL, NULL }
+/* Special device vnode ops. */
+struct vops nfs_specvops = {
+        .vop_default    = eopnotsupp,
+        .vop_close      = nfsspec_close,
+        .vop_access     = nfsspec_access,
+        .vop_getattr    = nfs_getattr,
+        .vop_setattr    = nfs_setattr,
+        .vop_read       = nfsspec_read,
+        .vop_write      = nfsspec_write,
+        .vop_fsync      = nfs_fsync,
+        .vop_inactive   = nfs_inactive,
+        .vop_reclaim    = nfs_reclaim,
+        .vop_lock       = vop_generic_lock,
+        .vop_unlock     = vop_generic_unlock,
+        .vop_print      = nfs_print,
+        .vop_islocked   = vop_generic_islocked,
+
+        /* XXX: Keep in sync with spec_vops. */
+	.vop_lookup	= vop_generic_lookup,
+	.vop_create	= spec_badop,
+	.vop_mknod	= spec_badop,
+	.vop_open	= spec_open,
+	.vop_ioctl	= spec_ioctl,
+	.vop_poll	= spec_poll,
+	.vop_kqfilter	= spec_kqfilter,
+	.vop_revoke	= vop_generic_revoke,
+	.vop_remove	= spec_badop,
+	.vop_link	= spec_badop,
+	.vop_rename	= spec_badop,
+	.vop_mkdir	= spec_badop,
+	.vop_rmdir	= spec_badop,
+	.vop_symlink	= spec_badop,
+	.vop_readdir	= spec_badop,
+	.vop_readlink	= spec_badop,
+	.vop_abortop	= spec_badop,
+	.vop_bmap	= vop_generic_bmap,
+	.vop_strategy	= spec_strategy,
+	.vop_pathconf	= spec_pathconf,
+	.vop_advlock	= spec_advlock,
+	.vop_bwrite	= vop_generic_bwrite,
 };
-struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
-	{ &spec_nfsv2nodeop_p, spec_nfsv2nodeop_entries };
 
 #ifdef FIFO
-int (**fifo_nfsv2nodeop_p)(void *);
-struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
-	{ &vop_default_desc, fifo_vnoperate },
-	{ &vop_close_desc, nfsfifo_close },
-	{ &vop_access_desc, nfsspec_access },
-	{ &vop_getattr_desc, nfs_getattr },
-	{ &vop_setattr_desc, nfs_setattr },
-	{ &vop_read_desc, nfsfifo_read },
-	{ &vop_write_desc, nfsfifo_write },
-	{ &vop_fsync_desc, nfs_fsync },
-	{ &vop_inactive_desc, nfs_inactive },
-	{ &vop_reclaim_desc, nfsfifo_reclaim },
-	{ &vop_lock_desc, vop_generic_lock },
-	{ &vop_unlock_desc, vop_generic_unlock },
-	{ &vop_print_desc, nfs_print },
-	{ &vop_islocked_desc, vop_generic_islocked },
-	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ NULL, NULL }
+struct vops nfs_fifovops = {
+        .vop_default    = eopnotsupp,
+        .vop_close      = nfsfifo_close,
+        .vop_access     = nfsspec_access,
+        .vop_getattr    = nfs_getattr,
+        .vop_setattr    = nfs_setattr,
+        .vop_read       = nfsfifo_read,
+        .vop_write      = nfsfifo_write,
+        .vop_fsync      = nfs_fsync,
+        .vop_inactive   = nfs_inactive,
+        .vop_reclaim    = nfsfifo_reclaim,
+        .vop_lock       = vop_generic_lock,
+        .vop_unlock     = vop_generic_unlock,
+        .vop_print      = nfs_print,
+        .vop_islocked   = vop_generic_islocked,
+        .vop_bwrite     = vop_generic_bwrite,
+
+        /* XXX: Keep in sync with fifo_vops. */
+	.vop_lookup	= vop_generic_lookup,
+	.vop_create	= fifo_badop,
+	.vop_mknod	= fifo_badop,
+	.vop_open	= fifo_open,
+	.vop_ioctl	= fifo_ioctl,
+	.vop_poll	= fifo_poll,
+	.vop_kqfilter	= fifo_kqfilter,
+	.vop_revoke	= vop_generic_revoke,
+	.vop_remove	= fifo_badop,
+	.vop_link	= fifo_badop,
+	.vop_rename	= fifo_badop,
+	.vop_mkdir	= fifo_badop,
+	.vop_rmdir	= fifo_badop,
+	.vop_symlink	= fifo_badop,
+	.vop_readdir	= fifo_badop,
+	.vop_readlink	= fifo_badop,
+	.vop_abortop	= fifo_badop,
+	.vop_bmap	= vop_generic_bmap,
+	.vop_strategy	= fifo_badop,
+	.vop_pathconf	= fifo_pathconf,
+	.vop_advlock	= fifo_advlock,
 };
-struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
-	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
 #endif /* FIFO */
 
 /*
@@ -3127,7 +3158,7 @@ nfsspec_read(void *v)
 	 */
 	np->n_flag |= NACC;
 	getnanotime(&np->n_atim);
-	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_read), ap));
+	return (spec_read(ap));
 }
 
 /*
@@ -3144,7 +3175,7 @@ nfsspec_write(void *v)
 	 */
 	np->n_flag |= NUPD;
 	getnanotime(&np->n_mtim);
-	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_write), ap));
+	return (spec_write(ap));
 }
 
 /*
@@ -3172,7 +3203,7 @@ nfsspec_close(void *v)
 			(void)VOP_SETATTR(vp, &vattr, ap->a_cred, ap->a_p);
 		}
 	}
-	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_close), ap));
+	return (spec_close(ap));
 }
 
 #ifdef FIFO
@@ -3183,7 +3214,6 @@ int
 nfsfifo_read(void *v)
 {
 	struct vop_read_args *ap = v;
-	extern int (**fifo_vnodeop_p)(void *);
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3191,7 +3221,7 @@ nfsfifo_read(void *v)
 	 */
 	np->n_flag |= NACC;
 	getnanotime(&np->n_atim);
-	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), ap));
+	return (fifo_read(ap));
 }
 
 /*
@@ -3201,7 +3231,6 @@ int
 nfsfifo_write(void *v)
 {
 	struct vop_write_args *ap = v;
-	extern int (**fifo_vnodeop_p)(void *);
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3209,7 +3238,7 @@ nfsfifo_write(void *v)
 	 */
 	np->n_flag |= NUPD;
 	getnanotime(&np->n_mtim);
-	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
+	return (fifo_write(ap));
 }
 
 /*
@@ -3224,7 +3253,6 @@ nfsfifo_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;
-	extern int (**fifo_vnodeop_p)(void *);
 
 	if (np->n_flag & (NACC | NUPD)) {
 		if (np->n_flag & NACC) {
@@ -3244,7 +3272,7 @@ nfsfifo_close(void *v)
 			(void)VOP_SETATTR(vp, &vattr, ap->a_cred, ap->a_p);
 		}
 	}
-	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), ap));
+	return (fifo_close(ap));
 }
 
 int

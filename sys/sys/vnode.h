@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.104 2009/12/17 16:30:45 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.105 2010/09/06 23:44:10 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ RB_HEAD(namecache_rb_cache, namecache);
 
 struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
-	int	(**v_op)(void *);		/* vnode operations vector */
+	struct vops *v_op;			/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
 	u_int	v_flag;				/* vnode flags (see below) */
 	u_int   v_usecount;			/* reference count of users */
@@ -258,90 +258,331 @@ extern void    vhold(struct vnode *);
 extern void    vdrop(struct vnode *);
 #endif /* _KERNEL */
 
-/*
- * Mods for exensibility.
- */
-
-/*
- * Flags for vdesc_flags:
- */
-#define VDESC_MAX_VPS		16
-/* Low order 16 flag bits are reserved for willrele flags for vp arguments. */
-#define VDESC_VP0_WILLRELE      0x00000001
-#define VDESC_VP1_WILLRELE      0x00000002
-#define VDESC_VP2_WILLRELE      0x00000004
-#define VDESC_VP3_WILLRELE      0x00000008
-#define VDESC_VP0_WILLUNLOCK    0x00000100
-#define VDESC_VP1_WILLUNLOCK    0x00000200
-#define VDESC_VP2_WILLUNLOCK    0x00000400
-#define VDESC_VP3_WILLUNLOCK    0x00000800
-#define VDESC_VP0_WILLPUT       0x00000101
-#define VDESC_VP1_WILLPUT       0x00000202
-#define VDESC_VP2_WILLPUT       0x00000404
-#define VDESC_VP3_WILLPUT       0x00000808
-#define VDESC_NOMAP_VPP         0x00010000
-#define VDESC_VPP_WILLRELE      0x00020000
-
-/*
- * This structure describes the vnode operation taking place.
- */
-struct vnodeop_desc {
-	int	vdesc_offset;		/* offset in vector--first for speed */
-	char	*vdesc_name;		/* a readable name for debugging */
-	int	vdesc_flags;		/* VDESC_* flags */
+/* vnode operations */
+struct vops {
+	int	(*vop_default)(void *);
+	int	(*vop_lock)(void *);
+	int	(*vop_unlock)(void *);
+	int	(*vop_islocked)(void *);
+	int	(*vop_abortop)(void *);
+	int	(*vop_access)(void *);
+	int	(*vop_advlock)(void *);
+	int	(*vop_bmap)(void *);
+	int	(*vop_bwrite)(void *);
+	int	(*vop_close)(void *);
+	int	(*vop_create)(void *);
+	int	(*vop_fsync)(void *);
+	int	(*vop_getattr)(void *);
+	int	(*vop_inactive)(void *);
+	int	(*vop_ioctl)(void *);
+	int	(*vop_link)(void *);
+	int	(*vop_lookup)(void *);
+	int	(*vop_mknod)(void *);
+	int	(*vop_open)(void *);
+	int	(*vop_pathconf)(void *);
+	int	(*vop_poll)(void *);
+	int	(*vop_print)(void *);
+	int	(*vop_read)(void *);
+	int	(*vop_readdir)(void *);
+	int	(*vop_readlink)(void *);
+	int	(*vop_reallocblks)(void *);
+	int	(*vop_reclaim)(void *);
+	int	(*vop_remove)(void *);
+	int	(*vop_rename)(void *);
+	int	(*vop_revoke)(void *);
+	int	(*vop_mkdir)(void *);
+	int	(*vop_rmdir)(void *);
+	int	(*vop_setattr)(void *);
+	int	(*vop_strategy)(void *);
+	int	(*vop_symlink)(void *);
+	int	(*vop_write)(void *);
+	int	(*vop_kqfilter)(void *);
 };
 
 #ifdef _KERNEL
-/*
- * A list of all the operation descs.
- */
-extern struct vnodeop_desc *vnodeop_descs[];
-
-
-/*
- * This structure is used to configure the new vnodeops vector.
- */
-struct vnodeopv_entry_desc {
-	struct vnodeop_desc *opve_op;   /* which operation this is */
-	int (*opve_impl)(void *);	/* code implementing this operation */
-};
-struct vnodeopv_desc {
-			/* ptr to the ptr to the vector where op should go */
-	int (***opv_desc_vector_p)(void *);
-	struct vnodeopv_entry_desc *opv_desc_ops;   /* null terminated list */
-};
-
-/*
- * A generic structure.
- * This can be used by bypass routines to identify generic arguments.
- */
+extern struct vops dead_vops;
+extern struct vops spec_vops;
+ 
 struct vop_generic_args {
-	struct vnodeop_desc *a_desc;
-	/* other random data follows, presumably */
+	void		*a_garbage;
+	/* Other data probably follows; */
 };
 
-/*
- * VOCALL calls an op given an ops vector.  We break it out because BSD's
- * vclean changes the ops vector and then wants to call ops with the old
- * vector.
- */
-#define VOCALL(OPSV,OFF,AP) (( *((OPSV)[(OFF)])) (AP))
+struct vop_islocked_args {
+	struct vnode *a_vp;
+};
+int VOP_ISLOCKED(struct vnode *);
 
-/*
- * This call works for vnodes in the kernel.
- */
-#define VCALL(VP,OFF,AP) VOCALL((VP)->v_op,(OFF),(AP))
-#define VDESC(OP) (& __CONCAT(OP,_desc))
-#define VOFFSET(OP) (VDESC(OP)->vdesc_offset)
+struct vop_lookup_args {
+	struct vnode *a_dvp;
+	struct vnode **a_vpp;
+	struct componentname *a_cnp;
+};
+int VOP_LOOKUP(struct vnode *, struct vnode **, struct componentname *);
 
-/*
- * Finally, include the default set of vnode operations.
- */
-#include <sys/vnode_if.h>
+struct vop_create_args {
+	struct vnode *a_dvp;
+	struct vnode **a_vpp;
+	struct componentname *a_cnp;
+	struct vattr *a_vap;
+};
+int VOP_CREATE(struct vnode *, struct vnode **, struct componentname *, 
+    struct vattr *);
 
-/*
- * Public vnode manipulation functions.
- */
+struct vop_mknod_args {
+	struct vnode *a_dvp;
+	struct vnode **a_vpp;
+	struct componentname *a_cnp;
+	struct vattr *a_vap;
+};
+int VOP_MKNOD(struct vnode *, struct vnode **, struct componentname *, 
+    struct vattr *);
+
+struct vop_open_args {
+	struct vnode *a_vp;
+	int a_mode;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+int VOP_OPEN(struct vnode *, int, struct ucred *, struct proc *);
+
+struct vop_close_args {
+	struct vnode *a_vp;
+	int a_fflag;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+int VOP_CLOSE(struct vnode *, int, struct ucred *, struct proc *);
+
+struct vop_access_args {
+	struct vnode *a_vp;
+	int a_mode;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+int VOP_ACCESS(struct vnode *, int, struct ucred *, struct proc *);
+
+struct vop_getattr_args {
+	struct vnode *a_vp;
+	struct vattr *a_vap;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+int VOP_GETATTR(struct vnode *, struct vattr *, struct ucred *, struct proc *);
+
+struct vop_setattr_args {
+	struct vnode *a_vp;
+	struct vattr *a_vap;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+int VOP_SETATTR(struct vnode *, struct vattr *, struct ucred *, struct proc *);
+
+struct vop_read_args {
+	struct vnode *a_vp;
+	struct uio *a_uio;
+	int a_ioflag;
+	struct ucred *a_cred;
+};
+int VOP_READ(struct vnode *, struct uio *, int, struct ucred *);
+
+struct vop_write_args {
+	struct vnode *a_vp;
+	struct uio *a_uio;
+	int a_ioflag;
+	struct ucred *a_cred;
+};
+int VOP_WRITE(struct vnode *, struct uio *, int, struct ucred *);
+
+struct vop_ioctl_args {
+	struct vnode *a_vp;
+	u_long a_command;
+	void *a_data;
+	int a_fflag;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+int VOP_IOCTL(struct vnode *, u_long, void *, int, struct ucred *, 
+    struct proc *);
+
+struct vop_poll_args {
+	struct vnode *a_vp;
+	int a_events;
+	struct proc *a_p;
+};
+int VOP_POLL(struct vnode *, int, struct proc *);
+
+struct vop_kqfilter_args {
+	struct vnode *a_vp;
+	struct knote *a_kn;
+};
+int VOP_KQFILTER(struct vnode *, struct knote *);
+
+struct vop_revoke_args {
+	struct vnode *a_vp;
+	int a_flags;
+};
+int VOP_REVOKE(struct vnode *, int);
+
+struct vop_fsync_args {
+	struct vnode *a_vp;
+	struct ucred *a_cred;
+	int a_waitfor;
+	struct proc *a_p;
+};
+int VOP_FSYNC(struct vnode *, struct ucred *, int, struct proc *);
+
+struct vop_remove_args {
+	struct vnode *a_dvp;
+	struct vnode *a_vp;
+	struct componentname *a_cnp;
+};
+int VOP_REMOVE(struct vnode *, struct vnode *, struct componentname *);
+
+struct vop_link_args {
+	struct vnode *a_dvp;
+	struct vnode *a_vp;
+	struct componentname *a_cnp;
+};
+int VOP_LINK(struct vnode *, struct vnode *, struct componentname *);
+
+struct vop_rename_args {
+	struct vnode *a_fdvp;
+	struct vnode *a_fvp;
+	struct componentname *a_fcnp;
+	struct vnode *a_tdvp;
+	struct vnode *a_tvp;
+	struct componentname *a_tcnp;
+};
+int VOP_RENAME(struct vnode *, struct vnode *, struct componentname *, 
+    struct vnode *, struct vnode *, struct componentname *);
+
+struct vop_mkdir_args {
+	struct vnode *a_dvp;
+	struct vnode **a_vpp;
+	struct componentname *a_cnp;
+	struct vattr *a_vap;
+};
+int VOP_MKDIR(struct vnode *, struct vnode **, struct componentname *, 
+    struct vattr *);
+
+struct vop_rmdir_args {
+	struct vnode *a_dvp;
+	struct vnode *a_vp;
+	struct componentname *a_cnp;
+};
+int VOP_RMDIR(struct vnode *, struct vnode *, struct componentname *);
+
+struct vop_symlink_args {
+	struct vnode *a_dvp;
+	struct vnode **a_vpp;
+	struct componentname *a_cnp;
+	struct vattr *a_vap;
+	char *a_target;
+};
+int VOP_SYMLINK(struct vnode *, struct vnode **, struct componentname *, 
+    struct vattr *, char *);
+
+struct vop_readdir_args {
+	struct vnode *a_vp;
+	struct uio *a_uio;
+	struct ucred *a_cred;
+	int *a_eofflag;
+	int *a_ncookies;
+	u_long **a_cookies;
+};
+int VOP_READDIR(struct vnode *, struct uio *, struct ucred *, int *, int *, 
+    u_long **);
+
+struct vop_readlink_args {
+	struct vnode *a_vp;
+	struct uio *a_uio;
+	struct ucred *a_cred;
+};
+int VOP_READLINK(struct vnode *, struct uio *, struct ucred *);
+
+struct vop_abortop_args {
+	struct vnode *a_dvp;
+	struct componentname *a_cnp;
+};
+int VOP_ABORTOP(struct vnode *, struct componentname *);
+
+struct vop_inactive_args {
+	struct vnode *a_vp;
+	struct proc *a_p;
+};
+int VOP_INACTIVE(struct vnode *, struct proc *);
+
+struct vop_reclaim_args {
+	struct vnode *a_vp;
+	struct proc *a_p;
+};
+int VOP_RECLAIM(struct vnode *, struct proc *);
+
+struct vop_lock_args {
+	struct vnode *a_vp;
+	int a_flags;
+	struct proc *a_p;
+};
+int VOP_LOCK(struct vnode *, int, struct proc *);
+
+struct vop_unlock_args {
+	struct vnode *a_vp;
+	int a_flags;
+	struct proc *a_p;
+};
+int VOP_UNLOCK(struct vnode *, int, struct proc *);
+
+struct vop_bmap_args {
+	struct vnode *a_vp;
+	daddr64_t a_bn;
+	struct vnode **a_vpp;
+	daddr64_t *a_bnp;
+	int *a_runp;
+};
+int VOP_BMAP(struct vnode *, daddr64_t, struct vnode **, daddr64_t *, int *);
+
+struct vop_print_args {
+	struct vnode *a_vp;
+};
+int VOP_PRINT(struct vnode *);
+
+struct vop_pathconf_args {
+	struct vnode *a_vp;
+	int a_name;
+	register_t *a_retval;
+};
+int VOP_PATHCONF(struct vnode *, int, register_t *);
+
+struct vop_advlock_args {
+	struct vnode *a_vp;
+	void *a_id;
+	int a_op;
+	struct flock *a_fl;
+	int a_flags;
+};
+int VOP_ADVLOCK(struct vnode *, void *, int, struct flock *, int);
+
+struct vop_reallocblks_args {
+	struct vnode *a_vp;
+	struct cluster_save *a_buflist;
+};
+int VOP_REALLOCBLKS(struct vnode *, struct cluster_save *);
+
+/* Special cases: */
+struct vop_strategy_args {
+	struct buf *a_bp;
+};
+int VOP_STRATEGY(struct buf *);
+
+struct vop_bwrite_args {
+	struct buf *a_bp;
+};
+int VOP_BWRITE(struct buf *);
+/* End of special cases. */
+
+
+/* Public vnode manipulation functions. */
 struct file;
 struct filedesc;
 struct mount;
@@ -358,7 +599,7 @@ struct vnode;
 int	bdevvp(dev_t, struct vnode **);
 int	cdevvp(dev_t, struct vnode **);
 struct vnode *checkalias(struct vnode *, dev_t, struct mount *);
-int	getnewvnode(enum vtagtype, struct mount *, int (**vops)(void *),
+int	getnewvnode(enum vtagtype, struct mount *, struct vops *,
 	    struct vnode **);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
 void	vattr_null(struct vattr *);
