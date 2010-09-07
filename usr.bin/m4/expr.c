@@ -1,4 +1,4 @@
-/* $OpenBSD: expr.c,v 1.17 2006/01/20 23:10:19 espie Exp $ */
+/* $OpenBSD: expr.c,v 1.18 2010/09/07 19:58:09 marco Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -33,7 +33,7 @@ yyerror(const char *msg)
 	return(0);
 }
 
-int 
+int
 expr(const char *toeval)
 {
 	copy_toeval = toeval;

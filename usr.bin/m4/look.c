@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.21 2009/10/14 17:23:17 sthen Exp $	*/
+/*	$OpenBSD: look.c,v 1.22 2010/09/07 19:58:09 marco Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@
 static void *hash_alloc(size_t, void *);
 static void hash_free(void *, size_t, void *);
 static void *element_alloc(size_t, void *);
-static void setup_definition(struct macro_definition *, const char *, 
+static void setup_definition(struct macro_definition *, const char *,
     const char *);
 
 static struct ohash_info macro_info = {
@@ -64,7 +64,7 @@ struct ohash macros;
 void *
 hash_alloc(s, u)
 	size_t s;
-	void *u 	UNUSED;
+	void *u		UNUSED;
 {
 	void *storage = xalloc(s, "hash alloc");
 	if (storage)
@@ -76,7 +76,7 @@ void
 hash_free(p, s, u)
 	void *p;
 	size_t s	UNUSED;
-	void *u 	UNUSED;
+	void *u		UNUSED;
 {
 	free(p);
 }
@@ -84,7 +84,7 @@ hash_free(p, s, u)
 void *
 element_alloc(s, u)
 	size_t s;
-	void *u 	UNUSED;
+	void *u		UNUSED;
 {
 	return xalloc(s, "element alloc");
 }
@@ -98,7 +98,7 @@ init_macros()
 /*
  * find name in the hash table
  */
-ndptr 
+ndptr
 lookup(const char *name)
 {
 	return ohash_find(&macros, ohash_qlookup(&macros, name));
@@ -116,7 +116,7 @@ lookup_macro_definition(const char *name)
 		return NULL;
 }
 
-static void 
+static void
 setup_definition(struct macro_definition *d, const char *defn, const char *name)
 {
 	ndptr p;
@@ -174,7 +174,7 @@ macro_pushdef(const char *name, const char *defn)
 {
 	ndptr n;
 	struct macro_definition *d;
-	
+
 	n = create_entry(name);
 	d = xalloc(sizeof(struct macro_definition), NULL);
 	d->next = n->d;
@@ -221,13 +221,13 @@ macro_for_all(void (*f)(const char *, struct macro_definition *))
 	ndptr n;
 	unsigned int i;
 
-	for (n = ohash_first(&macros, &i); n != NULL; 
+	for (n = ohash_first(&macros, &i); n != NULL;
 	    n = ohash_next(&macros, &i))
 		if (n->d != NULL)
 			f(n->name, n->d);
 }
 
-void 
+void
 setup_builtin(const char *name, unsigned int type)
 {
 	ndptr n;
@@ -259,16 +259,16 @@ mark_traced(const char *name, int on)
 			trace_flags |= TRACE_ALL;
 		else
 			trace_flags &= ~TRACE_ALL;
-		for (p = ohash_first(&macros, &i); p != NULL; 
+		for (p = ohash_first(&macros, &i); p != NULL;
 		    p = ohash_next(&macros, &i))
-		    	p->trace_flags = FLAG_NO_TRACE;
+			p->trace_flags = FLAG_NO_TRACE;
 	} else {
 		p = create_entry(name);
 		p->trace_flags = on;
 	}
 }
 
-ndptr 
+ndptr
 macro_getbuiltin(const char *name)
 {
 	ndptr p;
@@ -279,4 +279,3 @@ macro_getbuiltin(const char *name)
 	else
 		return p;
 }
-

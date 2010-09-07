@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.30 2010/09/07 19:58:09 marco Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
 #define FORMATTYPE	44
 
 #define BUILTIN_MARKER	"__builtin_"
- 
+
 #define TYPEMASK	63	/* Keep bits really corresponding to a type. */
 #define RECDEF		256	/* Pure recursive def, don't expand it */
 #define NOARGS		512	/* builtin needs no args */
@@ -96,7 +96,7 @@
 /*
  * m4 special characters
  */
- 
+
 #define ARGFLAG         '$'
 #define LPAREN          '('
 #define RPAREN          ')'
@@ -115,18 +115,18 @@
  */
 
 #define EOS             '\0'
-#define MAXINP          10              /* maximum include files   	    */
-#define MAXOUT          10              /* maximum # of diversions 	    */
+#define MAXINP          10              /* maximum include files	    */
+#define MAXOUT          10              /* maximum # of diversions	    */
 #define BUFSIZE         4096            /* starting size of pushback buffer */
-#define INITSTACKMAX    4096           	/* starting size of call stack      */
+#define INITSTACKMAX    4096		/* starting size of call stack      */
 #define STRSPMAX        4096            /* starting size of string space    */
-#define MAXTOK          512          	/* maximum chars in a tokn 	    */
-#define HASHSIZE        199             /* maximum size of hashtab 	    */
+#define MAXTOK          512		/* maximum chars in a tokn	    */
+#define HASHSIZE        199             /* maximum size of hashtab	    */
 #define MAXCCHARS	5		/* max size of comment/quote delim  */
- 
+
 #define ALL             1
 #define TOP             0
- 
+
 #define TRUE            1
 #define FALSE           0
 #define cycle           for(;;)
@@ -134,9 +134,9 @@
 /*
  * m4 data structures
  */
- 
+
 typedef struct ndblock *ndptr;
- 
+
 struct macro_definition {
 	struct macro_definition *next;
 	char		*defn;	/* definition..               */
@@ -145,23 +145,23 @@ struct macro_definition {
 
 
 struct ndblock {			/* hashtable structure         */
-	unsigned int 		builtin_type;
+	unsigned int		builtin_type;
 	unsigned int		trace_flags;
 	struct macro_definition *d;
 	char		name[1];	/* entry name..               */
 };
- 
+
 typedef union {			/* stack structure */
 	int	sfra;		/* frame entry  */
-	char 	*sstr;		/* string entry */
+	char	*sstr;		/* string entry */
 } stae;
 
 struct input_file {
-	FILE 		*file;
-	char 		*name;
-	unsigned long 	lineno;
+	FILE		*file;
+	char		*name;
+	unsigned long	lineno;
 	unsigned long   synch_lineno;	/* used for -s */
-	int 		c;
+	int		c;
 };
 
 #define CURRENT_NAME	(infile[ilevel].name)
@@ -173,26 +173,26 @@ struct input_file {
  *      pushf() - push a call frame entry onto stack
  *      pushs() - push a string pointer onto stack
  */
-#define gpbc() 	 (bp > bufbase) ? *--bp : obtain_char(infile+ilevel)
-#define pushf(x) 			\
+#define gpbc()	 (bp > bufbase) ? *--bp : obtain_char(infile+ilevel)
+#define pushf(x)			\
 	do {				\
-		if (++sp == STACKMAX) 	\
+		if (++sp == STACKMAX)	\
 			enlarge_stack();\
 		mstack[sp].sfra = (x);	\
 		sstack[sp] = 0; \
 	} while (0)
 
-#define pushs(x) 			\
+#define pushs(x)			\
 	do {				\
-		if (++sp == STACKMAX) 	\
+		if (++sp == STACKMAX)	\
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
 		sstack[sp] = 1; \
 	} while (0)
 
-#define pushs1(x) 			\
+#define pushs1(x)			\
 	do {				\
-		if (++sp == STACKMAX) 	\
+		if (++sp == STACKMAX)	\
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
 		sstack[sp] = 0; \
@@ -204,18 +204,18 @@ struct input_file {
  *	+-------+			+-----+
  *	| arg 3 ----------------------->| str |
  *	+-------+			|  .  |
- *	| arg 2 ---PREVEP-----+ 	   .
+ *	| arg 2 ---PREVEP-----+		   .
  *	+-------+	      |
  *	    .		      |		|     |
- *	+-------+	      | 	+-----+
+ *	+-------+	      |		+-----+
  *	| plev	|  PARLEV     +-------->| str |
  *	+-------+			|  .  |
  *	| type	|  CALTYP		   .
  *	+-------+
  *	| prcf	---PREVFP--+
- *	+-------+  	   |
+ *	+-------+	   |
  *	|   .	|  PREVSP  |
- *	    .	   	   |
+ *	    .		   |
  *	+-------+	   |
  *	|	<----------+
  *	+-------+

@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.40 2010/03/22 20:40:43 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.41 2010/09/07 19:58:09 marco Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-/* 
+/*
  * functions needed to support gnu-m4 extensions, including a fake freezing
  */
 
@@ -80,8 +80,8 @@ new_path_entry(const char *dirname)
 	n->next = 0;
 	return n;
 }
-	
-void 
+
+void
 addtoincludepath(const char *dirname)
 {
 	struct path_entry *n;
@@ -108,13 +108,13 @@ ensure_m4path()
 		return;
 	envpathdone = TRUE;
 	envpath = getenv("M4PATH");
-	if (!envpath) 
+	if (!envpath)
 		return;
 	/* for portability: getenv result is read-only */
 	envpath = strdup(envpath);
 	if (!envpath)
 		errx(1, "out of memory");
-	for (sweep = envpath; 
+	for (sweep = envpath;
 	    (path = strsep(&sweep, ":")) != NULL;)
 	    addtoincludepath(path);
 	free(envpath);
@@ -156,7 +156,7 @@ fopen_trypath(struct input_file *i, const char *filename)
 	return dopath(i, filename);
 }
 
-void 
+void
 doindir(const char *argv[], int argc)
 {
 	ndptr n;
@@ -166,11 +166,11 @@ doindir(const char *argv[], int argc)
 	if (n == NULL || (p = macro_getdef(n)) == NULL)
 		m4errx(1, "indir: undefined macro %s.", argv[2]);
 	argv[1] = p->defn;
-	
+
 	eval(argv+1, argc-1, p->type, is_traced(n));
 }
 
-void 
+void
 dobuiltin(const char *argv[], int argc)
 {
 	ndptr p;
@@ -181,7 +181,7 @@ dobuiltin(const char *argv[], int argc)
 		eval(argv+1, argc-1, macro_builtin_type(p), is_traced(p));
 	else
 		m4errx(1, "unknown builtin %s.", argv[2]);
-} 
+}
 
 
 /* We need some temporary buffer space, as pb pushes BACK and substitution
@@ -202,7 +202,7 @@ static void add_sub(int, const char *, regex_t *, regmatch_t *);
 static void add_replace(const char *, regex_t *, const char *, regmatch_t *);
 #define addconstantstring(s) addchars((s), sizeof(s)-1)
 
-static void 
+static void
 addchars(const char *c, size_t n)
 {
 	if (n == 0)
@@ -218,7 +218,7 @@ addchars(const char *c, size_t n)
 	current += n;
 }
 
-static void 
+static void
 addchar(int c)
 {
 	if (current +1 > bufsize) {
@@ -240,14 +240,14 @@ getstring()
 }
 
 
-static void 
+static void
 exit_regerror(int er, regex_t *re)
 {
-	size_t 	errlen;
-	char 	*errbuf;
+	size_t	errlen;
+	char	*errbuf;
 
 	errlen = regerror(er, re, NULL, 0);
-	errbuf = xalloc(errlen, 
+	errbuf = xalloc(errlen,
 	    "malloc in regerror: %lu", (unsigned long)errlen);
 	regerror(er, re, errbuf, errlen);
 	m4errx(1, "regular expression error: %s.", errbuf);
@@ -270,7 +270,7 @@ add_sub(int n, const char *string, regex_t *re, regmatch_t *pm)
 /* Add replacement string to the output buffer, recognizing special
  * constructs and replacing them with substrings of the original string.
  */
-static void 
+static void
 add_replace(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 {
 	const char *p;
@@ -299,11 +299,11 @@ add_replace(const char *string, regex_t *re, const char *replace, regmatch_t *pm
 				continue;
 			}
 		}
-	    	addchar(*p);
+		addchar(*p);
 	}
 }
 
-static void 
+static void
 do_subst(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 {
 	int error;
@@ -318,11 +318,11 @@ do_subst(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 				flags = REG_NOTBOL;
 		}
 
-		/* NULL length matches are special... We use the `vi-mode' 
+		/* NULL length matches are special... We use the `vi-mode'
 		 * rule: don't allow a NULL-match at the last match
-		 * position. 
+		 * position.
 		 */
-		if (pm[0].rm_so == pm[0].rm_eo && 
+		if (pm[0].rm_so == pm[0].rm_eo &&
 		    string + pm[0].rm_so == last_match) {
 			if (*string == '\0')
 				return;
@@ -343,13 +343,13 @@ do_subst(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 	pbstr(string);
 }
 
-static void 
+static void
 do_regexp(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 {
 	int error;
 
 	switch(error = regexec(re, string, re->re_nsub+1, pm, 0)) {
-	case 0: 
+	case 0:
 		add_replace(string, re, replace, pm);
 		pbstr(getstring());
 		break;
@@ -360,7 +360,7 @@ do_regexp(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 	}
 }
 
-static void 
+static void
 do_regexpindex(const char *string, regex_t *re, regmatch_t *pm)
 {
 	int error;
@@ -444,7 +444,7 @@ dopatsubst(const char *argv[], int argc)
 	if (argv[3][0] == '\0') {
 		const char *s;
 		size_t len;
-		if (argc > 4 && argv[4]) 
+		if (argc > 4 && argv[4])
 			len = strlen(argv[4]);
 		else
 			len = 0;
@@ -460,17 +460,17 @@ dopatsubst(const char *argv[], int argc)
 		size_t l = strlen(argv[3]);
 
 		if (!mimic_gnu ||
-		    (argv[3][0] == '^') || 
+		    (argv[3][0] == '^') ||
 		    (l > 0 && argv[3][l-1] == '$'))
 			mode |= REG_NEWLINE;
 
-		error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
+		error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3],
 		    mode);
 		if (error != 0)
 			exit_regerror(error, &re);
-		
+
 		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
-		do_subst(argv[2], &re, 
+		do_subst(argv[2], &re,
 		    argc > 4 && argv[4] != NULL ? argv[4] : "", pmatch);
 		free(pmatch);
 		regfree(&re);
@@ -493,14 +493,14 @@ doregexp(const char *argv[], int argc)
 	if (argv[3][0] == '\0' && mimic_gnu) {
 		if (argc == 4 || argv[4] == NULL)
 			return;
-		else 
+		else
 			pbstr(argv[4]);
 	}
-	error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
+	error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3],
 	    REG_EXTENDED);
 	if (error != 0)
 		exit_regerror(error, &re);
-	
+
 	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
 	if (argc == 4 || argv[4] == NULL)
 		do_regexpindex(argv[2], &re, pmatch);
@@ -541,7 +541,7 @@ doformat(const char *argv[], int argc)
 		if (*format == '*') {
 			format++;
 			if (pos >= argc)
-				m4errx(1, 
+				m4errx(1,
 				    "Format with too many format specifiers.");
 			width = strtol(argv[pos++], NULL, 10);
 		} else {
@@ -558,7 +558,7 @@ doformat(const char *argv[], int argc)
 			if (*format == '*') {
 				format++;
 				if (pos >= argc)
-					m4errx(1, 
+					m4errx(1,
 					    "Format with too many format specifiers.");
 				extra = strtol(argv[pos++], NULL, 10);
 			} else {
@@ -579,7 +579,7 @@ doformat(const char *argv[], int argc)
 			thisarg = temp;
 			break;
 		default:
-			m4errx(1, "Unsupported format specification: %s.", 
+			m4errx(1, "Unsupported format specification: %s.",
 			    argv[2]);
 		}
 		format++;

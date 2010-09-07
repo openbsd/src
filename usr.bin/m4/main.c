@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.78 2010/03/22 20:40:44 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.79 2010/09/07 19:58:09 marco Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -57,19 +57,19 @@
 #include "pathnames.h"
 
 ndptr hashtab[HASHSIZE];	/* hash table for macros etc.  */
-stae *mstack;		 	/* stack of m4 machine         */
-char *sstack;		 	/* shadow stack, for string space extension */
+stae *mstack;			/* stack of m4 machine         */
+char *sstack;			/* shadow stack, for string space extension */
 static size_t STACKMAX;		/* current maximum size of stack */
-int sp; 			/* current m4  stack pointer   */
-int fp; 			/* m4 call frame pointer       */
+int sp;				/* current m4  stack pointer   */
+int fp;				/* m4 call frame pointer       */
 struct input_file infile[MAXINP];/* input file stack (0=stdin)  */
 FILE **outfile;			/* diversion array(0=bitbucket)*/
 int maxout;
 FILE *active;			/* active output file pointer  */
-int ilevel = 0; 		/* input file stack pointer    */
-int oindex = 0; 		/* diversion index..	       */
+int ilevel = 0;			/* input file stack pointer    */
+int oindex = 0;			/* diversion index..	       */
 char *null = "";                /* as it says.. just a null..  */
-char **m4wraps = NULL;		/* m4wraps array.     	       */
+char **m4wraps = NULL;		/* m4wraps array.	       */
 int maxwraps = 0;		/* size of m4wraps array       */
 int wrapindex = 0;		/* current offset in m4wraps   */
 char lquote[MAXCCHARS+1] = {LQUOTE};	/* left quote character  (`)   */
@@ -105,7 +105,7 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 #ifdef EXTENDED
 	{ "paste",        PASTTYPE },
 	{ "spaste",       SPASTYPE },
-    	/* Newer extensions, needed to handle gnu-m4 scripts */
+	/* Newer extensions, needed to handle gnu-m4 scripts */
 	{ "indir",        INDIRTYPE},
 	{ "builtin",      BUILTINTYPE},
 	{ "patsubst",	  PATSTYPE},
@@ -132,7 +132,7 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "traceon",	  TRACEONTYPE | NOARGS },
 	{ "traceoff",	  TRACEOFFTYPE | NOARGS },
 
-#if defined(unix) || defined(__unix__) 
+#if defined(unix) || defined(__unix__)
 	{ "unix",         SELFTYPE | NOARGS },
 #else
 #ifdef vms
@@ -236,8 +236,8 @@ main(int argc, char *argv[])
 	active = stdout;		/* default active output     */
 	bbase[0] = bufbase;
         if (!argc) {
- 		sp = -1;		/* stack pointer initialized */
-		fp = 0; 		/* frame pointer initialized */
+		sp = -1;		/* stack pointer initialized */
+		fp = 0;			/* frame pointer initialized */
 		set_input(infile+0, stdin, "stdin");
 					/* default input (naturally) */
 		macro();
@@ -249,9 +249,9 @@ main(int argc, char *argv[])
 			else if (fopen_trypath(infile, p) == NULL)
 				err(1, "%s", p);
 			sp = -1;
-			fp = 0; 
+			fp = 0;
 			macro();
-		    	release_input(infile);
+			release_input(infile);
 		}
 
 	if (wrapindex) {
@@ -270,7 +270,7 @@ main(int argc, char *argv[])
 			for (i = 0; i < wrapindex; i++) {
 				pbstr(m4wraps[i]);
 				macro();
-		    	}
+			}
 		}
 	}
 
@@ -313,8 +313,8 @@ do_look_ahead(int t, const char *token)
 	return 1;
 }
 
-#define LOOK_AHEAD(t, token) (t != EOF && 		\
-    (unsigned char)(t)==(unsigned char)(token)[0] && 	\
+#define LOOK_AHEAD(t, token) (t != EOF &&		\
+    (unsigned char)(t)==(unsigned char)(token)[0] &&	\
     do_look_ahead(t,token))
 
 /*
@@ -381,7 +381,7 @@ macro(void)
 			p = inspect(t, token);
 			if (p != NULL)
 				pushback(l = gpbc());
-			if (p == NULL || (l != LPAREN && 
+			if (p == NULL || (l != LPAREN &&
 			    (macro_getdef(p)->type & NEEDARGS) != 0))
 				outputstr(token);
 			else {
@@ -398,15 +398,15 @@ macro(void)
 		 */
 				pushs1(macro_getdef(p)->defn);	/* defn string */
 				pushs1((char *)macro_name(p));	/* macro name  */
-				pushs(ep);	      	/* start next..*/
+				pushs(ep);			/* start next..*/
 
-				if (l != LPAREN && PARLEV == 0)  {   
+				if (l != LPAREN && PARLEV == 0) {
 				    /* no bracks  */
 					chrsave(EOS);
 
 					if (sp == STACKMAX)
 						errx(1, "internal stack overflow");
-					eval((const char **) mstack+fp+1, 2, 
+					eval((const char **) mstack+fp+1, 2,
 					    CALTYP, TRACESTATUS);
 
 					ep = PREVEP;	/* flush strspace */
@@ -451,7 +451,7 @@ macro(void)
 				if (sp == STACKMAX)
 					errx(1, "internal stack overflow");
 
-				eval((const char **) mstack+fp+1, sp-fp, 
+				eval((const char **) mstack+fp+1, sp-fp,
 				    CALTYP, TRACESTATUS);
 
 				ep = PREVEP;	/* flush strspace */
@@ -494,8 +494,8 @@ macro(void)
 	}
 }
 
-/* 
- * output string directly, without pushing it for reparses. 
+/*
+ * output string directly, without pushing it for reparses.
  */
 void
 outputstr(const char *s)
@@ -515,7 +515,7 @@ reallyoutputstr(const char *s)
 			fputc(*s, active);
 			if (*s++ == '\n') {
 				infile[ilevel].synch_lineno++;
-				if (infile[ilevel].synch_lineno != 
+				if (infile[ilevel].synch_lineno !=
 				    infile[ilevel].lineno)
 					do_emit_synchline();
 			}
@@ -537,15 +537,15 @@ reallyputchar(int c)
 
 /*
  * build an input token..
- * consider only those starting with _ or A-Za-z. 
+ * consider only those starting with _ or A-Za-z.
  */
 static ndptr
-inspect(int c, char *tp) 
+inspect(int c, char *tp)
 {
 	char *name = tp;
 	char *etp = tp+MAXTOK;
 	ndptr p;
-	
+
 	*tp++ = c;
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
@@ -576,9 +576,9 @@ inspect(int c, char *tp)
 }
 
 /*
- * initkwds - initialise m4 keywords as fast as possible. 
+ * initkwds - initialise m4 keywords as fast as possible.
  * This very similar to install, but without certain overheads,
- * such as calling lookup. Malloc is not used for storing the 
+ * such as calling lookup. Malloc is not used for storing the
  * keyword strings, since we simply use the static pointers
  * within keywrds block.
  */
@@ -615,20 +615,20 @@ dump_stack(struct position *t, int lev)
 			fprintf(stderr, "   ...\n");
 			break;
 		}
-		fprintf(stderr, "   %s at line %lu\n", 
+		fprintf(stderr, "   %s at line %lu\n",
 			t[i].name, t[i].line);
 	}
 }
 
 
-static void 
+static void
 enlarge_stack(void)
 {
 	STACKMAX += STACKMAX/2;
-	mstack = xrealloc(mstack, sizeof(stae) * STACKMAX, 
-	    "Evaluation stack overflow (%lu)", 
+	mstack = xrealloc(mstack, sizeof(stae) * STACKMAX,
+	    "Evaluation stack overflow (%lu)",
 	    (unsigned long)STACKMAX);
 	sstack = xrealloc(sstack, STACKMAX,
-	    "Evaluation stack overflow (%lu)", 
+	    "Evaluation stack overflow (%lu)",
 	    (unsigned long)STACKMAX);
 }

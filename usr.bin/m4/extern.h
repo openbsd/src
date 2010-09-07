@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.50 2010/09/07 19:58:09 marco Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ extern unsigned long expansion_id;
 extern int	expr(const char *);
 
 /* gnum4.c */
-extern void 	addtoincludepath(const char *);
+extern void	addtoincludepath(const char *);
 extern struct input_file *fopen_trypath(struct input_file *, const char *);
 extern void doindir(const char *[], int);
 extern void dobuiltin(const char *[], int);
@@ -57,7 +57,6 @@ extern void doprintfilename(struct input_file *);
 extern void doesyscmd(const char *);
 extern void getdivfile(const char *);
 extern void doformat(const char *[], int);
- 
 
 /* look.c */
 
@@ -71,13 +70,13 @@ extern void mark_traced(const char *, int);
 extern struct ohash macros;
 
 extern struct macro_definition *lookup_macro_definition(const char *);
-extern void 	macro_define(const char *, const char *);
-extern void 	macro_pushdef(const char *, const char *);
-extern void 	macro_popdef(const char *);
-extern void 	macro_undefine(const char *);
-extern void 	setup_builtin(const char *, unsigned int);
-extern void 	macro_for_all(void (*)(const char *, struct macro_definition *));
-#define macro_getdef(p) 	((p)->d)
+extern void	macro_define(const char *, const char *);
+extern void	macro_pushdef(const char *, const char *);
+extern void	macro_popdef(const char *);
+extern void	macro_undefine(const char *);
+extern void	setup_builtin(const char *, unsigned int);
+extern void	macro_for_all(void (*)(const char *, struct macro_definition *));
+#define macro_getdef(p)		((p)->d)
 #define macro_name(p)		((p)->name)
 #define macro_builtin_type(p)	((p)->builtin_type)
 #define is_traced(p) ((p)->trace_flags == FLAG_NO_TRACE ? (trace_flags & TRACE_ALL) : (p)->trace_flags)
@@ -91,10 +90,10 @@ extern void do_emit_synchline(void);
 
 /* misc.c */
 extern void	chrsave(int);
-extern char 	*compute_prevep(void);
+extern char	*compute_prevep(void);
 extern void	getdiv(int);
 extern ptrdiff_t indx(const char *, const char *);
-extern void 	initspaces(void);
+extern void	initspaces(void);
 extern void	killdiv(void);
 extern void	onintr(int);
 extern void	pbnum(int);
@@ -111,7 +110,7 @@ extern size_t	buffer_mark(void);
 extern void	dump_buffer(FILE *, size_t);
 extern void	__dead m4errx(int, const char *, ...);
 
-extern int 	obtain_char(struct input_file *);
+extern int	obtain_char(struct input_file *);
 extern void	set_input(struct input_file *, FILE *, const char *);
 extern void	release_input(struct input_file *);
 
@@ -122,7 +121,7 @@ extern void	release_input(struct input_file *);
 			enlarge_bufspace();	\
 		*bp++ = (c);			\
 	} while(0)
-	
+
 #define CHRSAVE(c)				\
 	do {					\
 		if (ep >= endest)		\
@@ -152,7 +151,7 @@ extern FILE *active;		/* active output file pointer */
 extern struct input_file infile[];/* input file stack (0=stdin) */
 extern FILE **outfile;		/* diversion array(0=bitbucket) */
 extern int maxout;		/* maximum number of diversions */
-extern int fp; 			/* m4 call frame pointer */
+extern int fp;			/* m4 call frame pointer */
 extern int ilevel;		/* input file stack pointer */
 extern int oindex;		/* diversion index. */
 extern int sp;			/* current m4 stack pointer */

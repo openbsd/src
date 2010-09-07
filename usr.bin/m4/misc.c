@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.42 2010/09/07 19:58:09 marco Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ static size_t bufsize = BUFSIZE;
 unsigned char *buf;			/* push-back buffer	       */
 unsigned char *bufbase;			/* the base for current ilevel */
 unsigned char *bbase[MAXINP];		/* the base for each ilevel    */
-unsigned char *bp; 			/* first available character   */
+unsigned char *bp;			/* first available character   */
 unsigned char *endpbb;			/* end of push-back buffer     */
 
 
@@ -155,7 +155,7 @@ pbunsigned(unsigned long n)
 	while ((n /= 10) > 0);
 }
 
-void 
+void
 initspaces()
 {
 	int i;
@@ -171,7 +171,7 @@ initspaces()
 		bbase[i] = buf;
 }
 
-void 
+void
 enlarge_strspace()
 {
 	char *newstrspace;
@@ -182,9 +182,9 @@ enlarge_strspace()
 	if (!newstrspace)
 		errx(1, "string space overflow");
 	memcpy(newstrspace, strspace, strsize/2);
-	for (i = 0; i <= sp; i++) 
+	for (i = 0; i <= sp; i++)
 		if (sstack[i])
-			mstack[i].sstr = (mstack[i].sstr - strspace) 
+			mstack[i].sstr = (mstack[i].sstr - strspace)
 			    + newstrspace;
 	ep = (ep-strspace) + newstrspace;
 	free(strspace);
@@ -214,7 +214,7 @@ enlarge_bufspace()
 void
 chrsave(int c)
 {
-	if (ep >= endest) 
+	if (ep >= endest)
 		enlarge_strspace();
 	*ep++ = c;
 }
@@ -283,7 +283,7 @@ resizedivs(int n)
 {
 	int i;
 
-	outfile = (FILE **)xrealloc(outfile, sizeof(FILE *) * n, 
+	outfile = (FILE **)xrealloc(outfile, sizeof(FILE *) * n,
 	    "too many diverts %d", n);
 	for (i = maxout; i < n; i++)
 		outfile[i] = NULL;
@@ -300,7 +300,7 @@ xalloc(size_t n, const char *fmt, ...)
 			err(1, "malloc");
 		else {
 			va_list va;
-			
+
 			va_start(va, fmt);
 			verr(1, fmt, va);
 			va_end(va);
@@ -324,7 +324,7 @@ xrealloc(void *old, size_t n, const char *fmt, ...)
 			va_start(va, fmt);
 			verr(1, fmt, va);
 			va_end(va);
-	    	}
+		}
 	}
 	return p;
 }
@@ -347,7 +347,7 @@ usage()
 	exit(1);
 }
 
-int 
+int
 obtain_char(struct input_file *f)
 {
 	if (f->c == EOF)
@@ -360,7 +360,7 @@ obtain_char(struct input_file *f)
 	return f->c;
 }
 
-void 
+void
 set_input(struct input_file *f, FILE *real, const char *name)
 {
 	f->file = real;
@@ -378,14 +378,14 @@ do_emit_synchline()
 	infile[ilevel].synch_lineno = infile[ilevel].lineno;
 }
 
-void 
+void
 release_input(struct input_file *f)
 {
 	if (f->file != stdin)
 	    fclose(f->file);
 	f->c = EOF;
 	/*
-	 * XXX can't free filename, as there might still be 
+	 * XXX can't free filename, as there might still be
 	 * error information pointing to it.
 	 */
 }
@@ -404,7 +404,7 @@ doprintfilename(struct input_file *f)
 	pbstr(lquote);
 }
 
-/* 
+/*
  * buffer_mark/dump_buffer: allows one to save a mark in a buffer,
  * and later dump everything that was added since then to a file.
  */
