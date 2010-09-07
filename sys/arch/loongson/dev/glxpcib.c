@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.8 2010/09/07 16:57:37 miod Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.9 2010/09/07 16:59:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -279,22 +279,22 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-glxpcib_activate(struct device *dv, int act)
+glxpcib_activate(struct device *self, int act)
 {
-	struct glxpcib_softc *sc = (struct glxpcib_softc *)dv;
+	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
 	int rv = 0;
 	uint i;
 
 	switch (act) {
 	case DVACT_SUSPEND:
-		rv = config_activate_children(dv, act);
+		rv = config_activate_children(self, act);
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			sc->sc_msrsave[i] = rdmsr(glxpcib_msrlist[i]);
 		break;
 	case DVACT_RESUME:
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			wrmsr(glxpcib_msrlist[i], sc->sc_msrsave[i]);
-		rv = config_activate_children(dv, act);
+		rv = config_activate_children(self, act);
 		break;
 	}
 
