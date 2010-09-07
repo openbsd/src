@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.21 2010/09/04 21:35:58 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.22 2010/09/07 00:41:05 thib Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -831,7 +831,7 @@ ntfs_vgetex(
 		}
 	}
 
-	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, ntfs_vnodeop_p, &vp);
+	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, &ntfs_vops, &vp);
 	if(error) {
 		ntfs_frele(fp);
 		ntfs_ntput(ip, p);
@@ -868,13 +868,6 @@ ntfs_vget(
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
 }
-
-extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;
-
-const struct vnodeopv_desc * const ntfs_vnodeopv_descs[] = {
-	&ntfs_vnodeop_opv_desc,
-	NULL,
-};
 
 const struct vfsops ntfs_vfsops = {
 	ntfs_mount,
