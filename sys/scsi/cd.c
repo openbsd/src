@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.185 2010/09/01 01:38:12 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.186 2010/09/07 04:42:15 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -115,8 +115,6 @@ struct cd_softc {
 	struct scsi_xshandler sc_xsh;
 	struct timeout sc_timeout;
 	void *sc_cdpwrhook;		/* our power hook */
-
-	struct workq_task sc_resume_wqt;
 };
 
 void	cdstart(struct scsi_xfer *);
@@ -149,7 +147,7 @@ int	dvd_read_manufact(struct cd_softc *, union dvd_struct *);
 int	dvd_read_struct(struct cd_softc *, union dvd_struct *);
 
 void	cd_powerhook(int why, void *arg);
-void	cd_resume(void *, void *);
+void	cd_resume(struct cd_softc *);
 
 #if defined(__macppc__)
 int	cd_eject(void);
@@ -258,8 +256,7 @@ cdactivate(struct device *self, int act)
 		 * there are any open partitions, lock the CD.
 		 */
 		if (sc->sc_dk.dk_openmask != 0)
-			workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-			    cd_resume, sc, NULL);
+			cd_resume(sc);
 		break;			
 	case DVACT_DEACTIVATE:
 		sc->sc_flags |= CDF_DYING;
@@ -270,13 +267,11 @@ cdactivate(struct device *self, int act)
 }
 
 void
-cd_resume(void *arg1, void *arg2)
+cd_resume(struct cd_softc *sc)
 {
-	struct cd_softc *sc = arg1;
-
 	scsi_prevent(sc->sc_link, PR_PREVENT,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-	    SCSI_SILENT);
+	    SCSI_SILENT | SCSI_AUTOCONF);
 }
 
 void
@@ -285,7 +280,7 @@ cd_powerhook(int why, void *arg)
 	struct cd_softc *sc = arg;
 
 	if (why == DVACT_RESUME && sc->sc_dk.dk_openmask != 0)
-		cd_resume(sc, NULL);
+		cd_resume(sc);
 }
 
 int
