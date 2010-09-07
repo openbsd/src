@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.6 2010/05/08 21:59:56 miod Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.7 2010/09/07 16:52:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -146,9 +146,11 @@ struct cfdriver glxpcib_cd = {
 
 int	glxpcib_match(struct device *, void *, void *);
 void	glxpcib_attach(struct device *, struct device *, void *);
+int	glxpcib_activate(struct device *, int);
 
 struct cfattach glxpcib_ca = {
-	sizeof(struct glxpcib_softc), glxpcib_match, glxpcib_attach
+	sizeof(struct glxpcib_softc), glxpcib_match, glxpcib_attach,
+	NULL, glxpcib_activate
 };
 
 /* from arch/<*>/pci/pcib.c */
@@ -263,6 +265,38 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	if (gpio)
 		config_found(&sc->sc_dev, &gba, gpiobus_print);
 #endif
+}
+
+int
+glxpcib_activate(struct device *dv, int act)
+{
+	int rv = 0;
+	const uint32_t msrlist[] = {
+		GLIU_PAE,
+		GLCP_GLD_MSR_PM,
+		DIVIL_BALL_OPTS
+	};
+	static uint64_t msrsave[nitems(msrlist)];
+	uint64_t msr;
+	uint i;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		rv = config_activate_children(dv, act);
+		for (i = 0; i < nitems(msrlist); i++)
+			msrsave[i] = rdmsr(msrlist[i]);
+		break;
+	case DVACT_RESUME:
+		for (i = 0; i < nitems(msrlist); i++) {
+			msr = rdmsr(msrlist[i]);
+			if (msr != msrsave[i])
+				wrmsr(msrlist[i], msr);
+		}
+		rv = config_activate_children(dv, act);
+		break;
+	}
+
+	return rv;
 }
 
 u_int
