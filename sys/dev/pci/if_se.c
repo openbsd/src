@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.5 2010/09/05 12:42:54 miod Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.6 2010/09/07 07:54:44 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -452,23 +452,31 @@ se_iff(struct se_softc *sc)
 	uint16_t rxfilt;
 
 	rxfilt = CSR_READ_2(sc, RxMacControl);
-	rxfilt &= ~(AcceptBroadcast | AcceptAllPhys | AcceptMulticast);
-	rxfilt |= AcceptMyPhys;
-	if ((ifp->if_flags & IFF_BROADCAST) != 0)
-		rxfilt |= AcceptBroadcast;
-	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
-		if ((ifp->if_flags & IFF_PROMISC) != 0)
+	rxfilt &= ~(AcceptAllPhys | AcceptBroadcast | AcceptMulticast);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	/*
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
+	 */
+	rxfilt |= AcceptBroadcast | AcceptMyPhys;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
 			rxfilt |= AcceptAllPhys;
 		rxfilt |= AcceptMulticast;
 		hashes[0] = hashes[1] = 0xffffffff;
 	} else {
 		rxfilt |= AcceptMulticast;
-		/* Now program new ones. */
-		ETHER_FIRST_MULTI(step, ac, enm);
 		hashes[0] = hashes[1] = 0;
+
+		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+
 			hashes[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
@@ -1250,9 +1258,6 @@ se_init(struct ifnet *ifp)
 
 	splassert(IPL_NET);
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0)
-		return 0;
-
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
@@ -1286,6 +1291,8 @@ se_init(struct ifnet *ifp)
 	/* Configure RX MAC. */
 	rxfilt = RXMAC_STRIP_FCS | RXMAC_PAD_ENB | RXMAC_CSUM_ENB;
 	CSR_WRITE_2(sc, RxMacControl, rxfilt);
+
+	/* Program promiscuous mode and multicast filters. */
 	se_iff(sc);
 
 	/*
@@ -1406,7 +1413,6 @@ se_watchdog(struct ifnet *ifp)
 	ifp->if_oerrors++;
 
 	s = splnet();
-	ifp->if_flags &= ~IFF_RUNNING;
 	se_init(ifp);
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		se_start(ifp);
