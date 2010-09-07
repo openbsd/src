@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.21 2009/05/21 12:24:22 thib Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.22 2010/09/07 00:10:12 thib Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 21 2009 $
+.Dd $Mdocdate: September 7 2010 $
 .Dt VOP_LOOKUP 9
 .Os
 .Sh NAME
@@ -276,9 +276,6 @@ function consist of one or more vnode pointers along with other data
 needed to perform the operation.
 Care must be taken to obey the vnode locking discipline when using
 VOP functions.
-The locking discipline for all currently defined VOP
-functions is described in the file
-.Pa sys/kern/vnode_if.src .
 Many VOP calls take a
 .Vt struct proc *p
 argument.
@@ -287,7 +284,6 @@ VOP calls are not safe to call in an interrupt context.
 .Pp
 The following sections comment on the VOP functions from the consumer's
 perspective.
-Some notes for file system implementors follow.
 .Pp
 .Bl -tag -width Ds -compact
 .It Fn VOP_ABORTOP dvp cnp
@@ -845,51 +841,11 @@ Do I/O as an atomic unit.
 Upon success, zero is returned; otherwise, an appropriate error code is
 returned.
 .El
-.Sh IMPLEMENTATION NOTES
-The
-.Nm VOP
-functions are stubs which redirect their arguments to the
-appropriate function for each file system.
-In order to allow for layered file systems and generic bypass methods,
-all vnode operation implementing functions take only a single
-.Vt void *
-pointer as an argument.
-This points to a structure containing the real arguments.
-Additionally, this structure contains a
-.Vt struct vnodeop_desc * ,
-or
-.Em vnodeop description .
-The description is typically used by the abstract VOP code, but can
-be useful to the lower implementation as well.
-Every file system defines an array of
-.Vt struct vnodeopv_entry_desc
-that contains one entry for each implemented vnode op.
-Unimplemented vnode operations match the default description,
-.Va vop_default_desc .
-Most non-layer file systems should assign the default error handler,
-.Fn vn_default_error ,
-to the generic description.
-.Pp
-All lower level implementations should conform to the interfaces described
-above.
-The rules for locking and referencing vnodes are enforced by each
-file system implementation, not the VOP stubs.
 .Sh RETURN VALUES
 The
 .Nm VOP
 functions return 0 to indicate success and a non-zero error code
 to indicate failure.
-.Sh FILES
-.Bl -tag -width sys/kern/vnode_if.src -compact
-.It Pa sys/kern/vnode_if.src
-source file containing
-.Nm VOP
-definitions
-.It Pa sys/kern/vnode_if.c
-C file with implementations of each
-.Nm VOP
-stub call
-.El
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr uio 9 ,
