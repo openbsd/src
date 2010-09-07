@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.42 2010/09/01 11:45:42 miod Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.43 2010/09/07 16:21:46 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -58,7 +58,6 @@ void	pcmcia_attach(struct device *, struct device *, void *);
 int	pcmcia_activate(struct device *, int);
 int	pcmcia_print(void *, const char *);
 void	pcmcia_card_detach_notify(struct device *, void *);
-void	pcmcia_powerhook(int why, void *arg);
 
 static inline void pcmcia_socket_enable(pcmcia_chipset_tag_t,
 					     pcmcia_chipset_handle_t *);
@@ -130,7 +129,6 @@ pcmcia_attach(parent, self, aux)
 	sc->iosize = paa->iosize;
 
 	sc->ih = NULL;
-	powerhook_establish(pcmcia_powerhook, sc);
 }
 
 int
@@ -165,12 +163,6 @@ pcmcia_activate(struct device *self, int act)
 		break;
 	}
 	return (0);
-}
-
-void
-pcmcia_powerhook(int why, void *arg)
-{
-	pcmcia_activate(arg, why);
 }
 
 int

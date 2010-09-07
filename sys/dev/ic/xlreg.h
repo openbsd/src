@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.23 2010/08/27 15:43:41 deraadt Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.24 2010/09/07 16:21:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -595,7 +595,7 @@ struct xl_softc {
 	struct xl_chain_data	xl_cdata;
 	int			xl_flags;
 	void (*intr_ack)(struct xl_softc *);
-	void *			sc_sdhook, *sc_pwrhook;
+	void *			sc_sdhook;
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_listmap;
 	bus_dma_segment_t	sc_listseg[1];

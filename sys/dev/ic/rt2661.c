@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.62 2010/09/06 19:20:21 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.63 2010/09/07 16:21:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -156,7 +156,6 @@ int		rt2661_prepare_beacon(struct rt2661_softc *);
 #endif
 void		rt2661_enable_tsf_sync(struct rt2661_softc *);
 int		rt2661_get_rssi(struct rt2661_softc *, uint8_t);
-void		rt2661_powerhook(int, void *);
 
 static const struct {
 	uint32_t	reg;
@@ -246,12 +245,6 @@ rt2661_attach(void *xsc, int id)
 		mountroothook_establish(rt2661_attachhook, sc);
 	else
 		rt2661_attachhook(sc);
-
-	sc->sc_powerhook = powerhook_establish(rt2661_powerhook, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-	}
 
 	return 0;
 
@@ -382,9 +375,6 @@ rt2661_detach(void *xsc)
 
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->amrr_to);
-
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
@@ -2924,22 +2914,4 @@ rt2661_get_rssi(struct rt2661_softc *sc, uint8_t raw)
 			rssi -= 100;
 	}
 	return rssi;
-}
-
-void
-rt2661_powerhook(int why, void *arg)
-{
-	struct rt2661_softc *sc = arg;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case DVACT_SUSPEND:
-		rt2661_suspend(sc);
-		break;
-	case DVACT_RESUME:
-		rt2661_resume(sc);
-		break;
-	}
-	splx(s);
 }

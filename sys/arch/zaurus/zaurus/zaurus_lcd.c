@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.23 2010/08/30 21:35:57 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.24 2010/09/07 16:21:41 deraadt Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -163,7 +163,6 @@ void	lcd_set_brightness_internal(int);
 int	lcd_get_backlight(void);
 void	lcd_set_backlight(int);
 void	lcd_blank(int);
-void	lcd_powerhook(int, void *);
 
 int
 lcd_match(struct device *parent, void *cf, void *aux)
@@ -193,8 +192,6 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
-
-	(void)powerhook_establish(lcd_powerhook, sc);
 }
 
 int
@@ -415,10 +412,3 @@ lcd_activate(struct device *self, int act)
 	}
 	return 0;
 }
-
-void
-lcd_powerhook(int why, void *v)
-{
-	lcd_activate(v, why);
-}
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.24 2010/08/27 18:50:57 deraadt Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.25 2010/09/07 16:21:44 deraadt Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -140,7 +140,6 @@ struct cs4281_softc {
 	struct ac97_host_if host_if;
 
         /* Power Management */
-        void	*sc_powerhook;		/* Power hook */
 	u_int16_t ac97_reg[CS4281_SAVE_REG_MAX + 1];   /* Save ac97 registers */
 };
 
@@ -182,8 +181,6 @@ int cs4281_attach_codec(void *, struct ac97_codec_if *);
 int cs4281_read_codec(void *, u_int8_t , u_int16_t *);
 int cs4281_write_codec(void *, u_int8_t, u_int16_t);
 void cs4281_reset_codec(void *);
-
-void cs4281_powerhook(int, void *);
 
 int cs4281_mixer_set_port(void *, mixer_ctrl_t *);
 int cs4281_mixer_get_port(void *, mixer_ctrl_t *);
@@ -368,8 +365,6 @@ cs4281_attach(parent, self, aux)
 #if NMIDI > 0
 	midi_attach_mi(&cs4281_midi_hw_if, sc, &sc->sc_dev);
 #endif
-
-	sc->sc_powerhook = powerhook_establish(cs4281_powerhook, sc);
 }
 
 
@@ -1163,12 +1158,6 @@ cs4281_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-cs4281_powerhook(int why, void *v)
-{
-	cs4281_activate(v, why);
 }
 
 void

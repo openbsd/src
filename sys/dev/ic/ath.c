@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.90 2010/08/27 19:44:43 deraadt Exp $  */
+/*      $OpenBSD: ath.c,v 1.91 2010/09/07 16:21:42 deraadt Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -426,12 +426,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 #endif
 
 	sc->sc_flags |= ATH_ATTACHED;
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_powerhook = powerhook_establish(ath_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf(": WARNING: unable to establish power hook\n");
 
 	/*
 	 * Print regulation domain and the mac address. The regulation domain
@@ -481,20 +475,12 @@ ath_detach(struct ath_softc *sc, int flags)
 	if_detach(ifp);
 
 	splx(s);
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 #ifdef __FreeBSD__
 	ATH_TXBUF_LOCK_DESTROY(sc);
 	ATH_TXQ_LOCK_DESTROY(sc);
 #endif
 
 	return 0;
-}
-
-void
-ath_powerhook(int why, void *arg)
-{
-	ath_activate(arg, why);
 }
 
 int

@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.5 2010/08/27 18:50:56 deraadt Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.6 2010/09/07 16:21:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -198,7 +198,6 @@ struct auglx_softc {
 	struct ac97_host_if	 host_if;
 
 	/* power mgmt */
-	void			*sc_powerhook;
 	u_int16_t		 sc_ext_ctrl;
 
 	int			 sc_dmamap_flags;
@@ -245,7 +244,6 @@ void auglx_free_prd(struct auglx_softc *sc, struct auglx_ring *bm);
 int auglx_allocmem(struct auglx_softc *, size_t, size_t, struct auglx_dma *);
 void auglx_freemem(struct auglx_softc *, struct auglx_dma *);
 void auglx_get_default_params(void *, int, struct audio_params *);
-void auglx_powerhook(int, void *);
 
 struct audio_hw_if auglx_hw_if = {
 	auglx_open,
@@ -359,10 +357,6 @@ auglx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	audio_attach_mi(&auglx_hw_if, sc, &sc->sc_dev);
-
-	/* Watch for power changes */
-	sc->sc_powerhook = powerhook_establish(auglx_powerhook, sc);
-
 }
 
 /* Functions to communicate with the AC97 Codec via the ACC */
@@ -1362,10 +1356,4 @@ auglx_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-auglx_powerhook(int why, void *self)
-{
-	auglx_activate(self, why);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.26 2010/08/30 21:35:55 deraadt Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.27 2010/09/07 16:21:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -51,8 +51,6 @@ struct pxaudc_pipe {
 	struct usbf_pipe	 pipe;
 //	LIST_ENTRY(pxaudc_pipe)	 list;
 };
-
-void		 pxaudc_powerhook(int, void *);
 
 void		 pxaudc_enable(struct pxaudc_softc *);
 void		 pxaudc_disable(struct pxaudc_softc *);
@@ -200,8 +198,6 @@ pxaudc_attach(struct pxaudc_softc *sc, void *aux)
 		return;
 	}
 
-	sc->sc_powerhook = powerhook_establish(pxaudc_powerhook, sc);
-
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &pxaudc_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct pxaudc_pipe);
@@ -228,9 +224,6 @@ pxaudc_attach(struct pxaudc_softc *sc, void *aux)
 int
 pxaudc_detach(struct pxaudc_softc *sc, int flags)
 {
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
-
 	if (sc->sc_conn_ih != NULL)
 		pxa2x0_gpio_intr_disestablish(sc->sc_conn_ih);
 
@@ -259,12 +252,6 @@ pxaudc_activate(struct pxaudc_softc *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-pxaudc_powerhook(int why, void *arg)
-{
-	pxaudc_activate(arg, why);
 }
 
 /*

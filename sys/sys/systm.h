@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.84 2010/09/06 19:20:24 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.85 2010/09/07 16:21:47 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -293,13 +293,6 @@ void	dohooks(struct hook_desc_head *, int);
 #define mountroothook_disestablish(vhook) \
 	hook_disestablish(&mountroothook_list, (vhook))
 #define domountroothooks() dohooks(&mountroothook_list, HOOK_REMOVE|HOOK_FREE)
-
-/*
- * Power management hooks.
- */
-void	*powerhook_establish(void (*)(int, void *), void *);
-void	powerhook_disestablish(void *);
-void	dopowerhooks(int);
 
 struct uio;
 int	uiomove(void *, int, struct uio *);

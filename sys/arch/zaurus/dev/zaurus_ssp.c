@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_ssp.c,v 1.7 2010/08/30 21:35:57 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_ssp.c,v 1.8 2010/09/07 16:21:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -46,7 +46,6 @@ int	zssp_match(struct device *, void *, void *);
 void	zssp_attach(struct device *, struct device *, void *);
 void	zssp_init(void);
 int	zssp_activate(struct device *, int);
-void	zssp_powerhook(int, void *);
 
 int	zssp_read_max1111(u_int32_t);
 u_int32_t zssp_read_ads7846(u_int32_t);
@@ -80,10 +79,6 @@ zssp_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
-
-	if (powerhook_establish(zssp_powerhook, sc) == NULL)
-		printf("%s: can't establish power hook\n",
-		    sc->sc_dev.dv_xname);
 
 	zssp_init();
 }
@@ -121,12 +116,6 @@ zssp_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-zssp_powerhook(int why, void *arg)
-{
-	zssp_activate(arg, why);
 }
 
 /*

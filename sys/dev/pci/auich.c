@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.90 2010/09/06 19:20:22 deraadt Exp $	*/
+/*	$OpenBSD: auich.c,v 1.91 2010/09/07 16:21:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -217,7 +217,6 @@ struct auich_softc {
 	int pcmo_fifoe;
 #endif
 
-	void *powerhook;
 	int suspend;
 	u_int16_t ext_ctrl;
 	int sc_sample_size;
@@ -326,8 +325,6 @@ void auich_get_default_params(void *, int, struct audio_params *);
 
 int auich_suspend(struct auich_softc *);
 int auich_resume(struct auich_softc *);
-
-void auich_powerhook(int, void *);
 
 struct audio_hw_if auich_hw_if = {
 	auich_open,
@@ -556,7 +553,6 @@ auich_attach(parent, self, aux)
 
 	/* Watch for power changes */
 	sc->suspend = DVACT_RESUME;
-	sc->powerhook = powerhook_establish(auich_powerhook, sc);
 
 	sc->sc_ac97rate = -1;
 }
@@ -1953,13 +1949,6 @@ auich_resume(struct auich_softc *sc)
 
 	return (0);
 }
-
-void
-auich_powerhook(int why, void *self)
-{
-	auich_activate(self, why);
-}
-
 
 /* -------------------------------------------------------------------- */
 /* Calibrate card (some boards are overclocked and need scaling) */

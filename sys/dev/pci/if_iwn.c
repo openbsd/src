@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.104 2010/08/27 20:09:01 deraadt Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.105 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -107,7 +107,6 @@ void		iwn_radiotap_attach(struct iwn_softc *);
 int		iwn_detach(struct device *, int);
 int		iwn_activate(struct device *, int);
 void		iwn_resume(void *, void *);
-void		iwn_powerhook(int, void *);
 int		iwn_nic_lock(struct iwn_softc *);
 int		iwn_eeprom_lock(struct iwn_softc *);
 int		iwn_init_otprom(struct iwn_softc *);
@@ -568,9 +567,6 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	iwn_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, iwn_calib_timeout, sc);
-
-	sc->powerhook = powerhook_establish(iwn_powerhook, sc);
-
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
@@ -713,9 +709,6 @@ iwn_detach(struct device *self, int flags)
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 
-	if (sc->powerhook != NULL)
-		powerhook_disestablish(sc->powerhook);
-
 	/* Free DMA resources. */
 	iwn_free_rx_ring(sc, &sc->rxq);
 	for (qid = 0; qid < sc->sc_hal->ntxqs; qid++)
@@ -784,12 +777,6 @@ iwn_resume(void *arg1, void *arg2)
 	sc->sc_flags &= ~IWN_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
 	splx(s);
-}
-
-void
-iwn_powerhook(int why, void *arg)
-{
-	iwn_activate(arg, why);
 }
 
 int

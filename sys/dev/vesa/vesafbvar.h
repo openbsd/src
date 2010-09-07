@@ -1,4 +1,4 @@
-/* $OpenBSD: vesafbvar.h,v 1.1 2006/11/27 18:04:28 gwk Exp $ */
+/* $OpenBSD: vesafbvar.h,v 1.2 2010/09/07 16:21:47 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -70,7 +70,6 @@ struct vesafb_softc {
 	int sc_pm;
 	uint8_t sc_pmver;
 	uint8_t sc_pmstates;
-	void *sc_powerhook;
 };
 
 

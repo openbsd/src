@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.109 2010/08/27 20:09:01 deraadt Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.110 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -76,7 +76,6 @@ int		iwi_match(struct device *, void *, void *);
 void		iwi_attach(struct device *, struct device *, void *);
 int		iwi_activate(struct device *, int);
 void		iwi_resume(void *, void *);
-void		iwi_powerhook(int, void *);
 int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
@@ -313,8 +312,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_send_mgmt = iwi_send_mgmt;
 	ieee80211_media_init(ifp, iwi_media_change, iwi_media_status);
 
-	sc->powerhook = powerhook_establish(iwi_powerhook, sc);
-
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
@@ -379,12 +376,6 @@ iwi_resume(void *arg1, void *arg2)
 	sc->sc_flags &= ~IWI_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
 	splx(s);
-}
-
-void
-iwi_powerhook(int why, void *arg)
-{
-	iwi_activate(arg, why);
 }
 
 int

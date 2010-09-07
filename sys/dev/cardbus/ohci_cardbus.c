@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.16 2010/08/30 21:30:14 deraadt Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.17 2010/09/07 16:21:41 deraadt Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -167,8 +167,6 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(ohci_powerhook, &sc->sc);
-
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
@@ -184,9 +182,6 @@ ohci_cardbus_detach(struct device *self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-
-	if (sc->sc.sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc.sc_powerhook);
 
 	if (sc->sc_ih != NULL) {
 		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);

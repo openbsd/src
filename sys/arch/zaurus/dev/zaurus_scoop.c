@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.20 2010/08/30 21:35:57 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.21 2010/09/07 16:21:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -40,7 +40,6 @@ struct scoop_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	u_int16_t sc_gpwr;	/* GPIO state before suspend */
-	void *sc_powerhook;
 	int sc_suspended;
 };
 
@@ -69,7 +68,6 @@ void	scoop0_set_card_power(enum card, int);
 
 struct timeout	scoop_checkdisk;
 void	scoop_timeout(void *);
-void	scoop_powerhook(int, void *);
 
 int
 scoopmatch(struct device *parent, void *match, void *aux)
@@ -121,11 +119,6 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 		timeout_set(&scoop_checkdisk, scoop_timeout, sc);
 
 	printf(": PCMCIA/GPIO controller\n");
-
-	sc->sc_powerhook = powerhook_establish(scoop_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		panic("Unable to establish %s powerhook",
-		    sc->sc_dev.dv_xname);
 }
 
 int
@@ -476,10 +469,4 @@ scoop_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-scoop_powerhook(int why, void *arg)
-{
-	scoop_activate(arg, why);
 }

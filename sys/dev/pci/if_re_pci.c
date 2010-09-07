@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.29 2010/07/27 21:56:11 todd Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.30 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -225,10 +225,6 @@ re_pci_detach(struct device *self, int flags)
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	/* No more hooks */
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
 
 	/* Disable interrupts */
 	if (psc->sc_ih != NULL)

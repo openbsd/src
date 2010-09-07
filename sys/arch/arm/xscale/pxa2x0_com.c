@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.11 2010/08/30 21:35:55 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.12 2010/09/07 16:21:35 deraadt Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 int	pxauart_match(struct device *, void *, void *);
 void	pxauart_attach(struct device *, struct device *, void *);
 int	pxauart_activate(struct device *, int);
-void	pxauart_powerhook(int why, void *);
 
 struct cfattach com_pxaip_ca = {
         sizeof (struct com_softc), pxauart_match, pxauart_attach, NULL,
@@ -145,8 +144,6 @@ pxauart_attach(struct device *parent, struct device *self, void *aux)
 
 	(void)pxa2x0_intr_establish(pxa->pxa_intr, IPL_TTY, comintr,
 	    sc, sc->sc_dev.dv_xname);
-
-	(void)powerhook_establish(pxauart_powerhook, sc);
 }
 
 int
@@ -181,10 +178,4 @@ pxauart_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-pxauart_powerhook(int why, void *arg)
-{
-	pxauart_activate(arg, why);
 }

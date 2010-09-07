@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.95 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.96 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -70,7 +70,6 @@
 int	nfe_match(struct device *, void *, void *);
 void	nfe_attach(struct device *, struct device *, void *);
 int	nfe_activate(struct device *, int);
-void	nfe_powerhook(int, void *);
 void	nfe_miibus_statchg(struct device *);
 int	nfe_miibus_readreg(struct device *, int, int);
 void	nfe_miibus_writereg(struct device *, int, int, int);
@@ -383,14 +382,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	timeout_set(&sc->sc_tick_ch, nfe_tick, sc);
-
-	sc->sc_powerhook = powerhook_establish(nfe_powerhook, sc);
-}
-
-void
-nfe_powerhook(int why, void *arg)
-{
-	nfe_activate(arg, why);
 }
 
 void

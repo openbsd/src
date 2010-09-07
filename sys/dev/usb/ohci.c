@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.98 2010/08/31 16:59:47 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.99 2010/09/07 16:21:46 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1021,19 +1021,6 @@ ohci_shutdown(void *v)
 
 	DPRINTF(("ohci_shutdown: stopping the HC\n"));
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
-}
-
-/*
- * Handle suspend/resume.
- *
- * We need to switch to polling mode here, because this routine is
- * called from an interrupt context.  This is all right since we
- * are almost suspended anyway.
- */
-void
-ohci_powerhook(int why, void *v)
-{
-	ohci_activate(v, why);
 }
 
 #ifdef OHCI_DEBUG

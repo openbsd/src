@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.19 2010/08/31 17:13:46 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.20 2010/09/07 16:21:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -561,7 +561,7 @@ zapm_power_info(struct pxa2x0_apm_softc *pxa_sc, struct apm_power_info *power)
 }
 
 /*
- * Called before suspending when all powerhooks are done.
+ * Called before suspending when all ca_activate functions are done.
  */
 void
 zapm_suspend(struct pxa2x0_apm_softc *pxa_sc)
@@ -588,7 +588,7 @@ zapm_suspend(struct pxa2x0_apm_softc *pxa_sc)
 
 /*
  * Called after wake-up from suspend with interrupts still disabled,
- * before any powerhooks are done.
+ * before any ca_activate functions are done.
  */
 int
 zapm_resume(struct pxa2x0_apm_softc *pxa_sc)

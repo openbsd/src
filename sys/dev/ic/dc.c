@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.120 2010/09/06 15:59:03 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.121 2010/09/07 16:21:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,7 +130,6 @@
 #include <dev/ic/dcreg.h>
 
 int dc_intr(void *);
-void dc_powerhook(int, void *);
 struct dc_type *dc_devtype(void *);
 int dc_newbuf(struct dc_softc *, int, struct mbuf *);
 int dc_encap(struct dc_softc *, struct mbuf *, u_int32_t *);
@@ -1814,8 +1813,6 @@ hasmac:
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->sc_pwrhook = powerhook_establish(dc_powerhook, sc);
-
 fail:
 	return;
 }
@@ -3149,12 +3146,6 @@ dc_activate(struct device *self, int act)
 	return (rv);
 }
 
-void
-dc_powerhook(int why, void *arg)
-{
-	dc_activate(arg, why);
-}
-
 int
 dc_detach(struct dc_softc *sc)
 {
@@ -3186,10 +3177,6 @@ dc_detach(struct dc_softc *sc)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
-
 	return (0);
 }
 

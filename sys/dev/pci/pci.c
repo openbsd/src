@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.85 2010/09/06 19:20:23 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.86 2010/09/07 16:21:45 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 int pcimatch(struct device *, void *, void *);
 void pciattach(struct device *, struct device *, void *);
 int pcidetach(struct device *, int);
-void pcipowerhook(int, void *);
 int pciactivate(struct device *, int);
 void pci_suspend(struct pci_softc *);
 void pci_resume(struct pci_softc *);
@@ -163,7 +162,6 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	LIST_INIT(&sc->sc_devs);
-	sc->sc_powerhook = powerhook_establish(pcipowerhook, sc);
 
 	sc->sc_iot = pba->pba_iot;
 	sc->sc_memt = pba->pba_memt;
@@ -211,20 +209,6 @@ pciactivate(struct device *self, int act)
 		break;
 	}
 	return (rv);
-}
-
-/* save and restore the pci config space */
-void
-pcipowerhook(int why, void *arg)
-{
-	switch (why) {
-	case DVACT_SUSPEND:
-		pci_suspend(arg);
-		break;
-	case DVACT_RESUME:
-		pci_resume(arg);
-		break;
-	}
 }
 
 void

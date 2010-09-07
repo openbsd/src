@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.56 2010/09/06 19:20:21 deraadt Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.57 2010/09/07 16:21:42 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -148,7 +148,6 @@ void		rt2560_read_eeprom(struct rt2560_softc *);
 int		rt2560_bbp_init(struct rt2560_softc *);
 int		rt2560_init(struct ifnet *);
 void		rt2560_stop(struct ifnet *, int);
-void		rt2560_powerhook(int, void *);
 
 static const struct {
 	uint32_t	reg;
@@ -294,12 +293,6 @@ rt2560_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2560_TX_RADIOTAP_PRESENT);
 #endif
-
-	sc->sc_powerhook = powerhook_establish(rt2560_powerhook, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-	}
 	return 0;
 
 fail5:	rt2560_free_tx_ring(sc, &sc->bcnq);
@@ -317,9 +310,6 @@ rt2560_detach(void *xsc)
 
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->amrr_to);
-
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
@@ -2730,24 +2720,6 @@ rt2560_stop(struct ifnet *ifp, int disable)
 			sc->sc_flags &= ~RT2560_ENABLED;
 		}
 	}
-}
-
-void
-rt2560_powerhook(int why, void *arg)
-{
-	struct rt2560_softc *sc = arg;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case DVACT_SUSPEND:
-		rt2560_suspend(sc);
-		break;
-	case DVACT_RESUME:
-		rt2560_resume(sc);
-		break;
-	}
-	splx(s);
 }
 
 struct cfdriver ral_cd = {

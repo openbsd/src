@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.20 2010/08/27 16:45:46 deraadt Exp $	*/
+/*	$OpenBSD: aps.c,v 1.21 2010/09/07 16:21:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -145,7 +145,6 @@ int	 aps_init(bus_space_tag_t, bus_space_handle_t);
 int	 aps_read_data(struct aps_softc *);
 void	 aps_refresh_sensor_data(struct aps_softc *);
 void	 aps_refresh(void *);
-void	 aps_powerhook(int, void *);
 int	 aps_do_io(bus_space_tag_t, bus_space_handle_t,
 		   unsigned char *, int, int);
 
@@ -349,8 +348,6 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sensordev_install(&sc->sensordev);
 
-	powerhook_establish(aps_powerhook, (void *)sc);
-
 	/* Refresh sensor data every 0.5 seconds */
 	timeout_set(&aps_timeout, aps_refresh, sc);
 	timeout_add_msec(&aps_timeout, 500);
@@ -512,10 +509,4 @@ aps_activate(struct device *self, int act)
 		break;
 	}
 	return (0);
-}
-
-void
-aps_powerhook(int why, void *arg)
-{
-	aps_activate(arg, why);
 }

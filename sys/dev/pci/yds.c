@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.36 2010/09/06 19:20:23 deraadt Exp $	*/
+/*	$OpenBSD: yds.c,v 1.37 2010/09/07 16:21:46 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -196,7 +196,6 @@ static u_int32_t yds_get_lpfq(u_int);
 static u_int32_t yds_get_lpfk(u_int);
 static struct yds_dma *yds_find_dma(struct yds_softc *, void *);
 
-void yds_powerhook(int, void *);
 int	yds_init(void *sc);
 void	yds_attachhook(void *);
 
@@ -823,8 +822,6 @@ yds_attachhook(void *xsc)
 
 	/* Watch for power changes */
 	sc->suspend = DVACT_RESUME;
-	sc->powerhook = powerhook_establish(yds_powerhook, sc);
-
 	yds_configure_legacy(sc);
 }
 
@@ -1818,12 +1815,6 @@ yds_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-yds_powerhook(int why, void *self)
-{
-	yds_activate(self, why);
 }
 
 int

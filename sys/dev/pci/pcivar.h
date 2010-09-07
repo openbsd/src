@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.62 2010/09/05 18:14:33 kettenis Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.63 2010/09/07 16:21:45 deraadt Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -183,7 +183,6 @@ struct pci_softc {
 	struct extent *sc_ioex;
 	struct extent *sc_memex;
 	struct extent *sc_pmemex;
-	void *sc_powerhook;
 	LIST_HEAD(, pci_dev) sc_devs;
 	int sc_domain, sc_bus, sc_maxndevs;
 	pcitag_t *sc_bridgetag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.29 2010/08/29 16:46:58 deraadt Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.30 2010/09/07 16:21:43 deraadt Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -287,10 +287,6 @@ struct rtw_tx_radiotap_header {
 	u_int16_t				rt_chan_flags;
 } __packed;
 
-struct rtw_hooks {
-	void			*rh_power;	/* power management hook */
-};
-
 struct rtw_mtbl {
 	int			(*mt_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
@@ -399,7 +395,6 @@ struct rtw_softc {
 	void			(*sc_disable)(struct rtw_softc *);
 	void			(*sc_power)(struct rtw_softc *, int);
 	struct rtw_mtbl		sc_mtbl;
-	struct rtw_hooks	sc_hooks;
 
 	caddr_t			sc_radiobpf;
 
@@ -453,7 +448,6 @@ void rtw_disable(struct rtw_softc *);
 int rtw_enable(struct rtw_softc *);
 
 int rtw_activate(struct device *, int);
-void rtw_powerhook(int, void *);
 void rtw_shutdown(void *);
 
 const char *rtw_pwrstate_string(enum rtw_pwrstate);

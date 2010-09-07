@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.47 2010/08/30 20:42:54 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.48 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -85,11 +85,9 @@ int	wi_pci_tmd_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 int	wi_pci_native_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 int	wi_pci_common_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 void	wi_pci_plx_print_cis(struct wi_softc *);
-void	wi_pci_powerhook(int, void *);
 
 struct wi_pci_softc {
 	struct wi_softc		 sc_wi;		/* real softc */
-	void			*sc_powerhook;
 	struct workq_task	sc_resume_wqt;
 };
 
@@ -147,7 +145,6 @@ wi_pci_match(struct device *parent, void *match, void *aux)
 void
 wi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
 	struct wi_softc *sc = (struct wi_softc *)self;
 	struct pci_attach_args *pa = aux;
 	const struct wi_pci_product *pp;
@@ -157,8 +154,6 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	printf("\n");
 	wi_attach(sc, &wi_func_io);
-
-	psc->sc_powerhook = powerhook_establish(wi_pci_powerhook, sc);
 }
 
 int
@@ -199,12 +194,6 @@ wi_pci_resume(void *arg1, void *arg2)
 	sc->wi_flags &= ~WI_FLAGS_BUSY;
 	wakeup(&sc->wi_flags);
 	splx(s);
-}
-
-void
-wi_pci_powerhook(int why, void *arg)
-{
-	wi_pci_activate(arg, why);
 }
 
 /*

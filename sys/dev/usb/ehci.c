@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.109 2010/08/31 17:13:47 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.110 2010/09/07 16:21:46 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -122,8 +122,6 @@ struct ehci_pipe {
 };
 
 u_int8_t		ehci_reverse_bits(u_int8_t, int);
-
-void		ehci_powerhook(int, void *);
 
 usbd_status	ehci_open(usbd_pipe_handle);
 void		ehci_poll(struct usbd_bus *);
@@ -418,8 +416,6 @@ ehci_init(ehci_softc_t *sc)
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
-
-	sc->sc_powerhook = powerhook_establish(ehci_powerhook, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
 
@@ -1012,8 +1008,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	timeout_del(&sc->sc_tmo_intrlist);
 
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 	if (sc->sc_shutdownhook != NULL)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
 
@@ -1139,12 +1133,6 @@ ehci_activate(struct device *self, int act)
 		break;
 	}
 	return (rv);
-}
-
-void
-ehci_powerhook(int why, void *v)
-{
-	ehci_activate(v, why);
 }
 
 /*

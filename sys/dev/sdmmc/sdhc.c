@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.32 2010/08/31 17:13:47 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.33 2010/09/07 16:21:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -283,12 +283,6 @@ sdhc_activate(struct device *self, int act)
 		break;
 	}
 	return (rv);
-}
-
-void
-sdhc_powerhook(int why, void *arg)
-{
-	sdhc_activate(arg, why);
 }
 
 /*

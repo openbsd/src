@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.81 2010/09/06 18:34:34 kettenis Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.82 2010/09/07 16:21:45 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -148,7 +148,6 @@ int	pccbb_pcmcia_card_detect(pcmcia_chipset_handle_t pch);
 void	pccbb_pcmcia_do_io_map(struct pcic_handle *, int);
 void	pccbb_pcmcia_wait_ready(struct pcic_handle *);
 void	pccbb_pcmcia_do_mem_map(struct pcic_handle *, int);
-void	pccbb_powerhook(int, void *);
 
 /* bus-space allocation and deallocation functions */
 int	pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t, rbus_tag_t,
@@ -501,8 +500,6 @@ pccbb_pci_callback(struct device *self)
 	/* clear data structure for child device interrupt handlers */
 	sc->sc_pil = NULL;
 	sc->sc_pil_intr_enable = 1;
-
-	powerhook_establish(pccbb_powerhook, sc);
 
 	sockstat = bus_space_read_4(base_memt, base_memh, CB_SOCKET_STAT);
 	if ((sockstat & CB_SOCKET_STAT_CD) == 0)
@@ -2903,10 +2900,4 @@ pccbbactivate(struct device *self, int act)
 		break;
 	}
 	return (rv);
-}
-
-void
-pccbb_powerhook(int why, void *arg)
-{
-	pccbbactivate(arg, why);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.72 2010/09/06 19:20:21 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.73 2010/09/07 16:21:42 deraadt Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -841,15 +841,6 @@ atw_attach(struct atw_softc *sc)
 	bpfattach(&sc->sc_radiobpf, ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64);
 #endif
-
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	sc->sc_powerhook = powerhook_establish(atw_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.ar_ihdr.it_len = sizeof(sc->sc_rxtapu);
@@ -2749,9 +2740,6 @@ atw_detach(struct atw_softc *sc)
 	    sizeof(struct atw_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
-
 	if (sc->sc_srom)
 		free(sc->sc_srom, M_DEVBUF);
 
@@ -4009,12 +3997,6 @@ atw_resume(void *arg1, void *arg2)
 		(*sc->sc_power)(sc, DVACT_RESUME);
 	if (ifp->if_flags & IFF_UP)
 		atw_init(ifp);
-}
-
-void
-atw_powerhook(int why, void *arg)
-{
-	atw_activate(arg, why);
 }
 
 /*

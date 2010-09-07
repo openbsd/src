@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.69 2010/08/27 20:22:13 deraadt Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.70 2010/09/07 16:21:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -809,7 +809,6 @@ struct rl_softc {
 	int			rl_eecmd_read;
 	int			rl_eewidth;
 	int			rl_bus_speed;
-	void			*sc_pwrhook;
 	int			rl_txthresh;
 	struct rl_chain_data	rl_cdata;
 	struct timeout		sc_tick_tmo;

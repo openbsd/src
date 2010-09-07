@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.3 2010/08/30 21:32:20 deraadt Exp $ */
+/*	$OpenBSD: omehci.c,v 1.4 2010/09/07 16:21:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -41,7 +41,6 @@ int	omehci_match(struct device *, void *, void *);
 void	omehci_attach(struct device *, struct device *, void *);
 int	omehci_detach(struct device *, int);
 int	omehci_activate(struct device *, int);
-void	omehci_powerhook(int, void *);
 
 struct omehci_softc {
 	ehci_softc_t	sc;
@@ -137,11 +136,6 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-#if 0
-	sc->sc.sc_powerhook = powerhook_establish(omehci_powerhook, sc);
-	if (sc->sc.sc_powerhook == NULL)
-		printf("%s: cannot establish powerhook\n", devname);
-#endif
 	sc->sc.sc_shutdownhook = shutdownhook_establish(ehci_shutdown, &sc->sc);
 
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -157,13 +151,6 @@ omehci_detach(struct device *self, int flags)
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-
-#if 0
-	if (sc->sc.sc_powerhook != NULL) {
-		powerhook_disestablish(sc->sc.sc_powerhook);
-		sc->sc.sc_powerhook = NULL;
-	}
-#endif
 
 	if (sc->sc_ih != NULL) {
 		intc_intr_disestablish(sc->sc_ih);
@@ -192,7 +179,7 @@ omehci_activate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		sc->sc.sc_bus.use_polling++;
 #if 0
-		ohci_powerhook(act, &sc->sc);
+		ohci_activate(&sc->sc, act);
 		prcm_disableclock(PRCM_CLK_EN_USB);
 #endif
 		sc->sc.sc_bus.use_polling--;
@@ -202,21 +189,13 @@ omehci_activate(struct device *self, int act)
 		prcm_enableclock(PRCM_CLK_EN_USB);
 #if 0
 		omehci_enable(sc);
-		ohci_powerhook(act, &sc->sc);
+		ohci_activate(&sc->sc, act);
 #endif
 		sc->sc.sc_bus.use_polling--;
 		break;
 	}
 	return 0;
 }
-
-#if 0
-void
-omehci_powerhook(int why, void *arg)
-{
-	omehci_activate(arg, why);
-}
-#endif
 
 #if 0
 void

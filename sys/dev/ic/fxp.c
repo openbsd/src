@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.106 2010/09/06 16:01:52 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.107 2010/09/07 16:21:42 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -287,8 +287,6 @@ struct cfdriver fxp_cd = {
 	NULL, "fxp", DV_IFNET
 };
 
-void	fxp_powerhook(int, void *);
-
 int
 fxp_activate(struct device *self, int act)
 {
@@ -321,12 +319,6 @@ fxp_resume(void *arg1, void *arg2)
 	struct fxp_softc *sc = arg1;
 
 	fxp_init(sc);
-}
-
-void
-fxp_powerhook(int why, void *arg)
-{
-	fxp_activate(arg, why);
 }
 
 /*************************************************************
@@ -511,13 +503,6 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	/*
-	 * Add power hook, so that DMA is disabled prior to reboot. Not
-	 * doing so could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	sc->sc_powerhook = powerhook_establish(fxp_powerhook, sc);
 
 	/*
 	 * Initialize timeout for statistics update.
@@ -1067,9 +1052,6 @@ fxp_detach(struct fxp_softc *sc)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 }
 
 /*

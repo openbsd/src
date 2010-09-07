@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.35 2010/08/27 18:50:57 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.36 2010/09/07 16:21:44 deraadt Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ struct cs4280_softc {
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;	
 
-	void   *sc_powerhook;		/* Power Hook */
 	u_int16_t  ac97_reg[CS4280_SAVE_REG_MAX + 1];	/* Save ac97 registers */
 };
 
@@ -232,8 +231,6 @@ int	cs4280_attach_codec(void *sc, struct ac97_codec_if *);
 int	cs4280_read_codec(void *sc, u_int8_t a, u_int16_t *d);
 int	cs4280_write_codec(void *sc, u_int8_t a, u_int16_t d);
 void	cs4280_reset_codec(void *sc);
-
-void	cs4280_powerhook(int, void *);
 
 void	cs4280_clear_fifos(struct cs4280_softc *);
 
@@ -591,7 +588,6 @@ cs4280_attachhook(void *xsc)
 #if NMIDI > 0
 	midi_attach_mi(&cs4280_midi_hw_if, sc, &sc->sc_dev);
 #endif
-	sc->sc_powerhook = powerhook_establish(cs4280_powerhook, sc);
 }
 
 void
@@ -1862,12 +1858,6 @@ cs4280_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-cs4280_powerhook(int why, void *v)
-{
-	cs4280_activate(v, why);
 }
 
 void

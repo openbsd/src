@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.3 2010/08/30 21:32:20 deraadt Exp $ */
+/* $OpenBSD: omap_com.c,v 1.4 2010/09/07 16:21:37 deraadt Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -116,10 +116,6 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 
 	(void)intc_intr_establish(aa->aa_intr, IPL_TTY, comintr,
 	    sc, sc->sc_dev.dv_xname);
-
-#if 0
-	(void)powerhook_establish(&omapuart_powerhook, sc);
-#endif
 }
 
 int

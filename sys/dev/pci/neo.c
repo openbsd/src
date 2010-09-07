@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.25 2010/08/27 18:49:40 deraadt Exp $       */
+/*      $OpenBSD: neo.c,v 1.26 2010/09/07 16:21:45 deraadt Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -154,8 +154,6 @@ struct neo_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
-
-	void *powerhook;
 };
 
 static struct neo_firmware *nf;
@@ -208,8 +206,6 @@ void	neo_free(void *, void *, int);
 size_t	neo_round_buffersize(void *, int, size_t);
 int	neo_get_props(void *);
 void	neo_set_mixer(struct neo_softc *sc, int a, int d);
-void    neo_powerhook(int why, void *arg);
-
 
 struct cfdriver neo_cd = {
 	NULL, "neo", DV_DULL
@@ -621,8 +617,6 @@ neo_attach(parent, self, aux)
 	if ((error = ac97_attach(&sc->host_if)) != 0)
 		return;
 
-	sc->powerhook = powerhook_establish(neo_powerhook, sc);
-
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
 
 	return;
@@ -642,12 +636,6 @@ neo_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-neo_powerhook(int why, void *addr)
-{
-	neo_activate(addr, why);
 }
 
 int

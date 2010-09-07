@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.26 2010/08/27 18:50:56 deraadt Exp $	*/
+/*	$OpenBSD: autri.c,v 1.27 2010/09/07 16:21:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -99,7 +99,6 @@ int	autri_write_codec(void *sc, u_int8_t a, u_int16_t d);
 void	autri_reset_codec(void *sc);
 enum ac97_host_flags	autri_flags_codec(void *);
 
-void autri_powerhook(int why,void *addr);
 int  autri_init(void *sc);
 struct autri_dma *autri_find_dma(struct autri_softc *, void *);
 void autri_setup_channel(struct autri_softc *sc,int mode,
@@ -617,8 +616,6 @@ autri_attach(parent, self, aux)
 #if NMIDI > 0
 	midi_attach_mi(&autri_midi_hw_if, sc, &sc->sc_dev);
 #endif
-
-	powerhook_establish(autri_powerhook, sc);
 }
 
 int
@@ -636,12 +633,6 @@ autri_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-autri_powerhook(int why,void *addr)
-{
-	autri_activate(addr, why);
 }
 
 int

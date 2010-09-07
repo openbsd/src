@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.92 2010/08/27 20:09:01 deraadt Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.93 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -66,7 +66,6 @@ int		ipw_match(struct device *, void *, void *);
 void		ipw_attach(struct device *, struct device *, void *);
 int		ipw_activate(struct device *, int);
 void		ipw_resume(void *, void *);
-void		ipw_powerhook(int, void *);
 int		ipw_dma_alloc(struct ipw_softc *);
 void		ipw_release(struct ipw_softc *);
 int		ipw_media_change(struct ifnet *);
@@ -277,8 +276,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_send_mgmt = ipw_send_mgmt;
 	ieee80211_media_init(ifp, ipw_media_change, ipw_media_status);
 
-	sc->powerhook = powerhook_establish(ipw_powerhook, sc);
-
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
@@ -337,12 +334,6 @@ ipw_resume(void *arg1, void *arg2)
 	sc->sc_flags &= ~IPW_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
 	splx(s);
-}
-
-void
-ipw_powerhook(int why, void *arg)
-{
-	ipw_activate(arg, why);
 }
 
 int

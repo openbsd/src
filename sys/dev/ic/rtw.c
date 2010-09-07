@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.80 2010/08/29 16:46:58 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.81 2010/09/07 16:21:43 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -184,8 +184,6 @@ void	 rtw_enable_interrupts(struct rtw_softc *);
 int	 rtw_dequeue(struct ifnet *, struct rtw_txsoft_blk **,
 	    struct rtw_txdesc_blk **, struct mbuf **,
 	    struct ieee80211_node **);
-void	 rtw_establish_hooks(struct rtw_hooks *, const char *, void *);
-void	 rtw_disestablish_hooks(struct rtw_hooks *, const char *, void *);
 int	 rtw_txsoft_blk_setup(struct rtw_txsoft_blk *, u_int);
 void	 rtw_rxdesc_init_all(struct rtw_rxdesc_blk *, struct rtw_rxsoft *,
 	    int);
@@ -3618,34 +3616,6 @@ rtw_activate(struct device *self, int act)
 	return 0;
 }
 
-void
-rtw_powerhook(int why, void *arg)
-{
-	rtw_activate(arg, why);
-}
-
-void
-rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
-    void *arg)
-{
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	hooks->rh_power = powerhook_establish(rtw_powerhook, arg);
-	if (hooks->rh_power == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    dvname);
-}
-
-void
-rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
-    void *arg)
-{
-	if (hooks->rh_power != NULL)
-		powerhook_disestablish(hooks->rh_power);
-}
-
 int
 rtw_txsoft_blk_setup(struct rtw_txsoft_blk *tsb, u_int qlen)
 {
@@ -4105,9 +4075,6 @@ rtw_attach(struct rtw_softc *sc)
 	bpfattach(&sc->sc_radiobpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64);
 #endif
-
-	rtw_establish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname, (void*)sc);
-
 	return;
 
 fail8:
@@ -4151,8 +4118,6 @@ rtw_detach(struct rtw_softc *sc)
 {
 	sc->sc_flags |= RTW_F_INVALID;
 
-	rtw_disestablish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname,
-	    (void*)sc);
 	timeout_del(&sc->sc_scan_to);
 
 	rtw_stop(&sc->sc_if, 1);

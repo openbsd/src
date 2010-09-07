@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.8 2010/08/27 18:50:56 deraadt Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.9 2010/09/07 16:21:44 deraadt Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -118,9 +118,6 @@ struct auacer_softc {
 	pcitag_t sc_pt;
 
 	int sc_dmamap_flags;
-
-	/* Power Management */
-	void *sc_powerhook;
 };
 
 #define READ1(sc, a) bus_space_read_1(sc->iot, sc->aud_ioh, a)
@@ -186,7 +183,6 @@ int	auacer_allocmem(struct auacer_softc *, size_t, size_t,
 	    struct auacer_dma *);
 int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
 
-void	auacer_powerhook(int, void *);
 int	auacer_set_rate(struct auacer_softc *, int, u_long);
 void	auacer_finish_attach(struct device *);
 
@@ -296,8 +292,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
-
-	sc->sc_powerhook = powerhook_establish(auacer_powerhook, sc);
 
 	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
 
@@ -1096,10 +1090,4 @@ auacer_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-auacer_powerhook(int why, void *addr)
-{
-	auacer_activate(addr, why);
 }

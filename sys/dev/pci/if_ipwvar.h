@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.20 2010/08/03 18:26:25 kettenis Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.21 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -128,7 +128,6 @@ struct ipw_softc {
 	uint32_t			rxcur;
 	int				txfree;
 
-	void				*powerhook;
 	struct workq_task		sc_resume_wqt;
 
 #if NBPFILTER > 0

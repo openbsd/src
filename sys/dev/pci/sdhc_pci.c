@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.9 2010/08/27 15:41:42 deraadt Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.10 2010/09/07 16:21:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -143,9 +143,8 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Establish power and shutdown hooks.
+	 * Establish shutdown hooks.
 	 */
-	(void)powerhook_establish(sdhc_powerhook, &sc->sc);
 	(void)shutdownhook_establish(sdhc_shutdown, &sc->sc);
 }
 

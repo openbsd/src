@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.91 2010/08/07 03:50:02 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.92 2010/09/07 16:21:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -592,7 +592,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_shutdownhook = shutdownhook_establish(arc_shutdown, sc);
 	if (sc->sc_shutdownhook == NULL)
-		panic("unable to establish arc powerhook");
+		panic("unable to establish arc shutdownhook");
 
 	sc->sc_link.adapter = &arc_switch;
 	sc->sc_link.adapter_softc = sc;

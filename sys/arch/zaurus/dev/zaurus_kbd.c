@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.30 2010/08/30 21:35:57 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.31 2010/09/07 16:21:41 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -109,7 +109,6 @@ struct zkbd_softc {
 	char sc_rep[MAXKEYS];
 	int sc_nrep;
 #endif
-	void *sc_powerhook;
 };
 
 struct zkbd_softc *zkbd_dev; /* XXX */
@@ -123,7 +122,6 @@ void zkbd_poll(void *v);
 int zkbd_on(void *v);
 int zkbd_sync(void *v);
 int zkbd_hinge(void *v);
-void zkbd_powerhook(int why, void *arg);
 
 int zkbd_modstate;
 
@@ -183,12 +181,6 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rawkbd = 0;
 #endif
 	/* Determine which system we are - XXX */
-
-	sc->sc_powerhook = powerhook_establish(zkbd_powerhook, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf(": unable to establish powerhook\n");
-		return;
-	}
 
 	if (1 /* C3000 */) {
 		sc->sc_sense_array = gpio_sense_pins_c3000;
@@ -586,10 +578,4 @@ zkbd_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-zkbd_powerhook(int why, void *arg)
-{
-	zkbd_activate(arg, why);
 }

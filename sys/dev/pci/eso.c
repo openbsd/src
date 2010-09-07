@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.33 2010/08/27 18:50:57 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.34 2010/09/07 16:21:44 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -129,9 +129,6 @@ int	eso_trigger_output(void *, void *, void *, int,
 int	eso_trigger_input(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
 void	eso_setup(struct eso_softc *, int);
-
-void	eso_powerhook(int, void *);
-
 
 struct audio_hw_if eso_hw_if = {
 	eso_open,
@@ -309,8 +306,6 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 	aa.hwif = NULL;
 	aa.hdl = NULL;
 	(void)config_found(&sc->sc_dev, &aa, audioprint);
-
-	sc->sc_powerhook = powerhook_establish(&eso_powerhook, sc);
 
 	aa.type = AUDIODEV_TYPE_MPU;
 	aa.hwif = NULL;
@@ -2084,11 +2079,4 @@ eso_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-eso_powerhook(int why, void *self)
-{
-	eso_activate(self, why);
-
 }

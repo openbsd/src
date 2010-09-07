@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.20 2010/09/06 19:20:21 deraadt Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.21 2010/09/07 16:21:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -75,8 +75,6 @@ int	re_cardbus_probe(struct device *, void *, void *);
 void	re_cardbus_attach(struct device *, struct device *, void *);
 int	re_cardbus_detach(struct device *, int);
 void	re_cardbus_setup(struct rl_softc *);
-
-void	re_cardbus_powerhook(int, void *);
 
 /*
  * Cardbus autoconfig definitions
@@ -160,12 +158,8 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 	snprintf(intrstr, sizeof(intrstr), "irq %d", ca->ca_intrline);
 
-	sc->sc_pwrhook = powerhook_establish(re_cardbus_powerhook, sc);
-
 	/* Call bus-independent (common) attach routine */
 	if (re_attach(sc, intrstr)) {
-		if (sc->sc_pwrhook != NULL)
-			powerhook_disestablish(sc->sc_pwrhook);
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
 		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg, sc->rl_btag,
 		    sc->rl_bhandle, csc->sc_mapsize);
@@ -259,10 +253,6 @@ re_cardbus_detach(struct device *self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	/* No more hooks */
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
-
 	/* Disable interrupts */
 	if (csc->sc_ih != NULL)
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
@@ -272,14 +262,4 @@ re_cardbus_detach(struct device *self, int flags)
 	    csc->sc_mapsize);
 
 	return (0);
-}
-
-void
-re_cardbus_powerhook(int why, void *arg)
-{
-	struct rl_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	if (why == DVACT_RESUME)
-		re_init(ifp);
 }

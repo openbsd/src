@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.4 2010/08/30 21:32:20 deraadt Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.5 2010/09/07 16:21:37 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -416,8 +416,6 @@ struct omdisplay_softc {
 	int	sc_nscreens;
 	LIST_HEAD(,omdisplay_screen) sc_screens;
 
-	void 				*sc_ph; /* powerhook */
-
 	struct omdisplay_panel_data	*sc_geometry;
 	struct omdisplay_screen		*sc_active;
 };
@@ -441,7 +439,6 @@ void omdisplay_set_backlight(int on);
 void omdisplay_blank(int blank);
 void omdisplay_suspend(struct omdisplay_softc *sc);
 void omdisplay_resume(struct omdisplay_softc *sc);
-void omdisplay_powerhook(int why, void *v);
 void omdisplay_initialize(struct omdisplay_softc *sc,
     struct omdisplay_panel_data *geom);
 void omdisplay_setup_rasops(struct omdisplay_softc *sc,
@@ -573,9 +570,6 @@ omdisplay_attach(struct device *parent, struct device *self, void *args)
 	(void)config_found(self, &wsaa, wsemuldisplaydevprint);
 
 	/* backlight? */
-
-	/* powerhook? */
-	sc->sc_ph = powerhook_establish(omdisplay_powerhook, sc);
 }
 
 
@@ -881,12 +875,6 @@ omdisplay_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-omdisplay_powerhook(int why, void *v)
-{
-	return omdisplay_activate(v, why);
 }
 
 void

@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.47 2010/04/20 22:05:43 tedu Exp $ */
+/* $OpenBSD: if_em.h,v 1.48 2010/09/07 16:21:44 deraadt Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -325,7 +325,6 @@ struct em_softc {
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
-	void		*sc_powerhook;
 
 #ifdef __STRICT_ALIGNMENT
 	/* Used for carrying forward alignment adjustments */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.21 2010/08/27 18:50:57 deraadt Exp $	*/
+/*	$OpenBSD: esa.c,v 1.22 2010/09/07 16:21:44 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -161,7 +161,6 @@ int		esa_add_list(struct esa_voice *, struct esa_list *, u_int16_t,
 void		esa_remove_list(struct esa_voice *, struct esa_list *, int);
 
 /* power management */
-void		esa_powerhook(int, void *);
 int		esa_suspend(struct esa_softc *);
 int		esa_resume(struct esa_softc *);
 
@@ -1145,13 +1144,6 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_audiodev[i] =
 		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
 	}
-
-	sc->powerhook = powerhook_establish(esa_powerhook, sc);
-	if (sc->powerhook == NULL)
-		printf("%s: WARNING: unable to establish powerhook\n",
-		    sc->sc_dev.dv_xname);
-
-	return;
 }
 
 int
@@ -1620,12 +1612,6 @@ esa_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-esa_powerhook(int why, void *hdl)
-{
-	esa_activate(hdl, why);
 }
 
 int

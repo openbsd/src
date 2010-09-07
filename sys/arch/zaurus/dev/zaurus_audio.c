@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.13 2010/08/30 21:35:57 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.14 2010/09/07 16:21:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -18,7 +18,6 @@
 
 /*
  * TODO:
- *	- powerhooks (currently only works until first suspend)
  *	- record support
  */
 
@@ -57,7 +56,6 @@ int	zaudio_match(struct device *, void *, void *);
 void	zaudio_attach(struct device *, struct device *, void *);
 int	zaudio_detach(struct device *, int);
 int	zaudio_activate(struct device *, int);
-void	zaudio_powerhook(int, void *);
 
 #define ZAUDIO_OP_SPKR	0
 #define ZAUDIO_OP_HP	1
@@ -85,7 +83,6 @@ struct zaudio_softc {
 	/* i2c device softc */
 	struct pxa2x0_i2c_softc	sc_i2c;
 
-	void			*sc_powerhook;
 	int			sc_playing;
 
 	struct zaudio_volume	sc_volume[2];
@@ -200,12 +197,6 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 	struct pxaip_attach_args	*pxa = aux;
 	int err;
 
-	sc->sc_powerhook = powerhook_establish(zaudio_powerhook, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf(": unable to establish powerhook\n");
-		return;
-	}
-
 	sc->sc_i2s.sc_iot = pxa->pxa_iot;
 	sc->sc_i2s.sc_dmat = pxa->pxa_dmat;
 	sc->sc_i2s.sc_size = PXA2X0_I2S_SIZE;
@@ -258,18 +249,13 @@ fail_probe:
 fail_i2c:
 	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
 fail_i2s:
-	powerhook_disestablish(sc->sc_powerhook);
+	;
 }
 
 int
 zaudio_detach(struct device *self, int flags)
 {
 	struct zaudio_softc *sc = (struct zaudio_softc *)self;
-
-	if (sc->sc_powerhook != NULL) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = NULL;
-	}
 
 	pxa2x0_i2c_detach_sub(&sc->sc_i2c);
 	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
@@ -294,12 +280,6 @@ zaudio_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-zaudio_powerhook(int why, void *arg)
-{
-	zaudio_activate(arg, why);
 }
 
 void

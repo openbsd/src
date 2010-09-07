@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.301 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.302 2010/09/07 16:21:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -151,7 +151,6 @@ int bge_intr(void *);
 void bge_start(struct ifnet *);
 int bge_ioctl(struct ifnet *, u_long, caddr_t);
 void bge_init(void *);
-void bge_powerhook(int, void *);
 void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
 void bge_stop(struct bge_softc *);
 void bge_watchdog(struct ifnet *);
@@ -2265,7 +2264,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	sc->sc_shutdownhook = shutdownhook_establish(bge_shutdown, sc);
-	sc->sc_powerhook = powerhook_establish(bge_powerhook, sc);
 	
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
 	timeout_set(&sc->bge_rxtimeout, bge_rxtick, sc);
@@ -3736,10 +3734,4 @@ bge_link_upd(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
 	    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
 	    BGE_MACSTAT_LINK_CHANGED);
-}
-
-void
-bge_powerhook(int why, void *arg)
-{
-	bge_activate(arg, why);
 }

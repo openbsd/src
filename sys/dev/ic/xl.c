@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.95 2010/09/06 16:01:52 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.96 2010/09/07 16:21:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -193,8 +193,6 @@ int xl_miibus_readreg(struct device *, int, int);
 void xl_miibus_writereg(struct device *, int, int, int);
 void xl_miibus_statchg(struct device *);
 
-void xl_powerhook(int, void *);
-
 int
 xl_activate(struct device *self, int act)
 {
@@ -221,12 +219,6 @@ xl_activate(struct device *self, int act)
 		break;
 	}
 	return (rv);
-}
-
-void
-xl_powerhook(int why, void *arg)
-{
-	xl_activate(arg, why);
 }
 
 /*
@@ -2687,7 +2679,6 @@ xl_attach(struct xl_softc *sc)
 	ether_ifattach(ifp);
 
 	sc->sc_sdhook = shutdownhook_establish(xl_shutdown, sc);
-	sc->sc_pwrhook = powerhook_establish(xl_powerhook, sc);
 }
 
 int
@@ -2710,8 +2701,6 @@ xl_detach(struct xl_softc *sc)
 
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);

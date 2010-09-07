@@ -1,4 +1,4 @@
-/*	$OpenBSD: omohci.c,v 1.3 2010/08/30 21:32:20 deraadt Exp $ */
+/*	$OpenBSD: omohci.c,v 1.4 2010/09/07 16:21:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -96,7 +96,6 @@ int	omohci_match(struct device *, void *, void *);
 void	omohci_attach(struct device *, struct device *, void *);
 int	omohci_detach(struct device *, int);
 int	omohci_activate(struct device *, int);
-void	omohci_powerhook(int, void *);
 
 struct omohci_softc {
 	ohci_softc_t	sc;
@@ -225,11 +224,6 @@ omohci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(omohci_powerhook, sc);
-	if (sc->sc.sc_powerhook == NULL)
-		printf("%s: cannot establish powerhook\n",
-		    sc->sc.sc_bus.bdev.dv_xname);
-
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 	    usbctlprint);
 }
@@ -243,11 +237,6 @@ omohci_detach(struct device *self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-
-	if (sc->sc.sc_powerhook != NULL) {
-		powerhook_disestablish(sc->sc.sc_powerhook);
-		sc->sc.sc_powerhook = NULL;
-	}
 
 	if (sc->sc_ih0 != NULL) {
 		intc_intr_disestablish(sc->sc_ih0);
@@ -306,12 +295,6 @@ omohci_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-int
-omohci_powerhook(int why, void *arg)
-{
-	omohci_activate(arg, why);
 }
 
 void

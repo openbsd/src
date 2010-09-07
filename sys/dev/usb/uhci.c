@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.80 2010/09/06 19:20:24 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.81 2010/09/07 16:21:46 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -129,7 +129,6 @@ void		uhci_globalreset(uhci_softc_t *);
 usbd_status	uhci_portreset(uhci_softc_t*, int);
 void		uhci_reset(uhci_softc_t *);
 void		uhci_shutdown(void *v);
-void		uhci_powerhook(int, void *);
 usbd_status	uhci_run(uhci_softc_t *, int run);
 uhci_soft_td_t  *uhci_alloc_std(uhci_softc_t *);
 void		uhci_free_std(uhci_softc_t *, uhci_soft_td_t *);
@@ -508,7 +507,6 @@ uhci_init(uhci_softc_t *sc)
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
 
 	sc->sc_suspend = DVACT_RESUME;
-	sc->sc_powerhook = powerhook_establish(uhci_powerhook, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
 
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
@@ -548,7 +546,7 @@ uhci_activate(struct device *self, int act)
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_suspend = act;
 		sc->sc_bus.use_polling--;
-		DPRINTF(("uhci_powerhook: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
+		DPRINTF(("uhci_activate: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
 		break;
 	case DVACT_RESUME:
 #ifdef DIAGNOSTIC
@@ -605,8 +603,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 	if (sc->sc_shutdownhook != NULL)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
 
@@ -722,19 +718,6 @@ uhci_shutdown(void *v)
 
 	DPRINTF(("uhci_shutdown: stopping the HC\n"));
 	uhci_run(sc, 0); /* stop the controller */
-}
-
-/*
- * Handle suspend/resume.
- *
- * We need to switch to polling mode here, because this routine is
- * called from an interrupt context.  This is all right since we
- * are almost suspended anyway.
- */
-void
-uhci_powerhook(int why, void *v)
-{
-	uhci_activate(v, why);
 }
 
 #ifdef UHCI_DEBUG

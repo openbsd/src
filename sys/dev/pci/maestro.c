@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.30 2010/08/27 18:50:57 deraadt Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.31 2010/09/07 16:21:45 deraadt Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -455,7 +455,6 @@ struct maestro_softc {
 	struct ac97_host_if	host_if;
 	struct audio_device	*sc_audev;
 
-	void			*powerhook;
 	int			suspend;
 
 	struct maestro_channel	play;
@@ -511,7 +510,6 @@ void	maestro_initcodec(void *);
 void	maestro_set_speed(struct maestro_channel *, u_long *);
 void	maestro_init(struct maestro_softc *);
 void	maestro_power(struct maestro_softc *, int);
-void	maestro_powerhook(int, void *);
 
 void 	maestro_channel_start(struct maestro_channel *);
 void 	maestro_channel_stop(struct maestro_channel *);
@@ -767,10 +765,6 @@ maestro_attach(parent, self, aux)
 
 	/* Attach audio */
 	audio_attach_mi(&maestro_hw_if, sc, &sc->dev);
-
-	/* Hook power changes */
-	sc->powerhook = powerhook_establish(maestro_powerhook, sc);
-
 	return;
 
  bad:
@@ -1550,12 +1544,6 @@ maestro_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-maestro_powerhook(int why, void *v)
-{
-	maestro_activate(v, why);
 }
 
 void

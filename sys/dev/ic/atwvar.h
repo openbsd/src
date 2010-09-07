@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.22 2010/08/29 16:46:58 deraadt Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.23 2010/09/07 16:21:42 deraadt Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -196,7 +196,6 @@ struct atw_softc {
 	bus_space_handle_t	sc_sh;		/* bus space handle */
 	bus_size_t		sc_mapsize;	/* mapping size */
 	bus_dma_tag_t		sc_dmat;	/* bus dma tag */
-	void			*sc_powerhook;	/* power management hook */
 	u_int32_t		sc_cacheline;	/* cache line size */
 	u_int32_t		sc_maxburst;	/* maximum burst length */
 
@@ -441,7 +440,6 @@ int	atw_detach(struct atw_softc *);
 int	atw_activate(struct device *, int);
 int	atw_intr(void *arg);
 int	atw_enable(struct atw_softc *);
-void	atw_powerhook(int, void *);
 void	atw_resume(void *, void *);
 
 #endif /* _DEV_IC_ATWVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.63 2010/09/06 19:20:22 deraadt Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.64 2010/09/07 16:21:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -166,7 +166,6 @@ void		rt2860_switch_chan(struct rt2860_softc *,
 int		rt2860_setup_beacon(struct rt2860_softc *);
 #endif
 void		rt2860_enable_tsf_sync(struct rt2860_softc *);
-void		rt2860_powerhook(int, void *);
 
 static const struct {
 	uint32_t	reg;
@@ -276,12 +275,6 @@ rt2860_attach(void *xsc, int id)
 		mountroothook_establish(rt2860_attachhook, sc);
 	else
 		rt2860_attachhook(sc);
-
-	sc->sc_powerhook = powerhook_establish(rt2860_powerhook, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-	}
 
 	return 0;
 
@@ -403,9 +396,6 @@ rt2860_detach(void *xsc)
 	struct rt2860_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int qid;
-
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
@@ -3862,22 +3852,4 @@ rt2860_enable_tsf_sync(struct rt2860_softc *sc)
 #endif
 
 	RAL_WRITE(sc, RT2860_BCN_TIME_CFG, tmp);
-}
-
-void
-rt2860_powerhook(int why, void *arg)
-{
-	struct rt2860_softc *sc = arg;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case DVACT_SUSPEND:
-		rt2860_suspend(sc);
-		break;
-	case DVACT_RESUME:
-		rt2860_resume(sc);
-		break;
-	}
-	splx(s);
 }

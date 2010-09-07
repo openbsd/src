@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.108 2010/08/27 20:09:01 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.109 2010/09/07 16:21:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -77,7 +77,6 @@ void		wpi_radiotap_attach(struct wpi_softc *);
 int		wpi_detach(struct device *, int);
 int		wpi_activate(struct device *, int);
 void		wpi_resume(void *, void *);
-void		wpi_powerhook(int, void *);
 int		wpi_nic_lock(struct wpi_softc *);
 int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
 int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
@@ -327,9 +326,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	wpi_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
-
-	sc->powerhook = powerhook_establish(wpi_powerhook, sc);
-
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
@@ -371,9 +367,6 @@ wpi_detach(struct device *self, int flags)
 	/* Uninstall interrupt handler. */
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
-
-	if (sc->powerhook != NULL)
-		powerhook_disestablish(sc->powerhook);
 
 	/* Free DMA resources. */
 	wpi_free_rx_ring(sc, &sc->rxq);
@@ -434,12 +427,6 @@ wpi_resume(void *arg1, void *arg2)
 	sc->sc_flags &= ~WPI_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
 	splx(s);
-}
-
-void
-wpi_powerhook(int why, void *arg)
-{
-	wpi_activate(arg, why);
 }
 
 int

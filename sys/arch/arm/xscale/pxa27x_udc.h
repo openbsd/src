@@ -32,7 +32,6 @@ struct pxaudc_softc {
 	bus_size_t		 sc_size;
 	void			*sc_ih;
 	void			*sc_conn_ih;
-	void 			*sc_powerhook;
 	SIMPLEQ_HEAD(,usbf_xfer) sc_free_xfers;	/* recycled xfers */
 	u_int32_t		 sc_icr0;	/* enabled EP interrupts */
 	u_int32_t		 sc_icr1;	/* enabled EP interrupts */

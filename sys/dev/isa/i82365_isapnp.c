@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isapnp.c,v 1.7 2010/07/02 04:23:15 blambert Exp $ */
+/*	$OpenBSD: i82365_isapnp.c,v 1.8 2010/09/07 16:21:43 deraadt Exp $ */
 /*	$NetBSD: i82365_isapnp.c,v 1.8 2000/02/23 17:22:11 soren Exp $	*/
 
 /*
@@ -199,7 +199,6 @@ pcic_isapnp_attach(parent, self, aux)
 				pcic_write(h, PCIC_CSC_INTR,
 				    (sc->irq << PCIC_CSC_INTR_IRQ_SHIFT) |
 				    PCIC_CSC_INTR_CD_ENABLE);
-				powerhook_establish(pcic_power, h);
 			}
 		}
 	} else

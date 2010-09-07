@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.34 2010/08/30 21:37:52 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.35 2010/09/07 16:21:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -342,7 +342,7 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 
 	/*
 	 * Clear the OTG Peripheral hold after running the pxaudc and pxaohci
-	 * powerhooks to re-enable their operation. See 3.8.1.2
+	 * ca_activate to re-enable their operation. See 3.8.1.2
 	 */
 	/* XXX ifdef NPXAUDC > 0 */
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PSSR, PSSR_OTGPH);
