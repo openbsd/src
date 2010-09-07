@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.71 2010/01/14 04:57:06 jsing Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.72 2010/09/07 12:40:30 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 14 2010 $
+.Dd $Mdocdate: September 7 2010 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -74,8 +74,12 @@ Dump packet-matching code as a C program fragment.
 Dump packet-matching code as decimal numbers
 preceded with a count.
 .It Xo
-.Fl E Oo Ar espalg : Oc Ar espkey
+.Fl E
+.Sm off
+.Op Ar espalg No \&:
+.Ar espkey
 .Xc
+.Sm on
 Try to decrypt RFC 2406 ESP
 .Pq Encapsulating Security Payload
 traffic using the specified hex key
