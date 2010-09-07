@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.7 2010/09/07 16:52:04 miod Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.8 2010/09/07 16:57:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -124,12 +124,23 @@
 #define AMD5536_GPIO_IN_INVRT_EN 0x24	/* invert input */
 #define	AMD5536_GPIO_READ_BACK	0x30	/* read back value */
 
+/*
+ * MSR registers we want to preserve accross suspend/resume
+ */
+const uint32_t glxpcib_msrlist[] = {
+	GLIU_PAE,
+	GLCP_GLD_MSR_PM,
+	DIVIL_BALL_OPTS
+};
+
 struct glxpcib_softc {
 	struct device		sc_dev;
 
 	struct timecounter	sc_timecounter;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	uint64_t 		sc_msrsave[nitems(glxpcib_msrlist)];
 
 #if NGPIO > 0
 	/* GPIO interface */
@@ -270,28 +281,19 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 int
 glxpcib_activate(struct device *dv, int act)
 {
+	struct glxpcib_softc *sc = (struct glxpcib_softc *)dv;
 	int rv = 0;
-	const uint32_t msrlist[] = {
-		GLIU_PAE,
-		GLCP_GLD_MSR_PM,
-		DIVIL_BALL_OPTS
-	};
-	static uint64_t msrsave[nitems(msrlist)];
-	uint64_t msr;
 	uint i;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		rv = config_activate_children(dv, act);
-		for (i = 0; i < nitems(msrlist); i++)
-			msrsave[i] = rdmsr(msrlist[i]);
+		for (i = 0; i < nitems(glxpcib_msrlist); i++)
+			sc->sc_msrsave[i] = rdmsr(glxpcib_msrlist[i]);
 		break;
 	case DVACT_RESUME:
-		for (i = 0; i < nitems(msrlist); i++) {
-			msr = rdmsr(msrlist[i]);
-			if (msr != msrsave[i])
-				wrmsr(msrlist[i], msr);
-		}
+		for (i = 0; i < nitems(glxpcib_msrlist); i++)
+			wrmsr(glxpcib_msrlist[i], sc->sc_msrsave[i]);
 		rv = config_activate_children(dv, act);
 		break;
 	}
