@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.8 2010/07/22 12:47:40 thib Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.9 2010/09/07 15:51:00 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -160,13 +160,14 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 	ses->ses_used = 1;
 
-	fpu_kernel_enter();
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
 		case CRYPTO_AES_CBC:
 			ses->ses_klen = c->cri_klen / 8;
 			arc4random_buf(ses->ses_iv, 16);
+			fpu_kernel_enter();
 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
+			fpu_kernel_exit();
 			break;
 
 		case CRYPTO_AES_CTR:
@@ -174,7 +175,9 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			bcopy(c->cri_key + ses->ses_klen, ses->ses_nonce,
 			    AESCTR_NONCESIZE);
 			arc4random_buf(ses->ses_iv, 8);
+			fpu_kernel_enter();
 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
+			fpu_kernel_exit();
 			break;
 
 		case CRYPTO_MD5_HMAC:
@@ -246,7 +249,6 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			return (EINVAL);
 		}
 	}
-	fpu_kernel_exit();
 
 	*sidp = ses->ses_sid;
 	return (0);
@@ -387,6 +389,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		bcopy(crp->crp_buf + crd->crd_skip, buf, crd->crd_len);
 
 	/* Apply cipher */
+	fpu_kernel_enter();
 	if (crd->crd_alg == CRYPTO_AES_CBC) {
 		if (crd->crd_flags & CRD_F_ENCRYPT)
 			aesni_cbc_enc(ses, buf, buf, crd->crd_len, iv);
@@ -395,6 +398,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	} else if (crd->crd_alg == CRYPTO_AES_CTR) {
 		aesni_ctr_enc(ses, buf, buf, crd->crd_len, iv);
 	}
+	fpu_kernel_exit();
 
 	aesni_ops++;
 
@@ -459,14 +463,13 @@ aesni_process(struct cryptop *crp)
 		goto out;
 	}
 
-	fpu_kernel_enter();
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		switch (crd->crd_alg) {
 		case CRYPTO_AES_CBC:
 		case CRYPTO_AES_CTR:
 			err = aesni_encdec(crp, crd, ses);
 			if (err != 0)
-				goto cleanup;
+				goto out;
 			break;
 
 		case CRYPTO_MD5_HMAC:
@@ -478,16 +481,15 @@ aesni_process(struct cryptop *crp)
 			err = aesni_swauth(crp, crd, ses->ses_swd,
 			    crp->crp_buf);
 			if (err != 0)
-				goto cleanup;
+				goto out;
 			break;
 
 		default:
 			err = EINVAL;
-			goto cleanup;
+			goto out;
 		}
 	}
-cleanup:
-	fpu_kernel_exit();
+
 out:
 	crp->crp_etype = err;
 	crypto_done(crp);
