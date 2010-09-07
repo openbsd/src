@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2010/07/25 21:43:38 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2010/09/07 16:22:48 mikeb Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -100,10 +100,9 @@ void		viac3_rnd(void *);
 #ifdef CRYPTO
 void		viac3_crypto_setup(void);
 extern int	amd64_has_xcrypt;
-#ifdef notyet
+
 void		aesni_setup(void);
 extern int	amd64_has_aesni;
-#endif
 #endif
 
 /*
@@ -150,10 +149,9 @@ cpu_configure(void)
 	 */
 	if (amd64_has_xcrypt)
 		viac3_crypto_setup();
-#ifdef notyet
+
 	if (amd64_has_aesni)
 		aesni_setup();
-#endif
 #endif
 }
 
