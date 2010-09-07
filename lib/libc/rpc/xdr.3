@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.21 2010/09/01 14:43:34 millert Exp $
+.\"	$OpenBSD: xdr.3,v 1.22 2010/09/07 19:52:37 schwarze Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .\" Copyright (c) 2010, Oracle America, Inc.
@@ -30,7 +30,7 @@
 .\"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\"   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2010 $
+.Dd $Mdocdate: September 7 2010 $
 .Dt XDR 3
 .Os
 .Sh NAME
@@ -163,9 +163,7 @@ The parameter
 .Fa elsize
 is the size of each of the array's elements, and
 .Fa elproc
-is an
-.Tn XDR
-filter that translates between
+is an XDR filter that translates between
 the array elements' C form, and their external
 representation.
 This routine returns one if it succeeds, zero otherwise.
@@ -201,9 +199,7 @@ or
 .Fn xdr_string .
 .Pp
 .Fn xdr_destroy
-is a macro that invokes the destroy routine associated with the
-.Tn XDR
-stream
+is a macro that invokes the destroy routine associated with the XDR stream
 .Fa xdrs .
 Destruction usually involves freeing private data structures
 associated with the stream.
@@ -233,9 +229,7 @@ This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_free
 is a generic freeing routine.
-The first argument is the
-.Tn XDR
-routine for the object being freed.
+The first argument is the XDR routine for the object being freed.
 The second argument
 is a pointer to the object itself.
 Note: the pointer passed to this routine is
@@ -243,25 +237,17 @@ Note: the pointer passed to this routine is
 freed, but what it points to is freed (recursively).
 .Pp
 .Fn xdr_getpos
-is a macro that invokes the get-position routine associated with the
-.Tn XDR
+is a macro that invokes the get-position routine associated with the XDR
 stream
 .Fa xdrs .
 The routine returns an unsigned integer,
-which indicates the position of the
-.Tn XDR
-byte stream.
-A desirable feature of
-.Tn XDR
+which indicates the position of the XDR byte stream.
+A desirable feature of XDR
 streams is that simple arithmetic works with this number,
-although the
-.Tn XDR
-stream instances need not guarantee this.
+although the XDR stream instances need not guarantee this.
 .Pp
 .Fn xdr_inline
-is a macro that invokes the in-line routine associated with the
-.Tn XDR
-stream
+is a macro that invokes the in-line routine associated with the XDR stream
 .Fa xdrs .
 The routine returns a pointer
 to a contiguous piece of the stream's buffer;
@@ -295,9 +281,7 @@ integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdrmem_create
-is a routine which initializes the
-.Tn XDR
-stream object pointed to by
+is a routine which initializes the XDR stream object pointed to by
 .Fa xdrs .
 The stream's data is written to, or read from,
 a chunk of memory at location
@@ -307,9 +291,7 @@ whose length is no more than
 bytes long.
 The
 .Fa op
-determines the direction of the
-.Tn XDR
-stream
+determines the direction of the XDR stream
 (either
 .Dv XDR_ENCODE ,
 .Dv XDR_DECODE ,
@@ -342,9 +324,7 @@ recursive data structures, such as binary trees or
 linked lists.
 .Pp
 .Fn xdrrec_create
-is a routine which initializes the
-.Tn XDR
-stream object pointed to by
+is a routine which initializes the XDR stream object pointed to by
 .Fa xdrs .
 The stream's data is written to a buffer of size
 .Fa sendsize ;
@@ -367,14 +347,10 @@ and
 except that
 .Fa handle
 is passed to the former routines as the first parameter.
-Note: the
-.Tn XDR
-stream's
+Note: the XDR stream's
 .Fa op
 field must be set by the caller.
-Warning: this
-.Tn XDR
-stream implements an intermediate record stream.
+Warning: this XDR stream implements an intermediate record stream.
 Therefore there are additional bytes in the stream
 to provide record boundary information.
 .Pp
@@ -400,9 +376,7 @@ zero otherwise.
 is a routine which can be invoked only on
 streams created by
 .Fn xdrrec_create .
-It tells the
-.Tn XDR
-implementation that the rest of the current record
+It tells the XDR implementation that the rest of the current record
 in the stream's input buffer should be discarded.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
@@ -416,9 +390,7 @@ is the size of the structure that
 .Fa *pp
 points to; and
 .Fa proc
-is an
-.Tn XDR
-procedure that filters the structure
+is an XDR procedure that filters the structure
 between its C form and its external representation.
 This routine returns one if it succeeds, zero otherwise.
 Warning: this routine does not understand
@@ -429,20 +401,16 @@ Use
 instead.
 .Pp
 .Fn xdr_setpos
-is a macro that invokes the set position routine associated with the
-.Tn XDR
+is a macro that invokes the set position routine associated with the XDR
 stream
 .Fa xdrs .
 The parameter
 .Fa pos
 is a position value obtained from
 .Fn xdr_getpos .
-This routine returns one if the
-.Tn XDR
-stream could be repositioned,
+This routine returns one if the XDR stream could be repositioned,
 and zero otherwise.
-Warning: it is difficult to reposition some types of
-.Tn XDR
+Warning: it is difficult to reposition some types of XDR
 streams, so this routine may fail with one
 type of stream and succeed with another.
 .Pp
@@ -453,27 +421,19 @@ integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdrstdio_create
-is a routine which initializes the
-.Tn XDR
-stream object pointed to by
+is a routine which initializes the XDR stream object pointed to by
 .Fa xdrs .
-The
-.Tn XDR
-stream data is written to, or read from, the Standard I/O
+The XDR stream data is written to, or read from, the Standard I/O
 stream
 .Fa file .
 The parameter
 .Fa op
-determines the direction of the
-.Tn XDR
-stream (either
+determines the direction of the XDR stream (either
 .Dv XDR_ENCODE ,
 .Dv XDR_DECODE ,
 or
 .Dv XDR_FREE ) .
-Warning: the destroy routine associated with such
-.Tn XDR
-streams calls
+Warning: the destroy routine associated with such XDR streams calls
 .Fn fflush
 on the
 .Fa file
@@ -567,29 +527,24 @@ The parameter
 .Fa elsize
 is the size of each of the array's elements, and
 .Fa elproc
-is an
-.Tn XDR
+is an XDR
 filter that translates between the array elements' C form, and their
 external representation.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_void
 is a routine which always returns one.
-It may be passed to
-.Tn RPC
+It may be passed to RPC
 routines that require a function parameter, but where nothing is to be done.
 .Pp
 .Fn xdr_wrapstring
 is a primitive that calls
 .Pa "xdr_string(xdrs, sp, MAXUN.UNSIGNED );"
 where
-.Tn MAXUN.UNSIGNED
+.Dv MAXUN.UNSIGNED
 is the maximum value of an unsigned integer.
 .Fn xdr_wrapstring
-is handy because the
-.Tn RPC
-package passes a maximum of two
-.Tn XDR
+is handy because the RPC package passes a maximum of two XDR
 routines as parameters, and
 .Fn xdr_string ,
 one of the most frequently used primitives, requires three.
