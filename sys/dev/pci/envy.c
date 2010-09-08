@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.40 2010/07/31 16:52:37 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.41 2010/09/08 20:34:11 stsp Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -118,6 +118,8 @@ void delta_codec_write(struct envy_softc *, int, int, int);
 
 void ap192k_init(struct envy_softc *);
 void ap192k_codec_write(struct envy_softc *, int, int, int);
+
+void ewx_codec_write(struct envy_softc *, int, int, int);
 
 void revo51_init(struct envy_softc *);
 void revo51_codec_write(struct envy_softc *, int, int, int);
@@ -267,6 +269,13 @@ struct envy_card envy_cards[] = {
 		2, &ak4524_adc, 2, &ak4524_dac,
 		delta_init,
 		delta_codec_write,
+		NULL
+	}, {
+		PCI_ID_CODE(0x153b, 0x1130),
+		"Terratec EWX 24/96",
+		2, &ak4524_adc, 2, &ak4524_dac,
+		delta_init,
+		ewx_codec_write,
 		NULL
 	}, {
 		0,
@@ -436,6 +445,50 @@ ap192k_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 	envy_gpio_setstate(sc, reg);
 	delay(1);
 }
+
+/*
+ * Terratec EWX specific code
+ */
+
+/*
+ * GPIO pin numbers
+ */
+#define EWX_GPIO_CSMASK		0x01
+#define EWX_GPIO_DOUT		0x10
+#define EWX_GPIO_CLK		0x20
+
+void
+ewx_codec_write(struct envy_softc *sc, int dev, int addr, int data)
+{
+	int bits, i, reg;
+
+	reg = envy_gpio_getstate(sc);
+	reg |= (EWX_GPIO_CSMASK | EWX_GPIO_CLK);
+	envy_gpio_setstate(sc, reg);
+	delay(1);
+
+	bits = 0xa000 | (addr << 8) | data;
+	for (i = 0; i < 16; i++) {
+		reg &= ~(EWX_GPIO_CLK | EWX_GPIO_DOUT);
+		reg |= (bits & 0x8000) ? EWX_GPIO_DOUT : 0;
+		envy_gpio_setstate(sc, reg);
+		delay(1);
+
+		reg |= EWX_GPIO_CLK;
+		envy_gpio_setstate(sc, reg);
+		delay(1);
+		bits <<= 1;
+	}
+
+	reg &= ~EWX_GPIO_CSMASK;
+	envy_gpio_setstate(sc, reg);
+	delay(1);
+
+	reg |= EWX_GPIO_CSMASK;
+	envy_gpio_setstate(sc, reg);
+	delay(1);
+}
+
 
 /*
  * M-Audio Revolution 5.1 specific code
