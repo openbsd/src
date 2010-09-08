@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.92 2010/09/08 21:18:15 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.93 2010/09/08 21:38:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -176,8 +176,7 @@ int  apm_record_event(struct apm_softc *sc, u_int type);
 const char *apm_err_translate(int code);
 
 #define	apm_get_powstat(r) apmcall(APM_POWER_STATUS, APM_DEV_ALLDEVS, r)
-void	apm_standby(void);
-void	apm_suspend(void);
+void	apm_suspend(int);
 void	apm_resume(struct apm_softc *, struct apmregs *);
 void	apm_cpu_slow(void);
 
@@ -319,7 +318,7 @@ apm_power_print(struct apm_softc *sc, struct apmregs *regs)
 int apm_saved_spl;
 
 void
-apm_suspend()
+apm_suspend(int state)
 {
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
@@ -331,23 +330,7 @@ apm_suspend()
 	disable_intr();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
-	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND);
-}
-
-void
-apm_standby()
-{
-#if NWSDISPLAY > 0
-	wsdisplay_suspend();
-#endif /* NWSDISPLAY > 0 */
-	bufq_quiesce();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
-
-	apm_saved_spl = splhigh();
-	disable_intr();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
-
-	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
+	(void)apm_set_powstate(APM_DEV_ALLDEVS, state);
 }
 
 void
@@ -494,7 +477,7 @@ apm_handle_event(struct apm_softc *sc, struct apmregs *regs)
 	case APM_CRIT_SUSPEND_REQ:
 		DPRINTF(("suspend required immediately\n"));
 		apm_record_event(sc, regs->bx);
-		apm_suspend();
+		apm_suspend(APM_SYS_SUSPEND);
 		break;
 	case APM_BATTERY_LOW:
 		DPRINTF(("Battery low!\n"));
@@ -556,10 +539,10 @@ apm_periodic_check(struct apm_softc *sc)
 
 	if (apm_suspends /*|| (apm_battlow && apm_userstandbys)*/) {
 		apm_op_inprog = 0;
-		apm_suspend();
+		apm_suspend(APM_SYS_SUSPEND);
 	} else if (apm_standbys || apm_userstandbys) {
 		apm_op_inprog = 0;
-		apm_standby();
+		apm_suspend(APM_SYS_STANDBY);
 	}
 	apm_suspends = apm_standbys = apm_battlow = apm_userstandbys = 0;
 	apm_error = 0;
