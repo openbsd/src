@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.187 2010/09/07 16:21:47 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.188 2010/09/08 14:47:12 jsing Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_xsh);
 
 	/* Attach disk. */
-	disk_attach(&sc->sc_dk);
+	disk_attach(&sc->sc_dev, &sc->sc_dk);
 }
 
 

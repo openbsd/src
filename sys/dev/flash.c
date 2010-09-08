@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.16 2010/08/28 20:23:22 matthew Exp $	*/
+/*	$OpenBSD: flash.c,v 1.17 2010/09/08 14:47:12 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -157,7 +157,7 @@ flashattach(struct flash_softc *sc, struct flash_ctl_tag *tag,
 	 * Initialize and attach the disk structure.
 	 */
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	disk_attach(&sc->sc_dk);
+	disk_attach(&sc->sc_dev, &sc->sc_dk);
 
 	/* XXX establish shutdown hook to finish any commands. */
 }

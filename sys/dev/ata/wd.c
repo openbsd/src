@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.91 2010/09/01 01:38:12 dlg Exp $ */
+/*	$OpenBSD: wd.c,v 1.92 2010/09/08 14:47:12 jsing Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -369,7 +369,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&wd->sc_restart_timeout, wdrestart, wd);
 
 	/* Attach disk. */
-	disk_attach(&wd->sc_dk);
+	disk_attach(&wd->sc_dev, &wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 }
 

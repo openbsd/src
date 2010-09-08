@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.23 2010/08/30 16:53:28 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.24 2010/09/08 14:47:12 jsing Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
  * Disk device structures.
  */
 
+#include <sys/device.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
@@ -76,6 +77,7 @@ struct disk {
 	struct rwlock	dk_lock;	/* disk lock */
 	struct mutex	dk_mtx;		/* busy/unbusy mtx */
 	char		*dk_name;	/* disk name */
+	struct device	*dk_device;	/* disk device structure. */
 	dev_t		dk_devno;	/* disk device number. */
 	int		dk_flags;	/* disk flags */
 #define DKF_CONSTRUCTED  0x0001
@@ -149,7 +151,7 @@ extern	int disk_change;		/* disk attached/detached */
 
 void	disk_init(void);
 int	disk_construct(struct disk *, char *);
-void	disk_attach(struct disk *);
+void	disk_attach(struct device *, struct disk *);
 void	disk_detach(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.20 2009/09/05 00:48:39 krw Exp $ */
+/*	$OpenBSD: hp.c,v 1.21 2010/09/08 14:47:10 jsing Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -146,7 +146,7 @@ hpattach(parent, self, aux)
 	 * Init and attach the disk structure.
 	 */
 	sc->sc_disk.dk_name = sc->sc_dev.dv_xname;
-	disk_attach(&sc->sc_disk);
+	disk_attach(&sc->sc_dev, &sc->sc_disk);
 
 	/*
 	 * Fake a disklabel to be able to read in the real label.

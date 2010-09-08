@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.32 2010/08/28 20:23:22 matthew Exp $	*/
+/*	$OpenBSD: fd.c,v 1.33 2010/09/08 14:47:10 jsing Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -668,7 +668,7 @@ fdattach(parent, self, aux)
 	 * Initialize and attach the disk structure.
 	 */
 	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
-	disk_attach(&fd->sc_dk);
+	disk_attach(&fd->sc_dv, &fd->sc_dk);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);

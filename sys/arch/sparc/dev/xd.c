@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.49 2010/08/28 20:23:22 matthew Exp $	*/
+/*	$OpenBSD: xd.c,v 1.50 2010/09/08 14:47:10 jsing Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -656,7 +656,7 @@ xdattach(parent, self, aux)
 
 	xd->hw_spt = spt;
 	/* Attach the disk: must be before getdisklabel to malloc label */
-	disk_attach(&xd->sc_dk);
+	disk_attach(&xd->sc_dev, &xd->sc_dk);
 
 	if (xdgetdisklabel(xd, xa->buf) != XD_ERR_AOK)
 		goto done;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.107 2010/09/01 20:16:51 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.108 2010/09/08 14:47:12 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -790,10 +790,9 @@ disk_construct(struct disk *diskp, char *lockname)
  * Attach a disk.
  */
 void
-disk_attach(struct disk *diskp)
+disk_attach(struct device *dv, struct disk *diskp)
 {
-	struct device *dv;
-	dev_t *dev;
+	int majdev;
 
 	if (!ISSET(diskp->dk_flags, DKF_CONSTRUCTED))
 		disk_construct(diskp, diskp->dk_name);
@@ -821,12 +820,16 @@ disk_attach(struct disk *diskp)
 	disk_change = 1;
 
 	/*
-	 * Lookup and store device number for later use.
+	 * Store device structure and number for later use.
 	 */
-	dev = &diskp->dk_devno;
-	dv = parsedisk(diskp->dk_name, strlen(diskp->dk_name), RAW_PART, dev);
-	if (dv == NULL)
-		diskp->dk_devno = NODEV;
+	diskp->dk_device = dv;
+	diskp->dk_devno = NODEV;
+	if (dv != NULL) {
+		majdev = findblkmajor(dv);
+		if (majdev >= 0)
+			diskp->dk_devno =
+			    MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
+	}
 
 	if (softraid_disk_attach)
 		softraid_disk_attach(diskp, 1);

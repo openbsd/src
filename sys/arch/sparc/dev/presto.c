@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.17 2010/08/28 20:23:22 matthew Exp $	*/
+/*	$OpenBSD: presto.c,v 1.18 2010/09/08 14:47:10 jsing Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -161,7 +161,7 @@ presto_attach(struct device *parent, struct device *self, void *args)
 #endif
 
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	disk_attach(&sc->sc_dk);
+	disk_attach(&sc->sc_dev, &sc->sc_dk);
 }
 
 /*

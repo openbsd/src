@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.86 2010/08/28 20:23:22 matthew Exp $	*/
+/*	$OpenBSD: fd.c,v 1.87 2010/09/08 14:47:12 jsing Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -304,7 +304,7 @@ fdattach(parent, self, aux)
 	 * Initialize and attach the disk structure.
 	 */
 	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
-	disk_attach(&fd->sc_dk);
+	disk_attach(&fd->sc_dev, &fd->sc_dk);
 
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);

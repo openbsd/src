@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.47 2010/09/06 14:44:19 jasper Exp $	*/
+/*	$OpenBSD: xy.c,v 1.48 2010/09/08 14:47:10 jsing Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ xyattach(parent, self, aux)
 
 	xy->hw_spt = spt = 0; /* XXX needed ? */
 	/* Attach the disk: must be before getdisklabel to malloc label */
-	disk_attach(&xy->sc_dk);
+	disk_attach(&xy->sc_dev, &xy->sc_dk);
 
 	if (xygetdisklabel(xy, xa->buf) != 0)
 		goto done;

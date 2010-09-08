@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.48 2010/09/07 18:45:56 deraadt Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.49 2010/09/08 14:47:12 jsing Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ rd_attach(struct device *parent, struct device *self, void *aux)
 	 * Initialize and attach the disk structure.
 	 */
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	disk_attach(&sc->sc_dk);
+	disk_attach(&sc->sc_dev, &sc->sc_dk);
 }
 
 /*

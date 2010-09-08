@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.29 2010/05/22 17:10:23 deraadt Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.30 2010/09/08 14:47:10 jsing Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -519,7 +519,7 @@ rxattach(parent, self, aux)
 	mi->mi_dp[mp->mscp_unit] = self;
 
 	rx->ra_disk.dk_name = rx->ra_dev.dv_xname;
-	disk_attach((struct disk *)&rx->ra_disk);
+	disk_attach(&rx->ra_dev, &rx->ra_disk);
 
 	/* Fill in what we know. The actual size is gotten later */
 	dl = rx->ra_disk.dk_label;

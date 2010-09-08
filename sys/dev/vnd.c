@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.101 2010/08/28 20:23:22 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.102 2010/09/08 14:47:12 jsing Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -866,7 +866,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		/* Attach the disk. */
 		vnd->sc_dk.dk_name = vnd->sc_dev.dv_xname;
-		disk_attach(&vnd->sc_dk);
+		disk_attach(&vnd->sc_dev, &vnd->sc_dk);
 
 		vndunlock(vnd);
 

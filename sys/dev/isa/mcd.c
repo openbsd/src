@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.54 2010/08/28 20:23:22 matthew Exp $ */
+/*	$OpenBSD: mcd.c,v 1.55 2010/09/08 14:47:12 jsing Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ mcdattach(parent, self, aux)
 	 * Initialize and attach the disk structure.
 	 */
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	disk_attach(&sc->sc_dk);
+	disk_attach(&sc->sc_dev, &sc->sc_dk);
 
 	printf(": model %s\n", sc->type != 0 ? sc->type : "unknown");
 

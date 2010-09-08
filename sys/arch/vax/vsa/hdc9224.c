@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.29 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.30 2010/09/08 14:47:10 jsing Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -352,7 +352,7 @@ hdattach(struct device *parent, struct device *self, void *aux)
 	 * Initialize and attach the disk structure.
 	 */
 	hd->sc_disk.dk_name = hd->sc_dev.dv_xname;
-	disk_attach(&hd->sc_disk);
+	disk_attach(&hd->sc_dev, &hd->sc_disk);
 
 	/*
 	 * if it's not a floppy then evaluate the on-disk geometry.

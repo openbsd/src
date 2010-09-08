@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.57 2010/06/26 23:24:45 guenther Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.58 2010/09/08 14:47:12 jsing Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -1619,7 +1619,7 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try
 	 * putzing with disklabels.
 	 */
-	disk_attach(&rs->sc_dkdev);
+	disk_attach(NULL, &rs->sc_dkdev);
 
 	/*
 	 * XXX There may be a weird interaction here between this, and
