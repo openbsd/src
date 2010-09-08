@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.15 2010/09/08 14:52:26 jsing Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.16 2010/09/08 15:25:43 jsing Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -423,7 +423,7 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
 
-	if (strategy(devp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &read)
+	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
 	    || read != DEV_BSIZE)
 		return ("Cannot read label");
 
@@ -522,7 +522,8 @@ devopen(struct open_file *of, const char *name, char **file)
 				    "devopen: getdisklabel says %s\n", errmsg);
 #endif
 			/* Else try MBR partitions */
-			errmsg = search_label(&ofdev, 0, buf, &label, 0);
+			errmsg = search_label(&ofdev, LABELSECTOR, buf,
+			    &label, 0);
 			if (errmsg) { 
 				printf("devopen: search_label says %s\n", errmsg);
 				error = ERDLAB;
