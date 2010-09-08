@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.11 2010/07/07 14:50:02 claudio Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.12 2010/09/08 08:00:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -33,13 +33,18 @@
 #include <netinet/ip.h>
 #endif
 
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
+
 extern int	mpls_inkloop;
 
 #ifdef MPLS_DEBUG
 #define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)
 #endif
 
-void	mpls_do_cksum(struct mbuf *);
+void		mpls_do_cksum(struct mbuf *);
+u_int8_t	mpls_getttl(struct mbuf *, sa_family_t);
 
 int
 mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
@@ -52,6 +57,7 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry		*rt = rt0;
 	struct rt_mpls		*rt_mpls;
 	int			 i, error;
+	u_int8_t		 ttl;
 
 	if (rt0 == NULL || (dst->sa_family != AF_INET &&
 	    dst->sa_family != AF_INET6 && dst->sa_family != AF_MPLS)) {
@@ -71,6 +77,8 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	smpls = &sa_mpls;
 	smpls->smpls_family = AF_MPLS;
 	smpls->smpls_len = sizeof(*smpls);
+
+	ttl = mpls_getttl(m, dst->sa_family);
 
 	for (i = 0; i < mpls_inkloop; i++) {
 		rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
@@ -134,7 +142,7 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 
 	/* write back TTL */
 	shim->shim_label &= ~MPLS_TTL_MASK;
-	shim->shim_label |= htonl(mpls_defttl);
+	shim->shim_label |= htonl(ttl);
 
 #ifdef MPLS_DEBUG
 	printf("MPLS: sending on %s outshim %x outlabel %d\n",
@@ -180,4 +188,42 @@ mpls_do_cksum(struct mbuf *m)
 		m->m_pkthdr.csum_flags &= ~M_IPV4_CSUM_OUT;
 	}
 #endif
+}
+
+u_int8_t
+mpls_getttl(struct mbuf *m, sa_family_t af)
+{
+	struct shim_hdr *shim;
+	struct ip *ip;
+	struct ip6_hdr *ip6hdr;
+	u_int8_t ttl = mpls_defttl;
+
+	/* If the AF is MPLS then inherit the TTL from the present label. */
+	if (af == AF_MPLS) {
+		shim = mtod(m, struct shim_hdr *);
+		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
+		return (ttl);
+	}
+	/* Else extract TTL from the encapsualted packet. */
+	switch (*mtod(m, u_char *) >> 4) {
+	case IPVERSION:
+		if (!mpls_mapttl_ip)
+			break;
+		if (m->m_len < sizeof(*ip))
+			break;			/* impossible */
+		ip = mtod(m, struct ip *);
+		ttl = ip->ip_ttl;
+		break;
+	case IPV6_VERSION >> 4:
+		if (!mpls_mapttl_ip6)
+			break;
+		if (m->m_len < sizeof(struct ip6_hdr))
+			break;			/* impossible */
+		ip6hdr = mtod(m, struct ip6_hdr *);
+		ttl = ip6hdr->ip6_hlim;
+		break;
+	default:
+		break;
+	}
+	return (ttl);
 }
