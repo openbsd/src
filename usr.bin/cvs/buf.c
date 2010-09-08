@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.79 2010/09/08 15:13:39 tobias Exp $	*/
+/*	$OpenBSD: buf.c,v 1.80 2010/09/08 20:49:11 nicm Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,6 +40,7 @@
 #define BUF_INCR	128
 
 struct buf {
+	/* buffer handle, buffer size, and data length */
 	u_char	*cb_buf;
 	size_t	 cb_size;
 	size_t	 cb_len;
@@ -49,6 +50,11 @@ struct buf {
 
 static void	buf_grow(BUF *, size_t);
 
+/*
+ * Create a new buffer structure and return a pointer to it.  This structure
+ * uses dynamically-allocated memory and must be freed with buf_free(), once
+ * the buffer is no longer needed.
+ */
 BUF *
 buf_alloc(size_t len)
 {
@@ -67,6 +73,11 @@ buf_alloc(size_t len)
 	return (b);
 }
 
+/*
+ * Open the file specified by <path> and load all of its contents into a
+ * buffer.
+ * Returns the loaded buffer.
+ */
 BUF *
 buf_load(const char *path)
 {
@@ -112,6 +123,11 @@ buf_free(BUF *b)
 	xfree(b);
 }
 
+/*
+ * Free the buffer <b>'s structural information but do not free the contents
+ * of the buffer.  Instead, they are returned and should be freed later using
+ * xfree().
+ */
 void *
 buf_release(BUF *b)
 {
@@ -122,6 +138,9 @@ buf_release(BUF *b)
 	return (tmp);
 }
 
+/*
+ * Append a single character <c> to the end of the buffer <b>.
+ */
 void
 buf_putc(BUF *b, int c)
 {
@@ -134,12 +153,20 @@ buf_putc(BUF *b, int c)
 	b->cb_len++;
 }
 
+/*
+ * Append a C-string <str> to the end of the buffer <b>.
+ */
 void
 buf_puts(BUF *b, const char *str)
 {
 	buf_append(b, str, strlen(str));
 }
 
+/*
+ * Append <len> bytes of data pointed to by <data> to the buffer <b>.  If the
+ * buffer is too small to accept all data, it will get resized to an
+ * appropriate size to accept all data.
+ */
 void
 buf_append(BUF *b, const void *data, size_t len)
 {
@@ -156,12 +183,18 @@ buf_append(BUF *b, const void *data, size_t len)
 	b->cb_len += len;
 }
 
+/*
+ * Returns the size of the buffer that is being used.
+ */
 size_t
 buf_len(BUF *b)
 {
 	return (b->cb_len);
 }
 
+/*
+ * Write the contents of the buffer <b> to the specified <fd>
+ */
 int
 buf_write_fd(BUF *b, int fd)
 {
@@ -170,6 +203,10 @@ buf_write_fd(BUF *b, int fd)
 	return (0);
 }
 
+/*
+ * Write the contents of the buffer <b> to the file whose path is given in
+ * <path>.  If the file does not exist, it is created with mode <mode>.
+ */
 int
 buf_write(BUF *b, const char *path, mode_t mode)
 {
@@ -195,6 +232,12 @@ open:
 	return (0);
 }
 
+/*
+ * Write the contents of the buffer <b> to a temporary file whose path is
+ * specified using <template> (see mkstemp.3). If <tv> is specified file
+ * access and modification time is set to <tv>.
+ * NB. This function will modify <template>, as per mkstemp
+ */
 int
 buf_write_stmp(BUF *b, char *template, struct timeval *tv)
 {
@@ -237,8 +280,6 @@ buf_differ(const BUF *b1, const BUF *b2)
 }
 
 /*
- * buf_grow()
- *
  * Grow the buffer <b> by <len> bytes.  The contents are unchanged by this
  * operation regardless of the result.
  */
