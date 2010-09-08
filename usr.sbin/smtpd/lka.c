@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.115 2010/06/04 11:15:25 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.116 2010/09/08 13:46:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,7 +57,7 @@ void		lka_request_forwardfile(struct smtpd *, struct lkasession *, struct path *
 void		lka_clear_expandtree(struct expandtree *);
 void		lka_clear_deliverylist(struct deliverylist *);
 char           *lka_encode_secret(struct map_secret *);
-size_t		lka_expand(char *, size_t, struct path *);
+size_t		lka_expand(char *, size_t, struct path *,struct path *);
 void		lka_rcpt_action(struct smtpd *, char *, struct path *);
 void		lka_session_destroy(struct smtpd *, struct lkasession *);
 void		lka_expansion_done(struct smtpd *, struct lkasession *);
@@ -372,7 +372,7 @@ lka_verify_mail(struct smtpd *env, struct path *path)
 }
 
 size_t
-lka_expand(char *buf, size_t len, struct path *path)
+lka_expand(char *buf, size_t len, struct path *path, struct path *sender)
 {
 	char *p, *pbuf;
 	struct rule r;
@@ -423,6 +423,22 @@ lka_expand(char *buf, size_t len, struct path *path)
 				p += strlen(username);
 				continue;
 			}
+		}
+		if (strncmp(p, "%U", 2) == 0) {
+			ret += strlcat(pbuf, sender->user, len);
+			if (ret >= len)
+				return ret;
+			pbuf += strlen (sender->user);
+			++p;
+			continue;
+		}
+		if (strncmp(p,"%D",2) == 0) {
+			ret += strlcat(pbuf, sender->domain, len);
+			if (ret >= len)
+				return ret;
+			pbuf += strlen(sender->domain);
+			++p;
+			continue;
 		}
 		if (strncmp(p, "%a", 2) == 0) {
 			ret += strlcat(pbuf, path->user, len);
@@ -682,7 +698,7 @@ lka_queue_append(struct smtpd *env, struct lkasession *s, int status)
 
 	/* send next item to queue */
 	message = s->message;
-	lka_expand(path->rule.r_value.path, sizeof(path->rule.r_value.path), path);
+	lka_expand(path->rule.r_value.path, sizeof(path->rule.r_value.path), path, &message.sender);
 	message.recipient = *path;
 	sep = strchr(message.session_hostname, '@');
 	if (sep) {
