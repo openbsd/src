@@ -674,7 +674,7 @@ radeondrm_activate(struct device *arg, int act)
 		/* Interrupts still not supported on r600 */
 		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600 ||
 		    dev->irq_enabled == 0)
-			return (0);
+			break;
 		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690)
 			RADEON_WRITE(R500_DxMODE_INT_MASK, 0);
 		RADEON_WRITE(RADEON_GEN_INT_CNTL, 0);
@@ -683,7 +683,7 @@ radeondrm_activate(struct device *arg, int act)
 		/* Interrupts still not supported on r600 */
 		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600 ||
 		    dev->irq_enabled == 0)
-			return (0);
+			break;
 		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690)
 			RADEON_WRITE(R500_DxMODE_INT_MASK,
 			    dev_priv->r500_disp_irq_reg);
