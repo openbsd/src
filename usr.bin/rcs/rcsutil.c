@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.35 2010/07/28 09:07:11 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.36 2010/09/08 15:15:50 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -152,10 +152,6 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	struct stat sb;
 	char *p, *ext, name[MAXPATHLEN], *next, *ptr, rcsdir[MAXPATHLEN],
 	    *suffixes, rcspath[MAXPATHLEN];
-
-	/* If -x flag was not given, use default. */
-	if (rcs_suffixes == NULL)
-		rcs_suffixes = RCS_DEFAULT_SUFFIX;
 
 	fd = -1;
 

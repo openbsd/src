@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.210 2010/07/30 21:47:18 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.211 2010/09/08 15:15:50 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -241,10 +241,6 @@ checkin_main(int argc, char **argv)
 
 	if ((pb.username = getlogin()) == NULL)
 		err(1, "getlogin");
-
-	/* If -x flag was not given, use default. */
-	if (rcs_suffixes == NULL)
-		rcs_suffixes = RCS_DEFAULT_SUFFIX;
 
 	for (i = 0; i < argc; i++) {
 		/*
