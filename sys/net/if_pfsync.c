@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.154 2010/07/28 06:52:05 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.155 2010/09/08 08:53:57 blambert Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -46,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -278,6 +279,7 @@ pfsyncattach(int npfsync)
 {
 	if_clone_attach(&pfsync_cloner);
 }
+
 int
 pfsync_clone_create(struct if_clone *ifc, int unit)
 {
@@ -290,9 +292,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 
 	pfsync_sync_ok = 1;
 
-	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc == NULL)
-		return (ENOMEM);
+	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (q = 0; q < PFSYNC_S_COUNT; q++)
 		TAILQ_INIT(&sc->sc_qs[q]);
