@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.49 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.50 2010/09/08 08:34:42 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ rip_output(struct mbuf *m, ...)
 	u_long dst;
 	struct ip *ip;
 	struct inpcb *inp;
-	int flags;
+	int flags, error;
 	va_list ap;
 
 	va_start(ap, m);
@@ -275,8 +275,11 @@ rip_output(struct mbuf *m, ...)
 	/* force routing domain */
 	m->m_pkthdr.rdomain = inp->inp_rtableid;
 
-	return (ip_output(m, inp->inp_options, &inp->inp_route, flags,
-	    inp->inp_moptions, inp));
+	error = ip_output(m, inp->inp_options, &inp->inp_route, flags,
+	    inp->inp_moptions, inp);
+	if (error == EACCES)	/* translate pf(4) error for userland */
+		error = EHOSTUNREACH;
+	return (error);
 }
 
 /*

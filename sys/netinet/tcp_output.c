@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.90 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.91 2010/09/08 08:34:42 claudio Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1138,6 +1138,8 @@ out:
 			tcp_mtudisc(tp->t_inpcb, -1);
 			return (0);
 		}
+		if (error == EACCES)	/* translate pf(4) error for userland */
+			error = EHOSTUNREACH;
 		if ((error == EHOSTUNREACH || error == ENETDOWN) &&
 		    TCPS_HAVERCVDSYN(tp->t_state)) {
 			tp->t_softerror = error;

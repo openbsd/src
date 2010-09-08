@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.211 2010/08/13 06:46:08 dlg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.212 2010/09/08 08:34:42 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ sendit:
 		if ((encif = enc_getif(tdb->tdb_rdomain,
 		    tdb->tdb_tap)) == NULL ||
 		    pf_test(PF_OUT, encif, &m, NULL) != PF_PASS) {
-			error = EHOSTUNREACH;
+			error = EACCES;
 			splx(s);
 			m_freem(m);
 			goto done;

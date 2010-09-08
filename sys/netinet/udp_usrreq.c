@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.136 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.137 2010/09/08 08:34:42 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1019,6 +1019,8 @@ udp_output(struct mbuf *m, ...)
 	    inp->inp_socket->so_options &
 	    (SO_DONTROUTE | SO_BROADCAST | SO_JUMBO),
 	    inp->inp_moptions, inp);
+	if (error == EACCES)	/* translate pf(4) error for userland */
+		error = EHOSTUNREACH;
 
 bail:
 	if (addr) {
