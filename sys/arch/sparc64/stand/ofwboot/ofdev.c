@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.14 2010/05/09 19:45:51 kettenis Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.15 2010/09/08 14:52:26 jsing Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -219,46 +219,65 @@ sun_fstypes[8] = {
 };
 
 /*
+ * Given a struct sun_disklabel, assume it has an extended partition
+ * table and compute the correct value for sl_xpsum.
+ */
+static __inline u_int
+sun_extended_sum(struct sun_disklabel *sl, void *end)
+{
+	u_int sum, *xp, *ep;
+
+	xp = (u_int *)&sl->sl_xpmag;
+	ep = (u_int *)end;
+
+	sum = 0;
+	for (; xp < ep; xp++)
+		sum += *xp;
+	return (sum);
+}
+
+/*
  * Given a SunOS disk label, set lp to a BSD disk label.
- * Returns NULL on success, else an error string.
- *
  * The BSD label is cleared out before this is called.
  */
-static char *
-disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
+static int
+disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
-	struct sun_disklabel *sl;
-	struct partition *npp;
+	struct sun_preamble *preamble = (struct sun_preamble *)sl;
+	struct sun_partinfo *ppp;
 	struct sun_dkpart *spp;
+	struct partition *npp;
+	u_short cksum = 0, *sp1, *sp2;
 	int i, secpercyl;
-	u_short cksum, *sp1, *sp2;
-
-	sl = (struct sun_disklabel *)cp;
 
 	/* Verify the XOR check. */
 	sp1 = (u_short *)sl;
 	sp2 = (u_short *)(sl + 1);
-	cksum = 0;
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
-		return("SunOS disk label, bad checksum");
+		return (EINVAL);	/* SunOS disk label, bad checksum */
 
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
+	lp->d_flags = D_VENDOR;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
-	lp->d_secsize = 512;
-	lp->d_nsectors   = sl->sl_nsectors;
-	lp->d_ntracks    = sl->sl_ntracks;
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_nsectors = sl->sl_nsectors;
+	lp->d_ntracks = sl->sl_ntracks;
 	lp->d_ncylinders = sl->sl_ncylinders;
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
-	lp->d_secpercyl  = secpercyl;
-	lp->d_secperunit = secpercyl * sl->sl_ncylinders;
+	lp->d_secpercyl = secpercyl;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
+	lp->d_version = 1;
 
-	lp->d_acylinders   = sl->sl_acylinders;
+	memcpy(&lp->d_uid, &sl->sl_uid, sizeof(lp->d_uid));
+
+	lp->d_acylinders = sl->sl_acylinders;
 
 	lp->d_npartitions = MAXPARTITIONS;
 	/* These are as defined in <ufs/ffs/fs.h> */
@@ -268,11 +287,9 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
-		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
-		npp->p_size = spp->sdkp_nsectors;
-		DNPRINTF(BOOT_D_OFDEV, "partition %d start %x size %x\n",
-		    i, (int)npp->p_offset, (int)npp->p_size);
-		if (npp->p_size == 0) {
+		DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
+		DL_SETPSIZE(npp, spp->sdkp_nsectors);
+		if (DL_GETPSIZE(npp) == 0) {
 			npp->p_fstype = FS_UNUSED;
 		} else {
 			npp->p_fstype = sun_fstypes[i];
@@ -282,8 +299,95 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 				 * so just set them with default values here.
 				 */
 				npp->p_fragblock =
-				    DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
+				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
 				npp->p_cpg = 16;
+			}
+		}
+	}
+
+	/* Clear "extended" partition info, tentatively */
+	for (i = 0; i < SUNXPART; i++) {
+		npp = &lp->d_partitions[i+8];
+		DL_SETPOFFSET(npp, 0);
+		DL_SETPSIZE(npp, 0);
+		npp->p_fstype = FS_UNUSED;
+	}
+
+	/* Check to see if there's an "extended" partition table
+	 * SL_XPMAG partitions had checksums up to just before the
+	 * (new) sl_types variable, while SL_XPMAGTYP partitions have
+	 * checksums up to the just before the (new) sl_xxx1 variable.
+	 * Also, disklabels created prior to the addition of sl_uid will
+	 * have a checksum to just before the sl_uid variable.
+	 */
+	if ((sl->sl_xpmag == SL_XPMAG &&
+	    sun_extended_sum(sl, &sl->sl_types) == sl->sl_xpsum) ||
+	    (sl->sl_xpmag == SL_XPMAGTYP &&
+	    sun_extended_sum(sl, &sl->sl_uid) == sl->sl_xpsum) ||
+	    (sl->sl_xpmag == SL_XPMAGTYP &&
+	    sun_extended_sum(sl, &sl->sl_xxx1) == sl->sl_xpsum)) {
+		/*
+		 * There is.  Copy over the "extended" partitions.
+		 * This code parallels the loop for partitions a-h.
+		 */
+		for (i = 0; i < SUNXPART; i++) {
+			spp = &sl->sl_xpart[i];
+			npp = &lp->d_partitions[i+8];
+			DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
+			DL_SETPSIZE(npp, spp->sdkp_nsectors);
+			if (DL_GETPSIZE(npp) == 0) {
+				npp->p_fstype = FS_UNUSED;
+				continue;
+			}
+			npp->p_fstype = sun_fstypes[i+8];
+			if (npp->p_fstype == FS_BSDFFS) {
+				npp->p_fragblock =
+				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
+				npp->p_cpg = 16;
+			}
+		}
+		if (sl->sl_xpmag == SL_XPMAGTYP) {
+			for (i = 0; i < MAXPARTITIONS; i++) {
+				npp = &lp->d_partitions[i];
+				npp->p_fstype = sl->sl_types[i];
+				npp->p_fragblock = sl->sl_fragblock[i];
+				npp->p_cpg = sl->sl_cpg[i];
+			}
+		}
+	} else if (preamble->sl_nparts <= 8) {
+		/*
+		 * A more traditional Sun label.  Recognise certain filesystem
+		 * types from it, if they are available.
+		 */
+		i = preamble->sl_nparts;
+		if (i == 0)
+			i = 8;
+
+		npp = &lp->d_partitions[i-1];
+		ppp = &preamble->sl_part[i-1];
+		for (; i > 0; i--, npp--, ppp--) {
+			if (npp->p_size == 0)
+				continue;
+			if ((ppp->spi_tag == 0) && (ppp->spi_flag == 0))
+				continue;
+
+			switch (ppp->spi_tag) {
+			case SPTAG_SUNOS_ROOT:
+			case SPTAG_SUNOS_USR:
+			case SPTAG_SUNOS_VAR:
+			case SPTAG_SUNOS_HOME:
+				npp->p_fstype = FS_BSDFFS;
+				npp->p_fragblock =
+				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
+				npp->p_cpg = 16;
+				break;
+			case SPTAG_LINUX_EXT2:
+				npp->p_fstype = FS_EXT2FS;
+				break;
+			default:
+				/* FS_SWAP for _SUNOS_SWAP and _LINUX_SWAP? */
+				npp->p_fstype = FS_UNUSED;
+				break;
 			}
 		}
 	}
@@ -291,7 +395,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	DNPRINTF(BOOT_D_OFDEV, "disklabel_sun_to_bsd: success!\n");
-	return (NULL);
+	return (0);
 }
 
 /*
@@ -322,21 +426,25 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	if (strategy(devp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &read)
 	    || read != DEV_BSIZE)
 		return ("Cannot read label");
-	/* Check for a NetBSD disk label. */
+
+	/* Check for a disk label. */
 	dlp = (struct disklabel *) (buf + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp))
-			return ("NetBSD disk label corrupted");
+			return ("corrupt disk label");
 		*lp = *dlp;
-		DNPRINTF(BOOT_D_OFDEV, "search_label: found NetBSD label\n");
+		DNPRINTF(BOOT_D_OFDEV, "search_label: found disk label\n");
 		return (NULL);
 	}
 
 	/* Check for a Sun disk label (for PROM compatibility). */
-	slp = (struct sun_disklabel *) buf;
-	if (slp->sl_magic == SUN_DKMAGIC)
-		return (disklabel_sun_to_bsd(buf, lp));
-
+	slp = (struct sun_disklabel *)buf;
+	if (slp->sl_magic == SUN_DKMAGIC) {
+		if (disklabel_sun_to_bsd(slp, lp) != 0)
+			return ("corrupt disk label");
+		DNPRINTF(BOOT_D_OFDEV, "search_label: found disk label\n");
+		return (NULL);
+	}
 
 	bzero(buf, sizeof(buf));
 	return ("no disk label");
