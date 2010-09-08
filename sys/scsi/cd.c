@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.188 2010/09/08 14:47:12 jsing Exp $	*/
+/*	$OpenBSD: cd.c,v 1.189 2010/09/08 15:16:22 jsing Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ const struct scsi_inquiry_pattern cd_patterns[] = {
 
 #define cdlock(softc)   disk_lock(&(softc)->sc_dk)
 #define cdunlock(softc) disk_unlock(&(softc)->sc_dk)
-#define cdlookup(unit) (struct cd_softc *)device_lookup(&cd_cd, (unit))
+#define cdlookup(unit) (struct cd_softc *)disk_lookup(&cd_cd, (unit))
 
 int
 cdmatch(struct device *parent, void *match, void *aux)

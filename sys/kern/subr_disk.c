@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.108 2010/09/08 14:47:12 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.109 2010/09/08 15:16:22 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1393,4 +1393,29 @@ disk_map(char *path, char *mappath, int size, int flags)
 	    (flags & DM_OPENBLCK) ? "" : "r", mdk->dk_name, part);
 
 	return 0;
+}
+
+/*
+ * Lookup a disk device and verify that it has completed attaching.
+ */
+struct device *
+disk_lookup(struct cfdriver *cd, int unit)
+{
+	struct device *dv;
+	struct disk *dk;
+
+	dv = device_lookup(cd, unit);
+	if (dv == NULL)
+		return (NULL);
+
+	TAILQ_FOREACH(dk, &disklist, dk_link)
+		if (dk->dk_device == dv)
+			break;
+
+	if (dk == NULL) {
+		device_unref(dv);
+		return (NULL);
+	}
+
+	return (dv);
 }

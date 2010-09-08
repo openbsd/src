@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.24 2010/09/08 14:47:12 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.25 2010/09/08 15:16:22 jsing Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -158,6 +158,7 @@ void	disk_unbusy(struct disk *, long, int);
 
 int	disk_lock(struct disk *);
 void    disk_unlock(struct disk *);
+struct device *disk_lookup(struct cfdriver *, int);
 
 int	disk_map(char *, char *, int, int);
 #endif
