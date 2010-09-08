@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.91 2010/09/06 15:42:18 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.92 2010/09/08 21:18:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -50,7 +50,6 @@
 #include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/event.h>
-#include <sys/mount.h>	/* for vfs_syncwait() proto */
 
 #include <machine/conf.h>
 #include <machine/cpu.h>
@@ -332,9 +331,6 @@ apm_suspend()
 	disable_intr();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
-	if (cold)
-		vfs_syncwait(0);
-
 	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND);
 }
 
@@ -350,9 +346,6 @@ apm_standby()
 	apm_saved_spl = splhigh();
 	disable_intr();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
-
-	if (cold)
-		vfs_syncwait(0);
 
 	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
 }

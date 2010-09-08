@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.35 2010/09/07 16:21:35 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.36 2010/09/08 21:18:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -40,7 +40,6 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/rwlock.h>
-#include <sys/mount.h>		/* for vfs_syncwait() */
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -313,9 +312,6 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 #endif /* NWSDISPLAY > 0 */
 
 	resettodr();
-
-	if (cold)
-		vfs_syncwait(0);
 
 	if (sc->sc_suspend == NULL)
 		pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);

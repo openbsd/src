@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.6 2010/09/01 13:10:42 pirofti Exp $	*/
+/*	$OpenBSD: apm.c,v 1.7 2010/09/08 21:18:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -43,7 +43,6 @@
 #include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/event.h>
-#include <sys/mount.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -379,9 +378,6 @@ apm_suspend()
 
 	apm_saved_spl = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
-
-	if (cold)
-		vfs_syncwait(0);
 
 	return sys_platform->suspend();
 }
