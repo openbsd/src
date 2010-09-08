@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.695 2010/08/08 14:27:42 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.696 2010/09/08 16:04:35 espie Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -29,7 +29,7 @@ option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		COMPAT_AOUT	# a.out binaries are emulated
 
 option		PROCFS		# /proc
-#option		NTFS		# Experimental NTFS support
+option		NTFS		# NTFS support
 
 # or use		root on nfs swap on nfs
 config		bsd	swap generic

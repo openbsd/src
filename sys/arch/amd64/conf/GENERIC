@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.301 2010/08/30 18:56:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.302 2010/09/08 16:04:35 espie Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,7 +22,7 @@ option		MTRR		# CPU memory range attributes control
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
-#option		NTFS		# Experimental NTFS support
+option		NTFS		# NTFS support
 
 config		bsd	swap generic
 
