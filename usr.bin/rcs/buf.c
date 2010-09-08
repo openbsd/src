@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.16 2010/07/28 09:07:11 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.17 2010/09/08 15:13:39 tobias Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -194,14 +194,9 @@ buf_putc(BUF *b, int c)
 {
 	u_char *bp;
 
-	bp = b->cb_buf + b->cb_len;
-	if (bp == (b->cb_buf + b->cb_size)) {
-		/* extend */
+	if (SIZE_LEFT(b) == 0)
 		buf_grow(b, BUF_INCR);
-
-		/* the buffer might have been moved */
-		bp = b->cb_buf + b->cb_len;
-	}
+	bp = b->cb_buf + b->cb_len;
 	*bp = (u_char)c;
 	b->cb_len++;
 }
@@ -230,18 +225,14 @@ size_t
 buf_append(BUF *b, const void *data, size_t len)
 {
 	size_t left, rlen;
-	u_char *bp, *bep;
+	u_char *bp;
 
-	bp = b->cb_buf + b->cb_len;
-	bep = b->cb_buf + b->cb_size;
-	left = bep - bp;
+	left = SIZE_LEFT(b);
 	rlen = len;
 
-	if (left < len) {
+	if (left < len)
 		buf_grow(b, len - left);
-		bp = b->cb_buf + b->cb_len;
-	}
-
+	bp = b->cb_buf + b->cb_len;
 	memcpy(bp, data, rlen);
 	b->cb_len += rlen;
 
