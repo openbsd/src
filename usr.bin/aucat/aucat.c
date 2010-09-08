@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.104 2010/08/20 06:56:54 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.105 2010/09/08 22:07:26 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -388,7 +388,7 @@ privdrop(void)
 	struct stat sb;
 
 	if ((pw = getpwnam(SNDIO_USER)) == NULL)
-		err(1, "getpwnam");
+		errx(1, "unknown user %s", SNDIO_USER);
 	if (stat(pw->pw_dir, &sb) < 0)
 		err(1, "stat(\"%s\")", pw->pw_dir);
 	if (sb.st_uid != 0 || (sb.st_mode & 022) != 0)
