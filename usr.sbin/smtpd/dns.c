@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.22 2010/06/29 03:47:24 deraadt Exp $	*/
+/*	$OpenBSD: dns.c,v 1.23 2010/09/08 13:32:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -118,7 +118,13 @@ dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 	rd->asker = asker;
 	query->env = env;
 
-	fd = dns();
+	/* dns() will fail if we are scarce on resources or processes */
+	if ((fd = dns()) == -1) {
+		query->error = EAI_AGAIN;
+		imsg_compose_event(rd->asker, type, 0, 0, -1, query, sizeof(*query));
+		return;
+	}
+
 	imsg_init(&rd->iev.ibuf, fd);
 	rd->iev.handler = parent_dispatch_dns;
 	rd->iev.events = EV_READ;
@@ -197,14 +203,21 @@ dns(void)
 	pid_t		 pid;
 	struct imsgev	*iev;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, AF_UNSPEC, fd) == -1)
-		fatal("socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, AF_UNSPEC, fd) == -1) {
+		log_warn("socketpair");
+		return -1;
+	}
 
 	session_socket_blockmode(fd[0], BM_NONBLOCK);
 	session_socket_blockmode(fd[1], BM_NONBLOCK);
 
-	if ((pid = fork()) == -1)
-		fatal("dns: fork");
+	if ((pid = fork()) == -1) {
+		log_warn("fork");
+		close(fd[0]);
+		close(fd[1]);
+		return -1;
+	}
+
 	if (pid > 0) {
 		close(fd[1]);
 		return (fd[0]);
