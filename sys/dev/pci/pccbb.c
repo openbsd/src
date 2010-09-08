@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.84 2010/09/08 17:54:37 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.85 2010/09/08 17:56:16 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -2884,6 +2884,11 @@ pccbbactivate(struct device *self, int act)
 		/* re-check all cards */
 		pccbb_checksockstat(sc);
 
+		/*
+		 * XXX Because the cardslot stuff is so obfuscated with threads,
+		 * here we are activating children which may have been
+		 * ejected while we were asleep.  This needs to be solved.
+		 */
 		rv = config_activate_children(self, act);
 
 		sc->sc_pil_intr_enable = 1;
