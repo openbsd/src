@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.61 2010/07/22 21:10:51 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.62 2010/09/08 20:36:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1055,6 +1055,8 @@ window_copy_write_line(
 	if (py == 0) {
 		size = xsnprintf(hdr, sizeof hdr,
 		    "[%u/%u]", data->oy, screen_hsize(data->backing));
+		if (size > screen_size_x(s))
+			size = screen_size_x(s);
 		screen_write_cursormove(ctx, screen_size_x(s) - size, 0);
 		screen_write_puts(ctx, &gc, "%s", hdr);
 	} else if (py == last && data->inputtype != WINDOW_COPY_OFF) {
