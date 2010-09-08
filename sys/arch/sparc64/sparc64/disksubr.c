@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.62 2010/05/24 16:41:32 jsing Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.63 2010/09/08 14:37:32 jsing Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -221,8 +221,6 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
 
 /*
  * Given a SunOS disk label, set lp to a BSD disk label.
- * Returns NULL on success, else an error string.
- *
  * The BSD label is cleared out before this is called.
  */
 static int
