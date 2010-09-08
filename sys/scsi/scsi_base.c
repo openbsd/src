@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.193 2010/08/30 02:47:56 matthew Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.194 2010/09/08 11:04:39 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -177,13 +177,21 @@ scsi_plug_probe(void *xsc, void *xp)
 {
 	struct scsibus_softc *sc = xsc;
 	struct scsi_plug *p = xp;
-
-	if (p->lun == -1)
-		scsi_probe_target(sc, p->target);
-	else
-		scsi_probe_lun(sc, p->target, p->lun);
+	int target = p->target, lun = p->lun;
 
 	pool_put(&scsi_plug_pool, p);
+
+	if (target == -1 && lun == -1)
+		scsi_probe_bus(sc);
+
+	/* specific lun and wildcard target is bad */
+	if (target == -1)
+		return;
+
+	if (lun == -1)
+		scsi_probe_target(sc, target);
+
+	scsi_probe_lun(sc, target, lun);
 }
 
 void
@@ -191,13 +199,22 @@ scsi_plug_detach(void *xsc, void *xp)
 {
 	struct scsibus_softc *sc = xsc;
 	struct scsi_plug *p = xp;
-
-	if (p->lun == -1)
-		scsi_detach_target(sc, p->target, p->how);
-	else
-		scsi_detach_lun(sc, p->target, p->lun, p->how);
+	int target = p->target, lun = p->lun;
+	int how = p->how;
 
 	pool_put(&scsi_plug_pool, p);
+
+	if (target == -1 && lun == -1)
+		scsi_detach_bus(sc, how);
+
+	/* specific lun and wildcard target is bad */
+	if (target == -1)
+		return;
+
+	if (lun == -1)
+		scsi_detach_target(sc, target, how);
+
+	scsi_detach_lun(sc, target, lun, how);
 }
 
 int
