@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.83 2010/09/08 17:53:55 deraadt Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.84 2010/09/08 17:54:37 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ void	pccbb_shutdown(void *);
 void	pci113x_insert(void *);
 int	pccbbintr_function(struct pccbb_softc *);
 
+int	pccbb_checksockstat(struct pccbb_softc *);
 int	pccbb_detect_card(struct pccbb_softc *);
 
 void	pccbb_pcmcia_write(struct pcic_handle *, int, int);
@@ -866,6 +867,50 @@ pccbb_pcmcia_detach_card(struct pcic_handle *ph, int flags)
 }
 #endif
 
+int
+pccbb_checksockstat(struct pccbb_softc *sc)
+{
+	u_int32_t sockstate;
+
+	sockstate = bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh,
+	    CB_SOCKET_STAT);
+
+	if ((sockstate & CB_SOCKET_STAT_CD) != 0) {
+		/* A card should be removed. */
+		if (sc->sc_flags & CBB_CARDEXIST) {
+			DPRINTF(("%s: 0x%08x", sc->sc_dev.dv_xname,
+			    sockevent));
+			DPRINTF((" card removed, 0x%08x\n", sockstate));
+			sc->sc_flags &= ~CBB_CARDEXIST;
+			if (sc->sc_csc->sc_status & CARDSLOT_STATUS_CARD_16) {
+#if 0
+				struct pcic_handle *ph =
+				    &sc->sc_pcmcia_h;
+
+				pcmcia_card_deactivate(ph->pcmcia);
+				pccbb_pcmcia_socket_disable(ph);
+				pccbb_pcmcia_detach_card(ph,
+				    DETACH_FORCE);
+#endif
+				cardslot_event_throw(sc->sc_csc,
+				    CARDSLOT_EVENT_REMOVAL_16);
+			} else if (sc->sc_csc->sc_status &
+			    CARDSLOT_STATUS_CARD_CB) {
+				/* Cardbus intr removed */
+				cardslot_event_throw(sc->sc_csc,
+				    CARDSLOT_EVENT_REMOVAL_CB);
+			}
+		}
+		return (1);
+	} else if ((sockstate & CB_SOCKET_STAT_CD) == 0 &&
+	    (sc->sc_flags & CBB_CARDEXIST) == 0) {
+		timeout_add_msec(&sc->sc_ins_tmo, 100);
+		sc->sc_flags |= CBB_INSERTING;
+		return (1);
+	}
+	return (0);
+}
+
 /*
  * int pccbbintr(arg)
  *    void *arg;
@@ -876,69 +921,25 @@ int
 pccbbintr(void *arg)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)arg;
-	u_int32_t sockevent, sockstate;
-	bus_space_tag_t memt = sc->sc_base_memt;
-	bus_space_handle_t memh = sc->sc_base_memh;
+	u_int32_t sockevent;
 	struct pcic_handle *ph = &sc->sc_pcmcia_h;
 
 	if (!sc->sc_ints_on)
 		return 0;
 
-	sockevent = bus_space_read_4(memt, memh, CB_SOCKET_EVENT);
-	bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
+	sockevent = bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh,
+	    CB_SOCKET_EVENT);
+	bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh,
+	    CB_SOCKET_EVENT, sockevent);
 	Pcic_read(ph, PCIC_CSC);
 
-	if (sockevent == 0) {
-		/* This intr is not for me: it may be for my child devices. */
-		if (sc->sc_pil_intr_enable) {
-			return pccbbintr_function(sc);
-		} else {
-			return 0;
-		}
-	}
-
 	if (sockevent & CB_SOCKET_EVENT_CD) {
-		sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
-		if ((sockstate & CB_SOCKET_STAT_CD) != 0) {
-			/* A card should be removed. */
-			if (sc->sc_flags & CBB_CARDEXIST) {
-				DPRINTF(("%s: 0x%08x", sc->sc_dev.dv_xname,
-				    sockevent));
-				DPRINTF((" card removed, 0x%08x\n", sockstate));
-				sc->sc_flags &= ~CBB_CARDEXIST;
-				if (sc->sc_csc->sc_status &
-				    CARDSLOT_STATUS_CARD_16) {
-#if 0
-					struct pcic_handle *ph =
-					    &sc->sc_pcmcia_h;
-
-					pcmcia_card_deactivate(ph->pcmcia);
-					pccbb_pcmcia_socket_disable(ph);
-					pccbb_pcmcia_detach_card(ph,
-					    DETACH_FORCE);
-#endif
-					cardslot_event_throw(sc->sc_csc,
-					    CARDSLOT_EVENT_REMOVAL_16);
-				} else if (sc->sc_csc->sc_status &
-				    CARDSLOT_STATUS_CARD_CB) {
-					/* Cardbus intr removed */
-					cardslot_event_throw(sc->sc_csc,
-					    CARDSLOT_EVENT_REMOVAL_CB);
-				}
-			}
-		} else if ((sockstate & CB_SOCKET_STAT_CD) == 0 &&
-		    /*
-		     * The pccbbintr may called from powerdown hook when
-		     * the system resumed, to detect the card
-		     * insertion/removal during suspension.
-		     */
-		    (sc->sc_flags & CBB_CARDEXIST) == 0) {
-			timeout_add_msec(&sc->sc_ins_tmo, 100);
-			sc->sc_flags |= CBB_INSERTING;
-		}
-		return (1);
+		if (pccbb_checksockstat(sc))
+			return (1);
 	}
 
+	if (sc->sc_pil_intr_enable)
+		return pccbbintr_function(sc);
 	return (0);
 }
 
@@ -2823,8 +2824,6 @@ pccbbactivate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 
-		DPRINTF(("%s: power: why %d stopping intr\n",
-		    sc->sc_dev.dv_xname, why));
 		sc->sc_pil_intr_enable = 0;
 
 		/* Save registers that may get lost. */
@@ -2882,18 +2881,12 @@ pccbbactivate(struct device *self, int act)
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
 		bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT, reg);
 
-		/*
-		 * check for card insertion or removal during suspend period.
-		 * XXX: the code can't cope with card swap (remove then
-		 * insert).  how can we detect such situation?
-		 */
-		(void)pccbbintr(sc);
+		/* re-check all cards */
+		pccbb_checksockstat(sc);
 
 		rv = config_activate_children(self, act);
 
 		sc->sc_pil_intr_enable = 1;
-		DPRINTF(("%s: power: RESUME enabling intr\n",
-		    sc->sc_dev.dv_xname));
 		break;
 	}
 	return (rv);
