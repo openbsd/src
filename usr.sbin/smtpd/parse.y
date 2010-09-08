@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.64 2010/08/03 18:42:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.65 2010/09/08 23:32:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -977,6 +977,10 @@ rule		: decision on from			{
 		} FOR conditions action	tag {
 			struct rule	*subr;
 			struct cond	*cond;
+
+			if ($8)
+				(void)strlcpy(rule->r_tag, $8, sizeof(rule->r_tag));
+			free($8);
 
 			while ((cond = TAILQ_FIRST(conditions)) != NULL) {
 
