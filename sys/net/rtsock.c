@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.108 2010/09/02 09:38:05 blambert Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.109 2010/09/08 08:20:45 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -733,16 +733,7 @@ report:
 				}
 			}
 #ifdef MPLS
-			/* if gateway changed remove MPLS information */
-			if (newgate || ((rtm->rtm_fmask & RTF_MPLS) &&
-			    !(rtm->rtm_flags & RTF_MPLS))) {
-				if (rt->rt_llinfo != NULL &&
-				    rt->rt_flags & RTF_MPLS) {
-					free(rt->rt_llinfo, M_TEMP);
-					rt->rt_llinfo = NULL;
-					rt->rt_flags &= ~RTF_MPLS;
-				}
-			} else if ((rtm->rtm_flags & RTF_MPLS) &&
+			if ((rtm->rtm_flags & RTF_MPLS) &&
 			    info.rti_info[RTAX_SRC] != NULL) {
 				struct rt_mpls *rt_mpls;
 
@@ -771,6 +762,15 @@ report:
 				/* XXX: set experimental bits */
 
 				rt->rt_flags |= RTF_MPLS;
+			} else if (newgate || ((rtm->rtm_fmask & RTF_MPLS) &&
+			    !(rtm->rtm_flags & RTF_MPLS))) {
+				/* if gateway changed remove MPLS information */
+				if (rt->rt_llinfo != NULL &&
+				    rt->rt_flags & RTF_MPLS) {
+					free(rt->rt_llinfo, M_TEMP);
+					rt->rt_llinfo = NULL;
+					rt->rt_flags &= ~RTF_MPLS;
+				}
 			}
 #endif
 			/* Hack to allow some flags to be toggled */
