@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.23 2010/06/26 18:20:53 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.24 2010/09/08 22:02:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -108,6 +108,8 @@ key_bindings_init(void)
 		{ '#', 			  0, &cmd_list_buffers_entry },
 		{ '%', 			  0, &cmd_split_window_entry },
 		{ '&', 			  0, &cmd_confirm_before_entry },
+		{ '(',                    0, &cmd_switch_client_entry },
+		{ ')',                    0, &cmd_switch_client_entry },
 		{ ',', 			  0, &cmd_command_prompt_entry },
 		{ '-', 			  0, &cmd_delete_buffer_entry },
 		{ '.', 			  0, &cmd_command_prompt_entry },
