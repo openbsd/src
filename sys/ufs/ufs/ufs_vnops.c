@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.93 2010/09/06 23:44:11 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.94 2010/09/09 10:37:04 thib Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -748,7 +748,7 @@ abortit:
 		if ((fcnp->cn_flags & SAVESTART) == 0)
 			panic("ufs_rename: lost from startdir");
 		fcnp->cn_nameiop = DELETE;
-		if ((error = relookup(fdvp, &fvp, fcnp)) != 0)
+		if ((error = vfs_relookup(fdvp, &fvp, fcnp)) != 0)
 			return (error);		/* relookup did vrele() */
 		vrele(fdvp);
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
@@ -855,7 +855,7 @@ abortit:
 		}
 		if ((tcnp->cn_flags & SAVESTART) == 0)
 			panic("ufs_rename: lost to startdir");
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
+		if ((error = vfs_relookup(tdvp, &tvp, tcnp)) != 0)
 			goto out;
 		vrele(tdvp); /* relookup() acquired a reference */
 		dp = VTOI(tdvp);
@@ -1004,7 +1004,7 @@ abortit:
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("ufs_rename: lost from startdir");
-	if ((error = relookup(fdvp, &fvp, fcnp)) != 0) {
+	if ((error = vfs_relookup(fdvp, &fvp, fcnp)) != 0) {
 		vrele(ap->a_fvp);
 		return (error);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.42 2010/05/20 02:32:02 marco Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.43 2010/09/09 10:37:03 thib Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ namei(struct nameidata *ndp)
 		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
-		if ((error = lookup(ndp)) != 0) {
+		if ((error = vfs_lookup(ndp)) != 0) {
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (error);
 		}
@@ -293,7 +293,7 @@ badlink:
  *	    if WANTPARENT set, return unlocked parent in ni_dvp
  */
 int
-lookup(struct nameidata *ndp)
+vfs_lookup(struct nameidata *ndp)
 {
 	char *cp;			/* pointer into pathname argument */
 	struct vnode *dp = 0;		/* the directory we are searching */
@@ -613,7 +613,7 @@ bad:
  * Reacquire a path name component.
  */
 int
-relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
+vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
 	struct proc *p = cnp->cn_proc;
 	struct vnode *dp = 0;		/* the directory we are searching */

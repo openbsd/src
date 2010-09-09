@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.90 2010/03/29 23:33:39 krw Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.91 2010/09/09 10:37:04 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -997,7 +997,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART);
 			nd.ni_cnd.cn_proc = procp;
 			nd.ni_cnd.cn_cred = cred;
-			if ((error = lookup(&nd)) != 0) {
+			if ((error = vfs_lookup(&nd)) != 0) {
 				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 				nfsm_reply(0);
 				error = 0;
@@ -1194,7 +1194,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART);
 		nd.ni_cnd.cn_proc = procp;
 		nd.ni_cnd.cn_cred = procp->p_ucred;
-		error = lookup(&nd);
+		error = vfs_lookup(&nd);
 		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		if (error)
 			goto out;
@@ -1712,7 +1712,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		nd.ni_cnd.cn_flags |= (NOFOLLOW | LOCKLEAF);
 		nd.ni_cnd.cn_proc = procp;
 		nd.ni_cnd.cn_cred = cred;
-		error = lookup(&nd);
+		error = vfs_lookup(&nd);
 		if (!error) {
 			bzero((caddr_t)fhp, sizeof(nfh));
 			fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.24 2010/05/19 08:31:23 thib Exp $	*/
+/*	$OpenBSD: namei.h,v 1.25 2010/09/09 10:37:04 thib Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -175,8 +175,8 @@ struct	namecache {
 
 #ifdef _KERNEL
 int	namei(struct nameidata *ndp);
-int	lookup(struct nameidata *ndp);
-int	relookup(struct vnode *dvp, struct vnode **vpp,
+int	vfs_lookup(struct nameidata *ndp);
+int	vfs_relookup(struct vnode *dvp, struct vnode **vpp,
 		      struct componentname *cnp);
 void cache_purge(struct vnode *);
 int cache_lookup(struct vnode *, struct vnode **, struct componentname *);
