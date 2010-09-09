@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.33 2010/08/25 08:04:01 jsg Exp $
+# $OpenBSD: Makefile.cross,v 1.34 2010/09/09 17:32:44 drahn Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -78,9 +78,7 @@ CROSSGCC=	${CROSSDIR}/.gcc_done
     ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "vax"
 TARGET_USE_GCC3=No
 COMPILER_VERSION=gcc2
-.elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc64"
+.elif ${TARGET_ARCH} == "amd64" || ${TARGET_ARCH} == "sparc64"
 TARGET_USE_GCC4=Yes
 COMPILER_VERSION=gcc4
 .else
