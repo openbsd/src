@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.27 2008/04/25 14:51:35 jmc Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.28 2010/09/09 11:31:40 miod Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1923,7 +1923,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      *  Ok, we already know the pattern has matched, but we now
      *  additionally have to check for all existing preconditions
      *  (RewriteCond) which have to be also true. We do this at
-     *  this very late stage to avoid unnessesary checks which
+     *  this very late stage to avoid unnecessary checks which
      *  would slow down the rewriting engine!!
      */
     rewriteconds = p->rewriteconds;
