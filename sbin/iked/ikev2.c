@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.23 2010/07/29 14:41:21 jsg Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.24 2010/09/09 13:06:46 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2257,10 +2257,15 @@ ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
 				    (i == IKEV2_XFORMTYPE_DH))) {
 					match_score = 0;
 					break;
-				} else if (protoid != IKEV2_SAPROTO_IKE &&
+				} else if (protoid == IKEV2_SAPROTO_AH &&
+				    (match[i] == NULL) && (
+				    (i == IKEV2_XFORMTYPE_INTEGR) ||
+				    (i == IKEV2_XFORMTYPE_ESN))) {
+					match_score = 0;
+					break;
+				} else if (protoid == IKEV2_SAPROTO_ESP &&
 				    (match[i] == NULL) && (
 				    (i == IKEV2_XFORMTYPE_ENCR) ||
-				    (i == IKEV2_XFORMTYPE_INTEGR) ||
 				    (i == IKEV2_XFORMTYPE_ESN))) {
 					match_score = 0;
 					break;
@@ -2956,6 +2961,9 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 				if (xform->xform_length)
 					xform->xform_keylength =
 					    xform->xform_length;
+				xform->xform_keylength +=
+				    noncelength_xf(xform->xform_type,
+				    xform->xform_id);
 				ilen += xform->xform_keylength / 8;
 				break;
 			}
@@ -3036,7 +3044,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			}
 
 			memcpy(flowa, flow, sizeof(*flow));
-			flowa->flow_dir = IPSP_DIRECTION_IN;
+			flowa->flow_dir = sa->sa_hdr.sh_initiator ?
+			    IPSP_DIRECTION_OUT : IPSP_DIRECTION_IN;
 			flowa->flow_saproto = prop->prop_protoid;
 			flowa->flow_srcid = localid;
 			flowa->flow_dstid = peerid;
@@ -3056,7 +3065,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 			memcpy(flowb, flowa, sizeof(*flow));
 
-			flowb->flow_dir = IPSP_DIRECTION_OUT;
+			flowb->flow_dir = sa->sa_hdr.sh_initiator ?
+			    IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
 			memcpy(&flowb->flow_src, &flow->flow_dst,
 			    sizeof(flow->flow_dst));
 			memcpy(&flowb->flow_dst, &flow->flow_src,
@@ -3105,11 +3115,17 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			csa->csa_allocated = 1;
 		}
 
-		if ((csa->csa_encrkey = ibuf_copy(keymat,
-		    encrxf->xform_keylength / 8)) == NULL ||
-		    (csa->csa_integrkey = ibuf_copy(keymat,
+		if (encrxf && (csa->csa_encrkey = ibuf_copy(keymat,
+		    encrxf->xform_keylength / 8)) == NULL) {
+			log_debug("%s: failed to get CHILD SA encryption key",
+			    __func__);
+			childsa_free(csa);
+			goto done;
+		}
+		if (integrxf && (csa->csa_integrkey = ibuf_copy(keymat,
 		    integrxf->xform_keylength / 8)) == NULL) {
-			log_debug("%s: failed to get CHILD SA keys", __func__);
+			log_debug("%s: failed to get CHILD SA integrity key",
+			    __func__);
 			childsa_free(csa);
 			goto done;
 		}
@@ -3132,11 +3148,17 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		csb->csa_local = csa->csa_peer;
 		csb->csa_peer = csa->csa_local;
 
-		if ((csb->csa_encrkey = ibuf_copy(keymat,
-		    encrxf->xform_keylength / 8)) == NULL ||
-		    (csb->csa_integrkey = ibuf_copy(keymat,
+		if (encrxf && (csb->csa_encrkey = ibuf_copy(keymat,
+		    encrxf->xform_keylength / 8)) == NULL) {
+			log_debug("%s: failed to get CHILD SA encryption key",
+			    __func__);
+			childsa_free(csb);
+			goto done;
+		}
+		if (integrxf && (csb->csa_integrkey = ibuf_copy(keymat,
 		    integrxf->xform_keylength / 8)) == NULL) {
-			log_debug("%s: failed to get CHILD SA keys", __func__);
+			log_debug("%s: failed to get CHILD SA integrity key",
+			    __func__);
 			childsa_free(csb);
 			goto done;
 		}
@@ -3273,16 +3295,22 @@ ikev2_valid_proposal(struct iked_proposal *prop,
 	encrxf = integrxf = NULL;
 	for (i = 0; i < prop->prop_nxforms; i++) {
 		xform = prop->prop_xforms + i;
-		if (xform->xform_type ==
-		    IKEV2_XFORMTYPE_ENCR)
+		if (xform->xform_type == IKEV2_XFORMTYPE_ENCR)
 			encrxf = xform;
-		else if (xform->xform_type ==
-		    IKEV2_XFORMTYPE_INTEGR)
+		else if (xform->xform_type == IKEV2_XFORMTYPE_INTEGR)
 			integrxf = xform;
 	}
-	/* XXX support non-auth / non-enc proposals */
-	if (encrxf == NULL || integrxf == NULL)
-		return (-1);
+
+	if (prop->prop_protoid == IKEV2_SAPROTO_IKE) {
+		if (encrxf == NULL || integrxf == NULL)
+			return (-1);
+	} else if (prop->prop_protoid == IKEV2_SAPROTO_AH) {
+		if (integrxf == NULL)
+			return (-1);
+	} else if (prop->prop_protoid == IKEV2_SAPROTO_ESP) {
+		if (encrxf == NULL)
+			return (-1);
+	}
 
 	if (exf)
 		*exf = encrxf;

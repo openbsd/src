@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2010/08/03 18:42:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2010/09/09 13:06:46 mikeb Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ struct ipsec_xf {
 	u_int		 id;
 	u_int		 length;
 	u_int		 keylength;
+	u_int		 nonce;
 };
 
 struct ipsec_transforms {
@@ -150,7 +151,7 @@ const struct ipsec_xf ipsecencxfs[] = {
 	{ "aes-128",		IKEV2_XFORMENCR_AES_CBC,	16, 16 },
 	{ "aes-192",		IKEV2_XFORMENCR_AES_CBC, 	24, 24 },
 	{ "aes-256",		IKEV2_XFORMENCR_AES_CBC, 	32, 32 },
-	{ "aes-ctr",		IKEV2_XFORMENCR_AES_CTR, 	20, 20 },
+	{ "aes-ctr",		IKEV2_XFORMENCR_AES_CTR, 	16, 16, 4 },
 	{ "blowfish",		IKEV2_XFORMENCR_BLOWFISH,	20, 20 },
 	{ "cast",		IKEV2_XFORMENCR_CAST,		16, 16 },
 	{ "null",		IKEV2_XFORMENCR_NULL,		0, 0 },
@@ -1954,6 +1955,21 @@ keylength_xf(u_int saproto, u_int type, u_int id)
 		if (xfs[i].id == id)
 			return (xfs[i].length * 8);
 	}
+	return (0);
+}
+
+size_t
+noncelength_xf(u_int type, u_int id)
+{
+	const struct ipsec_xf	*xfs = ipsecencxfs;
+	int			 i;
+
+	if (type != IKEV2_XFORMTYPE_ENCR)
+		return (0);
+
+	for (i = 0; xfs[i].name != NULL; i++)
+		if (xfs[i].id == id)
+			return (xfs[i].nonce * 8);
 	return (0);
 }
 
