@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.14 2010/09/01 13:10:42 pirofti Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.15 2010/09/09 19:06:15 miod Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -445,8 +445,10 @@ ykbec_suspend()
 	struct ykbec_softc *sc = ykbec_sc;
 	int ctrl;
 
-	/* enable isa irq 1 and 12 (PS/2 input devices) */
-	loongson_set_isa_imr((1 << 1) | (1 << 12));
+	/*
+	 * Set up wakeup sources: currently only the internal keyboard.
+	 */
+	loongson_set_isa_imr(1 << 1);
 
 	/* USB */
 	DPRINTF(("USB\n"));
@@ -467,8 +469,16 @@ ykbec_suspend()
 	/* CPU */
 	DPRINTF(("CPU\n"));
 	ykbec_chip_config = REGVAL(LOONGSON_CHIP_CONFIG0);
+	enableintr();
 	REGVAL(LOONGSON_CHIP_CONFIG0) = ykbec_chip_config & ~0x7;
 	(void)REGVAL(LOONGSON_CHIP_CONFIG0);
+
+	/*
+	 * When a resume interrupt fires, we will enter the interrupt
+	 * dispatcher, which will do nothing because we are at splhigh,
+	 * and execution flow will return here and continue.
+	 */
+	(void)disableintr();
 
 	return 0;
 }
@@ -492,6 +502,8 @@ ykbec_resume()
 	ykbec_write(sc, REG_USB0, USB_FLAG_ON); 
 	ykbec_write(sc, REG_USB1, USB_FLAG_ON); 
 	ykbec_write(sc, REG_USB2, USB_FLAG_ON); 
+
+	ykbec_refresh(sc);
 
 	return 0;
 }
