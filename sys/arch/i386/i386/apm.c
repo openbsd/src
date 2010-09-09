@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.93 2010/09/08 21:38:43 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.94 2010/09/09 04:13:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -315,52 +315,35 @@ apm_power_print(struct apm_softc *sc, struct apmregs *regs)
 #endif
 }
 
-int apm_saved_spl;
-
 void
 apm_suspend(int state)
 {
+	extern int perflevel;
+	int s;
+
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 	bufq_quiesce();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
 
-	apm_saved_spl = splhigh();
+	s = splhigh();
 	disable_intr();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
-	(void)apm_set_powstate(APM_DEV_ALLDEVS, state);
-}
+	/* Send machine to sleep */
+	apm_set_powstate(APM_DEV_ALLDEVS, state);
+	/* Wake up  */
 
-void
-apm_resume(struct apm_softc *sc, struct apmregs *regs)
-{
-	extern int perflevel;
-
-	apm_resumes = APM_RESUME_HOLDOFF;
-
-	/* Some machines resume with interrupts on */
-	(void) splhigh();
-	disable_intr();
-
-	/* they say that some machines may require reinitializing the clocks */
+	/* They say that some machines may require reinitializing the clocks */
 	i8254_startclock();
 	if (initclock_func == i8254_initclocks)
 		rtcstart();		/* in i8254 mode, rtc is profclock */
-
 	inittodr(time_second);
-	/* lower bit in cx means pccard was powered down */
 
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
-
 	enable_intr();
-	splx(apm_saved_spl);
-
-	apm_record_event(sc, regs->bx);
-
-	/* acknowledge any rtc interrupt we may have missed */
-	rtcdrain(NULL);
+	splx(s);
 
 	/* restore hw.setperf */
 	if (cpu_setperf != NULL)
@@ -369,6 +352,17 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
+}
+
+void
+apm_resume(struct apm_softc *sc, struct apmregs *regs)
+{
+
+	apm_resumes = APM_RESUME_HOLDOFF;
+
+	/* lower bit in cx means pccard was powered down */
+
+	apm_record_event(sc, regs->bx);
 }
 
 int
