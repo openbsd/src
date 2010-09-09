@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.43 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.44 2010/09/09 10:59:02 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -616,4 +616,21 @@ hw_ipi_intr_clear(u_long cpuid)
 	xheart_intr_clear(HEART_ISR_IPI(cpuid));
 }
 
+void
+hw_cpu_init_secondary(struct cpu_info *ci)
+{
+       /*
+        * When attaching secondary processors, cache information is not
+        * available yet.  But since the MP-capable systems we run on
+        * currently all have R10k-style caches, we can quickly compute
+        * the needed values.
+        */
+	ci->ci_cacheways = 2;
+	ci->ci_l1instcachesize = 32 * 1024;
+	ci->ci_l1instcacheline = 64;
+	ci->ci_l1datacachesize = 32 * 1024;
+	ci->ci_l1datacacheline = 64;
+	ci->ci_l2size = ci->ci_hw.l2size;
+	ci->ci_l3size = 0;
+}
 #endif

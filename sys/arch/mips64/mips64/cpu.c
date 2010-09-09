@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2010/09/09 10:55:52 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.34 2010/09/09 10:59:01 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -105,21 +105,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	ci->ci_dev = dev;
 	bcopy(ch, &ci->ci_hw, sizeof(struct cpu_hwinfo));
 #ifdef MULTIPROCESSOR
-	/*
-	 * When attaching secondary processors, cache information is not
-	 * available yet.  But since the MP-capable systems we run on
-	 * currently all have R10k-style caches, we can quickly compute
-	 * the needed values.
-	 */
-	if (!ISSET(ci->ci_flags, CPUF_PRIMARY)) {
-		ci->ci_cacheways = 2;
-		ci->ci_l1instcachesize = 32 * 1024;
-		ci->ci_l1instcacheline = 64;
-		ci->ci_l1datacachesize = 32 * 1024;
-		ci->ci_l1datacacheline = 64;
-		ci->ci_l2size = ch->l2size;
-		ci->ci_l3size = 0;
-	}
+	if (!ISSET(ci->ci_flags, CPUF_PRIMARY))
+		hw_cpu_init_secondary(ci);
 #endif
 
 	printf(": ");

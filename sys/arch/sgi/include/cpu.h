@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 2010/04/28 16:20:28 syuu Exp $ */
+/*	$OpenBSD: cpu.h,v 1.10 2010/09/09 10:59:01 syuu Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,6 +53,7 @@ void hw_cpu_spinup_trampoline(struct cpu_info *);
 int  hw_ipi_intr_establish(int (*)(void *), u_long);
 void hw_ipi_intr_set(u_long);
 void hw_ipi_intr_clear(u_long);
+void hw_cpu_init_secondary(struct cpu_info *);
 #endif	/* MULTIPROCESSOR && !_LOCORE */
 
 /*
