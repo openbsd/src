@@ -44,7 +44,7 @@ ssh_ecdsa_sign(const Key *key, u_char **sigp, u_int *lenp,
     const u_char *data, u_int datalen)
 {
 	ECDSA_SIG *sig;
-	const EVP_MD *evp_md = EVP_sha256();
+	const EVP_MD *evp_md;
 	EVP_MD_CTX md;
 	u_char digest[EVP_MAX_MD_SIZE];
 	u_int len, dlen;
@@ -55,6 +55,7 @@ ssh_ecdsa_sign(const Key *key, u_char **sigp, u_int *lenp,
 		error("%s: no ECDSA key", __func__);
 		return -1;
 	}
+	evp_md = key_ec_nid_to_evpmd(key->ecdsa_nid);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
 	EVP_DigestFinal(&md, digest, &dlen);
@@ -92,7 +93,7 @@ ssh_ecdsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
     const u_char *data, u_int datalen)
 {
 	ECDSA_SIG *sig;
-	const EVP_MD *evp_md = EVP_sha256();
+	const EVP_MD *evp_md;
 	EVP_MD_CTX md;
 	u_char digest[EVP_MAX_MD_SIZE], *sigblob;
 	u_int len, dlen;
@@ -105,6 +106,7 @@ ssh_ecdsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
 		error("%s: no ECDSA key", __func__);
 		return -1;
 	}
+	evp_md = key_ec_nid_to_evpmd(key->ecdsa_nid);
 
 	/* fetch signature */
 	buffer_init(&b);
