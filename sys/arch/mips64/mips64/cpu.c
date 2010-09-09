@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.32 2010/08/30 08:52:10 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.33 2010/09/09 10:55:52 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -287,7 +287,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 
 #ifdef DEBUG
 	printf("cpu%d: Setsize %d:%d\n", cpuno,
-	    ci->ci_l1instset, ci->ci_l1dataset);
+	    ci->ci_l1instcacheset, ci->ci_l1datacacheset);
 	printf("cpu%d: Alias mask %p\n", cpuno, CpuCacheAliasMask);
 	printf("cpu%d: Config Register %08x\n", cpuno, cp0_get_config());
 	printf("cpu%d: Cache configuration %x\n",
