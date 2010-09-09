@@ -154,6 +154,8 @@ extern void sh_pr_nosave_low_regs (struct cpp_reader *);
 extern rtx function_symbol (rtx, const char *, enum sh_function_kind);
 extern rtx sh_get_pr_initial_val (void);
 
+extern void sh_override_options (void);
+
 extern rtx sh_function_arg (CUMULATIVE_ARGS *, enum machine_mode, tree, int);
 extern void sh_function_arg_advance (CUMULATIVE_ARGS *, enum machine_mode, tree, int);
 extern int sh_pass_in_reg_p (CUMULATIVE_ARGS *, enum machine_mode, tree);

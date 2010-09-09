@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.12 2010/08/01 21:23:02 kettenis Exp $
+# $OpenBSD: Makefile,v 1.13 2010/09/09 19:16:50 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -136,6 +136,15 @@ CFLAGS+=	-fPIC -DELF=1 -DLINUX=1
 LIB1ASMFUNCS =	_divI _divU _remI _remU _div_const _mulI _dyncall
 LIB1ASMSRC =	pa/milli64.S
 LIB2FUNCS_EXTRA = fptr.c
+.endif
+
+.if ${TARGET_ARCH} == "sh"
+CFLAGS+=	-fpic
+LIB1ASMSRC = sh/lib1funcs.asm
+LIB1ASMFUNCS = _ashiftrt _ashiftrt_n _ashiftlt _lshiftrt _movmem \
+  _movmem_i4 _mulsi3 _sdivsi3 _sdivsi3_i4 _udivsi3 _udivsi3_i4 _set_fpscr \
+  _div_table _udiv_qrnnd_16 \
+  _ic_invalidate
 .endif
 
 .if ${TARGET_ARCH} == "powerpc"
