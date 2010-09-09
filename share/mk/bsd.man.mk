@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.30 2010/04/03 19:34:00 schwarze Exp $
+#	$OpenBSD: bsd.man.mk,v 1.31 2010/09/09 22:50:47 schwarze Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -33,8 +33,8 @@ MANLINT?=	\#
 	    (rm -f ${.TARGET}; false)
 
 .9.ps9 .8.ps8 .7.ps7 .6.ps6 .5.ps5 .4.ps4 .3p.ps3p .3.ps3 .2.ps2 .1.ps1:
-	@echo "nroff -Tps -mandoc ${.IMPSRC} > ${.TARGET}"
-	@nroff -Tps -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
+	@echo "${MANDOC} -Tps ${.IMPSRC} > ${.TARGET}"
+	@${MANDOC} -Tps ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 .9tbl.ps9 .8tbl.ps8 .7tbl.ps7 .6tbl.ps6 .5tbl.ps5 .4tbl.ps4 .3tbl.ps3 \
 .2tbl.ps2 .1tbl.ps1:
