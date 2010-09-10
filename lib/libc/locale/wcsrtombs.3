@@ -1,4 +1,4 @@
-.\" $OpenBSD: wcsrtombs.3,v 1.2 2007/05/31 19:19:29 jmc Exp $
+.\" $OpenBSD: wcsrtombs.3,v 1.3 2010/09/10 18:38:19 jmc Exp $
 .\" $NetBSD: wcsrtombs.3,v 1.6 2003/09/08 17:54:32 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,13 +25,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 10 2010 $
 .Dt WCSRTOMBS 3
 .Os
 .\" ----------------------------------------------------------------------
 .Sh NAME
 .Nm wcsrtombs
-.Nd converts a wide character string to a multibyte character string \
+.Nd converts a wide-character string to a multibyte character string \
 (restartable)
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 The
 .Fn wcsrtombs
-converts the null-terminated wide character string indirectly pointed to by
+converts the null-terminated wide-character string indirectly pointed to by
 .Fa pwcs
 to the corresponding multibyte character string,
 and store it to the array pointed to by
@@ -103,7 +103,7 @@ These are the special cases:
 .It "s == NULL"
 .Fn wcsrtombs
 returns the number of bytes to store the whole multibyte character string
-corresponding to the wide character string pointed to by
+corresponding to the wide-character string pointed to by
 .Fa pwcs ,
 not including the terminating null byte.
 In this case,

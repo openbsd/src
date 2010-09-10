@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getwc.3,v 1.3 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: getwc.3,v 1.4 2010/09/10 18:38:19 jmc Exp $
 .\"
 .\"	$NetBSD: getwc.3,v 1.7 2003/09/08 17:54:32 wiz Exp $
 .\"
@@ -35,14 +35,14 @@
 .\"
 .\"     @(#)getc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 10 2010 $
 .Dt GETWC 3
 .Os
 .Sh NAME
 .Nm fgetwc ,
 .Nm getwc ,
 .Nm getwchar
-.Nd get next wide-character from input stream
+.Nd get next wide character from input stream
 .Sh SYNOPSIS
 .In stdio.h
 .In wchar.h
@@ -56,7 +56,7 @@
 The
 .Fn fgetwc
 function
-obtains the next input wide-character (if present) from the stream pointed at by
+obtains the next input wide character (if present) from the stream pointed at by
 .Fa stream ,
 or the next character pushed back on the stream via
 .Xr ungetwc 3 .
@@ -75,7 +75,7 @@ is equivalent to
 .Fn getwc
 with the argument stdin.
 .Sh RETURN VALUES
-If successful, these routines return the next wide-character
+If successful, these routines return the next wide character
 from the
 .Fa stream .
 If the stream is at end-of-file or a read error occurs,

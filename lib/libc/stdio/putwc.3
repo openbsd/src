@@ -1,4 +1,4 @@
-.\"	$OpenBSD: putwc.3,v 1.3 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: putwc.3,v 1.4 2010/09/10 18:38:19 jmc Exp $
 .\"
 .\"	$NetBSD: putwc.3,v 1.7 2003/09/08 17:54:32 wiz Exp $
 .\"
@@ -35,14 +35,14 @@
 .\"
 .\"     @(#)putc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 10 2010 $
 .Dt PUTWC 3
 .Os
 .Sh NAME
 .Nm fputwc ,
 .Nm putwc ,
 .Nm putwchar
-.Nd output a wide-character to a stream
+.Nd output a wide character to a stream
 .Sh SYNOPSIS
 .In stdio.h
 .In wchar.h
@@ -56,7 +56,7 @@
 The
 .Fn fputwc
 function
-writes the wide-character
+writes the wide character
 .Fa wc
 to the output stream pointed to by
 .Fa stream .
@@ -82,7 +82,7 @@ The functions,
 .Fn putwc
 and
 .Fn putwchar
-return the wide-character written.
+return the wide character written.
 If an error occurs, the value
 .Dv WEOF
 is returned.
