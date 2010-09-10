@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.34 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.35 2010/09/10 04:52:05 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -63,7 +64,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/audio_if.h>
-#include <dev/audiovar.h>
 #include <dev/auconv.h>
 #include <dev/mulaw.h>
 #include <dev/ic/ac97.h>
@@ -2045,7 +2045,7 @@ emuxki_open(void *addr, int flags)
 	 * recording source(s) which is necessary when setting recording
 	 * params. This will be addressed very soon.
 	 */
-	if (flags & AUOPEN_READ) {
+	if (flags & FREAD) {
 		sc->rvoice = emuxki_voice_new(sc, 0 /* EMU_VOICE_USE_RECORD */);
 		if (sc->rvoice == NULL)
 			return (EBUSY);
@@ -2054,10 +2054,10 @@ emuxki_open(void *addr, int flags)
 		sc->rvoice->dataloc.source = EMU_RECSRC_ADC;
 	}
 
-	if (flags & AUOPEN_WRITE) {
+	if (flags & FWRITE) {
 		sc->pvoice = emuxki_voice_new(sc, EMU_VOICE_USE_PLAY);
 		if (sc->pvoice == NULL) {
-			if (flags & AUOPEN_READ)
+			if (flags & FREAD)
 				emuxki_voice_delete(sc->rvoice);
 			return (EBUSY);
 		}
