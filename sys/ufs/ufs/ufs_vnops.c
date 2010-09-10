@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.94 2010/09/09 10:37:04 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.95 2010/09/10 16:34:09 thib Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1570,7 +1570,7 @@ ufs_strategy(void *v)
 	}
 	vp = ip->i_devvp;
 	bp->b_dev = vp->v_rdev;
-	(vp->v_op->vop_strategy)(ap);
+	VOCALL(vp->v_op, VOFFSET(vop_strategy), ap);
 	return (0);
 }
 
@@ -1617,7 +1617,7 @@ ufsspec_read(void *v)
 	 * Set access flag.
 	 */
 	VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
-	return (spec_read(ap));
+	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
 /*
@@ -1632,7 +1632,7 @@ ufsspec_write(void *v)
 	 * Set update and change flags.
 	 */
 	VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
-	return (spec_write(ap));
+	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
 /*
@@ -1653,7 +1653,7 @@ ufsspec_close(void *v)
 		getmicrotime(&tv);
 		ITIMES(ip, &tv, &tv);
 	}
-	return (spec_close(ap));
+	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
 #ifdef FIFO
@@ -1664,12 +1664,13 @@ int
 ufsfifo_read(void *v)
 {
 	struct vop_read_args *ap = v;
+	extern int (**fifo_vnodeop_p)(void *);
 
 	/*
 	 * Set access flag.
 	 */
 	VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
-	return (fifo_read(ap));
+	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
 /*
@@ -1679,12 +1680,13 @@ int
 ufsfifo_write(void *v)
 {
 	struct vop_write_args *ap = v;
+	extern int (**fifo_vnodeop_p)(void *);
 
 	/*
 	 * Set update and change flags.
 	 */
 	VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
-	return (fifo_write(ap));
+	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
 /*
@@ -1696,6 +1698,7 @@ int
 ufsfifo_close(void *v)
 {
 	struct vop_close_args *ap = v;
+	extern int (**fifo_vnodeop_p)(void *);
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 
@@ -1705,7 +1708,7 @@ ufsfifo_close(void *v)
 		getmicrotime(&tv);
 		ITIMES(ip, &tv, &tv);
 	}
-	return (fifo_close(ap));
+	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 #endif /* FIFO */
 
@@ -1760,8 +1763,8 @@ ufs_advlock(void *v)
  * vnodes.
  */
 int
-ufs_vinit(struct mount *mntp, struct vops *specops, struct vops *fifoops,
-    struct vnode **vpp)
+ufs_vinit(struct mount *mntp, int (**specops)(void *),
+    int (**fifoops)(void *), struct vnode **vpp)
 {
 	struct inode *ip;
 	struct vnode *vp, *nvp;
@@ -1781,7 +1784,7 @@ ufs_vinit(struct mount *mntp, struct vops *specops, struct vops *fifoops,
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
-			vp->v_op = &spec_vops;
+			vp->v_op = spec_vnodeop_p;
 #ifdef VFSDEBUG
 			vp->v_flag &= ~VLOCKSWORK;
 #endif

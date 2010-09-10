@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.27 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.28 2010/09/10 16:34:09 thib Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ int ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 
 /* ext2fs_subr.c */
 int ext2fs_bufatoff(struct inode *, off_t, char **, struct buf **);
-int ext2fs_vinit(struct mount *, struct vops *, struct vops *,
+int ext2fs_vinit(struct mount *, int (**)(void *), int (**)(void *),
     struct vnode **);
 void ext2fs_fragacct(struct m_ext2fs *, int, int32_t[], int);
 #ifdef DIAGNOSTIC
@@ -151,11 +151,11 @@ __END_DECLS
 
 #define IS_EXT2_VNODE(vp)   (vp->v_tag == VT_EXT2FS)
 
-extern struct vops ext2fs_vops;
-extern struct vops ext2fs_specvops;
+extern int (**ext2fs_vnodeop_p)(void *);
+extern int (**ext2fs_specop_p)(void *);
 #ifdef FIFO
-extern struct vops ext2fs_fifovops;
-#define EXT2FS_FIFOOPS &ext2fs_fifovops
+extern int (**ext2fs_fifoop_p)(void *);
+#define EXT2FS_FIFOOPS ext2fs_fifoop_p
 #else
 #define EXT2FS_FIFOOPS NULL
 #endif

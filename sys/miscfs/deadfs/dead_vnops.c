@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.23 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.24 2010/09/10 16:34:08 thib Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -60,42 +60,47 @@ int	dead_print(void *);
 
 int	chkvnlock(struct vnode *);
 
-struct vops dead_vops = {
-	.vop_default	= eopnotsupp,
-	.vop_lookup	= vop_generic_lookup,
-	.vop_create	= dead_badop,
-	.vop_mknod	= dead_badop,
-	.vop_open	= dead_open,
-	.vop_close	= nullop,
-	.vop_access	= dead_ebadf,
-	.vop_getattr	= dead_ebadf,
-	.vop_setattr	= dead_ebadf,
-	.vop_read	= dead_read,
-	.vop_write	= dead_write,
-	.vop_ioctl	= dead_ioctl,
-	.vop_poll	= dead_poll,
-	.vop_fsync	= nullop,
-	.vop_remove	= dead_badop,
-	.vop_link	= dead_badop,
-	.vop_rename	= dead_badop,
-	.vop_mkdir	= dead_badop,
-	.vop_rmdir	= dead_badop,
-	.vop_symlink	= dead_badop,
-	.vop_readdir	= dead_ebadf,
-	.vop_readlink	= dead_ebadf,
-	.vop_abortop	= dead_badop,
-	.vop_inactive	= nullop,
-	.vop_reclaim	= nullop,
-	.vop_lock	= dead_lock,
-	.vop_unlock	= vop_generic_unlock,
-	.vop_bmap	= dead_bmap,
-	.vop_strategy	= dead_strategy,
-	.vop_print	= dead_print,
-	.vop_islocked	= vop_generic_islocked,
-	.vop_pathconf	= dead_ebadf,
-	.vop_advlock	= dead_ebadf,
-	.vop_bwrite	= nullop,
+int (**dead_vnodeop_p)(void *);
+
+struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
+	{ &vop_default_desc, eopnotsupp },
+	{ &vop_lookup_desc, vop_generic_lookup },
+	{ &vop_create_desc, dead_badop },
+	{ &vop_mknod_desc, dead_badop },
+	{ &vop_open_desc, dead_open },
+	{ &vop_close_desc, nullop },
+	{ &vop_access_desc, dead_ebadf },
+	{ &vop_getattr_desc, dead_ebadf },
+	{ &vop_setattr_desc, dead_ebadf },
+	{ &vop_read_desc, dead_read },
+	{ &vop_write_desc, dead_write },
+	{ &vop_ioctl_desc, dead_ioctl },
+	{ &vop_poll_desc, dead_poll },
+	{ &vop_fsync_desc, nullop },
+	{ &vop_remove_desc, dead_badop },
+	{ &vop_link_desc, dead_badop },
+	{ &vop_rename_desc, dead_badop },
+	{ &vop_mkdir_desc, dead_badop },
+	{ &vop_rmdir_desc, dead_badop },
+	{ &vop_symlink_desc, dead_badop },
+	{ &vop_readdir_desc, dead_ebadf },
+	{ &vop_readlink_desc, dead_ebadf },
+	{ &vop_abortop_desc, dead_badop },
+	{ &vop_inactive_desc, nullop },
+	{ &vop_reclaim_desc, nullop },
+	{ &vop_lock_desc, dead_lock },
+	{ &vop_unlock_desc, vop_generic_unlock },
+	{ &vop_bmap_desc, dead_bmap },
+	{ &vop_strategy_desc, dead_strategy },
+	{ &vop_print_desc, dead_print },
+	{ &vop_islocked_desc, vop_generic_islocked },
+	{ &vop_pathconf_desc, dead_ebadf },
+	{ &vop_advlock_desc, dead_ebadf },
+	{ &vop_bwrite_desc, nullop },
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
+struct vnodeopv_desc dead_vnodeop_opv_desc =
+	{ &dead_vnodeop_p, dead_vnodeop_entries };
 
 /*
  * Open always fails as if device did not exist.
@@ -151,7 +156,7 @@ dead_ioctl(void *v)
 
 	if (!chkvnlock(ap->a_vp))
 		return (EBADF);
-	return ((ap->a_vp->v_op->vop_ioctl)(ap));
+	return (VCALL(ap->a_vp, VOFFSET(vop_ioctl), ap));
 }
 
 /* ARGSUSED */
@@ -199,7 +204,7 @@ dead_lock(void *v)
 	if (ap->a_flags & LK_DRAIN || !chkvnlock(vp))
 		return (0);
 
-	return ((vp->v_op->vop_lock)(ap));
+	return (VCALL(vp, VOFFSET(vop_lock), ap));
 }
 
 /*

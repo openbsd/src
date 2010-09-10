@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.190 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.191 2010/09/10 16:34:08 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -301,13 +301,14 @@ vattr_null(struct vattr *vap)
 /*
  * Routines having to do with the management of the vnode table.
  */
+extern int (**dead_vnodeop_p)(void *);
 long numvnodes;
 
 /*
  * Return the next vnode from the free list.
  */
 int
-getnewvnode(enum vtagtype tag, struct mount *mp, struct vops *vops,
+getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
     struct vnode **vpp)
 {
 	struct proc *p = curproc;
@@ -463,7 +464,7 @@ getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)
 		*vpp = NULLVP;
 		return (0);
 	}
-	error = getnewvnode(VT_NON, NULL, &spec_vops, &nvp);
+	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, &nvp);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);
@@ -860,7 +861,7 @@ vflush_vnode(struct vnode *vp, void *arg) {
 			vgonel(vp, p);
 		} else {
 			vclean(vp, 0, p);
-			vp->v_op = &spec_vops;
+			vp->v_op = spec_vnodeop_p;
 			insmntque(vp, (struct mount *)0);
 		}
 		return (0);
@@ -966,7 +967,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	/*
 	 * Done with purge, notify sleepers of the grim news.
 	 */
-	vp->v_op = &dead_vops;
+	vp->v_op = dead_vnodeop_p;
 	VN_KNOTE(vp, NOTE_REVOKE);
 	vp->v_tag = VT_NON;
 	vp->v_flag &= ~VXLOCK;

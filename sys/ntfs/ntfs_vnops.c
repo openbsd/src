@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.19 2010/09/07 00:41:05 thib Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.20 2010/09/10 16:34:09 thib Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -57,20 +57,21 @@
 
 #include <sys/unistd.h> /* for pathconf(2) constants */
 
-static int	ntfs_read(void *);
-static int	ntfs_write(void *);
-static int	ntfs_getattr(void *);
-static int	ntfs_inactive(void *);
-static int	ntfs_print(void *);
-static int	ntfs_reclaim(void *);
-static int	ntfs_strategy(void *);
-static int	ntfs_access(void *);
-static int	ntfs_open(void *);
-static int	ntfs_close(void *);
-static int	ntfs_readdir(void *);
-static int	ntfs_lookup(void *);
-static int	ntfs_bmap(void *);
-static int	ntfs_fsync(void *);
+static int	ntfs_bypass(struct vop_generic_args *ap);
+static int	ntfs_read(struct vop_read_args *);
+static int	ntfs_write(struct vop_write_args *ap);
+static int	ntfs_getattr(struct vop_getattr_args *ap);
+static int	ntfs_inactive(struct vop_inactive_args *ap);
+static int	ntfs_print(struct vop_print_args *ap);
+static int	ntfs_reclaim(struct vop_reclaim_args *ap);
+static int	ntfs_strategy(struct vop_strategy_args *ap);
+static int	ntfs_access(struct vop_access_args *ap);
+static int	ntfs_open(struct vop_open_args *ap);
+static int	ntfs_close(struct vop_close_args *ap);
+static int	ntfs_readdir(struct vop_readdir_args *ap);
+static int	ntfs_lookup(struct vop_lookup_args *ap);
+static int	ntfs_bmap(struct vop_bmap_args *ap);
+static int	ntfs_fsync(struct vop_fsync_args *ap);
 static int	ntfs_pathconf(void *);
 
 int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
@@ -79,9 +80,9 @@ int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
  * This is a noop, simply returning what one has been given.
  */
 int
-ntfs_bmap(void *v)
+ntfs_bmap(ap)
+	struct vop_bmap_args *ap;
 {
-	struct vop_bmap_args *ap = v;
 	dprintf(("ntfs_bmap: vn: %p, blk: %d\n", ap->a_vp,(u_int32_t)ap->a_bn));
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
@@ -93,9 +94,9 @@ ntfs_bmap(void *v)
 }
 
 static int
-ntfs_read(void *v)
+ntfs_read(ap)
+	struct vop_read_args *ap;
 {
-	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
@@ -130,9 +131,19 @@ ntfs_read(void *v)
 }
 
 static int
-ntfs_getattr(void *v)
+ntfs_bypass(ap)
+	struct vop_generic_args *ap;
 {
-	struct vop_getattr_args *ap = v;
+	int error = ENOTTY;
+	dprintf(("ntfs_bypass: %s\n", ap->a_desc->vdesc_name));
+	return (error);
+}
+
+
+static int
+ntfs_getattr(ap)
+	struct vop_getattr_args *ap;
+{
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
@@ -165,9 +176,9 @@ ntfs_getattr(void *v)
  * Last reference to an ntnode.  If necessary, write or delete it.
  */
 int
-ntfs_inactive(void *v)
+ntfs_inactive(ap)
+	struct vop_inactive_args *ap;
 {
-	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
 #ifdef NTFS_DEBUG
@@ -193,9 +204,9 @@ ntfs_inactive(void *v)
  * Reclaim an fnode/ntnode so that it can be used for other purposes.
  */
 int
-ntfs_reclaim(void *v)
+ntfs_reclaim(ap)
+	struct vop_reclaim_args *ap;
 {
-	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
@@ -224,9 +235,9 @@ ntfs_reclaim(void *v)
 }
 
 static int
-ntfs_print(void *v)
+ntfs_print(ap)
+	struct vop_print_args *ap;
 {
-	struct vop_print_args *ap = v;
 	struct ntnode *ip = VTONT(ap->a_vp);
 
 	printf("tag VT_NTFS, ino %u, flag %#x, usecount %d, nlink %ld\n",
@@ -240,9 +251,9 @@ ntfs_print(void *v)
  * then call the device strategy routine.
  */
 int
-ntfs_strategy(void *v)
+ntfs_strategy(ap)
+	struct vop_strategy_args *ap;
 {
-	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
 	struct vnode *vp = bp->b_vp;
 	struct fnode *fp = VTOF(vp);
@@ -313,9 +324,9 @@ ntfs_strategy(void *v)
 }
 
 static int
-ntfs_write(void *v)
+ntfs_write(ap)
+	struct vop_write_args *ap;
 {
-	struct vop_write_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
@@ -348,9 +359,9 @@ ntfs_write(void *v)
 }
 
 int
-ntfs_access(void *v)
+ntfs_access(ap)
+	struct vop_access_args *ap;
 {
-	struct vop_access_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 	struct ucred *cred = ap->a_cred;
@@ -422,10 +433,10 @@ ntfs_access(void *v)
  */
 /* ARGSUSED */
 static int
-ntfs_open(void *v)
+ntfs_open(ap)
+	struct vop_open_args *ap;
 {
 #if NTFS_DEBUG
-	struct vop_open_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
@@ -446,10 +457,10 @@ ntfs_open(void *v)
  */
 /* ARGSUSED */
 static int
-ntfs_close(void *v)
+ntfs_close(ap)
+	struct vop_close_args *ap;
 {
 #if NTFS_DEBUG
-	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
@@ -460,9 +471,9 @@ ntfs_close(void *v)
 }
 
 int
-ntfs_readdir(void *v)
+ntfs_readdir(ap)
+	struct vop_readdir_args *ap;
 {
-	struct vop_readdir_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
@@ -596,9 +607,9 @@ ntfs_readdir(void *v)
 }
 
 int
-ntfs_lookup(void *v)
+ntfs_lookup(ap)
+	struct vop_lookup_args *ap;
 {
-	struct vop_lookup_args *ap = v;
 	struct vnode *dvp = ap->a_dvp;
 	struct ntnode *dip = VTONT(dvp);
 	struct ntfsmount *ntmp = dip->i_mp;
@@ -702,7 +713,8 @@ ntfs_lookup(void *v)
  * could just do a sync if they try an fsync on a directory file.
  */
 static int
-ntfs_fsync(void *v)
+ntfs_fsync(ap)
+	struct vop_fsync_args *ap;
 {
 	return (0);
 }
@@ -711,7 +723,8 @@ ntfs_fsync(void *v)
  * Return POSIX pathconf information applicable to NTFS filesystem
  */
 static int
-ntfs_pathconf(void *v)
+ntfs_pathconf(v)
+	void *v;
 {
 	struct vop_pathconf_args *ap = v;
 
@@ -740,25 +753,36 @@ ntfs_pathconf(void *v)
 /*
  * Global vfs data structures
  */
-struct vops ntfs_vops = {
-	.vop_default	= eopnotsupp,
-	.vop_getattr	= ntfs_getattr,
-	.vop_inactive	= ntfs_inactive,
-	.vop_reclaim	= ntfs_reclaim,
-	.vop_print	= ntfs_print,
-	.vop_pathconf	= ntfs_pathconf,
-	.vop_islocked	= vop_generic_islocked,
-	.vop_unlock	= vop_generic_unlock,
-	.vop_lock	= vop_generic_lock,
-	.vop_lookup	= ntfs_lookup,
-	.vop_access	= ntfs_access,
-	.vop_close	= ntfs_close,
-	.vop_open	= ntfs_open,
-	.vop_readdir	= ntfs_readdir,
-	.vop_fsync	= ntfs_fsync,
-	.vop_bmap	= ntfs_bmap,
-	.vop_strategy	= ntfs_strategy,
-	.vop_bwrite	= vop_generic_bwrite,
-	.vop_read	= ntfs_read,
-	.vop_write	= ntfs_write,
+vop_t **ntfs_vnodeop_p;
+static
+struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
+	{ &vop_default_desc, (vop_t *)ntfs_bypass },
+
+	{ &vop_getattr_desc, (vop_t *)ntfs_getattr },
+	{ &vop_inactive_desc, (vop_t *)ntfs_inactive },
+	{ &vop_reclaim_desc, (vop_t *)ntfs_reclaim },
+	{ &vop_print_desc, (vop_t *)ntfs_print },
+	{ &vop_pathconf_desc, ntfs_pathconf },
+
+	{ &vop_islocked_desc, (vop_t *)vop_generic_islocked },
+	{ &vop_unlock_desc, (vop_t *)vop_generic_unlock },
+	{ &vop_lock_desc, (vop_t *)vop_generic_lock },
+	{ &vop_lookup_desc, (vop_t *)ntfs_lookup },
+
+	{ &vop_access_desc, (vop_t *)ntfs_access },
+	{ &vop_close_desc, (vop_t *)ntfs_close },
+	{ &vop_open_desc, (vop_t *)ntfs_open },
+	{ &vop_readdir_desc, (vop_t *)ntfs_readdir },
+	{ &vop_fsync_desc, (vop_t *)ntfs_fsync },
+
+	{ &vop_bmap_desc, (vop_t *)ntfs_bmap },
+	{ &vop_strategy_desc, (vop_t *)ntfs_strategy },
+	{ &vop_bwrite_desc, (vop_t *)vop_generic_bwrite },
+	{ &vop_read_desc, (vop_t *)ntfs_read },
+	{ &vop_write_desc, (vop_t *)ntfs_write },
+
+	{ NULL, NULL }
 };
+
+const struct vnodeopv_desc ntfs_vnodeop_opv_desc =
+	{ &ntfs_vnodeop_p, ntfs_vnodeop_entries };

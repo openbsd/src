@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.53 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.54 2010/09/10 16:34:09 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -60,9 +60,6 @@ extern int prtactive;
 
 struct rwlock nfs_hashlock = RWLOCK_INITIALIZER("nfshshlk");
 
-/* XXX */
-extern struct vops nfs_vops;
-
 /* filehandle to node lookup. */
 static __inline int
 nfsnode_cmp(const struct nfsnode *a, const struct nfsnode *b)
@@ -84,6 +81,7 @@ RB_GENERATE(nfs_nodetree, nfsnode, n_entry, nfsnode_cmp);
 int
 nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 {
+	extern int (**nfsv2_vnodeop_p)(void *);		/* XXX */
 	struct nfsmount		*nmp;
 	struct nfsnode		*np, find, *np2;
 	struct vnode		*vp, *nvp;
@@ -116,7 +114,7 @@ loop:
 	 * the lock.
 	 */
 	rw_exit_write(&nfs_hashlock);
-	error = getnewvnode(VT_NFS, mnt, &nfs_vops, &nvp);
+	error = getnewvnode(VT_NFS, mnt, nfsv2_vnodeop_p, &nvp);
 	/* note that we don't have this vnode set up completely yet */
 	rw_enter_write(&nfs_hashlock);
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.39 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.40 2010/09/10 16:34:08 thib Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -168,7 +168,7 @@ deget(struct msdosfsmount *pmp, uint32_t dirclust, uint32_t diroffset,
     struct denode **depp)
 {
 	int error;
-	extern struct vops msdosfs_vops;
+	extern int (**msdosfs_vnodeop_p)(void *);
 	struct direntry *direntptr;
 	struct denode *ldep;
 	struct vnode *nvp;
@@ -211,7 +211,8 @@ retry:
 	 * copy it from the passed disk buffer.
 	 */
 	/* getnewvnode() does a vref() on the vnode */
-	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp, &msdosfs_vops, &nvp);
+	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp,
+			    msdosfs_vnodeop_p, &nvp);
 	if (error) {
 		*depp = 0;
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.27 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.28 2010/09/10 16:34:08 thib Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ extern struct vnode *speclisth[SPECHSZ];
 /*
  * Prototypes for special file operations on vnodes.
  */
-extern struct vops spec_vops;
+extern	int (**spec_vnodeop_p)(void *);
 struct	nameidata;
 struct	componentname;
 struct	ucred;
@@ -107,6 +107,8 @@ int	spec_strategy(void *);
 int	spec_print(void *);
 int	spec_pathconf(void *);
 int	spec_advlock(void *);
+
+int	spec_vnoperate(void *);
 
 /* spec_subr.c */
 int	spec_open_clone(struct vop_open_args *);

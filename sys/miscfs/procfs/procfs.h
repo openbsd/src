@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.25 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.26 2010/09/10 16:34:08 thib Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ int procfs_rw(void *);
 #define PROCFS_LOCKED	0x01
 #define PROCFS_WANT	0x02
 
-extern struct vops procfs_vops;
+extern int (**procfs_vnodeop_p)(void *);
 extern const struct vfsops procfs_vfsops;
 
 struct vfsconf;

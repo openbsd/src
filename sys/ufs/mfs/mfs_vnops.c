@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.38 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.39 2010/09/10 16:34:09 thib Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -48,44 +48,50 @@
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
 
-/* mfs vnode operations. */
-struct vops mfs_vops = {
-        .vop_default    = eopnotsupp,
-        .vop_lookup     = mfs_badop,
-        .vop_create     = mfs_badop,
-        .vop_mknod      = mfs_badop,
-        .vop_open       = mfs_open,
-        .vop_close      = mfs_close,
-        .vop_access     = mfs_badop,
-        .vop_getattr    = mfs_badop,
-        .vop_setattr    = mfs_badop,
-        .vop_read       = mfs_badop,
-        .vop_write      = mfs_badop,
-        .vop_ioctl      = mfs_ioctl,
-        .vop_poll       = mfs_badop,
-        .vop_revoke     = mfs_revoke,
-        .vop_fsync      = spec_fsync,
-        .vop_remove     = mfs_badop,
-        .vop_link       = mfs_badop,
-        .vop_rename     = mfs_badop,
-        .vop_mkdir      = mfs_badop,
-        .vop_rmdir      = mfs_badop,
-        .vop_symlink    = mfs_badop,
-        .vop_readdir    = mfs_badop,
-        .vop_readlink   = mfs_badop,
-        .vop_abortop    = mfs_badop,
-        .vop_inactive   = mfs_inactive,
-        .vop_reclaim    = mfs_reclaim,
-        .vop_lock       = vop_generic_lock,
-        .vop_unlock     = vop_generic_unlock,
-        .vop_bmap       = vop_generic_bmap,
-        .vop_strategy   = mfs_strategy,
-        .vop_print      = mfs_print,
-        .vop_islocked   = vop_generic_islocked,
-        .vop_pathconf   = mfs_badop,
-        .vop_advlock    = mfs_badop,
-        .vop_bwrite     = vop_generic_bwrite
+/*
+ * mfs vnode operations.
+ */
+int (**mfs_vnodeop_p)(void *);
+struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
+	{ &vop_default_desc, eopnotsupp },
+	{ &vop_lookup_desc, mfs_badop },
+	{ &vop_create_desc, mfs_badop },
+	{ &vop_mknod_desc, mfs_badop },
+	{ &vop_open_desc, mfs_open },
+	{ &vop_close_desc, mfs_close },
+	{ &vop_access_desc, mfs_badop },
+	{ &vop_getattr_desc, mfs_badop },
+	{ &vop_setattr_desc, mfs_badop },
+	{ &vop_read_desc, mfs_badop },
+	{ &vop_write_desc, mfs_badop },
+	{ &vop_ioctl_desc, mfs_ioctl },
+	{ &vop_poll_desc, mfs_badop },
+	{ &vop_revoke_desc, mfs_revoke },
+	{ &vop_fsync_desc, spec_fsync },
+	{ &vop_remove_desc, mfs_badop },
+	{ &vop_link_desc, mfs_badop },
+	{ &vop_rename_desc, mfs_badop },
+	{ &vop_mkdir_desc, mfs_badop },
+	{ &vop_rmdir_desc, mfs_badop },
+	{ &vop_symlink_desc, mfs_badop },
+	{ &vop_readdir_desc, mfs_badop },
+	{ &vop_readlink_desc, mfs_badop },
+	{ &vop_abortop_desc, mfs_badop },
+	{ &vop_inactive_desc, mfs_inactive },
+	{ &vop_reclaim_desc, mfs_reclaim },
+	{ &vop_lock_desc, vop_generic_lock },
+	{ &vop_unlock_desc, vop_generic_unlock },
+	{ &vop_bmap_desc, vop_generic_bmap },
+	{ &vop_strategy_desc, mfs_strategy },
+	{ &vop_print_desc, mfs_print },
+	{ &vop_islocked_desc, vop_generic_islocked },
+	{ &vop_pathconf_desc, mfs_badop },
+	{ &vop_advlock_desc, mfs_badop },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
+	{ NULL, NULL }
 };
+struct vnodeopv_desc mfs_vnodeop_opv_desc =
+	{ &mfs_vnodeop_p, mfs_vnodeop_entries };
 
 /*
  * Vnode Operations.

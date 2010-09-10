@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.38 2010/09/06 23:44:10 thib Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.39 2010/09/10 16:34:08 thib Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -186,3 +186,93 @@ static struct vfsconf vfsconflist[] = {
  */
 int maxvfsconf = sizeof(vfsconflist) / sizeof(struct vfsconf);
 struct vfsconf *vfsconf = vfsconflist;
+
+
+/*
+ * vfs_opv_descs enumerates the list of vnode classes, each with its own
+ * vnode operation vector.  It is consulted at system boot to build operation
+ * vectors.  It is NULL terminated.
+ */
+extern struct vnodeopv_desc sync_vnodeop_opv_desc;
+extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
+extern struct vnodeopv_desc ffs_specop_opv_desc;
+extern struct vnodeopv_desc ffs_fifoop_opv_desc;
+extern struct vnodeopv_desc mfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc dead_vnodeop_opv_desc;
+extern struct vnodeopv_desc fifo_vnodeop_opv_desc;
+extern struct vnodeopv_desc spec_vnodeop_opv_desc;
+extern struct vnodeopv_desc nfsv2_vnodeop_opv_desc;
+extern struct vnodeopv_desc spec_nfsv2nodeop_opv_desc;
+extern struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc;
+extern struct vnodeopv_desc portal_vnodeop_opv_desc;
+extern struct vnodeopv_desc procfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
+extern struct vnodeopv_desc cd9660_specop_opv_desc;
+extern struct vnodeopv_desc cd9660_fifoop_opv_desc;
+extern struct vnodeopv_desc msdosfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
+extern struct vnodeopv_desc ext2fs_specop_opv_desc;
+extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
+extern struct vnodeopv_desc nnpfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc ntfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc udf_vnodeop_opv_desc;
+
+struct vnodeopv_desc *vfs_opv_descs[] = {
+	&sync_vnodeop_opv_desc,
+#ifdef FFS
+	&ffs_vnodeop_opv_desc,
+	&ffs_specop_opv_desc,
+#ifdef FIFO
+	&ffs_fifoop_opv_desc,
+#endif
+#endif
+	&dead_vnodeop_opv_desc,
+#ifdef FIFO
+	&fifo_vnodeop_opv_desc,
+#endif
+	&spec_vnodeop_opv_desc,
+#ifdef MFS
+	&mfs_vnodeop_opv_desc,
+#endif
+#ifdef NFSCLIENT
+	&nfsv2_vnodeop_opv_desc,
+	&spec_nfsv2nodeop_opv_desc,
+#ifdef FIFO
+	&fifo_nfsv2nodeop_opv_desc,
+#endif
+#endif
+#ifdef PORTAL
+	&portal_vnodeop_opv_desc,
+#endif
+#ifdef PROCFS
+	&procfs_vnodeop_opv_desc,
+#endif
+#ifdef CD9660
+	&cd9660_vnodeop_opv_desc,
+	&cd9660_specop_opv_desc,
+#ifdef FIFO
+	&cd9660_fifoop_opv_desc,
+#endif
+#endif
+#ifdef MSDOSFS
+	&msdosfs_vnodeop_opv_desc,
+#endif
+#ifdef EXT2FS
+	&ext2fs_vnodeop_opv_desc,
+	&ext2fs_specop_opv_desc,
+#ifdef FIFO
+	&ext2fs_fifoop_opv_desc,
+#endif
+#endif
+#ifdef NNPFS
+	&nnpfs_vnodeop_opv_desc,
+#endif
+#ifdef NTFS
+	&ntfs_vnodeop_opv_desc,
+#endif
+#ifdef UDF
+	&udf_vnodeop_opv_desc,
+#endif
+
+	NULL
+};

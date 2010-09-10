@@ -40,7 +40,7 @@
 
 RCSID("$arla: nnpfs_node-bsd.c,v 1.70 2003/02/28 02:01:06 lha Exp $");
 
-extern struct vops nnpfs_vops;
+extern vop_t **nnpfs_vnodeop_p;
 
 #ifndef LK_NOPAUSE
 #define LK_NOPAUSE 0
@@ -58,7 +58,7 @@ nnpfs_getnewvnode(struct nnpfs *nnpfsp, struct vnode **vpp,
     struct nnpfs_node *result, *check;
     int error;
 
-    error = getnewvnode(VT_NNPFS, NNPFS_TO_VFS(nnpfsp), &nnpfs_vops,  vpp);
+    error = getnewvnode(VT_NNPFS, NNPFS_TO_VFS(nnpfsp), nnpfs_vnodeop_p, vpp);
     if (error)
 	return error;
     

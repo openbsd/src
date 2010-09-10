@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.110 2010/09/09 10:37:04 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.111 2010/09/10 16:34:09 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -940,7 +940,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 	struct vnode *vp = *vpp;
 	struct vattr *vap;
 	struct nfs_fattr *fp;
-	extern struct vops nfs_specvops;
+	extern int (**spec_nfsv2nodeop_p)(void *);
 	struct nfsnode *np;
 	int32_t t1;
 	caddr_t cp2;
@@ -996,12 +996,12 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 #ifndef FIFO
 			return (EOPNOTSUPP);
 #else
-                        extern struct vops nfs_fifovops;
-			vp->v_op = &nfs_fifovops;
+			extern int (**fifo_nfsv2nodeop_p)(void *);
+			vp->v_op = fifo_nfsv2nodeop_p;
 #endif /* FIFO */
 		}
 		if (vp->v_type == VCHR || vp->v_type == VBLK) {
-			vp->v_op = &nfs_specvops;
+			vp->v_op = spec_nfsv2nodeop_p;
 			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
 			if (nvp) {
 				/*
@@ -1012,7 +1012,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
-				vp->v_op = &spec_vops;
+				vp->v_op = spec_vnodeop_p;
 				vrele(vp);
 				vgone(vp);
 				/*
