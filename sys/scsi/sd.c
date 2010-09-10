@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.211 2010/09/08 15:16:22 jsing Exp $	*/
+/*	$OpenBSD: sd.c,v 1.212 2010/09/10 04:46:24 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -291,6 +291,7 @@ sdactivate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		sc->flags |= SDF_DYING;
 		bufq_drain(&sc->sc_bufq);
+		scsi_xsh_del(&sc->sc_xsh);
 		break;
 	}
 	return (rv);
