@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.157 2010/08/27 05:30:59 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.158 2010/09/10 07:00:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -140,6 +140,8 @@ void			mpi_eventnotify_done(struct mpi_ccb *);
 void			mpi_eventack(void *, void *);
 void			mpi_eventack_done(struct mpi_ccb *);
 void			mpi_evt_sas(struct mpi_softc *, struct mpi_rcb *);
+void			mpi_evt_fc_rescan(struct mpi_softc *);
+void			mpi_fc_rescan(void *, void *);
 
 int			mpi_req_cfg_header(struct mpi_softc *, u_int8_t,
 			    u_int8_t, u_int32_t, int, void *);
@@ -204,6 +206,9 @@ mpi_attach(struct mpi_softc *sc)
 
 	printf("\n");
 
+	rw_init(&sc->sc_lock, "mpi_lock");
+	mtx_init(&sc->sc_evt_rescan_mtx, IPL_BIO);
+
 	/* disable interrupts */
 	mpi_write(sc, MPI_INTR_MASK,
 	    MPI_INTR_MASK_REPLY | MPI_INTR_MASK_DOORBELL);
@@ -254,11 +259,14 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_replies;
 	}
 
-	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SAS) {
+	switch (sc->sc_porttype) {
+	case MPI_PORTFACTS_PORTTYPE_FC:
+	case MPI_PORTFACTS_PORTTYPE_SAS:
 		if (mpi_eventnotify(sc) != 0) {
 			printf("%s: unable to enable events\n", DEVNAME(sc));
 			goto free_replies;
 		}
+		break;
 	}
 
 	if (mpi_portenable(sc) != 0) {
@@ -281,8 +289,6 @@ mpi_attach(struct mpi_softc *sc)
 		mpi_fc_info(sc);
 		break;
 	}
-
-	rw_init(&sc->sc_lock, "mpi_lock");
 
 	/* get raid pages */
 	mpi_get_raid(sc);
@@ -2232,6 +2238,12 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		mpi_evt_sas(sc, ccb->ccb_rcb);
 		break;
 
+	case MPI_EVENT_RESCAN:
+		if (sc->sc_scsibus != NULL &&
+		    sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_FC)
+			mpi_evt_fc_rescan(sc);
+		break;
+
 	default:
 		DNPRINTF(MPI_D_EVT, "%s:  unhandled event 0x%02x\n",
 		    DEVNAME(sc), letoh32(enp->event));
@@ -2283,6 +2295,66 @@ mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 		printf("%s: unknown reason for SAS device status change: "
 		    "0x%02x\n", DEVNAME(sc), ch->reason);
 		break;
+	}
+}
+
+void
+mpi_evt_fc_rescan(struct mpi_softc *sc)
+{
+	int					queue = 1;
+
+	mtx_enter(&sc->sc_evt_rescan_mtx);
+	if (sc->sc_evt_rescan_sem)
+		queue = 0;
+	else
+		sc->sc_evt_rescan_sem = 1;
+	mtx_leave(&sc->sc_evt_rescan_mtx);
+
+	if (queue) {
+		workq_queue_task(NULL, &sc->sc_evt_rescan, 0,
+		    mpi_fc_rescan, sc, NULL);
+	}
+}
+
+void
+mpi_fc_rescan(void *xsc, void *xarg)
+{
+	struct mpi_softc			*sc = xsc;
+	struct mpi_cfg_hdr			hdr;
+	struct mpi_cfg_fc_device_pg0		pg;
+	struct scsi_link			*link;
+	u_int32_t				id;
+	int					i;
+
+	mtx_enter(&sc->sc_evt_rescan_mtx);
+	sc->sc_evt_rescan_sem = 0;
+	mtx_leave(&sc->sc_evt_rescan_mtx);
+
+	for (i = 0; i < sc->sc_buswidth; i++) {
+		id = MPI_PAGE_ADDRESS_FC_BTID | i;
+
+		if (mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV, 0,
+		    id, 0, &hdr) != 0) {
+			printf("%s: header get for rescan of %d failed\n",
+			    DEVNAME(sc), i);
+			return;
+		}
+
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
+
+		memset(&pg, 0, sizeof(pg));
+		if (mpi_req_cfg_page(sc, id, 0, &hdr, 1,
+		    &pg, sizeof(pg)) == 0) {
+			if (link == NULL)
+				scsi_probe_target(sc->sc_scsibus, i);
+		} else {
+			if (link != NULL) {
+				scsi_activate(sc->sc_scsibus, i, -1,
+				    DVACT_DEACTIVATE);
+				scsi_detach_target(sc->sc_scsibus, i,
+				    DETACH_FORCE);
+			}
+		}
 	}
 }
 
