@@ -880,6 +880,7 @@ extern const struct mips_rtx_cost_data *mips_cost;
 #define SUBTARGET_CPP_SPEC ""
 #endif
 
+#undef CPP_SPEC
 #define CPP_SPEC "%(subtarget_cpp_spec)"
 
 /* This macro defines names of additional specifications to put in the specs

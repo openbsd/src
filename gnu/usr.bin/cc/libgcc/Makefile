@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.13 2010/09/09 19:16:50 jsg Exp $
+# $OpenBSD: Makefile,v 1.14 2010/09/10 16:20:11 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -82,19 +82,17 @@ LIB2FUNCS_EXTRA =
 LIB2FUNCS_STATIC_EXTRA =
 
 # Defined in libgcc2.c, included only in the static library.
-# KAN: Excluded _sf_to_tf and _df_to_tf as TPBIT_FUNCS are not
-# built on any of our platforms.
 LIB2FUNCS_ST = _eprintf __gcc_bcmp
 
 FPBIT_FUNCS = _pack_sf _unpack_sf _addsub_sf _mul_sf _div_sf \
     _fpcmp_parts_sf _compare_sf _eq_sf _ne_sf _gt_sf _ge_sf \
     _lt_sf _le_sf _unord_sf _si_to_sf _sf_to_si _negate_sf _make_sf \
-    _sf_to_df _thenan_sf _sf_to_usi _usi_to_sf
+    _sf_to_df _sf_to_tf _thenan_sf _sf_to_usi _usi_to_sf _sf_to_tf
 
 DPBIT_FUNCS = _pack_df _unpack_df _addsub_df _mul_df _div_df \
     _fpcmp_parts_df _compare_df _eq_df _ne_df _gt_df _ge_df \
     _lt_df _le_df _unord_df _si_to_df _df_to_si _negate_df _make_df \
-    _df_to_sf _thenan_df _df_to_usi _usi_to_df
+    _df_to_sf _df_to_tf _thenan_df _df_to_usi _usi_to_df
 
 TPBIT_FUNCS = _pack_tf _unpack_tf _addsub_tf _mul_tf _div_tf \
     _fpcmp_parts_tf _compare_tf _eq_tf _ne_tf _gt_tf _ge_tf \
@@ -194,16 +192,40 @@ OBJ_GRPS =	STD DIV
 #
 # Floating point emulation functions
 #
-.if ${TARGET_ARCH} == "armNOT_YET" || ${TARGET_ARCH} == "powerpc" || \
+.if ${TARGET_ARCH} == "armNOT_YET" || ${TARGET_ARCH} == "mips64" || \
+    ${TARGET_ARCH} == "mips64el" || ${TARGET_ARCH} == "powerpc" || \
     ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "sparc64"
 
 FPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES -DFLOAT
 DPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES
 
+.if ${TARGET_ARCH} == "mips64" || ${TARGET_ARCH} == "mips64el"
+FPBIT_CFLAGS +=	-DTMODES
+DPBIT_CFLAGS +=	-DTMODES
+.endif
+
+.if ${TARGET_ARCH} == "mips64el"
+FPBIT_CFLAGS +=	-DFLOAT_BIT_ORDER_MISMATCH
+DPBIT_CFLAGS +=	-DFLOAT_BIT_ORDER_MISMATCH
+.endif
+
 FPBIT_CFILE =	config/fp-bit.c
 DPBIT_CFILE =	config/fp-bit.c
 
 OBJ_GRPS +=	FPBIT DPBIT
+.endif
+
+.if ${TARGET_ARCH} == "mips64" || ${TARGET_ARCH} == "mips64el"
+
+TPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES -DTFLOAT
+
+.if ${TARGET_ARCH} == "mips64el"
+TPBIT_CFLAGS +=	-DFLOAT_BIT_ORDER_MISMATCH
+.endif
+
+TPBIT_CFILE =	config/fp-bit.c
+
+OBJ_GRPS +=	TPBIT
 .endif
 
 #-----------------------------------------------------------------------

@@ -1,5 +1,6 @@
-/* Configuration for  a MIPS ABI32 OpenBSD target.
-   Copyright (C) 1999, 2003, 2004 Free Software Foundation, Inc.
+/* Configuration file for a mips64 OpenBSD target.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,50 +19,18 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
-/* Definitions needed for OpenBSD, to avoid picking mips 'defaults'.  */
-
-/* GAS must know this.  */
-#undef SUBTARGET_ASM_SPEC
-#define SUBTARGET_ASM_SPEC "%{fPIC|fPIE:-KPIC}"
-
-#define AS_NEEDS_DASH_FOR_PIPED_INPUT
-
-/* CPP specific OpenBSD specs.  */
-#undef SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC OBSD_CPP_SPEC
-
-/* Needed for ELF (inspired by netbsd-elf).  */
-#undef LOCAL_LABEL_PREFIX
-#define LOCAL_LABEL_PREFIX	"."
-
-/* The profiling lib spec here is not really correct but we leave
-   it as it is until we have some kind of profiling working.  */
-#define LIB_SPEC OBSD_LIB_SPEC
-
-/* mips assembler uses .set for arcane purposes.  __attribute__((alias))
-   and friends won't work until we get recent binutils with .weakext
-	support.  */
-#undef SET_ASM_OP
-
-#define TARGET_OS_CPP_BUILTINS()			\
-    do {						\
-	builtin_define ("__unix__");			\
-	builtin_define ("__SYSTYPE_BSD__");		\
-	builtin_define ("__NO_LEADING_UNDERSCORES__");	\
-	builtin_define ("__GP_SUPPORT__");		\
-	builtin_define ("__OpenBSD__");			\
-	builtin_assert ("system=unix");			\
-	builtin_assert ("system=OpenBSD");		\
-} while (0)
-
-/* Layout of source language data types.  */
-
-/* This must agree with <machine/ansi.h>.  */
+/* This must agree with <machine/_types.h> */
 #undef SIZE_TYPE
-#define SIZE_TYPE "unsigned int"
+#define SIZE_TYPE "long unsigned int"
 
 #undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE "int"
+#define PTRDIFF_TYPE "long int"
+
+#undef INTMAX_TYPE
+#define INTMAX_TYPE "long long int"
+
+#undef UINTMAX_TYPE
+#define UINTMAX_TYPE "long long unsigned int"
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
@@ -69,30 +38,169 @@ Boston, MA 02110-1301, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* Controlling the compilation driver.  */
+/* If defined, a C expression whose value is a string containing the
+   assembler operation to identify the following data as
+   uninitialized global data.  If not defined, and neither
+   `ASM_OUTPUT_BSS' nor `ASM_OUTPUT_ALIGNED_BSS' are defined,
+   uninitialized global data will be output in the data section if
+   `-fno-common' is passed, otherwise `ASM_OUTPUT_COMMON' will be
+   used.  */
+#define BSS_SECTION_ASM_OP	"\t.section\t.bss"
 
-/* LINK_SPEC appropriate for OpenBSD:  support for GCC options
-   -static, -assert, and -nostdlib. Dynamic loader control.  */
-#undef LINK_SPEC
-#define LINK_SPEC \
-  "%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
-   %{bestGnum} %{shared} %{non_shared} \
-   %{call_shared} %{no_archive} %{exact_version} \
-   %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
-   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so} \
-   %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
-   %{static:-Bstatic} %{!static:-Bdynamic} %{assert*}"
+#define ASM_OUTPUT_ALIGNED_BSS mips_output_aligned_bss
 
+#undef ASM_DECLARE_OBJECT_NAME
+#define ASM_DECLARE_OBJECT_NAME mips_declare_object_name
+
+#undef MD_EXEC_PREFIX
+#undef MD_STARTFILE_PREFIX
+
+/* If we don't set MASK_ABICALLS, we can't default to PIC.  */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT MASK_ABICALLS
+
+#define TARGET_OS_CPP_BUILTINS()				\
+  do {								\
+    OPENBSD_OS_CPP_BUILTINS();					\
+								\
+    if (TARGET_64BIT)						\
+      builtin_define ("__mips64__");				\
+								\
+    if (TARGET_ABICALLS)					\
+      builtin_define ("__ABICALLS__");				\
+								\
+    if (mips_abi == ABI_EABI)					\
+      builtin_define ("__mips_eabi");				\
+    else if (mips_abi == ABI_N32)				\
+      builtin_define ("__mips_n32");				\
+    else if (mips_abi == ABI_64)				\
+      builtin_define ("__mips_n64");				\
+    else if (mips_abi == ABI_O64)				\
+      builtin_define ("__mips_o64");				\
+    								\
+    if (mips_abi == ABI_N32)					\
+      {								\
+        builtin_define ("_ABIN32=2");				\
+        builtin_define ("_MIPS_SIM=_ABIN32");			\
+        builtin_define ("_MIPS_SZLONG=32");			\
+        builtin_define ("_MIPS_SZPTR=32");			\
+      }								\
+    else if (mips_abi == ABI_64)				\
+      {								\
+        builtin_define ("_ABI64=3");				\
+        builtin_define ("_MIPS_SIM=_ABI64");			\
+        builtin_define ("_MIPS_SZLONG=64");			\
+        builtin_define ("_MIPS_SZPTR=64");			\
+      }								\
+    else							\
+      {								\
+	builtin_define ("_ABIO32=1");				\
+	builtin_define ("_MIPS_SIM=_ABIO32");			\
+        builtin_define ("_MIPS_SZLONG=32");			\
+        builtin_define ("_MIPS_SZPTR=32");			\
+      }								\
+    if (TARGET_FLOAT64)						\
+      builtin_define ("_MIPS_FPSET=32");			\
+    else							\
+      builtin_define ("_MIPS_FPSET=16");			\
+    								\
+    builtin_define ("_MIPS_SZINT=32");				\
+  } while (0)
+
+#undef SUBTARGET_CPP_SPEC
+#define SUBTARGET_CPP_SPEC OBSD_CPP_SPEC
+
+/* A standard GNU/Linux mapping.  On most targets, it is included in
+   CC1_SPEC itself by config/linux.h, but mips.h overrides CC1_SPEC
+   and provides this hook instead.  */
+#undef SUBTARGET_CC1_SPEC
+#define SUBTARGET_CC1_SPEC "%{profile:-p}"
+
+/* From iris5.h */
 /* -G is incompatible with -KPIC which is the default, so only allow objects
    in the small data section if the user explicitly asks for it.  */
 #undef MIPS_DEFAULT_GVALUE
 #define MIPS_DEFAULT_GVALUE 0
 
+#define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
 
-/* Since gas and gld are standard on OpenBSD, we don't need these.  */
-#undef ASM_FINAL_SPEC
+/* Borrowed from sparc/linux.h */
+#undef LINK_SPEC
+#define LINK_SPEC \
+  "%(endian_spec) \
+   %{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
+   %{shared:-shared} %{R*} \
+   %{static:-Bstatic} \
+   %{!static:-Bdynamic} \
+   %{assert*} \
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+
+/* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
+#define STARTFILE_SPEC "\
+        %{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} %{!p:crt0%O%s}} \
+        crtbegin%O%s} %{shared:crtbeginS%O%s}"
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
 
-/* Switch into a generic section.  */
-#undef TARGET_ASM_NAMED_SECTION
-#define TARGET_ASM_NAMED_SECTION  default_elf_asm_named_section
+#undef SUBTARGET_ASM_SPEC
+#define SUBTARGET_ASM_SPEC "%{mabi=64: -64} %{!mno-abicalls:-KPIC}"
+
+/* The MIPS assembler has different syntax for .set. We set it to
+   .dummy to trap any errors.  */
+#undef SET_ASM_OP
+#define SET_ASM_OP "\t.dummy\t"
+
+#undef ASM_OUTPUT_DEF
+#define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2)				\
+ do {									\
+	fputc ( '\t', FILE);						\
+	assemble_name (FILE, LABEL1);					\
+	fputs ( " = ", FILE);						\
+	assemble_name (FILE, LABEL2);					\
+	fputc ( '\n', FILE);						\
+ } while (0)
+
+#undef ASM_DECLARE_FUNCTION_NAME
+#define ASM_DECLARE_FUNCTION_NAME(STREAM, NAME, DECL)			\
+  do {									\
+    if (!flag_inhibit_size_directive)					\
+      {									\
+	fputs ("\t.ent\t", STREAM);					\
+	assemble_name (STREAM, NAME);					\
+	putc ('\n', STREAM);						\
+      }									\
+    ASM_OUTPUT_TYPE_DIRECTIVE (STREAM, NAME, "function");		\
+    assemble_name (STREAM, NAME);					\
+    fputs (":\n", STREAM);						\
+  } while (0)
+
+#undef ASM_DECLARE_FUNCTION_SIZE
+#define ASM_DECLARE_FUNCTION_SIZE(STREAM, NAME, DECL)			\
+  do {									\
+    if (!flag_inhibit_size_directive)					\
+      {									\
+	fputs ("\t.end\t", STREAM);					\
+	assemble_name (STREAM, NAME);					\
+	putc ('\n', STREAM);						\
+      }									\
+  } while (0)
+
+/* Tell function_prologue in mips.c that we have already output the .ent/.end
+   pseudo-ops.  */
+#undef FUNCTION_NAME_ALREADY_DECLARED
+#define FUNCTION_NAME_ALREADY_DECLARED 1
+
+#undef LOCAL_LABEL_PREFIX
+#define LOCAL_LABEL_PREFIX	"."
+
+/* The glibc _mcount stub will save $v0 for us.  Don't mess with saving
+   it, since ASM_OUTPUT_REG_PUSH/ASM_OUTPUT_REG_POP do not work in the
+   presence of $gp-relative calls.  */
+#undef ASM_OUTPUT_REG_PUSH
+#undef ASM_OUTPUT_REG_POP
+
+#undef LIB_SPEC
+#define LIB_SPEC OBSD_LIB_SPEC
+
+#undef ENABLE_EXECUTE_STACK
