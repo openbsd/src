@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.8 2010/07/21 06:32:14 martinh Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.9 2010/09/10 21:21:15 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 21 2010 $
+.Dd $Mdocdate: September 10 2010 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -139,7 +139,7 @@ also known as a naming context.
 All entries' distinguished names (DN) has the same suffix, which is used to
 identify the namespace.
 The suffix should consist of the domain components, in reverse order, of your
-domain name, as recommended by RFC2247.
+domain name, as recommended by RFC 2247.
 .Bd -literal -offset indent
 namespace "dc=example,dc=com" {
 	rootdn "cn=admin,dc=example,dc=com"
