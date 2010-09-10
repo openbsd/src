@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.61 2010/08/07 20:48:56 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.62 2010/09/10 15:11:23 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -698,6 +698,7 @@ typedef struct codec_t {
 	nid_t fhp_dac;
 	int nout_jacks;		/* number of default output jacks */
 
+	int spkr_muted;
 	int spkr_muters;
 	int spkr_mute_method;
 #define	AZ_SPKR_MUTE_NONE	0
