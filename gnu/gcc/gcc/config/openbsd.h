@@ -53,6 +53,16 @@ along with GCC; see the file COPYING.  If not see
 
 /* The compiler is configured with ONLY the gcc/g++ standard headers.  */
 #undef INCLUDE_DEFAULTS
+#ifdef CROSS_COMPILE
+#define INCLUDE_DEFAULTS			\
+  {						\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
+    { GPLUSPLUS_TOOL_INCLUDE_DIR, "G++", 1, 1 }, \
+    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1 }, \
+    { GPLUSPLUS_INCLUDE_DIR "/..", STANDARD_INCLUDE_COMPONENT, 0, 0 }, \
+    { 0, 0, 0, 0 }				\
+  }
+#else
 #define INCLUDE_DEFAULTS			\
   {						\
     { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
@@ -61,6 +71,7 @@ along with GCC; see the file COPYING.  If not see
     { STANDARD_INCLUDE_DIR, STANDARD_INCLUDE_COMPONENT, 0, 0 }, \
     { 0, 0, 0, 0 }				\
   }
+#endif
 
 /* Under OpenBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
