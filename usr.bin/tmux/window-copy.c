@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.62 2010/09/08 20:36:42 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.63 2010/09/11 15:39:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -342,6 +342,8 @@ window_copy_resize(struct window_pane *wp, u_int sx, u_int sy)
 		data->cy = sy - 1;
 	if (data->cx > sx)
 		data->cx = sx;
+	if (data->oy > screen_hsize(data->backing))
+		data->oy = screen_hsize(data->backing);
 
 	window_copy_clear_selection(wp);
 
