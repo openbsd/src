@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2010/05/03 04:19:42 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.14 2010/09/11 11:13:20 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -232,7 +232,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		if (symp->st_shndx == SHN_UNDEF &&
 		    ELF64_ST_TYPE(symp->st_info) == STT_FUNC) {
 			if (symp->st_value == 0 || !lazy) {
-				this = 0;
+				this = NULL;
 				ooff = _dl_find_symbol(strt + symp->st_name,
 				    &this,
 				    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
@@ -243,7 +243,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				*gotp = symp->st_value + loff;
 		} else if (symp->st_shndx == SHN_COMMON ||
 			symp->st_shndx == SHN_UNDEF) {
-			this = 0;
+			this = NULL;
 			ooff = _dl_find_symbol(strt + symp->st_name, &this,
 			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
 			    symp, object, NULL);
@@ -253,7 +253,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			symp->st_value != *gotp) {
 			*gotp += loff;
 		} else {	/* Resolve all others immediately */
-			this = 0;
+			this = NULL;
 			ooff = _dl_find_symbol(strt + symp->st_name, &this,
 			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
 			    symp, object, NULL);
@@ -291,6 +291,7 @@ _dl_bind(elf_object_t *object, int symidx)
 	n = object->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM] -
 	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
 
+	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, NULL);
 	if (this == NULL) {
