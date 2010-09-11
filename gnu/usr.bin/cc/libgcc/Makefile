@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.14 2010/09/10 16:20:11 kettenis Exp $
+# $OpenBSD: Makefile,v 1.15 2010/09/11 11:52:39 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -55,13 +55,13 @@ LIB2FUNCS= _muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
 
 # The floating-point conversion routines that involve a single-word integer.
 .for mode in sf df xf
-LIB2FUNCS+= _fixuns${mode}si
+SWFLOATFUNCS+= _fixuns${mode}si
 .endfor
 
 # Likewise double-word routines.
 .for mode in sf df xf tf
-LIB2FUNCS+= _fix${mode}di _fixuns${mode}di
-LIB2FUNCS+= _floatdi${mode} _floatundi${mode}
+DWFLOATFUNCS+= _fix${mode}di _fixuns${mode}di
+DWFLOATFUNCS+= _floatdi${mode} _floatundi${mode}
 .endfor
 
 LIB2ADD = $(LIB2FUNCS_EXTRA)
@@ -179,14 +179,20 @@ CC_S =	${CC} -c ${CFLAGS} ${PICFLAG} -DSHARED
 #
 STD_CFLAGS =
 DIV_CFLAGS =	-fexceptions -fnon-call-exceptions
+SW_CFLAGS =
+DW_CFLAGS =
 
 STD_FUNCS =	${LIB2FUNCS}
 DIV_FUNCS =	${LIB2_DIVMOD_FUNCS}
+SI_FUNCS =	${SWFLOATFUNCS}
+DI_FUNCS =	${DWFLOATFUNCS}
 
 STD_CFILE =	libgcc2.c
 DIV_CFILE =	libgcc2.c
+SI_CFILE =	libgcc2.c
+DI_CFILE =	libgcc2.c
 
-OBJ_GRPS =	STD DIV
+OBJ_GRPS =	STD DIV SI DI
 
 #-----------------------------------------------------------------------
 #
@@ -200,6 +206,12 @@ FPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES -DFLOAT
 DPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES
 
 .if ${TARGET_ARCH} == "mips64" || ${TARGET_ARCH} == "mips64el"
+SI_CFLAGS +=	-DLIBGCC2_UNITS_PER_WORD=4
+DI_CFLAGS +=	-DLIBGCC2_UNITS_PER_WORD=4
+
+TI_FUNCS =	${DWFLOATFUNCS:S/di/ti/}
+TI_CFILE =	libgcc2.c
+
 FPBIT_CFLAGS +=	-DTMODES
 DPBIT_CFLAGS +=	-DTMODES
 .endif
@@ -245,6 +257,22 @@ ${${T}_OBJS_P}: ${${T}_CFILE} ${COMMONHDRS}
 ${${T}_OBJS_S}: ${${T}_CFILE} ${COMMONHDRS}
 	${CC_S} ${${T}_CFLAGS} -DL${.PREFIX} -o ${.TARGET} ${.ALLSRC:M*.c}
 .endfor
+
+#-----------------------------------------------------------------------
+#
+# Special versions of the floating-point conversion routines.
+#
+.if !empty{TI_FUNCS}
+TI_OBJS_T =	${TI_FUNCS:S/$/.o/}
+OBJS +=		${TI_FUNCS:S/$/.o/}
+
+${TI_OBJS_T}: ${TI_CFILE} ${COMMONHDRS}
+	${CC_T} ${TI_CFLAGS} -DL${.PREFIX:S/ti/di/} -o ${.TARGET} ${.ALLSRC:M*.c}
+${TI_OBJS_P}: ${TI_CFILE} ${COMMONHDRS}
+	${CC_P} ${TI_CFLAGS} -DL${.PREFIX:S/ti/di/} -o ${.TARGET} ${.ALLSRC:M*.c}
+${TI_OBJS_T}: ${TI_CFILE} ${COMMONHDRS}
+	${CC_S} ${TI_CFLAGS} -DL${.PREFIX:S/ti/di/} -o ${.TARGET} ${.ALLSRC:M*.c}
+.endif
 
 #-----------------------------------------------------------------------
 #
