@@ -1,5 +1,10 @@
-/*	$OpenBSD: asm.h,v 1.3 2010/04/28 16:20:28 syuu Exp $ */
+/*	$OpenBSD: asm.h,v 1.4 2010/09/11 11:29:50 syuu Exp $ */
 
-/* Use Mips generic include file */
+#ifdef MULTIPROCESSOR
+#define HW_GET_CPU_INFO(ci, tmp)	\
+	LOAD_XKPHYS(ci, CCA_CACHED);	\
+	mfc0	tmp, COP_0_LLADDR;	\
+	or	ci, ci, tmp
+#endif
 
 #include <mips64/asm.h>

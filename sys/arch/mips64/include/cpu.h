@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.59 2010/08/30 08:52:10 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.60 2010/09/11 11:29:49 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -434,8 +434,8 @@ extern struct cpu_info *cpu_info_list;
 
 #ifdef MULTIPROCESSOR
 #define MAXCPUS				4
-extern struct cpu_info *getcurcpu(void);
-extern void setcurcpu(struct cpu_info *);
+#define getcurcpu()			hw_getcurcpu()
+#define setcurcpu(ci)			hw_setcurcpu(ci)
 extern struct cpu_info *get_cpu_info(int);
 #define curcpu() getcurcpu()
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
