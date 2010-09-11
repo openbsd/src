@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.212 2010/09/10 04:46:24 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.213 2010/09/11 22:40:10 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -225,7 +225,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	switch (result) {
 	case SDGP_RESULT_OK:
 		printf("%lldMB, %lu bytes/sec, %lld sec total",
-		    dp->disksize / (1048576 / dp->blksize), dp->blksize,
+		    dp->disksize / (1048576 / dp->secsize), dp->secsize,
 		    dp->disksize);
 		break;
 
@@ -601,49 +601,49 @@ done:
 }
 
 void
-sd_cmd_rw6(struct scsi_xfer *xs, int read, daddr64_t blkno, u_int nblks)
+sd_cmd_rw6(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
 {
 	struct scsi_rw *cmd = (struct scsi_rw *)xs->cmd;
 
 	cmd->opcode = read ? READ_COMMAND : WRITE_COMMAND;
-	_lto3b(blkno, cmd->addr);
-	cmd->length = nblks;
+	_lto3b(secno, cmd->addr);
+	cmd->length = nsecs;
 
 	xs->cmdlen = sizeof(*cmd);
 }
 
 void
-sd_cmd_rw10(struct scsi_xfer *xs, int read, daddr64_t blkno, u_int nblks)
+sd_cmd_rw10(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
 {
 	struct scsi_rw_big *cmd = (struct scsi_rw_big *)xs->cmd;
 
 	cmd->opcode = read ? READ_BIG : WRITE_BIG;
-	_lto4b(blkno, cmd->addr);
-	_lto2b(nblks, cmd->length);
+	_lto4b(secno, cmd->addr);
+	_lto2b(nsecs, cmd->length);
 
 	xs->cmdlen = sizeof(*cmd);
 }
 
 void
-sd_cmd_rw12(struct scsi_xfer *xs, int read, daddr64_t blkno, u_int nblks)
+sd_cmd_rw12(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
 {
 	struct scsi_rw_12 *cmd = (struct scsi_rw_12 *)xs->cmd;
 
 	cmd->opcode = read ? READ_12 : WRITE_12;
-	_lto4b(blkno, cmd->addr);
-	_lto4b(nblks, cmd->length);
+	_lto4b(secno, cmd->addr);
+	_lto4b(nsecs, cmd->length);
 
 	xs->cmdlen = sizeof(*cmd);
 }
 
 void
-sd_cmd_rw16(struct scsi_xfer *xs, int read, daddr64_t blkno, u_int nblks)
+sd_cmd_rw16(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
 {
 	struct scsi_rw_16 *cmd = (struct scsi_rw_16 *)xs->cmd;
 
 	cmd->opcode = read ? READ_16 : WRITE_16;
-	_lto8b(blkno, cmd->addr);
-	_lto4b(nblks, cmd->length);
+	_lto8b(secno, cmd->addr);
+	_lto4b(nsecs, cmd->length);
 
 	xs->cmdlen = sizeof(*cmd);
 }
@@ -667,8 +667,8 @@ sdstart(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct sd_softc *sc = link->device_softc;
 	struct buf *bp;
-	daddr64_t blkno;
-	int nblks;
+	daddr64_t secno;
+	int nsecs;
 	int read;
 	struct partition *p;
 
@@ -688,10 +688,10 @@ sdstart(struct scsi_xfer *xs)
 		return;
 	}
 
-	blkno = bp->b_blkno / (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	secno = bp->b_blkno / (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-	blkno += DL_GETPOFFSET(p);
-	nblks = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
+	secno += DL_GETPOFFSET(p);
+	nsecs = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
 	read = bp->b_flags & B_READ;
 
 	/*
@@ -700,17 +700,17 @@ sdstart(struct scsi_xfer *xs)
 	 */
 	if (!(link->flags & SDEV_ATAPI) &&
 	    !(link->quirks & SDEV_ONLYBIG) &&
-	    ((blkno & 0x1fffff) == blkno) &&
-	    ((nblks & 0xff) == nblks))
-		sd_cmd_rw6(xs, read, blkno, nblks);
-	else if (((blkno & 0xffffffff) == blkno) &&
-	    ((nblks & 0xffff) == nblks))
-		sd_cmd_rw10(xs, read, blkno, nblks);
-	else if (((blkno & 0xffffffff) == blkno) &&
-	    ((nblks & 0xffffffff) == nblks))
-		sd_cmd_rw12(xs, read, blkno, nblks);
+	    ((secno & 0x1fffff) == secno) &&
+	    ((nsecs & 0xff) == nsecs))
+		sd_cmd_rw6(xs, read, secno, nsecs);
+	else if (((secno & 0xffffffff) == secno) &&
+	    ((nsecs & 0xffff) == nsecs))
+		sd_cmd_rw10(xs, read, secno, nsecs);
+	else if (((secno & 0xffffffff) == secno) &&
+	    ((nsecs & 0xffffffff) == nsecs))
+		sd_cmd_rw12(xs, read, secno, nsecs);
 	else
-		sd_cmd_rw16(xs, read, blkno, nblks);
+		sd_cmd_rw16(xs, read, secno, nsecs);
 
 	xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
 	xs->timeout = 60000;
@@ -1109,7 +1109,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 
 	bzero(lp, sizeof(struct disklabel));
 
-	lp->d_secsize = sc->params.blksize;
+	lp->d_secsize = sc->params.secsize;
 	lp->d_ntracks = sc->params.heads;
 	lp->d_nsectors = sc->params.sectors;
 	lp->d_ncylinders = sc->params.cyls;
@@ -1403,11 +1403,11 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	struct page_rigid_geometry *rigid = NULL;
 	struct page_flex_geometry *flex = NULL;
 	struct page_reduced_geometry *reduced = NULL;
-	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize = 0, ssblksize;
+	u_int32_t heads = 0, sectors = 0, cyls = 0, secsize = 0, sssecsize;
 	u_int16_t rpm = 0;
 	int err;
 
-	dp->disksize = scsi_size(sc->sc_link, flags, &ssblksize);
+	dp->disksize = scsi_size(sc->sc_link, flags, &sssecsize);
 
 	/*
 	 * Many UMASS devices choke when asked about their geometry. Most
@@ -1429,14 +1429,14 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	case T_RDIRECT:
 		/* T_RDIRECT supports only PAGE_REDUCED_GEOMETRY (6). */
 		err = scsi_do_mode_sense(sc->sc_link, PAGE_REDUCED_GEOMETRY,
-		    buf, (void **)&reduced, NULL, NULL, &blksize,
+		    buf, (void **)&reduced, NULL, NULL, &secsize,
 		    sizeof(*reduced), flags | SCSI_SILENT, NULL);
 		if (!err && reduced &&
 		    DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
 			if (dp->disksize == 0)
 				dp->disksize = _5btol(reduced->sectors);
-			if (blksize == 0)
-				blksize = _2btol(reduced->bytes_s);
+			if (secsize == 0)
+				secsize = _2btol(reduced->bytes_s);
 		}
 		break;
 
@@ -1452,7 +1452,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 		    ((sc->sc_link->flags & SDEV_REMOVABLE) == 0))
 			err = scsi_do_mode_sense(sc->sc_link,
 			    PAGE_RIGID_GEOMETRY, buf, (void **)&rigid, NULL,
-			    NULL, &blksize, sizeof(*rigid) - 4,
+			    NULL, &secsize, sizeof(*rigid) - 4,
 			    flags | SCSI_SILENT, NULL);
 		if (!err && rigid && DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			heads = rigid->nheads;
@@ -1463,7 +1463,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 		} else {
 			err = scsi_do_mode_sense(sc->sc_link,
 			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
-			    &blksize, sizeof(*flex) - 4,
+			    &secsize, sizeof(*flex) - 4,
 			    flags | SCSI_SILENT, NULL);
 			if (!err && flex &&
 			    DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
@@ -1471,8 +1471,8 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 				heads = flex->nheads;
 				cyls = _2btol(flex->ncyl);
 				rpm = _2btol(flex->rpm);
-				if (blksize == 0)
-					blksize = _2btol(flex->bytes_s);
+				if (secsize == 0)
+					secsize = _2btol(flex->bytes_s);
 				if (dp->disksize == 0)
 					dp->disksize = heads * cyls * sectors;
 			}
@@ -1487,15 +1487,15 @@ validate:
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
 
-	if (ssblksize > 0)
-		dp->blksize = ssblksize;
+	if (sssecsize > 0)
+		dp->secsize = sssecsize;
 	else
-		dp->blksize = (blksize == 0) ? 512 : blksize;
+		dp->secsize = (secsize == 0) ? 512 : secsize;
 
 	/*
-	 * Restrict blksize values to powers of two between 512 and 64k.
+	 * Restrict secsize values to powers of two between 512 and 64k.
 	 */
-	switch (dp->blksize) {
+	switch (dp->secsize) {
 	case 0x200:	/* == 512, == DEV_BSIZE on all architectures. */
 	case 0x400:
 	case 0x800:
@@ -1507,7 +1507,7 @@ validate:
 		break;
 	default:
 		SC_DEBUG(sc->sc_link, SDEV_DB1,
-		    ("sd_get_parms: bad blksize: %#x\n", dp->blksize));
+		    ("sd_get_parms: bad secsize: %#x\n", dp->secsize));
 		return (SDGP_RESULT_OFFLINE);
 	}
 

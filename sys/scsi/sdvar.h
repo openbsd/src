@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.32 2010/09/01 01:38:12 dlg Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.33 2010/09/11 22:40:10 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ struct sd_softc {
 		u_long	heads;		/* number of heads */
 		u_long	cyls;		/* number of cylinders */
 		u_long	sectors;	/* number of sectors/track */
-		u_long	blksize;	/* number of bytes/sector */
+		u_long	secsize;	/* number of bytes/sector */
 		u_long	rot_rate;	/* rotational rate, in RPM */
 		daddr64_t	disksize;	/* total number sectors */
 	} params;
