@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.33 2010/09/11 22:40:10 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.34 2010/09/12 02:05:54 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@ struct sd_softc {
 		u_long	cyls;		/* number of cylinders */
 		u_long	sectors;	/* number of sectors/track */
 		u_long	secsize;	/* number of bytes/sector */
-		u_long	rot_rate;	/* rotational rate, in RPM */
 		daddr64_t	disksize;	/* total number sectors */
 	} params;
 	void *sc_sdhook;		/* our shutdown hook */

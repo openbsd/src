@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.213 2010/09/11 22:40:10 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.214 2010/09/12 02:05:54 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1404,7 +1404,6 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	struct page_flex_geometry *flex = NULL;
 	struct page_reduced_geometry *reduced = NULL;
 	u_int32_t heads = 0, sectors = 0, cyls = 0, secsize = 0, sssecsize;
-	u_int16_t rpm = 0;
 	int err;
 
 	dp->disksize = scsi_size(sc->sc_link, flags, &sssecsize);
@@ -1457,7 +1456,6 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 		if (!err && rigid && DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			heads = rigid->nheads;
 			cyls = _3btol(rigid->ncyl);
-			rpm = _2btol(rigid->rpm);
 			if (heads * cyls > 0)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
@@ -1470,7 +1468,6 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 				sectors = flex->ph_sec_tr;
 				heads = flex->nheads;
 				cyls = _2btol(flex->ncyl);
-				rpm = _2btol(flex->rpm);
 				if (secsize == 0)
 					secsize = _2btol(flex->bytes_s);
 				if (dp->disksize == 0)
@@ -1528,7 +1525,6 @@ validate:
 		 */
 		dp->heads = (heads == 0) ? 255 : heads;
 		dp->sectors = (sectors == 0) ? 63 : sectors;
-		dp->rot_rate = (rpm == 0) ? 3600 : rpm;
 	}
 
 	dp->cyls = (cyls == 0) ? dp->disksize / (dp->heads * dp->sectors) :
