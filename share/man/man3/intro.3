@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.41 2010/05/26 19:34:33 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.42 2010/09/12 12:11:36 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 26 2010 $
+.Dd $Mdocdate: September 12 2010 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -98,6 +98,7 @@ See
 .Pp
 .It libcurses Pq Fl lcurses
 .It libncurses Pq Fl lncurses
+.It libncursesw Pq Fl lncursesw
 .It libtermcap Pq Fl ltermcap
 .It libtermlib Pq Fl ltermlib
 Terminal-independent screen management routines for two-dimensional
@@ -109,6 +110,7 @@ and is a replacement for
 classic curses.
 The libraries
 .Em libncurses ,
+.Em libncursesw ,
 .Em libtermcap ,
 and
 .Em libtermlib
@@ -151,6 +153,7 @@ See
 Library routines for parsing XML documents.
 .Pp
 .It libform Pq Fl lform
+.It libformw Pq Fl lformw
 Terminal-independent facilities for composing form screens on
 character-cell terminals.
 Functions using the
@@ -159,6 +162,12 @@ library must be linked with the
 .Em libcurses
 library, i.e.\&
 .Fl lform lcurses .
+.Em libformw
+is a hard link to
+.Em libform
+intended for use with
+.Em libncursesw
+wide-character functions.
 See
 .Xr form 3 .
 .Pp
@@ -247,6 +256,7 @@ See
 .Xr math 3 .
 .Pp
 .It libmenu Pq Fl lmenu
+.It libmenuw Pq Fl lmenuw
 Terminal-independent facilities for composing menu systems on
 character-cell terminals.
 Functions using the
@@ -255,6 +265,12 @@ library must be linked with the
 .Em libcurses
 library, i.e.\&
 .Fl lmenu lcurses .
+.Em libmenuw
+is a hard link to
+.Em libmenu
+intended for use with
+.Em libncursesw
+wide-character functions.
 See
 .Xr menu 3 .
 .Pp
@@ -295,6 +311,7 @@ See
 .Xr ossaudio 3 .
 .Pp
 .It libpanel Pq Fl lpanel
+.It libpanelw Pq Fl lpanelw
 Terminal-independent facilities for stacked windows on
 character-cell terminals.
 Functions using the
@@ -303,6 +320,12 @@ library must be linked with the
 .Em libcurses
 library, i.e.\&
 .Fl lpanel lcurses .
+.Em libpanelw
+is a hard link to
+.Em libpanel
+intended for use with
+.Em libncursesw
+wide-charcter functions.
 See
 .Xr panel 3 .
 .Pp
@@ -593,6 +616,7 @@ for more details.
 .It Pa /usr/lib/libexpat.a
 .It Pa /usr/lib/libfl.a
 .It Pa /usr/lib/libform.a
+.It Pa /usr/lib/libformw.a
 .It Pa /usr/lib/gcc-lib/${ARCH}-unknown-openbsd${OSREV}/${GCCREV}/fpic/libgcc.a
 .It Pa /usr/lib/libgssapi.a
 .It Pa /usr/lib/libhdb.a
@@ -606,13 +630,16 @@ for more details.
 .It Pa /usr/lib/libl.a
 .It Pa /usr/lib/libm.a
 .It Pa /usr/lib/libmenu.a
+.It Pa /usr/lib/libmenuw.a
 .It Pa /usr/lib/libmilter.a
 .It Pa /usr/lib/libncurses.a
+.It Pa /usr/lib/libncursesw.a
 .It Pa /usr/lib/libobjc.a
 .It Pa /usr/lib/libocurses.a
 .It Pa /usr/lib/libossaudio.a
 .It Pa /usr/lib/libotermcap.a
 .It Pa /usr/lib/libpanel.a
+.It Pa /usr/lib/libpanelw.a
 .It Pa /usr/lib/libpcap.a
 .It Pa /usr/lib/libperl.a
 .It Pa /usr/lib/libpthread.a
