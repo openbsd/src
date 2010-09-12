@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiovar.h,v 1.11 2009/03/16 19:45:09 ratchov Exp $	*/
+/*	$OpenBSD: audiovar.h,v 1.12 2010/09/12 02:01:17 jakemsr Exp $	*/
 /*	$NetBSD: audiovar.h,v 1.18 1998/03/03 09:16:16 augustss Exp $	*/
 
 /*
@@ -132,6 +132,13 @@ struct audio_softc {
 
 	int     sc_refcnt;
 	int     sc_dying;
+
+	int	sc_quiesce;
+#define	AUDIO_QUIESCE_START	1
+#define	AUDIO_QUIESCE_SILENT	2
+	struct timeout sc_resume_to;
+	struct workq_task sc_resume_task;
+	u_char	sc_mute;
 
 #ifdef AUDIO_INTR_TIME
 	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */
