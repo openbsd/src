@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.190 2010/09/11 22:40:10 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.191 2010/09/12 01:54:48 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct cd_softc {
 	struct cd_parms {
 		u_int32_t secsize;
 		daddr64_t disksize;	/* total number sectors */
-	} sc_params;
+	} params;
 	struct bufq	sc_bufq;
 	struct scsi_xshandler sc_xsh;
 	struct timeout sc_timeout;
@@ -1179,11 +1179,11 @@ cdgetdisklabel(dev_t dev, struct cd_softc *sc, struct disklabel *lp,
 
 	toc = malloc(sizeof(*toc), M_TEMP, M_WAITOK | M_ZERO);
 
-	lp->d_secsize = sc->sc_params.secsize;
+	lp->d_secsize = sc->params.secsize;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_secpercyl = 100;
-	lp->d_ncylinders = (sc->sc_params.disksize / 100) + 1;
+	lp->d_ncylinders = (sc->params.disksize / 100) + 1;
 
 	if (sc->sc_link->flags & SDEV_ATAPI) {
 		strncpy(lp->d_typename, "ATAPI CD-ROM", sizeof(lp->d_typename));
@@ -1194,7 +1194,7 @@ cdgetdisklabel(dev_t dev, struct cd_softc *sc, struct disklabel *lp,
 	}
 
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	DL_SETDSIZE(lp, sc->sc_params.disksize);
+	DL_SETDSIZE(lp, sc->params.disksize);
 	lp->d_version = 1;
 
 	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
@@ -1663,21 +1663,21 @@ int
 cd_get_parms(struct cd_softc *sc, int flags)
 {
 	/* Reasonable defaults for drives that don't support READ_CAPACITY */
-	sc->sc_params.secsize = 2048;
-	sc->sc_params.disksize = 400000;
+	sc->params.secsize = 2048;
+	sc->params.disksize = 400000;
 
 	if (sc->sc_link->quirks & ADEV_NOCAPACITY)
 		return (0);
 
-	sc->sc_params.disksize = scsi_size(sc->sc_link, flags,
-	    &sc->sc_params.secsize);
+	sc->params.disksize = scsi_size(sc->sc_link, flags,
+	    &sc->params.secsize);
 
-	if ((sc->sc_params.secsize < 512) ||
-	    ((sc->sc_params.secsize & 511) != 0))
-		sc->sc_params.secsize = 2048;	/* some drives lie ! */
+	if ((sc->params.secsize < 512) ||
+	    ((sc->params.secsize & 511) != 0))
+		sc->params.secsize = 2048;	/* some drives lie ! */
 
-	if (sc->sc_params.disksize < 100)
-		sc->sc_params.disksize = 400000;
+	if (sc->params.disksize < 100)
+		sc->params.disksize = 400000;
 
 	return (0);
 }
