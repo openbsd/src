@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.88 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.89 2010/09/12 10:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -538,6 +538,8 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	r->sk_len = htole16(dmamap->dm_segs[0].ds_len);
 	r->sk_ctl = 0;
 
+	MSK_CDRXSYNC(sc_if, head, BUS_DMASYNC_PREWRITE);
+
 	SK_INC(sc_if->sk_cdata.sk_rx_prod, MSK_RX_RING_CNT);
 	sc_if->sk_cdata.sk_rx_cnt++;
 
@@ -549,7 +551,12 @@ msk_newbuf(struct sk_if_softc *sc_if)
 		r->sk_addr = htole32(dmamap->dm_segs[i].ds_addr);
 		r->sk_len = htole16(dmamap->dm_segs[i].ds_len);
 		r->sk_ctl = 0;
+
+		MSK_CDRXSYNC(sc_if, sc_if->sk_cdata.sk_rx_prod,
+		    BUS_DMASYNC_PREWRITE);
+
 		r->sk_opcode = SK_Y2_RXOPC_BUFFER | SK_Y2_RXOPC_OWN;
+
 		MSK_CDRXSYNC(sc_if, sc_if->sk_cdata.sk_rx_prod,
 		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
@@ -1853,12 +1860,12 @@ msk_intr(void *xsc)
 
 	if (rx[0]) {
 		msk_fill_rx_ring(sc_if0);
-		SK_IF_WRITE_2(sc_if0, 0,  SK_RXQ1_Y2_PREF_PUTIDX,
+		SK_IF_WRITE_2(sc_if0, 0, SK_RXQ1_Y2_PREF_PUTIDX,
 		    sc_if0->sk_cdata.sk_rx_prod);
 	}
 	if (rx[1]) {
 		msk_fill_rx_ring(sc_if1);
-		SK_IF_WRITE_2(sc_if1, 0,  SK_RXQ1_Y2_PREF_PUTIDX,
+		SK_IF_WRITE_2(sc_if1, 0, SK_RXQ1_Y2_PREF_PUTIDX,
 		    sc_if1->sk_cdata.sk_rx_prod);
 	}
 
