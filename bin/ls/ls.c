@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.35 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.36 2010/09/12 20:16:29 sobrado Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -538,7 +538,7 @@ display(FTSENT *p, FTSENT *list)
 		(void)snprintf(buf, sizeof(buf), "%lu", maxnlink);
 		d.s_nlink = strlen(buf);
 		if (!f_humanval) {
-			(void)snprintf(buf, sizeof(buf), "%lld", 
+			(void)snprintf(buf, sizeof(buf), "%lld",
 				(long long) maxsize);
 			d.s_size = strlen(buf);
 		} else

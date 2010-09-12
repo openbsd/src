@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.26 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.27 2010/09/12 20:16:29 sobrado Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ printlong(DISPLAY *dp)
 			    dp->s_block, howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
-                (void)printf("%s %*u ", buf, dp->s_nlink, sp->st_nlink);
+		(void)printf("%s %*u ", buf, dp->s_nlink, sp->st_nlink);
 		if (!f_grouponly)
 			(void)printf("%-*s  ", dp->s_user, np->user);
 		(void)printf("%-*s  ", dp->s_group, np->group);
@@ -109,7 +109,7 @@ printlong(DISPLAY *dp)
 			(void)printf("%*s%*qd ",
 			    8 - dp->s_size, "", dp->s_size, sp->st_size);
 		else
-			printsize(dp->s_size, sp->st_size);	
+			printsize(dp->s_size, sp->st_size);
 		if (f_accesstime)
 			printtime(sp->st_atime);
 		else if (f_statustime)
