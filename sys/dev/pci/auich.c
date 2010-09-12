@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.91 2010/09/07 16:21:44 deraadt Exp $	*/
+/*	$OpenBSD: auich.c,v 1.92 2010/09/12 02:04:31 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -323,7 +323,6 @@ int auich_allocmem(struct auich_softc *, size_t, size_t, struct auich_dma *);
 int auich_freemem(struct auich_softc *, struct auich_dma *);
 void auich_get_default_params(void *, int, struct audio_params *);
 
-int auich_suspend(struct auich_softc *);
 int auich_resume(struct auich_softc *);
 
 struct audio_hw_if auich_hw_if = {
@@ -567,13 +566,13 @@ auich_activate(struct device *self, int act)
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_QUIESCE:
-		/* XXX to be filled by jakemsr */
+		rv = config_activate_children(self, DVACT_QUIESCE);
 		break;
 	case DVACT_SUSPEND:
-		auich_suspend(sc);
 		break;
 	case DVACT_RESUME:
 		auich_resume(sc);
+		rv = config_activate_children(self, DVACT_RESUME);
 		break;
 	case DVACT_DEACTIVATE:
 		if (sc->audiodev != NULL)
@@ -1837,30 +1836,8 @@ auich_alloc_cdata(struct auich_softc *sc)
 }
 
 int
-auich_suspend(struct auich_softc *sc)
-{
-	if (sc->pcmo.running) {
-		auich_halt_pipe(sc, AUICH_PCMO, &sc->pcmo);
-		sc->pcmo.running = 1;
-	}
-	if (sc->pcmi.running) {
-		auich_halt_pipe(sc, AUICH_PCMI, &sc->pcmi);
-		sc->pcmi.running = 1;
-	}
-	if (sc->mici.running) {
-		auich_halt_pipe(sc, AUICH_MICI, &sc->mici);
-		sc->mici.running = 1;
-	}
-
-	return (0);
-}
-
-int
 auich_resume(struct auich_softc *sc)
 {
-	struct auich_ring *ring;
-	u_long rate, control;
-
 	/* SiS 7012 needs special handling */
 	if (PCI_VENDOR(sc->pci_id) == PCI_VENDOR_SIS &&
 	    PCI_PRODUCT(sc->pci_id) == PCI_PRODUCT_SIS_7012_ACA) {
@@ -1871,81 +1848,6 @@ auich_resume(struct auich_softc *sc)
 	}
 
 	ac97_resume(&sc->host_if, sc->codec_if);
-
-	ring = &sc->pcmo;
-	if (ring->running) {
-
-		rate = sc->last_prate;
-		ac97_set_rate(sc->codec_if, AC97_REG_PCM_LFE_DAC_RATE, &rate);
-
-		rate = sc->last_prate;
-		ac97_set_rate(sc->codec_if, AC97_REG_PCM_SURR_DAC_RATE, &rate);
-
-		rate = sc->last_prate;
-		ac97_set_rate(sc->codec_if, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
-
-		control = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GCTRL);
-		control &= ~(sc->sc_pcm246_mask);
-		if (sc->last_pchan == 4)
-			control |= sc->sc_pcm4;
-		else if (sc->last_pchan == 6)
-			control |= sc->sc_pcm6;
-		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, control);
-
-		if (ring->intr) {
-			while (ring->ap != 0) {
-				ring->intr(ring->arg);
-				ring->ap += ring->blksize;
-				if (ring->ap >= ring->size)
-					ring->ap = 0;
-			}
-			ring->p = ring->start;
-		}
-
-		bus_space_write_4(sc->iot, sc->aud_ioh,
-		    AUICH_PCMO + AUICH_BDBAR, sc->sc_cddma + AUICH_PCMO_OFF(0));
-		auich_trigger_pipe(sc, AUICH_PCMO, ring);
-	}
-
-	ring = &sc->pcmi;
-	if (ring->running) {
-		rate = sc->last_rrate;
-		ac97_set_rate(sc->codec_if, AC97_REG_PCM_LR_ADC_RATE, &rate);
-
-		if (ring->intr) {
-			while (ring->ap != 0) {
-				ring->intr(ring->arg);
-				ring->ap += ring->blksize;
-				if (ring->ap >= ring->size)
-					ring->ap = 0;
-			}
-			ring->p = ring->start;
-		}
-
-		bus_space_write_4(sc->iot, sc->aud_ioh,
-		    AUICH_PCMI + AUICH_BDBAR, sc->sc_cddma + AUICH_PCMI_OFF(0));
-		auich_trigger_pipe(sc, AUICH_PCMI, ring);
-	}
-
-	ring = &sc->mici;
-	if (ring->running) {
-		rate = sc->last_rrate;
-		ac97_set_rate(sc->codec_if, AC97_REG_PCM_MIC_ADC_RATE, &rate);
-
-		if (ring->intr) {
-			while (ring->ap != 0) {
-				ring->intr(ring->arg);
-				ring->ap += ring->blksize;
-				if (ring->ap >= ring->size)
-					ring->ap = 0;
-			}
-			ring->p = ring->start;
-		}
-
-		bus_space_write_4(sc->iot, sc->aud_ioh,
-		    AUICH_MICI + AUICH_BDBAR, sc->sc_cddma + AUICH_MICI_OFF(0));
-		auich_trigger_pipe(sc, AUICH_MICI, ring);
-	}
 
 	return (0);
 }

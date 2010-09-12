@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.36 2010/09/07 16:21:44 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.37 2010/09/12 02:05:41 jakemsr Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1829,35 +1829,29 @@ int
 cs4280_activate(struct device *self, int act)
 {
 	struct cs4280_softc *sc = (struct cs4280_softc *)self;
-	int i;
+	int rv = 0;
 
 	switch (act) {
+ 	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, DVACT_QUIESCE);
+		break;
 	case DVACT_SUSPEND:
-		cs4280_halt_output(sc);
-		cs4280_halt_input(sc);
-		/* Save AC97 registers */
-		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
-			if(i == 0x04) /* AC97_REG_MASTER_TONE */
-				continue;
-			cs4280_read_codec(sc, 2*i, &sc->ac97_reg[i]);
-		}
 		/* should I powerdown here ? */
 		cs4280_write_codec(sc, AC97_REG_POWER, CS4280_POWER_DOWN_ALL);
 		break;
 	case DVACT_RESUME:
+		cs4280_close(sc);
 		cs4280_init(sc, 0);
 		cs4280_init2(sc, 0);
-		cs4280_reset_codec(sc);
-
-		/* restore ac97 registers */
-		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
-			if(i == 0x04) /* AC97_REG_MASTER_TONE */
-				continue;
-			cs4280_write_codec(sc, 2*i, sc->ac97_reg[i]);
-		}
+		ac97_resume(&sc->host_if, sc->codec_if);
+		rv = config_activate_children(self, DVACT_RESUME);
+		break;
+ 	case DVACT_DEACTIVATE:
 		break;
 	}
-	return 0;
+	return (rv);
 }
 
 void
