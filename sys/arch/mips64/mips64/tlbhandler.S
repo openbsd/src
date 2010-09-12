@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.31 2010/02/13 14:07:30 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.32 2010/09/12 12:05:37 syuu Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -403,7 +403,12 @@ LEAF(tlb_flush, 0)
 	LA	v0, CKSEG0_BASE		# invalid address
 	dmfc0	ta0, COP_0_TLB_HI	# Save the PID
 
+#ifdef CPU_OCTEON
+	mul	ta2, ta1, 2 * PAGE_SIZE
+	addu	v0, v0, ta2
+#else
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
+#endif
 	dmtc0	zero, COP_0_TLB_LO0	# Zero out low entry0.
 	dmtc0	zero, COP_0_TLB_LO1	# Zero out low entry1.
 	mtc0	zero, COP_0_TLB_PG_MASK	# Zero out mask entry.
@@ -412,6 +417,10 @@ LEAF(tlb_flush, 0)
  */
 1:
 	mtc0	ta1, COP_0_TLB_INDEX	# Set the index register.
+#ifdef CPU_OCTEON
+	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
+	addu	v0, v0, 2 * PAGE_SIZE
+#endif
 	addu	ta1, ta1, 1		# Increment index.
 	nop
 	nop
@@ -461,6 +470,10 @@ LEAF(tlb_flush_addr, 0)
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
 	bltz	v0, 1f			# index < 0 => !found
 	nop
+#ifdef CPU_OCTEON
+	mul	ta2, v0, 2 * PAGE_SIZE
+	addu	ta1, ta1, ta2
+#endif
 	dmtc0	ta1, COP_0_TLB_HI	# Mark entry high as invalid
 
 	dmtc0	zero, COP_0_TLB_LO0	# Zero out low entry.
