@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.186 2010/08/31 17:26:57 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.187 2010/09/12 02:35:10 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -122,7 +122,6 @@ typedef struct {
 	azalia_dma_t buffer;
 	void (*intr)(void*);
 	void *intr_arg;
-	int active;
 	int bufsize;
 	uint16_t fmt;
 	int blk;
@@ -130,7 +129,6 @@ typedef struct {
 	u_long swpos;			/* position in the audio(4) layer */
 	u_int last_hwpos;		/* last known lpib */
 	u_long hw_base;			/* this + lpib = overall position */
-	u_int lpib;			/* link position in buffer */
 	u_int pos_offs;			/* hardware fifo space */
 } stream_t;
 #define STR_READ_1(s, r)	\
@@ -542,13 +540,14 @@ azalia_pci_activate(struct device *self, int act)
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_QUIESCE:
-		/* XXX to be filled by jakemsr */
+		rv = config_activate_children(self, DVACT_QUIESCE);
 		break;
 	case DVACT_SUSPEND:
 		azalia_suspend(sc);
 		break;
 	case DVACT_RESUME:
 		azalia_resume(sc);
+		rv = config_activate_children(self, DVACT_RESUME);
 		break;
 	case DVACT_DEACTIVATE:
 		if (sc->audiodev != NULL)
@@ -1339,20 +1338,6 @@ azalia_suspend(azalia_t *az)
 	timeout_del(&az->unsol_to);
 
 	azalia_save_mixer(&az->codecs[az->codecno]);
-
-	/* azalia_stream_halt() always returns 0.
-	 * Set 'active' field back to 1 after halting, so azalia_resume()
-	 * knows to start it back up.
-	 */
-	if (az->rstream.active) {
-		azalia_stream_halt(&az->rstream);
-		az->rstream.active = 1;
-	}
-	if (az->pstream.active) {
-		azalia_stream_halt(&az->pstream);
-		az->pstream.active = 1;
-	}
-
 	/* azalia_halt_{corb,rirb}() only fail if the {CORB,RIRB} can't
 	 * be stopped and azalia_init_{corb,rirb}(), which starts the
 	 * {CORB,RIRB}, first calls azalia_halt_{corb,rirb}().  If halt
@@ -1377,11 +1362,6 @@ azalia_suspend(azalia_t *az)
 rirb_fail:
 	azalia_init_corb(az, 1);
 corb_fail:
-	if (az->pstream.active)
-		azalia_stream_start(&az->pstream);
-	if (az->rstream.active)
-		azalia_stream_start(&az->rstream);
-
 	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) | HDA_GCTL_UNSOL);
 
 	return err;
@@ -1462,17 +1442,6 @@ azalia_resume(azalia_t *az)
 	err = azalia_codec_enable_unsol(&az->codecs[az->codecno]);
 	if (err)
 		return err;
-
-	if (az->pstream.active) {
-		err = azalia_stream_start(&az->pstream);
-		if (err)
-			return err;
-	}
-	if (az->rstream.active) {
-		err = azalia_stream_start(&az->rstream);
-		if (err)
-			return err;
-	}
 
 	return 0;
 }
@@ -3647,7 +3616,6 @@ azalia_stream_init(stream_t *this, azalia_t *az, int regindex, int strnum,
 	this->intr_bit = 1 << regindex;
 	this->number = strnum;
 	this->dir = dir;
-	this->active = 0;
 	this->pos_offs = STR_READ_2(this, FIFOS) & 0xff;
 
 	/* setup BDL buffers */
@@ -3677,7 +3645,7 @@ azalia_stream_delete(stream_t *this, azalia_t *az)
 int
 azalia_stream_reset(stream_t *this)
 {
-	int i, skip;
+	int i;
 	uint16_t ctl;
 	uint8_t sts;
 
@@ -3717,25 +3685,6 @@ azalia_stream_reset(stream_t *this)
 	sts = STR_READ_1(this, STS);
 	sts |= HDA_SD_STS_DESE | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS;
 	STR_WRITE_1(this, STS, sts);
-
-	/* The hardware position pointer has been reset to the start
-	 * of the buffer.  Call our interrupt handler enough times
-	 * to advance the software position pointer to wrap to the
-	 * start of the buffer.
-	 */
-	if (this->active) {
-		skip = (this->bufsize - this->lpib) / this->blk + 1;
-		DPRINTF(("%s: dir=%d bufsize=%d blk=%d lpib=%d skip=%d\n",
-		    __func__, this->dir, this->bufsize, this->blk, this->lpib,
-		    skip));
-		for (i = 0; i < skip; i++)
-			this->intr(this->intr_arg);
-		this->swpos = 0;
-		this->last_hwpos = 0;
-		this->hw_base = 0;
-	}
-	this->active = 0;
-	this->lpib = 0;
 
 	return (0);
 }
@@ -3800,8 +3749,6 @@ azalia_stream_start(stream_t *this)
 	    HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE |
 	    HDA_SD_CTL_RUN);
 
-	this->active = 1;
-
 	return (0);
 }
 
@@ -3816,8 +3763,7 @@ azalia_stream_halt(stream_t *this)
 	AZ_WRITE_4(this->az, INTCTL,
 	    AZ_READ_4(this->az, INTCTL) & ~this->intr_bit);
 	azalia_codec_disconnect_stream(this);
-	this->lpib = STR_READ_4(this, LPIB);
-	this->active = 0;
+
 	return (0);
 }
 
