@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.16 2010/05/23 21:29:05 deraadt Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.17 2010/09/12 12:27:06 kettenis Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -249,17 +249,17 @@ typedef struct arc_calls
 		char **,		/* argv */
 		char **);		/* envp */
 
-	volatile void (*halt)(void);	/* Halt 4 */
+	__dead void (*halt)(void);	/* Halt 4 */
 
-	volatile void (*power_down)(void); /* PowerDown 5 */
+	__dead void (*power_down)(void); /* PowerDown 5 */
 
-	volatile void (*restart)(void);	/* Restart 6 */
+	__dead void (*restart)(void);	/* Restart 6 */
 
-	volatile void (*reboot)(void);	/* Reboot 7 */
+	__dead void (*reboot)(void);	/* Reboot 7 */
 
-	volatile void (*enter_interactive_mode)(void); /* EnterInteractiveMode 8 */
+	__dead void (*enter_interactive_mode)(void); /* EnterInteractiveMode 8 */
 
-	volatile void (*return_from_main)(void); /* ReturnFromMain 9 */
+	__dead void (*return_from_main)(void); /* ReturnFromMain 9 */
 
 	arc_config_t *(*get_peer)(	/* GetPeer 10 */
 		arc_config_t *);	/* Component */
