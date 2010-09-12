@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.45 2010/07/15 03:43:11 jakemsr Exp $ */
+/*	$OpenBSD: auvia.c,v 1.46 2010/09/12 02:03:35 jakemsr Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -103,12 +103,15 @@ int	auvia_trigger_input(void *, void *, void *, int, void (*)(void *),
 
 int	auvia_intr(void *);
 
+int	auvia_activate(struct device *, int);
+
 struct  cfdriver auvia_cd = {
 	NULL, "auvia", DV_DULL
 };
 
 struct cfattach auvia_ca = {
-	sizeof (struct auvia_softc), auvia_match, auvia_attach
+	sizeof (struct auvia_softc), auvia_match, auvia_attach,
+	    NULL, auvia_activate
 };
 
 #define AUVIA_PCICONF_JUNK	0x40
@@ -219,6 +222,8 @@ int	auvia_waitready_codec(struct auvia_softc *sc);
 int	auvia_waitvalid_codec(struct auvia_softc *sc);
 void	auvia_spdif_event(void *, int);
 
+int	auvia_resume(struct auvia_softc *);
+
 const struct pci_matchid auvia_devices[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97 },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97 },
@@ -229,6 +234,30 @@ auvia_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, auvia_devices,
 	    sizeof(auvia_devices)/sizeof(auvia_devices[0])));
+}
+
+int
+auvia_activate(struct device *self, int act)
+{
+	struct auvia_softc *sc = (struct auvia_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+ 	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, DVACT_QUIESCE);
+		break;
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		auvia_resume(sc);
+		rv = config_activate_children(self, DVACT_RESUME);
+		break;
+	case DVACT_DEACTIVATE:
+		break;
+	}
+	return (rv);
 }
 
 
@@ -296,6 +325,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	pr &= ~(AUVIA_PCICONF_ACFM | AUVIA_PCICONF_ACSB);
 
 	pci_conf_write(pc, pt, AUVIA_PCICONF_JUNK, pr);
+	sc->sc_pci_junk = pr;
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auvia_attach_codec;
@@ -1125,3 +1155,17 @@ auvia_intr(void *arg)
 
 	return (i? 1 : 0);
 }
+
+
+int
+auvia_resume(struct auvia_softc *sc)
+{
+	pci_conf_read(sc->sc_pc, sc->sc_pt, AUVIA_PCICONF_JUNK);
+	pci_conf_write(sc->sc_pc, sc->sc_pt, AUVIA_PCICONF_JUNK,
+	    sc->sc_pci_junk);
+
+	ac97_resume(&sc->host_if, sc->codec_if);
+
+	return (0);
+}
+

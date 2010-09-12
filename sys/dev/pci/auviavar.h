@@ -1,4 +1,4 @@
-/*	$OpenBSD: auviavar.h,v 1.11 2008/10/23 21:50:01 jakemsr Exp $ */
+/*	$OpenBSD: auviavar.h,v 1.12 2010/09/12 02:03:35 jakemsr Exp $ */
 /*	$NetBSD: auviavar.h,v 1.1 2000/03/31 04:45:29 tsarna Exp $	*/
 
 /*-
@@ -64,6 +64,8 @@ struct auvia_softc {
 	struct ac97_codec_if *codec_if;
 	int bufsize;
 	int sc_spdif;
+
+	pcireg_t sc_pci_junk;
 
 	struct auvia_dma *sc_dmas;
 
