@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.60 2010/09/11 11:29:49 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.61 2010/09/12 18:30:19 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -403,8 +403,9 @@ struct cpu_info {
 	int		ci_ipl;			/* software IPL */
 	uint32_t	ci_softpending;		/* pending soft interrupts */
 	int		ci_clock_started;
-	u_int32_t	ci_cpu_counter_last;
-	u_int32_t	ci_cpu_counter_interval;
+	u_int32_t	ci_cpu_counter_last;	/* last compare value loaded */
+	u_int32_t	ci_cpu_counter_interval; /* # of counter ticks/tick */
+
 	u_int32_t	ci_pendingticks;
 	struct pmap	*ci_curpmap;
 	uint		ci_intrdepth;		/* interrupt depth */
@@ -471,10 +472,6 @@ void	smp_rendezvous_cpus(unsigned long, void (*)(void *), void *arg);
 void cpu_startclock(struct cpu_info *);
 
 #include <machine/frame.h>
-
-#endif	/* _LOCORE */
-
-#ifndef _LOCORE
 
 /*
  * Arguments to hardclock encapsulate the previous machine state in
@@ -630,8 +627,7 @@ void	save_fpu(void);
 int	guarded_read_4(paddr_t, uint32_t *);
 int	guarded_write_4(paddr_t, uint32_t);
 
-extern u_int32_t cpu_counter_interval;	/* Number of counter ticks/tick */
-extern u_int32_t cpu_counter_last;	/* Last compare value loaded */
+register_t MipsEmulateBranch(struct trap_frame *, vaddr_t, uint32_t, uint32_t);
 
 /*
  *  Low level access routines to CPU registers

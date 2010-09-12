@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.29 2010/08/30 08:52:10 syuu Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.30 2010/09/12 18:30:19 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -50,8 +50,6 @@
 
 #define MIPS_JR_RA        0x03e00008      /* instruction code for jr ra */
 
-extern void trapDump(char *);
-u_long MipsEmulateBranch(db_regs_t *, int, int, u_int);
 void  stacktrace_subr(db_regs_t *, int, int (*)(const char*, ...));
 
 uint32_t kdbpeek(vaddr_t);
@@ -374,7 +372,7 @@ next_instr_address(db_addr_t pc, boolean_t bd)
 {
 	db_addr_t next;
 
-	next = MipsEmulateBranch(&ddb_regs, pc, 0, 0);
+	next = MipsEmulateBranch(&ddb_regs, (vaddr_t)pc, 0, 0);
 	return(next);
 }
 

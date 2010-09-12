@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.63 2010/01/21 17:50:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.64 2010/09/12 18:30:19 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,22 +59,17 @@
 #ifdef PTRACE
 #include <sys/ptrace.h>
 #endif
-#include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/trap.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
-#include <machine/mips_opcode.h>
+#include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/mips_opcode.h>
 #include <machine/regnum.h>
+#include <machine/trap.h>
 
 #include <mips64/rm7000.h>
-
-#include <mips64/archtype.h>
 
 #ifdef DDB
 #include <mips64/db_machdep.h>
@@ -145,7 +140,6 @@ void	trap(struct trap_frame *);
 #ifdef PTRACE
 int	cpu_singlestep(struct proc *);
 #endif
-u_long	MipsEmulateBranch(struct trap_frame *, long, int, u_int);
 
 static __inline__ void
 userret(struct proc *p)
@@ -328,18 +322,6 @@ trap(struct trap_frame *trapframe)
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-#if 0
-		/*
-		 * However we allow accesses to the top of user stack for
-		 * compat emul data.
-		 */
-#define szsigcode ((long)(p->p_emul->e_esigcode - p->p_emul->e_sigcode))
-		if (trapframe->badvaddr < VM_MAXUSER_ADDRESS &&
-		    trapframe->badvaddr >= (long)STACKGAPBASE)
-			goto fault_common;
-#undef szsigcode
-#endif
-
 		if (p->p_addr->u_pcb.pcb_onfault != 0) {
 			/*
 			 * We want to resolve the TLB fault before invoking
@@ -452,12 +434,11 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 
 		/* compute next PC after syscall instruction */
 		tpc = trapframe->pc; /* Remember if restart */
-		if (trapframe->cause & CR_BR_DELAY) {
-			locr0->pc = MipsEmulateBranch(locr0, trapframe->pc, 0, 0);
-		}
-		else {
+		if (trapframe->cause & CR_BR_DELAY)
+			locr0->pc = MipsEmulateBranch(locr0,
+			    trapframe->pc, 0, 0);
+		else
 			locr0->pc += 4;
-		}
 		callp = p->p_emul->e_sysent;
 		numsys = p->p_emul->e_nsysent;
 		code = locr0->v0;
@@ -726,11 +707,11 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		/* read break instruction */
 		copyin(va, &instr, sizeof(int32_t));
 
-		if (trapframe->cause & CR_BR_DELAY) {
-			locr0->pc = MipsEmulateBranch(locr0, trapframe->pc, 0, 0);
-		} else {
+		if (trapframe->cause & CR_BR_DELAY)
+			locr0->pc = MipsEmulateBranch(locr0,
+			    trapframe->pc, 0, 0);
+		else
 			locr0->pc += 4;
-		}
 #ifdef RM7K_PERFCNTR
 		if (instr == 0x040c0000) { /* Performance cntr trap */
 			int result;
@@ -914,30 +895,23 @@ trapDump(char *msg)
 /*
  * Return the resulting PC as if the branch was executed.
  */
-unsigned long
-MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
-	struct trap_frame *framePtr;
-	long instPC;
-	int fpcCSR;
-	u_int curinst;
+register_t
+MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
+    uint32_t curinst)
 {
+	register_t *regsPtr = (register_t *)tf;
 	InstFmt inst;
-	unsigned long retAddr;
+	vaddr_t retAddr;
 	int condition;
-	register_t *regsPtr = (register_t *)framePtr;
 
 #define	GetBranchDest(InstPtr, inst) \
-	    ((unsigned long)InstPtr + 4 + ((short)inst.IType.imm << 2))
+	    (InstPtr + 4 + ((short)inst.IType.imm << 2))
 
-
-	if (curinst)
+	if (curinst != 0)
 		inst = *(InstFmt *)&curinst;
 	else
 		inst = *(InstFmt *)instPC;
-#if 0
-	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
-		inst.word, fpcCSR); /* XXX */
-#endif
+
 	regsPtr[ZERO] = 0;	/* Make sure zero is 0x0 */
 
 	switch ((int)inst.JType.op) {
@@ -945,7 +919,7 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 		switch ((int)inst.RType.func) {
 		case OP_JR:
 		case OP_JALR:
-			retAddr = regsPtr[inst.RType.rs];
+			retAddr = (vaddr_t)regsPtr[inst.RType.rs];
 			break;
 
 		default:
@@ -992,7 +966,7 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 
 	case OP_J:
 	case OP_JAL:
-		retAddr = (inst.JType.target << 2) | (instPC & ~0x0fffffff);
+		retAddr = (inst.JType.target << 2) | (instPC & ~0x0fffffffUL);
 		break;
 
 	case OP_BEQ:
@@ -1032,9 +1006,9 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 		case OP_BCx:
 		case OP_BCy:
 			if ((inst.RType.rt & COPz_BC_TF_MASK) == COPz_BC_TRUE)
-				condition = fpcCSR & FPC_COND_BIT;
+				condition = fsr & FPC_COND_BIT;
 			else
-				condition = !(fpcCSR & FPC_COND_BIT);
+				condition = !(fsr & FPC_COND_BIT);
 			if (condition)
 				retAddr = GetBranchDest(instPC, inst);
 			else
@@ -1050,7 +1024,7 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 		retAddr = instPC + 4;
 	}
 
-	return (retAddr);
+	return (register_t)retAddr;
 #undef	GetBranchDest
 }
 
@@ -1069,7 +1043,7 @@ cpu_singlestep(p)
 	struct trap_frame *locr0 = p->p_md.md_regs;
 	int error;
 	int bpinstr = BREAK_SSTEP;
-	int curinstr;
+	uint32_t curinstr;
 	struct uio uio;
 	struct iovec iov;
 
@@ -1077,23 +1051,22 @@ cpu_singlestep(p)
 	 * Fetch what's at the current location.
 	 */
 	iov.iov_base = (caddr_t)&curinstr;
-	iov.iov_len = sizeof(int);
+	iov.iov_len = sizeof(uint32_t);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)locr0->pc;
-	uio.uio_resid = sizeof(int);
+	uio.uio_resid = sizeof(uint32_t);
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = curproc;
 	process_domem(curproc, p, &uio, PT_READ_I);
 
 	/* compute next address after current location */
-	if (curinstr != 0) {
-		va = MipsEmulateBranch(locr0, locr0->pc, locr0->fsr, curinstr);
-	}
-	else {
+	if (curinstr != 0)
+		va = (vaddr_t)MipsEmulateBranch(locr0,
+		    locr0->pc, locr0->fsr, curinstr);
+	else
 		va = locr0->pc + 4;
-	}
 	if (p->p_md.md_ss_addr) {
 		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
 			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
