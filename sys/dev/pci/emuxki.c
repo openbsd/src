@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.36 2010/09/12 02:10:52 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.37 2010/09/12 03:17:34 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -537,14 +537,14 @@ emuxki_activate(struct device *self, int act)
  	case DVACT_ACTIVATE:
 		break;
 	case DVACT_QUIESCE:
-		rv = config_activate_children(self, DVACT_QUIESCE);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
 		break;
 	case DVACT_RESUME:
 		emuxki_scinit(sc, 1);
 		ac97_resume(&sc->hostif, sc->codecif);
-		rv = config_activate_children(self, DVACT_RESUME);
+		rv = config_activate_children(self, act);
 		break;
  	case DVACT_DEACTIVATE:
 		break;
