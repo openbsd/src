@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.35 2010/09/10 04:52:05 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.36 2010/09/12 02:10:52 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -77,7 +77,8 @@
 int  emuxki_match(struct device *, void *, void *);
 void emuxki_attach(struct device *, struct device *, void *);
 int  emuxki_detach(struct device *, int);
-int  emuxki_scinit(struct emuxki_softc *sc);
+int  emuxki_activate(struct device *, int);
+int  emuxki_scinit(struct emuxki_softc *sc, int);
 void emuxki_pci_shutdown(struct emuxki_softc *sc);
 
 /* dma mem mgmt */
@@ -91,7 +92,7 @@ struct emuxki_mem *emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
 void emuxki_mem_delete(struct emuxki_mem *mem, int type);
 
 /* Emu10k1 init & shutdown */
-int  emuxki_init(struct emuxki_softc *);
+int  emuxki_init(struct emuxki_softc *, int);
 void emuxki_shutdown(struct emuxki_softc *);
 
 /* Emu10k1 mem mgmt */
@@ -217,7 +218,7 @@ struct cfattach emu_ca = {
         emuxki_match,
         emuxki_attach,
 	emuxki_detach,
-	NULL		  /* config activate */
+	emuxki_activate
 };
 
 struct audio_hw_if emuxki_hw_if = {
@@ -358,7 +359,7 @@ emuxki_pci_shutdown(struct emuxki_softc *sc)
 }
 
 int
-emuxki_scinit(struct emuxki_softc *sc)
+emuxki_scinit(struct emuxki_softc *sc, int resuming)
 {
 	int             err;
 
@@ -370,7 +371,7 @@ emuxki_scinit(struct emuxki_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_INTE,
 		EMU_INTE_SAMPLERATER | EMU_INTE_PCIERRENABLE);
 
-	if ((err = emuxki_init(sc)))
+	if ((err = emuxki_init(sc, resuming)))
 		return (err);
 
 	if (sc->sc_flags & EMUXKI_AUDIGY2) {
@@ -402,8 +403,10 @@ emuxki_scinit(struct emuxki_softc *sc)
 		}
 	}
 
-	/* No multiple voice support for now */
-	sc->pvoice = sc->rvoice = NULL;
+	if (!resuming) {
+		/* No multiple voice support for now */
+		sc->pvoice = sc->rvoice = NULL;
+	}
 
 	return (0);
 }
@@ -493,7 +496,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		 PCI_REVISION(pa->pa_class));
 	strlcpy(sc->sc_audv.config, "emuxki", sizeof sc->sc_audv.config);
 
-	if (emuxki_scinit(sc) ||
+	if (emuxki_scinit(sc, 0) ||
 	    /* APS has no ac97 XXX */
 	    (sc->sc_flags & EMUXKI_APS || emuxki_ac97_init(sc)) ||
 	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, self)) == NULL) {
@@ -524,6 +527,30 @@ emuxki_detach(struct device *self, int flags)
 	return (0);
 }
 
+int
+emuxki_activate(struct device *self, int act)
+{
+	struct emuxki_softc *sc = (struct emuxki_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+ 	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, DVACT_QUIESCE);
+		break;
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		emuxki_scinit(sc, 1);
+		ac97_resume(&sc->hostif, sc->codecif);
+		rv = config_activate_children(self, DVACT_RESUME);
+		break;
+ 	case DVACT_DEACTIVATE:
+		break;
+	}
+	return (rv);
+}
 
 /* Misc stuff relative to emu10k1 */
 
@@ -779,7 +806,7 @@ emuxki_initfx(struct emuxki_softc *sc)
 }
 
 int
-emuxki_init(struct emuxki_softc *sc)
+emuxki_init(struct emuxki_softc *sc, int resuming)
 {
 	u_int16_t       i;
 	u_int32_t       spcs, *ptb;
@@ -884,23 +911,25 @@ emuxki_init(struct emuxki_softc *sc)
 	/* Let's play with sound processor */
 	emuxki_initfx(sc);
 
-	/* Here is our Page Table */
-	if ((sc->ptb = emuxki_dmamem_alloc(sc->sc_dmat,
-	    EMU_MAXPTE * sizeof(u_int32_t),
-	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG,
-	    M_DEVBUF, M_WAITOK)) == NULL)
-		return (ENOMEM);
+	if (!resuming) {
+		/* Here is our Page Table */
+		if ((sc->ptb = emuxki_dmamem_alloc(sc->sc_dmat,
+		    EMU_MAXPTE * sizeof(u_int32_t),
+		    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG,
+		    M_DEVBUF, M_WAITOK)) == NULL)
+			return (ENOMEM);
 
-	/* This is necessary unless you like Metallic noise... */
-	if ((sc->silentpage = emuxki_dmamem_alloc(sc->sc_dmat, EMU_PTESIZE,
-	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG, M_DEVBUF, M_WAITOK))==NULL){
-		emuxki_dmamem_free(sc->ptb, M_DEVBUF);
-		return (ENOMEM);
+		/* This is necessary unless you like Metallic noise... */
+		if ((sc->silentpage = emuxki_dmamem_alloc(sc->sc_dmat, EMU_PTESIZE,
+		    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG, M_DEVBUF, M_WAITOK))==NULL){
+			emuxki_dmamem_free(sc->ptb, M_DEVBUF);
+			return (ENOMEM);
+		}
+
+		/* Zero out the silent page */
+		/* This might not be always true, it might be 128 for 8bit channels */
+		memset(KERNADDR(sc->silentpage), 0, DMASIZE(sc->silentpage));
 	}
-
-	/* Zero out the silent page */
-	/* This might not be always true, it might be 128 for 8bit channels */
-	memset(KERNADDR(sc->silentpage), 0, DMASIZE(sc->silentpage));
 
 	/*
 	 * Set all the PTB Entries to the silent page We shift the physical
@@ -928,8 +957,10 @@ emuxki_init(struct emuxki_softc *sc)
 		sc->channel[i] = NULL;
 	}
 
-	/* Init voices list */
-	LIST_INIT(&(sc->voices));
+	if (!resuming) {
+		/* Init voices list */
+		LIST_INIT(&(sc->voices));
+	}
 
 	/* Timer is stopped */
 	sc->timerstate &= ~EMU_TIMER_STATE_ENABLED;
