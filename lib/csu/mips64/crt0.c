@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2009/12/10 05:46:29 miod Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2010/09/12 12:13:51 kettenis Exp $	*/
 /*	$NetBSD: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -83,7 +83,11 @@ __start()
 	asm("	dla	$28,_gp");
 	asm("	daddiu	%0,$29,32" : "=r" (kfp));
 #else
+#if defined(__GNUC__) && __GNUC__ > 3
+	asm("	daddiu	%0,$29,64" : "=r" (kfp));
+#else
 	asm("	daddiu	%0,$29,80" : "=r" (kfp));
+#endif
 #endif
 	/* just above the saved frame pointer
 	kfp = (struct kframe *) (&param-1);*/
