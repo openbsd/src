@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.116 2010/09/08 13:46:18 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.117 2010/09/12 22:38:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -62,7 +62,7 @@ void		lka_rcpt_action(struct smtpd *, char *, struct path *);
 void		lka_session_destroy(struct smtpd *, struct lkasession *);
 void		lka_expansion_done(struct smtpd *, struct lkasession *);
 void		lka_session_fail(struct smtpd *, struct lkasession *);
-void		lka_queue_append(struct smtpd *, struct lkasession *, int);
+int		lka_queue_append(struct smtpd *, struct lkasession *, int);
 
 u_int32_t lka_id;
 
@@ -376,24 +376,24 @@ lka_expand(char *buf, size_t len, struct path *path, struct path *sender)
 {
 	char *p, *pbuf;
 	struct rule r;
-	size_t ret;
+	size_t ret, lret = 0;
 	struct passwd *pw;
 
 	bzero(r.r_value.path, MAXPATHLEN);
 	pbuf = r.r_value.path;
 
 	ret = 0;
-	for (p = path->rule.r_value.path; *p != '\0'; ++p) {
+	for (p = path->rule.r_value.path; *p != '\0';
+	    ++p, len -= lret, pbuf += lret, ret += lret) {
 		if (p == path->rule.r_value.path && *p == '~') {
 			if (*(p + 1) == '/' || *(p + 1) == '\0') {
 				pw = getpwnam(path->pw_name);
 				if (pw == NULL)
-					continue;
+					return 0;
 
-				ret += strlcat(pbuf, pw->pw_dir, len);
-				if (ret >= len)
-					return ret;
-				pbuf += strlen(pw->pw_dir);
+				lret = strlcat(pbuf, pw->pw_dir, len);
+				if (lret >= len)
+					return 0;
 				continue;
 			}
 
@@ -401,105 +401,81 @@ lka_expand(char *buf, size_t len, struct path *path, struct path *sender)
 				char username[MAXLOGNAME];
 				char *delim;
 
-				ret = strlcpy(username, p + 1,
+				lret = strlcpy(username, p + 1,
 				    sizeof(username));
-				delim = strchr(username, '/');
-				if (delim == NULL && ret >= sizeof(username)) {
-					continue;
-				}
+				if (lret >= sizeof(username))
+					return 0;
 
-				if (delim != NULL) {
-					*delim = '\0';
-				}
+				delim = strchr(username, '/');
+				if (delim == NULL)
+					goto copy;
+				*delim = '\0';
 
 				pw = getpwnam(username);
 				if (pw == NULL)
-					continue;
+					return 0;
 
-				ret += strlcat(pbuf, pw->pw_dir, len);
-				if (ret >= len)
-					return ret;
-				pbuf += strlen(pw->pw_dir);
+				lret = strlcat(pbuf, pw->pw_dir, len);
+				if (lret >= len)
+					return 0;
 				p += strlen(username);
 				continue;
 			}
 		}
-		if (strncmp(p, "%U", 2) == 0) {
-			ret += strlcat(pbuf, sender->user, len);
-			if (ret >= len)
-				return ret;
-			pbuf += strlen (sender->user);
-			++p;
-			continue;
-		}
-		if (strncmp(p,"%D",2) == 0) {
-			ret += strlcat(pbuf, sender->domain, len);
-			if (ret >= len)
-				return ret;
-			pbuf += strlen(sender->domain);
-			++p;
-			continue;
-		}
-		if (strncmp(p, "%a", 2) == 0) {
-			ret += strlcat(pbuf, path->user, len);
-			if (ret >= len)
-				return ret;
-			pbuf += strlen(path->user);
-			++p;
-			continue;
-		}
-		if (strncmp(p, "%u", 2) == 0) {
-			ret += strlcat(pbuf, path->pw_name, len);
-			if (ret >= len)
-				return ret;
-			pbuf += strlen(path->pw_name);
-			++p;
-			continue;
-		}
-		if (strncmp(p, "%d", 2) == 0) {
-			ret += strlcat(pbuf, path->domain, len);
-			if (ret >= len)
-				return ret;
-			pbuf += strlen(path->domain);
-			++p;
-			continue;
-		}
-		if (*p == '%' && isdigit((int)*(p+1)) && *(p+2) == 'a') {
-			size_t idx;
+		if (*p == '%') {
+			char	*string, *tmp = p + 1;
+			int	 digit = 0;
 
-			idx = *(p+1) - '0';
-			if (idx < strlen(path->user))
-				*pbuf++ = path->user[idx];
-			p+=2;
-			++ret;
+			if (isdigit((int)*tmp)) {
+			    digit = 1;
+			    tmp++;
+			}
+			switch (*tmp) {
+			case 'U':
+				string = sender->user;
+				break;
+			case 'D':
+				string = sender->domain;
+				break;
+			case 'a':
+				string = path->user;
+				break;
+			case 'u':
+				string = path->pw_name;
+				break;
+			case 'd':
+				string = path->domain;
+				break;
+			default:
+				goto copy;
+			}
+
+			if (digit == 1) {
+				size_t idx = *(tmp - 1) - '0';
+
+				lret = 1;
+				if (idx < strlen(string))
+					*pbuf++ = string[idx];
+				else { /* fail */
+					return 0;
+				}
+
+				p += 2; /* loop only does ++ */
+				continue;
+			}
+			lret = strlcat(pbuf, string, len);
+			if (lret >= len)
+				return 0;
+			p++;
 			continue;
 		}
-		if (*p == '%' && isdigit((int)*(p+1)) && *(p+2) == 'u') {
-			size_t idx;
-
-			idx = *(p+1) - '0';
-			if (idx < strlen(path->pw_name))
-				*pbuf++ = path->pw_name[idx];
-			p+=2;
-			++ret;
-			continue;
-		}
-		if (*p == '%' && isdigit((int)*(p+1)) && *(p+2) == 'd') {
-			size_t idx;
-
-			idx = *(p+1) - '0';
-			if (idx < strlen(path->domain))
-				*pbuf++ = path->domain[idx];
-			p+=2;
-			++ret;
-			continue;
-		}
-
-		*pbuf++ = *p;
-		++ret;
+copy:
+		lret = 1;
+		*pbuf = *p;
 	}
 
-	memcpy(path->rule.r_value.path, r.r_value.path, ret);
+	/* + 1 to include the NUL byte. */
+	memcpy(path->rule.r_value.path, r.r_value.path, ret + 1);
 
 	return ret;
 }
@@ -665,17 +641,21 @@ lka_expansion_done(struct smtpd *env, struct lkasession *s)
 			log_debug("lka_expansion_done: list empty");
 		else
 			log_debug("lka_expansion_done: session error");
-		status = S_MESSAGE_PERMFAILURE;
-		imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT,
-		    s->message.id, 0, -1, &status, sizeof status);
-		lka_clear_expandtree(&s->expandtree);
-		lka_clear_deliverylist(&s->deliverylist);
-		lka_session_destroy(env, s);
-	} else
-		lka_queue_append(env, s, 0);
+		goto error;
+	} else if (! lka_queue_append(env, s, 0))
+		goto error;
+	return;
+
+error:
+	status = S_MESSAGE_PERMFAILURE;
+	imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT,
+	    s->message.id, 0, -1, &status, sizeof status);
+	lka_clear_expandtree(&s->expandtree);
+	lka_clear_deliverylist(&s->deliverylist);
+	lka_session_destroy(env, s);
 }
 
-void
+int
 lka_queue_append(struct smtpd *env, struct lkasession *s, int status)
 {
 	struct path *path;
@@ -684,21 +664,28 @@ lka_queue_append(struct smtpd *env, struct lkasession *s, int status)
 	const char *errstr;
 	char *sep;
 	uid_t uid;
+	int ret;
 
 	path = TAILQ_FIRST(&s->deliverylist);
-
 	if (path == NULL || status) {
 		imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT,
 		    s->message.id, 0, -1, &status, sizeof status);
 		lka_clear_expandtree(&s->expandtree);
 		lka_clear_deliverylist(&s->deliverylist);
 		lka_session_destroy(env, s);
-		return;
+		return 0;
 	}
 
 	/* send next item to queue */
 	message = s->message;
-	lka_expand(path->rule.r_value.path, sizeof(path->rule.r_value.path), path, &message.sender);
+	log_debug("lka_expand: before: [%s]", path->rule.r_value.path);
+	ret = lka_expand(path->rule.r_value.path, sizeof(path->rule.r_value.path), path, &message.sender);
+	log_debug("lka_expand: after:  [%s]", path->rule.r_value.path);
+	if (! ret) {
+		log_debug("lka_expand: returned failure.");
+		return 0;
+	}
+
 	message.recipient = *path;
 	sep = strchr(message.session_hostname, '@');
 	if (sep) {
@@ -715,6 +702,7 @@ lka_queue_append(struct smtpd *env, struct lkasession *s, int status)
 	    s->id, 0, -1, &message, sizeof message);
 	TAILQ_REMOVE(&s->deliverylist, path, entry);
 	free(path);
+	return 1;
 }
 
 int
