@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.26 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.27 2010/09/12 02:06:54 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -95,18 +95,22 @@ void cmpci_set_mixer_gain(struct cmpci_softc *, int);
 void cmpci_set_out_ports(struct cmpci_softc *);
 int cmpci_set_in_ports(struct cmpci_softc *);
 
+int cmpci_resume(struct cmpci_softc *);
+
 /*
  * autoconf interface
  */
 int cmpci_match(struct device *, void *, void *);
 void cmpci_attach(struct device *, struct device *, void *);
+int cmpci_activate(struct device *, int);
 
 struct cfdriver cmpci_cd = {
 	NULL, "cmpci", DV_DULL
 };
 
 struct cfattach cmpci_ca = {
-	sizeof (struct cmpci_softc), cmpci_match, cmpci_attach
+	sizeof (struct cmpci_softc), cmpci_match, cmpci_attach, NULL,
+	cmpci_activate
 };
 
 /* interrupt */
@@ -513,6 +517,42 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_play_channel = 0;
+}
+
+int
+cmpci_activate(struct device *self, int act)
+{
+	struct cmpci_softc *sc = (struct cmpci_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, DVACT_QUIESCE);
+		break;
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		cmpci_resume(sc);
+		rv = config_activate_children(self, DVACT_RESUME);
+		break;
+	case DVACT_DEACTIVATE:
+		break;
+	}
+	return (rv);
+}
+
+int
+cmpci_resume(struct cmpci_softc *sc)
+{
+	int i;
+
+	cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_RESET, 0);
+	for (i = 0; i < CMPCI_NDEVS; i++)
+		cmpci_set_mixer_gain(sc, i);
+
+	return 0;
 }
 
 int
