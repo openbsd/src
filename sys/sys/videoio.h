@@ -1,4 +1,4 @@
-/*	$OpenBSD: videoio.h,v 1.3 2008/12/17 08:39:01 mglocker Exp $	*/
+/*	$OpenBSD: videoio.h,v 1.4 2010/09/12 22:27:52 jakemsr Exp $	*/
 /*
  *  Video for Linux Two header file
  *
@@ -361,8 +361,6 @@ struct v4l2_fmtdesc {
 
 #define V4L2_FMT_FLAG_COMPRESSED 0x0001
 
-#if 1				/* KEEP */
-/* Experimental Frame Size and frame rate enumeration */
 /*
  *      F R A M E   S I Z E   E N U M E R A T I O N
  */
@@ -394,7 +392,7 @@ struct v4l2_frmsizeenum {
 	union {			/* Frame size */
 		struct v4l2_frmsize_discrete discrete;
 		struct v4l2_frmsize_stepwise stepwise;
-	};
+	} un;
 
 	__u32           reserved[2];	/* Reserved space for future use */
 };
@@ -424,11 +422,10 @@ struct v4l2_frmivalenum {
 	union {			/* Frame interval */
 		struct v4l2_fract discrete;
 		struct v4l2_frmival_stepwise stepwise;
-	};
+	} un;
 
 	__u32           reserved[2];	/* Reserved space for future use */
 };
-#endif
 
 /*
  *      T I M E C O D E
@@ -458,125 +455,6 @@ struct v4l2_timecode {
 #define V4L2_TC_USERBITS_8BITCHARS      0x0008
 /* The above is based on SMPTE timecodes */
 
-#ifdef __KERNEL__
-/*
- *      M P E G   C O M P R E S S I O N   P A R A M E T E R S
- *
- *  ### WARNING: This experimental MPEG compression API is obsolete.
- *  ###          It is replaced by the MPEG controls API.
- *  ###          This old API will disappear in the near future!
- *
- */
-enum v4l2_bitrate_mode {
-	V4L2_BITRATE_NONE = 0,	/* not specified */
-	V4L2_BITRATE_CBR,	/* constant bitrate */
-	V4L2_BITRATE_VBR,	/* variable bitrate */
-};
-struct v4l2_bitrate {
-	/* rates are specified in kbit/sec */
-	enum v4l2_bitrate_mode mode;
-	__u32           min;
-	__u32           target;	/* use this one for CBR */
-	__u32           max;
-};
-
-enum v4l2_mpeg_streamtype {
-	V4L2_MPEG_SS_1,		/* MPEG-1 system stream */
-	V4L2_MPEG_PS_2,		/* MPEG-2 program stream */
-	V4L2_MPEG_TS_2,		/* MPEG-2 transport stream */
-	V4L2_MPEG_PS_DVD,	/* MPEG-2 program stream with DVD header
-				 * fixups */
-};
-enum v4l2_mpeg_audiotype {
-	V4L2_MPEG_AU_2_I,	/* MPEG-2 layer 1 */
-	V4L2_MPEG_AU_2_II,	/* MPEG-2 layer 2 */
-	V4L2_MPEG_AU_2_III,	/* MPEG-2 layer 3 */
-	V4L2_MPEG_AC3,		/* AC3 */
-	V4L2_MPEG_LPCM,		/* LPCM */
-};
-enum v4l2_mpeg_videotype {
-	V4L2_MPEG_VI_1,		/* MPEG-1 */
-	V4L2_MPEG_VI_2,		/* MPEG-2 */
-};
-enum v4l2_mpeg_aspectratio {
-	V4L2_MPEG_ASPECT_SQUARE = 1,	/* square pixel */
-	V4L2_MPEG_ASPECT_4_3 = 2,	/* 4 : 3       */
-	V4L2_MPEG_ASPECT_16_9 = 3,	/* 16 : 9       */
-	V4L2_MPEG_ASPECT_1_221 = 4,	/* 1 : 2,21    */
-};
-
-struct v4l2_mpeg_compression {
-	/* general */
-	enum v4l2_mpeg_streamtype st_type;
-	struct v4l2_bitrate st_bitrate;
-
-	/* transport streams */
-	__u16           ts_pid_pmt;
-	__u16           ts_pid_audio;
-	__u16           ts_pid_video;
-	__u16           ts_pid_pcr;
-
-	/* program stream */
-	__u16           ps_size;
-	__u16           reserved_1;	/* align */
-
-	/* audio */
-	enum v4l2_mpeg_audiotype au_type;
-	struct v4l2_bitrate au_bitrate;
-	__u32           au_sample_rate;
-	__u8            au_pesid;
-	__u8            reserved_2[3];	/* align */
-
-	/* video */
-	enum v4l2_mpeg_videotype vi_type;
-	enum v4l2_mpeg_aspectratio vi_aspect_ratio;
-	struct v4l2_bitrate vi_bitrate;
-	__u32           vi_frame_rate;
-	__u16           vi_frames_per_gop;
-	__u16           vi_bframes_count;
-	__u8            vi_pesid;
-	__u8            reserved_3[3];	/* align */
-
-	/* misc flags */
-	__u32           closed_gops:1;
-	__u32           pulldown:1;
-	__u32           reserved_4:30;	/* align */
-
-	/* I don't expect the above being perfect yet ;) */
-	__u32           reserved_5[8];
-};
-#endif
-
-struct v4l2_jpegcompression {
-	int             quality;
-
-	int             APPn;	/* Number of APP segment to be written, must
-				 * be 0..15 */
-	int             APP_len;/* Length of data in JPEG APPn segment */
-	char            APP_data[60];	/* Data in the JPEG APPn segment. */
-
-	int             COM_len;/* Length of data in JPEG COM segment */
-	char            COM_data[60];	/* Data in JPEG COM segment */
-
-	__u32           jpeg_markers;	/* Which markers should go into the
-					 * JPEG output. Unless you exactly
-					 * know what you do, leave them
-					 * untouched. Inluding less markers
-					 * will make the resulting code
-					 * smaller, but there will be fewer
-					 * aplications which can read it. The
-					 * presence of the APP and COM marker
-					 * is influenced by APP_len and
-					 * COM_len ONLY, not by this
-					 * property! */
-
-#define V4L2_JPEG_MARKER_DHT (1<<3)	/* Define Huffman Tables */
-#define V4L2_JPEG_MARKER_DQT (1<<4)	/* Define Quantization Tables */
-#define V4L2_JPEG_MARKER_DRI (1<<5)	/* Define Restart Interval */
-#define V4L2_JPEG_MARKER_COM (1<<6)	/* Comment segment */
-#define V4L2_JPEG_MARKER_APP (1<<7)	/* App segment, driver will allways
-					 * use APP0 */
-};
 
 /*
  *      M E M O R Y - M A P P I N G   B U F F E R S
@@ -873,7 +751,7 @@ struct v4l2_ext_control {
 		__s32           value;
 		__s64           value64;
 		void           *reserved;
-	};
+	} un;
 }               __attribute__((packed));
 
 struct v4l2_ext_controls {
@@ -1230,54 +1108,6 @@ struct v4l2_audioout {
 	__u32           reserved[2];
 };
 
-/*
- *      M P E G   S E R V I C E S
- *
- *      NOTE: EXPERIMENTAL API
- */
-#if 1				/* KEEP */
-#define V4L2_ENC_IDX_FRAME_I    (0)
-#define V4L2_ENC_IDX_FRAME_P    (1)
-#define V4L2_ENC_IDX_FRAME_B    (2)
-#define V4L2_ENC_IDX_FRAME_MASK (0xf)
-
-struct v4l2_enc_idx_entry {
-	__u64           offset;
-	__u64           pts;
-	__u32           length;
-	__u32           flags;
-	__u32           reserved[2];
-};
-
-#define V4L2_ENC_IDX_ENTRIES (64)
-struct v4l2_enc_idx {
-	__u32           entries;
-	__u32           entries_cap;
-	__u32           reserved[4];
-	struct v4l2_enc_idx_entry entry[V4L2_ENC_IDX_ENTRIES];
-};
-
-
-#define V4L2_ENC_CMD_START      (0)
-#define V4L2_ENC_CMD_STOP       (1)
-#define V4L2_ENC_CMD_PAUSE      (2)
-#define V4L2_ENC_CMD_RESUME     (3)
-
-/* Flags for V4L2_ENC_CMD_STOP */
-#define V4L2_ENC_CMD_STOP_AT_GOP_END    (1 << 0)
-
-struct v4l2_encoder_cmd {
-	__u32           cmd;
-	__u32           flags;
-	union {
-		struct {
-			__u32           data[8];
-		}               raw;
-	};
-};
-
-#endif
-
 
 /*
  *      D A T A   S E R V I C E S   ( V B I )
@@ -1393,36 +1223,6 @@ struct v4l2_streamparm {
 	}               parm;
 };
 
-/*
- *      A D V A N C E D   D E B U G G I N G
- *
- *      NOTE: EXPERIMENTAL API
- */
-
-/* VIDIOC_DBG_G_REGISTER and VIDIOC_DBG_S_REGISTER */
-
-#define V4L2_CHIP_MATCH_HOST       0	/* Match against chip ID on host (0
-					 * for the host) */
-#define V4L2_CHIP_MATCH_I2C_DRIVER 1	/* Match against I2C driver ID */
-#define V4L2_CHIP_MATCH_I2C_ADDR   2	/* Match against I2C 7-bit address */
-
-struct v4l2_register {
-	__u32           match_type;	/* Match type */
-	__u32           match_chip;	/* Match this chip, meaning
-					 * determined by match_type */
-	__u64           reg;
-	__u64           val;
-};
-
-/* VIDIOC_G_CHIP_IDENT */
-struct v4l2_chip_ident {
-	__u32           match_type;	/* Match type */
-	__u32           match_chip;	/* Match this chip, meaning
-					 * determined by match_type */
-	__u32           ident;	/* chip identifier as specified in
-				 * <media/v4l2-chip-ident.h> */
-	__u32           revision;	/* chip revision, chip specific */
-};
 
 /*
  *      I O C T L   C O D E S   F O R   V I D E O   D E V I C E S
@@ -1433,7 +1233,7 @@ struct v4l2_chip_ident {
 #define VIDIOC_ENUM_FMT         _IOWR ('V',  2, struct v4l2_fmtdesc)
 #define VIDIOC_G_FMT            _IOWR ('V',  4, struct v4l2_format)
 #define VIDIOC_S_FMT            _IOWR ('V',  5, struct v4l2_format)
-#ifdef __KERNEL__
+#if 0
 #define VIDIOC_G_MPEGCOMP       _IOR  ('V',  6, struct  v4l2_mpeg_compression)
 #define VIDIOC_S_MPEGCOMP       _IOW  ('V',  7, struct  v4l2_mpeg_compression)
 #endif
@@ -1474,8 +1274,10 @@ struct v4l2_chip_ident {
 #define VIDIOC_CROPCAP          _IOWR ('V', 58, struct v4l2_cropcap)
 #define VIDIOC_G_CROP           _IOWR ('V', 59, struct v4l2_crop)
 #define VIDIOC_S_CROP           _IOW  ('V', 60, struct v4l2_crop)
+#if 0
 #define VIDIOC_G_JPEGCOMP       _IOR  ('V', 61, struct v4l2_jpegcompression)
 #define VIDIOC_S_JPEGCOMP       _IOW  ('V', 62, struct v4l2_jpegcompression)
+#endif
 #define VIDIOC_QUERYSTD         _IOR  ('V', 63, v4l2_std_id)
 #define VIDIOC_TRY_FMT          _IOWR ('V', 64, struct v4l2_format)
 #define VIDIOC_ENUMAUDIO        _IOWR ('V', 65, struct v4l2_audio)
@@ -1487,19 +1289,12 @@ struct v4l2_chip_ident {
 #define VIDIOC_G_EXT_CTRLS      _IOWR ('V', 71, struct v4l2_ext_controls)
 #define VIDIOC_S_EXT_CTRLS      _IOWR ('V', 72, struct v4l2_ext_controls)
 #define VIDIOC_TRY_EXT_CTRLS    _IOWR ('V', 73, struct v4l2_ext_controls)
-#if 1				/* KEEP */
 #define VIDIOC_ENUM_FRAMESIZES  _IOWR ('V', 74, struct v4l2_frmsizeenum)
 #define VIDIOC_ENUM_FRAMEINTERVALS      _IOWR ('V', 75, struct v4l2_frmivalenum)
 #define VIDIOC_G_ENC_INDEX      _IOR  ('V', 76, struct v4l2_enc_idx)
 #define VIDIOC_ENCODER_CMD      _IOWR ('V', 77, struct v4l2_encoder_cmd)
 #define VIDIOC_TRY_ENCODER_CMD  _IOWR ('V', 78, struct v4l2_encoder_cmd)
 
-/* Experimental, only implemented if CONFIG_VIDEO_ADV_DEBUG is defined */
-#define VIDIOC_DBG_S_REGISTER   _IOW  ('V', 79, struct v4l2_register)
-#define VIDIOC_DBG_G_REGISTER   _IOWR ('V', 80, struct v4l2_register)
-
-#define VIDIOC_G_CHIP_IDENT     _IOWR ('V', 81, struct v4l2_chip_ident)
-#endif
 
 #ifdef __OLD_VIDIOC_
 /* for compatibility, will go away some day */

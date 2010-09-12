@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.136 2010/07/26 22:17:13 mk Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.137 2010/09/12 22:27:52 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2764,15 +2764,15 @@ uvideo_enum_fsizes(void *v, struct v4l2_frmsizeenum *fsizes)
 	if (sc->sc_fmtgrp[idx].frame[i]->bFrameIntervalType == 0) {
 		/* TODO */
 		fsizes->type = V4L2_FRMSIZE_TYPE_CONTINUOUS;
-		fsizes->stepwise.min_width = 0;
-		fsizes->stepwise.min_height = 0;
-		fsizes->stepwise.max_width = 0;
-		fsizes->stepwise.max_height = 0;
+		fsizes->un.stepwise.min_width = 0;
+		fsizes->un.stepwise.min_height = 0;
+		fsizes->un.stepwise.max_width = 0;
+		fsizes->un.stepwise.max_height = 0;
 	} else {
 		fsizes->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-		fsizes->discrete.width =
+		fsizes->un.discrete.width =
 		    UGETW(sc->sc_fmtgrp[idx].frame[i]->wWidth);
-		fsizes->discrete.height =
+		fsizes->un.discrete.height =
 		    UGETW(sc->sc_fmtgrp[idx].frame[i]->wHeight);
 	}
 
