@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.26 2010/05/05 11:33:26 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.27 2010/09/13 00:56:55 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -380,14 +380,14 @@ struct page_caching_mode {
 	u_int8_t pg_code;	/* page code (should be 8) */
 	u_int8_t pg_length;	/* page length (should be 0x12) */
 	u_int8_t flags;
-#define PG_CACHE_FL_IC		(1<<0)
-#define PG_CACHE_FL_ABPF	(1<<1)
-#define PG_CACHE_FL_CAP		(1<<2)
-#define PG_CACHE_FL_DISC	(1<<3)
-#define PG_CACHE_FL_SIZE	(1<<4)
-#define PG_CACHE_FL_WCE		(1<<5)
-#define PG_CACHE_FL_MF		(1<<6)
-#define PG_CACHE_FL_RCD		(1<<7)
+#define PG_CACHE_FL_RCD		(1<<0)
+#define PG_CACHE_FL_MF		(1<<1)
+#define PG_CACHE_FL_WCE		(1<<2)
+#define PG_CACHE_FL_SIZE	(1<<3)
+#define PG_CACHE_FL_DISC	(1<<4)
+#define PG_CACHE_FL_CAP		(1<<5)
+#define PG_CACHE_FL_ABPF	(1<<6)
+#define PG_CACHE_FL_IC		(1<<7)
 	u_int8_t priority;
 #define PG_CACHE_PRI_DEMAND(_f)		((_f) & 0x0f)
 #define PG_CACHE_PRI_WRITE(_f)		(((_f) >> 4) & 0x0f)
