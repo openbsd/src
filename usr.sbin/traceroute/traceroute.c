@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.72 2010/07/09 12:27:09 dhill Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.73 2010/09/13 10:09:00 claudio Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -754,7 +754,7 @@ print_exthdr(u_char *buf, int cc)
 		 * idotic corporations.
 		 */
 		off = ICMP_EXT_OFFSET;
-	else if (off < 128)
+	else if (off < ICMP_EXT_OFFSET)
 		/* rfc 4884 requires an offset of at least 128 bytes */
 		return;
 
@@ -805,13 +805,14 @@ print_exthdr(u_char *buf, int cc)
 					olen -= sizeof(u_int32_t);
 					
 					if (first == 0) {
-						printf(" [MPLS: ");
+						printf(" [MPLS Label ");
 						first++;
 					} else
 						printf(", ");
-					printf("Label %d Exp %d",
-						MPLS_LABEL(label), 
-						MPLS_EXP(label));
+					printf("%d", MPLS_LABEL(label));
+					if (MPLS_EXP(label))
+						printf(" (Exp %x)",
+						    MPLS_EXP(label));
 				}
 				if (olen > 0) {
 					printf("|]");
