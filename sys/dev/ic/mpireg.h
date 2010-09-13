@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.39 2010/09/10 01:11:46 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.40 2010/09/13 05:28:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1614,6 +1614,61 @@ struct mpi_cfg_raid_physdisk_path {
 	u_int16_t		flags;
 #define MPI_CFG_RAID_PHYDISK_PATH_INVALID		(1<<0)
 #define MPI_CFG_RAID_PHYDISK_PATH_BROKEN		(1<<1)
+} __packed;
+
+struct mpi_cfg_sas_iou_pg0 {
+	struct mpi_ecfg_hdr	config_header;
+
+	u_int16_t		nvdata_version_default;
+	u_int16_t		nvdata_version_persistent;
+
+	u_int8_t		num_phys;
+	u_int8_t		_reserved1[3];
+
+	/* followed by mpi_cfg_sas_iou_pg0_phy structs */
+} __packed;
+
+struct mpi_cfg_sas_iou_pg0_phy {
+	u_int8_t		port;
+	u_int8_t		port_flags;
+	u_int8_t		phy_flags;
+	u_int8_t		negotiated_link_rate;
+
+	u_int32_t		controller_phy_dev_info;
+
+	u_int16_t		attached_dev_handle;
+	u_int16_t		controller_dev_handle;
+
+	u_int32_t		discovery_status;
+} __packed;
+
+struct mpi_cfg_sas_iou_pg1 {
+	struct mpi_ecfg_hdr	config_header;
+
+	u_int16_t		control_flags;
+	u_int16_t		max_sata_targets;
+
+	u_int16_t		additional_control_flags;
+	u_int16_t		_reserved1;
+
+	u_int8_t		num_phys;
+	u_int8_t		max_sata_q_depth;
+	u_int8_t		report_dev_missing_delay;
+	u_int8_t		io_dev_missing_delay;
+
+	/* followed by mpi_cfg_sas_iou_pg1_phy structs */
+} __packed;
+
+struct mpi_cfg_sas_iou_pg1_phy {
+	u_int8_t		port;
+	u_int8_t		port_flags;
+	u_int8_t		phy_flags;
+	u_int8_t		max_min_link_rate;
+
+	u_int32_t		controller_phy_dev_info;
+
+	u_int16_t		max_target_port_connect_time;
+	u_int16_t		_reserved1;
 } __packed;
 
 #define MPI_CFG_SAS_DEV_ADDR_NEXT		(0<<28)
