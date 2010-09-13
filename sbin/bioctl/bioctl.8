@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.80 2009/12/31 14:00:45 jsing Exp $
+.\"	$OpenBSD: bioctl.8,v 1.81 2010/09/13 18:45:58 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 31 2009 $
+.Dd $Mdocdate: September 13 2010 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -119,7 +119,9 @@ is currently marked
 promote it to being a
 .Dq Hot Spare .
 .It Fl h
-Where necessary, produce "human-readable" output.
+Where necessary, produce
+.Dq human-readable
+output.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
 Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
 digits to four or less.
@@ -223,7 +225,7 @@ This file must be root owned and have 0600 permissions.
 It cannot be used during the initial creation of the crypto volume.
 .It Fl r Ar rounds
 When creating an encrypted volume, specifies the number of iterations of
-the algorithm used to convert a passphrase into a key.
+the PBKDF2 algorithm used to convert a passphrase into a key.
 Higher iteration counts take more time, but offer more resistance to key
 guessing attacks.
 The minimum is 1000 rounds and the default is 8192.
@@ -245,7 +247,7 @@ volume:
 .Ed
 .Pp
 .Nm
-will ask for a passphrase, that will be needed to unlock the encrypted
+will ask for a passphrase, which will be needed to unlock the encrypted
 disk.
 After creating a newly encrypted disk, the first megabyte of it should be
 zeroed, so tools like
@@ -267,6 +269,11 @@ For example:
 .Xr bio 4 ,
 .Xr scsi 4 ,
 .Xr softraid 4
+.Rs
+.%R RFC 2898
+.%T "PKCS #5: Password-Based Cryptography Specification Version 2.0"
+.%D 2000
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -278,4 +285,4 @@ The
 interface was written by
 .An Marco Peereboom Aq marco@openbsd.org .
 .Sh CAVEATS
-Use of the crypto & RAID 4/5 disciplines are currently considered experimental.
+Use of the CRYPTO & RAID 4/5 disciplines are currently considered experimental.
