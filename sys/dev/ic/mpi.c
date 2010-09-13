@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.159 2010/09/13 06:53:21 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.160 2010/09/13 07:11:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2396,7 +2396,7 @@ mpi_eventack(void *cookie, void *io)
 	eaq = ccb->ccb_cmd;
 
 	eaq->function = MPI_FUNCTION_EVENT_ACK;
-	eaq->msg_context = enp->msg_context;
+	eaq->msg_context = htole32(ccb->ccb_id);
 
 	eaq->event = enp->event;
 	eaq->event_context = enp->event_context;
