@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.28 2010/07/07 20:58:25 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.29 2010/09/13 10:02:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -33,6 +33,8 @@
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
 #endif
 
 #ifdef INET6
@@ -53,11 +55,10 @@ extern int	mpls_inkloop;
 #define MPLS_TTL_GET(l)		(ntohl((l) & MPLS_TTL_MASK))
 #endif
 
-extern int	mpls_mapttl_ip;
-extern int	mpls_mapttl_ip6;
-
 int	mpls_ip_adjttl(struct mbuf *, u_int8_t);
 int	mpls_ip6_adjttl(struct mbuf *, u_int8_t);
+
+struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
 
 void
 mpls_init(void)
@@ -124,16 +125,14 @@ mpls_input(struct mbuf *m)
 
 	/* check and decrement TTL */
 	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
-	if (ttl <= 1) {
+	if (ttl-- <= 1) {
 		/* TTL exceeded */
-		/*
-		 * XXX if possible hand packet up to network layer so that an
-		 * ICMP TTL exceeded can be sent back.
-		 */
-		m_freem(m);
-		return;
+		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
+		if (m == NULL)
+			return;
+		shim = mtod(m, struct shim_hdr *);
+		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
 	}
-	ttl--;
 
 	bzero(&sa_mpls, sizeof(sa_mpls));
 	smpls = &sa_mpls;
@@ -341,11 +340,11 @@ done:
 int
 mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 {
-	struct ip	*ip;
-	int		 hlen;
+	struct ip *ip;
+	int hlen;
 
 	if (mpls_mapttl_ip) {
-		if (m->m_len < sizeof (struct ip) &&
+		if (m->m_len < sizeof(struct ip) &&
 		    (m = m_pullup(m, sizeof(struct ip))) == NULL)
 			return -1;
 		ip = mtod(m, struct ip *);
@@ -377,7 +376,7 @@ mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 	struct ip6_hdr *ip6hdr;
 
 	if (mpls_mapttl_ip6) {
-		if (m->m_len < sizeof (struct ip6_hdr) &&
+		if (m->m_len < sizeof(struct ip6_hdr) &&
 		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
 			return -1;
 
@@ -387,4 +386,107 @@ mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 		ip6hdr->ip6_hlim = ttl;
 	}
 	return 0;
+}
+
+struct mbuf *
+mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
+{
+	struct shim_hdr stack[MPLS_INKERNEL_LOOP_MAX];
+	struct sockaddr_mpls sa_mpls;
+	struct sockaddr_mpls *smpls;
+	struct rtentry *rt = NULL;
+	struct shim_hdr *shim;
+	struct in_ifaddr *ia;
+	struct icmp *icp;
+	struct ip *ip;
+	int nstk;
+
+	for (nstk = 0; nstk < MPLS_INKERNEL_LOOP_MAX; nstk++) {
+		if (m->m_len < sizeof(*shim) &&
+		    (m = m_pullup(m, sizeof(*ip))) == NULL)
+			return (NULL);
+		stack[nstk] = *mtod(m, struct shim_hdr *);
+		m_adj(m, sizeof(*shim));
+		if (MPLS_BOS_ISSET(stack[nstk].shim_label))
+			break;
+	}
+	shim = &stack[0];
+
+	switch (*mtod(m, u_char *) >> 4) {
+	case IPVERSION:
+		if (m->m_len < sizeof(*ip) &&
+		    (m = m_pullup(m, sizeof(*ip))) == NULL)
+			return (NULL);
+		m = icmp_do_error(m, type, code, 0, destmtu);
+		if (m == NULL)
+			return (NULL);
+
+		if (icmp_do_exthdr(m, ICMP_EXT_MPLS, 1, stack,
+		    (nstk + 1) * sizeof(*shim)))
+			return (NULL);
+
+		/* set ip_src to something usable, based on the MPLS label */
+		bzero(&sa_mpls, sizeof(sa_mpls));
+		smpls = &sa_mpls;
+		smpls->smpls_family = AF_MPLS;
+		smpls->smpls_len = sizeof(*smpls);
+		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
+
+		rt = rtalloc1(smplstosa(smpls), RT_REPORT, 0);
+		if (rt == NULL) {
+			/* no entry for this label */
+			m_freem(m);
+			return (NULL);
+		}
+		if (rt->rt_ifa->ifa_addr->sa_family == AF_INET)
+			ia = ifatoia(rt->rt_ifa);
+		else {
+			/* XXX this needs fixing, if the MPLS is on an IP
+			 * less interface we need to find some other IP to
+			 * use as source.
+			 */
+			RTFREE(rt);
+			m_freem(m);
+			return (NULL);
+		}
+		rt->rt_use++;
+		RTFREE(rt);
+		if (icmp_reflect(m, NULL, ia))
+			return (NULL);
+
+		ip = mtod(m, struct ip *);
+		/* stuff to fix up which is normaly done in ip_output */
+		ip->ip_v = IPVERSION;
+		ip->ip_id = htons(ip_randomid());
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(m, sizeof(*ip));
+
+		/* stolen from icmp_send() */
+		m->m_data += sizeof(*ip);
+		m->m_len -= sizeof(*ip);
+		icp = mtod(m, struct icmp *);
+		icp->icmp_cksum = 0;
+		icp->icmp_cksum = in_cksum(m, ntohs(ip->ip_len) - sizeof(*ip));
+		m->m_data -= sizeof(*ip);
+		m->m_len += sizeof(*ip);
+
+		break;
+	case IPV6_VERSION >> 4:
+	default:
+		m_freem(m);
+		return (NULL);
+	}
+
+	/* add mpls stack back to new packet */
+	M_PREPEND(m, (nstk + 1) * sizeof(*shim), M_NOWAIT);
+	if (m == NULL)
+		return (NULL);
+	m_copyback(m, 0, (nstk + 1) * sizeof(*shim), stack, M_NOWAIT);
+
+	/* change TTL to default */
+	shim = mtod(m, struct shim_hdr *);
+	shim->shim_label =
+	    (shim->shim_label & ~MPLS_TTL_MASK) | htonl(mpls_defttl);
+
+	return (m);
 }
