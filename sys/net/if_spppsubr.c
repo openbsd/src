@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.81 2010/07/20 15:36:03 matthew Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.82 2010/09/13 08:53:06 claudio Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -408,6 +408,8 @@ HIDE void sppp_phase_network(struct sppp *sp);
 HIDE void sppp_print_bytes(const u_char *p, u_short len);
 HIDE void sppp_print_string(const char *p, u_short len);
 HIDE void sppp_qflush(struct ifqueue *ifq);
+int sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int);
+void sppp_update_gw(struct ifnet *ifp);
 HIDE void sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr,
 			      u_int32_t hisaddr);
 HIDE void sppp_clear_ip_addrs(struct sppp *sp);
@@ -4653,6 +4655,39 @@ sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
 	if (src) *src = ntohl(ssrc);
 }
 
+int
+sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int id)
+{
+	struct ifnet *ifp = arg;
+	struct rtentry *rt = (struct rtentry *)rn;
+
+	if (rt->rt_ifp == ifp) {
+		if (rt->rt_ifa->ifa_dstaddr->sa_family !=
+		    rt->rt_gateway->sa_family ||
+		    (rt->rt_flags & RTF_GATEWAY) == 0)
+			return (0);	/* do not modify non-gateway routes */
+		bcopy(rt->rt_ifa->ifa_dstaddr, rt->rt_gateway,
+		    rt->rt_ifa->ifa_dstaddr->sa_len);
+	}
+	return (0);
+}
+
+void
+sppp_update_gw(struct ifnet *ifp)
+{
+        struct radix_node_head *rnh;
+	u_int tid;
+
+	/* update routing table */
+	for (tid = 0; tid <= RT_TABLEID_MAX; tid++) {
+		if ((rnh = rt_gettable(AF_INET, tid)) != NULL) {
+			while ((*rnh->rnh_walktree)(rnh,
+			    sppp_update_gw_walker, ifp) == EAGAIN)
+				;	/* nothing */
+		}
+	}
+}
+
 /*
  * If an address is 0, leave it the way it is.
  */
@@ -4713,7 +4748,9 @@ sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
+			return;
 		}
+		sppp_update_gw(ifp);
 	}
 }
 
@@ -4760,6 +4797,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 		if (!in_ifinit(ifp, ifatoia(ifa), &new_sin, 0))
 			dohooks(ifp->if_addrhooks, 0);
+		sppp_update_gw(ifp);
 	}
 }
 
