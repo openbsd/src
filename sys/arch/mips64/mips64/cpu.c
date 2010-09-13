@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.34 2010/09/09 10:59:01 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.35 2010/09/13 21:59:07 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -169,6 +169,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf("STC Loongson2%c CPU", 'C' + vers_min);
 		displayver = 0;
 		break;
+	case MIPS_OCTEON:
+		printf("Cavium OCTEON CPU");
+		break;
 	default:
 		printf("Unknown CPU type (0x%x)", ch->type);
 		break;
@@ -178,9 +181,13 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	printf(" %d MHz, ", ch->clock / 1000000);
 
 	displayver = 1;
-	fptype = (ch->c1prid >> 8) & 0xff;
-	vers_maj = (ch->c1prid >> 4) & 0x0f;
-	vers_min = ch->c1prid & 0x0f;
+	if (ch->type == MIPS_OCTEON)
+		fptype = MIPS_SOFT;
+	else {
+		fptype = (ch->c1prid >> 8) & 0xff;
+		vers_maj = (ch->c1prid >> 4) & 0x0f;
+		vers_min = ch->c1prid & 0x0f;
+	}
 	switch (fptype) {
 	case MIPS_SOFT:
 		printf("Software FP emulation");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.61 2010/09/12 18:30:19 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.62 2010/09/13 21:59:07 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -544,6 +544,7 @@ void cpu_startclock(struct cpu_info *);
 #define	MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III	*/
 #define	MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
 #define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
+#define MIPS_OCTEON	0x06	/* Cavium OCTEON		MIPS64R2*/
 #define	MIPS_R3IDT	0x07	/* IDT R3000 derivate		ISA I	*/
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV  */
 #define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
