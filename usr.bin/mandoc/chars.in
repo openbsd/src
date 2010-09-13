@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.11 2010/08/18 02:46:37 schwarze Exp $ */
+/*	$Id: chars.in,v 1.12 2010/09/13 22:04:01 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -322,8 +322,8 @@ CHAR("fi",			"fi",		64257)
 CHAR("fl",			"fl",		64258)
 CHAR("Fi",			"ffi",		64259)
 CHAR("Fl",			"ffl",		64260)
-BOTH("AE",			"AE",		198)
-BOTH("ae",			"ae",		230)
+CHAR("AE",			"AE",		198)
+CHAR("ae",			"ae",		230)
 CHAR("OE",			"OE",		338)
 CHAR("oe",			"oe",		339)
 CHAR("ss",			"ss",		223)
@@ -360,13 +360,6 @@ STRING("^",			"^",		94)
 STRING(",",			",",		44)
 STRING("~",			"~",		126)
 STRING("/",			"/",		47)
-STRING(":",			"\"",		776)
-STRING("8",			"B",		946)
-STRING("o",			"o",		176)
-STRING("D-",			"D",		208)
-STRING("d-",			"o",		240)
-STRING("Th",			"b",		222)
-STRING("th",			"b",		254)
 
 /* Old style. */
 STRING("Am",			"&",		38)

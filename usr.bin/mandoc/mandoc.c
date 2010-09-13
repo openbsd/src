@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.18 2010/08/20 00:53:35 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.19 2010/09/13 22:04:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -51,13 +51,9 @@ mandoc_special(char *p)
 		/* FALLTHROUGH */
 	case ('x'):
 		/* FALLTHROUGH */
-	case ('w'):
-		/* FALLTHROUGH */
 	case ('S'):
 		/* FALLTHROUGH */
 	case ('R'):
-		/* FALLTHROUGH */
-	case ('o'):
 		/* FALLTHROUGH */
 	case ('N'):
 		/* FALLTHROUGH */
@@ -126,6 +122,27 @@ mandoc_special(char *p)
 			p++;
 		} 
 		
+		/* Handle embedded numerical subexp or escape. */
+
+		if ('(' == *p) {
+			while (*p && ')' != *p)
+				if ('\\' == *p++) {
+					i = mandoc_special(--p);
+					if (0 == i)
+						return(0);
+					p += i;
+				}
+
+			if (')' == *p++)
+				break;
+
+			return(0);
+		} else if ('\\' == *p) {
+			if (0 == (i = mandoc_special(p)))
+				return(0);
+			p += i;
+		}
+
 		break;
 #if 0
 	case ('Y'):
@@ -136,9 +153,9 @@ mandoc_special(char *p)
 		/* FALLTHROUGH */
 	case ('n'):
 		/* FALLTHROUGH */
+#endif
 	case ('k'):
 		/* FALLTHROUGH */
-#endif
 	case ('M'):
 		/* FALLTHROUGH */
 	case ('m'):
@@ -167,6 +184,23 @@ mandoc_special(char *p)
 	case ('['):
 		term = ']';
 		break;
+	case ('z'):
+		len = 1;
+		if ('\\' == *p) {
+			if (0 == (i = mandoc_special(p)))
+				return(0);
+			p += i;
+			return(*p ? (int)(p - sv) : 0);
+		}
+		break;
+	case ('o'):
+		/* FALLTHROUGH */
+	case ('w'):
+		if ('\'' == *p++) {
+			term = '\'';
+			break;
+		}
+		/* FALLTHROUGH */
 	default:
 		len = 1;
 		p--;

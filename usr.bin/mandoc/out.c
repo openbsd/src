@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.7 2010/08/18 02:38:40 schwarze Exp $ */
+/*	$Id: out.c,v 1.8 2010/09/13 22:04:01 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -168,6 +168,7 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 	int		 i, j, lim;
 	char		 term, c;
 	const char	*wp;
+	enum roffdeco	 dd;
 
 	*d = DECO_NONE;
 	lim = i = 0;
@@ -215,6 +216,8 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 			break;
 		}
 		break;
+	case ('k'):
+		/* FALLTHROUGH */
 	case ('M'):
 		/* FALLTHROUGH */
 	case ('m'):
@@ -271,7 +274,27 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 				return(i);
 			i++;
 		} 
-		
+
+		/* Handle embedded numerical subexp or escape. */
+
+		if ('(' == wp[i]) {
+			while (wp[i] && ')' != wp[i])
+				if ('\\' == wp[i++]) {
+					/* Handle embedded escape. */
+					*word = &wp[i];
+					i += a2roffdeco(&dd, word, sz);
+				}
+
+			if (')' == wp[i++])
+				break;
+
+			*d = DECO_NONE;
+			return(i - 1);
+		} else if ('\\' == wp[i]) {
+			*word = &wp[++i];
+			i += a2roffdeco(&dd, word, sz);
+		}
+
 		break;
 	case ('['):
 		*d = DECO_SPECIAL;
@@ -280,6 +303,22 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 	case ('c'):
 		*d = DECO_NOSPACE;
 		return(i);
+	case ('z'):
+		*d = DECO_NONE;
+		if ('\\' == wp[i]) {
+			*word = &wp[++i];
+			return(i + a2roffdeco(&dd, word, sz));
+		} else
+			lim = 1;
+		break;
+	case ('o'):
+		/* FALLTHROUGH */
+	case ('w'):
+		if ('\'' == wp[i++]) {
+			term = '\'';
+			break;
+		} 
+		/* FALLTHROUGH */
 	default:
 		*d = DECO_SSPECIAL;
 		i--;

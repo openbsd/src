@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.11 2010/08/20 00:53:35 schwarze Exp $ */
+/*	$Id: roff.c,v 1.12 2010/09/13 22:04:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -128,6 +128,7 @@ static	int		 roff_res(struct roff *,
 				char **, size_t *, int);
 static	void		 roff_setstr(struct roff *,
 				const char *, const char *);
+static	char		*roff_strdup(const char *);
 
 /* See roff_hash_find() */
 
@@ -744,11 +745,13 @@ roff_cond_sub(ROFF_ARGS)
 	l = r->last;
 	roffnode_cleanscope(r);
 
-	if (l != r->last)
+	if (ROFF_MAX == (t = roff_parse(*bufp, &pos))) {
+		if ('\\' == (*bufp)[pos] && '}' == (*bufp)[pos + 1])
+			return(roff_ccond
+				(r, ROFF_ccond, bufp, szp,
+				 ln, pos, pos + 2, offs));
 		return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
-
-	if (ROFF_MAX == (t = roff_parse(*bufp, &pos)))
-		return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
+	}
 
 	/*
 	 * A denied conditional must evaluate its children if and only
@@ -1005,6 +1008,27 @@ roff_nr(ROFF_ARGS)
 }
 
 
+static char *
+roff_strdup(const char *name)
+{
+	char		*namecopy, *sv;
+
+	/* 
+	 * This isn't a nice simple mandoc_strdup() because we must
+	 * handle roff's stupid double-escape rule. 
+	 */
+	sv = namecopy = mandoc_malloc(strlen(name) + 1);
+	while (*name) {
+		if ('\\' == *name && '\\' == *(name + 1))
+			name++;
+		*namecopy++ = *name++;
+	}
+
+	*namecopy = '\0';
+	return(sv);
+}
+
+
 static void
 roff_setstr(struct roff *r, const char *name, const char *string)
 {
@@ -1024,7 +1048,8 @@ roff_setstr(struct roff *r, const char *name, const char *string)
 	} else
 		free(n->string);
 
-	n->string = string ? strdup(string) : NULL;
+	/* Don't use mandoc_strdup: clean out double-escapes. */
+	n->string = string ? roff_strdup(string) : NULL;
 }
 
 
