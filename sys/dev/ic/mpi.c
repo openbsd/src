@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.160 2010/09/13 07:11:47 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.161 2010/09/13 07:48:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -137,9 +137,13 @@ int			mpi_scsi_probe_virtual(struct scsi_link *);
 
 int			mpi_eventnotify(struct mpi_softc *);
 void			mpi_eventnotify_done(struct mpi_ccb *);
+void			mpi_eventnotify_free(struct mpi_softc *,
+			    struct mpi_rcb *);
 void			mpi_eventack(void *, void *);
 void			mpi_eventack_done(struct mpi_ccb *);
-void			mpi_evt_sas(struct mpi_softc *, struct mpi_rcb *);
+int			mpi_evt_sas(struct mpi_softc *, struct mpi_rcb *);
+void			mpi_evt_sas_detach(void *, void *);
+void			mpi_evt_sas_detach_done(struct mpi_ccb *);
 void			mpi_evt_fc_rescan(struct mpi_softc *);
 void			mpi_fc_rescan(void *, void *);
 
@@ -260,8 +264,13 @@ mpi_attach(struct mpi_softc *sc)
 	}
 
 	switch (sc->sc_porttype) {
-	case MPI_PORTFACTS_PORTTYPE_FC:
 	case MPI_PORTFACTS_PORTTYPE_SAS:
+		SIMPLEQ_INIT(&sc->sc_evt_scan_queue);
+		mtx_init(&sc->sc_evt_scan_mtx, IPL_BIO);
+		scsi_ioh_set(&sc->sc_evt_scan_handler, &sc->sc_iopool,
+		    mpi_evt_sas_detach, sc);
+		/* FALLTHROUGH */
+	case MPI_PORTFACTS_PORTTYPE_FC:
 		if (mpi_eventnotify(sc) != 0) {
 			printf("%s: unable to enable events\n", DEVNAME(sc));
 			goto free_replies;
@@ -2240,7 +2249,10 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		if (sc->sc_scsibus == NULL)
 			break;
 
-		mpi_evt_sas(sc, rcb);
+		if (mpi_evt_sas(sc, rcb) != 0) {
+			/* reply is freed later on */
+			return;
+		}
 		break;
 
 	case MPI_EVENT_RESCAN:
@@ -2255,16 +2267,24 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		break;
 	}
 
+	mpi_eventnotify_free(sc, rcb);
+}
+
+void
+mpi_eventnotify_free(struct mpi_softc *sc, struct mpi_rcb *rcb)
+{
+	struct mpi_msg_event_reply		*enp = rcb->rcb_reply;
+
 	if (enp->ack_required) {
 		mtx_enter(&sc->sc_evt_ack_mtx);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_evt_ack_queue, rcb, rcb_link);
 		mtx_leave(&sc->sc_evt_ack_mtx);
 		scsi_ioh_add(&sc->sc_evt_ack_handler);
 	} else
-		mpi_push_reply(sc, ccb->ccb_rcb);
+		mpi_push_reply(sc, rcb);
 }
 
-void
+int
 mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 {
 	struct mpi_evt_sas_change		*ch;
@@ -2275,7 +2295,7 @@ mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 	ch = (struct mpi_evt_sas_change *)data;
 
 	if (ch->bus != 0)
-		return;
+		return (0);
 
 	switch (ch->reason) {
 	case MPI_EVT_SASCH_REASON_ADDED:
@@ -2288,12 +2308,14 @@ mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 
 	case MPI_EVT_SASCH_REASON_NOT_RESPONDING:
 		scsi_activate(sc->sc_scsibus, ch->target, -1, DVACT_DEACTIVATE);
-		if (scsi_req_detach(sc->sc_scsibus, ch->target, -1,
-		    DETACH_FORCE) != 0) {
-			printf("%s: unable to request detach of %d\n",
-			    DEVNAME(sc), ch->target);
-		}
-		break;
+
+		mtx_enter(&sc->sc_evt_scan_mtx);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_evt_scan_queue, rcb, rcb_link);
+		mtx_leave(&sc->sc_evt_scan_mtx);
+		scsi_ioh_add(&sc->sc_evt_scan_handler);
+
+		/* we'll handle event ack later on */
+		return (1);
 
 	case MPI_EVT_SASCH_REASON_SMART_DATA:
 	case MPI_EVT_SASCH_REASON_UNSUPPORTED:
@@ -2304,6 +2326,71 @@ mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 		    "0x%02x\n", DEVNAME(sc), ch->reason);
 		break;
 	}
+
+	return (0);
+}
+
+void
+mpi_evt_sas_detach(void *cookie, void *io)
+{
+	struct mpi_softc			*sc = cookie;
+	struct mpi_ccb				*ccb = io;
+	struct mpi_rcb				*rcb, *next;
+	struct mpi_msg_event_reply		*enp;
+	struct mpi_evt_sas_change		*ch;
+	struct mpi_msg_scsi_task_request	*str;
+
+	DNPRINTF(MPI_D_EVT, "%s: event sas detach handler\n", DEVNAME(sc));
+
+	mtx_enter(&sc->sc_evt_scan_mtx);
+	rcb = SIMPLEQ_FIRST(&sc->sc_evt_scan_queue);
+	if (rcb != NULL) {
+		next = SIMPLEQ_NEXT(rcb, rcb_link);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_evt_scan_queue, rcb_link);
+	}
+	mtx_leave(&sc->sc_evt_scan_mtx);
+
+	if (rcb == NULL) {
+		scsi_io_put(&sc->sc_iopool, ccb);
+		return;
+	}
+
+	enp = rcb->rcb_reply;
+	ch = (struct mpi_evt_sas_change *)(enp + 1);
+
+	ccb->ccb_done = mpi_evt_sas_detach_done;
+	str = ccb->ccb_cmd;
+
+	str->target_id = ch->target;
+	str->bus = 0;
+	str->function = MPI_FUNCTION_SCSI_TASK_MGMT;
+
+	str->task_type = MPI_MSG_SCSI_TASK_TYPE_TARGET_RESET;
+
+	str->msg_context = htole32(ccb->ccb_id);
+
+	mpi_eventnotify_free(sc, rcb);
+
+	mpi_start(sc, ccb);
+
+	if (next != NULL)
+		scsi_ioh_add(&sc->sc_evt_scan_handler);
+}
+
+void
+mpi_evt_sas_detach_done(struct mpi_ccb *ccb)
+{
+	struct mpi_softc			*sc = ccb->ccb_sc;
+	struct mpi_msg_scsi_task_reply		*r = ccb->ccb_rcb->rcb_reply;
+
+	if (scsi_req_detach(sc->sc_scsibus, r->target_id, -1,
+	    DETACH_FORCE) != 0) {
+		printf("%s: unable to request detach of %d\n",
+		    DEVNAME(sc), r->target_id);
+	}
+
+	mpi_push_reply(sc, ccb->ccb_rcb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 }
 
 void

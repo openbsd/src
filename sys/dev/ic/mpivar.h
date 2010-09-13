@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.34 2010/09/13 06:53:43 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.35 2010/09/13 07:48:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -139,6 +139,10 @@ struct mpi_softc {
 	struct mpi_rcb_list	sc_evt_ack_queue;
 	struct mutex		sc_evt_ack_mtx;
 	struct scsi_iohandler	sc_evt_ack_handler;
+
+	struct mpi_rcb_list	sc_evt_scan_queue;
+	struct mutex		sc_evt_scan_mtx;
+	struct scsi_iohandler	sc_evt_scan_handler;
 
 	struct workq_task	sc_evt_rescan;
 	struct mutex		sc_evt_rescan_mtx;
