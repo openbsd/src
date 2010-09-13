@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.91 2010/07/09 15:44:20 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.92 2010/09/13 09:59:32 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -291,7 +291,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 
 	m = icmp_do_error(n, type, code, dest, destmtu);
 	if (m != NULL)
-		icmp_reflect(m);
+		if (!icmp_reflect(m, NULL, NULL))
+			icmp_send(m, NULL);
 }
 
 struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
@@ -315,6 +316,7 @@ icmp_input(struct mbuf *m, ...)
 	int hlen;
 	va_list ap;
 	struct rtentry *rt;
+	struct mbuf *opts;
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
@@ -508,14 +510,14 @@ icmp_input(struct mbuf *m, ...)
 	case ICMP_MASKREQ:
 		if (icmpmaskrepl == 0)
 			break;
-		/*
-		 * We are not able to respond with all ones broadcast
-		 * unless we receive it over a point-to-point interface.
-		 */
 		if (icmplen < ICMP_MASKLEN) {
 			icmpstat.icps_badlen++;
 			break;
 		}
+		/*
+		 * We are not able to respond with all ones broadcast
+		 * unless we receive it over a point-to-point interface.
+		 */
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
 		    ip->ip_dst.s_addr == INADDR_ANY)
 			icmpdst.sin_addr = ip->ip_src;
@@ -548,7 +550,8 @@ reflect:
 
 		icmpstat.icps_reflect++;
 		icmpstat.icps_outhist[icp->icmp_type]++;
-		icmp_reflect(m);
+		if (!icmp_reflect(m, &opts, NULL))
+			icmp_send(m, opts);
 		return;
 
 	case ICMP_REDIRECT:
@@ -637,11 +640,10 @@ freeit:
 /*
  * Reflect the ip packet back to the source
  */
-void
-icmp_reflect(struct mbuf *m)
+int
+icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 {
 	struct ip *ip = mtod(m, struct ip *);
-	struct in_ifaddr *ia;
 	struct in_addr t;
 	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
@@ -649,8 +651,8 @@ icmp_reflect(struct mbuf *m)
 	if (!in_canforward(ip->ip_src) &&
 	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
 	    htonl(IN_LOOPBACKNET << IN_CLASSA_NSHIFT))) {
-		m_freem(m);	/* Bad return address */
-		goto done;	/* ip_output() will check for broadcast */
+		m_freem(m);		/* Bad return address */
+		return (EHOSTUNREACH);
 	}
 
 #if NPF > 0
@@ -663,21 +665,24 @@ icmp_reflect(struct mbuf *m)
 	 * use dst as the src for the reply.  For broadcast, use
 	 * the address which corresponds to the incoming interface.
 	 */
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (ia->ia_ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain))
-			continue;
-		if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
-			break;
-		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-		    t.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
-			break;
+	if (ia == NULL) {
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+			if (ia->ia_ifp->if_rdomain !=
+			    rtable_l2(m->m_pkthdr.rdomain))
+				continue;
+			if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
+				break;
+			if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
+			    t.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
+				break;
+		}
 	}
 	/*
 	 * The following happens if the packet was not addressed to us.
 	 * Use the new source address and do a route lookup. If it fails
 	 * drop the packet as there is no path to the host.
 	 */
-	if (ia == (struct in_ifaddr *)0) {
+	if (ia == NULL) {
 		struct sockaddr_in *dst;
 		struct route ro;
 
@@ -693,7 +698,7 @@ icmp_reflect(struct mbuf *m)
 		if (ro.ro_rt == 0) {
 			ipstat.ips_noroute++;
 			m_freem(m);
-			goto done;
+			return (EHOSTUNREACH);
 		}
 
 		ia = ifatoia(ro.ro_rt->rt_ifa);
@@ -715,12 +720,12 @@ icmp_reflect(struct mbuf *m)
 		 * add on any record-route or timestamp options.
 		 */
 		cp = (u_char *) (ip + 1);
-		if ((opts = ip_srcroute()) == 0 &&
+		if (op && (opts = ip_srcroute()) == 0 &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			opts->m_len = sizeof(struct in_addr);
 			mtod(opts, struct in_addr *)->s_addr = 0;
 		}
-		if (opts) {
+		if (op && opts) {
 #ifdef ICMPPRINTFS
 			if (icmpprintfs)
 				printf("icmp_reflect optlen %d rt %d => ",
@@ -778,10 +783,10 @@ icmp_reflect(struct mbuf *m)
 		    (unsigned)(m->m_len - sizeof(struct ip)));
 	}
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-	icmp_send(m, opts);
-done:
-	if (opts)
-		(void)m_free(opts);
+	if (op)
+		*op = opts;
+
+	return (0);
 }
 
 /*
@@ -1051,4 +1056,66 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 
 		    r->rtt_tableid);
 	}
+}
+
+int
+icmp_do_exthdr(struct mbuf *m, u_int16_t class, u_int8_t ctype, void *buf,
+    size_t len)
+{
+	struct ip *ip = mtod(m, struct ip *);
+	int hlen, off;
+	struct mbuf *n;
+	struct icmp *icp;
+	struct icmp_ext_hdr *ieh;
+	struct {
+		struct icmp_ext_hdr	ieh;
+		struct icmp_ext_obj_hdr	ieo;
+	} hdr;
+
+	hlen = ip->ip_hl << 2;
+	icp = (struct icmp *)(mtod(m, caddr_t) + hlen);
+	if (icp->icmp_type != ICMP_TIMXCEED && icp->icmp_type != ICMP_UNREACH &&
+	    icp->icmp_type != ICMP_PARAMPROB)
+		/* exthdr not supported */
+		return (0);
+	
+	if (icp->icmp_length != 0)
+		/* exthdr already present, giving up */
+		return (0);
+
+	/* the actuall offset starts after the common ICMP header */
+	hlen += ICMP_MINLEN;
+	/* exthdr must start on a word boundary */
+	off = roundup(ntohs(ip->ip_len) - hlen, sizeof(u_int32_t));
+	/* ... and at an offset of ICMP_EXT_OFFSET or bigger */
+	off = max(off, ICMP_EXT_OFFSET);
+	icp->icmp_length = off / sizeof(u_int32_t);
+
+	bzero(&hdr, sizeof(hdr));
+	hdr.ieh.ieh_version = ICMP_EXT_HDR_VERSION;
+	hdr.ieo.ieo_length = htons(sizeof(struct icmp_ext_obj_hdr) + len);
+	hdr.ieo.ieo_cnum = class;
+	hdr.ieo.ieo_ctype = ctype;
+
+	if (m_copyback(m, hlen + off, sizeof(hdr), &hdr, M_NOWAIT) ||
+	    m_copyback(m, hlen + off + sizeof(hdr), len, buf, M_NOWAIT)) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
+
+	/* calculate checksum */
+	n = m_getptr(m, hlen + off, &off);
+	if (n == NULL)
+		panic("icmp_do_exthdr: m_getptr failure");
+	/* this is disgusting, in_cksum() is stupid */
+	n->m_data += off;
+	n->m_len -= off;
+	ieh = mtod(n, struct icmp_ext_hdr *);
+	ieh->ieh_cksum = in_cksum(n, sizeof(hdr) + len);
+	n->m_data -= off;
+	n->m_len += off;
+
+	ip->ip_len = htons(m->m_pkthdr.len);
+
+	return (0);
 }

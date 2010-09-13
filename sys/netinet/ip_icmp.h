@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.23 2010/07/08 20:20:11 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.24 2010/09/13 09:59:32 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -234,11 +234,12 @@ struct mbuf *
 void	icmp_error(struct mbuf *, int, int, n_long, int);
 void	icmp_input(struct mbuf *, ...);
 void	icmp_init(void);
-void	icmp_reflect(struct mbuf *);
+int	icmp_reflect(struct mbuf *, struct mbuf **, struct in_ifaddr *);
 void	icmp_send(struct mbuf *, struct mbuf *);
 int	icmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 struct rtentry *
 	icmp_mtudisc_clone(struct sockaddr *, u_int);
 void	icmp_mtudisc(struct icmp *, u_int);
+int	icmp_do_exthdr(struct mbuf *, u_int16_t, u_int8_t, void *, size_t);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ICMP_H_ */
