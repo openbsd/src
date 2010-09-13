@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.158 2010/09/10 07:00:56 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.159 2010/09/13 06:53:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2187,6 +2187,12 @@ mpi_eventnotify(struct mpi_softc *sc)
 		return (1);
 	}
 
+	sc->sc_evt_ccb = ccb;
+	SIMPLEQ_INIT(&sc->sc_evt_ack_queue);
+	mtx_init(&sc->sc_evt_ack_mtx, IPL_BIO);
+	scsi_ioh_set(&sc->sc_evt_ack_handler, &sc->sc_iopool,
+	    mpi_eventack, sc);
+
 	ccb->ccb_done = mpi_eventnotify_done;
 	enq = ccb->ccb_cmd;
 
@@ -2195,8 +2201,6 @@ mpi_eventnotify(struct mpi_softc *sc)
 	enq->event_switch = MPI_EVENT_SWITCH_ON;
 	enq->msg_context = htole32(ccb->ccb_id);
 
-	sc->sc_evt_ccb = ccb;
-	scsi_ioh_set(&sc->sc_evt_ack, &sc->sc_iopool, mpi_eventack, sc);
 	mpi_start(sc, ccb);
 	return (0);
 }
@@ -2205,7 +2209,8 @@ void
 mpi_eventnotify_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc			*sc = ccb->ccb_sc;
-	struct mpi_msg_event_reply		*enp = ccb->ccb_rcb->rcb_reply;
+	struct mpi_rcb				*rcb = ccb->ccb_rcb;
+	struct mpi_msg_event_reply		*enp = rcb->rcb_reply;
 
 	DNPRINTF(MPI_D_EVT, "%s: mpi_eventnotify_done\n", DEVNAME(sc));
 
@@ -2235,7 +2240,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		if (sc->sc_scsibus == NULL)
 			break;
 
-		mpi_evt_sas(sc, ccb->ccb_rcb);
+		mpi_evt_sas(sc, rcb);
 		break;
 
 	case MPI_EVENT_RESCAN:
@@ -2250,9 +2255,12 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		break;
 	}
 
-	if (enp->ack_required)
-		scsi_ioh_add(&sc->sc_evt_ack);
-	else
+	if (enp->ack_required) {
+		mtx_enter(&sc->sc_evt_ack_mtx);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_evt_ack_queue, rcb, rcb_link);
+		mtx_leave(&sc->sc_evt_ack_mtx);
+		scsi_ioh_add(&sc->sc_evt_ack_handler);
+	} else
 		mpi_push_reply(sc, ccb->ccb_rcb);
 }
 
@@ -2363,23 +2371,41 @@ mpi_eventack(void *cookie, void *io)
 {
 	struct mpi_softc			*sc = cookie;
 	struct mpi_ccb				*ccb = io;
-	struct mpi_ccb				*eccb = sc->sc_evt_ccb;
-	struct mpi_msg_event_reply		*enp = eccb->ccb_rcb->rcb_reply;
+	struct mpi_rcb				*rcb, *next;
+	struct mpi_msg_event_reply		*enp;
 	struct mpi_msg_eventack_request		*eaq;
 
 	DNPRINTF(MPI_D_EVT, "%s: event ack\n", DEVNAME(sc));
+
+	mtx_enter(&sc->sc_evt_ack_mtx);
+	rcb = SIMPLEQ_FIRST(&sc->sc_evt_ack_queue);
+	if (rcb != NULL) {
+		next = SIMPLEQ_NEXT(rcb, rcb_link);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_evt_ack_queue, rcb_link);
+	}
+	mtx_leave(&sc->sc_evt_ack_mtx);
+
+	if (rcb == NULL) {
+		scsi_io_put(&sc->sc_iopool, ccb);
+		return;
+	}
+
+	enp = rcb->rcb_reply;
 
 	ccb->ccb_done = mpi_eventack_done;
 	eaq = ccb->ccb_cmd;
 
 	eaq->function = MPI_FUNCTION_EVENT_ACK;
-	eaq->msg_context = htole32(ccb->ccb_id);
+	eaq->msg_context = enp->msg_context;
 
 	eaq->event = enp->event;
 	eaq->event_context = enp->event_context;
 
-	mpi_push_reply(sc, eccb->ccb_rcb);
+	mpi_push_reply(sc, rcb);
 	mpi_start(sc, ccb);
+
+	if (next != NULL)
+		scsi_ioh_add(&sc->sc_evt_ack_handler);
 }
 
 void

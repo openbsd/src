@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.33 2010/09/10 07:00:56 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.34 2010/09/13 06:53:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -68,10 +68,12 @@ struct mpi_ccb_bundle {
 struct mpi_softc;
 
 struct mpi_rcb {
+	SIMPLEQ_ENTRY(mpi_rcb)	rcb_link;
 	void			*rcb_reply;
 	bus_addr_t		rcb_offset;
 	u_int32_t		rcb_reply_dva;
 };
+SIMPLEQ_HEAD(mpi_rcb_list, mpi_rcb);
 
 struct mpi_ccb {
 	struct mpi_softc	*ccb_sc;
@@ -134,7 +136,9 @@ struct mpi_softc {
 	int			sc_repq;
 
 	struct mpi_ccb		*sc_evt_ccb;
-	struct scsi_iohandler	sc_evt_ack;
+	struct mpi_rcb_list	sc_evt_ack_queue;
+	struct mutex		sc_evt_ack_mtx;
+	struct scsi_iohandler	sc_evt_ack_handler;
 
 	struct workq_task	sc_evt_rescan;
 	struct mutex		sc_evt_rescan_mtx;
