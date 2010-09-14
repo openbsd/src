@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile32.inc,v 1.3 2009/10/31 20:36:14 miod Exp $
+#	$OpenBSD: Makefile32.inc,v 1.4 2010/09/14 08:46:13 miod Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE32_INC
 __INCLUDED_STAND_MAKEFILE32_INC=
@@ -12,7 +12,7 @@ CFLAGS+=	-fno-builtin-memset
 CFLAGS+=	-fno-builtin-strncpy
 CFLAGS+=	-fno-builtin-strncmp
 # Override toolchain options to force 32 bit binaries
-SAABI=		-mabi=32 -mips2 -Wa,-G0
+SAABI=		-mno-abicalls -mabi=32 -mips2 -Wa,-G0
 AS?=		as
 AS+=		-32
 LD?=		ld
