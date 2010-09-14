@@ -12,6 +12,7 @@ SECTIONS
     *(.text)
     *(.rodata)
     *(.rodata1)
+    *(.rodata.str1.4)
     *(.reginfo)
     *(.init)
     *(.stub)
