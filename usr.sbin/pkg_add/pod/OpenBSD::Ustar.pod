@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.15 2010/07/28 12:19:54 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.16 2010/09/14 10:04:36 espie Exp $
 
 =head1 NAME
 
@@ -139,6 +139,10 @@ filename
 
 C<chmod(2)> mode
 
+=item C<$o-E<gt>{atime}>
+
+C<utime(2)> access time
+
 =item C<$o-E<gt>{mtime}>
 
 C<utime(2)> modification time
@@ -165,9 +169,10 @@ name of the source link, if applicable
 
 =back
 
-The fields C<name>, C<mode>, C<mtime>, C<uid>, C<gid> and C<linkname>
+The fields C<name>, C<mode>, C<atime>, C<mtime>, C<uid>, C<gid> and C<linkname>
 can be altered before calling C<$o-E<gt>create> or C<$o-E<gt>write>,
 and will properly influence the resulting file.
+C<atime> and C<mtime> can be undef to set those to the current time.
 
 The relationship between C<uid> and C<uname>, and C<gid> and C<gname>
 conforms to the USTAR format usual behavior.
