@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2009/05/14 18:57:41 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2010/09/14 14:28:05 marco Exp $
 #	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
@@ -14,6 +14,7 @@ CPPFLAGS+=	-I.
 
 CFLAGS+=	-fno-stack-protector -Wall
 CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
+CFLAGS+=	-fno-builtin-exit
 SAABI?=		-mips3 -mno-abicalls -G 0 -fno-pic -fno-common
 AS?=		as
 LD?=		ld
