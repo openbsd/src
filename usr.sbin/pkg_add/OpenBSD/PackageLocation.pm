@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.24 2010/07/31 11:17:22 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.25 2010/09/14 10:02:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -175,6 +175,8 @@ sub grab_info
 	while (my $e = $self->_next) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			$e->{name} = $dir.$e->{name};
+			undef $e->{mtime};
+			undef $e->{atime};
 			eval { $e->create; };
 			if ($@) {
 				unlink($e->{name});

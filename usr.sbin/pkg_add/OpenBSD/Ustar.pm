@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.63 2010/08/23 05:36:20 kili Exp $
+# $OpenBSD: Ustar.pm,v 1.64 2010/09/14 10:02:37 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -161,7 +161,8 @@ sub next
 	my $result= $self->new_object({
 	    name => $name,
 	    mode => $mode,
-	    mtime=> $mtime,
+	    atime => $mtime,
+	    mtime => $mtime,
 	    linkname=> $linkname,
 	    uname => $uname,
 	    uid => $uid,
@@ -401,7 +402,10 @@ sub set_modes
 	my $self = shift;
 	chown $self->{uid}, $self->{gid}, $self->{destdir}.$self->name;
 	chmod $self->{mode}, $self->{destdir}.$self->name;
-	utime time, $self->{mtime}, $self->{destdir}.$self->name;
+	if (defined $self->{mtime} || defined $self->{atime}) {
+		utime $self->{atime} // time, $self->{mtime} // time,
+		    $self->{destdir}.$self->name;
+	}
 }
 
 sub make_basedir
