@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2010/09/12 18:30:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.65 2010/09/14 19:35:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -619,9 +619,9 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			else
 				locr0->pc += 4;
 			break;
-		case 7:	/* gcc divide by zero */
+		case 7:	/* gcc3 divide by zero */
 			i = SIGFPE;
-			typ = FPE_FLTDIV;	/* XXX FPE_INTDIV ? */
+			typ = FPE_INTDIV;
 			/* skip instruction */
 			if (trapframe->cause & CR_BR_DELAY)
 				locr0->pc = MipsEmulateBranch(locr0,
@@ -723,7 +723,16 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			return;
 		} else
 #endif
-		{
+		/*
+		 * GCC 4 uses teq with code 7 to signal divide by
+	 	 * zero at runtime. This is one instruction shorter
+		 * than the BEQ + BREAK combination used by gcc 3.
+		 */
+		if ((instr & 0xfc00003f) == 0x00000034 /* teq */ &&
+		    (instr & 0x001fffc0) == ((ZERO << 16) | (7 << 6))) {
+			i = SIGFPE;
+			typ = FPE_INTDIV;
+		} else {
 			i = SIGEMT;	/* Stuff it with something for now */
 			typ = 0;
 		}
