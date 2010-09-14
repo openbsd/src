@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.194 2010/09/08 11:04:39 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.195 2010/09/14 01:39:44 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -527,7 +527,9 @@ scsi_xsh_del(struct scsi_xshandler *xsh)
 		break;
 	case RUNQ_POOLQ:
 		TAILQ_REMOVE(&link->pool->queue, &xsh->ioh, q_entry);
-		link->openings++;
+		link->pending--;
+		if (ISSET(link->state, SDEV_S_DYING) && link->pending == 0)
+			wakeup_one(&link->pending);
 		break;
 	default:
 		panic("unexpected xsh state %u", xsh->ioh.q_state);
@@ -552,9 +554,10 @@ scsi_xsh_runqueue(struct scsi_link *link)
 		runq = 0;
 
 		mtx_enter(&link->pool->mtx);
-		while (!ISSET(link->state, SDEV_S_DYING) && link->openings &&
+		while (!ISSET(link->state, SDEV_S_DYING) &&
+		    link->pending < link->openings &&
 		    ((ioh = TAILQ_FIRST(&link->queue)) != NULL)) {
-			link->openings--;
+			link->pending++;
 
 			TAILQ_REMOVE(&link->queue, ioh, q_entry);
 			TAILQ_INSERT_TAIL(&link->pool->queue, ioh, q_entry);
@@ -681,11 +684,14 @@ scsi_link_shutdown(struct scsi_link *link)
 		    xsh->link == link) {
 			TAILQ_REMOVE(&iopl->queue, &xsh->ioh, q_entry);
 			xsh->ioh.q_state = RUNQ_IDLE;
-			link->openings++;
+			link->pending--;
 
 			TAILQ_INSERT_TAIL(&sleepers, &xsh->ioh, q_entry);
 		}
 	}
+
+	while (link->pending > 0)
+		msleep(&link->pending, &iopl->mtx, PRIBIO, "pendxs", 0);
 	mtx_leave(&iopl->mtx);
 
 	while ((ioh = TAILQ_FIRST(&sleepers)) != NULL) {
@@ -700,8 +706,8 @@ scsi_link_open(struct scsi_link *link)
 	int open = 0;
 
 	mtx_enter(&link->pool->mtx);
-	if (link->openings) {
-		link->openings--;
+	if (link->pending < link->openings) {
+		link->pending++;
 		open = 1;
 	}
 	mtx_leave(&link->pool->mtx);
@@ -713,7 +719,9 @@ void
 scsi_link_close(struct scsi_link *link)
 {
 	mtx_enter(&link->pool->mtx);
-	link->openings++;
+	link->pending--;
+	if (ISSET(link->state, SDEV_S_DYING) && link->pending == 0)
+		wakeup_one(&link->pending);
 	mtx_leave(&link->pool->mtx);
 
 	scsi_xsh_runqueue(link);
