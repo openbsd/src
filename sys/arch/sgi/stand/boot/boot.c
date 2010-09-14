@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.16 2010/09/14 16:55:10 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.17 2010/09/14 16:57:15 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -148,11 +148,9 @@ dobootopts(int argc, char **argv)
 			SystemPartition = &cp[16];
 	}
 
-	/* If "OSLoadFilename=" is missing, see if any arg was given. */
-	if (bootauto == AUTO_NONE) {
-		if (*argv[1] == '/')
-			OSLoadFilename = argv[1];
-	}
+	/* If "OSLoadOptions=" is missing, see if any arg was given. */
+	if (bootauto == AUTO_NONE && *argv[1] == '/')
+		OSLoadFilename = argv[1];
 
 	if (bootauto == AUTO_MINI) {
 		static char loadpart[64];
