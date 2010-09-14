@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.111 2010/09/14 04:02:43 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.112 2010/09/14 04:49:42 dlg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -912,8 +912,10 @@ ststart(struct scsi_xfer *xs)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ststart\n"));
 
-	if (st->flags & ST_DYING)
+	if (st->flags & ST_DYING) {
+		scsi_xs_put(xs);
 		return;
+	}
 
 	/*
 	 * if the device has been unmounted by the user
