@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.27 2010/07/19 07:54:12 jmc Exp $
+.\"	$OpenBSD: flex.1,v 1.28 2010/09/15 07:03:26 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: July 19 2010 $
+.Dd $Mdocdate: September 15 2010 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -37,16 +37,16 @@
 .Nd fast lexical analyzer generator
 .Sh SYNOPSIS
 .Nm
+.Bk -words
 .Op Fl 78BbcdFfhIiLlnpsTtVvw+?
 .Op Fl C Ns Op Cm aeFfmr
 .Op Fl Fl help
 .Op Fl Fl version
-.Sm off
-.Op Fl o Ar output
-.Op Fl P Ar prefix
-.Op Fl S Ar skeleton
-.Op Ar filename ...
-.Sm on
+.Op Fl o Ns Ar output
+.Op Fl P Ns Ar prefix
+.Op Fl S Ns Ar skeleton
+.Op Ar
+.Ek
 .Sh DESCRIPTION
 .Nm
 is a tool for generating
