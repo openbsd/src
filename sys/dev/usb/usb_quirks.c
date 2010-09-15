@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.60 2010/08/21 17:31:49 jasper Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.61 2010/09/15 17:25:36 jasper Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -133,6 +133,7 @@ const struct usbd_quirk_entry {
 
  { USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220,	ANY,	{ UQ_NO_STRINGS }},
  { USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_DM9601, ANY, { UQ_NO_STRINGS }},
+ { USB_VENDOR_RALINK, USB_PRODUCT_RALINK_RT2573, ANY,	{ UQ_NO_STRINGS }},
 
  /* MS keyboards do weird things */
  { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_WLNOTEBOOK,
