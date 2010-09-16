@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.146 2010/09/12 16:36:20 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.147 2010/09/16 11:56:36 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 12 2010 $
+.Dd $Mdocdate: September 16 2010 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -208,6 +208,9 @@ Flush the filter parameters specified by
 Flush the queue rules.
 .It Fl F Cm rules
 Flush the filter rules.
+Note that this puts the packet filter in a
+.Cm pass all
+state.
 .It Fl F Cm states
 Flush the state table (NAT and filter).
 .It Fl F Cm Sources
@@ -222,7 +225,8 @@ Flush the passive operating system fingerprints.
 Flush all of the above.
 .El
 .It Fl f Ar file
-Load the rules contained in
+Replace the current ruleset with
+the rules contained in
 .Ar file .
 This
 .Ar file
