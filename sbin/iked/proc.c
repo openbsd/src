@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.2 2010/09/16 09:27:35 mikeb Exp $	*/
 /*	$vantronix: proc.c,v 1.11 2010/06/01 16:45:56 jsg Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ proc_shutdown(struct iked_proc *p)
 {
 	struct iked	*env = p->env;
 
-	if (p->id == PROC_CONTROL)
+	if (p->id == PROC_CONTROL && env)
 		control_cleanup(&env->sc_csock);
 
 	log_info("%s exiting", p->title);
@@ -232,11 +232,11 @@ run_proc(struct iked *env, struct iked_proc *p,
 
 	event_init();
 
-	signal_set(&env->sc_evsigint, SIGINT, proc_sig_handler, env);
-	signal_set(&env->sc_evsigterm, SIGTERM, proc_sig_handler, env);
-	signal_set(&env->sc_evsigchld, SIGCHLD, proc_sig_handler, env);
-	signal_set(&env->sc_evsighup, SIGHUP, proc_sig_handler, env);
-	signal_set(&env->sc_evsigpipe, SIGPIPE, proc_sig_handler, env);
+	signal_set(&env->sc_evsigint, SIGINT, proc_sig_handler, p);
+	signal_set(&env->sc_evsigterm, SIGTERM, proc_sig_handler, p);
+	signal_set(&env->sc_evsigchld, SIGCHLD, proc_sig_handler, p);
+	signal_set(&env->sc_evsighup, SIGHUP, proc_sig_handler, p);
+	signal_set(&env->sc_evsigpipe, SIGPIPE, proc_sig_handler, p);
 
 	signal_add(&env->sc_evsigint, NULL);
 	signal_add(&env->sc_evsigterm, NULL);
