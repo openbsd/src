@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.76 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.77 2010/09/17 14:03:09 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1078,6 +1078,8 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	}
 
 out:
+	if (psections)
+		free(psections, M_TEMP);
 	return (error);
 #endif
 }
