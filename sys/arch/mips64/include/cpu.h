@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.62 2010/09/13 21:59:07 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.63 2010/09/17 00:35:51 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ extern vaddr_t uncached_base;
 
 #endif	/* _LOCORE */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 /*
  * Status register.
@@ -352,11 +352,13 @@ extern vaddr_t uncached_base;
 #define	VMTLB_FOUND_WITH_PATCH	2
 #define	VMTLB_PROBE_ERROR	3
 
+#endif	/* _KERNEL || _STANDALONE */
+
 /*
  * Exported definitions unique to mips cpu support.
  */
 
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 #include <sys/device.h>
 #include <sys/lock.h>
@@ -519,8 +521,7 @@ void cpu_startclock(struct cpu_info *);
 
 #define	aston(p)		p->p_md.md_astpending = 1
 
-#endif /* !_LOCORE */
-#endif /* _KERNEL */
+#endif /* _KERNEL && !_LOCORE */
 
 /*
  * CTL_MACHDEP definitions.
@@ -643,5 +644,5 @@ uint32_t disableintr(void);
 uint32_t getsr(void);
 uint32_t setsr(uint32_t);
 
-#endif /* _KERNEL */
+#endif /* _KERNEL && !_LOCORE */
 #endif /* !_MIPS_CPU_H_ */
