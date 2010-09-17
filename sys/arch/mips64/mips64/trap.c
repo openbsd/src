@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.66 2010/09/17 00:25:11 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.67 2010/09/17 00:36:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,6 +64,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/mips_opcode.h>
 #include <machine/regnum.h>
@@ -912,6 +913,7 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 	InstFmt inst;
 	vaddr_t retAddr;
 	int condition;
+	uint cc;
 
 #define	GetBranchDest(InstPtr, inst) \
 	    (InstPtr + 4 + ((short)inst.IType.imm << 2))
@@ -1013,10 +1015,12 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 	case OP_COP1:
 		switch (inst.RType.rs) {
 		case OP_BC:
+			cc = (inst.RType.rt & COPz_BC_CC_MASK) >>
+			    COPz_BC_CC_SHIFT;
 			if ((inst.RType.rt & COPz_BC_TF_MASK) == COPz_BC_TRUE)
-				condition = fsr & FPC_COND_BIT;
+				condition = fsr & FPCSR_CONDVAL(cc);
 			else
-				condition = !(fsr & FPC_COND_BIT);
+				condition = !(fsr & FPCSR_CONDVAL(cc));
 			if (condition)
 				retAddr = GetBranchDest(instPC, inst);
 			else

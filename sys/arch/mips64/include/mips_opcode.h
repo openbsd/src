@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips_opcode.h,v 1.3 2010/09/17 00:25:10 miod Exp $	*/
+/*      $OpenBSD: mips_opcode.h,v 1.4 2010/09/17 00:36:30 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -71,7 +71,7 @@ typedef union {
 	} RType;
 
 	struct {
-		unsigned op: 6;		/* always '0x11' */
+		unsigned op: 6;		/* COP1 */
 		unsigned : 1;		/* always '1' */
 		unsigned fmt: 4;
 		unsigned ft: 5;
@@ -79,6 +79,16 @@ typedef union {
 		unsigned fd: 5;
 		unsigned func: 6;
 	} FRType;
+
+	struct {
+		unsigned op: 6;		/* COP1X */
+		unsigned fr: 5;
+		unsigned ft: 5;
+		unsigned fs: 5;
+		unsigned fd: 5;
+		unsigned op4: 3;
+		unsigned fmt3: 3;
+	} FQType;
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
 	struct {
@@ -109,8 +119,18 @@ typedef union {
 		unsigned ft: 5;
 		unsigned fmt: 4;
 		unsigned : 1;		/* always '1' */
-		unsigned op: 6;		/* always '0x11' */
+		unsigned op: 6;		/* COP1 */
 	} FRType;
+
+	struct {
+		unsigned fmt3: 3;
+		unsigned op4: 3;
+		unsigned fd: 5;
+		unsigned fs: 5;
+		unsigned ft: 5;
+		unsigned fr: 5;
+		unsigned op: 6;		/* COP1X */
+	} FQType;
 #endif
 } InstFmt;
 
@@ -139,6 +159,7 @@ typedef union {
 #define OP_COP1		021
 #define OP_COP2		022
 #define OP_COP3		023
+#define OP_COP1X	023
 #define	OP_BEQL		024
 #define	OP_BNEL		025
 #define	OP_BLEZL	026
@@ -156,8 +177,6 @@ typedef union {
 #define OP_LBU		044
 #define OP_LHU		045
 #define OP_LWR		046
-#define	OP_LHU		045
-#define	OP_LWR		046
 #define	OP_LWU		047
 
 #define OP_SB		050
@@ -173,7 +192,10 @@ typedef union {
 #define OP_LWC1		061
 #define OP_LWC2		062
 #define OP_LWC3		063
+#define OP_PREF		063
 #define	OP_LLD		064
+#define	OP_LDC1		065
+#define	OP_LDC2		066
 #define	OP_LD		067
 
 #define OP_SC		070
@@ -181,12 +203,15 @@ typedef union {
 #define OP_SWC2		072
 #define OP_SWC3		073
 #define	OP_SCD		074
+#define OP_SDC1		075
+#define OP_SDC2		076
 #define	OP_SD		077
 
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL.
  */
 #define OP_SLL		000
+#define	OP_MOVCI	001
 #define OP_SRL		002
 #define OP_SRA		003
 #define OP_SLLV		004
@@ -195,6 +220,8 @@ typedef union {
 
 #define OP_JR		010
 #define OP_JALR		011
+#define	OP_MOVZ		012
+#define	OP_MOVN		013
 #define OP_SYSCALL	014
 #define OP_BREAK	015
 #define	OP_SYNC		017
@@ -215,7 +242,6 @@ typedef union {
 #define	OP_DMULTU	035
 #define	OP_DDIV		036
 #define	OP_DDIVU	037
-
 
 #define OP_ADD		040
 #define OP_ADDU		041
@@ -263,30 +289,48 @@ typedef union {
 #define	OP_TNEI		016
 
 #define OP_BLTZAL	020
-#define	OP_BLTZAL	020
 #define OP_BGEZAL	021
 #define OP_BLTZALL	022
 #define	OP_BGEZALL	023
+
+/*
+ * Values for the 'func' field when 'op' == OP_COP1X.
+ */
+#define	OP_LWXC1	000
+#define	OP_LDXC1	001
+#define	OP_SWXC1	010
+#define	OP_SDXC1	011
+#define	OP_PREFX	017
+
+/*
+ * Values for the 'op4' field when 'op' == OP_COP1X.
+ */
+#define	OP_MADD		04
+#define	OP_MSUB		05
+#define	OP_NMADD	06
+#define	OP_NMSUB	07
 
 /*
  * Values for the 'rs' field when 'op' == OP_COPz.
  */
 #define OP_MF		000
 #define	OP_DMF		001
+#define OP_CF		002
 #define OP_MT		004
 #define	OP_DMT		005
-#define OP_BC		010
-#define OP_CF		002
 #define OP_CT		006
+#define OP_BC		010
 
 /*
  * Values for the 'rt' field when 'op' == OP_COPz.
  */
-#define COPz_BC_TF_MASK	0x01
-#define COPz_BC_TRUE	0x01
-#define COPz_BC_FALSE	0x00
+#define COPz_BC_TF_MASK		0x01
+#define COPz_BC_TRUE		0x01
+#define COPz_BC_FALSE		0x00
 #define COPz_BCL_TF_MASK	0x02
-#define COPz_BCL_TRUE	0x02
-#define COPz_BCL_FALSE	0x00
+#define COPz_BCL_TRUE		0x02
+#define COPz_BCL_FALSE		0x00
+#define	COPz_BC_CC_MASK		0x1c
+#define	COPz_BC_CC_SHIFT	2
 
 #endif /* !_MIPS_MIPS_OPCODE_H_ */
