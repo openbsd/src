@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.19 2010/04/06 19:09:50 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.20 2010/09/17 00:04:30 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -251,10 +251,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		 */
 		if (bootcpu_hwinfo.clock == 0) {
 			bootcpu_hwinfo.c0prid = cpucomp->cpu_prid;
-			if (ip35)
-				bootcpu_hwinfo.c1prid = cpucomp->cpu_prid;
-			else
-				bootcpu_hwinfo.c1prid = cpucomp->cpu_fpirr;
+			bootcpu_hwinfo.c1prid = cpucomp->cpu_prid; /* XXX */
 			bootcpu_hwinfo.clock = cpucomp->cpu_speed * 1000000;
 			bootcpu_hwinfo.tlbsize = 64;
 			bootcpu_hwinfo.type = (cpucomp->cpu_prid >> 8) & 0xff;
