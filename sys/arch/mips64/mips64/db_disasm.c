@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 2010/09/17 00:25:11 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.11 2010/09/17 00:30:09 miod Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.10 2010/09/17 00:25:11 miod Exp $
+ *      $Id: db_disasm.c,v 1.11 2010/09/17 00:30:09 miod Exp $
  */
 
 #include <sys/param.h>
@@ -264,10 +264,10 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 
 	case OP_COP0:
 		switch (i.RType.rs) {
-		case OP_BCx:
-		case OP_BCy:
-			db_printf("bc0%c\t",
-				"ft"[i.RType.rt & COPz_BC_TF_MASK]);
+		case OP_BC:
+			db_printf("bc0%c%c\t",
+				"ft"[i.RType.rt & COPz_BC_TF_MASK],
+				i.RType.rt & COPz_BCL_TF_MASK ? 'l' : ' ');
 			goto pr_displ;
 
 		case OP_MT:
