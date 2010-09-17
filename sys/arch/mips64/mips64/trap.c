@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2010/09/14 19:35:13 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2010/09/17 00:25:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1012,8 +1012,7 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 
 	case OP_COP1:
 		switch (inst.RType.rs) {
-		case OP_BCx:
-		case OP_BCy:
+		case OP_BC:
 			if ((inst.RType.rt & COPz_BC_TF_MASK) == COPz_BC_TRUE)
 				condition = fsr & FPC_COND_BIT;
 			else
@@ -1270,8 +1269,7 @@ loop:
 		case OP_COP2:
 		case OP_COP3:
 			switch (i.RType.rs) {
-			case OP_BCx:
-			case OP_BCy:
+			case OP_BC:
 				more = 2; /* stop after next instruction */
 			};
 			break;

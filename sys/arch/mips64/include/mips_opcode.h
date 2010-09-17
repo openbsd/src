@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips_opcode.h,v 1.2 2005/08/07 07:29:44 miod Exp $	*/
+/*      $OpenBSD: mips_opcode.h,v 1.3 2010/09/17 00:25:10 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -275,8 +275,7 @@ typedef union {
 #define	OP_DMF		001
 #define OP_MT		004
 #define	OP_DMT		005
-#define OP_BCx		010
-#define OP_BCy		014
+#define OP_BC		010
 #define OP_CF		002
 #define OP_CT		006
 
