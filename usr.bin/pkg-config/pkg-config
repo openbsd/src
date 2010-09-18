@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.24 2009/06/21 21:30:46 ckuethe Exp $
+# $OpenBSD: pkg-config,v 1.25 2010/09/18 09:27:51 sthen Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -39,7 +39,7 @@ my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
-my $version = 0.21; # pretend to be this version of pkgconfig
+my $version = 0.22; # pretend to be this version of pkgconfig
 
 my %configs = ();
 my %mode = ();
