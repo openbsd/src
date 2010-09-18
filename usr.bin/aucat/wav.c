@@ -699,6 +699,7 @@ wav_new_in(struct fileops *ops,
 #endif
 		close(fd);
 		dev_unref(dev);
+		return NULL;
 	}
 	f->dev = dev;
 	if (hdr == HDR_WAV) {
@@ -787,6 +788,7 @@ wav_new_out(struct fileops *ops,
 #endif
 		close(fd);
 		dev_unref(dev);
+		return NULL;
 	}
 	f->dev = dev;
 	if (hdr == HDR_WAV) {
