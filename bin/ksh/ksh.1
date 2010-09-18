@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.136 2010/07/15 20:04:35 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.137 2010/09/18 19:25:05 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: July 15 2010 $
+.Dd $Mdocdate: September 18 2010 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -13,9 +13,12 @@
 .Bk -words
 .Op Fl +abCefhiklmnpruvXx
 .Op Fl +o Ar option
-.Oo Fl c Ar string \*(Ba Fl s \*(Ba
-.Ar \ file\ \&
-.Op Ar argument ... Oc
+.Oo
+.Fl c Ar string \*(Ba
+.Fl s \*(Ba
+.Ar file
+.Op Ar argument ...
+.Oc
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -948,7 +951,7 @@ and VAR is set to
 the substitution for $VAR results in four fields:
 .Sq A ,
 .Sq B ,
-.Sq
+\(oq\(cq
 (an empty field),
 and
 .Sq D .
@@ -965,13 +968,13 @@ Using the previous example, the substitution for $VAR:E
 results in the fields:
 .Sq A ,
 .Sq B ,
-.Sq ,
+\(oq\(cq,
 and
 .Sq D:E ,
 not
 .Sq A ,
 .Sq B ,
-.Sq ,
+\(oq\(cq,
 .Sq D ,
 and
 .Sq E .
@@ -1912,7 +1915,7 @@ specified patterns.
 Example: The pattern
 .Ic *(foo|bar)
 matches the strings
-.Dq ,
+\(lq\(rq,
 .Dq foo ,
 .Dq bar ,
 .Dq foobarfoo ,
@@ -1937,7 +1940,7 @@ patterns.
 Example: The pattern
 .Ic ?(foo|bar)
 only matches the strings
-.Dq ,
+\(lq\(rq,
 .Dq foo ,
 and
 .Dq bar .
@@ -1975,9 +1978,9 @@ currently never matches
 and
 .Sq .. ,
 but the original
-.Xr ksh ,
+.Nm ksh ,
 Bourne
-.Xr sh ,
+.Nm sh ,
 and bash do, so this may have to change (too bad).
 .Pp
 Note that none of the above pattern elements match either a period
@@ -3110,8 +3113,10 @@ A command that exits with a non-zero status.
 .Pp
 .It Xo
 .Ic fc
-.Oo Fl e Ar editor \*(Ba
-.Fl l Op Fl n Oc
+.Oo
+.Fl e Ar editor \*(Ba
+.Fl l Op Fl n
+.Oc
 .Op Fl r
 .Op Ar first Op Ar last
 .Xc
@@ -3367,8 +3372,10 @@ for further information.
 .Pp
 .It Xo
 .Ic print
-.Oo Fl nprsu Ns Oo Ar n Oc \*(Ba
-.Fl R Op Fl en Oc
+.Oo
+.Fl nprsu Ns Oo Ar n Oc \*(Ba
+.Fl R Op Fl en
+.Oc
 .Op Ar argument ...
 .Xc
 .Ic print
@@ -4134,15 +4141,19 @@ A command that exits with a zero value.
 .Pp
 .It Xo
 .Ic typeset
-.Oo Op Ic +-lprtUux
+.Oo
+.Op Ic +-lprtUux
 .Op Fl L Ns Op Ar n
 .Op Fl R Ns Op Ar n
 .Op Fl Z Ns Op Ar n
 .Op Fl i Ns Op Ar n
-.No \*(Ba Fl f Op Fl tux Oc
-.Oo Ar name
+.No \*(Ba Fl f Op Fl tux
+.Oc
+.Oo
+.Ar name
 .Op Ns = Ns Ar value
-.Ar ... Oc
+.Ar ...
+.Oc
 .Xc
 Display or set parameter attributes.
 With no
