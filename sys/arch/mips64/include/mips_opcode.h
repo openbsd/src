@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips_opcode.h,v 1.4 2010/09/17 00:36:30 miod Exp $	*/
+/*      $OpenBSD: mips_opcode.h,v 1.5 2010/09/19 23:34:33 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #ifndef _MIPS_MIPS_OPCODE_H_
-#define _MIPS_MIPS_OPCODE_H_
+#define	_MIPS_MIPS_OPCODE_H_
 
 /*
  * Define the instruction formats and opcode values for the
@@ -137,29 +137,29 @@ typedef union {
 /*
  * Values for the 'op' field.
  */
-#define OP_SPECIAL	000
-#define OP_BCOND	001
-#define OP_J		002
+#define	OP_SPECIAL	000
+#define	OP_BCOND	001
+#define	OP_J		002
 #define	OP_JAL		003
-#define OP_BEQ		004
-#define OP_BNE		005
-#define OP_BLEZ		006
-#define OP_BGTZ		007
+#define	OP_BEQ		004
+#define	OP_BNE		005
+#define	OP_BLEZ		006
+#define	OP_BGTZ		007
 
-#define OP_ADDI		010
-#define OP_ADDIU	011
-#define OP_SLTI		012
-#define OP_SLTIU	013
-#define OP_ANDI		014
-#define OP_ORI		015
-#define OP_XORI		016
-#define OP_LUI		017
+#define	OP_ADDI		010
+#define	OP_ADDIU	011
+#define	OP_SLTI		012
+#define	OP_SLTIU	013
+#define	OP_ANDI		014
+#define	OP_ORI		015
+#define	OP_XORI		016
+#define	OP_LUI		017
 
-#define OP_COP0		020
-#define OP_COP1		021
-#define OP_COP2		022
-#define OP_COP3		023
-#define OP_COP1X	023
+#define	OP_COP0		020
+#define	OP_COP1		021
+#define	OP_COP2		022
+#define	OP_COP3		023
+#define	OP_COP1X	023
 #define	OP_BEQL		024
 #define	OP_BNEL		025
 #define	OP_BLEZL	026
@@ -172,88 +172,88 @@ typedef union {
 
 #define	OP_LB		040
 #define	OP_LH		041
-#define OP_LWL		042
-#define OP_LW		043
-#define OP_LBU		044
-#define OP_LHU		045
-#define OP_LWR		046
+#define	OP_LWL		042
+#define	OP_LW		043
+#define	OP_LBU		044
+#define	OP_LHU		045
+#define	OP_LWR		046
 #define	OP_LWU		047
 
-#define OP_SB		050
-#define OP_SH		051
-#define OP_SWL		052
-#define OP_SW		053
+#define	OP_SB		050
+#define	OP_SH		051
+#define	OP_SWL		052
+#define	OP_SW		053
 #define	OP_SDL		054
 #define	OP_SDR		055
-#define OP_SWR		056
+#define	OP_SWR		056
 #define	OP_CACHE	057
 
-#define OP_LL		060
-#define OP_LWC1		061
-#define OP_LWC2		062
-#define OP_LWC3		063
-#define OP_PREF		063
+#define	OP_LL		060
+#define	OP_LWC1		061
+#define	OP_LWC2		062
+#define	OP_LWC3		063
+#define	OP_PREF		063
 #define	OP_LLD		064
 #define	OP_LDC1		065
 #define	OP_LDC2		066
 #define	OP_LD		067
 
-#define OP_SC		070
-#define OP_SWC1		071
-#define OP_SWC2		072
-#define OP_SWC3		073
+#define	OP_SC		070
+#define	OP_SWC1		071
+#define	OP_SWC2		072
+#define	OP_SWC3		073
 #define	OP_SCD		074
-#define OP_SDC1		075
-#define OP_SDC2		076
+#define	OP_SDC1		075
+#define	OP_SDC2		076
 #define	OP_SD		077
 
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL.
  */
-#define OP_SLL		000
+#define	OP_SLL		000
 #define	OP_MOVCI	001
-#define OP_SRL		002
-#define OP_SRA		003
-#define OP_SLLV		004
-#define OP_SRLV		006
-#define OP_SRAV		007
+#define	OP_SRL		002
+#define	OP_SRA		003
+#define	OP_SLLV		004
+#define	OP_SRLV		006
+#define	OP_SRAV		007
 
-#define OP_JR		010
-#define OP_JALR		011
+#define	OP_JR		010
+#define	OP_JALR		011
 #define	OP_MOVZ		012
 #define	OP_MOVN		013
-#define OP_SYSCALL	014
-#define OP_BREAK	015
+#define	OP_SYSCALL	014
+#define	OP_BREAK	015
 #define	OP_SYNC		017
 
-#define OP_MFHI		020
-#define OP_MTHI		021
-#define OP_MFLO		022
-#define OP_MTLO		023
+#define	OP_MFHI		020
+#define	OP_MTHI		021
+#define	OP_MFLO		022
+#define	OP_MTLO		023
 #define	OP_DSLLV	024
 #define	OP_DSRLV	026
 #define	OP_DSRAV	027
 
-#define OP_MULT		030
-#define OP_MULTU	031
-#define OP_DIV		032
-#define OP_DIVU		033
+#define	OP_MULT		030
+#define	OP_MULTU	031
+#define	OP_DIV		032
+#define	OP_DIVU		033
 #define	OP_DMULT	034
 #define	OP_DMULTU	035
 #define	OP_DDIV		036
 #define	OP_DDIVU	037
 
-#define OP_ADD		040
-#define OP_ADDU		041
-#define OP_SUB		042
-#define OP_SUBU		043
-#define OP_AND		044
-#define OP_OR		045
-#define OP_XOR		046
-#define OP_NOR		047
+#define	OP_ADD		040
+#define	OP_ADDU		041
+#define	OP_SUB		042
+#define	OP_SUBU		043
+#define	OP_AND		044
+#define	OP_OR		045
+#define	OP_XOR		046
+#define	OP_NOR		047
 
-#define OP_SLT		052
-#define OP_SLTU		053
+#define	OP_SLT		052
+#define	OP_SLTU		053
 #define	OP_DADD		054
 #define	OP_DADDU	055
 #define	OP_DSUB		056
@@ -276,8 +276,8 @@ typedef union {
 /*
  * Values for the 'func' field when 'op' == OP_BCOND.
  */
-#define OP_BLTZ		000
-#define OP_BGEZ		001
+#define	OP_BLTZ		000
+#define	OP_BGEZ		001
 #define	OP_BLTZL	002
 #define	OP_BGEZL	003
 
@@ -288,10 +288,36 @@ typedef union {
 #define	OP_TEQI		014
 #define	OP_TNEI		016
 
-#define OP_BLTZAL	020
-#define OP_BGEZAL	021
-#define OP_BLTZALL	022
+#define	OP_BLTZAL	020
+#define	OP_BGEZAL	021
+#define	OP_BLTZALL	022
 #define	OP_BGEZALL	023
+
+/*
+ * Values for the 'rs' field when 'op' == OP_COPz.
+ */
+#define	OP_MF		000
+#define	OP_DMF		001
+#define	OP_CF		002
+#define	OP_MFH		003
+#define	OP_MT		004
+#define	OP_DMT		005
+#define	OP_CT		006
+#define	OP_MTH		007
+#define	OP_BC		010
+#define	OP_C0MISC	020	/* cop0 only */
+
+/*
+ * Values for the 'rt' field when 'op' == OP_COPz.
+ */
+#define	COPz_BC_TF_MASK		0x01
+#define	COPz_BC_TRUE		0x01
+#define	COPz_BC_FALSE		0x00
+#define	COPz_BCL_TF_MASK	0x02
+#define	COPz_BCL_TRUE		0x02
+#define	COPz_BCL_FALSE		0x00
+#define	COPz_BC_CC_MASK		0x1c
+#define	COPz_BC_CC_SHIFT	2
 
 /*
  * Values for the 'func' field when 'op' == OP_COP1X.
@@ -309,28 +335,5 @@ typedef union {
 #define	OP_MSUB		05
 #define	OP_NMADD	06
 #define	OP_NMSUB	07
-
-/*
- * Values for the 'rs' field when 'op' == OP_COPz.
- */
-#define OP_MF		000
-#define	OP_DMF		001
-#define OP_CF		002
-#define OP_MT		004
-#define	OP_DMT		005
-#define OP_CT		006
-#define OP_BC		010
-
-/*
- * Values for the 'rt' field when 'op' == OP_COPz.
- */
-#define COPz_BC_TF_MASK		0x01
-#define COPz_BC_TRUE		0x01
-#define COPz_BC_FALSE		0x00
-#define COPz_BCL_TF_MASK	0x02
-#define COPz_BCL_TRUE		0x02
-#define COPz_BCL_FALSE		0x00
-#define	COPz_BC_CC_MASK		0x1c
-#define	COPz_BC_CC_SHIFT	2
 
 #endif /* !_MIPS_MIPS_OPCODE_H_ */
