@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.56 2010/08/03 16:39:33 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.57 2010/09/19 11:29:27 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -8482,13 +8482,13 @@ em_get_phy_cfg_done(struct em_hw *hw)
 		msec_delay_irq(10);
 		break;
 	case em_80003es2lan:
+	case em_82575:
 		/* Separate *_CFG_DONE_* bit for each port */
 		if (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)
 			cfg_mask = E1000_EEPROM_CFG_DONE_PORT_1;
 		/* FALLTHROUGH */
 	case em_82571:
 	case em_82572:
-	case em_82575:
 		while (timeout) {
 			if (E1000_READ_REG(hw, EEMNGCTL) & cfg_mask)
 				break;
@@ -8499,7 +8499,6 @@ em_get_phy_cfg_done(struct em_hw *hw)
 		if (!timeout) {
 			DEBUGOUT("MNG configuration cycle has not completed."
 			    "\n");
-			return -E1000_ERR_RESET;
 		}
 		break;
 	}
