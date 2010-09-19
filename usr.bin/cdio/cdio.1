@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.56 2010/07/26 21:14:39 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.57 2010/09/19 21:30:04 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 26 2010 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -154,8 +154,10 @@ If we're at the last track, stop.
 Stop playing.
 Do not stop the disc.
 .It Xo Ic play
-.Oo Ar track1 Ns Op Ar .index1
-.Op Ar track2 Ns Op Ar .index2 Oc
+.Oo
+.Ar track1 Ns Op Ar .index1
+.Op Ar track2 Ns Op Ar .index2
+.Oc
 .Xc
 Play from
 .Ar track1
@@ -165,12 +167,14 @@ an optional index point can be specified for each track.
 If only one track is specified, play from that track to the end of the disc.
 If no tracks are specified, play the whole disc.
 .It Xo Ic play
-.Oo Op Ar tr1
+.Oo
+.Op Ar tr1
 .Ar m1 : Ns Ar s1 Ns Oo
 .Ar .f1 Oc
 .Op Ar tr2
 .Oo Ar m2 : Ns Ar s2 Ns
-.Op Ar .f2 Oc Oc
+.Op Ar .f2
+.Oc Oc
 .Xc
 Play from the absolute address
 (MSF) defined by

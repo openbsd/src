@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.24 2010/01/02 19:48:56 schwarze Exp $
+.\"	$OpenBSD: dc.1,v 1.25 2010/09/19 21:30:04 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)dc.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 2 2010 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt DC 1
 .Os
 .Sh NAME
@@ -304,7 +304,7 @@ The length of a number is its number of digits, not counting the minus sign
 and decimal point.
 .It Ic z
 The stack level is pushed onto the stack.
-.It Cm [ Ns ... Ns Cm ]
+.It Cm \&[ Ns ... Ns Cm \&]
 Puts the bracketed
 .Tn ASCII
 string onto the top of the stack.
@@ -364,12 +364,12 @@ command.
 .It Ic \&?
 A line of input is taken from the input source (usually the terminal)
 and executed.
-.It Ic : Ns Ar r
+.It Ic \&: Ns Ar r
 Pop two values from the stack.
 The second value on the stack is stored into the array
 .Ar r
 indexed by the top of stack.
-.It Ic ; Ns Ar r
+.It Ic \&; Ns Ar r
 Pop a value from the stack.
 The value is used as an index into register
 .Ar r .

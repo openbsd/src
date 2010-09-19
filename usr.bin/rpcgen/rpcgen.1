@@ -1,8 +1,8 @@
-.\" $OpenBSD: rpcgen.1,v 1.13 2007/11/17 11:50:00 jmc Exp $
+.\" $OpenBSD: rpcgen.1,v 1.14 2010/09/19 21:30:05 jmc Exp $
 .\" $NetBSD: rpcgen.1,v 1.5.2.1 1995/12/05 02:51:02 jtc Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt RPCGEN 1
 .Os
 .Sh NAME
@@ -16,17 +16,17 @@
 .Op Fl i Ar lines
 .Ar infile
 .Nm rpcgen
-.Fl c Li |
-.Fl h Li |
-.Fl l Li |
-.Fl m Li |
-.Fl t Li |
-.Fl S\&c Li |
-.Fl S\&s Li |
+.Fl c |
+.Fl h |
+.Fl l |
+.Fl m |
+.Fl t |
+.Fl S\&c |
+.Fl S\&s |
 .Op Fl o Ar outfile
 .Op Ar infile
 .Nm rpcgen
-.Fl c Li |
+.Fl c |
 .Ar nettype
 .Op Fl o Ar outfile
 .Op Ar infile
@@ -91,7 +91,7 @@ it backgrounds itself by default.
 A special define symbol
 .Dv RPC_SVC_FG
 can be used to run the server process in the foreground.
-.P
+.Pp
 The second synopsis provides special features which allow
 for the creation of more sophisticated
 .Tn RPC
