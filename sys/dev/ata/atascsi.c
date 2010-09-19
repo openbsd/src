@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.91 2010/09/02 11:54:44 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.92 2010/09/19 12:08:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -514,6 +514,11 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 {
 	struct scsi_inquiry	*inq = (struct scsi_inquiry *)xs->cmd;
 
+	if (xs->cmdlen != sizeof(*inq)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
 	if (ISSET(inq->flags, SI_EVPD)) {
 		switch (inq->pagecode) {
 		case SI_PG_SUPPORTED:
@@ -745,6 +750,11 @@ atascsi_disk_sync(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_xfer		*xa = xs->io;
 
+	if (xs->cmdlen != sizeof(struct scsi_synchronize_cache)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
 	xa->datalen = 0;
 	xa->flags = ATA_F_READ;
 	xa->complete = atascsi_disk_sync_done;
@@ -863,6 +873,11 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 	struct scsi_read_cap_data rcd;
 	u_int64_t		capacity;
 
+	if (xs->cmdlen != sizeof(struct scsi_read_capacity)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
 	bzero(&rcd, sizeof(rcd));
 	capacity = ata_identify_blocks(&ap->ap_identify);
 	if (capacity > 0xffffffff)
@@ -885,6 +900,11 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 	struct scsi_read_cap_data_16 rcd;
 	u_int			align;
 	u_int16_t		lowest_aligned = 0;
+
+	if (xs->cmdlen != sizeof(struct scsi_read_capacity_16)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
 
 	bzero(&rcd, sizeof(rcd));
 
@@ -952,6 +972,11 @@ atascsi_passthru_12(struct scsi_xfer *xs)
 	struct scsi_ata_passthru_12 *cdb;
 	struct ata_fis_h2d	*fis;
 
+	if (xs->cmdlen != sizeof(*cdb)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
 	cdb = (struct scsi_ata_passthru_12 *)xs->cmd;
 	/* validate cdb */
 
@@ -981,6 +1006,11 @@ atascsi_passthru_16(struct scsi_xfer *xs)
 	struct ata_xfer		*xa = xs->io;
 	struct scsi_ata_passthru_16 *cdb;
 	struct ata_fis_h2d	*fis;
+
+	if (xs->cmdlen != sizeof(*cdb)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
 
 	cdb = (struct scsi_ata_passthru_16 *)xs->cmd;
 	/* validate cdb */
@@ -1058,6 +1088,11 @@ atascsi_disk_start_stop(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_xfer		*xa = xs->io;
 	struct scsi_start_stop	*ss = (struct scsi_start_stop *)xs->cmd;
+
+	if (xs->cmdlen != sizeof(*ss)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
 
 	if (ss->how != SSS_STOP) {
 		atascsi_done(xs, XS_NOERROR);
