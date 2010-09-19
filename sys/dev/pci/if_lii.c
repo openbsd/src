@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.29 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.30 2010/09/19 00:15:41 sthen Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -710,8 +710,8 @@ lii_init(struct ifnet *ifp)
 	val = LII_READ_4(sc, LII_MACC) & MACC_FDX;
 
 	val |= MACC_RX_EN | MACC_TX_EN | MACC_MACLP_CLK_PHY |
-	    MACC_TX_FLOW_EN | MACC_RX_FLOW_EN |
-	    MACC_ADD_CRC | MACC_PAD | MACC_BCAST_EN;
+	    MACC_TX_FLOW_EN | MACC_RX_FLOW_EN | MACC_ADD_CRC |
+	    MACC_PAD;
 
 	val |= 7 << MACC_PREAMBLE_LEN_SHIFT;
 	val |= 2 << MACC_HDX_LEFT_BUF_SHIFT;
@@ -1135,8 +1135,13 @@ lii_iff(struct lii_softc *sc)
 	uint32_t crc, val;
 
 	val = LII_READ_4(sc, LII_MACC);
-	val &= ~(MACC_ALLMULTI_EN | MACC_PROMISC_EN);
+	val &= ~(MACC_ALLMULTI_EN | MACC_BCAST_EN | MACC_PROMISC_EN);
 	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	/*
+	 * Always accept broadcast frames.
+	 */
+	val |= MACC_BCAST_EN;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
