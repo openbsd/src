@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrace.8,v 1.16 2010/03/26 19:30:40 jmc Exp $
+.\"	$OpenBSD: mtrace.8,v 1.17 2010/09/19 21:59:23 jmc Exp $
 .\"	$NetBSD: mtrace.8,v 1.4 1995/12/10 10:57:11 mycroft Exp $
 .\"
 .\" Copyright (c) 1993, 1998-2001.
@@ -66,7 +66,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt MTRACE 8
 .Os
 .Sh NAME
@@ -240,7 +240,7 @@ problems.
 .Ss Finding the Last-Hop Router
 The trace query must be sent to the multicast router which is the
 last hop on the path from the
-.Ae source
+.Ar source
 to the
 .Ar receiver .
 If the
@@ -330,9 +330,9 @@ The output of
 is in two sections.
 The first section is a short listing of the hops in the order they are
 queried, that is, in the reverse of the order from the
-.Ae source
+.Ar source
 to the
-.Ae receiver .
+.Ar receiver .
 For each hop, a line is printed showing the hop number (counted
 negatively to indicate that this is the reverse path); the multicast
 routing protocol (DVMRP, MOSPF, PIM, etc.); the threshold required to

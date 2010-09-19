@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.36 2010/03/26 19:30:40 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.37 2010/09/19 21:59:23 jmc Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -1079,8 +1079,7 @@ Typically, when using the
 .Cm login
 option, the secret in
 .Pa /etc/ppp/pap-secrets
-would be
-.Qq ,
+would be \(dq\(dq,
 which will match any password supplied by the peer.
 This avoids the need to have the same secret in two places.
 .Pp
