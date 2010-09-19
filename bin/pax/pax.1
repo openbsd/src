@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.60 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: pax.1,v 1.61 2010/09/19 20:55:25 jmc Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -669,9 +669,9 @@ time falling within the specified time range.
 The range has the format:
 .Sm off
 .Bd -filled -offset indent
-.Oo Ar from_date Oc Oo ,
-.Ar to_date Oc Oo /
-.Oo Cm c Oc Op Cm m Oc
+.Op Ar from_date
+.Op \&, Ar to_date
+.Op / Oo Cm c Oc Op Cm m
 .Ed
 .Sm on
 .Pp
@@ -702,7 +702,7 @@ is in the
 or
 .Em copy
 mode, the optional trailing field
-.Oo Cm c Oc Op Cm m
+.Oo Cm c Oc Ns Op Cm m
 can be used to determine which file time (inode change, file modification or
 both) are used in the comparison.
 If neither is specified, the default is to use file modification time only.
