@@ -1,4 +1,4 @@
-.\" $OpenBSD: btsco.4,v 1.2 2008/11/25 16:18:30 jmc Exp $
+.\" $OpenBSD: btsco.4,v 1.3 2010/09/19 12:49:37 jmc Exp $
 .\" $NetBSD: btsco.4,v 1.9 2006/10/04 19:29:25 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 25 2008 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt BTSCO 4
 .Os
 .Sh NAME
@@ -51,7 +51,6 @@ btdevctl program.
 The following properties are used by
 .Nm
 during autoconfiguration:
-.Pp
 .Bl -tag -width Ds
 .It local-bdaddr
 Local device address.
@@ -91,7 +90,7 @@ an application setting up a control channel prior to use, via the
 call on the mixer device, which returns a
 .Ar btsco_info
 structure as follows:
-.Bd -literal -offset
+.Bd -literal -offset 3n
 #include <dev/bluetooth/btsco.h>
 
 struct btsco_info {
