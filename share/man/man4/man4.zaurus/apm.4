@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.11 2007/11/29 11:35:35 jmc Exp $
+.\"	$OpenBSD: apm.4,v 1.12 2010/09/19 12:32:10 jmc Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: November 29 2007 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt APM 4 zaurus
 .Os
 .Sh NAME
@@ -21,12 +21,9 @@
 The
 .Nm
 driver provides an interface which simulates the Advanced Power Management
-.Pq Tn APM
-.Tn BIOS
-functions.
-The
-.Tn BIOS
-functions are translated into the appropriate Power Manager requests.
+.Pq APM
+BIOS functions.
+The BIOS functions are translated into the appropriate Power Manager requests.
 Currently only battery level, AC connection, and charging status is available
 from the
 .Nm
@@ -127,9 +124,7 @@ value is 0.
 .It Dv APM_IOC_NEXTEVENT
 .Em NOT YET SUPPORTED on zaurus
 .Pq Li "struct apm_event_info"
-The
-.Tn APM
-driver stores up to
+The APM driver stores up to
 .Dv APM_NEVENTS
 events.
 This was defined as 16 at the time this documentation was written.
@@ -170,8 +165,7 @@ is one of:
 .Em NOT YET SUPPORTED on zaurus
 .Pq Li "struct apm_ctl"
 Allows an application to directly set the
-.Tm APM
-operating mode.
+APM operating mode.
 The argument structure is as follows:
 .Bd -literal -offset indent
 struct apm_ctl {
@@ -187,7 +181,7 @@ indicates the device, typically
 .Va mode
 indicates the desired operating mode.
 Possible values are
-.Bl -tag -compact -offset indent
+.Bl -tag -width Ds -compact -offset indent
 .It Dv APM_SYS_READY
 .It Dv APM_SYS_STANDBY
 .It Dv APM_SYS_SUSPEND
@@ -199,8 +193,7 @@ Possible values are
 .Pq Li "int"
 This
 .Xr ioctl 2
-controls message output by the
-.Tn APM
+controls message output by the APM
 driver when a power change event is detected.
 The integer parameter is one of:
 .Bl -tag -width Ds
