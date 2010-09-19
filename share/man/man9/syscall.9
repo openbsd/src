@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.9,v 1.7 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: syscall.9,v 1.8 2010/09/19 13:17:25 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt SYSCALL 9
 .Os
 .Sh NAME
@@ -200,7 +200,7 @@ should be included in the kernel configuration file (see
 This allows tracing for calls, returns, and arguments for both
 implemented and non-implemented system calls.
 A global integer variable
-.Dr scdebug
+.Dq scdebug
 contains a mask for the desired logging events:
 .Pp
 .Bl -tag -width SCDEBUG_SHOWARGS__ -compact
