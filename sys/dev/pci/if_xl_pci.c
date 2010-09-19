@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.33 2010/09/04 19:38:16 kettenis Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.34 2010/09/19 09:22:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -101,8 +101,8 @@ struct xl_pci_softc {
 };
 
 struct cfattach xl_pci_ca = {
-	sizeof(struct xl_pci_softc), xl_pci_match, xl_pci_attach, xl_pci_detach,
-	xl_activate
+	sizeof(struct xl_pci_softc), xl_pci_match, xl_pci_attach,
+	xl_pci_detach, xl_activate
 };
 
 const struct pci_matchid xl_pci_devices[] = {
