@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.40 2007/08/03 08:09:37 hshoexer Exp $
+.\" $OpenBSD: keynote.3,v 1.41 2010/09/19 22:22:13 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: August 3 2007 $
+.Dd $Mdocdate: September 19 2010 $
 .Dt KEYNOTE 3
 .\" .TH KeyNote 3 local
 .Os
@@ -865,6 +865,9 @@ is returned.
 .It Pa keynote.h
 .It Pa libkeynote.a
 .El
+.Sh DIAGNOSTICS
+The return values of all the functions have been given along with the
+function description above.
 .Sh SEE ALSO
 .Xr keynote 1 ,
 .Xr keynote 4 ,
@@ -897,9 +900,6 @@ is returned.
 .An Angelos D. Keromytis Aq angelos@cs.columbia.edu
 .Sh WEB PAGE
 .Pa http://www1.cs.columbia.edu/~angelos/keynote.html
-.Sh DIAGNOSTICS
-The return values of all the functions have been given along with the
-function description above.
 .Sh BUGS
 None that we know of.
 If you find any, please report them to
