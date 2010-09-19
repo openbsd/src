@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.4 2010/05/17 21:59:45 nicm Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.5 2010/09/19 22:46:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -66,6 +66,7 @@ struct aibs_softc {
 
 int	aibs_match(struct device *, void *, void *);
 void	aibs_attach(struct device *, struct device *, void *);
+int	aibs_notify(struct aml_node *, int, void *);
 void	aibs_refresh(void *);
 
 void	aibs_attach_sif(struct aibs_softc *, enum sensor_type);
@@ -117,12 +118,10 @@ aibs_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (sensor_task_register(sc, aibs_refresh, 5) == NULL) {
-		printf("%s: unable to register update task\n", DEVNAME(sc));
-		return;
-	}
-
 	sensordev_install(&sc->sc_sensordev);
+
+	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
+	    aibs_notify, sc, ACPIDEV_POLL);
 }
 
 void
@@ -376,4 +375,16 @@ aibs_refresh_r(struct aibs_softc *sc, enum sensor_type st)
 	}
 
 	return;
+}
+
+int
+aibs_notify(struct aml_node *node, int notify_type, void *arg)
+{
+	struct aibs_softc *sc = arg;
+
+	if (notify_type == 0x00) {
+		/* Poll sensors */
+		aibs_refresh(sc);
+	}
+	return (0);
 }
