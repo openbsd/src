@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.92 2010/09/19 12:08:27 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.93 2010/09/19 23:13:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -47,6 +47,7 @@ struct atascsi {
 	struct scsibus_softc	*as_scsibus;
 
 	int			as_capability;
+	int			as_ncqdepth;
 };
 
 struct atascsi_port {
@@ -56,8 +57,7 @@ struct atascsi_port {
 	int			ap_port;
 	int			ap_type;
 	int			ap_features;
-#define ATA_PORT_F_PROBED	1
-	int			ap_ncqdepth;
+#define ATA_PORT_F_NCQ			0x1
 };
 
 void		atascsi_cmd(struct scsi_xfer *);
@@ -127,6 +127,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_cookie = aaa->aaa_cookie;
 	as->as_methods = aaa->aaa_methods;
 	as->as_capability = aaa->aaa_capability;
+	as->as_ncqdepth = aaa->aaa_ncmds;
 
 	/* copy from template and modify for ourselves */
 	as->as_switch = atascsi_switch;
@@ -139,9 +140,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_link.adapter_buswidth = aaa->aaa_nports;
 	as->as_link.luns = 1; /* XXX port multiplier as luns */
 	as->as_link.adapter_target = aaa->aaa_nports;
-	as->as_link.openings = aaa->aaa_ncmds;
-	if (as->as_capability & ASAA_CAP_NEEDS_RESERVED)
-		as->as_link.openings--;
+	as->as_link.openings = 1;
 
 	as->as_ports = malloc(sizeof(struct atascsi_port *) * aaa->aaa_nports,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
@@ -190,7 +189,7 @@ atascsi_probe(struct scsi_link *link)
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa;
 	struct ata_identify	*identify;
-	int			port, type;
+	int			port, type, qdepth;
 	int			rv;
 	u_int16_t		cmdset;
 
@@ -251,6 +250,33 @@ atascsi_probe(struct scsi_link *link)
 
 	if (type != ATA_PORT_T_DISK)
 		return (0);
+
+	if (as->as_capability & ASAA_CAP_NCQ &&
+	    (letoh16(ap->ap_identify.satacap) & (1 << 8))) {
+		qdepth = (letoh16(ap->ap_identify.qdepth) & 0x1f) + 1;
+		qdepth = MIN(qdepth, as->as_ncqdepth);
+		if (ISSET(as->as_capability, ASAA_CAP_NEEDS_RESERVED))
+			qdepth--;
+
+		if (qdepth > 1) {
+			SET(ap->ap_features, ATA_PORT_F_NCQ);
+
+			/* Raise the number of openings */
+			link->openings = qdepth;
+
+			/*
+			 * XXX throw away any xfers that have tag numbers
+			 * higher than what the device supports.
+			 */
+			while (qdepth--) {
+				xa = scsi_io_get(&ap->ap_iopool, SCSI_NOSLEEP);
+				if (xa->tag < link->openings) {
+					xa->state = ATA_S_COMPLETE;
+					scsi_io_put(&ap->ap_iopool, xa);
+				}
+			}
+		}
+	}
 
 	cmdset = letoh16(ap->ap_identify.cmdset82);
 
@@ -442,7 +468,8 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	fis->lba_mid = (lba >> 8) & 0xff;
 	fis->lba_high = (lba >> 16) & 0xff;
 
-	if (ap->ap_ncqdepth && !(xs->flags & SCSI_POLL)) {
+	if (ISSET(ap->ap_features, ATA_PORT_F_NCQ) &&
+	    !(xs->flags & SCSI_POLL)) {
 		/* Use NCQ */
 		xa->flags |= ATA_F_NCQ;
 		fis->command = (xa->flags & ATA_F_WRITE) ?
@@ -551,7 +578,6 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	struct scsi_link        *link = xs->sc_link;
 	struct atascsi          *as = link->adapter_softc;
 	struct atascsi_port	*ap = as->as_ports[link->target];
-	struct ata_xfer		*xa;
 
 	bzero(&inq, sizeof(inq));
 
@@ -568,41 +594,6 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 
 	atascsi_done(xs, XS_NOERROR);
-
-	if (ap->ap_features & ATA_PORT_F_PROBED)
-		return;
-
-	ap->ap_features = ATA_PORT_F_PROBED;
-
-	if (as->as_capability & ASAA_CAP_NCQ &&
-	    (letoh16(ap->ap_identify.satacap) & (1 << 8))) {
-		int host_ncqdepth;
-		/*
-		 * At this point, openings should be the number of commands the
-		 * host controller supports, less any reserved slot the host
-		 * controller needs for recovery.
-		 */
-		host_ncqdepth = link->openings +
-		    ((as->as_capability & ASAA_CAP_NEEDS_RESERVED) ? 1 : 0);
-
-		ap->ap_ncqdepth = (letoh16(ap->ap_identify.qdepth) & 0x1f) + 1;
-
-		/* Limit the number of openings to what the device supports. */
-		if (host_ncqdepth > ap->ap_ncqdepth)
-			link->openings -= (host_ncqdepth - ap->ap_ncqdepth);
-
-		/*
-		 * XXX throw away any xfers that have tag numbers higher than
-		 * what the device supports.
-		 */
-		while (host_ncqdepth--) {
-			xa = scsi_io_get(&ap->ap_iopool, SCSI_NOSLEEP);
-			if (xa->tag < ap->ap_ncqdepth) {
-				xa->state = ATA_S_COMPLETE;
-				scsi_io_put(&ap->ap_iopool, xa);
-			}
-		}
-	}
 }
 
 void
