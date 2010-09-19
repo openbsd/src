@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.45 2010/08/03 16:39:34 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.46 2010/09/19 13:10:21 yasuoka Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -538,6 +538,7 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82576_SERDES        0x10E7
 #define E1000_DEV_ID_82576_QUAD_COPPER   0x10E8
 #define E1000_DEV_ID_82576_NS            0x150A
+#define E1000_DEV_ID_82583V              0x150C
 #define E1000_DEV_ID_82576_NS_SERDES     0x1518
 #define E1000_DEV_ID_82576_SERDES_QUAD   0x150D
 #define E1000_DEV_ID_82580_COPPER        0x150E

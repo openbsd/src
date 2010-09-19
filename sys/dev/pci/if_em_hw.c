@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.57 2010/09/19 11:29:27 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.58 2010/09/19 13:10:21 yasuoka Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -480,6 +480,7 @@ em_set_mac_type(struct em_hw *hw)
 		break;
 	case E1000_DEV_ID_82574L:
 	case E1000_DEV_ID_82574LA:
+	case E1000_DEV_ID_82583V:
 		hw->mac_type = em_82574;
 		break;
 	case E1000_DEV_ID_82575EB_PT:
