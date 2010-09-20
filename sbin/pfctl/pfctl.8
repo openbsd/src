@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.149 2010/09/19 22:33:44 schwarze Exp $
+.\" $OpenBSD: pfctl.8,v 1.150 2010/09/20 19:25:20 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: September 20 2010 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -40,7 +40,8 @@
 .Op Fl f Ar file
 .Op Fl i Ar interface
 .Op Fl K Ar host | network
-.Oo Fl k
+.Oo
+.Fl k
 .Ar host | network | label | id
 .Oc
 .Op Fl L Ar statefile
@@ -48,9 +49,11 @@
 .Op Fl p Ar device
 .Op Fl S Ar statefile
 .Op Fl s Ar modifier
-.Oo Fl t Ar table
+.Oo
+.Fl t Ar table
 .Fl T Ar command
-.Pq Ar address ... Oc
+.Op Ar address ...
+.Oc
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
