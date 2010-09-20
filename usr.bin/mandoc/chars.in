@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.12 2010/09/13 22:04:01 schwarze Exp $ */
+/*	$Id: chars.in,v 1.13 2010/09/20 20:43:38 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -348,19 +348,6 @@ CHAR("Po",			"L",		163)
 CHAR("Cs",			"x",		164)
 CHAR("Fn",			"f",		402)
 
-/* pod2man holdovers. */
-STRING("--",			"--",		8212)
-STRING("PI",			"pi",		960)
-STRING("L\"",			"``",		8220)
-STRING("R\"",			"\'\'",		8221)
-STRING("C`",			"`",		8216)
-STRING("C\'",			"\'",		8217)
-STRING("Aq",			"\'",		39)
-STRING("^",			"^",		94)
-STRING(",",			",",		44)
-STRING("~",			"~",		126)
-STRING("/",			"/",		47)
-
 /* Old style. */
 STRING("Am",			"&",		38)
 STRING("Ba",			"|",		124)
@@ -374,9 +361,7 @@ STRING("Na",			"NaN",		0)
 STRING("Ne",			"!=",		8800)
 STRING("Pi",			"pi",		960)
 STRING("Pm",			"+-",		177)
-STRING("R",			"(R)",		174)
 STRING("Rq",			"\'\'",		8221)
-STRING("Tm",			"tm",		8482)
 STRING("left-bracket",		"[",		91)
 STRING("left-parenthesis",	"(",		40)
 STRING("left-singlequote",	"`",		8216)
@@ -384,10 +369,12 @@ STRING("lp",			"(",		40)
 STRING("q",			"\"",		34)
 STRING("quote-left",		"`",		8216)
 STRING("quote-right",		"\'",		8217)
+STRING("R",			"(R)",		174)
 STRING("right-bracket",		"]",		93)
 STRING("right-parenthesis",	")",		41)
 STRING("right-singlequote",	"\'",		8217)
 STRING("rp",			")",		41)
+STRING("Tm",			"(Tm)",		8482)
 
 /* Lines. */
 CHAR("ba",			"|",		124)
