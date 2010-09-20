@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.35 2010/09/09 19:46:39 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.36 2010/09/20 04:49:08 drahn Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -99,6 +99,7 @@ NO_CROSS+=bind
 NO_CROSS+=httpd
 NO_CROSS+=microcode
 NO_CROSS+=groff lynx binutils perl texinfo gcc cvs
+NO_CROSS+=nsd
 
 cross-dirs:	${CROSSDIRS}
 cross-obj:	${CROSSOBJ}
