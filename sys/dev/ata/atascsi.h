@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.42 2010/07/03 00:41:58 kettenis Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.43 2010/09/20 06:02:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -86,7 +86,12 @@ struct ata_identify {
 	u_int16_t	typtime[2];	/*  71 */
 	u_int16_t	reserved5[2];	/*  73 */
 	u_int16_t	qdepth;		/*  75 */
+#define ATA_QDEPTH(_q)		(((_q) & 0x1f) + 1)
 	u_int16_t	satacap;	/*  76 */
+#define ATA_SATACAP_GEN1	0x0002
+#define ATA_SATACAP_GEN2	0x0004
+#define ATA_SATACAP_NCQ		0x0100
+#define ATA_SATACAP_PWRMGMT	0x0200
 	u_int16_t	reserved6;	/*  77 */
 	u_int16_t	satafsup;	/*  78 */
 	u_int16_t	satafen;	/*  79 */

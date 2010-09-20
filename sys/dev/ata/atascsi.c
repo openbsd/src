@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.93 2010/09/19 23:13:02 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.94 2010/09/20 06:02:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -252,8 +252,8 @@ atascsi_probe(struct scsi_link *link)
 		return (0);
 
 	if (as->as_capability & ASAA_CAP_NCQ &&
-	    (letoh16(ap->ap_identify.satacap) & (1 << 8))) {
-		qdepth = (letoh16(ap->ap_identify.qdepth) & 0x1f) + 1;
+	    ISSET(letoh16(ap->ap_identify.satacap), ATA_SATACAP_NCQ)) {
+		qdepth = ATA_QDEPTH(letoh16(ap->ap_identify.qdepth));
 		qdepth = MIN(qdepth, as->as_ncqdepth);
 		if (ISSET(as->as_capability, ASAA_CAP_NEEDS_RESERVED))
 			qdepth--;
