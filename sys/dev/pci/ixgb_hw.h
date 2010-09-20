@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.h,v 1.2 2008/02/19 18:47:18 brad Exp $ */ 
+/* $OpenBSD: ixgb_hw.h,v 1.3 2010/09/20 07:50:19 deraadt Exp $ */ 
 
 #ifndef _IXGB_HW_H_
 #define _IXGB_HW_H_
@@ -561,11 +561,7 @@ typedef enum {
 #define G6XXX_XGXS_XAUI_VS2_INPUT_MASK      0x0F	/* XAUI lanes
 							 * synchronized */
 
-/* Layout of a single receive descriptor.  The controller assumes that this
- * structure is packed into 16 bytes, which is a safe assumption with most
- * compilers.  However, some compilers may insert padding between the fields,
- * in which case the structure must be packed in some compiler-specific
- * manner. */
+/* Layout of a single receive descriptor. */
 struct ixgb_rx_desc {
 	uint64_t buff_addr;
 	uint16_t length;
@@ -573,7 +569,7 @@ struct ixgb_rx_desc {
 	uint8_t status;
 	uint8_t errors;
 	uint16_t special;
-};
+} __packed;
 
 #define IXGB_RX_DESC_STATUS_DD    0x01
 #define IXGB_RX_DESC_STATUS_EOP   0x02
@@ -595,18 +591,14 @@ struct ixgb_rx_desc {
 #define IXGB_RX_DESC_SPECIAL_PRI_SHIFT  0x000D	/* Priority is in upper 3 of 16 
 						 */
 
-/* Layout of a single transmit descriptor.  The controller assumes that this
- * structure is packed into 16 bytes, which is a safe assumption with most
- * compilers.  However, some compilers may insert padding between the fields,
- * in which case the structure must be packed in some compiler-specific
- * manner. */
+/* Layout of a single transmit descriptor. */
 struct ixgb_tx_desc {
 	uint64_t buff_addr;
 	uint32_t cmd_type_len;
 	uint8_t status;
 	uint8_t popts;
 	uint16_t vlan;
-};
+} __packed;
 
 #define IXGB_TX_DESC_LENGTH_MASK    0x000FFFFF
 #define IXGB_TX_DESC_TYPE_MASK      0x00F00000
@@ -639,7 +631,7 @@ struct ixgb_context_desc {
 	uint8_t status;
 	uint8_t hdr_len;
 	uint16_t mss;
-};
+} __packed;
 
 #define IXGB_CONTEXT_DESC_CMD_TCP 0x01000000
 #define IXGB_CONTEXT_DESC_CMD_IP  0x02000000
@@ -678,7 +670,7 @@ struct ixgb_flash_buffer {
 	uint8_t filler2[0x2AAA];
 	uint8_t cmd1;
 	uint8_t filler3[0xAAAA];
-};
+} __packed;
 
 /*
  * This is a little-endian specific check.
@@ -699,7 +691,7 @@ struct ixgb_fc {
 	uint16_t pause_time;	/* Flow Control Pause timer */
 	boolean_t send_xon;	/* Flow control send XON */
 	ixgb_fc_type type;	/* Type of flow control */
-};
+} __packed;
 
 /* The historical defaults for the flow control values are given below. */
 #define FC_DEFAULT_HI_THRESH        (0x8000)	/* 32KB */

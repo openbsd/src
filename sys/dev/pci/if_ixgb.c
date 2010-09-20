@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.56 2010/08/27 08:24:53 deraadt Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.57 2010/09/20 07:50:19 deraadt Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -690,10 +690,10 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 	/* Find out if we are in VLAN mode */
 	if (m_head->m_flags & M_VLANTAG) {
 		/* Set the VLAN id */
-		current_tx_desc->vlan = m_head->m_pkthdr.ether_vtag;
+		current_tx_desc->vlan = htole16(m_head->m_pkthdr.ether_vtag);
 
 		/* Tell hardware to add tag */
-		current_tx_desc->cmd_type_len |= IXGB_TX_DESC_CMD_VLE;
+		current_tx_desc->cmd_type_len |= htole32(IXGB_TX_DESC_CMD_VLE);
 	}
 
 	tx_buffer->m_head = m_head;
@@ -1476,6 +1476,7 @@ ixgb_get_buf(struct ixgb_softc *sc, int i,
 		return (error);
 	}
 	rx_buffer->m_head = mp;
+	bzero(&sc->rx_desc_base[i], sizeof(sc->rx_desc_base[i]));
 	sc->rx_desc_base[i].buff_addr = htole64(rx_buffer->map->dm_segs[0].ds_addr);
 	bus_dmamap_sync(sc->rxtag, rx_buffer->map, 0,
 	    rx_buffer->map->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1742,7 +1743,7 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 		} else {
 			eop = 0;
 		}
-		len = current_desc->length;
+		len = letoh16(current_desc->length);
 
 		if (current_desc->errors & (IXGB_RX_DESC_ERRORS_CE |
 			    IXGB_RX_DESC_ERRORS_SE | IXGB_RX_DESC_ERRORS_P |
@@ -1774,7 +1775,7 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 #if NVLAN > 0
 				if (current_desc->status & IXGB_RX_DESC_STATUS_VP) {
 					sc->fmp->m_pkthdr.ether_vtag =
-					    current_desc->special;
+					    letoh16(current_desc->special);
 					sc->fmp->m_flags |= M_VLANTAG;
 				}
 #endif
