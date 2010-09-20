@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.9 2010/09/07 16:59:42 deraadt Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.10 2010/09/20 00:49:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -286,6 +286,9 @@ glxpcib_activate(struct device *self, int act)
 	uint i;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
