@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.15 2009/07/03 04:34:59 deraadt Exp $
+# $OpenBSD: list.local,v 1.16 2010/09/20 04:26:10 jsg Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					bin/sha256
@@ -22,6 +22,7 @@ COPY	${DESTDIR}/etc/firmware/bnx-xi90-rv2p	etc/firmware/bnx-xi90-rv2p
 COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
 COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
 COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
+COPY	${DESTDIR}/etc/firmware/ral-rt2860	etc/firmware/ral-rt2860
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 COPY	${DESTDIR}/etc/firmware/run-rt2870	etc/firmware/run-rt2870
 COPY	${DESTDIR}/etc/firmware/run-rt3071	etc/firmware/run-rt3071
