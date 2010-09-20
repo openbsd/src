@@ -1,0 +1,58 @@
+#	$OpenBSD: files.octeon,v 1.1 2010/09/20 06:32:30 syuu Exp $
+
+# Standard stanzas config(8) can't run without
+maxpartitions 16
+maxusers 2 8 64
+
+# Major number for block devices, for ``root on'' lines
+major	{ sd = 0 }
+major	{ cd = 3 }
+major	{ wd = 4 }
+major	{ rd = 8 }
+
+file	dev/cninit.c
+file	arch/octeon/octeon/autoconf.c
+file	arch/octeon/octeon/bus_dma.c
+file	arch/octeon/octeon/conf.c
+file	arch/octeon/octeon/disksubr.c		disk
+file	arch/octeon/octeon/lock_machdep.c	multiprocessor
+file	arch/octeon/octeon/machdep.c
+file	arch/octeon/octeon/mutex.c
+file	arch/octeon/octeon/bootinfo.c
+
+include "dev/ata/files.ata"
+include "dev/atapiscsi/files.atapiscsi"
+include	"dev/i2c/files.i2c"
+include	"dev/gpio/files.gpio"
+include	"dev/i2o/files.i2o"
+include	"dev/isa/files.isa"
+include	"dev/isa/files.isapnp"
+include	"dev/mii/files.mii"
+include	"dev/pci/files.pci"
+include	"dev/pci/files.agp"
+include	"dev/pckbc/files.pckbc"
+include	"dev/usb/files.usb"
+include "dev/bluetooth/files.bluetooth"
+include "dev/rasops/files.rasops"
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include	"scsi/files.scsi"
+
+define	mainbus {}
+device	mainbus
+attach	mainbus at root
+file	arch/octeon/dev/mainbus.c			mainbus
+
+device	cpu
+attach	cpu at mainbus
+
+device	clock
+attach	clock at mainbus
+
+define	obio {[base = -1]}
+device	obio
+attach	obio at mainbus
+file	arch/octeon/dev/obio.c				mainbus
+
+attach	com at obio with com_oct
+file	arch/octeon/dev/com_oct.c			com_oct

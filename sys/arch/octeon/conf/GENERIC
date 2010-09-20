@@ -1,0 +1,36 @@
+#	$OpenBSD: GENERIC,v 1.1 2010/09/20 06:32:30 syuu Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		octeon mips64
+include		"../../../conf/GENERIC"
+maxusers	32
+
+option		CPU_OCTEON
+makeoption	LINK_ADDRESS="0xffffffff81000000"
+
+option		PCIVERBOSE
+option		USBVERBOSE
+
+config	bsd	swap generic
+
+#
+# Definition of system
+#
+mainbus0	at root
+cpu0		at mainbus0
+clock0		at mainbus0
+obio0		at mainbus0
+
+com0		at obio0
+com1		at obio0
+
+option		COM_OCTEON
+
