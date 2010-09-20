@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.36 2010/09/20 04:49:08 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.37 2010/09/20 11:49:39 syuu Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -16,7 +16,7 @@ TARGET_ARCH=	m68k
 .elif	(${TARGET} == "aviion" || ${TARGET} == "luna88k" || \
 	 ${TARGET} == "mvme88k")
 TARGET_ARCH=	m88k
-.elif	(${TARGET} == "sgi")
+.elif	(${TARGET} == "sgi" || ${TARGET} == "octeon")
 TARGET_ARCH=	mips64
 .elif	(${TARGET} == "loongson")
 TARGET_ARCH=	mips64el
