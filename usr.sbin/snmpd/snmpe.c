@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.27 2010/09/20 08:56:16 martinh Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.28 2010/09/20 12:32:41 martinh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <vis.h>
 
 #include "snmpd.h"
 
@@ -433,9 +434,14 @@ snmpe_debug_elements(struct ber_element *root)
 		    root->be_type == SNMP_T_IPADDR) {
 			fprintf(stderr, "addr %s\n",
 			    inet_ntoa(*(struct in_addr *)buf));
-		} else
-			fprintf(stderr, "string \"%s\"\n",
-			    root->be_len ? buf : "");
+		} else {
+			char *visbuf;
+			if ((visbuf = malloc(root->be_len * 4 + 1)) == NULL)
+				fatal("malloc");
+			strvisx(visbuf, buf, root->be_len, 0);
+			fprintf(stderr, "string \"%s\"\n",  visbuf);
+			free(visbuf);
+		}
 		break;
 	case BER_TYPE_NULL:	/* no payload */
 	case BER_TYPE_EOC:
