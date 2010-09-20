@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.63 2010/09/17 00:35:51 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.64 2010/09/20 12:10:26 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -590,6 +590,13 @@ void	tlb_set_wired(int);
 /*
  * Available cache operation routines. See <machine/cpu.h> for more.
  */
+int	Octeon_ConfigCache(struct cpu_info *);
+void	Octeon_SyncCache(struct cpu_info *);
+void	Octeon_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
+void	Octeon_SyncDCachePage(struct cpu_info *, paddr_t);
+void	Octeon_HitSyncDCache(struct cpu_info *, paddr_t, size_t);
+void	Octeon_HitInvalidateDCache(struct cpu_info *, paddr_t, size_t);
+void	Octeon_IOSyncDCache(struct cpu_info *, paddr_t, size_t, int);
 
 int	Loongson2_ConfigCache(struct cpu_info *);
 void	Loongson2_SyncCache(struct cpu_info *);
