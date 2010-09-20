@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.81 2010/09/07 16:21:46 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.82 2010/09/20 03:28:48 jsg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -542,6 +542,7 @@ uhci_activate(struct device *self, int act)
 
 		UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
 
+		cmd = UREAD2(sc, UHCI_CMD);
 		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_suspend = act;
@@ -555,6 +556,7 @@ uhci_activate(struct device *self, int act)
 #endif
 		sc->sc_bus.use_polling++;
 		sc->sc_suspend = act;
+		cmd = UREAD2(sc, UHCI_CMD);
 		if (cmd & UHCI_CMD_RS)
 			uhci_run(sc, 0); /* in case BIOS has started it */
 
