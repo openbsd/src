@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.19 2010/07/02 02:40:15 blambert Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.20 2010/09/20 02:46:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -171,14 +171,18 @@ struct glxsb_softc {
 	int			sc_nsessions;
 	struct glxsb_session	*sc_sessions;
 #endif /* CRYPTO */
+
+	uint64_t		save_gld_msr;	
 };
 
 int	glxsb_match(struct device *, void *, void *);
 void	glxsb_attach(struct device *, struct device *, void *);
+int	glxsb_activate(struct device *, int);
 void	glxsb_rnd(void *);
 
 struct cfattach glxsb_ca = {
-	sizeof(struct glxsb_softc), glxsb_match, glxsb_attach
+	sizeof(struct glxsb_softc), glxsb_match, glxsb_attach, NULL,
+	glxsb_activate
 };
 
 struct cfdriver glxsb_cd = {
@@ -283,6 +287,25 @@ glxsb_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	printf("\n");
+}
+
+int
+glxsb_activate(struct device *self, int act)
+{
+	struct glxsb_softc *sc = (struct glxsb_softc *)self;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		/* XXX should wait for current crypto op to finish */
+		break;
+	case DVACT_SUSPEND:
+		sc->save_gld_msr = rdmsr(SB_GLD_MSR_CTRL);
+		break;
+	case DVACT_RESUME:
+		wrmsr(SB_GLD_MSR_CTRL, sc->save_gld_msr);
+		break;
+	}
+	return (0);
 }
 
 void
