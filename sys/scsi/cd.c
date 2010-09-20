@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.192 2010/09/14 04:02:43 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.193 2010/09/20 02:51:52 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -254,7 +254,6 @@ cdactivate(struct device *self, int act)
 		break;			
 	case DVACT_DEACTIVATE:
 		sc->sc_flags |= CDF_DYING;
-		bufq_drain(&sc->sc_bufq);
 		scsi_xsh_del(&sc->sc_xsh);
 		break;
 	}
