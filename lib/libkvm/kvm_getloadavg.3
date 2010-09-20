@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getloadavg.3,v 1.9 2010/09/19 22:22:13 jmc Exp $
+.\"	$OpenBSD: kvm_getloadavg.3,v 1.10 2010/09/20 07:41:17 jmc Exp $
 .\"	$NetBSD: kvm_getloadavg.3,v 1.2 1996/03/18 22:33:26 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)kvm_getloadavg.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: September 20 2010 $
 .Dt KVM_GETLOADAVG 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ averaged over various periods of time.
 Up to
 .Fa nelem
 samples are retrieved and assigned to successive elements of
-.Fa loadavg Ns \(sq .
+.Fa loadavg Ns Bq .
 The system imposes a maximum of 3 samples, representing averages
 over the last 1, 5, and 15 minutes, respectively.
 .Sh RETURN VALUES

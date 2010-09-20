@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.137 2010/09/18 19:25:05 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.138 2010/09/20 07:41:17 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: September 18 2010 $
+.Dd $Mdocdate: September 20 2010 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -951,7 +951,7 @@ and VAR is set to
 the substitution for $VAR results in four fields:
 .Sq A ,
 .Sq B ,
-\(oq\(cq
+.Sq
 (an empty field),
 and
 .Sq D .
@@ -968,13 +968,13 @@ Using the previous example, the substitution for $VAR:E
 results in the fields:
 .Sq A ,
 .Sq B ,
-\(oq\(cq,
+.Sq ,
 and
 .Sq D:E ,
 not
 .Sq A ,
 .Sq B ,
-\(oq\(cq,
+.Sq ,
 .Sq D ,
 and
 .Sq E .
@@ -1915,7 +1915,7 @@ specified patterns.
 Example: The pattern
 .Ic *(foo|bar)
 matches the strings
-\(lq\(rq,
+.Dq ,
 .Dq foo ,
 .Dq bar ,
 .Dq foobarfoo ,
@@ -1940,7 +1940,7 @@ patterns.
 Example: The pattern
 .Ic ?(foo|bar)
 only matches the strings
-\(lq\(rq,
+.Dq ,
 .Dq foo ,
 and
 .Dq bar .
