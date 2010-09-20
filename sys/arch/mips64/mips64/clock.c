@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.33 2010/02/28 17:23:25 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.34 2010/09/20 06:33:47 matthew Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -94,7 +94,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	 * be computed correctly.
 	 */
 	set_intr(INTPRI_CLOCK, CR_INT_5, clock_int5);
-	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
+	evcount_attach(&clk_count, "clock", &clk_irq);
 	/* try to avoid getting clock interrupts early */
 	cp0_set_compare(cp0_get_count() - 1);
 }

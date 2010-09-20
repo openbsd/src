@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.59 2010/04/21 03:03:26 deraadt Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.60 2010/09/20 06:33:47 matthew Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -164,8 +164,7 @@ set_intr(int pri, uint32_t mask,
     uint32_t (*int_hand)(uint32_t, struct trap_frame *))
 {
 	if ((idle_mask & SOFT_INT_MASK) == 0)
-		evcount_attach(&soft_count, "soft", (void *)&soft_irq,
-		    &evcount_intr);
+		evcount_attach(&soft_count, "soft", &soft_irq);
 	if (pri < 0 || pri >= NLOWINT)
 		panic("set_intr: too high priority (%d), increase NLOWINT",
 		    pri);

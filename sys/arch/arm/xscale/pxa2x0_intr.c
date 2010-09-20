@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.20 2009/08/26 20:31:43 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.21 2010/09/20 06:33:47 matthew Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -567,8 +567,7 @@ pxa2x0_intr_establish(int irqno, int level,
 #endif
 
 	if (name != NULL)
-		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
-		    &evcount_intr);
+		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
 
 #ifdef MULTIPLE_HANDLERS_ON_ONE_IRQ
 	pxa2x0_update_intr_masks();

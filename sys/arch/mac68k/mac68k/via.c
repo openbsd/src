@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.32 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.33 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -328,7 +328,7 @@ add_nubus_intr(int slot, int ipl, int (*func)(void *), void *client_data,
 	ih->ih_fn = func;
 	ih->ih_arg = client_data;
 	ih->ih_ipl = ipl;
-	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl, &evcount_intr);
+	evcount_attach(&ih->ih_count, name, &ih->ih_ipl);
 
 	nubus_intr_mask |= 1 << slot;
 
@@ -497,8 +497,7 @@ via1_register_irq(int irq, int (*irq_func)(void *), void *client_data,
 	ih->ih_arg = client_data;
 	ih->ih_ipl = irq;
 	if (name != NULL)
-		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl,
-		    &evcount_intr);
+		evcount_attach(&ih->ih_count, name, &ih->ih_ipl);
 }
 
 int
@@ -512,8 +511,7 @@ via2_register_irq(struct via2hand *vh, const char *name)
 #endif
 
 	if (name != NULL)
-		evcount_attach(&vh->vh_count, name, (void *)&vh->vh_ipl,
-		    &evcount_intr);
+		evcount_attach(&vh->vh_count, name, &vh->vh_ipl);
 	SLIST_INSERT_HEAD(&via2intrs[irq], vh, v2h_link);
 	return (0);
 }

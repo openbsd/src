@@ -1,4 +1,4 @@
-/*	$OpenBSD: voyager.c,v 1.3 2010/02/26 14:53:11 miod Exp $	*/
+/*	$OpenBSD: voyager.c,v 1.4 2010/09/20 06:33:48 matthew Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -252,7 +252,7 @@ voyager_intr_establish(void *cookie, int irq, int level, int (*fun)(void *),
 	nh->ih_arg = arg;
 	nh->ih_level = level;
 	nh->ih_irq = irq + BONITO_NINTS;
-	evcount_attach(&nh->ih_count, name, (void *)&nh->ih_irq, &evcount_intr);
+	evcount_attach(&nh->ih_count, name, &nh->ih_irq);
 
 	if (sc->sc_intr[irq] == NULL)
 		sc->sc_intr[irq] = nh;

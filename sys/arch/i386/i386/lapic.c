@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.30 2010/07/25 21:43:35 deraadt Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.31 2010/09/20 06:33:47 matthew Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -211,9 +211,9 @@ lapic_boot_init(paddr_t lapic_base)
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);
 
-	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
+	evcount_attach(&clk_count, "clock", &clk_irq);
 #ifdef MULTIPROCESSOR
-	evcount_attach(&ipi_count, "ipi", (void *)&ipi_irq, &evcount_intr);
+	evcount_attach(&ipi_count, "ipi", &ipi_irq);
 #endif
 }
 

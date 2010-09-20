@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.34 2010/07/10 19:32:25 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.35 2010/09/20 06:33:47 matthew Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -177,11 +177,9 @@ void
 intr_init()
 {
 	level10.ih_vec = level10.ih_ipl >> 8;
-	evcount_attach(&level10.ih_count, "clock", &level10.ih_vec,
-	    &evcount_intr);
+	evcount_attach(&level10.ih_count, "clock", &level10.ih_vec);
 	level14.ih_vec = level14.ih_ipl >> 8;
-	evcount_attach(&level14.ih_count, "prof", &level14.ih_vec,
-	    &evcount_intr);
+	evcount_attach(&level14.ih_count, "prof", &level14.ih_vec);
 
 	softnet_ih = softintr_establish(IPL_SOFTNET, softnet, NULL);
 }
@@ -297,7 +295,7 @@ intr_establish(level, ih, ipl_block, name)
 	ih->ih_vec = ipl_block;
 	ih->ih_ipl = (ipl_block << 8);
 	if (name != NULL)
-		evcount_attach(&ih->ih_count, name, &ih->ih_vec, &evcount_intr);
+		evcount_attach(&ih->ih_count, name, &ih->ih_vec);
 
 	s = splhigh();
 

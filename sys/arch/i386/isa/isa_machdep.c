@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.69 2010/03/25 22:44:57 oga Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.70 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -554,8 +554,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
-	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
-	    &evcount_intr);
+	evcount_attach(&ih->ih_count, ih_what, &ih->ih_irq);
 	*p = ih;
 
 	return (ih);

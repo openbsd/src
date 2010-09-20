@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbus.c,v 1.2 2008/09/22 19:45:35 miod Exp $	*/
+/*	$OpenBSD: mbus.c,v 1.3 2010/09/20 06:33:48 matthew Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -403,7 +403,7 @@ mbus_intr_establish(unsigned int vec, int ipl, int (*fn)(void *), void *arg,
 	fi->fi_fn = fn;
 	fi->fi_arg = arg;
 	fi->fi_ipl = ipl;
-	evcount_attach(&fi->fi_cnt, name, &fi->fi_ipl, &evcount_intr);
+	evcount_attach(&fi->fi_cnt, name, &fi->fi_ipl);
 
 	fbicirq = MBUS_VECTOR_TO_IRQ(vec);
 	fbic->firq[fbicirq] = fi;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.12 2010/03/03 21:52:13 kettenis Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.13 2010/09/20 06:33:48 matthew Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -292,7 +292,7 @@ intr_establish(int ivec, int type, int level,
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = ivec;
-	evcount_attach(&ih->ih_count, name, NULL, &evcount_intr);
+	evcount_attach(&ih->ih_count, name, NULL);
 	*p = ih;
 
 	if (sc) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxtbus.c,v 1.2 2006/08/30 19:23:57 miod Exp $	*/
+/*	$OpenBSD: vxtbus.c,v 1.3 2010/09/20 06:33:48 matthew Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -118,7 +118,7 @@ vxtbus_intr_establish(const char *name, int ipl, int (*fn)(void *), void *arg)
 	ih->ih_fn = fn;
 	ih->ih_arg = arg;
 	ih->ih_vec = VXT_INTRVEC;
-	evcount_attach(&ih->ih_cnt, name, (void *)&ih->ih_vec, &evcount_intr);
+	evcount_attach(&ih->ih_cnt, name, &ih->ih_vec);
 
 	LIST_INSERT_HEAD(&sc->sc_intrlist, ih, ih_link);
 }

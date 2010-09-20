@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.13 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.14 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ intr_establish(int (*func)(void *), void *arg, int ipl, const char *name)
 	ih->ih_fn = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;
-	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl, &evcount_intr);
+	evcount_attach(&ih->ih_count, name, &ih->ih_ipl);
 }
 
 /*

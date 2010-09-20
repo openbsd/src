@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.22 2007/05/29 18:10:43 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.23 2010/09/20 06:33:47 matthew Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -329,7 +329,7 @@ i8259_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, what)
 	ih->ih_level = level;
 	ih->ih_irq = irq;
 	ih->ih_what = what;
-	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_irq, &evcount_intr);
+	evcount_attach(&ih->ih_count, what, &ih->ih_irq);
 	*p = ih;
 
 	return (ih);
@@ -412,7 +412,7 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, what)
 	ih->ih_level = level;
 	ih->ih_irq = irq;
 	ih->ih_what = what;
-	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_irq, &evcount_intr);
+	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_irq);
 	*p = ih;
 
 	return (ih);

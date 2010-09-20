@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.10 2009/04/19 18:54:06 oga Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.11 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -135,8 +135,7 @@ intc_intr_establish(int evtcode, int trigger, int level,
 	ih->ih_irq	= evtcode >> 5;
 	ih->ih_name	= name;
 	if (name)
-		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
-		    &evcount_intr);
+		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
 
 	/* Map interrupt handler */
 	EVTCODE_TO_IH_INDEX(evtcode) = ih->ih_idx;

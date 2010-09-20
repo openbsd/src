@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.18 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.19 2010/09/20 06:33:48 matthew Exp $	*/
 /*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
@@ -261,11 +261,9 @@ dhu_attach(parent, self, aux)
 	    dhuxint, sc, &sc->sc_tintrcnt);
 
 	sc->sc_rcvec = ua->ua_cvec;
-	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname,
-	    (void *)&sc->sc_rcvec, &evcount_intr);
+	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname, &sc->sc_rcvec);
 	sc->sc_tcvec = ua->ua_cvec + 4;
-	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname,
-	    (void *)&sc->sc_tcvec, &evcount_intr);
+	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname, &sc->sc_tcvec);
 }
 
 /* Receiver Interrupt */

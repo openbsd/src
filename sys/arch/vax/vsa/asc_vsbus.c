@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.12 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.13 2010/09/20 06:33:48 matthew Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -263,8 +263,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
 	    &asc->sc_ncr53c9x, SCB_ISTACK, &asc->sc_intrcnt);
 	asc->sc_cvec = va->va_cvec;
-	evcount_attach(&asc->sc_intrcnt, self->dv_xname,
-	    (void *)&asc->sc_cvec, &evcount_intr);
+	evcount_attach(&asc->sc_intrcnt, self->dv_xname, &asc->sc_cvec);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but

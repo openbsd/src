@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.3 2010/08/07 03:50:01 krw Exp $ */
+/* $OpenBSD: omgpio.c,v 1.4 2010/09/20 06:33:48 matthew Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -332,7 +332,7 @@ omgpio_intr_establish(unsigned int gpio, int level, int spl,
 
 	sc->sc_handlers[GPIO_PIN_TO_OFFSET(gpio)] = ih;
 
-	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq, &evcount_intr);
+	evcount_attach(&ih->ih_count, name, &ih->ih_irq);
 
 	omgpio_intr_level(gpio, level);
 	omgpio_intr_unmask(gpio);

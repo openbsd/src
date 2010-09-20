@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.23 2009/03/15 20:40:23 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.24 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -167,8 +167,7 @@ intr_establish(struct isr *isr, const char *name)
 		panic("intr_establish: bad ipl %d", isr->isr_ipl);
 #endif
 
-	evcount_attach(&isr->isr_count, name, &isr->isr_ipl,
-	    &evcount_intr);
+	evcount_attach(&isr->isr_count, name, &isr->isr_ipl);
 
 	/*
 	 * Some devices are particularly sensitive to interrupt

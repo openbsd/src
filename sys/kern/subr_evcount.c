@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.9 2010/04/20 22:05:43 tedu Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.10 2010/09/20 06:33:46 matthew Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -33,39 +33,16 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
-static TAILQ_HEAD(,evcount) evcount_list;
-
-/*
- * Standard evcount parents.
- */
-struct evcount evcount_intr;
-
-void evcount_init(void);
+static TAILQ_HEAD(,evcount) evcount_list = TAILQ_HEAD_INITIALIZER(evcount_list);
 
 void
-evcount_init(void)
-{
-	TAILQ_INIT(&evcount_list);
-
-	evcount_attach(&evcount_intr, "intr", NULL, NULL);
-}
-
-
-void
-evcount_attach(struct evcount *ec, const char *name, void *data,
-    struct evcount *parent)
+evcount_attach(struct evcount *ec, const char *name, void *data)
 {
 	static int nextid = 0;
 
-	if (nextid == 0) {
-		nextid++;		/* start with 1 */
-		evcount_init();
-	}
-
 	memset(ec, 0, sizeof(*ec));
 	ec->ec_name = name;
-	ec->ec_parent = parent;
-	ec->ec_id = nextid++;
+	ec->ec_id = ++nextid;
 	ec->ec_data = data;
 	TAILQ_INSERT_TAIL(&evcount_list, ec, next);
 }
@@ -100,8 +77,6 @@ evcount_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	nintr = 0;
 	TAILQ_FOREACH(ec, &evcount_list, next) {
-		if (ec->ec_parent != &evcount_intr)
-			continue;
 		if (nintr++ == i)
 			break;
 	}

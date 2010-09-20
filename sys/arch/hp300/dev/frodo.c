@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.12 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.13 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -302,7 +302,7 @@ frodo_intr_establish(struct device *frdev, int line, struct isr *isr,
 
 	/* Install the handler. */
 	isr->isr_ipl = sc->sc_isr.isr_ipl;
-	evcount_attach(&isr->isr_count, name, &isr->isr_ipl, &evcount_intr);
+	evcount_attach(&isr->isr_count, name, &isr->isr_ipl);
 	sc->sc_intr[line] = isr;
 
 	/* Enable the interrupt line. */

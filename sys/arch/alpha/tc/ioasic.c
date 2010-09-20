@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.16 2009/11/07 23:01:38 miod Exp $ */
+/* $OpenBSD: ioasic.c,v 1.17 2010/09/20 06:33:46 matthew Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -230,7 +230,7 @@ ioasic_intr_establish(ioa, cookie, level, func, arg, name)
 
 	ioasicintrs[dev].iai_func = func;
 	ioasicintrs[dev].iai_arg = arg;
-	evcount_attach(&ioasicintrs[dev].iai_count, name, NULL, &evcount_intr);
+	evcount_attach(&ioasicintrs[dev].iai_count, name, NULL);
 
 	/* Enable interrupts for the device. */
 	for (i = 0; i < ioasic_ndevs; i++)

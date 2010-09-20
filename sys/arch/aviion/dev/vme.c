@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.8 2010/04/24 18:44:27 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.9 2010/09/20 06:33:47 matthew Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -356,8 +356,7 @@ vmeintr_establish(u_int vec, struct intrhand *ih, const char *name)
 		}
 	}
 
-	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl,
-	    &evcount_intr);
+	evcount_attach(&ih->ih_count, name, &ih->ih_ipl);
 	SLIST_INSERT_HEAD(list, ih, ih_link);
 
 	/*

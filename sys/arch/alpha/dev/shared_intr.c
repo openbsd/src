@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.16 2009/09/30 20:16:22 miod Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.17 2010/09/20 06:33:46 matthew Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -170,8 +170,7 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 	ih->ih_arg = arg;
 	ih->ih_level = level;
 	ih->ih_num = num;
-	evcount_attach(&ih->ih_count, basename, (void *)&ih->ih_num,
-	    &evcount_intr);
+	evcount_attach(&ih->ih_count, basename, &ih->ih_num);
 
 	intr[num].intr_sharetype = type;
 	TAILQ_INSERT_TAIL(&intr[num].intr_q, ih, ih_q);

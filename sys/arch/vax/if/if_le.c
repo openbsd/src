@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.16 2008/10/22 23:04:45 mpf Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.17 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -174,8 +174,7 @@ le_ibus_attach(parent, self, aux)
 		return;
 	scb_vecalloc(sc->sc_vec, (void *)am7990_intr, sc,
 	     SCB_ISTACK, &sc->sc_intrcnt);
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
-	    (void *)&sc->sc_vec, &evcount_intr);
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname, &sc->sc_vec);
 
 	printf(": vec %d ipl %x\n%s", sc->sc_vec, br, self->dv_xname);
 	/*

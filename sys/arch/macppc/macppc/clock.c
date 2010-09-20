@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.30 2009/10/01 20:19:18 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.31 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -316,8 +316,8 @@ cpu_initclocks()
 		statvar >>= 1;
 	statmin = statint - (statvar >> 1);
 
-	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
-	evcount_attach(&stat_count, "stat", (void *)&stat_irq, &evcount_intr);
+	evcount_attach(&clk_count, "clock", &clk_irq);
+	evcount_attach(&stat_count, "stat", &stat_irq);
 
 	cpu_startclock();
 

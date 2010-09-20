@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.27 2008/08/24 14:52:08 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.28 2010/09/20 06:33:48 matthew Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -147,10 +147,8 @@ dz_vsbus_attach(parent, self, aux)
 	scb_vecalloc(sc->sc_rcvec, dzxint, sc, SCB_ISTACK, &sc->sc_tintrcnt);
 	sc->sc_tcvec = va->va_cvec - 4;
 	scb_vecalloc(sc->sc_tcvec, dzrint, sc, SCB_ISTACK, &sc->sc_rintrcnt);
-	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname,
-	    (void *)&sc->sc_rcvec, &evcount_intr);
-	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname,
-	    (void *)&sc->sc_tcvec, &evcount_intr);
+	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname, &sc->sc_rcvec);
+	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname, &sc->sc_tcvec);
 
 	printf("4 lines");
 

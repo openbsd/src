@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_300.c,v 1.14 2008/08/09 16:42:29 miod Exp $ */
+/* $OpenBSD: tc_3000_300.c,v 1.15 2010/09/20 06:33:46 matthew Exp $ */
 /* $NetBSD: tc_3000_300.c,v 1.26 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -130,7 +130,7 @@ tc_3000_300_intr_establish(tcadev, cookie, level, func, arg, name)
 	tc_3000_300_intr[dev].tci_arg = arg;
 	if (name != NULL)
 		evcount_attach(&tc_3000_300_intr[dev].tci_count,
-		    name, NULL, &evcount_intr);
+		    name, NULL);
 
 	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 	switch (dev) {

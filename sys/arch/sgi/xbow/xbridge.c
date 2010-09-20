@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.74 2010/08/23 16:56:18 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.75 2010/09/20 06:33:47 matthew Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1071,7 +1071,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	xih->xih_arg = arg;
 	xih->xih_level = level;
 	xih->xih_device = device;
-	evcount_attach(&xih->xih_count, name, &xi->xi_intrsrc, &evcount_intr);
+	evcount_attach(&xih->xih_count, name, &xi->xi_intrsrc);
 	LIST_INSERT_HEAD(&xi->xi_handlers, xih, xih_nxt);
 
 	if (new) {

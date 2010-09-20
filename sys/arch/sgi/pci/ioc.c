@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.35 2010/05/09 18:37:45 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.36 2010/09/20 06:33:47 matthew Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -774,7 +774,7 @@ ioc_intr_establish(void *cookie, u_long dev, int level, int (*func)(void *),
 	ii->ii_arg = arg;
 	ii->ii_level = level;
 
-	evcount_attach(&ii->ii_count, name, &ii->ii_level, &evcount_intr);
+	evcount_attach(&ii->ii_count, name, &ii->ii_level);
 	sc->sc_intr[dev] = ii;
 
 	/* enable hardware source if necessary */

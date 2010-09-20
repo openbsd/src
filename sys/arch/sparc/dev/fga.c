@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.15 2006/02/22 22:32:12 miod Exp $	*/
+/*	$OpenBSD: fga.c,v 1.16 2010/09/20 06:33:47 matthew Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -535,7 +535,7 @@ fga_intr_establish(sc, vec, level, ih, name)
 	}
 
 	ih->ih_vec = level;
-	evcount_attach(&ih->ih_count, name, &ih->ih_vec, &evcount_intr);
+	evcount_attach(&ih->ih_count, name, &ih->ih_vec);
 
 	/* setup hardware handler */
 	fga_hwintr_establish(sc, level_to_sint[level]);

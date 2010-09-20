@@ -1,4 +1,4 @@
-/* $OpenBSD: timekeeper.c,v 1.4 2008/06/26 05:42:11 ray Exp $ */
+/* $OpenBSD: timekeeper.c,v 1.5 2010/09/20 06:33:47 matthew Exp $ */
 /* $NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -126,7 +126,7 @@ clock_attach(parent, self, aux)
 		break;
 	}
 
-	evcount_attach(&sc->sc_count, self->dv_xname, (void *)&ma->ma_ilvl, &evcount_intr);
+	evcount_attach(&sc->sc_count, self->dv_xname, &ma->ma_ilvl);
 
 	clockattach(&sc->sc_dev, clockwork, &sc->sc_count);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2008/08/18 23:19:29 miod Exp $	 */
+/*	$OpenBSD: clock.c,v 1.22 2010/09/20 06:33:48 matthew Exp $	 */
 /*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -177,7 +177,7 @@ cpu_initclocks()
 	if (vax_boardtype != VAX_BTYP_VXT)
 		mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-	evcount_attach(&clock_intrcnt, "clock", NULL, &evcount_intr);
+	evcount_attach(&clock_intrcnt, "clock", NULL);
 }
 
 /*

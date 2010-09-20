@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.27 2010/06/28 18:31:01 krw Exp $ */
+/* $OpenBSD: ncr.c,v 1.28 2010/09/20 06:33:48 matthew Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -171,8 +171,7 @@ si_attach(parent, self, aux)
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
 	    SCB_ISTACK, &sc->ncr_intrcnt);
 	sc->ncr_cvec = va->va_cvec;
-	evcount_attach(&sc->ncr_intrcnt, self->dv_xname,
-	    (void *)&sc->ncr_cvec, &evcount_intr);
+	evcount_attach(&sc->ncr_intrcnt, self->dv_xname, &sc->ncr_cvec);
 
 	/*
 	 * DMA area mapin.

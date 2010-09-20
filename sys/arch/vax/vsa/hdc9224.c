@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.30 2010/09/08 14:47:10 jsing Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.31 2010/09/20 06:33:48 matthew Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -275,8 +275,7 @@ hdcattach(struct device *parent, struct device *self, void *aux)
 	 * Get interrupt vector, enable instrumentation.
 	 */
 	scb_vecalloc(va->va_cvec, hdcintr, sc, SCB_ISTACK, &sc->sc_intrcnt);
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname, (void *)va->va_cvec,
-	    &evcount_intr);
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname, va->va_cvec);
 
 	sc->sc_regs = vax_map_physmem(va->va_paddr, 1);
 	sc->sc_dmabase = (caddr_t)va->va_dmaaddr;

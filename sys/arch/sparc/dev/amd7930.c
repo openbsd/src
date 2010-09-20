@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.33 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.34 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ amd7930attach(parent, self, args)
 	if (intr_fasttrap(pri, amd7930_trap, amd7930_shareintr, sc) == 0) {
 		auiop = &sc->sc_au;
 		evcount_attach(&sc->sc_hwih.ih_count, sc->sc_dev.dv_xname,
-		    &sc->sc_hwih.ih_vec, &evcount_intr);
+		    &sc->sc_hwih.ih_vec);
 	} else {
 #ifdef AUDIO_DEBUG
 		printf("%s: unable to register fast trap handler\n",

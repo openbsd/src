@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.21 2009/08/22 02:54:50 mk Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.22 2010/09/20 06:33:47 matthew Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	gh->gh_gpio = gpio;
 	gh->gh_irq = gpio+32;
 	gh->gh_level = level;
-	evcount_attach(&gh->gh_count, name, (void *)&gh->gh_irq, &evcount_intr);
+	evcount_attach(&gh->gh_count, name, &gh->gh_irq);
 
 	gh->gh_next = sc->sc_handlers[gpio];
 	sc->sc_handlers[gpio] = gh;

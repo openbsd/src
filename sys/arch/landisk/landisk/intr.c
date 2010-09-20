@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.5 2007/04/09 13:23:25 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.6 2010/09/20 06:33:47 matthew Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -193,8 +193,7 @@ extintr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg,
 	ih->ih_name = ih_name;
 
 	if (ih_name != NULL)
-		evcount_attach(&ih->ih_count, ih_name, (void *)&ih->ih_irq,
-		    &evcount_intr);
+		evcount_attach(&ih->ih_count, ih_name, &ih->ih_irq);
 	*p = ih;
 
 	if (++eih->eih_nih == 1) {

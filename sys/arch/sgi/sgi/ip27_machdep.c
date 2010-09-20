@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.51 2010/05/09 18:37:47 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.52 2010/09/20 06:33:47 matthew Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -716,8 +716,7 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	ih->ih_level = level;
 	ih->ih_irq = intrbit;
 	if (name != NULL)
-		evcount_attach(&ih->ih_count, name, &ih->ih_level,
-		    &evcount_intr);
+		evcount_attach(&ih->ih_count, name, &ih->ih_level);
 
 	s = splhigh();
 

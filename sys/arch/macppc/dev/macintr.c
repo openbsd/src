@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.39 2009/10/01 20:19:18 kettenis Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.40 2010/09/20 06:33:47 matthew Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -288,8 +288,7 @@ printf("vI %d ", irq);
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
-	evcount_attach(&ih->ih_count, name, (void *)&m_hwirq[irq],
-	    &evcount_intr);
+	evcount_attach(&ih->ih_count, name, &m_hwirq[irq]);
 	*p = ih;
 
 	return (ih);

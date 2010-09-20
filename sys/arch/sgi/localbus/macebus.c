@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.57 2010/08/23 16:56:18 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.58 2010/09/20 06:33:47 matthew Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -500,8 +500,7 @@ macebus_intr_establish(int irq, uint32_t mace_irqmask, int type, int level,
 	ih->ih.ih_level = level;
 	ih->ih.ih_irq = irq;
 	ih->mace_irqmask = mace_irqmask;
-	evcount_attach(&ih->ih.ih_count, ih_what, (void *)&ih->ih.ih_irq,
-	    &evcount_intr);
+	evcount_attach(&ih->ih.ih_count, ih_what, &ih->ih.ih_irq);
 
 	s = splhigh();
 

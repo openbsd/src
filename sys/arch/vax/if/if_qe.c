@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.24 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.25 2010/09/20 06:33:47 matthew Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -314,8 +314,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr,
 		sc, &sc->sc_intrcnt);
 	sc->sc_cvec = ua->ua_cvec;
-	evcount_attach(&sc->sc_intrcnt, sc->sc_dev.dv_xname,
-	    (void *)&sc->sc_cvec, &evcount_intr);
+	evcount_attach(&sc->sc_intrcnt, sc->sc_dev.dv_xname, &sc->sc_cvec);
 
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;

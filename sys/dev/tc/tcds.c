@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.7 2008/08/09 16:42:30 miod Exp $ */
+/* $OpenBSD: tcds.c,v 1.8 2010/09/20 06:33:48 matthew Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -348,7 +348,7 @@ tcds_intr_establish(tcds, slot, func, arg, name)
 
 	sc->sc_slots[slot].sc_intrhand = func;
 	sc->sc_slots[slot].sc_intrarg = arg;
-	evcount_attach(&sc->sc_slots[slot].sc_count, name, NULL, &evcount_intr);
+	evcount_attach(&sc->sc_slots[slot].sc_count, name, NULL);
 
 	tcds_scsi_reset(&sc->sc_slots[slot]);
 }
