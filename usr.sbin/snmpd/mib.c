@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.40 2010/06/11 10:45:36 jsg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.41 2010/09/20 16:29:51 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1221,7 +1221,7 @@ char	*mib_sensorvalue(struct sensor *);
 int	 mib_memiftable(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid openbsd_mib[] = {
-	{ MIB(sensorMIBObjects),	OID_MIB },
+	{ MIB(sensorsMIBObjects),	OID_MIB },
 	{ MIB(sensorNumber),		OID_RD,	mib_sensornum },
 	{ MIB(sensorIndex),		OID_TRD, mib_sensors },
 	{ MIB(sensorDescr),		OID_TRD, mib_sensors },

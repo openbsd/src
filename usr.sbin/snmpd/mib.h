@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.20 2010/06/11 10:45:36 jsg Exp $	*/
+/*	$OpenBSD: mib.h,v 1.21 2010/09/20 16:29:51 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -398,8 +398,8 @@
 
 /* OPENBSD-MIB */
 #define MIB_pfMIBObjects		MIB_openBSD, 1
-#define MIB_sensorMIBObjects		MIB_openBSD, 2
-#define MIB_sensors			MIB_sensorMIBObjects, 1
+#define MIB_sensorsMIBObjects		MIB_openBSD, 2
+#define MIB_sensors			MIB_sensorsMIBObjects, 1
 #define MIB_sensorNumber		MIB_sensors, 1
 #define MIB_sensorTable			MIB_sensors, 2
 #define MIB_sensorEntry			MIB_sensorTable, 1
@@ -683,7 +683,7 @@
 	{ MIBDECL(vantronix) },				\
 	{ MIBDECL(openBSD) },				\
 							\
-	{ MIBDECL(sensorMIBObjects) },			\
+	{ MIBDECL(sensorsMIBObjects) },			\
 	{ MIBDECL(sensors) },				\
 	{ MIBDECL(sensorNumber) },			\
 	{ MIBDECL(sensorTable) },			\
