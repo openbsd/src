@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: eap.c,v 1.2 2010/09/20 18:06:22 mikeb Exp $	*/
 /*	$vantronix: eap.c,v 1.12 2010/05/31 11:30:08 reyk Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ eap_identity_response(struct eap_message *eap)
 	char				*str;
 	u_int8_t 			*ptr = (u_int8_t *)eap;
 
-	len = betoh16(eap->eap_length - sizeof(*eap));
+	len = betoh16(eap->eap_length) - sizeof(*eap);
 	ptr += sizeof(*eap);
 
 	if (len == 0 || (str = get_string(ptr, len)) == NULL) {
