@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.25 2010/08/27 08:05:01 deraadt Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.26 2010/09/20 07:40:41 deraadt Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -198,7 +198,6 @@ struct gem_softc {
 	/* ========== */
 	int			sc_inited;
 	int			sc_debug;
-	void			*sc_sh;		/* shutdownhook cookie */
 
 	/* Special hardware hooks */
 	void	(*sc_hwreset)(struct gem_softc *);

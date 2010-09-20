@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.19 2009/08/13 14:24:46 jasper Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.20 2010/09/20 07:40:42 deraadt Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -225,11 +225,6 @@ pdq_eisa_attach(parent, self, aux)
 
 	pdq_ifattach(sc, NULL);
 
-	sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset,
-	    sc->sc_pdq);
-	if (sc->sc_ats == NULL)
-		printf("%s: warning: can't establish shutdown hook\n",
-		    self->dv_xname);
 #if !defined(PDQ_IOMAPPED)
 	printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,
 	    maddr + msize - 1);

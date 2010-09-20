@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.9 2010/08/27 17:08:01 jsg Exp $ */
+/*	$OpenBSD: if_de.c,v 1.10 2010/09/20 07:40:41 deraadt Exp $ */
 /*	$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $	*/
 
 /*
@@ -130,7 +130,6 @@ struct	de_softc {
 	int	sc_rindex;		/* UNA index into receive chain */
 	int	sc_xfree;		/* index for next transmit buffer */
 	int	sc_nxmit;		/* # of transmits in progress */
-	void *sc_sh;			/* shutdownhook cookie */
 };
 
 static	int dematch(struct device *, struct cfdata *, void *);
@@ -143,7 +142,6 @@ static	void destop(struct ifnet *, int);
 static	void destart(struct ifnet *);
 static	void derecv(struct de_softc *);
 static	void deintr(void *);
-static	void deshutdown(void *);
 
 struct	cfattach de_ca = {
 	sizeof(struct de_softc), dematch, deattach
@@ -236,8 +234,6 @@ deattach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 	ubmemfree((struct uba_softc *)parent, &sc->sc_ui);
-
-	sc->sc_sh = shutdownhook_establish(deshutdown, sc);
 }
 
 void
@@ -612,15 +608,4 @@ dematch(struct device *parent, struct cfdata *cf, void *aux)
 	DELAY(50000);
 
 	return 1;
-}
-
-void
-deshutdown(void *arg)
-{
-	struct de_softc *sc = arg;
-
-	DE_WCSR(DE_PCSR0, 0);
-	DELAY(1000);
-	DE_WCSR(DE_PCSR0, PCSR0_RSET);
-	dewait(sc, "shutdown");
 }

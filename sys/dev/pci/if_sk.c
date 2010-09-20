@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.157 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.158 2010/09/20 07:40:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -134,7 +134,6 @@
 int skc_probe(struct device *, void *, void *);
 void skc_attach(struct device *, struct device *self, void *aux);
 int skc_detach(struct device *, int);
-void skc_shutdown(void *);
 int sk_probe(struct device *, void *, void *);
 void sk_attach(struct device *, struct device *self, void *aux);
 int sk_detach(struct device *, int);
@@ -1237,8 +1236,6 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc_if->sk_sdhook = shutdownhook_establish(skc_shutdown, sc);
-
 	DPRINTFN(2, ("sk_attach: end\n"));
 	return;
 
@@ -1270,9 +1267,6 @@ sk_detach(struct device *self, int flags)
 
 	/* Delete any remaining media. */
 	ifmedia_delete_instance(&sc_if->sk_mii.mii_media, IFM_INST_ANY);
-
-	if (sc_if->sk_sdhook != NULL)
-		shutdownhook_disestablish(sc_if->sk_sdhook);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -1712,23 +1706,6 @@ sk_watchdog(struct ifnet *ifp)
 
 		sk_init(sc_if);
 	}
-}
-
-void
-skc_shutdown(void *v)
-{
-	struct sk_softc		*sc = v;
-
-	DPRINTFN(2, ("sk_shutdown\n"));
-
-	/* Turn off the 'driver is loaded' LED. */
-	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_OFF);
-
-	/*
-	 * Reset the GEnesis controller. Doing this should also
-	 * assert the resets on the attached XMAC(s).
-	 */
-	sk_reset(sc);
 }
 
 static __inline int

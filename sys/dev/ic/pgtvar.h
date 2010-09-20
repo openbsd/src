@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtvar.h,v 1.12 2010/08/27 20:06:39 deraadt Exp $  */
+/*	$OpenBSD: pgtvar.h,v 1.13 2010/09/20 07:40:41 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -178,8 +178,6 @@ struct pgt_softc {
 	int			(*sc_enable)(struct pgt_softc *);
 	void			(*sc_disable)(struct pgt_softc *);
 	void			(*sc_power)(struct pgt_softc *, int);
-	void			*sc_shutdown_hook;	/* shutdown hook */
-	void			*sc_power_hook;		/* power mgmt hook */
 
 	struct pgt_mgmt_descq	sc_mgmtinprog;
 	struct pgt_descq	sc_freeq[PGT_QUEUE_COUNT];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.2 2009/12/13 13:21:54 kettenis Exp $	*/
+/*	$OpenBSD: ti.c,v 1.3 2010/09/20 07:40:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -132,7 +132,6 @@ void ti_init(void *);
 void ti_init2(struct ti_softc *);
 void ti_stop(struct ti_softc *);
 void ti_watchdog(struct ifnet *);
-void ti_shutdown(void *);
 int ti_ifmedia_upd(struct ifnet *);
 void ti_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -1686,7 +1685,6 @@ ti_attach(struct ti_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	shutdownhook_establish(ti_shutdown, sc);
 	return (0);
 
 fail_3:
@@ -2527,18 +2525,4 @@ ti_stop(struct ti_softc *sc)
 	sc->ti_return_prodidx.ti_idx = 0;
 	sc->ti_tx_considx.ti_idx = 0;
 	sc->ti_tx_saved_considx = TI_TXCONS_UNSET;
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-ti_shutdown(void *xsc)
-{
-	struct ti_softc		*sc;
-
-	sc = xsc;
-
-	ti_chipinit(sc);
 }

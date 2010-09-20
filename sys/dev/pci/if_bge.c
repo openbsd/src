@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.302 2010/09/07 16:21:44 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.303 2010/09/20 07:40:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -154,7 +154,6 @@ void bge_init(void *);
 void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
 void bge_stop(struct bge_softc *);
 void bge_watchdog(struct ifnet *);
-void bge_shutdown(void *);
 int bge_ifmedia_upd(struct ifnet *);
 void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -2263,8 +2262,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->sc_shutdownhook = shutdownhook_establish(bge_shutdown, sc);
-	
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
 	timeout_set(&sc->bge_rxtimeout, bge_rxtick, sc);
 	return;
@@ -3617,19 +3614,6 @@ bge_stop(struct bge_softc *sc)
 
 	/* Clear MAC's link state (PHY may still have link UP). */
 	BGE_STS_CLRBIT(sc, BGE_STS_LINK);
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-bge_shutdown(void *xsc)
-{
-	struct bge_softc *sc = (struct bge_softc *)xsc;
-
-	bge_stop(sc);
-	bge_reset(sc);
 }
 
 void

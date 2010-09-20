@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.101 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.102 2010/09/20 07:40:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -89,7 +89,6 @@ void txp_attach(struct device *, struct device *, void *);
 void txp_attachhook(void *vsc);
 int txp_intr(void *);
 void txp_tick(void *);
-void txp_shutdown(void *);
 int txp_ioctl(struct ifnet *, u_long, caddr_t);
 void txp_start(struct ifnet *);
 void txp_stop(struct txp_softc *);
@@ -242,7 +241,6 @@ txp_attachhook(void *vsc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	shutdownhook_establish(txp_shutdown, sc);
 	splx(s);
 }
 
@@ -867,22 +865,6 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 	r->r_cnt = cnt;
 	if (cnt == 0)
 		ifp->if_timer = 0;
-}
-
-void
-txp_shutdown(void *vsc)
-{
-	struct txp_softc *sc = (struct txp_softc *)vsc;
-
-	/* mask all interrupts */
-	WRITE_REG(sc, TXP_IMR,
-	    TXP_INT_SELF | TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |
-	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
-	    TXP_INT_LATCH);
-
-	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
-	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
-	txp_command(sc, TXP_CMD_HALT, 0, 0, 0, NULL, NULL, NULL, 0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
+/*	$OpenBSD: if_casvar.h,v 1.7 2010/09/20 07:40:38 deraadt Exp $	*/
 
 /*
  *
@@ -171,7 +171,6 @@ struct cas_softc {
 	int			sc_rev;
 	int			sc_inited;
 	int			sc_debug;
-	void			*sc_sh;		/* shutdownhook cookie */
 };
 
 /*

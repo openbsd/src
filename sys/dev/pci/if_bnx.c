@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.89 2010/08/03 16:11:57 jsg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.90 2010/09/20 07:40:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -285,7 +285,6 @@ int	bnx_read_rv2p(struct bnx_softc *sc, int);
 #if 0
 void	bnx_detach(void *);
 #endif
-void	bnx_shutdown(void *);
 
 /****************************************************************************/
 /* BNX Debug Data Structure Dump Routines                                   */
@@ -990,23 +989,6 @@ bnx_detach(void *xsc)
 	return(0);
 }
 #endif
-
-/****************************************************************************/
-/* Device shutdown function.                                                */
-/*                                                                          */
-/* Stops and resets the controller.                                         */
-/*                                                                          */
-/* Returns:                                                                 */
-/*   Nothing                                                                */
-/****************************************************************************/
-void
-bnx_shutdown(void *xsc)
-{
-	struct bnx_softc	*sc = (struct bnx_softc *)xsc;
-
-	bnx_stop(sc);
-	bnx_reset(sc, BNX_DRV_MSG_CODE_RESET);
-}
 
 /****************************************************************************/
 /* Indirect register read.                                                  */

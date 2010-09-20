@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.30 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.31 2010/09/20 07:40:38 deraadt Exp $	*/
 
 /*
  *
@@ -109,7 +109,6 @@ void		cas_stop(struct ifnet *, int);
 int		cas_ioctl(struct ifnet *, u_long, caddr_t);
 void		cas_tick(void *);
 void		cas_watchdog(struct ifnet *);
-void		cas_shutdown(void *);
 int		cas_init(struct ifnet *);
 void		cas_init_regs(struct cas_softc *);
 int		cas_ringsize(int);
@@ -578,10 +577,6 @@ cas_config(struct cas_softc *sc)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	sc->sc_sh = shutdownhook_establish(cas_shutdown, sc);
-	if (sc->sc_sh == NULL)
-		panic("cas_config: can't establish shutdownhook");
 
 	timeout_set(&sc->sc_tick_ch, cas_tick, sc);
 	return;
@@ -1720,16 +1715,6 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	splx(s);
 	return (error);
-}
-
-
-void
-cas_shutdown(void *arg)
-{
-	struct cas_softc *sc = (struct cas_softc *)arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	cas_stop(ifp, 1);
 }
 
 void

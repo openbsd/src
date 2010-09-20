@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.69 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.70 2010/09/20 07:40:38 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -154,7 +154,6 @@ int nge_ioctl(struct ifnet *, u_long, caddr_t);
 void nge_init(void *);
 void nge_stop(struct nge_softc *);
 void nge_watchdog(struct ifnet *);
-void nge_shutdown(void *);
 int nge_ifmedia_mii_upd(struct ifnet *);
 void nge_ifmedia_mii_sts(struct ifnet *, struct ifmediareq *);
 int nge_ifmedia_tbi_upd(struct ifnet *);
@@ -2218,20 +2217,6 @@ nge_stop(sc)
 
 	bzero((char *)&sc->nge_ldata->nge_tx_list,
 		sizeof(sc->nge_ldata->nge_tx_list));
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-nge_shutdown(xsc)
-	void *xsc;
-{
-	struct nge_softc *sc = (struct nge_softc *)xsc;
-
-	nge_reset(sc);
-	nge_stop(sc);
 }
 
 struct cfattach nge_ca = {

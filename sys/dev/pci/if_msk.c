@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.89 2010/09/12 10:39:50 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.90 2010/09/20 07:40:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -136,7 +136,6 @@ void mskc_attach(struct device *, struct device *self, void *aux);
 int mskc_detach(struct device *, int);
 int mskc_activate(struct device *, int);
 void mskc_reset(struct sk_softc *);
-void mskc_shutdown(void *);
 int msk_probe(struct device *, void *, void *);
 void msk_attach(struct device *, struct device *self, void *aux);
 int msk_detach(struct device *, int);
@@ -991,8 +990,6 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 	m_clsetwms(ifp, sc_if->sk_pktlen, 2, MSK_RX_RING_CNT);
 
-	sc_if->sk_sdhook = shutdownhook_establish(mskc_shutdown, sc);
-
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;
 
@@ -1024,9 +1021,6 @@ msk_detach(struct device *self, int flags)
 		return (0);
 
 	msk_stop(sc_if, 1);
-
-	if (sc_if->sk_sdhook != NULL)
-		shutdownhook_disestablish(sc_if->sk_sdhook);
 
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
@@ -1596,23 +1590,6 @@ msk_watchdog(struct ifnet *ifp)
 		msk_reset(sc_if);
 		msk_init(sc_if);
 	}
-}
-
-void
-mskc_shutdown(void *v)
-{
-	struct sk_softc		*sc = v;
-
-	DPRINTFN(2, ("msk_shutdown\n"));
-
-	/* Turn off the 'driver is loaded' LED. */
-	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_OFF);
-
-	/*
-	 * Reset the GEnesis controller. Doing this should also
-	 * assert the resets on the attached XMAC(s).
-	 */
-	mskc_reset(sc);
 }
 
 static __inline int

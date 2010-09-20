@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.65 2010/09/07 16:21:42 deraadt Exp $  */
+/*	$OpenBSD: pgt.c,v 1.66 2010/09/20 07:40:41 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -192,7 +192,6 @@ int	 pgt_dma_alloc(struct pgt_softc *);
 int	 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq);
 void	 pgt_dma_free(struct pgt_softc *);
 void	 pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq);
-void	 pgt_shutdown(void *);
 void	 pgt_resume(void *, void *);
 
 void
@@ -633,12 +632,6 @@ pgt_detach(struct pgt_softc *sc)
 	/* stop card */
 	pgt_stop(sc, SC_DYING);
 	pgt_reboot(sc);
-
-	/*
-	 * Disable shutdown and power hooks
-	 */
-        if (sc->sc_shutdown_hook != NULL)
-                shutdownhook_disestablish(sc->sc_shutdown_hook);
 
 	ieee80211_ifdetach(&sc->sc_ic.ic_if);
 	if_detach(&sc->sc_ic.ic_if);
@@ -2025,14 +2018,6 @@ pgt_net_attach(struct pgt_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(PGT_TX_RADIOTAP_PRESENT);
 #endif
-
-	/*
-         * Enable shutdown and power hooks
-         */
-        sc->sc_shutdown_hook = shutdownhook_establish(pgt_shutdown, sc);
-        if (sc->sc_shutdown_hook == NULL)
-                printf("%s: WARNING: unable to establish shutdown hook\n",
-                    sc->sc_dev.dv_xname);
 	return (0);
 }
 
@@ -3294,16 +3279,6 @@ pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		bus_dmamem_free(sc->sc_dmat, &pd->pd_dmas, 1);
 		free(pd, M_DEVBUF);
 	}
-}
-
-void
-pgt_shutdown(void *arg)
-{
-	struct pgt_softc *sc = arg;
-
-	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
-
-	pgt_stop(sc, SC_DYING);
 }
 
 int

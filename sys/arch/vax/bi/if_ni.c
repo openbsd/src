@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.14 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.15 2010/09/20 07:40:41 deraadt Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -140,7 +140,6 @@ static	int	niioctl(struct ifnet *, u_long, caddr_t);
 static	int	ni_add_rxbuf(struct ni_softc *, struct ni_dg *, int);
 static	void	ni_setup(struct ni_softc *);
 static	void	nitimeout(struct ifnet *);
-static	void	ni_shutdown(void *);
 static	void ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p);
 static	int failtest(struct ni_softc *, int, int, int, char *);
 
@@ -467,9 +466,6 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-	if (shutdownhook_establish(ni_shutdown, sc) == 0)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
 }
 
 /*
@@ -866,20 +862,3 @@ nitimeout(ifp)
 	niinit(sc);
 #endif
 }
-
-/*
- * Shutdown hook.  Make sure the interface is stopped at reboot.
- */
-void
-ni_shutdown(arg)
-	void *arg;
-{
-	struct ni_softc *sc = arg;
-
-        WAITREG(NI_PCR, PCR_OWN);
-        NI_WREG(NI_PCR, PCR_OWN|PCR_SHUTDOWN);
-        WAITREG(NI_PCR, PCR_OWN);
-        WAITREG(NI_PSR, PSR_OWN);
-
-}
-

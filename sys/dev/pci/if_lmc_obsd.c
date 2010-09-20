@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.21 2010/04/08 00:23:53 tedu Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.22 2010/09/20 07:40:38 deraadt Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -102,7 +102,6 @@
  * This file is INCLUDED (gross, I know, but...)
  */
 
-static void lmc_shutdown(void *arg);
 static int lmc_busdma_init(lmc_softc_t * const sc);
 static int lmc_busdma_allocmem(lmc_softc_t * const sc, size_t size,
 	bus_dmamap_t *map_p, lmc_desc_t **desc_p);
@@ -305,27 +304,11 @@ lmc_pci_attach(struct device * const parent,
                (sc->lmc_revinfo & 0xF0) >> 4, sc->lmc_revinfo & 0x0F,
                LMC_EADDR_ARGS(sc->lmc_enaddr), intrstr);
 
-        sc->lmc_ats = shutdownhook_establish(lmc_shutdown, sc);
-        if (sc->lmc_ats == NULL)
-		printf("%s: warning: couldn't establish shutdown hook\n",
-		       sc->lmc_xname);
-
 	s = LMC_RAISESPL();
 	lmc_dec_reset(sc);
 	lmc_reset(sc);
 	lmc_attach(sc);
 	LMC_RESTORESPL(s);
-}
-
-static void
-lmc_shutdown(void *arg)
-{
-	lmc_softc_t * const sc = arg;
-	LMC_CSR_WRITE(sc, csr_busmode, TULIP_BUSMODE_SWRESET);
-	DELAY(10);
-
-	sc->lmc_miireg16 = 0;  /* deassert ready, and all others too */
-	lmc_led_on(sc, LMC_MII16_LED_ALL);
 }
 
 static int

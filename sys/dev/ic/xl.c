@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.96 2010/09/07 16:21:43 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.97 2010/09/20 07:40:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -163,7 +163,6 @@ void xl_start_90xB(struct ifnet *);
 int xl_ioctl(struct ifnet *, u_long, caddr_t);
 void xl_freetxrx(struct xl_softc *);
 void xl_watchdog(struct ifnet *);
-void xl_shutdown(void *);
 int xl_ifmedia_upd(struct ifnet *);
 void xl_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -2677,8 +2676,6 @@ xl_attach(struct xl_softc *sc)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	sc->sc_sdhook = shutdownhook_establish(xl_shutdown, sc);
 }
 
 int
@@ -2699,22 +2696,10 @@ xl_detach(struct xl_softc *sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
 	return (0);
-}
-
-void
-xl_shutdown(void *v)
-{
-	struct xl_softc	*sc = (struct xl_softc *)v;
-
-	xl_reset(sc);
-	xl_stop(sc);
 }
 
 struct cfdriver xl_cd = {
