@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.76 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.77 2010/09/20 07:18:03 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -992,14 +992,15 @@ bad:
 	return (error);
 }
 
+#ifdef COMPAT_O47
 /*
  * Get eid of peer for connected socket.
  */
 /* ARGSUSED */
 int
-sys_getpeereid(struct proc *p, void *v, register_t *retval)
+compat_o47_sys_getpeereid(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_getpeereid_args /* {
+	struct compat_o47_sys_getpeereid_args /* {
 		syscallarg(int) fdes;
 		syscallarg(uid_t *) euid;
 		syscallarg(gid_t *) egid;
@@ -1036,6 +1037,7 @@ bad:
 	m_freem(m);
 	return (error);
 }
+#endif /* COMPAT_O47 */
 
 int
 sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)

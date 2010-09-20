@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.202 2010/07/05 22:26:20 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.203 2010/09/20 07:17:43 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 5 2010 $
+.Dd $Mdocdate: September 20 2010 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -119,6 +119,14 @@ and
 system calls which were replaced in
 .Ox 4.4
 when struct stat was expanded.
+.It Cd option COMPAT_O47
+Enables compatibility with
+.Ox 4.7 .
+This makes it possible to run statically-linked binaries that
+use the
+.Xr getpeereid 2
+system call which was replaced by
+.Xr geteereid 3 .
 .It Cd option COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
