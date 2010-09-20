@@ -1,7 +1,7 @@
-.\"	$OpenBSD: evcount.9,v 1.3 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: evcount.9,v 1.4 2010/09/20 07:09:55 matthew Exp $
 .\" Written by Jared Yanovich
 .\" This file belongs to the public domain, 11/02/2004.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 20 2010 $
 .Dt EVCOUNT 9
 .Os
 .Sh NAME
@@ -12,8 +12,7 @@
 .Sh SYNOPSIS
 .In sys/evcount.h
 .Ft void
-.Fn evcount_attach "struct evcount *ec" "const char *name" "void *data" \
-    "struct evcount *parent"
+.Fn evcount_attach "struct evcount *ec" "const char *name" "void *data"
 .Ft void
 .Fn evcount_detach "struct evcount *ec"
 .Sh DESCRIPTION
@@ -26,13 +25,12 @@ nodes.
 .Ss Overview
 With
 .Nm ,
-an architecture can collect interrupt counting for any device and
-organize the counting hierarchy however it wants.
+an architecture can collect interrupt counting for any device.
 All registered counters will be made available under the
 .Va kern.evcount
 .Xr sysctl 3
 node as a flat list.
-The following is a sample hierarchy for counters provided by some
+The following is a sample list of counters provided by some
 common architectures:
 .Pp
 .Bl -tag -width 8n -offset indent -compact
@@ -51,11 +49,6 @@ PCI IDE controller counter (see
 USB 1.0 controller counter (see
 .Xr usb 4 )
 .El
-.Pp
-Event counters may be organized hierarchically, so a parent
-.Nm
-node that represents a bus may contain child nodes that represent
-devices attached to that bus.
 .Pp
 See
 .Xr intro 4
@@ -78,7 +71,6 @@ struct evcount {
 	u_int64_t		ec_count;	/* main counter */
 	int			ec_id;		/* counter ID */
 	const char		*ec_name;	/* counter name */
-	struct evcount		*ec_parent;	/* parent */
 	void			*ec_data;	/* user data */
 
 	TAILQ_ENTRY(evcount)	next;
@@ -86,12 +78,8 @@ struct evcount {
 .Ed
 .Pp
 The
-.Fn evcount_attach ec name data parent
-function inserts the given event counter
-.Fa ec
-into the given
-.Fa parent Ns 's
-list of counters.
+.Fn evcount_attach ec name data
+function adds the given event counter to the system's counter list.
 .Fa name
 provides the counter name, which is modeled after a
 device, such as
@@ -107,7 +95,7 @@ The
 .Fn evcount_detach ec
 function removes the given event counter
 .Fa ec
-from its parent.
+from the counter list.
 .Sh EXAMPLES
 The following is an outline of code that provides routines to register
 and de-register interrupt handlers for devices, plugging the counting of
@@ -157,10 +145,9 @@ intr_establish(void *lcv, int irq, int type, int level,
 	ih->ih_irq = irq;
 
 	/*
-	 * Attach it under the root event counter, evcount_intr.
+	 * Attach it.
 	 */
-	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
-	    &evcount_intr);
+	evcount_attach(&ih->ih_count, name, &ih->ih_irq);
 
 	return (ih);
 }
