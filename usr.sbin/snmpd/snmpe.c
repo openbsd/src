@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.25 2009/12/16 22:17:53 deraadt Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.26 2010/09/20 08:33:18 martinh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -485,7 +485,8 @@ snmpe_parse(struct sockaddr_storage *ss,
 	struct ber_element	*a, *b, *c, *d, *e, *f, *next, *last;
 	const char		*errstr = "invalid message";
 	long long		 ver, req;
-	unsigned long		 type, errval, erridx;
+	long long		 errval, erridx;
+	unsigned long		 type;
 	u_int			 class, state, i = 0, j = 0;
 	char			*comn, buf[BUFSIZ], host[MAXHOSTNAMELEN];
 	struct ber_oid		 o;
