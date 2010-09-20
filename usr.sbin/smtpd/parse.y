@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2010/09/08 23:32:27 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.66 2010/09/20 09:01:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -805,33 +805,33 @@ user		: USER STRING		{
 action		: DELIVER TO MAILDIR user		{
 			rule->r_user = $4;
 			rule->r_action = A_MAILDIR;
-			if (strlcpy(rule->r_value.path, "~/Maildir",
-			    sizeof(rule->r_value.path)) >=
-			    sizeof(rule->r_value.path))
+			if (strlcpy(rule->r_value.buffer, "~/Maildir",
+			    sizeof(rule->r_value.buffer)) >=
+			    sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
 		}
 		| DELIVER TO MAILDIR STRING user	{
 			rule->r_user = $5;
 			rule->r_action = A_MAILDIR;
-			if (strlcpy(rule->r_value.path, $4,
-			    sizeof(rule->r_value.path)) >=
-			    sizeof(rule->r_value.path))
+			if (strlcpy(rule->r_value.buffer, $4,
+			    sizeof(rule->r_value.buffer)) >=
+			    sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
 			free($4);
 		}
 		| DELIVER TO MBOX			{
 			rule->r_action = A_MBOX;
-			if (strlcpy(rule->r_value.path, _PATH_MAILDIR "/%u",
-			    sizeof(rule->r_value.path))
-			    >= sizeof(rule->r_value.path))
+			if (strlcpy(rule->r_value.buffer, _PATH_MAILDIR "/%u",
+			    sizeof(rule->r_value.buffer))
+			    >= sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
 		}
 		| DELIVER TO MDA STRING user		{
 			rule->r_user = $5;
 			rule->r_action = A_EXT;
-			if (strlcpy(rule->r_value.command, $4,
-			    sizeof(rule->r_value.command))
-			    >= sizeof(rule->r_value.command))
+			if (strlcpy(rule->r_value.buffer, $4,
+			    sizeof(rule->r_value.buffer))
+			    >= sizeof(rule->r_value.buffer))
 				fatal("command too long");
 			free($4);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.117 2010/09/12 22:38:31 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.118 2010/09/20 09:01:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -379,13 +379,13 @@ lka_expand(char *buf, size_t len, struct path *path, struct path *sender)
 	size_t ret, lret = 0;
 	struct passwd *pw;
 
-	bzero(r.r_value.path, MAXPATHLEN);
-	pbuf = r.r_value.path;
+	bzero(r.r_value.buffer, MAX_RULEBUFFER_LEN);
+	pbuf = r.r_value.buffer;
 
 	ret = 0;
-	for (p = path->rule.r_value.path; *p != '\0';
+	for (p = path->rule.r_value.buffer; *p != '\0';
 	    ++p, len -= lret, pbuf += lret, ret += lret) {
-		if (p == path->rule.r_value.path && *p == '~') {
+		if (p == path->rule.r_value.buffer && *p == '~') {
 			if (*(p + 1) == '/' || *(p + 1) == '\0') {
 				pw = getpwnam(path->pw_name);
 				if (pw == NULL)
@@ -475,7 +475,7 @@ copy:
 	}
 
 	/* + 1 to include the NUL byte. */
-	memcpy(path->rule.r_value.path, r.r_value.path, ret + 1);
+	memcpy(path->rule.r_value.buffer, r.r_value.buffer, ret + 1);
 
 	return ret;
 }
@@ -526,9 +526,9 @@ lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expandn
 		log_debug("lka_resolve_node: node is filter: %s",
 		    expnode->u.filter);
 		path->rule.r_action = A_EXT;
-		strlcpy(path->rule.r_value.command, expnode->u.filter + 2,
-		    sizeof(path->rule.r_value.command));
-		path->rule.r_value.command[strlen(path->rule.r_value.command) - 1] = '\0';
+		strlcpy(path->rule.r_value.buffer, expnode->u.filter + 2,
+		    sizeof(path->rule.r_value.buffer));
+		path->rule.r_value.buffer[strlen(path->rule.r_value.buffer) - 1] = '\0';
 		break;
 
 	case EXPAND_ADDRESS:
@@ -678,12 +678,16 @@ lka_queue_append(struct smtpd *env, struct lkasession *s, int status)
 
 	/* send next item to queue */
 	message = s->message;
-	log_debug("lka_expand: before: [%s]", path->rule.r_value.path);
-	ret = lka_expand(path->rule.r_value.path, sizeof(path->rule.r_value.path), path, &message.sender);
-	log_debug("lka_expand: after:  [%s]", path->rule.r_value.path);
-	if (! ret) {
-		log_debug("lka_expand: returned failure.");
-		return 0;
+	if (path->rule.r_action != A_RELAY &&
+	    path->rule.r_action != A_RELAYVIA) {
+		log_debug("lka_expand: before: [%s]", path->rule.r_value.buffer);
+		ret = lka_expand(path->rule.r_value.buffer,
+		    sizeof(path->rule.r_value.buffer), path, &message.sender);
+		log_debug("lka_expand: after:  [%s]", path->rule.r_value.buffer);
+		if (! ret) {
+			log_debug("lka_expand: returned failure.");
+			return 0;
+		}
 	}
 
 	message.recipient = *path;

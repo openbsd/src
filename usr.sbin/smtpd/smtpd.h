@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.193 2010/06/10 19:34:51 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.194 2010/09/20 09:01:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,6 +40,7 @@
 
 /* return and forward path size */
 #define MAX_PATH_SIZE		 256
+#define	MAX_RULEBUFFER_LEN	 256
 
 #define SMTPD_EXPIRE		 (4 * 24 * 60 * 60)
 #define SMTPD_USER		 "_smtpd"
@@ -302,10 +303,8 @@ struct rule {
 	struct cond			 r_condition;
 	enum action_type		 r_action;
 	union rule_dest {
-		char			 path[MAXPATHLEN];
+		char			 buffer[MAX_RULEBUFFER_LEN];
 		struct relayhost       	 relayhost;
-#define	MAXCOMMANDLEN	256
-		char			 command[MAXCOMMANDLEN];
 	}				 r_value;
 
 	char				*r_user;

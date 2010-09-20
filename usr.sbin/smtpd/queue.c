@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.89 2010/07/23 22:23:24 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.90 2010/09/20 09:01:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -239,7 +239,7 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				strlcat(aux, "|", sizeof aux);
 				strlcat(aux, m->recipient.pw_name, sizeof aux);
 				strlcat(aux, "|", sizeof aux);
-				strlcat(aux, m->recipient.rule.r_value.path, sizeof aux);
+				strlcat(aux, m->recipient.rule.r_value.buffer, sizeof aux);
 				break;
 
 			case A_FILENAME:
