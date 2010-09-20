@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.53 2010/08/12 00:26:55 matthew Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.54 2010/09/20 06:17:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -944,7 +944,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 	case REQUEST_SENSE:
 		GDT_DPRINTF(GDT_D_CMD, ("REQUEST SENSE tgt %d ", target));
 		bzero(&sd, sizeof sd);
-		sd.error_code = 0x70;
+		sd.error_code = SSD_ERRCODE_CURRENT;
 		sd.segment = 0;
 		sd.flags = SKEY_NO_SENSE;
 		gdt_enc32(sd.info, 0);
@@ -1002,7 +1002,7 @@ gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->cmdlen > 12 /* XXX create #define */) {
 		GDT_DPRINTF(GDT_D_CMD, ("CDB too big %p ", xs));
 		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.error_code = SSD_ERRCODE_VALID | SSD_ERRCODE_CURRENT;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.94 2010/09/20 06:02:50 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.95 2010/09/20 06:17:49 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1066,7 +1066,7 @@ atascsi_disk_sense(struct scsi_xfer *xs)
 
 	bzero(xs->data, xs->datalen);
 	/* check datalen > sizeof(struct scsi_sense_data)? */
-	sd->error_code = 0x70; /* XXX magic */
+	sd->error_code = SSD_ERRCODE_CURRENT;
 	sd->flags = SKEY_NO_SENSE;
 
 	atascsi_done(xs, XS_NOERROR);

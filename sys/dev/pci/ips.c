@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.102 2010/07/01 16:30:57 deraadt Exp $	*/
+/*	$OpenBSD: ips.c,v 1.103 2010/09/20 06:17:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1009,7 +1009,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		    sc->sc_dev.dv_xname, xs->cmdlen));
 
 		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.error_code = SSD_ERRCODE_VALID | SSD_ERRCODE_CURRENT;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;

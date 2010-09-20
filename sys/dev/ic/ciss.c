@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.62 2010/09/20 04:08:36 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.63 2010/09/20 06:17:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -478,6 +478,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			if (ccb->ccb_xs) {
 				ccb->ccb_xs->error = XS_DRIVER_STUFFUP;
 				scsi_done(ccb->ccb_xs);
+				ccb->ccb_xs = NULL;
 			}
 			return (error);
 		}
@@ -668,7 +669,8 @@ ciss_error(struct ciss_ccb *ccb)
 		    err->err_info, err->err_type[3], err->err_type[2]);
 		if (xs) {
 			bzero(&xs->sense, sizeof(xs->sense));
-			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+			xs->sense.error_code = SSD_ERRCODE_VALID |
+			    SSD_ERRCODE_CURRENT;
 			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 			xs->sense.add_sense_code = 0x24; /* ill field */
 			xs->error = XS_SENSE;
@@ -845,7 +847,7 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->cmdlen > CISS_MAX_CDB) {
 		CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
 		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.error_code = SSD_ERRCODE_VALID | SSD_ERRCODE_CURRENT;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;

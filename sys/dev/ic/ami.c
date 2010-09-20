@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.214 2010/09/02 11:54:44 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.215 2010/09/20 06:17:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1215,7 +1215,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	if (xs->cmdlen > AMI_MAX_CDB) {
 		AMI_DPRINTF(AMI_D_CMD, ("CDB too big %p ", xs));
 		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.error_code = SSD_ERRCODE_VALID | SSD_ERRCODE_CURRENT;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
@@ -1375,7 +1375,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	case REQUEST_SENSE:
 		AMI_DPRINTF(AMI_D_CMD, ("REQUEST SENSE tgt %d ", target));
 		bzero(&sd, sizeof(sd));
-		sd.error_code = 0x70;
+		sd.error_code = SSD_ERRCODE_CURRENT;
 		sd.segment = 0;
 		sd.flags = SKEY_NO_SENSE;
 		*(u_int32_t*)sd.info = htole32(0);

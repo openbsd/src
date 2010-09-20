@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.111 2010/08/29 23:23:31 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.112 2010/09/20 06:17:49 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1087,7 +1087,8 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 			printf("%s: mfi_scsi_cmd poll failed\n",
 			    DEVNAME(sc));
 			bzero(&xs->sense, sizeof(xs->sense));
-			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+			xs->sense.error_code = SSD_ERRCODE_VALID |
+			    SSD_ERRCODE_CURRENT;
 			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 			xs->sense.add_sense_code = 0x20; /* invalid opcode */
 			xs->error = XS_SENSE;

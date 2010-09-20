@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.40 2010/07/01 03:20:38 matthew Exp $	*/
+/*	$OpenBSD: cac.c,v 1.41 2010/09/20 06:17:49 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -611,7 +611,7 @@ cac_scsi_cmd(xs)
 
 	case REQUEST_SENSE:
 		bzero(&sd, sizeof sd);
-		sd.error_code = 0x70;
+		sd.error_code = SSD_ERRCODE_CURRENT;
 		sd.segment = 0;
 		sd.flags = SKEY_NO_SENSE;
 		*(u_int32_t*)sd.info = htole32(0);

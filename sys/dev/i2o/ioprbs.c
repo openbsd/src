@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.22 2010/07/14 06:16:04 matthew Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.23 2010/09/20 06:17:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -714,7 +714,7 @@ ioprbs_internal_cache_cmd(xs)
 	case REQUEST_SENSE:
 		DPRINTF(("REQUEST SENSE tgt %d ", target));
 		bzero(&sd, sizeof sd);
-		sd.error_code = 0x70;
+		sd.error_code = SSD_ERRCODE_CURRENT;
 		sd.segment = 0;
 		sd.flags = SKEY_NO_SENSE;
 		bzero(sd.info, sizeof sd.info);
