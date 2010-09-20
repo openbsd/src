@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.68 2010/08/20 00:53:35 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.69 2010/09/20 19:48:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -60,10 +60,10 @@ static	int	 err_count(struct mdoc *, const char *,
 static	int	 berr_ge1(POST_ARGS);
 static	int	 bwarn_ge1(POST_ARGS);
 static	int	 ebool(POST_ARGS);
-static	int	 eerr_eq0(POST_ARGS);
 static	int	 eerr_eq1(POST_ARGS);
 static	int	 eerr_ge1(POST_ARGS);
 static	int	 eerr_le1(POST_ARGS);
+static	int	 ewarn_eq0(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
 static	int	 herr_eq0(POST_ARGS);
 static	int	 herr_ge1(POST_ARGS);
@@ -113,7 +113,7 @@ static	v_post	 posts_it[] = { post_it, NULL };
 static	v_post	 posts_lb[] = { eerr_eq1, post_lb, NULL };
 static	v_post	 posts_nd[] = { berr_ge1, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
-static	v_post	 posts_notext[] = { eerr_eq0, NULL };
+static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
 static	v_post	 posts_rs[] = { berr_ge1, herr_eq0, post_rs, NULL };
 static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
 static	v_post	 posts_sp[] = { eerr_le1, NULL };
@@ -388,10 +388,10 @@ CHECK_CHILD_DEFN(err, lt, <)			/* err_child_lt() */
 CHECK_CHILD_DEFN(warn, lt, <)			/* warn_child_lt() */
 CHECK_BODY_DEFN(ge1, warn, warn_child_gt, 0)	/* bwarn_ge1() */
 CHECK_BODY_DEFN(ge1, err, err_child_gt, 0)	/* berr_ge1() */
+CHECK_ELEM_DEFN(eq0, warn, warn_child_eq, 0)	/* ewarn_eq0() */
 CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_ge1() */
 CHECK_ELEM_DEFN(eq1, err, err_child_eq, 1)	/* eerr_eq1() */
 CHECK_ELEM_DEFN(le1, err, err_child_lt, 2)	/* eerr_le1() */
-CHECK_ELEM_DEFN(eq0, err, err_child_eq, 0)	/* eerr_eq0() */
 CHECK_ELEM_DEFN(ge1, err, err_child_gt, 0)	/* eerr_ge1() */
 CHECK_HEAD_DEFN(eq0, err, err_child_eq, 0)	/* herr_eq0() */
 CHECK_HEAD_DEFN(le1, warn, warn_child_lt, 2)	/* hwarn_le1() */
