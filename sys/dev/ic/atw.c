@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.73 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.74 2010/09/20 00:11:37 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2292,15 +2292,20 @@ void
 atw_write_sup_rates(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	/* 14 bytes are probably (XXX) reserved in the ADM8211 SRAM for
-	 * supported rates
+	/*
+	 * There is not enough space in the ADM8211 SRAM for the
+	 * full IEEE80211_RATE_MAXSIZE
 	 */
-	u_int8_t buf[roundup(1 /* length */ + IEEE80211_RATE_SIZE, 2)];
+	u_int8_t buf[12];
+	u_int8_t nrates;
 
 	memset(buf, 0, sizeof(buf));
-	buf[0] = ic->ic_bss->ni_rates.rs_nrates;
-	memcpy(&buf[1], ic->ic_bss->ni_rates.rs_rates,
-	    ic->ic_bss->ni_rates.rs_nrates);
+	if (ic->ic_bss->ni_rates.rs_nrates > sizeof(buf) - 1)
+		nrates = sizeof(buf) - 1;
+	else
+		nrates = ic->ic_bss->ni_rates.rs_nrates;
+	buf[0] = nrates;
+	memcpy(&buf[1], ic->ic_bss->ni_rates.rs_rates, nrates);
 
 	/* XXX deal with rev BA bug linux driver talks of? */
 
