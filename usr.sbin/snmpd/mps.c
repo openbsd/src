@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.13 2008/01/18 21:55:42 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.14 2010/09/20 08:56:16 martinh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -114,30 +114,47 @@ mps_getts(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 struct ber_element *
-mps_getreq(struct ber_element *root, struct ber_oid *o)
+mps_getreq(struct ber_element *root, struct ber_oid *o, u_int sm_version)
 {
 	struct ber_element	*elm = root;
 	struct oid		 key, *value;
+	unsigned long		 error_type = 0;	/* noSuchObject */
 
-	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (NULL);
 	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
+	smi_oidlen(&key.o_id);	/* Strip off any trailing .0. */
 	value = smi_find(&key);
 	if (value == NULL)
 		return (NULL);
 	if (OID_NOTSET(value))
 		return (NULL);
-	if ((value->o_flags & OID_TABLE) == 0)
-		elm = ber_add_noid(elm,
-		    &value->o_id, value->o_oidlen + 1);
-	if (value->o_get == NULL)
-		elm = ber_add_null(elm);
-	else
-		if (value->o_get(value, o, &elm) != 0)
-			return (NULL);
 
+	if (value->o_get == NULL)
+		goto fail;
+
+	if (value->o_oidlen == o->bo_n) {
+		/* No instance identifier specified. */
+		error_type = 1;	/* noSuchInstance */
+		goto fail;
+	}
+
+	if ((value->o_flags & OID_TABLE) == 0)
+		elm = ber_add_oid(elm, o);
+	if (value->o_get(value, o, &elm) != 0)
+		return (NULL);
+
+	return (elm);
+
+fail:
+	if (sm_version == 0)
+		return NULL;
+
+	/* Set SNMPv2 extended error response. */
+	elm = ber_add_oid(elm, o);
+	elm = ber_add_null(elm);
+	ber_set_header(elm, BER_CLASS_CONTEXT, error_type);
 	return (elm);
 }
 
@@ -169,11 +186,11 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 	int			 ret;
 	struct ber_oid		 no;
 
-	smi_oidlen(o);
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (NULL);
 	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
+	smi_oidlen(&key.o_id);	/* Strip off any trailing .0. */
 	value = smi_find(&key);
 	if (value == NULL)
 		return (NULL);
@@ -192,6 +209,14 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 		case 1:	/* end-of-rows */
 			break;
 		}
+	} else if (o->bo_n == value->o_oidlen && value->o_get != NULL) {
+		/* No instance identifier specified. Append .0. */
+		if (o->bo_n + 1 > BER_MAX_OID_LEN)
+			return (NULL);
+		ber = ber_add_noid(ber, o, o->bo_n + 1);
+		if ((ret = value->o_get(value, o, &ber)) != 0)
+			return (NULL);
+		return (ber);
 	}
 
 	for (next = value; next != NULL;) {

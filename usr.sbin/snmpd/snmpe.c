@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.26 2010/09/20 08:33:18 martinh Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.27 2010/09/20 08:56:16 martinh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -637,7 +637,8 @@ snmpe_parse(struct sockaddr_storage *ss,
 					break;	/* ignore error */
 				case SNMP_C_GETREQ:
 					c = ber_add_sequence(NULL);
-					if ((d = mps_getreq(c, &o)) != NULL)
+					if ((d = mps_getreq(c, &o,
+					    msg->sm_version)) != NULL)
 						break;
 					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
 					ber_free_elements(c);
