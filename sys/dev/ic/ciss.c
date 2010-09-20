@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.61 2010/07/07 10:12:13 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.62 2010/09/20 04:08:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -615,6 +615,7 @@ ciss_done(struct ciss_ccb *ccb)
 {
 	struct ciss_softc *sc = ccb->ccb_sc;
 	struct scsi_xfer *xs = ccb->ccb_xs;
+        struct ciss_cmd *cmd = &ccb->ccb_cmd;
 	ciss_lock_t lock;
 	int error = 0;
 
@@ -625,7 +626,6 @@ ciss_done(struct ciss_ccb *ccb)
 		    sc->sc_dev.dv_xname, ccb, ccb->ccb_state, CISS_CCB_BITS);
 		return 1;
 	}
-
 	lock = CISS_LOCK(sc);
 	ccb->ccb_state = CISS_CCB_READY;
 
@@ -634,14 +634,14 @@ ciss_done(struct ciss_ccb *ccb)
 
 	if (ccb->ccb_data) {
 		bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize, (xs->flags & SCSI_DATA_IN) ?
+		    ccb->ccb_dmamap->dm_mapsize, (cmd->flags & CISS_CDB_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 	}
 
 	if (xs) {
 		xs->resid = 0;
-		scsi_done(ccb->ccb_xs);
+		scsi_done(xs);
 	}
 
 	CISS_UNLOCK(sc, lock);
