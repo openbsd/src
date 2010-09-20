@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.204 2010/09/20 07:28:23 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.205 2010/09/20 10:36:03 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -112,10 +112,9 @@ See
 Enables compatibility with
 .Ox 4.7 .
 This makes it possible to run statically-linked binaries that
-use the
-.Xr getpeereid 2
-system call which was replaced by
-.Xr geteereid 3 .
+use
+.Xr getpeereid 3
+from the time when it was a system call.
 .It Cd option COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
