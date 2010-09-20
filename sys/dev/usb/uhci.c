@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.82 2010/09/20 03:28:48 jsg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.83 2010/09/20 06:54:10 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1160,7 +1160,6 @@ uhci_intr1(uhci_softc_t *sc)
 	if (sc->sc_suspend != DVACT_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
 		       sc->sc_bus.bdev.dv_xname);
-		UWRITE2(sc, UHCI_STS, status); /* acknowledge the ints */
 		return (0);
 	}
 
