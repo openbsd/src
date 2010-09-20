@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.12 2010/09/19 23:34:33 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.13 2010/09/20 23:37:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,7 +51,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.12 2010/09/19 23:34:33 miod Exp $
+ *      $Id: db_disasm.c,v 1.13 2010/09/20 23:37:08 miod Exp $
  */
 
 #ifdef _KERNEL
@@ -74,7 +74,6 @@
 #include <ddb/db_sym.h>
 #else
 #define db_addr_t uint64_t
-#define	db_printf printf
 #define	db_printsym(addr,flags,fn)	(fn)("%p",addr)
 #endif
 
@@ -574,10 +573,8 @@ static const char *cop0_reg1[32] = {
 	NULL,
 };
 
-static int md_printins(uint32_t ins, db_addr_t mdbdot);
-
-static int
-md_printins(uint32_t ins, db_addr_t mdbdot)
+int
+dbmd_print_insn(uint32_t ins, db_addr_t mdbdot, int (*pr)(const char *, ...))
 {
 	InstFmt i;
 	int delay = 0;
@@ -590,22 +587,22 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 	case OP_SPECIAL:
 		/* recognize nop/ssnop variants of sll early */
 		if (i.word == 0) {
-			db_printf("nop");
+			(*pr)("nop");
 			break;
 		} else if (i.word == 1 << 5) {
-			db_printf("ssnop");
+			(*pr)("ssnop");
 			break;
 		}
 
 		/* display `daddu' involving zero as `move' */
 		if (i.RType.func == OP_DADDU && i.RType.rt == 0) {
-			db_printf("move\t%s,%s",
+			(*pr)("move\t%s,%s",
 			    reg_name[i.RType.rd], reg_name[i.RType.rs]);
 			break;
 		}
 
 		if (i.RType.func == OP_MOVCI) {
-			db_printf("mov%c\t%s,%s,%d",
+			(*pr)("mov%c\t%s,%s,%d",
 			    i.RType.rt & 1 ? 't' : 'f',
 			    reg_name[i.RType.rd], reg_name[i.RType.rs],
 			    i.RType.rt >> 2);
@@ -643,7 +640,7 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 
 		if (insn == NULL)
 			goto unknown;
-		db_printf("%s", insn);
+		(*pr)("%s", insn);
 
 		switch (i.RType.func) {
 		case OP_SLL:
@@ -655,7 +652,7 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 		case OP_DSLL32:
 		case OP_DSRL32:
 		case OP_DSRA32:
-			db_printf("\t%s,%s,%d",
+			(*pr)("\t%s,%s,%d",
 			    reg_name[i.RType.rd], reg_name[i.RType.rt],
 			    i.RType.shamt);
 			break;
@@ -667,28 +664,28 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 		case OP_DSLLV:
 		case OP_DSRLV:
 		case OP_DSRAV:
-			db_printf("\t%s,%s,%s",
+			(*pr)("\t%s,%s,%s",
 			    reg_name[i.RType.rd], reg_name[i.RType.rt],
 			    reg_name[i.RType.rs]);
 			break;
 		case OP_MFHI:
 		case OP_MFLO:
-			db_printf("\t%s", reg_name[i.RType.rd]);
+			(*pr)("\t%s", reg_name[i.RType.rd]);
 			break;
 		case OP_JALR:
 			delay = 1;
 			if (i.RType.rd != RA)
-				db_printf("\t%s,%s",
+				(*pr)("\t%s,%s",
 				    reg_name[i.RType.rd], reg_name[i.RType.rs]);
 			else
-				db_printf("\t%s", reg_name[i.RType.rs]);
+				(*pr)("\t%s", reg_name[i.RType.rs]);
 			break;
 		case OP_JR:
 			delay = 1;
 			/* FALLTHROUGH */
 		case OP_MTLO:
 		case OP_MTHI:
-			db_printf("\t%s", reg_name[i.RType.rs]);
+			(*pr)("\t%s", reg_name[i.RType.rs]);
 			break;
 		case OP_MULT:
 		case OP_MULTU:
@@ -704,20 +701,20 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 		case OP_TLTU:
 		case OP_TEQ:
 		case OP_TNE:
-			db_printf("\t%s,%s",
+			(*pr)("\t%s,%s",
 			    reg_name[i.RType.rs], reg_name[i.RType.rt]);
 			break;
 		case OP_SYSCALL:
 			if ((ins >> 6) != 0)
-				db_printf("\t%d", ins >> 6);
+				(*pr)("\t%d", ins >> 6);
 			break;
 		case OP_SYNC:
 			break;
 		case OP_BREAK:
-			db_printf("\t%d", ins >> 16);
+			(*pr)("\t%d", ins >> 16);
 			break;
 		default:
-			db_printf("\t%s,%s,%s",
+			(*pr)("\t%s,%s,%s",
 			    reg_name[i.RType.rd], reg_name[i.RType.rs],
 			    reg_name[i.RType.rt]);
 		};
@@ -728,27 +725,27 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 		if (insn == NULL)
 			goto unknown;
 		if (i.IType.rt == 31) {	/* synci */
-			db_printf("%s\t", insn);
+			(*pr)("%s\t", insn);
 			goto loadstore;
 		}
-		db_printf("%s\t%s,", insn, reg_name[i.IType.rs]);
+		(*pr)("%s\t%s,", insn, reg_name[i.IType.rs]);
 		if ((i.IType.rt & 0x18) == 0x08)	/* trap, not branch */
-			db_printf("%d", i.IType.imm);
+			(*pr)("%d", i.IType.imm);
 		else
 			goto pr_displ;
 
 	case OP_J:
 	case OP_JAL:
 		delay = 1;
-		db_printf("%s\t", insn);
+		(*pr)("%s\t", insn);
 		db_printsym((mdbdot & ~0x0fffffffUL) |
-		    (db_addr_t)(i.JType.target << 2), DB_STGY_PROC, db_printf);
+		    (db_addr_t)(i.JType.target << 2), DB_STGY_PROC, pr);
 		break;
 
 	case OP_BEQ:
 	case OP_BEQL:
 		if (i.IType.rs == ZERO && i.IType.rt == ZERO) {
-			db_printf("b\t");
+			(*pr)("b\t");
 			goto pr_displ;
 		}
 		/* FALLTHROUGH */
@@ -758,25 +755,23 @@ md_printins(uint32_t ins, db_addr_t mdbdot)
 			if (i.IType.op == OP_BEQL || i.IType.op == OP_BNEL) {
 				/* get the non-l opcode name */
 				insn = op_name[i.IType.op & 0x07];
-				db_printf("%szl\t%s,",
-				    insn, reg_name[i.IType.rs]);
+				(*pr)("%szl\t%s,", insn, reg_name[i.IType.rs]);
 			} else
-				db_printf("%sz\t%s,",
-				    insn, reg_name[i.IType.rs]);
+				(*pr)("%sz\t%s,", insn, reg_name[i.IType.rs]);
 		} else
-			db_printf("%s\t%s,%s,", insn,
+			(*pr)("%s\t%s,%s,", insn,
 			    reg_name[i.IType.rs], reg_name[i.IType.rt]);
 pr_displ:
 		delay = 1;
 		db_printsym(mdbdot + 4 + ((int16_t)i.IType.imm << 2),
-		    DB_STGY_PROC, db_printf);
+		    DB_STGY_PROC, pr);
 		break;
 
 	case OP_BLEZ:
 	case OP_BGTZ:
 	case OP_BLEZL:
 	case OP_BGTZL:
-		db_printf("%s\t%s,", insn, reg_name[i.IType.rs]);
+		(*pr)("%s\t%s,", insn, reg_name[i.IType.rs]);
 		goto pr_displ;
 
 	case OP_ADDI:
@@ -784,7 +779,7 @@ pr_displ:
 	case OP_DADDI:
 	case OP_DADDIU:
 		if (i.IType.rs == 0) {
-			db_printf("li\t%s,%d",
+			(*pr)("li\t%s,%d",
 			    reg_name[i.IType.rt], (int16_t)i.IType.imm);
 			break;
 		}
@@ -793,31 +788,29 @@ pr_displ:
 	case OP_SLTIU:
 	default:
 		if (insn != NULL)
-			db_printf("%s\t%s,%s,%d", insn,
+			(*pr)("%s\t%s,%s,%d", insn,
 			    reg_name[i.IType.rt], reg_name[i.IType.rs],
 			    (int16_t)i.IType.imm);
 		else {
 unknown:
-			db_printf(".word\t%08x", ins);
+			(*pr)(".word\t%08x", ins);
 		}
 		break;
 
 	case OP_ORI:
 	case OP_XORI:
 		if (i.IType.rs == 0) {
-			db_printf("li\t%s,0x%x",
-			    reg_name[i.IType.rt], i.IType.imm);
+			(*pr)("li\t%s,0x%x", reg_name[i.IType.rt], i.IType.imm);
 			break;
 		}
 		/* FALLTHROUGH */
 	case OP_ANDI:
-		db_printf("%s\t%s,%s,0x%x", insn,
+		(*pr)("%s\t%s,%s,0x%x", insn,
 		    reg_name[i.IType.rt], reg_name[i.IType.rs], i.IType.imm);
 		break;
 
 	case OP_LUI:
-		db_printf("%s\t%s,0x%x", insn,
-		    reg_name[i.IType.rt], i.IType.imm);
+		(*pr)("%s\t%s,0x%x", insn, reg_name[i.IType.rt], i.IType.imm);
 		break;
 
 	case OP_COP0:
@@ -834,14 +827,14 @@ unknown:
 			else
 				descr = cop0_reg0[i.RType.rd];
 			if (descr != NULL)
-				db_printf("%s0\t%s,%d # %s", insn,
+				(*pr)("%s0\t%s,%d # %s", insn,
 				    reg_name[i.RType.rt], i.RType.rd, descr);
 			else
-				db_printf("%s0\t%s,%d", insn,
+				(*pr)("%s0\t%s,%d", insn,
 				    reg_name[i.RType.rt], i.RType.rd);
 			break;
 		case OP_BC:
-			db_printf("bc0%c%c\t",
+			(*pr)("bc0%c%c\t",
 			    i.RType.rt & COPz_BC_TF_MASK ? 't' : 'f',
 			    i.RType.rt & COPz_BCL_TF_MASK ? 'l' : ' ');
 			goto pr_displ;
@@ -850,7 +843,7 @@ unknown:
 			if (insn == NULL)
 				goto unknown;
 			else
-				db_printf("%s", insn);
+				(*pr)("%s", insn);
 		default:
 			goto unknown;
 		};
@@ -867,11 +860,11 @@ unknown:
 		case OP_CT:
 		case OP_MTH:
 			insn = cop_std[i.RType.rs];
-			db_printf("%s1\t%s,f%d", insn,
+			(*pr)("%s1\t%s,f%d", insn,
 			    reg_name[i.RType.rt], i.RType.rd);
 			break;
 		case OP_BC:
-			db_printf("bc1%c%c\t",
+			(*pr)("bc1%c%c\t",
 			    i.RType.rt & COPz_BC_TF_MASK ? 't' : 'f',
 			    i.RType.rt & COPz_BCL_TF_MASK ? 'l' : ' ');
 			goto pr_displ;
@@ -880,7 +873,7 @@ unknown:
 				goto unknown;
 			if (i.FRType.func == 0x11) {	/* movcf */
 				insn = i.FRType.ft & 1 ? "movt" : "movf";
-				db_printf("%s.%s\tf%d,f%d,%d",
+				(*pr)("%s.%s\tf%d,f%d,%d",
 				    insn, fmt_name[i.FRType.fmt],
 				    i.FRType.fd, i.FRType.fs, i.FRType.ft >> 2);
 				break;
@@ -888,7 +881,7 @@ unknown:
 			insn = cop1_name[i.FRType.func];
 			if (insn == NULL)
 				goto unknown;
-			db_printf("%s.%s\tf%d,f%d,f%d",
+			(*pr)("%s.%s\tf%d,f%d,f%d",
 			    insn, fmt_name[i.FRType.fmt],
 			    i.FRType.fd, i.FRType.fs, i.FRType.ft);
 		};
@@ -905,11 +898,11 @@ unknown:
 		case OP_CT:
 		case OP_MTH:
 			insn = cop_std[i.RType.rs];
-			db_printf("%s2\t%s,f%d", insn,
+			(*pr)("%s2\t%s,f%d", insn,
 			    reg_name[i.RType.rt], i.RType.rd);
 			break;
 		case OP_BC:
-			db_printf("bc2%c%c\t",
+			(*pr)("bc2%c%c\t",
 			    i.RType.rt & COPz_BC_TF_MASK ? 't' : 'f',
 			    i.RType.rt & COPz_BCL_TF_MASK ? 'l' : ' ');
 			goto pr_displ;
@@ -927,7 +920,7 @@ unknown:
 			if (fmt_name[i.FQType.fmt3] == NULL)
 				goto unknown;
 			insn = cop1x_op4[i.FQType.op4];
-			db_printf("%s.%s\tf%d,f%d,f%d,f%d",
+			(*pr)("%s.%s\tf%d,f%d,f%d,f%d",
 			    insn, fmt_name[i.FQType.fmt3],
 			    i.FQType.fd, i.FQType.fr,
 			    i.FQType.fs, i.FQType.ft);
@@ -937,18 +930,18 @@ unknown:
 			switch (i.FRType.func) {
 			case OP_LWXC1:
 			case OP_LDXC1:
-				db_printf("%s\tf%d,%s(%s)", insn,
+				(*pr)("%s\tf%d,%s(%s)", insn,
 				    i.FQType.fd, reg_name[i.FQType.ft],
 				    reg_name[i.FQType.fr]);
 				break;
 			case OP_SWXC1:
 			case OP_SDXC1:
-				db_printf("%s\tf%d,%s(%s)", insn,
+				(*pr)("%s\tf%d,%s(%s)", insn,
 				    i.FQType.fs, reg_name[i.FQType.ft],
 				    reg_name[i.FQType.fr]);
 				break;
 			case OP_PREFX:
-				db_printf("%s\t%d,%s(%s)", insn,
+				(*pr)("%s\t%d,%s(%s)", insn,
 				    i.FQType.fs, reg_name[i.FQType.ft],
 				    reg_name[i.FQType.fr]);
 				break;
@@ -980,14 +973,13 @@ unknown:
 	case OP_SC:
 	case OP_SCD:
 	case OP_SD:
-		db_printf("%s\t%s,", insn, reg_name[i.IType.rt]);
+		(*pr)("%s\t%s,", insn, reg_name[i.IType.rt]);
 loadstore:
-		db_printf("%d(%s)",
-		    (int16_t)i.IType.imm, reg_name[i.IType.rs]);
+		(*pr)("%d(%s)", (int16_t)i.IType.imm, reg_name[i.IType.rs]);
 		break;
 
 	case OP_CACHE:
-		db_printf("%s\t0x%x,", insn, i.IType.rt);
+		(*pr)("%s\t0x%x,", insn, i.IType.rt);
 		goto loadstore;
 		break;
 
@@ -1001,14 +993,14 @@ loadstore:
 	case OP_SWC3:
 	case OP_SDC1:
 	case OP_SDC2:
-		db_printf("%s\tf%d,", insn, i.IType.rt);
+		(*pr)("%s\tf%d,", insn, i.IType.rt);
 		goto loadstore;
 
 	case OP_PREF:
-		db_printf("%s\t%d,", insn, i.IType.rt);
+		(*pr)("%s\t%d,", insn, i.IType.rt);
 		goto loadstore;
 	}
-	db_printf("\n");
+	(*pr)("\n");
 	return delay;
 }
 
@@ -1018,11 +1010,11 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 {
 	extern uint32_t kdbpeek(vaddr_t);
 
-	if (md_printins(kdbpeek(loc), loc)) {
+	if (dbmd_print_insn(kdbpeek(loc), loc, db_printf)) {
 		loc += 4;
 		db_printsym(loc, DB_STGY_ANY, db_printf);
 		db_printf(":\t ");
-		md_printins(kdbpeek(loc), loc);
+		dbmd_print_insn(kdbpeek(loc), loc, db_printf);
 	}
 	loc += 4;
 	return loc;
@@ -1039,7 +1031,7 @@ main()
 
 	do {
 		printf("%08x\t", insn);
-		md_printins(insn, 0);
+		dbmd_print_insn(insn, 0, printf);
 		insn++;
 		if ((insn & 0x00ffffff) == 0)
 			fprintf(stderr, "%08x\n", insn);
