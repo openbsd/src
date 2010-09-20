@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.93 2010/09/08 15:16:22 jsing Exp $ */
+/*	$OpenBSD: wd.c,v 1.94 2010/09/20 01:24:08 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -380,8 +380,6 @@ wdactivate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_SUSPEND:
 		wd_flushcache(wd, AT_POLL);
 		wd_standby(wd, AT_POLL);
@@ -397,11 +395,6 @@ wdactivate(struct device *self, int act)
 		delay(10000);
 		wdc_reset_channel(wd->drvp);
 		wdc_enable_intr(wd->drvp->chnl_softc);
-		break;
-	case DVACT_DEACTIVATE:
-		/*
-		* Nothing to do; we key off the device's DVF_ACTIVATE.
-		*/
 		break;
 	}
 	return (rv);
