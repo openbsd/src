@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.697 2010/09/21 02:51:35 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.698 2010/09/21 03:42:17 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -184,9 +184,6 @@ static __inline int	 pf_create_state(struct pf_rule *, struct pf_rule *,
 			    struct pf_rule_actions *, struct pf_src_node *[]);
 int			 pf_state_key_setup(struct pf_pdesc *, struct
 			    pf_state_key **, struct pf_state_key **, int);
-void			 pf_translate(struct pf_pdesc *, struct pf_addr *,
-			    u_int16_t, struct pf_addr *, u_int16_t, u_int16_t,
-			    int, struct mbuf *);
 int			 pf_test_fragment(struct pf_rule **, int,
 			    struct pfi_kif *, struct mbuf *, void *,
 			    struct pf_pdesc *, struct pf_rule **,
@@ -3075,11 +3072,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 				sk = sks;
 			else
 				sk = skw;
-			pf_translate(pd,
+			rewrite += pf_translate(pd,
 			    &sk->addr[pd->sidx], sk->port[pd->sidx],
 			    &sk->addr[pd->didx], sk->port[pd->didx],
 			    virtual_type, icmp_dir, m);
-			rewrite = 1;
 		}
 	} else {
 		while ((ri = SLIST_FIRST(&rules))) {
@@ -3309,41 +3305,60 @@ csfailed:
 	return (PF_DROP);
 }
 
-void
+int
 pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
     struct pf_addr *daddr, u_int16_t dport, u_int16_t virtual_type,
     int icmp_dir, struct mbuf *m)
 {
+	/*
+	 * when called from bpf_mtap_pflog, there are extra constraints:
+	 * -mbuf is faked, m_data is the bpf buffer
+	 * -pd is not fully set up
+	 */
+	int	rewrite = 0;
+
 	if (PF_ANEQ(daddr, pd->dst, pd->af))
 		pd->destchg = 1;
 
 	switch (pd->proto) {
 	case IPPROTO_TCP:
-		if (PF_ANEQ(saddr, pd->src, pd->af) || *pd->sport != sport)
+		if (PF_ANEQ(saddr, pd->src, pd->af) || *pd->sport != sport) {
 			pf_change_ap(pd->src, pd->sport, pd->ip_sum,
-			    &pd->hdr.tcp->th_sum, saddr, sport, 0, pd->af);
-		if (PF_ANEQ(daddr, pd->dst, pd->af) || *pd->dport != dport)
+			    &pd->hdr.tcp->th_sum, saddr, sport, 0, pd->af);	
+			rewrite = 1;
+		}
+		if (PF_ANEQ(daddr, pd->dst, pd->af) || *pd->dport != dport) {
 			pf_change_ap(pd->dst, pd->dport, pd->ip_sum,
 			    &pd->hdr.tcp->th_sum, daddr, dport, 0, pd->af);
+			rewrite = 1;
+		}
 		break;
 
 	case IPPROTO_UDP:
-		if (PF_ANEQ(saddr, pd->src, pd->af) || *pd->sport != sport)
+		if (PF_ANEQ(saddr, pd->src, pd->af) || *pd->sport != sport) {
 			pf_change_ap(pd->src, pd->sport, pd->ip_sum,
 			    &pd->hdr.udp->uh_sum, saddr, sport, 1, pd->af);
-		if (PF_ANEQ(daddr, pd->dst, pd->af) || *pd->dport != dport)
+			rewrite = 1;
+		}
+		if (PF_ANEQ(daddr, pd->dst, pd->af) || *pd->dport != dport) {
 			pf_change_ap(pd->dst, pd->dport, pd->ip_sum,
 			    &pd->hdr.udp->uh_sum, daddr, dport, 1, pd->af);
+			rewrite = 1;
+		}
 		break;
 
 #ifdef INET
 	case IPPROTO_ICMP:
-		if (PF_ANEQ(saddr, pd->src, pd->af))
+		if (PF_ANEQ(saddr, pd->src, pd->af)) {
 			pf_change_a(&pd->src->v4.s_addr, pd->ip_sum,
 			    saddr->v4.s_addr, 0);
-		if (PF_ANEQ(daddr, pd->dst, pd->af))
+			rewrite = 1;
+		}
+		if (PF_ANEQ(daddr, pd->dst, pd->af)) {
 			pf_change_a(&pd->dst->v4.s_addr, pd->ip_sum,
 			    daddr->v4.s_addr, 0);
+			rewrite = 1;
+		}
 		if (virtual_type == htons(ICMP_ECHO)) {
 			u_int16_t icmpid = (icmp_dir == PF_IN) ? sport : dport;
 
@@ -3352,6 +3367,7 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 				    pd->hdr.icmp->icmp_cksum,
 				    pd->hdr.icmp->icmp_id, icmpid, 0);
 				pd->hdr.icmp->icmp_id = icmpid;
+				rewrite = 1;
 			}
 		}
 		break;
@@ -3360,12 +3376,16 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 #ifdef INET6
 	case IPPROTO_ICMPV6:
 		if (pd->af == AF_INET6) {
-			if (PF_ANEQ(saddr, pd->src, pd->af))
+			if (PF_ANEQ(saddr, pd->src, pd->af)) {
 				pf_change_a6(pd->src,
 				    &pd->hdr.icmp6->icmp6_cksum, saddr, 0);
-			if (PF_ANEQ(daddr, pd->dst, pd->af))
+				rewrite = 1;
+			}
+			if (PF_ANEQ(daddr, pd->dst, pd->af)) {
 				pf_change_a6(pd->dst,
 				    &pd->hdr.icmp6->icmp6_cksum, daddr, 0);
+				rewrite = 1;
+			}
 			break;
 		}
 		/* FALLTHROUGH */
@@ -3375,24 +3395,33 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 		switch (pd->af) {
 #ifdef INET
 		case AF_INET:
-			if (PF_ANEQ(saddr, pd->src, pd->af))
+			if (PF_ANEQ(saddr, pd->src, pd->af)) {
 				pf_change_a(&pd->src->v4.s_addr, pd->ip_sum,
 				    saddr->v4.s_addr, 0);
-			if (PF_ANEQ(daddr, pd->dst, pd->af))
+				rewrite = 1;
+			}
+			if (PF_ANEQ(daddr, pd->dst, pd->af)) {
 				pf_change_a(&pd->dst->v4.s_addr, pd->ip_sum,
 				    daddr->v4.s_addr, 0);
+				rewrite = 1;
+			}
 			break;
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
-			if (PF_ANEQ(saddr, pd->src, pd->af))
+			if (PF_ANEQ(saddr, pd->src, pd->af)) {
 				pf_change_a6(pd->src, pd->ip_sum, saddr, 0);
-			if (PF_ANEQ(daddr, pd->dst, pd->af))
+				rewrite = 1;
+			}
+			if (PF_ANEQ(daddr, pd->dst, pd->af)) {
 				pf_change_a6(pd->dst, pd->ip_sum, daddr, 0);
+				rewrite = 1;
+			}
 			break;
 #endif /* INET6 */
 		}
 	}
+	return (rewrite);
 }
 
 int

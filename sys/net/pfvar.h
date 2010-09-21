@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.312 2010/09/21 02:51:35 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.313 2010/09/21 03:42:17 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1796,6 +1796,8 @@ int	pf_socket_lookup(int, struct pf_pdesc *);
 struct pf_state_key *pf_alloc_state_key(int);
 void	pf_pkt_addr_changed(struct mbuf *);
 int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
+int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
+	    struct pf_addr *, u_int16_t, u_int16_t, int, struct mbuf *);
 
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
