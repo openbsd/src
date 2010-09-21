@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.49 2010/08/20 23:34:00 schwarze Exp $ */
+/*	$Id: term.c,v 1.50 2010/09/21 22:33:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -79,7 +79,7 @@ term_alloc(enum termenc enc)
 	p = calloc(1, sizeof(struct termp));
 	if (NULL == p) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 
 	p->enc = enc;
@@ -454,7 +454,6 @@ void
 term_word(struct termp *p, const char *word)
 {
 	const char	*sv, *seq;
-	int		 sz;
 	size_t		 ssz;
 	enum roffdeco	 deco;
 
@@ -511,7 +510,7 @@ term_word(struct termp *p, const char *word)
 			continue;
 
 		seq = ++word;
-		sz = a2roffdeco(&deco, &seq, &ssz);
+		word += a2roffdeco(&deco, &seq, &ssz);
 
 		switch (deco) {
 		case (DECO_RESERVED):
@@ -538,7 +537,6 @@ term_word(struct termp *p, const char *word)
 			break;
 		}
 
-		word += sz;
 		if (DECO_NOSPACE == deco && '\0' == *word)
 			p->flags |= TERMP_NOSPACE;
 	}
@@ -572,7 +570,7 @@ adjbuf(struct termp *p, size_t sz)
 	p->buf = realloc(p->buf, p->maxcols);
 	if (NULL == p->buf) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 }
 
@@ -641,10 +639,48 @@ term_len(const struct termp *p, size_t sz)
 size_t
 term_strlen(const struct termp *p, const char *cp)
 {
-	size_t		 sz;
+	size_t		 sz, ssz, rsz, i;
+	enum roffdeco	 d;
+	const char	*seq, *rhs;
 
-	for (sz = 0; *cp; cp++)
-		sz += (*p->width)(p, *cp);
+	for (sz = 0; '\0' != *cp; )
+		/*
+		 * Account for escaped sequences within string length
+		 * calculations.  This follows the logic in term_word()
+		 * as we must calculate the width of produced strings.
+		 */
+		if ('\\' == *cp) {
+			seq = ++cp;
+			cp += a2roffdeco(&d, &seq, &ssz);
+
+			switch (d) {
+			case (DECO_RESERVED):
+				rhs = chars_res2str
+					(p->symtab, seq, ssz, &rsz);
+				break;
+			case (DECO_SPECIAL):
+				/* FALLTHROUGH */
+			case (DECO_SSPECIAL):
+				rhs = chars_spec2str
+					(p->symtab, seq, ssz, &rsz);
+
+				/* Allow for one-char escapes. */
+				if (DECO_SSPECIAL != d || rhs)
+					break;
+
+				rhs = seq;
+				rsz = ssz;
+				break;
+			default:
+				rhs = NULL;
+				break;
+			}
+
+			if (rhs)
+				for (i = 0; i < rsz; i++)
+					sz += (*p->width)(p, *rhs++);
+		} else
+			sz += (*p->width)(p, *cp++);
 
 	return(sz);
 }

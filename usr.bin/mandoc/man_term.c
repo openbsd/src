@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.45 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.46 2010/09/21 22:33:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -911,6 +911,10 @@ print_man_foot(struct termp *p, const void *arg)
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
 	p->rmargin = p->maxrmargin - term_strlen(p, buf);
 	p->offset = 0;
+
+	/* term_strlen() can return zero. */
+	if (p->rmargin == p->maxrmargin)
+		p->rmargin--;
 
 	if (meta->source)
 		term_word(p, meta->source);
