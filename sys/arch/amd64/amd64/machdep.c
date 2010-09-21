@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 2010/08/05 21:10:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.120 2010/09/21 01:04:12 matthew Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1775,6 +1775,10 @@ splassert_check(int wantipl, const char *func)
 
 	if (cpl < wantipl) {
 		splassert_fail(wantipl, cpl, func);
+	}
+
+	if (wantipl == IPL_NONE && curcpu()->ci_idepth != 0) {
+		splassert_fail(-1, curcpu()->ci_idepth, func);
 	}
 }
 #endif
