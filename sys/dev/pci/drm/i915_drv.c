@@ -3721,29 +3721,27 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
 			  args->handle);
 		return (EBADF);
 	}
-
-	/*
-	 * Update the active list for the hardware's current position.
-	 * otherwise this will only update on a delayed timer or when
-	 * the irq is unmasked. This keeps our working set smaller.
-	 */
-	i915_gem_retire_requests(dev_priv);
-
+	
 	obj_priv = (struct inteldrm_obj *)obj;
-	/* Count all active objects as busy, even if they are currently not
-	 * used by the gpu. Users of this interface expect objects to eventually
-	 * become non-busy without any further actions, therefore emit any
-	 * necessary flushes here.
-	 */
 	args->busy = inteldrm_is_active(obj_priv);
-
-	/* Unconditionally flush objects, even when the gpu still uses them.
-	 * Userspace calling this function indicates that it wants to use
-	 * this buffer sooner rather than later, so flushing now helps.
-	 */
-	if (obj->write_domain && i915_gem_flush(dev_priv,
-	    obj->write_domain, obj->write_domain) == 0)
-		ret = ENOMEM;
+	if (args->busy) {
+		/*
+		 * Unconditionally flush objects write domain if they are
+		 * busy. The fact userland is calling this ioctl means that
+		 * it wants to use this buffer sooner rather than later, so
+		 * flushing now shoul reduce latency.
+		 */
+		if (obj->write_domain)
+			(void)i915_gem_flush(dev_priv, obj->write_domain,
+			    obj->write_domain);
+		/*
+		 * Update the active list after the flush otherwise this is
+		 * only updated on a delayed timer. Updating now reduces 
+		 * working set size.
+		 */
+		i915_gem_retire_requests(dev_priv);
+		args->busy = inteldrm_is_active(obj_priv);
+	}
 
 	drm_unref(&obj->uobj);
 	return (ret);
