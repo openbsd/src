@@ -2378,7 +2378,7 @@ _krb5_aes_cts_encrypt(const unsigned char *in, unsigned char *out,
 
     /*
      * In the framework of kerberos, the length can never be shorter
-     * then at least one blocksize.
+     * than at least one blocksize.
      */
 
     if (encrypt) {
@@ -3452,8 +3452,8 @@ decrypt_internal_derived(krb5_context context,
     }
 
     if (len < checksum_sz + et->confoundersize) {
-	krb5_set_error_string(context, "Encrypted data shorter then "
-				  "checksum + confunder");
+	krb5_set_error_string(context, "Encrypted data shorter than "
+				  "checksum + confounder");
 	return KRB5_BAD_MSIZE;
     }
 
