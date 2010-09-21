@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.193 2010/09/20 02:51:52 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.194 2010/09/21 12:20:53 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -850,8 +850,12 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
 		free(lp, M_TEMP);
 		break;
-	case DIOCGDINFO:
+
 	case DIOCGPDINFO:
+		cdgetdisklabel(dev, sc, (struct disklabel *)addr, 1);
+		break;
+
+	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		break;
 

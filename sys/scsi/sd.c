@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.215 2010/09/20 02:51:52 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.216 2010/09/21 12:20:53 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -904,6 +904,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
 		free(lp, M_TEMP);
 		goto exit;
+
 	case DIOCGPDINFO:
 		sdgetdisklabel(dev, sc, (struct disklabel *)addr, 1);
 		goto exit;
