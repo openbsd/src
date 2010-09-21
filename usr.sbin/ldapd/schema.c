@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.11 2010/09/03 09:53:24 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.12 2010/09/21 10:41:32 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1007,8 +1007,10 @@ schema_parse(struct schema *schema, const char *filename)
 
 	log_debug("parsing schema file '%s'", filename);
 
-	if ((schema->fp = fopen(filename, "r")) == NULL)
+	if ((schema->fp = fopen(filename, "r")) == NULL) {
+		log_warn("%s", filename);
 		return -1;
+	}
 	schema->filename = filename;
 	schema->lineno = 1;
 
