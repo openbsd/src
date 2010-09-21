@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.701 2010/09/21 10:37:33 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.702 2010/09/21 10:43:41 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2969,10 +2969,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	a = *am;
 	ruleset = *rsm;
 
-	/* apply actions for last matching rule */
-	if (lastr && lastr->action != PF_MATCH) {
-		pf_rule_to_actions(lastr, &act);
-		if (pf_get_transaddr(lastr, pd, sns) == -1) {
+	/* apply actions for last matching pass/block rule */
+	if (r) {
+		pf_rule_to_actions(r, &act);
+		if (pf_get_transaddr(r, pd, sns) == -1) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			goto cleanup;
 		}
