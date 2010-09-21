@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.698 2010/09/21 03:42:17 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.699 2010/09/21 04:09:33 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2981,7 +2981,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (act.log) {
 		struct pf_rule_item *mr;
 
-		/* XXX this is BEFORE nat/rdr are actually applied! */ 
 		if (r->log)
 			PFLOG_PACKET(kif, h, m, af, direction, reason,
 			    r, a, ruleset, pd);
