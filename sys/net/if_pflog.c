@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.31 2010/09/21 11:29:12 henning Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.32 2010/09/21 22:49:14 sthen Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -288,7 +288,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 
 	struct pf_pdesc		 pd;
 	struct pf_addr		 osaddr, odaddr;
-	u_int16_t		 osport, odport;
+	u_int16_t		 osport = 0, odport = 0;
 
 	m = src_arg;
 	dst = dst_arg;
@@ -340,8 +340,10 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 
 	PF_ACPY(&osaddr, pd.src, pd.af);
 	PF_ACPY(&odaddr, pd.dst, pd.af);
-	osport = *pd.sport;
-	odport = *pd.dport;
+	if (pd.sport)
+		osport = *pd.sport;
+	if (pd.dport)
+		odport = *pd.dport;
 
 	if ((pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
 	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
