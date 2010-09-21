@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: GENERIC,v 1.24 2010/09/21 02:46:33 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -38,6 +38,7 @@ pci*		at bonito?
 
 # Lemote Lynloong, Lemote Fuloong 2F and Lemote Yeeloong devices
 glxpcib*	at pci?
+gpio*		at glxpcib?
 isa0		at glxpcib?
 mcclock0	at isa? port 0x70
 pckbc0		at isa?				# Yeeloong only
