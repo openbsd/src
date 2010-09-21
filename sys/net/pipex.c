@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.7 2010/07/09 08:36:31 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.8 2010/09/21 07:44:54 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -83,7 +83,8 @@ static LIST_HEAD(pipex_hash_head, pipex_session)
     pipex_close_wait_list,			/* expired session list */
     pipex_peer_addr_hashtable[PIPEX_HASH_SIZE],	/* peer's address hash */
     pipex_id_hashtable[PIPEX_HASH_SIZE]; 	/* peer id hash */
-static struct radix_node_head *pipex_rd_head4 = NULL;
+static struct radix_node_head pipex_rd_head4;
+static int pipex_rd_head4_initialized = 0;
 static struct timeout pipex_timer_ch; 		/* callout timer context */
 static int pipex_prune = 1;			/* walk list every seconds */
 
@@ -132,19 +133,16 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 {
 	int s;
 	struct pipex_session *session;
-	void *ptr;
 
 	pipex_iface->pipexmode = PIPEX_DISABLE;
 	pipex_iface->ifnet_this = ifp;
 
 	s = splnet();
-	if (pipex_rd_head4 == NULL) {
-		/* XXX avoid dereferencing pointer warning */
-		ptr = pipex_rd_head4;
-
-		rn_inithead(&ptr, offsetof(struct sockaddr_in, sin_addr) *
-		    NBBY);
-		pipex_rd_head4 = ptr;
+	if (!pipex_rd_head4_initialized) {
+		pipex_rd_head4_initialized++;
+		if (!rn_inithead0(&pipex_rd_head4,
+		    offsetof(struct sockaddr_in, sin_addr) * NBBY))
+			panic("rn_inithead0() failed on pipex_init()");
 	}
 	splx(s);
 
@@ -280,9 +278,6 @@ pipex_add_session(struct pipex_session_req *req,
 
 	/* prepare a new session */
 	session = malloc(sizeof(*session), M_TEMP, M_WAITOK | M_ZERO);
-	if (session == NULL) 
-		return (ENOMEM);
-
 	session->state = PIPEX_STATE_OPENED;
 	session->protocol = req->pr_protocol;
 	session->session_id = req->pr_session_id;
@@ -355,8 +350,8 @@ pipex_add_session(struct pipex_session_req *req,
 		return (EADDRINUSE);
 	}
 
-	rn = pipex_rd_head4->rnh_addaddr(&session->ip_address,
-	    &session->ip_netmask, pipex_rd_head4, session->ps4_rn, RTP_STATIC);
+	rn = pipex_rd_head4.rnh_addaddr(&session->ip_address,
+	    &session->ip_netmask, &pipex_rd_head4, session->ps4_rn, RTP_STATIC);
 	if (rn == NULL) {
 		splx(s);
 		free(session, M_TEMP);
@@ -509,8 +504,9 @@ pipex_destroy_session(struct pipex_session *session)
 
 	/* remove from radix tree and hash chain */
 	s = splnet();
-	rn = pipex_rd_head4->rnh_deladdr(&session->ip_address,
-	    &session->ip_netmask, pipex_rd_head4, (struct radix_node *)session);
+	rn = pipex_rd_head4.rnh_deladdr(&session->ip_address,
+	    &session->ip_netmask, &pipex_rd_head4,
+	    (struct radix_node *)session);
 	KASSERT(rn != NULL);
 
 	LIST_REMOVE((struct pipex_session *)session, id_chain);
@@ -547,8 +543,8 @@ pipex_lookup_by_ip_address(struct in_addr addr)
 	pipex_in4mask.sin_family = AF_INET;
 	pipex_in4mask.sin_len = sizeof(pipex_in4mask);
 
-	session = (struct pipex_session *)pipex_rd_head4->rnh_lookup(
-	    &pipex_in4, &pipex_in4mask, pipex_rd_head4);
+	session = (struct pipex_session *)pipex_rd_head4.rnh_lookup(
+	    &pipex_in4, &pipex_in4mask, &pipex_rd_head4);
 
 #ifdef PIPEX_DEBUG
 	if (session == NULL)
