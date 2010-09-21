@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.163 2010/09/20 06:17:49 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.164 2010/09/21 06:25:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -103,6 +103,7 @@ int			mpi_ppr(struct mpi_softc *, struct scsi_link *,
 			    struct mpi_cfg_raid_physdisk *, int, int, int);
 int			mpi_inq(struct mpi_softc *, u_int16_t, int);
 
+int			mpi_cfg_sas(struct mpi_softc *);
 void			mpi_fc_info(struct mpi_softc *);
 
 void			mpi_timeout_xs(void *);
@@ -293,6 +294,10 @@ mpi_attach(struct mpi_softc *sc)
 		if (mpi_cfg_spi_port(sc) != 0)
 			goto free_replies;
 		mpi_squash_ppr(sc);
+		break;
+	case MPI_PORTFACTS_PORTTYPE_SAS:
+		if (mpi_cfg_sas(sc) != 0)
+			goto free_replies;
 		break;
 	case MPI_PORTFACTS_PORTTYPE_FC:
 		mpi_fc_info(sc);
@@ -810,6 +815,42 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (0);
+}
+
+int
+mpi_cfg_sas(struct mpi_softc *sc)
+{
+	struct mpi_ecfg_hdr		ehdr;
+	struct mpi_cfg_sas_iou_pg1	*pg;
+	size_t				pagelen;
+	int				rv = 0;
+
+	if (mpi_ecfg_header(sc, MPI_CONFIG_REQ_EXTPAGE_TYPE_SAS_IO_UNIT, 1, 0,
+	    &ehdr) != 0)
+		return (EIO);
+
+	pagelen = letoh16(ehdr.ext_page_length) * 4;
+	pg = malloc(pagelen, M_TEMP, M_NOWAIT | M_ZERO);
+	if (pg == NULL)
+		return (ENOMEM);
+
+	if (mpi_ecfg_page(sc, 0, &ehdr, 1, pg, pagelen) != 0) {
+		rv = EIO;
+		goto out;
+	}
+
+	if (pg->max_sata_q_depth != 32) {
+		pg->max_sata_q_depth = 32;
+
+		if (mpi_ecfg_page(sc, 0, &ehdr, 0, pg, pagelen) != 0) {
+			rv = EIO;
+			goto out;
+		}
+	}
+
+out:
+	free(pg, M_TEMP);
+	return (rv);
 }
 
 void
