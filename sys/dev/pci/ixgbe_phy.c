@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.4 2010/02/19 19:06:31 jsg Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.5 2010/09/21 00:29:29 claudio Exp $	*/
 
 /******************************************************************************
 
@@ -893,8 +893,9 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 	if (hw->mac.ops.get_media_type(hw) != ixgbe_media_type_fiber) {
 		hw->phy.sfp_type = ixgbe_sfp_type_not_present;
 		status = IXGBE_ERR_SFP_NOT_PRESENT;
+		DEBUGOUT("SFP+ not present");
 		goto out;
-    }
+	}
 
 	status = hw->phy.ops.read_i2c_eeprom(hw, IXGBE_SFF_IDENTIFIER,
 	                                     &identifier);
@@ -1129,10 +1130,13 @@ int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
 	 * EEPROM has no matching ID for them. So just accept the module.
 	 */
 	if (sfp_id == IXGBE_PHY_INIT_END_NL &&
-	    hw->mac.type >= ixgbe_mac_82599EB) {
-		DEBUGOUT("No matching SFP+ module found\n");
+	    hw->mac.type == ixgbe_mac_82598EB) {
+		/* refetch offset for the first phy entry */
+		hw->eeprom.ops.read(hw, IXGBE_PHY_INIT_OFFSET_NL, list_offset);
+		(*list_offset) += 2;
+		hw->eeprom.ops.read(hw, *list_offset, data_offset);
+	} else if (sfp_id == IXGBE_PHY_INIT_END_NL)
 		return IXGBE_ERR_SFP_NOT_SUPPORTED;
-	}
 
 	return IXGBE_SUCCESS;
 }
