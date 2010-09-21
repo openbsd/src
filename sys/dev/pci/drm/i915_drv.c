@@ -1397,12 +1397,10 @@ i915_gem_gtt_map_ioctl(struct drm_device *dev, void *data,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0), curproc);
 
 done:
-	if (ret != 0)
-		drm_unref(&obj->uobj);
-	DRM_UNLOCK();
-
 	if (ret == 0)
 		args->addr_ptr = (uint64_t) addr + (args->offset & PAGE_MASK);
+	else
+		drm_unref(&obj->uobj);
 
 	return (ret);
 }
