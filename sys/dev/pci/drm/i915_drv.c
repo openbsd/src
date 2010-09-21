@@ -67,6 +67,7 @@ int	inteldrm_activate(struct device *, int);
 int	inteldrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	inteldrm_doioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	inteldrm_intr(void *);
+void	inteldrm_error(struct inteldrm_softc *);
 int	inteldrm_ironlake_intr(void *);
 void	inteldrm_lastclose(struct drm_device *);
 
@@ -669,6 +670,8 @@ inteldrm_ironlake_intr(void *arg)
 		dev_priv->mm.hang_cnt = 0;
 		timeout_add_msec(&dev_priv->mm.hang_timer, 750);
 	}
+	if (gt_iir & GT_MASTER_ERROR)
+		inteldrm_error(dev_priv);
 
 	if (de_iir & DE_PIPEA_VBLANK)
 		drm_handle_vblank(dev, 0);
@@ -686,6 +689,7 @@ done:
 
 	return (ret);
 }
+
 int
 inteldrm_intr(void *arg)
 {
@@ -4191,23 +4195,32 @@ inteldrm_timeout(void *arg)
 void
 inteldrm_error(struct inteldrm_softc *dev_priv)
 {
-	u_int32_t	eir, ipeir, pgtbl_err, pipea_stats, pipeb_stats;
+	u_int32_t	eir, ipeir;
 	u_int8_t	reset = GDRST_RENDER;
+	char 		*errbitstr;
 
 	eir = I915_READ(EIR);
-	pipea_stats = I915_READ(PIPEASTAT);
-	pipeb_stats = I915_READ(PIPEBSTAT);
+	if (eir == 0)
+		return;
 
-	/*
-	 * only actually check the error bits if we register one.
-	 * else we just hung, stay silent.
-	 */
-	if (eir != 0) {
-		printf("render error detected, EIR: 0x%08x\n", eir);
+	if (IS_IRONLAKE(dev_priv)) {
+		errbitstr = "\20\x05PTEE\x04MPVE\x03CPVE";
+	} else if (IS_G4X(dev_priv)) {
+		errbitstr = "\20\x10 BCSINSTERR\x06PTEERR\x05MPVERR\x04CPVERR"
+		     "\x03 BCSPTEERR\x02REFRESHERR\x01INSTERR";
+	} else {
+		errbitstr = "\20\x5PTEERR\x2REFRESHERR\x1INSTERR";
+	}
+
+	printf("render error detected, EIR: %b\n", eir, errbitstr);
+	if (IS_IRONLAKE(dev_priv)) {
+		if (eir & GT_ERROR_PTE) {
+			dev_priv->mm.wedged = 1;
+			reset = GDRST_FULL;
+		}
+	} else {
 		if (IS_G4X(dev_priv)) {
 			if (eir & (GM45_ERROR_MEM_PRIV | GM45_ERROR_CP_PRIV)) {
-				ipeir = I915_READ(IPEIR_I965);
-
 				printf("  IPEIR: 0x%08x\n",
 				    I915_READ(IPEIR_I965));
 				printf("  IPEHR: 0x%08x\n",
@@ -4220,38 +4233,26 @@ inteldrm_error(struct inteldrm_softc *dev_priv)
 				    I915_READ(INSTDONE1));
 				printf("  ACTHD: 0x%08x\n",
 				    I915_READ(ACTHD_I965));
-				I915_WRITE(IPEIR_I965, ipeir);
-				(void)I915_READ(IPEIR_I965);
 			}
 			if (eir & GM45_ERROR_PAGE_TABLE) {
-				pgtbl_err = I915_READ(PGTBL_ER);
-				printf("page table error\n");
-				printf("  PGTBL_ER: 0x%08x\n", pgtbl_err);
-				I915_WRITE(PGTBL_ER, pgtbl_err);
-				(void)I915_READ(PGTBL_ER);
+				printf("  PGTBL_ER: 0x%08x\n",
+				    I915_READ(PGTBL_ER));
 				dev_priv->mm.wedged = 1;
 				reset = GDRST_FULL;
 
 			}
 		} else if (IS_I9XX(dev_priv) && eir & I915_ERROR_PAGE_TABLE) {
-			pgtbl_err = I915_READ(PGTBL_ER);
-			printf("page table error\n");
-			printf("  PGTBL_ER: 0x%08x\n", pgtbl_err);
-			I915_WRITE(PGTBL_ER, pgtbl_err);
-			(void)I915_READ(PGTBL_ER);
+			printf("  PGTBL_ER: 0x%08x\n", I915_READ(PGTBL_ER));
 			dev_priv->mm.wedged = 1;
 			reset = GDRST_FULL;
 		}
 		if (eir & I915_ERROR_MEMORY_REFRESH) {
-			printf("memory refresh error\n");
 			printf("PIPEASTAT: 0x%08x\n",
-			       pipea_stats);
+			    I915_READ(PIPEASTAT));
 			printf("PIPEBSTAT: 0x%08x\n",
-			       pipeb_stats);
-			/* pipestat has already been acked */
+			    I915_READ(PIPEBSTAT));
 		}
 		if (eir & I915_ERROR_INSTRUCTION) {
-			printf("instruction error\n");
 			printf("  INSTPM: 0x%08x\n",
 			       I915_READ(INSTPM));
 			if (!IS_I965G(dev_priv)) {
@@ -4286,20 +4287,24 @@ inteldrm_error(struct inteldrm_softc *dev_priv)
 				(void)I915_READ(IPEIR_I965);
 			}
 		}
-
-		I915_WRITE(EIR, eir);
-		eir = I915_READ(EIR);
 	}
+
+	I915_WRITE(EIR, eir);
+	eir = I915_READ(EIR);
 	/*
 	 * nasty errors don't clear and need a reset, mask them until we reset
 	 * else we'll get infinite interrupt storms.
 	 */
 	if (eir) {
-		/* print so we know that we may want to reset here too */
 		if (dev_priv->mm.wedged == 0)
 			DRM_ERROR("EIR stuck: 0x%08x, masking\n", eir);
 		I915_WRITE(EMR, I915_READ(EMR) | eir);
-		I915_WRITE(IIR, I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT);
+		if (IS_IRONLAKE(dev_priv)) {
+			I915_WRITE(GTIIR, GT_MASTER_ERROR);
+		} else {
+			I915_WRITE(IIR,
+			    I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT);
+		}
 	}
 	/*
 	 * if it was a pagetable error, or we were called from hangcheck, then

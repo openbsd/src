@@ -502,7 +502,6 @@ void		inteldrm_begin_ring(struct inteldrm_softc *, int);
 void		inteldrm_out_ring(struct inteldrm_softc *, u_int32_t);
 void		inteldrm_advance_ring(struct inteldrm_softc *);
 void		inteldrm_update_ring(struct inteldrm_softc *);
-void		inteldrm_error(struct inteldrm_softc *);
 int		inteldrm_pipe_enabled(struct inteldrm_softc *, int);
 int		i915_init_phys_hws(struct inteldrm_softc *, bus_dma_tag_t);
 
@@ -839,6 +838,12 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   GM45_ERROR_CP_PRIV				(1<<3)
 #define   I915_ERROR_MEMORY_REFRESH			(1<<1)
 #define   I915_ERROR_INSTRUCTION			(1<<0)
+/* ironlake error bits */
+#define   GT_ERROR_PTE					(1<<4)
+	/* memory privilege violation error */
+#define   GT_ERROR_MPE					(1<<3)
+	/* command privilege violation error */
+#define   GT_ERROR_CPE					(1<<2)
 #define INSTPM	        0x020c0
 #define ACTHD	        0x020c8
 #define FW_BLC		0x020d8
@@ -2509,6 +2514,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define DEIER   0x4400c
 
 /* GT interrupt */
+#define GT_MASTER_ERROR         (1 << 3)
 #define GT_SYNC_STATUS          (1 << 2)
 #define GT_USER_INTERRUPT       (1 << 0)
 
@@ -3013,12 +3019,12 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 /*
  * if kms we want pch event, gse, and plane flip masks too
  */
-#define PCH_SPLIT_DISPLAY_INTR_FIX	DE_MASTER_IRQ_CONTROL
-#define PCH_SPLIT_DISPLAY_INTR_VAR	DE_PIPEA_VBLANK | DE_PIPEB_VBLANK
+#define PCH_SPLIT_DISPLAY_INTR_FIX	(DE_MASTER_IRQ_CONTROL)
+#define PCH_SPLIT_DISPLAY_INTR_VAR	(DE_PIPEA_VBLANK | DE_PIPEB_VBLANK)
 #define PCH_SPLIT_DISPLAY_ENABLE_MASK	\
 	(PCH_SPLIT_DISPLAY_INTR_FIX | PCH_SPLIT_DISPLAY_INTR_VAR)
 #define PCH_SPLIT_RENDER_INTR_FIX	(0)
-#define PCH_SPLIT_RENDER_INTR_VAR	GT_USER_INTERRUPT
+#define PCH_SPLIT_RENDER_INTR_VAR	(GT_USER_INTERRUPT | GT_MASTER_ERROR)
 #define PCH_SPLIT_RENDER_ENABLE_MASK	\
 	(PCH_SPLIT_RENDER_INTR_FIX | PCH_SPLIT_RENDER_INTR_VAR)
 /* not yet */
@@ -3026,9 +3032,6 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define PCH_SPLIT_HOTPLUG_INTR_VAR	(0)
 #define PCH_SPLIT_HOTPLUG_ENABLE_MASK	\
 	(PCH_SPLIT_HOTPLUG_INTR_FIX | PCH_SPLIT_HOTPLUG_INTR_VAR)
-
-#define PCH_SPLIT_HOTPLUG_MASK
-
 
 #define	printeir(val)	printf("%s: error reg: %b\n", __func__, val,	\
 	"\20\x10PTEERR\x2REFRESHERR\x1INSTERR")
