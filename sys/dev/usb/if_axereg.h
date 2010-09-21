@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.18 2007/06/10 10:15:35 mbalmer Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.19 2010/09/21 08:02:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -131,8 +131,23 @@
 #define AXE_RXCMD_ENABLE			0x0080
 #define AXE_178_RXCMD_MFB			0x0300
 
-#define AXE_NOPHY				0xE0
-#define AXE_INTPHY				0x10
+#define        AXE_PHY_SEL_PRI         1
+#define        AXE_PHY_SEL_SEC         0
+#define        AXE_PHY_TYPE_MASK       0xE0
+#define        AXE_PHY_TYPE_SHIFT      5
+#define        AXE_PHY_TYPE(x)         \
+       (((x) & AXE_PHY_TYPE_MASK) >> AXE_PHY_TYPE_SHIFT)
+
+#define        PHY_TYPE_100_HOME       0       /* 10/100 or 1M HOME PHY */
+#define        PHY_TYPE_GIG            1       /* Gigabit PHY */
+#define        PHY_TYPE_SPECIAL        4       /* Special case */
+#define        PHY_TYPE_RSVD           5       /* Reserved */
+#define        PHY_TYPE_NON_SUP        7       /* Non-supported PHY */
+
+#define        AXE_PHY_NO_MASK         0x1F
+#define        AXE_PHY_NO(x)           ((x) & AXE_PHY_NO_MASK)
+
+#define        AXE_PHY_NO_AX772_EPHY   0x10    /* Embedded 10/100 PHY of AX88772 */
 
 #define AXE_TIMEOUT		1000
 #define AXE_172_BUFSZ		1536
@@ -222,6 +237,7 @@ struct axe_softc {
 	int			axe_link;
 	unsigned char		axe_ipgs[3];
 	unsigned char 		axe_phyaddrs[2];
+	int			axe_phyno;
 	struct timeval		axe_rx_notice;
 	u_int			axe_bufsz;
 };
