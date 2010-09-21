@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.29 2010/09/21 04:06:37 henning Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.30 2010/09/21 10:45:26 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -286,6 +286,8 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	} pf_hdrs;
 
 	struct pf_pdesc		 pd;
+	struct pf_addr		 osaddr, odaddr;
+	u_int16_t		 osport, odport;
 
 	m = src_arg;
 	dst = dst_arg;
@@ -297,6 +299,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	pfloghdr = mtod(m, struct pfloghdr *);
 	count = min(m->m_len, len);
 	bcopy(pfloghdr, dst, count);
+	pfloghdr = (struct pfloghdr *)dst;
 	dst += count;
 	len -= count;
 	m = m->m_next;
@@ -333,8 +336,20 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, &pd, mfake, &action,
 	    &reason, NULL, NULL, NULL, NULL, &off, &hdrlen) == -1)
 		return;
-	if (pf_translate(&pd, &pfloghdr->saddr, pfloghdr->sport,
-	    &pfloghdr->daddr, pfloghdr->dport, 0, pfloghdr->dir, mfake))
+
+	PF_ACPY(&osaddr, pd.src, pd.af);
+	PF_ACPY(&odaddr, pd.dst, pd.af);
+	osport = *pd.sport;
+	odport = *pd.dport;
+
+	if ((pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
+	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
+	    pfloghdr->dir, mfake))) {
 		m_copyback(mfake, off, min(mfake->m_len - off, hdrlen),
 		    pd.hdr.any, M_NOWAIT);
+		PF_ACPY(&pfloghdr->saddr, &osaddr, pd.af);
+		PF_ACPY(&pfloghdr->daddr, &odaddr, pd.af);
+		pfloghdr->sport = osport;
+		pfloghdr->dport = odport;
+	}
 }
