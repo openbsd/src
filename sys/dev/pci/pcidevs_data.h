@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1571 2010/08/31 21:42:19 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1572 2010/09/21 11:41:34 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4408,6 +4408,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "BCM57795",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SD,
+	    "SD Host Controller",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702_ALT,
 	    "BCM5702 Alt",
 	},
@@ -4528,12 +4532,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Serial",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43224,
+	    "BCM43224",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43225,
+	    "BCM43225",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
 	    "BCM4401",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401B0,
 	    "BCM4401B0",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4313,
+	    "BCM4313",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5801,
@@ -10052,6 +10068,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "3400 MEI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PT_IDER,
+	    "3400 PT IDER",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT,
 	    "3400 KT",
 	},
@@ -14616,8 +14636,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP77 AHCI",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_HB,
+	    "MCP89 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_MEM_1,
+	    "MCP89 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_MEM_2,
+	    "MCP89 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_SMB,
+	    "MCP89 SMBus",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_MEM_4,
+	    "MCP89 Memory",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_LAN,
 	    "MCP89 LAN",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_LPC,
+	    "MCP89 LPC",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_AHCI_1,
@@ -14628,8 +14672,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP89 AHCI",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_AHCI_3,
-	    "MCP89 AHCI",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_SATA_1,
+	    "MCP89 SATA",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_AHCI_4,
@@ -14656,8 +14700,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP89 AHCI",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_AHCI_10,
-	    "MCP89 AHCI",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_RAID_1,
+	    "MCP89 RAID",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_AHCI_11,
@@ -14682,6 +14726,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_HDA_4,
 	    "MCP89 HD Audio",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_OHCI,
+	    "MCP89 USB",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_EHCI,
+	    "MCP89 USB",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
@@ -15210,6 +15262,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8612,
 	    "PEX 8612",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8614,
+	    "PEX 8614",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8616,
