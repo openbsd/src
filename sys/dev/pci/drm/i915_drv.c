@@ -4385,7 +4385,7 @@ void
 inteldrm_hangcheck(void *arg)
 {
 	struct inteldrm_softc	*dev_priv = arg;
-	u_int32_t		 acthd;
+	u_int32_t		 acthd, instdone, instdone1;
 
 	/* are we idle? no requests, or ring is empty */
 	if (TAILQ_EMPTY(&dev_priv->mm.request_list) ||
@@ -4395,15 +4395,30 @@ inteldrm_hangcheck(void *arg)
 		return;
 	}
 
-	if (IS_I965G(dev_priv))
+	if (IS_I965G(dev_priv)) {
 		acthd = I915_READ(ACTHD_I965);
-	else
+		instdone = I915_READ(INSTDONE_I965);
+		instdone1 = I915_READ(INSTDONE1);
+	} else {
 		acthd = I915_READ(ACTHD);
+		instdone = I915_READ(INSTDONE);
+		instdone1 = 0;
+	}
 
 	/* if we've hit ourselves before and the hardware hasn't moved, hung. */
-	if (dev_priv->mm.last_acthd == acthd) {
+	if (dev_priv->mm.last_acthd == acthd &&
+	    dev_priv->mm.last_instdone == instdone &&
+	    dev_priv->mm.last_instdone1 == instdone1) {
 		/* if that's twice we didn't hit it, then we're hung */
 		if (++dev_priv->mm.hang_cnt >= 2) {
+			if (!IS_GEN2(dev_priv)) {
+				u_int32_t tmp = I915_READ(PRB0_CTL);
+				if (tmp & RING_WAIT) {
+					I915_WRITE(PRB0_CTL, tmp);
+					(void)I915_READ(PRB0_CTL);
+					goto out;
+				}
+			}
 			dev_priv->mm.hang_cnt = 0;
 			/* XXX atomic */
 			dev_priv->mm.wedged = 1; 
@@ -4415,9 +4430,12 @@ inteldrm_hangcheck(void *arg)
 		}
 	} else {
 		dev_priv->mm.hang_cnt = 0;
-	}
 
-	dev_priv->mm.last_acthd = acthd;
+		dev_priv->mm.last_acthd = acthd;
+		dev_priv->mm.last_instdone = instdone;
+		dev_priv->mm.last_instdone1 = instdone1;
+	}
+out:
 	/* Set ourselves up again, in case we haven't added another batch */
 	timeout_add_msec(&dev_priv->mm.hang_timer, 750);
 }
