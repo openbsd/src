@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiovar.h,v 1.12 2010/09/12 02:01:17 jakemsr Exp $	*/
+/*	$OpenBSD: audiovar.h,v 1.13 2010/09/21 20:08:11 jakemsr Exp $	*/
 /*	$NetBSD: audiovar.h,v 1.18 1998/03/03 09:16:16 augustss Exp $	*/
 
 /*
@@ -117,6 +117,9 @@ struct audio_softc {
 
 	u_char	sc_rbus;	/* input dma in progress */
 	u_char	sc_pbus;	/* output dma in progress */
+
+	u_char	sc_rqui;	/* input dma quiesced */
+	u_char	sc_pqui;	/* output dma quiesced */
 
 	struct	audio_params sc_pparams;	/* play encoding parameters */
 	struct	audio_params sc_rparams;	/* record encoding parameters */

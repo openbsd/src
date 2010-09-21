@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.109 2010/09/12 02:01:17 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.110 2010/09/21 20:08:11 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1177,19 +1177,20 @@ audio_quiesce(struct audio_softc *sc)
 {
 	sc->sc_quiesce = AUDIO_QUIESCE_START;
 
-	if (sc->sc_pbus) {
-		while (sc->sc_pr.outp != sc->sc_pr.start)
-			audio_sleep(&sc->sc_wchan, "aud_qui");
-	}
-	if (sc->sc_rbus) {
-		while (sc->sc_rr.inp != sc->sc_rr.start)
-			audio_sleep(&sc->sc_rchan, "aud_qui");
-	}
+	while (sc->sc_pbus && !sc->sc_pqui)
+		audio_sleep(&sc->sc_wchan, "audpqui");
+	while (sc->sc_rbus && !sc->sc_rqui)
+		audio_sleep(&sc->sc_rchan, "audrqui");
 
 	sc->sc_quiesce = AUDIO_QUIESCE_SILENT;
 
 	au_get_mute(sc, &sc->sc_outports, &sc->sc_mute);
 	au_set_mute(sc, &sc->sc_outports, 1);
+
+	if (sc->sc_pbus)
+		sc->hw_if->halt_output(sc->hw_hdl);
+	if (sc->sc_rbus)
+		sc->hw_if->halt_input(sc->hw_hdl);
 
 	return 0;
 }
@@ -1213,6 +1214,8 @@ audio_resume_task(void *arg1, void *arg2)
 {
 	struct audio_softc *sc = arg1;
 	int setmode = 0;
+
+	sc->sc_pqui = sc->sc_rqui = 0;
 
 	au_set_mute(sc, &sc->sc_outports, sc->sc_mute);
 
@@ -2120,6 +2123,9 @@ audio_pint(void *v)
 	if (!sc->sc_open)
 		return;		/* ignore interrupt if not open */
 
+	if (sc->sc_pqui)
+		return;
+
 	blksize = cb->blksize;
 
 	add_audio_randomness((long)cb);
@@ -2213,8 +2219,8 @@ audio_pint(void *v)
 	 * buffer position is reset to the beginning.  This will put
 	 * hardware and software positions in sync across a suspend cycle.
 	 */
-	if (sc->sc_quiesce && cb->outp == cb->start) {
-		sc->hw_if->halt_output(sc->hw_hdl);
+	if (sc->sc_quiesce == AUDIO_QUIESCE_START && cb->outp == cb->start) {
+		sc->sc_pqui = 1;
 		audio_wakeup(&sc->sc_wchan);
 	}
 }
@@ -2235,6 +2241,9 @@ audio_rint(void *v)
 
 	if (!sc->sc_open)
 		return;		/* ignore interrupt if not open */
+
+	if (sc->sc_rqui)
+		return;
 
 	add_audio_randomness((long)cb);
 
@@ -2317,8 +2326,8 @@ audio_rint(void *v)
 	 * buffer position is reset to the beginning.  This will put
 	 * hardware and software positions in sync across a suspend cycle.
 	 */
-	if (sc->sc_quiesce && cb->inp == cb->start) {
-		sc->hw_if->halt_input(sc->hw_hdl);
+	if (sc->sc_quiesce == AUDIO_QUIESCE_START && cb->inp == cb->start) {
+		sc->sc_rqui = 1;
 		audio_wakeup(&sc->sc_rchan);
 	}
 }
