@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.1 2010/09/20 06:32:30 syuu Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.2 2010/09/21 06:13:21 syuu Exp $	*/
 /*	$NetBSD: ns16550reg.h,v 1.4 1994/10/27 04:18:43 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 /*
- * NS16550 (and above) UART registers
+ * OCTEON UART registers
  */
 
 #define	com_rxdata	0x00	/* data register (R) */
