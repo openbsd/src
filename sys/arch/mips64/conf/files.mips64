@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mips64,v 1.15 2010/09/20 12:10:26 syuu Exp $
+#	$OpenBSD: files.mips64,v 1.16 2010/09/21 20:29:13 miod Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c
@@ -20,7 +20,7 @@ file	arch/mips64/mips64/cache_octeon.c	cpu_octeon
 file	arch/mips64/mips64/context.S
 file	arch/mips64/mips64/cp0access.S
 file	arch/mips64/mips64/exception.S
-file	arch/mips64/mips64/fp.S
+file	arch/mips64/mips64/fp_emulate.c
 file	arch/mips64/mips64/lcore_access.S
 file	arch/mips64/mips64/lcore_float.S
 file	arch/mips64/mips64/tlbhandler.S
@@ -33,3 +33,5 @@ file	arch/mips64/mips64/ipifuncs.c           multiprocessor
 
 file	netinet/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet
+
+file	lib/libkern/softfloat.c

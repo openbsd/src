@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.64 2010/09/20 12:10:26 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.65 2010/09/21 20:29:17 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -282,43 +282,6 @@ extern vaddr_t uncached_base;
  */
 #define	FPC_ID			$0
 #define	FPC_CSR			$31
-
-/*
- * The floating point coprocessor status register bits.
- */
-#define	FPC_ROUNDING_BITS		0x00000003
-#define	FPC_ROUND_RN			0x00000000
-#define	FPC_ROUND_RZ			0x00000001
-#define	FPC_ROUND_RP			0x00000002
-#define	FPC_ROUND_RM			0x00000003
-#define	FPC_STICKY_BITS			0x0000007c
-#define	FPC_STICKY_INEXACT		0x00000004
-#define	FPC_STICKY_UNDERFLOW		0x00000008
-#define	FPC_STICKY_OVERFLOW		0x00000010
-#define	FPC_STICKY_DIV0			0x00000020
-#define	FPC_STICKY_INVALID		0x00000040
-#define	FPC_ENABLE_BITS			0x00000f80
-#define	FPC_ENABLE_INEXACT		0x00000080
-#define	FPC_ENABLE_UNDERFLOW		0x00000100
-#define	FPC_ENABLE_OVERFLOW		0x00000200
-#define	FPC_ENABLE_DIV0			0x00000400
-#define	FPC_ENABLE_INVALID		0x00000800
-#define	FPC_EXCEPTION_BITS		0x0003f000
-#define	FPC_EXCEPTION_INEXACT		0x00001000
-#define	FPC_EXCEPTION_UNDERFLOW		0x00002000
-#define	FPC_EXCEPTION_OVERFLOW		0x00004000
-#define	FPC_EXCEPTION_DIV0		0x00008000
-#define	FPC_EXCEPTION_INVALID		0x00010000
-#define	FPC_EXCEPTION_UNIMPL		0x00020000
-#define	FPC_COND_BIT			0x00800000
-#define	FPC_FLUSH_BIT			0x01000000
-#define	FPC_MBZ_BITS			0xfe7c0000
-
-/*
- * Constants to determine if have a floating point instruction.
- */
-#define	OPCODE_SHIFT		26
-#define	OPCODE_C1		0x11
 
 /*
  * The low part of the TLB entry.
@@ -636,6 +599,7 @@ void	save_fpu(void);
 int	guarded_read_4(paddr_t, uint32_t *);
 int	guarded_write_4(paddr_t, uint32_t);
 
+void	MipsFPTrap(struct trap_frame *);
 register_t MipsEmulateBranch(struct trap_frame *, vaddr_t, uint32_t, uint32_t);
 
 /*

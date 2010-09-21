@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.67 2010/09/17 00:36:32 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.68 2010/09/21 20:29:17 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,10 +133,7 @@ uint64_t kdbpeekd(vaddr_t);
 extern int kdb_trap(int, db_regs_t *);
 #endif
 
-extern void MipsFPTrap(u_int, u_int, u_int, union sigval);
-
 void	ast(void);
-void	fpu_trapsignal(struct proc *, u_long, int, union sigval);
 void	trap(struct trap_frame *);
 #ifdef PTRACE
 int	cpu_singlestep(struct proc *);
@@ -746,6 +743,11 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		break;
 
 	case T_COP_UNUSABLE+T_USER:
+		/*
+		 * Note MIPS IV COP1X instructions issued with FPU
+		 * disabled correctly report coprocessor 1 as the
+		 * unusable coprocessor number.
+		 */
 		if ((trapframe->cause & CR_COP_ERR) != 0x10000000) {
 			i = SIGILL;	/* only FPU instructions allowed */
 			typ = ILL_ILLOPC;
@@ -761,8 +763,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		goto err;
 
 	case T_FPE+T_USER:
-		sv.sival_ptr = (void *)trapframe->pc;
-		MipsFPTrap(trapframe->sr, trapframe->cause, trapframe->pc, sv);
+		MipsFPTrap(trapframe);
 		goto out;
 
 	case T_OVFLOW+T_USER:
@@ -833,17 +834,6 @@ child_return(arg)
 		KERNEL_PROC_UNLOCK(p);
 	}
 #endif
-}
-
-/*
- * Wrapper around trapsignal() for use by the floating point code.
- */
-void
-fpu_trapsignal(struct proc *p, u_long ucode, int typ, union sigval sv)
-{
-	KERNEL_PROC_LOCK(p);
-	trapsignal(p, SIGFPE, ucode, typ, sv);
-	KERNEL_PROC_UNLOCK(p);
 }
 
 #if defined(DDB) || defined(DEBUG)
