@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.22 2010/08/25 13:57:07 claudio Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.23 2010/09/21 06:13:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -242,7 +242,6 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		off = sizeof(sa_family_t) + sizeof(in_addr_t);
 		M_PREPEND(m, sizeof(shim) + off, M_DONTWAIT);
 		if (m == NULL) {
-			m_freem(m);
 			error = ENOBUFS;
 			goto out;
 		}
@@ -253,7 +252,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 #endif
 	default:
 		m_freem(m);
-		error = ENETDOWN;
+		error = EPFNOSUPPORT;
 		goto out;
 	}
 
