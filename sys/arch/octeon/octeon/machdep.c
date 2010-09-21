@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2010/09/20 06:32:30 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.2 2010/09/21 06:21:00 syuu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -81,7 +81,6 @@
 
 #include <octeon/dev/obiovar.h>
 #include <octeon/dev/octeonreg.h>
-#include <machine/bootinfo.h>
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
@@ -161,10 +160,13 @@ octeon_memory_init(void)
 	physmem = endpfn - startpfn;
 	uint32_t realmem_bytes;
 
+#if 0
 	if (octeon_board_real()) {
 		realmem_bytes = (octeon_dram - PAGE_SIZE);
 		realmem_bytes &= ~(PAGE_SIZE - 1);
-	} else {
+	} else 
+#endif
+	{
 		/* Simulator we limit to 96 meg */
 		realmem_bytes = (96 << 20);
 	}
@@ -172,6 +174,7 @@ octeon_memory_init(void)
 	memset((void*)phys_avail,0,sizeof(phys_avail));
 	phys_avail[0] = (CKSEG0_TO_PHYS((uint64_t)&end) + 
 			 PAGE_SIZE ) & ~(PAGE_SIZE - 1);
+#if 0
 	if (octeon_board_real()) {
 		if (realmem_bytes > OCTEON_DRAM_FIRST_256_END)
 			phys_avail[1] = OCTEON_DRAM_FIRST_256_END;
@@ -180,7 +183,9 @@ octeon_memory_init(void)
 		realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
 		realmem_bytes &= ~(PAGE_SIZE - 1);
 		mem_layout[0].mem_last_page = atop(phys_avail[1]);
-	} else {
+	} else
+#endif
+	{
 		/* Simulator gets 96Meg period. */
 		phys_avail[1] = (96 << 20);
 	}
@@ -232,7 +237,9 @@ octeon_memory_init(void)
  	}
 #endif
  	realmem = physmem;
+#if 0
 	printf("Total DRAM Size 0x%016X\n", (uint32_t) octeon_dram);
+#endif
 	for(i=0;phys_avail[i];i+=2){
 		printf("Bank %d = 0x%016lX   ->  0x%016lX\n",i>>1, 
 		       (long)phys_avail[i], (long)phys_avail[i+1]);
@@ -253,7 +260,6 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	__register_t a3)
 {
 	uint prid;
-	u_long cpuspeed;
 	vaddr_t xtlb_handler;
 	int i;
 
@@ -291,17 +297,10 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 		ekern = end;
 	}
 
-	octeon_boot_params_init(a3);
-
 	prid = cp0_get_prid();
-	/*
-	 * Figure out processor clock speed.
-	 * Hopefully the processor speed, in Hertz, will not overflow
-	 * uint32_t...
-	 */
 
-	cpuspeed = octeon_get_clock_rate();
-	bootcpu_hwinfo.clock = cpuspeed;
+	/* XXX: We should get clockrate from boot descriptor */
+	bootcpu_hwinfo.clock = 500000000;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
