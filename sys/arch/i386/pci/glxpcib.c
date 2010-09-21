@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.10 2010/09/20 02:45:46 deraadt Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.11 2010/09/21 12:55:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -132,6 +132,8 @@ struct glxpcib_softc {
 	bus_space_handle_t	sc_gpio_ioh;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[AMD5536_GPIO_NPINS];
+	int			sc_wdog;
+	int			sc_wdog_period;
 #endif
 };
 
@@ -210,6 +212,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 		    AMD5536_MFGPT_CNT_EN | AMD5536_MFGPT_CMP2EV |
 		    AMD5536_MFGPT_CMP2 | AMD5536_MFGPT_DIV_MASK);
 		wdog_register(sc, glxpcib_wdogctl_cb);
+		sc->sc_wdog = 1;
 		printf(", watchdog");
 	}
 
@@ -258,6 +261,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 int
 glxpcib_activate(struct device *self, int act)
 {
+	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
 	int rv = 0;
 
 	switch (act) {
@@ -265,9 +269,20 @@ glxpcib_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
+#ifndef SMALL_KERNEL
+		if (sc->sc_wdog) {
+			sc->sc_wdog_period = bus_space_read_2(sc->sc_iot,
+			    sc->sc_ioh, AMD5536_MFGPT0_CMP2);
+			glxpcib_wdogctl_cb(sc, 0);
+		}
+#endif
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
+#ifndef SMALL_KERNEL
+		if (sc->sc_wdog)
+			glxpcib_wdogctl_cb(sc, sc->sc_wdog_period);
+#endif
 		rv = config_activate_children(self, act);
 		break;
 	}
