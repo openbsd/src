@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.27 2010/08/27 16:26:35 deraadt Exp $ */
+/* $OpenBSD: auixp.c,v 1.28 2010/09/21 02:09:15 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -104,8 +104,11 @@ int	auixp_match( struct device *, void *, void *);
 void	auixp_attach(struct device *, struct device *, void *);
 int	auixp_detach(struct device *, int);
 
+int	auixp_activate(struct device *, int);
+
 struct cfattach auixp_ca = {
-	sizeof(struct auixp_softc), auixp_match, auixp_attach
+	sizeof(struct auixp_softc), auixp_match, auixp_attach,
+	NULL, auixp_activate
 };
 
 int	auixp_open(void *v, int flags);
@@ -1233,6 +1236,32 @@ auixp_match(struct device *dev, void *match, void *aux)
 	    sizeof(auixp_pci_devices)/sizeof(auixp_pci_devices[0])));
 }
 
+int
+auixp_activate(struct device *self, int act)
+{
+	struct auixp_softc *sc = (struct auixp_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_SUSPEND:
+		auixp_disable_interrupts(sc);
+		break;
+	case DVACT_RESUME:
+		auixp_init(sc);
+		ac97_resume(&sc->sc_codec.host_if, sc->sc_codec.codec_if);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_DEACTIVATE:
+		break;
+	}
+	return (rv);
+}
+
 void
 auixp_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -1319,27 +1348,27 @@ void
 auixp_post_config(void *self)
 {
 	struct auixp_softc *sc;
-	struct auixp_codec *codec;
-	int codec_nr;
 
 	sc = (struct auixp_softc *)self;
 	/* detect the AC97 codecs */
 	auixp_autodetect_codecs(sc);
 
+	/* Bail if no codecs attached. */
+	if (!sc->sc_codec.present) {
+		printf("%s: no codecs detected or initialised\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	audio_attach_mi(&auixp_hw_if, &sc->sc_codec, &sc->sc_dev);
+
 #if notyet
 	/* copy formats and invalidate entries not suitable for codec0 */
-	sc->has_4ch   = AC97_IS_4CH(codec->codec_if);
-	sc->has_6ch   = AC97_IS_6CH(codec->codec_if);
-	sc->is_fixed  = AC97_IS_FIXED_RATE(codec->codec_if);
-	sc->has_spdif = AC97_HAS_SPDIF(codec->codec_if);
+	sc->has_4ch   = AC97_IS_4CH(sc->sc_codec.codec_if);
+	sc->has_6ch   = AC97_IS_6CH(sc->sc_codec.codec_if);
+	sc->is_fixed  = AC97_IS_FIXED_RATE(sc->sc_codec.codec_if);
+	sc->has_spdif = AC97_HAS_SPDIF(sc->sc_codec.codec_if);
 #endif
-
-	/* attach audio devices for all detected codecs */
-	for (codec_nr = 0; codec_nr < ATI_IXP_CODECS; codec_nr++) {
-		codec = &sc->sc_codec[codec_nr];
-		if (codec->present)
-			audio_attach_mi(&auixp_hw_if, codec, &sc->sc_dev);
-	}
 
 	if (sc->has_spdif)
 		sc->has_spdif = 0;
@@ -1445,7 +1474,6 @@ auixp_attach_codec(void *aux, struct ac97_codec_if *codec_if)
 
 	ixp_codec = aux;
 	ixp_codec->codec_if = codec_if;
-	ixp_codec->present  = 1;
 
 	return 0;
 }
@@ -1575,7 +1603,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	bus_space_handle_t   ioh;
 	pcireg_t subdev;
 	struct auixp_codec  *codec;
-	int timeout, codec_nr;
+	int timeout;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1583,7 +1611,6 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 
 	/* ATI IXP can have upto 3 codecs; mark all codecs as not existing */
 	sc->sc_codec_not_ready_bits = 0;
-	sc->sc_num_codecs = 0;
 
 	/* enable all codecs to interrupt as well as the new frame interrupt */
 	bus_space_write_4(iot, ioh, ATI_REG_IER, CODEC_CHECK_BITS);
@@ -1607,58 +1634,55 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	auixp_disable_interrupts(sc);
 
 	/* Attach AC97 host interfaces */
-	for (codec_nr = 0; codec_nr < ATI_IXP_CODECS; codec_nr++) {
-		codec = &sc->sc_codec[codec_nr];
-		bzero(codec, sizeof(struct auixp_codec));
+	codec = &sc->sc_codec;
+	bzero(codec, sizeof(struct auixp_codec));
 
-		codec->sc       = sc;
-		codec->codec_nr = codec_nr;
-		codec->present  = 0;
+	codec->sc       = sc;
 
-		codec->host_if.arg    = codec;
-		codec->host_if.attach = auixp_attach_codec;
-		codec->host_if.read   = auixp_read_codec;
-		codec->host_if.write  = auixp_write_codec;
-		codec->host_if.reset  = auixp_reset_codec;
-		codec->host_if.flags  = auixp_flags_codec;
-		switch (subdev) {
-		case 0x1311462: /* MSI S270 */
-		case 0x1611462: /* LG K1 Express */
-		case 0x3511462: /* MSI L725 */
-		case 0x4711462: /* MSI L720 */
-		case 0x0611462: /* MSI S250 */
-			codec->codec_flags = AC97_HOST_ALC650_PIN47_IS_EAPD;
-			break;
-		}
+	codec->host_if.arg    = codec;
+	codec->host_if.attach = auixp_attach_codec;
+	codec->host_if.read   = auixp_read_codec;
+	codec->host_if.write  = auixp_write_codec;
+	codec->host_if.reset  = auixp_reset_codec;
+	codec->host_if.flags  = auixp_flags_codec;
+	switch (subdev) {
+	case 0x1311462: /* MSI S270 */
+	case 0x1611462: /* LG K1 Express */
+	case 0x3511462: /* MSI L725 */
+	case 0x4711462: /* MSI L720 */
+	case 0x0611462: /* MSI S250 */
+		codec->codec_flags = AC97_HOST_ALC650_PIN47_IS_EAPD;
+		break;
 	}
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC0_NOT_READY)) {
 		/* codec 0 present */
 		DPRINTF(("auixp : YAY! codec 0 present!\n"));
-		if (ac97_attach(&sc->sc_codec[0].host_if) == 0)
-			sc->sc_num_codecs++;
+		if (ac97_attach(&sc->sc_codec.host_if) == 0) {
+			sc->sc_codec.codec_nr = 0;
+			sc->sc_codec.present = 1;
+			return;
+		}
 	}
 
-#ifdef notyet
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC1_NOT_READY)) {
 		/* codec 1 present */
 		DPRINTF(("auixp : YAY! codec 1 present!\n"));
-		if (ac97_attach(&sc->sc_codec[1].host_if, &sc->sc_dev) == 0)
-			sc->sc_num_codecs++;
+		if (ac97_attach(&sc->sc_codec.host_if) == 0) {
+			sc->sc_codec.codec_nr = 1;
+			sc->sc_codec.present = 1;
+			return;
+		}
 	}
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC2_NOT_READY)) {
 		/* codec 2 present */
 		DPRINTF(("auixp : YAY! codec 2 present!\n"));
-		if (ac97_attach(&sc->sc_codec[2].host_if, &sc->sc_dev) == 0)
-			sc->sc_num_codecs++;
-	}
-#endif
-
-	if (sc->sc_num_codecs == 0) {
-		printf("%s: no codecs detected or initialised\n",
-		    sc->sc_dev.dv_xname);
-		return;
+		if (ac97_attach(&sc->sc_codec.host_if) == 0) {
+			sc->sc_codec.codec_nr = 2;
+			sc->sc_codec.present = 1;
+			return;
+		}
 	}
 }
 
