@@ -3927,10 +3927,12 @@ i915_gem_idle(struct inteldrm_softc *dev_priv)
 	}
 
 	/*
-	 * If we're wedged, the workq will clear everything, else this will
-	 * empty out the lists for us.
+	 * To idle the gpu, flush anything pending then unbind the whole
+	 * shebang. If we're wedged, assume that the reset workq will clear
+	 * everything out and continue as normal.
 	 */
-	if ((ret = i915_gem_evict_everything(dev_priv, 1)) != 0 && ret != ENOSPC) {
+	if ((ret = i915_gem_evict_everything(dev_priv, 1)) != 0 &&
+	    ret != ENOSPC && ret != EIO) {
 		DRM_UNLOCK();
 		return (ret);
 	}
