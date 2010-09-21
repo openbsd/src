@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.25 2010/09/20 07:40:41 deraadt Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.26 2010/09/21 01:05:12 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -480,7 +480,9 @@ struct xl_chain_data {
 	struct xl_chain_onefrag	xl_rx_chain[XL_RX_LIST_CNT];
 	struct xl_chain		xl_tx_chain[XL_TX_LIST_CNT];
 
-	struct xl_chain_onefrag	*xl_rx_head;
+	struct xl_chain_onefrag	*xl_rx_cons;
+	struct xl_chain_onefrag *xl_rx_prod;
+	int			xl_rx_cnt;
 
 	/* 3c90x "boomerang" queuing stuff */
 	struct xl_chain		*xl_tx_head;
