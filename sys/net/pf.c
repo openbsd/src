@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.700 2010/09/21 07:04:24 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.701 2010/09/21 10:37:33 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -281,10 +281,8 @@ enum { PF_ICMP_MULTI_NONE, PF_ICMP_MULTI_SOLICITED, PF_ICMP_MULTI_LINK };
 			s->anchor.ptr->states_cur++;		\
 			s->anchor.ptr->states_tot++;		\
 		}						\
-		SLIST_FOREACH(mrm, &s->match_rules, entry) {	\
+		SLIST_FOREACH(mrm, &s->match_rules, entry)	\
 			mrm->r->states_cur++;			\
-			mrm->r->states_tot++;			\
-		}						\
 	} while (0)
 
 #define STATE_DEC_COUNTERS(s)					\
