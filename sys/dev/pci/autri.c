@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.27 2010/09/07 16:21:44 deraadt Exp $	*/
+/*	$OpenBSD: autri.c,v 1.28 2010/09/21 02:53:14 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -622,17 +622,25 @@ int
 autri_activate(struct device *self, int act)
 {
 	struct autri_softc *sc = (struct autri_softc *)self;
+	int rv = 0;
 
 	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		break;
 	case DVACT_RESUME:
 		autri_init(sc);
-		/*autri_reset_codec(&sc->sc_codec);*/
-		(sc->sc_codec.codec_if->vtbl->restore_ports)(sc->sc_codec.codec_if);
+		ac97_resume(&sc->sc_codec.host_if, sc->sc_codec.codec_if);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_DEACTIVATE:
 		break;
 	}
-	return 0;
+	return (rv);
 }
 
 int
