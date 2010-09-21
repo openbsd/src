@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.65 2010/09/21 10:58:23 krw Exp $
+.\"	$OpenBSD: route.8,v 1.66 2010/09/21 14:46:40 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -297,8 +297,7 @@ IPsec
 .It Fl link
 Hardware (link-level) addresses
 .It Fl mpls
-.Xr mpls 4
-addresses
+MPLS addresses
 .It Fl sa
 Actual
 .Vt sockaddr
@@ -354,16 +353,13 @@ if set to 0,
 the first route selected will be used for subsequent packets to that
 destination regardless of source.
 .Pp
-When inserting
-.Xr mpls 4
-routes, particular modifiers must be used.
+When inserting MPLS routes,
+particular modifiers must be used.
 The
 .Fl mplslabel
 modifier needs to be specified in an ingress LSR to associate a particular
 label to an IPv4/IPv6 route.
-The
-.Xr mpls 4
-traffic
+The MPLS traffic
 .Fl in
 and
 .Fl out
