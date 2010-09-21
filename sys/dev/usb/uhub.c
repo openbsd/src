@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.52 2009/11/13 18:06:57 deraadt Exp $ */
+/*	$OpenBSD: uhub.c,v 1.53 2010/09/21 12:25:34 sasano Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -65,7 +65,8 @@ struct uhub_softc {
 	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_hub;		/* USB device */
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
-	u_int8_t		sc_status[1];	/* XXX more ports */
+	u_int8_t		*sc_statusbuf;	/* per port status buffer */
+	size_t			sc_statuslen;	/* status bufferlen */
 	u_char			sc_running;
 };
 #define UHUB_PROTO(sc) ((sc)->sc_hub->ddesc.bDeviceProtocol)
@@ -234,9 +235,14 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
+	sc->sc_statuslen = (nports + 1 + 7) / 8;
+	sc->sc_statusbuf = malloc(sc->sc_statuslen, M_USBDEV, M_NOWAIT);
+	if (!sc->sc_statusbuf)
+		goto bad;
+
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
-		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status,
-		  sizeof(sc->sc_status), uhub_intr, UHUB_INTR_INTERVAL);
+		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_statusbuf,
+		  sc->sc_statuslen, uhub_intr, UHUB_INTR_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n",
 		       sc->sc_dev.dv_xname);
@@ -325,6 +331,8 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  bad:
+	if (sc->sc_statusbuf)
+		free(sc->sc_statusbuf, M_USBDEV);
 	if (hub->ports)
 		free(hub->ports, M_USBDEV);
 	if (hub)
@@ -352,7 +360,7 @@ uhub_explore(usbd_device_handle dev)
 	if (dev->depth > USB_HUB_MAX_DEPTH)
 		return (USBD_TOO_DEEP);
 
-	for(port = 1; port <= hd->bNbrPorts; port++) {
+	for (port = 1; port <= hd->bNbrPorts; port++) {
 		up = &dev->hub->ports[port-1];
 		err = usbd_get_port_status(dev, port, &up->status);
 		if (err) {
@@ -563,6 +571,8 @@ uhub_detach(struct device *self, int flags)
 
 	if (hub->ports[0].tt)
 		free(hub->ports[0].tt, M_USBDEV);
+	if (sc->sc_statusbuf)
+		free(sc->sc_statusbuf, M_USBDEV);
 	if (hub->ports)
 		free(hub->ports, M_USBDEV);
 	free(hub, M_USBDEV);
@@ -587,4 +597,6 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 	else if (status == USBD_NORMAL_COMPLETION)
 		usb_needs_explore(sc->sc_hub);
+	else
+		DPRINTFN(8, ("uhub_intr: unknown status, %d\n", status));
 }
