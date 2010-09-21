@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.149 2010/09/04 08:06:09 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.150 2010/09/21 10:58:23 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -63,14 +63,7 @@
 const struct if_status_description
 			if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 
-union	sockunion {
-	struct sockaddr		sa;
-	struct sockaddr_in	sin;
-	struct sockaddr_in6	sin6;
-	struct sockaddr_dl	sdl;
-	struct sockaddr_rtlabel	rtlabel;
-	struct sockaddr_mpls	smpls;
-} so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label, so_src;
+union sockunion so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label, so_src;
 
 typedef union sockunion *sup;
 pid_t	pid;
@@ -681,6 +674,11 @@ show(int argc, char *argv[])
 				break;
 			case K_GATEWAY:
 				Fflag = 1;
+				break;
+			case K_LABEL:
+				if (!--argc)
+					usage(1+*argv);
+				getlabel(*++argv);
 				break;
 			default:
 				usage(*argv);

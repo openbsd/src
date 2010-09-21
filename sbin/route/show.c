@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.87 2010/07/29 16:35:40 bluhm Exp $	*/
+/*	$OpenBSD: show.c,v 1.88 2010/09/21 10:58:23 krw Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ char	*label_print(struct sockaddr *);
 extern int nflag;
 extern int Fflag;
 extern int verbose;
+extern union sockunion so_label;
 
 #define PLEN  (LONG_BIT / 4 + 2) /* XXX this is also defined in netstat.h */
 
@@ -285,14 +286,26 @@ p_rtentry(struct rt_msghdr *rtm)
 	struct sockaddr	*sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
 	struct sockaddr	*mask, *rti_info[RTAX_MAX];
 	char		 ifbuf[IF_NAMESIZE];
+	char		*label;
 
 	if (sa->sa_family == AF_KEY)
 		return;
 
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
 	if (Fflag && rti_info[RTAX_GATEWAY]->sa_family != sa->sa_family) {
 		return;
 	}
+
+	if (strlen(so_label.rtlabel.sr_label)) {
+		if (!rti_info[RTAX_LABEL])
+			return;
+		label = ((struct sockaddr_rtlabel *)rti_info[RTAX_LABEL])->
+		    sr_label;
+		if (strcmp(label, so_label.rtlabel.sr_label))
+			return;
+	}
+
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;
 		pr_family(sa->sa_family);
