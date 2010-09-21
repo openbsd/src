@@ -404,6 +404,20 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev_priv->mm.next_gem_seqno = 1;
 	dev_priv->mm.suspended = 1;
 
+	/* On GEN3 we really need to make sure the ARB C3 LP bit is set */
+	if (IS_GEN3(dev_priv)) {
+		u_int32_t tmp = I915_READ(MI_ARB_STATE);
+		if (!(tmp & MI_ARB_C3_LP_WRITE_ENABLE)) {
+			/*
+			 * arb state is a masked write, so set bit + bit
+			 * in mask
+			 */
+			tmp = MI_ARB_C3_LP_WRITE_ENABLE |
+			    (MI_ARB_C3_LP_WRITE_ENABLE << MI_ARB_MASK_SHIFT);
+			I915_WRITE(MI_ARB_STATE, tmp);
+		}
+	}
+
 	/* For the X server, in kms mode this will not be needed */
 	dev_priv->fence_reg_start = 3;
 
