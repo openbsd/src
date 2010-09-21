@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.17 2010/07/24 20:15:31 matthew Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.18 2010/09/21 04:33:35 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -247,8 +247,10 @@ vscsiopen(dev_t dev, int flags, int mode, struct proc *p)
 		sc->sc_state = VSCSI_S_CONFIG;
 	mtx_leave(&sc->sc_state_mtx);
 
-	if (rv != 0)
+	if (rv != 0) {
+		device_unref(&sc->sc_dev);
 		return (rv);
+	}
 
 	pool_init(&sc->sc_ccb_pool, sizeof(struct vscsi_ccb), 0, 0, 0,
 	    "vscsiccb", NULL);
@@ -265,6 +267,7 @@ vscsiopen(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_state = state;
 	mtx_leave(&sc->sc_state_mtx);
 
+	device_unref(&sc->sc_dev);
 	return (rv);
 }
 
@@ -309,6 +312,7 @@ vscsiioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	rw_exit_write(&sc->sc_ioc_lock);
 
+	device_unref(&sc->sc_dev);
 	return (err);
 }
 
@@ -464,6 +468,7 @@ vscsipoll(dev_t dev, int events, struct proc *p)
 			selrecord(p, &sc->sc_sel);
 	}
 
+	device_unref(&sc->sc_dev);
 	return (revents);
 }
 
@@ -478,6 +483,7 @@ vscsikqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &vscsi_filtops;
 		break;
 	default:
+		device_unref(&sc->sc_dev);
 		return (1);
 	}
 
@@ -487,6 +493,7 @@ vscsikqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	mtx_leave(&sc->sc_sel_mtx);
 
+	device_unref(&sc->sc_dev);
 	return (0);
 }
 
@@ -555,6 +562,7 @@ vscsiclose(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_state = VSCSI_S_CLOSED;
 	mtx_leave(&sc->sc_state_mtx);
 
+	device_unref(&sc->sc_dev);
 	return (0);
 }
 
