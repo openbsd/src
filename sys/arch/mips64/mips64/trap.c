@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2010/09/21 20:29:17 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2010/09/21 21:59:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -922,13 +922,11 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		case OP_JALR:
 			retAddr = (vaddr_t)regsPtr[inst.RType.rs];
 			break;
-
 		default:
 			retAddr = instPC + 4;
 			break;
 		}
 		break;
-
 	case OP_BCOND:
 		switch ((int)inst.IType.rt) {
 		case OP_BLTZ:
@@ -940,7 +938,6 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 			else
 				retAddr = instPC + 8;
 			break;
-
 		case OP_BGEZ:
 		case OP_BGEZL:
 		case OP_BGEZAL:
@@ -950,26 +947,15 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 			else
 				retAddr = instPC + 8;
 			break;
-
-		case OP_TGEI:
-		case OP_TGEIU:
-		case OP_TLTI:
-		case OP_TLTIU:
-		case OP_TEQI:
-		case OP_TNEI:
-			retAddr = instPC + 4;	/* Like syscall... */
-			break;
-
 		default:
-			panic("MipsEmulateBranch: Bad branch cond");
+			retAddr = instPC + 4;
+			break;
 		}
 		break;
-
 	case OP_J:
 	case OP_JAL:
 		retAddr = (inst.JType.target << 2) | (instPC & ~0x0fffffffUL);
 		break;
-
 	case OP_BEQ:
 	case OP_BEQL:
 		if (regsPtr[inst.RType.rs] == regsPtr[inst.RType.rt])
@@ -977,7 +963,6 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		else
 			retAddr = instPC + 8;
 		break;
-
 	case OP_BNE:
 	case OP_BNEL:
 		if (regsPtr[inst.RType.rs] != regsPtr[inst.RType.rt])
@@ -985,7 +970,6 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		else
 			retAddr = instPC + 8;
 		break;
-
 	case OP_BLEZ:
 	case OP_BLEZL:
 		if ((int)(regsPtr[inst.RType.rs]) <= 0)
@@ -993,7 +977,6 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		else
 			retAddr = instPC + 8;
 		break;
-
 	case OP_BGTZ:
 	case OP_BGTZL:
 		if ((int)(regsPtr[inst.RType.rs]) > 0)
@@ -1001,7 +984,6 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		else
 			retAddr = instPC + 8;
 		break;
-
 	case OP_COP1:
 		switch (inst.RType.rs) {
 		case OP_BC:
@@ -1016,12 +998,10 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 			else
 				retAddr = instPC + 8;
 			break;
-
 		default:
 			retAddr = instPC + 4;
 		}
 		break;
-
 	default:
 		retAddr = instPC + 4;
 	}
