@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.85 2010/09/07 16:21:47 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.86 2010/09/21 01:09:10 matthew Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -178,6 +178,8 @@ void	ttyprintf(struct tty *, const char *, ...)
 
 void	splassert_fail(int, int, const char *);
 extern	int splassert_ctl;
+
+void	assertwaitok(void);
 
 void	tablefull(const char *);
 
