@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.30 2010/09/21 10:45:26 henning Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.31 2010/09/21 11:29:12 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -16,6 +16,7 @@
  * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
  * and Niels Provos.
  * Copyright (c) 2001, Angelos D. Keromytis, Niels Provos.
+ * Copyright (c) 2002 - 2010 Henning Brauer
  *
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in

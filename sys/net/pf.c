@@ -1,8 +1,8 @@
-/*	$OpenBSD: pf.c,v 1.702 2010/09/21 10:43:41 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.703 2010/09/21 11:29:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
- * Copyright (c) 2002 - 2008 Henning Brauer
+ * Copyright (c) 2002 - 2010 Henning Brauer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

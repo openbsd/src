@@ -1,7 +1,8 @@
-/*	$OpenBSD: pfvar.h,v 1.313 2010/09/21 03:42:17 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.314 2010/09/21 11:29:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
+ * Copyright (c) 2002 - 2010 Henning Brauer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
