@@ -538,10 +538,9 @@ done:
 	if (--dev->open_count == 0) {
 		DRM_UNLOCK();
 		retcode = drm_lastclose(dev);
-	}
+	} else
+		DRM_UNLOCK();
 
-	DRM_UNLOCK();
-	
 	return (retcode);
 }
 
