@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.27 2010/09/13 00:56:55 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.28 2010/09/21 09:00:23 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -192,6 +192,47 @@ struct scsi_rw_16 {
 	u_int8_t control;
 };
 
+struct scsi_write_same_10 {
+	u_int8_t opcode;
+	u_int8_t flags;
+	u_int8_t lba[4];
+	u_int8_t group_number;
+	u_int8_t length[2];
+	u_int8_t control;
+};
+
+struct scsi_write_same_16 {
+	u_int8_t opcode;
+	u_int8_t flags;
+	u_int8_t lba[8];
+	u_int8_t length[4];
+	u_int8_t group_number;
+	u_int8_t control;
+};
+
+struct scsi_unmap {
+	u_int8_t opcode;
+	u_int8_t anchor;
+	u_int8_t _reserved[4];
+	u_int8_t group_number;
+	u_int8_t list_len[2];
+	u_int8_t control;
+};
+
+struct scsi_unmap_data {
+	u_int8_t data_length[2];
+	u_int8_t desc_length[2];
+	u_int8_t _reserved[4];
+
+	/* followed by struct scsi_unmap_desc */
+};
+
+struct scsi_unmap_desc {
+	u_int8_t logical_addr[8];
+	u_int8_t logical_blocks[4];
+	u_int8_t _reserved[4];
+};
+
 struct scsi_read_capacity {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -253,6 +294,9 @@ struct scsi_synchronize_cache {
 #define READ_16			0x88
 #define WRITE_16		0x8a
 #define SYNCHRONIZE_CACHE	0x35
+#define WRITE_SAME_10		0x41
+#define WRITE_SAME_16		0x93
+#define UNMAP			0x42
 
 
 struct scsi_read_cap_data {
