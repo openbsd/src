@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.10 2010/09/20 00:49:00 deraadt Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.11 2010/09/21 11:23:20 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -148,6 +148,7 @@ struct glxpcib_softc {
 	bus_space_handle_t	sc_gpio_ioh;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[AMD5536_GPIO_NPINS];
+	int			sc_wdog_period;
 #endif
 };
 
@@ -293,8 +294,15 @@ glxpcib_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			sc->sc_msrsave[i] = rdmsr(glxpcib_msrlist[i]);
+
+		sc->sc_wdog_period = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    AMD5536_MFGPT0_CMP2);
+		glxpcib_wdogctl_cb(sc, 0);
+
 		break;
 	case DVACT_RESUME:
+		glxpcib_wdogctl_cb(sc, sc->sc_wdog_period);
+
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			wrmsr(glxpcib_msrlist[i], sc->sc_msrsave[i]);
 		rv = config_activate_children(self, act);
