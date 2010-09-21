@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.28 2010/01/12 02:47:07 claudio Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.29 2010/09/21 04:06:37 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -53,6 +53,9 @@
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/ip_icmp.h>
 #endif
 
 #ifdef INET6
@@ -60,6 +63,7 @@
 #include <netinet/in.h>
 #endif
 #include <netinet6/nd6.h>
+#include <netinet/icmp6.h>
 #endif /* INET6 */
 
 #include <net/pfvar.h>
@@ -86,6 +90,7 @@ struct if_clone	pflog_cloner =
     IF_CLONE_INITIALIZER("pflog", pflog_clone_create, pflog_clone_destroy);
 
 struct ifnet	*pflogifs[PFLOGIFS_MAX];	/* for fast access */
+struct mbuf	*mfake = NULL;
 
 void
 pflogattach(int npflog)
@@ -94,6 +99,8 @@ pflogattach(int npflog)
 	LIST_INIT(&pflogif_list);
 	for (i = 0; i < PFLOGIFS_MAX; i++)
 		pflogifs[i] = NULL;
+	if (mfake == NULL)
+		mfake = m_get(M_DONTWAIT, MT_HEADER);
 	if_clone_attach(&pflog_cloner);
 }
 
@@ -246,21 +253,88 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	hdr.rule_pid = rm->cpid;
 	hdr.dir = dir;
 
-#ifdef INET
-	if (af == AF_INET && dir == PF_OUT) {
-		struct ip *ip;
-
-		ip = mtod(m, struct ip *);
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-	}
-#endif /* INET */
+	PF_ACPY(&hdr.saddr, &pd->nsaddr, pd->af);
+	PF_ACPY(&hdr.daddr, &pd->ndaddr, pd->af);
+	hdr.sport = pd->nsport;
+	hdr.dport = pd->ndport;
 
 	ifn->if_opackets++;
 	ifn->if_obytes += m->m_pkthdr.len;
-	bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, PFLOG_HDRLEN, m,
-	    BPF_DIRECTION_OUT);
+
+	bpf_mtap_pflog(ifn->if_bpf, (caddr_t)&hdr, m);
 #endif
 
 	return (0);
+}
+
+void
+pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
+{
+	const struct mbuf	*m;
+	struct pfloghdr		*pfloghdr;
+	u_int			 count;
+	u_char			*dst;
+	u_short			 action, reason;
+	int			 off = 0, hdrlen = 0;
+	union {
+		struct tcphdr		tcp;
+		struct udphdr		udp;
+		struct icmp		icmp;
+#ifdef INET6
+		struct icmp6_hdr	icmp6;
+#endif /* INET6 */
+	} pf_hdrs;
+
+	struct pf_pdesc		 pd;
+
+	m = src_arg;
+	dst = dst_arg;
+
+	if (m == NULL)
+		panic("pflog_bpfcopy got no mbuf");
+
+	/* first mbuf holds struct pfloghdr */
+	pfloghdr = mtod(m, struct pfloghdr *);
+	count = min(m->m_len, len);
+	bcopy(pfloghdr, dst, count);
+	dst += count;
+	len -= count;
+	m = m->m_next;
+
+	/* second mbuf is pkthdr */
+	if (len > 0) {
+		if (m == NULL)
+			panic("no second mbuf");
+		bcopy(m, mfake, sizeof(*mfake));
+		mfake->m_flags &= ~(M_EXT|M_CLUSTER);
+		mfake->m_next = NULL;
+		mfake->m_nextpkt = NULL;
+		mfake->m_data = dst;
+		mfake->m_len = len;
+	} else
+		return;
+
+	while (len > 0) {
+		if (m == 0)
+			panic("bpf_mcopy");
+		count = min(m->m_len, len);
+		bcopy(mtod(m, caddr_t), (caddr_t)dst, count);
+		m = m->m_next;
+		dst += count;
+		len -= count;
+	}
+
+	if (mfake->m_flags & M_PKTHDR)
+		mfake->m_pkthdr.len = min(mfake->m_pkthdr.len, mfake->m_len);
+
+	/* rewrite addresses if needed */
+	memset(&pd, 0, sizeof(pd));
+	pd.hdr.any = &pf_hdrs;
+	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, &pd, mfake, &action,
+	    &reason, NULL, NULL, NULL, NULL, &off, &hdrlen) == -1)
+		return;
+	if (pf_translate(&pd, &pfloghdr->saddr, pfloghdr->sport,
+	    &pfloghdr->daddr, pfloghdr->dport, 0, pfloghdr->dir, mfake))
+		m_copyback(mfake, off, min(mfake->m_len - off, hdrlen),
+		    pd.hdr.any, M_NOWAIT);
 }

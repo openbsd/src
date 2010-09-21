@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.75 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.76 2010/09/21 04:06:37 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -62,6 +62,11 @@
 #include "vlan.h"
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
+#endif
+
+#include "pflog.h"
+#if NPFLOG > 0
+#include <net/if_pflog.h>
 #endif
 
 #define BPF_BUFSIZE 32768
@@ -1290,6 +1295,45 @@ bpf_mtap_ether(caddr_t arg, struct mbuf *m, u_int direction)
 	m->m_data -= ETHER_HDR_LEN;
 #endif
 }
+
+void
+bpf_mtap_pflog(caddr_t arg, caddr_t data, struct mbuf *m)
+{
+#if NPFLOG > 0
+	struct m_hdr mh;
+	struct bpf_if *bp = (struct bpf_if *)arg;
+	struct bpf_d *d;
+	size_t pktlen, slen;
+	struct mbuf *m0;
+
+	if (m == NULL)
+		return;
+
+	mh.mh_flags = 0;
+	mh.mh_next = m;
+	mh.mh_len = PFLOG_HDRLEN;
+	mh.mh_data = data;
+
+	pktlen = mh.mh_len;
+	for (m0 = m; m0 != 0; m0 = m0->m_next)
+		pktlen += m0->m_len;
+
+	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
+		++d->bd_rcount;
+		if ((BPF_DIRECTION_OUT & d->bd_dirfilt) != 0)
+			slen = 0;
+		else
+			slen = bpf_filter(d->bd_rfilter, (u_char *)&mh,
+			    pktlen, 0);
+
+		if (slen == 0)
+		    continue;
+
+		bpf_catchpacket(d, (u_char *)&mh, pktlen, slen, pflog_bpfcopy);
+	}
+#endif
+}
+
 
 /*
  * Move the packet data from interface memory (pkt) into the
