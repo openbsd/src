@@ -1493,7 +1493,7 @@ i915_gem_object_move_to_inactive_locked(struct drm_obj *obj)
 	atomic_clearbits_int(&obj->do_flags, I915_FENCED_EXEC);
 
 	KASSERT((obj->do_flags & I915_GPU_WRITE) == 0);
-	/* unlock becauase this unref could recurse */
+	/* unlock because this unref could recurse */
 	mtx_leave(&dev_priv->list_lock);
 	if (inteldrm_is_active(obj_priv)) {
 		atomic_clearbits_int(&obj->do_flags,
@@ -2484,7 +2484,7 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 	/*
 	 * We could only do this on bind so allow for map_buffer_range
 	 * unsynchronised objects (where buffer suballocation
-	 * is done by the GL application, however it gives coherency problems
+	 * is done by the GL application), however it gives coherency problems
 	 * normally.
 	 */
 	ret = i915_gem_object_set_to_gtt_domain(obj, write, 0);
@@ -3201,11 +3201,6 @@ i915_dispatch_gem_execbuffer(struct drm_device *dev,
 	(void)i915_add_request(dev_priv);
 
 	inteldrm_verify_inactive(dev_priv, __FILE__, __LINE__);
-#if 0
-	/* The sampler always gets flushed on i965 (sigh) */
-	if (IS_I965G(dev_priv))
-		inteldrm_process_flushing(dev_priv, I915_GEM_DOMAIN_SAMPLER);
-#endif
 }
 
 /* Throttle our rendering by waiting until the ring has completed our requests
