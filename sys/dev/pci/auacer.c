@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.9 2010/09/07 16:21:44 deraadt Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.10 2010/09/21 02:12:20 jakemsr Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -1079,15 +1079,22 @@ int
 auacer_activate(struct device *self, int act)
 {
 	struct auacer_softc *sc = (struct auacer_softc *)self;
+	int rv = 0;
 
 	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
 		break;
 	case DVACT_RESUME:
-		auacer_reset_codec(sc);
-		delay(1000);
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+		ac97_resume(&sc->host_if, sc->codec_if);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_DEACTIVATE:
 		break;
 	}
-	return 0;
+	return (rv);
 }
