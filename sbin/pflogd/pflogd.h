@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.h,v 1.3 2006/01/15 16:38:04 canacar Exp $ */
+/*	$OpenBSD: pflogd.h,v 1.4 2010/09/21 05:56:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -19,7 +19,7 @@
 #include <sys/limits.h>
 #include <pcap.h>
 
-#define DEF_SNAPLEN 116		/* default plus allow for larger header of pflog */
+#define DEF_SNAPLEN 160		/* pfloghdr + ip hdr + proto hdr fit usually */
 #define PCAP_TO_MS 500		/* pcap read timeout (ms) */
 #define PCAP_NUM_PKTS 1000	/* max number of packets to process at each loop */
 #define PCAP_OPT_FIL 1		/* filter optimization */
