@@ -4346,20 +4346,6 @@ inteldrm_hung(void *arg, void *reset_type)
 	 * they're now irrelavent.
 	 */
 	mtx_enter(&dev_priv->list_lock);
-	while ((obj_priv = TAILQ_FIRST(&dev_priv->mm.active_list)) != NULL) {
-		drm_lock_obj(&obj_priv->obj);
-		if (obj_priv->obj.write_domain & I915_GEM_GPU_DOMAINS) {
-			TAILQ_REMOVE(&dev_priv->mm.gpu_write_list,
-			    obj_priv, write_list);
-			atomic_clearbits_int(&obj_priv->obj.do_flags,
-			     I915_GPU_WRITE);
-			obj_priv->obj.write_domain &= ~I915_GEM_GPU_DOMAINS;
-		}
-		/* unlocks object and list */
-		i915_gem_object_move_to_inactive_locked(&obj_priv->obj);;
-		mtx_enter(&dev_priv->list_lock);
-	}
-
 	while ((obj_priv = TAILQ_FIRST(&dev_priv->mm.flushing_list)) != NULL) {
 		drm_lock_obj(&obj_priv->obj);
 		if (obj_priv->obj.write_domain & I915_GEM_GPU_DOMAINS) {
