@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.18 2010/09/21 04:33:35 matthew Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.19 2010/09/22 03:51:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -62,7 +62,7 @@ struct vscsi_softc {
 
 	struct mutex		sc_state_mtx;
 	enum vscsi_state	sc_state;
-	u_int			sc_ccb_count;
+	u_int			sc_ref_count;
 	struct pool		sc_ccb_pool;
 
 	struct scsi_iopool	sc_iopool;
@@ -94,12 +94,13 @@ struct cfdriver vscsi_cd = {
 
 void		vscsi_cmd(struct scsi_xfer *);
 int		vscsi_probe(struct scsi_link *);
+void		vscsi_free(struct scsi_link *);
 
 struct scsi_adapter vscsi_switch = {
 	vscsi_cmd,
 	scsi_minphys,
 	vscsi_probe,
-	NULL
+	vscsi_free
 };
 
 int		vscsi_i2t(struct vscsi_softc *, struct vscsi_ioc_i2t *);
@@ -221,13 +222,28 @@ int
 vscsi_probe(struct scsi_link *link)
 {
 	struct vscsi_softc		*sc = link->adapter_softc;
-	int				rv;
+	int				rv = 0;
 
 	mtx_enter(&sc->sc_state_mtx);
-	rv = (sc->sc_state == VSCSI_S_RUNNING) ? 0 : ENXIO;
+	if (sc->sc_state == VSCSI_S_RUNNING)
+		sc->sc_ref_count++;
+	else
+		rv = ENXIO;
 	mtx_leave(&sc->sc_state_mtx);
 
 	return (rv);
+}
+
+void
+vscsi_free(struct scsi_link *link)
+{
+	struct vscsi_softc		*sc = link->adapter_softc;
+
+	mtx_enter(&sc->sc_state_mtx);
+	sc->sc_ref_count--;
+	if (sc->sc_state != VSCSI_S_RUNNING && sc->sc_ref_count == 0)
+		wakeup(&sc->sc_ref_count);
+	mtx_leave(&sc->sc_state_mtx);
 }
 
 int
@@ -254,6 +270,7 @@ vscsiopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	pool_init(&sc->sc_ccb_pool, sizeof(struct vscsi_ccb), 0, 0, 0,
 	    "vscsiccb", NULL);
+	pool_setipl(&sc->sc_ccb_pool, IPL_BIO);
 
 	/* we need to guarantee some ccbs will be available for the iopool */
 	rv = pool_prime(&sc->sc_ccb_pool, 8);
@@ -527,7 +544,6 @@ vscsiclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct vscsi_softc		*sc = DEV2SC(dev);
 	struct vscsi_ccb		*ccb;
-	int				i;
 
 	mtx_enter(&sc->sc_state_mtx);
 	KASSERT(sc->sc_state == VSCSI_S_RUNNING);
@@ -546,17 +562,16 @@ vscsiclose(dev_t dev, int flags, int mode, struct proc *p)
 		vscsi_done(sc, ccb);
 	}
 
+	scsi_req_detach(sc->sc_scsibus, -1, -1, DETACH_FORCE);
+
 	mtx_enter(&sc->sc_state_mtx);
-	while (sc->sc_ccb_count > 0) {
-		msleep(&sc->sc_ccb_count, &sc->sc_state_mtx,
-		    PRIBIO, "vscsiccb", 0);
+	while (sc->sc_ref_count > 0) {
+		msleep(&sc->sc_ref_count, &sc->sc_state_mtx,
+		    PRIBIO, "vscsiref", 0);
 	}
 	mtx_leave(&sc->sc_state_mtx);
 
 	pool_destroy(&sc->sc_ccb_pool);
-
-	for (i = 0; i < sc->sc_link.adapter_buswidth; i++)
-		scsi_detach_target(sc->sc_scsibus, i, DETACH_FORCE);
 
 	mtx_enter(&sc->sc_state_mtx);
 	sc->sc_state = VSCSI_S_CLOSED;
@@ -572,15 +587,11 @@ vscsi_ccb_get(void *cookie)
 	struct vscsi_softc		*sc = cookie;
 	struct vscsi_ccb		*ccb = NULL;
 
-	mtx_enter(&sc->sc_state_mtx);
-	if (sc->sc_state == VSCSI_S_RUNNING &&
-	    (ccb = pool_get(&sc->sc_ccb_pool, PR_NOWAIT)) != NULL) {
+	ccb = pool_get(&sc->sc_ccb_pool, PR_NOWAIT);
+	if (ccb != NULL) {
 		ccb->ccb_tag = sc->sc_ccb_tag++;
 		ccb->ccb_datalen = 0;
-
-		sc->sc_ccb_count++;
 	}
-	mtx_leave(&sc->sc_state_mtx);
 
 	return (ccb);
 }
@@ -591,14 +602,5 @@ vscsi_ccb_put(void *cookie, void *io)
 	struct vscsi_softc		*sc = cookie;
 	struct vscsi_ccb		*ccb = io;
 
-	mtx_enter(&sc->sc_state_mtx);
-
 	pool_put(&sc->sc_ccb_pool, ccb);
-	sc->sc_ccb_count--;
-
-	if (sc->sc_state != VSCSI_S_RUNNING &&
-	    sc->sc_ccb_count == 0)
-		wakeup(&sc->sc_ccb_count);
-
-	mtx_leave(&sc->sc_state_mtx);
 }
