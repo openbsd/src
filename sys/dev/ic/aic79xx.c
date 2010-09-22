@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.46 2009/12/10 00:18:44 chl Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.47 2010/09/22 00:35:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -2251,7 +2251,6 @@ ahd_handle_nonpkt_busfree(struct ahd_softc *ahd)
 			found = ahd_abort_scbs(ahd, target, 'A', saved_lun,
 					       tag, ROLE_INITIATOR,
 					       CAM_REQ_ABORTED);
-			printf("found == 0x%x\n", found);
 			printerror = 0;
 		} else if (ahd_sent_msg(ahd, AHDMSG_1B,
 					MSG_BUS_DEV_RESET, TRUE)) {
