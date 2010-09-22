@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.31 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.32 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -739,7 +739,7 @@ hdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 int
 hdread(dev_t dev, struct uio *uio, int flag)
 {
-	return (physio(hdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(hdstrategy, dev, B_READ, minphys, uio));
 }
 
 /*
@@ -748,7 +748,7 @@ hdread(dev_t dev, struct uio *uio, int flag)
 int
 hdwrite(dev_t dev, struct uio *uio, int flag)
 {
-	return (physio(hdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(hdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 /*

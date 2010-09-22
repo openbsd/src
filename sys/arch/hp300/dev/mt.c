@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.24 2010/07/10 03:06:51 matthew Exp $	*/
+/*	$OpenBSD: mt.c,v 1.25 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /*
@@ -914,7 +914,7 @@ mtread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(mtstrategy, dev, B_READ, minphys, uio));
 }
 
 int
@@ -923,7 +923,7 @@ mtwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(mtstrategy, dev, B_WRITE, minphys, uio));
 }
 
 int

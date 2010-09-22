@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.50 2010/09/08 14:47:10 jsing Exp $	*/
+/*	$OpenBSD: xd.c,v 1.51 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -954,7 +954,7 @@ xdread(dev, uio, flags)
 	int flags;
 {
 
-	return (physio(xdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(xdstrategy, dev, B_READ, minphys, uio));
 }
 
 int
@@ -964,7 +964,7 @@ xdwrite(dev, uio, flags)
 	int flags;
 {
 
-	return (physio(xdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(xdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 

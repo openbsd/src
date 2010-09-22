@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.30 2010/09/08 14:47:10 jsing Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.31 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -345,7 +345,7 @@ raread(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(rastrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(rastrategy, dev, B_READ, minphys, uio));
 }
 
 int
@@ -354,7 +354,7 @@ rawrite(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(rastrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(rastrategy, dev, B_WRITE, minphys, uio));
 }
 
 /*
@@ -675,7 +675,7 @@ rxread(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(rxstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(rxstrategy, dev, B_READ, minphys, uio));
 }
 
 int
@@ -684,7 +684,7 @@ rxwrite(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(rxstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(rxstrategy, dev, B_WRITE, minphys, uio));
 }
 
 /*

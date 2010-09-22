@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.62 2010/09/08 14:47:10 jsing Exp $	*/
+/*	$OpenBSD: hd.c,v 1.63 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1110,7 +1110,7 @@ hdread(dev, uio, flags)
 	int flags;
 {
 
-	return (physio(hdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(hdstrategy, dev, B_READ, minphys, uio));
 }
 
 int
@@ -1120,7 +1120,7 @@ hdwrite(dev, uio, flags)
 	int flags;
 {
 
-	return (physio(hdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(hdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.91 2010/09/08 14:47:12 jsing Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.92 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -978,7 +978,7 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 	 * in particular, for raw I/O.  Underlying devices might have some
 	 * non-obvious limits, because of the copy to user-space.
 	 */
-	return (physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(ccdstrategy, dev, B_READ, minphys, uio));
 }
 
 /* ARGSUSED */
@@ -1002,7 +1002,7 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 	 * in particular, for raw I/O.  Underlying devices might have some
 	 * non-obvious limits, because of the copy to user-space.
 	 */
-	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(ccdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.55 2010/09/08 14:47:12 jsing Exp $ */
+/*	$OpenBSD: mcd.c,v 1.56 2010/09/22 01:18:57 matthew Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -593,7 +593,7 @@ mcdread(dev, uio, flags)
 	int flags;
 {
 
-	return (physio(mcdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(mcdstrategy, dev, B_READ, minphys, uio));
 }
 
 int
@@ -603,7 +603,7 @@ mcdwrite(dev, uio, flags)
 	int flags;
 {
 
-	return (physio(mcdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(mcdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 int

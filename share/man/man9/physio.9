@@ -1,4 +1,4 @@
-.\"	$OpenBSD: physio.9,v 1.6 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: physio.9,v 1.7 2010/09/22 01:18:57 matthew Exp $
 .\"	$NetBSD: physio.9,v 1.5 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: September 22 2010 $
 .Dt PHYSIO 9
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Ft int
 .Fo "physio"
 .Fa "void (*strategy)(struct buf *)"
-.Fa "struct buf *bp"
 .Fa "dev_t dev"
 .Fa "int flags"
 .Fa "void (*minphys)(struct buf *)"
@@ -73,28 +72,20 @@ functions in
 .Fn physio
 always awaits the completion of the entire requested transfer before
 returning, unless an error condition is detected earlier.
-In all cases, the buffer passed in
-.Fa bp
-is locked (marked as
-.Dq busy )
-for the duration of the entire transfer.
+.Pp
+In all cases, a temporary buffer is allocated from a system pool.
+This buffer will have the
+.Dv B_BUSY ,
+.Dv B_PHYS ,
+and
+.Dv B_RAW
+flags set when passed to the strategy routine.
 .Pp
 A break-down of the arguments follows:
 .Bl -tag -width indent
 .It Fa strategy
 The device strategy routine to call for each chunk of data to initiate
 device I/O.
-.It Fa bp
-The buffer to use with the strategy routine.
-The buffer flags will have
-.Dv B_BUSY ,
-.Dv B_PHYS ,
-and
-.Dv B_RAW
-set when passed to the strategy routine.
-If
-.Dv NULL ,
-a buffer is allocated from a system pool.
 .It Fa dev
 The device number identifying the device to interact with.
 .It Fa flags

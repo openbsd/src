@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.58 2010/09/08 14:47:12 jsing Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.59 2010/09/22 01:18:57 matthew Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -799,7 +799,7 @@ raidread(dev_t dev, struct uio *uio, int flags)
 
 	db1_printf(("raidread: unit: %d partition: %d\n", unit, part));
 
-	return (physio(raidstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(raidstrategy, dev, B_READ, minphys, uio));
 }
 
 /* ARGSUSED */
@@ -816,7 +816,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
 		return (ENXIO);
 	db1_printf(("raidwrite\n"));
-	return (physio(raidstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(raidstrategy, dev, B_WRITE, minphys, uio));
 }
 
 int

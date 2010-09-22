@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.21 2010/09/08 14:47:10 jsing Exp $ */
+/*	$OpenBSD: hp.c,v 1.22 2010/09/22 01:18:57 matthew Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -475,7 +475,7 @@ hpread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	return (physio(hpstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(hpstrategy, dev, B_READ, minphys, uio));
 }
 
 int
@@ -483,5 +483,5 @@ hpwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	return (physio(hpstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(hpstrategy, dev, B_WRITE, minphys, uio));
 }

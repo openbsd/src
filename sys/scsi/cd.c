@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.194 2010/09/21 12:20:53 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.195 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -769,14 +769,14 @@ int
 cdread(dev_t dev, struct uio *uio, int ioflag)
 {
 
-	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
+	return (physio(cdstrategy, dev, B_READ, cdminphys, uio));
 }
 
 int
 cdwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 
-	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
+	return (physio(cdstrategy, dev, B_WRITE, cdminphys, uio));
 }
 
 /*

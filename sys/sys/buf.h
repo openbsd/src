@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.73 2010/09/06 16:33:41 thib Exp $	*/
+/*	$OpenBSD: buf.h,v 1.74 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -301,8 +301,8 @@ void	buf_free_pages(struct buf *);
 
 
 void	minphys(struct buf *bp);
-int	physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
-	    int flags, void (*minphys)(struct buf *), struct uio *uio);
+int	physio(void (*strategy)(struct buf *), dev_t dev, int flags,
+	    void (*minphys)(struct buf *), struct uio *uio);
 void  brelvp(struct buf *);
 void  reassignbuf(struct buf *);
 void  bgetvp(struct vnode *, struct buf *);

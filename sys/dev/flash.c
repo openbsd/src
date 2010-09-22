@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.17 2010/09/08 14:47:12 jsing Exp $	*/
+/*	$OpenBSD: flash.c,v 1.18 2010/09/22 01:18:57 matthew Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -1033,13 +1033,13 @@ flashminphys(struct buf *bp)
 int
 flashread(dev_t dev, struct uio *uio, int ioflag)
 {
-	return physio(flashstrategy, NULL, dev, B_READ, flashminphys, uio);
+	return physio(flashstrategy, dev, B_READ, flashminphys, uio);
 }
 
 int
 flashwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-	return physio(flashstrategy, NULL, dev, B_WRITE, flashminphys, uio);
+	return physio(flashstrategy, dev, B_WRITE, flashminphys, uio);
 }
 
 /*

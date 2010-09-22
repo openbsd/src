@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.31 2010/07/01 21:27:39 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.32 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -68,19 +68,19 @@ void putphysbuf(struct buf *bp);
  * Comments in brackets are from Leffler, et al.'s pseudo-code implementation.
  */
 int
-physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
+physio(void (*strategy)(struct buf *), dev_t dev, int flags,
     void (*minphys)(struct buf *), struct uio *uio)
 {
 	struct iovec *iovp;
 	struct proc *p = curproc;
-	int error, done, i, nobuf, s, todo;
+	int error, done, i, s, todo;
+	struct buf *bp;
 
 	error = 0;
 	flags &= B_READ | B_WRITE;
 
-	/* Make sure we have a buffer, creating one if necessary. */
-	if ((nobuf = (bp == NULL)) != 0)
-		bp = getphysbuf();
+	/* Create a buffer. */
+	bp = getphysbuf();
 
 	/* [raise the processor priority level to splbio;] */
 	s = splbio();
@@ -242,18 +242,7 @@ done:
 	 */
 	s = splbio();
 	bp->b_flags &= ~(B_BUSY | B_PHYS | B_RAW);
-	if (nobuf)
-		putphysbuf(bp);
-	else {
-		/*
-		 * [if another process is waiting for the raw I/O buffer,
-		 *    wake up processes waiting to do physical I/O]
-		 */
-		if (bp->b_flags & B_WANTED) {
-			bp->b_flags &= ~B_WANTED;
-			wakeup(bp);
-		}
-	}
+	putphysbuf(bp);
 	splx(s);
 
 	return (error);

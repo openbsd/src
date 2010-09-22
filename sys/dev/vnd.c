@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.102 2010/09/08 14:47:12 jsing Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.103 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -699,7 +699,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(vndstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(vndstrategy, dev, B_READ, minphys, uio));
 }
 
 /* ARGSUSED */
@@ -718,7 +718,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(vndstrategy, dev, B_WRITE, minphys, uio));
 }
 
 size_t

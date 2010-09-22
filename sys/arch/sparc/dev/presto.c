@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.18 2010/09/08 14:47:10 jsing Exp $	*/
+/*	$OpenBSD: presto.c,v 1.19 2010/09/22 01:18:57 matthew Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -259,13 +259,13 @@ prestoclose(dev_t dev, int flag, int fmt, struct proc *proc)
 int
 prestoread(dev_t dev, struct uio *uio, int flags)
 {
-	return (physio(prestostrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(prestostrategy, dev, B_READ, minphys, uio));
 }
 
 int
 prestowrite(dev_t dev, struct uio *uio, int flags)
 {
-	return (physio(prestostrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(prestostrategy, dev, B_WRITE, minphys, uio));
 }
 
 void

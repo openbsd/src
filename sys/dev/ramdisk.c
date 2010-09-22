@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.49 2010/09/08 14:47:12 jsing Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.50 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -308,13 +308,13 @@ rdclose(dev_t dev, int flag, int fmt, struct proc *proc)
 int
 rdread(dev_t dev, struct uio *uio, int flags)
 {
-	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(rdstrategy, dev, B_READ, minphys, uio));
 }
 
 int
 rdwrite(dev_t dev, struct uio *uio, int flags)
 {
-	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(rdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 /*

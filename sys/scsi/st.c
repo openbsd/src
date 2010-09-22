@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.113 2010/09/20 02:51:52 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.114 2010/09/22 01:18:57 matthew Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1139,7 +1139,7 @@ stread(dev_t dev, struct uio *uio, int iomode)
 		return (ENXIO);
 	}
 
-	return (physio(ststrategy, NULL, dev, B_READ, stminphys, uio));
+	return (physio(ststrategy, dev, B_READ, stminphys, uio));
 }
 
 int
@@ -1156,7 +1156,7 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
 		return (ENXIO);
 	}
 
-	return (physio(ststrategy, NULL, dev, B_WRITE, stminphys, uio));
+	return (physio(ststrategy, dev, B_WRITE, stminphys, uio));
 }
 
 /*
