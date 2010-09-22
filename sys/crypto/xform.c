@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.38 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: xform.c,v 1.39 2010/09/22 11:54:23 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -60,6 +60,7 @@
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 #include <crypto/deflate.h>
+#include <crypto/gmac.h>
 
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
@@ -107,6 +108,7 @@ void null_zerokey(u_int8_t **);
 
 void aes_ctr_reinit(caddr_t, u_int8_t *);
 void aes_xts_reinit(caddr_t, u_int8_t *);
+void aes_gcm_reinit(caddr_t, u_int8_t *);
 
 int MD5Update_int(void *, const u_int8_t *, u_int16_t);
 int SHA1Update_int(void *, const u_int8_t *, u_int16_t);
@@ -194,6 +196,26 @@ struct enc_xform enc_xform_aes_ctr = {
 	aes_ctr_reinit
 };
 
+struct enc_xform enc_xform_aes_gcm = {
+	CRYPTO_AES_GCM_16, "AES-GCM",
+	1, 8, 16+4, 32+4,
+	aes_ctr_crypt,
+	aes_ctr_crypt,
+	aes_ctr_setkey,
+	aes_ctr_zerokey,
+	aes_gcm_reinit
+};
+
+struct enc_xform enc_xform_aes_gmac = {
+	CRYPTO_AES_GMAC, "AES-GMAC",
+	1, 8, 16+4, 32+4,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
 struct enc_xform enc_xform_aes_xts = {
 	CRYPTO_AES_XTS, "AES-XTS",
 	16, 8, 32, 64,
@@ -228,70 +250,110 @@ struct enc_xform enc_xform_null = {
 struct auth_hash auth_hash_hmac_md5_96 = {
 	CRYPTO_MD5_HMAC, "HMAC-MD5",
 	16, 16, 12, sizeof(MD5_CTX), HMAC_MD5_BLOCK_LEN,
-	(void (*) (void *)) MD5Init, MD5Update_int,
+	(void (*) (void *)) MD5Init, NULL, NULL,
+	MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 struct auth_hash auth_hash_hmac_sha1_96 = {
 	CRYPTO_SHA1_HMAC, "HMAC-SHA1",
 	20, 20, 12, sizeof(SHA1_CTX), HMAC_SHA1_BLOCK_LEN,
-	(void (*) (void *)) SHA1Init, SHA1Update_int,
+	(void (*) (void *)) SHA1Init, NULL, NULL,
+	SHA1Update_int,
 	(void (*) (u_int8_t *, void *)) SHA1Final
 };
 
 struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 	CRYPTO_RIPEMD160_HMAC, "HMAC-RIPEMD-160",
 	20, 20, 12, sizeof(RMD160_CTX), HMAC_RIPEMD160_BLOCK_LEN,
-	(void (*)(void *)) RMD160Init, RMD160Update_int,
+	(void (*)(void *)) RMD160Init, NULL, NULL,
+	RMD160Update_int,
 	(void (*)(u_int8_t *, void *)) RMD160Final
 };
 
 struct auth_hash auth_hash_hmac_sha2_256_128 = {
 	CRYPTO_SHA2_256_HMAC, "HMAC-SHA2-256",
 	32, 32, 16, sizeof(SHA2_CTX), HMAC_SHA2_256_BLOCK_LEN,
-	(void (*)(void *)) SHA256Init, SHA256Update_int,
+	(void (*)(void *)) SHA256Init, NULL, NULL,
+	SHA256Update_int,
 	(void (*)(u_int8_t *, void *)) SHA256Final
 };
 
 struct auth_hash auth_hash_hmac_sha2_384_192 = {
 	CRYPTO_SHA2_384_HMAC, "HMAC-SHA2-384",
 	48, 48, 24, sizeof(SHA2_CTX), HMAC_SHA2_384_BLOCK_LEN,
-	(void (*)(void *)) SHA384Init, SHA384Update_int,
+	(void (*)(void *)) SHA384Init, NULL, NULL,
+	SHA384Update_int,
 	(void (*)(u_int8_t *, void *)) SHA384Final
 };
 
 struct auth_hash auth_hash_hmac_sha2_512_256 = {
 	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
 	64, 64, 32, sizeof(SHA2_CTX), HMAC_SHA2_512_BLOCK_LEN,
-	(void (*)(void *)) SHA512Init, SHA512Update_int,
+	(void (*)(void *)) SHA512Init, NULL, NULL,
+	SHA512Update_int,
 	(void (*)(u_int8_t *, void *)) SHA512Final
+};
+
+struct auth_hash auth_hash_gmac_aes_128 = {
+	CRYPTO_AES_128_GMAC, "GMAC-AES-128",
+	16+4, 16, 16, sizeof(AES_GMAC_CTX), GMAC_BLOCK_LEN,
+	(void (*)(void *)) AES_GMAC_Init,
+	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Setkey,
+	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
+	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
+	(void (*)(u_int8_t *, void *)) AES_GMAC_Final
+};
+
+struct auth_hash auth_hash_gmac_aes_192 = {
+	CRYPTO_AES_192_GMAC, "GMAC-AES-192",
+	24+4, 16, 16, sizeof(AES_GMAC_CTX), GMAC_BLOCK_LEN,
+	(void (*)(void *)) AES_GMAC_Init,
+	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Setkey,
+	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
+	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
+	(void (*)(u_int8_t *, void *)) AES_GMAC_Final
+};
+
+struct auth_hash auth_hash_gmac_aes_256 = {
+	CRYPTO_AES_256_GMAC, "GMAC-AES-256",
+	32+4, 16, 16, sizeof(AES_GMAC_CTX), GMAC_BLOCK_LEN,
+	(void (*)(void *)) AES_GMAC_Init,
+	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Setkey,
+	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
+	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
+	(void (*)(u_int8_t *, void *)) AES_GMAC_Final
 };
 
 struct auth_hash auth_hash_key_md5 = {
 	CRYPTO_MD5_KPDK, "Keyed MD5",
 	0, 16, 16, sizeof(MD5_CTX), 0,
-	(void (*)(void *)) MD5Init, MD5Update_int,
+	(void (*)(void *)) MD5Init, NULL, NULL,
+	MD5Update_int,
 	(void (*)(u_int8_t *, void *)) MD5Final
 };
 
 struct auth_hash auth_hash_key_sha1 = {
 	CRYPTO_SHA1_KPDK, "Keyed SHA1",
 	0, 20, 20, sizeof(SHA1_CTX), 0,
-	(void (*)(void *)) SHA1Init, SHA1Update_int,
+	(void (*)(void *)) SHA1Init, NULL, NULL,
+	SHA1Update_int,
 	(void (*)(u_int8_t *, void *)) SHA1Final
 };
 
 struct auth_hash auth_hash_md5 = {
 	CRYPTO_MD5, "MD5",
 	0, 16, 16, sizeof(MD5_CTX), 0,
-	(void (*) (void *)) MD5Init, MD5Update_int,
+	(void (*) (void *)) MD5Init, NULL, NULL,
+	MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 struct auth_hash auth_hash_sha1 = {
 	CRYPTO_SHA1, "SHA1",
 	0, 20, 20, sizeof(SHA1_CTX), 0,
-	(void (*)(void *)) SHA1Init, SHA1Update_int,
+	(void (*)(void *)) SHA1Init, NULL, NULL,
+	SHA1Update_int,
 	(void (*)(u_int8_t *, void *)) SHA1Final
 };
 
@@ -552,6 +614,19 @@ aes_ctr_reinit(caddr_t key, u_int8_t *iv)
 }
 
 void
+aes_gcm_reinit(caddr_t key, u_int8_t *iv)
+{
+	struct aes_ctr_ctx *ctx;
+
+	ctx = (struct aes_ctr_ctx *)key;
+	bcopy(iv, ctx->ac_block + AESCTR_NONCESIZE, AESCTR_IVSIZE);
+
+	/* reset counter */
+	bzero(ctx->ac_block + AESCTR_NONCESIZE + AESCTR_IVSIZE, 4);
+	ctx->ac_block[AESCTR_BLOCKSIZE - 1] = 1; /* GCM starts with 1 */
+}
+
+void
 aes_ctr_crypt(caddr_t key, u_int8_t *data)
 {
 	struct aes_ctr_ctx *ctx;
@@ -743,6 +818,7 @@ SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 	SHA512Update(ctx, buf, len);
 	return 0;
 }
+
 
 /*
  * And compression

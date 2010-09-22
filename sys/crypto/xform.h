@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.20 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: xform.h,v 1.21 2010/09/22 11:54:23 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -28,6 +28,7 @@
 #include <crypto/sha1.h>
 #include <crypto/rmd160.h>
 #include <crypto/sha2.h>
+#include <crypto/gmac.h>
 
 /* Declarations */
 struct auth_hash {
@@ -39,6 +40,8 @@ struct auth_hash {
 	u_int16_t ctxsize;
 	u_int16_t blocksize;
 	void (*Init) (void *);
+	void (*Setkey) (void *, const u_int8_t *, u_int16_t);
+	void (*Reinit) (void *, const u_int8_t *, u_int16_t);
 	int  (*Update) (void *, const u_int8_t *, u_int16_t);
 	void (*Final) (u_int8_t *, void *);
 };
@@ -68,6 +71,7 @@ union authctx {
 	SHA1_CTX sha1ctx;
 	RMD160_CTX rmd160ctx;
 	SHA2_CTX sha2_ctx;
+	AES_GMAC_CTX aes_gmac_ctx;
 };
 
 extern struct enc_xform enc_xform_des;
@@ -77,6 +81,8 @@ extern struct enc_xform enc_xform_cast5;
 extern struct enc_xform enc_xform_skipjack;
 extern struct enc_xform enc_xform_rijndael128;
 extern struct enc_xform enc_xform_aes_ctr;
+extern struct enc_xform enc_xform_aes_gcm;
+extern struct enc_xform enc_xform_aes_gmac;
 extern struct enc_xform enc_xform_aes_xts;
 extern struct enc_xform enc_xform_arc4;
 extern struct enc_xform enc_xform_null;
@@ -91,6 +97,9 @@ extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 extern struct auth_hash auth_hash_hmac_sha2_256_128;
 extern struct auth_hash auth_hash_hmac_sha2_384_192;
 extern struct auth_hash auth_hash_hmac_sha2_512_256;
+extern struct auth_hash auth_hash_gmac_aes_128;
+extern struct auth_hash auth_hash_gmac_aes_192;
+extern struct auth_hash auth_hash_gmac_aes_256;
 
 extern struct comp_algo comp_algo_deflate;
 extern struct comp_algo comp_algo_lzs;

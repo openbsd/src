@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.54 2010/07/02 02:40:15 blambert Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.55 2010/09/22 11:54:23 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -492,6 +492,149 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 }
 
 /*
+ * Apply a combined encryption-authentication transformation
+ */
+int
+swcr_combined(struct cryptop *crp)
+{
+	uint32_t blkbuf[howmany(EALG_MAX_BLOCK_LEN, sizeof(uint32_t))];
+	u_char *blk = (u_char *)blkbuf;
+	u_char aalg[AALG_MAX_RESULT_LEN];
+	u_char iv[EALG_MAX_BLOCK_LEN];
+	union authctx ctx;
+	struct cryptodesc *crd, *crda = NULL, *crde = NULL;
+	struct swcr_data *sw, *swa, *swe;
+	struct auth_hash *axf = NULL;
+	struct enc_xform *exf = NULL;
+	struct mbuf *m = NULL;
+	struct uio *uio = NULL;
+	caddr_t buf = (caddr_t)crp->crp_buf;
+	uint32_t *blkp;
+	int i, blksz, ivlen, outtype, len;
+
+	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+		for (sw = swcr_sessions[crp->crp_sid & 0xffffffff];
+		     sw && sw->sw_alg != crd->crd_alg;
+		     sw = sw->sw_next)
+			;
+		if (sw == NULL)
+			return (EINVAL);
+
+		switch (sw->sw_alg) {
+		case CRYPTO_AES_GCM_16:
+		case CRYPTO_AES_GMAC:
+			swe = sw;
+			crde = crd;
+			exf = swe->sw_exf;
+			ivlen = exf->ivsize;
+			break;
+		case CRYPTO_AES_128_GMAC:
+		case CRYPTO_AES_192_GMAC:
+		case CRYPTO_AES_256_GMAC:
+			swa = sw;
+			crda = crd;
+			axf = swa->sw_axf;
+			if (swa->sw_ictx == 0)
+				return (EINVAL);
+			bcopy(swa->sw_ictx, &ctx, axf->ctxsize);
+			blksz = axf->blocksize;
+			break;
+		default:
+			return (EINVAL);
+		}
+	}
+	if (crde == NULL || crda == NULL)
+		return (EINVAL);
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		outtype = CRYPTO_BUF_MBUF;
+		m = (struct mbuf *)buf;
+	} else {
+		outtype = CRYPTO_BUF_IOV;
+		uio = (struct uio *)buf;
+	}
+
+	/* Initialize the IV */
+	if (crde->crd_flags & CRD_F_ENCRYPT) {
+		/* IV explicitly provided ? */
+		if (crde->crd_flags & CRD_F_IV_EXPLICIT)
+			bcopy(crde->crd_iv, iv, ivlen);
+		else
+			arc4random_buf(iv, ivlen);
+
+		/* Do we need to write the IV */
+		if (!(crde->crd_flags & CRD_F_IV_PRESENT)) {
+			COPYBACK(outtype, buf, crde->crd_inject, ivlen, iv);
+		}
+
+	} else {	/* Decryption */
+			/* IV explicitly provided ? */
+		if (crde->crd_flags & CRD_F_IV_EXPLICIT)
+			bcopy(crde->crd_iv, iv, ivlen);
+		else {
+			/* Get IV off buf */
+			COPYDATA(outtype, buf, crde->crd_inject, ivlen, iv);
+		}
+	}
+
+	/* Supply MAC with IV */
+	if (axf->Reinit)
+		axf->Reinit(&ctx, iv, ivlen);
+
+	/* Supply MAC with AAD */
+	for (i = 0; i < crda->crd_len; i += blksz) {
+		len = MIN(crda->crd_len - i, blksz);
+		COPYDATA(outtype, buf, crda->crd_skip + i, len, blk);
+		axf->Update(&ctx, blk, len);
+	}
+
+	if (exf->reinit)
+		exf->reinit(swe->sw_kschedule, iv);
+
+	/* Do encryption/decryption with MAC */
+	for (i = 0; i < crde->crd_len; i += blksz) {
+		len = MIN(crde->crd_len - i, blksz);
+		if (len < blksz)
+			bzero(blk, blksz);
+		COPYDATA(outtype, buf, crde->crd_skip + i, len, blk);
+		if (crde->crd_flags & CRD_F_ENCRYPT) {
+			exf->encrypt(swe->sw_kschedule, blk);
+			axf->Update(&ctx, blk, len);
+		} else {
+			axf->Update(&ctx, blk, len);
+			exf->decrypt(swe->sw_kschedule, blk);
+		}
+		COPYBACK(outtype, buf, crde->crd_skip + i, len, blk);
+	}
+
+	/* Do any required special finalization */
+	switch (crda->crd_alg) {
+		case CRYPTO_AES_128_GMAC:
+		case CRYPTO_AES_192_GMAC:
+		case CRYPTO_AES_256_GMAC:
+			/* length block */
+			bzero(blk, blksz);
+			blkp = (uint32_t *)blk + 1;
+			*blkp = htobe32(crda->crd_len * 8);
+			blkp = (uint32_t *)blk + 3;
+			*blkp = htobe32(crde->crd_len * 8);
+			axf->Update(&ctx, blk, blksz);
+			break;
+	}
+
+	/* Finalize MAC */
+	axf->Final(aalg, &ctx);
+
+	/* Inject the authentication data */
+	if (outtype == CRYPTO_BUF_MBUF)
+		COPYBACK(outtype, buf, crda->crd_inject, axf->authsize, aalg);
+	else
+		bcopy(aalg, crp->crp_mac, axf->authsize);
+
+	return (0);
+}
+
+/*
  * Apply a compression/decompression algorithm
  */
 int
@@ -653,6 +796,13 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_AES_XTS:
 			txf = &enc_xform_aes_xts;
 			goto enccommon;
+		case CRYPTO_AES_GCM_16:
+			txf = &enc_xform_aes_gcm;
+			goto enccommon;
+		case CRYPTO_AES_GMAC:
+			txf = &enc_xform_aes_gmac;
+			(*swd)->sw_exf = txf;
+			break;
 		case CRYPTO_NULL:
 			txf = &enc_xform_null;
 			goto enccommon;
@@ -769,6 +919,29 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_axf = axf;
 			break;
 
+		case CRYPTO_AES_128_GMAC:
+			axf = &auth_hash_gmac_aes_128;
+			goto auth4common;
+
+		case CRYPTO_AES_192_GMAC:
+			axf = &auth_hash_gmac_aes_192;
+			goto auth4common;
+
+		case CRYPTO_AES_256_GMAC:
+			axf = &auth_hash_gmac_aes_256;
+		auth4common:
+			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
+			    M_NOWAIT);
+			if ((*swd)->sw_ictx == NULL) {
+				swcr_freesession(i);
+				return ENOBUFS;
+			}
+			axf->Init((*swd)->sw_ictx);
+			axf->Setkey((*swd)->sw_ictx, cri->cri_key,
+			    cri->cri_klen / 8);
+			(*swd)->sw_axf = axf;
+			break;
+
 		case CRYPTO_DEFLATE_COMP:
 			cxf = &comp_algo_deflate;
 			(*swd)->sw_cxf = cxf;
@@ -816,6 +989,8 @@ swcr_freesession(u_int64_t tid)
 		case CRYPTO_RIJNDAEL128_CBC:
 		case CRYPTO_AES_CTR:
 		case CRYPTO_AES_XTS:
+		case CRYPTO_AES_GCM_16:
+		case CRYPTO_AES_GMAC:
 		case CRYPTO_NULL:
 			txf = swd->sw_exf;
 
@@ -855,6 +1030,9 @@ swcr_freesession(u_int64_t tid)
 			}
 			break;
 
+		case CRYPTO_AES_128_GMAC:
+		case CRYPTO_AES_192_GMAC:
+		case CRYPTO_AES_256_GMAC:
 		case CRYPTO_MD5:
 		case CRYPTO_SHA1:
 			axf = swd->sw_axf;
@@ -953,6 +1131,14 @@ swcr_process(struct cryptop *crp)
 				goto done;
 			break;
 
+		case CRYPTO_AES_GCM_16:
+		case CRYPTO_AES_GMAC:
+		case CRYPTO_AES_128_GMAC:
+		case CRYPTO_AES_192_GMAC:
+		case CRYPTO_AES_256_GMAC:
+			crp->crp_etype = swcr_combined(crp);
+			goto done;
+
 		case CRYPTO_DEFLATE_COMP:
 			if ((crp->crp_etype = swcr_compdec(crd, sw,
 			    crp->crp_buf, type)) != 0)
@@ -1006,11 +1192,16 @@ swcr_init(void)
 	algs[CRYPTO_RIJNDAEL128_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_CTR] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_XTS] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_AES_GCM_16] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_AES_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_DEFLATE_COMP] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_NULL] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_256_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_AES_128_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_AES_192_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_AES_256_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	crypto_register(swcr_id, algs, swcr_newsession,
 	    swcr_freesession, swcr_process);
