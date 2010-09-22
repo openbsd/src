@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.77 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.78 2010/09/22 14:38:52 yuo Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -855,6 +855,8 @@ aue_detach(struct device *self, int flags)
 	}
 
 	timeout_del(&sc->aue_stat_ch);
+
+	sc->aue_dying = 1;
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
 	 * in the same thread as detach.
