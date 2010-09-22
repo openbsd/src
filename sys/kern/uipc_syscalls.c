@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.77 2010/09/20 07:18:03 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.78 2010/09/22 04:57:55 matthew Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		 */
 		soqinsque(head, so, 1);
 		wakeup_one(&head->so_timeo);
-		goto bad;
+		goto unlock;
 	}
 	*retval = tmpfd;
 
@@ -243,8 +243,9 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		FILE_SET_MATURE(fp);
 	}
 	m_freem(nam);
-bad:
+unlock:
 	fdpunlock(p->p_fd);
+bad:
 	splx(s);
 	FRELE(headfp);
 	return (error);
