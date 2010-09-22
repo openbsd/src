@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.11 2010/09/21 12:55:25 deraadt Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.12 2010/09/22 04:24:19 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -261,7 +261,9 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 int
 glxpcib_activate(struct device *self, int act)
 {
+#ifndef SMALL_KERNEL
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
+#endif
 	int rv = 0;
 
 	switch (act) {
