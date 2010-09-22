@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.126 2010/06/07 08:38:09 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.127 2010/09/22 13:45:16 mikeb Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 7 2010 $
+.Dd $Mdocdate: September 22 2010 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -141,7 +141,9 @@ where:
 .It Ns { Ns Ar proto Ns }
 is either ESP or AH
 .It Ns { Ns Ar cipher Ns }
-is either DES, 3DES, CAST, BLF, AES, AES-128, AES-192, AES-256, AESCTR, or NULL
+is either DES, 3DES, CAST, BLF, AES, AES-128, AES-192, AES-256, AESCTR,
+AESGCM-128, AESGCM-192, AESGCM-256, AESGMAC-128, AESGMAC-192, AESGMAC-256
+or NULL
 .It Ns { Ns Ar hash Ns }
 is either MD5, SHA, RIPEMD, or SHA2-{256,384,512}
 .It Ns { Ns Ar group Ns }

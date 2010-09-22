@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.135 2010/06/29 19:50:16 reyk Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.136 2010/09/22 13:45:15 mikeb Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -975,7 +975,7 @@ ipsec_validate_transform_id(u_int8_t proto, u_int8_t transform_id)
 		    transform_id > IPSEC_AH_RIPEMD ? -1 : 0;
 	case IPSEC_PROTO_IPSEC_ESP:
 		return transform_id < IPSEC_ESP_DES_IV64 ||
-		    (transform_id > IPSEC_ESP_AES_128_CTR &&
+		    (transform_id > IPSEC_ESP_AES_GMAC &&
 		    transform_id < IPSEC_ESP_AES_MARS) ||
 		    transform_id > IPSEC_ESP_AES_TWOFISH ? -1 : 0;
 	case IPSEC_PROTO_IPCOMP:
@@ -1788,6 +1788,11 @@ ipsec_esp_enckeylength(struct proto *proto)
 		return iproto->keylen / 8;
 	case IPSEC_ESP_AES_128_CTR:
 		return 20;
+	case IPSEC_ESP_AES_GCM_16:
+	case IPSEC_ESP_AES_GMAC:
+		if (!iproto->keylen)
+			return 20;
+		return iproto->keylen / 8 + 4;
 	case IPSEC_ESP_AES:
 		if (!iproto->keylen)
 			return 16;

@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.16 2005/06/14 10:50:47 hshoexer Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.17 2010/09/22 13:45:16 mikeb Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -235,6 +235,8 @@ IPSEC_ESP
   NULL					11
   AES					12
   AES_128_CTR				13
+  AES_GCM_16				20
+  AES_GMAC				23
   AES_MARS				249
   AES_RC6				250
   AES_RIJNDAEL				251

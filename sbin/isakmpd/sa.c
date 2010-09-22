@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.113 2007/09/02 15:19:24 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.114 2010/09/22 13:45:16 mikeb Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -517,6 +517,14 @@ report_proto(FILE *fd, struct proto *proto)
 
 		case IPSEC_ESP_AES_128_CTR:
 			fprintf(fd, "AES-128 (CTR)\n");
+			break;
+
+		case IPSEC_ESP_AES_GCM_16:
+			fprintf(fd, "AES (GCM)\n");
+			break;
+
+		case IPSEC_ESP_AES_GMAC:
+			fprintf(fd, "AES (GMAC)\n");
 			break;
 
 		case IPSEC_ESP_CAST:
