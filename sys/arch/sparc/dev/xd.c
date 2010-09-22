@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.51 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: xd.c,v 1.52 2010/09/22 06:40:25 krw Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -839,6 +839,7 @@ xdioctl(dev, command, addr, flag, p)
 		return 0;
 
 	case DIOCGDINFO:	/* get disk label */
+	case DIOCGPDINFO:	/* no separate 'physical' info available. */
 		bcopy(xd->sc_dk.dk_label, addr, sizeof(struct disklabel));
 		return 0;
 

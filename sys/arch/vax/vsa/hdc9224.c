@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.32 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.33 2010/09/22 06:40:25 krw Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -164,6 +164,7 @@ void hdattach(struct device *, struct device *, void *);
 void hdcintr(void *);
 int hdc_command(struct hdcsoftc *, int);
 void hd_readgeom(struct hdcsoftc *, struct hdsoftc *);
+int hdgetdisklabel(dev_t, hdsoftc *, struct disklabel *, int);
 #ifdef HDDEBUG
 void hdc_printgeom( struct hdgeom *);
 #endif
@@ -337,6 +338,14 @@ hdmatch(parent, vcf, aux)
 
 #define	HDMAJOR 19
 
+int
+hdgetdisklabel(dev_t dev, hdsoftc *sc, struct disklabel *lp, int spoofonly)
+{
+	hdmakelabel(lp, &hd->sc_xbn);
+
+	return readdisklabel(DISKLABEL(dev), hdstrategy, lp, spoofonly);
+}
+
 void
 hdattach(struct device *parent, struct device *self, void *aux)
 {
@@ -360,9 +369,8 @@ hdattach(struct device *parent, struct device *self, void *aux)
 	hd_readgeom(sc, hd);
 	disk_printtype(hd->sc_drive, hd->sc_xbn.media_id);
 	dl = hd->sc_disk.dk_label;
-	hdmakelabel(dl, &hd->sc_xbn);
-	error = readdisklabel(MAKEDISKDEV(HDMAJOR, hd->sc_dev.dv_unit, RAW_PART),
-	    hdstrategy, dl, 0);
+	error = hdgetdisklabel(MAKEDISKDEV(HDMAJOR, hd->sc_dev.dv_unit, RAW_PART),
+	    hd, dl, 0);
 	printf("%s: %luMB, %lu sectors\n",
 	    hd->sc_dev.dv_xname, DL_GETDSIZE(dl) / (1048576 / DEV_BSIZE),
 	    DL_GETDSIZE(dl));
@@ -700,6 +708,10 @@ hdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	int error = 0;
 
 	switch (cmd) {
+	case DIOCGPDINFO:
+		hdgetdisklabel(dev, hd, (struct disklabel *)addr, 1);
+		break;
+
 	case DIOCGDINFO:
 		bcopy(lp, addr, sizeof (struct disklabel));
 		break;
