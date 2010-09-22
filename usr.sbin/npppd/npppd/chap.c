@@ -1,4 +1,4 @@
-/* $OpenBSD: chap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: chap.c,v 1.4 2010/09/22 11:48:38 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: chap.c,v 1.4 2010/09/22 11:48:38 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -686,8 +686,8 @@ mschapv2_authenticate(chap *_this, int id, char *username, u_char *challenge,
 		password[i*2+1] = 0;
 	}
 
-	GenerateNTResponse(challenge, response, username, strlen(username),
-	    password, passlen * 2, ntresponse);
+	mschap_nt_response(challenge, response, username, strlen(username),
+		    password, passlen * 2, ntresponse);
 
 	if (memcmp(ntresponse, response + 24, 24) != 0) {
 		chap_log(_this, LOG_INFO,
@@ -700,20 +700,19 @@ mschapv2_authenticate(chap *_this, int id, char *username, u_char *challenge,
      */
 	CHAP_DBG((_this, LOG_DEBUG, "%s() OK", __func__));
 
-	GenerateAuthenticatorResponse(password, passlen * 2, ntresponse,
-	    response, challenge, username, strlen(username), pkt);
+	mschap_auth_response(password, passlen * 2, ntresponse,
+	    challenge, response, username, strlen(username), pkt);
 	lpkt = 42;
 #ifdef	USE_NPPPD_MPPE
 	if (_this->ppp->mppe.enabled != 0) {
-		NtPasswordHash(password, passlen * 2, pwdhash);
-		HashNtPasswordHash(pwdhash, pwdhashhash);
+		mschap_ntpassword_hash(password, passlen * 2, pwdhash);
+		mschap_ntpassword_hash(pwdhash, sizeof(pwdhash), pwdhashhash);
 
-		GetMasterKey(pwdhashhash, ntresponse,
+		mschap_masterkey(pwdhashhash, ntresponse,
 		    _this->ppp->mppe.master_key);
-
-		GetAsymetricStartKey(_this->ppp->mppe.master_key,
+		mschap_asymetric_startkey(_this->ppp->mppe.master_key,
 		    _this->ppp->mppe.recv.master_key, MPPE_KEYLEN, 0, 1);
-		GetAsymetricStartKey(_this->ppp->mppe.master_key,
+		mschap_asymetric_startkey(_this->ppp->mppe.master_key,
 		    _this->ppp->mppe.send.master_key, MPPE_KEYLEN, 1, 1);
 	}
 #endif
@@ -925,10 +924,10 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 				goto auth_failed;
 			}
 
-			DecryptKeyFromRadius(_this->ppp->mppe.send.master_key,
+			mschap_radiuskey(_this->ppp->mppe.send.master_key,
 			    sendkey.salt, _this->authenticator, secret);
 
-			DecryptKeyFromRadius(_this->ppp->mppe.recv.master_key,
+			mschap_radiuskey(_this->ppp->mppe.recv.master_key,
 			    recvkey.salt, _this->authenticator, secret);
 		}
 #endif

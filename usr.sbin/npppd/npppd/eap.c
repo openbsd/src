@@ -1,4 +1,4 @@
-/* $OpenBSD: eap.c,v 1.4 2010/08/02 09:29:53 jsg Exp $ */
+/* $OpenBSD: eap.c,v 1.5 2010/09/22 11:48:38 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  *	    RADIUS (Remote Authentication Dial In User Service) Support For
  *	    Extensible Authentication Protocol (EAP). B. Aboba, P. Calhoun.
  */
-/* $Id: eap.c,v 1.4 2010/08/02 09:29:53 jsg Exp $ */
+/* $Id: eap.c,v 1.5 2010/09/22 11:48:38 yasuoka Exp $ */
 
 /* FIXME: This must be rewritten. */
 
@@ -894,10 +894,10 @@ get_mppe_keys(eap *_this, RADIUS_PACKET *pkt, const char *secret) {
 		eap_log(_this, LOG_ERR, "no mppe_recv_key");
 		return 1;
 	}
-	DecryptKeyFromRadius(_this->ppp->mppe.send.master_key,
+	mschap_radiuskey(_this->ppp->mppe.send.master_key,
 	    sendkey.salt, _this->authenticator, secret);
 
-	DecryptKeyFromRadius(_this->ppp->mppe.recv.master_key,
+	mschap_radiuskey(_this->ppp->mppe.recv.master_key,
 	    recvkey.salt, _this->authenticator, secret);
 
 	return 0;

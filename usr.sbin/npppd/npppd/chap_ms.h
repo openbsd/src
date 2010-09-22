@@ -1,56 +1,52 @@
-/* $OpenBSD: chap_ms.h,v 1.2 2010/07/02 21:20:57 yasuoka Exp $ */
+/*	$OpenBSD: chap_ms.h,v 1.3 2010/09/22 11:48:38 yasuoka Exp $	*/
+/*	$vantronix: chap_ms.h,v 1.6 2010/05/19 09:37:00 reyk Exp $	*/
 
-/*-
- * Copyright (c) 1997        Gabor Kincses <gabor@acm.org>
- *               1997 - 2001 Brian Somers <brian@Awfulhak.org>
- *          based on work by Eric Rosenquist
- *                           Strata Software Limited.
- * All rights reserved.
+/*
+ * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * $FreeBSD: src/usr.sbin/ppp/chap_ms.h,v 1.5.2.2 2001/08/18 02:46:06 brian Exp $
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Max # of (Unicode) chars in an NT password */
-#define MAX_NT_PASSWORD	256
+#ifndef _CHAP_MS_H
+#define _CHAP_MS_H
 
-/* Don't rely on sizeof(MS_ChapResponse) in case of struct padding */
-#define MS_CHAP_RESPONSE_LEN    49
-#define CHAP81_RESPONSE_LEN     49
-#define CHAP81_NTRESPONSE_LEN   24
-#define CHAP81_NTRESPONSE_OFF   24
-#define CHAP81_HASH_LEN         16
-#define CHAP81_AUTHRESPONSE_LEN	42
-#define CHAP81_CHALLENGE_LEN    16
+#define MSCHAP_CHALLENGE_SZ	8
+#define MSCHAPV2_CHALLENGE_SZ	16
+#define MSCHAP_HASH_SZ		16
+#define MSCHAP_MASTERKEY_SZ	16
+#define MSCHAP_MSK_KEY_SZ	32
+#define MSCHAP_MSK_PADDING_SZ	32
+#define MSCHAP_MSK_SZ		64
 
-extern void mschap_NT(char *, char *);
-extern void mschap_LANMan(char *, char *, char *);
-extern void GenerateNTResponse(char *, char *, char *, int, char *, int , char *);
-extern void HashNtPasswordHash(char *, char *);
-extern void NtPasswordHash(char *, int, char *);
-extern void ChallengeHash(char *, char *, char *UserName, int, char *);
-extern void GenerateAuthenticatorResponse(char *, int, char *, char *, char *, char *, int, char *);
-extern void GetAsymetricStartKey(char *, char *, int, int, int);
-extern void GetMasterKey(char *, char *, char *);
-extern void GetNewKeyFromSHA(char *, char *, long, char *);
-extern void DecryptKeyFromRadius(char *, const char *, const char *, const char *);
+#define MSCHAP_MAXNTPASSWORD_SZ	255	/* unicode chars */
+
+void	 mschap_nt_response(u_int8_t *, u_int8_t *, u_int8_t *, int,
+	    u_int8_t *, int , u_int8_t *);
+void	 mschap_auth_response(u_int8_t *, int, u_int8_t *, u_int8_t *,
+	    u_int8_t *, u_int8_t *, int, u_int8_t *);
+
+void	 mschap_nt(u_int8_t *, u_int8_t *);
+void	 mschap_lanman(u_int8_t *, u_int8_t *, u_int8_t *);
+
+void	 mschap_ntpassword_hash(u_int8_t *, int, u_int8_t *);
+void	 mschap_challenge_hash(u_int8_t *, u_int8_t *, u_int8_t *,
+	    int, u_int8_t *);
+
+void	 mschap_asymetric_startkey(u_int8_t *, u_int8_t *, int, int, int);
+void	 mschap_masterkey(u_int8_t *, u_int8_t *, u_int8_t *);
+void	 mschap_newkey(u_int8_t *, u_int8_t *, long, u_int8_t *);
+void	 mschap_radiuskey(u_int8_t *, const u_int8_t *, const u_int8_t *,
+	    const u_int8_t *);
+void	 mschap_msk(u_int8_t *, int, u_int8_t *, u_int8_t *);
+
+#endif /* _CHAP_MS_H */
