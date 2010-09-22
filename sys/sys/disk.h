@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.25 2010/09/08 15:16:22 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.26 2010/09/22 05:28:59 krw Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -108,8 +108,7 @@ struct disk {
 	 * must be dynamically allocated, otherwise the size of this
 	 * structure becomes machine-dependent.
 	 */
-	daddr64_t	dk_labelsector;	/* sector containing label */
-	struct disklabel *dk_label;	/* label */
+	struct disklabel *dk_label;
 };
 
 /* states */
