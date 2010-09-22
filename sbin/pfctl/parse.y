@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.592 2010/09/02 14:01:04 sobrado Exp $	*/
+/*	$OpenBSD: parse.y,v 1.593 2010/09/22 06:02:59 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -458,7 +458,7 @@ int	parseport(char *, struct range *r, int);
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
-%token	ANTISPOOF FOR INCLUDE
+%token	ANTISPOOF FOR INCLUDE MATCHES
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT RTABLE
@@ -2482,6 +2482,7 @@ logopts		: logopt			{ $$ = $1; }
 		;
 
 logopt		: ALL		{ $$.log = PF_LOG_ALL; $$.logif = 0; }
+		| MATCHES	{ $$.log = PF_LOG_MATCHES; $$.logif = 0; }
 		| USER		{ $$.log = PF_LOG_SOCKET_LOOKUP; $$.logif = 0; }
 		| GROUP		{ $$.log = PF_LOG_SOCKET_LOOKUP; $$.logif = 0; }
 		| TO string	{
@@ -5066,6 +5067,7 @@ lookup(char *s)
 		{ "log",		LOG},
 		{ "loginterface",	LOGINTERFACE},
 		{ "match",		MATCH},
+		{ "matches",		MATCHES},
 		{ "max",		MAXIMUM},
 		{ "max-mss",		MAXMSS},
 		{ "max-src-conn",	MAXSRCCONN},
