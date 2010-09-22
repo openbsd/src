@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.18 2008/08/09 16:42:30 miod Exp $	*/
+/*	$OpenBSD: tc.c,v 1.19 2010/09/22 12:36:32 miod Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -274,13 +274,14 @@ tc_intr_establish(dev, cookie, level, handler, arg, name)
 }
 
 void
-tc_intr_disestablish(dev, cookie)
+tc_intr_disestablish(dev, cookie, name)
 	struct device *dev;
 	void *cookie;
+	const char *name;
 {
 	struct tc_softc *sc = tc_cd.cd_devs[0];
 
-	(*sc->sc_intr_disestablish)(dev, cookie);
+	(*sc->sc_intr_disestablish)(dev, cookie, name);
 }
 
 #ifdef TCVERBOSE
