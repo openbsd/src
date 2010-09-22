@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.40 2010/07/15 03:43:11 jakemsr Exp $ */
+/*      $OpenBSD: eap.c,v 1.41 2010/09/22 21:59:59 jakemsr Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -88,6 +88,7 @@ int	eapdebug = 1;
 
 int	eap_match(struct device *, void *, void *);
 void	eap_attach(struct device *, struct device *, void *);
+int	eap_activate(struct device *, int);
 int	eap_intr(void *);
 
 struct eap_dma {
@@ -135,6 +136,7 @@ struct eap_softc {
 	u_int	sc_input_source;	/* input source mask */
 	u_int	sc_mic_preamp;
 	char    sc_1371;		/* Using ES1371/AC97 codec */
+	char    sc_ct5880;		/* CT5880 chip */
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
@@ -154,7 +156,7 @@ int	eap_freemem(struct eap_softc *, struct eap_dma *);
 #define EREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 
 struct cfattach eap_ca = {
-	sizeof(struct eap_softc), eap_match, eap_attach
+	sizeof(struct eap_softc), eap_match, eap_attach, NULL, eap_activate
 };
 
 int	eap_open(void *, int);
@@ -169,6 +171,7 @@ int	eap_trigger_input(void *, void *, void *, int, void (*)(void *),
 int	eap_halt_output(void *);
 int	eap_halt_input(void *);
 void	eap_get_default_params(void *, int, struct audio_params *);
+int	eap_resume(struct eap_softc *);
 void    eap1370_write_codec(struct eap_softc *, int, int);
 int	eap_getdev(void *, struct audio_device *);
 int	eap1370_mixer_set_port(void *, mixer_ctrl_t *);
@@ -286,6 +289,30 @@ eap_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, eap_devices,
 	    sizeof(eap_devices)/sizeof(eap_devices[0])));
+}
+
+int
+eap_activate(struct device *self, int act)
+{
+	struct eap_softc *sc = (struct eap_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		eap_resume(sc);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_DEACTIVATE:
+		break;
+	}
+	return (rv);
 }
 
 void
@@ -442,7 +469,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	mixer_ctrl_t ctl;
 	int i;
-	int revision, ct5880;
+	int revision;
 
 	/* Flag if we're "creative" */
 	sc->sc_1371 = !(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENSONIQ &&
@@ -454,9 +481,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		    ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_AUDIOPCI97 &&
 		    (revision == EAP_ES1373_8 || revision == EAP_CT5880_A)) ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_CT5880))
-			ct5880 = 1;
-		else
-			ct5880 = 0;
+			sc->sc_ct5880 = 1;
 	}
 
 	/* Map I/O register */
@@ -531,7 +556,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		EWRITE4(sc, EAP_ICSC, 0);
 		EWRITE4(sc, E1371_LEGACY, 0);
 
-		if (ct5880) {
+		if (sc->sc_ct5880) {
 			EWRITE4(sc, EAP_ICSS, EAP_CT5880_AC97_RESET);
 			/* Let codec wake up */
 			delay(20000);
@@ -599,6 +624,85 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mididev = midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
 #endif
 }
+
+int
+eap_resume(struct eap_softc *sc)
+{
+	mixer_ctrl_t ctl;
+	int i;
+
+	if (!sc->sc_1371) {
+		/* Enable interrupts and looping mode. */
+		/* enable the parts we need */
+		EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
+		EWRITE4(sc, EAP_ICSC, EAP_CDC_EN);
+
+		/* reset codec */
+		/* normal operation */
+		/* select codec clocks */
+		eap1370_write_codec(sc, AK_RESET, AK_PD);
+		eap1370_write_codec(sc, AK_RESET, AK_PD | AK_NRST);
+		eap1370_write_codec(sc, AK_CS, 0x0);
+
+		bzero(&ctl, sizeof(ctl));
+
+		ctl.dev = EAP_RECORD_SOURCE;
+		ctl.type = AUDIO_MIXER_SET;
+		ctl.un.mask = sc->sc_record_source;
+		eap1370_hw_if.set_port(sc, &ctl);
+
+		ctl.dev = EAP_INPUT_SOURCE;
+		ctl.type = AUDIO_MIXER_SET;
+		ctl.un.mask = sc->sc_input_source;
+		eap1370_hw_if.set_port(sc, &ctl);
+
+		eap1370_set_mixer(sc, AK_MGAIN, sc->sc_mic_preamp);
+
+		for (i = EAP_MASTER_VOL; i < EAP_MIC_VOL; i++)
+			eap1370_write_codec(sc, i, sc->sc_port[i]);
+
+	} else {
+		/* clean slate */
+
+		EWRITE4(sc, EAP_SIC, 0);
+		EWRITE4(sc, EAP_ICSC, 0);
+		EWRITE4(sc, E1371_LEGACY, 0);
+
+		if (sc->sc_ct5880) {
+			EWRITE4(sc, EAP_ICSS, EAP_CT5880_AC97_RESET);
+			/* Let codec wake up */
+			delay(20000);
+		}
+
+		ac97_resume(&sc->host_if, sc->codec_if);
+
+		EWRITE4(sc, E1371_SRC, E1371_SRC_DISABLE);
+		for (i = 0; i < 0x80; i++)
+			eap1371_src_write(sc, i, 0);
+		eap1371_src_write(sc, ESRC_ADC + ESRC_TRUNC_N, ESRC_SET_N(16));
+		eap1371_src_write(sc, ESRC_ADC + ESRC_IREGS, ESRC_SET_VFI(16));
+		eap1371_src_write(sc, ESRC_ADC + ESRC_VFF, 0);
+		eap1371_src_write(sc, ESRC_ADC_VOLL, ESRC_SET_ADC_VOL(16));
+		eap1371_src_write(sc, ESRC_ADC_VOLR, ESRC_SET_ADC_VOL(16));
+		eap1371_src_write(sc, ESRC_DAC1 + ESRC_TRUNC_N, ESRC_SET_N(16));
+		eap1371_src_write(sc, ESRC_DAC1 + ESRC_IREGS, ESRC_SET_VFI(16));
+		eap1371_src_write(sc, ESRC_DAC1 + ESRC_VFF, 0);
+		eap1371_src_write(sc, ESRC_DAC1_VOLL, ESRC_SET_DAC_VOLI(1));
+		eap1371_src_write(sc, ESRC_DAC1_VOLR, ESRC_SET_DAC_VOLI(1));
+		eap1371_src_write(sc, ESRC_DAC2 + ESRC_IREGS, ESRC_SET_VFI(16));
+		eap1371_src_write(sc, ESRC_DAC2 + ESRC_TRUNC_N, ESRC_SET_N(16));
+		eap1371_src_write(sc, ESRC_DAC2 + ESRC_VFF, 0);
+		eap1371_src_write(sc, ESRC_DAC2_VOLL, ESRC_SET_DAC_VOLI(1));
+		eap1371_src_write(sc, ESRC_DAC2_VOLR, ESRC_SET_DAC_VOLI(1));
+		EWRITE4(sc, E1371_SRC, 0);
+
+		/* Interrupt enable */
+		EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
+	}
+
+	return (0);
+}
+
 
 int
 eap1371_attach_codec(void *sc_, struct ac97_codec_if *codec_if)
