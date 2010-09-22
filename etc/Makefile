@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.290 2010/06/29 17:17:53 nicm Exp $
+#	$OpenBSD: Makefile,v 1.291 2010/09/22 13:01:10 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -232,8 +232,6 @@ distribution-etc-root-var: distrib-dirs
 	    ${DESTDIR}/var/log/wtmp
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
 	    ${DESTDIR}/var/log/xferlog
-	${INSTALL} -c -o daemon -g staff -m 664 /dev/null \
-	    ${DESTDIR}/var/msgs/bounds
 	${INSTALL} -c -o ${BINOWN} -g utmp -m 664 /dev/null \
 	    ${DESTDIR}/var/run/utmp
 .if ${MACHINE} == "vax"

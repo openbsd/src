@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.206 2010/06/07 14:15:27 jsg Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.207 2010/09/22 13:01:10 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2458,11 +2458,6 @@ rdist
 # ./var/mail
 mail
 # ./var/mail
-..
-
-# ./var/msgs
-msgs		uname=daemon
-# ./var/msgs
 ..
 
 # ./var/named

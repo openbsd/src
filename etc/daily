@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.67 2010/07/25 08:49:03 espie Exp $
+#	$OpenBSD: daily,v 1.68 2010/09/22 13:01:10 deraadt Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -78,10 +78,6 @@ fi
 if [ -d /var/rwho -a ! -L /var/rwho ] ; then
 	cd /var/rwho && {
 	find . ! -name . -mtime +7 -execdir rm -f -- {} \; ; }
-fi
-
-if [ -d /var/msgs -a ! -L /var/msgs ]; then
-	msgs -c
 fi
 
 next_part "Purging accounting records:"
