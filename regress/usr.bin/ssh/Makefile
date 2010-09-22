@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2010/09/02 16:12:55 markus Exp $
+#	$OpenBSD: Makefile,v 1.57 2010/09/22 12:26:05 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
 
@@ -47,12 +47,14 @@ LTESTS= 	connect \
 		forcecommand \
 		portnum \
 		keytype \
+		kextype \
 		cert-hostkey \
 		cert-userkey
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
+#LTESTS= 	cipher-speed
 
 USER!=		id -un
 CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
