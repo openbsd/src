@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.703 2010/09/21 11:29:12 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.704 2010/09/22 02:12:36 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1488,7 +1488,6 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 	for (i = 0; i < PF_SKIP_COUNT; ++i)
 		head[i] = cur;
 	while (cur != NULL) {
-
 		if (cur->kif != prev->kif || cur->ifnot != prev->ifnot)
 			PF_SET_SKIP_STEPS(PF_SKIP_IFP);
 		if (cur->direction != prev->direction)
@@ -1572,7 +1571,6 @@ pf_change_ap(struct pf_addr *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc,
 
 	PF_ACPY(&ao, a, af);
 	PF_ACPY(a, an, af);
-
 	*p = pn;
 
 	switch (af) {
@@ -2140,7 +2138,6 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 		return;
 
 	m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
-
 	m0->m_pkthdr.rdomain = rdomain;
 
 #ifdef ALTQ
@@ -2339,7 +2336,6 @@ pf_tag_packet(struct mbuf *m, int tag, int rtableid)
 {
 	if (tag <= 0 && rtableid < 0)
 		return (0);
-
 	if (tag > 0)
 		m->m_pkthdr.pf.tag = tag;
 	if (rtableid >= 0)
@@ -2970,14 +2966,11 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	ruleset = *rsm;
 
 	/* apply actions for last matching pass/block rule */
-	if (r) {
-		pf_rule_to_actions(r, &act);
-		if (pf_get_transaddr(r, pd, sns) == -1) {
-			REASON_SET(&reason, PFRES_MEMORY);
-			goto cleanup;
-		}
+	pf_rule_to_actions(r, &act);
+	if (pf_get_transaddr(r, pd, sns) == -1) {
+		REASON_SET(&reason, PFRES_MEMORY);
+		goto cleanup;
 	}
-
 	REASON_SET(&reason, PFRES_MATCH);
 
 	if (r->log)
@@ -3680,7 +3673,6 @@ pf_tcp_track_full(struct pf_state_peer *src, struct pf_state_peer *dst,
 		if (SEQ_GEQ(ack + (win << sws), dst->seqhi))
 			dst->seqhi = ack + MAX((win << sws), 1);
 
-
 		/* update states */
 		if (th->th_flags & TH_SYN)
 			if (src->state < TCPS_SYN_SENT)
@@ -3721,7 +3713,6 @@ pf_tcp_track_full(struct pf_state_peer *src, struct pf_state_peer *dst,
 			(*state)->timeout = PFTM_TCP_ESTABLISHED;
 
 		/* Fall through to PASS packet */
-
 	} else if ((dst->state < TCPS_SYN_SENT ||
 		dst->state >= TCPS_FIN_WAIT_2 ||
 		src->state >= TCPS_FIN_WAIT_2) &&
@@ -3783,7 +3774,6 @@ pf_tcp_track_full(struct pf_state_peer *src, struct pf_state_peer *dst,
 		 * Cannot set dst->seqhi here since this could be a shotgunned
 		 * SYN and not an already established connection.
 		 */
-
 		if (th->th_flags & TH_FIN)
 			if (src->state < TCPS_CLOSING)
 				src->state = TCPS_CLOSING;
@@ -3791,7 +3781,6 @@ pf_tcp_track_full(struct pf_state_peer *src, struct pf_state_peer *dst,
 			src->state = dst->state = TCPS_TIME_WAIT;
 
 		/* Fall through to PASS packet */
-
 	} else {
 		if ((*state)->dst.state == TCPS_SYN_SENT &&
 		    (*state)->src.state == TCPS_SYN_SENT) {
