@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.4 2010/07/08 08:40:29 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.5 2010/09/22 13:03:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -58,6 +58,7 @@ struct pipex_statistics {
 
 struct pipex_session_req {
 	int		pr_protocol;		/* tunnel protocol  */
+/*	u_int		pr_rdomain;	*/	/* rdomain id */
 	uint16_t	pr_session_id;		/* session-id */
 	uint16_t	pr_peer_session_id;	/* peer's session-id */
 	uint32_t	pr_ppp_flags;	/* PPP configuration flags */
@@ -121,6 +122,13 @@ struct pipex_session_config_req {
 	uint16_t	pcr_session_id;		/* session-id */
 	int		pcr_ip_forward;		/* ip_forwarding on/off */
 };
+
+/* for pppx(4) */
+struct pppx_hdr {
+	u_int32_t	pppx_proto;
+	u_int32_t	pppx_id;
+};
+
 
 /* PIPEX ioctls */
 #define PIPEXSMODE	_IOW ('t',  96, int)

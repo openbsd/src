@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.8 2010/09/21 07:44:54 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.9 2010/09/22 13:03:48 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -78,15 +78,16 @@
 /*
  * static/global variables
  */
-static LIST_HEAD(pipex_hash_head, pipex_session)
+struct pipex_hash_head
     pipex_session_list,				/* master session list */
     pipex_close_wait_list,			/* expired session list */
     pipex_peer_addr_hashtable[PIPEX_HASH_SIZE],	/* peer's address hash */
     pipex_id_hashtable[PIPEX_HASH_SIZE]; 	/* peer id hash */
-static struct radix_node_head pipex_rd_head4;
-static int pipex_rd_head4_initialized = 0;
-static struct timeout pipex_timer_ch; 		/* callout timer context */
-static int pipex_prune = 1;			/* walk list every seconds */
+
+struct radix_node_head pipex_rd_head4;
+int pipex_rd_head4_initialized = 0;
+struct timeout pipex_timer_ch; 		/* callout timer context */
+int pipex_prune = 1;			/* walk list every seconds */
 
 /* pipex traffic queue */
 struct ifqueue pipexinq = { NULL };

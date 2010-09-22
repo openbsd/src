@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.164 2010/09/20 07:18:03 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.165 2010/09/22 13:03:48 claudio Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -103,6 +103,7 @@ pseudo-device	loop		# network loopback
 #pseudo-device	mpe		# MPLS PE interface
 pseudo-device	ppp		# PPP
 pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
+#pseudo-device	pppx 		# PPP multiplexer
 pseudo-device	sl		# CSLIP
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	trunk		# Trunking support

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.7 2010/07/09 08:36:31 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.8 2010/09/22 13:03:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -185,6 +185,14 @@ struct pipex_pppoe_header {
 #define PIPEX_DBG(a)
 #define PIPEX_MPPE_DBG(a)
 #endif /* PIPEX_DEBUG */
+
+LIST_HEAD(pipex_hash_head, pipex_session);
+
+extern struct pipex_hash_head	pipex_session_list;
+extern struct pipex_hash_head	pipex_close_wait_list;
+extern struct pipex_hash_head	pipex_peer_addr_hashtable[];
+extern struct pipex_hash_head	pipex_id_hashtable[];
+
 
 #define PIPEX_ID_HASHTABLE(key)						\
 	(&pipex_id_hashtable[(key) & PIPEX_HASH_MASK])
