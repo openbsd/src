@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.98 2010/09/21 01:05:12 claudio Exp $	*/
+/*	$OpenBSD: xl.c,v 1.99 2010/09/22 08:49:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1180,18 +1180,19 @@ xl_rxeof(struct xl_softc *sc)
 
 again:
 
-	while ((rxstat = letoh32(sc->xl_cdata.xl_rx_cons->xl_ptr->xl_status))
-	    != 0 && sc->xl_cdata.xl_rx_cnt > 0) {
+	while (sc->xl_cdata.xl_rx_cnt > 0) {
 		cur_rx = sc->xl_cdata.xl_rx_cons;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,                    
+		    ((caddr_t)cur_rx->xl_ptr - sc->sc_listkva),
+		    sizeof(struct xl_list),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if ((rxstat = letoh32(sc->xl_cdata.xl_rx_cons->xl_ptr->xl_status)) == 0)
+			break;
 		m = cur_rx->xl_mbuf;  
 		cur_rx->xl_mbuf = NULL;
 		sc->xl_cdata.xl_rx_cons = cur_rx->xl_next;
 		sc->xl_cdata.xl_rx_cnt--;
 		total_len = rxstat & XL_RXSTAT_LENMASK;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    ((caddr_t)cur_rx->xl_ptr - sc->sc_listkva),
-		    sizeof(struct xl_list),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		/*
 		 * Since we have told the chip to allow large frames,
