@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.25 2010/09/07 16:21:44 deraadt Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.26 2010/09/22 22:22:47 jakemsr Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1130,34 +1130,23 @@ int
 cs4281_activate(struct device *self, int act)
 {
 	struct cs4281_softc *sc = (struct cs4281_softc *)self;
-	int i;
+	int rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
-		cs4281_halt_output(sc);
-		cs4281_halt_input(sc);
-		/* Save AC97 registers */
-		for (i = 1; i <= CS4281_SAVE_REG_MAX; i++) {
-			if (i == 0x04)	/* AC97_REG_MASTER_TONE */
-				continue;
-			cs4281_read_codec(sc, 2*i, &sc->ac97_reg[i>>1]);
-		}
 		/* should I powerdown here ? */
 		cs4281_write_codec(sc, AC97_REG_POWER, CS4281_POWER_DOWN_ALL);
 		break;
 	case DVACT_RESUME:
 		cs4281_init(sc);
-		cs4281_reset_codec(sc);
-
-		/* restore ac97 registers */
-		for (i = 1; i <= CS4281_SAVE_REG_MAX; i++) {
-			if (i == 0x04)	/* AC97_REG_MASTER_TONE */
-				continue;
-			cs4281_write_codec(sc, 2*i, sc->ac97_reg[i>>1]);
-		}
+		ac97_resume(&sc->host_if, sc->codec_if);
+		rv = config_activate_children(self, act);
 		break;
 	}
-	return 0;
+	return (rv);
 }
 
 void
