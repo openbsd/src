@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.14 2010/07/28 15:45:04 jsg Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.15 2010/09/22 09:12:18 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -633,11 +633,12 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 	struct ikev2_notify	*n;
 	u_int8_t		*buf, md[SHA_DIGEST_LENGTH];
 	size_t			 len;
-	u_int16_t		 type;
 	u_int32_t		 spi32;
 	u_int64_t		 spi64;
 	struct iked_spi		*rekey;
-	
+	u_int16_t		 type;
+	u_int16_t		 group;
+
 	if ((n = ibuf_seek(msg->msg_data, offset, sizeof(*n))) == NULL)
 		return (-1);
 	type = betoh16(n->n_type);
@@ -706,6 +707,31 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		log_debug("%s: rekey %s spi %s", __func__,
 		    print_map(n->n_protoid, ikev2_saproto_map),
 		    print_spi(rekey->spi, n->n_spisize));
+		break;
+	case IKEV2_N_INVALID_KE_PAYLOAD:
+		if (len != sizeof(group)) {
+			log_debug("%s: malformed notification", __func__);
+			return (-1);
+		}
+		if (!msg->msg_sa->sa_hdr.sh_initiator) {
+			log_debug("%s: not an initiator", __func__);
+			sa_free(env, msg->msg_sa);
+			msg->msg_sa = NULL;
+			return (-1);
+		}
+		memcpy(&group, buf, len);
+		group = betoh16(group);
+		if ((msg->msg_policy->pol_peerdh = group_get(group))
+		    == NULL) {
+			log_debug("%s: unable to select DH group %d", __func__,
+			    group);
+			return (-1);
+		}
+		log_debug("%s: responder selected DH group %d", __func__,
+		    group);
+		sa_free(env, msg->msg_sa);
+		msg->msg_sa = NULL;
+		timer_register_initiator(env, ikev2_init_ike_sa);
 		break;
 	}
 

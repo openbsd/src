@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.24 2010/09/09 13:06:46 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.25 2010/09/22 09:12:18 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -61,7 +61,6 @@ int	 ikev2_ike_auth(struct iked *, struct iked_sa *,
 
 void	 ikev2_init_recv(struct iked *, struct iked_message *,
 	    struct ike_header *);
-int	 ikev2_init_ike_sa(struct iked *, struct iked_policy *);
 int	 ikev2_init_ike_auth(struct iked *, struct iked_sa *);
 int	 ikev2_init_auth(struct iked *, struct iked_message *);
 int	 ikev2_init_done(struct iked *, struct iked_sa *);
@@ -592,6 +591,9 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 	/* Create a new initiator SA */
 	if ((sa = sa_new(env, 0, 0, 1, pol)) == NULL)
 		return (-1);
+
+	/* Pick peer's DH group if asked */
+	sa->sa_dhgroup = pol->pol_peerdh;
 
 	if (ikev2_sa_initiator(env, sa, NULL) == -1)
 		goto done;

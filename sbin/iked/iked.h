@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.19 2010/09/09 13:06:46 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.20 2010/09/22 09:12:18 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ struct iked_policy {
 	struct sockaddr_storage		 pol_peer;
 	u_int8_t			 pol_peermask;
 	int				 pol_peernet;
+	struct group			*pol_peerdh;
 
 	struct sockaddr_storage		 pol_local;
 	u_int8_t			 pol_localmask;
@@ -591,6 +592,7 @@ pid_t	 ikev1(struct iked *, struct iked_proc *);
 /* ikev2.c */
 pid_t	 ikev2(struct iked *, struct iked_proc *);
 void	 ikev2_recv(struct iked *, struct iked_message *);
+int	 ikev2_init_ike_sa(struct iked *, struct iked_policy *);
 int	 ikev2_sa_negotiate(struct iked_sa *, struct iked_proposals *,
 	    struct iked_proposals *, u_int8_t);
 int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
