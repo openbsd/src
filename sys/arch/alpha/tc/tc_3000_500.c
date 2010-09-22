@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.16 2010/09/20 06:33:46 matthew Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.17 2010/09/22 11:44:01 matthew Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -136,6 +136,8 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg, name)
 {
 	u_long dev = (u_long)cookie;
 
+	KASSERT(name != NULL);
+
 #ifdef DIAGNOSTIC
 	/* XXX bounds-check cookie. */
 #endif
@@ -145,9 +147,7 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg, name)
 
 	tc_3000_500_intr[dev].tci_func = func;
 	tc_3000_500_intr[dev].tci_arg = arg;
-	if (name != NULL)
-		evcount_attach(&tc_3000_500_intr[dev].tci_count,
-		    name, NULL);
+	evcount_attach(&tc_3000_500_intr[dev].tci_count, name, NULL);
 
 	tc_3000_500_imask &= ~tc_3000_500_intrbits[dev];
 	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
@@ -175,8 +175,7 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 
 	tc_3000_500_intr[dev].tci_func = tc_3000_500_intrnull;
 	tc_3000_500_intr[dev].tci_arg = (void *)dev;
-	if (tc_3000_500_intr[dev].tci_count.ec_parent != NULL)
-		evcount_detach(&tc_3000_500_intr[dev].tci_count);
+	evcount_detach(&tc_3000_500_intr[dev].tci_count);
 }
 
 int
