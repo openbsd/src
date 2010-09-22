@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.27 2010/07/01 02:11:35 reyk Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.28 2010/09/22 14:04:09 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -153,6 +153,9 @@ struct idname auth_types[] = {
 	{ SADB_X_AALG_SHA2_256,		"hmac-sha2-256",	NULL },
 	{ SADB_X_AALG_SHA2_384,		"hmac-sha2-384",	NULL },
 	{ SADB_X_AALG_SHA2_512,		"hmac-sha2-512",	NULL },
+	{ SADB_X_AALG_AES128GMAC,	"gmac-aes-128",		NULL },
+	{ SADB_X_AALG_AES192GMAC,	"gmac-aes-192",		NULL },
+	{ SADB_X_AALG_AES256GMAC,	"gmac-aes-256",		NULL },
 	{ SADB_X_AALG_MD5,		"md5",			NULL },
 	{ SADB_X_AALG_SHA1,		"sha1",			NULL },
 	{ 0,				NULL,			NULL }
@@ -171,6 +174,8 @@ struct idname enc_types[] = {
 	{ SADB_X_EALG_3IDEA,		"idea3",		NULL },
 	{ SADB_X_EALG_AES,		"aes",			NULL },
 	{ SADB_X_EALG_AESCTR,		"aesctr",		NULL },
+	{ SADB_X_EALG_AESGCM16,		"aes-gcm",		NULL },
+	{ SADB_X_EALG_AESGMAC,		"aes-gmac",		NULL },
 	{ SADB_X_EALG_BLF,		"blowfish",		NULL },
 	{ SADB_X_EALG_CAST,		"cast128",		NULL },
 	{ SADB_X_EALG_DES_IV32,		"des-iv32",		NULL },
@@ -707,6 +712,32 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 				break;
 			case SADB_X_EALG_AESCTR:
 				xfs.encxf = &encxfs[ENCXF_AESCTR];
+				break;
+			case SADB_X_EALG_AESGCM16:
+				switch (r.enckey->len) {
+				case 28:
+					xfs.encxf = &encxfs[ENCXF_AES_192_GCM];
+					break;
+				case 36:
+					xfs.encxf = &encxfs[ENCXF_AES_256_GCM];
+					break;
+				default:
+					xfs.encxf = &encxfs[ENCXF_AES_128_GCM];
+					break;
+				}
+				break;
+			case SADB_X_EALG_AESGMAC:
+				switch (r.enckey->len) {
+				case 28:
+					xfs.encxf = &encxfs[ENCXF_AES_192_GMAC];
+					break;
+				case 36:
+					xfs.encxf = &encxfs[ENCXF_AES_256_GMAC];
+					break;
+				default:
+					xfs.encxf = &encxfs[ENCXF_AES_128_GMAC];
+					break;
+				}
 				break;
 			case SADB_X_EALG_BLF:
 				xfs.encxf = &encxfs[ENCXF_BLOWFISH];

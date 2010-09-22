@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.67 2009/10/04 11:39:32 jsing Exp $	*/
+/*	$OpenBSD: ike.c,v 1.68 2010/09/22 14:04:09 mikeb Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -161,6 +161,7 @@ static int
 ike_section_p2(struct ipsec_rule *r, FILE *fd)
 {
 	char	*exchange_type, *sprefix;
+	int	needauth = 1;
 
 	switch (r->p2ie) {
 	case IKE_QM:
@@ -224,6 +225,30 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 			case ENCXF_AESCTR:
 				fprintf(fd, "AESCTR");
 				break;
+			case ENCXF_AES_128_GCM:
+				fprintf(fd, "AESGCM-128");
+				needauth = 0;
+				break;
+			case ENCXF_AES_192_GCM:
+				fprintf(fd, "AESGCM-192");
+				needauth = 0;
+				break;
+			case ENCXF_AES_256_GCM:
+				fprintf(fd, "AESGCM-256");
+				needauth = 0;
+				break;
+			case ENCXF_AES_128_GMAC:
+				fprintf(fd, "AESGMAC-128");
+				needauth = 0;
+				break;
+			case ENCXF_AES_192_GMAC:
+				fprintf(fd, "AESGMAC-192");
+				needauth = 0;
+				break;
+			case ENCXF_AES_256_GMAC:
+				fprintf(fd, "AESGMAC-256");
+				needauth = 0;
+				break;
 			case ENCXF_BLOWFISH:
 				fprintf(fd, "BLF");
 				break;
@@ -232,6 +257,7 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 				break;
 			case ENCXF_NULL:
 				fprintf(fd, "NULL");
+				needauth = 0;
 				break;
 			default:
 				warnx("illegal transform %s",
@@ -270,43 +296,44 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 			warnx("illegal transform %s", r->p2xfs->authxf->name);
 			return (-1);
 		}
-	} else
-		fprintf(fd, "SHA2-256");
+		fprintf(fd, "-");
+	} else if (needauth)
+		fprintf(fd, "SHA2-256-");
 
 	if (r->p2xfs && r->p2xfs->groupxf) {
 		switch (r->p2xfs->groupxf->id) {
 		case GROUPXF_NONE:
 			break;
 		case GROUPXF_768:
-			fprintf(fd, "-PFS-GRP1");
+			fprintf(fd, "PFS-GRP1");
 			break;
 		case GROUPXF_1024:
-			fprintf(fd, "-PFS-GRP2");
+			fprintf(fd, "PFS-GRP2");
 			break;
 		case GROUPXF_1536:
-			fprintf(fd, "-PFS-GRP5");
+			fprintf(fd, "PFS-GRP5");
 			break;
 		case GROUPXF_2048:
-			fprintf(fd, "-PFS-GRP14");
+			fprintf(fd, "PFS-GRP14");
 			break;
 		case GROUPXF_3072:
-			fprintf(fd, "-PFS-GRP15");
+			fprintf(fd, "PFS-GRP15");
 			break;
 		case GROUPXF_4096:
-			fprintf(fd, "-PFS-GRP16");
+			fprintf(fd, "PFS-GRP16");
 			break;
 		case GROUPXF_6144:
-			fprintf(fd, "-PFS-GRP17");
+			fprintf(fd, "PFS-GRP17");
 			break;
 		case GROUPXF_8192:
-			fprintf(fd, "-PFS-GRP18");
+			fprintf(fd, "PFS-GRP18");
 			break;
 		default:
 			warnx("illegal group %s", r->p2xfs->groupxf->name);
 			return (-1);
 		};
 	} else
-		fprintf(fd, "-PFS");
+		fprintf(fd, "PFS");
 	fprintf(fd, "-SUITE force\n");
 
 	return (0);

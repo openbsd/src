@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.59 2009/08/04 15:05:50 jsing Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.60 2010/09/22 14:04:09 mikeb Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -63,7 +63,9 @@ enum {
 };
 enum {
 	ENCXF_UNKNOWN, ENCXF_NONE, ENCXF_3DES_CBC, ENCXF_DES_CBC, ENCXF_AES,
-	ENCXF_AES_128, ENCXF_AES_192, ENCXF_AES_256, ENCXF_AESCTR, 
+	ENCXF_AES_128, ENCXF_AES_192, ENCXF_AES_256, ENCXF_AESCTR,
+	ENCXF_AES_128_GCM, ENCXF_AES_192_GCM, ENCXF_AES_256_GCM,
+	ENCXF_AES_128_GMAC, ENCXF_AES_192_GMAC, ENCXF_AES_256_GMAC,
 	ENCXF_BLOWFISH, ENCXF_CAST128, ENCXF_NULL, ENCXF_SKIPJACK
 };
 enum {
@@ -140,6 +142,7 @@ struct ipsec_xf {
 	u_int16_t	 id;
 	size_t		 keymin;
 	size_t		 keymax;
+	int		 noauth;
 };
 
 struct ipsec_transforms {

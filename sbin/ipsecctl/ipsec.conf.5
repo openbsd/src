@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.127 2010/09/19 20:59:20 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.128 2010/09/22 14:04:09 mikeb Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: September 22 2010 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -612,6 +612,12 @@ keyword:
 .It Li aes-192 Ta "192 bits"
 .It Li aes-256 Ta "256 bits"
 .It Li aesctr Ta "160 bits" Ta "[phase 2 only]"
+.It Li aes-128-gcm Ta "160 bits" Ta "[phase 2 only]"
+.It Li aes-192-gcm Ta "224 bits" Ta "[phase 2 only]"
+.It Li aes-256-gcm Ta "288 bits" Ta "[phase 2 only]"
+.It Li aes-128-gmac Ta "160 bits" Ta "[phase 2 only]"
+.It Li aes-192-gmac Ta "224 bits" Ta "[phase 2 only]"
+.It Li aes-256-gmac Ta "288 bits" Ta "[phase 2 only]"
 .It Li blowfish Ta "160 bits"
 .It Li cast Ta "128 bits"
 .It Li skipjack Ta "80 bits"
@@ -630,6 +636,10 @@ This is because the most significant bit of each byte is used for parity.
 The keysize of AES-CTR is actually 128-bit.
 However as well as the key, a 32-bit nonce has to be supplied.
 Thus 160 bits of key material have to be supplied.
+The same applies to AES-GCM and AES-GMAC.
+.Pp
+Please note that AES-GMAC performs no encryption and provides no
+confidentiality.
 .Pp
 Using NULL with ESP will only provide authentication.
 This is useful in setups where AH can not be used, e.g. when NAT is involved.

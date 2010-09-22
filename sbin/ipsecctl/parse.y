@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.148 2010/08/03 18:42:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.149 2010/09/22 14:04:09 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,20 +98,26 @@ const struct ipsec_xf authxfs[] = {
 };
 
 const struct ipsec_xf encxfs[] = {
-	{ "unknown",		ENCXF_UNKNOWN,		0,	0 },
-	{ "none",		ENCXF_NONE,		0,	0 },
-	{ "3des-cbc",		ENCXF_3DES_CBC,		24,	24 },
-	{ "des-cbc",		ENCXF_DES_CBC,		8,	8 },
-	{ "aes",		ENCXF_AES,		16,	32 },
-	{ "aes-128",		ENCXF_AES_128,		16,	16 },
-	{ "aes-192",		ENCXF_AES_192,		24,	24 },
-	{ "aes-256",		ENCXF_AES_256,		32,	32 },
-	{ "aesctr",		ENCXF_AESCTR,		16+4,	32+4 },
-	{ "blowfish",		ENCXF_BLOWFISH,		5,	56 },
-	{ "cast128",		ENCXF_CAST128,		5,	16 },
-	{ "null",		ENCXF_NULL,		0,	0 },
-	{ "skipjack",		ENCXF_SKIPJACK,		10,	10 },
-	{ NULL,			0,			0,	0 },
+	{ "unknown",		ENCXF_UNKNOWN,		0,	0,	0 },
+	{ "none",		ENCXF_NONE,		0,	0,	0 },
+	{ "3des-cbc",		ENCXF_3DES_CBC,		24,	24,	0 },
+	{ "des-cbc",		ENCXF_DES_CBC,		8,	8,	0 },
+	{ "aes",		ENCXF_AES,		16,	32,	0 },
+	{ "aes-128",		ENCXF_AES_128,		16,	16,	0 },
+	{ "aes-192",		ENCXF_AES_192,		24,	24,	0 },
+	{ "aes-256",		ENCXF_AES_256,		32,	32,	0 },
+	{ "aesctr",		ENCXF_AESCTR,		16+4,	32+4,	0 },
+	{ "aes-128-gcm",	ENCXF_AES_128_GCM,	16+4,	16+4,	1 },
+	{ "aes-192-gcm",	ENCXF_AES_192_GCM,	24+4,	24+4,	1 },
+	{ "aes-256-gcm",	ENCXF_AES_256_GCM,	32+4,	32+4,	1 },
+	{ "aes-128-gmac",	ENCXF_AES_128_GMAC,	16+4,	16+4,	1 },
+	{ "aes-192-gmac",	ENCXF_AES_192_GMAC,	24+4,	24+4,	1 },
+	{ "aes-256-gmac",	ENCXF_AES_256_GMAC,	32+4,	32+4,	1 },
+	{ "blowfish",		ENCXF_BLOWFISH,		5,	56,	0 },
+	{ "cast128",		ENCXF_CAST128,		5,	16,	0 },
+	{ "null",		ENCXF_NULL,		0,	0,	0 },
+	{ "skipjack",		ENCXF_SKIPJACK,		10,	10,	0 },
+	{ NULL,			0,			0,	0,	0 },
 };
 
 const struct ipsec_xf compxfs[] = {
@@ -2209,10 +2215,14 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 			yyerror("esp does not provide compression");
 			return (0);
 		}
-		if (!xfs->authxf)
-			xfs->authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
 		if (!xfs->encxf)
 			xfs->encxf = &encxfs[ENCXF_AES];
+		if (xfs->encxf->noauth && xfs->authxf) {
+			yyerror("authentication is implicit for %s",
+			    xfs->encxf->name);
+			return (0);
+		} else if (!xfs->encxf->noauth && !xfs->authxf)
+			xfs->authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
 	}
 	if (satype == IPSEC_IPCOMP) {
 		if (!xfs) {
@@ -2694,28 +2704,7 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts,
 	if ((hosts->sport != 0 || hosts->dport != 0) &&
 	    (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
 		yyerror("no protocol supplied with source/destination ports");
-		free(r);
-		free(hosts->src);
-		hosts->src = NULL;
-		free(hosts->dst);
-		hosts->dst = NULL;
-		if (phase1mode) {
-			free(phase1mode->xfs);
-			phase1mode->xfs = NULL;
-			free(phase1mode->life);
-			phase1mode->life = NULL;
-		}
-		if (phase2mode) {
-			free(phase2mode->xfs);
-			phase2mode->xfs = NULL;
-			free(phase2mode->life);
-			phase2mode->life = NULL;
-		}
-		if (srcid)
-			free(srcid);
-		if (dstid)
-			free(dstid);
-		return NULL;
+		goto errout;
 	}
 
 	r->satype = satype;
@@ -2729,6 +2718,13 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts,
 		r->p1ie = IKE_MM;
 	}
 	if (phase2mode) {
+		if (phase2mode->xfs && phase2mode->xfs->encxf &&
+		    phase2mode->xfs->encxf->noauth &&
+		    phase2mode->xfs->authxf) {
+			yyerror("authentication is implicit for %s",
+			    phase2mode->xfs->encxf->name);
+			goto errout;
+		}
 		r->p2xfs = phase2mode->xfs;
 		r->p2life = phase2mode->life;
 		r->p2ie = phase2mode->ike_exch;
@@ -2751,4 +2747,28 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts,
 	r->tag = tag;
 
 	return (r);
+
+errout:
+	free(r);
+	free(hosts->src);
+	hosts->src = NULL;
+	free(hosts->dst);
+	hosts->dst = NULL;
+	if (phase1mode) {
+		free(phase1mode->xfs);
+		phase1mode->xfs = NULL;
+		free(phase1mode->life);
+		phase1mode->life = NULL;
+	}
+	if (phase2mode) {
+		free(phase2mode->xfs);
+		phase2mode->xfs = NULL;
+		free(phase2mode->life);
+		phase2mode->life = NULL;
+	}
+	if (srcid)
+		free(srcid);
+	if (dstid)
+		free(dstid);
+	return NULL;
 }
