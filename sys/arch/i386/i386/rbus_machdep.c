@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.26 2010/01/13 09:10:33 jsg Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.27 2010/09/22 02:28:37 jsg Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 	start = RBUS_MEM_START;
 	size = ex->ex_end - start;
 
-	return (rbus_new_root_share(pa->pa_memt, ex, start, size, 0));
+	return (rbus_new_root_share(pa->pa_memt, ex, start, size));
 }
 
 rbus_tag_t
@@ -88,7 +88,7 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 	}
 	size = ex->ex_end - start;
 
-	return (rbus_new_root_share(pa->pa_iot, ex, start, size, 0));
+	return (rbus_new_root_share(pa->pa_iot, ex, start, size));
 }
 
 void

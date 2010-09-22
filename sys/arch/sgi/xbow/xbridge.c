@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.75 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.76 2010/09/22 02:28:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -3586,7 +3586,7 @@ xbridge_rbus_parent_io(struct pci_attach_args *pa)
 
 		if (start < end) {
 			rb = rbus_new_root_share(pa->pa_iot, ex,
-			    start, end - start, 0);
+			    start, end - start);
 			if (rb != NULL)
 				rb->rb_md = &xbridge_rb_md_fn;
 		}
@@ -3597,7 +3597,7 @@ xbridge_rbus_parent_io(struct pci_attach_args *pa)
 	 * resources, return a valid body which will fail requests.
 	 */
 	if (rb == NULL)
-		rb = rbus_new_body(pa->pa_iot, NULL, 0, 0, 0,
+		rb = rbus_new_body(pa->pa_iot, NULL, 0, 0,
 		    RBUS_SPACE_INVALID);
 
 	return rb;
@@ -3623,7 +3623,7 @@ xbridge_rbus_parent_mem(struct pci_attach_args *pa)
 
 		if (start < ex->ex_end) {
 			rb = rbus_new_root_share(pa->pa_memt, ex,
-			    start, ex->ex_end - start, 0);
+			    start, ex->ex_end - start);
 			if (rb != NULL)
 				rb->rb_md = &xbridge_rb_md_fn;
 		}

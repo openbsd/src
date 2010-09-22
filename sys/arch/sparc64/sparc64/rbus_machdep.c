@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.4 2008/07/19 10:02:09 kettenis Exp $	*/
+/*	$OpenBSD: rbus_machdep.c,v 1.5 2010/09/22 02:28:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -64,7 +64,7 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 				continue;
 
 			return (rbus_new_root_delegate(pa->pa_memt,
-			    addr[i].phys_lo, addr[i].size_lo, 0));
+			    addr[i].phys_lo, addr[i].size_lo));
 		}
 	}
 
@@ -79,7 +79,7 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 			continue;
 
 		return (rbus_new_root_delegate(pa->pa_memt,
-		    addr[i].phys_lo, addr[i].size_lo, 0));
+		    addr[i].phys_lo, addr[i].size_lo));
 	}
 
 	return &rbus_null;
@@ -110,7 +110,7 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 				continue;
 
 			return (rbus_new_root_delegate(pa->pa_iot,
-			    addr[i].phys_lo, addr[i].size_lo, 0));
+			    addr[i].phys_lo, addr[i].size_lo));
 		}
 	}
 
@@ -125,7 +125,7 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 			continue;
 
 		return (rbus_new_root_delegate(pa->pa_iot,
-		    addr[i].phys_lo, addr[i].size_lo, 0));
+		    addr[i].phys_lo, addr[i].size_lo));
 	}
 
 	return &rbus_null;

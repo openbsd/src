@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.15 2010/04/02 12:11:55 jsg Exp $	*/
+/*	$OpenBSD: rbus.c,v 1.16 2010/09/22 02:28:37 jsg Exp $	*/
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -74,8 +74,6 @@ rbus_space_alloc_subregion(rbus_tag_t rbt, bus_addr_t substart,
 	DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
 	    (u_long)addr, (u_long)size, (u_long)mask, (u_long)align));
 
-	addr += rbt->rb_offset;
-
 	if (mask == 0) {
 		/* FULL Decode */
 		decodesize = 0;
@@ -140,7 +138,7 @@ rbus_space_alloc_subregion(rbus_tag_t rbt, bus_addr_t substart,
 		}
 
 		if (addrp != NULL)
-			*addrp = result + rbt->rb_offset;
+			*addrp = result;
 		return (0);
 	} else {
 		/* error!! */
@@ -179,12 +177,12 @@ rbus_space_free(rbus_tag_t rbt, bus_space_handle_t bsh, bus_size_t size,
  * rbus_tag_t
  * rbus_new_body(bus_space_tag_t bt,
  *               struct extent *ex, bus_addr_t start, bus_size_t end,
- *               bus_addr_t offset, int flags)
+ *               int flags)
  *
  */
 rbus_tag_t
 rbus_new_body(bus_space_tag_t bt, struct extent *ex,
-    bus_addr_t start, bus_addr_t end, bus_addr_t offset, int flags)
+    bus_addr_t start, bus_addr_t end, int flags)
 {
 	rbus_tag_t rb;
 
@@ -196,7 +194,6 @@ rbus_new_body(bus_space_tag_t bt, struct extent *ex,
 	rb->rb_bt = bt;
 	rb->rb_start = start;
 	rb->rb_end = end;
-	rb->rb_offset = offset;
 	rb->rb_flags = flags;
 	rb->rb_ext = ex;
 
@@ -211,13 +208,12 @@ rbus_new_body(bus_space_tag_t bt, struct extent *ex,
 
 /*
  * rbus_tag_t rbus_new_root_delegate(bus_space_tag, bus_addr_t,
- *                                   bus_size_t, bus_addr_t offset)
+ *                                   bus_size_t)
  *
  *  This function makes a root rbus instance.
  */
 rbus_tag_t
-rbus_new_root_delegate(bus_space_tag_t bt, bus_addr_t start, bus_size_t size,
-    bus_addr_t offset)
+rbus_new_root_delegate(bus_space_tag_t bt, bus_addr_t start, bus_size_t size)
 {
 	rbus_tag_t rb;
 	struct extent *ex;
@@ -226,7 +222,7 @@ rbus_new_root_delegate(bus_space_tag_t bt, bus_addr_t start, bus_size_t size,
 	    NULL, 0, EX_NOCOALESCE|EX_NOWAIT)) == NULL)
 		return (NULL);
 
-	rb = rbus_new_body(bt, ex, start, start + size, offset,
+	rb = rbus_new_body(bt, ex, start, start + size,
 	    RBUS_SPACE_DEDICATE);
 
 	if (rb == NULL)
@@ -237,13 +233,13 @@ rbus_new_root_delegate(bus_space_tag_t bt, bus_addr_t start, bus_size_t size,
 
 /*
  * rbus_tag_t rbus_new_root_share(bus_space_tag, struct extent *,
- *                                 bus_addr_t, bus_size_t, bus_addr_t offset)
+ *                                 bus_addr_t, bus_size_t)
  *
  *  This function makes a root rbus instance.
  */
 rbus_tag_t
 rbus_new_root_share(bus_space_tag_t bt, struct extent *ex, bus_addr_t start,
-    bus_size_t size, bus_addr_t offset)
+    bus_size_t size)
 {
 	/* sanity check */
 	if (start < ex->ex_start || start + size > ex->ex_end) {
@@ -254,6 +250,6 @@ rbus_new_root_share(bus_space_tag_t bt, struct extent *ex, bus_addr_t start,
 		/* Should I invoke panic? */
 	}
 
-	return (rbus_new_body(bt, ex, start, start + size, offset,
+	return (rbus_new_body(bt, ex, start, start + size,
 	    RBUS_SPACE_SHARE));
 }

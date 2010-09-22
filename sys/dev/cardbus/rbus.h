@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.h,v 1.9 2010/04/02 12:11:55 jsg Exp $ */
+/*	$OpenBSD: rbus.h,v 1.10 2010/09/22 02:28:37 jsg Exp $ */
 /*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
 /*
  * Copyright (c) 1999
@@ -118,12 +118,11 @@ int	rbus_space_free(rbus_tag_t, bus_space_handle_t, bus_size_t,
  */
 
 rbus_tag_t	rbus_new_body(bus_space_tag_t, struct extent *,
-		      bus_addr_t, bus_addr_t, bus_addr_t, int);
+		      bus_addr_t, bus_addr_t, int);
 
-rbus_tag_t	rbus_new_root_delegate(bus_space_tag_t, bus_addr_t, bus_size_t,
-		    bus_addr_t);
+rbus_tag_t	rbus_new_root_delegate(bus_space_tag_t, bus_addr_t, bus_size_t);
 rbus_tag_t	rbus_new_root_share(bus_space_tag_t, struct extent *,
-		    bus_addr_t, bus_size_t, bus_addr_t);
+		    bus_addr_t, bus_size_t);
 
 /*
  * Machine-dependent definitions.

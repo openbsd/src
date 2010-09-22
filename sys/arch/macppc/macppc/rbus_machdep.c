@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.10 2010/04/21 03:03:26 deraadt Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.11 2010/09/22 02:28:37 jsg Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -49,14 +49,14 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 	macppc_cardbus_init(pa->pa_pc, pa->pa_tag);
 
 	return (rbus_new_root_share(pa->pa_memt, pa->pa_memex,
-	    0x00000000, 0xffffffff, 0));
+	    0x00000000, 0xffffffff));
 }
 
 rbus_tag_t
 rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 {
 	return (rbus_new_root_share(pa->pa_iot, pa->pa_ioex,
-	    0x0000, 0xffff, 0));
+	    0x0000, 0xffff));
 }
 
 /*
