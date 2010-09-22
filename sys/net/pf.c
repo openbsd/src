@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.704 2010/09/22 02:12:36 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.705 2010/09/22 05:58:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2939,7 +2939,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 						    PFRES_MEMORY);
 						goto cleanup;
 					}
-					if (r->log)
+					if (r->log || act.log & PF_LOG_MATCHES)
 						PFLOG_PACKET(kif, h, m, af,
 						    direction, reason, r,
 						    a, ruleset, pd);
@@ -2948,6 +2948,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 					*rm = r;
 					*am = a;
 					*rsm = ruleset;
+					if (act.log & PF_LOG_MATCHES)
+						PFLOG_PACKET(kif, h, m, af,
+						    direction, reason, r,
+						    a, ruleset, pd);
 				}
 
 				if ((*rm)->quick)
@@ -2973,7 +2977,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	}
 	REASON_SET(&reason, PFRES_MATCH);
 
-	if (r->log)
+	if (r->log || act.log & PF_LOG_MATCHES)
 		PFLOG_PACKET(kif, h, m, af, direction, reason,
 		    r, a, ruleset, pd);
 

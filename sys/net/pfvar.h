@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.314 2010/09/21 11:29:12 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.315 2010/09/22 05:58:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -123,6 +123,7 @@ enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 #define	PF_LOG_ALL		0x02
 #define	PF_LOG_SOCKET_LOOKUP	0x04
 #define	PF_LOG_FORCE		0x08
+#define	PF_LOG_MATCHES		0x10
 
 struct pf_addr {
 	union {
