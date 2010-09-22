@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.19 2010/09/22 03:51:47 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.20 2010/09/22 04:52:10 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -562,6 +562,7 @@ vscsiclose(dev_t dev, int flags, int mode, struct proc *p)
 		vscsi_done(sc, ccb);
 	}
 
+	scsi_activate(sc->sc_scsibus, -1, -1, DVACT_DEACTIVATE);
 	scsi_req_detach(sc->sc_scsibus, -1, -1, DETACH_FORCE);
 
 	mtx_enter(&sc->sc_state_mtx);
