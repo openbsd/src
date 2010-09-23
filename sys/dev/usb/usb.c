@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.65 2010/09/23 04:58:02 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.66 2010/09/23 05:28:57 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/selinfo.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
+#include <sys/time.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -97,6 +98,7 @@ struct usb_softc {
 	struct usb_task	 sc_explore_task;
 
 	char		 sc_dying;
+	struct timeval	 sc_ptime;
 };
 
 TAILQ_HEAD(, usb_task) usb_explore_tasks;
@@ -237,6 +239,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_bus->use_polling--;
 
 	if (!sc->sc_dying) {
+		getmicrouptime(&sc->sc_ptime);
 		if (sc->sc_bus->usbrev == USBREV_2_0)
 			explore_pending++;
 		config_pending_incr();
@@ -320,12 +323,18 @@ void
 usb_first_explore(void *arg)
 {
 	struct usb_softc *sc = arg;
-	int pwrdly;
+	struct timeval now, waited;
+	int pwrdly, waited_ms;
+
+	getmicrouptime(&now);
+	timersub(&now, &sc->sc_ptime, &waited);
+	waited_ms = waited.tv_sec * 1000 + waited.tv_usec / 1000;
 
 	/* Wait for power to come good. */
 	pwrdly = sc->sc_bus->root_hub->hub->hubdesc.bPwrOn2PwrGood * 
 	    UHD_PWRON_FACTOR + USB_EXTRA_POWER_UP_TIME;
-	usb_delay_ms(sc->sc_bus, pwrdly);
+	if (pwrdly > waited_ms)
+		usb_delay_ms(sc->sc_bus, pwrdly - waited_ms);
 
 	/*
 	 * USB1 waits for USB2 to finish their first probe.
