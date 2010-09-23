@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.43 2010/09/20 06:02:50 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.44 2010/09/23 11:41:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -38,6 +38,7 @@ struct scsi_link;
 #define ATA_C_IDENTIFY		0xec
 #define ATA_C_SET_FEATURES	0xef
 #define ATA_C_SEC_FREEZE_LOCK	0xf5
+#define ATA_C_DSM		0x06
 
 /*
  * ATA SET FEATURES subcommands
@@ -161,6 +162,11 @@ struct ata_identify {
  */
 #define ATA_IDENTIFY_WRITECACHE		(1 << 5)
 #define ATA_IDENTIFY_LOOKAHEAD		(1 << 6)
+
+/*
+ * ATA DSM (Data Set Management) subcommands
+ */
+#define ATA_DSM_TRIM		0x01
 
 /*
  * Frame Information Structures
