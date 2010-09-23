@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.53 2010/09/21 12:25:34 sasano Exp $ */
+/*	$OpenBSD: uhub.c,v 1.54 2010/09/23 04:58:02 jakemsr Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -596,7 +596,7 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 	else if (status == USBD_NORMAL_COMPLETION)
-		usb_needs_explore(sc->sc_hub);
+		usb_needs_explore(sc->sc_hub, 0);
 	else
 		DPRINTFN(8, ("uhub_intr: unknown status, %d\n", status));
 }

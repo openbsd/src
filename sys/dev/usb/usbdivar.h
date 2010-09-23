@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.37 2009/11/12 20:16:37 deraadt Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.38 2010/09/23 04:58:02 jakemsr Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -103,8 +103,9 @@ struct usbd_bus {
 	/* Filled by usb driver */
 	struct usbd_device     *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
-	char			needs_explore;/* a hub a signalled a change */
 	char			use_polling;
+	int			flags;
+#define USB_BUS_CONFIG_PENDING	0x01
 	struct usb_softc       *usbctl;
 	struct usb_device_stats	stats;
 	int 			intr_context;
@@ -216,6 +217,8 @@ struct usbd_xfer {
 
 void usbd_init(void);
 void usbd_finish(void);
+void usb_begin_tasks(void);
+void usb_end_tasks(void);
 
 #ifdef USB_DEBUG
 void usbd_dump_iface(struct usbd_interface *iface);
@@ -247,7 +250,7 @@ void		usb_transfer_complete(usbd_xfer_handle xfer);
 void		usb_disconnect_port(struct usbd_port *up, struct device *);
 
 /* Routines from usb.c */
-void		usb_needs_explore(usbd_device_handle);
+void		usb_needs_explore(usbd_device_handle, int);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 

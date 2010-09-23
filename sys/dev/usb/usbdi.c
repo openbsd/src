@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.38 2010/03/05 17:28:54 mk Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.39 2010/09/23 04:58:02 jakemsr Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -71,15 +71,18 @@ struct rwlock usbpalock;
 void
 usbd_init(void)
 {
-	if (usbd_nbuses == 0)
+	if (usbd_nbuses == 0) {
 		rw_init(&usbpalock, "usbpalock");
+		usb_begin_tasks();
+	}
 	usbd_nbuses++;
 }
 
 void
 usbd_finish(void)
 {
-	--usbd_nbuses;
+	if (--usbd_nbuses == 0)
+		usb_end_tasks();
 }
 
 static __inline int
