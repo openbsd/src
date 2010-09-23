@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2010/09/09 13:06:46 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2010/09/23 11:42:36 mikeb Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ struct ipsec_xf {
 	u_int		 length;
 	u_int		 keylength;
 	u_int		 nonce;
+	u_int		 noauth;
 };
 
 struct ipsec_transforms {
@@ -152,6 +153,12 @@ const struct ipsec_xf ipsecencxfs[] = {
 	{ "aes-192",		IKEV2_XFORMENCR_AES_CBC, 	24, 24 },
 	{ "aes-256",		IKEV2_XFORMENCR_AES_CBC, 	32, 32 },
 	{ "aes-ctr",		IKEV2_XFORMENCR_AES_CTR, 	16, 16, 4 },
+	{ "aes-128-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	16, 16, 4, 1 },
+	{ "aes-192-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	24, 24, 4, 1 },
+	{ "aes-256-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	32, 32, 4, 1 },
+	{ "aes-128-gmac",	IKEV2_XFORMENCR_NULL_AES_GMAC,	16, 16, 4, 1 },
+	{ "aes-192-gmac",	IKEV2_XFORMENCR_NULL_AES_GMAC,	24, 24, 4, 1 },
+	{ "aes-256-gmac",	IKEV2_XFORMENCR_NULL_AES_GMAC,	32, 32, 4, 1 },
 	{ "blowfish",		IKEV2_XFORMENCR_BLOWFISH,	20, 20 },
 	{ "cast",		IKEV2_XFORMENCR_CAST,		16, 16 },
 	{ "null",		IKEV2_XFORMENCR_NULL,		0, 0 },
@@ -2312,11 +2319,19 @@ create_ike(char *name, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		prop[1].prop_xforms = ikev2_default_esp_transforms;
 	} else {
 		j = 0;
-		copy_transforms(IKEV2_XFORMTYPE_INTEGR,
-		    ipsec_sa->xfs->authxf, authxfs,
-		    espxforms, nitems(espxforms), &j,
-		    ikev2_default_esp_transforms,
-		    ikev2_default_nesp_transforms);
+		if (ipsec_sa->xfs->encxf && ipsec_sa->xfs->encxf->noauth &&
+		    ipsec_sa->xfs->authxf) {
+			yyerror("authentication is implicit for %s",
+			    ipsec_sa->xfs->encxf->name);
+			return (-1);
+		}
+		if (ipsec_sa->xfs->encxf == NULL ||
+		    (ipsec_sa->xfs->encxf && !ipsec_sa->xfs->encxf->noauth))
+			copy_transforms(IKEV2_XFORMTYPE_INTEGR,
+			    ipsec_sa->xfs->authxf, authxfs,
+			    espxforms, nitems(espxforms), &j,
+			    ikev2_default_esp_transforms,
+			    ikev2_default_nesp_transforms);
 		copy_transforms(IKEV2_XFORMTYPE_ENCR,
 		    ipsec_sa->xfs->encxf, ipsecencxfs,
 		    espxforms, nitems(espxforms), &j,
