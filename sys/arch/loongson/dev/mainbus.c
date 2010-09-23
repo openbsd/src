@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 2010/08/31 10:24:46 pirofti Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.6 2010/09/23 14:12:05 pirofti Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -68,10 +68,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	caa.caa_hw = &bootcpu_hwinfo;
 	config_found(self, &caa, mainbus_print);
 
-	caa.caa_maa.maa_name = "clock";
+	caa.caa_maa.maa_name = "bonito";
 	config_found(self, &caa.caa_maa, mainbus_print);
 
-	caa.caa_maa.maa_name = "bonito";
+	caa.caa_maa.maa_name = "clock";
 	config_found(self, &caa.caa_maa, mainbus_print);
 
 	caa.caa_maa.maa_name = "apm";
