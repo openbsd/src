@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2010/07/03 03:59:16 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 2010/09/23 05:02:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -270,6 +270,7 @@ cdev_decl(nnpfs_dev);
 #include "hotplug.h"
 #include "scif.h"
 #include "vscsi.h"
+#include "pppx.h"
 
 #ifdef CONF_HAVE_GPIO
 #include "gpio.h"
@@ -388,6 +389,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vscsi_init(NVSCSI,vscsi),		/* 99: vscsi */
 	cdev_bthub_init(NBTHUB,bthub),		/* 100: bthub */
 	cdev_disk_init(1,diskmap),		/* 101: disk mapper */
+	cdev_pppx_init(NPPPX,pppx),		/* 102: pppx */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);

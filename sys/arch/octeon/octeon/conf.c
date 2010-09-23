@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2010/09/20 06:32:30 syuu Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 2010/09/23 05:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,6 +135,7 @@ cdev_decl(pci);
 
 #include "bthub.h"
 #include "vscsi.h"
+#include "pppx.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -221,6 +222,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bthub_init(NBTHUB,bthub),	/* 68: bluetooth hub */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 69: vscsi */
 	cdev_disk_init(1,diskmap),	/* 70: disk mapper */
+	cdev_pppx_init(NPPPX,pppx),	/* 71: pppx */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

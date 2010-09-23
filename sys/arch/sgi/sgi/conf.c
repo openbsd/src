@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2010/07/03 03:59:17 krw Exp $ */
+/*	$OpenBSD: conf.c,v 1.25 2010/09/23 05:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -130,6 +130,7 @@ cdev_decl(pci);
 #include "urio.h"
 #include "ucom.h"
 #include "vscsi.h"
+#include "pppx.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -211,6 +212,7 @@ struct cdevsw	cdevsw[] =
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 67: devices hotplugging */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 68: vscsi */
 	cdev_disk_init(1,diskmap),	/* 69: disk mapper */
+	cdev_pppx_init(NPPPX,pppx),	/* 70: pppx */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

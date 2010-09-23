@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.54 2010/09/23 05:02:14 claudio Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -128,6 +128,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "systrace.h"
 #include "tctrl.h"
 #include "vscsi.h"
+#include "pppx.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -268,6 +269,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptm_init(NPTY,ptm),	/* 125: pseudo-tty ptm device */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 128: vscsi */
 	cdev_disk_init(1,diskmap),	/* 129: disk mapper */
+	cdev_pppx_init(NPPPX,pppx),	/* 130: pppx */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
