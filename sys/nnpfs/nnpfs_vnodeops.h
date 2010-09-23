@@ -56,7 +56,7 @@
 
 #define nnpfs_vfs_readlock(vp, proc) vn_lock((vp), LK_SHARED | LK_RETRY)
 #define nnpfs_vfs_writelock(vp, proc) vn_lock((vp), LK_EXCLUSIVE | LK_RETRY)
-#define nnpfs_vfs_unlock(vp, proc) VOP_UNLOCK((vp), 0)
+#define nnpfs_vfs_unlock(vp, proc) VOP_UNLOCK((vp), (proc))
 #define nnpfs_vfs_vn_lock(vp, flags, proc) vn_lock((vp), (flags))
 
 #elif defined(HAVE_THREE_ARGUMENT_VOP_LOCK)

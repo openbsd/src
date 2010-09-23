@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.54 2010/07/02 09:26:05 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.55 2010/09/23 18:49:39 oga Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -674,7 +674,7 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 		    DEVNAME(sc));
 		goto done;
 	}
-	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, 0)) {
+	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META,"%s: sr_create_key_disk cannot open %s\n",
 		    DEVNAME(sc), devname);
 		vput(vn);
@@ -684,10 +684,11 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 
 	/* Get partition details. */
 	part = DISKPART(dev);
-	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED, 0)) {
+	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label,
+	    FREAD, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_create_key_disk ioctl failed\n",
 		    DEVNAME(sc));
-		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
 		goto fail;
 	}
@@ -798,7 +799,7 @@ done:
 	if (sm)
 		free(sm, M_DEVBUF);
 	if (open) {
-		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
 	}
 
@@ -836,7 +837,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 		    DEVNAME(sc));
 		goto done;
 	}
-	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, 0)) {
+	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META,"%s: sr_create_key_disk cannot open %s\n",
 		    DEVNAME(sc), devname);
 		vput(vn);
@@ -846,10 +847,11 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 
 	/* Get partition details. */
 	part = DISKPART(dev);
-	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED, 0)) {
+	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD,
+	    NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_create_key_disk ioctl failed\n",
 		    DEVNAME(sc));
-		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
 		goto done;
 	}
@@ -928,7 +930,7 @@ done:
 		free(sm, M_DEVBUF);
 
 	if (vn && open) {
-		VOP_CLOSE(vn, FREAD, NOCRED, 0);
+		VOP_CLOSE(vn, FREAD, NOCRED, curproc);
 		vput(vn);
 	}
 

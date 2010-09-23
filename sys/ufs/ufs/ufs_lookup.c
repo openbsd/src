@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.39 2010/04/20 22:05:44 tedu Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.40 2010/09/23 18:49:39 oga Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -1076,7 +1076,7 @@ ufs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
 	m = DIP(ip, size);
 	for (off = 0; off < m; off += dp->d_reclen) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
-		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
+		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, curproc);
 		/*
 		 * Since we read MINDIRSIZ, residual must
 		 * be 0 unless we're at end of file.
@@ -1145,7 +1145,7 @@ ufs_checkpath(struct inode *source, struct inode *target, struct ucred *cred)
 		}
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
 			sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
-			IO_NODELOCKED, cred, NULL, (struct proc *)0);
+			IO_NODELOCKED, cred, NULL, curproc);
 		if (error != 0)
 			break;
 #		if (BYTE_ORDER == LITTLE_ENDIAN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.95 2010/09/10 16:34:09 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.96 2010/09/23 18:49:39 oga Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1357,7 +1357,7 @@ ufs_symlink(void *v)
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
-		    (struct proc *)0);
+		    curproc);
 	vput(vp);
 	return (error);
 }

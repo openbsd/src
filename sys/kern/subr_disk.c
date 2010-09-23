@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.110 2010/09/23 13:20:36 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.111 2010/09/23 18:49:39 oga Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1337,7 +1337,7 @@ disk_readlabel(struct disklabel *dl, dev_t dev)
 		return (errbuf);
 	}
 
-	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)dl, FREAD, NOCRED, 0);
+	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)dl, FREAD, NOCRED, curproc);
 	if (error) {
 		snprintf(errbuf, sizeof(errbuf),
 		    "cannot read disk label, 0x%x/0x%x, error %d",
@@ -1345,7 +1345,7 @@ disk_readlabel(struct disklabel *dl, dev_t dev)
 		return (errbuf);
 	}
 
-	error = VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	error = VOP_CLOSE(vn, FREAD, NOCRED, curproc);
 	if (error) {
 		snprintf(errbuf, sizeof(errbuf),
 		    "cannot close disk, 0x%x/0x%x, error %d",

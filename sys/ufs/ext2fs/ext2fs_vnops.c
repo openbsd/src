@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.56 2010/09/10 16:34:09 thib Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.57 2010/09/23 18:49:39 oga Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -826,7 +826,7 @@ abortit:
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
 				sizeof (struct ext2fs_dirtemplate), (off_t)0,
 				UIO_SYSSPACE, IO_NODELOCKED, 
-				tcnp->cn_cred, (size_t *)0, (struct proc *)0);
+				tcnp->cn_cred, NULL, curproc);
 			if (error == 0) {
 					namlen = dirbuf.dotdot_namlen;
 				if (namlen != 2 ||
@@ -841,8 +841,7 @@ abortit:
 					    sizeof (struct dirtemplate),
 					    (off_t)0, UIO_SYSSPACE,
 					    IO_NODELOCKED|IO_SYNC,
-					    tcnp->cn_cred, (size_t *)0,
-					    (struct proc *)0);
+					    tcnp->cn_cred, NULL, curproc);
 					cache_purge(fdvp);
 				}
 			}
@@ -951,7 +950,7 @@ ext2fs_mkdir(void *v)
 	dirtemplate.dotdot_name[0] = dirtemplate.dotdot_name[1] = '.';
 	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
 	    sizeof (dirtemplate), (off_t)0, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (size_t *)0, (struct proc *)0);
+	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, NULL, curproc);
 	if (error) {
 		dp->i_e2fs_nlink--;
 		dp->i_flag |= IN_CHANGE;
@@ -1095,7 +1094,7 @@ ext2fs_symlink(void *v)
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
-		    (struct proc *)0);
+		    curproc);
 bad:	
 	vput(vp);
 	return (error);

@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.59 2010/09/22 01:18:57 matthew Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.60 2010/09/23 18:49:39 oga Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -2720,7 +2720,7 @@ rf_find_raid_components(void)
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
-		error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+		error = VOP_OPEN(vp, FREAD, NOCRED, curproc);
 
 		if (error) {
 			/*
@@ -2733,7 +2733,7 @@ rf_find_raid_components(void)
 
 		/* Ok, the disk exists.  Go get the disklabel. */
 		error = VOP_IOCTL(vp, DIOCGDINFO, (caddr_t)&label,
-				  FREAD, NOCRED, 0);
+				  FREAD, NOCRED, curproc);
 		if (error) {
 			/*
 			 * XXX can't happen - open() would
@@ -2747,7 +2747,7 @@ rf_find_raid_components(void)
 		 * We don't need this any more.  We'll allocate it again
 		 * a little later if we really do...
 		 */
-		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, curproc);
 		vrele(vp);
 
 		for (i=0; i < label.d_npartitions; i++) {
@@ -2770,7 +2770,7 @@ rf_find_raid_components(void)
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 
-			error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+			error = VOP_OPEN(vp, FREAD, NOCRED, curproc);
 			if (error) {
 				/* Whatever... */
 				vput(vp);
@@ -2825,7 +2825,7 @@ rf_find_raid_components(void)
 			if (!good_one) {
 				/* Cleanup. */
 				free(clabel, M_RAIDFRAME);
-				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, curproc);
 				vrele(vp);
 			}
 		}
@@ -3328,7 +3328,7 @@ rf_release_all_vps(RF_ConfigSet_t *cset)
 	while(ac!=NULL) {
 		/* Close the vp, and give it back. */
 		if (ac->vp) {
-			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
+			VOP_CLOSE(ac->vp, FREAD, NOCRED, curproc);
 			vrele(ac->vp);
 			ac->vp = NULL;
 		}
