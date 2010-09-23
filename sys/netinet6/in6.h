@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.51 2010/07/08 19:42:46 jsg Exp $	*/
+/*	$OpenBSD: in6.h,v 1.52 2010/09/23 04:45:15 yasuoka Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -477,6 +477,7 @@ struct route_in6 {
 
 #define IPV6_TCLASS		61   /* int; send traffic class value */
 #define IPV6_DONTFRAG		62   /* bool; disable IPv6 fragmentation */
+#define IPV6_PIPEX		63   /* bool; using PIPEX */
 
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 

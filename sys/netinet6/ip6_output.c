@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.117 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.118 2010/09/23 04:45:15 yasuoka Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1709,6 +1709,12 @@ do { \
 					inp->inp_secrequire = get_sa_require(inp);
 #endif
 				break;
+			case IPV6_PIPEX:
+				if (m != NULL && m->m_len == sizeof(int))
+					inp->inp_pipex = *mtod(m, int *);
+				else
+					error = EINVAL;
+				break;
 
 			default:
 				error = ENOPROTOOPT;
@@ -1953,6 +1959,11 @@ do { \
 				}
 				*mtod(m, int *) = optval;
 #endif
+				break;
+			case IPV6_PIPEX:
+				*mp = m = m_get(M_WAIT, MT_SOOPTS);
+				m->m_len = sizeof(int);
+				*mtod(m, int *) = optval;
 				break;
 
 			default:

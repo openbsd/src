@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.212 2010/09/08 08:34:42 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.213 2010/09/23 04:45:15 yasuoka Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1429,6 +1429,13 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			inp->inp_rtableid = rtid;
 			break;
+		case IP_PIPEX:
+			if (m != NULL && m->m_len == sizeof(int))
+				inp->inp_pipex = *mtod(m, int *);
+			else
+				error = EINVAL;
+			break;
+
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1626,6 +1633,11 @@ ip_ctloutput(op, so, level, optname, mp)
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(u_int);
 			*mtod(m, u_int *) = inp->inp_rtableid;
+			break;
+		case IP_PIPEX:
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+			*mtod(m, int *) = inp->inp_pipex;
 			break;
 		default:
 			error = ENOPROTOOPT;
