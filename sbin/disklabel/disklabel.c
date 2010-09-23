@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.172 2010/09/23 13:54:21 jsing Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.173 2010/09/23 13:59:10 jsing Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -121,9 +121,7 @@ main(int argc, char *argv[])
 {
 	int ch, f, i, writeable, error = 0;
 	struct disklabel *lp;
-	struct fstab *fsent;
 	FILE *t;
-	char *partname;
 
 	while ((ch = getopt(argc, argv, "ABEf:hNRWb:cdenp:s:tvw")) != -1)
 		switch (ch) {
@@ -227,17 +225,6 @@ main(int argc, char *argv[])
 	    &specname);
 	if (f < 0)
 		err(4, "%s", specname);
-
-	asprintf(&partname, "/dev/%s%c", dkname, 'a');
-	setfsent();
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		partname[strlen(dkname)+5] = 'a'+i;
-		fsent = getfsspec(partname);
-		if (fsent)
-			mountpoints[i] = strdup(fsent->fs_file);
-	}
-	endfsent();
-	free(partname);
 
 	switch (op) {
 	case EDIT:
@@ -480,6 +467,10 @@ l_perror(char *s)
 void
 readlabel(int f)
 {
+	char *partname, *partuid;
+	struct fstab *fsent;
+	int i;
+
 	if (cflag && ioctl(f, DIOCRLDINFO) < 0)
 		err(4, "ioctl DIOCRLDINFO");
 
@@ -490,6 +481,24 @@ readlabel(int f)
 		if (ioctl(f, DIOCGDINFO, &lab) < 0)
 			err(4, "ioctl DIOCGDINFO");
 	}
+
+	asprintf(&partname, "/dev/%s%c", dkname, 'a');
+	asprintf(&partuid, "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.a",
+            lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
+            lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
+	setfsent();
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		partname[strlen(dkname) + 5] = 'a' + i;
+		partuid[strlen(partuid) - 1] = 'a' + i;
+		fsent = getfsspec(partname);
+		if (fsent == NULL)
+			fsent = getfsspec(partuid);
+		if (fsent)
+			mountpoints[i] = strdup(fsent->fs_file);
+	}
+	endfsent();
+	free(partuid);
+	free(partname);
 
 	if (aflag)
 		editor_allocspace(&lab);
