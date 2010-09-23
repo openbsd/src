@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.66 2010/09/23 05:28:57 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.67 2010/09/23 05:44:15 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ struct usb_softc {
 
 	struct usb_task	 sc_explore_task;
 
-	char		 sc_dying;
 	struct timeval	 sc_ptime;
 };
 
@@ -183,7 +182,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	default:
 		printf(", not supported\n");
-		sc->sc_dying = 1;
+		sc->sc_bus->dying = 1;
 		return;
 	}
 	printf("\n");
@@ -206,7 +205,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
 		printf("%s: can't register softintr\n", sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		sc->sc_bus->dying = 1;
 		return;
 	}
 
@@ -215,7 +214,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	if (!err) {
 		dev = sc->sc_port.device;
 		if (dev->hub == NULL) {
-			sc->sc_dying = 1;
+			sc->sc_bus->dying = 1;
 			printf("%s: root device is not a hub\n",
 			       sc->sc_dev.dv_xname);
 			return;
@@ -233,12 +232,12 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		printf("%s: root hub problem, error=%d\n",
 		       sc->sc_dev.dv_xname, err);
-		sc->sc_dying = 1;
+		sc->sc_bus->dying = 1;
 	}
 	if (cold)
 		sc->sc_bus->use_polling--;
 
-	if (!sc->sc_dying) {
+	if (!sc->sc_bus->dying) {
 		getmicrouptime(&sc->sc_ptime);
 		if (sc->sc_bus->usbrev == USBREV_2_0)
 			explore_pending++;
@@ -288,6 +287,10 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 	int s;
 
 	DPRINTFN(2,("%s: task=%p onqueue=%d\n", __func__, task, task->onqueue));
+
+	/* Don't add task if the device's root hub is dying. */
+	if (dev->bus->dying)
+		return;
 
 	s = splusb();
 	if (!task->onqueue) {
@@ -417,7 +420,7 @@ usbopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	if (sc->sc_dying)
+	if (sc->sc_bus->dying)
 		return (EIO);
 
 	return (0);
@@ -496,7 +499,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	sc = usb_cd.cd_devs[unit];
 
-	if (sc->sc_dying)
+	if (sc->sc_bus->dying)
 		return (EIO);
 
 	error = 0;
@@ -699,7 +702,7 @@ usb_explore(void *v)
 		return;
 #endif
 
-	if (!sc->sc_dying)
+	if (!sc->sc_bus->dying)
 		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
 
 	if (sc->sc_bus->flags & USB_BUS_CONFIG_PENDING) {
@@ -828,7 +831,7 @@ usb_activate(struct device *self, int act)
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		sc->sc_bus->dying = 1;
 		if (dev != NULL && dev->cdesc != NULL &&
 		    dev->subdevs != NULL) {
 			for (i = 0; dev->subdevs[i]; i++) {
@@ -850,7 +853,7 @@ usb_detach(struct device *self, int flags)
 
 	DPRINTF(("usb_detach: start\n"));
 
-	sc->sc_dying = 1;
+	sc->sc_bus->dying = 1;
 
 	/* Make all devices disconnect. */
 	if (sc->sc_port.device != NULL)

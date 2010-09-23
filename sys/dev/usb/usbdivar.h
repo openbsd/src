@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.38 2010/09/23 04:58:02 jakemsr Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.39 2010/09/23 05:44:16 jakemsr Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -104,6 +104,7 @@ struct usbd_bus {
 	struct usbd_device     *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
 	char			use_polling;
+	char			dying;
 	int			flags;
 #define USB_BUS_CONFIG_PENDING	0x01
 	struct usb_softc       *usbctl;

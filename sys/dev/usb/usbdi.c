@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.39 2010/09/23 04:58:02 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.40 2010/09/23 05:44:15 jakemsr Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -921,6 +921,10 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 		return (USBD_INVAL);
 	}
 #endif
+
+	/* If the bus is gone, don't go any further. */
+	if (dev->bus->dying)
+		return (USBD_IOERROR);
 
 	xfer = usbd_alloc_xfer(dev);
 	if (xfer == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.54 2010/09/23 04:58:02 jakemsr Exp $ */
+/*	$OpenBSD: uhub.c,v 1.55 2010/09/23 05:44:15 jakemsr Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -352,6 +352,11 @@ uhub_explore(usbd_device_handle dev)
 	int change, status, reconnect;
 
 	DPRINTFN(10, ("uhub_explore dev=%p addr=%d\n", dev, dev->address));
+
+	if (dev->bus->dying) {
+		DPRINTF(("%s: root hub gone at start\n", __func__));
+		return (USBD_IOERROR);
+	}
 
 	if (!sc->sc_running)
 		return (USBD_NOT_STARTED);
