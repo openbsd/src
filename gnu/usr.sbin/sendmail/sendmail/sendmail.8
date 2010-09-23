@@ -576,36 +576,6 @@ would read
 .Pa /usr/local/lib/poets.list
 for the list of addresses making up the group.
 .Pp
-.Nm
-returns an exit status
-describing what it did.
-The codes are defined in
-.Aq Pa sysexits.h :
-.Pp
-.Bl -tag -width EX_UNAVAILABLE -compact -offset indent
-.It Dv EX_OK
-Successful completion on all addresses.
-.It Dv EX_NOUSER
-User name not recognized.
-.It Dv EX_UNAVAILABLE
-Catchall meaning necessary resources
-were not available.
-.It Dv EX_SYNTAX
-Syntax error in address.
-.It Dv EX_SOFTWARE
-Internal software error,
-including bad arguments.
-.It Dv EX_OSERR
-Temporary operating system error,
-such as
-.Dq cannot fork .
-.It Dv EX_NOHOST
-Host name not recognized.
-.It Dv EX_TEMPFAIL
-Message could not be sent immediately,
-but was queued.
-.El
-.Pp
 If invoked as
 .Nm newaliases ,
 .Nm
@@ -660,6 +630,36 @@ help file
 collected statistics
 .It Pa /var/spool/mqueue/*
 temp files
+.El
+.Sh EXIT STATUS
+.Nm
+returns an exit status
+describing what it did.
+The codes are defined in
+.Aq Pa sysexits.h :
+.Pp
+.Bl -tag -width EX_UNAVAILABLE -compact -offset indent
+.It Dv EX_OK
+Successful completion on all addresses.
+.It Dv EX_NOUSER
+User name not recognized.
+.It Dv EX_UNAVAILABLE
+Catchall meaning necessary resources
+were not available.
+.It Dv EX_SYNTAX
+Syntax error in address.
+.It Dv EX_SOFTWARE
+Internal software error,
+including bad arguments.
+.It Dv EX_OSERR
+Temporary operating system error,
+such as
+.Dq cannot fork .
+.It Dv EX_NOHOST
+Host name not recognized.
+.It Dv EX_TEMPFAIL
+Message could not be sent immediately,
+but was queued.
 .El
 .Sh SEE ALSO
 .Xr mail 1 ,

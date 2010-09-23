@@ -30,10 +30,6 @@ in order for the change to take effect.
 is identical to
 .Dq Li "sendmail -bi" .
 .Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
-.Pp
 Notice: do
 .Em not
 use
@@ -47,6 +43,8 @@ puts a special token into the data base that is required by
 .It Pa /etc/mail/aliases
 The mail aliases file
 .El
+.Sh EXIT STATUS
+.Ex -std newaliases
 .Sh SEE ALSO
 .Xr aliases 5 ,
 .Xr mailer.conf 5 ,
