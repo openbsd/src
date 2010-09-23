@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.705 2010/09/22 05:58:29 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.706 2010/09/23 14:17:02 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -239,6 +239,10 @@ struct pf_state		*pf_find_state(struct pfi_kif *,
 int			 pf_src_connlimit(struct pf_state **);
 int			 pf_check_congestion(struct ifqueue *);
 int			 pf_match_rcvif(struct mbuf *, struct pf_rule *);
+void			 pf_counters_inc(int, int,
+			    struct pf_pdesc *, struct pfi_kif *,
+			    struct pf_state *, struct pf_rule *,
+			    struct pf_rule *);
 
 extern struct pool pfr_ktable_pl;
 extern struct pool pfr_kentry_pl;
@@ -5769,6 +5773,64 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
 	return (0);
 }
 
+void
+pf_counters_inc(int dir, int action, struct pf_pdesc *pd,
+    struct pfi_kif *kif, struct pf_state *s,
+    struct pf_rule *r, struct pf_rule *a)
+{ 
+	int dirndx;
+	kif->pfik_bytes[pd->af == AF_INET6][dir == PF_OUT][action != PF_PASS]
+	    += pd->tot_len;
+	kif->pfik_packets[pd->af == AF_INET6][dir == PF_OUT][action != PF_PASS]++;
+
+	if (action == PF_PASS || r->action == PF_DROP) {
+		dirndx = (dir == PF_OUT);
+		r->packets[dirndx]++;
+		r->bytes[dirndx] += pd->tot_len;
+		if (a != NULL) {
+			a->packets[dirndx]++;
+			a->bytes[dirndx] += pd->tot_len;
+		}
+		if (s != NULL) {
+			struct pf_rule_item	*ri;
+			struct pf_sn_item	*sni;
+
+			SLIST_FOREACH(sni, &s->src_nodes, next) {
+				sni->sn->packets[dirndx]++;
+				sni->sn->bytes[dirndx] += pd->tot_len;
+			}
+			dirndx = (dir == s->direction) ? 0 : 1;
+			s->packets[dirndx]++;
+			s->bytes[dirndx] += pd->tot_len;
+
+			/*
+			 * We want to increase counters on _all_ rules
+			 * that were matched during processing. 
+			 *  XXX This does NOT affect pass rules!
+			 *  XXX Change this in pf_test_rule()?
+			 */
+			SLIST_FOREACH(ri, &s->match_rules, entry) {
+				ri->r->packets[dirndx]++;
+				ri->r->bytes[dirndx] += pd->tot_len;
+			}
+		}
+		if (r->src.addr.type == PF_ADDR_TABLE)
+			pfr_update_stats(r->src.addr.p.tbl,
+			    (s == NULL) ? pd->src :
+			    &s->key[(s->direction == PF_IN)]->
+				addr[(s->direction == PF_OUT)],
+			    pd->af, pd->tot_len, dir == PF_OUT,
+			    r->action == PF_PASS, r->src.neg);
+		if (r->dst.addr.type == PF_ADDR_TABLE)
+			pfr_update_stats(r->dst.addr.p.tbl,
+			    (s == NULL) ? pd->dst :
+			    &s->key[(s->direction == PF_IN)]->
+				addr[(s->direction == PF_IN)],
+			    pd->af, pd->tot_len, dir == PF_OUT,
+			    r->action == PF_PASS, r->dst.neg);
+	}
+}
+
 #ifdef INET
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
@@ -5782,8 +5844,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
-	int			 off, hdrlen, dirndx, pqid = 0;
-	u_int16_t		 qid;
+	int			 off, hdrlen;
+	u_int32_t		 qid, pqid = 0;
 
 	if (!pf_status.running)
 		return (PF_PASS);
@@ -6011,48 +6073,7 @@ done:
 		}
 	}
 
-	kif->pfik_bytes[0][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
-	kif->pfik_packets[0][dir == PF_OUT][action != PF_PASS]++;
-
-	if (action == PF_PASS || r->action == PF_DROP) {
-		dirndx = (dir == PF_OUT);
-		r->packets[dirndx]++;
-		r->bytes[dirndx] += pd.tot_len;
-		if (a != NULL) {
-			a->packets[dirndx]++;
-			a->bytes[dirndx] += pd.tot_len;
-		}
-		if (s != NULL) {
-			struct pf_rule_item	*ri;
-			struct pf_sn_item	*sni;
-
-			SLIST_FOREACH(sni, &s->src_nodes, next) {
-				sni->sn->packets[dirndx]++;
-				sni->sn->bytes[dirndx] += pd.tot_len;
-			}
-			dirndx = (dir == s->direction) ? 0 : 1;
-			s->packets[dirndx]++;
-			s->bytes[dirndx] += pd.tot_len;
-			SLIST_FOREACH(ri, &s->match_rules, entry) {
-				ri->r->packets[dirndx]++;
-				ri->r->bytes[dirndx] += pd.tot_len;
-			}
-		}
-		if (r->src.addr.type == PF_ADDR_TABLE)
-			pfr_update_stats(r->src.addr.p.tbl,
-			    (s == NULL) ? pd.src :
-			    &s->key[(s->direction == PF_IN)]->
-				addr[(s->direction == PF_OUT)],
-			    pd.af, pd.tot_len, dir == PF_OUT,
-			    r->action == PF_PASS, r->src.neg);
-		if (r->dst.addr.type == PF_ADDR_TABLE)
-			pfr_update_stats(r->dst.addr.p.tbl,
-			    (s == NULL) ? pd.dst :
-			    &s->key[(s->direction == PF_IN)]->
-				addr[(s->direction == PF_IN)],
-			    pd.af, pd.tot_len, dir == PF_OUT,
-			    r->action == PF_PASS, r->dst.neg);
-	}
+	pf_counters_inc(dir, action, &pd, kif, s, r, a);
 
 	switch (action) {
 	case PF_SYNPROXY_DROP:
@@ -6090,7 +6111,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
-	int			 off, hdrlen, dirndx;
+	int			 off, hdrlen;
 
 	if (!pf_status.running)
 		return (PF_PASS);
@@ -6320,41 +6341,7 @@ done:
 		}
 	}
 
-	kif->pfik_bytes[1][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
-	kif->pfik_packets[1][dir == PF_OUT][action != PF_PASS]++;
-
-	if (action == PF_PASS || r->action == PF_DROP) {
-		dirndx = (dir == PF_OUT);
-		r->packets[dirndx]++;
-		r->bytes[dirndx] += pd.tot_len;
-		if (a != NULL) {
-			a->packets[dirndx]++;
-			a->bytes[dirndx] += pd.tot_len;
-		}
-		if (s != NULL) {
-			struct pf_sn_item	*sni;
-
-			SLIST_FOREACH(sni, &s->src_nodes, next) {
-				sni->sn->packets[dirndx]++;
-				sni->sn->bytes[dirndx] += pd.tot_len;
-			}
-			dirndx = (dir == s->direction) ? 0 : 1;
-			s->packets[dirndx]++;
-			s->bytes[dirndx] += pd.tot_len;
-		}
-		if (r->src.addr.type == PF_ADDR_TABLE)
-			pfr_update_stats(r->src.addr.p.tbl,
-			    (s == NULL) ? pd.src :
-			    &s->key[(s->direction == PF_IN)]->addr[0],
-			    pd.af, pd.tot_len, dir == PF_OUT,
-			    r->action == PF_PASS, r->src.neg);
-		if (r->dst.addr.type == PF_ADDR_TABLE)
-			pfr_update_stats(r->dst.addr.p.tbl,
-			    (s == NULL) ? pd.dst :
-			    &s->key[(s->direction == PF_IN)]->addr[1],
-			    pd.af, pd.tot_len, dir == PF_OUT,
-			    r->action == PF_PASS, r->dst.neg);
-	}
+	pf_counters_inc(dir, action, &pd, kif, s, r, a);
 
 	switch (action) {
 	case PF_SYNPROXY_DROP:
