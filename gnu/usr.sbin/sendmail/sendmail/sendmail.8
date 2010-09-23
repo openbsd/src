@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendmail.8,v 1.31 2010/09/23 14:51:57 jmc Exp $
+.\"	$OpenBSD: sendmail.8,v 1.32 2010/09/23 14:54:11 jmc Exp $
 .\"
 .\" Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
@@ -594,23 +594,6 @@ If invoked as
 .Nm purgestat ,
 .Nm
 will purge expired entries from the persistent host status database.
-.Sh NOTES
-.Nm
-often gets blamed for many problems
-that are actually the result of other problems,
-such as overly permissive modes on directories.
-For this reason,
-.Nm
-checks the modes on system directories and files
-to determine if they can be trusted.
-Although these checks can be turned off
-and your system security reduced by setting the
-.Li DontBlameSendmail
-option,
-the permission problems should be fixed.
-For more information, see:
-.Pp
-.Pa http://www.sendmail.org/tips/DontBlameSendmail.html
 .Sh FILES
 Except for the file
 .Pa /etc/mail/sendmail.cf
@@ -693,3 +676,20 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh CAVEATS
+.Nm
+often gets blamed for many problems
+that are actually the result of other problems,
+such as overly permissive modes on directories.
+For this reason,
+.Nm
+checks the modes on system directories and files
+to determine if they can be trusted.
+Although these checks can be turned off
+and your system security reduced by setting the
+.Li DontBlameSendmail
+option,
+the permission problems should be fixed.
+For more information, see:
+.Pp
+.Pa http://www.sendmail.org/tips/DontBlameSendmail.html
