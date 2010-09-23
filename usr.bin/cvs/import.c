@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.102 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: import.c,v 1.103 2010/09/23 18:10:16 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -161,10 +161,8 @@ cvs_import(int argc, char **argv)
 
 	import_loginfo(import_repository);
 
-	if (cvs_noexec != 1) {
-		if (mkdir(repo, 0755) == -1 && errno != EEXIST)
-			fatal("cvs_import: %s: %s", repo, strerror(errno));
-	}
+	if (cvs_noexec != 1)
+		cvs_mkdir(repo, 0755);
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;

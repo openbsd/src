@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.152 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.153 2010/09/23 18:10:16 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -677,6 +677,47 @@ cvs_mkpath(const char *path, char *tag)
 			if (p != NULL)
 				*p = '/';
 		}
+	}
+
+	xfree(dir);
+}
+
+void
+cvs_mkdir(const char *path, mode_t mode)
+{
+	size_t len;
+	char *sp, *dp, *dir, rpath[MAXPATHLEN];
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
+	    cvs_server_active == 1)
+		cvs_validate_directory(path);
+
+	dir = xstrdup(path);
+
+	STRIP_SLASH(dir);
+
+	if (cvs_server_active == 0)
+		cvs_log(LP_TRACE, "cvs_mkdir(%s)", dir);
+
+	rpath[0] = '\0';
+
+	for (sp = dir; sp != NULL; sp = dp) {
+		dp = strchr(sp, '/');
+		if (dp != NULL)
+			*(dp++) = '\0';
+
+		len = strlcat(rpath, "/", sizeof(rpath));
+		if (len >= (int)sizeof(rpath))
+			fatal("cvs_mkdir: overflow");
+
+		len = strlcat(rpath, sp, sizeof(rpath));
+		if (len >= (int)sizeof(rpath))
+			fatal("cvs_mkdir: overflow");
+		if (1 == len)
+			continue;
+
+		if (mkdir(rpath, mode) == -1 && errno != EEXIST)
+			fatal("cvs_mkdir: %s: %s", rpath, strerror(errno));
 	}
 
 	xfree(dir);
