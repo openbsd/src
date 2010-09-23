@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.1 2010/09/23 14:33:34 yuo Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -17,6 +17,7 @@
  */
 
 /* Driver for Maywa-Denki & KAYAC YUREX BBU sensor */
+/* formely the driver name was utwitch(4). */
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,15 +52,15 @@
 #define UPDATE_TICK	5 /* sec */
 
 #ifdef UYUREX_DEBUG
-int	uyurexdebug = 0;
-#define DPRINTFN(n, x)	do { if (uyurexdebug > (n)) printf x; } while (0)
+int	utwitchdebug = 0;
+#define DPRINTFN(n, x)	do { if (utwitchdebug > (n)) printf x; } while (0)
 #else
 #define DPRINTFN(n, x)
 #endif
 
 #define DPRINTF(x) DPRINTFN(0, x)
 
-struct uyurex_softc {
+struct utwitch_softc {
 	struct uhidev		 sc_hdev;
 	usbd_device_handle	 sc_udev;
 	u_char			 sc_dying;
@@ -87,51 +88,51 @@ struct uyurex_softc {
 	uint32_t		 sc_oldval;
 };
 
-const struct usb_devno uyurex_devs[] = {
+const struct usb_devno utwitch_devs[] = {
 	{ USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_YUREX},
 };
-#define uyurex_lookup(v, p) usb_lookup(uyurex_devs, v, p)
+#define utwitch_lookup(v, p) usb_lookup(utwitch_devs, v, p)
 
-int uyurex_match(struct device *, void *, void *);
-void uyurex_attach(struct device *, struct device *, void *);
-int uyurex_detach(struct device *, int);
-int uyurex_activate(struct device *, int);
+int utwitch_match(struct device *, void *, void *);
+void utwitch_attach(struct device *, struct device *, void *);
+int utwitch_detach(struct device *, int);
+int utwitch_activate(struct device *, int);
 
-void uyurex_set_mode(struct uyurex_softc *, uint8_t);
-void uyurex_read_value_request(struct uyurex_softc *);
-void uyurex_write_value_request(struct uyurex_softc *, uint32_t);
+void utwitch_set_mode(struct utwitch_softc *, uint8_t);
+void utwitch_read_value_request(struct utwitch_softc *);
+void utwitch_write_value_request(struct utwitch_softc *, uint32_t);
 
-void uyurex_intr(struct uhidev *, void *, u_int);
-void uyurex_refresh(void *);
+void utwitch_intr(struct uhidev *, void *, u_int);
+void utwitch_refresh(void *);
 
-struct cfdriver uyurex_cd = {
-	NULL, "uyurex", DV_DULL
+struct cfdriver utwitch_cd = {
+	NULL, "utwitch", DV_DULL
 };
 
-const struct cfattach uyurex_ca = {
-	sizeof(struct uyurex_softc),
-	uyurex_match,
-	uyurex_attach,
-	uyurex_detach,
-	uyurex_activate,
+const struct cfattach utwitch_ca = {
+	sizeof(struct utwitch_softc),
+	utwitch_match,
+	utwitch_attach,
+	utwitch_detach,
+	utwitch_activate,
 };
 
 int
-uyurex_match(struct device *parent, void *match, void *aux)
+utwitch_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 
-	if (uyurex_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
+	if (utwitch_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
 		return UMATCH_NONE;
 
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
 void
-uyurex_attach(struct device *parent, struct device *self, void *aux)
+utwitch_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct uyurex_softc *sc = (struct uyurex_softc *)self;
+	struct utwitch_softc *sc = (struct utwitch_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	usbd_device_handle dev = uha->parent->sc_udev;
@@ -139,7 +140,7 @@ uyurex_attach(struct device *parent, struct device *self, void *aux)
 	void *desc;
 
 	sc->sc_udev = dev;
-	sc->sc_hdev.sc_intr = uyurex_intr;
+	sc->sc_hdev.sc_intr = utwitch_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
@@ -151,7 +152,7 @@ uyurex_attach(struct device *parent, struct device *self, void *aux)
 
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
-		printf("uyurex_open: uhidev_open %d\n", err);
+		printf("utwitch_open: uhidev_open %d\n", err);
 		return;
 	}
 	sc->sc_ibuf = malloc(sc->sc_ilen, M_USBDEV, M_WAITOK);
@@ -177,23 +178,23 @@ uyurex_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor_delta.desc, "mBBU/sec",
 		sizeof(sc->sc_sensor_delta.desc));
 
-	sc->sc_sensortask = sensor_task_register(sc, uyurex_refresh, UPDATE_TICK);
+	sc->sc_sensortask = sensor_task_register(sc, utwitch_refresh, UPDATE_TICK);
 	if (sc->sc_sensortask == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}
 	sensordev_install(&sc->sc_sensordev);
 
-	DPRINTF(("uyurex_attach: complete\n"));
+	DPRINTF(("utwitch_attach: complete\n"));
 
 	/* init device */ /* XXX */
-	uyurex_set_mode(sc, 0);
+	utwitch_set_mode(sc, 0);
 }
 
 int
-uyurex_detach(struct device *self, int flags)
+utwitch_detach(struct device *self, int flags)
 {
-	struct uyurex_softc *sc = (struct uyurex_softc *)self;
+	struct utwitch_softc *sc = (struct utwitch_softc *)self;
 	int rv = 0;
 
 	sc->sc_dying = 1;
@@ -217,9 +218,9 @@ uyurex_detach(struct device *self, int flags)
 }
 
 int
-uyurex_activate(struct device *self, int act)
+utwitch_activate(struct device *self, int act)
 {
-	struct uyurex_softc *sc = (struct uyurex_softc *)self;
+	struct utwitch_softc *sc = (struct utwitch_softc *)self;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -233,9 +234,9 @@ uyurex_activate(struct device *self, int act)
 }
 
 void
-uyurex_intr(struct uhidev *addr, void *ibuf, u_int len)
+utwitch_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
-	struct uyurex_softc *sc = (struct uyurex_softc *)addr;
+	struct utwitch_softc *sc = (struct utwitch_softc *)addr;
 	uint8_t buf[8];
 	uint32_t val;
 
@@ -281,12 +282,12 @@ uyurex_intr(struct uhidev *addr, void *ibuf, u_int len)
 }
 
 void
-uyurex_refresh(void *arg)
+utwitch_refresh(void *arg)
 {
-	struct uyurex_softc *sc = arg;
+	struct utwitch_softc *sc = arg;
 
 	if (!sc->sc_initialized) {
-		uyurex_read_value_request(sc);
+		utwitch_read_value_request(sc);
 	} else {
 		/* calculate delta value */
 		sc->sc_sensor_delta.value =
@@ -296,7 +297,7 @@ uyurex_refresh(void *arg)
 }
 
 void
-uyurex_set_mode(struct uyurex_softc *sc, uint8_t val)
+utwitch_set_mode(struct utwitch_softc *sc, uint8_t val)
 {
 	uint8_t req[8];
 	usbd_status err;
@@ -313,11 +314,11 @@ uyurex_set_mode(struct uyurex_softc *sc, uint8_t val)
 	}
 
 	/* wait ack */
-	tsleep(&sc->sc_sensortask, 0, "uyurex", (1000*hz+999)/1000 + 1);
+	tsleep(&sc->sc_sensortask, 0, "utwitch", (1000*hz+999)/1000 + 1);
 }
 
 void
-uyurex_read_value_request(struct uyurex_softc *sc)
+utwitch_read_value_request(struct utwitch_softc *sc)
 {
 	uint8_t req[8];
 
@@ -331,11 +332,11 @@ uyurex_read_value_request(struct uyurex_softc *sc)
 		return;
 
 	/* wait till sensor data are updated, 500ms will be enough */
-	tsleep(&sc->sc_sensortask, 0, "uyurex", (500*hz+999)/1000 + 1);
+	tsleep(&sc->sc_sensortask, 0, "utwitch", (500*hz+999)/1000 + 1);
 }
 
 void
-uyurex_write_value_request(struct uyurex_softc *sc, uint32_t val)
+utwitch_write_value_request(struct utwitch_softc *sc, uint32_t val)
 {
 	uint32_t v;
 	uint8_t req[8];
@@ -354,5 +355,5 @@ uyurex_write_value_request(struct uyurex_softc *sc, uint32_t val)
 		return;
 
 	/* wait till sensor data are updated, 250ms will be enough */
-	tsleep(&sc->sc_sensortask, 0, "uyurex", (250*hz+999)/1000 + 1);
+	tsleep(&sc->sc_sensortask, 0, "utwitch", (250*hz+999)/1000 + 1);
 }
