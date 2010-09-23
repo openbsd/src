@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.57 2010/09/10 16:34:09 thib Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.58 2010/09/23 18:40:00 oga Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -226,11 +226,9 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
 				    p->p_ucred, p);
-				if (error) {
-					VOP_UNLOCK(devvp, 0, p);
-					return (error);
-				}
 				VOP_UNLOCK(devvp, 0, p);
+				if (error)
+					return (error);
 			}
 			fs->e2fs_ronly = 0;
 			if (fs->e2fs.e2fs_state == E2FS_ISCLEAN)

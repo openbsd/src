@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.57 2010/01/24 18:12:46 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.58 2010/09/23 18:40:00 oga Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -135,11 +135,9 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
 						   p->p_ucred, p);
-				if (error) {
-					VOP_UNLOCK(devvp, 0, p);
-					return (error);
-				}
 				VOP_UNLOCK(devvp, 0, p);
+				if (error)
+					return (error);
 			}
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 		}
