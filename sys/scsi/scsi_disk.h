@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.28 2010/09/21 09:00:23 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.29 2010/09/23 11:23:58 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -195,6 +195,8 @@ struct scsi_rw_16 {
 struct scsi_write_same_10 {
 	u_int8_t opcode;
 	u_int8_t flags;
+#define WRITE_SAME_F_LBDATA	(1 << 1)
+#define WRITE_SAME_F_PBDATA	(1 << 2)
 	u_int8_t lba[4];
 	u_int8_t group_number;
 	u_int8_t length[2];
@@ -204,6 +206,9 @@ struct scsi_write_same_10 {
 struct scsi_write_same_16 {
 	u_int8_t opcode;
 	u_int8_t flags;
+/* includes WRITE SAME 10 flags */
+#define WRITE_SAME_F_UNMAP	(1 << 3)
+#define WRITE_SAME_F_ANCHOR	(1 << 4)
 	u_int8_t lba[8];
 	u_int8_t length[4];
 	u_int8_t group_number;
