@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.192 2010/08/19 18:14:14 kettenis Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.193 2010/09/23 13:24:22 jsing Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1793,8 +1793,11 @@ out:
 int
 sysctl_diskinit(int update, struct proc *p)
 {
+	struct disklabel *dl;
 	struct diskstats *sdk;
 	struct disk *dk;
+	char duid[17];
+	u_int64_t uid = 0;
 	int i, tlen, l;
 
 	if ((i = rw_enter(&sysctl_disklock, RW_WRITE|RW_INTR)) != 0)
@@ -1802,8 +1805,11 @@ sysctl_diskinit(int update, struct proc *p)
 
 	if (disk_change) {
 		for (dk = TAILQ_FIRST(&disklist), tlen = 0; dk;
-		    dk = TAILQ_NEXT(dk, dk_link))
-			tlen += strlen(dk->dk_name) + 1;
+		    dk = TAILQ_NEXT(dk, dk_link)) {
+			if (dk->dk_name)
+				tlen += strlen(dk->dk_name);
+			tlen += 18;	/* label uid + separators */
+		}
 		tlen++;
 
 		if (disknames)
@@ -1819,8 +1825,18 @@ sysctl_diskinit(int update, struct proc *p)
 
 		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
-			snprintf(disknames + l, tlen - l, "%s,",
-			    dk->dk_name ? dk->dk_name : "");
+			dl = dk->dk_label;
+			bzero(duid, sizeof(duid));
+			if (dl && bcmp(dl->d_uid, &uid, sizeof(dl->d_uid))) {
+				snprintf(duid, sizeof(duid), 
+				    "%02hhx%02hhx%02hhx%02hhx"
+				    "%02hhx%02hhx%02hhx%02hhx",
+				    dl->d_uid[0], dl->d_uid[1], dl->d_uid[2],
+				    dl->d_uid[3], dl->d_uid[4], dl->d_uid[5],
+				    dl->d_uid[6], dl->d_uid[7]);
+			}
+			snprintf(disknames + l, tlen - l, "%s:%s,",
+			    dk->dk_name ? dk->dk_name : "", duid);
 			l += strlen(disknames + l);
 			sdk = diskstats + i;
 			strlcpy(sdk->ds_name, dk->dk_name,
