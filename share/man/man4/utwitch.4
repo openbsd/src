@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uyurex.4,v 1.2 2010/03/01 09:36:24 jmc Exp $
+.\"	$OpenBSD: utwitch.4,v 1.1 2010/09/23 14:35:13 yuo Exp $
 .\"
 .\" Copyright (c) 2010 Yojiro UO <yuo@nui.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2010 $
-.Dt UYUREX 4
+.Dd $Mdocdate: September 23 2010 $
+.Dt UTWITCH 4
 .Os
 .Sh NAME
-.Nm uyurex
+.Nm utwitch
 .Nd YUREX USB twitch/jiggle of knee sensor
 .Sh SYNOPSIS
-.Cd "uyurex* at uhidev?"
+.Cd "utwitch* at uhidev?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -42,6 +42,11 @@ is "mBBU/sec" (milli BBU per second).
 .Rs
 .%T The YUREX Web Page
 .%O http://bbu.kayac.com/en/about/
+.Re
+.Sh HISTORY
+The
+.Nm
+driver was uyurex(4). 
 .Re
 .Sh AUTHORS
 .An -nosplit
