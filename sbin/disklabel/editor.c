@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.244 2010/08/12 23:32:07 tedu Exp $	*/
+/*	$OpenBSD: editor.c,v 1.245 2010/09/23 13:54:21 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1619,9 +1619,10 @@ set_uid(struct disklabel *lp)
 	char *s;
 	int i;
 
-	printf("The disklabel UID is currently: ");
-	uid_print(stdout, lp);
-	printf("\n");
+	printf("The disklabel UID is currently: "
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
+            lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
+            lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 
 	do {
 		s = getstring("uid", "The disklabel UID, given as a 16 "

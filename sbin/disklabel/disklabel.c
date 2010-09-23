@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.171 2010/08/12 23:32:07 tedu Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.172 2010/09/23 13:54:21 jsing Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -773,9 +773,9 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 	    lp->d_typename);
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname),
 	    lp->d_packname);
-	fprintf(f, "uid: ");
-	uid_print(f, lp);
-	fprintf(f, "\n");
+	fprintf(f, "uid: %02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
+            lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
+            lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 	fprintf(f, "flags:");
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
@@ -972,17 +972,6 @@ getnum(char *nptr, u_int64_t min, u_int64_t max, const char **errstr)
 	ret = strtonum(nptr, min, max, errstr);
 	*p = c;
 	return (ret);
-}
-
-void
-uid_print(FILE *f, struct disklabel *lp)
-{
-	char hex[] = "0123456789abcdef";
-	int i;
-
-	for (i = 0; i < sizeof(lp->d_uid); i++)
-		fprintf(f, "%c%c", hex[(lp->d_uid[i] >> 4) & 0xf],
-		    hex[lp->d_uid[i] & 0xf]);
 }
 
 int
