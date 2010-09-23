@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.110 2010/09/07 16:21:46 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.111 2010/09/23 08:39:32 jakemsr Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2172,7 +2172,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			if (v & EHCI_PS_PR) {
 				printf("%s: port reset timeout\n",
 				    sc->sc_bus.bdev.dv_xname);
-				return (USBD_TIMEOUT);
+				err = USBD_IOERROR;
+				goto ret;
 			}
 			if (!(v & EHCI_PS_PE)) {
 				/* Not a high speed device, give up ownership.*/
