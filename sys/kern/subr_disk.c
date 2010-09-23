@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.109 2010/09/08 15:16:22 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.110 2010/09/23 13:20:36 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <sys/dkstat.h>		/* XXX */
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/workq.h>
 #include <uvm/uvm_extern.h>
 
 #include <sys/socket.h>
@@ -82,6 +83,7 @@ int	disk_change;		/* set if a disk has been attached/detached
 void (*softraid_disk_attach)(struct disk *, int);
 
 char *disk_readlabel(struct disklabel *, dev_t);
+void disk_attach_callback(void *, void *);
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
@@ -793,6 +795,7 @@ void
 disk_attach(struct device *dv, struct disk *diskp)
 {
 	int majdev;
+	dev_t *dev;
 
 	if (!ISSET(diskp->dk_flags, DKF_CONSTRUCTED))
 		disk_construct(diskp, diskp->dk_name);
@@ -830,9 +833,40 @@ disk_attach(struct device *dv, struct disk *diskp)
 			diskp->dk_devno =
 			    MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
 	}
+	if (diskp->dk_devno != NODEV) {
+		dev = malloc(sizeof(dev_t), M_DEVBUF, M_NOWAIT);
+		if (dev == NULL)
+			panic("failed to allocate memory for dev no");
+		*dev = diskp->dk_devno;
+		if (workq_add_task(NULL, 0, disk_attach_callback, dev, NULL))
+			free(dev, M_DEVBUF);
+	}
 
 	if (softraid_disk_attach)
 		softraid_disk_attach(diskp, 1);
+}
+
+void
+disk_attach_callback(void *arg1, void *arg2)
+{
+	struct disklabel dl;
+	struct disk *dk;
+	dev_t dev = *((dev_t *)arg1);
+
+	/* Locate disk associated with device no. */
+	TAILQ_FOREACH(dk, &disklist, dk_link) {
+		if (dk->dk_devno == dev)
+			break;
+	}
+	if (dk == NULL || (dk->dk_flags & (DKF_OPENED | DKF_NOLABELREAD)))
+		goto done;
+
+	/* Read disklabel. */
+	disk_readlabel(&dl, dev);
+	dk->dk_flags |= DKF_OPENED;
+
+done:
+	free(arg1, M_DEVBUF);
 }
 
 /*
