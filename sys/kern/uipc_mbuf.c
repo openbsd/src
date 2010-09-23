@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.143 2010/07/15 09:45:09 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.144 2010/09/23 10:49:55 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -322,6 +322,7 @@ m_cltick(void *arg)
 }
 
 int m_livelock;
+u_int mcllivelocks;
 
 int
 m_cldrop(struct ifnet *ifp, int pi)
@@ -331,7 +332,7 @@ m_cldrop(struct ifnet *ifp, int pi)
 	extern int ticks;
 	int i;
 
-	if (m_livelock == 0 && ticks - m_clticks > 2) {
+	if (ticks - m_clticks > 1) {
 		struct ifnet *aifp;
 
 		/*
@@ -341,23 +342,26 @@ m_cldrop(struct ifnet *ifp, int pi)
 		 * future.
 		 */
 		m_livelock = 1;
-		ifp->if_data.ifi_livelocks++;
-		liveticks = ticks;
+		mcllivelocks++;
+		m_clticks = liveticks = ticks;
 		TAILQ_FOREACH(aifp, &ifnet, if_list) {
 			mclp = aifp->if_data.ifi_mclpool;
 			for (i = 0; i < MCLPOOLS; i++) {
-				mclp[i].mcl_cwm =
-				    max(mclp[i].mcl_cwm / 2, mclp[i].mcl_lwm);
+				int diff = max(mclp[i].mcl_cwm / 8, 2);
+				mclp[i].mcl_cwm = max(mclp[i].mcl_lwm,
+				    mclp[i].mcl_cwm - diff);
 			}
 		}
-	} else if (m_livelock && ticks - liveticks > 5)
+	} else if (m_livelock && (ticks - liveticks) > 4)
 		m_livelock = 0;	/* Let the high water marks grow again */
 
 	mclp = &ifp->if_data.ifi_mclpool[pi];
 	if (m_livelock == 0 && ISSET(ifp->if_flags, IFF_RUNNING) &&
-	    mclp->mcl_alive <= 2 && mclp->mcl_cwm < mclp->mcl_hwm) {
+	    mclp->mcl_alive <= 4 && mclp->mcl_cwm < mclp->mcl_hwm &&
+	    mclp->mcl_grown < ticks) {
 		/* About to run out, so increase the current watermark */
 		mclp->mcl_cwm++;
+		mclp->mcl_grown = ticks;
 	} else if (mclp->mcl_alive >= mclp->mcl_cwm)
 		return (1);		/* No more packets given */
 
