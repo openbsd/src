@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.34 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: fd.c,v 1.35 2010/09/23 13:11:38 jsing Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -667,6 +667,7 @@ fdattach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
+	fd->sc_dk.dk_flags = DKF_NOLABELREAD;
 	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
 	disk_attach(&fd->sc_dv, &fd->sc_dk);
 
