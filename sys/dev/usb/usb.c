@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.67 2010/09/23 05:44:15 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.68 2010/09/23 06:30:37 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -299,6 +299,7 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 		else
 			TAILQ_INSERT_TAIL(&usb_tasks, task, next);
 		task->onqueue = 1;
+		task->dev = dev;
 	}
 	wakeup(&usb_run_tasks);
 	splx(s);
@@ -318,6 +319,22 @@ usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 		else
 			TAILQ_REMOVE(&usb_tasks, task, next);
 		task->onqueue = 0;
+	}
+	splx(s);
+}
+
+void
+usb_rem_wait_task(usbd_device_handle dev, struct usb_task *task)
+{
+	int s;
+
+	DPRINTFN(2,("%s: task=%p onqueue=%d\n", __func__, task, task->onqueue));
+
+	s = splusb();
+	usb_rem_task(dev, task);
+	while (task->running) {
+		DPRINTF(("%s: waiting for task to complete\n", __func__));
+		tsleep(task, PWAIT, "endtask", 0);
 	}
 	splx(s);
 }
@@ -381,9 +398,15 @@ usb_task_thread(void *arg)
 			continue;
 		}
 		task->onqueue = 0;
+		/* Don't execute the task if the root hub is gone. */
+		if (task->dev->bus->dying)
+			continue;
+		task->running = 1;
 		splx(s);
 		task->fun(task->arg);
 		s = splusb();
+		task->running = 0;
+		wakeup(task);
 	}
 	splx(s);
 
@@ -859,7 +882,7 @@ usb_detach(struct device *self, int flags)
 	if (sc->sc_port.device != NULL)
 		usb_disconnect_port(&sc->sc_port, self);
 
-	usb_rem_task(sc->sc_bus->root_hub, &sc->sc_explore_task);
+	usb_rem_wait_task(sc->sc_bus->root_hub, &sc->sc_explore_task);
 
 	usbd_finish();
 

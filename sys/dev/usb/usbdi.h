@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.33 2009/11/04 19:14:10 kettenis Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.34 2010/09/23 06:30:37 jakemsr Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -181,14 +181,17 @@ const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
  */
 struct usb_task {
 	TAILQ_ENTRY(usb_task) next;
+	usbd_device_handle dev;
 	void (*fun)(void *);
 	void *arg;
 	char onqueue;
+	char running;
 };
 
-void usb_add_task(usbd_device_handle dev, struct usb_task *task);
-void usb_rem_task(usbd_device_handle dev, struct usb_task *task);
-#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0)
+void usb_add_task(usbd_device_handle, struct usb_task *);
+void usb_rem_task(usbd_device_handle, struct usb_task *);
+void usb_rem_wait_task(usbd_device_handle, struct usb_task *);
+#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0, (t)->running = 0)
 
 struct usb_devno {
 	u_int16_t ud_vendor;
