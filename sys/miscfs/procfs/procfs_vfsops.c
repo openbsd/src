@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.25 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.26 2010/09/23 18:43:37 oga Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ procfs_root(struct mount *mp, struct vnode **vpp)
 	error = procfs_allocvp(mp, vpp, 0, Proot);
 	if (error)
 		return (error);
-	vn_lock(*vpp, LK_EXCLUSIVE, curproc);
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY, curproc);
 
 	return (0);
 }
