@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.63 2010/08/31 16:38:42 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.64 2010/09/23 00:46:08 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ TAILQ_HEAD(, usb_task) usb_all_tasks;
 
 volatile int threads_pending = 0;
 
-void	usb_discover(void *);
+void	usb_explore(void *);
 void	usb_create_event_thread(void *);
 void	usb_event_thread(void *);
 void	usb_task_thread(void *);
@@ -308,9 +308,9 @@ usb_event_thread(void *arg)
 	while (sc->sc_bus->usbrev != USBREV_2_0 && threads_pending)
 		(void)tsleep((void *)&threads_pending, PWAIT, "config", 0);
 
-	/* Make sure first discover does something. */
+	/* Make sure first explore does something. */
 	sc->sc_bus->needs_explore = 1;
-	usb_discover(sc);
+	usb_explore(sc);
 	config_pending_decr();
 
 	/* Wake up any companions waiting for handover before their probes. */
@@ -323,7 +323,7 @@ usb_event_thread(void *arg)
 #ifdef USB_DEBUG
 		if (usb_noexplore < 2)
 #endif
-		usb_discover(sc);
+		usb_explore(sc);
 #ifdef USB_DEBUG
 		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
 		    usb_noexplore ? 0 : hz * 60);
@@ -664,11 +664,11 @@ usbkqfilter(dev_t dev, struct knote *kn)
 
 /* Explore device tree from the root. */
 void
-usb_discover(void *v)
+usb_explore(void *v)
 {
 	struct usb_softc *sc = v;
 
-	DPRINTFN(2,("usb_discover\n"));
+	DPRINTFN(2,("usb_explore\n"));
 #ifdef USB_DEBUG
 	if (usb_noexplore > 1)
 		return;
