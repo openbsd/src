@@ -364,7 +364,6 @@
 ./usr/bin/modstat
 ./usr/bin/more
 ./usr/bin/mset
-./usr/bin/msgs
 ./usr/bin/nc
 ./usr/bin/neqn
 ./usr/bin/netstat
@@ -4953,7 +4952,6 @@
 ./var/log
 ./var/log/rdist
 ./var/mail
-./var/msgs
 ./var/named
 ./var/named/dev
 ./var/named/etc
