@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.95 2010/09/20 06:17:49 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.96 2010/09/23 11:44:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -58,6 +58,7 @@ struct atascsi_port {
 	int			ap_type;
 	int			ap_features;
 #define ATA_PORT_F_NCQ			0x1
+#define ATA_PORT_F_TRIM			0x2
 };
 
 void		atascsi_cmd(struct scsi_xfer *);
@@ -84,6 +85,8 @@ void		atascsi_disk_vpd_serial(struct scsi_xfer *);
 void		atascsi_disk_vpd_ident(struct scsi_xfer *);
 void		atascsi_disk_vpd_limits(struct scsi_xfer *);
 void		atascsi_disk_vpd_info(struct scsi_xfer *);
+void		atascsi_disk_write_same_16(struct scsi_xfer *);
+void		atascsi_disk_write_same_16_done(struct ata_xfer *);
 void		atascsi_disk_capacity(struct scsi_xfer *);
 void		atascsi_disk_capacity16(struct scsi_xfer *);
 void		atascsi_disk_sync(struct scsi_xfer *);
@@ -278,6 +281,10 @@ atascsi_probe(struct scsi_link *link)
 		}
 	}
 
+	if (ISSET(letoh16(ap->ap_identify.data_set_mgmt), 
+	    ATA_ID_DATA_SET_MGMT_TRIM))
+		SET(ap->ap_features, ATA_PORT_F_TRIM);
+
 	cmdset = letoh16(ap->ap_identify.cmdset82);
 
 	/* Enable write cache if supported */
@@ -416,6 +423,10 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		flags = ATA_F_WRITE;
 		/* deal with io outside the switch */
 		break;
+
+	case WRITE_SAME_16:
+		atascsi_disk_write_same_16(xs);
+		return;
 
 	case SYNCHRONIZE_CACHE:
 		atascsi_disk_sync(xs);
@@ -735,6 +746,90 @@ atascsi_disk_vpd_info(struct scsi_xfer *xs)
 }
 
 void
+atascsi_disk_write_same_16(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct atascsi_port	*ap = as->as_ports[link->target];
+	struct scsi_write_same_16 *cdb;
+	struct ata_xfer		*xa = xs->io;
+	struct ata_fis_h2d	*fis;
+	u_int64_t		lba;
+	u_int32_t		length;
+	u_int64_t		desc;
+
+	if (xs->cmdlen != sizeof(*cdb)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
+	cdb = (struct scsi_write_same_16 *)xs->cmd;
+
+	if (cdb->flags != WRITE_SAME_F_UNMAP ||
+	   !ISSET(ap->ap_features, ATA_PORT_F_TRIM)) {
+		/* generate sense data */
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
+	lba = _8btol(cdb->lba);
+	length = _4btol(cdb->length);
+
+	if (length > 0xffff) {
+		/* XXX we dont support requests over 65535 blocks */
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
+	xa->data = xs->data;
+	xa->datalen = xs->datalen;;
+	xa->flags = ATA_F_WRITE;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+	xa->complete = atascsi_disk_write_same_16_done;
+	xa->atascsi_private = xs;
+	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
+
+	/* TRIM sends a list of blocks to discard in the databuf. */
+	memset(xa->data, 0, xa->datalen);
+	desc = htole64(((u_int64_t)length << 48) | lba);
+	memcpy(xa->data, &desc, sizeof(desc));
+
+	fis = xa->fis;
+	fis->flags = ATA_H2D_FLAGS_CMD;
+	fis->command = ATA_C_DSM;
+	fis->features = ATA_DSM_TRIM;
+
+	ata_exec(as, xa);
+}
+
+void
+atascsi_disk_write_same_16_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		xs->error = XS_NOERROR;
+		break;
+
+	case ATA_S_ERROR:
+	case ATA_S_TIMEOUT:
+		printf("atascsi_disk_write_same_16_done: %s\n",
+		    xa->state == ATA_S_TIMEOUT ? "timeout" : "error");
+		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
+		    XS_DRIVER_STUFFUP);
+		break;
+
+	default:
+		panic("atascsi_disk_write_same_16_done: "
+		    "unexpected ata_xfer state (%d)", xa->state);
+	}
+
+	scsi_done(xs);
+}
+
+void
 atascsi_disk_sync(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
@@ -906,8 +1001,7 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 	if (align > 0)
 		lowest_aligned = (1 << rcd.logical_per_phys) - align;
 
-	if (ISSET(letoh16(ap->ap_identify.data_set_mgmt), 
-	    ATA_ID_DATA_SET_MGMT_TRIM)) {
+	if (ISSET(ap->ap_features, ATA_PORT_F_TRIM)) {
 		SET(lowest_aligned, READ_CAP_16_TPE);
 
 		if (ISSET(letoh16(ap->ap_identify.add_support), 
