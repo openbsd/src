@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstab.5,v 1.42 2009/06/08 17:03:15 jmc Exp $
+.\"	$OpenBSD: fstab.5,v 1.43 2010/09/23 18:29:16 jmc Exp $
 .\"	$NetBSD: fstab.5,v 1.5.2.1 1995/11/16 20:11:11 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fstab.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 8 2009 $
+.Dd $Mdocdate: September 23 2010 $
 .Dt FSTAB 5
 .Os
 .Sh NAME
@@ -183,7 +183,8 @@ field).
 If
 .Fa fs_type
 is
-.Dq rw
+.Dq rw ,
+.Dq rq ,
 or
 .Dq ro
 then the filesystem whose name is given in the
@@ -243,7 +244,8 @@ a value of zero is returned and
 .Xr fsck 8
 will assume that the filesystem does not need to be checked.
 .Bd -literal
-#define	FSTAB_RW	"rw"	/* read-write device */
+#define	FSTAB_RW	"rw"	/* read/write device */
+#define	FSTAB_RQ	"rq"	/* read/write with quotas *
 #define	FSTAB_RO	"ro"	/* read-only device */
 #define	FSTAB_SW	"sw"	/* swap device */
 #define	FSTAB_XX	"xx"	/* ignore totally */
@@ -253,7 +255,7 @@ struct fstab {
 	char	*fs_file;	/* filesystem path prefix */
 	char	*fs_vfstype;	/* type of filesystem */
 	char	*fs_mntops;	/* comma separated mount options */
-	char	*fs_type;	/* rw, ro, sw, or xx */
+	char	*fs_type;	/* rw, rq, ro, sw, or xx */
 	int	fs_freq;	/* dump frequency, in days */
 	int	fs_passno;	/* pass number on parallel fsck */
 };
