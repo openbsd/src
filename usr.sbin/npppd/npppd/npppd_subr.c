@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_subr.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_subr.c,v 1.6 2010/09/23 01:45:10 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides helper functions for npppd.
  */
-/* $Id: npppd_subr.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: npppd_subr.c,v 1.6 2010/09/23 01:45:10 jsg Exp $ */
 #include <sys/cdefs.h>
 #ifndef LINT
 __COPYRIGHT(
@@ -65,11 +65,6 @@ __COPYRIGHT(
 #include "npppd_defs.h"
 #include "npppd_subr.h"
 #include "rtev.h"
-#ifdef NPPPD_USE_RT_ZEBRA
-#include "bytebuf.h"
-#include <event.h>
-#include "rt_zebra.h"
-#endif
 #include "privsep.h"
 
 static u_int16_t route_seq = 0;
@@ -159,19 +154,6 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 #endif
 
 	ASSERT(type == RTM_ADD || type == RTM_DELETE);
-#ifdef NPPPD_USE_RT_ZEBRA
-	if ((rtm_flags & RTF_BLACKHOLE) != 0) {
-		if (type == RTM_ADD)
-			return rt_zebra_add_ipv4_blackhole_rt(
-			    rt_zebra_get_instance(), dest->s_addr,
-			    (mask == NULL)? 0xffffffffL : mask->s_addr);
-		else
-			return rt_zebra_delete_ipv4_blackhole_rt(
-			    rt_zebra_get_instance(), dest->s_addr,
-			    (mask == NULL)? 0xffffffffL : mask->s_addr);
-		return -1;
-	}
-#endif
 	if(type == RTM_ADD)
 		strtype = "RTM_ADD";
 	else

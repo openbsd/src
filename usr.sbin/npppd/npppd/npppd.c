@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $ */
+/* $OpenBSD: npppd.c,v 1.7 2010/09/23 01:45:10 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $
+ * $Id: npppd.c,v 1.7 2010/09/23 01:45:10 jsg Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -79,9 +79,6 @@ __COPYRIGHT(
 #include "npppd_auth.h"
 #include "radish.h"
 #include "rtev.h"
-#ifdef NPPPD_USE_RT_ZEBRA
-#include "rt_zebra.h"
-#endif
 #include "net_utils.h"
 #include "time_utils.h"
 
@@ -333,12 +330,6 @@ npppd_init(npppd *_this, const char *config_file)
 	    npppd_config_int(_this, "rtsock.send_npkts",
 		DEFAULT_RTSOCK_SEND_NPKTS), 0);
 
-#ifdef NPPPD_USE_RT_ZEBRA
-	if (rt_zebra_get_instance() == NULL)
-		return -1;
-	rt_zebra_init(rt_zebra_get_instance());
-	rt_zebra_start(rt_zebra_get_instance());
-#endif
 	_this->rtev_event_serial = -1;
 
 	/* ignore signals */
@@ -453,9 +444,6 @@ npppd_stop_really(npppd *_this)
 		return;
 	}
 #endif
-#ifdef NPPPD_USE_RT_ZEBRA
-	rt_zebra_stop(rt_zebra_get_instance());
-#endif
 	for (i = countof(_this->iface) - 1; i >= 0; i--) {
 		if (_this->iface[i].initialized != 0)
 			npppd_iface_fini(&_this->iface[i]);
@@ -508,9 +496,6 @@ npppd_fini(npppd *_this)
 	if (_this->map_user_ppp != NULL)
 		hash_free(_this->map_user_ppp);
 
-#ifdef NPPPD_USE_RT_ZEBRA
-	rt_zebra_fini(rt_zebra_get_instance());
-#endif
 	rtev_fini();
 }
 
@@ -567,11 +552,6 @@ npppd_timer(int fd, short evtype, void *ctx)
 
 #ifdef USE_NPPPD_PIPEX
 	pipex_periodic(_this);
-#endif
-#ifdef NPPPD_USE_RT_ZEBRA
-	if (!rt_zebra_is_running(rt_zebra_get_instance())) {
-		rt_zebra_start(rt_zebra_get_instance());
-	}
 #endif
 
 	npppd_reset_timer(_this);
