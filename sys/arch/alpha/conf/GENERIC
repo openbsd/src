@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.215 2010/08/02 14:13:23 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.216 2010/09/23 16:21:46 yuo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -125,6 +125,7 @@ run*	at uhub?			# Ralink RT2700U/RT2800U/RT3000U
 uow*	at uhub?			# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 uthum*	at uhidev?			# TEMPerHUM sensor
+utwitch* at uhidev?			# yurex BBU sensor
 
 # USB Video
 uvideo* at uhub?

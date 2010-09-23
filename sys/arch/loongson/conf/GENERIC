@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 2010/09/21 02:46:33 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.25 2010/09/23 16:21:46 yuo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -154,6 +154,7 @@ zyd*		at uhub?	# Zydas ZD1211
 uberry*		at uhub?	# Research In Motion Blackberry 
 udcf*		at uhub?	# Gude Expert mouseCLOCK
 uthum*		at uhidev?	# TEMPerHUM sensor
+utwitch*	at uhidev?	# YUREX BBU sensor
 ugen*		at uhub?	# USB Generic driver
 
 # USB Audio

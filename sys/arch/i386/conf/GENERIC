@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.696 2010/09/08 16:04:35 espie Exp $
+#	$OpenBSD: GENERIC,v 1.697 2010/09/23 16:21:46 yuo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -302,6 +302,7 @@ udcf*	at uhub?		# Gude Expert mouseCLOCK
 umbg*	at uhub?		# Meinberg Funkuhren USB5131
 uthum*	at uhidev?		# TEMPerHUM sensor
 utrh*	at uhidev?		# USBRH sensor
+utwitch* at uhidev?		# YUREX BBU sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 uvideo* at uhub?		# USB video

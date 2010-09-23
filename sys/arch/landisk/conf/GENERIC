@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.26 2010/07/03 03:59:16 krw Exp $
+# $OpenBSD: GENERIC,v 1.27 2010/09/23 16:21:46 yuo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -156,6 +156,7 @@ zyd*	at uhub?		# Zydas ZD1211
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uthum*	at uhidev?		# TEMPerHUM sensor
+utwitch* at uhidev?		# YUREX BBU sensor
 #uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 #onewire* at uow?
 

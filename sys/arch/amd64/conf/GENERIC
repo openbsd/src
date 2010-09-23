@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.302 2010/09/08 16:04:35 espie Exp $
+#	$OpenBSD: GENERIC,v 1.303 2010/09/23 16:21:46 yuo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -241,6 +241,7 @@ urtw*	at uhub?		# RealTek 8187
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uthum*	at uhidev?		# TEMPerHUM sensor
 utrh*	at uhidev?		# USBRH sensor
+utwitch* at uhidev?		# YUREX BBU sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 uvideo*	at uhub?		# USB Video
