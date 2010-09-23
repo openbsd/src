@@ -486,7 +486,6 @@
 ./usr/bin/time
 ./usr/bin/tip
 ./usr/bin/tmux
-./usr/bin/tn3270
 ./usr/bin/top
 ./usr/bin/touch
 ./usr/bin/tput
