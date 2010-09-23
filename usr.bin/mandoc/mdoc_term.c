@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.104 2010/09/20 20:02:27 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.105 2010/09/23 20:39:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1027,12 +1027,18 @@ termp_nm_pre(DECL_ARGS)
 		synopsis_pre(p, n->parent);
 
 	if (MDOC_HEAD == n->type && n->next->child) {
-		p->flags |= TERMP_NOSPACE | TERMP_NOBREAK | TERMP_HANG;
-		p->rmargin = p->offset + term_len(p, 1) +
-		    (NULL == n->child ? term_strlen(p, m->name) :
-		     MDOC_TEXT == n->child->type ?
-			term_strlen(p, n->child->string) :
-		     term_len(p, 5));
+		p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
+		p->rmargin = p->offset + term_len(p, 1);
+		if (NULL == n->child) {
+			p->rmargin += term_strlen(p, m->name);
+		} else if (MDOC_TEXT == n->child->type) {
+			p->rmargin += term_strlen(p, n->child->string);
+			if (n->child->next)
+				p->flags |= TERMP_HANG;
+		} else {
+			p->rmargin += term_len(p, 5);
+			p->flags |= TERMP_HANG;
+		}
 	}
 
 	term_fontpush(p, TERMFONT_BOLD);
