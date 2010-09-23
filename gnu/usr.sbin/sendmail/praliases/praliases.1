@@ -40,10 +40,6 @@ system aliases file(s).
 .Pp
 If one or more keys are specified on the command line,
 only entries which match those keys are displayed.
-.Pp
-The
-.Nm praliases
-utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/mail/sendmail.cf -compact
 .It Pa /etc/mail/sendmail.cf
@@ -59,6 +55,8 @@ The database version of the
 .Pa /etc/mail/aliases
 file.
 .El
+.Sh EXIT STATUS
+.Ex -std praliases
 .Sh SEE ALSO
 .Xr mailq 8 ,
 .Xr sendmail 8

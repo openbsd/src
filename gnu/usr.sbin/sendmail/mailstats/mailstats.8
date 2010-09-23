@@ -87,10 +87,6 @@ Output information in program-readable mode without clearing statistics.
 .It Fl o
 Don't display the name of the mailer in the output.
 .El
-.Pp
-The
-.Nm mailstats
-utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /var/log/sendmail.stXX -compact
 .It Pa /etc/mail/sendmail.cf
@@ -103,6 +99,8 @@ The default
 .Nm sendmail
 statistics file.
 .El
+.Sh EXIT STATUS
+.Ex -std mailstats
 .Sh SEE ALSO
 .Xr mailq 8 ,
 .Xr sendmail 8
