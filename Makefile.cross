@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.37 2010/09/20 11:49:39 syuu Exp $
+# $OpenBSD: Makefile.cross,v 1.38 2010/09/23 19:00:48 pirofti Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -71,7 +71,7 @@ CROSSOBJ=	${CROSSDIR}/.obj_done
 CROSSINCLUDES=	${CROSSDIR}/.includes_done
 CROSSBINUTILS=	${CROSSDIR}/.binutils_done
 CROSSGCC=	${CROSSDIR}/.gcc_done
-#NO_CROSS=	isakmpd tn3270 keynote sectok ssh
+#NO_CROSS=	isakmpd keynote sectok ssh
 
 # bsd.own.mk can't do it for us
 .if ${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
