@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.51 2010/08/06 00:00:41 miod Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.52 2010/09/24 02:59:39 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1092,7 +1092,6 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct ucred *cred;
 	struct ptmget *ptm = (struct ptmget *)data;
 
-	error = 0;
 	switch (cmd) {
 	case PTMGET:
 		fdplock(fdp);
