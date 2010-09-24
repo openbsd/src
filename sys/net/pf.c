@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.708 2010/09/24 01:53:22 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.709 2010/09/24 01:56:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -945,7 +945,6 @@ pf_find_state_byid(struct pf_state_cmp *key)
 	return (RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
 
-/* XXX debug function, intended to be removed one day */
 int
 pf_compare_state_keys(struct pf_state_key *a, struct pf_state_key *b,
     struct pfi_kif *kif, u_int dir)
