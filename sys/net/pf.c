@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.707 2010/09/24 00:55:48 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.708 2010/09/24 01:53:22 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3053,8 +3053,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		}
 
 		action = pf_create_state(r, a, pd, &skw, &sks, m, off,
-		    &rewrite, kif, sm, tag, hdrlen,
-		    &rules, &act, sns);
+		    &rewrite, kif, sm, tag, hdrlen, &rules, &act, sns);
 
 		if (action != PF_PASS)
 			return (action);
@@ -3110,9 +3109,8 @@ static __inline int
 pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
     struct pf_state_key **skw, struct pf_state_key **sks, struct mbuf *m,
     int off, int *rewrite, struct pfi_kif *kif, struct pf_state **sm,
-    int tag, int hdrlen,
-    struct pf_rule_slist *rules, struct pf_rule_actions *act,
-    struct pf_src_node *sns[PF_SN_MAX])
+    int tag, int hdrlen, struct pf_rule_slist *rules,
+    struct pf_rule_actions *act, struct pf_src_node *sns[PF_SN_MAX])
 {
 	struct pf_state		*s = NULL;
 	struct tcphdr		*th = pd->hdr.tcp;
