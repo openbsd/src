@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.38 2010/09/23 19:00:48 pirofti Exp $
+# $OpenBSD: Makefile.cross,v 1.39 2010/09/24 14:04:06 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -79,8 +79,8 @@ CROSSGCC=	${CROSSDIR}/.gcc_done
 TARGET_USE_GCC3=No
 COMPILER_VERSION=gcc2
 .elif ${TARGET_ARCH} == "amd64" || ${TARGET_ARCH} == "hppa" || \
-    ${TARGET_ARCH} == "i386" || ${TARGET_ARCH} == "powerpc" || \
-    ${TARGET_ARCH} == "sparc64"
+    ${TARGET_ARCH} == "i386" || ${TARGET_ARCH:Mmips64*} || \
+    ${TARGET_ARCH} == "powerpc" || ${TARGET_ARCH} == "sparc64"
 TARGET_USE_GCC4=Yes
 COMPILER_VERSION=gcc4
 .else
