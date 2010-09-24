@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.c,v 1.5 2010/07/31 09:33:09 yasuoka Exp $ */
+/* $OpenBSD: ppp.c,v 1.6 2010/09/24 02:57:43 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.5 2010/07/31 09:33:09 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.6 2010/09/24 02:57:43 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -671,6 +671,17 @@ ppp_ccp_opened(npppd_ppp *_this)
 #endif
 }
 
+void
+ppp_ccp_stopped(npppd_ppp *_this)
+{
+       if (_this->mppe.required)
+               ppp_stop(_this, NULL);
+#ifdef USE_NPPPD_PIPEX
+       else
+               ppp_on_network_pipex(_this);
+#endif
+}
+
 /************************************************************************
  * Network I/O related functions
  ************************************************************************/
@@ -1076,7 +1087,8 @@ ppp_on_network_pipex(npppd_ppp *_this)
 		return;	/* already started */
 
 	if (_this->assigned_ip4_enabled != 0 &&
-	    (!MPPE_MUST_NEGO(_this) || _this->ccp.fsm.state == OPENED)) {
+	    (!MPPE_MUST_NEGO(_this) || _this->ccp.fsm.state == OPENED ||
+		    _this->ccp.fsm.state == STOPPED)) {
 		/* IPCP is opened and MPPE is not required or MPPE is opened */
 		npppd_ppp_pipex_enable(_this->pppd, _this);
 		ppp_log(_this, LOG_NOTICE, "Using pipex=%s",

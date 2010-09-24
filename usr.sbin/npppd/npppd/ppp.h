@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.h,v 1.4 2010/07/31 09:33:09 yasuoka Exp $ */
+/* $OpenBSD: ppp.h,v 1.5 2010/09/24 02:57:43 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -755,6 +755,7 @@ void         ppp_phy_downed (npppd_ppp *);
 void         ppp_auth_ok (npppd_ppp *);
 void         ppp_ipcp_opened (npppd_ppp *);
 void         ppp_ccp_opened (npppd_ppp *);
+void         ppp_ccp_stopped (npppd_ppp *);
 inline void  ppp_output (npppd_ppp *, uint16_t, u_char, u_char, u_char *, int);
 u_char       *ppp_packetbuf (npppd_ppp *, int);
 const char   *ppp_config_str (npppd_ppp *, const char *);

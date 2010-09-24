@@ -1,4 +1,4 @@
-/* $OpenBSD: ccp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: ccp.c,v 1.4 2010/09/24 02:57:43 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for CCP (Compression Control Protocol).
  * MPPE is supported as a CCP option.
- * $Id: ccp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
+ * $Id: ccp.c,v 1.4 2010/09/24 02:57:43 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -216,8 +216,7 @@ ccp_stop(fsm *f)
 {
 #ifdef USE_NPPPD_MPPE
 	fsm_log(f, LOG_INFO, "CCP is stopped");
-	if (f->ppp->mppe.required)
-		ppp_stop(f->ppp, NULL);
+	ppp_ccp_stopped(f->ppp);
 #endif
 }
 
