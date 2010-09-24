@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.91 2010/09/08 08:34:42 claudio Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.92 2010/09/24 02:59:45 claudio Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -593,6 +593,11 @@ send:
 		*lp++ = htonl(tcp_now + tp->ts_modulate);
 		*lp   = htonl(tp->ts_recent);
 		optlen += TCPOLEN_TSTAMP_APPA;
+
+		/* Set receive buffer autosizing timestamp. */
+		if (tp->rfbuf_ts == 0)
+			tp->rfbuf_ts = tcp_now;
+
 	}
 
 #ifdef TCP_SIGNATURE
@@ -1029,6 +1034,8 @@ send:
 	} else
 		if (SEQ_GT(tp->snd_nxt + len, tp->snd_max))
 			tp->snd_max = tp->snd_nxt + len;
+
+	tcp_update_sndspace(tp);
 
 	/*
 	 * Trace.

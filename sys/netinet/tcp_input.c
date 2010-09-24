@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.235 2010/07/20 15:36:03 matthew Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.236 2010/09/24 02:59:45 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1091,6 +1091,7 @@ after_listen:
 				else if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0)
 					TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
+				tcp_update_sndspace(tp);
 				if (sb_notify(&so->so_snd))
 					sowwakeup(so);
 				if (so->so_snd.sb_cc)
@@ -1122,6 +1123,16 @@ after_listen:
 			if (so->so_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
+				if (opti.ts_present && opti.ts_ecr) {
+					if (tp->rfbuf_ts < opti.ts_ecr &&
+					    opti.ts_ecr - tp->rfbuf_ts < hz) {
+						tcp_update_rcvspace(tp);
+						/* Start over with next RTT. */
+						tp->rfbuf_cnt = 0;
+						tp->rfbuf_ts = 0;
+					} else
+						tp->rfbuf_cnt += tlen;
+				}
 				m_adj(m, iphlen + off);
 				sbappendstream(&so->so_rcv, m);
 			}
@@ -1151,6 +1162,10 @@ after_listen:
 		win = 0;
 	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
 	}
+
+	/* Reset receive buffer auto scaling when not in bulk receive mode. */
+	tp->rfbuf_cnt = 0;
+	tp->rfbuf_ts = 0;
 
 	switch (tp->t_state) {
 
@@ -1861,6 +1876,8 @@ trimthenstep6:
 			tp->snd_wnd -= acked;
 			ourfinisacked = 0;
 		}
+
+		tcp_update_sndspace(tp);
 		if (sb_notify(&so->so_snd))
 			sowwakeup(so);
 
@@ -4063,9 +4080,28 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 		sc->sc_requested_s_scale = tb.requested_s_scale;
 		sc->sc_request_r_scale = 0;
+		/*
+		 * Pick the smallest possible scaling factor that
+		 * will still allow us to scale up to sb_max.
+		 *
+		 * We do this because there are broken firewalls that
+		 * will corrupt the window scale option, leading to
+		 * the other endpoint believing that our advertised
+		 * window is unscaled.  At scale factors larger than
+		 * 5 the unscaled window will drop below 1500 bytes,
+		 * leading to serious problems when traversing these
+		 * broken firewalls.
+		 *
+		 * With the default sbmax of 256K, a scale factor
+		 * of 3 will be chosen by this algorithm.  Those who
+		 * choose a larger sbmax should watch out
+		 * for the compatiblity problems mentioned above.
+		 *
+		 * RFC1323: The Window field in a SYN (i.e., a <SYN>
+		 * or <SYN,ACK>) segment itself is never scaled.
+		 */
 		while (sc->sc_request_r_scale < TCP_MAX_WINSHIFT &&
-		    TCP_MAXWIN << sc->sc_request_r_scale <
-		    so->so_rcv.sb_hiwat)
+		    (TCP_MAXWIN << sc->sc_request_r_scale) < sb_max)
 			sc->sc_request_r_scale++;
 	} else {
 		sc->sc_requested_s_scale = 15;

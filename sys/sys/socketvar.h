@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.46 2009/08/10 16:49:38 thib Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.47 2010/09/24 02:59:46 claudio Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -82,6 +82,7 @@ struct socket {
 		u_long	sb_cc;		/* actual chars in buffer */
 		u_long	sb_datacc;	/* data only chars in buffer */
 		u_long	sb_hiwat;	/* max actual char count */
+		u_long  sb_wat;		/* default watermark */
 		u_long	sb_mbcnt;	/* chars of mbufs used */
 		u_long	sb_mbmax;	/* max chars of mbufs to use */
 		long	sb_lowat;	/* low water mark */
@@ -225,7 +226,6 @@ struct socket {
 
 #ifdef _KERNEL
 extern u_long sb_max;
-struct	socket *sonewconn(struct socket *head, int connstatus);
 
 extern struct pool	socket_pool;
 
@@ -268,6 +268,7 @@ void	sbflush(struct sockbuf *sb);
 void	sbinsertoob(struct sockbuf *sb, struct mbuf *m0);
 void	sbrelease(struct sockbuf *sb);
 int	sbcheckreserve(u_long cnt, u_long defcnt);
+int	sbchecklowmem(void);
 int	sbreserve(struct sockbuf *sb, u_long cc);
 int	sbwait(struct sockbuf *sb);
 int	sb_lock(struct sockbuf *sb);

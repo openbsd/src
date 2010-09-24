@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.50 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.51 2010/09/24 02:59:45 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 u_long	sb_max = SB_MAX;		/* patchable */
 
 extern struct pool mclpools[];
+extern struct pool mbpool;
 
 /*
  * Procedures to manipulate state flags of socket
@@ -147,8 +148,6 @@ sonewconn(struct socket *head, int connstatus)
 {
 	struct socket *so;
 	int soqueue = connstatus ? 1 : 0;
-	extern u_long unpst_sendspace, unpst_recvspace;
-	u_long snd_sb_hiwat, rcv_sb_hiwat;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -175,17 +174,11 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_sigeuid = head->so_sigeuid;
 
 	/*
-	 * If we are tight on mbuf clusters, create the new socket
-	 * with the minimum.  Sorry, you lose.
+	 * Inherit watermarks but those may get clamped in low mem situations.
 	 */
-	snd_sb_hiwat = head->so_snd.sb_hiwat;
-	if (sbcheckreserve(snd_sb_hiwat, unpst_sendspace))
-		snd_sb_hiwat = unpst_sendspace;		/* and udp? */
-	rcv_sb_hiwat = head->so_rcv.sb_hiwat;
-	if (sbcheckreserve(rcv_sb_hiwat, unpst_recvspace))
-		rcv_sb_hiwat = unpst_recvspace;		/* and udp? */
+	so->so_snd.sb_wat = head->so_snd.sb_wat;
+	so->so_rcv.sb_wat = head->so_rcv.sb_wat;
 
-	(void) soreserve(so, snd_sb_hiwat, rcv_sb_hiwat);
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL, NULL,
 	    curproc)) {
@@ -392,16 +385,28 @@ sbreserve(struct sockbuf *sb, u_long cc)
 }
 
 /*
- * If over 50% of mbuf clusters in use, do not accept any
- * greater than normal request.
+ * In low memory situation, do not accept any greater than normal request.
  */
 int
 sbcheckreserve(u_long cnt, u_long defcnt)
 {
-	if (cnt > defcnt &&
-	    mclpools[0].pr_nout> mclpools[0].pr_hardlimit / 2)
+	if (cnt > defcnt && sbchecklowmem())
 		return (ENOBUFS);
 	return (0);
+}
+
+int
+sbchecklowmem(void)
+{
+	static int sblowmem;
+
+	if (mclpools[0].pr_nout < mclpools[0].pr_hardlimit * 60 / 100 ||
+	    mbpool.pr_nout < mbpool.pr_hardlimit * 60 / 100)
+		sblowmem = 0;
+	if (mclpools[0].pr_nout > mclpools[0].pr_hardlimit * 80 / 100 ||
+	    mbpool.pr_nout > mbpool.pr_hardlimit * 80 / 100)
+		sblowmem = 1;
+	return (sblowmem);
 }
 
 /*

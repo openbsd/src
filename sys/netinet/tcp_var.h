@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.95 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.96 2010/09/24 02:59:46 claudio Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -151,6 +151,11 @@ struct tcpcb {
 					 * for slow start exponential to
 					 * linear switch
 					 */
+
+/* auto-sizing variables */
+	u_int	rfbuf_cnt;	/* recv buffer autoscaling byte count */
+	u_int32_t rfbuf_ts;	/* recv buffer autoscaling time stamp */
+
 	u_short	t_maxopd;		/* mss plus options */
 	u_short	t_peermss;		/* peer's maximum segment size */
 
@@ -476,8 +481,8 @@ struct	tcpstat {
 	{ "keepintvl",	CTLTYPE_INT }, \
 	{ "slowhz",	CTLTYPE_INT }, \
 	{ "baddynamic", CTLTYPE_STRUCT }, \
-	{ "recvspace",	CTLTYPE_INT }, \
-	{ "sendspace",	CTLTYPE_INT }, \
+	{ NULL,	0 }, \
+	{ NULL,	0 }, \
 	{ "ident", 	CTLTYPE_STRUCT }, \
 	{ "sack",	CTLTYPE_INT }, \
 	{ "mssdflt",	CTLTYPE_INT }, \
@@ -501,8 +506,8 @@ struct	tcpstat {
 	&tcp_keepintvl, \
 	NULL, \
 	NULL, \
-	&tcp_recvspace, \
-	&tcp_sendspace, \
+	NULL, \
+	NULL, \
 	NULL, \
 	NULL, \
 	&tcp_mssdflt, \
@@ -590,6 +595,8 @@ void	 tcp_rscale(struct tcpcb *, u_long);
 void	 tcp_respond(struct tcpcb *, caddr_t, struct tcphdr *, tcp_seq,
 		tcp_seq, int, u_int);
 void	 tcp_setpersist(struct tcpcb *);
+void	 tcp_update_sndspace(struct tcpcb *);
+void	 tcp_update_rcvspace(struct tcpcb *);
 void	 tcp_slowtimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
