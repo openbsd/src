@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.15 2010/09/24 02:55:43 deraadt Exp $
+ * $OpenBSD: kern_tc.c,v 1.16 2010/09/24 07:29:30 deraadt Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -472,7 +472,6 @@ sysctl_tc_choice(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	int error, maxlen;
 
 	spc = "";
-	error = 0;
 	maxlen = 0;
 	for (tc = timecounters; tc != NULL; tc = tc->tc_next)
 		maxlen += sizeof(buf);
