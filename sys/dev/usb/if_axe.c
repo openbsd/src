@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.98 2010/09/23 16:58:28 yuo Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.99 2010/09/24 03:21:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -313,14 +313,14 @@ axe_miibus_readreg(struct device *dev, int phy, int reg)
 
 	ival = UGETW(val);
 	if ((sc->axe_flags & AX772) != 0 && reg == MII_BMSR) {
-	       /*
+		/*
 		* BMSR of AX88772 indicates that it supports extended
 		* capability but the extended status register is
 		* revered for embedded ethernet PHY. So clear the
 		* extended capability bit of BMSR.
 		*/
-	       ival &= ~BMSR_EXTCAP;
-       }
+		ival &= ~BMSR_EXTCAP;
+	}
 
 	return (ival);
 }
@@ -611,25 +611,24 @@ axe_ax88772_init(struct axe_softc *sc)
 static int
 axe_get_phyno(struct axe_softc *sc, int sel)
 {
-       int             phyno;
+	int phyno = -1;
 
-       phyno = -1;
-       switch (AXE_PHY_TYPE(sc->axe_phyaddrs[sel])) {
-       case PHY_TYPE_100_HOME:
-       case PHY_TYPE_GIG:
-               phyno  = AXE_PHY_NO(sc->axe_phyaddrs[sel]);
-               break;
-       case PHY_TYPE_SPECIAL:
-               /* FALLTHROUGH */
-       case PHY_TYPE_RSVD:
-               /* FALLTHROUGH */
-       case PHY_TYPE_NON_SUP:
-               /* FALLTHROUGH */
-       default:
-               break;
-       }
+	switch (AXE_PHY_TYPE(sc->axe_phyaddrs[sel])) {
+	case PHY_TYPE_100_HOME:
+	case PHY_TYPE_GIG:
+		phyno  = AXE_PHY_NO(sc->axe_phyaddrs[sel]);
+		break;
+	case PHY_TYPE_SPECIAL:
+		/* FALLTHROUGH */
+	case PHY_TYPE_RSVD:
+		/* FALLTHROUGH */
+	case PHY_TYPE_NON_SUP:
+		/* FALLTHROUGH */
+	default:
+		break;
+	}
 
-       return (phyno);
+	return (phyno);
 }
 
 /*
@@ -731,24 +730,21 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF((" phyaddrs[0]: %x phyaddrs[1]: %x\n",
 	    sc->axe_phyaddrs[0], sc->axe_phyaddrs[1]));
 
-       sc->axe_phyno = axe_get_phyno(sc, AXE_PHY_SEL_PRI);
-       if (sc->axe_phyno == -1)
-               sc->axe_phyno = axe_get_phyno(sc, AXE_PHY_SEL_SEC);
-       if (sc->axe_phyno == -1) {
-               printf(" no valid PHY address found, assuming PHY address 0\n");
-               sc->axe_phyno = 0;
-       }
+	sc->axe_phyno = axe_get_phyno(sc, AXE_PHY_SEL_PRI);
+	if (sc->axe_phyno == -1)
+		sc->axe_phyno = axe_get_phyno(sc, AXE_PHY_SEL_SEC);
+	if (sc->axe_phyno == -1) {
+		printf("%s:", sc->axe_dev.dv_xname);
+		printf(" no valid PHY address found, assuming PHY address 0\n");
+		sc->axe_phyno = 0;
+	}
 
 	DPRINTF((" get_phyno %d\n", sc->axe_phyno));
 
-	if (sc->axe_flags & AX178) {
+	if (sc->axe_flags & AX178)
 		axe_ax88178_init(sc);
-		printf(" AX88178");
-	} else if (sc->axe_flags & AX772) {
+	else if (sc->axe_flags & AX772)
 		axe_ax88772_init(sc);
-		printf(" AX88772");
-	} else
-		printf(" AX88172");
 
 	/*
 	 * Get station address.
@@ -766,6 +762,13 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * An ASIX chip was detected. Inform the world.
 	 */
+	printf("%s:", sc->axe_dev.dv_xname);
+	if (sc->axe_flags & AX178)
+		printf(" AX88178");
+	else if (sc->axe_flags & AX772)
+		printf(" AX88772");
+	else
+		printf(" AX88172");
 	printf(", address %s\n", ether_sprintf(eaddr));
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
