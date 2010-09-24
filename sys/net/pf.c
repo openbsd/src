@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.711 2010/09/24 02:15:00 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.712 2010/09/24 02:22:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3439,10 +3439,10 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af,
-		    r->src.neg, kif, /* XXX rdomain */ 0))
+		    r->src.neg, kif, pd->rdomain))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af,
-		    r->dst.neg, NULL, /* XXX rdomain */ 0))
+		    r->dst.neg, NULL, pd->rdomain))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
