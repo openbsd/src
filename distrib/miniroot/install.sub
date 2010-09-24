@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.619 2010/09/23 13:30:15 jsing Exp $
+#	$OpenBSD: install.sub,v 1.620 2010/09/24 07:44:43 ajacoutot Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1431,7 +1431,7 @@ set_timezone() {
 	# If configured in a previous call, return immediately
 	[[ -n $TZ ]] && return
 
-	if [[ -L /mnt/etc/localtime ]]; then
+	if [[ -h /mnt/etc/localtime ]]; then
 		TZ=$(ls -l /mnt/etc/localtime 2>/dev/null)
 		TZ=${TZ#*${_zoneroot#/mnt}/}
 	fi
