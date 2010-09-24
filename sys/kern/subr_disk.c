@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.111 2010/09/23 18:49:39 oga Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.112 2010/09/24 07:08:50 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ int	disk_change;		/* set if a disk has been attached/detached
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
 
-char *disk_readlabel(struct disklabel *, dev_t);
+char *disk_readlabel(struct disklabel *, dev_t, char *, size_t);
 void disk_attach_callback(void *, void *);
 
 /*
@@ -795,7 +795,6 @@ void
 disk_attach(struct device *dv, struct disk *diskp)
 {
 	int majdev;
-	dev_t *dev;
 
 	if (!ISSET(diskp->dk_flags, DKF_CONSTRUCTED))
 		disk_construct(diskp, diskp->dk_name);
@@ -833,14 +832,9 @@ disk_attach(struct device *dv, struct disk *diskp)
 			diskp->dk_devno =
 			    MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
 	}
-	if (diskp->dk_devno != NODEV) {
-		dev = malloc(sizeof(dev_t), M_DEVBUF, M_NOWAIT);
-		if (dev == NULL)
-			panic("failed to allocate memory for dev no");
-		*dev = diskp->dk_devno;
-		if (workq_add_task(NULL, 0, disk_attach_callback, dev, NULL))
-			free(dev, M_DEVBUF);
-	}
+	if (diskp->dk_devno != NODEV)
+		workq_add_task(NULL, 0, disk_attach_callback,
+		    (void *)(long)(diskp->dk_devno), NULL);
 
 	if (softraid_disk_attach)
 		softraid_disk_attach(diskp, 1);
@@ -849,9 +843,10 @@ disk_attach(struct device *dv, struct disk *diskp)
 void
 disk_attach_callback(void *arg1, void *arg2)
 {
+	char errbuf[100];
 	struct disklabel dl;
 	struct disk *dk;
-	dev_t dev = *((dev_t *)arg1);
+	dev_t dev = (dev_t)(long)arg1;
 
 	/* Locate disk associated with device no. */
 	TAILQ_FOREACH(dk, &disklist, dk_link) {
@@ -859,14 +854,11 @@ disk_attach_callback(void *arg1, void *arg2)
 			break;
 	}
 	if (dk == NULL || (dk->dk_flags & (DKF_OPENED | DKF_NOLABELREAD)))
-		goto done;
+		return;
 
 	/* Read disklabel. */
-	disk_readlabel(&dl, dev);
+	disk_readlabel(&dl, dev, errbuf, sizeof(errbuf));
 	dk->dk_flags |= DKF_OPENED;
-
-done:
-	free(arg1, M_DEVBUF);
 }
 
 /*
@@ -966,12 +958,13 @@ disk_unlock(struct disk *dk)
 int
 dk_mountroot(void)
 {
+	char errbuf[100];
 	int part = DISKPART(rootdev);
 	int (*mountrootfn)(void);
 	struct disklabel dl;
 	char *error;
 
-	error = disk_readlabel(&dl, rootdev);
+	error = disk_readlabel(&dl, rootdev, errbuf, sizeof(errbuf));
 	if (error)
 		panic(error);
 
@@ -1309,9 +1302,8 @@ findblkname(int maj)
 }
 
 char *
-disk_readlabel(struct disklabel *dl, dev_t dev)
+disk_readlabel(struct disklabel *dl, dev_t dev, char *errbuf, size_t errsize)
 {
-	static char errbuf[100];
 	struct vnode *vn;
 	dev_t chrdev, rawdev;
 	int error;
@@ -1324,37 +1316,30 @@ disk_readlabel(struct disklabel *dl, dev_t dev)
 #endif
 
 	if (cdevvp(rawdev, &vn)) {
-		snprintf(errbuf, sizeof(errbuf),
+		snprintf(errbuf, errsize,
 		    "cannot obtain vnode for 0x%x/0x%x", dev, rawdev);
 		return (errbuf);
 	}
 
 	error = VOP_OPEN(vn, FREAD, NOCRED, curproc);
 	if (error) {
-		snprintf(errbuf, sizeof(errbuf),
+		snprintf(errbuf, errsize,
 		    "cannot open disk, 0x%x/0x%x, error %d",
 		    dev, rawdev, error);
-		return (errbuf);
+		goto done;
 	}
 
 	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)dl, FREAD, NOCRED, curproc);
 	if (error) {
-		snprintf(errbuf, sizeof(errbuf),
+		snprintf(errbuf, errsize,
 		    "cannot read disk label, 0x%x/0x%x, error %d",
 		    dev, rawdev, error);
-		return (errbuf);
 	}
-
-	error = VOP_CLOSE(vn, FREAD, NOCRED, curproc);
-	if (error) {
-		snprintf(errbuf, sizeof(errbuf),
-		    "cannot close disk, 0x%x/0x%x, error %d",
-		    dev, rawdev, error);
-		return (errbuf);
-	}
-
+done:
+	VOP_CLOSE(vn, FREAD, NOCRED, curproc);
 	vput(vn);
-
+	if (error)
+		return (errbuf);
 	return (NULL);
 }
 
