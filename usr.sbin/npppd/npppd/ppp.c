@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.c,v 1.6 2010/09/24 02:57:43 yasuoka Exp $ */
+/* $OpenBSD: ppp.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.6 2010/09/24 02:57:43 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -1081,8 +1081,10 @@ ppp_on_network_pipex(npppd_ppp *_this)
 	if (_this->use_pipex == 0)
 		return;
 	if (_this->tunnel_type != PPP_TUNNEL_PPTP &&
-	    _this->tunnel_type != PPP_TUNNEL_PPPOE)
+	    _this->tunnel_type != PPP_TUNNEL_PPPOE &&
+	    _this->tunnel_type != PPP_TUNNEL_L2TP)
 		return;
+
 	if (_this->pipex_started != 0)
 		return;	/* already started */
 
@@ -1090,7 +1092,8 @@ ppp_on_network_pipex(npppd_ppp *_this)
 	    (!MPPE_MUST_NEGO(_this) || _this->ccp.fsm.state == OPENED ||
 		    _this->ccp.fsm.state == STOPPED)) {
 		/* IPCP is opened and MPPE is not required or MPPE is opened */
-		npppd_ppp_pipex_enable(_this->pppd, _this);
+		if (npppd_ppp_pipex_enable(_this->pppd, _this) != 0)
+			ppp_log(_this, LOG_WARNING, "failed enable pipex: %m");
 		ppp_log(_this, LOG_NOTICE, "Using pipex=%s",
 		    (_this->pipex_enabled != 0)? "yes" : "no");
 		_this->pipex_started = 1;

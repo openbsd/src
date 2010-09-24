@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.7 2010/09/23 01:45:10 jsg Exp $ */
+/* $OpenBSD: npppd.c,v 1.8 2010/09/24 14:50:30 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.7 2010/09/23 01:45:10 jsg Exp $
+ * $Id: npppd.c,v 1.8 2010/09/24 14:50:30 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -97,6 +97,8 @@ __COPYRIGHT(
 #else
 #include <netinet/if_ether.h>
 #endif
+#include <netinet/ip_var.h>
+#include <net/if_types.h>
 #include <net/pipex.h>
 #endif /* USE_NPPPD_PIPEX */
 
@@ -962,6 +964,10 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 #ifdef	USE_NPPPD_PPTP
 	pptp_call *call;
 #endif
+#ifdef	USE_NPPPD_L2TP
+	l2tp_call *l2tp;
+	l2tp_ctrl *l2tpctrl;
+#endif
 	int error;
 
 	NPPPD_ASSERT(ppp != NULL);
@@ -973,6 +979,9 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 	switch (ppp->tunnel_type) {
 #ifdef USE_NPPPD_PPPOE
 	case PPP_TUNNEL_PPPOE:
+	    {
+		struct sockaddr *sa;
+		struct ether_header *eh;
 		pppoe = (pppoe_session *)ppp->phy_context;
 
 		/* PPPoE specific informations */
@@ -982,10 +991,18 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		strlcpy(req.pr_proto.pppoe.over_ifname,
 		    pppoe_session_listen_ifname(pppoe),
 		    sizeof(req.pr_proto.pppoe.over_ifname));
-		memcpy(&req.pr_proto.pppoe.peer_address, &pppoe->ether_addr,
-		    ETHER_ADDR_LEN);
+
+		sa = (struct sockaddr *)&req.peer_address;
+		sa->sa_family = AF_UNSPEC;
+		sa->sa_len = sizeof(struct sockaddr);
+
+		eh = (struct ether_header *)sa->sa_data;
+		eh->ether_type = htons(ETHERTYPE_PPPOE);
+		memcpy(eh->ether_dhost, pppoe->ether_addr, ETHER_ADDR_LEN);
+		memset(eh->ether_shost, 0, ETHER_ADDR_LEN);
 
 		break;
+	    }
 #endif
 #ifdef USE_NPPPD_PPTP
 	case PPP_TUNNEL_PPTP:
@@ -1005,11 +1022,47 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		req.pr_proto.pptp.peer_maxwinsz = call->peers_maxwinsz;
 
 		NPPPD_ASSERT(call->ctrl->peer.ss_family == AF_INET);
-		req.pr_proto.pptp.peer_address =
-		    ((struct sockaddr_in *)&call->ctrl->peer)->sin_addr;
 		NPPPD_ASSERT(call->ctrl->our.ss_family == AF_INET);
-		req.pr_proto.pptp.our_address =
-		    ((struct sockaddr_in *)&call->ctrl->our)->sin_addr;
+
+		memcpy(&req.peer_address, &call->ctrl->peer,
+		    call->ctrl->peer.ss_len);
+		memcpy(&req.local_address, &call->ctrl->our,
+		    call->ctrl->our.ss_len);
+		break;
+#endif
+#ifdef USE_NPPPD_L2TP
+	case PPP_TUNNEL_L2TP:
+		l2tp = (l2tp_call *)ppp->phy_context;
+		l2tpctrl = l2tp->ctrl;
+
+		/* L2TPv2 specific context */
+		/* Session KEYS */
+		req.pr_protocol = PIPEX_PROTO_L2TP;
+		req.pr_proto.l2tp.tunnel_id = l2tpctrl->tunnel_id;
+		req.pr_proto.l2tp.peer_tunnel_id = l2tpctrl->peer_tunnel_id;
+		req.pr_session_id = l2tp->session_id;
+		req.pr_peer_session_id = l2tp->peer_session_id;
+
+		/* options: XXX: needs other? */
+		if (l2tpctrl->data_use_seq)
+			req.pr_proto.l2tp.option_flags |=
+			    PIPEX_L2TP_USE_SEQUENCING;
+
+		/* transmission control contexts */
+		req.pr_proto.l2tp.ns_nxt = l2tp->snd_nxt;
+		req.pr_proto.l2tp.nr_nxt = l2tp->rcv_nxt;
+
+		NPPPD_ASSERT(l2tpctrl->peer.ss_family == AF_INET);
+
+		memcpy(&req.peer_address, &l2tpctrl->peer,
+		    l2tpctrl->peer.ss_len);
+		memcpy(&req.local_address, &l2tpctrl->sock,
+		    l2tpctrl->sock.ss_len);
+#ifdef	IP_IPSEC_SA_COOKIE
+		if (l2tpctrl->sa_cookie != NULL)
+			req.pr_proto.l2tp.ipsec_sa_cookie =
+			    *(struct in_ipsec_sa_cookie *)l2tpctrl->sa_cookie;
+#endif
 		break;
 #endif
 	default:
@@ -1044,6 +1097,9 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 #endif
 #ifdef USE_NPPPD_PPTP
 	pptp_call *call;
+#endif
+#ifdef USE_NPPPD_L2TP
+	l2tp_call *l2tp;
 #endif
 	int error;
 
@@ -1101,6 +1157,9 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 #ifdef USE_NPPPD_PPTP
 	pptp_call *call;
 #endif
+#ifdef USE_NPPPD_L2TP
+	l2tp_call *l2tp;
+#endif
 	if (ppp->pipex_started == 0)
 		return 0;	/* not started */
 
@@ -1122,6 +1181,15 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 		/* PPTP specific informations */
 		req.pcr_session_id = call->id;
 		req.pcr_protocol = PIPEX_PROTO_PPTP;
+		break;
+#endif
+#ifdef USE_NPPPD_L2TP
+	case PPP_TUNNEL_L2TP:
+		l2tp = (l2tp_call *)ppp->phy_context;
+
+		/* L2TP specific context */
+		req.pcr_session_id = l2tp->session_id;
+		req.pcr_protocol = PIPEX_PROTO_L2TP;
 		break;
 #endif
 	default:

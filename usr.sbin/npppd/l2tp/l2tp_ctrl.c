@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_ctrl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_ctrl.c,v 1.5 2010/09/24 14:50:30 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.5 2010/09/24 14:50:30 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -373,15 +373,12 @@ static void
 l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 {
 	int is_natt, proto;
-	struct sockaddr_in peer, sock;
+	struct sockaddr_storage peer, sock;
 	hash_link *hl;
 #ifdef USE_LIBSOCKUTIL
 	struct in_ipsec_sa_cookie *ipsec_sa_cookie;
 #endif
 	l2tp_ctrl *anot;
-
-	L2TP_CTRL_ASSERT(_this->peer.ss_family == AF_INET);
-	L2TP_CTRL_ASSERT(_this->sock.ss_family == AF_INET);
 
 	/*
 	 * Search another tunnel that uses the same IPsec SA
@@ -392,20 +389,21 @@ l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 		anot = hl->item;
 		if (anot == _this)
 			continue;
-		switch (_this->peer.ss_family) {
-		case AF_INET:
-			if (SIN(&_this->peer)->sin_addr.s_addr ==
-			    SIN(&anot->peer)->sin_addr.s_addr)
-				break;
-			continue;
 
-		default:
-			L2TP_CTRL_ASSERT(0);
-			/* Not implemented yet */
+		if (_this->peer.ss_family != anot->peer.ss_family)
+			continue;
+		if (_this->peer.ss_family == AF_INET) {
+			if (SIN(&_this->peer)->sin_addr.s_addr !=
+			    SIN(&anot->peer)->sin_addr.s_addr)
+				continue;
+		} else if (_this->peer.ss_family == AF_INET6) {
+			if (!IN6_ARE_ADDR_EQUAL(
+			    &(SIN6(&_this->peer)->sin6_addr),
+			    &(SIN6(&anot->peer)->sin6_addr)))
+				continue;
 		}
 #ifdef USE_LIBSOCKUTIL
-		if (_this->sa_cookie != NULL &&
-		    anot->sa_cookie != NULL) {
+		if (_this->sa_cookie != NULL && anot->sa_cookie != NULL) {
 			/* Both tunnels belong the same NAT box.  */
 
 			if (memcmp(_this->sa_cookie, anot->sa_cookie,
@@ -416,11 +414,9 @@ l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 			/* The SA is shared by another tunnels by one host. */
 			return;	/* don't purge the sa */
 
-		} else if (_this->sa_cookie != NULL ||
-		    anot->sa_cookie != NULL) {
+		} else if (_this->sa_cookie != NULL || anot->sa_cookie != NULL)
 			/* Only one is behind the NAT */
 			continue;
-		}
 #endif
 		return;	/* don't purge the sa */
 	}
@@ -430,17 +426,17 @@ l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 #else
 	is_natt = 0;
 #endif
-	memcpy(&peer, &_this->peer, sizeof(peer));
-	memcpy(&sock, &_this->sock, sizeof(sock));
+	memcpy(&peer, &_this->peer, _this->peer.ss_len);
+	memcpy(&sock, &_this->sock, _this->sock.ss_len);
 	if (!is_natt) {
 		proto = 0;
-		peer.sin_port = sock.sin_port = 0;
+		SIN(&peer)->sin_port = SIN(&sock)->sin_port = 0;
 	}
 #ifdef USE_LIBSOCKUTIL
 	else {
 		ipsec_sa_cookie = _this->sa_cookie;
-		peer.sin_port = ipsec_sa_cookie->remote_port;
-		sock.sin_port = ipsec_sa_cookie->local_port;
+		SIN(&peer)->sin_port = ipsec_sa_cookie->remote_port;
+		SIN(&sock)->sin_port = ipsec_sa_cookie->local_port;
 #if 1
 		/*
 		 * XXX: As RFC 2367, protocol sould be specified if the port
@@ -453,9 +449,8 @@ l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 	}
 #endif
 	if (ipsec_util_purge_transport_sa((struct sockaddr *)&peer,
-	    (struct sockaddr *)&sock, proto, IPSEC_UTIL_DIRECTION_BOTH) != 0) {
+	    (struct sockaddr *)&sock, proto, IPSEC_UTIL_DIRECTION_BOTH) != 0)
 		l2tp_ctrl_log(_this, LOG_NOTICE, "failed to purge IPSec SA");
-	}
 }
 #endif
 
@@ -718,7 +713,6 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 {
 	int i, len, offsiz, reqlen, is_ctrl;
 	uint16_t mestype;
-	struct sockaddr_in *peersin, *socksin;
 	struct l2tp_avp *avp, *avp0;
 	l2tp_ctrl *ctrl;
 	l2tp_call *call;
@@ -727,23 +721,15 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 	u_char *pkt0;
 	char ifname[IF_NAMESIZE], phy_label[256];
 	struct l2tp_header hdr;
+	char hbuf[NI_MAXHOST + NI_MAXSERV + 16];
 
 	ctrl = NULL;
 	curr_time = get_monosec();
 	pkt0 = pkt;
 
-	L2TP_CTRL_ASSERT(peer->sa_family == AF_INET);
-	L2TP_CTRL_ASSERT(sock->sa_family == AF_INET);
-
-	if (peer->sa_family != AF_INET) {
-		l2tpd_log(_this, LOG_ERR,
-		    "Received a packet peer unknown address "
-		    "family=%d", peer->sa_family);
-		return;
-	}
-	peersin = (struct sockaddr_in *)peer;
-	socksin = (struct sockaddr_in *)sock;
-
+	L2TP_CTRL_ASSERT(peer->sa_family == sock->sa_family);
+	L2TP_CTRL_ASSERT(peer->sa_family == AF_INET ||
+	    peer->sa_family == AF_INET6)
     /*
      * Parse L2TP Header
      */
@@ -878,25 +864,29 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		 * treat as an error if src address and port is not
 		 * match. (because it is potentially DoS attach)
 		 */
-		L2TP_CTRL_ASSERT(ctrl->peer.ss_family == peer->sa_family);
+		int notmatch = 0;
 
-		switch (peer->sa_family) {
-		case AF_INET:
-		    {
-			struct sockaddr_in *peersin1;
-
-			peersin1 = (struct sockaddr_in *)&ctrl->peer;
-			if (peersin1->sin_addr.s_addr !=
-			    peersin->sin_addr.s_addr ||
-			    peersin1->sin_port != peersin->sin_port) {
-				snprintf(errmsg, sizeof(errmsg),
-				    "tunnelId=%u is already assigned for %s:%u",
-				    hdr.tunnel_id,
-				    inet_ntoa(peersin1->sin_addr),
-				    ntohs(peersin1->sin_port));
-				goto bad_packet;
-			}
-		    }
+		if (ctrl->peer.ss_family != peer->sa_family)
+			notmatch = 1;
+		else if (peer->sa_family == AF_INET) {
+			if (SIN(peer)->sin_addr.s_addr != 
+			    SIN(&ctrl->peer)->sin_addr.s_addr ||
+			    SIN(peer)->sin_port != SIN(&ctrl->peer)->sin_port)
+				notmatch = 1;
+		} else if (peer->sa_family == AF_INET6) {
+			if (!IN6_ARE_ADDR_EQUAL(&(SIN6(peer)->sin6_addr),
+				    &(SIN6(&ctrl->peer)->sin6_addr)) ||
+			    SIN6(peer)->sin6_port !=
+				    SIN6(&ctrl->peer)->sin6_port)
+				notmatch = 1;
+ 		}
+		if (notmatch) {
+			snprintf(errmsg, sizeof(errmsg),
+			    "tunnelId=%u is already assigned for %s",
+			    hdr.tunnel_id, addrport_tostring(
+				(struct sockaddr *)&ctrl->peer,
+				ctrl->peer.ss_len, hbuf, sizeof(hbuf)));
+			goto bad_packet;
 		}
 	}
 	ctrl->last_rcv = curr_time;
@@ -1141,8 +1131,9 @@ fail:
 	return;
 
 bad_packet:
-	l2tpd_log(_this, LOG_INFO, "Received from=%s:%u: %s",
-	    inet_ntoa(peersin->sin_addr), ntohs(peersin->sin_port), errmsg);
+	l2tpd_log(_this, LOG_INFO, "Received from=%s: %s",
+	    addrport_tostring(peer, peer->sa_len, hbuf, sizeof(hbuf)), errmsg);
+
 	return;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tpd.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: l2tpd.c,v 1.5 2010/09/24 14:50:30 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: l2tpd.c,v 1.5 2010/09/24 14:50:30 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -99,20 +99,30 @@ struct in_ipsec_sa_cookie	{	};
 int
 l2tpd_init(l2tpd *_this)
 {
-	struct sockaddr_in sin0;
+	int i, id, off;
+	struct sockaddr_in sin4;
+	struct sockaddr_in6 sin6;
 
 	L2TPD_ASSERT(_this != NULL);
 	memset(_this, 0, sizeof(l2tpd));
 
 	slist_init(&_this->listener);
-	memset(&sin0, 0, sizeof(sin0));
-	sin0.sin_len = sizeof(sin0);
-	sin0.sin_family = AF_INET;
+	slist_init(&_this->free_session_id_list);
+
+	memset(&sin4, 0, sizeof(sin4));
+	sin4.sin_len = sizeof(sin4);
+	sin4.sin_family = AF_INET;
 	if (l2tpd_add_listener(_this, 0, L2TPD_DEFAULT_LAYER2_LABEL,
-	    (struct sockaddr *)&sin0) != 0) {
+	    (struct sockaddr *)&sin4) != 0) {
 		return 1;
 	}
-
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_len = sizeof(sin6);
+	sin6.sin6_family = AF_INET6;
+	if (l2tpd_add_listener(_this, 1, L2TPD_DEFAULT_LAYER2_LABEL,
+	    (struct sockaddr *)&sin6) != 0) {
+		return 1;
+	}
 	_this->id = l2tpd_id_seq++;
 
 	if ((_this->ctrl_map = hash_create(short_cmp, short_hash,
@@ -120,6 +130,25 @@ l2tpd_init(l2tpd *_this)
 		log_printf(LOG_ERR, "hash_create() failed in %s(): %m",
 		    __func__);
 		return 1;
+	}
+
+	if (slist_add(&_this->free_session_id_list,
+	    (void *)L2TP_SESSION_ID_SHUFFLE_MARK) == NULL) {
+		l2tpd_log(_this, LOG_ERR, "slist_add() failed on %s(): %m",
+		    __func__);
+		return 1;
+	}
+	off = random() % L2TP_SESSION_ID_MASK;
+	for (i = 0; i < L2TP_NCALL; i++) {
+		id = (i + off) % L2TP_SESSION_ID_MASK;
+		if (id == 0)
+			id = (off - 1) % L2TP_SESSION_ID_MASK;
+		if (slist_add(&_this->free_session_id_list, (void *)id)
+		    == NULL) {
+			l2tpd_log(_this, LOG_ERR,
+			    "slist_add() failed on %s(): %m", __func__);
+			return 1;
+		}
 	}
 	_this->ip4_allow = NULL;
 
@@ -167,11 +196,11 @@ l2tpd_add_listener(l2tpd *_this, int idx, const char *label,
 		goto fail;
 	}
 	memset(plistener, 0, sizeof(l2tpd_listener));
-	L2TPD_ASSERT(sizeof(plistener->bind_sin) >= bindaddr->sa_len);
-	memcpy(&plistener->bind_sin, bindaddr, bindaddr->sa_len);
+	L2TPD_ASSERT(sizeof(plistener->bind) >= bindaddr->sa_len);
+	memcpy(&plistener->bind, bindaddr, bindaddr->sa_len);
 
-	if (plistener->bind_sin.sin_port == 0)
-		plistener->bind_sin.sin_port = htons(L2TPD_DEFAULT_UDP_PORT);
+	if (plistener->bind.sin6.sin6_port == 0)
+		plistener->bind.sin6.sin6_port = htons(L2TPD_DEFAULT_UDP_PORT);
 
 	plistener->sock = -1;
 	plistener->self = _this;
@@ -198,6 +227,7 @@ l2tpd_uninit(l2tpd *_this)
 
 	L2TPD_ASSERT(_this != NULL);
 
+	slist_fini(&_this->free_session_id_list);
 	if (_this->ctrl_map != NULL) {
 		hash_free(_this->ctrl_map);
 		_this->ctrl_map = NULL;
@@ -220,6 +250,44 @@ l2tpd_uninit(l2tpd *_this)
 	_this->config = NULL;
 }
 
+/** assign the call to the l2tpd */
+int
+l2tpd_assign_call(l2tpd *_this, l2tp_call *call)
+{
+	int shuffle_cnt, session_id;
+
+	shuffle_cnt = 0;
+	do {
+		session_id = (int)slist_remove_first(
+		    &_this->free_session_id_list);
+		if (session_id != L2TP_SESSION_ID_SHUFFLE_MARK)
+			break;
+		L2TPD_ASSERT(shuffle_cnt == 0);
+		if (shuffle_cnt++ > 0) {
+			l2tpd_log(_this, LOG_ERR,
+			    "unexpected errror in %s(): free_session_id_list "
+			    "full", __func__);
+			slist_add(&_this->free_session_id_list,
+			    (void *)L2TP_SESSION_ID_SHUFFLE_MARK);
+			return 1;
+		}
+		slist_shuffle(&_this->free_session_id_list);
+		slist_add(&_this->free_session_id_list,
+		    (void *)L2TP_SESSION_ID_SHUFFLE_MARK);
+	} while (1);
+	call->id = session_id;
+
+	return 0;
+}
+
+/* this function will be called when the call is released */
+void
+l2tpd_release_call(l2tpd *_this, l2tp_call *call)
+{
+	slist_add(&_this->free_session_id_list, (void *)call->id);
+}
+
+
 /* start l2tpd listner */
 static int
 l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
@@ -227,12 +295,15 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 {
 	int sock, ival;
 	l2tpd *_l2tpd;
+	char hbuf[NI_MAXHOST + NI_MAXSERV + 16];
 #ifdef NPPPD_FAKEBIND
 	int wildcardbinding = 0;
 	extern void set_faith(int, int);
 
+	/* XXX IPv6? */
 	wildcardbinding =
-	    (_this->bind_sin.sin_addr.s_addr == INADDR_ANY)?  1 : 0;
+	    (_this->bind.sin4.sin_family == AF_INET4 && 
+		    _this->bind.sin4.sin_addr.s_addr == INADDR_ANY)? 1 : 0;
 #endif
 	sock = -1;
 	_l2tpd = _this->self;
@@ -240,7 +311,8 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 	if (_this->phy_label[0] == '\0')
 		strlcpy(_this->phy_label, L2TPD_DEFAULT_LAYER2_LABEL,
 		    sizeof(_this->phy_label));
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((sock = socket(_this->bind.sin6.sin6_family,
+	    SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		l2tpd_log(_l2tpd, LOG_ERR,
 		    "socket() failed in %s(): %m", __func__);
 		goto fail;
@@ -272,11 +344,11 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 		    "setsockopt(,,SO_REUSEPORT) failed in %s(): %m", __func__);
 		goto fail;
 	}
-	if (bind(sock, (struct sockaddr *)&_this->bind_sin,
-	    _this->bind_sin.sin_len) != 0) {
-		l2tpd_log(_l2tpd, LOG_ERR, "Binding %s:%u/udp: %m",
-		    inet_ntoa(_this->bind_sin.sin_addr),
-		    ntohs(_this->bind_sin.sin_port));
+	if (bind(sock, (struct sockaddr *)&_this->bind,
+	    _this->bind.sin6.sin6_len) != 0) {
+		l2tpd_log(_l2tpd, LOG_ERR, "Binding %s/udp: %m",
+		    addrport_tostring((struct sockaddr *)&_this->bind,
+		    _this->bind.sin6.sin6_len, hbuf, sizeof(hbuf)));
 		goto fail;
 	}
 #ifdef NPPPD_FAKEBIND
@@ -300,13 +372,40 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 		goto fail;
 	}
 #else
-	ival = 1;	/* for recvfromto */
-	if (setsockopt(sock, IPPROTO_IP, IP_RECVDSTADDR, &ival, sizeof(ival))
-	    != 0) {
-		l2tpd_log(_l2tpd, LOG_ERR,
-		    "setsockopt(,,IP_RECVDSTADDR) failed in %s(): %m",
-		    __func__);
-		goto fail;
+	if (_this->bind.sin6.sin6_family == AF_INET) {
+		ival = 1;
+		if (setsockopt(sock, IPPROTO_IP, IP_RECVDSTADDR, &ival,
+		    sizeof(ival)) != 0) {
+			l2tpd_log(_l2tpd, LOG_ERR,
+			    "setsockopt(,,IP_RECVDSTADDR) failed in %s(): %m",
+			    __func__);
+			goto fail;
+		}
+	} else {
+		ival = 1;
+                if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ival,
+		    sizeof(ival)) != 0) {
+			l2tpd_log(_l2tpd, LOG_ERR,
+			    "setsockopt(,,IPV6_PKTINFO) failed in %s(): %m",
+			    __func__);
+			goto fail;
+		}
+	}
+#endif
+#ifdef IP_PIPEX
+	if (_this->bind.sin6.sin6_family == AF_INET) {
+		ival = 1;
+		if (setsockopt(sock, IPPROTO_IP, IP_PIPEX, &ival,
+		    sizeof(ival)) != 0)
+			l2tpd_log(_l2tpd, LOG_WARNING,
+			    "%s(): setsockopt(IP_PIPEX) failed: %m", __func__);
+	} else {
+		ival = 1;
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_PIPEX, &ival,
+		    sizeof(ival)) != 0)
+			l2tpd_log(_l2tpd, LOG_WARNING,
+			    "%s(): setsockopt(IPV6_PIPEX) failed: %m",
+			    __func__);
 	}
 #endif
 #ifdef IP_IPSEC_POLICY
@@ -332,9 +431,9 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 	    l2tpd_io_event, _this);
 	event_add(&_this->ev_sock, NULL);
 
-	l2tpd_log(_l2tpd, LOG_INFO, "Listening %s:%u/udp (L2TP LNS) [%s]",
-	    inet_ntoa(_this->bind_sin.sin_addr),
-	    ntohs(_this->bind_sin.sin_port), _this->phy_label);
+	l2tpd_log(_l2tpd, LOG_INFO, "Listening %s/udp (L2TP LNS) [%s]",
+	    addrport_tostring((struct sockaddr *)&_this->bind,
+	    _this->bind.sin6.sin6_len, hbuf, sizeof(hbuf)), _this->phy_label);
 
 	return 0;
 fail:
@@ -417,13 +516,15 @@ fail:
 static void
 l2tpd_listener_stop(l2tpd_listener *_this)
 {
+	char hbuf[NI_MAXHOST + NI_MAXSERV + 16];
+
 	if (_this->sock >= 0) {
 		event_del(&_this->ev_sock);
 		close(_this->sock);
 		l2tpd_log(_this->self, LOG_INFO,
-		    "Shutdown %s:%u/udp (L2TP LNS)",
-		    inet_ntoa(_this->bind_sin.sin_addr),
-		    ntohs(_this->bind_sin.sin_port));
+		    "Shutdown %s/udp (L2TP LNS)",
+		    addrport_tostring((struct sockaddr *)&_this->bind,
+		    _this->bind.sin6.sin6_len, hbuf, sizeof(hbuf)));
 		_this->sock = -1;
 	}
 }
@@ -594,8 +695,7 @@ l2tpd_reload(l2tpd *_this, struct properties *config, const char *name,
 		  * toggled "false" to "true" do this, because we can
 		  * assume that all pptpd listner are initialized.
 		  */
-		/* read l2tpd.lisnter_in */
-		val = l2tpd_config_str(_this, CFG_KEY(name, "listener_in"));
+		val = l2tpd_config_str(_this, CFG_KEY(name, "listener"));
 		if (val != NULL) {
 			if (strlen(val) >= sizeof(buf)) {
 				l2tpd_log(_this, LOG_ERR,
@@ -620,13 +720,11 @@ l2tpd_reload(l2tpd *_this, struct properties *config, const char *name,
 				    &ai)) != 0) {
 					l2tpd_log(_this, LOG_ERR,
 					    "configuration error at "
-					    "l2tpd.listener_in: %s: %s", label,
+					    "l2tpd.listener: %s: %s", label,
 					    gai_strerror(aierr));
 					label = NULL;
 					return 1;
 				}
-				L2TPD_ASSERT(ai != NULL &&
-				    ai->ai_family == AF_INET);
 				if (l2tpd_add_listener(_this, i, label,
 				    ai->ai_addr) != 0) {
 					freeaddrinfo(ai);
@@ -639,7 +737,7 @@ l2tpd_reload(l2tpd *_this, struct properties *config, const char *name,
 			}
 			if (label != NULL) {
 				l2tpd_log(_this, LOG_ERR, "configuration "
-				    "error at l2tpd.listener_in: %s", label);
+				    "error at l2tpd.listener: %s", label);
 				return 1;
 			}
 		}
@@ -741,6 +839,13 @@ l2tpd_io_event(int fd, short evtype, void *ctx)
 					l2tpd_log_access_deny(_l2tpd,
 					    "not allowed by acl.",
 					    (struct sockaddr *)&peer);
+				break;
+			case AF_INET6:
+				/* XXX source address restriction in IPv6? */
+				l2tp_ctrl_input(_l2tpd, _this->index,
+				    (struct sockaddr *)&peer,
+				    (struct sockaddr *)&sock, NULL,
+				    buf, sz);
 				break;
 			default:
 				l2tpd_log(_l2tpd, LOG_ERR,

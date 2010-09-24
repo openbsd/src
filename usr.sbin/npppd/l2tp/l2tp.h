@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: l2tp.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -299,7 +299,10 @@ typedef struct _l2tpd_listener {
 	/** listening socket */
 	int		sock;
 	/** listening socket address for UDP packets */
-	struct sockaddr_in bind_sin;
+	union {
+		struct sockaddr_in	sin4;
+		struct sockaddr_in6	sin6;
+	} bind;
 	/** physical layer label */
 	char	phy_label[16];
 } l2tpd_listener;
@@ -316,6 +319,8 @@ typedef struct _l2tpd {
 	int state;
 	/** mappings from tunnel ID to {@link ::_l2tp_ctrl L2TP control} */
 	hash_table *ctrl_map;
+	/** unique and free Session-ID list */
+	slist free_session_id_list;
 
 	/** IPv4 network addresses allowed to connect */
 	struct in_addr_range *ip4_allow;
@@ -448,7 +453,7 @@ extern "C" {
 #endif
 
 l2tp_call        *l2tp_call_create (void);
-void             l2tp_call_init (l2tp_call *, l2tp_ctrl *);
+int              l2tp_call_init (l2tp_call *, l2tp_ctrl *);
 void             l2tp_call_destroy (l2tp_call *, int);
 void             l2tp_call_admin_disconnect(l2tp_call *);
 int              l2tp_call_recv_packet (l2tp_ctrl *, l2tp_call *, int, u_char *, int);
@@ -464,6 +469,8 @@ bytebuffer       *l2tp_ctrl_prepare_snd_buffer (l2tp_ctrl *, int);
 void             l2tp_ctrl_log (l2tp_ctrl *, int, const char *, ...) __attribute__((__format__ (__printf__, 3, 4)));
 int              l2tpd_init (l2tpd *);
 void             l2tpd_uninit (l2tpd *);
+int              l2tpd_assign_call (l2tpd *, l2tp_call *);
+void             l2tpd_release_call (l2tpd *, l2tp_call *);
 int              l2tpd_start (l2tpd *);
 void             l2tpd_stop (l2tpd *);
 void             l2tpd_stop_immediatly (l2tpd *);

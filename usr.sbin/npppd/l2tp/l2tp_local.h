@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_local.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_local.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 #ifndef	L2TP_LOCAL_H
 #define	L2TP_LOCAL_H 1
-/* $Id: l2tp_local.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: l2tp_local.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $ */
 
 #ifndef	GETSHORT
 #define	GETSHORT(s, cp) {	\
@@ -72,5 +72,17 @@ struct l2tp_header {
 	((l2tpd_listener *)slist_get(&(ctrl)->l2tpd->listener, \
 	    (ctrl)->listener_index))->sock
 #define SIN(ss)	((struct sockaddr_in *)(ss))
+#define SIN6(ss)	((struct sockaddr_in6 *)(ss))
+
+#define	L2TP_SESSION_ID_MASK		0x00007fff
+#define	L2TP_SESSION_ID_SHUFFLE_MARK	0x10000000
+
+#ifndef	L2TP_NCALL 
+#define	L2TP_NCALL 		10000
+#endif
+
+#if L2TP_NCALL > 0xffff
+#error L2TP_NCALL must be less than 65536
+#endif
 
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_ctl.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $ */
+/* $OpenBSD: npppd_ctl.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
  * This file provides to open UNIX domain socket which located in
  * /var/run/npppd_ctl and accept commmands from the npppdctl command.
  */
-/* $Id: npppd_ctl.c,v 1.6 2010/07/31 09:33:09 yasuoka Exp $ */
+/* $Id: npppd_ctl.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -70,6 +70,7 @@
 #else
 #include <netinet/if_ether.h>
 #endif
+#include <netinet/ip_var.h>
 #include <sys/ioctl.h>
 #include <net/pipex.h>
 #endif
@@ -437,6 +438,9 @@ npppd_ppp_get_pipex_stat(struct npppd_who *_this, npppd_ppp *ppp)
 #ifdef USE_NPPPD_PPTP
 	pptp_call *call;
 #endif
+#ifdef USE_NPPPD_L2TP
+	l2tp_call *l2tp;
+#endif
 
 	if (ppp->pipex_enabled == 0)
 		return 0;
@@ -459,6 +463,15 @@ npppd_ppp_get_pipex_stat(struct npppd_who *_this, npppd_ppp *ppp)
 		/* PPTP specific information */
 		req.psr_session_id = call->id;
 		req.psr_protocol = PIPEX_PROTO_PPTP;
+		break;
+#endif
+#ifdef USE_NPPPD_L2TP
+	case PPP_TUNNEL_L2TP:
+		l2tp = (l2tp_call *)ppp->phy_context;
+
+		/* L2TP specific information */
+		req.psr_session_id = l2tp->session_id;
+		req.psr_protocol = PIPEX_PROTO_L2TP;
 		break;
 #endif
 	default:

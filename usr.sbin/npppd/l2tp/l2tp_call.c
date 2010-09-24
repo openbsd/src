@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_call.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_call.c,v 1.6 2010/09/24 14:50:30 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.6 2010/09/24 14:50:30 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,9 +76,6 @@ static int                l2tp_call_send_data_packet (l2tp_call *, bytebuffer *)
 static int   l2tp_call_ppp_output (npppd_ppp *, unsigned char *, int, int);
 static void  l2tp_call_closed_by_ppp (npppd_ppp *);
 
-/* l2tp_call ID sequence #  */
-static unsigned l2tp_call_id_seq = 0;
-
 /* create {@link ::_l2tp_call L2TP call} instance */
 l2tp_call *
 l2tp_call_create(void)
@@ -92,20 +89,25 @@ l2tp_call_create(void)
 }
 
 /* initialize {@link ::_l2tp_call L2TP call} instance */
-void
+int
 l2tp_call_init(l2tp_call *_this, l2tp_ctrl *ctrl)
 {
 	memset(_this, 0, sizeof(l2tp_call));
 
 	_this->ctrl = ctrl;
-	_this->id = l2tp_call_id_seq++;
+	if (l2tpd_assign_call(ctrl->l2tpd, _this) != 0)
+		return -1;
+
 	_this->use_seq = ctrl->data_use_seq;
+
+	return 0;
 }
 
 /* free {@link ::_l2tp_call L2TP call} instance */
 void
 l2tp_call_destroy(l2tp_call *_this, int from_l2tp_ctrl)
 {
+	l2tpd_release_call(_this->ctrl->l2tpd, _this);
 	free(_this);
 }
 
