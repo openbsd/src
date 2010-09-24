@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.8,v 1.2 2010/07/21 06:32:14 martinh Exp $
+.\"	$OpenBSD: ldapd.8,v 1.3 2010/09/24 10:10:58 lum Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2010 $
+.Dd $Mdocdate: September 24 2010 $
 .Dt LDAPD 8
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Fl D Ar macro Ns = Ns value
 .Oc
 .Op Fl f Ar file
+.Op Fl s Ar file
 .Sh DESCRIPTION
 .Nm
 is a daemon which implements the LDAP protocol.
@@ -59,6 +60,8 @@ as the configuration file, instead of the default
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl s Ar file
+Specify an alternative location for the socket file.
 .It Fl v
 Produce more verbose output.
 .El
