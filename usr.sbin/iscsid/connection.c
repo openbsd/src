@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.2 2010/09/24 10:44:39 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.3 2010/09/24 10:46:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -204,7 +204,6 @@ conn_task_issue(struct connection *c, struct task *t)
 {
 	/* XXX need to verify that we're in the right state for the task */
 
-log_debug("conn_task_issue");
 	if (!TAILQ_EMPTY(&c->tasks))  
 		return 0;
 
