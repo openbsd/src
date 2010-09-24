@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.215 2010/09/20 06:17:49 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.216 2010/09/24 01:32:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1332,7 +1332,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	error = 0;
 	xs->error = XS_NOERROR;
 
 	switch (xs->cmd->opcode) {
