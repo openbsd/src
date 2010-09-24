@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.1 2010/09/24 09:43:19 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.2 2010/09/24 10:44:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/uio.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 
 #include <scsi/iscsi.h>
 #include <scsi/scsi_all.h>
@@ -53,6 +54,7 @@ void
 conn_new(struct session *s, struct connection_config *cc)
 {
 	struct connection *c;
+	int nodelay = 1;
 
 	if (!(c = calloc(1, sizeof(*c))))
 		fatal("session_add_conn");
@@ -84,6 +86,13 @@ conn_new(struct session *s, struct connection_config *cc)
 		conn_free(c);
 		return;
 	}
+
+	/* try to turn off TCP Nagle */
+	if (setsockopt(c->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,
+	    sizeof(nodelay)) == -1)
+		log_warn("conn_new: setting TCP_NODELAY");
+
+
 
 	event_set(&c->ev, c->fd, EV_READ|EV_PERSIST, conn_dispatch, c);
 	event_set(&c->wev, c->fd, EV_WRITE, conn_write_dispatch, c);
