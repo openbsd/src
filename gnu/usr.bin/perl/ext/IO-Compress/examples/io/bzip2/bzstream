@@ -1,9 +1,0 @@
-#!/usr/local/bin/perl
-
-use strict ;
-use warnings ;
-use IO::Compress::Bzip2 qw(:all);
-
-bzip2 '-' => '-'
-  or die "bzstream: $Bzip2Error\n" ;
-

@@ -1,7 +1,0 @@
-#!/usr/bin/perl -Tw
-
-use lib qw(t/lib);
-use Test::More tests => 1;
-
-eval { kill 0, $^X };
-like( $@, '/^Insecure dependency/', '-T honored' );

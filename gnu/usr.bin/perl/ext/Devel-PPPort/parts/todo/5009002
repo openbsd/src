@@ -1,8 +1,0 @@
-5.009002
-SvPVbyte_force                 # U
-find_rundefsvoffset            # U
-gv_fetchsv                     # U
-op_refcnt_lock                 # U
-op_refcnt_unlock               # U
-savesvpv                       # U
-vnormal                        # U
