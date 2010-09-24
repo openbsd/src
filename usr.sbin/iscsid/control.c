@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2010/09/24 09:43:19 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.2 2010/09/24 10:32:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -198,7 +198,6 @@ control_dispatch(int fd, short event, void *bula)
 			control_close(c);
 			return;
 		}
-log_debug("control_dispatch: recv %zd bytes", n);
 		pdu = control_getpdu(cbuf, n);
 		if (!pdu) {
 			log_debug("control connection (fd %d) bad msg.", fd);
@@ -218,7 +217,6 @@ log_debug("control_dispatch: recv %zd bytes", n);
 			bzero(&msg, sizeof(msg));
 			msg.msg_iov = iov;
 			msg.msg_iovlen = niov;
-log_debug("control_dispatch: send %d iov", niov);
 			if (sendmsg(fd, &msg, 0) == -1 &&
 			    !(errno == EAGAIN || errno == ENOBUFS)) {
 				control_close(c);
