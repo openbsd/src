@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.135 2010/06/26 20:48:45 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.136 2010/09/24 13:44:14 claudio Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,8 @@
  * purpose.
  */
 
+#include <sys/ioctl.h>
+
 #include <ctype.h>
 #include <poll.h>
 #include <pwd.h>
@@ -92,6 +94,7 @@ int		 ipv4addrs(char * buf);
 int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
 int		 fork_privchld(int, int);
+void		 get_ifname(char *, char *);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -317,8 +320,7 @@ main(int argc, char *argv[])
 	if (config == NULL)
 		error("config calloc");
 
-	if (strlcpy(ifi->name, argv[0], IFNAMSIZ) >= IFNAMSIZ)
-		error("Interface name too long");
+	get_ifname(ifi->name, argv[0]);
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
 		error("asprintf");
@@ -2192,4 +2194,46 @@ fork_privchld(int fd, int fd2)
 
 		dispatch_imsg(fd);
 	}
+}
+
+void
+get_ifname(char *ifname, char *arg)
+{
+	struct ifgroupreq ifgr;
+	struct ifg_req *ifg;
+	int s, len;
+
+	if (!strcmp(arg, "egress")) {
+		s = socket(AF_INET, SOCK_DGRAM, 0);
+		if (s == -1)
+			error("socket error");
+		bzero(&ifgr, sizeof(ifgr));
+		strlcpy(ifgr.ifgr_name, "egress", sizeof(ifgr.ifgr_name));
+		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
+			if (errno == ENOENT)
+				error("no interface in group egress found");
+			error("ioctl SIOCGIFGMEMB: %m");
+		}
+		len = ifgr.ifgr_len;
+		if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
+			error("get_ifname");
+		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+			error("ioctl SIOCGIFGMEMB: %m");
+
+		arg = NULL;
+		for (ifg = ifgr.ifgr_groups;
+		    ifg && len >= sizeof(struct ifg_req); ifg++) {
+			len -= sizeof(struct ifg_req);
+			if (arg)
+				error("too many interfaces in group egress");
+			arg = ifg->ifgrq_member;
+		}
+
+		if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
+			error("Interface name too long: %m");
+
+		free(ifgr.ifgr_groups);
+		close(s);
+	} else if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
+		error("Interface name too long");
 }
