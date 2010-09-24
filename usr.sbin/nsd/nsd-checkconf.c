@@ -77,7 +77,7 @@ underscore(const char *s) {
 			buf[i++] = *j;
 		}
 		j++;
-		if (i > BUFSIZ) {
+		if (i >= BUFSIZ) {
 			return NULL;
 		}
 	}
