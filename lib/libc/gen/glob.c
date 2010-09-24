@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.31 2010/05/19 14:53:06 chl Exp $ */
+/*	$OpenBSD: glob.c,v 1.32 2010/09/24 13:32:55 djm Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -135,7 +135,7 @@ static int	 glob2(Char *, Char *, Char *, Char *, Char *, Char *,
 		    glob_t *, size_t *);
 static int	 glob3(Char *, Char *, Char *, Char *, Char *,
 		    Char *, Char *, glob_t *, size_t *);
-static int	 globextend(const Char *, glob_t *, size_t *);
+static int	 globextend(const Char *, glob_t *, size_t *, struct stat *);
 static const Char *
 		 globtilde(const Char *, Char *, size_t, glob_t *);
 static int	 globexp1(const Char *, glob_t *);
@@ -157,6 +157,7 @@ glob(const char *pattern, int flags, int (*errfunc)(const char *, int),
 	if (!(flags & GLOB_APPEND)) {
 		pglob->gl_pathc = 0;
 		pglob->gl_pathv = NULL;
+		pglob->gl_statv = NULL;
 		if (!(flags & GLOB_DOOFFS))
 			pglob->gl_offs = 0;
 	}
@@ -516,7 +517,7 @@ glob0(const Char *pattern, glob_t *pglob)
 		if ((pglob->gl_flags & GLOB_NOCHECK) ||
 		    ((pglob->gl_flags & GLOB_NOMAGIC) &&
 		    !(pglob->gl_flags & GLOB_MAGCHAR)))
-			return(globextend(pattern, pglob, &limit));
+			return(globextend(pattern, pglob, &limit, NULL));
 		else
 			return(GLOB_NOMATCH);
 	}
@@ -579,7 +580,7 @@ glob2(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 				*pathend = EOS;
 			}
 			++pglob->gl_matchc;
-			return(globextend(pathbuf, pglob, limitp));
+			return(globextend(pathbuf, pglob, limitp, &sb));
 		}
 
 		/* Find end of next segment, copy tentatively to pathend. */
@@ -702,24 +703,40 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
  *	gl_pathv points to (gl_offs + gl_pathc + 1) items.
  */
 static int
-globextend(const Char *path, glob_t *pglob, size_t *limitp)
+globextend(const Char *path, glob_t *pglob, size_t *limitp, struct stat *sb)
 {
 	char **pathv;
-	int i;
-	u_int newsize, len;
-	char *copy;
+	ssize_t i;
+	size_t newn, len;
+	char *copy = NULL;
 	const Char *p;
+	struct stat **statv;
 
-	newsize = sizeof(*pathv) * (2 + pglob->gl_pathc + pglob->gl_offs);
-	pathv = realloc((char *)pglob->gl_pathv, newsize);
-	if (pathv == NULL) {
+	newn = 2 + pglob->gl_pathc + pglob->gl_offs;
+	if (SIZE_MAX / sizeof(*pathv) <= newn ||
+	    SIZE_MAX / sizeof(*statv) <= newn) {
+ nospace:
+		for (i = pglob->gl_offs; i < newn - 2; i++) {
+			if (pglob->gl_pathv && pglob->gl_pathv[i])
+				free(pglob->gl_pathv[i]);
+			if ((pglob->gl_flags & GLOB_KEEPSTAT) != 0 &&
+			    pglob->gl_pathv && pglob->gl_pathv[i])
+				free(pglob->gl_statv[i]);
+		}
 		if (pglob->gl_pathv) {
 			free(pglob->gl_pathv);
 			pglob->gl_pathv = NULL;
 		}
+		if (pglob->gl_statv) {
+			free(pglob->gl_statv);
+			pglob->gl_statv = NULL;
+		}
 		return(GLOB_NOSPACE);
 	}
 
+	pathv = realloc(pglob->gl_pathv, newn * sizeof(*pathv));
+	if (pathv == NULL)
+		goto nospace;
 	if (pglob->gl_pathv == NULL && pglob->gl_offs > 0) {
 		/* first time around -- clear initial gl_offs items */
 		pathv += pglob->gl_offs;
@@ -727,6 +744,29 @@ globextend(const Char *path, glob_t *pglob, size_t *limitp)
 			*--pathv = NULL;
 	}
 	pglob->gl_pathv = pathv;
+
+	if ((pglob->gl_flags & GLOB_KEEPSTAT) != 0) {
+		statv = realloc(pglob->gl_statv, newn * sizeof(*statv));
+		if (statv == NULL)
+			goto nospace;
+		if (pglob->gl_statv == NULL && pglob->gl_offs > 0) {
+			/* first time around -- clear initial gl_offs items */
+			statv += pglob->gl_offs;
+			for (i = pglob->gl_offs; --i >= 0; )
+				*--statv = NULL;
+		}
+		pglob->gl_statv = statv;
+		if (sb == NULL)
+			statv[pglob->gl_offs + pglob->gl_pathc] = NULL;
+		else {
+			if ((statv[pglob->gl_offs + pglob->gl_pathc] =
+			    malloc(sizeof(**statv))) == NULL)
+				goto copy_error;
+			memcpy(statv[pglob->gl_offs + pglob->gl_pathc], sb,
+			    sizeof(*sb));
+		}
+		statv[pglob->gl_offs + pglob->gl_pathc + 1] = NULL;
+	}
 
 	for (p = path; *p++;)
 		;
@@ -742,11 +782,11 @@ globextend(const Char *path, glob_t *pglob, size_t *limitp)
 	pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
 
 	if ((pglob->gl_flags & GLOB_LIMIT) &&
-	    newsize + *limitp >= ARG_MAX) {
+	    (newn * sizeof(*pathv)) + *limitp >= ARG_MAX) {
 		errno = 0;
 		return(GLOB_NOSPACE);
 	}
-
+ copy_error:
 	return(copy == NULL ? GLOB_NOSPACE : 0);
 }
 
@@ -823,6 +863,14 @@ globfree(glob_t *pglob)
 				free(*pp);
 		free(pglob->gl_pathv);
 		pglob->gl_pathv = NULL;
+	}
+	if (pglob->gl_statv != NULL) {
+		free(pglob->gl_statv);
+		for (i = 0; i < pglob->gl_pathc; i++) {
+			if (pglob->gl_statv[i] != NULL)
+				free(pglob->gl_statv[i]);
+		}
+		pglob->gl_statv = NULL;
 	}
 }
 
