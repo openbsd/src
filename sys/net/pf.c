@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.706 2010/09/23 14:17:02 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.707 2010/09/24 00:55:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -180,7 +180,7 @@ static __inline int	 pf_create_state(struct pf_rule *, struct pf_rule *,
 			    struct pf_pdesc *, struct pf_state_key **,
 			    struct pf_state_key **, struct mbuf *, int,
 			    int *, struct pfi_kif *, struct pf_state **, int,
-			    u_int16_t, u_int16_t, int, struct pf_rule_slist *,
+			    int, struct pf_rule_slist *,
 			    struct pf_rule_actions *, struct pf_src_node *[]);
 int			 pf_state_key_setup(struct pf_pdesc *, struct
 			    pf_state_key **, struct pf_state_key **, int);
@@ -2792,7 +2792,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	int			 match = 0;
 	int			 state_icmp = 0, icmp_dir, multi;
 	u_int16_t		 virtual_type, virtual_id;
-	u_int16_t		 bproto_sum = 0, bip_sum;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
 	PF_ACPY(&pd->nsaddr, pd->src, pd->af);
@@ -3054,7 +3053,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		}
 
 		action = pf_create_state(r, a, pd, &skw, &sks, m, off,
-		    &rewrite, kif, sm, tag, bproto_sum, bip_sum, hdrlen,
+		    &rewrite, kif, sm, tag, hdrlen,
 		    &rules, &act, sns);
 
 		if (action != PF_PASS)
@@ -3111,7 +3110,7 @@ static __inline int
 pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
     struct pf_state_key **skw, struct pf_state_key **sks, struct mbuf *m,
     int off, int *rewrite, struct pfi_kif *kif, struct pf_state **sm,
-    int tag, u_int16_t bproto_sum, u_int16_t bip_sum, int hdrlen,
+    int tag, int hdrlen,
     struct pf_rule_slist *rules, struct pf_rule_actions *act,
     struct pf_src_node *sns[PF_SN_MAX])
 {
