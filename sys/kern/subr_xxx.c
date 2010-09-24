@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_xxx.c,v 1.10 2010/09/21 01:09:10 matthew Exp $	*/
+/*	$OpenBSD: subr_xxx.c,v 1.11 2010/09/24 13:21:30 matthew Exp $	*/
 /*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
@@ -160,4 +160,9 @@ void
 assertwaitok(void)
 {
 	splassert(IPL_NONE);
+#ifdef __HAVE_CPU_MUTEX_LEVEL
+	if (curcpu()->ci_mutex_level != 0)
+		panic("assertwaitok: non-zero mutex count: %d",
+		    curcpu()->ci_mutex_level);
+#endif
 }

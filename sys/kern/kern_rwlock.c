@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.15 2009/08/13 23:12:15 blambert Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.16 2010/09/24 13:21:30 matthew Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -107,6 +107,8 @@ rw_exit_read(struct rwlock *rwl)
 {
 	unsigned long owner = rwl->rwl_owner;
 
+	rw_assert_rdlock(rwl);
+
 	if (__predict_false((owner & RWLOCK_WAIT) ||
 	    rw_cas(&rwl->rwl_owner, owner, owner - RWLOCK_READ_INCR)))
 		rw_exit(rwl);
@@ -116,6 +118,8 @@ void
 rw_exit_write(struct rwlock *rwl)
 {
 	unsigned long owner = rwl->rwl_owner;
+
+	rw_assert_wrlock(rwl);
 
 	if (__predict_false((owner & RWLOCK_WAIT) ||
 	    rw_cas(&rwl->rwl_owner, owner, 0)))
@@ -236,6 +240,11 @@ rw_exit(struct rwlock *rwl)
 	int wrlock = owner & RWLOCK_WRLOCK;
 	unsigned long set;
 
+	if (wrlock)
+		rw_assert_wrlock(rwl);
+	else
+		rw_assert_rdlock(rwl);
+
 	do {
 		owner = rwl->rwl_owner;
 		if (wrlock)
@@ -249,6 +258,7 @@ rw_exit(struct rwlock *rwl)
 		wakeup(rwl);
 }
 
+#ifdef DIAGNOSTIC
 void
 rw_assert_wrlock(struct rwlock *rwl)
 {
@@ -272,3 +282,4 @@ rw_assert_unlocked(struct rwlock *rwl)
 	if (rwl->rwl_owner != 0L)
 		panic("%s: lock held", rwl->rwl_name);
 }
+#endif

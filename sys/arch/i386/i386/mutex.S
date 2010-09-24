@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.7 2009/08/13 13:24:55 weingart Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.8 2010/09/24 13:21:30 matthew Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -63,6 +63,9 @@ ENTRY(mtx_enter)
 	testl	%eax, %eax		# if (already held)
 	jnz	3f
 	movl	CPUVAR(SELF), %eax
+#ifdef DIAGNOSTIC
+	incl	CPU_INFO_MUTEX_LEVEL(%eax)
+#endif
 	movl	%eax, MTX_OWNER(%ecx)
 	movl	%edx, MTX_OLDIPL(%ecx)
 	leave
@@ -107,6 +110,9 @@ ENTRY(mtx_enter_try)
 	testl	%eax, %eax		# if (already held)
 	jnz	3f
 	movl	CPUVAR(SELF), %eax
+#ifdef DIAGNOSTIC
+	incl	CPU_INFO_MUTEX_LEVEL(%eax)
+#endif
 	movl	%eax, MTX_OWNER(%ecx)
 	movl	%edx, MTX_OLDIPL(%ecx)
 	movl	$1, %eax
@@ -130,7 +136,7 @@ ENTRY(mtx_enter_try)
 #ifdef DIAGNOSTIC
 4:	pushl	$5f
 	call	_C_LABEL(panic)
-5:	.asciz	"mtx_enter: locking against myself"
+5:	.asciz	"mtx_enter_try: locking against myself"
 #endif
 
 	
@@ -138,6 +144,12 @@ ENTRY(mtx_leave)
 	pushl	%ebp
 	movl	%esp, %ebp
 	movl	SOFF(%ebp), %ecx
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(SELF), %eax
+	cmpl	%eax, MTX_OWNER(%ecx)
+	jne	1f
+	decl	CPU_INFO_MUTEX_LEVEL(%eax)
+#endif
 	xorl	%eax, %eax
 	movl	%eax, MTX_OWNER(%ecx)
 	pushl	MTX_OLDIPL(%ecx)
@@ -146,3 +158,9 @@ ENTRY(mtx_leave)
 	call	_C_LABEL(splx)
 	leave
 	ret
+
+#ifdef DIAGNOSTIC
+1:	pushl	$2f
+	call	_C_LABEL(panic)
+2:	.asciz	"mtx_leave: lock not held"
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.23 2010/06/30 22:38:17 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.24 2010/09/24 13:21:30 matthew Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -356,6 +356,7 @@ mi_switch(void)
 	int sched_count;
 #endif
 
+	assertwaitok();
 	KASSERT(p->p_stat != SONPROC);
 
 	SCHED_ASSERT_LOCKED();

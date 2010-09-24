@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.22 2010/04/01 19:47:59 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.23 2010/09/24 13:21:30 matthew Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -105,6 +105,9 @@ member	CPU_INFO_IDEPTH		ci_idepth
 member	CPU_INFO_ISOURCES	ci_isources
 member	CPU_INFO_IPENDING	ci_ipending
 member	CPU_INFO_IUNMASK	ci_iunmask
+ifdef DIAGNOSTIC
+member	CPU_INFO_MUTEX_LEVEL	ci_mutex_level
+endif
 member	CPU_INFO_GDT		ci_gdt
 
 struct	intrsource
