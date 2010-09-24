@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.182 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.183 2010/09/24 15:22:29 blambert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1947,10 +1947,10 @@ bridge_rttrim(struct bridge_softc *sc)
 				LIST_REMOVE(n, brt_next);
 				sc->sc_brtcnt--;
 				free(n, M_DEVBUF);
-				n = p;
 				if (sc->sc_brtcnt <= sc->sc_brtmax)
 					return;
 			}
+			n = p;
 		}
 	}
 }
