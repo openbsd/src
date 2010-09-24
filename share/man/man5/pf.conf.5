@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.480 2010/09/24 10:41:36 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.481 2010/09/24 10:57:16 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -778,11 +778,11 @@ Those netblocks are:
 10.0.0.0 \(en 10.255.255.255 (all of net 10, i.e. 10/8)
 172.16.0.0 \(en 172.31.255.255 (i.e. 172.16/12)
 192.168.0.0 \(en 192.168.255.255 (i.e. 192.168/16)
+.Ed
+.Pp
 .Ar nat-to
 is usually applied outbound.
-If applied inbound,
-nat-to to a local IP address is not supported.
-.Ed
+If applied inbound, nat-to to a local IP address is not supported.
 .It Pa rdr-to
 The packet is redirected to another destination and possibly a
 different port.
@@ -795,11 +795,11 @@ redirects ports 2000 to 2999 (inclusive) to port 4000.
 .Pp
 .It match in ... port 2000:2999 rdr-to ... port 4000:*
 redirects port 2000 to 4000, port 2001 to 4001, ..., port 2999 to 4999.
+.El
+.Pp
 .Ar rdr-to
 is usually applied inbound.
-If applied outbound,
-rdr-to to a local IP address is not supported.
-.El
+If applied outbound, rdr-to to a local IP address is not supported.
 .El
 .Pp
 In addition to modifying the address, some translation rules may modify
