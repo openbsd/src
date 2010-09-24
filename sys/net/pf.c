@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.710 2010/09/24 02:06:47 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.711 2010/09/24 02:15:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6000,8 +6000,6 @@ done:
 			qid = s->qid;
 	} else {
 		pf_scrub_ip(&m, r->scrub_flags, r->min_ttl, r->set_tos);
-		/* XXX tag not needed since it is done in pf_test_rule ??? */
-		pf_tag_packet(m, r->tag, r->rtableid);
 		if (pqid || (pd.tos & IPTOS_LOWDELAY))
 			qid = r->pqid;
 		else
