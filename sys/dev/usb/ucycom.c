@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.16 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.17 2010/09/24 08:33:59 yuo Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -584,7 +584,6 @@ ucycom_detach(struct device *self, int flags)
 	struct ucycom_softc *sc = (struct ucycom_softc *)self;
 
 	DPRINTF(("ucycom_detach: sc=%p flags=%d\n", sc, flags));
-	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
 		config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;

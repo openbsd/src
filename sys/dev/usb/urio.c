@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.35 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: urio.c,v 1.36 2010/09/24 08:33:59 yuo Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -198,7 +198,6 @@ urio_detach(struct device *self, int flags)
 
 	DPRINTF(("urio_detach: sc=%p flags=%d\n", sc, flags));
 
-	sc->sc_dying = 1;
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
 	if (sc->sc_in_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_in_pipe);

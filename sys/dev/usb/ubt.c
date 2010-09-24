@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.18 2010/08/31 16:20:48 deraadt Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.19 2010/09/24 08:33:59 yuo Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -459,8 +459,6 @@ ubt_detach(struct device *self, int flags)
 	DPRINTF("sc=%p flags=%d\n", sc, flags);
 
 	/* XXX pmf_device_deregister in NetBSD (power hook) */
-
-	sc->sc_dying = 1;
 
 	if (!sc->sc_ok)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.47 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: udcf.c,v 1.48 2010/09/24 08:33:59 yuo Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -332,8 +332,6 @@ int
 udcf_detach(struct device *self, int flags)
 {
 	struct udcf_softc	*sc = (struct udcf_softc *)self;
-
-	sc->sc_dying = 1;
 
 	timeout_del(&sc->sc_to);
 	timeout_del(&sc->sc_bv_to);

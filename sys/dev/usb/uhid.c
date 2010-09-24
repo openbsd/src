@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.49 2010/08/02 23:17:34 miod Exp $ */
+/*	$OpenBSD: uhid.c,v 1.50 2010/09/24 08:33:59 yuo Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -174,8 +174,6 @@ uhid_detach(struct device *self, int flags)
 	int maj, mn;
 
 	DPRINTF(("uhid_detach: sc=%p flags=%d\n", sc, flags));
-
-	sc->sc_dying = 1;
 
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN) {
 		s = splusb();

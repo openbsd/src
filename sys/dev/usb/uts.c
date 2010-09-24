@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.26 2009/12/05 20:39:31 matthieu Exp $ */
+/*	$OpenBSD: uts.c,v 1.27 2010/09/24 08:33:59 yuo Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -240,8 +240,6 @@ uts_detach(struct device *self, int flags)
 		usbd_close_pipe(sc->sc_intr_pipe);
 		sc->sc_intr_pipe = NULL;
 	}
-
-	sc->sc_dying = 1;
 
 	if (sc->sc_wsmousedev != NULL) {
 		rv = config_detach(sc->sc_wsmousedev, flags);

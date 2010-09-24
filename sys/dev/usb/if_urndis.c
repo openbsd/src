@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.25 2010/07/31 11:51:45 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.26 2010/09/24 08:33:59 yuo Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1521,17 +1521,14 @@ urndis_detach(struct device *self, int flags)
 	int			 s;
 
 	sc = (void*)self;
-	s = splusb();
 
 	DPRINTF(("urndis_detach: %s flags %u\n", DEVNAME(sc),
 	    flags));
 	
-	if (!sc->sc_attached) {
-		splx(s);
+	if (!sc->sc_attached)
 		return 0;
-	}
 
-	sc->sc_dying = 1;
+	s = splusb();
 
 	ifp = GET_IFP(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.26 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.27 2010/09/24 08:33:59 yuo Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -256,7 +256,6 @@ umidi_detach(struct device *self, int flags)
 
 	DPRINTFN(1,("umidi_detach\n"));
 
-	sc->sc_dying = 1;
 	detach_all_mididevs(sc, flags);
 	free_all_mididevs(sc);
 	free_all_jacks(sc);

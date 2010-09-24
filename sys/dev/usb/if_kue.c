@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.59 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.60 2010/09/24 08:33:58 yuo Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -556,17 +556,15 @@ kue_detach(struct device *self, int flags)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
+	/* Detached before attached finished, so just bail out. */
+	if (!sc->kue_attached)
+		return (0);
+
 	s = splusb();		/* XXX why? */
 
 	if (sc->kue_mcfilters != NULL) {
 		free(sc->kue_mcfilters, M_USBDEV);
 		sc->kue_mcfilters = NULL;
-	}
-
-	if (!sc->kue_attached) {
-		/* Detached before attached finished, so just bail out. */
-		splx(s);
-		return (0);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)

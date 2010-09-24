@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.52 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.53 2010/09/24 08:33:58 yuo Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -555,18 +555,18 @@ cue_detach(struct device *self, int flags)
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->cue_dev.dv_xname, __func__));
 
+	/* Detached before attached finished, so just bail out. */
+	if (!sc->cue_attached)
+		return (0);
+
 	timeout_del(&sc->cue_stat_ch);
+
 	/*
 	 * Remove any pending task.  It cannot be executing because it run
 	 * in the same thread as detach.
 	 */
 	usb_rem_task(sc->cue_udev, &sc->cue_tick_task);
 	usb_rem_task(sc->cue_udev, &sc->cue_stop_task);
-
-	if (!sc->cue_attached) {
-		/* Detached before attached finished, so just bail out. */
-		return (0);
-	}
 
 	s = splusb();
 

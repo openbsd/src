@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.20 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.21 2010/09/24 08:33:59 yuo Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -253,7 +253,6 @@ uslcom_detach(struct device *self, int flags)
 	struct uslcom_softc *sc = (struct uslcom_softc *)self;
 	int rv = 0;
 
-	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;

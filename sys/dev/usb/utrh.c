@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.4 2010/04/15 09:40:46 yuo Exp $   */
+/*	$OpenBSD: utrh.c,v 1.5 2010/09/24 08:33:59 yuo Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -180,8 +180,6 @@ utrh_detach(struct device *self, int flags)
 {
 	struct utrh_softc *sc = (struct utrh_softc *)self;
 	int i, rv = 0;
-
-	sc->sc_dying = 1;
 
 	if (sc->sc_num_sensors > 0) {
 		wakeup(&sc->sc_sensortask);

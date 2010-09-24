@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.37 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: umodem.c,v 1.38 2010/09/24 08:33:59 yuo Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -742,8 +742,6 @@ umodem_detach(struct device *self, int flags)
 	int rv = 0;
 
 	DPRINTF(("umodem_detach: sc=%p flags=%d\n", sc, flags));
-
-	sc->sc_dying = 1;
 
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);

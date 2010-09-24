@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.43 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.44 2010/09/24 08:33:59 yuo Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -325,13 +325,11 @@ upl_detach(struct device *self, int flags)
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	s = splusb();
-
-	if (!sc->sc_attached) {
-		/* Detached before attached finished, so just bail out. */
-		splx(s);
+	/* Detached before attached finished, so just bail out. */
+	if (!sc->sc_attached)
 		return (0);
-	}
+
+	s = splusb();
 
 	if (ifp->if_flags & IFF_RUNNING)
 		upl_stop(sc);

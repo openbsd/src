@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.4 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.5 2010/09/24 08:33:59 yuo Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -466,7 +466,6 @@ uticom_detach(struct device *self, int flags)
 
 	DPRINTF(("%s: uticom_detach: sc = %p\n",
 	    sc->sc_dev.dv_xname, sc));
-	sc->sc_dying = 1;
 
 	if (sc->sc_subdev != NULL) {
 		config_detach(sc->sc_subdev, flags);

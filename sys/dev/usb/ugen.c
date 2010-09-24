@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.61 2009/11/09 17:53:39 nicm Exp $ */
+/*	$OpenBSD: ugen.c,v 1.62 2010/09/24 08:33:59 yuo Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -753,7 +753,6 @@ ugen_detach(struct device *self, int flags)
 
 	DPRINTF(("ugen_detach: sc=%p flags=%d\n", sc, flags));
 
-	sc->sc_dying = 1;
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.56 2010/02/23 23:31:54 jsg Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.57 2010/09/24 08:33:59 yuo Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -912,7 +912,6 @@ uftdi_detach(struct device *self, int flags)
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 
 	DPRINTF(("uftdi_detach: sc=%p flags=%d\n", sc, flags));
-	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
 		config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;

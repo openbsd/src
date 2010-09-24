@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.36 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.37 2010/09/24 08:33:59 yuo Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -327,7 +327,6 @@ ulpt_detach(struct device *self, int flags)
 
 	DPRINTF(("ulpt_detach: sc=%p\n", sc));
 
-	sc->sc_dying = 1;
 	if (sc->sc_out_pipe != NULL)
 		usbd_abort_pipe(sc->sc_out_pipe);
 	if (sc->sc_in_pipe != NULL)

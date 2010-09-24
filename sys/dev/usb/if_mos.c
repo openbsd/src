@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.7 2009/10/13 19:33:17 pirofti Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.8 2010/09/24 08:33:58 yuo Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -770,8 +770,6 @@ mos_detach(struct device *self, int flags)
 		return (0);
 
 	timeout_del(&sc->mos_stat_ch);
-
-	sc->mos_dying = 1;
 
 	if (sc->mos_ep[MOS_ENDPT_TX] != NULL)
 		usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_TX]);

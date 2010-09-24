@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.14 2010/09/24 08:33:59 yuo Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -273,7 +273,6 @@ moscom_detach(struct device *self, int flags)
 	struct moscom_softc *sc = (struct moscom_softc *)self;
 	int rv = 0;
 
-	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;

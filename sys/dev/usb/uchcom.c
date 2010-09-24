@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.10 2010/02/20 11:44:56 jsg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.11 2010/09/24 08:33:59 yuo Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -326,8 +326,6 @@ uchcom_detach(struct device *self, int flags)
 	DPRINTF(("uchcom_detach: sc=%p flags=%d\n", sc, flags));
 
 	uchcom_close_intr_pipe(sc);
-
-	sc->sc_dying = 1;
 
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);

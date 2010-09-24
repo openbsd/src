@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.50 2010/07/02 17:27:01 nicm Exp $ */
+/*	$OpenBSD: ucom.c,v 1.51 2010/09/24 08:33:59 yuo Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -224,8 +224,6 @@ ucom_detach(struct device *self, int flags)
 
 	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n",
 		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
-
-	sc->sc_dying = 1;
 
 	if (sc->sc_bulkin_pipe != NULL)
 		usbd_abort_pipe(sc->sc_bulkin_pipe);

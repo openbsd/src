@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.14 2010/04/20 14:37:38 deraadt Exp $   */
+/*	$OpenBSD: uthum.c,v 1.15 2010/09/24 08:33:59 yuo Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -269,8 +269,6 @@ uthum_detach(struct device *self, int flags)
 {
 	struct uthum_softc *sc = (struct uthum_softc *)self;
 	int i, rv = 0;
-
-	sc->sc_dying = 1;
 
 	if (sc->sc_num_sensors > 0) {
 		wakeup(&sc->sc_sensortask);

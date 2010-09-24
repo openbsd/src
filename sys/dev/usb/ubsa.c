@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.49 2010/04/22 19:47:30 mk Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.50 2010/09/24 08:33:59 yuo Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -394,7 +394,6 @@ ubsa_detach(struct device *self, int flags)
 		sc->sc_intr_pipe = NULL;
 	}
 
-	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.78 2010/09/22 14:38:52 yuo Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.79 2010/09/24 08:33:58 yuo Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -849,14 +849,12 @@ aue_detach(struct device *self, int flags)
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));
 
-	if (!sc->aue_attached) {
-		/* Detached before attached finished, so just bail out. */
+	/* Detached before attached finished, so just bail out. */
+	if (!sc->aue_attached) 
 		return (0);
-	}
 
 	timeout_del(&sc->aue_stat_ch);
 
-	sc->aue_dying = 1;
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
 	 * in the same thread as detach.

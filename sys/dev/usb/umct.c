@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.29 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: umct.c,v 1.30 2010/09/24 08:33:59 yuo Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -327,7 +327,6 @@ umct_detach(struct device *self, int flags)
                 sc->sc_intr_pipe = NULL;
         }
 
-	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;

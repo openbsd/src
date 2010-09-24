@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.42 2010/07/03 03:59:17 krw Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.43 2010/09/24 08:33:59 yuo Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -581,7 +581,6 @@ uscanner_detach(struct device *self, int flags)
 
 	DPRINTF(("uscanner_detach: sc=%p flags=%d\n", sc, flags));
 
-	sc->sc_dying = 1;
 	sc->sc_dev_flags = 0;	/* make close really close device */
 
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
