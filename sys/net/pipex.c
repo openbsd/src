@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.9 2010/09/22 13:03:48 claudio Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.10 2010/09/24 14:50:30 hsuenaga Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -42,9 +42,10 @@
 #include <sys/kernel.h>
 
 #include <net/if.h>
-
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <net/if_dl.h>
 
 #include <net/radix.h>
 #include <net/route.h>
@@ -64,8 +65,13 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+#include <netinet/udp_var.h>
 #endif
 #include <crypto/arc4.h>
 
@@ -85,7 +91,9 @@ struct pipex_hash_head
     pipex_id_hashtable[PIPEX_HASH_SIZE]; 	/* peer id hash */
 
 struct radix_node_head pipex_rd_head4;
+struct radix_node_head pipex_rd_head6;
 int pipex_rd_head4_initialized = 0;
+int pipex_rd_head6_initialized = 0;
 struct timeout pipex_timer_ch; 		/* callout timer context */
 int pipex_prune = 1;			/* walk list every seconds */
 
@@ -94,6 +102,7 @@ struct ifqueue pipexinq = { NULL };
 struct ifqueue pipexoutq = { NULL };
 struct pipex_tag {
 	struct pipex_session *session;
+	int			proto;
 };
 void *pipex_softintr = NULL;
 Static void pipex_softintr_handler(void *);
@@ -117,6 +126,7 @@ pipex_init(void)
 	extern int max_keylen;		/* for radix.c */
 
 	LIST_INIT(&pipex_session_list);
+	LIST_INIT(&pipex_close_wait_list);
 
 	if (sizeof(struct sockaddr_in) > max_keylen)
 		max_keylen = sizeof(struct sockaddr_in);
@@ -143,6 +153,12 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 		pipex_rd_head4_initialized++;
 		if (!rn_inithead0(&pipex_rd_head4,
 		    offsetof(struct sockaddr_in, sin_addr) * NBBY))
+			panic("rn_inithead0() failed on pipex_init()");
+	}
+	if (!pipex_rd_head6_initialized) {
+		pipex_rd_head6_initialized++;
+		if (!rn_inithead0(&pipex_rd_head6,
+		    offsetof(struct sockaddr_in6, sin6_addr) *NBBY))
 			panic("rn_inithead0() failed on pipex_init()");
 	}
 	splx(s);
@@ -248,8 +264,6 @@ pipex_add_session(struct pipex_session_req *req,
 	int s;
 #ifdef PIPEX_PPPOE
 	struct ifnet *over_ifp = NULL;
-	struct ether_header *eh;
-	struct sockaddr peer_addr;
 #endif
 
 	/* Checks requeted parameters.  */
@@ -261,16 +275,29 @@ pipex_add_session(struct pipex_session_req *req,
 		over_ifp = ifunit(req->pr_proto.pppoe.over_ifname);
 		if (over_ifp == NULL)
 			return (EINVAL);
-		bzero(&peer_addr, sizeof(peer_addr));
-		peer_addr.sa_family = AF_UNSPEC;
-		eh = (struct ether_header *)&peer_addr.sa_data;
-		eh->ether_type = htons(ETHERTYPE_PPPOE);
-		memcpy(&eh->ether_dhost, &req->pr_proto.pppoe.peer_address,
-		    sizeof(eh->ether_dhost));
+		if (req->peer_address.ss_family != AF_UNSPEC)
+			return (EINVAL);
 		break;
 #endif
+#if defined(PIPEX_L2TP) || defined(PIPEX_PPTP)
 #ifdef PIPEX_PPTP
 	case PIPEX_PROTO_PPTP:
+#endif
+#ifdef PIPEX_L2TP
+	case PIPEX_PROTO_L2TP:
+#endif
+		switch (req->peer_address.ss_family) {
+		case AF_INET:
+#ifdef INET6
+		case AF_INET6:
+#endif
+			if (req->peer_address.ss_family !=
+			    req->local_address.ss_family)
+				return (EINVAL);
+			break;
+		default:
+			return (EPROTONOSUPPORT);
+		}
 		break;
 #endif
 	default:
@@ -304,28 +331,53 @@ pipex_add_session(struct pipex_session_req *req,
 	session->ip_address.sin_addr.s_addr &=
 	    session->ip_netmask.sin_addr.s_addr;
 
+	if (req->peer_address.ss_len > 0)
+		memcpy(&session->peer, &req->peer_address,
+		    MIN(req->peer_address.ss_len, sizeof(session->peer)));
+	if (req->local_address.ss_len > 0)
+		memcpy(&session->local, &req->local_address,
+		    MIN(req->local_address.ss_len, sizeof(session->local)));
 #ifdef PIPEX_PPPOE
-	if (req->pr_protocol == PIPEX_PROTO_PPPOE) {
-		session->proto.pppoe.peer_addr = peer_addr;
+	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
 		session->proto.pppoe.over_ifp = over_ifp;
-	}
 #endif
 #ifdef PIPEX_PPTP
 	if (req->pr_protocol == PIPEX_PROTO_PPTP) {
-		session->proto.pptp.snd_gap = 0;
-		session->proto.pptp.rcv_gap = 0;
-		session->proto.pptp.snd_una = req->pr_proto.pptp.snd_una;
-		session->proto.pptp.snd_nxt = req->pr_proto.pptp.snd_nxt;
-		session->proto.pptp.rcv_nxt = req->pr_proto.pptp.rcv_nxt;
-		session->proto.pptp.rcv_acked = req->pr_proto.pptp.rcv_acked;
-		session->proto.pptp.winsz = req->pr_proto.pptp.winsz;
-		session->proto.pptp.maxwinsz = req->pr_proto.pptp.maxwinsz;
-		session->proto.pptp.peer_maxwinsz
-		    = req->pr_proto.pptp.peer_maxwinsz;
-		session->proto.pptp.peer_address =
-		    req->pr_proto.pptp.peer_address;
-		session->proto.pptp.our_address =
-		    req->pr_proto.pptp.our_address;
+		struct pipex_pptp_session *sess_pptp = &session->proto.pptp;
+
+		sess_pptp->snd_gap = 0;
+		sess_pptp->rcv_gap = 0;
+		sess_pptp->snd_una = req->pr_proto.pptp.snd_una;
+		sess_pptp->snd_nxt = req->pr_proto.pptp.snd_nxt;
+		sess_pptp->rcv_nxt = req->pr_proto.pptp.rcv_nxt;
+		sess_pptp->rcv_acked = req->pr_proto.pptp.rcv_acked;
+
+		sess_pptp->winsz = req->pr_proto.pptp.winsz;
+		sess_pptp->maxwinsz = req->pr_proto.pptp.maxwinsz;
+		sess_pptp->peer_maxwinsz = req->pr_proto.pptp.peer_maxwinsz;
+		/* last ack number */
+		sess_pptp->ul_snd_una = sess_pptp->snd_una - 1;
+	}
+#endif
+#ifdef PIPEX_L2TP
+	if (req->pr_protocol == PIPEX_PROTO_L2TP) {
+		struct pipex_l2tp_session *sess_l2tp = &session->proto.l2tp;
+
+		/* session keys */
+		sess_l2tp->tunnel_id = req->pr_proto.l2tp.tunnel_id;
+		sess_l2tp->peer_tunnel_id = req->pr_proto.l2tp.peer_tunnel_id;
+
+		/* protocol options */
+		sess_l2tp->option_flags = req->pr_proto.l2tp.option_flags;
+
+		/* initial state of dynamic context */
+		sess_l2tp->ns_gap = sess_l2tp->nr_gap = 0;
+		sess_l2tp->ns_nxt = req->pr_proto.l2tp.ns_nxt;
+		sess_l2tp->nr_nxt = req->pr_proto.l2tp.nr_nxt;
+		sess_l2tp->ns_una = req->pr_proto.l2tp.ns_una;
+		sess_l2tp->nr_acked = req->pr_proto.l2tp.nr_acked;
+		/* last ack number */
+		sess_l2tp->ul_ns_una = sess_l2tp->ns_una - 1;
 	}
 #endif
 #ifdef PIPEX_MPPE
@@ -345,30 +397,43 @@ pipex_add_session(struct pipex_session_req *req,
 
 	/* commit the session */
 	s = splnet();
-	if (pipex_lookup_by_ip_address(session->ip_address.sin_addr) != NULL) {
-		splx(s);
-		free(session, M_TEMP);
-		return (EADDRINUSE);
-	}
+	if (!in_nullhost(session->ip_address.sin_addr)) {
+		if (pipex_lookup_by_ip_address(session->ip_address.sin_addr)
+		    != NULL) {
+			splx(s);
+			free(session, M_TEMP);
+			return (EADDRINUSE);
+		}
 
-	rn = pipex_rd_head4.rnh_addaddr(&session->ip_address,
-	    &session->ip_netmask, &pipex_rd_head4, session->ps4_rn, RTP_STATIC);
-	if (rn == NULL) {
-		splx(s);
-		free(session, M_TEMP);
-		return (ENOMEM);
+		rn = pipex_rd_head4.rnh_addaddr(&session->ip_address,
+		    &session->ip_netmask, &pipex_rd_head4, session->ps4_rn, RTP_STATIC);
+		if (rn == NULL) {
+			splx(s);
+			free(session, M_TEMP);
+			return (ENOMEM);
+		}
+	}
+	if (0) { /* NOT YET */
+                rn = pipex_rd_head6.rnh_addaddr(&session->ip6_address,
+                    &session->ip6_prefixlen, &pipex_rd_head6, session->ps6_rn, 
+                    RTP_STATIC);
+                if (rn == NULL) {
+                        splx(s);
+                        free(session, M_TEMP);
+                        return (ENOMEM);
+                }
 	}
 
 	chain = PIPEX_ID_HASHTABLE(session->session_id);
 	LIST_INSERT_HEAD(chain, session, id_chain);
 	LIST_INSERT_HEAD(&pipex_session_list, session, session_list);
-#ifdef PIPEX_PPTP
-	if (req->pr_protocol == PIPEX_PROTO_PPTP) {
+	switch (req->pr_protocol) {
+	case PIPEX_PROTO_PPTP:
+	case PIPEX_PROTO_L2TP:
 		chain = PIPEX_PEER_ADDR_HASHTABLE(
-		    session->proto.pptp.peer_address.s_addr);
+		    pipex_sockaddr_hash_key((struct sockaddr *)&session->peer));
 		LIST_INSERT_HEAD(chain, session, peer_addr_chain);
 	}
-#endif
 
 	/* if first session is added, start timer */
 	if (LIST_NEXT(session, session_list) == NULL)
@@ -485,7 +550,7 @@ pipex_get_closed(struct pipex_session_list_req *req)
 	while (!LIST_EMPTY(&pipex_close_wait_list)) {
 		session = LIST_FIRST(&pipex_close_wait_list);
 		req->plr_ppp_id[req->plr_ppp_id_count++] = session->ppp_id;
-		LIST_REMOVE(session, state_list);
+		LIST_REMOVE((struct pipex_session *)session, state_list);
 		if (req->plr_ppp_id_count >= PIPEX_MAX_LISTREQ) {
 			if (LIST_NEXT(session, state_list))
 				req->plr_flags |= PIPEX_LISTREQ_MORE;
@@ -505,15 +570,24 @@ pipex_destroy_session(struct pipex_session *session)
 
 	/* remove from radix tree and hash chain */
 	s = splnet();
-	rn = pipex_rd_head4.rnh_deladdr(&session->ip_address,
-	    &session->ip_netmask, &pipex_rd_head4,
-	    (struct radix_node *)session);
-	KASSERT(rn != NULL);
+
+	if (!in_nullhost(session->ip_address.sin_addr)) {
+		rn = pipex_rd_head4.rnh_deladdr(&session->ip_address,
+		    &session->ip_netmask, &pipex_rd_head4,
+		    (struct radix_node *)session);
+		KASSERT(rn != NULL);
+	}
 
 	LIST_REMOVE((struct pipex_session *)session, id_chain);
 	LIST_REMOVE((struct pipex_session *)session, session_list);
 #ifdef PIPEX_PPTP
 	if (session->protocol == PIPEX_PROTO_PPTP) {
+		LIST_REMOVE((struct pipex_session *)session,
+		    peer_addr_chain);
+	}
+#endif
+#ifdef PIPEX_L2TP
+	if (session->protocol == PIPEX_PROTO_L2TP) {
 		LIST_REMOVE((struct pipex_session *)session,
 		    peer_addr_chain);
 	}
@@ -622,18 +696,19 @@ pipex_ppp_dequeue(void)
 				if (session->pipex_iface !=
 				    tag->session->pipex_iface)
 					continue;
-				if (session->ip_forward == 0)
+				if (session->ip_forward == 0 &&
+				    session->ip6_forward == 0)
 					continue;
 				m0 = m_copym(m, 0, M_COPYALL, M_WAITOK);
 				if (m0 == NULL) {
 					session->stat.oerrors++;
 					continue;
 				}
-				pipex_ppp_output(m0, session, PPP_IP);
+				pipex_ppp_output(m0, session, tag->proto);
 			}
 			m_freem(m);
 		} else
-			pipex_ppp_output(m, tag->session, PPP_IP);
+			pipex_ppp_output(m, tag->session, tag->proto);
 	}
 
 	/* ppp input */
@@ -689,6 +764,7 @@ pipex_ppp_enqueue(struct mbuf *m0, struct pipex_session *session,
 	m_tag_prepend(m0, mtag);
 	tag = (struct pipex_tag *)(mtag + 1);
 	tag->session = session;
+	tag->proto = PPP_IP;	/* XXX need to support other protocols */
 
 	IF_ENQUEUE(queue, m0);
 	splx(s);
@@ -779,6 +855,8 @@ pipex_output(struct mbuf *m0, int af, int off,
 {
 	struct pipex_session *session;
 	struct ip ip;
+	struct pipex_tag *tag;
+	struct m_tag *mtag;
 
 	session = NULL;
 	switch (af) {
@@ -791,6 +869,20 @@ pipex_output(struct mbuf *m0, int af, int off,
 				session = pipex_lookup_by_ip_address(ip.ip_dst);
 		}
 		if (session != NULL) {
+			for (mtag = m_tag_find(m0, PACKET_TAG_PIPEX, NULL);
+			    mtag != NULL;
+			    mtag = m_tag_find(m0, PACKET_TAG_PIPEX, mtag)) {
+				tag = (struct pipex_tag *)(mtag + 1);
+				if (tag->session == session) {
+					/*
+					 * Don't encapsulate encapsulated
+					 * packets.
+					 */
+					m_freem(m0);
+					return (NULL);
+				}
+			}
+
 			if (off > 0)
 				m_adj(m0, off);
 
@@ -818,7 +910,7 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 		/*
 		 * Multicast packet is a idle packet and it's not TCP.
 		 */
-		if (session->ip_forward == 0)
+		if (session->ip_forward == 0 && session->ip6_forward == 0)
 			goto drop;
 		/* reset idle timer */
 		if (session->timeout_sec != 0) {
@@ -866,15 +958,8 @@ pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 	}
 #endif /* PIPEX_MPPE */
 	cp = hdr;
-	if (pipex_session_has_acf(session)) {
-		if (!pipex_session_is_acfc_enabled(session)) {
 			PUTCHAR(PPP_ALLSTATIONS, cp);
 			PUTCHAR(PPP_UI, cp);
-		}
-	}
-	if (pipex_session_is_pfc_enabled(session) && proto <= 0xff)
-		PUTCHAR(proto, cp);	/* protocol field compression */
-	else
 		PUTSHORT(proto, cp);
 
 	M_PREPEND(m0, cp - hdr, M_NOWAIT);
@@ -893,6 +978,11 @@ pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 		pipex_pptp_output(m0, session, 1, 1);
 		break;
 #endif
+#ifdef	PIPEX_L2TP
+	case PIPEX_PROTO_L2TP:
+		pipex_l2tp_output(m0, session);
+		break;
+#endif
 	default:
 		goto drop;
 	}
@@ -909,22 +999,45 @@ Static void
 pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 {
 	int proto, hlen = 0;
+	struct m_tag *mtag;
+	struct pipex_tag *tag;
 
-	switch ((proto = pipex_ppp_proto(m0, session, 0, &hlen))) {
+	proto = pipex_ppp_proto(m0, session, 0, &hlen);
 #ifdef PIPEX_MPPE
-	case PPP_CCP:
-		if (decrypted)
-			goto drop;
-		m_adj(m0, hlen);
-		pipex_ccp_input(m0, session);
-		return;
-	case PPP_COMP:
+	if (pipex_session_is_mppe_accepted(session) && proto == PPP_COMP) {
 		if (decrypted)
 			goto drop;
 		m_adj(m0, hlen);
 		pipex_mppe_input(m0, session);
 		return;
+	}
+	if (proto == PPP_CCP) {
+		if (decrypted)
+			goto drop;
+	
+#if NBPFILTER > 0
+	    {
+		struct ifnet *ifp = session->pipex_iface->ifnet_this;
+		if (ifp->if_bpf && ifp->if_type == IFT_PPP)
+			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_IN);
+	    }
 #endif
+		m_adj(m0, hlen);
+		pipex_ccp_input(m0, session);
+		return;
+	}
+#endif
+	/* delete mtag from decapsulated packet */
+	for (mtag = m_tag_find(m0, PACKET_TAG_PIPEX, NULL); mtag;
+	    mtag = m_tag_find(m0, PACKET_TAG_PIPEX, mtag)) {
+		tag = (struct pipex_tag *)(mtag + 1);
+		if (tag->session == session) {
+			m_tag_delete(m0, mtag);
+			break;
+		}
+	}
+
+	switch (proto) {
 	case PPP_IP:
 		if (session->ip_forward == 0)
 			goto drop;
@@ -937,6 +1050,15 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 		m_adj(m0, hlen);
 		pipex_ip_input(m0, session);
 		return;
+#ifdef INET6
+	case PPP_IPV6:
+		if (session->ip6_forward == 0)
+			goto drop;
+		/* XXX: support MPPE */
+		m_adj(m0, hlen);
+		pipex_ip6_input(m0, session);
+		return;
+#endif
 	default:
 		if (decrypted)
 			goto drop;
@@ -970,6 +1092,19 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 	PIPEX_PULLUP(m0, sizeof(struct ip));
 	if (m0 == NULL)
 		goto drop;
+
+#if 0
+	/*
+	 * XXX: hsuenaga
+	 * we need to know openbsd manners to adjust alignment
+	 */
+	if (!ALIGNED_POINTER(mtod(m0, caddr_t), struct ip *)) {
+		/* ip_output() assumes ip packet is aligned.  */
+		if ((m0 = m_copyup(m0, sizeof(struct ip),
+		    ((max_linkhdr + 3) & ~3))) == NULL)
+			goto drop;
+	}
+#endif
 
 	/* ingress filter */
 	ip = mtod(m0, struct ip *);
@@ -1017,6 +1152,77 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 	}
 	IF_ENQUEUE(&ipintrq, m0);
 	schednetisr(NETISR_IP);
+
+	ifp->if_ipackets++;
+	ifp->if_ibytes += len;
+	session->stat.ipackets++;
+	session->stat.ibytes += len;
+
+	splx(s);
+
+	return;
+drop:
+	if (m0 != NULL)
+		m_freem(m0);
+	session->stat.ierrors++;
+
+	return;
+}
+
+#ifdef INET6
+Static void
+pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
+{
+	struct ifnet *ifp;
+	struct ip6_hdr *ip6;
+	int s, len;
+
+	/* change recvif */
+	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
+	ifp = m0->m_pkthdr.rcvif;
+
+#if 0 /* XXX: alignment */
+	PIPEX_PULLUP(m0, sizeof(struct ip6_hdr));
+	if (m0 == NULL)
+		goto drop;
+
+	if (!ALIGNED_POINTER(mtod(m0, caddr_t), struct ip6_hdr *)) {
+		/* ip6_output() assumes ip packet is aligned.  */
+		if ((m0 = m_copyup(m0, sizeof(struct ip6_hdr),
+		    ((max_linkhdr + 3) & ~3))) == NULL)
+			goto drop;
+	}
+#endif
+	ip6 = mtod(m0, struct ip6_hdr *);
+
+	/*
+	 * XXX: what is reasonable ingress filter ??? 
+	 *      only one address is enough ?? 
+	 */
+
+	/* XXX: we must define idle packet for IPv6(ICMPv6). */
+
+	/* 
+	 * XXX: tcpmss adjustment for IPv6 is required???
+	 *      We may use PMTUD in IPv6....
+	 */
+
+	len = m0->m_pkthdr.len;
+
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, AF_INET, m0, BPF_DIRECTION_IN);
+#endif
+
+	s = splnet();
+	if (IF_QFULL(&ip6intrq)) {
+		IF_DROP(&ipintrq);
+		ifp->if_collisions++;
+		splx(s);
+		goto drop;
+	}
+	IF_ENQUEUE(&ip6intrq, m0);
+	schednetisr(NETISR_IPV6);
 
 	ifp->if_ipackets++;
 	ifp->if_ibytes += len;
@@ -1104,6 +1310,7 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 
 	return (session);
 }
+#endif
 
 struct mbuf *
 pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
@@ -1190,7 +1397,7 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 	session->stat.opackets++;
 	session->stat.obytes += len;
 
-	over_ifp->if_output(over_ifp, m0, &session->proto.pppoe.peer_addr,
+	over_ifp->if_output(over_ifp, m0, (struct sockaddr *)&session->peer,
 	    NULL);
 
 	return;
@@ -1244,8 +1451,8 @@ pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
 	ip->ip_p = IPPROTO_GRE;
 	ip->ip_tos = 0;
 
-	ip->ip_src = session->proto.pptp.our_address;
-	ip->ip_dst = session->proto.pptp.peer_address;
+	ip->ip_src = session->local.sin4.sin_addr;
+	ip->ip_dst = session->peer.sin4.sin_addr;
 
 	/* setup gre(ver1) header information */
 	gre = PIPEX_SEEK_NEXTHDR(ip, sizeof(struct ip),
@@ -1264,8 +1471,8 @@ pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
 	}
 	if (has_ack) {
 		gre->flags |= PIPEX_GRE_AFLAG;
-		session->proto.pptp.rcv_acked = session->proto.pptp.rcv_nxt;
-		PUTLONG(session->proto.pptp.rcv_nxt - 1, cp);
+		session->proto.pptp.rcv_acked = session->proto.pptp.rcv_nxt - 1;
+		PUTLONG(session->proto.pptp.rcv_acked, cp);
        	}
 	gre->flags = htons(gre->flags);
 
@@ -1474,7 +1681,7 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 not_ours:
 	/* revert original seq/ack values */
 	seq--;
-	ack--;	
+	ack--;
 
 	/*
 	 * overwrite sequence numbers to adjust a gap between pipex and
@@ -1519,7 +1726,31 @@ drop:
 }
 
 struct pipex_session *
-pipex_pptp_userland_lookup_session(struct mbuf *m0, struct in_addr dst)
+pipex_pptp_userland_lookup_session_ipv4(struct mbuf *m0, struct in_addr dst)
+{
+	struct sockaddr_in sin4;
+
+	sin4.sin_family = AF_INET;
+	sin4.sin_addr = dst;
+
+	return pipex_pptp_userland_lookup_session(m0, (struct sockaddr *)&sin4);
+}
+
+#ifdef INET6
+struct pipex_session *
+pipex_pptp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
+{
+	struct sockaddr_in6 sin6;
+
+	sin6.sin6_family = AF_INET6;
+	in6_recoverscope(&sin6, &dst, NULL);
+
+	return pipex_pptp_userland_lookup_session(m0, (struct sockaddr *)&sin6);
+}
+#endif
+
+Static struct pipex_session *
+pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 {
 	struct pipex_gre_header gre;
 	struct pipex_hash_head *list;
@@ -1554,9 +1785,10 @@ pipex_pptp_userland_lookup_session(struct mbuf *m0, struct in_addr dst)
 	/* lookup pipex session table */
 	id = ntohs(gre.call_id);
 
-	list = PIPEX_PEER_ADDR_HASHTABLE(dst.s_addr);
+	list = PIPEX_PEER_ADDR_HASHTABLE(pipex_sockaddr_hash_key(sa));
 	LIST_FOREACH(session, list, peer_addr_chain) {
-		if (session->proto.pptp.peer_address.s_addr != dst.s_addr)
+		if (pipex_sockaddr_compar_addr(
+		    (struct sockaddr *)&session->peer, sa) != 0)
 			continue;
 		if (session->peer_session_id == id)
 			break;
@@ -1564,8 +1796,8 @@ pipex_pptp_userland_lookup_session(struct mbuf *m0, struct in_addr dst)
 #ifdef PIPEX_DEBUG
 	if (session == NULL) {
 		PIPEX_DBG((NULL, LOG_DEBUG,
-		    "<%s> session not found (dst=%s,call_id=%d)",
-		    __func__, inet_ntoa(dst), (int)gre.call_id));
+		    "<%s> session not found (,call_id=%d)",
+		    __func__, (int)gre.call_id));
 	}
 #endif
 	return (session);
@@ -1617,6 +1849,451 @@ pipex_pptp_userland_output(struct mbuf *m0, struct pipex_session *session)
 	return (m0);
 }
 #endif /* PIPEX_PPTP */
+
+#ifdef PIPEX_L2TP
+/***********************************************************************
+ * L2TP support
+ ***********************************************************************/
+Static void
+pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
+{
+	int hlen, plen, datalen;
+	struct pipex_l2tp_header *l2tp = NULL;
+	struct pipex_l2tp_seq_header *seq = NULL;
+	struct udphdr *udp;
+	struct ip *ip;
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif
+
+	hlen = sizeof(struct pipex_l2tp_header) +
+	    ((pipex_session_is_l2tp_data_sequencing_on(session))
+		    ? sizeof(struct pipex_l2tp_seq_header) : 0) +
+	    sizeof(struct udphdr) +
+	    ((session->peer.sin6.sin6_family == AF_INET6)
+		    ? sizeof(struct ip6_hdr) : sizeof(struct ip));
+
+	datalen = 0;
+	if (m0 != NULL) {
+		datalen = m0->m_pkthdr.len;
+		M_PREPEND(m0, hlen, M_NOWAIT);
+		if (m0 == NULL)
+			goto drop;
+	} else {
+		MGETHDR(m0, M_DONTWAIT, MT_DATA);
+		if (m0 == NULL)
+			goto drop;
+		KASSERT(hlen <= MHLEN);
+		m0->m_pkthdr.len = m0->m_len = hlen;
+	}
+
+	hlen = (session->peer.sin6.sin6_family == AF_INET6)
+	    ? sizeof(struct ip6_hdr) : sizeof(struct ip);
+	plen = datalen + sizeof(struct pipex_l2tp_header) +
+	    ((pipex_session_is_l2tp_data_sequencing_on(session))
+		    ? sizeof(struct pipex_l2tp_seq_header) : 0);
+ 
+	l2tp = (struct pipex_l2tp_header *)
+	    (mtod(m0, caddr_t) + hlen + sizeof(struct udphdr));
+	l2tp->flagsver = PIPEX_L2TP_VER | PIPEX_L2TP_FLAG_LENGTH;
+	l2tp->length = htons(plen);
+	l2tp->tunnel_id = htons(session->proto.l2tp.peer_tunnel_id);
+	l2tp->session_id = htons(session->peer_session_id);
+	if (pipex_session_is_l2tp_data_sequencing_on(session)) {
+		seq = (struct pipex_l2tp_seq_header *)(l2tp + 1);
+		l2tp->flagsver |= PIPEX_L2TP_FLAG_SEQUENCE;
+		l2tp->length += sizeof(struct pipex_l2tp_seq_header);
+		seq->ns = htons(session->proto.l2tp.ns_nxt);
+		session->proto.l2tp.ns_nxt++;
+		session->proto.l2tp.ns_gap++;
+		session->proto.l2tp.nr_acked = session->proto.l2tp.nr_nxt - 1;
+		seq->nr = htons(session->proto.l2tp.nr_acked);
+	}
+	HTONS(l2tp->flagsver);
+ 
+	plen += sizeof(struct udphdr);
+	udp = (struct udphdr *)(mtod(m0, caddr_t) + hlen);
+	udp->uh_sport = session->local.sin6.sin6_port;
+	udp->uh_dport = session->peer.sin6.sin6_port;
+	udp->uh_ulen = htons(plen);
+
+	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
+	switch (session->peer.sin6.sin6_family) {
+	case AF_INET:
+		ip = mtod(m0, struct ip *);
+		ip->ip_p = IPPROTO_UDP;
+		ip->ip_src = session->local.sin4.sin_addr;
+		ip->ip_dst = session->peer.sin4.sin_addr;
+		ip->ip_len = htons(hlen + plen);
+		ip->ip_ttl = MAXTTL;
+		ip->ip_tos = 0;
+
+		udp->uh_sum = in_cksum_phdr(ip->ip_src.s_addr,
+		    ip->ip_dst.s_addr, htons(plen  + IPPROTO_UDP));
+		m0->m_pkthdr.csum_flags |= M_UDPV4_CSUM_OUT;
+
+		if (ip_output(m0, NULL, NULL, 0, NULL, NULL) != 0) {
+			PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
+			goto drop;
+		}
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ip6 = mtod(m0, struct ip6_hdr *);
+
+		ip6->ip6_flow = 0;
+		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+		ip6->ip6_vfc |= IPV6_VERSION;
+		ip6->ip6_nxt = IPPROTO_UDP;
+		ip6->ip6_src = session->local.sin6.sin6_addr;
+		(void)in6_embedscope(&ip6->ip6_dst,
+		    &session->peer.sin6, NULL, NULL);
+		/* ip6->ip6_plen will be filled in ip6_output. */
+
+		udp->uh_sum = 0;
+		if ((udp->uh_sum = in6_cksum(m0, IPPROTO_UDP,
+		    sizeof(struct ip6_hdr), plen)) == 0)
+			udp->uh_sum = 0xffff;
+		if (ip6_output(m0, NULL, NULL, 0, NULL, NULL, NULL) != 0) {
+			PIPEX_DBG((session, LOG_DEBUG, "ip6_output failed."));
+			goto drop;
+		}
+		break;
+#endif
+	}
+	udpstat.udps_opackets++;
+
+	if (datalen > 0) {	/* network layer only */
+		/* countup statistics */
+		session->stat.opackets++;
+		session->stat.obytes += datalen;
+	}
+
+	return;
+drop:
+	session->stat.oerrors++;
+
+	return;
+}
+
+struct pipex_session *
+pipex_l2tp_lookup_session(struct mbuf *m0, int off)
+{
+	struct pipex_session *session;
+	uint16_t flags, session_id, ver;
+	u_char *cp, buf[PIPEX_L2TP_MINLEN];
+
+	if (m0->m_pkthdr.len < off + PIPEX_L2TP_MINLEN) {
+		PIPEX_DBG((NULL, LOG_DEBUG, 
+		    "<%s> packet length is too short", __func__));
+		goto not_ours;
+	}
+
+	/* get first 16bits of L2TP */
+	m_copydata(m0, off, sizeof(buf), buf);
+	cp = buf;
+	GETSHORT(flags, cp);
+	ver = flags & PIPEX_L2TP_VER_MASK;
+
+	/* l2tp version must be '2' */
+	if (ver != PIPEX_L2TP_VER) {
+		PIPEX_DBG((NULL, LOG_DEBUG,
+		    "<%s> l2tp header wrong version %u.", __func__, ver));
+		goto not_ours;
+	}
+	if ((flags & PIPEX_L2TP_FLAG_TYPE) != 0)
+		goto not_ours;
+
+	if (flags & PIPEX_L2TP_FLAG_LENGTH)
+		cp += 2;			/* skip length field */
+	cp += 2;				/* skip tunnel-id field */
+	GETSHORT(session_id, cp);		/* get session-id field */
+
+	/* lookup pipex session table */
+	session = pipex_lookup_by_session_id(PIPEX_PROTO_L2TP, session_id);
+#ifdef PIPEX_DEBUG
+	if (session == NULL) {
+		PIPEX_DBG((NULL, LOG_DEBUG,
+		    "<%s> session not found (id=%d)", __func__, session_id));
+		goto not_ours;
+	}
+#endif
+
+	return (session);
+
+not_ours:
+	return (NULL);
+}
+
+struct mbuf *
+pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session)
+{
+	struct pipex_l2tp_session *l2tp_session;
+	int length, offset, hlen, nseq, proto, ppphlen;
+	u_char *cp, *nsp, *nrp, code;
+	uint16_t flags, ns = 0, nr = 0;
+
+	length = offset = ns = nr = 0;
+	l2tp_session = &session->proto.l2tp;
+	nsp = nrp = NULL;
+
+	m_copydata(m0, off0, sizeof(flags), (caddr_t)&flags);
+
+	flags = ntohs(flags) & PIPEX_L2TP_FLAG_MASK;
+	KASSERT((flags & PIPEX_L2TP_FLAG_TYPE) == 0);
+
+	hlen = 2;				/* flags and version fields */
+	if (flags & PIPEX_L2TP_FLAG_LENGTH)	/* length */
+		hlen += 2;
+	hlen += 4;				/* tunnel-id and session-id */
+	if (flags & PIPEX_L2TP_FLAG_SEQUENCE)	/* ns and nr */
+		hlen += 4;
+	if (flags & PIPEX_L2TP_FLAG_OFFSET)	/* offset */
+		hlen += 2;
+
+	PIPEX_PULLUP(m0, off0 + hlen);
+	if (m0  == NULL)
+		goto drop;
+
+	cp = mtod(m0, u_char *) + off0;
+	cp += 2;	/* flags and version */
+	if (flags & PIPEX_L2TP_FLAG_LENGTH)
+		GETSHORT(length, cp);
+	else
+		length = m0->m_pkthdr.len - off0;
+	cp += 4;	/* skip tunnel-id and session-id field */
+
+	/* pullup for seek sequences in header */
+	nseq = 0;
+	if (flags & PIPEX_L2TP_FLAG_SEQUENCE) {
+		nsp = cp;
+		GETSHORT(ns, cp);
+		nrp = cp;
+		GETSHORT(nr, cp);
+
+		nr++;
+		if (SEQ16_GT(nr, l2tp_session->ns_una) &&
+		    SEQ16_LE(nr, l2tp_session->ns_nxt))	
+			/* update 'ns_una' only if the ns is in valid range */
+			l2tp_session->ns_una = nr;
+
+		if (SEQ16_LT(ns, l2tp_session->nr_nxt))
+			goto out_seq;
+
+	ns++;
+	nseq = SEQ16_SUB(ns, l2tp_session->nr_nxt);
+	l2tp_session->nr_nxt = ns;
+	}
+	if (flags & PIPEX_L2TP_FLAG_OFFSET)
+		GETSHORT(offset, cp);
+
+	if (m0->m_pkthdr.len < off0 + hlen + offset + PIPEX_PPPMINLEN)
+		goto drop;
+
+	proto = pipex_ppp_proto(m0, session, off0 + hlen + offset, &ppphlen);
+	switch (proto) {
+#ifdef	PIPEX_MPPE
+	case PPP_CCP:
+		code = 0;
+		m_copydata(m0, hlen + ppphlen, 1, &code);
+		if (code != CCP_RESETREQ && code != CCP_RESETACK)
+			goto not_ours;
+		break;
+
+	case PPP_COMP:
+#endif
+	case PPP_IP:
+#if 0 /* NOT YET */
+#ifdef INET6
+	case PPP_IPV6:
+#endif
+#endif
+		break;
+
+	default:
+		goto not_ours;
+	}
+
+	/* ok,  The packet is for PIPEX */
+	session->proto.l2tp.nr_gap += nseq;
+
+	/* cut off the header and offset */
+	m_adj(m0, off0 + hlen + offset);
+	length -= hlen + offset;
+
+	/* ensure the mbuf length equals the PPP frame length */
+	if (m0->m_pkthdr.len < length)
+		goto drop;
+	if (m0->m_pkthdr.len > length) {
+		if (m0->m_len == m0->m_pkthdr.len) {
+			m0->m_len = length;
+			m0->m_pkthdr.len = length;
+		} else
+			m_adj(m0, length - m0->m_pkthdr.len);
+	}
+
+	/* input ppp packets to kernel session */
+	if (pipex_ppp_enqueue(m0, session, &pipexinq))
+		goto drop;
+
+	return (NULL);
+not_ours:
+	/*
+	 * overwrite sequence numbers to adjust a gap between pipex and
+	 * userland.
+	 */
+	if (flags & PIPEX_L2TP_FLAG_SEQUENCE) {
+		--ns; --nr;	/* revert original values */
+		ns -= l2tp_session->nr_gap;
+		PUTSHORT(ns, nsp);
+
+		if (l2tp_session->ns_nxt == l2tp_session->ns_una) {
+			nr -= l2tp_session->ns_gap;
+			l2tp_session->ul_ns_una = nr;
+		} else {
+			/*
+			 * There are sending packets they are not acked.
+			 * In this situation, (ack - snd_gap) may points
+			 * before sending window of userland.  So we don't
+			 * update the ack number.
+			 */
+			nr = l2tp_session->ul_ns_una;
+		}
+		PUTSHORT(nr, nrp);
+	}
+
+	return (m0);
+out_seq:
+	pipex_session_log(session, LOG_DEBUG, 
+	    "Received bad data packet: out of sequence: seq=%u(%u-) "
+	    "ack=%u(%u-%u)", ns, l2tp_session->nr_nxt, nr, l2tp_session->ns_una,
+	    l2tp_session->ns_nxt);
+
+	/* FALLTHROUGH */
+drop:
+	if (m0 != NULL)
+		m_freem(m0);
+	session->stat.ierrors++;
+
+	return (NULL);
+}
+
+struct pipex_session *
+pipex_l2tp_userland_lookup_session_ipv4(struct mbuf *m0, struct in_addr dst)
+{
+	struct sockaddr_in sin4;
+
+	sin4.sin_family = AF_INET;
+	sin4.sin_addr = dst;
+
+	return pipex_l2tp_userland_lookup_session(m0, (struct sockaddr *)&sin4);
+}
+
+#ifdef INET6
+struct pipex_session *
+pipex_l2tp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
+{
+	struct sockaddr_in6 sin6;
+
+	sin6.sin6_family = AF_INET6;
+	in6_recoverscope(&sin6, &dst, NULL);
+
+	return pipex_l2tp_userland_lookup_session(m0, (struct sockaddr *)&sin6);
+}
+#endif
+
+Static struct pipex_session *
+pipex_l2tp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
+{
+	struct pipex_l2tp_header l2tp;
+	struct pipex_hash_head *list;
+	struct pipex_session *session;
+	uint16_t session_id, tunnel_id, flags;
+
+	/* pullup */
+	if (m0->m_pkthdr.len < sizeof(l2tp)) {
+		PIPEX_DBG((NULL, LOG_DEBUG,
+		    "<%s> packet length is too short", __func__));
+		return (NULL);
+	}
+
+	/* get flags */
+	m_copydata(m0, 0, sizeof(l2tp), (caddr_t)&l2tp);
+	flags = ntohs(l2tp.flagsver);
+
+	/* l2tp version must be '2' */
+	if ((flags & PIPEX_L2TP_VER_MASK) != PIPEX_L2TP_VER) {
+		PIPEX_DBG((NULL, LOG_DEBUG,
+		    "<%s> l2tp header wrong version.", __func__));
+		return (NULL);
+	}
+	/* We need L2TP data messages only */
+	if ((flags & PIPEX_L2TP_FLAG_TYPE) != 0)
+		return (NULL);
+	/* No need to hook packets that don't have the sequence field */
+	if ((flags & PIPEX_L2TP_FLAG_SEQUENCE) == 0)
+		return (NULL);
+
+	session_id = ntohs(l2tp.session_id);
+	tunnel_id = ntohs(l2tp.tunnel_id);
+
+	list = PIPEX_PEER_ADDR_HASHTABLE(pipex_sockaddr_hash_key(sa));
+	LIST_FOREACH(session, list, peer_addr_chain) {
+		if (pipex_sockaddr_compar_addr(
+		    (struct sockaddr *)&session->peer, sa) != 0)
+			continue;
+		if (session->proto.l2tp.peer_tunnel_id != tunnel_id)
+			continue;
+		if (session->peer_session_id == session_id)
+			break;
+	}
+#ifdef PIPEX_DEBUG
+	if (session == NULL) {
+		PIPEX_DBG((NULL, LOG_DEBUG, "<%s> session not found "
+		    "(tunnel_id=%d, session_id=%d)", __func__,
+		    tunnel_id, session_id));
+	}
+#endif
+
+	return (session);
+}
+
+struct mbuf *
+pipex_l2tp_userland_output(struct mbuf *m0, struct pipex_session *session)
+{
+	struct pipex_l2tp_header *l2tp;
+	struct pipex_l2tp_seq_header *seq;
+	uint16_t ns, nr;
+
+	/* check length */
+	PIPEX_PULLUP(m0, sizeof(struct pipex_l2tp_header) +
+	    sizeof(struct pipex_l2tp_seq_header));
+	if (m0 == NULL)
+		return (NULL);
+
+	l2tp = mtod(m0, struct pipex_l2tp_header *);
+	KASSERT(ntohs(l2tp->flagsver) & PIPEX_L2TP_FLAG_SEQUENCE);
+
+	/*
+	 * overwrite sequence numbers to adjust a gap between pipex and
+	 * userland.
+	 */
+		seq = (struct pipex_l2tp_seq_header *)(l2tp + 1);
+		ns = ntohs(seq->ns);
+		nr = ntohs(seq->nr);
+
+		ns += session->proto.l2tp.ns_gap;
+		seq->ns = htons(ns);
+		session->proto.l2tp.ns_nxt++;
+
+		nr += session->proto.l2tp.nr_gap;
+		seq->nr = htons(nr);
+		if (SEQ16_GT(nr, session->proto.l2tp.nr_acked))
+			session->proto.l2tp.nr_acked = nr;
+
+	return (m0);
+}
+#endif /* PIPEX_L2TP */
 
 #ifdef PIPEX_MPPE
 /**********************************************************************
@@ -2230,8 +2907,9 @@ pipex_session_log(struct pipex_session *session, int prio, const char *fmt, ...)
 		addlog("pipex: ppp=%d iface=%s protocol=%s id=%d ",
 		    session->ppp_id, session->pipex_iface->ifnet_this->if_xname,
 		    (session->protocol == PIPEX_PROTO_PPPOE)? "PPPoE" :
-		    (session->protocol == PIPEX_PROTO_PPTP)? "PPTP" : "Unknown",
-		    session->session_id);
+		    (session->protocol == PIPEX_PROTO_PPTP)? "PPTP" : 
+		    (session->protocol == PIPEX_PROTO_L2TP) ? "L2TP" :
+		    "Unknown", session->session_id);
 	} else
 		addlog("pipex: ");
 
@@ -2241,4 +2919,47 @@ pipex_session_log(struct pipex_session *session, int prio, const char *fmt, ...)
 	addlog("%s\n", logbuf);
 
 	return;
+}
+
+Static uint32_t
+pipex_sockaddr_hash_key(struct sockaddr *sa)
+{
+	switch (sa->sa_family) {
+	case AF_INET:
+		return ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
+	case AF_INET6:
+		return ntohl(((struct sockaddr_in6 *)sa)->sin6_addr
+		    .s6_addr32[3]);
+	}
+	panic("pipex_sockaddr_hash_key: unknown address family");
+	return 0;
+}
+
+/*
+ * Compare struct sockaddr_in{,6} with the address only.
+ * The port number is not covered.
+ */
+Static int
+pipex_sockaddr_compar_addr(struct sockaddr *a, struct sockaddr *b)
+{
+	int cmp;
+
+	cmp = b->sa_family - a->sa_family;
+	if (cmp != 0)
+		return cmp;
+	switch (a->sa_family) {
+	case AF_INET:
+		return ((struct sockaddr_in *)b)->sin_addr.s_addr -
+		    ((struct sockaddr_in *)a)->sin_addr.s_addr;
+	case AF_INET6:
+		cmp = ((struct sockaddr_in6 *)b)->sin6_scope_id -
+		    ((struct sockaddr_in6 *)a)->sin6_scope_id;
+		if (cmp != 0)
+			return cmp;
+		return memcmp(&((struct sockaddr_in6 *)a)->sin6_addr,
+		    &((struct sockaddr_in6 *)b)->sin6_addr,
+		    sizeof(struct in6_addr));
+	}
+	panic("pipex_sockaddr_compar_addr: unknown address family");
+	return -1;
 }

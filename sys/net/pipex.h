@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.5 2010/09/22 13:03:48 claudio Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.6 2010/09/24 14:50:30 hsuenaga Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -32,8 +32,9 @@
 #define PIPEX_ENABLE			1
 #define PIPEX_DISABLE			0
 
-#define PIPEX_PROTO_PPPOE		0x8864	/* protocol pppoe */
-#define PIPEX_PROTO_PPTP		0x880b	/* protocol pptp */
+#define PIPEX_PROTO_L2TP		0x0001  /* protocol L2TP */
+#define PIPEX_PROTO_PPTP		0x0002	/* protocol pptp */
+#define PIPEX_PROTO_PPPOE		0x0003	/* protocol pppoe */
 #define PIPEX_MAX_LISTREQ		128	/* list request size */
 #define	PIPEX_MPPE_KEYLEN		16
 
@@ -78,6 +79,8 @@ struct pipex_session_req {
 
 	struct in_addr	pr_ip_address;		/* framed IP-Address */
 	struct in_addr	pr_ip_netmask;		/* framed IP-Netmask */
+	struct sockaddr_in6 pr_ip6_address;	/* framed IPv6-Address */
+	int		pr_ip6_prefixlen;	/* framed IPv6-Prefixlen */
 	union {
 		struct {
 			uint32_t snd_nxt;	/* send next */
@@ -87,14 +90,26 @@ struct pipex_session_req {
 			int winsz;		/* window size */
 			int maxwinsz;		/* max window size */
 			int peer_maxwinsz;	/* peer's max window size */
-			struct in_addr peer_address;	/* peer's IP address */
-			struct in_addr our_address;	/* our IP address */
 		} pptp;
 		struct {
+			/* select protocol options: 1 for enable */
+			uint32_t option_flags;
+#define	PIPEX_L2TP_USE_SEQUENCING	0x00000001
+
+			/* session keys */
+			uint16_t tunnel_id;	/* our tunnel-id */
+			uint16_t peer_tunnel_id;/* peer's tunnel-id */
+			uint32_t ns_nxt;	/* send next */
+			uint32_t nr_nxt;	/* receive next */
+			uint32_t ns_una;	/* unacked */
+			uint32_t nr_acked;	/* recv acked */
+		} l2tp;
+		struct {
 			char over_ifname[IF_NAMESIZE]; 	/* ethernet i/f name */
-			struct ether_addr peer_address;/* peer's ether address*/
 		} pppoe;
 	} pr_proto;
+	struct sockaddr_storage		peer_address;
+	struct sockaddr_storage		local_address;
 	struct pipex_mppe_req pr_mppe_recv;
 	struct pipex_mppe_req pr_mppe_send;
 };
@@ -131,13 +146,13 @@ struct pppx_hdr {
 
 
 /* PIPEX ioctls */
-#define PIPEXSMODE	_IOW ('t',  96, int)
-#define PIPEXGMODE	_IOR ('t',  97, int)
-#define PIPEXASESSION	_IOW ('t',  98, struct pipex_session_req)
-#define PIPEXDSESSION	_IOWR('t',  99, struct pipex_session_close_req)
-#define PIPEXCSESSION	_IOW ('t', 100, struct pipex_session_config_req)
-#define PIPEXGSTAT	_IOWR('t', 101, struct pipex_session_stat_req)
-#define PIPEXGCLOSED	_IOR ('t', 102, struct pipex_session_list_req)
+#define PIPEXSMODE	_IOW ('p',  1, int)
+#define PIPEXGMODE	_IOR ('p',  2, int)
+#define PIPEXASESSION	_IOW ('p',  3, struct pipex_session_req)
+#define PIPEXDSESSION	_IOWR('p',  4, struct pipex_session_close_req)
+#define PIPEXCSESSION	_IOW ('p',  5, struct pipex_session_config_req)
+#define PIPEXGSTAT	_IOWR('p',  6, struct pipex_session_stat_req)
+#define PIPEXGCLOSED	_IOR ('p',  7, struct pipex_session_list_req)
 
 #ifdef _KERNEL
 
@@ -162,11 +177,18 @@ int                   pipex_notify_close_session_all(void);
 
 struct mbuf           *pipex_output (struct mbuf *, int, int, struct pipex_iface_context *);
 struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
+struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
 struct mbuf           *pipex_pppoe_input (struct mbuf *, struct pipex_session *);
 struct pipex_session  *pipex_pptp_lookup_session (struct mbuf *);
 struct mbuf           *pipex_pptp_input (struct mbuf *, struct pipex_session *);
-struct pipex_session  *pipex_pptp_userland_lookup_session (struct mbuf *, struct in_addr);
+struct pipex_session  *pipex_pptp_userland_lookup_session_ipv4 (struct mbuf *, struct in_addr);
+struct pipex_session  *pipex_pptp_userland_lookup_session_ipv6 (struct mbuf *, struct in6_addr);
 struct mbuf           *pipex_pptp_userland_output (struct mbuf *, struct pipex_session *);
+struct pipex_session  *pipex_l2tp_lookup_session (struct mbuf *, int);
+struct mbuf           *pipex_l2tp_input (struct mbuf *, int off, struct pipex_session *);
+struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv4 (struct mbuf *, struct in_addr);
+struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv6 (struct mbuf *, struct in6_addr);
+struct mbuf           *pipex_l2tp_userland_output (struct mbuf *, struct pipex_session *);
 int                   pipex_ioctl (struct pipex_iface_context *, int, caddr_t);
 __END_DECLS
 

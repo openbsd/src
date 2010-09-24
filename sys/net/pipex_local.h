@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.8 2010/09/22 13:03:48 claudio Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.9 2010/09/24 14:50:30 hsuenaga Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -33,6 +33,7 @@
 #endif
 
 #define	PIPEX_PPTP	1
+#define	PIPEX_L2TP	1
 #define	PIPEX_PPPOE	1
 #define	PIPEX_MPPE	1
 
@@ -76,7 +77,6 @@ struct pipex_mppe {
 #ifdef PIPEX_PPPOE
 struct pipex_pppoe_session {
 	struct ifnet *over_ifp;			/* ether inteface */
-	struct sockaddr peer_addr;		/* peer's sockaddr */
 };
 #endif /* PIPEX_PPPOE */
 
@@ -95,15 +95,61 @@ struct pipex_pptp_session {
 	int winsz;				/* windows size */
 	int maxwinsz;				/* max windows size */
 	int peer_maxwinsz;			/* peer's max windows size */
-
-	struct in_addr peer_address;		/* inet destination address */
-	struct in_addr our_address;		/* inet source address */
 };
 #endif /* PIPEX_PPTP */
+
+#ifdef PIPEX_L2TP
+/*
+ * L2TP Packet headers
+ *
+ *   +----+---+----+---+----+--------+
+ *   |IPv4|UDP|L2TP|PPP|IPv4|Data....|
+ *   +----+---+----+---+----+--------+
+ *
+ * Session Data
+ *
+ *   IPv4    IP_SRC         <-- required for encap.
+ *           IP_DST         <-- required for encap.
+ *
+ *   UDP     SPort          <-- required for encap.
+ *           DPort          <-- required for encap.
+ *
+ *   L2TP    FLAGS          <-- only handle TYPE=0 (data)
+ *           Tunnel ID      <-- ID per tunnel(NOT a key: differed from RFC)
+ *           Session ID     <-- ID per PPP session(KEY to look up session)
+ *           Ns(SEND SEQ)   <-- sequence number of packet to send(opt.)
+ *           Nr(RECV SEQ)   <-- sequence number of packet to recv(opt.)
+ *
+ * - Recv Session lookup key is (Tunnnel ID, Session ID) in RFC.
+ *   - BUT (Session ID) in PIPEX. SESSION ID MUST BE UNIQ.
+ *
+ * - We must update (Ns, Nr) of data channel. and we must adjust (Ns, Nr)
+ *   in packets from/to userland.
+ */
+struct pipex_l2tp_session {
+	/* KEYS for session lookup (host byte order) */
+	uint16_t tunnel_id;		/* our tunnel-id */
+	uint16_t peer_tunnel_id;	/* peer's tunnel-id */
+
+	/* protocol options */
+	uint32_t option_flags;
+
+	int16_t ns_gap;		/* gap between userland and pipex */
+	int16_t nr_gap;		/* gap between userland and pipex */
+	uint16_t ul_ns_una;	/* unacked sequence number (userland) */
+
+	uint16_t ns_nxt;	/* next sequence number to send */
+	uint16_t ns_una;	/* unacked sequence number to send*/
+
+	uint16_t nr_nxt;	/* next sequence number to recv */
+	uint16_t nr_acked;	/* acked sequence number to recv */
+};
+#endif /* PIPEX_L2TP */
 
 /* pppac ip-extension sessoin table */
 struct pipex_session {
 	struct radix_node	ps4_rn[2];  /* tree glue, and other values */
+	struct radix_node	ps6_rn[2];  /* tree glue, and other values */
 	LIST_ENTRY(pipex_session) session_list;	/* all session chain */
 	LIST_ENTRY(pipex_session) state_list;	/* state list chain */
 	LIST_ENTRY(pipex_session) id_chain;	/* id hash chain */
@@ -116,8 +162,9 @@ struct pipex_session {
 #define PIPEX_STATE_CLOSED		0x0003
 
 	uint16_t	ip_forward:1,		/* {en|dis}ableIP forwarding */
+			ip6_forward:1,		/* {en|dis}able IPv6 forwarding */
 			is_multicast:1,		/* virtual entry for mutlicast */
-			reserved:14;
+			reserved:13;
 	uint16_t	protocol;		/* tunnel protocol (PK) */
 	uint16_t	session_id;		/* session-id (PK) */
 	uint16_t	peer_session_id;	/* peer's session-id */
@@ -127,6 +174,8 @@ struct pipex_session {
 
 	struct sockaddr_in ip_address;		/* remote address (AK) */
 	struct sockaddr_in ip_netmask;		/* remote address mask (AK) */
+	struct sockaddr_in6 ip6_address; /* remote IPv6 address */
+	int		ip6_prefixlen;   /* remote IPv6 prefixlen */
 
 	struct pipex_iface_context* pipex_iface;/* context for interface */
 
@@ -145,8 +194,16 @@ struct pipex_session {
 #ifdef PIPEX_PPTP
 		struct pipex_pptp_session pptp;		/* context for PPTP */
 #endif /* PIPEX_PPTP */
+#ifdef PIPEX_L2TP
+		struct pipex_l2tp_session l2tp;
+#endif
 		char _proto_unknown[0];
 	} proto;
+	union {
+		struct sockaddr_in	sin4;
+		struct sockaddr_in6	sin6;
+		struct sockaddr_dl	sdl;
+	} peer, local;
 };
 
 /* gre header */
@@ -177,6 +234,34 @@ struct pipex_pppoe_header {
 	uint16_t length;			/* length */
 } __attribute__((__packed__));
 
+/* l2tp header */
+struct pipex_l2tp_header {
+	uint16_t flagsver;
+#define PIPEX_L2TP_FLAG_MASK		0xfff0
+#define PIPEX_L2TP_FLAG_TYPE		0x8000
+#define PIPEX_L2TP_FLAG_LENGTH		0x4000
+#define PIPEX_L2TP_FLAG_SEQUENCE	0x0800
+#define PIPEX_L2TP_FLAG_OFFSET		0x0200
+#define PIPEX_L2TP_FLAG_PRIORITY	0x0100
+#define PIPEX_L2TP_VER_MASK		0x000f
+#define PIPEX_L2TP_VER			2
+	uint16_t length; /* optional */
+	uint16_t tunnel_id;
+	uint16_t session_id;
+	/* can be followed by option header */
+} __attribute__((__packed__));
+
+/* l2tp option header */
+struct pipex_l2tp_seq_header {
+	uint16_t ns;
+	uint16_t nr;
+} __attribute__((__packed__));
+
+struct pipex_l2tp_offset_header {
+	uint16_t offset_size;
+	/* uint8_t offset_pad[] */
+} __attribute__((__packed__));
+
 #ifdef PIPEX_DEBUG
 #define PIPEX_DBG(a) if (pipex_debug & 1) pipex_session_log a
 /* #define PIPEX_MPPE_DBG(a) if (pipex_debug & 1) pipex_session_log a */
@@ -197,9 +282,7 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 #define PIPEX_ID_HASHTABLE(key)						\
 	(&pipex_id_hashtable[(key) & PIPEX_HASH_MASK])
 #define PIPEX_PEER_ADDR_HASHTABLE(key)					\
-	(&pipex_peer_addr_hashtable[ntohl((key)) & PIPEX_HASH_MASK])
-#define PIPEX_ADDR_HASHTABLE(key)					\
-	(&pipex_addr_hashtable[ntohl((key)) & PIPEX_HASH_MASK])
+	(&pipex_peer_addr_hashtable[(key) & PIPEX_HASH_MASK])
 
 #define GETCHAR(c, cp) do {						\
 	(c) = *(cp)++;							\
@@ -254,6 +337,13 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 #define SEQ32_GE(a,b)	((int)((a) - (b)) >= 0)
 #define SEQ32_SUB(a,b)	((int32_t)((a) - (b)))
 
+#define SEQ16_LT(a,b)	((int)((a) - (b)) <  0)
+#define SEQ16_LE(a,b)	((int)((a) - (b)) <= 0)
+#define SEQ16_GT(a,b)	((int)((a) - (b)) >  0)
+#define SEQ16_GE(a,b)	((int)((a) - (b)) >= 0)
+#define SEQ16_SUB(a,b)	((int16_t)((a) - (b)))
+
+#define RUPDIV(n,d)     (((n) + (d) - ((n) % (d))) / (d))
 #define	pipex_session_is_acfc_accepted(s)				\
     (((s)->ppp_flags & PIPEX_PPP_ACFC_ACCEPTED)? 1 : 0)
 #define	pipex_session_is_pfc_accepted(s)				\
@@ -271,8 +361,12 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 #define	pipex_session_is_mppe_required(s)				\
     (((s)->ppp_flags & PIPEX_PPP_MPPE_REQUIRED)? 1 : 0)
 #define pipex_mppe_rc4_keybits(r) ((r)->keylen << 3)
+#define pipex_session_is_l2tp_data_sequencing_on(s)			\
+    (((s)->proto.l2tp.option_flags & PIPEX_L2TP_USE_SEQUENCING) ? 1 : 0)
+
 #define PIPEX_IPGRE_HDRLEN (sizeof(struct ip) + sizeof(struct pipex_gre_header))
 #define PIPEX_TCP_OPTLEN 40
+#define	PIPEX_L2TP_MINLEN	8
 
 /*
  * static function prototypes
@@ -290,6 +384,7 @@ Static void                  pipex_ppp_output (struct mbuf *, struct pipex_sessi
 Static inline int            pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
 Static void                  pipex_ppp_input (struct mbuf *, struct pipex_session *, int);
 Static void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
+Static void                  pipex_ip6_input (struct mbuf *, struct pipex_session *);
 
 #ifdef PIPEX_PPPOE
 Static void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);
@@ -297,6 +392,12 @@ Static void                  pipex_pppoe_output (struct mbuf *, struct pipex_ses
 
 #ifdef PIPEX_PPTP
 Static void                  pipex_pptp_output (struct mbuf *, struct pipex_session *, int, int);
+Static struct pipex_session  *pipex_pptp_userland_lookup_session(struct mbuf *, struct sockaddr *);
+#endif
+
+#ifdef PIPEX_L2TP
+Static void                  pipex_l2tp_output (struct mbuf *, struct pipex_session *);
+Static struct pipex_session  *pipex_l2tp_userland_lookup_session(struct mbuf *, struct sockaddr *);
 #endif
 
 #ifdef PIPEX_MPPE
@@ -308,11 +409,15 @@ Static void                  pipex_mppe_input (struct mbuf *, struct pipex_sessi
 Static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *, uint16_t);
 Static void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
 Static int                   pipex_ccp_output (struct pipex_session *, int, int);
+Static inline int            rc4_key(struct pipex_mppe *, int, u_char *);
+Static inline void           rc4(struct pipex_mppe *, int, u_char *, u_char *);
 #endif
 
 Static struct mbuf           *adjust_tcp_mss (struct mbuf *, int);
 Static struct mbuf           *ip_is_idle_packet (struct mbuf *, int *);
 Static void                  pipex_session_log (struct pipex_session *, int, const char *, ...)  __attribute__((__format__(__printf__,3,4)));
+Static uint32_t              pipex_sockaddr_hash_key(struct sockaddr *);
+Static int                   pipex_sockaddr_compar_addr(struct sockaddr *, struct sockaddr *);
 Static int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct ifqueue *);
 Static void                  pipex_ppp_dequeue (void);
 Static void                  pipex_timer_start (void);

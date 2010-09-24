@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.137 2010/09/08 08:34:42 claudio Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.138 2010/09/24 14:50:30 hsuenaga Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -112,6 +112,11 @@ extern int ip6_defhlim;
 #include "pf.h"
 #if NPF > 0
 #include <net/pfvar.h>
+#endif
+
+#ifdef PIPEX 
+#include <netinet/if_ether.h>
+#include <net/pipex.h>
 #endif
 
 /*
@@ -683,6 +688,16 @@ udp_input(struct mbuf *m, ...)
 		*mp = sbcreatecontrol((caddr_t)&uh->uh_dport, sizeof(u_int16_t),
 		    IP_RECVDSTPORT, IPPROTO_IP);
 	}
+#ifdef PIPEX
+	if (inp->inp_pipex) {
+		struct pipex_session *session;
+		int off = iphlen + sizeof(struct udphdr);
+		if ((session = pipex_l2tp_lookup_session(m, off)) != NULL) {
+			if ((m = pipex_l2tp_input(m, off, session)) == NULL)
+				return; /* the packet is handled by PIPEX */
+		}
+	}
+#endif
 
 	iphlen += sizeof(struct udphdr);
 	m_adj(m, iphlen);
@@ -1177,6 +1192,28 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_SEND:
+#ifdef PIPEX
+		if (inp->inp_pipex) {
+			struct pipex_session *session;
+#ifdef INET6
+			if (inp->inp_flags & INP_IPV6)
+				session =
+				    pipex_l2tp_userland_lookup_session_ipv6(
+					m, inp->inp_faddr6);
+			else
+#endif
+				session =
+				    pipex_l2tp_userland_lookup_session_ipv4(
+					m, inp->inp_faddr);
+			if (session != NULL)
+				if ((m = pipex_l2tp_userland_output(
+				    m, session)) == NULL) {
+					error = ENOMEM;
+					goto release;
+				}
+		}
+#endif
+
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
 			return (udp6_output(inp, m, addr, control));
