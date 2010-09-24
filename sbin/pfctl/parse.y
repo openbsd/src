@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.593 2010/09/22 06:02:59 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.594 2010/09/24 09:17:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4009,12 +4009,9 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 		yyerror("nat-to and rdr-to require keep state");
 		problems++;
 	}
-	if (r->nat.addr.type != PF_ADDR_NONE && r->direction != PF_OUT) {
-		yyerror("nat-to can only be used outbound");
-		problems++;
-	}
-	if (r->rdr.addr.type != PF_ADDR_NONE && r->direction != PF_IN) {
-		yyerror("rdr-to can only be used inbound");
+	if (r->direction == PF_INOUT && (r->nat.addr.type != PF_ADDR_NONE ||
+	    r->rdr.addr.type != PF_ADDR_NONE)) {
+		yyerror("nat-to and rdr-to require a direction");
 		problems++;
 	}
 
