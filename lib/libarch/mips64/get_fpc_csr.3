@@ -1,4 +1,4 @@
-.\"	$OpenBSD: get_fpc_csr.3,v 1.1 2010/09/24 13:54:05 miod Exp $
+.\"	$OpenBSD: get_fpc_csr.3,v 1.2 2010/09/24 20:31:07 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Miodrag Vallat.
 .\"
@@ -20,7 +20,7 @@
 .Sh NAME
 .Nm get_fpc_csr ,
 .Nm set_fpc_csr
-.Nd Floating-point control register access
+.Nd floating-point control register access
 .Sh SYNOPSIS
 .In machine/fpu.h
 .Ft int
@@ -43,19 +43,19 @@ compatibility, and should only be used to control the value of the
 .Li FPCSR_FS
 bit in the floating-point control register.
 Portable code should use the
-.Nm fpgetmask ,
-.Nm fpgetround ,
-.Nm fpgetsticky ,
-.Nm fpsetmask ,
-.Nm fpsetround
+.Fn fpgetmask ,
+.Fn fpgetround ,
+.Fn fpgetsticky ,
+.Fn fpsetmask ,
+.Fn fpsetround
 and
-.Nm fpsetsticky
+.Fn fpsetsticky
 functions to inquire or alter the floating-point control register.
 .Sh RETURN VALUES
 The
-.Nm get_fpc_csr
+.Fn get_fpc_csr
 and
-.Nm set_fpc_csr
+.Fn set_fpc_csr
 functions return the
 .Pq previous
 value of the floating-point control register.
