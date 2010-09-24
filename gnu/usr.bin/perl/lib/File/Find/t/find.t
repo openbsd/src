@@ -19,7 +19,7 @@ BEGIN {
 }
 
 my $test_count = 85;
-$test_count += 114 if $symlink_exists;
+$test_count += 119 if $symlink_exists;
 $test_count += 18 if $^O eq 'MSWin32';
 $test_count += 2 if $^O eq 'MSWin32' and $symlink_exists;
 
@@ -95,13 +95,17 @@ sub cleanup {
 	       file_path('fa', 'faa', 'faa_ord'),
 	       file_path('fa', 'fab', 'fab_ord'),
 	       file_path('fa', 'fab', 'faba', 'faba_ord'),
+               file_path('fa', 'fac', 'faca'),
 	       file_path('fb', 'fb_ord'),
-	       file_path('fb', 'fba', 'fba_ord');
+	       file_path('fb', 'fba', 'fba_ord'),
+               file_path('fb', 'fbc', 'fbca');
 	rmdir dir_path('fa', 'faa');
 	rmdir dir_path('fa', 'fab', 'faba');
 	rmdir dir_path('fa', 'fab');
+	rmdir dir_path('fa', 'fac');
 	rmdir dir_path('fa');
 	rmdir dir_path('fb', 'fba');
+	rmdir dir_path('fb', 'fbc');
 	rmdir dir_path('fb');
     }
     if ($need_updir) {
@@ -892,4 +896,37 @@ if ($^O eq 'MSWin32') {
                    
     File::Find::find( {wanted => \&wanted_File_Dir, no_chdir => 1}, $volume . topdir('fa'));
     Check( scalar(keys %Expect_File) == 0 );
+}
+
+
+if ($symlink_exists) {  # Issue 68260
+    print "# BUG  68260\n";
+    MkDir (dir_path ('fa', 'fac'), 0770);
+    MkDir (dir_path ('fb', 'fbc'), 0770);
+    touch (file_path ('fa', 'fac', 'faca'));
+    if ($^O eq 'MacOS') {
+        CheckDie (symlink ('..::::..:fa:fac:faca', 'fb:fbc:fbca'));
+    }
+    else {
+        CheckDie (symlink ('..////../fa/fac/faca', 'fb/fbc/fbca'));
+    }
+
+    use warnings;
+    my $dangling_symlink;
+    local $SIG {__WARN__} = sub {
+        local $" = " ";
+        $dangling_symlink ++ if "@_" =~ /dangling symbolic link/;
+    };
+
+    File::Find::find (
+        {
+            wanted            => sub {1;},
+            follow            => 1,
+            follow_skip       => 2,
+            dangling_symlinks => 1,
+        },
+        File::Spec -> curdir
+    );
+
+    Check (!$dangling_symlink);
 }

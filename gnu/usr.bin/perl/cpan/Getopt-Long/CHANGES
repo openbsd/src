@@ -1,0 +1,534 @@
+Changes in version 2.38
+-----------------------
+
+* Bugfix for Ticket 35759: First arg to callback function evaluates
+  to false when used in bool context.
+
+* Fix problem with prototypes of GetOptionsFrom* functions.
+
+* Fix restoring default die handler.
+
+* Bugfix for Ticket 24941: Autoabbrev with + incorrect.
+
+Changes in version 2.37
+-----------------------
+
+* The first argument to callback function is now an object and will
+  get methods for finer control in the future. The object stringifies
+  to the option name, so current code should not notice a difference.
+
+* Bugfix: With gnu_compat, --foo= will no longer trigger "Option
+  requires an argument" but return the empty string.
+
+Changes in version 2.36
+-----------------------
+
+**************** WARNING -- EXPERIMENTAL CODE AHEAD ****************
+
+* Parsing options from an arbitrary array
+
+  The entry point GetOptionsFromArray (exported on demand) can be used
+  to parse command line options that are not passed in via @ARGV, but
+  using an arbitrary array.
+
+    use Getopt::Long qw(GetOptionsFromArray);
+    $ret = GetOptionsFromArray(\@myopts, ...);
+
+* Parsing options from an arbitrary string
+
+  The entry point GetOptionsFromString (exported on demand) can be
+  used to parse command line options that are not passed in via @ARGV,
+  but using an arbitrary string.
+
+    use Getopt::Long qw(GetOptionsFromString);
+    $ret = GetOptionsFromString($optstring, ...);
+
+  Note that upon completion, no arguments may remain in the string.
+  If arguments may remain, call it in list context:
+
+    ($ret, $args) = GetOptionsFromString($optstring, ...);
+
+  @$args will have the remaining arguments.
+
+**************** END EXPERIMENTAL CODE ****************
+
+* Number values for options may include underscores for readability
+  (just like Perls numbers).
+
+* Bugfix for Ticket #19432 (found and fixed by khali).
+
+* Bugfix to make it cooperate with the bignum pragma. Thanks to Merijn
+  and Yves.
+
+* Various small fixes to make the test suite run under 5.004_05.
+
+* More examples (skeletons).
+
+Changes in version 2.35
+-----------------------
+
+* long_prefix_pattern configuration variable.
+
+  prefix_pattern has now been complemented by a new configuration
+  option 'long_prefix_pattern' that allows the user to specify what
+  prefix patterns should have long option style sematics applied.
+  This will enable people to do things like
+
+    foo.pl /option=value
+
+  instead of forcing people to use the short option style
+
+    foo.pl /option value
+
+  This enhancement was suggested and implemented by Yves Orton.
+
+* Bugfix for Ticket #11377 (bug found and fixed by Ryan).
+* Bugfix for Ticket #12380.
+
+* Options can take multiple values at once. E.g.,
+
+    --coordinates 52.2 16.4 --rgbcolor 255 255 149
+
+  To handle the above command line, the following call to GetOptions
+  can be used:
+
+    GetOptions('coordinates=f{2}' => \@coor, 'rgbcolor=i{3}' => \@color);
+
+  You can specify the minimum and maximum number of values desired.
+  The syntax for this is similar to that of regular expression
+  patterns: { min , max }. 
+
+Changes in version 2.34
+-----------------------
+
+* Auto-vivification of array and hash refs
+
+  If an option is specified to require an array or hash ref, and a
+  scalar reference is passed, this is auto-vivified to array or hash
+  ref. 
+
+  Example:
+
+	@ARGV = qw(--foo=xx);
+	GetOptions("foo=s@", \$var);
+	# Now $var->[0] eq "xx"
+
+* Auto-supplied verbose and help options are no longer taken into
+  account when determining option ambiguity. This eliminates the
+  common problem that you suddenly get an ambiguous option warning
+  when you have an option "verbose" and run your program with "-v".
+
+* Cosmetic changes in some error messages.
+
+Changes in version 2.33
+-----------------------
+
+The following new features are marked experimental. This means that if
+you are going to use them you _must_ watch out for the next release of
+Getopt::Long to see if the API has changed.
+
+* Getopt::Long can automatically handle --version and --help options
+  if the calling program did not specify a handler explicitly.
+
+  Two configuration parameters have been added: 'auto_help' (or
+  'help') and 'auto_version' (or 'version'). If set, Getopt::Long will
+  itself take care of --help and --version options. Otherwise,
+  everything is exactly as it was before.
+
+  The new features will be enabled by default for programs that
+  explicitly require version 2.3203 or later.
+
+  Getopt::Long uses module Pod::Usage to produce the help message from
+  the SYNOPSIS section of the program's POD.
+
+  Using a --help (or -?) command line option will write the SYNOPSIS
+  section of the program's POD to STDOUT, and exit with status 0.
+  However, an illegal option will produce the help text to STDERR,
+  and exit with status 2. This is in accordance with current
+  conventions.
+
+* Two subroutines can be exported on demand:
+
+  - VersionMessage
+
+    This subroutine prints the standard version message.
+
+  - HelpMessage
+
+    This subroutine prints the standard help message.
+
+  Both subroutines take the same arguments as Pod::Usage::pod2usage,
+  see its documentation for details.  
+
+  Example:
+
+    use Getopt::Long 2.33 qw(GetOptions HelpMessage);
+    GetOptions(...) or HelpMessage(2);
+
+* Subroutine Configure can now be exported on demand.
+
+* Negatable options (with "!") now also support the "no-" prefix.
+  On request of Ed Avis.
+
+* Some fixes with hashes and bundling.
+  Thanks to Anders Johnson and Andrei Gnepp.
+  Mandatory/optional status for hash values is now effective.
+  String valued options with no value now default to the empty string
+  instead of 1 (one).
+  NOTE: The hash options still remain more or less experimental.
+
+* Fix a pass_through bug where the options terminator (normally "--")
+  was not passed through in @ARGV.
+  Thanks to Philippe Verdret.
+
+* Add FAQ: I "use GetOpt::Long;" (Windows) and now it doesn't work.
+
+Changes in version 2.32
+-----------------------
+
+* Fix a bug where the initial value for a optional numeric argument
+was not used for value of a hash option.
+
+* Remove 5.005 thread safety code. Getopt::Long is completely thread
+safe when using the 5.8 ithreads.
+
+Changes in version 2.31
+-----------------------
+
+* Fix a bug where calling the configure method on a
+  Getopt::Long::Parser object would bail out with 
+  Undefined subroutine &Getopt::Long::Parser::Configure called at
+  Getopt/Long.pm line 186.
+
+Changes in version 2.30
+-----------------------
+
+* Fix a problem where a 'die' from a 'warn' via a localized
+  $SIG{__WARN__} was not properly propagated from a callback.
+  Thanks to Diab Jerius.
+
+Changes in version 2.29
+-----------------------
+
+* Fix a problem where options were not recognized when both
+  auto_abbrev and ignore_case were disabled. Thanks to Seth Robertson.
+
+* Remove Carp.
+
+Changes in version 2.28
+-----------------------
+
+* When an option is specified more than once, a warning is generated
+  if perl is run with -w. This is a correction to 2.27, where it would
+  unconditionally die.
+
+  An example of duplicate specification is GetOptions('foo', 'foo'),
+  but also GetOptions('foo=s', 'foo') and GetOptions('Foo', 'foo')
+  (the latter only when ignore_case is in effect).
+
+Changes in version 2.27
+-----------------------
+
+* You can now specify integer options to take an optional argument.
+  that defaults to a specific value. E.g.,  GetOptions('foo:5' => \$var)
+  will allow $var to get the value 5 when no value was specified with
+  the -foo option on the command line.
+
+  Instead of a value, a '+' may be specified. E.g.,
+  GetOptions('foo:+' => \$var) will allow $var to be incremented when
+  no value was specified with the -foo option on the command line.
+
+* Fix several problems with internal and external use of 'die' and
+  signal handlers.
+
+* Fixed some bugs with subtle combinations of bundling_override and
+  ignore_case.
+
+* A callback routine that is associated with a hash-valued option will
+  now have both the hask key and the value passed. It used to get only
+  the value passed.
+
+* Eliminated the use of autoloading. Autoloading kept generating
+  problems during development, and when using perlcc.
+
+* Avoid errors on references when an option is found in error, e.g.
+  GetOptions('fo$@#' => \$var).
+  Thanks to Wolfgang Laun.
+
+* When an option is specified more than once, an error is now
+  generated. E.g., GetOptions('foo', 'foo').
+  Thanks to Wolfgang Laun.
+
+* Lots of internal restructoring to make room for extensions.
+
+* Redesigned the regression tests.
+
+* Enhance the documentation to prevent common misunderstandings about
+  single character options.
+
+Changes in version 2.26
+-----------------------
+
+* New option type: 'o'. It accepts all kinds of integral numbers in
+  Perl style, including decimal (24), octal (012), hexadecimal (0x2f)
+  and binary (0b1001).
+
+* Fix problem with getopt_compat not matching +foo=bar.
+
+* Remove $VERSION_STRING for production versions.
+
+Changes in version 2.25
+-----------------------
+
+* Change handling of a lone "-" on the command line. It will now be
+  treated as a non-option unless an explicit specification was passed
+  to GetOptions. See the manual.
+  In the old implementation an error was signalled, so no
+  compatibility breaks are expected from this change.
+
+* Add $VERSION_STRING. This is the string form of $VERSION. Usually
+  they are identical, unless it is a pre-release in which case
+  $VERSION will be (e.g.) 2.2403 and $VERSION_STRING will be "2.24_03".
+
+Changes in version 2.24
+-----------------------
+
+* Add object oriented interface:
+
+    use Getopt::Long;
+    $p = new Getopt::Long::Parser;
+    $p->configure(...configuration options...);
+    if ($p->getoptions(...options descriptions...)) ...
+
+* Add configuration at 'use' time:
+
+    use Getopt::Long qw(:config no_ignore_case bundling);
+
+* Add configuration options "gnu_getopt" and "gnu_compat".
+
+  "gnu_compat" controls whether --opt= is allowed, and what it should
+  do. Without "gnu_compat", --opt= gives an error. With "gnu_compat", 
+  --opt= will give option "opt" and empty value.
+  This is the way GNU getopt_long does it.
+
+  "gnu_getopt" is a short way of setting "gnu_compat bundling permute
+  no_getopt_compat. With "gnu_getopt", command line handling should be
+  fully compatible with GNU getopt_long.
+
+* Correct warnings when the user specified an array or hash
+  destination using a non-lowercase option, e.g. "I=s@".
+
+* Correct ambiguous use of 'set' and 'reset' in the Configuration
+  section of the documentation. 
+
+* Add configuration option "posix_default" to reset to defaults as if
+  POSIXLY_CORRECT were set.
+
+* Disallow "no" prefix on configuration options "default", "prefix" and
+  "prefix_pattern". 
+
+* Add a section "Trouble Shooting" to the documentation, with
+  frequently asked questions.
+
+Changes in version 2.23
+-----------------------
+
+* When a call-back routine issues 'die', messages starting with "!"
+  are treated specially. Currently, only "!FINISH" is recognised (see
+  the next bullet point). Other messages that start with "!" are
+  ignored.
+
+* Change 'die("FINISH") (see changes in 2.21) to die("!FINISH"). This
+  is an incompatible change, but I guess noone is using this yet.
+
+Changes in version 2.22
+-----------------------
+
+* Fixes a bug in the combination of aliases and negation.
+
+  Old:  "foo|bar!" allowed negation on foo, but not on bar.
+  New:  "foo|bar!" allows negation on foo and bar.
+
+  Caveat: "foo|f!", with bundling, issues the warning that negation on
+  a short option is ignored. To obtain the desired behaviour, use
+
+	"foo!" => \$opt_foo, "f" => \$opt_foo
+  or
+	"foo|f" => \$opt_foo, "nofoo" => sub { $opt_foo = 0 }
+
+  Remember that this is _only_ required when bundling is in effect.
+
+Changes in version 2.21
+-----------------------
+
+* New documentation.
+
+* User defined subroutines should use 'die' to signal errors.
+
+* User defined subroutines can preliminary terminate options
+  processing by calling die("FINISH");
+
+* Correct erroneous install of Getopt::Long manpage.
+  Previous versions seem to install Getopt::GetoptLong instead of
+  Getopt::Long.
+
+Changes in version 2.20
+-----------------------
+
+* Prevent the magic argument "<>" from being interpreted as option
+  starter characters if it is the first argument passed.
+  To use the characters "<>" as option starters, pass "><" instead.
+
+* Changed license: Getopt::Long may now also be used under the Perl
+  Artistic License.
+
+* Changed the file name of the distribution kit from "GetoptLong..."
+  to "Getopt-Long-..." to match the standards.
+
+Changes in version 2.19
+-----------------------
+
+* Fix a warning bug with bundling_override.
+
+There's no version 2.18
+-----------------------
+
+Changes in version 2.17
+-----------------------
+
+* Getopt::Long::config is renamed Getopt::Long::Configure. The old
+  name will remain supported without being documented.
+
+* Options can have the specifier '+' to denote that the option value
+  must be incremented each time the option occurs on the command line.
+  For example:
+
+     my $more = 2;
+     Getopt::Long::Configure("bundling");
+     GetOptions ("v+" => \$more);
+     print STDOUT ("more = $more\n");
+
+  will print "more = 3" when called with "-v", "more = 4" when called
+  with "-vv" (or "-v -v"), and so on.
+
+* Getopt::Long now uses autoloading. This substantially reduces the
+  resources required to 'use Getopt::Long' (about 100 lines of over
+  1300 total).
+
+* It is now documented that global option variables like $opt_foo
+  need to be declared using 'use vars ...' when running under 'use
+  strict'. 
+
+* To install, it is now required to use the official procedure:
+
+     perl Makefile.PL
+     make
+     make test
+     make install
+
+Changes in version 2.16
+-----------------------
+
+* A couple of small additional fixes to the $` $& $' fixes.
+
+* The option prefix can be set using config("prefix=...") or, more
+  powerful, with config("prefix_pattern=..."); see the documentation
+  for details.
+
+* More 'perl -w' warnings eliminated for obscure cases of bundling.
+
+This version is identical to 2.15, which was not released.
+
+There's no version 2.14
+-----------------------
+
+Changes in version 2.13
+-----------------------
+
+* All regexps are changed to avoid the use of $`, $& and $'. Using one
+  of these causes all pattern matches in the program to be much slower
+  than necessary.
+
+* Configuration errors are signalled using die() and will cause the
+  program to be terminated (unless eval{...} or $SIG{__DIE__} is
+  used).
+
+* Option parsing errors are now signalled with calls to warn().
+
+* In option bundles, numeric values may be embedded in the bundle
+  (e.g. -al24w80).
+
+* More 'perl -w' warnings eliminated for obscure cases of bundling.
+
+* Removed non-standard version number matching. Version 1.121 is now
+  more than 1.12 but less than 1.13. 
+
+Changes in version 2.12
+-----------------------
+
+* A single question mark is allowed as an alias to an option, e.g. 
+
+    GetOptions ("help|?", ...)
+
+Changes in version 2.11
+-----------------------
+
+* User linkage may be an object, provided the object is really a hash.
+
+  For example:
+
+    {	package Foo;
+	sub new () { return bless {}; }
+    }
+
+    my $linkage = Foo->new();
+
+    GetOptions ($linkage, ... );
+
+* Some bug fixes in handling obscure cases of pass-through.
+
+Changes in version 2.9
+----------------------
+
+* A new way to configure Getopt::Long. Instead of setting module local
+  variables, routine Getopt::Long::config can be called with the names
+  of options to be set or reset, e.g.
+
+    Getopt::Long::config ("no_auto_abbrev", "ignore_case");
+
+  Configuring by using the module local variables is deprecated, but
+  it will continue to work for backwark compatibility.
+
+Changes in version 2.6
+----------------------
+
+* Handle ignorecase even if autoabbrev is off. 
+
+* POD corrections.
+
+Changes in version 2.4
+----------------------
+
+* Pass-through of unrecognized options. Makes it easy to write wrapper
+  programs that process some of the command line options but pass the
+  others to another program.
+
+* Options can be of type HASH, now you can say
+
+    --define foo=bar
+
+  and have $opt_define{"foo"} set to "bar".
+
+* An enhanced skeleton program, skel2.pl, that combines the power of
+  Getopt::Long with Pod::Usage. 
+  Module Pod::Usage can be obtained from CPAN,
+  http://www.perl.com/CPAN/authors/Brad_Appleton. 
+
+Possible incompatibility in version 2.4
+---------------------------------------
+
+Previous versions of Getopt::Long always downcased the option variable
+names when ignorecase was in effect. This bug has been corrected. As a
+consequence, &GetOptions ("Foo") will now set variable $opt_Foo
+instead of $opt_foo.
+

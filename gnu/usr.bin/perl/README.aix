@@ -4,22 +4,23 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.aix - Perl version 5 on IBM Unix (AIX) systems
+README.aix - Perl version 5 on IBM AIX (UNIX) systems
 
 =head1 DESCRIPTION
 
-This document describes various features of IBM's Unix operating
-system (AIX) that will affect how Perl version 5 (hereafter just Perl)
+This document describes various features of IBM's UNIX operating
+system AIX that will affect how Perl version 5 (hereafter just Perl)
 is compiled and/or runs.
 
 =head2 Compiling Perl 5 on AIX
 
-For information on compilers on older versions of AIX, see L<Compiling 
+For information on compilers on older versions of AIX, see L<Compiling
 Perl 5 on older AIX versions up to 4.3.3>.
 
 When compiling Perl, you must use an ANSI C compiler. AIX does not ship
-an ANSI compliant C-compiler with AIX by default, but binary builds of
-gcc for AIX are widely available.
+an ANSI compliant C compiler with AIX by default, but binary builds of
+gcc for AIX are widely available. A version of gcc is also included in
+the AIX Toolbox which is shipped with AIX.
 
 =head2 Supported Compilers
 
@@ -32,14 +33,15 @@ like DBD::Oracle, it is better to use the _r version of the compiler.
 This will not build a threaded Perl, but a thread-enabled Perl. See
 also L<Threaded Perl> later on.
 
-As of writing (2009-08) only the IBM XL C for AIX or XL C/C++ for AIX
-compiler is supported by IBM on AIX 5L/6.1.
+As of writing (2010-05) only the I<IBM XL C for AIX> or I<IBM XL C/C++
+for AIX> compiler is supported by IBM on AIX 5L/6.1.
 
-The following compiler versions are supported by IBM:
+The following compiler versions are currently supported by IBM:
 
-XL C and XL C/C++ V7, V8, V9, V10
+    IBM XL C and IBM XL C/C++ V8, V9, V10
 
-The XL C for AIX is integrated in the XL C/C++ for AIX compiler.
+The XL C for AIX is integrated in the XL C/C++ for AIX compiler and
+therefore also supported.
 
 If you choose XL C/C++ V9 you need APAR IZ35785 installed
 otherwise the integrated SDBM_File do not compile correctly due
@@ -47,6 +49,9 @@ to an optimization bug. You can circumvent this problem by
 adding -qipa to the optimization flags (-Doptimize='-O -qipa').
 The PTF for APAR IZ35785 which solves this problem is available
 from IBM (April 2009 PTF for XL C/C++ Enterprise Edition for AIX, V9.0).
+
+If you choose XL C/C++ V11 you need the April 2010 PTF installed
+otherwise you will not get a working Perl version.
 
 Perl can be compiled with either IBM's ANSI C compiler or with gcc.
 The former is recommended, as not only it can compile Perl with no
@@ -60,45 +65,54 @@ development team.
 
 =head2 Incompatibility with AIX Toolbox lib gdbm
 
-If the AIX Toolbox version of lib gdbm 1.8.x is installed on the
-system then Perl will not work. This library contains a defect version
-of the dbm_store() function. The lib gdbm will be automatically removed
-from the wanted libraries.
+If the AIX Toolbox version of lib gdbm < 1.8.3-5 is installed on your
+system then Perl will not work. This library contains the header files
+/opt/freeware/include/gdbm/dbm.h|ndbm.h which conflict with the AIX
+system versions. The lib gdbm will be automatically removed from the
+wanted libraries if the presence of one of these two header files is
+detected. If you want to build Perl with GDBM support then please install
+at least gdbm-devel-1.8.3-5 (or higher).
 
-=head2 Perl 5.10 was successfully compiled and tested on:
+=head2 Perl 5.12 was successfully compiled and tested on:
 
-    AIX Level                 | Compiler Level          | w th | w/o th
-    --------------------------+-------------------------+------+-------
-    5.1 TL9 32 bit            | XL C/C++ V7             | OK   | OK
-    5.1 TL9 32 bit            | gcc 3.2.2               | OK   | OK
-    5.1 TL9 64 bit            | XL C/C++ V7             | OK   | OK
-    5.2 TL10 32 bit           | XL C/C++ V8             | OK   | OK
-    5.2 TL8 64 bit            | VA C/C++ V6             | OK   | OK
-    5.2 TL10 64 bit           | XL C/C++ V8             | OK   | OK
-    5.3 TL7 32 bit            | XL C/C++ V9 + IZ35785   | OK   | OK
-    5.3 TL7 32 bit            | gcc 4.2.4               | OK   | OK
-    5.3 TL7 64 bit            | XL C/C++ V9 + IZ35785   | OK   | OK
-    6.1 TL1 32 bit            | XL C/C++ V10            | OK   | OK
-    6.1 TL1 64 bit + IZ39077  | XL C/C++ V10            | OK   | OK
+    AIX Level            | Compiler Level            | w th | w/o th
+    ---------------------+---------------------------+------+-------
+    5.1 TL9 32 bit       | XL C/C++ V7               | OK   | OK
+    5.1 TL9 64 bit       | XL C/C++ V7               | OK   | OK
+    5.2 TL10 SP8 32 bit  | XL C/C++ V8               | OK   | OK
+    5.2 TL10 SP8 32 bit  | gcc 3.2.2                 | OK   | OK
+    5.2 TL10 SP8 64 bit  | XL C/C++ V8               | OK   | OK
+    5.3 TL8 SP8 32 bit   | XL C/C++ V9 + IZ35785     | OK   | OK
+    5.3 TL8 SP8 32 bit   | gcc 4.2.4                 | OK   | OK
+    5.3 TL8 SP8 64 bit   | XL C/C++ V9 + IZ35785     | OK   | OK
+    5.3 TL10 SP3 32 bit  | XL C/C++ V11 + April 2010 | OK   | OK
+    5.3 TL10 SP3 64 bit  | XL C/C++ V11 + April 2010 | OK   | OK
+    6.1 TL1 SP7 32 bit   | XL C/C++ V10              | OK   | OK
+    6.1 TL1 SP7 64 bit   | XL C/C++ V10              | OK   | OK
 
-    w th   = with thread
-    w/o th = without thread
+    w th   = with thread support
+    w/o th = without thread support
     OK     = tested
 
-Successfully tested means that all "make test" runs finish with an 
+Successfully tested means that all "make test" runs finish with a
 result of 100% OK. All tests were conducted with -Duseshrplib set.
+
+All tests were conducted on the oldest supported AIX technology level
+with the latest support package applied. If the tested AIX version is
+out of support (AIX 4.3.3, 5.1, 5.2) then the last available support
+level was used.
 
 =head2 Building Dynamic Extensions on AIX
 
-Starting from Perl 5.7.2 (and consequently 5.8.x / 5.10.x) and AIX 4.3 
-or newer Perl uses the AIX native dynamic loading interface in the so 
-called runtime linking mode instead of the emulated interface that was 
-used in Perl releases 5.6.1 and earlier or, for AIX releases 4.2 and 
-earlier. This change does break backward compatibility with compiled 
-modules from earlier Perl releases. The change was made to make Perl 
-more compliant with other applications like Apache/mod_perl which are 
-using the AIX native interface. This change also enables the use of 
-C++ code with static constructors and destructors in Perl extensions, 
+Starting from Perl 5.7.2 (and consequently 5.8.x / 5.10.x / 5.12.x)
+and AIX 4.3 or newer Perl uses the AIX native dynamic loading interface
+in the so called runtime linking mode instead of the emulated interface
+that was used in Perl releases 5.6.1 and earlier or, for AIX releases
+4.2 and earlier. This change does break backward compatibility with
+compiled modules from earlier Perl releases. The change was made to make
+Perl more compliant with other applications like Apache/mod_perl which are
+using the AIX native interface. This change also enables the use of
+C++ code with static constructors and destructors in Perl extensions,
 which was not possible using the emulated interface.
 
 It is highly recommended to use the new interface.
@@ -112,20 +126,22 @@ Should yield no problems.
 Should yield no problems with AIX 5.1 / 5.2 / 5.3 and 6.1.
 
 IBM uses the AIX system Perl (V5.6.0 on AIX 5.1 and V5.8.2 on
-AIX 5.2 / 5.3 and 6.1) for some AIX
-system scripts. If you switch the links in /usr/bin from the
+AIX 5.2 / 5.3 and 6.1; V5.8.8 on AIX 5.3 TL11 and AIX 6.1 TL4) for
+some AIX system scripts. If you switch the links in /usr/bin from the
 AIX system Perl (/usr/opt/perl5) to the newly build Perl then you
-get the same features as with the IBM AIX system Perl if the
-threaded options are used.
+get the same features as with the IBM AIX system Perl if the threaded
+options are used.
 
 The threaded Perl build works also on AIX 5.1 but the IBM Perl
 build (Perl v5.6.0) is not threaded on AIX 5.1.
+
+Perl 5.12 is not compatible with the IBM fileset perl.libext.
 
 =head2 64-bit Perl
 
 If your AIX system is installed with 64-bit support, you can expect 64-bit
 configurations to work. If you want to use 64-bit Perl on AIX 6.1
-you need a APAR for a libc.a bug which affects (n)dbm_XXX functions.
+you need an APAR for a libc.a bug which affects (n)dbm_XXX functions.
 The APAR number for this problem is IZ39077.
 
 If you need more memory (larger data segment) for your Perl programs you
@@ -136,7 +152,7 @@ can set:
         data = -1               (default is 262144 * 512 byte)
 
 With the default setting the size is limited to 128MB.
-The -1 removes this limit. If the "make test" fails please change 
+The -1 removes this limit. If the "make test" fails please change
 your /etc/security/limits as stated above.
 
 =head2 Recommended Options AIX 5.1/5.2/5.3 and 6.1 (threaded/32-bit)
@@ -189,7 +205,7 @@ passes all make tests in 64-bit mode.
 
 =head2 Recommended Options AIX 5.1/5.2/5.3 and 6.1(64-bit)
 
-With the following options you get a Perl version which passes all 
+With the following options you get a Perl version which passes all
 make tests in 64-bit mode. 
 
     export OBJECT_MODE=64 / setenv OBJECT_MODE 64 (depending on your shell)
@@ -202,10 +218,10 @@ make tests in 64-bit mode.
     -Duse64bitall \
     -Dprefix=/usr/opt/perl5_64
 
-The -Dprefix option will install Perl in a directory parallel to the 
+The -Dprefix option will install Perl in a directory parallel to the
 IBM AIX system Perl installation.
 
-If you choose gcc to compile 64-bit Perl then you need to add the 
+If you choose gcc to compile 64-bit Perl then you need to add the
 following option:
 
     -Dcc='gcc -maix64'
@@ -213,9 +229,9 @@ following option:
 
 =head2 Compiling Perl 5 on older AIX versions up to 4.3.3
 
-Due to the fact that AIX 4.3.3 reached end-of-service in December 31, 
-2003 this information  is provided as is. The Perl versions prior to 
-Perl 5.8.9 could be compiled on AIX up to 4.3.3 with the following 
+Due to the fact that AIX 4.3.3 reached end-of-service in December 31,
+2003 this information is provided as is. The Perl versions prior to
+Perl 5.8.9 could be compiled on AIX up to 4.3.3 with the following
 settings (your mileage may vary):
 
 When compiling Perl, you must use an ANSI C compiler. AIX does not ship
@@ -276,7 +292,7 @@ cannot be built without bos.adt.syscalls and bos.adt.libm installed
     bos.adt.syscalls  5.1.0.36  COMMITTED  System Calls Application
     #
 
-=head2 Building Dynamic Extensions on AIX
+=head2 Building Dynamic Extensions on AIX E<lt> 5L
 
 AIX supports dynamically loadable objects as well as shared libraries.
 Shared libraries by convention end with the suffix .a, which is a bit
@@ -424,18 +440,19 @@ Linux compatibility packages, available here:
 
   http://www.ibm.com/servers/aix/products/aixos/linux/
 
-=head2 Using Large Files with Perl
+=head2 Using Large Files with Perl E<lt> 5L
 
 Should yield no problems.
 
-=head2 Threaded Perl
+=head2 Threaded Perl E<lt> 5L
 
 Threads seem to work OK, though at the moment not all tests pass when
 threads are used in combination with 64-bit configurations.
 
 You may get a warning when doing a threaded build:
 
-  "pp_sys.c", line 4640.39: 1506-280 (W) Function argument assignment between types "unsigned char*" and "const void*" is not allowed.
+  "pp_sys.c", line 4640.39: 1506-280 (W) Function argument assignment 
+  between types "unsigned char*" and "const void*" is not allowed.
 
 The exact line number may vary, but if the warning (W) comes from a line
 line this
@@ -447,7 +464,7 @@ is caused by the reentrant variant of gethostbyaddr() having a slightly
 different prototype than its non-reentrant variant, but the difference
 is not really significant here.
 
-=head2 64-bit Perl
+=head2 64-bit Perl E<lt> 5L
 
 If your AIX is installed with 64-bit support, you can expect 64-bit
 configurations to work. In combination with threads some tests might
@@ -470,6 +487,6 @@ Rainer Tammer <tammer@tammer.net>
 
 =head1 DATE
 
-Version 0.0.10: 07 Aug 2009
+Version 5.12.1 / 2010-05-14
 
 =cut

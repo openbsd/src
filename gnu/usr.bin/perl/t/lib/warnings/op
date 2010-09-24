@@ -3,12 +3,6 @@
      Found = in conditional, should be ==
 	1 if $a = 1 ;
 
-     Use of implicit split to @_ is deprecated
-	split ;
-
-     Use of implicit split to @_ is deprecated
-	$a = split ;
-
      Useless use of time in void context
      Useless use of a variable in void context
      Useless use of a constant in void context
@@ -112,23 +106,6 @@ EXPECT
 Found = in conditional, should be == at - line 3.
 ########
 # op.c
-use warnings 'deprecated' ;
-split ;
-no warnings 'deprecated' ;
-split ;
-EXPECT
-Use of implicit split to @_ is deprecated at - line 3.
-########
-# op.c
-use warnings 'deprecated' ;
-$a = split ;
-no warnings 'deprecated' ;
-$a = split ;
-EXPECT
-Use of implicit split to @_ is deprecated at - line 3.
-########
-# op.c
-use warnings 'deprecated';
 my (@foo, %foo);
 %main::foo->{"bar"};
 %foo->{"bar"};
@@ -148,14 +125,14 @@ $foo = {}; %$foo->{"bar"};
 $main::foo = []; @$main::foo->[34];
 $foo = []; @$foo->[34];
 EXPECT
+Using a hash as a reference is deprecated at - line 3.
 Using a hash as a reference is deprecated at - line 4.
-Using a hash as a reference is deprecated at - line 5.
+Using an array as a reference is deprecated at - line 5.
 Using an array as a reference is deprecated at - line 6.
-Using an array as a reference is deprecated at - line 7.
+Using a hash as a reference is deprecated at - line 7.
 Using a hash as a reference is deprecated at - line 8.
-Using a hash as a reference is deprecated at - line 9.
+Using an array as a reference is deprecated at - line 9.
 Using an array as a reference is deprecated at - line 10.
-Using an array as a reference is deprecated at - line 11.
 ########
 # op.c
 use warnings 'void' ; close STDIN ;
@@ -529,21 +506,29 @@ Useless use of a variable in void context at - line 6.
 use warnings 'void' ;
 "abc"; # OP_CONST
 7 ; # OP_CONST
-5 || print "bad\n";	# test OPpCONST_SHORTCIRCUIT
+"x" . "y"; # optimized to OP_CONST
+2 + 2; # optimized to OP_CONST
 use constant U => undef;
+U;
+5 || print "bad\n";	# test OPpCONST_SHORTCIRCUIT
 print "boo\n" if U;	# test OPpCONST_SHORTCIRCUIT
 $[ = 2; # should not warn
 no warnings 'void' ;
 "abc"; # OP_CONST
 7 ; # OP_CONST
+"x" . "y"; # optimized to OP_CONST
+2 + 2; # optimized to OP_CONST
 EXPECT
-Useless use of a constant in void context at - line 3.
-Useless use of a constant in void context at - line 4.
+Useless use of a constant (abc) in void context at - line 3.
+Useless use of a constant (7) in void context at - line 4.
+Useless use of a constant (xy) in void context at - line 5.
+Useless use of a constant (4) in void context at - line 6.
+Useless use of a constant (undef) in void context at - line 8.
 ########
 # op.c
 #
 use warnings 'misc' ;
-my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;
+my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;my $d = 'test';
 @a =~ /abc/ ;
 @a =~ s/a/b/ ;
 @a =~ tr/a/b/ ;
@@ -556,9 +541,11 @@ my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;
 %$c =~ /abc/ ;
 %$c =~ s/a/b/ ;
 %$c =~ tr/a/b/ ;
+$d =~ tr/a/b/d ;
+$d =~ tr/a/bc/;
 {
 no warnings 'misc' ;
-my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;
+my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ; my $d = 'test';
 @a =~ /abc/ ;
 @a =~ s/a/b/ ;
 @a =~ tr/a/b/ ;
@@ -571,6 +558,8 @@ my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;
 %$c =~ /abc/ ;
 %$c =~ s/a/b/ ;
 %$c =~ tr/a/b/ ;
+$d =~ tr/a/b/d ;
+$d =~ tr/a/bc/ ;
 }
 EXPECT
 Applying pattern match (m//) to @array will act on scalar(@array) at - line 5.
@@ -585,8 +574,10 @@ Applying transliteration (tr///) to %hash will act on scalar(%hash) at - line 13
 Applying pattern match (m//) to %hash will act on scalar(%hash) at - line 14.
 Applying substitution (s///) to %hash will act on scalar(%hash) at - line 15.
 Applying transliteration (tr///) to %hash will act on scalar(%hash) at - line 16.
+Useless use of /d modifier in transliteration operator at - line 17.
+Replacement list is longer than search list at - line 18.
 Can't modify private array in substitution (s///) at - line 6, near "s/a/b/ ;"
-BEGIN not safe after errors--compilation aborted at - line 18.
+BEGIN not safe after errors--compilation aborted at - line 20.
 ########
 # op.c
 use warnings 'parenthesis' ;
@@ -735,69 +726,46 @@ EXPECT
 Format FRED redefined at - line 5.
 ########
 # op.c
-use warnings 'deprecated' ;
 push FRED;
 no warnings 'deprecated' ;
 push FRED;
 EXPECT
-Array @FRED missing the @ in argument 1 of push() at - line 3.
+Array @FRED missing the @ in argument 1 of push() at - line 2.
 ########
 # op.c
-use warnings 'deprecated' ;
 @a = keys FRED ;
 no warnings 'deprecated' ;
 @a = keys FRED ;
 EXPECT
-Hash %FRED missing the % in argument 1 of keys() at - line 3.
+Hash %FRED missing the % in argument 1 of keys() at - line 2.
 ########
 # op.c
-BEGIN {
-    if ($^O eq 'MacOS') {
-	print <<EOM;
-SKIPPED
-# no exec on Mac OS
-EOM
-	exit;
-    }
-}
 use warnings 'syntax' ;
 exec "$^X -e 1" ; 
 my $a
 EXPECT
-Statement unlikely to be reached at - line 13.
+Statement unlikely to be reached at - line 4.
 	(Maybe you meant system() when you said exec()?)
 ########
 # op.c
-use warnings 'deprecated' ;
 my @a; defined(@a);
 EXPECT
-defined(@array) is deprecated at - line 3.
+defined(@array) is deprecated at - line 2.
 	(Maybe you should just omit the defined()?)
 ########
 # op.c
-use warnings 'deprecated' ;
 defined(@a = (1,2,3));
 EXPECT
-defined(@array) is deprecated at - line 3.
+defined(@array) is deprecated at - line 2.
 	(Maybe you should just omit the defined()?)
 ########
 # op.c
-use warnings 'deprecated' ;
 my %h; defined(%h);
 EXPECT
-defined(%hash) is deprecated at - line 3.
+defined(%hash) is deprecated at - line 2.
 	(Maybe you should just omit the defined()?)
 ########
 # op.c
-BEGIN {
-    if ($^O eq 'MacOS') {
-	print <<EOM;
-SKIPPED
-# no exec on Mac OS
-EOM
-	exit;
-    }
-}
 no warnings 'syntax' ;
 exec "$^X -e 1" ; 
 my $a
@@ -1057,7 +1025,6 @@ Useless localization of match position at - line 49.
 Useless localization of vec at - line 50.
 ########
 # op.c
-use warnings 'deprecated';
 my $x1 if 0;
 my @x2 if 0;
 my %x3 if 0;
@@ -1073,10 +1040,32 @@ if (my $w2) { $a=1 }
 if ($a && (my $w3 = 1)) {$a = 2}
 
 EXPECT
+Deprecated use of my() in false conditional at - line 2.
 Deprecated use of my() in false conditional at - line 3.
 Deprecated use of my() in false conditional at - line 4.
 Deprecated use of my() in false conditional at - line 5.
 Deprecated use of my() in false conditional at - line 6.
 Deprecated use of my() in false conditional at - line 7.
 Deprecated use of my() in false conditional at - line 8.
-Deprecated use of my() in false conditional at - line 9.
+########
+# op.c
+$[ = 1;
+use warnings 'deprecated';
+$[ = 2;
+no warnings 'deprecated';
+$[ = 3;
+EXPECT
+Use of assignment to $[ is deprecated at - line 2.
+Use of assignment to $[ is deprecated at - line 4.
+########
+# op.c
+use warnings 'void';
+@x = split /y/, "z";
+$x = split /y/, "z";
+     split /y/, "z";
+no warnings 'void';
+@x = split /y/, "z";
+$x = split /y/, "z";
+     split /y/, "z";
+EXPECT
+Useless use of split in void context at - line 5.

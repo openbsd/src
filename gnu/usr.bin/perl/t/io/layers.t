@@ -27,7 +27,7 @@ BEGIN {
 
 use Config;
 
-my $DOSISH    = $^O =~ /^(?:MSWin32|os2|dos|NetWare|mint)$/ ? 1 : 0;
+my $DOSISH    = $^O =~ /^(?:MSWin32|os2|dos|NetWare)$/ ? 1 : 0;
    $DOSISH    = 1 if !$DOSISH and $^O =~ /^uwin/;
 my $NONSTDIO  = exists $ENV{PERLIO} && $ENV{PERLIO} ne 'stdio'     ? 1 : 0;
 my $FASTSTDIO = $Config{d_faststdio} && $Config{usefaststdio}      ? 1 : 0;

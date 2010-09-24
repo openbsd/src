@@ -3,12 +3,13 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 use strict;
 use warnings;
 
-use Test::More tests => 14;
+plan tests => 14;
 
 {
     package J;

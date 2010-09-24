@@ -2,7 +2,45 @@
 use strict;
 use warnings;
 use Config;
+BEGIN {
+    if ($^O eq 'MSWin32') {
+	unshift @INC, ('../cpan/Cwd', '../cpan/Cwd/lib');
+	require File::Spec::Functions;
+	require FindExt;
+    }
+    else {
+	unshift @INC, 'cpan/Cwd';
+    }
+}
 use Cwd;
+
+my $is_Win32 = $^O eq 'MSWin32';
+my $is_VMS = $^O eq 'VMS';
+my $is_Unix = !$is_Win32 && !$is_VMS;
+
+# To clarify, this isn't the entire suite of modules considered "toolchain"
+# It's not even all modules needed to build ext/
+# It's just the source paths of the (minimum complete set of) modules in ext/
+# needed to build the nonxs modules
+# After which, all nonxs modules are in lib, which was always sufficient to
+# allow miniperl to build everything else.
+
+# This list cannot get any longer without overflowing the length limit for
+# environment variables on VMS
+my @toolchain = qw(cpan/AutoLoader/lib
+		   cpan/Cwd cpan/Cwd/lib
+		   cpan/ExtUtils-Command/lib
+		   dist/ExtUtils-Install/lib
+		   cpan/ExtUtils-MakeMaker/lib
+		   cpan/ExtUtils-Manifest/lib
+		   cpan/File-Path/lib
+		   );
+
+# Used only in ExtUtils::Liblist::Kid::_win32_ext()
+push @toolchain, 'cpan/Text-ParseWords/lib' if $is_Win32;
+
+my @ext_dirs = qw(cpan dist ext);
+my $ext_dirs_re = '(?:' . join('|', @ext_dirs) . ')';
 
 # This script acts as a simple interface for building extensions.
 
@@ -16,7 +54,9 @@ use Cwd;
 #
 # On Windows or VMS,
 # If '--static' is specified, static extensions will be built.
-# If '--dynamic' is specified, dynamic (and nonxs) extensions will be built.
+# If '--dynamic' is specified, dynamic extensions will be built.
+# If '--nonxs' is specified, nonxs extensions will be built.
+# If '--dynaloader' is specificied, DynaLoader will be built.
 # If '--all' is specified, all extensions will be built.
 #
 #    make_ext.pl "MAKE=make [-make_opts]" --dir=directory [--target=target] [--static|--dynamic|--all] +ext2 !ext1
@@ -41,12 +81,6 @@ use Cwd;
 # It may be deleted in a later release of perl so try to
 # avoid using it for other purposes.
 
-my $is_Win32 = $^O eq 'MSWin32';
-my $is_VMS = $^O eq 'VMS';
-my $is_Unix = !$is_Win32 && !$is_VMS;
-
-require FindExt if $is_Win32;
-
 my (%excl, %incl, %opts, @extspec, @pass_through);
 
 foreach (@ARGV) {
@@ -57,7 +91,7 @@ foreach (@ARGV) {
     } elsif (/^--([\w\-]+)$/) {
 	$opts{$1} = 1;
     } elsif (/^--([\w\-]+)=(.*)$/) {
-	$opts{$1} = $2;
+	push @{$opts{$1}}, $2;
     } elsif (/=/) {
 	push @pass_through, $_;
     } elsif (length) {
@@ -67,6 +101,8 @@ foreach (@ARGV) {
 
 my $static = $opts{static} || $opts{all};
 my $dynamic = $opts{dynamic} || $opts{all};
+my $nonxs = $opts{nonxs} || $opts{all};
+my $dynaloader = $opts{dynaloader} || $opts{all};
 
 # The Perl Makefile.SH will expand all extensions to
 #	lib/auto/X/X.a  (or lib/auto/X/Y/Y.a if nested)
@@ -79,7 +115,7 @@ foreach (@extspec) {
     if (s{^lib/auto/}{}) {
 	# Remove lib/auto prefix and /*.* suffix
 	s{/[^/]+\.[^/]+$}{};
-    } elsif (s{^ext/}{}) {
+    } elsif (s{^$ext_dirs_re/}{}) {
 	# Remove ext/ prefix and /pm_to_blib suffix
 	s{/pm_to_blib$}{};
 	# Targets are given as files on disk, but the extension spec is still
@@ -95,8 +131,8 @@ foreach (@extspec) {
 my $makecmd  = shift @pass_through; # Should be something like MAKE=make
 unshift @pass_through, 'PERL_CORE=1';
 
-my $dir  = $opts{dir} || 'ext';
-my $target   = $opts{target};
+my @dirs  = @{$opts{dir} || \@ext_dirs};
+my $target   = $opts{target}[0];
 $target = 'all' unless defined $target;
 
 # Previously, $make was taken from config.sh.  However, the user might
@@ -126,7 +162,7 @@ if ($target eq '') {
     die "$0: unknown make target '$target'\n";
 }
 
-if (!@extspec and !$static and !$dynamic)  {
+if (!@extspec and !$static and !$dynamic and !$nonxs and !$dynaloader)  {
     die "$0: no extension specified\n";
 }
 
@@ -144,82 +180,132 @@ if ($is_Win32) {
     $ENV{PATH} = "$topdir;$topdir\\win32\\bin;$ENV{PATH}";
     my $pl2bat = "$topdir\\win32\\bin\\pl2bat";
     unless (-f "$pl2bat.bat") {
-	my @args = ($perl, ("$pl2bat.pl") x 2);
+	my @args = ($perl, "-I$topdir\\lib", ("$pl2bat.pl") x 2);
 	print "@args\n";
 	system(@args) unless defined $::Cross::platform;
     }
 
-    print "In ", getcwd();
-    chdir($dir) || die "Cannot cd to $dir\n";
-    (my $ext = getcwd()) =~ s{/}{\\}g;
-    FindExt::scan_ext($ext);
-    FindExt::set_static_extensions(split ' ', $Config{static_ext});
+    my $build = getcwd();
+    print "In $build";
+    foreach my $dir (@dirs) {
+	chdir($dir) or die "Cannot cd to $dir: $!\n";
+	(my $ext = getcwd()) =~ s{/}{\\}g;
+	FindExt::scan_ext($ext);
+	FindExt::set_static_extensions(split ' ', $Config{static_ext});
+	chdir $build
+	    or die "Couldn't chdir to '$build': $!"; # restore our start directory
+    }
 
     my @ext;
     push @ext, FindExt::static_ext() if $static;
-    push @ext, FindExt::dynamic_ext(), FindExt::nonxs_ext() if $dynamic;
+    push @ext, FindExt::dynamic_ext() if $dynamic;
+    push @ext, FindExt::nonxs_ext() if $nonxs;
+    push @ext, 'DynaLoader' if $dynaloader;
 
     foreach (sort @ext) {
 	if (%incl and !exists $incl{$_}) {
-	    #warn "Skipping extension $ext\\$_, not in inclusion list\n";
+	    #warn "Skipping extension $_, not in inclusion list\n";
 	    next;
 	}
 	if (exists $excl{$_}) {
-	    warn "Skipping extension $ext\\$_, not ported to current platform";
+	    warn "Skipping extension $_, not ported to current platform";
 	    next;
 	}
 	push @extspec, $_;
-	if(FindExt::is_static($_)) {
+	if($_ eq 'DynaLoader' and $target !~ /clean$/) {
+	    # No, we don't know why nmake can't work out the dependency chain
+	    push @{$extra_passthrough{$_}}, 'DynaLoader.c';
+	} elsif(FindExt::is_static($_)) {
 	    push @{$extra_passthrough{$_}}, 'LINKTYPE=static';
 	}
     }
-    chdir '..'; # now in the Perl build directory
+
+    chdir '..'
+	or die "Couldn't chdir to build directory: $!"; # now in the Perl build
 }
 elsif ($is_VMS) {
     $perl = $^X;
     push @extspec, (split ' ', $Config{static_ext}) if $static;
     push @extspec, (split ' ', $Config{dynamic_ext}) if $dynamic;
+    push @extspec, (split ' ', $Config{nonxs_ext}) if $nonxs;
+    push @extspec, 'DynaLoader' if $dynaloader;
+}
+
+{
+    # Cwd needs to be built before Encode recurses into subdirectories.
+    # This seems to be the simplest way to ensure this ordering:
+    my (@first, @other);
+    foreach (@extspec) {
+	if ($_ eq 'Cwd') {
+	    push @first, $_;
+	} else {
+	    push @other, $_;
+	}
+    }
+    @extspec = (@first, @other);
+}
+
+if ($Config{osname} eq 'catamount' and @extspec) {
+    # Snowball's chance of building extensions.
+    die "This is $Config{osname}, not building $extspec[0], sorry.\n";
 }
 
 foreach my $spec (@extspec)  {
     my $mname = $spec;
     $mname =~ s!/!::!g;
     my $ext_pathname;
-    if (-d "ext/$spec") {
-	# Old style ext/Data/Dumper/
-	$ext_pathname = "ext/$spec";
-    } elsif ($is_VMS and -d "vms/ext/" . substr($spec, 4)) {
-	# We could get rid of this by moving everything from
-	# [.vms.ext...] to [.ext.VMS...]
-	$ext_pathname = "vms/ext/" . substr($spec, 4);
-    } else {
-	# New style ext/Data-Dumper/
-	my $copy = $spec;
-	$copy =~ tr!/!-!;
-	$ext_pathname = "ext/$copy";
-    }
-    my $up = $ext_pathname;
-    $up =~ s![^/]+!..!g;
 
-    if ($Config{osname} eq 'catamount') {
-	# Snowball's chance of building extensions.
-	die "This is $Config{osname}, not building $mname, sorry.\n";
+    # Try new style ext/Data-Dumper/ first
+    my $copy = $spec;
+    $copy =~ tr!/!-!;
+    foreach my $dir (@ext_dirs) {
+	if (-d "$dir/$copy") {
+	    $ext_pathname = "$dir/$copy";
+	    last;
+	}
+    }
+
+    if (!defined $ext_pathname) {
+	if (-d "ext/$spec") {
+	    # Old style ext/Data/Dumper/
+	    $ext_pathname = "ext/$spec";
+	} else {
+	    warn "Can't find extension $spec in any of @ext_dirs";
+	    next;
+	}
     }
 
     print "\tMaking $mname ($target)\n";
 
-    build_extension('ext', $ext_pathname, $up, $perl || "$up/miniperl",
-		    "$up/lib", $mname,
+    build_extension($ext_pathname, $perl, $mname,
 		    [@pass_through, @{$extra_passthrough{$spec} || []}]);
 }
 
 sub build_extension {
-    my ($ext, $ext_dir, $return_dir, $perl, $lib_dir, $mname, $pass_through)
-	= @_;
+    my ($ext_dir, $perl, $mname, $pass_through) = @_;
+
     unless (chdir "$ext_dir") {
 	warn "Cannot cd to $ext_dir: $!";
 	return;
     }
+
+    my $up = $ext_dir;
+    $up =~ s![^/]+!..!g;
+
+    $perl ||= "$up/miniperl";
+    my $return_dir = $up;
+    my $lib_dir = "$up/lib";
+    # $lib_dir must be last, as we're copying files into it, and in a parallel
+    # make there's a race condition if one process tries to open a module that
+    # another process has half-written.
+    my @new_inc = ((map {"$up/$_"} @toolchain), $lib_dir);
+    if ($is_Win32) {
+	@new_inc = map {File::Spec::Functions::rel2abs($_)} @new_inc;
+    }
+    $ENV{PERL5LIB} = join $Config{path_sep}, @new_inc;
+    $ENV{PERL_CORE} = 1;
+    # warn $ENV{PERL5LIB};
+
     my $makefile;
     if ($is_VMS) {
 	$makefile = 'descrip.mms';
@@ -252,6 +338,9 @@ sub build_extension {
 	    unless ($fromname) {
 		die "For $mname tried @locations in in $ext_dir but can't find source";
 	    }
+            my $pod_name;
+	    ($pod_name = $fromname) =~ s/\.pm\z/.pod/;
+	    $pod_name = $fromname unless -e $pod_name;
 	    open my $fh, '>', 'Makefile.PL'
 		or die "Can't open Makefile.PL for writing: $!";
 	    print $fh <<"EOM";
@@ -266,7 +355,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME          => '$mname',
     VERSION_FROM  => '$fromname',
-    ABSTRACT_FROM => '$fromname',
+    ABSTRACT_FROM => '$pod_name',
     realclean     => {FILES => 'Makefile.PL'},
 );
 
@@ -286,7 +375,7 @@ EOM
 	    @cross = '-MCross';
 	}
 	    
-	my @args = ("-I$lib_dir", @cross, 'Makefile.PL');
+	my @args = (@cross, 'Makefile.PL');
 	if ($is_VMS) {
 	    my $libd = VMS::Filespec::vmspath($lib_dir);
 	    push @args, "INST_LIB=$libd", "INST_ARCHLIB=$libd";

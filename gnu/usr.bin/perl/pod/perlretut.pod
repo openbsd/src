@@ -184,7 +184,7 @@ bytes.  Here are some examples of escapes:
     "1000\t2000" =~ m(0\t2)   # matches
     "1000\n2000" =~ /0\n20/   # matches
     "1000\t2000" =~ /\000\t2/ # doesn't match, "0" ne "\000"
-    "cat"        =~ /\143\x61\x74/ # matches, but a weird way to spell cat
+    "cat"   =~ /\143\x61\x74/ # matches in ASCII, but a weird way to spell cat
 
 If you've been around Perl a while, all this talk of escape sequences
 may seem familiar.  Similar escape sequences are used in double-quoted
@@ -734,7 +734,7 @@ match).
 Closely associated with the matching variables C<$1>, C<$2>, ... are
 the I<backreferences> C<\1>, C<\2>,...  Backreferences are simply
 matching variables that can be used I<inside> a regexp.  This is a
-really nice feature -- what matches later in a regexp is made to depend on
+really nice feature; what matches later in a regexp is made to depend on
 what matched earlier in the regexp.  Suppose we wanted to look
 for doubled words in a text, like 'the the'.  The following regexp finds
 all 3-letter doubles with a space in between:
@@ -787,10 +787,10 @@ tempted to use it as a part of some other pattern:
         print "bad line: '$line'\n";
     }
 
-But this doesn't match -- at least not the way one might expect. Only
+But this doesn't match, at least not the way one might expect. Only
 after inserting the interpolated C<$a99a> and looking at the resulting
 full text of the regexp is it obvious that the backreferences have
-backfired -- the subexpression C<(\w+)> has snatched number 1 and
+backfired. The subexpression C<(\w+)> has snatched number 1 and
 demoted the groups in C<$a99a> by one rank. This can be avoided by
 using relative backreferences:
 
@@ -1059,7 +1059,7 @@ satisfied.
 
 =back
 
-As we have seen above, Principle 0 overrides the others -- the regexp
+As we have seen above, Principle 0 overrides the others. The regexp
 will be matched as early as possible, with the other principles
 determining how the regexp matches at that earliest character
 position.
@@ -1866,8 +1866,8 @@ Unicode and encoded in UTF-8, then an explicit C<use utf8> is needed.)
 Figuring out the hexadecimal sequence of a Unicode character you want
 or deciphering someone else's hexadecimal Unicode regexp is about as
 much fun as programming in machine code.  So another way to specify
-Unicode characters is to use the I<named character>> escape
-sequence C<\N{name}>.  C<name> is a name for the Unicode character, as
+Unicode characters is to use the I<named character> escape
+sequence C<\N{I<name>}>.  I<name> is a name for the Unicode character, as
 specified in the Unicode standard.  For instance, if we wanted to
 represent or match the astrological sign for the planet Mercury, we
 could use
@@ -1945,20 +1945,29 @@ you would use the script name, for example C<\p{Latin}>, C<\p{Greek}>,
 or C<\P{Katakana}>. Other sets are the Unicode blocks, the names
 of which begin with "In". One such block is dedicated to mathematical
 operators, and its pattern formula is <C\p{InMathematicalOperators>}>.
-For the full list see L<perlunicode>.
+For the full list see L<perluniprops>.
+
+What we have described so far is the single form of the C<\p{...}> character
+classes.  There is also a compound form which you may run into.  These
+look like C<\p{name=value}> or C<\p{name:value}> (the equals sign and colon
+can be used interchangeably).  These are more general than the single form,
+and in fact most of the single forms are just Perl-defined shortcuts for common
+compound forms.  For example, the script examples in the previous paragraph
+could be written equivalently as C<\p{Script=Latin}>, C<\p{Script:Greek}>, and
+C<\P{script=katakana}> (case is irrelevant between the C<{}> braces).  You may
+never have to use the compound forms, but sometimes it is necessary, and their
+use can make your code easier to understand.
 
 C<\X> is an abbreviation for a character class that comprises
-the Unicode I<combining character sequences>.  A combining character
-sequence is a base character followed by any number of diacritics, i.e.,
-signs like accents used to indicate different sounds of a letter. Using
-the Unicode full names, e.g., S<C<A + COMBINING RING>> is a combining
-character sequence with base character C<A> and combining character
-S<C<COMBINING RING>>, which translates in Danish to A with the circle
-atop it, as in the word Angstrom.  C<\X> is equivalent to C<\PM\pM*}>,
-i.e., a non-mark followed by one or more marks.
+a Unicode I<extended grapheme cluster>.  This represents a "logical character",
+what appears to be a single character, but may be represented internally by more
+than one.  As an example, using the Unicode full names, e.g., S<C<A + COMBINING
+RING>> is a grapheme cluster with base character C<A> and combining character
+S<C<COMBINING RING>>, which translates in Danish to A with the circle atop it,
+as in the word Angstrom.
 
 For the full and latest information about Unicode see the latest
-Unicode standard, or the Unicode Consortium's website http://www.unicode.org/
+Unicode standard, or the Unicode Consortium's website L<http://www.unicode.org>
 
 As if all those classes weren't enough, Perl also defines POSIX style
 character classes.  These have the form C<[:name:]>, with C<name> the
@@ -2474,12 +2483,12 @@ At first glance, you'd think that it shouldn't print, because obviously
 the C<ddd> isn't going to match the target string. But look at this
 example:
 
-    $x =~ /abc(?{print "Hi Mom!";})[d]dd/; # doesn't match,
-                                           # but _does_ print
+    $x =~ /abc(?{print "Hi Mom!";})[dD]dd/; # doesn't match,
+                                            # but _does_ print
 
 Hmm. What happened here? If you've been following along, you know that
-the above pattern should be effectively the same as the last one --
-enclosing the d in a character class isn't going to change what it
+the above pattern should be effectively (almost) the same as the last one;
+enclosing the C<d> in a character class isn't going to change what it
 matches. So why does the first not print while the second one does?
 
 The answer lies in the optimizations the regex engine makes. In the first
@@ -2487,7 +2496,7 @@ case, all the engine sees are plain old characters (aside from the
 C<?{}> construct). It's smart enough to realize that the string 'ddd'
 doesn't occur in our target string before actually running the pattern
 through. But in the second case, we've tricked it into thinking that our
-pattern is more complicated than it is. It takes a look, sees our
+pattern is more complicated. It takes a look, sees our
 character class, and decides that it will have to actually run the
 pattern to determine whether or not it matches, and in the process of
 running it hits the print statement before it discovers that we don't
@@ -2692,7 +2701,7 @@ the letter's counter. Then C<(*FAIL)> does what it says, and
 the regexp  engine proceeds according to the book: as long as the end of
 the string  hasn't been reached, the position is advanced before looking
 for another vowel. Thus, match or no match makes no difference, and the
-regexp engine proceeds until the the entire string has been inspected.
+regexp engine proceeds until the entire string has been inspected.
 (It's remarkable that an alternative solution using something like
 
    $count{lc($_)}++ for split('', "supercalifragilisticexpialidoceous");

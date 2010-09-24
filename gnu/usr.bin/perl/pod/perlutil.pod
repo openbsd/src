@@ -89,7 +89,7 @@ on the simple F<awk> script C<{print $2}> will produce a Perl program
 based around this code:
 
     while (<>) {
-        ($Fld1,$Fld2) = split(/[:\n]/, $_, 9999);
+        ($Fld1,$Fld2) = split(/[:\n]/, $_, -1);
         print $Fld2;
     }
 
@@ -218,7 +218,7 @@ for more information.
 
 =item L<prove>
 
-F<prove> is a command-line interface to the test-running functionality of
+F<prove> is a command-line interface to the test-running functionality
 of F<Test::Harness>.  It's an alternative to C<make test>.
 
 =item L<corelist>

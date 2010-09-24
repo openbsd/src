@@ -35,7 +35,7 @@ use File::Spec;
 
 my $script = File::Spec->catfile(
             File::Spec->catdir(
-                File::Spec->updir, qw[ lib CPANPLUS bin ]
+                File::Spec->updir, qw[ cpan CPANPLUS bin ]
             ), "cpan2dist");
 
 if (open(IN, $script)) {

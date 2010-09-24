@@ -1166,7 +1166,7 @@ between C<""> and C<< E<lt>E<gt> >> quoting in C<#include> statements.
 
 =item *
 
-now generates correct correct code for C<#if defined A || defined B>
+now generates correct code for C<#if defined A || defined B>
 [RT #39130]
 
 =back
@@ -1834,7 +1834,7 @@ The reference count of C<PerlIO> file descriptors is now correctly handled.
 
 =item *
 
-On VMS, escaped dots will be preserved when converted to UNIX syntax.
+On VMS, escaped dots will be preserved when converted to Unix syntax.
 
 =item *
 
@@ -2096,7 +2096,7 @@ Calls all tests in F<t/op/inccode.t> after first tying C<@INC>.
 
 =item t/op/incfilter.t
 
-Tests for for source filters returned from code references in C<@INC>.
+Tests for source filters returned from code references in C<@INC>.
 
 =item t/op/kill0.t
 

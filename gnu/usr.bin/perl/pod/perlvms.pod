@@ -206,12 +206,12 @@ check the appropriate DECC$ feature logical, or call a conversion
 routine to force it to that format.
 
 The feature logical name DECC$FILENAME_UNIX_REPORT modifies traditional
-Perl behavior in the conversion of file specifications from UNIX to VMS
+Perl behavior in the conversion of file specifications from Unix to VMS
 format in order to follow the extended character handling rules now
 expected by the CRTL.  Specifically, when this feature is in effect, the
-C<./.../> in a UNIX path is now translated to C<[.^.^.^.]> instead of
+C<./.../> in a Unix path is now translated to C<[.^.^.^.]> instead of
 the traditional VMS C<[...]>.  To be compatible with what MakeMaker
-expects, if a VMS path cannot be translated to a UNIX path, it is
+expects, if a VMS path cannot be translated to a Unix path, it is
 passed through unchanged, so C<unixify("[...]")> will return C<[...]>.
 
 The handling of extended characters is largely complete in the
@@ -221,24 +221,24 @@ particular, at this writing PathTools has only partial support for
 directories containing some extended characters.
 
 There are several ambiguous cases where a conversion routine cannot
-determine whether an input filename is in UNIX format or in VMS format,
-since now both VMS and UNIX file specifications may have characters in
+determine whether an input filename is in Unix format or in VMS format,
+since now both VMS and Unix file specifications may have characters in
 them that could be mistaken for syntax delimiters of the other type. So
 some pathnames simply cannot be used in a mode that allows either type
 of pathname to be present.  Perl will tend to assume that an ambiguous
-filename is in UNIX format.
+filename is in Unix format.
 
 Allowing "." as a version delimiter is simply incompatible with
-determining whether a pathname is in VMS format or in UNIX format with
+determining whether a pathname is in VMS format or in Unix format with
 extended file syntax.  There is no way to know whether "perl-5.8.6" is a
-UNIX "perl-5.8.6" or a VMS "perl-5.8;6" when passing it to unixify() or
+Unix "perl-5.8.6" or a VMS "perl-5.8;6" when passing it to unixify() or
 vmsify().
 
 The DECC$FILENAME_UNIX_REPORT logical name controls how Perl interprets
 filenames to the extent that Perl uses the CRTL internally for many
 purposes, and attempts to follow CRTL conventions for reporting
 filenames.  The DECC$FILENAME_UNIX_ONLY feature differs in that it
-expects all filenames passed to the C run-time to be already in UNIX
+expects all filenames passed to the C run-time to be already in Unix
 format.  This feature is not yet supported in Perl since Perl uses
 traditional OpenVMS file specifications internally and in the test
 harness, and it is not yet clear whether this mode will be useful or
@@ -274,7 +274,7 @@ OpenVMS Alpha v7.3-1 and later and all version of OpenVMS I64 support
 case sensitivity as a process setting (see C<SET PROCESS
 /CASE_LOOKUP=SENSITIVE>). Perl does not currently suppport case
 sensitivity on VMS, but it may in the future, so Perl programs should
-use the C<File::Spec->case_tolerant> method to determine the state, and
+use the C<< File::Spec->case_tolerant >> method to determine the state, and
 not the C<$^O> variable.
 
 =head2 Symbolic Links
@@ -284,7 +284,7 @@ default supports symbolic links when the requisite support is available
 in the filesystem and CRTL (generally 64-bit OpenVMS v8.3 and later). 
 There are a number of limitations and caveats to be aware of when
 working with symbolic links on VMS.  Most notably, the target of a valid
-symbolic link must be expressed as a UNIX-style path and it must exist
+symbolic link must be expressed as a Unix-style path and it must exist
 on a volume visible from your POSIX root (see the C<SHOW ROOT> command
 in DCL help).  For further details on symbolic link capabilities and
 requirements, see chapter 12 of the CRTL manual that ships with OpenVMS
@@ -348,15 +348,14 @@ argument to the C<system> operator (see below).  In this case,
 Perl will wait for the subprocess to complete before continuing. 
 
 The mailbox (MBX) that perl can create to communicate with a pipe
-defaults to a buffer size of 512.  The default buffer size is
-adjustable via the logical name PERL_MBX_SIZE provided that the
-value falls between 128 and the SYSGEN parameter MAXBUF inclusive.
-For example, to double the MBX size from the default within
-a Perl program, use C<$ENV{'PERL_MBX_SIZE'} = 1024;> and then
-open and use pipe constructs.  An alternative would be to issue
-the command:
+defaults to a buffer size of 8192 on 64-bit systems, 512 on VAX.  The
+default buffer size is adjustable via the logical name PERL_MBX_SIZE
+provided that the value falls between 128 and the SYSGEN parameter
+MAXBUF inclusive.  For example, to set the mailbox size to 32767 use
+C<$ENV{'PERL_MBX_SIZE'} = 32767;> and then open and use pipe constructs. 
+An alternative would be to issue the command:
 
-    $ Define PERL_MBX_SIZE 1024
+    $ Define PERL_MBX_SIZE 32767
 
 before running your wide record pipe program.  A larger value may
 improve performance at the expense of the BYTLM UAF quota.
@@ -388,7 +387,7 @@ lower case.
   $define DISPLAY "hostname:0.0"
 
 Currently the value of C<DISPLAY> is ignored.  It is recommended that it be set
-to be the hostname of the display, the server and screen in UNIX notation.  In
+to be the hostname of the display, the server and screen in Unix notation.  In
 the future the value of DISPLAY may be honored by Perl instead of using the
 default display.
 
@@ -680,21 +679,21 @@ SEVERE_ERROR severity for DCL error handling.
 
 When C<PERL_VMS_POSIX_EXIT> is active (see L</"$?"> below), the native VMS exit
 status value will have either one of the C<$!> or C<$?> or C<$^E> or
-the UNIX value 255 encoded into it in a way that the effective original
+the Unix value 255 encoded into it in a way that the effective original
 value can be decoded by other programs written in C, including Perl
 and the GNV package.  As per the normal non-VMS behavior of C<die> if
 either C<$!> or C<$?> are non-zero, one of those values will be
-encoded into a native VMS status value.  If both of the UNIX status
+encoded into a native VMS status value.  If both of the Unix status
 values are 0, and the C<$^E> value is set one of ERROR or SEVERE_ERROR
 severity, then the C<$^E> value will be used as the exit code as is.
-If none of the above apply, the UNIX value of 255 will be encoded into
+If none of the above apply, the Unix value of 255 will be encoded into
 a native VMS exit status value.
 
 Please note a significant difference in the behavior of C<die> in
 the C<PERL_VMS_POSIX_EXIT> mode is that it does not force a VMS
-SEVERE_ERROR status on exit.  The UNIX exit values of 2 through
+SEVERE_ERROR status on exit.  The Unix exit values of 2 through
 255 will be encoded in VMS status values with severity levels of
-SUCCESS.  The UNIX exit value of 1 will be encoded in a VMS status
+SUCCESS.  The Unix exit value of 1 will be encoded in a VMS status
 value with a severity level of ERROR.  This is to be compatible with
 how the VMS C library encodes these values.
 
@@ -702,7 +701,7 @@ The minimum severity level set by C<die> in C<PERL_VMS_POSIX_EXIT> mode
 may be changed to be ERROR or higher in the future depending on the 
 results of testing and further review.
 
-See L</"$?"> for a description of the encoding of the UNIX value to
+See L</"$?"> for a description of the encoding of the Unix value to
 produce a native VMS status containing it.
 
 
@@ -772,7 +771,7 @@ true, a warning message is printed, and C<undef> is returned.
 =item kill
 
 In most cases, C<kill> is implemented via the undocumented system
-service <$SIGPRC>, which has the same calling sequence as <$FORCEX>, but
+service C<$SIGPRC>, which has the same calling sequence as C<$FORCEX>, but
 throws an exception in the target process rather than forcing it to call
 C<$EXIT>.  Generally speaking, C<kill> follows the behavior of the
 CRTL's C<kill()> function, but unlike that function can be called from
@@ -1111,38 +1110,38 @@ compiled with the _POSIX_EXIT macro set, the status value will
 contain the actual value of 0 to 255 returned by that program
 on a normal exit.
 
-With the _POSIX_EXIT macro set, the UNIX exit value of zero is
-represented as a VMS native status of 1, and the UNIX values
+With the _POSIX_EXIT macro set, the Unix exit value of zero is
+represented as a VMS native status of 1, and the Unix values
 from 2 to 255 are encoded by the equation:
 
    VMS_status = 0x35a000 + (unix_value * 8) + 1.
 
-And in the special case of unix value 1 the encoding is:
+And in the special case of Unix value 1 the encoding is:
 
    VMS_status = 0x35a000 + 8 + 2 + 0x10000000.
 
 For other termination statuses, the severity portion of the
-subprocess' exit status is used: if the severity was success or
+subprocess's exit status is used: if the severity was success or
 informational, these bits are all 0; if the severity was
 warning, they contain a value of 1; if the severity was
 error or fatal error, they contain the actual severity bits,
 which turns out to be a value of 2 for error and 4 for severe_error.
 Fatal is another term for the severe_error status.
 
-As a result, C<$?> will always be zero if the subprocess' exit
+As a result, C<$?> will always be zero if the subprocess's exit
 status indicated successful completion, and non-zero if a
 warning or error occurred or a program compliant with encoding
 _POSIX_EXIT values was run and set a status.
 
 How can you tell the difference between a non-zero status that is
-the result of a VMS native error status or an encoded UNIX status?
+the result of a VMS native error status or an encoded Unix status?
 You can not unless you look at the ${^CHILD_ERROR_NATIVE} value.
 The ${^CHILD_ERROR_NATIVE} value returns the actual VMS status value
 and check the severity bits. If the severity bits are equal to 1,
 then if the numeric value for C<$?> is between 2 and 255 or 0, then
-C<$?> accurately reflects a value passed back from a UNIX application.
+C<$?> accurately reflects a value passed back from a Unix application.
 If C<$?> is 1, and the severity bits indicate a VMS error (2), then
-C<$?> is from a UNIX application exit value.
+C<$?> is from a Unix application exit value.
 
 In practice, Perl scripts that call programs that return _POSIX_EXIT
 type status values will be expecting those values, and programs that
@@ -1152,9 +1151,9 @@ behavior or just checking for a non-zero status.
 And success is always the value 0 in all behaviors.
 
 When the actual VMS termination status of the child is an error,
-internally the C<$!> value will be set to the closest UNIX errno
+internally the C<$!> value will be set to the closest Unix errno
 value to that error so that Perl scripts that test for error
-messages will see the expected UNIX style error message instead
+messages will see the expected Unix style error message instead
 of a VMS message.
 
 Conversely, when setting C<$?> in an END block, an attempt is made
@@ -1174,7 +1173,7 @@ status value to be passed through.  The special value of 0xFFFF is
 almost a NOOP as it will cause the current native VMS status in the
 C library to become the current native Perl VMS status, and is handled
 this way as it is known to not be a valid native VMS status value.
-It is recommend that only values in the range of normal UNIX parent or
+It is recommend that only values in the range of normal Unix parent or
 child status numbers, 0 to 255 are used.
 
 The pragma C<use vmsish 'status'> makes C<$?> reflect the actual 

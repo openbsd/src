@@ -1,10 +1,10 @@
-# PropertyAliases-5.1.0.txt
-# Date: 2008-02-28, 12:28:00 PST [KW]
+# PropertyAliases-5.2.0.txt
+# Date: 2009-08-24, 03:26:46 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UCD.html
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # This file contains aliases for properties used in the UCD.
 # These names can be used for XML formats of UCD data, for regular-expression
@@ -32,7 +32,7 @@
 # NOTE: Property value names are NOT unique across properties. For example:
 #
 #   AL means Arabic Letter for the Bidi_Class property, and
-#   AL means Alpha_Left for the Combining_Class property, and
+#   AL means Above_Left for the Combining_Class property, and
 #   AL means Alphabetic for the Line_Break property.
 #
 # In addition, some property names may be the same as some property value names.
@@ -43,14 +43,16 @@
 #
 # The combination of property value and property name is, however, unique.
 #
-# For more information, see UTS #18: Regular Expression Guidelines
+# For more information, see UTS #18: Unicode Regular Expressions
 # ================================================
 
 
 # ================================================
 # Numeric Properties
 # ================================================
-ccc       ; Canonical_Combining_Class
+cjkAccountingNumeric; kAccountingNumeric
+cjkOtherNumeric; kOtherNumeric
+cjkPrimaryNumeric; kPrimaryNumeric
 nv        ; Numeric_Value
 
 # ================================================
@@ -58,9 +60,11 @@ nv        ; Numeric_Value
 # ================================================
 bmg       ; Bidi_Mirroring_Glyph
 cf        ; Case_Folding
+cjkCompatibilityVariant; kCompatibilityVariant
 dm        ; Decomposition_Mapping
 FC_NFKC   ; FC_NFKC_Closure
 lc        ; Lowercase_Mapping
+NFKC_CF   ; NFKC_Casefold
 scf       ; Simple_Case_Folding         ; sfc
 slc       ; Simple_Lowercase_Mapping
 stc       ; Simple_Titlecase_Mapping
@@ -71,11 +75,22 @@ uc        ; Uppercase_Mapping
 # ================================================
 # Miscellaneous Properties
 # ================================================
+cjkIICore ; kIICore
+cjkIRG_GSource; kIRG_GSource
+cjkIRG_HSource; kIRG_HSource
+cjkIRG_JSource; kIRG_JSource
+cjkIRG_KPSource; kIRG_KPSource
+cjkIRG_KSource; kIRG_KSource
+cjkIRG_MSource; kIRG_MSource
+cjkIRG_TSource; kIRG_TSource
+cjkIRG_USource; kIRG_USource
+cjkIRG_VSource; kIRG_VSource
+cjkRSUnicode; kRSUnicode                ; Unicode_Radical_Stroke; URS
 isc       ; ISO_Comment
 JSN       ; Jamo_Short_Name
 na        ; Name
 na1       ; Unicode_1_Name
-URS       ; Unicode_Radical_Stroke
+Name_Alias; Name_Alias
 
 # ================================================
 # Catalog Properties
@@ -88,6 +103,7 @@ sc        ; Script
 # Enumerated Properties
 # ================================================
 bc        ; Bidi_Class
+ccc       ; Canonical_Combining_Class
 dt        ; Decomposition_Type
 ea        ; East_Asian_Width
 gc        ; General_Category
@@ -111,8 +127,16 @@ AHex      ; ASCII_Hex_Digit
 Alpha     ; Alphabetic
 Bidi_C    ; Bidi_Control
 Bidi_M    ; Bidi_Mirrored
+Cased     ; Cased
 CE        ; Composition_Exclusion
+CI        ; Case_Ignorable
 Comp_Ex   ; Full_Composition_Exclusion
+CWCF      ; Changes_When_Casefolded
+CWCM      ; Changes_When_Casemapped
+CWKCF     ; Changes_When_NFKC_Casefolded
+CWL       ; Changes_When_Lowercased
+CWT       ; Changes_When_Titlecased
+CWU       ; Changes_When_Uppercased
 Dash      ; Dash
 Dep       ; Deprecated
 DI        ; Default_Ignorable_Code_Point
@@ -160,6 +184,6 @@ XO_NFKC   ; Expands_On_NFKC
 XO_NFKD   ; Expands_On_NFKD
 
 # ================================================
-# Total:    88
+# Total:    112
 
 # EOF

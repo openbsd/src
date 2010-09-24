@@ -2838,6 +2838,7 @@ package PLXML::op_enterwrite;
 package PLXML::op_leavewrite;
 package PLXML::op_prtf;
 package PLXML::op_print;
+package PLXML::op_say;
 package PLXML::op_sysopen;
 package PLXML::op_sysseek;
 package PLXML::op_sysread;

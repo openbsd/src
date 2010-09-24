@@ -1,0 +1,112 @@
+CHANGES
+-------
+  2.023 9 November 2009
+
+      * Removed redundant bzip2 source files from the bzip2-src directory.
+        [RT# 47225]
+
+      * Fixed instance where $[ should have been $] in t/01bzip2.t
+        Thanks to Robin Barker and zefram [RT #50764] for independantly
+        spotting the issue.
+
+  2.021 30 August 2009
+
+      * Changed test harness so that it can cope with PERL5OPT=-MCarp=verbose
+        [RT# 47225]
+
+  2.020 4 June 2009
+
+      * No Changes
+
+  2.019 4 May 2009
+
+      * tidied up Bzip2.xs
+
+  2.018 3 May 2009
+
+      * added linitOutput option
+
+      * Changes to bzip2 source to get the module to build using a C++
+        compiler
+
+  2.017 28 March 2009
+
+      * Minor changes to allow building in perl core.
+
+      * Removed MAN3PODS from Makefile.PL
+
+  2.015 3 September 2008
+
+      * Documented bzlibversion
+
+  2.015 3 September 2008
+
+      * Makefile.PL
+        Backout changes made in 2.014
+
+  2.014 2 September 2008
+
+      * Makefile.PL
+        Updated to check for indirect dependencies.
+
+  2.012 15 July 2008
+
+      * No Changes
+
+  2.011 17 May 2008
+
+      * No Changes
+
+  2.010 5 May 2008
+
+      * No Changes
+
+  2.009 20 April 2008
+
+      * Updated to use bzip2 1.0.5
+
+  2.008 2 November 2007
+
+      * Minor documentation changes in README
+
+  2.006 1 September 2007
+
+      * Added the bzip2 LICENSE file into bzip2-src.
+        [rt.cpan.org #28980]
+
+  2.005 18 June 2007
+
+      * Added patch from Fedora to allow the module to be built with an
+        existing bzip2 library.
+        [rt.cpan.org #25489]
+
+  2.004 3 March 2007
+
+      * Updated to use bzip2 1.0.4
+
+      * Remove redundant code from Bzip2.xs
+
+  2.003 2 January 2007
+
+      * Added explicit version checking
+
+  2.002 29 December 2006
+
+      * Documentation updates.
+
+  2.001 1 November 2006
+
+      * Remove beta status.
+
+  2.000_14 26 October 2006
+
+      * Fixed memory leak on realloc.
+
+  2.000_12 12 May 2006
+
+      * Documentation updates.
+
+  2.000_10 13 March 2006
+
+      * Created Compress::Raw::Bzip2
+

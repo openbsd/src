@@ -409,7 +409,7 @@ NetWare from Novell is now supported.  See L<perlnetware>.
 
 =item *
 
-The Amdahl UTS UNIX mainframe platform is now supported.
+The Amdahl UTS Unix mainframe platform is now supported.
 
 =back
 

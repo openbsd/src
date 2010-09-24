@@ -9,26 +9,14 @@ README.mpeix - Perl/iX for HP e3000 MPE
 =head1 SYNOPSIS
 
    http://www.bixby.org/mark/perlix.html
-   http://jazz.external.hp.com/src/hp_freeware/perl/
    Perl language for MPE
    Last updated January 12, 2006 @ 2100 UTC
 
 
 =head1 NOTE
 
-This is a podified version of the above-mentioned web page,
+This is a podified version of what used to be on the above-mentioned web page,
 podified by Jarkko Hietaniemi 2001-Jan-01.
-
-=head1 Binary distribution from HP
-
-The simplest way to obtain Perl for the MPE/iX is to go either of
-these URLs and follow the instructions within.
-
-http://jazz.external.hp.com/src/hp_freeware/perl/
-http://www.bixby.org/mark/perlix.html
-
-Use which ever one is more recent.
-
 
 =head1 What's New in Perl for MPE/iX
 
@@ -111,13 +99,6 @@ libnet (as seen on CPAN)
 
 libwww-perl (LWP) which lets Perl programs behave like web browsers:
 
-    1. #!/PERL/PUB/perl
-    2. use LWP::Simple;
-    3. $doc = get('http://www.bixby.org/mark/perlix.html');  # reads the
-       web page into variable $doc
-
-(http://www.bixby.org/mark/perlix.html)
-
 =item *
 
 mod_perl (just the perl portion; the actual DSO will be released
@@ -136,7 +117,7 @@ installing of add-on packages:
     2. perl -MCPAN -e shell
     3. Ignore any terminal I/O related complaints!
 
-(http://theoryx5.uwinnipeg.ca/CPAN/data/perl/CPAN.html)
+(http://search.cpan.org/dist/CPAN/)
 
 =back
 
@@ -439,7 +420,7 @@ make sure that your script has execute permission. Run your script!
 Be sure to take a look at the CPAN module list
 ( http://www.cpan.org/CPAN.html ). A wide variety of free Perl software
 is available.  You can automatically download these packages by using
-the CPAN module ( http://theoryx5.uwinnipeg.ca/CPAN/data/perl/CPAN.html ).
+the CPAN module ( http://search.cpan.org/dist/CPAN/ ).
 
 =head1 MPE/iX Implementation Considerations
 

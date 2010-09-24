@@ -14,7 +14,7 @@ BEGIN {
 
 use warnings;
 
-plan 90;
+plan 92;
 
 $SIG{__WARN__} = sub { die @_ };
 
@@ -23,13 +23,7 @@ sub eval_ok ($;$) {
     is( $@, '', @_);
 }
 
-eval_ok 'sub t1 ($) : locked { $_[0]++ }';
-eval_ok 'sub t2 : locked { $_[0]++ }';
-eval_ok 'sub t3 ($) : locked ;';
-eval_ok 'sub t4 : locked ;';
-our $anon1; eval_ok '$anon1 = sub ($) : locked:method { $_[0]++ }';
-our $anon2; eval_ok '$anon2 = sub : locked : method { $_[0]++ }';
-our $anon3; eval_ok '$anon3 = sub : method { $_[0]->[1] }';
+our $anon1; eval_ok '$anon1 = sub : method { $_[0]++ }';
 
 eval 'sub e1 ($) : plugh ;';
 like $@, qr/^Invalid CODE attributes?: ["']?plugh["']? at/;
@@ -92,7 +86,10 @@ eval 'my A $x : plugh;';
 is $@, '';
 
 eval 'package Cat; my Cat @socks;';
-like $@, qr/^Can't declare class for non-scalar \@socks in "my"/;
+like $@, '';
+
+eval 'my Cat %nap;';
+like $@, '';
 
 sub X::MODIFY_CODE_ATTRIBUTES { die "$_[0]" }
 sub X::foo { 1 }
@@ -101,36 +98,37 @@ sub X::foo { 1 }
 eval 'package Z; sub Y::bar : foo';
 like $@, qr/^X at /;
 
-eval 'package Z; sub Y::baz : locked {}';
-my @attrs = eval 'attributes::get \&Y::baz';
-is "@attrs", "locked";
-
 @attrs = eval 'attributes::get $anon1';
-is "@attrs", "locked method";
+is "@attrs", "method";
 
 sub Z::DESTROY { }
 sub Z::FETCH_CODE_ATTRIBUTES { return 'Z' }
-my $thunk = eval 'bless +sub : method locked { 1 }, "Z"';
+my $thunk = eval 'bless +sub : method { 1 }, "Z"';
 is ref($thunk), "Z";
 
 @attrs = eval 'attributes::get $thunk';
-is "@attrs", "locked method Z";
+is "@attrs", "method Z";
 
 # Test attributes on predeclared subroutines:
 eval 'package A; sub PS : lvalue';
 @attrs = eval 'attributes::get \&A::PS';
 is "@attrs", "lvalue";
 
-# Test ability to modify existing sub's (or XSUB's) attributes.
-eval 'package A; sub X { $_[0] } sub X : lvalue';
-@attrs = eval 'attributes::get \&A::X';
+# Test attributes on predeclared subroutines, after definition
+eval 'package A; sub PS : lvalue; sub PS { }';
+@attrs = eval 'attributes::get \&A::PS';
 is "@attrs", "lvalue";
+
+# Test ability to modify existing sub's (or XSUB's) attributes.
+eval 'package A; sub X { $_[0] } sub X : method';
+@attrs = eval 'attributes::get \&A::X';
+is "@attrs", "method";
 
 # Above not with just 'pure' built-in attributes.
 sub Z::MODIFY_CODE_ATTRIBUTES { (); }
-eval 'package Z; sub L { $_[0] } sub L : Z lvalue';
+eval 'package Z; sub L { $_[0] } sub L : Z method';
 @attrs = eval 'attributes::get \&Z::L';
-is "@attrs", "lvalue Z";
+is "@attrs", "method Z";
 
 # Begin testing attributes that tie
 
@@ -162,21 +160,28 @@ eval 'my $$foo : bar = 1';
 like $@, qr/Can't declare scalar dereference in "my"/;
 
 
-my @code = qw(lvalue locked method);
-my @other = qw(shared unique);
+my @code = qw(lvalue method);
+my @other = qw(shared);
+my @deprecated = qw(locked unique);
 my %valid;
 $valid{CODE} = {map {$_ => 1} @code};
 $valid{SCALAR} = {map {$_ => 1} @other};
 $valid{ARRAY} = $valid{HASH} = $valid{SCALAR};
+my %deprecated;
+$deprecated{CODE} = { locked => 1 };
+$deprecated{ARRAY} = $deprecated{HASH} = $deprecated{SCALAR} = { unique => 1 };
 
 our ($scalar, @array, %hash);
 foreach my $value (\&foo, \$scalar, \@array, \%hash) {
     my $type = ref $value;
     foreach my $negate ('', '-') {
-	foreach my $attr (@code, @other) {
+	foreach my $attr (@code, @other, @deprecated) {
 	    my $attribute = $negate . $attr;
 	    eval "use attributes __PACKAGE__, \$value, '$attribute'";
-	    if ($valid{$type}{$attr}) {
+	    if ($deprecated{$type}{$attr}) {
+		like $@, qr/^Attribute "$attr" is deprecated at \(eval \d+\)/,
+		    "$type attribute $attribute deprecated";
+	    } elsif ($valid{$type}{$attr}) {
 		if ($attribute eq '-shared') {
 		    like $@, qr/^A variable may not be unshared/;
 		} else {
@@ -196,3 +201,45 @@ sub PVBM () { 'foo' }
 
 ok !defined(attributes::get(\PVBM)), 
     'PVBMs don\'t segfault attributes::get';
+
+{
+    #  [perl #49472] Attributes + Unkown Error
+    eval '
+	use strict;
+	sub MODIFY_CODE_ATTRIBUTE{}
+	sub f:Blah {$nosuchvar};
+    ';
+
+    my $err = $@;
+    like ($err, qr/Global symbol "\$nosuchvar" requires /, 'perl #49472');
+}
+
+# Test that code attributes always get applied to the same CV that
+# we're left with at the end (bug#66970).
+{
+	package bug66970;
+	our $c;
+	sub MODIFY_CODE_ATTRIBUTES { $c = $_[1]; () }
+	$c=undef; eval 'sub t0 :Foo';
+	main::ok $c == \&{"t0"};
+	$c=undef; eval 'sub t1 :Foo { }';
+	main::ok $c == \&{"t1"};
+	$c=undef; eval 'sub t2';
+	our $t2a = \&{"t2"};
+	$c=undef; eval 'sub t2 :Foo';
+	main::ok $c == \&{"t2"} && $c == $t2a;
+	$c=undef; eval 'sub t3';
+	our $t3a = \&{"t3"};
+	$c=undef; eval 'sub t3 :Foo { }';
+	main::ok $c == \&{"t3"} && $c == $t3a;
+	$c=undef; eval 'sub t4 :Foo';
+	our $t4a = \&{"t4"};
+	our $t4b = $c;
+	$c=undef; eval 'sub t4 :Foo';
+	main::ok $c == \&{"t4"} && $c == $t4b && $c == $t4a;
+	$c=undef; eval 'sub t5 :Foo';
+	our $t5a = \&{"t5"};
+	our $t5b = $c;
+	$c=undef; eval 'sub t5 :Foo { }';
+	main::ok $c == \&{"t5"} && $c == $t5b && $c == $t5a;
+}

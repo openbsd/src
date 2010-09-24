@@ -107,7 +107,7 @@ Perl 郵遞論壇一覽
 
 =over 4
 
-=item L<http://www.oreilly.com.tw/chinese/perl/index.html>
+=item L<http://www.oreilly.com.tw/product_perl.php?id=index_perl>
 
 正體中文版的歐萊禮 Perl 書藉
 
@@ -148,10 +148,6 @@ Unix/Linux 上的 UTF-8 及 Unicode 答客問
 =head2 中文化資訊
 
 =over 4
-
-=item 為什麼叫 "正體中文" 不叫 "繁體中文"?
-
-L<http://www.csie.ntu.edu.tw/~b7506051/mozilla/faq.html#faqglossary>
 
 =item 中文化軟體聯盟
 

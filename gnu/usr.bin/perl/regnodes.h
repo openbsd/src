@@ -625,39 +625,39 @@ EXTCONST char * const PL_reg_name[] = {
 EXTCONST char * PL_reg_extflags_name[];
 #else
 EXTCONST char * const PL_reg_extflags_name[] = {
-	/* Bits in extflags defined: 11111111111111111111111100111111 */
-	"ANCH_BOL",         /* 0x00000001 */
-	"ANCH_MBOL",        /* 0x00000002 */
-	"ANCH_SBOL",        /* 0x00000004 */
-	"ANCH_GPOS",        /* 0x00000008 */
-	"GPOS_SEEN",        /* 0x00000010 */
-	"GPOS_FLOAT",       /* 0x00000020 */
+	/* Bits in extflags defined: 11111111111101111111111100111111 */
+	"MULTILINE",        /* 0x00000001 */
+	"SINGLELINE",       /* 0x00000002 */
+	"FOLD",             /* 0x00000004 */
+	"EXTENDED",         /* 0x00000008 */
+	"KEEPCOPY",         /* 0x00000010 */
+	"LOCALE",           /* 0x00000020 */
 	"UNUSED_BIT_6",     /* 0x00000040 */
 	"UNUSED_BIT_7",     /* 0x00000080 */
-	"SKIPWHITE",        /* 0x00000100 */
-	"START_ONLY",       /* 0x00000200 */
-	"WHITE",            /* 0x00000400 */
-	"LOCALE",           /* 0x00000800 */
-	"MULTILINE",        /* 0x00001000 */
-	"SINGLELINE",       /* 0x00002000 */
-	"FOLD",             /* 0x00004000 */
-	"EXTENDED",         /* 0x00008000 */
-	"KEEPCOPY",         /* 0x00010000 */
-	"LOOKBEHIND_SEEN",  /* 0x00020000 */
-	"EVAL_SEEN",        /* 0x00040000 */
-	"CANY_SEEN",        /* 0x00080000 */
-	"NOSCAN",           /* 0x00100000 */
-	"CHECK_ALL",        /* 0x00200000 */
-	"UTF8",             /* 0x00400000 */
-	"MATCH_UTF8",       /* 0x00800000 */
-	"USE_INTUIT_NOML",  /* 0x01000000 */
-	"USE_INTUIT_ML",    /* 0x02000000 */
-	"INTUIT_TAIL",      /* 0x04000000 */
-	"SPLIT",            /* 0x08000000 */
-	"COPY_DONE",        /* 0x10000000 */
-	"TAINTED_SEEN",     /* 0x20000000 */
-	"NULL",             /* 0x40000000 */
-	"TAINTED",          /* 0x80000000 */
+	"ANCH_BOL",         /* 0x00000100 */
+	"ANCH_MBOL",        /* 0x00000200 */
+	"ANCH_SBOL",        /* 0x00000400 */
+	"ANCH_GPOS",        /* 0x00000800 */
+	"GPOS_SEEN",        /* 0x00001000 */
+	"GPOS_FLOAT",       /* 0x00002000 */
+	"LOOKBEHIND_SEEN",  /* 0x00004000 */
+	"EVAL_SEEN",        /* 0x00008000 */
+	"CANY_SEEN",        /* 0x00010000 */
+	"NOSCAN",           /* 0x00020000 */
+	"CHECK_ALL",        /* 0x00040000 */
+	"UNUSED_BIT_19",    /* 0x00080000 */
+	"MATCH_UTF8",       /* 0x00100000 */
+	"USE_INTUIT_NOML",  /* 0x00200000 */
+	"USE_INTUIT_ML",    /* 0x00400000 */
+	"INTUIT_TAIL",      /* 0x00800000 */
+	"SPLIT",            /* 0x01000000 */
+	"COPY_DONE",        /* 0x02000000 */
+	"TAINTED_SEEN",     /* 0x04000000 */
+	"TAINTED",          /* 0x08000000 */
+	"START_ONLY",       /* 0x10000000 */
+	"SKIPWHITE",        /* 0x20000000 */
+	"WHITE",            /* 0x40000000 */
+	"NULL",             /* 0x80000000 */
 };
 #endif /* DOINIT */
 

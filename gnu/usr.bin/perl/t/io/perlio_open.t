@@ -16,12 +16,13 @@ BEGIN {
 	print "1..0 # Skip: no Fcntl (how did you get this far?)\n";
 	exit 0;
     }
+    require './test.pl';
 }
 
 use strict;
 use warnings;
 
-use Test::More tests => 6;
+plan tests => 6;
 
 use Fcntl qw(:seek);
 

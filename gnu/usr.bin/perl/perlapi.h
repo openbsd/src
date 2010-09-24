@@ -178,8 +178,6 @@ END_EXTERN_C
 #define PL_beginav		(*Perl_Ibeginav_ptr(aTHX))
 #undef  PL_beginav_save
 #define PL_beginav_save		(*Perl_Ibeginav_save_ptr(aTHX))
-#undef  PL_bitcount
-#define PL_bitcount		(*Perl_Ibitcount_ptr(aTHX))
 #undef  PL_body_arenas
 #define PL_body_arenas		(*Perl_Ibody_arenas_ptr(aTHX))
 #undef  PL_body_roots
@@ -460,14 +458,16 @@ END_EXTERN_C
 #define PL_numeric_radix_sv	(*Perl_Inumeric_radix_sv_ptr(aTHX))
 #undef  PL_numeric_standard
 #define PL_numeric_standard	(*Perl_Inumeric_standard_ptr(aTHX))
-#undef  PL_ofs_sv
-#define PL_ofs_sv		(*Perl_Iofs_sv_ptr(aTHX))
+#undef  PL_ofsgv
+#define PL_ofsgv		(*Perl_Iofsgv_ptr(aTHX))
 #undef  PL_oldname
 #define PL_oldname		(*Perl_Ioldname_ptr(aTHX))
 #undef  PL_op
 #define PL_op			(*Perl_Iop_ptr(aTHX))
 #undef  PL_op_mask
 #define PL_op_mask		(*Perl_Iop_mask_ptr(aTHX))
+#undef  PL_opfreehook
+#define PL_opfreehook		(*Perl_Iopfreehook_ptr(aTHX))
 #undef  PL_opsave
 #define PL_opsave		(*Perl_Iopsave_ptr(aTHX))
 #undef  PL_origalen
@@ -508,8 +508,6 @@ END_EXTERN_C
 #define PL_ppid			(*Perl_Ippid_ptr(aTHX))
 #undef  PL_preambleav
 #define PL_preambleav		(*Perl_Ipreambleav_ptr(aTHX))
-#undef  PL_preprocess
-#define PL_preprocess		(*Perl_Ipreprocess_ptr(aTHX))
 #undef  PL_profiledata
 #define PL_profiledata		(*Perl_Iprofiledata_ptr(aTHX))
 #undef  PL_psig_name
@@ -568,6 +566,8 @@ END_EXTERN_C
 #define PL_scopestack_ix	(*Perl_Iscopestack_ix_ptr(aTHX))
 #undef  PL_scopestack_max
 #define PL_scopestack_max	(*Perl_Iscopestack_max_ptr(aTHX))
+#undef  PL_scopestack_name
+#define PL_scopestack_name	(*Perl_Iscopestack_name_ptr(aTHX))
 #undef  PL_screamfirst
 #define PL_screamfirst		(*Perl_Iscreamfirst_ptr(aTHX))
 #undef  PL_screamnext
@@ -684,10 +684,28 @@ END_EXTERN_C
 #define PL_unlockhook		(*Perl_Iunlockhook_ptr(aTHX))
 #undef  PL_unsafe
 #define PL_unsafe		(*Perl_Iunsafe_ptr(aTHX))
+#undef  PL_utf8_X_L
+#define PL_utf8_X_L		(*Perl_Iutf8_X_L_ptr(aTHX))
+#undef  PL_utf8_X_LV
+#define PL_utf8_X_LV		(*Perl_Iutf8_X_LV_ptr(aTHX))
+#undef  PL_utf8_X_LVT
+#define PL_utf8_X_LVT		(*Perl_Iutf8_X_LVT_ptr(aTHX))
+#undef  PL_utf8_X_LV_LVT_V
+#define PL_utf8_X_LV_LVT_V	(*Perl_Iutf8_X_LV_LVT_V_ptr(aTHX))
+#undef  PL_utf8_X_T
+#define PL_utf8_X_T		(*Perl_Iutf8_X_T_ptr(aTHX))
+#undef  PL_utf8_X_V
+#define PL_utf8_X_V		(*Perl_Iutf8_X_V_ptr(aTHX))
+#undef  PL_utf8_X_begin
+#define PL_utf8_X_begin		(*Perl_Iutf8_X_begin_ptr(aTHX))
+#undef  PL_utf8_X_extend
+#define PL_utf8_X_extend	(*Perl_Iutf8_X_extend_ptr(aTHX))
+#undef  PL_utf8_X_non_hangul
+#define PL_utf8_X_non_hangul	(*Perl_Iutf8_X_non_hangul_ptr(aTHX))
+#undef  PL_utf8_X_prepend
+#define PL_utf8_X_prepend	(*Perl_Iutf8_X_prepend_ptr(aTHX))
 #undef  PL_utf8_alnum
 #define PL_utf8_alnum		(*Perl_Iutf8_alnum_ptr(aTHX))
-#undef  PL_utf8_alnumc
-#define PL_utf8_alnumc		(*Perl_Iutf8_alnumc_ptr(aTHX))
 #undef  PL_utf8_alpha
 #define PL_utf8_alpha		(*Perl_Iutf8_alpha_ptr(aTHX))
 #undef  PL_utf8_ascii
@@ -706,6 +724,12 @@ END_EXTERN_C
 #define PL_utf8_lower		(*Perl_Iutf8_lower_ptr(aTHX))
 #undef  PL_utf8_mark
 #define PL_utf8_mark		(*Perl_Iutf8_mark_ptr(aTHX))
+#undef  PL_utf8_perl_space
+#define PL_utf8_perl_space	(*Perl_Iutf8_perl_space_ptr(aTHX))
+#undef  PL_utf8_perl_word
+#define PL_utf8_perl_word	(*Perl_Iutf8_perl_word_ptr(aTHX))
+#undef  PL_utf8_posix_digit
+#define PL_utf8_posix_digit	(*Perl_Iutf8_posix_digit_ptr(aTHX))
 #undef  PL_utf8_print
 #define PL_utf8_print		(*Perl_Iutf8_print_ptr(aTHX))
 #undef  PL_utf8_punct
@@ -764,6 +788,8 @@ END_EXTERN_C
 #define PL_interp_size		(*Perl_Ginterp_size_ptr(NULL))
 #undef  PL_interp_size_5_10_0
 #define PL_interp_size_5_10_0	(*Perl_Ginterp_size_5_10_0_ptr(NULL))
+#undef  PL_keyword_plugin
+#define PL_keyword_plugin	(*Perl_Gkeyword_plugin_ptr(NULL))
 #undef  PL_malloc_mutex
 #define PL_malloc_mutex		(*Perl_Gmalloc_mutex_ptr(NULL))
 #undef  PL_mmap_page_size

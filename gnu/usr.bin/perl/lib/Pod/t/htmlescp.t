@@ -52,6 +52,7 @@ instead of escaping them as &lt; and &gt;.</p>
 <p>Here is some <strong>bold</strong> text, some <em>italic</em> plus <em class="file">/etc/fstab</em>
 file and something that looks like an &lt;html&gt; tag.
 This is some <code>$code($arg1)</code>.</p>
+<p>Some numeric escapes: &#80; &#x65; &#x72; &#108;</p>
 
 </body>
 

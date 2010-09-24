@@ -6,6 +6,12 @@ looks something close to the existing perldeltas". So if it's unclear how
 do to do something, see if it's been done before, and if the approach works
 there, steal it.
 
+=head2 Template
+
+Note there is a file F<Porting/perldelta_template> which contains a
+skeleton version of a perldelta.pod file, which should normally be copied
+in at the start of a new release.
+
 =head2 Style
 
 Pod is more a physical markup language, rather than a logical markup language.
@@ -123,6 +129,48 @@ collate changes to F<ext/> and F<lib/> by module, and then summarise all
 changes to a module as a group. This can be done by partitioning directories
 within F<ext/> and F<lib/> to a number of people.
 
+B<FIXME> - this could be automated better
+
+If Module::CoreList has been updated, then F<Porting/corelist-perldelta.pl>
+will automatically print out several sections if relevent that can be
+pasted into F<perldelta>:
+
+    * New Modules and Pragmata
+    * Pragmata Changes
+    * Updated Modules
+    * Removed Modules and Pragmata
+
+Each section will have stub entries following a template like this:
+
+    =item C<less>
+
+    Upgraded from version 0.01 to 0.02
+
+It does not include modules listed in F<Porting/Maintainers.pl> under
+C<_PERLLIB>, but it's a start.  Where relevent, a summary of changes can be
+added by hand.
+
+A more adventurous enhancement would be to automate grabbing
+the changelogs for dual lived modules. For each of them, grab the relevant
+changes files from CPAN for the old and new versions, and if the old one is
+a strict subset of the new one, splice the extra lines right into the output,
+as a basis for summarising.
+
+(And if not, experiment with using F<git> to get the relevant part of changelog
+for the particular file in core)
+
+These could also be enhanced further by using a Pod parser module to produce
+a parse tree of F<perl${whatever}delta.pod>, and splicing in the updates
+correctly without throwing existing entries away.
+
+If you think that's nuts, take a look at what F<pod/buildtoc> already does to
+splice into existing Makefiles on various platforms:
+
+http://perl5.git.perl.org/perl.git/blob/blead:/pod/buildtoc#l498
+
+Perl is this really powerful language for text manipulation. And fun to
+play with. We need to get that message out. :-)
+
 =item Utility Changes
 
 Changes to installed programs such as F<perlbug> and F<xsubpp> go here. Most
@@ -131,6 +179,61 @@ of these are built within the directories F<utils> and F<x2p>.
 =item New Documentation
 
 Changes which create B<new> files in F<pod/> go here.
+
+B<FIXME> - this could be automated, at least as far as generating a first
+draft.
+
+=over
+
+=item 1
+
+Start with a clean exploded tarball of the previous release, and a clean
+checkout of the branch in question
+
+=item 2
+
+Take the F<MANIFEST> file of each
+
+=item 3
+
+Search for lines matching C<m!^pod/.*\.pod!>
+
+=item 4
+
+Diff them
+
+=item 5
+
+Explode if anyone deleted documentation. [No idea what the policy on that is
+yet]
+
+=item 6
+
+For each file only in the newer F<MANIFEST>
+
+=over
+
+=item 1
+
+Use F<git> to determine its Author
+
+=item 2
+
+Open the pod file itself
+
+=item 3
+
+Grab the description section
+
+=item 4
+
+Write out a block of text starting roughly
+
+    L<perlfoo>, by A. U. Thor, provides @description
+
+=back
+
+=back
 
 =item Changes to Existing Documentation
 
@@ -168,6 +271,10 @@ Changes which create B<new> files in F<t/> go here. Changes to existing files
 in F<t/> aren't worth summarising, although the bugs that they represent
 may be.
 
+Autogenerate this section by running something like this:
+
+ # perl newtests-perldelta.pl v5.11.1 HEAD
+
 =item Known Problems
 
 Descriptions of platform agnostic bugs we know we can't fix go here. Any
@@ -192,6 +299,14 @@ here.
 =item Acknowledgements
 
 The list of people to thank goes here.
+
+You can find the list of committers and authors by:
+
+  % git log --pretty='format:%an' v5.11.1..HEAD | sort | uniq
+
+And how many files where changed by:
+
+  % git diff --stat=200,200 v5.11.1..HEAD
 
 =item Reporting Bugs
 

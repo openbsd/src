@@ -2,7 +2,7 @@ package utf8;
 
 $utf8::hint_bits = 0x00800000;
 
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 
 sub import {
     $^H |= $utf8::hint_bits;
@@ -32,13 +32,16 @@ utf8 - Perl pragma to enable/disable UTF-8 (or UTF-EBCDIC) in source code
     use utf8;
     no utf8;
 
-    # Convert a Perl scalar to/from UTF-8.
+    # Convert the internal representation of a Perl scalar to/from UTF-8.
+
     $num_octets = utf8::upgrade($string);
     $success    = utf8::downgrade($string[, FAIL_OK]);
 
-    # Change the native bytes of a Perl scalar to/from UTF-8 bytes.
-    utf8::encode($string);
-    utf8::decode($string);
+    # Change each character of a Perl scalar to/from a series of
+    # characters that represent the UTF-8 bytes of each original character.
+
+    utf8::encode($string);  # "\x{100}"  becomes "\xc4\x80"
+    utf8::decode($string);  # "\xc4\x80" becomes "\x{100}"
 
     $flag = utf8::is_utf8(STRING); # since Perl 5.8.1
     $flag = utf8::valid(STRING);
@@ -99,9 +102,10 @@ you should not say that  unless you really want to have UTF-8 source code.
 
 =item * $num_octets = utf8::upgrade($string)
 
-Converts in-place the internal octet sequence in the native encoding
-(Latin-1 or EBCDIC) to the equivalent character sequence in I<UTF-X>.
-I<$string> already encoded as characters does no harm.  Returns the
+Converts in-place the internal representation of the string from an octet
+sequence in the native encoding (Latin-1 or EBCDIC) to I<UTF-X>. The
+logical character sequence itself is unchanged.  If I<$string> is already
+stored as I<UTF-X>, then this is a no-op. Returns the
 number of octets necessary to represent the string as I<UTF-X>.  Can be
 used to make sure that the UTF-8 flag is on, so that C<\w> or C<lc()>
 work as Unicode on strings containing characters in the range 0x80-0xFF
@@ -113,9 +117,11 @@ L<Encode>.
 
 =item * $success = utf8::downgrade($string[, FAIL_OK])
 
-Converts in-place the internal octet sequence in I<UTF-X> to the
-equivalent octet sequence in the native encoding (Latin-1 or EBCDIC).
-I<$string> already encoded as native 8 bit does no harm.  Can be used to
+Converts in-place the the internal representation of the string from
+I<UTF-X> to the equivalent octet sequence in the native encoding (Latin-1
+or EBCDIC). The logical character sequence itself is unchanged. If
+I<$string> is already stored as native 8 bit, then this is a no-op.  Can
+be used to
 make sure that the UTF-8 flag is off, e.g. when you want to make sure
 that the substr() or length() function works with the usually faster
 byte algorithm.
@@ -133,8 +139,13 @@ L<Encode>.
 =item * utf8::encode($string)
 
 Converts in-place the character sequence to the corresponding octet
-sequence in I<UTF-X>.  The UTF8 flag is turned off, so that after this
-operation, the string is a byte string.  Returns nothing.
+sequence in I<UTF-X>. That is, every (possibly wide) character gets
+replaced with a sequence of one or more characters that represent the
+individual I<UTF-X> bytes of the character.  The UTF8 flag is turned off.
+Returns nothing.
+
+    my $a = "\x{100}"; # $a contains one character, with ord 0x100
+    utf8::encode($a);  # $a contains two characters, with ords 0xc4 and 0x80
 
 B<Note that this function does not handle arbitrary encodings.>
 Therefore Encode is recommended for the general purposes; see also
@@ -143,10 +154,15 @@ L<Encode>.
 =item * $success = utf8::decode($string)
 
 Attempts to convert in-place the octet sequence in I<UTF-X> to the
-corresponding character sequence.  The UTF-8 flag is turned on only if
-the source string contains multiple-byte I<UTF-X> characters.  If
-I<$string> is invalid as I<UTF-X>, returns false; otherwise returns
-true.
+corresponding character sequence. That is, it replaces each sequence of
+characters in the string whose ords represent a valid UTF-X byte
+sequence, with the corresponding single character.  The UTF-8 flag is
+turned on only if the source string contains multiple-byte I<UTF-X>
+characters.  If I<$string> is invalid as I<UTF-X>, returns false;
+otherwise returns true.
+
+    my $a = "\xc4\x80"; # $a contains two characters, with ords 0xc4 and 0x80
+    utf8::decode($a);   # $a contains one character, with ord 0x100
 
 B<Note that this function does not handle arbitrary encodings.>
 Therefore Encode is recommended for the general purposes; see also

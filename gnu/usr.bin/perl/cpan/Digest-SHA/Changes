@@ -1,0 +1,411 @@
+Revision history for Perl extension Digest::SHA.
+
+5.47  Wed Apr 30 04:00:54 MST 2008
+	- modified Makefile.PL to install in core for Perls >= 5.10
+		-- thanks to Jerry Hedden for patch
+	- changed from #include <> to #include "" in SHA.xs
+		-- some platforms not able to find SHA source files
+			-- thanks to Alexandr Ciornii for testing
+	- moved .pm file to appropriate lib directory
+	- minor addition to META.yml
+
+5.46  Wed Apr  9 05:04:00 MST 2008
+	- modified Addfile to recognize leading and trailing
+		whitespace in filenames (ref. rt.cpan.org #34690)
+	- minor C source code modification (ref. hmac.c)
+	- use const in sha.c for clean builds with -Wwrite-strings
+		-- thanks to Robin Barker for patch
+
+5.45  Tue Jun 26 02:36:00 MST 2007
+	- extended portability to earlier Perls
+		-- works on Perl 5.003 and later
+		-- thanks to Jim Doble for testing on legacy platforms
+	- updated META.yml to conform to current META spec (1.3)
+	- minor documentation fixes
+
+5.44  Sat Oct 14 00:42:44 MST 2006
+	- removed SIGNATURE file from distribution
+		-- spurious errors from CPANPLUS can break build
+	- eliminated ppport.h header file
+		-- significantly reduces size of distribution
+	- modified C functions in src/hmac.c to use ANSI prototypes
+		-- thanks to Jarkko Hietaniemi for patch
+
+5.43  Sat Aug  5 02:36:18 MST 2006
+	- undid Perl Best Practice of favoring 3-argument "open"
+		-- 3-arg version uses different semantics for "-"
+			causing bugs in addfile and shasum
+	- modified underlying C functions to use ANSI prototypes
+		-- requested by Steve Hay (ref. Smoke [5.9.4] 28630)
+		-- K&R style was causing numerous warnings from
+			Borland compiler
+
+5.42  Mon Jul 24 04:04:40 MST 2006
+	- minor code changes suggested by Perl::Critic
+		-- e.g. no bareword filehandles, no 2-argument open's
+	- updated public key (ref. B538C51C)
+		-- previous one (0AF563FE) expired July 2, 2006
+	- added documentation to warn that Base64 digests are NOT padded
+		-- padding must be done by user if interoperability
+			with other software is required
+
+5.41  Sat Jun  3 01:50:46 MST 2006
+	- corrected addfile
+		-- process $file argument as a filehandle unless passed
+			as a SCALAR (which indicates a file name)
+
+5.40  Fri Jun  2 04:00:30 MST 2006
+	- modified addfile to accept indirect filehandles
+		-- ref. rt.cpan.org #19627 and #19641
+
+5.39  Sun May 28 03:22:24 MST 2006
+	- modified shasum to warn rather than die for file errors
+		-- to follow conventions of GNU sha1sum/md5sum
+
+5.38  Thu May 25 02:02:02 MST 2006
+	- added new capabilities to the "addfile" method
+		-- now able to accept file names as well as handles
+		-- includes mode for portable digest calculation
+			-- thanks to Adam Kennedy for emails and ideas
+				ref. File::LocalizeNewlines
+	- used expanded addfile interface to simplify shasum (sumfile)
+		-- regex a tad less general than 5.37, but handles all
+			known newline variants in UNIX/Windows/MacOS
+	- enhanced WARNING messages from shasum checkfile processing
+		-- to mimic behavior of md5sum
+
+5.37  Mon May  8 04:30:09 MST 2006
+	- modified shasum to avoid file slurping (ref. sub sumfile)
+	- improved error handling of checksum files in shasum
+		-- to better mimic the behavior of md5sum
+	- refined line-break regex in shasum (ref. sub sumfile)
+		-- catches multiple CR's preceding LF
+			thanks to Gisle Aas for suggested patch
+	- changed loop vars to signed int's in shadump (ref. src/sha.c)
+		-- to prevent type mismatch warnings
+
+5.36  Mon May  8 01:38:36 MST 2006
+	- fixed the "portable" option in shasum
+		-- normalize line-breaks in text files only
+
+5.35  Thu May  4 16:54:42 MST 2006
+	- added "portable" option to shasum
+		-- to make digests match across Windows/Unix/MacOS
+	- enabled bundling of shasum command line options
+		-- to mimic behavior of md5sum
+	- removed \r's from text files in t/nist directory
+		-- resolves SIGNATURE clashes (rt.cpan.org #18983)
+	- changed suffix on SHA64_MAX (src/sha.h) to ULL
+		-- eliminates gcc warnings (rt.cpan.org #18988)
+	- specified minimum Perl version for module and Makefile.PL
+		-- closes rt.cpan.org #18984
+
+5.34  Thu Feb  2 18:55:40 MST 2006
+	- removed Unix-style pathnames in test scripts
+		-- causing problems on OpenVMS
+		-- thanks to Steve Peters for patch
+	- included latest version of Perl Portability header (ppport.h)
+	- added PERL_CORE check to test scripts
+		-- allows module to be built into Perl distribution
+
+5.32  Fri Dec  2 02:32:20 MST 2005
+	- added POD section to shasum script
+		-- thanks to Gunnar Wolf for patch
+	- made minor code changes to silence compiler warnings
+		-- resulting from signed/unsigned integer mixing
+	- inserted code in test scripts for POD checking
+		-- to recover gracefully if Test::More isn't installed
+
+5.31  Mon Sep  5 00:52:42 MST 2005
+	- added standard tests for pod and pod-coverage checking
+	- inserted subtest to check for failure when using
+		unrecognized SHA algorithm
+
+5.30  Sat Aug 20 16:46:08 MST 2005
+	- updated docs with recent NIST statement on SHA-1
+		-- advises use of larger and stronger hash functions
+			(i.e. SHA-224/256/384/512) for new developments
+
+5.29  Sun Aug 14 04:48:34 MST 2005
+	- added explicit casts in "shaload" routine (ref. "ldvals")
+		-- thanks to E. Allen Smith for pointing out SGI compiler
+			warnings on IPxx-irix platforms
+	- updated docs with cautionary note about SHA-1
+
+5.28  Wed Nov 10 15:33:20 MST 2004
+	- provided more flexible formatting of SHA state files
+		-- entries may now contain embedded whitespace
+			for improved readability
+	- minor code cleanups
+
+5.27  Sun Oct 24 02:54:00 MST 2004
+	- minor code cleanups
+		-- reduces size of dump files for SHA-1/224/256
+
+5.26  Thu Oct  7 14:52:00 MST 2004
+	- streamlined distribution
+		-- reduced NIST vector tests from 200 to 20
+			-- former number was overkill
+			-- distro now downloads and builds more quickly
+	- rewrote SYNOPSIS sections in pod file
+	- made additional tweaks to t/8-shasum.t for portability
+	- cleaned up test scripts
+
+5.25  Sun Sep 12 18:48:00 MST 2004
+	- removed non-essential test script
+		-- t/8-shasum.t causes problems on sparc64-linux
+	- reverted to using eval "require $module" in shasum
+
+5.24  Sun Sep 12 02:50:18 MST 2004
+	- modified shasum to use barewords in "require" statements
+		-- ref. perl.cpan.testers (157305)
+
+5.23  Thu Sep  9 23:06:18 MST 2004
+	- corrected bug in test script
+		-- use blib when invoking perl as an external
+			command in t/8-shasum.t
+
+5.22  Tue Sep  7 19:12:40 MST 2004
+	- broadened SHA-384/512 support
+		-- to compilers with no ULLONG_MAX in limits.h
+			-- e.g IBM C (xlC 6.0.0) on AIX 4.3.3
+			-- thanks to Chris Carey for suggestions
+				and technical expertise
+	- improved use of static storage class in transforms
+		-- detection of Intel arch. now done in Makefile.PL
+		-- NB: static not used if compiling for thread safety
+	- minor changes to documentation
+
+5.21  Mon Aug 23 04:02:00 MST 2004
+	- removed 64-bit constant expressions from #if statements
+		-- ref. src/sha.h (lines 55, 58, and 61)
+		-- even if compiler supports long long's, preprocessor
+			may use long's when evaluating expressions
+	- improved test script for "shasum" (t/8-shasum.t)
+		-- exercises check file option (-c)
+
+5.20  Sun Aug 15 04:24:48 MST 2004
+	- introduced "shasum" script
+		-- mimics the usage and behavior of "md5sum"
+		-- adds "-a" option to select SHA algorithm
+		-- for help, just type "shasum -h"
+
+5.10  Fri Aug  6 02:04:38 MST 2004
+	- simplified module documentation
+		-- made it consistent with Digest::SHA::PurePerl docs
+
+5.03  Sat Jul 31 00:00:48 MST 2004
+	- corrected HMAC-SHA-384/512 bug (cpan #7181, Adam Woodbury)
+		-- code was using hardwired blocksize for SHA-1/256
+			-- ref. src/hmac.c, src/hmac.h
+
+5.02  Thu Jul 29 02:48:00 MST 2004
+	- updated documentation and "dump-load.t" test script
+		-- to be consistent with Digest::SHA::PurePerl
+	- included a SIGNATURE file
+		-- for stronger authentication of module contents
+			-- ref. Module::Signature on CPAN
+	- corrected embarrassing misspelling in docs
+		-- apologies to Gisle Aas
+
+5.01  Fri May 21 13:08:12 MST 2004
+	- check for undefined SHA handle when calling "shaclose()"
+		-- prevents intermittent cleanup errors during
+			global object destruction
+
+5.00  Fri May 14 04:45:00 MST 2004
+	- minor documentation fixes
+	- restored classical style of version numbering (X.YZ)
+		-- previous X.Y.Z style caused installation difficulties
+			when using CPANPLUS
+
+4.3.3 Wed May  5 00:30:40 MST 2004
+	- fixed bug in "strto64()" function
+		-- caused problems in state files with CR/LF pairs
+		-- thanks to Martin Thurn for testing support
+
+4.3.2 Wed Apr 28 03:56:00 MST 2004
+	- added Makefile.PL options
+		-- thread-safety: -t
+		-- exclude 384/512 support: -x
+		-- e.g. perl Makefile.PL -t
+	- temporarily suppress dump/load tests for SHA-384/512
+		-- pending clarification of problem on sun4u sparc
+
+4.3.1 Thu Mar  4 02:54:00 MST 2004
+	- removed unused functions from XS file
+		-- reduces size of compiled objects
+	- simplified implementation of Digest::SHA object
+		-- now a blessed SHAPtr ref instead of blessed array ref
+		-- results in slight speed-up of OO operations
+	- streamlined underlying C source
+		-- used macros to consolidate repetitive code
+	- rewrote test scripts to depend on Test rather than Test::More
+		-- allows module to be checked in minimal Perl environments
+	- added compilation option for thread-safety
+		-- overrides use of static arrays
+
+4.3.0 Sat Feb  7 02:58:00 MST 2004
+	- included SHA-384/512 support if using Microsoft C/C++
+		-- uses MSVC's __int64 in place of "long long"
+	- enhanced portability and efficiency on diverse platforms
+		-- automatically sets up optimal types for 32/64-bit ops
+	- improved test scripts for better reporting
+		-- many thanks to Alex Muntada for helpful suggestions
+
+4.2.2 Sat Jan 31 17:10:20 MST 2004
+	- repaired 32-bit SHA operations for 8-byte longs
+
+4.2.1 Sat Jan 24 00:56:54 MST 2004
+	- modified I/O and memory management in underlying C code
+		-- uses Perl libraries when compiled as CPAN module
+			-- otherwise defaults to ANSI C libraries
+		-- bypasses problems in MSWin multi-threaded Perls
+			-- avoids "Free to wrong pool" error
+		-- special thanks to Robert Gilmour and Brian Gladman
+			for technical guidance and testing
+
+4.2.0 Sat Dec 27 16:08:00 MST 2003
+	- added support for recently-announced SHA-224 algorithm
+		-- ref. FIPS 180-2 Change Notice 1
+		-- also includes HMAC-SHA-224
+
+4.1.0 Thu Dec 25 00:58:00 MST 2003
+	- repaired "nist-vectors" test scripts for MSWin32 portability
+		-- use binmode for data files
+
+4.0.9 Wed Dec 24 02:58:22 MST 2003
+	- use canonical file specs in test scripts
+		-- enhances portability across different OSes
+	- modify type declarations of objects in XS file
+		-- re-declare as (SV *) and cast to (AV *) SvRV(self)
+			-- in response to AVPtr problem on MSWin32
+
+4.0.8 Thu Dec 18 23:32:00 MST 2003
+	- inherits from Digest::base if installed
+		-- also checks for MIME::Base64
+		-- still fully-functional if neither are installed
+	- added buffer overflow protection in underlying C code
+		-- ref. shahex() and shabase64() routines
+		-- prior code appeared impossible to exploit, but ...
+			-- better safe than sorry
+		-- does not impact runtime efficiency
+	- minor code cleanup
+
+4.0.7 Sat Dec 13 00:48:24 MST 2003
+	- check for undefined SHA handle when calling "shaclose()"
+		-- was causing cleanup err during global destruction
+
+4.0.6 Thu Dec 11 02:18:00 MST 2003
+	- more optimization and streamlining
+		-- a bit faster on non-big-endians (e.g. Intel)
+	- rewrote time-critical functions and methods in XS
+	- removed unused C functions from source files
+
+4.0.5 Sat Dec  6 00:02:24 MST 2003
+	- performance optimizations
+		-- rewrote "add" method in XS
+		-- unrolled loops in sha256 transform
+
+4.0.4 Thu Dec  4 00:07:00 MST 2003
+	- made Digest::SHA into a self-contained module
+		-- no longer depends on Digest::base
+		-- more convenient for users
+			-- no need to install Digest:: module
+
+4.0.3 Wed Dec  3 00:01:20 MST 2003
+	- Digest::SHA now a subclass of Digest::base
+		-- inherits hexdigest/b64digest/addfile methods
+	- added "hashsize" method
+	- removed old "shaopen()/shawrite()/..." legacy code
+		-- in favor of standard, streamlined OO interface
+	- renamed test vector files from NIST
+		-- prevents problems on 8+3 filesystems
+	- added test for Dave Ireland's SHA-256 vector
+
+4.0.0 Sat Nov 29 21:14:09 MST 2003
+	- major streamlining of interface (hence, major version change)
+		-- coordinated with Gisle Aas and J. Duque
+			-- goal is to produce a single SHA module
+		-- adheres to OO and functional styles of Digest::
+		-- greatly reduces the number of interface functions
+		-- old functions still supported
+			-- use Digest::SHA ':legacy'
+			-- will be deprecated in near future
+	- rewrote all test scripts to match new interface
+		-- very easy to modify all 281 tests
+		-- old interface maps cleanly to new one
+
+3.0   Wed Nov 26 05:02:34 MST 2003
+	- added functions that conform to Digest:: interface
+		-- both functional and OO styles
+			-- byte-oriented data only
+		-- continue to support original interface as well
+			-- necessary for bit-oriented data
+	- supplied formal test vectors for HMAC-SHA-256
+		-- from draft-ietf-ipsec-ciph-sha-256-01.txt
+	- included tests for all OO methods
+
+2.4   Sat Nov 22 17:10:22 MST 2003
+	- code cleanup
+		-- "sha.c" now completely free of #ifdef's
+	- modularized all 64-bit (long long) code
+	- improved readability of header files
+	- simplified logic of "fixdump" utility
+
+2.3   Wed Nov 19 03:54:31 MST 2003
+	- minor optimizations and code cleanup
+		-- improved maintainability by reducing #ifdef's
+		-- sha1 transform code now easier to follow
+	- streamlined shadump/shaload file format
+		-- eliminated special "HQ" entry
+		-- state now held in "H" for all transforms
+		-- supplied "fixdump" utility to convert old format
+	- SHA-384/512 functions now return NULL for no 64-bit operations
+		-- previously they were undefined
+		-- no longer necessary to use eval's to test for presence
+
+2.2   Sun Nov 16 01:54:00 MST 2003
+	- optimized the performance of the SHA-1 transform
+		-- around 20-30% faster than previous version
+		-- achieved by loop unrolling and assignment consolidation
+	- enhanced shaload/shadump to allow interaction with stdin/stdout
+		-- "$filename" argument now optional
+
+2.1   Sun Nov  9 03:28:04 MST 2003
+	- simplified data input routines
+		-- length argument now optional for byte data
+			(special thanks to Jeffrey Friedl for this idea)
+		-- interface still compatible with earlier versions
+			-- changes will not affect existing client code
+	- streamlined underlying C code for easier maintenance
+	- provided additional tests for persistent data
+
+2.0   Sat Nov  1 03:55:36 MST 2003
+	- added functions for HMAC-SHA-1/256/384/512 (FIPS PUB 198)
+	- shadump/shaload files now compatible between 32/64-bit machines
+
+1.01  Sat Oct 25 02:44:55 MST 2003
+	- package now downloads and installs much faster
+	- reduced distribution size by 80%
+		-- pruned extensive NIST vectors to a useful subset
+		-- still possible to test all vectors if desired
+			--- see "t/nist/COPYRIGHT" file for details
+	- added routines to provide persistent storage of SHA states
+		-- shadump() and shaload()
+	- reduced runtime of large bitstring tests (gillogly-hard)
+		-- illustrates usefulness of shadump()/shaload()
+
+1.0   Sat Oct 18 17:35:07 MST 2003
+	- documentation fixes
+	- code cleanup: no more compiler warnings from gcc -Wall
+	- added code to allow reading of intermediate digest state
+		-- shahex() prior to shafinish() returns current state
+
+0.9   Thu Oct  9 20:43:54 MST 2003
+	- version updated to reflect portability check and passing
+		of all tests (1401)
+
+0.01  Wed Oct  8 22:28:05 2003
+	- original version; created by h2xs 1.22 with options
+		-x -A -n Digest::SHA sha.h

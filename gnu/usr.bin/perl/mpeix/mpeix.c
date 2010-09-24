@@ -40,7 +40,7 @@ int __perl_mpe_getspaceid(void *source)
    *     <clobbers> indicates those registers clobbered by the instruction
    *     and provides hints to the optimizer.
    *
-   * Refer to the gcc documentation or http://www.dis.com/gnu/gcc_toc.html
+   * Refer to the gcc documentation
    */
   __asm__ __volatile__ (
       "   comiclr,= 0,%1,%%r28\n"

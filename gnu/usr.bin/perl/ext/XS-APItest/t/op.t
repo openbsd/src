@@ -1,8 +1,6 @@
 #!perl -w
 
 BEGIN {
-  chdir 't' if -d 't';
-  @INC = '../lib';
   push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
   require Config; import Config;
   if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {
@@ -26,4 +24,4 @@ use_ok('XS::APItest');
 *hint_exists = *hint_exists = \&XS::APItest::Hash::refcounted_he_exists;
 *hint_fetch = *hint_fetch = \&XS::APItest::Hash::refcounted_he_fetch;
 
-require './op/caller.pl';
+require '../../t/op/caller.pl';

@@ -1,26 +1,28 @@
-# ArabicShaping-5.1.0.txt
-# Date: 2008-03-20, 17:39:00 PDT [KW]
+# ArabicShaping-5.2.0.txt
+# Date: 2009-08-17, 11:11:00 PDT [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
-# This file defines the shaping classes for Arabic and Syriac
+# This file defines the shaping classes for Arabic, Syriac, and N'Ko
 # positional shaping, repeating in machine readable form the
-# information printed in Tables 8-3, 8-7, 8-8, 8-11, 8-12, and
-# 8-13 of The Unicode Standard, Version 5.0.
+# information exemplified in Tables 8-3, 8-7, 8-8, 8-11, 8-12,
+# 8-13, and 13-5 of The Unicode Standard, Version 5.2.
 #
-# See sections 8.2 and 8.3 of The Unicode Standard, Version 5.0
+# See sections 8.2, 8.3, and 13.5 of The Unicode Standard, Version 5.2
 # for more information.
 #
 # Each line contains four fields, separated by a semicolon.
 #
 # Field 0: the code point, in 4-digit hexadecimal
-#   form, of an Arabic or Syriac character.
+#   form, of an Arabic, Syriac, or N'Ko character.
+#
 # Field 1: gives a short schematic name for that character,
 #   abbreviated from the normative Unicode character name.
+#
 # Field 2: defines the joining type (property name: Joining_Type)
 #   R Right_Joining
 #   L Left_Joining
@@ -28,7 +30,8 @@
 #   C Join_Causing
 #   U Non_Joining
 #   T Transparent
-#       See the Arabic block description for more information on these types.
+#     See Section 8.2, Arabic for more information on these types.
+#
 # Field 3: defines the joining group (property name: Joining_Group)
 #
 # The values of the joining group are based schematically on character
@@ -53,17 +56,25 @@
 #   value Hamza_On_Heh_Goal has not been changed, despite the fact that it
 #   no longer applies to Hamza On Heh Goal, but only to Teh Marbuta Goal.
 #
+# When other cursive scripts are added to the Unicode Standard in
+# the future, the joining group value of all its letters will default
+# to jg=No_Joining_Group in this data file. Other, more specific
+# joining group values will be defined only if an explicit proposal
+# to define those values exactly has been approved by the UTC. This
+# is the convention exemplified by the N'Ko script. Only the Arabic
+# and Syriac scripts currently have explicit joining group values defined.
+#
 # Note: Code points that are not explicitly listed in this file are
 # either of joining type T or U:
 #
 # - Those that not explicitly listed that are of General Category Mn, Me, or Cf
 #   have joining type T.
-# - All others not explicitly listed have type U.
+# - All others not explicitly listed have joining type U.
 #
 # For an explicit listing of characters of joining type T, see
 # the derived property file DerivedJoiningType.txt.
 #
-# There are currently no characters of type L defined in Unicode.
+# There are currently no characters of joining type L defined in Unicode.
 #
 # #############################################################
  
@@ -105,9 +116,9 @@
 063A; GHAIN; D; AIN
 063B; KEHEH WITH 2 DOTS ABOVE; D; GAF
 063C; KEHEH WITH 3 DOTS BELOW; D; GAF 
-063D; FARSI YEH WITH INVERTED V; D; YEH
-063E; FARSI YEH WITH 2 DOTS ABOVE; D; YEH
-063F; FARSI YEH WITH 3 DOTS ABOVE; D; YEH
+063D; FARSI YEH WITH INVERTED V; D; FARSI YEH
+063E; FARSI YEH WITH 2 DOTS ABOVE; D; FARSI YEH
+063F; FARSI YEH WITH 3 DOTS ABOVE; D; FARSI YEH
 0640; TATWEEL; C; No_Joining_Group
 0641; FEH; D; FEH
 0642; QAF; D; QAF
@@ -197,7 +208,7 @@
 06BA; DOTLESS NOON; D; NOON
 06BB; DOTLESS NOON WITH SMALL TAH; D; NOON
 06BC; NOON WITH RING; D; NOON
-06BD; NOON WITH 3 DOTS ABOVE; D; NOON
+06BD; NYA; D; NYA
 06BE; KNOTTED HEH; D; KNOTTED HEH
 06BF; HAH WITH MIDDLE 3 DOTS DOWNWARD AND DOT ABOVE; D; HAH
 06C0; HAMZA ON HEH; R; TEH MARBUTA
@@ -212,9 +223,9 @@
 06C9; WAW WITH INVERTED SMALL V; R; WAW
 06CA; WAW WITH 2 DOTS ABOVE; R; WAW
 06CB; WAW WITH 3 DOTS ABOVE; R; WAW
-06CC; DOTLESS YEH; D; YEH
+06CC; FARSI YEH; D; FARSI YEH
 06CD; YEH WITH TAIL; R; YEH WITH TAIL
-06CE; YEH WITH SMALL V; D; YEH
+06CE; FARSI YEH WITH SMALL V; D; FARSI YEH
 06CF; WAW WITH DOT ABOVE; R; WAW
 06D0; YEH WITH 2 DOTS VERTICAL BELOW; D; YEH
 06D1; YEH WITH 3 DOTS BELOW; D; YEH
@@ -305,9 +316,9 @@
 0772; HAH WITH SMALL TAH ABOVE; D; HAH
 0773; ALEF WITH DIGIT TWO ABOVE; R; ALEF
 0774; ALEF WITH DIGIT THREE ABOVE; R; ALEF
-0775; DOTLESS YEH WITH DIGIT TWO ABOVE; D; YEH
-0776; DOTLESS YEH WITH DIGIT THREE ABOVE; D; YEH
-0777; DOTLESS YEH WITH DIGIT FOUR BELOW; D; YEH
+0775; FARSI YEH WITH DIGIT TWO ABOVE; D; FARSI YEH
+0776; FARSI YEH WITH DIGIT THREE ABOVE; D; FARSI YEH
+0777; YEH WITH DIGIT FOUR BELOW; D; YEH
 0778; WAW WITH DIGIT TWO ABOVE; R; WAW
 0779; WAW WITH DIGIT THREE ABOVE; R; WAW
 077A; YEH BARREE WITH DIGIT TWO ABOVE; D; BURUSHASKI YEH BARREE
@@ -356,7 +367,7 @@
 
 # Other
 
-200D; ZERO WIDTH JOINER; C; No_Joining_Group
 200C; ZERO WIDTH NON-JOINER; U; No_Joining_Group
+200D; ZERO WIDTH JOINER; C; No_Joining_Group
 
 # EOF

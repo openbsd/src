@@ -8,7 +8,8 @@ plan tests => 1;
 
 my $count = 0;
 unshift @INC, sub {
-       $count++ if $_[1] eq 'unicore/lib/gc_sc/Hira.pl';
+       # XXX Kludge requires exact path, which might change
+       $count++ if $_[1] eq 'unicore/lib/Sc/Hira.pl';
 };
 
 my $s = 'foo';

@@ -1,0 +1,42 @@
+Changes for Perl programming language extension Parse-CPAN-Meta
+
+1.40 Sat 25 Jul 2009
+	- Add core perl 5.10.1's uupacktool.pl
+	- Repackage t/data/utf_16_le_bom.yml as ASCII for https://rt.cpan.org/Ticket/Display.html?id=47844
+
+1.39 Thu 21 May 2009
+	- Even though utf8 starts at 5.7+ there's no is_utf till
+	  5.8.1 so skip in the tests if needed (ADAMK)
+
+1.38 Sat 16 May 2009
+	- Synchorised version numbers with YAML::Tiny
+	- Code shrinkages to the bloaty Unicode/BOM code
+	- Merging a ton more tests from YAML::Tiny
+	- Added back some pointless options to yaml_ok that keep our
+	  codebase closer to YAML::Tiny (which should help with syncing)
+	- Changed exceptions to be closer to YAML::Tiny
+
+0.05 Wed 11 Mar 2009
+	- Upgrade previous release to a stable release.
+
+0.04_01 Tue  3 Mar 2009
+	- Merge Unicode / BOM fixes from YAML::Tiny
+
+0.04 Wed  7 Jan 2009
+	- Matching changes in YAML::Tiny 1.36
+	- Fixing missing feature reported by H.Merijn Brand
+	- Changes to make Padre-CPAN-Meta core-compatible (SMUELLER)++
+
+0.03 Thu 20 Mar 2008
+	- Adding YAML.pm compatibility in scalar context
+
+0.02 Thu 10 Jan 2008
+	- Purging some references to YAML::Tiny that I missed
+
+0.01 Tue  8 Jan 2008
+	- Cloned from YAML::Tiny 1.21
+	- Removed all write functionality
+	- Reduced interface to Load and LoadFile
+	- Removed object-orientation
+	- Removed global $errstr, all errors are exceptions
+	- Applied prototypes to all functions

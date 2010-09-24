@@ -1,0 +1,36 @@
+Revision history for Perl extension Class::ISA
+
+2009-09-29  Steffen Mueller  smueller@cpan.org
+	
+	* Release 0.36 -- fix installation dirs.
+
+2009-09-26  Steffen Mueller  smueller@cpan.org
+	
+	* Release 0.35 -- minor documentation nit.
+
+2009-09-22  Steffen Mueller  smueller@cpan.org
+	
+	* Release 0.34 -- add core deprecation logic,
+	  some distribution shuffling.  No code changes.
+
+2004-12-29  Sean M. Burke  sburke@cpan.org
+	
+	* Release 0.33 -- just rebundling.  No code changes.
+	
+	
+2000-05-13  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.32 -- Just noting my new email address.
+
+	
+1999-05-14  Sean M. Burke  sburke@netadventure.net
+
+	* Release 0.31 -- release version.
+
+	No changes in functionality -- just changed the core algorithm to
+	something that should behave the same, but is cleaner and faster.
+
+
+1999-01-23  Sean M. Burke  sburke@netadventure.net
+
+	* Release 0.20 -- first release version.

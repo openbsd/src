@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-print "1..70\n";
+print "1..72\n";
 
 my $test = 0;
 sub ok ($@) {
@@ -197,4 +197,22 @@ my $file = tempfile();
     package fqdb;
     ::ok( $_ ne 'fqdb', 'unqualified $_ is in main' );
     ::ok( q/$_/ ne 'fqdb', 'unqualified, evaled $_ is in main' );
+}
+
+{
+    $clank_est::qunckkk = 3;
+    our $qunckkk;
+    $qunckkk = 4;
+    package clank_est;
+    our $qunckkk;
+    ::ok($qunckkk == 3, 'regular variables are not forced to main');
+}
+
+{
+    $whack::_ = 3;
+    our $_;
+    $_ = 4;
+    package whack;
+    our $_;
+    ::ok($_ == 4, '$_ is "special", and always forced to main');
 }

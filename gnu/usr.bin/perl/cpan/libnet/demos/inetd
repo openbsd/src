@@ -1,0 +1,9 @@
+#!/usr/local/bin/perl
+
+use Net::DummyInetd;
+use Net::SMTP;
+
+$p = new Net::DummyInetd qw(/usr/lib/sendmail -ba -bs);
+
+$smtp = Net::SMTP->new('localhost', Port => $p->port, Debug => 7);
+$smtp->quit;

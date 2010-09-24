@@ -1,8 +1,6 @@
 #!./perl
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     require Config;
     if (($Config::Config{'extensions'} !~ /\bre\b/) ){
 	print "1..0 # Skip -- Perl configured without re module\n";
@@ -14,8 +12,8 @@ use strict;
 
 # must use a BEGIN or the prototypes wont be respected meaning 
     # tests could pass that shouldn't
-BEGIN { require "./test.pl"; }
-my $out = runperl(progfile => "../ext/re/t/lexical_debug.pl", stderr => 1 );
+BEGIN { require "../../t/test.pl"; }
+my $out = runperl(progfile => "t/lexical_debug.pl", stderr => 1 );
 
 print "1..10\n";
 

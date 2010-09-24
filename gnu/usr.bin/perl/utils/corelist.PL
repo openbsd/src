@@ -35,7 +35,7 @@ use File::Spec;
 
 my $script = File::Spec->catfile(
             File::Spec->catdir(
-                File::Spec->updir, qw[lib Module CoreList bin]
+                File::Spec->updir, qw[dist Module-CoreList]
             ), "corelist");
 
 if (open(IN, $script)) {

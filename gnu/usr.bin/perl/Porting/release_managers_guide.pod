@@ -14,7 +14,9 @@ manual - to produce a perl release of some description, be that a snaphot,
 release candidate, or final, numbered release of maint or blead.
 
 The release process has traditionally been executed by the current
-pumpking.
+pumpking. Blead releases from 5.11.0 forward are made each month on the
+20th by a non-pumpking release engineer.  The release engineer roster
+and schedule can be found in Porting/release_schedule.pod.
 
 This document both helps as a check-list for the release engineer 
 and is a base for ideas on how the various tasks could be automated 
@@ -107,12 +109,18 @@ If you don't have a PAUSE account, then request one:
     https://pause.perl.org/pause/query?ACTION=request_id
 
 Check that your account is allowed to upload perl distros: goto
-https://pause.perl.org/, login, then select 'upload file to CPAN'; there
+L<https://pause.perl.org/>, login, then select 'upload file to CPAN'; there
 should be a "For pumpkings only: Send a CC" tickbox.  If not, ask Andreas
 König to add your ID to the list of people allowed to upload something
 called perl.  You can find Andreas' email address at:
 
     https://pause.perl.org/pause/query?ACTION=pause_04imprint
+
+=item search.cpan.org
+
+Make sure that search.cpan.org knows that you're allowed to upload
+perl distros. Contact Graham Barr to make sure that you're on the right
+list.
 
 =item CPAN mirror
 
@@ -239,13 +247,15 @@ Once all version numbers have been bumped, re-run the checks.
 Then run again without the -x option, to check that dual-life modules are
 also sensible.
 
+     $ ./perl -Ilib Porting/cmpVERSION.pl -d ~/my_perl-tarballs/perl-5.10.0 .
+
 =item *
 
 I<You MAY SKIP this step for SNAPSHOT>
 
 Get perldelta in a mostly finished state.
 
-Peruse  F<Porting/how_to_write_a_perldelta.pod>, and try to make sure that
+Read  F<Porting/how_to_write_a_perldelta.pod>, and try to make sure that
 every section it lists is, if necessary, populated and complete. Copy
 edit the whole document.
 
@@ -283,7 +293,7 @@ careful not change text like "this was fixed in 5.10.0"! Then run:
 
     $ Porting/bump-perl-version -u < /tmp/scan
 
-which will update all the files shown; then commit the changes.
+which will update all the files shown.
 
 Be particularly careful with F<INSTALL>, which contains a mixture of
 C<5.10.0>-type strings, some of which need bumping on every release, and
@@ -293,6 +303,17 @@ this line in README.vms needs special handling:
 
     rename perl-5^.10^.1.dir perl-5_10_1.dir
 
+Commit your changes:
+
+    $ git st
+	$ git diff
+	  B<review the delta carefully>
+
+    $ git commit -a -m 'Bump the perl version in various places for 5.x.y'
+
+When the version number is bumped, you should also update Module::CoreList (as
+described below in L<"Building a release - on the day">) to reflect the new
+version number.
 
 =item *
 
@@ -309,7 +330,7 @@ Update the F<Changes> file to contain the git log command which would show
 all the changes in this release. You will need assume the existence of a
 not-yet created tag for the forthcoming release; e.g.
 
-    git log ... perl-5.10.0..perl5.12.0
+    git log ... perl-5.10.0..perl-5.12.0
 
 Due to warts in the perforce-to-git migration, some branches require extra
 exclusions to avoid other branches being pulled in. Make sure you have the
@@ -344,7 +365,7 @@ Update F<AUTHORS>, using the C<Porting/checkAUTHORS.pl> script, and if
 necessary, update the script to include new alias mappings for porters
 already in F<AUTHORS>
 
-	$ git log | perl Porting/checkAUTHORS.pl --acknowledged AUTHORS -
+    $ git log --pretty=fuller | perl Porting/checkAUTHORS.pl --acknowledged AUTHORS -
 
 =back
 
@@ -405,7 +426,7 @@ within your working directory:
 If any of the files managed by F<regen.pl> have changed, then you should
 re-make perl to check that it's okay, then commit the updated versions:
 
-    $ git commit -a -m 'make regn; make regn_perly'
+    $ git commit -a -m 'make regen; make regen_perly'
 
 =item *
 
@@ -435,7 +456,9 @@ I<blead> and subsequently cherry-pick it.
 
 F<corelist.pl> uses ftp.funet.fi to verify information about dual-lived
 modules on CPAN. It can use a full, local CPAN mirror or fall back
-to C<wget> or C<curl> to fetch only package metadata remotely.
+to C<wget> or C<curl> to fetch only package metadata remotely. (If you're
+on Win32, then installing Cygwin is one way to have commands like C<wget>
+and C<curl> available.)
 
 (If you'd prefer to have a full CPAN mirror, see 
 http://www.cpan.org/misc/cpan-faq.html#How_mirror_CPAN)
@@ -444,10 +467,11 @@ Then change to your perl checkout, and if necessary,
 
     $ make perl
 
-If this not the first update for this version, first edit
-F<lib/Module/CoreList.pm>to delete the existing entries for this version
-from the C<%released> and C<%version> hashes: they will have a key like
-C<5.010001> for 5.10.1.
+If this not the first update for this version (e.g. if it was updated
+when the version number was originally bumped), first edit
+F<dist/Module-CoreList/lib/Module/CoreList.pm> to delete the existing
+entries for this version from the C<%released> and C<%version> hashes:
+they will have a key like C<5.010001> for 5.10.1.
 
 XXX the edit-in-place functionality of Porting/corelist.pl should
 be fixed to handle this automatically.
@@ -461,12 +485,13 @@ Otherwise, run:
     $ ./perl -Ilib Porting/corelist.pl cpan
 
 This will chug for a while, possibly reporting various warnings about
-badly-indexed CPABN modules unreltaed to the modules actually in core.
-Assuming all goes well, it will update F<lib/Module/CoreList.pm>.
+badly-indexed CPAN modules unrelated to the modules actually in core.
+Assuming all goes well, it will update
+F<dist/Module-CoreList/lib/Module/CoreList.pm>.
 
 Check that file over carefully:
 
-    $ git diff lib/Module/CoreList.pm
+    $ git diff dist/Module-CoreList/lib/Module/CoreList.pm
 
 If necessary, bump C<$VERSION> (there's no need to do this for
 every RC; in RC1, bump the version to a new clean number that will
@@ -474,6 +499,9 @@ appear in the final release, and leave as-is for the later RCs and final).
 
 Edit the version number in the new C<< 'Module::CoreList' => 'X.YZ' >>
 entry, as that is likely to reflect the previous version number.
+
+Also edit Module::CoreList's new version number in its F<Changes> file and
+in its F<META.yml> file.
 
 In addition, if this is a final release (rather than a release candidate):
 
@@ -493,7 +521,7 @@ Finally, commit the new version of Module::CoreList:
 (unless this is for maint; in which case commit it blead first, then
 cherry-pick it back).
 
-    $ git commit -m 'Update Module::CoreList for 5.x.y' lib/Module/CoreList.pm
+    $ git commit -m 'Update Module::CoreList for 5.x.y' dist/Module-CoreList/lib/Module/CoreList.pm
 
 =item *
 
@@ -501,8 +529,11 @@ Check that the manifest is sorted and correct:
 
     $ make manisort
     $ make distclean
+    $ git clean -xdf # This shouldn't be necessary if distclean is correct
     $ perl Porting/manicheck
     $ git status
+
+	XXX manifest _sorting_ is now checked with make test_porting
 
 Commit MANIFEST if it has changed:
 
@@ -578,12 +609,30 @@ Push all your recent commits:
 
 =item *
 
+I<You MUST SKIP this step for SNAPSHOT>
+
+Tag the release (e.g.):
+
+    $ git tag v5.11.0 -m'First release of the v5.11 series!'
+
+(Adjust the syntax appropriately if you're working on Win32, i.e. use
+C<-m "..."> rather than C<-m'...'>.)
+
+It is VERY important that from this point forward, you not push
+your git changes to the Perl master repository.  If anything goes
+wrong before you publish your newly-created tag, you can delete
+and recreate it.  Once you push your tag, we're stuck with it
+and you'll need to use a new version number for your release.
+
+=item *
+
 Create a tarball. Use the C<-s> option to specify a suitable suffix for
 the tarball and directory name:
 
     $ cd root/of/perl/tree
     $ make distclean
-    $ git clean -xdf		#  make sure perl and git agree on files
+    $ git clean -xdf		# make sure perl and git agree on files
+    $ git status		# and there's nothing lying around
 
     $ perl Porting/makerel -b -s `git describe` # for a snapshot
     $ perl Porting/makerel -b -s RC1            # for a release candidate
@@ -593,6 +642,7 @@ This creates the  directory F<../perl-x.y.z-RC1> or similar, copies all
 the MANIFEST files into it, sets the correct permissions on them,
 adds DOS line endings to some, then tars it up as
 F<../perl-x.y.z-RC1.tar.gz>. With C<-b>, it also creates a C<tar.bz2> file.
+
 
 XXX if we go for extra tags and branches stuff, then add the extra details
 here
@@ -666,7 +716,11 @@ previous is 5.10.0:
 
 Bootstrap the CPAN client on the clean install:
 
-    $ ./bin/perl -MCPAN -e'shell' 
+    $ bin/perl -MCPAN -e'shell' 
+
+(Use C<... -e "shell"> instead on Win32. You probably also need a set of
+Unix command-line tools available for CPAN to function correctly without
+Perl alternatives like LWP installed. Cygwin is an obvious choice.)
 
 =item *
 
@@ -678,15 +732,21 @@ has dependencies; for example:
 
 Check that your perl can run this:
 
-    $ ./bin/perl -lwe 'use Inline C => "int f() { return 42;} "; print f'
+    $ bin/perl -lwe 'use Inline C => "int f() { return 42;} "; print f'
     42
     $
+
+(Use C<... -lwe "use ..."> instead on Win32.)
 
 =item *
 
 Bootstrap the CPANPLUS client on the clean install:
 
-    $ ./bin/cpanp
+    $ bin/cpanp
+
+(Again, on Win32 you'll need something like Cygwin installed, but make sure
+that you don't end up with its various F<bin/cpan*> programs being found on
+the PATH before those of the Perl that you're trying to test.)
 
 =item *
 
@@ -695,11 +755,13 @@ Install an XS module, for example:
     CPAN Terminal> i DBI
     CPAN Terminal> quit
     $ bin/perl -MDBI -e 1
-
+    $
 
 =item *
 
-I<You MAY SKIP this step for SNAPSHOT>
+I<If you're building a SNAPSHOT, you should STOP HERE>
+
+=item *
 
 Check that the C<perlbug> utility works. Try the following:
 
@@ -718,12 +780,10 @@ Check that the C<perlbug> utility works. Try the following:
 
 and carefully examine the output (in F<perlbug.rep]>), especially
 the "Locally applied patches" section. If everything appears okay, then
-try it again, this time actually submitting the bug report. Check that it
-shows up, then remember to close it!
+delete the file, and try it again, this time actually submitting the bug
+report. Check that it shows up, then remember to close it!
 
 =item *
-
-I<You MAY SKIP this step for SNAPSHOT>
 
 Wait for the smoke tests to catch up with the commit which this release is
 based on (or at least the last commit of any consequence).
@@ -734,8 +794,6 @@ back and fix things.
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT>
-
 Once smoking is okay, upload it to PAUSE. This is the point of no return.
 If anything goes wrong after this point, you will need to re-prepare
 a new release with a new minor version or RC number.
@@ -744,23 +802,33 @@ a new release with a new minor version or RC number.
 
 (Login, then select 'Upload a file to CPAN')
 
+If your workstation is not connected to a high-bandwidth,
+high-reliability connection to the Internet, you should probably use the
+"GET URL" feature (rather than "HTTP UPLOAD") to have PAUSE retrieve the
+new release from wherever you put it for testers to find it.  This will
+eliminate anxious gnashing of teeth while you wait to see if your
+15 megabyte HTTP upload successfully completes across your slow, twitchy
+cable modem.  You can make use of your home directory on dromedary for
+this purpose: F<http://users.perl5.git.perl.org/~USERNAME> maps to
+F</home/USERNAME/public_html>, where F<USERNAME> is your login account
+on dromedary.  I<Remember>: if your upload is partially successful, you
+may need to contact a PAUSE administrator or even bump the version of perl.
+
 Upload both the .gz and .bz2 versions of the tarball.
 
-=item *
-
-I<You MUST SKIP this step for SNAPSHOT>
-
-Create a tag for the exact git revision you built the release from.
-C<commit> below is the commit corresponding to the tarball. It can be
-omitted if there have been no further commits since the tarball was
-created.
-
-    $ git tag perl-5.10.1-RC1 -m'Release Candidate 1 of Perl 5.10.1' <commit>
-    $ git push origin tag perl-5.10.1-RC1
+Wait until you receive notification emails from the PAUSE indexer
+confirming that your uploads have been successfully indexed.  Do not
+proceed any further until you are sure that the indexing of your uploads
+has been successful.
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT>
+Now that you've shipped the new perl release to PAUSE, it's
+time to publish the tag you created earlier to the public git repo (e.g.):
+
+    $ git push origin tag v5.11.0
+
+=item *
 
 Disarm the F<patchlevel.h> change; for example,
 
@@ -781,21 +849,19 @@ Mail p5p to announce your new release, with a quote you prepared earlier.
 
 =item *
 
-I<You MAY SKIP this step for SNAPSHOT>
-
 Wait 24 hours or so, then post the announcement to use.perl.org.
 (if you don't have access rights to post news, ask someone like Rafael to
 do it for you.)
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT>
-
-Ask Jarkko to add the tarball to http://www.cpan.org/src/
+Check http://www.cpan.org/src/ to see if the new tarballs have appeared.
+They should appear automatically, but if they don't then ask Jarkko to look
+into it, since his scripts must have broken.
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT, RC, BLEAD>
+I<You MUST SKIP this step for RC, BLEAD>
 
 Ask Jarkko to update the descriptions of which tarballs are current in
 http://www.cpan.org/src/README.html, and Rafael to update
@@ -803,82 +869,120 @@ http://dev.perl.org/perl5/
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT, RC>
+I<You MUST SKIP this step for RC>
 
-Create a new empty perlNNNdelta.pod file for the current release + 1;
+Remind the current maintainer of C<Module::CoreList> to push a new release
+to CPAN.
+
+=item *
+
+I<You MUST SKIP this step for RC>
+
+Bump the perlXYZdelta version number.
+
+First, create a new empty perlNNNdelta.pod file for the current release + 1;
 see F<Porting/how_to_write_a_perldelta.pod>.
-[ XXX Perhaps we should have an empty template file we can copy in. ]
 
-In addition, edit F<pod.lst>, adding the new entry as 'D', and unmark previous
-entry as 'D',
+You should be able to do this by just copying in a skeleton template and
+then doing a quick fix up of the version numbers, e.g.
 
-Change perlNNNdelta references to the new version in these files
+    $ cp -i Porting/perldelta_template.pod pod/perl5102delta.pod
+    $ (edit it)
+    $ git add pod/perl5102delta.pod
+
+Edit F<pod.lst>: add the new entry, flagged as 'D', and unflag the previous
+entry from being 'D'; for example:
+
+    -D perl5101delta                Perl changes in version 5.10.1
+    +D perl5102delta                Perl changes in version 5.10.2
+    +  perl5101delta                Perl changes in version 5.10.1
+
+Run C<perl pod/buildtoc --build-all> to update the F<perldelta> version in
+the following files:
+
+    MANIFEST
+    Makefile.SH
+    pod.lst
+    pod/perl.pod
+    vms/descrip_mms.template
+    win32/Makefile
+    win32/makefile.mk
+    win32/pod.mak
+
+Then manually edit (F<vms/descrip_mms.template> to bump the version
+in the following entry:
+
+    [.pod]perldelta.pod : [.pod]perl5101delta.pod
+
+XXX this previous step needs to fixed to automate it in pod/buildtoc.
+
+Manually update references to the perlNNNdelta version in these files:
 
     INSTALL
-    win32/Makefile.mk
-    win32/Makefile
-    Makefile.SH
     README
 
-Also, edit the previous delta file to change the C<NAME> from C<perldelta>
+Edit the previous delta file to change the C<NAME> from C<perldelta>
 to C<perlNNNdelta>.
 
 These two lists of files probably aren't exhaustive; do a recursive grep
-on the previous filename to look for suitable candidates.
+on the previous filename to look for suitable candidates that may have
+been missed.
 
-(see 16410843ea for an example).
+Finally, commit:
 
-=item *
+    $ git commit -a -m 'create perlXXXdelta'
 
-Run C<perl pod/buildtoc --build-all> to update the following files:
-
-    MANIFEST
-    pod/perl.pod
-    win32/pod.mak
-    vms/descrip_mms.template
-
-If you modified perldelta.pod, (F<vms/descrip_mms.template> will
-needs a manual edit to bump the C<perldelta.pod> entry - it would
-be good for someone to figure out the fix.)
+At this point you may want  to compare the commit with a previous bump to
+see if they look similar. See commit ca8de22071 for an example of a
+previous version bump.
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT, RC, BLEAD>
+I<You MUST SKIP this step for RC, BLEAD>
 
 If this was a maint release, then edit F<Porting/mergelog> to change
 all the C<d> (deferred) flags to C<.> (needs review).
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT, RC, BLEAD>
+I<You MUST SKIP this step for RC, BLEAD>
 
-If this was a major release (5.x.0), then create a new maint branch 
-based on the commit tagged as the current release and bump the version 
-in the blead branch in git, e.g. 5.12.0 to 5.13.0.
+If this was the first release of a new maint series, (5.x.0 where x is
+even), then create a new maint branch based on the commit tagged as
+the current release and bump the version in the blead branch in git,
+e.g. 5.12.0 to 5.13.0.
 
 [ XXX probably lots more stuff to do, including perldelta,
 C<lib/feature.pm> ]
 
-XXX need a git recipe
+Assuming you're using git 1.7.x or newer:
+
+    $ git checkout -b maint-5.12
+    $ git push origin -u maint-5.12
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT, RC, BLEAD>
+I<You MUST SKIP this step for RC, BLEAD>
 
-Copy the perlNNNdelta.pod for this release into the other branches, and
-remember to update these files on those branches too:
+Copy the perlNNNdelta.pod for this release into the other branches; for
+example:
 
-    MANIFEST
-    pod.lst
-    pod/perl.pod
-    vms/descrip_mms.template
-    win32/pod.mak
+    $ cp -i ../5.10.x/pod/perl5101delta.pod pod/    # for example
+    $ git add pod/perl5101delta.pod
 
-(see fc5be80860 for an example).
+Edit F<pod.lst> to add an entry for the file, e.g.:
+
+    perl5101delta		Perl changes in version 5.10.1
+
+Then rebuild various files:
+
+    $ perl pod/buildtoc --build-all
+
+Finally, commit:
+
+    $ git commit -a -m 'add perlXXXdelta'
 
 =item *
-
-I<You MUST SKIP this step for SNAPSHOT>
 
 Make sure any recent F<pod/perlhist.pod> entries are copied to
 F<perlhist.pod> on other branches; typically the RC* and final entries,
@@ -890,15 +994,8 @@ e.g.
 
 =item *
 
-I<You MUST SKIP this step for SNAPSHOT, RC>
-
-Remind the current maintainer of C<Module::CoreList> to push a new release
-to CPAN.
-
-=item *
-
-I<You MUST RETIRE to your preferred PUB, CAFE or SEASIDE VILLA for some much-needed
-rest and relaxation>. 
+I<You MUST RETIRE to your preferred PUB, CAFE or SEASIDE VILLA for some
+much-needed rest and relaxation>.
 
 Thanks for releasing perl!
 

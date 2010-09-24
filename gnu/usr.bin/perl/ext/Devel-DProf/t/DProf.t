@@ -1,9 +1,7 @@
 #!perl
 
 BEGIN {
-    chdir( 't' ) if -d 't';
-    @INC = '../lib';
-    require './test.pl';      # for which_perl() etc
+    require 'test.pl';      # for which_perl() etc
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bDevel\/DProf\b/){
       print "1..0 # Skip: Devel::DProf was not built\n";
@@ -24,7 +22,7 @@ getopts('vI:p:');
 # -I   Add to @INC
 # -p   Name of perl binary
 
-@tests = @ARGV ? @ARGV : sort (<lib/dprof/*_t>, <lib/dprof/*_v>);  # glob-sort, for OS/2
+@tests = @ARGV ? @ARGV : sort (<dprof/*_t>, <dprof/*_v>);  # glob-sort, for OS/2
 
 $path_sep = $Config{path_sep} || ':';
 $perl5lib = $opt_I || join( $path_sep, @INC );
@@ -65,7 +63,7 @@ sub profile {
 sub verify {
 	my $test = shift;
 
-	my $command = $perl.' "-I../lib" "-I./lib/dprof" '.$test;
+	my $command = $perl.' "-I./dprof" '.$test;
 	$command .= ' -v' if $opt_v;
 	$command .= ' -p '. $perl;
 	system $command;

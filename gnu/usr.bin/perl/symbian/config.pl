@@ -736,7 +736,7 @@ perl${VERSION}lib.sis perllib.sis:	\$(PM)
 perl${VERSION}ext.sis perlext.sis:	perldll_arm buildext_sis
 	perl symbian\\makesis.pl perl${VERSION}ext
 
-EXT = 	Compress::Raw::Zlib Cwd Data::Dumper Devel::Peek Digest::MD5 Errno Fcntl File::Glob Filter::Util::Call IO List::Util MIME::Base64 PerlIO::scalar PerlIO::via SDBM_File Socket Storable Time::HiRes XSLoader attrs
+EXT = 	Compress::Raw::Zlib Cwd Data::Dumper Devel::Peek Digest::MD5 Errno Fcntl File::Glob Filter::Util::Call IO List::Util MIME::Base64 PerlIO::scalar PerlIO::via SDBM_File Socket Storable Time::HiRes XSLoader attributes
 
 buildext: perldll symbian\\xsbuild.pl lib\\Config.pm
 	perl \$(XLIB) symbian\\xsbuild.pl \$(XSBOPT) \$(EXT)

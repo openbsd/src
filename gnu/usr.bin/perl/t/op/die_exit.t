@@ -2,7 +2,7 @@
 
 #
 # Verify that C<die> return the return code
-#	-- Robin Barker <rmb@cise.npl.co.uk>
+#	-- Robin Barker 
 #
 
 BEGIN {

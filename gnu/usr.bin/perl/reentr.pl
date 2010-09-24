@@ -515,7 +515,7 @@ EOF
 EOF
 	    pushssif $endif;
 	}
-        elsif ($func =~ /^(drand48|gmtime|localtime|random|srandom)$/) {
+        elsif ($func =~ /^(drand48|random|srandom)$/) {
 	    pushssif $ifdef;
 	    push @struct, <<EOF;
 	$seent{$func} _${func}_struct;
@@ -727,9 +727,6 @@ EOF
 	    }
 
 	    my $call = "${func}_r($v$w)";
-	    if ($func eq 'localtime') {
-		$call = "L_R_TZSET $call";
-	    }
 
             # Must make OpenBSD happy
             my $memzero = '';
@@ -1135,8 +1132,6 @@ getservbyname CC|netdb	|struct servent	|I_CCSBWR|S_CCSBI|I_CCSD|D=struct servent
 getservbyport IC|netdb	|struct servent	|I_ICSBWR|S_ICSBI|I_ICSD|D=struct servent_data*
 getservent	|netdb	|struct servent	|I_SBWR|I_SBI|S_SBI|I_SD|D=struct servent_data*
 getspnam C	|shadow	|struct spwd	|I_CSBWR|S_CSBI
-gmtime T	|time	|struct tm	|S_TS|I_TS|T=const time_t*
-localtime T	|time	|struct tm	|S_TS|I_TS|T=const time_t*
 random		|stdlib	|struct random_data|I_iS|I_lS|I_St|i=int*|l=long*|t=int32_t*
 readdir T	|dirent	|struct dirent	|I_TSR|I_TS|T=DIR*
 readdir64 T	|dirent	|struct dirent64|I_TSR|I_TS|T=DIR*

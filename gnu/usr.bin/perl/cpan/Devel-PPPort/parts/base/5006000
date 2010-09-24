@@ -1,0 +1,295 @@
+5.006000
+PERL_SYS_INIT3                 # U
+POPn                           # E
+PUSHn                          # E
+SvIOK_UV                       # U
+SvIOK_notUV                    # U
+SvIOK_only_UV                  # U
+SvNV                           # E
+SvNVX                          # E
+SvNV_set                       # E
+SvNVx                          # E
+SvPOK_only_UTF8                # U
+SvPV_nolen                     # U
+SvPVbyte                       # U
+SvPVbyte_nolen                 # U
+SvPVbytex                      # U
+SvPVbytex_force                # U
+SvPVutf8                       # U
+SvPVutf8_force                 # U
+SvPVutf8_nolen                 # U
+SvPVutf8x                      # U
+SvPVutf8x_force                # U
+SvUTF8                         # U
+SvUTF8_off                     # U
+SvUTF8_on                      # U
+XPUSHn                         # E
+XSRETURN_NV                    # E
+XST_mNV                        # E
+av_delete                      # E
+av_exists                      # E
+call_argv                      # E (perl_call_argv)
+call_atexit                    # E
+call_method                    # E (perl_call_method)
+call_pv                        # E (perl_call_pv)
+call_sv                        # E (perl_call_sv)
+cast_i32                       # E (cast_i32)
+cast_iv                        # E (cast_iv)
+cast_ulong                     # E
+cast_uv                        # E (cast_uv)
+croak                          # E (Perl_croak)
+die                            # E (Perl_die)
+do_gv_dump                     # E
+do_gvgv_dump                   # E
+do_hv_dump                     # E
+do_magic_dump                  # E
+do_op_dump                     # E
+do_open9                       # E
+do_pmop_dump                   # E
+do_sv_dump                     # E
+dump_all                       # U
+dump_eval                      # U
+dump_form                      # U
+dump_indent                    # E
+dump_packsubs                  # U
+dump_sub                       # U
+dump_vindent                   # E
+eval_pv                        # E (perl_eval_pv)
+eval_sv                        # E (perl_eval_sv)
+form                           # E (Perl_form)
+get_av                         # E (perl_get_av)
+get_context                    # U
+get_cv                         # E (perl_get_cv)
+get_hv                         # E (perl_get_hv)
+get_ppaddr                     # E
+get_sv                         # E (perl_get_sv)
+gv_dump                        # E
+init_i18nl10n                  # E (perl_init_i18nl10n)
+init_i18nl14n                  # E (perl_init_i18nl14n)
+is_uni_alnum                   # E
+is_uni_alnum_lc                # E
+is_uni_alnumc                  # E
+is_uni_alnumc_lc               # E
+is_uni_alpha                   # E
+is_uni_alpha_lc                # E
+is_uni_ascii                   # E
+is_uni_ascii_lc                # E
+is_uni_cntrl                   # E
+is_uni_cntrl_lc                # E
+is_uni_digit                   # E
+is_uni_digit_lc                # E
+is_uni_graph                   # E
+is_uni_graph_lc                # E
+is_uni_idfirst                 # E
+is_uni_idfirst_lc              # E
+is_uni_lower                   # E
+is_uni_lower_lc                # E
+is_uni_print                   # E
+is_uni_print_lc                # E
+is_uni_punct                   # E
+is_uni_punct_lc                # E
+is_uni_space                   # E
+is_uni_space_lc                # E
+is_uni_upper                   # E
+is_uni_upper_lc                # E
+is_uni_xdigit                  # E
+is_uni_xdigit_lc               # E
+is_utf8_alnum                  # E
+is_utf8_alnumc                 # E
+is_utf8_alpha                  # E
+is_utf8_ascii                  # E
+is_utf8_char                   # E
+is_utf8_cntrl                  # E
+is_utf8_digit                  # E
+is_utf8_graph                  # E
+is_utf8_idfirst                # E
+is_utf8_lower                  # E
+is_utf8_mark                   # E
+is_utf8_print                  # E
+is_utf8_punct                  # E
+is_utf8_space                  # E
+is_utf8_upper                  # E
+is_utf8_xdigit                 # E
+load_module                    # E
+magic_dump                     # E
+mess                           # E (Perl_mess)
+my_atof                        # E
+my_fflush_all                  # E
+newANONATTRSUB                 # E
+newATTRSUB                     # E
+newSVnv                        # E (Perl_newSVnv)
+newSVpvf                       # E (Perl_newSVpvf)
+newSVuv                        # E
+newXS                          # E (Perl_newXS)
+newXSproto                     # E
+new_collate                    # E (perl_new_collate)
+new_ctype                      # E (perl_new_ctype)
+new_numeric                    # E (perl_new_numeric)
+op_dump                        # E
+perl_parse                     # E (perl_parse)
+pmop_dump                      # E
+pv_display                     # E
+re_intuit_string               # E
+reginitcolors                  # E
+require_pv                     # E (perl_require_pv)
+safesyscalloc                  # U
+safesysfree                    # U
+safesysmalloc                  # U
+safesysrealloc                 # U
+save_I8                        # E
+save_alloc                     # E
+save_destructor                # E (Perl_save_destructor)
+save_destructor_x              # E
+save_re_context                # E
+save_vptr                      # E
+scan_bin                       # E
+scan_hex                       # E (Perl_scan_hex)
+scan_oct                       # E (Perl_scan_oct)
+set_context                    # U
+set_numeric_local              # E (perl_set_numeric_local)
+set_numeric_radix              # E
+set_numeric_standard           # E (perl_set_numeric_standard)
+str_to_version                 # E
+sv_2nv                         # E (Perl_sv_2nv)
+sv_2pv_nolen                   # U
+sv_2pvbyte                     # E
+sv_2pvbyte_nolen               # U
+sv_2pvutf8                     # E
+sv_2pvutf8_nolen               # U
+sv_catpvf                      # E (Perl_sv_catpvf)
+sv_catpvf_mg                   # E (Perl_sv_catpvf_mg)
+sv_force_normal                # U
+sv_len_utf8                    # E
+sv_nv                          # E (Perl_sv_nv)
+sv_pos_b2u                     # E
+sv_pos_u2b                     # E
+sv_pv                          # U
+sv_pvbyte                      # U
+sv_pvbyten                     # E
+sv_pvbyten_force               # E
+sv_pvutf8                      # U
+sv_pvutf8n                     # E
+sv_pvutf8n_force               # E
+sv_rvweaken                    # E
+sv_setnv                       # E (Perl_sv_setnv)
+sv_setnv_mg                    # E (Perl_sv_setnv_mg)
+sv_setpvf                      # E (Perl_sv_setpvf)
+sv_setpvf_mg                   # E (Perl_sv_setpvf_mg)
+sv_setref_nv                   # E (Perl_sv_setref_nv)
+sv_utf8_decode                 # E
+sv_utf8_downgrade              # E
+sv_utf8_encode                 # E
+sv_vcatpvf                     # E
+sv_vcatpvf_mg                  # E
+sv_vsetpvf                     # E
+sv_vsetpvf_mg                  # E
+swash_init                     # E
+tmps_grow                      # E
+to_uni_lower_lc                # E
+to_uni_title_lc                # E
+to_uni_upper_lc                # E
+utf8_distance                  # E
+utf8_hop                       # E
+vcroak                         # E
+vform                          # E
+vload_module                   # E
+vmess                          # E
+vnewSVpvf                      # E
+vwarn                          # E
+vwarner                        # E
+warn                           # E (Perl_warn)
+warner                         # E
+CopFILE                        # added by devel/scanprov
+CopFILEAV                      # added by devel/scanprov
+CopFILEGV                      # added by devel/scanprov
+CopFILEGV_set                  # added by devel/scanprov
+CopFILESV                      # added by devel/scanprov
+CopFILE_set                    # added by devel/scanprov
+CopSTASH                       # added by devel/scanprov
+CopSTASHPV                     # added by devel/scanprov
+CopSTASHPV_set                 # added by devel/scanprov
+CopSTASH_eq                    # added by devel/scanprov
+CopSTASH_set                   # added by devel/scanprov
+INT2PTR                        # added by devel/scanprov
+IVSIZE                         # added by devel/scanprov
+IVTYPE                         # added by devel/scanprov
+IVdf                           # added by devel/scanprov
+NUM2PTR                        # added by devel/scanprov
+NVTYPE                         # added by devel/scanprov
+PERL_REVISION                  # added by devel/scanprov
+PERL_SUBVERSION                # added by devel/scanprov
+PERL_VERSION                   # added by devel/scanprov
+PL_no_modify                   # added by devel/scanprov
+PL_ppaddr                      # added by devel/scanprov
+PTR2IV                         # added by devel/scanprov
+PTR2NV                         # added by devel/scanprov
+PTR2UV                         # added by devel/scanprov
+PTRV                           # added by devel/scanprov
+SVf                            # added by devel/scanprov
+SVf_UTF8                       # added by devel/scanprov
+UVSIZE                         # added by devel/scanprov
+UVTYPE                         # added by devel/scanprov
+UVof                           # added by devel/scanprov
+UVuf                           # added by devel/scanprov
+UVxf                           # added by devel/scanprov
+WARN_ALL                       # added by devel/scanprov
+WARN_AMBIGUOUS                 # added by devel/scanprov
+WARN_BAREWORD                  # added by devel/scanprov
+WARN_CLOSED                    # added by devel/scanprov
+WARN_CLOSURE                   # added by devel/scanprov
+WARN_DEBUGGING                 # added by devel/scanprov
+WARN_DEPRECATED                # added by devel/scanprov
+WARN_DIGIT                     # added by devel/scanprov
+WARN_EXEC                      # added by devel/scanprov
+WARN_EXITING                   # added by devel/scanprov
+WARN_GLOB                      # added by devel/scanprov
+WARN_INPLACE                   # added by devel/scanprov
+WARN_INTERNAL                  # added by devel/scanprov
+WARN_IO                        # added by devel/scanprov
+WARN_MALLOC                    # added by devel/scanprov
+WARN_MISC                      # added by devel/scanprov
+WARN_NEWLINE                   # added by devel/scanprov
+WARN_NUMERIC                   # added by devel/scanprov
+WARN_ONCE                      # added by devel/scanprov
+WARN_OVERFLOW                  # added by devel/scanprov
+WARN_PACK                      # added by devel/scanprov
+WARN_PARENTHESIS               # added by devel/scanprov
+WARN_PIPE                      # added by devel/scanprov
+WARN_PORTABLE                  # added by devel/scanprov
+WARN_PRECEDENCE                # added by devel/scanprov
+WARN_PRINTF                    # added by devel/scanprov
+WARN_PROTOTYPE                 # added by devel/scanprov
+WARN_QW                        # added by devel/scanprov
+WARN_RECURSION                 # added by devel/scanprov
+WARN_REDEFINE                  # added by devel/scanprov
+WARN_REGEXP                    # added by devel/scanprov
+WARN_RESERVED                  # added by devel/scanprov
+WARN_SEMICOLON                 # added by devel/scanprov
+WARN_SEVERE                    # added by devel/scanprov
+WARN_SIGNAL                    # added by devel/scanprov
+WARN_SUBSTR                    # added by devel/scanprov
+WARN_SYNTAX                    # added by devel/scanprov
+WARN_TAINT                     # added by devel/scanprov
+WARN_UNINITIALIZED             # added by devel/scanprov
+WARN_UNOPENED                  # added by devel/scanprov
+WARN_UNPACK                    # added by devel/scanprov
+WARN_UNTIE                     # added by devel/scanprov
+WARN_UTF8                      # added by devel/scanprov
+WARN_VOID                      # added by devel/scanprov
+XSprePUSH                      # added by devel/scanprov
+aTHX                           # added by devel/scanprov
+aTHX_                          # added by devel/scanprov
+ckWARN                         # added by devel/scanprov
+dNOOP                          # added by devel/scanprov
+dTHX                           # added by devel/scanprov
+dTHXa                          # added by devel/scanprov
+dTHXoa                         # added by devel/scanprov
+dXSTARG                        # added by devel/scanprov
+isALNUMC                       # added by devel/scanprov
+isASCII                        # added by devel/scanprov
+isCNTRL                        # added by devel/scanprov
+isGRAPH                        # added by devel/scanprov
+isPUNCT                        # added by devel/scanprov
+isXDIGIT                       # added by devel/scanprov
+pTHX                           # added by devel/scanprov
+pTHX_                          # added by devel/scanprov

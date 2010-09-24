@@ -57,7 +57,7 @@ foreach my $prog (@prgs) {
 
 __END__
 ########
-$a = ":="; split /($a)/o, "a:=b:=c"; print "@_"
+$a = ":="; @_ = split /($a)/o, "a:=b:=c"; print "@_"
 EXPECT
 a := b := c
 ########
@@ -93,7 +93,7 @@ EXPECT
 ########
 eval 'sub bar {print "In bar"}';
 ########
-system './perl -ne "print if eof" /dev/null' unless $^O eq 'MacOS'
+system './perl -ne "print if eof" /dev/null'
 ########
 chop($file = <DATA>);
 ########
@@ -275,7 +275,7 @@ print "ok\n" if ("\0" lt "\xFF");
 EXPECT
 ok
 ########
-open(H,$^O eq 'MacOS' ? ':run:fresh_perl.t' : 'run/fresh_perl.t'); # must be in the 't' directory
+open(H,'run/fresh_perl.t'); # must be in the 't' directory
 stat(H);
 print "ok\n" if (-e _ and -f _ and -r _);
 EXPECT
@@ -345,7 +345,7 @@ map {#this newline here tickles the bug
 $s += $_} (1,2,4);
 print "eat flaming death\n" unless ($s == 7);
 ########
-sub foo { local $_ = shift; split; @_ }
+sub foo { local $_ = shift; @_ = split; @_ }
 @x = foo(' x  y  z ');
 print "you die joe!\n" unless "@x" eq 'x y z';
 ########

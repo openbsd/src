@@ -1,12 +1,27 @@
 #!./perl
 
-BEGIN {
-    chdir 't';
-    @INC = '../lib';
-    require './test.pl';
-}
-
 print "1..7\n";
+my $test = 0;
+
+sub is {
+    my ($got, $expect, $name) = @_;
+    $test = $test + 1;
+    if (defined $got && $got eq $expect) {
+	print "ok $test - $name\n";
+	return 1;
+    }
+
+    print "not ok $test - $name\n";
+    my @caller = caller(0);
+    print "# Failed test at $caller[1] line $caller[2]\n";
+    if (defined $got) {
+	print "# Got '$got'\n";
+    } else {
+	print "# Got undef\n";
+    }
+    print "# Expected $expect\n";
+    return;
+}
 
 {
     package TieAll;

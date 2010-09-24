@@ -1,8 +1,6 @@
 #!./perl
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     require Config; import Config;
     if ($^O ne 'VMS' and $Config{'extensions'} !~ /\bPOSIX\b/) {
 	print "1..0\n";
@@ -10,7 +8,7 @@ BEGIN {
     }
 }
 
-BEGIN { require "./test.pl"; }
+BEGIN { require "../../t/test.pl"; }
 plan(tests => 66);
 
 use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write
@@ -50,9 +48,9 @@ if ($Is_VMS) {
 }
 
 
-ok( $testfd = open("TEST", O_RDONLY, 0),        'O_RDONLY with open' );
+ok( $testfd = open("Makefile.PL", O_RDONLY, 0),        'O_RDONLY with open' );
 read($testfd, $buffer, 4) if $testfd > 2;
-is( $buffer, "#!./",                      '    with read' );
+is( $buffer, "# Ex",                      '    with read' );
 
 TODO:
 {
@@ -147,14 +145,11 @@ SKIP: {
 }
 
 my $pat;
-if ($Is_MacOS) {
-    $pat = qr/:t:$/;
-} 
-elsif ( $unix_mode ) {
-    $pat = qr#[\\/]t$#i;
+if ( $unix_mode ) {
+    $pat = qr#[\\/]POSIX$#i;
 }
 else {
-    $pat = qr/\.T]/i;
+    $pat = qr/\.POSIX]/i;
 }
 like( getcwd(), qr/$pat/, 'getcwd' );
 

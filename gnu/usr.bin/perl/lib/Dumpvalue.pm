@@ -585,7 +585,7 @@ Prints a dump to the currently selected filehandle.
 
   $dumper->dumpValues($value1, $value2);
 
-Same as C< $dumper->dumpValue([$value1, $value2]); >.
+Same as C<< $dumper->dumpValue([$value1, $value2]); >>.
 
 =item stringify
 

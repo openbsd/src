@@ -31,7 +31,7 @@ me a sample.
 =head1 INSTALLING PERL ON EPOC
 
 You can download a ready-to-install version from
-http://www.oflebbe.de/oflebbe/perl/
+http://www.oflebbe.de/perl/perl5.html
 
 You will need at least ~6MB free space in order to install and run perl.
 
@@ -50,11 +50,6 @@ you are free to copy them from a current perl release.
 
 Please use the epocemx shell to start perl. perl integrates with the
 conventions of epocemx. 
-
-=head2 Editors on Epoc
-
-A suitable text editor can be downloaded from symbian
-http://www.symbian.com/developer/downloads/files/editor.zip
 
 =head2 Features of Perl on Epoc
 
@@ -150,7 +145,7 @@ Very special thanks to Eberhard Mattes for epocemx.
 =head1 AUTHOR
 
 Olaf Flebbe <olaf@oflebbe.de>
-http://www.oflebbe.de/oflebbe/perl/
+http://www.oflebbe.de/perl/perl5.html
 
 =head1 LAST UPDATE
 

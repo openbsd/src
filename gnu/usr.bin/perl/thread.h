@@ -412,46 +412,6 @@
 #  define COND_DESTROY(c)
 #endif
 
-#ifndef LOCK_SV_MUTEX
-#  define LOCK_SV_MUTEX
-#endif
-
-#ifndef UNLOCK_SV_MUTEX
-#  define UNLOCK_SV_MUTEX
-#endif
-
-#ifndef LOCK_STRTAB_MUTEX
-#  define LOCK_STRTAB_MUTEX
-#endif
-
-#ifndef UNLOCK_STRTAB_MUTEX
-#  define UNLOCK_STRTAB_MUTEX
-#endif
-
-#ifndef LOCK_CRED_MUTEX
-#  define LOCK_CRED_MUTEX
-#endif
-
-#ifndef UNLOCK_CRED_MUTEX
-#  define UNLOCK_CRED_MUTEX
-#endif
-
-#ifndef LOCK_FDPID_MUTEX
-#  define LOCK_FDPID_MUTEX
-#endif
-
-#ifndef UNLOCK_FDPID_MUTEX
-#  define UNLOCK_FDPID_MUTEX
-#endif
-
-#ifndef LOCK_SV_LOCK_MUTEX
-#  define LOCK_SV_LOCK_MUTEX
-#endif
-
-#ifndef UNLOCK_SV_LOCK_MUTEX
-#  define UNLOCK_SV_LOCK_MUTEX
-#endif
-
 #ifndef LOCK_DOLLARZERO_MUTEX
 #  define LOCK_DOLLARZERO_MUTEX
 #endif

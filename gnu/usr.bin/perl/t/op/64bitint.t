@@ -172,13 +172,19 @@ if ($^O ne 'unicos') {
     print "ok 28\n";
 
     $a = -9223372036854775808;
-    $c = $a--;
+    {
+	no warnings 'imprecision';
+	$c = $a--;
+    }
     print "not "
 	unless $a == -9223372036854775809 && $c == -9223372036854775808;
     print "ok 29\n";
 
     $a = -9223372036854775808;
-    $c = --$a;
+    {
+	no warnings 'imprecision';
+	$c = --$a;
+    }
     print "not "
 	unless $a == -9223372036854775809 && $c == $a;
     print "ok 30\n";
@@ -191,14 +197,20 @@ if ($^O ne 'unicos') {
     
     $a = 9223372036854775808;
     $a = -$a;
-    $c = $a--;
+    {
+	no warnings 'imprecision';
+	$c = $a--;
+    }
     print "not "
 	unless $a == -9223372036854775809 && $c == -9223372036854775808;
     print "ok 32\n";
     
     $a = 9223372036854775808;
     $a = -$a;
-    $c = --$a;
+    {
+	no warnings 'imprecision';
+	$c = --$a;
+    }
     print "not "
 	unless $a == -9223372036854775809 && $c == $a;
     print "ok 33\n";
@@ -212,14 +224,20 @@ if ($^O ne 'unicos') {
 
     $a = 9223372036854775808;
     $b = -$a;
-    $c = $b--;
+    {
+	no warnings 'imprecision';
+	$c = $b--;
+    }
     print "not "
 	unless $b == -$a-1 && $c == -$a;
     print "ok 35\n";
 
     $a = 9223372036854775808;
     $b = -$a;
-    $c = --$b;
+    {
+	no warnings 'imprecision';
+	$c = --$b;
+    }
     print "not "
 	unless $b == -$a-1 && $c == $b;
     print "ok 36\n";

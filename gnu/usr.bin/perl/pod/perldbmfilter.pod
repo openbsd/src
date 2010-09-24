@@ -61,7 +61,7 @@ When each filter is called by Perl, a local copy of C<$_> will contain
 the key or value to be filtered. Filtering is achieved by modifying
 the contents of C<$_>. The return code from the filter is ignored.
 
-=head2 An Example -- the NULL termination problem.
+=head2 An Example: the NULL termination problem.
 
 DBM Filters are useful for a class of problems where you I<always>
 want to make the same transformation to all keys, all values or both.
@@ -118,7 +118,7 @@ self-explanatory. Both "fetch" filters remove the terminating NULL,
 and both "store" filters add a terminating NULL.
 
 
-=head2 Another Example -- Key is a C int.
+=head2 Another Example: Key is a C int.
 
 Here is another real-life example. By default, whenever Perl writes to
 a DBM database it always writes the key and value as strings. So when
@@ -154,7 +154,7 @@ Here is a DBM Filter that does it:
 The code above uses DB_File, but again it will work with any of the
 DBM modules.
 
-This time only two filters have been used -- we only need to manipulate
+This time only two filters have been used; we only need to manipulate
 the contents of the key, so it wasn't necessary to install any value
 filters.
 

@@ -1,3 +1,6 @@
+;# This legacy library is deprecated and will be removed in a future
+;# release of perl.
+;#
 ;# shellwords.pl
 ;#
 ;# Usage:

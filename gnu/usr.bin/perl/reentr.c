@@ -115,10 +115,6 @@ Perl_reentrant_size(pTHX) {
 #       endif
 #   endif 
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_GMTIME_R
-#endif /* HAS_GMTIME_R */
-#ifdef HAS_LOCALTIME_R
-#endif /* HAS_LOCALTIME_R */
 #ifdef HAS_RANDOM_R
 #endif /* HAS_RANDOM_R */
 #ifdef HAS_READDIR_R
@@ -205,10 +201,6 @@ Perl_reentrant_init(pTHX) {
 #   endif
 	Newx(PL_reentrant_buffer->_spent_buffer, PL_reentrant_buffer->_spent_size, char);
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_GMTIME_R
-#endif /* HAS_GMTIME_R */
-#ifdef HAS_LOCALTIME_R
-#endif /* HAS_LOCALTIME_R */
 #ifdef HAS_RANDOM_R
 #endif /* HAS_RANDOM_R */
 #ifdef HAS_READDIR_R
@@ -280,10 +272,6 @@ Perl_reentrant_free(pTHX) {
 #ifdef HAS_GETSPNAM_R
 	Safefree(PL_reentrant_buffer->_spent_buffer);
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_GMTIME_R
-#endif /* HAS_GMTIME_R */
-#ifdef HAS_LOCALTIME_R
-#endif /* HAS_LOCALTIME_R */
 #ifdef HAS_RANDOM_R
 #endif /* HAS_RANDOM_R */
 #ifdef HAS_READDIR_R

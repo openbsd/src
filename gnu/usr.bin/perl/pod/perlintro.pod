@@ -188,7 +188,7 @@ of elements in the array:
     if (@animals < 5) { ... }
 
 The elements we're getting from the array start with a C<$> because
-we're getting just a single value out of the array -- you ask for a scalar,
+we're getting just a single value out of the array; you ask for a scalar,
 you get a scalar.
 
 To get multiple values from an array:
@@ -307,10 +307,9 @@ running the program.  Using C<strict> is highly recommended.
 
 =head2 Conditional and looping constructs
 
-Perl has most of the usual conditional and looping constructs except for
-case/switch (but if you really want it, there is a Switch module in Perl
-5.8 and newer, and on CPAN. See the section on modules, below, for more
-information about modules and CPAN).
+Perl has most of the usual conditional and looping constructs.  As of Perl
+5.10, it even has a case/switch statement (spelled C<given>/C<when>).  See
+L<perlsyn/"Switch statements"> for more details.
 
 The conditions can be any Perl expression.  See the list of operators in
 the next section for information on comparison and boolean logic operators,
@@ -443,7 +442,7 @@ before 99).
     !   not
 
 (C<and>, C<or> and C<not> aren't just in the above table as descriptions
-of the operators -- they're also supported as operators in their own
+of the operators. They're also supported as operators in their own
 right.  They're more readable than the C-style operators, but have
 different precedence to C<&&> and friends.  Check L<perlop> for more
 detail.)

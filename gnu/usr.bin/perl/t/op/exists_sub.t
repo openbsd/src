@@ -8,7 +8,7 @@ BEGIN {
 print "1..9\n";
 
 sub t1;
-sub t2 : locked;
+sub t2 : lvalue;
 sub t3 ();
 sub t4 ($);
 sub t5 {1;}

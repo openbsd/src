@@ -2,7 +2,7 @@ package less;
 use strict;
 use warnings;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub _pack_tags {
     return join ' ', @_;
@@ -14,6 +14,8 @@ sub _unpack_tags {
         grep {defined} @_;
 }
 
+sub stash_name { $_[0] }
+
 sub of {
     my $class = shift @_;
 
@@ -22,7 +24,7 @@ sub of {
 
     my $hinthash = ( caller 0 )[10];
     my %tags;
-    @tags{ _unpack_tags( $hinthash->{$class} ) } = ();
+    @tags{ _unpack_tags( $hinthash->{ $class->stash_name } ) } = ();
 
     if (@_) {
         exists $tags{$_} and return !!1 for @_;
@@ -35,12 +37,13 @@ sub of {
 
 sub import {
     my $class = shift @_;
+    my $stash = $class->stash_name;
 
     @_ = 'please' if not @_;
     my %tags;
-    @tags{ _unpack_tags( @_, $^H{$class} ) } = ();
+    @tags{ _unpack_tags( @_, $^H{ $stash } ) } = ();
 
-    $^H{$class} = _pack_tags( keys %tags );
+    $^H{$stash} = _pack_tags( keys %tags );
     return;
 }
 
@@ -54,14 +57,14 @@ sub unimport {
         my $new = _pack_tags( keys %tags );
 
         if ( not length $new ) {
-            delete $^H{$class};
+            delete $^H{ $class->stash_name };
         }
         else {
-            $^H{$class} = $new;
+            $^H{ $class->stash_name } = $new;
         }
     }
     else {
-        delete $^H{$class};
+        delete $^H{ $class->stash_name };
     }
 
     return;

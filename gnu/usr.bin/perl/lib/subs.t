@@ -15,7 +15,6 @@ print "1..", scalar @prgs, "\n";
 my $Is_VMS = $^O eq 'VMS';
 my $Is_MSWin32 = $^O eq 'MSWin32';
 my $Is_NetWare = $^O eq 'NetWare';
-my $Is_MacOS = $^O eq 'MacOS';
 my $i = 0 ;
 
 for (@prgs){
@@ -52,8 +51,6 @@ for (@prgs){
 		      `.\\perl -I../lib $switch $tmpfile 2>&1` :
 		  $Is_NetWare ?
 		      `perl -I../lib $switch $tmpfile 2>&1` :
-		  $Is_MacOS ?
-		      `$^X -I::lib -MMac::err=unix $switch $tmpfile` :
                   `./perl $switch $tmpfile 2>&1`;
     my $status = $?;
     $results =~ s/\n+$//;

@@ -437,7 +437,15 @@ will also give a warning about being deprecated.
 =head1 CUSTOM ALIASES
 
 This version of charnames supports three mechanisms of adding local
-or customized aliases to standard Unicode naming conventions (:full)
+or customized aliases to standard Unicode naming conventions (:full).
+
+Note that an alias should not be something that is a legal curly
+brace-enclosed quantifier (see L<perlreref/QUANTIFIERS>).  For example
+C<\N{123}> means to match 123 non-newline characters, and is not treated as an
+alias.  Aliases are discouraged from beginning with anything other than an
+alphabetic character and from containing anything other than alphanumerics,
+spaces, dashes, colons, parentheses, and underscores.  Currently they must be
+ASCII.
 
 =head2 Anonymous hashes
 
@@ -530,23 +538,38 @@ state of C<bytes>-flag as in:
 	}
     }
 
+See L</CUSTOM ALIASES> above for restrictions on C<CHARNAME>.
+
 =head1 ILLEGAL CHARACTERS
 
-If you ask by name for a character that does not exist, a warning is
-given and the Unicode I<replacement character> "\x{FFFD}" is returned.
+If you ask by name for a character that does not exist, a warning is given and
+the Unicode I<replacement character> "\x{FFFD}" is returned.
 
-If you ask by code for a character that does not exist, no warning is
+If you ask by code for a character that is unassigned, no warning is
 given and C<undef> is returned.  (Though if you ask for a code point
-past U+10FFFF you do get a warning.)
+past U+10FFFF you do get a warning.)  See L</BUGS> below.
 
 =head1 BUGS
+
+viacode should return an empty string for unassigned in-range Unicode code
+points, as that is their correct current name.
+
+viacode(0) doesn't return C<NULL>, but C<undef>
+
+vianame returns a chr if the input name is of the form C<U+...>, and an ord
+otherwise.  It is planned to change this to always return an ord.
+
+None of the functions work on almost all the Hangul syllable and CJK Unicode
+characters that have their code points as part of their names.
+
+Names must be ASCII characters only.
 
 Unicode standard named sequences are not recognized, such as
 C<LATIN CAPITAL LETTER A WITH MACRON AND GRAVE>
 (which should mean C<LATIN CAPITAL LETTER A WITH MACRON> with an additional
 C<COMBINING GRAVE ACCENT>).
 
-Since evaluation of the translation function happens in a middle of
+Since evaluation of the translation function happens in the middle of
 compilation (of a string literal), the translation function should not
 do any C<eval>s or C<require>s.  This restriction should be lifted in
 a future version of Perl.

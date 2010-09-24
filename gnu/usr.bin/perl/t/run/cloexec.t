@@ -35,8 +35,8 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    use Config;
-    if (!$Config{'d_fcntl'}) {
+    require Config;
+    if (!$Config::Config{'d_fcntl'}) {
         print("1..0 # Skip: fcntl() is not available\n");
         exit(0);
     }
@@ -48,11 +48,9 @@ use strict;
 $|=1;
 
 my $Is_VMS      = $^O eq 'VMS';
-my $Is_MacOS    = $^O eq 'MacOS';
 my $Is_Win32    = $^O eq 'MSWin32';
 
 # When in doubt, skip.
-skip_all("MacOS")    if $Is_MacOS;
 skip_all("VMS")      if $Is_VMS;
 skip_all("Win32")    if $Is_Win32;
 

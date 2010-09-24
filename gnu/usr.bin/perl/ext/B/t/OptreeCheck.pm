@@ -329,7 +329,7 @@ our %gOpts = 	# values are replaced at runtime !!
      report	=> [qw/ diag fail print /],
      errcont	=> [1, 'if 1, tests match even if report is fail', 0],
 
-     # fixup for VMS, cygwin, which dont have stderr b4 stdout
+     # fixup for VMS, cygwin, which don't have stderr b4 stdout
      rxnoorder	=> [1, 'if 1, dont req match on -e lines, and -banner',0],
      strip	=> [1, 'if 1, catch errs and remove from renderings',0],
      stripv	=> 'if strip&&1, be verbose about it',
@@ -631,7 +631,7 @@ an ex-op.
 =head2 match criteria
 
 The selected golden-sample is massaged to eliminate various match
-irrelevancies.  This is done so that the tests dont fail just because
+irrelevancies.  This is done so that the tests don't fail just because
 you added a line to the top of the test file.  (Recall that the
 renderings contain the program's line numbers).  Similar cleanups are
 done on "strings", hex-constants, etc.

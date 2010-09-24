@@ -25,10 +25,15 @@ use strict;
 # implicit interpreter context argument.
 #
 
-my %apidocs;
-my %gutsdocs;
-my %docfuncs;
-my %seenfuncs;
+my %docs;
+my %funcflags;
+my %macro = (
+	     ax => 1,
+	     items => 1,
+	     ix => 1,
+	     svtype => 1,
+	    );
+my %missing;
 
 my $curheader = "Unknown section";
 
@@ -37,6 +42,11 @@ sub autodoc ($$) { # parse a file and extract documentation info
     my($in, $doc, $line);
 FUNC:
     while (defined($in = <$fh>)) {
+	if ($in =~ /^#\s*define\s+([A-Za-z_][A-Za-z_0-9]+)\(/ &&
+	    ($file ne 'embed.h' || $file ne 'proto.h')) {
+	    $macro{$1} = $file;
+	    next FUNC;
+	}
         if ($in=~ /^=head1 (.*)/) {
             $curheader = $1;
             next FUNC;
@@ -58,17 +68,49 @@ DOC:
 		$docs .= $doc;
 	    }
 	    $docs = "\n$docs" if $docs and $docs !~ /^\n/;
+
+	    # Check the consistency of the flags
+	    my ($embed_where, $inline_where);
+	    my ($embed_may_change, $inline_may_change);
+
+	    my $docref = delete $funcflags{$name};
+	    if ($docref and %$docref) {
+		$embed_where = $docref->{flags} =~ /A/ ? 'api' : 'guts';
+		$embed_may_change = $docref->{flags} =~ /M/;
+	    } else {
+		$missing{$name} = $file;
+	    }
 	    if ($flags =~ /m/) {
-		if ($flags =~ /A/) {
-		    $apidocs{$curheader}{$name} = [$flags, $docs, $ret, $file, @args];
+		$inline_where = $flags =~ /A/ ? 'api' : 'guts';
+		$inline_may_change = $flags =~ /x/;
+
+		if (defined $embed_where && $inline_where ne $embed_where) {
+		    warn "Function '$name' inconsistency: embed.fnc says $embed_where, Pod says $inline_where";
 		}
-		else {
-		    $gutsdocs{$curheader}{$name} = [$flags, $docs, $ret, $file, @args];
+
+		if (defined $embed_may_change
+		    && $inline_may_change ne $embed_may_change) {
+		    my $message = "Function '$name' inconsistency: ";
+		    if ($embed_may_change) {
+			$message .= "embed.fnc says 'may change', Pod does not";
+		    } else {
+			$message .= "Pod says 'may change', embed.fnc does not";
+		    }
+		    warn $message;
 		}
+	    } elsif (!defined $embed_where) {
+		warn "Unable to place $name!\n";
+		next;
+	    } else {
+		$inline_where = $embed_where;
+		$flags .= 'x' if $embed_may_change;
+		@args = @{$docref->{args}};
+		$ret = $docref->{retval};
 	    }
-	    else {
-		$docfuncs{$name} = [$flags, $docs, $ret, $file, $curheader, @args];
-	    }
+
+	    $docs{$inline_where}{$curheader}{$name}
+		= [$flags, $docs, $ret, $file, @args];
+
 	    if (defined $doc) {
 		if ($doc =~ /^=(?:for|head)/) {
 		    $in = $doc;
@@ -108,7 +150,7 @@ removed without notice.\n\n" if $flags =~ /x/;
 }
 
 sub output {
-    my ($podname, $header, $dochash, $footer) = @_;
+    my ($podname, $header, $dochash, $missing, $footer) = @_;
     my $filename = "pod/$podname.pod";
     open my $fh, '>', $filename or die "Can't open $filename: $!";
 
@@ -133,6 +175,15 @@ _EOH_
 	print $fh "\n=back\n";
     }
 
+    if (@$missing) {
+        print $fh "\n=head1 Undocumented functions\n\n";
+	print $fh "These functions are currently undocumented:\n\n=over\n\n";
+	for my $missing (sort @$missing) {
+	    print $fh "=item $missing\nX<$missing>\n\n";
+	}
+	print $fh "=back\n\n";
+    }
+
     print $fh $footer, <<'_EOF_';
 =cut
 
@@ -146,6 +197,33 @@ if (@ARGV) {
     my $workdir = shift;
     chdir $workdir
         or die "Couldn't chdir to '$workdir': $!";
+}
+
+open IN, "embed.fnc" or die $!;
+
+while (<IN>) {
+    chomp;
+    next if /^:/;
+    while (s|\\\s*$||) {
+	$_ .= <IN>;
+	chomp;
+    }
+    s/\s+$//;
+    next if /^\s*(#|$)/;
+
+    my ($flags, $retval, $func, @args) = split /\s*\|\s*/, $_;
+
+    next unless $func;
+
+    s/\b(NN|NULLOK)\b\s+//g for @args;
+    $func =~ s/\t//g; # clean up fields from embed.pl
+    $retval =~ s/\t//;
+
+    $funcflags{$func} = {
+			 flags => $flags,
+			 retval => $retval,
+			 args => \@args,
+			};
 }
 
 my $file;
@@ -164,55 +242,25 @@ for $file (($MANIFEST =~ /^(\S+\.c)\t/gm), ($MANIFEST =~ /^(\S+\.h)\t/gm)) {
     close F or die "Error closing $file: $!\n";
 }
 
-open IN, "embed.fnc" or die $!;
+for (sort keys %funcflags) {
+    next unless $funcflags{$_}{flags} =~ /d/;
+    warn "no docs for $_\n"
+}
+
+foreach (sort keys %missing) {
+    next if $macro{$_};
+    # Heuristics for known not-a-function macros:
+    next if /^[A-Z]/;
+    next if /^dj?[A-Z]/;
+
+    warn "Function '$_', documented in $missing{$_}, not listed in embed.fnc";
+}
 
 # walk table providing an array of components in each line to
 # subroutine, printing the result
 
-while (<IN>) {
-    chomp;
-    next if /^:/;
-    while (s|\\\s*$||) {
-	$_ .= <IN>;
-	chomp;
-    }
-    s/\s+$//;
-    next if /^\s*(#|$)/;
-
-    my ($flags, $retval, $func, @args) = split /\s*\|\s*/, $_;
-
-    next unless $flags =~ /d/;
-    next unless $func;
-
-    s/\b(NN|NULLOK)\b\s+//g for @args;
-    $func =~ s/\t//g; # clean up fields from embed.pl
-    $retval =~ s/\t//;
-
-    my $docref = delete $docfuncs{$func};
-    $seenfuncs{$func} = 1;
-    if ($docref and @$docref) {
-	if ($flags =~ /A/) {
-	    $docref->[0].="x" if $flags =~ /M/;
-	    $apidocs{$docref->[4]}{$func} =
-		[$docref->[0] . 'A', $docref->[1], $retval, $docref->[3],
-		 @args];
-	} else {
-	    $gutsdocs{$docref->[4]}{$func} =
-		[$docref->[0], $docref->[1], $retval, $docref->[3], @args];
-	}
-    }
-    else {
-	warn "no docs for $func\n" unless $seenfuncs{$func};
-    }
-}
-
-for (sort keys %docfuncs) {
-    # Have you used a full for apidoc or just a func name?
-    # Have you used Ap instead of Am in the for apidoc?
-    warn "Unable to place $_!\n";
-}
-
-output('perlapi', <<'_EOB_', \%apidocs, <<'_EOE_');
+my @missing_api = grep $funcflags{$_}{flags} =~ /A/ && !$docs{api}{$_}, keys %funcflags;
+output('perlapi', <<'_EOB_', $docs{api}, \@missing_api, <<'_EOE_');
 =head1 NAME
 
 perlapi - autogenerated documentation for the perl public API
@@ -274,11 +322,13 @@ Updated to be autogenerated from comments in the source by Benjamin Stuhl.
 
 =head1 SEE ALSO
 
-perlguts(1), perlxs(1), perlxstut(1), perlintern(1)
+L<perlguts>, L<perlxs>, L<perlxstut>, L<perlintern>
 
 _EOE_
 
-output('perlintern', <<'END', \%gutsdocs, <<'END');
+my @missing_guts = grep $funcflags{$_}{flags} !~ /A/ && !$docs{guts}{$_}, keys %funcflags;
+
+output('perlintern', <<'END', $docs{guts}, \@missing_guts, <<'END');
 =head1 NAME
 
 perlintern - autogenerated documentation of purely B<internal>
@@ -302,6 +352,6 @@ document their functions.
 
 =head1 SEE ALSO
 
-perlguts(1), perlapi(1)
+L<perlguts>, L<perlapi>
 
 END

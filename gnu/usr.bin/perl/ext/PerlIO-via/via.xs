@@ -138,14 +138,14 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 	else {
 	    STRLEN pkglen = 0;
 	    const char *pkg = SvPV(arg, pkglen);
-	    s->obj = SvREFCNT_inc(arg);
-	    s->stash = gv_stashpvn(pkg, pkglen, 0);
+	    s->obj =
+		newSVpvn(Perl_form(aTHX_ "PerlIO::via::%s", pkg),
+			 pkglen + 13);
+	    s->stash = gv_stashpvn(SvPVX_const(s->obj), pkglen + 13, 0);
 	    if (!s->stash) {
 		SvREFCNT_dec(s->obj);
-		s->obj =
-		    newSVpvn(Perl_form(aTHX_ "PerlIO::via::%s", pkg),
-			     pkglen + 13);
-		s->stash = gv_stashpvn(SvPVX_const(s->obj), pkglen + 13, 0);
+		s->obj = SvREFCNT_inc(arg);
+		s->stash = gv_stashpvn(pkg, pkglen, 0);
 	    }
 	    if (s->stash) {
 		char lmode[8];
@@ -155,7 +155,7 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 		    /* binmode() passes NULL - so find out what mode is */
 		    mode = PerlIO_modestr(f,lmode);
 		}
-		modesv = sv_2mortal(newSVpvn(mode, strlen(mode)));
+		modesv = newSVpvn_flags(mode, strlen(mode), SVs_TEMP);
 		result = PerlIOVia_method(aTHX_ f, MYMethod(PUSHED), G_SCALAR,
 				     modesv, Nullsv);
 		if (result) {
@@ -395,7 +395,7 @@ SSize_t
 PerlIOVia_unread(pTHX_ PerlIO * f, const void *vbuf, Size_t count)
 {
     PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
-    SV *buf = sv_2mortal(newSVpvn((char *) vbuf, count));
+    SV *buf = newSVpvn_flags((char *) vbuf, count, SVs_TEMP);
     SV *result =
 	PerlIOVia_method(aTHX_ f, MYMethod(UNREAD), G_SCALAR, buf, Nullsv);
     if (result)

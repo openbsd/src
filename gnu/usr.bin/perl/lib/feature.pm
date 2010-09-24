@@ -1,19 +1,26 @@
 package feature;
 
-our $VERSION = '1.13';
+our $VERSION = '1.16';
 
 # (feature name) => (internal name, used in %^H)
 my %feature = (
-    switch => 'feature_switch',
-    say    => "feature_say",
-    state  => "feature_state",
+    switch          => 'feature_switch',
+    say             => "feature_say",
+    state           => "feature_state",
+    unicode_strings => "feature_unicode",
 );
+
+# This gets set (for now) in $^H as well as in %^H,
+# for runtime speed of the uc/lc/ucfirst/lcfirst functions.
+# See HINT_UNI_8_BIT in perl.h.
+our $hint_uni8bit = 0x00000800;
 
 # NB. the latest bundle must be loaded by the -E switch (see toke.c)
 
 my %feature_bundle = (
     "5.10" => [qw(switch say state)],
-### "5.11" => [qw(switch say state)],
+    "5.11" => [qw(switch say state unicode_strings)],
+    "5.12" => [qw(switch say state unicode_strings)],
 );
 
 # special case
@@ -24,7 +31,7 @@ $feature_bundle{"5.9.5"} = $feature_bundle{"5.10"};
 
 =head1 NAME
 
-feature - Perl pragma to enable new syntactic features
+feature - Perl pragma to enable new features
 
 =head1 SYNOPSIS
 
@@ -43,9 +50,9 @@ feature - Perl pragma to enable new syntactic features
 
 It is usually impossible to add new syntax to Perl without breaking
 some existing programs. This pragma provides a way to minimize that
-risk. New syntactic constructs can be enabled by C<use feature 'foo'>,
-and will be parsed only when the appropriate feature pragma is in
-scope.
+risk. New syntactic constructs, or new semantic meanings to older
+constructs, can be enabled by C<use feature 'foo'>, and will be parsed
+only when the appropriate feature pragma is in scope.
 
 =head2 Lexical effect
 
@@ -94,6 +101,14 @@ C<use feature 'state'> tells the compiler to enable C<state>
 variables.
 
 See L<perlsub/"Persistent Private Variables"> for details.
+
+=head2 the 'unicode_strings' feature
+
+C<use feature 'unicode_strings'> tells the compiler to treat
+all strings outside of C<use locale> and C<use bytes> as Unicode. It is
+available starting with Perl 5.11.3.
+
+See L<perlunicode/The "Unicode Bug"> for details.
 
 =head1 FEATURE BUNDLES
 
@@ -164,6 +179,7 @@ sub import {
 	    unknown_feature($name);
 	}
 	$^H{$feature{$name}} = 1;
+        $^H |= $hint_uni8bit if $name eq 'unicode_strings';
     }
 }
 
@@ -173,6 +189,7 @@ sub unimport {
     # A bare C<no feature> should disable *all* features
     if (!@_) {
 	delete @^H{ values(%feature) };
+        $^H &= ~ $hint_uni8bit;
 	return;
     }
 
@@ -194,6 +211,7 @@ sub unimport {
 	}
 	else {
 	    delete $^H{$feature{$name}};
+            $^H &= ~ $hint_uni8bit if $name eq 'unicode_strings';
 	}
     }
 }

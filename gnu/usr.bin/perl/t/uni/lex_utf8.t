@@ -1,3 +1,4 @@
+#!./perl -w
 #
 # This script is written intentionally in UTF-8
 
@@ -7,11 +8,13 @@ BEGIN {
         exit 0;
     }
     $| = 1;
+
+    require './test.pl';
 }
 
 use strict;
 
-use Test::More tests => 10;
+plan (tests => 10);
 use charnames ':full';
 
 use utf8;

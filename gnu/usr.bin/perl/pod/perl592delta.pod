@@ -128,7 +128,7 @@ A new variable, ${^RE_DEBUG_FLAGS}, controls what debug flags are in
 effect for the regular expression engine when running under C<use re
 "debug">. See L<re> for details.
 
-A new variable ${^UTF8LOCALE} indicates where an UTF-8 locale was detected
+A new variable ${^UTF8LOCALE} indicates where a UTF-8 locale was detected
 by perl at startup.
 
 =head1 Modules and Pragmata

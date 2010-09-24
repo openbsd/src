@@ -1,10 +1,6 @@
 #!./perl -w
 
 BEGIN {
-    if ($ENV{'PERL_CORE'}){
-        chdir 't';
-        @INC = '../lib';
-    }
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
@@ -22,11 +18,12 @@ BEGIN {
         print "1..0 # Skip: no dynamic loading on miniperl, no Encode\n";
         exit 0;
     }
+
+    require './test.pl';
 }
 
-use Encode;
 use strict;
-use Test::More;
+use Encode;
 
 # %mbchars = (encoding => { bytes => utf8, ... }, ...);
 # * pack('C*') is expected to return bytes even if ${^ENCODING} is true.

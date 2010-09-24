@@ -17,15 +17,16 @@ $Is_Dosish = ($^O eq 'amigaos' || $^O eq 'MSWin32' ||
 	      $^O eq 'os2' || $^O eq 'mint' ||
 	      $^O eq 'cygwin');
 
-unlink <Op_dbmx*>;
+my $filename = "Any_dbmx$$";
+unlink <"$filename*">;
 
 umask(0);
 
-ok( tie(%h,AnyDBM_File,'Op_dbmx', O_RDWR|O_CREAT, 0640), "Tie");
+ok( tie(%h,AnyDBM_File,"$filename", O_RDWR|O_CREAT, 0640), "Tie");
 
-$Dfile = "Op_dbmx.pag";
+$Dfile = "$filename.pag";
 if (! -e $Dfile) {
-	($Dfile) = <Op_dbmx*>;
+	($Dfile) = <$filename*>;
 }
 
 SKIP:
@@ -63,7 +64,7 @@ $h{'goner2'} = 'snork';
 delete $h{'goner2'};
 
 untie(%h);
-ok(tie(%h,AnyDBM_File,'Op_dbmx', O_RDWR, 0640),"Re-tie hash");
+ok(tie(%h,AnyDBM_File,"$filename", O_RDWR, 0640),"Re-tie hash");
 
 $h{'j'} = 'J';
 $h{'k'} = 'K';
@@ -151,7 +152,7 @@ SKIP:
 untie %h;
 
 if ($^O eq 'VMS') {
-  unlink 'Op_dbmx.sdbm_dir', $Dfile;
+  unlink "$filename.sdbm_dir", $Dfile;
 } else {
-  unlink 'Op_dbmx.dir', $Dfile;  
+  unlink "$filename.dir", $Dfile;
 }

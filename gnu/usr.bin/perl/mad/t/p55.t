@@ -64,8 +64,6 @@ use Test::Differences;
 our %failing = map { $_, 1 } qw|
 ../t/comp/require.t
 
-../t/comp/parser.t
-
 ../t/op/switch.t
 
 ../t/op/attrhand.t
@@ -73,10 +71,8 @@ our %failing = map { $_, 1 } qw|
 ../t/op/symbolcache.t
 
 ../t/op/exec.t
-../t/io/say.t
 
 ../t/op/state.t
-../t/op/tiehandle.t
 ../t/op/each_array.t
 ../t/lib/cygwin.t
 |;

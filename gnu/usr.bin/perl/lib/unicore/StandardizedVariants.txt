@@ -1,5 +1,5 @@
-# StandardizedVariants-5.1.0.txt
-# Date: 2008-03-24, 13:39:00 PDT [KW]
+# StandardizedVariants-5.2.0.txt
+# Date: 2008-09-18, 17:41:00 PDT [KW]
 #
 # Specification of the variant sequences that are defined in the
 # Unicode Standard.
@@ -29,7 +29,7 @@
 # Format:
 #   Field 0: the variation sequence
 #   Field 1: the description of the desired appearance
-#   Field 2: where the appearance is only different in in particular shaping environments
+#   Field 2: where the appearance is only different in particular shaping environments
 #	this field lists them. The possible values are: isolate, initial, medial, final.
 #	If more than one is present, there are spaces between them.
 # =============================
@@ -42,6 +42,10 @@
 2269 FE00; with vertical stroke; # GREATER-THAN BUT NOT EQUAL TO
 2272 FE00; following the slant of the lower leg; # LESS-THAN OR EQUIVALENT TO
 2273 FE00; following the slant of the lower leg; # GREATER-THAN OR EQUIVALENT TO
+# The following two entries were originally defined for Unicode 3.2
+# but were determined to be in error and were removed from the list
+# of standardized variation sequences. The entries are left commented
+# in the file for the historical record of changes made to the data.
 #2278 FE00; with vertical stroke; # NEITHER LESS-THAN NOR GREATER-THAN
 #2279 FE00; with vertical stroke; # NEITHER GREATER-THAN NOR LESS-THAN
 228A FE00; with stroke through bottom members; # SUBSET OF WITH NOT EQUAL TO

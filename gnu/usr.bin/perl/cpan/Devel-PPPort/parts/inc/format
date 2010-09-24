@@ -1,0 +1,70 @@
+################################################################################
+##
+##  $Revision: 9 $
+##  $Author: mhx $
+##  $Date: 2009/01/18 14:10:55 +0100 $
+##
+################################################################################
+##
+##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 2.x, Copyright (C) 2001, Paul Marquess.
+##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+##
+##  This program is free software; you can redistribute it and/or
+##  modify it under the same terms as Perl itself.
+##
+################################################################################
+
+=provides
+
+/^#\s*define\s+(\w+)/
+
+=implementation
+
+#ifndef IVdf
+#  if IVSIZE == LONGSIZE
+#    define	IVdf      "ld"
+#    define	UVuf      "lu"
+#    define	UVof      "lo"
+#    define	UVxf      "lx"
+#    define	UVXf      "lX"
+#  else
+#    if IVSIZE == INTSIZE
+#      define	IVdf      "d"
+#      define	UVuf      "u"
+#      define	UVof      "o"
+#      define	UVxf      "x"
+#      define	UVXf      "X"
+#    endif
+#  endif
+#endif
+
+#ifndef NVef
+#  if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE) && \
+      defined(PERL_PRIfldbl) && { VERSION != 5.6.0 }
+            /* Not very likely, but let's try anyway. */
+#    define NVef          PERL_PRIeldbl
+#    define NVff          PERL_PRIfldbl
+#    define NVgf          PERL_PRIgldbl
+#  else
+#    define NVef          "e"
+#    define NVff          "f"
+#    define NVgf          "g"
+#  endif
+#endif
+
+=xsubs
+
+void
+croak_NVgf(num)
+	NV num
+	PPCODE:
+		Perl_croak(aTHX_ "%.20" NVgf "\n", num);
+
+=tests plan => 1
+
+my $num = 1.12345678901234567890;
+
+eval { Devel::PPPort::croak_NVgf($num) };
+ok($@ =~ /^1.1234567890/);
+

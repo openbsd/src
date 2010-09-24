@@ -117,8 +117,8 @@ for the user's code.
 
 User pragmata store their state by writing to the magical hash C<%^H>,
 hence these two routines manipulate it. The state information in C<%^H> is
-stored in the optree, and can be retrieved at runtime with C<caller()>, at
-index 10 of the list of returned results. In the example pragma, retrieval
+stored in the optree, and can be retrieved read-only at runtime with C<caller()>,
+at index 10 of the list of returned results. In the example pragma, retrieval
 is encapsulated into the routine C<in_effect()>, which takes as parameter
 the number of call frames to go up to find the value of the pragma in the
 user's script. This uses C<caller()> to determine the value of

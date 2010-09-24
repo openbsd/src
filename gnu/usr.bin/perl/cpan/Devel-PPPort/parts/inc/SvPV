@@ -1,0 +1,524 @@
+################################################################################
+##
+##  $Revision: 22 $
+##  $Author: mhx $
+##  $Date: 2009/01/18 14:10:54 +0100 $
+##
+################################################################################
+##
+##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 2.x, Copyright (C) 2001, Paul Marquess.
+##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+##
+##  This program is free software; you can redistribute it and/or
+##  modify it under the same terms as Perl itself.
+##
+################################################################################
+
+=provides
+
+__UNDEFINED__
+SvPVbyte
+sv_2pvbyte
+sv_2pv_flags
+sv_pvn_force_flags
+
+=dontwarn
+
+NEED_sv_2pv_flags
+NEED_sv_2pv_flags_GLOBAL
+DPPP_SVPV_NOLEN_LP_ARG
+
+=implementation
+
+/* Backwards compatibility stuff... :-( */
+#if !defined(NEED_sv_2pv_flags) && defined(NEED_sv_2pv_nolen)
+#  define NEED_sv_2pv_flags
+#endif
+#if !defined(NEED_sv_2pv_flags_GLOBAL) && defined(NEED_sv_2pv_nolen_GLOBAL)
+#  define NEED_sv_2pv_flags_GLOBAL
+#endif
+
+/* Hint: sv_2pv_nolen
+ * Use the SvPV_nolen() or SvPV_nolen_const() macros instead of sv_2pv_nolen().
+ */
+
+__UNDEFINED__  sv_2pv_nolen(sv)   SvPV_nolen(sv)
+
+#ifdef SvPVbyte
+
+/* Hint: SvPVbyte
+ * Does not work in perl-5.6.1, ppport.h implements a version
+ * borrowed from perl-5.7.3.
+ */
+
+#if { VERSION < 5.7.0 }
+
+#if { NEED sv_2pvbyte }
+
+char *
+sv_2pvbyte(pTHX_ SV *sv, STRLEN *lp)
+{
+  sv_utf8_downgrade(sv,0);
+  return SvPV(sv,*lp);
+}
+
+#endif
+
+/* Hint: sv_2pvbyte
+ * Use the SvPVbyte() macro instead of sv_2pvbyte().
+ */
+
+#undef SvPVbyte
+
+#define SvPVbyte(sv, lp)                                                \
+        ((SvFLAGS(sv) & (SVf_POK|SVf_UTF8)) == (SVf_POK)                \
+         ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_2pvbyte(sv, &lp))
+
+#endif
+
+#else
+
+#  define SvPVbyte          SvPV
+#  define sv_2pvbyte        sv_2pv
+
+#endif
+
+__UNDEFINED__  sv_2pvbyte_nolen(sv)  sv_2pv_nolen(sv)
+
+/* Hint: sv_pvn
+ * Always use the SvPV() macro instead of sv_pvn().
+ */
+
+/* Hint: sv_pvn_force
+ * Always use the SvPV_force() macro instead of sv_pvn_force().
+ */
+
+/* If these are undefined, they're not handled by the core anyway */
+__UNDEFINED__  SV_IMMEDIATE_UNREF	0
+__UNDEFINED__  SV_GMAGIC		0
+__UNDEFINED__  SV_COW_DROP_PV		0
+__UNDEFINED__  SV_UTF8_NO_ENCODING	0
+__UNDEFINED__  SV_NOSTEAL		0
+__UNDEFINED__  SV_CONST_RETURN		0
+__UNDEFINED__  SV_MUTABLE_RETURN	0
+__UNDEFINED__  SV_SMAGIC		0
+__UNDEFINED__  SV_HAS_TRAILING_NUL	0
+__UNDEFINED__  SV_COW_SHARED_HASH_KEYS	0
+
+#if { VERSION < 5.7.2 }
+
+#if { NEED sv_2pv_flags }
+
+char *
+sv_2pv_flags(pTHX_ SV *sv, STRLEN *lp, I32 flags)
+{
+  STRLEN n_a = (STRLEN) flags;
+  return sv_2pv(sv, lp ? lp : &n_a);
+}
+
+#endif
+
+#if { NEED sv_pvn_force_flags }
+
+char *
+sv_pvn_force_flags(pTHX_ SV *sv, STRLEN *lp, I32 flags)
+{
+  STRLEN n_a = (STRLEN) flags;
+  return sv_pvn_force(sv, lp ? lp : &n_a);
+}
+
+#endif
+
+#endif
+
+#if { VERSION < 5.8.8 } || ( { VERSION >= 5.9.0 } && { VERSION < 5.9.3 } )
+# define DPPP_SVPV_NOLEN_LP_ARG &PL_na
+#else
+# define DPPP_SVPV_NOLEN_LP_ARG 0
+#endif
+
+__UNDEFINED__  SvPV_const(sv, lp)      SvPV_flags_const(sv, lp, SV_GMAGIC)
+__UNDEFINED__  SvPV_mutable(sv, lp)    SvPV_flags_mutable(sv, lp, SV_GMAGIC)
+
+__UNDEFINED__  SvPV_flags(sv, lp, flags) \
+                 ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+                  ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_2pv_flags(sv, &lp, flags))
+
+__UNDEFINED__  SvPV_flags_const(sv, lp, flags) \
+                 ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+                  ? ((lp = SvCUR(sv)), SvPVX_const(sv)) : \
+                  (const char*) sv_2pv_flags(sv, &lp, flags|SV_CONST_RETURN))
+
+__UNDEFINED__  SvPV_flags_const_nolen(sv, flags) \
+                 ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+                  ? SvPVX_const(sv) : \
+                  (const char*) sv_2pv_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, flags|SV_CONST_RETURN))
+
+__UNDEFINED__  SvPV_flags_mutable(sv, lp, flags) \
+                 ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+                  ? ((lp = SvCUR(sv)), SvPVX_mutable(sv)) : \
+                  sv_2pv_flags(sv, &lp, flags|SV_MUTABLE_RETURN))
+
+__UNDEFINED__  SvPV_force(sv, lp) SvPV_force_flags(sv, lp, SV_GMAGIC)
+__UNDEFINED__  SvPV_force_nolen(sv) SvPV_force_flags_nolen(sv, SV_GMAGIC)
+__UNDEFINED__  SvPV_force_mutable(sv, lp) SvPV_force_flags_mutable(sv, lp, SV_GMAGIC)
+__UNDEFINED__  SvPV_force_nomg(sv, lp) SvPV_force_flags(sv, lp, 0)
+__UNDEFINED__  SvPV_force_nomg_nolen(sv) SvPV_force_flags_nolen(sv, 0)
+
+__UNDEFINED__  SvPV_force_flags(sv, lp, flags) \
+                 ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
+                 ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_pvn_force_flags(sv, &lp, flags))
+
+__UNDEFINED__  SvPV_force_flags_nolen(sv, flags) \
+                 ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
+                 ? SvPVX(sv) : sv_pvn_force_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, flags))
+
+__UNDEFINED__  SvPV_force_flags_mutable(sv, lp, flags) \
+                 ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
+                 ? ((lp = SvCUR(sv)), SvPVX_mutable(sv)) \
+                  : sv_pvn_force_flags(sv, &lp, flags|SV_MUTABLE_RETURN))
+
+__UNDEFINED__  SvPV_nolen(sv) \
+                 ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+                  ? SvPVX(sv) : sv_2pv_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, SV_GMAGIC))
+
+__UNDEFINED__  SvPV_nolen_const(sv) \
+                 ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+                  ? SvPVX_const(sv) : sv_2pv_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, SV_GMAGIC|SV_CONST_RETURN))
+
+__UNDEFINED__  SvPV_nomg(sv, lp) SvPV_flags(sv, lp, 0)
+__UNDEFINED__  SvPV_nomg_const(sv, lp) SvPV_flags_const(sv, lp, 0)
+__UNDEFINED__  SvPV_nomg_const_nolen(sv) SvPV_flags_const_nolen(sv, 0)
+
+__UNDEFINED__  SvPV_renew(sv,n) STMT_START { SvLEN_set(sv, n); \
+                 SvPV_set((sv), (char *) saferealloc(          \
+                       (Malloc_t)SvPVX(sv), (MEM_SIZE)((n)))); \
+               } STMT_END
+
+=xsinit
+
+#define NEED_sv_2pv_flags
+#define NEED_sv_pvn_force_flags
+#define NEED_sv_2pvbyte
+
+=xsubs
+
+IV
+SvPVbyte(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPVbyte(sv, len);
+		RETVAL = strEQ(str, "mhx") ? (IV) len : (IV) -1;
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_nolen(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+	CODE:
+		str = SvPV_nolen(sv);
+		RETVAL = strEQ(str, "mhx") ? 42 : 0;
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_const(sv)
+	SV *sv
+	PREINIT:
+		const char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_const(sv, len);
+		RETVAL = len + (strEQ(str, "mhx") ? 40 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_mutable(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_mutable(sv, len);
+		RETVAL = len + (strEQ(str, "mhx") ? 41 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_flags(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_flags(sv, len, SV_GMAGIC);
+		RETVAL = len + (strEQ(str, "mhx") ? 42 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_flags_const(sv)
+	SV *sv
+	PREINIT:
+		const char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_flags_const(sv, len, SV_GMAGIC);
+		RETVAL = len + (strEQ(str, "mhx") ? 43 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_flags_const_nolen(sv)
+	SV *sv
+	PREINIT:
+		const char *str;
+	CODE:
+		str = SvPV_flags_const_nolen(sv, SV_GMAGIC);
+		RETVAL = strEQ(str, "mhx") ? 47 : 0;
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_flags_mutable(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_flags_mutable(sv, len, SV_GMAGIC);
+		RETVAL = len + (strEQ(str, "mhx") ? 45 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_force(sv, len);
+		RETVAL = len + (strEQ(str, "mhx") ? 46 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force_nolen(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+	CODE:
+		str = SvPV_force_nolen(sv);
+		RETVAL = strEQ(str, "mhx") ? 50 : 0;
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force_mutable(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_force_mutable(sv, len);
+		RETVAL = len + (strEQ(str, "mhx") ? 48 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force_nomg(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_force_nomg(sv, len);
+		RETVAL = len + (strEQ(str, "mhx") ? 49 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force_nomg_nolen(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+	CODE:
+		str = SvPV_force_nomg_nolen(sv);
+		RETVAL = strEQ(str, "mhx") ? 53 : 0;
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force_flags(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_force_flags(sv, len, SV_GMAGIC);
+		RETVAL = len + (strEQ(str, "mhx") ? 51 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force_flags_nolen(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+	CODE:
+		str = SvPV_force_flags_nolen(sv, SV_GMAGIC);
+		RETVAL = strEQ(str, "mhx") ? 55 : 0;
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_force_flags_mutable(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_force_flags_mutable(sv, len, SV_GMAGIC);
+		RETVAL = len + (strEQ(str, "mhx") ? 53 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_nolen_const(sv)
+	SV *sv
+	PREINIT:
+		const char *str;
+	CODE:
+		str = SvPV_nolen_const(sv);
+		RETVAL = strEQ(str, "mhx") ? 57 : 0;
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_nomg(sv)
+	SV *sv
+	PREINIT:
+		char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_nomg(sv, len);
+		RETVAL = len + (strEQ(str, "mhx") ? 55 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_nomg_const(sv)
+	SV *sv
+	PREINIT:
+		const char *str;
+		STRLEN len;
+	CODE:
+		str = SvPV_nomg_const(sv, len);
+		RETVAL = len + (strEQ(str, "mhx") ? 56 : 0);
+	OUTPUT:
+		RETVAL
+
+IV
+SvPV_nomg_const_nolen(sv)
+	SV *sv
+	PREINIT:
+		const char *str;
+	CODE:
+		str = SvPV_nomg_const_nolen(sv);
+		RETVAL = strEQ(str, "mhx") ? 60 : 0;
+	OUTPUT:
+		RETVAL
+
+void
+SvPV_renew(sv, nlen, insv)
+	SV *sv
+	IV nlen
+	SV *insv
+	PREINIT:
+		STRLEN slen;
+		const char *str;
+	PPCODE:
+		str = SvPV_const(insv, slen);
+		XPUSHs(sv);
+		mXPUSHi(SvLEN(sv));
+		SvPV_renew(sv, nlen);
+		Copy(str, SvPVX(sv), slen + 1, char);
+		SvCUR_set(sv, slen);
+		mXPUSHi(SvLEN(sv));
+
+
+=tests plan => 47
+
+my $mhx = "mhx";
+
+ok(&Devel::PPPort::SvPVbyte($mhx), 3);
+
+my $i = 42;
+
+ok(&Devel::PPPort::SvPV_nolen($mhx), $i++);
+ok(&Devel::PPPort::SvPV_const($mhx), $i++);
+ok(&Devel::PPPort::SvPV_mutable($mhx), $i++);
+ok(&Devel::PPPort::SvPV_flags($mhx), $i++);
+ok(&Devel::PPPort::SvPV_flags_const($mhx), $i++);
+
+ok(&Devel::PPPort::SvPV_flags_const_nolen($mhx), $i++);
+ok(&Devel::PPPort::SvPV_flags_mutable($mhx), $i++);
+ok(&Devel::PPPort::SvPV_force($mhx), $i++);
+ok(&Devel::PPPort::SvPV_force_nolen($mhx), $i++);
+ok(&Devel::PPPort::SvPV_force_mutable($mhx), $i++);
+
+ok(&Devel::PPPort::SvPV_force_nomg($mhx), $i++);
+ok(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), $i++);
+ok(&Devel::PPPort::SvPV_force_flags($mhx), $i++);
+ok(&Devel::PPPort::SvPV_force_flags_nolen($mhx), $i++);
+ok(&Devel::PPPort::SvPV_force_flags_mutable($mhx), $i++);
+
+ok(&Devel::PPPort::SvPV_nolen_const($mhx), $i++);
+ok(&Devel::PPPort::SvPV_nomg($mhx), $i++);
+ok(&Devel::PPPort::SvPV_nomg_const($mhx), $i++);
+ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), $i++);
+
+$mhx = 42; ok(&Devel::PPPort::SvPV_nolen($mhx), 0);
+$mhx = 42; ok(&Devel::PPPort::SvPV_const($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_mutable($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_flags($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_flags_const($mhx), 2);
+
+$mhx = 42; ok(&Devel::PPPort::SvPV_flags_const_nolen($mhx), 0);
+$mhx = 42; ok(&Devel::PPPort::SvPV_flags_mutable($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_force($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_force_nolen($mhx), 0);
+$mhx = 42; ok(&Devel::PPPort::SvPV_force_mutable($mhx), 2);
+
+$mhx = 42; ok(&Devel::PPPort::SvPV_force_nomg($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), 0);
+$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags_nolen($mhx), 0);
+$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags_mutable($mhx), 2);
+
+$mhx = 42; ok(&Devel::PPPort::SvPV_nolen_const($mhx), 0);
+$mhx = 42; ok(&Devel::PPPort::SvPV_nomg($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
+$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
+
+my $str = "";
+my($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 81, "x"x80);
+ok($str, "x"x80);
+ok($s2, "x"x80);
+ok($before < 81);
+ok($after, 81);
+
+$str = "x"x400;
+($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 41, "x"x40);
+ok($str, "x"x40);
+ok($s2, "x"x40);
+ok($before > 41);
+ok($after, 41);

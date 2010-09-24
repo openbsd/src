@@ -119,8 +119,12 @@ case "$cc" in
 # 1506-294 (S) Syntax error in expression on #if directive.
 #
 case "$osvers" in
-    4.2.1.0) ccflags="$ccflags -D_XOPEN_SOURCE" ;;
-    *) ;;
+    4.2.1.0)
+	ccflags="$ccflags -D_XOPEN_SOURCE"
+	# aix 4.2 does not have IPv6 support
+	d_inetpton='undef'
+	d_inetntop='undef'
+	;;
     esac
 nm_opt='-B'
 

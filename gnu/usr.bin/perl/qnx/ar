@@ -12,8 +12,7 @@
 #This is a crude cover, but it has proved sufficient for many
 #ports. Rather than attempt to implement subtleties of the
 #ar syntax, I simply create a new library under all
-#circumstances. A much more thorough cover is available from
-#http://www.fdma.com/pub/qnx/porting/ar
+#circumstances.
 #
 #Note that Watcom 10.6 supports ar directly, so this
 #cover is not necessary.

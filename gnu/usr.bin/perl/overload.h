@@ -79,6 +79,8 @@ enum {
     concat_amg,
     concat_ass_amg,
     smart_amg,
+    ftest_amg,
+    regexp_amg,
     DESTROY_amg,
     max_amg_code
     /* Do not leave a trailing comma here.  C9X allows it, C89 doesn't. */

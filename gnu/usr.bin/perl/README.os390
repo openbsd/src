@@ -26,7 +26,7 @@ running the Configure script for Perl.
 
 The z/OS Unix Tools and Toys list may prove helpful and contains links
 to ports of much of the software helpful for building Perl.
-http://www-1.ibm.com/servers/eserver/zseries/zos/unix/bpxa1toy.html
+http://www.ibm.com/servers/eserver/zseries/zos/unix/bpxa1toy.html
 
 
 =head2 Unpacking Perl distribution on OS/390
@@ -35,7 +35,7 @@ If using ftp remember to transfer the distribution in binary format.
 
 Gunzip/gzip for OS/390 is discussed at:
 
-  http://www-1.ibm.com/servers/eserver/zseries/zos/unix/faq/bpxqp1.html
+  http://www.ibm.com/servers/eserver/zseries/zos/unix/bpxa1ty1.html
 
 to extract an ASCII tar archive on OS/390, try this:
 
@@ -231,20 +231,6 @@ anomalies:
 
 A message of the form:
 
- comp/cpp.............ERROR CBC3191 ./.301989890.c:1     The character $ is not a
-  valid C source character.
- FSUM3065 The COMPILE step ended with return code 12.
- FSUM3017 Could not compile .301989890.c. Correct the errors and try again.
- ok
-
-indicates that the t/comp/cpp.t test of Perl's -P command line switch has
-passed but that the particular invocation of c89 -E in the cpp script does
-not suppress the C compiler check of source code validity.
-
-=item *
-
-A message of the form:
-
  io/openpid...........CEE5210S The signal SIGHUP was received.
  CEE5210S The signal SIGHUP was received.
  CEE5210S The signal SIGHUP was received.
@@ -410,11 +396,11 @@ Thanks to John Goodyear for dynamic loading help.
 
 L<INSTALL>, L<perlport>, L<perlebcdic>, L<ExtUtils::MakeMaker>.
 
-    http://www-1.ibm.com/servers/eserver/zseries/zos/unix/bpxa1toy.html
+    http://www.ibm.com/servers/eserver/zseries/zos/unix/bpxa1toy.html
 
-    http://www.redbooks.ibm.com/abstracts/sg245944.html
+    http://www.redbooks.ibm.com/redbooks/SG245944.html
 
-    http://www-1.ibm.com/servers/eserver/zseries/zos/unix/bpxa1ty1.html#opensrc
+    http://www.ibm.com/servers/eserver/zseries/zos/unix/bpxa1ty1.html#opensrc
 
     http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/
 

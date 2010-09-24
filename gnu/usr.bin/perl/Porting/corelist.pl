@@ -16,8 +16,9 @@ use lib "Porting";
 use Maintainers qw(%Modules files_to_modules);
 use File::Spec;
 use Parse::CPAN::Meta;
+use IPC::Cmd 'can_run';
 
-my $corelist_file = 'lib/Module/CoreList.pm';
+my $corelist_file = 'dist/Module-CoreList/lib/Module/CoreList.pm';
 
 my %lines;
 my %module_to_file;
@@ -47,8 +48,9 @@ if ($cpan) {
         warn "Reading the module list from $modlistfile";
         open $fh, '<', $modlistfile or die "Couldn't open $modlistfile: $!";
     } elsif ( -e $modlistfile . ".gz" ) {
+        my $zcat = can_run('gzcat') || can_run('zcat') or die "Can't find gzcat or zcat";
         warn "Reading the module list from $modlistfile.gz";
-        open $fh, '-|', "gzcat $modlistfile.gz" or die "Couldn't zcat $modlistfile.gz: $!";
+        open $fh, '-|', "$zcat $modlistfile.gz" or die "Couldn't zcat $modlistfile.gz: $!";
     } else {
         warn "About to fetch 02packages from ftp.funet.fi. This may take a few minutes\n";
         $content = fetch_url('http://ftp.funet.fi/pub/CPAN/modules/02packages.details.txt');
@@ -84,28 +86,32 @@ find(
         $version =~ /\d/ and $version = "'$version'";
 
         # some heuristics to figure out the module name from the file name
-        $module =~ s{^(lib|(win32/|vms/|symbian/)?ext)/}{}
-            and $1 ne 'lib'
+        $module =~ s{^(lib|cpan|dist|(?:vms/|symbian/)?ext)/}{}
+			and $1 ne 'lib'
             and (
             $module =~ s{\b(\w+)/\1\b}{$1},
             $module =~ s{^B/O}{O},
             $module =~ s{^Devel-PPPort}{Devel},
+            $module =~ s{^libnet/}{},
             $module =~ s{^Encode/encoding}{encoding},
             $module =~ s{^IPC-SysV/}{IPC/},
             $module =~ s{^MIME-Base64/QuotedPrint}{MIME/QuotedPrint},
             $module =~ s{^(?:DynaLoader|Errno|Opcode)/}{},
             );
+		$module =~ s{^lib/}{}g;
         $module =~ s{/}{::}g;
         $module =~ s{-}{::}g;
-        $module =~ s{^.*::lib::}{};
+		$module =~ s{^.*::lib::}{}; # turns Foo/lib/Foo.pm into Foo.pm
         $module =~ s/(\.pm|_pm\.PL)$//;
         $lines{$module}          = $version;
         $module_to_file{$module} = $File::Find::name;
     },
+    'vms/ext',
+    'symbian/ext',
     'lib',
     'ext',
-    'vms/ext',
-    'symbian/ext'
+	'cpan',
+	'dist'
 );
 
 -e 'configpm' and $lines{Config} = 'undef';
@@ -133,11 +139,13 @@ my $file_to_M = files_to_modules( values %module_to_file );
 my %module_to_upstream;
 my %module_to_dist;
 my %dist_to_meta_YAML;
+my %module_to_deprecated;
 while ( my ( $module, $file ) = each %module_to_file ) {
     my $M = $file_to_M->{$file};
     next unless $M;
     next if $Modules{$M}{MAINTAINER} eq 'p5p';
     $module_to_upstream{$module} = $Modules{$M}{UPSTREAM};
+    $module_to_deprecated{$module} = 1 if $Modules{$M}{DEPRECATED};
     next
         if defined $module_to_upstream{$module}
             && $module_to_upstream{$module} =~ /^(?:blead|first-come)$/;
@@ -154,7 +162,7 @@ while ( my ( $module, $file ) = each %module_to_file ) {
 
     # Like it or lump it, this has to be Unix format.
     my $meta_YAML_path = "authors/id/$dist";
-    $meta_YAML_path =~ s/(?:tar\.gz|zip)$/meta/ or die "$meta_YAML_path";
+    $meta_YAML_path =~ s/(?:tar\.gz|tar\.bz2|zip)$/meta/ or die "$meta_YAML_path";
     my $meta_YAML_url = 'http://ftp.funet.fi/pub/CPAN/' . $meta_YAML_path;
 
     if ( -e "$cpan/$meta_YAML_path" ) {
@@ -188,6 +196,15 @@ $upstream_stanza .= ");";
 
 $corelist =~ s/^%upstream .*? ;$/$upstream_stanza/ismx;
 
+# Deprecation generation
+my $deprecated_stanza = "    " . $perl_vnum . " => {\n";
+foreach my $module ( sort keys %module_to_deprecated ) {
+    my $deprecated = defined $module_to_deprecated{$module} ? "'$module_to_deprecated{$module}'" : 'undef';
+    $deprecated_stanza .= sprintf "\t%-24s=> %s,\n", "'$module'", $deprecated;
+}
+$deprecated_stanza .= "    },\n";
+$corelist =~ s/^(%deprecated\s*=\s*.*?)(^\);)$/$1$deprecated_stanza$2/xism;
+
 my $tracker = "%bug_tracker = (\n";
 foreach my $module ( sort keys %module_to_upstream ) {
     my $upstream = defined $module_to_upstream{$module};
@@ -202,7 +219,7 @@ foreach my $module ( sort keys %module_to_upstream ) {
         if $dist;
 
     $bug_tracker = defined $bug_tracker ? "'$bug_tracker'" : 'undef';
-    next if $bug_tracker eq "'http://rt.perl.org/perlbug/'";
+	next if $bug_tracker eq "'http://rt.perl.org/perlbug/'";
     $tracker .= sprintf "    %-24s=> %s,\n", "'$module'", $bug_tracker;
 }
 $tracker .= ");";
@@ -223,17 +240,17 @@ unless (
 {
     warn "Adding $perl_vnum to the list of released perl versions. Please consider adding a release date.\n";
     $corelist =~ s/^(%released \s* = \s* .*?) ( \) )
-                /$1 $perl_vnum => '????-??-??',\n  $2/ismx;
+                /$1  $perl_vnum => '????-??-??',\n  $2/ismx;
 }
 
 write_corelist($corelist);
 
-warn "All done. Please check over lib/Module/CoreList.pm carefully before committing. Thanks!\n";
+warn "All done. Please check over $corelist_file carefully before committing. Thanks!\n";
 
 
 sub write_corelist {
     my $content = shift;
-    open ( my $clfh, ">", "lib/Module/CoreList.pm") || die "Failed to open lib/Module/CoreList.pm for writing: $!";
+    open (my $clfh, ">", $corelist_file) || die "Failed to open $corelist_file for writing: $!";
     print $clfh $content || die "Failed to write the new CoreList.pm: $!";
     close($clfh);
 }

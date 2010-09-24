@@ -1,0 +1,62 @@
+=head1 Release schedule
+
+This document lists the release engineers for at least the next
+four months of releases of bleadperl. If there are fewer than 
+four months listed as you make a release, it's important
+that you extend the schedule AND B<identify the next release engineer>.
+
+Before adding a release engineer, you B<must> contact them and they
+B<must> consent to ship the release.
+
+When shipping a release, you should include the schedule for (at least)
+the next four releases. If a stable version of Perl is released,
+you should reset the version numbers to the next blead series.
+
+=head2 2009
+
+ October 2       -   Jesse Vincent
+ October 20      -   Jesse Vincent
+ November 20     -   Leon Brocard
+ December 20     -   Jesse Vincent
+
+=head2 2010
+
+ January 20      -   Ricardo Signes
+ February 20     -   Steve Hay
+ March 20        -   Ask Bjørn Hansen (skipped due to 5.12.0-RC1)
+ April 20        -   Leon Brocard
+ May 20          -   Ricardo Signes
+ June 20         -   Matt Trout
+ July 20         -   David Golden
+ August 20       -   Florian Ragwitz
+ September 20    -   Steve Hay
+
+=head1 VICTIMS
+
+The following porters have all consented to do at least
+one release of bleadperl.  If you can't do a release
+and can't find a substitute amongst this list, mail p5p.
+
+Jesse Vincent <F<jesse@cpan.org>>
+Leon Brocard <F<acme@astray.com>>
+Yves Orton <F<demerphq@gmail.com>>
+Ricardo Signes <F<rjbs@cpan.org>>
+Steve Hay <F<steve.m.hay@googlemail.com>>
+Ask Bjørn Hansen <F<ask@perl.org>>
+David Golden <F<dagolden@cpan.org>>
+Philippe Bruhat <F<book@cpan.org>>
+Matt Trout <F<mst@shadowcat.co.uk>>
+Florian Ragwitz <F<rafl@debian.org>>
+
+=head2 Reticent victims
+
+These folks have said that they'd be willing to release Perl but would
+prefer that others have the opportunity before they pitch in:
+
+
+
+=head1 AUTHOR
+
+Jesse Vincent <F<jesse@cpan.org>>
+
+=cut

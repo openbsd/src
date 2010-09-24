@@ -30,7 +30,7 @@ it implicates that such an option I<may> be provided.
 
 =head1 Pod Definitions
 
-Pod is embedded in files, typically Perl source files -- although you
+Pod is embedded in files, typically Perl source files, although you
 can write a file that's nothing but Pod.
 
 A B<line> in a file consists of zero or more non-newline characters,
@@ -49,7 +49,7 @@ A B<non-blank line> is a line containing one or more characters other
 than space or tab (and terminated by a newline or end-of-file).
 
 (I<Note:> Many older Pod parsers did not accept a line consisting of
-spaces/tabs and then a newline as a blank line -- the only lines they
+spaces/tabs and then a newline as a blank line. The only lines they
 considered blank were lines consisting of I<no characters at all>,
 terminated by a newline.)
 
@@ -70,7 +70,7 @@ etc.).
 
 Pod content is contained in B<Pod blocks>.  A Pod block starts with a
 line that matches <m/\A=[a-zA-Z]/>, and continues up to the next line
-that matches C<m/\A=cut/> -- or up to the end of the file, if there is
+that matches C<m/\A=cut/> or up to the end of the file if there is
 no C<m/\A=cut/> line.
 
 =for comment
@@ -132,7 +132,7 @@ I<Some> command paragraphs allow formatting codes in their content
 
 In other words, the Pod processing handler for "head1" will apply the
 same processing to "Did You Remember to CE<lt>use strict;>?" that it
-would to an ordinary paragraph -- i.e., formatting codes (like
+would to an ordinary paragraph (i.e., formatting codes like
 "CE<lt>...>") are parsed and presumably formatted appropriately, and
 whitespace in the form of literal spaces and/or tabs is not
 significant.
@@ -293,6 +293,8 @@ by the most recent "=over" command.  It permits no text after the
 
 =item "=begin formatname"
 
+=item "=begin formatname parameter"
+
 This marks the following paragraphs (until the matching "=end
 formatname") as being for some special kind of processing.  Unless
 "formatname" begins with a colon, the contained non-command
@@ -302,9 +304,11 @@ or data paragraphs.  This is discussed in detail in the section
 L</About Data Paragraphs and "=beginE<sol>=end" Regions>.
 
 It is advised that formatnames match the regexp
-C<m/\A:?[-a-zA-Z0-9_]+\z/>.  Implementors should anticipate future
-expansion in the semantics and syntax of the first parameter
-to "=begin"/"=end"/"=for".
+C<m/\A:?[−a−zA−Z0−9_]+\z/>.  Everything following whitespace after the
+formatname is a parameter that may be used by the formatter when dealing
+with this region.  This parameter must not be repeated in the "=end"
+paragraph.  Implementors should anticipate future expansion in the
+semantics and syntax of the first parameter to "=begin"/"=end"/"=for".
 
 =item "=end formatname"
 
@@ -411,7 +415,7 @@ formatting code.  Examples:
     B<< $foo->bar(); >>
 
 With this syntax, the whitespace character(s) after the "CE<lt><<"
-and before the ">>" (or whatever letter) are I<not> renderable -- they
+and before the ">>" (or whatever letter) are I<not> renderable. They
 do not signify whitespace, are merely part of the formatting codes
 themselves.  That is, these are all synonymous:
 
@@ -424,6 +428,18 @@ themselves.  That is, these are all synonymous:
                >>>>
 
 and so on.
+
+Finally, the multiple-angle-bracket form does I<not> alter the interpretation
+of nested formatting codes, meaning that the following four example lines are
+identical in meaning:
+
+  B<example: C<$a E<lt>=E<gt> $b>>
+
+  B<example: C<< $a <=> $b >>>
+
+  B<example: C<< $a E<lt>=E<gt> $b >>>
+
+  B<<< example: C<< $a E<lt>=E<gt> $b >> >>>
 
 =back
 
@@ -1117,14 +1133,14 @@ link text.  Note that link text may contain formatting.)
 
 =item Second:
 
-The possibly inferred link-text -- i.e., if there was no real link
+The possibly inferred link-text; i.e., if there was no real link
 text, then this is the text that we'll infer in its place.  (E.g., for
 "LE<lt>Getopt::Std>", the inferred link text is "Getopt::Std".)
 
 =item Third:
 
 The name or URL, or undef if none.  (E.g., in "LE<lt>Perl
-Functions|perlfunc>", the name -- also sometimes called the page --
+Functions|perlfunc>", the name (also sometimes called the page)
 is "perlfunc".  In "LE<lt>/CAVEATS>", the name is undef.)
 
 =item Fourth:
@@ -1208,6 +1224,14 @@ For example:
         'url',                          # what sort of link
         "http://www.perl.org/"          # original content
 
+  L<Perl.org|http://www.perl.org/>
+    =>  "Perl.org",                     # link text
+        "http://www.perl.org/",         # possibly inferred link text
+        "http://www.perl.org/",         # name
+        undef,                          # section
+        'url',                          # what sort of link
+        "Perl.org|http://www.perl.org/" # original content
+
 Note that you can distinguish URL-links from anything else by the
 fact that they match C<m/\A\w+:[^:\s]\S*\z/>.  So
 C<LE<lt>http://www.perl.comE<gt>> is a URL, but
@@ -1290,9 +1314,8 @@ for formatting or for EE<lt>...> escapes, as in:
   L<B<ummE<234>stuff>|...>
 
 For C<LE<lt>...E<gt>> codes without a "name|" part, only
-C<EE<lt>...E<gt>> and C<ZE<lt>E<gt>> codes may occur -- no
-other formatting codes.  That is, authors should not use
-"C<LE<lt>BE<lt>Foo::BarE<gt>E<gt>>".
+C<EE<lt>...E<gt>> and C<ZE<lt>E<gt>> codes may occur.  That is,
+authors should not use "C<LE<lt>BE<lt>Foo::BarE<gt>E<gt>>".
 
 Note, however, that formatting codes and ZE<lt>>'s can occur in any
 and all parts of an LE<lt>...> (i.e., in I<name>, I<section>, I<text>,
@@ -1319,28 +1342,29 @@ that case, formatters will have to just ignore that formatting.
 At time of writing, C<LE<lt>nameE<gt>> values are of two types:
 either the name of a Pod page like C<LE<lt>Foo::BarE<gt>> (which
 might be a real Perl module or program in an @INC / PATH
-directory, or a .pod file in those places); or the name of a UNIX
+directory, or a .pod file in those places); or the name of a Unix
 man page, like C<LE<lt>crontab(5)E<gt>>.  In theory, C<LE<lt>chmodE<gt>>
 in ambiguous between a Pod page called "chmod", or the Unix man page
 "chmod" (in whatever man-section).  However, the presence of a string
 in parens, as in "crontab(5)", is sufficient to signal that what
 is being discussed is not a Pod page, and so is presumably a
-UNIX man page.  The distinction is of no importance to many
+Unix man page.  The distinction is of no importance to many
 Pod processors, but some processors that render to hypertext formats
 may need to distinguish them in order to know how to render a
 given C<LE<lt>fooE<gt>> code.
 
 =item *
 
-Previous versions of perlpod allowed for a C<LE<lt>sectionE<gt>> syntax
-(as in C<LE<lt>Object AttributesE<gt>>), which was not easily distinguishable
-from C<LE<lt>nameE<gt>> syntax.  This syntax is no longer in the
-specification, and has been replaced by the C<LE<lt>"section"E<gt>> syntax
-(where the quotes were formerly optional).  Pod parsers should tolerate
-the C<LE<lt>sectionE<gt>> syntax, for a while at least.  The suggested
-heuristic for distinguishing C<LE<lt>sectionE<gt>> from C<LE<lt>nameE<gt>>
-is that if it contains any whitespace, it's a I<section>.  Pod processors
-may warn about this being deprecated syntax.
+Previous versions of perlpod allowed for a C<LE<lt>sectionE<gt>> syntax (as in
+C<LE<lt>Object AttributesE<gt>>), which was not easily distinguishable from
+C<LE<lt>nameE<gt>> syntax and for C<LE<lt>"section"E<gt>> which was only
+slightly less ambiguous.  This syntax is no longer in the specification, and
+has been replaced by the C<LE<lt>/sectionE<gt>> syntax (where the slash was
+formerly optional).  Pod parsers should tolerate the C<LE<lt>"section"E<gt>>
+syntax, for a while at least.  The suggested heuristic for distinguishing
+C<LE<lt>sectionE<gt>> from C<LE<lt>nameE<gt>> is that if it contains any
+whitespace, it's a I<section>.  Pod processors should warn about this being
+deprecated syntax.
 
 =back
 
@@ -1861,7 +1885,7 @@ currently open region has the formatname "inner", not "outer".  (It just
 happens that "outer" is the format name of a higher-up region.)  This is
 an error.  Processors must by default report this as an error, and may halt
 processing the document containing that error.  A corollary of this is that
-regions cannot "overlap" -- i.e., the latter block above does not represent
+regions cannot "overlap". That is, the latter block above does not represent
 a region called "outer" which contains X and Y, overlapping a region called
 "inner" which contains Y and Z.  But because it is invalid (as all
 apparently overlapping regions would be), it doesn't represent that, or

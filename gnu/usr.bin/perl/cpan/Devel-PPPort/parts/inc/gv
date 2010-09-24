@@ -1,0 +1,66 @@
+################################################################################
+##
+##  $Revision: 1 $
+##  $Author: mhx $
+##  $Date: 2009/06/12 12:29:56 +0200 $
+##
+################################################################################
+##
+##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 2.x, Copyright (C) 2001, Paul Marquess.
+##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+##
+##  This program is free software; you can redistribute it and/or
+##  modify it under the same terms as Perl itself.
+##
+################################################################################
+
+=provides
+
+__UNDEFINED__
+
+=implementation
+
+__UNDEFINED__ GvSVn(gv)        GvSV(gv)
+__UNDEFINED__ isGV_with_GP(gv) isGV(gv)
+
+=xsubs
+
+int
+GvSVn()
+	PREINIT:
+		GV* gv;
+	CODE:
+		RETVAL = 0;
+		gv = gv_fetchpvs("Devel::PPPort::GvTest", GV_ADDMULTI, SVt_PVGV);
+		if (GvSVn(gv) != NULL)
+		{
+		  RETVAL++;
+		}
+	OUTPUT:
+		RETVAL
+
+int
+isGV_with_GP()
+	PREINIT:
+		GV* gv;
+	CODE:
+		RETVAL = 0;
+		gv = gv_fetchpvs("Devel::PPPort::GvTest", GV_ADDMULTI, SVt_PVGV);
+		if (isGV_with_GP(gv))
+		{
+		  RETVAL++;
+		}
+		if (!isGV(&PL_sv_undef))
+		{
+		  RETVAL++;
+		}
+	OUTPUT:
+		RETVAL
+
+
+=tests plan => 2
+
+ok(Devel::PPPort::GvSVn(), 1);
+
+ok(Devel::PPPort::isGV_with_GP(), 2)

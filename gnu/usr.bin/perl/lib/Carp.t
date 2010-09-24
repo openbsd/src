@@ -4,11 +4,14 @@ BEGIN {
 	require './test.pl';
 }
 
+use warnings;
+no warnings "once";
+
 my $Is_VMS = $^O eq 'VMS';
 
 use Carp qw(carp cluck croak confess);
 
-plan tests => 37;
+plan tests => 49;
 
 ok 1;
 
@@ -55,22 +58,21 @@ sub_6;
 ok(1);
 
 # test for caller_info API
-my $eval = "use Carp::Heavy; return Carp::caller_info(0);";
+my $eval = "use Carp; return Carp::caller_info(0);";
 my %info = eval($eval);
 is($info{sub_name}, "eval '$eval'", 'caller_info API');
 
-# test for '...::CARP_NOT used only once' warning from Carp::Heavy
+# test for '...::CARP_NOT used only once' warning from Carp
 my $warning;
 eval {
     BEGIN {
-	$^W = 1;
 	local $SIG{__WARN__} =
 	    sub { if( defined $^S ){ warn $_[0] } else { $warning = $_[0] } }
     }
     package Z;
     BEGIN { eval { Carp::croak() } }
 };
-ok !$warning, q/'...::CARP_NOT used only once' warning from Carp::Heavy/;
+ok !$warning, q/'...::CARP_NOT used only once' warning from Carp/;
 
 # Test the location of error messages.
 like(A::short(), qr/^Error at C/, "Short messages skip carped package");
@@ -265,6 +267,41 @@ cluck "Bang!"
 }
 
 cluck_undef (0, "undef", 2, undef, 4);
+
+# check that Carp respects CORE::GLOBAL::caller override after Carp
+# has been compiled
+for my $proper_job (0, 1) {
+    print '# ', ($proper_job ? '' : 'Not '), "setting \@DB::args in caller override\n";
+    my $accum = '';
+    local *CORE::GLOBAL::caller = sub {
+        local *__ANON__="fakecaller";
+        my @c=CORE::caller(@_);
+        $c[0] ||= 'undef';
+        $accum .= "@c[0..3]\n";
+        if ($proper_job && CORE::caller() eq 'DB') {
+            package DB;
+            return CORE::caller(($_[0]||0)+1);
+        } else {
+            return CORE::caller(($_[0]||0)+1);
+        }
+    };
+    eval "scalar caller()";
+    like( $accum, qr/main::fakecaller/, "test CORE::GLOBAL::caller override in eval");
+    $accum = '';
+    my $got = A::long(42);
+    like( $accum, qr/main::fakecaller/, "test CORE::GLOBAL::caller override in Carp");
+    my $package = 'A';
+    my $warning = $proper_job ? ''
+	: "\Q** Incomplete caller override detected; \@DB::args were not set **\E";
+    for (0..2) {
+	my $previous_package = $package;
+	++$package;
+	like( $got, qr/${package}::long\($warning\) called at $previous_package line 7/, "Correct arguments for $package" );
+    }
+    my $arg = $proper_job ? 42 : $warning;
+    like( $got, qr!A::long\($arg\) called at.+\b(?i:carp\.t) line \d+!,
+	  'Correct arguments for A' );
+}
 
 # line 1 "A"
 package A;

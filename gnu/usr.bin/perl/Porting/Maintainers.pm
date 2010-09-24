@@ -5,6 +5,7 @@
 package Maintainers;
 
 use strict;
+use warnings;
 
 use lib "Porting";
 # Please don't use post 5.008 features as this module is used by
@@ -19,8 +20,10 @@ use vars qw(@ISA @EXPORT_OK $VERSION);
 @EXPORT_OK = qw(%Modules %Maintainers
 		get_module_files get_module_pat
 		show_results process_options files_to_modules
+        finish_tap_output
 		reload_manifest);
-$VERSION = 0.03;
+$VERSION = 0.04;
+
 require Exporter;
 
 use File::Find;
@@ -32,8 +35,14 @@ my %MANIFEST;
 
 sub reload_manifest {
     %MANIFEST = ();
-    if (open(MANIFEST, "MANIFEST")) {
-	while (<MANIFEST>) {
+
+    my $manifest_path = 'MANIFEST';
+   if (! -e  $manifest_path) {
+        $manifest_path = "../MANIFEST";
+    }
+
+    if (open(my $manfh,  $manifest_path )) {
+	while (<$manfh>) {
 	    if (/^(\S+)/) {
 		$MANIFEST{$1}++;
 	    }
@@ -41,9 +50,9 @@ sub reload_manifest {
 		warn "MANIFEST:$.: malformed line: $_\n";
 	    }
 	}
-	close MANIFEST;
+	close $manfh;
     } else {
-	die "$0: Failed to open MANIFEST for reading: $!\n";
+	    die "$0: Failed to open MANIFEST for reading: $!\n";
     }
 }
 
@@ -60,9 +69,9 @@ sub get_module_pat {
 sub expand_glob {
     sort { lc $a cmp lc $b }
 	map {
-	    -f $_ ? # File as-is.
+	    -f $_ && $_ !~ /[*?]/ ? # File as-is.
 		$_ :
-		-d _ ? # Recurse into directories.
+		-d _ && $_ !~ /[*?]/ ? # Recurse into directories.
 		do {
 		    my @files;
 		    find(
@@ -120,6 +129,10 @@ or
     --opened  | file ....
 		List the module ownership of modified or the listed files
 
+    --tap-output
+        Show results as valid TAP output. Currently only compatible
+        with --check, --checkmani
+
 Matching is case-ignoring regexp, author matching is both by
 the short id and by the full name and email.  A "module" may
 not be just a module, it may be a file or files or a subdirectory.
@@ -134,6 +147,8 @@ my $Files;
 my $Check;
 my $Checkmani;
 my $Opened;
+my $TestCounter = 0;
+my $TapOutput;
 
 sub process_options {
     usage()
@@ -145,6 +160,7 @@ sub process_options {
 		       'check'		=> \$Check,
 		       'checkmani'	=> \$Checkmani,
 		       'opened'		=> \$Opened,
+		       'tap-output' => \$TapOutput,
 		      );
 
     my @Files;
@@ -287,16 +303,15 @@ sub show_results {
 	}
     } elsif ($Check or $Checkmani) {
         if( @Files ) {
-	    missing_maintainers(
-		$Checkmani
-		    ? sub { -f $_ and exists $MANIFEST{$File::Find::name} }
-		    : sub { /\.(?:[chty]|p[lm]|xs)\z/msx },
-		@Files
-	    );
-	}
-	else { 
-	    duplicated_maintainers();
-	}
+		    missing_maintainers(
+			$Checkmani
+			    ? sub { -f $_ and exists $MANIFEST{$File::Find::name} }
+			    : sub { /\.(?:[chty]|p[lm]|xs)\z/msx },
+			@Files
+		    );
+		} else { 
+		    duplicated_maintainers();
+		}
     } elsif (@Files) {
 	my $ModuleByFile = files_to_modules(@Files);
 	for my $file (@Files) {
@@ -332,15 +347,33 @@ sub maintainers_files {
 sub duplicated_maintainers {
     maintainers_files();
     for my $f (keys %files) {
-	if ($files{$f} > 1) {
-	    warn "File $f appears $files{$f} times in Maintainers.pl\n";
-	}
+        if ($TapOutput) {
+	        if ($files{$f} > 1) {
+	            print  "not ok ".++$TestCounter." - File $f appears $files{$f} times in Maintainers.pl\n";
+            } else {
+	            print  "ok ".++$TestCounter." - File $f appears $files{$f} times in Maintainers.pl\n";
+            }
+        } else {
+	        if ($files{$f} > 1) {
+	            warn "File $f appears $files{$f} times in Maintainers.pl\n";
+	        }
+    }
     }
 }
 
 sub warn_maintainer {
     my $name = shift;
-    warn "File $name has no maintainer\n" if not $files{$name};
+    if ($TapOutput) {
+        if ($files{$name}) {
+            print "ok ".++$TestCounter." - $name has a maintainer\n";
+        } else {
+            print "not ok ".++$TestCounter." - $name has NO maintainer\n";
+           
+        } 
+
+    } else {
+        warn "File $name has no maintainer\n" if not $files{$name};
+    }
 }
 
 sub missing_maintainers {
@@ -348,10 +381,13 @@ sub missing_maintainers {
     maintainers_files();
     my @dir;
     for my $d (@path) {
-	if( -d $d ) { push @dir, $d } else { warn_maintainer($d) }
+	    if( -d $d ) { push @dir, $d } else { warn_maintainer($d) }
     }
-    find sub { warn_maintainer($File::Find::name) if $check->() }, @dir
-	if @dir;
+    find sub { warn_maintainer($File::Find::name) if $check->() }, @dir if @dir;
+}
+
+sub finish_tap_output {
+    print "1..".$TestCounter."\n"; 
 }
 
 1;

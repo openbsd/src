@@ -1,0 +1,14 @@
+#!/usr/bin/perl -wT
+
+BEGIN {
+    if ( $ENV{PERL_CORE} ) {
+        @INC = ( '../../lib', 't/lib' );
+    }
+    else {
+        unshift @INC, 't/lib';
+    }
+}
+
+use Test::More tests => 1;
+
+ok 1;

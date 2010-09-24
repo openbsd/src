@@ -5,7 +5,7 @@ perldoc - Look up Perl documentation in Pod format.
 
 =head1 SYNOPSIS
 
-B<perldoc> [B<-h>] [B<-v>] [B<-t>] [B<-u>] [B<-m>] [B<-l>] [B<-F>]
+B<perldoc> [B<-h>] [B<-D>] [B<-t>] [B<-u>] [B<-m>] [B<-l>] [B<-F>]
 [B<-i>] [B<-V>] [B<-T>] [B<-r>]
 [B<-dI<destination_file>>]
 [B<-oI<formatname>>]
@@ -23,6 +23,8 @@ B<perldoc> B<-L> it B<-f> BuiltinFunction
 B<perldoc> B<-q> FAQ Keyword
 
 B<perldoc> B<-L> fr B<-q> FAQ Keyword
+
+B<perldoc> B<-v> PerlVariable
 
 See below for more description of the switches.
 
@@ -48,9 +50,9 @@ documentation, see the L<perltoc> page.
 
 Prints out a brief B<h>elp message.
 
-=item B<-v>
+=item B<-D>
 
-Describes search for the item in detail (B<v>erbosely).
+B<D>escribes search for the item in B<d>etail.
 
 =item B<-t>
 
@@ -85,11 +87,29 @@ Example:
 
       perldoc -f sprintf
 
+
 =item B<-q> I<perlfaq-search-regexp>
 
 The B<-q> option takes a regular expression as an argument.  It will search
 the B<q>uestion headings in perlfaq[1-9] and print the entries matching
-the regular expression.  Example: C<perldoc -q shuffle>
+the regular expression.
+
+Example:
+
+     perldoc -q shuffle
+
+
+=item B<-v> I<perlvar>
+
+The B<-v> option followed by the name of a Perl predefined variable will
+extract the documentation of this variable from L<perlvar>.
+
+Examples:
+
+     perldoc -v '$"'
+     perldoc -v @+
+     perldoc -v DATA
+
 
 =item B<-T>
 
@@ -145,7 +165,7 @@ might be more (or less) convenient, depending on what shell you use.
 
 =item B<-X>
 
-Use an index if it is present -- the B<-X> option looks for an entry
+Use an index if it is present. The B<-X> option looks for an entry
 whose basename matches the name given on the command line in the file
 C<$Config{archlib}/pod.idx>. The F<pod.idx> file should contain fully
 qualified filenames, one per line.
@@ -165,6 +185,10 @@ L<Pod::Perldoc>.
 The item you want to look up.  Nested modules (such as C<File::Basename>)
 are specified either as C<File::Basename> or C<File/Basename>.  You may also
 give a descriptive name of a page, such as C<perlfunc>.
+
+For simple names like 'foo', when the normal search fails to find
+a matching page, a search with the "perl" prefix is tried as well.
+So "perldoc intro" is enough to find/render "perlintro.pod".
 
 =item B<-n> I<some-formatter>
 
@@ -219,8 +243,14 @@ plain text or unformatted pod.)
 One useful value for C<PERLDOC_PAGER> is C<less -+C -E>.
 
 Having PERLDOCDEBUG set to a positive integer will make perldoc emit
-even more descriptive output than the C<-v> switch does -- the higher the
+even more descriptive output than the C<-v> switch does; the higher the
 number, the more it emits.
+
+
+=head1 CHANGES
+
+Up to 3.14_05, the switch B<-v> was used to produce verbose
+messages of B<perldoc> operation, which is now enabled by B<-D>.
 
 =head1 SEE ALSO
 
@@ -228,9 +258,10 @@ L<perlpod>, L<Pod::Perldoc>
 
 =head1 AUTHOR
 
-Current maintainer: Sean M. Burke, <sburke@cpan.org>
+Current maintainer: Adriano R. Ferreira <ferreira@cpan.org>
 
 Past contributors are:
+Sean M. Burke <sburke@cpan.org>,
 Kenneth Albanowski <kjahds@kjahds.com>,
 Andy Dougherty  <doughera@lafcol.lafayette.edu>,
 and many others.

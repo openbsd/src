@@ -11,7 +11,7 @@ read after L<perlunitut>.
 
 No, and this isn't really a Unicode FAQ.
 
-Perl has an abstracted interface for all supported character encodings, so they
+Perl has an abstracted interface for all supported character encodings, so this
 is actually a generic C<Encode> tutorial and C<Encode> FAQ. But many people
 think that Unicode is special and magical, and I didn't want to disappoint
 them, so I decided to call the document a Unicode tutorial.
@@ -25,7 +25,7 @@ To find out which character encodings your Perl supports, run:
 =head2 Which version of perl should I use?
 
 Well, if you can, upgrade to the most recent, but certainly C<5.8.1> or newer.
-The tutorial and FAQ are based on the status quo as of C<5.8.8>.
+The tutorial and FAQ assume the latest release.
 
 You should also check your modules, and upgrade them if necessary. For example,
 HTML::Entities requires version >= 1.32 to function correctly, even though the
@@ -139,14 +139,24 @@ concern, and you can just C<eval> dumped data as always.
 =head2 Why do some characters not uppercase or lowercase correctly?
 
 It seemed like a good idea at the time, to keep the semantics the same for
-standard strings, when Perl got Unicode support. While it might be repaired
-in the future, we now have to deal with the fact that Perl treats equal
-strings differently, depending on the internal state.
+standard strings, when Perl got Unicode support.  The plan is to fix this
+in the future, and the casing component has in fact mostly been fixed, but we
+have to deal with the fact that Perl treats equal strings differently,
+depending on the internal state.
 
-Affected are C<uc>, C<lc>, C<ucfirst>, C<lcfirst>, C<\U>, C<\L>, C<\u>, C<\l>,
+First the casing.  Just put a C<use feature 'unicode_strings'> near the
+beginning of your program.  Within its lexical scope, C<uc>, C<lc>, C<ucfirst>,
+C<lcfirst>, and the regular expression escapes C<\U>, C<\L>, C<\u>, C<\l> use
+Unicode semantics for changing case regardless of whether the UTF8 flag is on
+or not.  However, if you pass strings to subroutines in modules outside the
+pragma's scope, they currently likely won't behave this way, and you have to
+try one of the solutions below.  There is another exception as well:  if you
+have furnished your own casing functions to override the default, these will
+not be called unless the UTF8 flag is on)
+
+This remains a problem for the regular expression constructs
 C<\d>, C<\s>, C<\w>, C<\D>, C<\S>, C<\W>, C</.../i>, C<(?i:...)>,
-C</[[:posix:]]/>, and C<quotemeta> (though this last should not cause any real
-problems).
+and C</[[:posix:]]/>.
 
 To force Unicode semantics, you can upgrade the internal representation to
 by doing C<utf8::upgrade($string)>. This can be used
@@ -194,7 +204,7 @@ These are alternate syntaxes for C<decode('utf8', ...)> and C<encode('utf8',
 
 This is a term used both for characters with an ordinal value greater than 127,
 characters with an ordinal value greater than 255, or any character occupying
-than one byte, depending on the context.
+more than one byte, depending on the context.
 
 The Perl warning "Wide character in ..." is caused by a character with an
 ordinal value greater than 255. With no specified encoding layer, Perl tries to
@@ -217,7 +227,9 @@ use C<is_utf8>, C<_utf8_on> or C<_utf8_off> at all.
 
 The UTF8 flag, also called SvUTF8, is an internal flag that indicates that the
 current internal representation is UTF-8. Without the flag, it is assumed to be
-ISO-8859-1. Perl converts between these automatically.
+ISO-8859-1. Perl converts between these automatically.  (Actually Perl usually
+assumes the representation is ASCII; see L</Why do regex character classes
+sometimes match only in the ASCII range?> above.)
 
 One of Perl's internal formats happens to be UTF-8. Unfortunately, Perl can't
 keep a secret, so everyone knows about this. That is the source of much

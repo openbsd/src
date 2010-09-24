@@ -75,6 +75,8 @@ Usage: $0 [opts] [ -d | -v | -x ] [ -a | module ... ]
 
 -r/--reverse  Reverses the diff (perl to CPAN).
 
+-u/--upstream only print modules with the given upstream (defaults to all)
+
 -v/--verbose  List the fate of *all* files in the tarball, not just those
               that differ or are missing.
 
@@ -97,6 +99,7 @@ sub run {
     my $scan_all;
     my $diff_opts;
     my $reverse    = 0;
+    my @wanted_upstreams;
     my $cache_dir;
     my $use_diff;
     my $output_file;
@@ -113,6 +116,7 @@ sub run {
 	'h|help'       => \&usage,
 	'o|output=s'   => \$output_file,
 	'r|reverse'    => \$reverse,
+	'u|upstream=s@'=> \@wanted_upstreams,
 	'v|verbose'    => \$verbose,
 	'x|crosscheck' => \$do_crosscheck,
     ) or usage;
@@ -157,7 +161,7 @@ sub run {
     }
     else {
 	do_compare(\@modules, $outfh, $output_file, $cache_dir, $verbose, $use_diff,
-	    $reverse, $diff_opts);
+	    $reverse, $diff_opts, \@wanted_upstreams);
     }
 }
 
@@ -167,7 +171,7 @@ sub run {
 
 sub do_compare {
     my ($modules, $outfh, $output_file, $cache_dir, $verbose,
-		$use_diff, $reverse, $diff_opts) = @_;
+		$use_diff, $reverse, $diff_opts, $wanted_upstreams) = @_;
 
 
     # first, make sure we have a directory where they can all be untarred,
@@ -191,7 +195,6 @@ sub do_compare {
     my %seen_dist;
     for my $module (@$modules) {
 	warn "Processing $module ...\n" if defined $output_file;
-	print $outfh "\n$module\n" unless $use_diff;
 
 	my $m = $Maintainers::Modules{$module} 
 	    or die "ERROR: No such module in Maintainers.pl: '$module'\n";
@@ -207,6 +210,12 @@ sub do_compare {
 	if ($seen_dist{$dist}) {
 	    warn "WARNING: duplicate entry for $dist in $module\n"
 	}
+
+	my $upstream = $m->{UPSTREAM} || 'UNKNOWN';
+	next if @$wanted_upstreams and ! ($upstream ~~ $wanted_upstreams);
+	print $outfh "\n$module - ".$Maintainers::Modules{$module}->{DISTRIBUTION}."\n" unless $use_diff;
+	print $outfh "  upstream is: ".($m->{UPSTREAM} || 'UNKNOWN!')."\n";
+
 	$seen_dist{$dist}++;
 
 	my $cpan_dir;
@@ -284,27 +293,31 @@ EOF
 	        next;
 	    }
 
+			my $relative_mapped_file = $mapped_file;
+			$relative_mapped_file =~ s/^(cpan|dist|ext)\/.*?\///;
 
 	    if (File::Compare::compare($abs_cpan_file, $mapped_file)) {
-	        if ($use_diff) {
+
+
+	         if ($use_diff) {
 	            file_diff($outfh, $abs_cpan_file, $mapped_file,
 	                                $reverse, $diff_opts);
 	        }
 	        else {
-	            if ($cpan_file eq $mapped_file) {
-	                print $outfh "  Modified:  $cpan_file\n";
+	            if ($cpan_file eq $relative_mapped_file) {
+	                print $outfh "  Modified:  $relative_mapped_file\n";
 	            }
 	            else {
-	                print $outfh "  Modified:  $cpan_file $mapped_file\n";
+	                print $outfh "  Modified:  $cpan_file $relative_mapped_file\n";
 	            }
 	        }
 	    }
 	    elsif ($verbose) {
-	            if ($cpan_file eq $mapped_file) {
+	            if ($cpan_file eq $relative_mapped_file) {
 	                print $outfh "  Unchanged: $cpan_file\n";
 	            }
 	            else {
-	                print $outfh "  Unchanged: $cpan_file $mapped_file\n";
+	                print $outfh "  Unchanged: $cpan_file $relative_mapped_file\n";
 	            }
 	    }
 	}
@@ -432,7 +445,7 @@ sub get_map {
 
     my $ext;
     for (@$perl_files) {
-	if (m{^(ext/[^/]+/)}) {
+	if (m{^((?:ext|dist|cpan)/[^/]+/)}) {
 	    if (defined $ext and $ext ne $1) {
 	        # more than one ext/$ext/
 	        undef $ext;

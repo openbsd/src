@@ -17,6 +17,7 @@ version - Perl extension for Version Objects
 
   # Declaring an old-style decimal $VERSION (use quotes!)
 
+  our $VERSION = "1.0203";                                     # recommended
   use version 0.77; our $VERSION = version->parse("1.0203");   # formal
   use version 0.77; our $VERSION = version->parse("1.02_03");  # alpha
 
@@ -37,7 +38,7 @@ objects for older version of Perl and provides the version object API for all
 versions of Perl.  All previous releases before 0.74 are deprecated and should
 not be used due to incompatible API changes.  Version 0.77 introduces the new
 'parse' and 'declare' methods to standardize usage.  You are strongly urged to
-set 0.77 as a minimum in your code, e.g. 
+set 0.77 as a minimum in your code, e.g.
 
   use version 0.77; # even for Perl v.5.10.0
 
@@ -51,20 +52,19 @@ different styles of versions in use:
 =item Decimal Versions
 
 The classic floating-point number $VERSION.  The advantage to this style is
-that you don't need to do anything special, just type a number (without
-quotes) into your source file.
+that you don't need to do anything special, just type a number into your
+source file.  Quoting is recommended, as it ensures that trailing zeroes
+("1.50") are preserved in any warnings or other output.
 
 =item Dotted Decimal Versions
 
 The more modern form of version assignment, with 3 (or potentially more)
 integers seperated by decimal points (e.g. v1.2.3).  This is the form that
-Perl itself has used since 5.6.0 was released.  The leading "v" is now 
+Perl itself has used since 5.6.0 was released.  The leading "v" is now
 strongly recommended for clarity, and will throw a warning in a future
 release if omitted.
 
 =back
-
-See L<VERSION OBJECT DETAILS> for further information.
 
 =head1 DECLARING VERSIONS
 
@@ -72,16 +72,16 @@ If you have a module that uses a decimal $VERSION (floating point), and you
 do not intend to ever change that, this module is not for you.  There is
 nothing that version.pm gains you over a simple $VERSION assignment:
 
-  our $VERSION = 1.02;
+  our $VERSION = "1.02";
 
-Since Perl v5.10.0 includes the version.pm comparison logic anyways, 
+Since Perl v5.10.0 includes the version.pm comparison logic anyways,
 you don't need to do anything at all.
 
 =head2 How to convert a module from decimal to dotted-decimal
 
 If you have used a decimal $VERSION in the past and wish to switch to a
 dotted-decimal $VERSION, then you need to make a one-time conversion to
-the new format. 
+the new format.
 
 B<Important Note>: you must ensure that your new $VERSION is numerically
 greater than your current decimal $VERSION; this is not always obvious. First,
@@ -128,14 +128,14 @@ If you really insist on using version.pm with an ordinary decimal version,
 use C<parse()> instead of declare.  See the L<PARSING AND COMPARING VERSIONS>
 for details.
 
-See also L<VERSION OBJECT DETAILS> for more on version number conversion,
+See also L<version::Internals> for more on version number conversion,
 quoting, calculated version numbers and declaring developer or "alpha" version
 numbers.
 
 =head1 PARSING AND COMPARING VERSIONS
 
 If you need to compare version numbers, but can't be sure whether they are
-expressed as numbers, strings, v-strings or version objects,  then you can
+expressed as numbers, strings, v-strings or version objects,  then you should
 use version.pm to parse them all into objects for comparison.
 
 =head2 How to C<parse()> a version
@@ -169,7 +169,44 @@ Some examples:
   "1.2.3"     v1.2.3
   "v1.2.3"    v1.2.3
 
-See L<VERSION OBJECT DETAILS> for more on version number conversion.
+See L<version::Internals> for more on version number conversion.
+
+=head2 How to check for a legal version string
+
+If you do not want to actually create a full blown version object, but
+would still like to verify that a given string meets the criteria to
+be parsed as a version, there are two helper functions that can be
+employed directly:
+
+=over 4
+
+=item C<is_lax()>
+
+The lax criteria corresponds to what is currently allowed by the
+version parser.  All of the following formats are acceptable
+for dotted-decimal formats strings:
+
+    v1.2
+    1.2345.6
+    v1.23_4
+    1.2345
+    1.2345_01
+
+=item C<is_strict()>
+
+If you want to limit youself to a much more narrow definition of what
+a version string constitutes, C<is_strict()> is limited to version
+strings like the following list:
+
+    v1.234.5
+    2.3456
+
+=back
+
+See L<version::Internals> for details of the regular expressions
+that define the legal version string forms, as well as how to use
+those regular expressions in your own code if C<is_lax()> and
+C<is_strict()> are not sufficient for your needs.
 
 =head2 How to compare version objects
 
@@ -192,110 +229,13 @@ Always comparing to a version object will help avoid surprises:
 
   $bool = $v1 < version->parse("v0.96.0"); # TRUE
 
-=head1 VERSION OBJECT DETAILS
+Note that "alpha" version objects (where the version string contains
+a trailing underscore segment) compare as less than the equivalent
+version without an underscore:
 
-=head2 Equivalence between Decimal and Dotted-Decimal Versions
+  $bool = version->parse("1.23_45") < version->parse("1.2345"); # TRUE
 
-When Perl 5.6.0 was released, the decision was made to provide a
-transformation between the old-style decimal versions and new-style
-dotted-decimal versions:
-
-  5.6.0    == 5.006000
-  5.005_04 == 5.5.40
-
-The floating point number is taken and split first on the single decimal
-place, then each group of three digits to the right of the decimal makes up
-the next digit, and so on until the number of significant digits is exhausted,
-B<plus> enough trailing zeros to reach the next multiple of three.
-
-This was the method that version.pm adopted as well.  Some examples may be
-helpful:
-
-                            equivalent
-  decimal    zero-padded    dotted-decimal
-  -------    -----------    --------------
-  1.2        1.200          v1.200.0
-  1.02       1.020          v1.20.0
-  1.002      1.002          v1.2.0
-  1.0023     1.002300       v1.2.300
-  1.00203    1.002030       v1.2.30
-  1.002003   1.002003       v1.2.3
-
-=head2 Quoting rules
-
-Because of the nature of the Perl parsing and tokenizing routines,
-certain initialization values B<must> be quoted in order to correctly
-parse as the intended version, especially when using the L<declare> or
-L<qv> methods.  While you do not have to quote decimal numbers when
-creating version objects, it is always safe to quote B<all> initial values
-when using version.pm methods, as this will ensure that what you type is
-what is used.
-
-Additionally, if you quote your initializer, then the quoted value that goes
-B<in> will be be exactly what comes B<out> when your $VERSION is printed
-(stringified).  If you do not quote your value, Perl's normal numeric handling
-comes into play and you may not get back what you were expecting.
-
-If you use a mathematic formula that resolves to a floating point number,
-you are dependent on Perl's conversion routines to yield the version you
-expect.  You are pretty safe by dividing by a power of 10, for example,
-but other operations are not likely to be what you intend.  For example:
-
-  $VERSION = version->new((qw$Revision: 1.4)[1]/10);
-  print $VERSION;          # yields 0.14
-  $V2 = version->new(100/9); # Integer overflow in decimal number
-  print $V2;               # yields something like 11.111.111.100
-
-Perl 5.8.1 and beyond are able to automatically quote v-strings but
-that is not possible in earlier versions of Perl.  In other words:
-
-  $version = version->new("v2.5.4");  # legal in all versions of Perl
-  $newvers = version->new(v2.5.4);    # legal only in Perl >= 5.8.1
-
-=head2 What about v-strings?
-
-There are two ways to enter v-strings: a bare number with two or more
-decimal points, or a bare number with one or more decimal points and a 
-leading 'v' character (also bare).  For example:
-
-  $vs1 = 1.2.3; # encoded as \1\2\3
-  $vs2 = v1.2;  # encoded as \1\2 
-
-However, the use of bare v-strings to initialize version objects is
-B<strongly> discouraged in all circumstances.  Also, bare
-v-strings are not completely supported in any version of Perl prior to
-5.8.1.
-
-If you insist on using bare v-strings with Perl > 5.6.0, be aware of the 
-following limitations:
-
-1) For Perl releases 5.6.0 through 5.8.0, the v-string code merely guesses, 
-based on some characteristics of v-strings.  You B<must> use a three part
-version, e.g. 1.2.3 or v1.2.3 in order for this heuristic to be successful.
-
-2) For Perl releases 5.8.1 and later, v-strings have changed in the Perl
-core to be magical, which means that the version.pm code can automatically
-determine whether the v-string encoding was used.
-
-3) In all cases, a version created using v-strings will have a stringified
-form that has a leading 'v' character, for the simple reason that sometimes
-it is impossible to tell whether one was present initially.
-
-=head2 Alpha versions
-
-For module authors using CPAN, the convention has been to note unstable
-releases with an underscore in the version string. (See L<CPAN>.)  version.pm
-follows this convention and alpha releases will test as being newer than the
-more recent stable release, and less than the next stable release.  For
-dotted-decimal versions, only the last element may be separated by an
-underscore:
-
-  # Declaring
-  use version 0.77; our $VERSION = version->declare("v1.2_3");
-
-  # Parsing
-  $v1 = version->parse("v1.2_3");
-  $v1 = version->parse("1.002_003");
+See L<version::Internals> for more details on "alpha" versions.
 
 =head1 OBJECT METHODS
 
@@ -352,13 +292,29 @@ to your namespace, use this form:
 
   use version 0.77 ();
 
+=head2 is_lax()
+
+(Not exported by default)
+
+This function takes a scalar argument and returns a boolean value indicating
+whether the argument meets the "lax" rules for a version number.  Leading and
+trailing spaces are not allowed.
+
+=head2 is_strict()
+
+(Not exported by default)
+
+This function takes a scalar argument and returns a boolean value indicating
+whether the argument meets the "strict" rules for a version number.  Leading
+and trailing spaces are not allowed.
+
 =head1 AUTHOR
 
 John Peacock E<lt>jpeacock@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-L<version::Internal>.
+L<version::Internals>.
 
 L<perl>.
 

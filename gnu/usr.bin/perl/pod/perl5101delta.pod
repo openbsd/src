@@ -1,6 +1,6 @@
 =head1 NAME
 
-perldelta - what is new for perl v5.10.1
+perl5101delta - what is new for perl v5.10.1
 
 =head1 DESCRIPTION
 
@@ -191,7 +191,7 @@ in a change of behaviour between 5.8.x and 5.10.0:
 
 The copy of the Unicode Character Database included in Perl 5.10.1 has
 been updated to 5.1.0 from 5.0.0. See
-L<http://www.unicode.org/versions/Unicode5.1.0/#NotableChanges> for the
+L<http://www.unicode.org/versions/Unicode5.1.0/#Notable_Changes> for the
 notable changes.
 
 =head2 A proper interface for pluggable Method Resolution Orders
@@ -1149,7 +1149,7 @@ file. This eliminates a potential race condition [RT #60904].
 
 =item *
 
-On some UNIX systems, the value in C<$?> would not have the top bit set
+On some Unix systems, the value in C<$?> would not have the top bit set
 (C<$? & 128>) even if the child core dumped.
 
 =item *

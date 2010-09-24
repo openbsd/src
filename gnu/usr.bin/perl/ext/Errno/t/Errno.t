@@ -1,16 +1,5 @@
 #!./perl -w
 
-BEGIN {
-    unless(grep /blib/, @INC) {
-	chdir 't' if -d 't';
-	if ($^O eq 'MacOS') { 
-	    @INC = qw(: ::lib ::macos:lib); 
-	} else { 
-	    @INC = '../lib'; 
-	}
-    }
-}
-
 use Test::More tests => 10;
 
 BEGIN {

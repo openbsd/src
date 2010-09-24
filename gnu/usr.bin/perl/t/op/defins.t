@@ -34,7 +34,7 @@ if ($^O eq 'VMS') {
 }
 
 $wanted_filename = $unix_mode ? '0' : '0.';
-$saved_filename = $^O eq 'MacOS' ? ':0' : './0';
+$saved_filename = './0';
 
 cmp_ok($warns,'==',0,'no warns at start');
 
@@ -81,7 +81,7 @@ while ($where{$seen} = <FILE>)
 cmp_ok($seen,'==',1,'seen in hash while()');
 close FILE;
 
-opendir(DIR,($^O eq 'MacOS' ? ':' : '.'));
+opendir(DIR,'.');
 ok(defined(DIR),'opened current directory');
 $seen = 0;
 while (my $name = readdir(DIR))

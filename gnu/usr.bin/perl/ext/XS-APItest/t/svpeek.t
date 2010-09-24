@@ -1,6 +1,4 @@
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {
@@ -21,7 +19,7 @@ $| = 1;
   is (DPeek ($/),    'PVMG("\n"\0)',		'$/');
   is (DPeek ($\),    'PVMG()',			'$\\');
   is (DPeek ($.),    'PVMG()',			'$.');
-  is (DPeek ($,),    'PVMG()',			'$,');
+  is (DPeek ($,),    'UNDEF',			'$,');
   is (DPeek ($;),    'PV("\34"\0)',		'$;');
   is (DPeek ($"),    'PV(" "\0)',		'$"');
   is (DPeek ($:),    'PVMG(" \n-"\0)',		'$:');

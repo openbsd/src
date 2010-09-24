@@ -1,0 +1,327 @@
+=head1 NAME
+
+perl5115delta - what is new for perl v5.11.5
+
+=head1 DESCRIPTION
+
+This document describes differences between the 5.11.4 release and
+the 5.11.5 release.
+
+If you are upgrading from an earlier release such as 5.11.3, first read
+L<perl5114delta>, which describes differences between 5.11.3 and
+5.11.4.
+
+=head1 Core Enhancements
+
+=head2 32-bit limit on substr arguments removed
+
+The 32-bit limit on C<substr> arguments has now been removed. The full range
+of the system's signed and unsigned integers is now available for the C<pos>
+and C<len> arguments.
+
+=head1 Modules and Pragmata
+
+=head2 Pragmata Changes
+
+=over 4
+
+=item C<version>
+
+Upgraded from version 0.81 to 0.82.
+
+The C<is_lax> and C<is_strict> functions can now be optionally exported to the
+caller's namespace and are also now documented.
+
+Undefined version objects are now uninitialized with zero rather than C<undef>.
+
+=back
+
+=head2 Updated Modules
+
+=over 4
+
+=item C<B::Debug>
+
+Upgraded from version 1.11 to 1.12.
+
+=item C<CPAN>
+
+Upgraded from version 1.94_53 to 1.94_56.
+
+This resolves RT #72362, in which CPAN was ignoring C<configure_requires>,
+and RT #72348, in which the command C<o conf init> in the CPAN shell could
+cause an exception to be thrown.
+
+This module is also now built in a less specialized way, which resolves a
+problem that caused C<make> after C<make clean> to fail, fixing RT #72218.
+
+=item C<CPANPLUS::Dist::Build>
+
+Upgraded from version 0.44 to 0.46.
+
+This makes the prereq resolving fall back to F<_build/> querying if the
+C<prereq_data> action fails.
+
+=item C<Pod::Perldoc>
+
+Upgraded from version 3.15_01 to 3.15_02.
+
+=item C<Pod::Plainer>
+
+Upgraded from version 1.01 to 1.02.
+
+=item C<Safe>
+
+Upgraded from version 2.21 to 2.22.
+
+This resolves RT #72700, in which an exception thrown from a closure was
+getting lost.
+
+=item C<Socket>
+
+Upgraded from version 1.85 to 1.86.
+
+This makes the new Socket implementation of C<inet_pton> consistent with the
+existing Socket6 implementation of C<inet_pton>, fixing RT #72884.
+
+=item C<podlators>
+
+Upgraded from version 2.2.2 to 2.3.1.
+
+=back
+
+=head1 Changes to Existing Documentation
+
+The syntax C<unless (EXPR) BLOCK else BLOCK> is now documented as valid, as
+is the syntax C<unless (EXPR) BLOCK elsif (EXPR) BLOCK ... else BLOCK>,
+although actually using the latter may not be the best idea for the
+readability of your source code.
+
+=head1 Installation and Configuration Improvements
+
+=head2 Configuration improvements
+
+Support for SystemTap's C<dtrace> compatibility layer has been added and an
+issue with linking C<miniperl> has been fixed in the process.
+
+C<less -R> is now used instead of C<less> for C<groff>'s new usage of ANSI
+escape codes by setting C<$Config{less}> (and thereby C<$Config{pager}>,
+which fixes RT #72156.
+
+USE_PERL_ATOF is now reported in the compile-time options listed by the C<-V>
+switch.
+
+=head1 Selected Bug Fixes
+
+=over 4
+
+=item *
+
+Arbitrary whitespace is now allowed between C<NAME> and C<VERSION> in
+C<package NAME VERSION;> statements. (Fixes RT #72432)
+
+=item *
+
+A panic caused by trying to load C<charnames> when the parser is already in
+error (e.g. by a missing C<my> under C<use strict;>) is now averted. This
+was a regression since Perl 5.10.0. (Fixes RT #72590)
+
+=item *
+
+Reading C<$!> no longer causes a SEGV for out of range C<errno> values. (Fixes
+RT #72850)
+
+=item *
+
+A possible SEGV in C</\N{...}/> has been fixed. This was a regression since
+Perl 5.10.
+
+=item *
+
+A possible SEGV when freeing a scalar that was upgraded to an C<SVt_REGEXP>
+type from a simple(r) scalar has been fixed.
+
+=item *
+
+A type conversion bug in C<gmtime64> that caused it to break around C<2**48>
+has been fixed.
+
+=item *
+
+Interpolating a regex that makes use of the C<charnames> pragma will no longer
+cause a run-time error. (Fixes RT #56444)
+
+=item *
+
+Array references assigned to C<*Foo::ISA> now have the necessary magic added
+to them to catch any further updates to the new C<@ISA>. (Fixes RT #72866)
+
+=item *
+
+Filehandles are now always blessed into C<IO::File>, which, together with
+some suitable manipulation of C<@IO::File::ISA>, fixes a breakage introduced
+in Perl 5.11.3 by a change that always blessed filehandles into C<IO::Handle>
+rather than checking for C<FileHandle> first.
+
+=item *
+
+A change in the behaviour of C<warnings::enabled> and C<warnings::warnif> in
+Perl 5.10.0 that wasn't documented at the time is now documented in
+L<perl5100delta>. (Fixes RT #62522)
+
+=item *
+
+RT #71504 is now fixed by simply skipping the tests that failed on OpenBSD
+with ithreads and perlio.
+
+=back
+
+=head1 New or Changed Diagnostics
+
+=over 4
+
+=item *
+
+The fatal error C<Malformed UTF-8 returned by \N> is now produced if the
+C<charnames> handler returns malformed UTF-8.
+
+=item *
+
+If an unresolved named character or sequence was encountered when compiling a
+regex pattern then the fatal error C<\\N{NAME} must be resolved by the lexer>
+is now produced. This can happen, for example, when using a single-quotish
+context like C<$re = '\N{SPACE}'; $re;>. See L<perldiag> for more examples of
+how the lexer can get bypassed.
+
+=item *
+
+The fatal error C<Invalid hexadecimal number in \\N{U+...}> will be produced
+if the character constant represented by C<...> is not a valid hexadecimal
+number. 
+
+=item *
+
+The new meaning of C<\N> as C<[^\n]> is not valid in a bracketed character
+class, just like C<.> in a character class loses its special meaning, and will
+cause the fatal error C<\\N in a character class must be a named character:
+\\N{...}>.
+
+=item *
+
+The rules on what is legal for the C<...> in C<\N{...}> have been tightened
+up so that unless the C<...> begins with an alphabetic character and continues
+with a combination of alphanumerics, dashes, spaces, parentheses or colons
+then the warning C<Deprecated character(s) in \\N{...} starting at '%s'> is
+now issued.
+
+=item *
+
+The warning C<Using just the first characters returned by \N{}> will be
+issued if the C<charnames> handler returns a sequence of characters which
+exceeds the limit of the number of characters that can be used. The message
+will indicate which characters were used and which were discarded.
+
+=item *
+
+Currently, all but the first of the several characters that the C<charnames>
+handler may return are discarded when used in a regular expression pattern
+bracketed character class. If this happens then the warning C<Using just the
+first character returned by \N{} in character class> will be issued.
+
+=item *
+
+The warning C<Missing right brace on \\N{} or unescaped left brace after \\N.
+Assuming the latter> will be issued if Perl encounters a C<\N{> but doesn't
+find a matching C<}>. In this case Perl doesn't know if it was mistakenly
+omitted, or if "match non-newline" followed by "match a C<{>" was desired.
+It assumes the latter because that is actually a valid interpretation as
+written, unlike the other case.  If you meant the former, you need to add the
+matching right brace.  If you did mean the latter, you can silence this
+warning by writing instead C<\N\{>.
+
+=item *
+
+C<gmtime> and C<localtime> called with numbers smaller than they can reliably
+handle will now issue the warnings C<gmtime(%.0f) too small> and
+C<localtime(%.0f) too small>.
+
+=back
+
+=head1 New Tests
+
+=over 4
+
+=item F<t/op/filehandle.t>
+
+Tests some suitably portable filetest operators to check that they work as
+expected, particularly in the light of some internal changes made in how
+filehandles are blessed.
+
+=item F<t/op/time_loop.t>
+
+Tests that times greater than C<2**63>, which can now be handed to C<gmtime>
+and C<localtime>, do not cause an internal overflow or an excessively long
+loop.
+
+=back
+
+=head1 Known Problems
+
+Perl 5.11.5 is a development release leading up to Perl 5.12.0.
+Some notable known problems found in 5.11.5 are listed as dependencies
+of RT #69710, the Perl 5 version 12 meta-ticket.
+
+=head1 Acknowledgements
+
+Perl 5.11.5 represents approximately one month of development since
+Perl 5.11.4 and contains 9618 lines of changes across 151 files
+from 33 authors and committers:
+
+E<AElig>var ArnfjE<ouml>rE<eth> Bjarmason, Abigail, brian d foy, Chris
+Williams, David Golden, David Mitchell, Eric Brine, Frank Wiegand, Gisle
+Aas, H.Merijn Brand, Jan Dubois, Jesse Vincent, Jim Cromie, John Peacock,
+Josh ben Jore, Karl Williamson, Marcus Holland-Moritz, Michael G Schwern,
+Nicholas Clark, Offer Kaye, Philippe Bruhat (BooK), Rafael Garcia-Suarez,
+Reini Urban, Ricardo Signes, Robin Barker, Slaven Rezic, Steffen Mueller,
+Steve Hay, Steve Peters, Tim Bunce, Todd Rinaldo, Tony Cook and
+Vincent Pit.
+
+Many of the changes included in this version originated in the CPAN
+modules included in Perl's core. We're grateful to the entire CPAN
+community for helping Perl to flourish.
+
+=head1 Reporting Bugs
+
+If you find what you think is a bug, you might check the articles
+recently posted to the comp.lang.perl.misc newsgroup and the perl
+bug database at http://rt.perl.org/perlbug/ .  There may also be
+information at http://www.perl.org/ , the Perl Home Page.
+
+If you believe you have an unreported bug, please run the B<perlbug>
+program included with your release.  Be sure to trim your bug down
+to a tiny but sufficient test case.  Your bug report, along with the
+output of C<perl -V>, will be sent off to perlbug@perl.org to be
+analyzed by the Perl porting team.
+
+If the bug you are reporting has security implications, which make it
+inappropriate to send to a publicly archived mailing list, then please send
+it to perl5-security-report@perl.org. This points to a closed subscription
+unarchived mailing list, which includes all the core committers, who be able
+to help assess the impact of issues, figure out a resolution, and help
+co-ordinate the release of patches to mitigate or fix the problem across all
+platforms on which Perl is supported. Please only use this address for
+security issues in the Perl core, not for modules independently
+distributed on CPAN.
+
+=head1 SEE ALSO
+
+The F<Changes> file for an explanation of how to view exhaustive details
+on what changed.
+
+The F<INSTALL> file for how to build Perl.
+
+The F<README> file for general stuff.
+
+The F<Artistic> and F<Copying> files for copyright information.
+
+=cut

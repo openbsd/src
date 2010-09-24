@@ -77,9 +77,8 @@ ok ($in_onesec > 0, "iters returned positive iterations");
 {
   my $difference = $in_onesec - $estimate;
   my $actual = abs ($difference / $in_onesec);
-  ok ($actual < $delta, "is $in_onesec within $delta of estimate ($estimate)");
-  print "# $in_onesec is between " . ($delta / 2) .
-    " and $delta of estimate. Not that safe.\n" if $actual > $delta/2;
+  cmp_ok($actual, '<=', $delta, "is $in_onesec within $delta of estimate ($estimate)")
+    or diag("# $in_onesec is between " . ($delta / 2) . " and $delta of estimate. Not that safe.");
 }
 
 # I found that the eval'ed version was 3 times faster than the coderef.

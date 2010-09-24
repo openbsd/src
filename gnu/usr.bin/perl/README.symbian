@@ -360,7 +360,7 @@ The Symbian port is licensed under the same terms as Perl itself.
     DynaLoader Exporter File::Spec integer lib strict Symbol
     vars warnings XSLoader
   - The following extensions are available:
-    attrs Compress::Zlib Cwd Data::Dumper Devel::Peek Digest::MD5 DynaLoader
+    attributes Compress::Zlib Cwd Data::Dumper Devel::Peek Digest::MD5 DynaLoader
     Fcntl File::Glob Filter::Util::Call IO List::Util MIME::Base64
     PerlIO::scalar PerlIO::via SDBM_File Socket Storable Time::HiRes
   - The following extensions are missing for various technical reasons:

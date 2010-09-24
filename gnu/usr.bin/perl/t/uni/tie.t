@@ -1,13 +1,10 @@
 #!perl -w
 
 BEGIN {
-    if ($ENV{'PERL_CORE'}){
-        chdir 't';
-        @INC = '../lib';
-    }
+    require './test.pl';
 }
 
-use Test::More tests => 9;
+plan (tests => 9);
 use strict;
 
 {
@@ -44,6 +41,6 @@ foreach my $t ("ASCII", "B\366se") {
 }
 
 {
-    local $TODO = "Need more tests!";
+    local $::TODO = "Need more tests!";
     fail();
 }

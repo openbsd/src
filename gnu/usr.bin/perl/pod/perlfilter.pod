@@ -81,9 +81,8 @@ a source filter is just a special kind of module. Like all Perl
 modules, a source filter is invoked with a use statement.
 
 Say you want to pass your Perl source through the C preprocessor before
-execution. You could use the existing C<-P> command line option to do
-this, but as it happens, the source filters distribution comes with a C
-preprocessor filter module called Filter::cpp. Let's use that instead.
+execution. As it happens, the source filters distribution comes with a C
+preprocessor filter module called Filter::cpp.
 
 Below is an example program, C<cpp_test>, which makes use of this filter.
 Line numbers have been added to allow specific lines to be referenced

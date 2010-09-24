@@ -10,7 +10,7 @@ BEGIN {
 }
 
 require "test.pl";
-plan( tests => 60 );
+plan( tests => 61 );
 
 {
     my @lol = ([qw(a b c)], [], [qw(1 2 3)]);
@@ -206,4 +206,11 @@ plan( tests => 60 );
     # This shouldn't loop indefinitively.
     my @empty = map { while (1) {} } ();
     cmp_ok("@empty", 'eq', '', 'staying alive');
+}
+
+{
+    my $x;
+    eval 'grep $x (1,2,3);';
+    like($@, qr/Missing comma after first argument to grep function/,
+         "proper error on variable as block. [perl #37314]");
 }

@@ -95,13 +95,7 @@ Looking at ../foo2, you'll see 34 occurrences of the following error:
 =cut
 
 BEGIN {
-    if ($ENV{PERL_CORE}) {
-	chdir('t') if -d 't';
-	@INC = ('.', '../lib');
-    } else {
-	unshift @INC, 't';
-	push @INC, "../../t";
-    }
+    unshift @INC, 't';
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
@@ -154,7 +148,7 @@ my $testpkgs = {
 		  ), $] > 5.009 ? ('unitcheck_av') : ()],
     },
 
-    B::Deparse => { dflt => 'perl',	# 235 functions
+    B::Deparse => { dflt => 'perl',	# 236 functions
 
 	XS => [qw( svref_2object perlstring opnumber main_start
 		   main_root main_cv )],
@@ -167,10 +161,10 @@ my $testpkgs = {
 		     OPpENTERSUB_AMPER OPpEXISTS_SUB OPpITER_REVERSED
 		     OPpLVAL_INTRO OPpOUR_INTRO OPpSLICE OPpSORT_DESCEND
 		     OPpSORT_INPLACE OPpSORT_INTEGER OPpSORT_NUMERIC
-		     OPpSORT_REVERSE OPpTARGET_MY OPpTRANS_COMPLEMENT
-		     OPpTRANS_DELETE OPpTRANS_SQUASH PMf_CONTINUE
-		     PMf_EVAL PMf_EXTENDED PMf_FOLD PMf_GLOBAL PMf_KEEP
-		     PMf_MULTILINE PMf_ONCE PMf_SINGLELINE
+		     OPpSORT_REVERSE OPpREVERSE_INPLACE OPpTARGET_MY
+		     OPpTRANS_COMPLEMENT OPpTRANS_DELETE OPpTRANS_SQUASH
+		     PMf_CONTINUE PMf_EVAL PMf_EXTENDED PMf_FOLD PMf_GLOBAL
+		     PMf_KEEP PMf_MULTILINE PMf_ONCE PMf_SINGLELINE
 		     POSTFIX SVf_FAKE SVf_IOK SVf_NOK SVf_POK SVf_ROK
 		     SVpad_OUR SVs_RMG SVs_SMG SWAP_CHILDREN OPpPAD_STATE
 		     /, $] > 5.009 ? ('RXf_SKIPWHITE') : ('PMf_SKIPWHITE'),
@@ -225,6 +219,7 @@ my $testpkgs = {
 			   sockatmark sockaddr_family pack_sockaddr_un
 			   pack_sockaddr_in inet_ntoa inet_aton
 			   /],
+            # skip inet_ntop and inet_pton as they're not exported by default
 		},
 };
 

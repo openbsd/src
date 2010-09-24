@@ -1,3 +1,9 @@
+#
+# This library is no longer being maintained, and is included for backward
+# compatibility with Perl 4 programs which may require it.
+# This legacy library is deprecated and will be removed in a future
+# release of perl.
+#
 # assert.pl
 # tchrist@convex.com (Tom Christiansen)
 # 

@@ -15,7 +15,7 @@ require File::Spec;
 
 $| = 1;
 
-print "1..79\n";
+print "1..80\n";
 
 use charnames ':full';
 
@@ -176,28 +176,14 @@ print "ok 24\n";
 print "not " unless "\N{NULL}" eq "\c@";
 print "ok 25\n";
 
-if ($^O eq 'MacOS')
-{
-	print "not " unless "\N{CARRIAGE RETURN (CR)}" eq "\n";
-	print "ok 26\n";
+print "not " unless "\N{LINE FEED (LF)}" eq "\n";
+print "ok 26\n";
 
-	print "not " unless "\N{CARRIAGE RETURN}" eq "\n";
-	print "ok 27\n";
+print "not " unless "\N{LINE FEED}" eq "\n";
+print "ok 27\n";
 
-	print "not " unless "\N{CR}" eq "\n";
-	print "ok 28\n";
-}
-else
-{
-	print "not " unless "\N{LINE FEED (LF)}" eq "\n";
-	print "ok 26\n";
-
-	print "not " unless "\N{LINE FEED}" eq "\n";
-	print "ok 27\n";
-
-	print "not " unless "\N{LF}" eq "\n";
-	print "ok 28\n";
-}
+print "not " unless "\N{LF}" eq "\n";
+print "ok 28\n";
 
 my $nel = ord("A") == 193 ? qr/^(?:\x15|\x25)$/ : qr/^\x85$/;
 
@@ -302,10 +288,6 @@ for (@prgs) {
     $res =~ s/\n%[A-Z]+-[SIWEF]-.*$//		# clip off DCL status msg
 	if $^O eq "VMS";
     $exp =~ s/[\r\n]+$//;
-    if ($^O eq "MacOS") {
-	$exp =~ s{(\./)?abc\.pm}{:abc.pm}g;
-	$exp =~ s{./abc}        {:abc}g;
-	}
     my $pfx = ($res =~ s/^PREFIX\n//);
     my $rexp = qr{^$exp};
     if ($res =~ s/^SKIPPED\n//) {
@@ -359,6 +341,23 @@ if ($@) {
 # Verify that db includes the normative NameAliases.txt names
 print "not " unless "\N{U+1D0C5}" eq "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}";
 print "ok 79\n";
+
+# [perl #73174] use of \N{FOO} used to reset %^H
+
+{
+    use charnames ":full";
+    my $res;
+    BEGIN { $^H{73174} = "foo" }
+    BEGIN { $res = ($^H{73174} // "") }
+    # forces loading of utf8.pm, which used to reset %^H
+    $res .= '-1' if ":" =~ /\N{COLON}/i;
+    BEGIN { $res .= '-' . ($^H{73174} // "") }
+    $res .= '-' . ($^H{73174} // "");
+    $res .= '-2' if ":" =~ /\N{COLON}/;
+    $res .= '-3' if ":" =~ /\N{COLON}/i;
+    print $res eq "foo-foo-1--2-3" ? "" : "not ",
+	"ok 80 - \$^H{foo} correct after /\\N{bar}/i (res=$res)\n";
+}
 
 __END__
 # unsupported pragma

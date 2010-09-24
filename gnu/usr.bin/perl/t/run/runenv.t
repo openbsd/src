@@ -15,7 +15,7 @@ BEGIN {
     require './test.pl'
 }
 
-plan tests => 17;
+plan tests => 78;
 
 my $STDOUT = tempfile();
 my $STDERR = tempfile();
@@ -147,6 +147,21 @@ try({PERL5OPT => '-Mstrict -Mwarnings'},
     "ok",
     "");
 
+open F, ">", "Oooof.pm" or die "Can't write Oooof.pm: $!";
+print F "package Oooof; 1;\n";
+close F;
+END { 1 while unlink "Oooof.pm" }
+
+try({PERL5OPT => '-I. -MOooof'}, 
+    ['-e', 'print "ok" if $INC{"Oooof.pm"} eq "Oooof.pm"'],
+    "ok",
+    "");
+
+try({PERL5OPT => '-I./ -MOooof'}, 
+    ['-e', 'print "ok" if $INC{"Oooof.pm"} eq "Oooof.pm"'],
+    "ok",
+    "");
+
 try({PERL5OPT => '-w -w'},
     ['-e', 'print $ENV{PERL5OPT}'],
     '-w -w',
@@ -156,6 +171,15 @@ try({PERL5OPT => '-t'},
     ['-e', 'print ${^TAINT}'],
     '-1',
     '');
+
+try({PERL5OPT => '-W'},
+    ['-e', 'local $^W = 0;  no warnings;  print $x'],
+    '',
+    <<ERROR
+Name "main::x" used only once: possible typo at -e line 1.
+Use of uninitialized value \$x in print at -e line 1.
+ERROR
+);
 
 try({PERLLIB => "foobar$Config{path_sep}42"},
     ['-e', 'print grep { $_ eq "foobar" } @INC'],
@@ -188,6 +212,52 @@ try({PERL5LIB => "foo",
     ['-e', 'print grep { $_ eq "bar" } @INC'],
     '',
     '');
+
+# Tests for S_incpush_use_sep():
+
+my @dump_inc = ('-e', 'print "$_\n" foreach @INC');
+
+my ($out, $err) = runperl_and_capture({}, [@dump_inc]);
+
+is ($err, '', 'No errors when determining @INC');
+
+my @default_inc = split /\n/, $out;
+
+is (shift @default_inc, '../lib', 'Our -I../lib is at the front');
+
+my $sep = $Config{path_sep};
+foreach (['nothing', ''],
+	 ['something', 'zwapp', 'zwapp'],
+	 ['two things', "zwapp${sep}bam", 'zwapp', 'bam'],
+	 ['two things, ::', "zwapp${sep}${sep}bam", 'zwapp', 'bam'],
+	 [': at start', "${sep}zwapp", 'zwapp'],
+	 [': at end', "zwapp${sep}", 'zwapp'],
+	 [':: sandwich ::', "${sep}${sep}zwapp${sep}${sep}", 'zwapp'],
+	 [':', "${sep}"],
+	 ['::', "${sep}${sep}"],
+	 [':::', "${sep}${sep}${sep}"],
+	 ['two things and :', "zwapp${sep}bam${sep}", 'zwapp', 'bam'],
+	 [': and two things', "${sep}zwapp${sep}bam", 'zwapp', 'bam'],
+	 [': two things :', "${sep}zwapp${sep}bam${sep}", 'zwapp', 'bam'],
+	 ['three things', "zwapp${sep}bam${sep}${sep}owww",
+	  'zwapp', 'bam', 'owww'],
+	) {
+  my ($name, $lib, @expect) = @$_;
+  push @expect, @default_inc;
+
+  ($out, $err) = runperl_and_capture({PERL5LIB => $lib}, [@dump_inc]);
+
+  is ($err, '', "No errors when determining \@INC for $name");
+
+  my @inc = split /\n/, $out;
+
+  is (shift @inc, '../lib', 'Our -I../lib is at the front for $name');
+
+  is (scalar @inc, scalar @expect,
+      "expected number of elements in \@INC for $name");
+
+  is ("@inc", "@expect", "expected elements in \@INC for $name");
+}
 
 # PERL5LIB tests with included arch directories still missing
 

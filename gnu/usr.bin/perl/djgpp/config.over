@@ -46,6 +46,7 @@ repair()
      -e 's=cwd=Cwd=' \
      -e 's=perlio/via=PerlIO/via=' \
      -e 's=perlio/encoding=PerlIO/encoding=' \
+     -e 's=xs/apitest/keywordrpn=XS/APItest/KeywordRPN=' \
      -e 's=xs/apitest=XS/APItest=' \
      -e 's=xs/typemap=XS/Typemap=' \
      -e 's=unicode/normaliz=Unicode/Normalize=' \

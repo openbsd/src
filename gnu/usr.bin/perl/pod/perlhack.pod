@@ -214,15 +214,20 @@ changes.
 How to clone and use the git perl repository is described in L<perlrepository>.
 
 You can also choose to use rsync to get a copy of the current source tree
-for the bleadperl branch and all maintenance branches :
+for the bleadperl branch and all maintenance branches:
 
-    $ rsync -avz rsync://perl5.git.perl.org/APC/perl-current .
-    $ rsync -avz rsync://perl5.git.perl.org/APC/perl-5.10.x .
-    $ rsync -avz rsync://perl5.git.perl.org/APC/perl-5.8.x .
-    $ rsync -avz rsync://perl5.git.perl.org/APC/perl-5.6.x .
-    $ rsync -avz rsync://perl5.git.perl.org/APC/perl-5.005xx .
+    $ rsync -avz rsync://perl5.git.perl.org/perl-current .
+    $ rsync -avz rsync://perl5.git.perl.org/perl-5.12.x .
+    $ rsync -avz rsync://perl5.git.perl.org/perl-5.10.x .
+    $ rsync -avz rsync://perl5.git.perl.org/perl-5.8.x .
+    $ rsync -avz rsync://perl5.git.perl.org/perl-5.6.x .
+    $ rsync -avz rsync://perl5.git.perl.org/perl-5.005xx .
 
 (Add the C<--delete> option to remove leftover files)
+
+To get a full list of the available sync points:
+
+    $ rsync perl5.git.perl.org::
 
 You may also want to subscribe to the perl5-changes mailing list to
 receive a copy of each patch that gets submitted to the maintenance
@@ -296,8 +301,8 @@ automatically test Perl source releases on platforms with various
 configurations.  Both efforts welcome volunteers. In order to get
 involved in smoke testing of the perl itself visit
 L<http://search.cpan.org/dist/Test-Smoke>. In order to start smoke
-testing CPAN modules visit L<http://search.cpan.org/dist/CPAN-YACSmoke/>
-or L<http://search.cpan.org/dist/POE-Component-CPAN-YACSmoke/> or
+testing CPAN modules visit L<http://search.cpan.org/dist/CPANPLUS-YACSmoke/>
+or L<http://search.cpan.org/dist/minismokebox/> or
 L<http://search.cpan.org/dist/CPAN-Reporter/>.
 
 It's a good idea to read and lurk for a while before chipping in.
@@ -321,12 +326,10 @@ might start to make sense - don't worry if it doesn't yet, because the
 best way to study it is to read it in conjunction with poking at Perl
 source, and we'll do that later on.
 
-Gisle Aas's illustrated perlguts (aka: illguts) is wonderful, although
-a little out of date wrt some size details; the various SV structures
-have since been reworked for smaller memory footprint.  The
-fundamentals are right however, and the pictures are very helpful.
+Gisle Aas's "illustrated perlguts", also known as I<illguts>, has very
+helpful pictures:
 
-http://www.perl.org/tpc/1998/Perl_Language_and_Modules/Perl%20Illustrated/ 
+L<http://search.cpan.org/dist/illguts/>
 
 =item L<perlxstut> and L<perlxs>
 
@@ -365,9 +368,22 @@ correspond to files or directories in the source kit. Among the areas are:
 
 =item Core modules
 
-Modules shipped as part of the Perl core live in the F<lib/> and F<ext/>
-subdirectories: F<lib/> is for the pure-Perl modules, and F<ext/>
-contains the core XS modules.
+Modules shipped as part of the Perl core live in various subdirectories, where
+two are dedicated to core-only modules, and two are for the dual-life modules
+which live on CPAN and may be maintained separately with respect to the Perl
+core: 
+
+    lib/  is for pure-Perl modules, which exist in the core only.
+
+    ext/  is for XS extensions, and modules with special Makefile.PL requirements, which exist in the core only.
+
+    cpan/ is for dual-life modules, where the CPAN module is canonical (should be patched first).
+
+    dist/ is for dual-life modules, where the blead source is canonical.
+
+For some dual-life modules it has not been discussed if the CPAN version or the
+blead source is canonical. Until that is done, those modules should be in
+F<cpan/>.
 
 =item Tests
 
@@ -384,16 +400,28 @@ the documentation to the modules in core.
 
 =item Configure
 
-The configure process is the way we make Perl portable across the
+The Configure process is the way we make Perl portable across the
 myriad of operating systems it supports. Responsibility for the
-configure, build and installation process, as well as the overall
-portability of the core code rests with the configure pumpkin - others
-help out with individual operating systems.
+Configure, build and installation process, as well as the overall
+portability of the core code rests with the Configure pumpkin -
+others help out with individual operating systems.
+
+The three files that fall under his/her responsibility are Configure,
+config_h.SH, and Porting/Glossary (and a whole bunch of small related
+files that are less important here). The Configure pumpkin decides how
+patches to these are dealt with. Currently, the Configure pumpkin will
+accept patches in most common formats, even directly to these files.
+Other committers are allowed to commit to these files under the strict
+condition that they will inform the Configure pumpkin, either on IRC
+(if he/she happens to be around) or through (personal) e-mail.
 
 The files involved are the operating system directories, (F<win32/>,
 F<os2/>, F<vms/> and so on) the shell scripts which generate F<config.h>
 and F<Makefile>, as well as the metaconfig files which generate
 F<Configure>. (metaconfig isn't included in the core distribution.)
+
+See http://perl5.git.perl.org/metaconfig.git/blob/HEAD:/README for a
+description of the full process involved.
 
 =item Interpreter
 
@@ -1248,8 +1276,8 @@ C<-Wstrict-prototypes>
 =back
 
 The C<-Wtraditional> is another example of the annoying tendency of
-gcc to bundle a lot of warnings under one switch -- it would be
-impossible to deploy in practice because it would complain a lot -- but
+gcc to bundle a lot of warnings under one switch (it would be
+impossible to deploy in practice because it would complain a lot) but
 it does contain some warnings that would be beneficial to have available
 on their own, such as the warning about string constants inside macros
 containing the macro arguments: this behaved differently pre-ANSI
@@ -1499,6 +1527,10 @@ C<U> is the first active format during a C<pack>, (for example,
 C<pack "U3C8", @stuff>) then the resulting string should be treated as
 UTF-8 encoded.
 
+If you are working with a git clone of the Perl repository, you will want to
+create a branch for your changes. This will make creating a proper patch much
+simpler. See the L<perlrepository> for details on how to do this.
+
 How do we prepare to fix this up? First we locate the code in question -
 the C<pack> happens at runtime, so it's going to be in one of the F<pp>
 files. Sure enough, C<pp_pack> is in F<pp.c>. Since we're going to be
@@ -1638,36 +1670,6 @@ this text in the description of C<pack>:
  pattern with C<C0> (or anything else) to force Perl not to UTF-8 encode your
  string, and then follow this with a C<U*> somewhere in your pattern.
 
-All done. Now let's create the patch. F<Porting/patching.pod> tells us
-that if we're making major changes, we should copy the entire directory
-to somewhere safe before we begin fiddling, and then do
-
-    diff -ruN old new > patch
-
-However, we know which files we've changed, and we can simply do this:
-
-    diff -u pp.c~             pp.c             >  patch
-    diff -u t/op/pack.t~      t/op/pack.t      >> patch
-    diff -u pod/perlfunc.pod~ pod/perlfunc.pod >> patch
-
-We end up with a patch looking a little like this:
-
-    --- pp.c~       Fri Jun 02 04:34:10 2000
-    +++ pp.c        Fri Jun 16 11:37:25 2000
-    @@ -4375,6 +4375,7 @@
-         register I32 items;
-         STRLEN fromlen;
-         register char *pat = SvPVx(*++MARK, fromlen);
-    +    char *patcopy;
-         register char *patend = pat + fromlen;
-         register I32 len;
-         I32 datumtype;
-    @@ -4405,6 +4406,7 @@
-    ...
-
-And finally, we submit it, with our rationale, to perl5-porters. Job
-done!
-
 =head2 Patching a core module
 
 This works just like patching anything else, with an extra
@@ -1727,9 +1729,8 @@ When you write your new code, please be conscious of existing code
 conventions used in the perl source files.  See L<perlstyle> for
 details.  Although most of the guidelines discussed seem to focus on
 Perl code, rather than c, they all apply (except when they don't ;).
-See also I<Porting/patching.pod> file in the Perl source distribution
-for lots of details about both formatting and submitting patches of
-your changes.
+Also see I<perlrepository> for lots of details about both formatting and
+submitting patches of your changes.
 
 Lastly, TEST TEST TEST TEST TEST any code before posting to p5p.
 Test on as many platforms as you can find.  Test as many perl
@@ -1797,10 +1798,10 @@ Tests for perl's method resolution order implementations
 Tests for perl's built in functions that don't fit into any of the
 other directories.
 
-=item F<t/pod/>
+=item F<t/re/>
 
-Tests for POD directives.  There are still some tests for the Pod
-modules hanging around in here that need to be moved out into F<lib/>.
+Tests for regex related functions or behaviour. (These used to live
+in t/op).
 
 =item F<t/run/>
 
@@ -1830,6 +1831,7 @@ t/test.pl and ad hoc C<print $test ? "ok 42\n" : "not ok 42\n">.  The
 decision of which to use depends on what part of the test suite you're
 working on.  This is a measure to prevent a high-level failure (such
 as Config.pm breaking) from causing basic functionality tests to fail.
+If you write your own test, use the L<Test Anything Protocol|TAP>.
 
 =over 4
 
@@ -1954,6 +1956,23 @@ you can say
     nmake test TEST_FILES="op/*.t"
     nmake test TEST_SWITCHES="-torture" TEST_FILES="op/*.t"
 
+=item Parallel tests
+
+The core distribution can now run its regression tests in parallel on
+Unix-like platforms. Instead of running C<make test>, set C<TEST_JOBS> in
+your environment to the number of tests to run in parallel, and run
+C<make test_harness>. On a Bourne-like shell, this can be done as
+
+    TEST_JOBS=3 make test_harness  # Run 3 tests in parallel
+
+An environment variable is used, rather than parallel make itself, because
+L<TAP::Harness> needs to be able to schedule individual non-conflicting test
+scripts itself, and there is no standard interface to C<make> utilities to
+interact with their job schedulers.
+
+Note that currently some test scripts may fail when run in parallel (most
+notably C<ext/IO/t/io_dir.t>). If necessary run just the failing scripts
+again sequentially and see if the failures go away.
 =item test-notty test_notty
 
 Sets PERL_SKIP_TTY_TEST to true before running normal test.
@@ -2169,7 +2188,7 @@ in L<perlguts>.
 The following are common causes of compilation and/or execution
 failures, not common to Perl as such.  The C FAQ is good bedtime
 reading.  Please test your changes with as many C compilers and
-platforms as possible -- we will, anyway, and it's nice to save
+platforms as possible; we will, anyway, and it's nice to save
 oneself from public embarrassment.
 
 If using gcc, you can add the C<-std=c89> option which will hopefully
@@ -2367,7 +2386,7 @@ ASCII is a 7 bit encoding, but bytes have 8 bits in them.  The 128 extra
 characters have different meanings depending on the locale.  Absent a locale,
 currently these extra characters are generally considered to be unassigned,
 and this has presented some problems.
-This is scheduled to be changed in 5.12 so that these characters will
+This is being changed starting in 5.12 so that these characters will
 be considered to be Latin-1 (ISO-8859-1).
 
 =item *
@@ -2589,7 +2608,7 @@ not perfect, because the below is a compile-time check):
   #endif
 
 How does the HAS_QUUX become defined where it needs to be?  Well, if
-Foonix happens to be UNIXy enough to be able to run the Configure
+Foonix happens to be Unixy enough to be able to run the Configure
 script, and Configure has been taught about detecting and testing
 quux(), the HAS_QUUX will be correctly defined.  In other platforms,
 the corresponding configuration step will hopefully do the same.
@@ -2672,25 +2691,25 @@ Third Degree greatly slows down the execution: seconds become minutes,
 minutes become hours.  For example as of Perl 5.8.1, the
 ext/Encode/t/Unicode.t takes extraordinarily long to complete under
 e.g. Purify, Third Degree, and valgrind.  Under valgrind it takes more
-than six hours, even on a snappy computer-- the said test must be
+than six hours, even on a snappy computer. The said test must be
 doing something that is quite unfriendly for memory debuggers.  If you
 don't feel like waiting, that you can simply kill away the perl
 process.
 
 B<NOTE 2>: To minimize the number of memory leak false alarms (see
-L</PERL_DESTRUCT_LEVEL> for more information), you have to have
-environment variable PERL_DESTRUCT_LEVEL set to 2.  The F<TEST>
-and harness scripts do that automatically.  But if you are running
-some of the tests manually-- for csh-like shells:
+L</PERL_DESTRUCT_LEVEL> for more information), you have to set the
+environment variable PERL_DESTRUCT_LEVEL to 2. 
+
+For csh-like shells:
 
     setenv PERL_DESTRUCT_LEVEL 2
 
-and for Bourne-type shells:
+For Bourne-type shells:
 
     PERL_DESTRUCT_LEVEL=2
     export PERL_DESTRUCT_LEVEL
 
-or in UNIXy environments you can also use the C<env> command:
+In Unixy environments you can also use the C<env> command:
 
     env PERL_DESTRUCT_LEVEL=2 valgrind ./perl -Ilib ...
 
@@ -2945,27 +2964,29 @@ by C<-DPERL_MEM_LOG> instead.
 
 =head2 PERL_MEM_LOG
 
-If compiled with C<-DPERL_MEM_LOG>, all Newx() and Renew() allocations
-and Safefree() in the Perl core go through logging functions, which is
-handy for breakpoint setting.  If also compiled with C<-DPERL_MEM_LOG_STDERR>,
-the allocations and frees are logged to STDERR (or more precisely, to the
-file descriptor 2) in these logging functions, with the calling source code
-file and line number (and C function name, if supported by the C compiler).
+If compiled with C<-DPERL_MEM_LOG>, both memory and SV allocations go
+through logging functions, which is handy for breakpoint setting.
 
-This logging is somewhat similar to C<-Dm> but independent of C<-DDEBUGGING>,
-and at a higher level (the C<-Dm> is directly at the point of C<malloc()>,
-while the C<PERL_MEM_LOG> is at the level of C<New()>).
+Unless C<-DPERL_MEM_LOG_NOIMPL> is also compiled, the logging
+functions read $ENV{PERL_MEM_LOG} to determine whether to log the
+event, and if so how:
 
-In addition to memory allocations, SV allocations will be logged, just as
-with C<-Dm>. However, since the logging doesn't use PerlIO, all SV allocations
-are logged and no extra SV allocations are introduced by enabling the logging.
-If compiled with C<-DDEBUG_LEAKING_SCALARS>, the serial number for each SV
-allocation is also logged.
+    $ENV{PERL_MEM_LOG} =~ /m/		Log all memory ops
+    $ENV{PERL_MEM_LOG} =~ /s/		Log all SV ops
+    $ENV{PERL_MEM_LOG} =~ /t/		include timestamp in Log
+    $ENV{PERL_MEM_LOG} =~ /^(\d+)/	write to FD given (default is 2)
 
-You can control the logging from your environment if you compile with
-C<-DPERL_MEM_LOG_ENV>. Then you need to explicitly set C<PERL_MEM_LOG> and/or
-C<PERL_SV_LOG> to a non-zero value to enable logging of memory and/or SV
-allocations.
+Memory logging is somewhat similar to C<-Dm> but is independent of
+C<-DDEBUGGING>, and at a higher level; all uses of Newx(), Renew(),
+and Safefree() are logged with the caller's source code file and line
+number (and C function name, if supported by the C compiler).  In
+contrast, C<-Dm> is directly at the point of C<malloc()>.  SV logging
+is similar.
+
+Since the logging doesn't use PerlIO, all SV allocations are logged
+and no extra SV allocations are introduced by enabling the logging.
+If compiled with C<-DDEBUG_LEAKING_SCALARS>, the serial number for
+each SV allocation is also logged.
 
 =head2 Profiling
 
@@ -2999,7 +3020,7 @@ results.
 
 =head2 Gprof Profiling
 
-gprof is a profiling tool available in many UNIX platforms,
+gprof is a profiling tool available in many Unix platforms,
 it uses F<statistical time-sampling>.
 
 You can build a profiled version of perl called "perl.gprof" by
@@ -3046,9 +3067,9 @@ formats, see your own local documentation of gprof.
 
 quick hint:
 
-    $ sh Configure -des -Dusedevel -Doptimize='-g' -Accflags='-pg' -Aldflags='-pg' && make
-    $ ./perl someprog # creates gmon.out in current directory
-    $ gprof perl > out
+    $ sh Configure -des -Dusedevel -Doptimize='-pg' && make perl.gprof
+    $ ./perl.gprof someprog # creates gmon.out in current directory
+    $ gprof ./perl.gprof > out
     $ view out
 
 =head2 GCC gcov Profiling

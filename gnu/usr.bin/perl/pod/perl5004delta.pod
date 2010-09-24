@@ -195,8 +195,8 @@ A bug in previous versions may have failed to detect some insecure
 conditions when taint checks are turned on.  (Taint checks are used
 in setuid or setgid scripts, or when explicitly turned on with the
 C<-T> invocation option.)  Although it's unlikely, this may cause a
-previously-working script to now fail -- which should be construed
-as a blessing, since that indicates a potentially-serious security
+previously-working script to now fail, which should be construed
+as a blessing since that indicates a potentially-serious security
 hole was just plugged.
 
 The new restrictions when tainting include:
@@ -246,7 +246,7 @@ your interpreters.
 
 File handles are now stored internally as type IO::Handle.  The
 FileHandle module is still supported for backwards compatibility, but
-it is now merely a front end to the IO::* modules -- specifically,
+it is now merely a front end to the IO::* modules, specifically
 IO::Handle, IO::Seekable, and IO::File.  We suggest, but do not
 require, that you use the IO::* modules in new code.
 
@@ -1214,8 +1214,8 @@ or a hash slice, such as
 
 (W) The pattern match (//), substitution (s///), and transliteration (tr///)
 operators work on scalar values.  If you apply one of them to an array
-or a hash, it will convert the array or hash to a scalar value -- the
-length of an array, or the population info of a hash -- and then work on
+or a hash, it will convert the array or hash to a scalar value (the
+length of an array or the population info of a hash) and then work on
 that scalar value.  This is probably not what you meant to do.  See
 L<perlfunc/grep> and L<perlfunc/map> for alternatives.
 

@@ -410,7 +410,7 @@ name for identification regardless of whether they implement methods
 on the object.
 
 The package this method returns should also have the internal
-C<Regexp> package in its C<@ISA>. C<qr//->isa("Regexp")> should always
+C<Regexp> package in its C<@ISA>. C<< qr//->isa("Regexp") >> should always
 be true regardless of what engine is being used.
 
 Example implementation might be:
@@ -598,7 +598,7 @@ engine should use something else.
 
 =head2 C<swap>
 
-TODO: document
+Unused. Left in for compatibility with perl 5.10.0.
 
 =head2 C<offs>
 

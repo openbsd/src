@@ -59,8 +59,8 @@ PPCODE:
 	EXTEND(sp, pglob.gl_pathc);
 	for (i = 0; i < pglob.gl_pathc; i++) {
 	    /* printf("# bsd_glob: %s\n", pglob.gl_pathv[i]); */
-	    tmp = sv_2mortal(newSVpvn(pglob.gl_pathv[i],
-				      strlen(pglob.gl_pathv[i])));
+	    tmp = newSVpvn_flags(pglob.gl_pathv[i], strlen(pglob.gl_pathv[i]),
+				 SVs_TEMP);
 	    TAINT;
 	    SvTAINT(tmp);
 	    PUSHs(tmp);

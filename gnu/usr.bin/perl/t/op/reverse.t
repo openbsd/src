@@ -3,23 +3,84 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-print "1..4\n";
+plan tests => 23;
 
-print "not " unless reverse("abc")    eq "cba";
-print "ok 1\n";
+is(reverse("abc"), "cba");
 
 $_ = "foobar";
-print "not " unless reverse()         eq "raboof";
-print "ok 2\n";
+is(reverse(), "raboof");
 
 {
     my @a = ("foo", "bar");
     my @b = reverse @a;
 
-    print "not " unless $b[0] eq $a[1] && $b[1] eq $a[0];
-    print "ok 3\n";
+    is($b[0], $a[1]);
+    is($b[1], $a[0]);
+}
+
+{
+    my @a = (1, 2, 3, 4);
+    @a = reverse @a;
+    is("@a", "4 3 2 1");
+
+    delete $a[1];
+    @a = reverse @a;
+    ok(!exists $a[2]);
+    is($a[0] . $a[1] . $a[3], '124');
+
+    @a = (5, 6, 7, 8, 9);
+    @a = reverse @a;
+    is("@a", "9 8 7 6 5");
+
+    delete $a[3];
+    @a = reverse @a;
+    ok(!exists $a[1]);
+    is($a[0] . $a[2] . $a[3] . $a[4], '5789');
+
+    delete $a[2];
+    @a = reverse @a;
+    ok(!exists $a[2] && !exists $a[3]);
+    is($a[0] . $a[1] . $a[4], '985');
+
+    my @empty;
+    @empty = reverse @empty;
+    is("@empty", "");
+}
+
+use Tie::Array;
+
+{
+    tie my @a, 'Tie::StdArray';
+
+    @a = (1, 2, 3, 4);
+    @a = reverse @a;
+    is("@a", "4 3 2 1");
+
+    delete $a[1];
+    @a = reverse @a;
+    ok(!exists $a[2]);
+    is($a[0] . $a[1] . $a[3], '124');
+
+    @a = (5, 6, 7, 8, 9);
+    @a = reverse @a;
+    is("@a", "9 8 7 6 5");
+
+    delete $a[3];
+    @a = reverse @a;
+    ok(!exists $a[1]);
+    is($a[0] . $a[2] . $a[3] . $a[4], '5789');
+
+    delete $a[2];
+    @a = reverse @a;
+    ok(!exists $a[2] && !exists $a[3]);
+    is($a[0] . $a[1] . $a[4], '985');
+
+    tie my @empty, "Tie::StdArray";
+    @empty = reverse @empty;
+    is(scalar(@empty), 0);
 }
 
 {
@@ -28,6 +89,5 @@ print "ok 2\n";
     my $a = "\x{263A}\x{263A}x\x{263A}y\x{263A}";
     my $b = scalar reverse($a);
     my $c = scalar reverse($b);
-    print "not " unless $a eq $c;
-    print "ok 4\n";
+    is($a, $c);
 }

@@ -1,4 +1,4 @@
-=comment
+=begin comment
 
 Synchronize filename cases for extensions.
 

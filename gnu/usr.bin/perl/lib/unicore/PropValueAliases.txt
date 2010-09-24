@@ -1,10 +1,10 @@
-# PropertyValueAliases-5.1.0.txt
-# Date: 2008-03-03, 21:58:08 GMT [MD]
+# PropertyValueAliases-5.2.0.txt
+# Date: 2009-08-24, 03:27:01 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UCD.html
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # This file contains aliases for property values used in the UCD.
 # These names can be used for XML formats of UCD data, for regular-expression
@@ -40,7 +40,7 @@
 # NOTE: Property value names are NOT unique across properties. For example:
 #
 #   AL means Arabic Letter for the Bidi_Class property, and
-#   AL means Alpha_Left for the Combining_Class property, and
+#   AL means Above_Left for the Combining_Class property, and
 #   AL means Alphabetic for the Line_Break property.
 #
 # In addition, some property names may be the same as some property value names.
@@ -51,7 +51,7 @@
 #
 # The combination of property value and property name is, however, unique.
 #
-# For more information, see UTS #18: Regular Expression Guidelines
+# For more information, see UTS #18: Unicode Regular Expressions
 # ================================================
 
 
@@ -72,6 +72,7 @@ age; n/a       ; 4.0
 age; n/a       ; 4.1
 age; n/a       ; 5.0
 age; n/a       ; 5.1
+age; n/a       ; 5.2
 age; n/a       ; unassigned
 
 # Alphabetic (Alpha)
@@ -128,7 +129,9 @@ blk; n/a       ; Arabic_Presentation_Forms_B
 blk; n/a       ; Arabic_Supplement
 blk; n/a       ; Armenian
 blk; n/a       ; Arrows
+blk; n/a       ; Avestan
 blk; n/a       ; Balinese
+blk; n/a       ; Bamum
 blk; n/a       ; Basic_Latin                      ; ASCII
 blk; n/a       ; Bengali
 blk; n/a       ; Block_Elements
@@ -152,10 +155,12 @@ blk; n/a       ; CJK_Symbols_And_Punctuation
 blk; n/a       ; CJK_Unified_Ideographs
 blk; n/a       ; CJK_Unified_Ideographs_Extension_A
 blk; n/a       ; CJK_Unified_Ideographs_Extension_B
+blk; n/a       ; CJK_Unified_Ideographs_Extension_C
 blk; n/a       ; Combining_Diacritical_Marks
 blk; n/a       ; Combining_Diacritical_Marks_For_Symbols; Combining_Marks_For_Symbols
 blk; n/a       ; Combining_Diacritical_Marks_Supplement
 blk; n/a       ; Combining_Half_Marks
+blk; n/a       ; Common_Indic_Number_Forms
 blk; n/a       ; Control_Pictures
 blk; n/a       ; Coptic
 blk; n/a       ; Counting_Rod_Numerals
@@ -169,10 +174,14 @@ blk; n/a       ; Cyrillic_Extended_B
 blk; n/a       ; Cyrillic_Supplement              ; Cyrillic_Supplementary
 blk; n/a       ; Deseret
 blk; n/a       ; Devanagari
+blk; n/a       ; Devanagari_Extended
 blk; n/a       ; Dingbats
 blk; n/a       ; Domino_Tiles
+blk; n/a       ; Egyptian_Hieroglyphs
+blk; n/a       ; Enclosed_Alphanumeric_Supplement
 blk; n/a       ; Enclosed_Alphanumerics
 blk; n/a       ; Enclosed_CJK_Letters_And_Months
+blk; n/a       ; Enclosed_Ideographic_Supplement
 blk; n/a       ; Ethiopic
 blk; n/a       ; Ethiopic_Extended
 blk; n/a       ; Ethiopic_Supplement
@@ -189,6 +198,8 @@ blk; n/a       ; Gurmukhi
 blk; n/a       ; Halfwidth_And_Fullwidth_Forms
 blk; n/a       ; Hangul_Compatibility_Jamo
 blk; n/a       ; Hangul_Jamo
+blk; n/a       ; Hangul_Jamo_Extended_A
+blk; n/a       ; Hangul_Jamo_Extended_B
 blk; n/a       ; Hangul_Syllables
 blk; n/a       ; Hanunoo
 blk; n/a       ; Hebrew
@@ -196,7 +207,12 @@ blk; n/a       ; High_Private_Use_Surrogates
 blk; n/a       ; High_Surrogates
 blk; n/a       ; Hiragana
 blk; n/a       ; Ideographic_Description_Characters
+blk; n/a       ; Imperial_Aramaic
+blk; n/a       ; Inscriptional_Pahlavi
+blk; n/a       ; Inscriptional_Parthian
 blk; n/a       ; IPA_Extensions
+blk; n/a       ; Javanese
+blk; n/a       ; Kaithi
 blk; n/a       ; Kanbun
 blk; n/a       ; Kangxi_Radicals
 blk; n/a       ; Kannada
@@ -218,6 +234,7 @@ blk; n/a       ; Letterlike_Symbols
 blk; n/a       ; Limbu
 blk; n/a       ; Linear_B_Ideograms
 blk; n/a       ; Linear_B_Syllabary
+blk; n/a       ; Lisu
 blk; n/a       ; Low_Surrogates
 blk; n/a       ; Lycian
 blk; n/a       ; Lydian
@@ -225,6 +242,7 @@ blk; n/a       ; Mahjong_Tiles
 blk; n/a       ; Malayalam
 blk; n/a       ; Mathematical_Alphanumeric_Symbols
 blk; n/a       ; Mathematical_Operators
+blk; n/a       ; Meetei_Mayek
 blk; n/a       ; Miscellaneous_Mathematical_Symbols_A
 blk; n/a       ; Miscellaneous_Mathematical_Symbols_B
 blk; n/a       ; Miscellaneous_Symbols
@@ -234,6 +252,7 @@ blk; n/a       ; Modifier_Tone_Letters
 blk; n/a       ; Mongolian
 blk; n/a       ; Musical_Symbols
 blk; n/a       ; Myanmar
+blk; n/a       ; Myanmar_Extended_A
 blk; n/a       ; New_Tai_Lue
 blk; n/a       ; NKo
 blk; n/a       ; No_Block
@@ -242,6 +261,8 @@ blk; n/a       ; Ogham
 blk; n/a       ; Ol_Chiki
 blk; n/a       ; Old_Italic
 blk; n/a       ; Old_Persian
+blk; n/a       ; Old_South_Arabian
+blk; n/a       ; Old_Turkic
 blk; n/a       ; Optical_Character_Recognition
 blk; n/a       ; Oriya
 blk; n/a       ; Osmanya
@@ -252,7 +273,9 @@ blk; n/a       ; Phonetic_Extensions
 blk; n/a       ; Phonetic_Extensions_Supplement
 blk; n/a       ; Private_Use_Area                 ; Private_Use
 blk; n/a       ; Rejang
+blk; n/a       ; Rumi_Numeral_Symbols
 blk; n/a       ; Runic
+blk; n/a       ; Samaritan
 blk; n/a       ; Saurashtra
 blk; n/a       ; Shavian
 blk; n/a       ; Sinhala
@@ -273,6 +296,8 @@ blk; n/a       ; Tagalog
 blk; n/a       ; Tagbanwa
 blk; n/a       ; Tags
 blk; n/a       ; Tai_Le
+blk; n/a       ; Tai_Tham
+blk; n/a       ; Tai_Viet
 blk; n/a       ; Tai_Xuan_Jing_Symbols
 blk; n/a       ; Tamil
 blk; n/a       ; Telugu
@@ -282,9 +307,11 @@ blk; n/a       ; Tibetan
 blk; n/a       ; Tifinagh
 blk; n/a       ; Ugaritic
 blk; n/a       ; Unified_Canadian_Aboriginal_Syllabics; Canadian_Syllabics
+blk; n/a       ; Unified_Canadian_Aboriginal_Syllabics_Extended
 blk; n/a       ; Vai
 blk; n/a       ; Variation_Selectors
 blk; n/a       ; Variation_Selectors_Supplement
+blk; n/a       ; Vedic_Extensions
 blk; n/a       ; Vertical_Forms
 blk; n/a       ; Yi_Radicals
 blk; n/a       ; Yi_Syllables
@@ -299,6 +326,7 @@ ccc;   8; KV   ; Kana_Voicing
 ccc;   9; VR   ; Virama
 ccc; 200; ATBL ; Attached_Below_Left
 ccc; 202; ATB  ; Attached_Below
+ccc; 214; ATA  ; Attached_Above
 ccc; 216; ATAR ; Attached_Above_Right
 ccc; 218; BL   ; Below_Left
 ccc; 220; B    ; Below
@@ -315,6 +343,46 @@ ccc; 240; IS   ; Iota_Subscript
 # Case_Folding (cf)
 
 # @missing: 0000..10FFFF; Case_Folding; <code point>
+
+# Case_Ignorable (CI)
+
+CI ; N         ; No                               ; F                                ; False
+CI ; Y         ; Yes                              ; T                                ; True
+
+# Cased (Cased)
+
+Cased; N       ; No                               ; F                                ; False
+Cased; Y       ; Yes                              ; T                                ; True
+
+# Changes_When_Casefolded (CWCF)
+
+CWCF; N        ; No                               ; F                                ; False
+CWCF; Y        ; Yes                              ; T                                ; True
+
+# Changes_When_Casemapped (CWCM)
+
+CWCM; N        ; No                               ; F                                ; False
+CWCM; Y        ; Yes                              ; T                                ; True
+
+# Changes_When_Lowercased (CWL)
+
+CWL; N         ; No                               ; F                                ; False
+CWL; Y         ; Yes                              ; T                                ; True
+
+# Changes_When_NFKC_Casefolded (CWKCF)
+
+CWKCF; N       ; No                               ; F                                ; False
+CWKCF; Y       ; Yes                              ; T                                ; True
+
+# Changes_When_Titlecased (CWT)
+
+CWT; N         ; No                               ; F                                ; False
+CWT; Y         ; Yes                              ; T                                ; True
+
+# Changes_When_Uppercased (CWU)
+
+CWU; N         ; No                               ; F                                ; False
+CWU; Y         ; Yes                              ; T                                ; True
 
 # Composition_Exclusion (CE)
 
@@ -600,6 +668,7 @@ jg ; n/a       ; Burushaski_Yeh_Barree
 jg ; n/a       ; Dal
 jg ; n/a       ; Dalath_Rish
 jg ; n/a       ; E
+jg ; n/a       ; Farsi_Yeh
 jg ; n/a       ; Fe
 jg ; n/a       ; Feh
 jg ; n/a       ; Final_Semkath
@@ -622,6 +691,7 @@ jg ; n/a       ; Mim
 jg ; n/a       ; No_Joining_Group
 jg ; n/a       ; Noon
 jg ; n/a       ; Nun
+jg ; n/a       ; Nya
 jg ; n/a       ; Pe
 jg ; n/a       ; Qaf
 jg ; n/a       ; Qaph
@@ -667,6 +737,7 @@ lb ; BK        ; Mandatory_Break
 lb ; CB        ; Contingent_Break
 lb ; CL        ; Close_Punctuation
 lb ; CM        ; Combining_Mark
+lb ; CP        ; Close_Parenthesis
 lb ; CR        ; Carriage_Return
 lb ; EX        ; Exclamation
 lb ; GL        ; Glue
@@ -725,6 +796,10 @@ NFC_QC; Y      ; Yes
 NFD_QC; N      ; No
 NFD_QC; Y      ; Yes
 
+# NFKC_Casefold (NFKC_CF)
+
+# @missing: 0000..10FFFF; NFKC_Casefold; <code point>
+
 # NFKC_Quick_Check (NFKC_QC)
 
 NFKC_QC; M     ; Maybe
@@ -739,6 +814,10 @@ NFKD_QC; Y     ; Yes
 # Name (na)
 
 # @missing: 0000..10FFFF; Name; <none>
+
+# Name_Alias (Name_Alias)
+
+# @missing: 0000..10FFFF; Name_Alias; <none>
 
 # Noncharacter_Code_Point (NChar)
 
@@ -824,8 +903,11 @@ STerm; Y       ; Yes                              ; T                           
 # Script (sc)
 
 sc ; Arab      ; Arabic
+sc ; Armi      ; Imperial_Aramaic
 sc ; Armn      ; Armenian
+sc ; Avst      ; Avestan
 sc ; Bali      ; Balinese
+sc ; Bamu      ; Bamum
 sc ; Beng      ; Bengali
 sc ; Bopo      ; Bopomofo
 sc ; Brai      ; Braille
@@ -840,6 +922,7 @@ sc ; Cprt      ; Cypriot
 sc ; Cyrl      ; Cyrillic
 sc ; Deva      ; Devanagari
 sc ; Dsrt      ; Deseret
+sc ; Egyp      ; Egyptian_Hieroglyphs
 sc ; Ethi      ; Ethiopic
 sc ; Geor      ; Georgian
 sc ; Glag      ; Glagolitic
@@ -854,31 +937,40 @@ sc ; Hebr      ; Hebrew
 sc ; Hira      ; Hiragana
 sc ; Hrkt      ; Katakana_Or_Hiragana
 sc ; Ital      ; Old_Italic
+sc ; Java      ; Javanese
 sc ; Kali      ; Kayah_Li
 sc ; Kana      ; Katakana
 sc ; Khar      ; Kharoshthi
 sc ; Khmr      ; Khmer
 sc ; Knda      ; Kannada
+sc ; Kthi      ; Kaithi
+sc ; Lana      ; Tai_Tham
 sc ; Laoo      ; Lao
 sc ; Latn      ; Latin
 sc ; Lepc      ; Lepcha
 sc ; Limb      ; Limbu
 sc ; Linb      ; Linear_B
+sc ; Lisu      ; Lisu
 sc ; Lyci      ; Lycian
 sc ; Lydi      ; Lydian
 sc ; Mlym      ; Malayalam
 sc ; Mong      ; Mongolian
+sc ; Mtei      ; Meetei_Mayek
 sc ; Mymr      ; Myanmar
 sc ; Nkoo      ; Nko
 sc ; Ogam      ; Ogham
 sc ; Olck      ; Ol_Chiki
+sc ; Orkh      ; Old_Turkic
 sc ; Orya      ; Oriya
 sc ; Osma      ; Osmanya
 sc ; Phag      ; Phags_Pa
+sc ; Phli      ; Inscriptional_Pahlavi
 sc ; Phnx      ; Phoenician
-sc ; Qaai      ; Inherited
+sc ; Prti      ; Inscriptional_Parthian
 sc ; Rjng      ; Rejang
 sc ; Runr      ; Runic
+sc ; Samr      ; Samaritan
+sc ; Sarb      ; Old_South_Arabian
 sc ; Saur      ; Saurashtra
 sc ; Shaw      ; Shavian
 sc ; Sinh      ; Sinhala
@@ -889,6 +981,7 @@ sc ; Tagb      ; Tagbanwa
 sc ; Tale      ; Tai_Le
 sc ; Talu      ; New_Tai_Lue
 sc ; Taml      ; Tamil
+sc ; Tavt      ; Tai_Viet
 sc ; Telu      ; Telugu
 sc ; Tfng      ; Tifinagh
 sc ; Tglg      ; Tagalog
@@ -900,6 +993,7 @@ sc ; Vaii      ; Vai
 sc ; Xpeo      ; Old_Persian
 sc ; Xsux      ; Cuneiform
 sc ; Yiii      ; Yi
+sc ; Zinh      ; Inherited                        ; Qaai
 sc ; Zyyy      ; Common
 sc ; Zzzz      ; Unknown
 
@@ -955,10 +1049,6 @@ Term; Y        ; Yes                              ; T                           
 
 # @missing: 0000..10FFFF; Unicode_1_Name; <none>
 
-# Unicode_Radical_Stroke (URS)
-
-# @missing: 0000..10FFFF; Unicode_Radical_Stroke; <none>
-
 # Unified_Ideograph (UIdeo)
 
 UIdeo; N       ; No                               ; F                                ; False
@@ -1008,5 +1098,65 @@ XIDC; Y        ; Yes                              ; T                           
 
 XIDS; N        ; No                               ; F                                ; False
 XIDS; Y        ; Yes                              ; T                                ; True
+
+# cjkAccountingNumeric (cjkAccountingNumeric)
+
+# @missing: 0000..10FFFF; cjkAccountingNumeric; NaN
+
+# cjkCompatibilityVariant (cjkCompatibilityVariant)
+
+# @missing: 0000..10FFFF; cjkCompatibilityVariant; <code point>
+
+# cjkIICore (cjkIICore)
+
+# @missing: 0000..10FFFF; cjkIICore; <none>
+
+# cjkIRG_GSource (cjkIRG_GSource)
+
+# @missing: 0000..10FFFF; cjkIRG_GSource; <none>
+
+# cjkIRG_HSource (cjkIRG_HSource)
+
+# @missing: 0000..10FFFF; cjkIRG_HSource; <none>
+
+# cjkIRG_JSource (cjkIRG_JSource)
+
+# @missing: 0000..10FFFF; cjkIRG_JSource; <none>
+
+# cjkIRG_KPSource (cjkIRG_KPSource)
+
+# @missing: 0000..10FFFF; cjkIRG_KPSource; <none>
+
+# cjkIRG_KSource (cjkIRG_KSource)
+
+# @missing: 0000..10FFFF; cjkIRG_KSource; <none>
+
+# cjkIRG_MSource (cjkIRG_MSource)
+
+# @missing: 0000..10FFFF; cjkIRG_MSource; <none>
+
+# cjkIRG_TSource (cjkIRG_TSource)
+
+# @missing: 0000..10FFFF; cjkIRG_TSource; <none>
+
+# cjkIRG_USource (cjkIRG_USource)
+
+# @missing: 0000..10FFFF; cjkIRG_USource; <none>
+
+# cjkIRG_VSource (cjkIRG_VSource)
+
+# @missing: 0000..10FFFF; cjkIRG_VSource; <none>
+
+# cjkOtherNumeric (cjkOtherNumeric)
+
+# @missing: 0000..10FFFF; cjkOtherNumeric; NaN
+
+# cjkPrimaryNumeric (cjkPrimaryNumeric)
+
+# @missing: 0000..10FFFF; cjkPrimaryNumeric; NaN
+
+# cjkRSUnicode (cjkRSUnicode)
+
+# @missing: 0000..10FFFF; cjkRSUnicode; <none>
 
 # EOF

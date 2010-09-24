@@ -766,7 +766,7 @@ only with arrays that have a hash reference at index 0.
 (F) You said something like C<< local $ar->{'key'} >>, where $ar is
 a reference to a pseudo-hash.  That hasn't been implemented yet, but
 you can get a similar effect by localizing the corresponding array
-element directly -- C<< local $ar->[$ar->[0]{'key'}] >>.
+element directly: C<< local $ar->[$ar->[0]{'key'}] >>.
 
 =item Can't use %%! because Errno.pm is not available
 

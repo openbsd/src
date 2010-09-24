@@ -35,11 +35,11 @@ already be overwhelming.
   << >>                   while  ( ) { }, until ( ) { }
   named uops              if     ( ) { } elsif ( ) { } else { }
   < > <= >= lt gt le ge   unless ( ) { } elsif ( ) { } else { }
-  == != <=> eq ne cmp     for equals foreach (ALWAYS)
+  == != <=> eq ne cmp ~~  for equals foreach (ALWAYS)
   &
   | ^              REGEX METACHARS            REGEX MODIFIERS
   &&               ^     string begin         /i case insens.
-  ||               $     str. end (before \n) /m line based ^$
+  || //            $     str. end (before \n) /m line based ^$
   .. ...           +     one or more          /s . includes \n
   ?:               *     zero or more         /x ign. wh.space
   = += -= *= etc.  ?     zero or one          /g global

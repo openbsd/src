@@ -43,6 +43,9 @@ PERLVAR(Istack_base,	SV **)
 PERLVAR(Istack_max,	SV **)
 
 PERLVAR(Iscopestack,	I32 *)		/* scopes we've ENTERed */
+/* name of the scopes we've ENTERed. Only used with -DDEBUGGING, but needs to be
+   present always, as -DDEUBGGING must be binary compatible with non.  */
+PERLVARI(Iscopestack_name, const char * *, NULL)
 PERLVAR(Iscopestack_ix,	I32)
 PERLVAR(Iscopestack_max,I32)
 
@@ -102,16 +105,16 @@ The input record separator - C<$/> in Perl space.
 
 The GV which was last used for a filehandle input operation. (C<< <FH> >>)
 
-=for apidoc mn|SV*|PL_ofs_sv
+=for apidoc mn|GV*|PL_ofsgv
 
-The output field separator - C<$,> in Perl space.
+The glob containing the output field separator - C<*,> in Perl space.
 
 =cut
 */
 
 PERLVAR(Irs,		SV *)		/* input record separator $/ */
 PERLVAR(Ilast_in_gv,	GV *)		/* GV used in last <FH> */
-PERLVAR(Iofs_sv,	SV *)		/* output field separator $, */
+PERLVAR(Iofsgv,		GV *)		/* GV of output field separator *, */
 PERLVAR(Idefoutgv,	GV *)		/* default FH for output */
 PERLVARI(Ichopset,	const char *, " \n-")	/* $: */
 PERLVAR(Iformtarget,	SV *)
@@ -123,7 +126,7 @@ PERLVAR(Idefstash,	HV *)		/* main symbol table */
 PERLVAR(Icurstash,	HV *)		/* symbol table for current package */
 
 PERLVAR(Irestartop,	OP *)		/* propagating an error from croak? */
-PERLVAR(Icurcop,	COP * VOL)
+PERLVAR(Icurcop,	COP *)
 PERLVAR(Icurstack,	AV *)		/* THE STACK */
 PERLVAR(Icurstackinfo,	PERL_SI *)	/* current stack + context */
 PERLVAR(Imainstack,	AV *)		/* the stack when nothing funny is
@@ -170,6 +173,20 @@ PERLVARA(Icolors,6,	char *)		/* from regcomp.c */
 PERLVARI(Ipeepp,	peep_t, MEMBER_TO_FPTR(Perl_peep))
 					/* Pointer to peephole optimizer */
 
+/*
+=for apidoc Amn|Perl_ophook_t|PL_opfreehook
+
+When non-C<NULL>, the function pointed by this variable will be called each time an OP is freed with the corresponding OP as the argument.
+This allows extensions to free any extra attribute they have locally attached to an OP.
+It is also assured to first fire for the parent OP and then for its kids.
+
+When you replace this variable, it is considered a good practice to store the possibly previously installed hook and that you recall it inside your own.
+
+=cut
+*/
+
+PERLVARI(Iopfreehook,	Perl_ophook_t, 0) /* op_free() hook */
+
 PERLVARI(Imaxscream,	I32,	-1)
 PERLVARI(Ireginterp_cnt,I32,	 0)	/* Whether "Regexp" was interpolated. */
 PERLVARI(Iwatchaddr,	char **, 0)
@@ -188,7 +205,7 @@ PERLVAR(Ilocalizing,	U8)		/* are we processing a local() list? */
 PERLVAR(Icolorset,	bool)		/* from regcomp.c */
 PERLVARI(Idirty,	bool, FALSE)	/* in the middle of tearing things
 					   down? */
-PERLVAR(Iin_eval,	VOL U8)		/* trap "fatal" errors? */
+PERLVAR(Iin_eval,	U8)		/* trap "fatal" errors? */
 PERLVAR(Itainted,	bool)		/* using variables controlled by $< */
 
 /* This value may be set when embedding for full cleanup  */
@@ -214,14 +231,12 @@ PERLVAR(Ilocalpatches,	const char * const *)
 PERLVARI(Isplitstr,	const char *, " ")
 
 PERLVAR(Iminus_c,	bool)
-PERLVAR(Ipreprocess,	bool)
 PERLVAR(Iminus_n,	bool)
 PERLVAR(Iminus_p,	bool)
 PERLVAR(Iminus_l,	bool)
 PERLVAR(Iminus_a,	bool)
 PERLVAR(Iminus_F,	bool)
 PERLVAR(Idoswitches,	bool)
-
 PERLVAR(Iminus_E,	bool)
 
 /*
@@ -241,6 +256,7 @@ PERLVAR(Iexit_flags,	U8)		/* was exit() unexpected, etc. */
 PERLVAR(Isrand_called,	bool)
 /* Part of internal state, but makes the 16th 1 byte variable in a row.  */
 PERLVAR(Itainting,	bool)		/* doing taint checks */
+/* Space for a U8 */
 PERLVAR(Iinplace,	char *)
 PERLVAR(Ie_script,	SV *)
 
@@ -460,11 +476,13 @@ PERLVAR(Imax_intro_pending,	I32)	/* end of vars to introduce */
 PERLVAR(Ipadix,		I32)		/* max used index in current "register" pad */
 
 PERLVAR(Ipadix_floor,	I32)		/* how low may inner block reset padix */
-PERLVAR(Ipad_reset_pending,	I32)	/* reset pad on next attempted alloc */
 
 PERLVAR(Ihints,		U32)		/* pragma-tic compile-time flags */
 
 PERLVAR(Idebug,		VOL U32)	/* flags given to -D switch */
+
+/* Perl_Ibreakable_sub_generation_ptr was too long for VMS, hence "gen"  */
+PERLVARI(Ibreakable_sub_gen, U32, 0)
 
 PERLVARI(Iamagic_generation,	long,	0)
 
@@ -498,10 +516,12 @@ PERLVAR(Inumeric_name,	char *)		/* Name of current numeric locale */
 
 /* utf8 character classes */
 PERLVAR(Iutf8_alnum,	SV *)
-PERLVAR(Iutf8_alnumc,	SV *)
 PERLVAR(Iutf8_ascii,	SV *)
 PERLVAR(Iutf8_alpha,	SV *)
 PERLVAR(Iutf8_space,	SV *)
+PERLVAR(Iutf8_perl_space,	SV *)
+PERLVAR(Iutf8_perl_word,	SV *)
+PERLVAR(Iutf8_posix_digit,	SV *)
 PERLVAR(Iutf8_cntrl,	SV *)
 PERLVAR(Iutf8_graph,	SV *)
 PERLVAR(Iutf8_digit,	SV *)
@@ -511,6 +531,16 @@ PERLVAR(Iutf8_print,	SV *)
 PERLVAR(Iutf8_punct,	SV *)
 PERLVAR(Iutf8_xdigit,	SV *)
 PERLVAR(Iutf8_mark,	SV *)
+PERLVAR(Iutf8_X_begin,	SV *)
+PERLVAR(Iutf8_X_extend,	SV *)
+PERLVAR(Iutf8_X_prepend,	SV *)
+PERLVAR(Iutf8_X_non_hangul,	SV *)
+PERLVAR(Iutf8_X_L,	SV *)
+PERLVAR(Iutf8_X_LV,	SV *)
+PERLVAR(Iutf8_X_LVT,	SV *)
+PERLVAR(Iutf8_X_T,	SV *)
+PERLVAR(Iutf8_X_V,	SV *)
+PERLVAR(Iutf8_X_LV_LVT_V,	SV *)
 PERLVAR(Iutf8_toupper,	SV *)
 PERLVAR(Iutf8_totitle,	SV *)
 PERLVAR(Iutf8_tolower,	SV *)
@@ -525,20 +555,19 @@ PERLVAR(Ilast_swash_klen,	U8)	/* Only needs to store 0-10  */
 PERLVARI(Icryptseen,	bool,	FALSE)	/* has fast crypt() been initialized? */
 #endif
 
-/* Space for a U8 */
+PERLVAR(Ipad_reset_pending,	bool)	/* reset pad on next attempted alloc */
 
 PERLVARI(Iglob_index,	int,	0)
 
 
 PERLVAR(Iparser,	yy_parser *)	/* current parser state */
 
-PERLVAR(Ibitcount,	char *)
-
 /* Array of signal handlers, indexed by signal number, through which the C
    signal handler dispatches.  */
 PERLVAR(Ipsig_ptr, SV**)
 /* Array of names of signals, indexed by signal number, for (re)use as the first
-   argument to a signal handler.   */
+   argument to a signal handler.   Only one block of memory is allocated for
+   both psig_name and psig_ptr.  */
 PERLVAR(Ipsig_name, SV**)		
 
 #if defined(PERL_IMPLICIT_SYS)
@@ -570,7 +599,8 @@ PERLVAR(Iregex_pad,     SV**)		/* Shortcut into the array of
 					   regex_padav */
 PERLVAR(Iregex_padav,   AV*)		/* All regex objects, indexed via the
 					   values in op_pmoffset of pmop.
-					   Entry 0 is an array of IVs listing
+					   Entry 0 is an SV whose PV is a
+					   "packed" list of IVs listing
 					   the now-free slots in the array */
 #endif
 
@@ -678,9 +708,6 @@ PERLVARI(Islab_count, U32, 0)	/* Size of the array */
 
 /* Can shared object be destroyed */
 PERLVARI(Idestroyhook, destroyable_proc_t, MEMBER_TO_FPTR(Perl_sv_destroyable))
-
-/* Perl_Ibreakable_sub_generation_ptr was too long for VMS, hence "gen"  */
-PERLVARI(Ibreakable_sub_gen, U32, 0)
 
 #ifdef DEBUG_LEAKING_SCALARS
 PERLVARI(Isv_serial, U32, 0) /* SV serial number, used in sv.c */

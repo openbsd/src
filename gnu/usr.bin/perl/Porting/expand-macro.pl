@@ -59,7 +59,7 @@ print $out <<"EOF";
 #include "perl.h"
 EOF
 
-print qq{#include "$header"\n}
+print $out qq{#include "$header"\n}
     unless $header eq 'perl.h' or $header eq 'EXTERN.h';
 
 print $out <<"EOF";

@@ -61,7 +61,9 @@ $ use_pack_malloc = "N"
 $ use_debugmalloc = "N"
 $ ccflags = ""
 $ static_ext = ""
+$ dynamic_ext = ""
 $ nonxs_ext = ""
+$ nonxs_ext2 = ""
 $ vms_default_directory_name = F$ENVIRONMENT("DEFAULT")
 $ max_allowed_dir_depth = 3  ! e.g. [A.B.PERLxxx] not [A.B.C.PERLxxx]
 $! max_allowed_dir_depth = 2 ! e.g. [A.PERLxxx] not [A.B.PERLxxx]
@@ -368,11 +370,20 @@ $!
 $Shut_up:
 $ IF F$Mode() .eqs. "BATCH"
 $ THEN
-$   STDOUT = F$PARSE(F$GETQUI("DISPLAY_ENTRY", "JOB_NAME"), -
-                    F$GETQUI("DISPLAY_ENTRY", "LOG_SPECIFICATION"), ".LOG")
-$   WRITE SYS$OUTPUT "Warning: Executing in batch mode.  To avoid file locking conflicts,"
-$   WRITE SYS$OUTPUT "output intended for SYS$OUTPUT will be sent to a new version"
+$   x = F$GETQUI("CANCEL_OPERATION")        ! clear the deck
+$   x = "THIS_JOB"
+$   bproc_queue = f$getqui("DISPLAY_QUEUE","QUEUE_NAME","*",x)
+$   bproc_entry = f$getqui("DISPLAY_JOB","ENTRY_NUMBER",,x)
+$   bproc_name = f$getqui("DISPLAY_JOB","JOB_NAME",,x)
+$   bproc_log_spec = f$getqui("DISPLAY_JOB","LOG_SPECIFICATION",,x)
+$   STDOUT = F$PARSE(bproc_name, bproc_log_spec, ".LOG")
+$   WRITE SYS$OUTPUT "Writing output of entry ''bproc_entry' in queue ''bproc_queue' to a new version of: "
 $   WRITE SYS$OUTPUT STDOUT
+$   DELETE_/SYMBOL x
+$   DELETE_/SYMBOL bproc_queue
+$   DELETE_/SYMBOL bproc_entry
+$   DELETE_/SYMBOL bproc_name
+$   DELETE_/SYMBOL bproc_log_spec
 $ ELSE
 $   STDOUT = F$TRNLNM("SYS$OUTPUT")
 $ ENDIF
@@ -949,7 +960,7 @@ $   delete/symbol val
 $   delete/symbol dsym
 $   if f$type(usedebugging_perl) .nes. ""
 $   then
-$       useperldebug = usedebugging_perl
+$       DEBUGGING = usedebugging_perl
 $       delete/symbol usedebugging_perl
 $   endif
 $!
@@ -2302,10 +2313,10 @@ $ echo "enables the -D switch, at the cost of some performance.  It"
 $ echo "was mandatory on perl 5.005 and before on VMS, but is now"
 $ echo "optional.  If you do not generally use it you should probably"
 $ echo "leave this off and gain a bit of extra speed."
-$ bool_dflt = "y"
-$ if f$type(useperldebug) .nes. "" 
+$ bool_dflt = "n"
+$ if f$type(DEBUGGING) .nes. "" 
 $ then
-$   if f$extract(0,1,f$edit(useperldebug,"collapse,upcase")).eqs."N"  .or. useperldebug .eqs. "undef" then bool_dflt="n"
+$   if f$extract(0,1,f$edit(DEBUGGING,"collapse,upcase")).eqs."Y"  .or. DEBUGGING .eqs. "define" then bool_dflt="y"
 $ endif
 $ rp = "Build a DEBUGGING version of Perl? [''bool_dflt'] "
 $ GOSUB myread
@@ -2717,7 +2728,8 @@ $ OPEN/READ CONFIG 'manifestfound'
 $ext_loop:
 $   READ/END_OF_FILE=end_ext/ERROR=end_ext CONFIG line
 $   IF F$EXTRACT(0,4,line) .NES. "ext/" .AND. -
-       F$EXTRACT(0,8,line) .NES. "vms/ext/" THEN goto ext_loop
+       F$EXTRACT(0,5,line) .NES. "dist/".AND. -
+       F$EXTRACT(0,5,line) .NES. "cpan/" THEN goto ext_loop
 $   line = F$EDIT(line,"COMPRESS")
 $   line = F$ELEMENT(0," ",line)
 $   IF F$EXTRACT(0,4,line) .EQS. "ext/"
@@ -2725,17 +2737,22 @@ $   THEN
 $     xxx = F$ELEMENT(1,"/",line)
 $     IF F$SEARCH("[-.ext]''xxx'.DIR;1") .EQS. "" THEN GOTO ext_loop
 $   ENDIF
-$   IF F$EXTRACT(0,8,line) .EQS. "vms/ext/"
+$   IF F$EXTRACT(0,5,line) .EQS. "dist/"
 $   THEN
-$     xxx = F$ELEMENT(2,"/",line)
-$     IF F$SEARCH("[-.vms.ext]''xxx'.DIR;1") .EQS. "" THEN GOTO ext_loop
-$     xxx = "VMS/" + xxx
+$     xxx = F$ELEMENT(1,"/",line)
+$     IF F$SEARCH("[-.dist]''xxx'.DIR;1") .EQS. "" THEN GOTO ext_loop
+$   ENDIF
+$   IF F$EXTRACT(0,5,line) .EQS. "cpan/"
+$   THEN
+$     xxx = F$ELEMENT(1,"/",line)
+$     IF F$SEARCH("[-.cpan]''xxx'.DIR;1") .EQS. "" THEN GOTO ext_loop
 $   ENDIF
 $   IF xxx .EQS. "DynaLoader" THEN goto ext_loop     ! omit
 $!
 $! (extspec = xxx) =~ tr!-!/!
 $ extspec = ""
 $ idx = 0
+$ extension_dir_name = xxx
 $ replace_dash_with_slash:
 $   before = F$ELEMENT(idx, "-", xxx)
 $   IF before .EQS. "-" THEN goto end_replace_dash_with_slash
@@ -2750,11 +2767,27 @@ $
 $ end_replace_dash_with_slash:
 $   
 $ xxx = known_extensions
+$ gosub may_already_have_extension
+$ IF $STATUS .EQ. 1
+$ THEN
+$     xxx = nonxs_ext
+$     gosub may_already_have_extension
+$ ENDIF
+$ IF $STATUS .EQ. 1
+$ THEN
+$     xxx = nonxs_ext2
+$     gosub may_already_have_extension
+$ ENDIF
+$ IF $STATUS .NE. 1 THEN goto ext_loop
+$ goto found_new_extension
+$!
 $ may_already_have_extension:
 $   idx = F$LOCATE(extspec, xxx)
 $   extlen = F$LENGTH(xxx) 
-$   IF idx .EQ. extlen THEN goto found_new_extension
-$!  But "Flirble" may just be part of "Acme-Flirble"
+$   IF idx .EQ. extlen THEN return 1	! didn't find it
+$!  But "Flirble" may just be part of "Acme-Flirble".  This is not
+$!  bullet-proof because we may only be looking at one chunk of the
+$!  existing extension list.
 $   IF idx .GT. 0 .AND. F$EXTRACT(idx - 1, 1, xxx) .NES. " "
 $   THEN
 $	xxx = F$EXTRACT(idx + F$LENGTH(extspec) + 1, extlen, xxx)
@@ -2764,14 +2797,25 @@ $!  But "Foo" may just be part of "Foo-Bar" so check for equality.
 $   xxx = F$EXTRACT(idx, extlen - idx, xxx)
 $   IF F$ELEMENT(0, " ", xxx) .EQS. extspec
 $   THEN 
-$	GOTO ext_loop
+$	RETURN 3
 $   ELSE 
 $	xxx = F$EXTRACT(F$LENGTH(extspec) + 1, extlen, xxx)
 	GOTO may_already_have_extension
 $   ENDIF
 $!
 $ found_new_extension:
-$   known_extensions = known_extensions + " ''extspec'"
+$   IF F$SEARCH("[-.ext.''extension_dir_name']*.xs") .EQS. "" .AND. F$SEARCH("[-.dist.''extension_dir_name']*.xs") .EQS. "" .AND. F$SEARCH("[-.cpan.''extension_dir_name']*.xs") .EQS. ""
+$   THEN
+$!  Bit if a hack to get around the 1K buffer on older systems.
+$       IF F$LENGTH(nonxs_ext) .GT. 950
+$       THEN
+$           nonxs_ext2 = nonxs_ext2 + " ''extspec'"
+$       ELSE
+$           nonxs_ext = nonxs_ext + " ''extspec'"
+$       ENDIF
+$   ELSE
+$       known_extensions = known_extensions + " ''extspec'"
+$   ENDIF
 $   goto ext_loop
 $end_ext:
 $ close CONFIG
@@ -2779,6 +2823,7 @@ $ DELETE/SYMBOL xxx
 $ DELETE/SYMBOL idx
 $ DELETE/SYMBOL extspec
 $ DELETE/SYMBOL extlen
+$ DELETE/SYMBOL extension_dir_name
 $ known_extensions = F$EDIT(known_extensions,"TRIM,COMPRESS")
 $ dflt = known_extensions
 $ IF ccname .NES. "DEC" .AND. ccname .NES. "CXX"
@@ -2796,15 +2841,12 @@ $ IF .NOT. Has_socketshr .AND. .NOT. Has_Dec_C_Sockets
 $ THEN
 $   dflt = dflt - "Socket"            ! optional on VMS
 $ ENDIF
-$ ! Build this one only for threads without ithreads
-$ IF F$TYPE(useithreads) .EQS. "" .OR. .NOT. use_threads
-$ THEN
-$   dflt = dflt - "Thread"
-$ ELSE
-$   IF useithreads .OR. useithreads .EQS. "define" THEN dflt = dflt - "Thread"
-$ ENDIF
-$ dflt = dflt - "Win32API/File" - "Win32CORE" - "Win32"  ! need Dave Cutler's other project
+$ dflt = dflt - "Win32API/File" - "Win32"  ! need Dave Cutler's other project
+$ nonxs_ext = nonxs_ext - "Win32CORE"
+$ nonxs_ext2 = nonxs_ext2 - "Win32CORE"
 $ dflt = F$EDIT(dflt,"TRIM,COMPRESS")
+$ nonxs_ext = F$EDIT(nonxs_ext,"TRIM,COMPRESS")
+$ nonxs_ext2 = F$EDIT(nonxs_ext2,"TRIM,COMPRESS")
 $!
 $! Ask for their default list of extensions to build
 $ echo ""
@@ -2816,7 +2858,7 @@ $ echo ""
 $ echo "Which modules do you want to build into perl?"
 $ rp = "[''dflt'] "
 $ GOSUB myread
-$ extensions = F$EDIT(ans,"TRIM,COMPRESS")
+$ dynamic_ext = F$EDIT(ans,"TRIM,COMPRESS")
 $!
 $! %Config-I-VMS, determine build/make utility here (make gmake mmk mms)
 $ echo ""
@@ -3011,7 +3053,7 @@ $!
 $ bool_dflt = "y"
 $ IF F$TYPE(useperlio) .NES. ""
 $ then
-$   if f$extract(0,1,f$edit(useperlio,"collapse,upcase")) .eqs. "N" .or. useperlio .eqs. "undef" then bool_dflt = "n"
+$   if .not. useperlio .or. useperlio .eqs. "undef" then bool_dflt = "n"
 $ endif
 $ IF .NOT. silent
 $ THEN
@@ -5828,6 +5870,7 @@ $ WC "ccversion='" + ccversion + "'"
 $ WC "cf_by='" + cf_by + "'"
 $ WC "cf_email='" + cf_email + "'"
 $ WC "cf_time='" + cf_time + "'"
+$ WC "charbits='8'"
 $ WC "config_args='" + config_args + "'"
 $ WC "config_sh='" + config_sh + "'"
 $ WC "cpp_stuff='" + cpp_stuff + "'"
@@ -6248,9 +6291,9 @@ $ WC "doublesize='" + doublesize + "'"
 $ WC "drand01='" + drand01 + "'"
 $ WC "dtrace='" + "'"
 $!
-$! The extensions symbol may be quite long
+$! The dynamic_ext symbol may be quite long
 $!
-$ tmp = "dynamic_ext='" + extensions + "'"
+$ tmp = "dynamic_ext='" + dynamic_ext + "'"
 $ WC/symbol tmp
 $ DELETE/SYMBOL tmp
 $ WC "eagain=' '"
@@ -6259,11 +6302,9 @@ $ WC "embedmymalloc='" + usemymalloc + "'"
 $ WC "eunicefix=':'"
 $ WC "exe_ext='" + exe_ext + "'"
 $!
-$! The extensions symbol may be quite long
+$! The extensions symbols may be quite long
 $!
-$ tmp = "extensions='" + extensions + "'"
-$ WC/symbol tmp
-$ DELETE/SYMBOL tmp
+$ WC/symbol "extensions='", nonxs_ext, " ", nonxs_ext2, " ", dynamic_ext, "'"
 $ WC "fflushNULL='define'"
 $ WC "fflushall='undef'"
 $ WC "fpostype='fpos_t'"
@@ -6432,7 +6473,7 @@ $ WC "netdb_hlen_type='" + netdb_hlen_type + "'"
 $ WC "netdb_host_type='" + netdb_host_type + "'"
 $ WC "netdb_name_type='" + netdb_name_type + "'"
 $ WC "netdb_net_type='" + netdb_net_type + "'"
-$ WC "nonxs_ext='" + nonxs_ext + "'"
+$ WC/symbol "nonxs_ext='", nonxs_ext, " ", nonxs_ext2, "'"
 $ WC "nveformat='" + nveformat + "'"
 $ WC "nvfformat='" + nvfformat + "'"
 $ WC "nvgformat='" + nvgformat + "'"
@@ -6601,6 +6642,7 @@ $ WC "uvuformat='" + uvuformat + "'"
 $ WC "uvxformat='" + uvxformat + "'"
 $ WC "uvXUformat='" + uvXUformat + "'"
 $ WC "vendorarch='" + "'"
+$ WC "vaproto='define'"
 $ WC "vendorarchexp='" + "'"
 $ WC "vendorbin='" + "'"
 $ WC "vendorbinexp='" + "'"
@@ -7161,7 +7203,7 @@ $ WRITE CONFIG "$ cpan2dist  == """ + perl_setup_perl + " ''vms_prefix':[utils]c
 $! FIXME: "-" is an operator and illegal in a symbol name -- cpanp-run-perl can't work
 $!$ WRITE CONFIG "$ cpanp-run-perl == """ + perl_setup_perl + " ''vms_prefix':[utils]cpanp-run-perl.com"""
 $ WRITE CONFIG "$ cpanp      == """ + perl_setup_perl + " ''vms_prefix':[utils]cpanp.com"""
-$ IF F$LOCATE("Devel::DProf",extensions) .LT. F$LENGTH(extensions)
+$ IF F$LOCATE("Devel::DProf",dynamic_ext) .LT. F$LENGTH(dynamic_ext)
 $ THEN
 $ WRITE CONFIG "$ dprofpp    == """ + perl_setup_perl + " ''vms_prefix':[utils]dprofpp.com"""
 $ ENDIF 

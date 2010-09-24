@@ -1,0 +1,82 @@
+
+Name:		Memoize
+What:		Transparently speed up functions by caching return values.
+Version:	1.00
+Author:		Mark-Jason Dominus (mjd-perl-memoize+@plover.com)
+
+################################################################
+
+How to build me:
+
+	perl Makefile.PL
+	make
+	make test
+
+There's a very small chance that the tests in speed.t and
+expire_module_t.t might fail because of clock skew or bizarre system
+load conditions.  If the tests there fail, rerun them and see if the
+problem persists.
+
+If the tests work,
+
+	make install
+
+If not, please send me a report that mentions which tests failed.
+The address is: mjd-perl-memoize+@plover.com.
+
+################################################################
+What's new since 0.66:
+
+Minor documentation and test changes only.
+
+################################################################
+What's new since 0.65:
+
+Test changes only.  
+
+        0.62 was the fist version that would be distributed with Perl.
+        I got so absorbed in integrating it that I wrote some tests
+        that used Time::HiRes.  I knew this was safe because
+        Time::HiRes is also distributed with the same versions of
+        Perl.  I totally forgot that some people will get the module
+        off of CPAN without Perl and they may not have TIme::HiRes.
+        Sorry!
+
+################################################################
+What's new since 0.62:
+
+
+                            N O T I C E !
+
+    ****************************************************************
+    **                                                            **
+    **   The TIE option is now strongly deprecated.  It will be   **
+    **   permanently removed in the NEXT release of Memoize.      **
+    **   Please convert all extant software to use HASH instead.  **
+    **                                                            **
+    **   See the manual for details.                              **
+    **                                                            **
+    ****************************************************************
+
+I'm sorry about this.  I hate making incompatible changes.  But as of
+v0.65, Memoize is included in the Perl core.  It is about to become
+much more difficult to make incompatible interface changes; if I don't
+get rid of TIE now, I may not get another chance.
+
+TIE presented serious problems.  First, it had a bizarre syntax.  But
+the big problem was that it was difficult and complicated for
+expiration manager authors to support; evern expiration manager had to
+duplicate the logic for handling TIE.  HASH is much simpler to use,
+more powerful, and is trivial for expiration managers to support.
+
+Many long-awaited cleanups and bug fixes. 
+
+Memoize now works under threaded perl
+
+Slow tests speeded up.  More test file improvements.
+
+Long-standing LIST_CACHE bug cleared up---it turns out that there
+never was a bug.  I put in tests for it anyway.
+
+Manual increased.
+

@@ -1,0 +1,115 @@
+################################################################################
+##
+##  $Revision: 6 $
+##  $Author: mhx $
+##  $Date: 2009/01/18 14:10:51 +0100 $
+##
+################################################################################
+##
+##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 2.x, Copyright (C) 2001, Paul Marquess.
+##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
+##
+##  This program is free software; you can redistribute it and/or
+##  modify it under the same terms as Perl itself.
+##
+################################################################################
+
+=provides
+
+__UNDEFINED__
+newSVpvn_flags
+
+=implementation
+
+#if { VERSION < 5.6.0 }
+# define D_PPP_CONSTPV_ARG(x)  ((char *) (x))
+#else
+# define D_PPP_CONSTPV_ARG(x)  (x)
+#endif
+
+__UNDEFINED__  newSVpvn(data,len)  ((data)                                              \
+                                    ? ((len) ? newSVpv((data), (len)) : newSVpv("", 0)) \
+                                    : newSV(0))
+
+__UNDEFINED__  newSVpvn_utf8(s, len, u)  newSVpvn_flags((s), (len), (u) ? SVf_UTF8 : 0)
+
+__UNDEFINED__  SVf_UTF8  0
+
+#ifndef newSVpvn_flags
+
+#if { NEED newSVpvn_flags }
+
+SV *
+newSVpvn_flags(pTHX_ const char *s, STRLEN len, U32 flags)
+{
+  SV *sv = newSVpvn(D_PPP_CONSTPV_ARG(s), len);
+  SvFLAGS(sv) |= (flags & SVf_UTF8);
+  return (flags & SVs_TEMP) ? sv_2mortal(sv) : sv;
+}
+
+#endif
+
+#endif
+
+=xsinit
+
+#define NEED_newSVpvn_flags
+
+=xsubs
+
+void
+newSVpvn()
+	PPCODE:
+		mXPUSHs(newSVpvn("test", 4));
+		mXPUSHs(newSVpvn("test", 2));
+		mXPUSHs(newSVpvn("test", 0));
+		mXPUSHs(newSVpvn(NULL, 2));
+		mXPUSHs(newSVpvn(NULL, 0));
+		XSRETURN(5);
+
+void
+newSVpvn_flags()
+	PPCODE:
+		XPUSHs(newSVpvn_flags("test", 4, SVs_TEMP));
+		XPUSHs(newSVpvn_flags("test", 2, SVs_TEMP));
+		XPUSHs(newSVpvn_flags("test", 0, SVs_TEMP));
+		XPUSHs(newSVpvn_flags(NULL, 2, SVs_TEMP));
+		XPUSHs(newSVpvn_flags(NULL, 0, SVs_TEMP));
+		XSRETURN(5);
+
+void
+newSVpvn_utf8()
+	PPCODE:
+		XPUSHs(newSVpvn_flags("test", 4, SVs_TEMP|SVf_UTF8));
+		XSRETURN(1);
+
+=tests plan => 15
+
+my @s = &Devel::PPPort::newSVpvn();
+ok(@s == 5);
+ok($s[0], "test");
+ok($s[1], "te");
+ok($s[2], "");
+ok(!defined($s[3]));
+ok(!defined($s[4]));
+
+@s = &Devel::PPPort::newSVpvn_flags();
+ok(@s == 5);
+ok($s[0], "test");
+ok($s[1], "te");
+ok($s[2], "");
+ok(!defined($s[3]));
+ok(!defined($s[4]));
+
+@s = &Devel::PPPort::newSVpvn_utf8();
+ok(@s == 1);
+ok($s[0], "test");
+
+if ($] >= 5.008001) {
+  require utf8;
+  ok(utf8::is_utf8($s[0]));
+}
+else {
+  skip("skip: no is_utf8()", 0);
+}

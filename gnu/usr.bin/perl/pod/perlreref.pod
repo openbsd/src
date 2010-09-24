@@ -92,6 +92,7 @@ These work as in normal strings.
    \x{263a} A wide hexadecimal value
    \cx      Control-x
    \N{name} A named character
+   \N{U+263D} A Unicode character by hex ordinal
 
    \l  Lowercase next character
    \u  Titlecase next character
@@ -113,7 +114,7 @@ This one works differently from normal strings:
    [f-j-]   Dash escaped or at start or end means 'dash'
    [^f-j]   Caret indicates "match any character _except_ these"
 
-The following sequences work within or without a character class.
+The following sequences (except C<\N>) work within or without a character class.
 The first six are locale aware, all are Unicode aware. See L<perllocale>
 and L<perlunicode> for details.
 
@@ -123,18 +124,21 @@ and L<perlunicode> for details.
    \W      A non-word character
    \s      A whitespace character
    \S      A non-whitespace character
-   \h      An horizontal white space
-   \H      A non horizontal white space
-   \v      A vertical white space
-   \V      A non vertical white space
+   \h      An horizontal whitespace
+   \H      A non horizontal whitespace
+   \N      A non newline (when not followed by '{NAME}'; experimental; not
+	   valid in a character class; equivalent to [^\n]; it's like '.'
+	   without /s modifier)
+   \v      A vertical whitespace
+   \V      A non vertical whitespace
    \R      A generic newline           (?>\v|\x0D\x0A)
 
    \C      Match a byte (with Unicode, '.' matches a character)
    \pP     Match P-named (Unicode) property
-   \p{...} Match Unicode property with long name
+   \p{...} Match Unicode property with name longer than 1 character
    \PP     Match non-P
-   \P{...} Match lack of Unicode property with long name
-   \X      Match extended Unicode combining character sequence
+   \P{...} Match lack of Unicode property with name longer than 1 char
+   \X      Match Unicode extended grapheme cluster
 
 POSIX character classes and their Unicode and Perl equivalents:
 
@@ -177,7 +181,7 @@ All are zero-width assertions.
 
 =head2 QUANTIFIERS
 
-Quantifiers are greedy by default -- match the B<longest> leftmost.
+Quantifiers are greedy by default and match the B<longest> leftmost.
 
    Maximal Minimal Possessive Allowed range
    ------- ------- ---------- -------------
@@ -193,7 +197,7 @@ The possessive forms (new in Perl 5.10) prevent backtracking: what gets
 matched by a pattern with a possessive quantifier will not be backtracked
 into, even if that causes the whole match to fail.
 
-There is no quantifier {,n} -- that gets understood as a literal string.
+There is no quantifier C<{,n}>. That's interpreted as a literal string.
 
 =head2 EXTENDED CONSTRUCTS
 
@@ -345,7 +349,7 @@ for details on regexes and internationalisation.
 =item *
 
 I<Mastering Regular Expressions> by Jeffrey Friedl
-(F<http://regex.info/>) for a thorough grounding and
+(F<http://oreilly.com/catalog/9780596528126/>) for a thorough grounding and
 reference on the topic.
 
 =back

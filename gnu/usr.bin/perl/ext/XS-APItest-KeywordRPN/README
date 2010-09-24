@@ -1,0 +1,25 @@
+NAME
+
+XS::APItest::KeywordRPN - write arithmetic expressions in RPN
+
+DESCRIPTION
+
+This module supplies plugged-in keywords, using the new mechanism in Perl
+5.11.2, that allow arithmetic to be expressed in reverse Polish notation,
+in an otherwise Perl program.  This module has serious limitations and
+is not intended for real use: its purpose is only to test the keyword
+plugin mechanism.  For that purpose it is part of the Perl core source
+distribution, and is not meant to be installed.
+
+AUTHOR
+
+Andrew Main (Zefram) <zefram@fysh.org>
+
+COPYRIGHT
+
+Copyright (C) 2009 Andrew Main (Zefram) <zefram@fysh.org>
+
+LICENSE
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.

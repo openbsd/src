@@ -429,7 +429,7 @@ C<ExtUtils::MakeMaker> upgraded to version 6.30 (was 6.17)
 
 =item *
 
-Too much to list here;  see L<http://search.cpan.org/src/MSCHWERN/ExtUtils-MakeMaker-6.30/Changes>
+Too much to list here;  see L<http://search.cpan.org/dist/ExtUtils-MakeMaker/Changes>
 
 =back
 
@@ -1383,7 +1383,7 @@ happens at program exit, it may be skipped completely.
 
 =item *
 
-Salvador Fandiño provided improvements to reduce the memory usage of C<sort>
+Salvador FandiÃ±o provided improvements to reduce the memory usage of C<sort>
 and to speed up some cases.
 
 =item *
@@ -1472,7 +1472,7 @@ Trailing spaces are now trimmed from C<$!> and C<$^E>.
 
 =item *
 
-Operations that require perl to read a process' list of groups, such as reads
+Operations that require perl to read a process's list of groups, such as reads
 of C<$(> and C<$)>, now dynamically allocate memory rather than using a
 fixed sized array. The fixed size array could cause C stack exhaustion on
 systems configured to use large numbers of groups.

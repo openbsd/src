@@ -10,13 +10,20 @@ perlartistic - the Perl Artistic License
 
 =head1 DESCRIPTION
 
-This is B<"The Artistic License">. It's here so that modules,
-programs, etc., that want to declare this as their distribution
-license, can link to it.
+Perl is free software; you can redistribute it and/or modify
+it under the terms of either:
 
-It is also one of the two licenses Perl allows itself to be
-redistributed and/or modified; for the other one, the GNU General
-Public License, see the L<perlgpl>.
+        a) the GNU General Public License as published by the Free
+        Software Foundation; either version 1, or (at your option) any
+        later version, or
+
+        b) the "Artistic License" which comes with this Kit.
+
+This is B<"The Artistic License">.
+It's here so that modules, programs, etc., that want to declare
+this as their distribution license can link to it.
+
+For the GNU General Public License, see L<perlgpl>.
 
 =head1 The "Artistic License"
 

@@ -76,6 +76,11 @@
 #define WARN_UTF8		44
 #define WARN_VOID		45
 
+/* Warnings Categories added in Perl 5.011 */
+
+#define WARN_IMPRECISION	46
+#define WARN_ILLEGALPROTO	47
+
 #define WARNsize		12
 #define WARN_ALLstring		"\125\125\125\125\125\125\125\125\125\125\125\125"
 #define WARN_NONEstring		"\0\0\0\0\0\0\0\0\0\0\0\0"
@@ -100,6 +105,8 @@
 #define ckWARN2_d(w1,w2)	Perl_ckwarn_d(aTHX_ packWARN2(w1,w2))
 #define ckWARN3_d(w1,w2,w3)	Perl_ckwarn_d(aTHX_ packWARN3(w1,w2,w3))
 #define ckWARN4_d(w1,w2,w3,w4)	Perl_ckwarn_d(aTHX_ packWARN4(w1,w2,w3,w4))
+
+#define WARNshift		8
 
 #define packWARN(a)		(a                                      )
 #define packWARN2(a,b)		((a) | ((b)<<8)                         )

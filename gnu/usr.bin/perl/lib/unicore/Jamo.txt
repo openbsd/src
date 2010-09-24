@@ -1,14 +1,14 @@
-# Jamo-5.1.0.txt
-# Date: 2008-03-20, 17:59:00 PDT [KW]
+# Jamo-5.2.0.txt
+# Date: 2009-05-22, 13:02:00 PDT [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UCD.html
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # This file defines the Jamo Short Name property.
 #
-# See Section 3.12 of The Unicode Standard, Version 5.0
+# See Section 3.12 of The Unicode Standard, Version 5.2
 # for more information.
 #
 # Each line contains two fields, separated by a semicolon.

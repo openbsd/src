@@ -1,12 +1,6 @@
 all:
-	../../miniperl -I../../lib ./mktables
-
-TestProp.pl: mktables UnicodeData.txt Scripts.txt Blocks.txt PropList.txt
-	../../miniperl -I../../lib ./mktables -maketest
-
-test:   TestProp.pl
-	../../miniperl -I../../lib TestProp.pl
+	../../miniperl -I../../lib ./mktables -P ../../pod -maketest -makelist -p
 
 clean:
-	rm -f *.pl */*.pl */*/*.pl
-	rm -f Properties
+	rm -fr *.pl To lib
+	rm -f ../../pod/perluniprops.pod mktables.lst

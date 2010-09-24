@@ -73,7 +73,7 @@ our @EXPORT_OK = qw(
 	YESSTR
 );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -193,7 +193,7 @@ you can wrap the import in an eval like this:
 
 =head2 EXPORT
 
-Nothing is exported by default.
+By default only the C<langinfo()> function is exported.
 
 =head1 SEE ALSO
 

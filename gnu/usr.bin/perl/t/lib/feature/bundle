@@ -7,6 +7,25 @@ say "Hello", "world";
 EXPECT
 Helloworld
 ########
+# Standard feature bundle, no 5.11
+use feature ":5.10";
+say ord uc chr 233;
+EXPECT
+233
+########
+# Standard feature bundle, 5.11
+use feature ":5.11";
+say ord uc chr 233;
+EXPECT
+201
+########
+# Standard feature bundle, 5.11
+use feature ":5.11";
+use utf8;
+say ord "\ué"; # this is utf8
+EXPECT
+201
+########
 # more specific: 5.10.0 maps to 5.10
 use feature ":5.10.0";
 say "Hello", "world";

@@ -1,0 +1,14 @@
+The Digest::MD5 module allows you to use the RSA Data Security
+Inc. MD5 Message Digest algorithm from within Perl programs.  The
+algorithm takes as input a message of arbitrary length and produces as
+output a 128-bit "fingerprint" or "message digest" of the input.
+MD5 is described in RFC 1321.
+
+You will need perl version 5.6 or better to install this module.
+
+Copyright 1998-2003 Gisle Aas.
+Copyright 1995-1996 Neil Winton.
+Copyright 1990-1992 RSA Data Security, Inc.
+
+This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.

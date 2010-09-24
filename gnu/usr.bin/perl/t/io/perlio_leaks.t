@@ -1,9 +1,15 @@
 #!perl
 # ioleaks.t
 
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
 use strict;
 use warnings;
-use Test::More 'no_plan';
+plan 'no_plan';
 
 # :unix   -> not ok
 # :stdio  -> not ok
@@ -15,9 +21,9 @@ TODO: {
         my $base_fd = do{ open my $in, '<', $0 or die $!; fileno $in };
 
         for(1 .. 3){
-	    local $TODO;
+	    local $::TODO;
 	    if ($_ > 1 && $layer =~ /^:(unix|stdio)$/) {
-		$TODO = "[perl #56644] PerlIO resource leaks on open() and then :pop in :unix and :stdio"
+		$::TODO = "[perl #56644] PerlIO resource leaks on open() and then :pop in :unix and :stdio"
 	    }
 	    open my $fh, "<$layer", $0 or die $!;
 

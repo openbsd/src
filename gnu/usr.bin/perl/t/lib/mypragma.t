@@ -1,13 +1,13 @@
 #!./perl
 
-BEGIN {
-    chdir 't';
-    @INC = ('../lib', 'lib');
-}
-
 use strict;
 use warnings;
-use Test::More tests => 14;
+
+BEGIN {
+    unshift @INC, 'lib';
+    require './test.pl';
+    plan(tests => 14);
+}
 
 use mypragma (); # don't enable this pragma yet
 

@@ -25,7 +25,7 @@ EXPECT
 ########
 # mg.c
 use warnings 'signal' ;
-if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS' || $^O eq 'MacOS') {
+if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS') {
     print "SKIPPED\n# $^O, can't kill() to raise()\n"; exit;
 }
 $|=1;
@@ -35,7 +35,7 @@ SIGINT handler "fred" not defined.
 ########
 # mg.c
 no warnings 'signal' ;
-if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS' || $^O eq 'MacOS') {
+if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS') {
     print "SKIPPED\n# $^O, can't kill() to raise()\n"; exit;
 }
 $|=1;
@@ -46,15 +46,15 @@ EXPECT
 # mg.c
 use warnings 'uninitialized';
 'foo' =~ /(foo)/;
-length $3;
+oct $3;
 EXPECT
-Use of uninitialized value $3 in length at - line 4.
+Use of uninitialized value $3 in oct at - line 4.
 ########
 # mg.c
 use warnings 'uninitialized';
-length $3;
+oct $3;
 EXPECT
-Use of uninitialized value $3 in length at - line 3.
+Use of uninitialized value $3 in oct at - line 3.
 ########
 # mg.c
 use warnings 'uninitialized';

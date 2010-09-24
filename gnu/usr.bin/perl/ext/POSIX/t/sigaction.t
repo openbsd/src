@@ -1,10 +1,5 @@
 #!./perl
 
-BEGIN {
-	chdir 't' if -d 't';
-	unshift @INC, '../lib';
-}
-
 BEGIN{
 	# Don't do anything if POSIX is missing, or sigaction missing.
 	use Config;
@@ -197,6 +192,7 @@ SKIP: {
 SKIP: {
     eval 'use POSIX qw(SA_SIGINFO); SA_SIGINFO';
     skip("no SA_SIGINFO", 1) if $@;
+    skip("SA_SIGINFO is broken on AIX 4.2", 1) if $^O.$Config{osvers} =~ m/^aix4\.2/;
     sub hiphup {
 	is($_[1]->{signo}, SIGHUP, "SA_SIGINFO got right signal");
     }

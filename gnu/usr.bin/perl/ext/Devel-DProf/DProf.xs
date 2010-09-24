@@ -472,7 +472,7 @@ prof_mark(pTHX_ opcode ptype)
 static void
 test_time(pTHX_ clock_t *r, clock_t *u, clock_t *s)
 {
-    CV * const cv = perl_get_cv("Devel::DProf::NONESUCH_noxs", 0);
+    CV * const cv = get_cvs("Devel::DProf::NONESUCH_noxs", 0);
     HV * const oldstash = PL_curstash;
     struct tms t1, t2;
     const U32 ototal = g_total;

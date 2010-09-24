@@ -15,7 +15,7 @@ typedef struct {
     YYSTYPE val;    /* semantic value */
     short   state;
     I32     savestack_ix;	/* size of savestack at this state */
-    AV	    *comppad; /* value of PL_comppad when this value was created */
+    CV	    *compcv; /* value of PL_compcv when this value was created */
 #ifdef DEBUGGING
     const char  *name; /* token/rule name for -Dpv */
 #endif
@@ -106,6 +106,10 @@ typedef struct yy_parser {
     char	tokenbuf[256];
 
 } yy_parser;
+
+/* flags for lexer API */
+#define LEX_STUFF_UTF8		0x00000001
+#define LEX_KEEP_PREVIOUS	0x00000002
 
 /*
  * Local variables:

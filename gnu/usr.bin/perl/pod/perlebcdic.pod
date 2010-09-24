@@ -11,6 +11,10 @@ than some discussion of UTF-8 and UTF-EBCDIC.
 
 Portions that are still incomplete are marked with XXX.
 
+Perl used to work on EBCDIC machines, but there are now areas of the code where
+it doesn't.  If you want to use Perl on an EBCDIC machine, please let us know
+by sending mail to perlbug@perl.org
+
 =head1 COMMON CHARACTER CODE SETS
 
 =head2 ASCII
@@ -57,13 +61,13 @@ also known as CCSID 819 (or sometimes 0819 or even 00819).
 =head2 EBCDIC
 
 The Extended Binary Coded Decimal Interchange Code refers to a 
-large collection of slightly different single and multi byte 
-coded character sets that are different from ASCII or ISO 8859-1 
-and typically run on host computers.  The EBCDIC encodings derive 
-from 8 bit byte extensions of Hollerith punched card encodings.
-The layout on the cards was such that high bits were set for the
-upper and lower case alphabet characters [a-z] and [A-Z], but there
-were gaps within each Latin alphabet range.
+large collection of single and multi byte coded character sets that are
+different from ASCII or ISO 8859-1 and are all slightly different from each
+other; they typically run on host computers.  The EBCDIC encodings derive from
+8 bit byte extensions of Hollerith punched card encodings.  The layout on the
+cards was such that high bits were set for the upper and lower case alphabet
+characters [a-z] and [A-Z], but there were gaps within each Latin alphabet
+range.
 
 Some IBM EBCDIC character sets may be known by character code set 
 identification numbers (CCSID numbers) or code page numbers.  Leading
@@ -160,7 +164,7 @@ value when encoded as when not.
 mentioned above.)
 For example, the ordinal value of 'A' is 193 in most EBCDIC code pages,
 and also is 193 when encoded in UTF-EBCDIC.
-All other code points occupy at least two bytes when encoded.
+All variant code points occupy at least two bytes when encoded.
 In UTF-8, the code points corresponding to the lowest 128
 ordinal numbers (0 - 127: the ASCII characters) are invariant.
 In UTF-EBCDIC, there are 160 invariant characters.
@@ -699,7 +703,7 @@ it in tr/// like so:
     my $ebcdic_string = $ascii_string;
     eval '$ebcdic_string =~ tr/' . $cp_037 . '/\000-\377/';
 
-To convert from EBCDIC 037 to ASCII just reverse the order of the tr/// 
+To convert from EBCDIC 037 to ASCII just reverse the order of the tr///
 arguments like so:
 
     my $ascii_string = $ebcdic_string;
@@ -1009,7 +1013,7 @@ to use the characters in the range explicitly:
 
     sub Is_latin_1 {
         my $char = substr(shift,0,1);
-        $char =~ /[ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ]/;
+        $char =~ /[Â Â¡Â¢Â£Â¤Â¥Â¦Â§Â¨Â©ÂªÂ«Â¬Â­Â®Â¯Â°Â±Â²Â³Â´ÂµÂ¶Â·Â¸Â¹ÂºÂ»Â¼Â½Â¾Â¿Ã€ÃÃ‚ÃƒÃ„Ã…Ã†Ã‡ÃˆÃ‰ÃŠÃ‹ÃŒÃÃÃÃÃ‘Ã’Ã“Ã”Ã•Ã–Ã—Ã˜Ã™ÃšÃ›ÃœÃÃÃŸÃ Ã¡Ã¢Ã£Ã¤Ã¥Ã¦Ã§Ã¨Ã©ÃªÃ«Ã¬Ã­Ã®Ã¯Ã°Ã±Ã²Ã³Ã´ÃµÃ¶Ã·Ã¸Ã¹ÃºÃ»Ã¼Ã½Ã¾Ã¿]/;
     }
 
 Although that form may run into trouble in network transit (due to the 
@@ -1062,9 +1066,9 @@ then sort().  If the data are primarily lowercase non Latin 1 then
 apply tr/[A-Z]/[a-z]/ before sorting.  If the data are primarily UPPERCASE
 and include Latin-1 characters then apply:  
 
-    tr/[a-z]/[A-Z]/; 
-    tr/[àáâãäåæçèéêëìíîïğñòóôõöøùúûüış]/[ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞ]/;
-    s/ß/SS/g; 
+    tr/[a-z]/[A-Z]/;
+    tr/[Ã Ã¡Ã¢Ã£Ã¤Ã¥Ã¦Ã§Ã¨Ã©ÃªÃ«Ã¬Ã­Ã®Ã¯Ã°Ã±Ã²Ã³Ã´ÃµÃ¶Ã¸Ã¹ÃºÃ»Ã¼Ã½Ã¾]/[Ã€ÃÃ‚ÃƒÃ„Ã…Ã†Ã‡ÃˆÃ‰ÃŠÃ‹ÃŒÃÃÃÃÃ‘Ã’Ã“Ã”Ã•Ã–Ã˜Ã™ÃšÃ›ÃœÃÃ/;
+    s/ÃŸ/SS/g;
 
 then sort().  Do note however that such Latin-1 manipulation does not 
 address the E<yuml> C<y WITH DIAERESIS> character that will remain at 
@@ -1388,7 +1392,7 @@ L<http://www.unicode.org/>
 
 L<http://www.unicode.org/unicode/reports/tr16/>
 
-L<http://www.wps.com/texts/codes/>
+L<http://www.wps.com/projects/codes/>
 B<ASCII: American Standard Code for Information Infiltration> Tom Jennings,
 September 1999.
 

@@ -312,3 +312,18 @@ use strict;
 use warnings;
 our $x unless $x;
 EXPECT
+########
+use warnings 'misc';
+our $qunckkk;
+our $_;
+package clank_est;
+our $qunckkk;
+our $_;
+no warnings 'misc';
+our $ouch;
+our $_;
+package whack;
+our $ouch;
+our $_;
+EXPECT
+"our" variable $_ redeclared at - line 6.

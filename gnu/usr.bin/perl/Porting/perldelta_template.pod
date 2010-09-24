@@ -1,0 +1,262 @@
+=encoding utf8
+
+=head1 NAME
+
+[ this is a template for a new perldelta file. Any text flagged as
+XXX needs to be processed before release. ]
+
+perldelta - what is new for perl v5.XXX.XXX
+
+=head1 DESCRIPTION
+
+This document describes differences between the 5.XXX.XXX release and
+the 5.XXX.XXX release.
+
+If you are upgrading from an earlier release such as 5.XXX.XXX, first read
+L<perl5XXXdelta>, which describes differences between 5.XXX.XXX and
+5.XXX.XXX.
+
+=head1 Notice
+
+XXX Any important notices here
+
+=head1 Incompatible Changes
+
+XXX For a release on a stable branch, this section aspires to be:
+
+    There are no changes intentionally incompatible with 5.XXX.XXX. If any
+    exist, they are bugs and reports are welcome.
+
+
+=head1 Core Enhancements
+
+XXX New core language features go here. Summarise user-visible core language
+enhancements. Particularly prominent performance optimisations could go
+here, but most should go in the L</Performance Enhancements> section.
+
+=head1 New Platforms
+
+XXX List any platforms that this version of perl compiles on, that previous
+versions did not. These will either be enabled by new files in the F<hints/>
+directories, or new subdirectories and F<README> files at the top level of the
+source tree.
+
+=head1 Modules and Pragmata
+
+XXX All changes to installed files in F<cpan/>, F<dist/>, F<ext/> and F<lib/>
+go here.  If Module::CoreList is updated, generate an initial draft of the
+following sections using F<Porting/corelist-perldelta.pl>, which prints stub
+entries to STDOUT.  Results can be pasted in place of the '=head2' entries
+below.  A paragraph summary for important changes should then be added by hand.
+In an ideal world, dual-life modules would have a F<Changes> file that could be
+cribbed.
+
+=head2 New Modules and Pragmata
+
+=head2 Pragmata Changes
+
+=head2 Updated Modules
+
+=head2 Removed Modules and Pragmata
+
+=head1 Utility Changes
+
+XXX Changes to installed programs such as F<perlbug> and F<xsubpp> go
+here. Most of these are built within the directories F<utils> and F<x2p>.
+
+=over 4
+
+=item F<XXX>
+
+XXX
+
+=back
+
+=head1 New Documentation
+
+XXX Changes which create B<new> files in F<pod/> go here.
+
+=over 4
+
+=item L<XXX>
+
+XXX
+
+=back
+
+=head1 Changes to Existing Documentation
+
+XXX Changes which significantly change existing files in F<pod/> go here.
+Any changes to F<pod/perldiag.pod> should go in L</New or Changed Diagnostics>.
+
+
+=head1 Performance Enhancements
+
+XXX Changes which enhance performance without changing behaviour go here. There
+may well be none in a stable release.
+
+=over 4
+
+=item *
+
+XXX
+
+=back
+
+=head1 Installation and Configuration Improvements
+
+XXX Changes to F<Configure>, F<installperl>, F<installman>, and analogous tools
+go here.
+
+=head2 Configuration improvements
+
+XXX
+
+=head2 Compilation improvements
+
+XXX
+
+=head2 Platform Specific Changes
+
+=over 4
+
+=item XXX-some-platform
+
+XXX
+
+=back
+
+=head1 Selected Bug Fixes
+
+XXX Important bug fixes in the core language are summarised here.
+Bug fixes in files in F<ext/> and F<lib/> are best summarised in
+L</Modules and Pragmata>.
+
+=over 4
+
+=item *
+
+XXX
+
+=back
+
+=head1 New or Changed Diagnostics
+
+XXX New or changed warnings emitted by the core's C<C> code go here.
+
+=over 4
+
+=item C<XXX>
+
+XXX
+
+=back
+
+=head1 Changed Internals
+
+XXX Changes which affect the interface available to C<XS> code go here.
+
+=over 4
+
+=item *
+
+XXX
+
+=back
+
+=head1 New Tests
+
+XXX Changes which create B<new> files in F<t/> go here. Changes to
+existing files in F<t/> aren't worth summarising, although the bugs that
+they represent may be.
+
+=over 4
+
+=item F<XXX>
+
+XXX
+
+=back
+
+=head1 Known Problems
+
+XXX Descriptions of platform agnostic bugs we know we can't fix go here. Any
+tests that had to be C<TODO>ed for the release would be noted here, unless
+they were specific to a particular platform (see below).
+
+This is a list of some significant unfixed bugs, which are regressions
+from either 5.XXX.XXX or 5.XXX.XXX.
+
+=over 4
+
+=item *
+
+XXX
+
+=back
+
+=head1 Deprecations
+
+XXX Add any new known deprecations here.
+
+The following items are now deprecated.
+
+=over 4
+
+=item *
+
+XXX
+
+=back
+
+=head1 Platform Specific Notes
+
+XXX Any changes specific to a particular platform. VMS and Win32 are the usual
+stars here. It's probably best to group changes under the same section layout
+as the main perldelta
+
+=head1 Obituary
+
+XXX If any significant core contributor has died, we've added a short obituary
+here.
+
+=head1 Acknowledgements
+
+XXX The list of people to thank goes here.
+
+
+=head1 Reporting Bugs
+
+If you find what you think is a bug, you might check the articles
+recently posted to the comp.lang.perl.misc newsgroup and the perl
+bug database at http://rt.perl.org/perlbug/ .  There may also be
+information at http://www.perl.org/ , the Perl Home Page.
+
+If you believe you have an unreported bug, please run the B<perlbug>
+program included with your release.  Be sure to trim your bug down
+to a tiny but sufficient test case.  Your bug report, along with the
+output of C<perl -V>, will be sent off to perlbug@perl.org to be
+analysed by the Perl porting team.
+
+If the bug you are reporting has security implications, which make it
+inappropriate to send to a publicly archived mailing list, then please send
+it to perl5-security-report@perl.org. This points to a closed subscription
+unarchived mailing list, which includes all the core committers, who be able
+to help assess the impact of issues, figure out a resolution, and help
+co-ordinate the release of patches to mitigate or fix the problem across all
+platforms on which Perl is supported. Please only use this address for
+security issues in the Perl core, not for modules independently
+distributed on CPAN.
+
+=head1 SEE ALSO
+
+The F<Changes> file for an explanation of how to view exhaustive details
+on what changed.
+
+The F<INSTALL> file for how to build Perl.
+
+The F<README> file for general stuff.
+
+The F<Artistic> and F<Copying> files for copyright information.
+
+=cut

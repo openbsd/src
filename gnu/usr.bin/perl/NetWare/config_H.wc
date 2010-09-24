@@ -1048,7 +1048,7 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define ARCHLIB "c:\\perl\\5.10.1\\lib\\NetWare-x86-multi-thread"		/**/
+#define ARCHLIB "c:\\perl\\5.12.2\\lib\\NetWare-x86-multi-thread"		/**/
 /*#define ARCHLIB_EXP ""	/**/
 
 /* ARCHNAME:
@@ -1079,8 +1079,8 @@
  *	This symbol is the filename expanded version of the BIN symbol, for
  *	programs that do not want to deal with that at run-time.
  */
-#define BIN "c:\\perl\\5.10.1\\bin\\NetWare-x86-multi-thread"	/**/
-#define BIN_EXP "c:\\perl\\5.10.1\\bin\\NetWare-x86-multi-thread"	/**/
+#define BIN "c:\\perl\\5.12.2\\bin\\NetWare-x86-multi-thread"	/**/
+#define BIN_EXP "c:\\perl\\5.12.2\\bin\\NetWare-x86-multi-thread"	/**/
 
 /* BYTEORDER:
  *	This symbol holds the hexadecimal constant defined in byteorder,
@@ -3042,7 +3042,7 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define SITEARCH "c:\\perl\\site\\5.10.1\\lib\\NetWare-x86-multi-thread"		/**/
+#define SITEARCH "c:\\perl\\site\\5.12.2\\lib\\NetWare-x86-multi-thread"		/**/
 /*#define SITEARCH_EXP ""	/**/
 
 /* SITELIB:
@@ -3065,8 +3065,8 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "c:\\perl\\site\\5.10.1\\lib"		/**/
-#define SITELIB_EXP (nw_get_sitelib("5.10.1"))	/**/
+#define SITELIB "c:\\perl\\site\\5.12.2\\lib"		/**/
+/*#define SITELIB_EXP ""	/**/
 #define SITELIB_STEM ""		/**/
 
 /* Size_t_size:

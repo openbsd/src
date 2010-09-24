@@ -24,7 +24,7 @@ Unicode 1.0 was released in October 1991, and 4.0 in April 2003.
 A Unicode I<character> is an abstract entity.  It is not bound to any
 particular integer width, especially not to the C language C<char>.
 Unicode is language-neutral and display-neutral: it does not encode the
-language of the text and it does not generally define fonts or other graphical
+language of the text, and it does not generally define fonts or other graphical
 layout details.  Unicode operates on characters and on text built from
 those characters.
 
@@ -45,25 +45,29 @@ these properties are independent of the names of the characters.
 Furthermore, various operations on the characters like uppercasing,
 lowercasing, and collating (sorting) are defined.
 
-A Unicode character consists either of a single code point, or a
-I<base character> (like C<LATIN CAPITAL LETTER A>), followed by one or
-more I<modifiers> (like C<COMBINING ACUTE ACCENT>).  This sequence of
+A Unicode I<logical> "character" can actually consist of more than one internal
+I<actual> "character" or code point.  For Western languages, this is adequately
+modelled by a I<base character> (like C<LATIN CAPITAL LETTER A>) followed
+by one or more I<modifiers> (like C<COMBINING ACUTE ACCENT>).  This sequence of
 base character and modifiers is called a I<combining character
-sequence>.
+sequence>.  Some non-western languages require more complicated
+models, so Unicode created the I<grapheme cluster> concept, and then the
+I<extended grapheme cluster>.  For example, a Korean Hangul syllable is
+considered a single logical character, but most often consists of three actual
+Unicode characters: a leading consonant followed by an interior vowel followed
+by a trailing consonant.
 
-Whether to call these combining character sequences "characters"
-depends on your point of view. If you are a programmer, you probably
-would tend towards seeing each element in the sequences as one unit,
-or "character".  The whole sequence could be seen as one "character",
-however, from the user's point of view, since that's probably what it
-looks like in the context of the user's language.
+Whether to call these extended grapheme clusters "characters" depends on your
+point of view. If you are a programmer, you probably would tend towards seeing
+each element in the sequences as one unit, or "character".  The whole sequence
+could be seen as one "character", however, from the user's point of view, since
+that's probably what it looks like in the context of the user's language.
 
 With this "whole sequence" view of characters, the total number of
 characters is open-ended. But in the programmer's "one unit is one
 character" point of view, the concept of "characters" is more
-deterministic.  In this document, we take that second  point of view:
-one "character" is one Unicode code point, be it a base character or
-a combining character.
+deterministic.  In this document, we take that second point of view:
+one "character" is one Unicode code point.
 
 For some combinations, there are I<precomposed> characters.
 C<LATIN CAPITAL LETTER A WITH ACUTE>, for example, is defined as
@@ -84,7 +88,7 @@ character.  Firstly, there are unallocated code points within
 otherwise used blocks.  Secondly, there are special Unicode control
 characters that do not represent true characters.
 
-A common myth about Unicode is that it would be "16-bit", that is,
+A common myth about Unicode is that it is "16-bit", that is,
 Unicode is only represented as C<0x10000> (or 65536) characters from
 C<0x0000> to C<0xFFFF>.  B<This is untrue.>  Since Unicode 2.0 (July
 1996), Unicode has been defined all the way up to 21 bits (C<0x10FFFF>),
@@ -94,22 +98,22 @@ I<Plane 0>, or the I<Basic Multilingual Plane> (BMP).  With Unicode
 3.1, 17 (yes, seventeen) planes in all were defined--but they are
 nowhere near full of defined characters, yet.
 
-Another myth is that the 256-character blocks have something to
+Another myth is about Unicode blocks--that they have something to
 do with languages--that each block would define the characters used
 by a language or a set of languages.  B<This is also untrue.>
 The division into blocks exists, but it is almost completely
 accidental--an artifact of how the characters have been and
-still are allocated.  Instead, there is a concept called I<scripts>,
-which is more useful: there is C<Latin> script, C<Greek> script, and
-so on.  Scripts usually span varied parts of several blocks.
-For further information see L<Unicode::UCD>.
+still are allocated.  Instead, there is a concept called I<scripts>, which is
+more useful: there is C<Latin> script, C<Greek> script, and so on.  Scripts
+usually span varied parts of several blocks.  For more information about
+scripts, see L<perlunicode/Scripts>.
 
 The Unicode code points are just abstract numbers.  To input and
 output these abstract numbers, the numbers must be I<encoded> or
 I<serialised> somehow.  Unicode defines several I<character encoding
 forms>, of which I<UTF-8> is perhaps the most popular.  UTF-8 is a
 variable length encoding that encodes Unicode characters as 1 to 6
-bytes (only 4 with the currently defined characters).  Other encodings
+bytes.  Other encodings
 include UTF-16 and UTF-32 and their big- and little-endian variants
 (UTF-8 is byte-order independent) The ISO/IEC 10646 defines the UCS-2
 and UCS-4 encoding forms.
@@ -140,8 +144,8 @@ scripts with legacy 8-bit data in them would break.  See L<utf8>.
 Perl supports both pre-5.6 strings of eight-bit native bytes, and
 strings of Unicode characters.  The principle is that Perl tries to
 keep its data as eight-bit bytes for as long as possible, but as soon
-as Unicodeness cannot be avoided, the data is transparently upgraded
-to Unicode.
+as Unicodeness cannot be avoided, the data is (mostly) transparently upgraded
+to Unicode.  There are some problems--see L<perlunicode/The "Unicode Bug">.
 
 Internally, Perl currently uses either whatever the native eight-bit
 character set of the platform (for example Latin-1) is, defaulting to
@@ -151,8 +155,8 @@ character set.  Otherwise, it uses UTF-8.
 
 A user of Perl does not normally need to know nor care how Perl
 happens to encode its internal strings, but it becomes relevant when
-outputting Unicode strings to a stream without a PerlIO layer -- one with
-the "default" encoding.  In such a case, the raw bytes used internally
+outputting Unicode strings to a stream without a PerlIO layer (one with
+the "default" encoding).  In such a case, the raw bytes used internally
 (the native character set or UTF-8, as appropriate for each string)
 will be used, and a "Wide character" warning will be issued if those
 strings contain a character beyond 0x00FF.
@@ -192,11 +196,12 @@ C<useperlio=define>.
 
 Perl 5.8.0 also supports Unicode on EBCDIC platforms.  There,
 Unicode support is somewhat more complex to implement since
-additional conversions are needed at every step.  Some problems
-remain, see L<perlebcdic> for details.
+additional conversions are needed at every step.
 
-In any case, the Unicode support on EBCDIC platforms is better than
-in the 5.6 series, which didn't work much at all for EBCDIC platform.
+Later Perl releases have added code that will not work on EBCDIC platforms, and
+no one has complained, so the divergence has continued.  If you want to run
+Perl on an EBCDIC platform, send email to perlbug@perl.org
+
 On EBCDIC platforms, the internal Unicode encoding form is UTF-EBCDIC
 instead of UTF-8.  The difference is that as UTF-8 is "ASCII-safe" in
 that ASCII characters encode to UTF-8 as-is, while UTF-EBCDIC is
@@ -261,14 +266,14 @@ strings as usual.  Functions like C<index()>, C<length()>, and
 C<substr()> will work on the Unicode characters; regular expressions
 will work on the Unicode characters (see L<perlunicode> and L<perlretut>).
 
-Note that Perl considers combining character sequences to be
-separate characters, so for example
+Note that Perl considers grapheme clusters to be separate characters, so for
+example
 
     use charnames ':full';
     print length("\N{LATIN CAPITAL LETTER A}\N{COMBINING ACUTE ACCENT}"), "\n";
 
 will print 2, not 1.  The only exception is that regular expressions
-have C<\X> for matching a combining character sequence.
+have C<\X> for matching an extended grapheme cluster.
 
 Life is not quite so transparent, however, when working with legacy
 encodings, I/O, and certain special cases:
@@ -511,13 +516,12 @@ case, the answer is no (because 0x00C1 != 0x0041).  But sometimes, any
 CAPITAL LETTER As should be considered equal, or even As of any case.
 
 The long answer is that you need to consider character normalization
-and casing issues: see L<Unicode::Normalize>, Unicode Technical
-Reports #15 and #21, I<Unicode Normalization Forms> and I<Case
-Mappings>, L<http://www.unicode.org/unicode/reports/tr15/> and
-L<http://www.unicode.org/unicode/reports/tr21/>
+and casing issues: see L<Unicode::Normalize>, Unicode Technical Report #15,
+L<Unicode Normalization Forms|http://www.unicode.org/unicode/reports/tr15> and
+sections on case mapping in the L<Unicode Standard|http://www.unicode.org>.
 
 As of Perl 5.8.0, the "Full" case-folding of I<Case
-Mappings/SpecialCasing> is implemented.
+Mappings/SpecialCasing> is implemented, but bugs remain in C<qr//i> with them.
 
 =item *
 
@@ -605,7 +609,7 @@ How Do I Know Whether My String Is In Unicode?
 You shouldn't have to care.  But you may, because currently the semantics of the
 characters whose ordinals are in the range 128 to 255 is different depending on
 whether the string they are contained within is in Unicode or not.
-(See L<perlunicode>.) 
+(See L<perlunicode/When Unicode Does Not Happen>.)
 
 To determine if a string is in Unicode, use:
 
@@ -619,7 +623,7 @@ return the value of the internal "utf8ness" flag attached to the
 C<$string>.  If the flag is off, the bytes in the scalar are interpreted
 as a single byte encoding.  If the flag is on, the bytes in the scalar
 are interpreted as the (multi-byte, variable-length) UTF-8 encoded code
-points of the characters.  Bytes added to an UTF-8 encoded string are
+points of the characters.  Bytes added to a UTF-8 encoded string are
 automatically upgraded to UTF-8.  If mixed non-UTF-8 and UTF-8 scalars
 are merged (double-quoted interpolation, explicit concatenation, and
 printf/sprintf parameter substitution), the result will be UTF-8 encoded

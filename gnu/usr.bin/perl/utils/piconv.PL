@@ -33,7 +33,7 @@ $Config{startperl}
 
 use File::Spec;
 
-my $piconv = File::Spec->catfile(File::Spec->catdir(File::Spec->updir, "ext", "Encode", "bin"), "piconv");
+my $piconv = File::Spec->catfile(File::Spec->catdir(File::Spec->updir, "cpan", "Encode", "bin"), "piconv");
 
 if (open(PICONV, $piconv)) {
     print OUT <PICONV>;

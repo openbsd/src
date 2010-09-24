@@ -9,7 +9,7 @@ BEGIN {
 use strict;
 use warnings;
 
-plan tests => 122;
+plan tests => 132;
 
 # The behaviour of the feature pragma should be tested by lib/switch.t
 # using the tests in t/lib/switch/*. This file tests the behaviour of
@@ -411,6 +411,15 @@ sub check_outside1 { is($_, "outside", "\$_ lexically scoped") }
 	when (2 + 2 == 5) { $ok = 'n' }
     }
     is($ok, 'y', "Optimized-away comparison");
+}
+
+{
+    my $ok;
+    given(23) {
+        when (scalar 24) { $ok = 'n'; continue }
+        default { $ok = 'y' }
+    }
+    is($ok,'y','scalar()');
 }
 
 # File tests
@@ -864,8 +873,62 @@ SKIP: {
 	ok($obj->{reversed}, "$test: reversed");
     }
 }
-SKIP: {
-    skip "placeholder for tests not merged from f20dcd76e7", 7;
+
+# Postfix when
+{
+    my $ok;
+    given (undef) {
+	$ok = 1 when undef;
+    }
+    is($ok, 1, "postfix undef");
+}
+{
+    my $ok;
+    given (2) {
+	$ok += 1 when 7;
+	$ok += 2 when 9.1685;
+	$ok += 4 when $_ > 4;
+	$ok += 8 when $_ < 2.5;
+    }
+    is($ok, 8, "postfix numeric");
+}
+{
+    my $ok;
+    given ("apple") {
+	$ok = 1, continue when $_ eq "apple";
+	$ok += 2;
+	$ok = 0 when "banana";
+    }
+    is($ok, 3, "postfix string");
+}
+{
+    my $ok;
+    given ("pear") {
+	do { $ok = 1; continue } when /pea/;
+	$ok += 2;
+	$ok = 0 when /pie/;
+	default { $ok += 4 }
+	$ok = 0;
+    }
+    is($ok, 7, "postfix regex");
+}
+# be_true is defined at the beginning of the file
+{
+    my $x = "what";
+    given(my $x = "foo") {
+	do {
+	    is($x, "foo", "scope inside ... when my \$x = ...");
+	    continue;
+	} when be_true(my $x = "bar");
+	is($x, "bar", "scope after ... when my \$x = ...");
+    }
+}
+{
+    my $x = 0;
+    given(my $x = 1) {
+	my $x = 2, continue when be_true();
+        is($x, undef, "scope after my \$x = ... when ...");
+    }
 }
 
 # Tests for last and next in when clauses
@@ -910,6 +973,63 @@ LETTER2: for ("a".."e") {
     $letter .= ',';
 }
 is($letter, "a,c,e,", "next LABEL in when");
+
+# Test goto with given/when
+{
+    my $flag = 0;
+    goto GIVEN1;
+    $flag = 1;
+    GIVEN1: given ($flag) {
+	when (0) { break; }
+	$flag = 2;
+    }
+    is($flag, 0, "goto GIVEN1");
+}
+{
+    my $flag = 0;
+    given ($flag) {
+	when (0) { $flag = 1; }
+	goto GIVEN2;
+	$flag = 2;
+    }
+GIVEN2:
+    is($flag, 1, "goto inside given");
+}
+{
+    my $flag = 0;
+    given ($flag) {
+	when (0) { $flag = 1; goto GIVEN3; $flag = 2; }
+	$flag = 3;
+    }
+GIVEN3:
+    is($flag, 1, "goto inside given and when");
+}
+{
+    my $flag = 0;
+    for ($flag) {
+	when (0) { $flag = 1; goto GIVEN4; $flag = 2; }
+	$flag = 3;
+    }
+GIVEN4:
+    is($flag, 1, "goto inside for and when");
+}
+{
+    my $flag = 0;
+GIVEN5:
+    given ($flag) {
+	when (0) { $flag = 1; goto GIVEN5; $flag = 2; }
+	when (1) { break; }
+	$flag = 3;
+    }
+    is($flag, 1, "goto inside given and when to the given stmt");
+}
+
+# test with unreified @_ in smart match [perl #71078]
+sub unreified_check { ok([@_] ~~ \@_) } # should always match
+unreified_check(1,2,"lala");
+unreified_check(1,2,undef);
+unreified_check(undef);
+unreified_check(undef,"");
 
 # Okay, that'll do for now. The intricacies of the smartmatch
 # semantics are tested in t/op/smartmatch.t

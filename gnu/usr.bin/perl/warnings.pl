@@ -13,7 +13,7 @@
 #
 # This script is normally invoked from regen.pl.
 
-$VERSION = '1.02_02';
+$VERSION = '1.02_03';
 
 BEGIN {
     require 'regen_lib.pl';
@@ -46,6 +46,7 @@ my $tree = {
        	 			'printf'	=> [ 5.008, DEFAULT_OFF],
        	 			'prototype'	=> [ 5.008, DEFAULT_OFF],
        	 			'qw'		=> [ 5.008, DEFAULT_OFF],
+                                'illegalproto'  => [ 5.011, DEFAULT_OFF],
 			   }],
        	'severe'	=> [ 5.008, { 	
 				'inplace'	=> [ 5.008, DEFAULT_ON],
@@ -75,6 +76,7 @@ my $tree = {
        	'pack'		=> [ 5.008, DEFAULT_OFF],
        	'unpack'	=> [ 5.008, DEFAULT_OFF],
        	'threads'	=> [ 5.008, DEFAULT_OFF],
+       	'imprecision'	=> [ 5.011, DEFAULT_OFF],
 
        	 #'default'	=> [ 5.008, DEFAULT_ON ],
   	}],
@@ -352,6 +354,8 @@ print $warn <<'EOM';
 #define ckWARN3_d(w1,w2,w3)	Perl_ckwarn_d(aTHX_ packWARN3(w1,w2,w3))
 #define ckWARN4_d(w1,w2,w3,w4)	Perl_ckwarn_d(aTHX_ packWARN4(w1,w2,w3,w4))
 
+#define WARNshift		8
+
 #define packWARN(a)		(a                                      )
 #define packWARN2(a,b)		((a) | ((b)<<8)                         )
 #define packWARN3(a,b,c)	((a) | ((b)<<8) | ((c)<<16)             )
@@ -448,7 +452,7 @@ __END__
 
 package warnings;
 
-our $VERSION = '1.06';
+our $VERSION = '1.09';
 
 # Verify that we're called correctly so that warnings will work.
 # see also strict.pm.
@@ -526,6 +530,27 @@ Return TRUE if that warnings category is enabled in the first scope
 where the object is used.
 Otherwise returns FALSE.
 
+=item warnings::fatal_enabled()
+
+Return TRUE if the warnings category with the same name as the current
+package has been set to FATAL in the calling module.
+Otherwise returns FALSE.
+
+=item warnings::fatal_enabled($category)
+
+Return TRUE if the warnings category C<$category> has been set to FATAL in
+the calling module.
+Otherwise returns FALSE.
+
+=item warnings::fatal_enabled($object)
+
+Use the name of the class for the object reference, C<$object>, as the
+warnings category.
+
+Return TRUE if that warnings category has been set to FATAL in the first
+scope where the object is used.
+Otherwise returns FALSE.
+
 =item warnings::warn($message)
 
 Print C<$message> to STDERR.
@@ -586,7 +611,7 @@ $All = "" ; vec($All, $Offsets{'all'}, 2) = 3 ;
 
 sub Croaker
 {
-    require Carp::Heavy; # this initializes %CarpInternal
+    require Carp; # this initializes %CarpInternal
     local $Carp::CarpInternal{'warnings'};
     delete $Carp::CarpInternal{'warnings'};
     Carp::croak(@_);
@@ -737,7 +762,7 @@ sub __chk
 }
 
 sub _error_loc {
-    require Carp::Heavy;
+    require Carp;
     goto &Carp::short_error_loc; # don't introduce another stack frame
 }                                                             
 
@@ -753,6 +778,17 @@ sub enabled
            vec($callers_bitmask, $Offsets{'all'}, 1) ;
 }
 
+sub fatal_enabled
+{
+    Croaker("Usage: warnings::fatal_enabled([category])")
+  unless @_ == 1 || @_ == 0 ;
+
+    my ($callers_bitmask, $offset, $i) = __chk(@_) ;
+
+    return 0 unless defined $callers_bitmask;
+    return vec($callers_bitmask, $offset + 1, 1) ||
+           vec($callers_bitmask, $Offsets{'all'} + 1, 1) ;
+}
 
 sub warn
 {

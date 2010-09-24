@@ -66,6 +66,6 @@ sub compile_module {
 
 # These modules have no tests of their own.
 # Keep up to date with
-# http://www.pobox.com/~schwern/cgi-bin/perl-qa-wiki.cgi?UntestedModules
+# http://perl-qa.hexten.net/wiki/index.php/Untested_Core_Modules
 # and vice-versa.  The list should only shrink.
 __DATA__

@@ -29,7 +29,7 @@ if ($Is_VMS) {
 
 sub _cleanup {
     rmdir foreach reverse (@_);
-    unlink "stderr" unless $^O eq 'MacOS';
+    unlink "stderr";
 }
 
 sub _mkdirs {
@@ -41,21 +41,10 @@ sub _mkdirs {
     
 
 BEGIN {
-    if ($^O eq 'MacOS')
-    {
-	$MacPerl::Architecture = $MacPerl::Architecture; # shhhhh
-	$blib = ":blib:";
-	$blib_lib = ":blib:lib:";
-	$blib_arch = ":blib:lib:$MacPerl::Architecture:";
-	@blib_dirs = ($blib, $blib_lib, $blib_arch); # order
-    }
-    else
-    {
-	$blib = "blib";
-	$blib_arch = "blib/arch";
-	$blib_lib = "blib/lib";
-	@blib_dirs = ($blib, $blib_arch, $blib_lib);
-    }
+    $blib = "blib";
+    $blib_arch = "blib/arch";
+    $blib_lib = "blib/lib";
+    @blib_dirs = ($blib, $blib_arch, $blib_lib);
     _cleanup( @blib_dirs );
 }
 
@@ -82,7 +71,7 @@ if ($Is_VMS_mode) {
     $blib_arch = 'blib.arch]';
     $blib_lib = 'blib.lib]';
 }
-elsif ($^O ne 'MacOS')
+else
 {
     $blib_arch = File::Spec->catdir("blib","arch");
     $blib_lib  = File::Spec->catdir("blib","lib");

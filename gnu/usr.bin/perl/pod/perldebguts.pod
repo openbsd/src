@@ -4,7 +4,7 @@ perldebguts - Guts of Perl debugging
 
 =head1 DESCRIPTION
 
-This is not the perldebug(1) manpage, which tells you how to use
+This is not L<perldebug>, which tells you how to use
 the debugger.  This manpage describes low-level details concerning
 the debugger's internals, which range from difficult to impossible
 to understand for anyone who isn't incredibly intimate with Perl's guts.

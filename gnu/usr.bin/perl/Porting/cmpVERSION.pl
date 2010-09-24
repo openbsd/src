@@ -7,7 +7,7 @@
 # with -d option, output the diffs too
 # with -x option, exclude dual-life modules (after all, there are tools
 #                 like core-cpan-diff that can already deal with them)
-#                 With this option, one od the directories must be '.'.
+#                 With this option, one of the directories must be '.'.
 #
 # Original by slaven@rezic.de, modified by jhi.
 #

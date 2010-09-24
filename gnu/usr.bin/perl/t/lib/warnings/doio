@@ -171,15 +171,6 @@ Use of -l on filehandle STDIN at - line 3.
 Use of -l on filehandle $fh at - line 6.
 ########
 # doio.c [Perl_do_aexec5]
-BEGIN {
-    if ($^O eq 'MacOS') {
-	print <<EOM;
-SKIPPED
-# no exec on Mac OS
-EOM
-	exit;
-    }
-}
 use warnings 'io' ;
 exec "lskdjfalksdjfdjfkls","" ;
 no warnings 'io' ;
@@ -189,15 +180,6 @@ OPTION regex
 Can't exec "lskdjfalksdjfdjfkls": .+
 ########
 # doio.c [Perl_do_exec3]
-BEGIN {
-    if ($^O eq 'MacOS') {
-	print <<EOM;
-SKIPPED
-# no exec on Mac OS
-EOM
-	exit;
-    }
-}
 use warnings 'io' ;
 exec "lskdjfalksdjfdjfkls", "abc" ;
 no warnings 'io' ;
@@ -207,15 +189,6 @@ OPTION regex
 Can't exec "lskdjfalksdjfdjfkls(:? abc)?": .+
 ########
 # doio.c [win32_execvp]
-BEGIN {
-    if ($^O eq 'MacOS') {
-	print <<EOM;
-SKIPPED
-# no exec on Mac OS
-EOM
-	exit;
-    }
-}
 use warnings 'exec' ;
 exec $^X, "-e0" ;
 EXPECT

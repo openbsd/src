@@ -4,8 +4,6 @@
 # DAPM Aug 2004
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {
@@ -23,7 +21,7 @@ use strict;
 # use Test::More tests => 240;
 
 BEGIN {
-    require './test.pl';
+    require '../../t/test.pl';
     plan(240);
     use_ok('XS::APItest')
 };
@@ -160,7 +158,7 @@ is($@, "its_dead_jim\n", "eval { eval_pv('d()', 1) } - \$@");
 # a new jump level but before pushing an eval context, leading to
 # stack corruption
 
-fresh_perl_is(<<'EOF', "x=2", { switches => ['-T'] }, 'eval_sv() taint');
+fresh_perl_is(<<'EOF', "x=2", { switches => ['-T', '-I../../lib'] }, 'eval_sv() taint');
 use XS::APItest;
 
 my $x = 0;

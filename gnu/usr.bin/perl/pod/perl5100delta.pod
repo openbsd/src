@@ -440,7 +440,7 @@ with it. (Larry Wall, Nicholas Clark)
 =head2 kill() on Windows
 
 On Windows platforms, C<kill(-9, $pid)> now kills a process tree.
-(On UNIX, this delivers the signal to all processes in the same process
+(On Unix, this delivers the signal to all processes in the same process
 group.)
 
 =head1 Incompatible Changes
@@ -624,6 +624,27 @@ C<@ISA> in such a way that it would cause recursive inheritance.
 Previously, the exception would not occur until Perl attempted to make
 use of the recursive inheritance while resolving a method or doing a
 C<$foo-E<gt>isa($bar)> lookup.
+
+=head2 warnings::enabled and warnings::warnif changed to favor users of modules
+
+The behaviour in 5.10.x favors the person using the module;
+The behaviour in 5.8.x favors the module writer;
+
+Assume the following code:
+
+  main calls Foo::Bar::baz()
+  Foo::Bar inherits from Foo::Base
+  Foo::Bar::baz() calls Foo::Base::_bazbaz()
+  Foo::Base::_bazbaz() calls: warnings::warnif('substr', 'some warning 
+message');
+
+On 5.8.x, the code warns when Foo::Bar contains C<use warnings;>
+It does not matter if Foo::Base or main have warnings enabled
+to disable the warning one has to modify Foo::Bar.
+
+On 5.10.0 and newer, the code warns when main contains C<use warnings;>
+It does not matter if Foo::Base or Foo::Bar have warnings enabled
+to disable the warning one has to modify main.
 
 =head1 Modules and Pragmata
 
@@ -1468,7 +1489,7 @@ to reflect this.)
 
 =head2 Elimination of SVt_PVBM
 
-Related to this, the internal type C<SVt_PVBM> has been been removed. This
+Related to this, the internal type C<SVt_PVBM> has been removed. This
 dedicated type of C<SV> was used by the C<index> operator and parts of the
 regexp engine to facilitate fast Boyer-Moore matches. Its use internally has
 been replaced by C<SV>s of type C<SVt_PVGV>.

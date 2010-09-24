@@ -442,7 +442,7 @@ variations.
 
 Now, what about data?
 
-=head2 A horse is a horse, of course of course -- or is it?
+=head2 A horse is a horse, of course of course, or is it?
 
 Let's start with the code for the C<Animal> class
 and the C<Horse> class:

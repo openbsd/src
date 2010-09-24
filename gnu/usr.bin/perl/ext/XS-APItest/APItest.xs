@@ -892,3 +892,47 @@ void
 END()
     CODE:
 	sv_inc(get_sv("XS::APItest::END_called", GV_ADD|GV_ADDMULTI));
+
+void
+utf16_to_utf8 (sv, ...)
+    SV* sv
+	ALIAS:
+	    utf16_to_utf8_reversed = 1
+    PREINIT:
+        STRLEN len;
+	U8 *source;
+	SV *dest;
+	I32 got; /* Gah, badly thought out APIs */
+    CODE:
+	source = (U8 *)SvPVbyte(sv, len);
+	/* Optionally only convert part of the buffer.  */ 	
+	if (items > 1) {
+	    len = SvUV(ST(1));
+ 	}
+	/* Mortalise this right now, as we'll be testing croak()s  */
+	dest = sv_2mortal(newSV(len * 3 / 2 + 1));
+	if (ix) {
+	    utf16_to_utf8_reversed(source, (U8 *)SvPVX(dest), len, &got);
+	} else {
+	    utf16_to_utf8(source, (U8 *)SvPVX(dest), len, &got);
+	}
+	SvCUR_set(dest, got);
+	SvPVX(dest)[got] = '\0';
+	SvPOK_on(dest);
+ 	ST(0) = dest;
+	XSRETURN(1);
+
+U32
+pmflag (flag, before = 0)
+	int flag
+	U32 before
+   CODE:
+	pmflag(&before, flag);
+	RETVAL = before;
+    OUTPUT:
+	RETVAL
+
+void
+my_exit(int exitcode)
+        PPCODE:
+        my_exit(exitcode);

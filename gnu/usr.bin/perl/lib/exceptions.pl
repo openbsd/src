@@ -3,11 +3,12 @@
 #
 # This library is no longer being maintained, and is included for backward
 # compatibility with Perl 4 programs which may require it.
+# This legacy library is deprecated and will be removed in a future
+# release of perl.
 #
 # In particular, this should not be used as an example of modern Perl
 # programming techniques.
-#
-# 
+
 # Here's a little code I use for exception handling.  It's really just
 # glorfied eval/die.  The way to use use it is when you might otherwise
 # exit, use &throw to raise an exception.  The first enclosing &catch

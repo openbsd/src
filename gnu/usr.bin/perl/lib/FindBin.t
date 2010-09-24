@@ -10,12 +10,7 @@ print "1..2\n";
 use FindBin qw($Bin);
 
 print "# $Bin\n";
-
-if ($^O eq 'MacOS') {
-    print "not " unless $Bin =~ m,:lib:$,;
-} else {
-    print "not " unless $Bin =~ m,[/.]lib\]?$,;
-}
+print "not " unless $Bin =~ m,[/.]lib\]?$,;
 print "ok 1\n";
 
 $0 = "-";

@@ -1,0 +1,210 @@
+2.37    Tue Jul 20 2010
+  - Updated for 5.13.4
+  - Remove 'Filespec' module. It never existed in the core and is supposed to be
+    'VMS::Filespec' instead.
+
+2.36    Tue Jul 20 2010
+  - Updated for 5.13.3
+
+2.35    Thu Jun 22 2010
+  - Updated for 5.13.2
+
+2.34    Thu May 20 2010
+  - Updated for 5.13.1
+
+2.31_01 Fri Apr 30 2010
+  - [rt.cpan.org #56740] Format Perl versions >= 5.6.0 as X.Y.Z (schwern)
+  - Functional interface amended to make calling conventions consistent
+    (bingos)
+  - Documented all functions and all hash structures (bingos)
+  - Fixed functions with edge-case involving querying for Module::CoreList
+    itself. Pointed out by Ilmari.
+  - Added removed_from() and removed_from_by_date() functions
+    for querying which release a module was removed from core. (bingos)
+  - Amended corelist utility to use new removed from functions when
+    stating when a module entered core ( and when it left it ). (bingos)
+  - Added tests to the testsuite to cover the edge-cases and new funcs. (bingos)
+
+2.31    Sun Mar 20 2010
+  - Updated for 5.13.0
+
+2.27    Sun Mar 14 2010
+  - Updated for 5.12.0
+
+2.26    Sat Feb 20 2010
+  - Updated for 5.11.5
+
+2.25    Wed Jan 20 2010
+  - Updated for 5.11.4
+
+2.24    Mon Dec 21 2009
+  - Updated for 5.11.3
+
+2.23    Fri Nov 20 2009
+  - Updated for 5.11.2
+
+2.22    Thu Oct 22 2009
+  - is_deprecated function and %deprecated hash (dagolden)
+
+2.21    <>
+  - Added 5.11.1
+
+2.20    Sat Oct  3 2009
+	- Make Module::Corelist recognise $] as a version number on 5.11.0
+
+2.19    Fri Oct  2 2009
+	- Update for perl 5.11.1
+
+2.18	Mon Aug 24 2009
+	- Update for perl 5.10.1
+	- Remove %patchlevel hash (now that perl uses git and not perforce)
+	- Add %upstream and %bug_tracker data (Nicholas Clark)
+
+2.17	Sun Jan 18 2009
+	- Make $] work to select perl version for 5.1 and 5.10 (John Peacock)
+	- Add ExtUtils::Miniperl to the list of core modules for all versions
+	  >= 5.00504
+	- Add 5.8.9
+	- Fix release date for 5.002 (Grant McLean)
+
+2.15	Tue Apr  1 2008
+	- Add missing entries for Config.pm in recent perls
+	- Install in core location for perl >= 5.8.9 (Jerry D. Hedden)
+
+2.14	Mon Mar 17 2008
+	corelist changes:
+        - Add a new -d option to find first perl version by date
+          and not by version number
+        - Better handling of perl versions that end with a 0
+        - use version.pm only for version numbers that have multiple dots
+
+	- Fix tag for 5.00405 (Sam Vilain)
+
+2.13	Tue Dec 18 2007
+	- Add data for perl 5.10.0
+
+2.12	Mon Jul  9 2007
+	- Add data for perl 5.9.5
+
+2.11	Thu May 10 2007
+	- first_release() now returns the first release in the order of
+	  perl version numbers. Add a new method first_release_by_date()
+	  to keep the old behaviour available. Suggested by Michael G Schwern.
+	- Update data about UCD versions
+
+2.10	Wed May  9 2007
+	- Add versioning for the Unicode Character Database bundled
+	  with Perl (H. Merijn Brand)
+
+2.09	Thu Oct  5 2006
+	- Make the dependency on version.pm optional
+	- Improve doc of corelist(1)
+
+2.08	Thu Sep  7 2006
+	- Add data for 5.9.4
+
+2.07	Wed Aug  9 2006
+	- Regenerate data correctly for 5.8.7, 5.8.8, 5.9.2 and 5.9.3
+	- Add OS-specific modules for those versions
+
+2.06	Tue Aug  1 2006
+	Patches by Marius Feraru :
+	- handle dotted perl versions (e.g. 5.8.6)
+	- add an easy way to determine what was some module's version bundled
+	  with a specified Perl release
+
+2.05	Tue Jun  6 2006
+	Patches by Adriano Ferreira :
+	- corelist utility accepts regexes as arguments, eg. /IPC::Open/
+	- Errors when building regexes are trapped and warning is generated
+
+2.04	Thursday 2nd February, 2006
+	Fix patchlevel for 5.8.8 (Gisle Aas)
+	Silence warnings in corelist utility
+
+2.03	Wednesday 1st February, 2006
+	Include data for perl 5.9.3 and 5.8.8
+
+2.02	Tuesday 31th May, 2005
+	Include data for perl 5.8.7
+
+2.01	Sunday 24th April, 2005
+	Allow to specify several modules on the corelist command-line
+	(Yves Orton)
+	Add a %patchlevel hash to get perforce patchlevels corresponding to
+	released versions
+
+2.00	Sunday 10th April, 2005
+	Data from Sebastien Aperghis-Tramoni for perl 5.00{0,1,2}.
+
+1.99	Tuesday 5th April, 2005
+	Backport to CPAN the version of Module::CoreList shipped with
+	perl 5.9.2 (containing info for this latest distribution).
+	Install in coreperl instead of sitelib for perls >= 5.9.2.
+
+1.98	Saturday 1st January, 2005
+	Data from José Pedro Oliveira for 5.8.6
+
+1.97	Wednesday 8th September, 2004
+	Ship with a traditional Makefile.PL
+
+1.96	Monday 26th July, 2004
+	Lars Thegler supplied many many fixes as #6922, #7085, #7086,
+	#7089, #7090, #7091, #7092, #7093, #7094, #7095, #7096, #7098,
+	#7099, #7100, and #7101
+	Added the %families hash.
+	Small changes to the tests to ensure that things look consistent.
+
+1.95	Wednesday 21st July, 2004
+	Data from José Pedro Oliveira for 5.8.4 and 5.8.5
+
+1.94	Monday 12th July, 2004
+	Applied fixes from Lars Thegler (rt.cpan.org tickets #6919,
+	#6920, #6922, and #6923)
+	Data from Jose Pedro Oliveira for 5.005_04, 5.8.3, and 5.9.1.
+
+1.93	Friday 14th November, 2003
+	Data for 5.9.0 and 5.6.2
+
+1.92	Friday 14th November, 2003
+	Incorporated two patches submitted from anonymous reporters
+	via rt.cpan.org (#4358 and #4359, corelist enhancement and
+	information for 5.8.2)
+	Added 5.8.1 information.
+
+1.91    18th May 2003
+        - Fix from Mark Fowler - XSLoader is autogenerated too
+
+1.9     22nd April 2003
+        - incorported PodMaster's corelist script
+
+1.8	13th February 2003
+	- reformatted Changes file to use makereadme
+	- fixed version of Exporter::Heavy for 5.8 (as caught by Leon Brocard)
+
+1.7	30th July 2002
+	- HISTORY contents moved to this Changes file
+	- identify-dependencies script given some loving.
+
+1.6	July 2002
+	- Included Config as a shipped module for all releases of perl
+	  (caught by Mark Fowler)
+	- Added data for the 5.8 release.
+
+1.5	2nd April 2002
+	- Fixed a glaring bug caught by the testsuite but sadly
+	  released.  perl5.004_05 was released post 5.005_03 and so
+	  isn't the first release to contain File::Spec.
+	- Added data for 5.003_07, 5.004, and 5.005 releases.
+	- Added the %released hash.
+
+1.4	2nd April 2002
+	- Bugfixes from Roland Bauer to allow the code to work under
+	  5.004_04.
+	- Using a cgi developed by Roland caught and fixed a number of
+	  bugs in the previous extraction of module names.
+	- Rewrote the name extractor to be simpler.
+	- Added data for the 5.004_05 and 5.6.0 releases of perl.
+
+1.3	25th March 2002
+	- Initial CPAN release, covers 5.00503, 5.6.1 and 5.7.3

@@ -62,10 +62,10 @@ my $max   = chr(0x10FFFF);
 EXPECT
 UTF-16 surrogate 0xd800 at - line 3.
 UTF-16 surrogate 0xdfff at - line 4.
-Unicode character 0xfffe is illegal at - line 8.
-Unicode character 0xffff is illegal at - line 9.
-Unicode character 0x10fffe is illegal at - line 12.
-Unicode character 0x10ffff is illegal at - line 13.
+Unicode non-character 0xfffe is illegal for interchange at - line 8.
+Unicode non-character 0xffff is illegal for interchange at - line 9.
+Unicode non-character 0x10fffe is illegal for interchange at - line 12.
+Unicode non-character 0x10ffff is illegal for interchange at - line 13.
 ########
 use warnings 'utf8';
 my $d7ff  = pack("U", 0xD7FF);
@@ -96,10 +96,10 @@ my $max   = pack("U", 0x10FFFF);
 EXPECT
 UTF-16 surrogate 0xd800 at - line 3.
 UTF-16 surrogate 0xdfff at - line 4.
-Unicode character 0xfffe is illegal at - line 8.
-Unicode character 0xffff is illegal at - line 9.
-Unicode character 0x10fffe is illegal at - line 12.
-Unicode character 0x10ffff is illegal at - line 13.
+Unicode non-character 0xfffe is illegal for interchange at - line 8.
+Unicode non-character 0xffff is illegal for interchange at - line 9.
+Unicode non-character 0x10fffe is illegal for interchange at - line 12.
+Unicode non-character 0x10ffff is illegal for interchange at - line 13.
 ########
 use warnings 'utf8';
 my $d7ff  = "\x{D7FF}";
@@ -114,6 +114,7 @@ my $hex4  = "\x{10000}";
 my $hex5  = "\x{100000}";
 my $maxm1 = "\x{10FFFE}";
 my $max   = "\x{10FFFF}";
+uc($ffff);
 no warnings 'utf8';
 my $d7ff  = "\x{D7FF}";
 my $d800  = "\x{D800}";
@@ -127,10 +128,12 @@ my $hex4  = "\x{10000}";
 my $hex5  = "\x{100000}";
 my $maxm1 = "\x{10FFFE}";
 my $max   = "\x{10FFFF}";
+uc($ffff);
 EXPECT
 UTF-16 surrogate 0xd800 at - line 3.
 UTF-16 surrogate 0xdfff at - line 4.
-Unicode character 0xfffe is illegal at - line 8.
-Unicode character 0xffff is illegal at - line 9.
-Unicode character 0x10fffe is illegal at - line 12.
-Unicode character 0x10ffff is illegal at - line 13.
+Unicode non-character 0xfffe is illegal for interchange at - line 8.
+Unicode non-character 0xffff is illegal for interchange at - line 9.
+Unicode non-character 0x10fffe is illegal for interchange at - line 12.
+Unicode non-character 0x10ffff is illegal for interchange at - line 13.
+Unicode non-character 0xffff is illegal for interchange in uc at - line 14.

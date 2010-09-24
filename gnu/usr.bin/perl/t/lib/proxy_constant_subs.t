@@ -1,7 +1,5 @@
 my @symbols;
 BEGIN {
-    chdir 't';
-    @INC = '../lib';
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
@@ -14,11 +12,12 @@ BEGIN {
     # S_IFMT is a real subroutine, and acts as control
     # SEEK_SET is a proxy constant subroutine.
     @symbols = qw(S_IFMT SEEK_SET);
+    require './test.pl';
 }
 
 use strict;
 use warnings;
-use Test::More tests => 4 * @symbols;
+plan(4 * @symbols);
 use B qw(svref_2object GVf_IMPORTED_CV);
 use Fcntl @symbols;
 

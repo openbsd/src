@@ -17,7 +17,7 @@ sub new { 'Fooled you.' }
 package main;
 
 use vars qw( $flag );
-use Test::More tests => 13;
+use Test::More tests => 16;
 
 use_ok( 'Tie::Scalar' );
 
@@ -74,3 +74,48 @@ sub new {
 sub DESTROY {
 	$main::flag = 1;
 }
+
+
+#
+# Bug #72878: don't recurse forever if both new and TIESCALAR are missing.
+#
+package main;
+
+@NoMethods::ISA = qw [Tie::Scalar];
+
+{
+    #
+    # Without the fix for #72878, the code runs forever.
+    # Trap this, and die if with an appropriate message if this happens.
+    #
+    local $SIG {__WARN__} = sub {
+        die "Called NoMethods->new"
+             if $_ [0] =~ /^WARNING: calling NoMethods->new/;
+    };
+
+    eval {tie my $foo => "NoMethods";};
+
+    like $@ =>
+        qr /\QNoMethods must define either a TIESCALAR() or a new() method/,
+        "croaks if both new() and TIESCALAR() are missing";
+};
+
+#
+# Don't croak on missing new/TIESCALAR if you're inheriting one.
+#
+my $called1 = 0;
+my $called2 = 0;
+
+sub HasMethod1::new {$called1 ++}
+   @HasMethod1::ISA        = qw [Tie::Scalar];
+   @InheritHasMethod1::ISA = qw [HasMethod1];
+
+sub HasMethod2::TIESCALAR {$called2 ++}
+   @HasMethod2::ISA        = qw [Tie::Scalar];
+   @InheritHasMethod2::ISA = qw [HasMethod2];
+
+my $r1 = eval {tie my $foo => "InheritHasMethod1"; 1};
+my $r2 = eval {tie my $foo => "InheritHasMethod2"; 1};
+
+ok $r1 && $called1, "inheriting new() does not croak";
+ok $r2 && $called2, "inheriting TIESCALAR() does not croak";

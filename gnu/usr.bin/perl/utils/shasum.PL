@@ -35,7 +35,7 @@ use File::Spec;
 
 my $script = File::Spec->catfile(
             File::Spec->catdir(
-                File::Spec->updir, qw[ext Digest-SHA bin]
+                File::Spec->updir, qw[cpan Digest-SHA]
             ), "shasum");
 
 if (open(IN, $script)) {

@@ -1,8 +1,6 @@
 #!perl -w
 
 BEGIN {
-  chdir 't' if -d 't';
-  @INC = '../lib';
   push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
   require Config; import Config;
   if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {

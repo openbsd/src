@@ -5,9 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test;
-
-BEGIN { plan tests => 8 }
+use Test::More tests => 23;
 
 use strict;
 
@@ -19,6 +17,7 @@ BEGIN {
 	require Win32;
 	Win32->import();
     }
+    require overload;
 }
 
 use File::CheckTree;
@@ -53,13 +52,10 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    print STDERR $_ for @warnings;
-    if ( !$@ && !@warnings && defined($num_warnings) && $num_warnings == 0 ) {
-        ok(1);
-    }
-    else {
-        ok(0);
-    }
+    diag($_) for @warnings;
+    is( $@, '' );
+    is( scalar @warnings, 0 );
+    is( $num_warnings, 0 );
 }
 
 
@@ -77,16 +73,10 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    if ( !$@ && @warnings == 1
-             && $warnings[0] =~ /lib is not a plain file/
-             && defined($num_warnings)
-             && $num_warnings == 1 )
-    {
-        ok(1);
-    }
-    else {
-        ok(0);
-    }
+    is( $@, '' );
+    is( scalar @warnings, 1 );
+    like( $warnings[0], qr/lib is not a plain file/);
+    is( $num_warnings, 1 );
 }
 
 
@@ -108,18 +98,12 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    if ( !$@ && @warnings == 3
-             && $warnings[0] =~ /lib is not a plain file/
-             && $warnings[1] =~ /README is not a directory/
-             && $warnings[2] =~ /my warning: lib/
-             && defined($num_warnings)
-             && $num_warnings == 3 )
-    {
-        ok(1);
-    }
-    else {
-        ok(0);
-    }
+    is( $@, '' );
+    is( scalar @warnings, 3 );
+    like( $warnings[0], qr/lib is not a plain file/);
+    like( $warnings[1], qr/README is not a directory/);
+    like( $warnings[2], qr/my warning: lib/);
+    is( $num_warnings, 3 );
 }
 
 
@@ -145,17 +129,11 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    if ( !$@ && @warnings == 2
-             && $warnings[0] =~ /Spec is not a plain file/
-             && $warnings[1] =~ /INSTALL is not a directory/
-             && defined($num_warnings)
-             && $num_warnings == 2 )
-    {
-        ok(1);
-    }
-    else {
-        ok(0);
-    }
+    is( $@, '' );
+    is( scalar @warnings, 2 );
+    like( $warnings[0], qr/Spec is not a plain file/);
+    like( $warnings[1], qr/INSTALL is not a directory/);
+    is( $num_warnings, 2 );
 }
 
 
@@ -171,14 +149,7 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    if ( $@ && $@ =~ /lib is not a plain file/
-            && not defined $num_warnings )
-    {
-        ok(1);
-    }
-    else {
-        ok(0);
-    }
+    like($@, qr/lib is not a plain file/);
 }
 
 
@@ -194,14 +165,8 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    if ( $@ && $@ =~ /yadda lib yadda/
-            && not defined $num_warnings )
-    {
-        ok(1);
-    }
-    else {
-        ok(0);
-    }
+    like($@, qr/yadda lib yadda/);
+    is( $num_warnings, undef );
 }
 
 #### TEST 7 -- Quoted file names ####
@@ -214,13 +179,7 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    if ( !$@ ) {
-	# No errors mean we compile correctly
-        ok(1);
-    } else {
-        ok(0);
-	print STDERR $@;
-    };
+    is ( $@, '', 'No errors mean we compile correctly');
 }
 
 #### TEST 8 -- Malformed query ####
@@ -232,10 +191,6 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
         };
     };
 
-    if ( $@ =~ /syntax error/) {
-	# We got a syntax error for a malformed file query
-        ok(1);
-    } else {
-        ok(0);
-    };
+    like( $@, qr/syntax error/, 
+	  'We got a syntax error for a malformed file query' );
 }

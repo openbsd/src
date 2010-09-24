@@ -3,7 +3,6 @@
 BEGIN {
 	chdir 't' if -d 't';
 	@INC = '../lib';
-	push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
 	require Config; import Config;
 }
 
@@ -182,6 +181,7 @@ EOE
 }
 SKIP: {
     skip("no perlio", 2) unless (find PerlIO::Layer 'perlio');
+    skip("no Encode", 2) unless $Config{extensions} =~ m{\bEncode\b};
 
     eval q[use Encode::Alias;use open ":std", ":locale"];
     is($@, '', 'can use :std and :locale');

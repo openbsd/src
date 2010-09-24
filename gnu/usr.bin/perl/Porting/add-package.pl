@@ -371,49 +371,6 @@ my @ChangedFiles;
     }
 }
 
-### binary files must be encoded!
-### XXX use the new 'uupacktool.pl'
-{   my $pack = "$Repo/uupacktool.pl";
-
-    ### pack.pl encodes binary files for us
-    -e $pack or die "Need $pack to encode binary files!";
-
-    ### chdir, so uupacktool writes relative files properly
-    ### into it's header...
-    my $curdir = cwd();
-    chdir($Repo) or die "Could not chdir to '$Repo': $!";
-
-    for my $aref ( \@ModFiles, \@TestFiles, \@BinFiles ) {
-        for my $file ( @$aref ) {
-            my $full = -e $file                 ? $file              :
-                       -e "$RelTopDir/$file"    ? "$RelTopDir/$file" :
-                       die "Can not find $file in $Repo or $TopDir\n";
-
-            if( -f $full && -s _ && -B _ ) {
-                print "Binary file $file needs encoding\n" if $Verbose;
-
-                my $out = $full . '.packed';
-
-                ### does the file exist already?
-                ### and doesn't have +w
-                if( -e $out && not -w _ ) {
-                    system("chmod +w $out")
-                        and die "Could not set chmod +w to '$out': $!";
-                }
-
-                ### -D to remove the original
-                system("$^X $pack -D -p $full $out")
-                    and die "Could not encode $full to $out";
-
-
-                $file .= '.packed';
-            }
-        }
-    }
-
-    chdir($curdir) or die "Could not chdir back to '$curdir': $!";
-}
-
 ### update the manifest
 {   my $file        = $Repo . '/MANIFEST';
     my @manifest;

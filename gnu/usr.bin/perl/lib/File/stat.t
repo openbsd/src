@@ -6,24 +6,37 @@ BEGIN {
 }
 
 use Test::More;
+use Config qw( %Config );
 
 BEGIN {
+    # Check whether the build is configured with -Dmksymlinks
+    our $Dmksymlinks =
+        grep { /^config_arg\d+$/ && $Config{$_} eq '-Dmksymlinks' }
+        keys %Config;
+
+    # Resolve symlink to ./TEST if this build is configured with -Dmksymlinks
+    our $file = 'TEST';
+    if ( $Dmksymlinks ) {
+        $file = readlink $file;
+        die "Can't readlink(TEST): $!" if ! defined $file;
+    }
+
     our $hasst;
-    eval { my @n = stat "TEST" };
+    eval { my @n = stat $file };
     $hasst = 1 unless $@ && $@ =~ /unimplemented/;
     unless ($hasst) { plan skip_all => "no stat"; exit 0 }
     use Config;
     $hasst = 0 unless $Config{'i_sysstat'} eq 'define';
     unless ($hasst) { plan skip_all => "no sys/stat.h"; exit 0 }
-    our @stat = stat "TEST"; # This is the function stat.
-    unless (@stat) { plan skip_all => "1..0 # Skip: no file TEST"; exit 0 }
+    our @stat = stat $file; # This is the function stat.
+    unless (@stat) { plan skip_all => "1..0 # Skip: no file $file"; exit 0 }
 }
 
-plan tests => 19;
+plan tests => 19 + 24*2 + 3;
 
 use_ok( 'File::stat' );
 
-my $stat = File::stat::stat( "TEST" ); # This is the OO stat.
+my $stat = File::stat::stat( $file ); # This is the OO stat.
 ok( ref($stat), 'should build a stat object' );
 
 is( $stat->dev, $stat[0], "device number in position 0" );
@@ -56,9 +69,26 @@ is( $stat->blksize, $stat[11], "IO block size in position 11" );
 
 is( $stat->blocks, $stat[12], "number of blocks in position 12" );
 
+for (split //, "rwxoRWXOezsfdlpSbcugkMCA") {
+    SKIP: {
+        $^O eq "VMS" and index("rwxRWX", $_) >= 0
+            and skip "File::stat ignores VMS ACLs", 2;
+
+        my $rv = eval "-$_ \$stat";
+        ok( !$@,                            "-$_ overload succeeds" )
+            or diag( $@ );
+        is( $rv, eval "-$_ \$file",         "correct -$_ overload" );
+    }
+}
+
+for (split //, "tTB") {
+    eval "-$_ \$stat";
+    like( $@, qr/\Q-$_ is not implemented/, "-$_ overload fails" );
+}
+
 SKIP: {
 	local *STAT;
-	skip("Could not open file: $!", 2) unless open(STAT, 'TEST');
+	skip("Could not open file: $!", 2) unless open(STAT, $file);
 	ok( File::stat::stat('STAT'), '... should be able to find filehandle' );
 
 	package foo;
@@ -81,8 +111,9 @@ SKIP: {
 	main::is( "@$stat", "@$stat3", '... and must match normal stat' );
 }
 
+
 local $!;
 $stat = stat '/notafile';
-isn't( $!, '', 'should populate $!, given invalid file' );
+isnt( $!, '', 'should populate $!, given invalid file' );
 
 # Testing pretty much anything else is unportable.

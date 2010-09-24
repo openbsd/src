@@ -114,7 +114,7 @@ The American Standard Code for Information Interchange (a 7-bit
 character set adequate only for poorly representing English text).
 Often used loosely to describe the lowest 128 values of the various
 ISO-8859-X character sets, a bunch of mutually incompatible 8-bit
-codes best described as half ASCII.  See also L</Unicode>.
+codes sometimes described as half ASCII.  See also L</Unicode>.
 
 =item assertion
 
@@ -3223,7 +3223,7 @@ change their meanings.)
 =item Unicode
 
 A character set comprising all the major character sets of the world,
-more or less.  See L<http://www.unicode.org>.
+more or less.  See L<perlunicode> and L<http://www.unicode.org>.
 
 =item Unix
 

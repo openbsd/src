@@ -63,9 +63,9 @@ Perl 自身は Unicode で動作します。Perl スクリプト内の文字列リテラルや正規表現は 
 
 =head2 About (jcode.pl|Jcode.pm|JPerl)
 
-5.8以前の、スクリプトがEUC-JPであればリテラルだけは扱うことができました。また、入出力を扱うモジュールとしてはJcode.pmが( http://openlab.jp/Jcode/ )、perl4用のユーティリティとしてはjcode.pl( http://srekcah.org/jcode/ )がそれぞれ存在し、日本語の扱えるCGIでよく利用されていることを御存じの方も少なくないかと思われます。ただし、日本語による正規表現をうまく扱うことは不可能でした。
+5.8以前の、スクリプトがEUC-JPであればリテラルだけは扱うことができました。また、入出力を扱うモジュールとしてはJcode.pmが( http://openlab.ring.gr.jp/Jcode/ )、perl4用のユーティリティとしてはjcode.plがそれぞれ存在し、日本語の扱えるCGIでよく利用されていることを御存じの方も少なくないかと思われます。ただし、日本語による正規表現をうまく扱うことは不可能でした。
 
-5.005以前のPerlには、日本語に特化したローカライズ版、Jperlが存在しました( http://homepage2.nifty.com/kipp/perl/jperl/index.html )。また、Mac OS 9.x/Classic用のPerl、MacPerlの日本語版もMacJPerlとして存在してました。( http://world.std.com/~habilis/macjperl/ ).これらでは文字コードとしてEUC-JPに加えShift_JISもそのまま扱うことができ、また日本語による正規表現を扱うことも可能でした。
+5.005以前のPerlには、日本語に特化したローカライズ版、Jperlが存在しました( http://homepage2.nifty.com/kipp/perl/jperl/index.html )。また、Mac OS 9.x/Classic用のPerl、MacPerlの日本語版もMacJPerlとして存在してました。( http://habilis.net/macjperl/ ).これらでは文字コードとしてEUC-JPに加えShift_JISもそのまま扱うことができ、また日本語による正規表現を扱うことも可能でした。
 
 Perl5.8では、これらの機能がすべてPerl本体だけで実現できる上に、日本語のみならず上記114の文字コードをすべて、しかも同時に扱うことができます。さらに、CPANなどから新しい文字コード用のモジュールを入手することも簡単にできるようになっています。
 
@@ -144,15 +144,15 @@ Perl メーリングリスト集
 
 =over 4
 
-=item L<http://www.oreilly.com.tw/chinese/>
+=item L<http://www.oreilly.com.tw/>
 
 O'Reilly 社のPerl関連書籍(繁体字中国語)
 
-=item L<http://www.oreilly.com.cn/chinese/>
+=item L<http://www.oreilly.com.cn/>
 
 O'Reilly 社のPerl関連書籍(簡体字中国語)
 
-=item L<http://www.oreilly.co.jp/catalog.htm>
+=item L<http://www.oreilly.co.jp/catalog/>
 
 オライリー社のPerl関連書籍(日本語)
 
@@ -163,20 +163,6 @@ O'Reilly 社のPerl関連書籍(簡体字中国語)
 =over 4
 
 =item L<http://www.pm.org/groups/asia.html>
-
-中国（中華人民共和国）
-
-=item L<http://www.pm.org/groups/asia.shtml#Japan>
-
-日本
-
-=item L<http://www.pm.org/groups/asia.shtml#Korea%20(Republic%20of)>
-
-韓国（大韓民国）
-
-=item L<http://www.pm.org/groups/asia.shtml#Taiwan>
-
-台湾（中華民国）
 
 =back
 

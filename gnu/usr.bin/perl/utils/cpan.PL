@@ -33,7 +33,7 @@ $Config{startperl}
 
 use File::Spec;
 
-my $cpan = File::Spec->catfile(File::Spec->catdir(File::Spec->updir, "lib", "CPAN", "bin"), "cpan");
+my $cpan = File::Spec->catfile(File::Spec->catdir(File::Spec->updir, qw(cpan CPAN scripts)), "cpan");
 
 if (open(CPAN, $cpan)) {
     print OUT <CPAN>;

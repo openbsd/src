@@ -222,9 +222,9 @@ again:
     is $simpson, 'Homer', 'goto 1';
     goto again if @simpsons;
 
-goto Elvis;
 my $vi;
 {
+    goto Elvis unless $vi;
            state $calvin = ++ $vi;
     Elvis: state $vile   = ++ $vi;
     redo unless defined $calvin;

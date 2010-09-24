@@ -157,15 +157,7 @@ Perl 전반 뿐 아니라 유니코드 지원, Encode의 사용법 등에 많은 것을
 
   한국어 Perl 뉴스 그룹
 
-=item L<http://seoul.pm.org/>
-
-  Perl 망거스 (서울)
-
-=item L<http://www.perlmania.or.kr/>
-
-  Home for Korean Perlmanias
-
-=item L<http://www.oreilly.co.kr/perl/>
+=item L<http://www.hanb.co.kr/search/searchResult.php?keyword=perl>
 
   O'Reilly에서 나온 한국어 Perl 서적 목록
 
@@ -191,10 +183,6 @@ Perl 전반 뿐 아니라 유니코드 지원, Encode의 사용법 등에 많은 것을
 
 기본적으로 Unicode와 같은 ISO 표준인  ISO/IEC 10646 UCS(Universal
 Character Set)을 만드는  ISO/IEC JTC1/SC2/WG2의 웹 페이지. 
-
-=item L<http://jshin.net/faq/qa8.html>
-
-  한국어 문자 집합 및 인코딩에 대한 안내.
 
 =item L<http://www.cl.cam.ac.uk/~mgk25/unicode.html>
 

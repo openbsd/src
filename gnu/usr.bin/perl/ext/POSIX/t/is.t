@@ -1,8 +1,6 @@
 #!./perl -w
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     require Config; import Config;
     if ($^O ne 'VMS' and $Config{'extensions'} !~ /\bPOSIX\b/) {
 	print "1..0\n";
@@ -72,7 +70,7 @@ foreach my $s (keys %classes) {
 
 # Expected number of tests is one each for every combination of a
 # known is<xxx> function and string listed above.
-require './test.pl';
+require '../../t/test.pl';
 plan(tests => keys(%classes) * keys(%functions));
 
 

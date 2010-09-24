@@ -9,6 +9,7 @@ use Test::More tests => 10;
 use FindExt;
 use Config;
 
+FindExt::scan_ext('../cpan');
 FindExt::scan_ext('../ext');
 
 # Config.pm and FindExt.pm make different choices about what should be built

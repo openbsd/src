@@ -5,8 +5,6 @@ my $can_fork;
 my $has_perlio;
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     require Config; import Config;
     $can_fork = $Config{'d_fork'} || $Config{'d_pseudofork'};
 

@@ -1,8 +1,6 @@
 #!./perl
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     unless (find PerlIO::Layer 'perlio') {
 	print "1..0 # Skip: not perlio\n";
 	exit 0;
@@ -18,7 +16,7 @@ use Fcntl qw(SEEK_SET SEEK_CUR SEEK_END); # Not 0, 1, 2 everywhere.
 
 $| = 1;
 
-use Test::More tests => 55;
+use Test::More tests => 69;
 
 my $fh;
 my $var = "aaa\n";
@@ -99,7 +97,7 @@ open $fh, '<', \42;
 is(<$fh>, "42", "reading from non-string scalars");
 close $fh;
 
-{ package P; sub TIESCALAR {bless{}} sub FETCH { "shazam" } }
+{ package P; sub TIESCALAR {bless{}} sub FETCH { "shazam" } sub STORE {} }
 tie $p, P; open $fh, '<', \$p;
 is(<$fh>, "shazam", "reading from magic scalars");
 
@@ -134,6 +132,7 @@ is(<$fh>, "shazam", "reading from magic scalars");
         package MgUndef;
         sub TIESCALAR { bless [] }
         sub FETCH { $fetch++; return undef }
+	sub STORE {}
     }
     tie my $scalar, MgUndef;
 
@@ -230,4 +229,51 @@ EOF
     ok(!seek(F,  -50, SEEK_CUR), $!);
     ok(!seek(F, -150, SEEK_END), $!);
 }
+
+# RT #43789: should respect tied scalar
+
+{
+    package TS;
+    my $s;
+    sub TIESCALAR { bless \my $x }
+    sub FETCH { $s .= ':F'; ${$_[0]} }
+    sub STORE { $s .= ":S($_[1])"; ${$_[0]} = $_[1] }
+
+    package main;
+
+    my $x;
+    $s = '';
+    tie $x, 'TS';
+    my $fh;
+
+    ok(open($fh, '>', \$x), 'open-write tied scalar');
+    $s .= ':O';
+    print($fh 'ABC');
+    $s .= ':P';
+    ok(seek($fh, 0, SEEK_SET));
+    $s .= ':SK';
+    print($fh 'DEF');
+    $s .= ':P';
+    ok(close($fh), 'close tied scalar - write');
+    is($s, ':F:S():O:F:S(ABC):P:F:SK:F:S(DEF):P', 'tied actions - write');
+    is($x, 'DEF', 'new value preserved');
+
+    $x = 'GHI';
+    $s = '';
+    ok(open($fh, '+<', \$x), 'open-read tied scalar');
+    $s .= ':O';
+    my $buf;
+    is(read($fh,$buf,2), 2, 'read1');
+    $s .= ':R';
+    is($buf, 'GH', 'buf1');
+    is(read($fh,$buf,2), 1, 'read2');
+    $s .= ':R';
+    is($buf, 'I', 'buf2');
+    is(read($fh,$buf,2), 0, 'read3');
+    $s .= ':R';
+    is($buf, '', 'buf3');
+    ok(close($fh), 'close tied scalar - read');
+    is($s, ':F:S(GHI):O:F:R:F:R:F:R', 'tied actions - read');
+}
+
 

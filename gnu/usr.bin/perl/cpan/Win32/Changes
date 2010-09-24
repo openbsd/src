@@ -1,0 +1,137 @@
+Revision history for the Perl extension Win32.
+
+0.39	[2009-01-19]
+	- Add support for Windows 2008 Server and Windows 7 in
+	  Win32::GetOSName() and in the documentation for
+	  Win32::GetOSVersion().
+	- Make Win32::GetOSName() implementation testable.
+	- Document that the OSName for Win32s is actually "WinWin32s".
+
+0.38	[2008-06-27]
+	- Fix Cygwin releated problems in t/GetCurrentThreadId.t
+	  (Jerry D. Hedden).
+
+0.37	[2008-06-26]
+	- Add Win32::GetCurrentProcessId() function
+
+0.36	[2008-04-17]
+	- Add typecasts for Win64 compilation
+
+0.35	[2008-03-31]
+	Integrate changes from bleadperl:
+	- Silence Borland compiler warning (Steve Hay)
+	- Fix memory leak in Win32::GetOSVersion (Vincent Pit)
+	- Test Win32::GetCurrentThreadId on cygwin (Reini Urban, Steve Hay)
+
+0.34	[2007-11-21]
+	- Document "WinVista" return value for Win32::GetOSName()
+	  (Steve Hay).
+
+0.33	[2007-11-12]
+	- Update version to 0.33 for Perl 5.10 release
+	- Add $^O test in Makefile.PL for CPAN Testers
+	- Use Win32::GetLastError() instead of $^E in t/Names.t for
+	  cygwin compatibility (Jerry D. Hedden).
+
+0.32	[2007-09-20]
+	- Additional #define's for older versions of VC++ (Dmitry Karasik).
+	- Win32::DomainName() doesn't return anything when the Workstation
+	  service isn't running.  Set $^E and adapt t/Names.t accordingly
+	  (Steve Hay & Jerry D. Hedden).
+	- Fix t/Names.t to allow Win32::GetOSName() to return an empty
+	  description as the 2nd return value (e.g. Vista without SP).
+	- Fix t/GetFileVersion.t for Perl 5.10
+
+0.31	[2007-09-10]
+	- Apply Cygwin fixes from bleadperl (from Jerry D. Hedden).
+	- Make sure Win32::GetLongPathName() always returns drive
+	  letters in uppercase (Jerry D. Hedden).
+	- Use uppercase environment variable names in t/Unicode.t
+	  because the MSWin32 doesn't care, and Cygwin only works
+	  with the uppercased version.
+	- new t/Names.t test (from Sébastien Aperghis-Tramoni)
+
+0.30	[2007-06-25]
+	- Fixed t/Unicode.t test for Cygwin (with help from Jerry D. Hedden).
+	- Fixed and documented Win32::GetShortPathName() to return undef
+	  when the pathname doesn't exist (thanks to Steve Hay).
+	- Added t/GetShortPathName.t
+
+0.29	[2007-05-17]
+	- Fixed to compile with Borland BCC (thanks to Steve Hay).
+
+0.28_01	[2007-05-16]
+	- Increase version number as 0.28 was already used by an ActivePerl
+	  release (for essentially 0.27 plus the Win32::IsAdminUser() change).
+
+	- Add MODULE and PROTOTYPES directives to silence warnings from
+	  newer versions of xsubpp.
+
+	- Use the Cygwin codepath in Win32::GetFullPathName() when
+	  PERL_IMPLICIT_SYS is not defined, because the other code
+	  relies on the virtualization code in win32/vdir.h.
+
+0.27_02	[2007-05-15]
+	- We need Windows 2000 or later for the Unicode support because
+	  WC_NO_BEST_FIT_CHARS is not supported on Windows NT.
+
+	- Fix Win32::GetFullPathName() on Windows NT to return an
+	  empty file part if the original argument ends with a slash.
+
+0.27_01	[2007-04-18]
+	- Update Win32::IsAdminUser() to use the IsUserAnAdmin() function
+	  in shell32.dll when available.  On Windows Vista this will only
+	  return true if the process is running with elevated privileges
+	  and not just when the owner of the process is a member of the
+	  "Administrators" group.
+
+	- Win32::ExpandEnvironmentStrings() may return a Unicode string
+	  (a string containing characters outside the system codepage)
+
+	- new Win32::GetANSIPathName() function returns a pathname in
+	  a form containing only characters from the system codepage
+
+	- Win32::GetCwd() will return an ANSI version of the directory
+	  name if the long name contains characters outside the system
+	  codepage.
+
+	- Win32::GetFolderPath() will return an ANSI pathname. Call
+	  Win32::GetLongPathName() to get the canonical Unicode
+	  representation.
+
+	- Win32::GetFullPathName() will return an ANSI pathname. Call
+	  Win32::GetLongPathName() to get the canonical Unicode
+	  representation.
+
+	- Win32::GetLongPathName() may return a Unicode path name.
+	  Call Win32::GetANSIPathName() to get a representation using
+	  only characters from the system codepage.
+
+	- Win32::LoginName() may return a Unicode string.
+
+	- new Win32::OutputDebugString() function sends a string to
+	  the debugger.
+
+	- new Win32::GetCurrentThreadId() function returns the thread
+	  id (to complement the process id in $$).
+
+	- new Win32::CreateDirectory() creates a new directory.  The
+	  name of the directory may contain Unicode characters outside
+	  the system codepage.
+
+	- new Win32::CreateFile() creates a new file.  The name of the
+	  file may contain Unicode characters outside the system codepage.
+
+
+0.27	[2007-03-07]
+	- Extracted from the libwin32 distribution to simplify maintenance
+	  because Win32 is a dual-life core module since 5.8.4.
+
+	- Win32.pm and Win32.xs updated to version in bleadperl.
+	  This includes all the Win32::* function from win32/win32.c
+	  in core Perl, except for Win32::SetChildShowWindows().
+
+	- Install into 'perl' directory instead of 'site' for Perl 5.8.4
+	  and later.
+
+	- Add some simple tests.

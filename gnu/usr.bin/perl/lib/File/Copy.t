@@ -14,14 +14,14 @@ use Test::More;
 
 my $TB = Test::More->builder;
 
-plan tests => 115;
+plan tests => 463;
 
 # We're going to override rename() later on but Perl has to see an override
 # at compile time to honor it.
 BEGIN { *CORE::GLOBAL::rename = sub { CORE::rename($_[0], $_[1]) }; }
 
 
-use File::Copy;
+use File::Copy qw(copy move cp);
 use Config;
 
 
@@ -223,6 +223,154 @@ for my $cross_partition_test (0..1) {
 
   unlink "file-$$" or die $!;
   unlink "copy-$$" or die $!;
+
+  # RT #73714 copy to file with leading whitespace failed
+
+  TODO: {
+  local $TODO = 'spaces in filenames require DECC$EFS_CHARSET enabled' if $^O eq 'VMS';
+  open(F, ">file-$$") or die $!;
+  close F;
+  copy "file-$$", " copy-$$";
+  ok -e " copy-$$", "copy with leading whitespace";
+  unlink "file-$$" or die "unlink: $!";
+  unlink " copy-$$" or die "unlink: $!";
+  }
+}
+
+my $can_suidp = sub {
+    my $dir = "suid-$$";
+    my $ok = 1;
+    mkdir $dir or die "Can't mkdir($dir) for suid test";
+    $ok = 0 unless chmod 2000, $dir;
+    rmdir $dir;
+    return $ok;
+};
+
+SKIP: {
+    my @tests = (
+        [0000,  0777,  0777,  0777],
+        [0000,  0751,  0751,  0644],
+        [0022,  0777,  0755,  0206],
+        [0022,  0415,  0415,  0666],
+        [0077,  0777,  0700,  0333],
+        [0027,  0755,  0750,  0251],
+        [0777,  0751,  0000,  0215],
+    );
+
+    my $skips = @tests * 6 * 8;
+
+    my $can_suid = $can_suidp->();
+    skip "Can't suid on this $^O filesystem", $skips unless $can_suid;
+    skip "-- Copy preserves RMS defaults, not POSIX permissions.", $skips
+          if $^O eq 'VMS';
+    skip "Copy doesn't set file permissions correctly on Win32.",  $skips
+          if $^O eq "MSWin32";
+
+    # Just a sub to get better failure messages.
+    sub __ ($) {
+        my $perm   = shift;
+        my $id     = 07000 & $perm;
+           $id   >>= 9;
+        $perm     &= 0777;
+        my @chunks = map {(qw [--- --x -w- -wx r-- r-x rw- rwx]) [$_]}
+                     split // => sprintf "%03o" => $perm;
+        if ($id & 4) {$chunks [0] =~ s/(.)$/$1 eq '-' ? 'S' : 's'/e;}
+        if ($id & 2) {$chunks [1] =~ s/(.)$/$1 eq '-' ? 'S' : 's'/e;}
+        if ($id & 1) {$chunks [2] =~ s/(.)$/$1 eq '-' ? 'T' : 't'/e;}
+        join "" => @chunks;
+    }
+    # Testing permission bits.
+    my $src   = "file-$$";
+    my $copy1 = "copy1-$$";
+    my $copy2 = "copy2-$$";
+    my $copy3 = "copy3-$$";
+    my $copy4 = "copy4-$$";
+    my $copy5 = "copy5-$$";
+    my $copy6 = "copy6-$$";
+
+    open my $fh => ">", $src   or die $!;
+    close   $fh                or die $!;
+
+    open    $fh => ">", $copy3 or die $!;
+    close   $fh                or die $!;
+
+    open    $fh => ">", $copy6 or die $!;
+    close   $fh                or die $!;
+
+    my $old_mask = umask;
+    foreach my $test (@tests) {
+        foreach my $id (0 .. 7) {
+            my ($umask, $s_perm, $c_perm1, $c_perm3) = @$test;
+            # Make sure the copies doesn't exist.
+            ! -e $_ or unlink $_ or die $! for $copy1, $copy2, $copy4, $copy5;
+
+            $s_perm  |= $id << 9;
+            $c_perm1 |= $id << 9;
+            diag(sprintf "Src permission: %04o; umask %03o\n", $s_perm, $umask)
+                unless ($ENV{PERL_CORE});
+
+	    # Test that we can actually set a file to the correct permission.
+	    # Slightly convoluted, because some operating systems will let us
+	    # set a directory, but not a file. These should all work:
+	    mkdir $copy1 or die "Can't mkdir $copy1: $!";
+	    chmod $s_perm, $copy1
+		or die sprintf "Can't chmod %o $copy1: $!", $s_perm;
+	    rmdir $copy1
+		or die sprintf "Can't rmdir $copy1: $!";
+	    open my $fh0, '>', $copy1 or die "Can't open $copy1: $!";
+	    close $fh0 or die "Can't close $copy1: $!";
+	    unless (chmod $s_perm, $copy1) {
+		$TB->skip(sprintf "Can't chmod $copy1 to %o: $!", $s_perm)
+		    for 1..6;
+		next;
+	    }
+            my $perm0 = (stat $copy1) [2] & 07777;
+	    unless ($perm0 == $s_perm) {
+		$TB->skip(sprintf "chmod %o $copy1 lies - we actually get %o",
+			  $s_perm, $perm0)
+		    for 1..6;
+		next;
+	    }
+	    unlink $copy1 or die "Can't unlink $copy1: $!";
+
+            (umask $umask) // die $!;
+            chmod $s_perm  => $src   or die sprintf "$!: $src => %o", $s_perm;
+            chmod $c_perm3 => $copy3 or die $!;
+            chmod $c_perm3 => $copy6 or die $!;
+
+            open my $fh => "<", $src or die $!;
+
+            copy ($src, $copy1);
+            copy ($fh,  $copy2);
+            copy ($src, $copy3);
+            cp   ($src, $copy4);
+            cp   ($fh,  $copy5);
+            cp   ($src, $copy6);
+
+            my $permdef = 0666 & ~$umask;
+            my $perm1 = (stat $copy1) [2] & 07777;
+            my $perm2 = (stat $copy2) [2] & 07777;
+            my $perm3 = (stat $copy3) [2] & 07777;
+            my $perm4 = (stat $copy4) [2] & 07777;
+            my $perm5 = (stat $copy5) [2] & 07777;
+            my $perm6 = (stat $copy6) [2] & 07777;
+            is (__$perm1, __$permdef, "Permission bits set correctly");
+            is (__$perm2, __$permdef, "Permission bits set correctly");
+            is (__$perm4, __$c_perm1, "Permission bits set correctly");
+            is (__$perm5, __$c_perm1, "Permission bits set correctly");
+            TODO: {
+                local $TODO = 'Permission bits inconsistent under cygwin'
+                   if $^O eq 'cygwin';
+                is (__$perm3, __$c_perm3, "Permission bits not modified");
+                is (__$perm6, __$c_perm3, "Permission bits not modified");
+            }
+        }
+    }
+    umask $old_mask or die $!;
+
+    # Clean up.
+    ! -e $_ or unlink $_ or die $! for $src, $copy1, $copy2, $copy3,
+                                             $copy4, $copy5, $copy6;
 }
 
 {
@@ -270,6 +418,56 @@ for my $cross_partition_test (0..1) {
 		    'with the text we expect';
 	}
     }
+}
+
+# On Unix systems, File::Copy always returns 0 to signal failure,
+# even when in list context!  On Windows, it always returns "" to signal
+# failure.
+#
+# While returning a list containing a false value is arguably a bad
+# API design, at the very least we can make sure it always returns
+# the same false value.
+
+my $NO_SUCH_FILE       = "this_file_had_better_not_exist";
+my $NO_SUCH_OTHER_FILE = "my_goodness_im_sick_of_airports";
+
+use constant EXPECTED_SCALAR => 0;
+use constant EXPECTED_LIST   => [ EXPECTED_SCALAR ];
+
+my %subs = (
+    copy    =>  \&File::Copy::copy,
+    cp      =>  \&File::Copy::cp,
+    move    =>  \&File::Copy::move,
+    mv      =>  \&File::Copy::mv,
+);
+
+SKIP: {
+    skip( "Test can't run with $NO_SUCH_FILE existing", 2 * keys %subs)
+        if (-e $NO_SUCH_FILE);
+
+    foreach my $name (keys %subs) {
+
+        my $sub = $subs{$name};
+
+        my $scalar = $sub->( $NO_SUCH_FILE, $NO_SUCH_OTHER_FILE );
+        is( $scalar, EXPECTED_SCALAR, "$name in scalar context");
+
+        my @array  = $sub->( $NO_SUCH_FILE, $NO_SUCH_OTHER_FILE );
+        is_deeply( \@array, EXPECTED_LIST, "$name in list context");
+    }
+}
+
+SKIP: {
+    skip("fork required to test pipe copying", 2)
+        if (!$Config{'d_fork'});
+
+    open(my $IN, "-|") || exec $^X, '-e', 'print "Hello, world!\n"';
+    open(my $OUT, "|-") || exec $^X, '-ne', 'exit(/Hello/ ? 55 : 0)';
+
+    ok(copy($IN, $OUT), "copy pipe to another");
+    close($OUT);
+    is($? >> 8, 55, "content copied through the pipes");
+    close($IN);
 }
 
 END {

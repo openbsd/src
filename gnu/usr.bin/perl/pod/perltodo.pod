@@ -26,9 +26,58 @@ programming languages offer you 1 line of immortality?
 
 =head1 Tasks that only need Perl knowledge
 
-=head2 Remove macperl references from tests
+=head2 Improve Porting/cmpVERSION.pl to work from git tags
 
-MacPerl is gone. The tests don't need to be there.
+See F<Porting/release_managers_guide.pod> for a bit more detail.
+
+=head2 Migrate t/ from custom TAP generation
+
+Many tests below F<t/> still generate TAP by "hand", rather than using library
+functions. As explained in L<perlhack/Writing a test>, tests in F<t/> are
+written in a particular way to test that more complex constructions actually
+work before using them routinely. Hence they don't use C<Test::More>, but
+instead there is an intentionally simpler library, F<t/test.pl>. However,
+quite a few tests in F<t/> have not been refactored to use it. Refactoring
+any of these tests, one at a time, is a useful thing TODO.
+
+The subdirectories F<base>, F<cmd> and F<comp>, that contain the most
+basic tests, should be excluded from this task.
+
+=head2 Test that regen.pl was run
+
+There are various generated files shipped with the perl distribution, for
+things like header files generate from data. The generation scripts are
+written in perl, and all can be run by F<regen.pl>. However, because they're
+written in perl, we can't run them before we've built perl. We can't run them
+as part of the F<Makefile>, because changing files underneath F<make> confuses
+it completely, and we don't want to run them automatically anyway, as they
+change files shipped by the distribution, something we seek not do to.
+
+If someone changes the data, but forgets to re-run F<regen.pl> then the
+generated files are out of sync. It would be good to have a test in
+F<t/porting> that checks that the generated files are in sync, and fails
+otherwise, to alert someone before they make a poor commit. I suspect that this
+would require adapting the scripts run from F<regen.pl> to have dry-run
+options, and invoking them with these, or by refactoring them into a library
+that does the generation, which can be called by the scripts, and by the test.
+
+=head2 Automate perldelta generation
+
+The perldelta file accompanying each release summaries the major changes.
+It's mostly manually generated currently, but some of that could be
+automated with a bit of perl, specifically the generation of
+
+=over
+
+=item Modules and Pragmata
+
+=item New Documentation
+
+=item New Tests
+
+=back
+
+See F<Porting/how_to_write_a_perldelta.pod> for details.
 
 =head2 Remove duplication of test setup.
 
@@ -61,18 +110,6 @@ The more practical approach, to break the task down into manageable chunks, is
 to work your way though the code from bottom to top, or if necessary adding
 extra C<{ ... }> blocks, and turning on strict within them.
 
-=head2 Parallel testing
-
-(This probably impacts much more than the core: also the Test::Harness
-and TAP::* modules on CPAN.)
-
-All of the tests in F<t/> can now be run in parallel, if C<$ENV{TEST_JOBS}>
-is set. However, tests within each directory in F<ext> and F<lib> are still
-run in series, with directories run in parallel. This is an adequate
-heuristic, but it might be possible to relax it further, and get more
-throughput. Specifically, it would be good to audit all of F<lib/*.t>, and
-make them use C<File::Temp>.
-
 =head2 Make Schwern poorer
 
 We should have tests for everything. When all the core's modules are tested,
@@ -82,7 +119,7 @@ cash.
 
 =head2 Improve the coverage of the core tests
 
-Use Devel::Cover to ascertain the core modules's test coverage, then add
+Use Devel::Cover to ascertain the core modules' test coverage, then add
 tests that are currently missing.
 
 =head2 test B
@@ -113,11 +150,13 @@ do so. Test it with older perl releases, and fix the problems you find.
 To make a minimal perl distribution, it's useful to look at
 F<t/lib/commonsense.t>.
 
-=head2 Bundle dual life modules in ext/
+=head2 Move dual-life pod/*.PL into ext
 
-For maintenance (and branch merging) reasons, it would be useful to move
-some architecture-independent dual-life modules from lib/ to ext/, if this
-has no negative impact on the build of perl itself.
+Nearly all the dual-life modules have been moved to F<ext>. However, we
+still  need to move F<pod/*.PL> into their respective directories
+in F<ext/>. They're referenced by (at least) C<plextract> in F<Makefile.SH>
+and C<utils> in F<win32/Makefile> and F<win32/makefile.ml>, and listed
+explicitly in F<win32/pod.mak>, F<vms/descrip_mms.template> and F<utils.lst>
 
 =head2 POSIX memory footprint
 
@@ -162,6 +201,11 @@ The F<installman> script is slow. All it is doing text processing, which we're
 told is something Perl is good at. So it would be nice to know what it is doing
 that is taking so much CPU, and where possible address it.
 
+=head2 enable lexical enabling/disabling of inidvidual warnings
+
+Currently, warnings can only be enabled or disabled by category. There
+are times when it would be useful to quash a single warning, not a
+whole category.
 
 =head1 Tasks that need a little sysadmin-type knowledge
 
@@ -385,7 +429,7 @@ course, we all know what step 3 is.
 
 Currently F<Configure> automatically adds C<-DDEBUGGING> to the C compiler
 flags if it spots C<-g> in the optimiser flags. The pre-processor directive
-C<DEBUGGING> enables F<perl>'s command line <-D> options, but in the process
+C<DEBUGGING> enables F<perl>'s command line C<-D> options, but in the process
 makes F<perl> slower. It would be good to disentangle this logic, so that
 C-level debugging with C<-g> and Perl level debugging with C<-D> can easily
 be enabled independently.
@@ -565,6 +609,80 @@ These tasks would need C knowledge, and roughly the level of knowledge of
 the perl API that comes from writing modules that use XS to interface to
 C.
 
+=head2 Write an XS cookbook
+
+Create pod/perlxscookbook.pod with short, task-focused 'recipes' in XS that
+demonstrate common tasks and good practices.  (Some of these might be
+extracted from perlguts.) The target audience should be XS novices, who need
+more examples than perlguts but something less overwhelming than perlapi.
+Recipes should provide "one pretty good way to do it" instead of TIMTOWTDI.
+
+Rather than focusing on interfacing Perl to C libraries, such a cookbook
+should probably focus on how to optimize Perl routines by re-writing them
+in XS.  This will likely be more motivating to those who mostly work in
+Perl but are looking to take the next step into XS.
+
+Deconstructing and explaining some simpler XS modules could be one way to
+bootstrap a cookbook.  (List::Util? Class::XSAccessor? Tree::Ternary_XS?)
+Another option could be deconstructing the implementation of some simpler
+functions in op.c.
+
+=head2 Allow XSUBs to inline themselves as OPs
+
+For a simple XSUB, often the subroutine dispatch takes more time than the
+XSUB itself. The tokeniser already has the ability to inline constant
+subroutines - it would be good to provide a way to inline other subroutines.
+
+Specifically, simplest approach looks to be to allow an XSUB to provide an
+alternative implementation of itself as a custom OP. A new flag bit in
+C<CvFLAGS()> would signal to the peephole optimiser to take an optree
+such as this:
+
+    b  <@> leave[1 ref] vKP/REFC ->(end)
+    1     <0> enter ->2
+    2     <;> nextstate(main 1 -e:1) v:{ ->3
+    a     <2> sassign vKS/2 ->b
+    8        <1> entersub[t2] sKS/TARG,1 ->9
+    -           <1> ex-list sK ->8
+    3              <0> pushmark s ->4
+    4              <$> const(IV 1) sM ->5
+    6              <1> rv2av[t1] lKM/1 ->7
+    5                 <$> gv(*a) s ->6
+    -              <1> ex-rv2cv sK ->-
+    7                 <$> gv(*x) s/EARLYCV ->8
+    -        <1> ex-rv2sv sKRM*/1 ->a
+    9           <$> gvsv(*b) s ->a
+
+perform the symbol table lookup of C<rv2cv> and C<gv(*x)>, locate the
+pointer to the custom OP that provides the direct implementation, and re-
+write the optree something like:
+
+    b  <@> leave[1 ref] vKP/REFC ->(end)
+    1     <0> enter ->2
+    2     <;> nextstate(main 1 -e:1) v:{ ->3
+    a     <2> sassign vKS/2 ->b
+    7        <1> custom_x -> 8
+    -           <1> ex-list sK ->7
+    3              <0> pushmark s ->4
+    4              <$> const(IV 1) sM ->5
+    6              <1> rv2av[t1] lKM/1 ->7
+    5                 <$> gv(*a) s ->6
+    -              <1> ex-rv2cv sK ->-
+    -                 <$> ex-gv(*x) s/EARLYCV ->7
+    -        <1> ex-rv2sv sKRM*/1 ->a
+    8           <$> gvsv(*b) s ->a
+
+I<i.e.> the C<gv(*)> OP has been nulled and spliced out of the execution
+path, and the C<entersub> OP has been replaced by the custom op.
+
+This approach should provide a measurable speed up to simple XSUBs inside
+tight loops. Initially one would have to write the OP alternative
+implementation by hand, but it's likely that this should be reasonably
+straightforward for the type of XSUB that would benefit the most. Longer
+term, once the run-time implementation is proven, it should be possible to
+progressively update ExtUtils::ParseXS to generate OP implementations for
+some XSUBs.
+
 =head2 Remove the use of SVs as temporaries in dump.c
 
 F<dump.c> contains debugging routines to dump out the contains of perl data
@@ -703,12 +821,6 @@ See L</"Virtualize operating system access">.
 Currently glob patterns and filenames returned from File::Glob::glob()
 are always byte strings.  See L</"Virtualize operating system access">.
 
-=head2 Unicode and lc/uc operators
-
-Some built-in operators (C<lc>, C<uc>, etc.) behave differently, based on
-what the internal encoding of their argument is. That should not be the
-case. Maybe add a pragma to switch behaviour.
-
 =head2 use less 'memory'
 
 Investigate trade offs to switch out perl's choices on memory usage.
@@ -777,25 +889,6 @@ only the interpretation of non-ASCII characters, and not for the script file
 handle. To make it work needs some investigation of the ordering of function
 calls during startup, and (by implication) a bit of tweaking of that order.
 
-=head2 Duplicate logic in S_method_common() and Perl_gv_fetchmethod_autoload()
-
-A comment in C<S_method_common> notes
-
-	/* This code tries to figure out just what went wrong with
-	   gv_fetchmethod.  It therefore needs to duplicate a lot of
-	   the internals of that function.  We can't move it inside
-	   Perl_gv_fetchmethod_autoload(), however, since that would
-	   cause UNIVERSAL->can("NoSuchPackage::foo") to croak, and we
-	   don't want that.
-	*/
-
-If C<Perl_gv_fetchmethod_autoload> gets rewritten to take (more) flag bits,
-then it ought to be possible to move the logic from C<S_method_common> to
-the "right" place. When making this change it would probably be good to also
-pass in at least the method name length, if not also pre-computed hash values
-when known. (I'm contemplating a plan to pre-compute hash values for common
-fixed strings such as C<ISA> and pass them in to functions.)
-
 =head2 Organize error messages
 
 Perl's diagnostics (error messages, see L<perldiag>) could use
@@ -834,7 +927,9 @@ Currently C<goto keyword> "computes" the label value:
     $ perl -e 'goto print'
     Can't find label 1 at -e line 1.
 
-It would be nice to forbid labels with keyword names, to avoid confusion.
+It is controversial if the right way to avoid the confusion is to forbid
+labels with keyword names, or if it would be better to always treat
+bareword expressions after a "goto" as a label and never as a keyword.
 
 =head2 truncate() prototype
 
@@ -885,8 +980,7 @@ years for this discrepancy.
 The handling of Unicode is unclean in many places. For example, the regexp
 engine matches in Unicode semantics whenever the string or the pattern is
 flagged as UTF-8, but that should not be dependent on an internal storage
-detail of the string. Likewise, case folding behaviour is dependent on the
-UTF8 internal flag being on or off.
+detail of the string.
 
 =head2 Properly Unicode safe tokeniser and pads.
 
@@ -952,11 +1046,6 @@ slices. This would be good to fix.
 The regexp optimiser is not optional. It should configurable to be, to allow
 its performance to be measured, and its bugs to be easily demonstrated.
 
-=head2 delete &function
-
-Allow to delete functions. One can already undef them, but they're still
-in the stash.
-
 =head2 C</w> regex modifier
 
 That flag would enable to match whole words, and also to interpolate
@@ -1003,16 +1092,6 @@ reinstated.
 
 The old perltodo notes "Look at the "reification" code in C<av.c>".
 
-=head2 The yada yada yada operators
-
-Perl 6's Synopsis 3 says:
-
-I<The ... operator is the "yada, yada, yada" list operator, which is used as
-the body in function prototypes. It complains bitterly (by calling fail)
-if it is ever executed. Variant ??? calls warn, and !!! calls die.>
-
-Those would be nice to add to Perl 5. That could be done without new ops.
-
 =head2 Virtualize operating system access
 
 Implement a set of "vtables" that virtualizes operating system access
@@ -1028,7 +1107,7 @@ in fact, all of L<perlport> is.)
 This has actually already been implemented (but only for Win32),
 take a look at F<iperlsys.h> and F<win32/perlhost.h>.  While all Win32
 variants go through a set of "vtables" for operating system access,
-non-Win32 systems currently go straight for the POSIX/UNIX-style
+non-Win32 systems currently go straight for the POSIX/Unix-style
 system/library call.  Similar system as for Win32 should be
 implemented for all platforms.  The existing Win32 implementation
 probably does not need to survive alongside this proposed new
@@ -1163,12 +1242,6 @@ Bottom line on this is probably a new pp_tailcall function which
 combines the code in pp_entersub, pp_leavesub.  This should probably
 be done 1st in XS, and using B::Generate to patch the new OP into the
 optrees.
-
-=head2 C<\N>
-
-It should be possible to add a C<\N> regex assertion, meaning "every
-character except C<\n>° independently of the context. That would
-of course imply that C<\N> couldn't be followed by an opening C<{>.
 
 =head1 Big projects
 

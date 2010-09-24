@@ -19,7 +19,7 @@ use strict;
 use Config;
 use Filter::Util::Call;
 
-plan(tests => 141);
+plan(tests => 143);
 
 unshift @INC, sub {
     no warnings 'uninitialized';
@@ -221,3 +221,15 @@ do [\'pa', \&generator_with_state,
     ["ss('And generators which take state');\n",
      "pass('And return multiple lines');\n",
     ]] or die;
+
+# d8723a6a74b2c12e wasn't perfect, as the char * returned by SvPV*() can be
+# a temporary, freed at the next FREETMPS. And there is a FREETMPS in
+# pp_require
+
+for (0 .. 1) {
+    # Need both alternatives on the regexp, because currently the logic in
+    # pp_require for what is written to %INC is somewhat confused
+    open $fh, "<",
+	\'like(__FILE__, qr/(?:GLOB|CODE)\(0x[0-9a-f]+\)/, "__FILE__ is valid");';
+    do $fh or die;
+}

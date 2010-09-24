@@ -1,4 +1,4 @@
-=comments
+=begin comment
 
 helper script to make life for PerlCE easier.
 
@@ -77,8 +77,8 @@ else {
 }
 
 
-=comments
+=head1 AUTHOR
 
-  Author Vadim Konovalov.
+ Vadim Konovalov.
 
 =cut

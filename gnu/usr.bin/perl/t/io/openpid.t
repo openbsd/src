@@ -13,12 +13,12 @@ BEGIN {
     require './test.pl';
 }
 
-if ($^O eq 'dos' || $^O eq 'MacOS') {
+if ($^O eq 'dos') {
     skip_all("no multitasking");
 }
 
 plan tests => 10;
-
+watchdog(15);
 
 use Config;
 $| = 1;

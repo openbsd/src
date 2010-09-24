@@ -1,10 +1,10 @@
-# Blocks-5.1.0.txt
-# Date: 2008-03-20, 17:41:00 PDT [KW]
+# Blocks-5.2.0.txt
+# Date: 2009-05-19, 16:21:00 PDT [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UCD.html
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # Note:   The casing of block names is not normative.
 #         For example, "Basic Latin" and "BASIC LATIN" are equivalent.
@@ -18,7 +18,7 @@
 #         and underbars are ignored.
 #         For example, "Latin Extended-A" and "latin extended a" are equivalent.
 #         For more information on the comparison of property values, 
-#            see UCD.html.
+#            see UAX #44: http://www.unicode.org/reports/tr44/
 #
 #  All code points not explicitly listed for Block
 #  have the value No_Block.
@@ -44,6 +44,7 @@
 0750..077F; Arabic Supplement
 0780..07BF; Thaana
 07C0..07FF; NKo
+0800..083F; Samaritan
 0900..097F; Devanagari
 0980..09FF; Bengali
 0A00..0A7F; Gurmukhi
@@ -72,15 +73,18 @@
 1760..177F; Tagbanwa
 1780..17FF; Khmer
 1800..18AF; Mongolian
+18B0..18FF; Unified Canadian Aboriginal Syllabics Extended
 1900..194F; Limbu
 1950..197F; Tai Le
 1980..19DF; New Tai Lue
 19E0..19FF; Khmer Symbols
 1A00..1A1F; Buginese
+1A20..1AAF; Tai Tham
 1B00..1B7F; Balinese
 1B80..1BBF; Sundanese
 1C00..1C4F; Lepcha
 1C50..1C7F; Ol Chiki
+1CD0..1CFF; Vedic Extensions
 1D00..1D7F; Phonetic Extensions
 1D80..1DBF; Phonetic Extensions Supplement
 1DC0..1DFF; Combining Diacritical Marks Supplement
@@ -137,17 +141,27 @@
 4E00..9FFF; CJK Unified Ideographs
 A000..A48F; Yi Syllables
 A490..A4CF; Yi Radicals
+A4D0..A4FF; Lisu
 A500..A63F; Vai
 A640..A69F; Cyrillic Extended-B
+A6A0..A6FF; Bamum
 A700..A71F; Modifier Tone Letters
 A720..A7FF; Latin Extended-D
 A800..A82F; Syloti Nagri
+A830..A83F; Common Indic Number Forms
 A840..A87F; Phags-pa
 A880..A8DF; Saurashtra
+A8E0..A8FF; Devanagari Extended
 A900..A92F; Kayah Li
 A930..A95F; Rejang
+A960..A97F; Hangul Jamo Extended-A
+A980..A9DF; Javanese
 AA00..AA5F; Cham
+AA60..AA7F; Myanmar Extended-A
+AA80..AADF; Tai Viet
+ABC0..ABFF; Meetei Mayek
 AC00..D7AF; Hangul Syllables
+D7B0..D7FF; Hangul Jamo Extended-B
 D800..DB7F; High Surrogates
 DB80..DBFF; High Private Use Surrogates
 DC00..DFFF; Low Surrogates
@@ -179,11 +193,20 @@ FFF0..FFFF; Specials
 10450..1047F; Shavian
 10480..104AF; Osmanya
 10800..1083F; Cypriot Syllabary
+10840..1085F; Imperial Aramaic
 10900..1091F; Phoenician
 10920..1093F; Lydian
 10A00..10A5F; Kharoshthi
+10A60..10A7F; Old South Arabian
+10B00..10B3F; Avestan
+10B40..10B5F; Inscriptional Parthian
+10B60..10B7F; Inscriptional Pahlavi
+10C00..10C4F; Old Turkic
+10E60..10E7F; Rumi Numeral Symbols
+11080..110CF; Kaithi
 12000..123FF; Cuneiform
 12400..1247F; Cuneiform Numbers and Punctuation
+13000..1342F; Egyptian Hieroglyphs
 1D000..1D0FF; Byzantine Musical Symbols
 1D100..1D1FF; Musical Symbols
 1D200..1D24F; Ancient Greek Musical Notation
@@ -192,7 +215,10 @@ FFF0..FFFF; Specials
 1D400..1D7FF; Mathematical Alphanumeric Symbols
 1F000..1F02F; Mahjong Tiles
 1F030..1F09F; Domino Tiles
+1F100..1F1FF; Enclosed Alphanumeric Supplement
+1F200..1F2FF; Enclosed Ideographic Supplement
 20000..2A6DF; CJK Unified Ideographs Extension B
+2A700..2B73F; CJK Unified Ideographs Extension C
 2F800..2FA1F; CJK Compatibility Ideographs Supplement
 E0000..E007F; Tags
 E0100..E01EF; Variation Selectors Supplement

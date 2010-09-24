@@ -242,7 +242,7 @@ perl.org, not perl.com.
 =item *
 
 The perlcc utility has been rewritten and its user interface (that is,
-command line) is much more like that of the UNIX C compiler, cc.
+command line) is much more like that of the Unix C compiler, cc.
 
 =item *
 

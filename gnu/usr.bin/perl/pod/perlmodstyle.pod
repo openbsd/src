@@ -679,7 +679,7 @@ and the tests should also be available to people installing the modules
 For Module::Build you would use the C<make test> equivalent C<perl Build test>.
 
 The importance of these tests is proportional to the alleged stability of a 
-module -- a module which purports to be stable or which hopes to achieve wide 
+module. A module which purports to be stable or which hopes to achieve wide 
 use should adhere to as strict a testing regime as possible.
 
 Useful modules to help you write tests (with minimum impact on your 

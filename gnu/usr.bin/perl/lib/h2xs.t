@@ -53,7 +53,6 @@ if ($^O eq 'VMS') {
     }
     $Is_VMS_traildot = 0 if $drop_dot && unix_rpt;
 }
-if ($^O eq 'MacOS') { $extracted_program = '::utils:h2xs'; }
 if (!(-e $extracted_program)) {
     print "1..0 # Skip: $extracted_program was not built\n";
     exit 0;
@@ -65,13 +64,6 @@ if (!(-e $extracted_program)) {
 my $dupe = '2>&1';
 # ok on unix, nt, The extra \" are for VMS
 my $lib = '"-I../lib" "-I../../lib"';
-# The >&1 would create a file named &1 on MPW (STDERR && STDOUT are
-# already merged).
-if ($^O eq 'MacOS') {
-    $dupe = '';
-    # -x overcomes MPW $Config{startperl} anomaly
-    $lib = '-x -I::lib: -I:::lib:';
-}
 # $name should differ from system header file names and must
 # not already be found in the t/ subdirectory for perl.
 my $name = 'h2xst';
@@ -189,11 +181,6 @@ while (my ($args, $version, $expectation) = splice @tests, 0, 3) {
   cmp_ok ($?, "==", 0, "running $prog ");
   $result = join("",@result);
 
-  # accomodate MPW # comment character prependage
-  if ($^O eq 'MacOS') {
-    $result =~ s/#\s*//gs;
-  }
-
   #print "# expectation is >$expectation<\n";
   #print "# result is >$result<\n";
   # Was the output the list of files that were expected?
@@ -203,10 +190,6 @@ while (my ($args, $version, $expectation) = splice @tests, 0, 3) {
   find (sub {$got{$File::Find::name}++ unless -d $_}, $name);
 
   foreach ($expectation =~ /Writing\s+(\S+)/gm) {
-    if ($^O eq 'MacOS') {
-      $_ = ':' . join(':',split(/\//,$_));
-      $_ =~ s/$name:t:1.t/$name:t\/1.t/; # is this an h2xs bug?
-    }
     if ($^O eq 'VMS') {
       if ($Is_VMS_traildot) {
           $_ .= '.' unless $_ =~ m/\./;

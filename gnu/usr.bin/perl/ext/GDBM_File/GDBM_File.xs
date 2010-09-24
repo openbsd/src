@@ -40,6 +40,7 @@ static void
 output_datum(pTHX_ SV *arg, char *str, int size)
 {
 	sv_setpvn(arg, str, size);
+#	undef free
 	free(str);
 }
 

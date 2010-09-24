@@ -57,7 +57,7 @@ delete undef
 die (@)
 do undef
 dump ()
-each (\%)
+each (\[@%])
 else undef
 elsif undef
 endgrent ()
@@ -120,7 +120,7 @@ index ($$;$)
 int (_)
 ioctl (*$$)
 join ($@)
-keys (\%)
+keys (\[@%])
 kill (@)
 last undef
 lc (_)
@@ -252,7 +252,7 @@ untie undef
 until undef
 use undef
 utime (@)
-values (\%)
+values (\[@%])
 vec ($$$)
 wait ()
 waitpid ($$)

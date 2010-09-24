@@ -1,0 +1,12 @@
+Changes
+corelist
+identify-dependencies
+lib/Module/CoreList.pm
+README
+MANIFEST
+Makefile.PL
+META.yml
+t/corelist.t
+t/deprecated.t
+t/find_modules.t
+t/pod.t

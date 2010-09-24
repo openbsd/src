@@ -91,8 +91,8 @@ foreach my $source (@sources) {
 	    $module =~ s/\_pm.PL\z//;
 	    $module =~ s/\.pm\z//;
 	    # some heuristics to figure out the module name from the file name
-	    $module =~ s{^(lib|ext)/}{}
-		and $1 eq 'ext'
+	    $module =~ s{^(lib|ext|dist|cpan)/}{}
+		and $1 =~ /(?:ext|dist|cpan)/
 		and (
 		      # ext/Foo-Bar/Bar.pm
 		      $module =~ s{^(\w+)-(\w+)/\2$}{$1/lib/$1/$2},
@@ -155,11 +155,12 @@ if ($opt_t) {
 }
 else {
     for my $dist (sort { lc $a cmp lc $b } keys %results) {
-	print "Module $dist...\n";
+	my $distname_printed = 0;
 	for my $file (sort keys %{$results{$dist}}) {
 	    my ($vcore, $vcpan) = @{$results{$dist}{$file}}{@labels};
 	    if (our $opt_v or $vcore ne $vcpan) {
-		print "    $file: core=$vcore, cpan=$vcpan\n";
+		print "\n$dist:\n" unless ($distname_printed++);
+		print "\t$file: core=$vcore, cpan=$vcpan\n";
 	    }
 	}
     }

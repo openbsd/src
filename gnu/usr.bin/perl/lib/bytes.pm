@@ -1,6 +1,6 @@
 package bytes;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 $bytes::hint_bits = 0x00000008;
 
@@ -32,6 +32,18 @@ __END__
 =head1 NAME
 
 bytes - Perl pragma to force byte semantics rather than character semantics
+
+=head1 NOTICE
+
+This pragma reflects early attempts to incorporate Unicode into perl and
+has since been superseded. It breaks encapsulation (i.e. it exposes the
+innards of how the perl executable currently happens to store a string),
+and use of this module for anything other than debugging purposes is
+strongly discouraged. If you feel that the functions here within might be
+useful for your application, this possibly indicates a mismatch between
+your mental model of Perl Unicode and the current reality. In that case,
+you may wish to read some of the perl Unicode documentation:
+L<perluniintro>, L<perlunitut>, L<perlunifaq> and L<perlunicode>.
 
 =head1 SYNOPSIS
 

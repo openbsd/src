@@ -16,8 +16,10 @@ die "$0: will not override $file, delete it first.\n" if -e $file;
 use Maintainers qw(%Modules get_module_files get_module_pat);
 
 my @CPAN  = grep { $Modules{$_}{CPAN} } keys %Modules;
-my @files = map { get_module_files($_) } @CPAN;
-my @dirs  = grep { -d $_ } map { get_module_pat($_) } @CPAN;
+my @files = ('lib/unicore/mktables', 'TestInit.pm',
+	     'Porting/Maintainers.pm', 'Porting/perldelta_template.pod',
+	     map { get_module_files($_) } @CPAN);
+my @dirs  = ('cpan', 'win32', grep { -d $_ && $_  !~ /^cpan/ } map { get_module_pat($_) } @CPAN);
 
 my %dirs;
 @dirs{@dirs} = ();
@@ -50,6 +52,7 @@ resources:
   homepage: http://www.perl.org/
   bugtracker: http://rt.perl.org/perlbug/
   license: http://dev.perl.org/licenses/
+  repository: http://perl5.git.perl.org/
 distribution_type: core
 generated_by: $0
 no_index:

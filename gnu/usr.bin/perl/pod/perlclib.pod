@@ -208,5 +208,5 @@ For C<signal>/C<sigaction>, use C<rsignal(signo, handler)>.
 
 =head1 SEE ALSO
 
-C<perlapi>, C<perlapio>, C<perlguts>
+L<perlapi>, L<perlapio>, L<perlguts>
 

@@ -7,7 +7,7 @@
 #
 package B;
 
-our $VERSION = '1.22';
+our $VERSION = '1.23';
 
 use XSLoader ();
 require Exporter;
@@ -323,7 +323,7 @@ __END__
 
 =head1 NAME
 
-B - The Perl Compiler
+B - The Perl Compiler Backend
 
 =head1 SYNOPSIS
 

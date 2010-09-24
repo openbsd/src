@@ -20,7 +20,7 @@ The numbers refer to the Perl repository change numbers; see
 L<Changes58> (or L<Changes> in Perl 5.8.1).  In addition to these
 changes, lots of work took place in integrating threads, PerlIO, and
 Unicode; general code cleanup; and last but not least porting to
-non-UNIX lands such as Win32, VMS, Cygwin, DJGPP, VOS, MacOS Classic,
+non-Unix lands such as Win32, VMS, Cygwin, DJGPP, VOS, MacOS Classic,
 and EBCDIC.
 
 =over 4

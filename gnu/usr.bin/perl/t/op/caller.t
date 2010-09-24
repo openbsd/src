@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan( tests => 78 );
+    plan( tests => 80 );
 }
 
 my @c;
@@ -161,6 +161,48 @@ sub hint_fetch {
     my $level = shift;
     my @results = caller($level||0);
     $results[10]->{$key};
+}
+
+{
+    my $tmpfile = tempfile();
+
+    open my $fh, '>', $tmpfile or die "open $tmpfile: $!";
+    print $fh <<'EOP';
+#!perl -wl
+use strict;
+
+{
+    package KAZASH ;
+
+    sub DESTROY {
+	print "DESTROY";
+    }
+}
+
+@DB::args = bless [], 'KAZASH';
+
+print $^P;
+print scalar @DB::args;
+
+{
+    local $^P = shift;
+}
+
+@DB::args = (); # At this point, the object should be freed.
+
+print $^P;
+print scalar @DB::args;
+
+# It shouldn't leak.
+EOP
+    close $fh;
+
+    foreach (0, 1) {
+        my $got = runperl(progfile => $tmpfile, args => [$_]);
+        $got =~ s/\s+/ /gs;
+        like($got, qr/\s*0 1 DESTROY 0 0\s*/,
+             "\@DB::args doesn't leak with \$^P = $_");
+    }
 }
 
 $::testing_caller = 1;

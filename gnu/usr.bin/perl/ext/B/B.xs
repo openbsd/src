@@ -331,35 +331,35 @@ make_mg_object(pTHX_ SV *arg, MAGIC *mg)
 static SV *
 cstring(pTHX_ SV *sv, bool perlstyle)
 {
-    SV *sstr = newSVpvn("", 0);
+    SV *sstr = newSVpvs("");
 
     if (!SvOK(sv))
-	sv_setpvn(sstr, "0", 1);
+	sv_setpvs(sstr, "0");
     else if (perlstyle && SvUTF8(sv)) {
 	SV *tmpsv = sv_newmortal(); /* Temporary SV to feed sv_uni_display */
 	const STRLEN len = SvCUR(sv);
 	const char *s = sv_uni_display(tmpsv, sv, 8*len, UNI_DISPLAY_QQ);
-	sv_setpvn(sstr,"\"",1);
+	sv_setpvs(sstr,"\"");
 	while (*s)
 	{
 	    if (*s == '"')
-		sv_catpvn(sstr, "\\\"", 2);
+		sv_catpvs(sstr, "\\\"");
 	    else if (*s == '$')
-		sv_catpvn(sstr, "\\$", 2);
+		sv_catpvs(sstr, "\\$");
 	    else if (*s == '@')
-		sv_catpvn(sstr, "\\@", 2);
+		sv_catpvs(sstr, "\\@");
 	    else if (*s == '\\')
 	    {
 		if (strchr("nrftax\\",*(s+1)))
 		    sv_catpvn(sstr, s++, 2);
 		else
-		    sv_catpvn(sstr, "\\\\", 2);
+		    sv_catpvs(sstr, "\\\\");
 	    }
 	    else /* should always be printable */
 		sv_catpvn(sstr, s, 1);
 	    ++s;
 	}
-	sv_catpv(sstr, "\"");
+	sv_catpvs(sstr, "\"");
 	return sstr;
     }
     else
@@ -367,24 +367,24 @@ cstring(pTHX_ SV *sv, bool perlstyle)
 	/* XXX Optimise? */
 	STRLEN len;
 	const char *s = SvPV(sv, len);
-	sv_catpv(sstr, "\"");
+	sv_catpvs(sstr, "\"");
 	for (; len; len--, s++)
 	{
 	    /* At least try a little for readability */
 	    if (*s == '"')
-		sv_catpv(sstr, "\\\"");
+		sv_catpvs(sstr, "\\\"");
 	    else if (*s == '\\')
-		sv_catpv(sstr, "\\\\");
+		sv_catpvs(sstr, "\\\\");
             /* trigraphs - bleagh */
             else if (!perlstyle && *s == '?' && len>=3 && s[1] == '?') {
 		char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
-                sprintf(escbuff, "\\%03o", '?');
-                sv_catpv(sstr, escbuff);
+		const STRLEN oct_len = my_sprintf(escbuff, "\\%03o", '?');
+                sv_catpvn(sstr, escbuff, oct_len);
             }
 	    else if (perlstyle && *s == '$')
-		sv_catpv(sstr, "\\$");
+		sv_catpvs(sstr, "\\$");
 	    else if (perlstyle && *s == '@')
-		sv_catpv(sstr, "\\@");
+		sv_catpvs(sstr, "\\@");
 #ifdef EBCDIC
 	    else if (isPRINT(*s))
 #else
@@ -392,30 +392,30 @@ cstring(pTHX_ SV *sv, bool perlstyle)
 #endif /* EBCDIC */
 		sv_catpvn(sstr, s, 1);
 	    else if (*s == '\n')
-		sv_catpv(sstr, "\\n");
+		sv_catpvs(sstr, "\\n");
 	    else if (*s == '\r')
-		sv_catpv(sstr, "\\r");
+		sv_catpvs(sstr, "\\r");
 	    else if (*s == '\t')
-		sv_catpv(sstr, "\\t");
+		sv_catpvs(sstr, "\\t");
 	    else if (*s == '\a')
-		sv_catpv(sstr, "\\a");
+		sv_catpvs(sstr, "\\a");
 	    else if (*s == '\b')
-		sv_catpv(sstr, "\\b");
+		sv_catpvs(sstr, "\\b");
 	    else if (*s == '\f')
-		sv_catpv(sstr, "\\f");
+		sv_catpvs(sstr, "\\f");
 	    else if (!perlstyle && *s == '\v')
-		sv_catpv(sstr, "\\v");
+		sv_catpvs(sstr, "\\v");
 	    else
 	    {
 		/* Don't want promotion of a signed -1 char in sprintf args */
 		char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
 		const unsigned char c = (unsigned char) *s;
-		sprintf(escbuff, "\\%03o", c);
-		sv_catpv(sstr, escbuff);
+		const STRLEN oct_len = my_sprintf(escbuff, "\\%03o", c);
+		sv_catpvn(sstr, escbuff, oct_len);
 	    }
 	    /* XXX Add line breaks if string is long */
 	}
-	sv_catpv(sstr, "\"");
+	sv_catpvs(sstr, "\"");
     }
     return sstr;
 }
@@ -423,13 +423,13 @@ cstring(pTHX_ SV *sv, bool perlstyle)
 static SV *
 cchar(pTHX_ SV *sv)
 {
-    SV *sstr = newSVpvn("'", 1);
+    SV *sstr = newSVpvs("'");
     const char *s = SvPV_nolen(sv);
 
     if (*s == '\'')
-	sv_catpvn(sstr, "\\'", 2);
+	sv_catpvs(sstr, "\\'");
     else if (*s == '\\')
-	sv_catpvn(sstr, "\\\\", 2);
+	sv_catpvs(sstr, "\\\\");
 #ifdef EBCDIC
     else if (isPRINT(*s))
 #else
@@ -437,29 +437,29 @@ cchar(pTHX_ SV *sv)
 #endif /* EBCDIC */
 	sv_catpvn(sstr, s, 1);
     else if (*s == '\n')
-	sv_catpvn(sstr, "\\n", 2);
+	sv_catpvs(sstr, "\\n");
     else if (*s == '\r')
-	sv_catpvn(sstr, "\\r", 2);
+	sv_catpvs(sstr, "\\r");
     else if (*s == '\t')
-	sv_catpvn(sstr, "\\t", 2);
+	sv_catpvs(sstr, "\\t");
     else if (*s == '\a')
-	sv_catpvn(sstr, "\\a", 2);
+	sv_catpvs(sstr, "\\a");
     else if (*s == '\b')
-	sv_catpvn(sstr, "\\b", 2);
+	sv_catpvs(sstr, "\\b");
     else if (*s == '\f')
-	sv_catpvn(sstr, "\\f", 2);
+	sv_catpvs(sstr, "\\f");
     else if (*s == '\v')
-	sv_catpvn(sstr, "\\v", 2);
+	sv_catpvs(sstr, "\\v");
     else
     {
 	/* no trigraph support */
 	char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
 	/* Don't want promotion of a signed -1 char in sprintf args */
 	unsigned char c = (unsigned char) *s;
-	sprintf(escbuff, "\\%03o", c);
-	sv_catpv(sstr, escbuff);
+	const STRLEN oct_len = my_sprintf(escbuff, "\\%03o", c);
+	sv_catpvn(sstr, escbuff, oct_len);
     }
-    sv_catpvn(sstr, "'", 1);
+    sv_catpvs(sstr, "'");
     return sstr;
 }
 
@@ -595,7 +595,7 @@ PROTOTYPES: DISABLE
 
 BOOT:
 {
-    HV *stash = gv_stashpvn("B", 1, GV_ADD);
+    HV *stash = gv_stashpvs("B", GV_ADD);
     AV *export_ok = perl_get_av("B::EXPORT_OK", GV_ADD);
     MY_CXT_INIT;
     specialsv_list[0] = Nullsv;
@@ -778,7 +778,7 @@ ppname(opnum)
     CODE:
 	ST(0) = sv_newmortal();
 	if (opnum >= 0 && opnum < PL_maxo) {
-	    sv_setpvn(ST(0), "pp_", 3);
+	    sv_setpvs(ST(0), "pp_");
 	    sv_catpv(ST(0), PL_op_name[opnum]);
 	}
 
@@ -791,8 +791,8 @@ hash(sv)
 	char hexhash[19]; /* must fit "0xffffffffffffffff" plus trailing \0 */
 	const char *s = SvPV(sv, len);
 	PERL_HASH(hash, s, len);
-	sprintf(hexhash, "0x%"UVxf, (UV)hash);
-	ST(0) = sv_2mortal(newSVpv(hexhash, 0));
+	len = my_sprintf(hexhash, "0x%"UVxf, (UV)hash);
+	ST(0) = newSVpvn_flags(hexhash, len, SVs_TEMP);
 
 #define cast_I32(foo) (I32)foo
 IV
@@ -843,7 +843,7 @@ threadsv_names()
 
 	EXTEND(sp, len);
 	for (i = 0; i < len; i++)
-	    PUSHs(sv_2mortal(newSVpvn(&PL_threadsv_names[i], 1)));
+	    PUSHs(newSVpvn_flags(&PL_threadsv_names[i], 1, SVs_TEMP));
 # endif
 #endif
 
@@ -895,11 +895,11 @@ OP_ppaddr(o)
 	int i;
 	SV *sv = sv_newmortal();
     CODE:
-	sv_setpvn(sv, "PL_ppaddr[OP_", 13);
+	sv_setpvs(sv, "PL_ppaddr[OP_");
 	sv_catpv(sv, PL_op_name[o->op_type]);
 	for (i=13; (STRLEN)i < SvCUR(sv); ++i)
 	    SvPVX(sv)[i] = toUPPER(SvPVX(sv)[i]);
-	sv_catpv(sv, "]");
+	sv_catpvs(sv, "]");
 	ST(0) = sv;
 
 char *
@@ -1168,13 +1168,13 @@ PVOP_pv(o)
 	{
 	    const short* const tbl = (short*)o->op_pv;
 	    const short entries = 257 + tbl[256];
-	    ST(0) = sv_2mortal(newSVpv(o->op_pv, entries * sizeof(short)));
+	    ST(0) = newSVpvn_flags(o->op_pv, entries * sizeof(short), SVs_TEMP);
 	}
 	else if (o->op_type == OP_TRANS) {
-	    ST(0) = sv_2mortal(newSVpv(o->op_pv, 256 * sizeof(short)));
+	    ST(0) = newSVpvn_flags(o->op_pv, 256 * sizeof(short), SVs_TEMP);
 	}
 	else
-	    ST(0) = sv_2mortal(newSVpv(o->op_pv, 0));
+	    ST(0) = newSVpvn_flags(o->op_pv, strlen(o->op_pv), SVs_TEMP);
 
 #define LOOP_redoop(o)	o->op_redoop
 #define LOOP_nextop(o)	o->op_nextop
@@ -1372,10 +1372,10 @@ packiv(sv)
 	    wp[0] = htonl(((U32)iv) >> (sizeof(UV)*4));
 #endif
 	    wp[1] = htonl(iv & 0xffffffff);
-	    ST(0) = sv_2mortal(newSVpvn((char *)wp, 8));
+	    ST(0) = newSVpvn_flags((char *)wp, 8, SVs_TEMP);
 	} else {
 	    U32 w = htonl((U32)SvIVX(sv));
-	    ST(0) = sv_2mortal(newSVpvn((char *)&w, 4));
+	    ST(0) = newSVpvn_flags((char *)&w, 4, SVs_TEMP);
 	}
 
 
@@ -1518,18 +1518,16 @@ IV
 REGEX(sv)
 	B::REGEXP	sv
     CODE:
-	RETVAL = PTR2IV(((struct xregexp *)SvANY(sv))->xrx_regexp);
+	/* FIXME - can we code this method more efficiently?  */
+	RETVAL = PTR2IV(sv);
     OUTPUT:
         RETVAL
 
 SV*
 precomp(sv)
 	B::REGEXP	sv
-	REGEXP* rx = NO_INIT
     CODE:
-	rx = ((struct xregexp *)SvANY(sv))->xrx_regexp;
-	/* FIXME - UTF-8? And the equivalent precomp methods? */
-	RETVAL = newSVpvn( RX_PRECOMP(rx), RX_PRELEN(rx) );
+	RETVAL = newSVpvn( RX_PRECOMP(sv), RX_PRELEN(sv) );
     OUTPUT:
         RETVAL
 
@@ -1661,7 +1659,7 @@ BmTABLE(sv)
     CODE:
 	str = SvPV(sv, len);
 	/* Boyer-Moore table is just after string and its safety-margin \0 */
-	ST(0) = sv_2mortal(newSVpvn(str + len + PERL_FBM_TABLE_OFFSET, 256));
+	ST(0) = newSVpvn_flags(str + len + PERL_FBM_TABLE_OFFSET, 256, SVs_TEMP);
 
 MODULE = B	PACKAGE = B::GV		PREFIX = Gv
 
@@ -1669,7 +1667,11 @@ void
 GvNAME(gv)
 	B::GV	gv
     CODE:
-	ST(0) = sv_2mortal(newSVpvn(GvNAME(gv), GvNAMELEN(gv)));
+#if PERL_VERSION >= 10
+	ST(0) = sv_2mortal(newSVhek(GvNAME_HEK(gv)));
+#else
+	ST(0) = newSVpvn_flags(GvNAME(gv), GvNAMELEN(gv), SVs_TEMP);
+#endif
 
 bool
 is_empty(gv)

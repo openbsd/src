@@ -3,12 +3,10 @@
 # Tests the scoping of $^H and %^H
 
 BEGIN {
-    chdir 't' if -d 't';
     @INC = qw(. ../lib);
 }
 
-
-BEGIN { print "1..17\n"; }
+BEGIN { print "1..24\n"; }
 BEGIN {
     print "not " if exists $^H{foo};
     print "ok 1 - \$^H{foo} doesn't exist initially\n";
@@ -38,7 +36,7 @@ BEGIN {
     }
     BEGIN {
 	print "not " if $^H{foo} ne "a";
-	print "ok 6 - \$H^{foo} restored to 'a'\n";
+	print "ok 6 - \$^H{foo} restored to 'a'\n";
     }
     # The pragma settings disappear after compilation
     # (test at CHECK-time and at run-time)
@@ -82,7 +80,54 @@ BEGIN {
     }
 }
 
-require 'test.pl';
+{
+    BEGIN{$^H{x}=1};
+    for my $tno (15..16) {
+        eval q(
+            print $^H{x}==1 && !$^H{y} ? "ok $tno\n" : "not ok $tno\n";
+            $^H{y} = 1;
+        );
+        if ($@) {
+            (my $str = $@)=~s/^/# /gm;
+            print "not ok $tno\n$str\n";
+        }
+    }
+}
+
+{
+    BEGIN { $^H |= 0x04000000; $^H{foo} = "z"; }
+
+    our($ri0, $rf0); BEGIN { $ri0 = $^H; $rf0 = $^H{foo}; }
+    print +($ri0 & 0x04000000 ? "" : "not "), "ok 17 - \$^H correct before require\n";
+    print +($rf0 eq "z" ? "" : "not "), "ok 18 - \$^H{foo} correct before require\n";
+
+    our($ra1, $ri1, $rf1, $rfe1);
+    BEGIN { require "comp/hints.aux"; }
+    print +(!($ri1 & 0x04000000) ? "" : "not "), "ok 19 - \$^H cleared for require\n";
+    print +(!defined($rf1) && !$rfe1 ? "" : "not "), "ok 20 - \$^H{foo} cleared for require\n";
+
+    our($ri2, $rf2); BEGIN { $ri2 = $^H; $rf2 = $^H{foo}; }
+    print +($ri2 & 0x04000000 ? "" : "not "), "ok 21 - \$^H correct after require\n";
+    print +($rf2 eq "z" ? "" : "not "), "ok 22 - \$^H{foo} correct after require\n";
+}
+
+# [perl #73174]
+
+{
+    my $res;
+    BEGIN { $^H{73174} = "foo" }
+    BEGIN { $res = ($^H{73174} // "") }
+    "" =~ /\x{100}/i;	# forces loading of utf8.pm, which used to reset %^H
+    BEGIN { $res .= '-' . ($^H{73174} // "")}
+    $res .= '-' . ($^H{73174} // "");
+    print $res eq "foo-foo-" ? "" : "not ",
+	"ok 23 - \$^H{foo} correct after /unicode/i (res=$res)\n";
+}
+
+
+
+# Add new tests above this require, in case it fails.
+require './test.pl';
 
 # bug #27040: hints hash was being double-freed
 my $result = runperl(
@@ -90,19 +135,8 @@ my $result = runperl(
     stderr => 1
 );
 print "not " if length $result;
-print "ok 15 - double-freeing hints hash\n";
+print "ok 24 - double-freeing hints hash\n";
 print "# got: $result\n" if length $result;
 
-{
-    BEGIN{$^H{x}=1};
-    for(1..2) {
-        eval q(
-            print $^H{x}==1 && !$^H{y} ? "ok\n" : "not ok\n";
-            $^H{y} = 1;
-        );
-        if ($@) {
-            (my $str = $@)=~s/^/# /gm;
-            print "not ok\n$str\n";
-        }
-    }
-}
+__END__
+# Add new tests above require 'test.pl'

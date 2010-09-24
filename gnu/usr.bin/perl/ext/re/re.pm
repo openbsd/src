@@ -1,36 +1,20 @@
 package re;
 
-# pragma for controlling the regex engine
+# pragma for controlling the regexp engine
 use strict;
 use warnings;
 
-our $VERSION     = "0.09";
+our $VERSION     = "0.11";
 our @ISA         = qw(Exporter);
-my @XS_FUNCTIONS = qw(regmust);
-my %XS_FUNCTIONS = map { $_ => 1 } @XS_FUNCTIONS;
-our @EXPORT_OK   = (@XS_FUNCTIONS,
+our @EXPORT_OK   = ('regmust',
                     qw(is_regexp regexp_pattern
                        regname regnames regnames_count));
 our %EXPORT_OK = map { $_ => 1 } @EXPORT_OK;
-
-# *** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***
-#
-# If you modify these values see comment below!
 
 my %bitmask = (
     taint   => 0x00100000, # HINT_RE_TAINT
     eval    => 0x00200000, # HINT_RE_EVAL
 );
-
-# - File::Basename contains a literal for 'taint' as a fallback.  If
-# taint is changed here, File::Basename must be updated as well.
-#
-# - ExtUtils::ParseXS uses a hardcoded 
-# BEGIN { $^H |= 0x00200000 } 
-# in it to allow re.xs to be built. So if 'eval' is changed here then
-# ExtUtils::ParseXS must be changed as well.
-#
-# *** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***
 
 sub setcolor {
  eval {				# Ignore errors
@@ -71,42 +55,35 @@ my %flags = (
     OPTIMISEM       => 0x100000,
     STACK           => 0x280000,
     BUFFERS         => 0x400000,
+    GPOS            => 0x800000,
 );
 $flags{ALL} = -1 & ~($flags{OFFSETS}|$flags{OFFSETSDBG}|$flags{BUFFERS});
 $flags{All} = $flags{all} = $flags{DUMP} | $flags{EXECUTE};
-$flags{Extra} = $flags{EXECUTE} | $flags{COMPILE};
+$flags{Extra} = $flags{EXECUTE} | $flags{COMPILE} | $flags{GPOS};
 $flags{More} = $flags{MORE} = $flags{All} | $flags{TRIEC} | $flags{TRIEM} | $flags{STATE};
 $flags{State} = $flags{DUMP} | $flags{EXECUTE} | $flags{STATE};
 $flags{TRIE} = $flags{DUMP} | $flags{EXECUTE} | $flags{TRIEC};
 
-my $installed;
-my $installed_error;
-
-sub _do_install {
-    if ( ! defined($installed) ) {
-        require XSLoader;
-        $installed = eval { XSLoader::load('re', $VERSION) } || 0;
-        $installed_error = $@;
-    }
+if (defined &DynaLoader::boot_DynaLoader) {
+    require XSLoader;
+    XSLoader::load( __PACKAGE__, $VERSION);
 }
+# else we're miniperl
+# We need to work for miniperl, because the XS toolchain uses Text::Wrap, which
+# uses re 'taint'.
 
 sub _load_unload {
     my ($on)= @_;
     if ($on) {
-        _do_install();        
-        if ( ! $installed ) {
-            die "'re' not installed!? ($installed_error)";
-	} else {
-	    # We call install() every time, as if we didn't, we wouldn't
-	    # "see" any changes to the color environment var since
-	    # the last time it was called.
+	# We call install() every time, as if we didn't, we wouldn't
+	# "see" any changes to the color environment var since
+	# the last time it was called.
 
-	    # install() returns an integer, which if casted properly
-	    # in C resolves to a structure containing the regex
-	    # hooks. Setting it to a random integer will guarantee
-	    # segfaults.
-	    $^H{regcomp} = install();
-        }
+	# install() returns an integer, which if casted properly
+	# in C resolves to a structure containing the regexp
+	# hooks. Setting it to a random integer will guarantee
+	# segfaults.
+	$^H{regcomp} = install();
     } else {
         delete $^H{regcomp};
     }
@@ -145,14 +122,6 @@ sub bits {
 	    last;
         } elsif (exists $bitmask{$s}) {
 	    $bits |= $bitmask{$s};
-        } elsif ($XS_FUNCTIONS{$s}) {
-            _do_install();
-            if (! $installed) {
-                require Carp;
-                Carp::croak("\"re\" function '$s' not available");
-            }
-            require Exporter;
-            re->export_to_level(2, 're', $s);
 	} elsif ($EXPORT_OK{$s}) {
 	    require Exporter;
 	    re->export_to_level(2, 're', $s);
@@ -226,19 +195,21 @@ re - Perl pragma to alter regular expression behaviour
 =head2 'taint' mode
 
 When C<use re 'taint'> is in effect, and a tainted string is the target
-of a regex, the regex memories (or values returned by the m// operator
-in list context) are tainted.  This feature is useful when regex operations
+of a regexp, the regexp memories (or values returned by the m// operator
+in list context) are tainted.  This feature is useful when regexp operations
 on tainted data aren't meant to extract safe substrings, but to perform
 other transformations.
 
 =head2 'eval' mode
 
-When C<use re 'eval'> is in effect, a regex is allowed to contain
-C<(?{ ... })> zero-width assertions even if regular expression contains
+When C<use re 'eval'> is in effect, a regexp is allowed to contain
+C<(?{ ... })> zero-width assertions and C<(??{ ... })> postponed
+subexpressions, even if the regular expression contains
 variable interpolation.  That is normally disallowed, since it is a
 potential security risk.  Note that this pragma is ignored when the regular
 expression is obtained from tainted data, i.e.  evaluation is always
-disallowed with tainted regular expressions.  See L<perlre/(?{ code })>.
+disallowed with tainted regular expressions.  See L<perlre/(?{ code })> 
+and L<perlre/(??{ code })>.
 
 For the purpose of this pragma, interpolation of precompiled regular
 expressions (i.e., the result of C<qr//>) is I<not> considered variable
@@ -247,7 +218,7 @@ interpolation.  Thus:
     /foo${pat}bar/
 
 I<is> allowed if $pat is a precompiled regular expression, even
-if $pat contains C<(?{ ... })> assertions.
+if $pat contains C<(?{ ... })> assertions or C<(??{ ... })> subexpressions.
 
 =head2 'debug' mode
 
@@ -357,7 +328,7 @@ states as well. This output from this can be quite large.
 =item OPTIMISEM
 
 Enable enhanced optimisation debugging and start point optimisations.
-Probably not useful except when debugging the regex engine itself.
+Probably not useful except when debugging the regexp engine itself.
 
 =item OFFSETS
 
@@ -439,7 +410,7 @@ the pattern was compiled.
 
   my ($pat, $mods) = regexp_pattern($ref);
 
-In scalar context it returns the same as perl would when strigifying a raw
+In scalar context it returns the same as perl would when stringifying a raw
 C<qr//> with the same pattern inside.  If the argument is not a compiled
 reference then this routine returns false but defined in scalar context,
 and the empty list in list context. Thus the following
@@ -454,7 +425,7 @@ or blessing of the object.
 =item regmust($ref)
 
 If the argument is a compiled regular expression as returned by C<qr//>,
-then this function returns what the optimiser consiers to be the longest
+then this function returns what the optimiser considers to be the longest
 anchored fixed string and longest floating fixed string in the pattern.
 
 A I<fixed string> is defined as being a substring that must appear for the

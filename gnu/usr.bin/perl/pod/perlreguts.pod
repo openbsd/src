@@ -20,7 +20,7 @@ the regex engine, or understand how the regex engine works. Readers of
 this document are expected to understand perl's regex syntax and its
 usage in detail. If you want to learn about the basics of Perl's
 regular expressions, see L<perlre>. And if you want to replace the
-regex engine with your own see see L<perlreapi>.
+regex engine with your own, see L<perlreapi>.
 
 =head1 OVERVIEW
 
@@ -222,7 +222,7 @@ always be so.
 =item *
 
 There is the "next regop" from a given regop/regnode. This is the
-regop physically located after the the current one, as determined by
+regop physically located after the current one, as determined by
 the size of the current regop. This is often useful, such as when
 dumping the structure we use this order to traverse. Sometimes the code
 assumes that the "next regnode" is the same as the "next regop", or in
@@ -624,13 +624,13 @@ interpreter.
 The two entry points are C<re_intuit_start()> and C<pregexec()>. These routines
 have a somewhat incestuous relationship with overlap between their functions,
 and C<pregexec()> may even call C<re_intuit_start()> on its own. Nevertheless
-other parts of the the perl source code may call into either, or both.
+other parts of the perl source code may call into either, or both.
 
 Execution of the interpreter itself used to be recursive, but thanks to the
 efforts of Dave Mitchell in the 5.9.x development track, that has changed: now an
 internal stack is maintained on the heap and the routine is fully
 iterative. This can make it tricky as the code is quite conservative
-about what state it stores, with the result that that two consecutive lines in the
+about what state it stores, with the result that two consecutive lines in the
 code can actually be running in totally different contexts due to the
 simulated recursion.
 
@@ -685,7 +685,7 @@ that is a permissive version of Unicode's UTF-8 encoding[2]. This uses single
 bytes to represent characters from the ASCII character set, and sequences
 of two or more bytes for all other characters. (See L<perlunitut>
 for more information about the relationship between UTF-8 and perl's
-encoding, utf8 -- the difference isn't important for this discussion.)
+encoding, utf8. The difference isn't important for this discussion.)
 
 No matter how you look at it, Unicode support is going to be a pain in a
 regex engine. Tricks that might be fine when you have 256 possible
@@ -810,13 +810,12 @@ value to other engine implementations.
 
 =item C<swap>
 
-C<swap> is an extra set of startp/endp stored in a C<regexp_paren_ofs>
-struct. This is used when the last successful match was from the same pattern
-as the current pattern, so that a partial match doesn't overwrite the
-previous match's results. When this field is data filled the matching
-engine will swap buffers before every match attempt. If the match fails,
-then it swaps them back. If it's successful it leaves them. This field
-is populated on demand and is by default null.
+C<swap> formerly was an extra set of startp/endp stored in a
+C<regexp_paren_ofs> struct. This was used when the last successful match
+was from the same pattern as the current pattern, so that a partial
+match didn't overwrite the previous match's results, but it caused a
+problem with re-entrant code such as trying to build the UTF-8 swashes.
+Currently unused and left for backward compatibility with 5.10.0.
 
 =item C<offsets>
 

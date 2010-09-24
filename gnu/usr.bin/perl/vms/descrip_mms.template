@@ -241,7 +241,7 @@ NOOP = continue
 # Macros to invoke a copy of miniperl during the build.  Targets which
 # are built using these macros should depend on $(MINIPERL_EXE)
 MINIPERL_EXE = Sys$Disk:[]miniperl$(E)
-MINIPERL = MCR $(MINIPERL_EXE) "-I[.lib]"
+MINIPERL = MCR $(MINIPERL_EXE) "-I[.lib]" "-I[.cpan.Cwd]" "-I[.cpan.Cwd.lib]"
 MINIPERLQ = MCR $(MINIPERL_EXE) ""-I[.lib]""
 XSUBPP = $(MINIPERL) "-I[.ext.re]" [.lib.extutils]xsubpp -noprototypes
 # Macro to invoke a preexisting copy of Perl.  This is used to regenerate
@@ -263,7 +263,7 @@ MYEXT = DynaLoader
 # object files for these extensions; the trailing comma is required if
 # there are any object files specified
 # These must be built separately, or you must add rules below to build them
-myextobj = [.ext.DynaLoader]dl_vms$(O),
+myextobj = DynaLoader$(O),
 EXT = $(MYEXT)
 extobj = $(myextobj)
 
@@ -289,14 +289,14 @@ FULLLIBS2 = $(LIBS2)|$(THRLIBS1)|$(THRLIBS2)
 c0 = $(MALLOC_C) $(SOCKC) av.c deb.c doio.c doop.c dump.c globals.c gv.c hv.c mro.c
 c1 = mg.c locale.c mathoms.c miniperlmain.c numeric.c op.c pad.c perl.c perlapi.c perlio.c
 c2 = perly.c pp.c pp_ctl.c pp_hot.c pp_pack.c pp_sort.c pp_sys.c regcomp.c regexec.c reentr.c
-c3 = run.c scope.c sv.c taint.c toke.c universal.c utf8.c util.c vms.c xsutils.c
+c3 = run.c scope.c sv.c taint.c toke.c universal.c utf8.c util.c vms.c
 c = $(c0) $(c1) $(c2) $(c3)
 
 obj0 = perl$(O)
 obj1 = $(MALLOC_O) $(SOCKO) av$(O) deb$(O) doio$(O) doop$(O) dump$(O) mro$(O) globals$(O) gv$(O) hv$(O) 
 obj2 = locale$(O) mathoms$(O) mg$(O) miniperlmain$(O) numeric$(O) op$(O) pad$(O) perlapi$(O) perlio$(O) 
 obj3 = perly$(O) pp$(O) pp_ctl$(O) pp_hot$(O) reentr$(O) pp_pack$(O) pp_sort$(O) pp_sys$(O) regcomp$(O) 
-obj4 = regexec$(O) run$(O) scope$(O) sv$(O) taint$(O) toke$(O) universal$(O) utf8$(O) util$(O) vms$(O) xsutils$(O)
+obj4 = regexec$(O) run$(O) scope$(O) sv$(O) taint$(O) toke$(O) universal$(O) utf8$(O) util$(O) vms$(O)
 
 mini_obj = perlmini$(O) $(obj1) $(obj2) $(obj3) $(obj4)
 obj = $(obj0) $(obj1) $(obj2) $(obj3) $(obj4)
@@ -313,7 +313,7 @@ h = $(h0) $(h1) $(h2) $(h3) $(h4) $(h5) $(h6)
 ac0 = $(ARCHCORE)$(sockh) $(ARCHCORE)av.h $(ARCHCORE)cc_runtime.h
 ac1 = $(ARCHCORE)config.h $(ARCHCORE)cop.h $(ARCHCORE)cv.h $(ARCHCORE)embed.h
 ac2 = $(ARCHCORE)embedvar.h $(ARCHCORE)EXTERN.h $(ARCHCORE)fakethr.h
-ac3 = $(ARCHCORE)form.h $(ARCHCORE)gv.h $(ARCHCORE)handy.h $(ARCHCORE)hv.h
+ac3 = $(ARCHCORE)form.h $(ARCHCORE)git_version.h $(ARCHCORE)gv.h $(ARCHCORE)handy.h $(ARCHCORE)hv.h
 ac4 = $(ARCHCORE)INTERN.h $(ARCHCORE)intrpvar.h $(ARCHCORE)iperlsys.h
 ac5 = $(ARCHCORE)keywords.h $(ARCHCORE)mydtrace.h $(ARCHCORE)mg.h $(ARCHCORE)nostdio.h
 ac6 = $(ARCHCORE)op.h $(ARCHCORE)opcode.h $(ARCHCORE)opnames.h  $(ARCHCORE)overload.h
@@ -360,7 +360,7 @@ CRTLOPTS =,$(CRTL)/Options
 unidatadirs = lib/unicore/To lib/unicore/lib
 
 # Modules which must be installed before we can build extensions
-LIBPREREQ = $(ARCHDIR)Config.pm $(ARCHDIR)Config_heavy.pl [.lib.VMS]Filespec.pm [.lib]DynaLoader.pm [.lib]XSLoader.pm [.lib]lib.pm $(ARCHDIR)vmspipe.com [.lib]re.pm unidatafiles.ts
+LIBPREREQ = $(ARCHDIR)Config.pm $(ARCHDIR)Config_heavy.pl [.lib.VMS]Filespec.pm $(ARCHDIR)vmspipe.com [.lib]re.pm
 
 utils1 = [.lib.pods]perldoc.com [.lib.ExtUtils]Miniperl.pm [.utils]c2ph.com [.utils]h2ph.com 
 utils2 = [.utils]h2xs.com [.utils]libnetcfg.com [.lib]perlbug.com [.utils]dprofpp.com 
@@ -385,7 +385,7 @@ all : base extras x2p archcorefiles preplibrary [.pod]perltoc.pod
 git_version.h : $(MINIPERL_EXE) make_patchnum.pl
         $(MINIPERL) make_patchnum.pl
 
-base : miniperl perl
+base : miniperl git_version.h nonxsext perl
 	@ $(NOOP)
 extras : dynext libmods utils podxform extra.pods
 	@ $(NOOP)
@@ -401,40 +401,42 @@ extra.pods : miniperl
 	@ @extra_pods.com
 
 pod0 = [.lib.pods]perl.pod [.lib.pods]perl5004delta.pod [.lib.pods]perl5005delta.pod [.lib.pods]perl5100delta.pod [.lib.pods]perl5101delta.pod
-pod1 = [.lib.pods]perl561delta.pod [.lib.pods]perl56delta.pod [.lib.pods]perl570delta.pod [.lib.pods]perl571delta.pod [.lib.pods]perl572delta.pod
-pod2 = [.lib.pods]perl573delta.pod [.lib.pods]perl581delta.pod [.lib.pods]perl582delta.pod [.lib.pods]perl583delta.pod [.lib.pods]perl584delta.pod
-pod3 = [.lib.pods]perl585delta.pod [.lib.pods]perl586delta.pod [.lib.pods]perl587delta.pod [.lib.pods]perl588delta.pod [.lib.pods]perl589delta.pod
-pod4 = [.lib.pods]perl58delta.pod [.lib.pods]perl590delta.pod [.lib.pods]perl591delta.pod [.lib.pods]perl592delta.pod [.lib.pods]perl593delta.pod
-pod5 = [.lib.pods]perl594delta.pod [.lib.pods]perl595delta.pod [.lib.pods]perlaix.pod [.lib.pods]perlamiga.pod [.lib.pods]perlapi.pod
-pod6 = [.lib.pods]perlapio.pod [.lib.pods]perlapollo.pod [.lib.pods]perlartistic.pod [.lib.pods]perlbeos.pod [.lib.pods]perlbook.pod [.lib.pods]perlboot.pod
-pod7 = [.lib.pods]perlbot.pod [.lib.pods]perlbs2000.pod [.lib.pods]perlcall.pod [.lib.pods]perlce.pod [.lib.pods]perlcheat.pod [.lib.pods]perlclib.pod
-pod8 = [.lib.pods]perlcn.pod [.lib.pods]perlcommunity.pod [.lib.pods]perlcompile.pod [.lib.pods]perlcygwin.pod [.lib.pods]perldata.pod
-pod9 = [.lib.pods]perldbmfilter.pod [.lib.pods]perldebguts.pod [.lib.pods]perldebtut.pod [.lib.pods]perldebug.pod [.lib.pods]perldelta.pod
-pod10 = [.lib.pods]perldgux.pod [.lib.pods]perldiag.pod [.lib.pods]perldoc.pod [.lib.pods]perldos.pod [.lib.pods]perldsc.pod [.lib.pods]perlebcdic.pod
-pod11 = [.lib.pods]perlembed.pod [.lib.pods]perlepoc.pod [.lib.pods]perlfaq.pod [.lib.pods]perlfaq1.pod [.lib.pods]perlfaq2.pod [.lib.pods]perlfaq3.pod
-pod12 = [.lib.pods]perlfaq4.pod [.lib.pods]perlfaq5.pod [.lib.pods]perlfaq6.pod [.lib.pods]perlfaq7.pod [.lib.pods]perlfaq8.pod [.lib.pods]perlfaq9.pod
-pod13 = [.lib.pods]perlfilter.pod [.lib.pods]perlfork.pod [.lib.pods]perlform.pod [.lib.pods]perlfreebsd.pod [.lib.pods]perlfunc.pod
-pod14 = [.lib.pods]perlglossary.pod [.lib.pods]perlgpl.pod [.lib.pods]perlguts.pod [.lib.pods]perlhack.pod [.lib.pods]perlhaiku.pod [.lib.pods]perlhist.pod
-pod15 = [.lib.pods]perlhpux.pod [.lib.pods]perlhurd.pod [.lib.pods]perlintern.pod [.lib.pods]perlintro.pod [.lib.pods]perliol.pod [.lib.pods]perlipc.pod
-pod16 = [.lib.pods]perlirix.pod [.lib.pods]perljp.pod [.lib.pods]perlko.pod [.lib.pods]perllexwarn.pod [.lib.pods]perllinux.pod [.lib.pods]perllocale.pod
-pod17 = [.lib.pods]perllol.pod [.lib.pods]perlmachten.pod [.lib.pods]perlmacos.pod [.lib.pods]perlmacosx.pod [.lib.pods]perlmint.pod [.lib.pods]perlmod.pod
-pod18 = [.lib.pods]perlmodinstall.pod [.lib.pods]perlmodlib.pod [.lib.pods]perlmodstyle.pod [.lib.pods]perlmpeix.pod [.lib.pods]perlmroapi.pod
-pod19 = [.lib.pods]perlnetware.pod [.lib.pods]perlnewmod.pod [.lib.pods]perlnumber.pod [.lib.pods]perlobj.pod [.lib.pods]perlop.pod
-pod20 = [.lib.pods]perlopenbsd.pod [.lib.pods]perlopentut.pod [.lib.pods]perlos2.pod [.lib.pods]perlos390.pod [.lib.pods]perlos400.pod [.lib.pods]perlothrtut.pod
-pod21 = [.lib.pods]perlpacktut.pod [.lib.pods]perlperf.pod [.lib.pods]perlplan9.pod [.lib.pods]perlpod.pod [.lib.pods]perlpodspec.pod [.lib.pods]perlport.pod
-pod22 = [.lib.pods]perlpragma.pod [.lib.pods]perlqnx.pod [.lib.pods]perlre.pod [.lib.pods]perlreapi.pod [.lib.pods]perlrebackslash.pod
-pod23 = [.lib.pods]perlrecharclass.pod [.lib.pods]perlref.pod [.lib.pods]perlreftut.pod [.lib.pods]perlreguts.pod [.lib.pods]perlrepository.pod
-pod24 = [.lib.pods]perlrequick.pod [.lib.pods]perlreref.pod [.lib.pods]perlretut.pod [.lib.pods]perlriscos.pod [.lib.pods]perlrun.pod [.lib.pods]perlsec.pod
-pod25 = [.lib.pods]perlsolaris.pod [.lib.pods]perlstyle.pod [.lib.pods]perlsub.pod [.lib.pods]perlsymbian.pod [.lib.pods]perlsyn.pod
-pod26 = [.lib.pods]perlthrtut.pod [.lib.pods]perltie.pod [.lib.pods]perltoc.pod [.lib.pods]perltodo.pod [.lib.pods]perltooc.pod [.lib.pods]perltoot.pod
-pod27 = [.lib.pods]perltrap.pod [.lib.pods]perltru64.pod [.lib.pods]perltw.pod [.lib.pods]perlunicode.pod [.lib.pods]perlunifaq.pod
-pod28 = [.lib.pods]perluniintro.pod [.lib.pods]perlunitut.pod [.lib.pods]perlutil.pod [.lib.pods]perluts.pod [.lib.pods]perlvar.pod [.lib.pods]perlvmesa.pod
-pod29 = [.lib.pods]perlvms.pod [.lib.pods]perlvos.pod [.lib.pods]perlwin32.pod [.lib.pods]perlxs.pod [.lib.pods]perlxstut.pod
-pod = $(pod0) $(pod1) $(pod2) $(pod3) $(pod4) $(pod5) $(pod6) $(pod7) $(pod8) $(pod9) $(pod10) $(pod11) $(pod12) $(pod13) $(pod14) $(pod15) $(pod16) $(pod17) $(pod18) $(pod19) $(pod20) $(pod21) $(pod22) $(pod23) $(pod24) $(pod25) $(pod26) $(pod27) $(pod28) $(pod29)
+pod1 = [.lib.pods]perl5110delta.pod [.lib.pods]perl5111delta.pod [.lib.pods]perl5112delta.pod [.lib.pods]perl5113delta.pod [.lib.pods]perl5114delta.pod
+pod2 = [.lib.pods]perl5115delta.pod [.lib.pods]perl5120delta.pod [.lib.pods]perl5121delta.pod [.lib.pods]perl5122delta.pod [.lib.pods]perl561delta.pod
+pod3 = [.lib.pods]perl56delta.pod [.lib.pods]perl570delta.pod [.lib.pods]perl571delta.pod [.lib.pods]perl572delta.pod [.lib.pods]perl573delta.pod
+pod4 = [.lib.pods]perl581delta.pod [.lib.pods]perl582delta.pod [.lib.pods]perl583delta.pod [.lib.pods]perl584delta.pod [.lib.pods]perl585delta.pod
+pod5 = [.lib.pods]perl586delta.pod [.lib.pods]perl587delta.pod [.lib.pods]perl588delta.pod [.lib.pods]perl589delta.pod [.lib.pods]perl58delta.pod
+pod6 = [.lib.pods]perl590delta.pod [.lib.pods]perl591delta.pod [.lib.pods]perl592delta.pod [.lib.pods]perl593delta.pod [.lib.pods]perl594delta.pod
+pod7 = [.lib.pods]perl595delta.pod [.lib.pods]perlaix.pod [.lib.pods]perlamiga.pod [.lib.pods]perlapi.pod [.lib.pods]perlapio.pod [.lib.pods]perlapollo.pod
+pod8 = [.lib.pods]perlartistic.pod [.lib.pods]perlbeos.pod [.lib.pods]perlbook.pod [.lib.pods]perlboot.pod [.lib.pods]perlbot.pod [.lib.pods]perlbs2000.pod
+pod9 = [.lib.pods]perlcall.pod [.lib.pods]perlce.pod [.lib.pods]perlcheat.pod [.lib.pods]perlclib.pod [.lib.pods]perlcn.pod [.lib.pods]perlcommunity.pod
+pod10 = [.lib.pods]perlcompile.pod [.lib.pods]perlcygwin.pod [.lib.pods]perldata.pod [.lib.pods]perldbmfilter.pod [.lib.pods]perldebguts.pod
+pod11 = [.lib.pods]perldebtut.pod [.lib.pods]perldebug.pod [.lib.pods]perldelta.pod [.lib.pods]perldgux.pod [.lib.pods]perldiag.pod [.lib.pods]perldoc.pod
+pod12 = [.lib.pods]perldos.pod [.lib.pods]perldsc.pod [.lib.pods]perlebcdic.pod [.lib.pods]perlembed.pod [.lib.pods]perlepoc.pod [.lib.pods]perlfaq.pod
+pod13 = [.lib.pods]perlfaq1.pod [.lib.pods]perlfaq2.pod [.lib.pods]perlfaq3.pod [.lib.pods]perlfaq4.pod [.lib.pods]perlfaq5.pod [.lib.pods]perlfaq6.pod
+pod14 = [.lib.pods]perlfaq7.pod [.lib.pods]perlfaq8.pod [.lib.pods]perlfaq9.pod [.lib.pods]perlfilter.pod [.lib.pods]perlfork.pod [.lib.pods]perlform.pod
+pod15 = [.lib.pods]perlfreebsd.pod [.lib.pods]perlfunc.pod [.lib.pods]perlglossary.pod [.lib.pods]perlgpl.pod [.lib.pods]perlguts.pod [.lib.pods]perlhack.pod
+pod16 = [.lib.pods]perlhaiku.pod [.lib.pods]perlhist.pod [.lib.pods]perlhpux.pod [.lib.pods]perlhurd.pod [.lib.pods]perlintern.pod [.lib.pods]perlintro.pod
+pod17 = [.lib.pods]perliol.pod [.lib.pods]perlipc.pod [.lib.pods]perlirix.pod [.lib.pods]perljp.pod [.lib.pods]perlko.pod [.lib.pods]perllexwarn.pod
+pod18 = [.lib.pods]perllinux.pod [.lib.pods]perllocale.pod [.lib.pods]perllol.pod [.lib.pods]perlmacos.pod [.lib.pods]perlmacosx.pod [.lib.pods]perlmod.pod
+pod19 = [.lib.pods]perlmodinstall.pod [.lib.pods]perlmodlib.pod [.lib.pods]perlmodstyle.pod [.lib.pods]perlmpeix.pod [.lib.pods]perlmroapi.pod
+pod20 = [.lib.pods]perlnetware.pod [.lib.pods]perlnewmod.pod [.lib.pods]perlnumber.pod [.lib.pods]perlobj.pod [.lib.pods]perlop.pod
+pod21 = [.lib.pods]perlopenbsd.pod [.lib.pods]perlopentut.pod [.lib.pods]perlos2.pod [.lib.pods]perlos390.pod [.lib.pods]perlos400.pod
+pod22 = [.lib.pods]perlpacktut.pod [.lib.pods]perlperf.pod [.lib.pods]perlplan9.pod [.lib.pods]perlpod.pod [.lib.pods]perlpodspec.pod
+pod23 = [.lib.pods]perlpolicy.pod [.lib.pods]perlport.pod [.lib.pods]perlpragma.pod [.lib.pods]perlqnx.pod [.lib.pods]perlre.pod [.lib.pods]perlreapi.pod
+pod24 = [.lib.pods]perlrebackslash.pod [.lib.pods]perlrecharclass.pod [.lib.pods]perlref.pod [.lib.pods]perlreftut.pod [.lib.pods]perlreguts.pod
+pod25 = [.lib.pods]perlrepository.pod [.lib.pods]perlrequick.pod [.lib.pods]perlreref.pod [.lib.pods]perlretut.pod [.lib.pods]perlriscos.pod
+pod26 = [.lib.pods]perlrun.pod [.lib.pods]perlsec.pod [.lib.pods]perlsolaris.pod [.lib.pods]perlstyle.pod [.lib.pods]perlsub.pod [.lib.pods]perlsymbian.pod
+pod27 = [.lib.pods]perlsyn.pod [.lib.pods]perlthrtut.pod [.lib.pods]perltie.pod [.lib.pods]perltoc.pod [.lib.pods]perltodo.pod [.lib.pods]perltooc.pod
+pod28 = [.lib.pods]perltoot.pod [.lib.pods]perltrap.pod [.lib.pods]perltru64.pod [.lib.pods]perltw.pod [.lib.pods]perlunicode.pod [.lib.pods]perlunifaq.pod
+pod29 = [.lib.pods]perluniintro.pod [.lib.pods]perluniprops.pod [.lib.pods]perlunitut.pod [.lib.pods]perlutil.pod [.lib.pods]perluts.pod
+pod30 = [.lib.pods]perlvar.pod [.lib.pods]perlvmesa.pod [.lib.pods]perlvms.pod [.lib.pods]perlvos.pod [.lib.pods]perlwin32.pod [.lib.pods]perlxs.pod
+pod31 = [.lib.pods]perlxstut.pod
+pod = $(pod0) $(pod1) $(pod2) $(pod3) $(pod4) $(pod5) $(pod6) $(pod7) $(pod8) $(pod9) $(pod10) $(pod11) $(pod12) $(pod13) $(pod14) $(pod15) $(pod16) $(pod17) $(pod18) $(pod19) $(pod20) $(pod21) $(pod22) $(pod23) $(pod24) $(pod25) $(pod26) $(pod27) $(pod28) $(pod29) $(pod30) $(pod31)
 
 # Would be useful to automate the generation of this rule from pod/buildtoc
 # Plus its corresponding delete in the clean target.
-[.pod]perldelta.pod : [.pod]perl5101delta.pod
+[.pod]perldelta.pod : [.pod]perl5122delta.pod
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(MMS$TARGET)
 
 [.pod]perlapi.pod : embed.fnc autodoc.pl $(MINIPERL_EXE)
@@ -448,7 +450,7 @@ pod = $(pod0) $(pod1) $(pod2) $(pod3) $(pod4) $(pod5) $(pod6) $(pod7) $(pod8) $(
 
 [.pod]perltoc.pod : [.pod]perldelta.pod [.pod]perlapi.pod [.pod]perlintern.pod  [.pod]perlmodlib.pod extra.pods $(PERL_EXE)
 	@ define/user_mode $(DBG)PERLSHR SYS$DISK:[]$(DBG)perlshr$(E)
-	$(PERL) [.pod]buildtoc "-q" "--build-toc"
+	$(PERL) "-f" [.pod]buildtoc "-q" "--build-toc"
 
 archcorefiles : $(ac) $(ARCHAUTO)time.stamp
 	@ $(NOOP)
@@ -505,9 +507,8 @@ perlmini.c : perl.c
 perlmini$(O) : perlmini.c
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 
-uudmap.h : generate_uudmap$(E)
-	DEFINE/USER_MODE SYS$OUTPUT uudmap.h
-	MCR SYS$DISK:[]generate_uudmap$(E)
+uudmap.h bitcount.h : generate_uudmap$(E)
+	MCR SYS$DISK:[]generate_uudmap$(E) uudmap.h bitcount.h
 
 generate_uudmap$(E) : generate_uudmap$(O) $(CRTL)
 	Link $(LINKFLAGS)/NoDebug/Trace/NoMap/NoFull/NoCross/Exe=$(MMS$TARGET) generate_uudmap$(O) $(CRTLOPTS)
@@ -555,40 +556,19 @@ $(ARCHDIR)Config_heavy.pl : [.lib]Config_heavy.pl
 $(ARCHDIR)vmspipe.com : vmspipe.com
         Copy $(MMS$SOURCE) $(ARCHDIR)
 
-unidatafiles.ts : $(MINIPERL_EXE) [.lib]Config.pm [.lib.unicore]mktables
-	$(MINIPERL) [.lib.unicore]mktables "-C" [.lib.unicore] 
+unidatafiles.ts : $(MINIPERL_EXE) [.lib]Config.pm [.lib.unicore]mktables nonxsext
+	$(MINIPERL) [.lib.unicore]mktables "-C" [.lib.unicore] "-P" [.pod] "-makelist" "-maketest" "-p"
 	@ If F$Search("$(MMS$TARGET)").nes."" Then Delete/NoLog/NoConfirm $(MMS$TARGET);*
 	@ Copy/NoConfirm _NLA0: $(MMS$TARGET)
  
-[.ext.DynaLoader]dl_vms.c : [.ext.DynaLoader]dl_vms.xs $(ARCHDIR)Config.pm $(MINIPERL_EXE) [.lib.VMS]Filespec.pm 
-	$(XSUBPP) $(MMS$SOURCE) >$(MMS$TARGET)
+DynaLoader$(O) : $(ARCHDIR)Config.pm $(MINIPERL_EXE) [.lib.VMS]Filespec.pm 
+	$(MINIPERL) make_ext.pl "MAKE=$(MMS)" "DynaLoader"
 
-[.ext.DynaLoader]dl_vms$(O) : [.ext.DynaLoader]dl_vms.c
-	$(CC) $(CFLAGS) /Include=([],[.ext.DynaLoader])/Object=$(MMS$TARGET) $(MMS$SOURCE)
+dynext : $(LIBPREREQ) $(DBG)perlshr$(E) unidatafiles.ts DynaLoader$(O) preplibrary makeppport $(MINIPERL_EXE)
+       $(MINIPERL) make_ext.pl "MAKE=$(MMS)" "--dynamic" "--static"
 
-[.lib]DynaLoader.pm : [.ext.DynaLoader]DynaLoader.pm
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib]
-	@ If F$Search("[.lib]auto.dir").eqs."" Then Create/Directory [.lib.auto]
-	@ $(MINIPERL) -e "use AutoSplit; autosplit_lib_modules(@ARGV)" [.lib]DynaLoader.pm
-
-[.lib]XSLoader.pm : [.ext.DynaLoader]XSLoader.pm
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib]
-	@ If F$Search("[.lib]auto.dir").eqs."" Then Create/Directory [.lib.auto]
-	@ $(MINIPERL) -e "use AutoSplit; autosplit_lib_modules(@ARGV)" [.lib]XSLoader.pm
-
-[.ext.DynaLoader]DynaLoader.pm : [.ext.DynaLoader]DynaLoader_pm.PL
-	$(MINIPERL) $(MMS$SOURCE)
-	@ Rename/Log DynaLoader.pm [.ext.DynaLoader]
-
-[.ext.DynaLoader]XSLoader.pm : [.ext.DynaLoader]XSLoader_pm.PL
-	$(MINIPERL) $(MMS$SOURCE)
-	@ Rename/Log XSLoader.pm [.ext.DynaLoader]
-
-dynext : $(LIBPREREQ) $(DBG)perlshr$(E) preplibrary makeppport $(MINIPERL_EXE)
-       $(MINIPERL) make_ext.pl "MAKE=$(MMS)" "--all"
-
-[.lib]lib.pm : [.lib]lib_pm.PL
-	$(MINIPERL) $(MMS$SOURCE)
+nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE)
+       $(MINIPERL) make_ext.pl "MAKE=$(MMS)" "--nonxs"
 
 [.lib.VMS]Filespec.pm : [.vms.ext]Filespec.pm
 	@ If F$Search("[.lib]VMS.Dir").eqs."" Then Create/Directory [.lib.VMS]
@@ -676,7 +656,7 @@ dynext : $(LIBPREREQ) $(DBG)perlshr$(E) preplibrary makeppport $(MINIPERL_EXE)
 [.x2p]s2p.com : [.x2p]s2p.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
-[.utils]xsubpp.com : [.utils]xsubpp.PL $(ARCHDIR)Config.pm
+[.utils]xsubpp.com : [.utils]xsubpp.PL $(ARCHDIR)Config.pm nonxsext
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
 # Rename catches problem with some DECC versions in which object file is
@@ -744,11 +724,8 @@ dynext : $(LIBPREREQ) $(DBG)perlshr$(E) preplibrary makeppport $(MINIPERL_EXE)
 	Copy/NoConfirm/Log [.pod]podselect.com [.lib.pods]
 
 preplibrary : $(MINIPERL_EXE) $(LIBPREREQ) 
-	@ Write Sys$Output "Autosplitting Perl library . . ."
-	@ Create/Directory [.lib.auto]
-	@ $(MINIPERL) -e "use AutoSplit; autosplit_lib_modules(@ARGV)" [.lib]*.pm [.lib.*]*.pm [.lib.*.*]*.pm
 
-makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm
+makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm nonxsext
 	$(MINIPERL) mkppport
 
 [.lib.pods]perl.pod : [.pod]perl.pod
@@ -768,6 +745,42 @@ makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
 [.lib.pods]perl5101delta.pod : [.pod]perl5101delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5110delta.pod : [.pod]perl5110delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5111delta.pod : [.pod]perl5111delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5112delta.pod : [.pod]perl5112delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5113delta.pod : [.pod]perl5113delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5114delta.pod : [.pod]perl5114delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5115delta.pod : [.pod]perl5115delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5120delta.pod : [.pod]perl5120delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5121delta.pod : [.pod]perl5121delta.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perl5122delta.pod : [.pod]perl5122delta.pod
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
@@ -1127,19 +1140,11 @@ makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
-[.lib.pods]perlmachten.pod : [.pod]perlmachten.pod
-	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
-
 [.lib.pods]perlmacos.pod : [.pod]perlmacos.pod
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
 [.lib.pods]perlmacosx.pod : [.pod]perlmacosx.pod
-	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
-
-[.lib.pods]perlmint.pod : [.pod]perlmint.pod
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
@@ -1207,10 +1212,6 @@ makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
-[.lib.pods]perlothrtut.pod : [.pod]perlothrtut.pod
-	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
-
 [.lib.pods]perlpacktut.pod : [.pod]perlpacktut.pod
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
@@ -1228,6 +1229,10 @@ makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
 [.lib.pods]perlpodspec.pod : [.pod]perlpodspec.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
+[.lib.pods]perlpolicy.pod : [.pod]perlpolicy.pod
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
@@ -1367,6 +1372,10 @@ makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
+[.lib.pods]perluniprops.pod : [.pod]perluniprops.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+
 [.lib.pods]perlunitut.pod : [.pod]perlunitut.pod
 	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
 	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
@@ -1462,32 +1471,20 @@ perly$(O) : perly.c, perly.h, $(h)
 [.t.lib]vmsfspec.t : [.vms.ext]filespec.t
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(MMS$TARGET)
 
-[.t.lib]vms_dclsym.t : [.vms.ext.DCLsym]test.pl
-	Copy/NoConfirm/Log $(MMS$SOURCE) $(MMS$TARGET)
-
-[.t.lib]vms_stdio.t : [.vms.ext.Stdio]test.pl
-	Copy/NoConfirm/Log $(MMS$SOURCE) $(MMS$TARGET)
-
-unpack_files :
-	- $(MINIPERL) uupacktool.pl -u -m
-
-cleanup_unpacked_files :
-	- IF F$SEARCH("$(MINIPERL_EXE)") .NES. "" THEN $(MINIPERL) uupacktool.pl -c
-
 check : test
 	@ Continue
 
-test : all [.t.lib]vmsfspec.t [.t.lib]vms_dclsym.t [.t.lib]vms_stdio.t unpack_files
+test : all [.t.lib]vmsfspec.t
 	@ PERL_TEST_DRIVER == "TEST."
 	- @[.vms]test.com "$(E)" "$(__DEBUG__)"
 	@ $(MINIPERL) -e "print ""Ran tests"";" > [.t]rantests.
 
-test_harness : all [.t.lib]vmsfspec.t [.t.lib]vms_dclsym.t [.t.lib]vms_stdio.t unpack_files
+test_harness : all [.t.lib]vmsfspec.t
 	@ PERL_TEST_DRIVER == "harness."
 	- @[.vms]test.com "$(E)" "$(__DEBUG__)"
 	@ $(MINIPERL) -e "print ""Ran tests"";" > [.t]rantests.
 
-minitest : $(MINITEST_EXE) [.lib]re.pm [.lib]lib.pm [.lib.VMS]Filespec.pm unidatafiles.ts
+minitest : $(MINITEST_EXE) [.lib]re.pm [.lib.VMS]Filespec.pm unidatafiles.ts
 	@ PERL_TEST_DRIVER == "minitest"
 	- @[.vms]test.com "$(E)" "$(__DEBUG__)"
 
@@ -1549,6 +1546,9 @@ $(ARCHCORE)fakethr.h : fakethr.h
 	@ If F$Search("$(ARCHDIR)CORE.dir").eqs."" Then Create/Directory $(ARCHCORE)
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(ARCHCORE)
 $(ARCHCORE)form.h : form.h
+	@ If F$Search("$(ARCHDIR)CORE.dir").eqs."" Then Create/Directory $(ARCHCORE)
+	Copy/NoConfirm/Log $(MMS$SOURCE) $(ARCHCORE)
+$(ARCHCORE)git_version.h : git_version.h
 	@ If F$Search("$(ARCHDIR)CORE.dir").eqs."" Then Create/Directory $(ARCHCORE)
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(ARCHCORE)
 $(ARCHCORE)gv.h : gv.h
@@ -1704,7 +1704,7 @@ doop$(O) : doop.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 dump$(O) : dump.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
-globals$(O) : globals.c uudmap.h $(h)
+globals$(O) : globals.c uudmap.h bitcount.h $(h)
         $(CC) $(CORECFLAGS) $(MMS$SOURCE)
 gv$(O) : gv.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
@@ -1774,8 +1774,6 @@ util$(O) : util.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 vms$(O) : vms.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
-xsutils$(O) : xsutils.c $(h)
-	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 
 [.x2p]hash$(O) : [.x2p]hash.c [.x2p]EXTERN.h [.x2p]a2p.h [.x2p]hash.h [.x2p]str.h [.x2p]util.h config.h handy.h vmsish.h $(SOCKH)
 	$(CC) $(X2PCFLAGS) $(MMS$SOURCE)
@@ -1838,16 +1836,13 @@ tidy : cleanlis
 	- If F$Search("vms.c;-1")   .nes."" Then Purge/NoConfirm/Log vms.c
 	- If F$Search("perlmain.c;-1")   .nes."" Then Purge/NoConfirm/Log perlmain.c
 	- If F$Search("uudmap.h;-1")   .nes."" Then Purge/NoConfirm/Log uudmap.h
+	- If F$Search("bitcount.h;-1")   .nes."" Then Purge/NoConfirm/Log bitcount.h
 	- If F$Search("Perlshr_Gbl*.Mar;-1")   .nes."" Then Purge/NoConfirm/Log Perlshr_Gbl*.Mar
-	- If F$Search("[.ext.DynaLoader]dl_vms$(O);-1").nes."" Then Purge/NoConfirm/Log [.ext.DynaLoader]dl_vms$(O)
-	- If F$Search("[.ext.DynaLoader]dl_vms.c;-1").nes."" Then Purge/NoConfirm/Log [.ext.DynaLoader]dl_vms.c
 	- If F$Search("[.ext.Opcode...];-1").nes."" Then Purge/NoConfirm/Log [.ext.Opcode]
 	- If F$Search("[.vms.ext...]*.C;-1").nes."" Then Purge/NoConfirm/Log [.vms.ext...]*.C
 	- If F$Search("[.vms.ext...]*$(O);-1").nes."" Then Purge/NoConfirm/Log [.vms.ext...]*$(O)
 	- If F$Search("[.lib.auto...]*.al;-1").nes."" Then Purge/NoConfirm/Log [.lib.auto...]*.al
 	- If F$Search("[.lib.auto...]autosplit.ix;-1").nes."" Then Purge/NoConfirm/Log [.lib.auto...]autosplit.ix
-	- If F$Search("[.lib]DynaLoader.pm;-1").nes."" Then Purge/NoConfirm/Log [.lib]DynaLoader.pm
-	- If F$Search("[.lib]XSLoader.pm;-1").nes."" Then Purge/NoConfirm/Log [.lib]XSLoader.pm
 	- If F$Search("[.lib]Config.pm;-1").nes."" Then Purge/NoConfirm/Log [.lib]Config.pm
 	- If F$Search("$(ARCHDIR)Config.pm;-1").nes."" Then Purge/NoConfirm/Log $(ARCHDIR)Config.pm
 	- If F$Search("[.lib]Config_heavy.pl;-1").nes."" Then Purge/NoConfirm/Log [.lib]Config_heavy.pl
@@ -1862,7 +1857,7 @@ tidy : cleanlis
 	- If F$Search("[.x2p]*.com;-1").nes."" Then Purge/NoConfirm/Log [.x2p]*.com
 	- If F$Search("[.lib.pods]*.com;-1").nes."" Then Purge/NoConfirm/Log [.lib.pods]*.com
 
-clean : tidy cleantest cleanup_unpacked_files
+clean : tidy cleantest
       	- $(MINIPERL) make_ext.pl "MAKE=$(MMS)" "--all" "--target=clean"
 	- If F$Search("*.Opt").nes."" Then Delete/NoConfirm/Log *.Opt;*/Exclude=PerlShr_*.Opt
 	- If F$Search("[...]*$(O);*") .nes."" Then Delete/NoConfirm/Log [...]*$(O);*
@@ -1873,12 +1868,9 @@ clean : tidy cleantest cleanup_unpacked_files
 	- If F$Search("perlmain.c")   .nes."" Then Delete/NoConfirm/Log perlmain.c;*
 	- If F$Search("perlmini.c")   .nes."" Then Delete/NoConfirm/Log perlmini.c;*
 	- If F$Search("uudmap.h")   .nes."" Then Delete/NoConfirm/Log uudmap.h;*
+	- If F$Search("bitcount.h")   .nes."" Then Delete/NoConfirm/Log bitcount.h;*
 	- If F$Search("Perlshr_Gbl*.Mar")   .nes."" Then Delete/NoConfirm/Log Perlshr_Gbl*.Mar;*
 	- If F$Search("*.TS").nes."" Then Delete/NoConfirm/Log *.TS;*
-	- If F$Search("[.ext.DynaLoader]dl_vms$(O)").nes."" Then Delete/NoConfirm/Log [.ext.DynaLoader]dl_vms$(O);*
-	- If F$Search("[.ext.DynaLoader]dl_vms.c").nes."" Then Delete/NoConfirm/Log [.ext.DynaLoader]dl_vms.c;*
-	- If F$Search("[.ext.DynaLoader]DynaLoader.pm").nes."" Then Delete/NoConfirm/Log [.ext.DynaLoader]DynaLoader.pm;*
-	- If F$Search("[.ext.DynaLoader]XSLoader.pm").nes."" Then Delete/NoConfirm/Log [.ext.DynaLoader]XSLoader.pm;*
 	- If F$Search("[.vms.ext...]*.C").nes."" Then Delete/NoConfirm/Log [.vms.ext...]*.C;*
 	- If F$Search("[.vms.ext...]*$(O)").nes."" Then Delete/NoConfirm/Log [.vms.ext...]*$(O);*
 	- If F$Search("[.pod]*.com").nes."" Then Delete/NoConfirm/Log [.pod]*.com;*
@@ -1887,6 +1879,7 @@ clean : tidy cleantest cleanup_unpacked_files
 	- If F$Search("[.pod]perlintern.pod").nes."" Then Delete/NoConfirm/Log [.pod]perlintern.pod;*
 	- If F$Search("[.pod]perlmodlib.pod").nes."" Then Delete/NoConfirm/Log [.pod]perlmodlib.pod;*
 	- If F$Search("[.pod]perltoc.pod").nes."" Then Delete/NoConfirm/Log [.pod]perltoc.pod;*
+	- If F$Search("[.pod]perluniprops.pod").nes."" Then Delete/NoConfirm/Log [.pod]perluniprops.pod;*
 	- @extra_pods CLEAN
 	- If F$Search("unpushed.h").nes."" Then Delete/NoConfirm/Log unpushed.h;*
 	- If F$Search("[.lib]Config_git.pl").nes."" Then Delete/NoConfirm/Log [.lib]Config_git.pl;*
@@ -1908,8 +1901,6 @@ realclean : clean
 	- If F$Search("extra.pods").nes."" Then Delete/NoConfirm/Log extra.pods;*
 	- $(MINIPERL) -e "use File::Path; rmtree(['lib/auto','lib/VMS','lib/$(ARCH)'],1,0);"
 	- If F$Search("*.TS").nes."" Then Delete/NoConfirm/Log *.TS;*
-	- If F$Search("[.lib]DynaLoader.pm").nes."" Then Delete/NoConfirm/Log [.lib]DynaLoader.pm;*
-	- If F$Search("[.lib]XSLoader.pm").nes."" Then Delete/NoConfirm/Log [.lib]XSLoader.pm;*
 	- If F$Search("[.lib]Config.pm").nes."" Then Delete/NoConfirm/Log [.lib]Config.pm;*
 	- If F$Search("[.lib]Config_heavy.pl").nes."" Then Delete/NoConfirm/Log [.lib]Config_heavy.pl;*
 	- If F$Search("[.lib]*.com").nes."" Then Delete/NoConfirm/Log [.lib]*.com;*
@@ -1931,8 +1922,6 @@ realclean : clean
 	- If F$Search("[.t]test_state.").nes."" Then Delete/NoConfirm/Log [.t]test_state.;*
 	- If F$Search("[.t.lib]vmsfspec.t").nes."" Then Delete/NoConfirm/Log [.t.lib]vmsfspec.t;*
 	- If F$Search("[.t.lib]vmsish.t").nes."" Then Delete/NoConfirm/Log [.t.lib]vmsish.t;*
-	- If F$Search("[.t.lib]vms_dclsym.t").nes."" Then Delete/NoConfirm/Log [.t.lib]vms_dclsym.t;*
-	- If F$Search("[.t.lib]vms_stdio.t").nes."" Then Delete/NoConfirm/Log [.t.lib]vms_stdio.t;*
 	- If F$Search("vmspipe.com").nes."" Then Delete/NoConfirm/Log vmspipe.com;*
 
 cleansrc : clean

@@ -1,0 +1,11 @@
+# perl
+
+use V;
+
+dprofpp( '-t' );
+$expected = 
+qq{main::foo (2x)
+main::bar
+};
+
+report 20, sub { $expected eq $results };

@@ -85,8 +85,8 @@ for a carriage return.  Arbitrary bytes are represented by octal
 escape sequences, e.g., C<\033>, or hexadecimal escape sequences,
 e.g., C<\x1B>:
 
-    "1000\t2000" =~ m(0\t2)        # matches
-    "cat"        =~ /\143\x61\x74/ # matches, but a weird way to spell cat
+    "1000\t2000" =~ m(0\t2)      # matches
+    "cat"      =~ /\143\x61\x74/ # matches in ASCII, but a weird way to spell cat
 
 Regexes are treated mostly as double quoted strings, so variable
 substitution works:

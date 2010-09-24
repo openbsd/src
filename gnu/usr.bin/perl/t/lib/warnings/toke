@@ -125,7 +125,6 @@ toke.c	AOK
 
 __END__
 # toke.c 
-use warnings 'deprecated' ;
 format STDOUT =
 @<<<  @|||  @>>>  @>>>
 $a    $b    "abc" 'def'
@@ -136,19 +135,18 @@ format STDOUT =
 $a    $b    "abc" 'def'
 .
 EXPECT
-Use of comma-less variable list is deprecated at - line 5.
-Use of comma-less variable list is deprecated at - line 5.
-Use of comma-less variable list is deprecated at - line 5.
+Use of comma-less variable list is deprecated at - line 4.
+Use of comma-less variable list is deprecated at - line 4.
+Use of comma-less variable list is deprecated at - line 4.
 ########
 # toke.c
-use warnings 'deprecated' ;
 $a = <<;
 
 no warnings 'deprecated' ;
 $a = <<;
 
 EXPECT
-Use of bare << to mean <<"" is deprecated at - line 3.
+Use of bare << to mean <<"" is deprecated at - line 2.
 ########
 # toke.c
 use warnings 'syntax' ;
@@ -848,7 +846,117 @@ EXPECT
 ########
 # toke.c
 our $foo :unique;
-use warnings 'deprecated';
+sub pam :locked;
+sub glipp :locked {
+}
+sub whack_eth ($) : locked {
+}
+no warnings 'deprecated';
 our $bar :unique;
+sub zapeth :locked;
+sub ker_plop :locked {
+}
+sub swa_a_p ($) : locked {
+}
 EXPECT
-Use of :unique is deprecated at - line 4.
+Use of :unique is deprecated at - line 2.
+Use of :locked is deprecated at - line 3.
+Use of :locked is deprecated at - line 4.
+Use of :locked is deprecated at - line 6.
+########
+# toke.c
+use warnings "syntax";
+sub proto_after_array(@$);
+sub proto_after_arref(\@$);
+sub proto_after_arref2(\[@$]);
+sub proto_after_arref3(\[@$]_);
+sub proto_after_hash(%$);
+sub proto_after_hashref(\%$);
+sub proto_after_hashref2(\[%$]);
+sub underscore_last_pos($_);
+sub underscore2($_;$);
+sub underscore_fail($_$);
+sub underscore_after_at(@_);
+no warnings "syntax";
+sub proto_after_array(@$);
+sub proto_after_hash(%$);
+sub underscore_fail($_$);
+EXPECT
+Prototype after '@' for main::proto_after_array : @$ at - line 3.
+Prototype after '%' for main::proto_after_hash : %$ at - line 7.
+Illegal character after '_' in prototype for main::underscore_fail : $_$ at - line 12.
+Prototype after '@' for main::underscore_after_at : @_ at - line 13.
+########
+# toke.c
+use warnings "ambiguous";
+"foo\nn" =~ /^foo$\n/;
+"foo\nn" =~ /^foo${\}n/;
+my $foo = qr/^foo$\n/;
+my $bar = qr/^foo${\}n/;
+no warnings "ambiguous";
+"foo\nn" =~ /^foo$\n/;
+"foo\nn" =~ /^foo${\}n/;
+my $foo = qr/^foo$\n/;
+my $bar = qr/^foo${\}n/;
+EXPECT
+Possible unintended interpolation of $\ in regex at - line 3.
+Possible unintended interpolation of $\ in regex at - line 5.
+########
+# toke.c
+use feature 'state';
+# This one is fine as an empty attribute list
+my $holy_Einstein : = '';
+# This one is deprecated
+my $krunch := 4;
+our $FWISK_FWISK_FWIZZACH_FWACH_ZACHITTY_ZICH_SHAZZATZ_FWISK := '';
+state $thump := 'Trumpets';
+# Lather rinse repeat in my usual obsessive style
+my @holy_perfect_pitch : = ();
+my @zok := ();
+our @GUKGUK := ();
+# state @widget_mark := ();
+my %holy_seditives : = ();
+my %bang := ();
+our %GIGAZING := ();
+# state %hex := ();
+no warnings 'deprecated';
+my $holy_giveaways : = '';
+my $eee_yow := [];
+our $TWOYYOYYOING_THUK_UGH := 1 == 1;
+state $octothorn := 'Tinky Winky';
+my @holy_Taj_Mahal : = ();
+my @touche := ();
+our @PLAK_DAK_THUK_FRIT := ();
+# state @hash_mark := ();
+my %holy_priceless_collection_of_Etruscan_snoods : = ();
+my %wham_eth := ();
+our %THWUK := ();
+# state %octalthorpe := ();
+use warnings;
+my $holy_sewer_pipe : = '';
+my $thunk := undef;
+our $BLIT := time;
+state $crunch := 'Laa Laa';
+my @glurpp := ();
+my @holy_harem : = ();
+our @FABADAP := ();
+# state @square := ();
+my %holy_pin_cushions : = ();
+my %swoosh := ();
+our %RRRRR := ();
+# state %scratchmark := ();
+EXPECT
+Use of := for an empty attribute list is deprecated at - line 6.
+Use of := for an empty attribute list is deprecated at - line 7.
+Use of := for an empty attribute list is deprecated at - line 8.
+Use of := for an empty attribute list is deprecated at - line 11.
+Use of := for an empty attribute list is deprecated at - line 12.
+Use of := for an empty attribute list is deprecated at - line 15.
+Use of := for an empty attribute list is deprecated at - line 16.
+Use of := for an empty attribute list is deprecated at - line 33.
+Use of := for an empty attribute list is deprecated at - line 34.
+Use of := for an empty attribute list is deprecated at - line 35.
+Use of := for an empty attribute list is deprecated at - line 36.
+Use of := for an empty attribute list is deprecated at - line 38.
+Use of := for an empty attribute list is deprecated at - line 41.
+Use of := for an empty attribute list is deprecated at - line 42.

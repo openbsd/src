@@ -43,17 +43,28 @@ archname='cygwin'
 # - otherwise -fpic
 cccdlflags=' '
 lddlflags=' --shared'
-ld='g++'
+test -z "$ld" && ld='g++'
 
 case "$osvers" in
-
-# Configure gets these wrong if the IPC server isn't yet running:
-# only use for 1.5.7 and onwards
-[2-9]*|1.[6-9]*|1.[1-5][0-9]*|1.5.[7-9]*|1.5.[1-6][0-9]*)
+    # Configure gets these wrong if the IPC server isn't yet running:
+    # only use for 1.5.7 and onwards
+    [2-9]*|1.[6-9]*|1.[1-5][0-9]*|1.5.[7-9]*|1.5.[1-6][0-9]*)
         d_semctl_semid_ds='define'
         d_semctl_semun='define'
         ;;
-esac;
+esac
+
+case "$osvers" in
+    [2-9]*|1.[6-9]*)
+        # IPv6 only since 1.7
+        d_inetntop='define'
+        d_inetpton='define'
+        ;;
+    *)
+        # IPv6 not implemented before cygwin-1.7
+        d_inetntop='undef'
+        d_inetpton='undef'
+esac
 
 # compile Win32CORE "module" as static. try to avoid the space.
 if test -z "$static_ext"; then
@@ -73,7 +84,3 @@ lddlflags="$lddlflags $ldflags"
 #ldflags="$ldflags -s"
 #ccdlflags="$ccdlflags -s"
 #lddlflags="$lddlflags -s"
-
-# IPv6 not fully implemented under Cygwin
-d_inetntop='undef'
-d_inetpton='undef'

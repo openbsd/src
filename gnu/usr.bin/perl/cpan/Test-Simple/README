@@ -1,0 +1,22 @@
+This is the README file for Test::Simple, basic utilities for 
+writing tests, by Michael G Schwern <schwern@pobox.com>.
+
+After installation, please consult the tutorial for how to
+start adding tests to your modules. 'perldoc Test::Tutorial'
+should work on most systems.
+
+* Installation
+
+Test::Simple uses the standard perl module install process:
+
+perl Makefile.PL
+make
+make test
+make install
+
+It requires Perl version 5.6.0 or newer and Test::Harness 2.03 or newer.
+
+
+* More Info
+
+More information can be found at http://test-more.googlecode.com/

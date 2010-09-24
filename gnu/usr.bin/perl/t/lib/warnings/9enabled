@@ -1227,3 +1227,60 @@ print "ok2\n" if $@ =~ /line $warn_line/;
 EXPECT
 ok1
 ok2
+########
+
+--FILE-- fatal1.pm
+package fatal1 ;
+no warnings ;
+print "ok1\n" if !warnings::fatal_enabled('all') ;
+print "ok2\n" if !warnings::fatal_enabled("syntax") ;
+1;
+--FILE--
+use fatal1 ;
+EXPECT
+ok1
+ok2
+########
+
+--FILE-- fatal2.pm
+package  fatal2;
+no warnings ;
+print "ok1\n" if !warnings::fatal_enabled('all') ;
+print "ok2\n" if warnings::fatal_enabled("syntax") ;
+1;
+--FILE--
+use warnings FATAL => 'syntax' ;
+use fatal2 ;
+EXPECT
+ok1
+ok2
+########
+
+--FILE-- fatal3.pm
+package fatal3 ;
+no warnings ;
+print "ok1\n" if warnings::fatal_enabled('all') ;
+print "ok2\n" if warnings::fatal_enabled("syntax") ;
+1;
+--FILE--
+use warnings FATAL => 'all' ;
+use fatal3 ;
+EXPECT
+ok1
+ok2
+########
+
+--FILE-- fatal4.pm
+package fatal4 ;
+no warnings ;
+print "ok1\n" if !warnings::fatal_enabled('all') ;
+print "ok2\n" if warnings::fatal_enabled("void") ;
+print "ok3\n" if !warnings::fatal_enabled("syntax") ;
+1;
+--FILE--
+use warnings FATAL => 'all', NONFATAL => 'syntax' ;
+use fatal4 ;
+EXPECT
+ok1
+ok2
+ok3

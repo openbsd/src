@@ -1,0 +1,365 @@
+=head1 NAME
+
+perl5111delta - what is new for perl v5.11.1
+
+=head1 DESCRIPTION
+
+This document describes differences between the 5.11.0 release and
+the 5.11.1 release.
+
+=head1 Incompatible Changes
+
+=over 
+
+=item * 
+
+The boolkeys op moved to the group of hash ops. This breaks binary compatibility.
+
+=item *
+
+C<\s> C<\w> and C<\d> once again have the semantics they had in Perl 5.8.x.
+
+
+=back
+
+=head1 Core Enhancements
+
+=head2 Add C<package NAME VERSION> syntax
+
+This new syntax allows a module author to set the $VERSION of a namespace
+when the namespace is declared with 'package'.  It eliminates the need
+for C<our $VERSION = ...> and similar constructs.  E.g.
+
+      package Foo::Bar 1.23;
+      # $Foo::Bar::VERSION == 1.23
+
+There are several advantages to this:
+
+=over 
+
+=item *
+
+C<$VERSION> is parsed in I<exactly> the same way as C<use NAME VERSION>
+
+=item *
+
+C<$VERSION> is set at compile time
+
+=item *
+
+Eliminates C<$VERSION = ...> and C<eval $VERSION> clutter
+
+=item *
+
+As it requires VERSION to be a numeric literal or v-string
+literal, it can be statically parsed by toolchain modules
+without C<eval> the way MM-E<gt>parse_version does for C<$VERSION = ...>
+
+=item * 
+
+Alpha versions with underscores do not need to be quoted; static
+parsing will preserve the underscore, but during compilation, Perl
+will remove underscores as it does for all numeric literals
+
+It does not break old code with only C<package NAME>, but code that uses
+C<package NAME VERSION> will need to be restricted to perl 5.11.X or newer
+This is analogous to the change to C<open> from two-args to three-args.
+Users requiring the latest Perl will benefit, and perhaps N years from
+now it will become standard practice when Perl 5.12 is targeted the way
+that 5.6 is today.
+
+=back
+
+=head1 Modules and Pragmata
+
+=head2 Updated Modules
+
+=over 4 
+
+=item *
+
+Upgrade to Test-Simple 0.94
+
+=item *
+
+Upgrade to Storable 2.21
+
+=item *
+
+Upgrade to Pod-Simple 3.08
+
+=item *
+
+Upgrade to Parse-CPAN-Meta 1.40
+
+=item *
+
+Upgrade to ExtUtils-Manifest 1.57
+
+=item *
+
+Upgrade to ExtUtils-CBuilder 0.260301
+
+=item *
+
+Upgrade to CGI.pm-3.48
+
+=item *
+
+Upgrade CPANPLUS to CPAN version 0.89_02
+
+=item *
+
+Upgrade to threads::shared 1.32
+
+=item *
+
+Upgrade ExtUtils::ParseXS to 2.21
+
+=item *
+
+Upgrade File::Path to 2.08 (and add taint.t test)
+
+=item *
+
+Upgrade Module::CoreList to 2.20
+
+=item *
+
+Updated Object::Accessor to0.36
+
+=back
+
+=head1 New Documentation
+
+=over 4
+
+=item *
+
+L<perlpolicy> extends the "Social contract about contributed modules" into
+the beginnings of a document on Perl porting policies.
+
+=back
+
+=head1 Changes to Existing Documentation
+
+=over 
+
+=item Documentation for C<$1> in perlvar.pod clarified
+
+=back
+
+=head1 Performance Enhancements
+
+=over 4
+
+=item C<if (%foo)> has been optimized to be faster than C<if (keys %foo)>
+
+=back
+
+=head1 Platform Specific Notes
+
+=over 4
+
+=item Darwin (Mac OS X)
+
+=over 4
+
+=item *
+
+Skip testing the be_BY.CP1131 locale on Darwin 10 (Mac OS X 10.6),
+as it's still buggy.
+
+=item *
+
+Correct infelicities in the regexp used to identify buggy locales
+on Darwin 8 and 9 (Mac OS X 10.4 and 10.5, respectively).
+
+=back
+
+=item DragonFly BSD
+
+=over 4
+
+=item *
+
+Fix thread library selection [perl #69686]
+
+=back
+
+=item Win32
+
+=over 4
+
+=item *
+
+Initial support for mingw64 is now available
+
+=item *
+
+Various bits of Perl's build infrastructure are no longer converted to win32 line endings at release time. If this hurts you, please speak up.
+
+=back
+
+
+=back
+
+=head1 Selected Bug Fixes
+
+=over 4
+
+=item *
+
+Perl now properly returns a syntax error instead of segfaulting
+if C<each>, C<keys> or C<values> is used without an argument
+
+=item *
+
+C<tell()> now fails properly if called without an argument and when no previous file was read
+
+C<tell()> now returns C<-1>, and sets errno to C<EBADF>, thus restoring the 5.8.x behaviour
+
+=item *
+
+overload no longer implicitly unsets fallback on repeated 'use overload' lines
+
+=item *
+
+POSIX::strftime() can now handle Unicode characters in the format string.
+
+=item *
+
+The Windows select() implementation now supports all empty C<fd_set>s more correctly.
+
+=back
+
+=head1 New or Changed Diagnostics
+
+=over 4
+
+
+=item *
+
+The 'syntax' category was removed from 5 warnings that should only be in 'deprecated'.
+
+=item *
+
+Three fatal pack/unpack error messages have been normalized to "panic: %s"
+
+=item *
+
+"Unicode character is illegal" has been rephrased to be more accurate
+
+It now reads C<Unicode non-character is illegal in interchange> and the
+perldiag documentation has been expanded a bit.
+
+=item *
+
+Perl now defaults to issuing a warning if a deprecated language feature is used.
+
+To disable this feature in a given lexical scope, you should use C<no
+warnings 'deprecated';> For information about which language features
+are deprecated and explanations of various deprecation warnings, please
+see L<perldiag>
+
+=back
+
+=head1 Testing
+
+=over 4
+
+=item *
+
+Significant cleanups to core tests to ensure that language and
+interpreter features are not used before they're tested.
+
+=item *
+
+C<make test_porting> now runs a number of important pre-commit checks which might be of use to anyone working on the Perl core.
+
+=item *
+
+F<t/porting/podcheck.t> automatically checks the well-formedness of
+POD found in all .pl, .pm and .pod files in the F<MANIFEST>, other than in
+dual-lifed modules which are primarily maintained outside the Perl core.
+
+=item *
+
+F<t/porting/manifest.t> now tests that all files listed in MANIFEST are present.
+
+=back
+
+=head1 Known Problems
+
+=over 4
+
+=item Untriaged test crashes on Windows 2000
+
+Several porters have reported mysterious crashes when Perl's entire test suite is run after a build on certain Windows 2000 systems.  When run by hand, the individual tests reportedly work fine.
+
+=item Known test failures on VMS
+
+Perl 5.11.1 fails a small set of core and CPAN tests as of this release.
+With luck, that'll be sorted out for 5.11.2
+
+=back
+
+=head1 Errata for 5.11.0
+
+=over
+
+=item The Perl 5.11.0 release notes incorrectly described 'delete local'
+
+=back
+
+=head1 Acknowledgements
+
+Perl 5.11.1 represents approximately 3 weeks development since Perl 5.11.0
+contains 22,000 lines of changes across 396 files from 26 authors and committers:
+
+Abigail, Alex Vandiver, brian d foy, Chris Williams, Craig A. Berry,
+David Fifield, David Golden, demerphq, Eric Brine, Geoffrey T. Dairiki,
+George Greer, H.Merijn Brand, Jan Dubois, Jerry D. Hedden, Jesse Vincent,
+Josh ben Jore, Max Maischein, Nicholas Clark, Rafael Garcia-Suarez,
+Simon Schubert, Sisyphus, Smylers, Steve Hay, Steve Peters, Vincent Pit
+and Yves Orton.
+
+Many of the changes included in this version originated in the CPAN
+modules included in Perl's core.  We're grateful to the entire CPAN
+community for helping Perl to flourish.
+
+=head1 Reporting Bugs
+
+If you find what you think is a bug, you might check the articles
+recently posted to the comp.lang.perl.misc newsgroup and the perl
+bug database at http://rt.perl.org/perlbug/ .  There may also be
+information at http://www.perl.org/ , the Perl Home Page.
+
+If you believe you have an unreported bug, please run the B<perlbug>
+program included with your release.  Be sure to trim your bug down
+to a tiny but sufficient test case.  Your bug report, along with the
+output of C<perl -V>, will be sent off to perlbug@perl.org to be
+analysed by the Perl porting team.
+
+If the bug you are reporting has security implications, which make it
+inappropriate to send to a publicly archived mailing list, then please send
+it to perl5-security-report@perl.org. This points to a closed subscription
+unarchived mailing list, which includes all the core committers, who be able
+to help assess the impact of issues, figure out a resolution, and help
+co-ordinate the release of patches to mitigate or fix the problem across all
+platforms on which Perl is supported. Please only use this address for
+security issues in the Perl core, not for modules independently
+distributed on CPAN.
+
+=head1 SEE ALSO
+
+The F<Changes> file for an explanation of how to view exhaustive details
+on what changed.
+
+The F<INSTALL> file for how to build Perl.
+
+The F<README> file for general stuff.
+
+The F<Artistic> and F<Copying> files for copyright information.
+
+=cut

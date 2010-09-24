@@ -506,9 +506,9 @@ perlreref has been added: it is a regular expressions quick reference.
 
 =head1 Installation and Configuration Improvements
 
-The UNIX standard Perl location, F</usr/bin/perl>, is no longer
+The Unix standard Perl location, F</usr/bin/perl>, is no longer
 overwritten by default if it exists.  This change was very prudent
-because so many UNIX vendors already provide a F</usr/bin/perl>,
+because so many Unix vendors already provide a F</usr/bin/perl>,
 but simultaneously many system utilities may depend on that
 exact version of Perl, so better not to overwrite it.
 

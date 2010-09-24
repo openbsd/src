@@ -12,7 +12,7 @@ sub iterdirs(&);
 
 my $rootdir = dirname($0);
 
-unshift @INC, File::Spec->catdir($rootdir, 't', 'lib');
+unshift @INC, File::Spec->catdir($rootdir, qw(cpan ExtUtils-MakeMaker t lib));
 
 eval q{ use MakeMaker::Test::Utils qw( which_perl ) };
 $@ and die $@;
@@ -56,7 +56,7 @@ unshift @INC, File::Spec->catdir($absroot, 'lib');
 
 # Change to Devel::PPPort directory, as it needs the stuff
 # from the parts/ directory
-chdir File::Spec->catdir($rootdir, 'ext', 'Devel-PPPort');
+chdir File::Spec->catdir($rootdir, 'cpan', 'Devel-PPPort');
 
 # Capture and remove temporary files
 my @unlink;

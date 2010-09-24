@@ -1,0 +1,305 @@
+2009-08-30  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 2.02 released.
+
+	* ANSIColor.pm: Update compatibility matrix to reflect that xterm
+	now supports blink.
+
+	* ANSIColor.pm (colorvalid): New function to check whether an
+	attribute is known.
+	* t/basic.t: Test colorvalid.
+
+2009-07-04  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Add an example of checking color attributes by
+	catching exceptions from color() to the documentation.
+
+	* ANSIColor.pm: Add FAINT as a synonym for DARK and export it when
+	constants are requested.
+	* t/basic.t: Test faint and FAINT as a synonym for dark/DARK.
+
+	* ANSIColor.pm: Version 2.01 released.
+
+	* t/basic.t: Test error handling in color, colored, and uncolor.
+
+	* ANSIColor.pm (uncolor): When reporting errors for bad escape
+	sequences, don't include the leading \e[ or trailing m in the
+	error message.
+
+	* ANSIColor.pm: Add section headings to the DESCRIPTION section of
+	the module since it's getting rather long.
+	(colorstrip): New function to remove ANSI color codes from
+	strings.  Thanks, Paul Miller.
+	* t/basic.t: New tests for colorstrip.
+
+	* ANSIColor.pm (AUTOLOAD): Untaint $AUTOLOAD, required by Perl
+	5.10 when running in taint mode.  Thanks, Tim Bellinghausen.
+	* t/basic.t: Two new tests for AUTOLOAD error handling.  Enable
+	warnings and taint mode.
+
+2009-02-28  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 2.00 released.
+
+	* Makefile.PL: Add LICENSE to the distribution metadata for Perl
+	5.10 and later.
+
+	* ANSIColor.pm: Add explicit return statements instead of relying
+	on the implicit return of the last expression.  Use all caps for
+	all global variables.
+
+	* ANSIColor.pm: Add the new functions to a :pushpop export tag.
+	(PUSHCOLOR): New function that stores in an internal stack the
+	attributes that are being set.
+	(POPCOLOR): New function that pops the attributes being set and
+	sets the attributes previously found on the stack.
+	(LOCALCOLOR): New function that surrounds its argument in
+	PUSHCOLOR and POPCOLOR.
+	(AUTOLOAD): If $AUTOLOCAL is set, surround all color constants
+	with an implicit LOCALCOLOR.
+	* t/basic.t: Test PUSHCOLOR, POPCOLOR, and LOCALCOLOR.
+
+	* t/pod-spelling.t: Rewrite to use Test::More.  Support and prefer
+	aspell.
+
+	* ANSIColor.pm: Fix additional spelling errors and rewrap the POD
+	documentation to a 74-character margin.
+
+	* t/basic.t: Rewrite to use Test::More.
+	* t/pod.t: Likewise.
+
+	* ANSIColor.pm (AUTOLOAD): If ANSI_COLORS_DISABLED is set, return
+	the stringified arguments rather than creating a sub.  This allows
+	colors to work later if ANSI_COLORS_DISABLED is unset rather than
+	making its effects permanent.  It also avoids adding a reset
+	escape sequence when $AUTORESET and ANSI_COLORS_DISABLED are both
+	set.
+
+2008-09-14  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Add faint as a synonym for dark and improve the
+	documentation of text attributes.
+
+	* t/pod-spelling.t: New check to spell-check POD documentation
+	using ispell with Pod::Spell.
+	* ANSIColor.pm: Fix spelling and markup errors in documentation
+	and add stop-words where appropriate.
+
+2007-04-22  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.12 released.
+
+2007-03-23  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Use the right syntax for internal POD links.
+	Thanks, Rafael Garcia-Suarez.
+
+2007-02-10  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Add cyan and white to the list of supported
+	attributes.  Not sure how I managed to omit them before.
+
+2006-07-12  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.11 released.
+
+2006-06-22  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Clarify in the documentation the behavior of
+	terminals when background colors are set across newlines, and
+	rewrite some of the examples to avoid doing things that confuse
+	the terminal.  Fix a couple of spelling errors.
+
+	* test.pl: Moved to...
+	* t/basic.t: ...here.
+	* t/pod.t: New test for POD validity.
+
+2005-08-21  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.10 released.
+
+	* ANSIColor.pm (colored): Fix the $EACHLINE support to work
+	properly with a line consisting solely of "0".  Remove Zenin's
+	now-defunct e-mail address from the documentation.
+	* test.pl: Test 0 and the empty string in combination with
+	$EACHLINE.
+
+	* tests/ansicolor: Add terminal test file from Joe Smith.
+	* tests/vt100-torture: Likewise.
+	* tests/README: Add an explanation of the test files.
+
+2004-12-03  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.09 released.
+
+	* ANSIColor.pm: Add compatibility information for Mac OS X
+	Terminal from Daniel Lindsley.
+
+2004-02-20  Russ Allbery  <rra@stanford.edu>
+
+	* test.pl: Always use eq, not ==, for string comparisons.
+
+2004-02-19  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.08 released.
+
+	* ANSIColor.pm: Add DARK to %EXPORT_TAGS and add CYAN and WHITE to
+	the list of documented constants.
+	* test.pl: Add a test for DARK.  Redo the leading comment.
+
+2003-03-25  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.07 released.
+
+	* ANSIColor.pm: Add PuTTY, Windows telnet, and Cygwin OpenSSH
+	information to the terminal emulators table, and update the URL to
+	the ECMA standard.
+
+2002-12-09  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.06 released to synchronize the version
+	on CPAN with the version in Perl core.
+
+	* ANSIColor.pm: Fix typo in L<> link in documentation.
+
+2002-06-28  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.05 released.
+
+	* ANSIColor.pm: Update the formatting style, add a pointer to the
+	module web site, use L<> for URLs, and use naked <>s where
+	permissible rather than E<lt> and E<gt>.  Renamed LICENSE to
+	COPYRIGHT AND LICENSE.
+
+2002-02-14  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Added a mention of the specific Windows consoles
+	that don't work with this module.
+
+2001-07-10  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.04 released.
+
+	* ANSIColor.pm: Add documentation, examples, and diagnostics for
+	uncolor.  Document ANSI_COLORS_DISABLED.  Add information about
+	the relevant standards for these escape sequences and the
+	additional ones that aren't supported by this module.  Add a
+	pointer to the relevant standards.  Add a LICENSE section.  Update
+	Zenin's e-mail address.
+
+	* ANSIColor.pm (AUTOLOAD): Add support for ANSI_COLORS_DISABLED.
+	(color): Likewise.
+	(colored): Likewise.
+	* test.pl: Add tests for ANSI_COLORS_DISABLED.
+
+	* ANSIColor.pm (uncolor): New function.
+	* test.pl: Add a test for it.
+
+2000-08-06  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.03 released.
+
+	* Makefile.PL: Install in the Perl library directory for Perl
+	versions >= 5.6.0.
+
+	* test.pl: Added a new test for the array reference syntax for
+	colored.
+
+	* ANSIColor.pm: Changed $VERSION to a static string.  Added dark
+	to the attributes.  Updated the documentation to include a table
+	of supported attributes on different terminal emulators, to add
+	dark, to document the new optional way to call colored, and to
+	mark the diagnostics as fatal errors or warnings.
+	(colored): Allow the attributes to be passed as an initial array
+	reference as well as a final list, and for that calling syntax
+	take the rest of the arguments as text to be colored.
+
+1998-11-27  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.02 released.
+
+	* Makefile.PL: Added a 5.005-only section giving ABSTRACT and
+	AUTHOR settings for generating a PPD to go with a binary
+	distribution or the Perl Resource Kits.
+
+1998-04-14  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: croak() instead of die() on AUTOLOAD failure to
+	get the right error text, fixed a bunch of typos in the
+	documentation, added a quote.
+
+1997-12-10  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.01 released.
+
+	* ANSIColor.pm (color): Carp::croak() isn't predeclared, so it
+	needs parens around its argument.  This bug will only show up in
+	versions of Perl >5.004_04 since up until then strict.pm imports
+	Carp which predeclares the function.
+
+1997-11-29  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.00 released.
+
+	* Makefile.PL: Now gets version information from the module, has
+	the correct rules to build a distribution.
+
+	* test.pl: Comments trimmed, minor test modifications.
+
+	* ANSIColor.pm: Changed my e-mail address, fixed to deal correctly
+	with trailing delimiters when EACHLINE is being used, die()
+	changed to croak() if the caller uses an invalid attribute name,
+	getting $VERSION from RCS updated to my current method, source
+	detabified.
+
+	* test.pl: Added test for EACHLINE with trailing delimiters.
+
+1997-02-17  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 0.9 released.
+
+	* ANSIColor.pm: Changed the runtime error message to start with an
+	uppercase letter, reworked the documentation considerably
+	including adding more comparison between the two interfaces,
+	fixing some formatting bugs, fixing a typo, adding more
+	diagnostics, and generally being more verbose.
+
+1997-01-08  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 0.8 released.
+
+	* test.pl: Fixed the test numbering in the BEGIN block.
+
+	* test.pl: Reformatted and commented to fit my programming style.
+
+	* ANSIColor.pm: Changed the method by which $VERSION is set so
+	that it will always have two digits after the decimal point.
+
+	* test.pl: New file.
+
+	* ANSIColor.pm: [Revision 0.7] Changed the codes so that reset is
+	always consistantly "\e[0m".
+
+	* ANSIColor.pm: [Revision 0.6] Added $EACHLINE and support to
+	colored() for it so that attributes can be reset around every
+	newline (or other line delimiter -- we're flexible).  Documented
+	this as well.
+
+	* ANSIColor.pm: [Revision 0.5] Changed implementation of the
+	constants to autoloaded subs, added the $AUTORESET variable for
+	use with the constants, and documented this.
+
+1996-12-07  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: [Revision 0.4] Added POD documentation.
+
+	* ANSIColor.pm: [Revision 0.3] Added constant forms, modified to
+	allow a space-separated string of attributes to be passed to
+	color() and colored(), added Zenin to the credits.
+
+1996-12-04  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: [Revision 0.2] Changed return syntax and check for
+	the null attribute string.
+
+	* ANSIColor.pm: New file.

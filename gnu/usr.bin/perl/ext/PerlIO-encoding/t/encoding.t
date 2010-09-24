@@ -1,11 +1,6 @@
 #!./perl -w
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
-    no warnings; # Need global -w flag for later tests, but don't want this
-    # to warn here:
-    push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
     unless (find PerlIO::Layer 'perlio') {
 	print "1..0 # Skip: not perlio\n";
 	exit 0;

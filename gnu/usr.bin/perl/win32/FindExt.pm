@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 my $no = join('|',qw(GDBM_File ODBM_File NDBM_File DB_File
-                     VMS Sys-Syslog IPC-SysV I18N-Langinfo));
+                     VMS VMS-DCLsym VMS-Stdio Sys-Syslog IPC-SysV I18N-Langinfo));
 $no = qr/^(?:$no)$/i;
 
 my %ext;
@@ -63,6 +63,16 @@ sub is_static
  return $ext{$_[0]} eq 'static'
 }
 
+sub has_xs_or_c {
+    my $dir = shift;
+    opendir my $dh, $dir or die "opendir $dir: $!";
+    while (defined (my $item = readdir $dh)) {
+        return 1 if $item =~ /\.xs$/;
+        return 1 if $item =~ /\.c$/;
+    }
+    return 0;
+}
+
 # Function to find available extensions, ignoring DynaLoader
 sub find_ext
 {
@@ -78,7 +88,10 @@ sub find_ext
         $this_ext =~ s!-!/!g;
         $leaf =~ s/.*-//;
 
-        if (-f "$ext_dir$item/$leaf.xs" || -f "$ext_dir$item/$leaf.c" ) {
+	# Temporary hack to cope with smokers that are not clearing directories:
+        next if $ext{$this_ext};
+
+        if (has_xs_or_c("$ext_dir$item")) {
             $ext{$this_ext} = $static{$this_ext} ? 'static' : 'dynamic';
         } else {
             $ext{$this_ext} = 'nonxs';

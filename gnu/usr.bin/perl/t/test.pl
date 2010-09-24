@@ -99,7 +99,7 @@ sub _ok {
 	$out = $pass ? "ok $test" : "not ok $test";
     }
 
-    $out .= " # TODO $TODO" if $TODO;
+    $out = $out . " # TODO $TODO" if $TODO;
     _print "$out\n";
 
     unless ($pass) {
@@ -153,13 +153,22 @@ sub display {
             my $y = '';
             foreach my $c (unpack("U*", $x)) {
                 if ($c > 255) {
-                    $y .= sprintf "\\x{%x}", $c;
+                    $y = $y . sprintf "\\x{%x}", $c;
                 } elsif ($backslash_escape{$c}) {
-                    $y .= $backslash_escape{$c};
+                    $y = $y . $backslash_escape{$c};
                 } else {
                     my $z = chr $c; # Maybe we can get away with a literal...
-                    $z = sprintf "\\%03o", $c if $z =~ /[[:^print:]]/;
-                    $y .= $z;
+                    if ($z =~ /[[:^print:]]/) {
+
+                        # Use octal for characters traditionally expressed as
+                        # such: the low controls
+                        if ($c <= 037) {
+                            $z = sprintf "\\%03o", $c;
+                        } else {
+                            $z = sprintf "\\x{%x}", $c;
+                        }
+                    }
+                    $y = $y . $z;
                 }
             }
             $x = $y;
@@ -183,8 +192,8 @@ sub is ($$@) {
     }
 
     unless ($pass) {
-	unshift(@mess, "#      got "._q($got)."\n",
-		       "# expected "._q($expected)."\n");
+	unshift(@mess, "#      got "._qq($got)."\n",
+		       "# expected "._qq($expected)."\n");
     }
     _ok($pass, _where(), $name, @mess);
 }
@@ -202,7 +211,7 @@ sub isnt ($$@) {
     }
 
     unless( $pass ) {
-        unshift(@mess, "# it should not be "._q($got)."\n",
+        unshift(@mess, "# it should not be "._qq($got)."\n",
                        "# but it is.\n");
     }
     _ok($pass, _where(), $name, @mess);
@@ -229,8 +238,8 @@ sub cmp_ok ($$$@) {
         if ($got eq $expected and $type !~ tr/a-z//) {
             unshift @mess, "# $got - $expected = " . ($got - $expected) . "\n";
         }
-        unshift(@mess, "#      got "._q($got)."\n",
-                       "# expected $type "._q($expected)."\n");
+        unshift(@mess, "#      got "._qq($got)."\n",
+                       "# expected $type "._qq($expected)."\n");
     }
     _ok($pass, _where(), $name, @mess);
 }
@@ -266,8 +275,8 @@ sub within ($$$@) {
         if ($got eq $expected) {
             unshift @mess, "# $got - $expected = " . ($got - $expected) . "\n";
         }
-	unshift@mess, "#      got "._q($got)."\n",
-		      "# expected "._q($expected)." (within "._q($range).")\n";
+	unshift@mess, "#      got "._qq($got)."\n",
+		      "# expected "._qq($expected)." (within "._qq($range).")\n";
     }
     _ok($pass, _where(), $name, @mess);
 }
@@ -405,7 +414,6 @@ USE_OK
 
 my $is_mswin    = $^O eq 'MSWin32';
 my $is_netware  = $^O eq 'NetWare';
-my $is_macos    = $^O eq 'MacOS';
 my $is_vms      = $^O eq 'VMS';
 my $is_cygwin   = $^O eq 'cygwin';
 
@@ -416,8 +424,9 @@ sub _quote_args {
 	# In VMS protect with doublequotes because otherwise
 	# DCL will lowercase -- unless already doublequoted.
        $_ = q(").$_.q(") if $is_vms && !/^\"/ && length($_) > 0;
-	$$runperl .= ' ' . $_;
+       $runperl = $runperl . ' ' . $_;
     }
+    return $runperl;
 }
 
 sub _create_runperl { # Create the string to qx in runperl().
@@ -431,20 +440,13 @@ sub _create_runperl { # Create the string to qx in runperl().
 	$runperl = "$ENV{PERL_RUNPERL_DEBUG} $runperl";
     }
     unless ($args{nolib}) {
-	if ($is_macos) {
-	    $runperl .= ' -I::lib';
-	    # Use UNIX style error messages instead of MPW style.
-	    $runperl .= ' -MMac::err=unix' if $args{stderr};
-	}
-	else {
-	    $runperl .= ' "-I../lib"'; # doublequotes because of VMS
-	}
+	$runperl = $runperl . ' "-I../lib"'; # doublequotes because of VMS
     }
     if ($args{switches}) {
 	local $Level = 2;
 	die "test.pl:runperl(): 'switches' must be an ARRAYREF " . _where()
 	    unless ref $args{switches} eq "ARRAY";
-	_quote_args(\$runperl, $args{switches});
+	$runperl = _quote_args($runperl, $args{switches});
     }
     if (defined $args{prog}) {
 	die "test.pl:runperl(): both 'prog' and 'progs' cannot be used " . _where()
@@ -456,14 +458,14 @@ sub _create_runperl { # Create the string to qx in runperl().
 	    unless ref $args{progs} eq "ARRAY";
         foreach my $prog (@{$args{progs}}) {
             if ($is_mswin || $is_netware || $is_vms) {
-                $runperl .= qq ( -e "$prog" );
+                $runperl = $runperl . qq ( -e "$prog" );
             }
             else {
-                $runperl .= qq ( -e '$prog' );
+                $runperl = $runperl . qq ( -e '$prog' );
             }
         }
     } elsif (defined $args{progfile}) {
-	$runperl .= qq( "$args{progfile}");
+	$runperl = $runperl . qq( "$args{progfile}");
     } else {
 	# You probaby didn't want to be sucking in from the upstream stdin
 	die "test.pl:runperl(): none of prog, progs, progfile, args, "
@@ -481,29 +483,15 @@ sub _create_runperl { # Create the string to qx in runperl().
 	    $runperl = qq{$Perl -e "print qq(} .
 		$args{stdin} . q{)" | } . $runperl;
 	}
-	elsif ($is_macos) {
-	    # MacOS can only do two processes under MPW at once;
-	    # the test itself is one; we can't do two more, so
-	    # write to temp file
-	    my $stdin = qq{$Perl -e 'print qq(} . $args{stdin} . qq{)' > teststdin; };
-	    if ($args{verbose}) {
-		my $stdindisplay = $stdin;
-		$stdindisplay =~ s/\n/\n\#/g;
-		_print_stderr "# $stdindisplay\n";
-	    }
-	    `$stdin`;
-	    $runperl .= q{ < teststdin };
-	}
 	else {
 	    $runperl = qq{$Perl -e 'print qq(} .
 		$args{stdin} . q{)' | } . $runperl;
 	}
     }
     if (defined $args{args}) {
-	_quote_args(\$runperl, $args{args});
+	$runperl = _quote_args($runperl, $args{args});
     }
-    $runperl .= ' 2>&1'          if  $args{stderr} && !$is_macos;
-    $runperl .= " \xB3 Dev:Null" if !$args{stderr} &&  $is_macos;
+    $runperl = $runperl . ' 2>&1' if $args{stderr};
     if ($args{verbose}) {
 	my $runperldisplay = $runperl;
 	$runperldisplay =~ s/\n/\n\#/g;
@@ -537,13 +525,13 @@ sub runperl {
 	my @keys = grep {exists $ENV{$_}} qw(CDPATH IFS ENV BASH_ENV);
 	local @ENV{@keys} = ();
 	# Untaint, plus take out . and empty string:
-	local $ENV{'DCL$PATH'} = $1 if $is_vms && ($ENV{'DCL$PATH'} =~ /(.*)/s);
+	local $ENV{'DCL$PATH'} = $1 if $is_vms && exists($ENV{'DCL$PATH'}) && ($ENV{'DCL$PATH'} =~ /(.*)/s);
 	$ENV{PATH} =~ /(.*)/s;
 	local $ENV{PATH} =
 	    join $sep, grep { $_ ne "" and $_ ne "." and -d $_ and
 		($is_mswin or $is_vms or !(stat && (stat _)[2]&0022)) }
 		    split quotemeta ($sep), $1;
-	$ENV{PATH} .= "$sep/bin" if $is_cygwin;  # Must have /bin under Cygwin
+	$ENV{PATH} = $ENV{PATH} . "$sep/bin" if $is_cygwin;  # Must have /bin under Cygwin
 
 	$runperl =~ /(.*)/s;
 	$runperl = $1;
@@ -598,7 +586,7 @@ sub which_perl {
 	# the command.
 
 	if ($Perl !~ /\Q$exe\E$/i) {
-	    $Perl .= $exe;
+	    $Perl = $Perl . $exe;
 	}
 
 	warn "which_perl: cannot find $Perl from $^X" unless -f $Perl;
@@ -630,14 +618,14 @@ sub tempfile {
 	my $temp = $count;
 	my $try = "tmp$$";
 	do {
-	    $try .= $letters[$temp % 26];
+	    $try = $try . $letters[$temp % 26];
 	    $temp = int ($temp / 26);
 	} while $temp;
 	# Need to note all the file names we allocated, as a second request may
 	# come before the first is created.
 	if (!-e $try && !$tmpfiles{$try}) {
 	    # We have a winner
-	    $tmpfiles{$try}++;
+	    $tmpfiles{$try} = 1;
 	    return $try;
 	}
 	$count = $count + 1;
@@ -659,7 +647,14 @@ my $tmpfile = tempfile();
 sub _fresh_perl {
     my($prog, $resolve, $runperl_args, $name) = @_;
 
-    $runperl_args ||= {};
+    # Given the choice of the mis-parsable {}
+    # (we want an anon hash, but a borked lexer might think that it's a block)
+    # or relying on taking a reference to a lexical
+    # (\ might be mis-parsed, and the reference counting on the pad may go
+    #  awry)
+    # it feels like the least-worse thing is to assume that auto-vivification
+    # works. At least, this is only going to be a run-time failure, so won't
+    # affect tests using this file but not this function.
     $runperl_args->{progfile} = $tmpfile;
     $runperl_args->{stderr} = 1;
 
@@ -681,7 +676,7 @@ sub _fresh_perl {
     my $status = $?;
 
     # Clean up the results into something a bit more predictable.
-    $results =~ s/\n+$//;
+    $results  =~ s/\n+$//;
     $results =~ s/at\s+$::tempfile_regexp\s+line/at - line/g;
     $results =~ s/of\s+$::tempfile_regexp\s+aborted/of - aborted/g;
 
@@ -708,7 +703,7 @@ sub _fresh_perl {
     # Use the first line of the program as a name if none was given
     unless( $name ) {
         ($first_line, $name) = $prog =~ /^((.{1,50}).*)/;
-        $name .= '...' if length $first_line > length $name;
+        $name = $name . '...' if length $first_line > length $name;
     }
 
     _ok($pass, _where(), "fresh_perl - $name");
@@ -722,6 +717,11 @@ sub _fresh_perl {
 
 sub fresh_perl_is {
     my($prog, $expected, $runperl_args, $name) = @_;
+
+    # _fresh_perl() is going to clip the trailing newlines off the result.
+    # This will make it so the test author doesn't have to know that.
+    $expected =~ s/\n+$//;
+
     local $Level = 2;
     _fresh_perl($prog,
 		sub { @_ ? $_[0] eq $expected : $expected },
@@ -738,9 +738,7 @@ sub fresh_perl_like {
     my($prog, $expected, $runperl_args, $name) = @_;
     local $Level = 2;
     _fresh_perl($prog,
-		sub { @_ ?
-			  $_[0] =~ (ref $expected ? $expected : /$expected/) :
-		          $expected },
+		sub { @_ ? $_[0] =~ $expected : $expected },
 		$runperl_args, $name);
 }
 
@@ -841,10 +839,10 @@ sub watchdog ($)
                     _diag("Watchdog warning: $_[0]");
                 };
                 my $sig = $^O eq 'VMS' ? 'TERM' : 'KILL';
-                $watchdog = system(1, which_perl(), '-e',
-                                                    "sleep($timeout);" .
-                                                    "warn('# $timeout_msg\n');" .
+                my $cmd = _create_runperl( prog =>  "sleep($timeout);" .
+                                                    "warn qq/# $timeout_msg" . '\n/;' .
                                                     "kill($sig, $pid_to_kill);");
+                $watchdog = system(1, $cmd);
             };
             if ($@ || ($watchdog <= 0)) {
                 _diag('Failed to start watchdog');
@@ -908,7 +906,7 @@ sub watchdog ($)
                 # Execute the timeout
                 my $time_left = $timeout;
                 do {
-                    $time_left -= sleep($time_left);
+                    $time_left = $time_left - sleep($time_left);
                 } while ($time_left > 0);
 
                 # Kill the parent (and ourself)

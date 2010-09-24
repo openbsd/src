@@ -1,0 +1,142 @@
+
+=head1 NAME
+
+Compress::Raw::Zlib::FAQ -- Frequently Asked Questions about Compress::Raw::Zlib
+
+=head1 DESCRIPTION
+
+Common questions answered.
+
+=head2 Compatibility with Unix compress/uncompress.
+
+This module is not compatible with Unix C<compress>.
+
+If you have the C<uncompress> program available, you can use this to read
+compressed files
+
+    open F, "uncompress -c $filename |";
+    while (<F>)
+    {
+        ...
+
+Alternatively, if you have the C<gunzip> program available, you can use
+this to read compressed files
+
+    open F, "gunzip -c $filename |";
+    while (<F>)
+    {
+        ...
+
+and this to write compress files, if you have the C<compress> program
+available
+
+    open F, "| compress -c $filename ";
+    print F "data";
+    ...
+    close F ;
+
+=head2 Accessing .tar.Z files
+
+See previous FAQ item.
+
+If the C<Archive::Tar> module is installed and either the C<uncompress> or
+C<gunzip> programs are available, you can use one of these workarounds to
+read C<.tar.Z> files.
+
+Firstly with C<uncompress>
+
+    use strict;
+    use warnings;
+    use Archive::Tar;
+
+    open F, "uncompress -c $filename |";
+    my $tar = Archive::Tar->new(*F);
+    ...
+
+and this with C<gunzip>
+
+    use strict;
+    use warnings;
+    use Archive::Tar;
+
+    open F, "gunzip -c $filename |";
+    my $tar = Archive::Tar->new(*F);
+    ...
+
+Similarly, if the C<compress> program is available, you can use this to
+write a C<.tar.Z> file
+
+    use strict;
+    use warnings;
+    use Archive::Tar;
+    use IO::File;
+
+    my $fh = new IO::File "| compress -c >$filename";
+    my $tar = Archive::Tar->new();
+    ...
+    $tar->write($fh);
+    $fh->close ;
+
+=head2 Accessing Zip Files
+
+This module does not support reading/writing zip files.
+
+Support for reading/writing zip files is included with the
+C<IO::Compress::Zip> and C<IO::Uncompress::Unzip> modules.
+
+The primary focus of the C<IO::Compress::Zip> and C<IO::Uncompress::Unzip>
+modules is to provide an C<IO::File> compatible streaming read/write
+interface to zip files/buffers. They are not fully flegged archivers. If
+you are looking for an archiver check out the C<Archive::Zip> module. You
+can find it on CPAN at 
+
+    http://www.cpan.org/modules/by-module/Archive/Archive-Zip-*.tar.gz    
+
+=head2 Zlib Library Version Support
+
+By default C<Compress::Raw::Zlib> will build with a private copy of version
+1.2.3 of the zlib library. (See the F<README> file for details of
+how to override this behaviour)
+
+If you decide to use a different version of the zlib library, you need to be
+aware of the following issues
+
+=over 5
+
+=item *
+
+First off, you must have zlib 1.0.5 or better.
+
+=item *
+
+You need to have zlib 1.2.1 or better if you want to use the C<-Merge>
+option with C<IO::Compress::Gzip>, C<IO::Compress::Deflate> and
+C<IO::Compress::RawDeflate>.
+
+=back
+
+=head1 SEE ALSO
+
+L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
+
+L<Compress::Zlib::FAQ|Compress::Zlib::FAQ>
+
+L<File::GlobMapper|File::GlobMapper>, L<Archive::Zip|Archive::Zip>,
+L<Archive::Tar|Archive::Tar>,
+L<IO::Zlib|IO::Zlib>
+
+=head1 AUTHOR
+
+This module was written by Paul Marquess, F<pmqs@cpan.org>. 
+
+=head1 MODIFICATION HISTORY
+
+See the Changes file.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2005-2010 Paul Marquess. All rights reserved.
+
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+

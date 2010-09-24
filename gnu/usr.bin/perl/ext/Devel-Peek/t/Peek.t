@@ -1,8 +1,6 @@
 #!./perl -T
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bDevel\/Peek\b/) {
         print "1..0 # Skip: Devel::Peek was not built\n";
@@ -10,7 +8,7 @@ BEGIN {
     }
 }
 
-BEGIN { require "./test.pl"; }
+BEGIN { require "../../t/test.pl"; }
 
 use Devel::Peek;
 
@@ -327,12 +325,12 @@ do_test(15,
   FLAGS = \\(ROK\\)
   RV = $ADDR
   SV = REGEXP\\($ADDR\\) at $ADDR
-    REFCNT = 2
-    FLAGS = \\(OBJECT,POK,pPOK\\)
+    REFCNT = 1
+    FLAGS = \\(OBJECT,POK,FAKE,pPOK\\)
     IV = 0
-    PV = $ADDR "\\(\\?-xism:tic\\)"\\\0
+    PV = $ADDR "\\(\\?-xism:tic\\)"
     CUR = 12
-    LEN = \\d+
+    LEN = 0
     STASH = $ADDR\\t"Regexp"');
 } else {
 do_test(15,
@@ -618,9 +616,9 @@ do_test(25,
   SV = PVIO\\($ADDR\\) at $ADDR
     REFCNT = 3
     FLAGS = \\(OBJECT\\)
-    IV = 0
+    IV = 0					# $] < 5.011
     NV = 0					# $] < 5.011
-    STASH = $ADDR\s+"IO::Handle"
+    STASH = $ADDR\s+"IO::File"
     IFP = $ADDR
     OFP = $ADDR
     DIRP = 0x0
@@ -644,7 +642,7 @@ do_test(26,
   SV = PVFM\\($ADDR\\) at $ADDR
     REFCNT = 2
     FLAGS = \\(\\)
-    IV = 0
+    IV = 0					# $] < 5.009
     NV = 0					# $] < 5.009
 (?:    PV = 0
 )?    COMP_STASH = 0x0

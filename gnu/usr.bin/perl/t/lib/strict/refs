@@ -19,6 +19,14 @@ EXPECT
 
 # strict refs - error
 use strict ;
+my $str="A::Really::Big::Package::Name::To::Use"; 
+$str->{foo}= 1;
+EXPECT
+Can't use string ("A::Really::Big::Package::Name::T"...) as a HASH ref while "strict refs" in use at - line 5.
+########
+
+# strict refs - error
+use strict ;
 my $fred ;
 my $a = ${"fred"} ;
 EXPECT
@@ -321,4 +329,12 @@ use strict 'refs';
 my $x = "foo";
 defined %$x;
 EXPECT
+defined(%hash) is deprecated at - line 4.
+	(Maybe you should just omit the defined()?)
 Can't use string ("foo") as a HASH ref while "strict refs" in use at - line 4.
+########
+# [perl #37886] strict 'refs' doesn't apply inside definedlssertion failed: (SvTYPE(_svcur) >= SVt_PV), function Perl_softref2xv, file pp.c, line 240.
+use strict 'refs';
+my $o = 1 ; $o->{1} ;
+EXPECT
+Can't use string ("1") as a HASH ref while "strict refs" in use at - line 3.

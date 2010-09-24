@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+
+use strict ;
+use warnings ;
+use IO::Uncompress::Bunzip2 qw($Bunzip2Error);
+
+die "Usage: gzgrep pattern [file...]\n"
+    unless @ARGV >= 1;
+
+my $pattern = shift ;
+my $file ;
+
+@ARGV = '-' unless @ARGV ;
+
+foreach $file (@ARGV) {
+    my $gz = new IO::Uncompress::Bunzip2 $file 
+         or die "Cannot uncompress $file: $Bunzip2Error\n" ;
+
+     while (<$gz>) {
+        print if /$pattern/ ;
+     }
+
+     die "Error reading from $file: $Bunzip2Error\n" 
+        if $Bunzip2Error ;
+}

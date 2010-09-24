@@ -134,9 +134,9 @@ OSCON L<http://conferences.oreillynet.com/>; YAPC L<http://www.yapc.org>.
 
 A relatively new conference franchise with a large Perl portion is the
 Open Source Developers Conference or OSDC. First held in Australia it has
-recently also spread to Israel. More information can be found at:
-L<http://www.osdc.com.au/> for Australia, and L<http://www.osdc.org.il>
-for Israel.
+recently also spread to Israel and France. More information can be found at:
+L<http://www.osdc.com.au/> for Australia, L<http://www.osdc.org.il>
+for Israel, and L<http://www.osdc.fr/> for France.
 
 =head2 Calendar of Perl Events
 

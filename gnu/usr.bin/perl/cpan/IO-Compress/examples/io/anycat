@@ -1,0 +1,17 @@
+#!/usr/local/bin/perl
+
+use strict ;
+use warnings ;
+
+use IO::Uncompress::AnyUncompress qw( anyuncompress $AnyUncompressError );
+
+@ARGV = '-' unless @ARGV ;
+
+foreach my $file (@ARGV) {
+
+    anyuncompress $file       => '-',
+               Transparent => 1,
+               Strict      => 0,
+         or die "Cannot uncompress '$file': $AnyUncompressError\n" ;
+
+}

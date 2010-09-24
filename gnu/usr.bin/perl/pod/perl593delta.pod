@@ -107,7 +107,7 @@ details. (Contributed by Gisle Aas.)
 The support for assertions, introduced in perl 5.9.0, has been improved.
 The syntax for the C<-A> command-line switch has changed; it now accepts
 an optional module name, defaulting to C<assertions::activate>. See
-L<assertions> and L<perlrun>. (Contributed by Salvador Fandiño García.)
+L<assertions> and L<perlrun>. (Contributed by Salvador FandiÃ±o GarcÃ­a.)
 
 =head2 Unicode Character Database 4.1.0
 
@@ -274,7 +274,7 @@ happens at program exit, it may be skipped completely.
 
 =head2 sort() enhancements
 
-Salvador Fandiño provided improvements to reduce the memory usage of C<sort>
+Salvador FandiÃ±o provided improvements to reduce the memory usage of C<sort>
 and to speed up some cases.
 
 =head1 Installation and Configuration Improvements
@@ -390,7 +390,7 @@ Trailing spaces are now trimmed from C<$!> and C<$^E>.
 
 =item *
 
-Operations that require perl to read a process' list of groups, such as reads
+Operations that require perl to read a process's list of groups, such as reads
 of C<$(> and C<$)>, now dynamically allocate memory rather than using a
 fixed sized array. The fixed size array could cause C stack exhaustion on
 systems configured to use large numbers of groups.

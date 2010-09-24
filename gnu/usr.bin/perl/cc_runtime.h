@@ -54,6 +54,7 @@
 	switch (ret) {				\
 	case 0:					\
 	    PL_op = ppaddr(aTHX);		\
+            cxstack[cxstack_ix].blk_eval.retop = Nullop; \
 	    if (PL_op != nxt) CALLRUNOPS(aTHX);	\
 	    JMPENV_POP;				\
 	    break;				\
@@ -68,16 +69,17 @@
 	SPAGAIN;				\
     } while (0)
 
-
-#define PP_ENTERTRY(jmpbuf,label)  \
+#define PP_ENTERTRY(label)  		\
 	STMT_START {                    \
-		int ret;		\
-		JMPENV_PUSH_ENV(jmpbuf,ret);			\
-		switch (ret) {				\
-			case 1: JMPENV_POP_ENV(jmpbuf); JMPENV_JUMP(1);\
-			case 2: JMPENV_POP_ENV(jmpbuf); JMPENV_JUMP(2);\
-			case 3: JMPENV_POP_ENV(jmpbuf); SPAGAIN; goto label;\
-		}                                       \
+	    dJMPENV;			\
+	    int ret;			\
+	    JMPENV_PUSH(ret);		\
+	    switch (ret) {		\
+		case 1: JMPENV_POP; JMPENV_JUMP(1);\
+		case 2: JMPENV_POP; JMPENV_JUMP(2);\
+		case 3: JMPENV_POP; SPAGAIN; goto label;\
+	    }                                      \
 	} STMT_END
+
 #define PP_LEAVETRY \
 	STMT_START{ PL_top_env=PL_top_env->je_prev; }STMT_END

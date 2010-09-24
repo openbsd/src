@@ -41,9 +41,9 @@ of Perl and the updated modules.
 
 The official (threaded) builds from HP, as they are shipped on the
 Application DVD/CD's are available on
-http://www.software.hp.com/cgi-bin/swdepot_parser.cgi/cgi/displayProductInfo.pl?productNumber=PERL
+http://www.software.hp.com/portal/swdepot/displayProductInfo.do?productNumber=PERL
 for both PA-RISC and IPF (Itanium Processor Family). They are built
-with the HP ANSI-C compiler by ActiveState.
+with the HP ANSI-C compiler. Up till 5.8.8 that was done by ActiveState.
 
 To see what version is included on the DVD (assumed here to be mounted
 on /cdrom), issue this command:
@@ -122,12 +122,9 @@ ends as shown in the following table:
  | cores  |                | PA-8900/rp34x0 | 2014            |
  +--------+----------------+----------------+-----------------+
 
-From http://www.hp.com/products1/evolution/9000/eol_announcement.html:
+From http://www.hp.com/products1/evolution/9000/faqs.html
 
- The last order date for HP9000 PA-RISC systems is planned for
- December 31, 2008 and ship date of April 1, 2009. Operating system
- releases for HP-UX will continue shipping past the HP9000 systems
- last order date.
+ The last order date for HP 9000 systems was December 31, 2008.
 
 A complete list of models at the time the OS was built is in the file
 /usr/sam/lib/mo/sched.models. The first column corresponds to the last
@@ -406,12 +403,11 @@ for updates/patches. Enter "ANSI" as keyword.
 When you are going to use the GNU C compiler (gcc), and you don't have
 gcc yet, you can either build it yourself from the sources (available
 from e.g. http://www.gnu.ai.mit.edu/software/gcc/releases.html) or fetch
-a prebuilt binary from the HP porting center. There are two places where
-gcc prebuilds can be fetched; the first and best (for HP-UX 11 only) is
+a prebuilt binary from the HP porting center. gcc prebuilds can be
+fetched from
 http://h21007.www2.hp.com/dspp/tech/tech_TechSoftwareDetailPage_IDX/1,1703,547,00.html
-the second is http://hpux.cs.utah.edu/hppd/hpux/Gnu/ where you can also
-find the GNU binutils package. (Browse through the list, because there
-are often multiple versions of the same package available).
+(Browse through the list, because there are often multiple versions of
+the same package available).
 
 Above mentioned distributions are depots. H.Merijn Brand has made prebuilt
 gcc binaries available on http://mirrors.develooper.com/hpux/ and/or
@@ -485,7 +481,8 @@ HP-UX versions before 10.30 require a separate installation of a POSIX
 threads library package. Two examples are the HP DCE package, available
 on "HP-UX Hardware Extensions 3.0, Install and Core OS, Release 10.20,
 April 1999 (B3920-13941)" or the Freely available PTH package, available
-on H.Merijn's site (http://mirrors.develooper.com/hpux/).
+on H.Merijn's site (http://mirrors.develooper.com/hpux/). The use of PTH
+will be unsupported in perl-5.12 and up and is rather buggy in 5.11.x.
 
 If you are going to use the HP DCE package, the library used for threading
 is /usr/lib/libcma.sl, but there have been multiple updates of that
@@ -592,25 +589,6 @@ and Configure will give up.
 If you are compiling Perl on a remotely-mounted NFS filesystem, the test
 io/fs.t may fail on test #18.  This appears to be a bug in HP-UX and no
 fix is currently available.
-
-=head2 perl -P and // and HP-UX
-
-If HP-UX Perl is compiled with flags that will cause problems if the
--P flag of Perl (preprocess Perl code with the C preprocessor before
-perl sees it) is used.  The problem is that C<//>, being a C++-style
-until-end-of-line comment, will disappear along with the remainder
-of the line.  This means that common Perl constructs like
-
-  s/foo//;
-
-will turn into illegal code
-
-  s/foo
-
-The workaround is to use some other quoting separator than C<"/">,
-like for example C<"!">:
-
-  s!foo!!;
 
 =head2 HP-UX Kernel Parameters (maxdsiz) for Compiling Perl
 

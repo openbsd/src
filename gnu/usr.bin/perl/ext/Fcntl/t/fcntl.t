@@ -1,10 +1,5 @@
 #!./perl
 
-BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
-}
-
 # A modest test: exercises only O_WRONLY, O_CREAT, and O_RDONLY.
 # Have to be modest to be portable: could possibly extend testing
 # also to O_RDWR and O_APPEND, but dunno about the portability of,

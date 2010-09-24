@@ -185,13 +185,12 @@
 #define REENTRANT_PROTO_S_SBIE	69
 #define REENTRANT_PROTO_S_SBW	70
 #define REENTRANT_PROTO_S_TISBI	71
-#define REENTRANT_PROTO_S_TS	72
-#define REENTRANT_PROTO_S_TSBI	73
-#define REENTRANT_PROTO_S_TSBIE	74
-#define REENTRANT_PROTO_S_TWISBIE	75
-#define REENTRANT_PROTO_V_D	76
-#define REENTRANT_PROTO_V_H	77
-#define REENTRANT_PROTO_V_ID	78
+#define REENTRANT_PROTO_S_TSBI	72
+#define REENTRANT_PROTO_S_TSBIE	73
+#define REENTRANT_PROTO_S_TWISBIE	74
+#define REENTRANT_PROTO_V_D	75
+#define REENTRANT_PROTO_V_H	76
+#define REENTRANT_PROTO_V_ID	77
 
 /* Defines for indicating which special features are supported. */
 
@@ -740,12 +739,6 @@ typedef struct {
 	FILE*	_spent_fptr;
 #   endif
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_GMTIME_R
-	struct tm _gmtime_struct;
-#endif /* HAS_GMTIME_R */
-#ifdef HAS_LOCALTIME_R
-	struct tm _localtime_struct;
-#endif /* HAS_LOCALTIME_R */
 #ifdef HAS_RANDOM_R
 	struct random_data _random_struct;
 #   if RANDOM_R_PROTO == REENTRANT_PROTO_I_iS
@@ -1329,30 +1322,6 @@ typedef struct {
 #   endif
 #  endif
 #endif /* HAS_GETSPNAM_R */
-
-#ifdef HAS_GMTIME_R
-#  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
-#   undef gmtime
-#   if !defined(gmtime) && GMTIME_R_PROTO == REENTRANT_PROTO_S_TS
-#       define gmtime(a) (gmtime_r(a, &PL_reentrant_buffer->_gmtime_struct) ? &PL_reentrant_buffer->_gmtime_struct : 0)
-#   endif
-#   if !defined(gmtime) && GMTIME_R_PROTO == REENTRANT_PROTO_I_TS
-#       define gmtime(a) (gmtime_r(a, &PL_reentrant_buffer->_gmtime_struct) == 0 ? &PL_reentrant_buffer->_gmtime_struct : 0)
-#   endif
-#  endif
-#endif /* HAS_GMTIME_R */
-
-#ifdef HAS_LOCALTIME_R
-#  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
-#   undef localtime
-#   if !defined(localtime) && LOCALTIME_R_PROTO == REENTRANT_PROTO_S_TS
-#       define localtime(a) (L_R_TZSET localtime_r(a, &PL_reentrant_buffer->_localtime_struct) ? &PL_reentrant_buffer->_localtime_struct : 0)
-#   endif
-#   if !defined(localtime) && LOCALTIME_R_PROTO == REENTRANT_PROTO_I_TS
-#       define localtime(a) (L_R_TZSET localtime_r(a, &PL_reentrant_buffer->_localtime_struct) == 0 ? &PL_reentrant_buffer->_localtime_struct : 0)
-#   endif
-#  endif
-#endif /* HAS_LOCALTIME_R */
 
 #ifdef HAS_RANDOM_R
 #  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)

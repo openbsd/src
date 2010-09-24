@@ -1,0 +1,18 @@
+Changes
+lib/base.pm
+lib/fields.pm
+Makefile.PL
+MANIFEST
+META.yml			Module meta-data (added by MakeMaker)
+t/base.t
+t/compile-time.t
+t/fields-5.6.0.t
+t/fields-5.8.0.t
+t/fields-base.t
+t/fields.t
+t/isa.t
+t/lib/Dummy.pm
+t/lib/HasSigDie.pm
+t/sigdie.t
+t/version.t
+t/warnings.t

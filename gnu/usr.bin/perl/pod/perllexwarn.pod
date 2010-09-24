@@ -91,7 +91,7 @@ a block of code. You might expect this to be enough to do the trick:
      }
 
 When this code is run with the B<-w> flag, a warning will be produced
-for the C<$a> line -- C<"Reversed += operator">.
+for the C<$a> line:  C<"Reversed += operator">.
 
 The problem is that Perl has both compile-time and run-time warnings. To
 disable compile-time warnings you need to rewrite the code like this:
@@ -177,7 +177,7 @@ will work unchanged.
 
 =item 2.
 
-The B<-w> flag just sets the global C<$^W> variable as in 5.005 -- this
+The B<-w> flag just sets the global C<$^W> variable as in 5.005. This
 means that any legacy code that currently relies on manipulating C<$^W>
 to control warning behavior will still work as is. 
 
@@ -236,6 +236,8 @@ The current hierarchy is:
        |                |
        |                +- unopened
        |
+       +- imprecision
+       |
        +- misc
        |
        +- numeric
@@ -275,6 +277,8 @@ The current hierarchy is:
        |                +- bareword
        |                |
        |                +- digit
+       |                |
+       |                +- illegalproto
        |                |
        |                +- parenthesis
        |                |
@@ -397,7 +401,7 @@ Consider the module C<MyMod::Abc> below.
     1;
 
 The call to C<warnings::register> will create a new warnings category
-called "MyMod::abc", i.e. the new category name matches the current
+called "MyMod::Abc", i.e. the new category name matches the current
 package name. The C<open> function in the module will display a warning
 message if it gets given a relative path as a parameter. This warnings
 will only be displayed if the code that uses C<MyMod::Abc> has actually

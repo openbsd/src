@@ -25,17 +25,16 @@ it either takes away the special meaning of the character following it
 or it is the start of a backslash or escape sequence.
 
 The rules determining what it is are quite simple: if the character
-following the backslash is a punctuation (non-word) character (that is,
-anything that is not a letter, digit or underscore), then the backslash
-just takes away the special meaning (if any) of the character following
-it.
+following the backslash is an ASCII punctuation (non-word) character (that is,
+anything that is not a letter, digit or underscore), then the backslash just
+takes away the special meaning (if any) of the character following it.
 
-If the character following the backslash is a letter or a digit, then the
-sequence may be special; if so, it's listed below. A few letters have not
-been used yet, and escaping them with a backslash is safe for now, but a
-future version of Perl may assign a special meaning to it. However, if you
-have warnings turned on, Perl will issue a warning if you use such a sequence.
-[1].
+If the character following the backslash is an ASCII letter or an ASCII digit,
+then the sequence may be special; if so, it's listed below. A few letters have
+not been used yet, so escaping them with a backslash doesn't change them to be
+special.  A future version of Perl may assign a special meaning to them, so if
+you have warnings turned on, Perl will issue a warning if you use such a
+sequence.  [1].
 
 It is however guaranteed that backslash or escape sequences never have a
 punctuation character following the backslash, not now, and not in a future
@@ -61,55 +60,59 @@ quoted constructs>.
 
 =head2 All the sequences and escapes
 
+Those not usable within a bracketed character class (like C<[\da-z]>) are marked
+as C<Not in [].>
+
  \000              Octal escape sequence.
- \1                Absolute backreference.
+ \1                Absolute backreference.  Not in [].
  \a                Alarm or bell.
- \A                Beginning of string.
- \b                Word/non-word boundary. (Backspace in a char class).
- \B                Not a word/non-word boundary.
+ \A                Beginning of string.  Not in [].
+ \b                Word/non-word boundary. (Backspace in []).
+ \B                Not a word/non-word boundary.  Not in [].
  \cX               Control-X (X can be any ASCII character).
- \C                Single octet, even under UTF-8.
+ \C                Single octet, even under UTF-8.  Not in [].
  \d                Character class for digits.
  \D                Character class for non-digits.
  \e                Escape character.
- \E                Turn off \Q, \L and \U processing.
+ \E                Turn off \Q, \L and \U processing.  Not in [].
  \f                Form feed.
- \g{}, \g1         Named, absolute or relative backreference.
- \G                Pos assertion.
- \h                Character class for horizontal white space.
- \H                Character class for non horizontal white space.
- \k{}, \k<>, \k''  Named backreference.
- \K                Keep the stuff left of \K.
- \l                Lowercase next character.
- \L                Lowercase till \E.
+ \g{}, \g1         Named, absolute or relative backreference.  Not in [].
+ \G                Pos assertion.  Not in [].
+ \h                Character class for horizontal whitespace.
+ \H                Character class for non horizontal whitespace.
+ \k{}, \k<>, \k''  Named backreference.  Not in [].
+ \K                Keep the stuff left of \K.  Not in [].
+ \l                Lowercase next character.  Not in [].
+ \L                Lowercase till \E.  Not in [].
  \n                (Logical) newline character.
- \N{}              Named (Unicode) character.
- \p{}, \pP         Character with a Unicode property.
- \P{}, \PP         Character without a Unicode property.
- \Q                Quotemeta till \E.
+ \N                Any character but newline.  Experimental.  Not in [].
+ \N{}              Named or numbered (Unicode) character.
+ \p{}, \pP         Character with the given Unicode property.
+ \P{}, \PP         Character without the given Unicode property.
+ \Q                Quotemeta till \E.  Not in [].
  \r                Return character.
- \R                Generic new line.
- \s                Character class for white space.
- \S                Character class for non white space.
+ \R                Generic new line.  Not in [].
+ \s                Character class for whitespace.
+ \S                Character class for non whitespace.
  \t                Tab character.
- \u                Titlecase next character.
- \U                Uppercase till \E.
- \v                Character class for vertical white space.
- \V                Character class for non vertical white space.
+ \u                Titlecase next character.  Not in [].
+ \U                Uppercase till \E.  Not in [].
+ \v                Character class for vertical whitespace.
+ \V                Character class for non vertical whitespace.
  \w                Character class for word characters.
  \W                Character class for non-word characters.
  \x{}, \x00        Hexadecimal escape sequence.
- \X                Extended Unicode "combining character sequence".
- \z                End of string.
- \Z                End of string.
+ \X                Unicode "extended grapheme cluster".  Not in [].
+ \z                End of string.  Not in [].
+ \Z                End of string.  Not in [].
 
 =head2 Character Escapes
 
 =head3  Fixed characters
 
 A handful of characters have a dedicated I<character escape>. The following
-table shows them, along with their code points (in decimal and hex), their
-ASCII name, the control escape (see below) and a short description.
+table shows them, along with their ASCII code points (in decimal and hex),
+their ASCII name, the control escape (see below) and a short description.
 
  Seq.  Code Point  ASCII   Cntr    Description.
        Dec    Hex
@@ -153,16 +156,38 @@ Mnemonic: I<c>ontrol character.
 
  $str =~ /\cK/;  # Matches if $str contains a vertical tab (control-K).
 
-=head3 Named characters
+=head3 Named or numbered characters
 
-All Unicode characters have a Unicode name, and characters in various scripts
-have names as well. It is even possible to give your own names to characters.
-You can use a character by name by using the C<\N{}> construct; the name of
-the character goes between the curly braces. You do have to C<use charnames>
-to load the names of the characters, otherwise Perl will complain you use
-a name it doesn't know about. For more details, see L<charnames>.
+All Unicode characters have a Unicode name and numeric ordinal value.  Use the
+C<\N{}> construct to specify a character by either of these values.
+
+To specify by name, the name of the character goes between the curly braces.
+In this case, you have to C<use charnames> to load the Unicode names of the
+characters, otherwise Perl will complain.
+
+To specify by Unicode ordinal number, use the form
+C<\N{U+I<wide hex character>}>, where I<wide hex character> is a number in
+hexadecimal that gives the ordinal number that Unicode has assigned to the
+desired character.  It is customary (but not required) to use leading zeros to
+pad the number to 4 digits.  Thus C<\N{U+0041}> means
+C<Latin Capital Letter A>, and you will rarely see it written without the two
+leading zeros.  C<\N{U+0041}> means C<A> even on EBCDIC machines (where the
+ordinal value of C<A> is not 0x41).
+
+It is even possible to give your own names to characters, and even to short
+sequences of characters.  For details, see L<charnames>.
+
+(There is an expanded internal form that you may see in debug output:
+C<\N{U+I<wide hex character>.I<wide hex character>...}>.
+The C<...> means any number of these I<wide hex character>s separated by dots.
+This represents the sequence formed by the characters.  This is an internal
+form only, subject to change, and you should not try to use it yourself.)
 
 Mnemonic: I<N>amed character.
+
+Note that a character that is expressed as a named or numbered character is
+considered as a character without special meaning by the regex engine, and will
+match "as is".
 
 =head4 Example
 
@@ -176,7 +201,8 @@ Mnemonic: I<N>amed character.
 
 Octal escapes consist of a backslash followed by two or three octal digits
 matching the code point of the character you want to use. This allows for
-512 characters (C<\00> up to C<\777>) that can be expressed this way.
+512 characters (C<\00> up to C<\777>) that can be expressed this way (but
+anything above C<\377> is deprecated).
 Enough in pre-Unicode days, but most Unicode characters cannot be escaped
 this way.
 
@@ -184,7 +210,7 @@ Note that a character that is expressed as an octal escape is considered
 as a character without special meaning by the regex engine, and will match
 "as is".
 
-=head4 Examples
+=head4 Examples (assuming an ASCII platform)
 
  $str = "Perl";
  $str =~ /\120/;    # Match, "\120" is "P".
@@ -227,7 +253,7 @@ matched as is.
 
 =head3 Hexadecimal escapes
 
-Hexadecimal escapes start with C<\x> and are then either followed by
+Hexadecimal escapes start with C<\x> and are then either followed by a
 two digit hexadecimal number, or a hexadecimal number of arbitrary length
 surrounded by curly braces. The hexadecimal number is the code point of
 the character you want to express.
@@ -238,7 +264,7 @@ as a character without special meaning by the regex engine, and will match
 
 Mnemonic: heI<x>adecimal.
 
-=head4 Examples
+=head4 Examples (assuming an ASCII platform)
 
  $str = "Perl";
  $str =~ /\x50/;    # Match, "\x50" is "P".
@@ -290,15 +316,15 @@ the character classes are written as a backslash sequence. We will briefly
 discuss those here; full details of character classes can be found in
 L<perlrecharclass>.
 
-C<\w> is a character class that matches any I<word> character (letters,
-digits, underscore). C<\d> is a character class that matches any digit,
-while the character class C<\s> matches any white space character.
+C<\w> is a character class that matches any single I<word> character (letters,
+digits, underscore). C<\d> is a character class that matches any decimal digit,
+while the character class C<\s> matches any whitespace character.
 New in perl 5.10.0 are the classes C<\h> and C<\v> which match horizontal
-and vertical white space characters.
+and vertical whitespace characters.
 
 The uppercase variants (C<\W>, C<\D>, C<\S>, C<\H>, and C<\V>) are
 character classes that match any character that isn't a word character,
-digit, white space, horizontal white space or vertical white space.
+digit, whitespace, horizontal whitespace nor vertical whitespace.
 
 Mnemonics: I<w>ord, I<d>igit, I<s>pace, I<h>orizontal, I<v>ertical.
 
@@ -328,7 +354,7 @@ absolutely, relatively, and by name.
 
 A backslash sequence that starts with a backslash and is followed by a
 number is an absolute reference (but be aware of the caveat mentioned above).
-If the number is I<N>, it refers to the Nth set of parenthesis - whatever
+If the number is I<N>, it refers to the Nth set of parentheses - whatever
 has been matched by that set of parenthesis has to be matched by the C<\N>
 as well.
 
@@ -378,7 +404,7 @@ written as C<\k{name}>, C<< \k<name> >> or C<\k'name'>.
 
 Note that C<\g{}> has the potential to be ambiguous, as it could be a named
 reference, or an absolute or relative reference (if its argument is numeric).
-However, names are not allowed to start with digits, nor are allowed to
+However, names are not allowed to start with digits, nor are they allowed to
 contain a hyphen, so there is no ambiguity.
 
 =head4 Examples
@@ -391,7 +417,7 @@ contain a hyphen, so there is no ambiguity.
 
 =head2 Assertions
 
-Assertions are conditions that have to be true -- they don't actually
+Assertions are conditions that have to be true; they don't actually
 match parts of the substring. There are six assertions that are written as
 backslash sequences.
 
@@ -489,35 +515,45 @@ instead of C<s/(PAT1) PAT2/${1}REPL/x> or C<s/(?<=PAT1) PAT2/REPL/x>.
 
 Mnemonic: I<K>eep.
 
+=item \N
+
+This is a new experimental feature in perl 5.12.0.  It matches any character
+that is not a newline.  It is a short-hand for writing C<[^\n]>, and is
+identical to the C<.> metasymbol, except under the C</s> flag, which changes
+the meaning of C<.>, but not C<\N>.
+
+Note that C<\N{...}> can mean a
+L<named or numbered character|/Named or numbered characters>.
+
+Mnemonic: Complement of I<\n>.
+
 =item \R
+X<\R>
 
 C<\R> matches a I<generic newline>, that is, anything that is considered
 a newline by Unicode. This includes all characters matched by C<\v>
-(vertical white space), and the multi character sequence C<"\x0D\x0A">
+(vertical whitespace), and the multi character sequence C<"\x0D\x0A">
 (carriage return followed by a line feed, aka the network newline, or
-the newline used in Windows text files). C<\R> is equivalent with
-C<< (?>\x0D\x0A)|\v) >>. Since C<\R> can match a more than one character,
-it cannot be put inside a bracketed character class; C</[\R]/> is an error.
-C<\R> was introduced in perl 5.10.0.
+the newline used in Windows text files). C<\R> is equivalent to
+C<< (?>\x0D\x0A)|\v) >>. Since C<\R> can match a sequence of more than one
+character, it cannot be put inside a bracketed character class; C</[\R]/> is an
+error; use C<\v> instead.  C<\R> was introduced in perl 5.10.0.
 
 Mnemonic: none really. C<\R> was picked because PCRE already uses C<\R>,
 and more importantly because Unicode recommends such a regular expression
 metacharacter, and suggests C<\R> as the notation.
 
 =item \X
+X<\X>
 
-This matches an extended Unicode I<combining character sequence>, and
-is equivalent to C<< (?>\PM\pM*) >>. C<\PM> matches any character that is
-not considered a Unicode mark character, while C<\pM> matches any character
-that is considered a Unicode mark character; so C<\X> matches any non
-mark character followed by zero or more mark characters. Mark characters
-include (but are not restricted to) I<combining characters> and
-I<vowel signs>.
+This matches a Unicode I<extended grapheme cluster>.
 
 C<\X> matches quite well what normal (non-Unicode-programmer) usage
-would consider a single character: for example a base character
-(the C<\PM> above), for example a letter, followed by zero or more
-diacritics, which are I<combining characters> (the C<\pM*> above).
+would consider a single character.  As an example, consider a G with some sort
+of diacritic mark, such as an arrow.  There is no such single character in
+Unicode, but one can be composed by using a G followed by a Unicode "COMBINING
+UPWARDS ARROW BELOW", and would be displayed by Unicode-aware software as if it
+were a single character.
 
 Mnemonic: eI<X>tended Unicode character.
 

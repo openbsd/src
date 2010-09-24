@@ -242,11 +242,12 @@ foreach my $pain ($first, @virtual) {
 # Check that config entries appear correctly in @INC
 # TestInit.pm has probably already messed with our @INC
 # This little bit of evil is to avoid a @ in the program, in case it confuses
-# shell 1 liners. Perl 1 rules.
+# shell 1 liners. We used to use a perl 1-ism, until that was deprecated, so
+# now some octal in an eval.
 my ($path, $ver, @orig_inc)
   = split /\n/,
     runperl (nolib=>1,
-	     prog=>'print qq{$^X\n$]\n}; print qq{$_\n} while $_ = shift INC');
+	     prog=>'print qq{$_\n} foreach $^X, $], eval qq{\100INC}');
 
 die "This perl is $] at $^X; other perl is $ver (at $path) "
   . '- failed to find this perl' unless $] eq $ver;
@@ -255,9 +256,9 @@ my %orig_inc;
 @orig_inc{@orig_inc} = ();
 
 my $failed;
-# This is the order that directories are pushed onto @INC in perl.c:
+# This [used to be] the order that directories are pushed onto @INC in perl.c:
 foreach my $lib (qw(applibexp archlibexp privlibexp sitearchexp sitelibexp
-		     vendorarchexp vendorlibexp vendorlib_stem)) {
+		     vendorarchexp vendorlibexp)) {
   my $dir = $Config{$lib};
   SKIP: {
     skip "lib $lib not in \@INC on Win32" if $^O eq 'MSWin32';

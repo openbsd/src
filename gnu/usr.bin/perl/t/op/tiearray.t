@@ -147,7 +147,7 @@ sub FETCHSIZE { -1 }
 
 package main;
   
-print "1..62\n";                   
+print "1..66\n";                   
 my $test = 1;
 
 {my @ary;
@@ -234,7 +234,6 @@ print "ok ", $test++,"\n";
 print "not " unless join(':',@ary) eq '1:2:3';
 print "ok ", $test++,"\n";         
 
-  
 my $t = 0;
 foreach $n (@ary)
  {
@@ -264,6 +263,19 @@ print "ok ", $test++,"\n";
 @ary = qw(3 2 1);
 print "not " unless join(':',@ary) eq '3:2:1';
 print "ok ", $test++,"\n";         
+
+$#ary = 1;
+print "not " unless $seen{'STORESIZE'} == 1;
+print "ok ", $test++," -- seen STORESIZE\n";
+print "not " unless join(':',@ary) eq '3:2';
+print "ok ", $test++,"\n";
+
+sub arysize :lvalue { $#ary }
+arysize()--;
+print "not " unless $seen{'STORESIZE'} == 2;
+print "ok ", $test++," -- seen STORESIZE\n";
+print "not " unless join(':',@ary) eq '3';
+print "ok ", $test++,"\n";
 
 untie @ary;   
 

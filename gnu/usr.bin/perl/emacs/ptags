@@ -9,9 +9,6 @@
 #
 # fullpath - use full paths in TAGS (default: relative to the root)
 #
-# (IZ: to be a happier jumper: install 'imenu-go.el' from
-#      ftp://ftp.math.ohio-state.edu/pub/users/ilya/emacs.)
-#
 # (Some tags should probably live in their own subdirs, like those in x2p/,
 # but I have never been interested in x2p anyway.)
 #

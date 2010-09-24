@@ -70,10 +70,10 @@ handling binary data.  The "pushed" layers are processed in left-to-right
 order.
 
 sysopen() operates (unsurprisingly) at a lower level in the stack than
-open().  For example in UNIX or UNIX-like systems sysopen() operates
+open().  For example in Unix or Unix-like systems sysopen() operates
 directly at the level of file descriptors: in the terms of PerlIO
 layers, it uses only the "unix" layer, which is a rather thin wrapper
-on top of the UNIX file descriptors.
+on top of the Unix file descriptors.
 
 =head2 Layers vs Disciplines
 
@@ -837,7 +837,7 @@ The following table summarizes the behaviour:
     Unread      PerlIOBase_unread
     Write       FAILURE
 
- FAILURE        Set errno (to EINVAL in UNIXish, to LIB$_INVARG in VMS) and
+ FAILURE        Set errno (to EINVAL in Unixish, to LIB$_INVARG in VMS) and
                 return -1 (for numeric return values) or NULL (for pointers)
  INHERITED      Inherited from the layer below
  SUCCESS        Return 0 (for numeric return values) or a pointer 

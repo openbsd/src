@@ -1,5 +1,5 @@
-# CompositionExclusions-5.1.0.txt
-# Date: 2008-03-20, 17:45:00 PDT [KW]
+# CompositionExclusions-5.2.0.txt
+# Date: 2009-05-22, 12:52:00 PDT [KW]
 #
 # This file lists the characters for the Composition Exclusion Table
 # defined in UAX #15, Unicode Normalization Forms.
@@ -7,7 +7,7 @@
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # For more information, see
@@ -170,11 +170,11 @@ FB4E    #  HEBREW LETTER PE WITH RAFE
 # FA22                 CJK COMPATIBILITY IDEOGRAPH-FA22
 # FA25..FA26       [2] CJK COMPATIBILITY IDEOGRAPH-FA25..CJK COMPATIBILITY IDEOGRAPH-FA26
 # FA2A..FA2D       [4] CJK COMPATIBILITY IDEOGRAPH-FA2A..CJK COMPATIBILITY IDEOGRAPH-FA2D
-# FA30..FA6A      [59] CJK COMPATIBILITY IDEOGRAPH-FA30..CJK COMPATIBILITY IDEOGRAPH-FA6A
+# FA30..FA6D      [62] CJK COMPATIBILITY IDEOGRAPH-FA30..CJK COMPATIBILITY IDEOGRAPH-FA6D
 # FA70..FAD9     [106] CJK COMPATIBILITY IDEOGRAPH-FA70..CJK COMPATIBILITY IDEOGRAPH-FAD9
 # 2F800..2FA1D   [542] CJK COMPATIBILITY IDEOGRAPH-2F800..CJK COMPATIBILITY IDEOGRAPH-2FA1D
 
-# Total code points: 1030
+# Total code points: 1033
 
 # ================================================
 # (4) Non-Starter Decompositions

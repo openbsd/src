@@ -1,0 +1,42 @@
+5.009004
+PerlIO_context_layers          # U
+PoisonFree                     # E
+PoisonNew                      # E
+PoisonWith                     # E
+SvREFCNT_inc_NN                # U
+SvREFCNT_inc_simple            # U
+SvREFCNT_inc_simple_NN         # U
+SvREFCNT_inc_simple_void       # U
+SvREFCNT_inc_simple_void_NN    # U
+SvREFCNT_inc_void              # U
+SvREFCNT_inc_void_NN           # U
+gv_name_set                    # U
+hv_stores                      # U
+my_snprintf                    # U
+my_strlcat                     # U
+my_strlcpy                     # U
+my_vsnprintf                   # U
+newXS_flags                    # U
+pv_escape                      # U
+pv_pretty                      # U
+regclass_swash                 # E (Perl_regclass_swash)
+sv_does                        # U
+sv_setpvs                      # U
+sv_usepvn_flags                # U
+PERL_PV_ESCAPE_ALL             # added by devel/scanprov
+PERL_PV_ESCAPE_FIRSTCHAR       # added by devel/scanprov
+PERL_PV_ESCAPE_NOBACKSLASH     # added by devel/scanprov
+PERL_PV_ESCAPE_NOCLEAR         # added by devel/scanprov
+PERL_PV_ESCAPE_QUOTE           # added by devel/scanprov
+PERL_PV_ESCAPE_UNI             # added by devel/scanprov
+PERL_PV_ESCAPE_UNI_DETECT      # added by devel/scanprov
+PERL_PV_PRETTY_DUMP            # added by devel/scanprov
+PERL_PV_PRETTY_LTGT            # added by devel/scanprov
+PERL_PV_PRETTY_QUOTE           # added by devel/scanprov
+PERL_PV_PRETTY_REGPROP         # added by devel/scanprov
+PERL_UNUSED_CONTEXT            # added by devel/scanprov
+PERL_USE_GCC_BRACE_GROUPS      # added by devel/scanprov
+SV_HAS_TRAILING_NUL            # added by devel/scanprov
+SvVSTRING_mg                   # added by devel/scanprov
+gv_fetchpvs                    # added by devel/scanprov
+isGV_with_GP                   # added by devel/scanprov

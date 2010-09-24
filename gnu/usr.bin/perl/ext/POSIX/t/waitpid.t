@@ -1,9 +1,4 @@
 BEGIN {
-	chdir 't' if -d 't';
-	unshift @INC, '../lib';
-}
-
-BEGIN {
     use Config;
     unless ($Config{d_fork}) {
 	print "1..0 # Skip: no fork\n";

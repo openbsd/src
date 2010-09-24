@@ -3,13 +3,52 @@
 # Checks if the parser behaves correctly in edge cases
 # (including weird syntax errors)
 
-BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
+print "1..122\n";
+
+sub failed {
+    my ($got, $expected, $name) = @_;
+
+    print "not ok $test - $name\n";
+    my @caller = caller(1);
+    print "# Failed test at $caller[1] line $caller[2]\n";
+    if (defined $got) {
+	print "# Got '$got'\n";
+    } else {
+	print "# Got undef\n";
+    }
+    print "# Expected $expected\n";
+    return;
 }
 
-BEGIN { require "./test.pl"; }
-plan( tests => 110 );
+sub like {
+    my ($got, $pattern, $name) = @_;
+    $test = $test + 1;
+    if (defined $got && $got =~ $pattern) {
+	print "ok $test - $name\n";
+	# Principle of least surprise - maintain the expected interface, even
+	# though we aren't using it here (yet).
+	return 1;
+    }
+    failed($got, $pattern, $name);
+}
+
+sub is {
+    my ($got, $expect, $name) = @_;
+    $test = $test + 1;
+    if (defined $expect) {
+	if (defined $got && $got eq $expect) {
+	    print "ok $test - $name\n";
+	    return 1;
+	}
+	failed($got, "'$expect'", $name);
+    } else {
+	if (!defined $got) {
+	    print "ok $test - $name\n";
+	    return 1;
+	}
+	failed($got, 'undef', $name);
+    }
+}
 
 eval '%@x=0;';
 like( $@, qr/^Can't modify hash dereference in repeat \(x\)/, '%@x=0' );
@@ -109,7 +148,8 @@ my %data = ( foo => "\n" );
 print "#";
 print(
 $data{foo});
-pass();
+$test = $test + 1;
+print "ok $test\n";
 
 # Bug #21875
 # { q.* => ... } should be interpreted as hash, not block
@@ -127,7 +167,7 @@ EOF
 {
     my ($expect, $eval) = split / /, $line, 2;
     my $result = eval $eval;
-    ok($@ eq  '', "eval $eval");
+    is($@, '', "eval $eval");
     is(ref $result, $expect ? 'HASH' : '', $eval);
 }
 
@@ -155,15 +195,6 @@ EOF
     like( $@, qr/syntax error/, "use without body" );
 }
 
-# Bug #27024
-{
-    # this used to segfault (because $[=1 is optimized away to a null block)
-    my $x;
-    $[ = 1 while $x;
-    pass();
-    $[ = 0; # restore the original value for less side-effects
-}
-
 # [perl #2738] perl segfautls on input
 {
     eval q{ sub _ <> {} };
@@ -174,28 +205,6 @@ EOF
 
     eval q{ sub _ __FILE__ {} };
     like($@, qr/Illegal declaration of subroutine main::_/, "__FILE__ as prototype");
-}
-
-# [perl #36313] perl -e "1for$[=0" crash
-{
-    my $x;
-    $x = 1 for ($[) = 0;
-    pass('optimized assignment to $[ used to segfault in list context');
-    if ($[ = 0) { $x = 1 }
-    pass('optimized assignment to $[ used to segfault in scalar context');
-    $x = ($[=2.4);
-    is($x, 2, 'scalar assignment to $[ behaves like other variables');
-    $x = (($[) = 0);
-    is($x, 1, 'list assignment to $[ behaves like other variables');
-    $x = eval q{ ($[, $x) = (0) };
-    like($@, qr/That use of \$\[ is unsupported/,
-             'cannot assign to $[ in a list');
-    eval q{ ($[) = (0, 1) };
-    like($@, qr/That use of \$\[ is unsupported/,
-             'cannot assign list of >1 elements to $[');
-    eval q{ ($[) = () };
-    like($@, qr/That use of \$\[ is unsupported/,
-             'cannot assign list of <1 elements to $[');
 }
 
 # tests for "Bad name"
@@ -276,6 +285,74 @@ like($@, qr/BEGIN failed--compilation aborted/, 'BEGIN 6' );
 eval q[ BEGIN {\&foo4; die } ] for 1..10;
 like($@, qr/BEGIN failed--compilation aborted/, 'BEGIN 7' );
 
+{
+  # RT #70934
+  # check both the specific case in the ticket, and a few other paths into
+  # S_scan_ident()
+  # simplify long ids
+  my $x100 = "x" x 256;
+  my $xFE = "x" x 254;
+  my $xFD = "x" x 253;
+  my $xFC = "x" x 252;
+  my $xFB = "x" x 251;
+
+  eval qq[ \$#$xFB ];
+  is($@, "", "251 character \$# sigil ident ok");
+  eval qq[ \$#$xFC ];
+  like($@, qr/Identifier too long/, "too long id in \$# sigil ctx");
+
+  eval qq[ \$$xFB ];
+  is($@, "", "251 character \$ sigil ident ok");
+  eval qq[ \$$xFC ];
+  like($@, qr/Identifier too long/, "too long id in \$ sigil ctx");
+
+  eval qq[ %$xFB ];
+  is($@, "", "251 character % sigil ident ok");
+  eval qq[ %$xFC ];
+  like($@, qr/Identifier too long/, "too long id in % sigil ctx");
+
+  eval qq[ \\&$xFC ]; # take a ref since I don't want to call it
+  is($@, "", "252 character & sigil ident ok");
+  eval qq[ \\&$xFD ];
+  like($@, qr/Identifier too long/, "too long id in & sigil ctx");
+
+  eval qq[ *$xFC ];
+  is($@, "", "252 character glob ident ok");
+  eval qq[ *$xFD ];
+  like($@, qr/Identifier too long/, "too long id in glob ctx");
+
+  eval qq[ for $xFD ];
+  like($@, qr/Missing \$ on loop variable/,
+       "253 char id ok, but a different error");
+  eval qq[ for $xFE; ];
+  like($@, qr/Identifier too long/, "too long id in for ctx");
+
+  # the specific case from the ticket
+  my $x = "x" x 257;
+  eval qq[ for $x ];
+  like($@, qr/Identifier too long/, "too long id ticket case");
+}
+
+{
+  is(exists &zlonk, '', 'sub not present');
+  eval qq[ {sub zlonk} ];
+  is($@, '', 'sub declaration followed by a closing curly');
+  is(exists &zlonk, 1, 'sub now stubbed');
+  is(defined &zlonk, '', 'but no body defined');
+}
+
+# bug #71748
+eval q{
+	$_ = "";
+	s/(.)/
+	{
+	    #
+	}->{$1};
+	/e;
+	1;
+};
+is($@, "", "multiline whitespace inside substitute expression");
+
 # Add new tests HERE:
 
 # More awkward tests for #line. Keep these at the end, as they will screw
@@ -288,26 +365,27 @@ sub check ($$$) {
     is ($got_line, $line, "line of $name");
 }
 
+my $this_file = qr/parser\.t(?:\.[bl]eb?)?$/;
 #line 3
-check(qr/parser\.t$/, 3, "bare line");
+check($this_file, 3, "bare line");
 
 # line 5
-check(qr/parser\.t$/, 5, "bare line with leading space");
+check($this_file, 5, "bare line with leading space");
 
 #line 7 
-check(qr/parser\.t$/, 7, "trailing space still valid");
+check($this_file, 7, "trailing space still valid");
 
 # line 11 
-check(qr/parser\.t$/, 11, "leading and trailing");
+check($this_file, 11, "leading and trailing");
 
 #	line 13
-check(qr/parser\.t$/, 13, "leading tab");
+check($this_file, 13, "leading tab");
 
 #line	17
-check(qr/parser\.t$/, 17, "middle tab");
+check($this_file, 17, "middle tab");
 
 #line                                                                        19
-check(qr/parser\.t$/, 19, "loadsaspaces");
+check($this_file, 19, "loadsaspaces");
 
 #line 23 KASHPRITZA
 check(qr/^KASHPRITZA$/, 23, "bare filename");
@@ -329,6 +407,9 @@ check(qr/^"BBFRPRAFPGHPP$/, 43, "actually missing a quote is still valid");
 
 #line 47 bang eth
 check(qr/^"BBFRPRAFPGHPP$/, 46, "but spaces aren't allowed without quotes");
+
+#line 77sevenseven
+check(qr/^"BBFRPRAFPGHPP$/, 49, "need a space after the line number");
 
 eval <<'EOSTANZA'; die $@ if $@;
 #line 51 "With wonderful deathless ditties|We build up the world's great cities,|And out of a fabulous story|We fashion an empire's glory:|One man with a dream, at pleasure,|Shall go forth and conquer a crown;|And three with a new song's measure|Can trample a kingdom down."

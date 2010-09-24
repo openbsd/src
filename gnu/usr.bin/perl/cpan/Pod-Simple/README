@@ -1,0 +1,61 @@
+=head1 Pod::Simple version 3.14
+
+Pod::Simple is a Perl library for parsing text in the Pod ("plain old
+documentation") markup language that is typically used for writing
+documentation for Perl and for Perl modules. The Pod format is explained
+L<perlpod>; the most common formatter is called C<perldoc>.
+
+Pod formatters can use Pod::Simple to parse Pod documents and render them into
+plain text, HTML, or any number of other formats.
+
+=head2 Installation
+
+To install this module, type the following:
+
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+=head2 Support
+
+Questions or discussion about POD and Pod::Simple should be sent to the
+pod-people@perl.org mail list. Send an empty email to
+pod-people-subscribe@perl.org to subscribe.
+
+This module is managed in an open GitHub repository,
+L<http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/theory/pod-simple.git> and send patches!
+
+Patches against Pod::Simple are welcome. Please send bug reports to
+<bug-pod-simple@rt.cpan.org>.
+
+=head1 copyright and Disclaimers
+
+Copyright (c) 2002 Sean M. Burke.  All rights reserved.
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+This program is distributed in the hope that it will be useful, but
+without any warranty; without even the implied warranty of
+merchantability or fitness for a particular purpose.
+
+=head1 Author
+
+Pod::Simple was created by Sean M. Burke <sburke@cpan.org>.
+But don't bother him, he's retired.
+
+Pod::Simple is maintained by:
+
+=over
+
+=item * Allison Randal C<allison@perl.org>
+
+=item * Hans Dieter Pearcey C<hdp@cpan.org>
+
+=item * David E. Wheeler C<dwheeler@cpan.org>
+
+=back
+
+=cut

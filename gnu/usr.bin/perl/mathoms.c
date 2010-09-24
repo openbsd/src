@@ -76,6 +76,7 @@ PERL_CALLCONV int Perl_printf_nocontext(const char *format, ...);
 PERL_CALLCONV int Perl_magic_setglob(pTHX_ SV* sv, MAGIC* mg);
 PERL_CALLCONV AV * Perl_newAV(pTHX);
 PERL_CALLCONV HV * Perl_newHV(pTHX);
+PERL_CALLCONV IO * Perl_newIO(pTHX);
 
 /* ref() is now a macro using Perl_doref;
  * this version provided for binary compatibility only.
@@ -613,29 +614,6 @@ Perl_hv_magic(pTHX_ HV *hv, GV *gv, int how)
     sv_magic(MUTABLE_SV(hv), MUTABLE_SV(gv), how, NULL, 0);
 }
 
-AV *
-Perl_av_fake(pTHX_ register I32 size, register SV **strp)
-{
-    register SV** ary;
-    register AV * const av = MUTABLE_AV(newSV_type(SVt_PVAV));
-
-    PERL_ARGS_ASSERT_AV_FAKE;
-
-    Newx(ary,size+1,SV*);
-    AvALLOC(av) = ary;
-    Copy(strp,ary,size,SV*);
-    AvREIFY_only(av);
-    AvARRAY(av) = ary;
-    AvFILLp(av) = size - 1;
-    AvMAX(av) = size - 1;
-    while (size--) {
-        assert (*strp);
-        SvTEMP_off(*strp);
-        strp++;
-    }
-    return av;
-}
-
 bool
 Perl_do_open(pTHX_ GV *gv, register const char *name, I32 len, int as_raw,
 	     int rawmode, int rawperm, PerlIO *supplied_fp)
@@ -703,25 +681,16 @@ Perl_init_i18nl14n(pTHX_ int printwarn)
     return init_i18nl10n(printwarn);
 }
 
-OP *
-Perl_oopsCV(pTHX_ OP *o)
-{
-    PERL_ARGS_ASSERT_OOPSCV;
-
-    Perl_croak(aTHX_ "NOT IMPL LINE %d",__LINE__);
-    /* STUB */
-    PERL_UNUSED_ARG(o);
-    NORETURN_FUNCTION_END;
-}
-
 PP(pp_padany)
 {
     DIE(aTHX_ "NOT IMPL LINE %d",__LINE__);
+    return NORMAL;
 }
 
 PP(pp_mapstart)
 {
     DIE(aTHX_ "panic: mapstart");	/* uses grepstart */
+    return NORMAL;
 }
 
 /* These ops all have the same body as pp_null.  */
@@ -1282,14 +1251,6 @@ Perl_sv_usepvn(pTHX_ SV *sv, char *ptr, STRLEN len)
     sv_usepvn_flags(sv,ptr,len, 0);
 }
 
-void
-Perl_cv_ckproto(pTHX_ const CV *cv, const GV *gv, const char *p)
-{
-    PERL_ARGS_ASSERT_CV_CKPROTO;
-
-    cv_ckproto_len(cv, gv, p, p ? strlen(p) : 0);
-}
-
 /*
 =for apidoc unpack_str
 
@@ -1449,16 +1410,6 @@ Perl_hv_delete(pTHX_ HV *hv, const char *key, I32 klen_i32, I32 flags)
 }
 
 /* Functions after here were made mathoms post 5.10.0 but pre 5.8.9 */
-int
-Perl_magic_setglob(pTHX_ SV *sv, MAGIC *mg)
-{
-    PERL_UNUSED_ARG(mg);
-    PERL_UNUSED_ARG(sv);
-
-    Perl_croak(aTHX_ "Perl_magic_setglob is dead code?");
-
-    return 0;
-}
 
 AV *
 Perl_newAV(pTHX)
@@ -1479,20 +1430,9 @@ Perl_newHV(pTHX)
     return hv;
 }
 
-int
-Perl_magic_setbm(pTHX_ SV *sv, MAGIC *mg)
-{
-    return Perl_magic_setregexp(aTHX_ sv, mg);
-}
-
-int
-Perl_magic_setfm(pTHX_ SV *sv, MAGIC *mg)
-{
-    return Perl_magic_setregexp(aTHX_ sv, mg);
-}
-
 void
-Perl_sv_insert(pTHX_ SV *bigstr, STRLEN offset, STRLEN len, const char *little, STRLEN littlelen)
+Perl_sv_insert(pTHX_ SV *const bigstr, const STRLEN offset, const STRLEN len, 
+              const char *const little, const STRLEN littlelen)
 {
     PERL_ARGS_ASSERT_SV_INSERT;
     sv_insert_flags(bigstr, offset, len, little, littlelen, SV_GMAGIC);
@@ -1534,6 +1474,38 @@ Perl_save_op(pTHX)
 {
     dVAR;
     save_op();
+}
+
+#ifdef PERL_DONT_CREATE_GVSV
+GV *
+Perl_gv_SVadd(pTHX_ GV *gv)
+{
+    return gv_SVadd(gv);
+}
+#endif
+
+GV *
+Perl_gv_AVadd(pTHX_ GV *gv)
+{
+    return gv_AVadd(gv);
+}
+
+GV *
+Perl_gv_HVadd(pTHX_ register GV *gv)
+{
+    return gv_HVadd(gv);
+}
+
+GV *
+Perl_gv_IOadd(pTHX_ register GV *gv)
+{
+    return gv_IOadd(gv);
+}
+
+IO *
+Perl_newIO(pTHX)
+{
+    return MUTABLE_IO(newSV_type(SVt_PVIO));
 }
 
 #endif /* NO_MATHOMS */

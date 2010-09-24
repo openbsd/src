@@ -1,0 +1,125 @@
+Revision history for Perl extension Win32API::File.
+
+0.1101 by Alexandr Ciornii 2008-11-17
+        - require Win32.pm (not core on Cygwin 5.8.8)
+        - file.t uses Win32.pm only if necessary
+
+0.1100 by Alexandr Ciornii 2008-11-08
+        - license in Makefile.PL and README
+
+0.1001_02 by Alexandr Ciornii 2008-11-01
+        - list of changes from perl 5.10
+        - adaptation of core perl changes for CPAN
+        - ExtUtils::Myconst2perl hidden from indexing
+        - pod.t
+        - better Makefile.PL
+
+0.1001_01 (perl 5.10)
+        - tests adapted for core
+        - file.t moved from string checking to error code check
+        - file.t uses File::Spec->tmpdir()
+        - require Math::BigInt only if not in 64-bit mode
+        - remove indirect object notation in File.pm
+        - "Exterminate PL_na" by Nicholas Clark
+
+0.1001 2006-07-02 14:04
+	- Minor doc tweak, release as standalone for sychronization with
+	  version in bleadperl (future 5.10)
+
+0.10 2005-09-09
+	- Added GetFileAttributes() function and corresponding constants.
+	  (Patches from Kenneth Olwing from 2004-11-12).
+	- cygwin patches from Rafael Kitover and Reini Urban.
+	  This includes the addition of the GetFileSize(), getFileSize()
+	  setFilePointer() and GetOverlappedResult() methods and the
+	  experimental new object oriented interface.  All file position
+	  operations use either Math::BigInt objects or 8 byte integers
+	  (cygwin) for file offsets.
+
+0.0901 2005-08-30
+	- increased version number to show difference to standalone
+	  CPAN release of Win32API-File-0.09.zip
+
+0.09 2005-02-18
+        - Support 5.007+
+
+0.09 [libwin32 version only]
+	- Add AUTHOR and ABSTRACT_FROM to Makefile.PL.
+	- Trivial speed improvements.
+	- Fixed F<test.pl> if Z: is a valid drive letter.
+
+0.08 2000-04-07
+	- C<GetOsFHandle> now returns false for failure.
+	- New F<buffers.h> supports C++ compilers.
+	- Read-only output-only parameters now generate an error.
+	- Added fileLastError() since C<$^E> is often quickly overwritten.
+	- Complete rewrite of how C constants are made available in Perl.
+	- Added fileConstant(), a nice way to look-up constants at run time.
+	- Added Get/SetHandleInformation and HANDLE_FLAG_* constants.
+	- Added IOCTL_DISK_GET_MEDIA_TYPES since *_STORAGE_* fails for floppy.
+	- Added several example scripts.
+
+0.07 1999-08-17
+	- Added DeleteFile().
+	- Removed prototypes from OsFHandleOpen() and GetOsFHandle() since
+	  the C<*> doesn't prevent warnings about bareword file handles and
+	  prevents the useful usage message if no arguments given.
+	- Fixed bug due to failed C<(/k/i,/t/i)> in list context returning
+	  C<()> not C<(undef,undef)> in modern versions of Perl.
+	- Change order of C<#include>s so can build with Perl5.005 and later.
+	- Fixed C<test.pl> to ignore Perl bug where C<$^E> is truncated.
+	- Turned on C<CAPI> in C<Makefile.PL> for certain versions of Perl.
+	- Updated C<README>.
+
+0.06 1999-08-10
+	- Switch to new buffers.h and "Hungarian" notation!
+	- Added full documentation!
+	- ReadFile() no longer tries to read more bytes than asked for
+	  just because the scalar buffer can hold more bytes!
+	- createFile() does better DWIM for share mode.
+	- Return SV_NO rather than C<0> for Boolean false.
+	- For boolean args, non-empty strings are C<1>, don't convert to int.
+	- Added ":MEDIA_TYPE" export class.
+	- Added C<GENERIC_ALL> and C<GENERIC_EXECUTE> to ":GENERIC_" exports.
+	- Added C<FdGetOsFHandle()> and C<GetOsFHandle()>!
+	- Added C<OsFHandleOpenFd()> and C<OsFHandleOpen()>!
+	- Support calling C<constant()> without the useless integer argument.
+	- Auto-load/export constants with C<()> prototype so can be in-lined.
+	- Added C<IsRecognizedPartition()> and C<IsContainerPartition()>.
+	- Added C<getLogicalDrives()>.
+	- Added ":FILE_" export class for specific types of access to files.
+	- Added C<SECURITY_SQOS_PRESENT> to ":SECURITY_" export class.
+	- Added ":PARTITION_" export class for partition types.
+	- Seriously bulked up the test suite.
+
+0.05 1998-08-21
+	- "-w" no longer warns that a buffer size of "=99" "isn't numeric".
+	  nor if pass undef var for buffer size or output-only parameter.
+	- Added SetErrorMode() and :SEM_.
+	- createFile() sharing now defaults to "rw" to match C RTL.
+	- createFile() was ignoring "r" and "w" in access masks.
+
+0.04 1998-08-13
+	- Added GetLogicalDrives and GetLogicalDriveStrings.
+	- Added GetDriveType and GetVolumeInformation.
+	- Added DRIVE_* for GetDriveType().
+	- Added FS_* for GetVolumeInformation().
+	- Added createFile(), getLogicalDrives(), and attrLetsToBits() helpers.
+	- CreateFile() returns:  INVALID_HANDLE_VALUE->false, 0->"0 but true".
+	- More standardized "Hungarian" notation and uses buffers.h.
+	- Large unsigned values no longer made negative.
+
+0.03 1998-04-25
+	- Added DDD_* constants to File.pm and moved codes mistakenly
+	  exported for :DDD_ to be exported for :Misc.
+	- Split large group of constants to increase efficiency.
+	- Minor cosmetic fixes.
+
+0.02 1998-03-03
+	- Added DeviceIoControl().
+	- Added some IOCTL_STORAGE_* and IOCTL_DISK_* constants
+	- Taught test.pl to verify all exported functions and constants.
+
+0.01 1997-12-08
+	- original version; based on Win32API::Registry.
+	- release to partner

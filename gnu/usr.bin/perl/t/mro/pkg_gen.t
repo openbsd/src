@@ -6,6 +6,8 @@ use warnings;
 chdir 't' if -d 't';
 require q(./test.pl); plan(tests => 7);
 
+require mro;
+
 {
     package Foo;
     our @ISA = qw//;

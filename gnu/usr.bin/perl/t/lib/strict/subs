@@ -393,3 +393,42 @@ my @a;my $x=$a[FOO];
 EXPECT
 Bareword "FOO" not allowed while "strict subs" in use at - line 2.
 Execution of - aborted due to compilation errors.
+########
+# [perl #53806] No complain about bareword
+use strict 'subs';
+print FOO . "\n";
+EXPECT
+Bareword "FOO" not allowed while "strict subs" in use at - line 3.
+Execution of - aborted due to compilation errors.
+########
+# [perl #53806] No complain about bareword
+use strict 'subs';
+$ENV{PATH} = "";
+system(FOO . "\n");
+EXPECT
+Bareword "FOO" not allowed while "strict subs" in use at - line 4.
+Execution of - aborted due to compilation errors.
+########
+use strict 'subs';
+my @players;
+eval { @players = sort(_rankCompare @players) };
+sub _rankCompare2 { }
+@players = sort(_rankCompare2 @players);
+EXPECT
+
+########
+use strict;
+readline(FOO);
+EXPECT
+
+########
+use strict 'subs';
+sub sayfoo { print "foo:@_\n" ; "ret\n" }
+print sayfoo "bar";
+print sayfoo . "bar\n";
+EXPECT
+foo:bar
+ret
+foo:
+ret
+bar

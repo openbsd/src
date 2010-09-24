@@ -1,10 +1,10 @@
-# HangulSyllableType-5.1.0.txt
-# Date: 2008-03-03, 21:57:58 GMT [MD]
+# HangulSyllableType-5.2.0.txt
+# Date: 2009-05-22, 22:58:24 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UCD.html
+# For documentation, see http://www.unicode.org/reports/tr44/
 
 # ================================================
 
@@ -19,26 +19,28 @@
 
 # Hangul_Syllable_Type=Leading_Jamo
 
-1100..1159    ; L # Lo  [90] HANGUL CHOSEONG KIYEOK..HANGUL CHOSEONG YEORINHIEUH
-115F          ; L # Lo       HANGUL CHOSEONG FILLER
+1100..115F    ; L # Lo  [96] HANGUL CHOSEONG KIYEOK..HANGUL CHOSEONG FILLER
+A960..A97C    ; L # Lo  [29] HANGUL CHOSEONG TIKEUT-MIEUM..HANGUL CHOSEONG SSANGYEORINHIEUH
 
-# Total code points: 91
+# Total code points: 125
 
 # ================================================
 
 # Hangul_Syllable_Type=Vowel_Jamo
 
-1160..11A2    ; V # Lo  [67] HANGUL JUNGSEONG FILLER..HANGUL JUNGSEONG SSANGARAEA
+1160..11A7    ; V # Lo  [72] HANGUL JUNGSEONG FILLER..HANGUL JUNGSEONG O-YAE
+D7B0..D7C6    ; V # Lo  [23] HANGUL JUNGSEONG O-YEO..HANGUL JUNGSEONG ARAEA-E
 
-# Total code points: 67
+# Total code points: 95
 
 # ================================================
 
 # Hangul_Syllable_Type=Trailing_Jamo
 
-11A8..11F9    ; T # Lo  [82] HANGUL JONGSEONG KIYEOK..HANGUL JONGSEONG YEORINHIEUH
+11A8..11FF    ; T # Lo  [88] HANGUL JONGSEONG KIYEOK..HANGUL JONGSEONG SSANGNIEUN
+D7CB..D7FB    ; T # Lo  [49] HANGUL JONGSEONG NIEUN-RIEUL..HANGUL JONGSEONG PHIEUPH-THIEUTH
 
-# Total code points: 82
+# Total code points: 137
 
 # ================================================
 

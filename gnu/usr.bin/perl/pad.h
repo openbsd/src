@@ -112,6 +112,16 @@ typedef enum {
 	padtidy_FORMAT		/* or a format */
 } padtidy_type;
 
+#ifdef PERL_CORE
+
+/* flags for pad_add_name. SVf_UTF8 will also be valid in the future.  */
+
+#  define padadd_OUR		0x01	/* our declaration. */
+#  define padadd_STATE		0x02	/* state declaration. */
+#  define padadd_NO_DUP_CHECK	0x04	/* skip warning on dups. */
+
+#endif
+
 /* ASSERT_CURPAD_LEGAL and ASSERT_CURPAD_ACTIVE respectively determine
  * whether PL_comppad and PL_curpad are consistent and whether they have
  * active values */
@@ -239,7 +249,8 @@ Restore the old pad saved into the local variable opad by PAD_SAVE_LOCAL()
 	      PTR2UV(PL_comppad), PTR2UV(PL_curpad)));
 
 #define PAD_RESTORE_LOCAL(opad) \
-	PL_comppad = opad && SvIS_FREED(opad) ? NULL : opad;	\
+        assert(!opad || !SvIS_FREED(opad));					\
+	PL_comppad = opad;						\
 	PL_curpad =  PL_comppad ? AvARRAY(PL_comppad) : NULL;	\
 	DEBUG_Xv(PerlIO_printf(Perl_debug_log,			\
 	      "Pad 0x%"UVxf"[0x%"UVxf"] restore_local\n",	\

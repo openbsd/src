@@ -1,0 +1,177 @@
+Revision history for Perl module Unicode::Collate.
+
+0.52  Thu Oct 13 21:51:09 2005
+    - The Unicode::Collate->new method does not destroy user's $_ any longer.
+      (thanks to Jon Warbrick for bug report)
+
+0.51  Sun May 29 20:21:19 2005
+    - Added the latest DUCET (for Unicode 4.1.0) as Collate/allkeys.txt,
+      which is not required to test this module.
+      Please notice that allkeys.txt will be overwritten if you have had
+      other allkeys.txt already.
+    - Added INSTALL section in POD.
+
+0.50  Sun May  8 20:26:39 2005
+    - Now UCA Revision 14 (based on Unicode 4.1.0).
+    - Some tests are modified.
+    - Added cjkrange.t, ignor.t, override.t.
+    - Added META.yml.
+
+0.40  Sat Apr 24 06:54:40 2004
+    - Now a table file is searched in @INC.
+
+0.33  Sat Dec 13 14:07:27 2003
+    - documentation improvement: in "entry", "overrideHangul", etc.
+
+0.32  Wed Dec  3 23:38:18 2003
+    - A matching part from index(), match() etc. will include illegal
+      code points (as well as ignorable characters) following a grapheme.
+    - Contraction with illegal code point will be invalid.
+    - Added view.t.
+    - Added some tests in illegal.t.
+    - Some tests are separated from test.t into altern.t and rearrang.t.
+    - modified XSUB internals.
+
+0.31  Sun Nov 16 15:40:15 2003
+    - Illegal code points (surrogate and noncharacter; they are definitely
+      ignorable) will be distinguished from NULL ("\0");
+      but porting is not successful in the case of ((Pure Perl) and
+      (Perl 5.7.3 or before)). If perl 5.6.X is used, XSUB may help it
+      in place of broken CORE::unpack('U*') in older perl.
+    - added illegal.t and illegalp.t.
+    - added XSUB (EXPERIMENTAL!) where some functions are implemented
+      in XSUB. Pure Perl is also supported.
+
+0.30  Mon Oct 13 21:26:37 2003
+    - fix: Completely ignorable in table should be able to be overrided
+      by non-ignorable in entry.
+    - fix: Maximum length for contraction must not be shortened
+      by a shorter contraction following in table and/or entry.
+    - added normal.t.
+    - some doc fixes
+
+0.29  Mon Oct 13 12:18:23 2003
+    - now UCA Version 11 (but no functionality is different from Version 9).
+    - supported hangul_terminator.
+    - fix: Base_Unicode_Version falsely returns Perl's Unicode version.
+      C4 in UTS #10 requires UTS's Unicode version.
+    - For variable weighting, 'variable' is recommended
+      and 'alternate' is deprecated.
+    - added version() method.
+    - added hangtype.t, trailwt.t, variable.t, and version.t.
+
+0.28  Sat Sep 06 20:16:01 2003
+    - Fixed another inconsistency under (normalization => undef):
+      Non-contiguous contraction is always neglected.
+    - Fixed: according to S2.1 in UTS #10, a blocked combining character
+      should not be contracted. One test in test.t was wrong, then removed.
+    - Added contract.t.
+    - (normalization => "prenormalized") is able to be used.
+
+0.27  Sun Aug 31 22:23:17 2003
+      some improvements:
+    - The maximum length of contracted CE was not checked (v0.22 to v0.26).
+      Collation of a large string including a first letter of a contraction
+      that is not a part of that contraction (say, 'c' of 'ca'
+      where 'ch' is defined) was too slow, inefficient.
+    - A form name for 'normalization', no longer restricted to
+      /^(?:NF)?K?[CD]\z/, will be allowed as long as
+      Unicode::Normalize::normalize() accepts it, since Unicode::Normalize
+      or UAX #15 may be changed/enhanced in future.
+    - When Hangul syllables are decomposed under <normalization => undef>,
+      contraction among jamo (LV, VT, LVT) derived from the same
+      Hangul syllable is allowed.  Added hangul.t.
+
+0.26  Sun Aug 03 22:23:17 2003
+    - fix: an expansion in which a CE is level 3 ignorable and others are not
+      was wrongly made level 3 ignorable as a whole entry.
+      (In DUCET, some precomposites in Musical Symbols are so)
+
+0.25  Mon Jun 06 23:20:17 2003
+    - fix Makefile.PL.
+    - internal tweak (again): pack_U() and unpack_U().
+
+0.24  Thu Apr 02 23:12:54 2003
+    - internal tweak for (?un)pack 'U'.
+
+0.23  Wed Sep 04 19:25:20 2002
+    - fix: scalar match() no longer returns an lvalue substr ref.
+    - fix: "Ignorable after variable" should be made level 3 ignorable
+           even if alternate => 'blanked'.
+    - Now a grapheme may contain trailing level 2, level 3,
+      and completely ignorable characters.
+
+0.22  Mon Sep 02 23:15:14 2002
+    - New File: index.t.
+      (The new test.t excludes tests for index.)
+    - tweak on index(). POSITION is supported.
+    - add match, gmatch, subst, gsubst methods.
+    - fix: ignorable after variable in 'shift'-variable weight.
+
+0.21  Sat Aug 03 10:24:00 2002
+    - upgrade keys.txt and t/test.t for UCA Version 9.
+
+0.20  Fri Jul 26 02:15:25 2002
+    - now UCA Version 9.
+    - U+FDD0..U+FDEF are new non-characters.
+    - fix: whitespace characters before @backwards etc. in a table file.
+    - now values for 'alternate', 'backwards', etc.,
+      which are explicitly specified via new(),
+      are preferred to those specified in a table file.
+
+0.12  Sun May 05 09:43:10 2002
+    - add new methods, ->UCA_Version and ->Base_Unicode_Version.
+    - test fix: removed the needless requirement of Unicode::Normalize.
+      [reported by David Hand]
+
+0.11  Fri May 03 02:28:10 2002
+    - fix: now derived collation elements can be used for Hangul Jamo
+      when their weights are not defined.
+      [reported by Andreas J. Koenig]
+    - fix: rearrangements had not worked.
+    - mentioned pleblem on index() in BUGS.
+    - more documents, more tests.
+    - tag names for 'alternate' are case-insensitive (i.e. 'SHIFTed' etc.).
+    - The <undef> value for the keys "overrideCJK", "overrideHangul",
+      "rearrange" has a special behavior (different from default).
+
+0.10  Tue Dec 11 23:26:42 2001
+    - now you are allowed to use no table file.
+    - fix: fetching CE with two or more combining characters.
+
+0.09  Sun Nov 11 17:02:40:18 2001
+    - add the following methods: eq, ne, lt, le, gt, le.
+    - relies on &Unicode::Normalize::getCombinClass()
+      in place of %Unicode::Normalize::Combin
+      (the hash is not defined in the XS version of Unicode::Normalize).
+      then you should install Unicode::Normalize 0.10 or later.
+    - now independent of Lingua::KO::Hangul::Util
+      (this module does decomposition of Hangul syllables for itself)
+
+0.08  Mon Aug 20 22:40:18 2001
+    - add the index method.
+
+0.07  Thu Aug 16 23:42:02 2001
+    - rename the module name to Unicode::Collate.
+
+0.06  Thu Aug 16 23:18:36 2001
+    - add description of the getSortKey method.
+
+0.05  Mon Aug 13 22:23:11 2001
+    - bug fix: on the things of 4.2.1, UTR #10
+    - getSortKey returns a string, but not an arrayref.
+
+0.04  Mon Aug 13 22:23:11 2001
+    - some bugs are fixed.
+    - some tailoring parameters are added.
+
+0.03  Mon Aug 06 06:26:35 2001
+    - modify README
+
+0.02  Sun Aug 05 20:20:01 2001
+    - some fix
+
+0.01  Sun Jul 29 16:16:15 2001
+    - original version; created by h2xs 1.21
+      with options -A -X -n Sort::UCA
+

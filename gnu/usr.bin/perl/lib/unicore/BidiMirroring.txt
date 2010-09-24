@@ -1,18 +1,18 @@
-# BidiMirroring-5.1.0.txt
-# Date: 2008-03-28, 10:22:00 PDT [KW]
+# BidiMirroring-5.2.0.txt
+# Date: 2009-05-22, 12:44:00 PDT [KW]
 #
 # Bidi_Mirroring_Glyph Property
 # 
 # This file is an informative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2008 Unicode, Inc.
+# Copyright (c) 1991-2009 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This data file lists characters that have the mirrored property
 # where there is another Unicode character that typically has a glyph
 # that is the mirror image of the original character's glyph.
-# The repertoire covered by the file is Unicode 5.1.0.
+# The repertoire covered by the file is Unicode 5.2.0.
 # 
 # The file contains a list of lines with mappings from one code point
 # to another one for character-based mirroring.
@@ -32,7 +32,7 @@
 # at http://www.unicode.org/unicode/reports/tr9/
 # 
 # This file was originally created by Markus Scherer.
-# Extended for Unicode 3.2, 4.0, 4.1, 5.0, and 5.1 by Ken Whistler.
+# Extended for Unicode 3.2, 4.0, 4.1, 5.0, 5.1, and 5.2 by Ken Whistler.
 # 
 # ############################################################
 

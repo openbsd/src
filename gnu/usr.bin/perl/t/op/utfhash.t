@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
     require './test.pl';
 
-    plan(tests => 97);
+    plan(tests => 99);
 }
 
 use strict;
@@ -196,6 +196,12 @@ __END__
   is($hash{Ñ‚ÐµÑÑ‚}, $hash{'Ñ‚ÐµÑÑ‚'});
   is($hash{Ñ‚ÐµÑÑ‚}, 123);
   is($hash{'Ñ‚ÐµÑÑ‚'}, 123);
+
+  # See if plain ASCII strings quoted with '=>' erroneously get utf8 flag [perl #68812]
+  my %foo = (a => 'b', 'c' => 'd');
+  for my $key (keys %foo) {
+    ok !utf8::is_utf8($key), "'$key' shouldn't have utf8 flag";
+  }
 }
 __END__
 {
@@ -209,4 +215,10 @@ __END__
   is($hash{½ää½âÀ½äâ½ää}, $hash{'½ää½âÀ½äâ½ää'});
   is($hash{½ää½âÀ½äâ½ää}, 123);
   is($hash{'½ää½âÀ½äâ½ää'}, 123);
+
+  # See if plain ASCII strings quoted with '=>' erroneously get utf8 flag [perl #68812]
+  my %foo = (a => 'b', 'c' => 'd');
+  for my $key (keys %foo) {
+    ok !utf8::is_utf8($key), "'$key' shouldn't have utf8 flag";
+  }
 }

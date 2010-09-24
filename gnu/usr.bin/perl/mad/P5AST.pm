@@ -370,6 +370,7 @@ package P5AST::op_enterwrite; 	@ISA = 'P5AST::baseop_unop';
 package P5AST::op_leavewrite; 	@ISA = 'P5AST::unop';
 package P5AST::op_prtf; 	@ISA = 'P5AST::listop';
 package P5AST::op_print; 	@ISA = 'P5AST::listop';
+package P5AST::op_say;		@ISA = 'P5AST::listop';
 package P5AST::op_sysopen; 	@ISA = 'P5AST::listop';
 package P5AST::op_sysseek; 	@ISA = 'P5AST::listop';
 package P5AST::op_sysread; 	@ISA = 'P5AST::listop';

@@ -12,6 +12,7 @@ Perl_ck_concat
 Perl_ck_defined
 Perl_ck_delete
 Perl_ck_die
+Perl_ck_each
 Perl_ck_eof
 Perl_ck_eval
 Perl_ck_exec
@@ -23,7 +24,6 @@ Perl_ck_glob
 Perl_ck_grep
 Perl_ck_index
 Perl_ck_join
-Perl_ck_lengthconst
 Perl_ck_lfun
 Perl_ck_listiob
 Perl_ck_match
@@ -174,6 +174,9 @@ Perl_pp_rv2av
 Perl_pp_aelemfast
 Perl_pp_aelem
 Perl_pp_aslice
+Perl_pp_aeach
+Perl_pp_akeys
+Perl_pp_avalues
 Perl_pp_each
 Perl_pp_values
 Perl_pp_keys
@@ -182,6 +185,7 @@ Perl_pp_exists
 Perl_pp_rv2hv
 Perl_pp_helem
 Perl_pp_hslice
+Perl_pp_boolkeys
 Perl_pp_unpack
 Perl_pp_pack
 Perl_pp_split
@@ -238,7 +242,6 @@ Perl_pp_redo
 Perl_pp_dump
 Perl_pp_goto
 Perl_pp_exit
-Perl_pp_setstate
 Perl_pp_method_named
 Perl_pp_entergiven
 Perl_pp_leavegiven
@@ -270,8 +273,6 @@ Perl_pp_sysopen
 Perl_pp_sysseek
 Perl_pp_sysread
 Perl_pp_syswrite
-Perl_pp_send
-Perl_pp_recv
 Perl_pp_eof
 Perl_pp_tell
 Perl_pp_seek
@@ -279,6 +280,8 @@ Perl_pp_truncate
 Perl_pp_fcntl
 Perl_pp_ioctl
 Perl_pp_flock
+Perl_pp_send
+Perl_pp_recv
 Perl_pp_socket
 Perl_pp_sockpair
 Perl_pp_bind
@@ -367,6 +370,7 @@ Perl_pp_semget
 Perl_pp_semctl
 Perl_pp_require
 Perl_pp_dofile
+Perl_pp_hintseval
 Perl_pp_entereval
 Perl_pp_leaveeval
 Perl_pp_entertry

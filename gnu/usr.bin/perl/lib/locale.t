@@ -459,7 +459,10 @@ if ($^O eq 'darwin') {
     (my $v) = $Config{osvers} =~ /^(\d+)/;
     if ($v >= 8 and $v < 10) {
 	debug "# Skipping eu_ES, be_BY locales -- buggy in Darwin\n";
-	@Locale = grep ! m/^(eu_ES|be_BY.CP1131$)/, @Locale;
+	@Locale = grep ! m/^(eu_ES(?:\..*)?|be_BY\.CP1131)$/, @Locale;
+    } elsif ($v < 11) {
+	debug "# Skipping be_BY locales -- buggy in Darwin\n";
+	@Locale = grep ! m/^be_BY\.CP1131$/, @Locale;
     }
 }
 

@@ -141,13 +141,13 @@ $b = "\x{3a3}FOO.BAR"; # \x{3a3} == GREEK CAPITAL LETTER SIGMA.
 ($c = $b) =~ s/(\w+)/lc($1)/ge;
 is($c , $a, "Using s///e to change case.");
 
-($c = $a) =~ s/(\w+)/uc($1)/ge;
+($c = $a) =~ s/(\p{IsWord}+)/uc($1)/ge;
 is($c , $b, "Using s///e to change case.");
 
-($c = $b) =~ s/(\w+)/lcfirst($1)/ge;
+($c = $b) =~ s/(\p{IsWord}+)/lcfirst($1)/ge;
 is($c , "\x{3c3}FOO.bAR", "Using s///e to change case.");
 
-($c = $a) =~ s/(\w+)/ucfirst($1)/ge;
+($c = $a) =~ s/(\p{IsWord}+)/ucfirst($1)/ge;
 is($c , "\x{3a3}foo.Bar", "Using s///e to change case.");
 
 # #18931: perl5.8.0 bug in \U..\E processing

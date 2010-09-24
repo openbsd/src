@@ -1,0 +1,2186 @@
+2010-02-17  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_56
+
+	* No code change, only version bumps on files that had changed but did
+	not get a version bump. Requested by Steve Hay in his role as perl
+	pumpkin.
+
+2010-02-03  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_55
+
+	* Fixed rt.perl.org#72362 (CPAN ignoring configure_requires).
+	  Also fixed (MY)META.yml processing to always prefer
+	  Parse::CPAN::Meta, if available.  Reported by Joshua B Jore
+	  and patched by David Golden
+
+	* Fixed rt.perl.org#72348 (missing CPAN::HandleConfig::output);
+	  Reported by Joshua B Jore and patched by David Golden
+
+	* Quieter user interface: made lots of '$module missing' type
+	  warnings only warn once; eliminated 'no YAML' warnings for
+	  distroprefs if there are no distroprefs.
+
+	* now with 359 distroprefs files
+
+2010-01-14  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_54
+
+	* David Golden fixes several recent regressions related to external
+	transport tools (ncftp, lynx, curl, etc)
+
+	* fixed quoting for downloading into directories containing
+	whitespace (reported by Jarkko Hietaniemi)
+
+	* amended lib/App/Cpan.pm because of a regression reported by Zefram as
+	rt.cpan.org #53305 and rt.perl.org #71838
+
+2009-12-18  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_53
+
+	* bzip2 support should now be on par with gzip
+
+	* allow Foo/Bar.pm on the commandline to mean Foo::Bar (suggested by
+	c9s)
+
+	* bugfix: quit, exit, and bye did not allow a trailing space
+
+	* address #51018: do not switch to default sites when we have a
+	user-configured urllist (reported by Marc Lehmann)
+
+	* bugfix for programming interface (shell did not suffer from this):
+	localize $CPAN::Distrostatus::something_has_failed_at properly so it
+	gets reset after each command (bug inspection by brian d foy)
+
+	* added lib/App/Cpan.pm from brian d foy and update cpan script to his
+	current version
+
+	* major rewrite of the FirstTime experience for new users (including
+	auto-pick of download sites) (by David Golden)
+
+	* improved support for Perl core module deprecation (by David Golden)
+
+2009-10-15  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_52
+
+	* address #48803: avoid 'unreached' if not following
+	configure_requires (David Golden)
+
+	* solaris tar gets more handholding to avoid solaris tar errors (David
+	Golden)
+
+	* allow calling make/test/install with regexp if unambiguous (Andreas
+	Koenig)
+
+	* new config variable version_timeout used in
+	CPAN::Module::parse_version() (Jerry D. Hedden)
+
+	* streamline first time configuration to be more intuitive and less
+	noisy (David Golden)
+
+	* bugfix: eexpect in mode=anyorder with reuse=1 did not consume the
+	output (Andreas Koenig)
+
+	* now with 355 distroprefs files
+
+2009-09-14  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_51
+
+	* bugfix: wrong diagnostic message on old Archive::Tar
+
+	* test fix: additional quoting in test t/31sessions.t for systems where
+	cwd contains whitespace (bug reported by Curtis Jewell)
+
+	* portability fix: By-pass alarm() calls if we're running under perl
+	5.6.x && $OS is Windows. (burak)
+
+	* address rt #47774: allow duplicate mention of modules in Makefile
+	prelude
+
+	* portability fixes to OS2 (Ilya Zakharevich)
+
+	* fix cpan -r (David Golden, ported back from 5.10.1)
+
+	* work around win32 URI::file volume bug (David Golden)
+
+	* portability fix: use dir() instead of path() on file URLs (David Golden)
+
+	* portability fix: removed my_dot_config as it doesn't exist in
+	File::HomeDir any more (Tomas Doran)
+
+	* bugfix: prerequisites declared with the string "==" now supported (bug
+	reported by Elliot Shank)
+
+2009-06-27  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.9402, nearly identical to 1.94_01 with these additions:
+
+	* protect build_dir_reuse to not process irrelevant yaml files;
+	addressing a bug report by Asif Iqbal on cpan-discuss mailing list
+
+	* doc fix by Dan Dascalescu
+
+2009-06-14  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_01, a candidate for the next stable release
+
+	* friendlier CPAN shell startup message (RT#46869 by ADAMK)
+
+	* sets $Archive::Tar::CHOWN=0 and $Archive::Tar::SAME_PERMISSIONS=0;
+  (RT#46384 reported by John Lightsey)
+
+	* fix CPAN Testers reports summary for new website YAML format
+	(RT#46652; David Golden)
+
+	* continuing to improve error handling on unplugged operation (tracked
+	in RT#44549)
+
+	* fix RT#46378: what happens when using 'o conf urllist' for reordering
+
+2009-05-24  Andreas J. Koenig  <andk@cpan.org>
+
+	* this is release 1.94
+
+	* since 1.93_54 one test was changed that had been failing when
+	Text::Glob was not installed.
+
+	* since 1.93 (which was released 2008-10-12) changes are documented in
+	the release notes for 1.93_5[1234] below. Here is a quick summary:
+	SQLite dependency tracking fixed; packaging works around bugs in Solaris
+	tar; fixed ls on subdirectories; tested with YAML::XS; support for
+	MYMETA.yml; CPAN.pm file split into separate files; mega doc/English
+	corrections; negated match variables in distroprefs
+
+	* thanks to Gisle Aas, Tom Christiansen, Alexandr Ciornii, Nicholas
+	Clark, Jan Dubois, David Golden, Randy Kobes, Olivier 'dolmen' Mengué,
+	Steffen Müller, Slaven Rezić, Michael Schwern, Gábor Szabó, Frank
+	Wiegand and many others for providing patches, bugreports and valuable
+	feedback.
+
+2009-05-07  Andreas J. Koenig  <andk@cpan.org>
+
+	* this is release 1.93_54 (another release candidate for 1.94, I had
+	overlooked the github fork by Alexandr)
+
+	* Help Strawberry perl #41537: will prefer perl unpack modules (unless
+	it is bz2). (Alexandr Ciornii)
+
+	* address #43779: test failures when NFS involved (Alexandr Ciornii)
+
+	* adjust tests for 5.6.2 and when no yaml module is available
+
+2009-05-04  Andreas J. Koenig  <andk@cpan.org>
+
+	* this is release 1.93_53 (release candidate for 1.94)
+
+	* address #45470: pod synopsis fix submitted by Olivier 'dolmen' Mengué
+
+	* bugfix: @$urllist could break on an undefined urllist, now protected
+
+	* bugfix: Work around the troubles posed by Acme::BadExample
+
+	* bugfix: address #43813: solaris tar cannot deal with long paths
+
+2009-04-13  Andreas J. Koenig  <andk@cpan.org>
+
+	* this is release 1.93_52 (dev release towards 1.94)
+
+	* shake out missings after the split into many files
+
+	* Win32 fixes by Jan Dubois
+
+	* CPAN::SQLite support fixes by Randy Kobes
+
+	* completion on distros works now at least on the "d" command when using
+	pretty id ( eg. USERID/Foo-<TAB> )
+
+	* experimental support for deprecated.pm only enabled on perl 5.11
+
+	* address #37531: ls on subdirectories did not work as one would
+	expect (reported by Slaven Rezic)
+
+	* address #28438: do not create the author directory if we have a file
+	URL (reported by Schwern)
+
+	* all distroprefs now more YAML compliant
+
+	* tested with YAML::XS and documented as such
+
+	* patch by Gisle Aas to catch not compiling regexps in distroprefs
+
+	* patch by David Golden to support MYMETA.yml
+
+	* address #44549: support users who do not want to connect to the
+	internet but still configure us to run in an intranet or with a minicpan
+	on the local disk (reported by Nicholas Clark)
+
+2009-02-28  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* this is release 1.9304 (same as 1.93_03, just version changed to mark
+	as stable)
+
+2009-02-01  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* this is release 1.93_51 (dev release towards 1.94)
+
+	* major surgery: split all packages within the CPAN.pm file into
+	separate files. Requested by Gabor Szabo who also submitted an initial
+	implementation.
+
+	* major surgery: relocate the repository to github, adjust all SVN
+	related code in the Makefile.PL to git, and remove all files that are
+	not directly relevant to CPAN.pm. (David Golden and Andreas Koenig)
+
+	* mega doc and English patch by Tom Christiansen and David Golden
+
+	* chmod the build directories to be world readable (suggested by Slaven Rezic)
+
+	* fix broken perldoc command (Randy Kobes)
+
+	* Use Parse::CPAN::Meta not Parse::Metayaml (Steffen Mueller)
+
+	* Negated match variables in distroprefs (Gisle Aas)
+
+	* new batch signing key PAUSE2009.pub included
+
+  * this is release 1.93_03
+
+2009-02-01  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* this is release 1.93_03 (preparation of stable 1.9304)
+
+	* more backporting from trunk
+
+	* PAUSE2009.pub included
+
+	* s/cpantesters.perl.org/www.cpantesters.org/
+
+2009-01-11  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* this is release 1.93_02
+
+	* the underscore is there because it is the first git based release, it
+	as a test ballon for the merge with bleadperl. I expect it will become
+	1.9303
+
+	* upgrade repo to github
+
+	* more caution when running in degraded mode
+
+	* default for connect-to-internet-ok to 0 again (for 5.8.9 a quick fix
+	against bootstrapping problems was to set it to 1; now the resulting
+	error message makes clear what's going on)
+
+	* typo corrections (Frank Wiegand, David Golden)
+
+	* backport Parse::CPAN::Meta patch from trunk (Steffen Mueller, David Golden)
+
+2008-10-13  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* this is release 1.9301
+
+	* tests, as always, badly written tests! (RT #39994, #40001)
+
+2008-10-12  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* this is release 1.93
+
+	* no changes against 1.92_66 except in the distroprefs directory (which
+	is not used by default)
+
+	* highlights include:
+
+	* selection of displayed modules during the 'r' command more intuitive
+	(at the same time order of modules changed because we run two passes)
+
+	* several relevant bugfixes, including one related to security
+	(setting $Archive::Tar::CHMOD=0 to prevent undesired world writable
+	directories and files)
+
+	* for details see below the changes entries for 1.92_51 to 1.92_66.
+
+	* thanks to the many contributors who have made this release possible
+
+2008-09-30  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_66 FEATURE FREEZE for 1.93
+
+	* if nothing serious happens this will become 1.93 in a few days
+
+  * security fix: Archive::Tar should not preserve permissions in the
+	tarball; extracted file permissions will be set from users umask instead
+	(David Golden)
+
+	* improve on dealing with a tarball with zero permissions (thanks to
+	RPHANEY/openStatisticalServices-0.018.tar.gz)
+
+2008-09-14  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_65 (aiming at 1.93 once again)
+
+	* address #39243: signature test now skips when no SHA module available
+	(requested by M Schwern)
+
+	* adjust skip message formatting to Test::Harness 3.13 strictness
+
+	* now with 344 distroprefs files
+
+2008-09-03  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_64
+
+	* workaround for tarballs containing a pax_global_header comment
+	(reported by David Cantrell and Jan Dubois)
+
+	* set the PERL5LIB also on the look command (suggested by Slaven Rezic)
+
+	* better protection against invalid index files
+
+	* fix esoteric bug in build_dir_reuse/reset_tested (David Golden)
+
+	* allow more than 100 commands in history (Rodrigo Marchant)
+
+	* preserve modification and owner bits when overwriting FTPstats.yml
+	(Slaven Rezic)
+
+	* address #32841: Location of .cpan Inconsistent on Mac OS X (David Wheeler)
+
+	* updated the FAQ about choosing mirror sites
+
+	* now with 343 distroprefs files (the curve is flattening)
+
+2008-06-19  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_63
+
+	* The CPAN::PERL5INC experiment didn't work and all related code was
+	removed. Because PERL5OPT "-M" switches are resolved after command line
+	"-M" switches, CPAN::PERL5INC sets @INC too late for any PL code or
+	tests that load prerequisite modules with "-M" on a command line.
+
+	* fixed some localization bugs seen on 5.6.2 (David Golden)
+
+	* added 'perl5lib_verbosity' config option to silence 'added to
+	PERL5LIB' messages (David Golden)
+
+	* now with 340 distroprefs files
+
+2008-05-23  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_62
+
+	* fixed PERL5INC tempfile leak when running without lock file
+	(David Golden)
+
+	* better prereq and distropref disabled support under build_dir_reuse
+	(David Golden)
+
+	* distropref cache won't persist across sessions with build_dir_reuse
+	(David Golden)
+
+	* patch from chocelateboy: found a FileHandle->new with an argument
+
+	* fix "exiting subroutine via last" bug (patch from Gisle Aas)
+
+	* finishing the CPAN::Distroprefs refactoring (Hans Dieter Pearcey)
+
+	* silence noisy tests
+
+	* now with 320 distroprefs files
+
+2008-04-25  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_61
+
+	* regain 5.005 compat (Slaven Rezic)
+
+	* fixed PERL5INC/YAML::Syck tainting @INC issue (David Golden)
+
+	* major distroprefs code refactoring into new module CPAN::Distroprefs,
+	adding tests (Hans Dieter Pearcey)
+
+	* cpan script upgraded to 1.53 (brian d foy)
+
+	* rework the whole experimental "feature" thingie since the META.yml
+	spec was fixed
+
+	* address #30464 (imacat): small refactoring and extend the loop
+	protection from install only on make_test
+
+	* repair broken smoke command
+
+	* now with 309 distroprefs files
+
+2008-03-26  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_60: gearing towards a new stable release
+
+	* minor bugfixing
+
+	* documented that the support for optional_features is not yet ready for
+	prime time.
+
+	* now with 297 distroprefs files
+
+2008-03-16  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_59: new distroprefs parameter match/env; bugfixing
+
+	* address #34104: add match/env into the distroprefs mix (suggested by
+	Slaven Rezic)
+
+	* add reset_tested() function to forget distributions previously tested
+	in a session, which resets the list of directories added to PERL5LIB
+	(David Golden)
+
+	* address #34062: regain lost 'cpan .' command (reporter Slaven Rezic)
+
+	* shut up "exited subroutine via last" warning in an expect loop
+
+	* address #34102: wrong diagnostic message when no META.yml was there
+	(reporter Slaven Rezic)
+
+	* CPAN::PERL5INC now also used in available_file() so that testers that
+	do not install can continue to work as before this module was introduced
+
+	* new protection against subtly broken META.yml files (testcase provided
+	by Form-Processor-Model-DBIC-0.01)
+
+	* cleanup some files on whitespace, notably CRLF files that could
+	confuse some svn clients
+
+	* experimental support for optional_features in META.yml (pre-alpha)
+
+	* now with 287 distroprefs files
+
+2008-03-12  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_58: bugfix
+
+	* new module CPAN::PERL5INC repleaces the current PERL5INC stuff for
+	larger numers of directories involved
+
+	* force pragma can now override the effect of 'disabled' in distroprefs
+	(David Golden)
+
+	* speed up find_perl by caching absolute path in $^X (discovered by
+	Slaven Rezic)
+
+	* new FAQ entries about the build directory
+
+	* now with 284 distroprefs files
+
+2008-02-27  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_57: getting closer to 1.93
+
+	* address #32823: fix a (rare) case where the make_args were appended to
+	the commandline on the call to ./Build (reported by David Golden and
+	Michael Schwern)
+
+	* applied a patch from Randy Kobes to update index before a query when
+	CPAN::SQLite is active
+
+	* added 'halt_on_failure' config option to halt queue processing after
+	the first failure rather than processing all remaining items
+	(patch by David Golden; requested by Andrew Hampe and Matisse Enzer)
+
+	* address #33505: allow empty passwords in the config and pass proxy
+	data through to curl (suggestions by kevinarpe)
+
+	* new diagnostics when CPAN.pm is required a second time. Introduce a
+	sleep period when it is required several times because then a loop might
+	be the cause and this might provide a clue to the user.
+
+	* address #32525: when running the 'r' command, try to display the
+	module name that is best suited for the distribution name (suggestion
+	and prove of concept implementation by imacat)
+
+	* speed up distroprefs on eexpect/anyorder by reducing timeout to 1
+	second and retrying until full timeout reached
+
+	* address 32923: allow =head1 CONTENT without regard to case (David
+	Wheeler)
+
+	* Now with 277 distroprefs files
+
+2008-02-04  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_56: unstable release both bugfixes and new features
+
+	* addressing #32841: fixing wrong usage of HOME vs File::HomeDir spotted
+	by Randy Kobes based on a bugreport by David Wheeler; with help from
+	Schwern and Adam Kennedy and I'm sure this will need more iterations.
+
+	* added 'trust_test_report_history' config option; when set, CPAN will
+	skip tests for a distribution and rely on test report results if a prior
+	test report is found; requires CPAN::Reporter 1.07_02
+
+	* protect against the infamous bug in Safe 2.13 that causes data
+	corruption and ugly error messages like unknown method version::("")) or
+	some such
+
+	* let people disable the direct usage of gzip and tar by supplying a
+	whitespace config variable
+
+	* improvements to PPM support by Randy Kobes
+
+	* now with 274 distroprefs files
+
+2007-12-30  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_55: unstable release bugfix
+
+	* address #32003: if untar breaks we broke too much of the session
+
+	* regain 5.6.1 compatibility in the testsuite
+
+	* improve diagnostics in t/31sessions.t to understand better what's up
+	in #31750
+
+	* fail gracefully on distroprefs parse error
+
+	* now with 267 distroprefs files
+
+2007-12-27  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_54: unstable release bugfix
+
+	* document how redirection in the shell works
+
+	* skip distros in the smoke command when they match m|/Bundle-| (quick
+	hack suggested by David Golden)
+
+	* address #31825: wrong location of MyConfig.pm in Config.pm on OS X
+	(patch by Michael Stillwell)
+
+	* address #31750: fix the logic when Compress::Zlib is not installed,
+	add a test to verify it
+
+2007-12-10  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_53: unstable release low priority
+
+	* now with 262 distroprefs files
+
+	* fix the bug where CPAN.pm refused to upgrade to Test::Harness 3
+	because Test::Harness was too old (Eric Wilhelm)
+
+	* skip tests when YAML too old
+
+	* default changed in Firsttime: prefer the conservative choice to NOT
+	use build_dir_reuse
+
+	* improve diagnostics when Tarzip believes that it must give up
+
+	* new config variable connect_to_internet_ok (requested by Merijn Brand)
+
+2007-11-11  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.9205
+
+	* backport the bugfix from 1.92_52
+
+	* straighten out a few whitespace changes that slipped into 1.9204
+
+	* release 1.92_52: unstable release (1.9205 will follow)
+
+	* bugfix: the endless loop fix that made it into 1.92_51 and 1.9204 was
+	buggy in itself. Fixing the fix and adding a test case.
+
+	* use chdir from Cwd.pm everywhere instead of the built-in chdir so that
+	we set $PWD simultaneously (requested by Slaven Rezic)
+
+2007-11-06  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.9204: stable subset of 1.92_51
+
+	* bugfix addressing #30464 endless loop with prereq resolution (Slaven
+	Rezic) [untested!]
+
+	* protect the user from using File::Temp when it is too old
+
+	* applied a patch by Rich Paul to finally disable an undocumented, then
+	deprecated and then apparently broken feature
+	($CPAN::Shell::ADVANCED_QUERY)
+
+	* applied a patch by Rich Paul that gains us a lot of speed lost in
+	unnecessary recomputations
+
+	* replaced all occurrences of $^X with findperl (bug reported by Slaven Rezic)
+
+	* several of many suggestsions by Mark Overmeer to improve the style of
+	the dialoges. There's more stuff left in several tickets...
+
+	* address #29754: Lockfile problem with perl 5.005_05 (Slaven Rezic)
+
+	* let containsmods cache negative results: Slaven Rezic found out that
+	distros without modules can be a performance killer without this measure
+
+	* no changes in the distroprefs directory
+
+2007-11-04  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92_51: unstable release (I'll make a 1.9204 soonish)
+
+	* bugfix addressing #30464 endless loop with prereq resolution (Slaven
+	Rezic) [untested!]
+
+	* applied a patch by Rich Paul to support redirection and pipes on shell
+	commands [undocumented!]
+
+	* bugfix wrong usage of kill 0 (Slaven Rezic)
+
+	* protect the user from using File::Temp when it is too old
+
+	* applied a patch by Rich Paul to finally disable an undocumented, then
+	deprecated and then apparently broken feature
+	($CPAN::Shell::ADVANCED_QUERY)
+
+	* applied a patch by Rich Paul that gains us a lot of speed lost in
+	unnecessary recomputations
+
+	* replaced all occurrences of $^X with findperl (bug reported by Slaven Rezic)
+
+	* several of many suggestsions by Mark Overmeer to improve the style of
+	the dialoges. There's more stuff left in several tickets...
+
+	* address #29754: Lockfile problem with perl 5.005_05 (Slaven Rezic)
+
+	* let containsmods cache negative results: Slaven Rezic found out that
+	distros without modules can be a performance killer without this measure
+
+	* now with 242 distroprefs files
+
+2007-09-28  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.9203: stable release with one distroprefs file fixed
+
+	* release 1.9202: stable release
+
+	* bugfix: don't try to make/Build when Makefile/Build.PL fails to
+	generate a Makefile/Build (David Golden)
+
+	* now with 217 distroprefs files
+
+2007-09-27  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.9201: stable release
+
+	* bugfix: remove a compile time has_inst call from CPAN::Admin which
+	could cause a hang (Mike Brudenell, Slaven Rezic)
+
+	* address #29606: only warn once when we ignore locking issues (Steve Cooper)
+
+	* add CPAN::Reporter::* to the packages needed for "reload cpan" (David
+	Golden)
+
+	* now with 214 distroprefs files
+
+2007-09-15  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.92: stable release
+
+	* fixed bug that kept "?" from being interpreted as "help" command
+	(David Golden)
+
+2007-09-15  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.91_55: stable release candidate II
+
+	* Update one test to match the output of Test::Harness 2.99_02
+
+2007-09-14  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.91_54: stable release candidate
+
+	* highlights of 51-54: CPAN::Reporter support for reports on separate
+	phases; support for configure_requires in META.yml; now with 207
+	distroprefs files; see below for details.
+
+	* firsttime dialog now defaults prefer_installer to "MB" and offers a
+	third option (RAND) for a random choice.
+
+	* code beautification complete overhaul, whitespace only (Florian
+	Ragwitz)
+
+	* after a fail introduce a hint for using the reports command (suggested
+	by Gabor Szabo)
+
+	* Enable code deserialisation for YAML. (Florian Ragwitz)
+
+	* Add CPAN::DeferedCode and make CPAN.pm use it. (Florian Ragwitz)
+
+	* Add a new config option: yaml_load_code. (Florian Ragwitz)
+
+	* turn a few myprint() into mywarn()
+
+	* make inhibit_startup_message a normal config variable like all others
+
+	* New manpage CPAN::API::HOWTO by David Cantrell
+
+	* now setting PERL5_CPAN_IS_EXECUTING as requested by Adam Kennedy
+
+	* ask once if we may try to connect to the internet when we try to use
+	@CPAN::Defaultsites (I think this was inspired by Steve Hay, then by
+	Gabor Szabo)
+
+	* address #28946: skip locking on platforms not supporting flock
+
+	* address #28915: CPAN::HandleConfig::home did not cope with getting
+	undef from File::HomeDir-> my_data()
+
+	* support 'help' with argument
+
+	* integrate all FirstTime questions into POD
+
+	* FirstTime::my_prompt_loop now has support for *_intro prompts
+
+	* simplified lots of the complicated FirstTime::init dialogues
+
+	* new config variable load_modules_verbosity
+
+	* support 'o conf /regex/' to selectivel display the state of config varibles
+
+	* prevent recursion into HandleConfig::load()
+
+	* PERL5*_CPAN_IS_RUNNING now points to the process number
+
+	* several commands were missing in @COMMANDS so were not supported for completion
+
+	* started deprecating term_is_latin config variable
+
+2007-08-08  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.91_53:
+
+	* added CPAN Testers reporting for failures of *.PL or make/Build
+	if CPAN::Reporter version is at least 0.99 (David Golden)
+
+	* new config option tar_verbosity
+
+	* added base_id() method to CPAN::Distribution; documented both
+	base_id() and pretty_id() (David Golden)
+
+	* bugfix: make install did not set the PERL5LIB environment
+
+	* bugfix: smoke command handles distros it can't find more graciously
+
+	* docfix: new FAQ entry about commit and auto_commit (bugged by Nicholas
+	Clark)
+
+	* refactoring of the Queue objects for better readability
+
+	* address #28438: wording of the dialog for keep_source_where (Martin
+	Thurn,Michael Schwern)
+
+	* address #28439: did not report missing file URL when LWP not installed
+	(Martin Thurn,Michael Schwern)
+
+	* new parameter for eexpect: reuse (Slaven Rezic)
+
+	* bugfix 'reload cpan': make it less unintuitive (David Golden)
+
+	* bugfix in goto: did not formally say goodbye
+
+2007-07-13  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.91_52:
+
+	* When accessing the preconfigured default sites, reorder accessmethods
+	in favor of http access (suggested by Brandon Black)
+
+	* neutralize "force" on commands that have no support for it, e.g. turn
+	"force report" into "report" (bugged by Slaven Rezic)
+
+	* let SIGINT during recent mean LAST
+
+	* let SIGINT during smoke mean SKIP
+
+	* stop using any version.pm in test 10version.t below 0.7203 because it
+	broke on some older bleadperls between 23000 and 25000
+
+	* applied a patch by Jim Cromie to explicitly spit out the unparseable
+	and zero version numbers
+
+	* changed CPAN::Version to treat sequences of more than on trailing ".0"
+	in version strings as insignificant. This was relevant for
+	ANDYA/Set-IntSpan-Fast-v1.0.tar.gz. Bugreport about version.pm is
+	https://rt.cpan.org/Ticket/Display.html?id=28206
+
+	* now with 175 distroprefs files covering over 200 distributions
+
+2007-07-07  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.91_51:
+
+	* support configure_requires according to the META.yml spec
+
+	* support distroprefs for all three types of dependencies:
+	configure_requires, build_requires, requires
+
+	* new experimental commands C<recent> and C<smoke>
+
+	* increase the timeouts for the tests for really slow machines
+
+	* lots of new, updated, and consolidated distroprefs files
+
+	* tiny fix for very rare cases of wrong parsing of degenerate version
+	numbers in CPAN::Version (thanks to Julian Mehnle for the report)
+
+	* support for artistic license "2" (Allison Randal)
+
+	* fix color ornamenting to always end before a newline not after it to
+	prevent spurious reset escape sequences at the beginning of the next
+	line (discovered by Gregor Goldbach and Slaven Rezic)
+
+2007-05-08  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.9102 -- tiny bugfixes
+
+	* address #26664: probe for the version of the patch program before
+	using it and adjust the parameters accordingly
+
+	* bugfix: a recent bugfix to dot distros broke pip (reported by Adam Kennedy)
+
+	* compatibility with 5.00405 regained
+
+	* test fix: increase the timeouts (the dependency of test success on CPU
+	speed discovered by Slaven Rezic)
+
+	* work in progress: improve the output of CPAN.pm to improve
+	human/machine parseablility on several failure modes
+
+2007-04-23  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.9101
+
+	* bugfix: give all File::Temp using spots a tmpdir (bugged by Slaven Rezic)
+
+	* test fix: demand more YAML fu to run the kwalify test in 12cpan.t
+
+	* bugfix: work around a 5.8.0 overload bug (Slaven Rezic)
+
+	* cosmetics: turn on sorting for Data::Dumper conversions
+
+	* several new distropref files
+
+	* test fix: on failure use diag(STDERR) instead of mydiag (STDOUT)
+
+2007-04-19  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.91
+
+	* new command C<reports> shows the reports sent to cpantesters
+
+	* bugfix: dot distros did not work with Module::Build
+
+	* several new and updated distroprefs
+
+	* bugfixes in testscripts (spotted by Slaven Rezic, Nigel Horne, David Cantrell)
+
+	* bugfix: Time::HiRes not a prereq anymore (Joshua ben Jore)
+
+	* speedup of the cleanup process in the build directory: do not compute
+	the size of directories to be deleted
+
+	* bugfix: scripts installation was broken
+
+	* bugfix: do not drop unknown config variables for the sake of forward
+	compatibility
+
+2007-04-07  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.90
+
+	* Changes against 1.88:
+
+	* enhanced integration of CPAN::Reporter
+
+	* distroprefs subsystem to store preferences on a per-distro basis
+	independently of the support provided by the individual distributions
+
+	* Support for CPAN::SQLite to gain significant memory savings and speedup
+
+	* new commands upgrade, is_tested, install_tested
+
+	* improved visual navigation by colorized output and improved diagnostic
+	messages
+
+	* improved installation support for scripts without tarball
+
+	* improved config management of internal variables
+
+	* much more serialization of internal data into YAML, switchable between
+	YAML and YAML::Syck
+
+	* optional persistence between sessions
+
+	* support for pseudo "dot" distros (local directories having nothing to
+	do with CPAN)
+
+	* reworked force pragma and new fforce pragma
+
+	* new configuration variables auto_commit, build_requires_install_policy
+
+	* new optional Bundle::CPANxxl bringing all optional supporting modules
+
+	* Changes against 1.88_79:
+
+	* workaround YAML::Syck 0.84 bug
+
+	* bugfix: remove from the is_tested set what reaches "install already done"
+
+	* improve diagnostics when gpg fails
+
+	* bugfix persistence: do not restore pragmas
+
+	* do the eval $VERSION tango for $CPAN::VERSION only when needed
+	(allowing "1.90" with a trailing zero)
+
+	* bugfix: if a dependency has been installed successfully but did not
+	install the expected module, issue a warning and do not install again to
+	prevent endless loops.
+
+2007-03-15  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_79: stable release candidate VII
+
+	* make the failure mode on circular depencies just as the other failure
+	modes and let the rest of the modules continue; also improve diagnostics
+	for circular dependencies
+
+	* clean up a few places where STDERR leaked from underneath; others seem
+	unfixable so a few are left over
+
+	* protect better against lost build directories
+
+	* warn when YAML is too old and skip the 30shell test
+
+2007-03-05  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_78: stable release candidate VI
+
+	* set PERL5_CPANPLUS_IS_RUNNING (desparately; see RT#23735)
+
+	* prevent installation attempts for files named *.patch (inspired by
+	David Cantrell)
+
+	* allow refs in @INC by Nicholas Clark
+
+	* applied a patch by Slaven Rezic to support match/perlconfig in
+	distroprefs covering %Config::Config
+
+	* hint the Win32 users how to install nmake with YVES' download script
+
+	* catch typos in distroprefs that are not yet caught by kwalify
+
+	* several new and updated distroprefs files
+
+	* integrate brian d foy's cpan script from his 1.53 release
+
+	* address RT#25223 (JDHEDDEN) small fix to the cpan script
+
+	* fix installation of scripts which was broken
+
+2007-02-19  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_77: stable release candidate V
+
+	* another tweak to t/31sessions.t necessary after a cpantesters report
+
+2007-02-19  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_76: stable release candidate IV
+
+	* In t/31sessions.t set PERL_MM_USE_DEFAULT to emulate testers behaviour
+	and have the same results for testers and everybody else.
+
+2007-02-18  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_75: stable release candidate III
+
+	* make t/31sessions.t more verbose in order to determine the problem it
+	has on testers machines
+
+2007-02-15  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_74: stable release candidate II
+
+	* fix t/31sessions.t to run without Archive::Tar installed
+
+	* updated and new prefs files
+
+2007-02-13  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_73: quick small fixes, stable release candidate I
+
+	* Win32 fix for 31sessions.t by Randy Kobes
+
+	* flush non-archival files when the mirror changes (thanks for the
+	suggestion to Adam Kennedy)
+
+	* fix recursion detection logic: when we have the module and it
+	satisfies the minimum required, do not take its recursive dependencies
+	into account.
+
+	* fix bug in getting PREREQ_PM out of Makefile when a value in PREREQ_PM
+	is undef (uncovered by Template::Plugin::Format::Number)
+
+	* couple of distroprefs files
+
+	* in the tests, when using POSIX::_exit make sure the 1..0 is flushed out
+
+2007-01-31  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_72: quick small fixes
+
+	* fix completion for the two commands "failed" and "fforce"
+
+	* fix support for test/args in distroprefs
+
+	* stop scanning build_dir for sizes without lock because we are not
+	cleaning up anyway
+
+	* disable broken Archive::Tar 0.23
+
+	* mitigate a too sharp test in 31sessions.t
+
+2007-01-27  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_71: this does not yet qualify as a release candidate for
+	1.89 because it incorporates a major bugfix; but otherwise I think this
+	is feature complete for a release
+
+	* document treatment of requires and build_requires declarations
+
+	* integrate the distroprefs README into the manpage
+
+	* introduce negative distroprefs caching for the current command
+
+	* new commands C<is_tested> and C<install_tested> (inspired by Ilya
+	Zakharevich)
+
+	* fix completion bug with notest and fforce pragma
+
+	* delete distro objects in memory that are cleaned up by the CacheMgr
+
+	* fix a bug that only fired when prefer_installer was set to MB but
+	Module::Build was not yet installed
+
+	* fix a serious dependency resolution bug triggered by the new
+	family of Compress::Zlib module distributions
+
+	* limit recursion detection to those commands that need it and let
+	others, like 'look', continue to work; at the same time make recursion
+	detection a serious error that throws an exception and does not try to
+	continue to execute
+
+2007-01-08  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_69
+
+	* fix a broken test (which tested with the wrong MyConfig.pm)
+
+2007-01-07  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_68
+
+	* two bugfix patches from Randy Kobes for Win32
+
+	* include new PAUSE2007.pub key
+
+	* bugfix: make FTPstats writing atomic
+
+	* new mandatory config variable 'auto_commit' to always save changed
+	variables immediately to disk
+
+	* address 22069: display a colortable before asking questions about
+	colors
+
+	* new config variable colorize_debug to colorize debugging output
+
+	* bugfix: prepending to PERL5LIB contained the BUILDDIR literally
+
+	* bugfix: when determining unsatisfied prereqs, honour is_tested area
+
+	* improve documentation about has_inst and dontload_list
+
+	* several distropref files finetuned
+
+2006-12-31  Andreas J. Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.88_67
+
+	* Redesigned 'force' pragma: only force at the level of the given
+	command ('force test' only forces test, 'force make' only make etc.)
+
+	* new fforce pragma ("fortissimo") that forces at 'get' level and then
+	continues to the given command
+
+	* persistence via 'build_dir_reuse' improved: also maintain the
+	is_tested record between sessions
+
+	* documentation and tests for the new force pragmas and for session
+	persistence
+
+	* support for 'applypatch' via distroprefs
+
+	* improved SQLite support for TAB completion courtesy Randy Kobes
+
+	* lots of new and updated distroprefs files
+
+	* Devel::Cover working again
+
+	* address #24114 (Steve Peters): do not fail due to missing YAML
+
+	* bugfix: handle gracefully when a build dir disappears
+
+	* bugfix: improve dependency checking if a module has no version at all
+
+	* bugfix: when a "goto" object is installed remove it from the queue
+
+	* bugfix: test suite runnable again without Expect
+
+2006-12-18  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_66
+
+	* bugfix: protect FTPstats.yml from being truncated
+
+	* bugfix: now really remove the dependency on YAML::Syck in the Makefile
+
+	* distroprefs: deprecate expect-in-any-order and replace with eexpect
+
+	* distroprefs: attach a Distrostatus object to disabled distros in
+	$self->{unwrapped}
+
+	* distroprefs: new keyword 'commandline'
+
+	* sqlite: deprecate config variable sqlite_dbname
+
+	* sqlite: make Bundle::Localbundle work
+
+2006-12-09  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_65
+
+	* make CPAN::SQLite configurable and tweak a few places to help SQLite
+	bootstrapping.
+
+	* fixed an implicit dependency on YAML::Syck in the Makefile
+
+	* distropref-goto: use the queue because after the goto new dependencies
+	may be needed
+
+	* fix dependency checking after make test: it did not work well together
+	with a distropref-goto
+
+2006-12-04  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_64
+
+	* more of Randy Kobes' patches for CPAN::SQLite applied. Things start
+	working.
+
+	* CPAN::Kwalify as a bridge to Kwalify.pm verifies all distroprefs to be
+	syntactically correct
+
+	* address #23742: fix unini warning
+
+	* another patch from Randy Kobes to canonize directory names
+
+	* bugfix: force install of a local dot distro was doing weird things
+
+	* bugfix: goto did not normalize the distro name
+
+2006-11-23  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_63: nothing major, only bugfixes and tiny new features.
+	Still a lot to do for 1.89.
+
+	* address #23315: there were still some uncought exceptions in
+	CPAN::Tarzip that broke megainstalls by Steve Peters; now hopefully all
+	fixed
+
+	* address #22584: do not set VERSION to "undef" when 0
+
+	* bugfix: delete backups during downloading of new index files
+
+	* bugfix: repair all risky ->can with UNIVERSAL::can; thanks to Adriano
+	Rodrigues for the report!
+
+	* bugfix: dirname(undef) can die: protect against it when an entry in
+	FTPstats has no associated file
+
+	* the failed command now prints its rows sorted by command (as before)
+	but within each command by time.
+
+	* the prereq check under the Module::Build installer is now performed by
+	reading the _build/prereqs file instead of calling Module::Build
+	directly. (Suggested by Ken Williams)
+
+	* cleanup of the cache directory is now disabled for batch jobs;
+	documentation is updated about the lock file the shell is holding
+
+	* now setting the environment variable PERL5_CPAN_IS_RUNNING; tentative
+	patch for Module::Install in my CPAN homedirectory
+
+	* support for fallback Data::Dumper and Storable files in the prefs_dir
+	directory when YAML is not available (alpha)
+
+	* new support for cpanconfig/check_sigs in distroprefs to temporarily
+	switch signature checking on or off. See distroprefs/00.README for
+	details and distroprefs/JESSE.HTTP-Server-Simple.yml for an example (alpha)
+
+	* new keyword "goto" in distroprefs to nominate a delegate distro. See
+	distroprefs/00.README for details and distroprefs/ABH.XML-RSS.yml for an
+	example (alpha)
+
+	* small portions of patches from Randy Kobes applied to support
+	CPAN::SQLite (pre-alpha; see Makefile.PL how to invoke)
+
+2006-11-13  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_62
+
+	* bugfix in randomize_urllist introduced in 1.88_61: setting the value
+	with C<o conf randomize_urllist> was broken
+
+	* disallow C<o conf {commit,defaults}> in degraded mode
+
+	* more programming tips in the manpage from Ilya Zakharevich
+
+	* sanity check on path names with tilde suggested by Adam Kennedy
+
+	* change the prettyprint of arrays to accommodate the user of splice
+
+	* introduce C<expect-in-any-order> to distroprefs
+
+	* add a new testdistro CPAN-Test-Dummy-Perl5-Make-Expect
+
+	* make the 00.README in the distroprefs directory more like a manpage
+	for later inclusion into the CPAN.pm manpage
+
+	* determine if a patch needs -p0 or -p1
+
+	* fix downloads with lynx when the other end sends an unusual error page
+
+2006-11-10  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_61
+
+	* This release is dedicated to imacat.
+
+	* address #22749: always download CHECKSUMS from the same host as the
+	package file (Thanks to imacat for the report)
+
+	* new command 'hosts' to display some recent download statistics
+
+	* new config parameter 'randomize_urllist' brings some randomness into
+	the URL selection
+
+	* if yaml_module not YAML and not available, fall back to YAML
+
+2006-11-02  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_59
+
+	* Note: the build_dir has got a major reworking with regard to how
+	individual directories below it are being named. The names are now
+	generated by File::Temp and contain a random part. This has the
+	advantage that concurring users of CPAN.pm cannot disturb each other and
+	the disadvantage that it is more difficult to identify which directory
+	contains which build environment. If YAML is installed, then each
+	directory is accompanied by a YAML file that stores a lot of state about
+	the directory.
+
+	The filename of the YAML file is C<< <directoryname>.yml >>
+
+	* This release represents work in progress: new features marked as alpha
+	below are still in flux and may change or be removed in the future.
+
+	* Large chunk of documentation added about the many 'o conf' variants
+	(after a smart kick From Marc Lehmann)
+
+	* fix a bug reported by Sujith Emmanuel to survive when urllist contains
+	illegal URLs
+
+	* new bundle Bundle::CPANxxl with CPAN::Reporter, Module::Signature,
+	Expect, etc.
+
+	* many new sample distroprefs files (alpha)
+
+	* new keyword "disabled" in distroprefs (alpha)
+
+	* sanitize the behaviour after an Expect.pm timeout (alpha)
+
+	* make running concurrent batch jobs safe (alpha)
+
+	* lock the shell more granular to let many CPAN shells coexist (alpha)
+
+	* several small bugfixes to the persistent distro state feature
+	introduced in 1.88_58 (alpha)
+
+	* very early incarnation of new install_tested command (alpha)
+
+2006-10-28  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_58
+
+	* new config option build_dir_reuse for persistent distro state in
+	build_dir inspired by Ilya Zakharevich. (alpha!)
+
+	* a few new and rewritten distropref files.
+
+	* add distribution name to every OK/NOT OK; also inspired by Ilya.
+
+	* bugfix on a rare bug related to the deletion of metadata after using a
+	pragma on a distribution.
+
+2006-10-24  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_57
+
+	* address #22396: add a diagnostic warning at cleanup time when people
+	have changed their config but forgot to safe it (Tina Mueller, Alberto
+	Manuel Brandao Simoes).
+
+	* workaround for a weird interaction with a dated version.pm in
+	a probably dated Module::Build and UNIVERSAL::VERSION.
+
+	* document the config variables that are overridable via distroprefs.
+
+	* add prefer_installer to the list of overridable config variables.
+
+	* new and updated prefs files for DBI, Coro, etc.
+
+2006-10-22  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_56
+
+	* add the ability to patch random distros both with local patches and
+	with patches from CPAN. Demo patches to UNIVERSAL::require, Expect,
+	Math::Pari, etc. are uploaded to my CPAN directory, corresponding YAML
+	files are in the distroprefs directory. Heavily inspired by an old patch
+	from Ilya Zakharevich.
+
+	* fixes from Ilya Zakharevich to the PERL5LIB environment handling for
+	not yet installed modules from a 3 year old patch.
+
+	* work around a Module::Build issue with Build.PL files that are
+	subclassing Module::Build like Error.pm and HTML::Mason. For now we fall
+	back to the META.yml file. Needs further discussion with Module::Build
+	people.
+
+	* in the distroprefs system allow for YAML files with an arbitrary
+	number of sections.
+
+	* document how to integrate local distribution directories into the CPAN
+	shell. See section 'Integrating local directories' in the manpage.
+
+	* reporting of errors during unpacking is now integrated into the
+	report section at the end of each command and the 'failed' command.
+
+	* applied a patch by smpeters to silence an unini warning (RT #22277).
+
+	* address #20979: trailing backslashes in MyConfig variables with test
+	(Lars XXX via David Golden)
+
+2006-10-16  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_55
+
+	* new command 'report' as requested by Schwern in #22118.
+
+	* extend the Distribution object to local directories. Gives a meaning
+	to the 'cpan .' command. Suggested by Slaven Rezic.
+
+	* removes the linux centric behaviour of t/30shell.t.
+
+	* do not complain THAT often about uninstalled YAML or YAML::Syck; once
+	is per distro enough.
+
+2006-10-13  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_54
+
+	* New option 'yaml_module' to switch between YAML.pm and YAML::Syck
+	Try 'o conf init /yaml/' to use it.
+
+	* New distroprefs system that lets the user store arguments, environment
+	variables, individual answers to questions asked by Distributions when
+	being built, and config overrides. Try 'o conf init /prefs/' for more
+	information.
+
+	* address #21144 major documentation bug: $obj->install is NOT the same
+	as CPAN::Shell->install($obj) as soon as a queue of dependencies comes
+	into play.
+
+	* fix "o conf defaults" which was broken in 1.88_53.
+
+	* protect us against Module::Build errors with an eval around the
+	requires() and build_requires() calls.
+
+2006-10-09  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_53
+
+	* wrapping Module::Build calls into an eval to catch external errors
+	with the right consequences.
+
+	* 'reload cpan' now based on timestamps and always jumps into a fresh
+	shell when needed.
+
+	* display the version during loading of our own modules.
+
+	* address #21692: make the "isa perl" case less noisy (Gabor Szabo)
+
+	* new tests
+
+2006-10-03  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_52
+
+	* now does the right thing with prereq "perl"
+
+	* major speedup in parsing of index files
+
+	* repair debugging aid to display the correct line number
+
+	* fix bug introduced in _51 regarding Test::Harness version verification
+
+	* fix old bug in CPAN::Version wrt installed developer versions
+
+2006-09-29  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88_51
+
+	* dependencies declared as 'build_requires' are now treated according to
+	a new policy option: try 'o conf init build_requires_install_policy' for
+	more info. (Suggested/Requested by Johan Vromans)
+
+	* fixed a bug where successful tests were repeated if things were not
+	being installed like during the 'test' command itself.
+
+	* address #21724: document that the 'r' command takes arguments; support
+	the same arguments for the 'upgrade' command (Adam Kennedy)
+
+	* address #21716: fix the broken 'recent' command (Phil Pennock)
+
+	* fixed a rare but extremely unpleasant bug with deep recursion in
+	AUTOLOAD during the 'reload cpan' command.
+
+2006-09-22  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.8801
+
+	* trivial bugfix: init dialog had a tweak that made it impossible to set
+	'ncftp' when 'ncftpget' was installed and configured.
+
+2006-09-21  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.88
+
+	* For detailed changes since 1.87 see the entries in the Changes file.
+	For finer grained change log see the ChangeLog.svn file. The highlights
+	of this release are:
+
+	* convenient configuration: dialogs for individual items or groups of
+	items can be accessed with a single command (Courtesy Jim Cromie)
+
+	* experimental support for CPAN::Reporter: try
+	    o conf init /test/
+	(Courtesy David Golden)
+
+	* make installation of scripts easier: try something like
+	    install	SREZIC/pingomatic-1.012
+	(Courtesy Slaven Rezic)
+
+	* colored output for better separation of process output, messages from
+	CPAN and warnings from CPAN: to turn colorization on/off try
+	    o conf init /color/
+
+	* formatting of lists of modules now features a column to indicate
+	installed and updateable modules
+
+	* signature checking can now be turned on and off with 'o conf check_sigs'
+
+	* new command 'upgrade' installs newest version of all installed modules
+
+	* Please note a minor incompatibility: the init dialog now has reversed
+	semantics: it suggests automatic configuration that can be confirmed
+	with 'yes' instead of suggesting manual configuration that can be denied
+	with 'no'.
+
+2006-09-18  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_65
+
+	* Hunting missing documentation with Test::Pod::Coverage because my
+	first try to use it started with a wrong copy&paste.
+
+	* Forward compatibility: bzip2 via Archive::Tar not dying anymore
+
+2006-09-16  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_64
+
+	* added test for the urllist dialog
+
+	* added License to all pm files and to the Makefile.PL
+
+	* allow ranges in urllist dialog, as inspired by Andrew Strebkov
+
+	* allow "o conf init WORD WORD2..."
+
+	* address #21484: disable inactivity_timeout when d_alarm is not "define"
+
+	* regex in "o conf init MATCH" must now be enclosed in slashes as in all
+	other commands that allow regexes
+
+	* again tested with 5.8.0, this time with an UTF8 locale and it did
+	indeed not pass the 30test: turning LANG=C now for the 30shell test,
+	unconditionally
+
+	* all supported config variables now documented in the POD and added a
+	test to monitor changes in the future
+
+2006-09-13  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_63
+
+	* should run on 5.8.0 now
+
+	* address #17973: always honour user defined URLs over default URLs
+
+2006-09-11  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_62
+
+	* make term_ornaments switchable while running (was only checked during
+	initialization)
+
+	* verify that color settings are applicable (bad colors were killing the
+	shell process completely)
+
+	* improve wording and logic when user is offline and tries to run
+	the urllist dialog. (Address debian bug #380551)
+
+2006-09-10  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_61
+
+	* configuation of urllist uses a local urllist instead of the global
+	configured one: prevents that ^C accidentally kills the currently
+	configured urllist
+
+	* configuration of urllist: if there is already a previous pick, one can
+	go through the dialog with RETURN only
+
+	* new options to get colored output: colorize_output, colorize_print,
+	colorize_warn
+
+2006-09-03  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_59: "o conf init MATCH" finally works and can be used to
+	jump into the configuration dialog and select an arbitrary subset of
+	questions.
+
+	* perl -I. -MCPAN ... now works because we replaced C<no lib .> with
+	rel2absing the INC (suggested by Slaven Rezic)
+
+2006-08-31  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_58: work is still in progress to get "o conf init MATCH"
+	working (finishing the epochal Jim Cromie patches) but all tests pass
+
+	* initial configuration dialogue now has reversed meaning: automatic
+	configuration can be confirmed with 'yes' instead of having to deny
+	manual configuration with 'no'
+
+	* fix a bug reported by David Golden, that Bundle::CPAN is never
+	uptodate. Fixing it by special-casing readline.pm in the inst_file
+	method. See also #17963.
+
+	* Address #18196 once again because people have still MakeMaker < 6.18
+	installed.
+
+2006-08-26  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_57
+
+	* Added by David Golden: support for CPAN::Reporter.
+
+2006-08-24  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_56
+
+	* Tiny documentation improvements
+
+	* Fix by David Golden to suppress warnings when using term_ornaments
+
+2006-07-29  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_55
+
+	* improve the heuristics when parsing PREREQ for scripts
+
+	* document CPAN::Module::as_glimpse changes and fix the case where we
+	have no author or no distro and added some tests for these cases
+
+2006-07-23  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_54
+
+	* fix #18165: new config option term_ornaments
+
+	* fix #20272: FirstTime::init did not preserve the space that signifies
+	"disabled program"
+
+2006-07-22  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_53
+
+	* make *scripts* (as opposed to modules) installable when the path of
+	the distro is given: you can now 'install ANDK/keepcool-0.344' and it is
+	stored as 'keepcool'
+
+	* the m command displays one column more: an equals sign if we have this
+	version installed, a less-than sign if our installed version of the
+	module is smaller and a space if we do not have this thing installed
+
+	* fix #18438: weird dependency chain issue that broke
+	amavis/SpamAssassin
+
+	* fix #20168: when a user has neither Module::Signature nor gnupg, do
+	not warn them
+
+	* patch by Matisse Enzer to support authenticating proxies
+
+	* new command "upgrade" installs newer versions of all installed modules
+	if there are any (feature requested by Martin Sluka)
+
+	* release 1.87_52
+
+	* add support for check_sigs configuration option (turn signature
+	checking on and off any time)
+
+	* fix #18011: improved initial configuration according to suggestions by
+	Vassilii Khachaturov
+
+2006-03-06  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87_51
+
+	* patch by Max Maischein to quote commands that contain spaces as is
+	often the case on Windows systems (addresses #17877)
+
+	* do not display DSLIP_STATUS when it is empty; same thing for MANPAGE
+
+	* add a security advice to the manpage
+
+	* do not advertise Bundle::CPAN when a new CPAN is available, CPAN alone
+	should do
+
+2006-02-27  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.87
+
+	* new method dslip_status for Module objects
+
+	* no t/dot-cpan/ directory in the distro anymore and removed after test
+
+	* bugfix: when make clean failed, we did not list this as a fail
+
+	* more tests in t/30shell.t, sub coverage on CPAN.pm now >75%
+
+2006-02-23  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.86_53
+
+	* t/30shell emits two test headers (fixes #17816; Adam Kennedy)
+
+	* make Tarzip work better on uncompressed files; fixes test failure of
+	test t/12cpan.t work under some conditions
+
+	* t/30shell now skips tests that need uninstalled prerequisites and so
+	passes all tests on a bare 5.8.8 for me when CPAN_RUN_SHELL_TEST is set
+
+2006-02-22  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.86_52
+
+	* simplification of the concepts of home and of the CPAN/MyConfig.pm and
+	the CPAN/Config.pm. There were too many places that tried to do the same
+	thing. Should now be centralized and consistent.
+
+2006-02-21  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.86_51
+
+	* replace the concept of $ENV{HOME} with File::HomeDir (fixes #17759;
+	Adam Kennedy)
+
+	* remove a spurious CARRIAGE RETURN in the Todo file: it broke
+	Module::Signature on Windows (fixes #17746; Adam Kennedy)
+
+	* return empty string instead of undef when HAVE_MAKE is false (fixes
+	#17768; Adam Kennedy)
+
+	* do not try to use $CPAN::Frontend before it exists (fixes #17770; Adam
+	Kennedy)
+
+	* t/12cpan.t now behaves on 5.004 and 5.005
+
+	* t/30shell.t now can be run without Expect; needs to be enabled with
+	environment variable CPAN_RUN_SHELL_TEST in this case
+
+	* more testing in 30shell.t
+
+2006-02-20  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.86
+
+	* quick fix for a bug in the Checksums checking code: if the cache had
+	an old copy, it was in some cases not updated and if the file-to-check
+	was newer, a false alarm was triggered.
+
+	* I expect a 1.87 soonish, because we have open bugs: test 12cpan.t not
+	suited for old perls; test for the above bug missing.
+
+2006-02-19  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.85
+
+	* Fix for 'install Bundle:CPAN' on Windows machines (closes #17699; Adam
+	Kennedy)
+
+	* Make a separate distro for Bundle::CPAN (works around the bug for
+	older versions of CPAN)
+
+	* Another fix for bundles: in some cases CPAN.pm installed an older
+	bundle than the most recent
+
+	* more tests: CPAN.pm subroutine coverage now at 71.4%
+
+2006-02-15  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.84
+
+	* see detailed release notes for releases 1.83_51 upto 1.83_69 below
+
+	* highlights of the changes between 1.83 and 1.84: better error handling
+	with new "failed" command and in many other places; new config variable
+	ftp_passive is on by default; new command mkmyconfig; Module::Build
+	support should now work on Windows and work better on all platforms; new
+	methods for programmers CPAN::Module::distribution and
+	CPAN::Distribution::author; improved docs; prettier output; and last not
+	least a heavy dose of refactoring, bugfixing, and testing
+
+	* Thanks to the bunch of helpful contributors and bug reporters (you
+	know who you are:)
+
+2006-02-14  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_69
+
+	* much more testing (70% sub coverage in CPAN.pm)
+
+	* deprecated "dontload_hash" and introduced "donload_list" instead
+
+	* better handling of errors during 'perl Makefile.PL'
+
+	* turn on sorting for the dump command
+
+	* turn on sorting for the CONTAINSMODS attribute of Distribution objects
+
+	* env FTP_PASSIVE now set to true also when config variable ftp_passive
+	does not exist (brought up by Jarkko)
+
+	* patch by Sebastien Aperghis-Tramoni to avoid a SEGV with 5.004_05
+	which happens when exit is called within BEGIN
+
+2006-02-08  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_68
+
+	* bring 5.004 compatibility back
+
+	* kick out a 5.8.1 warning (Ken Williams)
+
+	* renaming all tests to NNxxx.t style
+
+	* less noise when Digest::SHA is not installed (closes 17598; Adam Kennedy)
+
+2006-02-06  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_67
+
+	* more tests
+
+2006-02-04  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_66
+
+	* add a new method CPAN::Distribution::author
+
+	* protect the usage of Text::Glob with a has_inst
+
+	* document CPAN::Module::distribution
+
+	* experimental and undocumented new method CPAN::Distribution::fast_yaml
+
+	* release 1.83_65
+
+	* much more testing in shell.t
+
+	* bugfix: protect "make test" from outer environment variable MAKEFLAGS
+
+	* bring "o conf help" back which was lost
+
+2006-02-02  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_64 (potential release candidate for 1.84)
+
+	* bugfix: when M:B specifies both requires AND build_requires AND then
+	has no YAML to write the META.yml file, THEN we did not merge the two
+	requiries. Seen in KCLARK/Text-RecordParser-v1.0.0.tar.gz.
+
+2006-02-01  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_63
+
+	* bugfix: when the CHECKSUMS file contains garbage, tell the user and
+	default to aborting the process (bug reported by Linda W)
+
+2006-01-31  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_62 came out today before this entry was written
+
+	* rename the LC_ALL macro so that it does not infect the whole
+	environment (Ken Williams)
+
+	* new command mkmyconfig: patch supplied by Tyler MacDonald
+
+2006-01-30  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_61
+
+	* After a bugreport from Randy Kobes, another few small fixes to make
+	sure that mbuild_install_build_command cannot make it through to be used
+	anywhere.
+
+	* release 1.83_60
+
+	* bugfix: Do not use ./Build directly on Windows, it must be called
+	together with the perl (fixes #17313; thanks to carl at fireartist for
+	the report and a patch skeleton)
+
+	* feature: 'o conf commit' now drops unknown config variables
+
+	* bugfix for very rare cases: do not use CPAN::Distrostatus object
+	methods on strings left over from the current session before a 'cpan
+	reload' introduces the CPAN::Distrostatus class
+
+	* bugfix: better switches for the call to curl
+
+	* bugfix: more checks after lynx if the command was successful or not
+
+	* docs: revisited the FAQ section
+
+	* bugfix: if a META.yml specified a prerequisite module that we do not
+	know, the whole prereq_pm became undef; now issues a warning and skips
+	the unknown thing
+
+2006-01-25  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_59
+
+	* new config variable ftp_passive which causes $ENV{FTP_PASSIVE} to be
+	set; fixes #17266 (Adam Kennedy)
+
+	* have 2 Default Hosts instead of one; fixes rt #17238 (Adam Kennedy)
+
+	* be much more verbose when reaching the last ressort external ftp;
+	fixes rt #17237 and #17241 (Adam Kennedy)
+
+	* give the cwd command more flexibility (stimulated by Ashley M. Kirchner)
+
+	* bugfix: honour build_requires
+
+2006-01-22  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_58
+
+	* command processor tweak on Win32 (Jan Dubois, Gisle Aas)
+
+	* README production was broken
+
+	* Ongoing heavy refactoring of FirstTime, currently still without
+	becoming visible to the user (Jim Cromie)
+
+	* More tests for CPAN::Version with output comparing the results with
+	Sort::Versions and version.pm
+
+	* bugfix: double check the "later" attribute before you excuse and unset
+	it if it is obsolete; fixes a bug where a postponed distro could be lost
+	from the queue
+
+	* output of as_glimpse more space efficient
+
+2006-01-19  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_57
+
+	* bugfix rt #17131 (Lee Goddard): better error messages on two
+	unrecoverable errors that require user intervention
+
+	* shell.t improved again: now the output reads really similar to a shell
+	session so we can determine which problems were leading to a failing
+	test
+
+2006-01-18  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_56
+
+	* bugfix rt #17089 (Adam Kennedy): the existance of a Build.PL without a
+	Makefile.PL implies a Module::Build dependency
+
+	* skipping the signature test now possible with "force"
+
+	* more tests in shell.t
+
+	* improved documentation
+
+	* new method CPAN::Module->distribution
+
+2006-01-14  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_55
+
+	* improve error handling on Net::FTP connections (R. Hauser; fixes rt
+	#1572)
+
+	* shell.t starts working on installations that have a CPAN/Config.pm
+
+2006-01-13  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_54
+
+	* conveniently handle $Config->{make} on systems that often switch
+	between dmake and nmake, like ActiveState's perl (Gisle Aas)
+
+	* better choice for command processor on Win32 (Gisle Aas)
+
+	* newest cpan script (1.51) from brian d foy
+
+	* "force ls" now refetches the CHECKSUMS files
+
+	* shell.t now conforming to Test-Anything-Protocol and hopefully working
+	on more platforms.
+
+2006-01-12  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_53
+
+	* bugfix: if we have no YAML and no Makefile, we could not determine
+	prereqs. Now fixed by using Module::Build.
+
+	* bugfix: b command on unpublished bundles was broken due to wrong
+	handling of missing RO elements.
+
+	* bugfix: do not die when you cannot verify a signature, proceed with a
+	fail instead.
+
+	* new command "failed" reports about failed invocations of make, test or
+	install on CPAN::Distribution objects.
+
+	* Jim's bold fight against the FirstTime dragons continues.
+
+2006-01-10  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_52 is a work in progress: Jim is proceeding with the
+	dressage of the FirstTime. It actually contains shell.t.
+
+2006-01-08  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.83_51 brings
+
+	* restructure FirstTime in a way to enable us to ask single questions RSN
+	(Jim Cromie)
+
+	* shell.t that can test dialogues
+
+	* bugfix: show_upload_date now asks yes/no instead of 1/0 (Ask B. Hansen)
+
+	* envariable CPAN_SHELL_LEVEL now available for subshells (Slaven Rezic)
+
+	* enable date/time warnings without the help of HTTP::Date (inspired by
+	a bogus bugreport on perl monks that was only due to wrong system time)
+
+	* bugfix: hide CPAN::Config from the indexer
+
+	* provide a more traditional style ChangeLog and Changes file
+
+2006-01-05  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.82 and 1.83 are quick bugfix releases.
+
+2006-01-03  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.81 adds on top of 1.80_58:
+
+	* bugfix: completion of debug options was not case insensitive
+
+	* bugfix: installation of distributions was broken for distros
+	not mentioned in the index
+
+	* include a hint that su might work as well as sudo in the dialog
+	about make_install_make_command and mbuild_install_build_command
+
+	* add Module::Signature to the Bundle and move Digest::SHA higher
+	up so they start working as soon as possible
+
+	* improve the dialog that ensues when bad signatures are
+	encountered
+
+2006-01-01  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.80_58 was a quick bugfix release
+
+2005-12-31  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.80_57 adds on top of 1.80_56 the following:
+
+	* prerequisites fixed: File::Temp was missing in PREREQ_PM and
+	Bundle
+
+	* reduce noise when $Debug is on
+
+	* improved handling of whitespace in filenames (Roland Bauer;
+	rt.cpan.org #3201)
+
+	* add the Module::Build configuration parameters to the required
+	parameters (thus users are relayed to the init dialog)
+
+	* import less symbols
+
+	* enhanced robustness if cwd gets removed while we're running
+	(Rhet Turnbull; rt.cpan.org #321)
+
+	* add "notest" to the completion table
+
+	* enhanced robustness when untar is failing or poses permission
+	problems
+
+	* iron out some buglets in the "ls GLOB" code
+
+	* enhanced robustness on "reload cpan" when the path to CPAN.pm
+	has changed
+
+	* replace some hash accesses with method calls for a cleaner
+	interface (Work in Progress; no user-visible changes)
+
+	* do not fail anymore when finding empty files left over from a
+	previous unsuccessful download
+
+	* uptodate message more descriptive (Adam Kennedy; rt.cpan.rg
+	#15580)
+
+2005-12-17  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* release 1.80_56 is a release candidate for 1.81
+
+	* integrate release 1.5 of brian's cpan script from
+	http://sourceforge.net/projects/brian-d-foy/
+
+	* Support for Module::Build: to set the preference for
+	Module::Build over MakeMaker, run
+
+	  o conf prefer_installer MB
+	  o conf commit
+
+	* ls command supports globbing; these work nicely:
+
+	  ls KWILLIAMS/P*
+	  ls JV/make*
+
+	this works too but is slow:
+
+	  ls */*make*
+
+	* META.yml data replace the Makefile parsing code if YAML
+	available (compensating for the frequent wrong usage of the
+	requires element)
+
+	* support SHA256; stop using MD5
+
+	* support bzip2 compression; can be tested with 'install
+	ARTURAZ/Net-Vypress-Chat-0.72.1.tar.bz2'; the CPAN indexer does
+	not yet index bz2 distros but will probably start to do so as soon
+	as CPANPLUS supports bzip2
+
+	* tiny tweaks to make CPAN.pm run on a busybox (Guillaume Filion)
+
+	* bugfix: major speedup on all commands that need expansion of
+	regular expressions to module names
+
+	* prettier r command output: the 4th column of the 'r' command
+	drops the redundant X/XX/ prefix
+
+	* tolerant when you type one colon instead of two on module names
+
+2005-12-03  Andreas J. Koenig  <andreas.koenig.gmwojprw@franz.ak.mind.de>
+
+	* this is release 1.80
+
+	* support for Module::Signature courtesy Autrijus Tang
+
+	* separated out new module CPAN::Version that has muchly improved
+	support for multidot version notation that should make the
+	deployment of version.pm easy for everybody. During the last weeks
+	the indexer on PAUSE also got improved version.pm support and
+	spits out numified versions. This release is optimized for the new
+	version handling, regardless if used with or without version.pm
+	(Thanks to John Peacock and to Graham Barr for their help)
+
+	* new pragma 'notest' courtesy Slaven Rezic
+
+	* support for sudo in the config variable
+	'make_install_make_command' courtesy Michael Richardson
+
+	* new commands 'recent' and 'perldoc' courtesy Toni Prug
+
+	* improved wget support for Windows users courtesy Daniel
+
+	* cleanup internal use of CPAN::Frontend courtesy David Storrs
+
+	* fixes to distro bugs by Adriano Ferreira
+
+	* runs under 5.004_05 courtesy Sébastien Aperghis-Tramoni
+
+	* new feature 'show_upload_date': if set to true, all 'm' and 'd'
+	commands will display the upload date
+
+	* fix bug in FirstTime causing endless loop under some conditions
+
+	* better completion for config variables and a new warning if an
+	unregistered config variable is being set
+
+	* improved some error messages
+
+	* improved help menu (Thanks to David Golden for the suggestion)
+
+
+	Local Variables:
+	mode: change-log
+	change-log-default-name: "Changes"
+	tab-width: 2
+	left-margin: 2
+	End:

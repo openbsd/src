@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-require q(./test.pl); plan(tests => 42);
+require q(./test.pl); plan(tests => 48);
 
 require mro;
 
@@ -247,4 +247,43 @@ is(eval { MRO_N->testfunc() }, 123);
   no warnings 'once';  # otherwise it'll bark about P1::bark used only once
   *{P1::bark} = sub { "[bark]" };
   is(scalar eval { $foo->bark }, "[bark]", "can bark now");
+}
+
+{
+  # assigning @ISA via arrayref then modifying it RT 72866
+  {
+    package Q1;
+    sub foo {  }
+
+    package Q2;
+    sub bar { }
+
+    package Q3;
+  }
+  push @Q3::ISA, "Q1";
+  can_ok("Q3", "foo");
+  *Q3::ISA = [];
+  push @Q3::ISA, "Q1";
+  can_ok("Q3", "foo");
+  *Q3::ISA = [];
+  push @Q3::ISA, "Q2";
+  can_ok("Q3", "bar");
+  ok(!Q3->can("foo"), "can't call foo method any longer");
+}
+
+{
+    # test mro::method_changed_in
+    my $count = mro::get_pkg_gen("MRO_A");
+    mro::method_changed_in("MRO_A");
+    my $count_new = mro::get_pkg_gen("MRO_A");
+
+    is($count_new, $count + 1);
+}
+
+{
+    # test if we can call mro::invalidate_all_method_caches;
+    eval {
+        mro::invalidate_all_method_caches();
+    };
+    is($@, "");
 }

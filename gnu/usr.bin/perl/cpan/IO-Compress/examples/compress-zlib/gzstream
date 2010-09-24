@@ -1,0 +1,19 @@
+#!/usr/local/bin/perl
+
+use strict ;
+use warnings ;
+
+use Compress::Zlib ;
+
+binmode STDOUT;	# gzopen only sets it on the fd
+
+#my $gz = gzopen(\*STDOUT, "wb")
+my $gz = gzopen('-', "wb")
+	  or die "Cannot open stdout: $gzerrno\n" ;
+
+while (<>) {
+    $gz->gzwrite($_) 
+	or die "error writing: $gzerrno\n" ;
+}
+
+$gz->gzclose ;

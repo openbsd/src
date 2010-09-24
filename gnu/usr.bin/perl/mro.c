@@ -37,16 +37,16 @@ Perl_mro_get_private_data(pTHX_ struct mro_meta *const smeta,
     SV **data;
     PERL_ARGS_ASSERT_MRO_GET_PRIVATE_DATA;
 
-    data = (SV **)Perl_hv_common(aTHX_ MUTABLE_HV(smeta->mro_linear_dfs), NULL,
-				which->name, which->length, which->kflags,
-				HV_FETCH_JUST_SV, NULL, which->hash);
+    data = (SV **)Perl_hv_common(aTHX_ smeta->mro_linear_all, NULL,
+				 which->name, which->length, which->kflags,
+				 HV_FETCH_JUST_SV, NULL, which->hash);
     if (!data)
 	return NULL;
 
     /* If we've been asked to look up the private data for the current MRO, then
        cache it.  */
     if (smeta->mro_which == which)
-	smeta->mro_linear_c3 = MUTABLE_AV(*data);
+	smeta->mro_linear_current = *data;
 
     return *data;
 }
@@ -57,24 +57,24 @@ Perl_mro_set_private_data(pTHX_ struct mro_meta *const smeta,
 {
     PERL_ARGS_ASSERT_MRO_SET_PRIVATE_DATA;
 
-    if (!smeta->mro_linear_dfs) {
+    if (!smeta->mro_linear_all) {
 	if (smeta->mro_which == which) {
 	    /* If all we need to store is the current MRO's data, then don't use
 	       memory on a hash with 1 element - store it direct, and signal
 	       this by leaving the would-be-hash NULL.  */
-	    smeta->mro_linear_c3 = MUTABLE_AV(data);
+	    smeta->mro_linear_current = data;
 	    return data;
 	} else {
 	    HV *const hv = newHV();
 	    /* Start with 2 buckets. It's unlikely we'll need more. */
 	    HvMAX(hv) = 1;	
-	    smeta->mro_linear_dfs = MUTABLE_AV(hv);
+	    smeta->mro_linear_all = hv;
 
-	    if (smeta->mro_linear_c3) {
+	    if (smeta->mro_linear_current) {
 		/* If we were storing something directly, put it in the hash
 		   before we lose it. */
 		Perl_mro_set_private_data(aTHX_ smeta, smeta->mro_which, 
-					  MUTABLE_SV(smeta->mro_linear_c3));
+					  smeta->mro_linear_current);
 	    }
 	}
     }
@@ -85,10 +85,10 @@ Perl_mro_set_private_data(pTHX_ struct mro_meta *const smeta,
     if (smeta->mro_which == which) {
 	/* If we've been asked to store the private data for the current MRO,
 	   then cache it.  */
-	smeta->mro_linear_c3 = MUTABLE_AV(data);
+	smeta->mro_linear_current = data;
     }
 
-    if (!Perl_hv_common(aTHX_ MUTABLE_HV(smeta->mro_linear_dfs), NULL,
+    if (!Perl_hv_common(aTHX_ smeta->mro_linear_all, NULL,
 			which->name, which->length, which->kflags,
 			HV_FETCH_ISSTORE, data, which->hash)) {
 	Perl_croak(aTHX_ "panic: hv_store() failed in set_mro_private_data() "
@@ -106,7 +106,7 @@ Perl_mro_get_from_name(pTHX_ SV *name) {
     PERL_ARGS_ASSERT_MRO_GET_FROM_NAME;
 
     data = (SV **)Perl_hv_common(aTHX_ PL_registered_mros, name, NULL, 0, 0,
-		      		HV_FETCH_JUST_SV, NULL, 0);
+				 HV_FETCH_JUST_SV, NULL, 0);
     if (!data)
 	return NULL;
     assert(SvTYPE(*data) == SVt_IV);
@@ -160,16 +160,17 @@ Perl_mro_meta_dup(pTHX_ struct mro_meta* smeta, CLONE_PARAMS* param)
     Newx(newmeta, 1, struct mro_meta);
     Copy(smeta, newmeta, 1, struct mro_meta);
 
-    if (newmeta->mro_linear_dfs) {
-	newmeta->mro_linear_dfs
-	    = MUTABLE_AV(SvREFCNT_inc(sv_dup((const SV *)newmeta->mro_linear_dfs, param)));
+    if (newmeta->mro_linear_all) {
+	newmeta->mro_linear_all
+	    = MUTABLE_HV(SvREFCNT_inc(sv_dup((const SV *)newmeta->mro_linear_all, param)));
 	/* This is just acting as a shortcut pointer, and will be automatically
 	   updated on the first get.  */
-	newmeta->mro_linear_c3 = NULL;
-    } else if (newmeta->mro_linear_c3) {
+	newmeta->mro_linear_current = NULL;
+    } else if (newmeta->mro_linear_current) {
 	/* Only the current MRO is stored, so this owns the data.  */
-	newmeta->mro_linear_c3
-	    = MUTABLE_AV(SvREFCNT_inc(sv_dup((const SV *)newmeta->mro_linear_c3, param)));
+	newmeta->mro_linear_current
+	    = SvREFCNT_inc(sv_dup((const SV *)newmeta->mro_linear_current,
+				  param));
     }
 
     if (newmeta->mro_nextmethod)
@@ -210,7 +211,7 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
     const HEK* stashhek;
     struct mro_meta* meta;
     SV *our_name;
-    HV *stored;
+    HV *stored = NULL;
 
     PERL_ARGS_ASSERT_MRO_GET_LINEAR_ISA_DFS;
     assert(HvAUX(stash));
@@ -248,8 +249,6 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
        It's then retained to be re-used as a fast lookup for ->isa(), by adding
        our own name and "UNIVERSAL" to it.  */
 
-    stored = MUTABLE_HV(sv_2mortal(MUTABLE_SV(newHV())));
-
     if(av && AvFILLp(av) >= 0) {
 
         SV **svp = AvARRAY(av);
@@ -280,41 +279,79 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
 		subrv_p = AvARRAY(subrv);
 		subrv_items = AvFILLp(subrv) + 1;
 	    }
-	    while(subrv_items--) {
-		SV *const subsv = *subrv_p++;
-		/* LVALUE fetch will create a new undefined SV if necessary
-		 */
-		HE *const he = hv_fetch_ent(stored, subsv, 1, 0);
-		assert(he);
-		if(HeVAL(he) != &PL_sv_undef) {
-		    /* It was newly created.  Steal it for our new SV, and
-		       replace it in the hash with the "real" thing.  */
-		    SV *const val = HeVAL(he);
-		    HEK *const key = HeKEY_hek(he);
+	    if (stored) {
+		while(subrv_items--) {
+		    SV *const subsv = *subrv_p++;
+		    /* LVALUE fetch will create a new undefined SV if necessary
+		     */
+		    HE *const he = hv_fetch_ent(stored, subsv, 1, 0);
+		    assert(he);
+		    if(HeVAL(he) != &PL_sv_undef) {
+			/* It was newly created.  Steal it for our new SV, and
+			   replace it in the hash with the "real" thing.  */
+			SV *const val = HeVAL(he);
+			HEK *const key = HeKEY_hek(he);
 
-		    HeVAL(he) = &PL_sv_undef;
-		    /* Save copying by making a shared hash key scalar. We
-		       inline this here rather than calling Perl_newSVpvn_share
-		       because we already have the scalar, and we already have
-		       the hash key.  */
-		    assert(SvTYPE(val) == SVt_NULL);
-		    sv_upgrade(val, SVt_PV);
-		    SvPV_set(val, HEK_KEY(share_hek_hek(key)));
-		    SvCUR_set(val, HEK_LEN(key));
-		    SvREADONLY_on(val);
-		    SvFAKE_on(val);
-		    SvPOK_on(val);
-		    if (HEK_UTF8(key))
-			SvUTF8_on(val);
+			HeVAL(he) = &PL_sv_undef;
+			/* Save copying by making a shared hash key scalar. We
+			   inline this here rather than calling
+			   Perl_newSVpvn_share because we already have the
+			   scalar, and we already have the hash key.  */
+			assert(SvTYPE(val) == SVt_NULL);
+			sv_upgrade(val, SVt_PV);
+			SvPV_set(val, HEK_KEY(share_hek_hek(key)));
+			SvCUR_set(val, HEK_LEN(key));
+			SvREADONLY_on(val);
+			SvFAKE_on(val);
+			SvPOK_on(val);
+			if (HEK_UTF8(key))
+			    SvUTF8_on(val);
 
-		    av_push(retval, val);
+			av_push(retval, val);
+		    }
 		}
-            }
+            } else {
+		/* We are the first (or only) parent. We can short cut the
+		   complexity above, because our @ISA is simply us prepended
+		   to our parent's @ISA, and our ->isa cache is simply our
+		   parent's, with our name added.  */
+		/* newSVsv() is slow. This code is only faster if we can avoid
+		   it by ensuring that SVs in the arrays are shared hash key
+		   scalar SVs, because we can "copy" them very efficiently.
+		   Although to be fair, we can't *ensure* this, as a reference
+		   to the internal array is returned by mro::get_linear_isa(),
+		   so we'll have to be defensive just in case someone faffed
+		   with it.  */
+		if (basestash) {
+		    SV **svp;
+		    stored = MUTABLE_HV(sv_2mortal((SV*)newHVhv(HvMROMETA(basestash)->isa)));
+		    av_extend(retval, subrv_items);
+		    AvFILLp(retval) = subrv_items;
+		    svp = AvARRAY(retval);
+		    while(subrv_items--) {
+			SV *const val = *subrv_p++;
+			*++svp = SvIsCOW_shared_hash(val)
+			    ? newSVhek(SvSHARED_HEK_FROM_PV(SvPVX(val)))
+			    : newSVsv(val);
+		    }
+		} else {
+		    /* They have no stash.  So create ourselves an ->isa cache
+		       as if we'd copied it from what theirs should be.  */
+		    stored = MUTABLE_HV(sv_2mortal(MUTABLE_SV(newHV())));
+		    (void) hv_store(stored, "UNIVERSAL", 9, &PL_sv_undef, 0);
+		    av_push(retval,
+			    newSVhek(HeKEY_hek(hv_store_ent(stored, sv,
+							    &PL_sv_undef, 0))));
+		}
+	    }
         }
+    } else {
+	/* We have no parents.  */
+	stored = MUTABLE_HV(sv_2mortal(MUTABLE_SV(newHV())));
+	(void) hv_store(stored, "UNIVERSAL", 9, &PL_sv_undef, 0);
     }
 
     (void) hv_store_ent(stored, our_name, &PL_sv_undef, 0);
-    (void) hv_store(stored, "UNIVERSAL", 9, &PL_sv_undef, 0);
 
     SvREFCNT_inc_simple_void_NN(stored);
     SvTEMP_off(stored);
@@ -399,15 +436,15 @@ Perl_mro_isa_changed_in(pTHX_ HV* stash)
 
     /* wipe out the cached linearizations for this stash */
     meta = HvMROMETA(stash);
-    if (meta->mro_linear_dfs) {
-	SvREFCNT_dec(MUTABLE_SV(meta->mro_linear_dfs));
-	meta->mro_linear_dfs = NULL;
+    if (meta->mro_linear_all) {
+	SvREFCNT_dec(MUTABLE_SV(meta->mro_linear_all));
+	meta->mro_linear_all = NULL;
 	/* This is just acting as a shortcut pointer.  */
-	meta->mro_linear_c3 = NULL;
-    } else if (meta->mro_linear_c3) {
+	meta->mro_linear_current = NULL;
+    } else if (meta->mro_linear_current) {
 	/* Only the current MRO is stored, so this owns the data.  */
-	SvREFCNT_dec(MUTABLE_SV(meta->mro_linear_c3));
-	meta->mro_linear_c3 = NULL;
+	SvREFCNT_dec(meta->mro_linear_current);
+	meta->mro_linear_current = NULL;
     }
     if (meta->isa) {
 	SvREFCNT_dec(meta->isa);
@@ -448,15 +485,15 @@ Perl_mro_isa_changed_in(pTHX_ HV* stash)
 
             if(!revstash) continue;
             revmeta = HvMROMETA(revstash);
-	    if (revmeta->mro_linear_dfs) {
-		SvREFCNT_dec(MUTABLE_SV(revmeta->mro_linear_dfs));
-		revmeta->mro_linear_dfs = NULL;
+	    if (revmeta->mro_linear_all) {
+		SvREFCNT_dec(MUTABLE_SV(revmeta->mro_linear_all));
+		revmeta->mro_linear_all = NULL;
 		/* This is just acting as a shortcut pointer.  */
-		revmeta->mro_linear_c3 = NULL;
-	    } else if (revmeta->mro_linear_c3) {
+		revmeta->mro_linear_current = NULL;
+	    } else if (revmeta->mro_linear_current) {
 		/* Only the current MRO is stored, so this owns the data.  */
-		SvREFCNT_dec(MUTABLE_SV(revmeta->mro_linear_c3));
-		revmeta->mro_linear_c3 = NULL;
+		SvREFCNT_dec(revmeta->mro_linear_current);
+		revmeta->mro_linear_current = NULL;
 	    }
             if(!is_universal)
                 revmeta->cache_gen++;
@@ -487,19 +524,12 @@ Perl_mro_isa_changed_in(pTHX_ HV* stash)
         HE *he = hv_fetch_ent(PL_isarev, sv, TRUE, 0);
 
 	/* That fetch should not fail.  But if it had to create a new SV for
-	   us, then we can detect it, because it will not be the correct type.
-	   Probably faster and cleaner for us to free that scalar [very little
-	   code actually executed to free it] and create a new HV than to
-	   copy&paste [SIN!] the code from newHV() to allow us to upgrade the
-	   new SV from SVt_NULL.  */
+	   us, then will need to upgrade it to an HV (which sv_upgrade() can
+	   now do for us. */
 
         mroisarev = MUTABLE_HV(HeVAL(he));
 
-	if(SvTYPE(mroisarev) != SVt_PVHV) {
-	    SvREFCNT_dec(mroisarev);
-	    mroisarev = newHV();
-	    HeVAL(he) = MUTABLE_SV(mroisarev);
-        }
+	SvUPGRADE(MUTABLE_SV(mroisarev), SVt_PVHV);
 
 	/* This hash only ever contains PL_sv_yes. Storing it over itself is
 	   almost as cheap as calling hv_exists, so on aggregate we expect to
@@ -606,15 +636,15 @@ Perl_mro_set_mro(pTHX_ struct mro_meta *const meta, SV *const name)
         Perl_croak(aTHX_ "Invalid mro name: '%"SVf"'", name);
 
     if(meta->mro_which != which) {
-	if (meta->mro_linear_c3 && !meta->mro_linear_dfs) {
+	if (meta->mro_linear_current && !meta->mro_linear_all) {
 	    /* If we were storing something directly, put it in the hash before
 	       we lose it. */
 	    Perl_mro_set_private_data(aTHX_ meta, meta->mro_which, 
-				      MUTABLE_SV(meta->mro_linear_c3));
+				      MUTABLE_SV(meta->mro_linear_current));
 	}
 	meta->mro_which = which;
 	/* Scrub our cached pointer to the private data.  */
-	meta->mro_linear_c3 = NULL;
+	meta->mro_linear_current = NULL;
         /* Only affects local method cache, not
            even child classes */
         meta->cache_gen++;
@@ -625,14 +655,7 @@ Perl_mro_set_mro(pTHX_ struct mro_meta *const meta, SV *const name)
 
 #include "XSUB.h"
 
-XS(XS_mro_get_linear_isa);
-XS(XS_mro_set_mro);
-XS(XS_mro_get_mro);
-XS(XS_mro_get_isarev);
-XS(XS_mro_is_universal);
-XS(XS_mro_invalidate_method_caches);
 XS(XS_mro_method_changed_in);
-XS(XS_mro_get_pkg_gen);
 
 void
 Perl_boot_core_mro(pTHX)
@@ -642,163 +665,7 @@ Perl_boot_core_mro(pTHX)
 
     Perl_mro_register(aTHX_ &dfs_alg);
 
-    newXSproto("mro::get_linear_isa", XS_mro_get_linear_isa, file, "$;$");
-    newXSproto("mro::set_mro", XS_mro_set_mro, file, "$$");
-    newXSproto("mro::get_mro", XS_mro_get_mro, file, "$");
-    newXSproto("mro::get_isarev", XS_mro_get_isarev, file, "$");
-    newXSproto("mro::is_universal", XS_mro_is_universal, file, "$");
-    newXSproto("mro::invalidate_all_method_caches", XS_mro_invalidate_method_caches, file, "");
     newXSproto("mro::method_changed_in", XS_mro_method_changed_in, file, "$");
-    newXSproto("mro::get_pkg_gen", XS_mro_get_pkg_gen, file, "$");
-}
-
-XS(XS_mro_get_linear_isa) {
-    dVAR;
-    dXSARGS;
-    AV* RETVAL;
-    HV* class_stash;
-    SV* classname;
-
-    if(items < 1 || items > 2)
-	croak_xs_usage(cv, "classname [, type ]");
-
-    classname = ST(0);
-    class_stash = gv_stashsv(classname, 0);
-
-    if(!class_stash) {
-        /* No stash exists yet, give them just the classname */
-        AV* isalin = newAV();
-        av_push(isalin, newSVsv(classname));
-        ST(0) = sv_2mortal(newRV_noinc(MUTABLE_SV(isalin)));
-        XSRETURN(1);
-    }
-    else if(items > 1) {
-	const struct mro_alg *const algo = Perl_mro_get_from_name(aTHX_ ST(1));
-	if (!algo)
-	    Perl_croak(aTHX_ "Invalid mro name: '%"SVf"'", ST(1));
-	RETVAL = algo->resolve(aTHX_ class_stash, 0);
-    }
-    else {
-        RETVAL = mro_get_linear_isa(class_stash);
-    }
-
-    ST(0) = newRV_inc(MUTABLE_SV(RETVAL));
-    sv_2mortal(ST(0));
-    XSRETURN(1);
-}
-
-XS(XS_mro_set_mro)
-{
-    dVAR;
-    dXSARGS;
-    SV* classname;
-    HV* class_stash;
-    struct mro_meta* meta;
-
-    if (items != 2)
-	croak_xs_usage(cv, "classname, type");
-
-    classname = ST(0);
-    class_stash = gv_stashsv(classname, GV_ADD);
-    if(!class_stash) Perl_croak(aTHX_ "Cannot create class: '%"SVf"'!", SVfARG(classname));
-    meta = HvMROMETA(class_stash);
-
-    Perl_mro_set_mro(aTHX_ meta, ST(1));
-
-    XSRETURN_EMPTY;
-}
-
-
-XS(XS_mro_get_mro)
-{
-    dVAR;
-    dXSARGS;
-    SV* classname;
-    HV* class_stash;
-
-    if (items != 1)
-	croak_xs_usage(cv, "classname");
-
-    classname = ST(0);
-    class_stash = gv_stashsv(classname, 0);
-
-    ST(0) = sv_2mortal(newSVpv(class_stash
-			       ? HvMROMETA(class_stash)->mro_which->name
-			       : "dfs", 0));
-    XSRETURN(1);
-}
-
-XS(XS_mro_get_isarev)
-{
-    dVAR;
-    dXSARGS;
-    SV* classname;
-    HE* he;
-    HV* isarev;
-    AV* ret_array;
-
-    if (items != 1)
-	croak_xs_usage(cv, "classname");
-
-    classname = ST(0);
-
-    SP -= items;
-
-    
-    he = hv_fetch_ent(PL_isarev, classname, 0, 0);
-    isarev = he ? MUTABLE_HV(HeVAL(he)) : NULL;
-
-    ret_array = newAV();
-    if(isarev) {
-        HE* iter;
-        hv_iterinit(isarev);
-        while((iter = hv_iternext(isarev)))
-            av_push(ret_array, newSVsv(hv_iterkeysv(iter)));
-    }
-    mXPUSHs(newRV_noinc(MUTABLE_SV(ret_array)));
-
-    PUTBACK;
-    return;
-}
-
-XS(XS_mro_is_universal)
-{
-    dVAR;
-    dXSARGS;
-    SV* classname;
-    HV* isarev;
-    char* classname_pv;
-    STRLEN classname_len;
-    HE* he;
-
-    if (items != 1)
-	croak_xs_usage(cv, "classname");
-
-    classname = ST(0);
-
-    classname_pv = SvPV(classname,classname_len);
-
-    he = hv_fetch_ent(PL_isarev, classname, 0, 0);
-    isarev = he ? MUTABLE_HV(HeVAL(he)) : NULL;
-
-    if((classname_len == 9 && strEQ(classname_pv, "UNIVERSAL"))
-        || (isarev && hv_exists(isarev, "UNIVERSAL", 9)))
-        XSRETURN_YES;
-    else
-        XSRETURN_NO;
-}
-
-XS(XS_mro_invalidate_method_caches)
-{
-    dVAR;
-    dXSARGS;
-
-    if (items != 0)
-	croak_xs_usage(cv, "");
-
-    PL_sub_generation++;
-
-    XSRETURN_EMPTY;
 }
 
 XS(XS_mro_method_changed_in)
@@ -819,28 +686,6 @@ XS(XS_mro_method_changed_in)
     mro_method_changed_in(class_stash);
 
     XSRETURN_EMPTY;
-}
-
-XS(XS_mro_get_pkg_gen)
-{
-    dVAR;
-    dXSARGS;
-    SV* classname;
-    HV* class_stash;
-
-    if(items != 1)
-	croak_xs_usage(cv, "classname");
-    
-    classname = ST(0);
-
-    class_stash = gv_stashsv(classname, 0);
-
-    SP -= items;
-
-    mXPUSHi(class_stash ? HvMROMETA(class_stash)->pkg_gen : 0);
-    
-    PUTBACK;
-    return;
 }
 
 /*

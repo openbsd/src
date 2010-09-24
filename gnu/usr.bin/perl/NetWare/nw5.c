@@ -870,12 +870,6 @@ perl_clone_host(PerlInterpreter* proto_perl, UV flags)
 
 // Some more functions:
 
-char *
-nw_get_sitelib(const char *pl)
-{
-    return (NULL);
-}
-
 int
 execv(char *cmdname, char **argv)
 {

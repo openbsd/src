@@ -1,0 +1,94 @@
+=head1 A GUIDE TO WRITING TESTS FOR MODULE::BUILD
+
+This document provides tips on writing new tests for Module::Build.  Please
+note that many existing tests were written prior to these guidelines and
+have many different styles.  Please don't copy/paste old tests by rote without
+considering better ways to test. See C<sample.t> for a starter test file.
+
+=head1 TEST FILE PREAMBLE
+
+Every Module::Build test should begin with the same preamble to ensure that the
+test library is set properly and that the correct version of Module::Build is
+being tested.
+
+  use strict;
+  use lib 't/lib';
+  use MBTest tests => 2; # or 'no_plan'
+
+  blib_load('Module::Build');
+
+The C<MBTest> module is in C<t/lib/> and subclasses Test::More.  When loaded
+it cleans up several environment variables that could cause problems,
+tweaks C<@INC> and exports several helper functions.  See that module for
+details.
+
+=head1 CREATING A TEST DISTRIBUTION
+
+The C<DistGen> module in C<t/lib/> should be used to create sample
+distributions for testing.  It provides numerous helpful methods to
+create a skeleton distribution, add files, change files, and so on.
+Run C<perldoc> on C<t/lib/DistGen.pm> to see the documentation.
+
+  # CREATE A TEST DISTRIBUTION
+
+  use DistGen;
+
+  # create dist object in a temp directory
+  my $dist = DistGen->new;
+
+  # enter the test distribution directory before further testing
+  $dist->chdir_in;
+
+  # generate the skeleton files
+  $dist->regen;
+
+
+=head1 GETTING A MODULE::BUILD OBJECT
+
+From inside the test distribution, you can get the Module::Build object
+configured in Build.PL using the C<new_from_context> method on the
+dist object.  This is just like Module::Build's C<new_from_context> except
+it passes C<< quiet => 1 >> to avoid sending output to the terminal.
+Use the Module::Build object to test the programmatic API.
+
+  my $mb = $dist->new_from_context( quiet => 1 );
+  isa_ok( $mb, "Module::Build" );
+  is( $mb->dist_name, "Simple", "dist_name is 'Simple'" );
+
+=head1 TESTING THE COMMAND LINE API
+
+The command line API is tested by running subprocesses, not via a Module::Build
+object.  The C<DistGen> object has helper methods for running C<Build.PL> and
+C<Build> and passing arguments on the command line.
+
+  $dist->run_build_pl( '--quiet' );
+  $dist->run_build( 'test' );
+
+=head1 TYPICAL TESTING CYCLE
+
+The typical testing cycle is to generate or modify a test distribution, either
+through the C<DistGen> object or directly in the filesystem, then regenerate
+the distribution and test it (or run command line tests and observe the
+result.)
+
+  # Modify the distribution
+
+  $dist->change_build_pl(
+    {
+      module_name   => $dist->name,
+      license       => 'artistic',
+    }
+  );
+  $dist->regen;
+
+  # Get a new build object and test it
+
+  $mb = $dist->new_from_context;
+  is( $mb->license, "artistic", "saw 'artistic' license" );
+
+
+=head1 COPYRIGHT
+
+This documentation is Copyright (C) 2009 by David Golden.  You can redistribute
+it and/or modify it under the same terms as Perl 5.10.0.
+

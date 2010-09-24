@@ -14,7 +14,6 @@ our $pragma_name;
 
 $| = 1;
 
-my $Is_MacOS = $^O eq 'MacOS';
 my $tmpfile = tempfile();
 
 my @prgs = () ;
@@ -22,11 +21,7 @@ my @w_files = () ;
 
 if (@ARGV)
   { print "ARGV = [@ARGV]\n" ;
-    if ($Is_MacOS) {
-      @w_files = map { s#^#:lib:$pragma_name:#; $_ } @ARGV
-    } else {
       @w_files = map { s#^#./lib/$pragma_name/#; $_ } @ARGV
-    }
   }
 else
   { @w_files = sort glob(catfile(curdir(), "lib", $pragma_name, "*")) }
@@ -107,12 +102,6 @@ for (@prgs){
 	$prog = shift @files ;
     }
 
-    # fix up some paths
-    if ($Is_MacOS) {
-	$prog =~ s|require "./abc(d)?";|require ":abc$1";|g;
-	$prog =~ s|"\."|":"|g;
-    }
-
     open TEST, ">$tmpfile" or die "Cannot open >$tmpfile: $!";
     print TEST q{
         BEGIN {
@@ -140,12 +129,6 @@ for (@prgs){
     $results =~ s/^(syntax|parse) error/syntax error/mig;
     # allow all tests to run when there are leaks
     $results =~ s/Scalars leaked: \d+\n//g;
-
-    # fix up some paths
-    if ($Is_MacOS) {
-	$results =~ s|:abc\.pm\b|abc.pm|g;
-	$results =~ s|:abc(d)?\b|./abc$1|g;
-    }
 
     $expected =~ s/\n+$//;
     my $prefix = ($results =~ s#^PREFIX(\n|$)##) ;

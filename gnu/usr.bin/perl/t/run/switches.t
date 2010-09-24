@@ -11,7 +11,7 @@ BEGIN {
 
 BEGIN { require "./test.pl"; }
 
-plan(tests => 69);
+plan(tests => 71);
 
 use Config;
 
@@ -267,8 +267,10 @@ SWTESTPM
     # there are definitely known build configs where this test will fail
     # DG/UX comes to mind. Maybe we should remove these special cases?
     my $v = sprintf "%vd", $^V;
+    my $ver = $Config{PERL_VERSION};
+    my $rel = $Config{PERL_SUBVERSION};
     like( runperl( switches => ['-v'] ),
-	  qr/This is perl, v$v(?:[-\w]+| \([^)]+\))? built for \Q$Config{archname}\E.+Copyright.+Larry Wall.+Artistic License.+GNU General Public License/s,
+	  qr/This is perl 5, version \Q$ver\E, subversion \Q$rel\E \(v\Q$v\E(?:[-*\w]+| \([^)]+\))?\) built for \Q$Config{archname}\E.+Copyright.+Larry Wall.+Artistic License.+GNU General Public License/s,
           '-v looks okay' );
 
 }
@@ -286,7 +288,7 @@ SWTESTPM
 
 # Tests for switches which do not exist
 
-foreach my $switch (split //, "ABbGgHJjKkLNOoQqRrYyZz123456789_")
+foreach my $switch (split //, "ABbGgHJjKkLNOoPQqRrYyZz123456789_")
 {
     local $TODO = '';   # these ones should work on VMS
 
@@ -357,6 +359,11 @@ $r = runperl(
     stdin       => 'zomtek',
 );
 is( $r, "affe\n", '-E works outside of the block created by -n' );
+
+$r = runperl(
+    switches	=> [ '-E', q("*{'bar'} = sub{}; print 'Hello, world!',qq|\n|;")]
+);
+is( $r, "Hello, world!\n", "-E does not enable strictures" );
 
 # RT #30660
 

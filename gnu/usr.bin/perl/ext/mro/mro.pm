@@ -1,7 +1,7 @@
 #      mro.pm
 #
 #      Copyright (c) 2007 Brandon L Black
-#      Copyright (c) 2008 Larry Wall and others
+#      Copyright (c) 2008,2009 Larry Wall and others
 #
 #      You may distribute under the terms of either the GNU General Public
 #      License or the Artistic License, as specified in the README file.
@@ -12,7 +12,7 @@ use warnings;
 
 # mro.pm versions < 1.00 reserved for MRO::Compat
 #  for partial back-compat to 5.[68].x
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 sub import {
     mro::set_mro(scalar(caller), $_[1]) if $_[1];
@@ -94,7 +94,7 @@ as well.
 
 =head2 How does C3 work
 
-C3 works by always preserving local precendence ordering. This essentially
+C3 works by always preserving local precedence ordering. This essentially
 means that no class will appear before any of its subclasses. Take, for
 instance, the classic diamond inheritance pattern:
 
@@ -131,7 +131,7 @@ Note that C<UNIVERSAL> (and any members of C<UNIVERSAL>'s MRO) are not
 part of the MRO of a class, even though all classes implicitly inherit
 methods from C<UNIVERSAL> and its parents.
 
-=head2 mro::set_mro($classname, $type)
+=head2 mro::set_mro ($classname, $type)
 
 Sets the MRO of the given class to the C<$type> argument (either
 C<c3> or C<dfs>).
@@ -328,15 +328,13 @@ works (like C<goto &maybe::next::method>);
 
 =back
 
-=head2 The prototype Perl 6 Object Model uses C3
+=head2 Pugs
 
-=over 4
+The Pugs prototype Perl 6 Object Model uses C3
 
-=item L<http://svn.openfoundry.org/pugs/perl5/Perl6-MetaModel/>
+=head2 Parrot
 
-=back
-
-=head2 Parrot now uses C3
+Parrot now uses C3
 
 =over 4
 

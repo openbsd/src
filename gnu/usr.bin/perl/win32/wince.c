@@ -70,12 +70,13 @@ static int		do_spawn2(pTHX_ char *cmd, int exectype);
 static BOOL		has_shell_metachars(char *ptr);
 static long		filetime_to_clock(PFILETIME ft);
 static BOOL		filetime_from_time(PFILETIME ft, time_t t);
-static char *		get_emd_part(SV **leading, char *trailing, ...);
+static char *		get_emd_part(SV **leading, STRLEN *const len,
+				     char *trailing, ...);
 static void		remove_dead_process(long deceased);
 static long		find_pid(int pid);
 static char *		qualified_path(const char *cmd);
 static char *		win32_get_xlib(const char *pl, const char *xlib,
-				       const char *libname);
+				       const char *libname, STRLEN *const len);
 
 #ifdef USE_ITHREADS
 static void		remove_dead_pseudo_process(long child);
@@ -171,7 +172,7 @@ get_regstr(const char *valuename, SV **svp)
 
 /* *prev_pathp (if non-NULL) is expected to be POK (valid allocated SvPVX(sv)) */
 static char *
-get_emd_part(SV **prev_pathp, char *trailing_path, ...)
+get_emd_part(SV **prev_pathp, STRLEN *const len, char *trailing_path, ...)
 {
     char base[10];
     va_list ap;
@@ -228,6 +229,8 @@ get_emd_part(SV **prev_pathp, char *trailing_path, ...)
 	    *prev_pathp = sv_2mortal(newSVpvn("",0));
 	sv_catpvn(*prev_pathp, ";", 1);
 	sv_catpv(*prev_pathp, mod_name);
+	if(len)
+	    *len = SvCUR(*prev_pathp);
 	return SvPVX(*prev_pathp);
     }
 
@@ -235,7 +238,7 @@ get_emd_part(SV **prev_pathp, char *trailing_path, ...)
 }
 
 char *
-win32_get_privlib(const char *pl)
+win32_get_privlib(const char *pl, STRLEN *const len)
 {
     dTHX;
     char *stdlib = "lib";
@@ -248,11 +251,12 @@ win32_get_privlib(const char *pl)
 	(void)get_regstr(stdlib, &sv);
 
     /* $stdlib .= ";$EMD/../../lib" */
-    return get_emd_part(&sv, stdlib, ARCHNAME, "bin", NULL);
+    return get_emd_part(&sv, len, stdlib, ARCHNAME, "bin", NULL);
 }
 
 static char *
-win32_get_xlib(const char *pl, const char *xlib, const char *libname)
+win32_get_xlib(const char *pl, const char *xlib, const char *libname,
+	       STRLEN *const len)
 {
     dTHX;
     char regstr[40];
@@ -269,7 +273,7 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname)
     /* $xlib .=
      * ";$EMD/" . ((-d $EMD/../../../$]) ? "../../.." : "../.."). "/$libname/$]/lib";  */
     sprintf(pathstr, "%s/%s/lib", libname, pl);
-    (void)get_emd_part(&sv1, pathstr, ARCHNAME, "bin", pl, NULL);
+    (void)get_emd_part(&sv1, NULL, pathstr, ARCHNAME, "bin", pl, NULL);
 
     /* $HKCU{$xlib} || $HKLM{$xlib} . ---; */
     (void)get_regstr(xlib, &sv2);
@@ -277,25 +281,26 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname)
     /* $xlib .=
      * ";$EMD/" . ((-d $EMD/../../../$]) ? "../../.." : "../.."). "/$libname/lib";  */
     sprintf(pathstr, "%s/lib", libname);
-    (void)get_emd_part(&sv2, pathstr, ARCHNAME, "bin", pl, NULL);
+    (void)get_emd_part(&sv2, NULL, pathstr, ARCHNAME, "bin", pl, NULL);
 
     if (!sv1 && !sv2)
 	return NULL;
-    if (!sv1)
-	return SvPVX(sv2);
-    if (!sv2)
-	return SvPVX(sv1);
+    if (!sv1) {
+	sv1 = sv2;
+    } else if (sv2) {
+	sv_catpvn(sv1, ";", 1);
+	sv_catsv(sv1, sv2);
+    }
 
-    sv_catpvn(sv1, ";", 1);
-    sv_catsv(sv1, sv2);
-
+    if (len)
+	*len = SvCUR(sv1);
     return SvPVX(sv1);
 }
 
 char *
-win32_get_sitelib(const char *pl)
+win32_get_sitelib(const char *pl, STRLEN *const len)
 {
-    return win32_get_xlib(pl, "sitelib", "site");
+    return win32_get_xlib(pl, "sitelib", "site", len);
 }
 
 #ifndef PERL_VENDORLIB_NAME
@@ -303,9 +308,9 @@ win32_get_sitelib(const char *pl)
 #endif
 
 char *
-win32_get_vendorlib(const char *pl)
+win32_get_vendorlib(const char *pl, STRLEN *const len)
 {
-    return win32_get_xlib(pl, "vendorlib", PERL_VENDORLIB_NAME);
+    return win32_get_xlib(pl, "vendorlib", PERL_VENDORLIB_NAME, len);
 }
 
 static BOOL

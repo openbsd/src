@@ -446,6 +446,83 @@ Use of uninitialized value $m1 in exists at - line 7.
 Use of uninitialized value $g1 in exists at - line 8.
 ########
 use warnings 'uninitialized';
+my ($m1, $m2);
+my ($v, @a);
+my ($t, $u) = (1, 1);
+
+local $.;
+
+@ma = (1   .. 2);
+@ma = ($t  .. 2);
+@ma = ($m1 .. 2);
+@ma = (1   .. $u);
+@ma = (1   .. $m2);
+
+@ma = (1   ... 2);
+@ma = ($t  ... 2);
+@ma = ($m1 ... 2);
+@ma = (1   ... $u);
+@ma = (1   ... $m2);
+
+$v = (1   .. 2);
+$v = ($t  .. 2);
+$v = ($m1 .. 2);
+$v = (1   .. $u);
+$v = (1   .. $m2);
+
+$v = (1   ... 2);
+$v = ($t  ... 2);
+$v = ($m1 ... 2);
+$v = (1   ... $u);
+$v = (1   ... $m2);
+EXPECT
+Use of uninitialized value $m1 in range (or flop) at - line 10.
+Use of uninitialized value $m2 in range (or flop) at - line 12.
+Use of uninitialized value $m1 in range (or flop) at - line 16.
+Use of uninitialized value $m2 in range (or flop) at - line 18.
+Use of uninitialized value $. in range (or flip) at - line 20.
+Use of uninitialized value $. in range (or flop) at - line 21.
+Use of uninitialized value $. in range (or flip) at - line 23.
+Use of uninitialized value $. in range (or flip) at - line 24.
+Use of uninitialized value $. in range (or flip) at - line 26.
+Use of uninitialized value $. in range (or flip) at - line 29.
+Use of uninitialized value $. in range (or flip) at - line 30.
+########
+use warnings 'uninitialized';
+my ($m1, $m2);
+my ($v, @a);
+my ($t, $u) = (1, 1);
+
+@ma = ($t  .. $u);
+@ma = ($m1 .. $u);
+@ma = ($t  .. $m2);
+@ma = ($m1 .. $m2);
+
+@ma = ($t  ... $u);
+@ma = ($m1 ... $u);
+@ma = ($t  ... $m2);
+@ma = ($m1 ... $m2);
+
+$v = ($t  .. $u);
+$v = ($m1 .. $u);
+$v = ($t  .. $m2);
+$v = ($m1 .. $m2);
+
+$v = ($t  ... $u);
+$v = ($m1 ... $u);
+$v = ($t  ... $m2);
+$v = ($m1 ... $m2);
+EXPECT
+Use of uninitialized value $m1 in range (or flop) at - line 7.
+Use of uninitialized value $m2 in range (or flop) at - line 8.
+Use of uninitialized value in range (or flop) at - line 9.
+Use of uninitialized value in range (or flop) at - line 9.
+Use of uninitialized value $m1 in range (or flop) at - line 12.
+Use of uninitialized value $m2 in range (or flop) at - line 13.
+Use of uninitialized value in range (or flop) at - line 14.
+Use of uninitialized value in range (or flop) at - line 14.
+########
+use warnings 'uninitialized';
 my ($m1, $v);
 our ($g1);
 
@@ -830,8 +907,8 @@ $v = eval {log $m1};
 $v = sqrt $m1;
 $v = hex $m1;
 $v = oct $m1;
-$v = length $m1;
-$v = length;
+$v = oct;
+$v = length; # does not warn
 EXPECT
 Use of uninitialized value $g1 in atan2 at - line 5.
 Use of uninitialized value $m1 in atan2 at - line 5.
@@ -844,8 +921,7 @@ Use of uninitialized value $m1 in log at - line 11.
 Use of uninitialized value $m1 in sqrt at - line 12.
 Use of uninitialized value $m1 in hex at - line 13.
 Use of uninitialized value $m1 in oct at - line 14.
-Use of uninitialized value $m1 in length at - line 15.
-Use of uninitialized value $_ in length at - line 16.
+Use of uninitialized value $_ in oct at - line 15.
 ########
 use warnings 'uninitialized';
 my ($m1, $v);
@@ -929,7 +1005,6 @@ $v = ord $m1;
 $v = chr;
 $v = chr $m1;
 
-# XXX these functions don't warn!
 $v = ucfirst;
 $v = ucfirst $m1;
 $v = lcfirst;
@@ -948,8 +1023,16 @@ Use of uninitialized value $_ in ord at - line 7.
 Use of uninitialized value $m1 in ord at - line 8.
 Use of uninitialized value $_ in chr at - line 9.
 Use of uninitialized value $m1 in chr at - line 10.
-Use of uninitialized value $_ in quotemeta at - line 22.
-Use of uninitialized value $m1 in quotemeta at - line 23.
+Use of uninitialized value $_ in ucfirst at - line 12.
+Use of uninitialized value $m1 in ucfirst at - line 13.
+Use of uninitialized value $_ in lcfirst at - line 14.
+Use of uninitialized value $m1 in lcfirst at - line 15.
+Use of uninitialized value $_ in uc at - line 16.
+Use of uninitialized value $m1 in uc at - line 17.
+Use of uninitialized value $_ in lc at - line 18.
+Use of uninitialized value $m1 in lc at - line 19.
+Use of uninitialized value $_ in quotemeta at - line 21.
+Use of uninitialized value $m1 in quotemeta at - line 22.
 ########
 use warnings 'uninitialized';
 my ($m1, $v1, $v2, $v3, $v4);
@@ -1118,7 +1201,6 @@ Use of uninitialized value $g1 in sysopen at - line 16.
 Use of uninitialized value $m1 in sysopen at - line 16.
 Use of uninitialized value $m1 in umask at - line 19.
 Use of uninitialized value $g1 in umask at - line 20.
-Use of uninitialized value $m1 in binmode at - line 23.
 Use of uninitialized value $m1 in binmode at - line 23.
 ########
 use warnings 'uninitialized';
@@ -1395,6 +1477,17 @@ my $b
 EXPECT
 Use of uninitialized value $undef in addition (+) at - line 4.
 Use of uninitialized value $undef in addition (+) at - line 7.
+########
+use warnings 'uninitialized';
+my ($r1, $r2);
+$_ = undef;
+$v = reverse;
+$v = reverse $r1;
+$v = reverse "abc", $r2, "def";
+EXPECT
+Use of uninitialized value in reverse at - line 4.
+Use of uninitialized value $r1 in reverse at - line 5.
+Use of uninitialized value $r2 in reverse at - line 6.
 ########
 use warnings 'uninitialized';
 #
@@ -1758,10 +1851,9 @@ Use of uninitialized value in addition (+) at - line 4.
 use warnings 'uninitialized';
 my $v;
 my @emptya;
-$v = 1 + each @emptya; # *** Not supported under 5.10.x
+$v = 1 + each @emptya;
 EXPECT
-Type of arg 1 to each must be hash (not private array) at - line 4, near "@emptya;"
-Execution of - aborted due to compilation errors.
+Use of uninitialized value in addition (+) at - line 4.
 ########
 use warnings 'uninitialized';
 my $v;

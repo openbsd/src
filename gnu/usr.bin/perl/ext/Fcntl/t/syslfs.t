@@ -3,8 +3,6 @@
 # If you modify/add tests here, remember to update also t/op/lfs.t.
 
 BEGIN {
-	chdir 't' if -d 't';
-	@INC = '../lib';
 	require Config; import Config;
 	# Don't bother if there are no quad offsets.
 	if ($Config{lseeksize} < 8) {
@@ -108,7 +106,8 @@ print "# s2 = @s2\n";
 zap();
 
 unless ($s1[7] == 1_000_003 && $s2[7] == 2_000_003 &&
-	$s1[11] == $s2[11] && $s1[12] == $s2[12]) {
+	$s1[11] == $s2[11] && $s1[12] == $s2[12] &&
+	$s1[12] > 0) {
 	print "1..0 # Skip: no sparse files?\n";
 	bye;
 }
@@ -121,13 +120,19 @@ print "# we seem to have sparse files...\n";
 
 $ENV{LC_ALL} = "C";
 
-my $r = system '../perl', '-I../lib', '-e', <<'EOF';
+my $perl = '../../perl';
+unless (-x $perl) {
+    print "1..1\nnot ok 1 - can't find perl: expected $perl\n";
+    exit 0;
+}
+my $r = system $perl, '-I../lib', '-e', <<'EOF';
 use Fcntl qw(/^O_/ /^SEEK_/);
 sysopen(BIG, "big", O_WRONLY|O_CREAT|O_TRUNC) or die $!;
 my $sysseek = sysseek(BIG, 5_000_000_000, SEEK_SET);
 my $syswrite = syswrite(BIG, "big");
 exit 0;
 EOF
+
 
 sysopen(BIG, "big", O_WRONLY|O_CREAT|O_TRUNC) or
 	do { warn "sysopen 'big' failed: $!\n"; bye };

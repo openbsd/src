@@ -37,11 +37,13 @@ You may have to re-read this entire section a few times...
 =head3 Unicode
 
 B<Unicode> is a character set with room for lots of characters. The ordinal
-value of a character is called a B<code point>. 
+value of a character is called a B<code point>.   (But in practice, the
+distinction between code point and character is blurred, so the terms often
+are used interchangeably.)
 
-There are many, many code points, but computers work with bytes, and a byte can
-have only 256 values. Unicode has many more characters, so you need a method
-to make these accessible.
+There are many, many code points, but computers work with bytes, and a byte has
+room for only 256 values.  Unicode has many more characters, so you need a
+method to make these accessible.
 
 Unicode is encoded using several competing encodings, of which UTF-8 is the
 most used. In a Unicode encoding, multiple subsequent bytes can be used to
@@ -63,9 +65,6 @@ us, so we don't have to worry about this.
 B<Text strings>, or B<character strings> are made of characters. Bytes are
 irrelevant here, and so are encodings. Each character is just that: the
 character.
-
-Text strings are also called B<Unicode strings>, because in Perl, every text
-string is a Unicode string.
 
 On a text string, you would do things like:
 

@@ -31,7 +31,7 @@ optimization process.
 Firstly, you need to establish a baseline time for the existing code, which
 timing needs to be reliable and repeatable.  You'll probably want to use the
 C<Benchmark> or C<Devel::DProf> modules, or something similar, for this step,
-or perhaps the unix system C<time> utility, whichever is appropriate.  See the
+or perhaps the Unix system C<time> utility, whichever is appropriate.  See the
 base of this document for a longer list of benchmarking and profiling modules,
 and recommended further reading.
 
@@ -168,7 +168,7 @@ it managed to execute an average of 628,930 times a second during our test, the
 direct approach managed to run an additional 204,403 times, unfortunately.
 Unfortunately, because there are many examples of code written using the
 multiple layer direct variable access, and it's usually horrible.  It is,
-however, miniscully faster.  The question remains whether the minute gain is
+however, minusculy faster.  The question remains whether the minute gain is
 actually worth the eyestrain, or the loss of maintainability.
 
 =head2  Search and replace or tr
@@ -214,8 +214,7 @@ Running the code gives us our results:
             tr:  0 wallclock secs ( 0.49 usr +  0.00 sys =  0.49 CPU) @ 2040816.33/s (n=1000000)
 
 The C<tr> version is a clear winner.  One solution is flexible, the other is
-fast - and it's appropriately the programmers choice which to use in the
-circumstances.
+fast - and it's appropriately the programmer's choice which to use.
 
 Check the C<Benchmark> docs for further useful techniques.
 
@@ -446,7 +445,7 @@ reader program.  C<dprofpp> usage is therefore identical to the above example.
 Interestingly we get slightly different results, which is mostly because the
 algorithm which generates the report is different, even though the output file
 format was allegedly identical.  The elapsed, user and system times are clearly
-showing the time it took for C<Devel::Profiler> to execute it's own run, but
+showing the time it took for C<Devel::Profiler> to execute its own run, but
 the column listings feel more accurate somehow than the ones we had earlier
 from C<Devel::DProf>.  The 102% figure has disappeared, for example.  This is
 where we have to use the tools at our disposal, and recognise their pros and
@@ -598,7 +597,7 @@ the code.
 C<NYTProf> will generate a report database into the file F<nytprof.out> by
 default.  Human readable reports can be generated from here by using the
 supplied C<nytprofhtml> (HTML output) and C<nytprofcsv> (CSV output) programs.
-We've used the unix sytem C<html2text> utility to convert the
+We've used the Unix sytem C<html2text> utility to convert the
 F<nytprof/index.html> file for convenience here.
 
     $> html2text nytprof/index.html
@@ -762,7 +761,7 @@ be quite useful as a simple filter:
 
 A command such as this can vastly reduce the volume of material to actually
 sort through in the first place, and should not be too lightly disregarded
-purely on the basis of it's simplicity.  The C<KISS> principle is too often
+purely on the basis of its simplicity.  The C<KISS> principle is too often
 overlooked - the next example uses the simple system C<time> utility to
 demonstrate.  Let's take a look at an actual example of sorting the contents of
 a large file, an apache logfile would do.  This one has over a quarter of a
@@ -945,7 +944,7 @@ Run the new code against the same logfile, as above, to check the new time.
 
 The time has been cut in half, which is a respectable speed improvement by any
 standard.  Naturally, it is important to check the output is consistent with
-the first program run, this is where the unix system C<cksum> utility comes in.
+the first program run, this is where the Unix system C<cksum> utility comes in.
 
     $> cksum out-sort out-schwarz
     3044173777 52029194 out-sort
@@ -1172,8 +1171,6 @@ Very useful online reference material:
     http://perlgolf.sourceforge.net/
 
     http://www.sysarch.com/Perl/sort_paper.html
-
-    http://www.unix.org.ua/orelly/perl/prog/ch08_03.htm
 
 =head1 AUTHOR
 

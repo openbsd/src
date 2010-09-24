@@ -2,7 +2,7 @@ package DBM_Filter ;
 
 use strict;
 use warnings;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 package Tie::Hash ;
 
@@ -93,7 +93,7 @@ sub _do_Filter_Push
     
         no strict 'refs';
         # does the "DBM_Filter::$class" exist?
-	if ( ! defined %{ "${class}::"} ) {
+	if ( ! %{ "${class}::"} ) {
 	    # Nope, so try to load it.
             eval " require $class ; " ;
             croak "$caller: Cannot Load DBM Filter '$class': $@" if $@;

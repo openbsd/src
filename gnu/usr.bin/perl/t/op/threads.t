@@ -16,7 +16,7 @@ BEGIN {
        exit 0;
      }
 
-     plan(14);
+     plan(18);
 }
 
 use strict;
@@ -129,6 +129,8 @@ foreach my $BLOCK (qw(CHECK INIT)) {
 EOI
 }
 
+} # TODO
+
 # Scalars leaked: 1
 fresh_perl_is(<<'EOI', 'ok', { }, 'Bug #41138');
     use threads;
@@ -141,7 +143,6 @@ fresh_perl_is(<<'EOI', 'ok', { }, 'Bug #41138');
     print 'ok';
 EOI
 
-} # TODO
 
 # [perl #45053] Memory corruption with heavy module loading in threads
 #
@@ -169,6 +170,7 @@ threads->new(\&matchit, "Pie", qr/pie/i)->join();
 # tests in threads don't get counted, so
 curr_test(curr_test() + 2);
 
+
 # the seen_evals field of a regexp was getting zeroed on clone, so
 # within a thread it didn't  know that a regex object contrained a 'safe'
 # re_eval expression, so it later died with 'Eval-group not allowed' when
@@ -189,5 +191,50 @@ curr_test(curr_test() + 1);
 undef *a;
 threads->new(sub {})->join;
 pass("undefing a typeglob doesn't cause a crash during cloning");
+
+
+# Test we don't get:
+# panic: del_backref during global destruction.
+# when returning a non-closure sub from a thread and subsequently starting
+# a new thread.
+fresh_perl_is(<<'EOI', 'ok', { }, 'No del_backref panic [perl #70748]');
+use threads;
+sub foo { return (sub { }); }
+my $bar = threads->create(\&foo)->join();
+threads->create(sub { })->join();
+print "ok";
+EOI
+
+# Another, more reliable test for the same del_backref bug:
+fresh_perl_like(
+ <<'   EOJ', qr/ok/, {}, 'No del_backref panic [perl #70748] (2)'
+   use threads;
+   push @bar, threads->create(sub{sub{}})->join() for 1...10;
+   print "ok";
+   EOJ
+);
+
+# Simple closure-returning test: At least this case works (though it
+# leaks), and we don't want to break it.
+fresh_perl_like(<<'EOJ', qr/^foo\n/, {}, 'returning a closure');
+use threads;
+print create threads sub {
+ my $x = "foo\n";
+ sub{sub{$x}}
+}=>->join->()()
+ //"undef"
+EOJ
+
+# At the point of thread creation, $h{1} is on the temps stack.
+# The weak reference $a, however, is visible from the symbol table.
+fresh_perl_is(<<'EOI', 'ok', { }, 'Test for 34394ecd06e704e9');
+    use threads;
+    %h = (1, 2);
+    use Scalar::Util 'weaken';
+    $a = \$h{1};
+    weaken($a);
+    delete $h{1} && threads->create(sub {}, shift)->join();
+    print 'ok';
+EOI
 
 # EOF

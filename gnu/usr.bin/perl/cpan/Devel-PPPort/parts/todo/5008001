@@ -1,0 +1,14 @@
+5.008001
+SvVOK                          # U
+doing_taint                    # U
+find_runcv                     # U
+is_utf8_string_loc             # U
+packlist                       # U
+save_bool                      # U
+savestack_grow_cnt             # U
+seed                           # U
+sv_cat_decode                  # U
+sv_compile_2op                 # E (Perl_sv_compile_2op)
+sv_setpviv                     # U
+sv_setpviv_mg                  # U
+unpackstring                   # U
