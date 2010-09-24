@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.53 2010/06/28 18:50:37 claudio Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.54 2010/09/24 14:10:52 jsing Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/workq.h>
 #include <dev/rndvar.h>
 
 #include <net/if.h>
@@ -75,6 +76,8 @@ void purge_detached(struct ifnet *);
 void in6_init_address_ltimes(struct nd_prefix *, struct in6_addrlifetime *);
 
 int rt6_deleteroute(struct radix_node *, void *, u_int);
+
+void nd6_addr_add(void *, void *);
 
 extern int nd6_recalc_reachtm_interval;
 
@@ -1040,7 +1043,7 @@ prelist_remove(struct nd_prefix *pr)
 int
 prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 {
-	struct in6_ifaddr *ia6 = NULL, *ia6_match = NULL;
+	struct in6_ifaddr *ia6_match = NULL;
 	struct ifaddr *ifa;
 	struct ifnet *ifp = new->ndpr_ifp;
 	struct nd_prefix *pr;
@@ -1277,30 +1280,35 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 		/*
 		 * No address matched, or there is no preferred RFC 4941
 		 * temporary address. And the valid prefix lifetime is non-zero.
-		 * Create a new address.
+		 * Create a new address in process context.
 		 */
-		if ((ia6 = in6_ifadd(new)) != NULL) {
-			/*
-			 * note that we should use pr (not new) for reference.
-			 */
-			pr->ndpr_refcnt++;
-			ia6->ia6_ndpr = pr;
-
-			/*
-			 * A newly added address might affect the status
-			 * of other addresses, so we check and update it.
-			 * XXX: what if address duplication happens?
-			 */
-			pfxlist_onlink_check();
-		} else {
-			/* just set an error. do not bark here. */
-			error = EADDRNOTAVAIL; /* XXX: might be unused. */
-		}
+		pr->ndpr_refcnt++;
+		if (workq_add_task(NULL, 0, nd6_addr_add, pr, NULL))
+			pr->ndpr_refcnt--;
 	}
 
  end:
 	splx(s);
 	return error;
+}
+
+void
+nd6_addr_add(void *prptr, void *arg2)
+{
+	struct nd_prefix *pr = (struct nd_prefix *)prptr;
+	struct in6_ifaddr *ia6 = NULL;
+
+	if ((ia6 = in6_ifadd(pr)) != NULL) {
+		ia6->ia6_ndpr = pr;
+
+		/*
+		 * A newly added address might affect the status
+		 * of other addresses, so we check and update it.
+		 * XXX: what if address duplication happens?
+		 */
+		pfxlist_onlink_check();
+	} else
+		pr->ndpr_refcnt--;
 }
 
 /*
