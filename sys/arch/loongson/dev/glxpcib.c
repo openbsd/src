@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.11 2010/09/21 11:23:20 pirofti Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.12 2010/09/24 10:30:28 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -45,8 +45,12 @@
 #define	AMD5536_REV_MASK	0xff
 #define	AMD5536_TMC		PMC_LTMR
 
+#define	MSR_LBAR_ENABLE		0x100000000ULL
+
 /* Multi-Functional General Purpose Timer */
 #define	MSR_LBAR_MFGPT		DIVIL_LBAR_MFGPT
+#define	MSR_MFGPT_SIZE		0x40
+#define	MSR_MFGPT_ADDR_MASK	0xffc0
 #define	AMD5536_MFGPT0_CMP1	0x00000000
 #define	AMD5536_MFGPT0_CMP2	0x00000002
 #define	AMD5536_MFGPT0_CNT	0x00000004
@@ -112,6 +116,8 @@
 
 /* GPIO */
 #define	MSR_LBAR_GPIO		DIVIL_LBAR_GPIO
+#define	MSR_GPIO_SIZE		0x100
+#define	MSR_GPIO_ADDR_MASK	0xff00
 #define	AMD5536_GPIO_NPINS	32
 #define	AMD5536_GPIOH_OFFSET	0x80	/* high bank register offset */
 #define	AMD5536_GPIO_OUT_VAL	0x00	/* output value */
@@ -225,9 +231,9 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach the watchdog timer */
 	sc->sc_iot = pa->pa_iot;
 	wa = rdmsr(MSR_LBAR_MFGPT);
-	if (wa & 0x100000000ULL &&
-	    !bus_space_map(sc->sc_iot, wa & 0xffff, 64, 0, &sc->sc_ioh)) {
-
+	if (wa & MSR_LBAR_ENABLE &&
+	    !bus_space_map(sc->sc_iot, wa & MSR_MFGPT_ADDR_MASK,
+	    MSR_MFGPT_SIZE, 0, &sc->sc_ioh)) {
 		/* count in seconds (as upper level desires) */
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMD5536_MFGPT0_SETUP,
 		    AMD5536_MFGPT_CNT_EN | AMD5536_MFGPT_CMP2EV |
@@ -239,9 +245,9 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	/* map GPIO I/O space */
 	sc->sc_gpio_iot = pa->pa_iot;
 	ga = rdmsr(MSR_LBAR_GPIO);
-	if (ga & 0x100000000ULL &&
-	    !bus_space_map(sc->sc_gpio_iot, ga & 0xffff, 0xff, 0,
-	    &sc->sc_gpio_ioh)) {
+	if (ga & MSR_LBAR_ENABLE &&
+	    !bus_space_map(sc->sc_gpio_iot, ga & MSR_GPIO_ADDR_MASK,
+	    MSR_GPIO_SIZE, 0, &sc->sc_gpio_ioh)) {
 		printf(", gpio");
 
 		/* initialize pin array */
