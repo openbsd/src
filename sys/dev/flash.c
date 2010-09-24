@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.19 2010/09/22 06:40:25 krw Exp $	*/
+/*	$OpenBSD: flash.c,v 1.20 2010/09/24 18:27:43 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -852,7 +852,7 @@ flashioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 	switch (cmd) {
 	case DIOCGPDINFO:
 		flashgetdisklabel(dev, sc, (struct disklabel *)data, 1);
-		break
+		break;
 
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *sc->sc_dk.dk_label;
