@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.22 2010/05/18 22:24:55 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.23 2010/09/24 13:33:00 matthew Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
@@ -9,7 +9,8 @@ SRCS+=	bm.c memccpy.c memrchr.c strcasecmp.c strcasestr.c strcoll.c strdup.c \
 	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c \
 	wcsstr.c wcstok.c wcswcs.c wcswidth.c wmemchr.c wmemcmp.c wmemcpy.c \
-	wmemmove.c wmemset.c
+	wmemmove.c wmemset.c \
+	timingsafe_bcmp.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
@@ -178,3 +179,4 @@ MLINKS+=wmemchr.3 wcspbrk.3
 MLINKS+=wmemchr.3 wcsrchr.3
 MLINKS+=wmemchr.3 wcsspn.3
 MLINKS+=wmemchr.3 wcsstr.3
+MLINKS+=bcmp.3 timingsafe_bcmp.3

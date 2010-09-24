@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.19 2010/05/18 22:24:55 tedu Exp $	*/
+/*	$OpenBSD: string.h,v 1.20 2010/09/24 13:33:00 matthew Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -124,6 +124,7 @@ size_t	 strlcpy(char *, const char *, size_t)
 void	 strmode(int, char *);
 char	*strsep(char **, const char *);
 char	*strsignal(int);
+int	 timingsafe_bcmp(const void *, const void *, size_t);
 #endif 
 __END_DECLS
 
