@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.709 2010/09/24 01:56:12 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.710 2010/09/24 02:06:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5799,12 +5799,6 @@ pf_counters_inc(int dir, int action, struct pf_pdesc *pd,
 			s->packets[dirndx]++;
 			s->bytes[dirndx] += pd->tot_len;
 
-			/*
-			 * We want to increase counters on _all_ rules
-			 * that were matched during processing. 
-			 *  XXX This does NOT affect pass rules!
-			 *  XXX Change this in pf_test_rule()?
-			 */
 			SLIST_FOREACH(ri, &s->match_rules, entry) {
 				ri->r->packets[dirndx]++;
 				ri->r->bytes[dirndx] += pd->tot_len;
