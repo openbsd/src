@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.79 2010/09/23 16:21:47 yuo Exp $
+#	$OpenBSD: GENERIC,v 1.80 2010/09/24 18:26:49 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -135,8 +135,8 @@ ugen*		at uhub?		# USB Generic driver
 udcf*		at uhub?		# Gude Expert mouseCLOCK
 umbg*		at uhub?		# Meinberg Funkuhren USB5131
 uow*		at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
-onewire* at uow?
-utwitch?	at uhidev?		# YUREX BBU sensor
+onewire*	at uow?
+utwitch*	at uhidev?		# YUREX BBU sensor
 
 sd*		at scsibus?		# SCSI disk drives
 #st*		at scsibus?		# SCSI tape drives
