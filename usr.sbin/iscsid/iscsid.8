@@ -1,0 +1,84 @@
+.\"	$OpenBSD: iscsid.8,v 1.1 2010/09/24 10:53:14 dlg Exp $
+.\"
+.\" Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 24 2010 $
+.Dt ISCSID 8
+.Os
+.Sh NAME
+.Nm iscsid
+.Nd "iSCSI (Internet SCSI) daemon"
+.Sh SYNOPSIS
+.Nm
+.Op Fl d
+.Op Fl n Ar file
+.Op Fl s Ar socket
+.Sh DESCRIPTION
+.Nm
+is an Internet SCSI
+.Pq iSCSI
+initiator implementation.
+.Pp
+.Nm
+is usually started at boot time.
+.Pp
+A running
+.Nm
+can be controlled with the
+.Xr iscsictl 8
+utility.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
+.It Fl n Ar file
+Use an alternate /dev entry for communicating with the kernel.
+.It Fl s Ar socket
+Use an alternate location for the default control socket.
+.El
+.Sh FILES
+.Bl -tag -width "/var/run/iscsid.sockXX" -compact
+.It /dev/vscsi0
+Default device used to exchange SCSI messages with the kernel midlayer.
+.It /var/run/iscsid.sock
+.Ux Ns -domain
+socket used for communication with
+.Xr iscsictl 8 .
+.El
+.Sh SEE ALSO
+.Xr vscsi 4 ,
+.Xr iscsictl 8
+.Rs
+.%R RFC 3720
+.%T "Internet Small Computer Systems Interface (iSCSI)"
+.%D April 2004
+.Re
+.Rs
+.%R RFC 3721
+.%T "Internet Small Computer Systems Interface (iSCSI) Naming and Discovery"
+.%D April 2004
+.Re
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.9 .
+.Sh AUTHORS
+.An Claudio Jeker Aq claudio@openbsd.org .   
