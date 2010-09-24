@@ -66,6 +66,7 @@
 ./usr/include/crypto/deflate.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
+./usr/include/crypto/gmac.h
 ./usr/include/crypto/hmac.h
 ./usr/include/crypto/idgen.h
 ./usr/include/crypto/key_wrap.h

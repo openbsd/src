@@ -686,6 +686,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/gmac.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/hmac.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/idgen.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/key_wrap.ph

@@ -721,6 +721,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/gmac.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/hmac.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/idgen.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/key_wrap.ph

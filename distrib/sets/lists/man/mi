@@ -502,7 +502,6 @@
 ./usr/share/man/cat1/mopprobe.0
 ./usr/share/man/cat1/moptrace.0
 ./usr/share/man/cat1/more.0
-./usr/share/man/cat1/mset.0
 ./usr/share/man/cat1/mt.0
 ./usr/share/man/cat1/mv.0
 ./usr/share/man/cat1/mvme68k
@@ -2327,11 +2326,11 @@
 ./usr/share/man/cat4/uticom.0
 ./usr/share/man/cat4/utrh.0
 ./usr/share/man/cat4/uts.0
+./usr/share/man/cat4/utwitch.0
 ./usr/share/man/cat4/uvideo.0
 ./usr/share/man/cat4/uvisor.0
 ./usr/share/man/cat4/uvscom.0
 ./usr/share/man/cat4/uyap.0
-./usr/share/man/cat4/uyurex.0
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat4/vax/asc.0
 ./usr/share/man/cat4/vax/autoconf.0
@@ -2523,7 +2522,6 @@
 ./usr/share/man/cat5/mailer.conf.0
 ./usr/share/man/cat5/malloc.conf.0
 ./usr/share/man/cat5/man.conf.0
-./usr/share/man/cat5/map3270.0
 ./usr/share/man/cat5/master.passwd.0
 ./usr/share/man/cat5/mixerctl.conf.0
 ./usr/share/man/cat5/mk.conf.0
