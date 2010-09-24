@@ -24,9 +24,15 @@ push(@x,4);
 if (join(':',@x) eq '1:2:3:1:2:3:4') {print "ok 2\n";} else {print "not ok 2\n";}
 
 # test for push/pop intuiting @ on array
-push(x,3);
+{
+    no warnings 'deprecated';
+    push(x,3);
+}
 if (join(':',@x) eq '1:2:3:1:2:3:4:3') {print "ok 3\n";} else {print "not ok 3\n";}
-pop(x);
+{
+    no warnings 'deprecated';
+    pop(x);
+}
 if (join(':',@x) eq '1:2:3:1:2:3:4') {print "ok 4\n";} else {print "not ok 4\n";}
 
 $test = 5;

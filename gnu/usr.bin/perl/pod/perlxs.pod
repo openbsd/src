@@ -1945,7 +1945,7 @@ and the module version number.
 
 =item typedef my_cxt_t
 
-This struct typedef I<must> always be called C<my_cxt_t> -- the other
+This struct typedef I<must> always be called C<my_cxt_t>. The other
 C<CXT*> macros assume the existence of the C<my_cxt_t> typedef name.
 
 Declare a typedef named C<my_cxt_t> that is a structure that contains
@@ -1964,7 +1964,7 @@ of C<my_cxt_t>.
 
 The MY_CXT_INIT macro initialises storage for the C<my_cxt_t> struct.
 
-It I<must> be called exactly once -- typically in a BOOT: section. If you
+It I<must> be called exactly once, typically in a BOOT: section. If you
 are maintaining multiple interpreters, it should be called once in each
 interpreter instance, except for interpreters cloned from existing ones.
 (But see C<MY_CXT_CLONE> below.)

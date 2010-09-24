@@ -8,6 +8,9 @@ BEGIN {
 
 plan tests => 1368;
 
+use strict;
+use Config;
+
 is(
     sprintf("%.40g ",0.01),
     sprintf("%.40g", 0.01)." ",
@@ -38,9 +41,9 @@ for my $i (1, 3, 5, 10) {
 }
 
 # Used to mangle PL_sv_undef
-fresh_perl_is(
+fresh_perl_like(
     'print sprintf "xxx%n\n"; print undef',
-    'Modification of a read-only value attempted at - line 1.',
+    'Modification of a read-only value attempted at - line 1\.',
     { switches => [ '-w' ] },
     q(%n should not be able to modify read-only constants),
 );
@@ -57,7 +60,7 @@ for (int(~0/2+1), ~0, "9999999999999999999") {
 {
     my ($warn, $bad) = (0,0);
     local $SIG{__WARN__} = sub {
-	if ($_[0] =~ /uninitialized/) {
+	if ($_[0] =~ /missing argument/i) {
 	    $warn++
 	}
 	else {
@@ -140,8 +143,26 @@ foreach my $n (2**1e100, -2**1e100, 2**1e100/2**1e100) { # +Inf, -Inf, NaN
     is $@, "", "sprintf(\"%f\", $n)";
 }
 
-SKIP: {
-    skip "placeholder for tests not merged from 53f65a9ef4", 24;
+# test %ll formats with and without HAS_QUAD
+eval { my $q = pack "q", 0 };
+my $Q = $@ eq '';
+
+my @tests = (
+  [ '%lld' => [qw( 4294967296 -100000000000000 )] ],
+  [ '%lli' => [qw( 4294967296 -100000000000000 )] ],
+  [ '%llu' => [qw( 4294967296  100000000000000 )] ],
+  [ '%Ld'  => [qw( 4294967296 -100000000000000 )] ],
+  [ '%Li'  => [qw( 4294967296 -100000000000000 )] ],
+  [ '%Lu'  => [qw( 4294967296  100000000000000 )] ],
+);
+
+for my $t (@tests) {
+  my($fmt, $nums) = @$t;
+  for my $num (@$nums) {
+    my $w; local $SIG{__WARN__} = sub { $w = shift };
+    is(sprintf($fmt, $num), $Q ? $num : $fmt, "quad: $fmt -> $num");
+    like($w, $Q ? '' : qr/Invalid conversion in sprintf: "$fmt"/, "warning: $fmt");
+  }
 }
 
 # Check unicode vs byte length

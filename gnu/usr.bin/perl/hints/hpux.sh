@@ -233,6 +233,15 @@ EOM
 	    exit 1
 	    fi
 
+	if [ $xxOsRev -eq 1100 ]; then
+	    # HP-UX 11.00 uses only 48 bits internally in 64bit mode, not 64
+	    # force min/max to 2**47-1
+	    sGMTIME_max=140737488355327
+	    sGMTIME_min=-62167219200
+	    sLOCALTIME_max=140737488355327
+	    sLOCALTIME_min=-62167219200
+	    fi
+
 	# Set libc and the library paths
 	case "$archname" in
 	    PA-RISC*)
@@ -270,14 +279,18 @@ EOM
 					ldflags="$ldflags -mlp64"
 					;;
 				    esac
-				    ;;
+				;;
 			    esac
 			;;
 		    esac
 		;;
 	    *)
-		ccflags="$ccflags +DD64"
-		ldflags="$ldflags +DD64"
+		case "$use64bitall" in
+		    $define|true|[yY]*)
+			ccflags="$ccflags +DD64"
+			ldflags="$ldflags +DD64"
+			;;
+		    esac
 		;;
 	    esac
 
@@ -668,7 +681,6 @@ if [ $xxOsRevMajor -lt 11 ]; then
     d_ctime_r="$undef"
     d_asctime_r="$undef"
     fi
-
 
 # fpclassify () is a macro, the library call is Fpclassify
 # Similarly with the others below.

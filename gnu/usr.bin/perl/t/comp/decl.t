@@ -11,8 +11,8 @@ ok 5
 
 print "1..7\n";
 
-do one();
-do two();
+one();
+two();
 
 sub two {
     print "ok 2\n";
@@ -26,10 +26,10 @@ if ($x eq $x) {
     sub three {
 	print "ok 3\n";
     }
-    do three();
+    three();
 }
 
-do four();
+four();
 $~ = 'one';
 write;
 $~ = 'two';

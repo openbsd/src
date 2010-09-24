@@ -5,4 +5,4 @@
 #define PERL_GIT_UNCOMMITTED_CHANGES 
 #define PERL_PATCHNUM ""
 #define PERL_GIT_UNPUSHED_COMMITS		\
-/*no-op*//*leave-this-comment*/
+    /*leave-this-comment*/

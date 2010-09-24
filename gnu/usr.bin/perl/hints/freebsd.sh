@@ -114,7 +114,7 @@ case "$osvers" in
 	lddlflags="-Bshareable $lddlflags"
 	;;
 
-*)
+3*|4*|5*|6*)
         objformat=`/usr/bin/objformat`
         if [ x$objformat = xaout ]; then
             if [ -e /usr/lib/aout ]; then
@@ -130,6 +130,13 @@ case "$osvers" in
         fi
         cccdlflags='-DPIC -fPIC'
         ;;
+*)
+       libpth="/usr/lib /usr/local/lib"
+       glibpth="/usr/lib /usr/local/lib"
+       ldflags="-Wl,-E "
+        lddlflags="-shared "
+        cccdlflags='-DPIC -fPIC'
+       ;;
 esac
 
 case "$osvers" in

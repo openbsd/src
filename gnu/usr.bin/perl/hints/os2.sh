@@ -456,11 +456,7 @@ fi
 
 cd ./os2/OS2
 
-if ! test -d ../../ext/OS2 ; then
-   mkdir ../../ext/OS2
-fi
-
-cp -rfu * ../../ext/OS2/
+cp -rfu * ../../ext/
 
 # Install tests:
 

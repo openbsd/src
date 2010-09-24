@@ -108,8 +108,9 @@ PerlIOEncode_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg, PerlIO_funcs *
 
     if (!SvROK(result) || !SvOBJECT(SvRV(result))) {
 	e->enc = Nullsv;
-	Perl_warner(aTHX_ packWARN(WARN_IO), "Cannot find encoding \"%" SVf "\"",
-		    arg);
+        if (ckWARN_d(WARN_IO))
+            Perl_warner(aTHX_ packWARN(WARN_IO), "Cannot find encoding \"%" SVf "\"",
+                    arg);
 	errno = EINVAL;
 	code = -1;
     }
@@ -120,8 +121,9 @@ PerlIOEncode_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg, PerlIO_funcs *
 	XPUSHs(result);
 	PUTBACK;
 	if (call_method("renew",G_SCALAR|G_EVAL) != 1 || SvTRUE(ERRSV)) {
-	    Perl_warner(aTHX_ packWARN(WARN_IO), "\"%" SVf "\" does not support renew method",
-			arg);
+            if (ckWARN_d(WARN_IO))
+                Perl_warner(aTHX_ packWARN(WARN_IO), "\"%" SVf "\" does not support renew method",
+                        arg);
 	}
 	else {
 	    SPAGAIN;
@@ -133,7 +135,8 @@ PerlIOEncode_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg, PerlIO_funcs *
 	XPUSHs(e->enc);
 	PUTBACK;
 	if (call_method("needs_lines",G_SCALAR|G_EVAL) != 1 || SvTRUE(ERRSV)) {
-	    Perl_warner(aTHX_ packWARN(WARN_IO), "\"%" SVf "\" does not support needs_lines",
+            if (ckWARN_d(WARN_IO))
+                Perl_warner(aTHX_ packWARN(WARN_IO), "\"%" SVf "\" does not support needs_lines",
 			arg);
 	}
 	else {
@@ -639,7 +642,7 @@ BOOT:
      */
     PUSHSTACKi(PERLSI_MAGIC);
     SPAGAIN;
-    if (!get_cv(OUR_DEFAULT_FB, 0)) {
+    if (!get_cvs(OUR_DEFAULT_FB, 0)) {
 #if 0
 	/* This would just be an irritant now loading works */
 	Perl_warner(aTHX_ packWARN(WARN_IO), ":encoding without 'use Encode'");

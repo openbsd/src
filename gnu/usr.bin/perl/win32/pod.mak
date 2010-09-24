@@ -14,12 +14,23 @@ converters: $(CONVERTERS)
 PERL = ..\miniperl.exe
 REALPERL = ..\perl.exe
 
+ICWD = -I..\cpan\Cwd
+
 POD = \
 	perl.pod	\
 	perl5004delta.pod	\
 	perl5005delta.pod	\
 	perl5100delta.pod	\
 	perl5101delta.pod	\
+	perl5110delta.pod	\
+	perl5111delta.pod	\
+	perl5112delta.pod	\
+	perl5113delta.pod	\
+	perl5114delta.pod	\
+	perl5115delta.pod	\
+	perl5120delta.pod	\
+	perl5121delta.pod	\
+	perl5122delta.pod	\
 	perl561delta.pod	\
 	perl56delta.pod	\
 	perl570delta.pod	\
@@ -100,11 +111,11 @@ POD = \
 	perlobj.pod	\
 	perlop.pod	\
 	perlopentut.pod	\
-	perlothrtut.pod	\
 	perlpacktut.pod	\
 	perlperf.pod	\
 	perlpod.pod	\
 	perlpodspec.pod	\
+	perlpolicy.pod	\
 	perlport.pod	\
 	perlpragma.pod	\
 	perlre.pod	\
@@ -133,6 +144,7 @@ POD = \
 	perlunicode.pod	\
 	perlunifaq.pod	\
 	perluniintro.pod	\
+	perluniprops.pod	\
 	perlunitut.pod	\
 	perlutil.pod	\
 	perlvar.pod	\
@@ -146,6 +158,15 @@ MAN = \
 	perl5005delta.man	\
 	perl5100delta.man	\
 	perl5101delta.man	\
+	perl5110delta.man	\
+	perl5111delta.man	\
+	perl5112delta.man	\
+	perl5113delta.man	\
+	perl5114delta.man	\
+	perl5115delta.man	\
+	perl5120delta.man	\
+	perl5121delta.man	\
+	perl5122delta.man	\
 	perl561delta.man	\
 	perl56delta.man	\
 	perl570delta.man	\
@@ -226,11 +247,11 @@ MAN = \
 	perlobj.man	\
 	perlop.man	\
 	perlopentut.man	\
-	perlothrtut.man	\
 	perlpacktut.man	\
 	perlperf.man	\
 	perlpod.man	\
 	perlpodspec.man	\
+	perlpolicy.man	\
 	perlport.man	\
 	perlpragma.man	\
 	perlre.man	\
@@ -259,6 +280,7 @@ MAN = \
 	perlunicode.man	\
 	perlunifaq.man	\
 	perluniintro.man	\
+	perluniprops.man	\
 	perlunitut.man	\
 	perlutil.man	\
 	perlvar.man	\
@@ -272,6 +294,15 @@ HTML = \
 	perl5005delta.html	\
 	perl5100delta.html	\
 	perl5101delta.html	\
+	perl5110delta.html	\
+	perl5111delta.html	\
+	perl5112delta.html	\
+	perl5113delta.html	\
+	perl5114delta.html	\
+	perl5115delta.html	\
+	perl5120delta.html	\
+	perl5121delta.html	\
+	perl5122delta.html	\
 	perl561delta.html	\
 	perl56delta.html	\
 	perl570delta.html	\
@@ -352,11 +383,11 @@ HTML = \
 	perlobj.html	\
 	perlop.html	\
 	perlopentut.html	\
-	perlothrtut.html	\
 	perlpacktut.html	\
 	perlperf.html	\
 	perlpod.html	\
 	perlpodspec.html	\
+	perlpolicy.html	\
 	perlport.html	\
 	perlpragma.html	\
 	perlre.html	\
@@ -384,6 +415,7 @@ HTML = \
 	perlunicode.html	\
 	perlunifaq.html	\
 	perluniintro.html	\
+	perluniprops.html	\
 	perlunitut.html	\
 	perlutil.html	\
 	perlvar.html	\
@@ -398,6 +430,15 @@ TEX = \
 	perl5005delta.tex	\
 	perl5100delta.tex	\
 	perl5101delta.tex	\
+	perl5110delta.tex	\
+	perl5111delta.tex	\
+	perl5112delta.tex	\
+	perl5113delta.tex	\
+	perl5114delta.tex	\
+	perl5115delta.tex	\
+	perl5120delta.tex	\
+	perl5121delta.tex	\
+	perl5122delta.tex	\
 	perl561delta.tex	\
 	perl56delta.tex	\
 	perl570delta.tex	\
@@ -478,11 +519,11 @@ TEX = \
 	perlobj.tex	\
 	perlop.tex	\
 	perlopentut.tex	\
-	perlothrtut.tex	\
 	perlpacktut.tex	\
 	perlperf.tex	\
 	perlpod.tex	\
 	perlpodspec.tex	\
+	perlpolicy.tex	\
 	perlport.tex	\
 	perlpragma.tex	\
 	perlre.tex	\
@@ -511,6 +552,7 @@ TEX = \
 	perlunicode.tex	\
 	perlunifaq.tex	\
 	perluniintro.tex	\
+	perluniprops.tex	\
 	perlunitut.tex	\
 	perlutil.tex	\
 	perlvar.tex	\
@@ -571,22 +613,22 @@ check:	podchecker
 
 # Dependencies.
 pod2latex:	pod2latex.PL ../lib/Config.pm
-	$(PERL) -I../lib pod2latex.PL
+	$(PERL) -I../lib $(ICWD) pod2latex.PL
 
 pod2html:	pod2html.PL ../lib/Config.pm
-	$(PERL) -I ../lib pod2html.PL
+	$(PERL) -I ../lib $(ICWD) pod2html.PL
 
 pod2man:	pod2man.PL ../lib/Config.pm
-	$(PERL) -I ../lib pod2man.PL
+	$(PERL) -I ../lib $(ICWD) pod2man.PL
 
 pod2text:	pod2text.PL ../lib/Config.pm
-	$(PERL) -I ../lib pod2text.PL
+	$(PERL) -I ../lib $(ICWD) pod2text.PL
 
 pod2usage:	pod2usage.PL ../lib/Config.pm
-	$(PERL) -I ../lib pod2usage.PL
+	$(PERL) -I ../lib $(ICWD) pod2usage.PL
 
 podchecker:	podchecker.PL ../lib/Config.pm
-	$(PERL) -I ../lib podchecker.PL
+	$(PERL) -I ../lib $(ICWD) podchecker.PL
 
 podselect:	podselect.PL ../lib/Config.pm
-	$(PERL) -I ../lib podselect.PL
+	$(PERL) -I ../lib $(ICWD) podselect.PL

@@ -470,7 +470,7 @@ Let's not force people to keep changing it.
 
 =head2 PPPort
 
-F<ext/Devel-PPPort/PPPort.pm> needs to be synchronized to include all
+F<cpan/Devel-PPPort/PPPort.pm> needs to be synchronized to include all
 new macros added to .h files (normally perl.h and XSUB.h, but others
 as well). Since chances are that when a new macro is added the
 committer will forget to update F<PPPort.pm>, it's the best to diff for

@@ -150,7 +150,43 @@ or better still:
     $SIG{CHLD} = \&REAPER;
     # do something that forks...
 
-Signal handling is also used for timeouts in Unix,   While safely
+Note: qx(), system() and some modules for calling external commands do a
+fork() and wait() for the result. Thus, your signal handler (REAPER in the
+example) will be called. Since wait() was already called by system() or qx()
+the wait() in the signal handler will not see any more zombies and therefore
+block.
+
+The best way to prevent this issue is to use waitpid, as in the following
+example:
+
+    use POSIX ":sys_wait_h"; # for nonblocking read
+
+    my %children;
+
+    $SIG{CHLD} = sub {
+        # don't change $! and $? outside handler
+        local ($!,$?);
+        my $pid = waitpid(-1, WNOHANG);
+        return if $pid == -1;
+        return unless defined $children{$pid};
+        delete $children{$pid};
+        cleanup_child($pid, $?);
+    };
+
+    while (1) {
+        my $pid = fork();
+        if ($pid == 0) {
+            # ...
+            exit 0;
+        } else {
+        $children{$pid}=1;
+            # ...
+            system($command);
+            # ...
+       }
+    }
+
+Signal handling is also used for timeouts in Unix.  While safely
 protected within an C<eval{}> block, you set a signal handler to trap
 alarm signals and then schedule to have one delivered to you in some
 number of seconds.  Then try your blocking operation, clearing the alarm
@@ -316,8 +352,8 @@ The pragmatic approach was to say "I know the risks, but prefer the
 convenience", and to do anything you wanted in your signal handler,
 and be prepared to clean up core dumps now and again.
 
-In Perl 5.7.3 and later to avoid these problems signals are
-"deferred"-- that is when the signal is delivered to the process by
+Perl 5.7.3 and later avoid these problems by "deferring" signals.
+That is, when the signal is delivered to the process by
 the system (to the C code that implements Perl) a flag is set, and the
 handler returns immediately. Then at strategic "safe" points in the
 Perl interpreter (e.g. when it is about to execute a new opcode) the
@@ -718,7 +754,7 @@ the pipe and expecting an EOF will never receive it, and therefore
 never exit.  A single process closing a pipe is not enough to close it;
 the last process with the pipe open must close it for it to read EOF.
 
-There are some features built-in to unix to help prevent this most of
+Certain built-in Unix features help prevent this most of
 the time.  For instance, filehandles have a 'close on exec' flag (set
 I<en masse> with Perl using the C<$^F> L<perlvar>), so that any
 filehandles which you didn't explicitly route to the STDIN, STDOUT or
@@ -1129,7 +1165,7 @@ differ from the system on which it's being run:
 	my $hisiaddr = inet_aton($host)     || die "unknown host";
 	my $hispaddr = sockaddr_in($port, $hisiaddr);
 	socket(SOCKET, PF_INET, SOCK_STREAM, $proto)   || die "socket: $!";
-	connect(SOCKET, $hispaddr)          || die "bind: $!";
+	connect(SOCKET, $hispaddr)          || die "connect: $!";
 	my $rtime = '    ';
 	read(SOCKET, $rtime, 4);
 	close(SOCKET);
@@ -1661,7 +1697,7 @@ Here's a small example showing shared memory usage.
     use IPC::SysV qw(IPC_PRIVATE IPC_RMID S_IRUSR S_IWUSR);
 
     $size = 2000;
-    $id = shmget(IPC_PRIVATE, $size, S_IRUSR|S_IWUSR) || die "$!";
+    $id = shmget(IPC_PRIVATE, $size, S_IRUSR|S_IWUSR) // die "$!";
     print "shm key $id\n";
 
     $message = "Message #1";
@@ -1683,7 +1719,7 @@ Here's an example of a semaphore:
     use IPC::SysV qw(IPC_CREAT);
 
     $IPC_KEY = 1234;
-    $id = semget($IPC_KEY, 10, 0666 | IPC_CREAT ) || die "$!";
+    $id = semget($IPC_KEY, 10, 0666 | IPC_CREAT ) // die "$!";
     print "shm key $id\n";
 
 Put this code in a separate file to be run in more than one process.

@@ -121,7 +121,7 @@ normal Perl method.
 */
 
 bool
-Perl_sv_derived_from(pTHX_ SV *sv, const char *name)
+Perl_sv_derived_from(pTHX_ SV *sv, const char *const name)
 {
     dVAR;
     HV *stash;
@@ -157,7 +157,7 @@ The SV can be a Perl object or the name of a Perl class.
 #include "XSUB.h"
 
 bool
-Perl_sv_does(pTHX_ SV *sv, const char *name)
+Perl_sv_does(pTHX_ SV *sv, const char *const name)
 {
     const char *classname;
     bool does_it;
@@ -172,8 +172,10 @@ Perl_sv_does(pTHX_ SV *sv, const char *name)
     SvGETMAGIC(sv);
 
     if (!SvOK(sv) || !(SvROK(sv) || (SvPOK(sv) && SvCUR(sv))
-		|| (SvGMAGICAL(sv) && SvPOKp(sv) && SvCUR(sv))))
+	    || (SvGMAGICAL(sv) && SvPOKp(sv) && SvCUR(sv)))) {
+	LEAVE;
 	return FALSE;
+    }
 
     if (sv_isobject(sv)) {
 	classname = sv_reftype(SvRV(sv),TRUE);
@@ -181,8 +183,10 @@ Perl_sv_does(pTHX_ SV *sv, const char *name)
 	classname = SvPV_nolen(sv);
     }
 
-    if (strEQ(name,classname))
+    if (strEQ(name,classname)) {
+	LEAVE;
 	return TRUE;
+    }
 
     PUSHMARK(SP);
     XPUSHs(sv);
@@ -234,7 +238,6 @@ XS(XS_Internals_SvREADONLY);
 XS(XS_Internals_SvREFCNT);
 XS(XS_Internals_hv_clear_placehold);
 XS(XS_PerlIO_get_layers);
-XS(XS_Regexp_DESTROY);
 XS(XS_Internals_hash_seed);
 XS(XS_Internals_rehash_seed);
 XS(XS_Internals_HvREHASH);
@@ -301,7 +304,9 @@ Perl_boot_core_UNIVERSAL(pTHX)
                XS_Internals_hv_clear_placehold, file, "\\%");
     newXSproto("PerlIO::get_layers",
                XS_PerlIO_get_layers, file, "*;@");
-    newXS("Regexp::DESTROY", XS_Regexp_DESTROY, file);
+    /* Providing a Regexp::DESTROY fixes #21347. See test in t/op/ref.t  */
+    CvFILE(newCONSTSUB(get_hv("Regexp::", GV_ADD), "DESTROY", NULL))
+	= (char *)file;
     newXSproto("Internals::hash_seed",XS_Internals_hash_seed, file, "");
     newXSproto("Internals::rehash_seed",XS_Internals_rehash_seed, file, "");
     newXSproto("Internals::HvREHASH", XS_Internals_HvREHASH, file, "\\%");
@@ -541,10 +546,10 @@ XS(XS_version_new)
 		? HvNAME(SvSTASH(SvRV(ST(0))))
 		: (char *)SvPV_nolen(ST(0));
 
-	if ( items == 1 || vs == &PL_sv_undef ) { /* no param or explicit undef */
+	if ( items == 1 || ! SvOK(vs) ) { /* no param or explicit undef */
 	    /* create empty object */
 	    vs = sv_newmortal();
-	    sv_setpvs(vs,"");
+	    sv_setpvs(vs, "0");
 	}
 	else if ( items == 3 ) {
 	    vs = sv_newmortal();
@@ -654,7 +659,7 @@ XS(XS_version_vcmp)
 
 	       if ( ! sv_derived_from(robj, "version") )
 	       {
-		    robj = new_version(robj);
+		    robj = new_version(SvOK(robj) ? robj : newSVpvs("0"));
 	       }
 	       rvs = SvRV(robj);
 
@@ -738,7 +743,7 @@ XS(XS_version_qv)
 	SV * ver = ST(0);
 	SV * rv;
 	const char * classname = "";
-	if ( items == 2 && (ST(1)) != &PL_sv_undef ) {
+	if ( items == 2 && SvOK(ST(1)) ) {
 	    /* getting called as object or class method */
 	    ver = ST(1);
 	    classname = 
@@ -789,7 +794,8 @@ XS(XS_utf8_is_utf8)
      if (items != 1)
 	 croak_xs_usage(cv, "sv");
      else {
-	const SV * const sv = ST(0);
+	SV * const sv = ST(0);
+	SvGETMAGIC(sv);
 	    if (SvUTF8(sv))
 		XSRETURN_YES;
 	    else
@@ -959,12 +965,6 @@ XS(XS_Internals_hv_clear_placehold)
     }
 }
 
-XS(XS_Regexp_DESTROY)
-{
-    PERL_UNUSED_CONTEXT;
-    PERL_UNUSED_ARG(cv);
-}
-
 XS(XS_PerlIO_get_layers)
 {
     dVAR;
@@ -1044,16 +1044,22 @@ XS(XS_PerlIO_get_layers)
 		  const bool flgok = flgsvp && *flgsvp && SvIOK(*flgsvp);
 
 		  if (details) {
+		      /* Indents of 5? Yuck.  */
+		      /* We know that PerlIO_get_layers creates a new SV for
+			 the name and flags, so we can just take a reference
+			 and "steal" it when we free the AV below.  */
 		       XPUSHs(namok
-			      ? sv_2mortal(newSVpvn(SvPVX_const(*namsvp), SvCUR(*namsvp)))
+			      ? sv_2mortal(SvREFCNT_inc_simple_NN(*namsvp))
 			      : &PL_sv_undef);
 		       XPUSHs(argok
-			      ? sv_2mortal(newSVpvn(SvPVX_const(*argsvp), SvCUR(*argsvp)))
+			      ? newSVpvn_flags(SvPVX_const(*argsvp),
+					       SvCUR(*argsvp),
+					       (SvUTF8(*argsvp) ? SVf_UTF8 : 0)
+					       | SVs_TEMP)
 			      : &PL_sv_undef);
-		       if (flgok)
-			    mXPUSHi(SvIVX(*flgsvp));
-		       else
-			    XPUSHs(&PL_sv_undef);
+		       XPUSHs(flgok
+			      ? sv_2mortal(SvREFCNT_inc_simple_NN(*flgsvp))
+			      : &PL_sv_undef);
 		       nitem += 3;
 		  }
 		  else {
@@ -1062,8 +1068,7 @@ XS(XS_PerlIO_get_layers)
 						 SVfARG(*namsvp),
 						 SVfARG(*argsvp))));
 		       else if (namok)
-			    XPUSHs(sv_2mortal(Perl_newSVpvf(aTHX_ "%"SVf,
-						 SVfARG(*namsvp))));
+			   XPUSHs(sv_2mortal(SvREFCNT_inc_simple_NN(*namsvp)));
 		       else
 			    XPUSHs(&PL_sv_undef);
 		       nitem++;
@@ -1364,7 +1369,7 @@ XS(XS_Tie_Hash_NamedCapture_FETCH)
 
     rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (!rx)
+    if (!rx || !SvROK(ST(0)))
         XSRETURN_UNDEF;
 
     SP -= items;
@@ -1394,7 +1399,7 @@ XS(XS_Tie_Hash_NamedCapture_STORE)
 
     rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (!rx) {
+    if (!rx || !SvROK(ST(0))) {
         if (!PL_localizing)
             Perl_croak(aTHX_ "%s", PL_no_modify);
         else
@@ -1417,7 +1422,7 @@ XS(XS_Tie_Hash_NamedCapture_DELETE)
     if (items != 2)
 	croak_xs_usage(cv, "$key, $flags");
 
-    if (!rx)
+    if (!rx || !SvROK(ST(0)))
         Perl_croak(aTHX_ "%s", PL_no_modify);
 
     SP -= items;
@@ -1438,7 +1443,7 @@ XS(XS_Tie_Hash_NamedCapture_CLEAR)
 
     rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (!rx)
+    if (!rx || !SvROK(ST(0)))
         Perl_croak(aTHX_ "%s", PL_no_modify);
 
     SP -= items;
@@ -1460,7 +1465,7 @@ XS(XS_Tie_Hash_NamedCapture_EXISTS)
 
     rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (!rx)
+    if (!rx || !SvROK(ST(0)))
         XSRETURN_UNDEF;
 
     SP -= items;
@@ -1488,7 +1493,7 @@ XS(XS_Tie_Hash_NamedCapture_FIRSTK)
 
     rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (!rx)
+    if (!rx || !SvROK(ST(0)))
         XSRETURN_UNDEF;
 
     SP -= items;
@@ -1520,7 +1525,7 @@ XS(XS_Tie_Hash_NamedCapture_NEXTK)
 
     rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (!rx)
+    if (!rx || !SvROK(ST(0)))
         XSRETURN_UNDEF;
 
     SP -= items;
@@ -1551,7 +1556,7 @@ XS(XS_Tie_Hash_NamedCapture_SCALAR)
 
     rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (!rx)
+    if (!rx || !SvROK(ST(0)))
         XSRETURN_UNDEF;
 
     SP -= items;

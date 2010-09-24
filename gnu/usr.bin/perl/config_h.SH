@@ -894,6 +894,28 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$i_vfork I_VFORK	/**/
 
+/* CAN_VAPROTO:
+ *	This variable is defined on systems supporting prototype declaration
+ *	of functions with a variable number of arguments.
+ */
+/* _V:
+ *	This macro is used to declare function parameters in prototypes for
+ *	functions with a variable number of parameters. Use double parentheses.
+ *	For example:
+ *
+ *		int printf _V((char *fmt, ...));
+ *
+ *	Remember to use the plain simple _() macro when declaring a function
+ *	with no variable number of arguments, since it might be possible to
+ *	have a non-effect _V() macro and still get prototypes via _().
+ */
+#$vaproto CAN_VAPROTO	/**/
+#ifdef CAN_VAPROTO
+#define	_V(args) args
+#else
+#define	_V(args) ()
+#endif
+
 /* INTSIZE:
  *	This symbol contains the value of sizeof(int) so that the C
  *	preprocessor can make decisions based on it.
@@ -2942,6 +2964,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #else
 #define BYTEORDER 0x$byteorder	/* large digits for MSB */
 #endif /* NeXT */
+
+/* CHARBITS:
+ *	This symbol contains the size of a char, so that the C preprocessor
+ *	can make decisions based on it.
+ */
+#define CHARBITS $charbits		/**/
 
 /* CASTI32:
  *	This symbol is defined if the C compiler can cast negative

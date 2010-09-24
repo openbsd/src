@@ -1,7 +1,7 @@
 /* WIN32.H
  *
  * (c) 1995 Microsoft Corporation. All rights reserved.
- * 		Developed by hip communications inc., http://info.hip.com/info/
+ * 		Developed by hip communications inc.
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -57,6 +57,23 @@
 
 #define  WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+/*
+ * Bug in winbase.h in mingw-w64 4.4.0-1 at least... they
+ * do #define GetEnvironmentStringsA GetEnvironmentStrings and fail
+ * to declare GetEnvironmentStringsA.
+ */
+#if defined(__MINGW64__) && defined(GetEnvironmentStringsA) && !defined(UNICODE)
+#ifdef __cplusplus
+extern "C" {
+#endif
+#undef GetEnvironmentStringsA
+WINBASEAPI LPCH WINAPI GetEnvironmentStringsA(VOID);
+#define GetEnvironmentStrings GetEnvironmentStringsA
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 #ifdef   WIN32_LEAN_AND_MEAN		/* C file is NOT a Perl5 original. */
 #define  CONTEXT	PERL_CONTEXT	/* Avoid conflict of CONTEXT defs. */
@@ -170,6 +187,14 @@ struct utsname {
 
 /* Compiler-specific stuff. */
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+/* VC uses non-standard way to determine the size and alignment if bit-fields */
+/* MinGW will compiler with -mms-bitfields, so should use the same types */
+#  define PERL_BITFIELD8  unsigned char
+#  define PERL_BITFIELD16 unsigned short
+#  define PERL_BITFIELD32 unsigned int
+#endif
+
 #ifdef __BORLANDC__		/* Borland C++ */
 
 #if (__BORLANDC__ <= 0x520)
@@ -235,7 +260,9 @@ typedef long		gid_t;
 #endif
 #define flushall	_flushall
 #define fcloseall	_fcloseall
+#ifndef isnan
 #define isnan		_isnan	/* ...same libraries as MSVC */
+#endif
 
 #ifndef _O_NOINHERIT
 #  define _O_NOINHERIT	0x0080
@@ -337,9 +364,9 @@ extern FILE *		my_fdopen(int, char *);
 #endif
 extern int		my_fclose(FILE *);
 extern int		my_fstat(int fd, Stat_t *sbufptr);
-extern char *		win32_get_privlib(const char *pl);
-extern char *		win32_get_sitelib(const char *pl);
-extern char *		win32_get_vendorlib(const char *pl);
+extern char *		win32_get_privlib(const char *pl, STRLEN *const len);
+extern char *		win32_get_sitelib(const char *pl, STRLEN *const len);
+extern char *		win32_get_vendorlib(const char *pl, STRLEN *const len);
 extern int		IsWin95(void);
 extern int		IsWinNT(void);
 

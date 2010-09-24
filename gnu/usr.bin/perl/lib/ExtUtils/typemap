@@ -149,7 +149,7 @@ T_REF_IV_PTR
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\", \"$ntype\")
 T_PTROBJ
-	if (sv_derived_from($arg, \"${ntype}\")) {
+	if (SvROK($arg) && sv_derived_from($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type,tmp);
 	}

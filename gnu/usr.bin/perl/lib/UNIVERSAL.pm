@@ -1,6 +1,6 @@
 package UNIVERSAL;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 # UNIVERSAL should not contain any extra subs/methods beyond those
 # that it exists to define. The use of Exporter below is a historical
@@ -15,6 +15,12 @@ require Exporter;
 # anything unless called on UNIVERSAL.
 sub import {
     return unless $_[0] eq __PACKAGE__;
+    return unless @_ > 1;
+    require warnings;
+    warnings::warnif(
+      'deprecated',
+      'UNIVERSAL->import is deprecated and will be removed in a future perl',
+    );
     goto &Exporter::import;
 }
 
@@ -141,7 +147,7 @@ I<undef>.  This includes methods inherited or imported by C<$obj>, C<CLASS>, or
 C<VAL>.
 
 C<can> cannot know whether an object will be able to provide a method through
-AUTOLOAD (unless the object's class has overriden C<can> appropriately), so a
+AUTOLOAD (unless the object's class has overridden C<can> appropriately), so a
 return value of I<undef> does not necessarily mean the object will not be able
 to handle the method call. To get around this some module authors use a forward
 declaration (see L<perlsub>) for methods they will handle via AUTOLOAD. For
@@ -159,7 +165,9 @@ block or C<blessed> if you need to be extra paranoid.
 C<VERSION> will return the value of the variable C<$VERSION> in the
 package the object is blessed into. If C<REQUIRE> is given then
 it will do a comparison and die if the package version is not
-greater than or equal to C<REQUIRE>.
+greater than or equal to C<REQUIRE>.  Both C<$VERSION> or C<REQUIRE>
+must be "lax" version numbers (as defined by the L<version> module)
+or C<VERSION> will die with an error.
 
 C<VERSION> can be called as either a class (static) method or an object
 method.
@@ -181,7 +189,8 @@ available to your program (and you should not do so).
 None by default.
 
 You may request the import of three functions (C<isa>, C<can>, and C<VERSION>),
-however it is usually harmful to do so.  Please don't do this in new code.
+B<but this feature is deprecated and will be removed>.  Please don't do this in
+new code.
 
 For example, previous versions of this documentation suggested using C<isa> as
 a function to determine the type of a reference:

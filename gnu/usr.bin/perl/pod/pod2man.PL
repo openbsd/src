@@ -351,7 +351,8 @@ documented by this POD page, such as:
 Manual page indexers are often extremely picky about the format of this
 section, so don't put anything in it except this line.  A single dash, and
 only a single dash, should separate the list of programs or functions from
-the description.  Functions should not be qualified with C<()> or the like.
+the description.  Do not use any markup such as CE<lt>E<gt> or
+BE<lt>E<gt>.  Functions should not be qualified with C<()> or the like.
 The description should ideally fit on a single line, even if a man program
 replaces the dash with a few tabs.
 

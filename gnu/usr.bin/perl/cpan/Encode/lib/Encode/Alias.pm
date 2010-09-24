@@ -152,6 +152,7 @@ sub init_aliases {
     define_alias( qr/^(?:US-?)ascii$/i       => '"ascii"' );
     define_alias( 'C'                        => 'ascii' );
     define_alias( qr/\b(?:ISO[-_]?)?646(?:[-_]?US)?$/i => '"ascii"' );
+    define_alias( '646'                      => 'ascii' );
 
     # Allow variants of iso-8859-1 etc.
     define_alias( qr/\biso[-_]?(\d+)[-_](\d+)$/i => '"iso-$1-$2"' );

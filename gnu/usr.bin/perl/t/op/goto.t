@@ -10,28 +10,37 @@ BEGIN {
 
 use warnings;
 use strict;
-plan tests => 58;
+plan tests => 67;
 our $TODO;
+
+my $deprecated = 0;
+local $SIG{__WARN__} = sub { if ($_[0] =~ m/jump into a construct/) { $deprecated++; } else { warn $_[0] } };
 
 our $foo;
 while ($?) {
     $foo = 1;
   label1:
+    is($deprecated, 1);
+    $deprecated = 0;
     $foo = 2;
     goto label2;
 } continue {
     $foo = 0;
     goto label4;
   label3:
+    is($deprecated, 1);
+    $deprecated = 0;
     $foo = 4;
     goto label4;
 }
+is($deprecated, 0);
 goto label1;
 
 $foo = 3;
 
 label2:
 is($foo, 2, 'escape while loop');
+is($deprecated, 0);
 goto label3;
 
 label4:
@@ -60,7 +69,7 @@ sub bar {
 exit;
 
 FINALE:
-is(curr_test(), 16, 'FINALE');
+is(curr_test(), 20, 'FINALE');
 
 # does goto LABEL handle block contexts correctly?
 # note that this scope-hopping differs from last & next,
@@ -174,13 +183,18 @@ ok($ok, 'works correctly in a nested eval string');
 	A: { if ($false) { redo A; B: $ok = 1; redo A; } }
 	goto B unless $count++;
     }
+    is($deprecated, 0);
     a();
     ok($ok, '#19061 loop label wiped away by goto');
+    is($deprecated, 1);
+    $deprecated = 0;
 
     $ok = 0;
     my $p;
     for ($p=1;$p && goto A;$p=0) { A: $ok = 1 }
     ok($ok, 'weird case of goto and for(;;) loop');
+    is($deprecated, 1);
+    $deprecated = 0;
 }
 
 # bug #9990 - don't prematurely free the CV we're &going to.
@@ -250,7 +264,7 @@ exit;
 
 bypass:
 
-is(curr_test(), 5, 'eval "goto $x"');
+is(curr_test(), 9, 'eval "goto $x"');
 
 # Test autoloading mechanism.
 
@@ -459,3 +473,13 @@ TODO: {
     }
 }
 
+is($deprecated, 0);
+
+#74290
+{
+    my $x;
+    my $y;
+    F1:++$x and eval 'return if ++$y == 10; goto F1;';
+    is($x, 10,
+       'labels outside evals can be distinguished from the start of the eval');
+}

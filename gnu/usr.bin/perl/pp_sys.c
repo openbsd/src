@@ -29,6 +29,8 @@
 #include "EXTERN.h"
 #define PERL_IN_PP_SYS_C
 #include "perl.h"
+#include "time64.h"
+#include "time64.c"
 
 #ifdef I_SHADOW
 /* Shadow password support for solaris - pdo@cs.umd.edu
@@ -201,15 +203,6 @@ void endservent(void);
 
 #undef PERL_EFF_ACCESS	/* EFFective uid/gid ACCESS */
 
-/* AIX 5.2 and below use mktime for localtime, and defines the edge case
- * for time 0x7fffffff to be valid only in UTC. AIX 5.3 provides localtime64
- * available in the 32bit environment, which could warrant Configure
- * checks in the future.
- */
-#ifdef  _AIX
-#define LOCALTIME_EDGECASE_BROKEN
-#endif
-
 /* F_OK unused: if stat() cannot find it... */
 
 #if !defined(PERL_EFF_ACCESS) && defined(HAS_ACCESS) && defined(EFF_ONLY_OK) && !defined(NO_EFF_ONLY_OK)
@@ -249,7 +242,6 @@ S_emulate_eaccess(pTHX_ const char* path, Mode_t mode)
     const Gid_t egid = getegid();
     int res;
 
-    LOCK_CRED_MUTEX;
 #if !defined(HAS_SETREUID) && !defined(HAS_SETRESUID)
     Perl_croak(aTHX_ "switching effective uid is not implemented");
 #else
@@ -295,7 +287,6 @@ S_emulate_eaccess(pTHX_ const char* path, Mode_t mode)
 #endif
 #endif
 	Perl_croak(aTHX_ "leaving effective gid failed");
-    UNLOCK_CRED_MUTEX;
 
     return res;
 }
@@ -327,13 +318,13 @@ PP(pp_backtick)
 		NOOP;
 	}
 	else if (gimme == G_SCALAR) {
-	    ENTER;
+	    ENTER_with_name("backtick");
 	    SAVESPTR(PL_rs);
 	    PL_rs = &PL_sv_undef;
 	    sv_setpvs(TARG, "");	/* note that this preserves previous buffer */
 	    while (sv_gets(TARG, fp, SvCUR(TARG)) != NULL)
 		NOOP;
-	    LEAVE;
+	    LEAVE_with_name("backtick");
 	    XPUSHs(TARG);
 	    SvTAINTED_on(TARG);
 	}
@@ -373,7 +364,7 @@ PP(pp_glob)
      * without at the same time croaking, for some reason, or if
      * perl was built with PERL_EXTERNAL_GLOB */
 
-    ENTER;
+    ENTER_with_name("glob");
 
 #ifndef VMS
     if (PL_tainting) {
@@ -398,7 +389,7 @@ PP(pp_glob)
 #endif	/* !DOSISH */
 
     result = do_readline();
-    LEAVE;
+    LEAVE_with_name("glob");
     return result;
 }
 
@@ -506,6 +497,7 @@ PP(pp_die)
 	tmpsv = newSVpvs_flags("Died", SVs_TEMP);
 
     DIE(aTHX_ "%"SVf, SVfARG(tmpsv));
+    RETURN;
 }
 
 /* I/O. */
@@ -530,9 +522,10 @@ PP(pp_open)
 	MAGIC *mg;
 	IoFLAGS(GvIOp(gv)) &= ~IOf_UNTAINT;
 
-	if (IoDIRP(io) && ckWARN2(WARN_IO, WARN_DEPRECATED))
-	    Perl_warner(aTHX_ packWARN2(WARN_IO, WARN_DEPRECATED),
-		    "Opening dirhandle %s also as a file", GvENAME(gv));
+	if (IoDIRP(io))
+	    Perl_ck_warner_d(aTHX_ packWARN2(WARN_IO, WARN_DEPRECATED),
+			     "Opening dirhandle %s also as a file",
+			     GvENAME(gv));
 
 	mg = SvTIED_mg((const SV *)io, PERL_MAGIC_tiedscalar);
 	if (mg) {
@@ -541,9 +534,9 @@ PP(pp_open)
 	    *MARK-- = SvTIED_obj(MUTABLE_SV(io), mg);
 	    PUSHMARK(MARK);
 	    PUTBACK;
-	    ENTER;
+	    ENTER_with_name("call_OPEN");
 	    call_method("OPEN", G_SCALAR);
-	    LEAVE;
+	    LEAVE_with_name("call_OPEN");
 	    SPAGAIN;
 	    RETURN;
 	}
@@ -581,9 +574,9 @@ PP(pp_close)
 		PUSHMARK(SP);
 		XPUSHs(SvTIED_obj(MUTABLE_SV(io), mg));
 		PUTBACK;
-		ENTER;
+		ENTER_with_name("call_CLOSE");
 		call_method("CLOSE", G_SCALAR);
-		LEAVE;
+		LEAVE_with_name("call_CLOSE");
 		SPAGAIN;
 		RETURN;
 	    }
@@ -650,6 +643,7 @@ badexit:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_func, "pipe");
+    return NORMAL;
 #endif
 }
 
@@ -671,9 +665,9 @@ PP(pp_fileno)
 	PUSHMARK(SP);
 	XPUSHs(SvTIED_obj(MUTABLE_SV(io), mg));
 	PUTBACK;
-	ENTER;
+	ENTER_with_name("call_FILENO");
 	call_method("FILENO", G_SCALAR);
-	LEAVE;
+	LEAVE_with_name("call_FILENO");
 	SPAGAIN;
 	RETURN;
     }
@@ -746,9 +740,9 @@ PP(pp_binmode)
 	    if (discp)
 		XPUSHs(discp);
 	    PUTBACK;
-	    ENTER;
+	    ENTER_with_name("call_BINMODE");
 	    call_method("BINMODE", G_SCALAR);
-	    LEAVE;
+	    LEAVE_with_name("call_BINMODE");
 	    SPAGAIN;
 	    RETURN;
 	}
@@ -764,8 +758,12 @@ PP(pp_binmode)
 
     PUTBACK;
     {
-	const int mode = mode_from_discipline(discp);
-	const char *const d = (discp ? SvPV_nolen_const(discp) : NULL);
+	STRLEN len = 0;
+	const char *d = NULL;
+	int mode;
+	if (discp)
+	    d = SvPV_const(discp, len);
+	mode = mode_from_discipline(d, len);
 	if (PerlIO_binmode(aTHX_ fp, IoTYPE(io), mode, d)) {
 	    if (IoOFP(io) && IoOFP(io) != IoIFP(io)) {
 		if (!PerlIO_binmode(aTHX_ IoOFP(io), IoTYPE(io), mode, d)) {
@@ -787,7 +785,7 @@ PP(pp_tie)
 {
     dVAR; dSP; dMARK;
     HV* stash;
-    GV *gv;
+    GV *gv = NULL;
     SV *sv;
     const I32 markoff = MARK - PL_stack_base;
     const char *methname;
@@ -805,11 +803,6 @@ PP(pp_tie)
 	    break;
 	case SVt_PVGV:
 	    if (isGV_with_GP(varsv)) {
-#ifdef GV_UNIQUE_CHECK
-		if (GvUNIQUE((const GV *)varsv)) {
-		    Perl_croak(aTHX_ "Attempt to tie unique GV");
-		}
-#endif
 		methname = "TIEHANDLE";
 		how = PERL_MAGIC_tiedscalar;
 		/* For tied filehandles, we apply tiedscalar magic to the IO
@@ -827,7 +820,7 @@ PP(pp_tie)
     }
     items = SP - MARK++;
     if (sv_isobject(*MARK)) { /* Calls GET magic. */
-	ENTER;
+	ENTER_with_name("call_TIE");
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
 	EXTEND(SP,(I32)items);
@@ -847,7 +840,7 @@ PP(pp_tie)
 	    DIE(aTHX_ "Can't locate object method \"%s\" via package \"%"SVf"\"",
 		 methname, SVfARG(SvOK(*MARK) ? *MARK : &PL_sv_no));
 	}
-	ENTER;
+	ENTER_with_name("call_TIE");
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
 	EXTEND(SP,(I32)items);
@@ -870,7 +863,7 @@ PP(pp_tie)
 		       "Self-ties of arrays and hashes are not supported");
 	sv_magic(varsv, (SvRV(sv) == varsv ? NULL : sv), how, NULL, 0);
     }
-    LEAVE;
+    LEAVE_with_name("call_TIE");
     SP = PL_stack_base + markoff;
     PUSHs(sv);
     RETURN;
@@ -897,15 +890,15 @@ PP(pp_untie)
 	       XPUSHs(SvTIED_obj(MUTABLE_SV(gv), mg));
 	       mXPUSHi(SvREFCNT(obj) - 1);
 	       PUTBACK;
-	       ENTER;
+	       ENTER_with_name("call_UNTIE");
 	       call_sv(MUTABLE_SV(cv), G_VOID);
-	       LEAVE;
+	       LEAVE_with_name("call_UNTIE");
 	       SPAGAIN;
             }
-	    else if (mg && SvREFCNT(obj) > 1 && ckWARN(WARN_UNTIE)) {
-		  Perl_warner(aTHX_ packWARN(WARN_UNTIE),
-		      "untie attempted while %"UVuf" inner references still exist",
-		       (UV)SvREFCNT(obj) - 1 ) ;
+	    else if (mg && SvREFCNT(obj) > 1) {
+		Perl_ck_warner(aTHX_ packWARN(WARN_UNTIE),
+			       "untie attempted while %"UVuf" inner references still exist",
+			       (UV)SvREFCNT(obj) - 1 ) ;
 	    }
         }
     }
@@ -940,7 +933,7 @@ PP(pp_dbmopen)
     dVAR; dSP;
     dPOPPOPssrl;
     HV* stash;
-    GV *gv;
+    GV *gv = NULL;
 
     HV * const hv = MUTABLE_HV(POPs);
     SV * const sv = newSVpvs_flags("AnyDBM_File", SVs_TEMP);
@@ -949,7 +942,7 @@ PP(pp_dbmopen)
 	PUTBACK;
 	require_pv("AnyDBM_File.pm");
 	SPAGAIN;
-	if (!(gv = gv_fetchmethod(stash, "TIEHASH")))
+	if (!stash || !(gv = gv_fetchmethod(stash, "TIEHASH")))
 	    DIE(aTHX_ "No dbm on this machine");
     }
 
@@ -1028,8 +1021,7 @@ PP(pp_sselect)
 		DIE(aTHX_ "%s", PL_no_modify);
 	}
 	if (!SvPOK(sv)) {
-	    if (ckWARN(WARN_MISC))
-                Perl_warner(aTHX_ packWARN(WARN_MISC), "Non-string passed as bitmask");
+	    Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "Non-string passed as bitmask");
 	    SvPV_force_nolen(sv);	/* force string conversion */
 	}
 	j = SvCUR(sv);
@@ -1149,16 +1141,27 @@ PP(pp_sselect)
     RETURN;
 #else
     DIE(aTHX_ "select not implemented");
+    return NORMAL;
 #endif
 }
+
+/*
+=for apidoc setdefout
+
+Sets PL_defoutgv, the default file handle for output, to the passed in
+typeglob. As PL_defoutgv "owns" a reference on its typeglob, the reference
+count of the passed in typeglob is increased by one, and the reference count
+of the typeglob that PL_defoutgv points to is decreased by one.
+
+=cut
+*/
 
 void
 Perl_setdefout(pTHX_ GV *gv)
 {
     dVAR;
     SvREFCNT_inc_simple_void(gv);
-    if (PL_defoutgv)
-	SvREFCNT_dec(PL_defoutgv);
+    SvREFCNT_dec(PL_defoutgv);
     PL_defoutgv = gv;
 }
 
@@ -1199,6 +1202,9 @@ PP(pp_getc)
     dVAR; dSP; dTARGET;
     IO *io = NULL;
     GV * const gv = (MAXARG==0) ? PL_stdingv : MUTABLE_GV(POPs);
+
+    if (MAXARG == 0)
+	EXTEND(SP, 1);
 
     if (gv && (io = GvIO(gv))) {
 	MAGIC * const mg = SvTIED_mg((const SV *)io, PERL_MAGIC_tiedscalar);
@@ -1253,8 +1259,7 @@ S_doform(pTHX_ CV *cv, GV *gv, OP *retop)
     SAVETMPS;
 
     PUSHBLOCK(cx, CXt_FORMAT, PL_stack_sp);
-    PUSHFORMAT(cx);
-    cx->blk_sub.retop = retop;
+    PUSHFORMAT(cx, retop);
     SAVECOMPPAD();
     PAD_SET_CUR_NOSAVE(CvPADLIST(cv), 1);
 
@@ -1269,8 +1274,8 @@ PP(pp_enterwrite)
     register GV *gv;
     register IO *io;
     GV *fgv;
-    CV *cv;
-    SV * tmpsv = NULL;
+    CV *cv = NULL;
+    SV *tmpsv = NULL;
 
     if (MAXARG == 0)
 	gv = PL_defoutgv;
@@ -1314,7 +1319,7 @@ PP(pp_enterwrite)
 PP(pp_leavewrite)
 {
     dVAR; dSP;
-    GV * const gv = cxstack[cxstack_ix].blk_sub.gv;
+    GV * const gv = cxstack[cxstack_ix].blk_format.gv;
     register IO * const io = GvIOp(gv);
     PerlIO *ofp;
     PerlIO *fp;
@@ -1417,8 +1422,7 @@ PP(pp_leavewrite)
     }
     else {
 	if ((IoLINES_LEFT(io) -= FmLINES(PL_formtarget)) < 0) {
-	    if (ckWARN(WARN_IO))
-		Perl_warner(aTHX_ packWARN(WARN_IO), "page overflow");
+	    Perl_ck_warner(aTHX_ packWARN(WARN_IO), "page overflow");
 	}
 	if (!do_print(PL_formtarget, fp))
 	    PUSHs(&PL_sv_no);
@@ -1919,7 +1923,7 @@ PP(pp_send)
 		    DIE(aTHX_ "Offset outside string");
 		}
 		offset += blen_chars;
-	    } else if (offset >= (IV)blen_chars && blen_chars > 0) {
+	    } else if (offset > (IV)blen_chars) {
 		Safefree(tmpbuf);
 		DIE(aTHX_ "Offset outside string");
 	    }
@@ -2010,51 +2014,65 @@ PP(pp_eof)
 {
     dVAR; dSP;
     GV *gv;
+    IO *io;
+    MAGIC *mg;
 
-    if (MAXARG == 0) {
-	if (PL_op->op_flags & OPf_SPECIAL) {	/* eof() */
-	    IO *io;
-	    gv = PL_last_in_gv = GvEGV(PL_argvgv);
-	    io = GvIO(gv);
-	    if (io && !IoIFP(io)) {
-		if ((IoFLAGS(io) & IOf_START) && av_len(GvAVn(gv)) < 0) {
-		    IoLINES(io) = 0;
-		    IoFLAGS(io) &= ~IOf_START;
-		    do_open(gv, "-", 1, FALSE, O_RDONLY, 0, NULL);
-		    if ( GvSV(gv) ) {
-			sv_setpvs(GvSV(gv), "-");
-		    }
-		    else {
-			GvSV(gv) = newSVpvs("-");
-		    }
-		    SvSETMAGIC(GvSV(gv));
-		}
-		else if (!nextargv(gv))
-		    RETPUSHYES;
-	    }
-	}
+    if (MAXARG)
+	gv = PL_last_in_gv = MUTABLE_GV(POPs);	/* eof(FH) */
+    else {
+	EXTEND(SP, 1);
+
+	if (PL_op->op_flags & OPf_SPECIAL)
+	    gv = PL_last_in_gv = GvEGV(PL_argvgv);	/* eof() - ARGV magic */
 	else
 	    gv = PL_last_in_gv;			/* eof */
     }
-    else
-	gv = PL_last_in_gv = MUTABLE_GV(POPs);	/* eof(FH) */
 
-    if (gv) {
-	IO * const io = GvIO(gv);
-	MAGIC * mg;
-	if (io && (mg = SvTIED_mg((const SV *)io, PERL_MAGIC_tiedscalar))) {
-	    PUSHMARK(SP);
-	    XPUSHs(SvTIED_obj(MUTABLE_SV(io), mg));
-	    PUTBACK;
-	    ENTER;
-	    call_method("EOF", G_SCALAR);
-	    LEAVE;
-	    SPAGAIN;
-	    RETURN;
+    if (!gv)
+	RETPUSHNO;
+
+    if ((io = GvIO(gv)) && (mg = SvTIED_mg((const SV *)io, PERL_MAGIC_tiedscalar))) {
+	PUSHMARK(SP);
+	XPUSHs(SvTIED_obj(MUTABLE_SV(io), mg));
+	/*
+	 * in Perl 5.12 and later, the additional paramter is a bitmask:
+	 * 0 = eof
+	 * 1 = eof(FH)
+	 * 2 = eof()  <- ARGV magic
+	 */
+	EXTEND(SP, 1);
+	if (MAXARG)
+	    mPUSHi(1);		/* 1 = eof(FH) - simple, explicit FH */
+	else if (PL_op->op_flags & OPf_SPECIAL)
+	    mPUSHi(2);		/* 2 = eof()   - ARGV magic */
+	else
+	    mPUSHi(0);		/* 0 = eof     - simple, implicit FH */
+	PUTBACK;
+	ENTER;
+	call_method("EOF", G_SCALAR);
+	LEAVE;
+	SPAGAIN;
+	RETURN;
+    }
+
+    if (!MAXARG && (PL_op->op_flags & OPf_SPECIAL)) {	/* eof() */
+	if (io && !IoIFP(io)) {
+	    if ((IoFLAGS(io) & IOf_START) && av_len(GvAVn(gv)) < 0) {
+		IoLINES(io) = 0;
+		IoFLAGS(io) &= ~IOf_START;
+		do_open(gv, "-", 1, FALSE, O_RDONLY, 0, NULL);
+		if (GvSV(gv))
+		    sv_setpvs(GvSV(gv), "-");
+		else
+		    GvSV(gv) = newSVpvs("-");
+		SvSETMAGIC(GvSV(gv));
+	    }
+	    else if (!nextargv(gv))
+		RETPUSHYES;
 	}
     }
 
-    PUSHs(boolSV(!gv || do_eof(gv)));
+    PUSHs(boolSV(do_eof(gv)));
     RETURN;
 }
 
@@ -2066,6 +2084,8 @@ PP(pp_tell)
 
     if (MAXARG != 0)
 	PL_last_in_gv = MUTABLE_GV(POPs);
+    else
+	EXTEND(SP, 1);
     gv = PL_last_in_gv;
 
     if (gv && (io = GvIO(gv))) {
@@ -2080,6 +2100,12 @@ PP(pp_tell)
 	    SPAGAIN;
 	    RETURN;
 	}
+    }
+    else if (!gv) {
+	if (!errno)
+	    SETERRNO(EBADF,RMS_IFI);
+	PUSHi(-1);
+	RETURN;
     }
 
 #if LSEEKSIZE > IVSIZE
@@ -2344,6 +2370,7 @@ PP(pp_flock)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "flock()");
+    return NORMAL;
 #endif
 }
 
@@ -2396,6 +2423,7 @@ PP(pp_socket)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "socket");
+    return NORMAL;
 #endif
 }
 
@@ -2457,6 +2485,7 @@ PP(pp_sockpair)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "socketpair");
+    return NORMAL;
 #endif
 }
 
@@ -2488,6 +2517,7 @@ nuts:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_sock_func, "bind");
+    return NORMAL;
 #endif
 }
 
@@ -2518,6 +2548,7 @@ nuts:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_sock_func, "connect");
+    return NORMAL;
 #endif
 }
 
@@ -2544,6 +2575,7 @@ nuts:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_sock_func, "listen");
+    return NORMAL;
 #endif
 }
 
@@ -2623,6 +2655,7 @@ badexit:
 
 #else
     DIE(aTHX_ PL_no_sock_func, "accept");
+    return NORMAL;
 #endif
 }
 
@@ -2647,6 +2680,7 @@ nuts:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_sock_func, "shutdown");
+    return NORMAL;
 #endif
 }
 
@@ -2724,6 +2758,7 @@ nuts2:
 
 #else
     DIE(aTHX_ PL_no_sock_func, PL_op_desc[PL_op->op_type]);
+    return NORMAL;
 #endif
 }
 
@@ -2788,6 +2823,7 @@ nuts2:
 
 #else
     DIE(aTHX_ PL_no_sock_func, PL_op_desc[PL_op->op_type]);
+    return NORMAL;
 #endif
 }
 
@@ -2807,9 +2843,8 @@ PP(pp_stat)
 	if (PL_op->op_type == OP_LSTAT) {
 	    if (gv != PL_defgv) {
 	    do_fstat_warning_check:
-		if (ckWARN(WARN_IO))
-		    Perl_warner(aTHX_ packWARN(WARN_IO),
-			"lstat() on filehandle %s", gv ? GvENAME(gv) : "");
+		Perl_ck_warner(aTHX_ packWARN(WARN_IO),
+			       "lstat() on filehandle %s", gv ? GvENAME(gv) : "");
 	    } else if (PL_laststype != OP_LSTAT)
 		Perl_croak(aTHX_ "The stat preceding lstat() wasn't an lstat");
 	}
@@ -2965,7 +3000,18 @@ PP(pp_ftrread)
     int stat_mode = S_IRUSR;
 
     bool effective = FALSE;
+    char opchar = '?';
     dSP;
+
+    switch (PL_op->op_type) {
+    case OP_FTRREAD:	opchar = 'R'; break;
+    case OP_FTRWRITE:	opchar = 'W'; break;
+    case OP_FTREXEC:	opchar = 'X'; break;
+    case OP_FTEREAD:	opchar = 'r'; break;
+    case OP_FTEWRITE:	opchar = 'w'; break;
+    case OP_FTEEXEC:	opchar = 'x'; break;
+    }
+    tryAMAGICftest(opchar);
 
     STACKED_FTEST_CHECK;
 
@@ -2999,7 +3045,7 @@ PP(pp_ftrread)
 	access_mode = W_OK;
 #endif
 	stat_mode = S_IWUSR;
-	/* Fall through  */
+	/* fall through */
 
     case OP_FTEREAD:
 #ifndef PERL_EFF_ACCESS
@@ -3059,8 +3105,20 @@ PP(pp_ftis)
     dVAR;
     I32 result;
     const int op_type = PL_op->op_type;
+    char opchar = '?';
     dSP;
+
+    switch (op_type) {
+    case OP_FTIS:	opchar = 'e'; break;
+    case OP_FTSIZE:	opchar = 's'; break;
+    case OP_FTMTIME:	opchar = 'M'; break;
+    case OP_FTCTIME:	opchar = 'C'; break;
+    case OP_FTATIME:	opchar = 'A'; break;
+    }
+    tryAMAGICftest(opchar);
+
     STACKED_FTEST_CHECK;
+
     result = my_stat();
     SPAGAIN;
     if (result < 0)
@@ -3097,7 +3155,24 @@ PP(pp_ftrowned)
 {
     dVAR;
     I32 result;
+    char opchar = '?';
     dSP;
+
+    switch (PL_op->op_type) {
+    case OP_FTROWNED:	opchar = 'O'; break;
+    case OP_FTEOWNED:	opchar = 'o'; break;
+    case OP_FTZERO:	opchar = 'z'; break;
+    case OP_FTSOCK:	opchar = 'S'; break;
+    case OP_FTCHR:	opchar = 'c'; break;
+    case OP_FTBLK:	opchar = 'b'; break;
+    case OP_FTFILE:	opchar = 'f'; break;
+    case OP_FTDIR:	opchar = 'd'; break;
+    case OP_FTPIPE:	opchar = 'p'; break;
+    case OP_FTSUID:	opchar = 'u'; break;
+    case OP_FTSGID:	opchar = 'g'; break;
+    case OP_FTSVTX:	opchar = 'k'; break;
+    }
+    tryAMAGICftest(opchar);
 
     /* I believe that all these three are likely to be defined on most every
        system these days.  */
@@ -3115,6 +3190,7 @@ PP(pp_ftrowned)
 #endif
 
     STACKED_FTEST_CHECK;
+
     result = my_stat();
     SPAGAIN;
     if (result < 0)
@@ -3181,8 +3257,13 @@ PP(pp_ftrowned)
 PP(pp_ftlink)
 {
     dVAR;
-    I32 result = my_lstat();
     dSP;
+    I32 result;
+
+    tryAMAGICftest('l');
+    result = my_lstat();
+    SPAGAIN;
+
     if (result < 0)
 	RETPUSHUNDEF;
     if (S_ISLNK(PL_statcache.st_mode))
@@ -3197,6 +3278,8 @@ PP(pp_fttty)
     int fd;
     GV *gv;
     SV *tmpsv = NULL;
+
+    tryAMAGICftest('t');
 
     STACKED_FTEST_CHECK;
 
@@ -3246,6 +3329,8 @@ PP(pp_fttext)
     register SV *sv;
     GV *gv;
     PerlIO *fp;
+
+    tryAMAGICftest(PL_op->op_type == OP_FTTEXT ? 'T' : 'B');
 
     STACKED_FTEST_CHECK;
 
@@ -3493,6 +3578,7 @@ PP(pp_chroot)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "chroot");
+    return NORMAL;
 #endif
 }
 
@@ -3567,6 +3653,7 @@ PP(pp_link)
 {
     /* Have neither.  */
     DIE(aTHX_ PL_no_func, PL_op_desc[PL_op->op_type]);
+    return NORMAL;
 }
 #endif
 
@@ -3766,9 +3853,10 @@ PP(pp_open_dir)
     if (!io)
 	goto nope;
 
-    if ((IoIFP(io) || IoOFP(io)) && ckWARN2(WARN_IO, WARN_DEPRECATED))
-	Perl_warner(aTHX_ packWARN2(WARN_IO, WARN_DEPRECATED),
-		"Opening filehandle %s also as a directory", GvENAME(gv));
+    if ((IoIFP(io) || IoOFP(io)))
+	Perl_ck_warner_d(aTHX_ packWARN2(WARN_IO, WARN_DEPRECATED),
+			 "Opening filehandle %s also as a directory",
+			 GvENAME(gv));
     if (IoDIRP(io))
 	PerlDir_close(IoDIRP(io));
     if (!(IoDIRP(io) = PerlDir_open(dirname)))
@@ -3781,6 +3869,7 @@ nope:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_dir_func, "opendir");
+    return NORMAL;
 #endif
 }
 
@@ -3788,6 +3877,7 @@ PP(pp_readdir)
 {
 #if !defined(Direntry_t) || !defined(HAS_READDIR)
     DIE(aTHX_ PL_no_dir_func, "readdir");
+    return NORMAL;
 #else
 #if !defined(I_DIRENT) && !defined(VMS)
     Direntry_t *readdir (DIR *);
@@ -3802,10 +3892,8 @@ PP(pp_readdir)
     register IO * const io = GvIOn(gv);
 
     if (!io || !IoDIRP(io)) {
-        if(ckWARN(WARN_IO)) {
-            Perl_warner(aTHX_ packWARN(WARN_IO),
-                "readdir() attempted on invalid dirhandle %s", GvENAME(gv));
-        }
+	Perl_ck_warner(aTHX_ packWARN(WARN_IO),
+		       "readdir() attempted on invalid dirhandle %s", GvENAME(gv));
         goto nope;
     }
 
@@ -3855,10 +3943,8 @@ PP(pp_telldir)
     register IO * const io = GvIOn(gv);
 
     if (!io || !IoDIRP(io)) {
-        if(ckWARN(WARN_IO)) {
-            Perl_warner(aTHX_ packWARN(WARN_IO),
-	        "telldir() attempted on invalid dirhandle %s", GvENAME(gv));
-        }
+	Perl_ck_warner(aTHX_ packWARN(WARN_IO),
+		       "telldir() attempted on invalid dirhandle %s", GvENAME(gv));
         goto nope;
     }
 
@@ -3870,6 +3956,7 @@ nope:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_dir_func, "telldir");
+    return NORMAL;
 #endif
 }
 
@@ -3882,10 +3969,8 @@ PP(pp_seekdir)
     register IO * const io = GvIOn(gv);
 
     if (!io || !IoDIRP(io)) {
-	if(ckWARN(WARN_IO)) {
-	    Perl_warner(aTHX_ packWARN(WARN_IO),
-                "seekdir() attempted on invalid dirhandle %s", GvENAME(gv));
-        }
+	Perl_ck_warner(aTHX_ packWARN(WARN_IO),
+		       "seekdir() attempted on invalid dirhandle %s", GvENAME(gv));
         goto nope;
     }
     (void)PerlDir_seek(IoDIRP(io), along);
@@ -3897,6 +3982,7 @@ nope:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_dir_func, "seekdir");
+    return NORMAL;
 #endif
 }
 
@@ -3908,10 +3994,8 @@ PP(pp_rewinddir)
     register IO * const io = GvIOn(gv);
 
     if (!io || !IoDIRP(io)) {
-	if(ckWARN(WARN_IO)) {
-	    Perl_warner(aTHX_ packWARN(WARN_IO),
-	        "rewinddir() attempted on invalid dirhandle %s", GvENAME(gv));
-	}
+	Perl_ck_warner(aTHX_ packWARN(WARN_IO),
+		       "rewinddir() attempted on invalid dirhandle %s", GvENAME(gv));
 	goto nope;
     }
     (void)PerlDir_rewind(IoDIRP(io));
@@ -3922,6 +4006,7 @@ nope:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_dir_func, "rewinddir");
+    return NORMAL;
 #endif
 }
 
@@ -3933,10 +4018,8 @@ PP(pp_closedir)
     register IO * const io = GvIOn(gv);
 
     if (!io || !IoDIRP(io)) {
-	if(ckWARN(WARN_IO)) {
-	    Perl_warner(aTHX_ packWARN(WARN_IO),
-                "closedir() attempted on invalid dirhandle %s", GvENAME(gv));
-        }
+	Perl_ck_warner(aTHX_ packWARN(WARN_IO),
+		       "closedir() attempted on invalid dirhandle %s", GvENAME(gv));
         goto nope;
     }
 #ifdef VOID_CLOSEDIR
@@ -3956,6 +4039,7 @@ nope:
     RETPUSHUNDEF;
 #else
     DIE(aTHX_ PL_no_dir_func, "closedir");
+    return NORMAL;
 #endif
 }
 
@@ -4002,13 +4086,14 @@ PP(pp_fork)
     RETURN;
 #  else
     DIE(aTHX_ PL_no_func, "fork");
+    return NORMAL;
 #  endif
 #endif
 }
 
 PP(pp_wait)
 {
-#if (!defined(DOSISH) || defined(OS2) || defined(WIN32)) && !defined(MACOS_TRADITIONAL) && !defined(__LIBCATAMOUNT__)
+#if (!defined(DOSISH) || defined(OS2) || defined(WIN32)) && !defined(__LIBCATAMOUNT__)
     dVAR; dSP; dTARGET;
     Pid_t childpid;
     int argflags;
@@ -4031,12 +4116,13 @@ PP(pp_wait)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "wait");
+    return NORMAL;
 #endif
 }
 
 PP(pp_waitpid)
 {
-#if (!defined(DOSISH) || defined(OS2) || defined(WIN32)) && !defined(MACOS_TRADITIONAL) && !defined(__LIBCATAMOUNT__)
+#if (!defined(DOSISH) || defined(OS2) || defined(WIN32)) && !defined(__LIBCATAMOUNT__)
     dVAR; dSP; dTARGET;
     const int optype = POPi;
     const Pid_t pid = TOPi;
@@ -4061,6 +4147,7 @@ PP(pp_waitpid)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "waitpid");
+    return NORMAL;
 #endif
 }
 
@@ -4266,6 +4353,7 @@ PP(pp_getppid)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "getppid");
+    return NORMAL;
 #endif
 }
 
@@ -4287,6 +4375,7 @@ PP(pp_getpgrp)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "getpgrp()");
+    return NORMAL;
 #endif
 }
 
@@ -4320,6 +4409,7 @@ PP(pp_setpgrp)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "setpgrp()");
+    return NORMAL;
 #endif
 }
 
@@ -4333,6 +4423,7 @@ PP(pp_getpriority)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "getpriority()");
+    return NORMAL;
 #endif
 }
 
@@ -4348,6 +4439,7 @@ PP(pp_setpriority)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "setpriority()");
+    return NORMAL;
 #endif
 }
 
@@ -4398,108 +4490,106 @@ PP(pp_tms)
     RETURN;
 #   else
     DIE(aTHX_ "times not implemented");
+    return NORMAL;
 #   endif
 #endif /* HAS_TIMES */
 }
 
-#ifdef LOCALTIME_EDGECASE_BROKEN
-static struct tm *S_my_localtime (pTHX_ Time_t *tp)
-{
-    auto time_t     T;
-    auto struct tm *P;
-
-    /* No workarounds in the valid range */
-    if (!tp || *tp < 0x7fff573f || *tp >= 0x80000000)
-	return (localtime (tp));
-
-    /* This edge case is to workaround the undefined behaviour, where the
-     * TIMEZONE makes the time go beyond the defined range.
-     * gmtime (0x7fffffff) => 2038-01-19 03:14:07
-     * If there is a negative offset in TZ, like MET-1METDST, some broken
-     * implementations of localtime () (like AIX 5.2) barf with bogus
-     * return values:
-     * 0x7fffffff gmtime               2038-01-19 03:14:07
-     * 0x7fffffff localtime            1901-12-13 21:45:51
-     * 0x7fffffff mylocaltime          2038-01-19 04:14:07
-     * 0x3c19137f gmtime               2001-12-13 20:45:51
-     * 0x3c19137f localtime            2001-12-13 21:45:51
-     * 0x3c19137f mylocaltime          2001-12-13 21:45:51
-     * Given that legal timezones are typically between GMT-12 and GMT+12
-     * we turn back the clock 23 hours before calling the localtime
-     * function, and add those to the return value. This will never cause
-     * day wrapping problems, since the edge case is Tue Jan *19*
-     */
-    T = *tp - 82800; /* 23 hour. allows up to GMT-23 */
-    P = localtime (&T);
-    P->tm_hour += 23;
-    if (P->tm_hour >= 24) {
-	P->tm_hour -= 24;
-	P->tm_mday++;	/* 18  -> 19  */
-	P->tm_wday++;	/* Mon -> Tue */
-	P->tm_yday++;	/* 18  -> 19  */
-    }
-    return (P);
-} /* S_my_localtime */
-#endif
+/* The 32 bit int year limits the times we can represent to these
+   boundaries with a few days wiggle room to account for time zone
+   offsets
+*/
+/* Sat Jan  3 00:00:00 -2147481748 */
+#define TIME_LOWER_BOUND -67768100567755200.0
+/* Sun Dec 29 12:00:00  2147483647 */
+#define TIME_UPPER_BOUND  67767976233316800.0
 
 PP(pp_gmtime)
 {
     dVAR;
     dSP;
-    Time_t when;
-    const struct tm *tmbuf;
+    Time64_T when;
+    struct TM tmbuf;
+    struct TM *err;
+    const char *opname = PL_op->op_type == OP_LOCALTIME ? "localtime" : "gmtime";
     static const char * const dayname[] =
 	{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     static const char * const monname[] =
 	{"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-    if (MAXARG < 1)
-	(void)time(&when);
-    else
-#ifdef BIG_TIME
-	when = (Time_t)SvNVx(POPs);
-#else
-	when = (Time_t)SvIVx(POPs);
-#endif
+    if (MAXARG < 1) {
+	time_t now;
+	(void)time(&now);
+	when = (Time64_T)now;
+    }
+    else {
+	double input = Perl_floor(POPn);
+	when = (Time64_T)input;
+	if (when != input) {
+	    Perl_ck_warner(aTHX_ packWARN(WARN_OVERFLOW),
+			   "%s(%.0f) too large", opname, input);
+	}
+    }
 
-    if (PL_op->op_type == OP_LOCALTIME)
-#ifdef LOCALTIME_EDGECASE_BROKEN
-	tmbuf = S_my_localtime(aTHX_ &when);
-#else
-	tmbuf = localtime(&when);
-#endif
-    else
-	tmbuf = gmtime(&when);
+    if ( TIME_LOWER_BOUND > when ) {
+	Perl_ck_warner(aTHX_ packWARN(WARN_OVERFLOW),
+		       "%s(%.0f) too small", opname, when);
+	err = NULL;
+    }
+    else if( when > TIME_UPPER_BOUND ) {
+	Perl_ck_warner(aTHX_ packWARN(WARN_OVERFLOW),
+		       "%s(%.0f) too large", opname, when);
+	err = NULL;
+    }
+    else {
+	if (PL_op->op_type == OP_LOCALTIME)
+	    err = S_localtime64_r(&when, &tmbuf);
+	else
+	    err = S_gmtime64_r(&when, &tmbuf);
+    }
 
-    if (GIMME != G_ARRAY) {
+    if (err == NULL) {
+	/* XXX %lld broken for quads */
+	Perl_ck_warner(aTHX_ packWARN(WARN_OVERFLOW),
+		       "%s(%.0f) failed", opname, (double)when);
+    }
+
+    if (GIMME != G_ARRAY) {	/* scalar context */
 	SV *tsv;
+	/* XXX newSVpvf()'s %lld type is broken, so cheat with a double */
+	double year = (double)tmbuf.tm_year + 1900;
+
         EXTEND(SP, 1);
         EXTEND_MORTAL(1);
-	if (!tmbuf)
+	if (err == NULL)
 	    RETPUSHUNDEF;
-	tsv = Perl_newSVpvf(aTHX_ "%s %s %2d %02d:%02d:%02d %d",
-			    dayname[tmbuf->tm_wday],
-			    monname[tmbuf->tm_mon],
-			    tmbuf->tm_mday,
-			    tmbuf->tm_hour,
-			    tmbuf->tm_min,
-			    tmbuf->tm_sec,
-			    tmbuf->tm_year + 1900);
+
+	tsv = Perl_newSVpvf(aTHX_ "%s %s %2d %02d:%02d:%02d %.0f",
+			    dayname[tmbuf.tm_wday],
+			    monname[tmbuf.tm_mon],
+			    tmbuf.tm_mday,
+			    tmbuf.tm_hour,
+			    tmbuf.tm_min,
+			    tmbuf.tm_sec,
+			    year);
 	mPUSHs(tsv);
     }
-    else if (tmbuf) {
+    else {			/* list context */
+	if ( err == NULL )
+	    RETURN;
+
         EXTEND(SP, 9);
         EXTEND_MORTAL(9);
-        mPUSHi(tmbuf->tm_sec);
-	mPUSHi(tmbuf->tm_min);
-	mPUSHi(tmbuf->tm_hour);
-	mPUSHi(tmbuf->tm_mday);
-	mPUSHi(tmbuf->tm_mon);
-	mPUSHi(tmbuf->tm_year);
-	mPUSHi(tmbuf->tm_wday);
-	mPUSHi(tmbuf->tm_yday);
-	mPUSHi(tmbuf->tm_isdst);
+        mPUSHi(tmbuf.tm_sec);
+	mPUSHi(tmbuf.tm_min);
+	mPUSHi(tmbuf.tm_hour);
+	mPUSHi(tmbuf.tm_mday);
+	mPUSHi(tmbuf.tm_mon);
+	mPUSHn(tmbuf.tm_year);
+	mPUSHi(tmbuf.tm_wday);
+	mPUSHi(tmbuf.tm_yday);
+	mPUSHi(tmbuf.tm_isdst);
     }
     RETURN;
 }
@@ -4518,6 +4608,7 @@ PP(pp_alarm)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "alarm");
+    return NORMAL;
 #endif
 }
 
@@ -4587,6 +4678,7 @@ PP(pp_semget)
     RETURN;
 #else
     DIE(aTHX_ "System V IPC is not implemented on this machine");
+    return NORMAL;
 #endif
 }
 
@@ -4647,7 +4739,7 @@ PP(pp_ghostent)
     struct hostent *gethostbyname(Netdb_name_t);
     struct hostent *gethostent(void);
 #endif
-    struct hostent *hent;
+    struct hostent *hent = NULL;
     unsigned long len;
 
     EXTEND(SP, 10);
@@ -4722,6 +4814,7 @@ PP(pp_ghostent)
     RETURN;
 #else
     DIE(aTHX_ PL_no_sock_func, "gethostent");
+    return NORMAL;
 #endif
 }
 
@@ -4795,6 +4888,7 @@ PP(pp_gnetent)
     RETURN;
 #else
     DIE(aTHX_ PL_no_sock_func, "getnetent");
+    return NORMAL;
 #endif
 }
 
@@ -4855,6 +4949,7 @@ PP(pp_gprotoent)
     RETURN;
 #else
     DIE(aTHX_ PL_no_sock_func, "getprotoent");
+    return NORMAL;
 #endif
 }
 
@@ -4930,6 +5025,7 @@ PP(pp_gservent)
     RETURN;
 #else
     DIE(aTHX_ PL_no_sock_func, "getservent");
+    return NORMAL;
 #endif
 }
 
@@ -4941,6 +5037,7 @@ PP(pp_shostent)
     RETSETYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "sethostent");
+    return NORMAL;
 #endif
 }
 
@@ -4952,6 +5049,7 @@ PP(pp_snetent)
     RETSETYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "setnetent");
+    return NORMAL;
 #endif
 }
 
@@ -4963,6 +5061,7 @@ PP(pp_sprotoent)
     RETSETYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "setprotoent");
+    return NORMAL;
 #endif
 }
 
@@ -4974,6 +5073,7 @@ PP(pp_sservent)
     RETSETYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "setservent");
+    return NORMAL;
 #endif
 }
 
@@ -4986,6 +5086,7 @@ PP(pp_ehostent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "endhostent");
+    return NORMAL;
 #endif
 }
 
@@ -4998,6 +5099,7 @@ PP(pp_enetent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "endnetent");
+    return NORMAL;
 #endif
 }
 
@@ -5010,6 +5112,7 @@ PP(pp_eprotoent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "endprotoent");
+    return NORMAL;
 #endif
 }
 
@@ -5022,6 +5125,7 @@ PP(pp_eservent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_sock_func, "endservent");
+    return NORMAL;
 #endif
 }
 
@@ -5255,6 +5359,7 @@ PP(pp_gpwent)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, PL_op_desc[PL_op->op_type]);
+    return NORMAL;
 #endif
 }
 
@@ -5266,6 +5371,7 @@ PP(pp_spwent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_func, "setpwent");
+    return NORMAL;
 #endif
 }
 
@@ -5277,6 +5383,7 @@ PP(pp_epwent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_func, "endpwent");
+    return NORMAL;
 #endif
 }
 
@@ -5351,6 +5458,7 @@ PP(pp_ggrent)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, PL_op_desc[PL_op->op_type]);
+    return NORMAL;
 #endif
 }
 
@@ -5362,6 +5470,7 @@ PP(pp_sgrent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_func, "setgrent");
+    return NORMAL;
 #endif
 }
 
@@ -5373,6 +5482,7 @@ PP(pp_egrent)
     RETPUSHYES;
 #else
     DIE(aTHX_ PL_no_func, "endgrent");
+    return NORMAL;
 #endif
 }
 
@@ -5388,6 +5498,7 @@ PP(pp_getlogin)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "getlogin");
+    return NORMAL;
 #endif
 }
 
@@ -5486,6 +5597,7 @@ PP(pp_syscall)
     RETURN;
 #else
     DIE(aTHX_ PL_no_func, "syscall");
+    return NORMAL;
 #endif
 }
 
@@ -5498,6 +5610,7 @@ PP(pp_syscall)
 static int
 fcntl_emulate_flock(int fd, int operation)
 {
+    int res;
     struct flock flock;
 
     switch (operation & ~LOCK_NB) {
@@ -5517,7 +5630,10 @@ fcntl_emulate_flock(int fd, int operation)
     flock.l_whence = SEEK_SET;
     flock.l_start = flock.l_len = (Off_t)0;
 
-    return fcntl(fd, (operation & LOCK_NB) ? F_SETLK : F_SETLKW, &flock);
+    res = fcntl(fd, (operation & LOCK_NB) ? F_SETLK : F_SETLKW, &flock);
+    if (res == -1 && ((errno == EAGAIN) || (errno == EACCES)))
+	errno = EWOULDBLOCK;
+    return res;
 }
 
 #endif /* FCNTL_EMULATE_FLOCK */

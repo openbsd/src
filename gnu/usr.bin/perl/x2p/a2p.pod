@@ -122,9 +122,9 @@ implicit in the awk script.  There are times when you can move this
 down past some conditionals that test the entire record so that the
 split is not done as often.
 
-For aesthetic reasons you may wish to change the array base $[ from 1
-back to perl's default of 0, but remember to change all array
-subscripts AND all substr() and index() operations to match.
+For aesthetic reasons you may wish to change index variables from being
+1-based (awk style) to 0-based (Perl style).  Be sure to change all
+operations the variable is involved in to match.
 
 Cute comments that say "# Here is a workaround because awk is dumb"
 are passed through unmodified.
@@ -148,7 +148,7 @@ statement that is the last statement executed in a subroutine.  A2p
 catches the most common case, but doesn't analyze embedded blocks for
 subtler cases.
 
-ARGV[0] translates to $ARGV0, but ARGV[n] translates to $ARGV[$n].  A
+ARGV[0] translates to $ARGV0, but ARGV[n] translates to $ARGV[$n-1].  A
 loop that tries to iterate over ARGV[0] won't find it.
 
 =head1 ENVIRONMENT

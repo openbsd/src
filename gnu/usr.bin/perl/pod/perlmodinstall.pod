@@ -49,7 +49,7 @@ Here's how to perform each step for each operating system.  This is
 might have come with your module!
 
 Also note that these instructions are tailored for installing the
-module into your system's repository of Perl modules -- but you can
+module into your system's repository of Perl modules, but you can
 install modules into any directory you wish.  For instance, where I
 say C<perl Makefile.PL>, you can substitute C<perl Makefile.PL
 PREFIX=/my/perl_directory> to install the modules into
@@ -110,7 +110,7 @@ Make sure you have the appropriate permissions to install the module
 in your Perl 5 library directory.  Often, you'll need to be root.
 
 That's all you need to do on Unix systems with dynamic linking.
-Most Unix systems have dynamic linking -- if yours doesn't, or if for
+Most Unix systems have dynamic linking. If yours doesn't, or if for
 another reason you have a statically-linked perl, B<and> the
 module requires compilation, you'll need to build a new Perl binary
 that includes the module.  Again, you'll probably need to be root.
@@ -145,7 +145,7 @@ http://search.cpan.org/dist/dmake/
 Does the module require compilation (i.e. does it have files that end
 in .xs, .c, .h, .y, .cc, .cxx, or .C)?  If it does, life is now
 officially tough for you, because you have to compile the module
-yourself -- no easy feat on Windows.  You'll need a compiler such as
+yourself (no easy feat on Windows).  You'll need a compiler such as
 Visual C++.  Alternatively, you can download a pre-built PPM package
 from ActiveState.
 http://aspn.activestate.com/ASPN/Downloads/ActivePerl/PPM/
@@ -179,9 +179,7 @@ After installing cpan-mac, drop the module archive on the
 B<untarzipme> droplet, which will decompress and unpack for you.
 
 B<Or>, you can either use the shareware B<StuffIt Expander> program
-( http://www.aladdinsys.com/expander/ )
-in combination with B<DropStuff with Expander Enhancer>
-( http://www.aladdinsys.com/dropstuff/ )
+( http://my.smithmicro.com/mac/stuffit/ )
 or the freeware B<MacGzip> program (
 http://persephone.cps.unizar.es/general/gente/spd/gzip/gzip.html ).
 
@@ -199,14 +197,6 @@ reasons why you might have trouble using it with MacPerl.  Look for
 F<.xs> and F<.c> files, which normally denote that the distribution
 must be compiled, and you cannot install it "out of the box."
 (See L<"PORTABILITY">.)
-
-If a module does not work on MacPerl but should, or needs to be
-compiled, see if the module exists already as a port on the
-MacPerl Module Porters site ( http://pudge.net/mmp/ ).
-For more information on doing XS with MacPerl yourself, see
-Arved Sandstrom's XS tutorial ( http://macperl.com/depts/Tutorials/ ),
-and then consider uploading your binary to the CPAN and
-registering it on the MMP site.
 
 D. INSTALL
 
@@ -251,7 +241,7 @@ B<If you're on the DJGPP port of DOS,>
 
    A. DECOMPRESS
 
-djtarx ( ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2/ )
+djtarx ( ftp://ftp.delorie.com/pub/djgpp/current/v2/ )
 will both uncompress and unpack.
 
    B. UNPACK
@@ -306,8 +296,7 @@ or, for zipped modules, type
 
 Executables for gzip, zip, and VMStar:
 
-    http://www.openvms.digital.com/freeware/
-    http://www.crinoid.com/utils/
+    http://www.hp.com/go/openvms/freeware/
 
 and their source code:
 

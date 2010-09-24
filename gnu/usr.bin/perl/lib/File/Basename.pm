@@ -37,13 +37,13 @@ is equivalent to the original path for all systems but VMS.
 
 package File::Basename;
 
-# A bit of juggling to insure that C<use re 'taint';> always works, since
 # File::Basename is used during the Perl build, when the re extension may
-# not be available.
+# not be available, but we only actually need it if running under tainting.
 BEGIN {
-  unless (eval { require re; })
-    { eval ' sub re::import { $^H |= 0x00100000; } ' } # HINT_RE_TAINT
-  import re 'taint';
+  if (${^TAINT}) {
+    require re;
+    re->import('taint');
+  }
 }
 
 
@@ -54,7 +54,7 @@ our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-$VERSION = "2.77";
+$VERSION = "2.78";
 
 fileparse_set_fstype($^O);
 

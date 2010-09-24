@@ -10,7 +10,7 @@ about Perl.
 =head2 What is Perl?
 
 Perl is a high-level programming language with an eclectic heritage
-written by Larry Wall and a cast of thousands.  It derives from the
+written by Larry Wall and a cast of thousands. It derives from the
 ubiquitous C programming language and to a lesser extent from sed,
 awk, the Unix shell, and at least a dozen other tools and languages.
 Perl's process, file, and text manipulation facilities make it
@@ -19,39 +19,39 @@ utilities, software tools, system management tasks, database access,
 graphical programming, networking, and world wide web programming.
 These strengths make it especially popular with system administrators
 and CGI script authors, but mathematicians, geneticists, journalists,
-and even managers also use Perl.  Maybe you should, too.
+and even managers also use Perl. Maybe you should, too.
 
-=head2 Who supports Perl?  Who develops it?  Why is it free?
+=head2 Who supports Perl? Who develops it? Why is it free?
 
 The original culture of the pre-populist Internet and the deeply-held
 beliefs of Perl's author, Larry Wall, gave rise to the free and open
-distribution policy of perl.  Perl is supported by its users.  The
+distribution policy of perl. Perl is supported by its users. The
 core, the standard Perl library, the optional modules, and the
-documentation you're reading now were all written by volunteers.  See
+documentation you're reading now were all written by volunteers. See
 the personal note at the end of the README file in the perl source
-distribution for more details.  See L<perlhist> (new as of 5.005)
+distribution for more details. See L<perlhist> (new as of 5.005)
 for Perl's milestone releases.
 
 In particular, the core development team (known as the Perl Porters)
 are a rag-tag band of highly altruistic individuals committed to
 producing better software for free than you could hope to purchase for
-money.  You may snoop on pending developments via the archives at
+money. You may snoop on pending developments via the archives at
 http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/
 and http://archive.develooper.com/perl5-porters@perl.org/
 or the news gateway nntp://nntp.perl.org/perl.perl5.porters or
 its web interface at http://nntp.perl.org/group/perl.perl5.porters ,
 or read the faq at http://dev.perl.org/perl5/docs/p5p-faq.html ,
 or you can subscribe to the mailing list by sending
-perl5-porters-request@perl.org a subscription request
+perl5-porters-subscribe@perl.org a subscription request
 (an empty message with no subject is fine).
 
 While the GNU project includes Perl in its distributions, there's no
-such thing as "GNU Perl".  Perl is not produced nor maintained by the
-Free Software Foundation.  Perl's licensing terms are also more open
+such thing as "GNU Perl". Perl is not produced nor maintained by the
+Free Software Foundation. Perl's licensing terms are also more open
 than GNU software's tend to be.
 
 You can get commercial support of Perl if you wish, although for most
-users the informal support will more than suffice.  See the answer to
+users the informal support will more than suffice. See the answer to
 "Where can I buy a commercial version of perl?" for more information.
 
 =head2 Which version of Perl should I use?
@@ -101,22 +101,22 @@ for a while, although not at the same level as the current releases.
 
 =item *
 
-No one is actively supporting Perl 4.  Five years ago it was a dead
-camel carcass (according to this document).  Now it's barely a skeleton
+No one is actively supporting Perl 4. Five years ago it was a dead
+camel carcass (according to this document). Now it's barely a skeleton
 as its whitewashed bones have fractured or eroded.
 
 =item *
 
 There is no Perl 6 release scheduled, but it will be available when
-it's ready.  Stay tuned, but don't worry that you'll have to change
+it's ready. Stay tuned, but don't worry that you'll have to change
 major versions of Perl; no one is going to take Perl 5 away from you.
 
 =item *
 
 There are really two tracks of perl development: a maintenance version
-and an experimental version.  The maintenance versions are stable, and
+and an experimental version. The maintenance versions are stable, and
 have an even number as the minor release (i.e. perl5.10.x, where 10 is the
-minor release).  The experimental versions may include features that
+minor release). The experimental versions may include features that
 don't make it into the stable versions, and have an odd number as the
 minor release (i.e. perl5.9.x, where 9 is the minor release).
 
@@ -131,21 +131,21 @@ In short, Perl 4 is the past, Perl 5 is the present, and Perl 6 is the
 future.
 
 The number after perl (i.e. the 5 after Perl 5) is the major release
-of the perl interpreter as well as the version of the language.  Each
+of the perl interpreter as well as the version of the language. Each
 major version has significant differences that earlier versions cannot
 support.
 
 The current major release of Perl is Perl 5, and was released in 1994.
 It can run scripts from the previous major release, Perl 4 (March 1991),
 but has significant differences. It introduced the concept of references,
-complex data structures, and modules.  The Perl 5 interpreter was a
+complex data structures, and modules. The Perl 5 interpreter was a
 complete re-write of the previous perl sources.
 
 Perl 6 is the next major version of Perl, but it's still in development
-in both its syntax and design.  The work started in 2002 and is still
-ongoing.  Many of the most interesting features have shown up in the
+in both its syntax and design. The work started in 2002 and is still
+ongoing. Many of the most interesting features have shown up in the
 latest versions of Perl 5, and some Perl 5 modules allow you to use some
-Perl 6 syntax in your programs.  You can learn more about Perl 6 at
+Perl 6 syntax in your programs. You can learn more about Perl 6 at
 http://dev.perl.org/perl6/ .
 
 See L<perlhist> for a history of Perl revisions.
@@ -162,7 +162,7 @@ Perl Foundation. It was abandoned in 2006
 Instead of using the current Perl internals, Ponie aimed to create a
 new one that would provide a translation path from Perl 5 to Perl 6
 (or anything else that targets Parrot, actually). You would have been
-able  to just keep using Perl 5 with Parrot, the virtual machine which
+able to just keep using Perl 5 with Parrot, the virtual machine which
 will compile and run Perl 6 bytecode.
 
 =head2 What is Perl 6?
@@ -174,7 +174,7 @@ Topaz. However, Topaz provided valuable insights to the next version
 of Perl and its implementation, but was ultimately abandoned.
 
 If you want to learn more about Perl 6, or have a desire to help in
-the crusade to make Perl a better place then peruse the Perl 6 developers
+the crusade to make Perl a better place then read the Perl 6 developers
 page at http://dev.perl.org/perl6/ and get involved.
 
 Perl 6 is not scheduled for release yet, and Perl 5 will still be supported
@@ -187,51 +187,51 @@ you need to do.
 =head2 How stable is Perl?
 
 Production releases, which incorporate bug fixes and new functionality,
-are widely tested before release.  Since the 5.000 release, we have
+are widely tested before release. Since the 5.000 release, we have
 averaged only about one production release per year.
 
 Larry and the Perl development team occasionally make changes to the
 internal core of the language, but all possible efforts are made toward
-backward compatibility.  While not quite all Perl 4 scripts run flawlessly
+backward compatibility. While not quite all Perl 4 scripts run flawlessly
 under Perl 5, an update to perl should nearly never invalidate a program
 written for an earlier version of perl (barring accidental bug fixes
 and the rare new keyword).
 
 =head2 Is Perl difficult to learn?
 
-No, Perl is easy to start learning--and easy to keep learning.  It looks
+No, Perl is easy to start learning--and easy to keep learning. It looks
 like most programming languages you're likely to have experience
 with, so if you've ever written a C program, an awk script, a shell
 script, or even a BASIC program, you're already partway there.
 
-Most tasks only require a small subset of the Perl language.  One of
+Most tasks only require a small subset of the Perl language. One of
 the guiding mottos for Perl development is "there's more than one way
-to do it" (TMTOWTDI, sometimes pronounced "tim toady").  Perl's
+to do it" (TMTOWTDI, sometimes pronounced "tim toady"). Perl's
 learning curve is therefore shallow (easy to learn) and long (there's
 a whole lot you can do if you really want).
 
 Finally, because Perl is frequently (but not always, and certainly not by
 definition) an interpreted language, you can write your programs and test
 them without an intermediate compilation step, allowing you to experiment
-and test/debug quickly and easily.  This ease of experimentation flattens
+and test/debug quickly and easily. This ease of experimentation flattens
 the learning curve even more.
 
 Things that make Perl easier to learn: Unix experience, almost any kind
 of programming experience, an understanding of regular expressions, and
-the ability to understand other people's code.  If there's something you
+the ability to understand other people's code. If there's something you
 need to do, then it's probably already been done, and a working example is
-usually available for free.  Don't forget Perl modules, either.
+usually available for free. Don't forget Perl modules, either.
 They're discussed in Part 3 of this FAQ, along with CPAN, which is
 discussed in Part 2.
 
 =head2 How does Perl compare with other languages like Java, Python, REXX, Scheme, or Tcl?
 
-Favorably in some areas, unfavorably in others.  Precisely which areas
+Favorably in some areas, unfavorably in others. Precisely which areas
 are good and bad is often a personal choice, so asking this question
 on Usenet runs a strong risk of starting an unproductive Holy War.
 
 Probably the best thing to do is try to write equivalent code to do a
-set of tasks.  These languages have their own newsgroups in which you
+set of tasks. These languages have their own newsgroups in which you
 can learn about (but hopefully not argue about) them.
 
 Some comparison documents can be found at http://www.perl.com/doc/FMTEYEWTK/versus/
@@ -243,21 +243,21 @@ Perl is flexible and extensible enough for you to use on virtually any
 task, from one-line file-processing tasks to large, elaborate systems.
 For many people, Perl serves as a great replacement for shell scripting.
 For others, it serves as a convenient, high-level replacement for most of
-what they'd program in low-level languages like C or C++.  It's ultimately
+what they'd program in low-level languages like C or C++. It's ultimately
 up to you (and possibly your management) which tasks you'll use Perl
 for and which you won't.
 
 If you have a library that provides an API, you can make any component
 of it available as just another Perl function or variable using a Perl
 extension written in C or C++ and dynamically linked into your main
-perl interpreter.  You can also go the other direction, and write your
+perl interpreter. You can also go the other direction, and write your
 main program in C or C++, and then link in some Perl code on the fly,
-to create a powerful application.  See L<perlembed>.
+to create a powerful application. See L<perlembed>.
 
 That said, there will always be small, focused, special-purpose
 languages dedicated to a specific problem domain that are simply more
-convenient for certain kinds of problems.  Perl tries to be all things
-to all people, but nothing special to anyone.  Examples of specialized
+convenient for certain kinds of problems. Perl tries to be all things
+to all people, but nothing special to anyone. Examples of specialized
 languages that come to mind include prolog and matlab.
 
 =head2 When shouldn't I program in Perl?
@@ -272,19 +272,19 @@ certain task (e.g. prolog, make).
 For various reasons, Perl is probably not well-suited for real-time
 embedded systems, low-level operating systems development work like
 device drivers or context-switching code, complex multi-threaded
-shared-memory applications, or extremely large applications.  You'll
+shared-memory applications, or extremely large applications. You'll
 notice that perl is not itself written in Perl.
 
 Perl remains fundamentally a dynamically typed language, not
-a statically typed one.  You certainly won't be chastised if you don't
-trust nuclear-plant or brain-surgery monitoring code to it.  And Larry
+a statically typed one. You certainly won't be chastised if you don't
+trust nuclear-plant or brain-surgery monitoring code to it. And Larry
 will sleep easier, too--Wall Street programs not withstanding. :-)
 
 =head2 What's the difference between "perl" and "Perl"?
 
-One bit.  Oh, you weren't talking ASCII? :-) Larry now uses "Perl" to
+One bit. Oh, you weren't talking ASCII? :-) Larry now uses "Perl" to
 signify the language proper and "perl" the implementation of it, i.e.
-the current interpreter.  Hence Tom's quip that "Nothing but perl can
+the current interpreter. Hence Tom's quip that "Nothing but perl can
 parse Perl."
 
 Before the first edition of I<Programming perl>, people commonly
@@ -295,26 +295,26 @@ when typeset. This convention was adopted by the community, and the
 second edition became I<Programming Perl>, using the capitalized
 version of the name to refer to the language.
 
-You may or may not choose to follow this usage.  For example,
+You may or may not choose to follow this usage. For example,
 parallelism means "awk and perl" and "Python and Perl" look good, while
-"awk and Perl" and "Python and perl" do not.  But never write "PERL",
+"awk and Perl" and "Python and perl" do not. But never write "PERL",
 because perl is not an acronym, apocryphal folklore and post-facto
 expansions notwithstanding.
 
 =head2 Is it a Perl program or a Perl script?
 
-Larry doesn't really care.  He says (half in jest) that "a script is
-what you give the actors.  A program is what you give the audience."
+Larry doesn't really care. He says (half in jest) that "a script is
+what you give the actors. A program is what you give the audience."
 
 Originally, a script was a canned sequence of normally interactive
-commands--that is, a chat script.  Something like a UUCP or PPP chat
+commands--that is, a chat script. Something like a UUCP or PPP chat
 script or an expect script fits the bill nicely, as do configuration
 scripts run by a program at its start up, such F<.cshrc> or F<.ircrc>,
-for example.  Chat scripts were just drivers for existing programs,
+for example. Chat scripts were just drivers for existing programs,
 not stand-alone programs in their own right.
 
 A computer scientist will correctly explain that all programs are
-interpreted and that the only question is at what level.  But if you
+interpreted and that the only question is at what level. But if you
 ask this question of someone who isn't a computer scientist, they might
 tell you that a I<program> has been compiled to physical machine code
 once and can then be run multiple times, whereas a I<script> must be
@@ -323,7 +323,7 @@ translated by a program each time it's used.
 Now that "script" and "scripting" are terms that have been seized by
 unscrupulous or unknowing marketeers for their own nefarious purposes,
 they have begun to take on strange and often pejorative meanings,
-like "non serious" or "not real programming".  Consequently, some Perl
+like "non serious" or "not real programming". Consequently, some Perl
 programmers prefer to avoid them altogether.
 
 =head2 What is a JAPH?
@@ -395,24 +395,16 @@ You might find these links useful:
 
 =back
 
-=head1 REVISION
-
-Revision: $Revision$
-
-Date: $Date$
-
-See L<perlfaq> for source control details and availability.
-
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2010 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples here are in the public
-domain.  You are permitted and encouraged to use this code and any
+domain. You are permitted and encouraged to use this code and any
 derivatives thereof in your own programs for fun or for profit as you
-see fit.  A simple comment in the code giving credit to the FAQ would
+see fit. A simple comment in the code giving credit to the FAQ would
 be courteous but is not required.

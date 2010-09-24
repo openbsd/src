@@ -556,33 +556,33 @@ like this:
 	# code
     }
 
-The range operator also works on strings, using the magical auto-increment,
-see below.
+The range operator also works on strings, using the magical
+auto-increment, see below.
 
 In scalar context, ".." returns a boolean value.  The operator is
-bistable, like a flip-flop, and emulates the line-range (comma) operator
-of B<sed>, B<awk>, and various editors.  Each ".." operator maintains its
-own boolean state.  It is false as long as its left operand is false.
+bistable, like a flip-flop, and emulates the line-range (comma)
+operator of B<sed>, B<awk>, and various editors. Each ".." operator
+maintains its own boolean state, even across calls to a subroutine
+that contains it. It is false as long as its left operand is false.
 Once the left operand is true, the range operator stays true until the
 right operand is true, I<AFTER> which the range operator becomes false
-again.  It doesn't become false till the next time the range operator is
-evaluated.  It can test the right operand and become false on the same
-evaluation it became true (as in B<awk>), but it still returns true once.
-If you don't want it to test the right operand till the next
-evaluation, as in B<sed>, just use three dots ("...") instead of
+again.  It doesn't become false till the next time the range operator
+is evaluated.  It can test the right operand and become false on the
+same evaluation it became true (as in B<awk>), but it still returns
+true once. If you don't want it to test the right operand until the
+next evaluation, as in B<sed>, just use three dots ("...") instead of
 two.  In all other regards, "..." behaves just like ".." does.
 
 The right operand is not evaluated while the operator is in the
 "false" state, and the left operand is not evaluated while the
 operator is in the "true" state.  The precedence is a little lower
 than || and &&.  The value returned is either the empty string for
-false, or a sequence number (beginning with 1) for true.  The
-sequence number is reset for each range encountered.  The final
-sequence number in a range has the string "E0" appended to it, which
-doesn't affect its numeric value, but gives you something to search
-for if you want to exclude the endpoint.  You can exclude the
-beginning point by waiting for the sequence number to be greater
-than 1.
+false, or a sequence number (beginning with 1) for true.  The sequence
+number is reset for each range encountered.  The final sequence number
+in a range has the string "E0" appended to it, which doesn't affect
+its numeric value, but gives you something to search for if you want
+to exclude the endpoint.  You can exclude the beginning point by
+waiting for the sequence number to be greater than 1.
 
 If either operand of scalar ".." is a constant expression,
 that operand is considered true if it is equal (C<==>) to the current
@@ -813,6 +813,67 @@ between keys and values in hashes, and other paired elements in lists.
         %hash = ( $key => $value );
         login( $username => $password );
 
+=head2 Yada Yada Operator
+X<...> X<... operator> X<yada yada operator>
+
+The yada yada operator (noted C<...>) is a placeholder for code. Perl
+parses it without error, but when you try to execute a yada yada, it
+throws an exception with the text C<Unimplemented>:
+
+	sub unimplemented { ... }
+	
+	eval { unimplemented() };
+	if( $@ eq 'Unimplemented' ) {
+	  print "I found the yada yada!\n";
+	  }
+
+You can only use the yada yada to stand in for a complete statement.
+These examples of the yada yada work:
+
+	{ ... }
+	
+	sub foo { ... }
+	
+	...;
+	
+	eval { ... };
+	
+	sub foo {
+			my( $self ) = shift;
+			
+			...;
+			}
+			
+	do { my $n; ...; print 'Hurrah!' };
+
+The yada yada cannot stand in for an expression that is part of a
+larger statement since the C<...> is also the three-dot version of the
+range operator (see L<Range Operators>). These examples of the yada
+yada are still syntax errors:
+
+	print ...;
+	
+	open my($fh), '>', '/dev/passwd' or ...;
+	
+	if( $condition && ... ) { print "Hello\n" };
+
+There are some cases where Perl can't immediately tell the difference
+between an expression and a statement. For instance, the syntax for a
+block and an anonymous hash reference constructor look the same unless
+there's something in the braces that give Perl a hint. The yada yada
+is a syntax error if Perl doesn't guess that the C<{ ... }> is a
+block. In that case, it doesn't think the C<...> is the yada yada
+because it's expecting an expression instead of a statement:
+
+	my @transformed = map { ... } @input;  # syntax error
+
+You can use a C<;> inside your block to denote that the C<{ ... }> is
+a block and not a hash reference constructor. Now the yada yada works:
+
+	my @transformed = map {; ... } @input; # ; disambiguates
+
+	my @transformed = map { ...; } @input; # ; disambiguates
+
 =head2 List Operators (Rightward)
 X<operator, list, rightward> X<list operator>
 
@@ -965,6 +1026,7 @@ X<\t> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
     \x{263a}	wide hex char	(example: SMILEY)
     \c[		control char    (example: ESC)
     \N{name}	named Unicode character
+    \N{U+263D}	Unicode character (example: FIRST QUARTER MOON)
 
 The character following C<\c> is mapped to some other character by
 converting letters to upper case and then (on ASCII systems) by inverting
@@ -974,10 +1036,15 @@ through 0x1F. A '?' maps to the DEL character. On EBCDIC systems only
 '@', the letters, '[', '\', ']', '^', '_' and '?' will work, resulting
 in 0x00 through 0x1F and 0x7F.
 
-B<NOTE>: Unlike C and other languages, Perl has no \v escape sequence for
-the vertical tab (VT - ASCII 11), but you may use C<\ck> or C<\x0b>.
+C<\N{U+I<wide hex char>}> means the Unicode character whose Unicode ordinal
+number is I<wide hex char>.
+For documentation of C<\N{name}>, see L<charnames>.
 
-The following escape sequences are available in constructs that interpolate
+B<NOTE>: Unlike C and other languages, Perl has no C<\v> escape sequence for
+the vertical tab (VT - ASCII 11), but you may use C<\ck> or C<\x0b>.  (C<\v>
+does have meaning in regular expression patterns in Perl, see L<perlre>.)
+
+The following escape sequences are available in constructs that interpolate,
 but not in transliterations.
 X<\l> X<\u> X<\L> X<\U> X<\E> X<\Q>
 
@@ -992,8 +1059,7 @@ If C<use locale> is in effect, the case map used by C<\l>, C<\L>,
 C<\u> and C<\U> is taken from the current locale.  See L<perllocale>.
 If Unicode (for example, C<\N{}> or wide hex characters of 0x100 or
 beyond) is being used, the case map used by C<\l>, C<\L>, C<\u> and
-C<\U> is as defined by Unicode.  For documentation of C<\N{name}>,
-see L<charnames>.
+C<\U> is as defined by Unicode.
 
 All systems use the virtual C<"\n"> to represent a line terminator,
 called a "newline".  There is no such thing as an unvarying, physical
@@ -1139,11 +1205,13 @@ process modifiers are available:
     c	Do not reset search position on a failed match when /g is in effect.
 
 If "/" is the delimiter then the initial C<m> is optional.  With the C<m>
-you can use any pair of non-alphanumeric, non-whitespace characters
+you can use any pair of non-whitespace characters
 as delimiters.  This is particularly useful for matching path names
 that contain "/", to avoid LTS (leaning toothpick syndrome).  If "?" is
 the delimiter, then the match-only-once rule of C<?PATTERN?> applies.
 If "'" is the delimiter, no interpolation is performed on the PATTERN.
+When using a character valid in an identifier, whitespace is required
+after the C<m>.
 
 PATTERN may contain variables, which will be interpolated (and the
 pattern recompiled) every time the pattern search is evaluated, except
@@ -1271,7 +1339,7 @@ The last example should print:
 
 Notice that the final match matched C<q> instead of C<p>, which a match
 without the C<\G> anchor would have done. Also note that the final match
-did not update C<pos> -- C<pos> is only updated on a C</g> match. If the
+did not update C<pos>. C<pos> is only updated on a C</g> match. If the
 final match did indeed match C<p>, it's a good bet that you're running an
 older (pre-5.6.0) Perl.
 
@@ -1281,7 +1349,7 @@ doing different actions depending on which regexp matched.  Each
 regexp tries to match where the previous one leaves off.
 
  $_ = <<'EOL';
-      $url = URI::URL->new( "http://www/" );   die if $url eq "xXx";
+      $url = URI::URL->new( "http://example.com/" ); die if $url eq "xXx";
  EOL
  LOOP:
     {
@@ -1353,13 +1421,13 @@ specific options:
     e	Evaluate the right side as an expression.
     ee  Evaluate the right side as a string then eval the result
 
-Any non-alphanumeric, non-whitespace delimiter may replace the
-slashes.  If single quotes are used, no interpretation is done on the
-replacement string (the C</e> modifier overrides this, however).  Unlike
-Perl 4, Perl 5 treats backticks as normal delimiters; the replacement
-text is not evaluated as a command.  If the
-PATTERN is delimited by bracketing quotes, the REPLACEMENT has its own
-pair of quotes, which may or may not be bracketing quotes, e.g.,
+Any non-whitespace delimiter may replace the slashes.  Add space after
+the C<s> when using a character allowed in identifiers.  If single quotes
+are used, no interpretation is done on the replacement string (the C</e>
+modifier overrides this, however).  Unlike Perl 4, Perl 5 treats backticks
+as normal delimiters; the replacement text is not evaluated as a command.
+If the PATTERN is delimited by bracketing quotes, the REPLACEMENT has
+its own pair of quotes, which may or may not be bracketing quotes, e.g.,
 C<s(foo)(bar)> or C<< s<foo>/bar/ >>.  A C</e> will cause the
 replacement portion to be treated as a full-fledged Perl expression
 and evaluated right then and there.  It is, however, syntax checked at
@@ -1791,7 +1859,7 @@ must be sure there is a newline after it; otherwise, Perl will give the
 warning B<Can't find string terminator "END" anywhere before EOF...>.
 
 Additionally, the quoting rules for the end of string identifier are not
-related to Perl's quoting rules -- C<q()>, C<qq()>, and the like are not
+related to Perl's quoting rules. C<q()>, C<qq()>, and the like are not
 supported in place of C<''> and C<"">, and the only interpolation is for
 backslashing the quoting character:
 
@@ -2006,6 +2074,11 @@ is emitted if the C<use warnings> pragma or the B<-w> command-line flag
 Processing of C<\Q>, C<\U>, C<\u>, C<\L>, C<\l>, C<\E>,
 and interpolation happens (almost) as with C<qq//> constructs.
 
+Processing of C<\N{...}> is also done here, and compiled into an intermediate
+form for the regex compiler.  (This is because, as mentioned below, the regex
+compilation may be done at execution time, and C<\N{...}> is a compile-time
+construct.)
+
 However any other combinations of C<\> followed by a character
 are not substituted but only skipped, in order to parse them
 as regular expressions at the following step.
@@ -2055,7 +2128,7 @@ which are processed further.
 X<regexp, parse>
 
 Previous steps were performed during the compilation of Perl code,
-but this one happens at run time--although it may be optimized to
+but this one happens at run time, although it may be optimized to
 be calculated at compile time if appropriate.  After preprocessing
 described above, and possibly after evaluation if concatenation,
 joining, casing translation, or metaquoting are involved, the
@@ -2168,8 +2241,8 @@ to terminate the loop, they should be tested for explicitly:
     while (($_ = <STDIN>) ne '0') { ... }
     while (<STDIN>) { last unless $_; ... }
 
-In other boolean contexts, C<< <I<filehandle>> >> without an
-explicit C<defined> test or comparison elicit a warning if the
+In other boolean contexts, C<< <filehandle> >> without an
+explicit C<defined> test or comparison elicits a warning if the
 C<use warnings> pragma or the B<-w>
 command-line switch (the C<$^W> variable) is in effect.
 
@@ -2214,7 +2287,7 @@ is equivalent to the following Perl-like pseudo code:
 except that it isn't so cumbersome to say, and will actually work.
 It really does shift the @ARGV array and put the current filename
 into the $ARGV variable.  It also uses filehandle I<ARGV>
-internally--<> is just a synonym for <ARGV>, which
+internally. <> is just a synonym for <ARGV>, which
 is magical.  (The pseudo code above doesn't work because it treats
 <ARGV> as non-magical.)
 
@@ -2448,8 +2521,8 @@ so some corners must be cut.  For example:
     printf "%.20g\n", 123456789123456789;
     #        produces 123456789123456784
 
-Testing for exact equality of floating-point equality or inequality is
-not a good idea.  Here's a (relatively expensive) work-around to compare
+Testing for exact floating-point equality or inequality is not a
+good idea.  Here's a (relatively expensive) work-around to compare
 whether two floating-point numbers are equal to a particular number of
 decimal places.  See Knuth, volume II, for a more robust treatment of
 this topic.

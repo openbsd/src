@@ -1,8 +1,6 @@
 #!./perl
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     require Config;
     if (($Config::Config{'extensions'} !~ /\bre\b/) ){
 	print "1..0 # Skip -- Perl configured without re module\n";
@@ -11,10 +9,10 @@ BEGIN {
 }
 
 use strict;
-BEGIN { require "./test.pl"; }
+BEGIN { require "../../t/test.pl"; }
 our $NUM_SECTS;
 chomp(my @strs= grep { !/^\s*\#/ } <DATA>);
-my $out = runperl(progfile => "../ext/re/t/regop.pl", stderr => 1 );
+my $out = runperl(progfile => "t/regop.pl", stderr => 1 );
 # VMS currently embeds linefeeds in the output.
 $out =~ s/\cJ//g if $^O = 'VMS';
 my @tests = grep { /\S/ } split /(?=Compiling REx)/, $out;

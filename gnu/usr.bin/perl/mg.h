@@ -18,7 +18,7 @@ struct mgvtbl {
     int		(CPERLscope(*svt_clear))(pTHX_ SV *sv, MAGIC* mg);
     int		(CPERLscope(*svt_free))	(pTHX_ SV *sv, MAGIC* mg);
     int		(CPERLscope(*svt_copy))	(pTHX_ SV *sv, MAGIC* mg,
-    					SV *nsv, const char *name, int namlen);
+    					SV *nsv, const char *name, I32 namlen);
     int		(CPERLscope(*svt_dup))	(pTHX_ MAGIC *mg, CLONE_PARAMS *param);
     int		(CPERLscope(*svt_local))(pTHX_ SV *nsv, MAGIC *mg);
 };

@@ -294,7 +294,7 @@ If I were you, I'd put that in a function:
 
 =head1 SEE ALSO
 
-perldata(1), perlref(1), perldsc(1)
+L<perldata>, L<perlref>, L<perldsc>
 
 =head1 AUTHOR
 

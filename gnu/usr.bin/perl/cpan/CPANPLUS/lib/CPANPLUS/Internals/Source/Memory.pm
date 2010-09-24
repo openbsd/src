@@ -191,6 +191,8 @@ sub _add_module_object {
 
 =pod
 
+=head1 SYNOPSIS
+
 =head2 $cb->__memory_retrieve_source(name => $name, [path => $path, uptodate => BOOL, verbose => BOOL])
 
 This method retrieves a I<storable>d tree identified by C<$name>.

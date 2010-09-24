@@ -24,7 +24,7 @@
 #include "perl.h"
 
 void
-Perl_taint_proper(pTHX_ const char *f, const char *s)
+Perl_taint_proper(pTHX_ const char *f, const char *const s)
 {
 #if defined(HAS_SETEUID) && defined(DEBUGGING)
     dVAR;
@@ -66,8 +66,7 @@ Perl_taint_proper(pTHX_ const char *f, const char *s)
         else
 	    ug = " while running with -T switch";
 	if (PL_unsafe || PL_taint_warn) {
-            if(ckWARN_d(WARN_TAINT))
-                Perl_warner(aTHX_ packWARN(WARN_TAINT), f, s, ug);
+	    Perl_ck_warner_d(aTHX_ packWARN(WARN_TAINT), f, s, ug);
         }
         else {
             Perl_croak(aTHX_ f, s, ug);

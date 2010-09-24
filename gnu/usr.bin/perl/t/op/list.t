@@ -6,7 +6,7 @@ BEGIN {
 }
 
 require "test.pl";
-plan( tests => 57 );
+plan( tests => 58 );
 
 @foo = (1, 2, 3, 4);
 cmp_ok($foo[0], '==', 1, 'first elem');
@@ -161,3 +161,7 @@ cmp_ok(join('',(1,2),3,(4,5)),'eq','12345','list (..).(..)');
     test_zero_args("do-returned list slice", do { (10,11)[2,3]; });
 }
 
+{
+    # perl #20321
+    is (join('', @{[('abc'=~/./g)[0,1,2,1,0]]}), "abcba");
+}

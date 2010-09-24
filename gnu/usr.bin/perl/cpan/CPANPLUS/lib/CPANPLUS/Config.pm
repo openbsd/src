@@ -24,7 +24,7 @@ use Module::Load::Conditional   qw[check_install];
 
 =head1 NAME
 
-CPANPLUS::Config
+CPANPLUS::Config - defaults and heuristics for CPANPLUS configuration information
 
 =head1 SYNOPSIS
 

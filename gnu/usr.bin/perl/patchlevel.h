@@ -14,8 +14,8 @@
  * exactly on the third column */
 
 #define PERL_REVISION	5		/* age */
-#define PERL_VERSION	10		/* epoch */
-#define PERL_SUBVERSION	1		/* generation */
+#define PERL_VERSION	12		/* epoch */
+#define PERL_SUBVERSION	2		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -31,7 +31,7 @@
    to include in @INC.  See INSTALL for how this works.
 */
 #define PERL_API_REVISION	5	/* Adjust manually as needed.  */
-#define PERL_API_VERSION	10	/* Adjust manually as needed.  */
+#define PERL_API_VERSION	12	/* Adjust manually as needed.  */
 #define PERL_API_SUBVERSION	0	/* Adjust manually as needed.  */
 /*
    XXX Note:  The selection of non-default Configure options, such
@@ -118,19 +118,19 @@ hunk.
 #if !defined(PERL_PATCHLEVEL_H_IMPLICIT) && !defined(LOCAL_PATCH_COUNT)
 #  if defined(PERL_IS_MINIPERL)
 #    define PERL_PATCHNUM "UNKNOWN-miniperl"
-#    define PERL_GIT_UNCOMMITTED_CHANGES ,"UNKNOWN"
 #    define PERL_GIT_UNPUSHED_COMMITS /*leave-this-comment*/
 #  elif defined(PERL_MICRO)
 #    define PERL_PATCHNUM "UNKNOWN-microperl"
-#    define PERL_GIT_UNCOMMITTED_CHANGES ,"UNKNOWN"
 #    define PERL_GIT_UNPUSHED_COMMITS /*leave-this-comment*/
 #  else
 #include "git_version.h"
 #  endif
 static const char * const local_patches[] = {
 	NULL
+#ifdef PERL_GIT_UNCOMMITTED_CHANGES
+	,"uncommitted-changes"
+#endif
 	PERL_GIT_UNPUSHED_COMMITS    	/* do not remove this line */
-        PERL_GIT_UNCOMMITTED_CHANGES	/* do not remove this line */
 	,NULL
 };
 

@@ -109,7 +109,7 @@ looking for implementation details you're going to be either
 disappointed or confused.  Possibly both.
 
 This is not to say that Perl threads are completely different from
-everything that's ever come before -- they're not.  Perl's threading
+everything that's ever come before. They're not.  Perl's threading
 model owes a lot to other thread models, especially POSIX.  Just as
 Perl is not C, though, Perl threads are not POSIX threads.  So if you
 find yourself looking for mutexes, or thread priorities, it's time to
@@ -161,7 +161,7 @@ make threaded programming easier.
 
 =head2 Basic Thread Support
 
-Thread support is a Perl compile-time option -- it's something that's
+Thread support is a Perl compile-time option. It's something that's
 turned on or off when Perl is built at your site, rather than when
 your programs are compiled. If your Perl wasn't compiled with thread
 support enabled, then any attempt to use threads will fail.
@@ -275,7 +275,7 @@ instead, as described next.
 
 NOTE: In the example above, the thread returns a list, thus necessitating
 that the thread creation call be made in list context (i.e., C<my ($thr)>).
-See L<threads/"$thr->join()"> and L<threads/"THREAD CONTEXT"> for more
+See L<< threads/"$thr->join()" >> and L<threads/"THREAD CONTEXT"> for more
 details on thread context and return values.
 
 =head2 Ignoring A Thread
@@ -366,7 +366,7 @@ threading, or for that matter, to most other threading systems out there,
 is that by default, no data is shared. When a new Perl thread is created,
 all the data associated with the current thread is copied to the new
 thread, and is subsequently private to that new thread!
-This is similar in feel to what happens when a UNIX process forks,
+This is similar in feel to what happens when a Unix process forks,
 except that in this case, the data is just copied to a different part of
 memory within the same process rather than a real fork taking place.
 
@@ -739,7 +739,7 @@ Semaphores with counters greater than one are also useful for
 establishing quotas.  Say, for example, that you have a number of
 threads that can do I/O at once.  You don't want all the threads
 reading or writing at once though, since that can potentially swamp
-your I/O channels, or deplete your process' quota of filehandles.  You
+your I/O channels, or deplete your process's quota of filehandles.  You
 can use a semaphore initialized to the number of concurrent I/O
 requests (or open files) that you want at any one time, and have your
 threads quietly block and unblock themselves.
@@ -1003,7 +1003,7 @@ all the variables and data of the parent thread has to be taken. Thus,
 thread creation can be quite expensive, both in terms of memory usage and
 time spent in creation. The ideal way to reduce these costs is to have a
 relatively short number of long-lived threads, all created fairly early
-on -- before the base thread has accumulated too much data. Of course, this
+on (before the base thread has accumulated too much data). Of course, this
 may not always be possible, so compromises have to be made. However, after
 a thread has been created, its performance and extra memory usage should
 be little different than ordinary code.
@@ -1030,7 +1030,7 @@ changing uids and gids.
 
 Thinking of mixing C<fork()> and threads?  Please lie down and wait
 until the feeling passes.  Be aware that the semantics of C<fork()> vary
-between platforms.  For example, some UNIX systems copy all the current
+between platforms.  For example, some Unix systems copy all the current
 threads into the child process, while others only copy the thread that
 called C<fork()>. You have been warned!
 
@@ -1049,9 +1049,8 @@ Whether various library calls are thread-safe is outside the control
 of Perl.  Calls often suffering from not being thread-safe include:
 C<localtime()>, C<gmtime()>,  functions fetching user, group and
 network information (such as C<getgrent()>, C<gethostent()>,
-C<getnetent()> and so on), C<readdir()>,
-C<rand()>, and C<srand()> -- in general, calls that depend on some global
-external state.
+C<getnetent()> and so on), C<readdir()>, C<rand()>, and C<srand()>. In
+general, calls that depend on some global external state.
 
 If the system Perl is compiled in has thread-safe variants of such
 calls, they will be used.  Beyond that, Perl is at the mercy of
@@ -1093,14 +1092,14 @@ L<http://lists.cpan.org/showlist.cgi?name=iThreads>
 
 =head1 Bibliography
 
-Here's a short bibliography courtesy of Jürgen Christoffel:
+Here's a short bibliography courtesy of JÃ¼rgen Christoffel:
 
 =head2 Introductory Texts
 
 Birrell, Andrew D. An Introduction to Programming with
 Threads. Digital Equipment Corporation, 1989, DEC-SRC Research Report
 #35 online as
-http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-035.html
+ftp://ftp.dec.com/pub/DEC/SRC/research-reports/SRC-035.pdf
 (highly recommended)
 
 Robbins, Kay. A., and Steven Robbins. Practical Unix Programming: A
@@ -1150,7 +1149,7 @@ L<http://www.perl.com/pub/a/2002/06/11/threads.html>
 =head1 Acknowledgements
 
 Thanks (in no particular order) to Chaim Frenkel, Steve Fink, Gurusamy
-Sarathy, Ilya Zakharevich, Benjamin Sugars, Jürgen Christoffel, Joshua
+Sarathy, Ilya Zakharevich, Benjamin Sugars, JÃ¼rgen Christoffel, Joshua
 Pritikin, and Alan Burlison, for their help in reality-checking and
 polishing this article.  Big thanks to Tom Christiansen for his rewrite
 of the prime number generator.
@@ -1161,7 +1160,7 @@ Dan Sugalski E<lt>dan@sidhe.org<gt>
 
 Slightly modified by Arthur Bergman to fit the new thread model/module.
 
-Reworked slightly by Jörg Walter E<lt>jwalt@cpan.org<gt> to be more concise
+Reworked slightly by JÃ¶rg Walter E<lt>jwalt@cpan.org<gt> to be more concise
 about thread-safety of Perl code.
 
 Rearranged slightly by Elizabeth Mattijsen E<lt>liz@dijkmat.nl<gt> to put

@@ -3,12 +3,14 @@
 #
 # This library is no longer being maintained, and is included for backward
 # compatibility with Perl 4 programs which may require it.
+# This legacy library is deprecated and will be removed in a future
+# release of perl.
 #
 # In particular, this should not be used as an example of modern Perl
 # programming techniques.
 #
 # Suggested alternative: Cwd
-#
+
 ;# $RCSfile: pwd.pl,v $$Revision: 4.1 $$Date: 92/08/07 18:24:11 $
 ;#
 ;# $Log:	pwd.pl,v $

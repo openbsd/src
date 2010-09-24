@@ -156,30 +156,33 @@ if ((-e "testcompile") && (defined($ENV{'COMPILE'}))) {
 # Exclude nonxs extensions that are not architecture dependent
 my @nonxs = grep(!/^(Errno|IO\/Compress)$/, split(' ', $Config{'nonxs_ext'}));
 
-find(sub {
-    if (($File::Find::name =~ m{^ext\b(.*)/([^/]+)\.pm$}) &&
-        ! grep { (my $dir = $_) =~ s/\//-/g;
-                 $File::Find::name =~ /^ext\/$dir/ } @nonxs)
-    {
-	my($path, $modname) = ($1,$2);
+my @ext_dirs = qw(cpan dist ext);
+foreach my $ext_dir (@ext_dirs) {
+    find(sub {
+	if (($File::Find::name =~ m{^$ext_dir\b(.*)/([^/]+)\.pm$}) &&
+	    ! grep { (my $dir = $_) =~ s/\//-/g;
+		     $File::Find::name =~ /^$ext_dir\/$dir\// } @nonxs)
+	{
+	    my($path, $modname) = ($1,$2);
 
-	# Change hypenated name like Filter-Util-Call to nested
-	# directory name Filter/Util/Call
-	$path =~ s{-}{/}g;
+	    # Change hypenated name like Filter-Util-Call to nested
+	    # directory name Filter/Util/Call
+	    $path =~ s{-}{/}g;
 
-	# strip to optional "/lib", or remove trailing component
-	$path =~ s{.*/lib\b}{} or $path =~ s{/[^/]*$}{};
+	    # strip to optional "/lib", or remove trailing component
+	    $path =~ s{.*/lib\b}{} or $path =~ s{/[^/]*$}{};
 
-	# strip any leading /
-	$path =~ s{^/}{};
+	    # strip any leading /
+	    $path =~ s{^/}{};
 
-	# reconstitute canonical module name
-	$modname = "$path/$modname" if length $path;
+	    # reconstitute canonical module name
+	    $modname = "$path/$modname" if length $path;
 
-	# remember it
-	$archpms{$modname} = 1;
-    }
-}, 'ext');
+	    # remember it
+	    $archpms{$modname} = 1;
+	}
+    }, $ext_dir);
+}
 
 # print "[$_]\n" for sort keys %archpms;
 
@@ -222,7 +225,6 @@ if ($nwinstall) {
     $installsitelib = $Config{installnwlib};
 }
 
-my $d_dosuid = $Config{d_dosuid};
 my $binexp = $Config{binexp};
 
 if ($Is_VMS) {  # Hang in there until File::Spec hits the big time
@@ -234,8 +236,6 @@ if ($Is_VMS) {  # Hang in there until File::Spec hits the big time
 }
 
 # Do some quick sanity checks.
-
-if (!$opts{notify} && $d_dosuid && $>) { die "You must run as root to install suidperl\n"; }
 
    $installbin		|| die "No installbin directory in config.sh\n";
 -d $installbin		|| mkpath($installbin, $opts{verbose}, 0777);
@@ -253,7 +253,6 @@ else {
         -x $dbg . 'perl' . $exe_ext	|| die "${dbg}perl$exe_ext isn't executable!\n";
     }
 }
--x 'suidperl' . $exe_ext|| die "suidperl isn't executable!\n" if $d_dosuid;
 
 #-f 't/rantests'		|| $Is_W32
 #			|| warn "WARNING: You've never run 'make test' or",
@@ -341,12 +340,6 @@ elsif ($^O ne 'dos') {
 else {
     safe_unlink("$installbin/$perl.exe");
     copy("perl.exe", "$installbin/$perl.exe");
-}
-
-safe_unlink("$installbin/s$perl_verbase$ver$exe_ext");
-if ($d_dosuid) {
-    install("perl$exe_ext", "$installbin/s$perl_verbase$ver$exe_ext",
-	"04711", $dostrip);
 }
 
 # Install library files.
@@ -446,9 +439,6 @@ if (! $versiononly && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VM
 	link("$installbin/$perl_verbase$ver$exe_ext",
 		"$installbin/$perl$exe_ext");
     }
-    link("$installbin/$perl_verbase$ver$exe_ext",
-	    "$installbin/suid$perl$exe_ext")
-      if $d_dosuid;
 }
 
 # For development purposes it can be very useful to have multiple perls
@@ -578,21 +568,6 @@ if ($versiononly) {
 my $pod = ($Is_Cygwin || $Is_Darwin || $Is_VMS || $Is_W32) ? 'pods' : 'pod';
 if ( !$versiononly || ($installprivlib =~ m/\Q$vershort/)) {
     mkpath("${installprivlib}/$pod", $opts{verbose}, 0777);
-
-    # If Perl 5.003's perldiag.pod is there, rename it.
-    if (open POD, "${installprivlib}/$pod/perldiag.pod") {
-	read POD, $_, 4000;
-	close POD;
-	# Some of Perl 5.003's diagnostic messages ended with periods.
-	if (/^=.*\.$/m) {
-	    my ($from, $to) = ("${installprivlib}/$pod/perldiag.pod",
-			       "${installprivlib}/$pod/perldiag-5.003.pod");
-	    print "  rename $from $to";
-	    rename($from, $to)
-		or warn "Couldn't rename $from to $to: $!\n"
-		unless $opts{notify};
-	}
-    }
 
     for (@pods) {
 	# $_ is a name like  pod/perl.pod
@@ -745,7 +720,7 @@ sub installlib {
 
     # ignore patch backups, RCS files, emacs backup & temp files and the
     # .exists files, .PL files, and test files.
-    return if $name =~ m{\.orig$|\.rej$|~$|^#.+#$|,v$|^\.exists|\.PL$|\.plc$|\.t$|^test\.pl$|^dbm_filter_util.pl$} ||
+    return if $name =~ m{\.orig$|\.rej$|~$|^#.+#$|,v$|^\.exists|\.PL$|\.plc$|\.t$|^test\.pl$|^dbm_filter_util\.pl$|^filter-util\.pl$|^uupacktool\.pl$|^\.gitignore$} ||
 	      $dir  =~ m{/t(?:/|$)};
     # ignore the cpan script in lib/CPAN/bin, the instmodsh and xsubpp
     # scripts in lib/ExtUtils, the prove script in lib/Test/Harness,

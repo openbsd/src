@@ -182,8 +182,6 @@ However, duplicating things (such as -name '*.c' -name '*.txt') implies OR.
 If any letter in -newer/-older is upper case, "or equal" is
 inserted into the test.
 
-You can always find the latest version on the World Wide Web in
-   http://www.wg.omron.co.jp/~jfriedl/perl/
 INLINE_LITERAL_TEXT
 	  exit(0);
       }
@@ -1143,10 +1141,7 @@ more powerful and efficient (and intuitive, I think).
 
 This manual describes
 .I search
-as of version "941227.4". You can always find the latest version at
-.nf
-   http://www.wg.omron.co.jp/~jfriedl/perl/index.html
-.fi
+as of version "941227.4".
 
 .SH "QUICK EXAMPLE"
 Basic use is simple:

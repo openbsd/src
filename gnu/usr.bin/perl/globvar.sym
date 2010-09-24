@@ -9,6 +9,7 @@ check
 fold
 fold_locale
 freq
+keyword_plugin
 memory_wrap
 no_aelem
 no_dir_func

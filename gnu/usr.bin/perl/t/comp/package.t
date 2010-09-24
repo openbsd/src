@@ -71,3 +71,4 @@ package bug32562;
 
 print       __PACKAGE__  eq 'bug32562' ? "ok 13\n" : "not ok 13\n";
 print eval '__PACKAGE__' eq 'bug32562' ? "ok 14\n" : "not ok 14\n";
+

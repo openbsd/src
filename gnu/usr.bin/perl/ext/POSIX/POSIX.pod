@@ -703,6 +703,14 @@ signals to processes (often to terminate them), see L<perlfunc/kill>.
 (For returning absolute values of long integers.)
 labs() is C-specific, see L<perlfunc/abs> instead.
 
+=item lchown
+
+This is identical to the C function, except the order of arguments is
+consistent with Perl's builtin C<chown()> with the added restriction
+of only one path, not an list of paths.  Does the same thing as the 
+C<chown()> function but changes the owner of a symbolic link instead 
+of the file the symbolic link points to.
+
 =item ldexp
 
 This is identical to the C function C<ldexp()>
@@ -1095,7 +1103,7 @@ Spanish. B<NOTE>: The naming and availability of locales depends on
 your operating system. Please consult L<perllocale> for how to find
 out which locales are available in your system.
 
-	$loc = setlocale( LC_ALL, "es_AR.ISO8859-1" );
+	$loc = setlocale( LC_COLLATE, "es_AR.ISO8859-1" );
 
 =item setpgid
 

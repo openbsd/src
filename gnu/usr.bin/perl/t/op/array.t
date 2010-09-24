@@ -7,7 +7,7 @@ BEGIN {
 
 require 'test.pl';
 
-plan (125);
+plan (127);
 
 #
 # @foo, @bar, and @ary are also used from tie-stdarray after tie-ing them
@@ -20,6 +20,9 @@ $tmp = $ary[$#ary]; --$#ary;
 is($tmp, 5);
 is($#ary, 3);
 is(join('',@ary), '1234');
+
+{
+    no warnings 'deprecated';
 
 $[ = 1;
 @ary = (1,2,3,4,5);
@@ -70,6 +73,8 @@ $bar[2] = '2';
 $r = join(',', $#bar, @bar);
 is($r, "2,0,,2");
 
+}
+
 $foo = 'now is the time';
 ok(scalar (($F1,$F2,$Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/)));
 is($F1, 'now');
@@ -119,7 +124,10 @@ $foo = ('a','b','c','d','e','f')[1];
 is($foo, 'b');
 
 @foo = ( 'foo', 'bar', 'burbl');
-push(foo, 'blah');
+{
+    no warnings 'deprecated';
+    push(foo, 'blah');
+}
 is($#foo, 3);
 
 # various AASSIGN_COMMON checks (see newASSIGNOP() in op.c)
@@ -252,6 +260,7 @@ is ($foo[1], "a");
 
 
 sub tary {
+  no warnings 'deprecated';
   local $[ = 10;
   my $five = 5;
   is ($tary[5], $tary[$five]);
@@ -417,6 +426,20 @@ sub test_arylen {
     our($x,$y,$z) = (1..3);
     (our $y, our $z) = ($x,$y);
     is("$x $y $z", "1 1 2");
+}
+
+# [perl #70171]
+{
+ my $x = get_x(); my %x = %$x; sub get_x { %x=(1..4); return \%x };
+ is(
+   join(" ", map +($_,$x{$_}), sort keys %x), "1 2 3 4",
+  'bug 70171 (self-assignment via my %x = %$x)'
+ );
+ my $y = get_y(); my @y = @$y; sub get_y { @y=(1..4); return \@y };
+ is(
+  "@y", "1 2 3 4",
+  'bug 70171 (self-assignment via my @x = @$x)'
+ );
 }
 
 

@@ -253,6 +253,9 @@ sub write_protos {
 	if ( $flags =~ /r/ ) {
 	    push @attrs, "__attribute__noreturn__";
 	}
+	if ( $flags =~ /D/ ) {
+	    push @attrs, "__attribute__deprecated__";
+	}
 	if ( $is_malloc ) {
 	    push @attrs, "__attribute__malloc__";
 	}

@@ -209,7 +209,7 @@ close MASTER;
     warn "$0: $i exists but is unknown by perl.pod\n"
 	if !$perlpods{$i} && !exists $sources{$i};
   }
-  my @BuildTargets = grep {defined} @Targets{keys %Build};
+  my @BuildTargets = grep {defined} @Targets{grep $_ ne 'all', keys %Build};
   my %BuildFiles;
   @BuildFiles{@BuildTargets} = @BuildTargets;
   
@@ -737,6 +737,7 @@ pod/$_: pod/$Copies{$_}
 
 my $built;
 while (my ($target, $name) = each %Targets) {
+  print "Working on target $target\n" if $Verbose;
   next unless $Build{$target};
   $built++;
   if ($target eq "toc") {
@@ -747,6 +748,7 @@ while (my ($target, $name) = each %Targets) {
   }
   print "Now processing $name\n" if $Verbose;
   open THING, $name or die "Can't open $name: $!";
+  binmode THING;
   my @orig = <THING>;
   my $orig = join '', @orig;
   close THING;
@@ -761,8 +763,9 @@ while (my ($target, $name) = each %Targets) {
   }
   rename $name, "$name.old" or die "$0: Can't rename $name to $name.old: $!";
   open THING, ">$name" or die "$0: Can't open $name for writing: $!";
+  binmode THING;
   print THING $new or die "$0: print to $name failed: $!";
-  close THING or die die "$0: close $name failed: $!";
+  close THING or die "$0: close $name failed: $!";
 }
 
 warn "$0: was not instructed to build anything\n" unless $built;

@@ -86,7 +86,7 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #define dTARG SV *targ
 
 #define NORMAL PL_op->op_next
-#define DIE return Perl_die
+#define DIE Perl_die
 
 /*
 =for apidoc Ams||PUTBACK
@@ -471,6 +471,37 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 #define tryAMAGICunDEREF_var(meth_enum) \
 	tryAMAGICunW_var(meth_enum,setAGAIN,0,(void)0)
 
+#define tryAMAGICftest(chr)				\
+    STMT_START {					\
+	assert(chr != '?');				\
+	if ((PL_op->op_flags & OPf_KIDS)		\
+		&& SvAMAGIC(TOPs)) {			\
+	    const char tmpchr = (chr);			\
+	    SV * const tmpsv = amagic_call(TOPs,	\
+		newSVpvn_flags(&tmpchr, 1, SVs_TEMP),	\
+		ftest_amg, AMGf_unary);			\
+							\
+	    if (tmpsv) {				\
+		const OP *next = PL_op->op_next;	\
+							\
+		SPAGAIN;				\
+							\
+		if (next->op_type >= OP_FTRREAD &&	\
+		    next->op_type <= OP_FTBINARY &&	\
+		    next->op_private & OPpFT_STACKED	\
+		) {					\
+		    if (SvTRUE(tmpsv))			\
+			/* leave the object alone */	\
+			RETURN;				\
+		}					\
+							\
+		SETs(tmpsv);				\
+		RETURN;					\
+	    }						\
+	}						\
+    } STMT_END
+
+
 #define opASSIGN (PL_op->op_flags & OPf_STACKED)
 #define SETsv(sv)	STMT_START {					\
 		if (opASSIGN || (SvFLAGS(TARG) & SVs_PADMY))		\
@@ -499,6 +530,15 @@ True if this op will be the return value of an lvalue subroutine
 
 =cut */
 #define LVRET ((PL_op->op_private & OPpMAYBE_LVSUB) && is_lvalue_sub())
+
+#define SvCANEXISTDELETE(sv) \
+ (!SvRMAGICAL(sv)            \
+  || ((mg = mg_find((const SV *) sv, PERL_MAGIC_tied))           \
+      && (stash = SvSTASH(SvRV(SvTIED_obj(MUTABLE_SV(sv), mg)))) \
+      && gv_fetchmethod_autoload(stash, "EXISTS", TRUE)          \
+      && gv_fetchmethod_autoload(stash, "DELETE", TRUE)          \
+     )                       \
+  )
 
 /*
  * Local variables:

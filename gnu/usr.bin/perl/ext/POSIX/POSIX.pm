@@ -4,7 +4,7 @@ use warnings;
 
 our(@ISA, %EXPORT_TAGS, @EXPORT_OK, @EXPORT, $AUTOLOAD, %SIGRT) = ();
 
-our $VERSION = "1.17";
+our $VERSION = "1.19";
 
 use AutoLoader;
 

@@ -70,9 +70,6 @@
 #ifdef I_UNISTD
 #include <unistd.h>
 #endif
-#ifdef MACOS_TRADITIONAL
-#undef fdopen
-#endif
 #include <fcntl.h>
 
 #ifdef HAS_TZNAME
@@ -196,7 +193,7 @@ char *tzname[] = { "" , "" };
 #else
 
 #  ifndef HAS_MKFIFO
-#    if defined(OS2) || defined(MACOS_TRADITIONAL)
+#    if defined(OS2)
 #      define mkfifo(a,b) not_here("mkfifo")
 #    else	/* !( defined OS2 ) */
 #      ifndef mkfifo
@@ -205,24 +202,142 @@ char *tzname[] = { "" , "" };
 #    endif
 #  endif /* !HAS_MKFIFO */
 
-#  ifdef MACOS_TRADITIONAL
-#    define ttyname(a) (char*)not_here("ttyname")
-#    define tzset() not_here("tzset")
-#  else
-#    ifdef I_GRP
-#      include <grp.h>
-#    endif
-#    include <sys/times.h>
-#    ifdef HAS_UNAME
-#      include <sys/utsname.h>
-#    endif
-#    include <sys/wait.h>
+#  ifdef I_GRP
+#    include <grp.h>
 #  endif
+#  include <sys/times.h>
+#  ifdef HAS_UNAME
+#    include <sys/utsname.h>
+#  endif
+#  include <sys/wait.h>
 #  ifdef I_UTIME
 #    include <utime.h>
 #  endif
 #endif /* WIN32 || NETWARE */
 #endif /* __VMS */
+
+#ifdef WIN32
+   /* Perl on Windows assigns WSAGetLastError() return values to errno
+    * (in win32/win32sck.c).  Therefore we need to map these values
+    * back to standard symbolic names, as long as the same name isn't
+    * already defined by errno.h itself.  The Errno.pm module does
+    * a similar mapping.
+    */
+#  ifndef EWOULDBLOCK
+#    define EWOULDBLOCK WSAEWOULDBLOCK
+#  endif
+#  ifndef EINPROGRESS
+#    define EINPROGRESS WSAEINPROGRESS
+#  endif
+#  ifndef EALREADY
+#    define EALREADY WSAEALREADY
+#  endif
+#  ifndef ENOTSOCK
+#    define ENOTSOCK WSAENOTSOCK
+#  endif
+#  ifndef EDESTADDRREQ
+#    define EDESTADDRREQ WSAEDESTADDRREQ
+#  endif
+#  ifndef EMSGSIZE
+#    define EMSGSIZE WSAEMSGSIZE
+#  endif
+#  ifndef EPROTOTYPE
+#    define EPROTOTYPE WSAEPROTOTYPE
+#  endif
+#  ifndef ENOPROTOOPT
+#    define ENOPROTOOPT WSAENOPROTOOPT
+#  endif
+#  ifndef EPROTONOSUPPORT
+#    define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#  endif
+#  ifndef ESOCKTNOSUPPORT
+#    define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT
+#  endif
+#  ifndef EOPNOTSUPP
+#    define EOPNOTSUPP WSAEOPNOTSUPP
+#  endif
+#  ifndef EPFNOSUPPORT
+#    define EPFNOSUPPORT WSAEPFNOSUPPORT
+#  endif
+#  ifndef EAFNOSUPPORT
+#    define EAFNOSUPPORT WSAEAFNOSUPPORT
+#  endif
+#  ifndef EADDRINUSE
+#    define EADDRINUSE WSAEADDRINUSE
+#  endif
+#  ifndef EADDRNOTAVAIL
+#    define EADDRNOTAVAIL WSAEADDRNOTAVAIL
+#  endif
+#  ifndef ENETDOWN
+#    define ENETDOWN WSAENETDOWN
+#  endif
+#  ifndef ENETUNREACH
+#    define ENETUNREACH WSAENETUNREACH
+#  endif
+#  ifndef ENETRESET
+#    define ENETRESET WSAENETRESET
+#  endif
+#  ifndef ECONNABORTED
+#    define ECONNABORTED WSAECONNABORTED
+#  endif
+#  ifndef ECONNRESET
+#    define ECONNRESET WSAECONNRESET
+#  endif
+#  ifndef ENOBUFS
+#    define ENOBUFS WSAENOBUFS
+#  endif
+#  ifndef EISCONN
+#    define EISCONN WSAEISCONN
+#  endif
+#  ifndef ENOTCONN
+#    define ENOTCONN WSAENOTCONN
+#  endif
+#  ifndef ESHUTDOWN
+#    define ESHUTDOWN WSAESHUTDOWN
+#  endif
+#  ifndef ETOOMANYREFS
+#    define ETOOMANYREFS WSAETOOMANYREFS
+#  endif
+#  ifndef ETIMEDOUT
+#    define ETIMEDOUT WSAETIMEDOUT
+#  endif
+#  ifndef ECONNREFUSED
+#    define ECONNREFUSED WSAECONNREFUSED
+#  endif
+#  ifndef ELOOP
+#    define ELOOP WSAELOOP
+#  endif
+#  ifndef ENAMETOOLONG
+#    define ENAMETOOLONG WSAENAMETOOLONG
+#  endif
+#  ifndef EHOSTDOWN
+#    define EHOSTDOWN WSAEHOSTDOWN
+#  endif
+#  ifndef EHOSTUNREACH
+#    define EHOSTUNREACH WSAEHOSTUNREACH
+#  endif
+#  ifndef ENOTEMPTY
+#    define ENOTEMPTY WSAENOTEMPTY
+#  endif
+#  ifndef EPROCLIM
+#    define EPROCLIM WSAEPROCLIM
+#  endif
+#  ifndef EUSERS
+#    define EUSERS WSAEUSERS
+#  endif
+#  ifndef EDQUOT
+#    define EDQUOT WSAEDQUOT
+#  endif
+#  ifndef ESTALE
+#    define ESTALE WSAESTALE
+#  endif
+#  ifndef EREMOTE
+#    define EREMOTE WSAEREMOTE
+#  endif
+#  ifndef EDISCON
+#    define EDISCON WSAEDISCON
+#  endif
+#endif
 
 typedef int SysRet;
 typedef long SysRetLong;
@@ -772,8 +887,8 @@ WEXITSTATUS(status)
 	POSIX::WSTOPSIG = 4
 	POSIX::WTERMSIG = 5
     CODE:
-#if !(defined(WEXITSTATUS) || defined(WIFEXITED) || defined(WIFSIGNALED) \
-      || defined(WIFSTOPPED) || defined(WSTOPSIG) || defined (WTERMSIG))
+#if !defined(WEXITSTATUS) || !defined(WIFEXITED) || !defined(WIFSIGNALED) \
+      || !defined(WIFSTOPPED) || !defined(WSTOPSIG) || !defined(WTERMSIG)
         RETVAL = 0; /* Silence compilers that notice this, but don't realise
 		       that not_here() can't return.  */
 #endif
@@ -1225,7 +1340,7 @@ sigaction(sig, optaction, oldaction = 0)
 	{
 	    dVAR;
 	    POSIX__SigAction action;
-	    GV *siggv = gv_fetchpv("SIG", TRUE, SVt_PVHV);
+	    GV *siggv = gv_fetchpvs("SIG", GV_ADD, SVt_PVHV);
 	    struct sigaction act;
 	    struct sigaction oact;
 	    sigset_t sset;
@@ -1288,7 +1403,7 @@ sigaction(sig, optaction, oldaction = 0)
                XSRETURN_UNDEF;
 	    ENTER;
 	    /* Restore signal mask no matter how we exit this block. */
-	    osset_sv = newSVpv((char *)(&osset), sizeof(sigset_t));
+	    osset_sv = newSVpvn((char *)(&osset), sizeof(sigset_t));
 	    SAVEFREESV( osset_sv );
 	    SAVEDESTRUCTOR_X(restore_sigmask, osset_sv);
 
@@ -1303,11 +1418,13 @@ sigaction(sig, optaction, oldaction = 0)
 			sv_setsv(*svp, *sigsvp);
 		}
 		else {
-			sv_setpv(*svp, "DEFAULT");
+			sv_setpvs(*svp, "DEFAULT");
 		}
 		RETVAL = sigaction(sig, (struct sigaction *)0, & oact);
-		if(RETVAL == -1)
+		if(RETVAL == -1) {
+                   LEAVE;
                    XSRETURN_UNDEF;
+                }
 		/* Get back the mask. */
 		svp = hv_fetchs(oldaction, "MASK", TRUE);
 		if (sv_isa(*svp, "POSIX::SigSet")) {
@@ -1387,8 +1504,10 @@ sigaction(sig, optaction, oldaction = 0)
 		 * essentially meaningless anyway.
 		 */
 		RETVAL = sigaction(sig, & act, (struct sigaction *)0);
-		if(RETVAL == -1)
+		if(RETVAL == -1) {
+                    LEAVE;
 		    XSRETURN_UNDEF;
+                }
 	    }
 
 	    LEAVE;
@@ -1465,7 +1584,7 @@ nice(incr)
 	errno = 0;
 	if ((incr = nice(incr)) != -1 || errno == 0) {
 	    if (incr == 0)
-		XPUSHs(sv_2mortal(newSVpvn("0 but true", 10)));
+		XPUSHs(newSVpvs_flags("0 but true", SVs_TEMP));
 	    else
 		XPUSHs(sv_2mortal(newSViv(incr)));
 	}
@@ -1520,11 +1639,11 @@ uname()
 	struct utsname buf;
 	if (uname(&buf) >= 0) {
 	    EXTEND(SP, 5);
-	    PUSHs(sv_2mortal(newSVpv(buf.sysname, 0)));
-	    PUSHs(sv_2mortal(newSVpv(buf.nodename, 0)));
-	    PUSHs(sv_2mortal(newSVpv(buf.release, 0)));
-	    PUSHs(sv_2mortal(newSVpv(buf.version, 0)));
-	    PUSHs(sv_2mortal(newSVpv(buf.machine, 0)));
+	    PUSHs(newSVpvn_flags(buf.sysname, strlen(buf.sysname), SVs_TEMP));
+	    PUSHs(newSVpvn_flags(buf.nodename, strlen(buf.nodename), SVs_TEMP));
+	    PUSHs(newSVpvn_flags(buf.release, strlen(buf.release), SVs_TEMP));
+	    PUSHs(newSVpvn_flags(buf.version, strlen(buf.version), SVs_TEMP));
+	    PUSHs(newSVpvn_flags(buf.machine, strlen(buf.machine), SVs_TEMP));
 	}
 #else
 	uname((char *) 0); /* A stub to call not_here(). */
@@ -1789,7 +1908,7 @@ mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = -1)
 #     ST(0) = sv_2mortal(newSVpv(...))
 void
 strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
-	char *		fmt
+	SV *		fmt
 	int		sec
 	int		min
 	int		hour
@@ -1801,10 +1920,14 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 	int		isdst
     CODE:
 	{
-	    char *buf = my_strftime(fmt, sec, min, hour, mday, mon, year, wday, yday, isdst);
+	    char *buf = my_strftime(SvPV_nolen(fmt), sec, min, hour, mday, mon, year, wday, yday, isdst);
 	    if (buf) {
-		ST(0) = sv_2mortal(newSVpv(buf, 0));
-		Safefree(buf);
+		SV *const sv = sv_newmortal();
+		sv_usepvn_flags(sv, buf, strlen(buf), SV_HAS_TRAILING_NUL);
+		if (SvUTF8(fmt)) {
+		    SvUTF8_on(sv);
+		}
+		ST(0) = sv;
 	    }
 	}
 
@@ -1817,8 +1940,8 @@ void
 tzname()
     PPCODE:
 	EXTEND(SP,2);
-	PUSHs(sv_2mortal(newSVpvn(tzname[0],strlen(tzname[0]))));
-	PUSHs(sv_2mortal(newSVpvn(tzname[1],strlen(tzname[1]))));
+	PUSHs(newSVpvn_flags(tzname[0], strlen(tzname[0]), SVs_TEMP));
+	PUSHs(newSVpvn_flags(tzname[1], strlen(tzname[1]), SVs_TEMP));
 
 SysRet
 access(filename, mode)

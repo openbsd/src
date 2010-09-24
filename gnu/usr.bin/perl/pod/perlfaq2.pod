@@ -44,7 +44,7 @@ Sunfreeware.com: Solaris 2.5 to Solaris 10 (SPARC and x86)
 Strawberry Perl: Windows, Perl 5.8.8 and 5.10.0
 
 	http://www.strawberryperl.com
-	
+
 IndigoPerl: Windows
 
 	http://indigostar.com/
@@ -54,7 +54,7 @@ IndigoPerl: Windows
 Since you don't have a C compiler, you're doomed and your vendor
 should be sacrificed to the Sun gods.  But that doesn't help you.
 
-What you need to do is get a binary version of gcc for your system
+What you need to do is get a binary version of C<gcc> for your system
 first.  Consult the Usenet FAQs for your operating system for
 information on where to get such a binary version.
 
@@ -77,13 +77,13 @@ eventually live on, and then type C<make install>.  Most other
 approaches are doomed to failure.
 
 One simple way to check that things are in the right place is to print out
-the hard-coded @INC that perl looks through for libraries:
+the hard-coded C<@INC> that perl looks through for libraries:
 
     % perl -le 'print for @INC'
 
 If this command lists any paths that don't exist on your system, then you
 may need to move the appropriate libraries to these locations, or create
-symbolic links, aliases, or shortcuts appropriately.  @INC is also printed as
+symbolic links, aliases, or shortcuts appropriately.  C<@INC> is also printed as
 part of the output of
 
     % perl -V
@@ -95,7 +95,7 @@ L<perlfaq8/"How do I keep my own module/library directory?">.
 
 Read the F<INSTALL> file, which is part of the source distribution.
 It describes in detail how to cope with most idiosyncrasies that the
-Configure script can't work around for any given system or
+C<Configure> script can't work around for any given system or
 architecture.
 
 =head2 What modules and extensions are available for Perl?  What is CPAN?  What does CPAN/src/... mean?
@@ -116,16 +116,16 @@ See the CPAN FAQ at http://www.cpan.org/misc/cpan-faq.html for answers
 to the most frequently asked questions about CPAN including how to
 become a mirror.
 
-CPAN/path/... is a naming convention for files available on CPAN
+C<CPAN/path/...> is a naming convention for files available on CPAN
 sites.  CPAN indicates the base directory of a CPAN mirror, and the
 rest of the path is the path from that directory to the file. For
 instance, if you're using ftp://ftp.funet.fi/pub/languages/perl/CPAN
-as your CPAN site, the file CPAN/misc/japh is downloadable as
+as your CPAN site, the file C<CPAN/misc/japh> is downloadable as
 ftp://ftp.funet.fi/pub/languages/perl/CPAN/misc/japh .
 
 Considering that, as of 2006, there are over ten thousand existing
 modules in the archive, one probably exists to do nearly anything you
-can think of. Current categories under CPAN/modules/by-category/
+can think of. Current categories under C<CPAN/modules/by-category/>
 include Perl core modules; development support; operating system
 interfaces; networking, devices, and interprocess communication; data
 type utilities; database interfaces; user interfaces; interfaces to
@@ -151,13 +151,13 @@ The complete Perl documentation is available with the Perl distribution.
 If you have Perl installed locally, you probably have the documentation
 installed as well: type C<man perl> if you're on a system resembling Unix.
 This will lead you to other important man pages, including how to set your
-$MANPATH.  If you're not on a Unix system, access to the documentation
+C<$MANPATH>.  If you're not on a Unix system, access to the documentation
 will be different; for example, documentation might only be in HTML format.  All
 proper perl installations have fully-accessible documentation.
 
 You might also try C<perldoc perl> in case your system doesn't
-have a proper man command, or it's been misinstalled.  If that doesn't
-work, try looking in /usr/local/lib/perl5/pod for documentation.
+have a proper C<man> command, or it's been misinstalled.  If that doesn't
+work, try looking in C</usr/local/lib/perl5/pod> for documentation.
 
 If all else fails, consult http://perldoc.perl.org/ which has the
 complete documentation in HTML and PDF format.
@@ -217,7 +217,7 @@ including setting the Followup-To header line to NOT include alt.sources;
 see their FAQ ( http://www.faqs.org/faqs/alt-sources-intro/ ) for details.
 
 If you're just looking for software, first use Google
-( http://www.google.com ), Google's usenet search interface
+( http://www.google.com ), Google's Usenet search interface
 ( http://groups.google.com ),  and CPAN Search ( http://search.cpan.org ).
 This is faster and more productive than just posting a request.
 
@@ -323,7 +323,7 @@ Recommended books on (or mostly on) Perl follow.
 
 	Writing Perl Modules for CPAN
 	by Sam Tregar
-	ISBN 1-59059-018-X [1st edition Aug 2002]
+	ISBN 1-59059-018-X [1st edition August 2002]
 	http://apress.com/book/bookDisplay.html?bID=14
 
 	The Perl Cookbook
@@ -370,13 +370,13 @@ Recommended books on (or mostly on) Perl follow.
 	http://www.awlonline.com/
 
 	Object Oriented Perl
-	Damian Conway
+	by Damian Conway
 	    with foreword by Randal L. Schwartz
 	ISBN 1-884777-79-1 [1st edition August 1999]
 	http://www.manning.com/conway/
 
 	Data Munging with Perl
-	Dave Cross
+	by Dave Cross
 	ISBN 1-930110-00-6 [1st edition 2001]
 	http://www.manning.com/cross
 
@@ -409,11 +409,14 @@ almost completely (although it sometimes sneaks in an article about
 another language). There's also I<$foo Magazin>, a german magazine
 dedicated to Perl, at ( http://www.foo-magazin.de ).
 
+The I<Perl-Zeitung> is a German-speaking magazine for Perl beginners
+(see http://perl-zeitung.at.tf ).
+
 Magazines that frequently carry quality articles on Perl include I<The
 Perl Review> ( http://www.theperlreview.com ), I<Unix Review> (
 http://www.unixreview.com/ ), I<Linux Magazine> (
 http://www.linuxmagazine.com/ ), and Usenix's newsletter/magazine to
-its members, I<login:> ( http://www.usenix.org/ )
+its members, I<login:> ( http://www.usenix.org/ ).
 
 The Perl columns of Randal L. Schwartz are available on the web at
 http://www.stonehenge.com/merlyn/WebTechniques/ ,
@@ -425,15 +428,15 @@ Perl, I<The Perl Journal> contains tutorials, demonstrations, case
 studies, announcements, contests, and much more.  I<TPJ> has columns
 on web development, databases, Win32 Perl, graphical programming,
 regular expressions, and networking, and sponsors the Obfuscated Perl
-Contest and the Perl Poetry Contests.  Beginning in November 2002, TPJ
+Contest and the Perl Poetry Contests.  Beginning in November 2002, I<TPJ>
 moved to a reader-supported monthly e-zine format in which subscribers
-can download issues as PDF documents. In 2006, TPJ merged with Dr.
-Dobbs Journal (online edition). To read old TPJ articles, see
+can download issues as PDF documents. In 2006, I<TPJ> merged with Dr.
+Dobbs Journal (online edition). To read old I<TPJ> articles, see
 http://www.ddj.com/ .
 
 =head2 What mailing lists are there for Perl?
 
-Most of the major modules (Tk, CGI, libwww-perl) have their own
+Most of the major modules (C<Tk>, C<CGI>, C<libwww-perl>) have their own
 mailing lists.  Consult the documentation that came with the module for
 subscription information.
 
@@ -491,6 +494,9 @@ To determine if a module came with your version of Perl, you can
 use the C<Module::CoreList> module. It has the information about
 the modules (with their versions) included with each release of Perl.
 
+If C<Module::CoreList> is not installed on your system, check out
+http://perlpunks.de/corelist .
+
 Every CPAN module has a bug tracker set up in RT, http://rt.cpan.org .
 You can submit bugs to RT either through its web interface or by
 email. To email a bug report, send it to
@@ -529,17 +535,9 @@ http://www.cpan.org/ is the Comprehensive Perl Archive Network,
 a replicated worldwide repository of Perl software, see
 the I<What is CPAN?> question earlier in this document.
 
-=head1 REVISION
-
-Revision: $Revision$
-
-Date: $Date$
-
-See L<perlfaq> for source control details and availability.
-
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2010 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

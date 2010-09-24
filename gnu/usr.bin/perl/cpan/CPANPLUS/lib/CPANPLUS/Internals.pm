@@ -48,7 +48,7 @@ $VERSION = "0.90";
 
 =head1 NAME
 
-CPANPLUS::Internals
+CPANPLUS::Internals - CPANPLUS internals
 
 =head1 SYNOPSIS
 

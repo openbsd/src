@@ -42,7 +42,7 @@ while (<PATCH_LEVEL>) {
     last if /^\s*}/;
     next if /^\s*#/;  # preprocessor stuff
     next if /PERL_GIT_UNPUSHED_COMMITS/;    # XXX expand instead
-    next if /PERL_GIT_UNCOMMITTED_CHANGES/; # XXX expand instead
+    next if /"uncommitted-changes"/;        # XXX determine if active instead
     chomp;
     s/^\s+,?\s*"?//;
     s/"?\s*,?$//;
@@ -455,11 +455,11 @@ EOF
     }
 
     # Prompt for return address, if needed
-    unless ($from) {
+    unless ($::opt_r) {
 	# Try and guess return address
 	my $guess;
 
-	$guess = $ENV{'REPLY-TO'} || $ENV{'REPLYTO'} || '';
+	$guess = $ENV{'REPLY-TO'} || $ENV{'REPLYTO'} || $from || '';
         if ($Is_MacOS) {
             require Mac::InternetConfig;
             $guess = $Mac::InternetConfig::InternetConfig{
@@ -605,6 +605,12 @@ for $entry on http://rt.cpan.org, and report your issue there.
 EOF
 
             $entry = '';
+	} elsif (my $bug_tracker = $Module::CoreList::bug_tracker{$entry}) {
+		paraprint <<"EOF";
+$entry included with core Perl is copied directly from the CPAN distribution.
+Please report bugs in $entry directly to its maintainers using $bug_tracker
+EOF
+            $entry = '';
         } elsif ($entry) {
 	        $category ||= 'library';
 	        $report_about_module = $entry;
@@ -709,6 +715,10 @@ EOF
 sub Dump {
     local(*OUT) = @_;
 
+    # these won't have been set if run with -d
+    $category ||= 'core';
+    $severity ||= 'low';
+
     print OUT <<EFF;
 ---
 Flags:
@@ -777,6 +787,7 @@ EOF
 	my $value;
 	foreach (sort keys %::Config) {
 	    $value = $::Config{$_};
+	    $value = '' unless defined $value;
 	    $value =~ s/'/\\'/g;
 	    print OUT "$_='$value'\n";
 	}
@@ -864,7 +875,7 @@ sub NowWhat {
 You have finished composing your message. At this point, you have 
 a few options. You can:
 
-    * [Se]end the message to $address$andcc, 
+    * [Se]nd the message to $address$andcc, 
     * [D]isplay the message on the screen,
     * [R]e-edit the message
     * Display or change the message's [su]bject
@@ -1127,7 +1138,7 @@ sub _send_message_mailsend {
     open(REP, "<$filename") or die "Couldn't open '$filename': $!\n";
     while (<REP>) { print $fh $_ }
     close(REP) or die "Error closing $filename: $!";
-    $fh->close;
+    $fh->close or die "Error sending mail: $!";
 
     print "\nMessage sent.\n";
 }
@@ -1152,9 +1163,15 @@ sub _probe_for_sendmail {
 sub _send_message_sendmail {
     my $sendmail = _probe_for_sendmail();
     unless ($sendmail) {
-        paraprint(<<"EOF"), die "\n";
+        my $message_start = !$Is_Linux && !$Is_OpenBSD ? <<'EOT' : <<'EOT';
 It appears that there is no program which looks like "sendmail" on
 your system and that the Mail::Send library from CPAN isn't available.
+EOT
+It appears that there is no program which looks like "sendmail" on
+your system.
+EOT
+        paraprint(<<"EOF"), die "\n";
+$message_start
 Because of this, there's no easy way to automatically send your
 message.
 

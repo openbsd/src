@@ -87,6 +87,11 @@ esac
 # Check if we're about to use Intel's ICC compiler
 case "`${cc:-cc} -V 2>&1`" in
 *"Intel(R) C++ Compiler"*|*"Intel(R) C Compiler"*)
+    # record the version, formats:
+    # icc (ICC) 10.1 20080801
+    # icpc (ICC) 10.1 20080801
+    # followed by a copyright on the second line
+    ccversion=`${cc:-cc} --version | sed -n -e 's/^icp\?c \((ICC) \)\?//p'`
     # This is needed for Configure's prototype checks to work correctly
     # The -mp flag is needed to pass various floating point related tests
     # The -no-gcc flag is needed otherwise, icc pretends (poorly) to be gcc

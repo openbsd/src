@@ -10,7 +10,6 @@ B<perl>	S<[ B<-sTtuUWX> ]>
 	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal/hexadecimal>] ]>
 	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ] [ B<-f> ]>
 	S<[ B<-C [I<number/list>] >]>
-	S<[ B<-P> ]>
 	S<[ B<-S> ]>
 	S<[ B<-x>[I<dir>] ]>
 	S<[ B<-i>[I<extension>] ]>
@@ -140,13 +139,6 @@ the sources), you may have to modify the Registry yourself.  Note that
 this means you can no longer tell the difference between an executable
 Perl program and a Perl library file.
 
-=item Macintosh
-
-Under "Classic" MacOS, a perl program will have the appropriate Creator and
-Type, so that double-clicking them will invoke the MacPerl application.
-Under Mac OS X, clickable apps can be made from any C<#!> script using Wil
-Sanchez' DropScript utility: http://www.wsanchez.net/software/ .
-
 =item VMS
 
 Put
@@ -182,10 +174,6 @@ For example:
     # MS-DOS, etc.
     perl -e "print \"Hello world\n\""
 
-    # Macintosh
-    print "Hello world\n"
-     (then Run "Myscript" or Shift-Command-R)
-
     # VMS
     perl -e "print ""Hello world\n"""
 
@@ -198,11 +186,6 @@ the command shell, this would probably work better:
 B<CMD.EXE> in Windows NT slipped a lot of standard Unix functionality in
 when nobody was looking, but just try to find documentation for its
 quoting rules.
-
-Under the Macintosh, it depends which environment you are using.  The MacPerl
-shell, or MPW, is much like Unix shells in its support for several
-quoting variants, except that it makes free use of the Macintosh's non-ASCII
-characters as control characters.
 
 There is no general solution to all of this.  It's just a mess.
 
@@ -252,11 +235,13 @@ terminated by the null character, you can say this:
     find . -name '*.orig' -print0 | perl -n0e unlink
 
 The special value 00 will cause Perl to slurp files in paragraph mode.
-The value 0777 will cause Perl to slurp files whole because there is no
-legal byte with that value.
+Any value 0400 or above will cause Perl to slurp files whole, but by convention
+the value 0777 is the one normally used for this purpose.
 
-If you want to specify any Unicode character, use the hexadecimal
-format: C<-0xHHH...>, where the C<H> are valid hexadecimal digits.
+You can also specify the separator character using hexadecimal notation:
+C<-0xHHH...>, where the C<H> are valid hexadecimal digits.  Unlike the octal
+form, this one may be used to specify any Unicode character, even those beyond
+0xFF.
 (This means that you cannot use the C<-x> with a directory name that
 consists of hexadecimal digits.)
 
@@ -333,7 +318,7 @@ You can use C<-C0> (or C<"0"> for C<PERL_UNICODE>) to explicitly
 disable all the above Unicode features.
 
 The read-only magic variable C<${^UNICODE}> reflects the numeric value
-of this setting.  This is variable is set during Perl startup and is
+of this setting.  This variable is set during Perl startup and is
 thereafter read-only.  If you want runtime effects, use the three-arg
 open() (see L<perlfunc/open>), the two-arg binmode() (see L<perlfunc/binmode>),
 and the C<open> pragma (see L<open>).
@@ -401,7 +386,7 @@ B<-D14> is equivalent to B<-Dtls>):
         8  t  Trace execution
        16  o  Method and overloading resolution
        32  c  String/numeric conversions
-       64  P  Print profiling info, preprocessor command for -P, source file input state
+       64  P  Print profiling info, source file input state
       128  m  Memory and SV allocation
       256  f  Format processing
       512  r  Regular expression parsing and execution
@@ -411,7 +396,6 @@ B<-D14> is equivalent to B<-Dtls>):
      8192  H  Hash dump -- usurps values()
     16384  X  Scratchpad allocation
     32768  D  Cleaning up
-    65536  S  Thread synchronization
    131072  T  Tokenising
    262144  R  Include reference counts of dumped variables (eg when using -Ds)
    524288  J  Do not s,t,P-debug (Jump over) opcodes within package DB
@@ -419,6 +403,8 @@ B<-D14> is equivalent to B<-Dtls>):
   2097152  C  Copy On Write
   4194304  A  Consistency checks on internal structures
   8388608  q  quiet - currently only suppresses the "EXECUTING" message
+ 16777216  M  trace smart match resolution
+ 33554432  B  dump suBroutine definitions, including special Blocks like BEGIN
 
 All these flags require B<-DDEBUGGING> when you compile the Perl
 executable (but see L<Devel::Peek>, L<re> which may change this).
@@ -456,7 +442,7 @@ behaves just like B<-e>, except that it implicitly enables all
 optional features (in the main compilation unit). See L<feature>.
 
 =item B<-f>
-X<-f>
+X<-f> X<sitecustomize> X<sitecustomize.pl>
 
 Disable executing F<$Config{sitelib}/sitecustomize.pl> at startup.
 
@@ -465,6 +451,28 @@ F<$Config{sitelib}/sitecustomize.pl> at startup (in a BEGIN block).
 This is a hook that allows the sysadmin to customize how perl behaves.
 It can for instance be used to add entries to the @INC array to make perl
 find modules in non-standard locations.
+
+Perl actually inserts the following code:
+
+    BEGIN {
+        do { local $!; -f "$Config{sitelib}/sitecustomize.pl"; }
+            && do "$Config{sitelib}/sitecustomize.pl";
+    }
+
+Since it is an actual C<do> (not a C<require>), F<sitecustomize.pl>
+doesn't need to return a true value. The code is run in package C<main>,
+in its own lexical scope. However, if the script dies, C<$@> will not
+be set.
+
+The value of C<$Config{sitelib}> is also determined in C code and not
+read from C<Config.pm>, which is not loaded.
+
+The code is executed B<very> early. For example, any changes made to
+C<@INC> will show up in the output of `perl -V`. Of course, C<END>
+blocks will be likewise executed very late.
+
+To determine at runtime if this capability has been compiled in your
+perl, you can check the value of C<$Config{usesitecustomize}>.
 
 =item B<-F>I<pattern>
 X<-F>
@@ -582,7 +590,7 @@ folks use it for their backup files:
     $ perl -pi~ -e 's/foo/bar/' file1 file2 file3...
 
 Note that because B<-i> renames or deletes the original file before
-creating a new file of the same name, UNIX-style soft and hard links will
+creating a new file of the same name, Unix-style soft and hard links will
 not be preserved.
 
 Finally, the B<-i> switch does not impede execution when no
@@ -594,9 +602,7 @@ proceeds from STDIN to STDOUT as might be expected.
 X<-I> X<@INC>
 
 Directories specified by B<-I> are prepended to the search path for
-modules (C<@INC>), and also tells the C preprocessor where to search for
-include files.  The C preprocessor is invoked with B<-P>; by default it
-searches /usr/include and /usr/lib/perl.
+modules (C<@INC>).
 
 =item B<-l>[I<octnum>]
 X<-l> X<$/> X<$\>
@@ -704,73 +710,6 @@ overrides a B<-n> switch.
 
 C<BEGIN> and C<END> blocks may be used to capture control before or after
 the implicit loop, just as in B<awk>.
-
-=item B<-P>
-X<-P>
-
-B<NOTE: Use of -P is strongly discouraged because of its inherent
-problems, including poor portability. It is deprecated and will be
-removed in a future version of Perl.>
-
-This option causes your program to be run through the C preprocessor before
-compilation by Perl.  Because both comments and B<cpp> directives begin
-with the # character, you should avoid starting comments with any words
-recognized by the C preprocessor such as C<"if">, C<"else">, or C<"define">.
-
-If you're considering using C<-P>, you might also want to look at the
-Filter::cpp module from CPAN.
-
-The problems of -P include, but are not limited to:
-
-=over 10
-
-=item *
-
-The C<#!> line is stripped, so any switches there don't apply.
-
-=item *
-
-A C<-P> on a C<#!> line doesn't work.
-
-=item *
-
-B<All> lines that begin with (whitespace and) a C<#> but
-do not look like cpp commands, are stripped, including anything
-inside Perl strings, regular expressions, and here-docs .
-
-=item *
-
-In some platforms the C preprocessor knows too much: it knows about
-the C++ -style until-end-of-line comments starting with C<"//">.
-This will cause problems with common Perl constructs like
-
-    s/foo//;
-
-because after -P this will became illegal code
-
-    s/foo
-
-The workaround is to use some other quoting separator than C<"/">,
-like for example C<"!">:
-
-    s!foo!!;
-
-
-
-=item *
-
-It requires not only a working C preprocessor but also a working
-F<sed>.  If not on UNIX, you are probably out of luck on this.
-
-=item *
-
-Script line numbers are not preserved.
-
-=item *
-
-The C<-x> does not work with C<-P>.
-
-=back
 
 =item B<-s>
 X<-s>
@@ -1031,7 +970,7 @@ locations are automatically included if they exist (this lookup
 being done at interpreter startup time.)
 
 If PERL5LIB is not defined, PERLLIB is used.  Directories are separated
-(like in PATH) by a colon on unixish platforms and by a semicolon on
+(like in PATH) by a colon on Unixish platforms and by a semicolon on
 Windows (the proper path separator being given by the command C<perl
 -V:path_sep>).
 
@@ -1045,7 +984,7 @@ is used. The program should instead say:
 X<PERL5OPT>
 
 Command-line options (switches).  Switches in this variable are taken
-as if they were on every Perl command line.  Only the B<-[CDIMUdmtw]>
+as if they were on every Perl command line.  Only the B<-[CDIMUdmtwW]>
 switches are allowed.  When running taint checks (because the program
 was running setuid or setgid, or the B<-T> switch was used), this
 variable is ignored.  If PERL5OPT begins with B<-T>, tainting will be
@@ -1063,7 +1002,7 @@ layer specification strings (which is also used to decode the PERLIO
 environment variable) treats the colon as a separator.
 
 An unset or empty PERLIO is equivalent to the default set of layers for
-your platform, for example C<:unix:perlio> on UNIX-like systems
+your platform, for example C<:unix:perlio> on Unix-like systems
 and C<:unix:crlf> on Windows and other DOS-like systems.
 
 The list becomes the default for I<all> perl's IO. Consequently only built-in
@@ -1157,7 +1096,7 @@ buggy in this release.
 
 On all platforms the default set of layers should give acceptable results.
 
-For UNIX platforms that will equivalent of "unix perlio" or "stdio".
+For Unix platforms that will equivalent of "unix perlio" or "stdio".
 Configure is setup to prefer "stdio" implementation if system's library
 provides for fast access to the buffer, otherwise it uses the "unix perlio"
 implementation.
@@ -1182,7 +1121,7 @@ X<PERLIO_DEBUG>
 
 If set to the name of a file or device then certain operations of PerlIO
 sub-system will be logged to that file (opened as append). Typical uses
-are UNIX:
+are Unix:
 
    PERLIO_DEBUG=/dev/tty perl script ...
 
@@ -1330,6 +1269,21 @@ see L<perlsec/"Algorithmic Complexity Attacks"> for more information.
 B<Do not disclose the hash seed> to people who don't need to know it.
 See also hash_seed() of L<Hash::Util>.
 
+=item PERL_MEM_LOG
+X<PERL_MEM_LOG>
+
+If your perl was configured with C<-Accflags=-DPERL_MEM_LOG>, setting
+the environment variable C<PERL_MEM_LOG> enables logging debug
+messages. The value has the form C<< <number>[m][s][t] >>, where
+C<number> is the filedescriptor number you want to write to (2 is
+default), and the combination of letters specifies that you want
+information about (m)emory and/or (s)v, optionally with
+(t)imestamps. For example C<PERL_MEM_LOG=1mst> will log all
+information to stdout. You can write to other opened filedescriptors
+too, in a variety of ways;
+
+  bash$ 3>foo3 PERL_MEM_LOG=3m perl ...
+
 =item PERL_ROOT (specific to the VMS port)
 X<PERL_ROOT>
 
@@ -1351,7 +1305,7 @@ See L<perlipc/"Deferred Signals (Safe Signals)">.
 X<PERL_UNICODE>
 
 Equivalent to the B<-C> command-line switch.  Note that this is not
-a boolean variable-- setting this to C<"1"> is not the right way to
+a boolean variable. Setting this to C<"1"> is not the right way to
 "enable Unicode" (whatever that would mean).  You can use C<"0"> to
 "disable Unicode", though (or alternatively unset PERL_UNICODE in
 your shell before starting Perl).  See the description of the C<-C>

@@ -264,7 +264,7 @@
 #define MIN_BUC_POW2 (sizeof(void*) > 4 ? 3 : 2) /* Allow for 4-byte arena. */
 #define MIN_BUCKET (MIN_BUC_POW2 * BUCKETS_PER_POW2)
 
-#if !(defined(I286) || defined(atarist) || defined(__MINT__))
+#if !(defined(I286) || defined(atarist))
 	/* take 2k unless the block is bigger than that */
 #  define LOG_OF_MIN_ARENA 11
 #else
@@ -552,7 +552,7 @@
 #define u_short unsigned short
 
 /* 286 and atarist like big chunks, which gives too much overhead. */
-#if (defined(RCHECK) || defined(I286) || defined(atarist) || defined(__MINT__)) && defined(PACK_MALLOC)
+#if (defined(RCHECK) || defined(I286) || defined(atarist)) && defined(PACK_MALLOC)
 #  undef PACK_MALLOC
 #endif 
 
@@ -1734,7 +1734,7 @@ getpages(MEM_SIZE needed, int *nblksp, int bucket)
 	/* Second, check alignment. */
 	slack = 0;
 
-#if !defined(atarist) && !defined(__MINT__) /* on the atari we dont have to worry about this */
+#if !defined(atarist) /* on the atari we dont have to worry about this */
 #  ifndef I286 	/* The sbrk(0) call on the I286 always returns the next segment */
 	/* WANTED_ALIGNMENT may be more than NEEDED_ALIGNMENT, but this may
 	   improve performance of memory access. */
@@ -1743,7 +1743,7 @@ getpages(MEM_SIZE needed, int *nblksp, int bucket)
 	    add += slack;
 	}
 #  endif
-#endif /* !atarist && !MINT */
+#endif /* !atarist */
 		
 	if (add) {
 	    DEBUG_m(PerlIO_printf(Perl_debug_log, 
@@ -2056,10 +2056,10 @@ Perl_mfree(Malloc_t where)
 #ifdef PERL_CORE
 		{
 		    dTHX;
-		    if (!PERL_IS_ALIVE || !PL_curcop || ckWARN_d(WARN_MALLOC))
-			Perl_warner(aTHX_ packWARN(WARN_MALLOC), "%s free() ignored (RMAGIC, PERL_CORE)",
-				    ovp->ov_rmagic == RMAGIC - 1 ?
-				    "Duplicate" : "Bad");
+		    if (!PERL_IS_ALIVE || !PL_curcop)
+			Perl_ck_warner_d(aTHX_ packWARN(WARN_MALLOC), "%s free() ignored (RMAGIC, PERL_CORE)",
+					 ovp->ov_rmagic == RMAGIC - 1 ?
+					 "Duplicate" : "Bad");
 		}
 #else
 		warn("%s free() ignored (RMAGIC)",
@@ -2069,8 +2069,8 @@ Perl_mfree(Malloc_t where)
 #ifdef PERL_CORE
 		{
 		    dTHX;
-		    if (!PERL_IS_ALIVE || !PL_curcop || ckWARN_d(WARN_MALLOC))
-			Perl_warner(aTHX_ packWARN(WARN_MALLOC), "%s", "Bad free() ignored (PERL_CORE)");
+		    if (!PERL_IS_ALIVE || !PL_curcop)
+			Perl_ck_warner_d(aTHX_ packWARN(WARN_MALLOC), "%s", "Bad free() ignored (PERL_CORE)");
 		}
 #else
 		warn("%s", "Bad free() ignored");
@@ -2163,11 +2163,11 @@ Perl_realloc(void *mp, size_t nbytes)
 #ifdef PERL_CORE
 		{
 		    dTHX;
-		    if (!PERL_IS_ALIVE || !PL_curcop || ckWARN_d(WARN_MALLOC))
-			Perl_warner(aTHX_ packWARN(WARN_MALLOC), "%srealloc() %signored",
-				    (ovp->ov_rmagic == RMAGIC - 1 ? "" : "Bad "),
-				    ovp->ov_rmagic == RMAGIC - 1
-				    ? "of freed memory " : "");
+		    if (!PERL_IS_ALIVE || !PL_curcop)
+			Perl_ck_warner_d(aTHX_ packWARN(WARN_MALLOC), "%srealloc() %signored",
+					 (ovp->ov_rmagic == RMAGIC - 1 ? "" : "Bad "),
+					 ovp->ov_rmagic == RMAGIC - 1
+					 ? "of freed memory " : "");
 		}
 #else
 		warn2("%srealloc() %signored",
@@ -2178,9 +2178,9 @@ Perl_realloc(void *mp, size_t nbytes)
 #ifdef PERL_CORE
 		{
 		    dTHX;
-		    if (!PERL_IS_ALIVE || !PL_curcop || ckWARN_d(WARN_MALLOC))
-			Perl_warner(aTHX_ packWARN(WARN_MALLOC), "%s",
-				    "Bad realloc() ignored");
+		    if (!PERL_IS_ALIVE || !PL_curcop)
+			Perl_ck_warner_d(aTHX_ packWARN(WARN_MALLOC), "%s",
+					 "Bad realloc() ignored");
 		}
 #else
 		warn("%s", "Bad realloc() ignored");
@@ -2467,7 +2467,7 @@ Perl_get_mstats(pTHX_ perl_mstats_t *buf, int buflen, int level)
  * frees for each size category.
  */
 void
-Perl_dump_mstats(pTHX_ char *s)
+Perl_dump_mstats(pTHX_ const char *s)
 {
 #ifdef DEBUGGING_MSTATS
   	register int i;
@@ -2536,7 +2536,7 @@ Perl_dump_mstats(pTHX_ char *s)
 
 #ifdef USE_PERL_SBRK
 
-#   if defined(__MACHTEN_PPC__) || defined(NeXT) || defined(__NeXT__) || defined(PURIFY)
+#   if defined(NeXT) || defined(__NeXT__) || defined(PURIFY)
 #      define PERL_SBRK_VIA_MALLOC
 #   endif
 

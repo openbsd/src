@@ -10,7 +10,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan tests => 116;
+plan tests => 124;
 
 $a = {};
 bless $a, "Bob";
@@ -245,3 +245,70 @@ ok (!splatt->isa('plop'));
 ok (!splatt->isa('zlopp'));
 ok (splatt->isa('plop'));
 
+use warnings "deprecated";
+{
+    my $m;
+    local $SIG{__WARN__} = sub { $m = $_[0] };
+    eval "use UNIVERSAL 'can'";
+    like($m, qr/^UNIVERSAL->import is deprecated/,
+	"deprecation warning for UNIVERSAL->import('can')");
+
+	  undef $m;
+    eval "use UNIVERSAL";
+    is($m, undef,
+	"no deprecation warning for UNIVERSAL->import");
+}
+
+# Test: [perl #66112]: change @ISA inside  sub isa
+{
+    package RT66112::A;
+
+    package RT66112::B;
+
+    sub isa {
+	my $self = shift;
+	@ISA = qw/RT66112::A/;
+	return $self->SUPER::isa(@_);
+    }
+
+    package RT66112::C;
+
+    package RT66112::D;
+
+    sub isa {
+	my $self = shift;
+	@RT66112::E::ISA = qw/RT66112::A/;
+	return $self->SUPER::isa(@_);
+    }
+
+    package RT66112::E;
+
+    package main;
+
+    @RT66112::B::ISA = qw//;
+    @RT66112::C::ISA = qw/RT66112::B/;
+    @RT66112::T1::ISA = qw/RT66112::C/;
+    ok(RT66112::T1->isa('RT66112::C'), "modify \@ISA in isa (RT66112::T1 isa RT66112::C)");
+
+    @RT66112::B::ISA = qw//;
+    @RT66112::C::ISA = qw/RT66112::B/;
+    @RT66112::T2::ISA = qw/RT66112::C/;
+    ok(RT66112::T2->isa('RT66112::B'), "modify \@ISA in isa (RT66112::T2 isa RT66112::B)");
+
+    @RT66112::B::ISA = qw//;
+    @RT66112::C::ISA = qw/RT66112::B/;
+    @RT66112::T3::ISA = qw/RT66112::C/;
+    ok(RT66112::T3->isa('RT66112::A'), "modify \@ISA in isa (RT66112::T3 isa RT66112::A)");
+
+    @RT66112::E::ISA = qw/RT66112::D/;
+    @RT66112::T4::ISA = qw/RT66112::E/;
+    ok(RT66112::T4->isa('RT66112::E'), "modify \@ISA in isa (RT66112::T4 isa RT66112::E)");
+
+    @RT66112::E::ISA = qw/RT66112::D/;
+    @RT66112::T5::ISA = qw/RT66112::E/;
+    ok(! RT66112::T5->isa('RT66112::D'), "modify \@ISA in isa (RT66112::T5 not isa RT66112::D)");
+
+    @RT66112::E::ISA = qw/RT66112::D/;
+    @RT66112::T6::ISA = qw/RT66112::E/;
+    ok(RT66112::T6->isa('RT66112::A'), "modify \@ISA in isa (RT66112::T6 isa RT66112::A)");
+}

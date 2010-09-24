@@ -9,7 +9,6 @@ BEGIN {
 $|  = 1;
 use warnings;
 use Config;
-$Is_MacOS = $^O eq 'MacOS';
 
 plan tests => 108;
 
@@ -84,9 +83,7 @@ EOC
     is( scalar @rows, 2,                '       readline, list context' );
     ok( close($f),                      '       close' );
 }
-SKIP: {
-    skip "Output for |- doesn't go to shell on MacOS", 5 if $Is_MacOS;
-
+{
     ok( open(my $f, '|-', <<EOC),     'open |-' );
     $Perl -pe "s/^not //"
 EOC
@@ -177,9 +174,7 @@ EOC
     ok( close($f),                      '       close' );
 }
 
-SKIP: {
-    skip "Output for |- doesn't go to shell on MacOS", 5 if $Is_MacOS;
-
+{
     ok( open(local $f, '|-', <<EOC),  'open local $f, "|-", ...' );
     $Perl -pe "s/^not //"
 EOC

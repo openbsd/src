@@ -1,3 +1,4 @@
+#! perl -w
 #
 # $Id$
 #
@@ -6,10 +7,6 @@
 # -- dankogai
 
 BEGIN {
-    if ($ENV{'PERL_CORE'}){
-        chdir 't';
-        @INC = '../lib';
-    }
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
@@ -28,11 +25,11 @@ BEGIN {
         exit 0;
     }
     $| = 1;
+    require './test.pl';
 }
 
 use strict;
-use Test::More tests => 6;
-use Encode;
+plan(tests => 6);
 use encoding 'iso-2022-jp';
 
 my @hiragana =  map {chr} ord("ぁ")..ord("ん");

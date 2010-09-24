@@ -797,7 +797,7 @@ to do that.  There's a bit of package data used in the constructor,
 but the reference to this is stored on the object itself and all other
 methods access package data via that reference, so we should be ok.
 
-What do we mean by the Person::new() function -- isn't that actually
+What do we mean by the Person::new() function? Isn't that actually
 a method?  Well, in principle, yes.  A method is just a function that
 expects as its first argument a class name (package) or object
 (blessed reference).   Person::new() is the function that both the

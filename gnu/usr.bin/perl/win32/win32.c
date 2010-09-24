@@ -1,7 +1,7 @@
 /* WIN32.C
  *
  * (c) 1995 Microsoft Corporation. All rights reserved.
- * 		Developed by hip communications inc., http://info.hip.com/info/
+ * 		Developed by hip communications inc.
  * Portions (c) 1993 Intergraph Corporation. All rights reserved.
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -22,6 +22,7 @@
 #  define WC_NO_BEST_FIT_CHARS 0x00000400 /* requires Windows 2000 or later */
 #endif
 #include <winnt.h>
+#include <commctrl.h>
 #include <tlhelp32.h>
 #include <io.h>
 #include <signal.h>
@@ -64,7 +65,6 @@ typedef struct {
 #define PERL_NO_GET_CONTEXT
 #include "XSUB.h"
 
-#include "Win32iop.h"
 #include <fcntl.h>
 #ifndef __GNUC__
 /* assert.h conflicts with #define of assert in perl.h */
@@ -123,12 +123,13 @@ static int		do_spawn2(pTHX_ const char *cmd, int exectype);
 static BOOL		has_shell_metachars(const char *ptr);
 static long		filetime_to_clock(PFILETIME ft);
 static BOOL		filetime_from_time(PFILETIME ft, time_t t);
-static char *		get_emd_part(SV **leading, char *trailing, ...);
+static char *		get_emd_part(SV **leading, STRLEN *const len,
+				     char *trailing, ...);
 static void		remove_dead_process(long deceased);
 static long		find_pid(int pid);
 static char *		qualified_path(const char *cmd);
 static char *		win32_get_xlib(const char *pl, const char *xlib,
-				       const char *libname);
+				       const char *libname, STRLEN *const len);
 static LRESULT  win32_process_message(HWND hwnd, UINT msg,
                        WPARAM wParam, LPARAM lParam);
 
@@ -320,7 +321,7 @@ get_regstr(const char *valuename, SV **svp)
 
 /* *prev_pathp (if non-NULL) is expected to be POK (valid allocated SvPVX(sv)) */
 static char *
-get_emd_part(SV **prev_pathp, char *trailing_path, ...)
+get_emd_part(SV **prev_pathp, STRLEN *const len, char *trailing_path, ...)
 {
     char base[10];
     va_list ap;
@@ -377,6 +378,8 @@ get_emd_part(SV **prev_pathp, char *trailing_path, ...)
 	else if (SvPVX(*prev_pathp))
 	    sv_catpvn(*prev_pathp, ";", 1);
 	sv_catpv(*prev_pathp, mod_name);
+	if(len)
+	    *len = SvCUR(*prev_pathp);
 	return SvPVX(*prev_pathp);
     }
 
@@ -384,7 +387,7 @@ get_emd_part(SV **prev_pathp, char *trailing_path, ...)
 }
 
 char *
-win32_get_privlib(const char *pl)
+win32_get_privlib(const char *pl, STRLEN *const len)
 {
     dTHX;
     char *stdlib = "lib";
@@ -397,11 +400,12 @@ win32_get_privlib(const char *pl)
 	(void)get_regstr(stdlib, &sv);
 
     /* $stdlib .= ";$EMD/../../lib" */
-    return get_emd_part(&sv, stdlib, ARCHNAME, "bin", NULL);
+    return get_emd_part(&sv, len, stdlib, ARCHNAME, "bin", NULL);
 }
 
 static char *
-win32_get_xlib(const char *pl, const char *xlib, const char *libname)
+win32_get_xlib(const char *pl, const char *xlib, const char *libname,
+	       STRLEN *const len)
 {
     dTHX;
     char regstr[40];
@@ -416,7 +420,7 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname)
     /* $xlib .=
      * ";$EMD/" . ((-d $EMD/../../../$]) ? "../../.." : "../.."). "/$libname/$]/lib";  */
     sprintf(pathstr, "%s/%s/lib", libname, pl);
-    (void)get_emd_part(&sv1, pathstr, ARCHNAME, "bin", pl, NULL);
+    (void)get_emd_part(&sv1, NULL, pathstr, ARCHNAME, "bin", pl, NULL);
 
     /* $HKCU{$xlib} || $HKLM{$xlib} . ---; */
     (void)get_regstr(xlib, &sv2);
@@ -424,25 +428,26 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname)
     /* $xlib .=
      * ";$EMD/" . ((-d $EMD/../../../$]) ? "../../.." : "../.."). "/$libname/lib";  */
     sprintf(pathstr, "%s/lib", libname);
-    (void)get_emd_part(&sv2, pathstr, ARCHNAME, "bin", pl, NULL);
+    (void)get_emd_part(&sv2, NULL, pathstr, ARCHNAME, "bin", pl, NULL);
 
     if (!sv1 && !sv2)
 	return NULL;
-    if (!sv1)
-	return SvPVX(sv2);
-    if (!sv2)
-	return SvPVX(sv1);
+    if (!sv1) {
+	sv1 = sv2;
+    } else if (sv2) {
+	sv_catpvn(sv1, ";", 1);
+	sv_catsv(sv1, sv2);
+    }
 
-    sv_catpvn(sv1, ";", 1);
-    sv_catsv(sv1, sv2);
-
+    if (len)
+	*len = SvCUR(sv1);
     return SvPVX(sv1);
 }
 
 char *
-win32_get_sitelib(const char *pl)
+win32_get_sitelib(const char *pl, STRLEN *const len)
 {
-    return win32_get_xlib(pl, "sitelib", "site");
+    return win32_get_xlib(pl, "sitelib", "site", len);
 }
 
 #ifndef PERL_VENDORLIB_NAME
@@ -450,9 +455,9 @@ win32_get_sitelib(const char *pl)
 #endif
 
 char *
-win32_get_vendorlib(const char *pl)
+win32_get_vendorlib(const char *pl, STRLEN *const len)
 {
-    return win32_get_xlib(pl, "vendorlib", PERL_VENDORLIB_NAME);
+    return win32_get_xlib(pl, "vendorlib", PERL_VENDORLIB_NAME, len);
 }
 
 static BOOL
@@ -2009,7 +2014,7 @@ win32_uname(struct utsname *name)
 	GetSystemInfo(&info);
 
 #if (defined(__BORLANDC__)&&(__BORLANDC__<=0x520)) \
- || (defined(__MINGW32__) && !defined(_ANONYMOUS_UNION))
+ || (defined(__MINGW32__) && !defined(_ANONYMOUS_UNION) && !defined(__MINGW_EXTENSION))
 	procarch = info.u.s.wProcessorArchitecture;
 #else
 	procarch = info.wProcessorArchitecture;
@@ -2500,7 +2505,6 @@ my_open_osfhandle(intptr_t osfhandle, int flags)
 
 /* simulate flock by locking a range on the file */
 
-#define LK_ERR(f,i)	((f) ? (i = 0) : (errno = GetLastError()))
 #define LK_LEN		0xffff0000
 
 DllExport int
@@ -2516,34 +2520,46 @@ win32_flock(int fd, int oper)
 	return -1;
     }
     fh = (HANDLE)_get_osfhandle(fd);
+    if (fh == (HANDLE)-1)  /* _get_osfhandle() already sets errno to EBADF */
+        return -1;
+
     memset(&o, 0, sizeof(o));
 
     switch(oper) {
     case LOCK_SH:		/* shared lock */
-	LK_ERR(LockFileEx(fh, 0, 0, LK_LEN, 0, &o),i);
+	if (LockFileEx(fh, 0, 0, LK_LEN, 0, &o))
+            i = 0;
 	break;
     case LOCK_EX:		/* exclusive lock */
-	LK_ERR(LockFileEx(fh, LOCKFILE_EXCLUSIVE_LOCK, 0, LK_LEN, 0, &o),i);
+	if (LockFileEx(fh, LOCKFILE_EXCLUSIVE_LOCK, 0, LK_LEN, 0, &o))
+            i = 0;
 	break;
     case LOCK_SH|LOCK_NB:	/* non-blocking shared lock */
-	LK_ERR(LockFileEx(fh, LOCKFILE_FAIL_IMMEDIATELY, 0, LK_LEN, 0, &o),i);
+	if (LockFileEx(fh, LOCKFILE_FAIL_IMMEDIATELY, 0, LK_LEN, 0, &o))
+            i = 0;
 	break;
     case LOCK_EX|LOCK_NB:	/* non-blocking exclusive lock */
-	LK_ERR(LockFileEx(fh,
-		       LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY,
-		       0, LK_LEN, 0, &o),i);
+	if (LockFileEx(fh, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY,
+		       0, LK_LEN, 0, &o))
+            i = 0;
 	break;
     case LOCK_UN:		/* unlock lock */
-	LK_ERR(UnlockFileEx(fh, 0, LK_LEN, 0, &o),i);
+	if (UnlockFileEx(fh, 0, LK_LEN, 0, &o))
+            i = 0;
 	break;
     default:			/* unknown */
 	errno = EINVAL;
-	break;
+	return -1;
+    }
+    if (i == -1) {
+        if (GetLastError() == ERROR_LOCK_VIOLATION)
+            errno = WSAEWOULDBLOCK;
+        else
+            errno = EINVAL;
     }
     return i;
 }
 
-#undef LK_ERR
 #undef LK_LEN
 
 /*
@@ -2607,21 +2623,24 @@ win32_strerror(int e)
 #if !defined __BORLANDC__ && !defined __MINGW32__      /* compiler intolerance */
     extern int sys_nerr;
 #endif
-    DWORD source = 0;
 
     if (e < 0 || e > sys_nerr) {
         dTHX;
 	if (e < 0)
 	    e = GetLastError();
 
-	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, &source, e, 0,
-			  w32_strerror_buffer,
-			  sizeof(w32_strerror_buffer), NULL) == 0)
+	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM
+                         |FORMAT_MESSAGE_IGNORE_INSERTS, NULL, e, 0,
+			  w32_strerror_buffer, sizeof(w32_strerror_buffer),
+                          NULL) == 0)
+        {
 	    strcpy(w32_strerror_buffer, "Unknown Error");
-
+        }
 	return w32_strerror_buffer;
     }
+#undef strerror
     return strerror(e);
+#define strerror win32_strerror
 }
 
 DllExport void
@@ -3082,9 +3101,7 @@ win32_popen(const char *command, const char *mode)
 	    lock_held = 0;
 	}
 
-	LOCK_FDPID_MUTEX;
 	sv_setiv(*av_fetch(w32_fdpid, p[parent], TRUE), childpid);
-	UNLOCK_FDPID_MUTEX;
 
 	/* set process id so that it can be returned by perl's open() */
 	PL_forkprocess = childpid;
@@ -3125,7 +3142,6 @@ win32_pclose(PerlIO *pf)
     int childpid, status;
     SV *sv;
 
-    LOCK_FDPID_MUTEX;
     sv = *av_fetch(w32_fdpid, PerlIO_fileno(pf), TRUE);
 
     if (SvIOK(sv))
@@ -3134,7 +3150,6 @@ win32_pclose(PerlIO *pf)
 	childpid = 0;
 
     if (!childpid) {
-        UNLOCK_FDPID_MUTEX;
 	errno = EBADF;
         return -1;
     }
@@ -3145,7 +3160,6 @@ win32_pclose(PerlIO *pf)
     fclose(pf);
 #endif
     SvIVX(sv) = 0;
-    UNLOCK_FDPID_MUTEX;
 
     if (win32_waitpid(childpid, &status, 0) == -1)
         return -1;
@@ -3492,6 +3506,27 @@ DllExport int
 win32_eof(int fd)
 {
     return eof(fd);
+}
+
+DllExport int
+win32_isatty(int fd)
+{
+    /* The Microsoft isatty() function returns true for *all*
+     * character mode devices, including "nul".  Our implementation
+     * should only return true if the handle has a console buffer.
+     */
+    DWORD mode;
+    HANDLE fh = (HANDLE)_get_osfhandle(fd);
+    if (fh == (HANDLE)-1) {
+        /* errno is already set to EBADF */
+        return 0;
+    }
+
+    if (GetConsoleMode(fh, &mode))
+        return 1;
+
+    errno = ENOTTY;
+    return 0;
 }
 
 DllExport int
@@ -4803,6 +4838,16 @@ Perl_win32_init(int *argcp, char ***argvp)
     _control87(MCW_EM, MCW_EM);
 #endif
     MALLOC_INIT;
+
+    /* When the manifest resource requests Common-Controls v6 then
+     * user32.dll no longer registers all the Windows classes used for
+     * standard controls but leaves some of them to be registered by
+     * comctl32.dll.  InitCommonControls() doesn't do anything but calling
+     * it makes sure comctl32.dll gets loaded into the process and registers
+     * the standard control classes.  Without this even normal Windows APIs
+     * like MessageBox() can fail under some versions of Windows XP.
+     */
+    InitCommonControls();
 
     module = GetModuleHandle("ntdll.dll");
     if (module) {

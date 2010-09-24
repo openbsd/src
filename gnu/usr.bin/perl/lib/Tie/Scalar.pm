@@ -1,6 +1,6 @@
 package Tie::Scalar;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 =head1 NAME
 
@@ -73,6 +73,18 @@ destruction of an instance.
 
 =back
 
+=head2 Tie::Scalar vs Tie::StdScalar
+
+C<< Tie::Scalar >> provides all the necessary methods, but one should realize
+they do not do anything useful. Calling C<< Tie::Scalar::FETCH >> or 
+C<< Tie::Scalar::STORE >> results in a (trappable) croak. And if you inherit
+from C<< Tie::Scalar >>, you I<must> provide either a C<< new >> or a
+C<< TIESCALAR >> method. 
+
+If you are looking for a class that does everything for you you don't
+define yourself, use the C<< Tie::StdScalar >> class, not the
+C<< Tie::Scalar >> one.
+
 =head1 MORE INFORMATION
 
 The L<perltie> section uses a good example of tying scalars by associating
@@ -92,9 +104,20 @@ sub new {
 
 sub TIESCALAR {
     my $pkg = shift;
-	if ($pkg->can('new') and $pkg ne __PACKAGE__) {
-	warnings::warnif("WARNING: calling ${pkg}->new since ${pkg}->TIESCALAR is missing");
-	$pkg->new(@_);
+    my $pkg_new = $pkg -> can ('new');
+
+    if ($pkg_new and $pkg ne __PACKAGE__) {
+        my $my_new = __PACKAGE__ -> can ('new');
+        if ($pkg_new == $my_new) {  
+            #
+            # Prevent recursion
+            #
+            croak "$pkg must define either a TIESCALAR() or a new() method";
+        }
+
+	warnings::warnif ("WARNING: calling ${pkg}->new since " .
+                          "${pkg}->TIESCALAR is missing");
+	$pkg -> new (@_);
     }
     else {
 	croak "$pkg doesn't define a TIESCALAR method";

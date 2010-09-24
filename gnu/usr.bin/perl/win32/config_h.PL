@@ -8,7 +8,8 @@ BEGIN
  }
 use File::Compare qw(compare);
 use File::Copy qw(copy);
-my $name = $0;
+use File::Basename qw(fileparse);
+my ($name, $dir) = fileparse($0);
 $name =~ s#^(.*)\.PL$#../$1.SH#;
 my %opt;
 while (@ARGV && $ARGV[0] =~ /^([\w_]+)=(.*)$/)
@@ -62,14 +63,15 @@ while (<SH>)
   munge();
   s/\\\$/\$/g;
   s#/[ *\*]*\*/#/**/#;
+  s#(.)/\*\*/#$1/ **/# if(/^\/\*/); #avoid "/*" inside comments
   if (/^\s*#define\s+(PRIVLIB|SITELIB|VENDORLIB)_EXP/)
    {
-     $_ = "#define ". $1 . "_EXP (win32_get_". lc($1) . "($patchlevel))\t/**/\n";
+     $_ = "#define ". $1 . "_EXP (win32_get_". lc($1) . "(PERL_VERSION_STRING, NULL))\t/**/\n";
    }
   # incpush() handles archlibs, so disable them
   elsif (/^\s*#define\s+(ARCHLIB|SITEARCH|VENDORARCH)_EXP/)
    {
-     $_ = "/*#define ". $1 . "_EXP \"\"\t/**/\n";
+     $_ = "/*#define ". $1 . "_EXP \"\"\t/ **/\n";
    }
   print H;
  }

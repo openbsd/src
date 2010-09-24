@@ -69,10 +69,11 @@ print qq
 print q<ok 17
 >;
 
-print <<;   # Yow!
-ok 18
-
-# previous line intentionally left blank.
+print "ok 18 - was the test for the deprecated use of bare << to mean <<\"\"\n";
+#print <<;   # Yow!
+#ok 18
+#
+## previous line intentionally left blank.
 
 print <<E1 eq "foo\n\n" ? "ok 19\n" : "not ok 19\n";
 @{[ <<E2 ]}
@@ -265,7 +266,7 @@ sub foo::::::bar { print "ok $test\n"; $test++ }
 foo::::::bar;
 
 eval "\$x =\xE2foo";
-if ($@ =~ /Unrecognized character \\xE2 in column 5/) { print "ok $test\n"; } else { print "not ok $test\n"; }
+if ($@ =~ /Unrecognized character \\xE2; marked by <-- HERE after \$x =<-- HERE near column 5/) { print "ok $test\n"; } else { print "not ok $test\n"; }
 $test++;
 
 # Is "[~" scanned correctly?

@@ -34,6 +34,7 @@
 
 
 BEGIN { unshift @INC, "lib" }
+use Config;
 use strict;
 
 use vars qw($PLATFORM $CCTYPE $FILETYPE $CONFIG_ARGS $ARCHNAME $PATCHLEVEL);
@@ -75,7 +76,11 @@ if ($PLATFORM eq 'win32' or $PLATFORM eq 'wince' or $PLATFORM eq "aix") {
 	# the user might have chosen to disable because the canned configs are
 	# minimal configs that don't include any of those options.
 	my $opts = ($PLATFORM eq 'wince' ? '-MCross' : ''); # for wince need Cross.pm to get Config.pm
-	my $config = `$^X $opts -Ilib -V`;
+
+	$ENV{PERL5LIB} = join $Config{path_sep}, @INC;
+	my $cmd = "$^X $opts -V";
+	my $config = `$cmd`
+	    or die "Couldn't run [$cmd]: $!";
 	my($options) = $config =~ /^  Compile-time options: (.*?)\n^  \S/ms;
 	$options =~ s/\s+/ /g;
 	print STDERR "Options: ($options)\n";
@@ -184,7 +189,7 @@ my $sym_ord = 0;
 print STDERR "Defines: (" . join(' ', sort keys %define) . ")\n";
 
 if ($PLATFORM =~ /^win(?:32|ce)$/) {
-    (my $dll = ($define{PERL_DLL} || "perl510")) =~ s/\.dll$//i;
+    (my $dll = ($define{PERL_DLL} || "perl512")) =~ s/\.dll$//i;
     print "LIBRARY $dll\n";
     # The DESCRIPTION module definition file statement is not supported
     # by VC7 onwards.
@@ -240,7 +245,7 @@ elsif ($PLATFORM eq 'aix') {
 }
 elsif ($PLATFORM eq 'netware') {
 	if ($FILETYPE eq 'def') {
-	print "LIBRARY perl510\n";
+	print "LIBRARY perl512\n";
 	print "DESCRIPTION 'Perl interpreter for NetWare'\n";
 	print "EXPORTS\n";
 	}
@@ -753,6 +758,7 @@ unless ($define{'USE_ITHREADS'}) {
 		    PL_sharedsv_space_mutex
 		    PL_dollarzero_mutex
 		    PL_hints_mutex
+		    PL_my_ctx_mutex
 		    PL_perlio_mutex
 		    PL_regdupe
 		    Perl_parser_dup
@@ -766,7 +772,7 @@ unless ($define{'USE_ITHREADS'}) {
 		    Perl_he_dup
 		    Perl_mg_dup
 		    Perl_mro_meta_dup
-		    Perl_re_dup
+		    Perl_re_dup_guts
 		    Perl_sv_dup
 		    Perl_rvpv_dup
 		    Perl_hek_dup
@@ -788,7 +794,6 @@ unless ($define{'USE_ITHREADS'}) {
 
 unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
     skip_symbols [qw(
-		    PL_my_ctx_mutex
 		    PL_my_cxt_index
 		    PL_my_cxt_list
 		    PL_my_cxt_size
@@ -1218,6 +1223,10 @@ if ($define{'MULTIPLICITY'}) {
 	my $glob = readvar($f, sub { "Perl_" . $_[1] . $_[2] . "_ptr" });
 	emit_symbols $glob;
     }
+    unless ($define{'USE_ITHREADS'}) {
+	# XXX needed for XS extensions that define PERL_CORE
+	emit_symbol("PL_curinterp");
+    }
     # XXX AIX seems to want the perlvars.h symbols, for some reason
     if ($PLATFORM eq 'aix' or $PLATFORM eq 'os2') {	# OS/2 needs PL_thr_key
 	my $glob = readvar($perlvars_h);
@@ -1279,6 +1288,7 @@ if ($PLATFORM =~ /^win(?:32|ce)$/) {
 			    win32_open
 			    win32_close
 			    win32_eof
+			    win32_isatty
 			    win32_read
 			    win32_write
 			    win32_spawnvp

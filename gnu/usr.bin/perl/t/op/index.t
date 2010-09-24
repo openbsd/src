@@ -137,7 +137,8 @@ foreach my $utf8 ('', ', utf-8') {
     foreach my $arraybase (0, 1, -1, -2) {
 	my $expect_pos = 2 + $arraybase;
 
-	my $prog = "\$[ = $arraybase; \$big = \"N\\xabN\\xab\"; ";
+	my $prog = "no warnings 'deprecated';\n";
+	$prog .= "\$[ = $arraybase; \$big = \"N\\xabN\\xab\"; ";
 	$prog .= '$big .= chr 256; chop $big; ' if $utf8;
 	$prog .= 'print rindex $big, "N", 2 + $[';
 

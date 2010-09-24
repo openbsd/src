@@ -66,51 +66,51 @@ typedef struct regexp_paren_pair {
   regexp's data array based on the data item's type.
 */
 
+#define _REGEXP_COMMON							\
+        /* what engine created this regexp? */				\
+	const struct regexp_engine* engine; 				\
+	REGEXP *mother_re; /* what re is this a lightweight copy of? */	\
+	/* Information about the match that the perl core uses to */	\
+	/* manage things */						\
+	U32 extflags;	/* Flags used both externally and internally */	\
+	I32 minlen;	/* mininum possible length of string to match */\
+	I32 minlenret;	/* mininum possible length of $& */		\
+	U32 gofs;	/* chars left of pos that we search from */	\
+	/* substring data about strings that must appear in the */	\
+	/* final match, used for optimisations */			\
+	struct reg_substr_data *substrs;				\
+	U32 nparens;	/* number of capture buffers */			\
+	/* private engine specific data */				\
+	U32 intflags;	/* Engine Specific Internal flags */		\
+	void *pprivate;	/* Data private to the regex engine which */	\
+			/* created this object. */			\
+	/* Data about the last/current match. These are modified */	\
+	/* during matching */						\
+	U32 lastparen;			/* last open paren matched */	\
+	U32 lastcloseparen;		/* last close paren matched */	\
+	regexp_paren_pair *swap;	/* Unused: 5.10.1 and later */	\
+	/* Array of offsets for (@-) and (@+) */			\
+	regexp_paren_pair *offs;					\
+	/* saved or original string so \digit works forever. */		\
+	char *subbeg;							\
+	SV_SAVED_COPY	/* If non-NULL, SV which is COW from original */\
+	I32 sublen;	/* Length of string pointed by subbeg */	\
+	/* Information about the match that isn't often used */		\
+	/* offset from wrapped to the start of precomp */		\
+	PERL_BITFIELD32 pre_prefix:4;					\
+	/* number of eval groups in the pattern - for security checks */\
+	PERL_BITFIELD32 seen_evals:28
+
 typedef struct regexp {
-        /* what engine created this regexp? */
-	const struct regexp_engine* engine; 
-	struct regexp* mother_re; /* what re is this a lightweight copy of? */
-	
-	/* Information about the match that the perl core uses to manage things */
-	U32 extflags;           /* Flags used both externally and internally */
-	I32 minlen;		/* mininum possible length of string to match */
-	I32 minlenret;		/* mininum possible length of $& */
-	U32 gofs;               /* chars left of pos that we search from */
-	struct reg_substr_data *substrs; /* substring data about strings that must appear
-                                   in the final match, used for optimisations */
-	U32 nparens;		/* number of capture buffers */
-
-        /* private engine specific data */
-	U32 intflags;		/* Engine Specific Internal flags */
-	void *pprivate;         /* Data private to the regex engine which 
-                                   created this object. */
-        
-        /* Data about the last/current match. These are modified during matching*/
-        U32 lastparen;		/* last open paren matched */
-	U32 lastcloseparen;	/* last close paren matched */
-        regexp_paren_pair *swap;  /* Swap copy of *offs */ 
-        regexp_paren_pair *offs;  /* Array of offsets for (@-) and (@+) */
-
-	char *subbeg;		/* saved or original string 
-				   so \digit works forever. */
-	SV_SAVED_COPY           /* If non-NULL, SV which is COW from original */
-	I32 sublen;		/* Length of string pointed by subbeg */
-        
-        
-        /* Information about the match that isn't often used */
-	I32 prelen;		/* length of precomp */
-	const char *precomp;	/* pre-compilation regular expression */
-	/* wrapped can't be const char*, as it is returned by sv_2pv_flags */
-	char *wrapped;          /* wrapped version of the pattern */
-	I32 wraplen;		/* length of wrapped */
-	I32 seen_evals;         /* number of eval groups in the pattern - for security checks */ 
-        HV *paren_names;	/* Optional hash of paren names */
-        
-        /* Refcount of this regexp */
-	I32 refcnt;             /* Refcount of this regexp */
+	_XPV_HEAD;
+	_XPVMG_HEAD;
+	_REGEXP_COMMON;
 } regexp;
 
-#define RXp_PAREN_NAMES(rx)	((rx)->paren_names)
+/*        HV *paren_names;	 Optional hash of paren names
+	  now stored in the IV union */
+
+#define RXp_PAREN_NAMES(rx)	((rx)->xiv_u.xivu_hv)
 
 /* used for high speed searches */
 typedef struct re_scream_pos_data_s
@@ -123,7 +123,7 @@ typedef struct re_scream_pos_data_s
  * Any regex engine implementation must be able to build one of these.
  */
 typedef struct regexp_engine {
-    REGEXP* (*comp) (pTHX_ const SV * const pattern, const U32 flags);
+    REGEXP* (*comp) (pTHX_ SV * const pattern, U32 flags);
     I32     (*exec) (pTHX_ REGEXP * const rx, char* stringarg, char* strend,
                      char* strbeg, I32 minend, SV* screamer,
                      void* data, U32 flags);
@@ -230,35 +230,17 @@ and check for NULL.
  *
  */
 
-/* Anchor and GPOS related stuff */
-#define RXf_ANCH_BOL    	0x00000001
-#define RXf_ANCH_MBOL   	0x00000002
-#define RXf_ANCH_SBOL   	0x00000004
-#define RXf_ANCH_GPOS   	0x00000008
-#define RXf_GPOS_SEEN   	0x00000010
-#define RXf_GPOS_FLOAT  	0x00000020
-/* two bits here */
-#define RXf_ANCH        	(RXf_ANCH_BOL|RXf_ANCH_MBOL|RXf_ANCH_GPOS|RXf_ANCH_SBOL)
-#define RXf_GPOS_CHECK          (RXf_GPOS_SEEN|RXf_ANCH_GPOS)
-#define RXf_ANCH_SINGLE         (RXf_ANCH_SBOL|RXf_ANCH_GPOS)
-
-/* Flags indicating special patterns */
-#define RXf_SKIPWHITE		0x00000100 /* Pattern is for a split / / */
-#define RXf_START_ONLY		0x00000200 /* Pattern is /^/ */
-#define RXf_WHITE		0x00000400 /* Pattern is /\s+/ */
-#define RXf_NULL		0x40000000 /* Pattern is // */
-
-/* 0x1F800 of extflags is used by (RXf_)PMf_COMPILETIME
+/* 0x3F of extflags is used by (RXf_)PMf_COMPILETIME
  * If you change these you need to change the equivalent flags in op.h, and
  * vice versa.  */
-#define RXf_PMf_LOCALE  	0x00000800 /* use locale */
-#define RXf_PMf_MULTILINE	0x00001000 /* /m         */
-#define RXf_PMf_SINGLELINE	0x00002000 /* /s         */
-#define RXf_PMf_FOLD    	0x00004000 /* /i         */
-#define RXf_PMf_EXTENDED	0x00008000 /* /x         */
-#define RXf_PMf_KEEPCOPY	0x00010000 /* /p         */
+#define RXf_PMf_MULTILINE	0x00000001 /* /m         */
+#define RXf_PMf_SINGLELINE	0x00000002 /* /s         */
+#define RXf_PMf_FOLD    	0x00000004 /* /i         */
+#define RXf_PMf_EXTENDED	0x00000008 /* /x         */
+#define RXf_PMf_KEEPCOPY	0x00000010 /* /p         */
+#define RXf_PMf_LOCALE  	0x00000020 /* use locale */
 /* these flags are transfered from the PMOP->op_pmflags member during compilation */
-#define RXf_PMf_STD_PMMOD_SHIFT	12
+#define RXf_PMf_STD_PMMOD_SHIFT	0
 #define RXf_PMf_STD_PMMOD	(RXf_PMf_MULTILINE|RXf_PMf_SINGLELINE|RXf_PMf_FOLD|RXf_PMf_EXTENDED)
 #define RXf_PMf_COMPILETIME	(RXf_PMf_MULTILINE|RXf_PMf_SINGLELINE|RXf_PMf_LOCALE|RXf_PMf_FOLD|RXf_PMf_EXTENDED|RXf_PMf_KEEPCOPY)
 
@@ -305,37 +287,54 @@ and check for NULL.
  *
  */
 
+/* Anchor and GPOS related stuff */
+#define RXf_ANCH_BOL    	0x00000100
+#define RXf_ANCH_MBOL   	0x00000200
+#define RXf_ANCH_SBOL   	0x00000400
+#define RXf_ANCH_GPOS   	0x00000800
+#define RXf_GPOS_SEEN   	0x00001000
+#define RXf_GPOS_FLOAT  	0x00002000
+/* two bits here */
+#define RXf_ANCH        	(RXf_ANCH_BOL|RXf_ANCH_MBOL|RXf_ANCH_GPOS|RXf_ANCH_SBOL)
+#define RXf_GPOS_CHECK          (RXf_GPOS_SEEN|RXf_ANCH_GPOS)
+#define RXf_ANCH_SINGLE         (RXf_ANCH_SBOL|RXf_ANCH_GPOS)
+
 /* What we have seen */
-#define RXf_LOOKBEHIND_SEEN	0x00020000
-#define RXf_EVAL_SEEN   	0x00040000
-#define RXf_CANY_SEEN   	0x00080000
+#define RXf_LOOKBEHIND_SEEN	0x00004000
+#define RXf_EVAL_SEEN   	0x00008000
+#define RXf_CANY_SEEN   	0x00010000
 
 /* Special */
-#define RXf_NOSCAN      	0x00100000
-#define RXf_CHECK_ALL   	0x00200000
+#define RXf_NOSCAN      	0x00020000
+#define RXf_CHECK_ALL   	0x00040000
 
 /* UTF8 related */
-#define RXf_UTF8        	0x00400000
-#define RXf_MATCH_UTF8  	0x00800000
+#define RXf_MATCH_UTF8  	0x00100000
 
 /* Intuit related */
-#define RXf_USE_INTUIT_NOML	0x01000000
-#define RXf_USE_INTUIT_ML	0x02000000
-#define RXf_INTUIT_TAIL 	0x04000000
+#define RXf_USE_INTUIT_NOML	0x00200000
+#define RXf_USE_INTUIT_ML	0x00400000
+#define RXf_INTUIT_TAIL 	0x00800000
 
 /*
   Set in Perl_pmruntime if op_flags & OPf_SPECIAL, i.e. split. Will
   be used by regex engines to check whether they should set
   RXf_SKIPWHITE
 */
-#define RXf_SPLIT           0x08000000
+#define RXf_SPLIT		0x01000000
 
 #define RXf_USE_INTUIT		(RXf_USE_INTUIT_NOML|RXf_USE_INTUIT_ML)
 
 /* Copy and tainted info */
-#define RXf_COPY_DONE   	0x10000000
-#define RXf_TAINTED_SEEN	0x20000000
-#define RXf_TAINTED             0x80000000 /* this pattern is tainted */
+#define RXf_COPY_DONE   	0x02000000
+#define RXf_TAINTED_SEEN	0x04000000
+#define RXf_TAINTED		0x08000000 /* this pattern is tainted */
+
+/* Flags indicating special patterns */
+#define RXf_START_ONLY		0x10000000 /* Pattern is /^/ */
+#define RXf_SKIPWHITE		0x20000000 /* Pattern is for a split / / */
+#define RXf_WHITE		0x40000000 /* Pattern is /\s+/ */
+#define RXf_NULL		0x80000000 /* Pattern is // */
 
 /*
  * NOTE: if you modify any RXf flags you should run regen.pl or regcomp.pl
@@ -364,27 +363,64 @@ and check for NULL.
 
 #define RXp_EXTFLAGS(rx)	((rx)->extflags)
 
-#define RX_PRECOMP(prog)	((prog)->precomp)
-/* *** 5.10.x-specific definition of RX_PRECOMP_const */
-#define RX_PRECOMP_const(prog)	((prog)->precomp)
-#define RX_PRELEN(prog)		((prog)->prelen)
-#define RX_WRAPPED(prog)	((prog)->wrapped)
-#define RX_WRAPLEN(prog)	((prog)->wraplen)
-#define RX_CHECK_SUBSTR(prog)	((prog)->check_substr)
-#define RX_EXTFLAGS(prog)	((prog)->extflags)
-#define RX_REFCNT(prog)		((prog)->refcnt)
-#define RX_ENGINE(prog)		((prog)->engine)
-#define RX_SUBBEG(prog)		((prog)->subbeg)
-#define RX_OFFS(prog)		((prog)->offs)
-#define RX_NPARENS(prog)	((prog)->nparens)
-#define RX_SUBLEN(prog)		((prog)->sublen)
-#define RX_SUBBEG(prog)		((prog)->subbeg)
-#define RX_MINLEN(prog)		((prog)->minlen)
-#define RX_MINLENRET(prog)	((prog)->minlenret)
-#define RX_GOFS(prog)		((prog)->gofs)
-#define RX_LASTPAREN(prog)	((prog)->lastparen)
-#define RX_LASTCLOSEPAREN(prog)	((prog)->lastcloseparen)
-#define RX_SEEN_EVALS(prog)	((prog)->seen_evals)
+/* For source compatibility. We used to store these explicitly.  */
+#define RX_PRECOMP(prog)	(RX_WRAPPED(prog) + ((struct regexp *)SvANY(prog))->pre_prefix)
+#define RX_PRECOMP_const(prog)	(RX_WRAPPED_const(prog) + ((struct regexp *)SvANY(prog))->pre_prefix)
+/* FIXME? Are we hardcoding too much here and constraining plugin extension
+   writers? Specifically, the value 1 assumes that the wrapped version always
+   has exactly one character at the end, a ')'. Will that always be true?  */
+#define RX_PRELEN(prog)		(RX_WRAPLEN(prog) - ((struct regexp *)SvANY(prog))->pre_prefix - 1)
+#define RX_WRAPPED(prog)	SvPVX(prog)
+#define RX_WRAPPED_const(prog)	SvPVX_const(prog)
+#define RX_WRAPLEN(prog)	SvCUR(prog)
+#define RX_CHECK_SUBSTR(prog)	(((struct regexp *)SvANY(prog))->check_substr)
+#define RX_REFCNT(prog)		SvREFCNT(prog)
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define RX_EXTFLAGS(prog)						\
+    (*({								\
+	const REGEXP *const _rx_extflags = (prog);			\
+	assert(SvTYPE(_rx_extflags) == SVt_REGEXP);			\
+	&RXp_EXTFLAGS(SvANY(_rx_extflags));				\
+    }))
+#  define RX_ENGINE(prog)						\
+    (*({								\
+	const REGEXP *const _rx_engine = (prog);			\
+	assert(SvTYPE(_rx_engine) == SVt_REGEXP);			\
+	&SvANY(_rx_engine)->engine;					\
+    }))
+#  define RX_SUBBEG(prog)						\
+    (*({								\
+	const REGEXP *const _rx_subbeg = (prog);			\
+	assert(SvTYPE(_rx_subbeg) == SVt_REGEXP);			\
+	&SvANY(_rx_subbeg)->subbeg;					\
+    }))
+#  define RX_OFFS(prog)							\
+    (*({								\
+	const REGEXP *const _rx_offs = (prog);				\
+	assert(SvTYPE(_rx_offs) == SVt_REGEXP);				\
+	&SvANY(_rx_offs)->offs;						\
+    }))
+#  define RX_NPARENS(prog)						\
+    (*({								\
+	const REGEXP *const _rx_nparens = (prog);			\
+	assert(SvTYPE(_rx_nparens) == SVt_REGEXP);			\
+	&SvANY(_rx_nparens)->nparens;					\
+    }))
+#else
+#  define RX_EXTFLAGS(prog)	RXp_EXTFLAGS((struct regexp *)SvANY(prog))
+#  define RX_ENGINE(prog)	(((struct regexp *)SvANY(prog))->engine)
+#  define RX_SUBBEG(prog)	(((struct regexp *)SvANY(prog))->subbeg)
+#  define RX_OFFS(prog)		(((struct regexp *)SvANY(prog))->offs)
+#  define RX_NPARENS(prog)	(((struct regexp *)SvANY(prog))->nparens)
+#endif
+#define RX_SUBLEN(prog)		(((struct regexp *)SvANY(prog))->sublen)
+#define RX_MINLEN(prog)		(((struct regexp *)SvANY(prog))->minlen)
+#define RX_MINLENRET(prog)	(((struct regexp *)SvANY(prog))->minlenret)
+#define RX_GOFS(prog)		(((struct regexp *)SvANY(prog))->gofs)
+#define RX_LASTPAREN(prog)	(((struct regexp *)SvANY(prog))->lastparen)
+#define RX_LASTCLOSEPAREN(prog)	(((struct regexp *)SvANY(prog))->lastcloseparen)
+#define RX_SEEN_EVALS(prog)	(((struct regexp *)SvANY(prog))->seen_evals)
+#define RX_SAVED_COPY(prog)	(((struct regexp *)SvANY(prog))->saved_copy)
 
 #endif /* PLUGGABLE_RE_EXTENSION */
 
@@ -392,8 +428,8 @@ and check for NULL.
 
 #ifdef PERL_OLD_COPY_ON_WRITE
 #define RX_MATCH_COPY_FREE(rx) \
-	STMT_START {if (rx->saved_copy) { \
-	    SV_CHECK_THINKFIRST_COW_DROP(rx->saved_copy); \
+	STMT_START {if (RX_SAVED_COPY(rx)) { \
+	    SV_CHECK_THINKFIRST_COW_DROP(RX_SAVED_COPY(rx)); \
 	} \
 	if (RX_MATCH_COPIED(rx)) { \
 	    Safefree(RX_SUBBEG(rx)); \
@@ -416,7 +452,7 @@ and check for NULL.
 			: (RX_MATCH_UTF8_off(prog), (PL_reg_match_utf8 = 0)))
 
 /* Whether the pattern stored at RX_WRAPPED is in UTF-8  */
-#define RX_UTF8(prog)			(RX_EXTFLAGS(prog) & RXf_UTF8)
+#define RX_UTF8(prog)			SvUTF8(prog)
 
 #define REXEC_COPY_STR	0x01		/* Need to copy the string. */
 #define REXEC_CHECKED	0x02		/* check_substr already checked. */
@@ -424,8 +460,27 @@ and check for NULL.
 #define REXEC_IGNOREPOS	0x08		/* \G matches at start. */
 #define REXEC_NOT_FIRST	0x10		/* This is another iteration of //g. */
 
-#define ReREFCNT_inc(re) ((void)(re && re->refcnt++), re)
-#define ReREFCNT_dec(re) CALLREGFREE(re)
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define ReREFCNT_inc(re)						\
+    ({									\
+	/* This is here to generate a casting warning if incorrect.  */	\
+	REGEXP *const _rerefcnt_inc = (re);				\
+	assert(SvTYPE(_rerefcnt_inc) == SVt_REGEXP);			\
+	SvREFCNT_inc(_rerefcnt_inc);					\
+	_rerefcnt_inc;							\
+    })
+#  define ReREFCNT_dec(re)						\
+    ({									\
+	/* This is here to generate a casting warning if incorrect.  */	\
+	REGEXP *const _rerefcnt_dec = (re);				\
+	SvREFCNT_dec(_rerefcnt_dec);					\
+    })
+#else
+#  define ReREFCNT_dec(re)	SvREFCNT_dec(re)
+#  define ReREFCNT_inc(re)	((REGEXP *) SvREFCNT_inc(re))
+#endif
+
+/* FIXME for plugins. */
 
 #define FBMcf_TAIL_DOLLAR	1
 #define FBMcf_TAIL_DOLLARM	2
@@ -446,7 +501,7 @@ typedef struct _reg_trie_accepted reg_trie_accepted;
  * Perl_regexec_flags and then passed to regtry(), regmatch() etc */
 
 typedef struct {
-    regexp *prog;
+    REGEXP *prog;
     char *bol;
     char *till;
     SV *sv;
@@ -516,7 +571,7 @@ typedef struct regmatch_state {
 	    struct regmatch_state *prev_yes_state;
 	    struct regmatch_state *prev_eval;
 	    struct regmatch_state *prev_curlyx;
-	    regexp	*prev_rex;
+	    REGEXP	*prev_rex;
 	    U32		toggle_reg_flags; /* what bits in PL_reg_flags to
 					    flip when transitioning between
 					    inner and outer rexen */

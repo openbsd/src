@@ -403,7 +403,7 @@ and must use
 A loop should be used to build up the argument list when not on
 Windows NT so more than 9 arguments can be processed.
 
-See also L</Disadvantages>.
+See also L</DISADVANTAGES>.
 
 =head1 SEE ALSO
 

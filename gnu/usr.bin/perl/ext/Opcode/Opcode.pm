@@ -6,7 +6,7 @@ use strict;
 
 our($VERSION, @ISA, @EXPORT_OK);
 
-$VERSION = "1.11";
+$VERSION = "1.15";
 
 use Carp;
 use Exporter ();
@@ -310,7 +310,8 @@ invert_opset function.
 
     rv2av aassign aelem aelemfast aslice av2arylen
 
-    rv2hv helem hslice each values keys exists delete
+    rv2hv helem hslice each values keys exists delete aeach akeys avalues
+    boolkeys
 
     preinc i_preinc predec i_predec postinc i_postinc postdec i_postdec
     int hex oct abs pow multiply i_multiply divide i_divide
@@ -332,7 +333,7 @@ invert_opset function.
 
     cond_expr flip flop andassign orassign dorassign and or dor xor
 
-    warn die lineseq nextstate scope enter leave setstate
+    warn die lineseq nextstate scope enter leave
 
     rv2cv anoncode prototype
 
@@ -556,6 +557,8 @@ about calling environment and args.
     sort -- assorted problems including core dumps
     tied -- can be used to access object implementing a tie
     pack unpack -- can be used to create/use memory pointers
+
+    hintseval -- constant op holding eval hints
 
     entereval -- can be used to hide code from initial compile
 

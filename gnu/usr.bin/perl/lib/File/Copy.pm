@@ -12,10 +12,7 @@ use strict;
 use warnings;
 use File::Spec;
 use Config;
-# During perl build, we need File::Copy but Fcntl might not be built yet
-# *** not needed for 2.14, only 2.15
-# *** my $Fcntl_loaded = eval q{ use Fcntl qw [O_CREAT O_WRONLY O_TRUNC]; 1 };
-# Similarly Scalar::Util
+# During perl build, we need File::Copy but Scalar::Util might not be built yet
 # And then we need these games to avoid loading overload, as that will
 # confuse miniperl during the bootstrap of perl.
 my $Scalar_Util_loaded = eval q{ require Scalar::Util; require overload; 1 };
@@ -25,7 +22,7 @@ sub syscopy;
 sub cp;
 sub mv;
 
-$VERSION = '2.14';
+$VERSION = '2.18';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -50,6 +47,44 @@ if ($^O eq 'MacOS') {
 	warn 'Mac::MoreFiles could not be loaded; using non-native syscopy'
 		if $@ && $^W;
 }
+
+# Look up the feature settings on VMS using VMS::Feature when available.
+
+my $use_vms_feature = 0;
+BEGIN {
+    if ($^O eq 'VMS') {
+        if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+            $use_vms_feature = 1;
+        }
+    }
+}
+
+# Need to look up the UNIX report mode.  This may become a dynamic mode
+# in the future.
+sub _vms_unix_rpt {
+    my $unix_rpt;
+    if ($use_vms_feature) {
+        $unix_rpt = VMS::Feature::current("filename_unix_report");
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        $unix_rpt = $env_unix_rpt =~ /^[ET1]/i;
+    }
+    return $unix_rpt;
+}
+
+# Need to look up the EFS character set mode.  This may become a dynamic
+# mode in the future.
+sub _vms_efs {
+    my $efs;
+    if ($use_vms_feature) {
+        $efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $env_efs = $ENV{'DECC$EFS_CHARSET'} || '';
+        $efs = $env_efs =~ /^[ET1]/i;
+    }
+    return $efs;
+}
+
 
 sub _catname {
     my($from, $to) = @_;
@@ -115,7 +150,7 @@ sub copy {
 	my @fs = stat($from);
 	if (@fs) {
 	    my @ts = stat($to);
-	    if (@ts && $fs[0] == $ts[0] && $fs[1] == $ts[1]) {
+	    if (@ts && $fs[0] == $ts[0] && $fs[1] == $ts[1] && !-p $from) {
 		carp("'$from' and '$to' are identical (not copied)");
                 return 0;
 	    }
@@ -141,14 +176,36 @@ sub copy {
 
             if (! -d $to && ! -d $from) {
 
+                my $vms_efs = _vms_efs();
+                my $unix_rpt = _vms_unix_rpt();
+                my $unix_mode = 0;
+                my $from_unix = 0;
+                $from_unix = 1 if ($from =~ /^\.\.?$/);
+                my $from_vms = 0;
+                $from_vms = 1 if ($from =~ m#[\[<\]]#);
+
+                # Need to know if we are in Unix mode.
+                if ($from_vms == $from_unix) {
+                    $unix_mode = $unix_rpt;
+                } else {
+                    $unix_mode = $from_unix;
+                }
+
                 # VMS has sticky defaults on extensions, which means that
                 # if there is a null extension on the destination file, it
                 # will inherit the extension of the source file
                 # So add a '.' for a null extension.
 
-                $copy_to = VMS::Filespec::vmsify($to);
+                # In unix_rpt mode, the trailing dot should not be added.
+
+                if ($vms_efs) {
+                    $copy_to = $to;
+                } else {
+                    $copy_to = VMS::Filespec::vmsify($to);
+                }
                 my ($vol, $dirs, $file) = File::Spec->splitpath($copy_to);
-                $file = $file . '.' unless ($file =~ /(?<!\^)\./);
+                $file = $file . '.'
+                    unless (($file =~ /(?<!\^)\./) || $unix_rpt);
                 $copy_to = File::Spec->catpath($vol, $dirs, $file);
 
                 # Get rid of the old versions to be like UNIX
@@ -156,7 +213,7 @@ sub copy {
             }
         }
 
-        return syscopy($from, $copy_to);
+        return syscopy($from, $copy_to) || 0;
     }
 
     my $closefrom = 0;
@@ -168,11 +225,9 @@ sub copy {
     if ($from_a_handle) {
        $from_h = $from;
     } else {
-	$from = _protect($from) if $from =~ /^\s/s;
-       $from_h = \do { local *FH };
        open $from_h, "<", $from or goto fail_open1;
        binmode $from_h or die "($!,$^E)";
-	$closefrom = 1;
+       $closefrom = 1;
     }
 
     # Seems most logical to do this here, in case future changes would want to
@@ -187,10 +242,9 @@ sub copy {
     if ($to_a_handle) {
        $to_h = $to;
     } else {
-	$to = _protect($to) if $to =~ /^\s/s;
-       $to_h = \do { local *FH };
-       open $to_h, ">", $to or goto fail_open2;
-       binmode $to_h or die "($!,$^E)";
+	$to_h = \do { local *FH }; # XXX is this line obsolete?
+	open $to_h, ">", $to or goto fail_open2;
+	binmode $to_h or die "($!,$^E)";
 	$closeto = 1;
     }
 
@@ -231,10 +285,50 @@ sub copy {
     return 0;
 }
 
-sub move {
-    croak("Usage: move(FROM, TO) ") unless @_ == 2;
-
+sub cp {
     my($from,$to) = @_;
+    my(@fromstat) = stat $from;
+    my(@tostat) = stat $to;
+    my $perm;
+
+    return 0 unless copy(@_) and @fromstat;
+
+    if (@tostat) {
+        $perm = $tostat[2];
+    } else {
+        $perm = $fromstat[2] & ~(umask || 0);
+	@tostat = stat $to;
+    }
+    # Might be more robust to look for S_I* in Fcntl, but we're
+    # trying to avoid dependence on any XS-containing modules,
+    # since File::Copy is used during the Perl build.
+    $perm &= 07777;
+    if ($perm & 06000) {
+	croak("Unable to check setuid/setgid permissions for $to: $!")
+	    unless @tostat;
+
+	if ($perm & 04000 and                     # setuid
+	    $fromstat[4] != $tostat[4]) {         # owner must match
+	    $perm &= ~06000;
+	}
+
+	if ($perm & 02000 && $> != 0) {           # if not root, setgid
+	    my $ok = $fromstat[5] == $tostat[5];  # group must match
+	    if ($ok) {                            # and we must be in group
+                $ok = grep { $_ == $fromstat[5] } split /\s+/, $)
+	    }
+	    $perm &= ~06000 unless $ok;
+	}
+    }
+    return 0 unless @tostat;
+    return 1 if $perm == ($tostat[2] & 07777);
+    return eval { chmod $perm, $to; } ? 1 : 0;
+}
+
+sub _move {
+    croak("Usage: move(FROM, TO) ") unless @_ == 3;
+
+    my($from,$to,$fallback) = @_;
 
     my($fromsz,$tosz1,$tomt1,$tosz2,$tomt2,$sts,$ossts);
 
@@ -253,14 +347,37 @@ sub move {
     if (-$^O eq 'VMS' && -e $from) {
 
         if (! -d $to && ! -d $from) {
+
+            my $vms_efs = _vms_efs();
+            my $unix_rpt = _vms_unix_rpt();
+            my $unix_mode = 0;
+            my $from_unix = 0;
+            $from_unix = 1 if ($from =~ /^\.\.?$/);
+            my $from_vms = 0;
+            $from_vms = 1 if ($from =~ m#[\[<\]]#);
+
+            # Need to know if we are in Unix mode.
+            if ($from_vms == $from_unix) {
+                $unix_mode = $unix_rpt;
+            } else {
+                $unix_mode = $from_unix;
+            }
+
             # VMS has sticky defaults on extensions, which means that
             # if there is a null extension on the destination file, it
             # will inherit the extension of the source file
             # So add a '.' for a null extension.
 
-            $rename_to = VMS::Filespec::vmsify($to);
+            # In unix_rpt mode, the trailing dot should not be added.
+
+            if ($vms_efs) {
+                $rename_to = $to;
+            } else {
+                $rename_to = VMS::Filespec::vmsify($to);
+            }
             my ($vol, $dirs, $file) = File::Spec->splitpath($rename_to);
-            $file = $file . '.' unless ($file =~ /(?<!\^)\./);
+            $file = $file . '.'
+                unless (($file =~ /(?<!\^)\./) || $unix_rpt);
             $rename_to = File::Spec->catpath($vol, $dirs, $file);
 
             # Get rid of the old versions to be like UNIX
@@ -284,7 +401,7 @@ sub move {
         local $@;
         eval {
             local $SIG{__DIE__};
-            copy($from,$to) or die;
+            $fallback->($from,$to) or die;
             my($atime, $mtime) = (stat($from))[8,9];
             utime($atime, $mtime, $to);
             unlink($from)   or die;
@@ -299,15 +416,8 @@ sub move {
     return 0;
 }
 
-*cp = \&copy;
-*mv = \&move;
-
-
-if ($^O eq 'MacOS') {
-    *_protect = sub { MacPerl::MakeFSSpec($_[0]) };
-} else {
-    *_protect = sub { "./$_[0]" };
-}
+sub move { _move(@_,\&copy); }
+sub mv   { _move(@_,\&cp);   }
 
 # &syscopy is an XSUB under OS/2
 unless (defined &syscopy) {
@@ -389,6 +499,12 @@ be opened for reading. Likewise, the second argument will be
 written to (and created if need be).  Trying to copy a file on top
 of itself is a fatal error.
 
+If the destination (second argument) already exists and is a directory,
+and the source (first argument) is not a filehandle, then the source
+file will be copied into the directory specified by the destination,
+using the same base name as the source file.  It's a failure to have a
+filehandle as the source when the destination is a directory.
+
 B<Note that passing in
 files as handles instead of names may lead to loss of information
 on some operating systems; it is recommended that you use file
@@ -403,8 +519,15 @@ being written to the second file. The default buffer size depends
 upon the file, but will generally be the whole file (up to 2MB), or
 1k for filehandles that do not reference files (eg. sockets).
 
-You may use the syntax C<use File::Copy "cp"> to get at the
-"cp" alias for this function. The syntax is I<exactly> the same.
+You may use the syntax C<use File::Copy "cp"> to get at the C<cp>
+alias for this function. The syntax is I<exactly> the same.  The
+behavior is nearly the same as well: as of version 2.15, <cp> will
+preserve the source file's permission bits like the shell utility
+C<cp(1)> would do, while C<copy> uses the default permissions for the
+target file (which may depend on the process' C<umask>, file
+ownership, inherited ACLs, etc.).  If an error occurs in setting
+permissions, C<cp> will return 0, regardless of whether the file was
+successfully copied.
 
 =item move
 X<move> X<mv> X<rename>
@@ -420,8 +543,8 @@ the file to the new location and deletes the original.  If an error occurs
 during this copy-and-delete process, you may be left with a (possibly partial)
 copy of the file under the destination name.
 
-You may use the "mv" alias for this function in the same way that
-you may use the "cp" alias for C<copy>.
+You may use the C<mv> alias for this function in the same way that
+you may use the <cp> alias for C<copy>.
 
 =item syscopy
 X<syscopy>

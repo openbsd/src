@@ -39,7 +39,7 @@ for my $meth ( qw[conf _lib _perl5lib]) {
 
 =head1 NAME
 
-CPANPLUS::Configure
+CPANPLUS::Configure - configuration for CPANPLUS
 
 =head1 SYNOPSIS
 

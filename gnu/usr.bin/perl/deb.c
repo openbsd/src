@@ -302,8 +302,7 @@ Perl_deb_stack_all(pTHX)
 		if (CxTYPE(cx) == CXt_EVAL || CxTYPE(cx) == CXt_SUB
 			|| CxTYPE(cx) == CXt_FORMAT)
 		{
-		    const OP * const retop = (CxTYPE(cx) == CXt_EVAL)
-			    ? cx->blk_eval.retop : cx->blk_sub.retop;
+		    const OP * const retop = cx->blk_sub.retop;
 
 		    PerlIO_printf(Perl_debug_log, "  retop=%s\n",
 			    retop ? OP_NAME(retop) : "(null)"

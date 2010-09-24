@@ -17,7 +17,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module::Fake
+CPANPLUS::Module::Fake - class for creating fake module objects
 
 =head1 SYNOPSIS
 

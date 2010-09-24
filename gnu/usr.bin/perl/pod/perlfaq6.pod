@@ -33,9 +33,9 @@ comments.
 =item Comments Inside the Regex
 
 The C</x> modifier causes whitespace to be ignored in a regex pattern
-(except in a character class), and also allows you to use normal
-comments there, too.  As you can imagine, whitespace and comments help
-a lot.
+(except in a character class and a few other places), and also allows you to
+use normal comments there, too.  As you can imagine, whitespace and comments
+help a lot.
 
 C</x> lets you turn this:
 
@@ -169,7 +169,7 @@ things can occur out-of-order. Just when you think you've got a
 pattern that matches your input, someone throws you a curveball.
 
 If you'd like to do it the hard way, scratching and clawing your way
-toward a right answer but constantly being disappointed, beseiged by
+toward a right answer but constantly being disappointed, besieged by
 bug reports, and weary from the inordinate amount of time you have to
 spend reinventing a triangular wheel, then there are several things
 you can try before you give up in frustration:
@@ -528,7 +528,7 @@ The regular expression to match the balanced text  uses two new (to
 Perl 5.10) regular expression features. These are covered in L<perlre>
 and this example is a modified version of one in that documentation.
 
-First, adding the new possesive C<+> to any quantifier finds the
+First, adding the new possessive C<+> to any quantifier finds the
 longest match and does not backtrack. That's important since you want
 to handle any angle brackets through the recursion, not backtracking.
 The group C<< [^<>]++ >> finds one or more non-angle brackets without
@@ -713,7 +713,7 @@ X<regular expression, efficiency>
 ( contributed by brian d foy )
 
 Avoid asking Perl to compile a regular expression every time
-you want to match it.  In this example, perl must recompile
+you want to match it. In this example, perl must recompile
 the regular expression for every iteration of the C<foreach>
 loop since it has no way to know what $pattern will be.
 
@@ -735,7 +735,7 @@ The C<qr//> operator showed up in perl 5.005.  It compiles a
 regular expression, but doesn't apply it.  When you use the
 pre-compiled version of the regex, perl does less work. In
 this example, I inserted a C<map> to turn each pattern into
-its pre-compiled form.  The rest of the script is the same,
+its pre-compiled form. The rest of the script is the same,
 but faster.
 
 	@patterns = map { qr/\b$_\b/i } qw( foo bar baz );
@@ -753,7 +753,7 @@ but faster.
 		}
 
 In some cases, you may be able to make several patterns into
-a single regular expression.  Beware of situations that require
+a single regular expression. Beware of situations that require
 backtracking though.
 
 	$regex = join '|', qw( foo bar baz );
@@ -1128,17 +1128,9 @@ Or...
 		warn $@;
 		}
 
-=head1 REVISION
-
-Revision: $Revision$
-
-Date: $Date$
-
-See L<perlfaq> for source control details and availability.
-
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2010 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

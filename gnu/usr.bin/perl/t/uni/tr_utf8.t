@@ -1,3 +1,4 @@
+#!perl -w
 #
 # $Id$
 #
@@ -28,11 +29,11 @@ BEGIN {
         exit 0;
     }
     $| = 1;
+    require './test.pl';
 }
 
 use strict;
-use Test::More tests => 8;
-
+plan(tests => 8);
 use encoding 'utf8';
 
 my @hiragana =  map {chr} ord("ぁ")..ord("ん");

@@ -511,7 +511,7 @@ package DB;
 BEGIN {eval 'use IO::Handle'};	# Needed for flush only? breaks under miniperl
 
 # Debugger for Perl 5.00x; perl5db.pl patch level:
-$VERSION = 1.32;
+$VERSION = '1.33';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -949,6 +949,9 @@ sub eval {
 #   + [perl #57016] debugger: o warn=0 die=0 ignored
 #   + Note, but don't use, PERLDBf_SAVESRC
 #   + Fix #7013: lvalue subs not working inside debugger
+# Changes: 1.32: Jun 03, 2009 Jonathan Leto <jonathan@leto.net>
+#   + Fix bug where a key _< with undefined value was put into the symbol table
+#   +   when the $filename variable is not set
 ########################################################################
 
 =head1 DEBUGGER INITIALIZATION
@@ -1053,8 +1056,9 @@ warn(               # Do not ;-)
   )
   if 0;
 
+# without threads, $filename is not defined until DB::DB is called
 foreach my $k (keys (%INC)) {
-	&share(\$main::{'_<'.$filename});
+	&share(\$main::{'_<'.$filename}) if defined $filename;
 };
 
 # Command-line + PERLLIB:
@@ -1846,7 +1850,7 @@ $I_m_init = 1;
 This gigantic subroutine is the heart of the debugger. Called before every
 statement, its job is to determine if a breakpoint has been reached, and
 stop if so; read commands from the user, parse them, and execute
-them, and hen send execution off to the next statement.
+them, and then send execution off to the next statement.
 
 Note that the order in which the commands are processed is very important;
 some commands earlier in the loop will actually alter the C<$cmd> variable
@@ -4831,30 +4835,21 @@ Display the (nested) parentage of the module or object given.
 sub cmd_i {
     my $cmd  = shift;
     my $line = shift;
-    eval { require Class::ISA };
-    if ($@) {
-        &warn( $@ =~ /locate/
-            ? "Class::ISA module not found - please install\n"
-            : $@ );
-    }
-    else {
-      ISA:
-        foreach my $isa ( split( /\s+/, $line ) ) {
-            $evalarg = $isa;
-            ($isa) = &eval;
-            no strict 'refs';
-            print join(
-                ', ',
-                map {    # snaffled unceremoniously from Class::ISA
-                    "$_"
-                      . (
-                        defined( ${"$_\::VERSION"} )
-                        ? ' ' . ${"$_\::VERSION"}
-                        : undef )
-                  } Class::ISA::self_and_super_path(ref($isa) || $isa)
-            );
-            print "\n";
-        }
+    foreach my $isa ( split( /\s+/, $line ) ) {
+        $evalarg = $isa;
+        ($isa) = &eval;
+        no strict 'refs';
+        print join(
+            ', ',
+            map {
+                "$_"
+                  . (
+                    defined( ${"$_\::VERSION"} )
+                    ? ' ' . ${"$_\::VERSION"}
+                    : undef )
+              } @{mro::get_linear_isa(ref($isa) || $isa)}
+        );
+        print "\n";
     }
 } ## end sub cmd_i
 
@@ -8179,10 +8174,8 @@ my @pods = qw(
     lexwarn
     locale
     lol
-    machten
     macos
     macosx
-    mint
     modinstall
     modlib
     mod
@@ -8197,7 +8190,6 @@ my @pods = qw(
     os2
     os390
     os400
-    othrtut
     packtut
     plan9
     pod
@@ -8613,7 +8605,6 @@ If there's only one hit, and it's a package qualifier, and it's not equal to the
 =cut
 
     if ( $text =~ /^[\$@%]/ ) {    # symbols (in $package + packages in main)
-
 =pod
 
 =over 4
@@ -8637,6 +8628,32 @@ We set the prefix to the item's sigil, and trim off the sigil to get the text to
         $prefix = substr $text, 0, 1;
         $text   = substr $text, 1;
 
+        my @out;
+
+=pod
+
+=item *
+
+We look for the lexical scope above DB::DB and auto-complete lexical variables
+if PadWalker could be loaded.
+
+=cut
+
+        if (not $text =~ /::/ and eval "require PadWalker; 1" and not $@ ) {
+            my $level = 1;
+            while (1) {
+                my @info = caller($level);
+                $level++;
+                $level = -1, last
+                  if not @info;
+                last if $info[3] eq 'DB::DB';
+            }
+            if ($level > 0) {
+                my $lexicals = PadWalker::peek_my($level);
+                push @out, grep /^\Q$prefix$text/, keys %$lexicals;
+            }
+        }
+
 =pod
 
 =item *
@@ -8645,7 +8662,7 @@ If the package is C<::> (C<main>), create an empty list; if it's something else,
 
 =cut
 
-        my @out = map "$prefix$_", grep /^\Q$text/,
+        push @out, map "$prefix$_", grep /^\Q$text/,
           ( grep /^_?[a-zA-Z]/, keys %$pack ),
           ( $pack eq '::' ? () : ( grep /::$/, keys %:: ) );
 

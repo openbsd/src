@@ -14,7 +14,7 @@ use warnings; # uses #3 and #4, since warnings uses Carp
 
 use Exporter (); # use #5
 
-our $VERSION   = "0.76";
+our $VERSION   = "0.78";
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw( set_style set_style_standard add_callback
 		     concise_subref concise_cv concise_main
@@ -299,7 +299,7 @@ sub compileOpts {
 	elsif ($o =~ /^-stash=(.*)/) {
 	    my $pkg = $1;
 	    no strict 'refs';
-	    if (!defined %{$pkg.'::'}) {
+	    if (! %{$pkg.'::'}) {
 		eval "require $pkg";
 	    } else {
 		require Config;
@@ -634,6 +634,7 @@ $priv{"list"}{64} = "GUESSED";
 $priv{"delete"}{64} = "SLICE";
 $priv{"exists"}{64} = "SUB";
 @{$priv{"sort"}}{1,2,4,8,16,32,64} = ("NUM", "INT", "REV", "INPLACE","DESC","QSORT","STABLE");
+$priv{"reverse"}{8} = "INPLACE";
 $priv{"threadsv"}{64} = "SVREFd";
 @{$priv{$_}}{16,32,64,128} = ("INBIN","INCR","OUTBIN","OUTCR")
   for ("open", "backtick");
@@ -1741,14 +1742,14 @@ This restores one of the standard line-styles: C<terse>, C<concise>,
 C<linenoise>, C<debug>, C<env>, into effect.  It also accepts style
 names previously defined with add_style().
 
-=head2 add_style()
+=head2 add_style ()
 
 This subroutine accepts a new style name and three style arguments as
 above, and creates, registers, and selects the newly named style.  It is
 an error to re-add a style; call set_style_standard() to switch between
 several styles.
 
-=head2 add_callback()
+=head2 add_callback ()
 
 If your newly minted styles refer to any new #variables, you'll need
 to define a callback subroutine that will populate (or modify) those

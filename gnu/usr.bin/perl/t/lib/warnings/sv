@@ -291,6 +291,16 @@ printf F "%" ;
 $a = sprintf "%" ;
 printf F "%\x02" ;
 $a = sprintf "%\x02" ;
+printf F "%llz" ;
+$a = sprintf "%llz" ;
+printf F "%25llz" ;
+$a = sprintf "%25llz" ;
+printf F "%+2Lz" ;
+$a = sprintf "%+2Lz" ;
+printf F "%+2ll" ;
+$a = sprintf "%+2ll" ;
+printf F "%+2L\x03" ;
+$a = sprintf "%+2L\x03" ;
 no warnings 'printf' ;
 printf F "%z\n" ;
 $a = sprintf "%z" ;
@@ -298,6 +308,16 @@ printf F "%" ;
 $a = sprintf "%" ;
 printf F "%\x02" ;
 $a = sprintf "%\x02" ;
+printf F "%llz" ;
+$a = sprintf "%llz" ;
+printf F "%25llz" ;
+$a = sprintf "%25llz" ;
+printf F "%+2Lz" ;
+$a = sprintf "%+2Lz" ;
+printf F "%+2ll" ;
+$a = sprintf "%+2ll" ;
+printf F "%+2L\x03" ;
+$a = sprintf "%+2L\x03" ;
 EXPECT
 Invalid conversion in printf: "%z" at - line 4.
 Invalid conversion in sprintf: "%z" at - line 5.
@@ -305,6 +325,16 @@ Invalid conversion in printf: end of string at - line 6.
 Invalid conversion in sprintf: end of string at - line 7.
 Invalid conversion in printf: "%\002" at - line 8.
 Invalid conversion in sprintf: "%\002" at - line 9.
+Invalid conversion in printf: "%llz" at - line 10.
+Invalid conversion in sprintf: "%llz" at - line 11.
+Invalid conversion in printf: "%25llz" at - line 12.
+Invalid conversion in sprintf: "%25llz" at - line 13.
+Invalid conversion in printf: "%+2Lz" at - line 14.
+Invalid conversion in sprintf: "%+2Lz" at - line 15.
+Invalid conversion in printf: "%+2ll" at - line 16.
+Invalid conversion in sprintf: "%+2ll" at - line 17.
+Invalid conversion in printf: "%+2L\003" at - line 18.
+Invalid conversion in sprintf: "%+2L\003" at - line 19.
 ########
 # sv.c
 use warnings 'misc' ;

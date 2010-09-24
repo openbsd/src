@@ -865,7 +865,7 @@ However, to help ease understanding, it is suggested that you place a "&"
 next to the variable name and away from the variable type), and place a
 "*" near the variable type, but away from the variable name (as in the
 call to foo above).  By doing so, it is easy to understand exactly what
-will be passed to the C function -- it will be whatever is in the "last
+will be passed to the C function; it will be whatever is in the "last
 column".
 
 You should take great pains to try to pass the function the type of variable

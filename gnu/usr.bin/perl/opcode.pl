@@ -30,7 +30,7 @@ select $oc;
 # Read data.
 
 my %seen;
-my (@ops, %desc, %check, %ckname, %flags, %args);
+my (@ops, %desc, %check, %ckname, %flags, %args, %opnum);
 
 while (<DATA>) {
     chop;
@@ -45,6 +45,7 @@ while (<DATA>) {
     $seen{$key} = qq[opcode "$key"];
 
     push(@ops, $key);
+    $opnum{$key} = $#ops;
     $desc{$key} = $desc;
     $check{$key} = $check;
     $ckname{$check}++;
@@ -104,6 +105,7 @@ my @raw_alias = (
 		 Perl_pp_sin => [qw(cos exp log sqrt)],
 		 Perl_pp_bit_or => ['bit_xor'],
 		 Perl_pp_rv2av => ['rv2hv'],
+		 Perl_pp_akeys => ['avalues'],
 		);
 
 while (my ($func, $names) = splice @raw_alias, 0, 2) {
@@ -161,7 +163,8 @@ END
 
 my $i = 0;
 for (@ops) {
-    print $on "\t", &tab(3,"OP_\U$_,"), "/* ", $i++, " */\n";
+    # print $on "\t", &tab(3,"OP_\U$_,"), "/* ", $i++, " */\n";
+      print $on "\t", &tab(3,"OP_\U$_"), " = ", $i++, ",\n";
 }
 print $on "\t", &tab(3,"OP_max"), "\n";
 print $on "} opcode;\n";
@@ -354,6 +357,7 @@ my %opflags = (
 
 my %OP_IS_SOCKET;
 my %OP_IS_FILETEST;
+my %OP_IS_FT_ACCESS;
 my $OCSHIFT = 9;
 my $OASHIFT = 13;
 
@@ -373,8 +377,10 @@ for my $op (@ops) {
     my $argshift = $OASHIFT;
     for my $arg (split(' ',$args{$op})) {
 	if ($arg =~ /^F/) {
-           $OP_IS_SOCKET{$op}   = 1 if $arg =~ s/s//;
-           $OP_IS_FILETEST{$op} = 1 if $arg =~ s/-//;
+	    # record opnums of these opnames
+	    $OP_IS_SOCKET{$op}   = $opnum{$op} if $arg =~ s/s//;
+	    $OP_IS_FILETEST{$op} = $opnum{$op} if $arg =~ s/-//;
+	    $OP_IS_FT_ACCESS{$op} = $opnum{$op} if $arg =~ s/\+//;
         }
 	my $argnum = ($arg =~ s/\?//) ? 8 : 0;
         die "op = $op, arg = $arg\n"
@@ -400,18 +406,48 @@ END_EXTERN_C
 
 END
 
-if (keys %OP_IS_SOCKET) {
-    print $on "\n#define OP_IS_SOCKET(op)	\\\n\t(";
-    print $on join(" || \\\n\t ",
-               map { "(op) == OP_" . uc() } sort keys %OP_IS_SOCKET);
-    print $on ")\n\n";
-}
+# Emit OP_IS_* macros
 
-if (keys %OP_IS_FILETEST) {
-    print $on "\n#define OP_IS_FILETEST(op)	\\\n\t(";
-    print $on join(" || \\\n\t ",
-               map { "(op) == OP_" . uc() } sort keys %OP_IS_FILETEST);
-    print $on ")\n\n";
+print $on <<EO_OP_IS_COMMENT;
+
+/* the OP_IS_(SOCKET|FILETEST) macros are optimized to a simple range
+    check because all the member OPs are contiguous in opcode.pl
+    <DATA> table.  opcode.pl verifies the range contiguity.  */
+
+EO_OP_IS_COMMENT
+
+gen_op_is_macro( \%OP_IS_SOCKET, 'OP_IS_SOCKET');
+gen_op_is_macro( \%OP_IS_FILETEST, 'OP_IS_FILETEST');
+gen_op_is_macro( \%OP_IS_FT_ACCESS, 'OP_IS_FILETEST_ACCESS');
+
+sub gen_op_is_macro {
+    my ($op_is, $macname) = @_;
+    if (keys %$op_is) {
+	
+	# get opnames whose numbers are lowest and highest
+	my ($first, @rest) = sort {
+	    $op_is->{$a} <=> $op_is->{$b}
+	} keys %$op_is;
+	
+	my $last = pop @rest;	# @rest slurped, get its last
+	die "Invalid range of ops: $first .. $last\n" unless $last;
+
+	print $on "#define $macname(op)	\\\n\t(";
+
+	# verify that op-ct matches 1st..last range (and fencepost)
+	# (we know there are no dups)
+	if ( $op_is->{$last} - $op_is->{$first} == scalar @rest + 1) {
+	    
+	    # contiguous ops -> optimized version
+	    print $on "(op) >= OP_" . uc($first) . " && (op) <= OP_" . uc($last);
+	    print $on ")\n\n";
+	}
+	else {
+	    print $on join(" || \\\n\t ",
+			  map { "(op) == OP_" . uc() } sort keys %$op_is);
+	    print $on ")\n\n";
+	}
+    }
 }
 
 print $oc "/* ex: set ro: */\n";
@@ -575,7 +611,9 @@ __END__
 # Values for the operands are:
 # scalar      - S            list     - L            array     - A
 # hash        - H            sub (CV) - C            file      - F
-# socket      - Fs           filetest - F-           reference - R
+# socket      - Fs           filetest - F-           filetest_access - F-+
+
+# reference - R
 # "?" denotes an optional operand.
 
 # Nothing.
@@ -733,7 +771,7 @@ abs		abs			ck_fun		fsTu%	S?
 
 # String stuff.
 
-length		length			ck_lengthconst	ifsTu%	S?
+length		length			ck_fun		ifsTu%	S?
 substr		substr			ck_substr	st@	S S S? S?
 vec		vec			ck_fun		ist@	S S S
 
@@ -758,16 +796,21 @@ aelemfast	constant array element	ck_null		s$	A S
 aelem		array element		ck_null		s2	A S
 aslice		array slice		ck_null		m@	A L
 
+aeach		each on array		ck_each		%	A
+akeys		keys on array		ck_each		t%	A
+avalues		values on array		ck_each		t%	A
+
 # Hashes.
 
-each		each			ck_fun		%	H
-values		values			ck_fun		t%	H
-keys		keys			ck_fun		t%	H
+each		each			ck_each		%	H
+values		values			ck_each		t%	H
+keys		keys			ck_each		t%	H
 delete		delete			ck_delete	%	S
 exists		exists			ck_exists	is%	S
 rv2hv		hash dereference	ck_rvconst	dt1	
 helem		hash element		ck_null		s2	H S
 hslice		hash slice		ck_null		m@	H L
+boolkeys	boolkeys		ck_fun		%	H
 
 # Explosives and implosives.
 
@@ -841,7 +884,6 @@ redo		redo			ck_null		ds}
 dump		dump			ck_null		ds}	
 goto		goto			ck_null		ds}	
 exit		exit			ck_exit		ds%	S?
-setstate	set statement info	ck_null		s;
 method_named	method with known name	ck_null		d$
 
 entergiven	given()			ck_null		d|
@@ -884,9 +926,6 @@ sysseek		sysseek			ck_fun		s@	F S S
 sysread		sysread			ck_fun		imst@	F R S S?
 syswrite	syswrite		ck_fun		imst@	F S S? S?
 
-send		send			ck_fun		imst@	Fs S S S?
-recv		recv			ck_fun		imst@	Fs R S S
-
 eof		eof			ck_eof		is%	F?
 tell		tell			ck_fun		st%	F?
 seek		seek			ck_fun		s@	F S S
@@ -897,7 +936,10 @@ fcntl		fcntl			ck_fun		st@	F S S
 ioctl		ioctl			ck_fun		st@	F S S
 flock		flock			ck_fun		isT@	F S
 
-# Sockets.
+# Sockets.  OP_IS_SOCKET wants them consecutive (so moved 1st 2)
+
+send		send			ck_fun		imst@	Fs S S S?
+recv		recv			ck_fun		imst@	Fs R S S
 
 socket		socket			ck_fun		is@	Fs S S S
 sockpair	socketpair		ck_fun		is@	Fs Fs S S S
@@ -914,16 +956,16 @@ ssockopt	setsockopt		ck_fun		is@	Fs S S S
 getsockname	getsockname		ck_fun		is%	Fs
 getpeername	getpeername		ck_fun		is%	Fs
 
-# Stat calls.
+# Stat calls.  OP_IS_FILETEST wants them consecutive.
 
 lstat		lstat			ck_ftst		u-	F
 stat		stat			ck_ftst		u-	F
-ftrread		-R			ck_ftst		isu-	F-
-ftrwrite	-W			ck_ftst		isu-	F-
-ftrexec		-X			ck_ftst		isu-	F-
-fteread		-r			ck_ftst		isu-	F-
-ftewrite	-w			ck_ftst		isu-	F-
-fteexec		-x			ck_ftst		isu-	F-
+ftrread		-R			ck_ftst		isu-	F-+
+ftrwrite	-W			ck_ftst		isu-	F-+
+ftrexec		-X			ck_ftst		isu-	F-+
+fteread		-r			ck_ftst		isu-	F-+
+ftewrite	-w			ck_ftst		isu-	F-+
+fteexec		-x			ck_ftst		isu-	F-+
 ftis		-e			ck_ftst		isu-	F-
 ftsize		-s			ck_ftst		istu-	F-
 ftmtime		-M			ck_ftst		stu-	F-
@@ -1022,10 +1064,11 @@ semctl		semctl			ck_fun		imst@	S S S S
 
 require		require			ck_require	du%	S?
 dofile		do "file"		ck_fun		d1	S
+hintseval	eval hints		ck_svconst	s$
 entereval	eval "string"		ck_eval		d%	S
 leaveeval	eval "string" exit	ck_null		1	S
 #evalonce	eval constant string	ck_null		d1	S
-entertry	eval {block}		ck_null		|	
+entertry	eval {block}		ck_eval		d%	
 leavetry	eval {block} exit	ck_null		@	
 
 # Get system info.

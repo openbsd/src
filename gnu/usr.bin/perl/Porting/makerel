@@ -1,11 +1,25 @@
 #!/usr/bin/perl -w
 
-# A first attempt at some automated support for making a perl release.
+# A tool to build a perl release tarball
 # Very basic but functional - if you're on a unix system.
 #
+# If you're on Win32 then it should still work, but various Unix command-line
+# tools will need to be available somewhere. An obvious choice is to install
+# Cygwin and ensure its 'bin' folder is on the PATH in the shell where you run
+# this script. The Cygwin 'bin' folder needs to precede the Windows 'system32'
+# folder so that Cygwin's 'find' command is found in preference to the Windows
+# 'find' command. Your Cygwin installation will need to contain at least the
+# 'cpio' command, in addition to the commands installed by default, and it will
+# also be useful to have 'curl' and 'diffstat' installed too for later stages
+# of the release process (namely, Porting\corelist.pl and generating the commit
+# statistics for the perlXYZdelta.pod file respectively). Finally, ensure that
+# the 'awk' and 'shasum' commands are copies of gawk.exe and sha1sum.exe
+# respectively, rather the links to them that only work in a Cygwin bash shell
+# which they are by default.
+#
 # No matter how automated this gets, you'll always need to read
-# and re-read pumpkin.pod checking for things to be done at various
-# stages of the process.
+# and re-read pumpkin.pod and release_managers_guide.pod to
+# check for things to be done at various stages of the process.
 #
 # Tim Bunce, June 1997
 
@@ -16,17 +30,18 @@ use Getopt::Std;
 $|=1;
 
 sub usage { die <<EOF; }
-usage: $0 [ -r rootdir ] [-s suffix ] [ -b ]
+usage: $0 [ -r rootdir ] [-s suffix ] [ -b ] [ -n ]
     -r rootdir   directory under which to create the build dir and tarball
                  defaults to '..'
     -s suffix    suffix to append to to the perl-x.y.z dir and tarball name
 		 defaults to the concatenaion of the local_patches entry
 		 in patchlevel.h (or blank, if none)
     -b           make a .bz2 file in addtion to a .gz file
+    -n           do not make any tarballs, just the directory
 EOF
 
 my %opts;
-getopts('br:s:', \%opts) or usage;
+getopts('bnr:s:', \%opts) or usage;
 @ARGV && usage;
 
 $relroot = defined $opts{r} ? $opts{r} : "..";
@@ -101,11 +116,14 @@ print "\n";
 
 chdir "$relroot/$reldir" or die $!;
 
+
+my $SEARCH_ROOTS = 't ext lib dist cpan';
+
 print "Setting file permissions...\n";
 system("find . -type f -print     | xargs chmod 0444");
 system("find . -type d -print     | xargs chmod 0755");
-system("find t ext lib -name '*.t'     -print | xargs chmod +x");
-system("find t ext lib -name 'test.pl' -print | xargs chmod +x");
+system("find $SEARCH_ROOTS -name '*.t'     -print | xargs chmod +x");
+system("find $SEARCH_ROOTS -name 'test.pl' -print | xargs chmod +x");
 my @exe = qw(
     Configure
     configpm
@@ -117,7 +135,6 @@ my @exe = qw(
     opcode.pl
     t/TEST
     *.SH
-    vms/ext/Stdio/test.pl
     vms/ext/filespec.t
     x2p/*.SH
     Porting/findrfuncs
@@ -148,8 +165,8 @@ my @writables = qw(
     overload.h
     perlapi.h
     perlapi.c
-    ext/Devel-PPPort/module2.c
-    ext/Devel-PPPort/module3.c
+    cpan/Devel-PPPort/module2.c
+    cpan/Devel-PPPort/module3.c
     reentr.c
     reentr.h
     regcharclass.h
@@ -168,31 +185,9 @@ my @writables = qw(
 system("chmod +w @writables") == 0
     or die "system: $!";
 
-print "Adding CRs to DOSish files...\n";
-# This list is also in curliff.pl.
-my @crlf = qw(
-    djgpp/configure.bat
-    README.ce
-    README.dos
-    README.symbian
-    README.win32
-    symbian/config.pl
-    symbian/makesis.pl
-    symbian/README
-    symbian/xsbuild.pl
-    win32/Makefile
-    win32/Makefile.ce
-    win32/ce-helpers/compile-all.bat
-    win32/ce-helpers/compile.bat
-    win32/ce-helpers/registry.bat
-    win32/distclean.bat
-    win32/makefile.mk
-);
-system("perl -pi -e 's/\\015*\\012/\\015\\012/' @crlf") == 0
-    or die "system: $!";
-print "\n";
-
 chdir ".." or die $!;
+
+exit if $opts{n};
 
 my $src = (-e $perl) ? $perl : 'perl'; # 'perl' in maint branch
 
@@ -211,8 +206,9 @@ print "\n";
 system("ls -ld $perl*");
 print "\n";
 
+my $null = $^O eq 'MSWin32' ? 'NUL' : '/dev/null';
 for my $sha (qw(sha1 shasum sha1sum)) {
-    if (`which $sha 2>/dev/null`) {
+    if (`which $sha 2>$null`) {
 	system("$sha $perl*.tar.*");
 	last;
     }

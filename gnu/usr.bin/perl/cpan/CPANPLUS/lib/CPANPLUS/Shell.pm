@@ -20,7 +20,7 @@ $DEFAULT    = SHELL_DEFAULT;
 
 =head1 NAME
 
-CPANPLUS::Shell
+CPANPLUS::Shell - base class for all CPANPLUS shells
 
 =head1 SYNOPSIS
 

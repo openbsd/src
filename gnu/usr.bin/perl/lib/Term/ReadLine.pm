@@ -303,7 +303,7 @@ sub get_line {
 
 package Term::ReadLine;		# So late to allow the above code be defined?
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 my ($which) = exists $ENV{PERL_RL} ? split /\s+/, $ENV{PERL_RL} : undef;
 if ($which) {
@@ -311,6 +311,9 @@ if ($which) {
     eval "use Term::ReadLine::Gnu;";
   } elsif ($which =~ /\bperl\b/i) {
     eval "use Term::ReadLine::Perl;";
+  } elsif ($which =~ /^(Stub|TermCap|Tk)$/) {
+    # it is already in memory to avoid false exception as seen in:
+    # PERL_RL=Stub perl -e'$SIG{__DIE__} = sub { print @_ }; require Term::ReadLine'
   } else {
     eval "use Term::ReadLine::$which;";
   }

@@ -12,7 +12,7 @@ BEGIN {
 use warnings;
 
 require './test.pl';
-plan( tests => 178 );
+plan( tests => 188 );
 
 # type coersion on assignment
 $foo = 'foo';
@@ -167,7 +167,10 @@ is (*{*x{GLOB}}, "*main::STDOUT");
     ok(!defined @{$a});
     ok(!defined *{$a});
 
-    ok(!defined %{$a});
+    {
+	no warnings 'deprecated';
+	ok(!defined %{$a});
+    }
     ok(!defined *{$a});
 
     ok(!defined ${$a});
@@ -556,6 +559,60 @@ foreach my $type (qw(integer number string)) {
     like ($@, qr/Can't coerce GLOB to $type in/,
 	  "with the correct error message");
 }
+
+# RT #60954 anonymous glob should be defined, and not coredump when
+# stringified. The behaviours are:
+#
+#        defined($glob)    "$glob"
+# 5.8.8     false           "" with uninit warning
+# 5.10.0    true            (coredump)
+# 5.12.0    true            ""
+
+{
+    my $io_ref = *STDOUT{IO};
+    my $glob = *$io_ref;
+    ok(defined $glob, "RT #60954 anon glob should be defined");
+
+    my $warn = '';
+    local $SIG{__WARN__} = sub { $warn = $_[0] };
+    use warnings;
+    my $str = "$glob";
+    is($warn, '', "RT #60954 anon glob stringification shouln't warn");
+    is($str,  '', "RT #60954 anon glob stringification should be empty");
+}
+
+# [perl #71254] - Assigning a glob to a variable that has a current
+# match position. (We are testing that Perl_magic_setmglob respects globs'
+# special used of SvSCREAM.)
+{
+    $m = 2; $m=~s/./0/gems; $m= *STDERR;
+    is(
+        "$m", "*main::STDERR",
+        '[perl #71254] assignment of globs to vars with pos'
+    );
+}
+
+# [perl #72740] - indirect object syntax, heuristically imputed due to
+# the non-existence of a function, should not cause a stash entry to be
+# created for the non-existent function.
+{
+	package RT72740a;
+	my $f = bless({}, RT72740b);
+	sub s1 { s2 $f; }
+	our $s4;
+	sub s3 { s4 $f; }
+}
+{
+	package RT72740b;
+	sub s2 { "RT72740b::s2" }
+	sub s4 { "RT72740b::s4" }
+}
+ok(exists($RT72740a::{s1}), "RT72740a::s1 exists");
+ok(!exists($RT72740a::{s2}), "RT72740a::s2 does not exist");
+ok(exists($RT72740a::{s3}), "RT72740a::s3 exists");
+ok(exists($RT72740a::{s4}), "RT72740a::s4 exists");
+is(RT72740a::s1(), "RT72740b::s2", "RT72740::s1 parsed correctly");
+is(RT72740a::s3(), "RT72740b::s4", "RT72740::s3 parsed correctly");
 
 __END__
 Perl

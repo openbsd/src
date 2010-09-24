@@ -192,7 +192,7 @@ esac'
 	case "`uname -s`" in
 	# Without the -mabi=64 gcc in 64-bit IRIX has problems passing
 	# and returning small structures.  This affects inet_*() and semctl().
-	# See http://reality.sgi.com/ariel/freeware/gcc-2.8.1-notes.html
+	# See http://groups.google.com/group/comp.sys.sgi.admin/msg/3ad8353bc4ce3cb0
 	# for more information.  Reported by Lionel Cons <lionel.cons@cern.ch>.
 	IRIX64)	ccflags="$ccflags -mabi=64"
 		ldflags="$ldflags -mabi=64 -L/usr/lib64"

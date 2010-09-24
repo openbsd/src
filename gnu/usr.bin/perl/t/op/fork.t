@@ -462,3 +462,21 @@ sub { @_ = 3; fork ? die "1\n" : die "1\n" }->(2);
 EXPECT
 1
 1
+########
+# [perl #72604] @DB::args stops working across Win32 fork
+$|=1;
+sub f {
+    if ($pid = fork()) {
+	print "waitpid() returned ok\n" if waitpid($pid,0) == $pid;
+    }
+    else {
+	package DB;
+	my @c = caller(0);
+	print "child: called as [$c[3](", join(',',@DB::args), ")]\n";
+	exit(0);
+    }
+}
+f("foo", "bar");
+EXPECT
+child: called as [main::f(foo,bar)]
+waitpid() returned ok

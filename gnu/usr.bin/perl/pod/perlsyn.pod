@@ -117,7 +117,7 @@ is treated as 0.
 
 =head2 Statement Modifiers
 X<statement modifier> X<modifier> X<if> X<unless> X<while>
-X<until> X<foreach> X<for>
+X<until> X<when> X<foreach> X<for>
 
 Any simple statement may optionally be followed by a I<SINGLE> modifier,
 just before the terminating semicolon (or block ending).  The possible
@@ -127,6 +127,8 @@ modifiers are:
     unless EXPR
     while EXPR
     until EXPR
+    when EXPR
+    for LIST
     foreach LIST
 
 The C<EXPR> following the modifier is referred to as the "condition".
@@ -138,6 +140,22 @@ the condition is true (i.e., if the condition is false).
 
     print "Basset hounds got long ears" if length $ear >= 10;
     go_outside() and play() unless $is_raining;
+
+C<when> executes the statement I<when> C<$_> smart matches C<EXPR>, and
+then either C<break>s out if it's enclosed in a C<given> scope or skips
+to the C<next> element when it lies directly inside a C<for> loop.
+See also L</"Switch statements">.
+
+    given ($something) {
+        $abc    = 1 when /^abc/;
+        $just_a = 1 when /^a/;
+        $other  = 1;
+    }
+
+    for (@names) {
+	admin($_)   when [ qw/Alice Bob/ ];
+	regular($_) when [ qw/Chris David Ellen/ ];
+    }
 
 The C<foreach> modifier is an iterator: it executes the statement once
 for each item in the LIST (with C<$_> aliased to each item in turn).
@@ -210,6 +228,9 @@ The following compound statements may be used to control flow:
     if (EXPR) BLOCK
     if (EXPR) BLOCK else BLOCK
     if (EXPR) BLOCK elsif (EXPR) BLOCK ... else BLOCK
+    unless (EXPR) BLOCK
+    unless (EXPR) BLOCK else BLOCK
+    unless (EXPR) BLOCK elsif (EXPR) BLOCK ... else BLOCK
     LABEL while (EXPR) BLOCK
     LABEL while (EXPR) BLOCK continue BLOCK
     LABEL until (EXPR) BLOCK
@@ -234,7 +255,11 @@ all do the same thing:
 The C<if> statement is straightforward.  Because BLOCKs are always
 bounded by curly brackets, there is never any ambiguity about which
 C<if> an C<else> goes with.  If you use C<unless> in place of C<if>,
-the sense of the test is reversed.
+the sense of the test is reversed. Like C<if>, C<unless> can be followed
+by C<else>. C<unless> can even be followed by one or more C<elsif>
+statements, though you may want to think twice before using that particular
+language construct, as everyone reading your code will have to think at least
+twice before they can understand what's going on.
 
 The C<while> statement executes the block as long as the expression is
 L<true|/"Truth and Falsehood">.
@@ -253,6 +278,14 @@ If there is a C<continue> BLOCK, it is always executed just before the
 conditional is about to be evaluated again.  Thus it can be used to
 increment a loop variable, even when the loop has been continued via
 the C<next> statement.
+
+Extension modules can also hook into the Perl parser to define new
+kinds of compound statement.  These are introduced by a keyword which
+the extension recognises, and the syntax following the keyword is
+defined entirely by the extension.  If you are an implementor, see
+L<perlapi/PL_keyword_plugin> for the mechanism.  If you are using such
+a module, see the module's documentation for details of the syntax that
+it defines.
 
 =head2 Loop Control
 X<loop control> X<loop, control> X<next> X<last> X<redo> X<continue>
@@ -653,7 +686,7 @@ string occurs in an array:
     }
     print "\@array contains $count copies of 'foo'\n";
 
-On exit from the C<when> block, there is an implicit C<next>.
+At the end of all C<when> blocks, there is an implicit C<next>.
 You can override that with an explicit C<last> if you're only
 interested in the first match.
 
@@ -686,12 +719,12 @@ C<grep> does not.
     Any     CodeRef   scalar sub truth          $b->($a)
 
     Hash    Hash      hash keys identical (every key is found in both hashes)
-    Array   Hash      hash slice existence     grep { exists $b->{$_} } @$a
+    Array   Hash      hash keys intersection   grep { exists $b->{$_} } @$a
     Regex   Hash      hash key grep            grep /$a/, keys %$b
     undef   Hash      always false (undef can't be a key)
     Any     Hash      hash entry existence     exists $b->{$a}
 
-    Hash    Array     hash slice existence     grep { exists $a->{$_} } @$b
+    Hash    Array     hash keys intersection   grep { exists $a->{$_} } @$b
     Array   Array     arrays are comparable[2]
     Regex   Array     array grep               grep /$a/, @$b
     undef   Array     array contains undef     grep !defined, @$b
@@ -739,7 +772,8 @@ See L<overload>.
 The Perl 5 smart match and C<given>/C<when> constructs are not
 absolutely identical to their Perl 6 analogues. The most visible
 difference is that, in Perl 5, parentheses are required around
-the argument to C<given()> and C<when()>. Parentheses in Perl 6
+the argument to C<given()> and C<when()> (except when this last
+one is used as a statement modifier). Parentheses in Perl 6
 are always optional in a control construct such as C<if()>,
 C<while()>, or C<when()>; they can't be made optional in Perl
 5 without a great deal of potential confusion, because Perl 5

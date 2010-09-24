@@ -1,3 +1,6 @@
+# This legacy library is deprecated and will be removed in a future
+# release of perl.
+#
 # This is a compatibility interface to IPC::Open3.  New programs should
 # do
 #

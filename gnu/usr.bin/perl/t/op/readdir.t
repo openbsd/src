@@ -8,7 +8,7 @@ BEGIN {
 eval 'opendir(NOSUCH, "no/such/directory");';
 if ($@) { print "1..0\n"; exit; }
 
-print "1..11\n";
+print "1..12\n";
 
 for $i (1..2000) {
     local *OP;
@@ -34,13 +34,12 @@ else {
 
 @R = sort @D;
 @G = sort <op/*.t>;
-@G = sort <:op:*.t> if $^O eq 'MacOS';
 if ($G[0] =~ m#.*\](\w+\.t)#i) {
     # grep is to convert filespecs returned from glob under VMS to format
     # identical to that returned by readdir
     @G = grep(s#.*\](\w+\.t).*#op/$1#i,<op/*.t>);
 }
-while (@R && @G && $G[0] eq ($^O eq 'MacOS' ? ':op:' : 'op/').$R[0]) {
+while (@R && @G && $G[0] eq 'op/'.$R[0]) {
 	shift(@R);
 	shift(@G);
 }
@@ -54,3 +53,10 @@ if (opendir($fh{abc}, "op")) { print "ok 8\n"; } else { print "not ok 8\n"; }
 if (ref($fh{abc}) eq 'GLOB') { print "ok 9\n"; } else { print "not ok 9\n"; }
 if ("$fh" ne "$fh[0]") { print "ok 10\n"; } else { print "not ok 10\n"; }
 if ("$fh" ne "$fh{abc}") { print "ok 11\n"; } else { print "not ok 11\n"; }
+# See that perl does not segfault upon readdir($x="."); 
+# http://rt.perl.org/rt3/Ticket/Display.html?id=68182
+eval {
+    my $x = ".";
+    my @files = readdir($x);
+};
+print "ok 12\n";

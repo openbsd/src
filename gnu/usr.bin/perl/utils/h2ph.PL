@@ -509,7 +509,7 @@ sub expr {
 		s/^\s*\((\w),/("$1",/ if $id =~ /^_IO[WR]*$/i;	# cheat
 		$new .= " &$id";
 	    } elsif ($isatype{$id}) {
-		if ($new =~ /{\s*$/) {
+		if ($new =~ /\{\s*$/) {
 		    $new .= "'$id'";
 		} elsif ($new =~ /\(\s*$/ && /^[\s*]*\)/) {
 		    $new =~ s/\(\s*$//;
@@ -518,8 +518,14 @@ sub expr {
 		    $new .= q(').$id.q(');
 		}
 	    } else {
-		if ($inif && $new !~ /defined\s*\($/) {
-		    $new .= '(defined(&' . $id . ') ? &' . $id . ' : undef)';
+		if ($inif) {
+		    if ($new =~ /defined\s*$/) {
+			$new .= '(&' . $id . ')';
+		    } elsif ($new =~ /defined\s*\($/) {
+			$new .= '&' . $id;
+		    } else {
+			$new .= '(defined(&' . $id . ') ? &' . $id . ' : undef)';
+		    }
 		} elsif (/^\[/) {
 		    $new .= " \$$id";
 		} else {

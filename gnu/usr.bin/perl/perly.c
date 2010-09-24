@@ -266,8 +266,10 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 
 
 #ifdef DISABLE_STACK_FREE
+    for (i=0; i< parser->yylen; i++) {
+	SvREFCNT_dec(ps[-i].compcv);
+    }
     ps -= parser->yylen;
-    PERL_UNUSED_VAR(i);
 #else
     /* clear any reducing ops (1st pass) */
 
@@ -278,8 +280,9 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 	    if ( ! (ps[-i].val.opval->op_attached
 		    && !ps[-i].val.opval->op_latefreed))
 	    {
-		if (ps[-i].comppad != PL_comppad) {
-		    PAD_RESTORE_LOCAL(ps[-i].comppad);
+		if (ps[-i].compcv != PL_compcv) {
+		    PL_compcv = ps[-i].compcv;
+		    PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
 		}
 		op_free(ps[-i].val.opval);
 	    }
@@ -294,8 +297,9 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 	if (yy_type_tab[yystos[ps->state]] == toketype_opval
 	    && ps->val.opval)
 	{
-	    if (ps->comppad != PL_comppad) {
-		PAD_RESTORE_LOCAL(ps->comppad);
+	    if (ps->compcv != PL_compcv) {
+		PL_compcv = ps->compcv;
+		PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
 	    }
 	    YYDPRINTF ((Perl_debug_log, "(freeing op)\n"));
 #ifndef DISABLE_STACK_FREE
@@ -304,6 +308,7 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 #endif
 		op_free(ps->val.opval);
 	}
+	SvREFCNT_dec(ps->compcv);
 	ps--;
     }
 }
@@ -451,7 +456,7 @@ Perl_yyparse (pTHX)
     YYPUSHSTACK;
     ps->state   = yyn;
     ps->val     = parser->yylval;
-    ps->comppad = PL_comppad;
+    ps->compcv  = (CV*)SvREFCNT_inc(PL_compcv);
     ps->savestack_ix = PL_savestack_ix;
 #ifdef DEBUGGING
     ps->name    = (const char *)(yytname[yytoken]);
@@ -525,12 +530,12 @@ Perl_yyparse (pTHX)
 
     }
 
-#ifndef DISABLE_STACK_FREE
     /* any just-reduced ops with the op_latefreed flag cleared need to be
      * freed; the rest need the flag resetting */
     {
 	int i;
 	for (i=0; i< parser->yylen; i++) {
+#ifndef DISABLE_STACK_FREE
 	    if (yy_type_tab[yystos[ps[-i].state]] == toketype_opval
 		&& ps[-i].val.opval)
 	    {
@@ -538,9 +543,10 @@ Perl_yyparse (pTHX)
 		if (ps[-i].val.opval->op_latefreed)
 		    op_free(ps[-i].val.opval);
 	    }
+#endif
+	    SvREFCNT_dec(ps[-i].compcv);
 	}
     }
-#endif
 
     parser->ps = ps -= (parser->yylen-1);
 
@@ -549,7 +555,7 @@ Perl_yyparse (pTHX)
 	  number reduced by.  */
 
     ps->val     = yyval;
-    ps->comppad = PL_comppad;
+    ps->compcv  = (CV*)SvREFCNT_inc(PL_compcv);
     ps->savestack_ix = PL_savestack_ix;
 #ifdef DEBUGGING
     ps->name    = (const char *)(yytname [yyr1[yyn]]);
@@ -584,6 +590,7 @@ Perl_yyparse (pTHX)
 	/* Return failure if at end of input.  */
 	if (parser->yychar == YYEOF) {
 	    /* Pop the error token.  */
+	    SvREFCNT_dec(ps->compcv);
 	    YYPOPSTACK;
 	    /* Pop the rest of the stack.  */
 	    while (ps > parser->stack) {
@@ -593,18 +600,22 @@ Perl_yyparse (pTHX)
 			&& ps->val.opval)
 		{
 		    YYDPRINTF ((Perl_debug_log, "(freeing op)\n"));
-		    if (ps->comppad != PL_comppad) {
-			PAD_RESTORE_LOCAL(ps->comppad);
+		    if (ps->compcv != PL_compcv) {
+			PL_compcv = ps->compcv;
+			PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
 		    }
 		    ps->val.opval->op_latefree  = 0;
 		    op_free(ps->val.opval);
 		}
+		SvREFCNT_dec(ps->compcv);
 		YYPOPSTACK;
 	    }
 	    YYABORT;
 	}
 
 	YYDSYMPRINTF ("Error: discarding", yytoken, &parser->yylval);
+	if (yy_type_tab[yytoken] == toketype_opval)
+	    op_free(parser->yylval.opval);
 	parser->yychar = YYEMPTY;
 
     }
@@ -639,12 +650,14 @@ Perl_yyparse (pTHX)
 	LEAVE_SCOPE(ps->savestack_ix);
 	if (yy_type_tab[yystos[ps->state]] == toketype_opval && ps->val.opval) {
 	    YYDPRINTF ((Perl_debug_log, "(freeing op)\n"));
-	    if (ps->comppad != PL_comppad) {
-		PAD_RESTORE_LOCAL(ps->comppad);
+	    if (ps->compcv != PL_compcv) {
+		PL_compcv = ps->compcv;
+		PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
 	    }
 	    ps->val.opval->op_latefree  = 0;
 	    op_free(ps->val.opval);
 	}
+	SvREFCNT_dec(ps->compcv);
 	YYPOPSTACK;
 	yystate = ps->state;
 
@@ -659,7 +672,7 @@ Perl_yyparse (pTHX)
     YYPUSHSTACK;
     ps->state   = yyn;
     ps->val     = parser->yylval;
-    ps->comppad = PL_comppad;
+    ps->compcv  = (CV*)SvREFCNT_inc(PL_compcv);
     ps->savestack_ix = PL_savestack_ix;
 #ifdef DEBUGGING
     ps->name    ="<err>";
@@ -673,6 +686,9 @@ Perl_yyparse (pTHX)
   `-------------------------------------*/
   yyacceptlab:
     yyresult = 0;
+    for (ps=parser->ps; ps > parser->stack; ps--) {
+	SvREFCNT_dec(ps->compcv);
+    }
     parser->ps = parser->stack; /* disable cleanup */
     goto yyreturn;
 

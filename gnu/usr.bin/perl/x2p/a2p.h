@@ -433,7 +433,6 @@ EXT STR str_yes;
 
 EXT bool do_split INIT(FALSE);
 EXT bool split_to_array INIT(FALSE);
-EXT bool set_array_base INIT(FALSE);
 EXT bool saw_RS INIT(FALSE);
 EXT bool saw_OFS INIT(FALSE);
 EXT bool saw_ORS INIT(FALSE);

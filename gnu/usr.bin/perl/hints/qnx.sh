@@ -55,7 +55,7 @@
 #   they both point to the correct library, that is,
 #   /usr/tcptk/current/usr/lib/socket3r.lib.
 # 
-#   ext/Cwd/Cwd.t will complain if `pwd` and cwd don't give
+#   cpan/Cwd/Cwd.t will complain if `pwd` and cwd don't give
 #   the same results. cwd calls `fullpath -t`, so if you
 #   cd `fullpath -t` before running the test, it will
 #   pass.

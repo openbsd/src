@@ -67,7 +67,7 @@ L<perlfunc/"Perl Functions by Category"> section.
 
 =cut
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 require Exporter;
 
@@ -171,7 +171,7 @@ chdir	File	change your current working directory
 chmod	File	changes the permissions on a list of files
 chomp	String 	remove a trailing record separator from a string
 chop	String 	remove the last character from a string
-chown	File	change the owership on a list of files
+chown	File	change the ownership on a list of files
 chr	String 	get character this number represents
 chroot	File	make directory new root for path lookups
 close	I/O	close file (or pipe or socket) handle
@@ -248,7 +248,7 @@ last	Flow	exit a block prematurely
 lc	String	return lower-case version of a string
 lcfirst	String	return a string with just the next letter in lower case
 length	String	return the number of bytes in a string
-link	File	create a hard link in the filesytem
+link	File	create a hard link in the filesystem
 listen	Socket	register your socket as a server 
 local	Misc,Namespace	create a temporary value for a global variable (dynamic scoping)
 localtime	Time	convert UNIX time into record or string using local time
@@ -339,7 +339,7 @@ srand	Math	seed the random number generator
 stat	File	get a file's status information
 study	Regexp	optimize input data for repeated searches
 sub	Flow	declare a subroutine, possibly anonymously
-substr	String	get or alter a portion of a stirng
+substr	String	get or alter a portion of a string
 symlink	File	create a symbolic link to a file
 syscall	I/O,Binary	execute an arbitrary system call
 sysopen	File	open a file, pipe, or descriptor

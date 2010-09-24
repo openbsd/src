@@ -9,11 +9,8 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.63';
+our $VERSION = '5.64_01';
 our (%Cache);
-
-# Carp 1.05+ does this now for us, but we may be running with an old Carp
-$Carp::Internal{Exporter}++;
 
 sub as_heavy {
   require Exporter::Heavy;

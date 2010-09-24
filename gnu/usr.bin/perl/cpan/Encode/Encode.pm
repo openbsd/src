@@ -913,7 +913,7 @@ Now that is overruled by Larry Wall himself.
 
 Do you copy?  As of Perl 5.8.7, B<UTF-8> means strict, official UTF-8
 while B<utf8> means liberal, lax, version thereof.  And Encode version
-2.10 or later thus groks the difference between C<UTF-8> and C"utf8".
+2.10 or later thus groks the difference between C<UTF-8> and C<utf8>.
 
   encode("utf8",  "\x{FFFF_FFFF}", 1); # okay
   encode("UTF-8", "\x{FFFF_FFFF}", 1); # croaks

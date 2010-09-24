@@ -1,7 +1,7 @@
 /* win32sck.c
  *
  * (c) 1995 Microsoft Corporation. All rights reserved. 
- * 		Developed by hip communications inc., http://info.hip.com/info/
+ * 		Developed by hip communications inc.
  * Portions (c) 1993 Intergraph Corporation. All rights reserved.
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -261,18 +261,8 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
 #ifdef USE_SOCKETS_AS_HANDLES
     int i, fd, save_errno = errno;
     FD_SET nrd, nwr, nex;
+    bool just_sleep = TRUE;
 
-    /* winsock seems incapable of dealing with all three null fd_sets,
-     * so do the (millisecond) sleep as a special case
-     */
-    if (!(rd || wr || ex)) {
-	if (timeout)
-	    Sleep(timeout->tv_sec  * 1000 +
-		  timeout->tv_usec / 1000);	/* do the best we can */
-	else
-	    Sleep(UINT_MAX);
-	return 0;
-    }
     StartSockets();
 
     FD_ZERO(&nrd);
@@ -282,15 +272,30 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
 	if (rd && PERL_FD_ISSET(i,rd)) {
 	    fd = TO_SOCKET(i);
 	    FD_SET((unsigned)fd, &nrd);
+            just_sleep = FALSE;
 	}
 	if (wr && PERL_FD_ISSET(i,wr)) {
 	    fd = TO_SOCKET(i);
 	    FD_SET((unsigned)fd, &nwr);
+            just_sleep = FALSE;
 	}
 	if (ex && PERL_FD_ISSET(i,ex)) {
 	    fd = TO_SOCKET(i);
 	    FD_SET((unsigned)fd, &nex);
+            just_sleep = FALSE;
 	}
+    }
+
+    /* winsock seems incapable of dealing with all three fd_sets being empty,
+     * so do the (millisecond) sleep as a special case
+     */
+    if (just_sleep) {
+	if (timeout)
+	    Sleep(timeout->tv_sec  * 1000 +
+		  timeout->tv_usec / 1000);	/* do the best we can */
+	else
+	    Sleep(UINT_MAX);
+	return 0;
     }
 
     errno = save_errno;

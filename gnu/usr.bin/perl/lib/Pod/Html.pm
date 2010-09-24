@@ -1575,7 +1575,9 @@ sub process_text1($$;$$){
 	# E<x> - convert to character
 	$$rstr =~ s/^([^>]*)>//;
 	my $escape = $1;
-	$escape =~ s/^(\d+|X[\dA-F]+)$/#$1/i;
+	$escape =~ s/^0?x([\dA-F]+)$/#x$1/i
+	or $escape =~ s/^0([0-7]+)$/'#'.oct($1)/ei
+	or $escape =~ s/^(\d+)$/#$1/;
 	$res = "&$escape;";
 
     } elsif( $func eq 'F' ){

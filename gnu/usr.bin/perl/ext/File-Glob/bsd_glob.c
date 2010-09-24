@@ -82,11 +82,8 @@ static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX
 #    define	MAXPATHLEN	PATH_MAX
-#    ifdef MACOS_TRADITIONAL
-#      define	MAXPATHLEN	255
-#    else
-#      define	MAXPATHLEN	1024
-#    endif
+#  else
+#    define	MAXPATHLEN	1024
 #  endif
 #endif
 
@@ -95,20 +92,16 @@ static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
 #endif
 
 #ifndef ARG_MAX
-#  ifdef MACOS_TRADITIONAL
-#    define		ARG_MAX		65536	/* Mac OS is actually unlimited */
+#  ifdef _SC_ARG_MAX
+#    define		ARG_MAX		(sysconf(_SC_ARG_MAX))
 #  else
-#    ifdef _SC_ARG_MAX
-#      define		ARG_MAX		(sysconf(_SC_ARG_MAX))
+#    ifdef _POSIX_ARG_MAX
+#      define		ARG_MAX		_POSIX_ARG_MAX
 #    else
-#      ifdef _POSIX_ARG_MAX
-#        define		ARG_MAX		_POSIX_ARG_MAX
+#      ifdef WIN32
+#        define	ARG_MAX		14500	/* from VC's limits.h */
 #      else
-#        ifdef WIN32
-#          define	ARG_MAX		14500	/* from VC's limits.h */
-#        else
-#          define	ARG_MAX		4096	/* from POSIX, be conservative */
-#        endif
+#        define	ARG_MAX		4096	/* from POSIX, be conservative */
 #      endif
 #    endif
 #  endif
@@ -123,11 +116,7 @@ static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
 #define	BG_QUOTE	'\\'
 #define	BG_RANGE	'-'
 #define	BG_RBRACKET	']'
-#ifdef MACOS_TRADITIONAL
-#  define	BG_SEP	':'
-#else
-#  define	BG_SEP	'/'
-#endif
+#define	BG_SEP	'/'
 #ifdef DOSISH
 #define BG_SEP2		'\\'
 #endif
@@ -227,23 +216,6 @@ my_readdir(DIR *d)
 
 #endif
 
-#ifdef MACOS_TRADITIONAL
-#include <Files.h>
-#include <Types.h>
-#include <string.h>
-
-#define NO_UPDIR_ERR 1	/* updir resolving failed */
-
-static Boolean g_matchVol; /* global variable */
-static short updir(char *path);
-static short resolve_updirs(char *new_pattern);
-static void remove_trColon(char *path);
-static short glob_mark_Mac(Char *pathbuf, Char *pathend, Char *pathend_last);
-static OSErr GetVolInfo(short volume, Boolean indexed, FSSpec *spec);
-static void name_f_FSSpec(StrFileName volname, FSSpec *spec);
-
-#endif
-
 int
 bsd_glob(const char *pattern, int flags,
 	 int (*errfunc)(const char *, int), glob_t *pglob)
@@ -251,16 +223,7 @@ bsd_glob(const char *pattern, int flags,
 	const U8 *patnext;
 	int c;
 	Char *bufnext, *bufend, patbuf[MAXPATHLEN];
-
-#ifdef MACOS_TRADITIONAL
-	char *new_pat, *p, *np;
-	int err;
-	size_t len;
-#endif
-
-#ifndef MACOS_TRADITIONAL
 	patnext = (U8 *) pattern;
-#endif
 	/* TODO: GLOB_APPEND / GLOB_DOOFFS aren't supported yet */
 #if 0
 	if (!(flags & GLOB_APPEND)) {
@@ -300,61 +263,6 @@ bsd_glob(const char *pattern, int flags,
 	}
 #endif
 
-#ifdef MACOS_TRADITIONAL
-	/* Check if we need to match a volume name (e.g. '*HD:*') */
-	g_matchVol = false;
-	p = (char *) pattern;
-	if (*p != BG_SEP) {
-	    p++;
-	    while (*p != BG_EOS) {
-		if (*p == BG_SEP) {
-		    g_matchVol = true;
-		    break;
-		}
-		p++;
-	    }
-	}
-
-	/* Transform the pattern:
-	 * (a) Resolve updirs, e.g.
-	 *     '*:t*p::'       -> '*:'
-	 *	   ':a*:tmp::::'   -> '::'
-	 *	   ':base::t*p:::' -> '::'
-	 *     '*HD::'         -> return 0 (error, quit silently)
-	 *
-	 * (b) Remove a single trailing ':', unless it's a "match volume only"
-	 *     pattern like '*HD:'; e.g.
-	 *     '*:tmp:' -> '*:tmp'  but
-	 *     '*HD:'   -> '*HD:'
-	 *     (If we don't do that, even filenames will have a trailing ':' in
-	 *     the result.)
-	 */
-
-	/* We operate on a copy of the pattern */
-	len = strlen(pattern);
-	Newx(new_pat, len + 1, char);
-	if (new_pat == NULL)
-	    return (GLOB_NOSPACE);
-
-	p = (char *) pattern;
-	np = new_pat;
-	while (*np++ = *p++) ;
-
-	/* Resolve updirs ... */
-	err = resolve_updirs(new_pat);
-	if (err) {
-	    Safefree(new_pat);
-	    /* The pattern is incorrect: tried to move
-	       up above the volume root, see above.
-	       We quit silently. */
-	    return 0;
-	}
-	/* remove trailing colon ... */
-	remove_trColon(new_pat);
-	patnext = (U8 *) new_pat;
-
-#endif /* MACOS_TRADITIONAL */
-
 	if (flags & GLOB_QUOTE) {
 		/* Protect the quoted characters. */
 		while (bufnext < bufend && (c = *patnext++) != BG_EOS)
@@ -382,19 +290,10 @@ bsd_glob(const char *pattern, int flags,
 			*bufnext++ = c;
 	*bufnext = BG_EOS;
 
-#ifdef MACOS_TRADITIONAL
-	if (flags & GLOB_BRACE)
-	    err = globexp1(patbuf, pglob);
-	else
-	    err = glob0(patbuf, pglob);
-	Safefree(new_pat);
-	return err;
-#else
 	if (flags & GLOB_BRACE)
 	    return globexp1(patbuf, pglob);
 	else
 	    return glob0(patbuf, pglob);
-#endif
 }
 
 /*
@@ -613,12 +512,6 @@ glob0(const Char *pattern, glob_t *pglob)
 	Char *bufnext, patbuf[MAXPATHLEN];
 	size_t limit = 0;
 
-#ifdef MACOS_TRADITIONAL
-	if ( (*pattern == BG_TILDE) && (pglob->gl_flags & GLOB_TILDE) ) {
-		return(globextend(pattern, pglob, &limit));
-	}
-#endif
-
 	qpat = globtilde(pattern, patbuf, MAXPATHLEN, pglob);
 	qpatnext = qpat;
 	oldflags = pglob->gl_flags;
@@ -777,17 +670,10 @@ glob2(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 				  (S_ISLNK(sb.st_mode) &&
 			    (g_stat(pathbuf, &sb, pglob) == 0) &&
 			    S_ISDIR(sb.st_mode)))) {
-#ifdef MACOS_TRADITIONAL
-				short err;
-				err = glob_mark_Mac(pathbuf, pathend, pathend_last);
-				if (err)
-					return (err);
-#else
 				if (pathend+1 > pathend_last)
 					return (1);
 				*pathend++ = BG_SEP;
 				*pathend = BG_EOS;
-#endif
 			}
 			++pglob->gl_matchc;
 #ifdef GLOB_DEBUG
@@ -873,49 +759,6 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
         }
 #endif
 
-#ifdef MACOS_TRADITIONAL
-	if ((!*pathbuf) && (g_matchVol)) {
-	    FSSpec spec;
-	    short index;
-	    StrFileName vol_name; /* unsigned char[64] on MacOS */
-
-	    err = 0;
-	    nocase = ((pglob->gl_flags & GLOB_NOCASE) != 0);
-
-	    /* Get and match a list of volume names */
-	    for (index = 0; !GetVolInfo(index+1, true, &spec); ++index) {
-		register U8 *sc;
-		register Char *dc;
-
-		name_f_FSSpec(vol_name, &spec);
-
-		/* Initial BG_DOT must be matched literally. */
-		if (*vol_name == BG_DOT && *pattern != BG_DOT)
-		    continue;
-		dc = pathend;
-		sc = (U8 *) vol_name;
-		while (dc < pathend_last && (*dc++ = *sc++) != BG_EOS)
-		    ;
-		if (dc >= pathend_last) {
-		    *dc = BG_EOS;
-		    err = 1;
-		    break;
-		}
-
-		if (!match(pathend, pattern, restpattern, nocase)) {
-		    *pathend = BG_EOS;
-		    continue;
-		}
-		err = glob2(pathbuf, pathbuf_last, --dc, pathend_last,
-		    restpattern, restpattern_last, pglob, limitp);
-		if (err)
-		    break;
-	    }
-	    return(err);
-
-	} else { /* open dir */
-#endif /* MACOS_TRADITIONAL */
-
 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
 		/* TODO: don't call for ENOENT or ENOTDIR? */
 		if (pglob->gl_errfunc) {
@@ -968,10 +811,6 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 	else
 		PerlDir_close(dirp);
 	return(err);
-
-#ifdef MACOS_TRADITIONAL
-	}
-#endif
 }
 
 
@@ -1130,11 +969,7 @@ g_opendir(register Char *str, glob_t *pglob)
 	char buf[MAXPATHLEN];
 
 	if (!*str) {
-#ifdef MACOS_TRADITIONAL
-		my_strlcpy(buf, ":", sizeof(buf));
-#else
 		my_strlcpy(buf, ".", sizeof(buf));
-#endif
 	} else {
 		if (g_Ctoc(str, buf, sizeof(buf)))
 			return(NULL);
@@ -1212,209 +1047,3 @@ qprintf(const char *str, register Char *s)
 	(void)printf("\n");
 }
 #endif /* GLOB_DEBUG */
-
-
-#ifdef MACOS_TRADITIONAL
-
-/* Replace the last occurrence of the pattern ":[^:]+::", e.g. ":lib::",
-   with a single ':', if possible. It is not an error, if the pattern
-   doesn't match (we return -1), but if there are two consecutive colons
-   '::', there must be a preceding ':[^:]+'. Hence,  a volume path like
-   "HD::" is considered to be an error (we return 1), that is, it can't
-   be resolved. We return 0 on success.
-*/
-
-static short
-updir(char *path)
-{
-	char *pb, *pe, *lastchar;
-	char *bgn_mark, *end_mark;
-	char *f, *m, *b; /* front, middle, back */
-	size_t len;
-
-	len = strlen(path);
-	lastchar = path + (len-1);
-	b = lastchar;
-	m = lastchar-1;
-	f = lastchar-2;
-
-	/* find a '[^:]::' (e.g. b::) pattern ... */
-	while ( !( (*f != BG_SEP) && (*m == BG_SEP) && (*b == BG_SEP) )
-	        && (f >= path)) {
-		f--;
-		m--;
-		b--;
-	}
-
-	if (f < path) { /* no (more) match */
-		return -1;
-	}
-
-	end_mark = b;
-
-	/* ... and now find its preceding colon ':' */
-	while ((*f != BG_SEP) && (f >= path)) {
-		f--;
-	}
-	if (f < path) {
-		/* No preceding colon found, must be a
-		   volume path. We can't move up the
-		   tree and that's an error */
-		return 1;
-	}
-	bgn_mark = f;
-
-	/* Shrink path, i.e. exclude all characters between
-	   bgn_mark and end_mark */
-
-	pb = bgn_mark;
-	pe = end_mark;
-	while (*pb++ = *pe++) ;
-	return 0;
-}
-
-
-/* Resolve all updirs in pattern. */
-
-static short
-resolve_updirs(char *new_pattern)
-{
-	short err;
-
-	do {
-		err = updir(new_pattern);
-	} while (!err);
-	if (err == 1) {
-		return NO_UPDIR_ERR;
-	}
-	return 0;
-}
-
-
-/* Remove a trailing colon from the path, but only if it's
-   not a volume path (e.g. HD:) and not a path consisting
-   solely of colons. */
-
-static void
-remove_trColon(char *path)
-{
-	char *lastchar, *lc;
-
-	/* if path matches the pattern /:[^:]+:$/, we can
-	   remove the trailing ':' */
-
-	lc = lastchar = path + (strlen(path) - 1);
-	if (*lastchar == BG_SEP) {
-		/* there's a trailing ':', there must be at least
-		   one preceding char != ':' and a preceding ':' */
-		lc--;
-		if ((*lc != BG_SEP) && (lc >= path)) {
-			lc--;
-		} else {
-			return;
-		}
-		while ((*lc != BG_SEP) && (lc >= path)) {
-			lc--;
-		}
-		if (lc >= path) {
-			/* ... there's a preceding ':', we remove
-			   the trailing colon */
-			*lastchar = BG_EOS;
-		}
-	}
-}
-
-
-/* With the GLOB_MARK flag on, we append a colon, if pathbuf
-   is a directory. If the directory name contains no colons,
-   e.g. 'lib', we can't simply append a ':', since this (e.g.
-   'lib:') is not a valid (relative) path on Mac OS. Instead,
-   we add a leading _and_ trailing ':'. */
-
-static short
-glob_mark_Mac(Char *pathbuf, Char *pathend, Char *pathend_last)
-{
-	Char *p, *pe;
-	Boolean is_file = true;
-
-	/* check if pathbuf contains a ':',
-	   i.e. is not a file name */
-	p = pathbuf;
-	while (*p != BG_EOS) {
-		if (*p == BG_SEP) {
-			is_file = false;
-			break;
-		}
-		p++;
-	}
-
-	if (is_file) {
-		if (pathend+2 > pathend_last) {
-			return (1);
-		}
-		/* right shift one char */
-		pe = p = pathend;
-		p--;
-		pathend++;
-		while (p >= pathbuf) {
-			*pe-- = *p--;
-		}
-		/* first char becomes a colon */
-		*pathbuf = BG_SEP;
-		/* append a colon */
-		*pathend++ = BG_SEP;
-		*pathend = BG_EOS;
-
-	} else {
-		if (pathend+1 > pathend_last) {
-			return (1);
-		}
-		*pathend++ = BG_SEP;
-		*pathend = BG_EOS;
-	}
-	return 0;
-}
-
-
-/* Return a FSSpec record for the specified volume
-   (borrowed from MacPerl.xs). */
-
-static OSErr
-GetVolInfo(short volume, Boolean indexed, FSSpec* spec)
-{
-	OSErr		err; /* OSErr: 16-bit integer */
-	HParamBlockRec	pb;
-
-	pb.volumeParam.ioNamePtr	= spec->name;
-	pb.volumeParam.ioVRefNum	= indexed ? 0 : volume;
-	pb.volumeParam.ioVolIndex	= indexed ? volume : 0;
-
-	if (err = PBHGetVInfoSync(&pb))
-		return err;
-
-	spec->vRefNum	= pb.volumeParam.ioVRefNum;
-	spec->parID	= 1;
-
-	return noErr; /* 0 */
-}
-
-/* Extract a C name from a FSSpec. Note that there are
-   no leading or trailing colons. */
-
-static void
-name_f_FSSpec(StrFileName name, FSSpec *spec)
-{
-	unsigned char *nc;
-	const short len = spec->name[0];
-	short i;
-
-	/* FSSpec.name is a Pascal string,
-	   convert it to C ... */
-	nc = name;
-	for (i=1; i<=len; i++) {
-		*nc++ = spec->name[i];
-	}
-	*nc = BG_EOS;
-}
-
-#endif /* MACOS_TRADITIONAL */

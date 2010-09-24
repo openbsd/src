@@ -6,6 +6,13 @@ BEGIN {
     push @INC, '../lib';
 }
 
+sub do_require {
+    %INC = ();
+    write_file('bleah.pm',@_);
+    eval { require "bleah.pm" };
+    my @a; # magic guard for scope violations (must be first lexical in file)
+}
+
 # don't make this lexical
 $i = 1;
 
@@ -15,22 +22,14 @@ krunch.pm krunch.pmc whap.pm whap.pmc);
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 50;
+my $total_tests = 49;
 if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
-
-sub do_require {
-    %INC = ();
-    write_file('bleah.pm',@_);
-    eval { require "bleah.pm" };
-    my @a; # magic guard for scope violations (must be first lexical in file)
-}
 
 sub write_file {
     my $f = shift;
     open(REQ,">$f") or die "Can't write '$f': $!";
     binmode REQ;
-    use bytes;
     print REQ @_;
     close REQ or die "Could not close $f: $!";
 }
@@ -60,14 +59,6 @@ print "# $@\nnot " if $@;
 print "ok ",$i++,"\n";
 
 eval { require 10.0.2; };
-print "# $@\nnot " unless $@ =~ /^Perl v10\.0\.2 required/;
-print "ok ",$i++,"\n";
-
-eval q{ use v5.5.630; };
-print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
-
-eval q{ use 10.0.2; };
 print "# $@\nnot " unless $@ =~ /^Perl v10\.0\.2 required/;
 print "ok ",$i++,"\n";
 
@@ -101,6 +92,12 @@ print "ok ",$i++,"\n";
       unless v1.20.300.4000.50000.600000 eq "\x{1}\x{14}\x{12c}\x{fa0}\x{c350}\x{927c0}";
     print "ok ",$i++,"\n";
 }
+
+# "use 5.11.0" (and higher) loads strictures.
+# check that this doesn't happen with require
+eval 'require 5.11.0; ${"foo"} = "bar";';
+print "# $@\nnot " if $@;
+print "ok ",$i++,"\n";
 
 # interaction with pod (see the eof)
 write_file('bleah.pm', "print 'ok $i\n'; 1;\n");
@@ -179,6 +176,7 @@ $foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 @foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
        eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
        eval q{$_=$_+2;require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+       eval q{return require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 $foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 @foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
        eval  {require bleah};
@@ -258,20 +256,6 @@ EOT
     }
 }
 
-#  [perl #49472] Attributes + Unkown Error
-
-{
-    do_require
-	'use strict;sub MODIFY_CODE_ATTRIBUTE{} sub f:Blah {$nosuchvar}';
-    my $err = $@;
-    $err .= "\n" unless $err =~ /\n$/;
-    unless ($err =~ /Global symbol "\$nosuchvar" requires /) {
-	$err =~ s/^/# /mg;
-	print "${err}not ";
-    }
-    print "ok ", ++$i, " [perl #49472]\n";
-}
-
 ##########################################
 # What follows are UTF-8 specific tests. #
 # Add generic tests before this point.   #
@@ -281,17 +265,25 @@ EOT
 
 if ($Is_EBCDIC || $Is_UTF8) { exit; }
 
-my $utf8 = chr(0xFEFF);
+my %templates = (
+		 'UTF-8'    => 'C0U',
+		 'UTF-16BE' => 'n',
+		 'UTF-16LE' => 'v',
+		);
 
-$i++; do_require(qq(${utf8}print "ok $i\n"; 1;\n));
-
-sub bytes_to_utf16 {
-    my $utf16 = pack("$_[0]*", unpack("C*", $_[1]));
-    return @_ == 3 && $_[2] ? pack("$_[0]", 0xFEFF) . $utf16 : $utf16;
+sub bytes_to_utf {
+    my ($enc, $content, $do_bom) = @_;
+    my $template = $templates{$enc};
+    die "Unsupported encoding $enc" unless $template;
+    return pack "$template*", ($do_bom ? 0xFEFF : ()), unpack "C*", $content;
 }
 
-$i++; do_require(bytes_to_utf16('n', qq(print "ok $i\\n"; 1;\n), 1)); # BE
-$i++; do_require(bytes_to_utf16('v', qq(print "ok $i\\n"; 1;\n), 1)); # LE
+foreach (sort keys %templates) {
+    $i++; do_require(bytes_to_utf($_, qq(print "ok $i # $_\\n"; 1;\n), 1));
+    if ($@ =~ /^(Unsupported script encoding \Q$_\E)/) {
+	print "ok $i # skip $1\n";
+    }
+}
 
 END {
     foreach my $file (@fjles_to_delete) {

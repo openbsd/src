@@ -202,9 +202,6 @@ distributions.
 
 (contributed by brian d foy)
 
-The full answer to this can be found at
-http://cpan.org/modules/04pause.html#takeover
-
 The easiest way to take over a module is to have the current
 module maintainer either make you a co-maintainer or transfer
 the module to you.
@@ -378,12 +375,9 @@ The expected output is:
 
 =head2 How can I pass/return a {Function, FileHandle, Array, Hash, Method, Regex}?
 
-With the exception of regexes, you need to pass references to these
-objects.  See L<perlsub/"Pass by Reference"> for this particular
-question, and L<perlref> for information on references.
-
-See "Passing Regexes", later in L<perlfaq7>, for information on
-passing regular expressions.
+You need to pass references to these objects.  See L<perlsub/"Pass by
+Reference"> for this particular question, and L<perlref> for
+information on references.
 
 =over 4
 
@@ -423,12 +417,9 @@ and especially L<perlsub/"Pass by Reference"> for more information.
 
 =item Passing Regexes
 
-To pass regexes around, you'll need to be using a release of Perl
-sufficiently recent as to support the C<qr//> construct, pass around
-strings and use an exception-trapping eval, or else be very, very clever.
-
-Here's an example of how to pass in a string to be regex compared
-using C<qr//>:
+Here's an example of how to pass in a string and a regular expression
+for it to match against. You construct the pattern with the C<qr//>
+operator:
 
 	sub compare($$) {
 		my ($val1, $regex) = @_;
@@ -436,37 +427,6 @@ using C<qr//>:
 	return $retval;
 	}
 	$match = compare("old McDonald", qr/d.*D/i);
-
-Notice how C<qr//> allows flags at the end.  That pattern was compiled
-at compile time, although it was executed later.  The nifty C<qr//>
-notation wasn't introduced until the 5.005 release.  Before that, you
-had to approach this problem much less intuitively.  For example, here
-it is again if you don't have C<qr//>:
-
-	sub compare($$) {
-		my ($val1, $regex) = @_;
-		my $retval = eval { $val1 =~ /$regex/ };
-	die if $@;
-	return $retval;
-	}
-
-	$match = compare("old McDonald", q/($?i)d.*D/);
-
-Make sure you never say something like this:
-
-	return eval "\$val =~ /$regex/";   # WRONG
-
-or someone can sneak shell escapes into the regex due to the double
-interpolation of the eval and the double-quoted string.  For example:
-
-	$pattern_of_evil = 'danger ${ system("rm -rf * &") } danger';
-
-	eval "\$string =~ /$pattern_of_evil/";
-
-Those preferring to be very, very clever might see the O'Reilly book,
-I<Mastering Regular Expressions>, by Jeffrey Friedl.  Page 273's
-Build_MatchMany_Function() is particularly interesting.  A complete
-citation of this book is given in L<perlfaq2>.
 
 =item Passing Methods
 
@@ -688,9 +648,9 @@ see L<perltoot/"Overridden Methods">.
 (contributed by brian d foy)
 
 Calling a subroutine as C<&foo> with no trailing parentheses ignores
-the prototype of C<foo> and passes it the current value of the argumet
+the prototype of C<foo> and passes it the current value of the argument
 list, C<@_>. Here's an example; the C<bar> subroutine calls C<&foo>,
-which prints what its arguments list:
+which prints its arguments list:
 
 	sub bar { &foo }
 
@@ -861,18 +821,6 @@ into strings like you can with variables:
 	my $current_package = __PACKAGE__;
 	print "I am in package $current_package\n";
 
-This is different from finding out the package an object is blessed
-into, which might not be the current package. For that, use C<blessed>
-from C<Scalar::Util>, part of the Standard Library since Perl 5.8:
-
-	use Scalar::Util qw(blessed);
-	my $object_package = blessed( $object );
-
-Most of the time, you shouldn't care what package an object is blessed
-into, however, as long as it claims to inherit from that class:
-
-	my $is_right_class = eval { $object->isa( $package ) }; # true or false
-
 If you want to find the package calling your code, perhaps to give better
 diagnostics as C<Carp> does, use the C<caller> built-in:
 
@@ -886,7 +834,27 @@ diagnostics as C<Carp> does, use the C<caller> built-in:
 By default, your program starts in package C<main>, so you should
 always be in some package unless someone uses the C<package> built-in
 with no namespace. See the C<package> entry in L<perlfunc> for the
-details of empty packges.
+details of empty packages.
+
+This is different from finding out the package an object is blessed
+into, which might not be the current package. For that, use C<blessed>
+from C<Scalar::Util>, part of the Standard Library since Perl 5.8:
+
+	use Scalar::Util qw(blessed);
+	my $object_package = blessed( $object );
+
+Most of the time, you shouldn't care what package an object is blessed
+into, however, as long as it claims to inherit from that class:
+
+	my $is_right_class = eval { $object->isa( $package ) }; # true or false
+
+And, with Perl 5.10 and later, you don't have to check for an
+inheritance to see if the object can handle a role. For that, you can
+use C<DOES>, which comes from C<UNIVERSAL>:
+
+	my $class_does_it = eval { $object->DOES( $role ) }; # true or false
+
+You can safely replace C<isa> with C<DOES> (although the converse is not true).
 
 =head2 How can I comment out a large block of Perl code?
 
@@ -908,10 +876,10 @@ comments). You end the comment with C<=cut>, ending the Pod section:
 
 	=cut
 
-The quick-and-dirty method only works well when you don't plan to 
+The quick-and-dirty method only works well when you don't plan to
 leave the commented code in the source. If a Pod parser comes along,
 you're multiline comment is going to show up in the Pod translation.
-A better way hides it from Pod parsers as well. 
+A better way hides it from Pod parsers as well.
 
 The C<=begin> directive can mark a section for a particular purpose.
 If the Pod parser doesn't want to handle it, it just ignores it. Label
@@ -1088,17 +1056,9 @@ If you get a message like "perl: command not found", perl is not in
 your PATH, which might also mean that the location of perl is not
 where you expect it so you need to adjust your shebang line.
 
-=head1 REVISION
-
-Revision: $Revision$
-
-Date: $Date$
-
-See L<perlfaq> for source control details and availability.
-
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2010 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

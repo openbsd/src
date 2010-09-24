@@ -179,7 +179,7 @@ to be aliases for d/f, but you never knew that.)
 
 The list of filenames from glob() (or <...>) is now by default sorted
 alphabetically to be csh-compliant (which is what happened before
-in most UNIX platforms).  (bsd_glob() does still sort platform
+in most Unix platforms).  (bsd_glob() does still sort platform
 natively, ASCII or EBCDIC, unless GLOB_ALPHASORT is specified.) [561]
 
 =head2 Deprecations
@@ -381,7 +381,7 @@ The built-in layers are: unix (low level read/write), stdio (as in
 previous Perls), perlio (re-implementation of stdio buffering in a
 portable manner), crlf (does CRLF <=> "\n" translation as on Win32,
 but available on any platform).  A mmap layer may be available if
-platform supports it (mostly UNIXes).
+platform supports it (mostly Unixes).
 
 Layers to be applied by default may be specified via the 'open' pragma.
 
@@ -532,7 +532,7 @@ already.  The fatal error has been downgraded to an optional warning:
 
 This warns you that C<"fred@example.com"> is going to turn into
 C<fred.com> if you don't backslash the C<@>.
-See http://www.plover.com/~mjd/perl/at-error.html for more details
+See http://perl.plover.com/at-error.html for more details
 about the history here.
 
 =head2 Miscellaneous Changes
@@ -1505,7 +1505,7 @@ perl.org, not perl.com.
 =item *
 
 C<perlcc> has been rewritten and its user interface (that is,
-command line) is much more like that of the UNIX C compiler, cc.
+command line) is much more like that of the Unix C compiler, cc.
 (The perlbc tools has been removed.  Use C<perlcc -B> instead.)
 B<Note that perlcc is still considered very experimental and
 unsupported.> [561]
@@ -1531,7 +1531,7 @@ C<pod2html> now produces XHTML 1.0.
 =item *
 
 C<pod2html> now understands POD written using different line endings
-(PC-like CRLF versus UNIX-like LF versus MacClassic-like CR).
+(PC-like CRLF versus Unix-like LF versus MacClassic-like CR).
 
 =item *
 
@@ -2083,7 +2083,7 @@ available.  See L<perlvos>. [561+]
 
 =item *
 
-The Amdahl UTS UNIX mainframe platform is now supported. [561]
+The Amdahl UTS Unix mainframe platform is now supported. [561]
 
 =item *
 

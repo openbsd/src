@@ -31,6 +31,7 @@ typedef OP OP_4tree;			/* Will be redefined later. */
  *
  * Personally I think 5.12 should disable this for sure. Its a bit more debatable for
  * 5.10, so for now im leaving it enabled.
+ * XXX: It is now enabled for 5.11/5.12
  *
  * -demerphq
  */
@@ -196,7 +197,7 @@ struct regnode_2 {
 
 
 #define ANYOF_BITMAP_SIZE	32	/* 256 b/(8 b/B) */
-#define ANYOF_CLASSBITMAP_SIZE	 4	/* up to 40 (8*5) named classes */
+#define ANYOF_CLASSBITMAP_SIZE	 4	/* up to 32 (8*4) named classes */
 
 /* also used by trie */
 struct regnode_charclass {
@@ -546,10 +547,10 @@ struct reg_data {
 #define check_offset_max substrs->data[2].max_offset
 #define check_end_shift substrs->data[2].end_shift
 
-#define RX_ANCHORED_SUBSTR(rx)	((rx)->anchored_substr)
-#define RX_ANCHORED_UTF8(rx)	((rx)->anchored_utf8)
-#define RX_FLOAT_SUBSTR(rx)	((rx)->float_substr)
-#define RX_FLOAT_UTF8(rx)	((rx)->float_utf8)
+#define RX_ANCHORED_SUBSTR(rx)	(((struct regexp *)SvANY(rx))->anchored_substr)
+#define RX_ANCHORED_UTF8(rx)	(((struct regexp *)SvANY(rx))->anchored_utf8)
+#define RX_FLOAT_SUBSTR(rx)	(((struct regexp *)SvANY(rx))->float_substr)
+#define RX_FLOAT_UTF8(rx)	(((struct regexp *)SvANY(rx))->float_utf8)
 
 /* trie related stuff */
 
@@ -728,6 +729,7 @@ re.pm, especially to the documentation.
 #define RE_DEBUG_EXTRA_STATE       0x080000
 #define RE_DEBUG_EXTRA_OPTIMISE    0x100000
 #define RE_DEBUG_EXTRA_BUFFERS     0x400000
+#define RE_DEBUG_EXTRA_GPOS        0x800000
 /* combined */
 #define RE_DEBUG_EXTRA_STACK       0x280000
 
@@ -783,6 +785,8 @@ re.pm, especially to the documentation.
 #define DEBUG_TRIE_r(x) DEBUG_r( \
     if (re_debug_flags & (RE_DEBUG_COMPILE_TRIE \
         | RE_DEBUG_EXECUTE_TRIE )) x )
+#define DEBUG_GPOS_r(x) DEBUG_r( \
+    if (re_debug_flags & RE_DEBUG_EXTRA_GPOS) x )
 
 /* initialization */
 /* get_sv() can return NULL during global destruction. */

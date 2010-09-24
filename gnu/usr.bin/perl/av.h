@@ -9,51 +9,11 @@
  */
 
 struct xpvav {
-    union {
-	NV	xnv_nv;		/* numeric value, if any */
-	HV *	xgv_stash;
-	struct {
-	    U32	xlow;
-	    U32	xhigh;
-	}	xpad_cop_seq;	/* used by pad.c for cop_sequence */
-	struct {
-	    U32 xbm_previous;	/* how many characters in string before rare? */
-	    U8	xbm_flags;
-	    U8	xbm_rare;	/* rarest character in string */
-	}	xbm_s;		/* fields from PVBM */
-    }		xnv_u;
+    union _xnvu xnv_u;
     SSize_t	xav_fill;       /* Index of last element present */
     SSize_t	xav_max;        /* max index for which array has space */
-    union {
-	IV	xivu_iv;	/* integer value or pv offset */
-	UV	xivu_uv;
-	void *	xivu_p1;
-	I32	xivu_i32;
-	HEK *	xivu_namehek;
-    }		xiv_u;
-    union {
-	MAGIC*	xmg_magic;	/* linked list of magicalness */
-	HV*	xmg_ourstash;	/* Stash for our (when SvPAD_OUR is true) */
-    } xmg_u;
-    HV*		xmg_stash;	/* class package */
+    _XPVMG_HEAD;
 };
-
-typedef struct {
-    SSize_t	xav_fill;       /* Index of last element present */
-    SSize_t	xav_max;        /* max index for which array has space */
-    union {
-	IV	xivu_iv;	/* integer value or pv offset */
-	UV	xivu_uv;
-	void *	xivu_p1;
-	I32	xivu_i32;
-	HEK *	xivu_namehek;
-    }		xiv_u;
-    union {
-	MAGIC*	xmg_magic;	/* linked list of magicalness */
-	HV*	xmg_ourstash;	/* Stash for our (when SvPAD_OUR is true) */
-    } xmg_u;
-    HV*		xmg_stash;	/* class package */
-} xpvav_allocated;
 
 /* SV**	xav_alloc; */
 #define xav_alloc xiv_u.xivu_p1
@@ -83,6 +43,8 @@ typedef struct {
 =for apidoc AmU||Nullav
 Null AV pointer.
 
+(deprecated - use C<(AV *)NULL> instead)
+
 =head1 Array Manipulation Functions
 
 =for apidoc Am|int|AvFILL|AV* av
@@ -91,7 +53,9 @@ Same as C<av_len()>.  Deprecated, use C<av_len()> instead.
 =cut
 */
 
-#define Nullav Null(AV*)
+#ifndef PERL_CORE
+#  define Nullav Null(AV*)
+#endif
 
 #define AvARRAY(av)	((av)->sv_u.svu_array)
 #define AvALLOC(av)	(*((SV***)&((XPVAV*)  SvANY(av))->xav_alloc))

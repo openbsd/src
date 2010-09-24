@@ -31,7 +31,7 @@ A crude table of contents for the Perl manpage set is found in L<perltoc>.
 =head2 How can I use Perl interactively?
 
 The typical approach uses the Perl debugger, described in the
-perldebug(1) manpage, on an "empty" program, like this:
+C<perldebug(1)> manpage, on an "empty" program, like this:
 
     perl -de 42
 
@@ -42,21 +42,21 @@ operations typically found in symbolic debuggers.
 
 =head2 Is there a Perl shell?
 
-The psh (Perl sh) is currently at version 1.8. The Perl Shell is a shell
+The C<psh> (Perl sh) is currently at version 1.8. The Perl Shell is a shell
 that combines the interactive nature of a Unix shell with the power of
 Perl. The goal is a full featured shell that behaves as expected for
 normal shell activity and uses Perl syntax and functionality for
-control-flow statements and other things. You can get psh at
+control-flow statements and other things. You can get C<psh> at
 http://sourceforge.net/projects/psh/ .
 
-Zoidberg is a similar project and provides a shell written in perl,
+C<Zoidberg> is a similar project and provides a shell written in perl,
 configured in perl and operated in perl. It is intended as a login shell
 and development environment. It can be found at
 http://pardus-larus.student.utwente.nl/~pardus/projects/zoidberg/
 or your local CPAN mirror.
 
-The Shell.pm module (distributed with Perl) makes Perl try commands
-which aren't part of the Perl language as shell commands.  perlsh from
+The C<Shell.pm> module (distributed with Perl) makes Perl try commands
+which aren't part of the Perl language as shell commands.  C<perlsh> from
 the source distribution is simplistic and uninteresting, but may still
 be what you want.
 
@@ -67,14 +67,14 @@ From the command line, you can use the C<cpan> command's C<-l> switch:
 	$ cpan -l
 
 You can also use C<cpan>'s C<-a> switch to create an autobundle file
-that C<CPAN.pm> understands and cna use to re-install every module:
+that C<CPAN.pm> understands and can use to re-install every module:
 
 	$ cpan -a
 
-Inside a Perl program, you can use the ExtUtils::Installed module to
+Inside a Perl program, you can use the C<ExtUtils::Installed> module to
 show all installed distributions, although it can take awhile to do
 its magic.  The standard library which comes with Perl just shows up
-as "Perl" (although you can get those with Module::CoreList).
+as "Perl" (although you can get those with C<Module::CoreList>).
 
 	use ExtUtils::Installed;
 
@@ -82,7 +82,7 @@ as "Perl" (although you can get those with Module::CoreList).
 	my @modules = $inst->modules();
 
 If you want a list of all of the Perl module filenames, you
-can use File::Find::Rule.
+can use C<File::Find::Rule>:
 
 	use File::Find::Rule;
 
@@ -94,7 +94,7 @@ can use File::Find::Rule.
 		;
 
 If you do not have that module, you can do the same thing
-with File::Find which is part of the standard library.
+with C<File::Find> which is part of the standard library:
 
 	use File::Find;
 	my @files;
@@ -117,12 +117,12 @@ If you simply need to quickly check to see if a module is
 available, you can check for its documentation.  If you can
 read the documentation the module is most likely installed.
 If you cannot read the documentation, the module might not
-have any (in rare cases).
+have any (in rare cases):
 
 	$ perldoc Module::Name
 
 You can also try to include the module in a one-liner to see if
-perl finds it.
+perl finds it:
 
 	$ perl -MModule::Name -e1
 
@@ -153,11 +153,11 @@ The C<Data::Dumper> module can pretty-print Perl data structures:
 Perl comes with an interactive debugger, which you can start with the
 C<-d> switch. It's fully explained in L<perldebug>.
 
-If you'd like a graphical user interface and you have Tk, you can use
+If you'd like a graphical user interface and you have C<Tk>, you can use
 C<ptkdb>. It's on CPAN and available for free.
 
 If you need something much more sophisticated and controllable, Leon
-Brocard's Devel::ebug (which you can call with the -D switch as -Debug)
+Brocard's C<Devel::ebug> (which you can call with the C<-D> switch as C<-Debug>)
 gives you the programmatic hooks into everything you need to write your
 own (without too much pain and suffering).
 
@@ -182,7 +182,7 @@ C<Devel::DProf>.
 	dprofpp
 
 You can also do the profiling and reporting in one step with the C<-p>
-switch to <dprofpp>:
+switch to C<dprofpp>:
 
 	dprofpp -p program.pl
 
@@ -224,18 +224,18 @@ http://www.stonehenge.com/merlyn/LinuxMag/col75.html .
 
 =head2 How do I cross-reference my Perl programs?
 
-The B::Xref module can be used to generate cross-reference reports
+The C<B::Xref> module can be used to generate cross-reference reports
 for Perl programs.
 
     perl -MO=Xref[,OPTIONS] scriptname.plx
 
 =head2 Is there a pretty-printer (formatter) for Perl?
 
-Perltidy is a Perl script which indents and reformats Perl scripts
+C<Perltidy> is a Perl script which indents and reformats Perl scripts
 to make them easier to read by trying to follow the rules of the
 L<perlstyle>. If you write Perl scripts, or spend much time reading
 them, you will probably find it useful.  It is available at
-http://perltidy.sourceforge.net
+http://perltidy.sourceforge.net .
 
 Of course, if you simply follow the guidelines in L<perlstyle>,
 you shouldn't need to reformat.  The habit of formatting your code
@@ -275,7 +275,7 @@ You might also try pltags: http://www.mscha.com/pltags.zip
 
 Perl programs are just plain text, so any editor will do.
 
-If you're on Unix, you already have an IDE--Unix itself.  The UNIX
+If you're on Unix, you already have an IDE--Unix itself.  The Unix
 philosophy is the philosophy of several small tools that each do one
 thing and do it well.  It's like a carpenter's toolbox.
 
@@ -307,6 +307,10 @@ ActiveState's cross-platform (as of October 2004, that's Windows, Linux,
 and Solaris), multi-language IDE has Perl support, including a regular expression
 debugger and remote debugging.
 
+=item Notepad++
+
+http://notepad-plus.sourceforge.net/
+
 =item Open Perl IDE
 
 http://open-perl-ide.sourceforge.net/
@@ -326,9 +330,8 @@ debugger and syntax highlighting editor.
 
 http://padre.perlide.org/
 
-Padre is cross-platform IDE for Perl written in Perl using the the wxWidgets
-to provide a native look and feel. It's open source under the Artistic
-License.
+Padre is cross-platform IDE for Perl written in Perl using wxWidgets to provide
+a native look and feel. It's open source under the Artistic License.
 
 =item PerlBuilder
 
@@ -364,7 +367,7 @@ anything. In any emacs the cperl-mode (M-x cperl-mode) gives you
 perhaps the best available Perl editing mode in any editor.
 
 If you are using Windows, you can use any editor that lets you work
-with plain text, such as NotePad or WordPad.  Word processors, such as
+with plain text, such as NotePad or WordPad. Word processors, such as
 Microsoft Word or WordPerfect, typically do not work since they insert
 all sorts of behind-the-scenes information, although some allow you to
 save files as "Text Only". You can also download text editors designed
@@ -372,7 +375,7 @@ specifically for programming, such as Textpad (
 http://www.textpad.com/ ) and UltraEdit ( http://www.ultraedit.com/ ),
 among others.
 
-If you are using MacOS, the same concerns apply.  MacPerl (for Classic
+If you are using MacOS, the same concerns apply. MacPerl (for Classic
 environments) comes with a simple editor. Popular external editors are
 BBEdit ( http://www.bbedit.com/ ) or Alpha (
 http://www.his.com/~jguyer/Alpha/Alpha8.html ). MacOS X users can use
@@ -422,7 +425,7 @@ For vi lovers in general, Windows or elsewhere:
 
 nvi ( http://www.bostic.com/vi/ , available from CPAN in src/misc/) is
 yet another vi clone, unfortunately not available for Windows, but in
-UNIX platforms you might be interested in trying it out, firstly because
+Unix platforms you might be interested in trying it out, firstly because
 strictly speaking it is not a vi clone, it is the real vi, or the new
 incarnation of it, and secondly because you can embed Perl inside it
 to use Perl as the scripting language.  nvi is not alone in this,
@@ -486,7 +489,7 @@ MKS and U/WIN are commercial (U/WIN is free for educational and
 research purposes), Cygwin is covered by the GNU General Public
 License (but that shouldn't matter for Perl use).  The Cygwin, MKS,
 and U/WIN all contain (in addition to the shells) a comprehensive set
-of standard UNIX toolkit utilities.
+of standard Unix toolkit utilities.
 
 If you're transferring text files between Unix and Windows using FTP
 be sure to transfer them in ASCII mode so the ends of lines are
@@ -515,7 +518,6 @@ including Perl and HTML ( http://www.his.com/~jguyer/Alpha/Alpha8.html ).
 are text editors for Mac OS that have a Perl sensitivity mode
 ( http://web.barebones.com/ ).
 
-
 =back
 
 =head2 Where can I get Perl macros for vi?
@@ -526,20 +528,19 @@ the standard benchmark file for vi emulators.  The file runs best with nvi,
 the current version of vi out of Berkeley, which incidentally can be built
 with an embedded Perl interpreter--see http://www.cpan.org/src/misc/ .
 
-=head2 Where can I get perl-mode for emacs?
+=head2 Where can I get perl-mode or cperl-mode for emacs?
+X<emacs>
 
 Since Emacs version 19 patchlevel 22 or so, there have been both a
 perl-mode.el and support for the Perl debugger built in.  These should
 come with the standard Emacs 19 distribution.
 
-In the Perl source directory, you'll find a directory called "emacs",
-which contains a cperl-mode that color-codes keywords, provides
-context-sensitive help, and other nifty things.
-
 Note that the perl-mode of emacs will have fits with C<"main'foo">
 (single quote), and mess up the indentation and highlighting.  You
 are probably using C<"main::foo"> in new Perl code anyway, so this
 shouldn't be an issue.
+
+For CPerlMode, see http://www.emacswiki.org/cgi-bin/wiki/CPerlMode
 
 =head2 How can I use curses with Perl?
 
@@ -734,21 +735,21 @@ only makes one copy.
 
 Ditto for stringifying large arrays:
 
-        {
-                local $, = "\n";
-                print @big_array;
-        }
+	{
+	local $, = "\n";
+	print @big_array;
+	}
 
 is much more memory-efficient than either
 
-        print join "\n", @big_array;
+	print join "\n", @big_array;
 
 or
 
-        {
-                local $" = "\n";
-                print "@big_array";
-        }
+	{
+	local $" = "\n";
+	print "@big_array";
+	}
 
 
 =item * Pass by reference
@@ -910,7 +911,7 @@ executables for HP-UX, Linux, Solaris and Windows."
 
 Perl2Exe ( http://www.indigostar.com/perl2exe.htm ) is a command line
 program for converting perl scripts to executable files.  It targets both
-Windows and unix platforms.
+Windows and Unix platforms.
 
 =head2 How can I get C<#!perl> to work on [MS-DOS,NT,...]?
 
@@ -1078,20 +1079,12 @@ or
 
 The C<ExtUtils::MakeMaker> module, better known simply as "MakeMaker",
 turns a Perl script, typically called C<Makefile.PL>, into a Makefile.
-The unix tool C<make> uses this file to manage dependencies and actions
+The Unix tool C<make> uses this file to manage dependencies and actions
 to process and install a Perl distribution.
-
-=head1 REVISION
-
-Revision: $Revision$
-
-Date: $Date$
-
-See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2010 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

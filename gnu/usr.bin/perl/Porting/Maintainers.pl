@@ -1857,6 +1857,7 @@ use File::Glob qw(:case);
 				lib/Carp/Heavy.pm
 				lib/Class/Struct.{pm,t}
 				lib/Config.t
+				lib/Config_git.pl
 				lib/Config/Extensions.{pm,t}
 				lib/DB.{pm,t}
 				lib/DBM_Filter.pm

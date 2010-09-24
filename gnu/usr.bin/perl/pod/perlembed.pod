@@ -1100,7 +1100,7 @@ Finally, select Build -> Build interp.exe and you're ready to go.
 
 =head1 Hiding Perl_
 
-If you completely hide the short forms forms of the Perl public API,
+If you completely hide the short forms of the Perl public API,
 add -DPERL_NO_SHORT_NAMES to the compilation flags.  This means that
 for example instead of writing
 

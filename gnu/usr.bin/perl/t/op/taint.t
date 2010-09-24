@@ -17,7 +17,7 @@ use Config;
 use File::Spec::Functions;
 
 BEGIN { require './test.pl'; }
-plan tests => 301;
+plan tests => 302;
 
 $| = 1;
 
@@ -42,7 +42,6 @@ BEGIN {
   }
 }
 
-my $Is_MacOS    = $^O eq 'MacOS';
 my $Is_VMS      = $^O eq 'VMS';
 my $Is_MSWin32  = $^O eq 'MSWin32';
 my $Is_NetWare  = $^O eq 'NetWare';
@@ -51,8 +50,7 @@ my $Is_Cygwin   = $^O eq 'cygwin';
 my $Is_OpenBSD  = $^O eq 'openbsd';
 my $Invoke_Perl = $Is_VMS      ? 'MCR Sys$Disk:[]Perl.exe' :
                   $Is_MSWin32  ? '.\perl'               :
-                  $Is_MacOS    ? ':perl'                :
-                  $Is_NetWare  ? 'perl'                 : 
+                  $Is_NetWare  ? 'perl'                 :
                                  './perl'               ;
 my @MoreEnv = qw/IFS CDPATH ENV BASH_ENV/;
 
@@ -134,7 +132,7 @@ sub test ($;$) {
 }
 
 # We need an external program to call.
-my $ECHO = ($Is_MSWin32 ? ".\\echo$$" : $Is_MacOS ? ":echo$$" : ($Is_NetWare ? "echo$$" : "./echo$$"));
+my $ECHO = ($Is_MSWin32 ? ".\\echo$$" : ($Is_NetWare ? "echo$$" : "./echo$$"));
 END { unlink $ECHO }
 open PROG, "> $ECHO" or die "Can't create $ECHO: $!";
 print PROG 'print "@ARGV\n"', "\n";
@@ -173,7 +171,7 @@ my $TEST = catfile(curdir(), 'TEST');
 
     SKIP: {
         skip "Environment tainting tests skipped", 4
-          if $Is_MSWin32 || $Is_NetWare || $Is_VMS || $Is_Dos || $Is_MacOS;
+          if $Is_MSWin32 || $Is_NetWare || $Is_VMS || $Is_Dos;
 
 	my @vars = ('PATH', @MoreEnv);
 	while (my $v = $vars[0]) {
@@ -430,8 +428,7 @@ SKIP: {
     # just because Errno possibly failing.
     test eval('$!{ENOENT}') ||
 	$! == 2 || # File not found
-	($Is_Dos && $! == 22) ||
-	($^O eq 'mint' && $! == 33);
+	($Is_Dos && $! == 22);
 
     test !eval { open FOO, "> $foo" }, 'open for write';
     test $@ =~ /^Insecure dependency/, $@;
@@ -628,7 +625,6 @@ SKIP: {
 	unlink($symlink);
 	my $sl = "/something/naughty";
 	# it has to be a real path on Mac OS
-	$sl = MacPerl::MakePath((MacPerl::Volumes())[0]) if $Is_MacOS;
 	symlink($sl, $symlink) or die "symlink: $!\n";
 	my $readlink = readlink($symlink);
 	test tainted $readlink;
@@ -973,15 +969,11 @@ TODO: {
     };
     test !$@;
 
-    SKIP: {
-        skip "no exec() on MacOS Classic" if $Is_MacOS;
-
-	eval { 
-            no warnings;
-            exec("lskdfj does not exist","with","args"); 
-        };
-	test !$@;
-    }
+    eval {
+	no warnings;
+	exec("lskdfj does not exist","with","args"); 
+    };
+    test !$@;
 
     # If you add tests here update also the above skip block for VMS.
 }
@@ -1315,6 +1307,17 @@ foreach my $ord (78, 163, 256) {
     my $zz = pack "a*a*", q{print "Hello world\n"}, $TAINT;
     ok(tainted($zz), "pack a*a* preserves tainting");
 }
+
+# Bug RT #61976 tainted $! would show numeric rather than string value
+
+{
+    my $tainted_path = substr($^X,0,0) . "/no/such/file";
+    my $err;
+    # $! is used in a tainted expression, so gets tainted
+    open my $fh, $tainted_path or $err= "$!";
+    unlike($err, qr/^\d+$/, 'tainted $!');
+}
+
 
 # This may bomb out with the alarm signal so keep it last
 SKIP: {

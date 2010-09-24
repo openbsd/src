@@ -2,7 +2,7 @@
 
 # use strict;
 
-print "1..38\n";
+print "1..54\n";
 
 my $test = 1;
 
@@ -194,6 +194,82 @@ ok ($a == 2147483647, $a);
     $x--;
     ok ($x == 0, "(void) i_postdec");
 }
+
+# I'm sure that there's an IBM format with a 48 bit mantissa
+# IEEE doubles have a 53 bit mantissa
+# 80 bit long doubles have a 64 bit mantissa
+# sparcs have a 112 bit mantissa for their long doubles. Just to be awkward :-)
+
+sub check_some_code {
+    my ($start, $warn, $action, $description) = @_;
+    my $warn_line = ($warn ? 'use' : 'no') . " warnings 'imprecision';";
+    my @warnings;
+    local $SIG{__WARN__} = sub {push @warnings, "@_"};
+
+    print "# checking $action under $warn_line\n";
+    my $code = <<"EOC";
+$warn_line
+my \$i = \$start;
+for(0 .. 3) {
+    my \$a = $action;
+}
+1;
+EOC
+    eval $code or die "# $@\n$code";
+
+    if ($warn) {
+	unless (ok (scalar @warnings == 2, scalar @warnings)) {
+	    print STDERR "# $_" foreach @warnings;
+	}
+	foreach (@warnings) {
+	    unless (ok (/Lost precision when incrementing \d+/, $_)) {
+		print STDERR "# $_"
+	    }
+	}
+    } else {
+	unless (ok (scalar @warnings == 0)) {
+	    print STDERR "# @$_" foreach @warnings;
+	}
+    }
+}
+
+my $h_uv_max = 1 + (~0 >> 1);
+my $found;
+for my $n (47..113) {
+    my $power_of_2 = 2**$n;
+    my $plus_1 = $power_of_2 + 1;
+    next if $plus_1 != $power_of_2;
+    my ($start_p, $start_n);
+    if ($h_uv_max > $power_of_2 / 2) {
+	my $uv_max = 1 + 2 * (~0 >> 1);
+	# UV_MAX is 2**$something - 1, so subtract 1 to get the start value
+	$start_p = $uv_max - 1;
+	# whereas IV_MIN is -(2**$something), so subtract 2
+	$start_n = -$h_uv_max + 2;
+	print "# Mantissa overflows at 2**$n ($power_of_2)\n";
+	print "# But max UV ($uv_max) is greater so testing that\n";
+    } else {
+	print "# Testing 2**$n ($power_of_2) which overflows the mantissa\n";
+	$start_p = int($power_of_2 - 2);
+	$start_n = -$start_p;
+	my $check = $power_of_2 - 2;
+	die "Something wrong with our rounding assumptions: $check vs $start_p"
+	    unless $start_p == $check;
+    }
+
+    foreach my $warn (0, 1) {
+	foreach (['++$i', 'pre-inc'], ['$i++', 'post-inc']) {
+	    check_some_code($start_p, $warn, @$_);
+	}
+	foreach (['--$i', 'pre-dec'], ['$i--', 'post-dec']) {
+	    check_some_code($start_n, $warn, @$_);
+	}
+    }
+
+    $found = 1;
+    last;
+}
+die "Could not find a value which overflows the mantissa" unless $found;
 
 # these will segfault if they fail
 

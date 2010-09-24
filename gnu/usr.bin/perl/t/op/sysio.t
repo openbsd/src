@@ -1,10 +1,12 @@
 #!./perl
 
-print "1..42\n";
+BEGIN {
+  chdir('op') || chdir('t/op') || die "sysio.t: cannot look for myself: $!";
+  @INC = '../../lib';
+  require '../test.pl';
+}
 
-chdir('op') || chdir('t/op') || die "sysio.t: cannot look for myself: $!";
-@INC = '../../lib';
-require '../test.pl';
+plan tests => 48;
 
 open(I, 'sysio.t') || die "sysio.t: cannot find myself: $!";
 
@@ -19,47 +21,37 @@ $x = 'abc';
 
 # should not be able to do negative lengths
 eval { sysread(I, $x, -1) };
-print 'not ' unless ($@ =~ /^Negative length /);
-print "ok 1\n";
+like($@, qr/^Negative length /);
 
 # $x should be intact
-print 'not ' unless ($x eq 'abc');
-print "ok 2\n";
+is($x, 'abc');
 
 # should not be able to read before the buffer
 eval { sysread(I, $x, 1, -4) };
-print 'not ' unless ($x eq 'abc');
-print "ok 3\n";
+like($@, qr/^Offset outside string /);
 
 # $x should be intact
-print 'not ' unless ($x eq 'abc');
-print "ok 4\n";
+is($x, 'abc');
 
 $a ='0123456789';
 
 # default offset 0
-print 'not ' unless(sysread(I, $a, 3) == 3);
-print "ok 5\n";
+is(sysread(I, $a, 3), 3);
 
 # $a should be as follows
-print 'not ' unless ($a eq '#!.');
-print "ok 6\n";
+is($a, '#!.');
 
 # reading past the buffer should zero pad
-print 'not ' unless(sysread(I, $a, 2, 5) == 2);
-print "ok 7\n";
+is(sysread(I, $a, 2, 5), 2);
 
 # the zero pad should be seen now
-print 'not ' unless ($a eq "#!.\0\0/p");
-print "ok 8\n";
+is($a, "#!.\0\0/p");
 
 # try changing the last two characters of $a
-print 'not ' unless(sysread(I, $a, 3, -2) == 3);
-print "ok 9\n";
+is(sysread(I, $a, 3, -2), 3);
 
 # the last two characters of $a should have changed (into three)
-print 'not ' unless ($a eq "#!.\0\0erl");
-print "ok 10\n";
+is($a, "#!.\0\0erl");
 
 $outfile = tempfile();
 
@@ -69,115 +61,125 @@ select(O); $|=1; select(STDOUT);
 
 # cannot write negative lengths
 eval { syswrite(O, $x, -1) };
-print 'not ' unless ($@ =~ /^Negative length /);
-print "ok 11\n";
+like($@, qr/^Negative length /);
 
 # $x still intact
-print 'not ' unless ($x eq 'abc');
-print "ok 12\n";
+is($x, 'abc');
 
 # $outfile still intact
-print 'not ' if (-s $outfile);
-print "ok 13\n";
+ok(!-s $outfile);
 
 # should not be able to write from after the buffer
-eval { syswrite(O, $x, 1, 3) };
-print 'not ' unless ($@ =~ /^Offset outside string /);
-print "ok 14\n";
+eval { syswrite(O, $x, 1, 4) };
+like($@, qr/^Offset outside string /);
 
 # $x still intact
-print 'not ' unless ($x eq 'abc');
-print "ok 15\n";
+is($x, 'abc');
+
+# but it should be ok to write from the end of the buffer
+syswrite(O, $x, 0, 3);
+syswrite(O, $x, 1, 3);
 
 # $outfile still intact
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
 }
-print 'not ' if (-s $outfile);
-print "ok 16\n";
+ok(!-s $outfile);
 
 # should not be able to write from before the buffer
 
 eval { syswrite(O, $x, 1, -4) };
-print 'not ' unless ($@ =~ /^Offset outside string /);
-print "ok 17\n";
+like($@, qr/^Offset outside string /);
 
 # $x still intact
-print 'not ' unless ($x eq 'abc');
-print "ok 18\n";
+is($x, 'abc');
 
 # $outfile still intact
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
 }
-print 'not ' if (-s $outfile);
-print "ok 19\n";
+ok(!-s $outfile);
+
+# [perl #67912] syswrite prints garbage if called with empty scalar and non-zero offset
+eval { my $buf = ''; syswrite(O, $buf, 1, 1) };
+like($@, qr/^Offset outside string /);
+
+# $x still intact
+is($x, 'abc');
+
+# $outfile still intact
+if ($reopen) {  # must close file to update EOF marker for stat
+  close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
+}
+ok(!-s $outfile);
+
+eval { my $buf = 'x'; syswrite(O, $buf, 1, 2) };
+like($@, qr/^Offset outside string /);
+
+# $x still intact
+is($x, 'abc');
+
+# $outfile still intact
+if ($reopen) {  # must close file to update EOF marker for stat
+  close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
+}
+ok(!-s $outfile);
 
 # default offset 0
 if (syswrite(O, $a, 2) == 2){
-  print "ok 20\n";
+  pass();
 } else {
-  print "# $!\nnot ok 20\n";
+  diag($!);
+  fail();
   # most other tests make no sense after e.g. "No space left on device"
   die $!;
 }
 
 
 # $a still intact
-print 'not ' unless ($a eq "#!.\0\0erl");
-print "ok 21\n";
+is($a, "#!.\0\0erl");
 
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
 }
-print 'not ' unless (-s $outfile == 2);
-print "ok 22\n";
+is(-s $outfile, 2);
 
 # with offset
-print 'not ' unless (syswrite(O, $a, 2, 5) == 2);
-print "ok 23\n";
+is(syswrite(O, $a, 2, 5), 2);
 
 # $a still intact
-print 'not ' unless ($a eq "#!.\0\0erl");
-print "ok 24\n";
+is($a, "#!.\0\0erl");
 
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
 }
-print 'not ' unless (-s $outfile == 4);
-print "ok 25\n";
+is(-s $outfile, 4);
 
 # with negative offset and a bit too much length
-print 'not ' unless (syswrite(O, $a, 5, -3) == 3);
-print "ok 26\n";
+is(syswrite(O, $a, 5, -3), 3);
 
 # $a still intact
-print 'not ' unless ($a eq "#!.\0\0erl");
-print "ok 27\n";
+is($a, "#!.\0\0erl");
 
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
 }
-print 'not ' unless (-s $outfile == 7);
-print "ok 28\n";
+is(-s $outfile, 7);
 
 # with implicit length argument
-print 'not ' unless (syswrite(O, $x) == 3);
-print "ok 29\n";
+is(syswrite(O, $x), 3);
 
 # $a still intact
-print 'not ' unless ($x eq "abc");
-print "ok 30\n";
+is($x, "abc");
 
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
 }
-print 'not ' unless (-s $outfile == 10);
-print "ok 31\n";
+is(-s $outfile, 10);
 
 close(O);
 
@@ -186,30 +188,24 @@ open(I, $outfile) || die "sysio.t: cannot read $outfile: $!";
 $b = 'xyz';
 
 # reading too much only return as much as available
-print 'not ' unless (sysread(I, $b, 100) == 10);
-print "ok 32\n";
+is(sysread(I, $b, 100), 10);
+
 # this we should have
-print 'not ' unless ($b eq '#!ererlabc');
-print "ok 33\n";
+is($b, '#!ererlabc');
 
 # test sysseek
 
-print 'not ' unless sysseek(I, 2, 0) == 2;
-print "ok 34\n";
+is(sysseek(I, 2, 0), 2);
 sysread(I, $b, 3);
-print 'not ' unless $b eq 'ere';
-print "ok 35\n";
+is($b, 'ere');
 
-print 'not ' unless sysseek(I, -2, 1) == 3;
-print "ok 36\n";
+is(sysseek(I, -2, 1), 3);
 sysread(I, $b, 4);
-print 'not ' unless $b eq 'rerl';
-print "ok 37\n";
+is($b, 'rerl');
 
-print 'not ' unless sysseek(I, 0, 0) eq '0 but true';
-print "ok 38\n";
-print 'not ' if defined sysseek(I, -1, 1);
-print "ok 39\n";
+ok(sysseek(I, 0, 0) eq '0 but true');
+
+ok(not defined sysseek(I, -1, 1));
 
 close(I);
 
@@ -224,16 +220,16 @@ die $@ if $@ and $@ !~ /^IO layers \(like ':utf8'\) unavailable/;
 # y diaresis is \w when UTF8
 $a = chr 255;
 
-print $a =~ /\w/ ? "not ok 40\n" : "ok 40\n";
+unlike($a, qr/\w/);
 
 syswrite I, $a;
 
 # Should not be upgraded as a side effect of syswrite.
-print $a =~ /\w/ ? "not ok 41\n" : "ok 41\n";
+unlike($a, qr/\w/);
 
 # This should work
 eval {syswrite I, 2;};
-print $@ eq "" ? "ok 42\n" : "not ok 42 # $@";
+is($@, '');
 
 close(I);
 unlink $outfile;

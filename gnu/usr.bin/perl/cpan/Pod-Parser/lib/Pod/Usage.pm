@@ -16,7 +16,7 @@ require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
 
-Pod::Usage, pod2usage() - print a usage message from embedded pod documentation
+Pod::Usage, pod2usage - print a usage message from embedded pod documentation
 
 =head1 SYNOPSIS
 

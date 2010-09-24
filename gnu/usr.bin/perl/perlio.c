@@ -135,7 +135,7 @@ perlsio_binmode(FILE *fp, int iotype, int mode)
      * This used to be contents of do_binmode in doio.c
      */
 #ifdef DOSISH
-#  if defined(atarist) || defined(__MINT__)
+#  if defined(atarist)
     PERL_UNUSED_ARG(iotype);
     if (!fflush(fp)) {
         if (mode & O_BINARY)
@@ -614,10 +614,8 @@ PerlIO_list_free(pTHX_ PerlIO_list_t *list)
 	if (--list->refcnt == 0) {
 	    if (list->array) {
 		IV i;
-		for (i = 0; i < list->cur; i++) {
-		    if (list->array[i].arg)
-			SvREFCNT_dec(list->array[i].arg);
-		}
+		for (i = 0; i < list->cur; i++)
+		    SvREFCNT_dec(list->array[i].arg);
 		Safefree(list->array);
 	    }
 	    Safefree(list);
@@ -761,6 +759,11 @@ PerlIO_get_layers(pTHX_ PerlIO *f)
 	PerlIOl *l = PerlIOBase(f);
 
 	while (l) {
+	    /* There is some collusion in the implementation of
+	       XS_PerlIO_get_layers - it knows that name and flags are
+	       generated as fresh SVs here, and takes advantage of that to
+	       "copy" them by taking a reference. If it changes here, it needs
+	       to change there too.  */
 	    SV * const name = l->tab && l->tab->name ?
 	    newSVpv(l->tab->name, 0) : &PL_sv_undef;
 	    SV * const arg = l->tab && l->tab->Getarg ?
@@ -802,7 +805,7 @@ PerlIO_find_layer(pTHX_ const char *name, STRLEN len, int load)
 	} else {
 	    SV * const pkgsv = newSVpvs("PerlIO");
 	    SV * const layer = newSVpvn(name, len);
-	    CV * const cv    = Perl_get_cvn_flags(aTHX_ STR_WITH_LEN("PerlIO::Layer::NoWarnings"), 0);
+	    CV * const cv    = get_cvs("PerlIO::Layer::NoWarnings", 0);
 	    ENTER;
 	    SAVEINT(PL_in_load_module);
 	    if (cv) {
@@ -976,10 +979,9 @@ PerlIO_parse_layers(pTHX_ PerlIO_list_t *av, const char *names)
 		     * seen as an invalid separator character.
 		     */
 		    const char q = ((*s == '\'') ? '"' : '\'');
-		    if (ckWARN(WARN_LAYER))
-			Perl_warner(aTHX_ packWARN(WARN_LAYER),
-			      "Invalid separator character %c%c%c in PerlIO layer specification %s",
-			      q, *s, q, s);
+		    Perl_ck_warner(aTHX_ packWARN(WARN_LAYER),
+				   "Invalid separator character %c%c%c in PerlIO layer specification %s",
+				   q, *s, q, s);
 		    SETERRNO(EINVAL, LIB_INVARG);
 		    return -1;
 		}
@@ -1013,10 +1015,9 @@ PerlIO_parse_layers(pTHX_ PerlIO_list_t *av, const char *names)
 			     */
 			case '\0':
 			    e--;
-			    if (ckWARN(WARN_LAYER))
-				Perl_warner(aTHX_ packWARN(WARN_LAYER),
-				      "Argument list not closed for PerlIO layer \"%.*s\"",
-				      (int) (e - s), s);
+			    Perl_ck_warner(aTHX_ packWARN(WARN_LAYER),
+					   "Argument list not closed for PerlIO layer \"%.*s\"",
+					   (int) (e - s), s);
 			    return -1;
 			default:
 			    /*
@@ -1035,13 +1036,11 @@ PerlIO_parse_layers(pTHX_ PerlIO_list_t *av, const char *names)
 			    arg = newSVpvn(as, alen);
 			PerlIO_list_push(aTHX_ av, layer,
 					 (arg) ? arg : &PL_sv_undef);
-			if (arg)
-			    SvREFCNT_dec(arg);
+			SvREFCNT_dec(arg);
 		    }
 		    else {
-			if (ckWARN(WARN_LAYER))
-			    Perl_warner(aTHX_ packWARN(WARN_LAYER), "Unknown PerlIO layer \"%.*s\"",
-				  (int) llen, s);
+			Perl_ck_warner(aTHX_ packWARN(WARN_LAYER), "Unknown PerlIO layer \"%.*s\"",
+				       (int) llen, s);
 			return -1;
 		    }
 		}
@@ -1455,8 +1454,8 @@ PerlIO_layer_from_ref(pTHX_ SV *sv)
 	PerlIO_funcs *f = PerlIO_find_layer(aTHX_ STR_WITH_LEN("scalar"), 1);
 	/* This isn't supposed to happen, since PerlIO::scalar is core,
 	 * but could happen anyway in smaller installs or with PAR */
-	if (!f && ckWARN(WARN_LAYER))
-	    Perl_warner(aTHX_ packWARN(WARN_LAYER), "Unknown PerlIO layer \"scalar\"");
+	if (!f)
+	    Perl_ck_warner(aTHX_ packWARN(WARN_LAYER), "Unknown PerlIO layer \"scalar\"");
 	return f;
     }
 
@@ -1561,8 +1560,7 @@ PerlIO_openn(pTHX_ const char *layers, const char *mode, int fd,
 		    arg = (*l->tab->Getarg) (aTHX_ &l, NULL, 0);
 		PerlIO_list_push(aTHX_ layera, l->tab,
 				 (arg) ? arg : &PL_sv_undef);
-		if (arg)
-		    SvREFCNT_dec(arg);
+		SvREFCNT_dec(arg);
 		l = *PerlIONext(&l);
 	    }
 	}
@@ -1768,10 +1766,7 @@ PerlIO_has_base(PerlIO *f)
 
 	  if (tab)
 	       return (tab->Get_base != NULL);
-	  SETERRNO(EINVAL, LIB_INVARG);
      }
-     else
-	  SETERRNO(EBADF, SS_IVCHAN);
 
      return 0;
 }
@@ -1779,15 +1774,14 @@ PerlIO_has_base(PerlIO *f)
 int
 PerlIO_fast_gets(PerlIO *f)
 {
-    if (PerlIOValid(f) && (PerlIOBase(f)->flags & PERLIO_F_FASTGETS)) {
-	 const PerlIO_funcs * const tab = PerlIOBase(f)->tab;
+    if (PerlIOValid(f)) {
+	 if (PerlIOBase(f)->flags & PERLIO_F_FASTGETS) {
+	     const PerlIO_funcs * const tab = PerlIOBase(f)->tab;
 
-	 if (tab)
-	      return (tab->Set_ptrcnt != NULL);
-	 SETERRNO(EINVAL, LIB_INVARG);
+	     if (tab)
+		  return (tab->Set_ptrcnt != NULL);
+	 }
     }
-    else
-	 SETERRNO(EBADF, SS_IVCHAN);
 
     return 0;
 }
@@ -1800,10 +1794,7 @@ PerlIO_has_cntptr(PerlIO *f)
 
 	if (tab)
 	     return (tab->Get_ptr != NULL && tab->Get_cnt != NULL);
-	  SETERRNO(EINVAL, LIB_INVARG);
     }
-    else
-	 SETERRNO(EBADF, SS_IVCHAN);
 
     return 0;
 }
@@ -1816,10 +1807,7 @@ PerlIO_canset_cnt(PerlIO *f)
 
 	  if (tab)
 	       return (tab->Set_ptrcnt != NULL);
-	  SETERRNO(EINVAL, LIB_INVARG);
     }
-    else
-	 SETERRNO(EBADF, SS_IVCHAN);
 
     return 0;
 }
@@ -2277,8 +2265,7 @@ PerlIOBase_dup(pTHX_ PerlIO *f, PerlIO *o, CLONE_PARAMS *param, int flags)
 	f = PerlIO_push(aTHX_ f, self, PerlIO_modestr(o,buf), arg);
 	if (PerlIOBase(o)->flags & PERLIO_F_UTF8)
 	    PerlIOBase(f)->flags |= PERLIO_F_UTF8;
-	if (arg)
-	    SvREFCNT_dec(arg);
+	SvREFCNT_dec(arg);
     }
     return f;
 }
@@ -4123,7 +4110,7 @@ PerlIOBuf_get_base(pTHX_ PerlIO *f)
     if (!b->buf) {
 	if (!b->bufsiz)
 	    b->bufsiz = 4096;
-	b->buf = Newxz(b->buf,b->bufsiz, STDCHAR);
+	Newxz(b->buf,b->bufsiz, STDCHAR);
 	if (!b->buf) {
 	    b->buf = (STDCHAR *) & b->oneword;
 	    b->bufsiz = sizeof(b->oneword);
@@ -5167,16 +5154,29 @@ PerlIO_tmpfile(void)
 	  f = PerlIO_fdopen(fd, "w+b");
 #else /* WIN32 */
 #    if defined(HAS_MKSTEMP) && ! defined(VMS) && ! defined(OS2)
-     SV * const sv = newSVpvs("/tmp/PerlIO_XXXXXX");
+     int fd = -1;
+     char tempname[] = "/tmp/PerlIO_XXXXXX";
+     const char * const tmpdir = PL_tainting ? NULL : PerlEnv_getenv("TMPDIR");
+     SV * sv;
      /*
       * I have no idea how portable mkstemp() is ... NI-S
       */
-     const int fd = mkstemp(SvPVX(sv));
+     if (tmpdir && *tmpdir) {
+	 /* if TMPDIR is set and not empty, we try that first */
+	 sv = newSVpv(tmpdir, 0);
+	 sv_catpv(sv, tempname + 4);
+	 fd = mkstemp(SvPVX(sv));
+     }
+     if (fd < 0) {
+	 sv = NULL;
+	 /* else we try /tmp */
+	 fd = mkstemp(tempname);
+     }
      if (fd >= 0) {
 	  f = PerlIO_fdopen(fd, "w+");
 	  if (f)
 	       PerlIOBase(f)->flags |= PERLIO_F_TEMP;
-	  PerlLIO_unlink(SvPVX_const(sv));
+	  PerlLIO_unlink(sv ? SvPVX_const(sv) : tempname);
      }
      SvREFCNT_dec(sv);
 #    else	/* !HAS_MKSTEMP, fallback to stdio tmpfile(). */

@@ -1,14 +1,51 @@
 #!./perl
 
-BEGIN {
-    chdir 't';
-    @INC = '../lib';
-    require './test.pl';
+print "1..6\n";
+my $test = 0;
+
+sub failed {
+    my ($got, $expected, $name) = @_;
+
+    print "not ok $test - $name\n";
+    my @caller = caller(1);
+    print "# Failed test at $caller[1] line $caller[2]\n";
+    if (defined $got) {
+	print "# Got '$got'\n";
+    } else {
+	print "# Got undef\n";
+    }
+    print "# Expected $expected\n";
+    return;
 }
 
-plan(tests => 6);
+sub like {
+    my ($got, $pattern, $name) = @_;
+    $test = $test + 1;
+    if (defined $got && $got =~ $pattern) {
+	print "ok $test - $name\n";
+	# Principle of least surprise - maintain the expected interface, even
+	# though we aren't using it here (yet).
+	return 1;
+    }
+    failed($got, $pattern, $name);
+}
 
-my $filename = tempfile();
+sub is {
+    my ($got, $expect, $name) = @_;
+    $test = $test + 1;
+    if (defined $got && $got eq $expect) {
+	print "ok $test - $name\n";
+	return 1;
+    }
+    failed($got, "'$expect'", $name);
+}
+
+my $filename = "multiline$$";
+
+END {
+    1 while unlink $filename;
+}
+
 open(TRY,'>',$filename) || (die "Can't open $filename: $!");
 
 $x = 'now is the time
@@ -44,7 +81,6 @@ is($., 7,       '    $.' );
 
 $out = (($^O eq 'MSWin32') || $^O eq 'NetWare') ? `type $filename`
     : ($^O eq 'VMS') ? `type $filename.;0`   # otherwise .LIS is assumed
-    : ($^O eq 'MacOS') ? `catenate $filename`
     : `cat $filename`;
 
 like($out, qr/.*\n.*\n.*\n$/);

@@ -2885,7 +2885,11 @@ int test_unix_status;
 
 
 /* default piping mailbox size */
-#define PERL_BUFSIZ        512
+#ifdef __VAX
+#  define PERL_BUFSIZ        512
+#else
+#  define PERL_BUFSIZ        8192
+#endif
 
 
 static void
@@ -3073,7 +3077,10 @@ pipe_exit_routine()
 #if defined(USE_ITHREADS)
              && my_perl
 #endif
-             && PL_perlio_fd_refcnt) 
+#ifdef USE_PERLIO
+             && PL_perlio_fd_refcnt 
+#endif
+              )
                PerlIO_flush(info->fp);
            else 
                fflush((FILE *)info->fp);
@@ -4681,7 +4688,10 @@ static I32 my_pclose_pinfo(pTHX_ pInfo info) {
 #if defined(USE_ITHREADS)
           && my_perl
 #endif
-          && PL_perlio_fd_refcnt) 
+#ifdef USE_PERLIO
+          && PL_perlio_fd_refcnt 
+#endif
+           )
             PerlIO_flush(info->fp);
         else 
             fflush((FILE *)info->fp);
@@ -4708,7 +4718,10 @@ static I32 my_pclose_pinfo(pTHX_ pInfo info) {
 #if defined(USE_ITHREADS)
          && my_perl
 #endif
-         && PL_perlio_fd_refcnt) 
+#ifdef USE_PERLIO
+         && PL_perlio_fd_refcnt
+#endif
+        )
         PerlIO_close(info->fp);
      else 
         fclose((FILE *)info->fp);
@@ -5414,10 +5427,6 @@ Stat_t dst_st;
 	   }
 
 	    /* The source must be a file specification */
-	    vms_dir_file = PerlMem_malloc(VMS_MAXRSS);
-	    if (vms_dir_file == NULL)
-		_ckvmssts_noperl(SS$_INSFMEM);
-
 	    ret_str = do_fileify_dirspec(vms_dst, vms_dir_file, 0, NULL);
 	    if (ret_str == NULL) {
 		PerlMem_free(vms_dst);
@@ -11289,7 +11298,8 @@ int my_fclose(FILE *fp) {
 int
 my_fwrite(const void *src, size_t itmsz, size_t nitm, FILE *dest)
 {
-  register char *cp, *end, *cpd, *data;
+  register char *cp, *end, *cpd;
+  char *data;
   register unsigned int fd = fileno(dest);
   register unsigned int fdoff = fd / sizeof(unsigned int);
   int retval;
@@ -12983,6 +12993,8 @@ Perl_flex_stat_int(pTHX_ const char *fspec, Stat_t *statbufp, int lstat_flag)
     }
     /* If we were successful, leave errno where we found it */
     if (retval == 0) RESTORE_ERRNO;
+    PerlMem_free(temp_fspec);
+    PerlMem_free(fileified);
     return retval;
 
 }  /* end of flex_stat_int() */
@@ -13570,7 +13582,7 @@ rmscopy_fromperl(pTHX_ CV *cv)
   if (SvTYPE(mysv) == SVt_PVGV) {
     if (!(io = GvIOp(mysv)) || !PerlIO_getname(IoIFP(io),inspec)) {
       set_errno(EINVAL); set_vaxc_errno(LIB$_INVARG);
-      ST(0) = &PL_sv_no;
+      ST(0) = sv_2mortal(newSViv(0));
       Safefree(inspec);
       XSRETURN(1);
     }
@@ -13579,7 +13591,7 @@ rmscopy_fromperl(pTHX_ CV *cv)
   else {
     if (mysv != ST(0) || !(inp = SvPV(mysv,n_a)) || !*inp) {
       set_errno(EINVAL); set_vaxc_errno(LIB$_INVARG);
-      ST(0) = &PL_sv_no;
+      ST(0) = sv_2mortal(newSViv(0));
       Safefree(inspec);
       XSRETURN(1);
     }
@@ -13589,7 +13601,7 @@ rmscopy_fromperl(pTHX_ CV *cv)
   if (SvTYPE(mysv) == SVt_PVGV) {
     if (!(io = GvIOp(mysv)) || !PerlIO_getname(IoIFP(io),outspec)) {
       set_errno(EINVAL); set_vaxc_errno(LIB$_INVARG);
-      ST(0) = &PL_sv_no;
+      ST(0) = sv_2mortal(newSViv(0));
       Safefree(inspec);
       Safefree(outspec);
       XSRETURN(1);
@@ -13599,7 +13611,7 @@ rmscopy_fromperl(pTHX_ CV *cv)
   else {
     if (mysv != ST(1) || !(outp = SvPV(mysv,n_a)) || !*outp) {
       set_errno(EINVAL); set_vaxc_errno(LIB$_INVARG);
-      ST(0) = &PL_sv_no;
+      ST(0) = sv_2mortal(newSViv(0));
       Safefree(inspec);
       Safefree(outspec);
       XSRETURN(1);
@@ -13607,7 +13619,7 @@ rmscopy_fromperl(pTHX_ CV *cv)
   }
   date_flag = (items == 3) ? SvIV(ST(2)) : 0;
 
-  ST(0) = boolSV(rmscopy(inp,outp,date_flag));
+  ST(0) = sv_2mortal(newSViv(rmscopy(inp,outp,date_flag)));
   Safefree(inspec);
   Safefree(outspec);
   XSRETURN(1);
@@ -14302,9 +14314,10 @@ struct statbuf_t {
             if (mode) {
                 *mode = statbuf.old_st_mode;
             }
-	    return 0;
 	}
     }
+    PerlMem_free(temp_fspec);
+    PerlMem_free(fileified);
     return sts;
 }
 

@@ -3364,8 +3364,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/sys/lib/perl/5.10.1"		/**/
-#define PRIVLIB_EXP "/sys/lib/perl/5.10.1"		/**/
+#define PRIVLIB "/sys/lib/perl/5.12.2"		/**/
+#define PRIVLIB_EXP "/sys/lib/perl/5.12.2"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -3492,9 +3492,9 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/sys/lib/perl/5.10.1/site_perl"		/**/
-#define SITELIB_EXP "/sys/lib/perl/5.10.1/site_perl"		/**/
-#define SITELIB_STEM "/sys/lib/perl/5.10.1/site_perl"		/**/
+#define SITELIB "/sys/lib/perl/5.12.2/site_perl"		/**/
+#define SITELIB_EXP "/sys/lib/perl/5.12.2/site_perl"		/**/
+#define SITELIB_STEM "/sys/lib/perl/5.12.2/site_perl"		/**/
 
 /* Size_t_size:
  *	This symbol holds the size of a Size_t in bytes.

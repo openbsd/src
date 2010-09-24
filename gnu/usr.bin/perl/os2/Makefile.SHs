@@ -481,7 +481,7 @@ $d/%/Makefile.aout : miniperl_ \$(_preplibrary) \$(AOUT_EXTENSIONS_FORCE)
 done
 
 # We need to special-case OS2/DLL/DLL.a, since the recipe above will
-# try to find it in ext/OS2/DLL
+# try to find it in ext/OS2-DLL
 
 $spitshell >>Makefile <<'!NO!SUBS!'
 lib/auto/OS2/DLL/DLL.a : lib/auto/OS2/REXX/REXX.a

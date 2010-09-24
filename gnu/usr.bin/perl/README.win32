@@ -44,9 +44,18 @@ following compilers on the Intel x86 architecture:
       Borland C++           version 5.02 or later
       Microsoft Visual C++  version 2.0 or later
       MinGW with gcc        gcc version 2.95.2 or later
+      Gcc by mingw.org        gcc version 2.95.2 or later
+      Gcc by mingw-w64.sf.net gcc version 4.4.3 or later
 
-The last of these is a high quality freeware compiler.  Use version
-3.2.x or later for the best results with this compiler.
+Note that the last two of these are actually competing projects both
+delivering complete gcc toolchain for MS Windows:
+- http://mingw.org - delivers gcc toolchain targeting 32-bit Windows
+  platform.
+  Use version 3.2.x or later for the best results with this compiler.
+- http://mingw-w64.sf.net - delivers gcc toolchain targeting both 64-bit
+  Windows and 32-bit Windows platforms (despite the project name "mingw-w64"
+  they are not only 64-bit oriented). They deliver the native gcc compilers
+  + cross-compilers that are also supported by perl's makefile.
 
 The Borland C++ and Microsoft Visual C++ compilers are also now being given
 away free.  The Borland compiler is available as "Borland C++ Compiler Free
@@ -57,11 +66,21 @@ as part of the ".NET Framework SDK") and is the same compiler that ships with
 "Visual C++ .NET 2003 Professional" or "Visual C++ 2005/2008 Professional"
 respectively.
 
-This port can also be built on the Intel IA64 using:
+This port can also be built on IA64/AMD64 using:
 
       Microsoft Platform SDK	Nov 2001 (64-bit compiler and tools)
+      MinGW64 compiler (gcc version 4.4.3 or later)
 
 The MS Platform SDK can be downloaded from http://www.microsoft.com/.
+The MinGW64 compiler is available at http://sourceforge.net/projects/mingw-w64.
+The latter is actually a cross-compiler targeting Win64. There's also a trimmed
+down compiler (no java, or gfortran) suitable for building perl available at:
+http://strawberryperl.com/package/kmx/64_gcctoolchain/mingw64-w64-20100123-kmx-v2.zip
+
+NOTE: If you're using a 32-bit compiler to build perl on a 64-bit Windows
+operating system, then you should set the WIN64 environment variable to "undef".
+Also, the trimmed down compiler only passes tests when USE_ITHREADS *= define
+(as opposed to undef) and when the CFG *= Debug line is commented out.
 
 This port fully supports MakeMaker (the set of modules that
 is used to build extensions to perl).  Therefore, you should be
@@ -330,6 +349,9 @@ gcc-3.2.3.  It can be downloaded here:
 Perl also compiles with earlier releases of gcc (2.95.2 and up).  See below
 for notes about using earlier versions of MinGW/gcc.
 
+And perl also compiles with gcc-4.3.0 and up, and perhaps even some of the
+earlier 4.x.x versions.
+
 You also need dmake.  See L</"Make"> above on how to get it.
 
 =item MinGW release 1 with gcc
@@ -396,7 +418,16 @@ may end up building against the installed perl's lib/CORE directory rather
 than the one being tested.
 
 You will have to make sure that CCTYPE is set correctly and that
-CCHOME points to wherever you installed your compiler.
+CCHOME points to wherever you installed your compiler. If building with
+gcc-4.x.x, you'll also need to uncomment the assignment to GCC_4XX and
+uncomment the assignment to the appropriate GCCHELPERDLL in the makefile.mk.
+
+If building with the cross-compiler provided by
+mingw-w64.sourceforge.net you'll need to uncomment the line that sets
+GCCCROSS in the makefile.mk. Do this only if it's the cross-compiler - ie
+only if the bin folder doesn't contain a gcc.exe. (The cross-compiler
+does not provide a gcc.exe, g++.exe, ar.exe, etc. Instead, all of these
+executables are prefixed with 'x86_64-w64-mingw32-'.)
 
 The default value for CCHOME in the makefiles for Visual C++
 may not be correct for some versions.  Make sure the default exists
@@ -429,7 +460,7 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type "dmake" (or "nmake" if you are using that make).
 
 This should build everything.  Specifically, it will create perl.exe,
-perl510.dll at the perl toplevel, and various other extension dll's
+perl512.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 

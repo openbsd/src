@@ -319,7 +319,6 @@ for file do
     usersub) ;;
     utf8) ;;
     util) ;;
-    xsutils) ;;
     *) ;;
     esac
 

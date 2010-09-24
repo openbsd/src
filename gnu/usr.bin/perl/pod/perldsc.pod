@@ -85,8 +85,8 @@ distinguishing between arrays and pointers to the same, this can be
 confusing.  If so, just think of it as the difference between a structure
 and a pointer to a structure.
 
-You can (and should) read more about references in the perlref(1) man
-page.  Briefly, references are rather like pointers that know what they
+You can (and should) read more about references in L<perlref>.
+Briefly, references are rather like pointers that know what they
 point to.  (Objects are also a kind of reference, but we won't be needing
 them right away--if ever.)  This means that when you have something which
 looks to you like an access to a two-or-more-dimensional array and/or hash,
@@ -837,7 +837,7 @@ source code to MLDBM.
 
 =head1 SEE ALSO
 
-perlref(1), perllol(1), perldata(1), perlobj(1)
+L<perlref>, L<perllol>, L<perldata>, L<perlobj>
 
 =head1 AUTHOR
 

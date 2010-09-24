@@ -1889,8 +1889,8 @@ The idea is that the calling context only needs to be
 created and destroyed once, and the sub can be called
 arbitrarily many times in between.
 
-It is usual to pass parameters using global variables -- typically
-$_ for one parameter, or $a and $b for two parameters -- rather
+It is usual to pass parameters using global variables (typically
+$_ for one parameter, or $a and $b for two parameters) rather
 than via @_. (It is possible to use the @_ mechanism if you know
 what you're doing, though there is as yet no supported API for
 it. It's also inherently slower.)

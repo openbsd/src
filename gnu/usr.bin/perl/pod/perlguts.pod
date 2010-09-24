@@ -278,7 +278,7 @@ efficient shifting and splicing off the beginning of the array; while
 C<AvARRAY> points to the first element in the array that is visible from
 Perl, C<AvALLOC> points to the real start of the C array. These are
 usually the same, but a C<shift> operation can be carried out by
-increasing C<AvARRAY> by one and decreasing C<AvFILL> and C<AvLEN>.
+increasing C<AvARRAY> by one and decreasing C<AvFILL> and C<AvMAX>.
 Again, the location of the real start of the C array only comes into
 play when freeing the array. See C<av_shift> in F<av.c>.
 
@@ -786,7 +786,7 @@ to survive its use on the stack you need not do any mortalization.
 If you are not sure then doing an C<SvREFCNT_inc> and C<sv_2mortal>, or
 making a C<sv_mortalcopy> is safer.
 
-The mortal routines are not just for SVs -- AVs and HVs can be
+The mortal routines are not just for SVs; AVs and HVs can be
 made mortal by passing their address (type-casted to C<SV*>) to the
 C<sv_2mortal> or C<sv_mortalcopy> routines.
 
@@ -979,7 +979,7 @@ routine types:
     int  (*svt_clear)(SV* sv, MAGIC* mg);
     int  (*svt_free)(SV* sv, MAGIC* mg);
 
-    int  (*svt_copy)(SV *sv, MAGIC* mg, SV *nsv, const char *name, int namlen);
+    int  (*svt_copy)(SV *sv, MAGIC* mg, SV *nsv, const char *name, I32 namlen);
     int  (*svt_dup)(MAGIC *mg, CLONE_PARAMS *param);
     int  (*svt_local)(SV *nsv, MAGIC *mg);
 
@@ -1038,7 +1038,7 @@ The current kinds of Magic Virtual Tables are:
     e  PERL_MAGIC_envelem        vtbl_envelem    %ENV hash element
     f  PERL_MAGIC_fm             vtbl_fm         Formline ('compiled' format)
     g  PERL_MAGIC_regex_global   vtbl_mglob      m//g target / study()ed string
-    H  PERL_MAGIC_hints          vtbl_sig        %^H hash
+    H  PERL_MAGIC_hints          vtbl_hints      %^H hash
     h  PERL_MAGIC_hintselem      vtbl_hintselem  %^H hash element
     I  PERL_MAGIC_isa            vtbl_isa        @ISA array
     i  PERL_MAGIC_isaelem        vtbl_isaelem    @ISA array element
@@ -1624,11 +1624,10 @@ and C<dXSTARG>.
 =head2 Scratchpads
 
 The question remains on when the SVs which are I<target>s for opcodes
-are created. The answer is that they are created when the current unit --
-a subroutine or a file (for opcodes for statements outside of
-subroutines) -- is compiled. During this time a special anonymous Perl
-array is created, which is called a scratchpad for the current
-unit.
+are created. The answer is that they are created when the current
+unit--a subroutine or a file (for opcodes for statements outside of
+subroutines)--is compiled. During this time a special anonymous Perl
+array is created, which is called a scratchpad for the current unit.
 
 A scratchpad keeps SVs which are lexicals for the current unit and are
 targets for opcodes. One can deduce that an SV lives on a scratchpad
@@ -1895,7 +1894,7 @@ MULTIPLICITY build has a C structure that packages all the interpreter
 state. With multiplicity-enabled perls, PERL_IMPLICIT_CONTEXT is also
 normally defined, and enables the support for passing in a "hidden" first
 argument that represents all three data structures. MULTIPLICITY makes
-mutli-threaded perls possible (with the ithreads threading model, related
+multi-threaded perls possible (with the ithreads threading model, related
 to the macro USE_ITHREADS.)
 
 Two other "encapsulation" macros are the PERL_GLOBAL_STRUCT and
@@ -2182,9 +2181,13 @@ functions or functions used in a program in which Perl is embedded.
 Similarly, all global variables begin with C<PL_>. (By convention,
 static functions start with C<S_>.)
 
-Inside the Perl core, you can get at the functions either with or
-without the C<Perl_> prefix, thanks to a bunch of defines that live in
-F<embed.h>. This header file is generated automatically from
+Inside the Perl core (C<PERL_CORE> defined), you can get at the functions
+either with or without the C<Perl_> prefix, thanks to a bunch of defines
+that live in F<embed.h>. Note that extension code should I<not> set
+C<PERL_CORE>; this exposes the full perl internals, and is likely to cause
+breakage of the XS in each new perl release.
+
+The file F<embed.h> is generated automatically from
 F<embed.pl> and F<embed.fnc>. F<embed.pl> also creates the prototyping
 header files for the internal functions, generates the documentation
 and a lot of other bits and pieces. It's important that when you add
@@ -2512,7 +2515,8 @@ Currently, Perl deals with Unicode strings and non-Unicode strings
 slightly differently. A flag in the SV, C<SVf_UTF8>, indicates that the
 string is internally encoded as UTF-8. Without it, the byte value is the
 codepoint number and vice versa (in other words, the string is encoded
-as iso-8859-1). You can check and manipulate this flag with the
+as iso-8859-1, but C<use feature 'unicode_strings'> is needed to get iso-8859-1
+semantics). You can check and manipulate this flag with the
 following macros:
 
     SvUTF8(sv)
@@ -2652,8 +2656,7 @@ C<PL_custom_op_descs> and C<PL_custom_op_names> hashes. This means you
 need to enter a name and description for your op at the appropriate
 place in the C<PL_custom_op_names> and C<PL_custom_op_descs> hashes.
 
-Forthcoming versions of C<B::Generate> (version 1.0 and above) should
-directly support the creation of custom ops by name.
+C<B::Generate> directly supports the creation of custom ops by name.
 
 =head1 AUTHORS
 
@@ -2668,4 +2671,4 @@ Stephen McCamant, and Gurusamy Sarathy.
 
 =head1 SEE ALSO
 
-perlapi(1), perlintern(1), perlxs(1), perlembed(1)
+L<perlapi>, L<perlintern>, L<perlxs>, L<perlembed>

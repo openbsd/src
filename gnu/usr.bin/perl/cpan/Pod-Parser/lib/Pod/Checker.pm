@@ -18,7 +18,7 @@ use Pod::ParseUtils; ## for hyperlinks and lists
 
 =head1 NAME
 
-Pod::Checker, podchecker() - check pod documents for syntax errors
+Pod::Checker, podchecker - check pod documents for syntax errors
 
 =head1 SYNOPSIS
 

@@ -234,7 +234,7 @@ of C<h2xs> may gain the ability to make educated guesses.
 
 When B<--compat-version> (B<-b>) is present the generated tests will use
 C<Test::More> rather than C<Test> which is the default for versions before
-5.7.2 .   C<Test::More> will be added to PREREQ_PM in the generated
+5.6.2.  C<Test::More> will be added to PREREQ_PM in the generated
 C<Makefile.PL>.
 
 =item B<--use-old-tests>
@@ -1903,14 +1903,18 @@ open(PL, ">Makefile.PL") || die "Can't create $ext$modpname/Makefile.PL: $!\n";
 
 my $prereq_pm = '';
 
-if ( $compat_version < 5.00702 and $new_test )
+if ( $compat_version < 5.006002 and $new_test )
 {
   $prereq_pm .= q%'Test::More'  =>  0, %;
 }
-
-if ( $compat_version < 5.00600 and !$opt_X and $use_xsloader)
+elsif ( $compat_version < 5.006002 )
 {
-  $prereq_pm .= q%'XSLoader'  =>  0, %;
+  $prereq_pm .= q%'Test'        =>  0, %;
+}
+
+if ( $compat_version < 5.006 and !$opt_X and $use_xsloader)
+{
+  $prereq_pm .= q%'XSLoader'    =>  0, %;
 }
 
 print PL <<"END";
@@ -2026,13 +2030,17 @@ my $rmheadeq = "=" x length($rmhead);
 
 my $rm_prereq;
 
-if ( $compat_version < 5.00702 and $new_test )
+if ( $compat_version < 5.006002 and $new_test )
 {
-   $rm_prereq = 'Test::More';
+  $rm_prereq = 'Test::More';
+}
+elsif ( $compat_version < 5.006002 )
+{
+  $rm_prereq = 'Test';
 }
 else
 {
-   $rm_prereq = 'blah blah blah';
+  $rm_prereq = 'blah blah blah';
 }
 
 print RM <<_RMEND_;
@@ -2092,11 +2100,14 @@ print EX <<_END_;
 
 # change 'tests => $tests' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
+
 _END_
 
 my $test_mod = 'Test::More';
 
-if ( $old_test or ($compat_version < 5.007 and not $new_test ))
+if ( $old_test or ($compat_version < 5.006002 and not $new_test ))
 {
   my $test_mod = 'Test';
 

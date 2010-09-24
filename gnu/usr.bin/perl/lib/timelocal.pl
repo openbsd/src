@@ -7,6 +7,8 @@
 ;# This file has been superseded by the Time::Local library module.
 ;# It is implemented as a call to that module for backwards compatibility
 ;# with code written for perl4; new code should use Time::Local directly.
+;# This legacy library is deprecated and will be removed in a future
+;# release of perl.
 
 ;# The current implementation shares with the original the questionable
 ;# behavior of defining the timelocal() and timegm() functions in the
@@ -16,3 +18,4 @@
 use Time::Local;
 
 *timelocal::cheat = \&Time::Local::cheat;
+

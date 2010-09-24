@@ -434,7 +434,7 @@ parameters as integers correctly formatted in the current locale:
 =head2 I18N::Langinfo
 
 Another interface for querying locale-dependent information is the
-I18N::Langinfo::langinfo() function, available at least in UNIX-like
+I18N::Langinfo::langinfo() function, available at least in Unix-like
 systems and VMS.
 
 The following example will import the langinfo() function itself and
@@ -861,7 +861,7 @@ set, it overrides all the rest of the locale environment variables.
 
 B<NOTE>: C<LANGUAGE> is a GNU extension, it affects you only if you
 are using the GNU libc.  This is the case if you are using e.g. Linux.
-If you are using "commercial" UNIXes you are most probably I<not>
+If you are using "commercial" Unixes you are most probably I<not>
 using GNU libc and you can ignore C<LANGUAGE>.
 
 However, in the case you are using C<LANGUAGE>: it affects the
@@ -977,8 +977,11 @@ structure.
 
 =head2 Freely available locale definitions
 
-There is a large collection of locale definitions at
-ftp://dkuug.dk/i18n/WG15-collection .  You should be aware that it is
+There is a large collection of locale definitions at:
+
+  http://std.dkuug.dk/i18n/WG15-collection/locales/
+
+You should be aware that it is
 unsupported, and is not claimed to be fit for any purpose.  If your
 system allows installation of arbitrary locales, you may find the
 definitions useful as they are, or as a basis for the development of

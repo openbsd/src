@@ -7,9 +7,9 @@ RUN =   # Used mainly cross-compilation setups.
 # Files to be built with variable substitution after miniperl is
 # available.  Dependencies handled manually below (for now).
 
-pl = c2ph.PL config_data.PL corelist.PL cpan.PL h2ph.PL h2xs.PL instmodsh.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL prove.PL cpanp-run-perl.PL cpanp.PL cpan2dist.PL splain.PL dprofpp.PL libnetcfg.PL piconv.PL enc2xs.PL xsubpp.PL
-plextract = c2ph config_data corelist cpan h2ph h2xs instmodsh perlbug perldoc perlivp pl2pm prove cpanp-run-perl cpanp cpan2dist splain dprofpp libnetcfg piconv enc2xs xsubpp
-plextractexe = ./c2ph ./config_data ./corelist ./cpan ./h2ph ./h2xs ./instmodsh ./perlbug ./perldoc ./perlivp ./pl2pm ./prove ./cpanp-run-perl ./cpanp ./cpan2dist ./splain ./dprofpp ./libnetcfg ./piconv ./enc2xs ./xsubpp
+pl = c2ph.PL config_data.PL corelist.PL cpan.PL h2ph.PL h2xs.PL instmodsh.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL prove.PL ptar.PL ptardiff.PL cpanp-run-perl.PL cpanp.PL cpan2dist.PL shasum.PL splain.PL dprofpp.PL libnetcfg.PL piconv.PL enc2xs.PL xsubpp.PL
+plextract = c2ph config_data corelist cpan h2ph h2xs instmodsh perlbug perldoc perlivp pl2pm prove ptar ptardiff cpanp-run-perl cpanp cpan2dist shasum splain dprofpp libnetcfg piconv enc2xs xsubpp
+plextractexe = ./c2ph ./config_data ./corelist ./cpan ./h2ph ./h2xs ./instmodsh ./perlbug ./perldoc ./perlivp ./pl2pm ./prove ./ptar ./ptardiff ./cpanp-run-perl ./cpanp ./cpan2dist ./shasum ./splain ./dprofpp ./libnetcfg ./piconv ./enc2xs ./xsubpp
 
 all: $(plextract) 
 
@@ -38,6 +38,10 @@ perlivp:	perlivp.PL ../config.sh
 
 prove:		prove.PL ../config.sh
 
+ptar:		ptar.PL ../config.sh
+
+ptardiff:	ptardiff.PL ../config.sh
+
 cpanp-run-perl:	cpanp-run-perl.PL ../config.sh
 
 cpanp:	cpanp.PL ../config.sh
@@ -45,6 +49,8 @@ cpanp:	cpanp.PL ../config.sh
 cpan2dist:	cpan2dist.PL ../config.sh
 
 pl2pm:		pl2pm.PL ../config.sh
+
+shasum:		shasum.PL ../config.sh
 
 splain:		splain.PL ../config.sh ../lib/diagnostics.pm
 

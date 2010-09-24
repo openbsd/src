@@ -4,15 +4,12 @@
 # Ensure that syntax using colons (:) is parsed correctly.
 # The tests are done on the following tokens (by default):
 # ABC LABEL XYZZY m q qq qw qx s tr y AUTOLOAD and alarm 
-#	-- Robin Barker <rmb@cise.npl.co.uk>
+#	-- Robin Barker 
 #
 
-BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
-}
-
-use strict;
+# Uncomment this for testing, but don't leave it in for "production", as
+# we've not yet verified that use works.
+# use strict;
 
 $_ = '';	# to avoid undef warning on m// etc.
 

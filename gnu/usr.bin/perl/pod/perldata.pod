@@ -371,11 +371,6 @@ equivalent to C<$version{2}++>, not to C<$version{'2.0'}++>.
 =head3 Version Strings
 X<version string> X<vstring> X<v-string>
 
-B<Note:> Version Strings (v-strings) have been deprecated.  They will
-be removed in some future release after Perl 5.8.1.  The marginal
-benefits of v-strings were greatly outweighed by the potential for
-Surprise and Confusion.
-
 A literal of the form C<v1.20.300.4000> is parsed as a string composed
 of characters with the specified ordinals.  This form, known as
 v-strings, provides an alternative, more readable way to construct
@@ -638,9 +633,9 @@ key/value pairs.  That's why it's good to use references sometimes.
 It is often more readable to use the C<< => >> operator between key/value
 pairs.  The C<< => >> operator is mostly just a more visually distinctive
 synonym for a comma, but it also arranges for its left-hand operand to be
-interpreted as a string -- if it's a bareword that would be a legal simple
-identifier (C<< => >> doesn't quote compound identifiers, that contain
-double colons). This makes it nice for initializing hashes:
+interpreted as a string if it's a bareword that would be a legal simple
+identifier. C<< => >> doesn't quote compound identifiers, that contain
+double colons. This makes it nice for initializing hashes:
 
     %map = (
                  red   => 0x00f,

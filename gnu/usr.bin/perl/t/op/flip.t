@@ -1,19 +1,22 @@
 #!./perl
 
-chdir 't' if -d 't';
-
-print "1..15\n";
-
-@a = (1,2,3,4,5,6,7,8,9,10,11,12);
-
-while ($_ = shift(@a)) {
-    if ($x = /4/../8/) { $z = $x; print "ok ", $x + 0, "\n"; }
-    $y .= /1/../2/;
+BEGIN {
+    require "test.pl";
 }
 
-if ($z eq '5E0') {print "ok 6\n";} else {print "not ok 6\n";}
+plan(11);
 
-if ($y eq '12E0123E0') {print "ok 7\n";} else {print "not ok 7\n";}
+@a = (1,2,3,4,5,6,7,8,9,10,11,12);
+@b = ();
+while ($_ = shift(@a)) {
+    if ($x = /4/../8/) { $z = $x; push @b, $x + 0; }
+    $y .= /1/../2/;
+}
+is(join("*", @b), "1*2*3*4*5");
+
+is($z, '5E0');
+
+is($y, '12E0123E0');
 
 @a = ('a','b','c','d','e','f','g');
 
@@ -26,41 +29,36 @@ while (<of>) {
 }
 $x = ($foo =~ y/\n/\n/);
 
-if ($x eq 3) {print "ok 8\n";} else {print "not ok 8 $x:$foo:\n";}
+is($x, 3);
 
 $x = 3.14;
-if (($x...$x) eq "1") {print "ok 9\n";} else {print "not ok 9\n";}
+ok(($x...$x) eq "1");
 
 {
     # coredump reported in bug 20001018.008
     readline(UNKNOWN);
     $. = 1;
     $x = 1..10;
-    print "ok 10\n";
+    ok(1);
 }
 
 }
 
-if (!defined $.) { print "ok 11\n" } else { print "not ok 11 # $.\n" }
+ok(!defined $.);
 
 use warnings;
 my $warn='';
 $SIG{__WARN__} = sub { $warn .= join '', @_ };
 
-if (0..2) { print "ok 12\n" } else { print "not ok 12\n" }
+ok(scalar(0..2));
 
-if ($warn =~ /uninitialized/) { print "ok 13\n" } else { print "not ok 13\n" }
+like($warn, qr/uninitialized/);
 $warn = '';
 
 $x = "foo".."bar";
 
-if ((() = ($warn =~ /isn't numeric/g)) == 2) {
-    print "ok 14\n"
-}
-else {
-    print "not ok 14\n"
-}
+ok((() = ($warn =~ /isn't numeric/g)) == 2);
 $warn = '';
 
 $. = 15;
-if (15..0) { print "ok 15\n" } else { print "not ok 15\n" }
+ok(scalar(15..0));

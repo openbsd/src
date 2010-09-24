@@ -134,7 +134,7 @@ refer to the same scalar value. This means that the following code:
     }
 
 Would print '1', because C<$foo> holds a reference to the I<original>
-C<$bar> -- the one that was stuffed away by C<local()> and which will be
+C<$bar>. The one that was stuffed away by C<local()> and which will be
 restored when the block ends. Because variables are accessed through the
 typeglob, you can use C<*foo = *bar> to create an alias which can be
 localized. (But be aware that this means you can't have a separate
@@ -267,7 +267,7 @@ these code blocks by name.
 A C<BEGIN> code block is executed as soon as possible, that is, the moment
 it is completely defined, even before the rest of the containing file (or
 string) is parsed.  You may have multiple C<BEGIN> blocks within a file (or
-eval'ed string) -- they will execute in order of definition.  Because a C<BEGIN>
+eval'ed string); they will execute in order of definition.  Because a C<BEGIN>
 code block executes immediately, it can pull in definitions of subroutines
 and such from other files in time to be visible to the rest of the compile
 and run time.  Once a C<BEGIN> has run, it is immediately undefined and any

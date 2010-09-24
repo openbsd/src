@@ -535,6 +535,7 @@ Synopsis:
     local @oof = @bar;		# make @oof dynamic, and init it
 
     local $hash{key} = "val";	# sets a local value for this hash entry
+    delete local $hash{key};    # delete this entry for the current block
     local ($cond ? $v1 : $v2);	# several types of lvalues support
 				# localization
 
@@ -691,6 +692,55 @@ Perl will print
 
 The behavior of local() on non-existent members of composite
 types is subject to change in future.
+
+=head3 Localized deletion of elements of composite types
+X<delete> X<local, composite type element> X<local, array element> X<local, hash element>
+
+You can use the C<delete local $array[$idx]> and C<delete local $hash{key}>
+constructs to delete a composite type entry for the current block and restore
+it when it ends. They return the array/hash value before the localization,
+which means that they are respectively equivalent to
+
+    do {
+        my $val = $array[$idx];
+        local  $array[$idx];
+        delete $array[$idx];
+        $val
+    }
+
+and
+
+    do {
+        my $val = $hash{key};
+        local  $hash{key};
+        delete $hash{key};
+        $val
+    }
+
+except that for those the C<local> is scoped to the C<do> block. Slices are
+also accepted.
+
+    my %hash = (
+     a => [ 7, 8, 9 ],
+     b => 1,
+    )
+
+    {
+     my $a = delete local $hash{a};
+     # $a is [ 7, 8, 9 ]
+     # %hash is (b => 1)
+
+     {
+      my @nums = delete local @$a[0, 2]
+      # @nums is (7, 9)
+      # $a is [ undef, 8 ]
+
+      $a[0] = 999; # will be erased when the scope ends
+     }
+     # $a is back to [ 7, 8, 9 ]
+
+    }
+    # %hash is back to its original state
 
 =head2 Lvalue subroutines
 X<lvalue> X<subroutine, lvalue>

@@ -49,7 +49,7 @@ struct gp {
 	   assert(!SvVALID(_gvname_hek));				\
 	   &(GvXPVGV(_gvname_hek)->xiv_u.xivu_namehek);			\
 	 }))
-#  define GvNAME_get(gv)	({ assert(GvNAME_HEK(gv)); HEK_KEY(GvNAME_HEK(gv)); })
+#  define GvNAME_get(gv)	({ assert(GvNAME_HEK(gv)); (char *)HEK_KEY(GvNAME_HEK(gv)); })
 #  define GvNAMELEN_get(gv)	({ assert(GvNAME_HEK(gv)); HEK_LEN(GvNAME_HEK(gv)); })
 #else
 #  define GvGP(gv)	((gv)->sv_u.svu_gp)
@@ -94,9 +94,6 @@ Return the SV from the GV.
 
 #define GvFORM(gv)	(GvGP(gv)->gp_form)
 #define GvAV(gv)	(GvGP(gv)->gp_av)
-
-/* This macro is deprecated.  Do not use! */
-#define GvREFCNT_inc(gv) ((GV*)SvREFCNT_inc(gv))	/* DO NOT USE */
 
 #define GvAVn(gv)	(GvGP(gv)->gp_av ? \
 			 GvGP(gv)->gp_av : \
@@ -166,17 +163,9 @@ Return the SV from the GV.
 #define GvIN_PAD_on(gv)		(GvFLAGS(gv) |= GVf_IN_PAD)
 #define GvIN_PAD_off(gv)	(GvFLAGS(gv) &= ~GVf_IN_PAD)
 
-#define GvUNIQUE(gv)            0
-#define GvUNIQUE_on(gv)         NOOP
-#define GvUNIQUE_off(gv)        NOOP
-
-#ifdef USE_ITHREADS
-#define GV_UNIQUE_CHECK
-#else
-#undef  GV_UNIQUE_CHECK
+#ifndef PERL_CORE
+#  define Nullgv Null(GV*)
 #endif
-
-#define Nullgv Null(GV*)
 
 #define DM_UID   0x003
 #define DM_RUID   0x001
@@ -204,6 +193,8 @@ Return the SV from the GV.
 #define GV_NOEXPAND	0x40	/* Don't expand SvOK() entries to PVGV */
 #define GV_NOTQUAL	0x80	/* A plain symbol name, not qualified with a
 				   package (so skip checks for :: and ')  */
+#define GV_AUTOLOAD	0x100	/* gv_fetchmethod_flags() should AUTOLOAD  */
+#define GV_CROAK	0x200	/* gv_fetchmethod_flags() should croak  */
 
 /*      SVf_UTF8 (more accurately the return value from SvUTF8) is also valid
 	as a flag to gv_fetch_pvn_flags, so ensure it lies outside this range.
@@ -215,6 +206,11 @@ Return the SV from the GV.
 #define gv_fullname3(sv,gv,prefix) gv_fullname4(sv,gv,prefix,TRUE)
 #define gv_efullname3(sv,gv,prefix) gv_efullname4(sv,gv,prefix,TRUE)
 #define gv_fetchmethod(stash, name) gv_fetchmethod_autoload(stash, name, TRUE)
+
+#define gv_AVadd(gv) gv_add_by_type((gv), SVt_PVAV)
+#define gv_HVadd(gv) gv_add_by_type((gv), SVt_PVHV)
+#define gv_IOadd(gv) gv_add_by_type((gv), SVt_PVIO)
+#define gv_SVadd(gv) gv_add_by_type((gv), SVt_NULL)
 
 /*
  * Local variables:

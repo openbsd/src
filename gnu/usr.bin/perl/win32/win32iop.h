@@ -86,6 +86,7 @@ DllExport  int		win32_dup2(int h1, int h2);
 DllExport  int		win32_open(const char *path, int oflag,...);
 DllExport  int		win32_close(int fd);
 DllExport  int		win32_eof(int fd);
+DllExport  int		win32_isatty(int fd);
 DllExport  int		win32_read(int fd, void *buf, unsigned int cnt);
 DllExport  int		win32_write(int fd, const void *buf, unsigned int cnt);
 DllExport  int		win32_spawnvp(int mode, const char *cmdname,
@@ -161,7 +162,9 @@ DllExport Sighandler_t	win32_signal(int sig, Sighandler_t subcode);
 END_EXTERN_C
 
 #undef alarm
-#define alarm			win32_alarm
+#define alarm				win32_alarm
+#undef strerror
+#define strerror			win32_strerror
 
 /*
  * the following six(6) is #define in stdio.h
@@ -205,7 +208,6 @@ END_EXTERN_C
 #define ferror(f)			win32_ferror(f)
 #define errno 				(*win32_errno())
 #define environ				(*win32_environ())
-#define strerror			win32_strerror
 
 /*
  * redirect to our own version
@@ -251,6 +253,7 @@ END_EXTERN_C
 #define open			win32_open
 #define close(fd)		win32_close(fd)
 #define eof(fd)			win32_eof(fd)
+#define isatty(fd)		win32_isatty(fd)
 #define read(fd,b,s)		win32_read(fd,b,s)
 #define write(fd,b,s)		win32_write(fd,b,s)
 #define _open_osfhandle		win32_open_osfhandle
@@ -293,6 +296,10 @@ END_EXTERN_C
 #define realloc			win32_realloc
 #define free			win32_free
 #endif
+
+/* XXX Why are APIs like sleep(), times() etc. inside a block
+ * XXX guarded by "#ifndef WIN32IO_IS_STDIO"?
+ */
 
 #define pipe(fd)		win32_pipe((fd), 512, O_BINARY)
 #define pause()			win32_sleep((32767L << 16) + 32767)

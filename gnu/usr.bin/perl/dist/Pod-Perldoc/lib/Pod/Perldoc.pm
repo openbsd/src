@@ -499,7 +499,7 @@ sub find_good_formatter_class {
       } else {
         $^W = 0;
         # The average user just has no reason to be seeing
-        #  $^W-suppressable warnings from the the require!
+        #  $^W-suppressible warnings from the require!
       }
 
       eval "require $c";
@@ -655,7 +655,7 @@ sub options_processing {
 
     $self->options_sanity;
 
-    $self->opt_n("nroff") unless $self->opt_n;
+    $self->opt_n("mandoc") unless $self->opt_n;
     $self->add_formatter_option( '__nroffer' => $self->opt_n );
 
     # Get language from PERLDOC_POD2 environment variable

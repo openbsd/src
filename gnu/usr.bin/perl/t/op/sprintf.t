@@ -60,6 +60,8 @@ $SIG{__WARN__} = sub {
 	$w = ' INVALID';
     } elsif ($_[0] =~ /^Use of uninitialized value/) {
 	$w = ' UNINIT';
+    } elsif ($_[0] =~ /^Missing argument/) {
+	$w = ' MISSING';
     } else {
 	warn @_;
     }
@@ -618,7 +620,7 @@ __END__
 >%3$d %d %d<	>[12, 34, 56]<	>56 12 34<
 >%2$*3$d %d<	>[12, 34, 3]<	> 34 12<
 >%*3$2$d %d<	>[12, 34, 3]<	>%*3$2$d 12 INVALID<
->%2$d<		>12<	>0 UNINIT<
+>%2$d<		>12<	>0 MISSING<
 >%0$d<		>12<	>%0$d INVALID<
 >%1$$d<		>12<	>%1$$d INVALID<
 >%1$1$d<	>12<	>%1$1$d INVALID<
@@ -685,4 +687,4 @@ __END__
 >%#o<		>0<	>0<
 >%#x<		>0<	>0<
 >%2147483647$v2d<	>''<	><
->%*2147483647$v2d<	>''<	> UNINIT<
+>%*2147483647$v2d<	>''<	> MISSING<

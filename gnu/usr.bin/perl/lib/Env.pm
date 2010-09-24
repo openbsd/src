@@ -1,6 +1,6 @@
 package Env;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 NAME
 
@@ -132,8 +132,7 @@ sub TIEARRAY {
 
 sub FETCHSIZE {
     my ($self) = @_;
-    my @temp = split($sep, $ENV{$$self});
-    return scalar(@temp);
+    return 1 + scalar(() = $ENV{$$self} =~ /\Q$sep\E/g);
 }
 
 sub STORESIZE {
@@ -157,6 +156,19 @@ sub STORE {
     my ($self, $index, $value) = @_;
     my @temp = split($sep, $ENV{$$self});
     $temp[$index] = $value;
+    $ENV{$$self} = join($sep, @temp);
+    return $value;
+}
+
+sub EXISTS {
+    my ($self, $index) = @_;
+    return $index < $self->FETCHSIZE;
+}
+
+sub DELETE {
+    my ($self, $index) = @_;
+    my @temp = split($sep, $ENV{$$self});
+    my $value = splice(@temp, $index, 1, ());
     $ENV{$$self} = join($sep, @temp);
     return $value;
 }
@@ -231,5 +243,12 @@ sub FETCH {
     my ($self, $index) = @_;
     return $ENV{$$self . ';' . $index};
 }
+
+sub EXISTS {
+    my ($self, $index) = @_;
+    return $index < $self->FETCHSIZE;
+}
+
+sub DELETE { }
 
 1;

@@ -118,7 +118,6 @@ toroff=`
     $mandir/splain.1	\
     $mandir/xsubpp.1	\
 			\
-    $libdir/attrs.3	\
     $libdir/autouse.3	\
     $libdir/base.3	\
     $libdir/blib.3	\

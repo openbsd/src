@@ -214,11 +214,11 @@ able to use them in the sort() comparison block or function.
 
 =over 8
 
-=item $<I<digits>>
+=item $<I<digits>> ($1, $2, ...)
 X<$1> X<$2> X<$3>
 
 Contains the subpattern from the corresponding set of capturing
-parentheses from the last pattern match, not counting patterns
+parentheses from the last successful pattern match, not counting patterns
 matched in nested blocks that have been exited already.  (Mnemonic:
 like \digits.)  These variables are all read-only and dynamically
 scoped to the current BLOCK.
@@ -1037,8 +1037,8 @@ subscripting and when evaluating the index() and substr() functions.
 
 As of release 5 of Perl, assignment to C<$[> is treated as a compiler
 directive, and cannot influence the behavior of any other file.
-(That's why you can only assign compile-time constants to it.)
-Its use is highly discouraged.
+(That's why you can only assign compile-time constants to it.)  Its
+use is deprecated, and by default will trigger a warning.
 
 Note that, unlike other compile-time directives (such as L<strict>),
 assignment to C<$[> can be seen from outer lexical scopes in the same file.
@@ -1190,9 +1190,11 @@ this variable.
 X<$^O> X<$OSNAME>
 
 The name of the operating system under which this copy of Perl was
-built, as determined during the configuration process.  The value
-is identical to C<$Config{'osname'}>.  See also L<Config> and the 
-B<-V> command-line switch documented in L<perlrun>.
+built, as determined during the configuration process. For examples
+see L<perlport/PLATFORMS>.
+
+The value is identical to C<$Config{'osname'}>.  See also L<Config>
+and the B<-V> command-line switch documented in L<perlrun>.
 
 In Windows platforms, $^O is not very helpful: since it is always
 C<MSWin32>, it doesn't tell the difference between
@@ -1321,7 +1323,7 @@ all its results against linear scans, and panicking on any discrepancy.
 
 =item ${^UTF8LOCALE}
 
-This variable indicates whether an UTF-8 locale was detected by perl at
+This variable indicates whether a UTF-8 locale was detected by perl at
 startup. This information is used by perl when it's in
 adjust-utf8ness-to-locale mode (as when run with the C<-CL> command-line
 switch); see L<perlrun> for more info on this.
@@ -1368,6 +1370,7 @@ The current set of warning checks enabled by the C<use warnings> pragma.
 See the documentation of C<warnings> for more details.
 
 =item ${^WIN32_SLOPPY_STAT}
+X<sitecustomize> X<sitecustomize.pl>
 
 If this variable is set to a true value, then stat() on Windows will
 not try to open the file. This means that the link count cannot be
@@ -1377,7 +1380,8 @@ is considerably faster, especially for files on network drives.
 
 This variable could be set in the F<sitecustomize.pl> file to
 configure the local Perl installation to use "sloppy" stat() by
-default.  See L<perlrun> for more information about site
+default.  See the documentation for B<-f> in
+L<perlrun|perlrun/"Command Switches"> for more information about site
 customization.
 
 =item $EXECUTABLE_NAME
@@ -1617,6 +1621,45 @@ not available.
 
 See L<perlfunc/die>, L<perlfunc/warn>, L<perlfunc/eval>, and
 L<warnings> for additional information.
+
+=back
+
+=head2 Names that are no longer special
+
+These variables had special meaning in prior versions of Perl but now
+have no effect and will cause warnings if used.  They are included
+here for historical reference.
+
+=over 8
+
+=item $#
+X<$#>
+
+C<$#> used to be a variable that could be used to format printed numbers.
+After a deprecation cycle, its magic was removed in Perl 5.10 and using it
+now triggers a warning: C<$# is no longer supported>.
+
+C<$#> is also used as sigil, which, when prepended on the name of an
+array, gives the index of the last element in that array.
+
+    my @array        = ("a", "b", "c");
+    my $last_index   = $#array;   # $last_index is 2
+
+    for my $i (0 .. $#array) {
+        print "The value of index $i is $array[$i]\n";
+    }
+
+Also see L<perldata>.
+
+=item $*
+X<$*>
+
+C<$*> used to be a variable that enabled multiline matching.
+After a deprecation cycle, its magic was removed in Perl 5.10.
+Using it now triggers a warning: C<$* is no longer supported>.
+Use the C</s> and C</m> regexp modifiers instead.
+
+Also see L<perlre>.
 
 =back
 

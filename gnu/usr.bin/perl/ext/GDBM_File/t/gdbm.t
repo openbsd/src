@@ -3,8 +3,6 @@
 # $RCSfile: dbm.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:43 $
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bGDBM_File\b/) {
 	print "1..0 # Skip: GDBM_File was not built\n";

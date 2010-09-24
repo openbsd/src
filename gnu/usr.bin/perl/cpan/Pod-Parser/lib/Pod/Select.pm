@@ -18,7 +18,7 @@ require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
 
-Pod::Select, podselect() - extract selected sections of POD from input
+Pod::Select, podselect - extract selected sections of POD from input
 
 =head1 SYNOPSIS
 

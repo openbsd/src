@@ -7,15 +7,17 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';              # pick up only this build's lib
 }
-delete $ENV{PERL5LIB};
 
 my $torture; # torture testing?
 
-use Test::Harness;
+use TAP::Harness 3.13;
 use strict;
 
-$Test::Harness::switches = "";    # Too much noise otherwise
-$Test::Harness::Verbose++ while @ARGV && $ARGV[0] eq '-v' && shift;
+$::do_nothing = $::do_nothing = 1;
+require './TEST';
+
+my $Verbose = 0;
+$Verbose++ while @ARGV && $ARGV[0] eq '-v' && shift;
 
 if ($ARGV[0] && $ARGV[0] eq '-torture') {
     shift;
@@ -51,23 +53,6 @@ my (@tests, $re);
 # [.VMS]TEST.COM calls harness with empty arguments, so clean-up @ARGV
 @ARGV = grep $_ && length( $_ ) => @ARGV;
 
-sub _populate_hash {
-    return map {$_, 1} split /\s+/, $_[0];
-}
-
-# Generate T::H schedule rules that run the contents of each directory
-# sequentially.
-sub _seq_dir_rules {
-    my @tests = @_;
-    my %dir;
-    for (@tests) {
-        s{[^/]+$}{\*};
-        $dir{$_}++;
-    }
-
-    return { par => [ map { { seq => $_ } } sort keys %dir ] };
-}
-
 sub _extract_tests;
 sub _extract_tests {
     # This can probably be done more tersely with a map, but I doubt that it
@@ -101,17 +86,14 @@ if ($ARGV[0] && $ARGV[0]=~/^-re/) {
 }
 
 my $jobs = $ENV{TEST_JOBS};
-my ($fork, $rules, $state);
+my ($rules, $state, $color);
 if ($ENV{HARNESS_OPTIONS}) {
     for my $opt ( split /:/, $ENV{HARNESS_OPTIONS} ) {
         if ( $opt =~ /^j(\d*)$/ ) {
             $jobs ||= $1 || 9;
         }
-        elsif ( $opt eq 'f' ) {
-            $fork = 1;
-        }
         elsif ( $opt eq 'c' ) {
-#            $args->{color} = 1;
+            $color = 1;
         }
         else {
             die "Unknown HARNESS_OPTIONS item: $opt\n";
@@ -145,9 +127,10 @@ if (@ARGV) {
     unless (@tests) {
 	my @seq = <base/*.t>;
 
-	my @next = qw(comp cmd run io op uni mro lib);
+	my @next = qw(comp run cmd io re op uni mro lib porting);
 	push @next, 'japh' if $torture;
 	push @next, 'win32' if $^O eq 'MSWin32';
+	push @next, 'benchmark' if $ENV{PERL_BENCHMARK};
 	# Hopefully TAP::Parser::Scheduler will support this syntax soon.
 	# my $next = { par => '{' . join (',', @next) . '}/*.t' };
 	my $next = { par => [
@@ -175,46 +158,38 @@ if (@ARGV) {
 
 	my @last;
 	use Config;
-	my %skip;
-	{
-	    my %extensions = _populate_hash $Config{'extensions'};
-	    my %known_extensions = _populate_hash $Config{'known_extensions'};
-	    foreach (keys %known_extensions) {
-		$skip{$_}++ unless $extensions{$_};
-	    }
-	}
-	use File::Spec;
-	my $updir = File::Spec->updir;
-	my $mani  = File::Spec->catfile(File::Spec->updir, "MANIFEST");
-	if (open(MANI, $mani)) {
-	    my @manitests = ();
-	    while (<MANI>) { # similar code in t/TEST
-		if (m!^(ext/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
-		    my ($test, $extension) = ($1, $2);
-		    if (defined $extension) {
-			$extension =~ s!/t$!!;
-			# XXX Do I want to warn that I'm skipping these?
-			next if $skip{$extension};
-			my $flat_extension = $extension;
-			$flat_extension =~ s!-!/!g;
-			next if $skip{$flat_extension}; # Foo/Bar may live in Foo-Bar
-		    }
-		    push @manitests, File::Spec->catfile($updir, $test);
-		}
-	    }
-	    close MANI;
-	    # Sort the list of test files read from MANIFEST into a sensible
-	    # order instead of using the order in which they are listed there
-	    push @last, sort { lc $a cmp lc $b } @manitests;
-	} else {
-	    warn "$0: cannot open $mani: $!\n";
-	}
-	push @last, <pod/*.t>;
+	push @last,  sort { lc $a cmp lc $b }
+	    _tests_from_manifest($Config{extensions}, $Config{known_extensions});
 	push @last, <x2p/*.t>;
+
+	my %times;
+	if ($state) {
+	    # Where known, collate the elapsed times by test name
+	    foreach ($state->results->tests()) {
+		$times{$_->name} = $_->elapsed();
+	    }
+	}
+
+	my %dir;
+	my %total_time;
+
+	for (@last) {
+	    if ($^O eq 'MSWin32') {
+		s,\\,/,g; # canonicalize path
+	    };
+	    m!(.*[/])! or die "'$_'";
+	    push @{$dir{$1}}, $_;
+	    $total_time{$1} += $times{$_} || 0;
+	}
 
 	push @tests, @last;
 
-	push @seq, _seq_dir_rules @last;
+	# Generate T::H schedule rules that run the contents of each directory
+	# sequentially.
+	push @seq, { par => [ map { { seq => "$_*" } } sort {
+	    # Directories, ordered by total time descending then name ascending
+	    $total_time{$b} <=> $total_time{$a} || $a cmp $b
+	} keys %dir ] };
 
 	$rules = { seq => \@seq };
     }
@@ -225,32 +200,61 @@ if ($^O eq 'MSWin32') {
 @tests=grep /$re/, @tests 
     if $re;
 
-if ($jobs) {
-    eval 'use TAP::Harness 3.13; 1' or die $@;
+my %options;
 
-    # Test::Harness parses $ENV{HARNESS_OPTIONS}, TAP::Harness does not
-    local $ENV{HARNESS_OPTIONS};
-    my $h = TAP::Harness->new({ jobs => $jobs, rules => $rules, ($fork ? (fork => $fork) : ())});
-    if ($state) {
-	$h->callback(
-		     after_test => sub {
-			 $state->observe_test(@_);
-		     }
-		    );
-	$h->callback(
-		     after_runtests => sub {
-			 $state->commit(@_);
-		     }
-		    );
-    }
+my $type = 'perl';
+
+# Load TAP::Parser now as otherwise it could be required in the short time span
+# in which the harness process chdirs into ext/Dist
+require TAP::Parser;
+
+my $h = TAP::Harness->new({
+    rules       => $rules,
+    color       => $color,
+    jobs        => $jobs,
+    verbosity   => $Verbose,
+    exec        => sub {
+	my ($harness, $test) = @_;
+
+	my $options = $options{$test};
+	if (!defined $options) {
+	    $options = $options{$test} = _scan_test($test, $type);
+	}
+
+	return [ split ' ', _cmd($options, $type) ];
+    },
+});
+
+if ($state) {
     $h->callback(
-		 parser_args => sub {
-		     my ( $args, $test ) = @_;
-		     push @{ $args->{switches} }, '-I../lib';
+		 after_test => sub {
+		     $state->observe_test(@_);
 		 }
-		);
-    $h->runtests(@tests);
-} else {
-    Test::Harness::runtests @tests;
+		 );
+    $h->callback(
+		 after_runtests => sub {
+		     $state->commit(@_);
+		 }
+		 );
 }
-exit(0);
+
+$h->callback(
+	     parser_args => sub {
+		 my ($args, $job) = @_;
+		 my $test = $job->[0];
+		 _before_fork($options{$test});
+		 push @{ $args->{switches} }, "-I../../lib";
+	     }
+	     );
+
+$h->callback(
+	     made_parser => sub {
+		 my ($parser, $job) = @_;
+		 my $test = $job->[0];
+		 my $options = delete $options{$test};
+		 _after_fork($options);
+	     }
+	     );
+
+my $agg = $h->runtests(@tests);
+exit $agg->has_errors ? 1 : 0;

@@ -42,6 +42,8 @@ while (@{$optref} && $optref->[0] =~ /^([\w_]+)=(.*)$/) {
     shift(@{$optref});
 }
 
+FindExt::scan_ext("../cpan");
+FindExt::scan_ext("../dist");
 FindExt::scan_ext("../ext");
 FindExt::set_static_extensions(split ' ', $opt{'static_ext'});
 

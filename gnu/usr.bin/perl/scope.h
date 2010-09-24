@@ -43,7 +43,7 @@
 #define SAVEt_I8		32
 #define SAVEt_COMPPAD		33
 #define SAVEt_GENERIC_PVREF	34
-#define SAVEt_PADSV		35
+#define SAVEt_PADSV_AND_MORTALIZE	35
 #define SAVEt_MORTALIZESV	36
 #define SAVEt_SHARED_PVREF	37
 #define SAVEt_BOOL		38
@@ -54,7 +54,13 @@
 #define SAVEt_COMPILE_WARNINGS	43
 #define SAVEt_STACK_CXPOS	44
 #define SAVEt_PARSER		45
-#define SAVEt_PADSV_AND_MORTALIZE	46
+#define SAVEt_ADELETE		46
+
+#define SAVEf_SETMAGIC		1
+#define SAVEf_KEEPOLDELEM	2
+
+#define save_aelem(av,idx,sptr)	save_aelem_flags(av,idx,sptr,SAVEf_SETMAGIC)
+#define save_helem(hv,key,sptr)	save_helem_flags(hv,key,sptr,SAVEf_SETMAGIC)
 
 #ifndef SCOPE_SAVES_SIGNAL_MASK
 #define SCOPE_SAVES_SIGNAL_MASK 0
@@ -94,6 +100,20 @@ Opening bracket on a callback.  See C<LEAVE> and L<perlcall>.
 =for apidoc Ams||LEAVE
 Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 
+=over
+
+=item ENTER_with_name(name)
+
+Same as C<ENTER>, but when debugging is enabled it also associates the
+given literal string with the new scope.
+
+=item LEAVE_with_name(name)
+
+Same as C<LEAVE>, but when debugging is enabled it first checks that the
+scope has the given name. Name must be a literal string.
+
+=back
+
 =cut
 */
 
@@ -111,9 +131,28 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 	DEBUG_SCOPE("LEAVE")					\
 	pop_scope();						\
     } STMT_END
+#define ENTER_with_name(name)						\
+    STMT_START {							\
+	push_scope();							\
+	if (PL_scopestack_name)						\
+	    PL_scopestack_name[PL_scopestack_ix-1] = name;		\
+	DEBUG_SCOPE("ENTER \"" name "\"")				\
+    } STMT_END
+#define LEAVE_with_name(name)						\
+    STMT_START {							\
+	DEBUG_SCOPE("LEAVE \"" name "\"")				\
+	if (PL_scopestack_name)	{					\
+	    assert(((char*)PL_scopestack_name[PL_scopestack_ix-1]	\
+			== (char*)name)					\
+		    || strEQ(PL_scopestack_name[PL_scopestack_ix-1], name));        \
+	}								\
+	pop_scope();							\
+    } STMT_END
 #else
 #define ENTER push_scope()
 #define LEAVE pop_scope()
+#define ENTER_with_name(name) ENTER
+#define LEAVE_with_name(name) LEAVE
 #endif
 #define LEAVE_SCOPE(old) if (PL_savestack_ix > old) leave_scope(old)
 
@@ -127,7 +166,6 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 #define SAVESPTR(s)	save_sptr((SV**)&(s))
 #define SAVEPPTR(s)	save_pptr((char**)&(s))
 #define SAVEVPTR(s)	save_vptr((void*)&(s))
-#define SAVEPADSV(s)	save_padsv(s)
 #define SAVEPADSVANDMORTALIZE(s)	save_padsv_and_mortalize(s)
 #define SAVEFREESV(s)	save_freesv(MUTABLE_SV(s))
 #define SAVEMORTALIZESV(s)	save_mortalizesv(MUTABLE_SV(s))
@@ -140,6 +178,10 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 #define SAVESETSVFLAGS(sv,mask,val)	save_set_svflags(sv,mask,val)
 #define SAVEDELETE(h,k,l) \
 	  save_delete(MUTABLE_HV(h), (char*)(k), (I32)(l))
+#define SAVEHDELETE(h,s) \
+	  save_hdelete(MUTABLE_HV(h), (s))
+#define SAVEADELETE(a,k) \
+	  save_adelete(MUTABLE_AV(a), (I32)(k))
 #define SAVEDESTRUCTOR(f,p) \
 	  save_destructor((DESTRUCTORFUNC_NOCONTEXT_t)(f), (void*)(p))
 
@@ -190,15 +232,11 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 #  define SAVECOPSTASH_FREE(c)	SAVESHAREDPV(CopSTASHPV(c))
 #  define SAVECOPFILE(c)	SAVEPPTR(CopFILE(c))
 #  define SAVECOPFILE_FREE(c)	SAVESHAREDPV(CopFILE(c))
-#  define SAVECOPLABEL(c)	SAVEPPTR(CopLABEL(c))
-#  define SAVECOPLABEL_FREE(c)	SAVESHAREDPV(CopLABEL(c))
 #else
 #  define SAVECOPSTASH(c)	SAVESPTR(CopSTASH(c))
 #  define SAVECOPSTASH_FREE(c)	SAVECOPSTASH(c)	/* XXX not refcounted */
 #  define SAVECOPFILE(c)	SAVESPTR(CopFILEGV(c))
 #  define SAVECOPFILE_FREE(c)	SAVEGENERICSV(CopFILEGV(c))
-#  define SAVECOPLABEL(c)	SAVEPPTR(CopLABEL(c))
-#  define SAVECOPLABEL_FREE(c)	SAVEPPTR(CopLABEL(c))
 #endif
 
 #define SAVECOPLINE(c)		SAVEI32(CopLINE(c))

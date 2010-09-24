@@ -6,7 +6,7 @@ BEGIN {
 }
 
 require "test.pl";
-plan( tests => 37 );
+plan( tests => 39 );
 
 $x = 10000;
 cmp_ok(0 + ++$x - 1,'==',10000,'scalar ++x - 1');
@@ -47,6 +47,8 @@ cmp_ok($x{0},          '==',10000,'helem x final');
 # test magical autoincrement
 
 cmp_ok(++($foo = '99'), 'eq','100','99 incr 100');
+cmp_ok(++($foo = "99a"), 'eq','100','99a incr 100');
+cmp_ok(++($foo = "99\0a"), 'eq','100','99\0a incr 100');
 cmp_ok(++($foo = 'a0'), 'eq','a1','a0 incr a1');
 cmp_ok(++($foo = 'Az'), 'eq','Ba','Az incr Ba');
 cmp_ok(++($foo = 'zz'), 'eq','aaa','zzz incr aaa');

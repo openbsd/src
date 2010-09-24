@@ -14,9 +14,11 @@ BEGIN {
     @INC = '../lib';
 }
 
+# We need this, as in places we're testing the interaction of prototypes with
+# strict
 use strict;
 
-print "1..141\n";
+print "1..153\n";
 
 my $i = 1;
 
@@ -549,11 +551,21 @@ sub sreftest (\$$) {
 # string "parse error".
 #
 for my $p ( "", qw{ () ($) ($@) ($%) ($;$) (&) (&\@) (&@) (%) (\%) (\@) } ) {
-  no warnings 'prototype';
+  my $warn = "";
+  local $SIG{__WARN__} = sub {
+    my $thiswarn = join("",@_);
+    return if $thiswarn =~ /^Prototype mismatch: sub main::evaled_subroutine/;
+    $warn .= $thiswarn;
+  };
   my $eval = "sub evaled_subroutine $p { &void *; }";
   eval $eval;
   print "# eval[$eval]\nnot " unless $@ && $@ =~ /(parse|syntax) error/i;
   print "ok ", $i++, "\n";
+  if ($warn eq '') {
+     print "ok ", $i++, "\n";
+  } else {
+    print "not ok ", $i++, "# $warn \n";
+  }
 }
 
 # Not $$;$;$
@@ -609,7 +621,7 @@ print "ok ", $i++, "\n";
 
 # check that obviously bad prototypes are getting warnings
 {
-  use warnings 'syntax';
+  local $^W = 1;
   my $warn = "";
   local $SIG{__WARN__} = sub { $warn .= join("",@_) };
   

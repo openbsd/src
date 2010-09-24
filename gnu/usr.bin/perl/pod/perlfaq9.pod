@@ -22,7 +22,7 @@ http://www.ietf.org/rfc/rfc3875
 Other relevant documentation listed in: http://www.perl.org/CGI_MetaFAQ.html
 
 These Perl FAQs very selectively cover some CGI issues. However, Perl
-programmers are strongly advised to use the CGI.pm module, to take care
+programmers are strongly advised to use the C<CGI.pm> module, to take care
 of the details for them.
 
 The similarity between CGI response headers (defined in the CGI
@@ -41,9 +41,9 @@ transaction response headers; the HTTP specification calls for records
 to be terminated with carriage-return and line-feed, i.e ASCII \015\012
 written in binary mode.
 
-Using CGI.pm gives excellent platform independence, including EBCDIC
-systems. CGI.pm selects an appropriate newline representation
-($CGI::CRLF) and sets binmode as appropriate.
+Using C<CGI.pm> gives excellent platform independence, including EBCDIC
+systems. C<CGI.pm> selects an appropriate newline representation
+(C<$CGI::CRLF>) and sets binmode as appropriate.
 
 =head2 My CGI script runs from the command line but not the browser.  (500 Server Error)
 
@@ -67,8 +67,8 @@ listed in the CGI Meta FAQ:
 
 =head2 How can I get better error messages from a CGI program?
 
-Use the CGI::Carp module.  It replaces C<warn> and C<die>, plus the
-normal Carp modules C<carp>, C<croak>, and C<confess> functions with
+Use the C<CGI::Carp> module.  It replaces C<warn> and C<die>, plus the
+normal C<Carp> modules C<carp>, C<croak>, and C<confess> functions with
 more verbose and safer versions.  It still sends them to the normal
 server error log.
 
@@ -76,8 +76,8 @@ server error log.
 	warn "This is a complaint";
 	die "But this one is serious";
 
-The following use of CGI::Carp also redirects errors to a file of your choice,
-placed in a BEGIN block to catch compile-time warnings as well:
+The following use of C<CGI::Carp> also redirects errors to a file of your choice,
+placed in a C<BEGIN> block to catch compile-time warnings as well:
 
 	BEGIN {
 		use CGI::Carp qw(carpout);
@@ -100,9 +100,9 @@ stamp prepended.
 
 =head2 How do I remove HTML from a string?
 
-The most correct way (albeit not the fastest) is to use HTML::Parser
+The most correct way (albeit not the fastest) is to use C<HTML::Parser>
 from CPAN.  Another mostly correct
-way is to use HTML::FormatText which not only removes HTML but also
+way is to use C<HTML::FormatText> which not only removes HTML but also
 attempts to do a little simple formatting of the resulting plain text.
 
 Many folks attempt a simple-minded regular expression approach, like
@@ -154,7 +154,7 @@ C<HTML::LinkExtor> or C<HTML::Parser>.  You might even use
 C<HTML::SimpleLinkExtor> as an example for something specifically
 suited to your needs.
 
-You can use URI::Find to extract URLs from an arbitrary text document.
+You can use C<URI::Find> to extract URLs from an arbitrary text document.
 
 Less complete solutions involving regular expressions can save
 you a lot of processing time if you know that the input is simple.  One
@@ -176,20 +176,20 @@ In this case, download means to use the file upload feature of HTML
 forms.  You allow the web surfer to specify a file to send to your web
 server.  To you it looks like a download, and to the user it looks
 like an upload.  No matter what you call it, you do it with what's
-known as B<multipart/form-data> encoding.  The CGI.pm module (which
+known as B<multipart/form-data> encoding.  The C<CGI.pm> module (which
 comes with Perl as part of the Standard Library) supports this in the
-start_multipart_form() method, which isn't the same as the startform()
+C<start_multipart_form()> method, which isn't the same as the C<startform()>
 method.
 
-See the section in the CGI.pm documentation on file uploads for code
+See the section in the C<CGI.pm> documentation on file uploads for code
 examples and details.
 
 =head2 How do I make an HTML pop-up menu with Perl?
 
 (contributed by brian d foy)
 
-The CGI.pm module (which comes with Perl) has functions to create
-the HTML form widgets. See the CGI.pm documentation for more
+The C<CGI.pm> module (which comes with Perl) has functions to create
+the HTML form widgets. See the C<CGI.pm> documentation for more
 examples.
 
 	use CGI qw/:standard/;
@@ -278,9 +278,9 @@ returns the escaped string:
 
 	my $original = "Colon : Hash # Percent %";
 
-	my $escaped = uri_escape( $original )
+	my $escaped = uri_escape( $original );
 
-	print "$string\n"; # 'Colon%20%3A%20Hash%20%23%20Percent%20%25%20'
+	print "$escaped\n"; # 'Colon%20%3A%20Hash%20%23%20Percent%20%25'
 
 To decode the string, use the C<uri_unescape> function:
 
@@ -307,7 +307,7 @@ script. The other kind (an absolute URLpath) is resolved internally to
 the server without any HTTP redirection. The CGI specifications do not
 allow relative URLs in either case.
 
-Use of CGI.pm is strongly recommended.  This example shows redirection
+Use of C<CGI.pm> is strongly recommended.  This example shows redirection
 with a complete URL. This redirection is handled by the web browser.
 
 	use CGI qw/:standard/;
@@ -338,10 +338,10 @@ the details for your particular server.
 
 =head2 How do I edit my .htpasswd and .htgroup files with Perl?
 
-The HTTPD::UserAdmin and HTTPD::GroupAdmin modules provide a
+The C<HTTPD::UserAdmin> and C<HTTPD::GroupAdmin> modules provide a
 consistent OO interface to these files, regardless of how they're
 stored.  Databases may be text, dbm, Berkeley DB or any database with
-a DBI compatible driver.  HTTPD::UserAdmin supports files used by the
+a DBI compatible driver.  C<HTTPD::UserAdmin> supports files used by the
 "Basic" and "Digest" authentication schemes.  Here's an example:
 
 	use HTTPD::UserAdmin ();
@@ -367,20 +367,20 @@ from L<perlfunc/split>:
 
 That solution doesn't do well if, for example, you're trying to
 maintain all the Received lines.  A more complete approach is to use
-the Mail::Header module from CPAN (part of the MailTools package).
+the C<Mail::Header> module from CPAN (part of the C<MailTools> package).
 
 =head2 How do I decode a CGI form?
 
 (contributed by brian d foy)
 
-Use the CGI.pm module that comes with Perl.  It's quick,
+Use the C<CGI.pm> module that comes with Perl.  It's quick,
 it's easy, and it actually does quite a bit of work to
 ensure things happen correctly.  It handles GET, POST, and
 HEAD requests, multipart forms, multivalued fields, query
 string and message body combinations, and many other things
 you probably don't want to think about.
 
-It doesn't get much easier: the CGI module automatically
+It doesn't get much easier: the C<CGI.pm> module automatically
 parses the input and makes each value available through the
 C<param()> function.
 
@@ -390,7 +390,7 @@ C<param()> function.
 
 	my @items = param( 'item' ); # multiple values, same field name
 
-If you want an object-oriented approach, CGI.pm can do that too.
+If you want an object-oriented approach, C<CGI.pm> can do that too.
 
 	use CGI;
 
@@ -400,13 +400,13 @@ If you want an object-oriented approach, CGI.pm can do that too.
 
 	my @items = $cgi->param( 'item' );
 
-You might also try CGI::Minimal which is a lightweight version
+You might also try C<CGI::Minimal> which is a lightweight version
 of the same thing.  Other CGI::* modules on CPAN might work better
 for you, too.
 
 Many people try to write their own decoder (or copy one from
 another program) and then run into one of the many "gotchas"
-of the task.  It's much easier and less hassle to use CGI.pm.
+of the task.  It's much easier and less hassle to use C<CGI.pm>.
 
 =head2 How do I check a valid mail address?
 
@@ -464,18 +464,18 @@ with the characters reversed, one added or subtracted to each digit, etc.
 
 =head2 How do I decode a MIME/BASE64 string?
 
-The MIME-Base64 package (available from CPAN) handles this as well as
+The C<MIME-Base64> package (available from CPAN) handles this as well as
 the MIME/QP encoding.  Decoding BASE64 becomes as simple as:
 
 	use MIME::Base64;
 	$decoded = decode_base64($encoded);
 
-The MIME-Tools package (available from CPAN) supports extraction with
+The C<MIME-Tools> package (available from CPAN) supports extraction with
 decoding of BASE64 encoded attachments and content directly from email
 messages.
 
 If the string to decode is short (less than 84 bytes long)
-a more direct approach is to use the unpack() function's "u"
+a more direct approach is to use the C<unpack()> function's "u"
 format after minor transliterations:
 
 	tr#A-Za-z0-9+/##cd;                   # remove non-base64 chars
@@ -485,8 +485,8 @@ format after minor transliterations:
 
 =head2 How do I return the user's mail address?
 
-On systems that support getpwuid, the $< variable, and the
-Sys::Hostname module (which is part of the standard perl distribution),
+On systems that support getpwuid, the C<< $< >> variable, and the
+C<Sys::Hostname> module (which is part of the standard perl distribution),
 you can probably try using something like this:
 
 	use Sys::Hostname;
@@ -497,8 +497,8 @@ that the company's mail system will not accept, so you should ask for
 users' mail addresses when this matters.  Furthermore, not all systems
 on which Perl runs are so forthcoming with this information as is Unix.
 
-The Mail::Util module from CPAN (part of the MailTools package) provides a
-mailaddress() function that tries to guess the mail address of the user.
+The C<Mail::Util> module from CPAN (part of the C<MailTools> package) provides a
+C<mailaddress()> function that tries to guess the mail address of the user.
 It makes a more intelligent guess than the code above, using information
 given when the module was installed, but it could still be incorrect.
 Again, the best way is often just to ask the user.
@@ -519,19 +519,19 @@ Use the C<sendmail> program directly:
 	EOF
 	close(SENDMAIL)     or warn "sendmail didn't close nicely";
 
-The B<-oi> option prevents sendmail from interpreting a line consisting
+The B<-oi> option prevents C<sendmail> from interpreting a line consisting
 of a single dot as "end of message".  The B<-t> option says to use the
 headers to decide who to send the message to, and B<-odq> says to put
 the message into the queue.  This last option means your message won't
 be immediately delivered, so leave it out if you want immediate
 delivery.
 
-Alternate, less convenient approaches include calling mail (sometimes
-called mailx) directly or simply opening up port 25 have having an
+Alternate, less convenient approaches include calling C<mail> (sometimes
+called C<mailx>) directly or simply opening up port 25 have having an
 intimate conversation between just you and the remote SMTP daemon,
-probably sendmail.
+probably C<sendmail>.
 
-Or you might be able use the CPAN module Mail::Mailer:
+Or you might be able use the CPAN module C<Mail::Mailer>:
 
 	use Mail::Mailer;
 
@@ -544,14 +544,14 @@ Or you might be able use the CPAN module Mail::Mailer:
 	print $mailer $body;
 	$mailer->close();
 
-The Mail::Internet module uses Net::SMTP which is less Unix-centric than
-Mail::Mailer, but less reliable.  Avoid raw SMTP commands.  There
-are many reasons to use a mail transport agent like sendmail.  These
+The C<Mail::Internet> module uses C<Net::SMTP> which is less Unix-centric than
+C<Mail::Mailer>, but less reliable.  Avoid raw SMTP commands.  There
+are many reasons to use a mail transport agent like C<sendmail>.  These
 include queuing, MX records, and security.
 
 =head2 How do I use MIME to make an attachment to a mail message?
 
-This answer is extracted directly from the MIME::Lite documentation.
+This answer is extracted directly from the C<MIME::Lite> documentation.
 Create a multipart message (i.e., one with attachments).
 
 	use MIME::Lite;
@@ -576,7 +576,7 @@ Create a multipart message (i.e., one with attachments).
 
 	$text = $msg->as_string;
 
-MIME::Lite also includes a method for sending these things.
+C<MIME::Lite> also includes a method for sending these things.
 
 	$msg->send;
 
@@ -585,9 +585,9 @@ SMTP via L<Net::SMTP>.
 
 =head2 How do I read mail?
 
-While you could use the Mail::Folder module from CPAN (part of the
-MailFolder package) or the Mail::Internet module from CPAN (part
-of the MailTools package), often a module is overkill.  Here's a
+While you could use the C<Mail::Folder> module from CPAN (part of the
+C<MailFolder> package) or the C<Mail::Internet> module from CPAN (part
+of the C<MailTools> package), often a module is overkill.  Here's a
 mail sorter.
 
 	#!/usr/bin/perl
@@ -621,7 +621,7 @@ gethostbyname, Socket, Net::Domain, Sys::Hostname>
 
 (contributed by brian d foy)
 
-The Net::Domain module, which is part of the standard distribution starting
+The C<Net::Domain> module, which is part of the standard distribution starting
 in perl5.7.3, can get you the fully qualified domain name (FQDN), the host
 name, or the domain name.
 
@@ -639,7 +639,7 @@ perl5.6, can also get the hostname.
 To get the IP address, you can use the C<gethostbyname> built-in function
 to turn the name into a number. To turn that number into the dotted octet
 form (a.b.c.d) that most people expect, use the C<inet_ntoa> function
-from the <Socket> module, which also comes with perl.
+from the C<Socket> module, which also comes with perl.
 
 	use Socket;
 
@@ -649,7 +649,7 @@ from the <Socket> module, which also comes with perl.
 
 =head2 How do I fetch a news article or the active newsgroups?
 
-Use the Net::NNTP or News::NNTPClient modules, both available from CPAN.
+Use the C<Net::NNTP> or C<News::NNTPClient> modules, both available from CPAN.
 This can make tasks like fetching the newsgroup list as simple as
 
 	perl -MNews::NNTPClient
@@ -657,7 +657,7 @@ This can make tasks like fetching the newsgroup list as simple as
 
 =head2 How do I fetch/put an FTP file?
 
-LWP::Simple (available from CPAN) can fetch but not put.  Net::FTP (also
+C<LWP::Simple> (available from CPAN) can fetch but not put.  C<Net::FTP> (also
 available from CPAN) is more complex but can put as well as fetch.
 
 =head2 How can I do RPC in Perl?
@@ -667,17 +667,9 @@ available from CPAN) is more complex but can put as well as fetch.
 Use one of the RPC modules you can find on CPAN (
 http://search.cpan.org/search?query=RPC&mode=all ).
 
-=head1 REVISION
-
-Revision: $Revision$
-
-Date: $Date$
-
-See L<perlfaq> for source control details and availability.
-
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2010 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

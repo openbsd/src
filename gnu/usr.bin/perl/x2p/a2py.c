@@ -428,7 +428,7 @@ yylex(void)
 	}
 	for (d = s; isALPHA(*s) || isDIGIT(*s) || *s == '_'; )
 	    s++;
-	split_to_array = set_array_base = TRUE;
+	split_to_array = TRUE;
 	if (d != s)
 	{
 	    yylval = string(d,s-d);
@@ -464,8 +464,6 @@ yylex(void)
 
     case 'a': case 'A':
 	SNARFWORD;
-	if (strEQ(d,"ARGC"))
-	    set_array_base = TRUE;
 	if (strEQ(d,"ARGV")) {
 	    yylval=numary(string("ARGV",0));
 	    XOP(VAR);
@@ -598,7 +596,6 @@ yylex(void)
 	if (strEQ(d,"in"))
 	    XTERM(IN);
 	if (strEQ(d,"index")) {
-	    set_array_base = TRUE;
 	    XTERM(INDEX);
 	}
 	if (strEQ(d,"int")) {
@@ -644,7 +641,6 @@ yylex(void)
     case 'm': case 'M':
 	SNARFWORD;
 	if (strEQ(d,"match")) {
-	    set_array_base = TRUE;
 	    XTERM(MATCH);
 	}
 	if (strEQ(d,"m"))
@@ -653,7 +649,7 @@ yylex(void)
     case 'n': case 'N':
 	SNARFWORD;
 	if (strEQ(d,"NF"))
-	    do_chop = do_split = split_to_array = set_array_base = TRUE;
+	    do_chop = do_split = split_to_array = TRUE;
 	if (strEQ(d,"next")) {
 	    saw_line_op = TRUE;
 	    XTERM(NEXT);
@@ -719,11 +715,9 @@ yylex(void)
     case 's': case 'S':
 	SNARFWORD;
 	if (strEQ(d,"split")) {
-	    set_array_base = TRUE;
 	    XOP(SPLIT);
 	}
 	if (strEQ(d,"substr")) {
-	    set_array_base = TRUE;
 	    XTERM(SUBSTR);
 	}
 	if (strEQ(d,"sub"))
@@ -1204,7 +1198,6 @@ numary(int arg)
     str_cat(key,"[]");
     hstore(symtab,key->str_ptr,str_make("1"));
     str_free(key);
-    set_array_base = TRUE;
     return arg;
 }
 

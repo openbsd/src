@@ -155,7 +155,7 @@ Don't put "=headI<n>" commands inside an "=over" ... "=back" region.
 And perhaps most importantly, keep the items consistent: either use
 "=item *" for all of them, to produce bullets; or use "=item 1.",
 "=item 2.", etc., to produce numbered lists; or use "=item foo",
-"=item bar", etc. -- namely, things that look nothing like bullets or
+"=item bar", etc.--namely, things that look nothing like bullets or
 numbers.
 
 If you start with bullets or numbers, stick with them, as
@@ -383,7 +383,7 @@ C<LE<lt>nameE<gt>>
 
 Link to a Perl manual page (e.g., C<LE<lt>Net::PingE<gt>>).  Note
 that C<name> should not contain spaces.  This syntax
-is also occasionally used for references to UNIX man pages, as in
+is also occasionally used for references to Unix man pages, as in
 C<LE<lt>crontab(5)E<gt>>.
 
 =item *
@@ -395,7 +395,7 @@ C<LE<lt>perlsyn/"For Loops"E<gt>>
 
 =item *
 
-C<LE<lt>/"sec"E<gt>> or C<LE<lt>/secE<gt>> or C<LE<lt>"sec"E<gt>>
+C<LE<lt>/"sec"E<gt>> or C<LE<lt>/secE<gt>>
 
 Link to a section in this manual page.  E.g.,
 C<LE<lt>/"Object Methods"E<gt>>
@@ -446,10 +446,10 @@ Or you can link to a web page:
 
 C<LE<lt>scheme:...E<gt>>
 
-Links to an absolute URL.  For example,
-C<LE<lt>http://www.perl.org/E<gt>>.  But note
-that there is no corresponding C<LE<lt>text|scheme:...E<gt>> syntax, for
-various reasons.
+C<LE<lt>text|scheme:...E<gt>>
+
+Links to an absolute URL.  For example, C<LE<lt>http://www.perl.org/E<gt>> or
+C<LE<lt>The Perl Home Page|http://www.perl.org/E<gt>>.
 
 =back
 
@@ -557,9 +557,8 @@ using an C<E> code:
 This will produce: "C<$a E<lt>=E<gt> $b>"
 
 A more readable, and perhaps more "plain" way is to use an alternate
-set of delimiters that doesn't require a single ">" to be escaped.  With
-the Pod formatters that are standard starting with perl5.5.660, doubled
-angle brackets ("<<" and ">>") may be used I<if and only if there is
+set of delimiters that doesn't require a single ">" to be escaped.
+Doubled angle brackets ("<<" and ">>") may be used I<if and only if there is
 whitespace right after the opening delimiter and whitespace right
 before the closing delimiter!>  For example, the following will
 do the trick:
@@ -581,6 +580,12 @@ X<POD, formatting code, escaping with multiple brackets>
 And they all mean exactly the same as this:
 
     C<$a E<lt>=E<gt> $b>
+
+The multiple-bracket form does not affect the interpretation of the contents of
+the formatting code, only how it must end.  That means that the examples above
+are also exactly the same as this:
+
+    C<< $a E<lt>=E<gt> $b >>
 
 As a further example, this means that if you wanted to put these bits of
 code in C<C> (code) style:
@@ -708,8 +713,8 @@ that could cause odd formatting.
 Older translators might add wording around an LE<lt>E<gt> link, so that
 C<LE<lt>Foo::BarE<gt>> may become "the Foo::Bar manpage", for example.
 So you shouldn't write things like C<the LE<lt>fooE<gt>
-documentation>, if you want the translated document to read sensibly
--- instead write C<the LE<lt>Foo::Bar|Foo::BarE<gt> documentation> or
+documentation>, if you want the translated document to read sensibly.
+Instead, write C<the LE<lt>Foo::Bar|Foo::BarE<gt> documentation> or
 C<LE<lt>the Foo::Bar documentation|Foo::BarE<gt>>, to control how the
 link comes out.
 

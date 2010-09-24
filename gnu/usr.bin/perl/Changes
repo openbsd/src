@@ -16,13 +16,6 @@ then run a command like
 
 to view all the changes between 5.10.0 and 5.11.0.
 
-Specifically, the changes for this release, (i.e. between 5.10.0 and
-5.10.1), is shown with with following command. Note that the range
-specification is slightly unusual for this release due to some kinks while
-migrating to git.
-
-    git log --name-status perl-5.10.0^..perl-5.10.1 ^f7c6915850
-
 See pod/perlrepository.pod for more details on using git and accessing the
 commit history.
 

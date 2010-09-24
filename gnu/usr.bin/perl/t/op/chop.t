@@ -9,7 +9,7 @@ BEGIN {
 plan tests => 139;
 
 $_ = 'abc';
-$c = do foo();
+$c = foo();
 is ($c . $_, 'cab', 'optimized');
 
 $_ = 'abc';
