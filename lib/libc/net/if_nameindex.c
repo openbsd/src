@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nameindex.c,v 1.9 2002/03/07 22:40:23 millert Exp $	*/
+/*	$OpenBSD: if_nameindex.c,v 1.10 2010/09/24 13:29:29 claudio Exp $	*/
 /*	$KAME: if_nameindex.c,v 1.7 2000/11/24 08:17:20 itojun Exp $	*/
 
 /*-
@@ -137,4 +137,10 @@ if_nameindex(void)
 out:
 	freeifaddrs(ifaddrs);
 	return(ifni);
+}
+
+void
+if_freenameindex(struct if_nameindex *ptr)
+{
+	free(ptr);
 }
