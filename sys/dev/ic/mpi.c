@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.164 2010/09/21 06:25:48 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.165 2010/09/24 01:27:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2666,7 +2666,6 @@ mpi_get_raid(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
 	struct mpi_cfg_ioc_pg2		*vol_page;
-	struct mpi_cfg_raid_vol		*vol_list;
 	size_t				pagelen;
 	u_int32_t			capabilities;
 
@@ -2685,7 +2684,6 @@ mpi_get_raid(struct mpi_softc *sc)
 		    "space for ioc config page 2\n", DEVNAME(sc));
 		return;
 	}
-	vol_list = (struct mpi_cfg_raid_vol *)(vol_page + 1);
 
 	if (mpi_cfg_page(sc, 0, &hdr, 1, vol_page, pagelen) != 0) {
 		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to fetch IOC "
