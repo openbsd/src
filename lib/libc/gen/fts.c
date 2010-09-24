@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.43 2009/08/27 16:19:27 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.44 2010/09/24 13:56:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -634,7 +634,7 @@ fts_build(FTS *sp, int type)
 	maxlen = sp->fts_pathlen - len;
 
 	/*
-	 * fts_level is a short so we must prevent it from wrapping
+	 * fts_level is signed so we must prevent it from wrapping
 	 * around to FTS_ROOTLEVEL and FTS_ROOTPARENTLEVEL.
 	 */
 	level = cur->fts_level;

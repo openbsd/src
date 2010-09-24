@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.h,v 1.12 2009/08/27 16:19:27 millert Exp $	*/
+/*	$OpenBSD: fts.h,v 1.13 2010/09/24 13:56:32 millert Exp $	*/
 /*	$NetBSD: fts.h,v 1.5 1994/12/28 01:41:50 mycroft Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ typedef struct _ftsent {
 
 #define	FTS_ROOTPARENTLEVEL	-1
 #define	FTS_ROOTLEVEL		 0
-#define	FTS_MAXLEVEL		 0x7fff
-	short fts_level;		/* depth (-1 to N) */
+#define	FTS_MAXLEVEL		 0x7fffffff
+	int fts_level;		/* depth (-1 to N) */
 
 #define	FTS_D		 1		/* preorder directory */
 #define	FTS_DC		 2		/* directory that causes cycles */
@@ -106,6 +106,8 @@ typedef struct _ftsent {
 #define	FTS_NOINSTR	 3		/* no instructions */
 #define	FTS_SKIP	 4		/* discard node */
 	unsigned short fts_instr;	/* fts_set() instructions */
+
+	unsigned short fts_spare;	/* unused */
 
 	struct stat *fts_statp;		/* stat(2) information */
 	char fts_name[1];		/* file name */
