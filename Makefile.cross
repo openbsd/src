@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.39 2010/09/24 14:04:06 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.40 2010/09/25 17:45:13 drahn Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -273,11 +273,15 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    MACHINE=${TARGET} \
 	    PATH=${CROSSPATH} ${MAKE} install)
+	cp -f ${CROSSDIR}/usr/bin/g++  ${CROSSDIR}/usr/bin/${TARGET_CANON}-g++ 
 	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-g++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-c++
 	cp -f ${CROSSDIR}/usr/libexec/cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp
-	rm -f ${CROSSDIR}/usr/bin/gcc  ${CROSSDIR}/usr/bin/cc ${CROSSDIR}/usr/libexec/cpp 
+	cp -f ${CROSSDIR}/usr/bin/gcc ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc
 	ln -sf ${TARGET_CANON}-cc ${CROSSDIR}/usr/${TARGET_CANON}/bin/cc
-	ln -sf ${TARGET_CANON}-c++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/c++
+
+	cp -f ${CROSSDIR}/usr/bin/gcc ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc
+	rm -f ${CROSSDIR}/usr/bin/gcc  ${CROSSDIR}/usr/bin/g++  ${CROSSDIR}/usr/bin/cc ${CROSSDIR}/usr/libexec/cpp 
+	# fix links
 	rm -f ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
 	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp#' \
 	    -e 's/@GNUC@//' \
