@@ -29,7 +29,7 @@ str_2ptr(register STR *str)
     GROWSTR(&(str->str_ptr), &(str->str_len), 24);
     s = str->str_ptr;
     if (str->str_nok) {
-	sprintf(s,"%.20g",str->str_nval);
+	snprintf(s,str->str_len,"%.20g",str->str_nval);
 	while (*s) s++;
     }
     *s = '\0';
