@@ -12,7 +12,7 @@ use Carp ;
 use bytes ;
 our ($VERSION, $XS_VERSION, @ISA, @EXPORT, $AUTOLOAD);
 
-$VERSION = '2.024';
+$VERSION = '2.031';
 $XS_VERSION = $VERSION; 
 $VERSION = eval $VERSION;
 
@@ -220,7 +220,7 @@ Returns C<BZ_STREAM_END> on success and a C<bzip2> error code on failure.
 
 =head1 Uncompression
 
-=head2 ($z, $status) = new Compress::Raw::Bunzip2 $appendOutput, $consumeInput, $small, $limitOutput;
+=head2 ($z, $status) = new Compress::Raw::Bunzip2 $appendOutput, $consumeInput, $small, $verbosity, $limitOutput;
 
 If successful, it will return the initialised uncompression object, C<$z>
 and a C<$status> of C<BZ_OK> in a list context. In scalar context it
@@ -272,6 +272,12 @@ If C<LimitOutput> is enabled, the C<ConsumeInput> option will also be
 enabled.
 
 This option defaults to false.
+
+=item B<$verbosity>
+
+This parameter is ignored.
+
+Defaults to 0.
 
 =back
 

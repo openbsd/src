@@ -1,5 +1,28 @@
 CHANGES
 -------
+
+  2.031 21 September 2010
+
+      * Updated to use bzip2 1.0.6
+
+  2.030 22 July 2010
+
+      * No Changes
+
+  2.027 24 April 2010
+
+      * No Changes
+
+  2.026 7 April 2010
+
+      * No Changes
+
+  2.025 27 March 2010
+
+      * Documented the unused "verbosity" option in
+        Compress::Raw::Bunzip2::new
+        [RT# 54425]
+
   2.023 9 November 2009
 
       * Removed redundant bzip2 source files from the bzip2-src directory.
