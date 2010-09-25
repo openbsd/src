@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2010/09/24 09:43:19 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.2 2010/09/25 16:20:06 sobrado Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -172,7 +172,7 @@ log_hexdump(void *buf, size_t len)
 		fprintf(stderr, "%4zi:", i);
 		l = sizeof(b) < len - i ? sizeof(b) : len - i;
 		bcopy((char *)buf + i, b, l);
-		
+
 		for (j = 0; j < sizeof(b); j++) {
 			if (j % 2 == 0)
 				fprintf(stderr, " ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.2 2010/09/25 14:40:28 sobrado Exp $ */
+/*	$OpenBSD: initiator.c,v 1.3 2010/09/25 16:20:06 sobrado Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -94,7 +94,7 @@ session_new(struct initiator *i, u_int8_t st)
 
 	if (!(s = calloc(1, sizeof(*s))))
 		return NULL;
-	
+
 	/* use the same qualifier unless there is a conflict */
 	s->isid_base = i->config.isid_base;
 	s->isid_qual = i->config.isid_qual;

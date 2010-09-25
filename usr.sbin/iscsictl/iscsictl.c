@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.1 2010/09/24 09:45:17 claudio Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.2 2010/09/25 16:23:01 sobrado Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -44,7 +44,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	
+
 	fprintf(stderr,"usage: %s [-s socket] command [argument ...]\n",
 	    __progname);
 	exit(1);
@@ -64,7 +64,7 @@ main (int argc, char* argv[])
 	struct iscsi_config *cf;
 	char *tname, *iname;
 	int ch, csock;
-	
+
 	/* check flags */
 	while ((ch = getopt(argc, argv, "f:s:")) != -1) {
 		switch (ch) {
