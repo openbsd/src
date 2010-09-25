@@ -646,7 +646,10 @@
 ./usr/lib/libskey_pic.a
 ./usr/lib/libsndio_pic.a
 ./usr/lib/libssl_pic.a
+./usr/lib/libstdc++_p.a
+./usr/lib/libstdc++_pic.a
 ./usr/lib/libsupc++.a
+./usr/lib/libsupc++_p.a
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libtermlib_pic.a
 ./usr/lib/libusbhid_pic.a
