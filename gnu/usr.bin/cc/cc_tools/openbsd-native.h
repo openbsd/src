@@ -1,5 +1,5 @@
 /* $FreeBSD: src/gnu/usr.bin/cc/cc_tools/freebsd-native.h,v 1.28.8.1 2009/04/15 03:14:26 kensmith Exp $ */
-/* $OpenBSD: openbsd-native.h,v 1.1.1.1 2009/10/15 20:50:21 robert Exp $ */
+/* $OpenBSD: openbsd-native.h,v 1.2 2010/09/25 17:44:34 drahn Exp $ */
 
 /* OPENBSD_NATIVE is defined when gcc is integrated into the OpenBSD
    source tree so it can be configured appropriately without using
@@ -42,7 +42,11 @@
 #undef  MD_STARTFILE_PREFIX		/* We don't need one for now. */
 #define STANDARD_STARTFILE_PREFIX	PREFIX"/lib/"
 #define STARTFILE_PREFIX_SPEC		PREFIX"/lib/"
+#ifdef CROSS_COMPILE
+#define STANDARD_BINDIR_PREFIX		PREFIX DEFAULT_TARGET_MACHINE "/bin/"
+#else
 #define STANDARD_BINDIR_PREFIX		PREFIX"/bin/"
+#endif
 
 /* OpenBSD is 4.4BSD derived */
 #define bsd4_4

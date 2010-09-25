@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.15 2010/09/11 11:52:39 kettenis Exp $
+# $OpenBSD: Makefile,v 1.16 2010/09/25 17:44:34 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -8,9 +8,13 @@ GCCDIR= ${GCCLIB}/gcc
 
 .include "../Makefile.tgt"
 
+.if defined(CROSSDIR)
+LD=${CROSSDIR}/usr/${GCC_TARGET}/bin/ld
+.endif
+
 .if defined(CROSS_TARGET)
 #Building cc for target, CC should already be the cross compiler
-.elif exists(${.CURDIR}/../cc/obj)
+.elif ${.OBJDIR} != ${.CURDIR}
 CC=${.OBJDIR}/../cc/cc -B ${.OBJDIR}/../cc1
 .else
 CC=${.CURDIR}/../cc/cc -B ${.CURDIR}/../cc1
