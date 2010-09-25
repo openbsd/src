@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.54 2010/06/12 09:44:44 bluhm Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.55 2010/09/25 13:29:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -335,7 +335,8 @@ show_summary_msg(struct imsg *imsg)
 
 		printf("SPF delay is %d msec(s), hold time between two SPFs "
 		    "is %d msec(s)\n", sum->spf_delay, sum->spf_hold_time);
-		printf("Number of external LSA(s) %d\n", sum->num_ext_lsa);
+		printf("Number of external LSA(s) %d (Checksum sum 0x%x)\n",
+		    sum->num_ext_lsa, sum->ext_lsa_cksum);
 		printf("Number of areas attached to this router: %d\n",
 		    sum->num_area);
 		break;
@@ -348,7 +349,8 @@ show_summary_msg(struct imsg *imsg)
 		    "area: %d\n", sumarea->num_adj_nbr);
 		printf("  SPF algorithm executed %d time(s)\n",
 		    sumarea->num_spf_calc);
-		printf("  Number LSA(s) %d\n", sumarea->num_lsa);
+		printf("  Number LSA(s) %d (Checksum sum 0x%x)\n",
+		    sumarea->num_lsa, sumarea->lsa_cksum);
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
