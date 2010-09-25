@@ -1,7 +1,8 @@
-/*	$OpenBSD: gcvt.c,v 1.11 2009/10/16 12:15:03 martynas Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.12 2010/09/25 13:19:19 millert Exp $	*/
 
 /*
- * Copyright (c) 2002, 2003, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2002, 2003, 2006, 2010
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +29,8 @@
 extern char *__dtoa(double, int, int, int *, int *, char **);
 extern void  __freedtoa(char *);
 
+#define DEFPREC	6
+
 char *
 gcvt(double value, int ndigit, char *buf)
 {
@@ -36,9 +39,9 @@ gcvt(double value, int ndigit, char *buf)
 	struct lconv *lconv;
 
 	lconv = localeconv();
-	if (ndigit == 0) {
-		buf[0] = '\0';
-		return (buf);
+	if (ndigit <= 0) {
+		/* Match printf(3) behavior. */
+		ndigit = ndigit ? DEFPREC : 1;
 	}
 
 	digits = __dtoa(value, 2, ndigit, &decpt, &sign, NULL);
@@ -47,9 +50,10 @@ gcvt(double value, int ndigit, char *buf)
 	if (decpt == 9999) {
 		/*
 		 * Infinity or NaN, convert to inf or nan with sign.
-		 * We assume the buffer is at least ndigit long.
+		 * We can't infer buffer size based on ndigit.
+		 * We have to assume it is at least 5 chars.
 		 */
-		snprintf(buf, ndigit + 1, "%s%s", sign ? "-" : "",
+		snprintf(buf, 5, "%s%s", sign ? "-" : "",
 		    *digits == 'I' ? "inf" : "nan");
 		__freedtoa(digits);
 		return (buf);
@@ -59,7 +63,8 @@ gcvt(double value, int ndigit, char *buf)
 	if (sign)
 		*dst++ = '-';
 
-	if (decpt < 0 || decpt > ndigit) {
+	/* Match printf(3) behavior for exponential vs. regular fomatting. */
+	if (decpt <= -4 || decpt > ndigit) {
 		/* exponential format (e.g. 1.2345e+13) */
 		if (--decpt < 0) {
 			sign = 1;
@@ -68,9 +73,12 @@ gcvt(double value, int ndigit, char *buf)
 			sign = 0;
 		src = digits;
 		*dst++ = *src++;
-		*dst++ = *lconv->decimal_point;
-		while (*src != '\0')
-			*dst++ = *src++;
+		if (*src != '\0') {
+			*dst++ = *lconv->decimal_point;
+			do {
+				*dst++ = *src++;
+			} while (*src != '\0');
+		}
 		*dst++ = 'e';
 		if (sign)
 			*dst++ = '-';
@@ -102,6 +110,10 @@ gcvt(double value, int ndigit, char *buf)
 			if (src == digits)
 				*dst++ = '0';	/* zero before decimal point */
 			*dst++ = *lconv->decimal_point;
+			while (decpt < 0) {
+				*dst++ = '0';
+				decpt++;
+			}
 			for (i = decpt; digits[i] != '\0'; i++) {
 				*dst++ = digits[i];
 			}
