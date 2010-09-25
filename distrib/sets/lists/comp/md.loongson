@@ -448,8 +448,8 @@
 ./usr/include/g++/ext/rope
 ./usr/include/g++/ext/ropeimpl.h
 ./usr/include/g++/ext/slist
-./usr/include/g++/ext/stdio_filebuf.h
 ./usr/include/g++/ext/sso_string_base.h
+./usr/include/g++/ext/stdio_filebuf.h
 ./usr/include/g++/ext/stdio_sync_filebuf.h
 ./usr/include/g++/ext/throw_allocator.h
 ./usr/include/g++/ext/type_traits.h
@@ -653,7 +653,9 @@
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd4.8/4.2.1/collect2
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd4.8/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd4.8/4.2.1/specs
+./usr/lib/libstdc++_p.a
 ./usr/lib/libsupc++.a
+./usr/lib/libsupc++_p.a
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32btsmip.x
 ./usr/libdata/ldscripts/elf32btsmip.xbn
@@ -709,8 +711,6 @@
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xsc
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xu
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xz
-./usr/lib/libstdc++_p.a
-./usr/lib/libsupc++_p.a
 ./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/readelf.0

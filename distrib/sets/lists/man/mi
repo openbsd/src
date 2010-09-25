@@ -537,6 +537,14 @@
 ./usr/share/man/cat1/perl5005delta.0
 ./usr/share/man/cat1/perl5100delta.0
 ./usr/share/man/cat1/perl5101delta.0
+./usr/share/man/cat1/perl5110delta.0
+./usr/share/man/cat1/perl5111delta.0
+./usr/share/man/cat1/perl5112delta.0
+./usr/share/man/cat1/perl5113delta.0
+./usr/share/man/cat1/perl5114delta.0
+./usr/share/man/cat1/perl5115delta.0
+./usr/share/man/cat1/perl5120delta.0
+./usr/share/man/cat1/perl5121delta.0
 ./usr/share/man/cat1/perl561delta.0
 ./usr/share/man/cat1/perl56delta.0
 ./usr/share/man/cat1/perl570delta.0
@@ -621,11 +629,11 @@
 ./usr/share/man/cat1/perlobj.0
 ./usr/share/man/cat1/perlop.0
 ./usr/share/man/cat1/perlopentut.0
-./usr/share/man/cat1/perlothrtut.0
 ./usr/share/man/cat1/perlpacktut.0
 ./usr/share/man/cat1/perlperf.0
 ./usr/share/man/cat1/perlpod.0
 ./usr/share/man/cat1/perlpodspec.0
+./usr/share/man/cat1/perlpolicy.0
 ./usr/share/man/cat1/perlport.0
 ./usr/share/man/cat1/perlpragma.0
 ./usr/share/man/cat1/perlre.0
@@ -655,6 +663,7 @@
 ./usr/share/man/cat1/perlunicode.0
 ./usr/share/man/cat1/perlunifaq.0
 ./usr/share/man/cat1/perluniintro.0
+./usr/share/man/cat1/perluniprops.0
 ./usr/share/man/cat1/perlunitut.0
 ./usr/share/man/cat1/perlutil.0
 ./usr/share/man/cat1/perlvar.0
@@ -856,6 +865,8 @@
 ./usr/share/man/cat3/i386
 ./usr/share/man/cat3/landisk
 ./usr/share/man/cat3/loongson
+./usr/share/man/cat3/loongson/get_fpc_csr.0
+./usr/share/man/cat3/loongson/set_fpc_csr.0
 ./usr/share/man/cat3/luna88k
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/macppc
@@ -864,13 +875,17 @@
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/palm
 ./usr/share/man/cat3/sgi
+./usr/share/man/cat3/sgi/get_fpc_csr.0
+./usr/share/man/cat3/sgi/set_fpc_csr.0
 ./usr/share/man/cat3/socppc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
+./usr/share/man/cat3/timingsafe_bcmp.0
 ./usr/share/man/cat3/vax
 ./usr/share/man/cat3/zaurus
 ./usr/share/man/cat3p
 ./usr/share/man/cat3p/AnyDBM_File.0
+./usr/share/man/cat3p/App::Cpan.0
 ./usr/share/man/cat3p/App::Prove.0
 ./usr/share/man/cat3p/App::Prove::State.0
 ./usr/share/man/cat3p/App::Prove::State::Result.0
@@ -886,6 +901,7 @@
 ./usr/share/man/cat3p/B::Debug.0
 ./usr/share/man/cat3p/B::Deparse.0
 ./usr/share/man/cat3p/B::Lint.0
+./usr/share/man/cat3p/B::Lint::Debug.0
 ./usr/share/man/cat3p/B::Showlex.0
 ./usr/share/man/cat3p/B::Terse.0
 ./usr/share/man/cat3p/B::Xref.0
@@ -918,6 +934,7 @@
 ./usr/share/man/cat3p/CPANPLUS::Dist::Build.0
 ./usr/share/man/cat3p/CPANPLUS::Dist::Build::Constants.0
 ./usr/share/man/cat3p/CPANPLUS::Dist::MM.0
+./usr/share/man/cat3p/CPANPLUS::Dist::Sample.0
 ./usr/share/man/cat3p/CPANPLUS::Error.0
 ./usr/share/man/cat3p/CPANPLUS::FAQ.0
 ./usr/share/man/cat3p/CPANPLUS::Hacking.0
@@ -944,9 +961,9 @@
 ./usr/share/man/cat3p/CPANPLUS::Shell::Default::Plugins::Remote.0
 ./usr/share/man/cat3p/CPANPLUS::Shell::Default::Plugins::Source.0
 ./usr/share/man/cat3p/Carp.0
-./usr/share/man/cat3p/Carp::Heavy.0
 ./usr/share/man/cat3p/Class::ISA.0
 ./usr/share/man/cat3p/Class::Struct.0
+./usr/share/man/cat3p/Compress::Raw::Bzip2.0
 ./usr/share/man/cat3p/Compress::Raw::Zlib.0
 ./usr/share/man/cat3p/Compress::Zlib.0
 ./usr/share/man/cat3p/Config.0
@@ -977,6 +994,7 @@
 ./usr/share/man/cat3p/Encode.0
 ./usr/share/man/cat3p/Encode::Alias.0
 ./usr/share/man/cat3p/Encode::Byte.0
+./usr/share/man/cat3p/Encode::CJKConstants.0
 ./usr/share/man/cat3p/Encode::CN.0
 ./usr/share/man/cat3p/Encode::CN::HZ.0
 ./usr/share/man/cat3p/Encode::Config.0
@@ -991,6 +1009,7 @@
 ./usr/share/man/cat3p/Encode::KR.0
 ./usr/share/man/cat3p/Encode::KR::2022_KR.0
 ./usr/share/man/cat3p/Encode::MIME::Header.0
+./usr/share/man/cat3p/Encode::MIME::Name.0
 ./usr/share/man/cat3p/Encode::PerlIO.0
 ./usr/share/man/cat3p/Encode::Supported.0
 ./usr/share/man/cat3p/Encode::Symbol.0
@@ -1020,6 +1039,7 @@
 ./usr/share/man/cat3p/ExtUtils::MM_BeOS.0
 ./usr/share/man/cat3p/ExtUtils::MM_Cygwin.0
 ./usr/share/man/cat3p/ExtUtils::MM_DOS.0
+./usr/share/man/cat3p/ExtUtils::MM_Darwin.0
 ./usr/share/man/cat3p/ExtUtils::MM_MacOS.0
 ./usr/share/man/cat3p/ExtUtils::MM_NW5.0
 ./usr/share/man/cat3p/ExtUtils::MM_OS2.0
@@ -1041,6 +1061,7 @@
 ./usr/share/man/cat3p/ExtUtils::Mksymlists.0
 ./usr/share/man/cat3p/ExtUtils::Packlist.0
 ./usr/share/man/cat3p/ExtUtils::ParseXS.0
+./usr/share/man/cat3p/ExtUtils::XSSymSet.0
 ./usr/share/man/cat3p/ExtUtils::testlib.0
 ./usr/share/man/cat3p/Fatal.0
 ./usr/share/man/cat3p/Fcntl.0
@@ -1081,6 +1102,7 @@
 ./usr/share/man/cat3p/I18N::Langinfo.0
 ./usr/share/man/cat3p/IO.0
 ./usr/share/man/cat3p/IO::Compress::Base.0
+./usr/share/man/cat3p/IO::Compress::Bzip2.0
 ./usr/share/man/cat3p/IO::Compress::Deflate.0
 ./usr/share/man/cat3p/IO::Compress::Gzip.0
 ./usr/share/man/cat3p/IO::Compress::RawDeflate.0
@@ -1098,6 +1120,7 @@
 ./usr/share/man/cat3p/IO::Uncompress::AnyInflate.0
 ./usr/share/man/cat3p/IO::Uncompress::AnyUncompress.0
 ./usr/share/man/cat3p/IO::Uncompress::Base.0
+./usr/share/man/cat3p/IO::Uncompress::Bunzip2.0
 ./usr/share/man/cat3p/IO::Uncompress::Gunzip.0
 ./usr/share/man/cat3p/IO::Uncompress::Inflate.0
 ./usr/share/man/cat3p/IO::Uncompress::RawInflate.0
@@ -1147,6 +1170,7 @@
 ./usr/share/man/cat3p/Module::Build::API.0
 ./usr/share/man/cat3p/Module::Build::Authoring.0
 ./usr/share/man/cat3p/Module::Build::Base.0
+./usr/share/man/cat3p/Module::Build::Bundling.0
 ./usr/share/man/cat3p/Module::Build::Compat.0
 ./usr/share/man/cat3p/Module::Build::ConfigData.0
 ./usr/share/man/cat3p/Module::Build::Cookbook.0
@@ -1155,7 +1179,6 @@
 ./usr/share/man/cat3p/Module::Build::PPMMaker.0
 ./usr/share/man/cat3p/Module::Build::Platform::Default.0
 ./usr/share/man/cat3p/Module::Build::Platform::Unix.0
-./usr/share/man/cat3p/Module::Build::YAML.0
 ./usr/share/man/cat3p/Module::CoreList.0
 ./usr/share/man/cat3p/Module::Load.0
 ./usr/share/man/cat3p/Module::Load::Conditional.0
@@ -1216,6 +1239,9 @@
 ./usr/share/man/cat3p/Pod::ParseLink.0
 ./usr/share/man/cat3p/Pod::ParseUtils.0
 ./usr/share/man/cat3p/Pod::Parser.0
+./usr/share/man/cat3p/Pod::Perldoc.0
+./usr/share/man/cat3p/Pod::Perldoc::BaseTo.0
+./usr/share/man/cat3p/Pod::Perldoc::GetOptsOO.0
 ./usr/share/man/cat3p/Pod::Perldoc::ToChecker.0
 ./usr/share/man/cat3p/Pod::Perldoc::ToMan.0
 ./usr/share/man/cat3p/Pod::Perldoc::ToNroff.0
@@ -1356,10 +1382,10 @@
 ./usr/share/man/cat3p/User::grent.0
 ./usr/share/man/cat3p/User::pwent.0
 ./usr/share/man/cat3p/XS::APItest.0
+./usr/share/man/cat3p/XS::APItest::KeywordRPN.0
 ./usr/share/man/cat3p/XS::Typemap.0
 ./usr/share/man/cat3p/XSLoader.0
 ./usr/share/man/cat3p/attributes.0
-./usr/share/man/cat3p/attrs.0
 ./usr/share/man/cat3p/autodie.0
 ./usr/share/man/cat3p/autodie::exception.0
 ./usr/share/man/cat3p/autodie::exception::system.0
@@ -1378,6 +1404,7 @@
 ./usr/share/man/cat3p/confess.0
 ./usr/share/man/cat3p/constant.0
 ./usr/share/man/cat3p/croak.0
+./usr/share/man/cat3p/deprecate.0
 ./usr/share/man/cat3p/diagnostics.0
 ./usr/share/man/cat3p/dirname.0
 ./usr/share/man/cat3p/encoding.0
@@ -1389,6 +1416,7 @@
 ./usr/share/man/cat3p/getopt.0
 ./usr/share/man/cat3p/getopts.0
 ./usr/share/man/cat3p/if.0
+./usr/share/man/cat3p/inc::latest.0
 ./usr/share/man/cat3p/inet_aton.0
 ./usr/share/man/cat3p/inet_ntoa.0
 ./usr/share/man/cat3p/integer.0
@@ -2793,6 +2821,8 @@
 ./usr/share/man/cat8/ipropd-slave.0
 ./usr/share/man/cat8/ipsecctl.0
 ./usr/share/man/cat8/isakmpd.0
+./usr/share/man/cat8/iscsictl.0
+./usr/share/man/cat8/iscsid.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdc.0
