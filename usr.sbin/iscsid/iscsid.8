@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iscsid.8,v 1.1 2010/09/24 10:53:14 dlg Exp $
+.\"	$OpenBSD: iscsid.8,v 1.2 2010/09/25 11:57:22 sobrado Exp $
 .\"
 .\" Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 24 2010 $
+.Dd $Mdocdate: September 25 2010 $
 .Dt ISCSID 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
-.Op Fl n Ar file
+.Op Fl n Ar device
 .Op Fl s Ar socket
 .Sh DESCRIPTION
 .Nm
@@ -48,7 +48,7 @@ If this option is specified,
 .Nm
 will run in the foreground and log to
 .Em stderr .
-.It Fl n Ar file
+.It Fl n Ar device
 Use an alternate /dev entry for communicating with the kernel.
 .It Fl s Ar socket
 Use an alternate location for the default control socket.
