@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.87 2010/07/19 09:16:30 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.88 2010/09/25 13:28:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -794,8 +794,11 @@ rde_send_summary(pid_t pid)
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		sumctl.num_area++;
 
-	RB_FOREACH(v, lsa_tree, &asext_tree)
+	RB_FOREACH(v, lsa_tree, &asext_tree) {
 		sumctl.num_ext_lsa++;
+		sumctl.ext_lsa_cksum += ntohs(v->lsa->hdr.ls_chksum);
+		
+	}
 
 	gettimeofday(&now, NULL);
 	if (rdeconf->uptime < now.tv_sec)
@@ -830,8 +833,10 @@ rde_send_summary_area(struct area *area, pid_t pid)
 		if (nbr->state == NBR_STA_FULL && !nbr->self)
 			sumareactl.num_adj_nbr++;
 
-	RB_FOREACH(v, lsa_tree, tree)
+	RB_FOREACH(v, lsa_tree, tree) {
 		sumareactl.num_lsa++;
+		sumareactl.lsa_cksum += ntohs(v->lsa->hdr.ls_chksum);
+	}
 
 	rde_imsg_compose_ospfe(IMSG_CTL_SHOW_SUM_AREA, 0, pid, &sumareactl,
 	    sizeof(sumareactl));

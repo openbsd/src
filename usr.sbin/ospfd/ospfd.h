@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.87 2010/02/19 10:35:52 dlg Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.88 2010/09/25 13:28:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -505,6 +505,7 @@ struct ctl_sum {
 	u_int32_t		 spf_hold_time;
 	u_int32_t		 num_ext_lsa;
 	u_int32_t		 num_area;
+	u_int32_t		 ext_lsa_cksum;
 	time_t			 uptime;
 	u_int8_t		 rfc1583compat;
 };
@@ -515,6 +516,7 @@ struct ctl_sum_area {
 	u_int32_t		 num_adj_nbr;
 	u_int32_t		 num_spf_calc;
 	u_int32_t		 num_lsa;
+	u_int32_t		 lsa_cksum;
 };
 
 struct demote_msg {
