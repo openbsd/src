@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.c,v 1.1 2010/09/24 09:43:19 claudio Exp $ */
+/*	$OpenBSD: task.c,v 1.2 2010/09/25 14:40:28 sobrado Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -33,7 +33,7 @@
 #include "log.h"
 
 /*
- * Task handling, PDU are attached to tasks and task are scheduled accross
+ * Task handling, PDU are attached to tasks and task are scheduled across
  * all connections of a session.
  */
 

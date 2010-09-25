@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.1 2010/09/24 09:43:19 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.2 2010/09/25 14:40:28 sobrado Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -300,7 +300,7 @@ initiator_login_cb(struct connection *c, void *arg, struct pdu *p)
 	/* XXX handle packet would be great */
 	log_pdu(p, 1);
 	if (ISCSI_PDU_OPCODE(lresp->opcode) != ISCSI_OP_LOGIN_RESPONSE) {
-		log_debug("Unkown crap");
+		log_debug("Unknown crap");
 	}
 
 	task_cleanup(&tl->task, c);
