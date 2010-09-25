@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.45 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.46 2010/09/25 19:23:39 mlarkin Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -366,22 +366,27 @@ ppbactivate(struct device *self, int act)
 			sc->sc_slcsr = pci_conf_read(pc, tag,
 			    sc->sc_cap_off + PCI_PCIE_SLCSR);
 
-		/*
-		 * Place the bridge into D3.  The PCI Power Management
-		 * spec says we should disable I/O and memory space as
-		 * well as bus mastering before we do so.
-		 */
-		csr = sc->sc_csr;
-		csr &= ~PCI_COMMAND_IO_ENABLE;
-		csr &= ~PCI_COMMAND_MEM_ENABLE;
-		csr &= ~PCI_COMMAND_MASTER_ENABLE;
-		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-		sc->sc_pmcsr_state = pci_get_powerstate(pc, tag);
-		pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D3);
+		if (pci_dopm) {	
+			/*
+		 	 * Place the bridge into D3.  The PCI Power
+			 * Management spec says we should disable I/O
+			 * and memory space as well as bus mastering
+			 * before we do so.
+		 	 */
+			csr = sc->sc_csr;
+			csr &= ~PCI_COMMAND_IO_ENABLE;
+			csr &= ~PCI_COMMAND_MEM_ENABLE;
+			csr &= ~PCI_COMMAND_MASTER_ENABLE;
+			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+			sc->sc_pmcsr_state = pci_get_powerstate(pc, tag);
+			pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D3);
+		}
 		break;
 	case DVACT_RESUME:
-		/* Restore power. */
-		pci_set_powerstate(pc, tag, sc->sc_pmcsr_state);
+		if (pci_dopm) {
+			/* Restore power. */
+			pci_set_powerstate(pc, tag, sc->sc_pmcsr_state);
+		}
 
 		/* Restore the registers saved above. */
 		pci_conf_write(pc, tag, PCI_BHLC_REG, sc->sc_bhlcr);
