@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.66 2010/07/24 15:31:19 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.67 2010/09/26 15:10:20 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -182,6 +182,7 @@
 .	if "\\$3"luna88k" .as vT \ (Luna88K)
 .	if "\\$3"mac68k" .as vT \ (Mac68K)
 .	if "\\$3"macppc"  .as vT \ (MacPPC)
+.	if "\\$3"mips64"  .as vT \ (MIPS64)
 .	if "\\$3"mvme68k" .as vT \ (MVME68K)
 .	if "\\$3"mvme88k" .as vT \ (MVME88K)
 .	if "\\$3"mvmeppc" .as vT \ (MVMEPPC)

@@ -1,4 +1,4 @@
-/*	$Id: arch.in,v 1.4 2010/07/31 23:42:04 schwarze Exp $ */
+/*	$Id: arch.in,v 1.5 2010/09/26 15:10:20 jmc Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,6 +42,7 @@ LINE("loongson",	"Loongson")
 LINE("luna88k",		"Luna88k")
 LINE("mac68k",		"Mac68k")
 LINE("macppc",		"MacPPC")
+LINE("mips64",		"MIPS64")
 LINE("mvme68k",		"MVME68k")
 LINE("mvme88k",		"MVME88k")
 LINE("mvmeppc",		"MVMEPPC")
