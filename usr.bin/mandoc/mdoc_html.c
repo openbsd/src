@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.30 2010/09/20 20:02:27 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.31 2010/09/26 18:23:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -2104,17 +2104,14 @@ static int
 mdoc_rs_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
-	struct roffsu	 su;
 
 	if (MDOC_BLOCK != n->type)
 		return(1);
 
 	if (n->prev && SEC_SEE_ALSO == n->sec) {
-		SCALE_VS_INIT(&su, 1);
-		bufcat_su(h, "margin-top", &su);
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
-	}
+		print_otag(h, TAG_BR, 0, NULL);
+		print_otag(h, TAG_BR, 0, NULL);
+	} 
 
 	PAIR_CLASS_INIT(&tag, "ref");
 	print_otag(h, TAG_SPAN, 1, &tag);
@@ -2262,7 +2259,9 @@ mdoc__x_post(MDOC_ARGS)
 
 	/* TODO: %U */
 
-	h->flags |= HTML_NOSPACE;
+	if (NULL == n->parent || MDOC_Rs != n->parent->tok)
+		return;
+
 	print_text(h, n->next ? "," : ".");
 }
 
