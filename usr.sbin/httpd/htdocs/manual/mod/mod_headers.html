@@ -44,6 +44,7 @@
     <ul>
       <li><a href="#header">Header</a></li>
       <li><a href="#errorheader">ErrorHeader</a></li>
+      <li><a href="#requestheader">RequestHeader</a></li>
     </ul>
     <hr />
 
@@ -158,6 +159,33 @@ Header unset Author
     <p>This directive can replace, merge or remove HTTP response
     headers during 3xx, 4xx and 5xx replies. For normal replies
     use the Header directive.
+    </p>
+    <p>This directive is identical to the <a href="#header">Header</a> 
+    directive in all other respects. Consult this directive for
+    more information on the syntax.
+    </P>
+
+    <h2><a id="requestheader" name="requestheader">RequestHeader</a> directive</h2>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> RequestHeader set|append|add
+    <em>header</em> <em>value</em><br />
+     <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> RequestHeader unset
+    <em>header</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual
+    host, access.conf, .htaccess<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>Override:</strong></a> FileInfo<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Extension<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_headers 
+
+    <p>This directive can replace, merge or remove HTTP request
+    headers. As opposed to the <a href="#header">Header</a> directive,
+    this directive modifies incoming request headers instead of outgoing
+    responses.
     </p>
     <p>This directive is identical to the <a href="#header">Header</a> 
     directive in all other respects. Consult this directive for

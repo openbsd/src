@@ -59,13 +59,19 @@
 /*
  * mod_headers.c: Add/append/remove HTTP response headers
  *     Written by Paul Sutton, paul@ukweb.com, 1 Oct 1996
+ *     Updated with RequestHeader by Martin Algesten,
+ *       puckman@taglab.com, 13 Jul 2002.
  *
  * New directive, Header, can be used to add/replace/remove HTTP headers.
  * Valid in both per-server and per-dir configurations.
+ * In addition directive, RequestHeader, can be used exactly as Header but
+ * with the difference that the header is added to the request headers rather
+ * than the response.
  *
  * Syntax is:
  *
- *   Header action header value
+ *   Header        action header value
+ *   RequestHeader action header value
  *
  * Where action is one of:
  *     set    - set this header, replacing any old value
@@ -77,7 +83,7 @@
  * Where action is unset, the third argument (value) should not be given.
  * The header name can include the colon, or not.
  *
- * The Header directive can only be used where allowed by the FileInfo 
+ * The directives can only be used where allowed by the FileInfo 
  * override.
  *
  * When the request is processed, the header directives are processed in
@@ -112,7 +118,15 @@ typedef enum {
     hdr_unset = 'u'             /* unset header */
 } hdr_actions;
 
+
+typedef enum {
+    hdrs_in  = 'i',             /* Add header to incoming (request) headers */
+    hdrs_out = 'o'              /* Add header to outgoing (response) headers */
+} hdrs_inout;
+
+
 typedef struct {
+    hdrs_inout inout;
     hdr_actions action;
     char *header;
     char *value;
@@ -154,7 +168,7 @@ static void *merge_headers_config(pool *p, void *basev, void *overridesv)
     return a;
 }
 
-static const char *header_cmd(cmd_parms *cmd, headers_conf * dirconf, char *action, char *hdr, char *value)
+static const char *header_cmd(cmd_parms *cmd, headers_conf * dirconf, char *action, char *hdr, char *value, hdrs_inout inout )
 {
     header_entry *new;
     server_rec *s = cmd->server;
@@ -174,6 +188,8 @@ static const char *header_cmd(cmd_parms *cmd, headers_conf * dirconf, char *acti
     } else {
 	new->do_err = 0;
     }
+
+    new->inout = inout;
 
     if (!strcasecmp(action, "set"))
         new->action = hdr_set;
@@ -202,11 +218,23 @@ static const char *header_cmd(cmd_parms *cmd, headers_conf * dirconf, char *acti
     return NULL;
 }
 
+static const char *outheader_cmd(cmd_parms *cmd, headers_conf * dirconf, char *action, char *hdr, char *value)
+{
+    header_cmd( cmd, dirconf, action, hdr, value, hdrs_out );
+}
+
+static const char *inheader_cmd(cmd_parms *cmd, headers_conf * dirconf, char *action, char *hdr, char *value)
+{
+    header_cmd( cmd, dirconf, action, hdr, value, hdrs_in );
+}
+
 static const command_rec headers_cmds[] =
 {
-    {"Header", header_cmd, (void *)0, OR_FILEINFO, TAKE23,
+    {"Header", outheader_cmd, NULL, OR_FILEINFO, TAKE23,
      "an action, header and value"},
-    {"ErrorHeader", header_cmd, (void *)1, OR_FILEINFO, TAKE23,
+    {"RequestHeader", inheader_cmd, NULL, OR_FILEINFO, TAKE23,
+     "an action, header and value"},
+    {"ErrorHeader", outheader_cmd, (void *)1, OR_FILEINFO, TAKE23,
      "an action, header and value"},
     {NULL}
 };
@@ -217,7 +245,15 @@ static void do_headers_fixup(request_rec *r, array_header *headers)
 
     for (i = 0; i < headers->nelts; ++i) {
         header_entry *hdr = &((header_entry *) (headers->elts))[i];
-	table *tbl = (hdr->do_err ? r->err_headers_out : r->headers_out);
+        table *tbl;
+        switch (hdr->inout) {
+        case hdrs_out:
+            tbl = (hdr->do_err ? r->err_headers_out : r->headers_out);
+            break;
+        case hdrs_in:
+            tbl = r->headers_in;
+            break;
+        }
         switch (hdr->action) {
         case hdr_add:
             ap_table_addn(tbl, hdr->header, hdr->value);
