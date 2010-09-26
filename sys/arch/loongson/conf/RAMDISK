@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.15 2010/09/26 21:04:32 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.16 2010/09/26 21:44:35 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -105,8 +105,6 @@ atapiscsi*	at umass?
 scsibus*	at atapiscsi?
 scsibus*	at umass?
 uhidev*		at uhub?	# Human Interface Devices
-ums*		at uhidev?	# USB mouse
-wsmouse*	at ums? mux 0
 ukbd*		at uhidev?	# USB keyboard
 wskbd*		at ukbd? mux 1
 uhid*		at uhidev?	# USB generic HID support
