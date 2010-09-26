@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.9 2010/09/04 08:00:15 jmc Exp $
+.\"	$OpenBSD: man.7,v 1.10 2010/09/26 19:40:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2010 $
+.Dd $Mdocdate: September 26 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -219,8 +219,8 @@ Documents are generally structured as follows:
 \&.TH FOO 1 2009-10-10
 \&.SH NAME
 \efBfoo\efR \e(en a description goes here
-\&.\e\*q The next is for sections 2 & 3 only.
 \&.\e\*q .SH LIBRARY
+\&.\e\*q For sections 2 & 3 only.
 \&.\e\*q Not used in OpenBSD.
 \&.SH SYNOPSIS
 \efBfoo\efR [\efB\e-options\efR] arguments...
@@ -939,11 +939,18 @@ The
 .Pq text colour ,
 .Sq \eM
 .Pq text filling colour ,
+.Sq \ez
+.Pq zero-length character ,
+.Sq \ew
+.Pq string length ,
+.Sq \ek
+.Pq horizontal position marker ,
+.Sq \eo
+.Pq text overstrike ,
 and
 .Sq \es
 .Pq text size
-.Sx Text Decoration
-escapes are all discarded in mandoc.
+escape sequences are all discarded in mandoc.
 .It
 The
 .Sq \ef

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.52 2010/09/26 15:10:20 jmc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.53 2010/09/26 19:40:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -2848,11 +2848,18 @@ The
 .Pq text colour ,
 .Sq \eM
 .Pq text filling colour ,
+.Sq \ez
+.Pq zero-length character ,
+.Sq \ew
+.Pq string length ,
+.Sq \ek
+.Pq horizontal position marker ,
+.Sq \eo
+.Pq text overstrike ,
 and
 .Sq \es
 .Pq text size
-.Sx Text Decoration
-escapes are all discarded in mandoc.
+escape sequences are all discarded in mandoc.
 .It
 The
 .Sq \ef
@@ -2867,6 +2874,17 @@ This is not supported by mandoc.
 .Xr mandoc 1 ,
 .Xr mandoc_char 7 ,
 .Xr mdoc.samples 7
+.Sh HISTORY
+The
+.Nm
+language first appeared as a troff macro package in
+.Bx 4.4 .
+It was later significantly updated by Werner Lemberg and Ruslan Ermilov
+in groff-1.17.
+The standalone implementation that is part of the
+.Xr mandoc 1
+utility written by Kristaps Dzonsons appeared in
+.Ox 4.6 .
 .Sh AUTHORS
 The
 .Nm
