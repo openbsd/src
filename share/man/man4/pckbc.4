@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbc.4,v 1.17 2010/07/22 07:41:59 jmc Exp $
+.\" $OpenBSD: pckbc.4,v 1.18 2010/09/26 20:39:08 miod Exp $
 .\" $NetBSD: pckbc.4,v 1.2 2000/06/16 06:42:31 augustss Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: September 26 2010 $
 .Dt PCKBC 4
 .Os
 .Sh NAME
@@ -36,7 +36,6 @@
 .Cd "pckbc* at ebus?                     " Pq "sparc64"
 .Cd "pckbd* at pckbc?"
 .Cd "pms*   at pckbc?"
-.Cd "pmsi*  at pckbc?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -69,5 +68,4 @@ device flags to 1.
 .Xr isa 4 ,
 .Xr pckbd 4 ,
 .Xr pms 4 ,
-.Xr pmsi 4 ,
 .Xr boot_config 8

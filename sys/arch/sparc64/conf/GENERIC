@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.257 2010/09/24 07:23:00 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.258 2010/09/26 20:39:08 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -300,8 +300,6 @@ pckbd*	at pckbc?			#  ps2 keyboard
 wskbd*	at pckbd? mux 1			#   generic keyboard layer
 pms*	at pckbc?			#  ps2 mouse
 wsmouse* at pms? mux 0			#   generic mouse
-pmsi*	at pckbc?			#  ps2 "intelli"mouse
-wsmouse* at pmsi? mux 0			#   generic mouse
 
 audioce*	at ebus?		# ebus cs4231
 

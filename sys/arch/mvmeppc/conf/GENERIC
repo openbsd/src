@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: GENERIC,v 1.12 2010/09/26 20:39:08 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -53,7 +53,6 @@ isa*	at	pcib?
 #pckbc0		at isa?			# PC keyboard controller
 #pckbd*		at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #vga0		at isa?
 #vga*		at pci?
 #com*	at	isa? port 0x3f8 irq 4	# standard serial ports

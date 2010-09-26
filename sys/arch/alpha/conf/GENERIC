@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.216 2010/09/23 16:21:46 yuo Exp $
+#	$OpenBSD: GENERIC,v 1.217 2010/09/26 20:39:08 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -335,7 +335,6 @@ spkr0	at pcppi?			# IBM BASIC emulation
 pckbc*	at isa?				# PC keyboard controller
 pckbd*	at pckbc?			# PC keyboard (kbd port)
 pms*	at pckbc?			# PS/2-style mouse (aux port)
-pmsi*	at pckbc?			# PS/2 "Intelli"mouse
 com*	at isa? port 0x3f8 irq 4	# standard serial ports
 com*	at isa? port 0x2f8 irq 3
 lpt*	at isa? port 0x3bc irq 7	# standard parallel port
@@ -429,7 +428,6 @@ wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd? mux 1
 wsmouse*	at	pms? mux 0
-wsmouse*	at	pmsi? mux 0
 
 # crypto support
 hifn*	at pci?				# Hi/fn 7751 crypto card

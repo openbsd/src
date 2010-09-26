@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.3 2010/07/22 14:25:41 deraadt Exp $ */
+/* $OpenBSD: pms.c,v 1.4 2010/09/26 20:39:08 miod Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -48,9 +48,11 @@ struct pms_softc {		/* driver status information */
 #define PMS_STATE_DISABLED	0
 #define PMS_STATE_ENABLED	1
 #define PMS_STATE_SUSPENDED	2
+
+	int intelli;
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
-	signed char dx;
+	signed char dx, dy;
 
 	struct device *sc_wsmousedev;
 };
@@ -70,11 +72,36 @@ int	pms_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	pms_enable(void *);
 void	pms_disable(void *);
 
+int	pms_setintellimode(pckbc_tag_t, pckbc_slot_t);
+
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
 	pms_ioctl,
 	pms_disable,
 };
+
+int
+pms_setintellimode(pckbc_tag_t tag, pckbc_slot_t slot)
+{
+	u_char cmd[2], resp[1];
+	int i, res;
+	static const u_char rates[] = {200, 100, 80};
+
+	cmd[0] = PMS_SET_SAMPLE;
+	for (i = 0; i < 3; i++) {
+		cmd[1] = rates[i];
+		res = pckbc_enqueue_cmd(tag, slot, cmd, 2, 0, 0, NULL);
+		if (res)
+			return (0);
+	}
+
+	cmd[0] = PMS_SEND_DEV_ID;
+	res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 0, resp);
+	if (res || resp[0] != 3)
+		return (0);
+
+	return (1);
+}
 
 int
 pmsprobe(parent, match, aux)
@@ -204,6 +231,8 @@ pms_change_state(struct pms_softc *sc, int newstate)
 
 		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
+		sc->intelli = pms_setintellimode(sc->sc_kbctag, sc->sc_kbcslot);
+
 		cmd[0] = PMS_DEV_ENABLE;
 		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 		    cmd, 1, 0, 1, 0);
@@ -320,7 +349,7 @@ void *vsc;
 int data;
 {
 	struct pms_softc *sc = vsc;
-	signed char dy;
+	signed char dz = 0;
 	u_int changed;
 
 	if (sc->sc_state != PMS_STATE_ENABLED) {
@@ -347,18 +376,28 @@ int data;
 		break;
 
 	case 2:
-		dy = data;
-		dy = (dy == -128) ? -127 : dy;
+		sc->dy = data;
+		sc->dy = (sc->dy == -128) ? -127 : sc->dy;
+		++sc->inputstate;
+		break;
+
+	case 3:
+		dz = data;
+		dz = (dz == -128) ? -127 : dz;
+		++sc->inputstate;
+		break;
+	}
+
+	if ((sc->inputstate == 3 && sc->intelli == 0) || sc->inputstate == 4) {
 		sc->inputstate = 0;
 
 		changed = (sc->buttons ^ sc->oldbuttons);
 		sc->oldbuttons = sc->buttons;
 
-		if (sc->dx || dy || changed)
+		if (sc->dx || sc->dy || dz || changed)
 			wsmouse_input(sc->sc_wsmousedev,
-				      sc->buttons, sc->dx, dy, 0, 0,
+				      sc->buttons, sc->dx, sc->dy, dz, 0,
 				      WSMOUSE_INPUT_DELTA);
-		break;
 	}
 
 	return;

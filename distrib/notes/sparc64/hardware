@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.151 2009/04/09 16:02:24 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.152 2010/09/26 20:39:06 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -490,7 +490,7 @@ Supported devices {:-include-:}:
 		Sun mice on Zilog serial ports (zstty)
 		Sun mice on NS16550 serial ports (com)
 		USB mice (ums)
-		PS/2 mice (pms or pmsi)
+		PS/2 mice (pms)
 
 	Framebuffers
 		SBUS framebuffers:

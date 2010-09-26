@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.697 2010/09/23 16:21:46 yuo Exp $
+#	$OpenBSD: GENERIC,v 1.698 2010/09/26 20:39:08 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -342,7 +342,6 @@ option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 pckbc0		at isa? flags 0x00	# PC keyboard controller
 pckbd*		at pckbc?	# PC keyboard
 pms*		at pckbc?	# PS/2 mouse for wsmouse
-pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 vga0		at isa?
 option		X86EMU		# to POST video cards
 vga*		at pci?
@@ -351,7 +350,6 @@ wsdisplay*	at vga?
 wsdisplay*	at pcdisplay?
 wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
 
 intagp*		at vga?		# intel integrated graphics agp
 aliagp*		at pchb?

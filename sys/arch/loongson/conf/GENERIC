@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2010/09/23 16:21:46 yuo Exp $
+#	$OpenBSD: GENERIC,v 1.26 2010/09/26 20:39:08 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -44,8 +44,8 @@ mcclock0	at isa? port 0x70
 pckbc0		at isa?				# Yeeloong only
 pckbd*		at pckbc?			# Yeeloong only
 wskbd*		at pckbd? mux 1			# Yeeloong only
-pmsi*		at pckbc?			# Yeeloong only
-wsmouse*	at pmsi? mux 0			# Yeeloong only
+pms*		at pckbc?			# Yeeloong only
+wsmouse*	at pms? mux 0			# Yeeloong only
 ykbec0		at isa? port 0x381		# Yeeloong only
 com0		at isa? port 0x2f8 irq 3	# Fuloong 2F only
 com1		at isa? port 0x3f8 irq 4	# Fuloong 2F only (IR port)
