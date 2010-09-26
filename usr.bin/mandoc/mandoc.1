@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.38 2010/08/20 00:53:35 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.39 2010/09/26 19:54:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2010 $
+.Dd $Mdocdate: September 26 2010 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -458,8 +458,7 @@ described above.
 .Sh COMPATIBILITY
 This section summarises
 .Nm
-compatibility with
-.Xr groff 1 .
+compatibility with GNU troff.
 Each input and output format is separately noted.
 .Ss ASCII Compatibility
 .Bl -bullet -compact
@@ -474,9 +473,7 @@ in
 .Fl T Ns Cm ascii
 are synonyms, as are \-filled and \-ragged.
 .It
-In
-.Xr groff 1 ,
-the
+In GNU troff, the
 .Sq \&Pa
 .Xr mdoc 7
 macro does not underline when scoped under an
@@ -563,17 +560,6 @@ which is usually 1024 bytes.
 Be aware of this when setting long link
 formats such as
 .Fl O Ns Cm style Ns = Ns Ar really/long/link .
-.Pp
-The
-.Fl T Ns Cm html
-and
-.Fl T Ns Cm xhtml
-output modes don't render the
-.Sq \es
-font size escape documented in
-.Xr mdoc 7
-and
-.Xr man 7 .
 .Pp
 Nesting elements within next-line element scopes of
 .Fl m Ns Cm an ,
