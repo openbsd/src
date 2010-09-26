@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.46 2010/08/20 08:13:03 schwarze Exp $ */
+/*	$Id: main.c,v 1.47 2010/09/26 20:19:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -124,7 +124,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"section not in conventional manual section",
 	"end of line whitespace",
 	"blocks badly nested",
-	"scope open on exit",
 
 	"generic error",
 
@@ -150,6 +149,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"argument count wrong",
 	"request scope close w/none open",
 	"scope already open",
+	"scope open on exit",
 	"macro requires line argument(s)",
 	"macro requires body argument(s)",
 	"macro requires argument(s)",
@@ -167,7 +167,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unsupported display type",
 	"blocks badly nested",
 	"no such block is open",
-	"scope broken, syntax violated",
 	"line scope broken, syntax violated",
 	"argument count wrong, violates syntax",
 	"child violates parent syntax",
@@ -216,7 +215,7 @@ main(int argc, char *argv[])
 		switch (c) {
 		case ('m'):
 			if ( ! moptions(&curp.inttype, optarg))
-				return(MANDOCLEVEL_BADARG);
+				return((int)MANDOCLEVEL_BADARG);
 			break;
 		case ('O'):
 			(void)strlcat(curp.outopts, optarg, BUFSIZ);
@@ -224,11 +223,11 @@ main(int argc, char *argv[])
 			break;
 		case ('T'):
 			if ( ! toptions(&curp, optarg))
-				return(MANDOCLEVEL_BADARG);
+				return((int)MANDOCLEVEL_BADARG);
 			break;
 		case ('W'):
 			if ( ! woptions(&curp, optarg))
-				return(MANDOCLEVEL_BADARG);
+				return((int)MANDOCLEVEL_BADARG);
 			break;
 		case ('V'):
 			version();
@@ -264,7 +263,7 @@ main(int argc, char *argv[])
 	if (curp.roff)
 		roff_free(curp.roff);
 
-	return(exit_status);
+	return((int)exit_status);
 }
 
 
@@ -273,7 +272,7 @@ version(void)
 {
 
 	(void)printf("%s %s\n", progname, VERSION);
-	exit(MANDOCLEVEL_OK);
+	exit((int)MANDOCLEVEL_OK);
 }
 
 
@@ -284,7 +283,7 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-V] [-foption] "
 			"[-mformat] [-Ooption] [-Toutput] "
 			"[-Werr] [file...]\n", progname);
-	exit(MANDOCLEVEL_BADARG);
+	exit((int)MANDOCLEVEL_BADARG);
 }
 
 
@@ -314,7 +313,7 @@ resize_buf(struct buf *buf, size_t initial)
 	buf->buf = realloc(buf->buf, buf->sz);
 	if (NULL == buf->buf) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 }
 
@@ -794,6 +793,7 @@ mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 
 	level = MANDOCLEVEL_FATAL;
 	while (t < mandoclimits[level])
+		/* LINTED */
 		level--;
 
 	cp = (struct curparse *)arg;

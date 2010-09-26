@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.55 2010/07/16 00:34:33 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.56 2010/09/26 20:19:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -203,14 +203,10 @@ mdoc_macroend(struct mdoc *m)
 
 	n = MDOC_VALID & m->last->flags ?  m->last->parent : m->last;
 
-	for ( ; n; n = n->parent) {
-		if (MDOC_BLOCK != n->type)
-			continue;
-		if ( ! (MDOC_EXPLICIT & mdoc_macros[n->tok].flags))
-			continue;
-		mdoc_nmsg(m, n, MANDOCERR_SYNTSCOPE);
-		return(0);
-	}
+	for ( ; n; n = n->parent)
+		if (MDOC_BLOCK == n->type &&
+		    MDOC_EXPLICIT & mdoc_macros[n->tok].flags)
+			mdoc_nmsg(m, n, MANDOCERR_SCOPEEXIT);
 
 	/* Rewind to the first. */
 
