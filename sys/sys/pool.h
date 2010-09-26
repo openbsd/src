@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.35 2010/07/13 16:47:02 deraadt Exp $	*/
+/*	$OpenBSD: pool.h,v 1.36 2010/09/26 21:03:57 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -91,15 +91,14 @@ struct pool {
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
-#define PR_MALLOCOK	0x01
-#define	PR_NOWAIT	0x00		/* for symmetry */
-#define PR_WAITOK	0x02
-#define PR_WANTED	0x04
-#define PR_PHINPAGE	0x08
-#define PR_LOGGING	0x10
-#define PR_LIMITFAIL	0x20	/* even if waiting, fail if we hit limit */
-#define PR_DEBUG	0x40
-#define PR_ZERO		0x100
+#define PR_WAITOK	0x0001 /* M_WAITOK */
+#define PR_NOWAIT	0x0002 /* M_NOWAIT */
+#define PR_LIMITFAIL	0x0004 /* M_CANFAIL */
+#define PR_ZERO		0x0008 /* M_ZERO */
+#define PR_WANTED	0x0100
+#define PR_PHINPAGE	0x0200
+#define PR_LOGGING	0x0400
+#define PR_DEBUG	0x0800
 
 	int			pr_ipl;
 

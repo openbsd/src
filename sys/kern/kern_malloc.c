@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.85 2010/09/21 01:09:10 matthew Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.86 2010/09/26 21:03:56 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -190,6 +190,8 @@ malloc(unsigned long size, int type, int flags)
 	if (((unsigned long)type) >= M_LAST)
 		panic("malloc - bogus type");
 #endif
+
+	KASSERT(flags & (M_WAITOK | M_NOWAIT));
 
 	if ((flags & M_NOWAIT) == 0)
 		assertwaitok();
