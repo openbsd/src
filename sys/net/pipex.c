@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.10 2010/09/24 14:50:30 hsuenaga Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.11 2010/09/26 07:04:43 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1902,7 +1902,6 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 	if (pipex_session_is_l2tp_data_sequencing_on(session)) {
 		seq = (struct pipex_l2tp_seq_header *)(l2tp + 1);
 		l2tp->flagsver |= PIPEX_L2TP_FLAG_SEQUENCE;
-		l2tp->length += sizeof(struct pipex_l2tp_seq_header);
 		seq->ns = htons(session->proto.l2tp.ns_nxt);
 		session->proto.l2tp.ns_nxt++;
 		session->proto.l2tp.ns_gap++;
