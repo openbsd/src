@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.46 2010/04/27 11:58:14 marco Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.47 2010/09/26 23:44:51 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -217,9 +217,10 @@ struct usb_video_vc_processing_desc {
 	uByte	bSourceID;
 	uWord	wMaxMultiplier;
 	uByte	bControlSize;
-	uWord	bmControls;	/* XXX must be variable size of bControlSize */
+	uByte	bmControls[255]; /* [bControlSize] */
 	uByte	iProcessing;
 	uByte	bmVideoStandards;
+
 } __packed;
 
 /* Table 3-9: VC Extension Unit Descriptor */
@@ -496,16 +497,18 @@ struct uvideo_controls {
 	int		cid;
 	int		type;
 	char		name[32];
-	uint16_t	ctrl_bitmap;
+	uint8_t         ctrl_bit;
 	uint16_t	ctrl_selector;
 	uint16_t	ctrl_len;
 } uvideo_ctrls[] = {
-	/* TODO complete control list */
+        /*
+         * Processing Unit Controls
+         */
 	{
 	    V4L2_CID_BRIGHTNESS,
 	    V4L2_CTRL_TYPE_INTEGER,
 	    "Brightness",
-	    (1 << 0),
+	    0,
 	    PU_BRIGHTNESS_CONTROL,
 	    2
 	},
@@ -513,7 +516,7 @@ struct uvideo_controls {
 	    V4L2_CID_CONTRAST,
 	    V4L2_CTRL_TYPE_INTEGER,
 	    "Contrast",
-	    (1 << 1),
+	    1,
 	    PU_CONTRAST_CONTROL,
 	    2
 	},
@@ -521,7 +524,7 @@ struct uvideo_controls {
 	    V4L2_CID_HUE,
 	    V4L2_CTRL_TYPE_INTEGER,
 	    "Hue",
-	    (1 << 2),
+	    2,
 	    PU_HUE_CONTROL,
 	    2
 	},
@@ -529,26 +532,128 @@ struct uvideo_controls {
 	    V4L2_CID_SATURATION,
 	    V4L2_CTRL_TYPE_INTEGER,
 	    "Saturation",
-	    (1 << 3),
+	    3,
 	    PU_SATURATION_CONTROL,
+	    2
+	},
+	{
+	    V4L2_CID_SHARPNESS,
+	    V4L2_CTRL_TYPE_INTEGER,
+	    "Sharpness",
+	    4,
+	    PU_SHARPNESS_CONTROL,
 	    2
 	},
 	{
 	    V4L2_CID_GAMMA,
 	    V4L2_CTRL_TYPE_INTEGER,
 	    "Gamma",
-	    (1 << 5),
+	    5,
 	    PU_GAMMA_CONTROL,
 	    2
 	},
 	{
+	    V4L2_CID_WHITE_BALANCE_TEMPERATURE,
+	    V4L2_CTRL_TYPE_INTEGER,
+	    "White Balance Temperature",
+	    6,
+	    PU_WHITE_BALANCE_TEMPERATURE_CONTROL,
+	    2
+	},
+#if 0
+        /* XXX Two V4L2 ids mapping one UVC control */
+	{
+	    V4L2_CID_RED_BALANCE, /* V4L2_CID_BLUE_BALANCE */
+	    V4L2_CTRL_TYPE_INTEGER,
+	    "White Balance Red Component", /* Blue Component */
+	    7,
+	    PU_WHITE_BALANCE_COMPONENT_CONTROL,
+	    4
+	},
+#endif
+        {
+            V4L2_CID_BACKLIGHT_COMPENSATION,
+            V4L2_CTRL_TYPE_INTEGER,
+            "Backlight Compensation",
+            8,
+            PU_BACKLIGHT_COMPENSATION_CONTROL,
+            2,
+        },
+	{
 	    V4L2_CID_GAIN,
 	    V4L2_CTRL_TYPE_INTEGER,
 	    "Gain",
-	    (1 << 9),
+	    9,
 	    PU_GAIN_CONTROL,
 	    2,
 	},
+        {
+            V4L2_CID_POWER_LINE_FREQUENCY,
+            V4L2_CTRL_TYPE_MENU,
+            "Power Line Frequency",
+            10,
+            PU_POWER_LINE_FREQUENCY_CONTROL,
+            1,
+        },
+        {
+            V4L2_CID_HUE_AUTO,
+            V4L2_CTRL_TYPE_BOOLEAN,
+            "Hue Auto",
+            11,
+            PU_HUE_AUTO_CONTROL,
+            1,
+        },
+        {
+            V4L2_CID_AUTO_WHITE_BALANCE,
+            V4L2_CTRL_TYPE_BOOLEAN,
+            "White Balance Temperature Auto",
+            12,
+            PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL,
+            1,
+        },
+        {
+            V4L2_CID_AUTO_WHITE_BALANCE,
+            V4L2_CTRL_TYPE_BOOLEAN,
+            "White Balance Component Auto",
+            13,
+            PU_WHITE_BALANCE_COMPONENT_AUTO_CONTROL,
+            1,
+        },
+#if 0
+        /* XXX No V4L2 CID for these controls? */
+        {
+            V4L2_CID_XXX,
+            V4L2_CTRL_TYPE_INTEGER,
+            "Digital Multiplier",
+            14,
+            PU_DIGITAL_MULTIPLIER_CONTROL,
+            2,
+        },
+        {
+            V4L2_CID_XXX,
+            V4L2_CTRL_TYPE_INTEGER,
+            "Digital Multiplier Limit",
+            15,
+            PU_DIGITAL_MULTIPLIER_LIMIT_CONTROL,
+            2,
+        },
+        {
+            V4L2_CID_XXX,
+            V4L2_CTRL_TYPE_INTEGER,
+            "Analog Video Standard",
+            16,
+            PU_ANALOG_VIDEO_STANDARD_CONTROL,
+            1,
+        },
+        {
+            V4L2_CID_XXX,
+            V4L2_CTRL_TYPE_INTEGER,
+            "Analog Lock Status",
+            17,
+            PU_ANALOG_LOCK_STATUS_CONTROL,
+            1,
+        },
+#endif
 	{ 0, 0, "", 0, 0, 0 }
 };
 

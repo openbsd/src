@@ -1,4 +1,4 @@
-/*	$OpenBSD: videoio.h,v 1.4 2010/09/12 22:27:52 jakemsr Exp $	*/
+/*	$OpenBSD: videoio.h,v 1.5 2010/09/26 23:44:51 jakemsr Exp $	*/
 /*
  *  Video for Linux Two header file
  *
@@ -819,21 +819,58 @@ struct v4l2_querymenu {
 #define V4L2_CID_AUDIO_TREBLE           (V4L2_CID_BASE+8)
 #define V4L2_CID_AUDIO_MUTE             (V4L2_CID_BASE+9)
 #define V4L2_CID_AUDIO_LOUDNESS         (V4L2_CID_BASE+10)
-#define V4L2_CID_BLACK_LEVEL            (V4L2_CID_BASE+11)
+#define V4L2_CID_BLACK_LEVEL            (V4L2_CID_BASE+11)  /* Deprecated */
 #define V4L2_CID_AUTO_WHITE_BALANCE     (V4L2_CID_BASE+12)
 #define V4L2_CID_DO_WHITE_BALANCE       (V4L2_CID_BASE+13)
 #define V4L2_CID_RED_BALANCE            (V4L2_CID_BASE+14)
 #define V4L2_CID_BLUE_BALANCE           (V4L2_CID_BASE+15)
 #define V4L2_CID_GAMMA                  (V4L2_CID_BASE+16)
-#define V4L2_CID_WHITENESS              (V4L2_CID_GAMMA)	/* ? Not sure */
+#define V4L2_CID_WHITENESS              (V4L2_CID_GAMMA)    /* Deprecated */
 #define V4L2_CID_EXPOSURE               (V4L2_CID_BASE+17)
 #define V4L2_CID_AUTOGAIN               (V4L2_CID_BASE+18)
 #define V4L2_CID_GAIN                   (V4L2_CID_BASE+19)
 #define V4L2_CID_HFLIP                  (V4L2_CID_BASE+20)
 #define V4L2_CID_VFLIP                  (V4L2_CID_BASE+21)
+
+/* Deprecated; use V4L2_CID_PAN_RESET and V4L2_CID_TILT_RESET */
 #define V4L2_CID_HCENTER                (V4L2_CID_BASE+22)
 #define V4L2_CID_VCENTER                (V4L2_CID_BASE+23)
-#define V4L2_CID_LASTP1                 (V4L2_CID_BASE+24)	/* last CID + 1 */
+
+#define V4L2_CID_POWER_LINE_FREQUENCY   (V4L2_CID_BASE+24)
+enum v4l2_power_line_frequency {
+	V4L2_CID_POWER_LINE_FREQUENCY_DISABLED  = 0,
+	V4L2_CID_POWER_LINE_FREQUENCY_50HZ      = 1,
+	V4L2_CID_POWER_LINE_FREQUENCY_60HZ      = 2,
+};
+#define V4L2_CID_HUE_AUTO                       (V4L2_CID_BASE+25)
+#define V4L2_CID_WHITE_BALANCE_TEMPERATURE      (V4L2_CID_BASE+26)
+#define V4L2_CID_SHARPNESS                      (V4L2_CID_BASE+27)
+#define V4L2_CID_BACKLIGHT_COMPENSATION         (V4L2_CID_BASE+28)
+#define V4L2_CID_CHROMA_AGC                     (V4L2_CID_BASE+29)
+#define V4L2_CID_COLOR_KILLER                   (V4L2_CID_BASE+30)
+#define V4L2_CID_COLORFX                        (V4L2_CID_BASE+31)
+enum v4l2_colorfx {
+	V4L2_COLORFX_NONE       = 0,
+	V4L2_COLORFX_BW         = 1,
+	V4L2_COLORFX_SEPIA      = 2,
+	V4L2_COLORFX_NEGATIVE = 3,
+	V4L2_COLORFX_EMBOSS = 4,
+	V4L2_COLORFX_SKETCH = 5,
+	V4L2_COLORFX_SKY_BLUE = 6,
+	V4L2_COLORFX_GRASS_GREEN = 7,
+	V4L2_COLORFX_SKIN_WHITEN = 8,
+	V4L2_COLORFX_VIVID = 9,
+};
+#define V4L2_CID_AUTOBRIGHTNESS                 (V4L2_CID_BASE+32)
+#define V4L2_CID_BAND_STOP_FILTER               (V4L2_CID_BASE+33)
+
+#define V4L2_CID_ROTATE                         (V4L2_CID_BASE+34)
+#define V4L2_CID_BG_COLOR                       (V4L2_CID_BASE+35)
+
+#define V4L2_CID_CHROMA_GAIN                    (V4L2_CID_BASE+36)
+
+/* last CID + 1 */
+#define V4L2_CID_LASTP1                         (V4L2_CID_BASE+37)
 
 /* MPEG-class control IDs defined by V4L2 */
 #define V4L2_CID_MPEG_BASE                      (V4L2_CTRL_CLASS_MPEG | 0x900)

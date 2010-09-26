@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.137 2010/09/12 22:27:52 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.138 2010/09/26 23:44:51 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -57,6 +57,9 @@ int uvideo_debug = 1;
 
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
+#define byteof(x) ((x) >> 3)
+#define bitof(x)  (1L << ((x) & 0x7))
+
 int		uvideo_enable(void *);
 void		uvideo_disable(void *);
 int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
@@ -78,6 +81,7 @@ usbd_status	uvideo_vc_get_ctrl(struct uvideo_softc *, uint8_t *, uint8_t,
 usbd_status	uvideo_vc_set_ctrl(struct uvideo_softc *, uint8_t *, uint8_t,
 		    uint8_t, uint16_t, uint16_t);
 int		uvideo_find_ctrl(struct uvideo_softc *, int);
+int		uvideo_has_ctrl(struct usb_video_vc_processing_desc *, int);
 
 usbd_status	uvideo_vs_parse_desc(struct uvideo_softc *,
 		    usb_config_descriptor_t *);
@@ -671,16 +675,11 @@ uvideo_vc_parse_desc_pu(struct uvideo_softc *sc,
 	struct usb_video_vc_processing_desc *d;
 
 	d = (struct usb_video_vc_processing_desc *)(uint8_t *)desc;
+	d->iProcessing = d->bmControls[d->bControlSize]; 
+	d->bmVideoStandards = d->bmControls[d->bControlSize + 1];
 
 	if (sc->sc_desc_vc_pu_num == UVIDEO_MAX_PU) {
 		printf("%s: too many PU descriptors found!\n", DEVNAME(sc));
-		return (USBD_INVAL);
-	}
-
-	/* XXX support variable bmControls fields */
-	if (d->bControlSize != 2) {
-		printf("%s: video control not supported for this device.\n",
-		    DEVNAME(sc));
 		return (USBD_INVAL);
 	}
 
@@ -763,8 +762,8 @@ uvideo_find_ctrl(struct uvideo_softc *sc, int id)
 
 	/* does the device support this control? */
 	for (found = 0, j = 0; j < sc->sc_desc_vc_pu_num; j++) {
-		if (UGETW(sc->sc_desc_vc_pu[j]->bmControls) &
-		    uvideo_ctrls[i].ctrl_bitmap) {
+		if (uvideo_has_ctrl(sc->sc_desc_vc_pu[j],
+		    uvideo_ctrls[i].ctrl_bit) != 0) {
 			found = 1;
 			break; 
 		}
@@ -777,6 +776,15 @@ uvideo_find_ctrl(struct uvideo_softc *sc, int id)
 	sc->sc_desc_vc_pu_cur = sc->sc_desc_vc_pu[j];
 
 	return (i);
+}
+
+int
+uvideo_has_ctrl(struct usb_video_vc_processing_desc *desc, int ctrl_bit)
+{
+	if (desc->bControlSize * 8 <= ctrl_bit)
+		return (0);
+
+	return (desc->bmControls[byteof(ctrl_bit)] & bitof(ctrl_bit));
 }
 
 usbd_status
@@ -2570,7 +2578,8 @@ uvideo_dump_desc_processing(struct uvideo_softc *sc,
 	printf("bSourceID=0x%02x\n", d->bSourceID);
 	printf("wMaxMultiplier=%d\n", UGETW(d->wMaxMultiplier));
 	printf("bControlSize=%d\n", d->bControlSize);
-	printf("bmControls=0x%02x\n", UGETW(d->bmControls));
+	printf("bmControls=0x");
+	uvideo_hexdump(d->bmControls, d->bControlSize, 1);
 	printf("iProcessing=0x%02x\n", d->iProcessing);
 	printf("bmVideoStandards=0x%02x\n", d->bmVideoStandards);
 }
