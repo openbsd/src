@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.31 2010/09/26 18:23:54 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.32 2010/09/26 18:55:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -63,8 +63,6 @@ static	int		  mdoc__x_pre(MDOC_ARGS);
 static	int		  mdoc_ad_pre(MDOC_ARGS);
 static	int		  mdoc_an_pre(MDOC_ARGS);
 static	int		  mdoc_ap_pre(MDOC_ARGS);
-static	void		  mdoc_aq_post(MDOC_ARGS);
-static	int		  mdoc_aq_pre(MDOC_ARGS);
 static	int		  mdoc_ar_pre(MDOC_ARGS);
 static	int		  mdoc_bd_pre(MDOC_ARGS);
 static	int		  mdoc_bf_pre(MDOC_ARGS);
@@ -72,16 +70,10 @@ static	void		  mdoc_bk_post(MDOC_ARGS);
 static	int		  mdoc_bk_pre(MDOC_ARGS);
 static	void		  mdoc_bl_post(MDOC_ARGS);
 static	int		  mdoc_bl_pre(MDOC_ARGS);
-static	void		  mdoc_bq_post(MDOC_ARGS);
-static	int		  mdoc_bq_pre(MDOC_ARGS);
-static	void		  mdoc_brq_post(MDOC_ARGS);
-static	int		  mdoc_brq_pre(MDOC_ARGS);
 static	int		  mdoc_bt_pre(MDOC_ARGS);
 static	int		  mdoc_bx_pre(MDOC_ARGS);
 static	int		  mdoc_cd_pre(MDOC_ARGS);
 static	int		  mdoc_d1_pre(MDOC_ARGS);
-static	void		  mdoc_dq_post(MDOC_ARGS);
-static	int		  mdoc_dq_pre(MDOC_ARGS);
 static	int		  mdoc_dv_pre(MDOC_ARGS);
 static	int		  mdoc_fa_pre(MDOC_ARGS);
 static	int		  mdoc_fd_pre(MDOC_ARGS);
@@ -111,20 +103,16 @@ static	int		  mdoc_ms_pre(MDOC_ARGS);
 static	int		  mdoc_nd_pre(MDOC_ARGS);
 static	int		  mdoc_nm_pre(MDOC_ARGS);
 static	int		  mdoc_ns_pre(MDOC_ARGS);
-static	void		  mdoc_op_post(MDOC_ARGS);
-static	int		  mdoc_op_pre(MDOC_ARGS);
 static	int		  mdoc_pa_pre(MDOC_ARGS);
 static	void		  mdoc_pf_post(MDOC_ARGS);
 static	int		  mdoc_pf_pre(MDOC_ARGS);
-static	void		  mdoc_pq_post(MDOC_ARGS);
-static	int		  mdoc_pq_pre(MDOC_ARGS);
+static	void		  mdoc_quote_post(MDOC_ARGS);
+static	int		  mdoc_quote_pre(MDOC_ARGS);
 static	int		  mdoc_rs_pre(MDOC_ARGS);
 static	int		  mdoc_rv_pre(MDOC_ARGS);
 static	int		  mdoc_sh_pre(MDOC_ARGS);
 static	int		  mdoc_sm_pre(MDOC_ARGS);
 static	int		  mdoc_sp_pre(MDOC_ARGS);
-static	void		  mdoc_sq_post(MDOC_ARGS);
-static	int		  mdoc_sq_pre(MDOC_ARGS);
 static	int		  mdoc_ss_pre(MDOC_ARGS);
 static	int		  mdoc_sx_pre(MDOC_ARGS);
 static	int		  mdoc_sy_pre(MDOC_ARGS);
@@ -168,7 +156,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_li_pre, NULL}, /* Li */
 	{mdoc_nd_pre, NULL}, /* Nd */ 
 	{mdoc_nm_pre, NULL}, /* Nm */ 
-	{mdoc_op_pre, mdoc_op_post}, /* Op */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Op */
 	{NULL, NULL}, /* Ot */
 	{mdoc_pa_pre, NULL}, /* Pa */
 	{mdoc_rv_pre, NULL}, /* Rv */
@@ -188,19 +176,19 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc__x_pre, mdoc__x_post}, /* %T */
 	{mdoc__x_pre, mdoc__x_post}, /* %V */
 	{NULL, NULL}, /* Ac */
-	{mdoc_aq_pre, mdoc_aq_post}, /* Ao */
-	{mdoc_aq_pre, mdoc_aq_post}, /* Aq */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Ao */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Aq */
 	{NULL, NULL}, /* At */
 	{NULL, NULL}, /* Bc */
 	{mdoc_bf_pre, NULL}, /* Bf */ 
-	{mdoc_bq_pre, mdoc_bq_post}, /* Bo */
-	{mdoc_bq_pre, mdoc_bq_post}, /* Bq */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Bo */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Bq */
 	{mdoc_xx_pre, NULL}, /* Bsx */
 	{mdoc_bx_pre, NULL}, /* Bx */
 	{NULL, NULL}, /* Db */
 	{NULL, NULL}, /* Dc */
-	{mdoc_dq_pre, mdoc_dq_post}, /* Do */
-	{mdoc_dq_pre, mdoc_dq_post}, /* Dq */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Do */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Dq */
 	{NULL, NULL}, /* Ec */ /* FIXME: no space */
 	{NULL, NULL}, /* Ef */
 	{mdoc_em_pre, NULL}, /* Em */ 
@@ -213,17 +201,17 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_xx_pre, NULL}, /* Ox */
 	{NULL, NULL}, /* Pc */
 	{mdoc_pf_pre, mdoc_pf_post}, /* Pf */
-	{mdoc_pq_pre, mdoc_pq_post}, /* Po */
-	{mdoc_pq_pre, mdoc_pq_post}, /* Pq */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Po */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Pq */
 	{NULL, NULL}, /* Qc */
-	{mdoc_sq_pre, mdoc_sq_post}, /* Ql */
-	{mdoc_dq_pre, mdoc_dq_post}, /* Qo */
-	{mdoc_dq_pre, mdoc_dq_post}, /* Qq */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Ql */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Qo */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Qq */
 	{NULL, NULL}, /* Re */
 	{mdoc_rs_pre, NULL}, /* Rs */
 	{NULL, NULL}, /* Sc */
-	{mdoc_sq_pre, mdoc_sq_post}, /* So */
-	{mdoc_sq_pre, mdoc_sq_post}, /* Sq */
+	{mdoc_quote_pre, mdoc_quote_post}, /* So */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Sq */
 	{mdoc_sm_pre, NULL}, /* Sm */ 
 	{mdoc_sx_pre, NULL}, /* Sx */
 	{mdoc_sy_pre, NULL}, /* Sy */
@@ -233,7 +221,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Xo */
 	{mdoc_fo_pre, mdoc_fo_post}, /* Fo */ 
 	{NULL, NULL}, /* Fc */ 
-	{mdoc_op_pre, mdoc_op_post}, /* Oo */
+	{mdoc_quote_pre, mdoc_quote_post}, /* Oo */
 	{NULL, NULL}, /* Oc */
 	{mdoc_bk_pre, mdoc_bk_post}, /* Bk */
 	{NULL, NULL}, /* Ek */
@@ -245,8 +233,8 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_sp_pre, NULL}, /* Lp */ 
 	{mdoc_lk_pre, NULL}, /* Lk */ 
 	{mdoc_mt_pre, NULL}, /* Mt */ 
-	{mdoc_brq_pre, mdoc_brq_post}, /* Brq */ 
-	{mdoc_brq_pre, mdoc_brq_post}, /* Bro */ 
+	{mdoc_quote_pre, mdoc_quote_post}, /* Brq */ 
+	{mdoc_quote_pre, mdoc_quote_post}, /* Bro */ 
 	{NULL, NULL}, /* Brc */ 
 	{mdoc__x_pre, mdoc__x_post}, /* %C */ 
 	{NULL, NULL}, /* Es */  /* TODO */
@@ -712,37 +700,6 @@ mdoc_nd_pre(MDOC_ARGS)
 }
 
 
-/* ARGSUSED */
-static int
-mdoc_op_pre(MDOC_ARGS)
-{
-	struct htmlpair	 tag;
-
-	if (MDOC_BODY != n->type)
-		return(1);
-
-	/* XXX: this tag in theory can contain block elements. */
-
-	print_text(h, "\\(lB");
-	h->flags |= HTML_NOSPACE;
-	PAIR_CLASS_INIT(&tag, "opt");
-	print_otag(h, TAG_SPAN, 1, &tag);
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-mdoc_op_post(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type) 
-		return;
-	h->flags |= HTML_NOSPACE;
-	print_text(h, "\\(rB");
-}
-
-
 static int
 mdoc_nm_pre(MDOC_ARGS)
 {
@@ -1179,7 +1136,7 @@ mdoc_bl_pre(MDOC_ARGS)
 	ord = malloc(sizeof(struct ord));
 	if (NULL == ord) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 	ord->cookie = n;
 	ord->pos = 1;
@@ -1245,80 +1202,6 @@ mdoc_ex_pre(MDOC_ARGS)
 
 /* ARGSUSED */
 static int
-mdoc_dq_pre(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	print_text(h, "\\(lq");
-	h->flags |= HTML_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-mdoc_dq_post(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	h->flags |= HTML_NOSPACE;
-	print_text(h, "\\(rq");
-}
-
-
-/* ARGSUSED */
-static int
-mdoc_pq_pre(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	print_text(h, "\\&(");
-	h->flags |= HTML_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-mdoc_pq_post(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	print_text(h, ")");
-}
-
-
-/* ARGSUSED */
-static int
-mdoc_sq_pre(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	print_text(h, "\\(oq");
-	h->flags |= HTML_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-mdoc_sq_post(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	h->flags |= HTML_NOSPACE;
-	print_text(h, "\\(aq");
-}
-
-
-/* ARGSUSED */
-static int
 mdoc_em_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
@@ -1370,31 +1253,6 @@ mdoc_sx_pre(MDOC_ARGS)
 
 	print_otag(h, TAG_A, 2, tag);
 	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-mdoc_aq_pre(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	print_text(h, "\\(la");
-	h->flags |= HTML_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-mdoc_aq_post(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	h->flags |= HTML_NOSPACE;
-	print_text(h, "\\(ra");
 }
 
 
@@ -1771,31 +1629,6 @@ mdoc_sp_pre(MDOC_ARGS)
 
 /* ARGSUSED */
 static int
-mdoc_brq_pre(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	print_text(h, "\\(lC");
-	h->flags |= HTML_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-mdoc_brq_post(MDOC_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	h->flags |= HTML_NOSPACE;
-	print_text(h, "\\(rC");
-}
-
-
-/* ARGSUSED */
-static int
 mdoc_lk_pre(MDOC_ARGS)
 {
 	const struct mdoc_node	*nn;
@@ -1878,9 +1711,7 @@ mdoc_fo_post(MDOC_ARGS)
 
 	if (MDOC_BODY != n->type)
 		return;
-	h->flags |= HTML_NOSPACE;
 	print_text(h, ")");
-	h->flags |= HTML_NOSPACE;
 	print_text(h, ";");
 }
 
@@ -1990,31 +1821,6 @@ mdoc_va_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag, "var");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-mdoc_bq_pre(MDOC_ARGS)
-{
-	
-	if (MDOC_BODY != n->type)
-		return(1);
-	print_text(h, "\\(lB");
-	h->flags |= HTML_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-mdoc_bq_post(MDOC_ARGS)
-{
-	
-	if (MDOC_BODY != n->type)
-		return;
-	h->flags |= HTML_NOSPACE;
-	print_text(h, "\\(rB");
 }
 
 
@@ -2296,3 +2102,126 @@ mdoc_bk_post(MDOC_ARGS)
 	if (MDOC_BODY == n->type)
 		h->flags &= ~(HTML_KEEP | HTML_PREKEEP);
 }
+
+
+/* ARGSUSED */
+static int
+mdoc_quote_pre(MDOC_ARGS)
+{
+	struct htmlpair	tag;
+
+	if (MDOC_BODY != n->type)
+		return(1);
+
+	switch (n->tok) {
+	case (MDOC_Ao):
+		/* FALLTHROUGH */
+	case (MDOC_Aq):
+		print_text(h, "\\(la");
+		break;
+	case (MDOC_Bro):
+		/* FALLTHROUGH */
+	case (MDOC_Brq):
+		print_text(h, "\\(lC");
+		break;
+	case (MDOC_Bo):
+		/* FALLTHROUGH */
+	case (MDOC_Bq):
+		print_text(h, "\\(lB");
+		break;
+	case (MDOC_Oo):
+		/* FALLTHROUGH */
+	case (MDOC_Op):
+		print_text(h, "\\(lB");
+		PAIR_CLASS_INIT(&tag, "opt");
+		print_otag(h, TAG_SPAN, 1, &tag);
+		break;
+	case (MDOC_Do):
+		/* FALLTHROUGH */
+	case (MDOC_Dq):
+		/* FALLTHROUGH */
+	case (MDOC_Qo):
+		/* FALLTHROUGH */
+	case (MDOC_Qq):
+		print_text(h, "\\(lq");
+		break;
+	case (MDOC_Po):
+		/* FALLTHROUGH */
+	case (MDOC_Pq):
+		print_text(h, "(");
+		break;
+	case (MDOC_Ql):
+		/* FALLTHROUGH */
+	case (MDOC_So):
+		/* FALLTHROUGH */
+	case (MDOC_Sq):
+		print_text(h, "\\(oq");
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+
+	h->flags |= HTML_NOSPACE;
+	return(1);
+}
+
+
+/* ARGSUSED */
+static void
+mdoc_quote_post(MDOC_ARGS)
+{
+
+	if (MDOC_BODY != n->type)
+		return;
+
+	h->flags |= HTML_NOSPACE;
+
+	switch (n->tok) {
+	case (MDOC_Ao):
+		/* FALLTHROUGH */
+	case (MDOC_Aq):
+		print_text(h, "\\(ra");
+		break;
+	case (MDOC_Bro):
+		/* FALLTHROUGH */
+	case (MDOC_Brq):
+		print_text(h, "\\(rC");
+		break;
+	case (MDOC_Oo):
+		/* FALLTHROUGH */
+	case (MDOC_Op):
+		/* FALLTHROUGH */
+	case (MDOC_Bo):
+		/* FALLTHROUGH */
+	case (MDOC_Bq):
+		print_text(h, "\\(rB");
+		break;
+	case (MDOC_Qo):
+		/* FALLTHROUGH */
+	case (MDOC_Qq):
+		/* FALLTHROUGH */
+	case (MDOC_Do):
+		/* FALLTHROUGH */
+	case (MDOC_Dq):
+		print_text(h, "\\(rq");
+		break;
+	case (MDOC_Po):
+		/* FALLTHROUGH */
+	case (MDOC_Pq):
+		print_text(h, ")");
+		break;
+	case (MDOC_Ql):
+		/* FALLTHROUGH */
+	case (MDOC_So):
+		/* FALLTHROUGH */
+	case (MDOC_Sq):
+		print_text(h, "\\(aq");
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+}
+
+

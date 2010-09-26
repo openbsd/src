@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.106 2010/09/26 18:23:54 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.107 2010/09/26 18:55:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -65,46 +65,35 @@ static	void	  synopsis_pre(struct termp *,
 
 static	void	  termp____post(DECL_ARGS);
 static	void	  termp_an_post(DECL_ARGS);
-static	void	  termp_aq_post(DECL_ARGS);
 static	void	  termp_bd_post(DECL_ARGS);
 static	void	  termp_bk_post(DECL_ARGS);
 static	void	  termp_bl_post(DECL_ARGS);
-static	void	  termp_bq_post(DECL_ARGS);
-static	void	  termp_brq_post(DECL_ARGS);
 static	void	  termp_bx_post(DECL_ARGS);
 static	void	  termp_d1_post(DECL_ARGS);
-static	void	  termp_dq_post(DECL_ARGS);
-static	int	  termp_fd_pre(DECL_ARGS);
 static	void	  termp_fo_post(DECL_ARGS);
 static	void	  termp_in_post(DECL_ARGS);
 static	void	  termp_it_post(DECL_ARGS);
 static	void	  termp_lb_post(DECL_ARGS);
 static	void	  termp_nm_post(DECL_ARGS);
-static	void	  termp_op_post(DECL_ARGS);
 static	void	  termp_pf_post(DECL_ARGS);
-static	void	  termp_pq_post(DECL_ARGS);
-static	void	  termp_qq_post(DECL_ARGS);
+static	void	  termp_quote_post(DECL_ARGS);
 static	void	  termp_sh_post(DECL_ARGS);
-static	void	  termp_sq_post(DECL_ARGS);
 static	void	  termp_ss_post(DECL_ARGS);
 
 static	int	  termp__a_pre(DECL_ARGS);
 static	int	  termp_an_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
-static	int	  termp_aq_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
 static	int	  termp_bf_pre(DECL_ARGS);
 static	int	  termp_bk_pre(DECL_ARGS);
 static	int	  termp_bl_pre(DECL_ARGS);
 static	int	  termp_bold_pre(DECL_ARGS);
-static	int	  termp_bq_pre(DECL_ARGS);
-static	int	  termp_brq_pre(DECL_ARGS);
 static	int	  termp_bt_pre(DECL_ARGS);
 static	int	  termp_cd_pre(DECL_ARGS);
 static	int	  termp_d1_pre(DECL_ARGS);
-static	int	  termp_dq_pre(DECL_ARGS);
 static	int	  termp_ex_pre(DECL_ARGS);
 static	int	  termp_fa_pre(DECL_ARGS);
+static	int	  termp_fd_pre(DECL_ARGS);
 static	int	  termp_fl_pre(DECL_ARGS);
 static	int	  termp_fn_pre(DECL_ARGS);
 static	int	  termp_fo_pre(DECL_ARGS);
@@ -116,16 +105,13 @@ static	int	  termp_lk_pre(DECL_ARGS);
 static	int	  termp_nd_pre(DECL_ARGS);
 static	int	  termp_nm_pre(DECL_ARGS);
 static	int	  termp_ns_pre(DECL_ARGS);
-static	int	  termp_op_pre(DECL_ARGS);
 static	int	  termp_pf_pre(DECL_ARGS);
-static	int	  termp_pq_pre(DECL_ARGS);
-static	int	  termp_qq_pre(DECL_ARGS);
+static	int	  termp_quote_pre(DECL_ARGS);
 static	int	  termp_rs_pre(DECL_ARGS);
 static	int	  termp_rv_pre(DECL_ARGS);
 static	int	  termp_sh_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
 static	int	  termp_sp_pre(DECL_ARGS);
-static	int	  termp_sq_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
 static	int	  termp_under_pre(DECL_ARGS);
 static	int	  termp_ud_pre(DECL_ARGS);
@@ -167,7 +153,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_li_pre, NULL }, /* Li */
 	{ termp_nd_pre, NULL }, /* Nd */ 
 	{ termp_nm_pre, termp_nm_post }, /* Nm */ 
-	{ termp_op_pre, termp_op_post }, /* Op */
+	{ termp_quote_pre, termp_quote_post }, /* Op */
 	{ NULL, NULL }, /* Ot */
 	{ termp_under_pre, NULL }, /* Pa */
 	{ termp_rv_pre, NULL }, /* Rv */
@@ -187,19 +173,19 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_under_pre, termp____post }, /* %T */
 	{ NULL, termp____post }, /* %V */
 	{ NULL, NULL }, /* Ac */
-	{ termp_aq_pre, termp_aq_post }, /* Ao */
-	{ termp_aq_pre, termp_aq_post }, /* Aq */
+	{ termp_quote_pre, termp_quote_post }, /* Ao */
+	{ termp_quote_pre, termp_quote_post }, /* Aq */
 	{ NULL, NULL }, /* At */
 	{ NULL, NULL }, /* Bc */
 	{ termp_bf_pre, NULL }, /* Bf */ 
-	{ termp_bq_pre, termp_bq_post }, /* Bo */
-	{ termp_bq_pre, termp_bq_post }, /* Bq */
+	{ termp_quote_pre, termp_quote_post }, /* Bo */
+	{ termp_quote_pre, termp_quote_post }, /* Bq */
 	{ termp_xx_pre, NULL }, /* Bsx */
 	{ NULL, termp_bx_post }, /* Bx */
 	{ NULL, NULL }, /* Db */
 	{ NULL, NULL }, /* Dc */
-	{ termp_dq_pre, termp_dq_post }, /* Do */
-	{ termp_dq_pre, termp_dq_post }, /* Dq */
+	{ termp_quote_pre, termp_quote_post }, /* Do */
+	{ termp_quote_pre, termp_quote_post }, /* Dq */
 	{ NULL, NULL }, /* Ec */ /* FIXME: no space */
 	{ NULL, NULL }, /* Ef */
 	{ termp_under_pre, NULL }, /* Em */ 
@@ -212,17 +198,17 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_xx_pre, NULL }, /* Ox */
 	{ NULL, NULL }, /* Pc */
 	{ termp_pf_pre, termp_pf_post }, /* Pf */
-	{ termp_pq_pre, termp_pq_post }, /* Po */
-	{ termp_pq_pre, termp_pq_post }, /* Pq */
+	{ termp_quote_pre, termp_quote_post }, /* Po */
+	{ termp_quote_pre, termp_quote_post }, /* Pq */
 	{ NULL, NULL }, /* Qc */
-	{ termp_sq_pre, termp_sq_post }, /* Ql */
-	{ termp_qq_pre, termp_qq_post }, /* Qo */
-	{ termp_qq_pre, termp_qq_post }, /* Qq */
+	{ termp_quote_pre, termp_quote_post }, /* Ql */
+	{ termp_quote_pre, termp_quote_post }, /* Qo */
+	{ termp_quote_pre, termp_quote_post }, /* Qq */
 	{ NULL, NULL }, /* Re */
 	{ termp_rs_pre, NULL }, /* Rs */
 	{ NULL, NULL }, /* Sc */
-	{ termp_sq_pre, termp_sq_post }, /* So */
-	{ termp_sq_pre, termp_sq_post }, /* Sq */
+	{ termp_quote_pre, termp_quote_post }, /* So */
+	{ termp_quote_pre, termp_quote_post }, /* Sq */
 	{ termp_sm_pre, NULL }, /* Sm */
 	{ termp_under_pre, NULL }, /* Sx */
 	{ termp_bold_pre, NULL }, /* Sy */
@@ -232,7 +218,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Xo */
 	{ termp_fo_pre, termp_fo_post }, /* Fo */ 
 	{ NULL, NULL }, /* Fc */ 
-	{ termp_op_pre, termp_op_post }, /* Oo */
+	{ termp_quote_pre, termp_quote_post }, /* Oo */
 	{ NULL, NULL }, /* Oc */
 	{ termp_bk_pre, termp_bk_post }, /* Bk */
 	{ NULL, NULL }, /* Ek */
@@ -244,8 +230,8 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_sp_pre, NULL }, /* Lp */ 
 	{ termp_lk_pre, NULL }, /* Lk */ 
 	{ termp_under_pre, NULL }, /* Mt */ 
-	{ termp_brq_pre, termp_brq_post }, /* Brq */ 
-	{ termp_brq_pre, termp_brq_post }, /* Bro */ 
+	{ termp_quote_pre, termp_quote_post }, /* Brq */ 
+	{ termp_quote_pre, termp_quote_post }, /* Bro */ 
 	{ NULL, NULL }, /* Brc */ 
 	{ NULL, termp____post }, /* %C */ 
 	{ NULL, NULL }, /* Es */ /* TODO */
@@ -588,33 +574,6 @@ print_bvspace(struct termp *p,
 		}
 
 	term_vspace(p);
-}
-
-
-/* ARGSUSED */
-static int
-termp_dq_pre(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-
-	term_word(p, "\\(lq");
-	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp_dq_post(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\\(rq");
 }
 
 
@@ -1285,18 +1244,6 @@ termp_bl_post(DECL_ARGS)
 
 
 /* ARGSUSED */
-static void
-termp_op_post(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type) 
-		return;
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\\(rB");
-}
-
-
-/* ARGSUSED */
 static int
 termp_xr_pre(DECL_ARGS)
 {
@@ -1313,9 +1260,7 @@ termp_xr_pre(DECL_ARGS)
 		return(0);
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, "(");
-	p->flags |= TERMP_NOSPACE;
 	term_word(p, nn->string);
-	p->flags |= TERMP_NOSPACE;
 	term_word(p, ")");
 
 	return(0);
@@ -1465,23 +1410,6 @@ termp_sh_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_op_pre(DECL_ARGS)
-{
-
-	switch (n->type) {
-	case (MDOC_BODY):
-		term_word(p, "\\(lB");
-		p->flags |= TERMP_NOSPACE;
-		break;
-	default:
-		break;
-	}
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
 termp_bt_pre(DECL_ARGS)
 {
 
@@ -1533,31 +1461,6 @@ termp_d1_post(DECL_ARGS)
 	if (MDOC_BLOCK != n->type) 
 		return;
 	term_newln(p);
-}
-
-
-/* ARGSUSED */
-static int
-termp_aq_pre(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	term_word(p, "\\(la");
-	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp_aq_post(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\\(ra");
 }
 
 
@@ -1709,31 +1612,6 @@ termp_bd_post(DECL_ARGS)
 
 
 /* ARGSUSED */
-static int
-termp_qq_pre(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	term_word(p, "\"");
-	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp_qq_post(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\"");
-}
-
-
-/* ARGSUSED */
 static void
 termp_bx_post(DECL_ARGS)
 {
@@ -1777,31 +1655,6 @@ termp_xx_pre(DECL_ARGS)
 	assert(pp);
 	term_word(p, pp);
 	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_sq_pre(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	term_word(p, "\\(oq");
-	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp_sq_post(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\\(aq");
 }
 
 
@@ -1940,12 +1793,59 @@ termp_sp_pre(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_brq_pre(DECL_ARGS)
+termp_quote_pre(DECL_ARGS)
 {
 
 	if (MDOC_BODY != n->type)
 		return(1);
-	term_word(p, "\\(lC");
+
+	switch (n->tok) {
+	case (MDOC_Ao):
+		/* FALLTHROUGH */
+	case (MDOC_Aq):
+		term_word(p, "<");
+		break;
+	case (MDOC_Bro):
+		/* FALLTHROUGH */
+	case (MDOC_Brq):
+		term_word(p, "{");
+		break;
+	case (MDOC_Oo):
+		/* FALLTHROUGH */
+	case (MDOC_Op):
+		/* FALLTHROUGH */
+	case (MDOC_Bo):
+		/* FALLTHROUGH */
+	case (MDOC_Bq):
+		term_word(p, "[");
+		break;
+	case (MDOC_Do):
+		/* FALLTHROUGH */
+	case (MDOC_Dq):
+		term_word(p, "``");
+		break;
+	case (MDOC_Po):
+		/* FALLTHROUGH */
+	case (MDOC_Pq):
+		term_word(p, "(");
+		break;
+	case (MDOC_Qo):
+		/* FALLTHROUGH */
+	case (MDOC_Qq):
+		term_word(p, "\"");
+		break;
+	case (MDOC_Ql):
+		/* FALLTHROUGH */
+	case (MDOC_So):
+		/* FALLTHROUGH */
+	case (MDOC_Sq):
+		term_word(p, "`");
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+
 	p->flags |= TERMP_NOSPACE;
 	return(1);
 }
@@ -1953,62 +1853,60 @@ termp_brq_pre(DECL_ARGS)
 
 /* ARGSUSED */
 static void
-termp_brq_post(DECL_ARGS)
+termp_quote_post(DECL_ARGS)
 {
 
 	if (MDOC_BODY != n->type)
 		return;
+
 	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\\(rC");
-}
 
-
-/* ARGSUSED */
-static int
-termp_bq_pre(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	term_word(p, "\\(lB");
-	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp_bq_post(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\\(rB");
-}
-
-
-/* ARGSUSED */
-static int
-termp_pq_pre(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return(1);
-	term_word(p, "\\&(");
-	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp_pq_post(DECL_ARGS)
-{
-
-	if (MDOC_BODY != n->type)
-		return;
-	term_word(p, ")");
+	switch (n->tok) {
+	case (MDOC_Ao):
+		/* FALLTHROUGH */
+	case (MDOC_Aq):
+		term_word(p, ">");
+		break;
+	case (MDOC_Bro):
+		/* FALLTHROUGH */
+	case (MDOC_Brq):
+		term_word(p, "}");
+		break;
+	case (MDOC_Oo):
+		/* FALLTHROUGH */
+	case (MDOC_Op):
+		/* FALLTHROUGH */
+	case (MDOC_Bo):
+		/* FALLTHROUGH */
+	case (MDOC_Bq):
+		term_word(p, "]");
+		break;
+	case (MDOC_Do):
+		/* FALLTHROUGH */
+	case (MDOC_Dq):
+		term_word(p, "''");
+		break;
+	case (MDOC_Po):
+		/* FALLTHROUGH */
+	case (MDOC_Pq):
+		term_word(p, ")");
+		break;
+	case (MDOC_Qo):
+		/* FALLTHROUGH */
+	case (MDOC_Qq):
+		term_word(p, "\"");
+		break;
+	case (MDOC_Ql):
+		/* FALLTHROUGH */
+	case (MDOC_So):
+		/* FALLTHROUGH */
+	case (MDOC_Sq):
+		term_word(p, "'");
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
 }
 
 
@@ -2023,7 +1921,6 @@ termp_fo_pre(DECL_ARGS)
 	} else if (MDOC_BODY == n->type) {
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, "(");
-		p->flags |= TERMP_NOSPACE;
 		return(1);
 	} 
 
@@ -2047,13 +1944,10 @@ termp_fo_post(DECL_ARGS)
 	if (MDOC_BODY != n->type) 
 		return;
 
-	p->flags |= TERMP_NOSPACE;
 	term_word(p, ")");
 
-	if (MDOC_SYNPRETTY & n->flags) {
-		p->flags |= TERMP_NOSPACE;
+	if (MDOC_SYNPRETTY & n->flags)
 		term_word(p, ";");
-	}
 }
 
 
@@ -2103,7 +1997,7 @@ termp_ap_pre(DECL_ARGS)
 {
 
 	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\\(aq");
+	term_word(p, "'");
 	p->flags |= TERMP_NOSPACE;
 	return(1);
 }
@@ -2165,7 +2059,6 @@ termp_lk_pre(DECL_ARGS)
 
 	term_fontpop(p);
 
-	p->flags |= TERMP_NOSPACE;
 	term_word(p, ":");
 
 	term_fontpush(p, TERMFONT_BOLD);
