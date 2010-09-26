@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.32 2010/09/24 13:32:55 djm Exp $ */
+/*	$OpenBSD: glob.c,v 1.33 2010/09/26 22:15:39 djm Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -865,11 +865,11 @@ globfree(glob_t *pglob)
 		pglob->gl_pathv = NULL;
 	}
 	if (pglob->gl_statv != NULL) {
-		free(pglob->gl_statv);
 		for (i = 0; i < pglob->gl_pathc; i++) {
 			if (pglob->gl_statv[i] != NULL)
 				free(pglob->gl_statv[i]);
 		}
+		free(pglob->gl_statv);
 		pglob->gl_statv = NULL;
 	}
 }
