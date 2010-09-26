@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.41 2010/08/11 07:36:23 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.42 2010/09/26 20:43:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -402,6 +402,25 @@ server_destroy_session(struct session *s)
 		}
 	}
 	recalculate_sizes();
+}
+
+void
+server_check_unattached (void)
+{
+	struct session	*s;
+	u_int		 i;
+
+	/*
+	 * If any sessions are no longer attached and have destroy-unattached
+	 * set, collect them.
+	 */
+	for (i = 0; i < ARRAY_LENGTH(&sessions); i++) {
+		s = ARRAY_ITEM(&sessions, i);
+		if (s == NULL || !(s->flags & SESSION_UNATTACHED))
+			continue;
+		if (options_get_number (&s->options, "destroy-unattached"))
+			session_destroy(s);
+	}
 }
 
 void

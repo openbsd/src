@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.40 2010/08/31 22:46:59 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.41 2010/09/26 20:43:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -185,6 +185,7 @@ server_client_lost(struct client *c)
 	c->flags |= CLIENT_DEAD;
 
 	recalculate_sizes();
+	server_check_unattached();
 	server_update_socket();
 }
 
