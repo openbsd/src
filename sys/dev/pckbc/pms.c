@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.4 2010/09/26 20:39:08 miod Exp $ */
+/* $OpenBSD: pms.c,v 1.5 2010/09/27 18:16:25 miod Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -96,7 +96,7 @@ pms_setintellimode(pckbc_tag_t tag, pckbc_slot_t slot)
 	}
 
 	cmd[0] = PMS_SEND_DEV_ID;
-	res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 0, resp);
+	res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 1, resp);
 	if (res || resp[0] != 3)
 		return (0);
 
@@ -231,6 +231,7 @@ pms_change_state(struct pms_softc *sc, int newstate)
 
 		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
+		pckbc_flush(sc->sc_kbctag, sc->sc_kbcslot);
 		sc->intelli = pms_setintellimode(sc->sc_kbctag, sc->sc_kbcslot);
 
 		cmd[0] = PMS_DEV_ENABLE;
