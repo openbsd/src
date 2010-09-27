@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.37 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: intr.c,v 1.38 2010/09/27 17:39:43 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -312,7 +312,7 @@ softintr_establish(level, fun, arg)
 	if (level == IPL_TTY)
 		level = IPL_SOFTTTY;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_ZERO);
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK | M_ZERO);
 	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
