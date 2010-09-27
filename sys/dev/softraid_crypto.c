@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.55 2010/09/23 18:49:39 oga Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.56 2010/09/27 02:56:28 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -251,10 +251,10 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	    DEVNAME(sd->sd_sc), wu, encrypt);
 
 	s = splbio();
-	uio = pool_get(&sd->mds.mdd_crypto.sr_uiopl, PR_ZERO);
+	uio = pool_get(&sd->mds.mdd_crypto.sr_uiopl, PR_ZERO | PR_NOWAIT);
 	if (uio == NULL)
 		goto unwind;
-	uio->uio_iov = pool_get(&sd->mds.mdd_crypto.sr_iovpl, 0);
+	uio->uio_iov = pool_get(&sd->mds.mdd_crypto.sr_iovpl, PR_NOWAIT);
 	if (uio->uio_iov == NULL)
 		goto unwind;
 	splx(s);
@@ -264,6 +264,8 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	if (xs->flags & SCSI_DATA_OUT) {
 		uio->uio_iov->iov_base = malloc(xs->datalen, M_DEVBUF,
 		    M_NOWAIT);
+		if (uio->uio_iov->iov_base == NULL)
+			goto unwind;
 		bcopy(xs->data, uio->uio_iov->iov_base, xs->datalen);
 	} else
 		uio->uio_iov->iov_base = xs->data;
@@ -1119,6 +1121,8 @@ sr_crypto_rw(struct sr_workunit *wu)
 
 	if (wu->swu_xs->flags & SCSI_DATA_OUT) {
 		crp = sr_crypto_getcryptop(wu, 1);
+		if (crp == NULL)
+			panic("sr_crypto_getcryptop");
 		crp->crp_callback = sr_crypto_write;
 		crp->crp_opaque = wu;
 		s = splvm();
@@ -1300,6 +1304,8 @@ sr_crypto_intr(struct buf *bp)
 
 		if ((xs->flags & SCSI_DATA_IN) && (xs->error == XS_NOERROR)) {
 			crp = sr_crypto_getcryptop(wu, 0);
+			if (crp == NULL)
+				panic("sr_crypto_getcryptop");
 			ccb->ccb_opaque = crp;
 			crp->crp_callback = sr_crypto_read;
 			crp->crp_opaque = wu;
