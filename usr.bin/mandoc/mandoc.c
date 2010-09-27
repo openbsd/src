@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.19 2010/09/13 22:04:01 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.20 2010/09/27 21:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -229,7 +229,7 @@ mandoc_calloc(size_t num, size_t size)
 	ptr = calloc(num, size);
 	if (NULL == ptr) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 
 	return(ptr);
@@ -244,7 +244,7 @@ mandoc_malloc(size_t size)
 	ptr = malloc(size);
 	if (NULL == ptr) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 
 	return(ptr);
@@ -258,7 +258,7 @@ mandoc_realloc(void *ptr, size_t size)
 	ptr = realloc(ptr, size);
 	if (NULL == ptr) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 
 	return(ptr);
@@ -273,7 +273,7 @@ mandoc_strdup(const char *ptr)
 	p = strdup(ptr);
 	if (NULL == p) {
 		perror(NULL);
-		exit(MANDOCLEVEL_SYSERR);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 
 	return(p);
@@ -369,7 +369,7 @@ mandoc_eos(const char *p, size_t sz, int enclosed)
 			found = 1;
 			break;
 		default:
-			return(found && (!enclosed || isalnum(*q)));
+			return(found && (!enclosed || isalnum((unsigned char)*q)));
 		}
 	}
 

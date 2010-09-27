@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.107 2010/09/26 18:55:22 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.108 2010/09/27 21:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1573,6 +1573,26 @@ termp_bd_pre(DECL_ARGS)
 
 	for (nn = n->child; nn; nn = nn->next) {
 		print_mdoc_node(p, pair, m, nn);
+		/*
+		 * If the printed node flushes its own line, then we
+		 * needn't do it here as well.  This is hacky, but the
+		 * notion of selective eoln whitespace is pretty dumb
+		 * anyway, so don't sweat it.
+		 */
+		switch (nn->tok) {
+		case (MDOC_br):
+			/* FALLTHROUGH */
+		case (MDOC_sp):
+			/* FALLTHROUGH */
+		case (MDOC_Bl):
+			/* FALLTHROUGH */
+		case (MDOC_Lp):
+			/* FALLTHROUGH */
+		case (MDOC_Pp):
+			continue;
+		default:
+			break;
+		}
 		if (nn->next && nn->next->line == nn->line)
 			continue;
 		term_flushln(p);

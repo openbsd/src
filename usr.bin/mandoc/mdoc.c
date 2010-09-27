@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.65 2010/08/20 00:53:35 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.66 2010/09/27 21:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -687,11 +687,11 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 			return(0);
 
 		/*
-		 * Insert a `Pp' in the case of a blank line.  Technically,
+		 * Insert a `sp' in the case of a blank line.  Technically,
 		 * blank lines aren't allowed, but enough manuals assume this
 		 * behaviour that we want to work around it.
 		 */
-		if ( ! mdoc_elem_alloc(m, line, offs, MDOC_Pp, NULL))
+		if ( ! mdoc_elem_alloc(m, line, offs, MDOC_sp, NULL))
 			return(0);
 
 		m->next = MDOC_NEXT_SIBLING;
