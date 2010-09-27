@@ -1,4 +1,4 @@
-/* $OpenBSD: pptpd.c,v 1.6 2010/09/24 14:50:30 yasuoka Exp $	*/
+/* $OpenBSD: pptpd.c,v 1.7 2010/09/27 00:12:16 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.6 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.7 2010/09/27 00:12:16 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.6 2010/09/24 14:50:30 yasuoka Exp $
+ * $Id: pptpd.c,v 1.7 2010/09/27 00:12:16 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -332,12 +332,6 @@ pptpd_listener_start(pptpd_listener *_this)
 		pptpd_log(_this->self, LOG_WARNING,
 		    "%s(): setsockopt(IP_STRICT_RCVIF) failed: %m", __func__);
 #endif
-#ifdef IP_PIPEX
-	ival = 1;
-	if (setsockopt(sock, IPPROTO_IP, IP_PIPEX, &ival, sizeof(ival)) != 0)
-		pptpd_log(_this->self, LOG_WARNING,
-		    "%s(): setsockopt(IP_PIPEX) failed: %m", __func__);
-#endif
 	if ((ival = fcntl(sock, F_GETFL, 0)) < 0) {
 		pptpd_log(_this->self, LOG_ERR,
 		    "fcntl(F_GET_FL) failed at %s(): %m", __func__);
@@ -387,6 +381,13 @@ pptpd_listener_start(pptpd_listener *_this)
 	    sizeof(ival)) != 0)
 		pptpd_log(_this->self, LOG_WARNING,
 		    "%s(): setsockopt(IP_STRICT_RCVIF) failed: %m", __func__);
+#endif
+#ifdef IP_PIPEX
+	ival = 1;
+	if (setsockopt(sock_gre, IPPROTO_IP, IP_PIPEX, &ival, sizeof(ival))
+	    != 0)
+		pptpd_log(_this->self, LOG_WARNING,
+		    "%s(): setsockopt(IP_PIPEX) failed: %m", __func__);
 #endif
 	if ((ival = fcntl(sock_gre, F_GETFL, 0)) < 0) {
 		pptpd_log(_this->self, LOG_ERR,
