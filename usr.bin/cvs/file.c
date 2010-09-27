@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.260 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: file.c,v 1.261 2010/09/27 14:08:41 joshe Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -596,7 +596,8 @@ walkrepo:
 		xsnprintf(fpath, sizeof(fpath), "%s/%s", cf->file_path,
 		    CVS_PATH_STATICENTRIES);
 
-		if (stat(fpath, &st) == -1 || build_dirs == 1)
+		if (!(cmdp->cmd_flags & CVS_USE_WDIR) ||
+		    stat(fpath, &st) == -1 || build_dirs == 1)
 			cvs_repository_getdir(repo, cf->file_path, &fl, &dl,
 			    (cr->flags & CR_RECURSE_DIRS) ?
 			    REPOSITORY_DODIRS : 0);
