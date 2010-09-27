@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2009/06/04 22:56:13 kettenis Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2010/09/27 10:08:28 mikeb Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -209,7 +209,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	db_addr_t	callpc;
 	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	boolean_t	trace_proc = FALSE;
 
 #if 0
 	if (!db_trace_symbols_found)
@@ -221,8 +221,8 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		char c;
 
 		while ((c = *cp++) != 0) {
-			if (c == 't')
-				trace_thread = TRUE;
+			if (c == 'p')
+				trace_proc = TRUE;
 			if (c == 'u')
 				kernel_only = FALSE;
 		}
@@ -232,28 +232,16 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		frame = (struct x86_64_frame *)ddb_regs.tf_rbp;
 		callpc = (db_addr_t)ddb_regs.tf_rip;
 	} else {
-#if 0
-		if (trace_thread) {
-			struct proc *p;
-			struct user *u;
-			struct lwp *l;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = pfind(addr);
+		if (trace_proc) {
+			struct proc *p = pfind((pid_t)addr);
 			if (p == NULL) {
-				(*pr)("not found\n");
+				(*pr) ("db_trace.c: process not found\n");
 				return;
 			}
-			l = proc_representative_lwp(p);
-			if (!(l->l_flag&L_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = l->l_addr;
-			frame = (struct x86_64_frame *) u->u_pcb.pcb_rbp;
-			(*pr)("at %p\n", frame);
-		} else
-#endif
+			frame = (struct x86_64_frame *)p->p_addr->u_pcb.pcb_rbp;
+		} else {
 			frame = (struct x86_64_frame *)addr;
+		}
 		callpc = (db_addr_t)
 			 db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
 		frame = (struct x86_64_frame *)frame->f_frame;
