@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.56 2010/09/27 02:56:28 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.57 2010/09/27 19:49:43 thib Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -867,7 +867,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	/*
 	 * Read and validate key disk metadata.
 	 */
-	sm = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
+	sm = malloc(SR_META_SIZE * 512, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sm == NULL) {
 		printf("%s: not enough memory for metadata buffer\n",
 		    DEVNAME(sc));
@@ -893,7 +893,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	}
 
 	/* Construct key disk chunk. */
-	key_disk = malloc(sizeof(struct sr_chunk), M_DEVBUF, M_ZERO);
+	key_disk = malloc(sizeof(struct sr_chunk), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (key_disk == NULL) {
 		printf("%s: not enough memory for chunk\n",
 		    DEVNAME(sc));
