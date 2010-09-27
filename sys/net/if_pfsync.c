@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.155 2010/09/08 08:53:57 blambert Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.156 2010/09/27 23:45:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -517,7 +517,7 @@ pfsync_state_import(struct pfsync_state *sp, u_int8_t flags)
 	if (flags & PFSYNC_SI_IOCTL)
 		pool_flags = PR_WAITOK | PR_LIMITFAIL | PR_ZERO;
 	else
-		pool_flags = PR_LIMITFAIL | PR_ZERO;
+		pool_flags = PR_NOWAIT | PR_LIMITFAIL | PR_ZERO;
 
 	if ((st = pool_get(&pf_state_pl, pool_flags)) == NULL)
 		goto cleanup;
