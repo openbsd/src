@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.65 2010/09/21 20:29:17 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.66 2010/09/28 20:27:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -384,6 +384,10 @@ struct cpu_info {
 #define	CI_DDB_STOPPED		2
 #define	CI_DDB_ENTERDDB		3
 #define	CI_DDB_INDDB		4
+
+#ifdef DIAGNOSTIC
+	int	ci_mutex_level;
+#endif
 };
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.18 2010/07/06 20:37:33 miod Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.19 2010/09/28 20:27:55 miod Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -80,6 +80,10 @@ struct cpu_info {
 
 	struct schedstate_percpu ci_schedstate;
 	u_int32_t 		ci_randseed;
+
+#ifdef DIAGNOSTIC
+	int	ci_mutex_level;
+#endif
 };
 
 #define curcpu() (&cpuinfo.ci)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.72 2009/03/26 17:24:33 oga Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.73 2010/09/28 20:27:55 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -147,6 +147,10 @@ struct cpu_info {
 
 	paddr_t			ci_cpuset;
 	paddr_t			ci_mondo;
+#endif
+
+#ifdef DIAGNOSTIC
+	int	ci_mutex_level;
 #endif
 };
 

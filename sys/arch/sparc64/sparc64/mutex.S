@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.6 2009/08/13 13:24:55 weingart Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.7 2010/09/28 20:27:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -72,6 +72,11 @@ ENTRY(mtx_enter)
 	ba,a	1b
 4:
 	stw	%g4, [%o0 + MTX_OLDIPL]
+#ifdef DIAGNOSTIC
+	ld	[%g1 + CI_MUTEX_LEVEL], %g5
+	add	%g5, 1, %g5
+	st	%g5, [%g1 + CI_MUTEX_LEVEL]
+#endif
 	retl
 	 membar	#LoadLoad | #LoadStore
 
@@ -98,11 +103,22 @@ ENTRY(mtx_enter_try)
 	 mov	0, %o0
 3:
 	stw	%g4, [%o0 + MTX_OLDIPL]
+#ifdef DIAGNOSTIC
+	ld	[%g1 + CI_MUTEX_LEVEL], %g5
+	add	%g5, 1, %g5
+	st	%g5, [%g1 + CI_MUTEX_LEVEL]
+#endif
 	membar	#LoadLoad | #LoadStore
 	retl
 	 mov	1, %o0
 
 ENTRY(mtx_leave)
+#ifdef DIAGNOSTIC
+	GET_CURCPU(%g1)
+	ld	[%g1 + CI_MUTEX_LEVEL], %g5
+	sub	%g5, 1, %g5
+	st	%g5, [%g1 + CI_MUTEX_LEVEL]
+#endif
 	ld	[%o0 + MTX_OLDIPL], %g1
 	membar	#StoreStore | #LoadStore
 	stx	%g0, [%o0 + MTX_OWNER]

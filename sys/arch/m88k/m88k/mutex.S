@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.8 2009/08/13 13:24:55 weingart Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.9 2010/09/28 20:27:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -65,6 +65,11 @@ enter_again:
 	ldcr	r3,  CPU
 	st	r2,  r4,  MTX_OLDIPL	/* save into mtx_oldipl */
 	st	r3,  r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+#ifdef DIAGNOSTIC
+	ld	r2,  r3,  CI_MUTEX_LEVEL
+	addu	r2,  r2,  1		/* curcpu()->ci_mutex_level++ */
+	st	r2,  r3,  CI_MUTEX_LEVEL
+#endif
 
 	ld	r1,  r31, 4
 	jmp.n	r1
@@ -115,8 +120,13 @@ enter_panic:
 
 	st	r2,  r4,  MTX_OLDIPL	/* save into mtx_oldipl */
 
-#ifdef DIAGNOSTIC	/* necessary for MUTEX_ASSERT_LOCKED */
+#ifdef DIAGNOSTIC
+	/* necessary for MUTEX_ASSERT_LOCKED */
 	st	r3,  r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+
+	ld	r2,  r3,  CI_MUTEX_LEVEL
+	addu	r2,  r2,  1		/* curcpu()->ci_mutex_level++ */
+	st	r2,  r3,  CI_MUTEX_LEVEL
 #endif
 
 	ld	r1,  r31, 4
@@ -148,6 +158,11 @@ enter_try_again:
 	ldcr	r3,  CPU
 	st	r2,  r4,  MTX_OLDIPL	/* save into mtx_oldipl */
 	st	r3,  r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+#ifdef DIAGNOSTIC
+	ld	r2,  r3,  CI_MUTEX_LEVEL
+	addu	r2,  r2,  1		/* curcpu()->ci_mutex_level++ */
+	st	r2,  r3,  CI_MUTEX_LEVEL
+#endif
 
 	ld	r1,  r31, 4
 	or	r2,  r0,  1		/* return nonzero */
@@ -198,8 +213,13 @@ enter_try_panic:
 
 	st	r2,  r4,  MTX_OLDIPL	/* save into mtx_oldipl */
 
-#ifdef DIAGNOSTIC	/* necessary for MUTEX_ASSERT_LOCKED */
+#ifdef DIAGNOSTIC
+	/* necessary for MUTEX_ASSERT_LOCKED */
 	st	r3,  r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+
+	ld	r2,  r3,  CI_MUTEX_LEVEL
+	addu	r2,  r2,  1		/* curcpu()->ci_mutex_level++ */
+	st	r2,  r3,  CI_MUTEX_LEVEL
 #endif
 
 	ld	r1,  r31, 4
@@ -215,6 +235,12 @@ enter_try_panic:
 ENTRY(mtx_leave)
 	ld	r3,  r2,  MTX_OLDIPL
 	ld	r4,  r2,  MTX_WANTIPL
+#ifdef DIAGNOSTIC
+	ld	r5,  r2,  MTX_CPU
+	ld	r6,  r5,  CI_MUTEX_LEVEL
+	subu	r6,  r6,  1		/* curcpu()->ci_mutex_level++ */
+	st	r6,  r5,  CI_MUTEX_LEVEL
+#endif
 	st	r0,  r2,  MTX_CPU		/* mtx->mtx_cpu = NULL */
 	bcnd.n	eq0, r4,  2f
 	 st	r0,  r2,  MTX_LOCK		/* mtx->mtx_lock = 0 */

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2008/05/10 12:18:30 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2010/09/28 20:27:55 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,6 +92,9 @@ member	ci_intstk
 member	ci_tempsave
 member	ci_ddbsave
 member	ci_disisave
+ifdef DIAGNOSTIC
+member	ci_mutex_level
+endif
 
 struct	mutex
 member	mtx_wantipl

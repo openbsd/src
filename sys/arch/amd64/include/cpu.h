@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.56 2010/09/24 13:21:30 matthew Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.57 2010/09/28 20:27:54 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ struct cpu_info {
 	u_int32_t	ci_iunmask[NIPL];
 #ifdef DIAGNOSTIC
 	int		ci_mutex_level;
-#define __HAVE_CPU_MUTEX_LEVEL
 #endif
 
 	u_int		ci_flags;

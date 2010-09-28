@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.115 2010/09/24 13:21:30 matthew Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.116 2010/09/28 20:27:54 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -108,7 +108,6 @@ struct cpu_info {
 	u_int32_t	ci_iunmask[NIPL];
 #ifdef DIAGNOSTIC
 	int		ci_mutex_level;
-#define __HAVE_CPU_MUTEX_LEVEL
 #endif
 
 	paddr_t		ci_idle_pcb_paddr; /* PA of idle PCB */

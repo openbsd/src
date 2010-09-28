@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.40 2010/07/24 12:18:55 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.41 2010/09/28 20:27:54 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -179,6 +179,9 @@ struct cpu_info {
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+#ifdef DIAGNOSTIC
+	int	ci_mutex_level;
 #endif
 	struct proc *ci_curproc;	/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */

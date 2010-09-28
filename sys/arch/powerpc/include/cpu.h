@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.45 2009/08/24 21:44:21 dms Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.46 2010/09/28 20:27:55 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -81,6 +81,10 @@ struct cpu_info {
 #define	CI_DDB_INDDB		4
 
 	u_int32_t ci_randseed;
+
+#ifdef DIAGNOSTIC
+	int	ci_mutex_level;
+#endif
 };
 
 static __inline struct cpu_info *
