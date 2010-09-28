@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.48 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.49 2010/09/28 01:50:08 deraadt Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -761,7 +761,7 @@ ncr53c9x_get_ecb(sc, flags)
 	int flags;
 {
 	struct ncr53c9x_ecb *ecb;
-	int s, wait = 0;
+	int s, wait = PR_NOWAIT;
 
 	if ((curproc != NULL) && ((flags & SCSI_NOSLEEP) == 0))
 		wait = PR_WAITOK;
