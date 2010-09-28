@@ -803,7 +803,7 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
 	struct statctx *psc;
 	struct pollfd *pfd;
 	char *buf;
-	int i, sock = -1;
+	int i;
 	ssize_t n;
 
 	if ((pfd = calloc(nconn, sizeof(*pfd))) == NULL)
@@ -814,7 +814,7 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
 	clientconnect(aitop, pfd, nconn);
 
 	for (i = 0; i < nconn; i++) {
-		stats_prepare(psc + i, sock, kvmh, ktcbtab);
+		stats_prepare(psc + i, pfd[i].fd, kvmh, ktcbtab);
 		mainstats.nconns++;
 	}
 
@@ -860,7 +860,6 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
 		warnx("Terminated by signal %d", done);
 
 	free(buf);
-	close(sock);
 	exit(0);
 }
 
