@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.2 2010/09/28 03:53:14 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -60,17 +60,7 @@
 98: 	INTR_SAVE_GPRS
 
 #define INTRFASTEXIT \
-	INTR_RESTORE_GPRS 		; \
-	testq	$SEL_UPL,56(%rsp)	; \
-	je	99f			; \
-	cli				; \
-	swapgs				; \
-	movw	0(%rsp),%gs		; \
-	movw	8(%rsp),%fs		; \
-	movw	16(%rsp),%es		; \
-	movw	24(%rsp),%ds		; \
-99:	addq	$48,%rsp		; \
-	iretq
+	jmp	intr_fast_exit
 
 #define INTR_RECURSE_HWFRAME \
 	movq	%rsp,%r10		; \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2010/05/06 21:33:51 nicm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2010/09/28 03:53:14 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -150,12 +150,10 @@ trap(struct trapframe *frame)
 	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
-	extern char resume_iret[], IDTVEC(oosyscall)[];
+	extern char doreti_iret[], resume_iret[], IDTVEC(oosyscall)[];
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
-	struct trapframe *vframe;
-	void *resume;
 	caddr_t onfault;
 	int error;
 	uint64_t cr2;
@@ -235,34 +233,14 @@ copyfault:
 
 		/*
 		 * Check for failure during return to user mode.
-		 *
-		 * XXXfvdl check for rex prefix?
-		 *
-		 * We do this by looking at the instruction we faulted on.  The
-		 * specific instructions we recognize only happen when
-		 * returning from a trap, syscall, or interrupt.
-		 *
-		 * XXX
-		 * The heuristic used here will currently fail for the case of
-		 * one of the 2 pop instructions faulting when returning from a
-		 * a fast interrupt.  This should not be possible.  It can be
-		 * fixed by rearranging the trap frame so that the stack format
-		 * at this point is the same as on exit from a `slow'
-		 * interrupt.
+		 * We do this by looking at the address of the
+		 * instruction that faulted.
 		 */
-		switch (*(u_char *)frame->tf_rip) {
-		case 0xcf:	/* iret */
-			vframe = (void *)((u_int64_t)&frame->tf_rsp - 44);
-			resume = resume_iret;
-			break;
-		default:
-			goto we_re_toast;
+		if (frame->tf_rip == (u_int64_t)doreti_iret) {
+			frame->tf_rip = (u_int64_t)resume_iret;
+			return;
 		}
-		if (KERNELMODE(vframe->tf_cs, vframe->tf_rflags))
-			goto we_re_toast;
-
-		frame->tf_rip = (u_int64_t)resume;
-		return;
+		goto we_re_toast;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 	case T_TSSFLT|T_USER:

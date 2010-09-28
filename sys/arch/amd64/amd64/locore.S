@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.39 2009/06/09 02:56:38 krw Exp $	*/
+/*	$OpenBSD: locore.S,v 1.40 2010/09/28 03:53:14 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1049,12 +1049,28 @@ _C_LABEL(osyscall_return):
 	jmp	2b
 
 iret_return:
-#ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-1:	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+1:
+#ifdef DIAGNOSTIC
+	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
-	INTRFASTEXIT
+#endif /* DIAGNOSTIC */
+	.globl	intr_fast_exit
+intr_fast_exit:
+	INTR_RESTORE_GPRS
+	testq	$SEL_UPL,56(%rsp)
+	je	5f
+	cli
+	swapgs
+	movw	0(%rsp),%gs
+	movw	8(%rsp),%fs
+	movw	16(%rsp),%es
+	movw	24(%rsp),%ds
+5:	addq	$48,%rsp
+	.globl	_C_LABEL(doreti_iret)
+_C_LABEL(doreti_iret):
+	iretq
+
+#ifdef DIAGNOSTIC
 3:	sti
 	movabsq	$4f, %rdi
 	xorq	%rax,%rax
