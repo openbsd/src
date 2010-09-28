@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.66 2009/06/04 13:30:06 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.67 2010/09/28 17:42:52 jmc Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: September 28 2010 $
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -67,13 +67,19 @@ file.
 .Pp
 For disk partitions, the
 .Ar special
-device must correspond to a partition registered in the
-.Xr disklabel 5 .
-.Pp
-The system maintains a list of currently mounted file systems.
-If no arguments are given to
-.Nm mount ,
-this list is printed.
+device is either a
+.Xr disklabel 8
+UID (DUID) or an entry in
+.Pa /dev .
+If it is a DUID,
+it will be automatically mapped to the appropriate entry in
+.Pa /dev .
+In either case the partition must be present
+in the disklabel loaded from the device.
+The partition name is the last letter in the entry name.
+For example, /dev/sd0a and 3eb7f9da875cb9ee.a both refer to the
+.Sq a
+partition.
 .Pp
 A mount point
 .Ar node
@@ -97,6 +103,11 @@ is readable and writeable by the user attempting the mount,
 and the mount point
 .Ar node
 is owned by the user attempting the mount.
+.Pp
+The system maintains a list of currently mounted file systems.
+If no arguments are given to
+.Nm mount ,
+this list is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -347,10 +358,10 @@ Mount a CD-ROM on node
 .Pp
 .Dl # mount -t cd9660 -r /dev/cd0a /mnt/cdrom
 .Pp
-Mount an MS-DOS floppy on node
-.Pa /mnt/floppy :
+Mount an MS-DOS USB stick with DUID 3eb7f9da875cb9ee on node
+.Pa /mnt/key :
 .Pp
-.Dl # mount -t msdos /dev/fd0a /mnt/floppy
+.Dl # mount -t msdos 3eb7f9da875cb9ee.i /mnt/key
 .Pp
 Graft a remote NFS file system on host
 .Ar host ,
