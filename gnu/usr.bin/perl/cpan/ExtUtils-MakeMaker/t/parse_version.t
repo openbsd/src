@@ -12,7 +12,7 @@ my $Has_Version = eval 'require version; "version"->import; 1';
 
 my %versions = (q[$VERSION = '1.00']            => '1.00',
                 q[*VERSION = \'1.01']           => '1.01',
-                q[($VERSION) = q/Revision: 32208 / =~ /(\d+)/g;] => 32208,
+                q[($VERSION) = q$Revision: 32208 $ =~ /(\d+)/g;] => 32208,
                 q[$FOO::VERSION = '1.10';]      => '1.10',
                 q[*FOO::VERSION = \'1.11';]     => '1.11',
                 '$VERSION = 0.02'               => 0.02,
@@ -34,8 +34,8 @@ my %versions = (q[$VERSION = '1.00']            => '1.00',
                 qq[\$Something::VERSION == 1.0\n\$VERSION = 2.3\n]                     => '2.3',
                 qq[\$Something::VERSION == 1.0\n\$VERSION = 2.3\n\$VERSION = 4.5\n]    => '2.3',
 
-                '$VERSION = sprintf("%d.%03d", q/Revision: 3.74 / =~ /(\d+)\.(\d+)/);' => '3.074',
-                '$VERSION = substr(q/Revision: 2.8 /, 10) + 2 . "";'                   => '4.8',
+                '$VERSION = sprintf("%d.%03d", q$Revision: 3.74 $ =~ /(\d+)\.(\d+)/);' => '3.074',
+                '$VERSION = substr(q$Revision: 2.8 $, 10) + 2 . "";'                   => '4.8',
 
                );
 

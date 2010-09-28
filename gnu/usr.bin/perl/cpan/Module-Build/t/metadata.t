@@ -171,9 +171,9 @@ is_deeply($mb->find_dist_packages,
 {
   $dist->change_file( 'lib/Simple.pm', <<'---' );
 package Simple;
-$VERSION = version->new('0.60.' . (qw/Revision: 128 /)[1]);
+$VERSION = version->new('0.60.' . (qw$Revision: 128 $)[1]);
 package Simple::Simon;
-$VERSION = version->new('0.61.' . (qw/Revision: 129 /)[1]);
+$VERSION = version->new('0.61.' . (qw$Revision: 129 $)[1]);
 ---
   $dist->regen;
   my $provides = new_build()->get_metadata()->{provides};
