@@ -2156,8 +2156,10 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/encoding.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/hash.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/objc-api.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/objc-decls.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/objc-list.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/objc.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/runtime.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/objc/typedstream.ph
