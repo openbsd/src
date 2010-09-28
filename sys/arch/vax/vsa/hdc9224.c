@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.33 2010/09/22 06:40:25 krw Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.34 2010/09/28 13:20:50 miod Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -164,9 +164,9 @@ void hdattach(struct device *, struct device *, void *);
 void hdcintr(void *);
 int hdc_command(struct hdcsoftc *, int);
 void hd_readgeom(struct hdcsoftc *, struct hdsoftc *);
-int hdgetdisklabel(dev_t, hdsoftc *, struct disklabel *, int);
+int hdgetdisklabel(dev_t, struct hdsoftc *, struct disklabel *, int);
 #ifdef HDDEBUG
-void hdc_printgeom( struct hdgeom *);
+void hdc_printgeom(struct hdgeom *);
 #endif
 void hdc_writeregs(struct hdcsoftc *);
 void hdcstart(struct hdcsoftc *, struct buf *);
@@ -276,7 +276,7 @@ hdcattach(struct device *parent, struct device *self, void *aux)
 	 * Get interrupt vector, enable instrumentation.
 	 */
 	scb_vecalloc(va->va_cvec, hdcintr, sc, SCB_ISTACK, &sc->sc_intrcnt);
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname, va->va_cvec);
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname, (void *)va->va_cvec);
 
 	sc->sc_regs = vax_map_physmem(va->va_paddr, 1);
 	sc->sc_dmabase = (caddr_t)va->va_dmaaddr;
@@ -339,11 +339,12 @@ hdmatch(parent, vcf, aux)
 #define	HDMAJOR 19
 
 int
-hdgetdisklabel(dev_t dev, hdsoftc *sc, struct disklabel *lp, int spoofonly)
+hdgetdisklabel(dev_t dev, struct hdsoftc *hd, struct disklabel *lp,
+    int spoofonly)
 {
 	hdmakelabel(lp, &hd->sc_xbn);
 
-	return readdisklabel(DISKLABEL(dev), hdstrategy, lp, spoofonly);
+	return readdisklabel(dev, hdstrategy, lp, spoofonly);
 }
 
 void
