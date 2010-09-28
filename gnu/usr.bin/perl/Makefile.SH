@@ -995,10 +995,8 @@ x2p/s2p: $(MINIPERL_EXE) $(CONFIGPM) $(dynamic_ext) x2p/s2p.PL
 unidatafiles $(unidatafiles) pod/perluniprops.pod: uni.data
 
 uni.data: $(MINIPERL_EXE) $(CONFIGPM) lib/unicore/mktables $(nonxs_ext)
-	$(MINIPERL) $(Icwd) lib/unicore/mktables -C lib/unicore -P pod -maketest -makelist -p
-#	Commented out so always runs, mktables looks at far more files than we
-#	can in this makefile to decide if needs to run or not
-#	touch uni.data
+#	$(MINIPERL) $(Icwd) lib/unicore/mktables -C lib/unicore -P pod -maketest -makelist -p
+	touch uni.data
 
 # $(PERL_EXE) and ext because buildtoc uses Text::Wrap uses re
 # But also this ensures that all extensions are built before we try to scan
