@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.183 2010/09/24 15:22:29 blambert Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.184 2010/09/28 08:13:11 blambert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2018,8 +2018,7 @@ bridge_rtagenode(struct ifnet *ifp, int age)
 		bridge_rtdelete(sc, ifp, 1);
 	else {
 		for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
-			n = LIST_FIRST(&sc->sc_rts[i]);
-			while (n != LIST_END(&sc->sc_rts[i])) {
+			LIST_FOREACH(n, &sc->sc_rts[i], brt_next) {
 				/* Cap the expiry time to 'age' */
 				if (n->brt_if == ifp &&
 				    n->brt_age > time_uptime + age &&
