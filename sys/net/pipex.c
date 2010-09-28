@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.11 2010/09/26 07:04:43 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.12 2010/09/28 14:14:54 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -958,9 +958,9 @@ pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 	}
 #endif /* PIPEX_MPPE */
 	cp = hdr;
-			PUTCHAR(PPP_ALLSTATIONS, cp);
-			PUTCHAR(PPP_UI, cp);
-		PUTSHORT(proto, cp);
+	PUTCHAR(PPP_ALLSTATIONS, cp);
+	PUTCHAR(PPP_UI, cp);
+	PUTSHORT(proto, cp);
 
 	M_PREPEND(m0, cp - hdr, M_NOWAIT);
 	if (m0 == NULL)
@@ -1503,7 +1503,6 @@ pipex_pptp_lookup_session(struct mbuf *m0)
 	uint16_t id;
 	int hlen;
 
-	/* pullup */
 	if (m0->m_pkthdr.len < PIPEX_IPGRE_HDRLEN) {
 		PIPEX_DBG((NULL, LOG_DEBUG, 
 		    "<%s> packet length is too short", __func__));

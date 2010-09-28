@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.39 2010/09/24 14:50:30 hsuenaga Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.40 2010/09/28 14:14:54 yasuoka Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -463,7 +463,8 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				ina_dst = &sin4->sin_addr;
 		}
 		if (ina_dst != NULL &&
-		    (session = pipex_pptp_userland_lookup_session_ipv4(m, *ina_dst)))
+		    (session = pipex_pptp_userland_lookup_session_ipv4(m,
+			    *ina_dst)))
 			m = pipex_pptp_userland_output(m, session);
 		splx(s);
 
