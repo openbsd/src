@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.62 2010/07/09 16:58:06 reyk Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.63 2010/09/28 01:44:57 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -781,7 +781,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		    0, 0, 0, "ipsec acquire", NULL);
 	}
 
-	ipa = pool_get(&ipsec_acquire_pool, PR_ZERO);
+	ipa = pool_get(&ipsec_acquire_pool, PR_NOWAIT|PR_ZERO);
 	if (ipa == NULL)
 		return ENOMEM;
 
