@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.35 2010/09/20 06:33:47 matthew Exp $ */
+/*	$OpenBSD: intr.c,v 1.36 2010/09/28 18:52:00 deraadt Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -485,7 +485,8 @@ softintr_establish(int level, void (*fn)(void *), void *arg)
 	}
 #endif
 
-	sih = (struct sintrhand *)malloc(sizeof *sih, M_DEVBUF, M_ZERO);
+	sih = (struct sintrhand *)malloc(sizeof *sih, M_DEVBUF,
+	    M_NOWAIT|M_ZERO);
 	if (sih == NULL)
 		return NULL;
 
