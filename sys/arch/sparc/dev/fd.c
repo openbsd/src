@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.78 2010/09/23 13:11:38 jsing Exp $	*/
+/*	$OpenBSD: fd.c,v 1.79 2010/09/28 12:39:17 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -643,7 +643,7 @@ fdattach(parent, self, aux)
 	 */
 	fd->sc_dk.dk_flags = DKF_NOLABELREAD;
 	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
-	disk_attach(&fd->sc_dev, &fd->sc_dk);
+	disk_attach(&fd->sc_dv, &fd->sc_dk);
 
 	/*
 	 * We're told if we're the boot device in fdcattach().
