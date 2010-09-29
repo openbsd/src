@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.12 2010/09/28 14:14:54 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.13 2010/09/29 22:15:54 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1808,22 +1808,30 @@ pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 struct mbuf *
 pipex_pptp_userland_output(struct mbuf *m0, struct pipex_session *session)
 {
-	struct pipex_gre_header *gre;
+	int len;
+	struct pipex_gre_header *gre, gre0;
 	uint16_t flags;
 	u_char *cp, *cp0;
 	uint32_t val32;
 
+	len = sizeof(struct pipex_gre_header);
+	m_copydata(m0, 0, len, (caddr_t)&gre0);
+	gre = &gre0;
+	flags = ntohs(gre->flags);
+	if ((flags & PIPEX_GRE_SFLAG) != 0)
+		len += 4;
+	if ((flags & PIPEX_GRE_AFLAG) != 0)
+		len += 4;
+
 	/* check length */
-	PIPEX_PULLUP(m0, sizeof(struct pipex_gre_header) + 8);
+	PIPEX_PULLUP(m0, len);
 	if (m0 == NULL) {
-		PIPEX_DBG((session, LOG_DEBUG,
-		    "gre header is too short."));
+		PIPEX_DBG((session, LOG_DEBUG, "gre header is too short."));
 		return (NULL);
 	}
 
 	gre = mtod(m0, struct pipex_gre_header *);
 	cp = PIPEX_SEEK_NEXTHDR(gre, sizeof(struct pipex_gre_header), u_char *);
-	flags = ntohs(gre->flags);
 
 	/*
 	 * overwrite sequence numbers to adjust a gap between pipex and
