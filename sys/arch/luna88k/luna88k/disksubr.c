@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.45 2010/04/25 06:15:17 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.46 2010/09/29 13:39:03 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -88,7 +88,7 @@
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
 
-char *disklabel_om_to_bsd(struct sun_disklabel *, struct disklabel *);
+int disklabel_om_to_bsd(struct sun_disklabel *, struct disklabel *);
 int disklabel_bsd_to_om(struct disklabel *, struct sun_disklabel *);
 
 /*
@@ -107,7 +107,6 @@ int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
-	struct sun_disklabel *slp;
 	struct buf *bp = NULL;
 	int error;
 
