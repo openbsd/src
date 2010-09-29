@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.236 2010/09/24 02:59:45 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.237 2010/09/29 08:18:23 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -175,12 +175,15 @@ do { \
  * Macro to compute ACK transmission behavior.  Delay the ACK unless
  * we have already delayed an ACK (must send an ACK every two segments).
  * We also ACK immediately if we received a PUSH and the ACK-on-PUSH
- * option is enabled.
+ * option is enabled or when the packet is comming from a loopback
+ * interface.
  */
-#define	TCP_SETUP_ACK(tp, tiflags) \
+#define	TCP_SETUP_ACK(tp, tiflags, m) \
 do { \
 	if ((tp)->t_flags & TF_DELACK || \
-	    (tcp_ack_on_push && (tiflags) & TH_PUSH)) \
+	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
+	    (m && (m->m_flags & M_PKTHDR) && m->m_pkthdr.rcvif && \
+	    (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
@@ -1116,6 +1119,8 @@ after_listen:
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
+
+			TCP_SETUP_ACK(tp, tiflags, m);
 			/*
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
@@ -1137,7 +1142,6 @@ after_listen:
 				sbappendstream(&so->so_rcv, m);
 			}
 			sorwakeup(so);
-			TCP_SETUP_ACK(tp, tiflags);
 			if (tp->t_flags & TF_ACKNOW)
 				(void) tcp_output(tp);
 			return;
@@ -2077,7 +2081,7 @@ dodata:							/* XXX */
 #endif
 		if (th->th_seq == tp->rcv_nxt && TAILQ_EMPTY(&tp->t_segq) &&
 		    tp->t_state == TCPS_ESTABLISHED) {
-			TCP_SETUP_ACK(tp, tiflags);
+			TCP_SETUP_ACK(tp, tiflags, m);
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;
