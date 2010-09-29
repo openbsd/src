@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.301 2010/09/11 07:26:00 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.302 2010/09/29 09:23:54 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -219,7 +219,7 @@ static int	rcs_parse_delta(RCSFILE *);
 static void	rcs_parse_deltas(RCSFILE *, RCSNUM *);
 static int	rcs_parse_deltatext(RCSFILE *);
 static void	rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
-static void	rcs_parse_desc(RCSFILE *, RCSNUM *);
+static void	rcs_parse_desc(RCSFILE *);
 
 static int	rcs_parse_access(RCSFILE *);
 static int	rcs_parse_symbols(RCSFILE *);
@@ -1575,7 +1575,7 @@ rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
 		return;
 
 	if (!(rfp->rf_flags & PARSED_DESC))
-		rcs_parse_desc(rfp, rev);
+		rcs_parse_desc(rfp);
 	for (;;) {
 		if (rev != NULL) {
 			rdp = rcs_findrev(rfp, rev);
@@ -1599,14 +1599,14 @@ rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
  * Parse RCS description.
  */
 static void
-rcs_parse_desc(RCSFILE *rfp, RCSNUM *rev)
+rcs_parse_desc(RCSFILE *rfp)
 {
 	int ret = 0;
 
 	if ((rfp->rf_flags & PARSED_DESC) || (rfp->rf_flags & RCS_CREATE))
 		return;
 	if (!(rfp->rf_flags & PARSED_DELTAS))
-		rcs_parse_deltas(rfp, rev);
+		rcs_parse_deltas(rfp, NULL);
 	/* do parsing */
 	ret = rcs_gettok(rfp);
 	if (ret != RCS_TOK_DESC)
