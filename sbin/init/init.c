@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.42 2010/08/07 10:22:28 phessler Exp $	*/
+/*	$OpenBSD: init.c,v 1.43 2010/09/29 13:23:37 dcoppa Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 #include <sys/reboot.h>
 
 #include <db.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
