@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.25 2010/09/18 09:27:51 sthen Exp $
+# $OpenBSD: pkg-config,v 1.26 2010/09/29 16:48:41 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -207,49 +207,61 @@ exit $rc;
 sub handle_config
 {
 	my ($p, $op, $v, $list) = @_;
+	my $cfg;
 
-
-	my $cfg = cache_find_config($p);
-
-	unshift @$list, $p if defined $cfg;
-
-	if (!defined $cfg) {
-		$rc = 1;
-		return undef;
-	}
-
-	if (defined $op) {
-		if (!versionmatch($cfg, $op, $v)) {
-			mismatch($p, $cfg, $op, $v) if $mode{printerr};
+	# pkg-config won't install a pkg-config.pc file itself, but it may be
+	# listed as a dependency in other files.
+	# If we encounter a dependency on pkg-config, check if our version
+	# is sufficient and error out if not.
+	if ($p eq "pkg-config"){
+		if ($v > $version) {
+			print STDERR "pkg-config version $version too old, $v required.\n" if $D;
 			$rc = 1;
 			return undef;
 		}
-	}
+	} else {
+		$cfg = cache_find_config($p);
 
-	my $deps = $cfg->get_property('Requires', $variables);
-	if (defined $deps) {
-		for my $dep (@$deps) {
-			if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
-				handle_config($1, $2, $3, $list);
-			} else {
-				handle_config($dep, undef, undef, $list);
+		unshift @$list, $p if defined $cfg;
+
+		if (!defined $cfg) {
+			$rc = 1;
+			return undef;
+		}
+
+		if (defined $op) {
+			if (!versionmatch($cfg, $op, $v)) {
+				mismatch($p, $cfg, $op, $v) if $mode{printerr};
+				$rc = 1;
+				return undef;
 			}
 		}
-		print STDERR "package $p requires ",
-		    join(',', @$deps), "\n" if $D;
-	}
 
-	$deps = $cfg->get_property('Requires.private', $variables);
-	if (defined $deps) {
-		for my $dep (@$deps) {
-			if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
-				handle_config($1, $2, $3, $list);
-			} else {
-				handle_config($dep, undef, undef, $list);
+		my $deps = $cfg->get_property('Requires', $variables);
+		if (defined $deps) {
+			for my $dep (@$deps) {
+				if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
+					handle_config($1, $2, $3, $list);
+				} else {
+					handle_config($dep, undef, undef, $list);
+				}
 			}
+			print STDERR "package $p requires ",
+			    join(',', @$deps), "\n" if $D;
 		}
-		print STDERR "package $p requires (private)",
-			join(',', @$deps), "\n" if $D;
+
+		$deps = $cfg->get_property('Requires.private', $variables);
+		if (defined $deps) {
+			for my $dep (@$deps) {
+				if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
+					handle_config($1, $2, $3, $list);
+				} else {
+					handle_config($dep, undef, undef, $list);
+				}
+			}
+			print STDERR "package $p requires (private)",
+			    join(',', @$deps), "\n" if $D;
+		}
 	}
 }
 
