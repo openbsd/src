@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.122 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: client.c,v 1.123 2010/09/29 18:14:52 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -524,7 +524,22 @@ cvs_client_sendfile(struct cvs_file *cf)
 			    cf->file_name);
 		break;
 	case FILE_ADDED:
+		if (backup_local_changes)	/* for update -C */
+			cvs_backup_file(cf);
+
+		cvs_client_send_request("Modified %s", cf->file_name);
+		cvs_remote_send_file(cf->file_path, cf->fd);
+		break;
 	case FILE_MODIFIED:
+		if (backup_local_changes) {	/* for update -C */
+			cvs_backup_file(cf);
+			cvs_client_send_request("Entry /%s/%s%s/%s/%s/%s",
+			    cf->file_name, "", rev, timebuf,
+			    cf->file_ent->ce_opts ? cf->file_ent->ce_opts : "",
+			    sticky);
+			break;
+		}
+
 		cvs_client_send_request("Modified %s", cf->file_name);
 		cvs_remote_send_file(cf->file_path, cf->fd);
 		break;

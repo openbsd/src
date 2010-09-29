@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.163 2010/07/30 21:47:18 ray Exp $	*/
+/*	$OpenBSD: update.c,v 1.164 2010/09/29 18:14:52 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -31,6 +31,7 @@ int	print_stdout = 0;
 int	build_dirs = 0;
 int	reset_option = 0;
 int	reset_tag = 0;
+int 	backup_local_changes = 0;
 char *cvs_specified_tag = NULL;
 char *cvs_join_rev1 = NULL;
 char *cvs_join_rev2 = NULL;
@@ -75,6 +76,7 @@ cvs_update(int argc, char **argv)
 				reset_tag = 1;
 			break;
 		case 'C':
+			backup_local_changes = 1;
 			break;
 		case 'D':
 			dateflag = optarg;
@@ -404,13 +406,20 @@ cvs_update_local(struct cvs_file *cf)
 		cvs_printf("? %s\n", cf->file_path);
 		break;
 	case FILE_MODIFIED:
-		ret = update_has_conflict_markers(cf);
-		if (cf->file_ent->ce_conflict != NULL && ret == 1) {
-			cvs_printf("C %s\n", cf->file_path);
+		if (backup_local_changes) {
+			cvs_backup_file(cf);
+
+			cvs_checkout_file(cf, cf->file_rcsrev, NULL, flags);
+			cvs_printf("U %s\n", cf->file_path);
 		} else {
-			if (cf->file_ent->ce_conflict != NULL && ret == 0)
-				update_clear_conflict(cf);
-			cvs_printf("M %s\n", cf->file_path);
+			ret = update_has_conflict_markers(cf);
+			if (cf->file_ent->ce_conflict != NULL && ret == 1)
+				cvs_printf("C %s\n", cf->file_path);
+			else {
+				if (cf->file_ent->ce_conflict != NULL && ret == 0)
+					update_clear_conflict(cf);
+				cvs_printf("M %s\n", cf->file_path);
+			}
 		}
 		break;
 	case FILE_ADDED:
@@ -713,4 +722,26 @@ out:
 		xfree(jrev1);
 	if (jrev2 != NULL)
 		xfree(jrev2);
+}
+
+void
+cvs_backup_file(struct cvs_file *cf)
+{
+	char	 backup_name[MAXPATHLEN];
+	char	 revstr[RCSNUM_MAXLEN];
+
+	if (cf->file_status == FILE_ADDED)
+		(void)xsnprintf(revstr, RCSNUM_MAXLEN, "0");
+	else
+		rcsnum_tostr(cf->file_ent->ce_rev, revstr, RCSNUM_MAXLEN);
+
+	(void)xsnprintf(backup_name, MAXPATHLEN, "%s/.#%s.%s",
+	    cf->file_wd, cf->file_name, revstr);
+
+	cvs_file_copy(cf->file_path, backup_name);
+
+	(void)xsnprintf(backup_name, MAXPATHLEN, ".#%s.%s",
+	    cf->file_name, revstr);
+	cvs_printf("(Locally modified %s moved to %s)\n",
+		   cf->file_name, backup_name);
 }
