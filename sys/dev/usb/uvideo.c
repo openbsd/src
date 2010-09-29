@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.138 2010/09/26 23:44:51 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.139 2010/09/29 09:33:26 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -675,11 +675,16 @@ uvideo_vc_parse_desc_pu(struct uvideo_softc *sc,
 	struct usb_video_vc_processing_desc *d;
 
 	d = (struct usb_video_vc_processing_desc *)(uint8_t *)desc;
-	d->iProcessing = d->bmControls[d->bControlSize]; 
-	d->bmVideoStandards = d->bmControls[d->bControlSize + 1];
 
 	if (sc->sc_desc_vc_pu_num == UVIDEO_MAX_PU) {
 		printf("%s: too many PU descriptors found!\n", DEVNAME(sc));
+		return (USBD_INVAL);
+	}
+
+	/* XXX support variable bmControls fields */
+	if (d->bControlSize != 2) {
+		printf("%s: video control not supported for this device.\n",
+		    DEVNAME(sc));
 		return (USBD_INVAL);
 	}
 
