@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.1 2010/09/22 13:03:48 claudio Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.2 2010/09/29 08:22:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -68,6 +68,7 @@
 #include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <net/if_dl.h>
 
 #ifdef INET
 #include <netinet/in_systm.h>
@@ -652,28 +653,37 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	int unit, s, error = 0;
 #ifdef PIPEX_PPPOE
 	struct ifnet *over_ifp = NULL;
-	struct ether_header *eh;
-	struct sockaddr peer_addr;
 #endif
 
 	switch (req->pr_protocol) {
-#ifdef PIPEX_PPTP
-	case PIPEX_PROTO_PPTP:
-		break;
-#endif
 #ifdef PIPEX_PPPOE
 	case PIPEX_PROTO_PPPOE:
 		over_ifp = ifunit(req->pr_proto.pppoe.over_ifname);
 		if (over_ifp == NULL)
 			return (EINVAL);
-		bzero(&peer_addr, sizeof(peer_addr));
-		peer_addr.sa_family = AF_UNSPEC;
-		eh = (struct ether_header *)&peer_addr.sa_data;
-		eh->ether_type = htons(ETHERTYPE_PPPOE);
-		memcpy(&eh->ether_dhost, &req->pr_proto.pppoe.peer_address,
-		    sizeof(eh->ether_dhost));
+		if (req->peer_address.ss_family != AF_UNSPEC)
+			return (EINVAL);
 		break;
 #endif
+#ifdef PIPEX_PPTP
+	case PIPEX_PROTO_PPTP:
+#endif
+#ifdef PIPEX_L2TP
+	case PIPEX_PROTO_L2TP:
+#endif
+		switch (req->peer_address.ss_family) {
+		case AF_INET:
+#ifdef INET6
+		case AF_INET6:
+#endif
+			if (req->peer_address.ss_family !=
+			    req->local_address.ss_family)
+				return (EINVAL);
+			break;
+		default:
+			return (EPROTONOSUPPORT);
+		}
+		break;
 	default:
 		return (EPROTONOSUPPORT);
 	}
@@ -715,33 +725,49 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	session->ip_address.sin_addr.s_addr &=
 	    session->ip_netmask.sin_addr.s_addr;
 
-	switch (req->pr_protocol) {
 #ifdef PIPEX_PPPOE
-	case PIPEX_PROTO_PPPOE:
-		session->proto.pppoe.peer_addr = peer_addr;
+	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
 		session->proto.pppoe.over_ifp = over_ifp;
-		break;
 #endif
 #ifdef PIPEX_PPTP
-	case PIPEX_PROTO_PPTP:
-		session->proto.pptp.snd_gap = 0;
-		session->proto.pptp.rcv_gap = 0;
-		session->proto.pptp.snd_una = req->pr_proto.pptp.snd_una;
-		session->proto.pptp.snd_nxt = req->pr_proto.pptp.snd_nxt;
-                session->proto.pptp.rcv_nxt = req->pr_proto.pptp.rcv_nxt;
-		session->proto.pptp.rcv_acked = req->pr_proto.pptp.rcv_acked;
-		session->proto.pptp.winsz = req->pr_proto.pptp.winsz;
-		session->proto.pptp.maxwinsz = req->pr_proto.pptp.maxwinsz;
-		session->proto.pptp.peer_maxwinsz =
-		    req->pr_proto.pptp.peer_maxwinsz;
-		session->proto.pptp.peer_address =
-		    req->pr_proto.pptp.peer_address;
-		session->proto.pptp.our_address =
-		    req->pr_proto.pptp.our_address;
-		break;
-#endif
-	}
+	if (req->pr_protocol == PIPEX_PROTO_PPTP) {
+		struct pipex_pptp_session *sess_pptp = &session->proto.pptp;
 
+		sess_pptp->snd_gap = 0;
+		sess_pptp->rcv_gap = 0;
+		sess_pptp->snd_una = req->pr_proto.pptp.snd_una;
+		sess_pptp->snd_nxt = req->pr_proto.pptp.snd_nxt;
+		sess_pptp->rcv_nxt = req->pr_proto.pptp.rcv_nxt;
+		sess_pptp->rcv_acked = req->pr_proto.pptp.rcv_acked;
+
+		sess_pptp->winsz = req->pr_proto.pptp.winsz;
+		sess_pptp->maxwinsz = req->pr_proto.pptp.maxwinsz;
+		sess_pptp->peer_maxwinsz = req->pr_proto.pptp.peer_maxwinsz;
+		/* last ack number */
+		sess_pptp->ul_snd_una = sess_pptp->snd_una - 1;
+	}
+#endif
+#ifdef PIPEX_L2TP
+	if (req->pr_protocol == PIPEX_PROTO_L2TP) {
+		struct pipex_l2tp_session *sess_l2tp = &session->proto.l2tp;
+
+		/* session keys */
+		sess_l2tp->tunnel_id = req->pr_proto.l2tp.tunnel_id;
+		sess_l2tp->peer_tunnel_id = req->pr_proto.l2tp.peer_tunnel_id;
+
+		/* protocol options */
+		sess_l2tp->option_flags = req->pr_proto.l2tp.option_flags;
+
+		/* initial state of dynamic context */
+		sess_l2tp->ns_gap = sess_l2tp->nr_gap = 0;
+		sess_l2tp->ns_nxt = req->pr_proto.l2tp.ns_nxt;
+		sess_l2tp->nr_nxt = req->pr_proto.l2tp.nr_nxt;
+		sess_l2tp->ns_una = req->pr_proto.l2tp.ns_una;
+		sess_l2tp->nr_acked = req->pr_proto.l2tp.nr_acked;
+		/* last ack number */
+		sess_l2tp->ul_ns_una = sess_l2tp->ns_una - 1;
+	}
+#endif
 #ifdef PIPEX_MPPE
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ACCEPTED) != 0)
 		pipex_mppe_req_init(&req->pr_mppe_recv, &session->mppe_recv);
@@ -790,13 +816,14 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	chain = PIPEX_ID_HASHTABLE(session->session_id);
 	LIST_INSERT_HEAD(chain, session, id_chain);
 	LIST_INSERT_HEAD(&pipex_session_list, session, session_list);
-#ifdef PIPEX_PPTP
-	if (req->pr_protocol == PIPEX_PROTO_PPTP) {
+	switch (req->pr_protocol) {
+	case PIPEX_PROTO_PPTP:
+	case PIPEX_PROTO_L2TP:
 		chain = PIPEX_PEER_ADDR_HASHTABLE(
-		    session->proto.pptp.peer_address.s_addr);
+		    pipex_sockaddr_hash_key((struct sockaddr *)&session->peer));
 		LIST_INSERT_HEAD(chain, session, peer_addr_chain);
+		break;
 	}
-#endif
 
 	/* if first session is added, start timer */
 	if (LIST_NEXT(session, session_list) == NULL)
@@ -849,11 +876,13 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 	s = splnet();
 	LIST_REMOVE(session, id_chain);
 	LIST_REMOVE(session, session_list);
-#ifdef PIPEX_PPTP
-	if (session->protocol == PIPEX_PROTO_PPTP)
+	switch (session->protocol) {
+	case PIPEX_PROTO_PPTP:
+	case PIPEX_PROTO_L2TP:
 		LIST_REMOVE((struct pipex_session *)session,
 		    peer_addr_chain);
-#endif
+		break;
+	}
 
 	/* if final session is destroyed, stop timer */
 	if (LIST_EMPTY(&pipex_session_list))
