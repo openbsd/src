@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.33 2009/09/12 19:37:27 miod Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.34 2010/09/29 20:00:51 kettenis Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -676,6 +676,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (nr->nr_flags & IEEE80211_NODEREQ_COPY)
 			ieee80211_req2node(ic, nr, ni);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case SIOCS80211DELNODE:
 		if ((error = suser(curproc, 0)) != 0)
 			break;
@@ -701,9 +702,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				    IEEE80211_FC0_SUBTYPE_DEAUTH,
 				    IEEE80211_REASON_AUTH_LEAVE);
 
-			ieee80211_release_node(ic, ni);
+			ieee80211_node_leave(ic, ni);
 		}
 		break;
+#endif
 	case SIOCG80211ALLNODES:
 		na = (struct ieee80211_nodereq_all *)data;
 		na->na_nodes = i = 0;
