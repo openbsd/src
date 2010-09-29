@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quota.1,v 1.14 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: quota.1,v 1.15 2010/09/29 07:44:56 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)quota.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 29 2010 $
 .Dt QUOTA 1
 .Os
 .Sh NAME
@@ -107,10 +107,6 @@ NFS server.
 For FFS
 filesystems, quotas must be turned on in
 .Pa /etc/fstab .
-If
-.Nm quota
-exits with a non-zero status, one or more filesystems
-are over quota.
 .Sh FILES
 .Bl -tag -width quota.group -compact
 .It Pa quota.user
@@ -120,6 +116,12 @@ located at the filesystem root with group quotas
 .It Pa /etc/fstab
 to find filesystem names and locations
 .El
+.Sh EXIT STATUS
+The
+.Nm quota
+utility exits 0 on success,
+and with a non-zero value if one or or more
+filesystems are over quota.
 .Sh SEE ALSO
 .Xr quotactl 2 ,
 .Xr fstab 5 ,

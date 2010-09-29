@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getent.1,v 1.7 2010/01/03 14:31:01 schwarze Exp $
+.\"	$OpenBSD: getent.1,v 1.8 2010/09/29 07:44:56 jmc Exp $
 .\"	$NetBSD: getent.1,v 1.13 2005/09/11 23:16:15 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: September 29 2010 $
 .Dt GETENT 1
 .Os
 .Sh NAME
@@ -94,14 +94,23 @@ is provided and
 supports enumeration, all entries for
 .Ar database
 will be retrieved using the appropriate enumeration function and printed.
-.Sh DIAGNOSTICS
+.Sh EXIT STATUS
+The
 .Nm
-exits 0 on success,
-1 if there was an error in the command syntax,
-2 if one of the specified key names was not found in
-.Ar database ,
-or 3 if there is no support for enumeration on
+utility exits with one of the following value:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+Success.
+.It 1
+There was an error in the command syntax.
+.It 2
+One of the specified key names was not found in
 .Ar database .
+.It 3
+There is no support for enumeration on
+.Ar database .
+.El
 .Sh SEE ALSO
 .Xr ethers 5 ,
 .Xr group 5 ,

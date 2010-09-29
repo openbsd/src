@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.88 2010/07/19 21:43:17 espie Exp $
+.\"	$OpenBSD: make.1,v 1.89 2010/09/29 07:44:56 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 19 2010 $
+.Dd $Mdocdate: September 29 2010 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1339,6 +1339,25 @@ default
 .Ev MAKEOBJDIRPREFIX
 directory
 .El
+.Sh EXIT STATUS
+If
+.Fl q
+was specified, the
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+Normal behavior.
+.It 1
+The target was not up-to date.
+.It \*(Gt1
+An error occurred.
+.El
+.Pp
+Otherwise, the
+.Nm
+utility exits with a value of 0 on success, and \*(Gt0 if an error occurred.
 .Sh SEE ALSO
 .Xr ed 1 ,
 .Xr mkdep 1 ,

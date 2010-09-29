@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.21 2009/02/09 17:15:44 jmc Exp $
+.\"	$OpenBSD: renice.8,v 1.22 2010/09/29 07:44:56 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: February 9 2009 $
+.Dd $Mdocdate: September 29 2010 $
 .Dt RENICE 8
 .Os
 .Sh NAME
@@ -110,6 +110,8 @@ which may be a user name or ID.
 .It Pa /etc/passwd
 for mapping user names to user IDs
 .El
+.Sh EXIT STATUS
+.Ex -std renice
 .Sh EXAMPLES
 The following example
 changes the priority of process IDs 987 and 32,

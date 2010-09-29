@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.80 2010/09/20 07:03:10 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.81 2010/09/29 07:44:56 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 20 2010 $
+.Dd $Mdocdate: September 29 2010 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -500,6 +500,11 @@ Operators, primaries, and arguments to primaries must be separate
 arguments to
 .Nm find ,
 i.e. they should be separated by whitespace.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with a value of 0 on successful traversal of all path operands
+or with a value \*(Gt0 if an error occurred.
 .Sh EXAMPLES
 Print out a list of all the files whose names end in
 .Dq \&.c :

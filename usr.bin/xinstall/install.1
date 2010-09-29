@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.24 2009/03/16 22:48:18 sobrado Exp $
+.\"	$OpenBSD: install.1,v 1.25 2010/09/29 07:44:57 jmc Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 16 2009 $
+.Dd $Mdocdate: September 29 2010 $
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -166,9 +166,6 @@ utility attempts to prevent moving a file onto itself.
 Installing
 .Pa /dev/null
 creates an empty file.
-.Pp
-Upon successful completion a value of 0 is returned.
-Otherwise, a value \*(Gt0 is returned.
 .Sh ENVIRONMENT
 .Bl -tag -width "STRIP"
 .It Ev STRIP
@@ -194,6 +191,8 @@ where XXXXXXXXXX is decided by
 .Xr mkstemp 3 ,
 are created in the target directory.
 .El
+.Sh EXIT STATUS
+.Ex -std install
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chgrp 1 ,

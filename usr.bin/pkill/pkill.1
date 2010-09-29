@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.15 2009/07/27 14:53:54 jmc Exp $
+.\"	$OpenBSD: pkill.1,v 1.16 2010/09/29 07:44:56 jmc Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 27 2009 $
+.Dd $Mdocdate: September 29 2010 $
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -178,11 +178,12 @@ or
 .Nm pkill
 process will never consider itself or system processes (kernel threads) as
 a potential match.
-.Pp
+.Sh EXIT STATUS
+The
 .Nm pgrep
 and
 .Nm pkill
-return one of the following values upon exit:
+utilities exit with one of the following values:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It 0
