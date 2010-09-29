@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.238 2010/09/29 18:00:19 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.239 2010/09/29 19:42:11 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3812,6 +3812,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #endif
 
 	tp->ts_modulate = sc->sc_modulate;
+	tp->ts_recent = sc->sc_timestamp;
 	tp->iss = sc->sc_iss;
 	tp->irs = sc->sc_irs;
 	tcp_sendseqinit(tp);
@@ -3992,6 +3993,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #else
 	if (optp) {
 #endif
+		bzero(&tb, sizeof(tb));
 		tb.pf = tp->pf;
 #ifdef TCP_SACK
 		tb.sack_enable = tp->sack_enable;
