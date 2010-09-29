@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.212 2010/08/31 17:13:46 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.213 2010/09/29 19:45:34 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2002,6 +2002,8 @@ acpi_thread(void *arg)
 	u_int32_t gpe;
 	int s;
 
+	rw_enter_write(&sc->sc_lck);
+
 	/*
 	 * If we have an interrupt handler, we can get notification
 	 * when certain status bits changes in the ACPI registers,
@@ -2032,8 +2034,6 @@ acpi_thread(void *arg)
 				acpi_enable_onegpe(sc, gpe, 1);
 		}
 	}
-
-	rw_enter_write(&sc->sc_lck);
 
 	while (thread->running) {
 		s = spltty();
