@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.127 2010/06/17 16:11:20 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.128 2010/09/29 18:04:33 thib Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -199,7 +199,7 @@ void uvm_map_unreference_amap(struct vm_map_entry *, int);
 int uvm_map_spacefits(struct vm_map *, vaddr_t *, vsize_t,
     struct vm_map_entry *, voff_t, vsize_t);
 
-struct vm_map_entry	*uvm_mapent_alloc(struct vm_map *);
+struct vm_map_entry	*uvm_mapent_alloc(struct vm_map *, int);
 void			uvm_mapent_free(struct vm_map_entry *);
 
 #ifdef KVA_GUARDPAGES
@@ -392,12 +392,16 @@ _uvm_tree_sanity(struct vm_map *map, const char *name)
  */
 
 struct vm_map_entry *
-uvm_mapent_alloc(struct vm_map *map)
+uvm_mapent_alloc(struct vm_map *map, int flags)
 {
 	struct vm_map_entry *me, *ne;
 	int s, i;
-	int slowdown;
+	int slowdown, pool_flags;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
+
+	pool_flags = PR_WAITOK;
+	if (flags & UVM_FLAG_TRYLOCK)
+		pool_flags = PR_NOWAIT;
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
 		s = splvm();
@@ -426,14 +430,19 @@ uvm_mapent_alloc(struct vm_map *map)
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
 		splassert(IPL_NONE);
-		me = pool_get(&uvm_map_entry_kmem_pool, PR_WAITOK);
+		me = pool_get(&uvm_map_entry_kmem_pool, pool_flags);
+		if (me == NULL)
+			goto out;
 		me->flags = UVM_MAP_KMEM;
 	} else {
 		splassert(IPL_NONE);
-		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
+		me = pool_get(&uvm_map_entry_pool, pool_flags);
+		if (me == NULL)
+			goto out;
 		me->flags = 0;
 	}
 
+out:
 	UVMHIST_LOG(maphist, "<- new entry=%p [kentry=%ld]", me,
 	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
 	return(me);
@@ -603,7 +612,7 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
 	 * starting address.
 	 */
 
-	new_entry = uvm_mapent_alloc(map);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 
 	new_entry->end = start; 
@@ -655,7 +664,7 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end)
 	 *	AFTER the specified entry
 	 */
 
-	new_entry = uvm_mapent_alloc(map);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 
 	new_entry->start = entry->end = end;
@@ -940,7 +949,11 @@ step3:
 		size -= PAGE_SIZE;
 #endif
 
-	new_entry = uvm_mapent_alloc(map);
+	new_entry = uvm_mapent_alloc(map, flags);
+	if (new_entry == NULL) {
+		vm_map_unlock(map);
+		return (ENOMEM);
+	}
 	new_entry->start = *startp;
 	new_entry->end = new_entry->start + size;
 	new_entry->object.uvm_obj = uobj;
@@ -999,22 +1012,24 @@ step3:
 	 * Create the guard entry.
 	 */
 	if (map == kernel_map && !(flags & UVM_FLAG_FIXED)) {
-		guard_entry = uvm_mapent_alloc(map);
-		guard_entry->start = new_entry->end;
-		guard_entry->end = guard_entry->start + PAGE_SIZE;
-		guard_entry->object.uvm_obj = uobj;
-		guard_entry->offset = uoffset;
-		guard_entry->etype = MAP_ET_KVAGUARD;
-		guard_entry->protection = prot;
-		guard_entry->max_protection = maxprot;
-		guard_entry->inheritance = inherit;
-		guard_entry->wired_count = 0;
-		guard_entry->advice = advice;
-		guard_entry->aref.ar_pageoff = 0;
-		guard_entry->aref.ar_amap = NULL;
-		uvm_map_entry_link(map, new_entry, guard_entry);
-		map->size += PAGE_SIZE;
-		kva_guardpages++;
+		guard_entry = uvm_mapent_alloc(map, flags);
+		if (guard_entry != NULL {
+			guard_entry->start = new_entry->end;
+			guard_entry->end = guard_entry->start + PAGE_SIZE;
+			guard_entry->object.uvm_obj = uobj;
+			guard_entry->offset = uoffset;
+			guard_entry->etype = MAP_ET_KVAGUARD;
+			guard_entry->protection = prot;
+			guard_entry->max_protection = maxprot;
+			guard_entry->inheritance = inherit;
+			guard_entry->wired_count = 0;
+			guard_entry->advice = advice;
+			guard_entry->aref.ar_pageoff = 0;
+			guard_entry->aref.ar_amap = NULL;
+			uvm_map_entry_link(map, new_entry, guard_entry);
+			map->size += PAGE_SIZE;
+			kva_guardpages++;
+		}
 	}
 #endif
 
@@ -2093,7 +2108,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		oldoffset = (entry->start + fudge) - start;
 
 		/* allocate a new map entry */
-		newentry = uvm_mapent_alloc(dstmap);
+		newentry = uvm_mapent_alloc(dstmap, flags);
 		if (newentry == NULL) {
 			error = ENOMEM;
 			goto bad;
@@ -3622,7 +3637,7 @@ uvmspace_fork(struct vmspace *vm1)
 				/* XXXCDC: WAITOK??? */
 			}
 
-			new_entry = uvm_mapent_alloc(new_map);
+			new_entry = uvm_mapent_alloc(new_map, 0);
 			/* old_entry -> new_entry */
 			uvm_mapent_copy(old_entry, new_entry);
 
@@ -3669,7 +3684,7 @@ uvmspace_fork(struct vmspace *vm1)
 			 * (note that new references are read-only).
 			 */
 
-			new_entry = uvm_mapent_alloc(new_map);
+			new_entry = uvm_mapent_alloc(new_map, 0);
 			/* old_entry -> new_entry */
 			uvm_mapent_copy(old_entry, new_entry);
 
