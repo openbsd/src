@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.103 2010/09/24 02:59:45 claudio Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.104 2010/09/29 06:32:47 claudio Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -966,7 +966,8 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
  * the limit. The buffer will scale with the congestion window, if the
  * the receiver stops acking data the window will shrink and therefor
  * the buffer size will shrink as well.
- * In low memory situation shrink 
+ * In low memory situation try to shrink the buffer to the initial size
+ * disabling the send buffer scaling as long as the situation persists.
  */
 void
 tcp_update_sndspace(struct tcpcb *tp)
@@ -992,6 +993,12 @@ tcp_update_sndspace(struct tcpcb *tp)
 		sbreserve(&so->so_snd, nmax);
 }
 
+/*
+ * Scale the recv buffer by looking at how much data was transfered in
+ * on approximated RTT. If more then a big part of the recv buffer was
+ * transfered during that time we increase the buffer by a constant.
+ * In low memory situation try to shrink the buffer to the initial size.
+ */
 void
 tcp_update_rcvspace(struct tcpcb *tp)
 {
