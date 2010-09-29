@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.19 2010/07/23 15:10:16 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.20 2010/09/29 13:46:38 joshe Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -92,6 +92,11 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
+/*
+ * The mxcsr_mask for this host, taken from fxsave() on the primary CPU
+ */
+uint32_t	fpu_mxcsr_mask;
+
 void fpudna(struct cpu_info *);
 static int x86fpflags_to_siginfo(u_int32_t);
 
@@ -103,6 +108,16 @@ fpuinit(struct cpu_info *ci)
 {
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
+	if (CPU_IS_PRIMARY(ci)) {
+		struct fxsave64 fx __attribute__((aligned(16)));
+
+		bzero(&fx, sizeof(fx));
+		fxsave(&fx);
+		if (fx.fx_mxcsr_mask)
+			fpu_mxcsr_mask = fx.fx_mxcsr_mask;
+		else
+			fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+	}
 	lcr0(rcr0() | (CR0_TS));
 }
 

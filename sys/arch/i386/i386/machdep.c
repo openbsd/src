@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.481 2010/08/05 21:10:09 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.482 2010/09/29 13:46:38 joshe Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2362,9 +2362,12 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		npxsave_proc(p, 0);
 
 	if (context.sc_fpstate) {
-		if ((error = copyin(context.sc_fpstate,
-		    &p->p_addr->u_pcb.pcb_savefpu, sizeof (union savefpu))))
+		union savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
+
+		if ((error = copyin(context.sc_fpstate, sfp, sizeof(*sfp))))
 			return (error);
+		if (i386_use_fxsave)
+			sfp->sv_xmm.sv_env.en_mxcsr &= fpu_mxcsr_mask;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 

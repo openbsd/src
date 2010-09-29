@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.51 2010/07/23 15:10:16 kettenis Exp $	*/
+/*	$OpenBSD: npx.c,v 1.52 2010/09/29 13:46:38 joshe Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -96,6 +96,11 @@
 #define	fwait()			__asm("fwait")
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
+
+/*
+ * The mxcsr_mask for this host, taken from fxsave() on the primary CPU
+ */
+uint32_t	fpu_mxcsr_mask;
 
 int npxintr(void *);
 static int npxprobe1(struct isa_attach_args *);
@@ -350,6 +355,16 @@ npxinit(struct cpu_info *ci)
 		i386_fpu_fdivbug = 1;
 		printf("%s: WARNING: Pentium FDIV bug detected!\n",
 		    ci->ci_dev.dv_xname);
+	}
+	if (CPU_IS_PRIMARY(ci) && i386_use_fxsave) {
+		struct savexmm xm __attribute__((aligned(16)));
+
+		bzero(&xm, sizeof(xm));
+		fxsave(&xm);
+		if (xm.sv_env.en_mxcsr_mask)
+			fpu_mxcsr_mask = xm.sv_env.en_mxcsr_mask;
+		else
+			fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 	}
 	lcr0(rcr0() | (CR0_TS));
 }
