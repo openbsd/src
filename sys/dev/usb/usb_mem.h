@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.h,v 1.12 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usb_mem.h,v 1.13 2010/09/29 20:06:38 kettenis Exp $ */
 /*	$NetBSD: usb_mem.h,v 1.20 2003/05/03 18:11:42 wiz Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -50,3 +50,4 @@ typedef struct usb_dma_block {
 
 usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
 void		usb_freemem(usbd_bus_handle, usb_dma_t *);
+void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int);

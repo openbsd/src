@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.21 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.22 2010/09/29 20:06:38 kettenis Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -274,4 +274,11 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
 	splx(s);
 	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
+}
+
+void
+usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
+{
+	bus_dmamap_sync(p->block->tag, p->block->map, p->offs + offset,
+	    len, ops);
 }
