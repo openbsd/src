@@ -3602,17 +3602,15 @@ lib/unicore/auxiliary/SentenceBreakProperty.txt	Unicode character database
 lib/unicore/auxiliary/WordBreakProperty.txt	Unicode character database
 lib/unicore/BidiMirroring.txt			Unicode character database
 lib/unicore/Blocks.txt				Unicode character database
-lib/unicore/Canonical.pl
 lib/unicore/CaseFolding.txt			Unicode character database
 lib/unicore/CJKRadicals.txt			Unicode character database
-lib/unicore/CombiningClass.pl
+lib/unicore/CombiningClass.pl			Unicode character database
 lib/unicore/CompositionExclusions.txt		Unicode character database
 lib/unicore/DAge.txt				Unicode character database
 lib/unicore/DCoreProperties.txt			Unicode character database
-lib/unicore/Decomposition.pl
+lib/unicore/Decomposition.pl			Unicode character database
 lib/unicore/DNormalizationProps.txt		Unicode character database
 lib/unicore/EastAsianWidth.txt			Unicode character database
-lib/unicore/Exact.pl
 lib/unicore/extracted/DBidiClass.txt		Unicode character database
 lib/unicore/extracted/DBinaryProperties.txt	Unicode character database
 lib/unicore/extracted/DCombiningClass.txt	Unicode character database
@@ -3625,580 +3623,862 @@ lib/unicore/extracted/DLineBreak.txt		Unicode character database
 lib/unicore/extracted/DNumType.txt		Unicode character database
 lib/unicore/extracted/DNumValues.txt		Unicode character database
 lib/unicore/HangulSyllableType.txt		Unicode character database
+lib/unicore/Heavy.pl				Unicode character database
 lib/unicore/Index.txt				Unicode character database
 lib/unicore/Jamo.txt				Unicode character database
-lib/unicore/lib/bc/AL.pl
-lib/unicore/lib/bc/AN.pl
-lib/unicore/lib/bc/BN.pl
-lib/unicore/lib/bc/B.pl
-lib/unicore/lib/bc/CS.pl
-lib/unicore/lib/bc/EN.pl
-lib/unicore/lib/bc/ES.pl
-lib/unicore/lib/bc/ET.pl
-lib/unicore/lib/bc/L.pl
-lib/unicore/lib/bc/LRE.pl
-lib/unicore/lib/bc/LRO.pl
-lib/unicore/lib/bc/NSM.pl
-lib/unicore/lib/bc/ON.pl
-lib/unicore/lib/bc/PDF.pl
-lib/unicore/lib/bc/RLE.pl
-lib/unicore/lib/bc/RLO.pl
-lib/unicore/lib/bc/R.pl
-lib/unicore/lib/bc/S.pl
-lib/unicore/lib/bc/WS.pl
-lib/unicore/lib/ccc/AL.pl
-lib/unicore/lib/ccc/A.pl
-lib/unicore/lib/ccc/AR.pl
-lib/unicore/lib/ccc/ATA.pl
-lib/unicore/lib/ccc/ATAR.pl
-lib/unicore/lib/ccc/ATBL.pl
-lib/unicore/lib/ccc/ATB.pl
-lib/unicore/lib/ccc/BL.pl
-lib/unicore/lib/ccc/B.pl
-lib/unicore/lib/ccc/BR.pl
-lib/unicore/lib/ccc/DA.pl
-lib/unicore/lib/ccc/DB.pl
-lib/unicore/lib/ccc/IS.pl
-lib/unicore/lib/ccc/KV.pl
-lib/unicore/lib/ccc/L.pl
-lib/unicore/lib/ccc/NK.pl
-lib/unicore/lib/ccc/NR.pl
-lib/unicore/lib/ccc/OV.pl
-lib/unicore/lib/ccc/R.pl
-lib/unicore/lib/ccc/VR.pl
-lib/unicore/lib/dt/Can.pl
-lib/unicore/lib/dt/Com.pl
-lib/unicore/lib/dt/Enc.pl
-lib/unicore/lib/dt/Fin.pl
-lib/unicore/lib/dt/Font.pl
-lib/unicore/lib/dt/Fra.pl
-lib/unicore/lib/dt/Init.pl
-lib/unicore/lib/dt/Iso.pl
-lib/unicore/lib/dt/Med.pl
-lib/unicore/lib/dt/Nar.pl
-lib/unicore/lib/dt/Nb.pl
-lib/unicore/lib/dt/Sml.pl
-lib/unicore/lib/dt/Sqr.pl
-lib/unicore/lib/dt/Sub.pl
-lib/unicore/lib/dt/Sup.pl
-lib/unicore/lib/dt/Vert.pl
-lib/unicore/lib/dt/Wide.pl
-lib/unicore/lib/ea/A.pl
-lib/unicore/lib/ea/F.pl
-lib/unicore/lib/ea/H.pl
-lib/unicore/lib/ea/Na.pl
-lib/unicore/lib/ea/N.pl
-lib/unicore/lib/ea/W.pl
-lib/unicore/lib/gc_sc/AHex.pl
-lib/unicore/lib/gc_sc/Alnum.pl
-lib/unicore/lib/gc_sc/Alphabet.pl
-lib/unicore/lib/gc_sc/Alpha.pl
-lib/unicore/lib/gc_sc/Any.pl
-lib/unicore/lib/gc_sc/Arab.pl
-lib/unicore/lib/gc_sc/Armn.pl
-lib/unicore/lib/gc_sc/AsciiHex.pl
-lib/unicore/lib/gc_sc/ASCII.pl
-lib/unicore/lib/gc_sc/Assigned.pl
-lib/unicore/lib/gc_sc/Avst.pl
-lib/unicore/lib/gc_sc/Bali.pl
-lib/unicore/lib/gc_sc/Bamu.pl
-lib/unicore/lib/gc_sc/Beng.pl
-lib/unicore/lib/gc_sc/BidiCont.pl
-lib/unicore/lib/gc_sc/BidiC.pl
-lib/unicore/lib/gc_sc/Blank.pl
-lib/unicore/lib/gc_sc/Bopo.pl
-lib/unicore/lib/gc_sc/Brai.pl
-lib/unicore/lib/gc_sc/Bugi.pl
-lib/unicore/lib/gc_sc/Buhd.pl
-lib/unicore/lib/gc_sc/Canadian.pl
-lib/unicore/lib/gc_sc/_CanonDC.pl
-lib/unicore/lib/gc_sc/Cari.pl
-lib/unicore/lib/gc_sc/_CaseIgn.pl
-lib/unicore/lib/gc_sc/Cc.pl
-lib/unicore/lib/gc_sc/Cf.pl
-lib/unicore/lib/gc_sc/Cham.pl
-lib/unicore/lib/gc_sc/Cher.pl
-lib/unicore/lib/gc_sc/Cn.pl
-lib/unicore/lib/gc_sc/Cntrl.pl
-lib/unicore/lib/gc_sc/_CombAbo.pl
-lib/unicore/lib/gc_sc/Co.pl
-lib/unicore/lib/gc_sc/Copt.pl
-lib/unicore/lib/gc_sc/C.pl
-lib/unicore/lib/gc_sc/Cprt.pl
-lib/unicore/lib/gc_sc/Cs.pl
-lib/unicore/lib/gc_sc/Cyrl.pl
-lib/unicore/lib/gc_sc/Dash2.pl
-lib/unicore/lib/gc_sc/Dash.pl
-lib/unicore/lib/gc_sc/DefaultI.pl
-lib/unicore/lib/gc_sc/Dep.pl
-lib/unicore/lib/gc_sc/Deprecat.pl
-lib/unicore/lib/gc_sc/Deva.pl
-lib/unicore/lib/gc_sc/Diacriti.pl
-lib/unicore/lib/gc_sc/Dia.pl
-lib/unicore/lib/gc_sc/Digit.pl
-lib/unicore/lib/gc_sc/Dsrt.pl
-lib/unicore/lib/gc_sc/Egyptian.pl
-lib/unicore/lib/gc_sc/Ethi.pl
-lib/unicore/lib/gc_sc/Extender.pl
-lib/unicore/lib/gc_sc/Ext.pl
-lib/unicore/lib/gc_sc/Geor.pl
-lib/unicore/lib/gc_sc/Glag.pl
-lib/unicore/lib/gc_sc/Goth.pl
-lib/unicore/lib/gc_sc/Graph.pl
-lib/unicore/lib/gc_sc/Grek.pl
-lib/unicore/lib/gc_sc/Gujr.pl
-lib/unicore/lib/gc_sc/Guru.pl
-lib/unicore/lib/gc_sc/Hang.pl
-lib/unicore/lib/gc_sc/Hani.pl
-lib/unicore/lib/gc_sc/Hano.pl
-lib/unicore/lib/gc_sc/Hebr.pl
-lib/unicore/lib/gc_sc/HexDigit.pl
-lib/unicore/lib/gc_sc/Hex.pl
-lib/unicore/lib/gc_sc/Hira.pl
-lib/unicore/lib/gc_sc/HorizSpa.pl
-lib/unicore/lib/gc_sc/Hyphen2.pl
-lib/unicore/lib/gc_sc/Hyphen.pl
-lib/unicore/lib/gc_sc/IdContin.pl
-lib/unicore/lib/gc_sc/Ideograp.pl
-lib/unicore/lib/gc_sc/Ideo.pl
-lib/unicore/lib/gc_sc/IdsBinar.pl
-lib/unicore/lib/gc_sc/IDSB.pl
-lib/unicore/lib/gc_sc/IdStart.pl
-lib/unicore/lib/gc_sc/IDST.pl
-lib/unicore/lib/gc_sc/IdsTrina.pl
-lib/unicore/lib/gc_sc/Imperial.pl
-lib/unicore/lib/gc_sc/InAegean.pl
-lib/unicore/lib/gc_sc/InAlphab.pl
-lib/unicore/lib/gc_sc/InAncie2.pl
-lib/unicore/lib/gc_sc/InAncie3.pl
-lib/unicore/lib/gc_sc/InAncien.pl
-lib/unicore/lib/gc_sc/InArabi2.pl
-lib/unicore/lib/gc_sc/InArabi3.pl
-lib/unicore/lib/gc_sc/InArabi4.pl
-lib/unicore/lib/gc_sc/InArabic.pl
-lib/unicore/lib/gc_sc/InArmeni.pl
-lib/unicore/lib/gc_sc/InArrows.pl
-lib/unicore/lib/gc_sc/InAvesta.pl
-lib/unicore/lib/gc_sc/InBaline.pl
-lib/unicore/lib/gc_sc/InBamum.pl
-lib/unicore/lib/gc_sc/InBasicL.pl
-lib/unicore/lib/gc_sc/InBengal.pl
-lib/unicore/lib/gc_sc/InBlockE.pl
-lib/unicore/lib/gc_sc/InBopom2.pl
-lib/unicore/lib/gc_sc/InBopomo.pl
-lib/unicore/lib/gc_sc/InBoxDra.pl
-lib/unicore/lib/gc_sc/InBraill.pl
-lib/unicore/lib/gc_sc/InBugine.pl
-lib/unicore/lib/gc_sc/InBuhid.pl
-lib/unicore/lib/gc_sc/InByzant.pl
-lib/unicore/lib/gc_sc/InCarian.pl
-lib/unicore/lib/gc_sc/InCham.pl
-lib/unicore/lib/gc_sc/InCherok.pl
-lib/unicore/lib/gc_sc/InCjkCo2.pl
-lib/unicore/lib/gc_sc/InCjkCo3.pl
-lib/unicore/lib/gc_sc/InCjkCo4.pl
-lib/unicore/lib/gc_sc/InCjkCom.pl
-lib/unicore/lib/gc_sc/InCjkRad.pl
-lib/unicore/lib/gc_sc/InCjkStr.pl
-lib/unicore/lib/gc_sc/InCjkSym.pl
-lib/unicore/lib/gc_sc/InCjkUn2.pl
-lib/unicore/lib/gc_sc/InCjkUn3.pl
-lib/unicore/lib/gc_sc/InCjkUn4.pl
-lib/unicore/lib/gc_sc/InCjkUni.pl
-lib/unicore/lib/gc_sc/InCombi2.pl
-lib/unicore/lib/gc_sc/InCombi3.pl
-lib/unicore/lib/gc_sc/InCombi4.pl
-lib/unicore/lib/gc_sc/InCombin.pl
-lib/unicore/lib/gc_sc/InCommon.pl
-lib/unicore/lib/gc_sc/InContro.pl
-lib/unicore/lib/gc_sc/InCoptic.pl
-lib/unicore/lib/gc_sc/InCounti.pl
-lib/unicore/lib/gc_sc/InCunei2.pl
-lib/unicore/lib/gc_sc/InCuneif.pl
-lib/unicore/lib/gc_sc/InCurren.pl
-lib/unicore/lib/gc_sc/InCyprio.pl
-lib/unicore/lib/gc_sc/InCyril2.pl
-lib/unicore/lib/gc_sc/InCyril3.pl
-lib/unicore/lib/gc_sc/InCyril4.pl
-lib/unicore/lib/gc_sc/InCyrill.pl
-lib/unicore/lib/gc_sc/InDesere.pl
-lib/unicore/lib/gc_sc/InDevan2.pl
-lib/unicore/lib/gc_sc/InDevana.pl
-lib/unicore/lib/gc_sc/InDingba.pl
-lib/unicore/lib/gc_sc/InDomino.pl
-lib/unicore/lib/gc_sc/InEgypti.pl
-lib/unicore/lib/gc_sc/InEnclo2.pl
-lib/unicore/lib/gc_sc/InEnclo3.pl
-lib/unicore/lib/gc_sc/InEnclo4.pl
-lib/unicore/lib/gc_sc/InEnclos.pl
-lib/unicore/lib/gc_sc/InEthio2.pl
-lib/unicore/lib/gc_sc/InEthio3.pl
-lib/unicore/lib/gc_sc/InEthiop.pl
-lib/unicore/lib/gc_sc/InGenera.pl
-lib/unicore/lib/gc_sc/InGeomet.pl
-lib/unicore/lib/gc_sc/InGeorg2.pl
-lib/unicore/lib/gc_sc/InGeorgi.pl
-lib/unicore/lib/gc_sc/InGlagol.pl
-lib/unicore/lib/gc_sc/InGothic.pl
-lib/unicore/lib/gc_sc/InGreekA.pl
-lib/unicore/lib/gc_sc/InGreekE.pl
-lib/unicore/lib/gc_sc/InGujara.pl
-lib/unicore/lib/gc_sc/InGurmuk.pl
-lib/unicore/lib/gc_sc/InHalfwi.pl
-lib/unicore/lib/gc_sc/InHangu2.pl
-lib/unicore/lib/gc_sc/InHangu3.pl
-lib/unicore/lib/gc_sc/InHangu4.pl
-lib/unicore/lib/gc_sc/InHangu5.pl
-lib/unicore/lib/gc_sc/InHangul.pl
-lib/unicore/lib/gc_sc/InHanuno.pl
-lib/unicore/lib/gc_sc/InHebrew.pl
-lib/unicore/lib/gc_sc/InHighPr.pl
-lib/unicore/lib/gc_sc/InHighSu.pl
-lib/unicore/lib/gc_sc/InHiraga.pl
-lib/unicore/lib/gc_sc/InIdeogr.pl
-lib/unicore/lib/gc_sc/InImperi.pl
-lib/unicore/lib/gc_sc/InInscr2.pl
-lib/unicore/lib/gc_sc/InInscri.pl
-lib/unicore/lib/gc_sc/InIpaExt.pl
-lib/unicore/lib/gc_sc/InJavane.pl
-lib/unicore/lib/gc_sc/InKaithi.pl
-lib/unicore/lib/gc_sc/InKanbun.pl
-lib/unicore/lib/gc_sc/InKangxi.pl
-lib/unicore/lib/gc_sc/InKannad.pl
-lib/unicore/lib/gc_sc/InKatak2.pl
-lib/unicore/lib/gc_sc/InKataka.pl
-lib/unicore/lib/gc_sc/InKayahL.pl
-lib/unicore/lib/gc_sc/InKharos.pl
-lib/unicore/lib/gc_sc/InKhmer.pl
-lib/unicore/lib/gc_sc/InKhmerS.pl
-lib/unicore/lib/gc_sc/InLao.pl
-lib/unicore/lib/gc_sc/InLatin1.pl
-lib/unicore/lib/gc_sc/InLatin2.pl
-lib/unicore/lib/gc_sc/InLatin3.pl
-lib/unicore/lib/gc_sc/InLatin4.pl
-lib/unicore/lib/gc_sc/InLatin5.pl
-lib/unicore/lib/gc_sc/InLatinE.pl
-lib/unicore/lib/gc_sc/InLepcha.pl
-lib/unicore/lib/gc_sc/InLetter.pl
-lib/unicore/lib/gc_sc/InLimbu.pl
-lib/unicore/lib/gc_sc/InLinea2.pl
-lib/unicore/lib/gc_sc/InLinear.pl
-lib/unicore/lib/gc_sc/InLisu.pl
-lib/unicore/lib/gc_sc/InLowSur.pl
-lib/unicore/lib/gc_sc/InLycian.pl
-lib/unicore/lib/gc_sc/InLydian.pl
-lib/unicore/lib/gc_sc/InMahjon.pl
-lib/unicore/lib/gc_sc/InMalaya.pl
-lib/unicore/lib/gc_sc/InMathe2.pl
-lib/unicore/lib/gc_sc/InMathem.pl
-lib/unicore/lib/gc_sc/InMeetei.pl
-lib/unicore/lib/gc_sc/InMisce2.pl
-lib/unicore/lib/gc_sc/InMisce3.pl
-lib/unicore/lib/gc_sc/InMisce4.pl
-lib/unicore/lib/gc_sc/InMisce5.pl
-lib/unicore/lib/gc_sc/InMiscel.pl
-lib/unicore/lib/gc_sc/InModifi.pl
-lib/unicore/lib/gc_sc/InMongol.pl
-lib/unicore/lib/gc_sc/InMusica.pl
-lib/unicore/lib/gc_sc/InMyanm2.pl
-lib/unicore/lib/gc_sc/InMyanma.pl
-lib/unicore/lib/gc_sc/InNewTai.pl
-lib/unicore/lib/gc_sc/InNko.pl
-lib/unicore/lib/gc_sc/InNumber.pl
-lib/unicore/lib/gc_sc/InOgham.pl
-lib/unicore/lib/gc_sc/InOlChik.pl
-lib/unicore/lib/gc_sc/InOldIta.pl
-lib/unicore/lib/gc_sc/InOldPer.pl
-lib/unicore/lib/gc_sc/InOldSou.pl
-lib/unicore/lib/gc_sc/InOldTur.pl
-lib/unicore/lib/gc_sc/InOptica.pl
-lib/unicore/lib/gc_sc/InOriya.pl
-lib/unicore/lib/gc_sc/InOsmany.pl
-lib/unicore/lib/gc_sc/InPhagsP.pl
-lib/unicore/lib/gc_sc/InPhaist.pl
-lib/unicore/lib/gc_sc/InPhoeni.pl
-lib/unicore/lib/gc_sc/InPhone2.pl
-lib/unicore/lib/gc_sc/InPhonet.pl
-lib/unicore/lib/gc_sc/InPrivat.pl
-lib/unicore/lib/gc_sc/InRejang.pl
-lib/unicore/lib/gc_sc/InRumiNu.pl
-lib/unicore/lib/gc_sc/InRunic.pl
-lib/unicore/lib/gc_sc/InSamari.pl
-lib/unicore/lib/gc_sc/InSauras.pl
-lib/unicore/lib/gc_sc/Inscrip2.pl
-lib/unicore/lib/gc_sc/Inscript.pl
-lib/unicore/lib/gc_sc/InShavia.pl
-lib/unicore/lib/gc_sc/InSinhal.pl
-lib/unicore/lib/gc_sc/InSmallF.pl
-lib/unicore/lib/gc_sc/InSpacin.pl
-lib/unicore/lib/gc_sc/InSpecia.pl
-lib/unicore/lib/gc_sc/InSundan.pl
-lib/unicore/lib/gc_sc/InSupers.pl
-lib/unicore/lib/gc_sc/InSuppl2.pl
-lib/unicore/lib/gc_sc/InSuppl3.pl
-lib/unicore/lib/gc_sc/InSuppl4.pl
-lib/unicore/lib/gc_sc/InSuppl5.pl
-lib/unicore/lib/gc_sc/InSuppl6.pl
-lib/unicore/lib/gc_sc/InSupple.pl
-lib/unicore/lib/gc_sc/InSyloti.pl
-lib/unicore/lib/gc_sc/InSyriac.pl
-lib/unicore/lib/gc_sc/InTagalo.pl
-lib/unicore/lib/gc_sc/InTagban.pl
-lib/unicore/lib/gc_sc/InTags.pl
-lib/unicore/lib/gc_sc/InTaiLe.pl
-lib/unicore/lib/gc_sc/InTaiTha.pl
-lib/unicore/lib/gc_sc/InTaiVie.pl
-lib/unicore/lib/gc_sc/InTaiXua.pl
-lib/unicore/lib/gc_sc/InTamil.pl
-lib/unicore/lib/gc_sc/InTelugu.pl
-lib/unicore/lib/gc_sc/InThaana.pl
-lib/unicore/lib/gc_sc/InThai.pl
-lib/unicore/lib/gc_sc/InTibeta.pl
-lib/unicore/lib/gc_sc/InTifina.pl
-lib/unicore/lib/gc_sc/InUgarit.pl
-lib/unicore/lib/gc_sc/InUnifi2.pl
-lib/unicore/lib/gc_sc/InUnifie.pl
-lib/unicore/lib/gc_sc/InVai.pl
-lib/unicore/lib/gc_sc/InVaria2.pl
-lib/unicore/lib/gc_sc/InVariat.pl
-lib/unicore/lib/gc_sc/InVedicE.pl
-lib/unicore/lib/gc_sc/InVertic.pl
-lib/unicore/lib/gc_sc/InYijing.pl
-lib/unicore/lib/gc_sc/InYiRadi.pl
-lib/unicore/lib/gc_sc/InYiSyll.pl
-lib/unicore/lib/gc_sc/Java.pl
-lib/unicore/lib/gc_sc/JoinCont.pl
-lib/unicore/lib/gc_sc/JoinC.pl
-lib/unicore/lib/gc_sc/Kana.pl
-lib/unicore/lib/gc_sc/KayahLi.pl
-lib/unicore/lib/gc_sc/Khar.pl
-lib/unicore/lib/gc_sc/Khmr.pl
-lib/unicore/lib/gc_sc/Knda.pl
-lib/unicore/lib/gc_sc/Kthi.pl
-lib/unicore/lib/gc_sc/Laoo.pl
-lib/unicore/lib/gc_sc/Latn.pl
-lib/unicore/lib/gc_sc/LC.pl
-lib/unicore/lib/gc_sc/Lepc.pl
-lib/unicore/lib/gc_sc/Limb.pl
-lib/unicore/lib/gc_sc/LinearB.pl
-lib/unicore/lib/gc_sc/Lisu.pl
-lib/unicore/lib/gc_sc/Ll.pl
-lib/unicore/lib/gc_sc/Lm.pl
-lib/unicore/lib/gc_sc/LOE.pl
-lib/unicore/lib/gc_sc/LogicalO.pl
-lib/unicore/lib/gc_sc/Lo.pl
-lib/unicore/lib/gc_sc/Lowercas.pl
-lib/unicore/lib/gc_sc/Lower.pl
-lib/unicore/lib/gc_sc/L.pl
-lib/unicore/lib/gc_sc/Lt.pl
-lib/unicore/lib/gc_sc/Lu.pl
-lib/unicore/lib/gc_sc/Lyci.pl
-lib/unicore/lib/gc_sc/Lydi.pl
-lib/unicore/lib/gc_sc/Math.pl
-lib/unicore/lib/gc_sc/Mc.pl
-lib/unicore/lib/gc_sc/MeeteiMa.pl
-lib/unicore/lib/gc_sc/Me.pl
-lib/unicore/lib/gc_sc/Mlym.pl
-lib/unicore/lib/gc_sc/Mn.pl
-lib/unicore/lib/gc_sc/Mong.pl
-lib/unicore/lib/gc_sc/M.pl
-lib/unicore/lib/gc_sc/Mymr.pl
-lib/unicore/lib/gc_sc/NChar.pl
-lib/unicore/lib/gc_sc/Nd.pl
-lib/unicore/lib/gc_sc/NewTaiLu.pl
-lib/unicore/lib/gc_sc/Nkoo.pl
-lib/unicore/lib/gc_sc/Nl.pl
-lib/unicore/lib/gc_sc/Nonchara.pl
-lib/unicore/lib/gc_sc/No.pl
-lib/unicore/lib/gc_sc/N.pl
-lib/unicore/lib/gc_sc/OAlpha.pl
-lib/unicore/lib/gc_sc/ODI.pl
-lib/unicore/lib/gc_sc/Ogam.pl
-lib/unicore/lib/gc_sc/OGrExt.pl
-lib/unicore/lib/gc_sc/OIDC.pl
-lib/unicore/lib/gc_sc/OIDS.pl
-lib/unicore/lib/gc_sc/OlChiki.pl
-lib/unicore/lib/gc_sc/OldItali.pl
-lib/unicore/lib/gc_sc/OldPersi.pl
-lib/unicore/lib/gc_sc/OldSouth.pl
-lib/unicore/lib/gc_sc/OldTurki.pl
-lib/unicore/lib/gc_sc/OLower.pl
-lib/unicore/lib/gc_sc/OMath.pl
-lib/unicore/lib/gc_sc/Orya.pl
-lib/unicore/lib/gc_sc/Osma.pl
-lib/unicore/lib/gc_sc/OtherAlp.pl
-lib/unicore/lib/gc_sc/OtherDef.pl
-lib/unicore/lib/gc_sc/OtherGra.pl
-lib/unicore/lib/gc_sc/OtherIdC.pl
-lib/unicore/lib/gc_sc/OtherIdS.pl
-lib/unicore/lib/gc_sc/OtherLow.pl
-lib/unicore/lib/gc_sc/OtherMat.pl
-lib/unicore/lib/gc_sc/OtherUpp.pl
-lib/unicore/lib/gc_sc/OUpper.pl
-lib/unicore/lib/gc_sc/PatSyn.pl
-lib/unicore/lib/gc_sc/PatternS.pl
-lib/unicore/lib/gc_sc/PatternW.pl
-lib/unicore/lib/gc_sc/PatWS.pl
-lib/unicore/lib/gc_sc/Pc.pl
-lib/unicore/lib/gc_sc/Pd.pl
-lib/unicore/lib/gc_sc/Pe.pl
-lib/unicore/lib/gc_sc/PerlSpac.pl
-lib/unicore/lib/gc_sc/PerlWord.pl
-lib/unicore/lib/gc_sc/Pf.pl
-lib/unicore/lib/gc_sc/PhagsPa.pl
-lib/unicore/lib/gc_sc/Phnx.pl
-lib/unicore/lib/gc_sc/Pi.pl
-lib/unicore/lib/gc_sc/Po.pl
-lib/unicore/lib/gc_sc/PosixAln.pl
-lib/unicore/lib/gc_sc/PosixAlp.pl
-lib/unicore/lib/gc_sc/PosixBla.pl
-lib/unicore/lib/gc_sc/PosixCnt.pl
-lib/unicore/lib/gc_sc/PosixDig.pl
-lib/unicore/lib/gc_sc/PosixGra.pl
-lib/unicore/lib/gc_sc/PosixLow.pl
-lib/unicore/lib/gc_sc/PosixPri.pl
-lib/unicore/lib/gc_sc/PosixPun.pl
-lib/unicore/lib/gc_sc/PosixSpa.pl
-lib/unicore/lib/gc_sc/PosixUpp.pl
-lib/unicore/lib/gc_sc/P.pl
-lib/unicore/lib/gc_sc/Print.pl
-lib/unicore/lib/gc_sc/Ps.pl
-lib/unicore/lib/gc_sc/Punct.pl
-lib/unicore/lib/gc_sc/QMark.pl
-lib/unicore/lib/gc_sc/Quotatio.pl
-lib/unicore/lib/gc_sc/Radical2.pl
-lib/unicore/lib/gc_sc/Radical.pl
-lib/unicore/lib/gc_sc/Rjng.pl
-lib/unicore/lib/gc_sc/Runr.pl
-lib/unicore/lib/gc_sc/Samr.pl
-lib/unicore/lib/gc_sc/Saur.pl
-lib/unicore/lib/gc_sc/Sc.pl
-lib/unicore/lib/gc_sc/SD.pl
-lib/unicore/lib/gc_sc/Shaw.pl
-lib/unicore/lib/gc_sc/Sinh.pl
-lib/unicore/lib/gc_sc/Sk.pl
-lib/unicore/lib/gc_sc/Sm.pl
-lib/unicore/lib/gc_sc/SoftDott.pl
-lib/unicore/lib/gc_sc/So.pl
-lib/unicore/lib/gc_sc/SpacePer.pl
-lib/unicore/lib/gc_sc/Space.pl
-lib/unicore/lib/gc_sc/S.pl
-lib/unicore/lib/gc_sc/Sterm2.pl
-lib/unicore/lib/gc_sc/STerm.pl
-lib/unicore/lib/gc_sc/Sund.pl
-lib/unicore/lib/gc_sc/SylotiNa.pl
-lib/unicore/lib/gc_sc/Syrc.pl
-lib/unicore/lib/gc_sc/Tagb.pl
-lib/unicore/lib/gc_sc/TaiLe.pl
-lib/unicore/lib/gc_sc/TaiTham.pl
-lib/unicore/lib/gc_sc/TaiViet.pl
-lib/unicore/lib/gc_sc/Taml.pl
-lib/unicore/lib/gc_sc/Telu.pl
-lib/unicore/lib/gc_sc/Terminal.pl
-lib/unicore/lib/gc_sc/Term.pl
-lib/unicore/lib/gc_sc/Tfng.pl
-lib/unicore/lib/gc_sc/Tglg.pl
-lib/unicore/lib/gc_sc/Thaa.pl
-lib/unicore/lib/gc_sc/Thai.pl
-lib/unicore/lib/gc_sc/Tibt.pl
-lib/unicore/lib/gc_sc/Title.pl
-lib/unicore/lib/gc_sc/Ugar.pl
-lib/unicore/lib/gc_sc/UIdeo.pl
-lib/unicore/lib/gc_sc/UnifiedI.pl
-lib/unicore/lib/gc_sc/Uppercas.pl
-lib/unicore/lib/gc_sc/Upper.pl
-lib/unicore/lib/gc_sc/Vaii.pl
-lib/unicore/lib/gc_sc/Variatio.pl
-lib/unicore/lib/gc_sc/VertSpac.pl
-lib/unicore/lib/gc_sc/VS.pl
-lib/unicore/lib/gc_sc/WhiteSpa.pl
-lib/unicore/lib/gc_sc/Word.pl
-lib/unicore/lib/gc_sc/WSpace.pl
-lib/unicore/lib/gc_sc/XDigit.pl
-lib/unicore/lib/gc_sc/Xsux.pl
-lib/unicore/lib/gc_sc/Yiii.pl
-lib/unicore/lib/gc_sc/Zinh.pl
-lib/unicore/lib/gc_sc/Zl.pl
-lib/unicore/lib/gc_sc/Z.pl
-lib/unicore/lib/gc_sc/Zp.pl
-lib/unicore/lib/gc_sc/Zs.pl
-lib/unicore/lib/gc_sc/Zyyy.pl
-lib/unicore/lib/hst/L.pl
-lib/unicore/lib/hst/LV.pl
-lib/unicore/lib/hst/LVT.pl
-lib/unicore/lib/hst/T.pl
-lib/unicore/lib/hst/V.pl
-lib/unicore/lib/jt/C.pl
-lib/unicore/lib/jt/D.pl
-lib/unicore/lib/jt/R.pl
-lib/unicore/lib/jt/U.pl
-lib/unicore/lib/lb/AI.pl
-lib/unicore/lib/lb/AL.pl
-lib/unicore/lib/lb/B2.pl
-lib/unicore/lib/lb/BA.pl
-lib/unicore/lib/lb/BB.pl
-lib/unicore/lib/lb/BK.pl
-lib/unicore/lib/lb/CB.pl
-lib/unicore/lib/lb/CL.pl
-lib/unicore/lib/lb/CM.pl
-lib/unicore/lib/lb/CP.pl
-lib/unicore/lib/lb/CR.pl
-lib/unicore/lib/lb/EX.pl
-lib/unicore/lib/lb/GL.pl
-lib/unicore/lib/lb/H2.pl
-lib/unicore/lib/lb/H3.pl
-lib/unicore/lib/lb/HY.pl
-lib/unicore/lib/lb/ID.pl
-lib/unicore/lib/lb/IN.pl
-lib/unicore/lib/lb/IS.pl
-lib/unicore/lib/lb/JL.pl
-lib/unicore/lib/lb/JT.pl
-lib/unicore/lib/lb/JV.pl
-lib/unicore/lib/lb/LF.pl
-lib/unicore/lib/lb/NL.pl
-lib/unicore/lib/lb/NS.pl
-lib/unicore/lib/lb/NU.pl
-lib/unicore/lib/lb/OP.pl
-lib/unicore/lib/lb/PO.pl
-lib/unicore/lib/lb/PR.pl
-lib/unicore/lib/lb/QU.pl
-lib/unicore/lib/lb/SA.pl
-lib/unicore/lib/lb/SG.pl
-lib/unicore/lib/lb/SP.pl
-lib/unicore/lib/lb/SY.pl
-lib/unicore/lib/lb/WJ.pl
-lib/unicore/lib/lb/XX.pl
-lib/unicore/lib/lb/ZW.pl
-lib/unicore/lib/nt/De.pl
-lib/unicore/lib/nt/Di.pl
-lib/unicore/lib/nt/Nu.pl
+lib/unicore/lib/Age/1_1.pl			Unicode character database
+lib/unicore/lib/Age/2_0.pl			Unicode character database
+lib/unicore/lib/Age/2_1.pl			Unicode character database
+lib/unicore/lib/Age/3_0.pl			Unicode character database
+lib/unicore/lib/Age/3_1.pl			Unicode character database
+lib/unicore/lib/Age/3_2.pl			Unicode character database
+lib/unicore/lib/Age/4_0.pl			Unicode character database
+lib/unicore/lib/Age/4_1.pl			Unicode character database
+lib/unicore/lib/Age/5_0.pl			Unicode character database
+lib/unicore/lib/Age/5_1.pl			Unicode character database
+lib/unicore/lib/Age/5_2.pl			Unicode character database
+lib/unicore/lib/Age/Unassign.pl			Unicode character database
+lib/unicore/lib/AHex/N.pl			Unicode character database
+lib/unicore/lib/AHex/Y.pl			Unicode character database
+lib/unicore/lib/Alpha/N.pl			Unicode character database
+lib/unicore/lib/Alpha/Y.pl			Unicode character database
+lib/unicore/lib/Bc/AL.pl			Unicode character database
+lib/unicore/lib/Bc/AN.pl			Unicode character database
+lib/unicore/lib/Bc/BN.pl			Unicode character database
+lib/unicore/lib/Bc/B.pl				Unicode character database
+lib/unicore/lib/Bc/CS.pl			Unicode character database
+lib/unicore/lib/Bc/EN.pl			Unicode character database
+lib/unicore/lib/Bc/ES.pl			Unicode character database
+lib/unicore/lib/Bc/ET.pl			Unicode character database
+lib/unicore/lib/Bc/L.pl				Unicode character database
+lib/unicore/lib/Bc/LRE.pl			Unicode character database
+lib/unicore/lib/Bc/LRO.pl			Unicode character database
+lib/unicore/lib/Bc/NSM.pl			Unicode character database
+lib/unicore/lib/Bc/ON.pl			Unicode character database
+lib/unicore/lib/Bc/PDF.pl			Unicode character database
+lib/unicore/lib/Bc/RLE.pl			Unicode character database
+lib/unicore/lib/Bc/RLO.pl			Unicode character database
+lib/unicore/lib/Bc/R.pl				Unicode character database
+lib/unicore/lib/Bc/S.pl				Unicode character database
+lib/unicore/lib/Bc/WS.pl			Unicode character database
+lib/unicore/lib/BidiC/N.pl			Unicode character database
+lib/unicore/lib/BidiC/Y.pl			Unicode character database
+lib/unicore/lib/BidiM/N.pl			Unicode character database
+lib/unicore/lib/BidiM/Y.pl			Unicode character database
+lib/unicore/lib/Blk/AegeanNu.pl			Unicode character database
+lib/unicore/lib/Blk/Alphabet.pl			Unicode character database
+lib/unicore/lib/Blk/Ancient2.pl			Unicode character database
+lib/unicore/lib/Blk/AncientG.pl			Unicode character database
+lib/unicore/lib/Blk/AncientS.pl			Unicode character database
+lib/unicore/lib/Blk/ArabicP2.pl			Unicode character database
+lib/unicore/lib/Blk/Arabic.pl			Unicode character database
+lib/unicore/lib/Blk/ArabicPr.pl			Unicode character database
+lib/unicore/lib/Blk/ArabicSu.pl			Unicode character database
+lib/unicore/lib/Blk/Armenian.pl			Unicode character database
+lib/unicore/lib/Blk/Arrows.pl			Unicode character database
+lib/unicore/lib/Blk/ASCII.pl			Unicode character database
+lib/unicore/lib/Blk/Avestan.pl			Unicode character database
+lib/unicore/lib/Blk/Balinese.pl			Unicode character database
+lib/unicore/lib/Blk/Bamum.pl			Unicode character database
+lib/unicore/lib/Blk/Bengali.pl			Unicode character database
+lib/unicore/lib/Blk/BlockEle.pl			Unicode character database
+lib/unicore/lib/Blk/Bopomof2.pl			Unicode character database
+lib/unicore/lib/Blk/Bopomofo.pl			Unicode character database
+lib/unicore/lib/Blk/BoxDrawi.pl			Unicode character database
+lib/unicore/lib/Blk/BrailleP.pl			Unicode character database
+lib/unicore/lib/Blk/Buginese.pl			Unicode character database
+lib/unicore/lib/Blk/Buhid.pl			Unicode character database
+lib/unicore/lib/Blk/Byzantin.pl			Unicode character database
+lib/unicore/lib/Blk/Canadian.pl			Unicode character database
+lib/unicore/lib/Blk/Carian.pl			Unicode character database
+lib/unicore/lib/Blk/Cham.pl			Unicode character database
+lib/unicore/lib/Blk/Cherokee.pl			Unicode character database
+lib/unicore/lib/Blk/CJKComp2.pl			Unicode character database
+lib/unicore/lib/Blk/CJKComp3.pl			Unicode character database
+lib/unicore/lib/Blk/CJKComp4.pl			Unicode character database
+lib/unicore/lib/Blk/CJKCompa.pl			Unicode character database
+lib/unicore/lib/Blk/CJKRadic.pl			Unicode character database
+lib/unicore/lib/Blk/CJKStrok.pl			Unicode character database
+lib/unicore/lib/Blk/CJKSymbo.pl			Unicode character database
+lib/unicore/lib/Blk/CJKUnif2.pl			Unicode character database
+lib/unicore/lib/Blk/CJKUnif3.pl			Unicode character database
+lib/unicore/lib/Blk/CJKUnif4.pl			Unicode character database
+lib/unicore/lib/Blk/CJKUnifi.pl			Unicode character database
+lib/unicore/lib/Blk/Combini2.pl			Unicode character database
+lib/unicore/lib/Blk/Combini3.pl			Unicode character database
+lib/unicore/lib/Blk/Combini4.pl			Unicode character database
+lib/unicore/lib/Blk/Combinin.pl			Unicode character database
+lib/unicore/lib/Blk/CommonIn.pl			Unicode character database
+lib/unicore/lib/Blk/ControlP.pl			Unicode character database
+lib/unicore/lib/Blk/Coptic.pl			Unicode character database
+lib/unicore/lib/Blk/Counting.pl			Unicode character database
+lib/unicore/lib/Blk/Cuneifo2.pl			Unicode character database
+lib/unicore/lib/Blk/Cuneifor.pl			Unicode character database
+lib/unicore/lib/Blk/Currency.pl			Unicode character database
+lib/unicore/lib/Blk/CypriotS.pl			Unicode character database
+lib/unicore/lib/Blk/Cyrilli2.pl			Unicode character database
+lib/unicore/lib/Blk/Cyrilli3.pl			Unicode character database
+lib/unicore/lib/Blk/Cyrilli4.pl			Unicode character database
+lib/unicore/lib/Blk/Cyrillic.pl			Unicode character database
+lib/unicore/lib/Blk/Deseret.pl			Unicode character database
+lib/unicore/lib/Blk/Devanag2.pl			Unicode character database
+lib/unicore/lib/Blk/Devanaga.pl			Unicode character database
+lib/unicore/lib/Blk/Dingbats.pl			Unicode character database
+lib/unicore/lib/Blk/DominoTi.pl			Unicode character database
+lib/unicore/lib/Blk/Egyptian.pl			Unicode character database
+lib/unicore/lib/Blk/Enclose2.pl			Unicode character database
+lib/unicore/lib/Blk/Enclose3.pl			Unicode character database
+lib/unicore/lib/Blk/Enclose4.pl			Unicode character database
+lib/unicore/lib/Blk/Enclosed.pl			Unicode character database
+lib/unicore/lib/Blk/Ethiopi2.pl			Unicode character database
+lib/unicore/lib/Blk/Ethiopi3.pl			Unicode character database
+lib/unicore/lib/Blk/Ethiopic.pl			Unicode character database
+lib/unicore/lib/Blk/GeneralP.pl			Unicode character database
+lib/unicore/lib/Blk/Geometri.pl			Unicode character database
+lib/unicore/lib/Blk/Georgia2.pl			Unicode character database
+lib/unicore/lib/Blk/Georgian.pl			Unicode character database
+lib/unicore/lib/Blk/Glagolit.pl			Unicode character database
+lib/unicore/lib/Blk/Gothic.pl			Unicode character database
+lib/unicore/lib/Blk/GreekExt.pl			Unicode character database
+lib/unicore/lib/Blk/Greek.pl			Unicode character database
+lib/unicore/lib/Blk/Gujarati.pl			Unicode character database
+lib/unicore/lib/Blk/Gurmukhi.pl			Unicode character database
+lib/unicore/lib/Blk/Halfwidt.pl			Unicode character database
+lib/unicore/lib/Blk/HangulCo.pl			Unicode character database
+lib/unicore/lib/Blk/HangulJ2.pl			Unicode character database
+lib/unicore/lib/Blk/HangulJ3.pl			Unicode character database
+lib/unicore/lib/Blk/HangulJa.pl			Unicode character database
+lib/unicore/lib/Blk/HangulSy.pl			Unicode character database
+lib/unicore/lib/Blk/Hanunoo.pl			Unicode character database
+lib/unicore/lib/Blk/Hebrew.pl			Unicode character database
+lib/unicore/lib/Blk/HighPriv.pl			Unicode character database
+lib/unicore/lib/Blk/HighSurr.pl			Unicode character database
+lib/unicore/lib/Blk/Hiragana.pl			Unicode character database
+lib/unicore/lib/Blk/Ideograp.pl			Unicode character database
+lib/unicore/lib/Blk/Imperial.pl			Unicode character database
+lib/unicore/lib/Blk/Inscrip2.pl			Unicode character database
+lib/unicore/lib/Blk/Inscript.pl			Unicode character database
+lib/unicore/lib/Blk/IPAExten.pl			Unicode character database
+lib/unicore/lib/Blk/Javanese.pl			Unicode character database
+lib/unicore/lib/Blk/Kaithi.pl			Unicode character database
+lib/unicore/lib/Blk/Kanbun.pl			Unicode character database
+lib/unicore/lib/Blk/KangxiRa.pl			Unicode character database
+lib/unicore/lib/Blk/Kannada.pl			Unicode character database
+lib/unicore/lib/Blk/Katakan2.pl			Unicode character database
+lib/unicore/lib/Blk/Katakana.pl			Unicode character database
+lib/unicore/lib/Blk/KayahLi.pl			Unicode character database
+lib/unicore/lib/Blk/Kharosht.pl			Unicode character database
+lib/unicore/lib/Blk/Khmer.pl			Unicode character database
+lib/unicore/lib/Blk/KhmerSym.pl			Unicode character database
+lib/unicore/lib/Blk/Lao.pl			Unicode character database
+lib/unicore/lib/Blk/Latin1.pl			Unicode character database
+lib/unicore/lib/Blk/LatinEx2.pl			Unicode character database
+lib/unicore/lib/Blk/LatinEx3.pl			Unicode character database
+lib/unicore/lib/Blk/LatinEx4.pl			Unicode character database
+lib/unicore/lib/Blk/LatinEx5.pl			Unicode character database
+lib/unicore/lib/Blk/LatinExt.pl			Unicode character database
+lib/unicore/lib/Blk/Lepcha.pl			Unicode character database
+lib/unicore/lib/Blk/Letterli.pl			Unicode character database
+lib/unicore/lib/Blk/Limbu.pl			Unicode character database
+lib/unicore/lib/Blk/LinearBI.pl			Unicode character database
+lib/unicore/lib/Blk/LinearBS.pl			Unicode character database
+lib/unicore/lib/Blk/Lisu.pl			Unicode character database
+lib/unicore/lib/Blk/LowSurro.pl			Unicode character database
+lib/unicore/lib/Blk/Lycian.pl			Unicode character database
+lib/unicore/lib/Blk/Lydian.pl			Unicode character database
+lib/unicore/lib/Blk/MahjongT.pl			Unicode character database
+lib/unicore/lib/Blk/Malayala.pl			Unicode character database
+lib/unicore/lib/Blk/Mathema2.pl			Unicode character database
+lib/unicore/lib/Blk/Mathemat.pl			Unicode character database
+lib/unicore/lib/Blk/MeeteiMa.pl			Unicode character database
+lib/unicore/lib/Blk/Miscell2.pl			Unicode character database
+lib/unicore/lib/Blk/Miscell3.pl			Unicode character database
+lib/unicore/lib/Blk/Miscell4.pl			Unicode character database
+lib/unicore/lib/Blk/Miscell5.pl			Unicode character database
+lib/unicore/lib/Blk/Miscella.pl			Unicode character database
+lib/unicore/lib/Blk/Modifier.pl			Unicode character database
+lib/unicore/lib/Blk/Mongolia.pl			Unicode character database
+lib/unicore/lib/Blk/MusicalS.pl			Unicode character database
+lib/unicore/lib/Blk/MyanmarE.pl			Unicode character database
+lib/unicore/lib/Blk/Myanmar.pl			Unicode character database
+lib/unicore/lib/Blk/NewTaiLu.pl			Unicode character database
+lib/unicore/lib/Blk/NKo.pl			Unicode character database
+lib/unicore/lib/Blk/NoBlock.pl			Unicode character database
+lib/unicore/lib/Blk/NumberFo.pl			Unicode character database
+lib/unicore/lib/Blk/Ogham.pl			Unicode character database
+lib/unicore/lib/Blk/OlChiki.pl			Unicode character database
+lib/unicore/lib/Blk/OldItali.pl			Unicode character database
+lib/unicore/lib/Blk/OldPersi.pl			Unicode character database
+lib/unicore/lib/Blk/OldSouth.pl			Unicode character database
+lib/unicore/lib/Blk/OldTurki.pl			Unicode character database
+lib/unicore/lib/Blk/OpticalC.pl			Unicode character database
+lib/unicore/lib/Blk/Oriya.pl			Unicode character database
+lib/unicore/lib/Blk/Osmanya.pl			Unicode character database
+lib/unicore/lib/Blk/PhagsPa.pl			Unicode character database
+lib/unicore/lib/Blk/Phaistos.pl			Unicode character database
+lib/unicore/lib/Blk/Phoenici.pl			Unicode character database
+lib/unicore/lib/Blk/Phoneti2.pl			Unicode character database
+lib/unicore/lib/Blk/Phonetic.pl			Unicode character database
+lib/unicore/lib/Blk/PrivateU.pl			Unicode character database
+lib/unicore/lib/Blk/Rejang.pl			Unicode character database
+lib/unicore/lib/Blk/RumiNume.pl			Unicode character database
+lib/unicore/lib/Blk/Runic.pl			Unicode character database
+lib/unicore/lib/Blk/Samarita.pl			Unicode character database
+lib/unicore/lib/Blk/Saurasht.pl			Unicode character database
+lib/unicore/lib/Blk/Shavian.pl			Unicode character database
+lib/unicore/lib/Blk/Sinhala.pl			Unicode character database
+lib/unicore/lib/Blk/SmallFor.pl			Unicode character database
+lib/unicore/lib/Blk/SpacingM.pl			Unicode character database
+lib/unicore/lib/Blk/Specials.pl			Unicode character database
+lib/unicore/lib/Blk/Sundanes.pl			Unicode character database
+lib/unicore/lib/Blk/Superscr.pl			Unicode character database
+lib/unicore/lib/Blk/Supplem2.pl			Unicode character database
+lib/unicore/lib/Blk/Supplem3.pl			Unicode character database
+lib/unicore/lib/Blk/Supplem4.pl			Unicode character database
+lib/unicore/lib/Blk/Supplem5.pl			Unicode character database
+lib/unicore/lib/Blk/Supplem6.pl			Unicode character database
+lib/unicore/lib/Blk/Suppleme.pl			Unicode character database
+lib/unicore/lib/Blk/SylotiNa.pl			Unicode character database
+lib/unicore/lib/Blk/Syriac.pl			Unicode character database
+lib/unicore/lib/Blk/Tagalog.pl			Unicode character database
+lib/unicore/lib/Blk/Tagbanwa.pl			Unicode character database
+lib/unicore/lib/Blk/Tags.pl			Unicode character database
+lib/unicore/lib/Blk/TaiLe.pl			Unicode character database
+lib/unicore/lib/Blk/TaiTham.pl			Unicode character database
+lib/unicore/lib/Blk/TaiViet.pl			Unicode character database
+lib/unicore/lib/Blk/TaiXuanJ.pl			Unicode character database
+lib/unicore/lib/Blk/Tamil.pl			Unicode character database
+lib/unicore/lib/Blk/Telugu.pl			Unicode character database
+lib/unicore/lib/Blk/Thaana.pl			Unicode character database
+lib/unicore/lib/Blk/Thai.pl			Unicode character database
+lib/unicore/lib/Blk/Tibetan.pl			Unicode character database
+lib/unicore/lib/Blk/Tifinagh.pl			Unicode character database
+lib/unicore/lib/Blk/Ugaritic.pl			Unicode character database
+lib/unicore/lib/Blk/UnifiedC.pl			Unicode character database
+lib/unicore/lib/Blk/Vai.pl			Unicode character database
+lib/unicore/lib/Blk/Variati2.pl			Unicode character database
+lib/unicore/lib/Blk/Variatio.pl			Unicode character database
+lib/unicore/lib/Blk/VedicExt.pl			Unicode character database
+lib/unicore/lib/Blk/Vertical.pl			Unicode character database
+lib/unicore/lib/Blk/YijingHe.pl			Unicode character database
+lib/unicore/lib/Blk/YiRadica.pl			Unicode character database
+lib/unicore/lib/Blk/YiSyllab.pl			Unicode character database
+lib/unicore/lib/Cased/N.pl			Unicode character database
+lib/unicore/lib/Cased/Y.pl			Unicode character database
+lib/unicore/lib/Ccc/103.pl			Unicode character database
+lib/unicore/lib/Ccc/107.pl			Unicode character database
+lib/unicore/lib/Ccc/10.pl			Unicode character database
+lib/unicore/lib/Ccc/118.pl			Unicode character database
+lib/unicore/lib/Ccc/11.pl			Unicode character database
+lib/unicore/lib/Ccc/122.pl			Unicode character database
+lib/unicore/lib/Ccc/129.pl			Unicode character database
+lib/unicore/lib/Ccc/12.pl			Unicode character database
+lib/unicore/lib/Ccc/130.pl			Unicode character database
+lib/unicore/lib/Ccc/132.pl			Unicode character database
+lib/unicore/lib/Ccc/13.pl			Unicode character database
+lib/unicore/lib/Ccc/14.pl			Unicode character database
+lib/unicore/lib/Ccc/15.pl			Unicode character database
+lib/unicore/lib/Ccc/16.pl			Unicode character database
+lib/unicore/lib/Ccc/17.pl			Unicode character database
+lib/unicore/lib/Ccc/18.pl			Unicode character database
+lib/unicore/lib/Ccc/19.pl			Unicode character database
+lib/unicore/lib/Ccc/20.pl			Unicode character database
+lib/unicore/lib/Ccc/21.pl			Unicode character database
+lib/unicore/lib/Ccc/22.pl			Unicode character database
+lib/unicore/lib/Ccc/23.pl			Unicode character database
+lib/unicore/lib/Ccc/24.pl			Unicode character database
+lib/unicore/lib/Ccc/25.pl			Unicode character database
+lib/unicore/lib/Ccc/26.pl			Unicode character database
+lib/unicore/lib/Ccc/27.pl			Unicode character database
+lib/unicore/lib/Ccc/28.pl			Unicode character database
+lib/unicore/lib/Ccc/29.pl			Unicode character database
+lib/unicore/lib/Ccc/30.pl			Unicode character database
+lib/unicore/lib/Ccc/31.pl			Unicode character database
+lib/unicore/lib/Ccc/32.pl			Unicode character database
+lib/unicore/lib/Ccc/33.pl			Unicode character database
+lib/unicore/lib/Ccc/34.pl			Unicode character database
+lib/unicore/lib/Ccc/35.pl			Unicode character database
+lib/unicore/lib/Ccc/36.pl			Unicode character database
+lib/unicore/lib/Ccc/84.pl			Unicode character database
+lib/unicore/lib/Ccc/91.pl			Unicode character database
+lib/unicore/lib/Ccc/AL.pl			Unicode character database
+lib/unicore/lib/Ccc/A.pl			Unicode character database
+lib/unicore/lib/Ccc/AR.pl			Unicode character database
+lib/unicore/lib/Ccc/ATA.pl			Unicode character database
+lib/unicore/lib/Ccc/ATAR.pl			Unicode character database
+lib/unicore/lib/Ccc/ATBL.pl			Unicode character database
+lib/unicore/lib/Ccc/ATB.pl			Unicode character database
+lib/unicore/lib/Ccc/BL.pl			Unicode character database
+lib/unicore/lib/Ccc/B.pl			Unicode character database
+lib/unicore/lib/Ccc/BR.pl			Unicode character database
+lib/unicore/lib/Ccc/DA.pl			Unicode character database
+lib/unicore/lib/Ccc/DB.pl			Unicode character database
+lib/unicore/lib/Ccc/IS.pl			Unicode character database
+lib/unicore/lib/Ccc/KV.pl			Unicode character database
+lib/unicore/lib/Ccc/L.pl			Unicode character database
+lib/unicore/lib/Ccc/NK.pl			Unicode character database
+lib/unicore/lib/Ccc/NR.pl			Unicode character database
+lib/unicore/lib/Ccc/OV.pl			Unicode character database
+lib/unicore/lib/Ccc/R.pl			Unicode character database
+lib/unicore/lib/Ccc/VR.pl			Unicode character database
+lib/unicore/lib/CE/N.pl				Unicode character database
+lib/unicore/lib/CE/Y.pl				Unicode character database
+lib/unicore/lib/CI/N.pl				Unicode character database
+lib/unicore/lib/CI/Y.pl				Unicode character database
+lib/unicore/lib/CompEx/N.pl			Unicode character database
+lib/unicore/lib/CompEx/Y.pl			Unicode character database
+lib/unicore/lib/CWCF/N.pl			Unicode character database
+lib/unicore/lib/CWCF/Y.pl			Unicode character database
+lib/unicore/lib/CWCM/N.pl			Unicode character database
+lib/unicore/lib/CWCM/Y.pl			Unicode character database
+lib/unicore/lib/CWKCF/N.pl			Unicode character database
+lib/unicore/lib/CWKCF/Y.pl			Unicode character database
+lib/unicore/lib/CWL/N.pl			Unicode character database
+lib/unicore/lib/CWL/Y.pl			Unicode character database
+lib/unicore/lib/CWT/N.pl			Unicode character database
+lib/unicore/lib/CWT/Y.pl			Unicode character database
+lib/unicore/lib/CWU/N.pl			Unicode character database
+lib/unicore/lib/CWU/Y.pl			Unicode character database
+lib/unicore/lib/Dash/N.pl			Unicode character database
+lib/unicore/lib/Dash/Y.pl			Unicode character database
+lib/unicore/lib/Dep/N.pl			Unicode character database
+lib/unicore/lib/Dep/Y.pl			Unicode character database
+lib/unicore/lib/Dia/N.pl			Unicode character database
+lib/unicore/lib/Dia/Y.pl			Unicode character database
+lib/unicore/lib/DI/N.pl				Unicode character database
+lib/unicore/lib/DI/Y.pl				Unicode character database
+lib/unicore/lib/Dt/Com.pl			Unicode character database
+lib/unicore/lib/Dt/Enc.pl			Unicode character database
+lib/unicore/lib/Dt/Fin.pl			Unicode character database
+lib/unicore/lib/Dt/Font.pl			Unicode character database
+lib/unicore/lib/Dt/Fra.pl			Unicode character database
+lib/unicore/lib/Dt/Init.pl			Unicode character database
+lib/unicore/lib/Dt/Iso.pl			Unicode character database
+lib/unicore/lib/Dt/Med.pl			Unicode character database
+lib/unicore/lib/Dt/Nar.pl			Unicode character database
+lib/unicore/lib/Dt/Nb.pl			Unicode character database
+lib/unicore/lib/Dt/NonCanon.pl			Unicode character database
+lib/unicore/lib/Dt/None.pl			Unicode character database
+lib/unicore/lib/Dt/Sml.pl			Unicode character database
+lib/unicore/lib/Dt/Sqr.pl			Unicode character database
+lib/unicore/lib/Dt/Sub.pl			Unicode character database
+lib/unicore/lib/Dt/Sup.pl			Unicode character database
+lib/unicore/lib/Dt/Vert.pl			Unicode character database
+lib/unicore/lib/Ea/A.pl				Unicode character database
+lib/unicore/lib/Ea/F.pl				Unicode character database
+lib/unicore/lib/Ea/H.pl				Unicode character database
+lib/unicore/lib/Ea/Na.pl			Unicode character database
+lib/unicore/lib/Ea/N.pl				Unicode character database
+lib/unicore/lib/Ea/W.pl				Unicode character database
+lib/unicore/lib/Ext/N.pl			Unicode character database
+lib/unicore/lib/Ext/Y.pl			Unicode character database
+lib/unicore/lib/GCB/CN.pl			Unicode character database
+lib/unicore/lib/GCB/CR.pl			Unicode character database
+lib/unicore/lib/GCB/EX.pl			Unicode character database
+lib/unicore/lib/GCB/LF.pl			Unicode character database
+lib/unicore/lib/GCB/L.pl			Unicode character database
+lib/unicore/lib/GCB/LV.pl			Unicode character database
+lib/unicore/lib/GCB/LVT.pl			Unicode character database
+lib/unicore/lib/GCB/PP.pl			Unicode character database
+lib/unicore/lib/GCB/SM.pl			Unicode character database
+lib/unicore/lib/GCB/T.pl			Unicode character database
+lib/unicore/lib/GCB/V.pl			Unicode character database
+lib/unicore/lib/GCB/XX.pl			Unicode character database
+lib/unicore/lib/Gc/Cc.pl			Unicode character database
+lib/unicore/lib/Gc/Cf.pl			Unicode character database
+lib/unicore/lib/Gc/Cn.pl			Unicode character database
+lib/unicore/lib/Gc/Co.pl			Unicode character database
+lib/unicore/lib/Gc/C.pl				Unicode character database
+lib/unicore/lib/Gc/Cs.pl			Unicode character database
+lib/unicore/lib/Gc/LC.pl			Unicode character database
+lib/unicore/lib/Gc/Ll.pl			Unicode character database
+lib/unicore/lib/Gc/Lm.pl			Unicode character database
+lib/unicore/lib/Gc/Lo.pl			Unicode character database
+lib/unicore/lib/Gc/L.pl				Unicode character database
+lib/unicore/lib/Gc/Lt.pl			Unicode character database
+lib/unicore/lib/Gc/Lu.pl			Unicode character database
+lib/unicore/lib/Gc/Mc.pl			Unicode character database
+lib/unicore/lib/Gc/Me.pl			Unicode character database
+lib/unicore/lib/Gc/Mn.pl			Unicode character database
+lib/unicore/lib/Gc/M.pl				Unicode character database
+lib/unicore/lib/Gc/Nl.pl			Unicode character database
+lib/unicore/lib/Gc/No.pl			Unicode character database
+lib/unicore/lib/Gc/N.pl				Unicode character database
+lib/unicore/lib/Gc/Pd.pl			Unicode character database
+lib/unicore/lib/Gc/Pe.pl			Unicode character database
+lib/unicore/lib/Gc/Pf.pl			Unicode character database
+lib/unicore/lib/Gc/Pi.pl			Unicode character database
+lib/unicore/lib/Gc/Po.pl			Unicode character database
+lib/unicore/lib/Gc/P.pl				Unicode character database
+lib/unicore/lib/Gc/Ps.pl			Unicode character database
+lib/unicore/lib/Gc/Sc.pl			Unicode character database
+lib/unicore/lib/Gc/Sk.pl			Unicode character database
+lib/unicore/lib/Gc/Sm.pl			Unicode character database
+lib/unicore/lib/Gc/So.pl			Unicode character database
+lib/unicore/lib/Gc/S.pl				Unicode character database
+lib/unicore/lib/Gc/Zl.pl			Unicode character database
+lib/unicore/lib/Gc/Z.pl				Unicode character database
+lib/unicore/lib/Gc/Zp.pl			Unicode character database
+lib/unicore/lib/Gc/Zs.pl			Unicode character database
+lib/unicore/lib/GrBase/N.pl			Unicode character database
+lib/unicore/lib/GrBase/Y.pl			Unicode character database
+lib/unicore/lib/GrExt/N.pl			Unicode character database
+lib/unicore/lib/GrExt/Y.pl			Unicode character database
+lib/unicore/lib/Hex/N.pl			Unicode character database
+lib/unicore/lib/Hex/Y.pl			Unicode character database
+lib/unicore/lib/Hst/NA.pl			Unicode character database
+lib/unicore/lib/Hyphen/N.pl			Unicode character database
+lib/unicore/lib/Hyphen/Y.pl			Unicode character database
+lib/unicore/lib/IDC/N.pl			Unicode character database
+lib/unicore/lib/IDC/Y.pl			Unicode character database
+lib/unicore/lib/Ideo/N.pl			Unicode character database
+lib/unicore/lib/Ideo/Y.pl			Unicode character database
+lib/unicore/lib/IDSB/N.pl			Unicode character database
+lib/unicore/lib/IDSB/Y.pl			Unicode character database
+lib/unicore/lib/IDS/N.pl			Unicode character database
+lib/unicore/lib/IDST/N.pl			Unicode character database
+lib/unicore/lib/IDST/Y.pl			Unicode character database
+lib/unicore/lib/IDS/Y.pl			Unicode character database
+lib/unicore/lib/In/2_0.pl			Unicode character database
+lib/unicore/lib/In/2_1.pl			Unicode character database
+lib/unicore/lib/In/3_0.pl			Unicode character database
+lib/unicore/lib/In/3_1.pl			Unicode character database
+lib/unicore/lib/In/3_2.pl			Unicode character database
+lib/unicore/lib/In/4_0.pl			Unicode character database
+lib/unicore/lib/In/4_1.pl			Unicode character database
+lib/unicore/lib/In/5_0.pl			Unicode character database
+lib/unicore/lib/In/5_1.pl			Unicode character database
+lib/unicore/lib/In/5_2.pl			Unicode character database
+lib/unicore/lib/Jg/Ain.pl			Unicode character database
+lib/unicore/lib/Jg/Alaph.pl			Unicode character database
+lib/unicore/lib/Jg/Alef.pl			Unicode character database
+lib/unicore/lib/Jg/Beh.pl			Unicode character database
+lib/unicore/lib/Jg/Beth.pl			Unicode character database
+lib/unicore/lib/Jg/Burushas.pl			Unicode character database
+lib/unicore/lib/Jg/DalathRi.pl			Unicode character database
+lib/unicore/lib/Jg/Dal.pl			Unicode character database
+lib/unicore/lib/Jg/E.pl				Unicode character database
+lib/unicore/lib/Jg/FarsiYeh.pl			Unicode character database
+lib/unicore/lib/Jg/Feh.pl			Unicode character database
+lib/unicore/lib/Jg/Fe.pl			Unicode character database
+lib/unicore/lib/Jg/FinalSem.pl			Unicode character database
+lib/unicore/lib/Jg/Gaf.pl			Unicode character database
+lib/unicore/lib/Jg/Gamal.pl			Unicode character database
+lib/unicore/lib/Jg/Hah.pl			Unicode character database
+lib/unicore/lib/Jg/HamzaOnH.pl			Unicode character database
+lib/unicore/lib/Jg/HehGoal.pl			Unicode character database
+lib/unicore/lib/Jg/Heh.pl			Unicode character database
+lib/unicore/lib/Jg/He.pl			Unicode character database
+lib/unicore/lib/Jg/Heth.pl			Unicode character database
+lib/unicore/lib/Jg/Kaf.pl			Unicode character database
+lib/unicore/lib/Jg/Kaph.pl			Unicode character database
+lib/unicore/lib/Jg/Khaph.pl			Unicode character database
+lib/unicore/lib/Jg/KnottedH.pl			Unicode character database
+lib/unicore/lib/Jg/Lamadh.pl			Unicode character database
+lib/unicore/lib/Jg/Lam.pl			Unicode character database
+lib/unicore/lib/Jg/Meem.pl			Unicode character database
+lib/unicore/lib/Jg/Mim.pl			Unicode character database
+lib/unicore/lib/Jg/NoJoinin.pl			Unicode character database
+lib/unicore/lib/Jg/Noon.pl			Unicode character database
+lib/unicore/lib/Jg/Nun.pl			Unicode character database
+lib/unicore/lib/Jg/Nya.pl			Unicode character database
+lib/unicore/lib/Jg/Pe.pl			Unicode character database
+lib/unicore/lib/Jg/Qaf.pl			Unicode character database
+lib/unicore/lib/Jg/Qaph.pl			Unicode character database
+lib/unicore/lib/Jg/Reh.pl			Unicode character database
+lib/unicore/lib/Jg/Reversed.pl			Unicode character database
+lib/unicore/lib/Jg/Sadhe.pl			Unicode character database
+lib/unicore/lib/Jg/Sad.pl			Unicode character database
+lib/unicore/lib/Jg/Seen.pl			Unicode character database
+lib/unicore/lib/Jg/Semkath.pl			Unicode character database
+lib/unicore/lib/Jg/Shin.pl			Unicode character database
+lib/unicore/lib/Jg/SwashKaf.pl			Unicode character database
+lib/unicore/lib/Jg/SyriacWa.pl			Unicode character database
+lib/unicore/lib/Jg/Tah.pl			Unicode character database
+lib/unicore/lib/Jg/Taw.pl			Unicode character database
+lib/unicore/lib/Jg/TehMarbu.pl			Unicode character database
+lib/unicore/lib/Jg/Teth.pl			Unicode character database
+lib/unicore/lib/Jg/Waw.pl			Unicode character database
+lib/unicore/lib/Jg/YehBarre.pl			Unicode character database
+lib/unicore/lib/Jg/Yeh.pl			Unicode character database
+lib/unicore/lib/Jg/YehWithT.pl			Unicode character database
+lib/unicore/lib/Jg/YudhHe.pl			Unicode character database
+lib/unicore/lib/Jg/Yudh.pl			Unicode character database
+lib/unicore/lib/Jg/Zain.pl			Unicode character database
+lib/unicore/lib/Jg/Zhain.pl			Unicode character database
+lib/unicore/lib/JoinC/N.pl			Unicode character database
+lib/unicore/lib/JoinC/Y.pl			Unicode character database
+lib/unicore/lib/Jt/C.pl				Unicode character database
+lib/unicore/lib/Jt/D.pl				Unicode character database
+lib/unicore/lib/Jt/R.pl				Unicode character database
+lib/unicore/lib/Jt/T.pl				Unicode character database
+lib/unicore/lib/Jt/U.pl				Unicode character database
+lib/unicore/lib/Lb/AI.pl			Unicode character database
+lib/unicore/lib/Lb/AL.pl			Unicode character database
+lib/unicore/lib/Lb/B2.pl			Unicode character database
+lib/unicore/lib/Lb/BA.pl			Unicode character database
+lib/unicore/lib/Lb/BB.pl			Unicode character database
+lib/unicore/lib/Lb/BK.pl			Unicode character database
+lib/unicore/lib/Lb/CB.pl			Unicode character database
+lib/unicore/lib/Lb/CL.pl			Unicode character database
+lib/unicore/lib/Lb/CM.pl			Unicode character database
+lib/unicore/lib/Lb/CP.pl			Unicode character database
+lib/unicore/lib/Lb/EX.pl			Unicode character database
+lib/unicore/lib/Lb/GL.pl			Unicode character database
+lib/unicore/lib/Lb/HY.pl			Unicode character database
+lib/unicore/lib/Lb/ID.pl			Unicode character database
+lib/unicore/lib/Lb/IN.pl			Unicode character database
+lib/unicore/lib/Lb/IS.pl			Unicode character database
+lib/unicore/lib/Lb/NL.pl			Unicode character database
+lib/unicore/lib/Lb/NS.pl			Unicode character database
+lib/unicore/lib/Lb/NU.pl			Unicode character database
+lib/unicore/lib/Lb/OP.pl			Unicode character database
+lib/unicore/lib/Lb/PO.pl			Unicode character database
+lib/unicore/lib/Lb/PR.pl			Unicode character database
+lib/unicore/lib/Lb/QU.pl			Unicode character database
+lib/unicore/lib/Lb/SA.pl			Unicode character database
+lib/unicore/lib/Lb/SG.pl			Unicode character database
+lib/unicore/lib/Lb/SP.pl			Unicode character database
+lib/unicore/lib/Lb/SY.pl			Unicode character database
+lib/unicore/lib/Lb/WJ.pl			Unicode character database
+lib/unicore/lib/Lb/XX.pl			Unicode character database
+lib/unicore/lib/Lb/ZW.pl			Unicode character database
+lib/unicore/lib/LOE/N.pl			Unicode character database
+lib/unicore/lib/Lower/N.pl			Unicode character database
+lib/unicore/lib/Lower/Y.pl			Unicode character database
+lib/unicore/lib/Math/N.pl			Unicode character database
+lib/unicore/lib/Math/Y.pl			Unicode character database
+lib/unicore/lib/NChar/N.pl			Unicode character database
+lib/unicore/lib/NChar/Y.pl			Unicode character database
+lib/unicore/lib/NFCQC/Y.pl			Unicode character database
+lib/unicore/lib/NFDQC/N.pl			Unicode character database
+lib/unicore/lib/NFDQC/Y.pl			Unicode character database
+lib/unicore/lib/NFKCQC/M.pl			Unicode character database
+lib/unicore/lib/NFKCQC/N.pl			Unicode character database
+lib/unicore/lib/NFKCQC/Y.pl			Unicode character database
+lib/unicore/lib/NFKDQC/N.pl			Unicode character database
+lib/unicore/lib/Nt/De.pl			Unicode character database
+lib/unicore/lib/Nt/Di.pl			Unicode character database
+lib/unicore/lib/Nt/Nu.pl			Unicode character database
+lib/unicore/lib/Nv/0.pl				Unicode character database
+lib/unicore/lib/Nv/10000000.pl			Unicode character database
+lib/unicore/lib/Nv/10000002.pl			Unicode character database
+lib/unicore/lib/Nv/100000.pl			Unicode character database
+lib/unicore/lib/Nv/10000.pl			Unicode character database
+lib/unicore/lib/Nv/1000.pl			Unicode character database
+lib/unicore/lib/Nv/100.pl			Unicode character database
+lib/unicore/lib/Nv/10.pl			Unicode character database
+lib/unicore/lib/Nv/1_10.pl			Unicode character database
+lib/unicore/lib/Nv/11_2.pl			Unicode character database
+lib/unicore/lib/Nv/1_16.pl			Unicode character database
+lib/unicore/lib/Nv/11.pl			Unicode character database
+lib/unicore/lib/Nv/12.pl			Unicode character database
+lib/unicore/lib/Nv/1_2.pl			Unicode character database
+lib/unicore/lib/Nv/_1_2.pl			Unicode character database
+lib/unicore/lib/Nv/13_2.pl			Unicode character database
+lib/unicore/lib/Nv/13.pl			Unicode character database
+lib/unicore/lib/Nv/1_3.pl			Unicode character database
+lib/unicore/lib/Nv/14.pl			Unicode character database
+lib/unicore/lib/Nv/1_4.pl			Unicode character database
+lib/unicore/lib/Nv/15_2.pl			Unicode character database
+lib/unicore/lib/Nv/15.pl			Unicode character database
+lib/unicore/lib/Nv/1_5.pl			Unicode character database
+lib/unicore/lib/Nv/16.pl			Unicode character database
+lib/unicore/lib/Nv/1_6.pl			Unicode character database
+lib/unicore/lib/Nv/17_2.pl			Unicode character database
+lib/unicore/lib/Nv/17.pl			Unicode character database
+lib/unicore/lib/Nv/1_7.pl			Unicode character database
+lib/unicore/lib/Nv/18.pl			Unicode character database
+lib/unicore/lib/Nv/1_8.pl			Unicode character database
+lib/unicore/lib/Nv/19.pl			Unicode character database
+lib/unicore/lib/Nv/1_9.pl			Unicode character database
+lib/unicore/lib/Nv/1.pl				Unicode character database
+lib/unicore/lib/Nv/20000.pl			Unicode character database
+lib/unicore/lib/Nv/2000.pl			Unicode character database
+lib/unicore/lib/Nv/200.pl			Unicode character database
+lib/unicore/lib/Nv/20.pl			Unicode character database
+lib/unicore/lib/Nv/21.pl			Unicode character database
+lib/unicore/lib/Nv/22.pl			Unicode character database
+lib/unicore/lib/Nv/23.pl			Unicode character database
+lib/unicore/lib/Nv/2_3.pl			Unicode character database
+lib/unicore/lib/Nv/24.pl			Unicode character database
+lib/unicore/lib/Nv/25.pl			Unicode character database
+lib/unicore/lib/Nv/2_5.pl			Unicode character database
+lib/unicore/lib/Nv/26.pl			Unicode character database
+lib/unicore/lib/Nv/27.pl			Unicode character database
+lib/unicore/lib/Nv/28.pl			Unicode character database
+lib/unicore/lib/Nv/29.pl			Unicode character database
+lib/unicore/lib/Nv/2.pl				Unicode character database
+lib/unicore/lib/Nv/30000.pl			Unicode character database
+lib/unicore/lib/Nv/3000.pl			Unicode character database
+lib/unicore/lib/Nv/300.pl			Unicode character database
+lib/unicore/lib/Nv/30.pl			Unicode character database
+lib/unicore/lib/Nv/3_16.pl			Unicode character database
+lib/unicore/lib/Nv/31.pl			Unicode character database
+lib/unicore/lib/Nv/32.pl			Unicode character database
+lib/unicore/lib/Nv/3_2.pl			Unicode character database
+lib/unicore/lib/Nv/33.pl			Unicode character database
+lib/unicore/lib/Nv/34.pl			Unicode character database
+lib/unicore/lib/Nv/3_4.pl			Unicode character database
+lib/unicore/lib/Nv/35.pl			Unicode character database
+lib/unicore/lib/Nv/3_5.pl			Unicode character database
+lib/unicore/lib/Nv/36.pl			Unicode character database
+lib/unicore/lib/Nv/37.pl			Unicode character database
+lib/unicore/lib/Nv/38.pl			Unicode character database
+lib/unicore/lib/Nv/3_8.pl			Unicode character database
+lib/unicore/lib/Nv/39.pl			Unicode character database
+lib/unicore/lib/Nv/3.pl				Unicode character database
+lib/unicore/lib/Nv/40000.pl			Unicode character database
+lib/unicore/lib/Nv/4000.pl			Unicode character database
+lib/unicore/lib/Nv/400.pl			Unicode character database
+lib/unicore/lib/Nv/40.pl			Unicode character database
+lib/unicore/lib/Nv/41.pl			Unicode character database
+lib/unicore/lib/Nv/42.pl			Unicode character database
+lib/unicore/lib/Nv/43.pl			Unicode character database
+lib/unicore/lib/Nv/44.pl			Unicode character database
+lib/unicore/lib/Nv/45.pl			Unicode character database
+lib/unicore/lib/Nv/4_5.pl			Unicode character database
+lib/unicore/lib/Nv/46.pl			Unicode character database
+lib/unicore/lib/Nv/47.pl			Unicode character database
+lib/unicore/lib/Nv/48.pl			Unicode character database
+lib/unicore/lib/Nv/49.pl			Unicode character database
+lib/unicore/lib/Nv/4.pl				Unicode character database
+lib/unicore/lib/Nv/50000.pl			Unicode character database
+lib/unicore/lib/Nv/5000.pl			Unicode character database
+lib/unicore/lib/Nv/500.pl			Unicode character database
+lib/unicore/lib/Nv/50.pl			Unicode character database
+lib/unicore/lib/Nv/5_2.pl			Unicode character database
+lib/unicore/lib/Nv/5_6.pl			Unicode character database
+lib/unicore/lib/Nv/5_8.pl			Unicode character database
+lib/unicore/lib/Nv/5.pl				Unicode character database
+lib/unicore/lib/Nv/60000.pl			Unicode character database
+lib/unicore/lib/Nv/6000.pl			Unicode character database
+lib/unicore/lib/Nv/600.pl			Unicode character database
+lib/unicore/lib/Nv/60.pl			Unicode character database
+lib/unicore/lib/Nv/6.pl				Unicode character database
+lib/unicore/lib/Nv/70000.pl			Unicode character database
+lib/unicore/lib/Nv/7000.pl			Unicode character database
+lib/unicore/lib/Nv/700.pl			Unicode character database
+lib/unicore/lib/Nv/70.pl			Unicode character database
+lib/unicore/lib/Nv/7_2.pl			Unicode character database
+lib/unicore/lib/Nv/7_8.pl			Unicode character database
+lib/unicore/lib/Nv/7.pl				Unicode character database
+lib/unicore/lib/Nv/80000.pl			Unicode character database
+lib/unicore/lib/Nv/8000.pl			Unicode character database
+lib/unicore/lib/Nv/800.pl			Unicode character database
+lib/unicore/lib/Nv/80.pl			Unicode character database
+lib/unicore/lib/Nv/8.pl				Unicode character database
+lib/unicore/lib/Nv/90000.pl			Unicode character database
+lib/unicore/lib/Nv/9000.pl			Unicode character database
+lib/unicore/lib/Nv/900.pl			Unicode character database
+lib/unicore/lib/Nv/90.pl			Unicode character database
+lib/unicore/lib/Nv/9_2.pl			Unicode character database
+lib/unicore/lib/Nv/9.pl				Unicode character database
+lib/unicore/lib/Nv/NaN.pl			Unicode character database
+lib/unicore/lib/OAlpha/N.pl			Unicode character database
+lib/unicore/lib/OAlpha/Y.pl			Unicode character database
+lib/unicore/lib/ODI/N.pl			Unicode character database
+lib/unicore/lib/ODI/Y.pl			Unicode character database
+lib/unicore/lib/OGrExt/N.pl			Unicode character database
+lib/unicore/lib/OGrExt/Y.pl			Unicode character database
+lib/unicore/lib/OIDC/N.pl			Unicode character database
+lib/unicore/lib/OIDC/Y.pl			Unicode character database
+lib/unicore/lib/OIDS/N.pl			Unicode character database
+lib/unicore/lib/OIDS/Y.pl			Unicode character database
+lib/unicore/lib/OLower/N.pl			Unicode character database
+lib/unicore/lib/OLower/Y.pl			Unicode character database
+lib/unicore/lib/OMath/N.pl			Unicode character database
+lib/unicore/lib/OMath/Y.pl			Unicode character database
+lib/unicore/lib/OUpper/N.pl			Unicode character database
+lib/unicore/lib/OUpper/Y.pl			Unicode character database
+lib/unicore/lib/PatSyn/N.pl			Unicode character database
+lib/unicore/lib/PatSyn/Y.pl			Unicode character database
+lib/unicore/lib/PatWS/N.pl			Unicode character database
+lib/unicore/lib/PatWS/Y.pl			Unicode character database
+lib/unicore/lib/Perl/Alnum.pl			Unicode character database
+lib/unicore/lib/Perl/Any.pl			Unicode character database
+lib/unicore/lib/Perl/Assigned.pl		Unicode character database
+lib/unicore/lib/Perl/Blank.pl			Unicode character database
+lib/unicore/lib/Perl/Graph.pl			Unicode character database
+lib/unicore/lib/Perl/PerlSpac.pl		Unicode character database
+lib/unicore/lib/Perl/PerlWord.pl		Unicode character database
+lib/unicore/lib/Perl/PosixAln.pl		Unicode character database
+lib/unicore/lib/Perl/PosixAlp.pl		Unicode character database
+lib/unicore/lib/Perl/PosixBla.pl		Unicode character database
+lib/unicore/lib/Perl/PosixCnt.pl		Unicode character database
+lib/unicore/lib/Perl/PosixDig.pl		Unicode character database
+lib/unicore/lib/Perl/PosixGra.pl		Unicode character database
+lib/unicore/lib/Perl/PosixLow.pl		Unicode character database
+lib/unicore/lib/Perl/PosixPri.pl		Unicode character database
+lib/unicore/lib/Perl/PosixPun.pl		Unicode character database
+lib/unicore/lib/Perl/PosixSpa.pl		Unicode character database
+lib/unicore/lib/Perl/PosixUpp.pl		Unicode character database
+lib/unicore/lib/Perl/Print.pl			Unicode character database
+lib/unicore/lib/Perl/SpacePer.pl		Unicode character database
+lib/unicore/lib/Perl/VertSpac.pl		Unicode character database
+lib/unicore/lib/Perl/Word.pl			Unicode character database
+lib/unicore/lib/Perl/_XBegin.pl			Unicode character database
+lib/unicore/lib/Perl/_XExtend.pl		Unicode character database
+lib/unicore/lib/Perl/_XLVLVTV.pl		Unicode character database
+lib/unicore/lib/QMark/N.pl			Unicode character database
+lib/unicore/lib/QMark/Y.pl			Unicode character database
+lib/unicore/lib/Radical/N.pl			Unicode character database
+lib/unicore/lib/Radical/Y.pl			Unicode character database
+lib/unicore/lib/SB/AT.pl			Unicode character database
+lib/unicore/lib/SB/CL.pl			Unicode character database
+lib/unicore/lib/SB/EX.pl			Unicode character database
+lib/unicore/lib/SB/FO.pl			Unicode character database
+lib/unicore/lib/SB/LE.pl			Unicode character database
+lib/unicore/lib/SB/LO.pl			Unicode character database
+lib/unicore/lib/SB/SC.pl			Unicode character database
+lib/unicore/lib/SB/SE.pl			Unicode character database
+lib/unicore/lib/SB/Sp.pl			Unicode character database
+lib/unicore/lib/SB/ST.pl			Unicode character database
+lib/unicore/lib/SB/UP.pl			Unicode character database
+lib/unicore/lib/SB/XX.pl			Unicode character database
+lib/unicore/lib/Sc/Arab.pl			Unicode character database
+lib/unicore/lib/Sc/Armi.pl			Unicode character database
+lib/unicore/lib/Sc/Armn.pl			Unicode character database
+lib/unicore/lib/Sc/Avst.pl			Unicode character database
+lib/unicore/lib/Sc/Bali.pl			Unicode character database
+lib/unicore/lib/Sc/Bamu.pl			Unicode character database
+lib/unicore/lib/Sc/Beng.pl			Unicode character database
+lib/unicore/lib/Sc/Bopo.pl			Unicode character database
+lib/unicore/lib/Sc/Bugi.pl			Unicode character database
+lib/unicore/lib/Sc/Buhd.pl			Unicode character database
+lib/unicore/lib/Sc/Cans.pl			Unicode character database
+lib/unicore/lib/Sc/Cari.pl			Unicode character database
+lib/unicore/lib/Sc/Cham.pl			Unicode character database
+lib/unicore/lib/Sc/Cher.pl			Unicode character database
+lib/unicore/lib/Sc/Copt.pl			Unicode character database
+lib/unicore/lib/Sc/Cprt.pl			Unicode character database
+lib/unicore/lib/Sc/Cyrl.pl			Unicode character database
+lib/unicore/lib/Sc/Deva.pl			Unicode character database
+lib/unicore/lib/Sc/Egyp.pl			Unicode character database
+lib/unicore/lib/Sc/Ethi.pl			Unicode character database
+lib/unicore/lib/Sc/Geor.pl			Unicode character database
+lib/unicore/lib/Sc/Glag.pl			Unicode character database
+lib/unicore/lib/Sc/Goth.pl			Unicode character database
+lib/unicore/lib/Sc/Grek.pl			Unicode character database
+lib/unicore/lib/Sc/Gujr.pl			Unicode character database
+lib/unicore/lib/Sc/Guru.pl			Unicode character database
+lib/unicore/lib/Sc/Hang.pl			Unicode character database
+lib/unicore/lib/Sc/Hano.pl			Unicode character database
+lib/unicore/lib/Sc/Han.pl			Unicode character database
+lib/unicore/lib/Sc/Hebr.pl			Unicode character database
+lib/unicore/lib/Sc/Hira.pl			Unicode character database
+lib/unicore/lib/Sc/Ital.pl			Unicode character database
+lib/unicore/lib/Sc/Java.pl			Unicode character database
+lib/unicore/lib/Sc/Kana.pl			Unicode character database
+lib/unicore/lib/Sc/Khar.pl			Unicode character database
+lib/unicore/lib/Sc/Khmr.pl			Unicode character database
+lib/unicore/lib/Sc/Knda.pl			Unicode character database
+lib/unicore/lib/Sc/Kthi.pl			Unicode character database
+lib/unicore/lib/Sc/Lana.pl			Unicode character database
+lib/unicore/lib/Sc/Lao.pl			Unicode character database
+lib/unicore/lib/Sc/Latn.pl			Unicode character database
+lib/unicore/lib/Sc/Lepc.pl			Unicode character database
+lib/unicore/lib/Sc/Limb.pl			Unicode character database
+lib/unicore/lib/Sc/Linb.pl			Unicode character database
+lib/unicore/lib/Sc/Lyci.pl			Unicode character database
+lib/unicore/lib/Sc/Lydi.pl			Unicode character database
+lib/unicore/lib/Sc/Mlym.pl			Unicode character database
+lib/unicore/lib/Sc/Mong.pl			Unicode character database
+lib/unicore/lib/Sc/Mtei.pl			Unicode character database
+lib/unicore/lib/Sc/Mymr.pl			Unicode character database
+lib/unicore/lib/Sc/Nko.pl			Unicode character database
+lib/unicore/lib/Sc/Ogam.pl			Unicode character database
+lib/unicore/lib/Sc/Orkh.pl			Unicode character database
+lib/unicore/lib/Sc/Orya.pl			Unicode character database
+lib/unicore/lib/Sc/Osma.pl			Unicode character database
+lib/unicore/lib/Sc/Phag.pl			Unicode character database
+lib/unicore/lib/Sc/Phli.pl			Unicode character database
+lib/unicore/lib/Sc/Phnx.pl			Unicode character database
+lib/unicore/lib/Sc/Prti.pl			Unicode character database
+lib/unicore/lib/Sc/Rjng.pl			Unicode character database
+lib/unicore/lib/Sc/Runr.pl			Unicode character database
+lib/unicore/lib/Sc/Samr.pl			Unicode character database
+lib/unicore/lib/Sc/Saur.pl			Unicode character database
+lib/unicore/lib/Sc/Sinh.pl			Unicode character database
+lib/unicore/lib/Sc/Sund.pl			Unicode character database
+lib/unicore/lib/Sc/Sylo.pl			Unicode character database
+lib/unicore/lib/Sc/Syrc.pl			Unicode character database
+lib/unicore/lib/Sc/Tagb.pl			Unicode character database
+lib/unicore/lib/Sc/Tale.pl			Unicode character database
+lib/unicore/lib/Sc/Talu.pl			Unicode character database
+lib/unicore/lib/Sc/Taml.pl			Unicode character database
+lib/unicore/lib/Sc/Tavt.pl			Unicode character database
+lib/unicore/lib/Sc/Telu.pl			Unicode character database
+lib/unicore/lib/Sc/Tfng.pl			Unicode character database
+lib/unicore/lib/Sc/Tglg.pl			Unicode character database
+lib/unicore/lib/Sc/Thaa.pl			Unicode character database
+lib/unicore/lib/Sc/Thai.pl			Unicode character database
+lib/unicore/lib/Sc/Tibt.pl			Unicode character database
+lib/unicore/lib/Sc/Ugar.pl			Unicode character database
+lib/unicore/lib/Sc/Vai.pl			Unicode character database
+lib/unicore/lib/Sc/Xpeo.pl			Unicode character database
+lib/unicore/lib/Sc/Xsux.pl			Unicode character database
+lib/unicore/lib/Sc/Yi.pl			Unicode character database
+lib/unicore/lib/Sc/Zinh.pl			Unicode character database
+lib/unicore/lib/Sc/Zyyy.pl			Unicode character database
+lib/unicore/lib/Sc/Zzzz.pl			Unicode character database
+lib/unicore/lib/SD/N.pl				Unicode character database
+lib/unicore/lib/SD/Y.pl				Unicode character database
+lib/unicore/lib/Space/N.pl			Unicode character database
+lib/unicore/lib/Space/Y.pl			Unicode character database
+lib/unicore/lib/STerm/N.pl			Unicode character database
+lib/unicore/lib/STerm/Y.pl			Unicode character database
+lib/unicore/lib/Term/N.pl			Unicode character database
+lib/unicore/lib/Term/Y.pl			Unicode character database
+lib/unicore/lib/UIdeo/N.pl			Unicode character database
+lib/unicore/lib/UIdeo/Y.pl			Unicode character database
+lib/unicore/lib/Upper/N.pl			Unicode character database
+lib/unicore/lib/Upper/Y.pl			Unicode character database
+lib/unicore/lib/VS/N.pl				Unicode character database
+lib/unicore/lib/VS/Y.pl				Unicode character database
+lib/unicore/lib/WB/EX.pl			Unicode character database
+lib/unicore/lib/WB/FO.pl			Unicode character database
+lib/unicore/lib/WB/KA.pl			Unicode character database
+lib/unicore/lib/WB/LE.pl			Unicode character database
+lib/unicore/lib/WB/MB.pl			Unicode character database
+lib/unicore/lib/WB/ML.pl			Unicode character database
+lib/unicore/lib/WB/MN.pl			Unicode character database
+lib/unicore/lib/WB/NL.pl			Unicode character database
+lib/unicore/lib/WB/NU.pl			Unicode character database
+lib/unicore/lib/WB/XX.pl			Unicode character database
+lib/unicore/lib/XIDC/N.pl			Unicode character database
+lib/unicore/lib/XIDC/Y.pl			Unicode character database
+lib/unicore/lib/XIDS/N.pl			Unicode character database
+lib/unicore/lib/XIDS/Y.pl			Unicode character database
 lib/unicore/LineBreak.txt			Unicode character database
 lib/unicore/Makefile				Unicode character database
 lib/unicore/mktables				Unicode character database generator
-lib/unicore/mktables.lst
+lib/unicore/mktables.lst			Unicode character database
 lib/unicore/NameAliases.txt			Unicode character database
 lib/unicore/NamedSequences.txt			Unicode character database
 lib/unicore/NamedSqProv.txt			Unicode character database
-lib/unicore/Name.pl
+lib/unicore/Name.pl				Unicode character database
 lib/unicore/NamesList.txt			Unicode character database
 lib/unicore/NormalizationCorrections.txt	Unicode character database
-lib/unicore/Properties
 lib/unicore/PropertyAliases.txt			Unicode character database
 lib/unicore/PropList.txt			Unicode character database
 lib/unicore/PropValueAliases.txt		Unicode character database
-lib/unicore/PVA.pl
 lib/unicore/README.perl				Unicode character database
 lib/unicore/ReadMe.txt				Unicode character database info
 lib/unicore/Scripts.txt				Unicode character database
 lib/unicore/SpecialCasing.txt			Unicode character database
 lib/unicore/StandardizedVariants.txt		Unicode character database
-lib/unicore/To/Digit.pl
-lib/unicore/To/Fold.pl
-lib/unicore/To/Lower.pl
-lib/unicore/To/Title.pl
-lib/unicore/To/Upper.pl
+lib/unicore/TestProp.pl				Unicode character database
+lib/unicore/To/Bmg.pl				Unicode character database
+lib/unicore/To/Digit.pl				Unicode character database
+lib/unicore/To/Fold.pl				Unicode character database
+lib/unicore/To/Lower.pl				Unicode character database
+lib/unicore/To/NFKCCF.pl			Unicode character database
+lib/unicore/To/Title.pl				Unicode character database
+lib/unicore/To/Upper.pl				Unicode character database
 lib/unicore/UnicodeData.txt			Unicode character database
 lib/unicore/version				The version of the Unicode
+lib/unicore/version				Unicode character database
 lib/UNIVERSAL.pm		Base class for ALL classes
 lib/User/grent.pm		By-name interface to Perl's builtin getgr*
 lib/User/grent.t		See if User::grwent works
