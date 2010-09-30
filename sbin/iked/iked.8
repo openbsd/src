@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.4 2010/06/10 14:17:48 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.5 2010/09/30 10:32:23 reyk Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2010 $
+.Dd $Mdocdate: September 30 2010 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -45,6 +45,17 @@ support for
 ISAKMP/Oakley and IKEv1
 is provided by
 .Xr isakmpd 8 .
+.Pp
+.Nm
+supports mutual authentication using RSA public keys and X.509 certificates.
+See the
+.Sx FILES
+section below and
+.Sx PKI AND CERTIFICATE AUTHORITY COMMANDS
+in
+.Xr ikectl 8
+for more information about creating and maintaining the public key
+infrastructure.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
