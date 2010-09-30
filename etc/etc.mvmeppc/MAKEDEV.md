@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.33 2010/07/03 03:59:15 krw Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.34 2010/09/30 15:27:54 claudio Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -483,6 +483,13 @@ diskmap)
 	mknod diskmap c 57 0
 	chmod 640 diskmap
 	chown root:operator diskmap
+	;;
+
+pppx*)
+	rm -f pppx$unit
+	mknod pppx$unit c 58 0
+	chmod 640 pppx$unit
+	chown root:wheel pppx$unit
 	;;
 
 altq)

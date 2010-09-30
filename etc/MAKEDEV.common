@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.52 2010/09/30 15:26:06 claudio Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -560,6 +560,8 @@ __devitem(rmidi, rmidi*, Raw MIDI devices,midi)dnl
 _mcdev(rmidi, rmidi*, rmidi, {-major_rmidi_c-}, 666)dnl
 __devitem(diskmap, diskmap, Disk mapper, diskmap)dnl
 _mkdev(diskmap, diskmap, {-M diskmap c major_diskmap_c 0 640 operator-})dnl
+__devitem(pppx, pppx*, PPP Multiplexer, pppx 4)dnl
+_mcdev(pppx, pppx*, pppx, {-major_pppx_c-}, 600)dnl
 __devtitle(plat, Platform-specific devices)dnl
 __devitem(bktr, bktr*, Video frame grabbers)dnl
 _mcdev(bktr, bktr*, bktr, {-major_bktr_c-}, 644)dnl

@@ -1,6 +1,6 @@
 define(MACHINE,socppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.11 2010/09/04 12:18:04 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.12 2010/09/30 15:27:54 claudio Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -74,6 +74,7 @@ _DEV(lkm, 24)
 _DEV(nnpfs, 51)
 _DEV(pci, 71)
 _DEV(pf, 39)
+_DEV(pppx, 83)
 _DEV(radio, 76)
 _DEV(rnd, 40)
 _DEV(systrace, 50)
