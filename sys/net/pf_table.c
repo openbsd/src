@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.85 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.86 2010/09/30 07:14:02 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -232,7 +232,8 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 		if (kt->pfrkt_cnt) {
-			printf("pfr_clr_addrs: corruption detected (%d).\n",
+			DPFPRINTF(LOG_NOTICE,
+			    "pfr_clr_addrs: corruption detected (%d).",
 			    kt->pfrkt_cnt);
 			kt->pfrkt_cnt = 0;
 		}
@@ -599,8 +600,8 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 		return (rv);
 
 	if (w.pfrw_free) {
-		printf("pfr_get_addrs: corruption detected (%d).\n",
-		    w.pfrw_free);
+		DPFPRINTF(LOG_ERR,
+		    "pfr_get_addrs: corruption detected (%d)", w.pfrw_free);
 		return (ENOTTY);
 	}
 	*size = kt->pfrkt_cnt;
@@ -649,8 +650,8 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 		return (rv);
 
 	if (w.pfrw_free) {
-		printf("pfr_get_astats: corruption detected (%d).\n",
-		    w.pfrw_free);
+		DPFPRINTF(LOG_ERR,
+		    "pfr_get_astats: corruption detected (%d)", w.pfrw_free);
 		return (ENOTTY);
 	}
 	*size = kt->pfrkt_cnt;
@@ -755,10 +756,12 @@ pfr_enqueue_addrs(struct pfr_ktable *kt, struct pfr_kentryworkq *workq,
 	w.pfrw_workq = workq;
 	if (kt->pfrkt_ip4 != NULL)
 		if (rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w))
-			printf("pfr_enqueue_addrs: IPv4 walktree failed.\n");
+			DPFPRINTF(LOG_ERR,
+			    "pfr_enqueue_addrs: IPv4 walktree failed.");
 	if (kt->pfrkt_ip6 != NULL)
 		if (rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w))
-			printf("pfr_enqueue_addrs: IPv6 walktree failed.\n");
+			DPFPRINTF(LOG_ERR,
+			    "pfr_enqueue_addrs: IPv6 walktree failed.");
 	if (naddr != NULL)
 		*naddr = w.pfrw_cnt;
 }
@@ -771,9 +774,11 @@ pfr_mark_addrs(struct pfr_ktable *kt)
 	bzero(&w, sizeof(w));
 	w.pfrw_op = PFRW_MARK;
 	if (rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w))
-		printf("pfr_mark_addrs: IPv4 walktree failed.\n");
+		DPFPRINTF(LOG_ERR,
+		    "pfr_mark_addrs: IPv4 walktree failed.");
 	if (rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w))
-		printf("pfr_mark_addrs: IPv6 walktree failed.\n");
+		DPFPRINTF(LOG_ERR,
+		    "pfr_mark_addrs: IPv6 walktree failed.");
 }
 
 
@@ -874,8 +879,9 @@ pfr_insert_kentries(struct pfr_ktable *kt,
 	SLIST_FOREACH(p, workq, pfrke_workq) {
 		rv = pfr_route_kentry(kt, p);
 		if (rv) {
-			printf("pfr_insert_kentries: cannot route entry "
-			    "(code=%d).\n", rv);
+			DPFPRINTF(LOG_ERR,
+			    "pfr_insert_kentries: cannot route entry "
+			    "(code=%d).", rv);
 			break;
 		}
 		p->pfrke_tzero = tzero;
@@ -1038,7 +1044,7 @@ pfr_unroute_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 	splx(s);
 
 	if (rn == NULL) {
-		printf("pfr_unroute_kentry: delete failed.\n");
+		DPFPRINTF(LOG_ERR, "pfr_unroute_kentry: delete failed.\n");
 		return (-1);
 	}
 	return (0);
@@ -1336,7 +1342,8 @@ pfr_get_tables(struct pfr_table *filter, struct pfr_table *tbl, int *size,
 			return (EFAULT);
 	}
 	if (n) {
-		printf("pfr_get_tables: corruption detected (%d).\n", n);
+		DPFPRINTF(LOG_ERR,
+		    "pfr_get_tables: corruption detected (%d).", n);
 		return (ENOTTY);
 	}
 	*size = nn;
@@ -1387,7 +1394,8 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 	if (flags & PFR_FLAG_ATOMIC)
 		splx(s);
 	if (n) {
-		printf("pfr_get_tstats: corruption detected (%d).\n", n);
+		DPFPRINTF(LOG_ERR,
+		    "pfr_get_tstats: corruption detected (%d).", n);
 		return (ENOTTY);
 	}
 	*size = nn;
@@ -2078,7 +2086,8 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 	}
 	if ((ke == NULL || (ke->pfrke_flags & PFRKE_FLAG_NOT)) != notrule) {
 		if (op_pass != PFR_OP_PASS)
-			printf("pfr_update_stats: assertion failed.\n");
+			DPFPRINTF(LOG_DEBUG,
+			    "pfr_update_stats: assertion failed.");
 		op_pass = PFR_OP_XPASS;
 	}
 	kt->pfrkt_packets[dir_out][op_pass]++;
@@ -2135,7 +2144,7 @@ void
 pfr_detach_table(struct pfr_ktable *kt)
 {
 	if (kt->pfrkt_refcnt[PFR_REFCNT_RULE] <= 0)
-		printf("pfr_detach_table: refcount = %d.\n",
+		DPFPRINTF(LOG_NOTICE, "pfr_detach_table: refcount = %d.",
 		    kt->pfrkt_refcnt[PFR_REFCNT_RULE]);
 	else if (!--kt->pfrkt_refcnt[PFR_REFCNT_RULE])
 		pfr_setflags_ktable(kt, kt->pfrkt_flags&~PFR_TFLAG_REFERENCED);
