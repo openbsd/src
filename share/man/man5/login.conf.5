@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.43 2010/03/26 19:30:40 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.44 2010/09/30 21:00:47 sthen Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: September 30 2010 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -445,7 +445,8 @@ For example, to indicate 1 and 1/2 hours, the following string could be used:
 .El
 .\"
 .Sh AUTHENTICATION
-\*(oSuses BSD Authentication, which is made up of a variety of
+.Ox
+uses BSD Authentication, which is made up of a variety of
 authentication styles.
 The authentication styles currently provided are:
 .Bl -tag -width krb5-or-pwdxx
