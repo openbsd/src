@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.15 2010/09/22 09:12:18 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.16 2010/09/30 12:54:24 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -275,7 +275,8 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	/*
 	 * Parse the attached transforms
 	 */
-	if (ikev2_pld_xform(env, &sap, msg, offset) != 0) {
+	if (sap.sap_transforms &&
+	    ikev2_pld_xform(env, &sap, msg, offset) != 0) {
 		log_debug("%s: invalid proposal transforms", __func__);
 		return (-1);
 	}
