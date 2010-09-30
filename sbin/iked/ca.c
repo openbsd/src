@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.10 2010/06/29 21:04:42 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.11 2010/09/30 14:25:54 mikeb Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -1119,12 +1119,8 @@ void
 ca_sslerror(void)
 {
 	u_long		 error;
-	extern int 	 verbose;
-
-	if (verbose < 3)
-		return;
 
 	while ((error = ERR_get_error()) != 0)
-		log_debug("%s: %.100s", __func__,
+		log_warn("%s: %.100s", __func__,
 		    ERR_error_string(error, NULL));
 }
