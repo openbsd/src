@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.48 2010/07/03 03:59:15 krw Exp 
-#	OpenBSD: MAKEDEV.common,v 1.51 2010/08/03 20:12:01 miod Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.50 2010/09/30 15:27:54 claudio Exp 
+#	OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -82,6 +82,7 @@
 #	nnpfs*	NNPFS filesystem node
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
+#	pppx*	PPP Multiplexer
 #	radio*	FM tuner devices
 #	*random	In-kernel random data source
 #	rmidi*	Raw MIDI devices
@@ -292,6 +293,10 @@ rmidi*)
 radio*)
 	M radio$U     c 59 $U
 	MKlist[${#MKlist[*]}]=";[ -e radio ] || ln -s radio$U radio"
+	;;
+
+pppx*)
+	M pppx$U c 64 $U 600
 	;;
 
 pf*)
