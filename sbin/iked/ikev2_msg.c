@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.7 2010/06/27 01:03:22 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.8 2010/09/30 10:34:56 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -333,11 +333,6 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	if (outlen && ibuf_add(dst, ibuf_data(out), outlen) != 0)
 		goto done;
 
-	outlen = cipher_outlength(sa->sa_encr, 0);
-	cipher_final(sa->sa_encr, out->buf, &outlen);
-	if (outlen)
-		ibuf_add(dst, out->buf, outlen);
-
 	if ((ptr = ibuf_advance(dst, integrlen)) == NULL)
 		goto done;
 	bzero(ptr, integrlen);
@@ -498,19 +493,10 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		goto done;
 
 	outlen = ibuf_length(out);
-	/* XXX why does it need encrlen + blocklen to work correctly? */
-	cipher_update(sa->sa_encr,
-	    ibuf_data(src) + encroff, encrlen + blocklen,
-	    ibuf_data(out), &outlen);
-	cipher_final(sa->sa_encr, ibuf_seek(out, outlen, blocklen), &tmplen);
-	if (tmplen)
-		outlen += tmplen;
 
-	/*
-	 * XXX 
-	 * XXX the padding is wrong
-	 * XXX
-	 */
+	cipher_update(sa->sa_encr, ibuf_data(src) + encroff, encrlen,
+	    ibuf_data(out), &outlen);
+
 	ptr = ibuf_seek(out, outlen - 1, 1);
 	pad = *ptr;
 

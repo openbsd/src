@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.2 2010/06/14 16:31:29 reyk Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.3 2010/09/30 10:34:56 mikeb Exp $	*/
 /*	$vantronix: crypto.c,v 1.18 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -307,7 +307,6 @@ cipher_new(u_int8_t type, u_int16_t id, u_int16_t id_length)
 	}
 
 	EVP_CIPHER_CTX_init(ctx);
-	EVP_CIPHER_CTX_set_padding(ctx, 0);
 	encr->encr_ctx = ctx;
 
 	return (encr);
@@ -363,6 +362,7 @@ cipher_init(struct iked_cipher *encr, int enc)
 {
 	EVP_CipherInit_ex(encr->encr_ctx, encr->encr_priv, NULL,
 	    ibuf_data(encr->encr_key), ibuf_data(encr->encr_iv), enc);
+	EVP_CIPHER_CTX_set_padding(encr->encr_ctx, 0);
 }
 
 void
@@ -384,7 +384,11 @@ cipher_update(struct iked_cipher *encr, void *in, size_t inlen,
 	int	 olen;
 
 	olen = 0;
-	EVP_CipherUpdate(encr->encr_ctx, out, &olen, in, inlen);
+	if (!EVP_CipherUpdate(encr->encr_ctx, out, &olen, in, inlen)) {
+		ca_sslerror();
+		*outlen = 0;
+		return;
+	}
 	*outlen = (size_t)olen;
 }
 
@@ -427,7 +431,7 @@ cipher_ivlength(struct iked_cipher *encr)
 size_t
 cipher_outlength(struct iked_cipher *encr, size_t inlen)
 {
-	return (inlen + encr->encr_length);
+	return (inlen + inlen % encr->encr_length);
 }
 
 struct iked_dsa *
