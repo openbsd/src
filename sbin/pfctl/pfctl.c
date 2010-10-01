@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.302 2010/09/02 14:01:04 sobrado Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.303 2010/10/01 12:33:14 reyk Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -81,7 +81,8 @@ int	 pfctl_load_logif(struct pfctl *, char *);
 int	 pfctl_load_hostid(struct pfctl *, unsigned int);
 int	 pfctl_load_reassembly(struct pfctl *, u_int32_t);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
-int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int, int);
+int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int, int,
+	    long);
 int	 pfctl_show_src_nodes(int, int);
 int	 pfctl_show_states(int, const char *, int);
 int	 pfctl_show_status(int, int);
@@ -236,7 +237,7 @@ usage(void)
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
 	fprintf(stderr, "\t[-k host | network | label | id] ");
 	fprintf(stderr, "[-L statefile] [-o level] [-p device]\n");
-	fprintf(stderr, "\t[-S statefile] [-s modifier] ");
+	fprintf(stderr, "\t[-S statefile] [-s modifier [-R id]] ");
 	fprintf(stderr, "[-t table -T command [address ...]]\n");
 	fprintf(stderr, "\t[-x level]\n");
 	exit(1);
@@ -750,7 +751,7 @@ pfctl_print_title(char *title)
 
 int
 pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
-    char *anchorname, int depth, int wildcard)
+    char *anchorname, int depth, int wildcard, long shownr)
 {
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr, header = 0;
@@ -808,7 +809,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			INDENT(depth, !(opts & PF_OPT_VERBOSE));
 			printf("anchor \"%s\" all {\n", prs.name);
 			pfctl_show_rules(dev, npath, opts,
-			    format, prs.name, depth + 1, 0);
+			    format, prs.name, depth + 1, 0, shownr);
 			INDENT(depth, !(opts & PF_OPT_VERBOSE));
 			printf("}\n");
 		}
@@ -841,8 +842,19 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		ret = -1;
 		goto error;
 	}
-	mnr = pr.nr;
-	for (nr = 0; nr < mnr; ++nr) {
+
+	if (shownr < 0) {
+		mnr = pr.nr;
+		nr = 0;
+	} else if (shownr < pr.nr) {
+		nr = shownr;
+		mnr = shownr + 1;
+	} else {
+		warnx("rule %ld not found", shownr);
+		ret = -1;
+		goto error;
+	}
+	for (; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRULE, &pr)) {
 			warn("DIOCGETRULE");
@@ -887,7 +899,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 				pfctl_print_rule_counters(&pr.rule, opts);
 				pfctl_show_rules(dev, npath, opts, format,
 				    pr.anchor_call, depth + 1,
-				    pr.rule.anchor_wildcard);
+				    pr.rule.anchor_wildcard, -1);
 				INDENT(depth, !(opts & PF_OPT_VERBOSE));
 				printf("}\n");
 			} else {
@@ -1929,12 +1941,14 @@ main(int argc, char *argv[])
 	char	 anchorname[MAXPATHLEN];
 	char	*path;
 	char	*lfile = NULL, *sfile = NULL;
+	const char *errstr;
+	long	 shownr = -1;
 
 	if (argc < 2)
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:dD:eqf:F:ghi:k:K:L:no:p:rS:s:t:T:vx:z")) != -1) {
+	    "a:dD:eqf:F:ghi:k:K:L:no:p:R:rS:s:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1989,6 +2003,13 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			opts |= PF_OPT_USEDNS;
+			break;
+		case 'R':
+			shownr = strtonum(optarg, -1, LONG_MAX, &errstr);
+			if (errstr) {
+				warnx("invalid rule id: %s", errstr);
+				usage();
+			}
 			break;
 		case 'f':
 			rulesopt = optarg;
@@ -2114,12 +2135,12 @@ main(int argc, char *argv[])
 		case 'r':
 			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
-			    anchorname, 0, 0);
+			    anchorname, 0, 0, shownr);
 			break;
 		case 'l':
 			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
-			    anchorname, 0, 0);
+			    anchorname, 0, 0, shownr);
 			break;
 		case 'q':
 			pfctl_show_altq(dev, ifaceopt, opts,
@@ -2144,12 +2165,14 @@ main(int argc, char *argv[])
 			opts |= PF_OPT_SHOWALL;
 			pfctl_load_fingerprints(dev, opts);
 
-			pfctl_show_rules(dev, path, opts, 0, anchorname, 0, 0);
+			pfctl_show_rules(dev, path, opts, 0, anchorname,
+			    0, 0, -1);
 			pfctl_show_altq(dev, ifaceopt, opts, 0);
 			pfctl_show_states(dev, ifaceopt, opts);
 			pfctl_show_src_nodes(dev, opts);
 			pfctl_show_status(dev, opts);
-			pfctl_show_rules(dev, path, opts, 1, anchorname, 0, 0);
+			pfctl_show_rules(dev, path, opts, 1, anchorname,
+			    0, 0, -1);
 			pfctl_show_timeouts(dev, opts);
 			pfctl_show_limits(dev, opts);
 			pfctl_show_tables(anchorname, opts);
@@ -2170,7 +2193,7 @@ main(int argc, char *argv[])
 
 	if ((opts & PF_OPT_CLRRULECTRS) && showopt == NULL)
 		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_NOTHING,
-		    anchorname, 0, 0);
+		    anchorname, 0, 0, -1);
 
 	if (clearopt != NULL) {
 		if (anchorname[0] == '_' || strstr(anchorname, "/_") != NULL)

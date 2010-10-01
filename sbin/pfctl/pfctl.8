@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.150 2010/09/20 19:25:20 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.151 2010/10/01 12:33:14 reyk Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 20 2010 $
+.Dd $Mdocdate: October 1 2010 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Op Fl o Ar level
 .Op Fl p Ar device
 .Op Fl S Ar statefile
-.Op Fl s Ar modifier
+.Op Fl s Ar modifier Op Fl R Ar id
 .Oo
 .Fl t Ar table
 .Fl T Ar command
@@ -362,6 +362,10 @@ will loop and show updated queue statistics every five seconds, including
 measured bandwidth and packets per second.
 .It Fl s Cm rules
 Show the currently loaded filter rules.
+If
+.Fl R Ar id
+is specified as well,
+only the rule with the specified numeric ID is shown.
 When used together with
 .Fl v ,
 the per-rule statistics (number of evaluations,
@@ -397,6 +401,10 @@ source tracking statistics are also shown.
 Show per-rule statistics (label, evaluations, packets total, bytes total,
 packets in, bytes in, packets out, bytes out, state creations) of
 filter rules with labels, useful for accounting.
+If
+.Fl R Ar id
+is specified as well,
+only the statistics for the rule with the specified numeric ID are shown.
 .It Fl s Cm timeouts
 Show the current global timeouts.
 .It Fl s Cm memory
