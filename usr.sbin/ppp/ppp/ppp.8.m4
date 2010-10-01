@@ -25,14 +25,14 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.43 2010/02/24 14:18:11 schwarze Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.44 2010/10/01 07:45:22 sobrado Exp $
 .\"
-.Dd $Mdocdate: February 24 2010 $
+.Dd $Mdocdate: October 1 2010 $
 .Dt PPP 8
 .Os
 .Sh NAME
 .Nm ppp
-.Nd Point to Point Protocol (a.k.a. user-ppp)
+.Nd Point-to-Point Protocol (a.k.a. user-ppp)
 .Sh SYNOPSIS
 .Nm ppp
 .Op Fl Va mode
@@ -358,7 +358,7 @@ It is possible to configure
 to open more than one physical connection to the peer, combining the
 bandwidth of all links for better throughput.
 .It Supports MPPE (draft-ietf-pppext-mppe).
-MPPE is Microsoft Point to Point Encryption scheme.
+MPPE is Microsoft Point-to-Point Encryption scheme.
 It is possible to configure
 .Nm
 to participate in Microsoft's Windows VPN.
@@ -2838,7 +2838,7 @@ command description for differences in behaviour prior to
 version 3.4.2.
 .It mppe
 Default: Enabled and Accepted.
-This is Microsoft Point to Point Encryption scheme.
+This is Microsoft Point-to-Point Encryption scheme.
 MPPE key size can be
 40-, 56-, and 128-bits.
 Refer to the
