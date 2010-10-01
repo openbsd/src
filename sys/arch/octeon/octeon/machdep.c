@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2010/09/21 06:21:00 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.3 2010/10/01 16:13:59 syuu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -141,6 +141,9 @@ vaddr_t	mips_init(__register_t, __register_t, __register_t, __register_t);
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	octeon_memory_init(void);
 
+cons_decl(com_oct);
+struct consdev octcons = cons_init(com_oct);
+
 #define btoc(x) (((x)+PAGE_MASK)>>PAGE_SHIFT)
 
 void
@@ -278,6 +281,11 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	 */
 
 	bzero(edata, end - edata);
+
+	/*
+	 * Set up early console output.
+	 */
+	cn_tab = &octcons;
 
 	/*
 	 * Reserve space for the symbol table, if it exists.

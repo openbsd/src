@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.1 2010/09/20 06:32:30 syuu Exp $ */
+/*	$OpenBSD: obio.c,v 1.2 2010/10/01 16:13:59 syuu Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -27,8 +27,8 @@
  */
 
 /*
- * This is a combined macebus/crimebus driver. It handles configuration of all
- * devices on the processor bus.
+ * This is a obio driver.
+ * It handles configuration of all devices on the processor bus except UART.
  */
 
 #include <sys/param.h>
@@ -165,8 +165,7 @@ uint64_t obio_imask[MAXCPUS][NIPLS];
 #define	OBIODEV(name, addr, i) \
 	{ name, &obio_tag, &obio_tag, &obio_bus_dma_tag, addr, i }
 struct obio_attach_args obio_children[] = {
-	OBIODEV("com", OCTEON_UART0_BASE, CIU_INT_UART0),
-	OBIODEV("com", OCTEON_UART1_BASE, CIU_INT_UART1),
+	OBIODEV("dummy", 0x0, 0x0)
 };
 #undef	OBIODEV
 
@@ -223,6 +222,8 @@ obioattach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map CIU control registers\n");
 		return;
 	}
+
+	printf("\n");
 
 	bus_space_write_8(&obio_tag, obio_h, CIU_INT0_EN0, 0);
 	bus_space_write_8(&obio_tag, obio_h, CIU_INT1_EN0, 0);
@@ -428,8 +429,7 @@ obio_intr_establish(int irq, int level,
 	ih->ih.ih_arg = ih_arg;
 	ih->ih.ih_level = level;
 	ih->ih.ih_irq = irq;
-	evcount_attach(&ih->ih.ih_count, ih_what, (void *)&ih->ih.ih_irq,
-	    &evcount_intr);
+	evcount_attach(&ih->ih.ih_count, ih_what, (void *)&ih->ih.ih_irq);
 
 	s = splhigh();
 

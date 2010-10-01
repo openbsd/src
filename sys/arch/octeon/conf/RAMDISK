@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2010/09/20 06:32:30 syuu Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2010/10/01 16:13:59 syuu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -42,9 +42,10 @@ mainbus0	at root
 cpu0		at mainbus0
 clock0		at mainbus0
 obio0		at mainbus0
+combus0		at mainbus0
 
-com0		at obio0
-com1		at obio0
+com0		at combus0
+com1		at combus0
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	1	# packet filter
