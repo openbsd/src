@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.13 2002/10/07 04:16:33 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.14 2010/10/01 05:02:19 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -65,7 +65,7 @@
 
 #define SUFFIX			PSEUDO_SUFFIX
 
-#define ALIAS(x,y)		.weak y; .set y,_CONCAT(x,y);
+#define ALIAS(x,y)		WEAK_ALIAS(y,_CONCAT(x,y));
 		
 #define PREFIX(x)		ALIAS(_thread_sys_,x) \
 				PSEUDO_PREFIX(_thread_sys_,x,x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 2010/10/01 05:02:19 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,13 +39,11 @@
 
 #ifdef __STDC__
 #define	SYSENTRY(x)					\
-	.weak	_C_LABEL(x);				\
-	_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x);	\
+	WEAK_ALIAS(x,_thread_sys_ ## x);		\
 	ENTRY(_thread_sys_ ## x)
 #else
 #define	SYSENTRY(x)					\
-	.weak	_C_LABEL(x);				\
-	_C_LABEL(x) = _C_LABEL(_thread_sys_/**/x);	\
+	WEAK_ALIAS(x,_thread_sys_/**/x);		\
 	ENTRY(_thread_sys_/**/x)
 #endif
 

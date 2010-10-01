@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2006/01/05 22:13:55 kettenis Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.16 2010/10/01 05:02:19 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -35,7 +35,7 @@
 
 #define SYSENTRY(x)				!\
 LEAF_ENTRY(__CONCAT(_thread_sys_,x))		!\
-	.weak x ! .set x, __CONCAT(_thread_sys_,x)
+	WEAK_ALIAS(x,__CONCAT(_thread_sys_,x))
 #define	SYSEXIT(x)				!\
 EXIT(__CONCAT(_thread_sys_,x))
 

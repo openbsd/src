@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.3 2004/09/09 16:14:02 pefo Exp $ 
+ *      $OpenBSD: SYS.h,v 1.4 2010/10/01 05:02:19 guenther Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -43,7 +43,7 @@
 				syscall
 
 # define __LEAF2(p,x,sz)	LEAF(p ## x, sz) \
-				.weak x; x = p ## x;
+				WEAK_ALIAS(x, p ## x);
 
 # define __END2(p,x)		END(p ## x)
 
@@ -56,7 +56,7 @@
 				syscall
 
 # define __LEAF2(p,x,sz)	LEAF(p/**/x, sz) \
-				.weak x; x = p/**/x;
+				WEAK_ALIAS(x, p/**/x);
 
 # define __END2(p,x)		END(p/**/x)
 

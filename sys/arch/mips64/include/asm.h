@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.12 2010/09/11 11:29:49 syuu Exp $ */
+/*	$OpenBSD: asm.h,v 1.13 2010/10/01 05:02:19 guenther Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -268,6 +268,13 @@ x: ;				\
  */
 #define END(x) \
 	.end x
+
+/*
+ * WEAK ALIAS: create a weak alias
+ */
+#define WEAK_ALIAS(alias,sym) \
+	.weak alias; alias = sym
+
 
 /*
  * Macros to panic and printf from assembly language.
