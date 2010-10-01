@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.89 2010/09/06 17:10:19 naddy Exp $
+#	$OpenBSD: special,v 1.90 2010/10/01 20:51:55 jakob Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -68,6 +68,7 @@ special		type=file mode=0600 uname=root gname=wheel
 ..	#mtree
 moduli		type=file mode=0644 uname=root gname=wheel
 netstart	type=file mode=0644 uname=root gname=wheel
+nsd.conf	type=file mode=0640 uname=root gname=_nsd
 ntpd.conf	type=file mode=0644 uname=root gname=wheel
 ospfd.conf	type=file mode=0600 uname=root gname=wheel
 ospf6d.conf	type=file mode=0600 uname=root gname=wheel
