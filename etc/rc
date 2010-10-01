@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.341 2010/09/06 17:10:19 naddy Exp $
+#	$OpenBSD: rc,v 1.342 2010/10/01 20:51:32 jakob Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -340,6 +340,10 @@ if [ X"${named_flags}" != X"NO" ]; then
 	rm -f /var/named/dev/log
 	syslogd_flags="${syslogd_flags} -a /var/named/dev/log"
 fi
+if [ X"${nsd_flags}" != X"NO" ]; then
+	rm -f /var/nsd/dev/log
+	syslogd_flags="${syslogd_flags} -a /var/nsd/dev/log"
+fi
 if [ -d /var/empty ]; then
 	rm -f /var/empty/dev/log
 	mkdir -p -m 0555 /var/empty/dev
@@ -369,6 +373,10 @@ if [ X"${named_flags}" != X"NO" ]; then
 	fi
 
 	echo 'starting named';		named $named_flags
+fi
+
+if [ X"${nsd_flags}" != X"NO" ]; then
+	echo 'starting nsd';		nsd $nsd_flags
 fi
 
 if [ ! -f /etc/isakmpd/private/local.key ]; then
