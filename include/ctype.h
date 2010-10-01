@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.21 2010/07/25 15:35:29 kettenis Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.22 2010/10/01 20:10:24 guenther Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -57,17 +57,6 @@ extern const char	*_ctype_;
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
 
-/* extern __inline is a GNU C extension */
-#ifdef __GNUC__
-#  if __GNUC_PREREQ__(4, 2)
-#define	__CTYPE_INLINE	extern __inline __attribute__((__gnu_inline__))
-#  else
-#define	__CTYPE_INLINE	extern __inline
-#  endif
-#else
-#define	__CTYPE_INLINE	static __inline
-#endif
-
 #if defined(__GNUC__) || defined(_ANSI_LIBRARY) || defined(lint)
 int	isalnum(int);
 int	isalpha(int);
@@ -99,69 +88,69 @@ int	_toupper(int);
 
 #if !defined(_ANSI_LIBRARY) && !defined(lint)
 
-__CTYPE_INLINE int isalnum(int c)
+__only_inline int isalnum(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N)));
 }
 
-__CTYPE_INLINE int isalpha(int c)
+__only_inline int isalpha(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L)));
 }
 
-__CTYPE_INLINE int iscntrl(int c)
+__only_inline int iscntrl(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _C));
 }
 
-__CTYPE_INLINE int isdigit(int c)
+__only_inline int isdigit(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _N));
 }
 
-__CTYPE_INLINE int isgraph(int c)
+__only_inline int isgraph(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N)));
 }
 
-__CTYPE_INLINE int islower(int c)
+__only_inline int islower(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _L));
 }
 
-__CTYPE_INLINE int isprint(int c)
+__only_inline int isprint(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B)));
 }
 
-__CTYPE_INLINE int ispunct(int c)
+__only_inline int ispunct(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _P));
 }
 
-__CTYPE_INLINE int isspace(int c)
+__only_inline int isspace(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _S));
 }
 
-__CTYPE_INLINE int isupper(int c)
+__only_inline int isupper(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _U));
 }
 
-__CTYPE_INLINE int isxdigit(int c)
+__only_inline int isxdigit(int c)
 {
 	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_N|_X)));
 }
 
-__CTYPE_INLINE int tolower(int c)
+__only_inline int tolower(int c)
 {
 	if ((unsigned int)c > 255)
 		return (c);
 	return ((_tolower_tab_ + 1)[c]);
 }
 
-__CTYPE_INLINE int toupper(int c)
+__only_inline int toupper(int c)
 {
 	if ((unsigned int)c > 255)
 		return (c);
@@ -170,29 +159,29 @@ __CTYPE_INLINE int toupper(int c)
 
 #if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999 || __POSIX_VISIBLE > 200112 \
     || __XPG_VISIBLE > 600
-__CTYPE_INLINE int isblank(int c)
+__only_inline int isblank(int c)
 {
 	return (c == ' ' || c == '\t');
 }
 #endif
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
-__CTYPE_INLINE int isascii(int c)
+__only_inline int isascii(int c)
 {
 	return ((unsigned int)c <= 0177);
 }
 
-__CTYPE_INLINE int toascii(int c)
+__only_inline int toascii(int c)
 {
 	return (c & 0177);
 }
 
-__CTYPE_INLINE int _tolower(int c)
+__only_inline int _tolower(int c)
 {
 	return (c - 'A' + 'a');
 }
 
-__CTYPE_INLINE int _toupper(int c)
+__only_inline int _toupper(int c)
 {
 	return (c - 'a' + 'A');
 }
@@ -201,7 +190,5 @@ __CTYPE_INLINE int _toupper(int c)
 #endif /* !_ANSI_LIBRARY && !lint */
 
 __END_DECLS
-
-#undef __CTYPE_INLINE
 
 #endif /* !_CTYPE_H_ */

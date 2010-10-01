@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.13 2010/07/26 07:08:22 kettenis Exp $	*/
+/*	$OpenBSD: signal.h,v 1.14 2010/10/01 20:10:24 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -62,13 +62,9 @@ int	sigpending(sigset_t *);
 int	sigprocmask(int, const sigset_t *, sigset_t *);
 int	sigsuspend(const sigset_t *);
 
-#if defined(__GNUC__)
-#  if __GNUC_PREREQ__(4, 2)
-#define __SIGNAL_INLINE	extern __inline __attribute((__gnu_inline__))
-#  else
-#define __SIGNAL_INLINE	extern __inline
-#  endif
-__SIGNAL_INLINE int sigaddset(sigset_t *set, int signo) {
+#if !defined(_ANSI_LIBRARY) && !defined(lint)
+
+__only_inline int sigaddset(sigset_t *set, int signo) {
 	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
@@ -79,7 +75,7 @@ __SIGNAL_INLINE int sigaddset(sigset_t *set, int signo) {
 	return (0);
 }
 
-__SIGNAL_INLINE int sigdelset(sigset_t *set, int signo) {
+__only_inline int sigdelset(sigset_t *set, int signo) {
 	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
@@ -90,7 +86,7 @@ __SIGNAL_INLINE int sigdelset(sigset_t *set, int signo) {
 	return (0);
 }
 
-__SIGNAL_INLINE int sigismember(const sigset_t *set, int signo) {
+__only_inline int sigismember(const sigset_t *set, int signo) {
 	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
@@ -99,7 +95,7 @@ __SIGNAL_INLINE int sigismember(const sigset_t *set, int signo) {
 	}
 	return ((*set & (1 << ((signo)-1))) != 0);
 }
-#endif
+#endif /* !_ANSI_LIBRARY && !lint */
 
 /* List definitions after function declarations, or Reiser cpp gets upset. */
 #define	sigemptyset(set)	(*(set) = 0, 0)
