@@ -1,4 +1,4 @@
-/*	$Id: e_acss.c,v 1.2 2004/02/13 10:05:44 hshoexer Exp $	*/
+/*	$Id: e_acss.c,v 1.3 2010/10/01 23:33:22 djm Exp $	*/
 /*
  * Copyright (c) 2004 The OpenBSD project
  *
@@ -32,7 +32,7 @@ typedef struct {
 static int acss_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		const unsigned char *iv, int enc);
 static int acss_ciph(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		const unsigned char *in, unsigned int inl);
+		const unsigned char *in, size_t inl);
 static int acss_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 static const EVP_CIPHER acss_cipher = {
 	NID_undef,
@@ -64,7 +64,7 @@ acss_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 static int
 acss_ciph(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
-		unsigned int inl)
+		size_t inl)
 {
 	acss(&data(ctx)->ks,inl,in,out);
 	return 1;
