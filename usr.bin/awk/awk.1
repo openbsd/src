@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.36 2010/08/25 19:21:04 deraadt Exp $
+.\"	$OpenBSD: awk.1,v 1.37 2010/10/01 07:06:16 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -23,7 +23,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2010 $
+.Dd $Mdocdate: October 1 2010 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -710,6 +710,12 @@ Returns x shifted by n bits to the left.
 .It Fn rshift x n
 Returns y shifted by n bits to the right.
 .El
+.Sh EXIT STATUS
+.Ex -std awk
+.Pp
+But note that the
+.Ic exit
+expression can modify the exit status.
 .Sh EXAMPLES
 Print lines longer than 72 characters:
 .Pp

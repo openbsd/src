@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.20 2010/09/29 07:44:56 jmc Exp $
+.\"	$OpenBSD: ctags.1,v 1.21 2010/10/01 07:06:16 jmc Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: October 1 2010 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -177,6 +177,8 @@ default output tags file
 .El
 .Sh EXIT STATUS
 .Ex -std ctags
+.Pp
+Duplicate objects are not considered errors.
 .Sh SEE ALSO
 .Xr ex 1 ,
 .Xr vi 1
