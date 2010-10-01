@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.67 2010/09/26 08:00:56 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.68 2010/10/01 21:56:00 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 26 2010 $
+.Dd $Mdocdate: October 1 2010 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -343,6 +343,19 @@ to locate the right directory.
 User settings: set CPAN_REPORT to Yes, CPAN_REPORT_DB to a valid directory,
 and CPAN_REPORT_FROM to a valid email address to automate the reporting
 of regress tests to CPAN.
+.Pp
+If MODCPAN_EXAMPLES is set, the following variables will be set.
+MODCPAN_EXAMPLES_DIST will hold the default directory in the distfile with
+example scripts.
+MODCPAN_EXAMPLES_DIR will be set to the standard installation directory for
+examples.
+Sets the post-install target if none has been defined to install the examples,
+otherwise MODCPAN_POST_INSTALL should be used as such:
+.Bd -literal
+post-install:
+	...
+	${MODCPAN_POST_INSTALL}
+.Ed
 .It devel/cmake
 .It devel/gconf2
 A link from
