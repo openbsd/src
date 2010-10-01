@@ -18,7 +18,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright
+  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials
  *    provided with the distribution.
@@ -298,7 +298,7 @@ BOOL SSL_X509_isSGC(X509 *cert)
 {
     X509_EXTENSION *ext;
     int ext_nid;
-    STACK *sk;
+    STACK_OF(ASN1_OBJECT) *sk;
     BOOL is_sgc;
     int idx;
     int i;
@@ -307,9 +307,9 @@ BOOL SSL_X509_isSGC(X509 *cert)
     idx = X509_get_ext_by_NID(cert, NID_ext_key_usage, -1);
     if (idx >= 0) {
         ext = X509_get_ext(cert, idx);
-        if ((sk = (STACK *)X509V3_EXT_d2i(ext)) != NULL) {
-            for (i = 0; i < sk_num(sk); i++) {
-                ext_nid = OBJ_obj2nid((ASN1_OBJECT *)sk_value(sk, i));
+        if ((sk = (STACK_OF(ASN1_OBJECT)*) X509V3_EXT_d2i(ext)) != NULL) {
+            for (i = 0; i < sk_ASN1_OBJECT_num(sk); i++) {
+                ext_nid = OBJ_obj2nid(sk_ASN1_OBJECT_value(sk, i));
                 if (ext_nid == NID_ms_sgc || ext_nid == NID_ns_sgc) {
                     is_sgc = TRUE;
                     break;
