@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.151 2010/10/01 12:33:14 reyk Exp $
+.\" $OpenBSD: pfctl.8,v 1.152 2010/10/01 12:47:38 reyk Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -48,7 +48,10 @@
 .Op Fl o Ar level
 .Op Fl p Ar device
 .Op Fl S Ar statefile
-.Op Fl s Ar modifier Op Fl R Ar id
+.Xo
+.Oo Fl s Ar modifier
+.Op Fl R Ar id Oc
+.Xc
 .Oo
 .Fl t Ar table
 .Fl T Ar command
