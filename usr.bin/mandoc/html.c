@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.16 2010/09/27 21:25:28 schwarze Exp $ */
+/*	$Id: html.c,v 1.17 2010/10/01 21:38:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -547,6 +547,8 @@ print_text(struct html *h, const char *word)
 	if ( ! print_encode(h, word, 0))
 		if ( ! (h->flags & HTML_NONOSPACE))
 			h->flags &= ~HTML_NOSPACE;
+
+	h->flags &= ~HTML_IGNDELIM;
 
 	/* 
 	 * Note that we don't process the pipe: the parser sees it as

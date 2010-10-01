@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.51 2010/09/23 20:22:31 schwarze Exp $ */
+/*	$Id: term.c,v 1.52 2010/10/01 21:38:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -501,7 +501,7 @@ term_word(struct termp *p, const char *word)
 	else
 		p->flags |= TERMP_NOSPACE;
 
-	p->flags &= ~TERMP_SENTENCE;
+	p->flags &= ~(TERMP_SENTENCE | TERMP_IGNDELIM);
 
 	while (*word) {
 		if ((ssz = strcspn(word, "\\")) > 0)
