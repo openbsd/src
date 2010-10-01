@@ -133,7 +133,50 @@
 # define FD_SETSIZE (8*sizeof(fd_set))
 #endif
 
-#ifdef __OpenBSD__
+#ifdef __VOS__
+int RAND_poll(void)
+{
+	unsigned char buf[ENTROPY_NEEDED];
+	pid_t curr_pid;
+	uid_t curr_uid;
+	static int first=1;
+	int i;
+	long rnd = 0;
+	struct timespec ts;
+	unsigned seed;
+
+/* The VOS random() function starts from a static seed so its
+   initial value is predictable.  If random() returns the
+   initial value, reseed it with dynamic data.  The VOS
+   real-time clock has a granularity of 1 nsec so it should be
+   reasonably difficult to predict its exact value.  Do not
+   gratuitously reseed the PRNG because other code in this
+   process or thread may be using it.  */
+
+	if (first) {
+		first = 0;
+		rnd = random ();
+		if (rnd == 1804289383) {
+			clock_gettime (CLOCK_REALTIME, &ts);
+			curr_pid = getpid();
+			curr_uid = getuid();
+			seed = ts.tv_sec ^ ts.tv_nsec ^ curr_pid ^ curr_uid;
+			srandom (seed);
+		}
+	}
+
+	for (i = 0; i < sizeof(buf); i++) {
+		if (i % 4 == 0)
+			rnd = random();
+		buf[i] = rnd;
+		rnd >>= 8;
+	}
+	RAND_add(buf, sizeof(buf), ENTROPY_NEEDED);
+	memset(buf, 0, sizeof(buf));
+
+	return 1;
+}
+#elif defined __OpenBSD__
 int RAND_poll(void)
 {
 	unsigned char buf[ENTROPY_NEEDED];
@@ -157,7 +200,7 @@ int RAND_poll(void)
 	static const char *randomfiles[] = { DEVRANDOM };
 	struct stat randomstats[sizeof(randomfiles)/sizeof(randomfiles[0])];
 	int fd;
-	size_t i;
+	unsigned int i;
 #endif
 #ifdef DEVRANDOM_EGD
 	static const char *egdsockets[] = { DEVRANDOM_EGD, NULL };
@@ -170,7 +213,8 @@ int RAND_poll(void)
 	 * have this. Use /dev/urandom if you can as /dev/random may block
 	 * if it runs out of random entries.  */
 
-	for (i=0; i<sizeof(randomfiles)/sizeof(randomfiles[0]) && n < ENTROPY_NEEDED; i++)
+	for (i = 0; (i < sizeof(randomfiles)/sizeof(randomfiles[0])) &&
+			(n < ENTROPY_NEEDED); i++)
 		{
 		if ((fd = open(randomfiles[i], O_RDONLY
 #ifdef O_NONBLOCK
@@ -187,7 +231,7 @@ int RAND_poll(void)
 			{
 			int usec = 10*1000; /* spend 10ms on each file */
 			int r;
-			size_t j;
+			unsigned int j;
 			struct stat *st=&randomstats[i];
 
 			/* Avoid using same input... Used to be O_NOFOLLOW
@@ -205,7 +249,12 @@ int RAND_poll(void)
 				{
 				int try_read = 0;
 
-#if defined(OPENSSL_SYS_LINUX)
+#if defined(OPENSSL_SYS_BEOS_R5)
+				/* select() is broken in BeOS R5, so we simply
+				 *  try to read something and snooze if we couldn't */
+				try_read = 1;
+
+#elif defined(OPENSSL_SYS_LINUX)
 				/* use poll() */
 				struct pollfd pset;
 				
@@ -252,6 +301,10 @@ int RAND_poll(void)
 					r = read(fd,(unsigned char *)tmpbuf+n, ENTROPY_NEEDED-n);
 					if (r > 0)
 						n += r;
+#if defined(OPENSSL_SYS_BEOS_R5)
+					if (r == 0)
+						snooze(t.tv_usec);
+#endif
 					}
 				else
 					r = -1;
@@ -304,6 +357,14 @@ int RAND_poll(void)
 
 	l=time(NULL);
 	RAND_add(&l,sizeof(l),0.0);
+
+#if defined(OPENSSL_SYS_BEOS)
+	{
+	system_info sysInfo;
+	get_system_info(&sysInfo);
+	RAND_add(&sysInfo,sizeof(sysInfo),0);
+	}
+#endif
 
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	return 1;

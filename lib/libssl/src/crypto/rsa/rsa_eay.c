@@ -115,7 +115,7 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-#if !defined(RSA_NULL) && !defined(OPENSSL_FIPS)
+#ifndef RSA_NULL
 
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
@@ -256,6 +256,7 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 {
 	BN_BLINDING *ret;
 	int got_write_lock = 0;
+	CRYPTO_THREADID cur;
 
 	CRYPTO_r_lock(CRYPTO_LOCK_RSA);
 
@@ -273,7 +274,8 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 	if (ret == NULL)
 		goto err;
 
-	if (BN_BLINDING_get_thread_id(ret) == CRYPTO_thread_id())
+	CRYPTO_THREADID_current(&cur);
+	if (!CRYPTO_THREADID_cmp(&cur, BN_BLINDING_thread_id(ret)))
 		{
 		/* rsa->blinding is ours! */
 
@@ -352,28 +354,6 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	BN_CTX *ctx=NULL;
 	int local_blinding = 0;
 	BN_BLINDING *blinding = NULL;
-
-	if (BN_num_bits(rsa->n) > OPENSSL_RSA_MAX_MODULUS_BITS)
-		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_MODULUS_TOO_LARGE);
-		return -1;
-		}
-
-	if (BN_ucmp(rsa->n, rsa->e) <= 0)
-		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_BAD_E_VALUE);
-		return -1;
-		}
-
-	/* for large moduli, enforce exponent limit */
-	if (BN_num_bits(rsa->n) > OPENSSL_RSA_SMALL_MODULUS_BITS)
-		{
-		if (BN_num_bits(rsa->e) > OPENSSL_RSA_MAX_PUBEXP_BITS)
-			{
-			RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_BAD_E_VALUE);
-			return -1;
-			}
-		}
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_CTX_start(ctx);

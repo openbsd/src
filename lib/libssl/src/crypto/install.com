@@ -3,13 +3,24 @@ $!
 $! Author: Richard Levitte <richard@levitte.org>
 $! Time of creation: 22-MAY-1998 10:13
 $!
+$! Changes by Zoltan Arpadffy <zoli@polarhome.com>
+$!
 $! P1	root of the directory tree
 $!
 $	IF P1 .EQS. ""
 $	THEN
 $	    WRITE SYS$OUTPUT "First argument missing."
-$	    WRITE SYS$OUTPUT "Should be the directory where you want things installed."
+$	    WRITE SYS$OUTPUT -
+		  "It should be the directory where you want things installed."
 $	    EXIT
+$	ENDIF
+$
+$	IF (F$GETSYI("CPU").LT.128)
+$	THEN
+$	    ARCH := VAX
+$	ELSE
+$	    ARCH = F$EDIT( F$GETSYI( "ARCH_NAME"), "UPCASE")
+$	    IF (ARCH .EQS. "") THEN ARCH = "UNK"
 $	ENDIF
 $
 $	ROOT = F$PARSE(P1,"[]A.;0",,,"SYNTAX_ONLY,NO_CONCEAL") - "A.;0"
@@ -19,30 +30,28 @@ $	ROOT_DIR = F$PARSE(ROOT,,,"DIRECTORY","SYNTAX_ONLY") -
 $	ROOT = ROOT_DEV + "[" + ROOT_DIR
 $
 $	DEFINE/NOLOG WRK_SSLROOT 'ROOT'.] /TRANS=CONC
-$	DEFINE/NOLOG WRK_SSLVLIB WRK_SSLROOT:[VAX_LIB]
-$	DEFINE/NOLOG WRK_SSLALIB WRK_SSLROOT:[ALPHA_LIB]
+$	DEFINE/NOLOG WRK_SSLLIB WRK_SSLROOT:['ARCH'_LIB]
 $	DEFINE/NOLOG WRK_SSLINCLUDE WRK_SSLROOT:[INCLUDE]
 $
 $	IF F$PARSE("WRK_SSLROOT:[000000]") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLROOT:[000000]
-$	IF F$PARSE("WRK_SSLVLIB:") .EQS. "" THEN -
-	   CREATE/DIR/LOG WRK_SSLVLIB:
-$	IF F$PARSE("WRK_SSLALIB:") .EQS. "" THEN -
-	   CREATE/DIR/LOG WRK_SSLALIB:
+$	IF F$PARSE("WRK_SSLLIB:") .EQS. "" THEN -
+	   CREATE/DIR/LOG WRK_SSLLIB:
 $	IF F$PARSE("WRK_SSLINCLUDE:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLINCLUDE:
 $
 $	SDIRS := ,-
+		 _'ARCH',-
 		 OBJECTS,-
-		 MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
+		 MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,-
 		 DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
 		 BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,-
 		 BUFFER,BIO,STACK,LHASH,RAND,ERR,-
 		 EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,-
 		 UI,KRB5,-
-		 STORE,PQUEUE,JPAKE
-$	EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,-
-		symhacks.h,ossl_typ.h
+		 STORE,CMS,PQUEUE,TS,JPAKE
+$	EXHEADER_ := crypto.h,opensslv.h,ebcdic.h,symhacks.h,ossl_typ.h
+$	EXHEADER__'ARCH' := opensslconf.h
 $	EXHEADER_OBJECTS := objects.h,obj_mac.h
 $	EXHEADER_MD2 := md2.h
 $	EXHEADER_MD4 := md4.h
@@ -51,6 +60,7 @@ $	EXHEADER_SHA := sha.h
 $	EXHEADER_MDC2 := mdc2.h
 $	EXHEADER_HMAC := hmac.h
 $	EXHEADER_RIPEMD := ripemd.h
+$	EXHEADER_WHRLPOOL := whrlpool.h
 $	EXHEADER_DES := des.h,des_old.h
 $	EXHEADER_AES := aes.h
 $	EXHEADER_RC2 := rc2.h
@@ -61,6 +71,7 @@ $	EXHEADER_BF := blowfish.h
 $	EXHEADER_CAST := cast.h
 $	EXHEADER_CAMELLIA := camellia.h
 $	EXHEADER_SEED := seed.h
+$	EXHEADER_MODES := modes.h
 $	EXHEADER_BN := bn.h
 $	EXHEADER_EC := ec.h
 $	EXHEADER_RSA := rsa.h
@@ -91,12 +102,13 @@ $	EXHEADER_UI := ui.h,ui_compat.h
 $	EXHEADER_KRB5 := krb5_asn.h
 $!	EXHEADER_STORE := store.h,str_compat.h
 $	EXHEADER_STORE := store.h
-$	EXHEADER_PQUEUE := pqueue.h,pq_compat.h
+$	EXHEADER_CMS := cms.h
+$	EXHEADER_PQUEUE := pqueue.h
+$	EXHEADER_TS := ts.h
 $	EXHEADER_JPAKE := jpake.h
 $	LIBS := LIBCRYPTO
 $
-$	VEXE_DIR := [-.VAX.EXE.CRYPTO]
-$	AEXE_DIR := [-.AXP.EXE.CRYPTO]
+$	EXE_DIR := [-.'ARCH'.EXE.CRYPTO]
 $
 $	I = 0
 $ LOOP_SDIRS: 
@@ -108,7 +120,12 @@ $	IF D .EQS. ""
 $	THEN
 $	  COPY 'tmp' WRK_SSLINCLUDE: /LOG
 $	ELSE
-$	  COPY [.'D']'tmp' WRK_SSLINCLUDE: /LOG
+$	  IF D .EQS. "_''ARCH'"
+$	  THEN
+$	    COPY [-.'ARCH'.CRYPTO]'tmp' WRK_SSLINCLUDE: /LOG
+$	  ELSE
+$	    COPY [.'D']'tmp' WRK_SSLINCLUDE: /LOG
+$	  ENDIF
 $	ENDIF
 $	SET FILE/PROT=WORLD:RE WRK_SSLINCLUDE:'tmp'
 $	GOTO LOOP_SDIRS
@@ -120,27 +137,16 @@ $	E = F$EDIT(F$ELEMENT(I, ",", LIBS),"TRIM")
 $	I = I + 1
 $	IF E .EQS. "," THEN GOTO LOOP_LIB_END
 $	SET NOON
-$	IF F$SEARCH(VEXE_DIR+E+".OLB") .NES. ""
+$	IF F$SEARCH(EXE_DIR+E+".OLB") .NES. ""
 $	THEN
-$	  COPY 'VEXE_DIR''E'.OLB WRK_SSLVLIB:'E'.OLB/log
-$	  SET FILE/PROT=W:RE WRK_SSLVLIB:'E'.OLB
+$	  COPY 'EXE_DIR''E'.OLB WRK_SSLLIB:'E'.OLB/log
+$	  SET FILE/PROT=W:RE WRK_SSLLIB:'E'.OLB
 $	ENDIF
 $	! Preparing for the time when we have shareable images
-$	IF F$SEARCH(VEXE_DIR+E+".EXE") .NES. ""
+$	IF F$SEARCH(EXE_DIR+E+".EXE") .NES. ""
 $	THEN
-$	  COPY 'VEXE_DIR''E'.EXE WRK_SSLVLIB:'E'.EXE/log
-$	  SET FILE/PROT=W:RE WRK_SSLVLIB:'E'.EXE
-$	ENDIF
-$	IF F$SEARCH(AEXE_DIR+E+".OLB") .NES. ""
-$	THEN
-$	  COPY 'AEXE_DIR''E'.OLB WRK_SSLALIB:'E'.OLB/log
-$	  SET FILE/PROT=W:RE WRK_SSLALIB:'E'.OLB
-$	ENDIF
-$	! Preparing for the time when we have shareable images
-$	IF F$SEARCH(AEXE_DIR+E+".EXE") .NES. ""
-$	THEN
-$	  COPY 'AEXE_DIR''E'.EXE WRK_SSLALIB:'E'.EXE/log
-$	  SET FILE/PROT=W:RE WRK_SSLALIB:'E'.EXE
+$	  COPY 'EXE_DIR''E'.EXE WRK_SSLLIB:'E'.EXE/log
+$	  SET FILE/PROT=W:RE WRK_SSLLIB:'E'.EXE
 $	ENDIF
 $	SET ON
 $	GOTO LOOP_LIB

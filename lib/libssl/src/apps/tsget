@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Written by Zoltan Glozik <zglozik@stones.com>.
 # Copyright (c) 2002 The OpenTSA Project.  All rights reserved.
-$::version = '$Id: tsget,v 1.1.1.2 2010/10/01 22:54:01 djm Exp $';
+$::version = '$Id: tsget,v 1.2 2010/10/01 22:58:51 djm Exp $';
 
 use strict;
 use IO::Handle;

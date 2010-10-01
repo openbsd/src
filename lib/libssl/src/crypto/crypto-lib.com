@@ -6,10 +6,11 @@ $!               A-Com Computing, Inc.
 $!               byer@mail.all-net.net
 $!
 $!  Changes by Richard Levitte <richard@levitte.org>
+$!             Zoltan Arpadffy <arpadffy@polarhome.com>
 $!
 $!  This command files compiles and creates the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" 
-$!  library for OpenSSL.  The "xxx" denotes the machine architecture of AXP
-$!  or VAX.
+$!  library for OpenSSL.  The "xxx" denotes the machine architecture, ALPHA,
+$!  IA64 or VAX.
 $!
 $!  It was re-written so it would try to determine what "C" compiler to use 
 $!  or you can specify which "C" compiler to use.
@@ -17,28 +18,28 @@ $!
 $!  Specify the following as P1 to build just that part or ALL to just
 $!  build everything.
 $!
-$!    		LIBRARY    To just compile the [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
-$!    		APPS       To just compile the [.xxx.EXE.CRYPTO]*.EXE
-$!		ALL	   To do both LIBRARY and APPS
+$!    	LIBRARY    To just compile the [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
+$!    	APPS       To just compile the [.xxx.EXE.CRYPTO]*.EXE
+$!	ALL	   To do both LIBRARY and APPS
 $!
 $!  Specify DEBUG or NODEBUG as P2 to compile with or without debugger
 $!  information.
 $!
 $!  Specify which compiler at P3 to try to compile under.
 $!
-$!	   VAXC	 For VAX C.
-$!	   DECC	 For DEC C.
-$!	   GNUC	 For GNU C.
+$!	VAXC	   For VAX C.
+$!	DECC	   For DEC C.
+$!	GNUC	   For GNU C.
 $!
-$!  If you don't speficy a compiler, it will try to determine which
+$!  If you don't specify a compiler, it will try to determine which
 $!  "C" compiler to use.
 $!
 $!  P4, if defined, sets a TCP/IP library to use, through one of the following
 $!  keywords:
 $!
-$!	UCX		for UCX
-$!	TCPIP		for TCPIP (post UCX)
-$!	SOCKETSHR	for SOCKETSHR+NETLIB
+$!	UCX	   For UCX
+$!	TCPIP	   For TCPIP (post UCX)
+$!	SOCKETSHR  For SOCKETSHR+NETLIB
 $!
 $!  P5, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
@@ -54,36 +55,49 @@ $ TCPIP_LIB = ""
 $!
 $! Check Which Architecture We Are Using.
 $!
-$ IF (F$GETSYI("CPU").GE.128)
+$ IF (F$GETSYI("CPU").LT.128)
 $ THEN
 $!
-$!  The Architecture Is AXP
+$!  The Architecture Is VAX
 $!
-$   ARCH := AXP
+$   ARCH = "VAX"
 $!
 $! Else...
 $!
 $ ELSE
 $!
-$!  The Architecture Is VAX.
+$!  The Architecture Is Alpha, IA64 or whatever comes in the future.
 $!
-$   ARCH := VAX
+$   ARCH = F$EDIT( F$GETSYI( "ARCH_NAME"), "UPCASE")
+$   IF (ARCH .EQS. "") THEN ARCH = "UNK"
 $!
 $! End The Architecture Check.
 $!
 $ ENDIF
 $!
 $! Define The Different Encryption Types.
+$! NOTE: Some might think this list ugly.  However, it's made this way to
+$! reflect the SDIRS variable in [-]Makefile.org as closely as possible,
+$! thereby making it fairly easy to verify that the lists are the same.
 $!
+$ ET_WHIRLPOOL = "WHRLPOOL"
+$ IF ARCH .EQS. "VAX" THEN ET_WHIRLPOOL = ""
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
-		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
-		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,"+ -
-		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,"+ -
+		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ET_WHIRLPOOL+","+ -
+		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,MODES,"+ -
+		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
-		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
+		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "STORE,CMS,PQUEUE,JPAKE"
+		  "STORE,CMS,PQUEUE,TS,JPAKE"
+$! Define The OBJ Directory.
+$!
+$ OBJ_DIR := SYS$DISK:[-.'ARCH'.OBJ.CRYPTO]
+$!
+$! Define The EXE Directory.
+$!
+$ EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -97,9 +111,6 @@ $! Tell The User What Kind of Machine We Run On.
 $!
 $ WRITE SYS$OUTPUT "Compiling On A ",ARCH," Machine."
 $!
-$! Define The OBJ Directory.
-$!
-$ OBJ_DIR := SYS$DISK:[-.'ARCH'.OBJ.CRYPTO]
 $!
 $! Check To See If The Architecture Specific OBJ Directory Exists.
 $!
@@ -113,10 +124,6 @@ $!
 $! End The Architecture Specific OBJ Directory Check.
 $!
 $ ENDIF
-$!
-$! Define The EXE Directory.
-$!
-$ EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]
 $!
 $! Check To See If The Architecture Specific Directory Exists.
 $!
@@ -161,15 +168,16 @@ $!
 $ APPS_DES = "DES/DES,CBC3_ENC"
 $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
-$ LIB_ = "cryptlib,dyn_lck,mem,mem_clr,mem_dbg,cversion,ex_data,tmdiff,cpt_err,ebcdic,uid,o_time,o_str,o_dir,o_init,fips_err"
+$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,ebcdic,uid,o_time,o_str,o_dir"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
 $ LIB_SHA = "sha_dgst,sha1dgst,sha_one,sha1_one,sha256,sha512"
 $ LIB_MDC2 = "mdc2dgst,mdc2_one"
-$ LIB_HMAC = "hmac"
+$ LIB_HMAC = "hmac,hm_ameth,hm_pmeth"
 $ LIB_RIPEMD = "rmd_dgst,rmd_one"
-$ LIB_DES = "des_lib,set_key,ecb_enc,cbc_enc,"+ -
+$ LIB_WHRLPOOL = "wp_dgst,wp_block"
+$ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"ecb3_enc,cfb64enc,cfb64ede,cfb_enc,ofb64ede,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
@@ -184,36 +192,39 @@ $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
 $ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
 	"cmll_cfb,cmll_ctr"
-$ LIB_SEED = "seed,seed_cbc,seed_ecb,seed_cfb,seed_ofb"
+$ LIB_SEED = "seed,seed_ecb,seed_cbc,seed_cfb,seed_ofb"
+$ LIB_MODES = "cbc128,ctr128,cfb128,ofb128"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
-$ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.EQS."AXP" THEN LIB_BN_ASM = "bn_asm"
+$ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
+     LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
 	"bn_recp,bn_mont,bn_mpi,bn_exp2,bn_gf2m,bn_nist,"+ -
-	"bn_depr,bn_x931p,bn_const,bn_opt"
+	"bn_depr,bn_const"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
-	"ec2_smpl,ec2_mult"
+	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
-	"rsa_pss,rsa_x931,rsa_x931g,rsa_asn1,rsa_depr,rsa_eng"
+	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn,"+ -
+	"rsa_pmeth"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
-	"dsa_err,dsa_ossl,dsa_depr,dsa_utl"
+	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_pmeth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
-$ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr"
+$ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
+	"dh_ameth,dh_pmeth,dh_prn"
 $ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
-	"dso_openssl,dso_win32,dso_vms"
+	"dso_openssl,dso_win32,dso_vms,dso_beos"
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
-	"tb_cipher,tb_digest,"+ -
-	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,eng_padlock"+ -
-	"eng_aesni"
-$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
-	"aes_ctr,aes_ige,aes_wrap"
-$ LIB_BUFFER = "buffer,buf_str,buf_err"
+	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
+	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"
+$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,aes_ctr,"+ -
+	"aes_ige,aes_wrap"
+$ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
@@ -225,33 +236,34 @@ $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 	"rand_vms"
-$ LIB_ERR = "err,err_def,err_all,err_prn,err_str,err_bio"
-$ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
-$ LIB_EVP = "encode,digest,dig_eng,evp_enc,evp_key,evp_acnf,evp_cnf,"+ -
+$ LIB_ERR = "err,err_all,err_prn"
+$ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"
+$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
 	"e_des,e_bf,e_idea,e_des3,e_camellia,"+ -
 	"e_rc4,e_aes,names,e_seed,"+ -
-	"e_xcbc_d,e_rc2,e_cast,e_rc5,enc_min"
-$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
+	"e_xcbc_d,e_rc2,e_cast,e_rc5"
+$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"m_dss,m_dss1,m_mdc2,m_ripemd,m_ecdsa,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
-$ LIB_EVP_3 = "e_old"
+$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,x_bignum,"+ -
 	"x_long,x_name,x_x509,x_x509a,x_crl,x_info,x_spki,nsseq,"+ -
-	"d2i_pu,d2i_pr,i2d_pu,i2d_pr"
+	"x_nx509,d2i_pu,d2i_pr,i2d_pu,i2d_pr"
 $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
+	"tasn_prn,ameth_lib,"+ -
 	"f_int,f_string,n_pkey,"+ -
-	"f_enum,a_hdr,x_pkey,a_bool,x_exten,asn_mime,"+ -
-	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_meth,a_bytes,a_strnid,"+ -
+	"f_enum,x_pkey,a_bool,x_exten,bio_asn1,bio_ndef,asn_mime,"+ -
+	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
-	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey"
+	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey,pvkfmt"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 	"x509_obj,x509_req,x509spki,x509_vfy,"+ -
 	"x509_set,x509cset,x509rset,x509_err,"+ -
@@ -267,7 +279,7 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 $ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall,conf_sap"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
-	"pk7_mime"
+	"pk7_mime,bio_pk7"
 $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_init,p12_key,p12_kiss,p12_mutl,"+ -
 	"p12_utl,p12_npas,pk12err,p12_p8d,p12_p8e"
@@ -282,6 +294,9 @@ $ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
 	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
 $ LIB_PQUEUE = "pqueue"
+$ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
+	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
+	"ts_asn1"
 $ LIB_JPAKE = "jpake,jpake_err"
 $!
 $! Setup exceptional compilations
@@ -292,7 +307,7 @@ $ ! Disable the DOLLARID warning
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,o_time,o_dir"
 $ ! Disable disjoint optimization
 $ COMPILEWITH_CC5 = ",md2_dgst,md4_dgst,md5_dgst,mdc2dgst," + -
-                    "sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
+                    "seed,sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
 $ ! Disable the MIXLINKAGE warning
 $ COMPILEWITH_CC6 = ",enc_read,set_key,"
 $!
@@ -335,11 +350,11 @@ $! Create The Library and Apps Module Names.
 $!
 $ LIB_MODULE = "LIB_" + MODULE_NAME
 $ APPS_MODULE = "APPS_" + MODULE_NAME
-$ IF (MODULE_NAME.EQS."ASN1_2")
+$ IF (F$EXTRACT(0,5,MODULE_NAME).EQS."ASN1_")
 $ THEN
 $   MODULE_NAME = "ASN1"
 $ ENDIF
-$ IF (MODULE_NAME.EQS."EVP_2")
+$ IF (F$EXTRACT(0,4,MODULE_NAME).EQS."EVP_")
 $ THEN
 $   MODULE_NAME = "EVP"
 $ ENDIF
@@ -354,7 +369,7 @@ $!
 $ IF F$TYPE('LIB_MODULE') .EQS. ""
 $ THEN
 $   WRITE SYS$ERROR ""
-$   WRITE SYS$ERROR "The module ",MODULE_NAME," does not exist.  Continuing..."
+$   WRITE SYS$ERROR "The module ",MODULE_NAME1," does not exist.  Continuing..."
 $   WRITE SYS$ERROR ""
 $   GOTO MODULE_NEXT
 $ ENDIF
@@ -695,7 +710,7 @@ $!
 $   IF (F$SEARCH(OPT_FILE).EQS."")
 $   THEN
 $!
-$!    Figure Out If We Need An AXP Or A VAX Linker Option File.
+$!    Figure Out If We Need A non-VAX Or A VAX Linker Option File.
 $!
 $     IF ARCH .EQS. "VAX"
 $     THEN
@@ -715,19 +730,19 @@ $!    Else...
 $!
 $     ELSE
 $!
-$!      Create The AXP Linker Option File.
+$!      Create The non-VAX Linker Option File.
 $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For AXP To Link Agianst 
+! Default System Options File For non-VAX To Link Agianst 
 ! The Sharable C Runtime Library.
 !
 SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
 SYS$SHARE:CMA$OPEN_RTL/SHARE
 $EOD
 $!
-$!    End The VAX/AXP DEC C Option File Check.
+$!    End The DEC C Option File Check.
 $!
 $     ENDIF
 $!
@@ -764,12 +779,12 @@ $! Else...
 $!
 $ ELSE
 $!
-$!  Else, Check To See If P1 Has A Valid Arguement.
+$!  Else, Check To See If P1 Has A Valid Argument.
 $!
 $   IF (P1.EQS."LIBRARY").OR.(P1.EQS."APPS")
 $   THEN
 $!
-$!    A Valid Arguement.
+$!    A Valid Argument.
 $!
 $     BUILDALL = P1
 $!
@@ -788,15 +803,16 @@ $     WRITE SYS$OUTPUT "    APPS     :  To Compile Just The [.xxx.EXE.CRYPTO]*.E
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For:"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "        AXP  :  Alpha Architecture."
-$     WRITE SYS$OUTPUT "        VAX  :  VAX Architecture."
+$     WRITE SYS$OUTPUT "    ALPHA    :  Alpha Architecture."
+$     WRITE SYS$OUTPUT "    IA64     :  IA64 Architecture."
+$     WRITE SYS$OUTPUT "    VAX      :  VAX Architecture."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -849,7 +865,7 @@ $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -914,7 +930,7 @@ $   ELSE
 $!
 $!    Check To See If We Have VAXC Or DECC.
 $!
-$     IF (ARCH.EQS."AXP").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
+$     IF (ARCH.NES."VAX").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
 $     THEN 
 $!
 $!      Looks Like DECC, Set To Use DECC.
@@ -1020,12 +1036,12 @@ $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
            "/NOLIST/PREFIX=ALL" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[._''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_DECC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_DECC_OPTIONS.OPT"
 $!
 $!  End DECC Check.
 $!
@@ -1047,14 +1063,14 @@ $!
 $!    Compile Using VAXC.
 $!
 $     CC = "CC"
-$     IF ARCH.EQS."AXP"
+$     IF ARCH.NES."VAX"
 $     THEN
-$	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
+$	WRITE SYS$OUTPUT "There is no VAX C on ''ARCH'!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[._''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -1064,7 +1080,7 @@ $     DEFINE/NOLOG SYS SYS$COMMON:[SYSLIB]
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_VAXC_OPTIONS.OPT"
 $!
 $!  End VAXC Check
 $!
@@ -1086,12 +1102,12 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[._''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_GNUC_OPTIONS.OPT"
 $!
 $!  End The GNU C Check.
 $!
@@ -1136,7 +1152,7 @@ $!  Show user the result
 $!
 $   WRITE/SYMBOL SYS$OUTPUT "Main C Compiling Command: ",CC
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!
@@ -1154,14 +1170,14 @@ $!  Time To EXIT.
 $!
 $   EXIT
 $!
-$! End The Valid Arguement Check.
+$! End The Valid Argument Check.
 $!
 $ ENDIF
 $!
 $! Build a MACRO command for the architecture at hand
 $!
 $ IF ARCH .EQS. "VAX" THEN MACRO = "MACRO/''DEBUGGER'"
-$ IF ARCH .EQS. "AXP" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
+$ IF ARCH .NES. "VAX" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
 $!
 $!  Show user the result
 $!
@@ -1249,7 +1265,7 @@ $!  Print info
 $!
 $   WRITE SYS$OUTPUT "TCP/IP library spec: ", TCPIP_LIB
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!

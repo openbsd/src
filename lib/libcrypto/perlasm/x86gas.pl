@@ -180,7 +180,16 @@ sub ::align
 sub ::picmeup
 { my($dst,$sym,$base,$reflabel)=@_;
 
-    if ($::pic && ($::elf || $::aout))
+    if ($::openbsd)
+    {  &::emitraw("#ifdef PIC");
+       &::emitraw("PIC_PROLOGUE");
+       &::mov($dst, &::DWP("PIC_GOT($sym)"));
+       &::emitraw("PIC_EPILOGUE");
+       &::emitraw("#else /* PIC */");
+       &::lea($dst,&::DWP($sym));
+       &::emitraw("#endif /* PIC */");
+    }
+    elsif ($::pic && ($::elf || $::aout))
     {	if (!defined($base))
 	{   &::call(&::label("PIC_me_up"));
 	    &::set_label("PIC_me_up");
@@ -206,7 +215,18 @@ sub ::picmeup
 sub ::initseg
 { my $f=$nmdecor.shift;
 
-    if ($::elf)
+    if ($::openbsd)
+    {	$initseg.=<<___;
+.section	.init
+PIC_PROLOGUE
+	call	PIC_PLT($f)
+PIC_EPILOGUE
+	jmp	.Linitalign
+.align	$align
+.Linitalign:
+___
+    }
+    elsif ($::elf)
     {	$initseg.=<<___;
 .section	.init
 	call	$f

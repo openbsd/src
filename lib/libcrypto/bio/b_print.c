@@ -115,8 +115,8 @@
 #define LDOUBLE double
 #endif
 
-#if HAVE_LONG_LONG
-# if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
+#ifdef HAVE_LONG_LONG
+# if defined(_WIN32) && !defined(__GNUC__)
 # define LLONG __int64
 # else
 # define LLONG long long
@@ -808,7 +808,6 @@ int BIO_vprintf (BIO *bio, const char *format, va_list args)
 	}
 
 /* As snprintf is not available everywhere, we provide our own implementation.
- * In case of overflow or error, this returns -1.
  * This function has nothing to do with BIOs, but it's closely related
  * to BIO_printf, and we need *some* name prefix ...
  * (XXX  the function should be renamed, but to what?) */
@@ -833,10 +832,10 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
 	_dopr(&buf, NULL, &n, &retlen, &truncated, format, args);
 
 	if (truncated)
-		/* In case of truncation, return -1 unlike traditional snprintf.
+		/* In case of truncation, return -1 like traditional snprintf.
 		 * (Current drafts for ISO/IEC 9899 say snprintf should return
 		 * the number of characters that would have been written,
-		 * had the buffer been large enough, as it did historically.) */
+		 * had the buffer been large enough.) */
 		return -1;
 	else
 		return (retlen <= INT_MAX) ? (int)retlen : -1;

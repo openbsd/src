@@ -75,9 +75,7 @@
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif
-#ifdef MAC_OS_pre_X
-# include <stat.h>
-#else
+#ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 #endif
 
@@ -111,14 +109,26 @@ int RAND_load_file(const char *file, long bytes)
 	 * if bytes == -1, read complete file. */
 
 	MS_STATIC unsigned char buf[BUFSIZE];
+#ifndef OPENSSL_NO_POSIX_IO
 	struct stat sb;
+#endif
 	int i,ret=0,n;
 	FILE *in;
 
 	if (file == NULL) return(0);
 
+#ifndef OPENSSL_NO_POSIX_IO
+#ifdef PURIFY
+	/* struct stat can have padding and unused fields that may not be
+	 * initialized in the call to stat(). We need to clear the entire
+	 * structure before calling RAND_add() to avoid complaints from
+	 * applications such as Valgrind.
+	 */
+	memset(&sb, 0, sizeof(sb));
+#endif
 	if (stat(file,&sb) < 0) return(0);
 	RAND_add(&sb,sizeof(sb),0.0);
+#endif
 	if (bytes == 0) return(ret);
 
 #ifdef OPENSSL_SYS_VMS
@@ -127,7 +137,7 @@ int RAND_load_file(const char *file, long bytes)
 	in=fopen(file,"rb");
 #endif
 	if (in == NULL) goto err;
-#if defined(S_IFBLK) && defined(S_IFCHR)
+#if defined(S_IFBLK) && defined(S_IFCHR) && !defined(OPNESSL_NO_POSIX_IO)
 	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
 	  /* this file is a device. we don't want read an infinite number
 	   * of bytes from a random device, nor do we want to use buffered
@@ -170,12 +180,13 @@ int RAND_write_file(const char *file)
 	int i,ret=0,rand_err=0;
 	FILE *out = NULL;
 	int n;
+#ifndef OPENSSL_NO_POSIX_IO
 	struct stat sb;
 	
 	i=stat(file,&sb);
 	if (i != -1) { 
-#if defined(S_IFBLK) && defined(S_IFCHR)
-	  if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
+#if defined(S_ISBLK) && defined(S_ISCHR)
+	  if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
 	    /* this file is a device. we don't write back to it. 
 	     * we "succeed" on the assumption this is some sort 
 	     * of random device. Otherwise attempting to write to 
@@ -185,14 +196,16 @@ int RAND_write_file(const char *file)
 	  }
 #endif
 	}
+#endif
 
-#if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS)
+#if defined(O_CREAT) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_SYS_VMS)
 	{
-	/* For some reason Win32 can't write to files created this way */
-	
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 	/* chmod(..., 0600) is too late to protect the file,
 	 * permissions should be restrictive from the start */
-	int fd = open(file, O_CREAT, 0600);
+	int fd = open(file, O_WRONLY|O_CREAT|O_BINARY, 0600);
 	if (fd != -1)
 		out = fdopen(fd, "wb");
 	}

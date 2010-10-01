@@ -336,6 +336,7 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 	dest->store_meth = src->store_meth;
 	dest->ciphers = src->ciphers;
 	dest->digests = src->digests;
+	dest->pkey_meths = src->pkey_meths;
 	dest->destroy = src->destroy;
 	dest->init = src->init;
 	dest->finish = src->finish;
@@ -412,6 +413,7 @@ ENGINE *ENGINE_by_id(const char *id)
 		return iterator;
 		}
 notfound:
+	ENGINE_free(iterator);
 	ENGINEerr(ENGINE_F_ENGINE_BY_ID,ENGINE_R_NO_SUCH_ENGINE);
 	ERR_add_error_data(2, "id=", id);
 	return NULL;

@@ -1,6 +1,6 @@
 /* crypto/engine/eng_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,6 +86,8 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 {ERR_FUNC(ENGINE_F_ENGINE_GET_DEFAULT_TYPE),	"ENGINE_GET_DEFAULT_TYPE"},
 {ERR_FUNC(ENGINE_F_ENGINE_GET_DIGEST),	"ENGINE_get_digest"},
 {ERR_FUNC(ENGINE_F_ENGINE_GET_NEXT),	"ENGINE_get_next"},
+{ERR_FUNC(ENGINE_F_ENGINE_GET_PKEY_ASN1_METH),	"ENGINE_get_pkey_asn1_meth"},
+{ERR_FUNC(ENGINE_F_ENGINE_GET_PKEY_METH),	"ENGINE_get_pkey_meth"},
 {ERR_FUNC(ENGINE_F_ENGINE_GET_PREV),	"ENGINE_get_prev"},
 {ERR_FUNC(ENGINE_F_ENGINE_INIT),	"ENGINE_init"},
 {ERR_FUNC(ENGINE_F_ENGINE_LIST_ADD),	"ENGINE_LIST_ADD"},
@@ -124,6 +126,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ERR_REASON(ENGINE_R_DSO_FAILURE)        ,"DSO failure"},
 {ERR_REASON(ENGINE_R_DSO_NOT_FOUND)      ,"dso not found"},
 {ERR_REASON(ENGINE_R_ENGINES_SECTION_ERROR),"engines section error"},
+{ERR_REASON(ENGINE_R_ENGINE_CONFIGURATION_ERROR),"engine configuration error"},
 {ERR_REASON(ENGINE_R_ENGINE_IS_NOT_IN_LIST),"engine is not in the list"},
 {ERR_REASON(ENGINE_R_ENGINE_SECTION_ERROR),"engine section error"},
 {ERR_REASON(ENGINE_R_FAILED_LOADING_PRIVATE_KEY),"failed loading private key"},
@@ -150,6 +153,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ERR_REASON(ENGINE_R_RSA_NOT_IMPLEMENTED),"rsa not implemented"},
 {ERR_REASON(ENGINE_R_UNIMPLEMENTED_CIPHER),"unimplemented cipher"},
 {ERR_REASON(ENGINE_R_UNIMPLEMENTED_DIGEST),"unimplemented digest"},
+{ERR_REASON(ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD),"unimplemented public key method"},
 {ERR_REASON(ENGINE_R_VERSION_INCOMPATIBILITY),"version incompatibility"},
 {0,NULL}
 	};

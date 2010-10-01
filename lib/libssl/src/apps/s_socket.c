@@ -62,6 +62,12 @@
 #include <errno.h>
 #include <signal.h>
 
+#ifdef FLAT_INC
+#include "e_os2.h"
+#else
+#include "../e_os2.h"
+#endif
+
 /* With IPv6, it looks like Digital has mixed up the proper order of
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
@@ -277,7 +283,7 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
 	{
 	int sock;
 	char *name = NULL;
-	int accept_socket;
+	int accept_socket = 0;
 	int i;
 
 	if (!init_server(&accept_socket,port,type)) return(0);
