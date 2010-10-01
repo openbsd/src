@@ -1,11 +1,11 @@
 $!
-$!  MAKEAPPS.COM
+$!  MAKEENGINES.COM
 $!  Written By:  Richard Levitte
 $!               richard@levitte.org
 $!
 $!  This command file compiles and creates the various engines in form
 $!  of shared images.  They are placed in [.xxx.EXE.ENGINES], where "xxx"
-$!  is either AXP or VAX depending on your hardware.
+$!  is ALPHA, IA64 or VAX, depending on your hardware.
 $!
 $!  P1	if this is ENGINES or ALL, the engines will build, otherwise not.
 $!
@@ -30,22 +30,49 @@ $!	all available engines are built.
 $!
 $!-----------------------------------------------------------------------------
 $!
-$! Set the names of the engines we want to build
-$!
-$ ENGINES = "," + P6
-$ IF ENGINES .EQS. "," THEN -
-	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec,capi"
-$!
 $! Set the default TCP/IP library to link against if needed
 $!
 $ TCPIP_LIB = ""
 $!
-$! Set the architecture name
+$! Check What Architecture We Are Using.
 $!
-$ ARCH := VAX
-$ IF F$GETSYI("CPU") .GE. 128 THEN ARCH := AXP
+$ IF (F$GETSYI("CPU").LT.128)
+$ THEN
 $!
-$! Set the goal directories, and creat them if necessary
+$!  The Architecture Is VAX.
+$!
+$   ARCH = "VAX"
+$!
+$! Else...
+$!
+$ ELSE
+$!
+$!  The Architecture Is Alpha, IA64 or whatever comes in the future.
+$!
+$   ARCH = F$EDIT( F$GETSYI( "ARCH_NAME"), "UPCASE")
+$   IF (ARCH .EQS. "") THEN ARCH = "UNK"
+$!
+$! End The Architecture Check.
+$!
+$ ENDIF
+$!
+$! Set the names of the engines we want to build
+$! NOTE: Some might think this list ugly.  However, it's made this way to
+$! reflect the LIBNAMES variable in Makefile as closely as possible,
+$! thereby making it fairly easy to verify that the lists are the same.
+$! NOTE: gmp isn't built, as it's mostly a test engine and brings in another
+$! library that isn't necessarely ported to VMS.
+$!
+$ ENGINES = "," + P6
+$ IF ENGINES .EQS. "," THEN -
+	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec,padlock,"
+$!
+$! GOST requires a 64-bit integer type, unavailable on VAX.
+$!
+$ IF (ARCH .NES. "VAX") THEN -
+       ENGINES = ENGINES+ ",ccgost"
+$!
+$! Set the goal directories, and create them if necessary
 $!
 $ OBJ_DIR := SYS$DISK:[-.'ARCH'.OBJ.ENGINES]
 $ EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.ENGINES]
@@ -55,7 +82,6 @@ $!
 $! Set the goal files, and create them if necessary
 $!
 $ CRYPTO_LIB :=SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.OLB
-$ CRYPTO_EXE :=SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.EXE
 $ IF F$SEARCH(CRYPTO_LIB) .EQS. "" THEN LIBRARY/CREATE/OBJECT 'CRYPTO_LIB'
 $!
 $! OK, time to check options and initialise
@@ -71,13 +97,15 @@ $ GOSUB CHECK_OPTIONS
 $ GOSUB INITIALISE
 $ GOSUB CHECK_OPT_FILE
 $!
-$! Define what goes into each engine
+$! Define what goes into each engine.  VAX includes a transfer vector.
 $!
 $ ENGINE_ = ""
+$ TV_OBJ = ""
 $ IF ARCH .EQS. "VAX"
 $ THEN
 $   ENGINE_ = "engine_vector.mar"
-$   EXTRA_OBJ := ,'OBJ_DIR'ENGINE_VECTOR.OBJ
+$   TV_OBJ_NAME = OBJ_DIR + F$PARSE(ENGINE_,,,"NAME","SYNTAX_ONLY") + ".OBJ"
+$   TV_OBJ = ",''TV_OBJ_NAME'"
 $ ENDIF
 $ ENGINE_4758CCA = "e_4758cca"
 $ ENGINE_aep = "e_aep"
@@ -87,7 +115,13 @@ $ ENGINE_chil = "e_chil"
 $ ENGINE_nuron = "e_nuron"
 $ ENGINE_sureware = "e_sureware"
 $ ENGINE_ubsec = "e_ubsec"
-$ ENGINE_capi = "e_capi"
+$ ENGINE_padlock = "e_padlock"
+$
+$ ENGINE_ccgost_SUBDIR = "ccgost"
+$ ENGINE_ccgost = "e_gost_err,gost2001_keyx,gost2001,gost89,gost94_keyx,"+ -
+		  "gost_ameth,gost_asn1,gost_crypt,gost_ctl,gost_eng,"+ -
+		  "gosthash,gost_keywrap,gost_md,gost_params,gost_pmeth,"+ -
+		  "gost_sign"
 $!
 $! Define which programs need to be linked with a TCP/IP library
 $!
@@ -134,6 +168,13 @@ $ ELSE
 $   WRITE SYS$OUTPUT "Compiling Support Files. (",BUILDALL,")"
 $ ENDIF
 $!
+$! Create a .OPT file for the object files (for a real engine name).
+$!
+$ IF ENGINE_NAME .NES. ""
+$ THEN
+$   OPEN/WRITE OBJECTS 'EXE_DIR''ENGINE_NAME'.OPT
+$ ENDIF
+$!
 $! Here's the start of per-engine module loop.
 $!
 $ FILE_COUNTER = 0
@@ -150,7 +191,12 @@ $ IF FILE_NAME .EQS. "" THEN GOTO FILE_NEXT
 $!
 $! Set up the source and object reference
 $!
-$ SOURCE_FILE = F$PARSE(FILE_NAME,"SYS$DISK:[].C",,,"SYNTAX_ONLY")
+$ IF F$TYPE('LIB_ENGINE'_SUBDIR) .EQS. ""
+$ THEN
+$     SOURCE_FILE = F$PARSE(FILE_NAME,"SYS$DISK:[].C",,,"SYNTAX_ONLY")
+$ ELSE
+$     SOURCE_FILE = F$PARSE(FILE_NAME,"SYS$DISK:[."+'LIB_ENGINE'_SUBDIR+"].C",,,"SYNTAX_ONLY")
+$ ENDIF
 $ OBJECT_FILE = OBJ_DIR + F$PARSE(FILE_NAME,,,"NAME","SYNTAX_ONLY") + ".OBJ"
 $!
 $! If we get some problem, we just go on trying to build the next module.
@@ -173,12 +219,33 @@ $!
 $! Do the dirty work.
 $!
 $ ON ERROR THEN GOTO FILE_NEXT
-$ IF FILE_NAME - ".MAR" .NES. FILE_NAME
+$ IF F$EDIT(F$PARSE(SOURCE_FILE,,,"TYPE","SYNTAX_ONLY"),"UPCASE") .EQS. ".MAR"
 $ THEN
 $   MACRO/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
 $ ELSE
 $   CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
 $ ENDIF
+$!
+$! Write the entry to the .OPT file (for a real engine name).
+$!
+$ IF ENGINE_NAME .NES. ""
+$ THEN
+$   WRITE OBJECTS OBJECT_FILE
+$ ENDIF
+$!
+$! Next file
+$!
+$ GOTO FILE_NEXT
+$!
+$ FILE_DONE:
+$!
+$! Do not link the support files.
+$!
+$ IF ENGINE_NAME .EQS. "" THEN GOTO ENGINE_NEXT
+$!
+$! Close the linker options file (for a real engine name).
+$!
+$ CLOSE OBJECTS
 $!
 $! Now, there are two ways to handle this.  We can either build 
 $! shareable images or stick the engine object file into libcrypto.
@@ -193,25 +260,15 @@ $ ENGINE_OPT := SYS$DISK:[]'ARCH'.OPT
 $ IF TCPIP_LIB .NES. ""
 $ THEN
 $   LINK/'DEBUGGER'/'TRACEBACK' /SHARE='EXE_DIR''ENGINE_NAME'.EXE -
-	'OBJECT_FILE''EXTRA_OBJ', -
+	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'TV_OBJ', -
 	'CRYPTO_LIB'/LIBRARY, -
 	'ENGINE_OPT'/OPTION,'TCPIP_LIB','OPT_FILE'/OPTION
 $ ELSE
 $   LINK/'DEBUGGER'/'TRACEBACK' /SHARE='EXE_DIR''ENGINE_NAME'.EXE -
-	'OBJECT_FILE''EXTRA_OBJ', -
+	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'TV_OBJ', -
         'CRYPTO_LIB'/LIBRARY, -
 	'ENGINE_OPT'/OPTION,'OPT_FILE'/OPTION
 $ ENDIF
-$!
-$! Clean up
-$!
-$ DELETE 'OBJECT_FILE';*
-$!
-$! Next file
-$!
-$ GOTO FILE_NEXT
-$!
-$ FILE_DONE:
 $!
 $! Next engine
 $!
@@ -299,7 +356,7 @@ $!
 $   IF (F$SEARCH(OPT_FILE).EQS."")
 $   THEN
 $!
-$!    Figure Out If We Need An AXP Or A VAX Linker Option File.
+$!    Figure Out If We Need A non-VAX Or A VAX Linker Option File.
 $!
 $     IF ARCH .EQS. "VAX"
 $     THEN
@@ -319,19 +376,19 @@ $!    Else...
 $!
 $     ELSE
 $!
-$!      Create The AXP Linker Option File.
+$!      Create The non-VAX Linker Option File.
 $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For AXP To Link Agianst 
+! Default System Options File For non-VAX To Link Agianst 
 ! The Sharable C Runtime Library.
 !
 SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
 SYS$SHARE:CMA$OPEN_RTL/SHARE
 $EOD
 $!
-$!    End The VAX/AXP DEC C Option File Check.
+$!    End The DEC C Option File Check.
 $!
 $     ENDIF
 $!
@@ -368,13 +425,13 @@ $! Else...
 $!
 $ ELSE
 $!
-$!  Else, Check To See If OPT_PHASE Has A Valid Arguement.
+$!  Else, Check To See If OPT_PHASE Has A Valid Argument.
 $!
 $   IF ("," + ACCEPT_PHASE + ",") - ("," + OPT_PHASE + ",") -
        .NES. ("," + ACCEPT_PHASE + ",")
 $   THEN
 $!
-$!    A Valid Arguement.
+$!    A Valid Argument.
 $!
 $     BUILDALL = OPT_PHASE
 $!
@@ -396,15 +453,16 @@ $     IF ("," + ACCEPT_PHASE + ",") - ",ENGINES," -
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " where 'xxx' stands for:"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "        AXP  :  Alpha architecture."
-$     WRITE SYS$OUTPUT "        VAX  :  VAX architecture."
+$     WRITE SYS$OUTPUT "    ALPHA    :  Alpha architecture."
+$     WRITE SYS$OUTPUT "    IA64     :  IA64 architecture."
+$     WRITE SYS$OUTPUT "    VAX      :  VAX architecture."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -457,7 +515,7 @@ $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -522,7 +580,7 @@ $   ELSE
 $!
 $!    Check To See If We Have VAXC Or DECC.
 $!
-$     IF (ARCH.EQS."AXP").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
+$     IF (ARCH.NES."VAX").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
 $     THEN 
 $!
 $!      Looks Like DECC, Set To Use DECC.
@@ -633,7 +691,7 @@ $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_DECC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_DECC_OPTIONS.OPT"
 $!
 $!  End DECC Check.
 $!
@@ -655,7 +713,7 @@ $!
 $!    Compile Using VAXC.
 $!
 $     CC = "CC"
-$     IF ARCH.EQS."AXP"
+$     IF ARCH.NES."VAX"
 $     THEN
 $	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
 $	EXIT
@@ -672,7 +730,7 @@ $     DEFINE/NOLOG SYS SYS$COMMON:[SYSLIB]
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_VAXC_OPTIONS.OPT"
 $!
 $!  End VAXC Check
 $!
@@ -699,7 +757,7 @@ $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_GNUC_OPTIONS.OPT"
 $!
 $!  End The GNU C Check.
 $!
@@ -726,7 +784,7 @@ $!  Show user the result
 $!
 $   WRITE/SYMBOL SYS$OUTPUT "Main C Compiling Command: ",CC
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!
@@ -744,14 +802,14 @@ $!  Time To EXIT.
 $!
 $   EXIT
 $!
-$! End The Valid Arguement Check.
+$! End The Valid Argument Check.
 $!
 $ ENDIF
 $!
 $! Build a MACRO command for the architecture at hand
 $!
 $ IF ARCH .EQS. "VAX" THEN MACRO = "MACRO/''DEBUGGER'"
-$ IF ARCH .EQS. "AXP" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
+$ IF ARCH .NES. "VAX" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
 $!
 $!  Show user the result
 $!
@@ -840,7 +898,7 @@ $!  Print info
 $!
 $   WRITE SYS$OUTPUT "TCP/IP library spec: ", TCPIP_LIB
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!

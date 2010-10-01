@@ -165,6 +165,9 @@ int MAIN(int argc, char **argv)
 		BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 		}
 
+	if (!load_config(bio_err, NULL))
+		goto cleanup;
+
 	for (argc--, argv++; argc > 0; argc--, argv++)
 		{
 		if (strcmp(*argv, "-config") == 0)
@@ -646,7 +649,7 @@ static ASN1_INTEGER *create_nonce(int bits)
 
 	/* Generating random byte sequence. */
 	if (len > (int)sizeof(buf)) goto err;
-	if (!RAND_bytes(buf, len)) goto err;
+	if (RAND_bytes(buf, len) <= 0) goto err;
 
 	/* Find the first non-zero byte and creating ASN1_INTEGER object. */
 	for (i = 0; i < len && !buf[i]; ++i);
@@ -1080,7 +1083,7 @@ static X509_STORE *create_cert_store(char *ca_path, char *ca_file)
 	cert_ctx = X509_STORE_new();
 
 	/* Setting the callback for certificate chain verification. */
-	X509_STORE_set_verify_cb_func(cert_ctx, verify_cb);
+	X509_STORE_set_verify_cb(cert_ctx, verify_cb);
 
 	/* Adding a trusted certificate directory source. */
 	if (ca_path)
