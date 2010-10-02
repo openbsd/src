@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.62 2010/08/01 10:03:24 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.63 2010/10/02 13:33:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -216,7 +216,7 @@ sub remove_first
 sub remove_directory
 {
 	my ($self, $name, $o) = @_;
-	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object::Directory->new($name, 
+	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object::Directory->new($name,
 	    $self->{state}->{current_set}, $o);
 }
 

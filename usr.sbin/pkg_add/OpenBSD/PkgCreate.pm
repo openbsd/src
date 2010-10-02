@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.22 2010/07/28 12:19:54 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.23 2010/10/02 13:33:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -774,7 +774,7 @@ sub create_package
 	local $SIG{'HUP'} = $h;
 	local $SIG{'KILL'} = $h;
 	local $SIG{'TERM'} = $h;
-	$state->{archive} = $self->create_archive($state, $wname, 
+	$state->{archive} = $self->create_archive($state, $wname,
 	    $plist->infodir);
 	$state->set_status("archiving");
 	$state->progress->visit_with_size($plist, 'create_package', $state);
@@ -945,7 +945,7 @@ sub parse_and_run
 	}
 
 	if ($state->opt('n')) {
-		$state->{archive} = OpenBSD::Ustar->new(undef, $state, 
+		$state->{archive} = OpenBSD::Ustar->new(undef, $state,
 		    $plist->infodir);
 		$plist->pretend_to_archive($state);
 	} else {
