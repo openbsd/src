@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.102 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.103 2010/10/02 15:49:17 tedu Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -985,7 +985,7 @@ struct selinfo rnd_wsel;
 int
 randomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	return (minor (dev) < RND_NODEV) ? 0 : ENXIO;
+	return (minor(dev) < RND_NODEV ? 0 : ENXIO);
 }
 
 int
@@ -1013,41 +1013,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 			ret = EIO;	/* no chip -- error */
 			break;
 		case RND_SRND:
-			if (random_state.entropy_count < 16 * 8) {
-				if (ioflag & IO_NDELAY) {
-					ret = EWOULDBLOCK;
-					break;
-				}
-#ifdef	RNDEBUG
-				if (rnd_debug & RD_WAIT)
-					printf("rnd: sleep[%u]\n",
-					    random_state.asleep);
-#endif
-				random_state.asleep++;
-				rndstats.rnd_waits++;
-				ret = tsleep(&random_state.asleep,
-				    PWAIT | PCATCH, "rndrd", 0);
-#ifdef	RNDEBUG
-				if (rnd_debug & RD_WAIT)
-					printf("rnd: awakened(%d)\n", ret);
-#endif
-				if (ret)
-					break;
-			}
-			if (n > random_state.entropy_count / 8)
-				n = random_state.entropy_count / 8;
-			rndstats.rnd_reads++;
-#ifdef	RNDEBUG
-			if (rnd_debug & RD_OUTPUT)
-				printf("rnd: %u possible output\n", n);
-#endif
 		case RND_URND:
-			get_random_bytes((char *)buf, n);
-#ifdef	RNDEBUG
-			if (rnd_debug & RD_OUTPUT)
-				printf("rnd: %u bytes for output\n", n);
-#endif
-			break;
 		case RND_ARND_OLD:
 		case RND_ARND:
 			arc4random_buf(buf, n);
@@ -1073,10 +1039,7 @@ randompoll(dev_t dev, int events, struct proc *p)
 
 	revents = events & (POLLOUT | POLLWRNORM);	/* always writable */
 	if (events & (POLLIN | POLLRDNORM)) {
-		if (minor(dev) == RND_SRND && random_state.entropy_count <= 0)
-			selrecord(p, &rnd_rsel);
-		else
-			revents |= events & (POLLIN | POLLRDNORM);
+		revents |= events & (POLLIN | POLLRDNORM);
 	}
 
 	return (revents);
@@ -1164,8 +1127,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 		}
 	}
 
-	if ((minor(dev) == RND_ARND || minor(dev) == RND_ARND_OLD) &&
-	    !ret)
+	if (!ret)
 		arc4random_initialized = 0;
 
 	free(buf, M_TEMP);
