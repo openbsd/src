@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.483 2010/09/29 15:11:31 joshe Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.484 2010/10/02 23:30:39 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3303,8 +3303,7 @@ need_resched(struct cpu_info *ci)
 	/* There's a risk we'll be called before the idle threads start */
 	if (ci->ci_curproc) {
 		aston(ci->ci_curproc);
-		if (ci != curcpu())
-			cpu_unidle(ci);
+		cpu_unidle(ci);
 	}
 }
 
