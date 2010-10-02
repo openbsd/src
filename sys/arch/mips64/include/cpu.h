@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.66 2010/09/28 20:27:55 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.67 2010/10/02 20:49:22 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -259,6 +259,14 @@ extern vaddr_t uncached_base;
 #define	COP_0_PC_CTRL		$22
 
 #define	COP_0_ICR		$20	/* Use cfc0/ctc0 to access */
+
+/*
+ * Octeon specific
+ */
+#define COP_0_TLB_PG_GRAIN	$5, 1
+#define COP_0_CVMCTL		$9, 7
+#define COP_0_CVMMEMCTL		$11, 7
+#define COP_0_EBASE		$15, 1
 
 /*
  * Values for the code field in a break instruction.
