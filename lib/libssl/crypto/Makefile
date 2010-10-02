@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.54 2010/10/01 23:01:54 djm Exp $
+# $OpenBSD: Makefile,v 1.55 2010/10/02 07:42:02 djm Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -514,6 +514,7 @@ SRCS+= fcrypt_b.c
 CFLAGS+= -DAES_ASM
 CFLAGS+= -DMD5_ASM
 CFLAGS+= -DSHA1_ASM
+CFLAGS+= -DSHA256_ASM
 CFLAGS+= -DSHA512_ASM
 CFLAGS+= -DOPENSSL_CPUID_OBJ
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
@@ -531,21 +532,20 @@ SSLASM=\
 SRCS+=	${f}.S
 GENERATED+=${f}.S
 ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl
-	(cd ${LCRYPTO_SRC}/${dir} ; \
+	(set -e ; cd ${LCRYPTO_SRC}/${dir} ; \
 		/usr/bin/perl ./asm/${f}.pl openbsd-elf) > ${.TARGET}
 .endfor
-SRCS+=	x86_64cpuid.S
-GENERATED+=x86_64cpuid.S
+SRCS+=	x86_64cpuid.S sha256-x86_64.S sha512-x86_64.S
+GENERATED+=x86_64cpuid.S sha256-x86_64.S sha512-x86_64.S
 x86_64cpuid.S: ${LCRYPTO_SRC}/x86_64cpuid.pl
-	(cd ${LCRYPTO_SRC}/${dir} ; /usr/bin/perl ./x86_64cpuid.pl) > ${.TARGET}
+	(set -e ; cd ${LCRYPTO_SRC}/${dir} ; \
+		/usr/bin/perl ./x86_64cpuid.pl) > ${.TARGET}
 sha256-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl
-	(cd ${LCRYPTO_SRC}/sha/asm ; \
+	(set -e ; cd ${LCRYPTO_SRC}/sha/asm ; \
 		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET})
 sha512-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl
-	(cd ${LCRYPTO_SRC}/sha/asm ; \
+	(set -e ; cd ${LCRYPTO_SRC}/sha/asm ; \
 		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET})
-SRCS+=	sha256-x86_64.S sha512-x86_64.S
-GENERATED+=sha256-x86_64.S sha512-x86_64.S
 .else
 # XXX ppccpuid.pl
 CFLAGS+=-DOPENSSL_NO_ASM
