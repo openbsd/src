@@ -231,10 +231,10 @@ This is more portable than the raw C<ioctl>, but not as
 illustrative:
 
 	require 'sys/ioctl.ph';
-	die "no TIOCGWINSZ " unless defined &TIOCGWINSZ;
+	die "no TIOCGSIZE " unless defined &TIOCGSIZE;
 	open(TTY, "+</dev/tty")                     or die "No tty: $!";
-	unless (ioctl(TTY, &TIOCGWINSZ, $winsize='')) {
-		die sprintf "$0: ioctl TIOCGWINSZ (%08x: $!)\n", &TIOCGWINSZ;
+	unless (ioctl(TTY, &TIOCGSIZE, $winsize='')) {
+		die sprintf "$0: ioctl TIOCGSIZE (%08x: $!)\n", &TIOCGSIZE;
 	}
 	($row, $col, $xpixel, $ypixel) = unpack('S4', $winsize);
 	print "(row,col) = ($row,$col)";
