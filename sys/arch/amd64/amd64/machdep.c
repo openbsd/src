@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2010/10/02 23:30:39 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.124 2010/10/02 23:31:33 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -717,6 +717,8 @@ struct pcb dumppcb;
 void
 boot(int howto)
 {
+	if (howto & RB_POWERDOWN)
+		lid_suspend = 0;
 
 	if (cold) {
 		/*

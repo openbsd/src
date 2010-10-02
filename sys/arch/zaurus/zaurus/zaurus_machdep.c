@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.35 2010/06/27 06:21:44 beck Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.36 2010/10/02 23:31:34 deraadt Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -289,6 +289,11 @@ int comcnmode = CONMODE;
 void
 boot(int howto)
 {
+	extern int lid_suspend;
+
+	if (howto & RB_POWERDOWN)
+		lid_suspend = 0;
+
 	if (cold) {
 		/*
 		 * If the system is cold, just halt, unless the user

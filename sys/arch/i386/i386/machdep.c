@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.484 2010/10/02 23:30:39 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.485 2010/10/02 23:31:34 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2403,6 +2403,9 @@ struct pcb dumppcb;
 void
 boot(int howto)
 {
+	if (howto & RB_POWERDOWN)
+		lid_suspend = 0;
+
 	if (cold) {
 		/*
 		 * If the system is cold, just halt, unless the user
