@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.64 2010/09/14 10:02:37 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.65 2010/10/02 13:36:56 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -59,11 +59,11 @@ sub new
 
 	$destdir = '' unless defined $destdir;
 
-	return bless { 
-	    fh => $fh, 
-	    swallow => 0, 
+	return bless {
+	    fh => $fh,
+	    swallow => 0,
 	    state => $state,
-	    key => {}, 
+	    key => {},
 	    destdir => $destdir} , $class;
 }
 
@@ -403,7 +403,7 @@ sub set_modes
 	chown $self->{uid}, $self->{gid}, $self->{destdir}.$self->name;
 	chmod $self->{mode}, $self->{destdir}.$self->name;
 	if (defined $self->{mtime} || defined $self->{atime}) {
-		utime $self->{atime} // time, $self->{mtime} // time,
+		utime $self->{atime} // time, $self->{mtime} // time, 
 		    $self->{destdir}.$self->name;
 	}
 }
@@ -669,10 +669,17 @@ sub create
 	my $buffer;
 	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->name);
 	if (!defined $out) {
-		$self->fatal("Can't write to #1#2: #3", $self->{destdir}, 
+		$self->fatal("Can't write to #1#2: #3", $self->{destdir},
 		    $self->name, $!);
 	}
 	my $toread = $self->{size};
+	if ($self->{partial}) {
+		$toread -= length($self->{partial});
+		unless ($out->write($self->{partial})) {
+			$self->fatal("Error writing to #1#2: #3",
+			    $self->{destdir}, $self->name, $!);
+		}
+	}
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
@@ -699,18 +706,35 @@ sub create
 
 sub contents
 {
-	my $self = shift;
+	my ($self, $lookfor) = @_;
 	my $toread = $self->{size};
 	my $buffer;
+	my $offset = 0;
+	if ($self->{partial}) {
+		$buffer = $self->{partial};
+		$offset = length($self->{partial});
+		$toread -= $offset;
+	}
 
-	my $actual = read($self->{archive}->{fh}, $buffer, $toread);
-	if (!defined $actual) {
-		$self->fatal("Error reading from archive: #1", $!);
+	while ($toread != 0) {
+		my $sz = $toread;
+		if (defined $lookfor) {
+			last if (defined $buffer) and &$lookfor($buffer);
+			$sz = 1024 if $sz > 1024;
+		}
+		my $actual = read($self->{archive}->{fh}, $buffer, $sz, $offset);
+		if (!defined $actual) {
+			$self->fatal("Error reading from archive: #1", $!);
+		}
+		if ($actual != $sz) {
+			$self->fatal("Error: short read from archive");
+		}
+		$self->{archive}->{swallow} -= $actual;
+		$toread -= $actual;
+		$offset += $actual;
 	}
-	if ($actual != $toread) {
-		$self->fatal("Error: short read from archive");
-	}
-	$self->{archive}->{swallow} -= $actual;
+
+	$self->{partial} = $buffer;
 	return $buffer;
 }
 

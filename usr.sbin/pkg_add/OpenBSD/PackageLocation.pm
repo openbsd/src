@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.25 2010/09/14 10:02:37 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.26 2010/10/02 13:36:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,7 +66,12 @@ OpenBSD::Auto::cache(pkgname,
 OpenBSD::Auto::cache(update_info,
     sub {
 	my $self = shift;
-	return $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly);
+	return $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly,
+	    sub {
+		return 0 if $_[0] =~ m/^\@option\s+always-update\b/m;
+		return 1 if $_[0] =~ m/^\@(?:newgroup|newuser|cwd)\b/m;
+		return 0;
+	    });
     });
 
 
@@ -102,12 +107,12 @@ sub _opened
 
 sub find_contents
 {
-	my $self = shift;
+	my ($self, $extra) = @_;
 
 	while (my $e = $self->_next) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS ) {
-				return $e->contents;
+				return $e->contents($extra);
 			}
 		} else {
 			$self->unput;
@@ -144,10 +149,18 @@ sub find_fat_contents
 
 sub contents
 {
-	my $self = shift;
+	my ($self, $extra) = @_;
 	if (!defined $self->{contents}) {
 		if (!$self->_opened) {
 			return;
+		}
+		if (defined $extra) {
+			my $contents = $self->find_contents($extra);
+			if ($contents) {
+				$self->unput;
+				return $contents;
+			}
+			return $self->find_fat_contents;
 		}
 		$self->{contents} = $self->find_contents ||
 		    $self->find_fat_contents;
@@ -231,7 +244,7 @@ sub info
 
 sub plist
 {
-	my ($self, $code) = @_;
+	my ($self, $code, $extra) = @_;
 	require OpenBSD::PackingList;
 
 	if (defined $self->{dir} && -f $self->{dir}.CONTENTS) {
@@ -241,7 +254,7 @@ sub plist
 		$plist->set_infodir($self->{dir});
 		return $plist;
 	}
-	if (my $value = $self->contents) {
+	if (my $value = $self->contents($extra)) {
 		return OpenBSD::PackingList->fromfile(\$value, $code);
 	}
 	# hopeless

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.15 2010/08/13 11:13:25 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.16 2010/10/02 13:36:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -267,6 +267,29 @@ sub complete
 	my ($set, $state) = @_;
 
 	for my $n ($set->newer) {
+		if (defined $n->{location} && defined $n->{location}{update_info}) {
+			my $plist = $n->{location}{update_info};
+			my $pkgname = $plist->pkgname;
+			if (is_installed($pkgname) &&
+			    (!$state->{allow_replacing} ||
+			      !$state->defines('installed') &&
+			      !$plist->has_different_sig($state) &&
+			      !$plist->uses_old_libs)) {
+				my $o = $set->{older}->{$pkgname};
+				if (!defined $o) {
+					$o = OpenBSD::Handle->create_old($pkgname, $state);
+					$set->add_older($o);
+				}
+				$o->{update_found} = $o;
+				$set->move_kept($o);
+				$o->{tweaked} =
+				    OpenBSD::Add::tweak_package_status($pkgname, $state);
+				$state->updater->progress_message($state, "No change in $pkgname");
+				delete $set->{newer}->{$pkgname};
+				$n->cleanup;
+				next;
+			}
+		}
 		$n->complete($state);
 		my $pkgname = $n->pkgname;
 		my $plist = $n->plist;
