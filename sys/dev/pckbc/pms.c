@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.6 2010/09/29 19:39:18 deraadt Exp $ */
+/* $OpenBSD: pms.c,v 1.7 2010/10/02 00:28:57 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -49,6 +49,7 @@ struct pms_softc {		/* driver status information */
 #define PMS_STATE_ENABLED	1
 #define PMS_STATE_SUSPENDED	2
 
+	int poll;
 	int intelli;
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
@@ -72,7 +73,9 @@ int	pms_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	pms_enable(void *);
 void	pms_disable(void *);
 
-int	pms_setintellimode(pckbc_tag_t, pckbc_slot_t);
+int	pms_cmd(struct pms_softc *, u_char *, int, u_char *, int);
+
+int	pms_setintellimode(struct pms_softc *sc);
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -81,7 +84,19 @@ const struct wsmouse_accessops pms_accessops = {
 };
 
 int
-pms_setintellimode(pckbc_tag_t tag, pckbc_slot_t slot)
+pms_cmd(struct pms_softc *sc, u_char *cmd, int len, u_char *resp, int resplen)
+{
+	if (sc->poll) {
+		return pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		    cmd, len, resplen, resp, 1);
+	} else {
+		return pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		    cmd, len, resplen, 1, resp);
+	}
+}
+
+int
+pms_setintellimode(struct pms_softc *sc)
 {
 	u_char cmd[2], resp[1];
 	int i, res;
@@ -90,13 +105,13 @@ pms_setintellimode(pckbc_tag_t tag, pckbc_slot_t slot)
 	cmd[0] = PMS_SET_SAMPLE;
 	for (i = 0; i < 3; i++) {
 		cmd[1] = rates[i];
-		res = pckbc_enqueue_cmd(tag, slot, cmd, 2, 0, 0, NULL);
+		res = pms_cmd(sc, cmd, 2, NULL, 0);
 		if (res)
 			return (0);
 	}
 
 	cmd[0] = PMS_SEND_DEV_ID;
-	res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 1, resp);
+	res = pms_cmd(sc, cmd, 1, resp, 1);
 	if (res || resp[0] != 3)
 		return (0);
 
@@ -191,11 +206,8 @@ pmsattach(parent, self, aux)
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
 	/* no interrupts until enabled */
-	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, NULL, 0);
-	if (res)
-		printf("pmsattach: disable error\n");
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+	sc->poll = 1;
+	pms_change_state(sc, PMS_STATE_DISABLED);
 }
 
 int
@@ -219,7 +231,7 @@ pmsactivate(struct device *self, int act)
 int
 pms_change_state(struct pms_softc *sc, int newstate)
 {
-	u_char cmd[1];
+	u_char cmd[1], resp[2];
 	int res;
 
 	switch (newstate) {
@@ -232,11 +244,14 @@ pms_change_state(struct pms_softc *sc, int newstate)
 		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
 		pckbc_flush(sc->sc_kbctag, sc->sc_kbcslot);
-		sc->intelli = pms_setintellimode(sc->sc_kbctag, sc->sc_kbcslot);
+
+		cmd[0] = PMS_RESET;
+		res = pms_cmd(sc, cmd, 1, resp, 2);
+
+		sc->intelli = pms_setintellimode(sc);
 
 		cmd[0] = PMS_DEV_ENABLE;
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
-		    cmd, 1, 0, 1, 0);
+		res = pms_cmd(sc, cmd, 1, NULL, 0);
 		if (res)
 			printf("pms_enable: command error\n");
 #if 0
@@ -265,18 +280,19 @@ pms_change_state(struct pms_softc *sc, int newstate)
 		}
 #endif
 		sc->sc_state = newstate;
+		sc->poll = 0;
 		break;
 	case PMS_STATE_DISABLED:
 
 		/* FALLTHROUGH */
 	case PMS_STATE_SUSPENDED:
 		cmd[0] = PMS_DEV_DISABLE;
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
-		    cmd, 1, 0, 1, 0);
+		res = pms_cmd(sc, cmd, 1, NULL, 0);
 		if (res)
 			printf("pms_disable: command error\n");
 		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 		sc->sc_state = newstate;
+		sc->poll = (newstate == PMS_STATE_SUSPENDED) ? 1 : 0;
 		break;
 	}
 	return 0;
