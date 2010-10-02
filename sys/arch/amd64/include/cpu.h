@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.57 2010/09/28 20:27:54 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.58 2010/10/02 23:13:27 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ struct cpu_info {
 	int		ci_mutex_level;
 #endif
 
-	u_int		ci_flags;
+	volatile u_int	ci_flags;
 	u_int32_t	ci_ipis;
 
 	u_int32_t	ci_feature_flags;
