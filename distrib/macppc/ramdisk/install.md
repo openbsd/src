@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.46 2010/06/27 00:42:00 krw Exp $
+#	$OpenBSD: install.md,v 1.47 2010/10/02 00:11:57 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,18 +47,16 @@ md_installboot() {
 		mv bsd.mp bsd
 	fi
 
-	[[ $PARTTABLE == MBR ]] || return
-
-	if mount -t msdos /dev/${_disk}i /mnt2 ; then
-		if cp /usr/mdec/ofwboot /mnt2; then
-			umount /mnt2
-			return
+	# If there is an MSDOS partition on the boot disk, copy ofwboot
+	# into it.
+	if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
+		if fdisk $_disk | grep -q '^..: 06 '; then
+			if mount /dev/${_disk}i /mnt2 >/dev/null 2>&1; then
+				cp /usr/mdec/ofwboot /mnt2
+				umount /mnt2
+			fi
 		fi
 	fi
-
-	echo "Failed to install bootblocks."
-	echo "You will not be able to boot OpenBSD from $_disk."
-	exit
 }
 
 md_has_hfs () {
