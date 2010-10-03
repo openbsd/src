@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.39 2010/06/28 18:31:02 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.40 2010/10/03 21:14:40 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -99,8 +99,8 @@ void iha_scsi(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
 int  iha_wait(struct iha_softc *, bus_space_tag_t, bus_space_handle_t,
 		      u_int8_t);
 void iha_mark_busy_scb(struct iha_scb *);
-void iha_append_free_scb(struct iha_softc *, struct iha_scb *);
-struct iha_scb *iha_pop_free_scb(struct iha_softc *);
+void *iha_scb_alloc(void *);
+void iha_scb_free(void *, void *);
 void iha_append_done_scb(struct iha_softc *, struct iha_scb *,
 				 u_int8_t);
 struct iha_scb *iha_pop_done_scb(struct iha_softc *);
@@ -267,12 +267,7 @@ iha_scsi_cmd(xs)
 		return;
 	}
 
-	pScb = iha_pop_free_scb(sc);
-	if (pScb == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	pScb = xs->io;
 
 	pScb->SCB_Target = sc_link->target;
 	pScb->SCB_Lun	 = sc_link->lun;
@@ -305,8 +300,6 @@ iha_scsi_cmd(xs)
 			else
 				printf("error %d loading buffer dma map\n",
 				    error);
-
-			iha_append_free_scb(sc, pScb); 
 
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
@@ -361,6 +354,13 @@ iha_init_tulip(sc)
 
 	pScsi = &iha_nvram.NVM_Scsi[0];
 
+	TAILQ_INIT(&sc->HCS_FreeScb);
+	TAILQ_INIT(&sc->HCS_PendScb);
+	TAILQ_INIT(&sc->HCS_DoneScb);
+
+	mtx_init(&sc->sc_scb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, iha_scb_alloc, iha_scb_free);
+
 	/*
 	 * fill in the prototype scsi_link.
 	 */
@@ -369,6 +369,7 @@ iha_init_tulip(sc)
 	sc->sc_link.openings	     = 4; /* # xs's allowed per device */
 	sc->sc_link.adapter_target   = pScsi->NVM_SCSI_Id;
 	sc->sc_link.adapter_buswidth = pScsi->NVM_SCSI_Targets;
+	sc->sc_link.pool             = &sc->sc_iopool;
 
 	/*
 	 * fill in the rest of the iha_softc fields
@@ -376,10 +377,6 @@ iha_init_tulip(sc)
 	sc->HCS_Semaph	  = ~SEMAPH_IN_MAIN;
 	sc->HCS_JSStatus0 = 0;
 	sc->HCS_ActScb	  = NULL;
-
-	TAILQ_INIT(&sc->HCS_FreeScb);
-	TAILQ_INIT(&sc->HCS_PendScb);
-	TAILQ_INIT(&sc->HCS_DoneScb);
 
 	error = iha_alloc_scbs(sc);
 	if (error != 0)
@@ -491,45 +488,42 @@ iha_reset_dma(iot, ioh)
 }
 
 /*
- * iha_pop_free_scb - return the first free SCB, or NULL if there are none.
+ * iha_scb_alloc - return the first free SCB, or NULL if there are none.
  */
-struct iha_scb *
-iha_pop_free_scb(sc)
-	struct iha_softc *sc;
+void *
+iha_scb_alloc(xsc)
+	void *xsc;
 {
+	struct iha_softc *sc = xsc;
 	struct iha_scb *pScb;
-	int s;
 
-	s = splbio();
-
+	mtx_enter(&sc->sc_scb_mtx);
 	pScb = TAILQ_FIRST(&sc->HCS_FreeScb);
-
 	if (pScb != NULL) {
 		pScb->SCB_Status = STATUS_RENT;
 		TAILQ_REMOVE(&sc->HCS_FreeScb, pScb, SCB_ScbList);
 	}
-
-	splx(s);
+	mtx_leave(&sc->sc_scb_mtx);
 
 	return (pScb);
 }
 
 /*
- * iha_append_free_scb - append the supplied SCB to the tail of the
- *                       HCS_FreeScb queue after clearing and resetting
- *			 everything possible.
+ * iha_scb_free - append the supplied SCB to the tail of the
+ *                HCS_FreeScb queue after clearing and resetting
+ *		  everything possible.
  */
 void
-iha_append_free_scb(sc, pScb)
-	struct iha_softc *sc;
-	struct iha_scb *pScb;
+iha_scb_free(void *xsc, void *xscb)
 {
+	struct iha_softc *sc = xsc;
+	struct iha_scb *pScb = xscb;
 	int s;
 
 	s = splbio();
-
 	if (pScb == sc->HCS_ActScb)
 		sc->HCS_ActScb = NULL;
+	splx(s);
 
 	pScb->SCB_Status = STATUS_QUEUED;
 	pScb->SCB_HaStat = HOST_OK;
@@ -555,9 +549,9 @@ iha_append_free_scb(sc, pScb)
 	 * SCB_TagId is set at initialization and never changes
 	 */
 
+	mtx_enter(&sc->sc_scb_mtx);
 	TAILQ_INSERT_TAIL(&sc->HCS_FreeScb, pScb, SCB_ScbList);
-
-	splx(s);
+	mtx_leave(&sc->sc_scb_mtx);
 }
 
 void
@@ -2541,11 +2535,8 @@ iha_done_scb(sc, pScb)
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
-
 		scsi_done(xs);
 	}
-	
-	iha_append_free_scb(sc, pScb);
 }
 
 void
