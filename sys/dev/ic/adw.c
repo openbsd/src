@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.47 2010/08/07 03:50:01 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.48 2010/10/03 21:23:35 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -59,10 +59,10 @@
 int adw_alloc_controls(ADW_SOFTC *);
 int adw_alloc_carriers(ADW_SOFTC *);
 int adw_create_ccbs(ADW_SOFTC *, ADW_CCB *, int);
-void adw_free_ccb(ADW_SOFTC *, ADW_CCB *);
+void adw_ccb_free(void *, void *);
 void adw_reset_ccb(ADW_CCB *);
 int adw_init_ccb(ADW_SOFTC *, ADW_CCB *);
-ADW_CCB *adw_get_ccb(ADW_SOFTC *, int);
+void *adw_ccb_alloc(void *);
 int adw_queue_ccb(ADW_SOFTC *, ADW_CCB *, int);
 
 void adw_scsi_cmd(struct scsi_xfer *);
@@ -230,25 +230,17 @@ adw_create_ccbs(sc, ccbstore, count)
  * A ccb is put onto the free list.
  */
 void
-adw_free_ccb(sc, ccb)
-	ADW_SOFTC      *sc;
-	ADW_CCB        *ccb;
+adw_ccb_free(xsc, xccb)
+	void *xsc, *xccb;
 {
-	int             s;
-
-	s = splbio();
+	ADW_SOFTC *sc = xsc;
+	ADW_CCB *ccb = xccb;
 
 	adw_reset_ccb(ccb);
+
+	mtx_enter(&sc->sc_ccb_mtx);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
-
-	/*
-         * If there were none, wake anybody waiting for one to come free,
-         * starting with queued entries.
-         */
-	if (TAILQ_NEXT(ccb, chain) == NULL)
-		wakeup(&sc->sc_free_ccb);
-
-	splx(s);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 
@@ -300,36 +292,21 @@ adw_init_ccb(sc, ccb)
  *
  * If there are none, see if we can allocate a new one
  */
-ADW_CCB *
-adw_get_ccb(sc, flags)
-	ADW_SOFTC      *sc;
-	int             flags;
+void *
+adw_ccb_alloc(xsc)
+	void *xsc;
 {
-	ADW_CCB        *ccb = 0;
-	int             s;
+	ADW_SOFTC *sc = xsc;
+	ADW_CCB *ccb;
 
-	s = splbio();
-
-	/*
-         * If we can and have to, sleep waiting for one to come free
-         * but only if we can't allocate a new one.
-         */
-	for (;;) {
-		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
-		}
-		if ((flags & SCSI_NOSLEEP) != 0)
-			goto out;
-
-		tsleep(&sc->sc_free_ccb, PRIBIO, "adwccb", 0);
+	mtx_enter(&sc->sc_ccb_mtx);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
+		ccb->flags |= CCB_ALLOC;
 	}
+	mtx_leave(&sc->sc_ccb_mtx);
 
-	ccb->flags |= CCB_ALLOC;
-
-out:
-	splx(s);
 	return (ccb);
 }
 
@@ -455,6 +432,8 @@ adw_attach(sc)
 	TAILQ_INIT(&sc->sc_waiting_ccb);
 	TAILQ_INIT(&sc->sc_pending_ccb);
 
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, adw_ccb_alloc, adw_ccb_free);
 
 	/*
          * Allocate the Control Blocks.
@@ -554,6 +533,7 @@ adw_attach(sc)
 	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.openings = 4;
 	sc->sc_link.adapter_buswidth = ADW_MAX_TID+1;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -586,8 +566,6 @@ adw_scsi_cmd(xs)
 	int             s, nowait = 0, retry = 0;
 	int		flags;
 
-	s = splbio();		/* protect the queue */
-
 	/*
          * get a ccb to use. If the transfer
          * is from a buf (possibly from interrupt time)
@@ -597,13 +575,7 @@ adw_scsi_cmd(xs)
 	flags = xs->flags;
 	if (nowait)
 		flags |= SCSI_NOSLEEP;
-	if ((ccb = adw_get_ccb(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		splx(s);
-		return;
-	}
-	splx(s);		/* done playing with the queue */
+	ccb = xs->io;
 
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
@@ -714,7 +686,6 @@ adw_build_req(xs, ccb, flags)
 			}
 
 			xs->error = XS_DRIVER_STUFFUP;
-			adw_free_ccb(sc, ccb);
 			return (0);
 		}
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
@@ -1046,7 +1017,6 @@ adw_isr_callback(sc, scsiq)
 	if ((ccb->flags & CCB_ALLOC) == 0) {
 		panic("%s: unallocated ccb found on pending list!",
 		    sc->sc_dev.dv_xname);
-		adw_free_ccb(sc, ccb);
 		return;
 	}
 
@@ -1205,8 +1175,6 @@ NO_ERROR:
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
-
-	adw_free_ccb(sc, ccb);
 
 	scsi_done(xs);
 }
