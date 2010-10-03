@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.515 2010/08/29 15:28:11 miod Exp $
+$OpenBSD: usbdevs,v 1.516 2010/10/03 16:01:22 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -541,6 +541,7 @@ vendor DISPLAYLINK	0x17e9	DisplayLink
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
+vendor AVAGO		0x192f	Avago
 vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor ZTE		0x19d2	ZTE Inc.
 vendor QUANTA		0x1a32	Quanta
@@ -949,6 +950,8 @@ product ATMEL AT76C505AS	0x7617	AT76C505AS (RFMD 2958 Radio)
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
 
+/* Avago Technologies products */
+product AVAGO MOUSE		0x0000	Mouse
 
 /* Avance Logic products */
 product AVANCELOGIC USBAUDIO	0x0100	USB Audio Speaker
