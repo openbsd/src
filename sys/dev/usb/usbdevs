@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.516 2010/10/03 16:01:22 deraadt Exp $
+$OpenBSD: usbdevs,v 1.517 2010/10/03 17:18:29 armani Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -556,6 +556,7 @@ vendor MDS		0x1bc8	MDS
 vendor ALTI2		0x1bc9	Alti-2
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor DRESDENELEC	0x1cf1	Dresden Elektronic
+vendor DREAMLINK	0x1d34	Dream Link
 vendor PEGATRON		0x1d4d	Pegatron
 vendor METAGEEK		0x1dd5	MetaGeek
 vendor MODACOM		0x1eb8	Modacom
@@ -1356,6 +1357,9 @@ product DMI SA2_0		0xb001	Storage Adapter
 /* DrayTek products */
 product DRAYTEK VIGOR550	0x0550	Vigor550
 product DRAYTEK VIGOR600	0x0600	Vigor600
+
+/* Dream Link products */
+product DREAMLINK ULMB1		0x0013	USB LED Message Board v1.0
 
 /* Dresden Elektronic products */
 product DRESDENELEC STB		0x0001	Sensor Terminal
