@@ -53,7 +53,7 @@
 ./usr/lib/libasn1.so.18.0
 ./usr/lib/libc.so.57.0
 ./usr/lib/libcom_err.so.18.0
-./usr/lib/libcrypto.so.18.0
+./usr/lib/libcrypto.so.19.0
 ./usr/lib/libcurses.so.12.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.4.0
@@ -86,7 +86,7 @@
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.3.3
-./usr/lib/libssl.so.15.1
+./usr/lib/libssl.so.16.0
 ./usr/lib/libstdc++.so.49.0
 ./usr/lib/libtermcap.so.12.0
 ./usr/lib/libtermlib.so.12.0
@@ -2069,16 +2069,16 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/engine.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/err.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/evp.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/fips.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/fips_rand.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/idea.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/kssl.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/lhash.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/md2.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/md5.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/mdc2.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/openssl/modes.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/obj_mac.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/objects.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ocsp.ph
@@ -2089,7 +2089,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/pem2.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/pkcs7.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/pq_compat.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rc2.ph
@@ -2108,10 +2107,11 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/store.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/tls1.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/tmdiff.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ts.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/txt_db.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ui.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ui_compat.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/openssl/whrlpool.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/x509.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/x509_vfy.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/x509v3.ph
