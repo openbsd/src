@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.61 2010/09/15 17:25:36 jasper Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.62 2010/10/03 17:25:21 armani Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -130,6 +130,7 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_TENX, USB_PRODUCT_TENX_MISSILE,		ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_TERRATEC, USB_PRODUCT_TERRATEC_AUREON,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_VELLEMAN, USB_PRODUCT_VELLEMAN_K8055,	ANY,	{ UQ_BAD_HID }},
+ { USB_VENDOR_DREAMLINK, USB_PRODUCT_DREAMLINK_ULMB1,	ANY,	{ UQ_BAD_HID }},
 
  { USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220,	ANY,	{ UQ_NO_STRINGS }},
  { USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_DM9601, ANY, { UQ_NO_STRINGS }},
