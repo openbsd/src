@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.65 2010/10/04 10:44:58 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.66 2010/10/04 16:07:56 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -272,11 +272,13 @@ with
 the stem of the
 .Ar pkgspec .
 Classical use case for postgresql:
-.Bd -literal
-	@ask-update postgresql-server<-8 Make sure your existing database is backed up
+.Bd -literal -offset 3n
+@ask-update postgresql-server<-8 Make sure your existing database is backed up
 .Ed
+.Pp
 Use very sparingly.
 Most cases that seem to require manual updates just require a bit more thought.
+.Pp
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
 .Pp
