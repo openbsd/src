@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.64 2010/06/25 09:00:56 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.65 2010/10/04 10:44:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 25 2010 $
+.Dd $Mdocdate: October 4 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -256,6 +256,27 @@ All these commands start with an
 Here is a list:
 .Pp
 .Bl -tag -width Ds -compact
+.It Cm @ask-update Ar pkgspec Ar message
+Mechanism to prevent unwanted updates.
+If the new package is installed as part of an update matching
+.Ar pkgspec ,
+the
+.Ar message
+will be displayed to the user.
+In non-interactive mode, the update will abort.
+Otherwise, the user will have a chance to proceed.
+Automated updates can be done by using
+.Fl D Ar update_stem ,
+with
+.Ar stem
+the stem of the
+.Ar pkgspec .
+Classical use case for postgresql:
+.Bd -literal
+	@ask-update postgresql-server<-8 Make sure your existing database is backed up
+.Ed
+Use very sparingly.
+Most cases that seem to require manual updates just require a bit more thought.
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
 .Pp
