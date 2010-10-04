@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.263 2010/10/04 10:32:47 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.264 2010/10/04 10:35:24 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1940,6 +1940,13 @@ and
 .Ev DISTDIR .
 .It Ev TAR
 Name of the tar binary.
+.It Ev TARGETS
+Read-only.
+Set to the list of special targets for a port
+.Po
+.Ar {pre,do,post}-*
+.Pc .
+Used by introspection tools such as the sqlports package.
 .It Ev TEMPLATES
 Base location for the templates used in the
 .Ar readmes
