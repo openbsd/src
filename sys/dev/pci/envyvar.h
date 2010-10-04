@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.15 2010/03/07 18:55:45 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.16 2010/10/04 09:32:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -22,6 +22,7 @@
 #include <sys/device.h>
 #include <sys/time.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 
 struct envy_softc;
 
@@ -93,6 +94,12 @@ struct envy_softc {
 	void *iarg;
 	void (*ointr)(void *);
 	void *oarg;
+#if NMIDI > 0
+	void (*midi_in)(void *, int);
+	void (*midi_out)(void *);
+	void *midi_arg;
+	struct device *midi;
+#endif
 };
 
 #define ENVY_MIX_CLASSIN	0

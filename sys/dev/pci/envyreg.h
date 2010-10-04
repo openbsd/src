@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.15 2010/07/21 07:11:55 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.16 2010/10/04 09:32:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,14 +32,21 @@
 #define   ENVY_CTL_NATIVE	0x01
 #define ENVY_CCS_INTMASK	0x01
 #define   ENVY_CCS_INT_MT	0x10
-#define   ENVY_CCS_INT_MIDI1	0x80
-#define   ENVY_CCS_INT_TMR	0x80
 #define   ENVY_CCS_INT_MIDI0	0x80
+#define   ENVY_CCS_INT_MIDI1	0x20	/* Envy24 only */
 #define ENVY_CCS_INTSTAT	0x02
 #define ENVY_CCS_CONF		0x04	/* Envy24HT only */
 #define ENVY_CCS_ACLINK		0x05	/* Envy24HT only */
 #define ENVY_CCS_I2S		0x06	/* Envy24HT only */
 #define ENVY_CCS_SPDIF		0x07	/* Envy24HT only */
+#define ENVY_CCS_MIDIDATA0	0x0c
+#define ENVY_CCS_MIDISTAT0	0x0d
+#define ENVY_CCS_MIDIDATA1	0x1c	/* Envy24 only */
+#define ENVY_CCS_MIDISTAT1	0x1d	/* Envy24 only */
+#define ENVY_CCS_MIDIWAT	0x0e	/* Envy24HT only */
+#define   ENVY_CCS_MIDIWAT_RX	0x20
+#define ENVY_CCS_MIDIDATA1	0x1c
+#define ENVY_CCS_MIDISTAT1	0x1d
 #define ENVY_CCS_GPIODATA0	0x14	/* Envy24HT only */
 #define ENVY_CCS_GPIODATA1	0x15	/* Envy24HT only */
 #define ENVY_CCS_GPIODATA2	0x1e	/* Envy24HT only */
@@ -79,12 +86,21 @@
  * EEPROM bytes signification
  */
 #define ENVY_EEPROM_CONF	6
+#define   ENVY_CONF_MIDI	0x20
 #define ENVY_EEPROM_ACLINK	7
 #define ENVY_EEPROM_I2S		8
 #define ENVY_EEPROM_SPDIF	9
 #define ENVY_EEPROM_GPIOMASK(s)	((s)->isht ? 13 : 10)
 #define ENVY_EEPROM_GPIOST(s)	((s)->isht ? 16 : 11)
 #define ENVY_EEPROM_GPIODIR(s)	((s)->isht ? 10 : 12)
+
+/*
+ * MIDI status
+ */
+#define ENVY_MIDISTAT_IEMPTY(s)	((s)->isht ? 0x8 : 0x80)
+#define ENVY_MIDISTAT_OBUSY(s)	((s)->isht ? 0x4 : 0x40)
+#define ENVY_MIDISTAT_RESET	0xff
+#define ENVY_MIDISTAT_UART	0x3f
 
 /*
  * MT registers for play/record params

@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.41 2010/09/08 20:34:11 stsp Exp $	*/
+/*	$OpenBSD: envy.c,v 1.42 2010/10/04 09:32:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,6 +26,7 @@
  *
  */
 
+#include "midi.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -34,6 +35,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/ic/ac97.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -72,6 +74,7 @@ void envy_gpio_i2c_start_bit(struct envy_softc *, int, int);
 void envy_gpio_i2c_stop_bit(struct envy_softc *, int, int);
 void envy_gpio_i2c_byte_out(struct envy_softc *, int, int, int);
 int  envy_eeprom_gpioxxx(struct envy_softc *, int);
+void envy_midi_wait(struct envy_softc *);
 void envy_reset(struct envy_softc *);
 int  envy_codec_read(struct envy_softc *, int, int);
 void envy_codec_write(struct envy_softc *, int, int, int);
@@ -105,6 +108,13 @@ int envy_query_devinfo(void *, struct mixer_devinfo *);
 int envy_get_port(void *, struct mixer_ctrl *);
 int envy_set_port(void *, struct mixer_ctrl *);
 int envy_get_props(void *);
+#if NMIDI > 0
+int envy_midi_open(void *, int, void (*)(void *, int),
+    void (*)(void *), void *);
+void envy_midi_close(void *);
+int envy_midi_output(void *, int);
+void envy_midi_getinfo(void *, struct midi_info *);
+#endif
 
 int  envy_ac97_wait(struct envy_softc *);
 int  envy_ac97_attach_codec(void *, struct ac97_codec_if *);
@@ -189,6 +199,17 @@ struct audio_hw_if envy_hw_if = {
 	envy_trigger_input,	/* trigger_input */
 	NULL
 };
+
+#if NMIDI > 0
+struct midi_hw_if envy_midi_hw_if = {
+	envy_midi_open,
+	envy_midi_close,
+	envy_midi_output,
+	NULL,				/* flush */
+	envy_midi_getinfo,
+	NULL				/* ioctl */
+};
+#endif
 
 struct pci_matchid envy_matchids[] = {
 	{ PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_ICE1712 },
@@ -1229,6 +1250,23 @@ envy_ac97_flags_codec(void *hdl)
 }
 
 void
+envy_midi_wait(struct envy_softc *sc)
+{
+	int i, st;
+	
+	for (i = 100;; i--) {
+		st = envy_ccs_read(sc, ENVY_CCS_MIDISTAT0);
+		if (!(st & ENVY_MIDISTAT_OBUSY(sc)))
+			break;
+		if (i == 0) {
+			printf("%s: midi wait timeout\n", DEVNAME(sc));
+			break;
+		}
+		delay(10);
+	}
+}
+
+void
 envy_reset(struct envy_softc *sc)
 {
 	int i;
@@ -1289,11 +1327,30 @@ envy_reset(struct envy_softc *sc)
 	DPRINTF("%s: gpio_state = %02x\n", DEVNAME(sc),
 		envy_gpio_getstate(sc));
 
+	if (sc->isht) {
+		/*
+		 * set water marks so we get an interrupt for each byte
+		 */
+		envy_ccs_write(sc, ENVY_CCS_MIDIWAT, 1);
+		envy_ccs_write(sc, ENVY_CCS_MIDIWAT, 1 | ENVY_CCS_MIDIWAT_RX);
+	}
+
+	/*
+	 * switch to UART mode
+	 */
+	envy_ccs_write(sc, ENVY_CCS_MIDISTAT0, 0xff);
+	envy_midi_wait(sc);
+	envy_ccs_write(sc, ENVY_CCS_MIDISTAT0, ENVY_MIDISTAT_UART);
+	envy_midi_wait(sc);
+	if (!sc->isht)
+		(void)envy_ccs_read(sc, ENVY_CCS_MIDIDATA0);
+
 	/*
 	 * clear all interrupts and unmask used ones
 	 */
 	envy_ccs_write(sc, ENVY_CCS_INTSTAT, 0xff);
-	envy_ccs_write(sc, ENVY_CCS_INTMASK, ~ENVY_CCS_INT_MT);
+	envy_ccs_write(sc, ENVY_CCS_INTMASK,
+	    ~(ENVY_CCS_INT_MT | ENVY_CCS_INT_MIDI0));
 	if (sc->isht) {
 		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_NSTREAM,
 		    4 - sc->card->noch / 2);
@@ -1551,6 +1608,11 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	    sc->card->name, sc->card->nich, sc->card->noch);
 	envy_reset(sc);
 	sc->audio = audio_attach_mi(&envy_hw_if, sc, &sc->dev);
+#if NMIDI > 0
+	if (!sc->isht || sc->eeprom[ENVY_EEPROM_CONF] & ENVY_CONF_MIDI)
+		sc->midi = midi_attach_mi(&envy_midi_hw_if, sc, &sc->dev);
+#endif
+
 }
 
 int
@@ -1793,12 +1855,15 @@ int
 envy_intr(void *self)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
+	int mintr, mstat, mdata;
 	int st, err, ctl;
-
+	int max;
 
 	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR);
-	if (st == 0)
+	mintr = envy_ccs_read(sc, ENVY_CCS_INTSTAT);
+	if (st == 0 && mintr == 0)
 		return 0;
+
 #ifdef ENVY_DEBUG
 	if (sc->nintr < ENVY_NINTR) {
 		sc->intrs[sc->nintr].iactive = sc->iactive;
@@ -1816,6 +1881,19 @@ envy_intr(void *self)
 		sc->nintr++;
 	}
 #endif
+	envy_ccs_write(sc, ENVY_CCS_INTSTAT, mintr);
+	if (mintr & ENVY_CCS_INT_MIDI0) {
+		for (max = 128; max > 0; max--) {
+			mstat = envy_ccs_read(sc, ENVY_CCS_MIDISTAT0);
+			if (mstat & ENVY_MIDISTAT_IEMPTY(sc))
+				break;
+			mdata = envy_ccs_read(sc, ENVY_CCS_MIDIDATA0);
+#if NMIDI > 0
+			if (sc->midi_in)
+				sc->midi_in(sc->midi_arg, mdata);
+#endif
+		}
+	}
 	if (st & ENVY_MT_INTR_PACK) {
 		if (sc->oactive)
 			sc->ointr(sc->oarg);
@@ -2198,3 +2276,52 @@ envy_get_props(void *self)
 {
 	return AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
 }
+
+#if NMIDI > 0
+int
+envy_midi_open(void *self, int flags,
+    void (*in)(void *, int),
+    void (*out)(void *),
+    void *arg)
+{
+	struct envy_softc *sc = (struct envy_softc *)self;
+	int s;
+
+	s = splaudio();
+	sc->midi_in = in;
+	sc->midi_out = out;
+	sc->midi_arg = arg;
+	splx(s);
+	return 0;
+}
+
+void
+envy_midi_close(void *self)
+{
+	struct envy_softc *sc = (struct envy_softc *)self;
+	int s;
+
+	tsleep(sc, PWAIT, "envymid", hz / 10);
+	s = splaudio();
+	sc->midi_in = NULL;
+	sc->midi_out = NULL;
+	splx(s);
+}
+
+int
+envy_midi_output(void *self, int data)
+{
+	struct envy_softc *sc = (struct envy_softc *)self;
+	
+	envy_midi_wait(sc);
+	envy_ccs_write(sc, ENVY_CCS_MIDIDATA0, data);
+	return 0;
+}
+
+void
+envy_midi_getinfo(void *self, struct midi_info *mi)
+{
+	mi->props = MIDI_PROP_CAN_INPUT;
+	mi->name = "Envy24 MIDI UART";
+}
+#endif

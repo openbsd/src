@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.698 2010/09/26 20:39:08 miod Exp $
+#	$OpenBSD: GENERIC,v 1.699 2010/10/04 09:32:43 ratchov Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -742,6 +742,7 @@ midi*	at ym?
 midi*	at mpu?
 midi*	at autri?
 midi*	at eap?
+midi*	at envy?
 
 spkr0	at pcppi?		# PC speaker
 
