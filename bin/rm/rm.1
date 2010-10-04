@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.33 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: rm.1,v 1.34 2010/10/04 07:17:30 jmc Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: October 4 2010 $
 .Dt RM 1
 .Os
 .Sh NAME
@@ -98,7 +98,6 @@ option is specified, the user is prompted for confirmation before
 each directory (and its contents) are processed.
 If the user does not respond affirmatively, the file hierarchy rooted in
 that directory is skipped.
-.Pp
 .It Fl r
 Equivalent to
 .Fl R .
@@ -158,6 +157,22 @@ The flags
 .Op Fl dP
 are extensions to that specification.
 .Pp
+.St -p1003.1-2008
+requires
+.Nm
+to act like
+.Xr rmdir 1
+when the
+.Ar file
+specified is a directory.
+This implementation requires the
+.Fl d
+option if such behavior is desired.
+This follows the historical
+behavior of
+.Nm
+with respect to directories.
+.Pp
 The
 .Nm
 utility differs from historical implementations in that the
@@ -174,22 +189,6 @@ The interactive mode used to be a
 .Nm dsw
 command, a carryover from the ancient past with an
 amusing etymology.
-.Pp
-.St -p1003.1-2008
-requires
-.Nm
-to act like
-.Xr rmdir 1
-when the
-.Ar file
-specified is a directory.
-This implementation requires the
-.Fl d
-option if such behavior is desired.
-This follows the historical
-behavior of
-.Nm
-with respect to directories.
 .Sh HISTORY
 An
 .Nm
