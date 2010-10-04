@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.18 2010/07/13 12:56:06 henning Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.19 2010/10/04 09:13:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -209,7 +209,6 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 				if (optlen >= TCPOLEN_WINDOW)
 					memcpy(&fp.fp_wscale, &optp[2],
 					    sizeof(fp.fp_wscale));
-				NTOHS(fp.fp_wscale);
 				fp.fp_tcpopts = (fp.fp_tcpopts <<
 				    PF_OSFP_TCPOPT_BITS) |
 				    PF_OSFP_TCPOPT_WSCALE;
