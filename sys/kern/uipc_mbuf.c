@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.144 2010/09/23 10:49:55 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.145 2010/10/05 13:29:40 mikeb Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -403,10 +403,13 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 		panic("m_clget: request for %u byte cluster", pktlen);
 #endif
 
-	if (ifp != NULL && m_cldrop(ifp, pi))
-		return (NULL);
-
 	s = splnet();
+
+	if (ifp != NULL && m_cldrop(ifp, pi)) {
+		splx(s);
+		return (NULL);
+	}
+
 	if (m == NULL) {
 		MGETHDR(m0, M_DONTWAIT, MT_DATA);
 		if (m0 == NULL) {
