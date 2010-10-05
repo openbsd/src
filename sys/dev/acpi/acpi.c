@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.214 2010/10/05 16:14:37 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.215 2010/10/05 16:14:59 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1578,17 +1578,9 @@ acpi_foundprw(struct aml_node *node, void *arg)
 struct gpe_block *
 acpi_find_gpe(struct acpi_softc *sc, int gpe)
 {
-#if 1
 	if (gpe >= sc->sc_lastgpe)
 		return NULL;
 	return &sc->gpe_table[gpe];
-#else
-	SIMPLEQ_FOREACH(pgpe, &sc->sc_gpes, gpe_link) {
-		if (gpe >= pgpe->start && gpe <= (pgpe->start+7))
-			return &pgpe->table[gpe & 7];
-	}
-	return NULL;
-#endif
 }
 
 void
