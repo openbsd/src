@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1573 2010/09/29 13:28:47 oga Exp $
+$OpenBSD: pcidevs,v 1.1574 2010/10/05 08:04:10 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -851,6 +851,7 @@ product ARECA ARC1380		0x1380	ARC-1380
 product ARECA ARC1381		0x1381	ARC-1381
 product ARECA ARC1680		0x1680	ARC-1680
 product ARECA ARC1681		0x1681	ARC-1681
+product ARECA ARC1880		0x1880	ARC-1880
 
 /* ASIX Electronics products */
 product ASIX AX88140A		0x1400	AX88140A/88141
