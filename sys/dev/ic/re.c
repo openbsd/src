@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.128 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.129 2010/10/05 08:57:34 mikeb Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2042,8 +2042,10 @@ re_init(struct ifnet *ifp)
 	if (sc->sc_hwrev != RL_HWREV_8139CPLUS)
 		CSR_WRITE_2(sc, RL_MAXRXPKTLEN, 16383);
 
-	if (sc->rl_testmode)
+	if (sc->rl_testmode) {
+		splx(s);
 		return (0);
+	}
 
 	mii_mediachg(&sc->sc_mii);
 
