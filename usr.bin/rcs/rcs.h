@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.10 2010/08/31 20:42:45 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.11 2010/10/05 15:13:04 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,6 +43,7 @@
 #define RCS_HEAD_REV		((RCSNUM *)(-1))
 
 
+#define RCS_STATE_INVALCHAR	"$,:;@"
 #define RCS_SYM_INVALCHAR	"$,.:;@"
 
 #define RCS_MAGIC_BRANCH	".0."

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.65 2010/09/29 09:23:54 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.66 2010/10/05 15:13:04 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -97,6 +97,9 @@ struct rcs_pdata {
 
 #define RCS_TOKSTR(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
 #define RCS_TOKLEN(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
+
+/* invalid characters in RCS states */
+static const char rcs_state_invch[] = RCS_STATE_INVALCHAR;
 
 /* invalid characters in RCS symbol names */
 static const char rcs_sym_invch[] = RCS_SYM_INVALCHAR;
@@ -2972,10 +2975,21 @@ rcs_state_set(RCSFILE *rfp, RCSNUM *rev, const char *state)
 int
 rcs_state_check(const char *state)
 {
-	if (strchr(state, ' ') != NULL)
+	int ret;
+	const char *cp;
+
+	ret = 0;
+	cp = state;
+	if (!isalpha(*cp++))
 		return (-1);
 
-	return (0);
+	for (; *cp != '\0'; cp++)
+		if (!isgraph(*cp) || (strchr(rcs_state_invch, *cp) != NULL)) {
+			ret = -1;
+			break;
+		}
+
+	return (ret);
 }
 
 /*
