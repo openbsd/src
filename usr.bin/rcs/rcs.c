@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.66 2010/10/05 15:13:04 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.67 2010/10/05 15:16:48 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1027,24 +1027,6 @@ rcs_comment_set(RCSFILE *file, const char *comment)
 		xfree(file->rf_comment);
 	file->rf_comment = tmp;
 	file->rf_flags &= ~RCS_SYNCED;
-}
-
-/*
- * rcs_tag_resolve()
- *
- * Retrieve the revision number corresponding to the tag <tag> for the RCS
- * file <file>.
- */
-RCSNUM *
-rcs_tag_resolve(RCSFILE *file, const char *tag)
-{
-	RCSNUM *num;
-
-	if ((num = rcsnum_parse(tag)) == NULL) {
-		num = rcs_sym_getrev(file, tag);
-	}
-
-	return (num);
 }
 
 int
