@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.213 2010/09/29 19:45:34 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.214 2010/10/05 16:14:37 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1315,14 +1315,15 @@ acpi_reset(void)
 	struct acpi_fadt	*fadt;
 	u_int32_t		 reset_as, reset_len;
 	u_int32_t		 value;
+	struct acpi_softc	*sc = acpi_softc;
 
-	fadt = acpi_softc->sc_fadt;
+	fadt = sc->sc_fadt;
 
 	/*
 	 * RESET_REG_SUP is not properly set in some implementations,
 	 * but not testing against it breaks more machines than it fixes
 	 */
-	if (acpi_softc->sc_revision <= 1 ||
+	if (sc->sc_revision <= 1 ||
 	    !(fadt->flags & FADT_RESET_REG_SUP) || fadt->reset_reg.address == 0)
 		return;
 
@@ -1336,7 +1337,7 @@ acpi_reset(void)
 	if (reset_len == 0)
 		reset_len = reset_as;
 
-	acpi_gasio(acpi_softc, ACPI_IOWRITE,
+	acpi_gasio(sc, ACPI_IOWRITE,
 	    fadt->reset_reg.address_space_id,
 	    fadt->reset_reg.address, reset_as, reset_len, &value);
 
