@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.216 2010/10/05 16:17:55 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.217 2010/10/05 16:59:02 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -133,6 +133,8 @@ int	acpi_add_device(struct aml_node *node, void *arg);
 struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
 void	acpi_enable_onegpe(struct acpi_softc *, int, int);
 int	acpi_gpe(struct acpi_softc *, int, void *);
+
+void	acpi_disable_allgpes(struct acpi_softc *);
 
 #endif /* SMALL_KERNEL */
 
@@ -1600,10 +1602,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 	ngpe = 0;
 
 	/* Clear GPE status */
-	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
-		acpi_write_pmreg(sc, ACPIREG_GPE_EN,  idx>>3, 0);
-		acpi_write_pmreg(sc, ACPIREG_GPE_STS, idx>>3, -1);
-	}
+	acpi_disable_allgpes(sc);
 	for (idx = 0; idx < sc->sc_lastgpe; idx++) {
 		/* Search Level-sensitive GPES */
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
@@ -1638,15 +1637,10 @@ acpi_susp_resume_gpewalk(struct acpi_softc *sc, int state,
     int wake_gpe_state)
 {
 	struct acpi_wakeq *wentry;
-	int idx;
 	u_int32_t gpe;
 
 	/* Clear GPE status */
-	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
-		acpi_write_pmreg(sc, ACPIREG_GPE_EN,  idx>>3, 0);
-		acpi_write_pmreg(sc, ACPIREG_GPE_STS, idx>>3, -1);
-	}
-
+	acpi_disable_allgpes(sc);
 	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
 		dnprintf(10, "%.4s(S%d) gpe %.2x\n", wentry->q_node->name,
 		    wentry->q_state,
@@ -1665,6 +1659,20 @@ acpi_susp_resume_gpewalk(struct acpi_softc *sc, int state,
 				acpi_enable_onegpe(sc, gpe, 1);
 		}
 	}
+}
+
+void
+acpi_disable_allgpes(struct acpi_softc *sc)
+{
+	int idx, s;
+
+	/* Clear GPE status */
+	s = spltty();
+	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
+		acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx >> 3, 0);
+		acpi_write_pmreg(sc, ACPIREG_GPE_STS, idx >> 3, -1);
+	}
+	splx(s);
 }
 
 int
