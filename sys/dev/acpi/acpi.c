@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.215 2010/10/05 16:14:59 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.216 2010/10/05 16:17:55 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1312,12 +1312,10 @@ acpi_foundide(struct aml_node *node, void *arg)
 void
 acpi_reset(void)
 {
-	struct acpi_fadt	*fadt;
 	u_int32_t		 reset_as, reset_len;
 	u_int32_t		 value;
 	struct acpi_softc	*sc = acpi_softc;
-
-	fadt = sc->sc_fadt;
+	struct acpi_fadt	*fadt = sc->sc_fadt;
 
 	/*
 	 * RESET_REG_SUP is not properly set in some implementations,
