@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.42 2010/10/04 09:32:43 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.43 2010/10/06 21:02:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1674,30 +1674,28 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 		DPRINTF("%s: dmamem_alloc: failed %d\n", DEVNAME(sc), err);
 		goto err_ret;
 	}
-
 	err = bus_dmamem_map(sc->pci_dmat, &buf->seg, rsegs, buf->size,
 	    &buf->addr, wait | BUS_DMA_COHERENT);
 	if (err) {
 		DPRINTF("%s: dmamem_map: failed %d\n", DEVNAME(sc), err);
 		goto err_free;
 	}
-
 	err = bus_dmamap_create(sc->pci_dmat, buf->size, 1, buf->size, 0,
 	    wait, &buf->map);
 	if (err) {
 		DPRINTF("%s: dmamap_create: failed %d\n", DEVNAME(sc), err);
 		goto err_unmap;
 	}
-
 	err = bus_dmamap_load(sc->pci_dmat, buf->map, buf->addr,
 	    buf->size, NULL, wait);
 	if (err) {
 		DPRINTF("%s: dmamap_load: failed %d\n", DEVNAME(sc), err);
 		goto err_destroy;
 	}
-	bus_space_write_4(sc->mt_iot, sc->mt_ioh, basereg, buf->seg.ds_addr);
-	DPRINTF("%s: allocated %ld bytes dir=%d, ka=%p, da=%p\n",
-		DEVNAME(sc), buf->size, dir, buf->addr, (void *)buf->seg.ds_addr);
+	bus_space_write_4(sc->mt_iot, sc->mt_ioh, basereg,
+	    buf->map->dm_segs[0].ds_addr);
+	DPRINTF("%s: allocated %zd bytes dir=%d, ka=%p, da=%p\n", DEVNAME(sc),
+	    buf->size, dir, buf->addr, (void *)buf->map->dm_segs[0].ds_addr);
 	return buf->addr;
 
  err_destroy:
