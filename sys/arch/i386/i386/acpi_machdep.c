@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.40 2010/10/06 16:37:32 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.41 2010/10/06 18:21:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -219,6 +219,8 @@ acpi_cpu_flush(struct acpi_softc *sc, int state)
 int
 acpi_sleep_machdep(struct acpi_softc *sc, int state)
 {
+	int s;
+
 	if (sc->sc_facs == NULL) {
 		printf("%s: acpi_sleep_machdep: no FACS\n", DEVNAME(sc));
 		return (ENXIO);
@@ -228,6 +230,12 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 
 	/* i386 does lazy pmap_activate */
 	pmap_activate(curproc);
+
+	/*
+	 * The local apic may lose its state, so save the Task
+	 * Priority register where we keep the system priority level.
+	 */
+	s = lapic_tpr;
 
 	/*
 	 * ACPI defines two wakeup vectors. One is used for ACPI 1.0
@@ -263,6 +271,9 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 
 	/* Reset the vector */
 	sc->sc_facs->wakeup_vector = 0;
+
+	/* Restore the Task Priority register */
+	lapic_tpr = s;
 
 #if NISA > 0
 	isa_defaultirq();
