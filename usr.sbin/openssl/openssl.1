@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.67 2010/02/18 13:39:21 schwarze Exp $
+.\" $OpenBSD: openssl.1,v 1.68 2010/10/06 13:21:02 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: October 6 2010 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -125,10 +125,12 @@
 .Op Ar command_args
 .Pp
 .Nm
-.Oo Cm list-standard-commands No |\ \&
-.Cm list-message-digest-commands |
-.Cm list-cipher-commands
-.Oc
+.Cm list-standard-commands \*(Ba
+.Cm list-message-digest-commands \*(Ba
+.Cm list-cipher-commands \*(Ba
+.Cm list-cipher-algorithms \*(Ba
+.Cm list-message-digest-algorithms \*(Ba
+.Cm list-public-key-algorithms
 .Pp
 .Nm
 .Cm no- Ns Ar XXX
@@ -152,7 +154,9 @@ It can be used for
 .Pp
 .Bl -bullet -offset indent -compact
 .It
-Creation of RSA, DH and DSA key parameters
+Creation and management of private keys, public keys, and parameters
+.It
+Public key cryptographic operations
 .It
 Creation of X.509 certificates, CSRs and CRLs
 .It
@@ -163,6 +167,8 @@ Encryption and Decryption with Ciphers
 SSL/TLS Client and Server Tests
 .It
 Handling of S/MIME signed or encrypted mail
+.It
+Time stamp requests, generation, and verification
 .El
 .Sh COMMAND SUMMARY
 The
@@ -189,6 +195,20 @@ of the names of all standard commands, message digest commands,
 or cipher commands, respectively, that are available in the present
 .Nm
 utility.
+.Pp
+The pseudo-commands
+.Cm list-cipher-algorithms
+and
+.Cm list-message-digest-algorithms
+list all cipher and message digest names,
+one entry per line.
+Aliases are listed as:
+.Pp
+.D1 from => to
+.Pp
+The pseudo-command
+.Cm list-public-key-algorithms
+lists all supported public key algorithms.
 .Pp
 The pseudo-command
 .Cm no- Ns Ar XXX
@@ -229,39 +249,55 @@ Parse an ASN.1 sequence.
 .It Cm ca
 Certificate Authority
 .Pq CA
-Management.
+management.
 .It Cm ciphers
-Cipher Suite Description Determination.
+Cipher suite description determination.
 .It Cm crl
 Certificate Revocation List
 .Pq CRL
-Management.
+management.
 .It Cm crl2pkcs7
-CRL to PKCS#7 Conversion.
+CRL to PKCS#7 conversion.
 .It Cm dgst
-Message Digest Calculation.
+Message digest calculation.
 .It Cm dh
-Diffie-Hellman Parameter Management.
+Diffie-Hellman parameter management.
 Obsoleted by
 .Cm dhparam .
 .It Cm dhparam
-Generation and Management of Diffie-Hellman Parameters.
+Generation and management of Diffie-Hellman parameters.
+Superseded by
+.Cm genpkey
+and
+.Cm pkeyparam .
 .It Cm dsa
-DSA Data Management.
+DSA data management.
 .It Cm dsaparam
-DSA Parameter Generation.
+DSA parameter generation and management.
+Superseded by
+.Cm genpkey
+and
+.Cm pkeyparam .
 .It Cm enc
-Encoding with Ciphers.
+Encoding with ciphers.
+.It Cm engine
+Engine (loadable module) information and manipulation.
 .It Cm errstr
-Error Number to Error String Conversion.
+Error number to error string conversion.
 .It Cm gendh
-Generation of Diffie-Hellman Parameters.
+Generation of Diffie-Hellman parameters.
 Obsoleted by
 .Cm dhparam .
 .It Cm gendsa
-Generation of DSA Parameters.
+Generation of DSA private key from parameters.
+Superseded by
+.Cm genpkey
+and
+.Cm pkey .
 .It Cm genrsa
-Generation of RSA Parameters.
+Generation of RSA private key.
+Superseded by
+.Cm genpkey .
 .It Cm nseq
 Create or examine a Netscape certificate sequence.
 .It Cm ocsp
@@ -269,21 +305,23 @@ Online Certificate Status Protocol utility.
 .It Cm passwd
 Generation of hashed passwords.
 .It Cm pkcs7
-PKCS#7 Data Management.
+PKCS#7 data management.
 .It Cm pkcs8
-PKCS#8 Data Management.
+PKCS#8 data management.
 .It Cm pkcs12
-PKCS#12 Data Management.
+PKCS#12 data management.
 .It Cm rand
 Generate pseudo-random bytes.
 .It Cm req
-X.509 Certificate Signing Request
+PKCS#10 X.509 Certificate Signing Request
 .Pq CSR
-Management.
+management.
 .It Cm rsa
-RSA Data Management.
+RSA key management.
 .It Cm rsautl
 RSA utility for signing, verification, encryption, and decryption.
+Superseded by
+.Cm pkeyutl .
 .It Cm s_client
 This implements a generic SSL/TLS client which can establish a transparent
 connection to a remote server speaking SSL/TLS.
@@ -304,80 +342,80 @@ It provides both an own command line oriented protocol for testing
 SSL functions and a simple HTTP response
 facility to emulate an SSL/TLS-aware webserver.
 .It Cm s_time
-SSL Connection Timer.
+SSL connection timer.
 .It Cm sess_id
-SSL Session Data Management.
+SSL session data management.
 .It Cm smime
 S/MIME mail processing.
 .It Cm speed
-Algorithm Speed Measurement.
+Algorithm speed measurement.
 .It Cm spkac
 SPKAC printing and generating utility.
 .It Cm verify
-X.509 Certificate Verification.
+X.509 certificate verification.
 .It Cm version
 .Nm OpenSSL
-Version Information.
+version information.
 .It Cm x509
-X.509 Certificate Data Management.
+X.509 certificate data management.
 .El
 .Sh MESSAGE DIGEST COMMANDS
 .Bl -tag -width "asn1parse"
 .It Cm md2
-MD2 Digest.
+MD2 digest.
 .It Cm md4
-MD4 Digest.
+MD4 digest.
 .It Cm md5
-MD5 Digest.
+MD5 digest.
 .It Cm ripemd160
-RIPEMD-160 Digest.
+RIPEMD-160 digest.
 .It Cm sha
-SHA Digest.
+SHA digest.
 .It Cm sha1
-SHA-1 Digest.
+SHA-1 digest.
 .El
 .Sh ENCODING AND CIPHER COMMANDS
 .Bl -tag -width Ds -compact
 .It Cm aes-128-cbc | aes-128-ecb | aes-192-cbc | aes-192-ecb
 .It Cm aes-256-cbc | aes-256-ecb
-AES Cipher.
+AES cipher.
 .Pp
 .It Cm base64
-Base64 Encoding.
+Base64 encoding.
 .Pp
 .It Xo
 .Cm bf | bf-cbc | bf-cfb |
 .Cm bf-ecb | bf-ofb
 .Xc
-Blowfish Cipher.
+Blowfish cipher.
 .Pp
 .It Cm cast | cast-cbc
-CAST Cipher.
+CAST cipher.
 .Pp
 .It Cm cast5-cbc | cast5-cfb | cast5-ecb | cast5-ofb
-CAST5 Cipher.
+CAST5 cipher.
 .Pp
 .It Xo
 .Cm des | des-cbc | des-cfb | des-ecb |
 .Cm des-ede | des-ede-cbc
 .Xc
 .It Cm des-ede-cfb | des-ede-ofb | des-ofb
-DES Cipher.
+DES cipher.
 .Pp
 .It Xo
 .Cm des3 | desx | des-ede3 |
 .Cm des-ede3-cbc | des-ede3-cfb | des-ede3-ofb
 .Xc
-Triple DES Cipher.
+Triple DES cipher.
 .Pp
 .It Xo
 .Cm rc2 | rc2-40-cbc | rc2-64-cbc | rc2-cbc |
 .Cm rc2-cfb | rc2-ecb | rc2-ofb
 .Xc
-RC2 Cipher.
+RC2 cipher.
 .Pp
 .It Cm rc4 | rc4-40
-RC4 Cipher.
+RC4 cipher.
 .El
 .Sh PASS PHRASE ARGUMENTS
 Several commands accept password arguments, typically using
@@ -441,6 +479,8 @@ Read the password from standard input.
 .Op Fl i
 .Op Fl noout
 .Op Fl dlimit Ar number
+.Op Fl genconf Ar file
+.Op Fl genstr Ar str
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM | TXT
 .Op Fl length Ar number
@@ -463,6 +503,24 @@ Dump the first
 bytes of unknown data in hex form.
 .It Fl dump
 Dump unknown data in hex form.
+.It Fl genconf Ar file , Fl genstr Ar str
+Generate encoded data based on string
+.Ar str ,
+file
+.Ar file ,
+or both using
+.Xr ASN1_generate_nconf 3
+format.
+If only
+.Ar file
+is present then the string is obtained from the default section
+using the name
+.Dq asn1 .
+The encoded data is passed through the ASN1 parser and printed out as
+though it came from a file;
+the contents can thus be examined and written to a file using the
+.Fl out
+option.
 .It Fl i
 Indents the output according to the
 .Qq depth
@@ -664,7 +722,7 @@ This allows the expiry date to be explicitly set.
 The format of the date is YYMMDDHHMMSSZ
 .Pq the same as an ASN1 UTCTime structure .
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm ca
@@ -1332,9 +1390,8 @@ then even if a certificate is issued with CA:TRUE it will not be valid.
 .\"
 .Sh CIPHERS
 .Nm openssl ciphers
-.Op Fl h
+.Op Fl hVv
 .Op Fl ssl2 | ssl3 | tls1
-.Op Fl v
 .Op Ar cipherlist
 .Pp
 The
@@ -1354,6 +1411,10 @@ Only include SSL v2 ciphers.
 Only include SSL v3 ciphers.
 .It Fl tls1
 Only include TLS v1 ciphers.
+.It Fl V
+Like
+.Fl v ,
+but include cipher suite codes in output (hex format).
 .It Fl v
 Verbose option.
 List ciphers with a complete description of protocol version
@@ -1484,8 +1545,6 @@ Export encryption algorithms.
 Including 40- and 56-bit algorithms.
 .It Ar EXPORT40
 40-bit export encryption algorithms.
-.It Ar EXPORT56
-56-bit export encryption algorithms.
 .It Ar eNULL , NULL
 The
 .Qq NULL
@@ -1502,22 +1561,10 @@ attack, so their use is normally discouraged.
 Cipher suites using RSA key exchange.
 .It Ar kEDH
 Cipher suites using ephemeral DH key agreement.
-.It Ar kDHr , kDHd
-Cipher suites using DH key agreement and DH certificates signed by
-CAs with RSA and DSS keys respectively.
-Not implemented.
 .It Ar aRSA
 Cipher suites using RSA authentication, i.e. the certificates carry RSA keys.
 .It Ar aDSS , DSS
 Cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
-.It Ar aDH
-Cipher suites effectively using DH authentication, i.e. the certificates carry
-DH keys.
-Not implemented.
-.It Ar kFZA , aFZA , eFZA , FZA
-Cipher suites using FORTEZZA key exchange, authentication, encryption
-or all FORTEZZA algorithms.
-Not implemented.
 .It Ar TLSv1 , SSLv3 , SSLv2
 TLS v1.0, SSL v3.0 or SSL v2.0 cipher suites, respectively.
 .It Ar DH
@@ -1634,6 +1681,18 @@ TLS_DHE_RSA_WITH_AES_256_CBC_SHA        DHE-RSA-AES256-SHA
 TLS_DH_anon_WITH_AES_128_CBC_SHA        ADH-AES128-SHA
 TLS_DH_anon_WITH_AES_256_CBC_SHA        ADH-AES256-SHA
 .Ed
+.Ss GOST ciphersuites from draft-chudov-cryptopro-cptls, extending TLS v1.0
+.Sy Note :
+These ciphers require an engine which includes GOST cryptographic
+algorithms, such as the
+.Dq ccgost
+engine, included in the OpenSSL distribution.
+.Bd -unfilled -offset indent
+TLS_GOSTR341094_WITH_28147_CNT_IMIT	GOST94-GOST89-GOST89
+TLS_GOSTR341001_WITH_28147_CNT_IMIT	GOST2001-GOST89-GOST89
+TLS_GOSTR341094_WITH_NULL_GOSTR3411	GOST94-NULL-GOST94
+TLS_GOSTR341001_WITH_NULL_GOSTR3411	GOST2001-NULL-GOST94
+.Ed
 .Ss Additional Export 1024 and other cipher suites
 .Sy Note :
 These ciphers can also be used in SSL v3.
@@ -1692,7 +1751,17 @@ The
 .Ar COMPLEMENTOFALL
 and
 .Ar COMPLEMENTOFDEFAULT
-selection options were added in version 0.9.7.
+selection options were added in
+.Nm OpenSSL
+0.9.7.
+.Pp
+The
+.Fl V
+option of the
+.Nm ciphers
+command was added in
+.Nm OpenSSL
+1.0.0.
 .\"
 .\" CRL
 .\"
@@ -1875,18 +1944,20 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Fl ripemd160 | sha | sha1
 .Oc
 .Op Fl binary
-.Op Fl c
-.Op Fl d
+.Op Fl cd
 .Op Fl hex
 .Op Fl hmac Ar key
 .Op Fl engine Ar id
 .Op Fl keyform Ar ENGINE | PEM
+.Op Fl mac Ar algorithm
+.Op Fl macopt Ar nm : Ns Ar v
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl prverify Ar file
 .Op Fl rand Ar
 .Op Fl sign Ar file
 .Op Fl signature Ar file
+.Op Fl sigopt Ar nm : Ns Ar v
 .Op Fl verify Ar file
 .Op Ar
 .Ek
@@ -1918,13 +1989,15 @@ format output is used.
 .It Fl d
 Print out BIO debugging information.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm dgst
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+This engine is not used as a source for digest algorithms
+unless it is also specified in the configuration file.
 .It Fl hex
 Digest is to be output as a hex dump.
 This is the default case for a
@@ -1934,7 +2007,31 @@ digest as opposed to a digital signature.
 Create a hashed MAC using
 .Ar key .
 .It Fl keyform Ar ENGINE | PEM
-Key file format.
+Specifies the key format to sign the digest with.
+.It Fl mac Ar algorithm
+Create a keyed Message Authentication Code (MAC).
+The most popular MAC algorithm is HMAC (hash-based MAC),
+but there are other MAC algorithms which are not based on hash,
+for instance the gost-mac algorithm,
+supported by the ccgost engine.
+MAC keys and other options should be set via the
+.Fl macopt
+parameter.
+.It Fl macopt Ar nm : Ns Ar v
+Passes options to the MAC algorithm, specified by
+.Fl mac .
+The following options are supported by both by HMAC and gost-mac:
+.Bl -tag -width Ds
+.It Ar key : Ns Ar string
+Specifies the MAC key as an alphanumeric string
+(use if the key contain printable characters only).
+String length must conform to any restrictions of the MAC algorithm,
+for example exactly 32 chars for gost-mac.
+.It Ar hexkey : Ns Ar string
+Specifies the MAC key in hexadecimal form (two hex digits per byte).
+Key length must conform to any restrictions of the MAC algorithm,
+for example exactly 32 chars for gost-mac.
+.El
 .It Fl out Ar file
 The file to output to, or standard output by default.
 .It Fl passin Ar arg
@@ -1962,6 +2059,9 @@ Digitally sign the digest using the private key in
 .Ar file .
 .It Fl signature Ar file
 The actual signature to verify.
+.It Fl sigopt Ar nm : Ns Ar v
+Pass options to the signature algorithm during sign or verify operations.
+The names and values of these options are algorithm-specific.
 .It Fl verify Ar file
 Verify the signature using the public key in
 .Ar file .
@@ -2053,7 +2153,7 @@ Beware that with such DSA-style DH parameters,
 a fresh DH key should be created for each use to
 avoid small-subgroup attacks that may be possible otherwise.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm dhparam
@@ -2203,7 +2303,7 @@ or by setting the encryption options it can be use to add or change
 the pass phrase.
 These options can only be used with PEM format output files.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm dsa
@@ -2338,7 +2438,7 @@ The parameters can then be loaded by calling the
 .Cm get_dsa Ns Ar XXX Ns Li ()
 function.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm dsaparam
@@ -2413,17 +2513,20 @@ DSA parameters is often used to generate several distinct keys.
 .Bk -words
 .Fl ciphername
 .Op Fl AadePp
+.Op Fl base64
 .Op Fl debug
-.Op Fl engine Ar id
+.Op Fl none
 .Op Fl nopad
 .Op Fl nosalt
 .Op Fl salt
 .Op Fl bufsize Ar number
+.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl iv Ar IV
 .Op Fl K Ar key
 .Op Fl k Ar password
 .Op Fl kfile Ar file
+.Op Fl md Ar digest
 .Op Fl out Ar file
 .Op Fl pass Ar arg
 .Op Fl S Ar salt
@@ -2441,7 +2544,7 @@ The options are as follows:
 If the
 .Fl a
 option is set, then base64 process the data on one line.
-.It Fl a
+.It Fl a , base64
 Base64 process the data.
 This means that if encryption is taking place, the data is base64-encoded
 after encryption.
@@ -2456,7 +2559,7 @@ Debug the BIOs used for I/O.
 .It Fl e
 Encrypt the input data: this is the default.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm enc
@@ -2526,6 +2629,19 @@ This is for compatibility with previous versions of
 Superseded by the
 .Fl pass
 option.
+.It Fl md Ar digest
+Use
+.Ar digest
+to create a key from a passphrase.
+.Ar digest
+may be one of
+.Dq md2 ,
+.Dq md5 ,
+.Dq sha ,
+or
+.Dq sha1 .
+.It Fl none
+Use NULL cipher (no encryption or decryption of input).
 .It Fl nopad
 Disable standard block padding.
 .It Fl nosalt
@@ -2581,6 +2697,26 @@ The program can be called either as
 .Nm openssl ciphername
 or
 .Nm openssl enc -ciphername .
+But the first form doesn't work with engine-provided ciphers,
+because this form is processed before the
+configuration file is read and any engines loaded.
+.Pp
+Engines which provide entirely new encryption algorithms
+(such as the ccgost engine which provides the gost89 algorithm)
+should be configured in the configuration file.
+Engines, specified on the command line using the
+.Fl engine
+option,
+can only be used for hardware-assisted implementations of ciphers,
+supported by
+.Nm OpenSSL
+core, or by other engines specified in the configuration file.
+.Pp
+When
+.Nm enc
+lists supported ciphers,
+ciphers provided by engines specified in the configuration files
+are listed too.
 .Pp
 A password will be prompted for to derive the
 .Ar key
@@ -2629,59 +2765,58 @@ All RC2 ciphers have the same key and effective key length.
 Blowfish and RC5 algorithms use a 128-bit key.
 .Sh ENC SUPPORTED CIPHERS
 .Bd -unfilled -offset indent
-aes-128-cbc        128-bit AES in CBC mode
-aes-128-ecb        128-bit AES in ECB mode
+aes-[128|192|256]-cbc	128/192/256 bit AES in CBC mode
+aes-[128|192|256]	Alias for aes-[128|192|256]-cbc
+aes-[128|192|256]-cfb	128/192/256 bit AES in 128 bit CFB mode
+aes-[128|192|256]-cfb1	128/192/256 bit AES in 1 bit CFB mode
+aes-[128|192|256]-cfb8	128/192/256 bit AES in 8 bit CFB mode
+aes-[128|192|256]-ecb	128/192/256 bit AES in ECB mode
+aes-[128|192|256]-ofb	128/192/256 bit AES in OFB mode
 
-aes-192-cbc        192-bit AES in CBC mode
-aes-192-ecb        192-bit AES in ECB mode
+base64			Base 64
 
-aes-256-cbc        256-bit AES in CBC mode
-aes-256-ecb        256-bit AES in ECB mode
+bf			Alias for bf-cbc
+bf-cbc			Blowfish in CBC mode
+bf-cfb			Blowfish in CFB mode
+bf-ecb			Blowfish in ECB mode
+bf-ofb			Blowfish in OFB mode
 
-base64             Base 64
+cast			Alias for cast-cbc
+cast-cbc		CAST in CBC mode
+cast5-cbc		CAST5 in CBC mode
+cast5-cfb		CAST5 in CFB mode
+cast5-ecb		CAST5 in ECB mode
+cast5-ofb		CAST5 in OFB mode
 
-bf                 Alias for bf-cbc
-bf-cbc             Blowfish in CBC mode
-bf-cfb             Blowfish in CFB mode
-bf-ecb             Blowfish in ECB mode
-bf-ofb             Blowfish in OFB mode
+des			Alias for des-cbc
+des-cbc			DES in CBC mode
+des-cfb			DES in CBC mode
+des-ecb			DES in ECB mode
+des-ofb			DES in OFB mode
 
-cast               Alias for cast-cbc
-cast-cbc           CAST in CBC mode
-cast5-cbc          CAST5 in CBC mode
-cast5-cfb          CAST5 in CFB mode
-cast5-ecb          CAST5 in ECB mode
-cast5-ofb          CAST5 in OFB mode
+des-ede			Two key triple DES EDE in ECB mode
+des-ede-cbc		Two key triple DES EDE in CBC mode
+des-ede-cfb		Two key triple DES EDE in CFB mode
+des-ede-ofb		Two key triple DES EDE in OFB mode
 
-des                Alias for des-cbc
-des-cbc            DES in CBC mode
-des-cfb            DES in CBC mode
-des-ecb            DES in ECB mode
-des-ofb            DES in OFB mode
+des3			Alias for des-ede3-cbc
+des-ede3		Three key triple DES EDE in ECB mode
+des-ede3-cbc		Three key triple DES EDE in CBC mode
+des-ede3-cfb		Three key triple DES EDE CFB mode
+des-ede3-ofb		Three key triple DES EDE in OFB mode
 
-des-ede            Two key triple DES EDE in ECB mode
-des-ede-cbc        Two key triple DES EDE in CBC mode
-des-ede-cfb        Two key triple DES EDE in CFB mode
-des-ede-ofb        Two key triple DES EDE in OFB mode
+desx			DESX algorithm
 
-des3               Alias for des-ede3-cbc
-des-ede3           Three key triple DES EDE in ECB mode
-des-ede3-cbc       Three key triple DES EDE in CBC mode
-des-ede3-cfb       Three key triple DES EDE CFB mode
-des-ede3-ofb       Three key triple DES EDE in OFB mode
+rc2			Alias for rc2-cbc
+rc2-cbc			128-bit RC2 in CBC mode
+rc2-cfb			128-bit RC2 in CFB mode
+rc2-ecb			128-bit RC2 in ECB mode
+rc2-ofb			128-bit RC2 in OFB mode
+rc2-64-cbc		64-bit RC2 in CBC mode
+rc2-40-cbc		40-bit RC2 in CBC mode
 
-desx               Alias for desx-cbc
-
-rc2                Alias for rc2-cbc
-rc2-cbc            128-bit RC2 in CBC mode
-rc2-cfb            128-bit RC2 in CFB mode
-rc2-ecb            128-bit RC2 in ECB mode
-rc2-ofb            128-bit RC2 in OFB mode
-rc2-64-cbc         64-bit RC2 in CBC mode
-rc2-40-cbc         40-bit RC2 in CBC mode
-
-rc4                128-bit RC4
-rc4-40             40-bit RC4
+rc4			128-bit RC4
+rc4-40			40-bit RC4
 .Ed
 .Sh ENC EXAMPLES
 Just base64 encode a binary file:
@@ -2810,7 +2945,7 @@ or the triple DES ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
 If none of these options are specified, no encryption is used.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm gendsa
@@ -2873,7 +3008,7 @@ if it is not supplied via the
 .Fl passout
 option.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm genrsa
@@ -3013,6 +3148,7 @@ and allowing multiple certificate files to be used.
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
+.Op Fl dgst Ar alg
 .Oo
 .Fl host
 .Ar hostname : Ns Ar port
@@ -3072,6 +3208,10 @@ to the request.
 The issuer certificate is taken from the previous
 .Fl issuer
 option, or an error occurs if no issuer certificate is specified.
+.It Fl dgst Ar alg
+Sets the digest algorithm to use for certificate identification
+in the OCSP request.
+By default SHA-1 is used.
 .It Xo
 .Fl host Ar hostname : Ns Ar port ,
 .Fl path Ar path
@@ -3569,7 +3709,7 @@ command processes PKCS#7 files in DER or PEM format.
 The options are as follows:
 .Bl -tag -width "XXXX"
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm pkcs7
@@ -3675,7 +3815,7 @@ two structures:
 a SEQUENCE containing the parameters and an ASN1 INTEGER containing
 the private key.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm pkcs8
@@ -3906,6 +4046,7 @@ compatibility, several of the utilities use the old format at present.
 .Op Fl nodes
 .Op Fl noiter
 .Op Fl nokeys
+.Op Fl nomac
 .Op Fl nomaciter
 .Op Fl nomacver
 .Op Fl noout
@@ -3915,10 +4056,12 @@ compatibility, several of the utilities use the old format at present.
 .Op Fl caname Ar name
 .Op Fl certfile Ar file
 .Op Fl certpbe Ar alg
+.Op Fl CSP Ar name
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inkey Ar file
 .Op Fl keypbe Ar alg
+.Op Fl macalg Ar alg
 .Op Fl name Ar name
 .Op Fl out Ar file
 .Op Fl passin Ar arg
@@ -4004,11 +4147,13 @@ PKCS#12 files unreadable.
 .Sh PKCS12 FILE CREATION OPTIONS
 .Bl -tag -width "XXXX"
 .It Fl CAfile Ar file
-File of CAs
-.Pq PEM format .
+CA storage as a file.
 .It Fl CApath Ar directory
-Directory of CAs
-.Pq PEM format .
+CA storage as a directory.
+This directory must be a standard certificate directory:
+that is, a hash of each subject name (using
+.Cm x509 -hash )
+should be linked to each certificate.
 .It Fl caname Ar name
 This specifies the
 .Qq friendly name
@@ -4022,16 +4167,24 @@ A file to read additional certificates from.
 .It Fl certpbe Ar alg , Fl keypbe Ar alg
 These options allow the algorithm used to encrypt the private key and
 certificates to be selected.
-Although any PKCS#5 v1.5 or PKCS#12 algorithms can be selected,
-it is advisable to only use PKCS#12 algorithms.
-See the list in the
+Any PKCS#5 v1.5 or PKCS#12 PBE algorithm name can be used (see the
 .Sx PKCS12 NOTES
-section for more information.
+section for more information).
+If a a cipher name
+(as output by the
+.Cm list-cipher-algorithms
+command) is specified then it
+is used with PKCS#5 v2.0.
+For interoperability reasons it is advisable to only use PKCS#12 algorithms.
 .It Fl chain
 If this option is present, an attempt is made to include the entire
 certificate chain of the user certificate.
 The standard CA store is used for this search.
 If the search fails, it is considered a fatal error.
+.It Fl CSP Ar name
+Write
+.Ar name
+as a Microsoft CSP name.
 .It Fl descert
 Encrypt the certificate using triple DES; this may render the PKCS#12
 file unreadable by some
@@ -4040,7 +4193,7 @@ software.
 By default, the private key is encrypted using triple DES and the
 certificate using 40-bit RC2.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm pkcs12
@@ -4077,6 +4230,9 @@ Signing only keys can be used for S/MIME signing, authenticode
 and SSL client authentication;
 however, due to a bug only MSIE 5.0 and later support
 the use of signing only keys for SSL client authentication.
+.It Fl macalg Ar alg
+Specify the MAC digest algorithm.
+If not included then SHA1 is used.
 .It Fl maciter
 This option is included for compatibility with previous versions; it used
 to be needed to use MAC iterations counts but they are now used by default.
@@ -4085,6 +4241,8 @@ This specifies the
 .Qq friendly name
 for the certificate and private key.
 This name is typically displayed in list boxes by software importing the file.
+.It Fl nomac
+Don't attempt to provide the MAC integrity.
 .It Fl nomaciter , noiter
 These options affect the iteration counts on the MAC and key algorithms.
 Unless you wish to produce files compatible with MSIE 4.0, you should leave
@@ -4289,7 +4447,7 @@ Perform
 .Em base64
 encoding on the output.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm rand
@@ -4317,10 +4475,11 @@ Multiple files can be specified separated by a
 .Bk -words
 .Op Fl asn1-kludge
 .Op Fl batch
-.Op Fl md2 | md4 | md5 | sha1
+.Op Fl md4 | md5 | sha1
 .Op Fl modulus
 .Op Fl new
 .Op Fl newhdr
+.Op Fl no-asn1-kludge
 .Op Fl nodes
 .Op Fl noout
 .Op Fl pubkey
@@ -4340,16 +4499,7 @@ Multiple files can be specified separated by a
 .Op Fl keyform Ar DER | PEM
 .Op Fl keyout Ar file
 .Op Fl nameopt Ar option
-.Oo Xo
-.Fl newkey
-.Ar dsa : Ns Ar file
-.Xc
-.Oc
-.Oo Xo
-.Fl newkey
-.Ar rsa : Ns Ar bits
-.Xc
-.Oc
+.Op Fl newkey Ar arg
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
@@ -4405,7 +4555,7 @@ option is being used, this specifies the number of
 days to certify the certificate for.
 The default is 30 days.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm req
@@ -4455,10 +4605,14 @@ This gives the
 to write the newly created private key to.
 If this option is not specified, the filename present in the
 configuration file is used.
-.It Fl md2 | md4 | md5 | sha1
+.It Fl md4 | md5 | sha1
 This specifies the message digest to sign the request with.
 This overrides the digest algorithm specified in the configuration file.
-This option is ignored for DSA requests: they always use SHA1.
+.Pp
+Some public key algorithms may override this choice.
+For instance, DSA signatures always use SHA1;
+GOST R 34.10 signatures always use GOST R 34.11-94
+.Pq Fl md_gost94 .
 .It Fl modulus
 This option prints out the value of the modulus of the public key
 contained in the request.
@@ -4489,16 +4643,61 @@ Some software
 and some CAs need this.
 .It Fl newkey Ar arg
 This option creates a new certificate request and a new private key.
-The argument takes one of two forms:
+The argument takes one of several forms.
 .Ar rsa : Ns Ar nbits ,
 where
 .Ar nbits
 is the number of bits, generates an RSA key
 .Ar nbits
 in size.
-.Ar dsa : Ns Ar file
+If
+.Ar nbits
+is omitted, i.e.\&
+.Cm -newkey rsa
+specified,
+the default key size, specified in the configuration file, is used.
+.Pp
+All other algorithms support the
+.Ar alg : Ns Ar file
+form,
+where file may be an algorithm parameter file,
+created by the
+.Cm genpkey -genparam
+command or an X.509 certificate for a key with approriate algorithm.
+.Pp
+.Ar param : Ns Ar file
+generates a key using the parameter file or certificate
+.Ar file ;
+the algorithm is determined by the parameters.
+.Ar algname : Ns Ar file
+use algorithm
+.Ar algname
+and parameter file
+.Ar file :
+the two algorithms must match or an error occurs.
+.Ar algname
+just uses algorithm
+.Ar algname ,
+and parameters, if necessary,
+should be specified via the
+.Fl pkeyopt
+option.
+.Pp
+.Ar dsa : Ns Ar filename
 generates a DSA key using the parameters in the file
-.Ar file .
+.Ar filename .
+.Ar ec : Ns Ar filename
+generates an EC key (usable both with ECDSA or ECDH algorithms);
+.Ar gost2001 : Ns Ar filename
+generates a GOST R 34.10-2001 key
+(requires the ccgost engine configured in the configuration file).
+If just
+.Cm gost2001
+is specified a parameter set should be specified by
+.Cm -pkeyopt paramset:X .
+.It Fl no-asn1-kludge
+Reverses the effect of
+.Fl asn1-kludge .
 .It Fl nodes
 If this option is specified and a private key is created, it
 will not be encrypted.
@@ -4534,22 +4733,36 @@ or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified separated by a
 .Sq \&: .
+.It Fl reqopt Ar option
+Customise the output format used with
+.Fl text .
+The
+.Ar option
+argument can be a single option or multiple options separated by commas.
+.Pp
+See the discussion of the
+.Fl certopt
+option in the
+.Nm x509
+command.
 .It Fl set_serial Ar n
 Serial number to use when outputting a self-signed certificate.
 This may be specified as a decimal value or a hex value if preceded by
 .Sq 0x .
 It is possible to use negative serial numbers but this is not recommended.
 .It Fl subj Ar arg
-Sets subject name for new request or supersedes the subject name
-when processing a request.
+Replaces subject field of input request with specified data and outputs
+modified request.
 The arg must be formatted as
 .Em /type0=value0/type1=value1/type2=... ;
 characters may be escaped by
 .Sq \e
-.Pq backslash ,
+.Pq backslash ;
 no spaces are skipped.
 .It Fl subject
-Output the request's subject.
+Prints out the request subject (or certificate subject if
+.Fl x509
+is specified.
 .It Fl text
 Prints out the certificate request in text form.
 .It Fl utf8
@@ -5088,7 +5301,7 @@ These options can only be used with PEM format output files.
 .It Fl check
 This option checks the consistency of an RSA private key.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm rsa
@@ -5266,7 +5479,7 @@ Decrypt the input data using an RSA private key.
 .It Fl encrypt
 Encrypt the input data using an RSA public key.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm rsautl
@@ -5416,16 +5629,24 @@ which it can be seen agrees with the recovered value above.
 .Bk -words
 .Op Fl 4 | 6
 .Op Fl bugs
+.Op Fl check_ss_sig
+.Op Fl crl_check
+.Op Fl crl_check_all
 .Op Fl crlf
 .Op Fl debug
+.Op Fl extended_crl
 .Op Fl ign_eof
+.Op Fl ignore_critical
+.Op Fl issuer_checks
 .Op Fl msg
 .Op Fl nbio
 .Op Fl nbio_test
 .Op Fl no_ssl2
 .Op Fl no_ssl3
+.Op Fl no_ticket
 .Op Fl no_tls1
 .Op Fl pause
+.Op Fl policy_check
 .Op Fl prexit
 .Op Fl quiet
 .Op Fl reconnect
@@ -5435,6 +5656,8 @@ which it can be seen agrees with the recovered value above.
 .Op Fl ssl3
 .Op Fl state
 .Op Fl tls1
+.Op Fl tlsextdebug
+.Op Fl x509_strict
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
@@ -5445,6 +5668,8 @@ which it can be seen agrees with the recovered value above.
 .Oc
 .Op Fl engine Ar id
 .Op Fl key Ar keyfile
+.Op Fl psk Ar key
+.Op Fl psk_identity Ar identity
 .Op Fl rand Ar
 .Op Fl starttls Ar protocol
 .Op Fl verify Ar depth
@@ -5489,6 +5714,20 @@ These are also used when building the client certificate chain.
 .It Fl cert Ar file
 The certificate to use, if one is requested by the server.
 The default is not to use a certificate.
+.It Xo
+.Fl check_ss_sig ,
+.Fl crl_check ,
+.Fl crl_check_all ,
+.Fl extended_crl ,
+.Fl ignore_critical ,
+.Fl issuer_checks ,
+.Fl policy_check ,
+.Fl x509_strict
+.Xc
+Set various certificate chain validation options.
+See the
+.Nm VERIFY
+command for details.
 .It Fl cipher Ar cipherlist
 This allows the cipher list sent by the client to be modified.
 Although the server determines which cipher suite is used, it should take
@@ -5516,7 +5755,7 @@ by some servers.
 .It Fl debug
 Print extensive debugging information including a hex dump of all traffic.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm s_client
@@ -5550,6 +5789,8 @@ Some servers only work if TLS is turned off with the
 option, others will only support SSL v2 and may need the
 .Fl ssl2
 option.
+.It Fl no_ticket
+Disable RFC 4507 session ticket support.
 .It Fl pause
 Pauses 1 second between each read and write call.
 .It Fl prexit
@@ -5563,6 +5804,16 @@ requested only after an attempt is made to access a certain URL.
 .Sy Note :
 the output produced by this option is not always accurate because a
 connection might never have been established.
+.It Fl psk Ar key
+Use the PSK key
+.Ar key
+when using a PSK cipher suite.
+The key is given as a hexadecimal number without the leading 0x,
+for example -psk 1a2b3c4d.
+.It Fl psk_identity Ar identity
+Use the PSK identity
+.Ar identity
+when using a PSK cipher suite.
 .It Fl quiet
 Inhibit printing of session and certificate information.
 This implicitly turns on
@@ -5596,6 +5847,8 @@ and
 .Qq xmpp .
 .It Fl state
 Prints out the SSL session states.
+.It Fl tlsextdebug
+Print out a hex dump of any TLS extensions received from the server.
 .It Fl verify Ar depth
 The verify
 .Ar depth
@@ -5733,6 +5986,8 @@ We should really report information whenever a session is renegotiated.
 .Op Fl id_prefix Ar arg
 .Op Fl key Ar keyfile
 .Op Fl rand Ar
+.Op Fl psk Ar key
+.Op Fl psk_hint Ar hint
 .Op Fl Verify Ar depth
 .Op Fl verify Ar depth
 .Ek
@@ -5826,7 +6081,7 @@ If this fails, a static set of parameters hard coded into the
 .Nm s_server
 program will be used.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm s_server
@@ -5882,6 +6137,16 @@ disables temporary RSA key generation.
 If this option is set, no certificate is used.
 This restricts the cipher suites available to the anonymous ones
 .Pq currently just anonymous DH .
+.It Fl psk Ar key
+Use the PSK key
+.Ar key
+when using a PSK cipher suite.
+The key is given as a hexadecimal number without the leading 0x,
+for example -psk 1a2b3c4d.
+.It Fl psk_hint Ar hint
+Use the PSK identity hint
+.Ar hint
+when using a PSK cipher suite.
 .It Fl quiet
 Inhibit printing of session and certificate information.
 .It Fl rand Ar
@@ -6320,21 +6585,31 @@ The cipher and start time should be printed out in human readable form.
 .Xc
 .Oc
 .Op Fl binary
+.Op Fl check_ss_sig
 .Op Fl crl_check
 .Op Fl crl_check_all
 .Op Fl decrypt
 .Op Fl encrypt
+.Op Fl extended_crl
+.Op Fl ignore_critical
+.Op Fl indef
+.Op Fl issuer_checks
 .Op Fl noattr
 .Op Fl nocerts
 .Op Fl nochain
 .Op Fl nodetach
+.Op Fl noindef
 .Op Fl nointern
 .Op Fl nosigs
 .Op Fl noverify
 .Op Fl pk7out
+.Op Fl policy_check
+.Op Fl resign
 .Op Fl sign
+.Op Fl stream
 .Op Fl text
 .Op Fl verify
+.Op Fl x509_strict
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl certfile Ar file
@@ -6345,6 +6620,7 @@ The cipher and start time should be printed out in human readable form.
 .Op Fl inform Ar DER | PEM | SMIME
 .Op Fl inkey Ar file
 .Op Fl keyform Ar ENGINE | PEM
+.Op Fl md Ar digest
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM | SMIME
 .Op Fl passin Ar arg
@@ -6365,10 +6641,10 @@ It can encrypt, decrypt, sign, and verify
 .Em S/MIME
 messages.
 .Pp
-There are five operation options that set the type of operation to be performed.
+There are six operation options that set the type of operation to be performed.
 The meaning of the other options varies according to the operation type.
 .Pp
-The five operation options are as follows:
+The six operation options are as follows:
 .Bl -tag -width "XXXX"
 .It Fl decrypt
 Decrypt mail using the supplied certificate and private key.
@@ -6384,6 +6660,8 @@ The output file is the encrypted mail in
 format.
 .It Fl pk7out
 Takes an input message and writes out a PEM-encoded PKCS#7 structure.
+.It Fl resign
+Resign a message: take an existing message and one or more new signers.
 .It Fl sign
 Sign mail using the supplied certificate and private key.
 Input file is the message to be signed.
@@ -6446,6 +6724,20 @@ Allows additional certificates to be specified.
 When signing, these will be included with the message.
 When verifying, these will be searched for the signers' certificates.
 The certificates should be in PEM format.
+.It Xo
+.Fl check_ss_sig ,
+.Fl crl_check ,
+.Fl crl_check_all ,
+.Fl extended_crl ,
+.Fl ignore_critical ,
+.Fl issuer_checks ,
+.Fl policy_check ,
+.Fl x509_strict
+.Xc
+Set various certificate chain validation options.
+See the
+.Nm VERIFY
+command for details.
 .It Fl content Ar file
 This specifies a file containing the detached content.
 This is only useful with the
@@ -6458,12 +6750,8 @@ This option will override any content if the input format is
 and it uses the multipart/signed
 .Em MIME
 content type.
-.It Fl crl_check
-Check revocation status of signer's certificate using CRLs.
-.It Fl crl_check_all
-Check revocation status of signer's certificate chain using CRLs.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm smime
@@ -6488,6 +6776,14 @@ The input message to be encrypted or signed or the
 .Em MIME
 message to
 be decrypted or verified.
+.It Fl indef
+Enable streaming I/O for encoding operations.
+This permits single pass processing of data without
+the need to hold the entire contents in memory,
+potentially supporting very large files.
+Streaming is automatically set for S/MIME signing with detached
+data if the output format is SMIME;
+it is currently off by default for all other operations.
 .It Fl inform Ar DER | PEM | SMIME
 This specifies the input format for the PKCS#7 structure.
 The default is
@@ -6516,8 +6812,14 @@ the
 or
 .Fl signer
 file.
+When signing,
+this option can be used multiple times to specify successive keys.
 .It Fl keyform Ar ENGINE | PEM
 Input private key format.
+.It Fl md Ar digest
+The digest algorithm to use when signing or resigning.
+If not present then the default digest algorithm for the signing key is used
+(usually SHA1).
 .It Fl noattr
 Normally, when a message is signed a set of attributes are included which
 include the signing time and supported symmetric algorithms.
@@ -6540,6 +6842,11 @@ do not support
 Without this option cleartext signing with the
 .Em MIME
 type multipart/signed is used.
+.It Fl noindef
+Disable streaming I/O where it would produce an encoding of indefinite length.
+This option currently has no effect.
+In future streaming will be enabled by default on all relevant operations
+and this option will disable it.
 .It Fl nointern
 When verifying a message, normally certificates
 .Pq if any
@@ -6593,9 +6900,13 @@ The recipients certificate when decrypting a message.
 This certificate
 must match one of the recipients of the message or an error occurs.
 .It Fl signer Ar file
-The signer's certificate when signing a message.
+A signing certificate when signing or resigning a message;
+this option can be used multiple times if more than one signer is required.
 If a message is being verified, the signer's certificates will be
 written to this file if the verification was successful.
+.It Fl stream
+The same as
+.Fl indef .
 .It Fl text
 This option adds plain text
 .Pq text/plain
@@ -6652,6 +6963,31 @@ reflect common usage in
 clients.
 Strictly speaking these process PKCS#7 enveloped data: PKCS#7
 encrypted data is used for other purposes.
+.Pp
+The
+.Fl resign
+option uses an existing message digest when adding a new signer.
+This means that attributes must be present in at least one existing
+signer using the same message digest or this operation will fail.
+.Pp
+The
+.Fl stream
+and
+.Fl indef
+options enable experimental streaming I/O support.
+As a result the encoding is BER using indefinite length constructed encoding
+and no longer DER.
+Streaming is supported for the
+.Fl encrypt
+and
+.Fl sign
+operations if the content is not detached.
+.Pp
+Streaming is always used for the
+.Fl sign
+operation with detached data
+but since the content is no longer part of the PKCS#7 structure
+the encoding remains DER.
 .Sh SMIME EXIT CODES
 .Bl -tag -width "XXXX"
 .It Ar 0
@@ -6688,6 +7024,12 @@ read the private key from another file:
 .Bd -literal -offset indent
 $ openssl smime -sign -in in.txt -text -out mail.msg \e
 	-signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
+.Ed
+.Pp
+Create a signed message with two signers:
+.Bd -literal -offset indent
+openssl smime -sign -in message.txt -text -out mail.msg \e
+	-signer mycert.pem -signer othercert.pem
 .Ed
 .Pp
 Send a signed message under
@@ -6755,6 +7097,18 @@ Alternatively, you can base64 decode the signature and use:
 $ openssl smime -verify -inform DER -in signature.der \e
 	-content content.txt
 .Ed
+.Pp
+Create an encrypted message using 128-bit AES:
+.Bd -literal -offset indent
+openssl smime -encrypt -in plain.txt -aes128 \e
+	-out mail.msg cert.pem
+.Ed
+.Pp
+Add a signer to an existing message:
+.Bd -literal -offset indent
+openssl smime -resign -in mail.msg -signer newsign.pem \e
+	-out mail2.msg
+.Ed
 .Sh SMIME BUGS
 The
 .Em MIME
@@ -6784,6 +7138,14 @@ The current code can only handle
 v2 messages; the more complex
 .Em S/MIME
 v3 structures may cause parsing errors.
+.Sh SMIME HISTORY
+The use of multiple
+.Fl signer
+options and the
+.Fl resign
+command were first added in
+.Nm OpenSSL
+1.0.0.
 .\"
 .\" SPEED
 .\"
@@ -6839,7 +7201,7 @@ tests those algorithms, otherwise all of the above are tested.
 Time decryption instead of encryption
 .Pq only EVP .
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm speed
@@ -6891,7 +7253,7 @@ The options are as follows:
 .It Fl challenge Ar string
 Specifies the challenge string if an SPKAC is being created.
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm spkac
@@ -6991,10 +7353,19 @@ to be used in a
 .Sh VERIFY
 .Nm openssl verify
 .Bk -words
+.Op Fl check_ss_sig
 .Op Fl crl_check
+.Op Fl crl_check_all
+.Op Fl explicit_policy
+.Op Fl extended_crl
 .Op Fl help
+.Op Fl ignore_critical
+.Op Fl inhibit_any
+.Op Fl inhibit_map
 .Op Fl issuer_checks
+.Op Fl policy_check
 .Op Fl verbose
+.Op Fl x509_strict
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl engine Ar id
@@ -7010,6 +7381,17 @@ command verifies certificate chains.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
+.It Fl check_ss_sig
+Verify the signature on the self-signed root CA.
+This is disabled by default
+because it doesn't add any security.
+.It Fl CAfile Ar file
+A
+.Ar file
+of trusted certificates.
+The
+.Ar file
+should contain multiple certificates in PEM format, concatenated together.
 .It Fl CApath Ar directory
 A
 .Ar directory
@@ -7027,20 +7409,46 @@ Under
 the
 .Nm c_rehash
 script will automatically create symbolic links to a directory of certificates.
-.It Fl CAfile Ar file
-A
-.Ar file
-of trusted certificates.
-The
-.Ar file
-should contain multiple certificates in PEM format, concatenated together.
-.It Fl untrusted Ar file
-A
-.Ar file
-of untrusted certificates.
-The
-.Ar file
-should contain multiple certificates.
+.It Fl crl_check
+Checks end entity certificate validity by attempting to look up a valid CRL.
+If a valid CRL cannot be found an error occurs.
+.It Fl crl_check_all
+Checks the validity of all certificates in the chain by attempting
+to look up valid CRLs.
+.It Fl engine Ar id
+Specifying an engine (by its unique
+.Ar id
+string) will cause
+.Nm verify
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
+.It Fl explicit_policy
+Set policy variable require-explicit-policy (see RFC 3280 et al).
+.It Fl extended_crl
+Enable extended CRL features such as indirect CRLs and alternate CRL
+signing keys.
+.It Fl help
+Prints out a usage message.
+.It Fl ignore_critical
+Normally if an unhandled critical extension is present which is not
+supported by
+.Nm OpenSSL ,
+the certificate is rejected (as required by RFC 3280 et al).
+If this option is set, critical extensions are ignored.
+.It Fl inhibit_any
+Set policy variable inhibit-any-policy (see RFC 3280 et al).
+.It Fl inhibit_map
+Set policy variable inhibit-policy-mapping (see RFC 3280 et al).
+.It Fl issuer_checks
+Print out diagnostics relating to searches for the issuer certificate
+of the current certificate.
+This shows why each candidate issuer certificate was rejected.
+However the presence of rejection messages
+does not itself imply that anything is wrong: during the normal
+verify process several rejections may take place.
+.It Fl policy_check
+Enables certificate policy processing.
 .It Fl purpose Ar purpose
 The intended use for the certificate.
 Without this option no chain verification will be done.
@@ -7054,27 +7462,18 @@ and
 See the
 .Sx VERIFY OPERATION
 section for more information.
-.It Fl help
-Prints out a usage message.
+.It Fl untrusted Ar file
+A
+.Ar file
+of untrusted certificates.
+The
+.Ar file
+should contain multiple certificates.
 .It Fl verbose
 Print extra information about the operations being performed.
-.It Fl issuer_checks
-Print out diagnostics relating to searches for the issuer certificate
-of the current certificate.
-This shows why each candidate issuer certificate was rejected.
-However the presence of rejection messages
-does not itself imply that anything is wrong: during the normal
-verify process several rejections may take place.
-.It Fl crl_check
-Check revocation status of signer's certificate using CRLs.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm verify
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
+.It Fl x509_strict
+Disable workarounds for broken certificates which have to be disabled
+for strict X.509 compliance.
 .It Fl
 Marks the last option.
 All arguments following this are assumed to be certificate files.
@@ -7203,7 +7602,6 @@ The issuer certificate could not be found: this occurs if the issuer certificate
 of an untrusted certificate cannot be found.
 .It Ar 3 X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL
 The CRL of a certificate could not be found.
-Unused.
 .It Ar 4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature
 The certificate signature could not be decrypted.
 This means that the actual signature value could not be determined rather
@@ -7222,7 +7620,6 @@ could not be read.
 The signature of the certificate is invalid.
 .It Ar 8 X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure
 The signature of the certificate is invalid.
-Unused.
 .It Ar 9 X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid
 The certificate is not yet valid: the
 .Em notBefore
@@ -7233,10 +7630,8 @@ The certificate has expired; that is, the
 date is before the current time.
 .It Ar 11 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid
 The CRL is not yet valid.
-Unused.
 .It Ar 12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired
 The CRL has expired.
-Unused.
 .It Ar 13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field
 The certificate
 .Em notBefore
@@ -7249,12 +7644,10 @@ field contains an invalid time.
 The CRL
 .Em lastUpdate
 field contains an invalid time.
-Unused.
 .It Ar 16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field
 The CRL
 .Em nextUpdate
 field contains an invalid time.
-Unused.
 .It Ar 17 X509_V_ERR_OUT_OF_MEM: out of memory
 An error occurred trying to allocate memory.
 This should never happen.
@@ -7275,7 +7668,6 @@ The certificate chain length is greater than the supplied maximum depth.
 Unused.
 .It Ar 23 X509_V_ERR_CERT_REVOKED: certificate revoked
 The certificate has been revoked.
-Unused.
 .It Ar 24 X509_V_ERR_INVALID_CA: invalid CA certificate
 A CA certificate is invalid.
 Either it is not a CA or its extensions are not consistent
@@ -7397,10 +7789,12 @@ option was added in
 .Op Fl hash
 .Op Fl issuer
 .Op Fl issuer_hash
+.Op Fl issuer_hash_old
 .Op Fl md2 | md5 | sha1
 .Op Fl modulus
 .Op Fl noout
 .Op Fl ocspid
+.Op Fl ocsp_uri
 .Op Fl pubkey
 .Op Fl purpose
 .Op Fl req
@@ -7408,6 +7802,7 @@ option was added in
 .Op Fl startdate
 .Op Fl subject
 .Op Fl subject_hash
+.Op Fl subject_hash_old
 .Op Fl text
 .Op Fl trustout
 .Op Fl x509toreq
@@ -7449,7 +7844,7 @@ various sections.
 .Sh X509 INPUT, OUTPUT, AND GENERAL PURPOSE OPTIONS
 .Bl -tag -width "XXXX"
 .It Fl engine Ar id
-Specifying an engine (by it's unique
+Specifying an engine (by its unique
 .Ar id
 string) will cause
 .Nm x509
@@ -7548,6 +7943,13 @@ Outputs the issuer name.
 Outputs the
 .Qq hash
 of the certificate issuer name.
+.It Fl issuer_hash_old
+Outputs the
+.Qq hash
+of the certificate issuer name using the older algorithm
+as used by
+.Nm OpenSSL
+versions before 1.0.0.
 .It Fl modulus
 This option prints out the value of the modulus of the public key
 contained in the certificate.
@@ -7566,6 +7968,8 @@ section for more information.
 This option prevents output of the encoded version of the request.
 .It Fl ocspid
 Print OCSP hash values for the subject name and public key.
+.It Fl ocsp_uri
+Outputs the OCSP responder addresses, if any.
 .It Fl pubkey
 Output the public key.
 .It Fl serial
@@ -7584,6 +7988,13 @@ This is used in
 .Nm OpenSSL
 to form an index to allow certificates in a directory to be looked up
 by subject name.
+.It Fl subject_hash_old
+Outputs the
+.Qq hash
+of the certificate subject name using the older algorithm
+as used by
+.Nm OpenSSL
+versions before 1.0.0.
 .It Fl text
 Prints out the certificate in text form.
 Full details are output including the public key, signature algorithms,
@@ -8322,6 +8733,27 @@ It thus describes the intended behaviour rather than the current behaviour.
 It is hoped that it will represent reality in
 .Nm OpenSSL
 0.9.5 and later.
+.Sh X509 HISTORY
+Before
+.Nm OpenSSL
+0.9.8,
+the default digest for RSA keys was MD5.
+.Pp
+The hash algorithm used in the
+.Fl subject_hash
+and
+.Fl issuer_hash
+options before
+.Nm OpenSSL
+1.0.0 was based on the deprecated MD5 algorithm and the encoding
+of the distinguished name.
+In
+.Nm OpenSSL
+1.0.0 and later it is based on a canonical version of the DN using SHA1.
+This means that any directories using the old form
+must have their links rebuilt using
+.Ar c_rehash
+or similar.
 .\"
 .\" FILES
 .\"
@@ -8350,7 +8782,6 @@ certificates.
 .Xr sendmail 8 ,
 .Xr ssl 8 ,
 .Xr starttls 8
-.Pp
 .Rs
 .%T The SSL Protocol
 .%Q Netscape Communications Corp.
@@ -8406,12 +8837,17 @@ document appeared in
 .Nm OpenSSL
 0.9.2.
 The
-.Cm list- Ns Ar XXX Ns Cm -commands
+.Cm list- Ns XXX Ns Cm -commands
 pseudo-commands were added in
 .Nm OpenSSL
 0.9.3;
 the
-.Cm no- Ns Ar XXX
+.Cm no- Ns XXX
 pseudo-commands were added in
 .Nm OpenSSL
-0.9.5a.
+0.9.5a;
+the
+.Cm list- Ns XXX Ns Cm -algorithms
+pseudo-commands were added in
+.Nm OpenSSL
+1.0.0.
