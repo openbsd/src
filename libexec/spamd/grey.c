@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.49 2010/01/11 10:00:22 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.50 2010/10/06 09:38:02 stephan Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -536,11 +536,13 @@ do_changes(DB *db)
 	return(ret);
 }
 
+/* -1=error, 0=notfound, 1=TRAPPED, 2=WHITE */
 int
-db_notin(DB *db, char *key)
+db_addrstate(DB *db, char *key)
 {
 	int			i;
 	DBT			dbk, dbd;
+	struct gdata		gd;
 
 	memset(&dbk, 0, sizeof(dbk));
 	dbk.size = strlen(key);
@@ -551,10 +553,9 @@ db_notin(DB *db, char *key)
 		return (-1);
 	if (i)
 		/* not in the database */
-		return (1);
-	else
-		/* it is in the database */
 		return (0);
+	memcpy(&gd, dbd.data, sizeof(gd));
+	return gd.pcount == -1 ? 1 : 2;
 }
 
 
@@ -609,8 +610,10 @@ greyscan(char *dbname)
 		} else if (gd.pcount >= 0 && gd.pass <= now) {
 			int tuple = 0;
 			char *cp;
+			int state;
 
 			/*
+			 * if not already TRAPPED,
 			 * add address to whitelist
 			 * add an address-keyed entry to db
 			 */
@@ -620,14 +623,15 @@ greyscan(char *dbname)
 				*cp = '\0';
 			}
 
-			if (addwhiteaddr(a) == -1) {
+			state = db_addrstate(db, a);
+			if (state != 1 && addwhiteaddr(a) == -1) {
 				if (cp != NULL)
 					*cp = '\n';
 				if (queue_change(a, NULL, 0, DBC_DEL) == -1)
 					goto bad;
 			}
 
-			if (tuple && db_notin(db, a)) {
+			if (tuple && state <= 0) {
 				if (cp != NULL)
 					*cp = '\0';
 				/* re-add entry, keyed only by ip */
