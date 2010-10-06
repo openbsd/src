@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.55 2010/09/22 11:54:23 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.56 2010/10/06 10:00:59 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -1037,8 +1037,10 @@ swcr_freesession(u_int64_t tid)
 		case CRYPTO_SHA1:
 			axf = swd->sw_axf;
 
-			if (swd->sw_ictx)
+			if (swd->sw_ictx) {
+				bzero(swd->sw_ictx, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
+			}
 			break;
 		}
 
