@@ -56,13 +56,13 @@ ENGINE_load_cryptodev(void)
 #include <sys/ioctl.h>
 
 #include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdarg.h>
-#include <syslog.h>
-#include <errno.h>
+#include <stdio.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #if defined(__i386__) || defined(__amd64__)
 #include <sys/sysctl.h>
@@ -97,7 +97,7 @@ static int get_cryptodev_ciphers(const int **cnids);
 static int cryptodev_usable_ciphers(const int **nids);
 static int cryptodev_usable_digests(const int **nids);
 static int cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, unsigned int inl);
+    const unsigned char *in, size_t inl);
 static int cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc);
 static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx);
@@ -381,7 +381,7 @@ cryptodev_usable_digests(const int **nids)
 
 static int
 cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, unsigned int inl)
+    const unsigned char *in, size_t inl)
 {
 	struct crypt_op cryp;
 	struct dev_crypto_state *state = ctx->cipher_data;
@@ -644,7 +644,7 @@ viac3_xcrypt_cbc(int *cw, const void *src, void *dst, void *key, int rep,
 
 static int
 xcrypt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, unsigned int inl)
+    const unsigned char *in, size_t inl)
 {
 	unsigned char *save_iv_store[EVP_MAX_IV_LENGTH + 15];
 	unsigned char *save_iv = DOALIGN(save_iv_store);
@@ -658,6 +658,8 @@ xcrypt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (!inl)
 		return (1);
 	if ((inl % ctx->cipher->block_size) != 0)
+		return (0);
+	if (inl > UINT_MAX)
 		return (0);
 
 	if (ISUNALIGNED(in) || ISUNALIGNED(out)) {

@@ -438,20 +438,20 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
 }
 
 static int aesni_cipher_ecb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, unsigned int inl)
+		 const unsigned char *in, size_t inl)
 {	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 	aesni_ecb_encrypt(in, out, inl, key, ctx->encrypt);
 	return 1;
 }
 static int aesni_cipher_cbc(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, unsigned int inl)
+		 const unsigned char *in, size_t inl)
 {	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 	aesni_cbc_encrypt(in, out, inl, key,
 			      ctx->iv, ctx->encrypt);
 	return 1;
 }
 static int aesni_cipher_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, unsigned int inl)
+		 const unsigned char *in, size_t inl)
 {	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 
 	aesni_cfb128_encrypt(in, out, inl, key, ctx->iv,
@@ -459,7 +459,7 @@ static int aesni_cipher_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 static int aesni_cipher_ofb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, unsigned int inl)
+		 const unsigned char *in, size_t inl)
 {	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 	aesni_ofb128_encrypt(in, out, inl, key, ctx->iv, &ctx->num);
 	return 1;

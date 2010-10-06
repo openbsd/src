@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.56 2010/10/04 19:15:40 naddy Exp $
+# $OpenBSD: Makefile,v 1.57 2010/10/06 22:57:46 djm Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -150,7 +150,7 @@ SRCS+= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c
 SRCS+= eng_table.c eng_pkey.c eng_fat.c eng_all.c
 SRCS+= tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c
 SRCS+= tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c
-SRCS+= eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c
+SRCS+= eng_openssl.c eng_cnf.c eng_dyn.c hw_cryptodev.c
 SRCS+= eng_aesni.c # local addition
 
 # err/
