@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.113 2010/09/23 16:33:48 mikeb Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.114 2010/10/06 22:19:20 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -145,10 +145,6 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
 		case SADB_X_EALG_CAST:
 			txform = &enc_xform_cast5;
-			break;
-
-		case SADB_X_EALG_SKIPJACK:
-			txform = &enc_xform_skipjack;
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.145 2010/09/23 16:34:09 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.146 2010/10/06 22:19:20 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -475,7 +475,6 @@ extern struct enc_xform enc_xform_des;
 extern struct enc_xform enc_xform_3des;
 extern struct enc_xform enc_xform_blf;
 extern struct enc_xform enc_xform_cast5;
-extern struct enc_xform enc_xform_skipjack;
 
 extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;

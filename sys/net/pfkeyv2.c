@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.122 2010/09/27 17:28:34 deraadt Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.123 2010/10/06 22:19:20 mikeb Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -107,7 +107,6 @@ static const struct sadb_alg ealgs[] = {
 	{ SADB_EALG_3DESCBC, 64, 192, 192 },
 	{ SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
 	{ SADB_X_EALG_CAST, 64, 40, 128},
-	{ SADB_X_EALG_SKIPJACK, 64, 80, 80},
 	{ SADB_X_EALG_AES, 128, 128, 256},
 	{ SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32}
 };
@@ -2070,11 +2069,6 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 				sadb_comb->sadb_comb_encrypt = SADB_X_EALG_BLF;
 				sadb_comb->sadb_comb_encrypt_minbits = 40;
 				sadb_comb->sadb_comb_encrypt_maxbits = BLF_MAXKEYLEN * 8;
-			} else if (!strncasecmp(ipsec_def_enc, "skipjack",
-			    sizeof("skipjack"))) {
-				sadb_comb->sadb_comb_encrypt = SADB_X_EALG_SKIPJACK;
-				sadb_comb->sadb_comb_encrypt_minbits = 80;
-				sadb_comb->sadb_comb_encrypt_maxbits = 80;
 			} else if (!strncasecmp(ipsec_def_enc, "cast128",
 			    sizeof("cast128"))) {
 				sadb_comb->sadb_comb_encrypt = SADB_X_EALG_CAST;

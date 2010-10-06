@@ -44,9 +44,3 @@ esp tunnel from 3ffe::8 to 3ffe::10 spi 0x8eadbeef auth hmac-sha1 enc null \
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 esp tunnel from 3ffe::10 to 3ffe::8 spi 0xbeef8ead auth hmac-sha1 enc null \
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-esp tunnel from 3ffe::9 to 3ffe::10 spi 0x9eadbeef auth hmac-sha1 enc skipjack \
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-	enckey 0xeeeeeeeeeeeeeeeeeeee
-esp tunnel from 3ffe::10 to 3ffe::9 spi 0xbeef9ead auth hmac-sha1 enc skipjack \
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-	enckey 0xeeeeeeeeeeeeeeeeeeee

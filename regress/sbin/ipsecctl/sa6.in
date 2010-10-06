@@ -28,7 +28,3 @@ esp from 1.1.1.7 to 2.2.2.2 spi 0x7eadbeef:0xbeef7ead auth hmac-sha1 \
 esp from 1.1.1.8 to 2.2.2.2 spi 0x8eadbeef:0xbeef8ead auth hmac-sha1 \
 	enc null \
 	authkey file "DIR/ak160:DIR/ak160"
-esp from 1.1.1.9 to 2.2.2.2 spi 0x9eadbeef:0xbeef9ead auth hmac-sha1 \
-	enc skipjack \
-	authkey file "DIR/ak160:DIR/ak160" \
-	enckey file "DIR/ek80:DIR/ek80"

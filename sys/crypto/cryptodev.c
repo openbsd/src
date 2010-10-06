@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.73 2010/07/21 18:44:01 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.74 2010/10/06 22:19:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -44,7 +44,6 @@
 #include <crypto/sha1.h>
 #include <crypto/rmd160.h>
 #include <crypto/cast.h>
-#include <crypto/skipjack.h>
 #include <crypto/blf.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
@@ -165,9 +164,6 @@ cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			break;
 		case CRYPTO_CAST_CBC:
 			txform = &enc_xform_cast5;
-			break;
-		case CRYPTO_SKIPJACK_CBC:
-			txform = &enc_xform_skipjack;
 			break;
 		case CRYPTO_AES_CBC:
 			txform = &enc_xform_rijndael128;

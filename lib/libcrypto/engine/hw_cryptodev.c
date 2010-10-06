@@ -147,7 +147,6 @@ static struct dev_crypto_cipher ciphers[] = {
 	{ CRYPTO_AES_CBC,		NID_aes_256_cbc,	16,	32, },
 	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
 	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	16, },
-	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
 	{ 0,				NID_undef,		0,	 0, },
 };
 

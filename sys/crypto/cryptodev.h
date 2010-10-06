@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.52 2010/09/22 11:54:23 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.53 2010/10/06 22:19:20 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -74,7 +74,6 @@
 #define DES_BLOCK_LEN		8
 #define DES3_BLOCK_LEN		8
 #define BLOWFISH_BLOCK_LEN	8
-#define SKIPJACK_BLOCK_LEN	8
 #define CAST128_BLOCK_LEN	8
 #define RIJNDAEL128_BLOCK_LEN	16
 #define EALG_MAX_BLOCK_LEN	16 /* Keep this updated */
@@ -86,7 +85,6 @@
 #define CRYPTO_3DES_CBC		2
 #define CRYPTO_BLF_CBC		3
 #define CRYPTO_CAST_CBC		4
-#define CRYPTO_SKIPJACK_CBC	5
 #define CRYPTO_MD5_HMAC		6
 #define CRYPTO_SHA1_HMAC	7
 #define CRYPTO_RIPEMD160_HMAC	8

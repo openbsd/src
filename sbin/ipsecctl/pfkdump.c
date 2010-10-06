@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.28 2010/09/22 14:04:09 mikeb Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.29 2010/10/06 22:19:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -184,7 +184,6 @@ struct idname enc_types[] = {
 	{ SADB_EALG_NULL,		"null",			NULL },
 	{ SADB_X_EALG_RC4,		"rc4",			NULL },
 	{ SADB_X_EALG_RC5,		"rc5",			NULL },
-	{ SADB_X_EALG_SKIPJACK,		"skipjack",		NULL },
 	{ 0,				NULL,			NULL }
 };
 
@@ -747,9 +746,6 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 				break;
 			case SADB_EALG_NULL:
 				xfs.encxf = &encxfs[ENCXF_NULL];
-				break;
-			case SADB_X_EALG_SKIPJACK:
-				xfs.encxf = &encxfs[ENCXF_SKIPJACK];
 				break;
 			}
 		}

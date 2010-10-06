@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.33 2010/09/22 12:48:52 mikeb Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.34 2010/10/06 22:19:20 mikeb Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -269,10 +269,6 @@ export_sa(void **p, struct tdb *tdb)
 
 		case CRYPTO_BLF_CBC:
 			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_BLF;
-			break;
-
-		case CRYPTO_SKIPJACK_CBC:
-			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_SKIPJACK;
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.149 2010/09/22 14:04:09 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.150 2010/10/06 22:19:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -116,7 +116,6 @@ const struct ipsec_xf encxfs[] = {
 	{ "blowfish",		ENCXF_BLOWFISH,		5,	56,	0 },
 	{ "cast128",		ENCXF_CAST128,		5,	16,	0 },
 	{ "null",		ENCXF_NULL,		0,	0,	0 },
-	{ "skipjack",		ENCXF_SKIPJACK,		10,	10,	0 },
 	{ NULL,			0,			0,	0,	0 },
 };
 

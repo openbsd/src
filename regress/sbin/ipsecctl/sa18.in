@@ -28,7 +28,3 @@ esp from 3ffe::7 to 3ffe::10 spi 0x7eadbeef:0xbeef7ead auth hmac-sha1 \
 esp from 3ffe::8 to 3ffe::10 spi 0x8eadbeef:0xbeef8ead auth hmac-sha1 \
 	enc null \
 	authkey file "DIR/ak160:DIR/ak160"
-esp from 3ffe::9 to 3ffe::10 spi 0x9eadbeef:0xbeef9ead auth hmac-sha1 \
-	enc skipjack \
-	authkey file "DIR/ak160:DIR/ak160" \
-	enckey file "DIR/ek80:DIR/ek80"

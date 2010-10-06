@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.39 2010/09/22 11:54:23 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.40 2010/10/06 22:19:20 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -55,7 +55,6 @@
 #include <crypto/rmd160.h>
 #include <crypto/blf.h>
 #include <crypto/cast.h>
-#include <crypto/skipjack.h>
 #include <crypto/rijndael.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
@@ -70,7 +69,6 @@ int  des1_setkey(u_int8_t **, u_int8_t *, int);
 int  des3_setkey(u_int8_t **, u_int8_t *, int);
 int  blf_setkey(u_int8_t **, u_int8_t *, int);
 int  cast5_setkey(u_int8_t **, u_int8_t *, int);
-int  skipjack_setkey(u_int8_t **, u_int8_t *, int);
 int  rijndael128_setkey(u_int8_t **, u_int8_t *, int);
 int  aes_ctr_setkey(u_int8_t **, u_int8_t *, int);
 int  aes_xts_setkey(u_int8_t **, u_int8_t *, int);
@@ -80,7 +78,6 @@ void des1_encrypt(caddr_t, u_int8_t *);
 void des3_encrypt(caddr_t, u_int8_t *);
 void blf_encrypt(caddr_t, u_int8_t *);
 void cast5_encrypt(caddr_t, u_int8_t *);
-void skipjack_encrypt(caddr_t, u_int8_t *);
 void rijndael128_encrypt(caddr_t, u_int8_t *);
 void null_encrypt(caddr_t, u_int8_t *);
 void aes_xts_encrypt(caddr_t, u_int8_t *);
@@ -89,7 +86,6 @@ void des1_decrypt(caddr_t, u_int8_t *);
 void des3_decrypt(caddr_t, u_int8_t *);
 void blf_decrypt(caddr_t, u_int8_t *);
 void cast5_decrypt(caddr_t, u_int8_t *);
-void skipjack_decrypt(caddr_t, u_int8_t *);
 void rijndael128_decrypt(caddr_t, u_int8_t *);
 void null_decrypt(caddr_t, u_int8_t *);
 void aes_xts_decrypt(caddr_t, u_int8_t *);
@@ -100,7 +96,6 @@ void des1_zerokey(u_int8_t **);
 void des3_zerokey(u_int8_t **);
 void blf_zerokey(u_int8_t **);
 void cast5_zerokey(u_int8_t **);
-void skipjack_zerokey(u_int8_t **);
 void rijndael128_zerokey(u_int8_t **);
 void aes_ctr_zerokey(u_int8_t **);
 void aes_xts_zerokey(u_int8_t **);
@@ -163,16 +158,6 @@ struct enc_xform enc_xform_cast5 = {
 	cast5_decrypt,
 	cast5_setkey,
 	cast5_zerokey,
-	NULL
-};
-
-struct enc_xform enc_xform_skipjack = {
-	CRYPTO_SKIPJACK_CBC, "Skipjack",
-	8, 8, 10, 10,
-	skipjack_encrypt,
-	skipjack_decrypt,
-	skipjack_setkey,
-	skipjack_zerokey,
 	NULL
 };
 
@@ -515,44 +500,6 @@ void
 cast5_zerokey(u_int8_t **sched)
 {
 	bzero(*sched, sizeof(cast_key));
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
-}
-
-void
-skipjack_encrypt(caddr_t key, u_int8_t *blk)
-{
-	skipjack_forwards(blk, blk, (u_int8_t **) key);
-}
-
-void
-skipjack_decrypt(caddr_t key, u_int8_t *blk)
-{
-	skipjack_backwards(blk, blk, (u_int8_t **) key);
-}
-
-int
-skipjack_setkey(u_int8_t **sched, u_int8_t *key, int len)
-{
-	*sched = malloc(10 * sizeof(u_int8_t *), M_CRYPTO_DATA, M_WAITOK |
-	    M_ZERO);
-	subkey_table_gen(key, (u_int8_t **) *sched);
-
-	return 0;
-}
-
-void
-skipjack_zerokey(u_int8_t **sched)
-{
-	int k;
-
-	for (k = 0; k < 10; k++) {
-		if (((u_int8_t **)(*sched))[k]) {
-			bzero(((u_int8_t **)(*sched))[k], 0x100);
-			free(((u_int8_t **)(*sched))[k], M_CRYPTO_DATA);
-		}
-	}
-	bzero(*sched, 10 * sizeof(u_int8_t *));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
