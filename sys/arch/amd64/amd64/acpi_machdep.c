@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.45 2010/08/11 21:22:44 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.46 2010/10/06 16:37:29 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -212,7 +212,6 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	/* amd64 does not do lazy pmap_activate */
 
 	/*
-	 *
 	 * ACPI defines two wakeup vectors. One is used for ACPI 1.0
 	 * implementations - it's in the FACS table as wakeup_vector and
 	 * indicates a 32-bit physical address containing real-mode wakeup
@@ -221,10 +220,9 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	 * The second wakeup vector is in the FACS table as
 	 * x_wakeup_vector and indicates a 64-bit physical address
 	 * containing protected-mode wakeup code.
-	 *
 	 */
 	sc->sc_facs->wakeup_vector = (u_int32_t)ACPI_TRAMPOLINE;
-	if (sc->sc_facs->version == 1)
+	if (sc->sc_facs->length > 32 && sc->sc_facs->version >= 1)
 		sc->sc_facs->x_wakeup_vector = 0;
 
 	/* Copy the current cpu registers into a safe place for resume.
