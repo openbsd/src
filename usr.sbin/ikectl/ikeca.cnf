@@ -1,4 +1,4 @@
-# $OpenBSD: ikeca.cnf,v 1.2 2010/06/10 16:14:04 jsg Exp $
+# $OpenBSD: ikeca.cnf,v 1.3 2010/10/07 09:36:33 phessler Exp $
 # $vantronix: ikeca.cnf,v 1.3 2010/05/31 12:26:26 reyk Exp $
 
 RANDFILE		= /dev/arandom
@@ -85,5 +85,7 @@ extendedKeyUsage=$ENV::EXTCERTUSAGE
 default_ca			= CA_default
 
 [CA_default]
-database=$ENV::CADB
+database			= $ENV::CADB
+default_md			= sha1
+default_crl_days		= 365
 

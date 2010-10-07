@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.9 2010/06/23 19:28:18 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.10 2010/10/07 09:36:33 phessler Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -317,6 +317,9 @@ ca_create(struct ca *ca)
 	    PATH_OPENSSL, ca->sslpath, ca->sslpath, ca->extcnf, ca->sslpath,
 	    ca->passfile);
 	system(cmd);
+
+	/* Create the CRL revocation list */
+	ca_revoke(ca, NULL);
 
 	return (0);
 }
@@ -650,11 +653,13 @@ ca_revoke(struct ca *ca, char *keyname)
 	char		*pass;
 	size_t		 len;
 
-	snprintf(path, sizeof(path), "%s/%s.crt",
-	    ca->sslpath, keyname);
-	if (stat(path, &st) != 0) {
-		warn("Problem with certificate for '%s'", keyname);
-		return (1);
+	if (keyname) {
+		snprintf(path, sizeof(path), "%s/%s.crt",
+		    ca->sslpath, keyname);
+		if (stat(path, &st) != 0) {
+			warn("Problem with certificate for '%s'", keyname);
+			return (1);
+		}
 	}
 
 	snprintf(path, sizeof(path), "%s/ikeca.passwd", ca->sslpath);
@@ -673,15 +678,17 @@ ca_revoke(struct ca *ca, char *keyname)
 			err(1, "could not access %s", path);
 	}
 
-	snprintf(cmd, sizeof(cmd), "env CADB='%s/index.txt' "
-	    " %s ca -config %s -keyfile %s/private/ca.key"
-	    " -key %s"
-	    " -cert %s/ca.crt"
-	    " -md sha1"
-	    " -revoke %s/%s.crt",
-	    ca->sslpath, PATH_OPENSSL,  ca->sslcnf, ca->sslpath, pass,
-	    ca->sslpath, ca->sslpath, keyname);
-	system(cmd);
+	if (keyname) {
+		snprintf(cmd, sizeof(cmd), "env CADB='%s/index.txt' "
+		    " %s ca -config %s -keyfile %s/private/ca.key"
+		    " -key %s"
+		    " -cert %s/ca.crt"
+		    " -md sha1"
+		    " -revoke %s/%s.crt",
+		    ca->sslpath, PATH_OPENSSL,  ca->sslcnf, ca->sslpath, pass,
+		    ca->sslpath, ca->sslpath, keyname);
+		system(cmd);
+	}
 
 	snprintf(cmd, sizeof(cmd), "env CADB='%s/index.txt' "
 	    " %s ca -config %s -keyfile %s/private/ca.key"
