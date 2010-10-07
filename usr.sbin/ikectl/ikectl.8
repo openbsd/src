@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.10 2010/10/07 12:23:14 reyk Exp $
+.\" $OpenBSD: ikectl.8,v 1.11 2010/10/07 12:33:58 reyk Exp $
 .\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
@@ -102,7 +102,10 @@ and its peers.
 .Pp
 The following commands are available to control the CA:
 .Bl -tag -width Ds
-.It Cm ca Ar name Cm create Op Ar password
+.It Xo
+.Cm ca Ar name Cm create
+.Op Ar password
+.Xc
 Create a new certificate authority with the specified
 .Ar name .
 The command will prompt for a CA password unless it is specified with
@@ -115,7 +118,10 @@ in the CA directory and used for subsequent commands.
 .It Cm ca Ar name Cm delete
 Delete the certificate authority with the specified
 .Ar name .
-.It Cm ca Ar name Cm export Op Ar peer
+.It Xo
+.Cm ca Ar name Cm export
+.Op Ar peer
+.Xc
 Export the certificate authority with the specified
 .Ar name
 into the current directory for transport to other systems.
@@ -136,7 +142,11 @@ and included in the archives.
 Install the certificate and Certificate Revocation List (CRL) for CA
 .Ar name
 as the currently active CA.
-.It Cm ca Ar name Cm certificate Ar host Cm create Op Ic server  \*(Ba client
+.It Xo
+.Cm ca Ar name Cm certificate Ar host
+.Cm create
+.Op Ic server \*(Ba client
+.Xc
 Create a private key and certificate for
 .Ar host
 and sign then with the key of certificate authority with the specified
@@ -149,10 +159,17 @@ this can be restricted using the optional
 or
 .Ic client
 argument.
-.It Cm ca Ar name Cm certificate Ar host Cm delete
+.It Xo
+.Cm ca Ar name Cm certificate Ar host
+.Cm delete
+.Xc
 Deletes the private key and and certificates associated with
 .Ar host .
-.It Cm ca Ar name Cm certificate Ar host Cm export Op Ar peer
+.It Xo
+.Cm ca Ar name Cm certificate Ar host
+.Cm export
+.Op Ar peer
+.Xc
 Export key files for
 .Ar host
 of the certificate authority with the specified
@@ -171,29 +188,48 @@ argument can be used to specify the address or FQDN of the local gateway
 which will be written into a text file
 .Pa peer.txt
 and included in the archives.
-.It Cm ca Ar name Cm certificate Ar host Cm install
+.It Xo
+.Cm ca Ar name Cm certificate Ar host
+.Cm install
+.Xc
 Install the private and public key for
 .Ar host
 into the active configuration.
-.It Cm ca Ar name Cm certificate Ar host Cm revoke
+.It Xo
+.Cm ca Ar name Cm certificate Ar host
+.Cm revoke
+.Xc
 Revoke the certificate specified by
 .Ar host
 and generate a new Certificate Revocation List (CRL).
 .It Cm show Cm ca Ar name Cm certificates
 Display a listing of certificates associated with CA
 .Ar name .
-.It Cm ca Ar name Cm key Ar host Cm create
+.It Xo
+.Cm ca Ar name Cm key Ar host
+.Cm create
+.Xc
 Create a private key for
 .Ar host
 if one does not already exist.
-.It Cm ca Ar name Cm key Ar host Cm install
+.It Xo
+.Cm ca Ar name Cm key Ar host
+.Cm install
+.Xc
 Install the private and public keys for
 .Ar host
 into the active configuration.
-.It Cm ca Ar name Cm key Ar host Cm delete
+.It Xo
+.Cm ca Ar name Cm key Ar host
+.Cm delete
+.Xc
 Delete the private key for
 .Ar host .
-.It Cm ca Ar name Cm key Ar host Cm import Ar file
+.It Xo
+.Cm ca Ar name Cm key Ar host
+.Cm import
+.Ar file
+.Xc
 Source the private key for
 .Ar host
 from the named
