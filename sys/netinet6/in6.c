@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.88 2010/07/08 19:42:46 jsg Exp $	*/
+/*	$OpenBSD: in6.c,v 1.89 2010/10/07 22:07:06 mpf Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -661,6 +661,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		pr0.ndpr_plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr,
 		    NULL);
 		if (pr0.ndpr_plen == 128) {
+			dohooks(ifp->if_addrhooks, 0);
 			break;	/* we don't need to install a host route. */
 		}
 		pr0.ndpr_prefix = ifra->ifra_addr;
