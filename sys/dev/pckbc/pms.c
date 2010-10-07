@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.7 2010/10/02 00:28:57 krw Exp $ */
+/* $OpenBSD: pms.c,v 1.8 2010/10/07 01:52:25 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -243,7 +243,8 @@ pms_change_state(struct pms_softc *sc, int newstate)
 
 		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
-		pckbc_flush(sc->sc_kbctag, sc->sc_kbcslot);
+		if (sc->poll)
+			pckbc_flush(sc->sc_kbctag, sc->sc_kbcslot);
 
 		cmd[0] = PMS_RESET;
 		res = pms_cmd(sc, cmd, 1, resp, 2);
