@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.26 2010/09/02 14:34:04 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.27 2010/10/07 12:02:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -351,24 +351,6 @@ struct ctl_rt {
 	u_int8_t		 prefixlen;
 	u_int8_t		 connected;
 	u_int8_t		 in_use;
-};
-
-struct ctl_sum {
-	struct in_addr		 rtr_id;
-	u_int32_t		 spf_delay;
-	u_int32_t		 spf_hold_time;
-	u_int32_t		 num_ext_lsa;
-	u_int32_t		 num_lspace;
-	time_t			 uptime;
-	u_int8_t		 rfc1583compat;
-};
-
-struct ctl_sum_lspace {
-	struct in_addr		 lspace;
-	u_int32_t		 num_iface;
-	u_int32_t		 num_adj_nbr;
-	u_int32_t		 num_spf_calc;
-	u_int32_t		 num_lsa;
 };
 
 /* parse.y */
