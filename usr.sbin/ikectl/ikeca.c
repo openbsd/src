@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.10 2010/10/07 09:36:33 phessler Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.11 2010/10/07 10:56:22 phessler Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -512,6 +512,8 @@ ca_export(struct ca *ca, char *keyname, char *myname)
 
 	if ((p = mkdtemp(tpl)) == NULL)
 		err(1, "could not create temp dir");
+
+	chmod(p, 0755);
 
 	for (i = 0; i < nitems(exdirs); i++) {
 		strlcpy(dst, p, sizeof(dst));
