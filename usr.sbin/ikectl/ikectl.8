@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.9 2010/10/01 07:08:25 jmc Exp $
+.\" $OpenBSD: ikectl.8,v 1.10 2010/10/07 12:23:14 reyk Exp $
 .\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2010 $
+.Dd $Mdocdate: October 7 2010 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nd control the IKEv2 daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl q
 .Op Fl s Ar socket
 .Ar command
 .Op Ar arg ...
@@ -36,6 +37,8 @@ authority (CA) for IKEv2 peers.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl q
+Don't ask for confirmation of any default options.
 .It Fl s Ar socket
 Use
 .Ar socket
@@ -99,9 +102,16 @@ and its peers.
 .Pp
 The following commands are available to control the CA:
 .Bl -tag -width Ds
-.It Cm ca Ar name Cm create
+.It Cm ca Ar name Cm create Op Ar password
 Create a new certificate authority with the specified
 .Ar name .
+The command will prompt for a CA password unless it is specified with
+the optional
+.Ar password
+argument.
+The password will be saved in a protected file
+.Pa ikeca.passwd
+in the CA directory and used for subsequent commands.
 .It Cm ca Ar name Cm delete
 Delete the certificate authority with the specified
 .Ar name .
@@ -126,11 +136,19 @@ and included in the archives.
 Install the certificate and Certificate Revocation List (CRL) for CA
 .Ar name
 as the currently active CA.
-.It Cm ca Ar name Cm certificate Ar host Cm create
+.It Cm ca Ar name Cm certificate Ar host Cm create Op Ic server  \*(Ba client
 Create a private key and certificate for
 .Ar host
 and sign then with the key of certificate authority with the specified
 .Ar name .
+.Pp
+The certificate will be valid for client and server authentication by
+default by setting both flags as the extended key usage in the certificate;
+this can be restricted using the optional
+.Ic server
+or
+.Ic client
+argument.
 .It Cm ca Ar name Cm certificate Ar host Cm delete
 Deletes the private key and and certificates associated with
 .Ar host .

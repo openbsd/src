@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.5 2010/06/23 16:01:01 jsg Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.6 2010/10/07 12:23:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -50,20 +50,6 @@ void		 monitor_id(struct imsg *);
 int		 monitor(struct imsg *);
 
 int		 ca_opt(struct parse_result *);
-struct ca	*ca_setup(char *, int);
-int		 ca_create(struct ca *);
-int		 ca_certificate(struct ca *, char *, int);
-int		 ca_export(struct ca *, char *, char *);
-int		 ca_revoke(struct ca *, char *);
-int		 ca_delete(struct ca *);
-int		 ca_delkey(struct ca *, char *);
-int		 ca_install(struct ca *);
-int		 ca_cert_install(struct ca *, char *);
-int		 ca_show_certs(struct ca *);
-int		 ca_key_create(struct ca *, char *);
-int		 ca_key_delete(struct ca *, char *);
-int		 ca_key_install(struct ca *, char *);
-int		 ca_key_import(struct ca *, char *, char *);
 
 struct imsgname imsgs[] = {
 	{ IMSG_CTL_OK,			"ok",			NULL },
@@ -95,7 +81,8 @@ ca_opt(struct parse_result *res)
 {
 	struct ca	*ca;
 
-	ca = ca_setup(res->caname, (res->action == CA_CREATE));
+	ca = ca_setup(res->caname, (res->action == CA_CREATE),
+	    res->quiet, res->pass);
 	if (ca == NULL)
 		errx(1, "ca_setup failed");
 
@@ -113,7 +100,9 @@ ca_opt(struct parse_result *res)
 		ca_export(ca, NULL, res->peer);
 		break;
 	case CA_CERT_CREATE:
-		ca_certificate(ca, res->host, res->htype);
+	case CA_SERVER:
+	case CA_CLIENT:
+		ca_certificate(ca, res->host, res->htype, res->action);
 		break;
 	case CA_CERT_DELETE:
 		ca_delkey(ca, res->host);
@@ -160,13 +149,17 @@ main(int argc, char *argv[])
 	int			 n;
 	int			 ch;
 	int			 v = 0;
+	int			 quiet = 0;
 	const char		*sock = IKED_SOCKET;
 
 	if ((env = calloc(1, sizeof(struct snmpd *))) == NULL)
 		err(1, "calloc");
 
-	while ((ch = getopt(argc, argv, "s:")) != -1) {
+	while ((ch = getopt(argc, argv, "qs:")) != -1) {
 		switch (ch) {
+		case 'q':
+			quiet = 1;
+			break;
 		case 's':
 			sock = optarg;
 			break;
@@ -182,12 +175,16 @@ main(int argc, char *argv[])
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
+	res->quiet = quiet;
+
 	switch (res->action) {
 	case CA_CREATE:
 	case CA_DELETE:
 	case CA_INSTALL:
 	case CA_EXPORT:
 	case CA_CERT_CREATE:
+	case CA_CLIENT:
+	case CA_SERVER:
 	case CA_CERT_DELETE:
 	case CA_CERT_INSTALL:
 	case CA_CERT_EXPORT:

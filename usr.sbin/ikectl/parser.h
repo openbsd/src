@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.5 2010/06/23 16:01:01 jsg Exp $	*/
+/*	$OpenBSD: parser.h,v 1.6 2010/10/07 12:23:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -15,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _IKECTL_PARSER_H
+#define _IKECTL_PARSER_H
 
 enum actions {
 	NONE,
@@ -39,6 +42,8 @@ enum actions {
 	CA_EXPORT,
 	CA_CERTIFICATE,
 	CA_CERT_CREATE,
+	CA_SERVER,
+	CA_CLIENT,
 	CA_CERT_DELETE,
 	CA_CERT_INSTALL,
 	CA_CERT_EXPORT,
@@ -56,12 +61,31 @@ struct parse_result {
 	struct imsgbuf	*ibuf;
 	char		*filename;
 	char 		*caname;
+	char		*pass;
 	char		*host;
 	char		*peer;
 	int		 htype;
+	int		 quiet;
 };
 
 #define HOST_IPADDR	1
 #define HOST_FQDN	2
 
 struct parse_result	*parse(int, char *[]);
+
+struct ca	*ca_setup(char *, int, int, char *);
+int		 ca_create(struct ca *);
+int		 ca_certificate(struct ca *, char *, int, int);
+int		 ca_export(struct ca *, char *, char *);
+int		 ca_revoke(struct ca *, char *);
+int		 ca_delete(struct ca *);
+int		 ca_delkey(struct ca *, char *);
+int		 ca_install(struct ca *);
+int		 ca_cert_install(struct ca *, char *);
+int		 ca_show_certs(struct ca *);
+int		 ca_key_create(struct ca *, char *);
+int		 ca_key_delete(struct ca *, char *);
+int		 ca_key_install(struct ca *, char *);
+int		 ca_key_import(struct ca *, char *, char *);
+
+#endif /* _IKECTL_PARSER_H */

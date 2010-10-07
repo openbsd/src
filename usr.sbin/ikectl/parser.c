@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.5 2010/06/23 16:01:01 jsg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.6 2010/10/07 12:23:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -44,7 +44,8 @@ enum token_type {
 	CANAME,
 	PEER,
 	ADDRESS,
-	FQDN
+	FQDN,
+	PASSWORD
 };
 
 struct token {
@@ -59,9 +60,11 @@ static const struct token t_reset[];
 static const struct token t_log[];
 static const struct token t_load[];
 static const struct token t_ca[];
+static const struct token t_ca_pass[];
 static const struct token t_ca_ex_peer[];
 static const struct token t_ca_modifiers[];
 static const struct token t_ca_cert[];
+static const struct token t_ca_cert_extusage[];
 static const struct token t_ca_cert_ex_peer[];
 static const struct token t_ca_cert_modifiers[];
 static const struct token t_ca_key[];
@@ -112,13 +115,19 @@ static const struct token t_ca[] = {
 };
 
 static const struct token t_ca_modifiers[] = {
-	{ KEYWORD,	"create",	CA_CREATE,	NULL },
+	{ KEYWORD,	"create",	CA_CREATE,	t_ca_pass },
 	{ KEYWORD,	"delete",	CA_DELETE,	NULL },
 	{ KEYWORD,	"install",	CA_INSTALL,	NULL },
 	{ KEYWORD,	"certificate",	CA_CERTIFICATE,	t_ca_cert },
 	{ KEYWORD,	"key",		NONE,		t_ca_key },
 	{ KEYWORD,	"export",	CA_EXPORT,	t_ca_ex_peer },
 	{ ENDTOKEN, 	"",		NONE,		NULL }
+};
+
+static const struct token t_ca_pass[] = {
+	{ NOTOKEN,	"",		NONE,		NULL },
+	{ PASSWORD,	"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL },
 };
 
 static const struct token t_ca_ex_peer[] = {
@@ -134,7 +143,7 @@ static const struct token t_ca_cert[] = {
 };
 
 static const struct token t_ca_cert_modifiers[] = {
-	{ KEYWORD,	"create",	CA_CERT_CREATE,		NULL },
+	{ KEYWORD,	"create",	CA_CERT_CREATE,		t_ca_cert_extusage },
 	{ KEYWORD,	"delete",	CA_CERT_DELETE,		NULL },
 	{ KEYWORD,	"install",	CA_CERT_INSTALL,	NULL },
 	{ KEYWORD,	"export",	CA_CERT_EXPORT,		t_ca_cert_ex_peer },
@@ -145,6 +154,13 @@ static const struct token t_ca_cert_modifiers[] = {
 static const struct token t_ca_cert_ex_peer[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
 	{ PEER,		"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL },
+};
+
+static const struct token t_ca_cert_extusage[] = {
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ KEYWORD,	"server",	CA_SERVER,	NULL },
+	{ KEYWORD,	"client",	CA_CLIENT,	NULL },
 	{ ENDTOKEN,	"",		NONE,		NULL },
 };
 
@@ -294,6 +310,13 @@ match_token(char *word, const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case PASSWORD:
+			if (!match && word != NULL && strlen(word) > 0) {
+				res.pass = strdup(word);
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -330,6 +353,9 @@ show_valid_args(const struct token table[])
 			break;
 		case CANAME:
 			fprintf(stderr, "  <caname>\n");
+			break;
+		case PASSWORD:
+			fprintf(stderr, "  <password>\n");
 			break;
 		case PEER:
 			fprintf(stderr, "  <peer>\n");
