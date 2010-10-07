@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.29 2010/09/13 10:02:49 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.30 2010/10/07 12:34:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -161,6 +161,7 @@ mpls_input(struct mbuf *m)
 				 * to be at the beginning of the stack.
 				 */
 				if (hasbos) {
+do_v4:
 					if (mpls_ip_adjttl(m, ttl))
 						goto done;
 					s = splnet();
@@ -168,10 +169,11 @@ mpls_input(struct mbuf *m)
 					schednetisr(NETISR_IP);
 					splx(s);
 					goto done;
-				} else
-					continue;
+				}
+				continue;
 			case MPLS_LABEL_IPV6NULL:
 				if (hasbos) {
+do_v6:
 					if (mpls_ip6_adjttl(m, ttl))
 						goto done;
 					s = splnet();
@@ -179,13 +181,26 @@ mpls_input(struct mbuf *m)
 					schednetisr(NETISR_IPV6);
 					splx(s);
 					goto done;
-				} else
-					continue;
+				}
+				continue;
+			case MPLS_LABEL_IMPLNULL:
+				if (hasbos) {
+					switch (*mtod(m, u_char *) >> 4) {
+					case IPVERSION:
+						goto do_v4;
+					case IPV6_VERSION >> 4:
+						goto do_v6;
+					default:
+						m_freem(m);
+						goto done;
+					}
+				}
+				/* FALLTHROUGH */
 			default:
+				/* Other cases are not handled for now */
 				m_freem(m);
 				goto done;
 			}
-			/* Other cases are not handled for now */
 		}
 
 		rt = rtalloc1(smplstosa(smpls), RT_REPORT, 0);
