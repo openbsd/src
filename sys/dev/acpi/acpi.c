@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.218 2010/10/05 17:04:48 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.219 2010/10/07 21:17:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -127,7 +127,6 @@ struct idechnl {
 };
 
 void	acpi_resume(struct acpi_softc *, int);
-void	acpi_susp_resume_gpewalk(struct acpi_softc *, int, int);
 int	acpi_add_device(struct aml_node *node, void *arg);
 
 struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
@@ -135,6 +134,8 @@ void	acpi_enable_onegpe(struct acpi_softc *, int);
 void	acpi_disable_onegpe(struct acpi_softc *, int);
 int	acpi_gpe(struct acpi_softc *, int, void *);
 
+void	acpi_enable_rungpes(struct acpi_softc *);
+void	acpi_enable_wakegpes(struct acpi_softc *, int);
 void	acpi_disable_allgpes(struct acpi_softc *);
 
 #endif /* SMALL_KERNEL */
@@ -1503,6 +1504,51 @@ acpi_disable_onegpe(struct acpi_softc *sc, int gpe)
 	splx(s);
 }
 
+/* Clear all GPEs */
+void
+acpi_disable_allgpes(struct acpi_softc *sc)
+{
+	int idx, s;
+
+	s = spltty();
+	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
+		acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx >> 3, 0);
+		acpi_write_pmreg(sc, ACPIREG_GPE_STS, idx >> 3, -1);
+	}
+	splx(s);
+}
+
+/* Enable runtime GPEs */
+void
+acpi_enable_rungpes(struct acpi_softc *sc)
+{
+	int s, idx;
+
+	s = spltty();
+	for (idx = 0; idx < sc->sc_lastgpe; idx++)
+		if (sc->gpe_table[idx].handler)
+			acpi_enable_onegpe(sc, idx);
+	splx(s);
+}
+
+/* Enable wakeup GPEs */
+void
+acpi_enable_wakegpes(struct acpi_softc *sc, int state)
+{
+	struct acpi_wakeq *wentry;
+	int s;
+
+	s = spltty();
+	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
+		dnprintf(10, "%.4s(S%d) gpe %.2x\n", wentry->q_node->name,
+		    wentry->q_state,
+		    wentry->q_gpe);
+		if (state <= wentry->q_state)
+			acpi_enable_onegpe(sc, wentry->q_gpe);
+	}
+	splx(s);
+}
+
 int
 acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
     (struct acpi_softc *, int, void *), void *arg, int edge)
@@ -1645,52 +1691,6 @@ acpi_init_pm(struct acpi_softc *sc)
 	sc->sc_sst = aml_searchname(&aml_root, "_SI_._SST");
 }
 
-void
-acpi_susp_resume_gpewalk(struct acpi_softc *sc, int state,
-    int wake_gpe_state)
-{
-	struct acpi_wakeq *wentry;
-	u_int32_t gpe;
-
-	/* Clear GPE status */
-	acpi_disable_allgpes(sc);
-	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
-		dnprintf(10, "%.4s(S%d) gpe %.2x\n", wentry->q_node->name,
-		    wentry->q_state,
-		    wentry->q_gpe);
-
-		if (state <= wentry->q_state) {
-			if (wake_gpe_state)
-				acpi_enable_onegpe(sc, wentry->q_gpe);
-			else
-				acpi_disable_onegpe(sc, wentry->q_gpe);
-		}
-	}
-
-	/* If we are resuming (disabling wake GPEs), enable other GPEs */
-
-	if (wake_gpe_state == 0) {
-		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
-			if (sc->gpe_table[gpe].handler)
-				acpi_enable_onegpe(sc, gpe);
-		}
-	}
-}
-
-void
-acpi_disable_allgpes(struct acpi_softc *sc)
-{
-	int idx, s;
-
-	/* Clear GPE status */
-	s = spltty();
-	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
-		acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx >> 3, 0);
-		acpi_write_pmreg(sc, ACPIREG_GPE_STS, idx >> 3, -1);
-	}
-	splx(s);
-}
-
 int
 acpi_sleep_state(struct acpi_softc *sc, int state)
 {
@@ -1811,8 +1811,9 @@ acpi_resume(struct acpi_softc *sc, int state)
 		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 	}
 
-	/* Disable wake GPEs */
-	acpi_susp_resume_gpewalk(sc, state, 0);
+	/* Enable runtime GPEs */
+	acpi_disable_allgpes(sc);
+	acpi_enable_rungpes(sc);
 
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
 
@@ -1973,7 +1974,8 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	    ACPI_PM1_ALL_STS);
 
 	/* Enable wake GPEs */
-	acpi_susp_resume_gpewalk(sc, state, 1);
+	acpi_disable_allgpes(sc);
+	acpi_enable_wakegpes(sc, state);
 
 fail:
 	if (error) {
@@ -2003,7 +2005,8 @@ acpi_powerdown(void)
 	 * In case acpi_prepare_sleep fails, we shouldn't try to enter
 	 * the sleep state. It might cost us the battery.
 	 */
-	acpi_susp_resume_gpewalk(acpi_softc, ACPI_STATE_S5, 1);
+	acpi_disable_allgpes(acpi_softc);
+	acpi_enable_wakegpes(acpi_softc, ACPI_STATE_S5);
 	if (acpi_prepare_sleep_state(acpi_softc, ACPI_STATE_S5) == 0)
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 }
@@ -2044,10 +2047,7 @@ acpi_thread(void *arg)
 		splx(s);
 
 		/* Enable handled GPEs here */
-		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
-			if (sc->gpe_table[gpe].handler)
-				acpi_enable_onegpe(sc, gpe);
-		}
+		acpi_enable_rungpes(sc);
 	}
 
 	while (thread->running) {
