@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.57 2010/10/06 22:57:46 djm Exp $
+# $OpenBSD: Makefile,v 1.58 2010/10/07 10:49:39 djm Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -345,6 +345,7 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/x509v3
 
 HDRS=\
+	e_os.h \
 	e_os2.h \
 	crypto/acss/acss.h \
 	crypto/aes/aes.h \
