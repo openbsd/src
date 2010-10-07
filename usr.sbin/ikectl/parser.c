@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.6 2010/10/07 12:23:14 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.7 2010/10/07 13:30:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -61,7 +61,10 @@ static const struct token t_log[];
 static const struct token t_load[];
 static const struct token t_ca[];
 static const struct token t_ca_pass[];
+static const struct token t_ca_pass_val[];
+static const struct token t_ca_export[];
 static const struct token t_ca_ex_peer[];
+static const struct token t_ca_ex_pass[];
 static const struct token t_ca_modifiers[];
 static const struct token t_ca_cert[];
 static const struct token t_ca_cert_extusage[];
@@ -120,20 +123,36 @@ static const struct token t_ca_modifiers[] = {
 	{ KEYWORD,	"install",	CA_INSTALL,	NULL },
 	{ KEYWORD,	"certificate",	CA_CERTIFICATE,	t_ca_cert },
 	{ KEYWORD,	"key",		NONE,		t_ca_key },
-	{ KEYWORD,	"export",	CA_EXPORT,	t_ca_ex_peer },
+	{ KEYWORD,	"export",	CA_EXPORT,	t_ca_export },
 	{ ENDTOKEN, 	"",		NONE,		NULL }
+};
+
+static const struct token t_ca_pass_val[] = {
+	{ PASSWORD,	"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
 static const struct token t_ca_pass[] = {
 	{ NOTOKEN,	"",		NONE,		NULL },
-	{ PASSWORD,	"",		NONE,		NULL },
-	{ ENDTOKEN,	"",		NONE,		NULL },
+	{ KEYWORD,	"password",	NONE,		t_ca_pass_val },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_ca_export[] = {
+	{ NOTOKEN,	"",		NONE,		NULL },
+	{ KEYWORD,	"peer",		NONE,		t_ca_ex_peer },
+	{ KEYWORD,	"password",	NONE,		t_ca_ex_pass },
+	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
 static const struct token t_ca_ex_peer[] = {
-	{ NOTOKEN,	"",		NONE,		NULL},
-	{ PEER,		"",		NONE,		NULL },
-	{ ENDTOKEN,	"",		NONE,		NULL },
+	{ PEER,		"",		NONE,		t_ca_export },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_ca_ex_pass[] = {
+	{ PASSWORD,	"",		NONE,		t_ca_export },
+	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
 static const struct token t_ca_cert[] = {
@@ -146,15 +165,9 @@ static const struct token t_ca_cert_modifiers[] = {
 	{ KEYWORD,	"create",	CA_CERT_CREATE,		t_ca_cert_extusage },
 	{ KEYWORD,	"delete",	CA_CERT_DELETE,		NULL },
 	{ KEYWORD,	"install",	CA_CERT_INSTALL,	NULL },
-	{ KEYWORD,	"export",	CA_CERT_EXPORT,		t_ca_cert_ex_peer },
+	{ KEYWORD,	"export",	CA_CERT_EXPORT,		t_ca_export },
 	{ KEYWORD,	"revoke",	CA_CERT_REVOKE,		NULL },
 	{ ENDTOKEN,	"",		NONE,			NULL }
-};
-
-static const struct token t_ca_cert_ex_peer[] = {
-	{ NOTOKEN,	"",		NONE,		NULL},
-	{ PEER,		"",		NONE,		NULL },
-	{ ENDTOKEN,	"",		NONE,		NULL },
 };
 
 static const struct token t_ca_cert_extusage[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.6 2010/10/07 12:23:14 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.7 2010/10/07 13:30:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -76,7 +76,7 @@ struct parse_result	*parse(int, char *[]);
 struct ca	*ca_setup(char *, int, int, char *);
 int		 ca_create(struct ca *);
 int		 ca_certificate(struct ca *, char *, int, int);
-int		 ca_export(struct ca *, char *, char *);
+int		 ca_export(struct ca *, char *, char *, char *);
 int		 ca_revoke(struct ca *, char *);
 int		 ca_delete(struct ca *);
 int		 ca_delkey(struct ca *, char *);

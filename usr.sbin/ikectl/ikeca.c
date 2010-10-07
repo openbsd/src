@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.12 2010/10/07 12:23:14 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.13 2010/10/07 13:30:50 reyk Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -458,7 +458,7 @@ rm_dir(char *path)
 }
 
 int
-ca_export(struct ca *ca, char *keyname, char *myname)
+ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 {
 	DIR		*dexp;
 	struct dirent	*de;
@@ -496,14 +496,18 @@ ca_export(struct ca *ca, char *keyname, char *myname)
 	while ((p = strchr(oname, ':')) != NULL)
 		*p = '_';
 
-	pass = getpass("Export passphrase:");
-	if (pass == NULL || *pass == '\0')
-		err(1, "password not set");
+	if (password != NULL)
+		pass = password;
+	else {
+		pass = getpass("Export passphrase:");
+		if (pass == NULL || *pass == '\0')
+			err(1, "password not set");
 
-	strlcpy(prev, pass, sizeof(prev));
-	pass = getpass("Retype export passphrase:");
-	if (pass == NULL || strcmp(prev, pass) != 0)
-		errx(1, "passphrase does not match!");
+		strlcpy(prev, pass, sizeof(prev));
+		pass = getpass("Retype export passphrase:");
+		if (pass == NULL || strcmp(prev, pass) != 0)
+			errx(1, "passphrase does not match!");
+	}
 
 	if (keyname != NULL) {
 		snprintf(cmd, sizeof(cmd), "env EXPASS=%s %s pkcs12 -export"

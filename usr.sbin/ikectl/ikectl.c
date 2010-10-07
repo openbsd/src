@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.7 2010/10/07 13:28:46 jmc Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.8 2010/10/07 13:30:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -97,7 +97,7 @@ ca_opt(struct parse_result *res)
 		ca_install(ca);
 		break;
 	case CA_EXPORT:
-		ca_export(ca, NULL, res->peer);
+		ca_export(ca, NULL, res->peer, res->pass);
 		break;
 	case CA_CERT_CREATE:
 	case CA_SERVER:
@@ -111,7 +111,7 @@ ca_opt(struct parse_result *res)
 		ca_cert_install(ca, res->host);
 		break;
 	case CA_CERT_EXPORT:
-		ca_export(ca, res->host, res->peer);
+		ca_export(ca, res->host, res->peer, res->pass);
 		break;
 	case CA_CERT_REVOKE:
 		ca_revoke(ca, res->host);
