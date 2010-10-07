@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.43 2010/10/06 21:02:59 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.44 2010/10/07 07:15:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1650,6 +1650,7 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 	struct envy_softc *sc = (struct envy_softc *)self;
 	int err, rsegs, basereg, wait;
 	struct envy_buf *buf;
+	bus_addr_t dma_addr;
 
 	if (dir == AUMODE_RECORD) {
 		buf = &sc->ibuf;
@@ -1666,10 +1667,10 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 	wait = (flags & M_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
 
 #define ENVY_ALIGN	4
-#define ENVY_BOUNDARY	0
+#define ENVY_BOUNDARY	(1 << 28)
 
 	err = bus_dmamem_alloc(sc->pci_dmat, buf->size, ENVY_ALIGN,
-	    ENVY_BOUNDARY, &buf->seg, 1, &rsegs, wait);
+	    sc->isht ? 0 : ENVY_BOUNDARY, &buf->seg, 1, &rsegs, wait);
 	if (err) {
 		DPRINTF("%s: dmamem_alloc: failed %d\n", DEVNAME(sc), err);
 		goto err_ret;
@@ -1692,12 +1693,17 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 		DPRINTF("%s: dmamap_load: failed %d\n", DEVNAME(sc), err);
 		goto err_destroy;
 	}
-	bus_space_write_4(sc->mt_iot, sc->mt_ioh, basereg,
-	    buf->map->dm_segs[0].ds_addr);
+	dma_addr = buf->map->dm_segs[0].ds_addr;
 	DPRINTF("%s: allocated %zd bytes dir=%d, ka=%p, da=%p\n", DEVNAME(sc),
-	    buf->size, dir, buf->addr, (void *)buf->map->dm_segs[0].ds_addr);
+	    buf->size, dir, buf->addr, dma_addr);
+	if (!sc->isht && (dma_addr & ~(ENVY_BOUNDARY - 1))) {
+		printf("%s: DMA address beyond 0x10000000\n", DEVNAME(sc));
+		goto err_unload;
+	}
+	bus_space_write_4(sc->mt_iot, sc->mt_ioh, basereg, dma_addr);
 	return buf->addr;
-
+ err_unload:
+	bus_dmamap_unload(sc->pci_dmat, buf->map);
  err_destroy:
 	bus_dmamap_destroy(sc->pci_dmat, buf->map);
  err_unmap:
@@ -1725,6 +1731,7 @@ envy_freem(void *self, void *addr, int type)
 		DPRINTF("%s: no buf to free\n", DEVNAME(sc));
 		return;
 	}
+	bus_dmamap_unload(sc->pci_dmat, buf->map);
 	bus_dmamap_destroy(sc->pci_dmat, buf->map);
 	bus_dmamem_unmap(sc->pci_dmat, buf->addr, buf->size);
 	bus_dmamem_free(sc->pci_dmat, &buf->seg, 1);
