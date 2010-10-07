@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.13 2010/10/07 13:30:50 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.14 2010/10/07 15:17:38 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -770,7 +770,7 @@ ca_setup(char *caname, int create, int quiet, char *pass)
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		err(1, "failed to create dir %s", path);
 
-	if (stat(ca->passfile, &st) == -1 && errno == ENOENT)
+	if (create && stat(ca->passfile, &st) == -1 && errno == ENOENT)
 		ca_newpass(ca->passfile, pass);
 
 	arc4random_buf(rnd, sizeof(rnd));
