@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.17 2010/10/08 11:41:56 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.18 2010/10/08 15:45:34 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -591,7 +591,8 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 	for (i = 0; i < nitems(hier); i++) {
 		strlcpy(dst, p, sizeof(dst));
 		strlcat(dst, hier[i].dir, sizeof(dst));
-		if (mkdir(dst, hier[i].mode) != 0)
+		if (stat(dst, &st) != 0 && errno == ENOENT &&
+		    mkdir(dst, hier[i].mode) != 0)
 			err(1, "failed to create dir %s", dst);
 	}
 
