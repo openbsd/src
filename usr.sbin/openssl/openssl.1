@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.70 2010/10/08 05:41:48 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.71 2010/10/08 17:57:19 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -280,6 +280,8 @@ and
 .Cm pkeyparam .
 .It Cm ec
 Elliptic curve (EC) key processing.
+.It Cm ecparam
+EC parameter manipulation and generation.
 .It Cm enc
 Encoding with ciphers.
 .It Cm engine
@@ -2710,6 +2712,185 @@ command was first introduced in
 .Nm OpenSSL
 0.9.8.
 .Sh EC AUTHORS
+.An Nils Larsch .
+.\"
+.\" ECPARAM
+.\"
+.Sh ECPARAM
+.Nm openssl ecparam
+.Bk -words
+.Op Fl C
+.Op Fl check
+.Op Fl genkey
+.Op Fl list_curves
+.Op Fl no_seed
+.Op Fl noout
+.Op Fl text
+.Op Fl conv_form Ar arg
+.Op Fl engine Ar id
+.Op Fl in Ar filename
+.Op Fl inform Ar DER | PEM
+.Op Fl name Ar arg
+.Op Fl out Ar filename
+.Op Fl outform Ar DER | PEM
+.Op Fl param_enc Ar arg
+.Op Fl rand Ar file ...
+.Ek
+.Pp
+This command is used to manipulate or generate EC parameter files.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl C
+Convert the EC parameters into C code.
+The parameters can then be loaded by calling the
+.Fn get_ec_group_XXX
+function.
+.It Fl check
+Validate the elliptic curve parameters.
+.It Fl conv_form Ar arg
+Specify how the points on the elliptic curve are converted
+into octet strings.
+Possible values are:
+.Cm compressed
+(the default value),
+.Cm uncompressed ,
+and
+.Cm hybrid .
+For more information regarding
+the point conversion forms please read the X9.62 standard.
+Note:
+Due to patent issues the
+.Cm compressed
+option is disabled by default for binary curves
+and can be enabled by defining the preprocessor macro
+.Ar OPENSSL_EC_BIN_PT_COMP
+at compile time.
+.It Fl engine Ar id
+Specifying an engine (by its unique
+.Ar id
+string) will cause
+.Nm ecparam
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default
+for all available algorithms.
+.It Fl genkey
+Generate an EC private key using the specified parameters.
+.It Fl in Ar filename
+Specify the input filename to read parameters from or standard input if
+this option is not specified.
+.It Fl inform Ar DER | PEM
+Specify the input format.
+DER uses an ASN.1 DER encoded
+form compatible with RFC 3279 EcpkParameters.
+PEM is the default format:
+it consists of the DER format base64 encoded with additional
+header and footer lines.
+.It Fl list_curves
+Print out a list of all
+currently implemented EC parameter names and exit.
+.It Fl name Ar arg
+Use the EC parameters with the specified 'short' name.
+Use
+.Fl list_curves
+to get a list of all currently implemented EC parameters.
+.It Fl no_seed
+Inhibit that the 'seed' for the parameter generation
+is included in the ECParameters structure (see RFC 3279).
+.It Fl noout
+Inhibit the output of the encoded version of the parameters.
+.It Fl out Ar filename
+Specify the output filename parameters are written to.
+Standard output is used if this option is not present.
+The output filename should
+.Em not
+be the same as the input filename.
+.It Fl outform Ar DER | PEM
+Specify the output format;
+the parameters have the same meaning as the
+.Fl inform
+option.
+.It Fl param_enc Ar arg
+This specifies how the elliptic curve parameters are encoded.
+Possible value are:
+.Cm named_curve ,
+i.e. the EC parameters are specified by an OID, or
+.Cm explicit ,
+where the EC parameters are explicitly given
+(see RFC 3279 for the definition of the EC parameter structures).
+The default value is
+.Cm named_curve .
+Note: the
+.Cm implicitlyCA
+alternative, as specified in RFC 3279,
+is currently not implemented in
+.Nm OpenSSL .
+.It Fl rand Ar file ...
+A file or files containing random data used to seed the random number
+generator, or an EGD socket (see
+.Xr RAND_egd 3 ) .
+Multiple files can be specified separated by an OS-dependent character.
+The separator is
+.Sq \&;
+for MS-Windows,
+.Sq \&,
+for OpenVMS, and
+.Sq \&:
+for all others.
+.It Fl text
+Print out the EC parameters in human readable form.
+.El
+.Sh ECPARAM NOTES
+PEM format EC parameters use the header and footer lines:
+.Bd -literal -offset indent
+-----BEGIN EC PARAMETERS-----
+-----END EC PARAMETERS-----
+.Ed
+.Pp
+.Nm OpenSSL
+is currently not able to generate new groups and therefore
+.Nm ecparam
+can only create EC parameters from known (named) curves.
+.Sh ECPARAM EXAMPLES
+To create EC parameters with the group 'prime192v1':
+.Bd -literal -offset indent
+$ openssl ecparam -out ec_param.pem -name prime192v1
+.Ed
+.Pp
+To create EC parameters with explicit parameters:
+.Bd -literal -offset indent
+$ openssl ecparam -out ec_param.pem -name prime192v1 \e
+	-param_enc explicit
+.Ed
+.Pp
+To validate given EC parameters:
+.Bd -literal -offset indent
+$ openssl ecparam -in ec_param.pem -check
+.Ed
+.Pp
+To create EC parameters and a private key:
+.Bd -literal -offset indent
+$ openssl ecparam -out ec_key.pem -name prime192v1 -genkey
+.Ed
+.Pp
+To change the point encoding to 'compressed':
+.Bd -literal -offset indent
+$ openssl ecparam -in ec_in.pem -out ec_out.pem \e
+	-conv_form compressed
+.Ed
+.Pp
+To print out the EC parameters to standard output:
+.Bd -literal -offset indent
+$ openssl ecparam -in ec_param.pem -noout -text
+.Ed
+.Sh ECPARAM HISTORY
+The
+.Nm ecparam
+command was first introduced in
+.Nm OpenSSL
+0.9.8.
+.Sh ECPARAM AUTHORS
 .An Nils Larsch .
 .\"
 .\" ENC
