@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.14 2010/10/07 15:17:38 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.15 2010/10/08 07:45:06 reyk Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ struct ca {
 int		 ca_sign(struct ca *, char *, int, char *);
 int		 ca_request(struct ca *, char *);
 int		 ca_newpass(char *, char *);
-int		 ca_show_certs(struct ca *);
 char *		 ca_readpass(char *, size_t *);
 int		 fcopy(char *, char *, mode_t);
 int		 rm_dir(char *);
@@ -366,13 +365,26 @@ ca_install(struct ca *ca)
 }
 
 int
-ca_show_certs(struct ca *ca)
+ca_show_certs(struct ca *ca, char *name)
 {
 	DIR		*dir;
 	struct dirent	*de;
 	char		 cmd[PATH_MAX * 2];
 	char		 path[PATH_MAX];
 	char		*p;
+	struct stat	 st;
+
+	if (name != NULL) {
+		snprintf(path, sizeof(path), "%s/%s.crt",
+		    ca->sslpath, name);
+		if (stat(path, &st) != 0)
+			err(1, "could not open file %s.crt", name);
+		snprintf(cmd, sizeof(cmd), "%s x509 -text"
+		    " -in %s", PATH_OPENSSL, path);
+		system(cmd);
+		printf("\n");
+		return (0);
+	}
 
 	if ((dir = opendir(ca->sslpath)) == NULL)
 		err(1, "could not open directory %s", ca->sslpath);

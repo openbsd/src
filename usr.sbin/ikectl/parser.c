@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.7 2010/10/07 13:30:50 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.8 2010/10/08 07:45:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -76,6 +76,7 @@ static const struct token t_ca_key_path[];
 static const struct token t_show[];
 static const struct token t_show_ca[];
 static const struct token t_show_ca_modifiers[];
+static const struct token t_show_ca_cert[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"active",	ACTIVE,		NULL },
@@ -207,8 +208,15 @@ static const struct token t_show_ca[] = {
 };
 
 static const struct token t_show_ca_modifiers[] = {
-	{ KEYWORD,	"certificates",		SHOW_CA_CERTIFICATES,	NULL },
-	{ ENDTOKEN,	"",			NONE,			NULL }
+	{ KEYWORD,	"certificates",	SHOW_CA_CERTIFICATES,	t_show_ca_cert },
+	{ ENDTOKEN,	"",		NONE,			NULL }
+};
+
+static const struct token t_show_ca_cert[] = {
+	{ NOTOKEN,	"",		NONE,		NULL },
+	{ ADDRESS,	"",		NONE,		NULL },
+	{ FQDN,		"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
 static struct parse_result	 res;

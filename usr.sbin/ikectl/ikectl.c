@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.8 2010/10/07 13:30:50 reyk Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.9 2010/10/08 07:45:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -117,7 +117,7 @@ ca_opt(struct parse_result *res)
 		ca_revoke(ca, res->host);
 		break;
 	case SHOW_CA_CERTIFICATES:
-		ca_show_certs(ca);
+		ca_show_certs(ca, res->host);
 		break;
 	case CA_KEY_CREATE:
 		ca_key_create(ca, res->host);
