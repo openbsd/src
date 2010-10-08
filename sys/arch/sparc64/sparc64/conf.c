@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.57 2010/09/23 05:02:14 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.58 2010/10/08 18:21:34 ratchov Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -55,6 +55,7 @@
 #include "pty.h"
 #include "bpfilter.h"
 #include "tun.h"
+#include "midi.h"
 #include "audio.h"
 #include "video.h"
 #include "vnd.h"
@@ -231,7 +232,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 65 */
 	cdev_notdef(),			/* 66 */
 	cdev_notdef(),			/* 67 */
-	cdev_notdef(),			/* 68 */
+	cdev_midi_init(NMIDI,midi),	/* 68: /dev/rmidi */
 	cdev_audio_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
 	cdev_tty_init(NMTTY,mtty),	/* 71: magma serial ports */
