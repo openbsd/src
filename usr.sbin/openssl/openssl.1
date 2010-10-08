@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.71 2010/10/08 17:57:19 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.72 2010/10/08 19:18:41 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -3243,6 +3243,56 @@ The
 program only supports a fixed number of algorithms with certain parameters.
 Therefore it is not possible to use RC2 with a 76-bit key
 or RC4 with an 84-bit key with this program.
+.\"
+.\" ENGINE
+.\"
+.Sh ENGINE
+.Nm openssl engine
+.Op Fl ctv
+.Op Fl post Ar cmd
+.Op Fl pre Ar cmd
+.Op Ar engine ...
+.Pp
+The
+.Nm engine
+command provides loadable module information and manipulation
+of various engines.
+Any options are applied to all engines supplied on the command line,
+or all supported engines if none are specified.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+For each engine, also list the capabilities.
+.It Fl post Ar cmd
+Run command
+.Ar cmd
+against the engine after loading it
+(only used if
+.Fl t
+is also provided).
+.It Fl pre Ar cmd
+Run command
+.Ar cmd
+against the engine before any attempts
+to load it
+(only used if
+.Fl t
+is also provided).
+.It Fl t
+For each engine, check that they are really available.
+.Fl tt
+will display an error trace for unavailable engines.
+.It Fl v
+Verbose mode.
+For each engine, list its 'control commands'.
+.Fl vv
+will additionally display each command's description.
+.Fl vvv
+will also add the input flags for each command.
+.Fl vvvv
+will also show internal input flags.
+.El
 .\"
 .\" ERRSTR
 .\"
