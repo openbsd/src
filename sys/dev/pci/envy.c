@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.46 2010/10/08 18:54:03 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.47 2010/10/08 19:26:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -933,49 +933,77 @@ ak5365_adc_set(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 int
 envy_ccs_read(struct envy_softc *sc, int reg)
 {
-	return bus_space_read_1(sc->ccs_iot, sc->ccs_ioh, reg);
+	int val;
+
+	val = bus_space_read_1(sc->ccs_iot, sc->ccs_ioh, reg);
+	bus_space_barrier(sc->ccs_iot, sc->ccs_ioh, 0, sc->ccs_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	return val;
 }
 
 void
 envy_ccs_write(struct envy_softc *sc, int reg, int val)
 {
 	bus_space_write_1(sc->ccs_iot, sc->ccs_ioh, reg, val);
+	bus_space_barrier(sc->ccs_iot, sc->ccs_ioh, 0, sc->ccs_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 }
 
 int
 envy_mt_read_1(struct envy_softc *sc, int reg)
 {
-	return bus_space_read_1(sc->mt_iot, sc->mt_ioh, reg);
+	int val;
+
+	val = bus_space_read_1(sc->mt_iot, sc->mt_ioh, reg);
+	bus_space_barrier(sc->mt_iot, sc->mt_ioh, 0, sc->mt_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	return val;
 }
 
 void
 envy_mt_write_1(struct envy_softc *sc, int reg, int val)
 {
 	bus_space_write_1(sc->mt_iot, sc->mt_ioh, reg, val);
+	bus_space_barrier(sc->mt_iot, sc->mt_ioh, 0, sc->mt_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 }
 
 int
 envy_mt_read_2(struct envy_softc *sc, int reg)
 {
-	return bus_space_read_2(sc->mt_iot, sc->mt_ioh, reg);
+	int val;
+
+	val = bus_space_read_2(sc->mt_iot, sc->mt_ioh, reg);
+	bus_space_barrier(sc->mt_iot, sc->mt_ioh, 0, sc->mt_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	return val;
 }
 
 void
 envy_mt_write_2(struct envy_softc *sc, int reg, int val)
 {
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh, reg, val);
+	bus_space_barrier(sc->mt_iot, sc->mt_ioh, 0, sc->mt_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 }
 
 int
 envy_mt_read_4(struct envy_softc *sc, int reg)
 {
-	return bus_space_read_4(sc->mt_iot, sc->mt_ioh, reg);
+	int val;
+
+	val = bus_space_read_4(sc->mt_iot, sc->mt_ioh, reg);
+	bus_space_barrier(sc->mt_iot, sc->mt_ioh, 0, sc->mt_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	return val;
 }
 
 void
 envy_mt_write_4(struct envy_softc *sc, int reg, int val)
 {
 	bus_space_write_4(sc->mt_iot, sc->mt_ioh, reg, val);
+	bus_space_barrier(sc->mt_iot, sc->mt_ioh, 0, sc->mt_iosz,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 }
 
 int
