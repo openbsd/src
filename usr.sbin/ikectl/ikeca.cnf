@@ -1,4 +1,4 @@
-# $OpenBSD: ikeca.cnf,v 1.3 2010/10/07 09:36:33 phessler Exp $
+# $OpenBSD: ikeca.cnf,v 1.4 2010/10/08 16:15:22 reyk Exp $
 # $vantronix: ikeca.cnf,v 1.3 2010/05/31 12:26:26 reyk Exp $
 
 RANDFILE		= /dev/arandom
@@ -18,6 +18,7 @@ EXTCERTUSAGE		= serverAuth,clientAuth
 CERTIP			= 0.0.0.0
 CERTFQDN		= nohost.nodomain
 CADB			= index.txt
+NSCERTTYPE		= server,client
 
 [ req ]
 default_bits		= 2048
@@ -74,10 +75,14 @@ basicConstraints=critical,CA:true,pathlen:$ENV::CERTPATHLEN
 keyUsage=$ENV::CERTUSAGE
 
 [x509v3_IPAddr]
+keyUsage=$ENV::CERTUSAGE
+nsCertType=$ENV::NSCERTTYPE
 subjectAltName=IP:$ENV::CERTIP
 extendedKeyUsage=$ENV::EXTCERTUSAGE
 
 [x509v3_FQDN]
+keyUsage=$ENV::CERTUSAGE
+nsCertType=$ENV::NSCERTTYPE
 subjectAltName=DNS:$ENV::CERTFQDN
 extendedKeyUsage=$ENV::EXTCERTUSAGE
 

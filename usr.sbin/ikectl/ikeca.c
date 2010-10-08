@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.18 2010/10/08 15:45:34 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.19 2010/10/08 16:15:22 reyk Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -219,10 +219,12 @@ ca_certificate(struct ca *ca, char *keyname, int type, int action)
 
 	switch (action) {
 	case CA_SERVER:
-		envargs = " EXTCERTUSAGE=serverAuth";
+		envargs = " EXTCERTUSAGE=serverAuth NSCERTTYPE=server"
+		    " CERTUSAGE=digitalSignature,keyEncipherment";
 		break;
 	case CA_CLIENT:
-		envargs = " EXTCERTUSAGE=clientAuth";
+		envargs = " EXTCERTUSAGE=clientAuth NSCERTTYPE=client"
+		    " CERTUSAGE=digitalSignature,keyAgreement";
 		break;
 	default:
 		break;
