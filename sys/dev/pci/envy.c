@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.45 2010/10/08 18:46:42 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.46 2010/10/08 18:54:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1821,14 +1821,14 @@ envy_set_params(void *self, int setmode, int usemode,
 	reg |= envy_rates[i].reg;
 	envy_mt_write_1(sc, ENVY_MT_RATE, reg);
 	if (setmode & AUMODE_PLAY) {
-		p->encoding = AUDIO_ENCODING_SLINEAR;
+		p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		p->precision = 24;
 		p->bps = 4;
 		p->msb = 1;
 		p->channels = sc->isht ? sc->card->noch : ENVY_PCHANS;
 	}
 	if (setmode & AUMODE_RECORD) {
-		r->encoding = AUDIO_ENCODING_SLINEAR;
+		r->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		r->precision = 24;
 		r->bps = 4;
 		r->msb = 1;
