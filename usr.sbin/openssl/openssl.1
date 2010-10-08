@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.69 2010/10/08 05:38:24 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.70 2010/10/08 05:41:48 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1504,8 +1504,8 @@ The following is a list of all permitted cipher strings and their meanings.
 .Bl -tag -width "XXXX"
 .It Ar DEFAULT
 The default cipher list.
-This is determined at compile time and is normally
-.Ar ALL:!ADH:+RC4:@STRENGTH .
+This is determined at compile time and is currently
+.Ar ALL:!aNULL:!eNULL:!SSLv2 .
 This must be the first
 .Ar cipher string
 specified.
