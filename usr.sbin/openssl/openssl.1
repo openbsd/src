@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.68 2010/10/06 13:21:02 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.69 2010/10/08 05:38:24 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: October 6 2010 $
+.Dd $Mdocdate: October 8 2010 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -278,6 +278,8 @@ Superseded by
 .Cm genpkey
 and
 .Cm pkeyparam .
+.It Cm ec
+Elliptic curve (EC) key processing.
 .It Cm enc
 Encoding with ciphers.
 .It Cm engine
@@ -2506,6 +2508,210 @@ PEM format DSA parameters use the header and footer lines:
 DSA parameter generation is a slow process and as a result the same set of
 DSA parameters is often used to generate several distinct keys.
 .\"
+.\" EC
+.\"
+.Sh EC
+.Nm openssl ec
+.Bk -words
+.Op Fl des
+.Op Fl des3
+.Op Fl noout
+.Op Fl param_out
+.Op Fl pubin
+.Op Fl pubout
+.Op Fl text
+.Op Fl conv_form Ar arg
+.Op Fl engine Ar id
+.Op Fl in Ar filename
+.Op Fl inform Ar PEM|DER
+.Op Fl out Ar filename
+.Op Fl outform Ar PEM|DER
+.Op Fl param_enc Ar arg
+.Op Fl passin Ar arg
+.Op Fl passout Ar arg
+.Ek
+.Pp
+The
+.Nm ec
+command processes EC keys.
+They can be converted between various
+forms and their components printed out.
+Note:
+.Nm OpenSSL
+uses the private key format specified in
+.Dq SEC 1: Elliptic Curve Cryptography
+.Pq Pa http://www.secg.org/ .
+To convert an
+.Nm OpenSSL
+EC private key into the PKCS#8 private key format use the
+.Nm pkcs8
+command.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl conv_form
+This specifies how the points on the elliptic curve are converted
+into octet strings.
+Possible values are:
+.Cm compressed
+(the default value),
+.Cm uncompressed ,
+and
+.Cm hybrid .
+For more information regarding
+the point conversion forms please read the X9.62 standard.
+Note:
+Due to patent issues the
+.Cm compressed
+option is disabled by default for binary curves
+and can be enabled by defining the preprocessor macro
+.Ar OPENSSL_EC_BIN_PT_COMP
+at compile time.
+.It Fl des | des3
+These options encrypt the private key with the DES, triple DES, or
+any other cipher supported by
+.Nm OpenSSL
+before outputting it.
+A pass phrase is prompted for.
+If none of these options is specified the key is written in plain text.
+This means that using the
+.Nm ec
+utility to read in an encrypted key with no
+encryption option can be used to remove the pass phrase from a key,
+or by setting the encryption options
+it can be use to add or change the pass phrase.
+These options can only be used with PEM format output files.
+.It Fl engine Ar id
+Specifying an engine (by its unique
+.Ar id
+string) will cause
+.Nm ec
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default
+for all available algorithms.
+.It Fl in Ar filename
+This specifies the input filename to read a key from,
+or standard input if this option is not specified.
+If the key is encrypted a pass phrase will be prompted for.
+.It Fl inform Ar DER | PEM
+This specifies the input format.
+DER with a private key uses
+an ASN.1 DER-encoded SEC1 private key.
+When used with a public key it
+uses the SubjectPublicKeyInfo structure as specified in RFC 3280.
+PEM is the default format:
+it consists of the DER format base64
+encoded with additional header and footer lines.
+In the case of a private key
+PKCS#8 format is also accepted.
+.It Fl noout
+Prevents output of the encoded version of the key.
+.It Fl out Ar filename
+Specifies the output filename to write a key to,
+or standard output if none is specified.
+If any encryption options are set then a pass phrase will be prompted for.
+The output filename should
+.Em not
+be the same as the input filename.
+.It Fl outform Ar DER | PEM
+This specifies the output format.
+The options have the same meaning as the
+.Fl inform
+option.
+.It Fl param_enc Ar arg
+This specifies how the elliptic curve parameters are encoded.
+Possible value are:
+.Cm named_curve ,
+i.e. the EC parameters are specified by an OID; or
+.Cm explicit ,
+where the EC parameters are explicitly given
+(see RFC 3279 for the definition of the EC parameter structures).
+The default value is
+.Cm named_curve .
+Note: the
+.Cm implicitlyCA
+alternative,
+as specified in RFC 3279,
+is currently not implemented in
+.Nm OpenSSL .
+.It Fl passin Ar arg
+The input file password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl passout Ar arg
+The output file password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl pubin
+By default a private key is read from the input file;
+with this option a public key is read instead.
+.It Fl pubout
+By default a private key is output;
+with this option a public key is output instead.
+This option is automatically set if the input is a public key.
+.It Fl text
+Prints out the public/private key components and parameters.
+.El
+.Sh EC NOTES
+The PEM private key format uses the header and footer lines:
+.Bd -literal -offset indent
+-----BEGIN EC PRIVATE KEY-----
+-----END EC PRIVATE KEY-----
+.Ed
+.Pp
+The PEM public key format uses the header and footer lines:
+.Bd -literal -offset indent
+-----BEGIN PUBLIC KEY-----
+-----END PUBLIC KEY-----
+.Ed
+.Sh EC EXAMPLES
+To encrypt a private key using triple DES:
+.Bd -literal -offset indent
+$ openssl ec -in key.pem -des3 -out keyout.pem
+.Ed
+.Pp
+To convert a private key from PEM to DER format:
+.Bd -literal -offset indent
+$ openssl ec -in key.pem -outform DER -out keyout.der
+.Ed
+.Pp
+To print out the components of a private key to standard output:
+.Bd -literal -offset indent
+$ openssl ec -in key.pem -text -noout
+.Ed
+.Pp
+To just output the public part of a private key:
+.Bd -literal -offset indent
+$ openssl ec -in key.pem -pubout -out pubkey.pem
+.Ed
+.Pp
+To change the parameter encoding to
+.Cm explicit :
+.Bd -literal -offset indent
+$ openssl ec -in key.pem -param_enc explicit -out keyout.pem
+.Ed
+.Pp
+To change the point conversion form to
+.Cm compressed :
+.Bd -literal -offset indent
+$ openssl ec -in key.pem -conv_form compressed -out keyout.pem
+.Ed
+.Sh EC HISTORY
+The
+.Nm ec
+command was first introduced in
+.Nm OpenSSL
+0.9.8.
+.Sh EC AUTHORS
+.An Nils Larsch .
+.\"
 .\" ENC
 .\"
 .Sh ENC
@@ -2632,7 +2838,7 @@ option.
 .It Fl md Ar digest
 Use
 .Ar digest
-to create a key from a passphrase.
+to create a key from a pass phrase.
 .Ar digest
 may be one of
 .Dq md2 ,
