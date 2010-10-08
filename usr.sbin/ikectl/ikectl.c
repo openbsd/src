@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.10 2010/10/08 10:13:47 jsg Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.11 2010/10/08 11:41:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -80,11 +80,23 @@ int
 ca_opt(struct parse_result *res)
 {
 	struct ca	*ca;
+	size_t		 len;
+	char		*p;
 
 	ca = ca_setup(res->caname, (res->action == CA_CREATE),
 	    res->quiet, res->pass);
 	if (ca == NULL)
 		errx(1, "ca_setup failed");
+
+	/* assume paths are relative to /etc if not absolute */
+	if (res->path && (res->path[0] != '.') && (res->path[0] != '/')) {
+		len = 5 + strlen(res->path) + 1;
+		if ((p = malloc(len)) == NULL)
+			err(1, "malloc");
+		snprintf(p, len, "/etc/%s", res->path);
+		free(res->path);
+		res->path = p;
+	}
 
 	switch (res->action) {
 	case CA_CREATE:

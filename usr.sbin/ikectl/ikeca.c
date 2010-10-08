@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.16 2010/10/08 10:13:47 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.17 2010/10/08 11:41:56 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -59,7 +59,8 @@ struct ca {
 struct {
 	char	*dir;
 	mode_t	 mode;
-} exdirs[] = {
+} hier[] = {
+	{ "",		0755 },
 	{ "/ca",	0755 },
 	{ "/certs",	0755 },
 	{ "/crls",	0755 },
@@ -513,11 +514,11 @@ ca_hier(char *path)
 	char		 dst[PATH_MAX];
 	u_int		 i;
 
-	for (i = 0; i < nitems(exdirs); i++) {
+	for (i = 0; i < nitems(hier); i++) {
 		strlcpy(dst, path, sizeof(dst));
-		strlcat(dst, exdirs[i].dir, sizeof(dst));
+		strlcat(dst, hier[i].dir, sizeof(dst));
 		if (stat(dst, &st) != 0 && errno == ENOENT &&
-		    mkdir(dst, exdirs[i].mode) != 0)
+		    mkdir(dst, hier[i].mode) != 0)
 			err(1, "failed to create dir %s", dst);
 	}
 
@@ -587,10 +588,10 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 
 	chmod(p, 0755);
 
-	for (i = 0; i < nitems(exdirs); i++) {
+	for (i = 0; i < nitems(hier); i++) {
 		strlcpy(dst, p, sizeof(dst));
-		strlcat(dst, exdirs[i].dir, sizeof(dst));
-		if (mkdir(dst, exdirs[i].mode) != 0)
+		strlcat(dst, hier[i].dir, sizeof(dst));
+		if (mkdir(dst, hier[i].mode) != 0)
 			err(1, "failed to create dir %s", dst);
 	}
 
