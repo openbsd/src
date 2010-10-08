@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.44 2010/10/07 07:15:30 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.45 2010/10/08 18:46:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,6 +59,12 @@ int  envydetach(struct device *, int);
 
 int  envy_ccs_read(struct envy_softc *, int);
 void envy_ccs_write(struct envy_softc *, int, int);
+int  envy_mt_read_1(struct envy_softc *, int);
+void envy_mt_write_1(struct envy_softc *, int, int);
+int  envy_mt_read_2(struct envy_softc *, int);
+void envy_mt_write_2(struct envy_softc *, int, int);
+int  envy_mt_read_4(struct envy_softc *, int);
+void envy_mt_write_4(struct envy_softc *, int, int);
 int  envy_cci_read(struct envy_softc *, int);
 void envy_cci_write(struct envy_softc *, int, int);
 void envy_i2c_wait(struct envy_softc *);
@@ -937,9 +943,46 @@ envy_ccs_write(struct envy_softc *sc, int reg, int val)
 }
 
 int
+envy_mt_read_1(struct envy_softc *sc, int reg)
+{
+	return bus_space_read_1(sc->mt_iot, sc->mt_ioh, reg);
+}
+
+void
+envy_mt_write_1(struct envy_softc *sc, int reg, int val)
+{
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, reg, val);
+}
+
+int
+envy_mt_read_2(struct envy_softc *sc, int reg)
+{
+	return bus_space_read_2(sc->mt_iot, sc->mt_ioh, reg);
+}
+
+void
+envy_mt_write_2(struct envy_softc *sc, int reg, int val)
+{
+	bus_space_write_2(sc->mt_iot, sc->mt_ioh, reg, val);
+}
+
+int
+envy_mt_read_4(struct envy_softc *sc, int reg)
+{
+	return bus_space_read_4(sc->mt_iot, sc->mt_ioh, reg);
+}
+
+void
+envy_mt_write_4(struct envy_softc *sc, int reg, int val)
+{
+	bus_space_write_4(sc->mt_iot, sc->mt_ioh, reg, val);
+}
+
+int
 envy_cci_read(struct envy_softc *sc, int index)
 {
 	int val;
+
 	envy_ccs_write(sc, ENVY_CCI_INDEX, index);
 	val = envy_ccs_read(sc, ENVY_CCI_DATA);
 	return val;
@@ -1153,7 +1196,7 @@ envy_ac97_wait(struct envy_softc *sc)
 	int timeout = 50, st;
 
 	for (;;) {
-		st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD);
+		st = envy_mt_read_1(sc, ENVY_MT_AC97_CMD);
 		if ((st & ENVY_MT_AC97_READY) && !(st & ENVY_MT_AC97_CMD_MASK)) {
 			st = 0;
 			break;
@@ -1189,8 +1232,8 @@ envy_ac97_read_codec(void *hdl, u_int8_t reg, u_int16_t *result)
 		return (-1);
 	}
 
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_IDX, reg & 0x7f);
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD,
+	envy_mt_write_1(sc, ENVY_MT_AC97_IDX, reg & 0x7f);
+	envy_mt_write_1(sc, ENVY_MT_AC97_CMD,
 	    ENVY_MT_AC97_CMD_RD);
 	delay(50);
 
@@ -1199,7 +1242,7 @@ envy_ac97_read_codec(void *hdl, u_int8_t reg, u_int16_t *result)
 		return (-1);
 	}
 
-	*result = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_DATA);
+	*result = envy_mt_read_2(sc, ENVY_MT_AC97_DATA);
 
 	return (0);
 }
@@ -1214,9 +1257,9 @@ envy_ac97_write_codec(void *hdl, u_int8_t reg, u_int16_t data)
 		return (-1);
 	}
 
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_IDX, reg & 0x7f);
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_DATA, data);
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD,
+	envy_mt_write_1(sc, ENVY_MT_AC97_IDX, reg & 0x7f);
+	envy_mt_write_2(sc, ENVY_MT_AC97_DATA, data);
+	envy_mt_write_1(sc, ENVY_MT_AC97_CMD,
 	    ENVY_MT_AC97_CMD_WR);
 	delay(50);
 
@@ -1228,10 +1271,9 @@ envy_ac97_reset_codec(void *hdl)
 {
 	struct envy_softc *sc = hdl;
 
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD,
-	    ENVY_MT_AC97_CMD_RST);
+	envy_mt_write_1(sc, ENVY_MT_AC97_CMD, ENVY_MT_AC97_CMD_RST);
 	delay(50);
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD, 0);
+	envy_mt_write_1(sc, ENVY_MT_AC97_CMD, 0);
 	delay(50);
 
 	if (envy_ac97_wait(sc)) {
@@ -1352,10 +1394,8 @@ envy_reset(struct envy_softc *sc)
 	envy_ccs_write(sc, ENVY_CCS_INTMASK,
 	    ~(ENVY_CCS_INT_MT | ENVY_CCS_INT_MIDI0));
 	if (sc->isht) {
-		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_NSTREAM,
-		    4 - sc->card->noch / 2);
-		bus_space_write_1(sc->mt_iot, sc->mt_ioh,
-		    ENVY_MT_IMASK, ~(ENVY_MT_IMASK_PDMA0 |
+		envy_mt_write_1(sc, ENVY_MT_NSTREAM, 4 - sc->card->noch / 2);
+		envy_mt_write_1(sc, ENVY_MT_IMASK, ~(ENVY_MT_IMASK_PDMA0 |
 		    ENVY_MT_IMASK_RDMA0 | ENVY_MT_IMASK_ERR));
 	}
 	sc->iactive = 0;
@@ -1369,7 +1409,7 @@ envy_lineout_getsrc(struct envy_softc *sc, int out)
 	int reg, shift, src;
 
 	if (sc->isht) {
-		reg = bus_space_read_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_HTSRC);
+		reg = envy_mt_read_4(sc, ENVY_MT_HTSRC);
 		DPRINTF("%s: outsrc=%x\n", DEVNAME(sc), reg);
 		shift = 3 * (out / 2) + ((out & 1) ? 20 : 8);
 		src = (reg >> shift) & ENVY_MT_HTSRC_MASK;
@@ -1381,7 +1421,7 @@ envy_lineout_getsrc(struct envy_softc *sc, int out)
 		}
 	}
 
-	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_OUTSRC);
+	reg = envy_mt_read_2(sc, ENVY_MT_OUTSRC);
 	DPRINTF("%s: outsrc=%x\n", DEVNAME(sc), reg);
 	shift = (out  & 1) ? (out & ~1) + 8 : out;
 	src = (reg >> shift) & 3;
@@ -1390,7 +1430,7 @@ envy_lineout_getsrc(struct envy_softc *sc, int out)
 	} else if (src == ENVY_MT_OUTSRC_MON) {
 		return ENVY_MIX_OUTSRC_MON;
 	}
-	reg = bus_space_read_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_INSEL);
+	reg = envy_mt_read_4(sc, ENVY_MT_INSEL);
 	DPRINTF("%s: insel=%x\n", DEVNAME(sc), reg);
 	reg = (reg >> (out * 4)) & 0xf;
 	if (src == ENVY_MT_OUTSRC_LINE)
@@ -1416,9 +1456,9 @@ envy_lineout_setsrc(struct envy_softc *sc, int out, int src)
 		}
 		shift = 3 * (out / 2) + ((out & 1) ? 20 : 8);
 		mask = ENVY_MT_HTSRC_MASK << shift;
-		reg = bus_space_read_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_HTSRC);
+		reg = envy_mt_read_4(sc, ENVY_MT_HTSRC);
 		reg = (reg & ~mask) | (sel << shift);
-		bus_space_write_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_HTSRC, reg);
+		envy_mt_write_4(sc, ENVY_MT_HTSRC, reg);
 		DPRINTF("%s: outsrc <- %x\n", DEVNAME(sc), reg);
 		return;
 	}
@@ -1435,9 +1475,9 @@ envy_lineout_setsrc(struct envy_softc *sc, int out, int src)
 
 		shift = out * ENVY_MT_INSEL_BITS;
 		mask = ENVY_MT_INSEL_MASK << shift;
-		reg = bus_space_read_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_INSEL);
+		reg = envy_mt_read_4(sc, ENVY_MT_INSEL);
 		reg = (reg & ~mask) | (sel << shift);
-		bus_space_write_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_INSEL, reg);
+		envy_mt_write_4(sc, ENVY_MT_INSEL, reg);
 		DPRINTF("%s: insel <- %x\n", DEVNAME(sc), reg);
 	}
 
@@ -1455,9 +1495,9 @@ envy_lineout_setsrc(struct envy_softc *sc, int out, int src)
 	}
 	shift = (out  & 1) ? (out & ~1) + 8 : out;
 	mask = ENVY_MT_OUTSRC_MASK << shift;
-	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_OUTSRC);
+	reg = envy_mt_read_2(sc, ENVY_MT_OUTSRC);
 	reg = (reg & ~mask) | (sel << shift);
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_OUTSRC, reg);
+	envy_mt_write_2(sc, ENVY_MT_OUTSRC, reg);
 	DPRINTF("%s: outsrc <- %x\n", DEVNAME(sc), reg);
 }
 
@@ -1467,7 +1507,7 @@ envy_spdout_getsrc(struct envy_softc *sc, int out)
 {
 	int reg, src, sel;
 
-	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_SPDROUTE);
+	reg = envy_mt_read_2(sc, ENVY_MT_SPDROUTE);
 	DPRINTF("%s: spdroute=%x\n", DEVNAME(sc), reg);
 	src = (out == 0) ? reg : reg >> 2;
 	src &= ENVY_MT_SPDSRC_MASK;
@@ -1490,7 +1530,7 @@ envy_spdout_setsrc(struct envy_softc *sc, int out, int src)
 {
 	int reg, shift, mask, sel;
 
-	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_SPDROUTE);
+	reg = envy_mt_read_2(sc, ENVY_MT_SPDROUTE);
 	if (src < ENVY_MIX_OUTSRC_DMA) {
 		/*
 		 * linein and spdin are used as output source so we
@@ -1521,7 +1561,7 @@ envy_spdout_setsrc(struct envy_softc *sc, int out, int src)
 	shift = out * 2;
 	mask = ENVY_MT_SPDSRC_MASK << shift;
 	reg = (reg & ~mask) | (sel << shift);
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_SPDROUTE, reg);
+	envy_mt_write_2(sc, ENVY_MT_SPDROUTE, reg);
 	DPRINTF("%s: spdroute <- %x\n", DEVNAME(sc), reg);
 }
 
@@ -1530,8 +1570,8 @@ envy_mon_getvol(struct envy_softc *sc, int idx, int ch, int *val)
 {
 	int reg;
 
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONIDX, idx);
-	reg = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONDATA + ch);
+	envy_mt_write_2(sc, ENVY_MT_MONIDX, idx);
+	reg = envy_mt_read_1(sc, ENVY_MT_MONDATA + ch);
 	*val = 0x7f - (reg & 0x7f);
 }
 
@@ -1540,10 +1580,10 @@ envy_mon_setvol(struct envy_softc *sc, int idx, int ch, int val)
 {
 	int reg;
 
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONIDX, idx);
+	envy_mt_write_2(sc, ENVY_MT_MONIDX, idx);
 	reg = 0x7f - val;
 	DPRINTF("%s: mon=%d/%d <- %d\n", DEVNAME(sc), reg, ch, val);
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONDATA + ch, reg);
+	envy_mt_write_1(sc, ENVY_MT_MONDATA + ch, reg);
 }
 
 int
@@ -1700,7 +1740,7 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 		printf("%s: DMA address beyond 0x10000000\n", DEVNAME(sc));
 		goto err_unload;
 	}
-	bus_space_write_4(sc->mt_iot, sc->mt_ioh, basereg, dma_addr);
+	envy_mt_write_4(sc, basereg, dma_addr);
 	return buf->addr;
  err_unload:
 	bus_dmamap_unload(sc->pci_dmat, buf->map);
@@ -1776,10 +1816,10 @@ envy_set_params(void *self, int setmode, int usemode,
 			break;
 		}
 	}
-	reg = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_RATE);
+	reg = envy_mt_read_1(sc, ENVY_MT_RATE);
 	reg &= ~ENVY_MT_RATEMASK;
 	reg |= envy_rates[i].reg;
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_RATE, reg);
+	envy_mt_write_1(sc, ENVY_MT_RATE, reg);
 	if (setmode & AUMODE_PLAY) {
 		p->encoding = AUDIO_ENCODING_SLINEAR;
 		p->precision = 24;
@@ -1864,7 +1904,7 @@ envy_intr(void *self)
 	int st, err, ctl;
 	int max;
 
-	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR);
+	st = envy_mt_read_1(sc, ENVY_MT_INTR);
 	mintr = envy_ccs_read(sc, ENVY_CCS_INTSTAT);
 	if (st == 0 && mintr == 0)
 		return 0;
@@ -1874,14 +1914,10 @@ envy_intr(void *self)
 		sc->intrs[sc->nintr].iactive = sc->iactive;
 		sc->intrs[sc->nintr].oactive = sc->oactive;
 		sc->intrs[sc->nintr].st = st;
-		sc->intrs[sc->nintr].ipos = 
-		    bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_RBUFSZ);
-		sc->intrs[sc->nintr].opos = 
-		    bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_PBUFSZ);
-		sc->intrs[sc->nintr].ctl = 
-		    bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
-		sc->intrs[sc->nintr].mask = 
-		    bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_IMASK);
+		sc->intrs[sc->nintr].ipos = envy_mt_read_2(sc, ENVY_MT_RBUFSZ);
+		sc->intrs[sc->nintr].opos = envy_mt_read_2(sc, ENVY_MT_PBUFSZ);
+		sc->intrs[sc->nintr].ctl = envy_mt_read_1(sc, ENVY_MT_CTL);
+		sc->intrs[sc->nintr].mask = envy_mt_read_1(sc, ENVY_MT_IMASK);
 		nanouptime(&sc->intrs[sc->nintr].ts);
 		sc->nintr++;
 	}
@@ -1903,11 +1939,11 @@ envy_intr(void *self)
 		if (sc->oactive)
 			sc->ointr(sc->oarg);
 		else {
-			ctl = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
+			ctl = envy_mt_read_1(sc, ENVY_MT_CTL);
 			if (ctl & ENVY_MT_CTL_PSTART) {
-				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				envy_mt_write_1(sc,
 				    ENVY_MT_INTR, ENVY_MT_INTR_PACK);
-				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				envy_mt_write_1(sc,
 				    ENVY_MT_CTL, ctl & ~ENVY_MT_CTL_PSTART);
 				st &= ~ENVY_MT_INTR_PACK;
 				sc->obusy = 0;
@@ -1923,11 +1959,11 @@ envy_intr(void *self)
 		if (sc->iactive)
 			sc->iintr(sc->iarg);
 		else {
-			ctl = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
+			ctl = envy_mt_read_1(sc, ENVY_MT_CTL);
 			if (ctl & ENVY_MT_CTL_RSTART(sc)) {
-				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				envy_mt_write_1(sc,
 				    ENVY_MT_INTR, ENVY_MT_INTR_RACK);
-				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				envy_mt_write_1(sc,
 				    ENVY_MT_CTL, ctl & ~ENVY_MT_CTL_RSTART(sc));
 				st &= ~ENVY_MT_INTR_RACK;
 				sc->ibusy = 0;
@@ -1940,10 +1976,10 @@ envy_intr(void *self)
 		}
 	}
 	if (sc->isht && (st & ENVY_MT_INTR_ERR)) {
-		err = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_ERR);
-		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_ERR, err);
+		err = envy_mt_read_1(sc, ENVY_MT_ERR);
+		envy_mt_write_1(sc, ENVY_MT_ERR, err);
 	}
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
+	envy_mt_write_1(sc, ENVY_MT_INTR, st);
 	return 1;
 }
 
@@ -1967,10 +2003,8 @@ envy_trigger_output(void *self, void *start, void *end, int blksz,
 	}
 #endif
 	s = splaudio();
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
-	    ENVY_MT_PBUFSZ, bufsz / 4 - 1);
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
-	    ENVY_MT_PBLKSZ(sc), blksz / 4 - 1);
+	envy_mt_write_2(sc, ENVY_MT_PBUFSZ, bufsz / 4 - 1);
+	envy_mt_write_2(sc, ENVY_MT_PBLKSZ(sc), blksz / 4 - 1);
 
 #ifdef ENVY_DEBUG
 	if (!sc->iactive) {
@@ -1984,10 +2018,10 @@ envy_trigger_output(void *self, void *start, void *end, int blksz,
 	sc->oactive = 1;
 	sc->obusy = 1;
 	st = ENVY_MT_INTR_PACK;
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
-	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
+	envy_mt_write_1(sc, ENVY_MT_INTR, st);
+	st = envy_mt_read_1(sc, ENVY_MT_CTL);
 	st |= ENVY_MT_CTL_PSTART;
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
+	envy_mt_write_1(sc, ENVY_MT_CTL, st);
 	splx(s);
 	return 0;
 }
@@ -2012,10 +2046,8 @@ envy_trigger_input(void *self, void *start, void *end, int blksz,
 	}
 #endif
 	s = splaudio();
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
-	    ENVY_MT_RBUFSZ, bufsz / 4 - 1);
-	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
-	    ENVY_MT_RBLKSZ, blksz / 4 - 1);
+	envy_mt_write_2(sc, ENVY_MT_RBUFSZ, bufsz / 4 - 1);
+	envy_mt_write_2(sc, ENVY_MT_RBLKSZ, blksz / 4 - 1);
 
 #ifdef ENVY_DEBUG
 	if (!sc->oactive) {
@@ -2029,10 +2061,10 @@ envy_trigger_input(void *self, void *start, void *end, int blksz,
 	sc->iactive = 1;
 	sc->ibusy = 1;
 	st = ENVY_MT_INTR_RACK;
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
-	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
+	envy_mt_write_1(sc, ENVY_MT_INTR, st);
+	st = envy_mt_read_1(sc, ENVY_MT_CTL);
 	st |= ENVY_MT_CTL_RSTART(sc);
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
+	envy_mt_write_1(sc, ENVY_MT_CTL, st);
 	splx(s);
 	return 0;
 }
