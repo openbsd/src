@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.8 2010/10/08 07:45:06 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.9 2010/10/08 10:13:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -59,7 +59,7 @@ enum actions {
 struct parse_result {
 	enum actions	 action;
 	struct imsgbuf	*ibuf;
-	char		*filename;
+	char		*path;
 	char 		*caname;
 	char		*pass;
 	char		*host;
@@ -80,12 +80,12 @@ int		 ca_export(struct ca *, char *, char *, char *);
 int		 ca_revoke(struct ca *, char *);
 int		 ca_delete(struct ca *);
 int		 ca_delkey(struct ca *, char *);
-int		 ca_install(struct ca *);
-int		 ca_cert_install(struct ca *, char *);
+int		 ca_install(struct ca *, char *);
+int		 ca_cert_install(struct ca *, char *, char *);
 int		 ca_show_certs(struct ca *, char *);
 int		 ca_key_create(struct ca *, char *);
 int		 ca_key_delete(struct ca *, char *);
-int		 ca_key_install(struct ca *, char *);
+int		 ca_key_install(struct ca *, char *, char *);
 int		 ca_key_import(struct ca *, char *, char *);
 
 #endif /* _IKECTL_PARSER_H */

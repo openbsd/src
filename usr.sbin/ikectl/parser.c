@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2010/10/08 07:45:06 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.9 2010/10/08 10:13:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -40,7 +40,7 @@ enum token_type {
 	NOTOKEN,
 	ENDTOKEN,
 	KEYWORD,
-	FILENAME,
+	PATH,
 	CANAME,
 	PEER,
 	ADDRESS,
@@ -77,6 +77,7 @@ static const struct token t_show[];
 static const struct token t_show_ca[];
 static const struct token t_show_ca_modifiers[];
 static const struct token t_show_ca_cert[];
+static const struct token t_opt_path[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"active",	ACTIVE,		NULL },
@@ -109,7 +110,7 @@ static const struct token t_reset[] = {
 };
 
 static const struct token t_load[] = {
-	{ FILENAME,	"",		NONE,		NULL },
+	{ PATH,		"",		NONE,		NULL },
 	{ ENDTOKEN, 	"",		NONE,		NULL }
 };
 
@@ -121,7 +122,7 @@ static const struct token t_ca[] = {
 static const struct token t_ca_modifiers[] = {
 	{ KEYWORD,	"create",	CA_CREATE,	t_ca_pass },
 	{ KEYWORD,	"delete",	CA_DELETE,	NULL },
-	{ KEYWORD,	"install",	CA_INSTALL,	NULL },
+	{ KEYWORD,	"install",	CA_INSTALL,	t_opt_path },
 	{ KEYWORD,	"certificate",	CA_CERTIFICATE,	t_ca_cert },
 	{ KEYWORD,	"key",		NONE,		t_ca_key },
 	{ KEYWORD,	"export",	CA_EXPORT,	t_ca_export },
@@ -156,6 +157,12 @@ static const struct token t_ca_ex_pass[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
+static const struct token t_opt_path[] = {
+	{ NOTOKEN,	"",		NONE,		NULL },
+	{ PATH,		"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
 static const struct token t_ca_cert[] = {
 	{ ADDRESS,	"",		NONE,		t_ca_cert_modifiers },
 	{ FQDN,		"",		NONE,		t_ca_cert_modifiers },
@@ -165,7 +172,7 @@ static const struct token t_ca_cert[] = {
 static const struct token t_ca_cert_modifiers[] = {
 	{ KEYWORD,	"create",	CA_CERT_CREATE,		t_ca_cert_extusage },
 	{ KEYWORD,	"delete",	CA_CERT_DELETE,		NULL },
-	{ KEYWORD,	"install",	CA_CERT_INSTALL,	NULL },
+	{ KEYWORD,	"install",	CA_CERT_INSTALL,	t_opt_path },
 	{ KEYWORD,	"export",	CA_CERT_EXPORT,		t_ca_export },
 	{ KEYWORD,	"revoke",	CA_CERT_REVOKE,		NULL },
 	{ ENDTOKEN,	"",		NONE,			NULL }
@@ -187,14 +194,14 @@ static const struct token t_ca_key[] = {
 static const struct token t_ca_key_modifiers[] = {
 	{ KEYWORD,	"create",	CA_KEY_CREATE,		NULL },
 	{ KEYWORD,	"delete",	CA_KEY_DELETE,		NULL },
-	{ KEYWORD,	"install",	CA_KEY_INSTALL,		NULL },
+	{ KEYWORD,	"install",	CA_KEY_INSTALL,		t_opt_path },
 	{ KEYWORD,	"import",	CA_KEY_IMPORT,		t_ca_key_path },
 	{ ENDTOKEN,	"",		NONE,			NULL }
 };
 
 static const struct token t_ca_key_path[] = {
-	{ FILENAME,	"",		NONE,		NULL },
-	{ ENDTOKEN, 	"",		NONE,		NULL }
+	{ PATH,		"",		NONE,		NULL },
+	{ PATH, 	"",		NONE,		NULL }
 };
 
 static const struct token t_show[] = {
@@ -297,9 +304,9 @@ match_token(char *word, const struct token table[])
 					res.action = t->value;
 			}
 			break;
-		case FILENAME:
+		case PATH:
 			if (!match && word != NULL && strlen(word) > 0) {
-				res.filename = strdup(word);
+				res.path = strdup(word);
 				match++;
 				t = &table[i];
 			}
@@ -369,8 +376,8 @@ show_valid_args(const struct token table[])
 		case KEYWORD:
 			fprintf(stderr, "  %s\n", table[i].keyword);
 			break;
-		case FILENAME:
-			fprintf(stderr, "  <filename>\n");
+		case PATH:
+			fprintf(stderr, "  <path>\n");
 			break;
 		case CANAME:
 			fprintf(stderr, "  <caname>\n");

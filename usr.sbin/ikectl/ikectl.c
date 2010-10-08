@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.9 2010/10/08 07:45:06 reyk Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.10 2010/10/08 10:13:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -94,7 +94,7 @@ ca_opt(struct parse_result *res)
 		ca_delete(ca);
 		break;
 	case CA_INSTALL:
-		ca_install(ca);
+		ca_install(ca, res->path);
 		break;
 	case CA_EXPORT:
 		ca_export(ca, NULL, res->peer, res->pass);
@@ -108,7 +108,7 @@ ca_opt(struct parse_result *res)
 		ca_delkey(ca, res->host);
 		break;
 	case CA_CERT_INSTALL:
-		ca_cert_install(ca, res->host);
+		ca_cert_install(ca, res->host, res->path);
 		break;
 	case CA_CERT_EXPORT:
 		ca_export(ca, res->host, res->peer, res->pass);
@@ -126,10 +126,10 @@ ca_opt(struct parse_result *res)
 		ca_key_delete(ca, res->host);
 		break;
 	case CA_KEY_INSTALL:
-		ca_key_install(ca, res->host);
+		ca_key_install(ca, res->host, res->path);
 		break;
 	case CA_KEY_IMPORT:
-		ca_key_import(ca, res->host, res->filename);
+		ca_key_import(ca, res->host, res->path);
 		break;
 	default:
 		break;
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 		break;
 	case LOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1,
-		    res->filename, strlen(res->filename));
+		    res->path, strlen(res->path));
 		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);

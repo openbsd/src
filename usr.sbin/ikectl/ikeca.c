@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.15 2010/10/08 07:45:06 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.16 2010/10/08 10:13:47 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -56,12 +56,24 @@ struct ca {
 	char		*caname;
 };
 
+struct {
+	char	*dir;
+	mode_t	 mode;
+} exdirs[] = {
+	{ "/ca",	0755 },
+	{ "/certs",	0755 },
+	{ "/crls",	0755 },
+	{ "/export",	0755 },
+	{ "/private",	0700 }
+};
+
 int		 ca_sign(struct ca *, char *, int, char *);
 int		 ca_request(struct ca *, char *);
 int		 ca_newpass(char *, char *);
 char *		 ca_readpass(char *, size_t *);
 int		 fcopy(char *, char *, mode_t);
 int		 rm_dir(char *);
+int		 ca_hier(char *);
 
 int
 ca_delete(struct ca *ca)
@@ -223,12 +235,13 @@ ca_certificate(struct ca *ca, char *keyname, int type, int action)
 }
 
 int
-ca_key_install(struct ca *ca, char *keyname)
+ca_key_install(struct ca *ca, char *keyname, char *dir)
 {
-	struct stat	st;
-	char		cmd[PATH_MAX * 2];
-	char		src[PATH_MAX];
-	char		dst[PATH_MAX];
+	struct stat	 st;
+	char		 cmd[PATH_MAX * 2];
+	char		 src[PATH_MAX];
+	char		 dst[PATH_MAX];
+	char		*p = NULL;
 
 	snprintf(src, sizeof(src), "%s/private/%s.key", ca->sslpath, keyname);
 	if (stat(src, &st) == -1) {
@@ -239,31 +252,46 @@ ca_key_install(struct ca *ca, char *keyname)
 		return (1);
 	}
 
-	snprintf(dst, sizeof(dst), "%s/private/local.key", KEYBASE);
+	if (dir == NULL)
+		p = dir = strdup(KEYBASE);
+
+	ca_hier(dir);
+
+	snprintf(dst, sizeof(dst), "%s/private/local.key", dir);
 	fcopy(src, dst, 0600);
 
 	snprintf(cmd, sizeof(cmd), "%s rsa -out %s/local.pub"
-	    " -in %s/private/local.key -pubout", PATH_OPENSSL, KEYBASE,
-	    KEYBASE);
+	    " -in %s/private/local.key -pubout", PATH_OPENSSL, dir, dir);
 	system(cmd);
 
+	free(p);
 
 	return (0);
 }
 
 int
-ca_cert_install(struct ca *ca, char *keyname)
+ca_cert_install(struct ca *ca, char *keyname, char *dir)
 {
-	char		src[PATH_MAX];
-	char		dst[PATH_MAX];
-	int		r;
+	char		 src[PATH_MAX];
+	char		 dst[PATH_MAX];
+	int		 r;
+	char		*p = NULL;
 
-	if ((r = ca_key_install(ca, keyname)) != 0)
+	if (dir == NULL)
+		p = dir = strdup(KEYBASE);
+
+	ca_hier(dir);
+
+	if ((r = ca_key_install(ca, keyname, dir)) != 0) {
+		free(dir);
 		return (r);
+	}
 
 	snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath, keyname);
-	snprintf(dst, sizeof(dst), "%s/certs/%s.crt", KEYBASE, keyname);
+	snprintf(dst, sizeof(dst), "%s/certs/%s.crt", dir, keyname);
 	fcopy(src, dst, 0644);
+
+	free(p);
 
 	return (0);
 }
@@ -336,11 +364,12 @@ ca_create(struct ca *ca)
 }
 
 int
-ca_install(struct ca *ca)
+ca_install(struct ca *ca, char *dir)
 {
-	struct stat	st;
-	char		src[PATH_MAX];
-	char		dst[PATH_MAX];
+	struct stat	 st;
+	char		 src[PATH_MAX];
+	char		 dst[PATH_MAX];
+	char		*p = NULL;
 	
 	snprintf(src, sizeof(src), "%s/ca.crt", ca->sslpath);
 	if (stat(src, &st) == -1) {
@@ -348,18 +377,25 @@ ca_install(struct ca *ca)
 		return (1);
 	}
 
-	snprintf(dst, sizeof(dst), "%s/ca/ca.crt", KEYBASE);
+	if (dir == NULL)
+		p = dir = strdup(KEYBASE);
+
+	ca_hier(dir);
+
+	snprintf(dst, sizeof(dst), "%s/ca/ca.crt", dir);
 	if (fcopy(src, dst, 0644) == 0)
 		printf("certificate for CA '%s' installed into %s\n",
 		    ca->caname, dst);
 
 	snprintf(src, sizeof(src), "%s/ca.crl", ca->sslpath);
 	if (stat(src, &st) == 0) {
-		snprintf(dst, sizeof(dst), "%s/crls/ca.crl", KEYBASE);
+		snprintf(dst, sizeof(dst), "%s/crls/ca.crl", dir);
 		if (fcopy(src, dst, 0644) == 0)
 			printf("CRL for CA '%s' installed to %s\n",
 			    ca->caname, dst);
 	}
+
+	free(p);
 
 	return (0);
 }
@@ -469,6 +505,25 @@ rm_dir(char *path)
 	return (0);
 }
 
+
+int
+ca_hier(char *path)
+{
+	struct stat	 st;
+	char		 dst[PATH_MAX];
+	u_int		 i;
+
+	for (i = 0; i < nitems(exdirs); i++) {
+		strlcpy(dst, path, sizeof(dst));
+		strlcat(dst, exdirs[i].dir, sizeof(dst));
+		if (stat(dst, &st) != 0 && errno == ENOENT &&
+		    mkdir(dst, exdirs[i].mode) != 0)
+			err(1, "failed to create dir %s", dst);
+	}
+
+	return (0);
+}
+
 int
 ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 {
@@ -485,17 +540,6 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 	char		 tpl[] = "/tmp/ikectl.XXXXXXXXXX";
 	u_int		 i;
 	int		 fd;
-
-	struct {
-		char	*dir;
-		mode_t	 mode;
-	} exdirs[] = {
-		{ "/ca",	0755 },
-		{ "/certs",	0755 },
-		{ "/crls",	0755 },
-		{ "/export",	0755 },
-		{ "/private",	0700 }
-	};
 
 	if (keyname != NULL) {
 		if (strlcpy(oname, keyname, sizeof(oname)) >= sizeof(oname))
