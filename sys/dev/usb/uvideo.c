@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.139 2010/09/29 09:33:26 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.140 2010/10/08 21:41:44 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1105,33 +1105,34 @@ usbd_status
 uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_frame_uncompressed_desc *d;
-	int fmtidx;
+	struct usb_video_frame_uncompressed_desc *fd = 
+	    (struct usb_video_frame_uncompressed_desc *)(uint8_t *)desc;
+	int fmtidx, frame_num;
 	uint32_t fbuf_size;
-	struct usb_video_frame_uncompressed_desc *fd;
 
-	d = (struct usb_video_frame_uncompressed_desc *)(uint8_t *)desc;
+	fmtidx = sc->sc_fmtgrp_idx;
 
-	if (d->bFrameIndex == UVIDEO_MAX_FRAME) {
+	frame_num = sc->sc_fmtgrp[fmtidx].frame_num + 1;
+	if (frame_num >= UVIDEO_MAX_FRAME) {
 		printf("%s: too many UNCOMPRESSED frame descriptors found!\n",
 		    DEVNAME(sc));
 		return (USBD_INVAL);
 	}
+	sc->sc_fmtgrp[fmtidx].frame_num = frame_num;
 
-	fmtidx = sc->sc_fmtgrp_idx;
-	sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex] =
-	    (struct usb_video_frame_mjpeg_desc *)d;
+	sc->sc_fmtgrp[fmtidx].frame[frame_num] =
+	    (struct usb_video_frame_mjpeg_desc *)fd;
 
-	if (sc->sc_fmtgrp[fmtidx].format_dfidx == d->bFrameIndex) {
+	if (sc->sc_fmtgrp[fmtidx].frame_cur == NULL ||
+	    sc->sc_fmtgrp[fmtidx].format_dfidx == frame_num) {
 		sc->sc_fmtgrp[fmtidx].frame_cur =
-		    sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex];
+		    sc->sc_fmtgrp[fmtidx].frame[frame_num];
 	}
 
-	sc->sc_fmtgrp[fmtidx].frame_num++;
-
 	if (sc->sc_fmtgrp[fmtidx].frame_num ==
-	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
+	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors) {
 		sc->sc_fmtgrp_idx++;
+	}
 
 	/*
 	 * On some broken device, dwMaxVideoFrameBufferSize is not correct.
@@ -1140,13 +1141,11 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 	if (sc->sc_quirk &&
 	    sc->sc_quirk->flags & UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE &&
 	    sc->sc_fmtgrp[fmtidx].pixelformat == V4L2_PIX_FMT_YUYV) {
-		fd = (struct usb_video_frame_uncompressed_desc *)
-		    sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex]; 
 		fbuf_size = UGETW(fd->wWidth) * UGETW(fd->wHeight) * 4;
 		DPRINTF(1, "wWidth = %d, wHeight = %d\n",
 			UGETW(fd->wWidth), UGETW(fd->wHeight));
 	} else
-		fbuf_size = UGETDW(d->dwMaxVideoFrameBufferSize);
+		fbuf_size = UGETDW(fd->dwMaxVideoFrameBufferSize);
 
 	/* store max value */
 	if (fbuf_size > sc->sc_max_fbuf_size)
