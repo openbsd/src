@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.48 2010/09/29 09:33:26 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.49 2010/10/09 08:41:28 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -500,6 +500,7 @@ struct uvideo_controls {
 	uint8_t         ctrl_bit;
 	uint16_t	ctrl_selector;
 	uint16_t	ctrl_len;
+	int		sig;
 } uvideo_ctrls[] = {
         /*
          * Processing Unit Controls
@@ -510,7 +511,8 @@ struct uvideo_controls {
 	    "Brightness",
 	    0,
 	    PU_BRIGHTNESS_CONTROL,
-	    2
+	    2,
+	    1
 	},
 	{
 	    V4L2_CID_CONTRAST,
@@ -518,7 +520,8 @@ struct uvideo_controls {
 	    "Contrast",
 	    1,
 	    PU_CONTRAST_CONTROL,
-	    2
+	    2,
+	    0
 	},
 	{
 	    V4L2_CID_HUE,
@@ -526,7 +529,8 @@ struct uvideo_controls {
 	    "Hue",
 	    2,
 	    PU_HUE_CONTROL,
-	    2
+	    2,
+	    1
 	},
 	{
 	    V4L2_CID_SATURATION,
@@ -534,7 +538,8 @@ struct uvideo_controls {
 	    "Saturation",
 	    3,
 	    PU_SATURATION_CONTROL,
-	    2
+	    2,
+	    0
 	},
 	{
 	    V4L2_CID_SHARPNESS,
@@ -542,7 +547,8 @@ struct uvideo_controls {
 	    "Sharpness",
 	    4,
 	    PU_SHARPNESS_CONTROL,
-	    2
+	    2,
+	    0
 	},
 	{
 	    V4L2_CID_GAMMA,
@@ -550,7 +556,8 @@ struct uvideo_controls {
 	    "Gamma",
 	    5,
 	    PU_GAMMA_CONTROL,
-	    2
+	    2,
+	    0
 	},
 	{
 	    V4L2_CID_WHITE_BALANCE_TEMPERATURE,
@@ -558,7 +565,8 @@ struct uvideo_controls {
 	    "White Balance Temperature",
 	    6,
 	    PU_WHITE_BALANCE_TEMPERATURE_CONTROL,
-	    2
+	    2,
+	    0
 	},
 #if 0
         /* XXX Two V4L2 ids mapping one UVC control */
@@ -568,7 +576,8 @@ struct uvideo_controls {
 	    "White Balance Red Component", /* Blue Component */
 	    7,
 	    PU_WHITE_BALANCE_COMPONENT_CONTROL,
-	    4
+	    4,
+	    0
 	},
 #endif
         {
@@ -578,6 +587,7 @@ struct uvideo_controls {
             8,
             PU_BACKLIGHT_COMPENSATION_CONTROL,
             2,
+	    0
         },
 	{
 	    V4L2_CID_GAIN,
@@ -586,6 +596,7 @@ struct uvideo_controls {
 	    9,
 	    PU_GAIN_CONTROL,
 	    2,
+	    0
 	},
         {
             V4L2_CID_POWER_LINE_FREQUENCY,
@@ -593,7 +604,8 @@ struct uvideo_controls {
             "Power Line Frequency",
             10,
             PU_POWER_LINE_FREQUENCY_CONTROL,
-            1,
+            2,
+	    0
         },
         {
             V4L2_CID_HUE_AUTO,
@@ -602,6 +614,7 @@ struct uvideo_controls {
             11,
             PU_HUE_AUTO_CONTROL,
             1,
+	    0
         },
         {
             V4L2_CID_AUTO_WHITE_BALANCE,
@@ -610,6 +623,7 @@ struct uvideo_controls {
             12,
             PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL,
             1,
+	    0
         },
         {
             V4L2_CID_AUTO_WHITE_BALANCE,
@@ -618,6 +632,7 @@ struct uvideo_controls {
             13,
             PU_WHITE_BALANCE_COMPONENT_AUTO_CONTROL,
             1,
+	    0
         },
 #if 0
         /* XXX No V4L2 CID for these controls? */
@@ -628,6 +643,7 @@ struct uvideo_controls {
             14,
             PU_DIGITAL_MULTIPLIER_CONTROL,
             2,
+	    0
         },
         {
             V4L2_CID_XXX,
@@ -636,6 +652,7 @@ struct uvideo_controls {
             15,
             PU_DIGITAL_MULTIPLIER_LIMIT_CONTROL,
             2,
+	    0
         },
         {
             V4L2_CID_XXX,
@@ -644,6 +661,7 @@ struct uvideo_controls {
             16,
             PU_ANALOG_VIDEO_STANDARD_CONTROL,
             1,
+	    0
         },
         {
             V4L2_CID_XXX,
@@ -652,9 +670,10 @@ struct uvideo_controls {
             17,
             PU_ANALOG_LOCK_STATUS_CONTROL,
             1,
+	    0
         },
 #endif
-	{ 0, 0, "", 0, 0, 0 }
+	{ 0, 0, "", 0, 0, 0, 0 }
 };
 
 struct uvideo_softc {
