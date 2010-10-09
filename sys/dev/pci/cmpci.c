@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.29 2010/10/08 14:01:07 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.30 2010/10/09 09:11:13 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -592,8 +592,8 @@ cmpci_intr(void *handle)
 				if (chan->swpos >= chan->nblocks)
 					chan->swpos = 0;
 				if (chan->swpos != hwpos) {
-					printf("%s: DMA0 hwpos=%d swpos=%d\n",
-					    __func__, hwpos, chan->swpos);
+					DPRINTF(("%s: DMA0 hwpos=%d swpos=%d\n",
+					    __func__, hwpos, chan->swpos));
 				}
 			}
 		}
@@ -611,8 +611,8 @@ cmpci_intr(void *handle)
 				if (chan->swpos >= chan->nblocks)
 					chan->swpos = 0;
 				if (chan->swpos != hwpos) {
-					printf("%s: DMA1 hwpos=%d swpos=%d\n",
-					    __func__, hwpos, chan->swpos);
+					DPRINTF(("%s: DMA1 hwpos=%d swpos=%d\n",
+					    __func__, hwpos, chan->swpos));
 				}
 			}
 		}
