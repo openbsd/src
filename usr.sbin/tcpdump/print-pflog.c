@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.22 2010/09/21 10:46:12 henning Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.23 2010/10/09 08:22:26 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -85,7 +85,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 		printf("[pflog: invalid header length!]");
 		goto out;
 	}
-	hdrlen = BPF_WORDALIGN(hdr->length);
+	hdrlen = (hdr->length + 3) & 0xfc;
 
 	if (caplen < hdrlen) {
 		printf("[|pflog]");
