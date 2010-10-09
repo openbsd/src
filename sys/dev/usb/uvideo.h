@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.49 2010/10/09 08:41:28 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.50 2010/10/09 09:48:04 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -217,10 +217,9 @@ struct usb_video_vc_processing_desc {
 	uByte	bSourceID;
 	uWord	wMaxMultiplier;
 	uByte	bControlSize;
-	uWord	bmControls;	/* XXX must be variable size of bControlSize */
-	uByte	iProcessing;
-	uByte	bmVideoStandards;
-
+	uByte	bmControls[255]; /* [bControlSize] */
+	/* uByte iProcessing; */
+	/* uByte bmVideoStandards; */
 } __packed;
 
 /* Table 3-9: VC Extension Unit Descriptor */

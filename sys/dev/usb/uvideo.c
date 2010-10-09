@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.141 2010/10/09 08:41:28 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.142 2010/10/09 09:48:03 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -674,17 +674,11 @@ uvideo_vc_parse_desc_pu(struct uvideo_softc *sc,
 {
 	struct usb_video_vc_processing_desc *d;
 
-	d = (struct usb_video_vc_processing_desc *)(uint8_t *)desc;
+	/* PU descriptor is variable sized */
+	d = (void *)desc;
 
 	if (sc->sc_desc_vc_pu_num == UVIDEO_MAX_PU) {
 		printf("%s: too many PU descriptors found!\n", DEVNAME(sc));
-		return (USBD_INVAL);
-	}
-
-	/* XXX support variable bmControls fields */
-	if (d->bControlSize != 2) {
-		printf("%s: video control not supported for this device.\n",
-		    DEVNAME(sc));
 		return (USBD_INVAL);
 	}
 
@@ -2573,7 +2567,8 @@ uvideo_dump_desc_processing(struct uvideo_softc *sc,
 {
 	struct usb_video_vc_processing_desc *d;
 
-	d = (struct usb_video_vc_processing_desc *)(uint8_t *)desc;
+	/* PU descriptor is variable sized */
+	d = (void *)desc;
 
 	printf("bLength=%d\n", d->bLength);
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
@@ -2584,8 +2579,8 @@ uvideo_dump_desc_processing(struct uvideo_softc *sc,
 	printf("bControlSize=%d\n", d->bControlSize);
 	printf("bmControls=0x");
 	uvideo_hexdump(d->bmControls, d->bControlSize, 1);
-	printf("iProcessing=0x%02x\n", d->iProcessing);
-	printf("bmVideoStandards=0x%02x\n", d->bmVideoStandards);
+	printf("iProcessing=0x%02x\n", d->bmControls[d->bControlSize]);
+	printf("bmVideoStandards=0x%02x\n", d->bmControls[d->bControlSize + 1]);
 }
 
 void
