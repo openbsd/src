@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2010/09/20 09:01:09 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.67 2010/10/09 22:05:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -117,7 +117,7 @@ typedef struct {
 
 %}
 
-%token	EXPIRE SIZE LISTEN ON ALL PORT
+%token	QUEUE INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
 %token	MAP TYPE HASH LIST SINGLE SSL SMTPS CERTIFICATE
 %token	DNS DB PLAIN EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
@@ -126,8 +126,9 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	decision port from auth ssl size
+%type	<v.number>	quantifier decision port from auth ssl size
 %type	<v.cond>	condition
+%type	<v.tv>		interval
 %type	<v.object>	mapref
 %type	<v.string>	certname user tag on alias
 
@@ -178,7 +179,23 @@ optnl		: '\n' optnl
 nl		: '\n' optnl
 		;
 
-size		: NUMBER			{
+quantifier      : /* empty */                   { $$ = 1; }  	 
+		| 'm'                           { $$ = 60; } 	 
+		| 'h'                           { $$ = 3600; } 	 
+		| 'd'                           { $$ = 86400; } 	 
+		;
+
+interval	: NUMBER quantifier		{
+			if ($1 < 0) {
+				yyerror("invalid interval: %lld", $1);
+				YYERROR;
+			}
+			$$.tv_usec = 0;
+			$$.tv_sec = $1 * $2;
+		}
+		;
+
+size		: NUMBER		{
 			if ($1 < 0) {
 				yyerror("invalid size: %lld", $1);
 				YYERROR;
@@ -251,14 +268,17 @@ tag		: TAG STRING			{
 		| /* empty */			{ $$ = NULL; }
 		;
 
-main		: EXPIRE STRING {
-      			conf->sc_qexpire = delaytonum($2);
-      			if (conf->sc_qexpire == -1) {
+main		: QUEUE INTERVAL interval	{
+			conf->sc_qintval = $3;
+		}
+		| EXPIRE STRING {
+			conf->sc_qexpire = delaytonum($2);
+			if (conf->sc_qexpire == -1) {
 				yyerror("invalid expire delay: %s", $2);
 				YYERROR;
 			}
-      		}
-		| SIZE size {
+		}
+	       	| SIZE size {
        			conf->sc_maxsize = $2;
 		}
 		| LISTEN ON STRING port ssl certname auth tag {
@@ -1053,6 +1073,7 @@ lookup(char *s)
 		{ "hash",		HASH },
 		{ "hostname",		HOSTNAME },
 		{ "include",		INCLUDE },
+		{ "interval",		INTERVAL },
 		{ "list",		LIST },
 		{ "listen",		LISTEN },
 		{ "local",		LOCAL },
@@ -1064,6 +1085,7 @@ lookup(char *s)
 		{ "on",			ON },
 		{ "plain",		PLAIN },
 		{ "port",		PORT },
+		{ "queue",		QUEUE },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
 		{ "single",		SINGLE },
@@ -1456,7 +1478,9 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	SPLAY_INIT(conf->sc_ssl);
 	SPLAY_INIT(&conf->sc_sessions);
 
-	conf->sc_qexpire = SMTPD_EXPIRE;
+	conf->sc_qexpire = SMTPD_QUEUE_EXPIRY;
+	conf->sc_qintval.tv_sec = SMTPD_QUEUE_INTERVAL;
+	conf->sc_qintval.tv_usec = 0;
 	conf->sc_opts = opts;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
@@ -1843,45 +1867,45 @@ set_localaddrs(void)
 int
 delaytonum(char *str)
 {
-	unsigned int	 factor;
-	size_t		 len;
-	const char	*errstr = NULL;
-	int		 delay;
-
+	unsigned int     factor;
+	size_t           len;
+	const char      *errstr = NULL;
+	int              delay;
+  	
 	/* we need at least 1 digit and 1 unit */
 	len = strlen(str);
 	if (len < 2)
 		goto bad;
-
+	
 	switch(str[len - 1]) {
-
+		
 	case 's':
 		factor = 1;
 		break;
-
+		
 	case 'm':
 		factor = 60;
 		break;
-
+		
 	case 'h':
 		factor = 60 * 60;
 		break;
-
+		
 	case 'd':
 		factor = 24 * 60 * 60;
 		break;
-
+		
 	default:
 		goto bad;
 	}
-	
+  	
 	str[len - 1] = '\0';
 	delay = strtonum(str, 1, INT_MAX / factor, &errstr);
 	if (errstr)
 		goto bad;
-
+	
 	return (delay * factor);
-
+  	
 bad:
 	return (-1);
 }

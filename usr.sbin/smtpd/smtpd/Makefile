@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.20 2010/06/01 23:06:25 jacekm Exp $
+#	$OpenBSD: Makefile,v 1.21 2010/10/09 22:05:36 gilles Exp $
 
 PROG=		smtpd
-SRCS=		aliases.c authenticate.c client.c		\
+SRCS=		aliases.c authenticate.c bounce.c client.c		\
 		config.c control.c dns.c expand.c forward.c		\
 		lka.c log.c map.c map_backend.c map_parser.c mda.c	\
-		mfa.c mta.c parse.y queue.c queue_backend.c ruleset.c	\
-		smtp.c smtp_session.c smtpd.c ssl.c ssl_privsep.c util.c
+		mfa.c mta.c parse.y queue.c queue_shared.c ruleset.c	\
+		runner.c smtp.c smtp_session.c smtpd.c ssl.c		\
+		ssl_privsep.c util.c
 
 MAN=		smtpd.8 smtpd.conf.5
 BINDIR=		/usr/sbin
