@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.72 2010/10/08 19:18:41 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.73 2010/10/09 10:03:44 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: October 8 2010 $
+.Dd $Mdocdate: October 9 2010 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -298,6 +298,8 @@ Superseded by
 .Cm genpkey
 and
 .Cm pkey .
+.It Cm genpkey
+Generation of private keys or parameters.
 .It Cm genrsa
 Generation of RSA private key.
 Superseded by
@@ -3409,6 +3411,178 @@ Multiple files can be specified separated by a
 .Sh GENDSA NOTES
 DSA key generation is little more than random number generation so it is
 much quicker than RSA key generation, for example.
+.\"
+.\" GENPKEY
+.\"
+.Sh GENPKEY
+.Nm openssl genpkey
+.Bk -words
+.Op Ar cipher
+.Op Fl genparam
+.Op Fl pass Ar arg
+.Op Fl text
+.Op Fl algorithm Ar alg
+.Op Fl engine Ar id
+.Op Fl out Ar filename
+.Op Fl outform Ar DER | PEM
+.Op Fl paramfile Ar file
+.Op Fl pkeyopt Ar opt : Ns Ar value
+.Ek
+.Pp
+The
+.Nm genpkey
+command generates private keys.
+The use of this
+program is encouraged over the algorithm specific utilities
+because additional algorithm options
+and engine-provided algorithms can be used.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl algorithm Ar alg
+The public key algorithm to use,
+such as RSA, DSA, or DH.
+If used this option must precede any
+.Fl pkeyopt
+options.
+The options
+.Fl paramfile
+and
+.Fl algorithm
+are mutually exclusive.
+.It Ar cipher
+Encrypt the private key with the supplied cipher.
+Any algorithm name accepted by
+.Fn EVP_get_cipherbyname
+is acceptable, such as
+.Cm des3 .
+.It Fl engine Ar id
+Specifying an engine (by its unique
+.Ar id
+string) will cause
+.Nm genpkey
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default
+for all available algorithms.
+.It Fl genparam
+Generate a set of parameters instead of a private key.
+If used this option must precede any
+.Fl algorithm ,
+.Fl paramfile ,
+or
+.Fl pkeyopt
+options.
+.It Fl out Ar filename
+The output filename.
+If this argument is not specified then standard output is used.
+.It Fl outform Ar DER | PEM
+This specifies the output format, DER or PEM.
+.It Fl paramfile Ar file
+Some public key algorithms generate a private key based on a set of parameters.
+They can be supplied using this option.
+If this option is used the public key
+algorithm used is determined by the parameters.
+If used this option must precede any
+.Fl pkeyopt
+options.
+The options
+.Fl paramfile
+and
+.Fl algorithm
+are mutually exclusive.
+.It Fl pass Ar arg
+The output file password source.
+For more information about the format of
+.Ar arg
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl pkeyopt Ar opt : Ns Ar value
+Set the public key algorithm option
+.Ar opt
+to
+.Ar value .
+The precise set of options supported
+depends on the public key algorithm used and its implementation.
+See
+.Sx GENPKEY KEY GENERATION OPTIONS
+below for more details.
+.It Fl text
+Print an (unencrypted) text representation of private and public keys and
+parameters along with the DER or PEM structure.
+.El
+.Sh GENPKEY KEY GENERATION OPTIONS
+The options supported by each algorithm
+and indeed each implementation of an algorithm can vary.
+The options for the
+.Nm OpenSSL
+implementations are detailed below.
+.Bl -tag -width Ds -offset indent
+.It rsa_keygen_bits : Ns Ar numbits
+(RSA)
+The number of bits in the generated key.
+If not specified 1024 is used.
+.It rsa_keygen_pubexp : Ns Ar value
+(RSA)
+The RSA public exponent value.
+This can be a large decimal or hexadecimal value if preceded by 0x.
+The default value is 65537.
+.It dsa_paramgen_bits : Ns Ar numbits
+(DSA)
+The number of bits in the generated parameters.
+If not specified 1024 is used.
+.It dh_paramgen_prime_len : Ns Ar numbits
+(DH)
+The number of bits in the prime parameter
+.Ar p .
+.It dh_paramgen_generator : Ns Ar value
+(DH)
+The value to use for the generator
+.Ar g .
+.It ec_paramgen_curve : Ns Ar curve
+(EC)
+The EC curve to use.
+.El
+.Sh GENPKEY EXAMPLES
+Generate an RSA private key using default parameters:
+.Bd -literal -offset indent
+$ openssl genpkey -algorithm RSA -out key.pem
+.Ed
+.Pp
+Encrypt and output a private key using 128-bit AES and the passphrase "hello":
+.Bd -literal -offset indent
+$ openssl genpkey -algorithm RSA -out key.pem \e
+	-aes-128-cbc -pass pass:hello
+.Ed
+.Pp
+Generate a 2048-bit RSA key using 3 as the public exponent:
+.Bd -literal -offset indent
+$ openssl genpkey -algorithm RSA -out key.pem \e
+	-pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3
+.Ed
+.Pp
+Generate 1024-bit DSA parameters:
+.Bd -literal -offset indent
+$ openssl genpkey -genparam -algorithm DSA \e
+	-out dsap.pem -pkeyopt dsa_paramgen_bits:1024
+.Ed
+.Pp
+Generate a DSA key from parameters:
+.Bd -literal -offset indent
+$ openssl genpkey -paramfile dsap.pem -out dsakey.pem
+.Ed
+.Pp
+Generate 1024-bit DH parameters:
+.Bd -literal -offset indent
+$ openssl genpkey -genparam -algorithm DH \e
+	-out dhp.pem -pkeyopt dh_paramgen_prime_len:1024
+.Ed
+.Pp
+Generate a DH key from parameters:
+.Bd -literal -offset indent
+$ openssl genpkey -paramfile dhp.pem -out dhkey.pem
+.Ed
 .\"
 .\" GENRSA
 .\"
