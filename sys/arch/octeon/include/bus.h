@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 2010/09/20 06:32:30 syuu Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2010/10/10 16:38:55 syuu Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -115,8 +115,7 @@ struct mips_bus_space {
     (*(t)->_space_subregion)((t), (h), (o), (s), (p))
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
-#define	BUS_SPACE_MAP_LINEAR		0x02
-#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
+#define BUS_SPACE_MAP_KSEG0		0x02
 
 #define	bus_space_vaddr(t, h)	(*(t)->_space_vaddr)((t), (h))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.2 2010/10/01 16:13:59 syuu Exp $ */
+/*	$OpenBSD: obio.c,v 1.3 2010/10/10 16:38:55 syuu Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -165,7 +165,7 @@ uint64_t obio_imask[MAXCPUS][NIPLS];
 #define	OBIODEV(name, addr, i) \
 	{ name, &obio_tag, &obio_tag, &obio_bus_dma_tag, addr, i }
 struct obio_attach_args obio_children[] = {
-	OBIODEV("dummy", 0x0, 0x0)
+	OBIODEV("wdc", OCTEON_CF_BASE, 0x0),
 };
 #undef	OBIODEV
 
@@ -261,19 +261,19 @@ obioattach(struct device *parent, struct device *self, void *aux)
 u_int8_t
 obio_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	return (u_int8_t)(volatile uint64_t)*(volatile uint64_t *)(h + o);
+	return (u_int8_t)*(volatile uint8_t *)(h + o);
 }
 
 u_int16_t
 obio_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	return (u_int16_t)(volatile uint64_t)*(volatile uint64_t *)(h + o);
+	return (u_int16_t)*(volatile uint16_t *)(h + o);
 }
 
 u_int32_t
 obio_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	return (u_int32_t)(volatile uint64_t)*(volatile u_int64_t *)(h + o);
+	return (u_int32_t)*(volatile u_int32_t *)(h + o);
 }
 
 u_int64_t
@@ -285,19 +285,19 @@ obio_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 void
 obio_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v)
 {
-	*(volatile uint64_t *)(h + o) = (volatile uint64_t)v;
+	*(volatile uint8_t *)(h + o) = (volatile uint8_t)v;
 }
 
 void
 obio_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v)
 {
-	*(volatile uint64_t *)(h + o) = (volatile uint64_t)v;
+	*(volatile uint16_t *)(h + o) = (volatile uint16_t)v;
 }
 
 void
 obio_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v)
 {
-	*(volatile u_int64_t *)(h + o) = (volatile uint64_t)v;
+	*(volatile u_int32_t *)(h + o) = (volatile uint32_t)v;
 }
 
 void
@@ -310,48 +310,82 @@ void
 obio_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     u_int8_t *buf, bus_size_t len)
 {
-	panic(__func__);
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
+	len >>= 1;
+	while (len-- != 0) {
+		*(uint16_t *)buf = *addr;
+		buf += 2;
+	}
 }
 
 void
 obio_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     const u_int8_t *buf, bus_size_t len)
 {
-	panic(__func__);
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
+	len >>= 1;
+	while (len-- != 0) {
+		*addr = *(uint16_t *)buf;
+		buf += 2;
+	}
 }
 
 void
 obio_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     u_int8_t *buf, bus_size_t len)
 {
-	panic(__func__);
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*(uint32_t *)buf = *addr;
+		buf += 4;
+	}
 }
 
 void
 obio_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     const u_int8_t *buf, bus_size_t len)
 {
-	panic(__func__);
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*addr = *(uint32_t *)buf;
+		buf += 4;
+	}
 }
 
 void
 obio_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     u_int8_t *buf, bus_size_t len)
 {
-	panic(__func__);
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*(uint64_t *)buf = *addr;
+		buf += 8;
+	}
 }
 
 void
 obio_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     const u_int8_t *buf, bus_size_t len)
 {
-	panic(__func__);
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*addr = *(uint64_t *)buf;
+		buf += 8;
+	}
 }
 
 int
 obio_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
+	if (ISSET(flags, BUS_SPACE_MAP_KSEG0)) {
+		*bshp = PHYS_TO_CKSEG0(t->bus_base + offs);
+		return 0;
+	}
 	if (ISSET(flags, BUS_SPACE_MAP_CACHEABLE))
 		offs +=
 		    PHYS_TO_XKPHYS(0, CCA_CACHED) - PHYS_TO_XKPHYS(0, CCA_NC);

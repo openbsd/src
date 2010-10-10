@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.2 2010/10/01 16:13:59 syuu Exp $
+#	$OpenBSD: RAMDISK,v 1.3 2010/10/10 16:38:55 syuu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -44,6 +44,9 @@ clock0		at mainbus0
 obio0		at mainbus0
 combus0		at mainbus0
 
+wdc0		at obio0
+wd*		at wdc? flags 0x0000
+
 com0		at combus0
 com1		at combus0
 
@@ -53,4 +56,3 @@ pseudo-device	rd		1	# ram disk
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 option		BOOT_CONFIG	# boot-time kernel config
-option		COM_OCTEON

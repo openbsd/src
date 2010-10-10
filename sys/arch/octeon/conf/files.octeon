@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.3 2010/10/01 16:13:59 syuu Exp $
+#	$OpenBSD: files.octeon,v 1.4 2010/10/10 16:38:55 syuu Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -52,6 +52,10 @@ define	obio {[base = -1]}
 device	obio
 attach	obio at mainbus
 file	arch/octeon/dev/obio.c				mainbus
+
+# On-board CF
+attach	wdc at obio with wdc_obio
+file	arch/octeon/dev/wdc_obio.c
 
 define	combus {[base = -1]}
 device	combus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.1 2010/09/20 06:32:30 syuu Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.2 2010/10/10 16:38:55 syuu Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -30,6 +30,7 @@
 #define OCTEON_UART1_BASE	0x1180000000C00ULL
 #define OCTEON_CIU_BASE		0x1070000000000ULL
 #define OCTEON_CIU_SIZE		0xC10
+#define OCTEON_CF_BASE		0x1D000800ULL
 
 #define CIU_INT_WORKQ0		0
 #define CIU_INT_WORKQ1		1
