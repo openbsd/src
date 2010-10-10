@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.104 2010/09/29 06:32:47 claudio Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.105 2010/10/10 22:02:50 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -973,7 +973,7 @@ void
 tcp_update_sndspace(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
-	int nmax;
+	u_long nmax;
 
 	if (sbchecklowmem())
 		/* low on memory try to get rid of some */
@@ -1003,7 +1003,7 @@ void
 tcp_update_rcvspace(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
-	int nmax = so->so_rcv.sb_hiwat;
+	u_long nmax = so->so_rcv.sb_hiwat;
 
 	if (sbchecklowmem())
 		/* low on memory try to get rid of some */
