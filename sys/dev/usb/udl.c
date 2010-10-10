@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.62 2010/09/27 19:49:43 thib Exp $ */
+/*	$OpenBSD: udl.c,v 1.63 2010/10/10 11:11:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1396,7 +1396,7 @@ udl_fbmem_alloc(struct udl_softc *sc)
 	size = round_page(size);
 
 	if (sc->sc_fbmem == NULL) {
-		sc->sc_fbmem = malloc(size, M_DEVBUF, M_ZERO);
+		sc->sc_fbmem = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (sc->sc_fbmem == NULL)
 			return (-1);
 	}
@@ -1461,7 +1461,7 @@ udl_cmd_alloc_buf(struct udl_softc *sc)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	cb->buf = malloc(UDL_CMD_MAX_XFER_SIZE, M_DEVBUF, 0);
+	cb->buf = malloc(UDL_CMD_MAX_XFER_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cb->buf == NULL) {
 		printf("%s: %s: can't allocate buffer!\n",
 		    DN(sc), FUNC);
