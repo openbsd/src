@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.185 2010/09/30 08:57:37 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.186 2010/10/11 11:45:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -193,6 +193,7 @@ int
 kr_init(void)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
+	unsigned int	tid = RTABLE_ANY;
 	socklen_t	optlen;
 
 	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
@@ -217,6 +218,12 @@ kr_init(void)
 		    &rcvbuf, sizeof(rcvbuf)) == -1 && errno == ENOBUFS;
 		    rcvbuf /= 2)
 			;	/* nothing */
+
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_TABLEFILTER, &tid,
+	    sizeof(tid)) == -1) {
+		log_warn("kr_init: setsockopt AF_ROUTE ROUTE_TABLEFILTER");
+		return (-1);
+	}
 
 	kr_state.pid = getpid();
 	kr_state.rtseq = 1;
