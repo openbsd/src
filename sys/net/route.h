@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.73 2010/08/25 14:07:24 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.74 2010/10/11 11:41:08 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -277,8 +277,11 @@ struct rt_msghdr {
  */
 #define ROUTE_MSGFILTER	1	/* bitmask to specifiy which types should be
 				   sent to the client. */
+#define ROUTE_TABLEFILTER 2	/* change routing table the socket is listening
+				   on, RTABLE_ANY listens on all tables. */
 
 #define ROUTE_FILTER(m)	(1 << (m))
+#define RTABLE_ANY	0xffffffff
 
 struct rt_addrinfo {
 	int	rti_addrs;

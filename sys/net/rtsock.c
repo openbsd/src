@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.109 2010/09/08 08:20:45 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.110 2010/10/11 11:41:08 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -113,9 +113,10 @@ void		 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 
 struct routecb {
 	struct rawcb	rcb;
+	struct timeout	timeout;
 	unsigned int	msgfilter;
 	unsigned int	flags;
-	struct timeout	timeout;
+	u_int		rtableid;
 };
 #define	sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
 
@@ -151,7 +152,8 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * code does not care about the additional fields
 		 * and works directly on the raw socket.
 		 */
-		rp = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
+		rop = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
+		rp = &rop->rcb;
 		so->so_pcb = rp;
 		/* Init the timeout structure */
 		timeout_set(&((struct routecb *)rp)->timeout, rt_senddesync, rp);
@@ -169,6 +171,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			splx(s);
 			return (error);
 		}
+		rop->rtableid = curproc->p_p->ps_rtableid;
 		af = rp->rcb_proto.sp_protocol;
 		if (af == AF_INET)
 			route_cb.ip_count++;
@@ -227,6 +230,7 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 	struct routecb *rop = sotoroutecb(so);
 	struct mbuf *m = *mp;
 	int error = 0;
+	unsigned int tid;
 
 	if (level != AF_ROUTE) {
 		error = EINVAL;
@@ -244,6 +248,17 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 			else
 				rop->msgfilter = *mtod(m, unsigned int *);
 			break;
+		case ROUTE_TABLEFILTER:
+			if (m == NULL || m->m_len != sizeof(unsigned int)) {
+				error = EINVAL;
+				break;
+			}
+			tid = *mtod(m, unsigned int *);
+			if (tid != RTABLE_ANY && !rtable_exists(tid))
+				error = ENOENT;
+			else
+				rop->rtableid = tid;
+			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -255,8 +270,13 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 		switch (optname) {
 		case ROUTE_MSGFILTER:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);   
-			m->m_len = sizeof(int);
+			m->m_len = sizeof(unsigned int);
 			*mtod(m, unsigned int *) = rop->msgfilter;
+			break;
+		case ROUTE_TABLEFILTER:
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);   
+			m->m_len = sizeof(unsigned int);
+			*mtod(m, unsigned int *) = rop->rtableid;
 			break;
 		default:
 			error = ENOPROTOOPT;
@@ -300,6 +320,7 @@ route_input(struct mbuf *m0, ...)
 {
 	struct rawcb *rp;
 	struct routecb *rop;
+	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
 	int sockets = 0;
 	struct socket *last = NULL;
@@ -345,9 +366,31 @@ route_input(struct mbuf *m0, ...)
 
 		/* filter messages that the process does not want */
 		rop = (struct routecb *)rp;
+		rtm = mtod(m, struct rt_msghdr *);
 		if (rop->msgfilter != 0 && !(rop->msgfilter & (1 <<
-		    mtod(m, struct rt_msghdr *)->rtm_type)))
+		    rtm->rtm_type)))
 			continue;
+		switch (rtm->rtm_type) {
+		case RTM_IFANNOUNCE:
+		case RTM_DESYNC:
+			/* no tableid */
+			break;
+		case RTM_RESOLVE:
+		case RTM_NEWADDR:
+		case RTM_DELADDR:
+		case RTM_IFINFO:
+			/* check against rdomain id */
+			if (rop->rtableid != RTABLE_ANY &&
+			    rtable_l2(rop->rtableid) != rtm->rtm_tableid)
+				continue;
+			break;
+		default:
+			/* check against rtable id */
+			if (rop->rtableid != RTABLE_ANY &&
+			    rop->rtableid != rtm->rtm_tableid)
+				continue;
+			break;
+		}
 
 		/*
 		 * Check to see if the flush flag is set. If so, don't queue 
@@ -1078,6 +1121,7 @@ rt_ifmsg(struct ifnet *ifp)
 		return;
 	ifm = mtod(m, struct if_msghdr *);
 	ifm->ifm_index = ifp->if_index;
+	ifm->ifm_tableid = ifp->if_rdomain;
 	ifm->ifm_flags = ifp->if_flags;
 	ifm->ifm_xflags = ifp->if_xflags;
 	ifm->ifm_data = ifp->if_data;
@@ -1277,6 +1321,7 @@ sysctl_iflist(int af, struct walkarg *w)
 
 			ifm = (struct if_msghdr *)w->w_tmem;
 			ifm->ifm_index = ifp->if_index;
+			ifm->ifm_tableid = ifp->if_rdomain;
 			ifm->ifm_flags = ifp->if_flags;
 			ifm->ifm_data = ifp->if_data;
 			ifm->ifm_addrs = info.rti_addrs;
@@ -1340,7 +1385,8 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		tableid = name[3];
 		if (!rtable_exists(tableid))
 			return (ENOENT);
-	}
+	} else
+		tableid = curproc->p_p->ps_rtableid;
 
 	s = splsoftnet();
 	switch (w.w_op) {
