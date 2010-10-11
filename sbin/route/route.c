@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.150 2010/09/21 10:58:23 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.151 2010/10/11 11:45:00 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ union sockunion so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label, 
 typedef union sockunion *sup;
 pid_t	pid;
 int	rtm_addrs, s;
-int	forcehost, forcenet, Fflag, nflag, af, qflag, tflag;
+int	forcehost, forcenet, Fflag, nflag, af, qflag, tflag, Tflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly;
 u_long	mpls_flags = MPLS_OP_LOCAL;
@@ -134,6 +134,7 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage(NULL);
 
+	tableid = getrtable();
 	while ((ch = getopt(argc, argv, "dnqtT:v")) != -1)
 		switch (ch) {
 		case 'n':
@@ -150,6 +151,7 @@ main(int argc, char **argv)
 			break;
 		case 'T':
 			gettable(optarg);
+			Tflag = 1;
 			break;
 		case 'd':
 			debugonly = 1;
@@ -180,6 +182,10 @@ main(int argc, char **argv)
 			s = socket(PF_ROUTE, SOCK_RAW, 0);
 		if (s == -1)
 			err(1, "socket");
+		/* force socket onto table user requested */
+		if (Tflag && setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
+		    &tableid, sizeof(tableid)) == -1)
+			err(1, "setsockopt(ROUTE_TABLEFILTER)");
 		break;
 	}
 	switch (kw) {
@@ -688,7 +694,7 @@ show(int argc, char *argv[])
 			usage(*argv);
 	}
 
-	p_rttables(af, tableid);
+	p_rttables(af, tableid, Tflag);
 }
 
 void
@@ -1046,7 +1052,10 @@ monitor(int argc, char *argv[])
 
 	if (setsockopt(s, AF_ROUTE, ROUTE_MSGFILTER, &filter,
 	    sizeof(filter)) == -1)
-		err(1, "setsockopt");
+		err(1, "setsockopt(ROUTE_MSGFILTER)");
+	if (Tflag && setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER, &tableid,
+	    sizeof(tableid)) == -1)
+		err(1, "setsockopt(ROUTE_TABLEFILTER)");
 
 	verbose = 1;
 	if (debugonly) {
@@ -1617,11 +1626,25 @@ getlabel(char *name)
 void
 gettable(const char *s)
 {
-	const char	*errstr;
+	const char		*errstr;
+	struct rt_tableinfo      info;
+	int			 mib[6];
+	size_t			 len;
 
 	tableid = strtonum(s, 0, RT_TABLEID_MAX, &errstr);
 	if (errstr)
 		errx(1, "invalid table id: %s", errstr);
+
+	mib[0] = CTL_NET;
+	mib[1] = AF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_TABLE;
+	mib[5] = tableid;
+
+	len = sizeof(info);
+	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1)
+		err(1, "routing table %i", tableid);
 }
 
 int
