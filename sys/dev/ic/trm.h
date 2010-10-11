@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.h,v 1.1 2002/02/18 01:55:30 krw Exp $
+/*	$OpenBSD: trm.h,v 1.2 2010/10/11 14:56:44 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.h
@@ -105,7 +105,7 @@ struct trm_scsi_req_q
 #define TRM_BAD_CCB_OR_SG           0x1A
 #define TRM_ABORT                   0xFF
 
-	u_int8_t	CmdBlock[12];
+	u_int8_t	CmdBlock[16];
 
 	u_int8_t	ScsiCmdLen;
 	u_int8_t	ScsiPhase;
