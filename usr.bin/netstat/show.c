@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.33 2010/07/30 12:55:12 bluhm Exp $	*/
+/*	$OpenBSD: show.c,v 1.34 2010/10/11 12:33:36 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -116,13 +116,13 @@ void	 index_pfk(struct sadb_msg *, void **);
  * Print routing tables.
  */
 void
-p_rttables(int af, u_int tableid)
+p_rttables(int af, u_int tableid, int hastable)
 {
 	struct rt_msghdr *rtm;
 	struct sadb_msg *msg;
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
-	int mib[7];
+	int mib[7], mcnt;
 	struct sockaddr *sa;
 
 	mib[0] = CTL_NET;
@@ -131,14 +131,18 @@ p_rttables(int af, u_int tableid)
 	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	mib[6] = tableid;
+	if (hastable) {
+		mib[6] = tableid;
+		mcnt = 7;
+	} else
+		mcnt = 6;
 
-	if (sysctl(mib, 7, NULL, &needed, NULL, 0) < 0)
+	if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == 0)
 			err(1, NULL);
-		if (sysctl(mib, 7, buf, &needed, NULL, 0) < 0)
+		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) < 0)
 			err(1, "sysctl of routing table");
 		lim = buf + needed;
 	}
@@ -835,7 +839,6 @@ char *
 netname(struct sockaddr *sa, struct sockaddr *mask)
 {
 	switch (sa->sa_family) {
-
 	case AF_INET:
 		return netname4(((struct sockaddr_in *)sa)->sin_addr.s_addr,
 		    mask->sa_len == 0 ? 0 :

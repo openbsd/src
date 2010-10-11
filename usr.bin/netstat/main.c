@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.85 2010/07/14 23:44:41 dhill Exp $	*/
+/*	$OpenBSD: main.c,v 1.86 2010/10/11 12:33:36 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/file.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 
 #include <net/route.h>
 #include <netinet/in.h>
@@ -144,6 +145,8 @@ static void printproto(struct protox *, char *, int);
 static void usage(void);
 static struct protox *name2protox(char *);
 static struct protox *knownname(char *);
+u_int gettable(const char *);
+
 
 kvm_t *kvmd;
 
@@ -161,6 +164,7 @@ main(int argc, char *argv[])
 	gid_t gid;
 	u_long pcbaddr = 0;
 	u_int tableid = 0;
+	int Tflag = 0;
 	int repeatcount = 0;
 
 	af = AF_UNSPEC;
@@ -267,9 +271,8 @@ main(int argc, char *argv[])
 			++sflag;
 			break;
 		case 'T':
-			tableid = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
-			if (errstr)
-				errx(1, "invalid table id: %s", errstr);
+			Tflag = 1;
+			tableid = gettable(optarg);
 			break;
 		case 't':
 			tflag = 1;
@@ -390,7 +393,7 @@ main(int argc, char *argv[])
 			    nl[N_AF2RTAFIDX].n_value, nl[N_RTBLIDMAX].n_value,
 			    tableid);
 		else
-			p_rttables(af, tableid);
+			p_rttables(af, tableid, Tflag);
 		exit(0);
 	}
 	if (gflag) {
@@ -547,3 +550,31 @@ usage(void)
 	    __progname, __progname, __progname);
 	exit(1);
 }
+
+u_int
+gettable(const char *s)
+{
+	const char *errstr;
+	struct rt_tableinfo info;
+	int mib[6];
+	size_t len;
+	u_int tableid;
+
+	tableid = strtonum(s, 0, RT_TABLEID_MAX, &errstr);
+	if (errstr)
+		errx(1, "invalid table id: %s", errstr);
+
+	mib[0] = CTL_NET;
+	mib[1] = AF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_TABLE;
+	mib[5] = tableid;
+
+	len = sizeof(info);
+	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1)
+		err(1, "routing table %i", tableid);
+
+	return (tableid);
+}
+
