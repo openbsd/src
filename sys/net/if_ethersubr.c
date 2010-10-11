@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.146 2010/08/24 14:43:56 blambert Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.147 2010/10/11 11:31:14 claudio Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -737,13 +737,6 @@ decapsulate:
 #if NPPPOE > 0 || defined(PIPEX)
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
-		/* XXX we dont have this flag */
-		/*
-		if (m->m_flags & M_PROMISC) {
-			m_freem(m);
-			goto done;
-		}
-		*/
 #ifndef PPPOE_SERVER
 		if (m->m_flags & (M_MCAST | M_BCAST)) {
 			m_freem(m);
@@ -773,7 +766,7 @@ decapsulate:
 
 		schednetisr(NETISR_PPPOE);
 		break;
-#endif /* NPPPOE > 0 || defined(PIPEX) */
+#endif
 #ifdef AOE
 	case ETHERTYPE_AOE:
 		aoe_input(ifp, m);
