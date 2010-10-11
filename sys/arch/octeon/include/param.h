@@ -1,13 +1,13 @@
-/* $OpenBSD: param.h,v 1.1 2010/09/20 06:32:30 syuu Exp $ */
+/* $OpenBSD: param.h,v 1.2 2010/10/11 15:51:06 syuu Exp $ */
 /* public domain */
 
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
 
-#define	MACHINE		"loongson"
-#define	_MACHINE	loongson
-#define MACHINE_ARCH	"mips64el"
-#define _MACHINE_ARCH	mips64el
+#define	MACHINE		"octeon"
+#define	_MACHINE	octeon
+#define MACHINE_ARCH	"mips64"
+#define _MACHINE_ARCH	mips64
 /* not the canonical endianness */
 #define	MACHINE_CPU	"mips64"
 #define	_MACHINE_CPU	mips64
