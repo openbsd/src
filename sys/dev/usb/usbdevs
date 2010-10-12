@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.517 2010/10/03 17:18:29 armani Exp $
+$OpenBSD: usbdevs,v 1.518 2010/10/12 21:05:44 mpf Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3282,6 +3282,7 @@ product SIERRA MC8775_2		0x6815	MC8775
 product SIERRA AIRCARD_875	0x6820	875
 product SIERRA MC8780		0x6832	MC8780
 product SIERRA MC8781		0x6833	MC8781
+product SIERRA MC8790		0x683c	MC8790
 product SIERRA AC880		0x6850	880
 product SIERRA AC881		0x6851	881
 product SIERRA AC880E		0x6852	880E
