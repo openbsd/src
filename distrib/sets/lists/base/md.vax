@@ -67,7 +67,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/sha1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/sha2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/sk.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/crypto/skipjack.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/spr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/xform.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ctype.ph
@@ -1339,6 +1338,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/dtls1.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/openssl/e_os.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ec.ph

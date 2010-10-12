@@ -819,7 +819,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/sha1.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/sha2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/sk.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/skipjack.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/spr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/xform.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ctype.ph
@@ -2107,6 +2106,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/dtls1.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/e_os.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/ec.ph
