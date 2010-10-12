@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.h,v 1.8 2007/01/28 16:37:09 miod Exp $	*/
+/*	$OpenBSD: hexdump.h,v 1.9 2010/10/12 17:23:21 millert Exp $	*/
 /*	$NetBSD: hexdump.h,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -78,6 +78,8 @@ extern int exitval;			/* final exit value */
 extern FS *fshead;			/* head of format strings list */
 extern long length;			/* max bytes to read */
 extern off_t skip;			/* bytes to skip */
+extern char *iobuf;                            /* stdio I/O buffer */
+extern size_t iobufsiz;                        /* size of stdio I/O buffer */
 extern enum _vflag vflag;
 
 void	 add(const char *);

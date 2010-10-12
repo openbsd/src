@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.c,v 1.13 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.14 2010/10/12 17:23:21 millert Exp $	*/
 /*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
@@ -30,7 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +41,8 @@ FS *fshead;				/* head of format strings */
 int blocksize;				/* data block size */
 int exitval;				/* final exit value */
 long length = -1;			/* max bytes to read */
+char *iobuf;				/* stdio I/O buffer */
+size_t iobufsiz;			/* size of stdio I/O buffer */
 
 int	main(int, char **);
 
@@ -59,6 +62,11 @@ main(int argc, char *argv[])
 		tfs->bcnt = size(tfs);
 		if (blocksize < tfs->bcnt)
 			blocksize = tfs->bcnt;
+	}
+	if (length != -1) {
+		iobufsiz = MIN(length, blocksize);
+		if ((iobuf = malloc(iobufsiz)) == NULL)
+			err(1, NULL);
 	}
 	/* rewrite the rules, do syntax checking */
 	for (tfs = fshead; tfs; tfs = tfs->nextfs)
