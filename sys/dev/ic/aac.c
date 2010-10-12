@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.50 2010/09/21 05:28:58 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.51 2010/10/12 00:53:32 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2448,6 +2448,7 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
+		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "Adaptec", sizeof inq.vendor);
 		snprintf(inq.product, sizeof inq.product, "Container #%02d",
 		    target);

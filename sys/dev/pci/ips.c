@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.103 2010/09/20 06:17:49 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.104 2010/10/12 00:53:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -934,6 +934,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
+		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "IBM", sizeof(inq.vendor));
 		snprintf(inq.product, sizeof(inq.product),
 		    "LD%d RAID%d", target, drive->raid);

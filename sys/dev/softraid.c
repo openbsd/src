@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.214 2010/09/23 18:49:39 oga Exp $ */
+/* $OpenBSD: softraid.c,v 1.215 2010/10/12 00:53:32 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3473,6 +3473,7 @@ sr_raid_inquiry(struct sr_workunit *wu)
 	inq.version = 2;
 	inq.response_format = 2;
 	inq.additional_length = 32;
+	inq.flags |= SID_CmdQue;
 	strlcpy(inq.vendor, sd->sd_meta->ssdi.ssd_vendor,
 	    sizeof(inq.vendor));
 	strlcpy(inq.product, sd->sd_meta->ssdi.ssd_product,

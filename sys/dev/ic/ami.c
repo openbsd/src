@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.216 2010/09/24 01:32:09 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.217 2010/10/12 00:53:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1393,6 +1393,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
+		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "AMI    ", sizeof(inq.vendor));
 		snprintf(inq.product, sizeof(inq.product),
 		    "Host drive  #%02d", target);

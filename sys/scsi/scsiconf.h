@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.140 2010/09/20 00:19:47 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.141 2010/10/12 00:53:32 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -585,7 +585,7 @@ void			scsi_remove_link(struct scsibus_softc *,
 			    struct scsi_link *);
 
 extern const u_int8_t version_to_spc[];
-#define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])
+#define SCSISPC(x)	(version_to_spc[(x) & SID_ANSII])
 
 struct scsi_xfer *	scsi_xs_get(struct scsi_link *, int);
 void			scsi_xs_exec(struct scsi_xfer *);

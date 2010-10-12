@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.54 2010/09/20 06:17:49 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.55 2010/10/12 00:53:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -963,6 +963,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
+		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "ICP	   ", sizeof inq.vendor);
 		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
 		    target);

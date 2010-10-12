@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.23 2010/09/20 06:17:49 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.24 2010/10/12 00:53:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -731,6 +731,7 @@ ioprbs_internal_cache_cmd(xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
+		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "I2O", sizeof inq.vendor);
 		snprintf(inq.product, sizeof inq.product, "Container #%02d",
 		    target);

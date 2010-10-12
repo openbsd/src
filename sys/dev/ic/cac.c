@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.41 2010/09/20 06:17:49 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.42 2010/10/12 00:53:32 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -630,6 +630,7 @@ cac_scsi_cmd(xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
+		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "Compaq  ", sizeof inq.vendor);
 		switch (CAC_GET1(dinfo->mirror)) {
 		case 0: p = "RAID0";	break;

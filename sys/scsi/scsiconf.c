@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.166 2010/09/08 00:58:05 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.167 2010/10/12 00:53:32 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -1006,6 +1006,12 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 */
 	if (priority != 0)
 		sc_link->quirks |= finger->quirks;
+
+	/*
+	 * If the device can't use tags, >1 opening may confuse it.
+	 */
+	if (ISSET(sc_link->quirks, SDEV_NOTAGS))
+		sc_link->openings = 1;
 
 	/*
 	 * note what BASIC type of device it is
