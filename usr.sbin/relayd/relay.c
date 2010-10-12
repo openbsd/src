@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.122 2010/08/01 22:18:35 sthen Exp $	*/
+/*	$OpenBSD: relay.c,v 1.123 2010/10/12 14:52:21 dhill Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2400,6 +2400,12 @@ relay_close(struct rsession *con, const char *msg)
 		bufferevent_free(con->se_out.bev);
 	else if (con->se_out.output != NULL)
 		evbuffer_free(con->se_out.output);
+	if (con->se_out.ssl != NULL) {
+		/* XXX handle non-blocking shutdown */
+		if (SSL_shutdown(con->se_out.ssl) == 0)
+			SSL_shutdown(con->se_out.ssl);
+		SSL_free(con->se_out.ssl);
+	}
 	if (con->se_out.s != -1)
 		close(con->se_out.s);
 	if (con->se_out.path != NULL)
