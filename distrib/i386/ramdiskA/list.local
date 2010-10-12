@@ -1,0 +1,5 @@
+# $OpenBSD: list.local,v 1.1 2010/10/12 23:37:40 deraadt Exp $
+
+LINK	instbin					sbin/mount_msdos
+
+TZ
