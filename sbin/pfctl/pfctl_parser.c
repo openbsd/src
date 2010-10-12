@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.271 2010/09/22 06:02:59 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.272 2010/10/12 17:45:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1022,7 +1022,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	if (r->rtableid != -1)
 		printf(" rtable %u", r->rtableid);
 	if (r->divert.port) {
-		if (PF_AZERO(&r->divert.addr, r->af)) {
+		if (PF_AZERO(&r->divert.addr, AF_INET6)) {
 			printf(" divert-reply");
 		} else {
 			/* XXX cut&paste from print_addr */
