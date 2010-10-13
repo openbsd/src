@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_ffs.8,v 1.16 2007/05/31 19:19:45 jmc Exp $
+.\"	$OpenBSD: mount_ffs.8,v 1.17 2010/10/13 15:40:31 jmc Exp $
 .\"	$NetBSD: mount_ffs.8,v 1.2 1996/02/05 06:33:47 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 13 2010 $
 .Dt MOUNT_FFS 8
 .Os
 .Sh NAME
@@ -63,8 +63,19 @@ when using any of the following syntax:
 .Pp
 The
 .Ar special
-device must correspond to a partition registered in the
-.Xr disklabel 5 .
+device is either a
+.Xr disklabel 8
+UID (DUID) or an entry in
+.Pa /dev .
+If it is a DUID,
+it will be automatically mapped to the appropriate entry in
+.Pa /dev .
+In either case the partition must be present
+in the disklabel loaded from the device.
+The partition name is the last letter in the entry name.
+For example, /dev/sd0a and 3eb7f9da875cb9ee.a both refer to the
+.Sq a
+partition.
 .Pp
 This command is normally executed per file system by
 .Xr rc 8

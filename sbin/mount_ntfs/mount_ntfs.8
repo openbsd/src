@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_ntfs.8,v 1.10 2007/12/09 19:48:55 martin Exp $
+.\" $OpenBSD: mount_ntfs.8,v 1.11 2010/10/13 15:40:31 jmc Exp $
 .\" $NetBSD: mount_ntfs.8,v 1.13 2003/02/14 16:21:48 grant Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 .\"
 .\"	Id: mount_ntfs.8,v 1.3 1999/05/04 11:34:33 jkoshy Exp
 .\"
-.Dd $Mdocdate: December 9 2007 $
+.Dd $Mdocdate: October 13 2010 $
 .Dt MOUNT_NTFS 8
 .Os
 .Sh NAME
@@ -64,8 +64,19 @@ contains the file system).
 .Pp
 The
 .Ar special
-device must correspond to a partition registered in the
-.Xr disklabel 5 .
+device is either a
+.Xr disklabel 8
+UID (DUID) or an entry in
+.Pa /dev .
+If it is a DUID,
+it will be automatically mapped to the appropriate entry in
+.Pa /dev .
+In either case the partition must be present
+in the disklabel loaded from the device.
+The partition name is the last letter in the entry name.
+For example, /dev/sd0a and 3eb7f9da875cb9ee.a both refer to the
+.Sq a
+partition.
 .Pp
 The supported NTFS versions include both NTFS4, as used by Microsoft
 Windows NT 4.0, and NTFS5, as used by Microsoft Windows 2000 and XP.
