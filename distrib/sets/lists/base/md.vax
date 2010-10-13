@@ -2364,9 +2364,8 @@
 ./usr/libdata/perl5/vax-openbsd/5.12.2/auto/Unicode/Normalize/Normalize.a
 ./usr/libdata/perl5/vax-openbsd/5.12.2/auto/Unicode/Normalize/extralibs.ld
 ./usr/libdata/perl5/vax-openbsd/5.12.2/auto/attributes
-./usr/libdata/perl5/vax-openbsd/5.12.2/auto/attributes/attributes.so
-./usr/libdata/perl5/vax-openbsd/5.12.2/auto/attrs/attrs.a
-./usr/libdata/perl5/vax-openbsd/5.12.2/auto/attrs/extralibs.ld
+./usr/libdata/perl5/vax-openbsd/5.12.2/auto/attributes/attributes.a
+./usr/libdata/perl5/vax-openbsd/5.12.2/auto/attributes/extralibs.ld
 ./usr/libdata/perl5/vax-openbsd/5.12.2/auto/mro
 ./usr/libdata/perl5/vax-openbsd/5.12.2/auto/mro/extralibs.ld
 ./usr/libdata/perl5/vax-openbsd/5.12.2/auto/mro/mro.a
