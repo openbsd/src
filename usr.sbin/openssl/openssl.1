@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.75 2010/10/12 18:36:03 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.76 2010/10/13 15:38:56 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: October 12 2010 $
+.Dd $Mdocdate: October 13 2010 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -318,6 +318,8 @@ PKCS#8 data management.
 PKCS#12 data management.
 .It Cm pkey
 Public and private key management.
+.It Cm pkeyparam
+Public key algorithm parameter management.
 .It Cm pkeyutl
 Public key algorithm cryptographic operation utility.
 .It Cm rand
@@ -5034,9 +5036,9 @@ $ openssl -in keycerts.pem -export -name "My PKCS#12 file" \e
 .Op Fl text
 .Op Fl text_pub
 .Op Fl engine Ar id
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
@@ -5065,7 +5067,7 @@ to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default
 for all available algorithms.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input filename to read a key from,
 or standard input if this option is not specified.
 If the key is encrypted a pass phrase will be prompted for.
@@ -5073,7 +5075,7 @@ If the key is encrypted a pass phrase will be prompted for.
 This specifies the input format, DER or PEM.
 .It Fl noout
 Do not output the encoded version of the key.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output filename to write a key to,
 or standard output if this option is not specified.
 If any encryption options are set then a pass phrase
@@ -5145,6 +5147,52 @@ To just output the public part of a private key:
 .Bd -literal -offset indent
 $ openssl pkey -in key.pem -pubout -out pubkey.pem
 .Ed
+.\"
+.\" PKEYPARAM
+.\"
+.Sh PKEYPARAM
+.Cm openssl pkeyparam
+.Op Fl noout
+.Op Fl text
+.Op Fl engine Ar id
+.Op Fl in Ar file
+.Op Fl out Ar file
+.Pp
+The
+.Nm pkey
+command processes public or private keys.
+They can be converted between various forms and their components printed out.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl engine Ar id
+Specifying an engine (by its unique
+.Ar id
+string) will cause
+.Nm pkeyparam
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default
+for all available algorithms.
+.It Fl in Ar file
+This specifies the input filename to read parameters from,
+or standard input if this option is not specified.
+.It Fl noout
+Do not output the encoded version of the parameters.
+.It Fl out Ar file
+This specifies the output filename to write parameters to,
+or standard output if this option is not specified.
+.It Fl text
+Prints out the parameters in plain text in addition to the encoded version.
+.El
+.Sh PKEYPARAM EXAMPLES
+Print out text version of parameters:
+.Bd -literal -offset indent
+$ openssl pkeyparam -in param.pem -text
+.Ed
+.Sh PKEYPARAM NOTES
+There are no B<-inform> or B<-outform> options for this command because only
+PEM format is supported because the key type is determined by the PEM headers.
 .\"
 .\" PKEYUTL
 .\"
