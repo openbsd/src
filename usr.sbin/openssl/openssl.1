@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.76 2010/10/13 15:38:56 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.77 2010/10/13 19:16:37 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -322,6 +322,8 @@ Public and private key management.
 Public key algorithm parameter management.
 .It Cm pkeyutl
 Public key algorithm cryptographic operation utility.
+.It Cm prime
+Generate prime numbers or test numbers for primality.
 .It Cm rand
 Generate pseudo-random bytes.
 .It Cm req
@@ -5401,6 +5403,50 @@ Derive a shared secret value:
 $ openssl pkeyutl -derive -inkey key.pem \e
 	-peerkey pubkey.pem -out secret
 .Ed
+.\"
+.\" PRIME
+.\"
+.Sh PRIME
+.Cm openssl prime
+.Op Fl generate
+.Op Fl hex
+.Op Fl safe
+.Op Fl bits Ar n
+.Op Fl checks Ar n
+.Ar p
+.Pp
+The
+.Nm prime
+command is used to generate prime numbers,
+or to check numbers for primality.
+.Pp
+The options are as follows:
+.Bl -tag -width ds
+.It Fl bits Ar n
+Specify the number of bits in the generated prime number.
+Must be used in conjunction with
+.Fl generate .
+.It Fl checks Ar n
+Perform a Miller-Rabin probabilistic primality test with
+.Ar n
+iterations.
+The default is 20.
+.It Fl generate
+Generate a pseudo-random prime number.
+Must be used in conjunction with
+.Fl bits .
+.It Fl hex
+Output in hex format.
+.It Fl safe
+Generate only
+.Qq safe
+prime numbers
+(i.e. a prime p so that (p-1)/2 is also prime).
+.It Ar p
+Test if number
+.Ar p
+is prime.
+.El
 .\"
 .\" RAND
 .\"
