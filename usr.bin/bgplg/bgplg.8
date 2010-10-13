@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bgplg.8,v 1.7 2010/05/18 15:09:34 sobrado Exp $
+.\"	$OpenBSD: bgplg.8,v 1.8 2010/10/13 08:28:30 sthen Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2010 $
+.Dd $Mdocdate: October 13 2010 $
 .Dt BGPLG 8
 .Os
 .Sh NAME
@@ -93,18 +93,17 @@ from within the
 .Xr chroot 2
 environment.
 See
-.Xr bgpd 8
+.Xr bgpd.conf 5
 for more information.
 .Pp
 For example,
-set the following in
-.Pa /etc/rc.conf.local
-to start
+add the following to
+.Pa /etc/bgpd.conf
+to have
 .Xr bgpd 8
-using the second, restricted, control socket:
+open a second, restricted, control socket:
 .Pp
-.Dl bgpd_flags=\&"-r /var/www/logs/bgpd.rsock\&"
-.Pp
+.Dl socket \&/var/www/logs/bgpd.rsock\&" restricted
 .It
 Start the Apache HyperText Transfer Protocol server.
 See
