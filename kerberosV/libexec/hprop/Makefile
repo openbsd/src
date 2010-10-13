@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2003/07/14 16:14:43 mho Exp $
+# $OpenBSD: Makefile,v 1.8 2010/10/13 08:14:22 jsg Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -15,7 +15,7 @@ SRCS+=	tm2time.c
 
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5
 
-DPADD+= ${LIBKADM5SRV} ${LIBDES} ${LIBCRYPTO}
-LDADD+=	-lkadm5srv -lkrb5 -ldes -lcrypto
+DPADD+= ${LIBKADM5SRV} ${LIBCRYPTO}
+LDADD+=	-lkadm5srv -lkrb5 -lcrypto
 
 .include <bsd.prog.mk>

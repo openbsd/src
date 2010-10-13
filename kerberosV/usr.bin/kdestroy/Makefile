@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2003/07/14 16:14:44 mho Exp $
+# $OpenBSD: Makefile,v 1.7 2010/10/13 08:14:22 jsg Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -10,7 +10,7 @@ SRCS+=	${PRINTVER}
 
 .PATH:	${KRB5SRC}/kuser
 
-DPADD+= ${LIBKRB5} ${LIBDES} ${LIBCRYPTO}
-LDADD+=	-lkrb5 -ldes -lcrypto
+DPADD+= ${LIBKRB5} ${LIBCRYPTO}
+LDADD+=	-lkrb5 -lcrypto
 
 .include <bsd.prog.mk>

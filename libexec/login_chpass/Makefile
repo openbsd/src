@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2008/01/02 14:33:48 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2010/10/13 08:14:22 jsg Exp $
 
 
 PROG=	login_chpass
@@ -14,8 +14,8 @@ CFLAGS+=-Wall
 #.if (${KERBEROS5:L} == "yes")
 #SRCS+= krb5_passwd.c
 #CFLAGS+= -DKRB5
-#DPADD+= ${LIBKRB5} ${LIBASN1} ${LIBDES} ${LIBCRYPTO}
-#LDADD+= -lkrb5 -lasn1 -ldes -lcrypto
+#DPADD+= ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
+#LDADD+= -lkrb5 -lasn1 -lcrypto
 #.endif
 
 .if (${YP:L} == "yes")
