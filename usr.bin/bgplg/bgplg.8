@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bgplg.8,v 1.8 2010/10/13 08:28:30 sthen Exp $
+.\"	$OpenBSD: bgplg.8,v 1.9 2010/10/13 18:56:03 sthen Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -103,7 +103,7 @@ to have
 .Xr bgpd 8
 open a second, restricted, control socket:
 .Pp
-.Dl socket \&/var/www/logs/bgpd.rsock\&" restricted
+.Dl socket \&"/var/www/logs/bgpd.rsock\&" restricted
 .It
 Start the Apache HyperText Transfer Protocol server.
 See
