@@ -33,13 +33,6 @@ _quick1=
 _quick3p=
 MANSRCALL=
 
-.ifndef NOPIC
-XSDOC = \
-    XS::APItest 3p		lib/XS/APItest.pm \
-    XS::APItest::KeywordRPN 3p	lib/XS/APItest/KeywordRPN.pm \
-    XS::Typemap 3p		lib/XS/Typemap.pm
-.endif
-
 .for page sect file in \
     a2p 1 			x2p/a2p.pod \
     c2ph 1			utils/c2ph \
@@ -684,6 +677,9 @@ XSDOC = \
     Unicode::UCD 3p		lib/Unicode/UCD.pm \
     User::grent 3p		lib/User/grent.pm \
     User::pwent 3p		lib/User/pwent.pm \
+    XS::APItest 3p		ext/XS-APItest/APItest.pm \
+    XS::APItest::KeywordRPN 3p	ext/XS-APItest-KeywordRPN/KeywordRPN.pm \
+    XS::Typemap 3p		ext/XS-Typemap/Typemap.pm \
     XSLoader 3p			lib/XSLoader.pm \
     attributes 3p		lib/attributes.pm \
     autodie 3p			lib/autodie.pm \
@@ -731,8 +727,7 @@ XSDOC = \
     version::Internals 3p	lib/version/Internals.pod \
     vmsish 3p			lib/vmsish.pm \
     warnings 3p			lib/warnings.pm \
-    warnings::register 3p	lib/warnings/register.pm \
-    ${XSDOC}
+    warnings::register 3p	lib/warnings/register.pm
 .  ifndef NOMAN
 MANALL+= ${page}.cat${sect}
 MANSRCALL+= ${page}.${sect}
