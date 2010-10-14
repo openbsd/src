@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.40 2010/09/28 03:53:14 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.41 2010/10/14 04:38:24 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -911,7 +911,7 @@ IDTVEC(syscall)
 	 * ss:rsp, etc, so that all GP registers can be
 	 * saved. Then, fill in the rest.
 	 */
-	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
+	pushq	$(GSEL(GUDATA_SEL, SEL_UPL))
 	pushq	%r15
 	subq	$(TF_RSP-TF_TRAPNO),%rsp
 	movq	CPUVAR(SCRATCH),%r15
@@ -920,9 +920,9 @@ IDTVEC(syscall)
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
 	movw	%es,TF_ES(%rsp)
-	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
+	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
-	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
+	movq	$(GSEL(GUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
@@ -961,7 +961,7 @@ syscall_return:
 	movw	TF_FS(%rsp),%fs
 	movw	TF_GS(%rsp),%gs
 	INTR_RESTORE_GPRS
-	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
+	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),%r11
 	movw	%r11,%ds
 	addq	$48,%rsp
 	popq	%rcx	/* return rip */

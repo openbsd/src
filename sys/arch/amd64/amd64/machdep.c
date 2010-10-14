@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.124 2010/10/02 23:31:33 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.125 2010/10/14 04:38:24 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -612,10 +612,10 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 
 	tf->tf_rax = (u_int64_t)catcher;
 	tf->tf_rdi = sig;
@@ -623,10 +623,10 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_rdx = scp;
 
 	tf->tf_rip = (u_int64_t)p->p_sigcode;
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_rsp = scp;
-	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1018,10 +1018,10 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	pcb->pcb_flags = 0;
 
 	tf = p->p_md.md_regs;
-	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -1038,10 +1038,10 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_r14 = 0;
 	tf->tf_r15 = 0;
 	tf->tf_rip = pack->ep_entry;
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags = PSL_USERSET;
 	tf->tf_rsp = stack;
-	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	retval[1] = 0;
 }
@@ -1498,11 +1498,14 @@ init_x86_64(paddr_t first_avail)
 	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore, LDT_SIZE - 1,
 	    SDT_SYSLDT, SEL_KPL, 0);
 
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
-	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE32_SEL), 0,
+	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
+
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
+	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
 
 	/* make ldt gates and memory segments */
 	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
@@ -1513,16 +1516,6 @@ init_x86_64(paddr_t first_avail)
 	    *GDT_ADDR_MEM(gdtstore, GUCODE_SEL);
 	*(struct mem_segment_descriptor *)(ldtstore + LUDATA_SEL) =
 	    *GDT_ADDR_MEM(gdtstore, GUDATA_SEL);
-
-	/*
-	 * 32 bit GDT entries.
-	 */
-
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE32_SEL), 0,
-	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
-
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA32_SEL), 0,
-	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
 
 	/*
 	 * 32 bit LDT entries.

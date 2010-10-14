@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.5 2008/05/23 15:39:43 jasper Exp $	*/
+/*	$OpenBSD: segments.h,v 1.6 2010/10/14 04:38:24 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -253,24 +253,17 @@ void cpu_init_idt(void);
  *
  * Then come the predefined LDT (and possibly TSS) descriptors.
  * There are NGDT_SYS of them.
+ *
+ * The particular order of the UCODE32, UDATA, and UCODE descriptors is 
+ * required by the syscall/sysret instructions.
  */
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
-#define	GUCODE_SEL	3	/* User code descriptor */
+#define	GUCODE32_SEL	3	/* User 32bit code descriptor (unused) */
 #define	GUDATA_SEL	4	/* User data descriptor */
-#define	GAPM32CODE_SEL	5
-#define	GAPM16CODE_SEL	6
-#define	GAPMDATA_SEL	7
-#define	GBIOSCODE_SEL	8
-#define	GBIOSDATA_SEL	9
-#define GPNPBIOSCODE_SEL 10
-#define GPNPBIOSDATA_SEL 11
-#define GPNPBIOSSCRATCH_SEL 12
-#define GPNPBIOSTRAMP_SEL 13
-#define GUCODE32_SEL	14
-#define GUDATA32_SEL	15
-#define NGDT_MEM 16
+#define	GUCODE_SEL	5	/* User code descriptor */
+#define NGDT_MEM 6
 
 #define	GLDT_SEL	0	/* Default LDT descriptor */
 #define NGDT_SYS	1
@@ -296,7 +289,6 @@ void cpu_init_idt(void);
 
 #define LDT_SIZE	144
 
-#define LSYSRETBASE_SEL	LUCODE32_SEL
 
 /*
  * Checks for valid user selectors.
