@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.28 2010/08/22 21:15:25 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.29 2010/10/14 07:38:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -522,20 +522,21 @@ kroute_matchgw(struct kroute_node *kr, struct in6_addr *nh, unsigned int scope)
 int
 kroute_insert(struct kroute_node *kr)
 {
-	struct kroute_node	*krm;
+	struct kroute_node	*krm, *krh;
 
-	if ((krm = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
+	if ((krh = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
 		/*
 		 * Multipath route, add at end of list and clone the
 		 * ospfd inserted flag.
 		 */
+		krm = krh;
 		kr->r.flags |= krm->r.flags & F_OSPFD_INSERTED;
 		while (krm->next != NULL)
 			krm = krm->next;
 		krm->next = kr;
 		kr->next = NULL; /* to be sure */
 	} else
-		krm = kr;
+		krh = kr;
 
 	if (!(kr->r.flags & F_KERNEL)) {
 		/* don't validate or redistribute ospf route */
@@ -548,7 +549,7 @@ kroute_insert(struct kroute_node *kr)
 	else
 		kr->r.flags |= F_DOWN;
 
-	kr_redistribute(krm);
+	kr_redistribute(krh);
 	return (0);
 }
 
