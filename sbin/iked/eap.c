@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.2 2010/09/20 18:06:22 mikeb Exp $	*/
+/*	$OpenBSD: eap.c,v 1.3 2010/10/14 19:35:02 dhill Exp $	*/
 /*	$vantronix: eap.c,v 1.12 2010/05/31 11:30:08 reyk Exp $	*/
 
 /*
@@ -375,9 +375,12 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 			break;
 		if ((str = eap_identity_response(eap)) == NULL)
 			return (-1);
-		if (response)
+		if (response) {
+			free(str);
 			break;
+		}
 		if (sa->sa_eapid != NULL) {
+			free(str);
 			log_debug("%s: EAP identity already known", __func__);
 			return (0);
 		}
