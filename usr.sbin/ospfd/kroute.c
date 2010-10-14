@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.87 2010/07/14 01:00:32 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.88 2010/10/14 07:35:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -671,20 +671,21 @@ kroute_matchgw(struct kroute_node *kr, struct in_addr nh)
 int
 kroute_insert(struct kroute_node *kr)
 {
-	struct kroute_node	*krm;
+	struct kroute_node	*krm, *krh;
 
 	kr->serial = kr_state.fib_serial;
 
-	if ((krm = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
+	if ((krh = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
 		/*
 		 * Multipath route, add at end of list.
 		 */
+		krm = krh;
 		while (krm->next != NULL)
 			krm = krm->next;
 		krm->next = kr;
 		kr->next = NULL; /* to be sure */
 	} else
-		krm = kr;
+		krh = kr;
 
 	if (!(kr->r.flags & F_KERNEL)) {
 		/* don't validate or redistribute ospf route */
@@ -697,7 +698,7 @@ kroute_insert(struct kroute_node *kr)
 	else
 		kr->r.flags |= F_DOWN;
 
-	kr_redistribute(krm);
+	kr_redistribute(krh);
 	return (0);
 }
 
@@ -1441,7 +1442,7 @@ rtmsg_process(char *buf, int len)
 
 				/* just readd, the RDE will care */
 				kr->serial = kr_state.fib_serial;
-				kr_redistribute(kr);
+				kr_redistribute(okr);
 			} else {
 add:
 				if ((kr = calloc(1,
