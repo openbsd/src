@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.42 2010/09/19 20:59:20 jmc Exp $
+.\"	$OpenBSD: init.8,v 1.43 2010/10/14 23:48:57 dlg Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)init.8	8.6 (Berkeley) 5/26/95
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: October 14 2010 $
 .Dt INIT 8
 .Os
 .Sh NAME
@@ -213,18 +213,25 @@ and
 .Nm
 will terminate multi-user operations, kill all
 .Xr getty 8 ,
-run
-.Pa /etc/rc.shutdown ,
-and halt the machine if user-defined signal 1
-.Pq Dv USR1
-or user-defined signal 2
-.Pq Dv USR2
-is received.
+and run
 .Pa /etc/rc.shutdown
-can specify that a powerdown is requested.
-Alternatively,
+if a user-defined signal 1
+.Pq Dv USR1 ,
+user-defined signal 2
+.Pq Dv USR2 ,
+or 
+.Dv QUIT
+signal is received.
+Following this,
+.Dv USR1
+will halt the system;
 .Dv USR2
-specifically requests a powerdown.
+will request a powerdown; and
+.Dv QUIT
+will cause a reboot.
+.Pa /etc/rc.shutdown
+can specify that a powerdown is requested instead of the action
+specified by the signal.
 .Pp
 The role of
 .Nm
