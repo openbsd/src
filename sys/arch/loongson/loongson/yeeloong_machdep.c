@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.14 2010/09/01 04:52:43 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.15 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -36,11 +36,12 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/glxreg.h>
+#include <dev/pci/glxvar.h>
+
 #include <loongson/dev/bonitoreg.h>
 #include <loongson/dev/bonitovar.h>
 #include <loongson/dev/bonito_irq.h>
-#include <loongson/dev/glxreg.h>
-#include <loongson/dev/glxvar.h>
 #include <loongson/dev/kb3310var.h>
 
 #include "com.h"

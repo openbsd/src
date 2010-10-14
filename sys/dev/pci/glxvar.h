@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxvar.h,v 1.1.1.1 2009/11/25 13:48:20 miod Exp $	*/
+/*	$OpenBSD: glxvar.h,v 1.1 2010/10/14 21:23:05 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.

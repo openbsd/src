@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.5 2010/02/19 15:14:19 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -36,8 +36,8 @@
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ohcireg.h>
 
-#include <loongson/dev/glxreg.h>
-#include <loongson/dev/glxvar.h>
+#include <dev/pci/glxreg.h>
+#include <dev/pci/glxvar.h>
 
 #include <loongson/dev/bonitovar.h>
 

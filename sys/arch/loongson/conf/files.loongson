@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.12 2010/09/01 04:52:41 miod Exp $
+#	$OpenBSD: files.loongson,v 1.13 2010/10/14 21:23:04 pirofti Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -64,11 +64,6 @@ file	arch/loongson/dev/bonito.c			bonito
 
 # AMD Geode CS5536 companion chip
 file	arch/loongson/dev/glx.c				bonito & pci
-
-# AMD Geode CS5536 PCI-ISA bridge
-device	glxpcib: isabus, gpiobus
-attach	glxpcib at pci
-file	arch/loongson/dev/glxpcib.c			glxpcib
 
 # Other PCI-ISA bridges
 device	pcib: isabus

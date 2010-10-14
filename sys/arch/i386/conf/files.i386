@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.198 2010/07/23 16:14:54 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.199 2010/10/14 21:23:04 pirofti Exp $
 #
 # new style config file for i386 architecture
 #
@@ -139,11 +139,6 @@ file	arch/i386/pci/glxsb.c		glxsb
 device	gscpm
 attach	gscpm at pci
 file	arch/i386/pci/gscpm.c		gscpm
-
-# AMD Geode CS5536 PCI-ISA bridge
-device	glxpcib: isabus, gpiobus
-attach	glxpcib at pci
-file	arch/i386/pci/glxpcib.c		glxpcib   
 
 # AMD Geode LX series MSR access
 device	amdmsr

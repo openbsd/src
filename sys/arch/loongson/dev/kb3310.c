@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.15 2010/09/09 19:06:15 miod Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.16 2010/10/14 21:23:04 pirofti Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -28,9 +28,10 @@
 #include <machine/bus.h>
 #include <dev/isa/isavar.h>
 
+#include <dev/pci/glxreg.h>
+
 #include <loongson/dev/bonitoreg.h>
 #include <loongson/dev/kb3310var.h>
-#include <loongson/dev/glxreg.h>
 
 #include "apm.h"
 #include "pckbd.h"

@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.13 2010/09/24 10:30:29 pirofti Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.1 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -24,26 +24,34 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/timetc.h>
 
 #include <machine/bus.h>
+#ifdef __i386__
 #include <machine/cpufunc.h>
+#endif
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define	AMD5536_REV		0x51700017
+#include <dev/pci/glxreg.h>
+#include <dev/pci/glxvar.h>
+
+#include "gpio.h"
+
+#define	AMD5536_REV		GLCP_CHIP_REV_ID
 #define	AMD5536_REV_MASK	0xff
-#define	AMD5536_TMC		0x51400050
+#define	AMD5536_TMC		PMC_LTMR
 
 #define	MSR_LBAR_ENABLE		0x100000000ULL
 
 /* Multi-Functional General Purpose Timer */
-#define	MSR_LBAR_MFGPT		0x5140000d
+#define	MSR_LBAR_MFGPT		DIVIL_LBAR_MFGPT
 #define	MSR_MFGPT_SIZE		0x40
 #define	MSR_MFGPT_ADDR_MASK	0xffc0
 #define	AMD5536_MFGPT0_CMP1	0x00000000
@@ -66,7 +74,7 @@
 #define	AMD5536_MFGPT_CMP1	0x2000
 #define	AMD5536_MFGPT_CMP2	0x4000
 #define	AMD5536_MFGPT_CNT_EN	0x8000
-#define	AMD5536_MFGPT_IRQ	0x51400028
+#define	AMD5536_MFGPT_IRQ	MFGPT_IRQ
 #define	AMD5536_MFGPT0_C1_IRQM	0x00000001
 #define	AMD5536_MFGPT1_C1_IRQM	0x00000002
 #define	AMD5536_MFGPT2_C1_IRQM	0x00000004
@@ -83,7 +91,7 @@
 #define	AMD5536_MFGPT5_C2_IRQM	0x00002000
 #define	AMD5536_MFGPT6_C2_IRQM	0x00004000
 #define	AMD5536_MFGPT7_C2_IRQM	0x00008000
-#define	AMD5536_MFGPT_NR	0x51400029
+#define	AMD5536_MFGPT_NR	MFGPT_NR
 #define	AMD5536_MFGPT0_C1_NMIM	0x00000001
 #define	AMD5536_MFGPT1_C1_NMIM	0x00000002
 #define	AMD5536_MFGPT2_C1_NMIM	0x00000004
@@ -107,10 +115,10 @@
 #define	AMD5536_MFGPT3_C2_RSTEN	0x08000000
 #define	AMD5536_MFGPT4_C2_RSTEN	0x10000000
 #define	AMD5536_MFGPT5_C2_RSTEN	0x20000000
-#define	AMD5536_MFGPT_SETUP	0x5140002b
+#define	AMD5536_MFGPT_SETUP	MFGPT_SETUP
 
 /* GPIO */
-#define	MSR_LBAR_GPIO		0x5140000c
+#define	MSR_LBAR_GPIO		DIVIL_LBAR_GPIO
 #define	MSR_GPIO_SIZE		0x100
 #define	MSR_GPIO_ADDR_MASK	0xff00
 #define	AMD5536_GPIO_NPINS	32
@@ -125,6 +133,15 @@
 #define AMD5536_GPIO_IN_INVRT_EN 0x24	/* invert input */
 #define	AMD5536_GPIO_READ_BACK	0x30	/* read back value */
 
+/*
+ * MSR registers we want to preserve accross suspend/resume
+ */
+const uint32_t glxpcib_msrlist[] = {
+	GLIU_PAE,
+	GLCP_GLD_MSR_PM,
+	DIVIL_BALL_OPTS
+};
+
 struct glxpcib_softc {
 	struct device		sc_dev;
 
@@ -132,7 +149,9 @@ struct glxpcib_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-#ifndef SMALL_KERNEL
+	uint64_t 		sc_msrsave[nitems(glxpcib_msrlist)];
+
+#if !defined(SMALL_KERNEL) && NGPIO > 0
 	/* GPIO interface */
 	bus_space_tag_t		sc_gpio_iot;
 	bus_space_handle_t	sc_gpio_ioh;
@@ -160,12 +179,12 @@ struct cfattach glxpcib_ca = {
 void	pcibattach(struct device *parent, struct device *self, void *aux);
 
 u_int	glxpcib_get_timecount(struct timecounter *tc);
-#ifndef SMALL_KERNEL
-int     glxpcib_wdogctl_cb(void *, int);
 
+#if !defined(SMALL_KERNEL) && NGPIO > 0
+void	glxpcib_gpio_pin_ctl(void *, int, int);
 int	glxpcib_gpio_pin_read(void *, int);
 void	glxpcib_gpio_pin_write(void *, int, int);
-void	glxpcib_gpio_pin_ctl(void *, int, int);
+int     glxpcib_wdogctl_cb(void *, int);
 #endif
 
 const struct pci_matchid glxpcib_devices[] = {
@@ -176,8 +195,10 @@ int
 glxpcib_match(struct device *parent, void *match, void *aux)
 { 
 	if (pci_matchbyid((struct pci_attach_args *)aux, glxpcib_devices,
-	    sizeof(glxpcib_devices) / sizeof(glxpcib_devices[0])))
+	    nitems(glxpcib_devices))) {
+		/* needs to win over pcib */
 		return 2;
+	}
 
 	return 0;
 }
@@ -187,18 +208,21 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
 	struct timecounter *tc = &sc->sc_timecounter;
-#ifndef SMALL_KERNEL
-	struct pci_attach_args *pa = aux;
+#if !defined(SMALL_KERNEL) && NGPIO > 0
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	u_int64_t wa, ga;
 	struct gpiobus_attach_args gba;
 	int i, gpio = 0;
 #endif
-
 	tc->tc_get_timecount = glxpcib_get_timecount;
 	tc->tc_counter_mask = 0xffffffff;
 	tc->tc_frequency = 3579545;
 	tc->tc_name = "CS5536";
+#ifdef __loongson__
+	tc->tc_quality = 0;
+#else
 	tc->tc_quality = 1000;
+#endif
 	tc->tc_priv = sc;
 	tc_init(tc);
 
@@ -206,14 +230,13 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	    (int)rdmsr(AMD5536_REV) & AMD5536_REV_MASK,
 	    tc->tc_frequency);
 
-#ifndef SMALL_KERNEL
+#if !defined(SMALL_KERNEL) && NGPIO > 0
 	/* Attach the watchdog timer */
 	sc->sc_iot = pa->pa_iot;
 	wa = rdmsr(MSR_LBAR_MFGPT);
 	if (wa & MSR_LBAR_ENABLE &&
 	    !bus_space_map(sc->sc_iot, wa & MSR_MFGPT_ADDR_MASK,
 	    MSR_MFGPT_SIZE, 0, &sc->sc_ioh)) {
-
 		/* count in seconds (as upper level desires) */
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMD5536_MFGPT0_SETUP,
 		    AMD5536_MFGPT_CNT_EN | AMD5536_MFGPT_CMP2EV |
@@ -259,7 +282,8 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 	pcibattach(parent, self, aux);
-#ifndef SMALL_KERNEL
+
+#if !defined(SMALL_KERNEL) && NGPIO > 0
 	if (gpio)
 		config_found(&sc->sc_dev, &gba, gpiobus_print);
 #endif
@@ -272,6 +296,7 @@ glxpcib_activate(struct device *self, int act)
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
 #endif
 	int rv = 0;
+	uint i;
 
 	switch (act) {
 	case DVACT_QUIESCE:
@@ -286,12 +311,17 @@ glxpcib_activate(struct device *self, int act)
 		}
 #endif
 		rv = config_activate_children(self, act);
+		for (i = 0; i < nitems(glxpcib_msrlist); i++)
+			sc->sc_msrsave[i] = rdmsr(glxpcib_msrlist[i]);
+
 		break;
 	case DVACT_RESUME:
 #ifndef SMALL_KERNEL
 		if (sc->sc_wdog)
 			glxpcib_wdogctl_cb(sc, sc->sc_wdog_period);
 #endif
+		for (i = 0; i < nitems(glxpcib_msrlist); i++)
+			wrmsr(glxpcib_msrlist[i], sc->sc_msrsave[i]);
 		rv = config_activate_children(self, act);
 		break;
 	}
@@ -304,7 +334,7 @@ glxpcib_get_timecount(struct timecounter *tc)
         return rdmsr(AMD5536_TMC);
 }
 
-#ifndef SMALL_KERNEL
+#if !defined(SMALL_KERNEL) && NGPIO > 0
 int
 glxpcib_wdogctl_cb(void *v, int period)
 {

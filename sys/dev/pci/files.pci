@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.275 2010/10/04 09:32:43 ratchov Exp $
+#	$OpenBSD: files.pci,v 1.276 2010/10/14 21:23:04 pirofti Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -802,3 +802,7 @@ device	itherm
 attach	itherm at pci
 file	dev/pci/itherm.c		itherm
 
+# AMD Geode CS5536 PCI-ISA bridge
+device	glxpcib: isabus, gpiobus
+attach	glxpcib at pci
+file	dev/pci/glxpcib.c		glxpcib
