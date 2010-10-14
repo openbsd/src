@@ -2,4 +2,5 @@ root::0:0:daemon:0:0:Charlie &:/root:/bin/ksh
 daemon:*:1:1::0:0:The devil himself:/root:/sbin/nologin
 operator:*:2:5::0:0:System &:/operator:/sbin/nologin
 bin:*:3:7::0:0:Binaries Commands and Source:/:/sbin/nologin
+_dhcp:*:77:77::0:0:DHCP programs:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user for NFS:/nonexistent:/sbin/nologin
