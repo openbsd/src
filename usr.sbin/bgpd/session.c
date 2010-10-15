@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.311 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: session.c,v 1.312 2010/10/15 07:45:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -753,7 +753,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				change_state(peer, STATE_IDLE, event);
 			break;
 		default:
-			session_notification(peer, ERR_FSM, 0, NULL, 0);
+			session_notification(peer,
+			    ERR_FSM, ERR_FSM_UNEX_OPENSENT, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
 			break;
 		}
@@ -787,7 +788,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		default:
-			session_notification(peer, ERR_FSM, 0, NULL, 0);
+			session_notification(peer,
+			    ERR_FSM, ERR_FSM_UNEX_OPENCONFIRM, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
 			break;
 		}
@@ -827,7 +829,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		default:
-			session_notification(peer, ERR_FSM, 0, NULL, 0);
+			session_notification(peer,
+			    ERR_FSM, ERR_FSM_UNEX_ESTABLISHED, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
 			break;
 		}

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.38 2010/06/27 19:53:34 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.39 2010/10/15 07:45:32 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2010 $
+.Dd $Mdocdate: October 15 2010 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -210,6 +210,11 @@ control socket
 .%R draft-ietf-idr-optional-transitive-00
 .%T "Error Handling for Optional Transitive BGP Attributes"
 .%D April 2009
+.Re
+.Rs
+.%R draft-ietf-idr-fsm-subcode-00
+.%T "Subcodes for BGP Finite State Machine Error"
+.%D September 2010
 .Re
 .Sh HISTORY
 The
