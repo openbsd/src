@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.41 2010/10/15 20:45:03 schwarze Exp $ */
+/*	$Id: man.c,v 1.42 2010/10/15 21:33:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,8 @@
 #include "libman.h"
 #include "libmandoc.h"
 
+#include "out.h"
+#include "term.h"
 #include "tbl.h"
 
 const	char *const __man_macronames[MAN_MAX] = {		 

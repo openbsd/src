@@ -1,4 +1,4 @@
-/*	$Id: tbl_extern.h,v 1.1 2010/10/15 19:20:03 schwarze Exp $ */
+/*	$Id: tbl_extern.h,v 1.2 2010/10/15 21:33:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -173,7 +173,7 @@ struct tbl_cell	*tbl_cell_alloc(struct tbl_row *, enum tbl_cellt);
 struct tbl_span	*tbl_span_alloc(struct tbl *);
 struct tbl_data	*tbl_data_alloc(struct tbl_span *);
 
-int		 tbl_write_term(const struct tbl *);
+int		 tbl_write_term(struct termp *, const struct tbl *);
 int		 tbl_calc_term(struct tbl *);
 int		 tbl_write_tree(const struct tbl *);
 int		 tbl_calc_tree(struct tbl *);

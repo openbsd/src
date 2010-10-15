@@ -1,4 +1,4 @@
-/*	$Id: tbl.h,v 1.1 2010/10/15 19:20:03 schwarze Exp $ */
+/*	$Id: tbl.h,v 1.2 2010/10/15 21:33:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,7 +27,7 @@ void		 tbl_reset(struct tbl *);
 
 int	 	 tbl_read(struct tbl *, const char *, int, const char *, int);
 int		 tbl_close(struct tbl *, const char *, int);
-int		 tbl_write(const struct tbl *);
+int		 tbl_write(struct termp *, const struct tbl *);
 
 __END_DECLS
 

@@ -1,6 +1,7 @@
-/*	$Id: tbl_term.c,v 1.1 2010/10/15 19:20:03 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.2 2010/10/15 21:33:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "out.h"
+#include "term.h"
 #include "tbl_extern.h"
 
 /* FIXME: `n' modifier doesn't always do the right thing. */
@@ -30,19 +33,23 @@ static	void		 calc_data(struct tbl_data *);
 static	void		 calc_data_literal(struct tbl_data *);
 static	void		 calc_data_number(struct tbl_data *);
 static	void		 calc_data_spanner(struct tbl_data *);
-static	inline void	 write_char(char, int);
-static	void		 write_data(const struct tbl_data *, int);
-static	void		 write_data_literal(const struct tbl_data *, int);
-static	void		 write_data_number(const struct tbl_data *, int);
-static	void		 write_data_spanner(const struct tbl_data *, int);
-static	void		 write_hframe(const struct tbl *);
-static	void		 write_hrule(const struct tbl_span *);
-static	void		 write_spanner(const struct tbl_head *);
-static	void		 write_vframe(const struct tbl *);
+static	inline void	 write_char(struct termp *, char, int);
+static	void		 write_data(struct termp *,
+				const struct tbl_data *, int);
+static	void		 write_data_literal(struct termp *,
+				const struct tbl_data *, int);
+static	void		 write_data_number(struct termp *,
+				const struct tbl_data *, int);
+static	void		 write_data_spanner(struct termp *,
+				const struct tbl_data *, int);
+static	void		 write_hframe(struct termp *, const struct tbl *);
+static	void		 write_hrule(struct termp *, const struct tbl_span *);
+static	void		 write_spanner(struct termp *, const struct tbl_head *);
+static	void		 write_vframe(struct termp *, const struct tbl *);
 
 
 int
-tbl_write_term(const struct tbl *tbl)
+tbl_write_term(struct termp *p, const struct tbl *tbl)
 {
 	const struct tbl_span	*span;
 	const struct tbl_data	*data;
@@ -53,9 +60,12 @@ tbl_write_term(const struct tbl *tbl)
 	 * were set when tbl_calc_term was called.
 	 */
 
+	term_newln(p);
+	p->flags |= TERMP_NOSPACE | TERMP_NONOSPACE;
+
 	/* First, write out our head horizontal frame. */
 
-	write_hframe(tbl);
+	write_hframe(p, tbl);
 
 	/*
 	 * Iterate through each span, and inside, through the global
@@ -65,14 +75,14 @@ tbl_write_term(const struct tbl *tbl)
 	 */
 
 	TAILQ_FOREACH(span, &tbl->span, entries) {
-		write_vframe(tbl);
+		write_vframe(p, tbl);
 
 		/* Accomodate for the horizontal rule. */
 		if (TBL_DATA_DHORIZ & span->flags || 
 				TBL_DATA_HORIZ & span->flags) {
-			write_hrule(span);
-			write_vframe(tbl);
-			printf("\n");
+			write_hrule(p, span);
+			write_vframe(p, tbl);
+			term_flushln(p);
 			continue;
 		}
 
@@ -82,10 +92,10 @@ tbl_write_term(const struct tbl *tbl)
 			case (TBL_HEAD_VERT):
 				/* FALLTHROUGH */
 			case (TBL_HEAD_DVERT):
-				write_spanner(head);
+				write_spanner(p, head);
 				break;
 			case (TBL_HEAD_DATA):
-				write_data(data, head->width);
+				write_data(p, data, head->width);
 				if (data)
 					data = TAILQ_NEXT(data, entries);
 				break;
@@ -94,13 +104,15 @@ tbl_write_term(const struct tbl *tbl)
 				/* NOTREACHED */
 			}
 		}
-		write_vframe(tbl);
-		printf("\n");
+		write_vframe(p, tbl);
+		term_flushln(p);
 	}
 
 	/* Last, write out our tail horizontal frame. */
 
-	write_hframe(tbl);
+	write_hframe(p, tbl);
+
+	p->flags &= ~TERMP_NONOSPACE;
 
 	return(1);
 }
@@ -147,7 +159,7 @@ tbl_calc_term(struct tbl *tbl)
 
 
 static void
-write_hrule(const struct tbl_span *span)
+write_hrule(struct termp *p, const struct tbl_span *span)
 {
 	const struct tbl_head	*head;
 	char			 c;
@@ -167,13 +179,13 @@ write_hrule(const struct tbl_span *span)
 	TAILQ_FOREACH(head, &span->tbl->head, entries) {
 		switch (head->pos) {
 		case (TBL_HEAD_DATA):
-			write_char(c, head->width);
+			write_char(p, c, head->width);
 			break;
 		case (TBL_HEAD_DVERT):
-			write_char('+', head->width);
+			write_char(p, '+', head->width);
 			/* FALLTHROUGH */
 		case (TBL_HEAD_VERT):
-			write_char('+', head->width);
+			write_char(p, '+', head->width);
 			break;
 		default:
 			abort();
@@ -184,7 +196,7 @@ write_hrule(const struct tbl_span *span)
 
 
 static void
-write_hframe(const struct tbl *tbl)
+write_hframe(struct termp *p, const struct tbl *tbl)
 {
 	const struct tbl_head	*head;
 
@@ -200,35 +212,37 @@ write_hframe(const struct tbl *tbl)
 	 */
 
 	if (TBL_OPT_DBOX & tbl->opts) {
-		printf("+");
+		term_word(p, "+");
 		TAILQ_FOREACH(head, &tbl->head, entries)
-			write_char('-', head->width);
-		printf("+\n");
+			write_char(p, '-', head->width);
+		term_word(p, "+");
+		term_flushln(p);
 	}
 
-	printf("+");
+	term_word(p, "+");
 	TAILQ_FOREACH(head, &tbl->head, entries) {
 		switch (head->pos) {
 		case (TBL_HEAD_DATA):
-			write_char('-', head->width);
+			write_char(p, '-', head->width);
 			break;
 		default:
-			write_char('+', head->width);
+			write_char(p, '+', head->width);
 			break;
 		}
 	}
-	printf("+\n");
+	term_word(p, "+");
+	term_flushln(p);
 }
 
 
 static void
-write_vframe(const struct tbl *tbl)
+write_vframe(struct termp *p, const struct tbl *tbl)
 {
 	/* Always just a single vertical line. */
 
 	if ( ! (TBL_OPT_BOX & tbl->opts || TBL_OPT_DBOX & tbl->opts))
 		return;
-	printf("|");
+	term_word(p, "|");
 }
 
 
@@ -348,7 +362,7 @@ calc_data(struct tbl_data *data)
 
 
 static void
-write_data_spanner(const struct tbl_data *data, int width)
+write_data_spanner(struct termp *p, const struct tbl_data *data, int width)
 {
 
 	/*
@@ -356,18 +370,18 @@ write_data_spanner(const struct tbl_data *data, int width)
 	 * layout) or as data.
 	 */
 	if (TBL_DATA_HORIZ & data->flags)
-		write_char('-', width);
+		write_char(p, '-', width);
 	else if (TBL_DATA_DHORIZ & data->flags)
-		write_char('=', width);
+		write_char(p, '=', width);
 	else if (TBL_CELL_HORIZ == data->cell->pos)
-		write_char('-', width);
+		write_char(p, '-', width);
 	else if (TBL_CELL_DHORIZ == data->cell->pos)
-		write_char('=', width);
+		write_char(p, '=', width);
 }
 
 
 static void
-write_data_number(const struct tbl_data *data, int width)
+write_data_number(struct termp *p, const struct tbl_data *data, int width)
 {
 	char		*dp, pnt;
 	int		 d, padl, sz;
@@ -393,14 +407,14 @@ write_data_number(const struct tbl_data *data, int width)
 	padl = data->cell->head->decimal - d + 1;
 	assert(width - sz - padl);
 
-	write_char(' ', padl);
-	(void)printf("%s", data->string);
-	write_char(' ', width - sz - padl);
+	write_char(p, ' ', padl);
+	term_word(p, data->string);
+	write_char(p, ' ', width - sz - padl);
 }
 
 
 static void
-write_data_literal(const struct tbl_data *data, int width)
+write_data_literal(struct termp *p, const struct tbl_data *data, int width)
 {
 	int		 padl, padr;
 
@@ -409,41 +423,41 @@ write_data_literal(const struct tbl_data *data, int width)
 	switch (data->cell->pos) {
 	case (TBL_CELL_LONG):
 		padl = 1;
-		padr = width - (int)strlen(data->string) - 1;
+		padr = width - (int)term_strlen(p, data->string) - 1;
 		break;
 	case (TBL_CELL_CENTRE):
-		padl = width - (int)strlen(data->string);
+		padl = width - (int)term_strlen(p, data->string);
 		if (padl % 2)
 			padr++;
 		padl /= 2;
 		padr += padl;
 		break;
 	case (TBL_CELL_RIGHT):
-		padl = width - (int)strlen(data->string);
+		padl = width - (int)term_strlen(p, data->string);
 		break;
 	default:
-		padr = width - (int)strlen(data->string);
+		padr = width - (int)term_strlen(p, data->string);
 		break;
 	}
 
-	write_char(' ', padl);
-	(void)printf("%s", data->string);
-	write_char(' ', padr);
+	write_char(p, ' ', padl);
+	term_word(p, data->string);
+	write_char(p, ' ', padr);
 }
 
 
 static void
-write_data(const struct tbl_data *data, int width)
+write_data(struct termp *p, const struct tbl_data *data, int width)
 {
 
 	if (NULL == data) {
-		write_char(' ', width);
+		write_char(p, ' ', width);
 		return;
 	}
 
 	if (TBL_DATA_HORIZ & data->flags || 
 			TBL_DATA_DHORIZ & data->flags) {
-		write_data_spanner(data, width);
+		write_data_spanner(p, data, width);
 		return;
 	}
 
@@ -451,7 +465,7 @@ write_data(const struct tbl_data *data, int width)
 	case (TBL_CELL_HORIZ):
 		/* FALLTHROUGH */
 	case (TBL_CELL_DHORIZ):
-		write_data_spanner(data, width);
+		write_data_spanner(p, data, width);
 		break;
 	case (TBL_CELL_LONG):
 		/* FALLTHROUGH */
@@ -460,10 +474,10 @@ write_data(const struct tbl_data *data, int width)
 	case (TBL_CELL_LEFT):
 		/* FALLTHROUGH */
 	case (TBL_CELL_RIGHT):
-		write_data_literal(data, width);
+		write_data_literal(p, data, width);
 		break;
 	case (TBL_CELL_NUMBER):
-		write_data_number(data, width);
+		write_data_number(p, data, width);
 		break;
 	default:
 		abort();
@@ -473,32 +487,34 @@ write_data(const struct tbl_data *data, int width)
 
 
 static void
-write_spanner(const struct tbl_head *head)
+write_spanner(struct termp *p, const struct tbl_head *head)
 {
-	char		*p;
+	char		*w;
 
-	p = NULL;
+	w = NULL;
 	switch (head->pos) {
 	case (TBL_HEAD_VERT):
-		p = "|";
+		w = "|";
 		break;
 	case (TBL_HEAD_DVERT):
-		p = "||";
+		w = "||";
 		break;
 	default:
 		break;
 	}
 
 	assert(p);
-	printf("%s", p);
+	term_word(p, w);
 }
 
 
 static inline void
-write_char(char c, int len)
+write_char(struct termp *p, char c, int len)
 {
 	int		 i;
+	static char	 w[2];
 
+	w[0] = c;
 	for (i = 0; i < len; i++)
-		printf("%c", c);
+		term_word(p, w);
 }

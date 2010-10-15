@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.1 2010/10/15 19:20:03 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.2 2010/10/15 21:33:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "out.h"
+#include "term.h"
 #include "tbl_extern.h"
 
 /* FIXME: warn about losing data contents if cell is HORIZ. */

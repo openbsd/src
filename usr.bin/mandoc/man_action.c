@@ -1,4 +1,4 @@
-/*	$Id: man_action.c,v 1.25 2010/10/15 20:45:03 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.26 2010/10/15 21:33:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,8 @@
 #include "libman.h"
 #include "libmandoc.h"
 
+#include "out.h"
+#include "term.h"
 #include "tbl.h"
 
 struct	actions {
