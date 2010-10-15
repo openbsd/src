@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.298 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: rde.c,v 1.299 2010/10/15 07:43:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1489,6 +1489,8 @@ bad_flags:
 			 */
 			if ((flags & ATTR_PARTIAL) == 0)
 				goto bad_len;
+			log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
+			    "partial attribute ignored");
 			plen += attr_len;
 			break;
 		}
@@ -1509,7 +1511,7 @@ bad_flags:
 		/* 4-byte ready server take the default route */
 		goto optattr;
 	case ATTR_COMMUNITIES:
-		if ((attr_len & 0x3) != 0) {
+		if (attr_len % 4 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
 			 * draft-ietf-idr-optional-transitive-00.txt
@@ -1517,15 +1519,16 @@ bad_flags:
 			 */
 			if ((flags & ATTR_PARTIAL) == 0)
 				goto bad_len;
-			else
-				a->flags |= F_ATTR_PARSE_ERR;
+			a->flags |= F_ATTR_PARSE_ERR;
+			log_peer_warnx(&peer->conf, "bad COMMUNITIES, "
+			    "path invalidated and prefix withdrawn");
 		}
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
 		goto optattr;
 	case ATTR_EXT_COMMUNITIES:
-		if ((attr_len & 0x7) != 0) {
+		if (attr_len % 8 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
 			 * draft-ietf-idr-optional-transitive-00.txt
@@ -1533,8 +1536,9 @@ bad_flags:
 			 */
 			if ((flags & ATTR_PARTIAL) == 0)
 				goto bad_len;
-			else
-				a->flags |= F_ATTR_PARSE_ERR;
+			a->flags |= F_ATTR_PARSE_ERR;
+			log_peer_warnx(&peer->conf, "bad EXT_COMMUNITIES, "
+			    "path invalidated and prefix withdrawn");
 		}
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
@@ -1547,7 +1551,7 @@ bad_flags:
 			goto bad_flags;
 		goto optattr;
 	case ATTR_CLUSTER_LIST:
-		if ((attr_len & 0x3) != 0)
+		if (attr_len % 4 != 0)
 			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
@@ -1585,7 +1589,8 @@ bad_flags:
 			/* see ATTR_AGGREGATOR ... */
 			if ((flags & ATTR_PARTIAL) == 0)
 				goto bad_len;
-			/* we should add a warning here */
+			log_peer_warnx(&peer->conf, "bad AS4_AGGREGATOR, "
+			    "partial attribute ignored");
 			plen += attr_len;
 			break;
 		}
@@ -1611,6 +1616,8 @@ bad_flags:
 			 */
 			if (flags & ATTR_PARTIAL) {
 				a->flags |= F_ATTR_PARSE_ERR;
+				log_peer_warnx(&peer->conf, "bad AS4_PATH, "
+				    "path invalidated and prefix withdrawn");
 				goto optattr;
 			} else {
 				rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
@@ -1940,10 +1947,16 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 
 	if (rde_as4byte(peer)) {
 		/* NEW session using 4-byte ASNs */
-		if (nasp)
+		if (nasp) {
+			log_peer_warnx(&peer->conf, "uses 4-byte ASN "
+			    "but sent AS4_PATH attribute.");
 			attr_free(a, nasp);
-		if (naggr)
+		}
+		if (naggr) {
+			log_peer_warnx(&peer->conf, "uses 4-byte ASN "
+			    "but sent AS4_AGGREGATOR attribute.");
 			attr_free(a, naggr);
+		}
 		return;
 	}
 	/* OLD session using 2-byte ASNs */
