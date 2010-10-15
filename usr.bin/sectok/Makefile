@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2002/05/11 00:20:20 espie Exp $
+#	$OpenBSD: Makefile,v 1.4 2010/10/15 10:18:42 jsg Exp $
 
 PROG=	sectok
 SRCS=   main.c cmds.c cyberflex.c
-DPADD=	${LIBSECTOK} ${LIBCRYPTO} ${LIBDES}
-LDADD=  -lsectok -lcrypto -ldes
+DPADD=	${LIBSECTOK} ${LIBCRYPTO}
+LDADD=  -lsectok -lcrypto
 
 CFLAGS+=-Wall
 

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap_ms.c,v 1.12 2002/06/15 08:02:00 brian Exp $
+ * $OpenBSD: chap_ms.c,v 1.13 2010/10/15 10:18:42 jsg Exp $
  */
 
 #include <ctype.h>
@@ -36,11 +36,7 @@
 #else
 #include <sys/types.h>
 #include <stdlib.h>
-#ifdef __NetBSD__
 #include <openssl/des.h>
-#else
-#include <des.h>
-#endif
 #include <openssl/sha.h>
 #endif
 #include <md4.h>
@@ -103,18 +99,18 @@ MakeKey(u_char *key, u_char *des_key)
     des_key[6] = Get7Bits(key, 42);
     des_key[7] = Get7Bits(key, 49);
 
-    des_set_odd_parity((des_cblock *)des_key);
+    DES_set_odd_parity((DES_cblock *)des_key);
 }
 
 static void /* IN 8 octets IN 7 octest OUT 8 octets */
 DesEncrypt(u_char *clear, u_char *key, u_char *cipher)
 {
-    des_cblock		des_key;
-    des_key_schedule	key_schedule;
+    DES_cblock		des_key;
+    DES_key_schedule	key_schedule;
 
     MakeKey(key, des_key);
-    des_set_key(&des_key, key_schedule);
-    des_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, key_schedule, 1);
+    DES_set_key(&des_key, &key_schedule);
+    DES_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, &key_schedule, 1);
 }
 
 static void      /* IN 8 octets      IN 16 octets     OUT 24 octets */

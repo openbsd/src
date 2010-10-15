@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyberflex.c,v 1.28 2007/12/30 13:35:27 sobrado Exp $ */
+/*	$OpenBSD: cyberflex.c,v 1.29 2010/10/15 10:18:42 jsg Exp $ */
 
 /*
  * copyright 1999, 2000
@@ -38,7 +38,7 @@
 #include <signal.h>
 #include <string.h>
 #include <fcntl.h>
-#include <des.h>
+#include <openssl/des.h>
 #ifdef __linux
 #include <sha.h>
 #define SHA1_CTX SHA_CTX
@@ -65,10 +65,6 @@
 
 #include "sc.h"
 
-#ifdef __sun
-#define des_set_key(key, schedule) des_key_sched(key, schedule)
-#endif
-
 #define MAX_KEY_FILE_SIZE 1024
 #define NUM_RSA_KEY_ELEMENTS 5
 #define RSA_BIT_LEN 1024
@@ -87,7 +83,7 @@ static void print_acl(int isdir, u_char *acl);
 
 #ifndef __palmos__
 /* default signed applet key of Cyberflex Access */
-static des_cblock app_key = {0x6A, 0x21, 0x36, 0xF5, 0xD8, 0x0C, 0x47, 0x83};
+static DES_cblock app_key = {0x6A, 0x21, 0x36, 0xF5, 0xD8, 0x0C, 0x47, 0x83};
 #endif
 
 static int
@@ -612,8 +608,8 @@ jload(int argc, char *argv[])
 	int	i, j, vflag = 0, gotprog = 0, gotcont = 0, fd_app, size;
 	int	aidlen = 0, sw;
 	int	cont_size = 1152, inst_size = 1024;
-	des_cblock tmp;
-	des_key_schedule schedule;
+	DES_cblock tmp;
+	DES_key_schedule schedule;
 	static u_char acl[] = {0x81, 0, 0, 0xff, 0, 0, 0, 0};
 
 	optind = optreset = 1;
@@ -723,12 +719,12 @@ jload(int argc, char *argv[])
 	/* chain.  DES encrypt one block, XOR the cyphertext with the next
 	 * block, ... continues until the end of the buffer */
 
-	des_set_key(&app_key, schedule);
+	DES_set_key(&app_key, &schedule);
 
 	for (i = 0; i < size / BLOCK_SIZE; i++) {
 		for (j = 0; j < BLOCK_SIZE; j++)
 			tmp[j] = tmp[j] ^ app_data[i * BLOCK_SIZE + j];
-		des_ecb_encrypt(&tmp, &tmp, schedule, DES_ENCRYPT);
+		DES_ecb_encrypt(&tmp, &tmp, &schedule, DES_ENCRYPT);
 	}
 
 	if (vflag) {

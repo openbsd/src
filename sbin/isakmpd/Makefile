@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.81 2010/06/29 19:50:16 reyk Exp $
+#	$OpenBSD: Makefile,v 1.82 2010/10/15 10:18:42 jsg Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -75,8 +75,8 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 #LWRESLIB=      /usr/local/lib/liblwres.a
 #DNSSEC_CFLAGS= -I/usr/local/include -DLWRES
 
-LDADD+=		${LWRESLIB} -lkeynote -lcrypto -ldes -lm
-DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBDES} ${LIBM}
+LDADD+=		${LWRESLIB} -lkeynote -lcrypto -lm
+DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBM}
 
 exchange_num.c exchange_num.h: stamp_exchange_num
 

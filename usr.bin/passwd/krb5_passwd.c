@@ -49,7 +49,7 @@
 #include <dlfcn.h>
 #include <util.h>
 #include <err.h>
-#include <des.h>
+#include <openssl/ui.h>
 #include <kerberosV/krb5.h>
 
 /* RCSID("$KTH: kpasswd.c,v 1.23 2000/12/31 07:48:34 assar Exp $"); */
@@ -113,7 +113,8 @@ krb5_passwd(int argc, char **argv)
 	krb5_data_zero(&result_code_string);
 	krb5_data_zero(&result_string);
 
-	if (des_read_pw_string(pwbuf, sizeof(pwbuf), "New password:", 1) != 0)
+	if (UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), "New password:",
+	    1) != 0)
 		return 1;
 
 	ret = krb5_change_password (context, &cred, pwbuf, &result_code,

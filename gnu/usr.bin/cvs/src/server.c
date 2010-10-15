@@ -6416,8 +6416,8 @@ krb_encrypt_input (fnclosure, input, output, size)
     struct krb_encrypt_data *kd = (struct krb_encrypt_data *) fnclosure;
     int tcount;
 
-    des_cbc_encrypt ((C_Block *) input, (C_Block *) output,
-		     size, kd->sched, &kd->block, 0);
+    DES_cbc_encrypt ((C_Block *) input, (C_Block *) output,
+		     size, &kd->sched, &kd->block, 0);
 
     /* SIZE is the size of the buffer, which is set by the encryption
        routine.  The packetizing buffer will arrange for the first two
@@ -6456,15 +6456,15 @@ krb_encrypt_output (fnclosure, input, output, size, translated)
        the packetizing buffer.  */
     aligned = (size + 7) & ~7;
 
-    /* We use des_cbc_encrypt rather than krb_mk_priv because the
+    /* We use DES_cbc_encrypt rather than krb_mk_priv because the
        latter sticks a timestamp in the block, and krb_rd_priv expects
        that timestamp to be within five minutes of the current time.
        Given the way the CVS server buffers up data, that can easily
        fail over a long network connection.  We trust krb_recvauth to
        guard against a replay attack.  */
 
-    des_cbc_encrypt ((C_Block *) input, (C_Block *) output, aligned,
-		     kd->sched, &kd->block, 1);
+    DES_cbc_encrypt ((C_Block *) input, (C_Block *) output, aligned,
+		     &kd->sched, &kd->block, 1);
 
     *translated = aligned;
 

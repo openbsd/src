@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.9 2008/03/24 16:11:00 deraadt Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.10 2010/10/15 10:18:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -39,7 +39,7 @@
 
 #include <login_cap.h>
 #include <bsd_auth.h>
-#include <des.h>			/* openssl/des.h */
+#include <openssl/des.h>
 
 #include "login_tis.h"
 
@@ -343,7 +343,7 @@ tis_getkey(struct tis_connection *tc)
 {
 	size_t len;
 	struct stat sb;
-	des_cblock cblock;
+	DES_cblock cblock;
 	char *key, *tbuf = NULL;
 	FILE *fp;
 	int error;
@@ -393,8 +393,8 @@ tis_getkey(struct tis_connection *tc)
 		tbuf[len] = '\0';
 		key = tbuf;
 	}
-	des_string_to_key(key, &cblock);
-	error = des_set_key(&cblock, tc->keysched);
+	DES_string_to_key(key, &cblock);
+	error = DES_set_key(&cblock, &tc->keysched);
 	memset(key, 0, len);
 	memset(&cblock, 0, sizeof(cblock));
 	free(tbuf);
@@ -466,8 +466,8 @@ tis_open(struct tis_connection *tc, const char *server, char *ebuf)
 ssize_t
 tis_recv(struct tis_connection *tc, u_char *buf, size_t bufsiz)
 {
-	des_key_schedule ks;
-	des_cblock iv;
+	DES_key_schedule ks;
+	DES_cblock iv;
 	ssize_t len;
 	u_char *cp, *ep, tbuf[TIS_BUFSIZ];
 
@@ -502,10 +502,10 @@ tis_recv(struct tis_connection *tc, u_char *buf, size_t bufsiz)
 			syslog(LOG_ERR, "encrypted data too large to store");
 			return (-1);
 		}
-		memcpy(ks, tc->keysched, sizeof(ks));
+		memcpy(&ks, &tc->keysched, sizeof(ks));
 		memset(iv, 0, sizeof(iv));
-		des_ncbc_encrypt((des_cblock *)buf, (des_cblock *)tbuf,
-		    len, ks, &iv, DES_DECRYPT);
+		DES_ncbc_encrypt(buf, tbuf,
+		    len, &ks, &iv, DES_DECRYPT);
 		if (strlcpy(buf, tbuf, bufsiz) >= bufsiz) {
 			syslog(LOG_ERR, "unencrypted data too large to store");
 			memset(tbuf, 0, sizeof(tbuf));
@@ -524,14 +524,14 @@ ssize_t
 tis_send(struct tis_connection *tc, u_char *buf, size_t len)
 {
 	struct iovec iov[2];
-	des_key_schedule ks;
-	des_cblock iv;
+	DES_key_schedule ks;
+	DES_cblock iv;
 	ssize_t nwritten;
 	size_t n;
 	u_char cbuf[TIS_BUFSIZ];
 
 	if (tc->keyfile != NULL) {
-		memcpy(ks, tc->keysched, sizeof(ks));
+		memcpy(&ks, &tc->keysched, sizeof(ks));
 		memset(iv, 0, sizeof(iv));
 
 		len++;				/* we need to encrypt the NUL */
@@ -541,8 +541,8 @@ tis_send(struct tis_connection *tc, u_char *buf, size_t len)
 			syslog(LOG_ERR, "encoded data too large to store");
 			return (-1);
 		}
-		des_ncbc_encrypt((des_cblock *)buf, (des_cblock *)cbuf, len,
-		    ks, &iv, DES_ENCRYPT);
+		DES_ncbc_encrypt(buf, cbuf, len,
+		    &ks, &iv, DES_ENCRYPT);
 		len = tis_encode(cbuf, len, sizeof(cbuf));
 		buf = cbuf;
 	}

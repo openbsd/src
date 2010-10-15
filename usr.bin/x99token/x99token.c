@@ -1,4 +1,4 @@
-/*	$OpenBSD: x99token.c,v 1.7 2007/03/29 10:59:13 jmc Exp $	*/
+/*	$OpenBSD: x99token.c,v 1.8 2010/10/15 10:18:42 jsg Exp $	*/
 
 /*
  * X9.9 calculator
@@ -18,13 +18,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <des.h>
+#include <openssl/des.h>
 
 #define	KEYFILE		".keyfile.des"
 #define	HEXDIGITS	"0123456789abcdef"
 #define	DECDIGITS	"0123456789012345"
 
-void predict(des_key_schedule, const char *, int);
+void predict(DES_key_schedule, const char *, int);
 
 char *digits = HEXDIGITS;
 extern char *__progname;
@@ -34,8 +34,8 @@ main(int argc, char **argv)
 {
 	int i;
 	char buf[256];
-	des_key_schedule ks;
-	des_cblock key;
+	DES_key_schedule ks;
+	DES_cblock key;
 	char _keyfile[MAXPATHLEN];
 	char *keyfile = 0;
 	FILE *fp;
@@ -147,8 +147,8 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	des_fixup_key_parity(&key);
-	des_key_sched(&key, ks);
+	DES_fixup_key_parity(&key);
+	DES_key_sched(&key, &ks);
 
 	buf[0] = '\0';
 	readpassphrase("Enter challenge: ", buf, sizeof(buf), RPP_ECHO_ON);
@@ -171,15 +171,15 @@ main(int argc, char **argv)
 }
 
 void
-predict(des_key_schedule ks, const char *chal, int cnt)
+predict(DES_key_schedule ks, const char *chal, int cnt)
 {
 	int i;
-	des_cblock cb;
+	DES_cblock cb;
 
 	memcpy(&cb, chal, sizeof(cb));
 	while (cnt-- > 0) {
 		printf("%.8s: ", (char *)cb);
-		des_ecb_encrypt(&cb, &cb, ks, DES_ENCRYPT);
+		DES_ecb_encrypt(&cb, &cb, &ks, DES_ENCRYPT);
 		for (i = 0; i < 4; ++i) {
 			printf("%c", digits[(cb[i]>>4) & 0xf]);
 			printf("%c", digits[(cb[i]>>0) & 0xf]);

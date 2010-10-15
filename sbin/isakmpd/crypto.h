@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.18 2006/06/02 19:35:55 hshoexer Exp $	 */
+/* $OpenBSD: crypto.h,v 1.19 2010/10/15 10:18:42 jsg Exp $	 */
 /* $EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	 */
 
 /*
@@ -32,7 +32,7 @@
 #ifndef _CRYPTO_H_
 #define _CRYPTO_H_
 
-#include <des.h>
+#include <openssl/des.h>
 #include <blf.h>
 #include <cast.h>
 
@@ -80,7 +80,7 @@ struct keystate {
 	u_int8_t        iv2[MAXBLK];
 	u_int8_t       *riv, *liv;
 	union {
-		des_key_schedule desks[3];
+		DES_key_schedule desks[3];
 		blf_ctx         blfks;
 		cast_key        castks;
 		AES_KEY         aesks[2];
