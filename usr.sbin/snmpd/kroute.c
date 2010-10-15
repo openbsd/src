@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.14 2010/06/11 10:45:36 jsg Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.15 2010/10/15 09:27:03 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -745,7 +745,7 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	u_int8_t	 l = 0, i, len;
 
 	/*
-	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * sin6_len is the size of the sockaddr so subtract the offset of
 	 * the possibly truncated sin6_addr struct.
 	 */
 	len = sa_in6->sin6_len -
