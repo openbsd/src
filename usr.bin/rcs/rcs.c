@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.67 2010/10/05 15:16:48 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.68 2010/10/15 08:44:12 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,64 +39,13 @@
 
 #include "diff.h"
 #include "rcs.h"
+#include "rcsparse.h"
 #include "rcsprog.h"
 #include "rcsutil.h"
 #include "xmalloc.h"
 
-#define RCS_BUFSIZE	16384
-#define RCS_BUFEXTSIZE	8192
 #define RCS_KWEXP_SIZE  1024
 
-/* RCS token types */
-#define RCS_TOK_ERR	-1
-#define RCS_TOK_EOF	0
-#define RCS_TOK_NUM	1
-#define RCS_TOK_ID	2
-#define RCS_TOK_STRING	3
-#define RCS_TOK_SCOLON	4
-#define RCS_TOK_COLON	5
-
-#define RCS_TOK_HEAD		8
-#define RCS_TOK_BRANCH		9
-#define RCS_TOK_ACCESS		10
-#define RCS_TOK_SYMBOLS		11
-#define RCS_TOK_LOCKS		12
-#define RCS_TOK_COMMENT		13
-#define RCS_TOK_EXPAND		14
-#define RCS_TOK_DATE		15
-#define RCS_TOK_AUTHOR		16
-#define RCS_TOK_STATE		17
-#define RCS_TOK_NEXT		18
-#define RCS_TOK_BRANCHES	19
-#define RCS_TOK_DESC		20
-#define RCS_TOK_LOG		21
-#define RCS_TOK_TEXT		22
-#define RCS_TOK_STRICT		23
-#define RCS_TOK_COMMITID	24
-
-#define RCS_ISKEY(t)	(((t) >= RCS_TOK_HEAD) && ((t) <= RCS_TOK_BRANCHES))
-
-#define RCS_NOSCOL	0x01	/* no terminating semi-colon */
-#define RCS_VOPT	0x02	/* value is optional */
-
-/* opaque parse data */
-struct rcs_pdata {
-	u_int	rp_lines;
-
-	char	*rp_buf;
-	size_t	 rp_blen;
-	char	*rp_bufend;
-	size_t	 rp_tlen;
-
-	/* pushback token buffer */
-	char	rp_ptok[128];
-	int	rp_pttype;	/* token type, RCS_TOK_ERR if no token */
-
-	FILE	*rp_file;
-};
-
-#define RCS_TOKSTR(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
-#define RCS_TOKLEN(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
 
 /* invalid characters in RCS states */
 static const char rcs_state_invch[] = RCS_STATE_INVALCHAR;
@@ -189,33 +138,6 @@ struct rcs_kw rcs_expkw[] =  {
 
 #define NB_COMTYPES	(sizeof(rcs_comments)/sizeof(rcs_comments[0]))
 
-static struct rcs_key {
-	char	rk_str[16];
-	int	rk_id;
-	int	rk_val;
-	int	rk_flags;
-} rcs_keys[] = {
-	{ "access",   RCS_TOK_ACCESS,   RCS_TOK_ID,     RCS_VOPT     },
-	{ "author",   RCS_TOK_AUTHOR,   RCS_TOK_ID,     0            },
-	{ "branch",   RCS_TOK_BRANCH,   RCS_TOK_NUM,    RCS_VOPT     },
-	{ "branches", RCS_TOK_BRANCHES, RCS_TOK_NUM,    RCS_VOPT     },
-	{ "comment",  RCS_TOK_COMMENT,  RCS_TOK_STRING, RCS_VOPT     },
-	{ "commitid", RCS_TOK_COMMITID, RCS_TOK_ID,     0            },
-	{ "date",     RCS_TOK_DATE,     RCS_TOK_NUM,    0            },
-	{ "desc",     RCS_TOK_DESC,     RCS_TOK_STRING, RCS_NOSCOL   },
-	{ "expand",   RCS_TOK_EXPAND,   RCS_TOK_STRING, RCS_VOPT     },
-	{ "head",     RCS_TOK_HEAD,     RCS_TOK_NUM,    RCS_VOPT     },
-	{ "locks",    RCS_TOK_LOCKS,    RCS_TOK_ID,     0            },
-	{ "log",      RCS_TOK_LOG,      RCS_TOK_STRING, RCS_NOSCOL   },
-	{ "next",     RCS_TOK_NEXT,     RCS_TOK_NUM,    RCS_VOPT     },
-	{ "state",    RCS_TOK_STATE,    RCS_TOK_ID,     RCS_VOPT     },
-	{ "strict",   RCS_TOK_STRICT,   0,              0,           },
-	{ "symbols",  RCS_TOK_SYMBOLS,  0,              0            },
-	{ "text",     RCS_TOK_TEXT,     RCS_TOK_STRING, RCS_NOSCOL   },
-};
-
-#define RCS_NKEYS	(sizeof(rcs_keys)/sizeof(rcs_keys[0]))
-
 static const char *rcs_errstrs[] = {
 	"No error",
 	"No such entry",
@@ -232,23 +154,8 @@ char *timezone_flag = NULL;
 
 int		rcs_patch_lines(struct rcs_lines *, struct rcs_lines *);
 static int	rcs_movefile(char *, char *, mode_t, u_int);
-static void	rcs_parse_init(RCSFILE *);
-static int	rcs_parse_admin(RCSFILE *);
-static int	rcs_parse_delta(RCSFILE *);
-static void	rcs_parse_deltas(RCSFILE *, RCSNUM *);
-static int	rcs_parse_deltatext(RCSFILE *);
-static void	rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
-static void	rcs_parse_desc(RCSFILE *);
 
-static int	rcs_parse_access(RCSFILE *);
-static int	rcs_parse_symbols(RCSFILE *);
-static int	rcs_parse_locks(RCSFILE *);
-static int	rcs_parse_branches(RCSFILE *, struct rcs_delta *);
 static void	rcs_freedelta(struct rcs_delta *);
-static void	rcs_freepdata(struct rcs_pdata *);
-static int	rcs_gettok(RCSFILE *);
-static int	rcs_pushtok(RCSFILE *, const char *, int);
-static void	rcs_growbuf(RCSFILE *);
 static void	rcs_strprint(const u_char *, size_t, FILE *);
 
 static BUF	*rcs_expand_keywords(char *, struct rcs_delta *, BUF *, int);
@@ -286,7 +193,8 @@ rcs_open(const char *path, int fd, int flags, ...)
 	TAILQ_INIT(&(rfp->rf_locks));
 
 	if (!(rfp->rf_flags & RCS_CREATE)) {
-		rcs_parse_init(rfp);
+		if (rcsparse_init(rfp))
+			errx(1, "could not parse admin data");
 
 		/* fill in rd_locker */
 		TAILQ_FOREACH(lkr, &(rfp->rf_locks), rl_list) {
@@ -361,7 +269,7 @@ rcs_close(RCSFILE *rfp)
 	if (rfp->rf_desc != NULL)
 		xfree(rfp->rf_desc);
 	if (rfp->rf_pdata != NULL)
-		rcs_freepdata(rfp->rf_pdata);
+		rcsparse_free(rfp);
 	xfree(rfp);
 }
 
@@ -391,7 +299,8 @@ rcs_write(RCSFILE *rfp)
 		return;
 
 	/* Write operations need the whole file parsed */
-	rcs_parse_deltatexts(rfp, NULL);
+	if (rcsparse_deltatexts(rfp, NULL))
+		errx(1, "problem parsing deltatexts");
 
 	(void)xasprintf(&fn, "%s/rcs.XXXXXXXXXX", rcs_tmpdir);
 
@@ -1162,7 +1071,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 
 	/* No matter what, we'll need everything parsed up until the description
            so go for it. */
-	rcs_parse_desc(rfp);
+	if (rcsparse_deltas(rfp, NULL))
+		return (NULL);
 
 	rdp = rcs_findrev(rfp, rfp->rf_head);
 	if (rdp == NULL) {
@@ -1171,7 +1081,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	}
 
 	if (rdp->rd_tlen == 0)
-		rcs_parse_deltatexts(rfp, rfp->rf_head);
+		if (rcsparse_deltatexts(rfp, rfp->rf_head))
+			return (NULL);
 
 	len = rdp->rd_tlen;
 	if (len == 0) {
@@ -1258,7 +1169,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		data = buf_release(rbuf);
 		/* check if we have parsed this rev's deltatext */
 		if (rdp->rd_tlen == 0)
-			rcs_parse_deltatexts(rfp, rdp->rd_num);
+			if (rcsparse_deltatexts(rfp, rdp->rd_num))
+				return (NULL);
 
 		rbuf = rcs_patchfile(data, dlen, patch, plen, rcs_patch_lines);
 		xfree(data);
@@ -1521,7 +1433,8 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 	rdp = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
 	if (rdp == NULL ||
 	    rcsnum_cmp(rdp->rd_num, rev, 0) == -1) {
-		rcs_parse_deltas(rfp, rev);
+		if (rcsparse_deltas(rfp, rev))
+			return (NULL);
 	}
 
 	/*
@@ -1659,714 +1572,6 @@ rcs_errstr(int code)
 	return (esp);
 }
 
-/* rcs_parse_deltas()
- *
- * Parse deltas. If <rev> is not NULL, parse only as far as that
- * revision. If <rev> is NULL, parse all deltas.
- */
-static void
-rcs_parse_deltas(RCSFILE *rfp, RCSNUM *rev)
-{
-	int ret;
-	struct rcs_delta *enddelta;
-
-	if ((rfp->rf_flags & PARSED_DELTAS) || (rfp->rf_flags & RCS_CREATE))
-		return;
-
-	for (;;) {
-		ret = rcs_parse_delta(rfp);
-		if (rev != NULL) {
-			enddelta = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
-			if (rcsnum_cmp(enddelta->rd_num, rev, 0) == 0)
-				break;
-		}
-		if (ret == 0) {
-			rfp->rf_flags |= PARSED_DELTAS;
-			break;
-		}
-		else if (ret == -1)
-			errx(1, "error parsing deltas");
-	}
-}
-
-/* rcs_parse_deltatexts()
- *
- * Parse deltatexts. If <rev> is not NULL, parse only as far as that
- * revision. If <rev> is NULL, parse everything.
- */
-static void
-rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
-{
-	int ret;
-	struct rcs_delta *rdp;
-
-	if ((rfp->rf_flags & PARSED_DELTATEXTS) ||
-	    (rfp->rf_flags & RCS_CREATE))
-		return;
-
-	if (!(rfp->rf_flags & PARSED_DESC))
-		rcs_parse_desc(rfp);
-	for (;;) {
-		if (rev != NULL) {
-			rdp = rcs_findrev(rfp, rev);
-			if (rdp->rd_text != NULL)
-				break;
-			else
-				ret = rcs_parse_deltatext(rfp);
-		} else
-			ret = rcs_parse_deltatext(rfp);
-		if (ret == 0) {
-			rfp->rf_flags |= PARSED_DELTATEXTS;
-			break;
-		}
-		else if (ret == -1)
-			errx(1, "problem parsing deltatexts");
-	}
-}
-
-/* rcs_parse_desc()
- *
- * Parse RCS description.
- */
-static void
-rcs_parse_desc(RCSFILE *rfp)
-{
-	int ret = 0;
-
-	if ((rfp->rf_flags & PARSED_DESC) || (rfp->rf_flags & RCS_CREATE))
-		return;
-	if (!(rfp->rf_flags & PARSED_DELTAS))
-		rcs_parse_deltas(rfp, NULL);
-	/* do parsing */
-	ret = rcs_gettok(rfp);
-	if (ret != RCS_TOK_DESC)
-		errx(1, "token `%s' found where RCS desc expected",
-		    RCS_TOKSTR(rfp));
-
-	ret = rcs_gettok(rfp);
-	if (ret != RCS_TOK_STRING)
-		errx(1, "token `%s' found where RCS desc expected",
-		    RCS_TOKSTR(rfp));
-
-	rfp->rf_desc = xstrdup(RCS_TOKSTR(rfp));
-	rfp->rf_flags |= PARSED_DESC;
-}
-
-/*
- * rcs_parse_init()
- *
- * Initial parsing of file <path>, which is in the RCS format.
- * Just does admin section.
- */
-static void
-rcs_parse_init(RCSFILE *rfp)
-{
-	struct rcs_pdata *pdp;
-
-	if (rfp->rf_flags & RCS_PARSED)
-		return;
-
-	pdp = xcalloc(1, sizeof(*pdp));
-
-	pdp->rp_lines = 0;
-	pdp->rp_pttype = RCS_TOK_ERR;
-
-	if ((pdp->rp_file = fdopen(rfp->rf_fd, "r")) == NULL)
-		err(1, "fdopen: `%s'", rfp->rf_path);
-
-	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);
-	pdp->rp_blen = RCS_BUFSIZE;
-	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
-
-	/* ditch the strict lock */
-	rfp->rf_flags &= ~RCS_SLOCK;
-	rfp->rf_pdata = pdp;
-
-	if (rcs_parse_admin(rfp) < 0) {
-		rcs_freepdata(pdp);
-		errx(1, "could not parse admin data");
-	}
-
-	if (rfp->rf_flags & RCS_PARSE_FULLY)
-		rcs_parse_deltatexts(rfp, NULL);
-
-	rfp->rf_flags |= RCS_SYNCED;
-}
-
-/*
- * rcs_parse_admin()
- *
- * Parse the administrative portion of an RCS file.
- * Returns the type of the first token found after the admin section on
- * success, or -1 on failure.
- */
-static int
-rcs_parse_admin(RCSFILE *rfp)
-{
-	u_int i;
-	int tok, ntok, hmask;
-	struct rcs_key *rk;
-
-	/* hmask is a mask of the headers already encountered */
-	hmask = 0;
-	for (;;) {
-		tok = rcs_gettok(rfp);
-		if (tok == RCS_TOK_ERR) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("parse error in RCS admin section");
-			goto fail;
-		} else if (tok == RCS_TOK_NUM || tok == RCS_TOK_DESC) {
-			/*
-			 * Assume this is the start of the first delta or
-			 * that we are dealing with an empty RCS file and
-			 * we just found the description.
-			 */
-			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
-			return (tok);
-		}
-
-		rk = NULL;
-		for (i = 0; i < RCS_NKEYS; i++)
-			if (rcs_keys[i].rk_id == tok)
-				rk = &(rcs_keys[i]);
-
-		if (hmask & (1 << tok)) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("duplicate RCS key");
-			goto fail;
-		}
-		hmask |= (1 << tok);
-
-		switch (tok) {
-		case RCS_TOK_HEAD:
-		case RCS_TOK_BRANCH:
-		case RCS_TOK_COMMENT:
-		case RCS_TOK_EXPAND:
-			ntok = rcs_gettok(rfp);
-			if (ntok == RCS_TOK_SCOLON)
-				break;
-			if (ntok != rk->rk_val) {
-				rcs_errno = RCS_ERR_PARSE;
-				warnx("invalid value type for RCS key `%s'",
-				    rk->rk_str);
-			}
-
-			if (tok == RCS_TOK_HEAD) {
-				if (rfp->rf_head == NULL)
-					rfp->rf_head = rcsnum_alloc();
-				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
-				    rfp->rf_head);
-			} else if (tok == RCS_TOK_BRANCH) {
-				if (rfp->rf_branch == NULL)
-					rfp->rf_branch = rcsnum_alloc();
-				if (rcsnum_aton(RCS_TOKSTR(rfp), NULL,
-				    rfp->rf_branch) < 0)
-					goto fail;
-			} else if (tok == RCS_TOK_COMMENT) {
-				rfp->rf_comment = xstrdup(RCS_TOKSTR(rfp));
-			} else if (tok == RCS_TOK_EXPAND) {
-				rfp->rf_expand = xstrdup(RCS_TOKSTR(rfp));
-			}
-
-			/* now get the expected semi-colon */
-			ntok = rcs_gettok(rfp);
-			if (ntok != RCS_TOK_SCOLON) {
-				rcs_errno = RCS_ERR_PARSE;
-				warnx("missing semi-colon after RCS `%s' key",
-				    rk->rk_str);
-				goto fail;
-			}
-			break;
-		case RCS_TOK_ACCESS:
-			if (rcs_parse_access(rfp) < 0)
-				goto fail;
-			break;
-		case RCS_TOK_SYMBOLS:
-			if (rcs_parse_symbols(rfp) < 0)
-				goto fail;
-			break;
-		case RCS_TOK_LOCKS:
-			if (rcs_parse_locks(rfp) < 0)
-				goto fail;
-			break;
-		default:
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in RCS admin section",
-			    RCS_TOKSTR(rfp));
-			goto fail;
-		}
-	}
-
-fail:
-	return (-1);
-}
-
-/*
- * rcs_parse_delta()
- *
- * Parse an RCS delta section and allocate the structure to store that delta's
- * information in the <rfp> delta list.
- * Returns 1 if the section was parsed OK, 0 if it is the last delta, and
- * -1 on error.
- */
-static int
-rcs_parse_delta(RCSFILE *rfp)
-{
-	int ret, tok, ntok, hmask;
-	u_int i;
-	char *tokstr;
-	RCSNUM *datenum;
-	struct rcs_delta *rdp;
-	struct rcs_key *rk;
-
-	tok = rcs_gettok(rfp);
-	if (tok == RCS_TOK_DESC) {
-		rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
-		return (0);
-	} else if (tok != RCS_TOK_NUM) {
-		rcs_errno = RCS_ERR_PARSE;
-		warnx("unexpected token `%s' at start of delta",
-		    RCS_TOKSTR(rfp));
-		return (-1);
-	}
-
-	rdp = xcalloc(1, sizeof(*rdp));
-
-	rdp->rd_num = rcsnum_alloc();
-	rdp->rd_next = rcsnum_alloc();
-
-	TAILQ_INIT(&(rdp->rd_branches));
-
-	rcsnum_aton(RCS_TOKSTR(rfp), NULL, rdp->rd_num);
-
-	hmask = 0;
-	ret = 0;
-	tokstr = NULL;
-
-	for (;;) {
-		tok = rcs_gettok(rfp);
-		if (tok == RCS_TOK_ERR) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("parse error in RCS delta section");
-			rcs_freedelta(rdp);
-			return (-1);
-		} else if (tok == RCS_TOK_NUM || tok == RCS_TOK_DESC) {
-			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
-			ret = (tok == RCS_TOK_NUM ? 1 : 0);
-			break;
-		}
-
-		rk = NULL;
-		for (i = 0; i < RCS_NKEYS; i++)
-			if (rcs_keys[i].rk_id == tok)
-				rk = &(rcs_keys[i]);
-
-		if (hmask & (1 << tok)) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("duplicate RCS key");
-			rcs_freedelta(rdp);
-			return (-1);
-		}
-		hmask |= (1 << tok);
-
-		switch (tok) {
-		case RCS_TOK_DATE:
-		case RCS_TOK_AUTHOR:
-		case RCS_TOK_STATE:
-		case RCS_TOK_NEXT:
-		case RCS_TOK_COMMITID:
-			ntok = rcs_gettok(rfp);
-			if (ntok == RCS_TOK_SCOLON) {
-				if (rk->rk_flags & RCS_VOPT)
-					break;
-				else {
-					rcs_errno = RCS_ERR_PARSE;
-					warnx("missing mandatory "
-					    "value to RCS key `%s'",
-					    rk->rk_str);
-					rcs_freedelta(rdp);
-					return (-1);
-				}
-			}
-
-			if (ntok != rk->rk_val) {
-				rcs_errno = RCS_ERR_PARSE;
-				warnx("invalid value type for RCS key `%s'",
-				    rk->rk_str);
-				rcs_freedelta(rdp);
-				return (-1);
-			}
-
-			if (tokstr != NULL)
-				xfree(tokstr);
-			tokstr = xstrdup(RCS_TOKSTR(rfp));
-			/* now get the expected semi-colon */
-			ntok = rcs_gettok(rfp);
-			if (ntok != RCS_TOK_SCOLON) {
-				rcs_errno = RCS_ERR_PARSE;
-				warnx("missing semi-colon after RCS `%s' key",
-				    rk->rk_str);
-				xfree(tokstr);
-				rcs_freedelta(rdp);
-				return (-1);
-			}
-
-			if (tok == RCS_TOK_DATE) {
-				if ((datenum = rcsnum_parse(tokstr)) == NULL) {
-					xfree(tokstr);
-					rcs_freedelta(rdp);
-					return (-1);
-				}
-				if (datenum->rn_len != 6) {
-					rcs_errno = RCS_ERR_PARSE;
-					warnx("RCS date specification has %s "
-					    "fields",
-					    (datenum->rn_len > 6) ? "too many" :
-					    "missing");
-					xfree(tokstr);
-					rcs_freedelta(rdp);
-					rcsnum_free(datenum);
-					return (-1);
-				}
-				rdp->rd_date.tm_year = datenum->rn_id[0];
-				if (rdp->rd_date.tm_year >= 1900)
-					rdp->rd_date.tm_year -= 1900;
-				rdp->rd_date.tm_mon = datenum->rn_id[1] - 1;
-				rdp->rd_date.tm_mday = datenum->rn_id[2];
-				rdp->rd_date.tm_hour = datenum->rn_id[3];
-				rdp->rd_date.tm_min = datenum->rn_id[4];
-				rdp->rd_date.tm_sec = datenum->rn_id[5];
-				rcsnum_free(datenum);
-			} else if (tok == RCS_TOK_AUTHOR) {
-				rdp->rd_author = tokstr;
-				tokstr = NULL;
-			} else if (tok == RCS_TOK_STATE) {
-				rdp->rd_state = tokstr;
-				tokstr = NULL;
-			} else if (tok == RCS_TOK_NEXT) {
-				rcsnum_aton(tokstr, NULL, rdp->rd_next);
-			} else if (tok == RCS_TOK_COMMITID) {
-				/* XXX just parse it, no action yet */
-			}
-			break;
-		case RCS_TOK_BRANCHES:
-			if (rcs_parse_branches(rfp, rdp) < 0) {
-				rcs_freedelta(rdp);
-				return (-1);
-			}
-			break;
-		default:
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in RCS delta",
-			    RCS_TOKSTR(rfp));
-			rcs_freedelta(rdp);
-			return (-1);
-		}
-	}
-
-	if (tokstr != NULL)
-		xfree(tokstr);
-
-	TAILQ_INSERT_TAIL(&(rfp->rf_delta), rdp, rd_list);
-	rfp->rf_ndelta++;
-
-	return (ret);
-}
-
-/*
- * rcs_parse_deltatext()
- *
- * Parse an RCS delta text section and fill in the log and text field of the
- * appropriate delta section.
- * Returns 1 if the section was parsed OK, 0 if it is the last delta, and
- * -1 on error.
- */
-static int
-rcs_parse_deltatext(RCSFILE *rfp)
-{
-	int tok;
-	RCSNUM *tnum;
-	struct rcs_delta *rdp;
-
-	tok = rcs_gettok(rfp);
-	if (tok == RCS_TOK_EOF)
-		return (0);
-
-	if (tok != RCS_TOK_NUM) {
-		rcs_errno = RCS_ERR_PARSE;
-		warnx("unexpected token `%s' at start of RCS delta text",
-		    RCS_TOKSTR(rfp));
-		return (-1);
-	}
-
-	tnum = rcsnum_alloc();
-	rcsnum_aton(RCS_TOKSTR(rfp), NULL, tnum);
-
-	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
-		if (rcsnum_cmp(tnum, rdp->rd_num, 0) == 0)
-			break;
-	}
-	rcsnum_free(tnum);
-
-	if (rdp == NULL) {
-		warnx("RCS delta text `%s' has no matching delta",
-		    RCS_TOKSTR(rfp));
-		return (-1);
-	}
-
-	tok = rcs_gettok(rfp);
-	if (tok != RCS_TOK_LOG) {
-		rcs_errno = RCS_ERR_PARSE;
-		warnx("unexpected token `%s' where RCS log expected",
-		    RCS_TOKSTR(rfp));
-		return (-1);
-	}
-
-	tok = rcs_gettok(rfp);
-	if (tok != RCS_TOK_STRING) {
-		rcs_errno = RCS_ERR_PARSE;
-		warnx("unexpected token `%s' where RCS log expected",
-		    RCS_TOKSTR(rfp));
-		return (-1);
-	}
-	rdp->rd_log = xstrdup(RCS_TOKSTR(rfp));
-	tok = rcs_gettok(rfp);
-	if (tok != RCS_TOK_TEXT) {
-		rcs_errno = RCS_ERR_PARSE;
-		warnx("unexpected token `%s' where RCS text expected",
-		    RCS_TOKSTR(rfp));
-		return (-1);
-	}
-
-	tok = rcs_gettok(rfp);
-	if (tok != RCS_TOK_STRING) {
-		rcs_errno = RCS_ERR_PARSE;
-		warnx("unexpected token `%s' where RCS text expected",
-		    RCS_TOKSTR(rfp));
-		return (-1);
-	}
-
-	if (RCS_TOKLEN(rfp) == 0) {
-		rdp->rd_text = xmalloc(1);
-		rdp->rd_text[0] = '\0';
-		rdp->rd_tlen = 0;
-	} else {
-		rdp->rd_text = xmalloc(RCS_TOKLEN(rfp));
-		memcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp)));
-		rdp->rd_tlen = RCS_TOKLEN(rfp);
-	}
-
-	return (1);
-}
-
-/*
- * rcs_parse_access()
- *
- * Parse the access list given as value to the `access' keyword.
- * Returns 0 on success, or -1 on failure.
- */
-static int
-rcs_parse_access(RCSFILE *rfp)
-{
-	int type;
-
-	while ((type = rcs_gettok(rfp)) != RCS_TOK_SCOLON) {
-		if (type != RCS_TOK_ID) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in access list",
-			    RCS_TOKSTR(rfp));
-			return (-1);
-		}
-
-		if (rcs_access_add(rfp, RCS_TOKSTR(rfp)) < 0)
-			return (-1);
-	}
-
-	return (0);
-}
-
-/*
- * rcs_parse_symbols()
- *
- * Parse the symbol list given as value to the `symbols' keyword.
- * Returns 0 on success, or -1 on failure.
- */
-static int
-rcs_parse_symbols(RCSFILE *rfp)
-{
-	int type;
-	struct rcs_sym *symp;
-
-	for (;;) {
-		type = rcs_gettok(rfp);
-		if (type == RCS_TOK_SCOLON)
-			break;
-
-		if (type != RCS_TOK_ID) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in symbol list",
-			    RCS_TOKSTR(rfp));
-			return (-1);
-		}
-
-		symp = xmalloc(sizeof(*symp));
-		symp->rs_name = xstrdup(RCS_TOKSTR(rfp));
-		symp->rs_num = rcsnum_alloc();
-
-		type = rcs_gettok(rfp);
-		if (type != RCS_TOK_COLON) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in symbol list",
-			    RCS_TOKSTR(rfp));
-			rcsnum_free(symp->rs_num);
-			xfree(symp->rs_name);
-			xfree(symp);
-			return (-1);
-		}
-
-		type = rcs_gettok(rfp);
-		if (type != RCS_TOK_NUM) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in symbol list",
-			    RCS_TOKSTR(rfp));
-			rcsnum_free(symp->rs_num);
-			xfree(symp->rs_name);
-			xfree(symp);
-			return (-1);
-		}
-
-		if (rcsnum_aton(RCS_TOKSTR(rfp), NULL, symp->rs_num) < 0) {
-			warnx("failed to parse RCS NUM `%s'",
-			    RCS_TOKSTR(rfp));
-			rcsnum_free(symp->rs_num);
-			xfree(symp->rs_name);
-			xfree(symp);
-			return (-1);
-		}
-
-		TAILQ_INSERT_TAIL(&(rfp->rf_symbols), symp, rs_list);
-	}
-
-	return (0);
-}
-
-/*
- * rcs_parse_locks()
- *
- * Parse the lock list given as value to the `locks' keyword.
- * Returns 0 on success, or -1 on failure.
- */
-static int
-rcs_parse_locks(RCSFILE *rfp)
-{
-	int type;
-	struct rcs_lock *lkp;
-
-	for (;;) {
-		type = rcs_gettok(rfp);
-		if (type == RCS_TOK_SCOLON)
-			break;
-
-		if (type != RCS_TOK_ID) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in lock list",
-			    RCS_TOKSTR(rfp));
-			return (-1);
-		}
-
-		lkp = xmalloc(sizeof(*lkp));
-		lkp->rl_name = xstrdup(RCS_TOKSTR(rfp));
-		lkp->rl_num = rcsnum_alloc();
-
-		type = rcs_gettok(rfp);
-		if (type != RCS_TOK_COLON) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in symbol list",
-			    RCS_TOKSTR(rfp));
-			rcsnum_free(lkp->rl_num);
-			xfree(lkp->rl_name);
-			xfree(lkp);
-			return (-1);
-		}
-
-		type = rcs_gettok(rfp);
-		if (type != RCS_TOK_NUM) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in symbol list",
-			    RCS_TOKSTR(rfp));
-			rcsnum_free(lkp->rl_num);
-			xfree(lkp->rl_name);
-			xfree(lkp);
-			return (-1);
-		}
-
-		if (rcsnum_aton(RCS_TOKSTR(rfp), NULL, lkp->rl_num) < 0) {
-			warnx("failed to parse RCS NUM `%s'",
-			    RCS_TOKSTR(rfp));
-			rcsnum_free(lkp->rl_num);
-			xfree(lkp->rl_name);
-			xfree(lkp);
-			return (-1);
-		}
-
-		TAILQ_INSERT_HEAD(&(rfp->rf_locks), lkp, rl_list);
-	}
-
-	/* check if we have a `strict' */
-	type = rcs_gettok(rfp);
-	if (type != RCS_TOK_STRICT) {
-		rcs_pushtok(rfp, RCS_TOKSTR(rfp), type);
-	} else {
-		rfp->rf_flags |= RCS_SLOCK;
-
-		type = rcs_gettok(rfp);
-		if (type != RCS_TOK_SCOLON) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("missing semi-colon after `strict' keyword");
-			return (-1);
-		}
-	}
-
-	return (0);
-}
-
-/*
- * rcs_parse_branches()
- *
- * Parse the list of branches following a `branches' keyword in a delta.
- * Returns 0 on success, or -1 on failure.
- */
-static int
-rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
-{
-	int type;
-	struct rcs_branch *brp;
-
-	for (;;) {
-		type = rcs_gettok(rfp);
-		if (type == RCS_TOK_SCOLON)
-			break;
-
-		if (type != RCS_TOK_NUM) {
-			rcs_errno = RCS_ERR_PARSE;
-			warnx("unexpected token `%s' in list of branches",
-			    RCS_TOKSTR(rfp));
-			return (-1);
-		}
-
-		brp = xmalloc(sizeof(*brp));
-		brp->rb_num = rcsnum_parse(RCS_TOKSTR(rfp));
-		if (brp->rb_num == NULL) {
-			xfree(brp);
-			return (-1);
-		}
-
-		TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
-	}
-
-	return (0);
-}
-
 /*
  * rcs_freedelta()
  *
@@ -2400,195 +1605,6 @@ rcs_freedelta(struct rcs_delta *rdp)
 	}
 
 	xfree(rdp);
-}
-
-/*
- * rcs_freepdata()
- *
- * Free the contents of the parser data structure.
- */
-static void
-rcs_freepdata(struct rcs_pdata *pd)
-{
-	if (pd->rp_file != NULL)
-		(void)fclose(pd->rp_file);
-	if (pd->rp_buf != NULL)
-		xfree(pd->rp_buf);
-	xfree(pd);
-}
-
-/*
- * rcs_gettok()
- *
- * Get the next RCS token from the string <str>.
- */
-static int
-rcs_gettok(RCSFILE *rfp)
-{
-	u_int i;
-	int ch, last, type;
-	size_t len;
-	char *bp;
-	struct rcs_pdata *pdp = (struct rcs_pdata *)rfp->rf_pdata;
-
-	type = RCS_TOK_ERR;
-	bp = pdp->rp_buf;
-	pdp->rp_tlen = 0;
-	*bp = '\0';
-
-	if (pdp->rp_pttype != RCS_TOK_ERR) {
-		type = pdp->rp_pttype;
-		if (strlcpy(pdp->rp_buf, pdp->rp_ptok, pdp->rp_blen) >=
-		    pdp->rp_blen)
-			errx(1, "rcs_gettok: strlcpy");
-		pdp->rp_pttype = RCS_TOK_ERR;
-		return (type);
-	}
-
-	/* skip leading whitespace */
-	/* XXX we must skip backspace too for compatibility, should we? */
-	do {
-		ch = getc(pdp->rp_file);
-		if (ch == '\n')
-			pdp->rp_lines++;
-	} while (isspace(ch));
-
-	if (ch == EOF) {
-		type = RCS_TOK_EOF;
-	} else if (ch == ';') {
-		type = RCS_TOK_SCOLON;
-	} else if (ch == ':') {
-		type = RCS_TOK_COLON;
-	} else if (isalpha(ch)) {
-		type = RCS_TOK_ID;
-		*(bp++) = ch;
-		for (;;) {
-			ch = getc(pdp->rp_file);
-			if (ch == EOF) {
-				type = RCS_TOK_EOF;
-				break;
-			} else if (!isgraph(ch) ||
-			    strchr(rcs_sym_invch, ch) != NULL) {
-				ungetc(ch, pdp->rp_file);
-				break;
-			}
-			*(bp++) = ch;
-			pdp->rp_tlen++;
-			if (bp == pdp->rp_bufend - 1) {
-				len = bp - pdp->rp_buf;
-				rcs_growbuf(rfp);
-				bp = pdp->rp_buf + len;
-			}
-		}
-		*bp = '\0';
-
-		if (type != RCS_TOK_ERR) {
-			for (i = 0; i < RCS_NKEYS; i++) {
-				if (strcmp(rcs_keys[i].rk_str,
-				    pdp->rp_buf) == 0) {
-					type = rcs_keys[i].rk_id;
-					break;
-				}
-			}
-		}
-	} else if (ch == '@') {
-		/* we have a string */
-		type = RCS_TOK_STRING;
-		for (;;) {
-			ch = getc(pdp->rp_file);
-			if (ch == EOF) {
-				type = RCS_TOK_EOF;
-				break;
-			} else if (ch == '@') {
-				ch = getc(pdp->rp_file);
-				if (ch != '@') {
-					ungetc(ch, pdp->rp_file);
-					break;
-				}
-			} else if (ch == '\n')
-				pdp->rp_lines++;
-
-			*(bp++) = ch;
-			pdp->rp_tlen++;
-			if (bp == pdp->rp_bufend - 1) {
-				len = bp - pdp->rp_buf;
-				rcs_growbuf(rfp);
-				bp = pdp->rp_buf + len;
-			}
-		}
-
-		*bp = '\0';
-	} else if (isdigit(ch)) {
-		*(bp++) = ch;
-		last = ch;
-		type = RCS_TOK_NUM;
-
-		for (;;) {
-			ch = getc(pdp->rp_file);
-			if (ch == EOF) {
-				type = RCS_TOK_EOF;
-				break;
-			}
-			if (bp == pdp->rp_bufend)
-				break;
-			if (isalpha(ch) && ch != '.') {
-				type = RCS_TOK_ID;
-			} else if (!isdigit(ch) && ch != '.') {
-				ungetc(ch, pdp->rp_file);
-				break;
-			}
-
-			if (last == '.' && ch == '.') {
-				type = RCS_TOK_ERR;
-				break;
-			}
-			last = ch;
-			*(bp++) = ch;
-			pdp->rp_tlen++;
-		}
-		*bp = '\0';
-	}
-
-	return (type);
-}
-
-/*
- * rcs_pushtok()
- *
- * Push a token back in the parser's token buffer.
- */
-static int
-rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
-{
-	struct rcs_pdata *pdp = (struct rcs_pdata *)rfp->rf_pdata;
-
-	if (pdp->rp_pttype != RCS_TOK_ERR)
-		return (-1);
-
-	pdp->rp_pttype = type;
-	if (strlcpy(pdp->rp_ptok, tok, sizeof(pdp->rp_ptok)) >=
-	    sizeof(pdp->rp_ptok))
-		errx(1, "rcs_pushtok: strlcpy");
-	return (0);
-}
-
-
-/*
- * rcs_growbuf()
- *
- * Attempt to grow the internal parse buffer for the RCS file <rf> by
- * RCS_BUFEXTSIZE.
- * In case of failure, the original buffer is left unmodified.
- */
-static void
-rcs_growbuf(RCSFILE *rf)
-{
-	struct rcs_pdata *pdp = (struct rcs_pdata *)rf->rf_pdata;
-
-	pdp->rp_buf = xrealloc(pdp->rp_buf, 1,
-	    pdp->rp_blen + RCS_BUFEXTSIZE);
-	pdp->rp_blen += RCS_BUFEXTSIZE;
-	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
 }
 
 /*
@@ -2859,7 +1875,8 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, BUF *bp)
 	struct rcs_delta *rdp;
 
 	/* Write operations require full parsing */
-	rcs_parse_deltatexts(rfp, NULL);
+	if (rcsparse_deltatexts(rfp, NULL))
+		return (-1);
 
 	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 		return (-1);
