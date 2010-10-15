@@ -1,4 +1,4 @@
-/*	$Id: tbl_term.c,v 1.3 2010/10/15 22:07:12 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.4 2010/10/15 22:16:51 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -353,6 +353,9 @@ calc_data(struct termp *p, struct tbl_data *data)
 	case (TBL_CELL_NUMBER):
 		calc_data_number(p, data);
 		break;
+	case (TBL_CELL_SPAN):
+		data->cell->head->width = 0;
+		break;
 	default:
 		abort();
 		/* NOTREACHED */
@@ -477,6 +480,8 @@ write_data(struct termp *p, const struct tbl_data *data, int width)
 		break;
 	case (TBL_CELL_NUMBER):
 		write_data_number(p, data, width);
+		break;
+	case (TBL_CELL_SPAN):
 		break;
 	default:
 		abort();
