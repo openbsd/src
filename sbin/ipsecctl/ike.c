@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.68 2010/09/22 14:04:09 mikeb Exp $	*/
+/*	$OpenBSD: ike.c,v 1.69 2010/10/15 12:11:10 mikeb Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -305,36 +305,36 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 		case GROUPXF_NONE:
 			break;
 		case GROUPXF_768:
-			fprintf(fd, "PFS-GRP1");
+			fprintf(fd, "PFS-GRP1-");
 			break;
 		case GROUPXF_1024:
-			fprintf(fd, "PFS-GRP2");
+			fprintf(fd, "PFS-GRP2-");
 			break;
 		case GROUPXF_1536:
-			fprintf(fd, "PFS-GRP5");
+			fprintf(fd, "PFS-GRP5-");
 			break;
 		case GROUPXF_2048:
-			fprintf(fd, "PFS-GRP14");
+			fprintf(fd, "PFS-GRP14-");
 			break;
 		case GROUPXF_3072:
-			fprintf(fd, "PFS-GRP15");
+			fprintf(fd, "PFS-GRP15-");
 			break;
 		case GROUPXF_4096:
-			fprintf(fd, "PFS-GRP16");
+			fprintf(fd, "PFS-GRP16-");
 			break;
 		case GROUPXF_6144:
-			fprintf(fd, "PFS-GRP17");
+			fprintf(fd, "PFS-GRP17-");
 			break;
 		case GROUPXF_8192:
-			fprintf(fd, "PFS-GRP18");
+			fprintf(fd, "PFS-GRP18-");
 			break;
 		default:
 			warnx("illegal group %s", r->p2xfs->groupxf->name);
 			return (-1);
 		};
 	} else
-		fprintf(fd, "PFS");
-	fprintf(fd, "-SUITE force\n");
+		fprintf(fd, "PFS-");
+	fprintf(fd, "SUITE force\n");
 
 	return (0);
 }
