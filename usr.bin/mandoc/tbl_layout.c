@@ -1,4 +1,4 @@
-/*	$Id: tbl_layout.c,v 1.2 2010/10/15 21:33:47 schwarze Exp $ */
+/*	$Id: tbl_layout.c,v 1.3 2010/10/15 22:50:28 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -119,6 +119,11 @@ mods(struct tbl *tbl, struct tbl_cell *cp, const char *p,
 	case ('Z'):
 		cp->flags |= TBL_CELL_WIGN;
 		return(mods(tbl, cp, p, pp + 1, f, ln, pos));
+	case ('w'):
+		/* FALLTHROUGH */
+	case ('W'):  /* XXX for now, ignore minimal column width */
+		while (isdigit((u_char)p[++pp]));
+		return(mods(tbl, cp, p, pp, f, ln, pos));
 	case ('u'):
 		/* FALLTHROUGH */
 	case ('U'):
