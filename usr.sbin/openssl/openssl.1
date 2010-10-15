@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.81 2010/10/15 21:00:05 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.82 2010/10/15 21:05:06 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -514,7 +514,7 @@ command is a diagnostic utility that can parse ASN.1 structures.
 It can also be used to extract data from ASN.1 formatted data.
 .Pp
 The options are as follows:
-.Bl -tag -width "-noout"
+.Bl -tag -width Ds
 .It Fl dlimit Ar number
 Dump the first
 .Ar number
@@ -1422,7 +1422,7 @@ cipher lists into ordered SSL cipher preference lists.
 It can be used as a test tool to determine the appropriate cipherlist.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXXXX"
+.Bl -tag -width Ds
 .It Fl h , \&?
 Print a brief usage message.
 .It Fl ssl2
@@ -1810,7 +1810,7 @@ The
 command processes CRL files in DER or PEM format.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl CAfile Ar file
 Verify the signature on a CRL by looking up the issuing certificate in
 .Ar file .
@@ -1899,7 +1899,7 @@ certificates and converts them into a PKCS#7 degenerate
 structure.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl certfile Ar file
 Specifies a
 .Ar file
@@ -2005,7 +2005,7 @@ in hexadecimal form.
 They can also be used for digital signing and verification.
 .Pp
 The options are as follows:
-.Bl -tag -width "-binary"
+.Bl -tag -width Ds
 .It Fl binary
 Output the digest or signature in binary form.
 .It Fl c
@@ -2151,7 +2151,7 @@ The
 command is used to manipulate DH parameter files.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl 2 , 5
 The generator to use, either 2 or 5.
 2 is the default.
@@ -2316,7 +2316,7 @@ newer applications should use the more secure PKCS#8 format using the
 command.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Xo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
@@ -2463,7 +2463,7 @@ The
 command is used to manipulate or generate DSA parameter files.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl C
 This option converts the parameters into C code.
 The parameters can then be loaded by calling the
@@ -2960,7 +2960,7 @@ Base64 encoding or decoding can also be performed either by itself
 or in addition to the encryption or decryption.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl A
 If the
 .Fl a
@@ -3356,7 +3356,7 @@ and
 are all ASCII text.
 .Pp
 The options are as follows:
-.Bl -tag -width "-stats"
+.Bl -tag -width Ds
 .It Fl stats
 Print debugging statistics about various aspects of the hash table.
 .El
@@ -3408,7 +3408,7 @@ command generates a DSA private key from a DSA parameter file
 command).
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Xo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
@@ -3644,7 +3644,7 @@ The
 command generates an RSA private key.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl 3 | f4
 The public exponent to use, either 3 or 65537.
 The default is 65537.
@@ -3729,7 +3729,7 @@ file of certificates and converts it into a Netscape certificate
 sequence.
 .Pp
 The options are as follows:
-.Bl -tag -width "-toseq"
+.Bl -tag -width Ds
 .It Fl in Ar file
 This specifies the input
 .Ar file
@@ -3845,7 +3845,7 @@ create requests and send queries to an OCSP responder,
 and behave like a mini OCSP server itself.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl CAfile Ar file , Fl CApath Ar directory
 .Ar file
 or
@@ -4285,7 +4285,7 @@ and its Apache variant
 are available.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl 1
 Use the MD5 based
 .Bx
@@ -4362,7 +4362,7 @@ The
 command processes PKCS#7 files in DER or PEM format.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl engine Ar id
 Specifying an engine (by its unique
 .Ar id
@@ -4461,7 +4461,7 @@ and EncryptedPrivateKeyInfo format with a variety of PKCS#5
 and PKCS#12 algorithms.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl embed
 This option generates DSA keys in a broken format.
 The DSA parameters are embedded inside the
@@ -5472,7 +5472,7 @@ they have an exceedingly high likelihood of being correct,
 but are not guaranteed.
 .Pp
 The options are as follows:
-.Bl -tag -width ds
+.Bl -tag -width Ds
 .It Fl bits Ar n
 Specify the number of bits in the generated prime number.
 Must be used in conjunction with
@@ -5535,7 +5535,7 @@ file will be written back if enough
 seeding was obtained from these sources.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl base64
 Perform
 .Em base64
@@ -5615,7 +5615,7 @@ It can additionally create self-signed certificates,
 for use as root CAs, for example.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl asn1-kludge
 By default, the
 .Nm req
@@ -6381,7 +6381,7 @@ newer applications should use the more secure PKCS#8 format using the
 utility.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Xo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
@@ -6567,7 +6567,7 @@ command can be used to sign, verify, encrypt and decrypt
 data using the RSA algorithm.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl asn1parse
 Asn1parse the output data; this is useful when combined with the
 .Fl verify
@@ -6786,7 +6786,7 @@ It is a
 useful diagnostic tool for SSL servers.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl 4
 Specify that
 .Nm s_client
@@ -7102,7 +7102,7 @@ command implements a generic SSL/TLS server which listens
 for connections on a given port using SSL/TLS.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl accept Ar port
 The TCP
 .Ar port
@@ -7579,7 +7579,7 @@ Since this is a diagnostic tool that needs some knowledge of the SSL
 protocol to use properly, most users will not need to use it.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl cert
 If a certificate is present in the session,
 it will be output using this option;
@@ -8982,7 +8982,7 @@ It can print out their contents, verify the signature,
 and produce its own SPKACs from a supplied private key.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl challenge Ar string
 Specifies the challenge string if an SPKAC is being created.
 .It Fl engine Ar id
@@ -9115,7 +9115,7 @@ The
 command verifies certificate chains.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl check_ss_sig
 Verify the signature on the self-signed root CA.
 This is disabled by default
@@ -9474,7 +9474,7 @@ command is used to print out version information about
 .Nm OpenSSL .
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width Ds
 .It Fl a
 All information: this is the same as setting all the other flags.
 .It Fl b
