@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.303 2010/10/15 08:44:12 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.304 2010/10/15 08:46:23 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -452,16 +452,22 @@ rcs_head_get(RCSFILE *file)
 		/* we have a default branch, use that to calculate the
 		 * real HEAD*/
 		rootrev = rcsnum_alloc();
-		rcsnum_cpy(file->rf_branch, rootrev, 2);
+		rcsnum_cpy(file->rf_branch, rootrev,
+		    file->rf_branch->rn_len - 1);
 		if ((rdp = rcs_findrev(file, rootrev)) == NULL)
 			fatal("rcs_head_get: could not find root revision");
 
 		/* HEAD should be the last revision on the default branch */
 		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
-			if (TAILQ_NEXT(brp, rb_list) == NULL)
+			if (rcsnum_cmp(brp->rb_num, file->rf_branch,
+			    file->rf_branch->rn_len) == NULL)
 				break;
 		}
 		rcsnum_free(rootrev);
+
+		if (brp == NULL)
+			fatal("rcs_head_get: could not find first default "
+			    "branch revision");
 
 		if ((rdp = rcs_findrev(file, brp->rb_num)) == NULL)
 			fatal("rcs_head_get: could not find branch revision");
