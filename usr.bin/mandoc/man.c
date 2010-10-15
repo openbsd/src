@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.40 2010/08/20 00:53:35 schwarze Exp $ */
+/*	$Id: man.c,v 1.41 2010/10/15 20:45:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,8 @@
 #include "libman.h"
 #include "libmandoc.h"
 
+#include "tbl.h"
+
 const	char *const __man_macronames[MAN_MAX] = {		 
 	"br",		"TH",		"SH",		"SS",
 	"TP", 		"LP",		"PP",		"P",
@@ -36,7 +38,7 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"nf",		"fi",		"r",		"RE",
 	"RS",		"DT",		"UC",		"PD",
 	"Sp",		"Vb",		"Ve",		"AT",
-	"in"
+	"in",		"TS",		"TE"
 	};
 
 const	char * const *man_macronames = __man_macronames;
@@ -121,9 +123,19 @@ man_endparse(struct man *m)
 int
 man_parseln(struct man *m, int ln, char *buf, int offs)
 {
+	struct man_node *n;
 
 	if (MAN_HALT & m->flags)
 		return(0);
+
+	n = m->last;
+
+	if (n && MAN_TS == n->tok && MAN_BODY == n->type &&
+	    strncmp(buf+offs, ".TE", 3)) {
+		n = n->parent;
+		return(tbl_read(n->data.TS, "<man>", ln, buf+offs,
+		    strlen(buf+offs)) ? 1 : 0);
+	}
 
 	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
 			man_pmacro(m, ln, buf, offs) : 
@@ -322,6 +334,8 @@ man_node_free(struct man_node *p)
 
 	if (p->string)
 		free(p->string);
+	if (p->data.TS)
+		tbl_free(p->data.TS);
 	free(p);
 }
 

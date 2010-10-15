@@ -1,4 +1,4 @@
-/*	$Id: man_action.c,v 1.24 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.25 2010/10/15 20:45:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,8 @@
 #include "libman.h"
 #include "libmandoc.h"
 
+#include "tbl.h"
+
 struct	actions {
 	int	(*post)(struct man *);
 };
@@ -32,6 +34,7 @@ static	int	  post_fi(struct man *);
 static	int	  post_nf(struct man *);
 static	int	  post_AT(struct man *);
 static	int	  post_UC(struct man *);
+static	int	  post_TS(struct man *);
 
 const	struct actions man_actions[MAN_MAX] = {
 	{ NULL }, /* br */
@@ -71,6 +74,8 @@ const	struct actions man_actions[MAN_MAX] = {
 	{ post_fi }, /* Ve */
 	{ post_AT }, /* AT */
 	{ NULL }, /* in */
+	{ post_TS }, /* TS */
+	{ NULL }, /* TE */
 };
 
 
@@ -273,6 +278,17 @@ post_UC(struct man *m)
 		free(m->meta.source);
 
 	m->meta.source = mandoc_strdup(p);
+
+	return(1);
+}
+
+
+static int
+post_TS(struct man *m)
+{
+
+	if (MAN_HEAD == m->last->type)
+		m->last->parent->data.TS = tbl_alloc();
 
 	return(1);
 }

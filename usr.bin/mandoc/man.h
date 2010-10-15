@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.26 2010/08/20 00:53:35 schwarze Exp $ */
+/*	$Id: man.h,v 1.27 2010/10/15 20:45:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,6 +57,8 @@ enum	mant {
 	MAN_Ve,
 	MAN_AT,
 	MAN_in,
+	MAN_TS,
+	MAN_TE,
 	MAN_MAX
 };
 
@@ -95,6 +97,9 @@ struct	man_node {
 	char		*string;
 	struct man_node	*head;
 	struct man_node	*body;
+	union {
+		struct tbl *TS;
+	} data;
 };
 
 extern	const char *const *man_macronames;

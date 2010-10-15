@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.46 2010/09/21 22:33:41 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.47 2010/10/15 20:45:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,6 +28,7 @@
 #include "term.h"
 #include "chars.h"
 #include "main.h"
+#include "tbl.h"
 
 #define	INDENT		  7
 #define	HALFINDENT	  3
@@ -92,6 +93,7 @@ static	int		  pre_ign(DECL_ARGS);
 static	int		  pre_in(DECL_ARGS);
 static	int		  pre_literal(DECL_ARGS);
 static	int		  pre_sp(DECL_ARGS);
+static	int		  pre_TS(DECL_ARGS);
 
 static	void		  post_IP(DECL_ARGS);
 static	void		  post_HP(DECL_ARGS);
@@ -138,6 +140,8 @@ static	const struct termact termacts[MAN_MAX] = {
  	{ pre_literal, NULL, 0 }, /* Ve */
 	{ pre_ign, NULL, 0 }, /* AT */
 	{ pre_in, NULL, MAN_NOTEXT }, /* in */
+	{ pre_TS, NULL, 0 }, /* TS */
+	{ NULL, NULL, 0 }, /* TE */
 };
 
 
@@ -823,6 +827,23 @@ post_RS(DECL_ARGS)
 		p->offset = term_len(p, INDENT);
 		break;
 	}
+}
+
+
+/* ARGSUSED */
+static int
+pre_TS(DECL_ARGS)
+{
+
+	if (MAN_BLOCK != n->type)
+		return(0);
+
+	if ( ! tbl_close(n->data.TS, "<man>", n->line))
+		return(0);
+
+	tbl_write(n->data.TS);
+
+	return(0);
 }
 
 
