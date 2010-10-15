@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.1 2010/10/15 08:44:12 tobias Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.2 2010/10/15 09:58:25 tobias Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -219,10 +219,8 @@ rcsparse_init(RCSFILE *rfp)
 {
 	struct rcs_pdata *pdp;
 
-	if (rfp->rf_flags & RCS_PARSED) {
-		rfp->rf_flags &= ~RCS_PARSED;
+	if (rfp->rf_flags & RCS_PARSED)
 		return (0);
-	}
 
 	pdp = xmalloc(sizeof(*pdp));
 	pdp->rp_buf = xmalloc(RCS_BUFSIZE);
@@ -1162,10 +1160,8 @@ rcsparse_deltatext(RCSFILE *rfp)
 	if (rcsparse(rfp, sec_deltatext))
 		return (-1);
 
-	if (rfp->rf_flags & RCS_PARSED) {
-		rfp->rf_flags &= ~RCS_PARSED;
+	if (rfp->rf_flags & RCS_PARSED)
 		rfp->rf_flags |= PARSED_DELTATEXTS;
-	}
 
 	return (1);
 }
