@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.80 2010/10/15 18:17:10 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.81 2010/10/15 21:00:05 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -204,7 +204,7 @@ list all cipher and message digest names,
 one entry per line.
 Aliases are listed as:
 .Pp
-.D1 from => to
+.D1 from =\*(Gt to
 .Pp
 The pseudo-command
 .Cm list-public-key-algorithms
@@ -489,22 +489,24 @@ Read the password from standard input.
 .\" ASN1PARSE
 .\"
 .Sh ASN1PARSE
-.Nm openssl asn1parse
+.nr nS 1
+.Nm "openssl asn1parse"
 .Bk -words
-.Op Fl dump
 .Op Fl i
-.Op Fl noout
 .Op Fl dlimit Ar number
+.Op Fl dump
 .Op Fl genconf Ar file
 .Op Fl genstr Ar str
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM | TXT
 .Op Fl length Ar number
+.Op Fl noout
 .Op Fl offset Ar number
 .Op Fl oid Ar file
 .Op Fl out Ar file
 .Op Fl strparse Ar offset
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm asn1parse
@@ -670,17 +672,10 @@ The output of some ASN.1 types is not well handled
 .\" CA
 .\"
 .Sh CA
-.Nm openssl ca
+.nr nS 1
+.Nm "openssl ca"
 .Bk -words
 .Op Fl batch
-.Op Fl gencrl
-.Op Fl infiles
-.Op Fl msie_hack
-.Op Fl noemailDN
-.Op Fl notext
-.Op Fl preserveDN
-.Op Fl updatedb
-.Op Fl verbose
 .Op Fl cert Ar file
 .Op Fl config Ar file
 .Op Fl crl_CA_compromise Ar time
@@ -695,23 +690,32 @@ The output of some ASN.1 types is not well handled
 .Op Fl engine Ar id
 .Op Fl extensions Ar section
 .Op Fl extfile Ar section
+.Op Fl gencrl
 .Op Fl in Ar file
+.Op Fl infiles
 .Op Fl key Ar keyfile
 .Op Fl keyfile Ar arg
 .Op Fl keyform Ar ENGINE | PEM
 .Op Fl md Ar arg
+.Op Fl msie_hack
 .Op Fl name Ar section
+.Op Fl noemailDN
+.Op Fl notext
 .Op Fl out Ar file
 .Op Fl outdir Ar dir
 .Op Fl passin Ar arg
 .Op Fl policy Ar arg
+.Op Fl preserveDN
 .Op Fl revoke Ar file
 .Op Fl spkac Ar file
 .Op Fl ss_cert Ar file
 .Op Fl startdate Ar date
 .Op Fl status Ar serial
 .Op Fl subj Ar arg
+.Op Fl updatedb
+.Op Fl verbose
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm ca
@@ -1782,22 +1786,24 @@ command was added in
 .\" CRL
 .\"
 .Sh CRL
-.Nm openssl crl
+.nr nS 1
+.Nm "openssl crl"
 .Bk -words
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar dir
 .Op Fl fingerprint
 .Op Fl hash
+.Op Fl in Ar file
+.Op Fl inform Ar DER | PEM
 .Op Fl issuer
 .Op Fl lastupdate
 .Op Fl nextupdate
 .Op Fl noout
-.Op Fl text
-.Op Fl CAfile Ar file
-.Op Fl CApath Ar dir
-.Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
+.Op Fl text
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm crl
@@ -1873,15 +1879,17 @@ and files too.
 .\" CRL2PKCS7
 .\"
 .Sh CRL2PKCS7
-.Nm openssl crl2pkcs7
+.nr nS 1
+.Nm "openssl crl2pkcs7"
 .Bk -words
-.Op Fl nocrl
 .Op Fl certfile Ar file
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
+.Op Fl nocrl
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm crl2pkcs7
@@ -1953,7 +1961,8 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .\" DGST
 .\"
 .Sh DGST
-.Nm openssl dgst
+.nr nS 1
+.Nm "openssl dgst"
 .Bk -words
 .Oo
 .Fl dss1 | md2 | md4 | md5 |
@@ -1961,9 +1970,9 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Oc
 .Op Fl binary
 .Op Fl cd
+.Op Fl engine Ar id
 .Op Fl hex
 .Op Fl hmac Ar key
-.Op Fl engine Ar id
 .Op Fl keyform Ar ENGINE | PEM
 .Op Fl mac Ar algorithm
 .Op Fl macopt Ar nm : Ns Ar v
@@ -1977,6 +1986,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Op Fl verify Ar file
 .Op Ar
 .Ek
+.nr nS 0
 .Pp
 .Nm openssl
 .Xo
@@ -2117,22 +2127,24 @@ below.
 .\" DHPARAM
 .\"
 .Sh DHPARAM
-.Nm openssl dhparam
+.nr nS 1
+.Nm "openssl dhparam"
 .Bk -words
 .Op Fl 2 | 5
 .Op Fl C
 .Op Fl check
 .Op Fl dsaparam
-.Op Fl noout
-.Op Fl text
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl rand Ar
+.Op Fl text
 .Op Ar numbits
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm dhparam
@@ -2268,25 +2280,27 @@ option was added in
 .\" DSA
 .\"
 .Sh DSA
-.Nm openssl dsa
+.nr nS 1
+.Nm "openssl dsa"
 .Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
 .Oc
-.Op Fl modulus
-.Op Fl noout
-.Op Fl pubin
-.Op Fl pubout
-.Op Fl text
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
+.Op Fl modulus
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl pubin
+.Op Fl pubout
+.Op Fl text
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm dsa
@@ -2427,20 +2441,22 @@ To just output the public part of a private key:
 .\" DSAPARAM
 .\"
 .Sh DSAPARAM
-.Nm openssl dsaparam
+.nr nS 1
+.Nm "openssl dsaparam"
 .Bk -words
 .Op Fl C
-.Op Fl genkey
-.Op Fl noout
-.Op Fl text
 .Op Fl engine Ar id
+.Op Fl genkey
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl rand Ar
+.Op Fl text
 .Op Ar numbits
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm dsaparam
@@ -2525,25 +2541,27 @@ DSA parameters is often used to generate several distinct keys.
 .\" EC
 .\"
 .Sh EC
-.Nm openssl ec
+.nr nS 1
+.Nm "openssl ec"
 .Bk -words
+.Op Fl conv_form Ar arg
 .Op Fl des
 .Op Fl des3
-.Op Fl noout
-.Op Fl param_out
-.Op Fl pubin
-.Op Fl pubout
-.Op Fl text
-.Op Fl conv_form Ar arg
 .Op Fl engine Ar id
 .Op Fl in Ar filename
 .Op Fl inform Ar PEM|DER
+.Op Fl noout
 .Op Fl out Ar filename
 .Op Fl outform Ar PEM|DER
 .Op Fl param_enc Ar arg
+.Op Fl param_out
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl pubin
+.Op Fl pubout
+.Op Fl text
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm ec
@@ -2563,7 +2581,7 @@ command.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl conv_form
+.It Fl conv_form Ar arg
 This specifies how the points on the elliptic curve are converted
 into octet strings.
 Possible values are:
@@ -2729,25 +2747,27 @@ command was first introduced in
 .\" ECPARAM
 .\"
 .Sh ECPARAM
-.Nm openssl ecparam
+.nr nS 1
+.Nm "openssl ecparam"
 .Bk -words
 .Op Fl C
 .Op Fl check
-.Op Fl genkey
-.Op Fl list_curves
-.Op Fl no_seed
-.Op Fl noout
-.Op Fl text
 .Op Fl conv_form Ar arg
 .Op Fl engine Ar id
+.Op Fl genkey
 .Op Fl in Ar filename
 .Op Fl inform Ar DER | PEM
+.Op Fl list_curves
 .Op Fl name Ar arg
+.Op Fl no_seed
+.Op Fl noout
 .Op Fl out Ar filename
 .Op Fl outform Ar DER | PEM
 .Op Fl param_enc Ar arg
 .Op Fl rand Ar file ...
+.Op Fl text
 .Ek
+.nr nS 0
 .Pp
 This command is used to manipulate or generate EC parameter files.
 .Pp
@@ -2908,17 +2928,14 @@ command was first introduced in
 .\" ENC
 .\"
 .Sh ENC
-.Nm openssl enc
+.nr nS 1
+.Nm "openssl enc"
 .Bk -words
 .Fl ciphername
 .Op Fl AadePp
 .Op Fl base64
-.Op Fl debug
-.Op Fl none
-.Op Fl nopad
-.Op Fl nosalt
-.Op Fl salt
 .Op Fl bufsize Ar number
+.Op Fl debug
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl iv Ar IV
@@ -2926,10 +2943,15 @@ command was first introduced in
 .Op Fl k Ar password
 .Op Fl kfile Ar file
 .Op Fl md Ar digest
+.Op Fl none
+.Op Fl nopad
+.Op Fl nosalt
 .Op Fl out Ar file
 .Op Fl pass Ar arg
 .Op Fl S Ar salt
+.Op Fl salt
 .Ek
+.nr nS 0
 .Pp
 The symmetric cipher commands allow data to be encrypted or decrypted
 using various block and stream ciphers using keys based on passwords
@@ -3364,7 +3386,8 @@ above.
 .\" GENDSA
 .\"
 .Sh GENDSA
-.Nm openssl gendsa
+.nr nS 1
+.Nm "openssl gendsa"
 .Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 |
@@ -3375,6 +3398,7 @@ above.
 .Op Fl rand Ar
 .Op Ar paramfile
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm gendsa
@@ -3405,18 +3429,18 @@ The engine will then be set as the default for all available algorithms.
 The output
 .Ar file .
 If this argument is not specified, standard output is used.
-.It Ar paramfile
-This option specifies the DSA parameter file to use.
-The parameters in this file determine the size of the private key.
-DSA parameters can be generated and examined using the
-.Nm openssl dsaparam
-command.
 .It Fl rand Ar
 A file or files containing random data used to seed the random number
 generator, or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified separated by a
 .Sq \&: .
+.It Ar paramfile
+This option specifies the DSA parameter file to use.
+The parameters in this file determine the size of the private key.
+DSA parameters can be generated and examined using the
+.Nm openssl dsaparam
+command.
 .El
 .Sh GENDSA NOTES
 DSA key generation is little more than random number generation so it is
@@ -3425,19 +3449,21 @@ much quicker than RSA key generation, for example.
 .\" GENPKEY
 .\"
 .Sh GENPKEY
-.Nm openssl genpkey
+.nr nS 1
+.Nm "openssl genpkey"
 .Bk -words
-.Op Ar cipher
-.Op Fl genparam
-.Op Fl pass Ar arg
-.Op Fl text
 .Op Fl algorithm Ar alg
+.Op Ar cipher
 .Op Fl engine Ar id
+.Op Fl genparam
 .Op Fl out Ar filename
 .Op Fl outform Ar DER | PEM
 .Op Fl paramfile Ar file
+.Op Fl pass Ar arg
 .Op Fl pkeyopt Ar opt : Ns Ar value
+.Op Fl text
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm genpkey
@@ -3597,19 +3623,21 @@ $ openssl genpkey -paramfile dhp.pem -out dhkey.pem
 .\" GENRSA
 .\"
 .Sh GENRSA
-.Nm openssl genrsa
+.nr nS 1
+.Nm "openssl genrsa"
 .Bk -words
+.Op Fl 3 | f4
 .Oo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
 .Oc
 .Op Fl engine Ar id
-.Op Fl 3 | f4
 .Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Fl rand Ar
 .Op Ar numbits
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm genrsa
@@ -3617,6 +3645,9 @@ command generates an RSA private key.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
+.It Fl 3 | f4
+The public exponent to use, either 3 or 65537.
+The default is 65537.
 .It Xo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
@@ -3636,13 +3667,6 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
-.It Fl 3 | f4
-The public exponent to use, either 3 or 65537.
-The default is 65537.
-.It Ar numbits
-The size of the private key to generate in bits.
-This must be the last option specified.
-The default is 512.
 .It Fl out Ar file
 The output
 .Ar file .
@@ -3661,6 +3685,10 @@ generator, or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified separated by a
 .Sq \&: .
+.It Ar numbits
+The size of the private key to generate in bits.
+This must be the last option specified.
+The default is 512.
 .El
 .Sh GENRSA NOTES
 RSA private key generation essentially involves the generation of two prime
@@ -3689,9 +3717,9 @@ they will be much larger
 .\"
 .Sh NSEQ
 .Nm openssl nseq
-.Op Fl toseq
 .Op Fl in Ar file
 .Op Fl out Ar file
+.Op Fl toseq
 .Pp
 The
 .Nm nseq
@@ -3748,23 +3776,9 @@ and allowing multiple certificate files to be used.
 .\" OCSP
 .\"
 .Sh OCSP
-.Nm openssl ocsp
+.nr nS 1
+.Nm "openssl ocsp"
 .Bk -words
-.Op Fl no_cert_checks
-.Op Fl no_cert_verify
-.Op Fl no_certs
-.Op Fl no_chain
-.Op Fl no_intern
-.Op Fl no_nonce
-.Op Fl no_signature_verify
-.Op Fl nonce
-.Op Fl noverify
-.Op Fl req_text
-.Op Fl resp_key_id
-.Op Fl resp_no_certs
-.Op Fl resp_text
-.Op Fl text
-.Op Fl trust_other
 .Op Fl CA Ar file
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
@@ -3778,12 +3792,25 @@ and allowing multiple certificate files to be used.
 .Op Fl issuer Ar file
 .Op Fl ndays Ar days
 .Op Fl nmin Ar minutes
+.Op Fl no_cert_checks
+.Op Fl no_cert_verify
+.Op Fl no_certs
+.Op Fl no_chain
+.Op Fl no_intern
+.Op Fl no_nonce
+.Op Fl no_signature_verify
+.Op Fl nonce
+.Op Fl noverify
 .Op Fl nrequest Ar number
 .Op Fl out Ar file
 .Op Fl path Ar path
 .Op Fl port Ar portnum
+.Op Fl req_text
 .Op Fl reqin Ar file
 .Op Fl reqout Ar file
+.Op Fl resp_key_id
+.Op Fl resp_no_certs
+.Op Fl resp_text
 .Op Fl respin Ar file
 .Op Fl respout Ar file
 .Op Fl rkey Ar file
@@ -3794,11 +3821,14 @@ and allowing multiple certificate files to be used.
 .Op Fl signer Ar file
 .Op Fl signkey Ar file
 .Op Fl status_age Ar age
+.Op Fl text
+.Op Fl trust_other
 .Op Fl url Ar responder_url
 .Op Fl VAfile Ar file
 .Op Fl validity_period Ar nsec
 .Op Fl verify_other Ar file
 .Ek
+.nr nS 0
 .Pp
 The Online Certificate Status Protocol
 .Pq OCSP
@@ -4218,16 +4248,18 @@ $ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
 .\" PASSWD
 .\"
 .Sh PASSWD
-.Nm openssl passwd
+.nr nS 1
+.Nm "openssl passwd"
 .Op Fl 1 | apr1 | crypt
+.Op Fl in Ar file
 .Op Fl noverify
 .Op Fl quiet
 .Op Fl reverse
+.Op Fl salt Ar string
 .Op Fl stdin
 .Op Fl table
-.Op Fl in Ar file
-.Op Fl salt Ar string
 .Op Ar password
+.nr nS 0
 .Pp
 The
 .Nm passwd
@@ -4311,17 +4343,19 @@ prints
 .\" PKCS7
 .\"
 .Sh PKCS7
-.Nm openssl pkcs7
+.nr nS 1
+.Nm "openssl pkcs7"
 .Bk -words
-.Op Fl noout
-.Op Fl print_certs
-.Op Fl text
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
+.Op Fl print_certs
+.Op Fl text
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm pkcs7
@@ -4397,24 +4431,26 @@ They cannot currently parse, for example, the new CMS as described in RFC 2630.
 .\" PKCS8
 .\"
 .Sh PKCS8
-.Nm openssl pkcs8
+.nr nS 1
+.Nm "openssl pkcs8"
 .Bk -words
 .Op Fl embed
+.Op Fl engine Ar id
+.Op Fl in Ar file
+.Op Fl inform Ar DER | PEM
 .Op Fl nocrypt
 .Op Fl noiter
 .Op Fl nooct
 .Op Fl nsdb
-.Op Fl topk8
-.Op Fl engine Ar id
-.Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl topk8
 .Op Fl v1 Ar alg
 .Op Fl v2 Ar alg
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm pkcs8
@@ -4648,6 +4684,7 @@ compatibility, several of the utilities use the old format at present.
 .\" PKCS12
 .\"
 .Sh PKCS12
+.nr nS 1
 .Nm "openssl pkcs12"
 .Bk -words
 .Oo
@@ -4655,14 +4692,26 @@ compatibility, several of the utilities use the old format at present.
 .Fl des | des3
 .Oc
 .Op Fl cacerts
+.Op Fl CAfile Ar file
+.Op Fl caname Ar name
+.Op Fl CApath Ar directory
+.Op Fl certfile Ar file
+.Op Fl certpbe Ar alg
 .Op Fl chain
 .Op Fl clcerts
+.Op Fl CSP Ar name
 .Op Fl descert
+.Op Fl engine Ar id
 .Op Fl export
+.Op Fl in Ar file
 .Op Fl info
+.Op Fl inkey Ar file
 .Op Fl keyex
+.Op Fl keypbe Ar alg
 .Op Fl keysig
+.Op Fl macalg Ar alg
 .Op Fl maciter
+.Op Fl name Ar name
 .Op Fl nocerts
 .Op Fl nodes
 .Op Fl noiter
@@ -4671,24 +4720,13 @@ compatibility, several of the utilities use the old format at present.
 .Op Fl nomaciter
 .Op Fl nomacver
 .Op Fl noout
-.Op Fl twopass
-.Op Fl CAfile Ar file
-.Op Fl CApath Ar directory
-.Op Fl caname Ar name
-.Op Fl certfile Ar file
-.Op Fl certpbe Ar alg
-.Op Fl CSP Ar name
-.Op Fl engine Ar id
-.Op Fl in Ar file
-.Op Fl inkey Ar file
-.Op Fl keypbe Ar alg
-.Op Fl macalg Ar alg
-.Op Fl name Ar name
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
 .Op Fl rand Ar
+.Op Fl twopass
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm pkcs12
@@ -5031,22 +5069,24 @@ $ openssl -in keycerts.pem -export -name "My PKCS#12 file" \e
 .\" PKEY
 .\"
 .Sh PKEY
-.Cm openssl pkey
+.nr nS 1
+.Nm "openssl pkey"
 .Bk -words
 .Op Ar cipher
-.Op Fl noout
-.Op Fl pubin
-.Op Fl pubout
-.Op Fl text
-.Op Fl text_pub
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl pubin
+.Op Fl pubout
+.Op Fl text
+.Op Fl text_pub
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm pkey
@@ -5156,11 +5196,11 @@ $ openssl pkey -in key.pem -pubout -out pubkey.pem
 .\"
 .Sh PKEYPARAM
 .Cm openssl pkeyparam
-.Op Fl noout
-.Op Fl text
 .Op Fl engine Ar id
 .Op Fl in Ar file
+.Op Fl noout
 .Op Fl out Ar file
+.Op Fl text
 .Pp
 The
 .Nm pkey
@@ -5205,20 +5245,16 @@ because the key type is determined by the PEM headers.
 .\" PKEYUTL
 .\"
 .Sh PKEYUTL
-.Cm openssl pkeyutl
+.nr nS 1
+.Nm "openssl pkeyutl"
 .Bk -words
 .Op Fl asn1parse
 .Op Fl certin
 .Op Fl decrypt
 .Op Fl derive
 .Op Fl encrypt
-.Op Fl hexdump
-.Op Fl pubin
-.Op Fl rev
-.Op Fl sign
-.Op Fl verify
-.Op Fl verifyrecover
 .Op Fl engine Ar id
+.Op Fl hexdump
 .Op Fl in Ar file
 .Op Fl inkey Ar file
 .Op Fl keyform Ar DER | PEM
@@ -5227,8 +5263,14 @@ because the key type is determined by the PEM headers.
 .Op Fl peerform Ar DER | PEM
 .Op Fl peerkey Ar file
 .Op Fl pkeyopt Ar opt : Ns Ar value
+.Op Fl pubin
+.Op Fl rev
 .Op Fl sigfile Ar file
+.Op Fl sign
+.Op Fl verify
+.Op Fl verifyrecover
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm pkeyutl
@@ -5414,11 +5456,11 @@ $ openssl pkeyutl -derive -inkey key.pem \e
 .\"
 .Sh PRIME
 .Cm openssl prime
+.Op Fl bits Ar n
+.Op Fl checks Ar n
 .Op Fl generate
 .Op Fl hex
 .Op Fl safe
-.Op Fl bits Ar n
-.Op Fl checks Ar n
 .Ar p
 .Pp
 The
@@ -5460,13 +5502,15 @@ is prime.
 .\" RAND
 .\"
 .Sh RAND
-.Cm openssl rand
+.nr nS 1
+.Nm "openssl rand"
 .Op Fl base64
-.Op Fl hex
 .Op Fl engine Ar id
+.Op Fl hex
 .Op Fl out Ar file
 .Op Fl rand Ar
 .Ar num
+.nr nS 0
 .Pp
 The
 .Nm rand
@@ -5521,24 +5565,11 @@ Multiple files can be specified separated by a
 .\" REQ
 .\"
 .Sh REQ
-.Nm openssl req
+.nr nS 1
+.Nm "openssl req"
 .Bk -words
 .Op Fl asn1-kludge
 .Op Fl batch
-.Op Fl md4 | md5 | sha1
-.Op Fl modulus
-.Op Fl new
-.Op Fl newhdr
-.Op Fl no-asn1-kludge
-.Op Fl nodes
-.Op Fl noout
-.Op Fl pubkey
-.Op Fl subject
-.Op Fl text
-.Op Fl utf8
-.Op Fl verbose
-.Op Fl verify
-.Op Fl x509
 .Op Fl config Ar file
 .Op Fl days Ar n
 .Op Fl engine Ar id
@@ -5548,18 +5579,33 @@ Multiple files can be specified separated by a
 .Op Fl key Ar keyfile
 .Op Fl keyform Ar DER | PEM
 .Op Fl keyout Ar file
+.Op Fl md4 | md5 | sha1
+.Op Fl modulus
 .Op Fl nameopt Ar option
+.Op Fl new
+.Op Fl newhdr
 .Op Fl newkey Ar arg
+.Op Fl no-asn1-kludge
+.Op Fl nodes
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl pubkey
 .Op Fl rand Ar
 .Op Fl reqexts Ar section
 .Op Fl reqopt Ar option
 .Op Fl set_serial Ar n
 .Op Fl subj Ar arg
+.Op Fl subject
+.Op Fl text
+.Op Fl utf8
+.Op Fl verbose
+.Op Fl verify
+.Op Fl x509
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm req
@@ -6297,26 +6343,28 @@ should be input by the user.
 .\" RSA
 .\"
 .Sh RSA
-.Cm openssl rsa
+.nr nS 1
+.Nm "openssl rsa"
 .Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
 .Oc
 .Op Fl check
-.Op Fl modulus
-.Op Fl noout
-.Op Fl pubin
-.Op Fl pubout
-.Op Fl sgckey
-.Op Fl text
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | NET | PEM
+.Op Fl modulus
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | NET | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl pubin
+.Op Fl pubout
+.Op Fl sgckey
+.Op Fl text
+.nr nS 0
 .Ek
 .Pp
 The
@@ -6493,23 +6541,25 @@ without having to manually edit them.
 .\" RSAUTL
 .\"
 .Sh RSAUTL
-.Nm openssl rsautl
+.nr nS 1
+.Nm "openssl rsautl"
 .Bk -words
 .Op Fl asn1parse
 .Op Fl certin
 .Op Fl decrypt
 .Op Fl encrypt
-.Op Fl hexdump
-.Op Fl oaep | pkcs | raw | ssl
-.Op Fl pubin
-.Op Fl sign
-.Op Fl verify
 .Op Fl engine Ar id
+.Op Fl hexdump
 .Op Fl in Ar file
 .Op Fl inkey Ar file
 .Op Fl keyform Ar DER | PEM
+.Op Fl oaep | pkcs | raw | ssl
 .Op Fl out Ar file
+.Op Fl pubin
+.Op Fl sign
+.Op Fl verify
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm rsautl
@@ -6675,19 +6725,30 @@ which it can be seen agrees with the recovered value above.
 .\" S_CLIENT
 .\"
 .Sh S_CLIENT
-.Nm openssl s_client
+.nr nS 1
+.Nm "openssl s_client"
 .Bk -words
 .Op Fl 4 | 6
 .Op Fl bugs
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
+.Op Fl cert Ar file
 .Op Fl check_ss_sig
+.Op Fl cipher Ar cipherlist
+.Oo
+.Fl connect Ar host : Ns Ar port |
+.Ar host Ns / Ns Ar port
+.Oc
 .Op Fl crl_check
 .Op Fl crl_check_all
 .Op Fl crlf
 .Op Fl debug
+.Op Fl engine Ar id
 .Op Fl extended_crl
 .Op Fl ign_eof
 .Op Fl ignore_critical
 .Op Fl issuer_checks
+.Op Fl key Ar keyfile
 .Op Fl msg
 .Op Fl nbio
 .Op Fl nbio_test
@@ -6698,32 +6759,23 @@ which it can be seen agrees with the recovered value above.
 .Op Fl pause
 .Op Fl policy_check
 .Op Fl prexit
+.Op Fl psk Ar key
+.Op Fl psk_identity Ar identity
 .Op Fl quiet
+.Op Fl rand Ar
 .Op Fl reconnect
 .Op Fl serverpref
 .Op Fl showcerts
 .Op Fl ssl2
 .Op Fl ssl3
+.Op Fl starttls Ar protocol
 .Op Fl state
 .Op Fl tls1
 .Op Fl tlsextdebug
-.Op Fl x509_strict
-.Op Fl CAfile Ar file
-.Op Fl CApath Ar directory
-.Op Fl cert Ar file
-.Op Fl cipher Ar cipherlist
-.Oo
-.Fl connect Ar host : Ns Ar port |
-.Ar host Ns / Ns Ar port
-.Oc
-.Op Fl engine Ar id
-.Op Fl key Ar keyfile
-.Op Fl psk Ar key
-.Op Fl psk_identity Ar identity
-.Op Fl rand Ar
-.Op Fl starttls Ar protocol
 .Op Fl verify Ar depth
+.Op Fl x509_strict
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm s_client
@@ -6997,15 +7049,28 @@ We should really report information whenever a session is renegotiated.
 .\" S_SERVER
 .\"
 .Sh S_SERVER
-.Nm openssl s_server
+.nr nS 1
+.Nm "openssl s_server"
 .Bk -words
+.Op Fl accept Ar port
 .Op Fl bugs
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
+.Op Fl cert Ar file
+.Op Fl cipher Ar cipherlist
+.Op Fl context Ar id
 .Op Fl crl_check
 .Op Fl crl_check_all
 .Op Fl crlf
+.Op Fl dcert Ar file
 .Op Fl debug
+.Op Fl dhparam Ar file
+.Op Fl dkey Ar file
+.Op Fl engine Ar id
 .Op Fl hack
 .Op Fl HTTP
+.Op Fl id_prefix Ar arg
+.Op Fl key Ar keyfile
 .Op Fl msg
 .Op Fl nbio
 .Op Fl nbio_test
@@ -7015,32 +7080,21 @@ We should really report information whenever a session is renegotiated.
 .Op Fl no_tls1
 .Op Fl no_tmp_rsa
 .Op Fl nocert
+.Op Fl psk Ar key
+.Op Fl psk_hint Ar hint
 .Op Fl quiet
+.Op Fl rand Ar
 .Op Fl serverpref
 .Op Fl ssl2
 .Op Fl ssl3
 .Op Fl state
 .Op Fl tls1
-.Op Fl WWW
-.Op Fl www
-.Op Fl accept Ar port
-.Op Fl CAfile Ar file
-.Op Fl CApath Ar directory
-.Op Fl cert Ar file
-.Op Fl cipher Ar cipherlist
-.Op Fl context Ar id
-.Op Fl dcert Ar file
-.Op Fl dhparam Ar file
-.Op Fl dkey Ar file
-.Op Fl engine Ar id
-.Op Fl id_prefix Ar arg
-.Op Fl key Ar keyfile
-.Op Fl rand Ar
-.Op Fl psk Ar key
-.Op Fl psk_hint Ar hint
 .Op Fl Verify Ar depth
 .Op Fl verify Ar depth
+.Op Fl WWW
+.Op Fl www
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm s_server
@@ -7304,24 +7358,26 @@ unknown cipher suites a client says it supports.
 .\" S_TIME
 .\"
 .Sh S_TIME
-.Nm openssl s_time
+.nr nS 1
+.Nm "openssl s_time"
 .Bk -words
 .Op Fl bugs
-.Op Fl nbio
-.Op Fl new
-.Op Fl reuse
-.Op Fl ssl2
-.Op Fl ssl3
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
 .Op Fl cipher Ar cipherlist
 .Op Fl connect Ar host : Ns Ar port
 .Op Fl key Ar keyfile
+.Op Fl nbio
+.Op Fl new
+.Op Fl reuse
+.Op Fl ssl2
+.Op Fl ssl3
 .Op Fl time Ar seconds
 .Op Fl verify Ar depth
 .Op Fl www Ar page
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm s_client
@@ -7499,17 +7555,19 @@ option should really exit if the server verification fails.
 .\" SESS_ID
 .\"
 .Sh SESS_ID
-.Nm openssl sess_id
+.nr nS 1
+.Nm "openssl sess_id"
 .Bk -words
 .Op Fl cert
-.Op Fl noout
-.Op Fl text
 .Op Fl context Ar ID
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
+.Op Fl text
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm sess_id
@@ -7627,7 +7685,8 @@ The cipher and start time should be printed out in human readable form.
 .\" SMIME
 .\"
 .Sh SMIME
-.Nm openssl smime
+.nr nS 1
+.Nm "openssl smime"
 .Bk -words
 .Oo Xo
 .Fl aes128 | aes192 | aes256 | des |
@@ -7635,15 +7694,26 @@ The cipher and start time should be printed out in human readable form.
 .Xc
 .Oc
 .Op Fl binary
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
+.Op Fl certfile Ar file
 .Op Fl check_ss_sig
+.Op Fl content Ar file
 .Op Fl crl_check
 .Op Fl crl_check_all
 .Op Fl decrypt
 .Op Fl encrypt
+.Op Fl engine Ar id
 .Op Fl extended_crl
+.Op Fl from Ar addr
 .Op Fl ignore_critical
+.Op Fl in Ar file
 .Op Fl indef
+.Op Fl inform Ar DER | PEM | SMIME
+.Op Fl inkey Ar file
 .Op Fl issuer_checks
+.Op Fl keyform Ar ENGINE | PEM
+.Op Fl md Ar digest
 .Op Fl noattr
 .Op Fl nocerts
 .Op Fl nochain
@@ -7652,35 +7722,25 @@ The cipher and start time should be printed out in human readable form.
 .Op Fl nointern
 .Op Fl nosigs
 .Op Fl noverify
-.Op Fl pk7out
-.Op Fl policy_check
-.Op Fl resign
-.Op Fl sign
-.Op Fl stream
-.Op Fl text
-.Op Fl verify
-.Op Fl x509_strict
-.Op Fl CAfile Ar file
-.Op Fl CApath Ar directory
-.Op Fl certfile Ar file
-.Op Fl content Ar file
-.Op Fl engine Ar id
-.Op Fl from Ar addr
-.Op Fl in Ar file
-.Op Fl inform Ar DER | PEM | SMIME
-.Op Fl inkey Ar file
-.Op Fl keyform Ar ENGINE | PEM
-.Op Fl md Ar digest
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM | SMIME
 .Op Fl passin Ar arg
+.Op Fl pk7out
+.Op Fl policy_check
 .Op Fl rand Ar
 .Op Fl recip Ar file
+.Op Fl resign
+.Op Fl sign
 .Op Fl signer Ar file
+.Op Fl stream
 .Op Fl subject Ar s
+.Op Fl text
 .Op Fl to Ar addr
+.Op Fl verify
+.Op Fl x509_strict
 .Op Ar cert.pem ...
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm smime
@@ -8200,7 +8260,8 @@ command were first added in
 .\" SPEED
 .\"
 .Sh SPEED
-.Nm openssl speed
+.nr nS 1
+.Nm "openssl speed"
 .Bk -words
 .Op Cm aes
 .Op Cm aes-128-cbc
@@ -8233,11 +8294,12 @@ command were first added in
 .Op Cm sha1
 .Op Fl decrypt
 .Op Fl elapsed
-.Op Fl mr
 .Op Fl engine Ar id
 .Op Fl evp Ar e
+.Op Fl mr
 .Op Fl multi Ar number
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm speed
@@ -8281,15 +8343,15 @@ benchmarks in parallel.
 .Fl query
 .Op Fl md4 | md5 | ripemd160 | sha | sha1
 .Op Fl cert
-.Op Fl no_nonce
-.Op Fl text
 .Op Fl config Ar configfile
 .Op Fl data Ar file_to_hash
 .Op Fl digest Ar digest_bytes
 .Op Fl in Ar request.tsq
+.Op Fl no_nonce
 .Op Fl out Ar request.tsq
 .Op Fl policy Ar object_id
 .Op Fl rand Ar file : Ns Ar file
+.Op Fl text
 .Ek
 .nr nS 0
 .Pp
@@ -8297,9 +8359,6 @@ benchmarks in parallel.
 .Nm "openssl ts"
 .Bk -words
 .Fl reply
-.Op Fl text
-.Op Fl token_in
-.Op Fl token_out
 .Op Fl chain Ar certs_file.pem
 .Op Fl config Ar configfile
 .Op Fl engine Ar id
@@ -8311,6 +8370,9 @@ benchmarks in parallel.
 .Op Fl queryfile Ar request.tsq
 .Op Fl section Ar tsa_section
 .Op Fl signer Ar tsa_cert.pem
+.Op Fl text
+.Op Fl token_in
+.Op Fl token_out
 .Ek
 .nr nS 0
 .Pp
@@ -8318,13 +8380,13 @@ benchmarks in parallel.
 .Nm "openssl ts"
 .Bk -words
 .Fl verify
-.Op Fl token_in
 .Op Fl CAfile Ar trusted_certs.pem
 .Op Fl CApath Ar trusted_cert_path
 .Op Fl data Ar file_to_hash
 .Op Fl digest Ar digest_bytes
 .Op Fl in Ar response.tsr
 .Op Fl queryfile Ar request.tsq
+.Op Fl token_in
 .Op Fl untrusted Ar cert_file.pem
 .Ek
 .nr nS 0
@@ -8894,20 +8956,22 @@ OpenTSA project
 .\" SPKAC
 .\"
 .Sh SPKAC
-.Nm openssl spkac
+.nr nS 1
+.Nm "openssl spkac"
 .Bk -words
-.Op Fl noout
-.Op Fl pubkey
-.Op Fl verify
 .Op Fl challenge Ar string
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl key Ar keyfile
+.Op Fl noout
 .Op Fl out Ar file
 .Op Fl passin Ar arg
+.Op Fl pubkey
 .Op Fl spkac Ar spkacname
 .Op Fl spksect Ar section
+.Op Fl verify
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm spkac
@@ -9020,11 +9084,15 @@ to be used in a
 .\" VERIFY
 .\"
 .Sh VERIFY
-.Nm openssl verify
+.nr nS 1
+.Nm "openssl verify"
 .Bk -words
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
 .Op Fl check_ss_sig
 .Op Fl crl_check
 .Op Fl crl_check_all
+.Op Fl engine Ar id
 .Op Fl explicit_policy
 .Op Fl extended_crl
 .Op Fl help
@@ -9033,16 +9101,14 @@ to be used in a
 .Op Fl inhibit_map
 .Op Fl issuer_checks
 .Op Fl policy_check
-.Op Fl verbose
-.Op Fl x509_strict
-.Op Fl CAfile Ar file
-.Op Fl CApath Ar directory
-.Op Fl engine Ar id
 .Op Fl purpose Ar purpose
 .Op Fl untrusted Ar file
+.Op Fl verbose
+.Op Fl x509_strict
 .Op Fl
 .Op Ar certificates
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm verify
@@ -9443,31 +9509,55 @@ option was added in
 .\" X509
 .\"
 .Sh X509
-.Nm openssl x509
+.nr nS 1
+.Nm "openssl x509"
 .Bk -words
-.Op Fl alias
 .Op Fl C
+.Op Fl addreject Ar arg
+.Op Fl addtrust Ar arg
+.Op Fl alias
+.Op Fl CA Ar file
 .Op Fl CAcreateserial
+.Op Fl CAform Ar DER | PEM
+.Op Fl CAkey Ar file
+.Op Fl CAkeyform Ar DER | PEM
+.Op Fl CAserial Ar file
+.Op Fl certopt Ar option
+.Op Fl checkend Ar arg
 .Op Fl clrext
 .Op Fl clrreject
 .Op Fl clrtrust
 .Op Fl dates
+.Op Fl days Ar arg
 .Op Fl email
 .Op Fl enddate
+.Op Fl engine Ar id
+.Op Fl extensions Ar section
+.Op Fl extfile Ar file
 .Op Fl fingerprint
 .Op Fl hash
+.Op Fl in Ar file
+.Op Fl inform Ar DER | NET | PEM
 .Op Fl issuer
 .Op Fl issuer_hash
 .Op Fl issuer_hash_old
+.Op Fl keyform Ar DER | PEM
 .Op Fl md2 | md5 | sha1
 .Op Fl modulus
+.Op Fl nameopt Ar option
 .Op Fl noout
-.Op Fl ocspid
 .Op Fl ocsp_uri
+.Op Fl ocspid
+.Op Fl out Ar file
+.Op Fl outform Ar DER | NET | PEM
+.Op Fl passin Ar arg
 .Op Fl pubkey
 .Op Fl purpose
 .Op Fl req
 .Op Fl serial
+.Op Fl set_serial Ar n
+.Op Fl setalias Ar arg
+.Op Fl signkey Ar file
 .Op Fl startdate
 .Op Fl subject
 .Op Fl subject_hash
@@ -9475,30 +9565,8 @@ option was added in
 .Op Fl text
 .Op Fl trustout
 .Op Fl x509toreq
-.Op Fl addreject Ar arg
-.Op Fl addtrust Ar arg
-.Op Fl CA Ar file
-.Op Fl CAform Ar DER | PEM
-.Op Fl CAkey Ar file
-.Op Fl CAkeyform Ar DER | PEM
-.Op Fl CAserial Ar file
-.Op Fl certopt Ar option
-.Op Fl checkend Ar arg
-.Op Fl days Ar arg
-.Op Fl engine Ar id
-.Op Fl extensions Ar section
-.Op Fl extfile Ar file
-.Op Fl in Ar file
-.Op Fl inform Ar DER | NET | PEM
-.Op Fl keyform Ar DER | PEM
-.Op Fl nameopt Ar option
-.Op Fl out Ar file
-.Op Fl outform Ar DER | NET | PEM
-.Op Fl passin Ar arg
-.Op Fl set_serial Ar n
-.Op Fl setalias Ar arg
-.Op Fl signkey Ar file
 .Ek
+.nr nS 0
 .Pp
 The
 .Nm x509
@@ -9635,10 +9703,10 @@ See the
 section for more information.
 .It Fl noout
 This option prevents output of the encoded version of the request.
-.It Fl ocspid
-Print OCSP hash values for the subject name and public key.
 .It Fl ocsp_uri
 Outputs the OCSP responder addresses, if any.
+.It Fl ocspid
+Print OCSP hash values for the subject name and public key.
 .It Fl pubkey
 Output the public key.
 .It Fl serial
