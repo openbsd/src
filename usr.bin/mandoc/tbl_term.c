@@ -1,4 +1,4 @@
-/*	$Id: tbl_term.c,v 1.2 2010/10/15 21:33:47 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.3 2010/10/15 22:07:12 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,10 +29,10 @@
 /* FIXME: `n' modifier doesn't always do the right thing. */
 /* FIXME: `n' modifier doesn't use the cell-spacing buffer. */
 
-static	void		 calc_data(struct tbl_data *);
-static	void		 calc_data_literal(struct tbl_data *);
-static	void		 calc_data_number(struct tbl_data *);
-static	void		 calc_data_spanner(struct tbl_data *);
+static	void		 calc_data(struct termp *, struct tbl_data *);
+static	void		 calc_data_literal(struct termp *, struct tbl_data *);
+static	void		 calc_data_number(struct termp *, struct tbl_data *);
+static	void		 calc_data_spanner(struct termp *, struct tbl_data *);
 static	inline void	 write_char(struct termp *, char, int);
 static	void		 write_data(struct termp *,
 				const struct tbl_data *, int);
@@ -119,7 +119,7 @@ tbl_write_term(struct termp *p, const struct tbl *tbl)
 
 
 int
-tbl_calc_term(struct tbl *tbl)
+tbl_calc_term(struct termp *p, struct tbl *tbl)
 {
 	struct tbl_span	*span;
 	struct tbl_data	*data;
@@ -137,7 +137,7 @@ tbl_calc_term(struct tbl *tbl)
 		if (TBL_DATA_NDHORIZ & span->flags)
 			continue;
 		TAILQ_FOREACH(data, &span->data, entries)
-			calc_data(data);
+			calc_data(p, data);
 	}
 
 	/* Calculate width as the simple spanner value. */
@@ -145,10 +145,10 @@ tbl_calc_term(struct tbl *tbl)
 	TAILQ_FOREACH(head, &tbl->head, entries) 
 		switch (head->pos) {
 		case (TBL_HEAD_VERT):
-			head->width = 1;
+			head->width = term_len(p, 1);
 			break;
 		case (TBL_HEAD_DVERT):
-			head->width = 2;
+			head->width = term_len(p, 2);
 			break;
 		default:
 			break;
@@ -247,16 +247,16 @@ write_vframe(struct termp *p, const struct tbl *tbl)
 
 
 static void
-calc_data_spanner(struct tbl_data *data)
+calc_data_spanner(struct termp *p, struct tbl_data *data)
 {
 
 	/* N.B., these are horiz spanners (not vert) so always 1. */
-	data->cell->head->width = 1;
+	data->cell->head->width = term_len(p, 1);
 }
 
 
 static void
-calc_data_number(struct tbl_data *data)
+calc_data_number(struct termp *p, struct tbl_data *data)
 {
 	int 		 sz, d;
 	char		*dp, pnt;
@@ -273,15 +273,14 @@ calc_data_number(struct tbl_data *data)
 	/* TODO: use spacing modifier. */
 
 	assert(data->string);
-	sz = (int)strlen(data->string);
+	sz = (int)term_strlen(p, data->string);
 	pnt = data->span->tbl->decimal;
 
-	if (NULL == (dp = strchr(data->string, pnt)))
-		d = sz + 1;
-	else
-		d = (int)(dp - data->string) + 1;
+	dp = strchr(data->string, pnt);
+	d = dp ? sz - (int)term_strlen(p, dp) : sz;
+	d += term_len(p, 1);
 
-	sz += 2;
+	sz += term_len(p, 2);
 
 	if (data->cell->head->decimal > d) {
 		sz += data->cell->head->decimal - d;
@@ -298,7 +297,7 @@ calc_data_number(struct tbl_data *data)
 
 
 static void
-calc_data_literal(struct tbl_data *data)
+calc_data_literal(struct termp *p, struct tbl_data *data)
 {
 	int		 sz, bufsz;
 
@@ -309,7 +308,7 @@ calc_data_literal(struct tbl_data *data)
 	 */
 
 	assert(data->string);
-	sz = (int)strlen(data->string);
+	sz = (int)term_strlen(p, data->string);
 
 	switch (data->cell->pos) {
 	case (TBL_CELL_LONG):
@@ -326,21 +325,21 @@ calc_data_literal(struct tbl_data *data)
 		bufsz = bufsz > data->cell->spacing ? 
 			bufsz : data->cell->spacing;
 
-	sz += bufsz;
+	sz += term_len(p, bufsz);
 	if (data->cell->head->width < sz)
 		data->cell->head->width = sz;
 }
 
 
 static void
-calc_data(struct tbl_data *data)
+calc_data(struct termp *p, struct tbl_data *data)
 {
 
 	switch (data->cell->pos) {
 	case (TBL_CELL_HORIZ):
 		/* FALLTHROUGH */
 	case (TBL_CELL_DHORIZ):
-		calc_data_spanner(data);
+		calc_data_spanner(p, data);
 		break;
 	case (TBL_CELL_LONG):
 		/* FALLTHROUGH */
@@ -349,10 +348,10 @@ calc_data(struct tbl_data *data)
 	case (TBL_CELL_LEFT):
 		/* FALLTHROUGH */
 	case (TBL_CELL_RIGHT):
-		calc_data_literal(data);
+		calc_data_literal(p, data);
 		break;
 	case (TBL_CELL_NUMBER):
-		calc_data_number(data);
+		calc_data_number(p, data);
 		break;
 	default:
 		abort();
@@ -391,7 +390,7 @@ write_data_number(struct termp *p, const struct tbl_data *data, int width)
 	 * and the maximum decimal; right-pad by the remaining amount.
 	 */
 
-	sz = (int)strlen(data->string);
+	sz = (int)term_strlen(p, data->string);
 	pnt = data->span->tbl->decimal;
 
 	if (NULL == (dp = strchr(data->string, pnt))) {

@@ -1,4 +1,4 @@
-/*	$Id: tbl.c,v 1.2 2010/10/15 21:33:47 schwarze Exp $ */
+/*	$Id: tbl.c,v 1.3 2010/10/15 22:07:12 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -90,7 +90,7 @@ tbl_read(struct tbl *tbl, const char *f, int ln, const char *p, int len)
 
 
 int
-tbl_close(struct tbl *tbl, const char *f, int ln)
+tbl_close(struct termp *p, struct tbl *tbl, const char *f, int ln)
 {
 
 	if (TBL_PART_DATA != tbl->part) 
@@ -98,7 +98,7 @@ tbl_close(struct tbl *tbl, const char *f, int ln)
 	if ( ! tbl_data_close(tbl, f, ln))
 		return(0);
 #if 1
-	return(tbl_calc_term(tbl));
+	return(tbl_calc_term(p, tbl));
 #else
 	return(tbl_calc_tree(tbl));
 #endif

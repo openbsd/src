@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.48 2010/10/15 21:33:47 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.49 2010/10/15 22:07:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -838,7 +838,7 @@ pre_TS(DECL_ARGS)
 	if (MAN_BLOCK != n->type)
 		return(0);
 
-	if ( ! tbl_close(n->data.TS, "<man>", n->line))
+	if ( ! tbl_close(p, n->data.TS, "<man>", n->line))
 		return(0);
 
 	tbl_write(p, n->data.TS);
