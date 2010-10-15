@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.38 2010/07/21 19:35:15 deraadt Exp $ */
+/* $OpenBSD: amltypes.h,v 1.39 2010/10/15 20:25:04 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -108,7 +108,6 @@
 #define AMLOP_NOTIFY		0x86
 #define AMLOP_SIZEOF		0x87
 #define AMLOP_INDEX		0x88
-#define AMLOP_DEREFOF		0x83
 #define AMLOP_MATCH		0x89
 #define AMLOP_CREATEDWORDFIELD	0x8A
 #define AMLOP_CREATEWORDFIELD	0x8B
