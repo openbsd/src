@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.14 2010/09/27 21:25:28 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.15 2010/10/16 20:49:37 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -100,6 +100,7 @@ enum	mandocerr {
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
 	MANDOCERR_IGNPAR, /* paragraph macro ignored */
+	MANDOCERR_TBL, /* tbl(1) error */
 
 	MANDOCERR_FATAL, /* ===== end of fatal errors ===== */
 

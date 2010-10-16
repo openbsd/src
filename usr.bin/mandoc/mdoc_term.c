@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.110 2010/10/16 13:38:29 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.111 2010/10/16 20:49:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -2100,10 +2100,8 @@ termp_ts_pre(DECL_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(0);
 
-	if ( ! tbl_close(p, n->data.TS, "<mdoc>", n->line))
-		return(0);
-
-	tbl_write(p, n->data.TS);
+	if (tbl_close(p, n->data.TS, "mdoc tbl postprocess", n->line))
+		tbl_write(p, n->data.TS);
 
 	return(0);
 }

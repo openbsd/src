@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.48 2010/09/27 21:25:28 schwarze Exp $ */
+/*	$Id: main.c,v 1.49 2010/10/16 20:49:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -160,6 +160,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
 	"paragraph macro ignored",
+	"tbl(1) error",
 
 	"generic fatal error",
 

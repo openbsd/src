@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.67 2010/10/16 13:38:29 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.68 2010/10/16 20:49:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -241,8 +241,10 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 	if (n && MDOC_TS == n->tok && MDOC_BODY == n->type &&
 	    strncmp(buf+offs, ".TE", 3)) {
 		n = n->parent;
-		return(tbl_read(n->data.TS, "<mdoc>", ln, buf+offs,
-		    strlen(buf+offs)) ? 1 : 0);
+		if ( ! tbl_read(n->data.TS, "mdoc tbl parser",
+		    ln, buf+offs, strlen(buf+offs)))
+			mdoc_nmsg(m, n, MANDOCERR_TBL);
+		return(1);
 	}
 
 	/*
