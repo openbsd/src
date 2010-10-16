@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.41 2010/09/26 20:43:30 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.42 2010/10/16 08:31:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,8 +59,6 @@ server_client_create(int fd)
 	if ((mode = fcntl(fd, F_GETFL)) == -1)
 		fatal("fcntl failed");
 	if (fcntl(fd, F_SETFL, mode|O_NONBLOCK) == -1)
-		fatal("fcntl failed");
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
 		fatal("fcntl failed");
 
 	c = xcalloc(1, sizeof *c);
@@ -706,8 +704,6 @@ server_client_msg_dispatch(struct client *c)
 
 			if ((mode = fcntl(c->stdin_fd, F_GETFL)) != -1)
 				fcntl(c->stdin_fd, F_SETFL, mode|O_NONBLOCK);
-			if (fcntl(c->stdin_fd, F_SETFD, FD_CLOEXEC) == -1)
-				fatal("fcntl failed");
 
 			server_client_msg_identify(c, &identifydata, imsg.fd);
 			break;
@@ -725,8 +721,6 @@ server_client_msg_dispatch(struct client *c)
 
 			if ((mode = fcntl(c->stdout_fd, F_GETFL)) != -1)
 				fcntl(c->stdout_fd, F_SETFL, mode|O_NONBLOCK);
-			if (fcntl(c->stdout_fd, F_SETFD, FD_CLOEXEC) == -1)
-				fatal("fcntl failed");
 			break;
 		case MSG_STDERR:
 			if (datalen != 0)
@@ -742,8 +736,6 @@ server_client_msg_dispatch(struct client *c)
 
 			if ((mode = fcntl(c->stderr_fd, F_GETFL)) != -1)
 				fcntl(c->stderr_fd, F_SETFL, mode|O_NONBLOCK);
-			if (fcntl(c->stderr_fd, F_SETFD, FD_CLOEXEC) == -1)
-				fatal("fcntl failed");
 			break;
 		case MSG_RESIZE:
 			if (datalen != 0)

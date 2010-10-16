@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.89 2010/10/14 17:38:39 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.90 2010/10/16 08:31:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -222,6 +222,8 @@ shell_exec(const char *shell, const char *shellcmd)
 	else
 		xasprintf(&argv0, "%s", shellname);
 	setenv("SHELL", shell, 1);
+
+	closefrom(STDERR_FILENO + 1);
 
 	execl(shell, argv0, "-c", shellcmd, (char *) NULL);
 	fatal("execl failed");
