@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.518 2010/10/12 21:05:44 mpf Exp $
+$OpenBSD: usbdevs,v 1.519 2010/10/16 11:55:00 krw Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2524,6 +2524,7 @@ product MELCO WLIUCAG300N	0x012e	WLI-UC-AG300N
 product MELCO RT2870_1		0x0148	RT2870
 product MELCO RT2870_2		0x0150	RT2870
 product MELCO WLIUCGN		0x015d	WLI-UC-GN
+product MELCO WLIUCGNM		0x01a2	WLI-UC-GNM
 
 /* MetaGeek tagged products */
 product MECANIQUE WISPY		0x083e	MetaGeek Wi-Spy
@@ -2945,6 +2946,7 @@ product PLANEX2 GWUSMICRON	0xed14	GW-USMicroN
 product PLANEX3 GWUS54GZ	0xab10	GW-US54GZ
 product PLANEX2 GWUS300MINIS	0xab24	GW-US300MiniS
 product PLANEX2	RT3070		0xab25	RT3070
+product PLANEX2 GWUSMICRO300	0xab29	GW-USMicro300
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	DSP-400 Headset
