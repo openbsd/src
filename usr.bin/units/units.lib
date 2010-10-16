@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.11 2002/07/17 16:42:12 mickey Exp $
+/ $OpenBSD: units.lib,v 1.12 2010/10/16 00:44:42 tedu Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -179,6 +179,8 @@ british			1200|3937 m/ft
 nmile			1852 m
 
 acre			4840 yd2
+
+ox			acre/day
 
 cc			cm3
 liter			kilocc
