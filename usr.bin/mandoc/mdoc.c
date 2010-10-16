@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.66 2010/09/27 21:25:28 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.67 2010/10/16 13:38:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,6 +27,10 @@
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
+
+#include "out.h"
+#include "term.h"
+#include "tbl.h"
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 
 	"Ap",		"Dd",		"Dt",		"Os",
@@ -65,7 +69,7 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	/* LINTED */
 	"Dx",		"%Q",		"br",		"sp",
 	/* LINTED */
-	"%U",		"Ta"
+	"%U",		"Ta",		"TS",		"TE"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -225,11 +229,21 @@ mdoc_endparse(struct mdoc *m)
 int
 mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 {
+	struct mdoc_node *n;
 
 	if (MDOC_HALT & m->flags)
 		return(0);
 
 	m->flags |= MDOC_NEWLINE;
+
+	n = m->last;
+
+	if (n && MDOC_TS == n->tok && MDOC_BODY == n->type &&
+	    strncmp(buf+offs, ".TE", 3)) {
+		n = n->parent;
+		return(tbl_read(n->data.TS, "<mdoc>", ln, buf+offs,
+		    strlen(buf+offs)) ? 1 : 0);
+	}
 
 	/*
 	 * Let the roff nS register switch SYNOPSIS mode early,
@@ -524,6 +538,9 @@ mdoc_node_free(struct mdoc_node *p)
 	if (MDOC_Bf == p->tok && MDOC_HEAD == p->type)
 		if (p->data.Bf)
 			free(p->data.Bf);
+	if (MDOC_TS == p->tok && MDOC_BLOCK == p->type)
+		if (p->data.TS)
+			tbl_free(p->data.TS);
 
 	if (p->string)
 		free(p->string);

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.109 2010/10/01 21:38:26 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.110 2010/10/16 13:38:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,6 +30,7 @@
 #include "mdoc.h"
 #include "chars.h"
 #include "main.h"
+#include "tbl.h"
 
 #define	INDENT		  5
 #define	HALFINDENT	  3
@@ -113,6 +114,7 @@ static	int	  termp_sh_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
 static	int	  termp_sp_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
+static	int	  termp_ts_pre(DECL_ARGS);
 static	int	  termp_under_pre(DECL_ARGS);
 static	int	  termp_ud_pre(DECL_ARGS);
 static	int	  termp_vt_pre(DECL_ARGS);
@@ -242,6 +244,8 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_sp_pre, NULL }, /* sp */ 
 	{ termp_under_pre, termp____post }, /* %U */ 
 	{ NULL, NULL }, /* Ta */ 
+	{ termp_ts_pre, NULL }, /* TS */ 
+	{ NULL, NULL }, /* TE */ 
 };
 
 
@@ -2083,6 +2087,23 @@ termp_lk_pre(DECL_ARGS)
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, sv->string);
 	term_fontpop(p);
+
+	return(0);
+}
+
+
+/* ARGSUSED */
+static int
+termp_ts_pre(DECL_ARGS)
+{
+
+	if (MDOC_BLOCK != n->type)
+		return(0);
+
+	if ( ! tbl_close(p, n->data.TS, "<mdoc>", n->line))
+		return(0);
+
+	tbl_write(p, n->data.TS);
 
 	return(0);
 }
