@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.8 2010/10/07 01:52:25 krw Exp $ */
+/* $OpenBSD: pms.c,v 1.9 2010/10/16 11:24:04 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -167,29 +167,11 @@ pmsattach(parent, self, aux)
 	struct pms_softc *sc = (void *)self;
 	struct pckbc_attach_args *pa = aux;
 	struct wsmousedev_attach_args a;
-	u_char cmd[1], resp[2];
-	int res;
 
 	sc->sc_kbctag = pa->pa_tag;
 	sc->sc_kbcslot = pa->pa_slot;
 
 	printf("\n");
-
-	/* Flush any garbage. */
-	pckbc_flush(pa->pa_tag, pa->pa_slot);
-
-	/* reset the device */
-	cmd[0] = PMS_RESET;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
-#ifdef DEBUG
-	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
-		printf("pmsattach: reset error\n");
-		return;
-	}
-#endif
-
-	sc->inputstate = 0;
-	sc->oldbuttons = 0;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 			       pmsinput, sc, sc->sc_dev.dv_xname);
