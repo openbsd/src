@@ -1,9 +1,9 @@
-.\" $OpenBSD: sdiff.1,v 1.15 2007/06/29 14:48:07 jmc Exp $
+.\" $OpenBSD: sdiff.1,v 1.16 2010/10/16 18:00:32 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: June 29 2007 $
+.Dd $Mdocdate: October 16 2010 $
 .Dt SDIFF 1
 .Os
 .Sh NAME
@@ -142,6 +142,19 @@ the default is
 Specifies a directory for temporary files to be created.
 The default is
 .Pa /tmp .
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+No differences were found.
+.It 1
+Differences were found.
+.It \*(Gt1
+An error occurred.
 .El
 .Sh SEE ALSO
 .Xr cmp 1 ,
