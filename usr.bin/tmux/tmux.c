@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.90 2010/10/16 08:31:55 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.91 2010/10/16 08:42:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
@@ -211,6 +212,7 @@ shell_exec(const char *shell, const char *shellcmd)
 {
 	const char	*shellname, *ptr;
 	char		*argv0;
+	int		 mode;
 
 	ptr = strrchr(shell, '/');
 	if (ptr != NULL && *(ptr + 1) != '\0')
@@ -223,6 +225,12 @@ shell_exec(const char *shell, const char *shellcmd)
 		xasprintf(&argv0, "%s", shellname);
 	setenv("SHELL", shell, 1);
 
+	if ((mode = fcntl(STDIN_FILENO, F_GETFL)) != -1)
+		fcntl(STDIN_FILENO, F_SETFL, mode & ~O_NONBLOCK);
+	if ((mode = fcntl(STDOUT_FILENO, F_GETFL)) != -1)
+		fcntl(STDOUT_FILENO, F_SETFL, mode & ~O_NONBLOCK);
+	if ((mode = fcntl(STDERR_FILENO, F_GETFL)) != -1)
+		fcntl(STDERR_FILENO, F_SETFL, mode & ~O_NONBLOCK);
 	closefrom(STDERR_FILENO + 1);
 
 	execl(shell, argv0, "-c", shellcmd, (char *) NULL);
