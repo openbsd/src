@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2010/04/25 13:59:53 espie Exp $
+#	$OpenBSD: Makefile,v 1.52 2010/10/17 22:54:37 schwarze Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -59,10 +59,6 @@ targ.o parse.o: nodehashconsts.h
 var.ln: varhashconsts.h
 cond.ln: condhashconsts.h
 targ.ln parse.ln: nodehashconsts.h
-
-.if make(install)
-SUBDIR+= PSD.doc
-.endif
 
 .PHONY:		regress
 

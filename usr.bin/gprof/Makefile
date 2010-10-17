@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2010/02/03 20:49:01 miod Exp $
+#	$OpenBSD: Makefile,v 1.19 2010/10/17 22:54:37 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -21,9 +21,5 @@ beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/gprof.flat ${.CURDIR}/gprof.callg \
 	    ${DESTDIR}/usr/share/misc
-
-.if make(install)
-SUBDIR+= PSD.doc
-.endif
 
 .include <bsd.prog.mk>
