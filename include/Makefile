@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.155 2010/05/25 00:24:58 espie Exp $
+#	$OpenBSD: Makefile,v 1.156 2010/10/17 08:44:15 djm Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -41,7 +41,7 @@ LDIRS=	altq crypto ddb dev isofs miscfs msdosfs net netatalk netinet netinet6 \
 RDIRS=	../lib/libpthread ../lib/libcompat ../lib/libcurses \
 	../lib/libform ../lib/libssl ../lib/libmenu \
 	../lib/libocurses ../lib/libossaudio ../lib/libpanel ../lib/librpcsvc \
-	../lib/libskey ../lib/libsectok ../lib/libedit ../lib/libexpat \
+	../lib/libskey ../lib/libedit ../lib/libexpat \
 	../lib/libpcap ../lib/libutil ../lib/libusbhid ../lib/libwrap \
 	../lib/libz ../lib/libkeynote ../lib/libevent ../usr.bin/lex \
 	../gnu/lib/libreadline ../gnu/usr.sbin/sendmail/libmilter \
