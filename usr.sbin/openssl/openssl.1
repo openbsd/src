@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.82 2010/10/15 21:05:06 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.83 2010/10/17 13:30:37 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: October 15 2010 $
+.Dd $Mdocdate: October 17 2010 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1989,10 +1989,8 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .nr nS 0
 .Pp
 .Nm openssl
-.Xo
 .Cm md2 | md4 | md5 |
 .Cm ripemd160 | sha | sha1
-.Xc
 .Op Fl c
 .Op Fl d
 .Op Ar
@@ -2037,26 +2035,22 @@ Specifies the key format to sign the digest with.
 .It Fl mac Ar algorithm
 Create a keyed Message Authentication Code (MAC).
 The most popular MAC algorithm is HMAC (hash-based MAC),
-but there are other MAC algorithms which are not based on hash,
-for instance the gost-mac algorithm,
-supported by the ccgost engine.
+but there are other MAC algorithms which are not based on hash.
 MAC keys and other options should be set via the
 .Fl macopt
 parameter.
 .It Fl macopt Ar nm : Ns Ar v
 Passes options to the MAC algorithm, specified by
 .Fl mac .
-The following options are supported by both by HMAC and gost-mac:
+The following options are supported by HMAC:
 .Bl -tag -width Ds
 .It Ar key : Ns Ar string
 Specifies the MAC key as an alphanumeric string
 (use if the key contain printable characters only).
-String length must conform to any restrictions of the MAC algorithm,
-for example exactly 32 chars for gost-mac.
+String length must conform to any restrictions of the MAC algorithm.
 .It Ar hexkey : Ns Ar string
 Specifies the MAC key in hexadecimal form (two hex digits per byte).
-Key length must conform to any restrictions of the MAC algorithm,
-for example exactly 32 chars for gost-mac.
+Key length must conform to any restrictions of the MAC algorithm.
 .El
 .It Fl out Ar file
 The file to output to, or standard output by default.
@@ -2382,7 +2376,7 @@ This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
 .It Fl passin Ar arg
-The input file password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -2548,11 +2542,11 @@ DSA parameters is often used to generate several distinct keys.
 .Op Fl des
 .Op Fl des3
 .Op Fl engine Ar id
-.Op Fl in Ar filename
-.Op Fl inform Ar PEM|DER
+.Op Fl in Ar file
+.Op Fl inform Ar DER | PEM
 .Op Fl noout
-.Op Fl out Ar filename
-.Op Fl outform Ar PEM|DER
+.Op Fl out Ar file
+.Op Fl outform Ar DER | PEM
 .Op Fl param_enc Ar arg
 .Op Fl param_out
 .Op Fl passin Ar arg
@@ -2620,9 +2614,8 @@ string) will cause
 .Nm ec
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
-.It Fl in Ar filename
+The engine will then be set as the default for all available algorithms.
+.It Fl in Ar file
 This specifies the input filename to read a key from,
 or standard input if this option is not specified.
 If the key is encrypted a pass phrase will be prompted for.
@@ -2639,7 +2632,7 @@ In the case of a private key
 PKCS#8 format is also accepted.
 .It Fl noout
 Prevents output of the encoded version of the key.
-.It Fl out Ar filename
+.It Fl out Ar file
 Specifies the output filename to write a key to,
 or standard output if none is specified.
 If any encryption options are set then a pass phrase will be prompted for.
@@ -2668,7 +2661,7 @@ as specified in RFC 3279,
 is currently not implemented in
 .Nm OpenSSL .
 .It Fl passin Ar arg
-The input file password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -2755,13 +2748,13 @@ command was first introduced in
 .Op Fl conv_form Ar arg
 .Op Fl engine Ar id
 .Op Fl genkey
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
 .Op Fl list_curves
 .Op Fl name Ar arg
 .Op Fl no_seed
 .Op Fl noout
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl param_enc Ar arg
 .Op Fl rand Ar file ...
@@ -2805,16 +2798,15 @@ string) will cause
 .Nm ecparam
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Fl genkey
 Generate an EC private key using the specified parameters.
-.It Fl in Ar filename
+.It Fl in Ar file
 Specify the input filename to read parameters from or standard input if
 this option is not specified.
 .It Fl inform Ar DER | PEM
 Specify the input format.
-DER uses an ASN.1 DER encoded
+DER uses an ASN.1 DER-encoded
 form compatible with RFC 3279 EcpkParameters.
 PEM is the default format:
 it consists of the DER format base64 encoded with additional
@@ -2832,7 +2824,7 @@ Inhibit that the 'seed' for the parameter generation
 is included in the ECParameters structure (see RFC 3279).
 .It Fl noout
 Inhibit the output of the encoded version of the parameters.
-.It Fl out Ar filename
+.It Fl out Ar file
 Specify the output filename parameters are written to.
 Standard output is used if this option is not present.
 The output filename should
@@ -3123,7 +3115,6 @@ because this form is processed before the
 configuration file is read and any engines loaded.
 .Pp
 Engines which provide entirely new encryption algorithms
-(such as the ccgost engine which provides the gost89 algorithm)
 should be configured in the configuration file.
 Engines, specified on the command line using the
 .Fl engine
@@ -3456,7 +3447,7 @@ much quicker than RSA key generation, for example.
 .Op Ar cipher
 .Op Fl engine Ar id
 .Op Fl genparam
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl paramfile Ar file
 .Op Fl pass Ar arg
@@ -3499,8 +3490,7 @@ string) will cause
 .Nm genpkey
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Fl genparam
 Generate a set of parameters instead of a private key.
 If used this option must precede any
@@ -3509,7 +3499,7 @@ If used this option must precede any
 or
 .Fl pkeyopt
 options.
-.It Fl out Ar filename
+.It Fl out Ar file
 The output filename.
 If this argument is not specified then standard output is used.
 .It Fl outform Ar DER | PEM
@@ -3530,7 +3520,7 @@ are mutually exclusive.
 .It Fl pass Ar arg
 The output file password source.
 For more information about the format of
-.Ar arg
+.Ar arg ,
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
@@ -4531,7 +4521,7 @@ This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
 .It Fl passin Ar arg
-The input file password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -4783,16 +4773,14 @@ The
 to write certificates and private keys to, standard output by default.
 They are all written in PEM format.
 .It Fl passin Ar arg
-The PKCS#12 file
-.Pq i.e. input file
-password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
 .It Fl passout Ar arg
-Pass phrase source to encrypt any outputed private keys with.
+The output file password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -4927,16 +4915,14 @@ This specifies
 to write the PKCS#12 file to.
 Standard output is used by default.
 .It Fl passin Ar arg
-Pass phrase source to decrypt any input private keys with.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
 .It Fl passout Ar arg
-The PKCS#12 file
-.Pq i.e. output file
-password source.
+The output file password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -5109,8 +5095,7 @@ string) will cause
 .Nm pkey
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input filename to read a key from,
 or standard input if this option is not specified.
@@ -5133,9 +5118,9 @@ the options have the same meaning as the
 .Fl inform
 option.
 .It Fl passin Ar arg
-The input file password source.
+The key password source.
 For more information about the format of
-.Ar arg
+.Ar arg ,
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
@@ -5216,8 +5201,7 @@ string) will cause
 .Nm pkeyparam
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input filename to read parameters from,
 or standard input if this option is not specified.
@@ -5257,10 +5241,10 @@ because the key type is determined by the PEM headers.
 .Op Fl hexdump
 .Op Fl in Ar file
 .Op Fl inkey Ar file
-.Op Fl keyform Ar DER | PEM
+.Op Fl keyform Ar DER | ENGINE | PEM
 .Op Fl out Ar file
 .Op Fl passin Ar arg
-.Op Fl peerform Ar DER | PEM
+.Op Fl peerform Ar DER | ENGINE | PEM
 .Op Fl peerkey Ar file
 .Op Fl pkeyopt Ar opt : Ns Ar value
 .Op Fl pubin
@@ -5299,8 +5283,7 @@ string) will cause
 .Nm pkeyutl
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Fl hexdump
 Hex dump the output data.
 .It Fl in Ar file
@@ -5309,20 +5292,20 @@ or standard input if this option is not specified.
 .It Fl inkey Ar file
 The input key file.
 By default it should be a private key.
-.It Fl keyform Ar DER | PEM
-The key format DER, PEM, or ENGINE.
+.It Fl keyform Ar DER | ENGINE | PEM
+The key format DER, ENGINE, or PEM.
 .It Fl out Ar file
 Specify the output filename to write to,
 or standard output by default.
 .It Fl passin Ar arg
-The input key password source.
+The key password source.
 For more information about the format of
-.Ar arg
+.Ar arg ,
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl peerform Ar DER | PEM
-The peer key format DER, PEM, or ENGINE.
+.It Fl peerform Ar DER | ENGINE | PEM
+The peer key format DER, ENGINE, or PEM.
 .It Fl peerkey Ar file
 The peer key file, used by key derivation (agreement) operations.
 .It Fl pkeyopt Ar opt : Ns Ar value
@@ -5706,9 +5689,7 @@ This specifies the message digest to sign the request with.
 This overrides the digest algorithm specified in the configuration file.
 .Pp
 Some public key algorithms may override this choice.
-For instance, DSA signatures always use SHA1;
-GOST R 34.10 signatures always use GOST R 34.11-94
-.Pq Fl md_gost94 .
+For instance, DSA signatures always use SHA1.
 .It Fl modulus
 This option prints out the value of the modulus of the public key
 contained in the request.
@@ -5779,18 +5760,9 @@ should be specified via the
 .Fl pkeyopt
 option.
 .Pp
-.Ar dsa : Ns Ar filename
+.Ar dsa : Ns Ar file
 generates a DSA key using the parameters in the file
-.Ar filename .
-.Ar ec : Ns Ar filename
-generates an EC key (usable both with ECDSA or ECDH algorithms);
-.Ar gost2001 : Ns Ar filename
-generates a GOST R 34.10-2001 key
-(requires the ccgost engine configured in the configuration file).
-If just
-.Cm gost2001
-is specified a parameter set should be specified by
-.Cm -pkeyopt paramset:X .
+.Ar file .
 .It Fl no-asn1-kludge
 Reverses the effect of
 .Fl asn1-kludge .
@@ -5808,7 +5780,7 @@ This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
 .It Fl passin Ar arg
-The input file password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -6446,7 +6418,7 @@ This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
 .It Fl passin Ar arg
-The input file password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -7688,10 +7660,9 @@ The cipher and start time should be printed out in human readable form.
 .nr nS 1
 .Nm "openssl smime"
 .Bk -words
-.Oo Xo
+.Oo
 .Fl aes128 | aes192 | aes256 | des |
 .Fl des3 | rc2-40 | rc2-64 | rc2-128
-.Xc
 .Oc
 .Op Fl binary
 .Op Fl CAfile Ar file
@@ -7867,8 +7838,7 @@ string) will cause
 .Nm smime
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Xo
 .Fl from Ar addr ,
 .Fl subject Ar s ,
@@ -7992,7 +7962,7 @@ or
 .Fl decrypt )
 this option has no effect.
 .It Fl passin Ar arg
-The private key password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
@@ -8319,8 +8289,7 @@ string) will cause
 .Nm speed
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Fl elapsed
 Measure time in real time instead of CPU user time.
 .It Fl evp Ar e
@@ -8365,7 +8334,7 @@ benchmarks in parallel.
 .Op Fl in Ar response.tsr
 .Op Fl inkey Ar private.pem
 .Op Fl out Ar response.tsr
-.Op Fl passin Ar password_src
+.Op Fl passin Ar arg
 .Op Fl policy Ar object_id
 .Op Fl queryfile Ar request.tsq
 .Op Fl section Ar tsa_section
@@ -8414,7 +8383,7 @@ It also checks if the token contains the same hash
 value that it had sent to the TSA.
 .El
 .Pp
-There is one DER encoded protocol data unit defined for transporting a time
+There is one DER-encoded protocol data unit defined for transporting a time
 stamp request to the TSA and one for sending the time stamp response
 back to the client.
 The
@@ -8539,8 +8508,7 @@ string) will cause
 .Nm ts
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
+The engine will then be set as the default for all available algorithms.
 .It Fl in Ar response.tsr
 Specifies a previously created time stamp response or time stamp token, if
 .Fl token_in
@@ -8565,9 +8533,11 @@ The format and content of the file depends on other options (see
 and
 .Fl token_out ) .
 The default is stdout.
-.It Fl passin Ar password_src
-Specifies the password source for the private key of the TSA.
-See the
+.It Fl passin Ar arg
+The key password source.
+For more information about the format of
+.Ar arg ,
+see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
 .It Fl policy Ar object_id
@@ -8600,7 +8570,7 @@ instead of DER.
 .It Fl token_in
 This flag can be used together with the
 .Fl in
-option and indicates that the input is a DER encoded time stamp token
+option and indicates that the input is a DER-encoded time stamp token
 (ContentInfo) instead of a time stamp response (TimeStampResp).
 .It Fl token_out
 The output is a time stamp token (ContentInfo) instead of time stamp
@@ -9016,7 +8986,7 @@ Specifies the output
 .Ar file
 to write to, or standard output by default.
 .It Fl passin Ar arg
-The input file password source.
+The key password source.
 For more information about the format of
 .Ar arg ,
 see the
