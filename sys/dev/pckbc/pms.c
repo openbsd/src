@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.9 2010/10/16 11:24:04 krw Exp $ */
+/* $OpenBSD: pms.c,v 1.10 2010/10/17 10:32:00 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -119,10 +119,7 @@ pms_setintellimode(struct pms_softc *sc)
 }
 
 int
-pmsprobe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pmsprobe(struct device *parent, void *match, void *aux)
 {
 	struct pckbc_attach_args *pa = aux;
 	u_char cmd[1], resp[2];
@@ -160,9 +157,7 @@ pmsprobe(parent, match, aux)
 }
 
 void
-pmsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pmsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pms_softc *sc = (void *)self;
 	struct pckbc_attach_args *pa = aux;
@@ -282,8 +277,7 @@ pms_change_state(struct pms_softc *sc, int newstate)
 }
 
 int
-pms_enable(v)
-	void *v;
+pms_enable(void *v)
 {
 	struct pms_softc *sc = v;
 
@@ -291,8 +285,7 @@ pms_enable(v)
 }
 
 void
-pms_disable(v)
-	void *v;
+pms_disable(void *v)
 {
 	struct pms_softc *sc = v;
 
@@ -300,12 +293,7 @@ pms_disable(v)
 }
 
 int
-pms_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pms_softc *sc = v;
 	u_char kbcmd[2];
@@ -344,9 +332,8 @@ pms_ioctl(v, cmd, data, flag, p)
 #define PS2RBUTMASK 0x02
 #define PS2MBUTMASK 0x04
 
-void pmsinput(vsc, data)
-void *vsc;
-int data;
+void
+pmsinput(void *vsc, int data)
 {
 	struct pms_softc *sc = vsc;
 	signed char dz = 0;
