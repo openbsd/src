@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.19 2010/10/04 09:13:05 claudio Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.20 2010/10/17 12:14:28 jsing Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -111,7 +111,7 @@ struct pf_osfp_enlist *
 pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const struct tcphdr *tcp)
 {
 	struct pf_os_fingerprint fp, *fpresult;
-	int cnt, optlen = 0;
+	int cnt, tscnt = 0, optlen = 0;
 	const u_int8_t *optp;
 #ifdef _KERNEL
 	char srcname[128];
@@ -137,6 +137,10 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 		fp.fp_ttl = ip->ip_ttl;
 		if (ip->ip_off & htons(IP_DF))
 			fp.fp_flags |= PF_OSFP_DF;
+		if (ip->ip_hl > 5)
+			fp.fp_quirks |= PF_OSFP_QUIRK_IPOPT;
+		if (ip->ip_id == 0)
+			fp.fp_quirks |= PF_OSFP_QUIRK_ZEROID;
 #ifdef _KERNEL
 		strlcpy(srcname, inet_ntoa(ip->ip_src), sizeof(srcname));
 #else
@@ -178,6 +182,19 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 		return (NULL);
 	fp.fp_wsize = ntohs(tcp->th_win);
 
+	/* Set quirks flags. */
+	if (tcp->th_seq == tcp->th_ack)
+		fp.fp_quirks |= PF_OSFP_QUIRK_SEQEQ;
+	if (tcp->th_seq == 0)
+		fp.fp_quirks |= PF_OSFP_QUIRK_SEQZERO;
+	if (tcp->th_ack != 0)
+		fp.fp_quirks |= PF_OSFP_QUIRK_ACKNO;
+	if (tcp->th_urp != 0)
+		fp.fp_quirks |= PF_OSFP_QUIRK_URG;
+	if (tcp->th_x2 != 0)
+		fp.fp_quirks |= PF_OSFP_QUIRK_X2;
+	if (tcp->th_flags & ~(TH_SYN|TH_ACK|TH_RST|TH_ECE|TH_CWR))
+		fp.fp_quirks |= PF_OSFP_QUIRK_FLAGS;
 
 	cnt = (tcp->th_off << 2) - sizeof(*tcp);
 	optp = (const u_int8_t *)((const char *)tcp + sizeof(*tcp));
@@ -218,12 +235,15 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 				    PF_OSFP_TCPOPT_BITS) | PF_OSFP_TCPOPT_SACK;
 				break;
 			case TCPOPT_TIMESTAMP:
+				tscnt++;
 				if (optlen >= TCPOLEN_TIMESTAMP) {
 					u_int32_t ts;
 					memcpy(&ts, &optp[2], sizeof(ts));
 					if (ts == 0)
 						fp.fp_flags |= PF_OSFP_TS0;
-
+					else if (tscnt > 1)
+						fp.fp_quirks |=
+						    PF_OSFP_QUIRK_TS2;
 				}
 				fp.fp_tcpopts = (fp.fp_tcpopts <<
 				    PF_OSFP_TCPOPT_BITS) | PF_OSFP_TCPOPT_TS;
@@ -236,8 +256,8 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 	}
 
 	DPFPRINTF(LOG_NOTICE,
-	    "fingerprinted %s:%d  %d:%d:%d:%d:%llx (%d) "
-	    "(TS=%s,M=%s%d,W=%s%d)",
+	    "fingerprinted %s:%d %d:%d:%d:%d:%llx (%d) "
+	    "(TS=%s,M=%s%d,W=%s%d) (0x%hx)",
 	    srcname, ntohs(tcp->th_sport),
 	    fp.fp_wsize, fp.fp_ttl, (fp.fp_flags & PF_OSFP_DF) != 0,
 	    fp.fp_psize, (long long int)fp.fp_tcpopts, fp.fp_optcnt,
@@ -247,7 +267,7 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 	    fp.fp_mss,
 	    (fp.fp_flags & PF_OSFP_WSCALE_MOD) ? "%" :
 	    (fp.fp_flags & PF_OSFP_WSCALE_DC) ? "*" : "",
-	    fp.fp_wscale);
+	    fp.fp_wscale, fp.fp_quirks);
 
 	if ((fpresult = pf_osfp_find(&pf_osfp_list, &fp,
 	    PF_OSFP_MAXTTL_OFFSET)))
@@ -328,6 +348,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	fpadd.fp_psize = fpioc->fp_psize;
 	fpadd.fp_mss = fpioc->fp_mss;
 	fpadd.fp_flags = fpioc->fp_flags;
+	fpadd.fp_quirks = fpioc->fp_quirks;
 	fpadd.fp_optcnt = fpioc->fp_optcnt;
 	fpadd.fp_wscale = fpioc->fp_wscale;
 	fpadd.fp_ttl = fpioc->fp_ttl;
@@ -358,7 +379,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	    fpioc->fp_os.fp_os);
 
 	if ((fp = pf_osfp_find_exact(&pf_osfp_list, &fpadd))) {
-		 SLIST_FOREACH(entry, &fp->fp_oses, fp_entry) {
+		SLIST_FOREACH(entry, &fp->fp_oses, fp_entry) {
 			if (PF_OSFP_ENTRY_EQ(entry, &fpioc->fp_os))
 				return (EEXIST);
 		}
@@ -374,6 +395,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 		fp->fp_psize = fpioc->fp_psize;
 		fp->fp_mss = fpioc->fp_mss;
 		fp->fp_flags = fpioc->fp_flags;
+		fp->fp_quirks = fpioc->fp_quirks;
 		fp->fp_optcnt = fpioc->fp_optcnt;
 		fp->fp_wscale = fpioc->fp_wscale;
 		fp->fp_ttl = fpioc->fp_ttl;
@@ -471,6 +493,8 @@ pf_osfp_find(struct pf_osfp_list *list, struct pf_os_fingerprint *find,
 					continue;
 			}
 		}
+		if (f->fp_quirks != find->fp_quirks)
+			continue;
 		return (f);
 	}
 
@@ -489,6 +513,7 @@ pf_osfp_find_exact(struct pf_osfp_list *list, struct pf_os_fingerprint *find)
 		    f->fp_psize == find->fp_psize &&
 		    f->fp_mss == find->fp_mss &&
 		    f->fp_flags == find->fp_flags &&
+		    f->fp_quirks == find->fp_quirks &&
 		    f->fp_optcnt == find->fp_optcnt &&
 		    f->fp_wscale == find->fp_wscale &&
 		    f->fp_ttl == find->fp_ttl)
@@ -523,7 +548,6 @@ pf_osfp_get(struct pf_osfp_ioctl *fpioc)
 	int num = fpioc->fp_getnum;
 	int i = 0;
 
-
 	memset(fpioc, 0, sizeof(*fpioc));
 	SLIST_FOREACH(fp, &pf_osfp_list, fp_next) {
 		SLIST_FOREACH(entry, &fp->fp_oses, fp_entry) {
@@ -531,6 +555,7 @@ pf_osfp_get(struct pf_osfp_ioctl *fpioc)
 				fpioc->fp_mss = fp->fp_mss;
 				fpioc->fp_wsize = fp->fp_wsize;
 				fpioc->fp_flags = fp->fp_flags;
+				fpioc->fp_quirks = fp->fp_quirks;
 				fpioc->fp_psize = fp->fp_psize;
 				fpioc->fp_ttl = fp->fp_ttl;
 				fpioc->fp_wscale = fp->fp_wscale;
@@ -544,7 +569,6 @@ pf_osfp_get(struct pf_osfp_ioctl *fpioc)
 
 	return (EBUSY);
 }
-
 
 /* Validate that each signature is reachable */
 struct pf_os_fingerprint *

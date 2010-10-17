@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.315 2010/09/22 05:58:29 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.316 2010/10/17 12:14:28 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -487,6 +487,19 @@ struct pf_os_fingerprint {
 #define PF_OSFP_DF		0x1000		/* IPv4 don't fragment bit */
 #define PF_OSFP_TS0		0x2000		/* Zero timestamp */
 #define PF_OSFP_INET6		0x4000		/* IPv6 */
+	u_int16_t		fp_quirks;
+#define PF_OSFP_QUIRK_DATA	0x0001		/* SYN contains payload. */
+#define PF_OSFP_QUIRK_SEQEQ	0x0002		/* SEQ no equals ACK no. */
+#define PF_OSFP_QUIRK_SEQZERO	0x0004		/* SEQ no is zero. */
+#define PF_OSFP_QUIRK_PAST	0x0008		/* Options past EOL. */
+#define PF_OSFP_QUIRK_ZEROID	0x0010		/* IPv4 ID is zero. */
+#define PF_OSFP_QUIRK_IPOPT	0x0020		/* IPv4 options specified. */
+#define PF_OSFP_QUIRK_URG	0x0040		/* URG pointer non-zero. */
+#define PF_OSFP_QUIRK_X2	0x0080		/* Used x2 field non-zero. */
+#define PF_OSFP_QUIRK_ACKNO	0x0100		/* ACK no is non-zero. */
+#define PF_OSFP_QUIRK_TS2	0x0200		/* Second non-zero timestamp. */
+#define PF_OSFP_QUIRK_FLAGS	0x0400		/* Unusual flags set. */
+#define PF_OSFP_QUIRK_BROKEN	0x0800		/* Broken options segment. */
 	u_int8_t		fp_optcnt;	/* TCP option count */
 	u_int8_t		fp_wscale;	/* TCP window scaling */
 	u_int8_t		fp_ttl;		/* IPv4 TTL */
@@ -512,6 +525,7 @@ struct pf_osfp_ioctl {
 	u_int16_t		fp_psize;	/* ip->ip_len */
 	u_int16_t		fp_mss;		/* TCP MSS */
 	u_int16_t		fp_flags;
+	u_int16_t		fp_quirks;
 	u_int8_t		fp_optcnt;	/* TCP option count */
 	u_int8_t		fp_wscale;	/* TCP window scaling */
 	u_int8_t		fp_ttl;		/* IPv4 TTL */

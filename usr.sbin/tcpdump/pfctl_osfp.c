@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.5 2008/06/16 03:40:34 david Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.6 2010/10/17 12:14:28 jsing Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -79,6 +79,8 @@ int			 get_str(char **, size_t *, char **, const char *, int,
 int			 get_tcpopts(const char *, int, const char *,
 			    pf_tcpopts_t *, int *, int *, int *, int *, int *,
 			    int *);
+int			 get_quirks(const char *, int, const char *,
+			    u_int16_t *);
 void			 import_fingerprint(struct pf_osfp_ioctl *);
 const char		*print_ioctl(struct pf_osfp_ioctl *);
 void			 print_name_list(int, struct name_list *, const char *);
@@ -99,11 +101,11 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 	int window, w_mod, ttl, df, psize, p_mod, mss, mss_mod, wscale,
 	    wscale_mod, optcnt, ts0;
 	pf_tcpopts_t packed_tcpopts;
-	char *class, *version, *subtype, *desc, *tcpopts;
+	char *class, *version, *subtype, *desc, *tcpopts, *quirks;
 	struct pf_osfp_ioctl fp;
 
 	pfctl_flush_my_fingerprints(&classes);
-	class = version = subtype = desc = tcpopts = NULL;
+	class = version = subtype = desc = tcpopts = quirks = NULL;
 
 	if ((opts & PF_OPT_NOACTION) == 0)
 		pfctl_clear_fingerprints(dev, opts);
@@ -123,7 +125,9 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 			free(desc);
 		if (tcpopts)
 			free(tcpopts);
-		class = version = subtype = desc = tcpopts = NULL;
+		if (quirks)
+			free(quirks);
+		class = version = subtype = desc = tcpopts = quirks = NULL;
 		memset(&fp, 0, sizeof(fp));
 
 		/* Chop off comment */
@@ -159,19 +163,25 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 		    GET_INT(psize, &p_mod, "overall packet size", T_MOD|T_DC,
 		    8192) ||
 		    GET_STR(tcpopts, "TCP Options", 1) ||
+		    GET_STR(quirks, "Quirks", 1) ||
 		    GET_STR(class, "OS class", 1) ||
 		    GET_STR(version, "OS version", 0) ||
 		    GET_STR(subtype, "OS subtype", 0) ||
 		    GET_STR(desc, "OS description", 2))
 			continue;
-		if (get_tcpopts(fp_filename, lineno, tcpopts, &packed_tcpopts,
-		    &optcnt, &mss, &mss_mod, &wscale, &wscale_mod, &ts0))
-			continue;
+
 		if (len != 0) {
 			fprintf(stderr, "%s:%d excess field\n", fp_filename,
 			    lineno);
 			continue;
 		}
+
+		if (get_tcpopts(fp_filename, lineno, tcpopts, &packed_tcpopts,
+		    &optcnt, &mss, &mss_mod, &wscale, &wscale_mod, &ts0))
+			continue;
+
+		if (get_quirks(fp_filename, lineno, quirks, &fp.fp_quirks))
+			continue;
 
 		fp.fp_ttl = ttl;
 		if (df)
@@ -202,7 +212,6 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 			fp.fp_flags |= PF_OSFP_PSIZE_MOD;
 		}
 		fp.fp_psize = psize;
-
 
 		switch (wscale_mod) {
 		case T_DC:
@@ -678,7 +687,6 @@ import_fingerprint(struct pf_osfp_ioctl *fp)
 		}
 	}
 
-
 	fingerprint_count++;
 	DEBUG(fp, "import signature %d:%d:%d", class, version, subtype);
 }
@@ -963,6 +971,71 @@ get_tcpopts(const char *filename, int lineno, const char *tcpopts,
 			return (1);
 		}
 		i++;
+	}
+
+	return (0);
+}
+
+int
+get_quirks(const char *filename, int lineno, const char *quirkstr,
+    u_int16_t *quirks)
+{
+	int i, opt;
+
+	*quirks = 0;
+
+	if (strcmp(quirkstr, ".") == 0)
+		return (0);
+
+	for (i = 0; quirkstr[i];) {
+		switch ((opt = toupper(quirkstr[i++]))) {
+		case 'D':
+			fprintf(stderr, "%s:%d quirk %c not yet supported\n",
+			    filename, lineno, opt);
+			*quirks |= PF_OSFP_QUIRK_DATA;
+			break;
+		case 'Q':
+			*quirks |= PF_OSFP_QUIRK_SEQEQ;
+			break;
+		case '0':
+			*quirks |= PF_OSFP_QUIRK_SEQZERO;
+			break;
+		case 'P':
+			fprintf(stderr, "%s:%d quirk %c not yet supported\n",
+			    filename, lineno, opt);
+			*quirks |= PF_OSFP_QUIRK_PAST;
+			break;
+		case 'Z':
+			*quirks |= PF_OSFP_QUIRK_ZEROID;
+			break;
+		case 'I':
+			*quirks |= PF_OSFP_QUIRK_IPOPT;
+			break;
+		case 'U':
+			*quirks |= PF_OSFP_QUIRK_URG;
+			break;
+		case 'X':
+			*quirks |= PF_OSFP_QUIRK_X2;
+			break;
+		case 'A':
+			*quirks |= PF_OSFP_QUIRK_ACKNO;
+			break;
+		case 'T':
+			*quirks |= PF_OSFP_QUIRK_TS2;
+			break;
+		case 'F':
+			*quirks |= PF_OSFP_QUIRK_FLAGS;
+			break;
+		case '!':
+			fprintf(stderr, "%s:%d quirk %c not yet supported\n",
+			    filename, lineno, opt);
+			*quirks |= PF_OSFP_QUIRK_BROKEN;
+			break;
+		default:
+			fprintf(stderr, "%s:%d unknown quirk %c\n",
+			    filename, lineno, opt);
+			return (1);
+		}
 	}
 
 	return (0);
