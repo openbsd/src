@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.42 2010/09/12 12:11:36 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.43 2010/10/17 09:57:47 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 12 2010 $
+.Dd $Mdocdate: October 17 2010 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -363,11 +363,6 @@ containing stub functions for many common
 .Xr rpc 3
 protocols.
 .Pp
-.It libsectok Pq Fl lsectok
-Library for communicating with ISO 7816 smartcards.
-See
-.Xr sectok 3 .
-.Pp
 .It libskey Pq Fl lskey
 Support library for the S/Key one time password
 .Pq OTP
@@ -645,7 +640,6 @@ for more details.
 .It Pa /usr/lib/libpthread.a
 .It Pa /usr/lib/libreadline.a
 .It Pa /usr/lib/librpcsvc.a
-.It Pa /usr/lib/libsectok.a
 .It Pa /usr/lib/libskey.a
 .It Pa /usr/lib/libsndio.a
 .It Pa /usr/lib/libssl.a
