@@ -1,12 +1,9 @@
-#	$OpenBSD: bsd.man.mk,v 1.31 2010/09/09 22:50:47 schwarze Exp $
+#	$OpenBSD: bsd.man.mk,v 1.32 2010/10/17 22:47:08 schwarze Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat
 MANDOC?=	mandoc
-NROFF?=		nroff -Tascii
-TBL?=		tbl
-MANLINT?=	\#
 
 .if !target(.MAIN)
 .  if exists(${.CURDIR}/../Makefile.inc)
@@ -21,25 +18,18 @@ MANLINT?=	\#
 	.cat1 .cat2 .cat3 .cat3p .cat4 .cat5 .cat6 .cat7 .cat8 .cat9 \
 	.ps1 .ps2 .ps3 .ps3p .ps4 .ps5 .ps6 .ps7 .ps8 .ps9
 
-.9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3p.cat3p .3.cat3 .2.cat2 .1.cat1:
+.9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 \
+.4.cat4 .3p.cat3p .3.cat3 .2.cat2 .1.cat1 \
+.9tbl.cat9 .8tbl.cat8 .7tbl.cat7 .6tbl.cat6 .5tbl.cat5 \
+.4tbl.cat4 .3tbl.cat3 .2tbl.cat2 .1tbl.cat1:
 	@echo "${MANDOC} ${.IMPSRC} > ${.TARGET}"
 	@${MANDOC} ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
-.9tbl.cat9 .8tbl.cat8 .7tbl.cat7 .6tbl.cat6 .5tbl.cat5 .4tbl.cat4 .3tbl.cat3 \
-.2tbl.cat2 .1tbl.cat1:
-	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET}"
-	@${MANLINT} -tbl ${.IMPSRC}
-	@${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET} || \
-	    (rm -f ${.TARGET}; false)
-
-.9.ps9 .8.ps8 .7.ps7 .6.ps6 .5.ps5 .4.ps4 .3p.ps3p .3.ps3 .2.ps2 .1.ps1:
-	@echo "${MANDOC} -Tps ${.IMPSRC} > ${.TARGET}"
-	@${MANDOC} -Tps ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
-
+.9.ps9 .8.ps8 .7.ps7 .6.ps6 .5.ps5 .4.ps4 .3p.ps3p .3.ps3 .2.ps2 .1.ps1 \
 .9tbl.ps9 .8tbl.ps8 .7tbl.ps7 .6tbl.ps6 .5tbl.ps5 .4tbl.ps4 .3tbl.ps3 \
 .2tbl.ps2 .1tbl.ps1:
-	@echo "${TBL} ${.IMPSRC} | nroff -Tps -mandoc > ${.TARGET}"
-	@${TBL} ${.IMPSRC} | nroff -Tps -mandoc > ${.TARGET} || (rm -f ${.TARGET}; false)
+	@echo "${MANDOC} -Tps ${.IMPSRC} > ${.TARGET}"
+	@${MANDOC} -Tps ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 .if defined(MAN) && !empty(MAN) && !defined(MANALL)
 .  for v s in MANALL .cat PS2ALL .ps
