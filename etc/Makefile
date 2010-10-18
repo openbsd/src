@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.292 2010/10/08 23:35:42 david Exp $
+#	$OpenBSD: Makefile,v 1.293 2010/10/18 14:54:47 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,7 +30,7 @@ BIN1+=	wsconsctl.conf
 # -rw-rw-r--
 BIN2=	motd
 
-MISETS=	base${OSrev}.tgz comp${OSrev}.tgz misc${OSrev}.tgz \
+MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
 
 PCS=	pcs750.bin
