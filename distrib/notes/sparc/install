@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.71 2010/07/10 19:38:37 miod Exp $
+dnl	$OpenBSD: install,v 1.72 2010/10/18 04:24:07 deraadt Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk.  The normal way
@@ -285,9 +285,9 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tgz" files onto your disk.
 
     sunos# ls -FC
-    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
-    bsd             etc{:--:}OSrev.tgz    misc{:--:}OSrev.tgz      xserv{:--:}OSrev.tgz
-    bsd.scsi3       game{:--:}OSrev.tgz   xbase{:--:}OSrev.tgz
+    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xserv{:--:}OSrev.tgz
+    bsd             etc{:--:}OSrev.tgz    xbase{:--:}OSrev.tgz
+    bsd.scsi3       game{:--:}OSrev.tgz   xfont{:--:}OSrev.tgz
     sunos{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
@@ -378,9 +378,9 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tgz" files onto your disk.
 
     solaris# ls -FC
-    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
-    bsd             etc{:--:}OSrev.tgz    misc{:--:}OSrev.tgz      xserv{:--:}OSrev.tgz
-    bsd.scsi3       game{:--:}OSrev.tgz   xbase{:--:}OSrev.tgz
+    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xserv{:--:}OSrev.tgz
+    bsd             etc{:--:}OSrev.tgz    xbase{:--:}OSrev.tgz
+    bsd.scsi3       game{:--:}OSrev.tgz   xfont{:--:}OSrev.tgz
     solaris{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; tar xvpf -)
     [...] for each set
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.14 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: contents,v 1.15 2010/10/18 04:24:07 deraadt Exp $
 TopPart
 
 OpenBSDdistsets
@@ -55,8 +55,6 @@ OpenBSDetc(522296,1582807)
 OpenBSDgame(2802507,6681864)
 
 OpenBSDman(9463394,34570283)
-
-OpenBSDmisc(364791,1175282)
 
 OpenBSDxbase(14689775,52232809)
 

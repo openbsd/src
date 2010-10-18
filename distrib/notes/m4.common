@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.92 2010/06/05 19:36:10 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.93 2010/10/18 04:24:07 deraadt Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -147,14 +147,6 @@ define({:-OpenBSDman-:},
 		 and other software contained in the base set.
 		 Note that it does not {:-include-:} any of the manual pages
 		 that are included in the other sets.showsize($1,$2)-:})dnl
-dnl
-dnl
-dnl OpenBSDmisc( compressed size, uncompressed size )
-dnl Describes miscXX.tgz.
-dnl
-define({:-OpenBSDmisc-:},
-{:-	misc{:--:}OSrev	 This set includes the system dictionaries (which are rather
-		 large), and the typesettable document set.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxbase( compressed size, uncompressed size )
@@ -953,7 +945,7 @@ define({:-OpenBSDXferBareTape-:},
 	#! /bin/sh
 	TAPE=${TAPE:-/dev/nrst0}
 	mt -f ${TAPE} rewind
-	for file in base etc comp game man misc $1
+	for file in base etc comp game man $1
 	do
 		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=osync
 	done
@@ -1005,7 +997,7 @@ ifelse(X$3,X,,{:-		dd of=${TAPE} if=$3
 ifelse(X$4,X,,{:-		dd of=${TAPE} if=$4
 -:})dnl
 	fi
-	for file in base etc comp game man misc $1
+	for file in base etc comp game man $1
 	do
 		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=osync
 	done
