@@ -485,7 +485,6 @@
 ./usr/bin/uuencode
 ./usr/bin/vacation
 ./usr/bin/verify_krb5_conf
-./usr/bin/vgrind
 ./usr/bin/vi
 ./usr/bin/view
 ./usr/bin/vis
@@ -3005,8 +3004,6 @@
 ./usr/share/misc/terminfo.db
 ./usr/share/misc/units.lib
 ./usr/share/misc/usb_hid_usages
-./usr/share/misc/vgrindefs
-./usr/share/misc/vgrindefs.db
 ./usr/share/misc/zipcodes
 ./usr/share/mk
 ./usr/share/mk/bsd.README
@@ -3279,7 +3276,6 @@
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
 ./usr/share/tmac
-./usr/share/tmac/tmac.vgrind
 ./usr/share/vi
 ./usr/share/vi/catalog
 ./usr/share/vi/catalog/dutch

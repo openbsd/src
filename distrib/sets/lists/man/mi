@@ -788,7 +788,6 @@
 ./usr/share/man/cat1/uuencode.0
 ./usr/share/man/cat1/vacation.0
 ./usr/share/man/cat1/vax
-./usr/share/man/cat1/vgrind.0
 ./usr/share/man/cat1/vi.0
 ./usr/share/man/cat1/view.0
 ./usr/share/man/cat1/vis.0
@@ -2591,7 +2590,6 @@
 ./usr/share/man/cat5/utmp.0
 ./usr/share/man/cat5/uuencode.0
 ./usr/share/man/cat5/vax
-./usr/share/man/cat5/vgrindefs.0
 ./usr/share/man/cat5/wsconsctl.conf.0
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat5/ypldap.conf.0
