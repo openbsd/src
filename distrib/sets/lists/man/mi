@@ -280,8 +280,6 @@
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/a2p.0
-./usr/share/man/cat1/addftinfo.0
-./usr/share/man/cat1/afmtodit.0
 ./usr/share/man/cat1/afslog.0
 ./usr/share/man/cat1/alpha
 ./usr/share/man/cat1/amd64
@@ -367,7 +365,6 @@
 ./usr/share/man/cat1/enc2xs.0
 ./usr/share/man/cat1/encrypt.0
 ./usr/share/man/cat1/env.0
-./usr/share/man/cat1/eqn.0
 ./usr/share/man/cat1/ex.0
 ./usr/share/man/cat1/expand.0
 ./usr/share/man/cat1/expr.0
@@ -394,13 +391,6 @@
 ./usr/share/man/cat1/getent.0
 ./usr/share/man/cat1/getopt.0
 ./usr/share/man/cat1/grep.0
-./usr/share/man/cat1/grodvi.0
-./usr/share/man/cat1/groff.0
-./usr/share/man/cat1/grog.0
-./usr/share/man/cat1/grohtml.0
-./usr/share/man/cat1/grolj4.0
-./usr/share/man/cat1/grops.0
-./usr/share/man/cat1/grotty.0
 ./usr/share/man/cat1/groups.0
 ./usr/share/man/cat1/gunzip.0
 ./usr/share/man/cat1/gzcat.0
@@ -415,7 +405,6 @@
 ./usr/share/man/cat1/hostname.0
 ./usr/share/man/cat1/hoststat.0
 ./usr/share/man/cat1/hp300
-./usr/share/man/cat1/hpftodit.0
 ./usr/share/man/cat1/hppa
 ./usr/share/man/cat1/hppa64
 ./usr/share/man/cat1/htdigest.0
@@ -425,7 +414,6 @@
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
-./usr/share/man/cat1/indxbib.0
 ./usr/share/man/cat1/info.0
 ./usr/share/man/cat1/infocmp.0
 ./usr/share/man/cat1/infokey.0
@@ -457,7 +445,6 @@
 ./usr/share/man/cat1/less.0
 ./usr/share/man/cat1/lesskey.0
 ./usr/share/man/cat1/libnetcfg.0
-./usr/share/man/cat1/lkbib.0
 ./usr/share/man/cat1/ln.0
 ./usr/share/man/cat1/lndir.0
 ./usr/share/man/cat1/locate.0
@@ -467,7 +454,6 @@
 ./usr/share/man/cat1/login.0
 ./usr/share/man/cat1/logname.0
 ./usr/share/man/cat1/look.0
-./usr/share/man/cat1/lookbib.0
 ./usr/share/man/cat1/loongson
 ./usr/share/man/cat1/lpq.0
 ./usr/share/man/cat1/lpr.0
@@ -508,13 +494,11 @@
 ./usr/share/man/cat1/mvme88k
 ./usr/share/man/cat1/mvmeppc
 ./usr/share/man/cat1/nc.0
-./usr/share/man/cat1/neqn.0
 ./usr/share/man/cat1/netstat.0
 ./usr/share/man/cat1/nfsstat.0
 ./usr/share/man/cat1/nice.0
 ./usr/share/man/cat1/nm.0
 ./usr/share/man/cat1/nohup.0
-./usr/share/man/cat1/nroff.0
 ./usr/share/man/cat1/nslookup.0
 ./usr/share/man/cat1/od.0
 ./usr/share/man/cat1/oldrdist.0
@@ -669,9 +653,7 @@
 ./usr/share/man/cat1/perlvar.0
 ./usr/share/man/cat1/perlxs.0
 ./usr/share/man/cat1/perlxstut.0
-./usr/share/man/cat1/pfbtops.0
 ./usr/share/man/cat1/pgrep.0
-./usr/share/man/cat1/pic.0
 ./usr/share/man/cat1/piconv.0
 ./usr/share/man/cat1/pkg-config.0
 ./usr/share/man/cat1/pkg.0
@@ -696,7 +678,6 @@
 ./usr/share/man/cat1/procmap.0
 ./usr/share/man/cat1/prove.0
 ./usr/share/man/cat1/ps.0
-./usr/share/man/cat1/psbb.0
 ./usr/share/man/cat1/psed.0
 ./usr/share/man/cat1/pstruct.0
 ./usr/share/man/cat1/pts.0
@@ -713,7 +694,6 @@
 ./usr/share/man/cat1/rdist.0
 ./usr/share/man/cat1/rdistd.0
 ./usr/share/man/cat1/readlink.0
-./usr/share/man/cat1/refer.0
 ./usr/share/man/cat1/reset.0
 ./usr/share/man/cat1/rev.0
 ./usr/share/man/cat1/rksh.0
@@ -747,7 +727,6 @@
 ./usr/share/man/cat1/sleep.0
 ./usr/share/man/cat1/slogin.0
 ./usr/share/man/cat1/socppc
-./usr/share/man/cat1/soelim.0
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/sparc
 ./usr/share/man/cat1/sparc/fdformat.0
@@ -772,7 +751,6 @@
 ./usr/share/man/cat1/tail.0
 ./usr/share/man/cat1/talk.0
 ./usr/share/man/cat1/tar.0
-./usr/share/man/cat1/tbl.0
 ./usr/share/man/cat1/tcopy.0
 ./usr/share/man/cat1/tcpbench.0
 ./usr/share/man/cat1/tee.0
@@ -781,7 +759,6 @@
 ./usr/share/man/cat1/texi2dvi.0
 ./usr/share/man/cat1/texi2pdf.0
 ./usr/share/man/cat1/texindex.0
-./usr/share/man/cat1/tfmtodit.0
 ./usr/share/man/cat1/tftp.0
 ./usr/share/man/cat1/tic.0
 ./usr/share/man/cat1/time.0
@@ -791,7 +768,6 @@
 ./usr/share/man/cat1/touch.0
 ./usr/share/man/cat1/tput.0
 ./usr/share/man/cat1/tr.0
-./usr/share/man/cat1/troff.0
 ./usr/share/man/cat1/true.0
 ./usr/share/man/cat1/tset.0
 ./usr/share/man/cat1/tsort.0
@@ -2504,8 +2480,6 @@
 ./usr/share/man/cat5/fstab.0
 ./usr/share/man/cat5/genassym.cf.0
 ./usr/share/man/cat5/gettytab.0
-./usr/share/man/cat5/groff_font.0
-./usr/share/man/cat5/groff_out.0
 ./usr/share/man/cat5/group.0
 ./usr/share/man/cat5/hostapd.conf.0
 ./usr/share/man/cat5/hostname.if.0
@@ -2628,12 +2602,6 @@
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/environ.0
 ./usr/share/man/cat7/glob.0
-./usr/share/man/cat7/groff_char.0
-./usr/share/man/cat7/groff_me.0
-./usr/share/man/cat7/groff_mm.0
-./usr/share/man/cat7/groff_mmse.0
-./usr/share/man/cat7/groff_ms.0
-./usr/share/man/cat7/groff_msafer.0
 ./usr/share/man/cat7/hier.0
 ./usr/share/man/cat7/hostname.0
 ./usr/share/man/cat7/intro.0
@@ -2646,11 +2614,8 @@
 ./usr/share/man/cat7/mandoc_char.0
 ./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/mdoc.samples.0
-./usr/share/man/cat7/me.0
 ./usr/share/man/cat7/mirror-maker.0
 ./usr/share/man/cat7/mirroring-ports.0
-./usr/share/man/cat7/mm.0
-./usr/share/man/cat7/ms.0
 ./usr/share/man/cat7/operator.0
 ./usr/share/man/cat7/packages-specs.0
 ./usr/share/man/cat7/ports.0
