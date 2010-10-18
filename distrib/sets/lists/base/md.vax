@@ -524,6 +524,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/gcu.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/gcu_reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/glxreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/glxvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/i82365_pcivar.ph
@@ -1469,7 +1471,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/ses.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/search.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sgtty.ph

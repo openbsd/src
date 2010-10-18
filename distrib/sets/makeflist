@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: makeflist,v 1.9 2003/07/02 02:08:02 avsm Exp $
+#	$OpenBSD: makeflist,v 1.10 2010/10/18 04:11:15 deraadt Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -33,6 +33,5 @@ for i in base comp etc game; do
 	cat ./lists/$i/mi ./lists/$i/md.${arch} >> $TMP
 done
 cat ./lists/man/mi ./lists/man/md.${arch} >> $TMP
-cat ./lists/misc/mi ./lists/misc/md.${arch} >> $TMP
 
 sort $TMP

@@ -66,7 +66,6 @@
 ./usr/lib/libpthread.so.12.1
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.2
-./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.3.3
 ./usr/lib/libssl.so.16.0
@@ -593,6 +592,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/gcu.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/gcu_reg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/glxreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/glxvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/i82365_pcivar.ph
@@ -1539,7 +1540,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/scsi/ses.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/search.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sgtty.ph

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: maketars,v 1.19 2006/12/09 21:12:54 deraadt Exp $
+#	$OpenBSD: maketars,v 1.20 2010/10/18 04:11:15 deraadt Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -53,7 +53,7 @@ trap 'rm -f $TMP $TMP2; exit 1' 1 15
 
 cd $fsdir
 
-for i in base comp etc game man misc; do
+for i in base comp etc game man; do
 	echo -n "$i: "
 	sort ${lists}/$i/mi ${lists}/$i/md.${arch} > $TMP
 	cat $TMP | grep '^./usr/lib/lib' > $TMP2

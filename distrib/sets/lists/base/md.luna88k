@@ -1020,6 +1020,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/gcu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/gcu_reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/glxreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/glxvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/i82365_pcivar.ph
@@ -2055,7 +2057,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/ses.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/search.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sgtty.ph
