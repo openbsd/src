@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.40 2010/07/19 00:28:18 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.41 2010/10/18 18:50:49 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.40 $
-#	$Date: 2010/07/19 00:28:18 $
+#	$Revision: 1.41 $
+#	$Date: 2010/10/18 18:50:49 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -2269,7 +2269,7 @@ vt100|vt100-am|dec vt100 (w/advanced video),
 	lf2=pf2, lf3=pf3, lf4=pf4, mc0=\E[0i, mc4=\E[4i, mc5=\E[5i,
 	rc=\E8, rev=\E[7m$<2>, ri=\EM$<5>, rmacs=^O, rmam=\E[?7l,
 	rmkx=\E[?1l\E>, rmso=\E[m$<2>, rmul=\E[m$<2>,
-	rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h, sc=\E7,
+	rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h^O, sc=\E7,
 	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;$<2>,
 	sgr0=\E[m\017$<2>, smacs=^N, smam=\E[?7h, smkx=\E[?1h\E=,
 	smso=\E[7m$<2>, smul=\E[4m$<2>, tbc=\E[3g,
@@ -2425,7 +2425,7 @@ vt220|vt200|dec vt220,
 	lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4, mc0=\E[i, mc4=\E[4i,
 	mc5=\E[5i, nel=\EE, rc=\E8, rev=\E[7m, ri=\EM,
 	rmacs=\E(B$<4>, rmam=\E[?7l, rmir=\E[4l, rmso=\E[27m,
-	rmul=\E[24m, rs1=\E[?3l, sc=\E7,
+	rmul=\E[24m, rs1=\E[?3l\E(B$<4>, sc=\E7,
 	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;$<2>,
 	sgr0=\E[m\E(B, smacs=\E(0$<2>, smam=\E[?7h, smir=\E[4h,
 	smso=\E[7m, smul=\E[4m, tbc=\E[3g,
