@@ -1,4 +1,4 @@
-/* $OpenBSD: safe_sprintf.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: safe_sprintf.c,v 1.6 2010/10/18 18:22:35 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2003,2007 Free Software Foundation, Inc.              *
@@ -35,7 +35,7 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$Id: safe_sprintf.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: safe_sprintf.c,v 1.6 2010/10/18 18:22:35 nicm Exp $")
 
 #if USE_SAFE_SPRINTF
 
@@ -57,6 +57,7 @@ _nc_printf_length(const char *fmt, va_list ap)
     size_t length = BUFSIZ;
     char *buffer;
     char *format;
+    char *tmp_format;
     int len = 0;
     size_t fmt_len;
     char fmt_arg[BUFSIZ];
@@ -113,9 +114,12 @@ _nc_printf_length(const char *fmt, va_list ap)
 		    }
 		    sprintf(fmt_arg, "%d", ival);
 		    fmt_len += strlen(fmt_arg);
-		    if ((format = realloc(format, fmt_len)) == 0) {
+		    if ((tmp_format = realloc(format, fmt_len)) == 0) {
+			free(buffer);
+			free(format);
 			return -1;
 		    }
+		    format = tmp_format;
 		    strcpy(&format[--f], fmt_arg);
 		    f = strlen(format);
 		} else if (isalpha(UChar(*fmt))) {
