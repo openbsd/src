@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.23 2010/09/03 15:40:08 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.24 2010/10/18 16:37:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define ATHN_DEBUG		1
 /*#define ATHN_BT_COEXISTENCE	1*/
 
 #ifdef ATHN_DEBUG
