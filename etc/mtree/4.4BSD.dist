@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.207 2010/09/22 13:01:10 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.208 2010/10/18 04:17:11 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -709,74 +709,6 @@ programs  type=dir uname=root gname=wheel mode=755
 ..
 
 # ./usr/share/doc/html
-..
-
-# ./usr/share/doc/psd
-psd
-
-# ./usr/share/doc/psd/12.make
-12.make
-# ./usr/share/doc/psd/12.make
-..
-
-# ./usr/share/doc/psd/15.yacc
-15.yacc
-# ./usr/share/doc/psd/15.yacc
-..
-
-# ./usr/share/doc/psd/16.lex
-16.lex
-# ./usr/share/doc/psd/16.lex
-..
-
-# ./usr/share/doc/psd/18.gprof
-18.gprof
-# ./usr/share/doc/psd/18.gprof
-..
-
-# ./usr/share/doc/psd
-..
-
-# ./usr/share/doc/smm
-smm
-
-# ./usr/share/doc/smm/08.sendmailop
-08.sendmailop
-# ./usr/share/doc/smm/08.sendmailop
-..
-
-# ./usr/share/doc/smm
-..
-
-# ./usr/share/doc/usd
-usd
-
-# ./usr/share/doc/usd/06.bc
-06.bc
-# ./usr/share/doc/usd/06.bc
-..
-
-# ./usr/share/doc/usd/11.edit
-11.edit
-# ./usr/share/doc/usd/11.edit
-..
-
-# ./usr/share/doc/usd/12.vi
-12.vi
-# ./usr/share/doc/usd/12.vi
-..
-
-# ./usr/share/doc/usd/13.viref
-13.viref
-# ./usr/share/doc/usd/13.viref
-..
-
-# ./usr/share/doc/usd/13.ex
-13.ex
-# ./usr/share/doc/usd/13.ex
-..
-
-# ./usr/share/doc/usd
 ..
 
 # ./usr/share/doc
