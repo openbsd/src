@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.623 2010/10/18 22:45:28 halex Exp $
+#	$OpenBSD: install.sub,v 1.624 2010/10/18 22:47:07 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -360,7 +360,7 @@ ask_yn() {
 		n|no)	resp=n ; return ;;
 		esac
 	done
- }
+}
 
 # Ask for the user to select one value from a list, or 'done'.
 #
