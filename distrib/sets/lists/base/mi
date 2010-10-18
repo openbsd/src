@@ -3278,6 +3278,8 @@
 ./usr/share/texinfo/texinfo.cat
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/tmac
+./usr/share/tmac/tmac.vgrind
 ./usr/share/vi
 ./usr/share/vi/catalog
 ./usr/share/vi/catalog/dutch
