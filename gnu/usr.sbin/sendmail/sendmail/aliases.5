@@ -1,3 +1,5 @@
+.\"	$OpenBSD: aliases.5,v 1.11 2010/10/18 15:01:38 jmc Exp $
+.\"
 .\" Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
@@ -11,7 +13,7 @@
 .\"
 .\"     $Sendmail: aliases.5,v 8.19 2004/07/12 05:39:21 ca Exp $
 .\"
-.Dd July 12, 2004
+.Dd $Mdocdate: October 18 2010 $
 .Dt ALIASES 5
 .Os
 .Sh NAME
@@ -42,36 +44,35 @@ can be another alias, a local username, a local filename,
 a command,
 an include file,
 or an external address.
-.Pp
-.Bl -tag
+.Bl -tag -width Ds
 .It Em Local Username
 username
 .Pp
 The username must be available via
 .Xr getpwnam 3 .
 .El
-.Bl -tag
+.Bl -tag -width Ds
 .It Em Local Filename
 /path/name
 .Pp
 Messages are appended to the file specified by the full pathname
 (starting with a slash (/))
 .El
-.Bl -tag
+.Bl -tag -width Ds
 .It Em Command
 |command
 .Pp
 A command starts with a pipe symbol (|),
 it receives messages via standard input.
 .El
-.Bl -tag
+.Bl -tag -width Ds
 .It Em Include File
 :include: /path/name
 .Pp
 The aliases in pathname are added to the aliases for
 .Em name .
 .El
-.Bl -tag
+.Bl -tag -width Ds
 .It Em E-Mail Address
 user@domain
 .Pp
@@ -118,16 +119,6 @@ change to take effect.
 .Xr dbopen 3 ,
 .Xr newaliases 8 ,
 .Xr sendmail 8
-.Rs
-.%T "Sendmail Installation and Operation Guide"
-.%V SMM
-.%N \&No. 8
-.Re
-.Rs
-.%T "Sendmail \- An Internetwork Mail Router"
-.%V SMM
-.%N \&No. 9
-.Re
 .Sh HISTORY
 The
 .Nm
