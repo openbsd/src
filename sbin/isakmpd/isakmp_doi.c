@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_doi.c,v 1.25 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: isakmp_doi.c,v 1.26 2010/10/18 21:38:58 todd Exp $	 */
 /* $EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	 */
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/types.h>
 
 #include "doi.h"
+#include "dpd.h"
 #include "exchange.h"
 #include "isakmp.h"
 #include "isakmp_doi.h"
@@ -217,16 +218,29 @@ static int
 isakmp_responder(struct message *msg)
 {
 	struct payload *p;
+	u_int16_t	type;
 
 	switch (msg->exchange->type) {
 	case ISAKMP_EXCH_INFO:
 		for (p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY); p;
 		    p = TAILQ_NEXT(p, link)) {
+			type = GET_ISAKMP_NOTIFY_MSG_TYPE(p->p);
+
 			LOG_DBG((LOG_EXCHANGE, 10, "isakmp_responder: "
-			    "got NOTIFY of type %s, ignoring",
+			    "got NOTIFY of type %s",
 			    constant_name(isakmp_notify_cst,
-			    GET_ISAKMP_NOTIFY_MSG_TYPE(p->p))));
-			p->flags |= PL_MARK;
+			    type)));
+
+			switch (type) {
+			case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE:
+			case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK:
+				dpd_handle_notify(msg, p);
+				break;
+
+			default:
+				p->flags |= PL_MARK;
+				break;
+			}
 		}
 
 		for (p = payload_first(msg, ISAKMP_PAYLOAD_DELETE); p;
