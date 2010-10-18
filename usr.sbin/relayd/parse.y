@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.147 2010/09/02 14:03:22 sobrado Exp $	*/
+/*	$OpenBSD: parse.y,v 1.148 2010/10/18 11:51:22 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -192,6 +192,7 @@ include		: INCLUDE STRING		{
 			file = nfile;
 			lungetc('\n');
 		}
+		;
 
 optssl		: /*empty*/	{ $$ = 0; }
 		| SSL		{ $$ = 1; }
