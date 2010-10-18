@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.143 2010/10/18 23:12:40 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.144 2010/10/18 23:20:15 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1346,7 +1346,7 @@ uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
 			diff_best = diff;
 			r->width = w;
 			r->height = h;
-			r->fidx = i;
+			r->fidx = sc->sc_fmtgrp[idx].frame[i]->bFrameIndex;
 		}
 		DPRINTF(1, "%s: %s: frame index %d: width=%d, height=%d\n",
 		    DEVNAME(sc), __func__, i, w, h);
