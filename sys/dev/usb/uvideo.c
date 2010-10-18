@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.142 2010/10/09 09:48:03 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.143 2010/10/18 23:12:40 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1226,7 +1226,7 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
 	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	int i;
+	int i, diff, best_diff = INT_MAX;
 	usbd_status error;
 	uint32_t psize;
 
@@ -1253,18 +1253,25 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
 		/* save endpoint with requested bandwidth */
 		psize = UGETW(ed->wMaxPacketSize);
 		psize = UE_GET_SIZE(psize) * (1 + UE_GET_TRANS(psize));
-		if (psize >= max_packet_size) {
+		if (psize >= max_packet_size)
+			diff = psize - max_packet_size;
+		else
+			goto next;
+		if (diff < best_diff) {
+			best_diff = diff;
 			sc->sc_vs_cur->endpoint = ed->bEndpointAddress;
 			sc->sc_vs_cur->curalt = id->bAlternateSetting;
 			sc->sc_vs_cur->psize = psize;
-			DPRINTF(1, "%s: set alternate iface to ", DEVNAME(sc));
-			DPRINTF(1, "bAlternateSetting=0x%02x\n",
-			    id->bAlternateSetting);
-			break;
+			if (diff == 0)
+				break;
 		}
 next:
 		desc = usb_desc_iter_next(&iter);
 	}
+
+	DPRINTF(1, "%s: set alternate iface to ", DEVNAME(sc));
+	DPRINTF(1, "bAlternateSetting=0x%02x psize=%d max_packet_size=%d\n",
+	    sc->sc_vs_cur->curalt, sc->sc_vs_cur->psize, max_packet_size);
 
 	/* set alternate video stream interface */
 	error = usbd_set_interface(ifaceh, i);
