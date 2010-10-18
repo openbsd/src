@@ -29,7 +29,7 @@ if [ $# -gt 3 ]; then
 	done
 fi
 
-for i in base comp etc misc man game ; do
+for i in base comp etc man game ; do
 	cat $rel/$i$rev.tgz | sum -a sha256 > $dir/$i$rev.tgz
 	#ls -alF $rel/$i$rev.tgz
 	#echo $i$rev.tgz `cat $dir/$i$rev.tgz`
