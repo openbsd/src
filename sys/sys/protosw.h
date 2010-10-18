@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.13 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.14 2010/10/18 04:31:01 guenther Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -142,7 +142,9 @@ struct protosw {
 #define	PRU_SLOWTIMO		19	/* 500ms timeout */
 #define	PRU_PROTORCV		20	/* receive from below */
 #define	PRU_PROTOSEND		21	/* send to below */
+#ifdef COMPAT_O47
 #define PRU_PEEREID		22	/* get local peer eid */
+#endif /* COMPAT_O47 */
 
 #define	PRU_NREQ		22
 

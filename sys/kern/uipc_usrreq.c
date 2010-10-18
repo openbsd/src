@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.48 2010/07/02 00:11:39 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.49 2010/10/18 04:31:01 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -288,6 +288,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			nam->m_len = 0;
 		break;
 
+#ifdef COMPAT_O47
 	case PRU_PEEREID:
 		if (unp->unp_flags & UNP_FEIDS) {
 			nam->m_len = sizeof(struct sockpeercred);
@@ -296,6 +297,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		} else
 			nam->m_len = 0;
 		break;
+#endif /* COMPAT_O47 */
 
 	case PRU_SLOWTIMO:
 		break;
