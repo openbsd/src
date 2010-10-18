@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.239 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.240 2010/10/18 04:10:57 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -105,6 +105,7 @@
 #include <ifaddrs.h>
 
 #include "brconfig.h"
+#include "pbkdf2.h"
 
 struct	ifreq		ifr, ridreq;
 struct	in_aliasreq	in_addreq;
@@ -160,6 +161,7 @@ void	setifwpaprotos(const char *, int);
 void	setifwpaakms(const char *, int);
 void	setifwpaciphers(const char *, int);
 void	setifwpagroupcipher(const char *, int);
+void	setifwpakey(const char *, int);
 void	setifwpapsk(const char *, int);
 void	setifchan(const char *, int);
 void	setifscan(const char *, int);
@@ -317,6 +319,8 @@ const struct	cmd {
 	{ "wpaciphers",	NEXTARG,	0,		setifwpaciphers },
 	{ "wpagroupcipher", NEXTARG,	0,		setifwpagroupcipher },
 	{ "wpaprotos",	NEXTARG,	0,		setifwpaprotos },
+	{ "wpakey",	NEXTARG,	0,		setifwpakey },
+	{ "-wpakey",	-1,		0,		setifwpakey },
 	{ "wpapsk",	NEXTARG,	0,		setifwpapsk },
 	{ "-wpapsk",	-1,		0,		setifwpapsk },
 	{ "chan",	NEXTARG0,	0,		setifchan },
@@ -1564,6 +1568,7 @@ setifwpa(const char *val, int d)
 {
 	struct ieee80211_wpaparams wpa;
 
+	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
@@ -1594,6 +1599,7 @@ setifwpaprotos(const char *val, int d)
 	}
 	free(optlist);
 
+	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
@@ -1624,6 +1630,7 @@ setifwpaakms(const char *val, int d)
 	}
 	free(optlist);
 
+	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
@@ -1675,6 +1682,7 @@ setifwpaciphers(const char *val, int d)
 	}
 	free(optlist);
 
+	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
@@ -1694,10 +1702,55 @@ setifwpagroupcipher(const char *val, int d)
 	if (cipher == IEEE80211_WPA_CIPHER_NONE)
 		errx(1, "wpagroupcipher: unknown cipher: %s", val);
 
+	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
 	wpa.i_groupcipher = cipher;
+	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCS80211WPAPARMS");
+}
+
+void
+setifwpakey(const char *val, int d)
+{
+	struct ieee80211_wpaparams wpa;
+	struct ieee80211_wpapsk psk;
+	struct ieee80211_nwid nwid;
+	int passlen, nwid_len;
+
+	memset(&psk, 0, sizeof(psk));
+	if (d != -1) {
+		memset(&ifr, 0, sizeof(ifr));
+		ifr.ifr_data = (caddr_t)&nwid;
+		strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+		if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr))
+			err(1, "SIOCG80211NWID");
+
+		passlen = strlen(val);
+		if (passlen < 8 || passlen > 63)
+			errx(1, "wpakey: passphrase must be between 8 and 63 "
+			    "characters");
+		nwid_len = nwid.i_len;
+		if (nwid_len == 0)
+			errx(1, "wpakey: nwid not set");
+		if (pkcs5_pbkdf2(val, passlen, nwid.i_nwid, nwid_len, psk.i_psk,
+		    sizeof(psk.i_psk), 4096) != 0)
+			errx(1, "wpakey: passphrase hashing failed");
+		psk.i_enabled = 1;
+	} else
+		psk.i_enabled = 0;
+
+	(void)strlcpy(psk.i_name, name, sizeof(psk.i_name));
+	if (ioctl(s, SIOCS80211WPAPSK, (caddr_t)&psk) < 0)
+		err(1, "SIOCS80211WPAPSK");
+
+	/* And ... automatically enable or disable WPA */
+	memset(&wpa, 0, sizeof(wpa));
+	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
+	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
+		err(1, "SIOCG80211WPAPARMS");
+	wpa.i_enabled = psk.i_enabled;
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
