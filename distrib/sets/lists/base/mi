@@ -2479,7 +2479,6 @@
 ./usr/libexec/tftp-proxy
 ./usr/libexec/tftpd
 ./usr/libexec/uucpd
-./usr/libexec/vfontedpr
 ./usr/libexec/vi.recover
 ./usr/lkm
 ./usr/local
@@ -3275,7 +3274,6 @@
 ./usr/share/texinfo/texinfo.cat
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
-./usr/share/tmac
 ./usr/share/vi
 ./usr/share/vi/catalog
 ./usr/share/vi/catalog/dutch
