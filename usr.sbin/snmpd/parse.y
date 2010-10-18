@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2010/08/03 18:42:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.19 2010/10/18 13:29:49 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -147,6 +147,7 @@ include		: INCLUDE STRING		{
 			file = nfile;
 			lungetc('\n');
 		}
+		;
 
 varset		: STRING '=' STRING	{
 			if (symset($1, $3, 0) == -1)
