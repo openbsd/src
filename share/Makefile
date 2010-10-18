@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.15 2008/12/23 18:33:36 reyk Exp $
+#	$OpenBSD: Makefile,v 1.16 2010/10/18 00:29:24 deraadt Exp $
 
-SUBDIR=	dict doc lkm locale man misc mk snmp tabset termtypes \
+SUBDIR=	dict lkm locale man misc mk snmp tabset termtypes \
 	tmac zoneinfo
 
 .include <bsd.subdir.mk>
