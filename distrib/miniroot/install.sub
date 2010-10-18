@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.622 2010/10/18 04:18:26 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.623 2010/10/18 22:45:28 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -638,6 +638,10 @@ configure_ifs() {
 			[[ ${_ifs##vlan} == $_vl ]] && (( _vl += 1 ))
 		fi
 
+		# Test if it is an 802.11 interface
+		ifconfig $_ifs 2>&- | grep -q "^[[:space:]]*ieee80211:" &&
+			ieee80211_config $_ifs $_hn
+
 		# First interface configured will use the hostname without
 		# asking the user.
 		resp=$(hostname -s)
@@ -731,6 +735,81 @@ hextodec() {
 		_d=$_d.$((0x$_b))
 	done
 	echo ${_d#.}
+}
+
+# Perform an 802.11 interface network scan.
+# The result is cached in $WLANLIST
+# $1 == interface
+ieee80211_scan() {
+	# N.B. Skipping quoted nwid's for now
+	[[ -f $WLANLIST ]] ||
+		ifconfig $1 scan |
+		sed -n 's/^		nwid \([^"]\)/\1/p' > $WLANLIST
+	cat $WLANLIST
+}
+
+# Configures an 802.11 interface
+#
+# $1 == interface
+# $2 == hostname
+ieee80211_config() {
+	local _ifs=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
+
+	# Reset 802.11 settings and determine wpa capability
+	ifconfig $_ifs -nwid -nwkey
+	ifconfig $_ifs -wpa 2>&- && _haswpa=1
+
+	# Empty scan cache
+	rm -f $WLANLIST
+
+	while [ -z $_nwid ]; do
+		ask_until "Access point? (ESSID, 'any', list# or '?')" "any"
+		case "$resp" in
+		+([0-9]))
+			_nwid=$(ieee80211_scan $_ifs | sed -n "${resp}s/ .*//p")
+			[[ -z $_nwid ]] && echo "There is no line $resp."
+			;;
+		\?)	ieee80211_scan $_ifs |
+				sed -n 's/^\([^ ]*\) chan .* bssid \([^ ]*\) .*$/	\1 (\2)/p' |
+				less -XEN
+			;;
+		*)	_nwid=$resp ;;
+		esac
+	done
+
+	# 'any' implies that only open access points are considered
+	if [[ $_nwid != any ]]; then
+		ifconfig $_ifs nwid "$_nwid"
+		echo "nwid \"$_nwid\"" >>$_hn
+
+		_prompt="Security protocol? (O)pen, (W)EP"
+		[[ $_haswpa == 1 ]] && _prompt="$_prompt, WPA-(P)SK"
+		while :; do
+			ask_until "$_prompt" "O"
+			case "$_haswpa-$resp" in
+			?-[Oo])	break
+				;;
+			?-[Ww])	ask_until "WEP key? (will echo)"
+				# Make sure ifconfig accepts the key
+				if _err=$(ifconfig $_ifs nwkey "$resp" 2>&1) &&
+					[[ -z $_err ]]; then
+					echo "nwkey \"$resp\"" >>$_hn
+					break
+				fi
+				echo "$_err"
+				;;
+			1-[Pp])	ask_until "WPA passphrase? (will echo)"
+				# Make sure ifconfig accepts the key
+				if ifconfig $_ifs wpakey $resp; then
+					echo "wpakey \"$resp\"" >>$_hn
+					break
+				fi
+				;;
+			*)	echo "'$resp' is not a valid choice."
+				;;
+			esac
+		done
+	fi
 }
 
 v4_config() {
@@ -1892,6 +1971,7 @@ FTPOPTS="-V"
 SERVERLISTALL=/tmp/serverlistall
 SERVERLISTSEC=/tmp/serverlistsec
 SERVERLIST=/tmp/serverlist
+WLANLIST=/tmp/wlanlist
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do
