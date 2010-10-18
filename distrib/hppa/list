@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.15 2010/03/31 17:51:42 deraadt Exp $
+#	$OpenBSD: list,v 1.16 2010/10/18 04:07:50 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -54,7 +54,8 @@ LINK	instbin					sbin/sysctl
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
-COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
+SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.36 2009/06/02 06:17:47 todd Exp $
+#	$OpenBSD: list.local,v 1.1 2010/10/18 04:08:32 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's

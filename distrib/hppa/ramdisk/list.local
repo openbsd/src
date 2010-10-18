@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 2009/06/02 06:17:47 todd Exp $
+#	$OpenBSD: list.local,v 1.1 2010/10/18 04:07:50 deraadt Exp $
 
 # hppa extra's
 LINK	instbin					sbin/disklabel

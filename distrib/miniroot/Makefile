@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.32 2010/10/18 04:07:48 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -30,7 +30,7 @@ CRUNCHGENOPTS?=-E
 CRUNCHGENOPTS?=
 .endif
 
-LISTS=		${.CURDIR}/list ${ARCHDIR}/list
+LISTS=		${.CURDIR}/list ${ARCHDIR}/list.local
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
 

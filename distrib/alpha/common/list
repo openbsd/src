@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.30 2010/03/31 17:51:42 deraadt Exp $
+#	$OpenBSD: list,v 1.31 2010/10/18 04:07:49 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -58,7 +58,8 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 COPY	${DESTDIR}/etc/group			etc/group
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
-COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
+SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf

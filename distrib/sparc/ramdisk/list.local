@@ -1,10 +1,17 @@
-#	$OpenBSD: list,v 1.20 2009/02/20 00:02:49 krw Exp $
+#	$OpenBSD: list.local,v 1.1 2010/10/18 04:08:32 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
-# extras
+# Sparc extra's
+LINK	instbin					bin/sha256
+
+LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/disklabel
+LINK	instbin					sbin/restore
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/less usr/bin/more
+LINK	instbin					usr/sbin/installboot
+
+SRCDIRS	sys/arch/sparc/stand
 
 SYMLINK	/tmp	var/tmp
 
@@ -12,18 +19,21 @@ SYMLINK	/tmp	var/tmp
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# copy and link first stage boot code
-COPY	${DESTDIR}/usr/mdec/xxboot		usr/mdec/xxboot
-LINK	usr/mdec/xxboot				usr/mdec/hpboot
-LINK	usr/mdec/xxboot				usr/mdec/raboot
-LINK	usr/mdec/xxboot				usr/mdec/rdboot
-LINK	usr/mdec/xxboot				usr/mdec/sdboot
+# we need the contents of /usr/mdec (but not boot or binstall)
+COPYDIR	${DESTDIR}/usr/mdec			usr/mdec
+SPECIAL	rm -f usr/mdec/binstall			usr/mdec/installboot
 
 # various files that we need in /etc for the install
 SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
-TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
+TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
 
 # and the installation tools
 SCRIPT	${ARCHDIR}/../install.md		install.md
+
+# no NFS support in sparc ramdisk
+REMOVE	sbin/mount_nfs
+
+HASH	var/hash
+TZ

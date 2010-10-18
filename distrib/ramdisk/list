@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.38 2010/03/31 17:51:42 deraadt Exp $
+#	$OpenBSD: list,v 1.39 2010/10/18 04:07:51 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -54,7 +54,8 @@ LINK	instbin					usr/bin/sed
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
-COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+COPY	${CURDIR}/../miniroot/master.passwd	etc/master.passwd
+SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${CURDIR}/../miniroot/protocols		etc/protocols
 COPY	${CURDIR}/../miniroot/services		etc/services
 

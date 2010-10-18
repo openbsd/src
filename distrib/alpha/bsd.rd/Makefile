@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2010/10/18 04:07:49 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -27,7 +27,7 @@ RDSETROOT=	elfrdsetroot
 
 .include "${TOP}/inst-common/Makefile.inc"
 
-LISTS+=		${.CURDIR}/list
+LISTS+=		${.CURDIR}/list.local
 
 all: ${CBIN} bsd.rd
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2010/08/26 01:35:44 krw Exp $
+#	$OpenBSD: Makefile,v 1.20 2010/10/18 04:07:50 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -25,7 +25,7 @@ CRUNCHGENOPTS?=-E
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../../miniroot
 
-LISTS=		${ARCHDIR}/list ${.CURDIR}/list
+LISTS=		${ARCHDIR}/list ${.CURDIR}/list.local
 MTREE=		${UTILS}/mtree.conf
 
 LIF?=		lif${REV}.fs
