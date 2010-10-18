@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.167 2010/09/24 14:13:47 sobrado Exp $
+#	$OpenBSD: GENERIC,v 1.168 2010/10/18 15:01:21 claudio Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -67,7 +67,7 @@ option		PPP_DEFLATE
 #option		PIPEX		# Pppac IP EXtension, for npppd
 option		MROUTING	# Multicast router
 #option		PIM		# Protocol Independent Multicast
-#option		MPLS		# Multi-Protocol Label Switching
+option		MPLS		# Multi-Protocol Label Switching
 
 #mpath0		at root		# SCSI Multipathing
 #scsibus*	at mpath?
@@ -100,7 +100,7 @@ pseudo-device	carp		# CARP protocol support
 pseudo-device	gif		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	gre		# GRE encapsulation interface
 pseudo-device	loop		# network loopback
-#pseudo-device	mpe		# MPLS PE interface
+pseudo-device	mpe		# MPLS PE interface
 pseudo-device	ppp		# PPP
 pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
 #pseudo-device	pppx 		# PPP multiplexer
