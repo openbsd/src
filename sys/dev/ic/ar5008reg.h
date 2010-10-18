@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008reg.h,v 1.1 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar5008reg.h,v 1.2 2010/10/18 16:18:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -685,7 +685,7 @@ struct ar_tx_desc {
 	 * not cross a 4KB boundary.
 	 */
 	uint32_t	pad[8];
-} __packed;
+} __packed __attribute__((aligned(4)));
 
 /* Bits for ds_ctl0. */
 #define AR_TXC0_FRAME_LEN_M		0x00000fff
@@ -858,7 +858,7 @@ struct ar_rx_desc {
 	 * not cross a 4KB boundary.
 	 */
 	uint32_t	pad[3];
-} __packed;
+} __packed  __attribute__((aligned(4)));
 
 /* Bits for ds_ctl1. */
 #define AR_RXC1_BUF_LEN_M		0x00000fff

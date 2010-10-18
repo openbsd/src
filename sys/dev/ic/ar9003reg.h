@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003reg.h,v 1.3 2010/06/21 19:54:28 damien Exp $	*/
+/*	$OpenBSD: ar9003reg.h,v 1.4 2010/10/18 16:18:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -880,7 +880,7 @@ struct ar_tx_desc {
 	 * not cross a 4KB boundary.
 	 */
 	uint32_t	pad[9];
-} __packed;
+} __packed  __attribute__((aligned(4)));
 
 /* Bits for ds_info. */
 #define AR_TXI_DESC_NDWORDS_M		0x000000ff
@@ -1020,7 +1020,7 @@ struct ar_tx_status {
 	uint32_t	ds_status6;
 	uint32_t	ds_status7;
 	uint32_t	ds_status8;
-} __packed;
+} __packed  __attribute__((aligned(4)));
 
 /* Bits for ds_status3. */
 #define AR_TXS3_EXCESSIVE_RETRIES	0x00000002
@@ -1058,7 +1058,7 @@ struct ar_rx_status {
 	uint32_t	ds_status9;
 	uint32_t	ds_status10;
 	uint32_t	ds_status11;
-} __packed;
+} __packed  __attribute__((aligned(4)));
 
 /* Bits for ds_info. */
 #define AR_RXI_CTRL_STAT		0x00004000
