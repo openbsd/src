@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.209 2010/08/08 20:36:58 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.210 2010/10/18 22:30:29 halex Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: August 8 2010 $
+.Dd $Mdocdate: October 18 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -851,6 +851,7 @@ will begin advertising as master.
 .Op Cm wpaakms Ar akm,akm,...
 .Op Cm wpaciphers Ar cipher,cipher,...
 .Op Cm wpagroupcipher Ar cipher
+.Op Oo Fl Oc Ns Cm wpakey Ar key
 .Op Cm wpaprotos Ar proto,proto,...
 .Op Oo Fl Oc Ns Cm wpapsk Ar psk
 .Ek
@@ -992,6 +993,8 @@ The default value is
 .Dq psk .
 .Dq psk
 can only be used if a pre-shared key is configured using the
+.Cm wpakey
+or
 .Cm wpapsk
 option.
 .It Cm wpaciphers Ar cipher,cipher,...
@@ -1039,6 +1042,17 @@ The
 .Cm wpagroupcipher
 option is available in Host AP mode only.
 A station will always use the group cipher of the BSS.
+.It Cm wpakey Ar key
+Set the WPA passphrase and enable WPA.
+The
+.Cm nwid
+option must be set prior to specifying the
+.Cm wpakey
+option, since
+.Nm
+will hash the nwid along with the passphrase.
+.It Fl wpakey
+Delete the pre-shared WPA key and disable WPA.
 .It Cm wpaprotos Ar proto,proto,...
 Set the comma-separated list of allowed WPA protocol versions.
 .Pp
@@ -1058,7 +1072,7 @@ is specified, a station will always use the
 .Ar wpa2
 protocol when supported by the access point.
 .It Cm wpapsk Ar psk
-Set the 256-bit pre-shared key.
+Set the hashed 256-bit pre-shared WPA key.
 The pre-shared key must be specified using a series of 64 hexadecimal digits
 (preceded by
 .So 0x Sc ) .
@@ -1077,6 +1091,10 @@ using WPA-PSK with passphrase
 # ifconfig wpi0 nwid my_net wpa wpapsk \e
         `wpa-psk my_net my_passphrase`
 .Ed
+.Pp
+However, you are likely much better off just using the
+.Cm wpakey
+option instead.
 .It Fl wpapsk
 Delete the pre-shared key.
 This will prevent
