@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.68 2010/10/18 13:28:00 sthen Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -251,6 +251,7 @@ ssl		: SMTPS				{ $$ = F_SMTPS; }
 		| TLS				{ $$ = F_STARTTLS; }
 		| SSL				{ $$ = F_SSL; }
 		| /* empty */			{ $$ = 0; }
+		;
 
 auth		: ENABLE AUTH  			{ $$ = 1; }
 		| /* empty */			{ $$ = 0; }
@@ -453,6 +454,7 @@ keyval		: STRING ARROW STRING		{
 
 			TAILQ_INSERT_TAIL(contents, me, me_entry);
 		}
+		;
 
 keyval_list	: keyval
 		| keyval comma keyval_list
@@ -976,6 +978,7 @@ on		: ON STRING	{
 			$$ = $2;
 		}
 		| /* empty */	{ $$ = NULL; }
+		;
 
 rule		: decision on from			{
 
