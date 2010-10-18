@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.208 2010/10/18 04:17:11 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.209 2010/10/18 17:11:29 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -738,64 +738,6 @@ quiz.db
 ..
 
 # ./usr/share/games
-..
-
-# ./usr/share/groff_font
-groff_font
-
-# ./usr/share/groff_font/devX100
-devX100
-# ./usr/share/groff_font/devX100
-..
-
-# ./usr/share/groff_font/devX100-12
-devX100-12
-# ./usr/share/groff_font/devX100-12
-..
-
-# ./usr/share/groff_font/devX75
-devX75
-# ./usr/share/groff_font/devX75
-..
-
-# ./usr/share/groff_font/devX75-12
-devX75-12
-# ./usr/share/groff_font/devX75-12
-..
-
-# ./usr/share/groff_font/devascii
-devascii
-# ./usr/share/groff_font/devascii
-..
-
-# ./usr/share/groff_font/devdvi
-devdvi
-
-# ./usr/share/groff_font/devdvi/generate
-generate
-# ./usr/share/groff_font/devdvi/generate
-..
-
-# ./usr/share/groff_font/devdvi
-..
-
-# ./usr/share/groff_font/devlatin1
-devlatin1
-# ./usr/share/groff_font/devlatin1
-..
-
-# ./usr/share/groff_font/devps
-devps
-
-# ./usr/share/groff_font/devps/generate
-generate
-# ./usr/share/groff_font/devps/generate
-..
-
-# ./usr/share/groff_font/devps
-..
-
-# ./usr/share/groff_font
 ..
 
 # ./usr/share/info
@@ -2185,22 +2127,6 @@ mibs
 # ./usr/share/tabset
 tabset
 # ./usr/share/tabset
-..
-
-# ./usr/share/tmac
-tmac
-
-# ./usr/share/tmac/mdoc
-mdoc
-# ./usr/share/tmac/mdoc
-..
-
-# ./usr/share/tmac/mm
-mm
-# ./usr/share/tmac/mm
-..
-
-# ./usr/share/tmac
 ..
 
 # ./usr/share/vi

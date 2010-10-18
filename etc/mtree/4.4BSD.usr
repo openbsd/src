@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.usr,v 1.24 2010/10/18 04:17:11 deraadt Exp $
+#	$OpenBSD: 4.4BSD.usr,v 1.25 2010/10/18 17:11:29 deraadt Exp $
 #	$NetBSD: 4.4BSD.usr,v 1.3 1996/05/12 23:30:37 thorpej Exp $
 #
 #	   user: bostic
@@ -710,84 +710,6 @@ quiz.db         type=dir uname=root gname=wheel mode=0755
 # ./share/games
 ..
 
-
-# ./share/groff_font
-/set type=file gname=wheel uname=root mode=0755
-groff_font      type=dir
-
-# ./share/groff_font/devX100
-/set type=file gname=wheel uname=root mode=0644
-devX100         type=dir mode=0755
-# ./share/groff_font/devX100
-..
-
-
-# ./share/groff_font/devX100-12
-/set type=file gname=wheel uname=root mode=0644
-devX100-12      type=dir mode=0755
-# ./share/groff_font/devX100-12
-..
-
-
-# ./share/groff_font/devX75
-/set type=file gname=wheel uname=root mode=0644
-devX75          type=dir mode=0755
-# ./share/groff_font/devX75
-..
-
-
-# ./share/groff_font/devX75-12
-/set type=file gname=wheel uname=root mode=0644
-devX75-12       type=dir mode=0755
-# ./share/groff_font/devX75-12
-..
-
-
-# ./share/groff_font/devascii
-/set type=file gname=wheel uname=root mode=0644
-devascii        type=dir mode=0755
-# ./share/groff_font/devascii
-..
-
-
-# ./share/groff_font/devdvi
-/set type=file gname=wheel uname=root mode=0644
-devdvi          type=dir mode=0755
-
-# ./share/groff_font/devdvi/generate
-/set type=file gname=wheel uname=root mode=0644
-generate        type=dir mode=0755
-# ./share/groff_font/devdvi/generate
-..
-
-# ./share/groff_font/devdvi
-..
-
-
-# ./share/groff_font/devlatin1
-/set type=file gname=wheel uname=root mode=0644
-devlatin1       type=dir mode=0755
-# ./share/groff_font/devlatin1
-..
-
-
-# ./share/groff_font/devps
-/set type=file gname=wheel uname=root mode=0644
-devps           type=dir mode=0755
-
-# ./share/groff_font/devps/generate
-/set type=file gname=wheel uname=root mode=0644
-generate        type=dir mode=0755
-# ./share/groff_font/devps/generate
-..
-
-# ./share/groff_font/devps
-..
-
-# ./share/groff_font
-..
-
-
 # ./share/locale
 locale          type=dir mode=0755
 # ./share/locale
@@ -1023,26 +945,6 @@ skel            type=dir uname=root gname=wheel mode=0755
 /set type=file gname=bin uname=root mode=0444
 tabset          type=dir uname=root gname=wheel mode=0755
 # ./share/tabset
-..
-
-
-# ./share/tmac
-/set type=file gname=wheel uname=root mode=0644
-tmac            type=dir mode=0755
-
-# ./share/tmac/mdoc
-/set type=file gname=wheel uname=root mode=0644
-mdoc            type=dir mode=0755
-# ./share/tmac/mdoc
-..
-
-# ./share/tmac/mm
-/set type=file gname=wheel uname=root mode=0644
-mm              type=dir mode=0755
-# ./share/tmac/mm
-..
-
-# ./share/tmac
 ..
 
 
