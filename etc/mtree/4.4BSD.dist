@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.209 2010/10/18 17:11:29 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.210 2010/10/18 17:36:39 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2127,6 +2127,12 @@ mibs
 # ./usr/share/tabset
 tabset
 # ./usr/share/tabset
+..
+
+# ./usr/share/tmac
+tmac
+
+# ./usr/share/tmac
 ..
 
 # ./usr/share/vi
