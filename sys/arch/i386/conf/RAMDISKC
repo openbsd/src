@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.95 2010/10/13 19:21:52 mikeb Exp $
+#	$OpenBSD: RAMDISKC,v 1.96 2010/10/19 20:23:53 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -27,7 +27,7 @@ option		INET		# IP + ICMP + TCP + UDP
 option		BOOT_CONFIG	# boot-time kernel config
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=3800
+option		MINIROOTSIZE=3872
 
 config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 

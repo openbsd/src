@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.26 2010/05/24 19:10:26 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.27 2010/10/19 20:23:53 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -48,7 +48,7 @@ ${FS}:	bsd.gz
 	rm ${REALIMAGE}
 
 DISKTYPE?=       rdroot
-NBLKS?=          3800
+NBLKS?=          3872
 # minfree, opt, b/i, blks/cyl
 NEWFSARGS= -m 0 -o space -i 4096
 

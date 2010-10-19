@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.180 2010/10/13 19:47:41 mikeb Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.181 2010/10/19 20:23:53 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -31,7 +31,7 @@ option		BOOT_CONFIG	# boot-time kernel config
 option		CRYPTO		# Cryptographic framework
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=3800
+option		MINIROOTSIZE=3872
 
 config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
