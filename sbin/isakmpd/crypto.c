@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.30 2010/10/15 10:18:42 jsg Exp $	 */
+/* $OpenBSD: crypto.c,v 1.31 2010/10/19 07:47:34 mikeb Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -204,38 +204,21 @@ blf_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 enum cryptoerr
 cast_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
-	cast_setkey(&ks->ks_cast, key, len);
+	CAST_set_key(&ks->ks_cast, len, key);
 	return EOKAY;
 }
 
 void
 cast1_encrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
-	u_int16_t       i, blocksize = ks->xf->blocksize;
-	u_int8_t       *iv = ks->liv;
-
-	memcpy(iv, ks->riv, blocksize);
-
-	for (i = 0; i < len; data += blocksize, i += blocksize) {
-		XOR64(data, iv);
-		cast_encrypt(&ks->ks_cast, data, data);
-		SET64(iv, data);
-	}
+	memcpy(ks->liv, ks->riv, ks->xf->blocksize);
+	CAST_cbc_encrypt(data, data, len, &ks->ks_cast, ks->liv, 1);
 }
 
 void
 cast1_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
-	u_int16_t       i, blocksize = ks->xf->blocksize;
-
-	data += len - blocksize;
-	for (i = len - blocksize; i >= blocksize; data -= blocksize,
-	    i -= blocksize) {
-		cast_decrypt(&ks->ks_cast, data, data);
-		XOR64(data, data - blocksize);
-	}
-	cast_decrypt(&ks->ks_cast, data, data);
-	XOR64(data, ks->riv);
+	CAST_cbc_encrypt(data, data, len, &ks->ks_cast, ks->riv, 0);
 }
 
 enum cryptoerr
