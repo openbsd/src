@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.7 2010/09/20 17:26:47 martinh Exp $ */
+/*	$OpenBSD: auth.c,v 1.8 2010/10/19 09:10:12 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -266,6 +266,11 @@ ldap_auth_sasl(struct request *req, char *binddn, struct ber_element *params)
 	if (send_auth_request(req, authcid, password) != 0)
 		return LDAP_OPERATIONS_ERROR;
 
+	free(req->conn->binddn);
+	req->conn->binddn = NULL;
+	if ((req->conn->pending_binddn = strdup(authcid)) == NULL)
+		return LDAP_OTHER;
+
 	return LDAP_SUCCESS;
 }
 
@@ -333,16 +338,20 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 		}
 	}
 
+	free(req->conn->binddn);
+	req->conn->binddn = NULL;
+
 	if (ok == 1) {
-		free(req->conn->binddn);
 		if ((req->conn->binddn = strdup(binddn)) == NULL)
 			return LDAP_OTHER;
 		log_debug("successfully authenticated as %s",
 		    req->conn->binddn);
 		return LDAP_SUCCESS;
-	} else if (ok == 2)
+	} else if (ok == 2) {
+		if ((req->conn->pending_binddn = strdup(binddn)) == NULL)
+			return LDAP_OTHER;
 		return -LDAP_SASL_BIND_IN_PROGRESS;
-	else if (ok == 0)
+	} else if (ok == 0)
 		return LDAP_INVALID_CREDENTIALS;
 	else
 		return LDAP_OPERATIONS_ERROR;
@@ -353,10 +362,15 @@ ldap_bind_continue(struct conn *conn, int ok)
 {
 	int			 rc;
 
-	if (ok)
+	if (ok) {
 		rc = LDAP_SUCCESS;
-	else
+		conn->binddn = conn->pending_binddn;
+		log_debug("successfully authenticated as %s", conn->binddn);
+	} else {
 		rc = LDAP_INVALID_CREDENTIALS;
+		free(conn->pending_binddn);
+	}
+	conn->pending_binddn = NULL;
 
 	ldap_respond(conn->bind_req, rc);
 	conn->bind_req = NULL;
