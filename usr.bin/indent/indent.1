@@ -1,4 +1,4 @@
-.\"	$OpenBSD: indent.1,v 1.18 2010/07/15 20:51:38 schwarze Exp $
+.\"	$OpenBSD: indent.1,v 1.19 2010/10/19 16:54:15 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)indent.1	8.1 (Berkeley) 7/1/93
 .\"
-.Dd $Mdocdate: July 15 2010 $
+.Dd $Mdocdate: October 19 2010 $
 .Dt INDENT 1
 .Os
 .Sh NAME
@@ -381,11 +381,8 @@ instances of
 .It Fl troff
 Causes
 .Nm
-to format the program for processing by
-.Xr troff 1 .
-It will produce a fancy
-listing in much the same spirit as
-.Xr vgrind 1 .
+to format the program for processing by troff,
+producing a fancy listing.
 If the output file is not specified, the default is standard output,
 rather than formatting in place.
 .It Fl v , \&nv
