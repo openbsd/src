@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.10 2010/10/17 10:32:00 krw Exp $ */
+/* $OpenBSD: pms.c,v 1.11 2010/10/19 11:00:50 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -134,21 +134,10 @@ pmsprobe(struct device *parent, void *match, void *aux)
 	/* reset the device */
 	cmd[0] = PMS_RESET;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
-	if (res) {
+	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
 #ifdef DEBUG
-		printf("pmsprobe: reset error %d\n", res);
-#endif
-		return (0);
-	}
-	if (resp[0] != PMS_RSTDONE) {
-		printf("pmsprobe: reset response 0x%x\n", resp[0]);
-		return (0);
-	}
-
-	/* get type number (0 = mouse) */
-	if (resp[1] != 0) {
-#ifdef DEBUG
-		printf("pmsprobe: type 0x%x\n", resp[1]);
+		printf("pms: reset error %d (response 0x%02x, type 0x%02x)\n",
+		    res, resp[0], resp[1]);
 #endif
 		return (0);
 	}
