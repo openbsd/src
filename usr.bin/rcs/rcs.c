@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.69 2010/10/20 19:53:53 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.70 2010/10/20 19:55:46 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1897,11 +1897,13 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, BUF *bp)
 		rdp->rd_text = xmalloc(len);
 		rdp->rd_tlen = len;
 		(void)memcpy(rdp->rd_text, dtext, len);
-		xfree(dtext);
 	} else {
 		rdp->rd_text = NULL;
 		rdp->rd_tlen = 0;
 	}
+
+	if (dtext != NULL)
+		xfree(dtext);
 
 	return (0);
 }
