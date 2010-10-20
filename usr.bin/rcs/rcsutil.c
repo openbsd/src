@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.36 2010/09/08 15:15:50 tobias Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.37 2010/10/20 19:53:53 tobias Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -50,7 +50,10 @@ rcs_get_mtime(RCSFILE *file)
 	struct stat st;
 	time_t mtime;
 
-	if (fstat(file->rf_fd, &st) == -1) {
+	if (file->rf_file == NULL)
+		return (-1);
+
+	if (fstat(fileno(file->rf_file), &st) == -1) {
 		warn("%s", file->rf_path);
 		return (-1);
 	}
@@ -70,13 +73,13 @@ rcs_set_mtime(RCSFILE *file, time_t mtime)
 {
 	static struct timeval tv[2];
 
-	if (mtime == -1)
+	if (file->rf_file == NULL || mtime == -1)
 		return;
 
 	tv[0].tv_sec = mtime;
 	tv[1].tv_sec = tv[0].tv_sec;
 
-	if (futimes(file->rf_fd, tv) == -1)
+	if (futimes(fileno(file->rf_file), tv) == -1)
 		err(1, "utimes");
 }
 

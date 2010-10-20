@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.12 2010/10/05 15:16:48 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.13 2010/10/20 19:53:53 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,6 +28,8 @@
 #define RCS_H
 
 #include <sys/queue.h>
+
+#include <stdio.h>
 
 #include "buf.h"
 
@@ -187,7 +189,7 @@ struct rcs_delta {
 
 
 typedef struct rcs_file {
-	int	 rf_fd;
+	FILE	*rf_file;
 	char	*rf_path;
 	mode_t	 rf_mode;
 	u_int	 rf_flags;

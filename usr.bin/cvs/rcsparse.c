@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.2 2010/10/20 06:51:26 tobias Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.3 2010/10/20 19:53:53 tobias Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -78,7 +78,6 @@ struct rcs_pdata {
 	size_t			 rp_tlen;
 
 	struct rcs_delta	*rp_delta;
-	FILE			*rp_file;
 	int			 rp_lineno;
 	int			 rp_msglineno;
 	int			 rp_token;
@@ -230,10 +229,7 @@ rcsparse_init(RCSFILE *rfp)
 	pdp->rp_token = -1;
 	pdp->rp_lineno = 1;
 	pdp->rp_msglineno = 1;
-	if ((pdp->rp_file = fdopen(rfp->rf_fd, "r")) == NULL) {
-		xfree(pdp);
-		return (1);
-	}
+
 	/* ditch the strict lock */
 	rfp->rf_flags &= ~RCS_SLOCK;
 	rfp->rf_pdata = pdp;
@@ -343,8 +339,6 @@ rcsparse_free(RCSFILE *rfp)
 
 	pdp = rfp->rf_pdata;
 
-	if (pdp->rp_file != NULL)
-		(void)fclose(pdp->rp_file);
 	if (pdp->rp_buf != NULL)
 		xfree(pdp->rp_buf);
 	if (pdp->rp_token == RCS_TYPE_REVISION)
@@ -850,13 +844,13 @@ rcsparse_string(RCSFILE *rfp, int allowed)
 	*bp = '\0';
 
 	for (;;) {
-		c = getc(pdp->rp_file);
+		c = getc(rfp->rf_file);
 		if (c == '@') {
-			c = getc(pdp->rp_file);
+			c = getc(rfp->rf_file);
 			if (c == EOF) {
 				return (EOF);
 			} else if (c != '@') {
-				ungetc(c, pdp->rp_file);
+				ungetc(c, rfp->rf_file);
 				break;
 			}
 		}
@@ -905,9 +899,9 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 	c = EOF;
 	do {
 		pre = c;
-		c = getc(pdp->rp_file);
+		c = getc(rfp->rf_file);
 		if (c == EOF) {
-			if (ferror(pdp->rp_file)) {
+			if (ferror(rfp->rf_file)) {
 				rcsparse_warnx(rfp, "error during parsing");
 				return (0);
 			}
@@ -924,7 +918,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 	switch (c) {
 	case '@':
 		ret = rcsparse_string(rfp, allowed);
-		if (ret == EOF && ferror(pdp->rp_file)) {
+		if (ret == EOF && ferror(rfp->rf_file)) {
 			rcsparse_warnx(rfp, "error during parsing");
 			return (0);
 		}
@@ -966,7 +960,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 
 	for (;;) {
 		if (c == EOF) {
-			if (ferror(pdp->rp_file))
+			if (ferror(rfp->rf_file))
 				rcsparse_warnx(rfp, "error during parsing");
 			else
 				rcsparse_warnx(rfp, "unexpected end of file");
@@ -976,7 +970,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 
 		RBUF_PUTC(c);
 
-		c = getc(pdp->rp_file);
+		c = getc(rfp->rf_file);
 
 		if (isspace(c)) {
 			if (c == '\n')
@@ -984,7 +978,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 			RBUF_PUTC('\0');
 			break;
 		} else if (c == ';' || c == ':' || c == ',') {
-			ungetc(c, pdp->rp_file);
+			ungetc(c, rfp->rf_file);
 			RBUF_PUTC('\0');
 			break;
 		} else if (!isgraph(c)) {

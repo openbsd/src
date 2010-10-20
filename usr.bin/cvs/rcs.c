@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.304 2010/10/15 08:46:23 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.305 2010/10/20 19:53:53 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -176,7 +176,10 @@ rcs_open(const char *path, int fd, int flags, ...)
 	rfp->rf_path = xstrdup(path);
 	rfp->rf_flags = flags | RCS_SLOCK | RCS_SYNCED;
 	rfp->rf_mode = fmode;
-	rfp->rf_fd = fd;
+	if (fd == -1)
+		rfp->rf_file = NULL;
+	else if ((rfp->rf_file = fdopen(fd, "r")) == NULL)
+		fatal("rcs_open: %s: fdopen: %s", path, strerror(errno));
 	rfp->rf_dead = 0;
 
 	TAILQ_INIT(&(rfp->rf_delta));
@@ -252,6 +255,8 @@ rcs_close(RCSFILE *rfp)
 	if (rfp->rf_branch != NULL)
 		rcsnum_free(rfp->rf_branch);
 
+	if (rfp->rf_file != NULL)
+		fclose(rfp->rf_file);
 	if (rfp->rf_path != NULL)
 		xfree(rfp->rf_path);
 	if (rfp->rf_comment != NULL)
