@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.23 2010/10/15 13:18:45 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.24 2010/10/20 12:16:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -260,6 +260,7 @@ kr_shutdown(void)
 		kr_state.fib_sync = 1;	/* force removal of mulitcast route */
 		(void)send_rtmsg(kr_state.fd, RTM_DELETE, &kr_all_routers,
 		    AF_INET);
+		kr_state.fib_sync = 0;	/* back to decoupled state */
 	}
 
 	kroute_clear();
