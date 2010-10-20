@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.21 2010/08/08 04:19:24 deraadt Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.22 2010/10/20 20:34:19 mk Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
 		printf("%s: pre-2.0 USB rev\n", devname);
-		goto unmap_ret;
+		goto disestablish_ret;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
 		break;
@@ -212,7 +212,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
-		goto unmap_ret;
+		goto disestablish_ret;
 	}
 
 	sc->sc.sc_shutdownhook = shutdownhook_establish(ehci_pci_shutdown, sc);
@@ -224,6 +224,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
+disestablish_ret:
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 unmap_ret:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 	splx(s);

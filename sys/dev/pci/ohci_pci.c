@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.36 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.37 2010/10/20 20:34:19 mk Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (ohci_checkrev(&sc->sc) != USBD_NORMAL_COMPLETION ||
 	    ohci_handover(&sc->sc) != USBD_NORMAL_COMPLETION) {
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		splx(s);
 		return;
 	}
@@ -186,6 +187,7 @@ ohci_pci_attach_deferred(struct device *self)
 		printf("%s: init failed, error=%d\n",
 		    sc->sc.sc_bus.bdev.dv_xname, r);
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		splx(s);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.29 2010/06/29 22:14:57 mlarkin Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.30 2010/10/20 20:34:19 mk Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -219,6 +219,7 @@ uhci_pci_attach_deferred(struct device *self)
 
 unmap_ret:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 	splx(s);
 }
 
