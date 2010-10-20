@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.11 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.12 2010/10/20 18:20:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -77,6 +77,11 @@ cmd_list_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		if (!(bd->key & KEYC_PREFIX)) {
 			used = strlcat(tmp, "(no prefix) ", sizeof tmp);
+			if (used >= sizeof tmp)
+				continue;
+		}
+		if (bd->can_repeat) {
+			used = strlcat(tmp, "(repeat) ", sizeof tmp);
 			if (used >= sizeof tmp)
 				continue;
 		}
