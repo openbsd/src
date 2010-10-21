@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.24 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: printf.1,v 1.25 2010/10/21 13:20:51 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: October 21 2010 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -349,9 +349,7 @@ In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
 .Sh EXIT STATUS
-The
-.Nm
-utility exits 0 on success or 1 on failure.
+.Ex -std printf
 .Sh EXAMPLES
 Convert a hexadecimal value to decimal and print it out:
 .Pp

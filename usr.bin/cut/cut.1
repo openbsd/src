@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cut.1,v 1.17 2010/09/03 11:09:28 jmc Exp $
+.\"	$OpenBSD: cut.1,v 1.18 2010/10/21 13:20:51 jmc Exp $
 .\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: October 21 2010 $
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -113,9 +113,7 @@ Suppresses lines with no field delimiter characters.
 Unless specified, lines with no delimiters are passed through unmodified.
 .El
 .Sh EXIT STATUS
-The
-.Nm
-utility exits 0 on success or 1 if an error occurred.
+.Ex -std cut
 .Sh EXAMPLES
 Extract login names and shells from the system
 .Xr passwd 5

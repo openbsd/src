@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.58 2010/09/19 21:30:04 jmc Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.59 2010/10/21 13:20:51 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: October 21 2010 $
 .Dt M4 1
 .Os
 .Sh NAME
@@ -433,6 +433,12 @@ Returns the current file's line number.
 .It Ic __file__
 Returns the current file's name.
 .El
+.Sh EXIT STATUS
+.Ex -std m4
+.Pp
+But note that the
+.Ic m4exit
+macro can modify the exit status.
 .Sh STANDARDS
 The
 .Nm
