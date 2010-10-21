@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.59 2010/05/07 07:15:50 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.60 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1042,6 +1042,10 @@ mix_setmaster(struct aproc *p)
 	 * uses channels that have no intersection, they are 
 	 * counted only once because they don't need to 
 	 * share their volume
+	 *
+	 * XXX: this is wrong, this is not optimal if we have two
+	 *      buckets of N and N' clients, in which case we should
+	 *	get 1/N and 1/N' respectively
 	 */
 	n = 0;
 	LIST_FOREACH(i, &p->ins, ient) {
@@ -1081,41 +1085,6 @@ mix_clear(struct aproc *p)
 
 	p->u.mix.lat = 0;
 	obuf->w.mix.todo = 0;
-}
-
-void
-mix_prime(struct aproc *p)
-{
-	struct abuf *obuf = LIST_FIRST(&p->outs);
-	unsigned todo, count;
-
-	for (;;) {
-		if (!ABUF_WOK(obuf))
-			break;
-		todo = p->u.mix.maxlat - p->u.mix.lat;
-		mix_bzero(obuf, todo);
-		count = obuf->w.mix.todo;
-		if (count > todo)
-			count = todo;
-		if (count == 0)
-			break;
-		obuf->w.mix.todo -= count;
-		p->u.mix.lat += count;
-		abuf_wcommit(obuf, count);
-		if (APROC_OK(p->u.mix.mon))
-			mon_snoop(p->u.mix.mon, obuf, 0, count);
-		abuf_flush(obuf);
-	}
-#ifdef DEBUG
-	if (debug_level >= 3) {
-		aproc_dbg(p);
-		dbg_puts(": prime: lat/maxlat=");
-		dbg_puti(p->u.mix.lat);
-		dbg_puts("/");
-		dbg_puti(p->u.mix.maxlat);
-		dbg_puts("\n");
-	}
-#endif
 }
 
 /*

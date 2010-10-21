@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.22 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.23 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,11 +18,6 @@
 #define ABUF_H
 
 #include <sys/queue.h>
-
-#define XRUN_IGNORE	0	/* on xrun silently insert/discard samples */
-#define XRUN_SYNC	1	/* catchup to sync to the mix/sub */
-#define XRUN_ERROR	2	/* xruns are errors, eof/hup buffer */
-#define MIDI_MSGMAX	16	/* max size of MIDI messaage */
 
 struct aproc;
 struct aparams;
@@ -62,6 +57,7 @@ struct abuf {
 			unsigned used;	/* bytes used from ``msg'' */
 			unsigned idx;	/* actual MIDI message size */
 			unsigned len;	/* MIDI message length */
+#define MIDI_MSGMAX	16		/* max size of MIDI messaage */
 			unsigned char msg[MIDI_MSGMAX];
 		} midi;
 	} r;
@@ -75,7 +71,7 @@ struct abuf {
 		} mix;
 		struct {
 			unsigned done;	/* frames copied */
-			unsigned xrun;	/* overrun policy */
+			unsigned xrun;	/* overrun policy, one of XRUN_XXX */
 			int silence;	/* silence to add on next write */
 		} sub;
 	} w;

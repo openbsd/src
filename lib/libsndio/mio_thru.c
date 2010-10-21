@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_thru.c,v 1.10 2010/07/21 23:00:16 ratchov Exp $	*/
+/*	$OpenBSD: mio_thru.c,v 1.11 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -119,11 +119,7 @@ thru_open(const char *str, char *sock, unsigned mode, int nbio)
 	AMSG_INIT(&msg);
 	msg.cmd = AMSG_HELLO;
 	msg.u.hello.version = AMSG_VERSION;
-	msg.u.hello.proto = 0;
-	if (mode & MIO_IN)
-		msg.u.hello.proto |= AMSG_MIDIIN;
-	if (mode & MIO_OUT)
-		msg.u.hello.proto |= AMSG_MIDIOUT;
+	msg.u.hello.mode = mode;
 	strlcpy(msg.u.hello.opt, opt, sizeof(msg.u.hello.opt));
 	strlcpy(msg.u.hello.who, __progname, sizeof(msg.u.hello.who));
 	n = write(s, &msg, sizeof(struct amsg));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.50 2010/06/05 16:00:52 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.51 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,7 +57,9 @@ struct fileops sock_ops = {
 void
 sock_dbg(struct sock *f)
 {
-	static char *pstates[] = { "hel", "ini", "sta", "rdy", "run", "mid" };
+	static char *pstates[] = {
+		"hel", "ini", "sta", "rdy", "run", "stp", "mid"
+	};
 	static char *rstates[] = { "rdat", "rmsg", "rret" };
 	static char *wstates[] = { "widl", "wmsg", "wdat" };
 	struct aproc *midi;
@@ -180,7 +182,7 @@ rsock_opos(struct aproc *p, struct abuf *obuf, int delta)
 {
 	struct sock *f = (struct sock *)p->u.io.file;
 
-	if (f->mode & AMSG_RECMASK)
+	if (f->mode & MODE_RECMASK)
 		return;
 
 	f->delta += delta;
@@ -279,7 +281,7 @@ wsock_ipos(struct aproc *p, struct abuf *obuf, int delta)
 {
 	struct sock *f = (struct sock *)p->u.io.file;
 
-	if (!(f->mode & AMSG_RECMASK))
+	if (!(f->mode & MODE_RECMASK))
 		return;
 
 	f->delta += delta;
@@ -351,7 +353,7 @@ sock_new(struct fileops *ops, int fd)
 	f->mode = 0;
 	f->opt = NULL;
 	f->dev = NULL;
-	f->xrun = AMSG_IGNORE;
+	f->xrun = XRUN_IGNORE;
 	f->delta = 0;
 	f->tickpending = 0;
 	f->startpos = 0;
@@ -413,14 +415,14 @@ sock_allocbuf(struct sock *f)
 
 	bufsz = f->bufsz + f->dev->bufsz / f->dev->round * f->round;
 	f->pstate = SOCK_START;
-	if (f->mode & AMSG_PLAY) {
+	if (f->mode & MODE_PLAY) {
 		rbuf = abuf_new(bufsz, &f->rpar);
 		aproc_setout(f->pipe.file.rproc, rbuf);
 		if (!ABUF_WOK(rbuf) || (f->pipe.file.state & FILE_EOF))
 			f->pstate = SOCK_READY;
 		f->rmax = bufsz * aparams_bpf(&f->rpar);
 	}
-	if (f->mode & AMSG_RECMASK) {
+	if (f->mode & MODE_RECMASK) {
 		wbuf = abuf_new(bufsz, &f->wpar);
 		aproc_setin(f->pipe.file.wproc, wbuf);
 		f->walign = f->round;
@@ -442,7 +444,7 @@ sock_allocbuf(struct sock *f)
 		dbg_puts("\n");
 	}
 #endif
-	if (f->mode & AMSG_PLAY) {
+	if (f->mode & MODE_PLAY) {
 		f->pstate = SOCK_START;
 	} else {
 		f->pstate = SOCK_READY;
@@ -490,9 +492,7 @@ sock_startreq(void *arg)
 	}
 #endif
 	(void)sock_attach(f, 0);
-}
-
-/*
+}/*
  * Callback invoked by MMC stop
  */
 void
@@ -542,7 +542,7 @@ sock_quitreq(void *arg)
 }
 
 /*
- * Attach play and/or record buffers to dev->mix and/or dev->sub.
+ * Attach play and/or record buffers to the device
  */
 void
 sock_attach(struct sock *f, int force)
@@ -591,7 +591,7 @@ sock_attach(struct sock *f, int force)
 	    wbuf, &f->wpar, 
 	    f->opt->join ? f->opt->wpar.cmax - f->opt->wpar.cmin + 1 : 0,
 	    f->xrun, f->opt->maxweight);
-	if (f->mode & AMSG_PLAY)
+	if (f->mode & MODE_PLAY)
 		dev_setvol(f->dev, rbuf, MIDI_TO_ADATA(f->vol));
 
 	/*
@@ -835,7 +835,7 @@ sock_setpar(struct sock *f)
 		f->rpar.le = f->wpar.le = p->le ? 1 : 0;
 	if (AMSG_ISSET(p->msb))
 		f->rpar.msb = f->wpar.msb = p->msb ? 1 : 0;
-	if (AMSG_ISSET(p->rchan) && (f->mode & AMSG_RECMASK)) {
+	if (AMSG_ISSET(p->rchan) && (f->mode & MODE_RECMASK)) {
 		if (p->rchan < 1)
 			p->rchan = 1;
 		if (p->rchan > NCHAN_MAX)
@@ -855,7 +855,7 @@ sock_setpar(struct sock *f)
 		}
 #endif
 	}
-	if (AMSG_ISSET(p->pchan) && (f->mode & AMSG_PLAY)) {
+	if (AMSG_ISSET(p->pchan) && (f->mode & MODE_PLAY)) {
 		if (p->pchan < 1)
 			p->pchan = 1;
 		if (p->pchan > NCHAN_MAX)
@@ -905,9 +905,9 @@ sock_setpar(struct sock *f)
 #endif
 	}
 	if (AMSG_ISSET(p->xrun)) {
-		if (p->xrun != AMSG_IGNORE &&
-		    p->xrun != AMSG_SYNC &&
-		    p->xrun != AMSG_ERROR) {
+		if (p->xrun != XRUN_IGNORE &&
+		    p->xrun != XRUN_SYNC &&
+		    p->xrun != XRUN_ERROR) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
 				sock_dbg(f);
@@ -919,8 +919,8 @@ sock_setpar(struct sock *f)
 			return 0;
 		}
 		f->xrun = p->xrun;
-		if (f->opt->mmc && f->xrun == AMSG_IGNORE)
-			f->xrun = AMSG_SYNC;
+		if (f->opt->mmc && f->xrun == XRUN_IGNORE)
+			f->xrun = XRUN_SYNC;
 #ifdef DEBUG
 		if (debug_level >= 3) {
 			sock_dbg(f);
@@ -931,7 +931,7 @@ sock_setpar(struct sock *f)
 #endif
 	}
 	if (AMSG_ISSET(p->appbufsz)) {
-		rate = (f->mode & AMSG_PLAY) ? f->rpar.rate : f->wpar.rate;
+		rate = (f->mode & MODE_PLAY) ? f->rpar.rate : f->wpar.rate;
 		min = 1;
 		max = 1 + rate / f->dev->round;
 		min *= f->round;
@@ -961,11 +961,11 @@ sock_setpar(struct sock *f)
 			dbg_puts(f->pipe.file.name);
 		dbg_puts(": buffer size = ");
 		dbg_putu(f->bufsz);
-		if (f->mode & AMSG_PLAY) {
+		if (f->mode & MODE_PLAY) {
 			dbg_puts(", play = ");
 			aparams_dbg(&f->rpar);
 		}
-		if (f->mode & AMSG_RECMASK) {
+		if (f->mode & MODE_RECMASK) {
 			dbg_puts(", rec:");
 			aparams_dbg(&f->wpar);
 		}
@@ -979,18 +979,19 @@ sock_setpar(struct sock *f)
  * allocate buffers, so client can start filling write-end.
  */
 void
-sock_midiattach(struct sock *f, unsigned mode)
+sock_midiattach(struct sock *f)
 {
 	struct abuf *rbuf = NULL, *wbuf = NULL;
 	
-	if (mode & AMSG_MIDIOUT) {
+	if (f->mode & MODE_MIDIOUT) {
 		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(f->pipe.file.rproc, rbuf);
 	}
-	if (mode & AMSG_MIDIIN) {
+	if (f->mode & MODE_MIDIIN) {
 		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(f->pipe.file.wproc, wbuf);
 	}
+	f->pstate = SOCK_MIDI;
 	dev_midiattach(f->dev, rbuf, wbuf);
 }
 
@@ -1004,8 +1005,8 @@ sock_hello(struct sock *f)
 		sock_dbg(f);
 		dbg_puts(": hello from <");
 		dbg_puts(p->who);
-		dbg_puts(">, proto = ");
-		dbg_putx(p->proto);
+		dbg_puts(">, mode = ");
+		dbg_putx(p->mode);
 		dbg_puts(", ver ");
 		dbg_putu(p->version);
 		dbg_puts("\n");
@@ -1017,7 +1018,26 @@ sock_hello(struct sock *f)
 			sock_dbg(f);
 			dbg_puts(": ");
 			dbg_putu(p->version);
-			dbg_puts(": bad version\n");
+			dbg_puts(": unsupported protocol version\n");
+		}
+#endif
+		return 0;
+	}
+	switch (p->mode) {
+	case MODE_MIDIIN:
+	case MODE_MIDIOUT:
+	case MODE_MIDIOUT | MODE_MIDIIN:
+	case MODE_REC:
+	case MODE_PLAY:
+	case MODE_PLAY | MODE_REC:
+		break;
+	default:
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			sock_dbg(f);
+			dbg_puts(": ");
+			dbg_putx(p->mode);
+			dbg_puts(": unsupported mode\n");
 		}
 #endif
 		return 0;
@@ -1027,85 +1047,45 @@ sock_hello(struct sock *f)
 		return 0;
 	if (!dev_ref(f->opt->dev))
 		return 0;
-	f->dev = f->opt->dev;
-
-	if (APROC_OK(f->dev->midi) && (p->proto & (AMSG_MIDIIN | AMSG_MIDIOUT))) {
-		if (p->proto & ~(AMSG_MIDIIN | AMSG_MIDIOUT)) {
-#ifdef DEBUG
-			if (debug_level >= 1) {
-				sock_dbg(f);
-				dbg_puts(": ");
-				dbg_putx(p->proto);
-				dbg_puts(": bad hello protocol\n");
-			}
-#endif
-			return 0;
-		}
-		f->mode = p->proto;
-		f->pstate = SOCK_MIDI;
-		sock_midiattach(f, p->proto);
-		return 1;
+	if ((p->mode & MODE_REC) && (f->opt->mode & MODE_MON)) {
+		p->mode &= ~MODE_REC;
+		p->mode |= MODE_MON;
 	}
-	if (f->opt->mode & MODE_RECMASK)
-		f->wpar = f->opt->wpar;
-	if (f->opt->mode & MODE_PLAY)
-		f->rpar = f->opt->rpar;
-	if (f->opt->mmc)
-		f->xrun = AMSG_SYNC;
-	f->bufsz = f->dev->bufsz;
-	f->round = f->dev->round;
-	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0 ||
-	    (p->proto &  (AMSG_PLAY | AMSG_REC)) == 0) {
+	f->dev = f->opt->dev;
+	f->mode = (p->mode & f->opt->mode) & f->dev->mode;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		sock_dbg(f);
+		dbg_puts(": using mode = ");
+		dbg_putx(f->mode);
+		dbg_puts("\n");
+	}
+#endif
+	if (f->mode != p->mode) {
 #ifdef DEBUG
 		if (debug_level >= 1) {
 			sock_dbg(f);
-			dbg_puts(": ");
-			dbg_putx(p->proto);
-			dbg_puts(": unsupported hello protocol\n");
+			dbg_puts(": requested mode not available\n");
 		}
 #endif
 		return 0;
 	}
-	f->mode = 0;
-	if (p->proto & AMSG_PLAY) {
-		if (!APROC_OK(f->dev->mix) || !(f->opt->mode & MODE_PLAY)) {
-#ifdef DEBUG
-			if (debug_level >= 1) {
-				sock_dbg(f);
-				dbg_puts(": playback not available\n");
-			}
-#endif
-			return 0;
-		}
-		f->mode |= AMSG_PLAY;
+	if (f->mode & (MODE_MIDIOUT | MODE_MIDIIN)) {
+		sock_midiattach(f);
+		return 1;
 	}
-	if (p->proto & AMSG_REC) {
-		if (!(APROC_OK(f->dev->sub)    && (f->opt->mode & MODE_REC)) &&
-		    !(APROC_OK(f->dev->submon) && (f->opt->mode & MODE_MON))) {
-#ifdef DEBUG
-			if (debug_level >= 1) {
-				sock_dbg(f);
-				dbg_puts(": recording not available\n");
-			}
-#endif
-			return 0;
-		}
-		f->mode |= (f->opt->mode & MODE_MON) ? AMSG_MON : AMSG_REC;
-	}
-	if (APROC_OK(f->dev->midi)) {
-		f->slot = ctl_slotnew(f->dev->midi,
-		     p->who, &ctl_sockops, f,
-		     f->opt->mmc);
-		if (f->slot < 0) {
-#ifdef DEBUG
-			if (debug_level >= 1) {
-				sock_dbg(f);
-				dbg_puts(": out of mixer slots\n");
-			}
-#endif
-			return 0;
-		}
-	}
+	if (f->mode & MODE_PLAY)
+		f->rpar = f->opt->rpar;
+	if (f->mode & MODE_RECMASK)
+		f->wpar = f->opt->wpar;
+	f->xrun = (f->opt->mmc) ? XRUN_SYNC : XRUN_IGNORE;
+	f->bufsz = f->dev->bufsz;
+	f->round = f->dev->round;
+	f->slot = ctl_slotnew(f->dev->midi, p->who,
+	    &ctl_sockops, f,
+	    f->opt->mmc);
+	if (f->slot < 0)
+		return 0;
 	f->pstate = SOCK_INIT;
 	return 1;
 }
@@ -1139,7 +1119,7 @@ sock_execmsg(struct sock *f)
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		if (!(f->mode & AMSG_PLAY)) {
+		if (!(f->mode & MODE_PLAY)) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
 				sock_dbg(f);
@@ -1295,7 +1275,7 @@ sock_execmsg(struct sock *f)
 		AMSG_INIT(m);
 		m->cmd = AMSG_GETPAR;
 		m->u.par.legacy_mode = f->mode;
-		if (f->mode & AMSG_PLAY) {
+		if (f->mode & MODE_PLAY) {
 			m->u.par.bits = f->rpar.bits;
 			m->u.par.bps = f->rpar.bps;
 			m->u.par.sig = f->rpar.sig;
@@ -1304,7 +1284,7 @@ sock_execmsg(struct sock *f)
 			m->u.par.rate = f->rpar.rate;
 			m->u.par.pchan = f->rpar.cmax - f->rpar.cmin + 1;
 		}
-		if (f->mode & AMSG_RECMASK) {
+		if (f->mode & MODE_RECMASK) {
 			m->u.par.bits = f->wpar.bits;
 			m->u.par.bps = f->wpar.bps;
 			m->u.par.sig = f->wpar.sig;
@@ -1446,7 +1426,7 @@ sock_execmsg(struct sock *f)
 			dbg_puts(": RRET done\n");
 		}
 #endif
-		if (f->pstate == SOCK_MIDI && (f->mode & AMSG_MIDIOUT)) {
+		if (f->pstate == SOCK_MIDI && (f->mode & MODE_MIDIOUT)) {
 			f->rstate = SOCK_RDATA;
 			f->rtodo = 0;
 		} else {
@@ -1660,7 +1640,7 @@ sock_return(struct sock *f)
 			dbg_puts(": sent RRET message\n");
 		}
 #endif
-		if (f->pstate == SOCK_MIDI && (f->mode & AMSG_MIDIOUT)) {
+		if (f->pstate == SOCK_MIDI && (f->mode & MODE_MIDIOUT)) {
 			f->rstate = SOCK_RDATA;
 			f->rtodo = 0;
 		} else {

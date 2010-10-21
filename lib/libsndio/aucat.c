@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.41 2010/06/05 16:00:52 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.42 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -261,11 +261,7 @@ sio_open_aucat(const char *str, unsigned mode, int nbio)
 	AMSG_INIT(&hdl->wmsg);
 	hdl->wmsg.cmd = AMSG_HELLO;
 	hdl->wmsg.u.hello.version = AMSG_VERSION;
-	hdl->wmsg.u.hello.proto = 0;
-	if (mode & SIO_PLAY)
-		hdl->wmsg.u.hello.proto |= AMSG_PLAY;
-	if (mode & SIO_REC)
-		hdl->wmsg.u.hello.proto |= AMSG_REC;
+	hdl->wmsg.u.hello.mode = mode;
 	strlcpy(hdl->wmsg.u.hello.who, __progname,
 	    sizeof(hdl->wmsg.u.hello.who));
 	strlcpy(hdl->wmsg.u.hello.opt, opt,

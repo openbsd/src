@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.17 2010/06/05 12:45:48 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.18 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -50,7 +50,7 @@ struct sock {
 #define SOCK_STOP	5		/* draining rec buffers */
 #define SOCK_MIDI	6		/* raw byte stream (midi) */
 	unsigned pstate;		/* one of the above */
-	unsigned mode;			/* a set of AMSG_PLAY, AMSG_REC */
+	unsigned mode;			/* bitmask of MODE_XXX */
 	struct aparams rpar;		/* read (ie play) parameters */
 	struct aparams wpar;		/* write (ie rec) parameters */
 	int delta;			/* pos. change to send */

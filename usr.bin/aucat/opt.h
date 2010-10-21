@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.8 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.9 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,16 +31,7 @@ struct opt {
 	struct aparams rpar;	/* template for clients read params */
 	int mmc;		/* true if MMC control enabled */
 	int join;		/* true if join/expand enabled */
-#define MODE_PLAY	0x1	/* allowed to play */
-#define MODE_REC	0x2	/* allowed to rec */
-#define MODE_MIDIIN	0x4	/* allowed to read midi */
-#define MODE_MIDIOUT	0x8	/* allowed to write midi */
-#define MODE_MON	0x10	/* allowed to monitor */
-#define MODE_LOOP	0x20	/* deviceless mode */
-#define MODE_RECMASK	(MODE_REC | MODE_MON)
-#define MODE_AUDIOMASK	(MODE_REC | MODE_MON | MODE_PLAY)
-#define MODE_MIDIMASK	(MODE_MIDIIN | MODE_MIDIOUT)
-	unsigned mode;		/* bitmap of above */
+	unsigned mode;		/* bitmap of MODE_XXX */
 	struct dev *dev;	/* device to which we're attached */
 };
 

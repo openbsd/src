@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.63 2010/07/31 08:46:56 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.64 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -166,7 +166,7 @@ dev_new_loop(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	d->rate = rate;
 	d->reqround = (bufsz + 1) / 2;
 	d->reqbufsz = d->reqround * 2;
-	d->reqmode = MODE_PLAY | MODE_REC | MODE_LOOP;
+	d->reqmode = MODE_PLAY | MODE_REC | MODE_LOOP | MODE_MIDIMASK;
 	d->pstate = DEV_CLOSED;
 	d->hold = 0;
 	d->path = "loop";
@@ -188,7 +188,7 @@ dev_new_thru(void)
 		perror("malloc");
 		exit(1);
 	}
-	d->reqmode = 0;
+	d->reqmode = MODE_MIDIMASK;
 	d->pstate = DEV_CLOSED;
 	d->hold = 0;
 	d->path = "midithru";
@@ -289,8 +289,11 @@ dev_open(struct dev *d)
 	 * Create the midi control end, or a simple thru box
 	 * if there's no device
 	 */
-	d->midi = (d->mode == 0) ? thru_new("thru") : ctl_new("ctl", d);
-	d->midi->refs++;
+	if (d->mode & MODE_MIDIMASK) {
+		d->midi = (d->mode & (MODE_PLAY | MODE_RECMASK)) ?
+		    ctl_new("ctl", d) : thru_new("thru");
+		d->midi->refs++;
+	}
 
 	/*
 	 * Create mixer, demuxer and monitor

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.17 2010/06/05 12:45:48 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.18 2010/10/21 18:57:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,6 +18,7 @@
 #define AMSG_H
 
 #include <stdint.h>
+#include "conf.h"
 
 /*
  * WARNING: since the protocol may be simultaneously used by static
@@ -46,9 +47,6 @@ struct amsg {
 	union {
 		struct amsg_par {
 			uint8_t legacy_mode;	/* compat for old libs */
-#define AMSG_IGNORE	0			/* loose sync */
-#define AMSG_SYNC	1			/* resync after xrun */
-#define AMSG_ERROR	2			/* kill the stream */
 			uint8_t xrun;		/* one of above */
 			uint8_t bps;		/* bytes per sample */
 			uint8_t bits;		/* actually used bits */
@@ -84,13 +82,7 @@ struct amsg {
 			uint32_t ctl;
 		} vol;
 		struct amsg_hello {
-#define AMSG_PLAY	0x1			/* audio playback */
-#define AMSG_REC	0x2			/* audio recording */
-#define AMSG_MIDIIN	0x4			/* MIDI thru input */
-#define AMSG_MIDIOUT	0x8			/* MIDI thru output */
-#define AMSG_MON	0x10			/* audio monitoring */
-#define AMSG_RECMASK	(AMSG_REC | AMSG_MON)	/* can record ? */
-			uint16_t proto;		/* protocol type */
+			uint16_t mode;		/* bitmap of MODE_XXX */
 #define AMSG_VERSION	3
 			uint8_t version;	/* protocol version */
 			uint8_t reserved1[5];	/* for future use */
