@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.15 2010/06/30 22:15:02 claudio Exp $ */
+/*	$OpenBSD: lde.h,v 1.16 2010/10/21 08:24:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -111,6 +111,7 @@ void		lde_send_notification(u_int32_t, u_int32_t, u_int32_t,
 void		lde_nbr_del(struct lde_nbr *);
 void		lde_nbr_do_mappings(struct rt_node *);
 struct lde_map *lde_map_add(struct lde_nbr *, struct rt_node *, int);
+void		lde_map_del(struct lde_nbr *, struct lde_map *, int);
 struct lde_nbr *lde_find_address(struct in_addr);
 
 
@@ -127,7 +128,7 @@ struct fec	*fec_find(struct fec_tree *, struct fec *);
 void		 fec_clear(struct fec_tree *, void (*)(void *));
 
 void		 rt_dump(pid_t);
-void		 rt_snap(u_int32_t);
+void		 rt_snap(struct lde_nbr *);
 void		 rt_clear(void);
 
 void		 lde_kernel_insert(struct kroute *);
@@ -135,6 +136,7 @@ void		 lde_kernel_remove(struct kroute *);
 void		 lde_check_mapping(struct map *, struct lde_nbr *);
 void		 lde_check_request(struct map *, struct lde_nbr *);
 void		 lde_check_release(struct map *, struct lde_nbr *);
+void		 lde_check_withdraw(struct map *, struct lde_nbr *);
 void		 lde_label_list_free(struct lde_nbr *);
 
 #endif	/* _LDE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.20 2010/06/30 22:15:02 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.21 2010/10/21 08:24:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -219,8 +219,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_LABEL_MAPPING_FULL:
-			rt_snap(imsg.hdr.peerid);
+			nbr = lde_nbr_find(imsg.hdr.peerid);
+			if (nbr == NULL) {
+				log_debug("lde_dispatch_imsg: cannot find "
+				    "lde neighbor");
+				return;
+			}
 
+			rt_snap(nbr);
 			lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END,
 			    imsg.hdr.peerid, 0, NULL, 0);
 			break;
@@ -249,6 +255,9 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				break;
 			case IMSG_LABEL_RELEASE:
 				lde_check_release(&map, nbr);
+				break;
+			case IMSG_LABEL_WITHDRAW:
+				lde_check_withdraw(&map, nbr);
 				break;
 			default:
 				log_warnx("type %d not yet handled. nbr %s",
@@ -603,9 +612,10 @@ lde_nbr_do_mappings(struct rt_node *rn)
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
 		/* Did we already send a mapping to this peer? */
 		lm = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
-		if (lm && lm->label == map.label)
+		if (lm && lm->label == map.label) {
 			/* same mapping already sent, skip */
 			continue;
+		}
 
 		/* Is this from a pending request? */
 		lr = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
@@ -617,9 +627,9 @@ lde_nbr_do_mappings(struct rt_node *rn)
 			/* ordered mode needs the downstream path to be
 			 * ready before we can send the mapping upstream */
 			LIST_FOREACH(rl, &rn->lsp, entry) {
-				/* no remote-label, skip */
-				if (rl->remote_label == NO_LABEL)
-					continue;
+				if (rl->remote_label != NO_LABEL)
+					/* at least on LSP exists */
+					break;
 			}
 			if (rl == NULL)
 				continue;
@@ -632,19 +642,8 @@ lde_nbr_do_mappings(struct rt_node *rn)
 			fec_remove(&ln->sent_req, &lr->fec);
 		}
 
-		if (lm == NULL) {
-			lm = calloc(1, sizeof(*lm));
-			if (lm == NULL)
-				fatal("lde_nbr_do_mappings");
-			lm->fec = rn->fec;
-			lm->nexthop = ln;
-
-			LIST_INSERT_HEAD(&rn->upstream, lm, entry);
-			if (fec_insert(&ln->sent_map, &lm->fec))
-				log_warnx("failed to add %s/%u to sent map",
-				    inet_ntoa(lm->fec.prefix),
-				    lm->fec.prefixlen);
-		}
+		if (lm == NULL)
+			lm = lde_map_add(ln, rn, 1);
 		lm->label = map.label;
 
 		lde_send_labelmapping(ln->peerid, &map);
@@ -676,6 +675,17 @@ lde_map_add(struct lde_nbr *ln, struct rt_node *rn, int sent)
 	}
 
 	return (me);
+}
+
+void
+lde_map_del(struct lde_nbr *ln, struct lde_map *me, int sent)
+{
+	if (sent)
+		fec_remove(&ln->sent_map, &me->fec);
+	else
+		fec_remove(&ln->recv_map, &me->fec);
+	
+	lde_map_free(me);
 }
 
 void
