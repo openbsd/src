@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.61 2010/10/21 19:10:52 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.62 2010/10/21 21:42:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -911,7 +911,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 void
 mix_eof(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->outs);
+	struct abuf *i, *obuf = LIST_FIRST(&p->outs);
 	unsigned odone;
 
 	mix_setmaster(p);
@@ -927,10 +927,13 @@ mix_eof(struct aproc *p, struct abuf *ibuf)
 		 * Find a blocked input.
 		 */
 		odone = obuf->len;
-		for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
-			inext = LIST_NEXT(i, ient);
+		LIST_FOREACH(i, &p->ins, ient) {
+			/*
+			 * abuf_fill() may trigger mix_eof(), do the job
+			 * and possibly reorder the list
+			 */
 			if (!abuf_fill(i))
-				continue;
+				return;
 			if (MIX_ROK(i) && i->r.mix.done < obuf->w.mix.todo) {
 				abuf_run(i);
 				return;
@@ -1352,7 +1355,7 @@ sub_eof(struct aproc *p, struct abuf *ibuf)
 void
 sub_hup(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *i, *inext, *ibuf = LIST_FIRST(&p->ins);
+	struct abuf *i, *ibuf = LIST_FIRST(&p->ins);
 	unsigned idone;
 
 	if (!aproc_inuse(p)) {
@@ -1366,10 +1369,13 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 		 * Find a blocked output.
 		 */
 		idone = ibuf->len;
-		for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
-			inext = LIST_NEXT(i, oent);
+		LIST_FOREACH(i, &p->outs, oent) {
+			/*
+			 * abuf_flush() may trigger sub_hup(), do the job
+			 * and possibly reorder the list
+			 */
 			if (!abuf_flush(i))
-				continue;
+				return;
 			if (SUB_WOK(i) && i->w.sub.done < ibuf->used) {
 				abuf_run(i);
 				return;
