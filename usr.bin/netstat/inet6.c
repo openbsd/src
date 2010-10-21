@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.40 2009/11/05 20:50:14 michele Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.41 2010/10/21 10:51:05 bluhm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,10 +43,8 @@
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/in_systm.h>
-#ifndef TCP6
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/pim6_var.h>
@@ -1169,60 +1167,3 @@ inet6name(struct in6_addr *in6p)
 	}
 	return (line);
 }
-
-#ifdef TCP6
-/*
- * Dump the contents of a TCP6 PCB.
- */
-void
-tcp6_dump(u_long pcbaddr)
-{
-	struct tcp6cb tcp6cb;
-	int i;
-
-	kread(pcbaddr, &tcp6cb, sizeof(tcp6cb));
-
-	printf("TCP Protocol Control Block at 0x%08lx:\n\n", pcbaddr);
-
-	printf("Timers:\n");
-	for (i = 0; i < TCP6T_NTIMERS; i++)
-		printf("\t%s: %u", tcp6timers[i], tcp6cb.t_timer[i]);
-	printf("\n\n");
-
-	if (tcp6cb.t_state < 0 || tcp6cb.t_state >= TCP6_NSTATES)
-		printf("State: %d", tcp6cb.t_state);
-	else
-		printf("State: %s", tcp6states[tcp6cb.t_state]);
-	printf(", flags 0x%x, in6pcb 0x%lx\n\n", tcp6cb.t_flags,
-	    (u_long)tcp6cb.t_in6pcb);
-
-	printf("rxtshift %d, rxtcur %d, dupacks %d\n", tcp6cb.t_rxtshift,
-	    tcp6cb.t_rxtcur, tcp6cb.t_dupacks);
-	printf("peermaxseg %u, maxseg %u, force %d\n\n", tcp6cb.t_peermaxseg,
-	    tcp6cb.t_maxseg, tcp6cb.t_force);
-
-	printf("snd_una %u, snd_nxt %u, snd_up %u\n",
-	    tcp6cb.snd_una, tcp6cb.snd_nxt, tcp6cb.snd_up);
-	printf("snd_wl1 %u, snd_wl2 %u, iss %u, snd_wnd %lu\n\n",
-	    tcp6cb.snd_wl1, tcp6cb.snd_wl2, tcp6cb.iss, tcp6cb.snd_wnd);
-
-	printf("rcv_wnd %lu, rcv_nxt %u, rcv_up %u, irs %u\n\n",
-	    tcp6cb.rcv_wnd, tcp6cb.rcv_nxt, tcp6cb.rcv_up, tcp6cb.irs);
-
-	printf("rcv_adv %u, snd_max %u, snd_cwnd %lu, snd_ssthresh %lu\n",
-	    tcp6cb.rcv_adv, tcp6cb.snd_max, tcp6cb.snd_cwnd, tcp6cb.snd_ssthresh);
-
-	printf("idle %d, rtt %d, rtseq %u, srtt %d, rttvar %d, rttmin %d, "
-	    "max_sndwnd %lu\n\n", tcp6cb.t_idle, tcp6cb.t_rtt, tcp6cb.t_rtseq,
-	    tcp6cb.t_srtt, tcp6cb.t_rttvar, tcp6cb.t_rttmin, tcp6cb.max_sndwnd);
-
-	printf("oobflags %d, iobc %d, softerror %d\n\n", tcp6cb.t_oobflags,
-	    tcp6cb.t_iobc, tcp6cb.t_softerror);
-
-	printf("snd_scale %d, rcv_scale %d, req_r_scale %d, req_s_scale %d\n",
-	    tcp6cb.snd_scale, tcp6cb.rcv_scale, tcp6cb.request_r_scale,
-	    tcp6cb.requested_s_scale);
-	printf("ts_recent %u, ts_regent_age %d, last_ack_sent %u\n",
-	    tcp6cb.ts_recent, tcp6cb.ts_recent_age, tcp6cb.last_ack_sent);
-}
-#endif
