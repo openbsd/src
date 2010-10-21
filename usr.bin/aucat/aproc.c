@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.60 2010/10/21 18:57:42 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.61 2010/10/21 19:10:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -970,9 +970,9 @@ mix_newout(struct aproc *p, struct abuf *obuf)
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		aproc_dbg(p);
-		dbg_puts(": newin, will use ");
+		dbg_puts(": newout, will use ");
 		dbg_putu(obuf->len);
-		dbg_puts("\n");
+		dbg_puts(" fr\n");
 	}
 #endif
 	obuf->w.mix.todo = 0;
@@ -1494,7 +1494,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		aproc_dbg(p);
-		dbg_puts(": resamp starting diff = ");
+		dbg_puts(": starting diff = ");
 		dbg_puti(diff);
 		dbg_puts(", ifr = ");
 		dbg_putu(ifr);
@@ -1552,7 +1552,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		aproc_dbg(p);
-		dbg_puts(": resamp done delta = ");
+		dbg_puts(": done delta = ");
 		dbg_puti(diff);
 		dbg_puts(", ifr = ");
 		dbg_putu(ifr);
@@ -2126,7 +2126,7 @@ join_new(char *name)
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		aproc_dbg(p);
-		dbg_puts("\n");
+		dbg_puts(": new\n");
 	}
 #endif
 	return p;
@@ -2177,7 +2177,7 @@ mon_snoop(struct aproc *p, struct abuf *ibuf, unsigned pos, unsigned todo)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		aproc_dbg(p);
-		dbg_puts(": snoop ");
+		dbg_puts(": snooping ");
 		dbg_putu(pos);
 		dbg_puts("..");
 		dbg_putu(todo);
