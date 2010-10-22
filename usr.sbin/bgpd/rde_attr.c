@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.85 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.86 2010/10/22 12:37:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -146,8 +146,11 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 	for (l = 0; l < asp->others_len; l++) {
 		if (asp->others[l] == NULL)
 			break;
-		if (type == asp->others[l]->type)
+		if (type == asp->others[l]->type) {
+			if (a->refcnt == 0)
+				attr_put(a);
 			return (-1);
+		}
 	}
 
 	/* add attribute to the table but first bump refcnt */
