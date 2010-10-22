@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: fold.c,v 1.13 2010/10/22 14:11:22 millert Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <err.h>
 #include <limits.h>
 
@@ -44,20 +45,21 @@
 
 static void fold(int);
 static int new_column_position(int, int);
+static __dead void usage(void);
 int count_bytes = 0;
 int split_words = 0;
 
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	int width;
-	char *p;
-	char *w;
+	int ch, lastch, newarg, prevoptind, width;
 	const char *errstr;
 
-	width = -1;
-	while ((ch = getopt(argc, argv, "0123456789bsw:")) != -1)
+	width = 0;
+	lastch = '\0';
+	prevoptind = 1;
+	newarg = 1;
+	while ((ch = getopt(argc, argv, "0123456789bsw:")) != -1) {
 		switch (ch) {
 		case 'b':
 			count_bytes = 1;
@@ -73,28 +75,27 @@ main(int argc, char *argv[])
 			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			if (width == -1) {
-				p = argv[optind - 1];
-				if (p[0] == '-' && p[1] == ch && !p[2])
-					w = ++p;
-				else
-					w = argv[optind] + 1;
-
-				width = strtonum(w, 1, INT_MAX, &errstr);
-				if (errstr != NULL)
-					errx(1, "illegal width value, %s: %s", 
-						errstr, optarg);
-			}
+			if (newarg)
+				width = 0;
+			else if (!isdigit(lastch))
+				usage();
+			if (width > INT_MAX / 10)
+				errx(1, "illegal width value, too large");
+			width = (width * 10) + (ch - '0');
+			if (width < 1)
+				errx(1, "illegal width value, too small");
 			break;
 		default:
-			(void)fprintf(stderr,
-			    "usage: fold [-bs] [-w width] [file ...]\n");
-			exit(1);
+			usage();
 		}
+		lastch = ch;
+		newarg = optind != prevoptind;
+		prevoptind = optind;
+	}
 	argv += optind;
 	argc -= optind;
 
-	if (width == -1)
+	if (width == 0)
 		width = DEFLINEWIDTH;
 
 	if (!*argv)
@@ -214,4 +215,11 @@ new_column_position(int col, int ch)
 	}
 
 	return col;
+}
+
+static __dead void
+usage(void)
+{
+	(void)fprintf(stderr, "usage: fold [-bs] [-w width] [file ...]\n");
+	exit(1);
 }
