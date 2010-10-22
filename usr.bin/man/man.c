@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.39 2010/03/19 21:04:25 schwarze Exp $	*/
+/*	$OpenBSD: man.c,v 1.40 2010/10/22 14:08:53 mikeb Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -550,19 +550,12 @@ next:				anyfound = 1;
 static void
 build_page(char *fmt, char **pathp)
 {
-	static int warned;
 	ENTRY *ep;
 	TAG *intmpp;
 	int fd, n;
 	char *p, *b;
 	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[MAXPATHLEN];
 	sigset_t osigs;
-
-	/* Let the user know this may take awhile. */
-	if (!warned) {
-		warned = 1;
-		warnx("Formatting manual page...");
-	}
 
        /*
         * Historically man chdir'd to the root of the man tree.
