@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.19 2010/10/12 17:23:21 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.20 2010/10/22 14:04:24 millert Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -306,15 +306,14 @@ next(char **argv)
 				return(0);
 			statok = 0;
 		}
+		if (iobuf != NULL)
+			setvbuf(stdin, iobuf, _IOFBF, iobufsiz);
 		if (skip)
 			doskip(statok ? *_argv : "stdin", statok);
 		if (*_argv)
 			++_argv;
-		if (!skip) {
-			if (iobuf != NULL)
-				setvbuf(stdin, iobuf, _IOFBF, iobufsiz);
+		if (!skip)
 			return(1);
-		}
 	}
 	/* NOTREACHED */
 }
