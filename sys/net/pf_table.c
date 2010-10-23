@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.86 2010/09/30 07:14:02 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.87 2010/10/23 15:38:18 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -213,9 +213,8 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 {
 	struct pfr_ktable	*kt;
 	struct pfr_kentryworkq	 workq;
-	int			 s;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
 		return (EINVAL);
 	kt = pfr_lookup_table(tbl);
@@ -226,11 +225,7 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 	pfr_enqueue_addrs(kt, &workq, ndel, 0);
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_remove_kentries(kt, &workq);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 		if (kt->pfrkt_cnt) {
 			DPFPRINTF(LOG_NOTICE,
 			    "pfr_clr_addrs: corruption detected (%d).",
@@ -249,11 +244,10 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 workq;
 	struct pfr_kentry	*p, *q;
 	struct pfr_addr		 ad;
-	int			 i, rv, s, xadd = 0;
+	int			 i, rv, xadd = 0;
 	long			 tzero = time_second;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY |
-	    PFR_FLAG_FEEDBACK);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
 		return (EINVAL);
 	kt = pfr_lookup_table(tbl);
@@ -302,11 +296,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	}
 	pfr_clean_node_mask(tmpkt, &workq);
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_insert_kentries(kt, &workq, tzero);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	} else
 		pfr_destroy_kentries(&workq);
 	if (nadd != NULL)
@@ -330,10 +320,9 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 workq;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
-	int			 i, rv, s, xdel = 0, log = 1;
+	int			 i, rv, xdel = 0, log = 1;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY |
-	    PFR_FLAG_FEEDBACK);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
 		return (EINVAL);
 	kt = pfr_lookup_table(tbl);
@@ -399,11 +388,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				senderr(EFAULT);
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_remove_kentries(kt, &workq);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	}
 	if (ndel != NULL)
 		*ndel = xdel;
@@ -423,11 +408,10 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 addq, delq, changeq;
 	struct pfr_kentry	*p, *q;
 	struct pfr_addr		 ad;
-	int			 i, rv, s, xadd = 0, xdel = 0, xchange = 0;
+	int			 i, rv, xadd = 0, xdel = 0, xchange = 0;
 	long			 tzero = time_second;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY |
-	    PFR_FLAG_FEEDBACK);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, ignore_pfrt_flags, flags &
 	    PFR_FLAG_USERIOCTL))
 		return (EINVAL);
@@ -502,13 +486,9 @@ _skip:
 	}
 	pfr_clean_node_mask(tmpkt, &addq);
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_insert_kentries(kt, &addq, tzero);
 		pfr_remove_kentries(kt, &delq);
 		pfr_clstats_kentries(&changeq, tzero, INVERT_NEG_FLAG);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	} else
 		pfr_destroy_kentries(&addq);
 	if (nadd != NULL)
@@ -615,11 +595,9 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	struct pfr_ktable	*kt;
 	struct pfr_walktree	 w;
 	struct pfr_kentryworkq	 workq;
-	int			 rv, s;
+	int			 rv;
 	long			 tzero = time_second;
 
-	/* XXX PFR_FLAG_CLSTATS disabled */
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC);
 	if (pfr_validate_table(tbl, 0, 0))
 		return (EINVAL);
 	kt = pfr_lookup_table(tbl);
@@ -635,8 +613,6 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	w.pfrw_astats = addr;
 	w.pfrw_free = kt->pfrkt_cnt;
 	w.pfrw_flags = flags;
-	if (flags & PFR_FLAG_ATOMIC)
-		s = splsoftnet();
 	rv = rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
 	if (!rv)
 		rv = rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);
@@ -644,8 +620,6 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 		pfr_enqueue_addrs(kt, &workq, NULL, 0);
 		pfr_clstats_kentries(&workq, tzero, 0);
 	}
-	if (flags & PFR_FLAG_ATOMIC)
-		splx(s);
 	if (rv)
 		return (rv);
 
@@ -666,10 +640,9 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 workq;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
-	int			 i, rv, s, xzero = 0;
+	int			 i, rv, xzero = 0;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY |
-	    PFR_FLAG_FEEDBACK);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, 0))
 		return (EINVAL);
 	kt = pfr_lookup_table(tbl);
@@ -695,11 +668,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	}
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_clstats_kentries(&workq, 0, 0);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	}
 	if (nzero != NULL)
 		*nzero = xzero;
@@ -885,7 +854,7 @@ pfr_insert_kentries(struct pfr_ktable *kt,
 			break;
 		}
 		p->pfrke_tzero = tzero;
-		n++;
+		++n;
 	}
 	kt->pfrkt_cnt += n;
 }
@@ -922,7 +891,7 @@ pfr_remove_kentries(struct pfr_ktable *kt,
 
 	SLIST_FOREACH(p, workq, pfrke_workq) {
 		pfr_unroute_kentry(kt, p);
-		n++;
+		++n;
 	}
 	kt->pfrkt_cnt -= n;
 	pfr_destroy_kentries(workq);
@@ -934,8 +903,9 @@ pfr_clean_node_mask(struct pfr_ktable *kt,
 {
 	struct pfr_kentry	*p;
 
-	SLIST_FOREACH(p, workq, pfrke_workq)
+	SLIST_FOREACH(p, workq, pfrke_workq) {
 		pfr_unroute_kentry(kt, p);
+	}
 }
 
 void
@@ -1161,10 +1131,9 @@ pfr_clr_tables(struct pfr_table *filter, int *ndel, int flags)
 {
 	struct pfr_ktableworkq	 workq;
 	struct pfr_ktable	*p;
-	int			 s, xdel = 0;
+	int			 xdel = 0;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY |
-	    PFR_FLAG_ALLRSETS);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_ALLRSETS);
 	if (pfr_fix_anchor(filter->pfrt_anchor))
 		return (EINVAL);
 	if (pfr_table_count(filter, flags) < 0)
@@ -1183,11 +1152,7 @@ pfr_clr_tables(struct pfr_table *filter, int *ndel, int flags)
 		xdel++;
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_setflags_ktables(&workq);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	}
 	if (ndel != NULL)
 		*ndel = xdel;
@@ -1199,10 +1164,10 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 {
 	struct pfr_ktableworkq	 addq, changeq;
 	struct pfr_ktable	*p, *q, *r, key;
-	int			 i, rv, s, xadd = 0;
+	int			 i, rv, xadd = 0;
 	long			 tzero = time_second;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY);
 	SLIST_INIT(&addq);
 	SLIST_INIT(&changeq);
 	for (i = 0; i < size; i++) {
@@ -1260,12 +1225,8 @@ _skip:
 	;
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_insert_ktables(&addq);
 		pfr_setflags_ktables(&changeq);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	} else
 		 pfr_destroy_ktables(&addq, 0);
 	if (nadd != NULL)
@@ -1281,9 +1242,9 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 {
 	struct pfr_ktableworkq	 workq;
 	struct pfr_ktable	*p, *q, key;
-	int			 i, s, xdel = 0;
+	int			 i, xdel = 0;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
 		if (COPYIN(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t), flags))
@@ -1305,11 +1266,7 @@ _skip:
 	}
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_setflags_ktables(&workq);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	}
 	if (ndel != NULL)
 		*ndel = xdel;
@@ -1360,7 +1317,7 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 	long			 tzero = time_second;
 
 	/* XXX PFR_FLAG_CLSTATS disabled */
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_ALLRSETS);
+	ACCEPT_FLAGS(flags, PFR_FLAG_ALLRSETS);
 	if (pfr_fix_anchor(filter->pfrt_anchor))
 		return (EINVAL);
 	n = nn = pfr_table_count(filter, flags);
@@ -1371,28 +1328,22 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 		return (0);
 	}
 	SLIST_INIT(&workq);
-	if (flags & PFR_FLAG_ATOMIC)
-		s = splsoftnet();
 	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		if (pfr_skip_table(filter, p, flags))
 			continue;
 		if (n-- <= 0)
 			continue;
-		if (!(flags & PFR_FLAG_ATOMIC))
-			s = splsoftnet();
+		s = splsoftnet();
 		if (COPYOUT(&p->pfrkt_ts, tbl++, sizeof(*tbl), flags)) {
 			splx(s);
 			return (EFAULT);
 		}
-		if (!(flags & PFR_FLAG_ATOMIC))
-			splx(s);
+		splx(s);
 		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 	}
 	if (flags & PFR_FLAG_CLSTATS)
 		pfr_clstats_ktables(&workq, tzero,
 		    flags & PFR_FLAG_ADDRSTOO);
-	if (flags & PFR_FLAG_ATOMIC)
-		splx(s);
 	if (n) {
 		DPFPRINTF(LOG_ERR,
 		    "pfr_get_tstats: corruption detected (%d).", n);
@@ -1407,11 +1358,10 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 {
 	struct pfr_ktableworkq	 workq;
 	struct pfr_ktable	*p, key;
-	int			 i, s, xzero = 0;
+	int			 i, xzero = 0;
 	long			 tzero = time_second;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY |
-	    PFR_FLAG_ADDRSTOO);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_ADDRSTOO);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
 		if (COPYIN(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t), flags))
@@ -1425,11 +1375,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 		}
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_clstats_ktables(&workq, tzero, flags & PFR_FLAG_ADDRSTOO);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	}
 	if (nzero != NULL)
 		*nzero = xzero;
@@ -1442,9 +1388,9 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 {
 	struct pfr_ktableworkq	 workq;
 	struct pfr_ktable	*p, *q, key;
-	int			 i, s, xchange = 0, xdel = 0;
+	int			 i, xchange = 0, xdel = 0;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY);
 	if ((setflag & ~PFR_TFLAG_USRMASK) ||
 	    (clrflag & ~PFR_TFLAG_USRMASK) ||
 	    (setflag & clrflag))
@@ -1477,11 +1423,7 @@ _skip:
 	;
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		pfr_setflags_ktables(&workq);
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 	}
 	if (nchange != NULL)
 		*nchange = xchange;
@@ -1663,10 +1605,10 @@ pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
 	struct pfr_ktable	*p, *q;
 	struct pfr_ktableworkq	 workq;
 	struct pf_ruleset	*rs;
-	int			 s, xadd = 0, xchange = 0;
+	int			 xadd = 0, xchange = 0;
 	long			 tzero = time_second;
 
-	ACCEPT_FLAGS(flags, PFR_FLAG_ATOMIC | PFR_FLAG_DUMMY);
+	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY);
 	rs = pf_find_ruleset(trs->pfrt_anchor);
 	if (rs == NULL || !rs->topen || ticket != rs->tticket)
 		return (EBUSY);
@@ -1684,14 +1626,10 @@ pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
 	}
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		if (flags & PFR_FLAG_ATOMIC)
-			s = splsoftnet();
 		for (p = SLIST_FIRST(&workq); p != NULL; p = q) {
 			q = SLIST_NEXT(p, pfrkt_workq);
 			pfr_commit_ktable(p, tzero);
 		}
-		if (flags & PFR_FLAG_ATOMIC)
-			splx(s);
 		rs->topen = 0;
 		pf_remove_if_empty_ruleset(rs);
 	}
