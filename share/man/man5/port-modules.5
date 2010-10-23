@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.72 2010/10/23 15:19:59 steven Exp $
+.\"	$OpenBSD: port-modules.5,v 1.73 2010/10/23 15:29:02 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -548,10 +548,10 @@ to RUN_DEPENDS and also sets NO_REGRESS to Yes.
 .It www/zope
 .It x11/gnome
 If both GNOME_PROJECT and GNOME_VERSION are set, this module defines
-DISTNAME, VERSION, MASTER_SITES, EXTRACT_SUFX and adds x11/gnome to
-CATEGORIES.
-Sets DESKTOP_FILES, MODGNOME_HELP_FILES, MODGNOME_BUILD_DEPENDS,
-MODGNOME_RUN_DEPENDS, USE_GMAKE and USE_X11.
+DISTNAME, VERSION, MASTER_SITES, adds x11/gnome to CATEGORIES and
+EXTRACT_SUFX will default to .tar.bz2 if unset.
+Unconditionally sets DESKTOP_FILES, MODGNOME_HELP_FILES,
+MODGNOME_BUILD_DEPENDS, MODGNOME_RUN_DEPENDS, USE_GMAKE and USE_X11.
 If CONFIGURE_STYLE is set to either gnu or autoconf
 --disable-silent-rules and --disable-shave
 are appended to CONFIGURE_ARGS.
