@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.73 2010/10/23 15:42:09 jakemsr Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.74 2010/10/23 16:14:07 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -595,8 +595,10 @@ run_detach(struct device *self, int flags)
 	while (sc->cmdq.queued > 0)
 		tsleep(&sc->cmdq, 0, "cmdq", 0);
 
-	timeout_del(&sc->scan_to);
-	timeout_del(&sc->calib_to);
+	if (timeout_initialized(&sc->scan_to))
+		timeout_del(&sc->scan_to);
+	if (timeout_initialized(&sc->calib_to))
+		timeout_del(&sc->calib_to);
 
 	if (ifp->if_flags != 0) {	/* if_attach() has been called */
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

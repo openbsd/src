@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.49 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: udcf.c,v 1.50 2010/10/23 16:14:07 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -334,13 +334,20 @@ udcf_detach(struct device *self, int flags)
 {
 	struct udcf_softc	*sc = (struct udcf_softc *)self;
 
-	timeout_del(&sc->sc_to);
-	timeout_del(&sc->sc_bv_to);
-	timeout_del(&sc->sc_mg_to);
-	timeout_del(&sc->sc_sl_to);
-	timeout_del(&sc->sc_it_to);
-	if (sc->sc_detect_ct)
-		timeout_del(&sc->sc_ct_to);
+	if (timeout_initialized(&sc->sc_to))
+		timeout_del(&sc->sc_to);
+	if (timeout_initialized(&sc->sc_bv_to))
+		timeout_del(&sc->sc_bv_to);
+	if (timeout_initialized(&sc->sc_mg_to))
+		timeout_del(&sc->sc_mg_to);
+	if (timeout_initialized(&sc->sc_sl_to))
+		timeout_del(&sc->sc_sl_to);
+	if (timeout_initialized(&sc->sc_it_to))
+		timeout_del(&sc->sc_it_to);
+	if (sc->sc_detect_ct) {
+		if (timeout_initialized(&sc->sc_ct_to))
+			timeout_del(&sc->sc_ct_to);
+	}
 
 	/* Unregister the clock with the kernel */
 	sensordev_deinstall(&sc->sc_sensordev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.47 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.48 2010/10/23 16:14:07 jakemsr Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -333,7 +333,8 @@ udav_detach(struct device *self, int flags)
 	if (!sc->sc_attached)
 		return (0);
 
-	timeout_del(&sc->sc_stat_ch);
+	if (timeout_initialized(&sc->sc_stat_ch))
+		timeout_del(&sc->sc_stat_ch);
 
 	/* Remove any pending tasks */
 	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);

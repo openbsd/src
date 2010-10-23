@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.54 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.55 2010/10/23 16:14:07 jakemsr Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -561,7 +561,8 @@ cue_detach(struct device *self, int flags)
 	if (!sc->cue_attached)
 		return (0);
 
-	timeout_del(&sc->cue_stat_ch);
+	if (timeout_initialized(&sc->cue_stat_ch))
+		timeout_del(&sc->cue_stat_ch);
 
 	/*
 	 * Remove any pending task.  It cannot be executing because it run

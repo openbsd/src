@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.57 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: if_url.c,v 1.58 2010/10/23 16:14:07 jakemsr Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -339,7 +339,8 @@ url_detach(struct device *self, int flags)
 	if (!sc->sc_attached)
 		return (0);
 
-	timeout_del(&sc->sc_stat_ch);
+	if (timeout_initialized(&sc->sc_stat_ch))
+		timeout_del(&sc->sc_stat_ch);
 
 	/* Remove any pending tasks */
 	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);

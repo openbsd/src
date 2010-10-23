@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.32 2010/10/23 15:42:09 jakemsr Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.33 2010/10/23 16:14:07 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -780,8 +780,10 @@ urtw_detach(struct device *self, int flags)
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_ledtask);
-	timeout_del(&sc->scan_to);
-	timeout_del(&sc->sc_led_ch);
+	if (timeout_initialized(&sc->scan_to))
+		timeout_del(&sc->scan_to);
+	if (timeout_initialized(&sc->sc_led_ch))
+		timeout_del(&sc->sc_led_ch);
 
 	/* abort and free xfers */
 	urtw_free_tx_data_list(sc);

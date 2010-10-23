@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.3 2010/08/01 21:37:08 miod Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.4 2010/10/23 16:14:06 jakemsr Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -224,7 +224,8 @@ hidkbd_detach(struct hidkbd *kbd, int flags)
 	DPRINTF(("hidkbd_detach: sc=%p flags=%d\n", kbd->sc_device, flags));
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	timeout_del(&kbd->sc_rawrepeat_ch);
+	if (timeout_initialized(&kbd->sc_rawrepeat_ch))
+		timeout_del(&kbd->sc_rawrepeat_ch);
 #endif
 
 	if (kbd->sc_console_keyboard) {

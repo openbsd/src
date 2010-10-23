@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.83 2010/10/23 15:42:09 jakemsr Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.84 2010/10/23 16:14:07 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -443,8 +443,10 @@ zyd_detach(struct device *self, int flags)
 	s = splusb();
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	timeout_del(&sc->scan_to);
-	timeout_del(&sc->amrr_to);
+	if (timeout_initialized(&sc->scan_to))
+		timeout_del(&sc->scan_to);
+	if (timeout_initialized(&sc->amrr_to))
+		timeout_del(&sc->amrr_to);
 
 	zyd_close_pipes(sc);
 

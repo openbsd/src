@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.51 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.52 2010/10/23 16:14:07 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -486,8 +486,10 @@ upgt_detach(struct device *self, int flags)
 	/* remove tasks and timeouts */
 	usb_rem_task(sc->sc_udev, &sc->sc_task_newstate);
 	usb_rem_task(sc->sc_udev, &sc->sc_task_tx);
-	timeout_del(&sc->scan_to);
-	timeout_del(&sc->led_to);
+	if (timeout_initialized(&sc->scan_to))
+		timeout_del(&sc->scan_to);
+	if (timeout_initialized(&sc->led_to))
+		timeout_del(&sc->led_to);
 
 	/* free xfers */
 	upgt_free_tx(sc);

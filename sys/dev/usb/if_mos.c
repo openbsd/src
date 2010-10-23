@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.9 2010/10/23 15:42:09 jakemsr Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.10 2010/10/23 16:14:07 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -771,7 +771,8 @@ mos_detach(struct device *self, int flags)
 	if (!sc->mos_attached)
 		return (0);
 
-	timeout_del(&sc->mos_stat_ch);
+	if (timeout_initialized(&sc->mos_stat_ch))
+		timeout_del(&sc->mos_stat_ch);
 
 	if (sc->mos_ep[MOS_ENDPT_TX] != NULL)
 		usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_TX]);
