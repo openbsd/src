@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.71 2010/10/23 14:42:59 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.72 2010/10/23 15:19:59 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -392,8 +392,10 @@ do-build, do-install and post-install can be overridden in the port
 Makefile.
 .It fortran
 Sets MODFORTRAN_LIB_DEPENDS, MODFORTRAN_WANTLIB, MODFORTRAN_BUILD_DEPENDS.
-Set MODFORTRAN_WANTG77=Yes if the port requires a Fortran 77 compiler.
-The dependencies are chosen according to COMPILER_VERSION.
+Set MODFORTRAN_COMPILER to `g77' or `gfortran', depending on what the
+port requires. The default is `g77'.
+The dependencies are chosen according to COMPILER_VERSION and
+MODFORTRAN_COMPILER.
 .It gcc3
 If COMPILER_VERSION is not gcc3 (defined by
 .Pa /usr/share/mk/bsd.own.mk ) ,
