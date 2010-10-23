@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.17 2006/04/27 02:19:32 tedu Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.18 2010/10/23 22:50:07 guenther Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -35,6 +35,10 @@
 #ifndef _NETINET_TCP_H_
 #define	_NETINET_TCP_H_
 
+#include <sys/cdefs.h>
+
+#if __BSD_VISIBLE
+
 typedef u_int32_t tcp_seq;
 
 /*
@@ -47,11 +51,11 @@ struct tcphdr {
 	tcp_seq	  th_seq;		/* sequence number */
 	tcp_seq	  th_ack;		/* acknowledgement number */
 #if _BYTE_ORDER == _LITTLE_ENDIAN
-	u_int     th_x2:4,		/* (unused) */
+	u_int32_t th_x2:4,		/* (unused) */
 		  th_off:4;		/* data offset */
 #endif
 #if _BYTE_ORDER == _BIG_ENDIAN
-	u_int     th_off:4,		/* data offset */
+	u_int32_t th_off:4,		/* data offset */
 		  th_x2:4;		/* (unused) */
 #endif
 	u_int8_t  th_flags;
@@ -113,6 +117,8 @@ struct tcphdr {
 #define	TCP_MAXWIN	65535	/* largest value for (unscaled) window */
 
 #define	TCP_MAX_WINSHIFT	14	/* maximum window shift */
+
+#endif /* __BSD_VISIBLE */
 
 /*
  * User-settable options (used with setsockopt).
