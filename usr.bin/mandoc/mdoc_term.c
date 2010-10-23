@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.111 2010/10/16 20:49:37 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.112 2010/10/23 16:08:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1584,6 +1584,8 @@ termp_bd_pre(DECL_ARGS)
 		 * anyway, so don't sweat it.
 		 */
 		switch (nn->tok) {
+		case (MDOC_Sm):
+			/* FALLTHROUGH */
 		case (MDOC_br):
 			/* FALLTHROUGH */
 		case (MDOC_sp):
