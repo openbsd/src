@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.3,v 1.12 2010/08/20 00:53:35 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.13 2010/10/23 17:11:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2010 $
+.Dd $Mdocdate: October 23 2010 $
 .Dt MDOC 3
 .Os
 .Sh NAME
@@ -79,43 +79,18 @@ The
 .Fn mdoc_reset
 function may be used in order to reset the parser for another input
 sequence.
-See the
-.Sx EXAMPLES
-section for a simple example.
-.Pp
-This section further defines the
-.Sx Types ,
-.Sx Functions
-and
-.Sx Variables
-available to programmers.
-Following that, the
-.Sx Abstract Syntax Tree
-section documents the output tree.
 .Ss Types
-Both functions (see
-.Sx Functions )
-and variables (see
-.Sx Variables )
-may use the following types:
 .Bl -ohang
 .It Vt struct mdoc
-An opaque type defined in
-.Pa mdoc.c .
+An opaque type.
 Its values are only used privately within the library.
 .It Vt struct mdoc_node
 A parsed node.
-Defined in
-.Pa mdoc.h .
 See
 .Sx Abstract Syntax Tree
 for details.
-.It Vt mandocmsg
-A function callback type defined in
-.Pa mandoc.h .
 .El
 .Ss Functions
-Function descriptions follow:
 .Bl -ohang
 .It Fn mdoc_alloc
 Allocates a parsing structure.
@@ -166,7 +141,6 @@ or
 return 0, the data will be incomplete.
 .El
 .Ss Variables
-The following variables are also defined:
 .Bl -ohang
 .It Va mdoc_macronames
 An array of string-ified token names.
@@ -354,9 +328,13 @@ parsed(mdoc, node);
 mdoc_free(mdoc);
 .Ed
 .Pp
-Please see
+To compile this, execute
+.Pp
+.D1 % cc main.c libmdoc.a libmandoc.a
+.Pp
+where
 .Pa main.c
-in the source archive for a rigorous reference.
+is the example file.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr mdoc 7

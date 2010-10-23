@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.15 2010/08/20 00:53:35 schwarze Exp $
+.\"	$Id: man.3,v 1.16 2010/10/23 17:11:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2010 $
+.Dd $Mdocdate: October 23 2010 $
 .Dt MAN 3
 .Os
 .Sh NAME
@@ -76,9 +76,6 @@ The
 .Fn man_reset
 function may be used in order to reset the parser for another input
 sequence.
-See the
-.Sx EXAMPLES
-section for a full example.
 .Pp
 Beyond the full set of macros defined in
 .Xr man 7 ,
@@ -107,63 +104,18 @@ closing
 .Pq part of the standard preamble for Perl documentation .
 Handled as a current-scope line macro.
 .El
-.Pp
-Furthermore, the following escapes are accepted to allow
-.Xr pod2man 1
-documents to be correctly formatted:
-\e*(-- (dash),
-\e*(PI (pi),
-\e*(L" (left double-quote),
-\e*(R" (right double-quote),
-\e*(C` (left single-quote),
-\e*(C' (right single-quote),
-\e*(Aq (apostrophe),
-\e*^ (hat),
-\e*, (comma),
-\e*~ (tilde),
-\e*/ (forward slash),
-\e*: (umlaut),
-\e*8 (beta),
-\e*o (degree),
-\e*(D- (Eth),
-\e*(d- (eth),
-\e*(Th (Thorn),
-and
-\e*(th (thorn).
-.Sh REFERENCE
-This section further defines the
-.Sx Types ,
-.Sx Functions
-and
-.Sx Variables
-available to programmers.
-Following that, the
-.Sx Abstract Syntax Tree
-section documents the output tree.
 .Ss Types
-Both functions (see
-.Sx Functions )
-and variables (see
-.Sx Variables )
-may use the following types:
 .Bl -ohang
 .It Vt struct man
-An opaque type defined in
-.Pa man.c .
+An opaque type.
 Its values are only used privately within the library.
-.It Vt mandocmsg
-A function callback type defined in
-.Pa mandoc.h .
 .It Vt struct man_node
 A parsed node.
-Defined in
-.Pa man.h .
 See
 .Sx Abstract Syntax Tree
 for details.
 .El
 .Ss Functions
-Function descriptions follow:
 .Bl -ohang
 .It Fn man_alloc
 Allocates a parsing structure.
@@ -316,9 +268,13 @@ parsed(man, node);
 man_free(man);
 .Ed
 .Pp
-Please see
+To compile this, execute
+.Pp
+.D1 % cc main.c libman.a libmandoc.a
+.Pp
+where
 .Pa main.c
-in the source archive for a rigorous reference.
+is the example file.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr man 7
