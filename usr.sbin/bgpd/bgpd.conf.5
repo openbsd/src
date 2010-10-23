@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.112 2010/10/13 21:04:13 sthen Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.113 2010/10/23 16:44:56 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2010 $
+.Dd $Mdocdate: October 23 2010 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1432,9 +1432,8 @@ times to the
 .Em AS path .
 .Pp
 .It Ic rtlabel Ar label
-Add the prefix with the specified
-.Ar label
-to the kernel routing table.
+Add the prefix to the kernel routing table with the specified
+.Ar label .
 .Pp
 .It Ic weight Ar number
 The
