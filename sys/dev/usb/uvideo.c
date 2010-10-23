@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.145 2010/10/18 23:25:31 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.146 2010/10/23 15:42:10 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1802,7 +1802,8 @@ uvideo_vs_init(struct uvideo_softc *sc)
 #ifdef UVIDEO_DUMP
 	if (uvideo_debug_file_open(sc) != 0)
 		return (USBD_INVAL);
-	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_frame, sc);
+	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_frame, sc,
+	    USB_TASK_TYPE_GENERIC);
 #endif
 	return (USBD_NORMAL_COMPLETION);
 }

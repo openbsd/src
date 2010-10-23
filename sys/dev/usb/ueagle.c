@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.28 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.29 2010/10/23 15:42:09 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -210,7 +210,8 @@ ueagle_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_dev.dv_xname, addr[0], addr[1], addr[2], addr[3],
 	    addr[4], addr[5]);
 
-	usb_init_task(&sc->sc_swap_task, ueagle_loadpage, sc);
+	usb_init_task(&sc->sc_swap_task, ueagle_loadpage, sc,
+	    USB_TASK_TYPE_GENERIC);
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_SIMPLEX;

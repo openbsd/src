@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.46 2010/08/27 07:08:22 deraadt Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.47 2010/10/23 15:42:09 jakemsr Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -211,9 +211,11 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc);
+	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc,
+	    USB_TASK_TYPE_GENERIC);
 	rw_init(&sc->sc_mii_lock, "udavmii");
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) udav_stop_task, sc);
+	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) udav_stop_task, sc,
+	    USB_TASK_TYPE_GENERIC);
 
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, UDAV_IFACE_INDEX, &iface);

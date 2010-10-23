@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.94 2009/11/21 14:18:34 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.95 2010/10/23 15:42:09 jakemsr Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1467,7 +1467,7 @@ atu_complete_attach(struct atu_softc *sc)
 	/* setup ifmedia interface */
 	ieee80211_media_init(ifp, atu_media_change, atu_media_status);
 
-	usb_init_task(&sc->sc_task, atu_task, sc);
+	usb_init_task(&sc->sc_task, atu_task, sc, USB_TASK_TYPE_GENERIC);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_radiobpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,

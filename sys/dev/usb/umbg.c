@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.12 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: umbg.c,v 1.13 2010/10/23 15:42:09 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -200,7 +200,7 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
 	sensordev_install(&sc->sc_sensordev);
 
-	usb_init_task(&sc->sc_task, umbg_task, sc);
+	usb_init_task(&sc->sc_task, umbg_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->sc_to, umbg_intr, sc);
 	timeout_set(&sc->sc_it_to, umbg_it_intr, sc);
 

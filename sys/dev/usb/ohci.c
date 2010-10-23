@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.99 2010/09/07 16:21:46 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.100 2010/10/23 15:42:09 jakemsr Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1894,7 +1894,8 @@ ohci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr);
+	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr,
+	    USB_TASK_TYPE_ABORT);
 	usb_add_task(oxfer->xfer.pipe->device, &oxfer->abort_task);
 }
 

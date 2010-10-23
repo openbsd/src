@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.50 2010/08/27 17:08:01 jsg Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.51 2010/10/23 15:42:09 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -273,8 +273,9 @@ upgt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* setup tasks and timeouts */
-	usb_init_task(&sc->sc_task_newstate, upgt_newstate_task, sc);
-	usb_init_task(&sc->sc_task_tx, upgt_tx_task, sc);
+	usb_init_task(&sc->sc_task_newstate, upgt_newstate_task, sc,
+	    USB_TASK_TYPE_GENERIC);
+	usb_init_task(&sc->sc_task_tx, upgt_tx_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->scan_to, upgt_next_scan, sc);
 	timeout_set(&sc->led_to, upgt_set_led_blink, sc);
 

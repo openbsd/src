@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.99 2010/09/24 03:21:21 deraadt Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.100 2010/10/23 15:42:09 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -676,9 +676,11 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
 
-	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
+	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc,
+	    USB_TASK_TYPE_GENERIC);
 	rw_init(&sc->axe_mii_lock, "axemii");
-	usb_init_task(&sc->axe_stop_task, (void (*)(void *))axe_stop, sc);
+	usb_init_task(&sc->axe_stop_task, (void (*)(void *))axe_stop, sc,
+	    USB_TASK_TYPE_GENERIC);
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {

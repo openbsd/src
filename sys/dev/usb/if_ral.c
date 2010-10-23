@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.113 2010/08/27 17:08:01 jsg Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.114 2010/10/23 15:42:09 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -273,7 +273,7 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, ural_task, sc);
+	usb_init_task(&sc->sc_task, ural_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->scan_to, ural_next_scan, sc);
 
 	sc->amrr.amrr_min_success_threshold =  1;

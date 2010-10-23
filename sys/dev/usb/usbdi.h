@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.34 2010/09/23 06:30:37 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.35 2010/10/23 15:42:09 jakemsr Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -184,6 +184,10 @@ struct usb_task {
 	usbd_device_handle dev;
 	void (*fun)(void *);
 	void *arg;
+	char type;
+#define USB_TASK_TYPE_GENERIC	0
+#define USB_TASK_TYPE_EXPLORE	1
+#define USB_TASK_TYPE_ABORT	2
 	char onqueue;
 	char running;
 };
@@ -191,7 +195,12 @@ struct usb_task {
 void usb_add_task(usbd_device_handle, struct usb_task *);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
 void usb_rem_wait_task(usbd_device_handle, struct usb_task *);
-#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0, (t)->running = 0)
+#define usb_init_task(t, f, a, y) \
+	((t)->fun = (f),	\
+	(t)->arg = (a),		\
+	(t)->type = (y),	\
+	(t)->onqueue = 0,	\
+	(t)->running = 0)
 
 struct usb_devno {
 	u_int16_t ud_vendor;

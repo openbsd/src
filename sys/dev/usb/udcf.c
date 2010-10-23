@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.48 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: udcf.c,v 1.49 2010/10/23 15:42:09 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -206,10 +206,10 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	usb_init_task(&sc->sc_task, udcf_probe, sc);
-	usb_init_task(&sc->sc_bv_task, udcf_bv_probe, sc);
-	usb_init_task(&sc->sc_mg_task, udcf_mg_probe, sc);
-	usb_init_task(&sc->sc_sl_task, udcf_sl_probe, sc);
+	usb_init_task(&sc->sc_task, udcf_probe, sc, USB_TASK_TYPE_GENERIC);
+	usb_init_task(&sc->sc_bv_task, udcf_bv_probe, sc, USB_TASK_TYPE_GENERIC);
+	usb_init_task(&sc->sc_mg_task, udcf_mg_probe, sc, USB_TASK_TYPE_GENERIC);
+	usb_init_task(&sc->sc_sl_task, udcf_sl_probe, sc, USB_TASK_TYPE_GENERIC);
 
 	timeout_set(&sc->sc_to, udcf_intr, sc);
 	timeout_set(&sc->sc_bv_to, udcf_bv_intr, sc);
@@ -218,7 +218,8 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_it_to, udcf_it_intr, sc);
 
 	if (sc->sc_detect_ct) {
-		usb_init_task(&sc->sc_ct_task, udcf_ct_probe, sc);
+		usb_init_task(&sc->sc_ct_task, udcf_ct_probe, sc,
+		    USB_TASK_TYPE_GENERIC);
 		timeout_set(&sc->sc_ct_to, udcf_ct_intr, sc);
 	}
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,

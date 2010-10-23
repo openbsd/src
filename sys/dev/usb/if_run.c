@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.72 2010/10/22 15:45:36 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.73 2010/10/23 15:42:09 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -473,7 +473,7 @@ run_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, run_task, sc);
+	usb_init_task(&sc->sc_task, run_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->scan_to, run_next_scan, sc);
 	timeout_set(&sc->calib_to, run_calibrate_to, sc);
 

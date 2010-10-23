@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.43 2010/08/27 17:08:01 jsg Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.44 2010/10/23 15:42:09 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -298,7 +298,7 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Only post-firmware devices here.
 	 */
-	usb_init_task(&sc->sc_task, uath_task, sc);
+	usb_init_task(&sc->sc_task, uath_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->scan_to, uath_next_scan, sc);
 	timeout_set(&sc->stat_to, uath_stat, sc);
 

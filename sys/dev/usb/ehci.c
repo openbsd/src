@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.112 2010/09/29 20:06:38 kettenis Exp $ */
+/*	$OpenBSD: ehci.c,v 1.113 2010/10/23 15:42:09 jakemsr Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1221,7 +1221,7 @@ ehci_allocx(struct usbd_bus *bus)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ehci_xfer));
 		usb_init_task(&EXFER(xfer)->abort_task, ehci_timeout_task,
-		    xfer);
+		    xfer, USB_TASK_TYPE_ABORT);
 		EXFER(xfer)->ehci_xfer_flags = 0;
 #ifdef DIAGNOSTIC
 		EXFER(xfer)->isdone = 1;

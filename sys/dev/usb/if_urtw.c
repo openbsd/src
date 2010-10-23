@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.31 2010/08/27 17:08:01 jsg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.32 2010/10/23 15:42:09 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -690,8 +690,9 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX for what? */
 	sc->sc_preamble_mode = 2;
 
-	usb_init_task(&sc->sc_task, urtw_task, sc);
-	usb_init_task(&sc->sc_ledtask, urtw_ledusbtask, sc);
+	usb_init_task(&sc->sc_task, urtw_task, sc, USB_TASK_TYPE_GENERIC);
+	usb_init_task(&sc->sc_ledtask, urtw_ledusbtask, sc,
+	    USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->scan_to, urtw_next_scan, sc);
 	timeout_set(&sc->sc_led_ch, urtw_ledtask, sc);
 

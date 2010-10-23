@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.68 2010/09/23 06:30:37 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.69 2010/10/23 15:42:09 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -100,17 +100,20 @@ struct usb_softc {
 	struct timeval	 sc_ptime;
 };
 
+TAILQ_HEAD(, usb_task) usb_abort_tasks;
 TAILQ_HEAD(, usb_task) usb_explore_tasks;
-TAILQ_HEAD(, usb_task) usb_tasks;
+TAILQ_HEAD(, usb_task) usb_generic_tasks;
 
-int usb_run_tasks;
+int usb_run_tasks, usb_run_abort_tasks;
 int explore_pending;
 
 void	usb_explore(void *);
 void	usb_first_explore(void *);
-void	usb_create_task_thread(void *);
+void	usb_create_task_threads(void *);
 void	usb_task_thread(void *);
 struct proc *usb_task_thread_proc = NULL;
+void	usb_abort_task_thread(void *);
+struct proc *usb_abort_task_thread_proc = NULL;
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
@@ -195,7 +198,8 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus->flags |= USB_BUS_CONFIG_PENDING;
 
 	/* explore task */
-	usb_init_task(&sc->sc_explore_task, usb_explore, sc);
+	usb_init_task(&sc->sc_explore_task, usb_explore, sc,
+	    USB_TASK_TYPE_EXPLORE);
 
 	ue.u.ue_ctrlr.ue_bus = sc->sc_dev.dv_unit;
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, &ue);
@@ -252,10 +256,11 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 void
 usb_begin_tasks(void)
 {
+	TAILQ_INIT(&usb_abort_tasks);
 	TAILQ_INIT(&usb_explore_tasks);
-	TAILQ_INIT(&usb_tasks);
-	usb_run_tasks = 1;
-	kthread_create_deferred(usb_create_task_thread, NULL);
+	TAILQ_INIT(&usb_generic_tasks);
+	usb_run_tasks = usb_run_abort_tasks = 1;
+	kthread_create_deferred(usb_create_task_threads, NULL);
 }
 
 /*
@@ -264,13 +269,18 @@ usb_begin_tasks(void)
 void
 usb_end_tasks(void)
 {
-	usb_run_tasks = 0;
+	usb_run_tasks = usb_run_abort_tasks = 0;
+	wakeup(&usb_run_abort_tasks);
 	wakeup(&usb_run_tasks);
 }
 
 void
-usb_create_task_thread(void *arg)
+usb_create_task_threads(void *arg)
 {
+	if (kthread_create(usb_abort_task_thread, NULL,
+	    &usb_abort_task_thread_proc, "usbatsk"))
+		panic("unable to create usb abort task thread");
+
 	if (kthread_create(usb_task_thread, NULL,
 	    &usb_task_thread_proc, "usbtask"))
 		panic("unable to create usb task thread");
@@ -286,7 +296,8 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 {
 	int s;
 
-	DPRINTFN(2,("%s: task=%p onqueue=%d\n", __func__, task, task->onqueue));
+	DPRINTFN(2,("%s: task=%p onqueue=%d type=%d\n", __func__, task,
+	    task->onqueue, task->type));
 
 	/* Don't add task if the device's root hub is dying. */
 	if (dev->bus->dying)
@@ -294,14 +305,24 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 
 	s = splusb();
 	if (!task->onqueue) {
-		if (task->fun == usb_explore)
+		switch (task->type) {
+		case USB_TASK_TYPE_ABORT:
+			TAILQ_INSERT_TAIL(&usb_abort_tasks, task, next);
+			break;
+		case USB_TASK_TYPE_EXPLORE:
 			TAILQ_INSERT_TAIL(&usb_explore_tasks, task, next);
-		else
-			TAILQ_INSERT_TAIL(&usb_tasks, task, next);
+			break;
+		case USB_TASK_TYPE_GENERIC:
+			TAILQ_INSERT_TAIL(&usb_generic_tasks, task, next);
+			break;
+		}
 		task->onqueue = 1;
 		task->dev = dev;
 	}
-	wakeup(&usb_run_tasks);
+	if (task->type == USB_TASK_TYPE_ABORT)
+		wakeup(&usb_run_abort_tasks);
+	else
+		wakeup(&usb_run_tasks);
 	splx(s);
 }
 
@@ -310,14 +331,22 @@ usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 {
 	int s;
 
-	DPRINTFN(2,("%s: task=%p onqueue=%d\n", __func__, task, task->onqueue));
+	DPRINTFN(2,("%s: task=%p onqueue=%d type=%d\n", __func__, task,
+	    task->onqueue, task->type));
 
 	s = splusb();
 	if (task->onqueue) {
-		if (task->fun == usb_explore)
+		switch (task->type) {
+		case USB_TASK_TYPE_ABORT:
+			TAILQ_REMOVE(&usb_abort_tasks, task, next);
+			break;
+		case USB_TASK_TYPE_EXPLORE:
 			TAILQ_REMOVE(&usb_explore_tasks, task, next);
-		else
-			TAILQ_REMOVE(&usb_tasks, task, next);
+			break;
+		case USB_TASK_TYPE_GENERIC:
+			TAILQ_REMOVE(&usb_generic_tasks, task, next);
+			break;
+		}
 		task->onqueue = 0;
 	}
 	splx(s);
@@ -328,7 +357,8 @@ usb_rem_wait_task(usbd_device_handle dev, struct usb_task *task)
 {
 	int s;
 
-	DPRINTFN(2,("%s: task=%p onqueue=%d\n", __func__, task, task->onqueue));
+	DPRINTFN(2,("%s: task=%p onqueue=%d type=%d\n", __func__, task,
+	    task->onqueue, task->type));
 
 	s = splusb();
 	usb_rem_task(dev, task);
@@ -391,10 +421,47 @@ usb_task_thread(void *arg)
 	while (usb_run_tasks) {
 		if ((task = TAILQ_FIRST(&usb_explore_tasks)) != NULL)
 			TAILQ_REMOVE(&usb_explore_tasks, task, next);
-		else if ((task = TAILQ_FIRST(&usb_tasks)) != NULL)
-			TAILQ_REMOVE(&usb_tasks, task, next);
+		else if ((task = TAILQ_FIRST(&usb_generic_tasks)) != NULL)
+			TAILQ_REMOVE(&usb_generic_tasks, task, next);
 		else {
 			tsleep(&usb_run_tasks, PWAIT, "usbtsk", 0);
+			continue;
+		}
+		task->onqueue = 0;
+		/* Don't execute the task if the root hub is gone. */
+		if (task->dev->bus->dying)
+			continue;
+		task->running = 1;
+		splx(s);
+		task->fun(task->arg);
+		s = splusb();
+		task->running = 0;
+		wakeup(task);
+	}
+	splx(s);
+
+	kthread_exit(0);
+}
+
+/*
+ * This thread is ONLY for the HCI drivers to be able to abort xfers.
+ * Synchronous xfers sleep the task thread, so the aborts need to happen
+ * in a different thread.
+ */
+void
+usb_abort_task_thread(void *arg)
+{
+	struct usb_task *task;
+	int s;
+
+	DPRINTF(("usb_xfer_abort_thread: start\n"));
+
+	s = splusb();
+	while (usb_run_abort_tasks) {
+		if ((task = TAILQ_FIRST(&usb_abort_tasks)) != NULL)
+			TAILQ_REMOVE(&usb_abort_tasks, task, next);
+		else {
+			tsleep(&usb_run_abort_tasks, PWAIT, "usbatsk", 0);
 			continue;
 		}
 		task->onqueue = 0;

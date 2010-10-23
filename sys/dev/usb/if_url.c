@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.56 2010/08/27 07:08:22 deraadt Exp $ */
+/*	$OpenBSD: if_url.c,v 1.57 2010/10/23 15:42:09 jakemsr Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -208,9 +208,11 @@ url_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	usb_init_task(&sc->sc_tick_task, url_tick_task, sc);
+	usb_init_task(&sc->sc_tick_task, url_tick_task, sc,
+	    USB_TASK_TYPE_GENERIC);
 	rw_init(&sc->sc_mii_lock, "urlmii");
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) url_stop_task, sc);
+	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) url_stop_task, sc,
+	    USB_TASK_TYPE_GENERIC);
 
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, URL_IFACE_INDEX, &iface);
