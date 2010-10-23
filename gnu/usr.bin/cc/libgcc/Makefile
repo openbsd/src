@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.16 2010/09/25 17:44:34 drahn Exp $
+# $OpenBSD: Makefile,v 1.17 2010/10/23 09:46:30 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ GCCDIR= ${GCCLIB}/gcc
 
 .if defined(CROSSDIR)
 LD=${CROSSDIR}/usr/${GCC_TARGET}/bin/ld
+RANLIB=${CROSSDIR}/usr/${GCC_TARGET}/bin/ranlib
 .endif
 
 .if defined(CROSS_TARGET)
