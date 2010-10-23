@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.46 2009/02/21 12:52:47 joris Exp $	*/
+/*	$OpenBSD: root.c,v 1.47 2010/10/23 18:36:35 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -172,8 +172,11 @@ cvsroot_get(const char *dir)
 	if (cvs_server_active == 1)
 		return cvsroot_parse(dir);
 
-	if (cvs_cmdop == CVS_OP_IMPORT)
-		return NULL;
+	if (cvs_cmdop == CVS_OP_IMPORT) {
+		if ((rootstr = getenv("CVSROOT")) != NULL)
+			return (cvsroot_parse(rootstr));
+		return (NULL);
+	}
 
 	(void)xsnprintf(rootpath, MAXPATHLEN, "%s/%s", dir, CVS_PATH_ROOTSPEC);
 
