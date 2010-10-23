@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.71 2010/10/16 13:38:29 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.72 2010/10/23 16:40:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,18 @@
 #define	PRE_ARGS  struct mdoc *mdoc, struct mdoc_node *n
 #define	POST_ARGS struct mdoc *mdoc
 
+enum	check_ineq {
+	CHECK_LT,
+	CHECK_GT,
+	CHECK_EQ
+};
+
+enum	check_lvl {
+	CHECK_WARN,
+	CHECK_ERROR,
+	CHECK_FATAL
+};
+
 typedef	int	(*v_pre)(PRE_ARGS);
 typedef	int	(*v_post)(POST_ARGS);
 
@@ -40,26 +52,19 @@ struct	valids {
 	v_post	*post;
 };
 
+static	int	 check_count(struct mdoc *, enum mdoc_type, 
+			enum check_lvl, enum check_ineq, int);
 static	int	 check_parent(PRE_ARGS, enum mdoct, enum mdoc_type);
 static	int	 check_stdarg(PRE_ARGS);
 static	int	 check_text(struct mdoc *, int, int, char *);
 static	int	 check_argv(struct mdoc *, 
 			struct mdoc_node *, struct mdoc_argv *);
 static	int	 check_args(struct mdoc *, struct mdoc_node *);
-static	int	 err_child_lt(struct mdoc *, const char *, int);
-static	int	 warn_child_lt(struct mdoc *, const char *, int);
-static	int	 err_child_gt(struct mdoc *, const char *, int);
-static	int	 warn_child_gt(struct mdoc *, const char *, int);
-static	int	 err_child_eq(struct mdoc *, const char *, int);
-static	int	 warn_child_eq(struct mdoc *, const char *, int);
-static	int	 warn_count(struct mdoc *, const char *, 
-			int, const char *, int);
-static	int	 err_count(struct mdoc *, const char *, 
-			int, const char *, int);
 
+static	int	 ebool(POST_ARGS);
 static	int	 berr_ge1(POST_ARGS);
 static	int	 bwarn_ge1(POST_ARGS);
-static	int	 ebool(POST_ARGS);
+static	int	 eerr_eq0(POST_ARGS);
 static	int	 eerr_eq1(POST_ARGS);
 static	int	 eerr_ge1(POST_ARGS);
 static	int	 eerr_le1(POST_ARGS);
@@ -67,8 +72,8 @@ static	int	 ewarn_eq0(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
 static	int	 herr_eq0(POST_ARGS);
 static	int	 herr_ge1(POST_ARGS);
-static	int	 hwarn_eq1(POST_ARGS);
 static	int	 hwarn_eq0(POST_ARGS);
+static	int	 hwarn_eq1(POST_ARGS);
 static	int	 hwarn_le1(POST_ARGS);
 
 static	int	 post_an(POST_ARGS);
@@ -317,91 +322,124 @@ mdoc_valid_post(struct mdoc *mdoc)
 	return(1);
 }
 
+static int
+check_count(struct mdoc *m, enum mdoc_type type, 
+		enum check_lvl lvl, enum check_ineq ineq, int val)
+{
+	const char	*p;
 
-static inline int
-warn_count(struct mdoc *m, const char *k, 
-		int want, const char *v, int has)
+	if (m->last->type != type)
+		return(1);
+	
+	switch (ineq) {
+	case (CHECK_LT):
+		p = "less than ";
+		if (m->last->nchild < val)
+			return(1);
+		break;
+	case (CHECK_GT):
+		p = "greater than ";
+		if (m->last->nchild > val)
+			return(1);
+		break;
+	case (CHECK_EQ):
+		p = "";
+		if (val == m->last->nchild)
+			return(1);
+		break;
+	}
+
+	if (CHECK_WARN == lvl) {
+		return(mdoc_vmsg(m, MANDOCERR_ARGCOUNT,
+				m->last->line, m->last->pos,
+				"want %s%d children (have %d)",
+				p, val, m->last->nchild));
+	}
+
+	return(mdoc_vmsg(m, MANDOCERR_ARGCOUNT,
+			m->last->line, m->last->pos,
+			"require %s%d children (have %d)",
+			p, val, m->last->nchild));
+}
+
+static int
+berr_ge1(POST_ARGS)
 {
 
-	return(mdoc_vmsg(m, MANDOCERR_ARGCOUNT, 
-				m->last->line, m->last->pos, 
-				"%s %s %d (have %d)", v, k, want, has));
+	return(check_count(mdoc, MDOC_BODY, CHECK_FATAL, CHECK_GT, 0));
 }
 
-
-static inline int
-err_count(struct mdoc *m, const char *k,
-		int want, const char *v, int has)
+static int
+bwarn_ge1(POST_ARGS)
 {
-
-	mdoc_vmsg(m, MANDOCERR_SYNTARGCOUNT, 
-			m->last->line, m->last->pos, 
-			"%s %s %d (have %d)", 
-			v, k, want, has);
-	return(0);
+	return(check_count(mdoc, MDOC_BODY, CHECK_WARN, CHECK_GT, 0));
 }
 
-
-/*
- * Build these up with macros because they're basically the same check
- * for different inequalities.  Yes, this could be done with functions,
- * but this is reasonable for now.
- */
-
-#define CHECK_CHILD_DEFN(lvl, name, ineq) 			\
-static int 							\
-lvl##_child_##name(struct mdoc *mdoc, const char *p, int sz) 	\
-{ 								\
-	if (mdoc->last->nchild ineq sz)				\
-		return(1); 					\
-	return(lvl##_count(mdoc, #ineq, sz, p, mdoc->last->nchild)); \
+static int
+eerr_eq0(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_EQ, 0));
 }
 
-#define CHECK_BODY_DEFN(name, lvl, func, num) 			\
-static int 							\
-b##lvl##_##name(POST_ARGS) 					\
-{ 								\
-	if (MDOC_BODY != mdoc->last->type) 			\
-		return(1); 					\
-	return(func(mdoc, "multi-line arguments", (num))); 	\
+static int
+eerr_eq1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_EQ, 1));
 }
 
-#define CHECK_ELEM_DEFN(name, lvl, func, num) 			\
-static int							\
-e##lvl##_##name(POST_ARGS) 					\
-{ 								\
-	assert(MDOC_ELEM == mdoc->last->type); 			\
-	return(func(mdoc, "line arguments", (num))); 		\
+static int
+eerr_ge1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_GT, 0));
 }
 
-#define CHECK_HEAD_DEFN(name, lvl, func, num)			\
-static int 							\
-h##lvl##_##name(POST_ARGS) 					\
-{ 								\
-	if (MDOC_HEAD != mdoc->last->type) 			\
-		return(1); 					\
-	return(func(mdoc, "line arguments", (num)));	 	\
+static int
+eerr_le1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_LT, 2));
 }
 
+static int
+ewarn_eq0(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 0));
+}
 
-CHECK_CHILD_DEFN(warn, gt, >)			/* warn_child_gt() */
-CHECK_CHILD_DEFN(err, gt, >)			/* err_child_gt() */
-CHECK_CHILD_DEFN(warn, eq, ==)			/* warn_child_eq() */
-CHECK_CHILD_DEFN(err, eq, ==)			/* err_child_eq() */
-CHECK_CHILD_DEFN(err, lt, <)			/* err_child_lt() */
-CHECK_CHILD_DEFN(warn, lt, <)			/* warn_child_lt() */
-CHECK_BODY_DEFN(ge1, warn, warn_child_gt, 0)	/* bwarn_ge1() */
-CHECK_BODY_DEFN(ge1, err, err_child_gt, 0)	/* berr_ge1() */
-CHECK_ELEM_DEFN(eq0, warn, warn_child_eq, 0)	/* ewarn_eq0() */
-CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_ge1() */
-CHECK_ELEM_DEFN(eq1, err, err_child_eq, 1)	/* eerr_eq1() */
-CHECK_ELEM_DEFN(le1, err, err_child_lt, 2)	/* eerr_le1() */
-CHECK_ELEM_DEFN(ge1, err, err_child_gt, 0)	/* eerr_ge1() */
-CHECK_HEAD_DEFN(eq0, err, err_child_eq, 0)	/* herr_eq0() */
-CHECK_HEAD_DEFN(le1, warn, warn_child_lt, 2)	/* hwarn_le1() */
-CHECK_HEAD_DEFN(ge1, err, err_child_gt, 0)	/* herr_ge1() */
-CHECK_HEAD_DEFN(eq1, warn, warn_child_eq, 1)	/* hwarn_eq1() */
-CHECK_HEAD_DEFN(eq0, warn, warn_child_eq, 0)	/* hwarn_eq0() */
+static int
+ewarn_ge1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_GT, 0));
+}
+
+static int
+herr_eq0(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_HEAD, CHECK_FATAL, CHECK_EQ, 0));
+}
+
+static int
+herr_ge1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_HEAD, CHECK_FATAL, CHECK_GT, 0));
+}
+
+static int
+hwarn_eq0(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_EQ, 0));
+}
+
+static int
+hwarn_eq1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_EQ, 1));
+}
+
+static int
+hwarn_le1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_LT, 2));
+}
 
 
 static int
@@ -860,6 +898,8 @@ pre_an(PRE_ARGS)
 		if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_ARGCOUNT))
 			return(0);
 
+	/* FIXME: this should use a different error message. */
+
 	if (MDOC_Split == n->args->argv[0].arg)
 		n->data.An.auth = AUTH_split;
 	else if (MDOC_Nosplit == n->args->argv[0].arg)
@@ -1092,7 +1132,11 @@ post_an(POST_ARGS)
 
 	np = mdoc->last;
 	if (AUTH__NONE != np->data.An.auth && np->child)
-		return(mdoc_nmsg(mdoc, np, MANDOCERR_ARGCOUNT));
+		return(eerr_eq0(mdoc));
+	/* 
+	 * FIXME: make this ewarn and make sure that the front-ends
+	 * don't print the arguments.
+	 */
 	if (AUTH__NONE != np->data.An.auth || np->child)
 		return(1);
 	return(mdoc_nmsg(mdoc, np, MANDOCERR_NOARGS));
@@ -1189,7 +1233,6 @@ post_it(POST_ARGS)
 static int
 post_bl_head(POST_ARGS) 
 {
-	int		  i;
 	struct mdoc_node *n;
 
 	assert(mdoc->last->parent);
@@ -1203,9 +1246,8 @@ post_bl_head(POST_ARGS)
 		return(1);
 	}
 
-	if (0 == (i = mdoc->last->nchild))
-		return(1);
-	return(warn_count(mdoc, "==", 0, "line arguments", i));
+	/* FIXME: should be ERROR class. */
+	return(hwarn_eq0(mdoc));
 }
 
 
