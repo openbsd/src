@@ -1,7 +1,6 @@
-.\" $OpenBSD: ral.4,v 1.95 2010/04/29 09:20:17 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.96 2010/10/23 14:28:33 damien Exp $
 .\"
-.\" Copyright (c) 2005-2008
-.\"	Damien Bergamini <damien.bergamini@free.fr>
+.\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2010 $
+.Dd $Mdocdate: October 23 2010 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -28,7 +27,7 @@
 The
 .Nm
 driver supports PCI/PCIe/CardBus wireless adapters based on the Ralink RT2500,
-RT2501, RT2600, RT2700 and RT2800 chipsets.
+RT2501, RT2600, RT2700, RT2800 and RT3090 chipsets.
 .Pp
 The RT2500 chipset is the first generation of 802.11b/g adapters from Ralink.
 It consists of two integrated chips, an RT2560 MAC/BBP and an RT2525 radio
@@ -61,6 +60,9 @@ The RT2800 chipset supports two transmit paths and up to three receiver
 paths (2T2R/2T3R).
 It can achieve speeds up to 144Mbps (20MHz bandwidth) and 300Mbps (40MHz
 bandwidth.)
+.Pp
+The RT3090 chipset is the first generation of single-chip 802.11n adapters
+from Ralink.
 .Pp
 These are the modes the
 .Nm
