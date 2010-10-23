@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.36 2010/10/23 16:08:36 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.37 2010/10/23 23:30:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -841,7 +841,7 @@ mdoc_xx_pre(MDOC_ARGS)
 
 	switch (n->tok) {
 	case (MDOC_Bsx):
-		pp = "BSDI BSD/OS";
+		pp = "BSD/OS";
 		break;
 	case (MDOC_Dx):
 		pp = "DragonFly";
