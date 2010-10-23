@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.2 2010/10/23 10:14:45 pirofti Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.3 2010/10/23 17:42:57 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -294,9 +294,9 @@ glxpcib_activate(struct device *self, int act)
 {
 #ifndef SMALL_KERNEL
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
+	uint i;
 #endif
 	int rv = 0;
-	uint i;
 
 	switch (act) {
 	case DVACT_QUIESCE:
