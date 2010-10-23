@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.48 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.49 2010/10/23 14:26:57 phessler Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -131,6 +131,9 @@ dispatch(void)
 		 * a timeout registered, time out the select call then.
 		 */
 another:
+		if (!ifi)
+			error("No interfaces available");
+			
 		if (!ifi->linkstat)
 			interfaces_invalidated = 0;
 
