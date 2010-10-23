@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.1 2010/10/14 21:23:04 pirofti Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.2 2010/10/23 10:14:45 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -311,17 +311,19 @@ glxpcib_activate(struct device *self, int act)
 		}
 #endif
 		rv = config_activate_children(self, act);
+#ifndef SMALL_KERNEL
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			sc->sc_msrsave[i] = rdmsr(glxpcib_msrlist[i]);
+#endif
 
 		break;
 	case DVACT_RESUME:
 #ifndef SMALL_KERNEL
 		if (sc->sc_wdog)
 			glxpcib_wdogctl_cb(sc, sc->sc_wdog_period);
-#endif
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			wrmsr(glxpcib_msrlist[i], sc->sc_msrsave[i]);
+#endif
 		rv = config_activate_children(self, act);
 		break;
 	}
