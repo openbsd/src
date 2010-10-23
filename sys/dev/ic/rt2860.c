@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.64 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.65 2010/10/23 14:24:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -66,8 +66,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/rndvar.h>
-
-#define RAL_DEBUG
 
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2860_debug > 0) printf x; } while (0)
@@ -226,11 +224,7 @@ rt2860_attach(void *xsc, int id)
 	}
 	sc->mac_ver = tmp >> 16;
 	sc->mac_rev = tmp & 0xffff;
-#ifdef RAL_DEBUG
-	/* temporarily enable debug for >=RT3071 */
-	if (sc->mac_ver >= 0x3071)
-		rt2860_debug = 10;
-#endif
+
 	if (sc->mac_ver != 0x2860 &&
 	    (id == PCI_PRODUCT_RALINK_RT2890 ||
 	     id == PCI_PRODUCT_RALINK_RT2790 ||
@@ -1021,7 +1015,8 @@ rt3090_efuse_read_2(struct rt2860_softc *sc, uint16_t addr)
 	tmp |= (addr & ~0xf) << RT3070_EFSROM_AIN_SHIFT | RT3070_EFSROM_KICK;
 	RAL_WRITE(sc, RT3070_EFUSE_CTRL, tmp);
 	for (ntries = 0; ntries < 500; ntries++) {
-		if (!(RAL_READ(sc, RT3070_EFUSE_CTRL) & RT3070_EFSROM_KICK))
+		tmp = RAL_READ(sc, RT3070_EFUSE_CTRL);
+		if (!(tmp & RT3070_EFSROM_KICK))
 			break;
 		DELAY(2);
 	}
@@ -2008,7 +2003,8 @@ rt3090_rf_read(struct rt2860_softc *sc, uint8_t reg)
 	RAL_WRITE(sc, RT3070_RF_CSR_CFG, tmp);
 
 	for (ntries = 0; ntries < 100; ntries++) {
-		if (!(RAL_READ(sc, RT3070_RF_CSR_CFG) & RT3070_RF_KICK))
+		tmp = RAL_READ(sc, RT3070_RF_CSR_CFG);
+		if (!(tmp & RT3070_RF_KICK))
 			break;
 		DELAY(1);
 	}
