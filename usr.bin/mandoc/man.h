@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.27 2010/10/15 20:45:03 schwarze Exp $ */
+/*	$Id: man.h,v 1.28 2010/10/23 15:49:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,8 +17,9 @@
 #ifndef MAN_H
 #define MAN_H
 
-#include <time.h>
-
+/* 
+ * What follows is a list of ALL possible macros. 
+ */
 enum	mant {
 	MAN_br = 0,
 	MAN_TH,
@@ -62,6 +63,9 @@ enum	mant {
 	MAN_MAX
 };
 
+/* 
+ * Type of a syntax node. 
+ */
 enum	man_type {
 	MAN_TEXT,
 	MAN_ELEM,
@@ -71,37 +75,49 @@ enum	man_type {
 	MAN_BODY
 };
 
+/* 
+ * Information from prologue. 
+ */
 struct	man_meta {
-	char		*msec;
-	time_t		 date;
-	char		*rawdate;
-	char		*vol;
-	char		*title;
-	char		*source;
+	char		*msec; /* `TH' section (1, 3p, etc.) */
+	time_t		 date; /* `TH' normalised date */
+	char		*rawdate; /* raw `TH' date */
+	char		*vol; /* `TH' volume */
+	char		*title; /* `TH' title (e.g., FOO) */
+	char		*source; /* `TH' source (e.g., GNU) */
 };
 
+union man_data {
+	struct tbl	*TS;
+};
+
+/* 
+ * Single node in tree-linked AST. 
+ */
 struct	man_node {
-	struct man_node	*parent;
-	struct man_node	*child;
-	struct man_node	*next;
-	struct man_node	*prev;
-	int		 nchild;
+	struct man_node	*parent; /* parent AST node */
+	struct man_node	*child; /* first child AST node */
+	struct man_node	*next; /* sibling AST node */
+	struct man_node	*prev; /* prior sibling AST node */
+	int		 nchild; /* number children */
 	int		 line;
 	int		 pos;
-	enum mant	 tok;
+	enum mant	 tok; /* tok or MAN__MAX if none */
 	int		 flags;
-#define	MAN_VALID	(1 << 0)
-#define	MAN_ACTED	(1 << 1)
-#define	MAN_EOS		(1 << 2)
-	enum man_type	 type;
-	char		*string;
-	struct man_node	*head;
-	struct man_node	*body;
-	union {
-		struct tbl *TS;
-	} data;
+#define	MAN_VALID	(1 << 0) /* has been validated */
+#define	MAN_ACTED	(1 << 1) /* has been acted upon */
+#define	MAN_EOS		(1 << 2) /* at sentence boundary */
+	enum man_type	 type; /* AST node type */
+	char		*string; /* TEXT node argument */
+	struct man_node	*head; /* BLOCK node HEAD ptr */
+	struct man_node	*body; /* BLOCK node BODY ptr */
+	union man_data	 data;
 };
 
+/*
+ * Names of macros.  Index is enum mant.  Indexing into this returns
+ * the normalised name, e.g., man_macronames[MAN_SH] -> "SH".
+ */
 extern	const char *const *man_macronames;
 
 __BEGIN_DECLS

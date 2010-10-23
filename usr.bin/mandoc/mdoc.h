@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.34 2010/10/16 13:38:29 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.35 2010/10/23 15:49:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,16 +17,9 @@
 #ifndef MDOC_H
 #define MDOC_H
 
-/*
- * This library implements a validating scanner/parser for ``mdoc'' roff
- * macro documents, a.k.a. BSD manual page documents.  The mdoc.c file
- * drives the parser, while macro.c describes the macro ontologies.
- * validate.c pre- and post-validates parsed macros, and action.c
- * performs actions on parsed and validated macros.
+/* 
+ * What follows is a list of ALL possible macros. 
  */
-
-/* What follows is a list of ALL possible macros. */
-
 enum	mdoct {
 	MDOC_Ap = 0,
 	MDOC_Dd,
@@ -155,8 +148,9 @@ enum	mdoct {
 	MDOC_MAX
 };
 
-/* What follows is a list of ALL possible macro arguments. */
-
+/* 
+ * What follows is a list of ALL possible macro arguments. 
+ */
 enum	mdocargt {
 	MDOC_Split,
 	MDOC_Nosplit,
@@ -188,7 +182,9 @@ enum	mdocargt {
 	MDOC_ARG_MAX
 };
 
-/* Type of a syntax node. */
+/* 
+ * Type of a syntax node. 
+ */
 enum	mdoc_type {
 	MDOC_TEXT,
 	MDOC_ELEM,
@@ -199,9 +195,12 @@ enum	mdoc_type {
 	MDOC_ROOT
 };
 
-/* Section (named/unnamed) of `Sh'. */
+/* 
+ * Section (named/unnamed) of `Sh'.   Note that these appear in the
+ * conventional order imposed by mdoc.7.
+ */
 enum	mdoc_sec {
-	SEC_NONE,		/* No section, yet. */
+	SEC_NONE = 0, /* No section, yet. */
 	SEC_NAME,
 	SEC_LIBRARY,
 	SEC_SYNOPSIS,
@@ -222,42 +221,58 @@ enum	mdoc_sec {
 	SEC_CAVEATS,
 	SEC_BUGS,
 	SEC_SECURITY,
-	SEC_CUSTOM,		/* User-defined. */
+	SEC_CUSTOM, /* User-defined. */
 	SEC__MAX
 };
 
-/* Information from prologue. */
+/* 
+ * Information from prologue. 
+ */
 struct	mdoc_meta {
-	char		 *msec;
-	char		 *vol;
-	char		 *arch;
-	time_t		  date;
-	char		 *title;
-	char		 *os;
-	char		 *name;
+	char		 *msec; /* `Dt' section (1, 3p, etc.) */
+	char		 *vol; /* `Dt' volume (implied) */
+	char		 *arch; /* `Dt' arch (i386, etc.) */
+	time_t		  date; /* `Dd' normalised date */
+	char		 *title; /* `Dt' title (FOO, etc.) */
+	char		 *os; /* `Os' system (OpenBSD, etc.) */
+	char		 *name; /* leading `Nm' name */
 };
 
-/* An argument to a macro (multiple values = `It -column'). */
+/* 
+ * An argument to a macro (multiple values = `-column xxx yyy'). 
+ */
 struct	mdoc_argv {
-	enum mdocargt  	  arg;
+	enum mdocargt  	  arg; /* type of argument */
 	int		  line;
 	int		  pos;
-	size_t		  sz;
-	char		**value;
+	size_t		  sz; /* elements in "value" */
+	char		**value; /* argument strings */
 };
 
+/*
+ * Reference-counted macro arguments.  These are refcounted because
+ * blocks have multiple instances of the same arguments spread across
+ * the HEAD, BODY, TAIL, and BLOCK node types.
+ */
 struct 	mdoc_arg {
 	size_t		  argc;
 	struct mdoc_argv *argv;
 	unsigned int	  refcnt;
 };
 
+/*
+ * Indicates that a BODY's formatting has ended, but the scope is still
+ * open.  Used for syntax-broken blocks.
+ */
 enum	mdoc_endbody {
 	ENDBODY_NOT = 0,
-	ENDBODY_SPACE,
-	ENDBODY_NOSPACE
+	ENDBODY_SPACE, /* is broken: append a space */
+	ENDBODY_NOSPACE /* is broken: don't append a space */
 };
 
+/*
+ * Normalised `Bl' list type.
+ */
 enum	mdoc_list {
 	LIST__NONE = 0,
 	LIST_bullet,
@@ -273,6 +288,9 @@ enum	mdoc_list {
 	LIST_tag
 };
 
+/*
+ * Normalised `Bd' display type.
+ */
 enum	mdoc_disp {
 	DISP__NONE = 0,
 	DISP_centred,
@@ -282,12 +300,18 @@ enum	mdoc_disp {
 	DISP_literal
 };
 
+/*
+ * Normalised `An' splitting argument. 
+ */
 enum	mdoc_auth {
 	AUTH__NONE = 0,
 	AUTH_split,
 	AUTH_nosplit
 };
 
+/*
+ * Normalised `Bf' font type.
+ */
 enum	mdoc_font {
 	FONT__NONE = 0,
 	FONT_Em,
@@ -295,12 +319,18 @@ enum	mdoc_font {
 	FONT_Sy
 };
 
+/*
+ * Normalised arguments for `Bd'.
+ */
 struct	mdoc_bd {
 	const char	 *offs; /* -offset */
 	enum mdoc_disp	  type; /* -ragged, etc. */
 	int		  comp; /* -compact */
 };
 
+/*
+ * Normalised arguments for `Bl'.
+ */
 struct	mdoc_bl {
 	const char	 *width; /* -width */
 	const char	 *offs; /* -offset */
@@ -310,15 +340,36 @@ struct	mdoc_bl {
 	const char	**cols; /* -column val ptr */
 };
 
+/*
+ * Normalised arguments for `Bf'.
+ */
 struct	mdoc_bf {
 	enum mdoc_font	  font; /* font */
 };
 
+/*
+ * Normalised arguments for `An'.
+ */
 struct	mdoc_an {
 	enum mdoc_auth	  auth; /* -split, etc. */
 };
 
-/* Node in AST. */
+/*
+ * Consists of normalised node arguments.  These should be used instead
+ * of iterating through the mdoc_arg pointers of a node: defaults are
+ * provided, etc.
+ */
+union mdoc_data {
+	struct mdoc_an 	  An;
+	struct mdoc_bd	 *Bd;
+	struct mdoc_bf	 *Bf;
+	struct mdoc_bl	 *Bl;
+	struct tbl	 *TS;
+};
+
+/* 
+ * Single node in tree-linked AST. 
+ */
 struct	mdoc_node {
 	struct mdoc_node *parent; /* parent AST node */
 	struct mdoc_node *child; /* first child AST node */
@@ -338,33 +389,32 @@ struct	mdoc_node {
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
 	/* FIXME: these can be union'd to shave a few bytes. */
-	struct mdoc_arg	 *args; 	/* BLOCK/ELEM */
-	struct mdoc_node *pending;	/* BLOCK */
-	struct mdoc_node *head;		/* BLOCK */
-	struct mdoc_node *body;		/* BLOCK */
-	struct mdoc_node *tail;		/* BLOCK */
-	char		 *string;	/* TEXT */
-	enum mdoc_endbody end;		/* BODY */
-
-	union {
-		struct mdoc_an	 An;
-		struct mdoc_bd	*Bd;
-		struct mdoc_bf	*Bf;
-		struct mdoc_bl	*Bl;
-		struct tbl	*TS;
-	} data;
+	struct mdoc_arg	 *args; /* BLOCK/ELEM */
+	struct mdoc_node *pending; /* BLOCK */
+	struct mdoc_node *head; /* BLOCK */
+	struct mdoc_node *body; /* BLOCK */
+	struct mdoc_node *tail; /* BLOCK */
+	char		 *string; /* TEXT */
+	enum mdoc_endbody end; /* BODY */
+	union mdoc_data	  data;
 };
 
-/* See mdoc.3 for documentation. */
-
+/*
+ * Names of macros.  Index is enum mdoct.  Indexing into this returns
+ * the normalised name, e.g., mdoc_macronames[MDOC_Sh] -> "Sh".
+ */
 extern	const char *const *mdoc_macronames;
+
+/*
+ * Names of macro args.  Index is enum mdocargt.  Indexing into this
+ * returns the normalised name, e.g., mdoc_argnames[MDOC_File] ->
+ * "file".
+ */
 extern	const char *const *mdoc_argnames;
 
 __BEGIN_DECLS
 
 struct	mdoc;
-
-/* See mdoc.3 for documentation. */
 
 void	 	  mdoc_free(struct mdoc *);
 struct	mdoc	 *mdoc_alloc(struct regset *, void *, mandocmsg);

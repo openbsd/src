@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.15 2010/10/16 20:49:37 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.16 2010/10/23 15:49:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,31 +17,34 @@
 #ifndef MANDOC_H
 #define MANDOC_H
 
-/*
- * This contains declarations that are available system-wide.
- */
-
 #define ASCII_NBRSP	 31  /* non-breaking space */
 #define	ASCII_HYPH	 30  /* breakable hyphen */
 
-__BEGIN_DECLS
-
+/*
+ * Status level.  This refers to both internal status (i.e., whilst
+ * running, when warnings/errors are reported) and an indicator of a
+ * threshold of when to halt (when said internal state exceeds the
+ * threshold).
+ */
 enum	mandoclevel {
 	MANDOCLEVEL_OK = 0,
 	MANDOCLEVEL_RESERVED,
-	MANDOCLEVEL_WARNING,
-	MANDOCLEVEL_ERROR,
-	MANDOCLEVEL_FATAL,
-	MANDOCLEVEL_BADARG,
-	MANDOCLEVEL_SYSERR,
+	MANDOCLEVEL_WARNING, /* warnings: syntax, whitespace, etc. */
+	MANDOCLEVEL_ERROR, /* input has been thrown away */
+	MANDOCLEVEL_FATAL, /* input is borked */
+	MANDOCLEVEL_BADARG, /* bad argument in invocation */
+	MANDOCLEVEL_SYSERR, /* system error */
 	MANDOCLEVEL_MAX
 };
 
+/*
+ * All possible things that can go wrong within a parse, be it libroff,
+ * libmdoc, or libman.
+ */
 enum	mandocerr {
 	MANDOCERR_OK,
 
-	MANDOCERR_WARNING, /* ===== end of warnings ===== */
-
+	MANDOCERR_WARNING, /* ===== start of warnings ===== */
 	MANDOCERR_UPPERCASE, /* text should be uppercase */
 	MANDOCERR_SECOOO, /* sections out of conventional order */
 	MANDOCERR_SECREP, /* section name repeats */
@@ -64,8 +67,7 @@ enum	mandocerr {
 	MANDOCERR_EOLNSPACE, /* end of line whitespace */
 	MANDOCERR_SCOPENEST, /* blocks badly nested */
 
-	MANDOCERR_ERROR, /* ===== end of errors ===== */
-
+	MANDOCERR_ERROR, /* ===== start of errors ===== */
 	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
 	MANDOCERR_BADBOOL, /* bad Boolean value */
 	MANDOCERR_CHILD, /* child violates parent syntax */
@@ -102,8 +104,7 @@ enum	mandocerr {
 	MANDOCERR_IGNPAR, /* paragraph macro ignored */
 	MANDOCERR_TBL, /* tbl(1) error */
 
-	MANDOCERR_FATAL, /* ===== end of fatal errors ===== */
-
+	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_NESTEDDISP, /* displays may not be nested */
@@ -118,13 +119,23 @@ enum	mandocerr {
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
 	MANDOCERR_UTSNAME, /* utsname system call failed */
 	MANDOCERR_MEM, /* static buffer exhausted */
-
 	MANDOCERR_MAX
 };
 
+/*
+ * Available registers (set in libroff, accessed elsewhere).
+ */
 enum	regs {
-	REG_nS = 0,	/* register: nS */
+	REG_nS = 0,
 	REG__MAX
+};
+
+/*
+ * A register (struct reg) can consist of many types: this consists of
+ * normalised types from the original string form.
+ */
+union	regval {
+	unsigned  u; /* unsigned integer */
 };
 
 /*
@@ -135,9 +146,7 @@ enum	regs {
  */
 struct	reg {
 	int		  set; /* whether set or not */
-	union {
-		unsigned  u; /* unsigned integer */
-	} v;
+	union regval	  v; /* parsed data */
 };
 
 /*
@@ -148,6 +157,8 @@ struct	reg {
 struct	regset {
 	struct reg	  regs[REG__MAX];
 };
+
+__BEGIN_DECLS
 
 /*
  * Callback function for warnings, errors, and fatal errors as they
