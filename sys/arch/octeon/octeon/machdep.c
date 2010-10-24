@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2010/10/01 16:13:59 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.4 2010/10/24 15:40:03 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -133,7 +133,6 @@ caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
-void	build_trampoline(vaddr_t, vaddr_t);
 void	dumpsys(void);
 void	dumpconf(void);
 extern	void parsepmonbp(void);
@@ -450,73 +449,6 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 }
 
 /*
- * Build a tlb trampoline
- */
-void
-build_trampoline(vaddr_t addr, vaddr_t dest)
-{
-	const uint32_t insns[] = {
-		0x3c1a0000,	/* lui k0, imm16 */
-		0x675a0000,	/* daddiu k0, k0, imm16 */
-		0x001ad438,	/* dsll k0, k0, 0x10 */
-		0x675a0000,	/* daddiu k0, k0, imm16 */
-		0x001ad438,	/* dsll k0, k0, 0x10 */
-		0x675a0000,	/* daddiu k0, k0, imm16 */
-		0x03400008,	/* jr k0 */
-		0x00000000	/* nop */
-	};
-	uint32_t *dst = (uint32_t *)addr;
-	const uint32_t *src = insns;
-	uint32_t a, b, c, d;
-
-	/*
-	 * Decompose the handler address in the four components which,
-	 * added with sign extension, will produce the correct address.
-	 */
-	d = dest & 0xffff;
-	dest >>= 16;
-	if (d & 0x8000)
-		dest++;
-	c = dest & 0xffff;
-	dest >>= 16;
-	if (c & 0x8000)
-		dest++;
-	b = dest & 0xffff;
-	dest >>= 16;
-	if (b & 0x8000)
-		dest++;
-	a = dest & 0xffff;
-
-	/*
-	 * Build the trampoline, skipping noop computations.
-	 */
-	*dst++ = *src++ | a;
-	if (b != 0)
-		*dst++ = *src++ | b;
-	else
-		src++;
-	*dst++ = *src++;
-	if (c != 0)
-		*dst++ = *src++ | c;
-	else
-		src++;
-	*dst++ = *src++;
-	if (d != 0)
-		*dst++ = *src++ | d;
-	else
-		src++;
-	*dst++ = *src++;
-	*dst++ = *src++;
-
-	/*
-	 * Note that we keep the delay slot instruction a nop, instead
-	 * of branching to the second instruction of the handler and
-	 * having its first instruction in the delay slot, so that the
-	 * tlb handler is free to use k0 immediately.
-	 */
-}
-
-/*
  * Console initialization: called early on from main, before vm init or startup.
  * Do enough configuration to choose and initialize a console.
  */
@@ -604,38 +536,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return EOPNOTSUPP;
 	}
 }
-
-/*
- * Set registers on exec for native exec format. For o64/64.
- */
-void
-setregs(p, pack, stack, retval)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
-{
-	struct cpu_info *ci = curcpu();
-
-	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trap_frame));
-	p->p_md.md_regs->sp = stack;
-	p->p_md.md_regs->pc = pack->ep_entry & ~3;
-	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
-	p->p_md.md_regs->sr = SR_FR_32 | SR_XX | SR_KSU_USER | SR_KX | SR_UX |
-	    SR_EXL | SR_INT_ENAB;
-	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;
-	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
-	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (ci->ci_fpuproc == p)
-		ci->ci_fpuproc = NULL;
-	p->p_md.md_ss_addr = 0;
-	p->p_md.md_pc_ctrl = 0;
-	p->p_md.md_watch_1 = 0;
-	p->p_md.md_watch_2 = 0;
-
-	retval[1] = 0;
-}
-
 
 int	waittime = -1;
 
