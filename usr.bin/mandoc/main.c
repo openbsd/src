@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.49 2010/10/16 20:49:37 schwarze Exp $ */
+/*	$Id: main.c,v 1.50 2010/10/24 18:15:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -121,6 +121,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"bad date argument",
 	"bad width argument",
 	"unknown manual section",
+	"nested displays are not portable",
 	"section not in conventional manual section",
 	"end of line whitespace",
 	"blocks badly nested",
@@ -148,8 +149,10 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"line scope broken",
 	"argument count wrong",
 	"request scope close w/none open",
+	"missing end of block",
 	"scope already open",
 	"scope open on exit",
+	"uname(3) system call failed",
 	"macro requires line argument(s)",
 	"macro requires body argument(s)",
 	"macro requires argument(s)",
@@ -165,17 +168,13 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"generic fatal error",
 
 	"column syntax is inconsistent",
-	"displays may not be nested",
 	"unsupported display type",
-	"blocks badly nested",
-	"no such block is open",
 	"line scope broken, syntax violated",
 	"argument count wrong, violates syntax",
 	"child violates parent syntax",
 	"argument count wrong, violates syntax",
 	"no document body",
 	"no document prologue",
-	"utsname system call failed",
 	"static buffer exhausted",
 };
 

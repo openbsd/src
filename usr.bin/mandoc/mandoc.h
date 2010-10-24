@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.16 2010/10/23 15:49:30 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.17 2010/10/24 18:15:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -63,6 +63,7 @@ enum	mandocerr {
 	MANDOCERR_BADDATE, /* bad date argument */
 	MANDOCERR_BADWIDTH, /* bad width argument */
 	MANDOCERR_BADMSEC, /* unknown manual section */
+	MANDOCERR_NESTEDDISP, /* nested displays are not portable */
 	MANDOCERR_SECMSEC, /* section not in conventional manual section */
 	MANDOCERR_EOLNSPACE, /* end of line whitespace */
 	MANDOCERR_SCOPENEST, /* blocks badly nested */
@@ -89,8 +90,10 @@ enum	mandocerr {
 	MANDOCERR_LINESCOPE, /* line scope broken */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
 	MANDOCERR_NOSCOPE, /* no such block is open */
+	MANDOCERR_SCOPEBROKEN, /* missing end of block */
 	MANDOCERR_SCOPEREP, /* scope already open */
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
+	MANDOCERR_UNAME, /* uname(3) system call failed */
 	/* FIXME: merge following with MANDOCERR_ARGCOUNT */
 	MANDOCERR_NOARGS, /* macro requires line argument(s) */
 	MANDOCERR_NOBODY, /* macro requires body argument(s) */
@@ -106,18 +109,13 @@ enum	mandocerr {
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
-	/* FIXME: this should be a MANDOCERR_ERROR */
-	MANDOCERR_NESTEDDISP, /* displays may not be nested */
 	MANDOCERR_BADDISP, /* unsupported display type */
-	MANDOCERR_SCOPEFATAL, /* blocks badly nested */
-	MANDOCERR_SYNTNOSCOPE, /* no scope to rewind: syntax violated */
 	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
-	MANDOCERR_UTSNAME, /* utsname system call failed */
 	MANDOCERR_MEM, /* static buffer exhausted */
 	MANDOCERR_MAX
 };

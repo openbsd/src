@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.45 2010/10/16 13:38:29 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.46 2010/10/24 18:15:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -600,8 +600,7 @@ post_os(POST_ARGS)
 	struct utsname	  utsname;
 #endif
 
-	if (m->meta.os)
-		free(m->meta.os);
+	free(m->meta.os);
 
 	if ( ! concat(m, buf, n->child, BUFSIZ))
 		return(0);
@@ -617,14 +616,17 @@ post_os(POST_ARGS)
 			return(0);
 		}
 #else /*!OSNAME */
-		if (-1 == uname(&utsname))
-			return(mdoc_nmsg(m, n, MANDOCERR_UTSNAME));
+		if (uname(&utsname)) {
+			mdoc_nmsg(m, n, MANDOCERR_UNAME);
+			m->meta.os = mandoc_strdup("UNKNOWN");
+			return(post_prol(m, n));
+		}
 
 		if (strlcat(buf, utsname.sysname, BUFSIZ) >= BUFSIZ) {
 			mdoc_nmsg(m, n, MANDOCERR_MEM);
 			return(0);
 		}
-		if (strlcat(buf, " ", 64) >= BUFSIZ) {
+		if (strlcat(buf, " ", BUFSIZ) >= BUFSIZ) {
 			mdoc_nmsg(m, n, MANDOCERR_MEM);
 			return(0);
 		}

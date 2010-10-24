@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.73 2010/10/23 17:04:51 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.74 2010/10/24 18:15:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -549,21 +549,17 @@ pre_display(PRE_ARGS)
 {
 	struct mdoc_node *node;
 
-	/* Display elements (`Bd', `D1'...) cannot be nested. */
-
 	if (MDOC_BLOCK != n->type)
 		return(1);
 
-	/* LINTED */
 	for (node = mdoc->last->parent; node; node = node->parent) 
 		if (MDOC_BLOCK == node->type)
 			if (MDOC_Bd == node->tok)
 				break;
-	if (NULL == node)
-		return(1);
+	if (node)
+		mdoc_nmsg(mdoc, n, MANDOCERR_NESTEDDISP);
 
-	mdoc_nmsg(mdoc, n, MANDOCERR_NESTEDDISP);
-	return(0);
+	return(1);
 }
 
 
