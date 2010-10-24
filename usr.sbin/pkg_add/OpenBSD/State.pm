@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.17 2010/10/02 13:33:05 espie Exp $
+# $OpenBSD: State.pm,v 1.18 2010/10/24 17:04:47 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -388,10 +388,31 @@ sub child_error
 	}
 }
 
+sub _system
+{
+	my ($self, $todo) = (shift, shift);
+	my $r = fork;
+	if (!defined $r) {
+		return 1;
+	} elsif ($r == 0) {
+		&$todo;
+		exec {$_[0]} @_ or return 1;
+	} else {
+		waitpid($r, 0);
+		return $?;
+	}
+}
+
 sub system
 {
 	my $self = shift;
-	my $r = CORE::system(@_);
+	my $todo;
+	if (ref $_[0] eq 'CODE') {
+		$todo = shift;
+	} else {
+		$todo = sub {};
+	}
+	my $r = $self->_system($todo, @_);
 	if ($r != 0) {
 		$self->say("system(#1) failed: #2",
 		    join(", ", @_), $self->child_error);
@@ -402,9 +423,15 @@ sub system
 sub verbose_system
 {
 	my $self = shift;
+	my $todo;
+	if (ref $_[0] eq 'CODE') {
+		$todo = shift;
+	} else {
+		$todo = sub {};
+	}
 
 	$self->print("Running #1", join(' ', @_));
-	my $r = CORE::system(@_);
+	my $r = $self->_system($todo, @_);
 	if ($r != 0) {
 		$self->say("... failed: #1", $self->child_error);
 	} else {
