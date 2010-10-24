@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.75 2010/10/24 13:54:14 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.76 2010/10/24 15:54:58 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -473,7 +473,8 @@ This also selects a %%native%% plist fragment depending on whether
 the architecture supports native compilation or not.
 .It lang/python
 Sets MODPY_VERSION, MODPY_BIN, MODPY_INCDIR, MODPY_LIBDIR, MODPY_SITEPKG,
-MODPY_SETUP, MODPY_LIB_DEPENDS, MODPY_RUN_DEPENDS, MODPY_BUILD_DEPENDS.
+MODPY_SETUP, MODPY_WANTLIB, MODPY_LIB_DEPENDS, MODPY_RUN_DEPENDS,
+MODPY_BUILD_DEPENDS.
 Appends to RUN_DEPENDS unless MODPY_RUNDEP is set to No.
 Appends to BUILD_DEPENDS unless MODPY_BUILDDEP is set to No or NO_BUILD
 is set to Yes.
