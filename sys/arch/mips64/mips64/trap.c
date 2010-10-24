@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.69 2010/09/21 21:59:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.70 2010/10/24 15:39:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -684,7 +684,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 #ifdef RM7K_PERFCNTR
 		if (rm7k_watchintr(trapframe)) {
 			/* Return to user, don't add any more overhead */
-			return;
+			goto out;
 		}
 #endif
 		i = SIGTRAP;
@@ -718,7 +718,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 						trapframe->a2, trapframe->a3);
 			locr0->v0 = -result;
 			/* Return to user, don't add any more overhead */
-			return;
+			goto out;
 		} else
 #endif
 		/*
