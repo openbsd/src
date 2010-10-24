@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.23 2010/10/02 13:33:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.24 2010/10/24 17:06:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -390,7 +390,8 @@ sub makesum_plist
 		return $self->SUPER::makesum_plist($plist, $state);
 	}
 	my $dest = $self->source_to_dest;
-	$self->format($state->{base}, $self->cwd."/".$dest);
+	my $out = $state->{base}.$self->cwd."/".$dest;
+	$self->format($state, $self->cwd."/".$dest);
 	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
 	$e->compute_checksum($e, $state, $state->{base});
 }

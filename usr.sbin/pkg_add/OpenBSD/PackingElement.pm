@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.185 2010/10/19 11:37:59 sthen Exp $
+# $OpenBSD: PackingElement.pm,v 1.186 2010/10/24 17:06:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -512,8 +512,11 @@ sub source_to_dest
 # assumes the source is nroff, launches nroff
 sub format
 {
-	my ($self, $base, $out) = @_;
-	my $fname = $base."/".$self->fullname;
+	my ($self, $state, $dest) = @_;
+
+	my $base = $state->{base};
+	my $fname = $base.$self->fullname;
+	$dest = "$base$dest";
 	open(my $fh, '<', $fname) or die "Can't read $fname";
 	my $line = <$fh>;
 	close $fh;
@@ -528,15 +531,22 @@ sub format
 			}
 		}
 	}
-	open my $oldout, '>&STDOUT';
-	my $dir = dirname("$base/$out");
-	unless (-d $dir) {
-		mkdir($dir);
+	my $d = dirname($dest);
+	unless (-d $d) {
+		mkdir($d);
 	}
-	open STDOUT, '>', "$base/$out" or die "Can't write to $base/$out";
-	system(OpenBSD::Paths->groff,
-	    '-Tascii', '-mandoc', '-Wall', '-mtty-char', @extra, '--', $fname);
-	open STDOUT, '>&', $oldout;
+	if (my ($dir, $file) = $fname =~ m/^(.*)\/([^\/]+\/[^\/]+)$/) {
+		$state->system(sub {
+		    open STDOUT, '>', "$dest" or 
+			die "Can't write to $dest";
+		    chdir($dir) or die "Can't chdir to $dir";
+		    }, 
+		    OpenBSD::Paths->groff,
+		    '-Tascii', '-mandoc', '-Wall', '-mtty-char', @extra, '--', 
+		    $file);
+	} else {
+		die "Can't parse source name $fname";
+	}
 }
 
 package OpenBSD::PackingElement::Mandoc;
