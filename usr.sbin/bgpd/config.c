@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.55 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: config.c,v 1.56 2010/10/24 17:20:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -332,7 +332,7 @@ get_mpe_label(struct rdomain *r)
 	strlcpy(ifr.ifr_name, r->ifmpe, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&shim;
 
-	if (ioctl(s, SIOCGETLABEL , (caddr_t)&ifr) == -1) {
+	if (ioctl(s, SIOCGETLABEL, (caddr_t)&ifr) == -1) {
 		close(s);
 		return (-1);
 	}

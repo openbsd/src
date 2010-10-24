@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.262 2010/06/27 19:53:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.263 2010/10/24 17:20:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -532,7 +532,7 @@ struct ctl_show_nexthop {
 		struct kroute6		kr6;
 	} kr;
 	u_int8_t		valid;
-	u_int8_t		krvalid;;
+	u_int8_t		krvalid;
 };
 
 struct ctl_neighbor {
