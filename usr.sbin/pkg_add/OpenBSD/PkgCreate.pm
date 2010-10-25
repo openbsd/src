@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.24 2010/10/24 17:06:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.25 2010/10/25 18:00:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -392,6 +392,11 @@ sub makesum_plist
 	my $dest = $self->source_to_dest;
 	my $out = $state->{base}.$self->cwd."/".$dest;
 	$self->format($state, $self->cwd."/".$dest);
+	if (-z $out) {
+		$state->errsay("groff produced empty result for #1", $dest);
+		$state->errsay("\tkeeping source manpage");
+		return $self->SUPER::makesum_plist($plist, $state);
+	}
 	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
 	$e->compute_checksum($e, $state, $state->{base});
 }
