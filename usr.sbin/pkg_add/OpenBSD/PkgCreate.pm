@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.25 2010/10/25 18:00:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.26 2010/10/25 21:33:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -157,7 +157,12 @@ sub compute_checksum
 	if (defined $base) {
 		$fname = $base.$fname;
 	}
-
+	for my $field (qw(symlink link size)) {  # md5
+		if (defined $result->{$field}) {
+			$state->error("User tried to define @#1 for #2", 
+			    $field, $fname);
+		}
+	}
 	if (-l $fname) {
 		if (!defined $base) {
 			$state->error("special file #1 can't be a symlink",
