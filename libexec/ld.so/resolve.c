@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.51 2010/08/11 01:14:27 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.52 2010/10/25 20:34:44 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -113,7 +113,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	if (object->Dyn.info[DT_RELA])
 		object->Dyn.info[DT_RELA] += obase;
 	if (object->Dyn.info[DT_SONAME])
-		object->Dyn.info[DT_SONAME] += obase;
+		object->Dyn.info[DT_SONAME] += object->Dyn.info[DT_STRTAB];
 	if (object->Dyn.info[DT_RPATH])
 		object->Dyn.info[DT_RPATH] += object->Dyn.info[DT_STRTAB];
 	if (object->Dyn.info[DT_REL])
@@ -202,6 +202,8 @@ _dl_cleanup_objects()
 	while (head != NULL) {
 		if (head->load_name)
 			_dl_free(head->load_name);
+		if (head->sod.sod_name)
+			_dl_free((char *)head->sod.sod_name);
 		_dl_tailq_free(TAILQ_FIRST(&head->grpsym_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->child_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->grpref_list));
@@ -225,20 +227,6 @@ _dl_remove_object(elf_object_t *object)
 	free_objects = object;
 }
 
-
-elf_object_t *
-_dl_lookup_object(const char *name)
-{
-	elf_object_t *object;
-
-	object = _dl_objects;
-	while (object) {
-		if (_dl_strcmp(name, object->load_name) == 0)
-			return(object);
-		object = object->next;
-	}
-	return(0);
-}
 
 int _dl_find_symbol_obj(elf_object_t *object, const char *name,
     unsigned long hash, int flags, const Elf_Sym **ref,

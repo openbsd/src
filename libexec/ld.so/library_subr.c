@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.31 2010/07/01 19:25:44 drahn Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.32 2010/10/25 20:34:44 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -59,11 +59,11 @@ struct dlochld _dlopened_child_list;
  */
 
 int
-_dl_match_file(struct sod *sodp, char *name, int namelen)
+_dl_match_file(struct sod *sodp, const char *name, int namelen)
 {
 	int match;
 	struct sod lsod;
-	char *lname;
+	const char *lname;
 
 	lname = name;
 	if (sodp->sod_library) {
@@ -90,6 +90,35 @@ _dl_match_file(struct sod *sodp, char *name, int namelen)
 		sodp->sod_minor = lsod.sod_minor;
 	}
 	_dl_free((char *)lsod.sod_name);
+	return match;
+}
+
+/*
+ * _dl_cmp_sod()
+ *
+ * This fucntion compares sod structs. The major must match exactly,
+ * and the minor must be same or larger.
+ *
+ * sodp is updated with the minor if this matches.
+ */
+
+int
+_dl_cmp_sod(struct sod *sodp, const struct sod *lsod)
+{
+	int match;
+
+	match = 1;
+	if ((_dl_strcmp((char *)lsod->sod_name, (char *)sodp->sod_name) == 0) &&
+	    (lsod->sod_library == sodp->sod_library) &&
+	    ((sodp->sod_major == -1) || (sodp->sod_major == lsod->sod_major)) &&
+	    ((sodp->sod_minor == -1) ||
+	    (lsod->sod_minor >= sodp->sod_minor))) {
+		match = 0;
+
+		/* return version matched */
+		sodp->sod_major = lsod->sod_major;
+		sodp->sod_minor = lsod->sod_minor;
+	}
 	return match;
 }
 
@@ -227,8 +256,67 @@ nohints:
 	return NULL;
 }
 
+elf_object_t *
+_dl_lookup_object(const char *req_name, struct sod *req_sod)
+{
+	elf_object_t *object = _dl_objects;
+
+	while (object) {
+		char *soname;
+
+		if (_dl_cmp_sod(req_sod, &object->sod) == 0)
+			return(object);
+
+		soname = (char *)object->Dyn.info[DT_SONAME];
+		if (soname != NULL) {
+			if (_dl_strcmp(req_name, soname) == 0)
+				return(object);
+		}
+
+		object = object->next;
+	}
+
+	return(NULL);
+}
+
+elf_object_t *
+_dl_find_loaded_shlib(const char *req_name, struct sod req_sod, int flags)
+{
+	elf_object_t *object;
+
+	object = _dl_lookup_object(req_name, &req_sod);
+
+	/* if not found retry with any minor */
+	if (object == NULL && req_sod.sod_library && req_sod.sod_minor != -1) {
+		short orig_minor = req_sod.sod_minor;
+		req_sod.sod_minor = -1;
+		object = _dl_lookup_object(req_name, &req_sod);
+
+		if (object != NULL && req_sod.sod_minor < orig_minor)
+			_dl_printf("warning: lib%s.so.%d.%d: "
+			    "minor version >= %d expected, "
+			    "using it anyway\n",
+			    req_sod.sod_name, req_sod.sod_major,
+			    req_sod.sod_minor, orig_minor);
+	}
+
+	if (object) {	/* Already loaded */
+		object->obj_flags |= flags & RTLD_GLOBAL;
+		if (_dl_loading_object == NULL)
+			_dl_loading_object = object;
+		if (object->load_object != _dl_objects &&
+		    object->load_object != _dl_loading_object) {
+			_dl_link_grpref(object->load_object, _dl_loading_object);
+		}
+	}
+
+	return (object);
+}
+
 /*
  *  Load a shared object. Search order is:
+ *      First check loaded objects for a matching shlib, otherwise:
+ *
  *	If the name contains a '/' use only the path preceding the
  *	library name and do not continue on to other methods if not
  *	found.
@@ -302,6 +390,12 @@ fullpathdone:
 	_dl_build_sod(libname, &sod);
 	req_sod = sod;
 
+	object = _dl_find_loaded_shlib(libname, req_sod, flags);
+	if (object) {
+		_dl_free((char *)sod.sod_name);
+		return (object);
+	}
+
 again:
 	/* No '/' in name. Scan the known places, LD_LIBRARY_PATH first.  */
 	if (_dl_libpath != NULL) {
@@ -345,8 +439,14 @@ done:
 			    sod.sod_name, sod.sod_major,
 			    req_sod.sod_minor, sod.sod_minor);
 		object = _dl_tryload_shlib(hint, type, flags);
+		if (object) {
+			object->sod = req_sod;
+		} else {
+			_dl_free((char *)sod.sod_name);
+		}
+	} else {
+		_dl_free((char *)sod.sod_name);
 	}
-	_dl_free((char *)sod.sod_name);
 	return(object);
 }
 

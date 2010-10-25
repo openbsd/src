@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.36 2008/10/02 20:12:08 kurt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.37 2010/10/25 20:34:44 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -97,18 +97,6 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
-
-	object = _dl_lookup_object(libname);
-	if (object) {
-		object->obj_flags |= flags & RTLD_GLOBAL;
-		if (_dl_loading_object == NULL)
-			_dl_loading_object = object;
-		if (object->load_object != _dl_objects &&
-		    object->load_object != _dl_loading_object) {
-			_dl_link_grpref(object->load_object, _dl_loading_object);
-		}
-		return(object);		/* Already loaded */
-	}
 
 	libfile = _dl_open(libname, O_RDONLY);
 	if (libfile < 0) {

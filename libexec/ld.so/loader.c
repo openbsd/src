@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.119 2010/07/01 19:25:44 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.120 2010/10/25 20:34:44 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -58,6 +58,7 @@ void _dl_setup_env(char **);
 void _dl_dtors(void);
 void _dl_boot_bind(const long, long *, Elf_Dyn *);
 void _dl_fixup_user_env(void);
+void _dl_set_sod(const char *, struct sod *);
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -76,6 +77,17 @@ char *_dl_tracefmt1, *_dl_tracefmt2, *_dl_traceprog;
 struct r_debug *_dl_debug_map;
 
 void _dl_dopreload(char *paths);
+
+void
+_dl_set_sod(const char *path, struct sod *sod)
+{
+	char *fname = _dl_strrchr(path, '/');
+
+	if (fname != NULL)
+		_dl_build_sod(++fname, sod);
+	else
+		_dl_build_sod(path, sod);
+}
 
 void
 _dl_debug_state(void)
@@ -472,6 +484,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	exe_obj->load_list = load_list;
 	exe_obj->obj_flags |= RTLD_GLOBAL;
 	exe_obj->load_size = maxva - minva;
+	_dl_set_sod(exe_obj->load_name, &exe_obj->sod);
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -501,6 +514,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	_dl_link_grpsym(dyn_obj, 1);
 
 	dyn_obj->status |= STAT_RELOC_DONE;
+	_dl_set_sod(dyn_obj->load_name, &dyn_obj->sod);
 
 	/*
 	 * Everything should be in place now for doing the relocation
