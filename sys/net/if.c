@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.225 2010/08/27 17:08:01 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.226 2010/10/25 11:33:06 blambert Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ RB_HEAD(ifaddr_items, ifaddr_item) ifaddr_items = RB_INITIALIZER(&ifaddr_items);
 RB_PROTOTYPE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
 RB_GENERATE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
 
-TAILQ_HEAD(, ifg_group) ifg_head;
+TAILQ_HEAD(, ifg_group) ifg_head = TAILQ_HEAD_INITIALIZER(ifg_head);
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
@@ -190,7 +190,7 @@ static int if_index = 0;
 int if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
-struct ifnet_head ifnet;
+struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
 struct ifnet_head iftxlist = TAILQ_HEAD_INITIALIZER(iftxlist);
 struct ifnet *lo0ifp;
 
@@ -443,10 +443,6 @@ void
 if_attach_common(struct ifnet *ifp)
 {
 
-	if (if_index == 0) {
-		TAILQ_INIT(&ifnet);
-		TAILQ_INIT(&ifg_head);
-	}
 	TAILQ_INIT(&ifp->if_addrlist);
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
 	    M_TEMP, M_NOWAIT);
