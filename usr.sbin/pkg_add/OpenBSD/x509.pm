@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: x509.pm,v 1.9 2010/07/15 13:38:30 espie Exp $
+# $OpenBSD: x509.pm,v 1.10 2010/10/25 21:03:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -77,21 +77,6 @@ sub print_certificate_info
 	unlink $fname;
 }
 
-sub system_quiet
-{
-	my $fh = shift;
-	my $r = fork;
-	if (!defined $r) {
-		return 1;
-	} elsif ($r == 0) {
-		open STDERR, ">&", $fh;
-		exec {$_[0]} @_ or return 1;
-	} else {
-		waitpid($r, 0);
-		return $?;
-	}
-}
-
 sub check_signature
 {
 	my ($plist, $state) = @_;
@@ -107,7 +92,8 @@ sub check_signature
 	close $fh;
 	close $fh2;
 	my ($fh3, $fname3) = mkstemp("/tmp/commandresult.XXXXXXXXX");
-	if (system_quiet ($fh3, OpenBSD::Paths->openssl, "smime", "-verify",
+	if ($state->system(sub { open STDERR ,">&", $fh3}, 
+	    OpenBSD::Paths->openssl, "smime", "-verify",
 	    "-binary", "-inform", "DEM", "-in", $fname2, "-content", $fname,
 	    "-CAfile", OpenBSD::Paths->pkgca, "-out", "/dev/null") != 0) {
 	    	close($fh3);
