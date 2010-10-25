@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.11 2010/07/09 12:42:43 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.12 2010/10/25 21:02:44 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub handle_options
 
 	$state->SUPER::handle_options($opt_string.'mnx', @usage);
 
-	$state->progress->setup($state->opt('x'), $state->opt('m'));
+	$state->progress->setup($state->opt('x'), $state->opt('m'), $state);
 	$state->{not} = $state->opt('n');
 }
 
