@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.50 2008/09/06 12:01:34 djm Exp $	*/
+/*	$OpenBSD: md5.c,v 1.51 2010/10/25 19:05:52 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -475,14 +475,14 @@ void
 digest_file(const char *file, struct hash_list *hl, int echo)
 {
 	struct hash_function *hf;
-	int fd;
-	ssize_t nread;
+	FILE *fp;
+	size_t nread;
 	u_char data[BUFSIZ];
 	char digest[MAX_DIGEST_LEN + 1];
 
 	if (strcmp(file, "-") == 0)
-		fd = STDIN_FILENO;
-	else if ((fd = open(file, O_RDONLY, 0)) == -1) {
+		fp = stdin;
+	else if ((fp = fopen(file, "r")) == NULL) {
 		warn("cannot open %s", file);
 		return;
 	}
@@ -495,25 +495,25 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 			err(1, NULL);
 		hf->init(hf->ctx);
 	}
-	while ((nread = read(fd, data, sizeof(data))) > 0) {
+	while ((nread = fread(data, 1UL, sizeof(data), fp)) != 0) {
 		if (echo)
 			write(STDOUT_FILENO, data, (size_t)nread);
 		TAILQ_FOREACH(hf, hl, tailq)
 			hf->update(hf->ctx, data, (unsigned int)nread);
 	}
-	if (nread == -1) {
+	if (ferror(fp)) {
 		warn("%s: read error", file);
-		if (fd != STDIN_FILENO)
-			close(fd);
+		if (fp != stdin)
+			fclose(fp);
 		return;
 	}
-	if (fd != STDIN_FILENO)
-		close(fd);
+	if (fp != stdin)
+		fclose(fp);
 	TAILQ_FOREACH(hf, hl, tailq) {
 		digest_end(hf, hf->ctx, digest, sizeof(digest), hf->base64);
 		free(hf->ctx);
 		hf->ctx = NULL;
-		if (fd == STDIN_FILENO)
+		if (fp == stdin)
 			(void)puts(digest);
 		else
 			digest_print(hf, file, digest);
@@ -529,22 +529,21 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 int
 digest_filelist(const char *file, struct hash_function *defhash)
 {
-	int fd, found, base64, error, cmp;
+	int found, base64, error, cmp;
 	size_t algorithm_max, algorithm_min;
 	const char *algorithm;
 	char *filename, *checksum, *buf, *p;
 	char digest[MAX_DIGEST_LEN + 1];
 	char *lbuf = NULL;
-	FILE *fp;
-	ssize_t nread;
-	size_t len;
+	FILE *listfp, *fp;
+	size_t len, nread;
 	u_char data[BUFSIZ];
 	union ANY_CTX context;
 	struct hash_function *hf;
 
 	if (strcmp(file, "-") == 0) {
-		fp = stdin;
-	} else if ((fp = fopen(file, "r")) == NULL) {
+		listfp = stdin;
+	} else if ((listfp = fopen(file, "r")) == NULL) {
 		warn("cannot open %s", file);
 		return(1);
 	}
@@ -557,7 +556,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 	}
 
 	error = found = 0;
-	while ((buf = fgetln(fp, &len))) {
+	while ((buf = fgetln(listfp, &len))) {
 		base64 = 0;
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
@@ -654,7 +653,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 		}
 		found = 1;
 
-		if ((fd = open(filename, O_RDONLY, 0)) == -1) {
+		if ((fp = fopen(filename, "r")) == NULL) {
 			warn("cannot open %s", filename);
 			(void)printf("(%s) %s: FAILED\n", algorithm, filename);
 			error = 1;
@@ -662,15 +661,15 @@ digest_filelist(const char *file, struct hash_function *defhash)
 		}
 
 		hf->init(&context);
-		while ((nread = read(fd, data, sizeof(data))) > 0)
+		while ((nread = fread(data, 1UL, sizeof(data), fp)) > 0)
 			hf->update(&context, data, (unsigned int)nread);
-		if (nread == -1) {
+		if (ferror(fp)) {
 			warn("%s: read error", file);
 			error = 1;
-			close(fd);
+			fclose(fp);
 			continue;
 		}
-		close(fd);
+		fclose(fp);
 		digest_end(hf, &context, digest, sizeof(digest), base64);
 
 		if (base64)
@@ -686,8 +685,8 @@ digest_filelist(const char *file, struct hash_function *defhash)
 			error = 1;
 		}
 	}
-	if (fp != stdin)
-		fclose(fp);
+	if (listfp != stdin)
+		fclose(listfp);
 	if (!found)
 		warnx("%s: no properly formatted checksum lines found", file);
 	if (lbuf != NULL)
