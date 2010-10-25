@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.151 2010/10/11 11:45:00 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.152 2010/10/25 19:39:55 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1204,7 +1204,6 @@ char *msgtypes[] = {
 	"RTM_IFINFO: iface status change",
 	"RTM_IFANNOUNCE: iface arrival/departure",
 	"RTM_DESYNC: route socket overflow",
-	NULL
 };
 
 char metricnames[] =
@@ -1247,7 +1246,13 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    rtm->rtm_version);
 		return;
 	}
-	printf("%s: len %d", msgtypes[rtm->rtm_type], rtm->rtm_msglen);
+	if (rtm->rtm_type > 0 &&
+	    rtm->rtm_type < sizeof(msgtypes)/sizeof(msgtypes[0]))
+		printf("%s", msgtypes[rtm->rtm_type]);
+	else
+		printf("[rtm_type %d out of range]", rtm->rtm_type);
+
+	printf(": len %d", rtm->rtm_msglen);	
 	switch (rtm->rtm_type) {
 	case RTM_DESYNC:
 		printf("\n");
