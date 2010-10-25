@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.8 2010/07/13 15:38:27 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.9 2010/10/25 17:42:29 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -98,6 +98,10 @@ sub scan_manpages
 	    }
 	    $_ = $`;
 	} else {
+	    if (-z $_) {
+	    	$p->errsay("Empty file #1", $_);
+		next;
+	    }
 	    unless (open $file, '<', $_) {
 	    	$p->errsay("#1: can't read #2: #3", $0, $_, $!);
 		next;
