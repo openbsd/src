@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.17 2010/10/24 18:15:43 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.18 2010/10/26 22:28:57 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -114,6 +114,7 @@ enum	mandocerr {
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
+	MANDOCERR_SOPATH, /* invalid path in include directive */
 	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
 	MANDOCERR_MEM, /* static buffer exhausted */

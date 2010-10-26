@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.13 2010/09/27 21:25:28 schwarze Exp $ */
+/*	$Id: roff.c,v 1.14 2010/10/26 22:28:57 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,11 +48,12 @@ enum	rofft {
 	ROFF_ie,
 	ROFF_if,
 	ROFF_ig,
+	ROFF_nr,
 	ROFF_rm,
+	ROFF_so,
 	ROFF_tr,
 	ROFF_cblock,
 	ROFF_ccond, /* FIXME: remove this. */
-	ROFF_nr,
 	ROFF_MAX
 };
 
@@ -128,6 +129,7 @@ static	int		 roff_res(struct roff *,
 				char **, size_t *, int);
 static	void		 roff_setstr(struct roff *,
 				const char *, const char *);
+static	enum rofferr	 roff_so(ROFF_ARGS);
 static	char		*roff_strdup(const char *);
 
 /* See roff_hash_find() */
@@ -150,11 +152,12 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "ig", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "nr", roff_nr, NULL, NULL, 0, NULL },
 	{ "rm", roff_line, NULL, NULL, 0, NULL },
+	{ "so", roff_so, NULL, NULL, 0, NULL },
 	{ "tr", roff_line, NULL, NULL, 0, NULL },
 	{ ".", roff_cblock, NULL, NULL, 0, NULL },
 	{ "\\}", roff_ccond, NULL, NULL, 0, NULL },
-	{ "nr", roff_nr, NULL, NULL, 0, NULL },
 };
 
 static	void		 roff_free1(struct roff *);
@@ -1005,6 +1008,23 @@ roff_nr(ROFF_ARGS)
 	}
 
 	return(ROFF_IGN);
+}
+
+
+/* ARGSUSED */
+static enum rofferr
+roff_so(ROFF_ARGS)
+{
+	char *name;
+
+	name = *bufp + pos;
+	if ('/' == *name || strstr(name, "../") || strstr(name, "/..")) {
+		(*r->msg)(MANDOCERR_SOPATH, r->data, ln, pos, NULL);
+		return(ROFF_ERR);
+	}
+
+	*offs = pos;
+	return(ROFF_SO);
 }
 
 

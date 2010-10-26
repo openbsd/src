@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.51 2010/10/26 22:13:58 schwarze Exp $ */
+/*	$Id: main.c,v 1.52 2010/10/26 22:28:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -173,6 +173,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"argument count wrong, violates syntax",
 	"child violates parent syntax",
 	"argument count wrong, violates syntax",
+	"invalid path in include directive",
 	"no document body",
 	"no document prologue",
 	"static buffer exhausted",
@@ -181,6 +182,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 static	void		  pdesc(struct curparse *);
 static	void		  fdesc(struct curparse *);
 static	void		  ffile(const char *, struct curparse *);
+static	int		  pfile(const char *, struct curparse *, int);
 static	int		  moptions(enum intt *, char *);
 static	int		  mmsg(enum mandocerr, void *, 
 				int, int, const char *);
@@ -304,6 +306,35 @@ ffile(const char *file, struct curparse *curp)
 
 	if (-1 == close(curp->fd))
 		perror(curp->file);
+}
+
+static int
+pfile(const char *file, struct curparse *curp, int ln)
+{
+	const char	*savefile;
+	int		 fd, savefd;
+
+	if (-1 == (fd = open(file, O_RDONLY, 0))) {
+		perror(file);
+		exit_status = MANDOCLEVEL_SYSERR;
+		return(0);
+	}
+
+	savefile = curp->file;
+	savefd = curp->fd;
+
+	curp->file = file;
+	curp->fd = fd;
+
+	pdesc(curp);
+
+	curp->file = savefile;
+	curp->fd = savefd;
+
+	if (-1 == close(fd))
+		perror(file);
+
+	return(MANDOCLEVEL_FATAL > exit_status ? 1 : 0);
 }
 
 
@@ -629,6 +660,11 @@ pdesc(struct curparse *curp)
 		} else if (ROFF_ERR == re) {
 			assert(MANDOCLEVEL_FATAL <= exit_status);
 			break;
+		} else if (ROFF_SO == re) {
+			if (pfile(ln.buf + of, curp, lnn_start))
+				continue;
+			else
+				break;
 		}
 
 		/*
