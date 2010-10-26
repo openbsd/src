@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.12 2010/09/01 13:54:54 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.13 2010/10/26 12:03:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -395,8 +395,10 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_MAPPING_ADD:
+		case IMSG_RELEASE_ADD:
+		case IMSG_REQUEST_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))
-				fatalx("invalid size of OE request");
+				fatalx("invalid size of map request");
 			memcpy(&map, imsg.data, sizeof(map));
 
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
@@ -406,40 +408,39 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 				return;
 			}
 
-			nbr_mapping_add(nbr, &nbr->mapping_list, &map);
+			switch (imsg.hdr.type) {
+			case IMSG_MAPPING_ADD:
+				nbr_mapping_add(nbr, &nbr->mapping_list, &map);
+				break;
+			case IMSG_RELEASE_ADD:
+				nbr_mapping_add(nbr, &nbr->release_list, &map);
+				break;
+			case IMSG_REQUEST_ADD:
+				nbr_mapping_add(nbr, &nbr->request_list, &map);
+				break;
+			}
 			break;
 		case IMSG_MAPPING_ADD_END:
-			nbr = nbr_find_peerid(imsg.hdr.peerid);
-			if (nbr == NULL) {
-				log_debug("ldpe_dispatch_lde: cannot find "
-				    "neighbor");
-				return;
-			}
-
-			send_labelmapping(nbr);
-			break;
-		case IMSG_RELEASE_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))
-				fatalx("invalid size of OE request");
-			memcpy(&map, imsg.data, sizeof(map));
-
-			nbr = nbr_find_peerid(imsg.hdr.peerid);
-			if (nbr == NULL) {
-				log_debug("ldpe_dispatch_lde: cannot find "
-				    "neighbor");
-				return;
-			}
-
-			nbr_mapping_add(nbr, &nbr->release_list, &map);
-			break;
 		case IMSG_RELEASE_ADD_END:
+		case IMSG_REQUEST_ADD_END:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL) {
 				log_debug("ldpe_dispatch_lde: cannot find "
 				    "neighbor");
 				return;
 			}
-			send_labelrelease(nbr);
+
+			switch (imsg.hdr.type) {
+			case IMSG_MAPPING_ADD_END:
+				send_labelmapping(nbr);
+				break;
+			case IMSG_RELEASE_ADD_END:
+				send_labelrelease(nbr);
+				break;
+			case IMSG_REQUEST_ADD_END:
+				send_labelrequest(nbr);
+				break;
+			}
 			break;
 		case IMSG_NOTIFICATION_SEND:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(nm))
@@ -455,29 +456,6 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 
 			send_notification_nbr(nbr, nm.status,
 			    htonl(nm.messageid), htonl(nm.type));
-			break;
-		case IMSG_REQUEST_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))
-				fatalx("invalid size of OE request");
-			memcpy(&map, imsg.data, sizeof(map));
-
-			nbr = nbr_find_peerid(imsg.hdr.peerid);
-			if (nbr == NULL) {
-				log_debug("ldpe_dispatch_lde: cannot find "
-				    "neighbor");
-				return;
-			}
-
-			nbr_mapping_add(nbr, &nbr->request_list, &map);
-			break;
-		case IMSG_REQUEST_ADD_END:
-			nbr = nbr_find_peerid(imsg.hdr.peerid);
-			if (nbr == NULL) {
-				log_debug("ldpe_dispatch_lde: cannot find "
-				    "neighbor");
-				return;
-			}
-			send_labelrequest(nbr);
 			break;
 		case IMSG_CTL_END:
 		case IMSG_CTL_SHOW_LIB:
