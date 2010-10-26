@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.3 2010/10/10 16:38:55 syuu Exp $ */
+/*	$OpenBSD: obio.c,v 1.4 2010/10/26 00:02:01 syuu Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -165,7 +165,7 @@ uint64_t obio_imask[MAXCPUS][NIPLS];
 #define	OBIODEV(name, addr, i) \
 	{ name, &obio_tag, &obio_tag, &obio_bus_dma_tag, addr, i }
 struct obio_attach_args obio_children[] = {
-	OBIODEV("wdc", OCTEON_CF_BASE, 0x0),
+	OBIODEV("octcf", OCTEON_CF_BASE, 0),
 };
 #undef	OBIODEV
 
@@ -383,7 +383,7 @@ obio_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
 	if (ISSET(flags, BUS_SPACE_MAP_KSEG0)) {
-		*bshp = PHYS_TO_CKSEG0(t->bus_base + offs);
+		*bshp = PHYS_TO_CKSEG0(offs);
 		return 0;
 	}
 	if (ISSET(flags, BUS_SPACE_MAP_CACHEABLE))

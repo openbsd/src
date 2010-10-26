@@ -1,4 +1,4 @@
-/*	$OpenBSD: combus.c,v 1.1 2010/10/01 16:13:59 syuu Exp $ */
+/*	$OpenBSD: combus.c,v 1.2 2010/10/26 00:02:01 syuu Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -290,10 +290,8 @@ int
 combus_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
-	if (ISSET(flags, BUS_SPACE_MAP_CACHEABLE))
-		offs +=
-		    PHYS_TO_XKPHYS(0, CCA_CACHED) - PHYS_TO_XKPHYS(0, CCA_NC);
 	*bshp = t->bus_base + offs;
+
 	return 0;
 }
 

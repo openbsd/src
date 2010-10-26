@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2010/09/20 06:32:30 syuu Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2010/10/26 00:02:01 syuu Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -117,6 +117,8 @@ device_register(struct device *dev, void *aux)
 	case DV_DISK:
 		if (strcmp(drvrname, "wd") == 0 && strcmp(name, bootdev) == 0)
 			bootdv = dev;
+		if (strcmp(drvrname, "octcf") == 0 && strcmp(name, bootdev) == 0)
+			bootdv = dev;
 		else {
 			/* XXX this really only works safely for usb0... */
 		    	if ((strcmp(drvrname, "sd") == 0 ||
@@ -144,5 +146,6 @@ struct nam2blk nam2blk[] = {
 	{ "wd",		4 },
 	{ "rd",		8 },
 	{ "vnd",	2 },
+	{ "octcf",	15 },
 	{ NULL,		-1 }
 };

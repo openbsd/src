@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2010/09/23 05:02:14 claudio Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 2010/10/26 00:02:01 syuu Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,9 @@ bdev_decl(wd);
 #include "rd.h"
 #include "hotplug.h"
 
+#define NOCTCF 1
+bdev_decl(octcf);
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NSD,sd),		/* 0: SCSI disk */
@@ -77,7 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 12:  */
 	bdev_notdef(),			/* 13:  */
 	bdev_notdef(),			/* 14:  */
-	bdev_notdef(),			/* 15:  */
+	bdev_disk_init(NOCTCF,octcf),	/* 15: CF disk */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -112,6 +115,8 @@ cdev_decl(wd);
 #include <nnpfs/nnnpfs.h>
 cdev_decl(nnpfs_dev);
 #endif
+cdev_decl(octcf);
+
 #include "ksyms.h"
 
 #include "wsdisplay.h"
@@ -158,7 +163,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 14: */
 #endif
-	cdev_notdef(),			/* 15: */
+	cdev_disk_init(NOCTCF,octcf),	/* 15: CF disk */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
@@ -287,7 +292,7 @@ int chrtoblktbl[] =  {
 	/* 12 */	NODEV,
 	/* 13 */	NODEV,
 	/* 14 */	NODEV,
-	/* 15 */	NODEV,
+	/* 15 */	15,		/* octcf */
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
 	/* 18 */	4,		/* wd */

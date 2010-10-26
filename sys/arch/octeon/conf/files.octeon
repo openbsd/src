@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.4 2010/10/10 16:38:55 syuu Exp $
+#	$OpenBSD: files.octeon,v 1.5 2010/10/26 00:02:01 syuu Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -9,6 +9,7 @@ major	{ sd = 0 }
 major	{ cd = 3 }
 major	{ wd = 4 }
 major	{ rd = 8 }
+major	{ octcf = 15 }
 
 file	dev/cninit.c
 file	arch/octeon/octeon/autoconf.c
@@ -54,8 +55,9 @@ attach	obio at mainbus
 file	arch/octeon/dev/obio.c				mainbus
 
 # On-board CF
-attach	wdc at obio with wdc_obio
-file	arch/octeon/dev/wdc_obio.c
+device	octcf: disk
+attach	octcf at obio
+file	arch/octeon/dev/octcf.c				octcf
 
 define	combus {[base = -1]}
 device	combus
