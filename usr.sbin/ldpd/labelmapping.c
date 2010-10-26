@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.15 2010/10/26 12:35:25 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.16 2010/10/26 12:59:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -37,10 +37,12 @@
 #include "log.h"
 #include "ldpe.h"
 
-void		gen_fec_tlv(struct ibuf *, struct in_addr, u_int8_t);
 void		gen_label_tlv(struct ibuf *, u_int32_t);
+void		gen_reqid_tlv(struct ibuf *, u_int32_t);
+void		gen_fec_tlv(struct ibuf *, struct in_addr, u_int8_t);
 
 u_int32_t	tlv_decode_label(struct label_tlv *);
+u_int32_t	tlv_decode_reqid(struct reqid_tlv *);
 int		tlv_decode_fec_elm(char *, u_int16_t, u_int8_t *, u_int32_t *,
 		    u_int8_t *);
 
@@ -66,11 +68,15 @@ send_labelmapping(struct nbr *nbr)
 
 	TAILQ_FOREACH(me, &nbr->mapping_list, entry) {
 		tlv_size = BASIC_LABEL_MAP_LEN + PREFIX_SIZE(me->map.prefixlen);
+		if (me->map.flags & F_MAP_REQ_ID)
+			tlv_size += REQID_TLV_LEN;
 		size += tlv_size;
 
 		gen_msg_tlv(buf, MSG_TYPE_LABELMAPPING, tlv_size);
 		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
 		gen_label_tlv(buf, me->map.label);
+		if (me->map.flags & F_MAP_REQ_ID)
+			gen_reqid_tlv(buf, me->map.requestid);
 	}
 
 	/* XXX: should we remove them first? */
@@ -131,6 +137,7 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 		session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid, lm->type);
 		return (-1);
 	}
+	/* TODO opt label request msg id */
 
 	do {
 		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
@@ -582,6 +589,54 @@ recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 
 /* Other TLV related functions */
 void
+gen_label_tlv(struct ibuf *buf, u_int32_t label)
+{
+	struct label_tlv	lt;
+
+	lt.type = htons(TLV_TYPE_GENERICLABEL);
+	lt.length = htons(sizeof(label));
+	lt.label = htonl(label);
+
+	ibuf_add(buf, &lt, sizeof(lt));
+}
+
+u_int32_t
+tlv_decode_label(struct label_tlv *lt)
+{
+	if (lt->type != htons(TLV_TYPE_GENERICLABEL))
+		return (NO_LABEL);
+
+	if (ntohs(lt->length) != sizeof(lt->label))
+		return (NO_LABEL);
+
+	return (ntohl(lt->label));
+}
+
+void
+gen_reqid_tlv(struct ibuf *buf, u_int32_t reqid)
+{
+	struct reqid_tlv	rt;
+
+	rt.type = htons(TLV_TYPE_LABELREQUEST);
+	rt.length = htons(sizeof(reqid));
+	rt.reqid = htonl(reqid);
+
+	ibuf_add(buf, &rt, sizeof(rt));
+}
+
+u_int32_t
+tlv_decode_reqid(struct reqid_tlv *rt)
+{
+	if (rt->type != htons(TLV_TYPE_LABELREQUEST))
+		return (NO_LABEL);
+
+	if (ntohs(rt->length) != sizeof(rt->reqid))
+		return (NO_LABEL);
+
+	return (ntohl(rt->reqid));
+}
+
+void
 gen_fec_tlv(struct ibuf *buf, struct in_addr prefix, u_int8_t prefixlen)
 {
 	struct fec_tlv	ft;
@@ -604,30 +659,6 @@ gen_fec_tlv(struct ibuf *buf, struct in_addr prefix, u_int8_t prefixlen)
 	ibuf_add(buf, &prefixlen, sizeof(prefixlen));
 	if (len)
 		ibuf_add(buf, &prefix, len);
-}
-
-void
-gen_label_tlv(struct ibuf *buf, u_int32_t label)
-{
-	struct label_tlv	lt;
-
-	lt.type = htons(TLV_TYPE_GENERICLABEL);
-	lt.length = htons(sizeof(label));
-	lt.label = htonl(label);
-
-	ibuf_add(buf, &lt, sizeof(lt));
-}
-
-u_int32_t
-tlv_decode_label(struct label_tlv *lt)
-{
-	if (lt->type != htons(TLV_TYPE_GENERICLABEL))
-		return (NO_LABEL);
-
-	if (ntohs(lt->length) != sizeof(lt->label))
-		return (NO_LABEL);
-
-	return (ntohl(lt->label));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.5 2010/05/17 08:07:04 claudio Exp $ */
+/*	$OpenBSD: ldp.h,v 1.6 2010/10/26 12:59:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -213,6 +213,14 @@ struct label_tlv {
 };
 
 #define LABEL_TLV_LEN		8
+
+struct reqid_tlv {
+	u_int16_t	type;
+	u_int16_t	length;
+	u_int32_t	reqid;
+};
+
+#define REQID_TLV_LEN		8
 
 struct hello_opt_parms_tlv {
 	u_int16_t	type;
