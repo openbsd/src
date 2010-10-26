@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.78 2010/10/26 10:39:48 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.79 2010/10/26 14:30:09 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -479,7 +479,7 @@ the architecture supports native compilation or not.
 .It lang/python
 Sets MODPY_VERSION, MODPY_BIN, MODPY_INCDIR, MODPY_LIBDIR, MODPY_SITEPKG,
 MODPY_SETUP, MODPY_WANTLIB, MODPY_LIB_DEPENDS, MODPY_RUN_DEPENDS,
-MODPY_BUILD_DEPENDS.
+MODPY_BUILD_DEPENDS, MODPY_BIN_ADJ and MODPY_ADJ_FILES.
 Appends to RUN_DEPENDS unless MODPY_RUNDEP is set to No.
 Appends to BUILD_DEPENDS unless MODPY_BUILDDEP is set to No or NO_BUILD
 is set to Yes.
@@ -489,6 +489,10 @@ All ports that generate egg-info files should set MODPY_EGG_VERSION
 to the version string used by the port's setup.py setup() function.
 Extra arguments to the build and install commands can be passed via
 MODPY_DISTUTILS_BUILDARGS and MODPY_DISTUTILS_INSTALLARGS.
+MODPY_BIN_ADJ is a command that takes filename arguments and replaces
+the python shebang line with MODPY_BIN.
+MODPY_ADJ_FILES is a list of filenames that will automatically have
+MODPY_BIN_ADJ called on them at the end of pre-configure.
 Also affects CATEGORIES, MAKE_ENV, CONFIGURE_ENV, SHARED_ONLY, and SUBST_VARS.
 May affect the regress target.
 .It lang/ruby
