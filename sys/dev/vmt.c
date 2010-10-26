@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.8 2010/10/26 00:57:21 dlg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.9 2010/10/26 01:16:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -102,6 +102,8 @@
 #define VM_STATE_CHANGE_HALT	1
 #define VM_STATE_CHANGE_REBOOT	2
 #define VM_STATE_CHANGE_POWERON 3
+#define VM_STATE_CHANGE_RESUME  4
+#define VM_STATE_CHANGE_SUSPEND 5
 
 /* VM guest info keys */
 #define VM_GUEST_INFO_DNS_NAME		1
@@ -510,6 +512,27 @@ vmt_tclo_tick(void *xarg)
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_POWERON);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
 			printf("%s: error sending poweron response\n", DEVNAME(sc));
+			sc->sc_rpc_error = 1;
+		}
+	} else if (strcmp(sc->sc_rpc_buf, "OS_Suspend") == 0) {
+		log(LOG_KERN | LOG_NOTICE, "VMware guest entering suspended state\n");
+
+		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+			printf("%s: error sending suspend response\n", DEVNAME(sc));
+			sc->sc_rpc_error = 1;
+		}
+	} else if (strcmp(sc->sc_rpc_buf, "OS_Resume") == 0) {
+		log(LOG_KERN | LOG_NOTICE, "VMware guest resuming from suspended state\n");
+
+		/* force guest info update */
+		sc->sc_hostname[0] = '\0';
+		sc->sc_set_guest_os = 0;
+		vmt_update_guest_info(sc);
+
+		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_RESUME);
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+			printf("%s: error sending resume response\n", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "Capabilities_Register") == 0) {
