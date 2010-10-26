@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.14 2010/10/26 12:22:35 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.15 2010/10/26 12:35:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -300,7 +300,7 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	struct ldp_msg	*lw;
 	struct fec_tlv	*ft;
 	u_int32_t	 optlabel = NO_LABEL;
-	int		 feclen, tlen;
+	int		 feclen, tlen, numfec = 0;
 	u_int8_t	 addr_type;
 
 	if (nbr->state != NBR_STA_OPER)
@@ -356,12 +356,26 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 		}
 
 		if (addr_type == FEC_WILDCARD) {
+			/* Wildcard FEC must be the only FEC element */
+			if (numfec != 0) {
+				session_shutdown(nbr, S_BAD_TLV_VAL, lw->msgid,
+				    lw->type);
+				return (-1);
+			}
 			map.prefix.s_addr = 0;
 			map.prefixlen = 0;
 			map.flags |= F_MAP_WILDCARD;
-
-		} else
+			numfec = -1;
+		} else {
+			/* Wildcard FEC must be the only FEC element */
+			if (numfec == -1) {
+				session_shutdown(nbr, S_BAD_TLV_VAL, lw->msgid,
+				    lw->type);
+				return (-1);
+			}
+			numfec++;
 			map.flags &= ~F_MAP_WILDCARD;
+		}
 
 		ldpe_imsg_compose_lde(IMSG_LABEL_WITHDRAW, nbr->peerid, 0, &map,
 		    sizeof(map));
@@ -427,7 +441,7 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 	struct ldp_msg	*lr;
 	struct fec_tlv	*ft;
 	u_int32_t	 optlabel = NO_LABEL;
-	int		 feclen, tlen;
+	int		 feclen, tlen, numfec = 0;
 	u_int8_t	 addr_type;
 
 	if (nbr->state != NBR_STA_OPER)
@@ -483,12 +497,25 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 		}
 
 		if (addr_type == FEC_WILDCARD) {
+			/* Wildcard FEC must be the only FEC element */
+			if (numfec != 0) {
+				session_shutdown(nbr, S_BAD_TLV_VAL, lr->msgid,
+				    lr->type);
+				return (-1);
+			}
 			map.prefix.s_addr = 0;
 			map.prefixlen = 0;
 			map.flags |= F_MAP_WILDCARD;
 
-		} else
+		} else {
+			/* Wildcard FEC must be the only FEC element */
+			if (numfec == -1) {
+				session_shutdown(nbr, S_BAD_TLV_VAL, lr->msgid,
+				    lr->type);
+				return (-1);
+			}
 			map.flags &= ~F_MAP_WILDCARD;
+		}
 
 		ldpe_imsg_compose_lde(IMSG_LABEL_RELEASE, nbr->peerid, 0, &map,
 		    sizeof(map));
