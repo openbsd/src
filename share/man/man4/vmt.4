@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmt.4,v 1.2 2010/03/22 21:52:53 weerd Exp $
+.\"	$OpenBSD: vmt.4,v 1.3 2010/10/26 01:24:48 dlg Exp $
 .\"
 .\" Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: March 22 2010 $
+.Dd $Mdocdate: October 26 2010 $
 .Dt VMT 4
 .Os
 .Sh NAME
@@ -29,9 +29,20 @@ driver is a kernel level implementation of VMware Tools.
 VMware Tools are intended to provide better support for operating systems
 running inside virtual machines.
 .Pp
+The
 .Nm
-provides access to the host machines clock as a timedelta sensor.
+handles shutdown and reboot requests from the host by signalling
+.Xr init 8
+with SIGUSR2 and SIGINT respectively.
+.Nm
+will log notifications that the guest has been suspended or resumed by the
+host.
+It also provides access to the host machines clock as a timedelta sensor.
+.Pp
+.Nm
+reports the guests hostname and first non-loopback IP address to the host.
 .Sh SEE ALSO
+.Xr init 8 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
