@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.21 2010/10/21 08:24:06 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.22 2010/10/26 12:08:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -474,29 +474,84 @@ lde_send_delete_klabel(struct rt_node *rr, struct rt_lsp *rl)
 }
 
 void
-lde_send_labelrequest(u_int32_t peerid, struct map *map)
+lde_send_labelrequest(struct lde_nbr *ln, struct rt_node *rn)
 {
-	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD, peerid, 0,
-	     -1, map, sizeof(*map));
-	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD_END, peerid, 0,
+	struct map	 map;
+
+	/* TODO check if status of peer is OK to send requests (SLRq.2 & 6)
+	 * For now assume no peer will send no-label-resource notifications */
+
+	/* check if request is already pending */
+	if (fec_find(&ln->sent_req, &rn->fec) != NULL)
+		return;
+	/* and try to add request to pending list */
+	lde_req_add(ln, &rn->fec, 1);
+	/* msgid does not matter since only one req can be pending */
+
+	bzero(&map, sizeof(map));
+	map.prefix = rn->fec.prefix;
+	map.prefixlen = rn->fec.prefixlen;
+
+	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD, ln->peerid, 0,
+	     -1, &map, sizeof(map));
+	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD_END, ln->peerid, 0,
 	     -1, NULL, 0);
 }
 
 void
-lde_send_labelmapping(u_int32_t peerid, struct map *map)
+lde_send_labelmapping(struct lde_nbr *ln, struct rt_node *rn)
 {
-	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD, peerid, 0,
-	     -1, map, sizeof(*map));
-	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD_END, peerid, 0,
+	struct lde_req	*lre;
+	struct lde_map	*me;
+	struct map	 map;
+
+	/*
+	 * This function skips SL.1 - 3 and SL.9 - 14 because the lable
+	 * allocation is done way earlier (because of the merging nature of
+	 * ldpd).
+	 */
+
+	bzero(&map, sizeof(map));
+	map.label = rn->local_label;
+	map.prefix = rn->fec.prefix;
+	map.prefixlen = rn->fec.prefixlen;
+
+	/* is there a pending request for this mapping? */
+	lre = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
+	if (lre) {
+		/* set label request msg id in the mapping response. */
+		map.requestid = lre->msgid;
+		map.flags = F_MAP_REQ_ID;
+		lde_req_del(ln, lre, 0);
+	}
+
+	me = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
+	if (me == NULL)
+		me = lde_map_add(ln, rn, 1);
+	me->label = map.label;
+
+	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD, ln->peerid, 0,
+	     -1, &map, sizeof(map));
+	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD_END, ln->peerid, 0,
 	     -1, NULL, 0);
 }
 
 void
-lde_send_labelrelease(u_int32_t peerid, struct map *map)
+lde_send_labelrelease(struct lde_nbr *ln, struct rt_node *rn, u_int32_t label)
 {
-	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD, peerid, 0,
-	    -1, map, sizeof(*map));
-	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD_END, peerid, 0,
+	struct map	 map;
+
+	bzero(&map, sizeof(map));
+	map.prefix = rn->fec.prefix;
+	map.prefixlen = rn->fec.prefixlen;
+	if (label != NO_LABEL) {
+		map.flags = F_MAP_OPTLABEL;
+		map.label = label;
+	}
+	
+	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD, ln->peerid, 0,
+	    -1, &map, sizeof(map));
+	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD_END, ln->peerid, 0,
 	    -1, NULL, 0);
 }
 
@@ -599,54 +654,31 @@ lde_nbr_clear(void)
 void
 lde_nbr_do_mappings(struct rt_node *rn)
 {
-	struct map	 map;
 	struct lde_nbr	*ln;
-	struct lde_map	*lm;
-	struct lde_req	*lr;
-	struct rt_lsp	*rl;
+	struct lde_map	*me;
+	struct lde_req	*lre;
 
-	map.label = rn->local_label;
-	map.prefix = rn->fec.prefix;
-	map.prefixlen = rn->fec.prefixlen;
+	/* This handles LMp.17-31 for lde_check_mapping() */
 
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
-		/* Did we already send a mapping to this peer? */
-		lm = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
-		if (lm && lm->label == map.label) {
+		/* LMp.18 Did we already send a mapping to this peer? */
+		me = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
+		if (me && me->label == rn->local_label)
 			/* same mapping already sent, skip */
+			/* TODO LMp.22-27 Loop detection check */
 			continue;
-		}
 
-		/* Is this from a pending request? */
-		lr = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
-		if (ldeconf->mode & MODE_ADV_ONDEMAND && lr == NULL)
+		/* LMp.28 Is this from a pending request? */
+		lre = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
+
+		/* Check for the only case where no mapping should be sent.
+		 * This is the On Demand case of LMp.29  */
+		if (ldeconf->mode & MODE_ADV_ONDEMAND && lre == NULL)
 			/* adv. on demand but no req pending, skip */
 			continue;
 
-		if (ldeconf->mode & MODE_DIST_ORDERED) {
-			/* ordered mode needs the downstream path to be
-			 * ready before we can send the mapping upstream */
-			LIST_FOREACH(rl, &rn->lsp, entry) {
-				if (rl->remote_label != NO_LABEL)
-					/* at least on LSP exists */
-					break;
-			}
-			if (rl == NULL)
-				continue;
-		}
-
-		if (lr) {
-			/* set label request msg id in the mapping response. */
-			map.requestid = lr->msgid;
-			map.flags = F_MAP_REQ_ID;
-			fec_remove(&ln->sent_req, &lr->fec);
-		}
-
-		if (lm == NULL)
-			lm = lde_map_add(ln, rn, 1);
-		lm->label = map.label;
-
-		lde_send_labelmapping(ln->peerid, &map);
+		lde_send_labelmapping(ln, rn);
+		/* LMp.30 & 31 are not needed because labels are always added */
 	}
 }
 
@@ -667,6 +699,7 @@ lde_map_add(struct lde_nbr *ln, struct rt_node *rn, int sent)
 		if (fec_insert(&ln->sent_map, &me->fec))
 			log_warnx("failed to add %s/%u to sent map",
 			    inet_ntoa(me->fec.prefix), me->fec.prefixlen);
+			/* XXX on failure more cleanup is needed */
 	} else {
 		LIST_INSERT_HEAD(&rn->downstream, me, entry);
 		if (fec_insert(&ln->recv_map, &me->fec))
@@ -695,6 +728,41 @@ lde_map_free(void *ptr)
 
 	LIST_REMOVE(map, entry);
 	free(map);
+}
+
+struct lde_req *
+lde_req_add(struct lde_nbr *ln, struct fec *fec, int sent)
+{
+	struct fec_tree	*ft;
+	struct lde_req	*lre;
+
+	ft = sent ? &ln->sent_req : &ln->recv_req;
+
+	lre = calloc(1, sizeof(*lre));
+	if (lre != NULL) {
+		lre->fec = *fec;
+
+		if (fec_insert(ft, &lre->fec)) {
+			log_warnx("failed to add %s/%u to %s req",
+			    inet_ntoa(lre->fec.prefix), lre->fec.prefixlen,
+			    sent ? "sent" : "recv");
+			free(lre);
+			return (NULL);
+		}
+	}
+
+	return (lre);
+}
+
+void
+lde_req_del(struct lde_nbr *ln, struct lde_req *lre, int sent)
+{
+	if (sent)
+		fec_remove(&ln->sent_req, &lre->fec);
+	else
+		fec_remove(&ln->recv_req, &lre->fec);
+	
+	free(lre);
 }
 
 int

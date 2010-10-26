@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.27 2010/10/21 08:24:06 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.28 2010/10/26 12:08:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -375,42 +375,45 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 
 	/* first check if we have a pending request running */
 	lre = (struct lde_req *)fec_find(&ln->sent_req, &rn->fec);
-	if (lre) {
-		fec_remove(&ln->sent_req, &lre->fec);
-		free(lre);
-	}
+	if (lre)
+		lde_req_del(ln, lre, 1);
 
 	/* TODO Loop detection LMp.3 - LMp.8 */
 
 	LIST_FOREACH(me, &rn->downstream, entry) {
-		if (ln == me->nexthop) {
-			if (me->label == map->label) {
-				/* Duplicate: RFC says to send back a release,
-				 * even though we did not release the actual
-				 * mapping. This is confusing.
-				 */
-				log_debug("duplicate FEC %s, label %u",
-				    log_fec(map), map->label);
-				lde_send_labelrelease(ln->peerid, map);
-				return;
-			}
-			/* old mapping that is now changed */
+		if (ln != me->nexthop)				/* LMp.9 */
+			continue;
+		if (lre)
+			/* LMp.10 Note 6: req. mappings are always new */
 			break;
+		if (me->label != map->label) {			/* LMp.10 */
+			/*
+			 * This is, according to the RFC, a try to install a
+			 * multipath LSP which is not supported by the RFC.
+			 * So instead release the old label and install the
+			 * new one.
+			 */
+			log_debug("possible multipath FEC %s, "
+			    "label %u, old label %u",
+			    log_fec(map), map->label, me->label);
+			lde_send_labelrelease(ln, rn, me->label);
 		}
+		/* there can only be one mapping */
+		break;
 	}
 
+	/* LMp.11: get nexthop */
 	LIST_FOREACH(rl, &rn->lsp, entry) {
 		addr = lde_address_find(ln, &rl->nexthop);
 		if (addr)
 			break;
 	}
-
 	if (addr == NULL) {
-		/* route not yet available */
+		/* route not yet available LMp.13 */
 		if (ldeconf->mode & MODE_RET_CONSERVATIVE) {
 			log_debug("FEC %s: conservative ret but no route",
 			    log_fec(map));
-			lde_send_labelrelease(ln->peerid, map);
+			lde_send_labelrelease(ln, rn, map->label);
 			return;
 		}
 		/* in liberal mode just note the mapping */
@@ -421,16 +424,18 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		return;
 	}
 
+	/* LMp.14 do we actually need this FEC for now this is always true */
 	rl->remote_label = map->label;
 
-	/* Record the mapping from this peer */	
+	/* LMp.15 install FEC in FIB */
+	lde_send_change_klabel(rn, rl);
+
+	/* Record the mapping from this peer LMp.16 */	
 	if (me == NULL)
 		me = lde_map_add(ln, rn, 0);
 	me->label = map->label;
 
-	lde_send_change_klabel(rn, rl);
-
-	/* Redistribute the current mapping to every nbr */
+	/* Redistribute the current mapping to every nbr LMp.17-31 */
 	lde_nbr_do_mappings(rn);
 }
 
@@ -441,8 +446,6 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	struct rt_node	*rn;
 	struct rt_lsp	*rl;
 	struct lde_nbr	*lnn;
-	struct lde_map	*me;
-	struct map	 localmap;
 
 	log_debug("label request from nbr %s, FEC %s",
 	    inet_ntoa(ln->id), log_fec(map));
@@ -470,46 +473,25 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	lre = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
 	if (lre != NULL)
 		return;
+	/* else record label request */
+	lre = lde_req_add(ln, &rn->fec, 0);
+	if (lre != NULL)
+		lre->msgid = map->messageid;
 
 	/* there is a valid mapping available */
 	if (rl != NULL) {
-		bzero(&localmap, sizeof(localmap));
-		localmap.prefix = map->prefix;
-		localmap.prefixlen = map->prefixlen;
-		localmap.label = rn->local_label;
-
-		me = lde_map_add(ln, rn, 1);
-		me->label = rn->local_label;
-
 		/* TODO loop protection handling (LRq.9) */
-		lde_send_labelmapping(ln->peerid, &localmap);
+		lde_send_labelmapping(ln, rn);
 		return;
 	}
 
-	/* else record label request */
-	lre = calloc(1, sizeof(*lre));
-	if (lre == NULL)
-		fatal("lde_check_request");
-
-	lre->fec = rn->fec;
-	lre->msgid = map->messageid;
-
-	if (fec_insert(&ln->recv_req, &lre->fec)) {
-		log_warnx("failed to add %s/%u to recv req",
-		    inet_ntoa(lre->fec.prefix), lre->fec.prefixlen);
-		free(lre);
-	}
-
-	/* XXX  map should not be * reused, especially the messageid */
 	/* no mapping available, try to request */
 	/* XXX depending on the request behaviour we could return here */
 	LIST_FOREACH(rl, &rn->lsp, entry) {
 		lnn = lde_find_address(rl->nexthop);
 		if (lnn == NULL)
 			continue;
-
-		/* TODO record request on the sent_req list of lnn */
-		lde_send_labelrequest(lnn->peerid, map);
+		lde_send_labelrequest(lnn, rn);
 	}
 }
 
@@ -563,7 +545,7 @@ lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
 
-	lde_send_labelrelease(ln->peerid, map);
+	lde_send_labelrelease(ln, rn, map->label);
 
 	if (rn == NULL)
 		/* LSP not available, nothing to do */
