@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.13 2010/06/30 01:47:11 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.14 2010/10/26 12:22:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -37,7 +37,7 @@
 #include "log.h"
 #include "ldpe.h"
 
-void		gen_fec_tlv(struct ibuf *, u_int32_t, u_int8_t);
+void		gen_fec_tlv(struct ibuf *, struct in_addr, u_int8_t);
 void		gen_label_tlv(struct ibuf *, u_int32_t);
 
 u_int32_t	tlv_decode_label(struct label_tlv *);
@@ -65,12 +65,12 @@ send_labelmapping(struct nbr *nbr)
 	size = LDP_HDR_SIZE - TLV_HDR_LEN;
 
 	TAILQ_FOREACH(me, &nbr->mapping_list, entry) {
-		tlv_size = BASIC_LABEL_MAP_LEN + PREFIX_SIZE(me->prefixlen);
+		tlv_size = BASIC_LABEL_MAP_LEN + PREFIX_SIZE(me->map.prefixlen);
 		size += tlv_size;
 
 		gen_msg_tlv(buf, MSG_TYPE_LABELMAPPING, tlv_size);
-		gen_fec_tlv(buf, me->prefix, me->prefixlen);
-		gen_label_tlv(buf, me->label);
+		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
+		gen_label_tlv(buf, me->map.label);
 	}
 
 	/* XXX: should we remove them first? */
@@ -174,11 +174,11 @@ send_labelrequest(struct nbr *nbr)
 	size = LDP_HDR_SIZE - TLV_HDR_LEN;
 
 	TAILQ_FOREACH(me, &nbr->request_list, entry) {
-		tlv_size = PREFIX_SIZE(me->prefixlen);
+		tlv_size = PREFIX_SIZE(me->map.prefixlen);
 		size += tlv_size;
 
 		gen_msg_tlv(buf, MSG_TYPE_LABELREQUEST, tlv_size);
-		gen_fec_tlv(buf, me->prefix, me->prefixlen);
+		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
 	}
 
 	/* XXX: should we remove them first? */
@@ -269,19 +269,19 @@ send_labelwithdraw(struct nbr *nbr)
 	size = LDP_HDR_SIZE - TLV_HDR_LEN;
 
 	TAILQ_FOREACH(me, &nbr->withdraw_list, entry) {
-		if (me->label == NO_LABEL)
-			tlv_size = PREFIX_SIZE(me->prefixlen);
+		if (me->map.label == NO_LABEL)
+			tlv_size = PREFIX_SIZE(me->map.prefixlen);
 		else
 			tlv_size = BASIC_LABEL_MAP_LEN +
-			    PREFIX_SIZE(me->prefixlen);
+			    PREFIX_SIZE(me->map.prefixlen);
 
 		size += tlv_size;
 
 		gen_msg_tlv(buf, MSG_TYPE_LABELWITHDRAW, tlv_size);
-		gen_fec_tlv(buf, me->prefix, me->prefixlen);
+		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
 
-		if (me->label != NO_LABEL)
-			gen_label_tlv(buf, me->label);
+		if (me->map.label != NO_LABEL)
+			gen_label_tlv(buf, me->map.label);
 	}
 
 	/* XXX: should we remove them first? */
@@ -396,19 +396,19 @@ send_labelrelease(struct nbr *nbr)
 	size = LDP_HDR_SIZE - TLV_HDR_LEN;
 
 	TAILQ_FOREACH(me, &nbr->release_list, entry) {
-		if (me->label == NO_LABEL)
-			tlv_size = PREFIX_SIZE(me->prefixlen);
+		if (me->map.label == NO_LABEL)
+			tlv_size = PREFIX_SIZE(me->map.prefixlen);
 		else
 			tlv_size = BASIC_LABEL_MAP_LEN +
-			    PREFIX_SIZE(me->prefixlen);
+			    PREFIX_SIZE(me->map.prefixlen);
 
 		size += tlv_size;
 
 		gen_msg_tlv(buf, MSG_TYPE_LABELRELEASE, tlv_size);
-		gen_fec_tlv(buf, me->prefix, me->prefixlen);
+		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
 
-		if (me->label != NO_LABEL)
-			gen_label_tlv(buf, me->label);
+		if (me->map.label != NO_LABEL)
+			gen_label_tlv(buf, me->map.label);
 	}
 
 	/* XXX: should we remove them first? */
@@ -555,7 +555,7 @@ recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 
 /* Other TLV related functions */
 void
-gen_fec_tlv(struct ibuf *buf, u_int32_t prefix, u_int8_t prefixlen)
+gen_fec_tlv(struct ibuf *buf, struct in_addr prefix, u_int8_t prefixlen)
 {
 	struct fec_tlv	ft;
 	u_int8_t	type;
