@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.6 2010/09/01 17:34:15 martinh Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.7 2010/10/26 01:58:22 william Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <login_cap.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -259,6 +260,45 @@ ldapd_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 	}
 }
 
+static int
+ldapd_auth_classful(char *name, char *password)
+{
+	login_cap_t		*lc = NULL;
+	char			*class = NULL, *style = NULL;
+	auth_session_t		*as;
+
+	if ((class = strchr(name, '#')) == NULL) {
+		log_debug("regular auth");
+		return auth_userokay(name, NULL, "auth-ldap", password);
+	}
+	*class++ = '\0';
+
+	if ((lc = login_getclass(class)) == NULL) {
+		log_debug("login_getclass(%s) for [%s] failed", class, name);
+		return 0;
+	}
+	if ((style = login_getstyle(lc, style, "auth-ldap")) == NULL) {
+		log_debug("login_getstyle() for [%s] failed", name);
+		login_close(lc);
+		return 0;
+	}
+	if (password) {
+		if ((as = auth_open()) == NULL) {
+			login_close(lc);
+			return 0;
+		}
+		auth_setitem(as, AUTHV_SERVICE, "response");
+		auth_setdata(as, "", 1);
+		auth_setdata(as, password, strlen(password) + 1);
+		memset(password, 0, strlen(password));
+	} else
+		as = NULL;
+
+	as = auth_verify(as, style, name, lc->lc_class, (char *)NULL);
+	login_close(lc);
+	return (as != NULL ? auth_close(as) : 0);
+}
+
 static void
 ldapd_auth_request(struct imsgev *iev, struct imsg *imsg)
 {
@@ -273,7 +313,7 @@ ldapd_auth_request(struct imsgev *iev, struct imsg *imsg)
 	areq->password[sizeof(areq->password) - 1] = '\0';
 
 	log_debug("authenticating [%s]", areq->name);
-	ares.ok = auth_userokay(areq->name, NULL, "auth-ldap", areq->password);
+	ares.ok = ldapd_auth_classful(areq->name, areq->password);
 	ares.fd = areq->fd;
 	ares.msgid = areq->msgid;
 	bzero(areq, sizeof(*areq));
