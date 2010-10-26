@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.53 2010/10/26 22:48:07 schwarze Exp $ */
+/*	$Id: main.c,v 1.54 2010/10/26 23:34:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,6 +115,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"macro not allowed in body",
 
 	/* related to document structure */
+	".so is fragile, better use ln(1)",
 	"NAME section must come first",
 	"bad NAME section contents",
 	"manual name not yet set",

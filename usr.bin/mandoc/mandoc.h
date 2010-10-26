@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.19 2010/10/26 22:48:07 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.20 2010/10/26 23:34:38 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,6 +57,7 @@ enum	mandocerr {
 	MANDOCERR_BADBODY, /* macro not allowed in body */
 
 	/* related to document structure */
+	MANDOCERR_SO, /* .so is fragile, better use ln(1) */
 	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
 	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
 	MANDOCERR_NONAME, /* manual name not yet set */

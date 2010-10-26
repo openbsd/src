@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.14 2010/10/26 22:28:57 schwarze Exp $ */
+/*	$Id: roff.c,v 1.15 2010/10/26 23:34:38 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1016,6 +1016,8 @@ static enum rofferr
 roff_so(ROFF_ARGS)
 {
 	char *name;
+
+	(*r->msg)(MANDOCERR_SO, r->data, ln, ppos, NULL);
 
 	name = *bufp + pos;
 	if ('/' == *name || strstr(name, "../") || strstr(name, "/..")) {
