@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.6 2010/10/14 04:38:24 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.7 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define	SEL_LDT		4		/* local descriptor table */	
 
-/* Dynamically allocated TSSs and LDTs start (byte offset) */
+/* Dynamically allocated TSSs start (byte offset) */
 #define SYSSEL_START	(NGDT_MEM << 3)
 #define DYNSEL_START	(SYSSEL_START + (NGDT_SYS << 4))
 
@@ -69,9 +69,8 @@
  * These define the index not from the start of the GDT, but from
  * the part of the GDT that they're allocated from.
  * First NGDT_MEM entries are 8-byte descriptors for CS and DS.
- * Next NGDT_SYS entries are 16-byte descriptors defining LDTs.
  *
- * The rest is 16-byte descriptors for TSS and LDT.
+ * The rest is 16-byte descriptors for TSSs
  */
 
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)
@@ -158,7 +157,6 @@ extern struct sys_segment_descriptor *ldt;
 #endif
 extern struct gate_descriptor *idt;
 extern char *gdtstore;
-extern char *ldtstore;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
@@ -265,8 +263,7 @@ void cpu_init_idt(void);
 #define	GUCODE_SEL	5	/* User code descriptor */
 #define NGDT_MEM 6
 
-#define	GLDT_SEL	0	/* Default LDT descriptor */
-#define NGDT_SYS	1
+#define NGDT_SYS	0
 
 #define GDT_SYS_OFFSET	(NGDT_MEM << 3)
 
@@ -276,31 +273,11 @@ void cpu_init_idt(void);
    ((struct sys_segment_descriptor *)((s) + (((i) << 4) + SYSSEL_START)))
 
 /*
- * Byte offsets in the Local Descriptor Table (LDT)
- * Strange order because of syscall/sysret insns
- */
-#define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
-#define LUCODE32_SEL	8	/* 32 bit user code descriptor */
-#define	LUDATA_SEL	16	/* User data descriptor */
-#define	LUCODE_SEL	24	/* User code descriptor */
-#define	LSOL26CALLS_SEL	32	/* Solaris 2.6 system call gate */
-#define LUDATA32_SEL	56	/* 32 bit user data descriptor (needed?)*/
-#define	LBSDICALLS_SEL	128	/* BSDI system call gate */
-
-#define LDT_SIZE	144
-
-
-/*
  * Checks for valid user selectors.
  */
-#define VALID_USER_DSEL32(s) \
-    ((s) == GSEL(GUDATA32_SEL, SEL_UPL) || (s) == LSEL(LUDATA32_SEL, SEL_UPL))
-#define VALID_USER_CSEL32(s) \
-    ((s) == GSEL(GUCODE32_SEL, SEL_UPL) || (s) == LSEL(LUCODE32_SEL, SEL_UPL))
-
 #define VALID_USER_CSEL(s) \
-    ((s) == GSEL(GUCODE_SEL, SEL_UPL) || (s) == LSEL(LUCODE_SEL, SEL_UPL))
+    ((s) == GSEL(GUCODE_SEL, SEL_UPL))
 #define VALID_USER_DSEL(s) \
-    ((s) == GSEL(GUDATA_SEL, SEL_UPL) || (s) == LSEL(LUDATA_SEL, SEL_UPL))
+    ((s) == GSEL(GUDATA_SEL, SEL_UPL))
 
 #endif /* _AMD64_SEGMENTS_H_ */

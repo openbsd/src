@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.4 2009/09/18 21:08:19 martynas Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.5 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 
 #ifndef _AMD64_SYSARCH_H_
@@ -7,8 +7,6 @@
 /*
  * Architecture specific syscalls (amd64)
  */
-#define AMD64_GET_LDT	0
-#define AMD64_SET_LDT	1
 #define	AMD64_IOPL	2
 #define	AMD64_GET_IOPERM	3
 #define	AMD64_SET_IOPERM	4

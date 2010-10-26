@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.34 2010/09/06 17:36:49 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.35 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -318,9 +318,6 @@ struct pmap {
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
-	union descriptor *pm_ldt;	/* user-set LDT */
-	int pm_ldt_len;			/* number of LDT entries */
-	int pm_ldt_sel;			/* LDT selector */
 	u_int32_t pm_cpus;		/* mask of CPUs using pmap */
 };
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.23 2010/09/24 13:21:30 matthew Exp $
+#	$OpenBSD: genassym.cf,v 1.24 2010/10/26 05:49:10 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -84,10 +84,8 @@ struct pcb
 member	pcb_cr3
 member	pcb_rbp
 member	pcb_rsp
-member	pcb_usersp
 member	PCB_RSP0	pcb_tss.tss_rsp0
 member	pcb_cr0
-member	pcb_ldt_sel
 member	pcb_onfault
 member	pcb_fpcpu
 

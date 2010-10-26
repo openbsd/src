@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.56 2010/09/06 17:36:49 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.57 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -121,6 +121,7 @@
 #include <uvm/uvm.h>
 
 #include <machine/atomic.h>
+#include <machine/lock.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -1022,11 +1023,6 @@ pmap_create(void)
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
 	pmap->pm_cpus = 0;
 
-	/* init the LDT */
-	pmap->pm_ldt = NULL;
-	pmap->pm_ldt_len = 0;
-	pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
-
 	/* allocate PDP */
 
 	/*
@@ -1120,7 +1116,7 @@ pmap_reference(struct pmap *pmap)
 }
 
 /*
- * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
+ * pmap_activate: activate a process' pmap (fill in %cr3)
  *
  * => called from cpu_switch()
  * => if p is the curproc, then load it into the MMU
@@ -1133,7 +1129,6 @@ pmap_activate(struct proc *p)
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
 	pcb->pcb_pmap = pmap;
-	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
 	if (p == curproc) {
 		lcr3(pcb->pcb_cr3);
@@ -1143,8 +1138,6 @@ pmap_activate(struct proc *p)
 		 */
 		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 	}
-	if (pcb == curpcb)
-		lldt(pcb->pcb_ldt_sel);
 }
 
 /*

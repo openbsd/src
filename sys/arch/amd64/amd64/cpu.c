@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.36 2010/10/14 04:38:24 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.37 2010/10/26 05:49:10 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -512,7 +512,7 @@ cpu_hatch(void *v)
 	gdt_init_cpu(ci);
 	fpuinit(ci);
 
-	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
+	lldt(0);
 
 	cpu_init(ci);
 

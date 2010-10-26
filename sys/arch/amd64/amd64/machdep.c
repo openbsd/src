@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.125 2010/10/14 04:38:24 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.126 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -360,7 +360,7 @@ cpu_startup(void)
 }
 
 /*
- * Set up proc0's TSS and LDT.
+ * Set up proc0's TSS
  */
 void
 x86_64_proc0_tss_ldt_init(void)
@@ -372,14 +372,11 @@ x86_64_proc0_tss_ldt_init(void)
 
 	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
 
-	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_iobase =
 	    (u_int16_t)((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss);
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)proc0.p_addr + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = (u_int64_t)proc0.p_addr + PAGE_SIZE;
@@ -387,11 +384,11 @@ x86_64_proc0_tss_ldt_init(void)
 	proc0.p_md.md_tss_sel = tss_alloc(pcb);
 
 	ltr(proc0.p_md.md_tss_sel);
-	lldt(pcb->pcb_ldt_sel);
+	lldt(0);
 }
 
 /*       
- * Set up TSS and LDT for a new PCB.
+ * Set up TSS for a new PCB.
  */         
          
 #ifdef MULTIPROCESSOR
@@ -406,9 +403,6 @@ x86_64_init_pcb_tss_ldt(struct cpu_info *ci)
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
-	/* XXXfvdl pmap_kernel not needed */ 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
         
         ci->ci_idle_tss_sel = tss_alloc(pcb);
@@ -1007,15 +1001,12 @@ void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf;
 
 	/* If we were using the FPU, forget about it. */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
 	p->p_md.md_flags &= ~MDP_USEDFPU;
-
-	pcb->pcb_flags = 0;
 
 	tf = p->p_md.md_regs;
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
@@ -1053,7 +1044,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
 struct simplelock idt_lock;
-char *ldtstore;
 char *gdtstore;
 extern  struct user *proc0paddr;
 
@@ -1194,10 +1184,7 @@ map_tramps(void) {
 
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
-extern vector IDTVEC(syscall);
-extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
-extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 int bigmem = 0;
@@ -1207,7 +1194,6 @@ init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
 	struct region_descriptor region;
-	struct mem_segment_descriptor *ldt_segp;
 	bios_memmap_t *bmp;
 	int x, ist;
 
@@ -1486,56 +1472,22 @@ init_x86_64(paddr_t first_avail)
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
-	ldtstore = gdtstore + DYNSEL_START;
 
 	/* make gdt gates and memory segments */
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0, 0xfffff, SDT_MEMERA,
-	    SEL_KPL, 1, 0, 1);
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0,
+	    0xfffff, SDT_MEMERA, SEL_KPL, 1, 0, 1);
 
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GDATA_SEL), 0, 0xfffff, SDT_MEMRWA,
-	    SEL_KPL, 1, 0, 1);
-
-	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore, LDT_SIZE - 1,
-	    SDT_SYSLDT, SEL_KPL, 0);
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GDATA_SEL), 0,
+	    0xfffff, SDT_MEMRWA, SEL_KPL, 1, 0, 1);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE32_SEL), 0,
-	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
+	    atop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
-
-	/* make ldt gates and memory segments */
-	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-
-	*(struct mem_segment_descriptor *)(ldtstore + LUCODE_SEL) =
-	    *GDT_ADDR_MEM(gdtstore, GUCODE_SEL);
-	*(struct mem_segment_descriptor *)(ldtstore + LUDATA_SEL) =
-	    *GDT_ADDR_MEM(gdtstore, GUDATA_SEL);
-
-	/*
-	 * 32 bit LDT entries.
-	 */
-	ldt_segp = (struct mem_segment_descriptor *)(ldtstore + LUCODE32_SEL);
-	set_mem_segment(ldt_segp, 0, atop(VM_MAXUSER_ADDRESS32) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1, 0);
-	ldt_segp = (struct mem_segment_descriptor *)(ldtstore + LUDATA32_SEL);
-	set_mem_segment(ldt_segp, 0, atop(VM_MAXUSER_ADDRESS32) - 1,
-	    SDT_MEMRWA, SEL_UPL, 1, 1, 0);
-
-	/*
-	 * Other entries.
-	 */
-	memcpy((struct gate_descriptor *)(ldtstore + LSOL26CALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
-	memcpy((struct gate_descriptor *)(ldtstore + LBSDICALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {

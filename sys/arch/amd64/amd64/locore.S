@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.41 2010/10/14 04:38:24 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.42 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1008,26 +1008,12 @@ NENTRY(child_trampoline)
 
 	.globl  _C_LABEL(osyscall_return)
 
-/* XXX - can we zap the following two? */
-
-/*
- * Old call gate entry for syscall. only needed if we're
- * going to support running old NetBSD or ibcs2 binaries, etc,
- * on NetBSD/amd64.
- */
-IDTVEC(oosyscall)
-	/* Set rflags in trap frame. */
-	pushfq
-	popq	8(%rsp)
-	pushq	$7		# size of instruction for restart
-	jmp	osyscall1
 
 /*
  * Trap gate entry for int $80 syscall, also used by sigreturn.
  */
 IDTVEC(osyscall)
 	pushq	$2		# size of instruction for restart
-osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	sti

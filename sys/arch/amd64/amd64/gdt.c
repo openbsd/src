@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.16 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.17 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -124,8 +124,6 @@ gdt_init(void)
 	}
 	bcopy(old_gdt, gdtstore, DYNSEL_START);
 	ci->ci_gdt = gdtstore;
-	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
-	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
 
 	gdt_init_cpu(ci);
 }

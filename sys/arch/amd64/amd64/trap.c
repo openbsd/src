@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2010/09/28 03:53:14 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2010/10/26 05:49:10 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -150,10 +150,7 @@ trap(struct trapframe *frame)
 	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
-	extern char doreti_iret[], resume_iret[], IDTVEC(oosyscall)[];
-#if 0
-	extern char resume_pop_ds[], resume_pop_es[];
-#endif
+	extern char doreti_iret[], resume_iret[];
 	caddr_t onfault;
 	int error;
 	uint64_t cr2;
@@ -420,13 +417,6 @@ faultcommon:
 	}
 
 	case T_TRCTRAP:
-		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (register_t)IDTVEC(oosyscall))
-			return;
-		if (frame->tf_rip == (register_t)IDTVEC(oosyscall) + 1) {
-			frame->tf_rflags &= ~PSL_T;
-			return;
-		}
 		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
