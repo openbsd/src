@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.18 2010/10/26 22:28:57 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.19 2010/10/26 22:48:07 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,66 +45,76 @@ enum	mandocerr {
 	MANDOCERR_OK,
 
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
-	MANDOCERR_UPPERCASE, /* text should be uppercase */
-	MANDOCERR_SECOOO, /* sections out of conventional order */
-	MANDOCERR_SECREP, /* section name repeats */
-	MANDOCERR_PROLOGOOO, /* out of order prologue */
-	MANDOCERR_PROLOGREP, /* repeated prologue entry */
-	MANDOCERR_LISTFIRST, /* list type must come first */
-	MANDOCERR_BADSTANDARD, /* bad standard */
-	MANDOCERR_BADLIB, /* bad library */
-	MANDOCERR_BADTAB, /* tab in non-literal context */
-	MANDOCERR_BADESCAPE, /* bad escape sequence */
-	MANDOCERR_BADQUOTE, /* unterminated quoted string */
-	MANDOCERR_NOWIDTHARG, /* argument requires the width argument */
-	/* FIXME: merge with MANDOCERR_IGNARGV. */
-	MANDOCERR_WIDTHARG, /* superfluous width argument */
-	MANDOCERR_IGNARGV, /* ignoring argument */
-	MANDOCERR_BADDATE, /* bad date argument */
-	MANDOCERR_BADWIDTH, /* bad width argument */
+
+	/* related to the prologue */
+	MANDOCERR_NOTITLE, /* no title in document */
+	MANDOCERR_UPPERCASE, /* document title should be all caps */
 	MANDOCERR_BADMSEC, /* unknown manual section */
-	MANDOCERR_NESTEDDISP, /* nested displays are not portable */
+	MANDOCERR_BADDATE, /* cannot parse date argument */
+	MANDOCERR_PROLOGOOO, /* prologue macros out of order */
+	MANDOCERR_PROLOGREP, /* duplicate prologue macro */
+	MANDOCERR_BADPROLOG, /* macro not allowed in prologue */
+	MANDOCERR_BADBODY, /* macro not allowed in body */
+
+	/* related to document structure */
+	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
+	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
+	MANDOCERR_NONAME, /* manual name not yet set */
+	MANDOCERR_SECOOO, /* sections out of conventional order */
+	MANDOCERR_SECREP, /* duplicate section name */
 	MANDOCERR_SECMSEC, /* section not in conventional manual section */
-	MANDOCERR_EOLNSPACE, /* end of line whitespace */
+
+	/* related to macros and nesting */
+	MANDOCERR_MACROOBS, /* skipping obsolete macro */
+	MANDOCERR_IGNPAR, /* skipping paragraph macro */
 	MANDOCERR_SCOPENEST, /* blocks badly nested */
+	MANDOCERR_CHILD, /* child violates parent syntax */
+	MANDOCERR_NESTEDDISP, /* nested displays are not portable */
+	MANDOCERR_SCOPEREP, /* already in literal mode */
+
+	/* related to missing macro arguments */
+	MANDOCERR_MACROEMPTY, /* skipping empty macro */
+	MANDOCERR_DISPTYPE, /* missing display type */
+	MANDOCERR_LISTFIRST, /* list type must come first */
+	MANDOCERR_NOWIDTHARG, /* tag lists require a width argument */
+	MANDOCERR_FONTTYPE, /* missing font type */
+
+	/* related to bad macro arguments */
+	MANDOCERR_IGNARGV, /* skipping argument */
+	MANDOCERR_ARGVREP, /* duplicate argument */
+	MANDOCERR_DISPREP, /* duplicate display type */
+	MANDOCERR_LISTREP, /* duplicate list type */
+	MANDOCERR_BADATT, /* unknown AT&T UNIX version */
+	MANDOCERR_BADBOOL, /* bad Boolean value */
+	MANDOCERR_BADLIB, /* unknown library specifier */
+	MANDOCERR_BADSTANDARD, /* unknown standard specifier */
+	MANDOCERR_BADWIDTH, /* bad width argument */
+
+	/* related to plain text */
+	MANDOCERR_NOBLANKLN, /* blank line in non-literal context */
+	MANDOCERR_BADTAB, /* tab in non-literal context */
+	MANDOCERR_EOLNSPACE, /* end of line whitespace */
+	MANDOCERR_BADCOMMENT, /* bad comment style */
+	MANDOCERR_BADESCAPE, /* unknown escape sequence */
+	MANDOCERR_BADQUOTE, /* unterminated quoted string */
 
 	MANDOCERR_ERROR, /* ===== start of errors ===== */
-	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
-	MANDOCERR_BADBOOL, /* bad Boolean value */
-	MANDOCERR_CHILD, /* child violates parent syntax */
-	MANDOCERR_BADATT, /* bad AT&T symbol */
-	MANDOCERR_LISTREP, /* list type repeated */
-	MANDOCERR_DISPREP, /* display type repeated */
-	MANDOCERR_ARGVREP, /* argument repeated */
-	MANDOCERR_NONAME, /* manual name not yet set */
-	MANDOCERR_MACROOBS, /* obsolete macro ignored */
-	MANDOCERR_MACROEMPTY, /* empty macro ignored */
-	MANDOCERR_BADBODY, /* macro not allowed in body */
-	MANDOCERR_BADPROLOG, /* macro not allowed in prologue */
-	MANDOCERR_BADCHAR, /* bad character */
-	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
-	MANDOCERR_NOBLANKLN, /* no blank lines */
-	MANDOCERR_NOTEXT, /* no text in this context */
-	MANDOCERR_BADCOMMENT, /* bad comment style */
-	MANDOCERR_MACRO, /* unknown macro will be lost */
+	MANDOCERR_BADCHAR, /* skipping bad character */
+	MANDOCERR_NOTEXT, /* skipping text before the first section header */
+	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_LINESCOPE, /* line scope broken */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
-	MANDOCERR_NOSCOPE, /* no such block is open */
+	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */
 	MANDOCERR_SCOPEBROKEN, /* missing end of block */
-	MANDOCERR_SCOPEREP, /* scope already open */
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
 	MANDOCERR_UNAME, /* uname(3) system call failed */
 	/* FIXME: merge following with MANDOCERR_ARGCOUNT */
 	MANDOCERR_NOARGS, /* macro requires line argument(s) */
 	MANDOCERR_NOBODY, /* macro requires body argument(s) */
 	MANDOCERR_NOARGV, /* macro requires argument(s) */
-	MANDOCERR_NOTITLE, /* no title in document */
 	MANDOCERR_LISTTYPE, /* missing list type */
-	MANDOCERR_DISPTYPE, /* missing display type */
-	MANDOCERR_FONTTYPE, /* missing font type */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
-	MANDOCERR_IGNPAR, /* paragraph macro ignored */
 	MANDOCERR_TBL, /* tbl(1) error */
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */

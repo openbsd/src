@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.46 2010/10/24 18:15:43 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.47 2010/10/26 22:48:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -665,12 +665,8 @@ post_bl_tagwidth(POST_ARGS)
 		assert(MDOC_BLOCK == nn->type);
 		nn = nn->head->child;
 
-		if (nn == NULL) {
-			/* No -width for .Bl and first .It is emtpy */
-			if ( ! mdoc_nmsg(m, n, MANDOCERR_NOWIDTHARG))
-				return(0);
+		if (nn == NULL)
 			break;
-		}
 
 		if (MDOC_TEXT == nn->type) {
 			sz = strlen(nn->string) + 1;
@@ -679,8 +675,6 @@ post_bl_tagwidth(POST_ARGS)
 
 		if (0 != (ssz = mdoc_macro2len(nn->tok)))
 			sz = ssz;
-		else if ( ! mdoc_nmsg(m, n, MANDOCERR_NOWIDTHARG))
-			return(0);
 
 		break;
 	} 
