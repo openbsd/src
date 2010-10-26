@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmt.4,v 1.3 2010/10/26 01:24:48 dlg Exp $
+.\"	$OpenBSD: vmt.4,v 1.4 2010/10/26 05:07:31 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -29,7 +29,6 @@ driver is a kernel level implementation of VMware Tools.
 VMware Tools are intended to provide better support for operating systems
 running inside virtual machines.
 .Pp
-The
 .Nm
 handles shutdown and reboot requests from the host by signalling
 .Xr init 8
@@ -37,7 +36,7 @@ with SIGUSR2 and SIGINT respectively.
 .Nm
 will log notifications that the guest has been suspended or resumed by the
 host.
-It also provides access to the host machines clock as a timedelta sensor.
+It also provides access to the host machine's clock as a timedelta sensor.
 .Pp
 .Nm
 reports the guests hostname and first non-loopback IP address to the host.
