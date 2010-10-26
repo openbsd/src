@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.342 2010/10/01 20:51:32 jakob Exp $
+#	$OpenBSD: rc,v 1.343 2010/10/26 20:56:03 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -157,6 +157,9 @@ HOME=/; export HOME
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 
+# pick up option configuration
+. /etc/rc.conf
+
 if [ X"$1" = X"shutdown" ]; then
 	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
@@ -243,9 +246,6 @@ mount -uw /		# root on nfs requires this, others aren't hurt
 rm -f /fastboot		# XXX (root now writeable)
 
 random_seed
-
-# pick up option configuration
-. /etc/rc.conf
 
 # set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
 echo 'setting tty flags'

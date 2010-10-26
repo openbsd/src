@@ -1,0 +1,54 @@
+[ -z $local_rcconf ] && . /etc/rc.conf
+
+rc_err() {
+	echo $1
+	exit 1
+}
+
+rc_start() {
+	type rc_pre >/dev/null && rc_pre
+	eval $daemon $daemon_flags
+}
+
+rc_check() {
+	pgrep -f "^$pexp" >/dev/null
+}
+
+rc_reload() {
+	pkill -HUP -f "^$pexp"
+}
+
+rc_stop() {
+	pkill -f "^$pexp"
+	type rc_post >/dev/null && rc_post || return 0
+}
+
+rc_cmd() {
+	[ `id -u` -eq 0 ] || rc_err "$0: need root privileges"
+	[ -n "$daemon"  ] || rc_err "$0: daemon is not set"
+	[ -n "$pexp"    ] || pexp="$daemon${daemon_flags:+ $daemon_flags}"
+
+	case "$1" in
+	check|status)
+		rc_check
+		;;
+	start)
+		rc_check || rc_start
+		;;
+	stop)
+		rc_stop
+		;;
+	reload)
+		rc_check && rc_reload
+		;;
+	restart)
+		rc_stop
+		while rc_check; do
+			sleep 1
+		done
+		rc_start
+		;;
+	*)
+		rc_err "usage: $0 {start|check|reload|restart|stop}"
+	esac
+}
