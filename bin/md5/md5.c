@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.51 2010/10/25 19:05:52 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.52 2010/10/27 15:24:10 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -477,7 +477,7 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 	struct hash_function *hf;
 	FILE *fp;
 	size_t nread;
-	u_char data[BUFSIZ];
+	u_char data[32 * 1024];
 	char digest[MAX_DIGEST_LEN + 1];
 
 	if (strcmp(file, "-") == 0)
@@ -537,7 +537,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 	char *lbuf = NULL;
 	FILE *listfp, *fp;
 	size_t len, nread;
-	u_char data[BUFSIZ];
+	u_char data[32 * 1024];
 	union ANY_CTX context;
 	struct hash_function *hf;
 
