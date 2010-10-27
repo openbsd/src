@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.56 2010/06/30 20:38:49 tedu Exp $ */
+/* $OpenBSD: trap.c,v 1.57 2010/10/27 20:20:38 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -268,6 +268,7 @@ trap(a0, a1, a2, entry, framep)
 	uvmexp.traps++;
 	p = curproc;
 	ucode = 0;
+	v = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user)  {
 		p->p_md.md_tf = framep;
@@ -294,7 +295,8 @@ trap(a0, a1, a2, entry, framep)
 				goto out;
 #endif
 
-			ucode = a0;		/* VA */
+			ucode = ILL_ILLADR;
+			v = (caddr_t)a0;
 			break;
 		}
 
@@ -323,8 +325,9 @@ trap(a0, a1, a2, entry, framep)
 				goto out;
 #else
 			i = SIGFPE;
-			ucode = a0;
+			ucode = FPE_FLTINV;
 #endif
+			v = (caddr_t)framep->tf_regs[FRAME_PC];
 			break;
 		}
 
@@ -388,6 +391,7 @@ trap(a0, a1, a2, entry, framep)
 			printf("trap: unknown IF type 0x%lx\n", a0);
 			goto dopanic;
 		}
+		v = (caddr_t)framep->tf_regs[FRAME_PC];
 		break;
 
 	case ALPHA_KENTRY_MM:
