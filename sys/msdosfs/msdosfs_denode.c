@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.40 2010/09/10 16:34:08 thib Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.41 2010/10/27 19:16:17 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ msdosfs_hashget(dev_t dev, uint32_t dirclust, uint32_t diroff)
 	struct proc *p = curproc; /* XXX */
        
 	for (;;)
-		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)];;
+		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)]; ;
 		     dep = dep->de_next) {
 			if (dep == NULL)
 				return (NULL);
