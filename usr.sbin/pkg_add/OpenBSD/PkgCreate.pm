@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.26 2010/10/25 21:33:15 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.27 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -237,6 +237,16 @@ sub prepare_for_archival
 sub copy_over
 {
 }
+package OpenBSD::PackingElement::RcScript;
+sub archive
+{
+	my ($self, $state) = @_;
+	if ($self->name =~ m/^\//) {
+		$state->{archive}->destdir($state->{base});
+	}
+	$self->SUPER::archive($state);
+}
+
 package OpenBSD::PackingElement::SpecialFile;
 sub archive
 {

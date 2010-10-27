@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.9 2010/07/11 10:05:18 espie Exp $
+# $OpenBSD: Signature.pm,v 1.10 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #

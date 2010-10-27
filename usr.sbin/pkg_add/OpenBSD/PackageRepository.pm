@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.89 2010/08/13 11:12:04 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.90 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.50 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.51 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #

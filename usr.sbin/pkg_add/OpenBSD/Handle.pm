@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.25 2010/08/12 20:36:13 espie Exp $
+# $OpenBSD: Handle.pm,v 1.26 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #

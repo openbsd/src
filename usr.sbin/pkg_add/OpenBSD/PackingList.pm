@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.109 2010/07/31 11:30:50 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.110 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -197,7 +197,7 @@ sub FilesOnly
 	my ($fh, $cont) = @_;
 	my $_;
 	while (<$fh>) {
-	    	next unless m/^\@(?:cwd|name|info|man|file|lib|shell|sample|bin)\b/o || !m/^\@/o;
+	    	next unless m/^\@(?:cwd|name|info|man|file|lib|shell|sample|bin|rcscript)\b/o || !m/^\@/o;
 		&$cont($_);
 	}
 }

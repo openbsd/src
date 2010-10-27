@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.14 2010/07/26 07:28:29 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.15 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #

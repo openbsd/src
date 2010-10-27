@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.186 2010/10/24 17:06:05 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.187 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -461,6 +461,25 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$self->compute_fullname($state, 1);
+	$self->compute_modes($state);
+}
+
+package OpenBSD::PackingElement::RcScript;
+use File::Basename;
+our @ISA = qw(OpenBSD::PackingElement::FileBase);
+
+sub keyword() { "rcscript" }
+__PACKAGE__->register_with_factory;
+
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->compute_fullname($state, 1);
+	if ($self->name =~ m/^\//) {
+		$state->set_cwd(dirname($self->name));
+	}
+	$state->{lastfile} = $self;
+	$state->{lastchecksummable} = $self;
 	$self->compute_modes($state);
 }
 

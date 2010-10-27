@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.134 2010/08/13 11:12:43 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.135 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #

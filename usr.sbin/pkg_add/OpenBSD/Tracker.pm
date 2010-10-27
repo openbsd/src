@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.23 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.24 2010/10/27 14:35:56 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
