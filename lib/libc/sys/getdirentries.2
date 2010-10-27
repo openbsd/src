@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.22 2009/07/09 10:14:41 eric Exp $
+.\"	$OpenBSD: getdirentries.2,v 1.23 2010/10/27 19:07:27 deraadt Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 9 2009 $
+.Dd $Mdocdate: October 27 2010 $
 .Dt GETDIRENTRIES 2
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Fd #include <dirent.h>
 .Ft int
-.Fn getdirentries "int fd" "char *buf" "int nbytes" "long *basep"
+.Fn getdirentries "int fd" "char *buf" "int nbytes" "off_t *basep"
 .Sh DESCRIPTION
 .Fn getdirentries
 reads directory entries from the directory
@@ -142,41 +142,6 @@ the end of the directory has been reached.
 Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
-.Sh EXAMPLES
-The following code may be used to iterate on all entries in a
-directory:
-.Bd -literal -offset indent
-char *buf, *ebuf, *cp;
-long base;
-size_t bufsize;
-int fd, nbytes;
-char *path;
-struct stat sb;
-struct dirent *dp;
-
-if ((fd = open(path, O_RDONLY)) == -1)
-	err(2, "cannot open %s", path);
-if (fstat(fd, &sb) == -1)
-	err(2, "fstat");
-bufsize = sb.st_size;
-if (bufsize < sb.st_blksize)
-	bufsize = sb.st_blksize;
-if ((buf = malloc(bufsize)) == NULL)
-	err(2,  "cannot malloc %lu bytes", (unsigned long)bufsize);
-while ((nbytes = getdirentries(fd, buf, bufsize, &base)) > 0) {
-	ebuf = buf + nbytes;
-	cp = buf;
-	while (cp < ebuf) {
-		dp = (struct dirent *)cp;
-		if (dp->d_fileno != 0)
-			printf("%s\en", dp->d_name);
-		cp += dp->d_reclen;
-	}
-}
-if (nbytes == -1)
-	err(2, "getdirentries");
-free(buf);
-.Ed
 .Sh ERRORS
 .Fn getdirentries
 will fail if:
@@ -207,6 +172,14 @@ error occurred while reading from or writing to the file system.
 .Xr open 2 ,
 .Xr opendir 3 ,
 .Xr dirent 5
+.Sh STANDARDS
+The
+.Fn getdirentries
+call is not a portable interface and should not be used directly by
+applications.
+Use
+.Xr readdir 3
+instead.
 .Sh HISTORY
 The
 .Fn getdirentries
