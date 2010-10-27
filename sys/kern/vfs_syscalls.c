@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.163 2010/07/01 22:03:32 krw Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.164 2010/10/27 17:11:08 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2310,10 +2310,6 @@ sys_getdirentries(struct proc *p, void *v, register_t *retval)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
-		goto bad;
-	}
-	if ((fp->f_offset < 0) || (fp->f_offset > LONG_MAX)) {
-		error = EINVAL;
 		goto bad;
 	}
 	vp = (struct vnode *)fp->f_data;
