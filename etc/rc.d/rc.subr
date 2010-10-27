@@ -1,4 +1,4 @@
-[ -z "$local_rcconf" ] && . /etc/rc.conf
+[ -z "${local_rcconf}" ] && . /etc/rc.conf
 
 rc_err() {
 	echo $1
@@ -7,26 +7,26 @@ rc_err() {
 
 rc_start() {
 	type rc_pre >/dev/null && rc_pre
-	$daemon $daemon_flags >/dev/null
+	${daemon} ${daemon_flags} >/dev/null
 }
 
 rc_check() {
-	pgrep -f "^$pexp" >/dev/null
+	pgrep -f "^${pexp}" >/dev/null
 }
 
 rc_reload() {
-	pkill -HUP -f "^$pexp"
+	pkill -HUP -f "^${pexp}"
 }
 
 rc_stop() {
-	pkill -f "^$pexp"
+	pkill -f "^${pexp}"
 	type rc_post >/dev/null && rc_post || return 0
 }
 
 rc_cmd() {
 	[ `id -u` -eq 0 -o X"$1" = "Xcheck" ] || rc_err "$0: need root privileges"
-	[ -n "$daemon"  ] || rc_err "$0: daemon is not set"
-	[ -n "$pexp"    ] || pexp="$daemon${daemon_flags:+ $daemon_flags}"
+	[ -n "${daemon}"  ] || rc_err "$0: daemon is not set"
+	[ -n "${pexp}"    ] || pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
 
 	case "$1" in
 	check)
