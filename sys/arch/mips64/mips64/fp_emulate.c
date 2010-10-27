@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.1 2010/09/21 20:29:17 miod Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.2 2010/10/27 20:05:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -109,7 +109,7 @@ int	fpu_int_w(struct trap_frame *, uint, uint, uint, uint, uint);
 #define	ONE_F64	(float64)((uint64_t)DBL_EXP_BIAS << DBL_FRACBITS)
 
 /*
- * Handle a floating-point exception.
+ * Handle a floating-point exception.
  */
 void
 MipsFPTrap(struct trap_frame *tf)
@@ -711,8 +711,8 @@ fpu_c(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint op)
 	lt = eq = uo = 0;
 	cc = fd >> 2;
 
-	raw1 = fpu_load(tf, fmt, ft);
-	raw2 = fpu_load(tf, fmt, fs);
+	raw1 = fpu_load(tf, fmt, fs);
+	raw2 = fpu_load(tf, fmt, ft);
 
 	if (fmt == FMT_S) {
 		float32 f32a = (float32)raw1;
@@ -721,11 +721,13 @@ fpu_c(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint op)
 			uo = 1 << 0;
 			if (float32_is_signaling_nan(f32a))
 				op |= 0x08;	/* force invalid exception */
-		} else if (float32_is_nan(f32b)) {
+		}
+		if (float32_is_nan(f32b)) {
 			uo = 1 << 0;
 			if (float32_is_signaling_nan(f32b))
 				op |= 0x08;	/* force invalid exception */
-		} else {
+		}
+		if (uo == 0) {
 			if (float32_eq(f32a, f32b))
 				eq = 1 << 1;
 			else if (float32_lt(f32a, f32b))
@@ -738,11 +740,13 @@ fpu_c(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint op)
 			uo = 1 << 0;
 			if (float64_is_signaling_nan(f64a))
 				op |= 0x08;	/* force invalid exception */
-		} else if (float64_is_nan(f64b)) {
+		}
+		if (float64_is_nan(f64b)) {
 			uo = 1 << 0;
 			if (float64_is_signaling_nan(f64b))
 				op |= 0x08;	/* force invalid exception */
-		} else {
+		}
+		if (uo == 0) {
 			if (float64_eq(f64a, f64b))
 				eq = 1 << 1;
 			else if (float64_lt(f64a, f64b))
