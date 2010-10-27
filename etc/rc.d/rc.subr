@@ -1,4 +1,4 @@
-[ -z $local_rcconf ] && . /etc/rc.conf
+[ -z "$local_rcconf" ] && . /etc/rc.conf
 
 rc_err() {
 	echo $1
@@ -7,7 +7,7 @@ rc_err() {
 
 rc_start() {
 	type rc_pre >/dev/null && rc_pre
-	eval $daemon $daemon_flags
+	$daemon $daemon_flags
 }
 
 rc_check() {
