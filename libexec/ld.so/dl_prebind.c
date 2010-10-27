@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.9 2008/04/09 21:45:26 kurt Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.10 2010/10/27 19:04:26 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -220,7 +220,7 @@ prebind_symcache(elf_object_t *object, int plt)
 
 	footer = (void *)c;
 	prebind_map = (void *)object->prebind_data;
-	nameidx = prebind_map + footer->nameidx_idx;;
+	nameidx = prebind_map + footer->nameidx_idx;
 	if (plt) {
 		symcachetab = prebind_map + footer->pltsymcache_idx;
 		symcache_cnt = footer->pltsymcache_cnt;
@@ -599,7 +599,7 @@ dump_prelink(Elf_Addr base, u_long size)
 	dl_dump_footer(footer);
 
 	prebind_map = (void *)base;
-	nameidx = prebind_map + footer->nameidx_idx;;
+	nameidx = prebind_map + footer->nameidx_idx;
 	symcachetab = prebind_map + footer->symcache_idx;
 	fixupidx = prebind_map + footer->fixup_idx;
 	nametab = prebind_map + footer->nametab_idx;
