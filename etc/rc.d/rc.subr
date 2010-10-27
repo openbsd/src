@@ -24,12 +24,12 @@ rc_stop() {
 }
 
 rc_cmd() {
-	[ `id -u` -eq 0 ] || rc_err "$0: need root privileges"
+	[ `id -u` -eq 0 -o X"$1" = "Xcheck" ] || rc_err "$0: need root privileges"
 	[ -n "$daemon"  ] || rc_err "$0: daemon is not set"
 	[ -n "$pexp"    ] || pexp="$daemon${daemon_flags:+ $daemon_flags}"
 
 	case "$1" in
-	check|status)
+	check)
 		rc_check
 		;;
 	start)
