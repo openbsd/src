@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.8 2007/09/29 16:03:43 marco Exp $ */
+/* $OpenBSD: qlireg.h,v 1.9 2010/10/27 20:48:27 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -603,7 +603,7 @@ struct qli_cb {
 	u_int8_t		qcb_ipv6_flow_label[3];
 	u_int8_t		qcb_ipv6_def_router_addr[16];
 	u_int8_t		qcb_ipv6_vlan_tci[2];
-	u_int8_t		qcb_ipv6_link_local_addr_state;;
+	u_int8_t		qcb_ipv6_link_local_addr_state;
 #define QLI_QCB_IPV6_LLAS_UNCONFIGURED		(0x00)
 #define QLI_QCB_IPV6_LLAS_INVALID		(0x01)
 #define QLI_QCB_IPV6_LLAS_ACQUIRING		(0x02)

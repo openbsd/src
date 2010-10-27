@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.44 2010/08/27 08:24:53 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.45 2010/10/27 20:48:27 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -3028,7 +3028,7 @@ ixgbe_configure_ivars(struct ix_softc *sc)
 void
 ixgbe_update_stats_counters(struct ix_softc *sc)
 {
-	struct ifnet   *ifp = &sc->arpcom.ac_if;;
+	struct ifnet   *ifp = &sc->arpcom.ac_if;
 	struct ixgbe_hw *hw = &sc->hw;
 	uint32_t  missed_rx = 0, bprc, lxon, lxoff, total;
 	int	i;
