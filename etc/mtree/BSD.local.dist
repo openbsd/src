@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.local.dist,v 1.14 2007/09/05 15:17:18 steven Exp $
+#     $OpenBSD: BSD.local.dist,v 1.15 2010/10/27 16:47:39 espie Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
@@ -122,6 +122,8 @@
         dict
         ..
         doc
+	    pkg-readmes
+	    ..
         ..
         examples
         ..
