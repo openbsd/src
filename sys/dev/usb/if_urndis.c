@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.26 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.27 2010/10/27 17:51:11 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1532,8 +1532,10 @@ urndis_detach(struct device *self, int flags)
 
 	ifp = GET_IFP(sc);
 
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 	urndis_stop(sc);
 	sc->sc_attached = 0;

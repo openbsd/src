@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.60 2010/09/24 08:33:58 yuo Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.61 2010/10/27 17:51:11 jakemsr Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -570,9 +570,10 @@ kue_detach(struct device *self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		kue_stop(sc);
 
-	ether_ifdetach(ifp);
-
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->kue_ep[KUE_ENDPT_TX] != NULL ||

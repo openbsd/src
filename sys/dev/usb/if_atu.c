@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.95 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.96 2010/10/27 17:51:11 jakemsr Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1504,8 +1504,10 @@ atu_detach(struct device *self, int flags)
 		if (sc->atu_ep[ATU_ENDPT_RX] != NULL)
 			usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 
-		ieee80211_ifdetach(ifp);
-		if_detach(ifp);
+		if (ifp->if_softc != NULL) {
+			ieee80211_ifdetach(ifp);
+			if_detach(ifp);
+		}
 	}
 
 	return(0);

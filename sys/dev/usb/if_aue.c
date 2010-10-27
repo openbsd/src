@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.81 2010/10/23 16:14:06 jakemsr Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.82 2010/10/27 17:51:11 jakemsr Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -872,8 +872,10 @@ aue_detach(struct device *self, int flags)
 
 	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->aue_mii.mii_media, IFM_INST_ANY);
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->aue_ep[AUE_ENDPT_TX] != NULL ||

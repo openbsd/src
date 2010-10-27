@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.33 2010/10/23 16:14:07 jakemsr Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.34 2010/10/27 17:51:11 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -775,8 +775,10 @@ urtw_detach(struct device *self, int flags)
 
 	s = splusb();
 
-	ieee80211_ifdetach(ifp);	/* free all nodes */
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ieee80211_ifdetach(ifp);	/* free all nodes */
+		if_detach(ifp);
+	}
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_ledtask);

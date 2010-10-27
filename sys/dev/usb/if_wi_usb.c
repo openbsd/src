@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.48 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.49 2010/10/27 17:51:11 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -427,8 +427,10 @@ wi_usb_detach(struct device *self, int flags)
 
 	wsc->wi_flags = 0;
 
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 	sc->wi_usb_attached = 0;
 

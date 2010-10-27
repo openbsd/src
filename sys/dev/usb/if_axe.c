@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.101 2010/10/23 16:14:07 jakemsr Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.102 2010/10/27 17:51:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -864,8 +864,10 @@ axe_detach(struct device *self, int flags)
 
 	mii_detach(&sc->axe_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->axe_mii.mii_media, IFM_INST_ANY);
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->axe_ep[AXE_ENDPT_TX] != NULL ||

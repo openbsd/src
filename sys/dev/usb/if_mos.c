@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.10 2010/10/23 16:14:07 jakemsr Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.11 2010/10/27 17:51:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -799,8 +799,10 @@ mos_detach(struct device *self, int flags)
 
 	mii_detach(&sc->mos_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->mos_mii.mii_media, IFM_INST_ANY);
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->mos_ep[MOS_ENDPT_TX] != NULL ||

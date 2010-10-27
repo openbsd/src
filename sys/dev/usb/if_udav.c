@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.48 2010/10/23 16:14:07 jakemsr Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.49 2010/10/27 17:51:11 jakemsr Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -351,8 +351,10 @@ udav_detach(struct device *self, int flags)
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_pipe_tx != NULL)

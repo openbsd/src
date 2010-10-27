@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.58 2010/10/23 16:14:07 jakemsr Exp $ */
+/*	$OpenBSD: if_url.c,v 1.59 2010/10/27 17:51:11 jakemsr Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -358,8 +358,10 @@ url_detach(struct device *self, int flags)
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_pipe_tx != NULL)

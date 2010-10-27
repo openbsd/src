@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.45 2010/10/23 16:14:07 jakemsr Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.46 2010/10/27 17:51:11 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -461,8 +461,10 @@ uath_detach(struct device *self, int flags)
 	/* close Tx/Rx pipes */
 	uath_close_pipes(sc);
 
-	ieee80211_ifdetach(ifp);	/* free all nodes */
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ieee80211_ifdetach(ifp);	/* free all nodes */
+		if_detach(ifp);
+	}
 
 	splx(s);
 

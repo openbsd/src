@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.84 2010/10/23 16:14:07 jakemsr Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.85 2010/10/27 17:51:11 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -455,8 +455,10 @@ zyd_detach(struct device *self, int flags)
 		return 0;
 	}
 
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ieee80211_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 	zyd_free_rx_list(sc);
 	zyd_free_tx_list(sc);

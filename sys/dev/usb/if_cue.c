@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.55 2010/10/23 16:14:07 jakemsr Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.56 2010/10/27 17:51:11 jakemsr Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -576,9 +576,10 @@ cue_detach(struct device *self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		cue_stop(sc);
 
-	ether_ifdetach(ifp);
-
-	if_detach(ifp);
+	if (ifp->if_softc != NULL) {
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->cue_ep[CUE_ENDPT_TX] != NULL ||
