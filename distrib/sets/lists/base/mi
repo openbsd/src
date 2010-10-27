@@ -88,6 +88,8 @@
 ./etc/ppp/ppp.linkdown.sample
 ./etc/ppp/ppp.linkup.sample
 ./etc/ppp/ppp.secret.sample
+./etc/rc.d
+./etc/rc.d/rc.subr
 ./etc/skel
 ./etc/sliphome
 ./etc/ssl
