@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.30 2010/10/15 20:45:03 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.31 2010/10/27 10:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -310,9 +310,7 @@ check_par(CHKARGS)
 				break;
 			return(man_nmsg(m, n, MANDOCERR_ARGSLOST));
 		default:
-			if (n->nchild)
-				break;
-			return(man_nmsg(m, n, MANDOCERR_NOARGS));
+			break;
 		}
 
 	return(1);
