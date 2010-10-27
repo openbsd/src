@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.26 2010/05/09 09:34:42 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.27 2010/10/27 20:44:23 millert Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -314,7 +314,7 @@ _ENTRY(_dl_sigprocmask)
 	 clr %o0
 
 _ENTRY(_dl_sysctl)
-	mov  SYS___sysctl | SYSCALL_G2RFLAG, %g1	! call sys_getdirentries
+	mov  SYS___sysctl | SYSCALL_G2RFLAG, %g1	! call sys___sysctl
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl
