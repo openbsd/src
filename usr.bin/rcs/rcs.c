@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.70 2010/10/20 19:55:46 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.71 2010/10/27 08:35:45 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1517,7 +1517,10 @@ rcs_kwexp_set(RCSFILE *file, int mode)
 int
 rcs_kwexp_get(RCSFILE *file)
 {
-	return rcs_kflag_get(file->rf_expand);
+	if (file->rf_expand == NULL)
+		return (RCS_KWEXP_DEFAULT);
+
+	return (rcs_kflag_get(file->rf_expand));
 }
 
 /*
@@ -1534,9 +1537,10 @@ rcs_kflag_get(const char *flags)
 	size_t len;
 	const char *fp;
 
-	fl = 0;
-	len = strlen(flags);
+	if (flags == NULL || !(len = strlen(flags)))
+		return (RCS_KWEXP_ERR);
 
+	fl = 0;
 	for (fp = flags; *fp != '\0'; fp++) {
 		if (*fp == 'k')
 			fl |= RCS_KWEXP_NAME;
@@ -1551,6 +1555,7 @@ rcs_kflag_get(const char *flags)
 		} else if (*fp == 'b') {
 			if (len != 1)
 				fl |= RCS_KWEXP_ERR;
+			fl |= RCS_KWEXP_NONE;
 		} else	/* unknown letter */
 			fl |= RCS_KWEXP_ERR;
 	}
@@ -2031,10 +2036,7 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 	/*
 	 * Do keyword expansion if required.
 	 */
-	if (rf->rf_expand != NULL)
-		expmode = rcs_kwexp_get(rf);
-	else
-		expmode = RCS_KWEXP_DEFAULT;
+	expmode = rcs_kwexp_get(rf);
 
 	if (!(expmode & RCS_KWEXP_NONE)) {
 		if ((rdp = rcs_findrev(rf, rev)) == NULL)
