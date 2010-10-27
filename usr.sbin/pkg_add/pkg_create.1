@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.67 2010/10/22 15:59:50 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.68 2010/10/27 17:26:03 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: October 22 2010 $
+.Dd $Mdocdate: October 27 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -682,6 +682,22 @@ When ports get renamed, or flavors change, extra
 annotations can help
 .Nm pkg_add
 get a sense of continuity.
+.Pp
+.It Cm @rcscript Ar filename
+Script for the
+.Pa /etc/rc.d
+framework.
+Contrary to
+.Cm @file ,
+absolute paths are okay, e.g.,
+.Bd -literal -offset indent
+@rcscript ${RCDIR}/ballsd
+.Ed
+.Pp
+In this case, performs an implicit
+.Cm @cwd
+to
+.Pa ${RCDIR} .
 .Pp
 .It Cm @sample Ar filename
 Last preceding
