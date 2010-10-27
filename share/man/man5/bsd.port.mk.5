@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.268 2010/10/25 04:54:25 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.269 2010/10/27 17:20:06 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 25 2010 $
+.Dd $Mdocdate: October 27 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1629,8 +1629,7 @@ to look up package specifications.
 Defaults to
 .Pa ${PORTSDIR}:${PORTSDIR}/mystuff .
 .It Ev PKGDIR
-Location for packaging information (packing list, port description, port
-short description).
+Location for packaging information (packing list, port description, messages).
 Default: pkg.${ARCH} or pkg.
 .It Ev PKGNAME
 Name of the created package.
@@ -1700,6 +1699,11 @@ FLAVOR=no_gnome make package
 Creation of a separate working directory is mandatory.
 If, at a later time, a full build with all subpackages is required,
 all the work will need to be done again.
+.It Ev RCDIR
+Location for daemon startup scripts.
+Defaults to
+.Pa /etc/rc.d .
+Do not change.
 .It Ev REFETCH
 User settings.
 If set to true,
@@ -1878,6 +1882,7 @@ Always holds
 .Ev MACHINE_ARCH ,
 .Ev MAINTAINER ,
 .Ev PREFIX ,
+.Ev RCDIR ,
 and
 .Ev SYSCONFDIR .
 The special construct
@@ -2136,6 +2141,25 @@ Description for the port.
 Variables such as ${HOMEPAGE} and ${MAINTAINER} will be expanded
 (see SUBST_VARS).
 Multi-package ports will use DESCR${SUBPACKAGE}.
+.It Pa ${PKGDIR}/README
+.Ox
+specific documentation for a port, that will be installed as
+.Pa ${LOCALBASE}/share/doc/pkg-readmes/${FULLPKGNAME}
+at the end of
+.Ar fake .
+Variables from
+.Ev SUBST_VARS
+will be expanded.
+Multi-package ports will use README${SUBPACKAGE}.
+.It Pa ${PKGDIR}/<foo>.rc
+startup script for <foo>.
+Will be installed as
+.Ar ${RCDIR}/<foo>
+at the end of
+.Ar fake .
+Variables from
+.Ev SUBST_VARS
+will be expanded.
 .It Pa ${PORTSDIR}/infrastructure/db/fake.mtree
 Specification used for populating ${WRKINST} at the start of
 .Ar fake .
@@ -2623,6 +2647,16 @@ ${FAKE_FLAGS} is used to set variables on
 .Xr make 1
 command line, which will override the port Makefile contents.
 Thus, a port that mentions DESTDIR= does not need any patch to work with fake.
+.Pp
+Files such as
+.Pa ${PKGDIR}/README*
+or
+.Pa ${PKGDIR}/*.rc
+get copied to
+.Pa ${WRKINST}
+at the end of
+.Ar fake
+(see the FILES section above for details).
 .Sh FLAVORS AND MULTI_PACKAGES
 Starting with
 .Ox 2.7 ,
