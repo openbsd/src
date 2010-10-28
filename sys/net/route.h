@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.74 2010/10/11 11:41:08 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.75 2010/10/28 17:18:35 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -216,6 +216,8 @@ struct rt_msghdr {
 #define rtm_use	rtm_rmx.rmx_pksent
 
 #define RTM_VERSION	4	/* Up the ante and ignore older versions */
+
+#define RTM_MAXSIZE	2048	/* Maximum size of an accepted route msg */
 
 #define RTM_ADD		0x1	/* Add Route */
 #define RTM_DELETE	0x2	/* Delete Route */

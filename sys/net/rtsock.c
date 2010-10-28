@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.110 2010/10/11 11:41:08 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.111 2010/10/28 17:18:35 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -474,31 +474,57 @@ route_output(struct mbuf *m, ...)
 	if (len < offsetof(struct rt_msghdr, rtm_type) + 1 ||
 	    len != mtod(m, struct rt_msghdr *)->rtm_msglen) {
 		error = EINVAL;
-		goto flush;
+		goto fail;
 	}
 	switch (mtod(m, struct rt_msghdr *)->rtm_version) {
 	case RTM_VERSION:
 		if (len < sizeof(struct rt_msghdr)) {
 			error = EINVAL;
-			goto flush;
+			goto fail;
+		}
+		if (len > RTM_MAXSIZE) {
+			error = EMSGSIZE;
+			goto fail;
 		}
 		R_Malloc(rtm, struct rt_msghdr *, len);
 		if (rtm == 0) {
 			error = ENOBUFS;
-			goto flush;
+			goto fail;
 		}
 		m_copydata(m, 0, len, (caddr_t)rtm);
 		break;
 	default:
 		error = EPROTONOSUPPORT;
-		goto flush;
+		goto fail;
 	}
 	rtm->rtm_pid = curproc->p_pid;
 	if (rtm->rtm_hdrlen == 0)	/* old client */
 		rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
 	if (len < rtm->rtm_hdrlen) {
 		error = EINVAL;
-		goto flush;
+		goto fail;
+	}
+
+	/* Verify that the caller is sending an appropriate message early */
+	switch (rtm->rtm_type) {
+	case RTM_ADD:
+	case RTM_DELETE:
+	case RTM_GET:
+	case RTM_CHANGE:
+	case RTM_LOCK:
+		break;
+	default:
+		error = EOPNOTSUPP;
+		goto fail;
+	}
+
+	/*
+	 * Verify that the caller has the appropriate privilege; RTM_GET
+	 * is the only operation the non-superuser is allowed.
+	 */
+	if (rtm->rtm_type != RTM_GET && suser(curproc, 0) != 0) {
+		error = EACCES;
+		goto fail;
 	}
 
 	tableid = rtm->rtm_tableid;
@@ -518,7 +544,7 @@ route_output(struct mbuf *m, ...)
 	if (rtm->rtm_priority != 0) {
 		if (rtm->rtm_priority > RTP_MAX) {
 			error = EINVAL;
-			goto flush;
+			goto fail;
 		}
 		prio = rtm->rtm_priority;
 	} else if (rtm->rtm_type != RTM_ADD)
@@ -553,15 +579,6 @@ route_output(struct mbuf *m, ...)
 #ifdef MPLS
 	info.rti_mpls = rtm->rtm_mpls;
 #endif
-
-	/*
-	 * Verify that the caller has the appropriate privilege; RTM_GET
-	 * is the only operation the non-superuser is allowed.
-	 */
-	if (rtm->rtm_type != RTM_GET && suser(curproc, 0) != 0) {
-		error = EACCES;
-		goto flush;
-	}
 
 	switch (rtm->rtm_type) {
 	case RTM_ADD:
@@ -848,10 +865,6 @@ report:
 			break;
 		}
 		break;
-
-	default:
-		error = EOPNOTSUPP;
-		break;
 	}
 
 flush:
@@ -870,6 +883,7 @@ flush:
 	 */
 	if (!(so->so_options & SO_USELOOPBACK)) {
 		if (route_cb.any_count <= 1) {
+fail:
 			if (rtm)
 				Free(rtm);
 			m_freem(m);
