@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.50 2010/10/16 20:49:37 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.51 2010/10/28 10:42:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -77,14 +77,12 @@ static	void		  print_man_foot(struct termp *, const void *);
 static	void		  print_bvspace(struct termp *, 
 				const struct man_node *);
 
+static	int		  pre_alternate(DECL_ARGS);
 static	int		  pre_B(DECL_ARGS);
-static	int		  pre_BI(DECL_ARGS);
 static	int		  pre_HP(DECL_ARGS);
 static	int		  pre_I(DECL_ARGS);
 static	int		  pre_IP(DECL_ARGS);
 static	int		  pre_PP(DECL_ARGS);
-static	int		  pre_RB(DECL_ARGS);
-static	int		  pre_RI(DECL_ARGS);
 static	int		  pre_RS(DECL_ARGS);
 static	int		  pre_SH(DECL_ARGS);
 static	int		  pre_SS(DECL_ARGS);
@@ -115,15 +113,15 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_HP, post_HP, 0 }, /* HP */ 
 	{ NULL, NULL, 0 }, /* SM */
 	{ pre_B, NULL, 0 }, /* SB */
-	{ pre_BI, NULL, 0 }, /* BI */
-	{ pre_BI, NULL, 0 }, /* IB */
-	{ pre_RB, NULL, 0 }, /* BR */
-	{ pre_RB, NULL, 0 }, /* RB */
+	{ pre_alternate, NULL, 0 }, /* BI */
+	{ pre_alternate, NULL, 0 }, /* IB */
+	{ pre_alternate, NULL, 0 }, /* BR */
+	{ pre_alternate, NULL, 0 }, /* RB */
 	{ NULL, NULL, 0 }, /* R */
 	{ pre_B, NULL, 0 }, /* B */
 	{ pre_I, NULL, 0 }, /* I */
-	{ pre_RI, NULL, 0 }, /* IR */
-	{ pre_RI, NULL, 0 }, /* RI */
+	{ pre_alternate, NULL, 0 }, /* IR */
+	{ pre_alternate, NULL, 0 }, /* RI */
 	{ NULL, NULL, MAN_NOTEXT }, /* na */
 	{ pre_I, NULL, 0 }, /* i */
 	{ pre_sp, NULL, MAN_NOTEXT }, /* sp */
@@ -268,77 +266,55 @@ pre_literal(DECL_ARGS)
 }
 
 
-
 /* ARGSUSED */
 static int
-pre_RB(DECL_ARGS)
+pre_alternate(DECL_ARGS)
 {
-	const struct man_node *nn;
-	int		 i;
-
-	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		if (i % 2 && MAN_RB == n->tok)
-			term_fontrepl(p, TERMFONT_BOLD);
-		else if ( ! (i % 2) && MAN_RB != n->tok)
-			term_fontrepl(p, TERMFONT_BOLD);
-		else
-			term_fontrepl(p, TERMFONT_NONE);
-
-		if (i > 0)
-			p->flags |= TERMP_NOSPACE;
-
-		print_man_node(p, mt, nn, m);
-	}
-	return(0);
-}
-
-
-/* ARGSUSED */
-static int
-pre_RI(DECL_ARGS)
-{
-	const struct man_node *nn;
-	int		 i;
-
-	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		if (i % 2 && MAN_RI == n->tok)
-			term_fontrepl(p, TERMFONT_UNDER);
-		else if ( ! (i % 2) && MAN_RI != n->tok)
-			term_fontrepl(p, TERMFONT_UNDER);
-		else
-			term_fontrepl(p, TERMFONT_NONE);
-
-		if (i > 0)
-			p->flags |= TERMP_NOSPACE;
-
-		print_man_node(p, mt, nn, m);
-	}
-	return(0);
-}
-
-
-/* ARGSUSED */
-static int
-pre_BI(DECL_ARGS)
-{
+	enum termfont		 font[2];
 	const struct man_node	*nn;
-	int			 i;
+	int			 savelit, i;
 
-	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		if (i % 2 && MAN_BI == n->tok)
-			term_fontrepl(p, TERMFONT_UNDER);
-		else if (i % 2)
-			term_fontrepl(p, TERMFONT_BOLD);
-		else if (MAN_BI == n->tok)
-			term_fontrepl(p, TERMFONT_BOLD);
-		else
-			term_fontrepl(p, TERMFONT_UNDER);
-
-		if (i)
-			p->flags |= TERMP_NOSPACE;
-
-		print_man_node(p, mt, nn, m);
+	switch (n->tok) {
+	case (MAN_RB):
+		font[0] = TERMFONT_NONE;
+		font[1] = TERMFONT_BOLD;
+		break;
+	case (MAN_RI):
+		font[0] = TERMFONT_NONE;
+		font[1] = TERMFONT_UNDER;
+		break;
+	case (MAN_BR):
+		font[0] = TERMFONT_BOLD;
+		font[1] = TERMFONT_NONE;
+		break;
+	case (MAN_BI):
+		font[0] = TERMFONT_BOLD;
+		font[1] = TERMFONT_UNDER;
+		break;
+	case (MAN_IR):
+		font[0] = TERMFONT_UNDER;
+		font[1] = TERMFONT_NONE;
+		break;
+	case (MAN_IB):
+		font[0] = TERMFONT_UNDER;
+		font[1] = TERMFONT_BOLD;
+		break;
+	default:
+		abort();
 	}
+
+	savelit = MANT_LITERAL & mt->fl;
+	mt->fl &= ~MANT_LITERAL;
+
+	for (i = 0, nn = n->child; nn; nn = nn->next, i = 1 - i) {
+		term_fontrepl(p, font[i]);
+		if (savelit && NULL == nn->next)
+			mt->fl |= MANT_LITERAL;
+		print_man_node(p, mt, nn, m);
+		if (nn->next)
+			p->flags |= TERMP_NOSPACE;
+	}
+
 	return(0);
 }
 
