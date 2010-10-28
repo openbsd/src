@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.7 2010/10/28 21:03:33 robert Exp $
+#	$OpenBSD: rc.subr,v 1.8 2010/10/28 21:36:45 robert Exp $
 
 [ -z "${local_rcconf}" ] && . /etc/rc.conf
 
@@ -28,9 +28,6 @@ rc_stop() {
 rc_cmd() {
 	_name=`basename $0`
 	eval _rcflags=\${${_name}_flags}
-
-	echo $_rcflags
-	exit
 
 	[ `id -u` -eq 0 -o X"$1" = "Xcheck" ] || \
 		rc_err "$0: need root privileges"
