@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.11 2008/06/10 20:50:19 miod Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.12 2010/10/28 16:07:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -302,7 +302,7 @@ usbf_get_descriptor(usbf_device_handle dev, usb_device_request_t *req,
 	case UDESC_DEVICE:
 		dd = usbf_device_descriptor(dev);
 		*data = dd;
-		USETW(req->wLength, MIN(UGETW(req->wLength), dd->bLength));;
+		USETW(req->wLength, MIN(UGETW(req->wLength), dd->bLength));
 		return USBF_NORMAL_COMPLETION;
 
 	case UDESC_DEVICE_QUALIFIER: {
@@ -319,7 +319,7 @@ usbf_get_descriptor(usbf_device_handle dev, usb_device_request_t *req,
 		dq.bMaxPacketSize0 = dd->bMaxPacketSize;
 		dq.bNumConfigurations = dd->bNumConfigurations;
 		*data = &dq;
-		USETW(req->wLength, MIN(UGETW(req->wLength), dq.bLength));;
+		USETW(req->wLength, MIN(UGETW(req->wLength), dq.bLength));
 		return USBF_NORMAL_COMPLETION;
 	}
 
@@ -474,7 +474,7 @@ usbf_do_request(usbf_xfer_handle xfer, usbf_private_handle priv,
 			data = &zero;
 		} else
 			data = &cfg->uc_cdesc->bConfigurationValue;
-		USETW(req->wLength, MIN(UGETW(req->wLength), 1));;
+		USETW(req->wLength, MIN(UGETW(req->wLength), 1));
 	}
 		break;
 
