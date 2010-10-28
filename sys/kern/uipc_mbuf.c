@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.145 2010/10/05 13:29:40 mikeb Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.146 2010/10/28 16:28:56 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1370,3 +1370,47 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from)
 
 	return (0);
 }
+
+#ifdef DDB
+void
+m_print(struct mbuf *m)
+{
+	printf("mbuf %p\n", m);
+	printf("m_type: %hi\tm_flags: %b\n", m->m_type, m->m_flags,
+	    "\20\1M_EXT\2M_PKTHDR\3M_EOR\4M_CLUSTER\5M_PROTO1\6M_VLANTAG"
+	    "\7M_LOOP\10M_FILDROP\11M_BCAST\12M_MCAST\13M_CONF\14M_AUTH"
+	    "\15M_TUNNEL\16M_AUTH_AH\17M_LINK0");
+	printf("m_next: %p\tm_nextpkt: %p\n", m->m_next, m->m_nextpkt);
+	printf("m_data: %p\tm_len: %u\n", m->m_data, m->m_len);
+	printf("m_dat: %p m_pktdat: %p\n", m->m_dat, m->m_pktdat);
+	if (m->m_flags & M_PKTHDR) {
+		printf("m_pkthdr.len: %i\tm_ptkhdr.rcvif: %p\t"
+		    "m_ptkhdr.rdomain: %u\n", m->m_pkthdr.len, 
+		    m->m_pkthdr.rcvif, m->m_pkthdr.rdomain);
+		printf("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %hx\n",
+		    SLIST_FIRST(&m->m_pkthdr.tags), m->m_pkthdr.tagsset);
+		printf("m_pkthdr.csum_flags: %hx\tm_pkthdr.ether_vtag: %hu\n",
+		    m->m_pkthdr.csum_flags, m->m_pkthdr.ether_vtag);
+		printf("m_pkthdr.pf.flags: %b\n",
+		    m->m_pkthdr.pf.flags, "\20\1GENERATED\2FRAGCACHE"
+		    "\3TRANSLATE_LOCALHOST\4DIVERTED\5DIVERTED_PACKET"
+		    "\6PF_TAG_REROUTE");
+		printf("m_pkthdr.pf.hdr: %p\tm_pkthdr.pf.statekey: %p\n",
+		    m->m_pkthdr.pf.hdr, m->m_pkthdr.pf.statekey);
+		printf("m_pkthdr.pf.qid:\t%u m_pkthdr.pf.tag: %hu\n",
+		    m->m_pkthdr.pf.qid, m->m_pkthdr.pf.tag);
+		printf("m_pkthdr.pf.routed: %hhx\n", m->m_pkthdr.pf.routed);
+	}
+	if (m->m_flags & M_EXT) {
+		printf("m_ext.ext_buf: %p\tm_ext.ext_size: %u\n",
+		    m->m_ext.ext_buf, m->m_ext.ext_size);
+		printf("m_ext.ext_type: %x\tm_ext.ext_backend: %i\n",
+		    m->m_ext.ext_type, m->m_ext.ext_backend);
+		printf("m_ext.ext_ifp: %p\n", m->m_ext.ext_ifp);
+		printf("m_ext.ext_free: %p\tm_ext.ext_arg: %p\n",
+		    m->m_ext.ext_free, m->m_ext.ext_arg);
+		printf("m_ext.ext_nextref: %p\tm_ext.ext_prevref: %p\n",
+		    m->m_ext.ext_nextref, m->m_ext.ext_prevref);
+	}
+}
+#endif
