@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.55 2010/07/02 02:40:16 blambert Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.56 2010/10/28 16:36:16 claudio Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -499,6 +499,18 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		DPRINTF(("etherip_output(): M_PREPEND failed\n"));
 		etheripstat.etherip_adrops++;
 		return ENOBUFS;
+	}
+
+	/*
+	 * Normalize mbuf so that it can be reinjected into higherlevel
+	 * output functions (alignment also required in this function).
+	 */
+	if ((long)mtod(m, caddr_t) & 0x03) {
+		int off = (long)mtod(m, caddr_t) & 0x03;
+		if (M_LEADINGSPACE(m) < off)
+			panic("etherip_output: no space for align fixup");
+		m->m_data -= off;
+		bcopy(mtod(m, caddr_t) + off, mtod(m, caddr_t), m->m_len);
 	}
 
 	/* Statistics */
