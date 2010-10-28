@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.135 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.136 2010/10/28 16:31:07 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -356,7 +356,7 @@ sub check_for_loops
 
 	while (my $set = shift @todo) {
 		next unless defined $set->{solver};
-		next if $set->real_set eq $initial->real_set;
+#		next if $set->real_set eq $initial->real_set;
 		for my $l (values %{$set->solver->{deplist}}) {
 			if ($l eq $initial) {
 				push(@to_merge, $set);
