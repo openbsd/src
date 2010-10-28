@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.31 2006/12/11 22:11:48 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.32 2010/10/28 13:49:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -446,7 +446,7 @@ void	bstp_stop(struct bstp_state *);
 int	bstp_ioctl(struct ifnet *, u_long, caddr_t);
 struct bstp_port *bstp_add(struct bstp_state *, struct ifnet *);
 void	bstp_delete(struct bstp_port *);
-struct mbuf *bstp_input(struct bstp_state *, struct bstp_port *,
+void	bstp_input(struct bstp_state *, struct bstp_port *,
     struct ether_header *, struct mbuf *);
 void	bstp_ifstate(void *);
 u_int8_t bstp_getstate(struct bstp_state *, struct bstp_port *);
