@@ -670,7 +670,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/bm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/bsd_auth.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/cpio.ph
@@ -2213,7 +2212,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/skey.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/skipjack.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/spinlock.ph

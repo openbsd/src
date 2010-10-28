@@ -93,7 +93,6 @@
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.19.0
 ./usr/lib/libcurses.so.12.0
-./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.4.0
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
@@ -740,7 +739,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/bm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/bsd_auth.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/cpio.ph
@@ -2359,7 +2357,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/skey.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/skipjack.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/spe.ph
