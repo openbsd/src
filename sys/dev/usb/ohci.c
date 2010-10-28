@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.100 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: ohci.c,v 1.101 2010/10/28 16:07:33 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1421,7 +1421,7 @@ ohci_softintr(void *v)
 			    bEndpointAddress);
 			xfer->status = USBD_NORMAL_COMPLETION;
 			actlen = 0;
-			for (i = 0, sitd = xfer->hcpriv;;
+			for (i = 0, sitd = xfer->hcpriv; ;
 			    sitd = next) {
 				next = sitd->nextitd;
 				if (OHCI_ITD_GET_CC(letoh32(sitd->
