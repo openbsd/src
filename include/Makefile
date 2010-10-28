@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.156 2010/10/17 08:44:15 djm Exp $
+#	$OpenBSD: Makefile,v 1.157 2010/10/28 08:34:37 mikeb Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -10,7 +10,7 @@
 .include <bsd.own.mk>
 
 # Missing: mp.h
-FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h cast.h \
+FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h \
 	complex.h cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
 	dlfcn.h elf_abi.h err.h errno.h fnmatch.h fstab.h fts.h ftw.h getopt.h \
 	glob.h grp.h ifaddrs.h inttypes.h iso646.h kvm.h langinfo.h \
@@ -18,7 +18,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h cast.h \
 	md5.h memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h \
 	ohash.h paths.h poll.h pwd.h ranlib.h re_comp.h \
 	readpassphrase.h regex.h resolv.h rmd160.h search.h setjmp.h \
-	sgtty.h sha1.h sha2.h skipjack.h signal.h sndio.h stab.h \
+	sgtty.h sha1.h sha2.h signal.h sndio.h stab.h \
 	stdbool.h stddef.h stdio.h stdlib.h \
 	string.h strings.h struct.h sysexits.h tar.h \
 	time.h ttyent.h tzfile.h unistd.h utime.h utmp.h vis.h \
