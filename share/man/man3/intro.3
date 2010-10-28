@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.43 2010/10/17 09:57:47 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.44 2010/10/28 17:21:41 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: October 17 2010 $
+.Dd $Mdocdate: October 28 2010 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -123,13 +123,6 @@ See
 .Xr curses 3
 and
 .Xr termcap 3 .
-.Pp
-.It libdes Pq Fl ldes
-Implementation of the
-.Tn DES
-encryption algorithm.
-See
-.Xr des_crypt 3 .
 .Pp
 .It libedit Pq Fl ledit
 Generic line editing and history functions, similar to those found in
@@ -605,7 +598,6 @@ for more details.
 .It Pa /usr/lib/libcompat.a
 .It Pa /usr/lib/libcrypto.a
 .It Pa /usr/lib/libcurses.a
-.It Pa /usr/lib/libdes.a
 .It Pa /usr/lib/libedit.a
 .It Pa /usr/lib/libevent.a
 .It Pa /usr/lib/libexpat.a
