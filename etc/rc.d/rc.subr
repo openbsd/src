@@ -1,3 +1,5 @@
+#	$OpenBSD: rc.subr,v 1.6 2010/10/28 15:36:37 robert Exp $
+
 [ -z "${local_rcconf}" ] && . /etc/rc.conf
 
 rc_err() {
