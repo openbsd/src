@@ -1,4 +1,4 @@
-.\" $OpenBSD: deroff.1,v 1.8 2007/05/31 19:20:09 jmc Exp $
+.\" $OpenBSD: deroff.1,v 1.9 2010/10/28 20:45:19 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)deroff.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 28 2010 $
 .Dt DEROFF 1
 .Os
 .Sh NAME
@@ -77,19 +77,14 @@
 .Op Ar
 .Sh DESCRIPTION
 .Nm deroff
-reads each file in sequence and removes all
-.Xr nroff 1
-and
-.Xr troff 1
+reads each file in sequence and removes all roff
 command lines, backslash constructions, macro definitions,
-.Xr eqn 1
-constructs (between
+eqn constructs (between
 .Dq .EQ
 and
 .Dq .EN
 lines or between delimiters),
-.Xr pic 1
-pictures,
+pic pictures,
 and table descriptions and writes the remainder to the standard output.
 .Nm
 follows chains of included files
@@ -133,19 +128,13 @@ recognize
 .Xr man 7
 macros.
 .It e
-recognize
-.Xr me 7
-macros.
+recognize me macros.
 .It l
 remove list constructs.
 .It m
-recognize
-.Xr mm 7
-macros.
+recognize mm macros.
 .It s
-recognize
-.Xr ms 7
-macros.
+recognize ms macros.
 .El
 .It Fl p
 Preserve paragraph macros.
@@ -160,20 +149,15 @@ apostrophes are removed) per line, and all other characters ignored.
 Normally, the output follows the original, with the deletions mentioned above.
 .El
 .Sh SEE ALSO
-.Xr eqn 1 ,
-.Xr nroff 1 ,
-.Xr pic 1 ,
-.Xr tbl 1 ,
-.Xr troff 1
+.Xr man 7
 .Sh HISTORY
 .Nm
 appeared in
 .At v7 .
 .Sh BUGS
 .Nm
-is not a complete
-.Xr troff 1
-interpreter, so it can be confused by subtle constructs.
+is not a complete troff interpreter,
+so it can be confused by subtle constructs.
 Most errors result in too much rather than too little output.
 .Pp
 The
