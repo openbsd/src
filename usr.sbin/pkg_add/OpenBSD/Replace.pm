@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.78 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: Replace.pm,v 1.79 2010/10/28 22:33:43 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -207,7 +207,7 @@ sub is_set_safe
 {
 	my ($set, $state) = @_;
 
-	if ($state->defines('update') && !$state->verbose) {
+	if (!$state->defines('paranoid') && !$state->verbose) {
 		return 1;
 	}
 
@@ -221,8 +221,8 @@ sub is_set_safe
 	}
 	return 1 if $ok;
 
-	if ($state->defines('update')) {
-		$state->errsay("Forcing update");
+	if (!$state->defines('paranoid')) {
+		$state->errsay("Running update");
 		return 1;
 	} elsif ($state->{interactive}) {
 
@@ -232,7 +232,7 @@ sub is_set_safe
 			return 0;
 		}
 	} else {
-		$state->errsay("Cannot install #1 (use -D update)",
+		$state->errsay("Cannot install #1",
 		    $set->print);
 		return 0;
     	}

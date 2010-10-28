@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.102 2010/08/01 23:03:48 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.103 2010/10/28 22:33:43 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: August 1 2010 $
+.Dd $Mdocdate: October 28 2010 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -260,12 +260,12 @@ install even if not running as root.
 .It Ar nosig
 do not check digital signatures.
 Still displays a very prominent message if a signature is found.
+.It Ar paranoid
+very safe update: don't run any @exec/@unexec.
 .It Ar repair
 attempt to repair installed packages with missing registration data.
 .It Ar scripts
 external scripts may fail.
-.It Ar update
-unsafe update: old packing-list will run scripts that may fail.
 .It Ar updatedepends
 force update even if forward dependencies no longer match.
 .El
