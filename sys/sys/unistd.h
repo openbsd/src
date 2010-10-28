@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.17 2010/01/15 10:17:48 sthen Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.18 2010/10/28 02:05:59 deraadt Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -119,6 +119,7 @@
 #define	_SC_XOPEN_SHM		30
 #define	_SC_SEM_NSEMS_MAX	31
 #define	_SC_SEM_VALUE_MAX	32
+#define	_SC_HOST_NAME_MAX	33
 
 /* P1003.1c */
 #define _SC_GETGR_R_SIZE_MAX	100

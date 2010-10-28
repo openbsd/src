@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.27 2010/02/22 17:54:52 jmc Exp $
+.\"	$OpenBSD: sysconf.3,v 1.28 2010/10/28 02:06:00 deraadt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 22 2010 $
+.Dd $Mdocdate: October 28 2010 $
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -172,6 +172,8 @@ The level of support for thread-safe (re-entrant) functions.
 The number of processors configured.
 .It Li _SC_NPROCESSORS_ONLN
 The number of processors online (capable of running processes).
+.It Li _SC_HOST_NAME_MAX
+The maximum size of a hostname, not counting NULL.
 .El
 .Sh RETURN VALUES
 If the call to
