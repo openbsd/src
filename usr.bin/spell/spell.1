@@ -1,4 +1,4 @@
-.\" $OpenBSD: spell.1,v 1.10 2007/05/31 19:20:16 jmc Exp $
+.\" $OpenBSD: spell.1,v 1.11 2010/10/28 21:32:54 jmc Exp $
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)spell.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 28 2010 $
 .Dt SPELL 1
 .Os
 .Sh NAME
@@ -88,13 +88,7 @@ are printed on the standard output.
 .Pp
 If no files are named, words are collected from the standard input.
 .Nm
-ignores most
-.Xr troff 1 ,
-.Xr tbl 1 ,
-.Xr eqn 1 ,
-and
-.Xr pic 1
-constructions.
+ignores most troff, tbl, eqn, and pic constructions.
 Copies of all output may be accumulated in the history file,
 if one is specified.
 .Pp
@@ -173,8 +167,7 @@ instead of
 if it is present on the system.
 .It Fl m
 Enable support for common
-.Xr troff 1
-macro packages; this option is passed verbatim to
+troff macro packages; this option is passed verbatim to
 .Xr deroff 1 .
 Refer to the
 .Fl m
@@ -225,8 +218,7 @@ Binary executed by the shell script
 .Xr look 1 ,
 .Xr sed 1 ,
 .Xr sort 1 ,
-.Xr tee 1 ,
-.Xr troff 1
+.Xr tee 1
 .Sh HISTORY
 The
 .Nm spell
