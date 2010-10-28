@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_getdirentries.c,v 1.3 1999/11/25 07:01:36 d Exp $	*/
+/*	$OpenBSD: uthread_getdirentries.c,v 1.4 2010/10/28 15:02:41 millert Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -39,7 +39,7 @@
 #include "pthread_private.h"
 
 int
-getdirentries(int fd, char *buf, int nbytes, long *basep)
+getdirentries(int fd, char *buf, int nbytes, off_t *basep)
 {
 	int             ret;
 

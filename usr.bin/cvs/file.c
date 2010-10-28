@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.261 2010/09/27 14:08:41 joshe Exp $	*/
+/*	$OpenBSD: file.c,v 1.262 2010/10/28 15:02:41 millert Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -393,7 +393,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	int l, type;
 	FILE *fp;
 	int nbytes;
-	long base;
+	off_t base;
 	size_t bufsize;
 	struct stat st;
 	struct dirent *dp;

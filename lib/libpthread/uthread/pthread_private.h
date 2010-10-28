@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.75 2010/07/13 03:10:29 guenther Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.76 2010/10/28 15:02:41 millert Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1352,7 +1352,7 @@ int     _thread_sys_alphasort(const void *, const void *);
 int     _thread_sys_scandir(const char *, struct dirent ***,
 	int (*)(struct dirent *), int (*)(const void *, const void *));
 int     _thread_sys_closedir(DIR *);
-int     _thread_sys_getdirentries(int, char *, int, long *);
+int     _thread_sys_getdirentries(int, char *, int, off_t *);
 long    _thread_sys_telldir(const DIR *);
 struct  dirent *_thread_sys_readdir(DIR *);
 void    _thread_sys_rewinddir(DIR *);

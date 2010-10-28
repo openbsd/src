@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.h,v 1.3 2007/10/12 22:41:42 chl Exp $	*/
+/*	$OpenBSD: telldir.h,v 1.4 2010/10/28 15:02:41 millert Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
  * associated with that return value.
  */
 struct ddloc {
-	long	loc_seek;	/* magic cookie returned by getdirentries */
+	off_t	loc_seek;	/* magic cookie returned by getdirentries */
 	long	loc_loc;	/* offset of entry in buffer */
 };
 

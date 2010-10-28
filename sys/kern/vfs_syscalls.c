@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.164 2010/10/27 17:11:08 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.165 2010/10/28 15:02:41 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -67,6 +67,9 @@ static int change_dir(struct nameidata *, struct proc *);
 void checkdirs(struct vnode *);
 
 int copyout_statfs(struct statfs *, void *, struct proc *);
+
+int getdirentries_internal(struct proc *, int, char *, int, off_t *,
+    register_t *);
 
 /*
  * Virtual File System System Calls
@@ -2289,27 +2292,25 @@ out:
  * Read a block of directory entries in a file system independent format.
  */
 int
-sys_getdirentries(struct proc *p, void *v, register_t *retval)
+getdirentries_internal(struct proc *p, int fd, char *buf, int count,
+    off_t *basep, register_t *retval)
 {
-	struct sys_getdirentries_args /* {
-		syscallarg(int) fd;
-		syscallarg(char *) buf;
-		syscallarg(int) count;
-		syscallarg(long *) basep;
-	} */ *uap = v;
 	struct vnode *vp;
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
-	long loff;
 	int error, eofflag;
 
-	if (SCARG(uap, count) < 0)
+	if (count < 0)
 		return EINVAL;
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
+		goto bad;
+	}
+	if (fp->f_offset < 0) {
+		error = EINVAL;
 		goto bad;
 	}
 	vp = (struct vnode *)fp->f_data;
@@ -2317,27 +2318,65 @@ sys_getdirentries(struct proc *p, void *v, register_t *retval)
 		error = EINVAL;
 		goto bad;
 	}
-	aiov.iov_base = SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, count);
+	aiov.iov_base = buf;
+	aiov.iov_len = count;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	auio.uio_resid = SCARG(uap, count);
+	auio.uio_resid = count;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	loff = auio.uio_offset = fp->f_offset;
+	*basep = auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, 0, 0);
 	fp->f_offset = auio.uio_offset;
 	VOP_UNLOCK(vp, 0, p);
 	if (error)
 		goto bad;
-	error = copyout(&loff, SCARG(uap, basep),
-	    sizeof(long));
-	*retval = SCARG(uap, count) - auio.uio_resid;
+	*retval = count - auio.uio_resid;
 bad:
 	FRELE(fp);
 	return (error);
+}
+
+int
+sys_getdirentries(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_getdirentries_args /* {
+		syscallarg(int) fd;
+		syscallarg(char *) buf;
+		syscallarg(int) count;
+		syscallarg(off_t *) basep;
+	} */ *uap = v;
+	int error;
+	off_t off;
+
+	error = getdirentries_internal(p, SCARG(uap, fd), SCARG(uap, buf),
+	    SCARG(uap, count), &off, retval);
+	if (!error)
+		error = copyout(&off, SCARG(uap, basep), sizeof(off_t));
+	return error;
+}
+
+int
+sys_ogetdirentries(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_getdirentries_args /* {
+		syscallarg(int) fd;
+		syscallarg(char *) buf;
+		syscallarg(int) count;
+		syscallarg(long *) basep;
+	} */ *uap = v;
+	int error;
+	off_t off;
+
+	error = getdirentries_internal(p, SCARG(uap, fd), SCARG(uap, buf),
+	    SCARG(uap, count), &off, retval);
+	if (!error) {
+		long loff = (long)off;
+		error = copyout(&loff, SCARG(uap, basep), sizeof(long));
+	}
+	return error;
 }
 
 /*

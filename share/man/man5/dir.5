@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dir.5,v 1.13 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: dir.5,v 1.14 2010/10/28 15:02:41 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dir.5	8.4 (Berkeley) 5/3/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 28 2010 $
 .Dt DIR 5
 .Os
 .Sh NAME
@@ -123,8 +123,8 @@ typedef struct _dirdesc {
 	long	dd_size;   /* amount of data returned by getdirentries */
 	char	*dd_buf;   /* data buffer */
 	int	dd_len;    /* size of data buffer */
-	long	dd_seek;   /* magic cookie returned by getdirentries */
-	long	dd_rewind; /* magic cookie for rewinding */
+	off_t	dd_seek;   /* magic cookie returned by getdirentries */
+	off_t	dd_rewind; /* magic cookie for rewinding */
 	int	dd_flags;  /* flags for readdir */
 } DIR;
 

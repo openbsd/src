@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.2 2008/10/02 20:12:08 kurt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.3 2010/10/28 15:02:41 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -50,7 +50,7 @@ int	_dl_read(int, const char *, int);
 int	_dl_stat(const char *, struct stat *);
 int	_dl_fstat(int, struct stat *);
 int	_dl_fcntl(int, int, ...);
-int	_dl_getdirentries(int, char*, int, long *);
+int	_dl_getdirentries(int, char*, int, off_t *);
 int	_dl_sigprocmask(int, const sigset_t *, sigset_t *);
 int	_dl_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	_dl_gettimeofday(struct timeval *tp, struct timezone *tzp);
