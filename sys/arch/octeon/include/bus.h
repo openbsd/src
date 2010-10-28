@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2010/10/10 16:38:55 syuu Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2010/10/28 22:52:10 syuu Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -466,5 +466,36 @@ struct machine_bus_dmamap {
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
+
+int	generic_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+void	generic_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	generic_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, bus_space_handle_t *);
+void	*generic_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+uint8_t generic_space_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+uint16_t generic_space_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+uint32_t generic_space_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+uint64_t generic_space_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	generic_space_read_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, uint8_t *, bus_size_t);
+void	generic_space_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    uint8_t);
+void	generic_space_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    uint16_t);
+void	generic_space_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    uint32_t);
+void	generic_space_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    uint64_t);
+void	generic_space_write_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const uint8_t *, bus_size_t);
+void	generic_space_read_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, uint8_t *, bus_size_t);
+void	generic_space_write_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const uint8_t *, bus_size_t);
+void	generic_space_read_raw_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, uint8_t *, bus_size_t);
+void	generic_space_write_raw_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const uint8_t *, bus_size_t);
 
 #endif /* _MACHINE_BUS_H_ */
