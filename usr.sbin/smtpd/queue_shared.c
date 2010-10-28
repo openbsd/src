@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.31 2010/10/09 22:12:26 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.32 2010/10/28 21:15:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -792,12 +792,13 @@ display_envelope(struct message *envelope, int flags)
 		printf("UNKNOWN");
 	}
 	
-	printf("|%s|%s|%s@%s|%s@%s|%d|%u",
+	printf("|%s|%s|%s@%s|%s@%s|%d|%d|%u",
 	    envelope->message_uid,
 	    status,
 	    envelope->sender.user, envelope->sender.domain,
 	    envelope->recipient.user, envelope->recipient.domain,
 	    envelope->lasttry,
+	    envelope->expire,
 	    envelope->retry);
 	
 	if (envelope->session_errorline[0] != '\0')

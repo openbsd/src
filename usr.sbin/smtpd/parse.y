@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2010/10/18 13:28:00 sthen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.69 2010/10/28 21:15:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -126,7 +126,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port from auth ssl size
+%type	<v.number>	quantifier decision port from auth ssl size expire
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
@@ -267,6 +267,17 @@ tag		: TAG STRING			{
 			$$ = $2;
 		}
 		| /* empty */			{ $$ = NULL; }
+		;
+
+expire		: EXPIRE STRING {
+			$$ = delaytonum($2);
+			if ($$ == -1) {
+				yyerror("invalid expire delay: %s", $2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| /* empty */	{ $$ = conf->sc_qexpire; }
 		;
 
 main		: QUEUE INTERVAL interval	{
@@ -997,13 +1008,15 @@ rule		: decision on from			{
 
 			TAILQ_INIT(conditions);
 
-		} FOR conditions action	tag {
+		} FOR conditions action	tag expire {
 			struct rule	*subr;
 			struct cond	*cond;
 
 			if ($8)
 				(void)strlcpy(rule->r_tag, $8, sizeof(rule->r_tag));
 			free($8);
+
+			rule->r_qexpire = $9;
 
 			while ((cond = TAILQ_FIRST(conditions)) != NULL) {
 

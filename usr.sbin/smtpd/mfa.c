@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.50 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.51 2010/10/28 21:15:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -274,6 +274,8 @@ mfa_test_rcpt_resume(struct smtpd *env, struct submit_status *ss) {
 	}
 
 	ss->msg.recipient = ss->u.path;
+	ss->msg.expire = ss->msg.recipient.rule.r_qexpire;
+	log_debug("EXPIRE IN %d", ss->msg.expire);
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    ss, sizeof(*ss));
 }
