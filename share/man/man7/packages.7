@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.28 2009/04/13 22:44:16 schwarze Exp $
+.\" $OpenBSD: packages.7,v 1.29 2010/10/29 09:16:03 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 13 2009 $
+.Dd $Mdocdate: October 29 2010 $
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -97,12 +97,18 @@ and some web packages, which install under
 Some packages installation scripts will also create new configuration
 files in
 .Pa /etc ,
+install daemon control scripts in
+.Pa /etc/rc.d ,
 or need some working directory under
 .Pa /var
 to function correctly (e.g.,
 .Nm squid ,
 or
 .Nm mysql ) .
+.Pp
+.Ox
+specific information installs under
+.Pa /usr/local/share/doc/pkg-readmes .
 .Pp
 The current package system has some major limitations.
 .Ss "The package system is not aware of shared network installations"
