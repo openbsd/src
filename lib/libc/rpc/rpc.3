@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.42 2010/09/07 19:52:37 schwarze Exp $
+.\"	$OpenBSD: rpc.3,v 1.43 2010/10/29 12:43:09 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\"   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 7 2010 $
+.Dd $Mdocdate: October 29 2010 $
 .Dt RPC 3
 .Os
 .Sh NAME
@@ -167,9 +167,8 @@
 .Fn pmap_getmaps "struct sockaddr_in *addr"
 .Ft u_short
 .Fn pmap_getport "struct sockaddr_in *addr" "u_long prognum" "u_long versnum" "u_long protocol"
-.\" XXX the following works around an apparent nroff line length bug.
 .Ft "enum clnt_stat"
-.Fn pmap_rmtcall "struct sockaddr_in *" "u_long prog, vers, proc" "xdrproc_t inp" "char *in" "xdrproc_t outp" "char *out" "struct timeval tv" "u_long *portp"
+.Fn pmap_rmtcall "struct sockaddr_in *" "u_long prog" "u_long vers" "u_long proc" "xdrproc_t inp" "char *in" "xdrproc_t outp" "char *out" "struct timeval tv" "u_long *portp"
 .Ft int
 .Fn pmap_set "u_long prognum" "u_long versnum" "u_int protocol" "int port"
 .Ft int
@@ -560,7 +559,7 @@ the client uses TCP/IP as a transport.
 The remote program is located at Internet address
 .Fa *addr .
 If
-.Fa addr\->sin_port
+.Fa addr-\*(Gtsin_port
 is zero, then it is set to the actual port that the remote
 program is listening on (the remote
 .Xr portmap 8
@@ -591,7 +590,7 @@ the client uses use UDP/IP as a transport.
 The remote program is located at Internet address
 .Fa addr .
 If
-.Fa addr\->sin_port
+.Fa addr-\*(Gtsin_port
 is zero, then it is set to actual port that the remote
 program is listening on (the remote
 .Xr portmap 8
@@ -771,8 +770,9 @@ read file descriptor array.
 This variable is only of interest if service implementors do not call
 .Fn svc_run ,
 but rather do their own asynchronous event processing.
-This variable is read-only, and it may change after calls
-to svc_getreq_poll() or any creation routines.
+This variable is read-only, and it may change after calls to
+.Fn svc_getreq_poll
+or any creation routines.
 Do not pass it directly to
 .Xr poll 2 !
 Instead, make a copy and pass that instead.
@@ -783,8 +783,9 @@ is a global variable containing the maximum length of the
 array.
 .Fa svc_max_pollfd
 is not a hard limit; it will grow automatically as needed.
-This variable is read-only, and it may change after calls
-to svc_getreq_poll() or any creation routines.
+This variable is read-only, and it may change after calls to
+.Fn svc_getreq_poll
+or any creation routines.
 The purpose of
 .Fa svc_max_pollfd
 is to allow a service implementor to make a copy of
@@ -809,8 +810,9 @@ These variables are only of interest
 if service implementors do not call
 .Fn svc_run ,
 but rather do their own asynchronous event processing.
-This variable is read-only, and it may change after calls
-to svc_getreqset() or any creation routines.
+This variable is read-only, and it may change after calls to
+.Fn svc_getreqset
+or any creation routines.
 Do not pass its address to
 .Xr select 2 !
 Instead, pass the address of a copy.
@@ -830,8 +832,9 @@ This is only of interest
 if service implementors do not call
 .Fn svc_run ,
 but rather do their own asynchronous event processing.
-This variable is read-only, and it may change after calls
-to svc_getreqset() or any creation routines.
+This variable is read-only, and it may change after calls to
+.Fn svc_getreqset
+or any creation routines.
 Do not pass it directly to
 .Xr select 2 !
 Instead, make a copy and pass that instead.
@@ -971,7 +974,7 @@ If
 is non-zero, then a mapping of the triple
 .Fa [ prognum , versnum , protocol ]
 to
-.Fa xprt\->xp_port
+.Fa xprt-\*(Gtxp_port
 is established with the local
 .Xr portmap 8
 service (generally
@@ -1082,9 +1085,9 @@ in which case a new socket is created.
 If the socket is not bound to a local TCP
 port, then this routine binds it to an arbitrary port.
 Upon completion,
-.Fa xprt\->xp_sock
+.Fa xprt-\*(Gtxp_sock
 is the transport's socket descriptor, and
-.Fa xprt\->xp_port
+.Fa xprt-\*(Gtxp_port
 is the transport's port number.
 This routine returns
 .Dv NULL
@@ -1114,9 +1117,9 @@ in which case a new socket is created.
 If the socket is not bound to a local UDP
 port, then this routine binds it to an arbitrary port.
 Upon completion,
-.Fa xprt\->xp_sock
+.Fa xprt-\*(Gtxp_sock
 is the transport's socket descriptor, and
-.Fa xprt\->xp_port
+.Fa xprt-\*(Gtxp_port
 is the transport's port number.
 This routine returns
 .Dv NULL
