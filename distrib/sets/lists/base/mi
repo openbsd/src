@@ -212,7 +212,6 @@
 ./usr/bin/cap_mkdb
 ./usr/bin/captoinfo
 ./usr/bin/cdio
-./usr/bin/checknr
 ./usr/bin/chflags
 ./usr/bin/chfn
 ./usr/bin/chpass
@@ -222,7 +221,6 @@
 ./usr/bin/cmp
 ./usr/bin/co
 ./usr/bin/col
-./usr/bin/colcrt
 ./usr/bin/colrm
 ./usr/bin/column
 ./usr/bin/comm

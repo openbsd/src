@@ -310,7 +310,6 @@
 ./usr/share/man/cat1/captoinfo.0
 ./usr/share/man/cat1/cat.0
 ./usr/share/man/cat1/cdio.0
-./usr/share/man/cat1/checknr.0
 ./usr/share/man/cat1/chflags.0
 ./usr/share/man/cat1/chfn.0
 ./usr/share/man/cat1/chgrp.0
@@ -324,7 +323,6 @@
 ./usr/share/man/cat1/cmp.0
 ./usr/share/man/cat1/co.0
 ./usr/share/man/cat1/col.0
-./usr/share/man/cat1/colcrt.0
 ./usr/share/man/cat1/colrm.0
 ./usr/share/man/cat1/column.0
 ./usr/share/man/cat1/comm.0
