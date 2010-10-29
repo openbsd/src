@@ -1,4 +1,4 @@
-.\" $OpenBSD: more.1,v 1.10 2007/05/31 19:19:16 jmc Exp $
+.\" $OpenBSD: more.1,v 1.11 2010/10/29 07:35:18 jmc Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)more.1	5.15 (Berkeley) 7/29/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 29 2010 $
 .Dt MORE 1
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ Causes
 .Nm
 to count logical, rather than screen lines (i.e., long lines are not folded).
 This option is recommended if
-.Xr nroff 1
+.Xr mandoc 1
 output is being piped through
 .Xr ul 1 ,
 since the latter may generate escape sequences.
@@ -114,15 +114,13 @@ option.
 .It Fl s
 Squeeze multiple blank lines from the output, producing only one blank
 line.
-Especially helpful when viewing
-.Xr nroff 1
-output, this option maximizes the useful information present on the screen.
+This maximizes the useful information present on the screen.
 .It Fl u
 Suppress underlining.
 Normally,
 .Nm
 will handle underlining such as produced by
-.Xr nroff 1
+.Xr mandoc 1
 in a manner appropriate to the particular terminal:
 if the terminal can perform underlining or has a stand-out mode,
 .Nm
@@ -352,13 +350,13 @@ Default editor
 A sample usage of
 .Nm
 in previewing
-.Xr nroff 1
+.Xr mandoc 1
 output would be:
 .Pp
-.Dl nroff -ms doc.n | more -s
+.Dl mandoc doc.1 | more
 .Sh SEE ALSO
 .Xr cat 1 ,
-.Xr nroff 1 ,
+.Xr mandoc 1 ,
 .Xr sh 1 ,
 .Xr ul 1 ,
 .Xr vi 1 ,
