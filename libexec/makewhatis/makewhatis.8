@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makewhatis.8,v 1.15 2008/06/26 05:42:05 ray Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.16 2010/10/29 12:06:45 jmc Exp $
 .\"	$NetBSD: makewhatis.8,v 1.2.2.1 1997/11/10 19:57:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: October 29 2010 $
 .Dt MAKEWHATIS 8
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@
 .Ar files
 .Sh DESCRIPTION
 .Nm
-strips the NAME lines from compiled or raw
+extracts the NAME lines from compiled or raw
 .Xr man 1
 pages and creates
 a whatis.db database (that is, a subject index)
@@ -120,7 +120,6 @@ man configuration information
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr man 1 ,
-.Xr nroff 1 ,
 .Xr whatis 1 ,
 .Xr man.conf 5
 .Sh BUGS
@@ -128,9 +127,6 @@ man configuration information
 should parse
 .Pa /etc/man.conf
 and deal with extra configuration information.
-In particular, it does not handle
-.Xr nroff 1
-.Cm me
-format.
-Likewise, its use of
-heuristics to retrieve subjects from most man pages is not 100% accurate.
+.Pp
+The use of heuristics to retrieve subjects
+from most man pages is not 100% accurate.
