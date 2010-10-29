@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.53 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.54 2010/10/29 17:49:37 nicm Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -160,13 +160,13 @@ cvs_merge_file(struct cvs_file *cf, int verbose)
 	char *data, *patch;
 	char *argv[5], r1[CVS_REV_BUFSZ], r2[CVS_REV_BUFSZ];
 	char *dp13, *dp23, *path1, *path2, *path3;
-	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
+	BUF *b1, *d1, *d2, *diffb;
 	size_t dlen, plen;
 	struct rcs_line *lp;
 	struct rcs_lines *dlines, *plines;
 
 	overlapcnt = 0;
-	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
+	b1 = d1 = d2 = diffb = NULL;
 
 	rcsnum_tostr(d3rev1, r1, sizeof(r1));
 	rcsnum_tostr(d3rev2, r2, sizeof(r2));

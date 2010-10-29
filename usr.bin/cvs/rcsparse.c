@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.3 2010/10/20 19:53:53 tobias Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.4 2010/10/29 17:49:37 nicm Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -1138,7 +1138,6 @@ end:
 static int
 rcsparse_deltatext(RCSFILE *rfp)
 {
-	struct rcs_pdata *pdp;
 	int ret;
 
 	if (rfp->rf_flags & PARSED_DELTATEXTS)
@@ -1147,8 +1146,6 @@ rcsparse_deltatext(RCSFILE *rfp)
 	if (!(rfp->rf_flags & PARSED_DESC))
 		if ((ret = rcsparse_desc(rfp)))
 			return (ret);
-		
-	pdp = (struct rcs_pdata *)rfp->rf_pdata;
 
 	if (rcsparse(rfp, sec_deltatext))
 		return (-1);

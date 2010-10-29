@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.18 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.19 2010/10/29 17:49:37 nicm Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -561,7 +561,7 @@ cvs_trigger_loginfo_header(BUF *buf, char *repo)
 	buf_puts(buf, "In directory ");
 	buf_puts(buf, hostname);
 	buf_puts(buf, ":");
-	buf_puts(buf, dirname(pwd));
+	buf_puts(buf, dir);
 	buf_putc(buf, '/');
 	buf_puts(buf, repo);
 	buf_putc(buf, '\n');
