@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.196 2010/10/28 21:15:50 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.197 2010/10/29 09:16:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -103,6 +103,8 @@
 	((s)->s_l->flags & F_AUTH && (s)->s_flags & F_SECURE && \
 	 !((s)->s_flags & F_AUTHENTICATED))
 
+typedef u_int32_t	objid_t;
+
 struct netaddr {
 	struct sockaddr_storage ss;
 	int bits;
@@ -113,6 +115,7 @@ struct relayhost {
 	char hostname[MAXHOSTNAMELEN];
 	u_int16_t port;
 	char cert[PATH_MAX];
+	objid_t secmapid;
 };
 
 enum imsg_type {
@@ -210,8 +213,6 @@ struct ctl_conn {
 	struct imsgev		 iev;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
-
-typedef u_int32_t		 objid_t;
 
 struct ctl_id {
 	objid_t		 id;
@@ -734,6 +735,7 @@ struct dns {
 
 struct secret {
 	u_int64_t		 id;
+	objid_t			 secmapid;
 	char			 host[MAXHOSTNAMELEN];
 	char			 secret[MAX_LINE_SIZE];
 };
@@ -813,6 +815,7 @@ struct mta_session {
 	int			 flags;
 	TAILQ_HEAD(,message)	 recipients;
 	TAILQ_HEAD(,mta_relay)	 relays;
+	objid_t			 secmapid;
 	char			*secret;
 	int			 fd;
 	int			 datafd;

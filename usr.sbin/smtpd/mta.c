@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.93 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.94 2010/10/29 09:16:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -103,8 +103,10 @@ mta_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 			/* use auth? */
 			if ((b->rule.r_value.relayhost.flags & F_SSL) &&
-			    (b->rule.r_value.relayhost.flags & F_AUTH))
+			    (b->rule.r_value.relayhost.flags & F_AUTH)) {
 				s->flags |= MTA_USE_AUTH;
+				s->secmapid = b->rule.r_value.relayhost.secmapid;
+			}
 
 			/* force a particular SSL mode? */
 			switch (b->rule.r_value.relayhost.flags & F_SSL) {
@@ -352,6 +354,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		 */
 		bzero(&secret, sizeof(secret));
 		secret.id = s->id;
+		secret.secmapid = s->secmapid;
 		strlcpy(secret.host, s->host, sizeof(secret.host));
 		imsg_compose_event(s->env->sc_ievs[PROC_LKA], IMSG_LKA_SECRET,
 		    0, 0, -1, &secret, sizeof(secret));  

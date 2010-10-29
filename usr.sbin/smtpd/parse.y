@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.69 2010/10/28 21:15:50 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.70 2010/10/29 09:16:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -126,7 +126,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port from auth ssl size expire
+%type	<v.number>	quantifier decision port from auth ssl size expire credentials
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
@@ -278,6 +278,20 @@ expire		: EXPIRE STRING {
 			free($2);
 		}
 		| /* empty */	{ $$ = conf->sc_qexpire; }
+		;
+
+credentials	: AUTH STRING	{
+			struct map *m;
+
+			if ((m = map_findbyname(conf, $2)) == NULL) {
+				yyerror("no such map: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			$$ = m->m_id;
+		}
+		| /* empty */	{ $$ = 0; }
 		;
 
 main		: QUEUE INTERVAL interval	{
@@ -871,7 +885,7 @@ action		: DELIVER TO MAILDIR user		{
 		| RELAY				{
 			rule->r_action = A_RELAY;
 		}
-		| RELAY VIA STRING port ssl certname auth {
+		| RELAY VIA STRING port ssl certname credentials {
 			rule->r_action = A_RELAYVIA;
 
 			if ($5 == 0 && ($6 != NULL || $7)) {
@@ -889,8 +903,10 @@ action		: DELIVER TO MAILDIR user		{
 			rule->r_value.relayhost.port = $4;
 			rule->r_value.relayhost.flags |= $5;
 
-			if ($7)
+			if ($7) {
 				rule->r_value.relayhost.flags |= F_AUTH;
+				rule->r_value.relayhost.secmapid = $7;
+			}
 
 			if ($6 != NULL) {
 				if (ssl_load_certfile(conf, $6, F_CCERT) < 0) {

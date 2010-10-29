@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.35 2010/10/28 21:15:50 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.36 2010/10/29 09:16:08 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: October 29 2010 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -76,6 +76,101 @@ The syntax of
 .Nm
 is described below.
 .Bl -tag -width Ds
+.It Ic expire Ar n {s|m|h|d}
+Specify how long a message can stay in the queue.
+The default value is 4 days.
+For example:
+.Bd -literal -offset indent
+expire 4d	# expire after 4 days
+expire 10h	# expire after 10 hours
+.Ed
+.It Ic hostname Ar name
+Specify the domain name of the server.
+By default the current host name is used,
+as returned by
+.Xr hostname 1 .
+.It Xo
+.Ic listen on Ar interface
+.Op Ic port Ar port
+.Op Ic tls | smtps
+.Op Ic certificate Ar name
+.Op Ic enable auth
+.Xc
+Specify an
+.Ar interface
+and
+.Ar port
+to listen on.
+An IP address or domain name may be used in place of
+.Ar interface .
+.Pp
+Secured connections are provided either using STARTTLS
+.Pq Ic tls ,
+by default on port 25,
+or SMTPS
+.Pq Ic smtps ,
+by default on port 465.
+Creation of certificates is documented in
+.Xr starttls 8 .
+If no certificate
+.Ar name
+is specified, the
+.Pa /etc/mail/certs
+directory is searched for a file named by joining
+the interface name with a .crt extension, e.g.\&
+.Pa /etc/mail/certs/fxp0.crt .
+.Pp
+If the
+.Ic enable auth
+parameter is used,
+any remote sender that passed SMTPAUTH is treated as if
+it was the server's local user that was sending the mail.
+This means that filter rules using "from local" will be matched.
+.It Xo
+.Ic map Ar map
+.No {
+.Ic source Ar type Ar source
+.No }
+.Xc
+Maps are used to provide additional configuration information for
+.Xr smtpd 8 .
+.Pp
+.Ar map
+may be named freely.
+.Pp
+.Ar type
+may be one of the following:
+.Pp
+.Bl -tag -width "fileXXX" -compact
+.It db
+Mappings are stored in a file created using
+.Xr makemap 8 .
+This is the default type if none is specified.
+.It dns
+Not implemented yet.
+.It plain
+Mappings are stored in a plain text file using the
+same format as used to generate
+.Xr makemap 8
+mappings.
+.El
+.Pp
+.Ar source
+specifies the source of the map data.
+It must be an absolute path to a file for the
+.Dq file
+and
+.Dq db
+map types,
+or a domain name for the
+.Dq dns
+map type.
+.It Ic size Ar n
+Specify a maximum message size of
+.Ar n
+bytes.
+The argument may contain a multiplier, as documented in
+.Xr scan_scaled 3 .
 .It Ic accept | reject
 .Xr smtpd 8
 accepts and rejects messages
@@ -172,7 +267,7 @@ The routing decision is based on the DNS system.
 .Op Ic port Ar port
 .Op Ic tls | smtps | ssl
 .Op Ic certificate Ar name
-.Op Ic enable auth
+.Op Ic auth Ar map
 .Xc
 Mail is relayed through the specified
 .Ar host
@@ -200,113 +295,13 @@ Creation of certificates is documented in
 If an SMTPAUTH session with
 .Ar host
 is desired, use the
-.Ic enable auth
-parameter.
+.Ic auth
+parameter to specify the
+.Ar map
+that holds the credentials.
 .It Ic expire Ar n {s|m|h|d}
 Specify how long a message that matched this rule can stay in the queue.
 .El
-.It Ic expire Ar n {s|m|h|d}
-Specify how long a message can stay in the queue.
-The default value is 4 days.
-For example:
-.Bd -literal -offset indent
-expire 4d	# expire after 4 days
-expire 10h	# expire after 10 hours
-.Ed
-.It Ic hostname Ar name
-Specify the domain name of the server.
-By default the current host name is used,
-as returned by
-.Xr hostname 1 .
-.It Xo
-.Ic listen on Ar interface
-.Op Ic port Ar port
-.Op Ic tls | smtps
-.Op Ic certificate Ar name
-.Op Ic enable auth
-.Xc
-Specify an
-.Ar interface
-and
-.Ar port
-to listen on.
-An IP address or domain name may be used in place of
-.Ar interface .
-.Pp
-Secured connections are provided either using STARTTLS
-.Pq Ic tls ,
-by default on port 25,
-or SMTPS
-.Pq Ic smtps ,
-by default on port 465.
-Creation of certificates is documented in
-.Xr starttls 8 .
-If no certificate
-.Ar name
-is specified, the
-.Pa /etc/mail/certs
-directory is searched for a file named by joining
-the interface name with a .crt extension, e.g.\&
-.Pa /etc/mail/certs/fxp0.crt .
-.Pp
-If the
-.Ic enable auth
-parameter is used,
-any remote sender that passed SMTPAUTH is treated as if
-it was the server's local user that was sending the mail.
-This means that filter rules using "from local" will be matched.
-.It Xo
-.Ic map Ar map
-.No {
-.Ic source Ar type Ar source
-.No }
-.Xc
-Maps are used to provide additional configuration information for
-.Xr smtpd 8 .
-.Pp
-.Ar map
-may be named freely except for the following:
-.Pp
-.Bl -tag -width "virtualXXX" -compact
-.It secrets
-Map queried for remote host credentials.
-See
-.Xr makemap 8 .
-.El
-.Pp
-.Ar type
-may be one of the following:
-.Pp
-.Bl -tag -width "fileXXX" -compact
-.It db
-Mappings are stored in a file created using
-.Xr makemap 8 .
-This is the default type if none is specified.
-.It dns
-Not implemented yet.
-.It plain
-Mappings are stored in a plain text file using the
-same format as used to generate
-.Xr makemap 8
-mappings.
-.El
-.Pp
-.Ar source
-specifies the source of the map data.
-It must be an absolute path to a file for the
-.Dq file
-and
-.Dq db
-map types,
-or a domain name for the
-.Dq dns
-map type.
-.It Ic size Ar n
-Specify a maximum message size of
-.Ar n
-bytes.
-The argument may contain a multiplier, as documented in
-.Xr scan_scaled 3 .
 .El
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
@@ -345,7 +340,7 @@ listen on lo0
 map aliases { source db "/etc/mail/aliases.db" }
 map secrets { source db "/etc/mail/secrets.db" }
 accept for local deliver to mbox
-accept for all relay via smtp.gmail.com tls enable auth
+accept for all relay via smtp.gmail.com tls auth "secrets"
 .Ed
 .Pp
 In this second example,
