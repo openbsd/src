@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.244 2010/10/23 13:04:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.245 2010/10/29 20:11:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1464,6 +1464,7 @@ const char	*cmd_set_option_print(
 /* cmd.c */
 int		 cmd_pack_argv(int, char **, char *, size_t);
 int		 cmd_unpack_argv(char *, size_t, int, char ***);
+char	       **cmd_copy_argv(int, char **);
 void		 cmd_free_argv(int, char **);
 struct cmd	*cmd_parse(int, char **, char **);
 int		 cmd_exec(struct cmd *, struct cmd_ctx *);
