@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_stub.c,v 1.8 2005/11/17 19:23:01 fgsch Exp $	*/
+/*	$OpenBSD: kgdb_stub.c,v 1.9 2010/10/30 04:17:07 tedu Exp $	*/
 /*	$NetBSD: kgdb_stub.c,v 1.6 1998/08/30 20:30:57 scottr Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ kgdb_trap(int type, db_regs_t *regs)
 #ifdef	PC_ADVANCE
 		PC_ADVANCE(regs);
 #else
-		PC_REGS(regs) += BKPT_SIZE;
+		SET_PC_REGS(regs, PC_REGS(regs) + BKPT_SIZE);
 #endif
 		kgdb_active = 1;
 	} else {
@@ -479,7 +479,7 @@ kgdb_trap(int type, db_regs_t *regs)
 					kgdb_send("E0B");
 					continue;
 				}
-				PC_REGS(regs) = addr;
+				SET_PC_REGS(regs, addr);
 			}
 			db_clear_single_step(regs);
 			goto out;
@@ -492,7 +492,7 @@ kgdb_trap(int type, db_regs_t *regs)
 					kgdb_send("E0B");
 					continue;
 				}
-				PC_REGS(regs) = addr;
+				SET_PC_REGS(regs, addr);
 			}
 			db_set_single_step(regs);
 			goto out;
