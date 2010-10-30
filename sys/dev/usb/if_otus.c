@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.20 2010/10/23 16:14:07 jakemsr Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.21 2010/10/30 11:46:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -255,7 +255,7 @@ otus_detach(struct device *self, int flags)
 	if (timeout_initialized(&sc->calib_to))
 		timeout_del(&sc->calib_to);
 
-	if (ifp->if_flags != 0) {	/* if_attach() has been called. */
+	if (ifp->if_softc != NULL) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);

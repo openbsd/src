@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.75 2010/10/30 11:44:18 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.76 2010/10/30 11:46:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -600,7 +600,7 @@ run_detach(struct device *self, int flags)
 	if (timeout_initialized(&sc->calib_to))
 		timeout_del(&sc->calib_to);
 
-	if (ifp->if_flags != 0) {	/* if_attach() has been called */
+	if (ifp->if_softc != NULL) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
