@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.74 2010/10/23 16:14:07 jakemsr Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.75 2010/10/30 11:44:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2141,7 +2141,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* setup TX Wireless Information */
 	txwi = (struct rt2860_txwi *)(txd + 1);
 	txwi->flags = 0;
-	txwi->xflags = 0;
+	txwi->xflags = hasqos ? 0 : RT2860_TX_NSEQ;
 	txwi->wcid = (type == IEEE80211_FC0_TYPE_DATA) ?
 	    RUN_AID2WCID(ni->ni_associd) : 0xff;
 	txwi->len = htole16(m->m_pkthdr.len);
