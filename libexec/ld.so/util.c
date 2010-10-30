@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2008/10/02 20:12:08 kurt Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2010/10/30 15:36:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -80,7 +80,7 @@ _dl_malloc(size_t need)
 {
 	long *p, *t, *n, have;
 
-	need = (need + 8 + DL_MALLOC_ALIGN - 1) & ~(DL_MALLOC_ALIGN - 1);
+	need = (need + 2*DL_MALLOC_ALIGN - 1) & ~(DL_MALLOC_ALIGN - 1);
 
 	if ((t = _dl_malloc_free) != 0) {	/* Try free list first */
 		n = (long *)&_dl_malloc_free;
@@ -90,7 +90,7 @@ _dl_malloc(size_t need)
 		}
 		if (t) {
 			*n = *t;
-			_dl_memset(t, 0, t[-1] - sizeof(long));
+			_dl_memset(t, 0, t[-1] - DL_MALLOC_ALIGN);
 			return((void *)t);
 		}
 	}
@@ -98,8 +98,9 @@ _dl_malloc(size_t need)
 	if (need > have) {
 		if (have >= 8 + DL_MALLOC_ALIGN) {
 			p = _dl_malloc_pool;
-			*p = have;
-			_dl_free((void *)(p + 1));	/* move to freelist */
+			p = (void *) ((long)p + DL_MALLOC_ALIGN);
+			p[-1] = have;
+			_dl_free((void *)p);		/* move to freelist */
 		}
 		_dl_malloc_pool = (void *)_dl_mmap((void *)0,
 		    _dl_round_page(need), PROT_READ|PROT_WRITE,
@@ -112,8 +113,9 @@ _dl_malloc(size_t need)
 	p = _dl_malloc_pool;
 	_dl_malloc_pool += need;
 	_dl_memset(p, 0, need);
-	*p = need;
-	return((void *)(p + 1));
+	p = (void *) ((long)p + DL_MALLOC_ALIGN);
+	p[-1] = need;
+	return (p);
 }
 
 void
