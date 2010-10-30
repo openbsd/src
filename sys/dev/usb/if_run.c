@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.78 2010/10/30 11:52:29 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.79 2010/10/30 11:59:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2094,13 +2094,11 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct run_tx_data *data;
 	struct rt2870_txd *txd;
 	struct rt2860_txwi *txwi;
-	u_int hdrlen;
 	uint16_t qos, dur;
 	uint8_t type, mcs, tid, qid;
 	int error, hasqos, ridx, ctl_ridx, xferlen;
 
 	wh = mtod(m, struct ieee80211_frame *);
-	hdrlen = ieee80211_get_hdrlen(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
 	if ((hasqos = ieee80211_has_qos(wh))) {
