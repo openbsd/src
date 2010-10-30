@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.23 2010/10/30 11:52:29 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.24 2010/10/30 18:03:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1383,7 +1383,6 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	xferlen = sizeof (*head) + m->m_pkthdr.len;
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&head[1]);
 	m_freem(m);
-	ieee80211_release_node(ic, ni);
 
 	DPRINTFN(5, ("tx queued=%d len=%d mac=0x%04x phy=0x%08x rate=%d\n",
 	    sc->tx_queued, head->len, head->macctl, head->phyctl,
@@ -1393,6 +1392,8 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS && error != 0))
 		return error;
+
+	ieee80211_release_node(ic, ni);
 
 	sc->tx_queued++;
 	sc->tx_cur = (sc->tx_cur + 1) % OTUS_TX_DATA_LIST_COUNT;
@@ -1441,6 +1442,7 @@ sendit:
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 		if (otus_tx(sc, m, ni) != 0) {
+			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;
 		}

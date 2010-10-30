@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.79 2010/10/30 11:59:05 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.80 2010/10/30 18:03:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2191,7 +2191,6 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)(txwi + 1));
 	m_freem(m);
-	ieee80211_release_node(ic, ni);
 
 	xferlen += sizeof (*txd) + 4;
 
@@ -2200,6 +2199,8 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS && error != 0))
 		return error;
+
+	ieee80211_release_node(ic, ni);
 
 	ring->cur = (ring->cur + 1) % RUN_TX_RING_COUNT;
 	if (++ring->queued >= RUN_TX_RING_COUNT)
@@ -2249,6 +2250,7 @@ sendit:
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 		if (run_tx(sc, m, ni) != 0) {
+			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;
 		}
