@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.209 2010/10/29 07:43:09 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.210 2010/10/30 22:48:03 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -286,15 +286,16 @@ apply
 if [[ -n $user ]]; then
 	_encr="*"
 	[[ -n "$userpass" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$userpass"`
-	userline="${user}:${_encr}:1000:10:staff:0:0:${username}:/home/${user}:/bin/ksh"
-	echo "$userline" >> /mnt/etc/master.passwd
+	uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:/home/${user}:/bin/ksh"
+	echo "$uline" >> /mnt/etc/master.passwd
+	echo "${user}:*:1000:" >> /mnt/etc/group
 
 	mkdir -p /mnt/home/$user
 	(cd /mnt/etc/skel; cp -pR . /mnt/home/$user)
 	( umask 077 &&
 		sed "s,^To: root\$,To: ${username} <${user}>," \
 		/mnt/var/mail/root > /mnt/var/mail/$user )
-	chown -R 1000.10 /mnt/home/$user /mnt/var/mail/$user
+	chown -R 1000:1000 /mnt/home/$user /mnt/var/mail/$user
 	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${user}@
 w
 q" | /mnt/bin/ed /mnt/etc/group 2>/dev/null
