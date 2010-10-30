@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.21 2010/10/30 11:46:47 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.22 2010/10/30 11:47:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1439,7 +1439,6 @@ sendit:
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 		if (otus_tx(sc, m, ni) != 0) {
-			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.76 2010/10/30 11:46:47 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.77 2010/10/30 11:47:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2250,7 +2250,6 @@ sendit:
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 		if (run_tx(sc, m, ni) != 0) {
-			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;
 		}
