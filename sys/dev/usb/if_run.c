@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.77 2010/10/30 11:47:53 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.78 2010/10/30 11:52:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2064,22 +2064,23 @@ run_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
+	s = splnet();
+	txq->queued--;
+	sc->qfullmsk &= ~(1 << data->qid);
+
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		DPRINTF(("TX status=%d\n", status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(txq->pipeh);
 		ifp->if_oerrors++;
+		splx(s);
 		return;
 	}
 
-	s = splnet();
 	sc->sc_tx_timer = 0;
 	ifp->if_opackets++;
-	if (--txq->queued < RUN_TX_RING_COUNT) {
-		sc->qfullmsk &= ~(1 << data->qid);
-		ifp->if_flags &= ~IFF_OACTIVE;
-		run_start(ifp);
-	}
+	ifp->if_flags &= ~IFF_OACTIVE;
+	run_start(ifp);
 	splx(s);
 }
 

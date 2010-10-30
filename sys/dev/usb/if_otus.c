@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.22 2010/10/30 11:47:53 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.23 2010/10/30 11:52:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1261,16 +1261,18 @@ otus_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet *ifp = &ic->ic_if;
 	int s;
 
+	s = splnet();
+	sc->tx_queued--;
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		DPRINTF(("TX status=%d\n", status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->data_tx_pipe);
 		ifp->if_oerrors++;
+		splx(s);
 		return;
 	}
-	s = splnet();
-	sc->tx_queued--;
 	sc->sc_tx_timer = 0;
+	ifp->if_opackets++;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	otus_start(ifp);
 	splx(s);
