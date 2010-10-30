@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.113 2010/06/29 03:09:29 blambert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.114 2010/10/30 23:06:05 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
+#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 
@@ -94,6 +95,11 @@ char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, in_port_t, char *, int);
 char	*inet6name(struct in6_addr *);
 void	inet6print(struct in6_addr *, int, char *);
+void	sockbuf_dump(struct sockbuf *, const char *);
+void	protosw_dump(u_long, u_long);
+void	domain_dump(u_long, u_long, short);
+void	inpcb_dump(u_long, short, int);
+void	tcpcb_dump(u_long);
 
 /*
  * Print a summary of connections related to an Internet
@@ -102,7 +108,7 @@ void	inet6print(struct in6_addr *, int, char *);
  * -a (all) flag is specified.
  */
 void
-protopr(u_long off, char *name, int af)
+protopr(u_long off, char *name, int af, u_long pcbaddr)
 {
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
@@ -145,6 +151,21 @@ protopr(u_long off, char *name, int af)
 		default:
 			isany = 0;
 			break;
+		}
+
+		if (Pflag) {
+			if (istcp && pcbaddr == (u_long)inpcb.inp_ppcb) {
+				if (vflag)
+					socket_dump((u_long)inpcb.inp_socket);
+				else
+					tcpcb_dump(pcbaddr);
+			} else if (pcbaddr == (u_long)prev) {
+				if (vflag)
+					socket_dump((u_long)inpcb.inp_socket);
+				else
+					inpcb_dump(pcbaddr, 0, af);
+			}
+			continue;
 		}
 
 		kread((u_long)inpcb.inp_socket, &sockb, sizeof (sockb));
@@ -1130,10 +1151,193 @@ ipcomp_stats(char *name)
 }
 
 /*
- * Dump the contents of a TCPCB
+ * Dump the contents of a socket structure
  */
 void
-tcp_dump(u_long off)
+socket_dump(u_long off)
+{
+	struct socket so;
+
+	if (off == 0)
+		return;
+	kread(off, &so, sizeof(so));
+
+#define	p(fmt, v, sep) printf(#v " " fmt sep, so.v);
+	printf("socket %#lx\n ", off);
+	p("%#0.4x", so_type, "\n ");
+	p("%#0.4x", so_options, "\n ");
+	p("%d", so_linger, "\n ");
+	p("%#0.4x", so_state, "\n ");
+	p("%p", so_pcb, ", ");
+	p("%p", so_proto, ", ");
+	p("%p", so_head, "\n ");
+	p("%d", so_q0len, ", ");
+	p("%d", so_qlen, ", ");
+	p("%d", so_qlimit, "\n ");
+	p("%d", so_timeo, "\n ");
+	p("%u", so_error, "\n ");
+	p("%d", so_pgid, ", ");
+	p("%u", so_siguid, ", ");
+	p("%u", so_sigeuid, "\n ");
+	p("%lu", so_oobmark, "\n ");
+	sockbuf_dump(&so.so_rcv, "so_rcv");
+	sockbuf_dump(&so.so_snd, "so_snd");
+	p("%u", so_euid, ", ");
+	p("%u", so_ruid, ", ");
+	p("%u", so_egid, ", ");
+	p("%u", so_rgid, "\n ");
+	p("%d", so_cpid, "\n");
+#undef	p
+
+	if (!vflag)
+		return;
+	protosw_dump((u_long)so.so_proto, (u_long)so.so_pcb);
+}
+
+/*
+ * Dump the contents of a socket buffer
+ */
+void
+sockbuf_dump(struct sockbuf *sb, const char *name)
+{
+#define	p(fmt, v, sep) printf(#v " " fmt sep, sb->v);
+	printf("%s ", name);
+	p("%lu", sb_cc, ", ");
+	p("%lu", sb_datacc, ", ");
+	p("%lu", sb_hiwat, ", ");
+	p("%lu", sb_wat, "\n ");
+	printf("%s ", name);
+	p("%lu", sb_mbcnt, ", ");
+	p("%lu", sb_mbmax, ", ");
+	p("%ld", sb_lowat, "\n ");
+	printf("%s ", name);
+	p("%#0.4x", sb_flags, ", ");
+	p("%u", sb_timeo, "\n ");
+#undef	p
+}
+
+/*
+ * Dump the contents of a protosw structure
+ */
+void
+protosw_dump(u_long off, u_long pcb)
+{
+	struct protosw proto;
+
+	if (off == 0)
+		return;
+	kread(off, &proto, sizeof(proto));
+
+#define	p(fmt, v, sep) printf(#v " " fmt sep, proto.v);
+	printf("protosw %#lx\n ", off);
+	p("%#0.4x", pr_type, "\n ");
+	p("%p", pr_domain, "\n ");
+	p("%d", pr_protocol, "\n ");
+	p("%#0.4x", pr_flags, "\n");
+#undef	p
+
+	domain_dump((u_long)proto.pr_domain, pcb, proto.pr_protocol);
+}
+
+/*
+ * Dump the contents of a domain structure
+ */
+void
+domain_dump(u_long off, u_long pcb, short protocol)
+{
+	struct domain dom;
+	char name[256];
+
+	if (off == 0)
+		return;
+	kread(off, &dom, sizeof(dom));
+	kread((u_long)dom.dom_name, name, sizeof(name));
+
+#define	p(fmt, v, sep) printf(#v " " fmt sep, dom.v);
+	printf("domain %#lx\n ", off);
+	p("%d", dom_family, "\n ");
+	printf("dom_name %.*s\n", sizeof(name), name);
+#undef	p
+
+	switch (dom.dom_family) {
+	case AF_INET:
+	case AF_INET6:
+		inpcb_dump(pcb, protocol, dom.dom_family);
+		break;
+	case AF_UNIX:
+		unpcb_dump(pcb);
+		break;
+	}
+}
+
+/*
+ * Dump the contents of a internet PCB
+ */
+void
+inpcb_dump(u_long off, short protocol, int af)
+{
+	struct inpcb inp;
+	char faddr[256], laddr[256];
+
+	if (off == 0)
+		return;
+	kread(off, &inp, sizeof(inp));
+	switch (af) {
+	case AF_INET:
+		inet_ntop(af, &inp.inp_faddr, faddr, sizeof(faddr));
+		inet_ntop(af, &inp.inp_laddr, laddr, sizeof(laddr));
+		break;
+	case AF_INET6:
+		inet_ntop(af, &inp.inp_faddr6, faddr, sizeof(faddr));
+		inet_ntop(af, &inp.inp_laddr6, laddr, sizeof(laddr));
+		break;
+	default:
+		faddr[0] = laddr[0] = '\0';
+	}
+
+#define	p(fmt, v, sep) printf(#v " " fmt sep, inp.v);
+	printf("inpcb %#lx\n ", off);
+	p("%p", inp_table, "\n ");
+	printf("inp_faddru %s, inp_laddru %s\n ", faddr, laddr);
+	HTONS(inp.inp_fport);
+	HTONS(inp.inp_lport);
+	p("%u", inp_fport, ", ");
+	p("%u", inp_lport, "\n ");
+	p("%p", inp_socket, ", ");
+	p("%p", inp_ppcb, "\n ");
+	p("%#0.8x", inp_flags, "\n ");
+	p("%d", inp_hops, "\n ");
+	p("%u", inp_seclevel[0], ", ");
+	p("%u", inp_seclevel[1], ", ");
+	p("%u", inp_seclevel[2], ", ");
+	p("%u", inp_seclevel[3], "\n ");
+	p("%#x", inp_secrequire, ", ");
+	p("%#x", inp_secresult, "\n ");
+	p("%u", inp_ip_minttl, "\n ");
+	p("%p", inp_tdb_in, ", ");
+	p("%p", inp_tdb_out, ", ");
+	p("%p", inp_ipo, "\n ");
+	p("%p", inp_ipsec_remotecred, ", ");
+	p("%p", inp_ipsec_remoteauth, "\n ");
+	p("%d", in6p_cksum, "\n ");
+	p("%p", inp_icmp6filt, "\n ");
+	p("%p", inp_pf_sk, "\n ");
+	p("%u", inp_rtableid, "\n ");
+	p("%d", inp_pipex, "\n");
+#undef	p
+
+	switch (protocol) {
+	case IPPROTO_TCP:
+		tcpcb_dump((u_long)inp.inp_ppcb);
+		break;
+	}
+}
+
+/*
+ * Dump the contents of a TCP PCB
+ */
+void
+tcpcb_dump(u_long off)
 {
 	struct tcpcb tcpcb;
 
@@ -1142,68 +1346,68 @@ tcp_dump(u_long off)
 	kread(off, (char *)&tcpcb, sizeof (tcpcb));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, tcpcb.v);
-	printf("pcb %#lx, ", off);
-	p("%p", t_inpcb, "\n");
+	printf("tcpcb %#lx\n ", off);
+	p("%p", t_inpcb, "\n ");
 	p("%d", t_state, "");
-        if (tcpcb.t_state >= 0 && tcpcb.t_state < TCP_NSTATES)
+	if (tcpcb.t_state >= 0 && tcpcb.t_state < TCP_NSTATES)
 		printf(" (%s)", tcpstates[tcpcb.t_state]);
-	printf("\n");
+	printf("\n ");
 	p("%d", t_rxtshift, ", ");
 	p("%d", t_rxtcur, ", ");
-	p("%d", t_dupacks, "\n");
+	p("%d", t_dupacks, "\n ");
 	p("%u", t_maxseg, ", ");
 	p("%u", t_maxopd, ", ");
-	p("%u", t_peermss, "\n");
+	p("%u", t_peermss, "\n ");
 	p("0x%x", t_flags, ", ");
-	p("%u", t_force, "\n");
-	p("%u", iss, "\n");
+	p("%u", t_force, "\n ");
+	p("%u", iss, "\n ");
 	p("%u", snd_una, ", ");
 	p("%u", snd_nxt, ", ");
-	p("%u", snd_up, "\n");
+	p("%u", snd_up, "\n ");
 	p("%u", snd_wl1, ", ");
 	p("%u", snd_wl2, ", ");
-	p("%lu", snd_wnd, "\n");
+	p("%lu", snd_wnd, "\n ");
 	p("%d", sack_enable, ", ");
 	p("%d", snd_numholes, ", ");
 	p("%u", snd_fack, ", ");
-	p("%lu",snd_awnd, "\n");
+	p("%lu",snd_awnd, "\n ");
 	p("%u", retran_data, ", ");
-	p("%u", snd_last, "\n");
-	p("%u", irs, "\n");
+	p("%u", snd_last, "\n ");
+	p("%u", irs, "\n ");
 	p("%u", rcv_nxt, ", ");
 	p("%u", rcv_up, ", ");
-	p("%lu", rcv_wnd, "\n");
-	p("%u", rcv_lastsack, "\n");
-	p("%d", rcv_numsacks, "\n");
+	p("%lu", rcv_wnd, "\n ");
+	p("%u", rcv_lastsack, "\n ");
+	p("%d", rcv_numsacks, "\n ");
 	p("%u", rcv_adv, ", ");
-	p("%u", snd_max, "\n");
+	p("%u", snd_max, "\n ");
 	p("%lu", snd_cwnd, ", ");
 	p("%lu", snd_ssthresh, ", ");
-	p("%lu", max_sndwnd, "\n");
+	p("%lu", max_sndwnd, "\n ");
 	p("%u", t_rcvtime, ", ");
 	p("%u", t_rtttime, ", ");
-	p("%u", t_rtseq, "\n");
+	p("%u", t_rtseq, "\n ");
 	p("%u", t_srtt, ", ");
 	p("%u", t_rttvar, ", ");
-	p("%u", t_rttmin, "\n");
+	p("%u", t_rttmin, "\n ");
 	p("%u", t_oobflags, ", ");
-	p("%u", t_iobc, "\n");
-	p("%u", t_softerror, "\n");
+	p("%u", t_iobc, "\n ");
+	p("%u", t_softerror, "\n ");
 	p("%u", snd_scale, ", ");
 	p("%u", rcv_scale, ", ");
 	p("%u", request_r_scale, ", ");
-	p("%u", requested_s_scale, "\n");
+	p("%u", requested_s_scale, "\n ");
 	p("%u", ts_recent, ", ");
-	p("%u", ts_recent_age, "\n");
-	p("%u", last_ack_sent, "\n");
+	p("%u", ts_recent_age, "\n ");
+	p("%u", last_ack_sent, "\n ");
 	HTONS(tcpcb.t_pmtud_ip_len);
 	HTONS(tcpcb.t_pmtud_nextmtu);
 	p("%u", t_pmtud_mss_acked, ", ");
-	p("%u", t_pmtud_mtu_sent, "\n");
+	p("%u", t_pmtud_mtu_sent, "\n ");
 	p("%u", t_pmtud_nextmtu, ", ");
 	p("%u", t_pmtud_ip_len, ", ");
-	p("%u", t_pmtud_ip_hl, "\n");
-	p("%u", t_pmtud_th_seq, "\n");
+	p("%u", t_pmtud_ip_hl, "\n ");
+	p("%u", t_pmtud_th_seq, "\n ");
 	p("%u", pf, "\n");
 #undef	p
 }

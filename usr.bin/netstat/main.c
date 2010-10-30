@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.86 2010/10/11 12:33:36 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.87 2010/10/30 23:06:05 bluhm Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -93,55 +93,55 @@ struct nlist nl[] = {
 #define N_DIVB6TABLE	16
 	{ "_divb6table" },
 
-	{ ""}
+	{ "" }
 };
 
 struct protox {
-	u_char	pr_index;			/* index into nlist of cb head */
-	void	(*pr_cblocks)(u_long, char *, int); /* control blocks printing routine */
-	void	(*pr_stats)(char *);		/* statistics printing routine */
-	void	(*pr_dump)(u_long);		/* pcb printing routine */
-	char	*pr_name;			/* well-known name */
+	u_char	pr_index;		/* index into nlist of cb head */
+	void	(*pr_cblocks)(u_long, char *, int, u_long);
+					/* control blocks printing routine */
+	void	(*pr_stats)(char *);	/* statistics printing routine */
+	char	*pr_name;		/* well-known name */
 } protox[] = {
-	{ N_TCBTABLE,	protopr,	tcp_stats,	tcp_dump,	"tcp" },
-	{ N_UDBTABLE,	protopr,	udp_stats,	NULL,		"udp" },
-	{ N_RAWIPTABLE,	protopr,	ip_stats,	NULL,		"ip" },
-	{ N_DIVBTABLE,	protopr,	div_stats,	NULL,		"divert" },
-	{ -1,		NULL,		icmp_stats,	NULL,		"icmp" },
-	{ -1,		NULL,		igmp_stats,	NULL,		"igmp" },
-	{ -1,		NULL,		ah_stats,	NULL,		"ah" },
-	{ -1,		NULL,		esp_stats,	NULL,		"esp" },
-	{ -1,		NULL,		ipip_stats,	NULL,		"ipencap" },
-	{ -1,		NULL,		etherip_stats,	NULL,		"etherip" },
-	{ -1,		NULL,		ipcomp_stats,	NULL,		"ipcomp" },
-	{ -1,		NULL,		carp_stats,	NULL,		"carp" },
-	{ -1,		NULL,		pfsync_stats,	NULL,		"pfsync" },
-	{ -1,		NULL,		pim_stats,	NULL,		"pim" },
-	{ -1,		NULL,		pflow_stats,	NULL,		"pflow" },
-	{ -1,		NULL,		NULL,		NULL,		NULL }
+	{ N_TCBTABLE,	protopr,	tcp_stats,	"tcp" },
+	{ N_UDBTABLE,	protopr,	udp_stats,	"udp" },
+	{ N_RAWIPTABLE,	protopr,	ip_stats,	"ip" },
+	{ N_DIVBTABLE,	protopr,	div_stats,	"divert" },
+	{ -1,		NULL,		icmp_stats,	"icmp" },
+	{ -1,		NULL,		igmp_stats,	"igmp" },
+	{ -1,		NULL,		ah_stats,	"ah" },
+	{ -1,		NULL,		esp_stats,	"esp" },
+	{ -1,		NULL,		ipip_stats,	"ipencap" },
+	{ -1,		NULL,		etherip_stats,	"etherip" },
+	{ -1,		NULL,		ipcomp_stats,	"ipcomp" },
+	{ -1,		NULL,		carp_stats,	"carp" },
+	{ -1,		NULL,		pfsync_stats,	"pfsync" },
+	{ -1,		NULL,		pim_stats,	"pim" },
+	{ -1,		NULL,		pflow_stats,	"pflow" },
+	{ -1,		NULL,		NULL,		NULL }
 };
 
 struct protox ip6protox[] = {
-	{ N_TCBTABLE,	protopr,	NULL,		tcp_dump,	"tcp" },
-	{ N_UDBTABLE,	protopr,	NULL,		NULL,		"udp" },
-	{ N_RAWIP6TABLE,protopr,	ip6_stats,	NULL,		"ip6" },
-	{ N_DIVB6TABLE,	protopr,	div6_stats,	NULL,		"divert6" },
-	{ -1,		NULL,		icmp6_stats,	NULL,		"icmp6" },
-	{ -1,		NULL,		pim6_stats,	NULL,		"pim6" },
-	{ -1,		NULL,		rip6_stats,	NULL,		"rip6" },
-	{ -1,		NULL,		NULL,		NULL,		NULL }
+	{ N_TCBTABLE,	protopr,	NULL,		"tcp" },
+	{ N_UDBTABLE,	protopr,	NULL,		"udp" },
+	{ N_RAWIP6TABLE,protopr,	ip6_stats,	"ip6" },
+	{ N_DIVB6TABLE,	protopr,	div6_stats,	"divert6" },
+	{ -1,		NULL,		icmp6_stats,	"icmp6" },
+	{ -1,		NULL,		pim6_stats,	"pim6" },
+	{ -1,		NULL,		rip6_stats,	"rip6" },
+	{ -1,		NULL,		NULL,		NULL }
 };
 
 struct protox atalkprotox[] = {
-	{ N_DDPCB,	atalkprotopr,	ddp_stats,	NULL,		"ddp" },
-	{ -1,		NULL,		NULL,		NULL,		NULL }
+	{ N_DDPCB,	atalkprotopr,	ddp_stats,	"ddp" },
+	{ -1,		NULL,		NULL,		NULL }
 };
 
 struct protox *protoprotox[] = {
 	protox, ip6protox, atalkprotox, NULL
 };
 
-static void printproto(struct protox *, char *, int);
+static void printproto(struct protox *, char *, int, u_long);
 static void usage(void);
 static struct protox *name2protox(char *);
 static struct protox *knownname(char *);
@@ -360,18 +360,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (pflag) {
-		printproto(tp, tp->pr_name, af);
-		exit(0);
-	}
-	if (Pflag) {
-		if (tp == NULL && (tp = name2protox("tcp")) == NULL) {
-			(void)fprintf(stderr,
-			    "%s: %s: unknown protocol\n",
-			    __progname, "tcp");
-			exit(1);
-		}
-		if (tp->pr_dump)
-			(tp->pr_dump)(pcbaddr);
+		printproto(tp, tp->pr_name, af, pcbaddr);
 		exit(0);
 	}
 	/*
@@ -423,22 +412,22 @@ main(int argc, char *argv[])
 					break;
 			if (tp->pr_name == 0)
 				continue;
-			printproto(tp, p->p_name, AF_INET);
+			printproto(tp, p->p_name, AF_INET, pcbaddr);
 		}
 		endprotoent();
 	}
 	if (af == PF_PFLOW || af == AF_UNSPEC) {
 		tp = name2protox("pflow");
-		printproto(tp, tp->pr_name, af);
+		printproto(tp, tp->pr_name, af, pcbaddr);
 	}
 	if (af == AF_INET6 || af == AF_UNSPEC)
 		for (tp = ip6protox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name, AF_INET6);
+			printproto(tp, tp->pr_name, AF_INET6, pcbaddr);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
-		unixpr(nl[N_UNIXSW].n_value);
+		unixpr(nl[N_UNIXSW].n_value, pcbaddr);
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
 		for (tp = atalkprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name, af);
+			printproto(tp, tp->pr_name, af, pcbaddr);
 	exit(0);
 }
 
@@ -448,7 +437,7 @@ main(int argc, char *argv[])
  * is not in the namelist, ignore this one.
  */
 static void
-printproto(struct protox *tp, char *name, int af)
+printproto(struct protox *tp, char *name, int af, u_long pcbaddr)
 {
 	if (sflag) {
 		if (tp->pr_stats != NULL)
@@ -458,7 +447,7 @@ printproto(struct protox *tp, char *name, int af)
 		if (tp->pr_cblocks != NULL &&
 		    i < sizeof(nl) / sizeof(nl[0]) &&
 		    (nl[i].n_value || af != AF_UNSPEC))
-			(*tp->pr_cblocks)(nl[i].n_value, name, af);
+			(*tp->pr_cblocks)(nl[i].n_value, name, af, pcbaddr);
 	}
 }
 
@@ -542,7 +531,7 @@ usage(void)
 	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
 	    "               [-T tableid]\n"
 	    "       %s [-bdn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
-	    "       %s [-M core] [-N system] -P pcbaddr\n"
+	    "       %s [-v] [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
 	    "       %s [-a] [-f address_family] [-i | -I interface]\n"
 	    "       %s [-W interface]\n",
@@ -577,4 +566,3 @@ gettable(const char *s)
 
 	return (tableid);
 }
-

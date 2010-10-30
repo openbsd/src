@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.57 2010/10/11 12:33:36 claudio Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.58 2010/10/30 23:06:05 bluhm Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ int	kread(u_long addr, void *buf, int size);
 char	*plural(u_int64_t);
 char	*plurales(u_int64_t);
 
-void	protopr(u_long, char *, int);
+void	protopr(u_long, char *, int, u_long);
 void	tcp_stats(char *);
 void	udp_stats(char *);
 void	ip_stats(char *);
@@ -88,7 +88,8 @@ void	ipcomp_stats(char *);
 
 void	net80211_ifstats(char *);
 
-void	tcp_dump(u_long);
+void	socket_dump(u_long);
+void	unpcb_dump(u_long);
 
 void	mbpr(void);
 
@@ -130,11 +131,11 @@ void	nsprotopr(u_long, char *);
 
 void	intpr(int, int);
 
-void	unixpr(u_long);
+void	unixpr(u_long, u_long);
 
 void	mroutepr(u_long, u_long, u_long);
 void	mrt_stats(void);
 
-void	atalkprotopr(u_long, char *, int);
+void	atalkprotopr(u_long, char *, int, u_long);
 void	ddp_stats(char *);
 char	*atalk_print(const struct sockaddr *, int);

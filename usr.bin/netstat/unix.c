@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.14 2010/04/28 18:22:11 jsg Exp $	*/
+/*	$OpenBSD: unix.c,v 1.15 2010/10/30 23:06:05 bluhm Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -54,14 +54,14 @@ struct proc;
 #include <kvm.h>
 #include "netstat.h"
 
-static	void unixdomainpr(struct socket *, caddr_t);
+static	void unixdomainpr(struct socket *, caddr_t, u_long);
 
 static struct	file *file, *fileNFILE;
 static int	fcnt;
 extern	kvm_t *kvmd;
 
 void
-unixpr(u_long off)
+unixpr(u_long off, u_long pcbaddr)
 {
 	struct file *fp;
 	struct socket sock, *so = &sock;
@@ -83,7 +83,7 @@ unixpr(u_long off)
 		/* kludge */
 		if (so->so_proto >= unixsw && so->so_proto <= unixsw + 2)
 			if (so->so_pcb)
-				unixdomainpr(so, fp->f_data);
+				unixdomainpr(so, fp->f_data, pcbaddr);
 	}
 }
 
@@ -91,12 +91,18 @@ static	char *socktype[] =
     { "#0", "stream", "dgram", "raw", "rdm", "seqpacket" };
 
 static void
-unixdomainpr(struct socket *so, caddr_t soaddr)
+unixdomainpr(struct socket *so, caddr_t soaddr, u_long pcbaddr)
 {
 	struct unpcb unpcb, *unp = &unpcb;
 	struct mbuf mbuf, *m;
 	struct sockaddr_un *sa = NULL;
 	static int first = 1;
+
+	if (Pflag) {
+		if (pcbaddr == (u_long)soaddr)
+			socket_dump(pcbaddr);
+		return;
+	}
 
 	if (kread((u_long)so->so_pcb, unp, sizeof (*unp)))
 		return;
@@ -124,4 +130,36 @@ unixdomainpr(struct socket *so, caddr_t soaddr)
 		    (int)(m->m_len - (int)(sizeof(*sa) - sizeof(sa->sun_path))),
 		    sa->sun_path);
 	putchar('\n');
+}
+
+/*
+ * Dump the contents of a UNIX PCB
+ */
+void
+unpcb_dump(u_long off)
+{
+	struct unpcb unp;
+
+	if (off == 0)
+		return;
+	kread(off, &unp, sizeof(unp));
+
+#define	p(fmt, v, sep) printf(#v " " fmt sep, unp.v);
+	printf("unpcb %#lx\n ", off);
+	p("%p", unp_socket, "\n ");
+	p("%p", unp_vnode, ", ");
+	p("%u", unp_ino, "\n ");
+	p("%p", unp_conn, ", ");
+	p("%p", unp_refs, ", ");
+	p("%p", unp_nextref, "\n ");
+	p("%p", unp_addr, "\n ");
+	p("%#0.8x", unp_flags, "\n ");
+	p("%u", unp_connid.uid, ", ");
+	p("%u", unp_connid.gid, ", ");
+	p("%d", unp_connid.pid, "\n ");
+	p("%d", unp_cc, ", ");
+	p("%d", unp_mbcnt, "\n ");
+	p("%d", unp_ctime.tv_sec, ", ");
+	p("%ld", unp_ctime.tv_nsec, "\n");
+#undef p
 }

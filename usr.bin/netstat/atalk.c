@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.19 2010/06/29 03:09:29 blambert Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.20 2010/10/30 23:06:05 bluhm Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ atalk_print(const struct sockaddr *sa, int what)
 }
 
 void
-atalkprotopr(u_long off, char *name, int af)
+atalkprotopr(u_long off, char *name, int af, u_long pcbaddr)
 {
 	struct ddpcb    cb;
 	struct ddpcb *prev, *next;
@@ -214,6 +214,11 @@ atalkprotopr(u_long off, char *name, int af)
 		if (kread((u_long) next, &ddpcb, sizeof(ddpcb)) < 0)
 			return;
 		next = ddpcb.ddp_next;
+		if (Pflag) {
+			if (pcbaddr == ppcb)
+				socket_dump((u_long)ddpcb.ddp_socket);
+			continue;
+		}
 #if 0
 		if (!aflag && atalk_nullhost(ddpcb.ddp_lsat)) {
 			continue;
