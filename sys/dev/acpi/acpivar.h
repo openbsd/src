@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.67 2010/10/26 20:51:35 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.68 2010/10/31 21:52:46 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -80,13 +80,6 @@ struct acpi_q {
 	int			 q_id;
 	void			*q_table;
 	u_int8_t		 q_data[0];
-};
-
-struct acpi_taskq {
-	SIMPLEQ_ENTRY(acpi_taskq)	next;
-	void 				(*handler)(void *, int);
-	void				*arg0;
-	int				arg1;
 };
 
 struct acpi_wakeq {
@@ -339,9 +332,6 @@ void	acpi_sleep(int, char *);
 int acpi_matchhids(struct acpi_attach_args *, const char *[], const char *);
 
 int	acpi_record_event(struct acpi_softc *, u_int);
-
-void	acpi_addtask(struct acpi_softc *, void (*)(void *, int), void *, int);
-int	acpi_dotask(struct acpi_softc *);
 
 #endif
 

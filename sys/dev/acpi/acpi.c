@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.220 2010/10/26 20:51:35 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.221 2010/10/31 21:52:46 guenther Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -85,8 +85,6 @@ struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *,
 	    const char *, const char *, int);
 
 void	acpi_init_states(struct acpi_softc *);
-
-void 	acpi_gpe_task(void *, int);
 
 #ifndef SMALL_KERNEL
 
@@ -1206,54 +1204,6 @@ acpi_init_states(struct acpi_softc *sc)
 	}
 }
 
-/* ACPI Workqueue support */
-SIMPLEQ_HEAD(,acpi_taskq) acpi_taskq =
-    SIMPLEQ_HEAD_INITIALIZER(acpi_taskq);
-
-void
-acpi_addtask(struct acpi_softc *sc, void (*handler)(void *, int), 
-    void *arg0, int arg1)
-{
-	struct acpi_taskq *wq;
-	int s;
-
-	wq = malloc(sizeof(*wq), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (wq == NULL)
-		return;
-	wq->handler = handler;
-	wq->arg0 = arg0;
-	wq->arg1 = arg1;
-	
-	s = spltty();
-	SIMPLEQ_INSERT_TAIL(&acpi_taskq, wq, next);
-	splx(s);
-}
-
-int
-acpi_dotask(struct acpi_softc *sc)
-{
-	struct acpi_taskq *wq;
-	int s;
-
-	s = spltty();
-	if (SIMPLEQ_EMPTY(&acpi_taskq)) {
-		splx(s);
-
-		/* we don't have anything to do */
-		return (0);
-	}
-	wq = SIMPLEQ_FIRST(&acpi_taskq);
-	SIMPLEQ_REMOVE_HEAD(&acpi_taskq, next);
-	splx(s);
-
-	wq->handler(wq->arg0, wq->arg1);
-
-	free(wq, M_DEVBUF);
-
-	/* We did something */
-	return (1);	
-}
-
 #ifndef SMALL_KERNEL
 int
 is_ata(struct aml_node *node)
@@ -1396,19 +1346,6 @@ acpi_reset(void)
 	delay(100000);
 }
 
-void
-acpi_gpe_task(void *arg0, int gpe)
-{
-	struct acpi_softc *sc = acpi_softc;
-	struct gpe_block *pgpe = &sc->gpe_table[gpe];
-
-	dnprintf(10, "handle gpe: %x\n", gpe);
-	if (pgpe->handler && pgpe->active) {
-		pgpe->active = 0;
-		pgpe->handler(sc, gpe, pgpe->arg);
-	}
-}
-
 int
 acpi_interrupt(void *arg)
 {
@@ -1429,8 +1366,6 @@ acpi_interrupt(void *arg)
 				if (en & sts & (1L << jdx)) {
 					/* Signal this GPE */
 					sc->gpe_table[idx+jdx].active = 1;
-					dnprintf(10, "queue gpe: %x\n", idx+jdx);
-					acpi_addtask(sc, acpi_gpe_task, NULL, idx+jdx);
 
 					/*
 					 * Edge interrupts need their STS bits
@@ -2082,6 +2017,7 @@ acpi_thread(void *arg)
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
 	extern int aml_busy;
+	u_int32_t gpe;
 	int s;
 
 	rw_enter_write(&sc->sc_lck);
@@ -2129,10 +2065,16 @@ acpi_thread(void *arg)
 			continue;
 		}
 
-		/* Run ACPI taskqueue */
-		while(acpi_dotask(acpi_softc))
-			;
+		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
+			struct gpe_block *pgpe = &sc->gpe_table[gpe];
 
+			if (pgpe->active) {
+				pgpe->active = 0;
+				dnprintf(50, "softgpe: %.2x\n", gpe);
+				if (pgpe->handler)
+					pgpe->handler(sc, gpe, pgpe->arg);
+			}
+		}
 		if (sc->sc_powerbtn) {
 			uint16_t en;
 

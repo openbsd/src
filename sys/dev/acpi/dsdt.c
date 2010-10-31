@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.179 2010/10/26 20:51:35 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.180 2010/10/31 21:52:46 guenther Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -103,8 +103,6 @@ int64_t			aml_hextoint(const char *);
 void			aml_dump(int, u_int8_t *);
 void			_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
-
-void aml_notify_task(void *, int);
 
 /*
  * @@@: Global variables
@@ -532,17 +530,6 @@ acpi_poll(void *arg)
 }
 
 void
-aml_notify_task(void *node, int notify_value)
-{
-	struct aml_notify_data	*pdata = NULL;
-
-	dnprintf(10,"run notify: %s %x\n", aml_nodename(node), notify_value);
-	SLIST_FOREACH(pdata, &aml_notify_list, link)
-		if (pdata->node == node)
-			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
-}
-
-void
 aml_register_notify(struct aml_node *node, const char *pnpid,
     int (*proc)(struct aml_node *, int, void *), void *arg, int poll)
 {
@@ -570,11 +557,14 @@ aml_register_notify(struct aml_node *node, const char *pnpid,
 void
 aml_notify(struct aml_node *node, int notify_value)
 {
+	struct aml_notify_data	*pdata = NULL;
+
 	if (node == NULL)
 		return;
 
-	dnprintf(10,"queue notify: %s %x\n", aml_nodename(node), notify_value);
-	acpi_addtask(acpi_softc, aml_notify_task, node, notify_value);
+	SLIST_FOREACH(pdata, &aml_notify_list, link)
+		if (pdata->node == node)
+			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
 }
 
 #ifndef SMALL_KERNEL
@@ -2482,14 +2472,6 @@ acpi_xmutex_release(struct aml_scope *scope, struct aml_value *mtx)
 int
 acpi_xevent_wait(struct aml_scope *scope, struct aml_value *evt, int timeout)
 {
-	/* Wait for event to occur; do work in meantime */
-	evt->v_evt.state = 0;
-	while (!evt->v_evt.state) {
-		if (!acpi_dotask(acpi_softc) && !cold)
-			tsleep(evt, PWAIT, "acpievt", 1);
-		else
-			delay(100);
-	}
 	if (evt->v_evt.state == 1) {
 		/* Object is signaled */
 		return (0);
