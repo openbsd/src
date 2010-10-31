@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.37 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: init.c,v 1.38 2010/10/31 15:37:34 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -174,7 +174,7 @@ init_mkfile(char *path, const char **content)
 
 	(void)xsnprintf(rpath, MAXPATHLEN, "%s%s", path, RCS_FILE_EXT);
 
-	if ((file = rcs_open(rpath, fd, rcsflags, 0444)) == NULL)
+	if ((file = rcs_open(rpath, -1, rcsflags, 0444)) == NULL)
 		fatal("failed to create RCS file for `%s'", path);
 
 	b = buf_load(path);

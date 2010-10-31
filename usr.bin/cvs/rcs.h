@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.97 2010/10/20 19:53:53 tobias Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.98 2010/10/31 15:37:34 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -106,7 +106,7 @@ struct rcs_kw {
 
 /* file flags */
 #define RCS_READ	  (1<<0)
-#define RCS_WRITE	  (1<<1)
+#define RCS_WRITE	  (1<<1)  /* flush changes on rcs_close() */
 #define RCS_CREATE	  (1<<2)  /* create the file */
 #define RCS_PARSE_FULLY   (1<<3)  /* fully parse it on open */
 

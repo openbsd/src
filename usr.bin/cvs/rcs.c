@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.306 2010/10/27 08:35:45 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.307 2010/10/31 15:37:34 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -144,6 +144,10 @@ static void	rcs_strprint(const u_char *, size_t, FILE *);
 static void	rcs_kwexp_line(char *, struct rcs_delta *, struct rcs_lines *,
 		    struct rcs_line *, int mode);
 
+/*
+ * Prepare RCSFILE for parsing. The given file descriptor (if any) must be
+ * read-only and is closed on rcs_close().
+ */
 RCSFILE *
 rcs_open(const char *path, int fd, int flags, ...)
 {
