@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.122 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.123 2010/10/31 00:03:44 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -480,7 +480,8 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * marking us as parent via retval[1].
 	 */
 	if (retval != NULL) {
-		retval[0] = p2->p_pid;
+		retval[0] = p2->p_pid +
+		    (flags & FORK_THREAD ? THREAD_PID_OFFSET : 0);
 		retval[1] = 0;
 	}
 	return (0);
