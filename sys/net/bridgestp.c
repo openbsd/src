@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.37 2010/10/28 13:49:54 claudio Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.38 2010/10/31 15:14:30 mpf Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -227,7 +227,6 @@ struct bstp_tbpdu {
 
 const u_int8_t bstp_etheraddr[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
 
-LIST_HEAD(, bstp_state) bstp_list;
 
 void	bstp_transmit(struct bstp_state *, struct bstp_port *);
 void	bstp_transmit_bpdu(struct bstp_state *, struct bstp_port *);
@@ -287,11 +286,6 @@ void	bstp_edge_delay_expiry(struct bstp_state *,
 int	bstp_addr_cmp(const u_int8_t *, const u_int8_t *);
 int	bstp_same_bridgeid(u_int64_t, u_int64_t);
 
-void
-bstp_attach(int n)
-{
-	LIST_INIT(&bstp_list);
-}
 
 void
 bstp_transmit(struct bstp_state *bs, struct bstp_port *bp)
@@ -1956,7 +1950,6 @@ bstp_create(struct ifnet *ifp)
 
 	getmicrotime(&bs->bs_last_tc_time);
 
-	LIST_INSERT_HEAD(&bstp_list, bs, bs_list);
 	splx(s);
 
 	return (bs);

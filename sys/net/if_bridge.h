@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.32 2010/10/28 13:49:54 claudio Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.33 2010/10/31 15:14:30 mpf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -438,7 +438,6 @@ void	bridge_update(struct ifnet *, struct ether_addr *, int);
 void	bridge_rtdelete(struct bridge_softc *, struct ifnet *, int);
 void	bridge_rtagenode(struct ifnet *, int);
 
-void	bstp_attach(int);
 struct bstp_state *bstp_create(struct ifnet *);
 void	bstp_destroy(struct bstp_state *);
 void	bstp_initialization(struct bstp_state *);

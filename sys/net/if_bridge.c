@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.186 2010/10/28 19:00:57 mpf Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.187 2010/10/31 15:14:30 mpf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -186,7 +186,6 @@ bridgeattach(int n)
 {
 	LIST_INIT(&bridge_list);
 	if_clone_attach(&bridge_cloner);
-	bstp_attach(n);
 }
 
 int
