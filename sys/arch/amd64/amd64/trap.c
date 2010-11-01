@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2010/10/26 05:49:10 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2010/11/01 15:37:03 phessler Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -209,8 +209,8 @@ trap(struct trapframe *frame)
 		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 
-		/* panic("trap"); */
-		boot(RB_HALT);
+		panic("trap type %d, code=%lx, pc=%lx",
+		    type, frame->tf_err, frame->tf_rip);
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
