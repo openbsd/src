@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.12 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: acct.5,v 1.13 2010/11/01 22:07:08 jmc Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)acct.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 1 2010 $
 .Dt ACCT 5
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ If a terminated process was created by an
 the name of the executed file (at most ten characters of it)
 is saved in the field
 .Fa ac_comm
-and its status is saved by setting one of more of the following flags in
+and its status is saved by setting one or more of the following flags in
 .Fa ac_flag :
 .Dv AFORK ,
 .Dv ASU ,
