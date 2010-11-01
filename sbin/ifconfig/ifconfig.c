@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.240 2010/10/18 04:10:57 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.241 2010/11/01 05:24:58 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -162,7 +162,6 @@ void	setifwpaakms(const char *, int);
 void	setifwpaciphers(const char *, int);
 void	setifwpagroupcipher(const char *, int);
 void	setifwpakey(const char *, int);
-void	setifwpapsk(const char *, int);
 void	setifchan(const char *, int);
 void	setifscan(const char *, int);
 void	setiftxpower(const char *, int);
@@ -321,8 +320,9 @@ const struct	cmd {
 	{ "wpaprotos",	NEXTARG,	0,		setifwpaprotos },
 	{ "wpakey",	NEXTARG,	0,		setifwpakey },
 	{ "-wpakey",	-1,		0,		setifwpakey },
-	{ "wpapsk",	NEXTARG,	0,		setifwpapsk },
-	{ "-wpapsk",	-1,		0,		setifwpapsk },
+/*XXX delete these two after the 4.9 release */
+/*XXX*/	{ "wpapsk",     NEXTARG,        0,              setifwpakey },
+/*XXX*/	{ "-wpapsk",    -1,             0,              setifwpakey },
 	{ "chan",	NEXTARG0,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
 	{ "scan",	NEXTARG0,	0,		setifscan },
@@ -1378,11 +1378,9 @@ unsetifgroup(const char *group_name, int dummy)
 const char *
 get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 {
-	int len, hexstr;
-	u_int8_t *p;
+	int len = *lenp, hexstr;
+	u_int8_t *p = buf;
 
-	len = *lenp;
-	p = buf;
 	hexstr = (val[0] == '0' && tolower((u_char)val[1]) == 'x');
 	if (hexstr)
 		val += 2;
@@ -1430,11 +1428,8 @@ get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 void
 print_string(const u_int8_t *buf, int len)
 {
-	int i;
-	int hasspc;
+	int i = 0, hasspc = 0;
 
-	i = 0;
-	hasspc = 0;
 	if (len < 2 || buf[0] != '0' || tolower(buf[1]) != 'x') {
 		for (; i < len; i++) {
 			/* Only print 7-bit ASCII keys */
@@ -1717,7 +1712,7 @@ setifwpakey(const char *val, int d)
 	struct ieee80211_wpaparams wpa;
 	struct ieee80211_wpapsk psk;
 	struct ieee80211_nwid nwid;
-	int passlen, nwid_len;
+	int passlen;
 
 	memset(&psk, 0, sizeof(psk));
 	if (d != -1) {
@@ -1728,15 +1723,24 @@ setifwpakey(const char *val, int d)
 			err(1, "SIOCG80211NWID");
 
 		passlen = strlen(val);
-		if (passlen < 8 || passlen > 63)
-			errx(1, "wpakey: passphrase must be between 8 and 63 "
-			    "characters");
-		nwid_len = nwid.i_len;
-		if (nwid_len == 0)
-			errx(1, "wpakey: nwid not set");
-		if (pkcs5_pbkdf2(val, passlen, nwid.i_nwid, nwid_len, psk.i_psk,
-		    sizeof(psk.i_psk), 4096) != 0)
-			errx(1, "wpakey: passphrase hashing failed");
+		if (passlen == 2 + 2 * sizeof(psk.i_psk) &&
+		    val[0] == '0' && val[1] == 'x') {
+			/* Parse a WPA hex key (must be full-length) */
+			passlen = sizeof(psk.i_psk);
+			val = get_string(val, NULL, psk.i_psk, &passlen);
+			if (val == NULL || passlen != sizeof(psk.i_psk))
+				errx(1, "wpakey: invalid pre-shared key");
+		} else {
+			/* Parse a WPA passphrase */ 
+			if (passlen < 8 || passlen > 63)
+				errx(1, "wpakey: passphrase must be between "
+				    "8 and 63 characters");
+			if (nwid.i_len == 0)
+				errx(1, "wpakey: nwid not set");
+			if (pkcs5_pbkdf2(val, passlen, nwid.i_nwid, nwid.i_len,
+			    psk.i_psk, sizeof(psk.i_psk), 4096) != 0)
+				errx(1, "wpakey: passphrase hashing failed");
+		}
 		psk.i_enabled = 1;
 	} else
 		psk.i_enabled = 0;
@@ -1753,28 +1757,6 @@ setifwpakey(const char *val, int d)
 	wpa.i_enabled = psk.i_enabled;
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
-}
-
-void
-setifwpapsk(const char *val, int d)
-{
-	struct ieee80211_wpapsk psk;
-	int len;
-
-	if (d != -1) {
-		len = sizeof(psk.i_psk);
-		val = get_string(val, NULL, psk.i_psk, &len);
-		if (val == NULL)
-			errx(1, "wpapsk: invalid pre-shared key");
-		if (len != sizeof(psk.i_psk))
-			errx(1, "wpapsk: bad pre-shared key length");
-		psk.i_enabled = 1;
-	} else
-		psk.i_enabled = 0;
-
-	(void)strlcpy(psk.i_name, name, sizeof(psk.i_name));
-	if (ioctl(s, SIOCS80211WPAPSK, (caddr_t)&psk) < 0)
-		err(1, "SIOCS80211WPAPSK");
 }
 
 void
@@ -2063,7 +2045,7 @@ ieee80211_status(void)
 	}
 
 	if (ipsk == 0 && psk.i_enabled) {
-		fputs(" wpapsk ", stdout);
+		fputs(" wpakey ", stdout);
 		if (psk.i_enabled == 2)
 			fputs("<not displayed>", stdout);
 		else

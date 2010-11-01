@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.210 2010/10/18 22:30:29 halex Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.211 2010/11/01 05:24:58 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: October 18 2010 $
+.Dd $Mdocdate: November 1 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -851,9 +851,8 @@ will begin advertising as master.
 .Op Cm wpaakms Ar akm,akm,...
 .Op Cm wpaciphers Ar cipher,cipher,...
 .Op Cm wpagroupcipher Ar cipher
-.Op Oo Fl Oc Ns Cm wpakey Ar key
+.Op Oo Fl Oc Ns Cm wpakey Ar passphrase | hexkey
 .Op Cm wpaprotos Ar proto,proto,...
-.Op Oo Fl Oc Ns Cm wpapsk Ar psk
 .Ek
 .nr nS 0
 .Pp
@@ -994,8 +993,6 @@ The default value is
 .Dq psk
 can only be used if a pre-shared key is configured using the
 .Cm wpakey
-or
-.Cm wpapsk
 option.
 .It Cm wpaciphers Ar cipher,cipher,...
 Set the comma-separated list of allowed pairwise ciphers.
@@ -1042,15 +1039,17 @@ The
 .Cm wpagroupcipher
 option is available in Host AP mode only.
 A station will always use the group cipher of the BSS.
-.It Cm wpakey Ar key
-Set the WPA passphrase and enable WPA.
-The
+.It Cm wpakey Ar passphrase | hexkey
+Set the WPA key and enable WPA.
+The key can be given using either a passphrase or a full length hex key,
+starting with 0x.
+If a passphrase is used the
 .Cm nwid
 option must be set prior to specifying the
 .Cm wpakey
 option, since
 .Nm
-will hash the nwid along with the passphrase.
+will hash the nwid along with the passphrase to create the key.
 .It Fl wpakey
 Delete the pre-shared WPA key and disable WPA.
 .It Cm wpaprotos Ar proto,proto,...
@@ -1071,35 +1070,6 @@ If
 is specified, a station will always use the
 .Ar wpa2
 protocol when supported by the access point.
-.It Cm wpapsk Ar psk
-Set the hashed 256-bit pre-shared WPA key.
-The pre-shared key must be specified using a series of 64 hexadecimal digits
-(preceded by
-.So 0x Sc ) .
-The pre-shared key will be used only if
-.Dq psk
-authentication is allowed using the
-.Cm wpaakms
-option.
-Pre-shared keys can be generated from passphrases using
-.Xr wpa-psk 8 ,
-as in the following example, which configures wpi0 to join network
-.Dq my_net
-using WPA-PSK with passphrase
-.Dq my_passphrase :
-.Bd -literal -offset indent
-# ifconfig wpi0 nwid my_net wpa wpapsk \e
-        `wpa-psk my_net my_passphrase`
-.Ed
-.Pp
-However, you are likely much better off just using the
-.Cm wpakey
-option instead.
-.It Fl wpapsk
-Delete the pre-shared key.
-This will prevent
-.Dq psk
-authentication.
 .El
 .\" INET6
 .Sh INET6
