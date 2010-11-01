@@ -179,7 +179,6 @@
 ./sbin/tunefs
 ./sbin/umount
 ./sbin/vnconfig
-./sbin/wpa-psk
 ./stand
 ./tmp
 ./usr
