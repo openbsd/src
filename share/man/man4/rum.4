@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.48 2010/04/29 09:20:17 jmc Exp $
+.\" $OpenBSD: rum.4,v 1.49 2010/11/01 17:59:09 jmc Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2010 $
+.Dd $Mdocdate: November 1 2010 $
 .Dt RUM 4
 .Os
 .Sh NAME
@@ -170,17 +170,10 @@ inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
 .Pp
 Configure rum0 to join network
 .Dq my_net
-using WPA-PSK with passphrase
+using WPA with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig rum0 nwid my_net wpa wpapsk \e
-	`wpa-psk my_net my_passphrase`
-.Ed
-.Pp
-Return rum0 to its default settings:
-.Bd -literal -offset indent
-# ifconfig rum0 -bssid -chan media autoselect \e
-	nwid "" -nwkey -wpa -wpapsk
+# ifconfig rum0 nwid my_net wpakey my_passphrase
 .Ed
 .Pp
 Join an existing BSS network,
@@ -210,8 +203,7 @@ This should not happen.
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
 .Xr hostapd 8 ,
-.Xr ifconfig 8 ,
-.Xr wpa-psk 8
+.Xr ifconfig 8
 .Pp
 Ralink Technology:
 .Pa http://www.ralinktech.com/

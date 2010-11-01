@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.10 2010/08/18 19:18:30 damien Exp $
+.\" $OpenBSD: athn.4,v 1.11 2010/11/01 17:59:09 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2010 $
+.Dd $Mdocdate: November 1 2010 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -174,17 +174,10 @@ inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
 .Pp
 Configure athn0 to join network
 .Dq my_net
-using WPA-PSK with passphrase
+using WPA with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig athn0 nwid my_net wpa wpapsk \e
-	`wpa-psk my_net my_passphrase`
-.Ed
-.Pp
-Return athn0 to its default settings:
-.Bd -literal -offset indent
-# ifconfig athn0 -bssid -chan media autoselect \e
-	nwid "" -nwkey -wpa -wpapsk
+# ifconfig athn0 nwid my_net wpakey my_passphrase
 .Ed
 .Pp
 Join an existing BSS network,
@@ -214,8 +207,7 @@ The driver will turn the interface down.
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
-.Xr ifconfig 8 ,
-.Xr wpa-psk 8
+.Xr ifconfig 8
 .Pp
 Atheros Communications Bulletins:
 .Pa http://www.atheros.com/pt/bulletins/

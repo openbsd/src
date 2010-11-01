@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.29 2010/04/29 09:21:45 jmc Exp $
+.\" $OpenBSD: bwi.4,v 1.30 2010/11/01 17:59:09 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2010 $
+.Dd $Mdocdate: November 1 2010 $
 .Dt BWI 4
 .Os
 .Sh NAME
@@ -144,17 +144,10 @@ dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
 .Pp
 Configure bwi0 to join network
 .Dq my_net
-using WPA-PSK with passphrase
+using WPA with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig bwi0 nwid my_net wpa wpapsk \e
-	`wpa-psk my_net my_passphrase`
-.Ed
-.Pp
-Return bwi0 to its default settings:
-.Bd -literal -offset indent
-# ifconfig bwi0 -bssid -chan media autoselect \e
-	nwid "" -nwkey -wpa -wpapsk
+# ifconfig bwi0 nwid my_net wpakey my_passphrase
 .Ed
 .Pp
 Join an existing BSS network,
@@ -171,8 +164,7 @@ Join an existing BSS network,
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .\".Xr hostapd 8 ,
-.Xr ifconfig 8 ,
-.Xr wpa-psk 8
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm

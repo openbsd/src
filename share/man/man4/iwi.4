@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.39 2010/04/29 09:20:17 jmc Exp $
+.\" $OpenBSD: iwi.4,v 1.40 2010/11/01 17:59:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 29 2010 $
+.Dd $Mdocdate: November 1 2010 $
 .Dt IWI 4
 .Os
 .Sh NAME
@@ -126,17 +126,10 @@ dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
 .Pp
 Configure iwi0 to join network
 .Dq my_net
-using WPA-PSK with passphrase
+using WPA with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig iwi0 nwid my_net wpa wpapsk \e
-	`wpa-psk my_net my_passphrase`
-.Ed
-.Pp
-Return iwi0 to its default settings:
-.Bd -literal -offset indent
-# ifconfig iwi0 -bssid -chan media autoselect \e
-	nwid "" -nwkey -wpa -wpapsk
+# ifconfig iwi0 nwid my_net wpakey my_passphrase
 .Ed
 .Pp
 Join an existing BSS network,

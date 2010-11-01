@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.50 2010/03/13 06:35:40 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.51 2010/11/01 17:59:09 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: March 13 2010 $
+.Dd $Mdocdate: November 1 2010 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -220,17 +220,10 @@ inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
 .Pp
 Configure ath0 to join network
 .Dq my_net
-using WPA-PSK with passphrase
+using WPA with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig ath0 nwid my_net wpa wpapsk \e
-	`wpa-psk my_net my_passphrase`
-.Ed
-.Pp
-Return ath0 to its default settings:
-.Bd -literal -offset indent
-# ifconfig ath0 -bssid -chan media autoselect \e
-	nwid "" -nwkey -wpa -wpapsk
+# ifconfig ath0 nwid my_net wpakey my_passphrase
 .Ed
 .Pp
 Join an existing BSS network,
@@ -325,8 +318,7 @@ This should not happen.
 .Xr hostname.if 5 ,
 .Xr gpioctl 8 ,
 .Xr hostapd 8 ,
-.Xr ifconfig 8 ,
-.Xr wpa-psk 8
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
