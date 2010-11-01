@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2010/11/01 15:37:03 phessler Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2010/11/01 15:41:01 phessler Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ trap(struct trapframe *frame)
 
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %lx eip %lx cs %lx rflags %lx cr2 %lx "
+		printf("trap %d code %lx rip %lx cs %lx rflags %lx cr2 %lx "
 		       "cpl %x\n",
 		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
