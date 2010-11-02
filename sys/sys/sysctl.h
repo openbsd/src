@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.106 2010/08/19 18:14:13 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.107 2010/11/02 09:36:09 dlg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -190,7 +190,8 @@ struct ctlname {
 #define	KERN_FILE2		73	/* struct: file entries */
 #define	KERN_RTHREADS		74	/* kernel rthreads support enabled */
 #define	KERN_CONSDEV		75	/* dev_t: console terminal device */
-#define	KERN_MAXID		76	/* number of valid kern ids */
+#define	KERN_NETLIVELOCKS	76	/* int: number of network livelocks */
+#define	KERN_MAXID		77	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -269,6 +270,7 @@ struct ctlname {
 	{ "file2", CTLTYPE_STRUCT }, \
 	{ "rthreads", CTLTYPE_INT }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
+	{ "netlivelocks", CTLTYPE_INT }, \
 }
 
 /*
