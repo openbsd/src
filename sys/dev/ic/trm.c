@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.25 2010/11/02 14:37:56 krw Exp $
+/*	$OpenBSD: trm.c,v 1.26 2010/11/02 14:55:01 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -1525,6 +1525,10 @@ trm_MsgInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 					pDCB->pActiveSRB = pSRB;
 					pSRB->SRBState = TRM_DATA_XFER;
 				} else {
+#ifdef TRM_DEBUG0
+					printf("%s: TRM_UNEXPECT_RESEL!\n",
+					    sc->sc_device.dv_xname);
+#endif
 					pSRB = &sc->SRB[0];
 					pSRB->SRBState = TRM_UNEXPECT_RESEL;
 					pDCB->pActiveSRB = pSRB;
