@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.24 2010/11/02 14:17:27 krw Exp $
+/*	$OpenBSD: trm.c,v 1.25 2010/11/02 14:37:56 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -106,7 +106,7 @@ void	trm_RequestSense(struct trm_softc *, struct trm_scsi_req_q *);
 void	trm_initAdapter     (struct trm_softc *);
 void	trm_Disconnect      (struct trm_softc *);
 void	trm_Reselect        (struct trm_softc *);
-void	trm_GoingSRB_Done   (struct trm_softc *);
+void	trm_GoingSRB_Done   (struct trm_softc *, struct trm_dcb *);
 void	trm_ScsiRstDetect   (struct trm_softc *);
 void	trm_ResetSCSIBus    (struct trm_softc *);
 void	trm_reset           (struct trm_softc *);
@@ -614,7 +614,7 @@ trm_reset (struct trm_softc *sc)
 	bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL, DO_CLRFIFO);
 
 	trm_ResetAllDevParam(sc);
-	trm_GoingSRB_Done(sc);
+	trm_GoingSRB_Done(sc, NULL);
 	sc->pActiveDCB = NULL;
 
 	/*
@@ -1757,7 +1757,7 @@ void
 trm_Disconnect(struct trm_softc *sc)
 {
 	const bus_space_handle_t ioh = sc->sc_iohandle;
-	struct trm_scsi_req_q *pSRB, *pNextSRB;
+	struct trm_scsi_req_q *pSRB;
 	const bus_space_tag_t iot = sc->sc_iotag;
 	struct trm_dcb *pDCB; 
 	int j;
@@ -1789,22 +1789,7 @@ trm_Disconnect(struct trm_softc *sc)
 		break;
 
 	case TRM_ABORT_SENT:
-		pSRB = TAILQ_FIRST(&sc->goingSRB);
-		while (pSRB != NULL) {
-			/*
-			 * Need to save pNextSRB because trm_FinishSRB() puts
-			 * pSRB in freeSRB queue, and thus its links no longer
-			 * point to members of the goingSRB queue. This is why
-			 * TAILQ_FOREACH() will not work for this traversal.
-			 */
-			pNextSRB = TAILQ_NEXT(pSRB, link);
-			if (pSRB->pSRBDCB == pDCB) {
-				/* TODO XXXX: Is TIMED_OUT the best state to report? */
-				pSRB->SRBFlag |= TRM_SCSI_TIMED_OUT;
-				trm_FinishSRB(sc, pSRB);
-			}
-			pSRB = pNextSRB;
-		}
+		trm_GoingSRB_Done(sc, pDCB);
 		break;
 
 	case TRM_START:
@@ -2166,16 +2151,27 @@ trm_ReleaseSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
  * ------------------------------------------------------------
  */
 void
-trm_GoingSRB_Done(struct trm_softc *sc)
+trm_GoingSRB_Done(struct trm_softc *sc, struct trm_dcb *pDCB)
 {
-	struct trm_scsi_req_q *pSRB;
+	struct trm_scsi_req_q *pSRB, *pNextSRB;
 
 	/* ASSUME we are inside a splbio()/splx() pair */
 
-	while ((pSRB = TAILQ_FIRST(&sc->goingSRB)) != NULL) {
-		/* TODO XXXX: Is TIMED_OUT the best status? */
-		pSRB->SRBFlag |= TRM_SCSI_TIMED_OUT;
-		trm_FinishSRB(sc, pSRB);
+	pSRB = TAILQ_FIRST(&sc->goingSRB);
+	while (pSRB != NULL) {
+		/*
+		 * Need to save pNextSRB because trm_FinishSRB() puts
+		 * pSRB in freeSRB queue, and thus its links no longer
+		 * point to members of the goingSRB queue. This is why
+		 * TAILQ_FOREACH() will not work for this traversal.
+		 */
+		pNextSRB = TAILQ_NEXT(pSRB, link);
+		if (pDCB == NULL || pSRB->pSRBDCB == pDCB) {
+			/* TODO XXXX: Is TIMED_OUT the best state to report? */
+			pSRB->SRBFlag |= TRM_SCSI_TIMED_OUT;
+			trm_FinishSRB(sc, pSRB);
+		}
+		pSRB = pNextSRB;
 	}
 }
 
