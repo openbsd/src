@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.23 2010/10/09 19:35:32 krw Exp $
+/*	$OpenBSD: trm.c,v 1.24 2010/11/02 14:17:27 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -338,21 +338,23 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	iot = sc->sc_iotag;
 
 #ifdef TRM_DEBUG0
-	if ((xs->flags & SCSI_POLL) != 0)
-	printf("%s: trm_scsi_cmd. sc = %p, xs = %p, targ/lun = %d/%d opcode = 0x%02x\n",
-	    sc->sc_device.dv_xname, sc, xs, target, lun, xs->cmd->opcode);
+	if ((xs->flags & SCSI_POLL) != 0) {
+ 		sc_print_addr(xs->sc_link);
+		printf("trm_scsi_cmd. sc = %p, xs = %p, opcode = 0x%02x\n",
+		    sc, xs, lun, xs->cmd->opcode);
+	}
 #endif
 
 	if (target >= TRM_MAX_TARGETS) {
-		printf("%s: target=%d >= %d\n",
-		    sc->sc_device.dv_xname, target, TRM_MAX_TARGETS);
+ 		sc_print_addr(xs->sc_link);
+		printf("target >= %d\n", TRM_MAX_TARGETS);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
 	}
 	if (lun >= TRM_MAX_LUNS) {
-		printf("%s: lun=%d >= %d\n",
-		    sc->sc_device.dv_xname, lun, TRM_MAX_LUNS);
+ 		sc_print_addr(xs->sc_link);
+		printf("lun >= %d\n", TRM_MAX_LUNS);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
@@ -369,7 +371,8 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	xferflags = xs->flags;
 	if (xferflags & SCSI_RESET) {
 #ifdef TRM_DEBUG0
-		printf("%s: trm_reset\n", sc->sc_device.dv_xname);
+ 		sc_print_addr(xs->sc_link);
+		printf("trm_reset via SCSI_RESET\n");
 #endif
 		trm_reset(sc);
 		xs->error = XS_NOERROR;
@@ -397,21 +400,22 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	 */
 	if (xs->datalen != 0) {
 #ifdef TRM_DEBUG0
-		printf("%s: xs->datalen=%x\n", sc->sc_device.dv_xname,
-		    (u_int32_t)xs->datalen);
-		printf("%s: sc->sc_dmatag=0x%x\n", sc->sc_device.dv_xname,
-		    (u_int32_t)sc->sc_dmatag);
-		printf("%s: pSRB->dmamapxfer=0x%x\n", sc->sc_device.dv_xname,
-		    (u_int32_t)pSRB->dmamapxfer);
-		printf("%s: xs->data=0x%x\n", sc->sc_device.dv_xname,
-		    (u_int32_t)xs->data);
+ 		sc_print_addr(xs->sc_link);
+		printf("xs->datalen=%x\n", (u_int32_t)xs->datalen);
+ 		sc_print_addr(xs->sc_link);
+		printf("sc->sc_dmatag=0x%x\n", (u_int32_t)sc->sc_dmatag);
+ 		sc_print_addr(xs->sc_link);
+		printf("pSRB->dmamapxfer=0x%x\n", (u_int32_t)pSRB->dmamapxfer);
+ 		sc_print_addr(xs->sc_link);
+		printf("xs->data=0x%x\n", (u_int32_t)xs->data);
 #endif
 		if ((error = bus_dmamap_load(sc->sc_dmatag, pSRB->dmamapxfer,
 		    xs->data, xs->datalen, NULL,
 		    (xferflags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
 		    BUS_DMA_WAITOK)) != 0) {
-			printf("%s: DMA transfer map unable to load, error = %d\n"
-			    , sc->sc_device.dv_xname, error);
+			sc_print_addr(xs->sc_link);
+			printf("DMA transfer map unable to load, error = %d\n",
+			    error);
 			xs->error = XS_DRIVER_STUFFUP;
 			/*
 			 * free SRB
@@ -580,10 +584,6 @@ trm_reset (struct trm_softc *sc)
 	const bus_space_tag_t iot = sc->sc_iotag;
 	int i, intflag;
 
-#ifdef TRM_DEBUG0
-	printf("%s: trm_reset", sc->sc_device.dv_xname);
-#endif
-
 	intflag = splbio();
 
 	bus_space_write_1(iot, ioh, TRM_S1040_DMA_INTEN,  0);
@@ -646,10 +646,14 @@ trm_timeout(void *arg1)
  	if (xs != NULL) {
  		sc = xs->sc_link->adapter_softc;
  		sc_print_addr(xs->sc_link);
- 		printf("%s: SCSI OpCode 0x%02x timed out\n",
- 		    sc->sc_device.dv_xname, xs->cmd->opcode);
+ 		printf("SCSI OpCode 0x%02x timed out\n",
+ 		     xs->cmd->opcode);
 		pSRB->SRBFlag |= TRM_SCSI_TIMED_OUT;
  		trm_FinishSRB(sc, pSRB);
+#ifdef TRM_DEBUG0
+ 		sc_print_addr(xs->sc_link);
+		printf("trm_reset via trm_timeout()\n");
+#endif
 		trm_reset(sc);
 		trm_StartWaitingSRB(sc);
  	}
@@ -1968,8 +1972,8 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		case TRM_STATUS_GOOD:
 			if ((pSRB->SRBFlag & TRM_PARITY_ERROR) != 0) {
 #ifdef TRM_DEBUG0
-				printf("%s: trm_FinishSRB. TRM_PARITY_ERROR\n",
-				    sc->sc_device.dv_xname);
+				sc_print_addr(xs->sc_link);
+				printf(" trm_FinishSRB. TRM_PARITY_ERROR\n");
 #endif		
 				xs->error = XS_DRIVER_STUFFUP;
 
@@ -1991,16 +1995,17 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 
 		case TRM_OVER_UNDER_RUN:
 #ifdef TRM_DEBUG0
-			printf("%s: trm_FinishSRB. TRM_OVER_UNDER_RUN\n",
-			    sc->sc_device.dv_xname);
+			sc_print_addr(xs->sc_link);
+			printf("trm_FinishSRB. TRM_OVER_UNDER_RUN\n");
 #endif
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
 		default:
 #ifdef TRM_DEBUG0
-			printf("%s: trm_FinishSRB. AdaptStatus Error = 0x%02x\n",
-			    sc->sc_device.dv_xname, pSRB->AdaptStatus);
+			sc_print_addr(xs->sc_link);
+			printf("trm_FinishSRB. AdaptStatus Error = 0x%02x\n",
+			    pSRB->AdaptStatus);
 #endif	
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
@@ -2061,8 +2066,8 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 			if ((xs->error != XS_NOERROR) ||
 			    ((ptr->device & SID_QUAL_BAD_LU) == SID_QUAL_BAD_LU)) {
 #ifdef TRM_DEBUG0
-				printf("%s: trm_FinishSRB NO Device:target= %d,lun= %d\n",
-				    sc->sc_device.dv_xname, target, lun);
+				sc_print_addr(xs->sc_link);
+				printf("trm_FinishSRB NO Device\n");
 #endif		
 				free(pDCB, M_DEVBUF);
 				sc->pDCB[target][lun] = NULL;
@@ -2080,8 +2085,9 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	 */
 #ifdef TRM_DEBUG0
 	if ((xs->error != 0) || (xs->status != 0) || ((xs->flags & SCSI_POLL) != 0))
-		printf("%s: trm_FinishSRB. %d/%d xs->cmd->opcode = 0x%02x, xs->error = %d, xs->status = %d\n",
-		    sc->sc_device.dv_xname, target, lun, xs->cmd->opcode, xs->error, xs->status);
+		sc_print_addr(xs->sc_link);
+		printf("trm_FinishSRB. xs->cmd->opcode = 0x%02x, xs->error = %d, xs->status = %d\n",
+		    xs->cmd->opcode, xs->error, xs->status);
 #endif
 
 	scsi_done(xs);
