@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.26 2010/11/02 14:55:01 krw Exp $
+/*	$OpenBSD: trm.c,v 1.27 2010/11/02 22:15:09 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -646,8 +646,10 @@ trm_timeout(void *arg1)
  	if (xs != NULL) {
  		sc = xs->sc_link->adapter_softc;
  		sc_print_addr(xs->sc_link);
- 		printf("SCSI OpCode 0x%02x timed out\n",
- 		     xs->cmd->opcode);
+ 		printf("SCSI OpCode 0x%02x ", xs->cmd->opcode);
+		if (pSRB->SRBFlag & TRM_AUTO_REQSENSE)
+			printf("REQUEST SENSE ");
+		printf("timed out\n");
 		pSRB->SRBFlag |= TRM_SCSI_TIMED_OUT;
  		trm_FinishSRB(sc, pSRB);
 #ifdef TRM_DEBUG0
@@ -1967,7 +1969,13 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 				xs->error = XS_DRIVER_STUFFUP;
 
 			} else if ((pSRB->SRBFlag & TRM_SCSI_TIMED_OUT) != 0) {
-				xs->error = XS_TIMEOUT;
+				if ((pSRB->SRBFlag & TRM_AUTO_REQSENSE) == 0)
+					xs->error = XS_TIMEOUT;
+				else {
+					bzero(&xs->sense, sizeof(xs->sense));
+					xs->status = SCSI_CHECK;
+					xs->error  = XS_SENSE;
+				}
 
 			} else if ((pSRB->SRBFlag & TRM_AUTO_REQSENSE) != 0) {
 				s1 = &pSRB->scsisense;
