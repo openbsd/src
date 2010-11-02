@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.343 2010/10/26 20:56:03 robert Exp $
+#	$OpenBSD: rc,v 1.344 2010/11/02 18:59:12 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -643,7 +643,7 @@ fi
 echo -n starting network daemons:
 
 if [ X"${sshd_flags}" != X"NO" ]; then
-	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags};
+	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags}
 fi
 
 if [ X"${snmpd_flags}" != X"NO" ]; then
@@ -715,7 +715,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 fi
 
 if [ X"${hostapd_flags}" != X"NO" ]; then
-	echo -n ' hostapd';		/usr/sbin/hostapd ${hostapd_flags};
+	echo -n ' hostapd';		/usr/sbin/hostapd ${hostapd_flags}
 fi
 
 if [ X"${bt}" != X"NO" ]; then
@@ -735,7 +735,7 @@ if [ X"${lpd_flags}" != X"NO" ]; then
 fi
 
 if [ X"${ldapd_flags}" != X"NO" ]; then
-	echo -n ' ldapd';		/usr/sbin/ldapd ${ldapd_flags};
+	echo -n ' ldapd';		/usr/sbin/ldapd ${ldapd_flags}
 fi
 
 # We call sendmail with a full path so that SIGHUP works.
