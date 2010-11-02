@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.29 2010/09/23 10:49:55 dlg Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.30 2010/11/02 10:24:34 dlg Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -41,6 +41,7 @@ struct mclpool_info {
 int mclpool_count = 0;
 int mbpool_index = -1;
 struct pool mbpool;
+u_int mcllivelocks = 0;
 
 /* interfaces */
 static int num_ifs;
@@ -198,6 +199,15 @@ read_mb(void)
 	int i, p, nif, ret = 1;
 	size_t size;
 
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_NETLIVELOCKS;
+	size = sizeof(mcllivelocks);
+	if (sysctl(mib, 2, &mcllivelocks, &size, NULL, 0) < 0 &&
+	    errno != EOPNOTSUPP) {
+		error("sysctl(KERN_NETLIVELOCKS)");
+		goto exit;
+	}
+
 	num_disp = 0;
 	if (getifaddrs(&ifap)) {
 		error("getifaddrs: %s", strerror(errno));
@@ -341,6 +351,7 @@ showmbuf(struct if_info *ifi, int p, int showif)
 		print_fld_str(FLD_MB_IFACE, ifi->name);
 
 	if (p == -1 && ifi == interfaces) {
+		print_fld_uint(FLD_MB_LLOCKS, mcllivelocks);
 		print_fld_size(FLD_MB_MSIZE, mbpool.pr_size);
 		print_fld_size(FLD_MB_MALIVE, mbpool.pr_nget - mbpool.pr_nput);
 		print_fld_size(FLD_MB_MHWM, mbpool.pr_hiwat);
@@ -349,8 +360,6 @@ showmbuf(struct if_info *ifi, int p, int showif)
 #if NOTYET
 	print_fld_uint(FLD_MB_RXDELAY, ifi->data.ifi_rxdelay);
 	print_fld_uint(FLD_MB_TXDELAY, ifi->data.ifi_txdelay);
-	if (ifi->data.ifi_livelocks)
-		print_fld_size(FLD_MB_LLOCKS, ifi->data.ifi_livelocks);
 #endif
 
 	if (p >= 0 && p < mclpool_count) {
