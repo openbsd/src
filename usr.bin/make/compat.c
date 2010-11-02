@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.74 2010/07/19 19:46:43 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.75 2010/11/02 19:47:22 deraadt Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ CompatMake(void *gnp,	/* The node to make */
 		/* If the user is just seeing if something is out-of-date,
 		 * exit now to tell him/her "yes".  */
 		if (queryFlag)
-			exit(-1);
+			exit(1);
 
 		/* normally, we run the job, but if we can't find any
 		 * commands, we defer to siblings instead.
