@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.8 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: resource.h,v 1.9 2010/11/02 10:51:06 kettenis Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -34,6 +34,8 @@
 
 #ifndef _SYS_RESOURCE_H_
 #define	_SYS_RESOURCE_H_
+
+#include <sys/time.h>
 
 /*
  * Process priority specifications to get/setpriority.
