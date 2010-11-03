@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.12 2010/09/21 10:41:32 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.13 2010/11/03 14:17:01 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -665,6 +665,35 @@ fail:
 }
 
 static int
+schema_validate_match_rule(struct schema *schema, struct attr_type *at,
+    const struct match_rule *mrule, enum match_rule_type type)
+{
+	int i;
+
+	if (mrule == NULL)
+		return 0;
+
+	if ((mrule->type & type) != type) {
+		schema_err(schema, "%s: bad matching rule '%s'",
+		    ATTR_NAME(at), mrule->name);
+		return -1;
+	}
+
+	/* Is this matching rule compatible with the attribute syntax? */
+	if (strcmp(mrule->syntax_oid, at->syntax->oid) == 0)
+		return 0;
+
+	/* Check any alternative syntaxes for compatibility. */
+	for (i = 0; mrule->alt_syntax_oids && mrule->alt_syntax_oids[i]; i++)
+		if (strcmp(mrule->alt_syntax_oids[i], at->syntax->oid) == 0)
+			return 0;
+
+	schema_err(schema, "%s: inappropriate matching rule '%s' for syntax [%s]",
+	    ATTR_NAME(at), mrule->name, at->syntax->oid);
+	return -1;
+}
+
+static int
 schema_parse_attributetype(struct schema *schema)
 {
 	struct attr_type	*attr = NULL, *prev, *sup;
@@ -725,14 +754,32 @@ schema_parse_attributetype(struct schema *schema)
 			}
 			free(arg);
 		} else if (strcasecmp(kw, "EQUALITY") == 0) {
-			if (schema_lex(schema, &attr->equality) != STRING)
+			if (schema_lex(schema, &arg) != STRING)
 				goto fail;
+			if ((attr->equality = match_rule_lookup(arg)) == NULL) {
+				schema_err(schema, "%s: unknown matching rule",
+				    arg);
+				goto fail;
+			}
+			free(arg);
 		} else if (strcasecmp(kw, "ORDERING") == 0) {
-			if (schema_lex(schema, &attr->ordering) != STRING)
+			if (schema_lex(schema, &arg) != STRING)
 				goto fail;
+			if ((attr->ordering = match_rule_lookup(arg)) == NULL) {
+				schema_err(schema, "%s: unknown matching rule",
+				    arg);
+				goto fail;
+			}
+			free(arg);
 		} else if (strcasecmp(kw, "SUBSTR") == 0) {
-			if (schema_lex(schema, &attr->substr) != STRING)
+			if (schema_lex(schema, &arg) != STRING)
 				goto fail;
+			if ((attr->substr = match_rule_lookup(arg)) == NULL) {
+				schema_err(schema, "%s: unknown matching rule",
+				    arg);
+				goto fail;
+			}
+			free(arg);
 		} else if (strcasecmp(kw, "SYNTAX") == 0) {
 			if (schema_lex(schema, &arg) != STRING ||
 			    !is_oidstr(arg))
@@ -819,6 +866,11 @@ schema_parse_attributetype(struct schema *schema)
 		attr->substr = sup->substr;
 		sup = sup->sup;
 	} 
+
+	if (schema_validate_match_rule(schema, attr, attr->equality, MATCH_EQUALITY) != 0 ||
+	    schema_validate_match_rule(schema, attr, attr->ordering, MATCH_ORDERING) != 0 ||
+	    schema_validate_match_rule(schema, attr, attr->substr, MATCH_SUBSTR) != 0)
+		goto fail;
 
 	return 0;
 
@@ -1230,17 +1282,17 @@ schema_dump_attribute(struct attr_type *at, char *buf, size_t size)
 
 	if (at->equality != NULL)
 		if (strlcat(buf, " EQUALITY ", size) >= size ||
-		    strlcat(buf, at->equality, size) >= size)
+		    strlcat(buf, at->equality->name, size) >= size)
 			return -1;
 
 	if (at->ordering != NULL)
 		if (strlcat(buf, " ORDERING ", size) >= size ||
-		    strlcat(buf, at->ordering, size) >= size)
+		    strlcat(buf, at->ordering->name, size) >= size)
 			return -1;
 
 	if (at->substr != NULL)
 		if (strlcat(buf, " SUBSTR ", size) >= size ||
-		    strlcat(buf, at->substr, size) >= size)
+		    strlcat(buf, at->substr->name, size) >= size)
 			return -1;
 
 	if (at->syntax != NULL)
