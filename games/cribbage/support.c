@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.c,v 1.11 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: support.c,v 1.12 2010/11/03 12:51:10 dcoppa Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
  */
 
 #include <curses.h>
+#include <err.h>
 #include <string.h>
 
 #include "deck.h"
@@ -107,7 +108,7 @@ cchose(CARD h[], int n, int s)
 		}
 	}
 	if (j < 0)
-		errx("cchose internal error %d %d", j, n);
+		errx(1, "cchose internal error %d %d", j, n);
 	return (j);
 }
 
