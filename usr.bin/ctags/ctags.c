@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.12 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.13 2010/11/03 19:39:38 millert Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -55,7 +55,6 @@ long	lineftell;		/* ftell after getc( inf ) == '\n' */
 
 int	lineno;			/* line number of current line */
 int	dflag;			/* -d: non-macro defines */
-int	tflag;			/* -t: create tags for typedefs */
 int	vflag;			/* -v: vgrind style index output */
 int	wflag;			/* -w: suppress warnings */
 int	xflag;			/* -x: cxref style output */
@@ -97,7 +96,7 @@ main(int argc, char *argv[])
 			outfile = optarg;
 			break;
 		case 't':
-			tflag++;
+			/* backwards compatibility */
 			break;
 		case 'u':
 			uflag++;
@@ -118,7 +117,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	if (!argc) {
 usage:		(void)fprintf(stderr,
-			"usage: ctags [-aBdFtuvwx] [-f tagsfile] file ...\n");
+			"usage: ctags [-aBdFuvwx] [-f tagsfile] file ...\n");
 		exit(1);
 	}
 

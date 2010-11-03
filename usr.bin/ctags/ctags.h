@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.h,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: ctags.h,v 1.6 2010/11/03 19:39:38 millert Exp $	*/
 /*	$NetBSD: ctags.h,v 1.3 1995/03/26 20:14:07 glass Exp $	*/
 
 /*
@@ -67,7 +67,6 @@ extern FILE    *outf;			/* ioptr for current output file */
 extern long	lineftell;		/* ftell after getc( inf ) == '\n' */
 extern int	lineno;			/* line number of current line */
 extern int	dflag;			/* -d: non-macro defines */
-extern int	tflag;			/* -t: create tags for typedefs */
 extern int	vflag;			/* -v: vgrind style index output */
 extern int	wflag;			/* -w: suppress warnings */
 extern int	xflag;			/* -x: cxref style output */

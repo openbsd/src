@@ -1,4 +1,4 @@
-/*	$OpenBSD: C.c,v 1.12 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: C.c,v 1.13 2010/11/03 19:39:38 millert Exp $	*/
 /*	$NetBSD: C.c,v 1.3 1995/03/26 20:14:02 glass Exp $	*/
 
 /*
@@ -217,29 +217,27 @@ endtok:			if (sp > tok) {
 				if (sp == tok)
 					break;
 				*sp = EOS;
-				if (tflag) {
-					/* no typedefs inside typedefs */
-					if (!t_def &&
-						   !memcmp(tok, "typedef",8)) {
-						t_def = YES;
-						t_level = level;
-						break;
-					}
-					/* catch "typedef struct" */
-					if ((!t_def || t_level < level)
-					    && (!memcmp(tok, "struct", 7)
-					    || !memcmp(tok, "union", 6)
-					    || !memcmp(tok, "enum", 5))) {
-						/*
-						 * get line immediately;
-						 * may change before '{'
-						 */
-						getline();
-						if (str_entry(c))
-							++level;
-						break;
-						/* } */
-					}
+				/* no typedefs inside typedefs */
+				if (!t_def &&
+					   !memcmp(tok, "typedef",8)) {
+					t_def = YES;
+					t_level = level;
+					break;
+				}
+				/* catch "typedef struct" */
+				if ((!t_def || t_level < level)
+				    && (!memcmp(tok, "struct", 7)
+				    || !memcmp(tok, "union", 6)
+				    || !memcmp(tok, "enum", 5))) {
+					/*
+					 * get line immediately;
+					 * may change before '{'
+					 */
+					getline();
+					if (str_entry(c))
+						++level;
+					break;
+					/* } */
 				}
 				sp = tok;
 			}

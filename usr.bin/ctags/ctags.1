@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.22 2010/10/19 16:54:15 jmc Exp $
+.\"	$OpenBSD: ctags.1,v 1.23 2010/11/03 19:39:38 millert Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 19 2010 $
+.Dd $Mdocdate: November 3 2010 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -38,17 +38,14 @@
 .Nd create a tags file
 .Sh SYNOPSIS
 .Nm ctags
-.Op Fl aBdFtuvwx
+.Op Fl aBdFuvwx
 .Op Fl f Ar tagsfile
 .Ar
 .Sh DESCRIPTION
 .Nm
-makes a tags file for
-.Xr ex 1
-from the specified C,
-Pascal, Fortran,
+makes a tags file from the specified, C Pascal, Fortran,
 .Tn YACC ,
-lex, and lisp sources.
+lex, and Lisp sources.
 A tags file gives the locations of specified objects in a group of files.
 Each line of the tags file contains the object name, the file in which it
 is defined, and a search pattern for the object definition, separated by
@@ -57,11 +54,12 @@ whitespace.
 Using the
 .Ar tags
 file,
+a text editor such as
 .Xr ex 1
+or
+.Xr vi 1
 can quickly locate these object definitions.
-Depending upon the options provided to
-.Nm ctags ,
-objects will consist of subroutines, typedefs, defines, structs,
+Indexed objects include subroutines, typedefs, defines, structs,
 enums, and unions.
 .Pp
 The options are as follows:
@@ -88,8 +86,6 @@ Places the tag descriptions in a file called
 .Ar tagsfile .
 The default behaviour is to place them in a file called
 .Ar tags .
-.It Fl t
-Create tags for typedefs, structs, unions, and enums.
 .It Fl u
 Update the specified files in the
 .Ar tags
@@ -137,7 +133,7 @@ are assumed to be
 source files.
 Files whose names end in
 .Dq \&.l
-are assumed to be lisp files if their
+are assumed to be Lisp files if their
 first non-blank character is
 .Ql \&; ,
 .Ql \&( ,
@@ -190,7 +186,7 @@ specification,
 though its presence is optional.
 .Pp
 The flags
-.Op Fl BdFtuvw
+.Op Fl BdFuvw
 are extensions to that specification.
 .Sh HISTORY
 The
