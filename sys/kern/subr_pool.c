@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.98 2010/09/26 21:03:57 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.99 2010/11/03 17:49:42 mikeb Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -993,13 +993,6 @@ pool_sethardlimit(struct pool *pp, u_int n, const char *warnmsg, int ratecap)
 	pp->pr_hardlimit_ratecap.tv_sec = ratecap;
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
-
-	/*
-	 * In-line version of pool_sethiwat().
-	 */
-	pp->pr_maxpages = (n == 0 || n == UINT_MAX)
-		? n
-		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 done:
 	return (error);
