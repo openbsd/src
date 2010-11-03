@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.10 2010/10/07 13:23:11 jmc Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.11 2010/11/03 11:21:11 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 7 2010 $
+.Dd $Mdocdate: November 3 2010 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -164,7 +164,7 @@ Password for the root user.
 Specified either in plain text, or in hashed format.
 .It index Ar attribute
 Maintain an index on the specified attribute.
-This index can be used for equality, prefix substring and range searches.
+This index can be used for equality, presence, prefix substring and range searches.
 .Xr ldapd 8
 will update the index on each modification.
 If you add an index to an existing namespace, you need to run
