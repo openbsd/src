@@ -1,6 +1,6 @@
-.\" $OpenBSD: btree.3,v 1.2 2010/06/02 14:45:59 deraadt Exp $
+.\" $OpenBSD: btree.3,v 1.3 2010/11/03 17:30:01 martinh Exp $
 .\"
-.\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
+.\" Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2010 $
+.Dd $Mdocdate: November 3 2010 $
 .Dt BTREE 3
 .Os
 .Sh NAME
@@ -47,9 +47,9 @@
 .Sh SYNOPSIS
 .Fd #include <btree.h>
 .Ft "struct btree *"
-.Fn "btree_open_fd" "int fd" "uint32_t flags"
+.Fn "btree_open_fd" "int fd" "unsigned int flags"
 .Ft "struct btree *"
-.Fn "btree_open" "const char *path" "uint32_t flags" "mode_t mode"
+.Fn "btree_open" "const char *path" "unsigned int flags" "mode_t mode"
 .Ft "void"
 .Fn "btree_close" "struct btree *bt"
 .Ft "struct btree_txn *"
@@ -57,7 +57,7 @@
 .Ft "int"
 .Fn "btree_txn_get" "struct btree *bt" "struct btree_txn *" "struct btval *key" "struct btval *data"
 .Ft "int"
-.Fn "btree_txn_put" "struct btree *bt" "struct btree_txn *" "struct btval *key" "struct btval *data" "unsigned flags"
+.Fn "btree_txn_put" "struct btree *bt" "struct btree_txn *" "struct btval *key" "struct btval *data" "unsigned int flags"
 .Ft "int"
 .Fn "btree_txn_del" "struct btree *bt" "struct btree_txn *" "struct btval *key" "struct btval *data"
 .Ft "int"
@@ -101,6 +101,7 @@ The database is implemented as a modified prefix B+tree.
 Instead of modifying the database file inplace,
 each update appends any modified pages at the end of the file.
 The last block of the file contains metadata and a pointer to the root page.
+The first block of the file contains a header that specifies the page size.
 .Pp
 Append-only writing gives the following properties:
 .Bl -enum
@@ -127,12 +128,14 @@ A 4-level B+tree database will write at least 5 new pages on each update,
 including the meta-data page.
 With 4 KiB pagesize, the file would grow by 20 KiB on each update.
 .Pp
-To reclaim the wasted space, the database can be compacted.
-The compaction process opens the database and traverses the tree.
+To reclaim the wasted space, the database should be compacted.
+The compaction process opens a write transaction and traverses the tree.
 Each active page is then written to a new file.
-When complete, the old file is replaced.
-Any updates committed after the file was opened will be lost.
-All processes using the file should re-open it.
+When complete, a special
+.Dq tombstone
+page is written to the old file to
+signal that it is stale and all processes using the file should re-open it.
+Modifications are denied on a stale file and fail with errno set to ESTALE.
 .Sh CURSORS
 A new cursor may be opened with a call to
 .Fn btree_txn_cursor_open
@@ -153,6 +156,10 @@ to BT_CURSOR and filling in the
 argument.
 The cursor will be placed at the smallest key greater or equal to
 the specified key.
+If
+.Ar op
+is instead set to BT_CURSOR_EXACT, the cursor will be placed at the
+specified key, or fail if it doesn't exist.
 .Pp
 The database may be traversed from the first key to the last by calling
 .Fn btree_cursor_get
@@ -175,7 +182,8 @@ A transaction is started with
 If the
 .Ar rdonly
 parameter is 0, a write transaction is started and an exclusive lock
-is taken on the file.
+is taken on the file using
+.Xr flock 2 .
 No lock is taken for read-only transactions.
 .Pp
 The transaction is ended either with
@@ -185,6 +193,8 @@ or
 The
 .Ft btree_txn
 pointer must not be accessed afterwards.
+Any cursor opened inside the transaction must be closed before the
+transaction is ended.
 .Sh RETURN VALUES
 The
 .Fn btree_txn_get ,
@@ -198,12 +208,15 @@ The
 .Fn btree_compact
 and
 .Fn btree_revert
-functions all return BT_SUCCESS on success and BT_FAIL on failure.
+functions all return 0 on success.
+On failure -1 is returned and errno is set.
+.Pp
+All functions returning pointers return NULL on error.
 .Pp
 .Fn btree_txn_put
 and
 .Fn btree_put
-returns BT_EXISTS if the key already exists and BT_NOOVERWRITE was not
+sets errno to EEXIST if the key already exists and BT_NOOVERWRITE was not
 passed in the
 .Ar flags
 argument.
@@ -214,17 +227,22 @@ argument.
 .Fn btree_del
 and
 .Fn btree_cursor_get
-returns BT_NOTFOUND if the specified key was not found.
+sets errno to ENOENT if the specified key was not found.
 .Pp
-All functions returning pointers to structs returns NULL on error.
-.Sh SEE ALSO
-.Pp
+The
+.Fn btree_txn_begin ,
+.Fn btree_cursor ,
+.Fn btree_cursor_get ,
+.Fn btree_get ,
+.Fn btree_put ,
+.Fn btree_del
+functions can fail and set errno to ESTALE if the database file has been
+compacted by another process.
+The file should be re-opened and the operation retried.
 .Sh AUTHORS
 The
 .Nm btree
 library was written by
 .An Martin Hedenfalk Aq martin@bzero.se
 .Sh BUGS
-This manpage is incomplete.
-The page size can't be changed.
 Byte order is assumed never to change.
