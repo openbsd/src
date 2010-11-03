@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.47 2009/11/23 22:57:38 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.48 2010/11/03 10:15:23 dlg Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NVMT > 0
 	if (vmt_probe()) {
-		mba.mba_busname = "vmware";
+		mba.mba_busname = "vmt";
 		config_found(self, &mba.mba_busname, mainbus_print);
 	}
 #endif
