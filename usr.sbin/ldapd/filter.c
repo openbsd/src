@@ -1,7 +1,7 @@
-/*	$OpenBSD: filter.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: filter.c,v 1.2 2010/11/03 10:33:17 martinh Exp $ */
 
 /*
- * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
+ * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,29 +24,24 @@
 
 #include "ldapd.h"
 
-static int		 ldap_filt_eq(struct ber_element *root,
-				struct ber_element *filter);
-static int		 ldap_filt_subs(struct ber_element *root,
-				struct ber_element *filter);
-static int		 ldap_filt_and(struct ber_element *root,
-				struct ber_element *filter);
-static int		 ldap_filt_or(struct ber_element *root,
-				struct ber_element *filter);
-static int		 ldap_filt_not(struct ber_element *root,
-				struct ber_element *filter);
+static int	 ldap_filt_eq(struct ber_element *root, struct plan *plan);
+static int	 ldap_filt_subs(struct ber_element *root, struct plan *plan);
+static int	 ldap_filt_and(struct ber_element *root, struct plan *plan);
+static int	 ldap_filt_or(struct ber_element *root, struct plan *plan);
+static int	 ldap_filt_not(struct ber_element *root, struct plan *plan);
 
 static int
-ldap_filt_eq(struct ber_element *root, struct ber_element *filter)
+ldap_filt_eq(struct ber_element *root, struct plan *plan)
 {
-	const char		*key, *cmp;
+	char			*vs;
 	struct ber_element	*a, *vals, *v;
 
-	if (ber_scanf_elements(filter, "{ss", &key, &cmp) != 0)
-		return -1;
-
-	a = ldap_get_attribute(root, key);
+	if (plan->adesc != NULL)
+		a = ldap_get_attribute(root, plan->adesc);
+	else
+		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("no attribute [%s] found", key);
+		log_debug("no attribute [%s] found", plan->adesc ?: ATTR_NAME(plan->at));
 		return -1;
 	}
 
@@ -55,10 +50,9 @@ ldap_filt_eq(struct ber_element *root, struct ber_element *filter)
 		return -1;
 
 	for (v = vals->be_sub; v; v = v->be_next) {
-		char *vs;
 		if (ber_get_string(v, &vs) != 0)
 			continue;
-		if (strcasecmp(cmp, vs) == 0)
+		if (strcasecmp(plan->assert.value, vs) == 0)
 			return 0;
 	}
 
@@ -115,17 +109,19 @@ ldap_filt_subs_value(struct ber_element *v, struct ber_element *sub)
 }
 
 static int
-ldap_filt_subs(struct ber_element *root, struct ber_element *filter)
+ldap_filt_subs(struct ber_element *root, struct plan *plan)
 {
-	const char		*key, *attr;
-	struct ber_element	*sub, *a, *v;
+	const char		*attr;
+	struct ber_element	*a, *v;
 
-	if (ber_scanf_elements(filter, "{s{e", &key, &sub) != 0)
+	if (plan->adesc != NULL)
+		a = ldap_get_attribute(root, plan->adesc);
+	else
+		a = ldap_find_attribute(root, plan->at);
+	if (a == NULL) {
+		log_debug("no attribute [%s] found", plan->adesc ?: ATTR_NAME(plan->at));
 		return -1;
-
-	a = ldap_get_attribute(root, key);
-	if (a == NULL)
-		return -1; /* attribute not found, false or undefined? */
+	}
 
 	if (ber_scanf_elements(a, "s(e", &attr, &v) != 0)
 		return -1; /* internal failure, false or undefined? */
@@ -134,7 +130,7 @@ ldap_filt_subs(struct ber_element *root, struct ber_element *filter)
 	 */
 	for (; v; v = v->be_next) {
 		/* All substrings must match. */
-		switch (ldap_filt_subs_value(v, sub)) {
+		switch (ldap_filt_subs_value(v, plan->assert.substring)) {
 		case 0:
 			return 0;
 		case -1:
@@ -149,104 +145,80 @@ ldap_filt_subs(struct ber_element *root, struct ber_element *filter)
 }
 
 static int
-ldap_filt_and(struct ber_element *root, struct ber_element *filter)
+ldap_filt_and(struct ber_element *root, struct plan *plan)
 {
-	struct ber_element	*elm;
+	struct plan	*arg;
 
-	if (ber_scanf_elements(filter, "{e", &elm) != 0)
-		return -1;
-
-	for (; elm; elm = elm->be_next) {
-		if (ldap_matches_filter(root, elm) != 0)
+	TAILQ_FOREACH(arg, &plan->args, next)
+		if (ldap_matches_filter(root, arg) != 0)
 			return -1;
-	}
 
 	return 0;
 }
 
 static int
-ldap_filt_or(struct ber_element *root, struct ber_element *filter)
+ldap_filt_or(struct ber_element *root, struct plan *plan)
 {
-	struct ber_element	*elm;
+	struct plan	*arg;
 
-	if (ber_scanf_elements(filter, "{e", &elm) != 0) {
-		log_warnx("failed to parse search filter");
-		return -1;
-	}
-
-	for (; elm; elm = elm->be_next) {
-		if (ldap_matches_filter(root, elm) == 0)
+	TAILQ_FOREACH(arg, &plan->args, next)
+		if (ldap_matches_filter(root, arg) == 0)
 			return 0;
-	}
 
 	return -1;
 }
 
 static int
-ldap_filt_not(struct ber_element *root, struct ber_element *filter)
+ldap_filt_not(struct ber_element *root, struct plan *plan)
 {
-	struct ber_element	*elm;
+	struct plan	*arg;
 
-	if (ber_scanf_elements(filter, "{e", &elm) != 0) {
-		log_warnx("failed to parse search filter");
-		return -1;
-	}
-
-	for (; elm; elm = elm->be_next) {
-		if (ldap_matches_filter(root, elm) != 0)
+	TAILQ_FOREACH(arg, &plan->args, next)
+		if (ldap_matches_filter(root, arg) != 0)
 			return 0;
-	}
 
 	return -1;
 }
 
 static int
-ldap_filt_presence(struct ber_element *root, struct ber_element *filter)
+ldap_filt_presence(struct ber_element *root, struct plan *plan)
 {
-	const char		*key;
 	struct ber_element	*a;
 
-	if (ber_scanf_elements(filter, "s", &key) != 0) {
-		log_warnx("failed to parse presence filter");
-		return -1;
-	}
-
-	a = ldap_get_attribute(root, key);
+	if (plan->adesc != NULL)
+		a = ldap_get_attribute(root, plan->adesc);
+	else
+		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("attribute %s not found", key);
-		return -1; /* attribute not found */
+		log_debug("no attribute [%s] found", plan->adesc ?: ATTR_NAME(plan->at));
+		return -1;
 	}
 
 	return 0;
 }
 
 int
-ldap_matches_filter(struct ber_element *root, struct ber_element *filter)
+ldap_matches_filter(struct ber_element *root, struct plan *plan)
 {
-	if (filter == NULL)
+	if (plan == NULL)
 		return 0;
 
-	if (filter->be_class != BER_CLASS_CONTEXT) {
-		log_warnx("invalid class %d in filter", filter->be_class);
-		return -1;
-	}
-
-	switch (filter->be_type) {
+	switch (plan->op) {
 	case LDAP_FILT_EQ:
 	case LDAP_FILT_APPR:
-		return ldap_filt_eq(root, filter);
+		return ldap_filt_eq(root, plan);
 	case LDAP_FILT_SUBS:
-		return ldap_filt_subs(root, filter);
+		return ldap_filt_subs(root, plan);
 	case LDAP_FILT_AND:
-		return ldap_filt_and(root, filter);
+		return ldap_filt_and(root, plan);
 	case LDAP_FILT_OR:
-		return ldap_filt_or(root, filter);
+		return ldap_filt_or(root, plan);
 	case LDAP_FILT_NOT:
-		return ldap_filt_not(root, filter);
+		return ldap_filt_not(root, plan);
 	case LDAP_FILT_PRES:
-		return ldap_filt_presence(root, filter);
+		return ldap_filt_presence(root, plan);
 	default:
-		log_warnx("filter type %d not implemented", filter->be_type);
+		log_warnx("filter type %d not implemented", plan->op);
 		return -1;
 	}
 }

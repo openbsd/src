@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.19 2010/10/19 09:10:12 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.20 2010/11/03 10:33:17 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -93,8 +93,8 @@ enum index_type {
 	INDEX_NONE,
 	INDEX_EQUAL	= 1,
 	INDEX_APPROX	= 1,
-	INDEX_SUBSTR,
-	INDEX_PRESENCE
+	INDEX_PRESENCE	= 1,
+	INDEX_SUBSTR
 };
 
 struct attr_index {
@@ -149,7 +149,15 @@ struct plan
 	TAILQ_ENTRY(plan)	 next;
 	TAILQ_HEAD(, plan)	 args;
 	TAILQ_HEAD(, index)	 indices;
+	struct attr_type	*at;
+	char			*adesc;
+	union {
+		char			*value;
+		struct ber_element	*substring;
+	} assert;
+	int			 op;
 	int			 indexed;
+	int			 undefined;
 };
 
 /* For OR filters using multiple indices, matches are not unique. Remember
@@ -427,7 +435,7 @@ void			 control_cleanup(struct control_sock *);
 
 /* filter.c */
 int			 ldap_matches_filter(struct ber_element *root,
-				struct ber_element *filter);
+				struct plan *plan);
 
 /* search.c */
 int			 ldap_search(struct request *req);
