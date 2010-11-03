@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2010/05/31 22:21:43 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2010/11/03 20:08:02 deraadt Exp $
 
 S=	${.CURDIR}/../..
 KFILE=	GENERIC
@@ -27,7 +27,7 @@ tags::
 	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
 	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
 	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
-	ctags -wdt -f ${TAGS} $${CFILES} && \
+	ctags -wd -f ${TAGS} $${CFILES} && \
 	egrep "^[_A-Z]*ENTRY[_A-Z]*\(.*\)" $${SFILES} $${AFILES} | \
 	    sed "s;\\([^:]*\\):\\([^(]*\\)(\\([^, )]*\\)\\(.*\\);\\3	\\1	/^\\2(\\3\\4$$/;" \
 	    >> ${TAGS} && \
