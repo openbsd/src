@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.23 2010/11/03 19:39:38 millert Exp $
+.\"	$OpenBSD: ctags.1,v 1.24 2010/11/04 14:32:28 jmc Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 3 2010 $
+.Dd $Mdocdate: November 4 2010 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -43,9 +43,8 @@
 .Ar
 .Sh DESCRIPTION
 .Nm
-makes a tags file from the specified, C Pascal, Fortran,
-.Tn YACC ,
-lex, and Lisp sources.
+makes a tags file from the specified C, Pascal, Fortran,
+YACC, lex, and Lisp sources.
 A tags file gives the locations of specified objects in a group of files.
 Each line of the tags file contains the object name, the file in which it
 is defined, and a search pattern for the object definition, separated by
@@ -175,7 +174,6 @@ default output tags file
 .Pp
 Duplicate objects are not considered errors.
 .Sh SEE ALSO
-.Xr ex 1 ,
 .Xr vi 1
 .Sh STANDARDS
 The
