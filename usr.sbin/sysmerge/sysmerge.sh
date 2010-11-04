@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.63 2010/08/21 09:32:00 sthen Exp $
+# $OpenBSD: sysmerge.sh,v 1.64 2010/11/04 09:17:38 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -690,6 +690,12 @@ while getopts bds:x: arg; do
 		;;
 	esac
 done
+
+shift $(( OPTIND -1 ))
+if [ $# -ne 0 ]; then
+	usage
+	error_rm_wrkdir
+fi
 
 
 if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
