@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.17 2010/10/26 12:08:14 claudio Exp $ */
+/*	$OpenBSD: lde.h,v 1.18 2010/11/04 09:49:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -82,6 +82,7 @@ struct rt_lsp {
 
 	struct in_addr		nexthop;
 	u_int32_t		remote_label;
+	u_int8_t		priority;
 };
 
 struct rt_node {

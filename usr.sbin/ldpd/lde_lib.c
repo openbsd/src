@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.28 2010/10/26 12:08:14 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.29 2010/11/04 09:49:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,8 +42,8 @@ static int fec_compare(struct fec *, struct fec *);
 
 void		 rt_free(void *);
 struct rt_node	*rt_add(struct in_addr, u_int8_t);
-struct rt_lsp	*rt_lsp_find(struct rt_node *, struct in_addr);
-struct rt_lsp	*rt_lsp_add(struct rt_node *, struct in_addr);
+struct rt_lsp	*rt_lsp_find(struct rt_node *, struct in_addr, u_int8_t);
+struct rt_lsp	*rt_lsp_add(struct rt_node *, struct in_addr, u_int8_t);
 void		 rt_lsp_del(struct rt_lsp *);
 
 RB_PROTOTYPE(fec_tree, fec, entry, fec_compare)
@@ -243,20 +243,21 @@ rt_add(struct in_addr prefix, u_int8_t prefixlen)
 }
 
 struct rt_lsp *
-rt_lsp_find(struct rt_node *rn, struct in_addr nexthop)
+rt_lsp_find(struct rt_node *rn, struct in_addr nexthop, u_int8_t prio)
 {
 	struct rt_lsp	*rl;
 
 	LIST_FOREACH(rl, &rn->lsp, entry)
-		if (rl->nexthop.s_addr == nexthop.s_addr)
+		if (rl->nexthop.s_addr == nexthop.s_addr &&
+		    rl->priority == prio)
 			return (rl);
 	return (NULL);
 }
 
 struct rt_lsp *
-rt_lsp_add(struct rt_node *rn, struct in_addr nexthop)
+rt_lsp_add(struct rt_node *rn, struct in_addr nexthop, u_int8_t prio)
 {
-	struct rt_lsp	*rl;
+	struct rt_lsp	*rl, *nrl;
 
 	rl = calloc(1, sizeof(*rl));
 	if (rl == NULL)
@@ -264,8 +265,24 @@ rt_lsp_add(struct rt_node *rn, struct in_addr nexthop)
 
 	rl->nexthop.s_addr = nexthop.s_addr;
 	rl->remote_label = NO_LABEL;
-	LIST_INSERT_HEAD(&rn->lsp, rl, entry);
+	rl->priority = prio;
 
+	/* keep LSP list sorted by priority because only the best routes
+	 * can be used in a LSP. */
+	if (LIST_EMPTY(&rn->lsp))
+		LIST_INSERT_HEAD(&rn->lsp, rl, entry);
+	else {
+		LIST_FOREACH(nrl, &rn->lsp, entry) {
+			if (prio < nrl->priority) {
+				LIST_INSERT_BEFORE(nrl, rl, entry);
+				break;
+			}
+			if (LIST_NEXT(nrl, entry) == NULL) {
+				LIST_INSERT_AFTER(nrl, rl, entry);
+				break;
+			}
+		}
+	}
 	return (rl);
 }
 
@@ -292,9 +309,9 @@ lde_kernel_insert(struct kroute *kr)
 	if (rn == NULL)
 		rn = rt_add(kr->prefix, kr->prefixlen);
 
-	rl = rt_lsp_find(rn, kr->nexthop);
+	rl = rt_lsp_find(rn, kr->nexthop, kr->priority);
 	if (rl == NULL)
-		rl = rt_lsp_add(rn, kr->nexthop);
+		rl = rt_lsp_add(rn, kr->nexthop, kr->priority);
 
 	/* There is static assigned label for this route, record it in lib */
 	if (kr->local_label != NO_LABEL) {
@@ -339,7 +356,7 @@ lde_kernel_remove(struct kroute *kr)
 		/* route lost */
 		return;
 
-	rl = rt_lsp_find(rn, kr->nexthop);
+	rl = rt_lsp_find(rn, kr->nexthop, kr->priority);
 	if (rl != NULL)
 		rt_lsp_del(rl);
 
@@ -446,6 +463,7 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	struct rt_node	*rn;
 	struct rt_lsp	*rl;
 	struct lde_nbr	*lnn;
+	u_int8_t	 prio = 0;
 
 	log_debug("label request from nbr %s, FEC %s",
 	    inet_ntoa(ln->id), log_fec(map));
@@ -459,6 +477,11 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	}
 
 	LIST_FOREACH(rl, &rn->lsp, entry) {
+		/* only consider pathes with highest priority */
+		if (prio == 0)
+			prio = rl->priority;
+		if (prio < rl->priority)
+			break;
 		if (lde_address_find(ln, &rl->nexthop)) {
 			lde_send_notification(ln->peerid, S_LOOP_DETECTED,
 			    map->messageid, MSG_TYPE_LABELREQUEST);
@@ -488,6 +511,11 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	/* no mapping available, try to request */
 	/* XXX depending on the request behaviour we could return here */
 	LIST_FOREACH(rl, &rn->lsp, entry) {
+		/* only consider pathes with highest priority */
+		if (prio == 0)
+			prio = rl->priority;
+		if (prio < rl->priority)
+			break;
 		lnn = lde_find_address(rl->nexthop);
 		if (lnn == NULL)
 			continue;
