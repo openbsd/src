@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.187 2010/10/31 15:14:30 mpf Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.188 2010/11/04 23:07:15 weerd Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1415,10 +1415,23 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 	bridge_span(sc, eh, m);
 
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
-		/* Tap off 802.1D packets, they do not get forwarded */
-		if (bcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN) == 0) {
-			bstp_input(sc->sc_stp, ifl->bif_stp, eh, m);
-			return (NULL);
+		/*
+	 	 * Reserved destination MAC addresses (01:80:C2:00:00:0x)
+		 * should not be forwarded to bridge members according to
+		 * section 7.12.6 of the 802.1D-2004 specification.  The
+		 * STP destination address (as stored in bstp_etheraddr)
+		 * is the first of these.
+	 	 */
+		if (bcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN - 1)
+		    == 0) {
+			if (eh->ether_dhost[ETHER_ADDR_LEN - 1] == 0) {
+				/* STP traffic */
+				bstp_input(sc->sc_stp, ifl->bif_stp, eh, m);
+				return (NULL);
+			} else if (eh->ether_dhost[ETHER_ADDR_LEN - 1] <= 0xf) {
+				m_freem(m);
+				return (NULL);
+			}
 		}
 
 		/*
