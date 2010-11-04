@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.62 2010/10/21 21:42:46 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.63 2010/11/04 17:55:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -583,13 +583,13 @@ mix_drop(struct abuf *buf, int extra)
 void
 mix_bzero(struct abuf *obuf, unsigned maxtodo)
 {
-	short *odata;
+	adata_t *odata;
 	unsigned ocount, todo;
 
 	if (obuf->w.mix.todo >= maxtodo)
 		return;
 	todo = maxtodo - obuf->w.mix.todo;
-	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->w.mix.todo);
+	odata = (adata_t *)abuf_wgetblk(obuf, &ocount, obuf->w.mix.todo);
 	if (ocount > todo)
 		ocount = todo;
 	if (ocount == 0)
@@ -612,7 +612,7 @@ mix_bzero(struct abuf *obuf, unsigned maxtodo)
 unsigned
 mix_badd(struct abuf *ibuf, struct abuf *obuf)
 {
-	short *idata, *odata;
+	adata_t *idata, *odata;
 	unsigned cmin, cmax;
 	unsigned i, j, cc, istart, inext, onext, ostart;
 	unsigned scount, icount, ocount;
@@ -647,21 +647,21 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	/*
 	 * Calculate the maximum we can read.
 	 */
-	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	idata = (adata_t *)abuf_rgetblk(ibuf, &icount, 0);
 	if (icount == 0)
 		return 0;
 
 	/*
 	 * Calculate the maximum we can write.
 	 */
-	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->r.mix.done);
+	odata = (adata_t *)abuf_wgetblk(obuf, &ocount, ibuf->r.mix.done);
 	if (ocount == 0)
 		return 0;
 
 	scount = (icount < ocount) ? icount : ocount;
 	mix_bzero(obuf, scount + ibuf->r.mix.done);
 
-	vol = (ibuf->r.mix.weight * ibuf->r.mix.vol) >> ADATA_SHIFT;
+	vol = ADATA_MUL(ibuf->r.mix.weight, ibuf->r.mix.vol);
 	cmin = obuf->cmin > ibuf->cmin ? obuf->cmin : ibuf->cmin;
 	cmax = obuf->cmax < ibuf->cmax ? obuf->cmax : ibuf->cmax;
 	ostart = cmin - obuf->cmin;
@@ -673,7 +673,7 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	idata += istart;
 	for (i = scount; i > 0; i--) {
 		for (j = cc; j > 0; j--) {
-			*odata += (*idata * vol) >> ADATA_SHIFT;
+			*odata += ADATA_MUL(*idata, vol);
 			idata++;
 			odata++;
 		}
@@ -1155,7 +1155,7 @@ sub_silence(struct abuf *buf, int extra)
 void
 sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 {
-	short *idata, *odata;
+	adata_t *idata, *odata;
 	unsigned cmin, cmax;
 	unsigned i, j, cc, istart, inext, onext, ostart;
 	unsigned icount, ocount, scount;
@@ -1171,10 +1171,10 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 		obuf->w.sub.silence += scount;
 	}
 
-	idata = (short *)abuf_rgetblk(ibuf, &icount, obuf->w.sub.done);
+	idata = (adata_t *)abuf_rgetblk(ibuf, &icount, obuf->w.sub.done);
 	if (icount == 0)
 		return;
-	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	odata = (adata_t *)abuf_wgetblk(obuf, &ocount, 0);
 	if (ocount == 0)
 		return;
 	cmin = obuf->cmin > ibuf->cmin ? obuf->cmin : ibuf->cmin;
@@ -1459,26 +1459,26 @@ void
 resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 {
 	unsigned inch;
-	short *idata;
+	adata_t *idata;
 	unsigned oblksz;
 	unsigned ifr;
 	unsigned onch;
-	int s1, s2, diff;
-	short *odata;
+	int s, ds, diff;
+	adata_t *odata;
 	unsigned iblksz;
 	unsigned ofr;
 	unsigned c;
-	short *ctxbuf, *ctx;
+	adata_t *ctxbuf, *ctx;
 	unsigned ctx_start;
 	unsigned icount, ocount;
 
 	/*
 	 * Calculate max frames readable at once from the input buffer.
 	 */
-	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	idata = (adata_t *)abuf_rgetblk(ibuf, &icount, 0);
 	ifr = icount;
 
-	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	odata = (adata_t *)abuf_wgetblk(obuf, &ocount, 0);
 	ofr = ocount;
 
 	/*
@@ -1526,10 +1526,10 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 				break;
 			ctx = ctxbuf;
 			for (c = onch; c > 0; c--) {
-				s1 = ctx[ctx_start];
-				s2 = ctx[ctx_start ^ 1];
+				s = ctx[ctx_start];
+				ds = ctx[ctx_start ^ 1] - s;
 				ctx += RESAMP_NCTX;
-				*odata++ = s1 + (s2 - s1) * diff / (int)oblksz;
+				*odata++ = s + ADATA_MULDIV(ds, diff, oblksz);
 			}
 			diff -= iblksz;
 			ofr--;
@@ -1685,7 +1685,7 @@ enc_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 {
 	unsigned nch, scount, icount, ocount;
 	unsigned f;
-	short *idata;
+	adata_t *idata;
 	int s;
 	unsigned oshift;
 	int osigbit;
@@ -1698,7 +1698,7 @@ enc_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	/*
 	 * Calculate max frames readable at once from the input buffer.
 	 */
-	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	idata = (adata_t *)abuf_rgetblk(ibuf, &icount, 0);
 	if (icount == 0)
 		return;
 	odata = abuf_wgetblk(obuf, &ocount, 0);
@@ -1733,7 +1733,7 @@ enc_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	odata += p->u.conv.bfirst;
 	for (f = scount * nch; f > 0; f--) {
 		s = *idata++;
-		s <<= 16;
+		s <<= 32 - ADATA_BITS;
 		s >>= oshift;
 		s ^= osigbit;
 		for (i = obps; i > 0; i--) {
@@ -1851,7 +1851,7 @@ dec_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	int isnext;
 	int isigbit;
 	unsigned ishift;
-	short *odata;
+	adata_t *odata;
 
 	/*
 	 * Calculate max frames readable at once from the input buffer.
@@ -1859,7 +1859,7 @@ dec_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	idata = abuf_rgetblk(ibuf, &icount, 0);
 	if (icount == 0)
 		return;
-	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	odata = (adata_t *)abuf_wgetblk(obuf, &ocount, 0);
 	if (ocount == 0)
 		return;
 	scount = (icount < ocount) ? icount : ocount;
@@ -1898,7 +1898,7 @@ dec_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 		idata += isnext;
 		s ^= isigbit;
 		s <<= ishift;
-		s >>= 16;
+		s >>= 32 - ADATA_BITS;
 		*odata++ = s;
 	}
 
@@ -2001,19 +2001,19 @@ join_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 {
 	unsigned h, hops;
 	unsigned inch, inext;
-	short *idata;
+	adata_t *idata;
 	unsigned onch, onext;
-	short *odata;
+	adata_t *odata;
 	int scale;
 	unsigned c, f, scount, icount, ocount;
 
 	/*
 	 * Calculate max frames readable at once from the input buffer.
 	 */
-	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	idata = (adata_t *)abuf_rgetblk(ibuf, &icount, 0);
 	if (icount == 0)
 		return;
-	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	odata = (adata_t *)abuf_wgetblk(obuf, &ocount, 0);
 	if (ocount == 0)
 		return;
 	scount = icount < ocount ? icount : ocount;
@@ -2043,13 +2043,11 @@ join_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 		hops--;
 		for (f = scount; f > 0; f--) {
 			for (c = onch; c > 0; c--)
-				*odata++ = (*idata++ * scale)
-				    >> ADATA_SHIFT;
+				*odata++ = ADATA_MUL(*idata++, scale);
 			for (h = hops; h > 0; h--) {
 				odata -= onch;
 				for (c = onch; c > 0; c--)
-					*odata++ += (*idata++ * scale)
-					    >> ADATA_SHIFT;
+					*odata++ += ADATA_MUL(*idata++, scale);
 			}
 			idata += inext;
 		}
@@ -2178,7 +2176,7 @@ mon_snoop(struct aproc *p, struct abuf *ibuf, unsigned pos, unsigned todo)
 {
 	struct abuf *obuf = LIST_FIRST(&p->outs);
 	unsigned scount, icount, ocount;
-	short *idata, *odata;
+	adata_t *idata, *odata;
 
 #ifdef DEBUG
 	if (debug_level >= 4) {
@@ -2197,8 +2195,8 @@ mon_snoop(struct aproc *p, struct abuf *ibuf, unsigned pos, unsigned todo)
 		/*
 		 * Calculate max frames readable at once from the input buffer.
 		 */
-		idata = (short *)abuf_rgetblk(ibuf, &icount, pos);
-		odata = (short *)abuf_wgetblk(obuf, &ocount, p->u.mon.pending);
+		idata = (adata_t *)abuf_rgetblk(ibuf, &icount, pos);
+		odata = (adata_t *)abuf_wgetblk(obuf, &ocount, p->u.mon.pending);
 		scount = (icount < ocount) ? icount : ocount;
 #ifdef DEBUG
 		if (debug_level >= 4) {

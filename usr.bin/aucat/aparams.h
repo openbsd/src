@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.h,v 1.8 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: aparams.h,v 1.9 2010/11/04 17:55:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -63,14 +63,17 @@ struct aparams {
  * numbers, so that we can do all multiplications and divisions in
  * 32-bit precision without having to deal with overflows.
  */
+typedef short adata_t;
+#define ADATA_BITS		16
+#define ADATA_MSB		1
+#define ADATA_MUL(x,y)		(((int)(x) * (int)(y)) >> (ADATA_BITS - 1))
+#define ADATA_MULDIV(x,y,z)	((int)(x) * (int)(y) / (int)(z))
 
-#define ADATA_SHIFT		(8 * sizeof(short) - 1)
-#define ADATA_UNIT		(1 << ADATA_SHIFT)
+#define ADATA_UNIT		(1 << (ADATA_BITS - 1))
 #define ADATA_MAX		(ADATA_UNIT - 1)
-#define ADATA_MUL(x,y)		(((x) * (y)) >> ADATA_SHIFT)
 
 #define MIDI_MAXCTL		127
-#define MIDI_TO_ADATA(m)	(aparams_ctltovol[m])
+#define MIDI_TO_ADATA(m)	(aparams_ctltovol[m] << (ADATA_BITS - 16))
 
 extern int aparams_ctltovol[128];
 extern struct aparams aparams_none;
