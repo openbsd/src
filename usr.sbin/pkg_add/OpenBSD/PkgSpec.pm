@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.32 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.33 2010/11/04 07:43:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -98,7 +98,7 @@ sub match_ref
 
 sub match_locations
 {
-	return ();
+	return [];
 }
 
 sub is_valid
