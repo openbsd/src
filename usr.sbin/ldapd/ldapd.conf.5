@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.11 2010/11/03 11:21:11 martinh Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.12 2010/11/04 20:22:34 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 3 2010 $
+.Dd $Mdocdate: November 4 2010 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -132,6 +132,9 @@ Password for the root user.
 Specified either in plain text, or in hashed format.
 .It schema Ar filename
 Add schema definitions from the specified file.
+For a description of the schema file syntax see
+.Sx SCHEMA
+below.
 .El
 .Sh NAMESPACES
 A namespace is a subtree of the global X.500 DIT (Directory Information Tree),
@@ -250,16 +253,79 @@ Typically used to allow users to modify their own data.
 Enable compression of entries and optionally specify compression level (0 - 9).
 By default, no compression is used.
 .El
+.Sh SCHEMA
+Schema files define the structure and format of entries in the directory tree.
+There are three types of definitions in a schema file:
+.Bl -tag -width Ds
+.It attributetype
+\*(lp
+.Ar oid
+.Op NAME name
+.Op DESC description
+.Op OBSOLETE
+.Op SUP oid
+.Op EQUALITY oid
+.Op ORDERING oid
+.Op SUBSTR oid
+.Op SYNTAX oid
+.Op SINGLE-VALUE
+.Op COLLECTIVE
+.Op NO-USER-MODIFICATION
+.Op USAGE Brq userApplications | directoryOperation | distributedOperation | dSAOperation
+\*(rp
+.Pp
+An attribute type definition specifies the syntax of attribute values, whether
+it allows multiple values and how it can be compared in search requests.
+For a complete description of attribute type definitions, see section
+4.1.2 in RFC 4712.
+.It objectclass
+\*(lp
+.Ar oid
+.Op NAME name
+.Op DESC description
+.Op OBSOLETE
+.Op SUP oids
+.Op Brq ABSTRACT | STRUCTURAL | AUXILIARY
+.Op MUST oids
+.Op MAY oids
+\*(rp
+.Pp
+An object class definition specifies which attributes are required
+and which are allowed.
+For a complete description of object class definitions, see section
+4.1.1 in RFC 4712.
+.It objectidentifier Ar symbolic-name Ar OID
+Defines a symbolic name for the object identifier.
+A symbolic name can be used in place of a numeric OID in definitions
+of attribute types, object classes and other symbolic OIDs.
+A descendant OID can be defined in terms of another symbolic OID by appending
+a numeric OID after a colon, for example:
+.Bd -literal -offset indent
+objectidentifier MyOidRoot 1.2.3.4
+objectidentifier MyOidAttributes MyOidRoot:5.6
+objectidentifier MyOidObjects MyOidRoot:7
+.Ed
+.Pp
+This would define MyOidAttributes as a symbolic name for the OID
+1.2.3.4.5.6, and MyOidObjects for 1.2.3.4.7.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/ldap/ldapd.confXXX" -compact
 .It Pa /etc/ldapd.conf
 Default
 .Xr ldapd 8
 configuration file.
+.It Pa /etc/ldap/*.schema
+Default schema definition files.
 .El
 .Sh SEE ALSO
 .Xr ldapctl 8 ,
 .Xr ldapd 8
+.Rs
+.%R RFC 4512
+.%T Lightweight Directory Access Protocol (LDAP): Directory Information Models
+.%D June 2006
+.Re
 .Sh HISTORY
 The
 .Nm
