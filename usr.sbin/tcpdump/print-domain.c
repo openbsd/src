@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.17 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.18 2010/11/04 17:37:05 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -101,7 +101,6 @@ static const u_char *
 blabel_print(const u_char *cp)
 {
 	int bitlen, slen, b;
-	int truncated = 0;
 	const u_char *bitp, *lim;
 	char tc;
 
@@ -110,27 +109,28 @@ blabel_print(const u_char *cp)
 	if ((bitlen = *cp) == 0)
 		bitlen = 256;
 	slen = (bitlen + 3) / 4;
-	if ((lim = cp + 1 + slen) > snapend) {
-		truncated = 1;
-		lim = snapend;
-	}
+	lim = cp + 1 + slen;
 
 	/* print the bit string as a hex string */
 	printf("\\[x");
-	for (bitp = cp + 1, b = bitlen; bitp < lim && b > 7; b -= 8, bitp++)
+	for (bitp = cp + 1, b = bitlen; bitp < lim && b > 7; b -= 8, bitp++) {
+		TCHECK(*bitp);
 		printf("%02x", *bitp);
-	if (bitp == lim)
-		printf("...");
-	else if (b > 4) {
+	}
+	if (b > 4) {
+		TCHECK(*bitp);
 		tc = *bitp++;
 		printf("%02x", tc & (0xff << (8 - b)));
 	} else if (b > 0) {
+		TCHECK(*bitp);
 		tc = *bitp++;
 		printf("%1x", ((tc >> 4) & 0x0f) & (0x0f << (4 - b)));
 	}
 	printf("/%d]", bitlen);
-
-	return(truncated ? NULL : lim);
+	return lim;
+trunc:
+	printf(".../%d]", bitlen);
+	return NULL;
 }
 
 static int
@@ -143,9 +143,10 @@ labellen(const u_char *cp)
 	i = *cp;
 	if ((i & INDIR_MASK) == EDNS0_MASK) {
 		int bitlen, elt;
-
-		if ((elt = (i & ~INDIR_MASK)) != EDNS0_ELT_BITLABEL)
+		if ((elt = (i & ~INDIR_MASK)) != EDNS0_ELT_BITLABEL) {
+			printf("<ELT %d>", elt);
 			return(-1);
+		}
 		if (!TTEST2(*(cp + 1), 1))
 			return(-1);
 		if ((bitlen = *(cp + 1)) == 0)
@@ -289,17 +290,20 @@ struct tok ns_type2str[] = {
 	{ T_SRV,	"SRV" },		/* RFC 2782 */
 	{ T_ATMA,	"ATMA" },		/* ATM Forum */
 	{ T_NAPTR,	"NAPTR" },		/* RFC 2168, RFC 2915 */
-	{ T_KX,		"KX" },
+	{ T_KX,		"KX" },			/* RFC 2230 */
+	{ T_CERT,	"CERT" },		/* RFC 2538 */
 	{ T_A6,		"A6" },			/* RFC 2874 */
 	{ T_DNAME,	"DNAME" },		/* RFC 2672 */
-	{ T_SINK,	"SINK" },
+	{ T_SINK, 	"SINK" },
 	{ T_OPT,	"OPT" },		/* RFC 2671 */
-	{ T_APL,	"APL" },
-	{ T_DS,		"DS" },
-	{ T_SSHFP,	"SSHFP" },
-	{ T_RRSIG,	"RRSIG" },
-	{ T_NSEC,	"NSEC" },
-	{ T_DNSKEY,	"DNSKEY" },
+	{ T_APL, 	"APL" },		/* RFC 3123 */
+	{ T_DS,		"DS" },			/* RFC 4034 */
+	{ T_SSHFP,	"SSHFP" },		/* RFC 4255 */
+	{ T_IPSECKEY,	"IPSECKEY" },		/* RFC 4025 */
+	{ T_RRSIG, 	"RRSIG" },		/* RFC 4034 */
+	{ T_NSEC,	"NSEC" },		/* RFC 4034 */
+	{ T_DNSKEY,	"DNSKEY" },		/* RFC 4034 */
+	{ T_SPF,	"SPF" },		/* RFC-schlitt-spf-classic-02.txt */
 	{ T_UINFO,	"UINFO" },
 	{ T_UID,	"UID" },
 	{ T_GID,	"GID" },
@@ -328,23 +332,28 @@ static const u_char *
 ns_qprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 {
 	register const u_char *np = cp;
-	register u_int i;
+	register u_int i, class;
 
 	cp = ns_nskip(cp);
 
 	if (cp == NULL || !TTEST2(*cp, 4))
 		return(NULL);
 
-	/* print the qtype and qclass (if it's not IN) */
+	/* print the qtype */
 	i = EXTRACT_16BITS(cp);
 	cp += 2;
 	printf(" %s", tok2str(ns_type2str, "Type%d", i));
+	/* print the qclass (if it's not IN) */
 	i = EXTRACT_16BITS(cp);
 	cp += 2;
-	if (is_mdns && i == (C_IN|C_CACHE_FLUSH))
-		printf(" (Cache flush)");
-	else if (i != C_IN)
-		printf(" %s", tok2str(ns_class2str, "(Class %d)", i));
+	if (is_mdns)
+		class = (i & ~C_QU);
+	else
+		class = i;
+	if (class != C_IN)
+		printf(" %s", tok2str(ns_class2str, "(Class %d)", class));
+	if (is_mdns && (i & C_QU))
+		printf(" (QU)");
 
 	fputs("? ", stdout);
 	cp = ns_nprint(np, bp);
@@ -355,7 +364,7 @@ ns_qprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 static const u_char *
 ns_rprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 {
-	register u_int class;
+	register u_int i, class, opt_flags = 0;
 	register u_short typ, len;
 	register const u_char *rp;
 
@@ -369,18 +378,39 @@ ns_rprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 	if (cp == NULL || !TTEST2(*cp, 10))
 		return (snapend);
 
-	/* print the type/qtype and class (if it's not IN) */
+	/* print the type/qtype */
 	typ = EXTRACT_16BITS(cp);
 	cp += 2;
-	class = EXTRACT_16BITS(cp);
+	/* print the class (if it's not IN and the type isn't OPT) */
+	i = EXTRACT_16BITS(cp);
 	cp += 2;
-	if (is_mdns && class == (C_IN|C_CACHE_FLUSH))
-		printf(" (Cache flush)");
-	else if (class != C_IN && typ != T_OPT)
+	if (is_mdns)
+		class = (i & ~C_CACHE_FLUSH);
+	else
+		class = i;
+	if (class != C_IN && typ != T_OPT)
 		printf(" %s", tok2str(ns_class2str, "(Class %d)", class));
+	if (is_mdns) {
+		if (i & C_CACHE_FLUSH)
+			printf(" (Cache flush)");
+	}
 
-	/* ignore ttl */
-	cp += 4;
+	if (typ == T_OPT) {
+		/* get opt flags */
+		cp += 2;
+		opt_flags = EXTRACT_16BITS(cp);
+		/* ignore rest of ttl field */
+		cp += 2;
+	} else if (vflag > 2) {
+		/* print ttl */
+		printf(" [");
+		relts_print(EXTRACT_32BITS(cp));
+		printf("]");
+		cp += 4;
+	} else {
+		/* ignore ttl */
+		cp += 4;
+	}
 
 	len = EXTRACT_16BITS(cp);
 	cp += 2;
@@ -497,6 +527,8 @@ ns_rprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 
 	case T_OPT:
 		printf(" UDPsize=%u", class);
+		if (opt_flags & 0x8000)
+			printf(" OK");
 		break;
 
 	case T_UNSPECA:		/* One long string */

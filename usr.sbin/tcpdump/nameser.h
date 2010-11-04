@@ -1,4 +1,4 @@
-/* @(#) $Id: nameser.h,v 1.5 2007/10/07 16:41:05 deraadt Exp $ (LBL) */
+/* @(#) $Id: nameser.h,v 1.6 2010/11/04 17:37:05 canacar Exp $ (LBL) */
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -151,10 +151,12 @@
 #define T_APL		42		/* APL */
 #define T_DS		43		/* Delegation Signer */
 #define T_SSHFP		44		/* SSH Key Fingerprint */
+#define T_IPSECKEY	45		/* IPsec keying material */
 #define T_RRSIG		46		/* RRSIG */
 #define T_NSEC		47		/* NSEC */
 #define T_DNSKEY	48		/* DNSKEY */
 	/* non standard */
+#define T_SPF		99		/* sender policy framework */
 #define T_UINFO		100		/* user (finger) information */
 #define T_UID		101		/* user ID */
 #define T_GID		102		/* group ID */
@@ -178,7 +180,8 @@
 #define C_HS		4		/* for Hesiod name server (MIT) (XXX) */
 	/* Query class values which do not appear in resource records */
 #define C_ANY		255		/* wildcard match */
-#define C_CACHE_FLUSH	0x8000		/* mDNS cache flush flag */
+#define C_QU		0x8000		/* mDNS QU flag in queries */
+#define C_CACHE_FLUSH	0x8000		/* mDNS cache flush flag in replies */
 
 /*
  * Status return codes for T_UNSPEC conversion routines
