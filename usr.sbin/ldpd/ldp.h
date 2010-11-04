@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.6 2010/10/26 12:59:03 claudio Exp $ */
+/*	$OpenBSD: ldp.h,v 1.7 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -103,7 +103,7 @@ struct ldp_msg {
 	u_int32_t	msgid;
 	/* Mandatory Parameters */
 	/* Optional Parameters */
-};
+} __packed;
 
 #define LDP_MSG_LEN		8
 #define	TLV_HDR_LEN		4
@@ -119,8 +119,10 @@ struct hello_prms_tlv {
 	u_int16_t	type;
 	u_int16_t	length;
 	u_int16_t	holdtime;
-	u_int16_t	reserved;
+	u_int16_t	flags;
 };
+
+#define HELLO_PRMS_SIZE		8
 
 #define	S_SUCCESS	0x00000000
 #define	S_BAD_LDP_ID	0x80000001
@@ -159,7 +161,7 @@ struct sess_prms_tlv {
 	u_int16_t	max_pdu_len;
 	u_int32_t	lsr_id;
 	u_int16_t	lspace_id;
-};
+} __packed;
 
 #define SESS_PRMS_SIZE		18
 
@@ -169,7 +171,7 @@ struct status_tlv {
 	u_int32_t	status_code;
 	u_int32_t	msg_id;
 	u_int16_t	msg_type;
-};
+} __packed;
 
 #define STATUS_SIZE		14
 #define STATUS_TLV_LEN		10
@@ -180,7 +182,7 @@ struct address_list_tlv {
 	u_int16_t	length;
 	u_int16_t	family;
 	/* address entries */
-};
+} __packed;
 
 #define	BASIC_LABEL_MAP_LEN	24
 

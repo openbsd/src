@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.12 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: packet.c,v 1.13 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -115,8 +115,8 @@ disc_recv_packet(int fd, short event, void *bula)
 	struct msghdr		 msg;
 	struct iovec		 iov;
 	struct ldpd_conf	*xconf = bula;
-	struct ldp_hdr		*ldp_hdr;
-	struct ldp_msg		*ldp_msg;
+	struct ldp_hdr		 ldp_hdr;
+	struct ldp_msg		 ldp_msg;
 	struct iface		*iface;
 	char			*buf;
 	struct cmsghdr		*cmsg;
@@ -168,33 +168,34 @@ disc_recv_packet(int fd, short event, void *bula)
 		log_debug("disc_recv_packet: bad packet size");
 		return;
 	}
-	ldp_hdr = (struct ldp_hdr *)buf;
+	bcopy(buf, &ldp_hdr, sizeof(ldp_hdr));
 
-	if (ntohs(ldp_hdr->version) != LDP_VERSION) {
+	if (ntohs(ldp_hdr.version) != LDP_VERSION) {
 		log_debug("dsc_recv_packet: invalid LDP version %d",
-		    ldp_hdr->version);
+		    ldp_hdr.version);
 		return;
 	}
 
-	if ((l = ldp_hdr_sanity_check(ldp_hdr, len, iface)) == -1)
+	if ((l = ldp_hdr_sanity_check(&ldp_hdr, len, iface)) == -1)
 		return;
 
 	if (l > len) {
 		log_debug("disc_recv_packet: invalid LDP packet length %d",
-		    ntohs(ldp_hdr->length));
+		    ntohs(ldp_hdr.length));
 		return;
 	}
-
-	ldp_msg = (struct ldp_msg *)(buf + LDP_HDR_SIZE);
 
 	if (len < LDP_HDR_SIZE + LDP_MSG_LEN) {
 		log_debug("disc_recv_packet: invalid LDP packet length %d",
-		    ntohs(ldp_hdr->length));
+		    ntohs(ldp_hdr.length));
 		return;
 	}
 
+	bcopy(buf + LDP_HDR_SIZE, &ldp_msg, sizeof(ldp_msg));
+
+
 	/* switch LDP packet type */
-	switch (ntohs(ldp_msg->type)) {
+	switch (ntohs(ldp_msg.type)) {
 	case MSG_TYPE_HELLO:
 		recv_hello(iface, src.sin_addr, buf, len);
 		break;
@@ -373,10 +374,8 @@ session_read(int fd, short event, void *arg)
 				msg_size = recv_keepalive(nbr, pdu, pdu_len);
 				break;
 			case MSG_TYPE_ADDR:
-				msg_size = recv_address(nbr, pdu, pdu_len);
-				break;
 			case MSG_TYPE_ADDRWITHDRAW:
-				msg_size = recv_address_withdraw(nbr, pdu, pdu_len);
+				msg_size = recv_address(nbr, pdu, pdu_len);
 				break;
 			case MSG_TYPE_LABELMAPPING:
 				msg_size = recv_labelmapping(nbr, pdu, pdu_len);
@@ -393,8 +392,8 @@ session_read(int fd, short event, void *arg)
 			case MSG_TYPE_LABELABORTREQ:
 			case MSG_TYPE_HELLO:
 			default:
-				log_debug("session_read: unknown LDP packet type "
-				    "interface %s", iface->name);
+				log_debug("session_read: unknown LDP packet "
+				    "type interface %s", iface->name);
 				free(buf);
 				return;
 			}

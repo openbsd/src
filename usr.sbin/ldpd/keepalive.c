@@ -1,4 +1,4 @@
-/*	$OpenBSD: keepalive.c,v 1.6 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: keepalive.c,v 1.7 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -63,22 +63,19 @@ send_keepalive(struct nbr *nbr)
 int
 recv_keepalive(struct nbr *nbr, char *buf, u_int16_t len)
 {
-	struct ldp_msg *ka;
+	struct ldp_msg ka;
 
-	ka = (struct ldp_msg *)buf;
+	bcopy(buf, &ka, sizeof(ka));
 
-	if ((len - TLV_HDR_LEN) < ntohs(ka->length)) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, ka->msgid, ka->type);
+	if (len != LDP_MSG_LEN) {
+		session_shutdown(nbr, S_BAD_MSG_LEN, ka.msgid, ka.type);
 		return (-1);
 	}
-
-	buf += sizeof(struct ldp_msg);
-	len -= sizeof(struct ldp_msg);
 
 	if (nbr->state != NBR_STA_OPER)
 		nbr_fsm(nbr, NBR_EVT_KEEPALIVE_RCVD);
 	else
 		nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
-	return (ntohs(ka->length));
+	return (ntohs(ka.length));
 }

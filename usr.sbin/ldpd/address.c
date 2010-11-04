@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.5 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: address.c,v 1.6 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -83,61 +83,67 @@ send_address(struct nbr *nbr, struct iface *iface)
 int
 recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 {
-	struct ldp_msg		*addr;
-	struct address_list_tlv	*alt;
-	struct in_addr		*address;
-	u_int32_t		 addrs_len;
+	struct ldp_msg		addr;
+	struct address_list_tlv	alt;
+	enum imsg_type		type;
 
-	log_debug("recv_address: neighbor ID %s", inet_ntoa(nbr->id));
-
-	if (nbr->state != NBR_STA_OPER)
-		return (-1);
-
-	addr = (struct ldp_msg *)buf;
-
-	if ((len - TLV_HDR_LEN) < ntohs(addr->length)) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, addr->msgid, addr->type);
+	if (nbr->state != NBR_STA_OPER) {
+		log_debug("recv_address: neighbor ID %s not operational",
+		    inet_ntoa(nbr->id));
 		return (-1);
 	}
+
+	bcopy(buf, &addr, sizeof(addr));
+	log_debug("recv_address: neighbor ID %s%s", inet_ntoa(nbr->id),
+	    ntohs(addr.type) == MSG_TYPE_ADDR ? "" : " address withdraw");
+	if (ntohs(addr.type) == MSG_TYPE_ADDR)
+		type = IMSG_ADDRESS_ADD;
+	else
+		type = IMSG_ADDRESS_DEL;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
-	alt = (struct address_list_tlv *)buf;
-
-	if (len < sizeof(*alt) ||
-	    (len - TLV_HDR_LEN) < ntohs(alt->length)) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, addr->msgid, addr->type);
+	if (len < sizeof(alt)) {
+		session_shutdown(nbr, S_BAD_MSG_LEN, addr.msgid, addr.type);
 		return (-1);
 	}
 
-	addrs_len = (ntohs(alt->length) - sizeof(alt->family));
+	bcopy(buf, &alt, sizeof(alt));
 
-	if (alt->type != TLV_TYPE_ADDRLIST) {
-		session_shutdown(nbr, S_UNKNOWN_TLV, addr->msgid, addr->type);
+	if (ntohs(alt.length) != len - TLV_HDR_LEN) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid, addr.type);
+		return (-1);
+	}
+
+	if (ntohs(alt.type) != TLV_TYPE_ADDRLIST) {
+		session_shutdown(nbr, S_UNKNOWN_TLV, addr.msgid, addr.type);
 		return (-1);
 	}
 
 	/* For now we only support IPv4 */
-	if (alt->family != htons(ADDR_IPV4)) {
-		send_notification_nbr(nbr, S_UNSUP_ADDR, addr->msgid,
-		    addr->type);
+	if (alt.family != htons(ADDR_IPV4)) {
+		send_notification_nbr(nbr, S_UNSUP_ADDR, addr.msgid, addr.type);
 		return (-1);
 	}
 
-	buf += sizeof(*alt);
-	len -= sizeof(*alt);
-	address = (struct in_addr *)buf;
+	buf += sizeof(alt);
+	len -= sizeof(alt);
 
-	while (addrs_len >= sizeof(address)) {
-		ldpe_imsg_compose_lde(IMSG_ADDRESS_ADD, nbr->peerid, 0,
-		    address, sizeof(*address));
+	while (len >= sizeof(struct in_addr)) {
+		ldpe_imsg_compose_lde(type, nbr->peerid, 0,
+		    buf, sizeof(struct in_addr));
 
-		address++;
-		addrs_len -= sizeof(*address);
+		buf += sizeof(struct in_addr);
+		len -= sizeof(struct in_addr);
 	}
 
-	return (ntohs(addr->length));
+	if (len != 0) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid, addr.type);
+		return (-1);
+	}
+
+	return (ntohs(addr.length));
 }
 
 void
@@ -192,57 +198,4 @@ send_address_withdraw(struct nbr *nbr, struct iface *iface)
 	gen_address_list_tlv(buf, iface, size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
-}
-
-int
-recv_address_withdraw(struct nbr *nbr, char *buf, u_int16_t len)
-{
-	struct ldp_msg		*aw;
-	struct address_list_tlv	*alt;
-	struct in_addr		*address;
-
-	log_debug("recv_address_withdraw: neighbor ID %s", inet_ntoa(nbr->id));
-
-	aw = (struct ldp_msg *)buf;
-
-	if ((len - TLV_HDR_LEN) < ntohs(aw->length)) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, aw->msgid, aw->type);
-		return (-1);
-	}
-
-	buf += sizeof(struct ldp_msg);
-	len -= sizeof(struct ldp_msg);
-
-	alt = (struct address_list_tlv *)buf;
-
-	if (len < sizeof(*alt) ||
-	    (len - TLV_HDR_LEN) < ntohs(alt->length)) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, aw->msgid, aw->type);
-		return (-1);
-	}
-
-	if (alt->type != TLV_TYPE_ADDRLIST) {
-		session_shutdown(nbr, S_UNKNOWN_TLV, aw->msgid, aw->type);
-		return (-1);
-	}
-
-	/* For now we just support IPv4 */
-	if (alt->family != AF_INET) {
-		send_notification_nbr(nbr, S_UNSUP_ADDR, aw->msgid, aw->type);
-		return (-1);
-	}
-
-	buf += sizeof(*alt);
-	len -= sizeof(*alt);
-	address = (struct in_addr *)buf;
-
-	while (len >= sizeof(address)) {
-		ldpe_imsg_compose_lde(IMSG_ADDRESS_DEL, nbr->peerid, 0,
-		    address, sizeof(*address));
-
-		address++;
-		len -= sizeof(*address);
-	}
-
-	return (ntohs(aw->length));
 }

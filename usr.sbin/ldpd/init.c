@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: init.c,v 1.6 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -71,37 +71,38 @@ send_init(struct nbr *nbr)
 int
 recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 {
-	struct ldp_msg		*init;
-	struct sess_prms_tlv	*sess_tlv;
+	struct ldp_msg		init;
+	struct sess_prms_tlv	sess;
 
 	log_debug("recv_init: neighbor ID %s", inet_ntoa(nbr->id));
 
-	init = (struct ldp_msg *)buf;
-
-	if ((len - TLV_HDR_LEN) < ntohs(init->length)) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, init->msgid, init->type);
-		return (-1);
-	}
+	bcopy(buf, &init, sizeof(init));
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
-	sess_tlv = (struct sess_prms_tlv *)buf;
+	if (len < SESS_PRMS_SIZE) {
+		session_shutdown(nbr, S_BAD_MSG_LEN, init.msgid, init.type);
+		return (-1);
+	}
+	bcopy(buf, &sess, sizeof(sess));
 
-	if (len < SESS_PRMS_SIZE ||
-	    ntohs(sess_tlv->length) != (SESS_PRMS_SIZE - TLV_HDR_LEN)) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, init->msgid, init->type);
+	if (ntohs(sess.length) != SESS_PRMS_SIZE - TLV_HDR_LEN ||
+	    ntohs(sess.length) != len - TLV_HDR_LEN) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, init.msgid, init.type);
 		return (-1);
 	}
 
-	if (nbr->iface->keepalive < ntohs(sess_tlv->keepalive_time))
+	/* ATM and Frame Relay optional attributes not supported */
+
+	if (nbr->iface->keepalive < ntohs(sess.keepalive_time))
 		nbr->keepalive = nbr->iface->keepalive;
 	else
-		nbr->keepalive = ntohs(sess_tlv->keepalive_time);
+		nbr->keepalive = ntohs(sess.keepalive_time);
 
 	nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
 
-	return (ntohs(init->length));
+	return (ntohs(init.length));
 }
 
 int

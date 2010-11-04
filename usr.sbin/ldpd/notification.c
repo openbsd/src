@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.7 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: notification.c,v 1.8 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -80,44 +80,46 @@ send_notification(u_int32_t status, struct iface *iface, u_int32_t msgid,
 int
 recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 {
-	struct ldp_msg		*not;
-	struct status_tlv	*st;
+	struct ldp_msg		not;
+	struct status_tlv	st;
 
 	log_debug("recv_notification: neighbor ID %s", inet_ntoa(nbr->id));
 
-	not = (struct ldp_msg *)buf;
-
-	if ((len - TLV_HDR_LEN) < ntohs(not->length)) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, not->msgid, not->type);
-		return (-1);
-	}
+	bcopy(buf, &not, sizeof(not));
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
-	st = (struct status_tlv *)buf;
+	if (len < STATUS_SIZE) {
+		session_shutdown(nbr, S_BAD_MSG_LEN, not.msgid, not.type);
+		return (-1);
+	}
+	bcopy(buf, &st, sizeof(st));
 
-	if (len < STATUS_SIZE ||
-	    (STATUS_SIZE - TLV_HDR_LEN) != ntohs(st->length)) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, not->msgid, not->type);
+	if (ntohs(st.length) > STATUS_SIZE - TLV_HDR_LEN ||
+	    ntohs(st.length) > len - TLV_HDR_LEN) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, not.msgid, not.type);
 		return (-1);
 	}
 
-	if (st->status_code & htonl(STATUS_FATAL))
+	/* TODO optional parameters: ext status, returned PDU and msg */
+
+	if (st.status_code & htonl(STATUS_FATAL))
 		log_warnx("recieved notification from neighbor %s: %s",
 		    inet_ntoa(nbr->id),
-		    notification_name(ntohl(st->status_code)));
+		    notification_name(ntohl(st.status_code)));
 	else
 		log_debug("recieved non-fatal notification from neighbor "
 		    "%s: %s", inet_ntoa(nbr->id),
-		    notification_name(ntohl(st->status_code)));
+		    notification_name(ntohl(st.status_code)));
 
-	if (st->status_code & htonl(STATUS_FATAL)) {
+	if (st.status_code & htonl(STATUS_FATAL)) {
 		nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		return (-1);
 	}
+	/* XXX in some cases we should inform the RDE about non-fatal ones */
 
-	return (ntohs(not->length));
+	return (ntohs(not.length));
 }
 
 int

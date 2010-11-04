@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.12 2010/10/26 12:22:35 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.13 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -95,7 +95,6 @@ int	 recv_notification(struct nbr *, char *, u_int16_t);
 void	 send_address(struct nbr *, struct iface *);
 int	 recv_address(struct nbr *, char *, u_int16_t);
 void	 send_address_withdraw(struct nbr *, struct iface *);
-int	 recv_address_withdraw(struct nbr *, char *, u_int16_t);
 
 /* labelmapping.c */
 #define PREFIX_SIZE(x)	(((x) + 7) / 8)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.6 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: hello.c,v 1.7 2010/11/04 09:52:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,11 +36,10 @@
 #include "log.h"
 #include "ldpe.h"
 
-struct hello_prms_tlv	*tlv_decode_hello_prms(char *, u_int16_t);
-int			 tlv_decode_opt_hello_prms(char *, u_int16_t,
-			    struct in_addr *, u_int32_t *);
-int			 gen_hello_prms_tlv(struct iface *, struct ibuf *,
-			    u_int16_t);
+int	tlv_decode_hello_prms(char *, u_int16_t, u_int16_t *, u_int16_t *);
+int	tlv_decode_opt_hello_prms(char *, u_int16_t, struct in_addr *,
+	    u_int32_t *);
+int	gen_hello_prms_tlv(struct iface *, struct ibuf *, u_int16_t);
 
 int
 send_hello(struct iface *iface)
@@ -82,41 +81,50 @@ send_hello(struct iface *iface)
 void
 recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 {
-	struct ldp_msg		*hello;
-	u_int32_t		 messageid;
+	struct ldp_msg		 hello;
+	struct ldp_hdr		 ldp;
 	struct nbr		*nbr = NULL;
-	struct hello_prms_tlv	*cpt;
-	struct ldp_hdr		*ldp;
 	struct in_addr		 address;
 	u_int32_t		 conf_number;
+	u_int16_t		 holdtime, flags;
+	int			 r;
 
-	ldp = (struct ldp_hdr *)buf;
-
+	bcopy(buf, &ldp, sizeof(ldp));
 	buf += LDP_HDR_SIZE;
 	len -= LDP_HDR_SIZE;
 
-	hello = (struct ldp_msg *)buf;
-
-	if ((len - TLV_HDR_LEN) < ntohs(hello->length))
-		return;
-
-	messageid = hello->msgid;
-
+	bcopy(buf, &hello, sizeof(hello));
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
-	cpt = tlv_decode_hello_prms(buf, len);
-	if (cpt == NULL)
+	r = tlv_decode_hello_prms(buf, len, &holdtime, &flags);
+	if (r == -1) {
+		address.s_addr = ldp.lsr_id;
+		log_debug("recv_hello: neighbor %s: failed to decode params",
+		    inet_ntoa(address));
 		return;
+	}
 
-	buf += sizeof(struct hello_prms_tlv);
-	len -= sizeof(struct hello_prms_tlv);
+	buf += r;
+	len -= r;
 
-	tlv_decode_opt_hello_prms(buf, len, &address, &conf_number);
+	r = tlv_decode_opt_hello_prms(buf, len, &address, &conf_number);
+	if (r == -1) {
+		address.s_addr = ldp.lsr_id;
+		log_debug("recv_hello: neighbor %s: failed to decode "
+		    "optional params", inet_ntoa(address));
+		return;
+	}
+	if (r != len) {
+		address.s_addr = ldp.lsr_id;
+		log_debug("recv_hello: neighbor %s: unexpected data in message",
+		    inet_ntoa(address));
+		return;
+	}
 
-	nbr = nbr_find_ldpid(iface, ldp->lsr_id, ldp->lspace_id);
+	nbr = nbr_find_ldpid(iface, ldp.lsr_id, ldp.lspace_id);
 	if (!nbr) {
-		nbr = nbr_new(ldp->lsr_id, ldp->lspace_id, iface);
+		nbr = nbr_new(ldp.lsr_id, ldp.lspace_id, iface);
 
 		/* set neighbor parameters */
 		if (address.s_addr == INADDR_ANY)
@@ -124,22 +132,22 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		else
 			nbr->addr.s_addr = address.s_addr;
 
-		nbr->hello_type = cpt->reserved;
+		nbr->hello_type = flags;
 
-		if (cpt->holdtime == 0) {
+		if (holdtime == 0) {
 			/* XXX: lacks support for targeted hellos */
 			if (iface->holdtime < LINK_DFLT_HOLDTIME)
 				nbr->holdtime = iface->holdtime;
 			else
 				nbr->holdtime = LINK_DFLT_HOLDTIME;
-		} else if (cpt->holdtime == INFINITE_HOLDTIME) {
+		} else if (holdtime == INFINITE_HOLDTIME) {
 			/* No timeout for this neighbor */
 			nbr->holdtime = iface->holdtime;
 		} else {
-			if (iface->holdtime < ntohs(cpt->holdtime))
+			if (iface->holdtime < holdtime)
 				nbr->holdtime = iface->holdtime;
 			else
-				nbr->holdtime = ntohs(cpt->holdtime);
+				nbr->holdtime = holdtime;
 		}
 	}
 
@@ -163,60 +171,64 @@ gen_hello_prms_tlv(struct iface *iface, struct ibuf *buf, u_int16_t size)
 	parms.length = htons(size);
 	/* XXX */
 	parms.holdtime = htons(iface->holdtime);
-	parms.reserved = 0;
+	parms.flags = 0;
 
 	return (ibuf_add(buf, &parms, sizeof(parms)));
 }
 
-struct hello_prms_tlv *
-tlv_decode_hello_prms(char *buf, u_int16_t len)
+int
+tlv_decode_hello_prms(char *buf, u_int16_t len, u_int16_t *holdtime,
+    u_int16_t *flags)
 {
-	struct hello_prms_tlv	*tlv;
+	struct hello_prms_tlv	tlv;
 
-	tlv = (struct hello_prms_tlv *)buf;
+	if (len < sizeof(tlv))
+		return (-1);
+	bcopy(buf, &tlv, sizeof(tlv));
 
-	if (len < sizeof(*tlv) || ntohs(tlv->length) !=
-	    (sizeof(tlv->holdtime) + sizeof(tlv->reserved)))
-		return (NULL);
+	if (ntohs(tlv.length) != sizeof(tlv) - TLV_HDR_LEN)
+		return (-1);
 
-	if ((tlv->type & ~UNKNOWN_FLAGS_MASK) != htons(TLV_TYPE_COMMONHELLO))
-		return (NULL);
+	if (tlv.type != htons(TLV_TYPE_COMMONHELLO))
+		return (-1);
 
-	if ((tlv->type & UNKNOWN_FLAGS_MASK) != 0)
-		return (NULL);
+	*holdtime = ntohs(tlv.holdtime);
+	*flags = ntohs(tlv.flags);
 
-	return (tlv);
+	return (sizeof(tlv));
 }
 
 int
 tlv_decode_opt_hello_prms(char *buf, u_int16_t len, struct in_addr *addr,
     u_int32_t *conf_number)
 {
-	struct hello_opt_parms_tlv	*tlv;
+	struct hello_opt_parms_tlv	tlv;
+	int				cons = 0;
 
 	bzero(addr, sizeof(*addr));
 	*conf_number = 0;
 
-	while (len >= sizeof(*tlv)) {
-		tlv = (struct hello_opt_parms_tlv *)buf;
+	while (len >= sizeof(tlv)) {
+		bcopy(buf, &tlv, sizeof(tlv));
 
-		if (tlv->length < sizeof(u_int32_t))
+		if (ntohs(tlv.length) < sizeof(u_int32_t))
 			return (-1);
 
-		switch (ntohs(tlv->type)) {
+		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_IPV4TRANSADDR:
-			addr->s_addr = tlv->value;
+			addr->s_addr = tlv.value;
 			break;
 		case TLV_TYPE_CONFIG:
-			*conf_number = ntohl(tlv->value);
+			*conf_number = ntohl(tlv.value);
 			break;
 		default:
 			return (-1);
 		}
 
-		len -= sizeof(*tlv);
-		buf += sizeof(*tlv);
+		len -= sizeof(tlv);
+		buf += sizeof(tlv);
+		cons += sizeof(cons);
 	}
 
-	return (0);
+	return (cons);
 }
