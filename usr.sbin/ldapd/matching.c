@@ -1,4 +1,4 @@
-/*	$OpenBSD: matching.c,v 1.1 2010/11/03 14:17:01 martinh Exp $ */
+/*	$OpenBSD: matching.c,v 1.2 2010/11/04 15:35:00 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -75,7 +75,7 @@ static const char *oid_first_component_syntaxes[] = {
 	NULL
 };
 
-static struct match_rule match_rules[] = {
+struct match_rule match_rules[] = {
 
 	{ "1.3.6.1.1.16.2", "uuidMatch", MATCH_EQUALITY, NULL, "1.3.6.1.1.16.1", NULL },
 	{ "1.3.6.1.1.16.3", "uuidOrderingMatch", MATCH_ORDERING, NULL, "1.3.6.1.1.16.1", NULL },
@@ -115,6 +115,8 @@ static struct match_rule match_rules[] = {
 	{ "2.5.13.33", "keywordMatch", "1.3.6.1.4.1.1466.115.121.1.15", MATCH_EQUALITY, NULL },
 #endif
 };
+
+int num_match_rules = nitems(match_rules);
 
 static struct match_rule_alias {
 	char	*name;

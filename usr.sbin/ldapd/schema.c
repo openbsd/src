@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.13 2010/11/03 14:17:01 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.14 2010/11/04 15:35:00 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1328,6 +1328,21 @@ schema_dump_attribute(struct attr_type *at, char *buf, size_t size)
 	}
 
 	if (strlcat(buf, " )", size) >= size)
+		return -1;
+
+	return 0;
+}
+
+int
+schema_dump_match_rule(struct match_rule *mr, char *buf, size_t size)
+{
+	if (strlcpy(buf, "( ", size) >= size ||
+	    strlcat(buf, mr->oid, size) >= size ||
+	    strlcat(buf, " NAME '", size) >= size ||
+	    strlcat(buf, mr->name, size) >= size ||
+	    strlcat(buf, "' SYNTAX ", size) >= size ||
+	    strlcat(buf, mr->syntax_oid, size) >= size ||
+	    strlcat(buf, " )", size) >= size)
 		return -1;
 
 	return 0;

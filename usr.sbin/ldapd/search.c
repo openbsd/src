@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.11 2010/11/03 10:33:17 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.12 2010/11/04 15:35:00 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -531,7 +531,7 @@ ldap_search_subschema(struct search *search)
 	struct ber_element	*root, *elm, *key, *val;
 	struct object		*obj;
 	struct attr_type	*at;
-	int			 rc;
+	int			 rc, i;
 
 	if ((root = ber_add_sequence(NULL)) == NULL) {
 		return;
@@ -579,6 +579,21 @@ ldap_search_subschema(struct search *search)
 
 		RB_FOREACH(at, attr_type_tree, &conf->schema->attr_types) {
 			if (schema_dump_attribute(at, buf, sizeof(buf)) != 0) {
+				rc = LDAP_OTHER;
+				goto done;
+			}
+			val = ber_add_string(val, buf);
+		}
+	}
+
+	if (should_include_attribute("matchingRules", search, 1)) {
+		elm = ber_add_sequence(elm);
+		key = ber_add_string(elm, "matchingRules");
+		val = ber_add_set(key);
+
+		for (i = 0; i < num_match_rules; i++) {
+			if (schema_dump_match_rule(&match_rules[i], buf,
+			    sizeof(buf)) != 0) {
 				rc = LDAP_OTHER;
 				goto done;
 			}
