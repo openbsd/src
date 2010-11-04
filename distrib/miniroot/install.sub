@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.625 2010/11/04 04:15:56 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.626 2010/11/04 06:39:19 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1815,7 +1815,7 @@ apply()
 			>>/mnt/etc/rc.conf.local
 		if [[ $ntpd_server != default ]]; then
 			# Comment out the default 'servers' line, and add a
-			# 'server' line with the first token in $resp as the
+			# 'servers' line with the first token in $resp as the
 			# server.
 			set -- $ntpd_server
 			sed -e "s/^servers /#&/;/#server /a\\
