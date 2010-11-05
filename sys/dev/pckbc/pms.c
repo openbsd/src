@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.11 2010/10/19 11:00:50 krw Exp $ */
+/* $OpenBSD: pms.c,v 1.12 2010/11/05 16:10:49 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -203,7 +203,8 @@ pms_change_state(struct pms_softc *sc, int newstate)
 	switch (newstate) {
 	case PMS_STATE_ENABLED:
 		if (sc->sc_state == PMS_STATE_ENABLED)
-			return EBUSY;
+			return (EBUSY);
+
 		sc->inputstate = 0;
 		sc->oldbuttons = 0;
 
@@ -221,48 +222,21 @@ pms_change_state(struct pms_softc *sc, int newstate)
 		res = pms_cmd(sc, cmd, 1, NULL, 0);
 		if (res)
 			printf("pms_enable: command error\n");
-#if 0
-		{
-			u_char scmd[2];
-
-			scmd[0] = PMS_SET_RES;
-			scmd[1] = 3; /* 8 counts/mm */
-			res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
-						2, 0, 1, 0);
-			if (res)
-				printf("pms_enable: setup error1 (%d)\n", res);
-
-			scmd[0] = PMS_SET_SCALE21;
-			res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
-						1, 0, 1, 0);
-			if (res)
-				printf("pms_enable: setup error2 (%d)\n", res);
-
-			scmd[0] = PMS_SET_SAMPLE;
-			scmd[1] = 100; /* 100 samples/sec */
-			res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
-						2, 0, 1, 0);
-			if (res)
-				printf("pms_enable: setup error3 (%d)\n", res);
-		}
-#endif
-		sc->sc_state = newstate;
-		sc->poll = 0;
 		break;
 	case PMS_STATE_DISABLED:
-
-		/* FALLTHROUGH */
 	case PMS_STATE_SUSPENDED:
 		cmd[0] = PMS_DEV_DISABLE;
 		res = pms_cmd(sc, cmd, 1, NULL, 0);
 		if (res)
 			printf("pms_disable: command error\n");
 		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
-		sc->sc_state = newstate;
-		sc->poll = (newstate == PMS_STATE_SUSPENDED) ? 1 : 0;
 		break;
 	}
-	return 0;
+
+	sc->sc_state = newstate;
+	sc->poll = (newstate == PMS_STATE_SUSPENDED) ? 1 : 0;
+
+	return (0);
 }
 
 int
