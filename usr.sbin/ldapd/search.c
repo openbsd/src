@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.12 2010/11/04 15:35:00 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.13 2010/11/05 08:17:46 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -951,9 +951,14 @@ ldap_search(struct request *req)
 			btval_reset(&val);
 			reason = LDAP_SUCCESS;
 		} else if (errno == ENOENT)
-			reason = LDAP_SUCCESS;
+			reason = LDAP_NO_SUCH_OBJECT;
 		else
 			reason = LDAP_OTHER;
+		goto done;
+	}
+
+	if (!namespace_exists(search->ns, search->basedn)) {
+		reason = LDAP_NO_SUCH_OBJECT;
 		goto done;
 	}
 
