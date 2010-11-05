@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.68 2010/03/26 19:30:40 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.69 2010/11/05 15:18:54 claudio Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: November 5 2010 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -646,6 +646,17 @@ at
 If the
 .Cm /f
 modifier is specified the complete map is printed.
+.\" --------------------
+.It Ic show mbuf Ar addr
+Prints the
+.Li struct mbuf
+header at
+.Ar addr .
+Depending on the mbuf flags
+.Li struct pkthdr
+and
+.Li struct m_ext
+are printed as well.
 .\" --------------------
 .It Xo
 .Ic show mount
