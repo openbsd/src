@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.30 2010/11/02 10:24:34 dlg Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.31 2010/11/05 10:07:30 claudio Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -41,7 +41,7 @@ struct mclpool_info {
 int mclpool_count = 0;
 int mbpool_index = -1;
 struct pool mbpool;
-u_int mcllivelocks = 0;
+u_int mcllivelocks, mcllivelocks_cur, mcllivelocks_diff;
 
 /* interfaces */
 static int num_ifs;
@@ -201,12 +201,14 @@ read_mb(void)
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_NETLIVELOCKS;
-	size = sizeof(mcllivelocks);
-	if (sysctl(mib, 2, &mcllivelocks, &size, NULL, 0) < 0 &&
+	size = sizeof(mcllivelocks_cur);
+	if (sysctl(mib, 2, &mcllivelocks_cur, &size, NULL, 0) < 0 &&
 	    errno != EOPNOTSUPP) {
 		error("sysctl(KERN_NETLIVELOCKS)");
 		goto exit;
 	}
+	mcllivelocks_diff = mcllivelocks_cur - mcllivelocks;
+	mcllivelocks = mcllivelocks_cur;
 
 	num_disp = 0;
 	if (getifaddrs(&ifap)) {
@@ -351,7 +353,7 @@ showmbuf(struct if_info *ifi, int p, int showif)
 		print_fld_str(FLD_MB_IFACE, ifi->name);
 
 	if (p == -1 && ifi == interfaces) {
-		print_fld_uint(FLD_MB_LLOCKS, mcllivelocks);
+		print_fld_uint(FLD_MB_LLOCKS, mcllivelocks_diff);
 		print_fld_size(FLD_MB_MSIZE, mbpool.pr_size);
 		print_fld_size(FLD_MB_MALIVE, mbpool.pr_nget - mbpool.pr_nput);
 		print_fld_size(FLD_MB_MHWM, mbpool.pr_hiwat);
