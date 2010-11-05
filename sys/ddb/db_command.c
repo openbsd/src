@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.61 2010/01/19 01:08:16 guenther Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.62 2010/11/05 15:17:50 claudio Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -324,6 +324,13 @@ db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 void
+db_mbuf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	m_print((void *)addr, db_printf);
+}
+
+/*ARGSUSED*/
+void
 db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	boolean_t full = FALSE;
@@ -512,6 +519,7 @@ struct db_command db_show_cmds[] = {
 	{ "extents",	db_extent_print_cmd,	0,	NULL },
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
+	{ "mbuf",	db_mbuf_print_cmd,	0,	NULL },
 	{ "mount",	db_mount_print_cmd,	0,	NULL },
 #ifdef NFSCLIENT
 	{ "nfsreq",	db_nfsreq_print_cmd,	0,	NULL },

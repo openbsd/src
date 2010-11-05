@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.h,v 1.29 2009/08/17 13:11:58 jasper Exp $	*/
+/*	$OpenBSD: db_command.h,v 1.30 2010/11/05 15:17:50 claudio Exp $	*/
 /*	$NetBSD: db_command.h,v 1.8 1996/02/05 01:56:55 christos Exp $	*/
 
 /* 
@@ -41,6 +41,7 @@ void db_command(struct db_command **, struct db_command *);
 void db_buf_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_map_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_malloc_print_cmd(db_expr_t, int, db_expr_t, char *);
+void db_mbuf_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_mount_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_show_all_mounts(db_expr_t, int, db_expr_t, char *);
 void db_show_all_vnodes(db_expr_t, int, db_expr_t, char *);
