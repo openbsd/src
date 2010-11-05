@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.106 2010/10/21 18:57:42 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.107 2010/11/05 16:09:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -765,8 +765,10 @@ aucat_main(int argc, char **argv)
 	if (geteuid() == 0)
 		privdrop();
 	if (l_flag) {
+#ifdef DEBUG
 		debug_level = 0;
 		dbg_flush();
+#endif
 		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
@@ -1033,8 +1035,10 @@ midicat_main(int argc, char **argv)
 	if (geteuid() == 0)
 		privdrop();
 	if (l_flag) {
+#ifdef DEBUG
 		debug_level = 0;
 		dbg_flush();
+#endif
 		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}

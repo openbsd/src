@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.22 2010/08/20 06:56:54 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.23 2010/11/05 16:09:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -249,7 +249,9 @@ file_new(struct fileops *ops, char *name, unsigned nfds)
 	f->ops = ops;
 	f->name = name;
 	f->state = 0;
+#ifdef DEBUG
 	f->cycles = 0;
+#endif
 	f->rproc = NULL;
 	f->wproc = NULL;
 	LIST_INSERT_HEAD(&file_list, f, entry);
