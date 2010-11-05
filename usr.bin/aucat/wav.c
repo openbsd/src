@@ -203,14 +203,14 @@ wav_conv(unsigned char *data, unsigned count, short *map)
 {
 	unsigned i;
 	unsigned char *iptr;
-	short *optr;
+	adata_t *optr;
 
 	iptr = data + count;
-	optr = (short *)data + count;
+	optr = (adata_t *)data + count;
 	for (i = count; i > 0; i--) {
 		--optr;
 		--iptr;
-		*optr = map[*iptr];
+		*optr = (adata_t)(map[*iptr]) << (ADATA_BITS - 16);
 	}
 }
 
@@ -224,7 +224,7 @@ wav_read(struct file *file, unsigned char *data, unsigned count)
 	unsigned n;
 
 	if (f->map)
-		count /= sizeof(short);
+		count /= sizeof(adata_t);
 	if (f->rbytes >= 0 && count > f->rbytes) {
 		count = f->rbytes; /* file->rbytes fits in count */
 		if (count == 0) {
@@ -246,7 +246,7 @@ wav_read(struct file *file, unsigned char *data, unsigned count)
 		f->rbytes -= n;
 	if (f->map) {
 		wav_conv(data, n, f->map);
-		n *= sizeof(short);
+		n *= sizeof(adata_t);
 	}
 	return n;
 }

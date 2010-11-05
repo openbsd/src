@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.18 2010/06/05 16:54:19 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.19 2010/11/05 15:23:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -148,17 +148,18 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par, short **map)
 		par->bits = bits;
 		par->le = 1;
 		par->sig = (bits <= 8) ? 0 : 1;	/* ask microsoft why... */
+		par->msb = 1;
 	} else {
 		if (bits != 8) {
 			warnx("%u: mulaw/alaw encoding not 8-bit", bits);
 			return 0;
 		}
-		par->bits = 8 * sizeof(short);
-		par->bps = sizeof(short);
-		par->le = NATIVE_LE;
+		par->bits = ADATA_BITS;
+		par->bps = sizeof(adata_t);
+		par->le = ADATA_LE;
 		par->sig = 1;
+		par->msb = 0;
 	}
-	par->msb = 1;
 	par->cmax = cmax;
 	par->rate = rate;
 	return 1;

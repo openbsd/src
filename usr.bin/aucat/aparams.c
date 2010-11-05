@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.11 2010/11/04 17:55:28 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.12 2010/11/05 15:23:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -116,7 +116,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 		return 0;
 	bps = APARAMS_BPS(bits);
 	msb = 1;
-	le = NATIVE_LE;
+	le = ADATA_LE;
 
 	/*
 	 * get (optional) endianness
@@ -176,9 +176,9 @@ aparams_init(struct aparams *par, unsigned cmin, unsigned cmax, unsigned rate)
 {
 	par->bps = sizeof(adata_t);
 	par->bits = ADATA_BITS;
+	par->le = ADATA_LE;
 	par->sig = 1;
-	par->le = NATIVE_LE;
-	par->msb = ADATA_MSB;
+	par->msb = 0;
 	par->cmin = cmin;
 	par->cmax = cmax;
 	par->rate = rate;

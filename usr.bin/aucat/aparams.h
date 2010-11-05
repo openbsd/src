@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.h,v 1.9 2010/11/04 17:55:28 ratchov Exp $	*/
+/*	$OpenBSD: aparams.h,v 1.10 2010/11/05 15:23:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,14 +31,6 @@
  */
 #define ENCMAX	10
 
-#if BYTE_ORDER ==  LITTLE_ENDIAN
-#define NATIVE_LE 1
-#elif BYTE_ORDER == BIG_ENDIAN
-#define NATIVE_LE 0
-#else
-/* not defined */
-#endif
-
 /*
  * Default bytes per sample for the given bits per sample.
  */
@@ -59,18 +51,17 @@ struct aparams {
 
 /*
  * Samples are numbers in the interval [-1, 1[, note that 1, the upper
- * boundary is excluded. We represent them in 16-bit signed fixed point
- * numbers, so that we can do all multiplications and divisions in
- * 32-bit precision without having to deal with overflows.
+ * boundary is excluded. We represent them as signed fixed point numbers
+ * of ADATA_BITS. We also assume that 2^(ADATA_BITS - 1) fits in a int.
  */
+#define ADATA_BITS			16
+#define ADATA_LE			(BYTE_ORDER == LITTLE_ENDIAN)
+#define ADATA_UNIT			(1 << (ADATA_BITS - 1))
+
 typedef short adata_t;
-#define ADATA_BITS		16
-#define ADATA_MSB		1
+
 #define ADATA_MUL(x,y)		(((int)(x) * (int)(y)) >> (ADATA_BITS - 1))
 #define ADATA_MULDIV(x,y,z)	((int)(x) * (int)(y) / (int)(z))
-
-#define ADATA_UNIT		(1 << (ADATA_BITS - 1))
-#define ADATA_MAX		(ADATA_UNIT - 1)
 
 #define MIDI_MAXCTL		127
 #define MIDI_TO_ADATA(m)	(aparams_ctltovol[m] << (ADATA_BITS - 16))
