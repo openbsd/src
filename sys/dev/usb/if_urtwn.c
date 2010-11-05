@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.2 2010/11/05 17:26:38 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.3 2010/11/05 17:57:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -75,7 +75,7 @@ int urtwn_debug = 4;
 #define DPRINTFN(n, x)
 #endif
 
-static const struct usb_devno urtw_devs[] = {
+static const struct usb_devno urtwn_devs[] = {
 	{ USB_VENDOR_ABOCOM,	USB_PRODUCT_ABOCOM_RTL8188CU_1 },
 	{ USB_VENDOR_ABOCOM,	USB_PRODUCT_ABOCOM_RTL8188CU_2 },
 	{ USB_VENDOR_ABOCOM,	USB_PRODUCT_ABOCOM_RTL8192CU },
@@ -222,7 +222,7 @@ urtwn_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return ((usb_lookup(urtw_devs, uaa->vendor, uaa->product) != NULL) ?
+	return ((usb_lookup(urtwn_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
