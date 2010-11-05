@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.h,v 1.10 2010/11/05 15:23:18 ratchov Exp $	*/
+/*	$OpenBSD: aparams.h,v 1.11 2010/11/05 16:42:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -54,14 +54,71 @@ struct aparams {
  * boundary is excluded. We represent them as signed fixed point numbers
  * of ADATA_BITS. We also assume that 2^(ADATA_BITS - 1) fits in a int.
  */
+#ifndef ADATA_BITS
 #define ADATA_BITS			16
+#endif
 #define ADATA_LE			(BYTE_ORDER == LITTLE_ENDIAN)
 #define ADATA_UNIT			(1 << (ADATA_BITS - 1))
+
+#if ADATA_BITS == 16
 
 typedef short adata_t;
 
 #define ADATA_MUL(x,y)		(((int)(x) * (int)(y)) >> (ADATA_BITS - 1))
 #define ADATA_MULDIV(x,y,z)	((int)(x) * (int)(y) / (int)(z))
+
+#elif ADATA_BITS == 24
+
+typedef int adata_t;
+
+#if defined(__i386__) && defined(__GNUC__)
+
+static inline int
+fp24_mul(int x, int a)
+{
+	int res;
+
+	asm volatile (
+		"imull	%2\n\t"
+		"shrdl $23, %%edx, %%eax\n\t"
+		: "=a" (res)
+		: "a" (x), "r" (a)
+		: "%edx"
+		);
+	return res;
+}
+
+static inline int
+fp24_muldiv(int x, int a, int b)
+{
+	int res;
+
+	asm volatile (
+		"imull %2\n\t"
+		"idivl %3\n\t"
+		: "=a" (res)
+		: "a" (x), "d" (a), "r" (b)
+		);
+	return res;
+}
+
+#define ADATA_MUL(x,y)		fp24_mul(x, y)
+#define ADATA_MULDIV(x,y,z)	fp24_muldiv(x, y, z);
+
+#elif defined(__amd64__) || defined(__sparc64__)
+
+#define ADATA_MUL(x,y)		\
+	((int)(((long long)(x) * (long long)(y)) >> (ADATA_BITS - 1)))
+#define ADATA_MULDIV(x,y,z)	\
+	((int)((long long)(x) * (long long)(y) / (long long)(z)))
+
+#else
+#error "no 24-bit code for this architecture"
+#endif
+
+#else
+#error "only 16-bit and 24-bit precisions are supported"
+#endif
 
 #define MIDI_MAXCTL		127
 #define MIDI_TO_ADATA(m)	(aparams_ctltovol[m] << (ADATA_BITS - 16))
