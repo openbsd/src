@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.6 2010/10/19 09:10:12 martinh Exp $ */
+/*	$OpenBSD: conn.c,v 1.7 2010/11/05 07:49:03 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -180,7 +180,7 @@ conn_read(struct bufferevent *bev, void *data)
 
 	while (conn->ber.br_rend - conn->ber.br_rptr > 0) {
 		if (conn_dispatch(conn) == 0)
-			nused += conn->ber.br_rptr - conn->ber.br_rbuf;
+			nused = conn->ber.br_rptr - conn->ber.br_rbuf;
 		else
 			break;
 	}
