@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.1 2010/11/05 16:58:12 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.2 2010/11/05 17:26:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -270,7 +270,7 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	urtwn_read_rom(sc);
 
 	printf(", %s\n", ether_sprintf(ic->ic_myaddr));
-	printf("%s: board type 0x%x, ROM ver %d, RF 6052 %dT%dR\n\n",
+	printf("%s: board type 0x%x, ROM ver %d, RF 6052 %dT%dR\n",
 	    sc->sc_dev.dv_xname, sc->board_type, sc->rom.version,
 	    sc->ntxchains, sc->nrxchains);
 
