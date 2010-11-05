@@ -303,7 +303,7 @@ send_igmp(u_int32_t src, u_int32_t dst, int type, int code,
     struct sockaddr_in sdst;
     struct ip *ip;
     struct igmp *igmp;
-    int setloop;
+    int setloop = 0;
 
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
