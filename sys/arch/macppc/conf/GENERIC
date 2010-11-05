@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.200 2010/09/23 16:21:46 yuo Exp $g
+#	$OpenBSD: GENERIC,v 1.201 2010/11/05 16:09:30 drahn Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -208,16 +208,16 @@ atapiscsi*	at pciide? flags 0x0000
 scsibus*	at atapiscsi?
 
 # USB Controllers
-ohci*		at pci?		# Open Host Controller
-ohci*		at cardbus?	# Open Host Controller
-uhci*		at pci?		# Universal Host Controller
-ehci*		at pci?		# Enhanced Host Controller
-ehci*		at cardbus?	# Enhanced Host Controller
+ohci*	at pci?			# Open Host Controller
+ohci*	at cardbus?		# Open Host Controller
+uhci*	at pci?			# Universal Host Controller
+ehci*	at pci?			# Enhanced Host Controller
+ehci*	at cardbus?		# Enhanced Host Controller
 
 # USB bus support
-usb*		at ohci?
-usb*		at uhci?
-usb*		at ehci?
+usb*	at ohci?
+usb*	at uhci?
+usb*	at ehci?
 
 # USB devices
 uhub*	at usb?			# USB Hubs
@@ -240,6 +240,8 @@ uslcom*	at uhub?		# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
 uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
+moscom*	at uhub?		# MosChip MCS7703 serial
+ucom*	at moscom?
 uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
 umsm*	at uhub?		# Qualcomm MSM EVDO
@@ -258,10 +260,14 @@ uhidev*	at uhub?		# Human Interface Devices
 tpms*	at uhidev?		# Apple touchpad mouse
 wsmouse* at tpms? mux 0
 ums*	at uhidev?		# USB mouse
-wsmouse* at ums? mux 0
+wsmouse*	at ums? mux 0
+uts*	at uhub?		# USB touchscreen
+wsmouse*	at uts? mux 0
+uhts*	 at uhidev?		# USB HID touch screen
+wsmouse* at uhts? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
-ucycom*	at uhidev?			# Cypress serial
+ucycom*	at uhidev?		# Cypress serial
 ucom*	at ucycom?
 uhid*	at uhidev?		# USB generic HID support
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
@@ -270,7 +276,7 @@ axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 cdce*	at uhub?		# CDC Ethernet
-urndis*	at uhub?		# Remote NDIS devices
+urndis*	at uhub?		# Remote NDIS Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
@@ -281,15 +287,20 @@ uscanner* at uhub?		# USB Scanners
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
+uberry*	at uhub?		# Research In Motion Blackberry
 ugen*	at uhub?		# USB Generic driver
-upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
+uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+otus*	at uhub?		# Atheros AR9001U
 zyd*	at uhub?		# Zydas ZD1211
+upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
+urtw*	at uhub?		# RealTek 8187
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 umbg*	at uhub?		# Meinberg Funkuhren USB5131
 uthum*	at uhidev?		# TEMPerHUM sensor
+utrh*	at uhidev?		# USBRH sensor
 utwitch* at uhidev?		# YUREX BBU sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
