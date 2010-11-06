@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.321 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.322 2010/11/06 16:57:34 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -215,6 +215,7 @@ void ns_scx200_setup_channel(struct channel_softc *);
 void acer_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void acer_setup_channel(struct channel_softc *);
 int  acer_pci_intr(void *);
+int  acer_dma_init(void *, int, int, void *, size_t, int);
 
 void pdc202xx_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void pdc202xx_setup_channel(struct channel_softc *);
@@ -5629,6 +5630,8 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		}
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
+		if (rev <= 0xC4)
+			sc->sc_wdcdev.dma_init = acer_dma_init;
 	}
 
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -5821,6 +5824,17 @@ acer_pci_intr(void *arg)
 		}
 	}
 	return (rv);
+}
+
+int
+acer_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int flags)
+{
+	/* Use PIO for LBA48 transfers. */
+	if (flags & WDC_DMA_LBA48)
+		return (EINVAL);
+
+	return (pciide_dma_init(v, channel, drive, databuf, datalen, flags));
 }
 
 void
