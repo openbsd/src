@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.80 2010/10/30 18:03:43 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.81 2010/11/06 00:09:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -192,6 +192,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(LOGITEC,		RT2870_1),
 	USB_ID(LOGITEC,		RT2870_2),
 	USB_ID(LOGITEC,		RT2870_3),
+	USB_ID(LOGITEC,		RT3020),
 	USB_ID(MELCO,		RT2870_1),
 	USB_ID(MELCO,		RT2870_2),
 	USB_ID(MELCO,		WLIUCAG300N),
