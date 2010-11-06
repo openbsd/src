@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.25 2010/07/02 09:20:26 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.26 2010/11/06 23:01:56 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -476,6 +476,8 @@ ragain:
 
 		LIST_INIT(&b->b_dep);
 
+		if (wu->swu_cb_active == 1)
+			panic("%s: sr_raid1_rw", DEVNAME(sd->sd_sc));
 		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
 
 		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid1: b_bcount: %d "
@@ -560,6 +562,9 @@ sr_raid1_intr(struct buf *bp)
 				printf("%s: retrying read on block %lld\n",
 				    DEVNAME(sc), b->b_blkno);
 				sr_ccb_put(ccb);
+				if (wu->swu_cb_active == 1)
+					panic("%s: sr_raid1_intr_cb",
+					    DEVNAME(sd->sd_sc));
 				TAILQ_INIT(&wu->swu_ccb);
 				wu->swu_state = SR_WU_RESTART;
 				if (sd->sd_scsi_rw(wu))
@@ -647,6 +652,8 @@ sr_raid1_recreate_wu(struct sr_workunit *wu)
 		DNPRINTF(SR_D_INTR, "%s: sr_raid1_recreate_wu: %p\n", wup);
 
 		/* toss all ccbs */
+		if (wu->swu_cb_active == 1)
+			panic("%s: sr_raid1_recreate_wu", DEVNAME(sd->sd_sc));
 		while ((ccb = TAILQ_FIRST(&wup->swu_ccb)) != NULL) {
 			TAILQ_REMOVE(&wup->swu_ccb, ccb, ccb_link);
 			sr_ccb_put(ccb);

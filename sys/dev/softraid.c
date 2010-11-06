@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.215 2010/10/12 00:53:32 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.216 2010/11/06 23:01:56 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -126,6 +126,7 @@ void			sr_rebuild(void *);
 void			sr_rebuild_thread(void *);
 void			sr_roam_chunks(struct sr_discipline *);
 int			sr_chunk_in_use(struct sr_softc *, dev_t);
+void			sr_startwu_callback(void *, void *);
 
 /* don't include these on RAMDISK */
 #ifndef SMALL_KERNEL
@@ -1806,6 +1807,8 @@ sr_wu_put(struct sr_workunit *wu)
 	wu->swu_fake = 0;
 	wu->swu_flags = 0;
 
+	if (wu->swu_cb_active == 1)
+		panic("%s: sr_wu_put", DEVNAME(sd->sd_sc));
 	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
 		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
 		sr_ccb_put(ccb);
@@ -2563,6 +2566,9 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 			busy = 0;
 
 			s = splbio();
+			if (wu->swu_cb_active == 1)
+				panic("%s: sr_hotspare_rebuild",
+				    DEVNAME(sd->sd_sc));
 			TAILQ_FOREACH(wu, &sd->sd_wu_pendq, swu_link) {
         			TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
                 			if (ccb->ccb_target == chunk_no)
@@ -2816,6 +2822,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK | M_ZERO);
 	sd->sd_sc = sc;
 	SLIST_INIT(&sd->sd_meta_opt);
+	sd->sd_workq = workq_create("srdis", 1, IPL_BIO);
+	if (sd->sd_workq == NULL) {
+		printf("%s: could not create workq\n", DEVNAME(sc));
+		goto unwind;
+	}
 	if (sr_discipline_init(sd, bc->bc_level)) {
 		printf("%s: could not initialize discipline\n", DEVNAME(sc));
 		goto unwind;
@@ -3407,6 +3418,9 @@ sr_discipline_shutdown(struct sr_discipline *sd)
 
 	sr_chunks_unwind(sc, &sd->sd_vol.sv_chunk_list);
 
+	if (sd->sd_workq)
+		workq_destroy(sd->sd_workq);
+
 	if (sd)
 		sr_discipline_free(sd);
 
@@ -3625,10 +3639,29 @@ sr_raid_sync(struct sr_workunit *wu)
 }
 
 void
+sr_startwu_callback(void *arg1, void *arg2)
+{
+	struct sr_discipline	*sd = arg1;
+	struct sr_workunit	*wu = arg2;
+	struct sr_ccb		*ccb;
+	int			s;
+
+	s = splbio();
+	if (wu->swu_cb_active == 1)
+		panic("%s: sr_startwu_callback", DEVNAME(sd->sd_sc));
+	wu->swu_cb_active = 1;
+
+	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link)
+		VOP_STRATEGY(&ccb->ccb_buf);
+
+	wu->swu_cb_active = 0;
+	splx(s);
+}
+
+void
 sr_raid_startwu(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
-	struct sr_ccb		*ccb;
 
 	splassert(IPL_BIO);
 
@@ -3643,9 +3676,8 @@ sr_raid_startwu(struct sr_workunit *wu)
 		TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
 
 	/* start all individual ios */
-	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
-		VOP_STRATEGY(&ccb->ccb_buf);
-	}
+	workq_queue_task(sd->sd_workq, &wu->swu_wqt, 0, sr_startwu_callback,
+	    sd, wu);
 }
 
 void
