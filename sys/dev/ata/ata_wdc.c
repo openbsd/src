@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.34 2010/07/23 07:47:12 jsg Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.35 2010/11/06 16:53:15 kettenis Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ _wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 	u_int8_t head, sect, cmd = 0;
 	int nblks;
 	int ata_delay;
-	int dma_flags = 0;
+	int error, dma_flags = 0;
 
 	WDCDEBUG_PRINT(("_wdc_ata_bio_start %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
@@ -249,10 +249,21 @@ again:
 				cmd = (ata_bio->flags & ATA_READ) ?
 				    WDCC_READDMA : WDCC_WRITEDMA;
 	    		/* Init the DMA channel. */
-			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
+			error = (*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
 			    (char *)xfer->databuf + xfer->c_skip,
-			    ata_bio->nbytes, dma_flags) != 0) {
+			    ata_bio->nbytes, dma_flags);
+			if (error) {
+				if (error == EINVAL) {
+					/*
+					 * We can't do DMA on this transfer
+					 * for some reason.  Fall back to
+					 * PIO.
+					 */
+					xfer->c_flags &= ~C_DMA;
+					error = 0;
+					goto do_pio;
+				}
 				ata_bio->error = ERR_DMA;
 				ata_bio->r_error = 0;
 				wdc_ata_bio_done(chp, xfer);
@@ -276,6 +287,7 @@ again:
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
+ do_pio:
 		ata_bio->nblks = min(nblks, ata_bio->multi);
 		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
