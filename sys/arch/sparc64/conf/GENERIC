@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.258 2010/09/26 20:39:08 miod Exp $
+#	$OpenBSD: GENERIC,v 1.259 2010/11/06 12:24:28 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -226,6 +226,7 @@ mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ural*	at uhub?		# Ralink RT2500USB
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
+urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211
