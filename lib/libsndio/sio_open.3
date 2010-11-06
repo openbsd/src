@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.25 2010/11/06 20:25:42 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.26 2010/11/06 22:17:26 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -669,7 +669,8 @@ The callback is always invoked when
 is called in order to provide the initial volume.
 An application can safely assume that once
 .Fn sio_onvol
-returns non-zero value, the callback has already been invoked and thus
+has returned a non-zero value,
+the callback has been invoked and thus
 the current volume is available.
 If there's no volume setting available,
 .Fn sio_onvol
