@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.520 2010/10/23 18:37:46 damien Exp $
+$OpenBSD: usbdevs,v 1.521 2010/11/06 00:09:05 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2173,6 +2173,7 @@ product LOGITEC	RTL8187		0x010c	RTL8187
 product LOGITEC RT2870_1	0x0162	RT2870
 product LOGITEC RT2870_2	0x0163	RT2870
 product LOGITEC RT2870_3	0x0164	RT2870
+product LOGITEC RT3020		0x0168	RT3020
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
