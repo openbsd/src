@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.3 2010/11/05 17:57:10 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.4 2010/11/06 12:27:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -242,20 +242,22 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->calib_to, urtwn_calib_to, sc);
 
 	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		printf(": could not set configuration no\n");
+		printf("%s: could not set configuration no\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/* Get the first interface handle. */
 	error = usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface);
 	if (error != 0) {
-		printf(": could not get interface handle\n");
+		printf("%s: could not get interface handle\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	error = urtwn_read_chipid(sc);
 	if (error != 0) {
-		printf(": unsupported test chip\n");
+		printf("%s: unsupported test chip\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -269,10 +271,9 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	}
 	urtwn_read_rom(sc);
 
-	printf(", %s\n", ether_sprintf(ic->ic_myaddr));
-	printf("%s: board type 0x%x, ROM ver %d, RF 6052 %dT%dR\n",
-	    sc->sc_dev.dv_xname, sc->board_type, sc->rom.version,
-	    sc->ntxchains, sc->nrxchains);
+	printf("%s: board type 0x%x, RF 6052 %dT%dR, address %s\n",
+	    sc->sc_dev.dv_xname, sc->board_type, sc->ntxchains,
+	    sc->nrxchains, ether_sprintf(ic->ic_myaddr));
 
 	if (urtwn_open_pipes(sc) != 0)
 		return;
@@ -727,7 +728,7 @@ urtwn_rf_write(struct urtwn_softc *sc, int chain, uint8_t addr, uint32_t val)
 uint32_t
 urtwn_rf_read(struct urtwn_softc *sc, int chain, uint8_t addr)
 {
-	uint32_t reg[2], val;
+	uint32_t reg[R92C_MAX_CHAINS], val;
 
 	reg[0] = urtwn_bb_read(sc, R92C_HSSI_PARAM2(0));
 	if (chain != 0)

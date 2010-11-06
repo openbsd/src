@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwnreg.h,v 1.1 2010/11/05 16:58:12 damien Exp $	*/
+/*	$OpenBSD: if_urtwnreg.h,v 1.2 2010/11/06 12:27:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -857,15 +857,15 @@ struct r92c_rom {
 	uint8_t		macaddr[6];
 	uint8_t		string[61];	/* "Realtek" */
 	uint8_t		subcustomer_id;
-	uint8_t		cck_tx_pwr[2][3];
-	uint8_t		ht40_1s_tx_pwr[2][3];
+	uint8_t		cck_tx_pwr[R92C_MAX_CHAINS][3];
+	uint8_t		ht40_1s_tx_pwr[R92C_MAX_CHAINS][3];
 	uint8_t		ht40_2s_tx_pwr_diff[3];
 	uint8_t		ht20_tx_pwr_diff[3];
 	uint8_t		ofdm_tx_pwr_diff[3];
 	uint8_t		ht40_max_pwr[3];
 	uint8_t		ht20_max_pwr[3];
 	uint8_t		xtal_calib;
-	uint8_t		tssi[2];
+	uint8_t		tssi[R92C_MAX_CHAINS];
 	uint8_t		thermal_meter;
 	uint8_t		rf_opt1;
 #define R92C_ROM_RF1_REGULATORY_M	0x07
