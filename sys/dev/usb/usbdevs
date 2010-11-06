@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.521 2010/11/06 00:09:05 deraadt Exp $
+$OpenBSD: usbdevs,v 1.522 2010/11/06 00:12:32 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2967,6 +2967,7 @@ product PLANEX2 RTL8188CU_2	0xed17	RTL8188CU
 product PLANEX3 GWUS54GZ	0xab10	GW-US54GZ
 product PLANEX2 GWUS300MINIS	0xab24	GW-US300MiniS
 product PLANEX2	RT3070		0xab25	RT3070
+product PLANEX2 GWUSNANO	0xab28  GW-USNano
 product PLANEX2 GWUSMICRO300	0xab29	GW-USMicro300
 
 /* Plantronics products */
