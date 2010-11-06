@@ -92,7 +92,7 @@
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libskey.so.5.1
-./usr/lib/libsndio.so.3.3
+./usr/lib/libsndio.so.4.0
 ./usr/lib/libssl.so.16.0
 ./usr/lib/libstdc++.so.43.0
 ./usr/lib/libtermcap.so.12.0
