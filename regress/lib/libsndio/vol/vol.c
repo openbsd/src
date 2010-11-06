@@ -103,7 +103,8 @@ main(int argc, char **argv) {
 		fprintf(stderr, "sio_setpar() failed\n");
 		exit(1);
 	}
-	sio_onvol(hdl, onvol, NULL);
+	if (!sio_onvol(hdl, onvol, NULL))
+		fprintf(stderr, "warning: no volume knob on this device\n");
 	fprintf(stderr, "use ``+'' and ``-'' to adjust the volume\n");
 	if (!sio_start(hdl)) {
 		fprintf(stderr, "sio_start() failed\n");

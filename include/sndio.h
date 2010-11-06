@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.3 2009/07/25 11:27:14 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.4 2010/11/06 20:25:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -87,12 +87,6 @@ struct sio_cap {
 #define MIO_IN		8
 
 /*
- * maximum size of the encording string (the longest possible
- * encoding is ``s24le3msb'')
- */
-#define SIO_ENCMAX	10
-
-/*
  * default bytes per sample for the given bits per sample
  */
 #define SIO_BPS(bits) (((bits) <= 8) ? 1 : (((bits) <= 16) ? 2 : 4))
@@ -107,16 +101,6 @@ struct sio_cap {
 #endif
 
 /*
- * default device for the sun audio(4) back-end
- */
-#define SIO_SUN_PATH	"/dev/audio"
-
-/*
- * default socket name for the aucat(1) back-end
- */
-#define SIO_AUCAT_PATH	"default"
-
-/*
  * maximum value of volume, eg. for sio_setvol()
  */
 #define SIO_MAXVOL 127
@@ -127,10 +111,7 @@ extern "C" {
 
 struct pollfd;
 
-int sio_strtoenc(struct sio_par *, char *);
-int sio_enctostr(struct sio_par *, char *);
 void sio_initpar(struct sio_par *);
-
 struct sio_hdl *sio_open(const char *, unsigned, int);
 void sio_close(struct sio_hdl *);
 int sio_setpar(struct sio_hdl *, struct sio_par *);
@@ -146,7 +127,7 @@ int sio_pollfd(struct sio_hdl *, struct pollfd *, int);
 int sio_revents(struct sio_hdl *, struct pollfd *);
 int sio_eof(struct sio_hdl *);
 int sio_setvol(struct sio_hdl *, unsigned);
-void sio_onvol(struct sio_hdl *, void (*)(void *, unsigned), void *);
+int sio_onvol(struct sio_hdl *, void (*)(void *, unsigned), void *);
 
 struct mio_hdl *mio_open(const char *, unsigned, int);
 void mio_close(struct mio_hdl *);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.24 2010/04/26 07:11:10 jakemsr Exp $
+.\" $OpenBSD: sio_open.3,v 1.25 2010/11/06 20:25:42 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2010 $
+.Dd $Mdocdate: November 6 2010 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@
 .Fn "sio_eof" "struct sio_hdl *hdl"
 .Ft "int"
 .Fn "sio_setvol" "struct sio_hdl *hdl" "unsigned vol"
-.Ft "void"
+.Ft "int"
 .Fn "sio_onvol" "struct sio_hdl *hdl" "void (*cb)(void *arg, unsigned vol)" "void *arg"
 .Ft "void"
 .Fn "sio_initpar" "struct sio_par *par"
@@ -669,8 +669,18 @@ The callback is always invoked when
 is called in order to provide the initial volume.
 An application can safely assume that once
 .Fn sio_onvol
-returns, the callback has already been invoked and thus
+returns non-zero value, the callback has already been invoked and thus
 the current volume is available.
+If there's no volume setting available,
+.Fn sio_onvol
+returns 0 and the callback is never invoked and calls to
+.Fn sio_setvol
+are ignored.
+.Pp
+The
+.Fn sio_onvol
+function can be called with a NULL argument to check whether
+a volume knob is available.
 .Ss Error handling
 Errors related to the audio subsystem
 (like hardware errors, dropped connections) and
