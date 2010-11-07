@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.13 2010/09/03 15:40:08 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.14 2010/11/07 18:00:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -631,7 +631,7 @@ ar5008_rx_free(struct athn_softc *sc)
 	free(rxq->bf, M_DEVBUF);
 
 	/* Free Rx descriptors. */
-	if (rxq->descs != NULL) {
+	if (rxq->map != NULL) {
 		if (rxq->descs != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, rxq->map);
 			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)rxq->descs,
