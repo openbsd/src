@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_schedparam.3,v 1.2 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_schedparam.3,v 1.3 2010/11/07 13:29:21 fgsch Exp $
 .\" Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
 .\" All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/pthread_schedparam.3,v 1.4 2001/07/15 07:53:27 dd Exp $
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 7 2010 $
 .Dt PTHREAD_SCHEDPARAM 3
 .Os
 .Sh NAME
@@ -53,10 +53,11 @@ The scheduling policy for a thread can either be
 (round-robin).
 The thread priority (accessed via
 .Va param->sched_priority )
-must be at least
-.Dv PTHREAD_MIN_PRIORITY
-and no more than
-.Dv PTHREAD_MAX_PRIORITY .
+must be within the range returned by the
+.Fn sched_get_priority_min
+and
+.Fn sched_get_priority_max
+functions.
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
@@ -81,6 +82,9 @@ will fail if:
 Non-existent thread
 .Va thread .
 .El
+.Sh SEE ALSO
+.Xr sched_get_priority_max 3 ,
+.Xr sched_get_priority_min 3
 .Sh STANDARDS
 .Fn pthread_setschedparam
 and

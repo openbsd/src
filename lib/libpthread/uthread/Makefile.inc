@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.22 2010/02/03 20:49:00 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.23 2010/11/07 13:29:21 fgsch Exp $
 # $FreeBSD: Makefile.inc,v 1.19 1999/08/28 00:03:19 peter Exp $
 
 # uthread sources
@@ -7,6 +7,7 @@
 CFLAGS += -I${SRCDIR}/arch/${MACHINE_CPU}
 
 SRCS+= \
+	sched_prio.c \
 	uthread_accept.c \
 	uthread_atfork.c \
 	uthread_attr_destroy.c \
