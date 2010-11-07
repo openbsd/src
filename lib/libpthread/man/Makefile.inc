@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.25 2010/11/07 13:29:21 fgsch Exp $
+# $OpenBSD: Makefile.inc,v 1.26 2010/11/07 20:18:22 deraadt Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -59,7 +59,7 @@ MAN+=	\
 	pthread_suspend_np.3 \
 	pthread_testcancel.3 \
 	pthread_yield.3 \
-	sched_prio.3 \
+	sched_get_priority_min.3 \
 	sem_destroy.3 \
 	sem_getvalue.3 \
 	sem_init.3 \
@@ -104,8 +104,7 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	pthread_testcancel.3 pthread_setcancelstate.3 \
 	pthread_testcancel.3 pthread_setcanceltype.3 \
 	pthread_getconcurrency.3 pthread_setconcurrency.3 \
-	sched_prio.3 sched_get_priority_max.3 \
-	sched_prio.3 sched_get_priority_min.3 \
+	sched_get_priority_min.3 sched_get_priority_max.3 \
 	sem_open.3 sem_close.3 \
 	sem_open.3 sem_unlink.3 \
 	sem_wait.3 sem_trywait.3
