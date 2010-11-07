@@ -5496,6 +5496,8 @@
 ./usr/share/man/cat3/scandir.0
 ./usr/share/man/cat3/scanf.0
 ./usr/share/man/cat3/scanw.0
+./usr/share/man/cat3/sched_get_priority_max.0
+./usr/share/man/cat3/sched_get_priority_min.0
 ./usr/share/man/cat3/scr_dump.0
 ./usr/share/man/cat3/scr_init.0
 ./usr/share/man/cat3/scr_restore.0
