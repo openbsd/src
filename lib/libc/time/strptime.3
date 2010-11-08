@@ -1,6 +1,6 @@
-.\"	$OpenBSD: strptime.3,v 1.13 2010/04/12 01:17:33 tedu Exp $
+.\"	$OpenBSD: strptime.3,v 1.14 2010/11/08 19:16:16 jasper Exp $
 .\"
-.\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This file was contributed to The NetBSD Foundation by Klaus Klein.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 12 2010 $
+.Dd $Mdocdate: November 8 2010 $
 .Dt STRPTIME 3
 .Os
 .Sh NAME
@@ -95,6 +95,13 @@ the date as %m/%d/%y.
 .It Cm \&%e
 the same as
 .Cm \&%d .
+.It Cm \&%F
+the date as %Y-%m-%d
+(the ISO 8601 date format).
+.It Cm \&%g
+the year corresponding to the ISO week number, without the century.
+.It Cm \&%G
+the year corresponding to the ISO week number, with the century.
 .It Cm \&%h
 the same as
 .Cm \&%b .
@@ -137,11 +144,21 @@ leading zeros are permitted but not required.
 any whitespace.
 .It Cm \&%T
 the time as %H:%M:%S.
+.It Cm \&%u
+the day of the week as a decimal number, where Monday = 1.
 .It Cm \&%U
 the week number of the year (Sunday as the first day of the week)
 as a decimal number [0,53];
 leading zeros are permitted but not required.
 All days in a year preceding the first Sunday are considered to be in week 0.
+.It Cm \&%V
+the ISO 8601:1988 week number as a decimal number.
+If the week (starting on Monday) that contains January 1 has more than
+three days in the new year, then it is considered the first week of the
+year.
+If it has fewer than four days in the new year, then it is considered
+the last week of the previous year.
+Weeks are numbered from 1 to 53.
 .It Cm \&%w
 the weekday as a decimal number [0,6], with 0 representing Sunday;
 leading zeros are permitted but not required.
@@ -163,7 +180,68 @@ to years in the twenty-first century (2000 to 2068 inclusive).
 Leading zeros are permitted but not required.
 .It Cm \&%Y
 the year, including the century (i.e., 1998).
-.It Cm \&%%
+.It Cm \&%z
+an ISO 8601 or RFC-2822 timezone specification.
+This is one of the following:
+the offset from
+Coordinated Universal Time
+.Pq Ql UTC
+specified as:
+.Dq [+-]hhmm ,
+.Dq [+-]hh:mm ,
+or
+.Dq [+-]hh ;
+.Ql UTC
+specified as:
+.Dq GMT
+.Pq Ql Greenwich Mean Time ,
+.Dq UT
+.Pq Ql Universal Time ,
+or
+.Dq Z
+.Pq Ql Zulu Time ;
+a three character US timezone specified as:
+.Dq EDT ,
+.Dq EST ,
+.Dq CDT ,
+.Dq CST ,
+.Dq MDT ,
+.Dq MST ,
+.Dq PDT ,
+or
+.Dq PST ,
+with the first letter standing for
+.Ql Eastern
+.Pq Dq E ,
+.Ql Central
+.Pq Dq C ,
+.Ql Mountain
+.Pq Dq M
+or
+.Ql Pacific
+.Pq Dq P ,
+and the second letter standing for
+.Ql Daylight
+.Po
+.Dq D
+or summer
+.Pc
+time
+or
+.Ql Standard
+.Pq Dq S
+time;
+a single letter military timezone specified as:
+.Dq A
+through
+.Dq I
+and 
+.Dq K
+through
+.Dq Y .
+.It Cm \&%Z
+timezone name or no characters when time zone information is unavailable.
+It Cm \&%%
 A `%' is read.
 No argument is converted.
 .El
@@ -210,3 +288,24 @@ The
 .Fn strptime
 function conforms to
 .St -xpg4.2 .
+.Pp
+The
+.Ql \&%G ,
+.Ql \&%g ,
+.Ql \&%u ,
+.Ql \&%V ,
+.Ql \&%Y ,
+and
+.Ql \&%Z
+conversion specifications are extensions.
+.Sh BUGS
+The
+.Cm \&%Z
+format specifier only accepts timezone
+abbreviations of the local timezone,
+or the value
+.Dq GMT .
+This limitation is caused by the ambiguity
+of overloaded timezone abbreviations,
+for example EST is both Eastern Standard
+Time and Eastern Australia Summer Time.

@@ -1,8 +1,8 @@
-/*	$OpenBSD: strptime.c,v 1.12 2008/06/26 05:42:05 ray Exp $ */
+/*	$OpenBSD: strptime.c,v 1.13 2010/11/08 19:16:16 jasper Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Klaus Klein.
@@ -46,9 +46,22 @@
 #define _ALT_O			0x02
 #define	_LEGAL_ALT(x)		{ if (alt_format & ~(x)) return (0); }
 
+static char gmt[] = { "GMT" };
+#ifdef TM_ZONE
+static char utc[] = { "UTC" };
+#endif
+/* RFC-822/RFC-2822 */
+static const char * const nast[5] = {
+       "EST",    "CST",    "MST",    "PST",    "\0\0\0"
+};
+static const char * const nadt[5] = {
+       "EDT",    "CDT",    "MDT",    "PDT",    "\0\0\0"
+};
 
 static	int _conv_num(const unsigned char **, int *, int, int);
 static	char *_strptime(const char *, const char *, struct tm *, int);
+static	const u_char *_find_string(const u_char *, int *, const char * const *,
+	    const char * const *, int);
 
 
 char *
@@ -61,9 +74,10 @@ static char *
 _strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 {
 	unsigned char c;
-	const unsigned char *bp;
+	const unsigned char *bp, *ep;
 	size_t len;
-	int alt_format, i;
+	int alt_format, i, offs;
+	int neg = 0;
 	static int century, relyear;
 
 	if (initialize) {
@@ -125,7 +139,13 @@ literal:
 			if (!(bp = _strptime(bp, "%m/%d/%y", tm, 0)))
 				return (NULL);
 			break;
-	
+
+		case 'F':	/* The date as "%Y-%m-%d". */
+			_LEGAL_ALT(0);
+			if (!(bp = _strptime(bp, "%Y/%m/%d", tm, 0)))
+				return (NULL);
+			continue;
+
 		case 'R':	/* The time as "%H:%M". */
 			_LEGAL_ALT(0);
 			if (!(bp = _strptime(bp, "%H:%M", tm, 0)))
@@ -312,6 +332,33 @@ literal:
 				return (NULL);
 			break;
 
+		case 'u':	/* The day of week, monday = 1. */
+			_LEGAL_ALT(_ALT_O);
+			if (!(_conv_num(&bp, &i, 1, 7)))
+				return (NULL);
+			tm->tm_wday = i % 7;
+			continue;
+
+		case 'g':	/* The year corresponding to the ISO week
+				 * number but without the century.
+				 */
+			if (!(_conv_num(&bp, &i, 0, 99)))
+				return (NULL);				
+			continue;
+
+		case 'G':	/* The year corresponding to the ISO week
+				 * number with century.
+				 */
+			do
+				bp++;
+			while (isdigit(*bp));
+			continue;
+
+		case 'V':	/* The ISO 8601:1988 week number as decimal */
+			if (!(_conv_num(&bp, &i, 0, 53)))
+				return (NULL);
+			continue;
+
 		case 'Y':	/* The year. */
 			_LEGAL_ALT(_ALT_E);
 			if (!(_conv_num(&bp, &i, 0, 9999)))
@@ -326,6 +373,163 @@ literal:
 			if (!(_conv_num(&bp, &relyear, 0, 99)))
 				return (NULL);
 			break;
+
+		case 'Z':
+			tzset();
+			if (strncmp((const char *)bp, gmt, 3) == 0) {
+				tm->tm_isdst = 0;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = gmt;
+#endif
+				bp += 3;
+			} else {
+				ep = _find_string(bp, &i,
+					       	 (const char * const *)tzname,
+					       	  NULL, 2);
+				if (ep != NULL) {
+					tm->tm_isdst = i;
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -(timezone);
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = tzname[i];
+#endif
+				}
+				bp = ep;
+			}
+			continue;
+
+		case 'z':
+			/*
+			 * We recognize all ISO 8601 formats:
+			 * Z	= Zulu time/UTC
+			 * [+-]hhmm
+			 * [+-]hh:mm
+			 * [+-]hh
+			 * We recognize all RFC-822/RFC-2822 formats:
+			 * UT|GMT
+			 *          North American : UTC offsets
+			 * E[DS]T = Eastern : -4 | -5
+			 * C[DS]T = Central : -5 | -6
+			 * M[DS]T = Mountain: -6 | -7
+			 * P[DS]T = Pacific : -7 | -8
+			 *          Military
+			 * [A-IL-M] = -1 ... -9 (J not used)
+			 * [N-Y]  = +1 ... +12
+			 */
+			while (isspace(*bp))
+				bp++;
+
+			switch (*bp++) {
+			case 'G':
+				if (*bp++ != 'M')
+					return NULL;
+				/*FALLTHROUGH*/
+			case 'U':
+				if (*bp++ != 'T')
+					return NULL;
+				/*FALLTHROUGH*/
+			case 'Z':
+				tm->tm_isdst = 0;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = utc;
+#endif
+				continue;
+			case '+':
+				neg = 0;
+				break;
+			case '-':
+				neg = 1;
+				break;
+			default:
+				--bp;
+				ep = _find_string(bp, &i, nast, NULL, 4);
+				if (ep != NULL) {
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -5 - i;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = __UNCONST(nast[i]);
+#endif
+					bp = ep;
+					continue;
+				}
+				ep = _find_string(bp, &i, nadt, NULL, 4);
+				if (ep != NULL) {
+					tm->tm_isdst = 1;
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -4 - i;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = __UNCONST(nadt[i]);
+#endif
+					bp = ep;
+					continue;
+				}
+
+				if ((*bp >= 'A' && *bp <= 'I') ||
+				    (*bp >= 'L' && *bp <= 'Y')) {
+#ifdef TM_GMTOFF
+					/* Argh! No 'J'! */
+					if (*bp >= 'A' && *bp <= 'I')
+						tm->TM_GMTOFF =
+						    ('A' - 1) - (int)*bp;
+					else if (*bp >= 'L' && *bp <= 'M')
+						tm->TM_GMTOFF = 'A' - (int)*bp;
+					else if (*bp >= 'N' && *bp <= 'Y')
+						tm->TM_GMTOFF = (int)*bp - 'M';
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = NULL; /* XXX */
+#endif
+					bp++;
+					continue;
+				}
+				return NULL;
+			}
+			offs = 0;
+			for (i = 0; i < 4; ) {
+				if (isdigit(*bp)) {
+					offs = offs * 10 + (*bp++ - '0');
+					i++;
+					continue;
+				}
+				if (i == 2 && *bp == ':') {
+					bp++;
+					continue;
+				}
+				break;
+			}
+			switch (i) {
+			case 2:
+				offs *= 100;
+				break;
+			case 4:
+				i = offs % 100;
+				if (i >= 60)
+					return NULL;
+				/* Convert minutes into decimal */
+				offs = (offs / 100) * 100 + (i * 50) / 30;
+				break;
+			default:
+				return NULL;
+			}
+			if (neg)
+				offs = -offs;
+			tm->tm_isdst = 0;	/* XXX */
+#ifdef TM_GMTOFF
+			tm->TM_GMTOFF = offs;
+#endif
+#ifdef TM_ZONE
+			tm->TM_ZONE = NULL;	/* XXX */
+#endif
+			continue;
 
 		/*
 		 * Miscellaneous conversions.
@@ -385,4 +589,26 @@ _conv_num(const unsigned char **buf, int *dest, int llim, int ulim)
 
 	*dest = result;
 	return (1);
+}
+
+static const u_char *
+_find_string(const u_char *bp, int *tgt, const char * const *n1,
+		const char * const *n2, int c)
+{
+	int i;
+	unsigned int len;
+
+	/* check full name - then abbreviated ones */
+	for (; n1 != NULL; n1 = n2, n2 = NULL) {
+		for (i = 0; i < c; i++, n1++) {
+			len = strlen(*n1);
+			if (strncasecmp(*n1, (const char *)bp, len) == 0) {
+				*tgt = i;
+				return bp + len;
+			}
+		}
+	}
+
+	/* Nothing matched */
+	return NULL;
 }
