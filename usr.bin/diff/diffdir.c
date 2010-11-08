@@ -1,7 +1,7 @@
-/*	$OpenBSD: diffdir.c,v 1.38 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.39 2010/11/08 15:49:13 millert Exp $	*/
 
 /*
- * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2003, 2010 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,9 +37,8 @@
 #include "diff.h"
 #include "xmalloc.h"
 
-static int dircompare(const void *, const void *);
-static int excluded(const char *);
-static struct dirent **slurpdir(char *, char **, int);
+static int selectfile(struct dirent *);
+static struct dirent **slurpdir(char *, int);
 static void diffit(struct dirent *, char *, size_t, char *, size_t, int);
 
 #define d_status	d_type		/* we need to store status for -l */
@@ -50,11 +49,10 @@ static void diffit(struct dirent *, char *, size_t, char *, size_t, int);
 void
 diffdir(char *p1, char *p2, int flags)
 {
-	struct dirent **dirp1, **dirp2, **dp1, **dp2;
-	struct dirent *dent1, *dent2;
+	struct dirent *dent1, **dp1, **dirp1 = NULL;
+	struct dirent *dent2, **dp2, **dirp2 = NULL;
 	size_t dirlen1, dirlen2;
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
-	char *dirbuf1, *dirbuf2;
 	int pos;
 
 	dirlen1 = strlcpy(path1, *p1 ? p1 : ".", sizeof(path1));
@@ -79,11 +77,10 @@ diffdir(char *p1, char *p2, int flags)
 	}
 
 	/* get a list of the entries in each directory */
-	dp1 = dirp1 = slurpdir(path1, &dirbuf1, Nflag + Pflag);
-	dp2 = dirp2 = slurpdir(path2, &dirbuf2, Nflag);
-	if (dirp1 == NULL || dirp2 == NULL) {
+	dp1 = dirp1 = slurpdir(path1, Nflag + Pflag);
+	dp2 = dirp2 = slurpdir(path2, Nflag);
+	if (dirp1 == NULL || dirp2 == NULL)
 		goto closem;
-	}
 
 	/*
 	 * If we were given a starting point, find it.
@@ -146,115 +143,40 @@ diffdir(char *p1, char *p2, int flags)
 	}
 
 closem:
-	if (dirbuf1 != NULL) {
+	if (dirp1 != NULL) {
+		for (dp1 = dirp1; (dent1 = *dp1) != NULL; dp1++)
+			xfree(dent1);
 		xfree(dirp1);
-		xfree(dirbuf1);
 	}
-	if (dirbuf2 != NULL) {
+	if (dirp2 != NULL) {
+		for (dp2 = dirp2; (dent2 = *dp2) != NULL; dp2++)
+			xfree(dent2);
 		xfree(dirp2);
-		xfree(dirbuf2);
 	}
 }
 
 /*
- * Read in a whole directory's worth of struct dirents, culling
- * out the "excluded" ones.
- * Returns an array of struct dirent *'s that point into the buffer
- * returned via bufp.  Caller is responsible for free()ing both of these.
+ * Read in a whole directory, culling out the "excluded" files.
+ * Returns an array of struct dirent *'s in alphabetic order.
+ * Caller is responsible for free()ing each array element and the array itself.
  */
 static struct dirent **
-slurpdir(char *path, char **bufp, int enoentok)
+slurpdir(char *dirname, int enoentok)
 {
-	char *buf, *ebuf, *cp;
-	size_t bufsize, have, need;
-	off_t base;
-	int fd, nbytes, entries;
-	struct stat sb;
-	struct dirent **dirlist, *dp;
+	struct dirent **namelist = NULL;
+	int rval;
 
-	*bufp = NULL;
-	if ((fd = open(path, O_RDONLY, 0644)) == -1) {
-		static struct dirent *dummy;
-
-		if (!enoentok || errno != ENOENT) {
-			warn("%s", path);
-			return (NULL);
+	rval = scandir(dirname, &namelist, selectfile, alphasort);
+	if (rval == -1) {
+		if (enoentok && errno == ENOENT) {
+			namelist = xmalloc(sizeof(struct dirent *));
+			namelist[0] = NULL;
+		} else {
+			warn("%s", dirname);
 		}
-		return (&dummy);
-	}
-	if (fstat(fd, &sb) == -1) {
-		warn("%s", path);
-		close(fd);
-		return (NULL);
 	}
 
-	need = roundup(sb.st_blksize, sizeof(struct dirent));
-	have = bufsize = roundup(MAX(sb.st_size, sb.st_blksize),
-	    sizeof(struct dirent)) + need;
-	ebuf = buf = xmalloc(bufsize);
-
-	do {
-		if (have < need) {
-		    bufsize += need;
-		    have += need;
-		    cp = xrealloc(buf, 1, bufsize);
-		    ebuf = cp + (ebuf - buf);
-		    buf = cp;
-		}
-		nbytes = getdirentries(fd, ebuf, have, &base);
-		if (nbytes == -1) {
-			warn("%s", path);
-			xfree(buf);
-			close(fd);
-			return (NULL);
-		}
-		ebuf += nbytes;
-		have -= nbytes;
-	} while (nbytes != 0);
-	close(fd);
-
-	/*
-	 * We now have all the directory entries in our buffer.
-	 * However, in order to easily sort them we need to convert
-	 * the buffer into an array.
-	 */
-	for (entries = 0, cp = buf; cp < ebuf; ) {
-		dp = (struct dirent *)cp;
-		if (dp->d_fileno != 0)
-			entries++;
-		if (dp->d_reclen <= 0)
-			break;
-		cp += dp->d_reclen;
-	}
-	dirlist = xcalloc(sizeof(*dirlist), entries + 1);
-	for (entries = 0, cp = buf; cp < ebuf; ) {
-		dp = (struct dirent *)cp;
-		if (dp->d_fileno != 0 && !excluded(dp->d_name)) {
-			dp->d_status = 0;
-			dirlist[entries++] = dp;
-		}
-		if (dp->d_reclen <= 0)
-			break;
-		cp += dp->d_reclen;
-	}
-	dirlist[entries] = NULL;
-
-	qsort(dirlist, entries, sizeof(struct dirent *), dircompare);
-
-	*bufp = buf;
-	return (dirlist);
-}
-
-/*
- * Compare d_name in two dirent structures; for qsort(3).
- */
-static int
-dircompare(const void *vp1, const void *vp2)
-{
-	struct dirent *dp1 = *((struct dirent **) vp1);
-	struct dirent *dp2 = *((struct dirent **) vp2);
-
-	return (strcmp(dp1->d_name, dp2->d_name));
+	return (namelist);
 }
 
 /*
@@ -309,22 +231,26 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
 }
 
 /*
- * Exclude the given directory entry?
+ * Returns 1 if the directory entry should be included in the
+ * diff, else 0.  Checks the excludes list.
  */
 static int
-excluded(const char *entry)
+selectfile(struct dirent *dp)
 {
 	struct excludes *excl;
 
+	if (dp->d_fileno == 0)
+		return (0);
+
 	/* always skip "." and ".." */
-	if (entry[0] == '.' &&
-	    (entry[1] == '\0' || (entry[1] == '.' && entry[2] == '\0')))
-		return (1);
+	if (dp->d_name[0] == '.' && (dp->d_name[1] == '\0' ||
+	    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
+		return (0);
 
 	/* check excludes list */
 	for (excl = excludes_list; excl != NULL; excl = excl->next)
-		if (fnmatch(excl->pattern, entry, FNM_PATHNAME) == 0)
-			return (1);
+		if (fnmatch(excl->pattern, dp->d_name, FNM_PATHNAME) == 0)
+			return (0);
 
-	return (0);
+	return (1);
 }
