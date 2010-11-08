@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.3 2010/09/30 10:34:56 mikeb Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.4 2010/11/08 12:16:20 mikeb Exp $	*/
 /*	$vantronix: crypto.c,v 1.18 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ cipher_ivlength(struct iked_cipher *encr)
 size_t
 cipher_outlength(struct iked_cipher *encr, size_t inlen)
 {
-	return (inlen + inlen % encr->encr_length);
+	return (roundup(inlen, encr->encr_length));
 }
 
 struct iked_dsa *
