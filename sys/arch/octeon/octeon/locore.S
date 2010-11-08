@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1 2010/09/20 06:32:30 syuu Exp $ */
+/*	$OpenBSD: locore.S,v 1.2 2010/11/08 12:36:57 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -51,7 +51,7 @@ start:
 	dmtc0	t0, COP_0_CVMCTL
 
 /* initialize cvmmemctl */
-/* 
+/*
 	dli	t0, 0x1846104 # If you want to skip write buffer, use this
 */
 	dli	t0, 0x46104
@@ -122,7 +122,7 @@ END(get_cvmmemctl)
 #if defined(MULTIPROCESSOR)
 LEAF(hw_cpu_spinup_trampoline, 0)
 	mfc0	v0, COP_0_STATUS_REG
-	li	v1, ~SR_INT_ENAB
+	li	v1, ~(SR_INT_ENAB | SR_ERL | SR_EXL)
 	and	v0, v1
 	ori	v0, SR_KX | SR_UX
 	mtc0	v0, COP_0_STATUS_REG		# disable all interrupts
@@ -147,23 +147,11 @@ LEAF(hw_setcurcpu, 0)
 END(hw_setcurcpu)
 
 /*
- * This function must be implemented in assembly because it is called early
- * in AP boot without a valid stack.
- */
-LEAF(platform_processor_id, 0)
-	jr	ra
-	rdhwr	v0, $0
-END(platform_processor_id)
-
-/*
  * Called on APs to wait until they are told to launch.
  */
 LEAF(octeon_ap_wait, 0)
-	jal	platform_processor_id
-	nop
-
 1:	ll	t0, octeon_ap_boot
-	bne	v0, t0, 1b
+	bne	t2, t0, 1b
 	nop
 
 	move	t0, zero
