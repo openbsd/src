@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.64 2010/11/04 09:17:38 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.65 2010/11/08 14:05:09 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -422,7 +422,7 @@ diff_loop() {
 				echo ""
 			fi
 		else
-			echo "===> ${COMPFILE#.} was not found on the target system"
+			# file does not exist on the target system
 			if [ "${IS_LINK}" ]; then
 				if [ -n "${DIFFMODE}" ]; then
 					echo ""
