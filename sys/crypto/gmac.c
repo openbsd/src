@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.c,v 1.1 2010/09/22 11:54:23 mikeb Exp $	*/
+/*	$OpenBSD: gmac.c,v 1.2 2010/11/08 10:27:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mike@vantronix.net>
@@ -93,9 +93,7 @@ ghash_update(GHASH_CTX *ctx, uint8_t *X, size_t len)
 	bcopy(ctx->S, ctx->Z, GMAC_BLOCK_LEN);
 }
 
-/* defines from xform.c */
-#define AES_GCM_SALTSIZE	4
-#define AES_GCM_IVSIZE		8
+#define AESCTR_NONCESIZE	4
 
 void
 AES_GMAC_Init(AES_GMAC_CTX *ctx)
@@ -110,9 +108,9 @@ void
 AES_GMAC_Setkey(AES_GMAC_CTX *ctx, const uint8_t *key, uint16_t klen)
 {
 	ctx->rounds = rijndaelKeySetupEnc(ctx->K, (u_char *)key,
-	    (klen - AES_GCM_SALTSIZE) * 8);
+	    (klen - AESCTR_NONCESIZE) * 8);
 	/* copy out salt to the counter block */
-	bcopy(key + klen - AES_GCM_SALTSIZE, ctx->J, AES_GCM_SALTSIZE);
+	bcopy(key + klen - AESCTR_NONCESIZE, ctx->J, AESCTR_NONCESIZE);
 	/* prepare a hash subkey */
 	rijndaelEncrypt(ctx->K, ctx->rounds, ctx->ghash.H, ctx->ghash.H);
 }
@@ -121,7 +119,7 @@ void
 AES_GMAC_Reinit(AES_GMAC_CTX *ctx, const uint8_t *iv, uint16_t ivlen)
 {
 	/* copy out IV to the counter block */
-	bcopy(iv, ctx->J + AES_GCM_SALTSIZE, ivlen);
+	bcopy(iv, ctx->J + AESCTR_NONCESIZE, ivlen);
 }
 
 int
