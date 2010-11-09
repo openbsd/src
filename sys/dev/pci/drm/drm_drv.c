@@ -1441,7 +1441,7 @@ drm_gem_flink_ioctl(struct drm_device *dev, void *data,
 	struct drm_gem_flink	*args = data;
 	struct drm_obj		*obj;
 
-	if (!dev->driver->flags & DRIVER_GEM)
+	if (!(dev->driver->flags & DRIVER_GEM))
 		return (ENODEV);
 
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
@@ -1476,7 +1476,7 @@ drm_gem_open_ioctl(struct drm_device *dev, void *data,
 	struct drm_obj		*obj, search;
 	int			 ret, handle;
 
-	if (!dev->driver->flags & DRIVER_GEM)
+	if (!(dev->driver->flags & DRIVER_GEM))
 		return (ENODEV);
 
 	search.name = args->name;
