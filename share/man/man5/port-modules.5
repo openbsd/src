@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.79 2010/10/26 14:30:09 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.80 2010/11/09 17:39:10 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 26 2010 $
+.Dd $Mdocdate: November 9 2010 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -499,7 +499,9 @@ May affect the regress target.
 Sets MODRUBY_REV, RUBY, RAKE, RSPEC, MODRUBY_RUN_DEPENDS, MODRUBY_LIB_DEPENDS,
 MODRUBY_BUILD_DEPENDS, MODRUBY_ICONV_DEPENDS, MODRUBY_LIBDIR, MODRUBY_DOCDIR,
 MODRUBY_EXAMPLEDIR, MODRUBY_ARCH, MODRUBY_REGRESS, MODRUBY_RUBY_ADJ,
-MODRUBY_ADJ_FILES.
+MODRUBY_ADJ_FILES, GEM_BIN_SUFFIX, MODRUBY_LIBREV, MODRUBY_BINREV,
+MODRUBY_PKGSPEC, MODRUBY_PKG_PREFIX, MODRUBY_RAKE_DEPENDS,
+MODRUBY_RSPEC_DEPENDS, MODRUBY_WANTLIB.
 RUBY, RAKE, and RSPEC are the path to the ruby, rake, and rspec binaries.
 MODRUBY_RUBY_ADJ is a command that takes filename arguments and replaces
 the /usr/bin/env ruby shebang lines with RUBY.
@@ -510,6 +512,31 @@ Appends to BUILD_DEPENDS unless MODRUBY_BUILDDEP is set to No or NO_BUILD
 is set to Yes.
 Appends to RUN_DEPENDS unless MODRUBY_RUNDEP is set to No.
 May affect the regress target if MODRUBY_REGRESS is used.
+Supports additional CONFIGURE_STYLEs, and setting specific CONFIGURE_STYLEs
+modifies some additional parameters.
+The "ruby gem" CONFIGURE_STYLE should be used for pure ruby gems without
+C extensions.
+This adds PKG_ARCH = * and adds ruby19 and jruby FLAVORs to the port, so the
+same port can build packages for multiple versions of ruby.
+The "ruby gem ext" CONFIGURE_STYLE should be used for ruby gems with C
+extensions.
+This adds SHARED_ONLY = Yes and adds MODRUBY_LIB_DEPENDS to LIB_DEPENDS and
+c, m, and MODRUBY_WANTLIB to WANTLIB.
+It also adds a ruby19 FLAVOR to build a ruby 1.9 version of the port.
+The "ruby extconf" CONFIGURE_STYLE is similar to the "ruby gem ext"
+CONFIGURE_STYLE, except that it is used when the package is not distributed
+as a ruby gem.
+In order for ruby 1.9 and jruby packages to be built from the same port
+directory, any gem dependencies specified in the port should use this format:
+:${MODRUBY_PKG_PREFIX}-foo-*:category/ruby-foo,${FLAVOR}.
+MODRUBY_PKG_PREFIX is ruby for ruby 1.8 ports (for backwards compatibility),
+ruby19 for ruby 1.9 ports, and jruby for jruby ports.
+Specifying the FLAVOR is necessary so that if you are building a ruby 1.9
+package for the current port, it depends on the ruby 1.9 package of the
+dependencies.
+For ruby gem ports that can work on both ruby 1.8 and ruby 1.9, any binary
+file entries in the PLIST should be appended with ${GEM_BIN_SUFFIX}.
+This is because the ruby 1.9 gem binaries are installed with a 19 suffix.
 .It lang/tcl
 Sets MODTCL_VERSION, MODTCL_BIN, MODTCL_INCDIR, MODTCL_LIBDIR,
 MODTCL_BUILD_DEPENDS, MODTCL_RUN_DEPENDS, MODTCL_LIB, MODTCL_LIB_DEPENDS,
