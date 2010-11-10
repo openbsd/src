@@ -1,4 +1,4 @@
-/* $OpenBSD: kexgexc.c,v 1.11 2006/11/06 21:25:28 markus Exp $ */
+/* $OpenBSD: kexgexc.c,v 1.12 2010/11/10 01:33:07 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,6 +25,8 @@
  */
 
 #include <sys/types.h>
+
+#include <openssl/dh.h>
 
 #include <stdio.h>
 #include <string.h>

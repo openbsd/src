@@ -1,4 +1,4 @@
-/* $OpenBSD: kexdhs.c,v 1.11 2010/02/26 20:29:54 djm Exp $ */
+/* $OpenBSD: kexdhs.c,v 1.12 2010/11/10 01:33:07 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
+
+#include <openssl/dh.h>
 
 #include "xmalloc.h"
 #include "buffer.h"
