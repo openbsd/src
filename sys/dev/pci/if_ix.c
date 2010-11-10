@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.45 2010/10/27 20:48:27 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.46 2010/11/10 15:23:25 claudio Exp $	*/
 
 /******************************************************************************
 
@@ -657,6 +657,11 @@ ixgbe_init(void *arg)
 	if (sc->hw.mac.type == ixgbe_mac_82599EB) {
 		gpie |= IXGBE_SDP1_GPIEN;
 		gpie |= IXGBE_SDP2_GPIEN;
+		/*
+		 * Set LL interval to max to reduce the number of low latency
+		 * interrupts hitting the card when the ring is getting full.
+		 */
+		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
 	}
 
 	/* Enable Fan Failure Interrupt */
@@ -2483,6 +2488,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	uint32_t	rxctrl, fctrl, srrctl, rxcsum;
 	uint32_t	reta, mrqc, hlreg, linkvec;
 	uint32_t	random[10];
+	uint32_t	llimod = 0;
 	int		i;
 
 	/*
@@ -2516,8 +2522,10 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_SRRCTL(0), srrctl);
 
 	/* Set Queue moderation rate */
+	if (sc->hw.mac.type == ixgbe_mac_82599EB)
+		llimod = IXGBE_EITR_LLI_MOD;
 	for (i = 0; i < IXGBE_MSGS; i++)
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(i), DEFAULT_ITR);
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(i), DEFAULT_ITR | llimod);
 
 	/* Set Link moderation lower */
 	linkvec = sc->num_tx_queues + sc->num_rx_queues;
