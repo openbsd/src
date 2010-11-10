@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.7 2010/11/05 07:49:03 martinh Exp $ */
+/*	$OpenBSD: conn.c,v 1.8 2010/11/10 08:00:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -132,6 +132,7 @@ conn_dispatch(struct conn *conn)
 {
 	int			 class;
 	struct request		*req;
+	u_char			*rptr;
 
 	++stats.requests;
 
@@ -142,25 +143,35 @@ conn_dispatch(struct conn *conn)
 	}
 
 	req->conn = conn;
+	rptr = conn->ber.br_rptr;	/* save where we start reading */
 
 	if ((req->root = ber_read_elements(&conn->ber, NULL)) == NULL) {
 		if (errno != ECANCELED) {
 			log_warnx("protocol error");
+			hexdump(rptr, conn->ber.br_rend - rptr,
+			    "failed to parse request from %zi bytes:",
+			    conn->ber.br_rend - rptr);
 			conn_disconnect(conn);
 		}
 		request_free(req);
 		return -1;
 	}
+	log_debug("consumed %d bytes", conn->ber.br_rptr - rptr);
 
 	/* Read message id and request type.
 	 */
 	if (ber_scanf_elements(req->root, "{ite",
 	    &req->msgid, &class, &req->type, &req->op) != 0) {
 		log_warnx("protocol error");
+		ldap_debug_elements(req->root, -1,
+		    "received invalid request on fd %d", conn->fd);
 		conn_disconnect(conn);
 		request_free(req);
 		return -1;
 	}
+
+	ldap_debug_elements(req->root, req->type,
+	    "received request on fd %d", conn->fd);
 
 	log_debug("got request type %d, id %lld", req->type, req->msgid);
 	request_dispatch(req);

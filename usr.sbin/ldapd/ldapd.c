@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.7 2010/10/26 01:58:22 william Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.8 2010/11/10 08:00:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 			csockpath = optarg;
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 		default:
 			usage();

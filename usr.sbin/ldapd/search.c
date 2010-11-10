@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.13 2010/11/05 08:17:46 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.14 2010/11/10 08:00:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -133,6 +133,9 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 		dn, dnlen, filtered_attrs);
 	if (elm == NULL)
 		goto fail;
+
+	ldap_debug_elements(root, LDAP_RES_SEARCH_ENTRY,
+	    "sending search entry on fd %d", conn->fd);
 
 	rc = ber_write_elements(&conn->ber, root);
 	ber_free_elements(root);

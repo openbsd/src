@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.20 2010/11/03 10:33:17 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.21 2010/11/10 08:00:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -472,6 +472,9 @@ __dead void		 fatal(const char *);
 __dead void		 fatalx(const char *);
 const char		*print_host(struct sockaddr_storage *ss, char *buf,
 				size_t len);
+void			 hexdump(void *data, size_t len, const char *fmt, ...);
+void			 ldap_debug_elements(struct ber_element *root,
+			    int context, const char *fmt, ...);
 
 /* util.c */
 int			 bsnprintf(char *str, size_t size,

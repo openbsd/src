@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.8,v 1.7 2010/11/05 07:18:30 martinh Exp $
+.\"	$OpenBSD: ldapd.8,v 1.8 2010/11/10 08:00:54 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2010 $
+.Dd $Mdocdate: November 10 2010 $
 .Dt LDAPD 8
 .Os
 .Sh NAME
@@ -64,6 +64,11 @@ Only check the configuration file for validity.
 Specify an alternative location for the socket file.
 .It Fl v
 Produce more verbose output.
+A second
+.Fl v
+together with the
+.Fl d
+flag produces debug traces of decoded BER messages on stderr.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/ldapd.sockXXXXXXX" -compact
