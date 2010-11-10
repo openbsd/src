@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.299 2010/10/15 07:43:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.300 2010/11/10 15:14:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -227,7 +227,7 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 	if (rdomains_l == NULL)
 		fatal(NULL);
 	SIMPLEQ_INIT(rdomains_l);
-	if ((conf = malloc(sizeof(struct bgpd_config))) == NULL)
+	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
 	log_info("route decision engine ready");
 
