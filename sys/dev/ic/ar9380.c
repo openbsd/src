@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.6 2010/10/18 16:05:28 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.7 2010/11/10 21:06:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -64,6 +64,7 @@
 
 int	ar9380_attach(struct athn_softc *);
 void	ar9380_setup(struct athn_softc *);
+const	uint8_t *ar9380_get_rom_template(struct athn_softc *, uint8_t);
 void	ar9380_swap_rom(struct athn_softc *);
 int	ar9380_set_synth(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
@@ -102,9 +103,9 @@ ar9380_attach(struct athn_softc *sc)
 {
 	sc->eep_base = AR9380_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar9380_eeprom);
-	sc->eep_def = ar9380_def_rom;
 	sc->ngpiopins = 17;
 	sc->ops.setup = ar9380_setup;
+	sc->ops.get_rom_template = ar9380_get_rom_template;
 	sc->ops.swap_rom = ar9380_swap_rom;
 	sc->ops.init_from_rom = ar9380_init_from_rom;
 	sc->ops.set_txpower = ar9380_set_txpower;
@@ -173,6 +174,18 @@ ar9380_setup(struct athn_softc *sc)
 		sc->tx_gain = &ar9380_2_2_tx_gain_low_ob_db;
 	else
 		sc->tx_gain = &ar9380_2_2_tx_gain;
+}
+
+const uint8_t *
+ar9380_get_rom_template(struct athn_softc *sc, uint8_t ref)
+{
+	int i;
+
+	/* Retrieve template ROM image for given reference. */
+	for (i = 0; i < nitems(ar9380_rom_templates); i++)
+		if (ar9380_rom_templates[i][1] == ref)
+			return (ar9380_rom_templates[i]);
+	return (NULL);
 }
 
 void
@@ -256,6 +269,7 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 {
 	const struct ar9380_eeprom *eep = sc->eep;
 	const struct ar9380_modal_eep_header *modal;
+	uint8_t db, margin;
 	uint32_t reg;
 	int i;
 
@@ -267,11 +281,12 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	/* Apply XPA bias level. */
 	reg = AR_READ(sc, AR_PHY_65NM_CH0_TOP);
 	reg = RW(reg, AR_PHY_65NM_CH0_TOP_XPABIASLVL,
-	    MS(modal->xpaBiasLvl, AR_EEP_XPABIASLVL));
+	    modal->xpaBiasLvl & 0x3);
 	AR_WRITE(sc, AR_PHY_65NM_CH0_TOP, reg);
 	reg = AR_READ(sc, AR_PHY_65NM_CH0_THERM);
-	reg = RW(reg, AR_PHY_65NM_CH0_THERM_SPARE,
-	    MS(modal->xpaBiasLvl, AR_EEP_THERM_SPARE));
+	reg = RW(reg, AR_PHY_65NM_CH0_THERM_XPABIASLVL_MSB,
+	    modal->xpaBiasLvl >> 2);
+	reg |= AR_PHY_65NM_CH0_THERM_XPASHORT2GND;
 	AR_WRITE(sc, AR_PHY_65NM_CH0_THERM, reg);
 
 	/* Apply antenna control. */
@@ -301,6 +316,40 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		reg = AR_READ(sc, AR_PHY_65NM_CH0_BIAS4);
 		reg = (reg & ~0xff800000) | 0xb6800000;
 		AR_WRITE(sc, AR_PHY_65NM_CH0_BIAS4, reg);
+	}
+
+	/* Apply attenuation settings. */
+	for (i = 0; i < AR9380_MAX_CHAINS; i++) {
+		if (IEEE80211_IS_CHAN_5GHZ(c) &&
+		    eep->base_ext2.xatten1DBLow[i] != 0) {
+			if (c->ic_freq <= 5500) {
+				db = athn_interpolate(c->ic_freq,
+				    5180, eep->base_ext2.xatten1DBLow[i],
+				    5500, modal->xatten1DB[i]);
+			} else {
+				db = athn_interpolate(c->ic_freq,
+				    5500, modal->xatten1DB[i],
+				    5785, eep->base_ext2.xatten1DBHigh[i]);
+			}
+		} else
+			db = modal->xatten1DB[i];
+		if (IEEE80211_IS_CHAN_5GHZ(c) &&
+		    eep->base_ext2.xatten1MarginLow[i] != 0) {
+			if (c->ic_freq <= 5500) {
+				margin = athn_interpolate(c->ic_freq,
+				    5180, eep->base_ext2.xatten1MarginLow[i],
+				    5500, modal->xatten1Margin[i]);
+			} else {
+				margin = athn_interpolate(c->ic_freq,
+				    5500, modal->xatten1Margin[i],
+				    5785, eep->base_ext2.xatten1MarginHigh[i]);
+			}
+		} else
+			margin = modal->xatten1Margin[i];
+		reg = AR_READ(sc, AR_PHY_EXT_ATTEN_CTL(i));
+		reg = RW(reg, AR_PHY_EXT_ATTEN_CTL_XATTEN1_DB, db);
+		reg = RW(reg, AR_PHY_EXT_ATTEN_CTL_XATTEN1_MARGIN, margin);
+		AR_WRITE(sc, AR_PHY_EXT_ATTEN_CTL(i), reg);
 	}
 
 	if (eep->baseEepHeader.featureEnable & AR_EEP_INTERNAL_REGULATOR) {
@@ -651,9 +700,15 @@ void
 ar9380_set_correction(struct athn_softc *sc, struct ieee80211_channel *c)
 {
 	const struct ar9380_eeprom *eep = sc->eep;
+	const struct ar9380_modal_eep_header *modal;
 	uint32_t reg;
 	int8_t slope;
 	int i, corr, temp, temp0;
+
+	if (IEEE80211_IS_CHAN_2GHZ(c))
+		modal = &eep->modalHeader2G;
+	else
+		modal = &eep->modalHeader5G;
 
 	for (i = 0; i < AR9380_MAX_CHAINS; i++) {
 		ar9380_get_correction(sc, c, i, &corr, &temp);
@@ -671,10 +726,19 @@ ar9380_set_correction(struct athn_softc *sc, struct ieee80211_channel *c)
 	}
 
 	/* Enable temperature compensation. */
-	if (IEEE80211_IS_CHAN_2GHZ(c))
-		slope = eep->modalHeader2G.tempSlope;
-	else
-		slope = eep->modalHeader5G.tempSlope;
+	if (IEEE80211_IS_CHAN_5GHZ(c) &&
+	    eep->base_ext2.tempSlopeLow != 0) {
+		if (c->ic_freq <= 5500) {
+			slope = athn_interpolate(c->ic_freq,
+			    5180, eep->base_ext2.tempSlopeLow,
+			    5500, modal->tempSlope);
+		} else {
+			slope = athn_interpolate(c->ic_freq,
+			    5500, modal->tempSlope,
+			    5785, eep->base_ext2.tempSlopeHigh);
+		}
+	} else
+		slope = modal->tempSlope;
 
 	reg = AR_READ(sc, AR_PHY_TPC_19);
 	reg = RW(reg, AR_PHY_TPC_19_ALPHA_THERM, slope);

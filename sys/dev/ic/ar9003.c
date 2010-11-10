@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.17 2010/08/18 19:03:07 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.18 2010/11/10 21:06:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -214,6 +214,10 @@ ar9003_attach(struct athn_softc *sc)
 		return (error);
 	}
 
+	/* Determine if it is a non-enterprise AR9003 card. */
+	if (AR_READ(sc, AR_ENT_OTP) & AR_ENT_OTP_MPSD)
+		sc->flags |= ATHN_FLAG_NON_ENTERPRISE;
+
 	ops->setup(sc);
 	return (0);
 }
@@ -283,16 +287,20 @@ int
 ar9003_restore_rom_block(struct athn_softc *sc, uint8_t alg, uint8_t ref,
     const uint8_t *buf, int len)
 {
-	const uint8_t *ptr, *end;
+	const uint8_t *def, *ptr, *end;
 	uint8_t *eep = sc->eep;
 	int off, clen;
 
 	if (alg == AR_EEP_COMPRESS_BLOCK) {
-		/* Block contains chunks of ROM image. */
-		if (ref != 0 && ref != 2) {
-			DPRINTF(("bad reference %d\n", ref));
+		/* Block contains chunks that shadow ROM template. */
+		def = sc->ops.get_rom_template(sc, ref);
+		if (def == NULL) {
+			DPRINTF(("unknown template image %d\n", ref));
 			return (EINVAL);
 		}
+		/* Start with template. */
+		memcpy(eep, def, sc->eep_size);
+		/* Shadow template with chunks. */
 		off = 0;	/* Offset in ROM image. */
 		ptr = buf;	/* Offset in block. */
 		end = buf + len;
@@ -335,8 +343,6 @@ ar9003_read_rom(struct athn_softc *sc)
 	sc->eep = malloc(sc->eep_size, M_DEVBUF, M_NOWAIT);
 	if (sc->eep == NULL)
 		return (ENOMEM);
-	/* Initialize with default ROM image (little endian.) */
-	memcpy(sc->eep, sc->eep_def, sc->eep_size);
 
 	/* Allocate temporary buffer to store ROM blocks. */
 	buf = malloc(2048, M_DEVBUF, M_NOWAIT);
@@ -1902,8 +1908,11 @@ ar9003_init_calib(struct athn_softc *sc)
 	/* Save chains masks. */
 	txchainmask = sc->txchainmask;
 	rxchainmask = sc->rxchainmask;
-	/* Configure for 3-chain mode before calibration. */
-	txchainmask = rxchainmask = 0x7;
+	/* Configure hardware before calibration. */
+	if (AR_READ(sc, AR_ENT_OTP) & AR_ENT_OTP_CHAIN2_DISABLE)
+		txchainmask = rxchainmask = 0x3;
+	else
+		txchainmask = rxchainmask = 0x7;
 	ar9003_init_chains(sc);
 
 	/* Perform Tx IQ calibration. */
