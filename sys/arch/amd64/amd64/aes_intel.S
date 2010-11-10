@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.2 2010/07/22 12:47:40 thib Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.3 2010/11/10 17:05:39 mikeb Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -66,13 +66,13 @@
 #define BSWAP_MASK	%xmm10
 #define CTR		%xmm11
 #define INC		%xmm12
-#define NONCE		%xmm13
 
 #define KEYP		%rdi
 #define OUTP		%rsi
 #define INP		%rdx
 #define LEN		%rcx
 #define IVP		%r8
+#define ICBP		%r8
 #define KLEN		%r9d
 #define T1		%r10
 #define TKEYP		T1
@@ -772,22 +772,22 @@ ENTRY(aesni_cbc_dec)
  * _aesni_inc_init:	internal ABI
  *	setup registers used by _aesni_inc
  * input:
- *	IV
+ *	ICB
  * output:
- *	CTR:		== IV, in little endian
+ *	CTR:		== CTR, in little endian
+ *	IV:		== IV, in big endian
  *	TCTR_LOW:	== lower dword of CTR
  *	INC:		== 1, in little endian
  *	BSWAP_MASK	== endian swapping mask
  */
 _aesni_inc_init:
-	movaps .Lbswap_mask, BSWAP_MASK
-	movaps IV, CTR
-	pslldq $4, CTR
-	por NONCE, CTR
-	pshufb BSWAP_MASK, CTR
-	mov $1, TCTR_LOW
-	movd TCTR_LOW, INC
-	movd CTR, TCTR_LOW
+	movdqa	CTR, IV
+	pslldq	$8, IV
+	movdqu	.Lbswap_mask, BSWAP_MASK
+	pshufb	BSWAP_MASK, CTR
+	mov	$1, TCTR_LOW
+	movd	TCTR_LOW, INC
+	movd	CTR, TCTR_LOW
 	ret
 
 /*
@@ -819,14 +819,13 @@ _aesni_inc:
 
 /*
  * void aesni_ctr_enc(struct aesni_sess *ses, uint8_t *dst, uint8_t *src,
- *     size_t len, uint8_t *iv)
+ *     size_t len, uint8_t *icb)
  */
 ENTRY(aesni_ctr_enc)
 	cmp $16, LEN
 	jb .Lctr_enc_just_ret
 	mov 480(KEYP), KLEN
-	movd 484(KEYP), NONCE
-	movq (IVP), IV
+	movdqu (ICBP), CTR
 	call _aesni_inc_init
 	cmp $64, LEN
 	jb .Lctr_enc_loop1

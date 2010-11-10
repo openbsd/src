@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.9 2010/09/07 15:51:00 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.10 2010/11/10 17:05:39 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -77,7 +77,7 @@ extern void aesni_cbc_dec(struct aesni_sess *ses, uint8_t *dst,
 
 /* assembler-assisted CTR mode */
 extern void aesni_ctr_enc(struct aesni_sess *ses, uint8_t *dst,
-	    uint8_t *src, size_t len, uint8_t *iv);
+	    uint8_t *src, size_t len, uint8_t *icb);
 
 void	aesni_setup(void);
 int	aesni_newsession(u_int32_t *, struct cryptoini *);
@@ -314,6 +314,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
     struct aesni_sess *ses)
 {
 	uint8_t iv[EALG_MAX_BLOCK_LEN];
+	uint8_t icb[EALG_MAX_BLOCK_LEN];
 	uint8_t *buf = aesni_sc->sc_buf;
 	int ivlen = 0;
 	int err = 0;
@@ -396,7 +397,10 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		else
 			aesni_cbc_dec(ses, buf, buf, crd->crd_len, iv);
 	} else if (crd->crd_alg == CRYPTO_AES_CTR) {
-		aesni_ctr_enc(ses, buf, buf, crd->crd_len, iv);
+		bzero(icb, sizeof(icb));
+		bcopy(ses->ses_nonce, icb, AESCTR_NONCESIZE);
+		bcopy(iv, icb + AESCTR_NONCESIZE, AESCTR_IVSIZE);
+		aesni_ctr_enc(ses, buf, buf, crd->crd_len, icb);
 	}
 	fpu_kernel_exit();
 
