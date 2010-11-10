@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2010/05/31 17:36:31 martinh Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2010/11/10 07:32:50 martinh Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <netdb.h>
@@ -28,6 +29,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "ldapd.h"
 
@@ -66,9 +68,22 @@ logit(int pri, const char *fmt, ...)
 void
 vlog(int pri, const char *fmt, va_list ap)
 {
-	char	*nfmt;
+	char		 datebuf[24];
+	struct timeval	 tv;
+	struct tm	*tm;
+	char		*nfmt;
+	size_t		 rc;
+	time_t		 now;
 
 	if (debug) {
+		gettimeofday(&tv, NULL); 
+		now = tv.tv_sec;
+		tm = localtime(&now);
+		rc = strftime(datebuf, sizeof(datebuf), "%b %e %H:%M:%S", tm);
+		if (rc == 0)
+			datebuf[0] = 0;
+		fprintf(stderr, "%s.%03li [%i] ", datebuf, tv.tv_usec / 1000, getpid());
+
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
 			vfprintf(stderr, fmt, ap);
