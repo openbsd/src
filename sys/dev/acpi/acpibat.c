@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.57 2010/08/07 16:55:38 canacar Exp $ */
+/* $OpenBSD: acpibat.c,v 1.58 2010/11/10 21:40:55 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -185,13 +185,6 @@ acpibat_refresh(void *arg)
 		    sizeof(sc->sc_sens[4].desc));
 		return;
 	}
-
-	/*
-	 * XXX don't really need _BIF but keep it here in case we
-	 * miss an insertion/removal event
-	 */
-	acpibat_getbif(sc);
-	acpibat_getbst(sc);
 
 	/* _BIF values are static, sensor 0..3 */
 	if (sc->sc_bif.bif_last_capacity == BIF_UNKNOWN) {
@@ -386,7 +379,8 @@ out:
 	return (rv);
 }
 
-/* XXX it has been observed that some systems do not propagate battery
+/*
+ * XXX it has been observed that some systems do not propagate battery
  * insertion events up to the driver.  What seems to happen is that DSDT
  * does receive an interrupt however the originator bit is not set.
  * This seems to happen when one inserts a 100% full battery.  Removal
@@ -400,23 +394,25 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpibat_softc	*sc = arg;
 	int64_t			sta;
-	int			present;
 
 	dnprintf(10, "acpibat_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->name);
 
 	/* Check if installed state of battery has changed */
 	if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta) == 0) {
-		present = sta & STA_BATTERY;
-		if (!sc->sc_bat_present && present)
+		if (sta & STA_BATTERY)
 			sc->sc_bat_present = 1;
-		else if (sc->sc_bat_present && !present)
+		else
 			sc->sc_bat_present = 0;
 	}
+
 	switch (notify_type) {
+	case 0x00:	/* Poll sensors */
 	case 0x80:	/* _BST changed */
+		acpibat_getbst(sc);
 		break;
 	case 0x81:	/* _BIF changed */
+		acpibat_getbif(sc);
 		break;
 	default:
 		break;
