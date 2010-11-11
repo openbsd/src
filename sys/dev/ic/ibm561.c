@@ -1,5 +1,5 @@
 /* $NetBSD: ibm561.c,v 1.1 2001/12/12 07:46:48 elric Exp $ */
-/* $OpenBSD: ibm561.c,v 1.5 2008/06/26 05:42:15 ray Exp $ */
+/* $OpenBSD: ibm561.c,v 1.6 2010/11/11 17:47:00 miod Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,10 +151,9 @@ ibm561_register(v, sched_update, wr, rd)
 {
 	struct ibm561data *data;
 
-	if (ibm561_console_data.cookie == NULL) {
-		data = malloc(sizeof *data, M_DEVBUF, M_WAITOK);
-		bzero(data, sizeof *data);
-	} else
+	if (ibm561_console_data.cookie == NULL)
+		data = malloc(sizeof *data, M_DEVBUF, M_WAITOK | M_ZERO);
+	else
 		data = &ibm561_console_data;
 	data->cookie = v;
 	data->ramdac_sched_update = sched_update;

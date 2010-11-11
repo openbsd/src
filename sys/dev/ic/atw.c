@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.74 2010/09/20 00:11:37 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.75 2010/11/11 17:47:00 miod Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -397,15 +397,15 @@ atw_read_srom(struct atw_softc *sc)
 		return -1;
 	}
 
-	sc->sc_srom = malloc(sc->sc_sromsz, M_DEVBUF, M_NOWAIT);
+	sc->sc_srom = malloc(sc->sc_sromsz, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_srom == NULL) {
 		printf("%s: unable to allocate SROM buffer\n",
 		    sc->sc_dev.dv_xname);
 		return -1;
 	}
 
-	(void)memset(sc->sc_srom, 0, sc->sc_sromsz);
-	/* ADM8211 has a single 32-bit register for controlling the
+	/*
+	 * ADM8211 has a single 32-bit register for controlling the
 	 * 93cx6 SROM.  Bit SRS enables the serial port. There is no
 	 * "ready" bit. The ADM8211 input/output sense is the reverse
 	 * of read_seeprom's.

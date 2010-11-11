@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.52 2010/09/22 06:40:25 krw Exp $	*/
+/*	$OpenBSD: xd.c,v 1.53 2010/11/11 17:46:58 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -413,9 +413,8 @@ xdcattach(parent, self, aux)
 
 	xdc->dvmaiopb = (struct xd_iopb *)
 	    dvma_malloc(XDC_MAXIOPB * sizeof(struct xd_iopb), &xdc->iopbase,
-			M_NOWAIT);
+	      M_NOWAIT | M_ZERO);
 	xdc->iopbase = xdc->dvmaiopb; /* XXX TMP HACK */
-	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 	/* Setup device view of DVMA address */
 	xdc->dvmaiopb = (struct xd_iopb *) ((u_long) xdc->iopbase - DVMA_BASE);
 
