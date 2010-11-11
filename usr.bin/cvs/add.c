@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.109 2010/07/23 21:46:04 ray Exp $	*/
+/*	$OpenBSD: add.c,v 1.110 2010/11/11 21:00:59 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -232,7 +232,6 @@ cvs_add_tobranch(struct cvs_file *cf, char *tag)
 	char attic[MAXPATHLEN], repo[MAXPATHLEN];
 	char *msg;
 	struct stat st;
-	struct rcs_delta *rdp;
 	RCSNUM *branch;
 
 	cvs_log(LP_TRACE, "cvs_add_tobranch(%s)", cf->file_name);
@@ -280,7 +279,7 @@ cvs_add_tobranch(struct cvs_file *cf, char *tag)
 		    "revision");
 	xfree(msg);
 
-	if ((rdp = rcs_findrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
+	if (rcs_findrev(cf->file_rcs, cf->file_rcs->rf_head) == NULL)
 		fatal("cvs_add_tobranch: cannot find newly added revision");
 
 	bp = buf_alloc(1);

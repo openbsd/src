@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.29 2010/09/23 18:10:16 nicm Exp $	*/
+/*	$OpenBSD: util.h,v 1.30 2010/11/11 21:00:59 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -34,7 +34,6 @@ void	  cvs_strtomode(const char *, mode_t *);
 void	  cvs_mkadmin(const char *, const char *, const char *, char *, char *);
 void	  cvs_mkpath(const char *, char *);
 void	  cvs_mkdir(const char *, mode_t);
-int	  cvs_cksum(const char *, char *, size_t);
 int	  cvs_getargv(const char *, char **, int);
 int	  cvs_chdir(const char *, int);
 int	  cvs_rename(const char *, const char *);
