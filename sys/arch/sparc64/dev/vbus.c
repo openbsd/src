@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.4 2008/12/30 21:23:33 kettenis Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.5 2010/11/11 17:58:23 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -235,7 +235,7 @@ vbus_alloc_bus_tag(struct vbus_softc *sc, bus_space_tag_t parent)
 	if (bt == NULL)
 		panic("could not allocate vbus bus tag");
 
-	snprintf(bt->name, sizeof(bt->name), "%s", sc->sc_dv.dv_xname);
+	strlcpy(bt->name, sc->sc_dv.dv_xname, sizeof(bt->name));
 	bt->cookie = sc;
 	bt->parent = parent;
 	bt->asi = parent->asi;

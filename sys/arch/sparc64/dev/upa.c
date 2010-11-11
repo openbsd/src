@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.8 2008/01/17 22:53:18 kettenis Exp $	*/
+/*	$OpenBSD: upa.c,v 1.9 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -159,8 +159,7 @@ upa_alloc_bus_tag(struct upa_softc *sc)
 	if (bt == NULL)
 		panic("upa: couldn't alloc bus tag");
 
-	snprintf(bt->name, sizeof(bt->name), "%s",
-			sc->sc_dev.dv_xname);
+	strlcpy(bt->name, sc->sc_dev.dv_xname, sizeof(bt->name));
 	bt->cookie = sc;
 	bt->parent = sc->sc_bt;
 	bt->asi = bt->parent->asi;

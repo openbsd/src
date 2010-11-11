@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.38 2009/10/01 20:19:18 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.39 2010/11/11 17:58:21 miod Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.38 2009/10/01 20:19:18 kettenis Exp $
+ *      $Id: autoconf.c,v 1.39 2010/11/11 17:58:21 miod Exp $
  */
 
 /*
@@ -184,7 +184,7 @@ makebootdev(char *bp)
 	} while((dp->type & T_IFACE) == 0);
 
 	if (dp->att && dp->type == T_IFACE) {
-		snprintf(bootdev, sizeof bootdev, "%s", dp->dev);
+		strlcpy(bootdev, dp->dev, sizeof bootdev);
 		return;
 	}
 	dev = dp->dev;

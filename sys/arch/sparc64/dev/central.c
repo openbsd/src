@@ -1,4 +1,4 @@
-/*	$OpenBSD: central.c,v 1.6 2008/01/17 22:53:18 kettenis Exp $	*/
+/*	$OpenBSD: central.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -154,7 +154,7 @@ central_alloc_bus_tag(struct central_softc *sc)
 	if (bt == NULL)
 		panic("central: couldn't alloc bus tag");
 
-	snprintf(bt->name, sizeof(bt->name), "%s", sc->sc_dv.dv_xname);
+	strlcpy(bt->name, sc->sc_dv.dv_xname, sizeof(bt->name));
 	bt->cookie = sc;
 	bt->parent = sc->sc_bt;
 	bt->asi = bt->parent->asi;

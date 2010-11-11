@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.37 2009/01/14 20:35:42 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.38 2010/11/11 17:58:23 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -776,8 +776,7 @@ sbus_alloc_bustag(struct sbus_softc *sc, int indirect)
 	if (sbt == NULL)
 		return (NULL);
 
-	snprintf(sbt->name, sizeof(sbt->name), "%s",
-		sc->sc_dev.dv_xname);
+	strlcpy(sbt->name, sc->sc_dev.dv_xname, sizeof(sbt->name));
 	sbt->cookie = sc;
 	if (indirect)
 		sbt->parent = sc->sc_bustag->parent;
