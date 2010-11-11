@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.22 2009/11/13 21:10:34 deraadt Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.23 2010/11/11 17:35:23 miod Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -45,16 +45,7 @@
  */
 #define QMEM(n)		((((n)-1)/NBBY)+1)
 
-void	cinit(void);
 void	clrbits(u_char *, int, int);
-
-/*
- * Initialize clists.
- */
-void
-cinit(void)
-{
-}
 
 /*
  * Initialize a particular clist. Ok, they are really ring buffers,
@@ -251,7 +242,7 @@ putc(int c, struct clist *clp)
 
 	if (clp->c_cc == 0) {
 		if (!clp->c_cs) {
-#if defined(DIAGNOSTIC) || 1
+#if defined(DIAGNOSTIC)
 			printf("putc: required clalloc\n");
 #endif
 			clalloc(clp, 1024, 1);
@@ -334,7 +325,7 @@ b_to_q(u_char *cp, int count, struct clist *clp)
 
 	if (clp->c_cc == 0) {
 		if (!clp->c_cs) {
-#if defined(DIAGNOSTIC) || 1
+#if defined(DIAGNOSTIC)
 			printf("b_to_q: required clalloc\n");
 #endif
 			clalloc(clp, 1024, 1);
