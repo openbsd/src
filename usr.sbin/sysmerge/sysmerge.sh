@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.65 2010/11/08 14:05:09 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.66 2010/11/11 10:46:10 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -59,7 +59,7 @@ error_rm_wrkdir() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-bd] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
+	echo "usage: ${0##*/} [-bd] [-s [src | etcXX.tgz]] [-x xetcXX.tgz]" >&2
 }
 
 trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
