@@ -1,4 +1,4 @@
-/* $OpenBSD: tcvar.h,v 1.15 2010/09/22 12:36:32 miod Exp $ */
+/* $OpenBSD: tcvar.h,v 1.16 2010/11/11 17:54:54 miod Exp $ */
 /* $NetBSD: tcvar.h,v 1.17 2000/06/04 19:15:15 cgd Exp $ */
 
 /*
@@ -136,7 +136,10 @@ void	tc_intr_disestablish(struct device *, void *, const char *);
 /*
  * Miscellaneous definitions.
  */
-#define	TC_SPEED_12_5_MHZ	0		/* 12.5MHz TC bus */
-#define	TC_SPEED_25_MHZ		1		/* 25MHz TC bus */
+#define	TC_SPEED_12_5_MHZ	25		/* 12.5MHz TC bus */
+#define	TC_SPEED_22_5_MHZ	45		/* 22.5MHz TC bus */
+#define	TC_SPEED_25_MHZ		50		/* 25MHz TC bus */
+
+#define	TC_SPEED_TO_KHZ(s)	((s) * (1000 / 2))
 
 #endif /* __DEV_TC_TCVAR_H__ */

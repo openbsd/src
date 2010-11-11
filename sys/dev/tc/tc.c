@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.19 2010/09/22 12:36:32 miod Exp $	*/
+/*	$OpenBSD: tc.c,v 1.20 2010/11/11 17:54:54 miod Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -81,8 +81,10 @@ tcattach(parent, self, aux)
 	tc_addr_t tcaddr;
 	int i;
 
-	printf(": %s MHz clock\n",
-	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");
+	if (tba->tba_speed & 1)
+		printf(": %d.5 MHz clock\n", tba->tba_speed / 2);
+	else
+		printf(": %d MHz clock\n", tba->tba_speed / 2);
 
 	/*
 	 * Save important CPU/chipset information.

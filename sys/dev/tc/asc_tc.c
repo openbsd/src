@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tc.c,v 1.10 2010/06/28 18:31:02 krw Exp $ */
+/* $OpenBSD: asc_tc.c,v 1.11 2010/11/11 17:54:54 miod Exp $ */
 /* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -140,10 +140,7 @@ asc_tc_attach(parent, self, aux)
 	    self->dv_xname);
 	
 	sc->sc_id = 7;
-	sc->sc_freq = (ta->ta_busspeed) ? 25000000 : 12500000;
-
-	/* gimme MHz */
-	sc->sc_freq /= 1000000;
+	sc->sc_freq = TC_SPEED_TO_KHZ(ta->ta_busspeed);	/* in kHz so far */
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -171,12 +168,15 @@ asc_tc_attach(parent, self, aux)
 	 * in "clocks per byte", and has a minimum value of 4.
 	 * The SCSI period used in negotiation is one-fourth
 	 * of the time (in nanoseconds) needed to transfer one byte.
-	 * Since the chip's clock is given in MHz, we have the following
-	 * formula: 4 * period = (1000 / freq) * 4
+	 * Since the chip's clock is given in kHz, we have the following
+	 * formula: 4 * period = (1000000 / freq) * 4
 	 */
-	sc->sc_minsync = (1000 / sc->sc_freq) * 5 / 4;
+	sc->sc_minsync = (1000000 / sc->sc_freq) * 5 / 4;
 
 	sc->sc_maxxfer = 64 * 1024;
+
+	/* convert sc_freq to MHz */
+	sc->sc_freq /= 1000;
 
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &asc_switch);
