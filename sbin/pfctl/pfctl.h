@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.45 2010/03/23 13:31:29 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.46 2010/11/12 13:14:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -107,7 +107,7 @@ struct pf_altq	*pfaltq_lookup(const char *);
 char		*rate2str(double);
 
 void	 print_addr(struct pf_addr_wrap *, sa_family_t, int);
-void	 print_host(struct pf_addr *, u_int16_t p, sa_family_t, int, int);
+void	 print_host(struct pf_addr *, u_int16_t p, sa_family_t, u_int16_t, int);
 void	 print_seq(struct pfsync_state_peer *);
 void	 print_state(struct pfsync_state *, int);
 int	 unmask(struct pf_addr *, sa_family_t);

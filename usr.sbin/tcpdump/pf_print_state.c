@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.8 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.9 2010/11/12 13:14:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -129,11 +129,11 @@ print_name(struct pf_addr *addr, sa_family_t af)
 }
 
 void
-print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, int rdom,
+print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, u_int16_t rdom,
     int opts)
 {
 	if (rdom)
-		printf("(%d) ", rdom);
+		printf("(%u) ", ntohs(rdom));
 
 	if (opts & PF_OPT_USEDNS)
 		print_name(addr, af);
