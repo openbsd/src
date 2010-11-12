@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.75 2010/05/08 11:26:06 stsp Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.76 2010/11/12 13:26:29 dhill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1211,7 +1211,7 @@ trunk_gethdr(struct mbuf *m, u_int off, u_int len, void *buf)
 		m_copydata(m, off, len, buf);
 		return (buf);
 	}
-	return (mtod(m, const void *) + off);
+	return (mtod(m, caddr_t) + off);
 }
 
 /*
