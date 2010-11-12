@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.627 2010/11/05 00:23:05 halex Exp $
+#	$OpenBSD: install.sub,v 1.628 2010/11/12 06:47:40 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -103,6 +103,16 @@ stripcom () {
 		[[ -n ${_l%%#*} ]] && echo $_l
 	done <$1
 }
+
+# Prints the supplied parameters properly escaped for future sh/ksh parsing.
+# Quotes are added if needed, so you should not do that yourself.
+quote() (
+	# Since this is a subshell we won't pollute the calling namespace
+	for a; do
+		alias Q=$a; a=$(alias Q); print -rn -- " ${a#Q=}"
+	done | sed '1s/ //'
+	echo
+)
 
 scan_dmesg() {
 	bsort $(sed -ne "$1" /var/run/dmesg.boot)
@@ -762,7 +772,7 @@ ieee80211_config() {
 	# Empty scan cache
 	rm -f $WLANLIST
 
-	while [ -z $_nwid ]; do
+	while [[ -z $_nwid ]]; do
 		ask_until "Access point? (ESSID, 'any', list# or '?')" "any"
 		case "$resp" in
 		+([0-9]))
@@ -780,7 +790,7 @@ ieee80211_config() {
 	# 'any' implies that only open access points are considered
 	if [[ $_nwid != any ]]; then
 		ifconfig $_ifs nwid "$_nwid"
-		echo "nwid \"$_nwid\"" >>$_hn
+		quote nwid "$_nwid" >>$_hn
 
 		_prompt="Security protocol? (O)pen, (W)EP"
 		[[ $_haswpa == 1 ]] && _prompt="$_prompt, WPA-(P)SK"
@@ -793,7 +803,7 @@ ieee80211_config() {
 				# Make sure ifconfig accepts the key
 				if _err=$(ifconfig $_ifs nwkey "$resp" 2>&1) &&
 					[[ -z $_err ]]; then
-					echo "nwkey \"$resp\"" >>$_hn
+					quote nwkey "$resp" >>$_hn
 					break
 				fi
 				echo "$_err"
@@ -801,7 +811,7 @@ ieee80211_config() {
 			1-[Pp])	ask_until "WPA passphrase? (will echo)"
 				# Make sure ifconfig accepts the key
 				if ifconfig $_ifs wpakey "$resp"; then
-					echo "wpakey \"$resp\"" >>$_hn
+					quote wpakey "$resp" >>$_hn
 					break
 				fi
 				;;
