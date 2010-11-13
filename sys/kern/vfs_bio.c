@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.126 2010/08/03 06:30:19 deraadt Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.127 2010/11/13 17:45:44 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -672,20 +672,10 @@ bdwrite(struct buf *bp)
 	 */
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
-		bp->b_synctime = time_uptime + 35;
 		s = splbio();
 		reassignbuf(bp);
 		splx(s);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
-	} else {
-		/*
-		 * see if this buffer has slacked through the syncer
-		 * and enforce an async write upon it.
-		 */
-		if (bp->b_synctime < time_uptime) {
-			bawrite(bp);
-			return;
-		}
 	}
 
 	/* If this is a tape block, write the block now. */
@@ -727,7 +717,6 @@ buf_dirty(struct buf *bp)
 
 	if (ISSET(bp->b_flags, B_DELWRI) == 0) {
 		SET(bp->b_flags, B_DELWRI);
-		bp->b_synctime = time_uptime + 35;
 		reassignbuf(bp);
 	}
 }
