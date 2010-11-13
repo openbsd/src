@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.7 2010/10/26 05:49:10 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.8 2010/11/13 04:16:42 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -61,16 +61,14 @@
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define	SEL_LDT		4		/* local descriptor table */	
 
-/* Dynamically allocated TSSs start (byte offset) */
 #define SYSSEL_START	(NGDT_MEM << 3)
-#define DYNSEL_START	(SYSSEL_START + (NGDT_SYS << 4))
+#define GDT_SIZE	(SYSSEL_START + (NGDT_SYS << 4))
 
 /*
  * These define the index not from the start of the GDT, but from
  * the part of the GDT that they're allocated from.
  * First NGDT_MEM entries are 8-byte descriptors for CS and DS.
- *
- * The rest is 16-byte descriptors for TSSs
+ * Next NGDT_SYS entries are 16-byte descriptors defining TSSs.
  */
 
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)
@@ -249,7 +247,7 @@ void cpu_init_idt(void);
  * The code and data descriptors must come first. There
  * are NGDT_MEM of them.
  *
- * Then come the predefined LDT (and possibly TSS) descriptors.
+ * Then comes the predefined TSS descriptor.
  * There are NGDT_SYS of them.
  *
  * The particular order of the UCODE32, UDATA, and UCODE descriptors is 
@@ -263,7 +261,8 @@ void cpu_init_idt(void);
 #define	GUCODE_SEL	5	/* User code descriptor */
 #define NGDT_MEM 6
 
-#define NGDT_SYS	0
+#define	GPROC0_SEL	0	/* common TSS */
+#define NGDT_SYS	1
 
 #define GDT_SYS_OFFSET	(NGDT_MEM << 3)
 

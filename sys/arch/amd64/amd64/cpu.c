@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.37 2010/10/26 05:49:10 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.38 2010/11/13 04:16:42 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -280,9 +280,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	pcb = ci->ci_idle_pcb = (struct pcb *) kstack;
 	memset(pcb, 0, USPACE);
 
-	pcb->pcb_tss.tss_rsp0 = kstack + USPACE - 16;
+	pcb->pcb_kstack = kstack + USPACE - 16;
 	pcb->pcb_rbp = pcb->pcb_rsp = kstack + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = kstack + PAGE_SIZE - 16;
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;

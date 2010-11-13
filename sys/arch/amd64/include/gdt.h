@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.h,v 1.4 2009/02/03 11:24:19 mikeb Exp $	*/
+/*	$OpenBSD: gdt.h,v 1.5 2010/11/13 04:16:42 guenther Exp $	*/
 /*	$NetBSD: gdt.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 /*-
@@ -30,29 +30,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LOCORE
-struct proc;
-struct pmap;
-
-void gdt_init(void);
 void gdt_init_cpu(struct cpu_info *);
-void gdt_reload_cpu(struct cpu_info *);
 void gdt_alloc_cpu(struct cpu_info *);
-
-int tss_alloc(struct pcb *);
-void tss_free(int);
-
-void ldt_alloc(struct pmap *, char *, size_t);
-void ldt_free(struct pmap *);
-
-void set_mem_gdt(struct mem_segment_descriptor *, void *, size_t,
-		 int, int, int, int, int);
-void set_sys_gdt(struct sys_segment_descriptor *, void *, size_t, int, int,
-		 int);
-#endif
-
-/*
- * Maximum GDT size.  It cannot exceed 65536 since the selector field of
- * a descriptor is just 16 bits, and used as free list link.
- */
-#define MAXGDTSIZ       65536

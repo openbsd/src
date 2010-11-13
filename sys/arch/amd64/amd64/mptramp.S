@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.6 2010/04/01 19:47:59 kettenis Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.7 2010/11/13 04:16:42 guenther Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -83,7 +83,6 @@
 #include <machine/segments.h>
 #include <machine/mpbiosvar.h>
 #include <machine/i82489reg.h>
-#include <machine/gdt.h>
 
 #define _RELOC(x)       ((x) - KERNBASE)
 #define RELOC(x)        _RELOC(_C_LABEL(x))
@@ -224,7 +223,7 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movq	PCB_RBP(%rsi),%rbp
 
 	movq	CPU_INFO_GDT(%rdi),%rax
-	movw	$(MAXGDTSIZ-1),-10(%rsp)
+	movw	$(GDT_SIZE-1),-10(%rsp)
 	movq	%rax,-8(%rsp)
 	lgdt	-10(%rsp)
 

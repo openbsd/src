@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.126 2010/10/26 05:49:10 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.127 2010/11/13 04:16:42 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -111,6 +111,7 @@
 #include <machine/mpbiosvar.h>
 #include <machine/reg.h>
 #include <machine/kcore.h>
+#include <machine/tss.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -360,30 +361,25 @@ cpu_startup(void)
 }
 
 /*
- * Set up proc0's TSS
+ * Set up proc0's PCB and the cpu's TSS.
  */
 void
 x86_64_proc0_tss_ldt_init(void)
 {
 	struct pcb *pcb;
-	int x;
-
-	gdt_init();
 
 	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
-
-	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss);
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)proc0.p_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)proc0.p_addr + PAGE_SIZE;
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
-	proc0.p_md.md_tss_sel = tss_alloc(pcb);
+	pcb->pcb_kstack = (u_int64_t)proc0.p_addr + USPACE - 16;
+	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_kstack - 1;
 
-	ltr(proc0.p_md.md_tss_sel);
+	/* an empty iomap, by setting its offset to the TSS limit */
+	cpu_info_primary.ci_tss->tss_iobase = sizeof(struct x86_64_tss);
+	cpu_info_primary.ci_tss->tss_rsp0 = pcb->pcb_kstack;
+	cpu_info_primary.ci_tss->tss_ist[0] =
+	    (u_int64_t)proc0.p_addr + PAGE_SIZE - 16;
+
+	ltr(GSYSSEL(GPROC0_SEL, SEL_KPL));
 	lldt(0);
 }
 
@@ -395,17 +391,13 @@ x86_64_proc0_tss_ldt_init(void)
 void    
 x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
 {        
-	int x;      
 	struct pcb *pcb = ci->ci_idle_pcb;
  
-	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss);
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
+	ci->ci_tss->tss_iobase = sizeof(*ci->ci_tss);
+	ci->ci_tss->tss_rsp0 = pcb->pcb_kstack;
+	ci->ci_tss->tss_ist[0] = pcb->pcb_kstack - USPACE + PAGE_SIZE;
 
 	pcb->pcb_cr0 = rcr0();
-        
-        ci->ci_idle_tss_sel = tss_alloc(pcb);
 }       
 #endif	/* MULTIPROCESSOR */
 
@@ -1471,7 +1463,8 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	idt = (struct gate_descriptor *)idt_vaddr;
-	gdtstore = (char *)(idt + NIDT);
+	cpu_info_primary.ci_tss = (void *)(idt + NIDT);
+	gdtstore = (void *)(cpu_info_primary.ci_tss + 1);
 
 	/* make gdt gates and memory segments */
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0,
@@ -1489,6 +1482,10 @@ init_x86_64(paddr_t first_avail)
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
 
+	set_sys_segment(GDT_ADDR_SYS(gdtstore, GPROC0_SEL),
+	    cpu_info_primary.ci_tss, sizeof (struct x86_64_tss)-1,
+	    SDT_SYS386TSS, SEL_KPL, 0);
+
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
 		ist = (x == 8) ? 1 : 0;
@@ -1503,7 +1500,7 @@ init_x86_64(paddr_t first_avail)
 	    GSEL(GCODE_SEL, SEL_KPL));
 	idt_allocmap[128] = 1;
 
-	setregion(&region, gdtstore, DYNSEL_START - 1);
+	setregion(&region, gdtstore, GDT_SIZE - 1);
 	lgdt(&region);
 
 	cpu_init_idt();
@@ -1528,9 +1525,6 @@ init_x86_64(paddr_t first_avail)
 	}
 #endif
 
-        /* Make sure maxproc is sane */ 
-        if (maxproc > cpu_maxproc())
-                maxproc = cpu_maxproc();
 }
 
 #ifdef KGDB
@@ -1702,15 +1696,6 @@ idt_vec_free(int vec)
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
 	simple_unlock(&idt_lock);
-}
-
-/*
- * Number of processes is limited by number of available GDT slots.
- */
-int
-cpu_maxproc(void)
-{
-	return (MAXGDTSIZ - DYNSEL_START) / 16;
 }
 
 #ifdef DIAGNOSTIC

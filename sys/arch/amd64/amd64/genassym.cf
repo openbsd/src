@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.24 2010/10/26 05:49:10 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.25 2010/11/13 04:16:42 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -15,6 +15,7 @@ include <machine/pte.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/pic.h>
+include <machine/tss.h>
 include <machine/i82093var.h>
 include <machine/mutex.h>
 
@@ -36,7 +37,6 @@ member	p_addr
 member	p_priority
 member	p_stat
 member	p_wchan
-member	P_MD_TSS_SEL	p_md.md_tss_sel
 member	P_MD_REGS	p_md.md_regs
 member	P_MD_FLAGS	p_md.md_flags
 member	P_MD_ASTPENDING	p_md.md_astpending
@@ -82,22 +82,29 @@ define  FRAMESIZE               sizeof(struct trapframe)
 
 struct pcb
 member	pcb_cr3
-member	pcb_rbp
 member	pcb_rsp
-member	PCB_RSP0	pcb_tss.tss_rsp0
-member	pcb_cr0
+member	pcb_rbp
+member	pcb_kstack
 member	pcb_onfault
 member	pcb_fpcpu
+member	pcb_pmap
+member	pcb_cr0
+
+struct pmap
+member	pm_cpus
+
+struct x86_64_tss
+member	tss_rsp0
 
 struct	cpu_info
 member	CPU_INFO_SCRATCH	ci_scratch
 member  CPU_INFO_SELF		ci_self
+member  CPU_INFO_CPUID		ci_cpuid
 member  CPU_INFO_APICID		ci_apicid
 member  CPU_INFO_RESCHED	ci_want_resched
 member  CPU_INFO_CURPROC	ci_curproc
 member  CPU_INFO_CURPCB		ci_curpcb
 member  CPU_INFO_IDLE_PCB	ci_idle_pcb
-member  CPU_INFO_IDLE_TSS_SEL	ci_idle_tss_sel
 member	CPU_INFO_ILEVEL		ci_ilevel
 member	CPU_INFO_IDEPTH		ci_idepth
 member	CPU_INFO_ISOURCES	ci_isources
@@ -107,6 +114,7 @@ ifdef DIAGNOSTIC
 member	CPU_INFO_MUTEX_LEVEL	ci_mutex_level
 endif
 member	CPU_INFO_GDT		ci_gdt
+member	CPU_INFO_TSS		ci_tss
 
 struct	intrsource
 member	is_recurse

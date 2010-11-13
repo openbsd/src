@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.42 2010/10/26 05:49:10 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.43 2010/11/13 04:16:42 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -741,6 +741,8 @@ ENTRY(cpu_switchto)
 	movb	$SONPROC,P_STAT(%r12)	# p->p_stat = SONPROC
 	SET_CURPROC(%r12,%rcx)
 
+	movl	CPUVAR(CPUID),%edi
+
 	/* If old proc exited, don't bother. */
 	testq	%r13,%r13
 	jz	switch_exited
@@ -752,12 +754,15 @@ ENTRY(cpu_switchto)
 	 *   %rax, %rcx - scratch
 	 *   %r13 - old proc, then old pcb
 	 *   %r12 - new proc
+	 *   %edi - cpuid
 	 */
 
-	movq	%r13,%rdi
-	call	pmap_deactivate
-
 	movq	P_ADDR(%r13),%r13
+
+	/* clear the old pmap's bit for the cpu */
+	movq	PCB_PMAP(%r13),%rcx
+	lock
+	btrl	%edi,PM_CPUS(%rcx)
 
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%r13)
@@ -781,30 +786,28 @@ switch_exited:
 	movq	PCB_RSP(%r13),%rsp
 	movq	PCB_RBP(%r13),%rbp
 
-#if 0
+	movq	CPUVAR(TSS),%rcx
+	movq	PCB_KSTACK(%r13),%rdx
+	movq	%rdx,TSS_RSP0(%rcx)
+
+	movq	PCB_CR3(%r13),%rax
+	movq	%rax,%cr3
+
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$P_SYSTEM,P_FLAG(%r12)
 	jnz	switch_restored
+
+	/* set the new pmap's bit for the cpu */
+	movl	CPUVAR(CPUID),%edi
+	movq	PCB_PMAP(%r13),%rcx
+	movl	PM_CPUS(%rcx),%eax
+	lock
+	btsl	%edi,PM_CPUS(%rcx)
+#ifdef DIAGNOSTIC
+	jc	_C_LABEL(switch_pmcpu_set)
 #endif
 
-	/* Load TSS info. */
-#ifdef MULTIPROCESSOR
-	movq    CPUVAR(GDT),%rax
-#else   
-	movq	_C_LABEL(gdtstore)(%rip),%rax
-#endif
-	movl	P_MD_TSS_SEL(%r12),%edx
-
-	/* Switch TSS. Reset "task busy" flag before */
-	andl	$~0x0200,4(%rax,%rdx, 1)
-	ltr	%dx
-
-	movq	%r12,%rdi
-	call	_C_LABEL(pmap_activate)
-
-#if 0
 switch_restored:
-#endif
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%r13),%ecx
 #ifdef MULTIPROCESSOR
@@ -876,6 +879,11 @@ NENTRY(switch_error3)
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
 1:	.asciz	"cpu_switch 3"
+NENTRY(switch_pmcpu_set)
+	movabsq	$1f,%rdi
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+1:	.asciz	"activate already active pmap"
 #endif /* DIAGNOSTIC */
 
 /*
@@ -900,7 +908,7 @@ IDTVEC(syscall)
 	swapgs
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURPCB),%r15
-	movq	PCB_RSP0(%r15),%r15
+	movq	PCB_KSTACK(%r15),%r15
 	xchgq	%r15,%rsp
 	sti
 

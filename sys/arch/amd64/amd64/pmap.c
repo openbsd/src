@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2010/10/26 05:49:10 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2010/11/13 04:16:42 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1118,7 +1118,7 @@ pmap_reference(struct pmap *pmap)
 /*
  * pmap_activate: activate a process' pmap (fill in %cr3)
  *
- * => called from cpu_switch()
+ * => called from cpu_fork() and when switching pmaps during exec
  * => if p is the curproc, then load it into the MMU
  */
 

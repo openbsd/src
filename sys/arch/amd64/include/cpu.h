@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.58 2010/10/02 23:13:27 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.59 2010/11/13 04:16:42 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@
  */
 #include <machine/frame.h>
 #include <machine/segments.h>
-#include <machine/tss.h>
 #include <machine/intrdefs.h>
 #include <machine/cacheinfo.h>
 
@@ -59,6 +58,7 @@
 
 #ifdef _KERNEL
 
+struct x86_64_tss;
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
@@ -79,7 +79,6 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;
 	struct pcb *ci_idle_pcb;
-	int ci_idle_tss_sel;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	u_int32_t	ci_ipending;
@@ -110,6 +109,7 @@ struct cpu_info {
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
+	struct	x86_64_tss *ci_tss;
 	char		*ci_gdt;
 
 	volatile int	ci_ddb_paused;
@@ -124,10 +124,6 @@ struct cpu_info {
 #define CI_SETPERF_SHOULDSTOP	1
 #define CI_SETPERF_INTRANSIT	2
 #define CI_SETPERF_DONE		3
-
-	struct x86_64_tss	ci_doubleflt_tss;
-
-	char *ci_doubleflt_stack;
 
 	struct ksensordev	ci_sensordev;
 	struct ksensor		ci_sensor;
@@ -272,7 +268,6 @@ void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_bufinit(void);
