@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.269 2010/10/27 17:20:06 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.270 2010/11/13 10:43:20 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 27 2010 $
+.Dd $Mdocdate: November 13 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -37,6 +37,14 @@
 holds all the standard routines used by the ports tree.
 Some variables and targets are for its internal use only.
 The rest is documented here.
+.Pp
+.Nm
+also uses quite a few helper scripts.
+Those live under
+.Pa ${PORTSDIR}/infrastructure/bin ,
+and they do have manpages under
+.Pa ${PORTSDIR}/infrastructure/man ,
+which is not currently part of the default manpath.
 .Pp
 Other BSD variants, as well as older versions of
 .Nm bsd.port.mk ,
@@ -463,7 +471,8 @@ unless you already have all binary packages.
 Prepare a port for building, by checking and installing all required
 dependencies.
 .It Ar print-package-signature
-Print the package signature, in the same format used for
+Print the package signature, as computed using information from the ports tree,
+in the same format used for
 .Xr pkg_info 1
 .Fl S .
 .It Ar print-plist
@@ -732,7 +741,7 @@ Set based on corresponding INSTALL_* variables.
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
-.Sq [legacy]:[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
+.Sq :[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
 .Sq target
 defaults to
 .Sq install
@@ -1267,7 +1276,7 @@ to package installation time.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Each item has the form
-.Sq [legacy]:[pkgspec]:directory[,-subpackage][,flavor ...] .
+.Sq :[pkgspec]:directory[,-subpackage][,flavor ...] .
 Similar to
 .Ev BUILD_DEPENDS
 and
