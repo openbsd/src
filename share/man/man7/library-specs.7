@@ -1,6 +1,6 @@
-.\" $OpenBSD: library-specs.7,v 1.8 2010/07/04 17:30:31 espie Exp $
+.\" $OpenBSD: library-specs.7,v 1.9 2010/11/14 07:26:11 espie Exp $
 .\"
-.\" Copyright (c) 2001 Marc Espie
+.\" Copyright (c) 2001-2010 Marc Espie
 .\"
 .\" All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 4 2010 $
+.Dd $Mdocdate: November 14 2010 $
 .Dt LIBRARY-SPECS 7
 .Os
 .Sh NAME
@@ -33,14 +33,14 @@
 .Sh DESCRIPTION
 Each
 .Ev WANTLIB
-item in the port tree conforms to
+item in the ports tree conforms to
 .Bd -literal -offset indent
-libname[.=major[.minor]]
+[path/]libname[=major[.minor]]
 .Ed
 .Pp
 or
 .Bd -literal -offset indent
-libname[.>=major[.minor]]
+[path/]libname[>=major[.minor]]
 .Ed
 .Pp
 All libraries that a package needs must be mentioned in that list.
@@ -71,7 +71,7 @@ the same major number, and a greater or equal minor number will do.
 .Pp
 Note that static libraries can only satisfy a library specification if
 no shared library has been found.
-Thus, if WANTLIB=foo.>=5, and both libfoo.so.4.0 and libfoo.a are present,
+Thus, if WANTLIB = foo>=5, and both libfoo.so.4.0 and libfoo.a are present,
 the check will fail.
 .Pp
 Therefore, porters must strive to respect correct shared library semantics
@@ -81,13 +81,14 @@ Note that adding functions to a library is an interface augmentation.
 Removing functions is an interface change.
 .Pp
 The major.minor components of the library specification are used only as a
-build-time check, the run-time checks are computed by ports tree internals.
+build-time check, the run-time checks are computed by
+.Xr resolve-lib 1 .
 For
-.Sq libname.>=major[.minor] ,
+.Sq libname>=major[.minor] ,
 any library which is more recent than the given major.minor version will
 do.
 If a specific major number is needed, use the form
-.Sq libname.=major[.minor] .
+.Sq libname=major[.minor] .
 If the minor component is left empty, any minor will do.
 If both components are left empty, any version will do.
 .Pp
@@ -100,12 +101,47 @@ failure to mention
 .Ev RUN_DEPENDS
 if the port needs anything beyond libraries from the dependent port will
 lead to strange errors on such architectures.
+.Pp
+Most specifications won't mention a
+.Pa path :
+.Xr resolve-lib 1
+will look in the default
+.Xr ldconfig 8
+path automatically, namely
+.Pa /usr/local/lib ,
+.Pa /usr/X11R6/lib ,
+.Pa /usr/lib .
+It is generally a bad idea to put libraries elsewhere as they won't be
+reached directly.
+.Pp
+However, distinct ports may install different major versions of the same
+library in
+.Pa /usr/local/lib ,
+and desambiguate the build by creating a link in a separate directory,
+and specifying the right options to the linker.
+.Pp
+These libraries will require a
+.Pa path
+component in the corresponding
+.Ev WANTLIB
+to make sure the right library is resolved.
+This path is rooted under
+.Pa /usr/local .
+For instance, to refer to
+.Pa /usr/local/lib/qt3/libqt-mt.so.33.0 ,
+one would use
+.Sq lib/qt3/qt-mt>=33 .
 .Sh SEE ALSO
+.Xr check-lib-depends 1 ,
+.Xr ld 1 ,
+.Xr ld.so 1 ,
 .Xr pkg_add 1 ,
+.Xr resolve_lib 1 ,
 .Xr bsd.port.mk 5 ,
 .Xr packages 7 ,
 .Xr packages-specs 7 ,
-.Xr ports 7
+.Xr ports 7 ,
+.Xr ldconfig 8
 .Sh HISTORY
 Full support for library specifications first appeared in
 .Ox 3.1 .
@@ -119,3 +155,6 @@ and
 .Ev WANTLIB
 were modified and clarified for
 .Ox 4.8 .
+The format of specifications changed again before
+.Ox 4.9
+to remove extra noise.
