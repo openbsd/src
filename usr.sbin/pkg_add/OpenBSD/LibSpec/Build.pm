@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Build.pm,v 1.5 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Build.pm,v 1.6 2010/11/14 07:24:06 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -102,7 +102,7 @@ sub no_match_major
 sub to_string
 {
 	my $self = shift;
-	return join('.', $self->key, ">=".$self->major, $self->minor);
+	return $self->key.">=".$self->major.".".$self->minor;
 
 }
 
@@ -115,9 +115,9 @@ sub new_from_string
 	my ($class, $string) = @_;
 
 	$string =~ s/\.$//;
-	if (my ($stem, $strict, $major, $minor) = $string =~ m/^(.*)\.(\>?)\=(\d+)\.(\d+)$/o) {
+	if (my ($stem, $strict, $major, $minor) = $string =~ m/^(.*?)\.?(\>?)\=(\d+)\.(\d+)$/o) {
 		return $class->new_object($stem, $strict, $major, $minor);
-	} elsif (($stem, $strict, $major) = $string =~ m/^(.*)\.(\>?)\=(\d+)$/o) {
+	} elsif (($stem, $strict, $major) = $string =~ m/^(.*?)\.?(\>?)\=(\d+)$/o) {
 		return $class->new_object($stem, $strict, $major, 0);
 	} else {
 		return $class->new_object($string, '>', 0, 0);
