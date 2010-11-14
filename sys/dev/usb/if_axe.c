@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.102 2010/10/27 17:51:11 jakemsr Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.103 2010/11/14 20:38:43 weerd Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -723,8 +723,6 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	s = splnet();
-
-	printf("%s:", sc->axe_dev.dv_xname);
 
 	/* We need the PHYID for init dance in some cases */
 	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
