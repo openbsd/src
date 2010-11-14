@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.189 2010/11/11 20:54:06 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.190 2010/11/14 09:04:22 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2010 $
+.Dd $Mdocdate: November 14 2010 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2022,7 +2022,8 @@ was given to the
 .Ic set-environment
 command).
 The default is
-"DISPLAY WINDOWID SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION".
+"DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION WINDOWID
+XAUTHORITY".
 .It Xo Ic visual-activity
 .Op Ic on | off
 .Xc
