@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.270 2010/11/13 10:43:20 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.271 2010/11/14 11:18:30 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 13 2010 $
+.Dd $Mdocdate: November 14 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -741,7 +741,7 @@ Set based on corresponding INSTALL_* variables.
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
-.Sq :[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
+.Sq [pkgspec:]directory[,-subpackage][,flavor ...][:target] .
 .Sq target
 defaults to
 .Sq install
@@ -1276,7 +1276,7 @@ to package installation time.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Each item has the form
-.Sq :[pkgspec]:directory[,-subpackage][,flavor ...] .
+.Sq [pkgspec:]directory[,-subpackage][,flavor ...] .
 Similar to
 .Ev BUILD_DEPENDS
 and

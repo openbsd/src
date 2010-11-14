@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.13 2010/07/11 07:25:10 espie Exp $
+.\" $OpenBSD: packages-specs.7,v 1.14 2010/11/14 11:18:30 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 11 2010 $
+.Dd $Mdocdate: November 14 2010 $
 .Dt PACKAGES-SPECS 7
 .Os
 .Sh NAME
@@ -133,13 +133,8 @@ or
 .Ev RUN_DEPENDS .
 All those conform to
 .Bd -literal -offset indent
-[legacy]:[pkgspec]:directory,[-multi],[flavor...]
+[pkgspec:]directory,[-multi],[flavor...]
 .Ed
-.Pp
-The
-.Ar [legacy]
-part of the dependency corresponds to older semantics that have been
-deprecated.
 .Pp
 The
 .Ar directory,[-multi],[flavor...]
@@ -149,17 +144,15 @@ is found).
 The corresponding package name is also used as a package specification,
 after removing any version and flavor requirements.
 .Pp
-If the
-.Sq pkgspec
-part is left empty, any package with the right stem will do: in effect,
+Without a
+.Sq pkgspec:
+part, any package with the right stem will do: in effect,
 the pkgspec used is
 .Sq stem-* .
 .Pp
 An explicit specification such as
-.Qq ghostscript-*
-may be used to ask for any version of package ghostscript,
-or a more specific version number may be required, such as
 .Qq png-1.0.7 .
+may be used to ask for a more specific version number.
 Version numbers may also include ranges, separated by commas, so for
 instance,
 .Qq foo->=1.3
@@ -167,12 +160,16 @@ would match any foo with version at least 1.3, and
 .Qq foo->=1.3,<=1.5
 would match any version of foo between 1.3 and 1.5, inclusive.
 .Pp
+As a convenience, the ports tree recognizes a specification that starts
+with STEM, and will replace this with the correct stem, which can be useful
+for embarrassingly long package names.
+.Pp
 If the flavor specification is left blank, any flavor will do.
 Note that most default package names don't contain flavor specification,
-which means that any flavor will do.
+which means that any flavor will do
 For instance, in
 .Bd -literal -offset indent
-LIB_DEPENDS=::graphics/aalib
+LIB_DEPENDS = graphics/aalib
 .Ed
 .Pp
 both
@@ -190,7 +187,7 @@ append
 .Sq -!f .
 In the preceding case, one may use
 .Bd -literal -offset indent
-LIB_DEPENDS=:aalib-*-!no_x11:graphics/aalib
+LIB_DEPENDS = aalib-*-!no_x11:graphics/aalib
 .Ed
 .Pp
 to ensure the no_x11 flavor is not picked.
@@ -240,5 +237,8 @@ and so would check on
 .Xr packages 7 ,
 .Xr ports 7
 .Sh HISTORY
-Support for these package specifications first appeared in
+Support for a more complex form of those package specifications first 
+appeared in
 .Ox 2.9 .
+The current simplified form was introduced in
+.Ox 4.9 .
