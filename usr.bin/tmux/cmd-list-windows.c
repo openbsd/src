@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.9 2010/06/29 03:30:13 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.10 2010/11/15 06:52:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -51,10 +51,10 @@ cmd_list_windows_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (-1);
 
 	RB_FOREACH(wl, winlinks, &s->windows) {
-		ctx->print(ctx, "%d: %s [%ux%u]",
-		    wl->idx, wl->window->name, wl->window->sx, wl->window->sy);
 		layout = layout_dump(wl->window);
-		ctx->print(ctx, "    layout: %s", layout);
+		ctx->print(ctx, "%d: %s [%ux%u] [layout %s]%s",
+		    wl->idx, wl->window->name, wl->window->sx, wl->window->sy,
+		    layout, wl == s->curw ? " (active)" : "");
 		xfree(layout);
 	}
 
