@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.27 2006/06/14 02:14:25 krw Exp $	*/
+/*	$OpenBSD: util.h,v 1.28 2010/11/15 15:07:40 jsing Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -114,6 +114,7 @@ int	uu_lock_txfr(const char *_ttyname, pid_t _pid);
 int     uu_unlock(const char *_ttyname);
 int	fmt_scaled(long long number, char *result);
 int	scan_scaled(char *scaled, long long *result);
+int	isduid(const char *, int);
 __END_DECLS
 
 #endif /* !_UTIL_H_ */

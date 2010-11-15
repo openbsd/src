@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.10 2010/06/28 19:12:29 chl Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.11 2010/11/15 15:07:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -41,28 +41,6 @@
 
 #include "util.h"
 
-/* Returns 1 if a valid disklabel UID.  */
-static int
-valid_diskuid(const char *duid, int dflags)
-{
-	char c;
-	int i;
-
-	/* Basic format check. */
-	if (!((strlen(duid) == 16 && (dflags & OPENDEV_PART)) ||
-	    (strlen(duid) == 18 && duid[16] == '.')))
-		return 0;
-
-	/* Check UID. */
-	for (i = 0; i < 16; i++) {
-		c = duid[i];
-		if ((c < '0' || c > '9') && (c < 'a' || c > 'f'))
-			return 0;
-	}
-
-	return 1;
-}
-
 /*
  * This routine is a generic rewrite of the original code found in
  * disklabel(8).
@@ -88,7 +66,7 @@ opendev(char *path, int oflags, int dflags, char **realpath)
 
 	if ((slash = strchr(path, '/')))
 		fd = open(path, oflags);
-	else if (valid_diskuid(path, dflags)) {
+	else if (isduid(path, dflags)) {
 		if ((fd = open("/dev/diskmap", oflags)) != -1) {
 			bzero(&dm, sizeof(struct dk_diskmap));
 			strlcpy(namebuf, path, sizeof(namebuf));

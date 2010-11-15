@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.31 2010/05/26 16:44:32 nicm Exp $
+#	$OpenBSD: Makefile,v 1.32 2010/11/15 15:07:40 jsing Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
 WANTLINT=
 
 HDRS=	util.h imsg.h
-SRCS=	check_expire.c getmaxpartitions.c getrawpartition.c login.c \
+SRCS=	check_expire.c duid.c getmaxpartitions.c getrawpartition.c login.c \
 	login_tty.c logout.c logwtmp.c opendev.c passwd.c pty.c readlabel.c \
 	login_fbtab.c uucplock.c fparseln.c opendisk.c pidfile.c \
 	fmt_scaled.c imsg.c imsg-buffer.c
@@ -61,8 +61,8 @@ MLINKS+=fmt_scaled.3 scan_scaled.3
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
-		${DESTDIR}/usr/include"; \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} \
+		-m 444 $$i ${DESTDIR}/usr/include"; \
 	    echo $$j; \
 	    eval "$$j"; \
 	done
