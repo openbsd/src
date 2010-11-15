@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.18 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: who.c,v 1.19 2010/11/15 10:57:49 otto Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -59,7 +59,9 @@ int show_labels;		/* show column labels */
 int show_quick;			/* quick, names only */
 
 #define NAME_WIDTH	8
-#define HOST_WIDTH	32
+#define HOST_WIDTH	45
+
+int hostwidth = HOST_WIDTH;
 
 int
 main(int argc, char *argv[])
@@ -100,6 +102,11 @@ main(int argc, char *argv[])
 	if (show_quick) {
 		only_current_term = show_term = show_idle = show_labels = 0;
 	}
+	
+	if (show_term)
+		hostwidth -= 2;
+	if (show_idle)
+		hostwidth -= 6;
 
 	if (show_labels)
 		output_labels();
@@ -245,7 +252,7 @@ output(struct utmp *up)
 	}
 	
 	if (*up->ut_host)
-		printf("  (%.*s)", HOST_WIDTH, up->ut_host);
+		printf("  (%.*s)", hostwidth, up->ut_host);
 	(void)putchar('\n');
 }
 
@@ -263,7 +270,7 @@ output_labels(void)
 	if (show_idle)
 		(void)printf("IDLE  ");
 
-	(void)printf("  %.*s", HOST_WIDTH, "FROM");
+	(void)printf("  %.*s", hostwidth, "FROM");
 
 	(void)putchar('\n');
 }
