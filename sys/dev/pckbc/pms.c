@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.13 2010/11/15 13:51:20 krw Exp $ */
+/* $OpenBSD: pms.c,v 1.14 2010/11/15 20:25:31 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -60,15 +60,11 @@ struct pms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-int pmsprobe(struct device *, void *, void *);
-void pmsattach(struct device *, struct device *, void *);
-int pmsactivate(struct device *, int);
-void pmsinput(void *, int);
+int	pmsprobe(struct device *, void *, void *);
+void	pmsattach(struct device *, struct device *, void *);
+int	pmsactivate(struct device *, int);
 
-struct cfattach pms_ca = {
-	sizeof(struct pms_softc), pmsprobe, pmsattach, NULL,
-	pmsactivate
-};
+void	pmsinput(void *, int);
 
 int	pms_change_state(struct pms_softc *, int);
 int	pms_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -86,6 +82,15 @@ int	pms_dev_enable(struct pms_softc *);
 int	pms_dev_disable(struct pms_softc *);
 
 int	pms_setintellimode(struct pms_softc *sc);
+
+struct cfattach pms_ca = {
+	sizeof(struct pms_softc), pmsprobe, pmsattach, NULL,
+	pmsactivate
+};
+
+struct cfdriver pms_cd = {
+	NULL, "pms", DV_DULL
+};
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -442,7 +447,3 @@ pmsinput(void *vsc, int data)
 
 	return;
 }
-
-struct cfdriver pms_cd = {
-	NULL, "pms", DV_DULL
-};
