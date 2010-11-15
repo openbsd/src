@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.32 2010/10/28 21:15:50 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.33 2010/11/15 14:57:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -560,7 +560,7 @@ queue_load_envelope(struct message *messagep, char *evpid)
 
 	fp = fopen(pathname, "r");
 	if (fp == NULL) {
-		if (errno == ENOSPC || errno == ENFILE)
+		if (errno == ENOENT || errno == ENFILE)
 			return 0;
 		fatal("queue_load_envelope: fopen");
 	}
