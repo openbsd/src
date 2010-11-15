@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.11 2010/11/15 11:52:58 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.12 2010/11/15 12:30:29 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -315,8 +315,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	uint8_t iv[EALG_MAX_BLOCK_LEN];
 	uint8_t icb[EALG_MAX_BLOCK_LEN];
 	uint8_t *buf = aesni_sc->sc_buf;
-	int ivlen = 0;
-	int err = 0;
+	int ivlen, rlen, err = 0;
 
 	if ((crd->crd_len % 16) != 0) {
 		err = EINVAL;
@@ -330,11 +329,12 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		}
 
 		aesni_sc->sc_buflen = 0;
-		aesni_sc->sc_buf = buf = malloc(crd->crd_len, M_DEVBUF,
-		    M_NOWAIT|M_ZERO);
+		rlen = roundup(crd->crd_len, EALG_MAX_BLOCK_LEN);
+		aesni_sc->sc_buf = buf = malloc(rlen, M_DEVBUF, M_NOWAIT |
+		    M_ZERO);
 		if (buf == NULL)
 			return (ENOMEM);
-		aesni_sc->sc_buflen = crd->crd_len;
+		aesni_sc->sc_buflen = rlen;
 	}
 
 	/* CBC uses 16, CTR only 8 */
@@ -427,7 +427,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	}
 
 out:
-	bzero(buf, crd->crd_len);
+	bzero(buf, aesni_sc->sc_buflen);
 	return (err);
 }
 
