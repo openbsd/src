@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.13 2010/11/15 12:57:24 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.14 2010/11/15 14:24:13 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -430,7 +430,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	}
 
 out:
-	bzero(buf, aesni_sc->sc_buflen);
+	bzero(buf, roundup(crd->crd_len, EALG_MAX_BLOCK_LEN));
 	return (err);
 }
 
