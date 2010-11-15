@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.12 2010/11/15 12:30:29 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.13 2010/11/15 12:57:24 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -313,7 +313,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
     struct aesni_sess *ses)
 {
 	uint8_t iv[EALG_MAX_BLOCK_LEN];
-	uint8_t icb[EALG_MAX_BLOCK_LEN];
+	uint8_t icb[AESCTR_BLOCKSIZE];
 	uint8_t *buf = aesni_sc->sc_buf;
 	int ivlen, rlen, err = 0;
 
@@ -382,16 +382,19 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 	/* Apply cipher */
 	fpu_kernel_enter();
-	if (crd->crd_alg == CRYPTO_AES_CBC) {
+	switch (crd->crd_alg) {
+	case CRYPTO_AES_CBC:
 		if (crd->crd_flags & CRD_F_ENCRYPT)
 			aesni_cbc_enc(ses, buf, buf, crd->crd_len, iv);
 		else
 			aesni_cbc_dec(ses, buf, buf, crd->crd_len, iv);
-	} else if (crd->crd_alg == CRYPTO_AES_CTR) {
-		bzero(icb, sizeof(icb));
+		break;
+	case CRYPTO_AES_CTR:
+		bzero(icb, AESCTR_BLOCKSIZE);
 		bcopy(ses->ses_nonce, icb, AESCTR_NONCESIZE);
 		bcopy(iv, icb + AESCTR_NONCESIZE, AESCTR_IVSIZE);
 		aesni_ctr_enc(ses, buf, buf, crd->crd_len, icb);
+		break;
 	}
 	fpu_kernel_exit();
 
