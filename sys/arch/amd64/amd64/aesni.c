@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.15 2010/11/15 14:41:41 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.16 2010/11/15 14:48:17 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -41,7 +41,7 @@
 #define AESCTR_IVSIZE		8
 #define AESCTR_BLOCKSIZE	16
 
-struct aesni_sess {
+struct aesni_session {
 	uint32_t		 ses_ekey[4 * (AES_MAXROUNDS + 1)];
 	uint32_t		 ses_dkey[4 * (AES_MAXROUNDS + 1)];
 	uint32_t		 ses_klen;
@@ -49,7 +49,8 @@ struct aesni_sess {
 	uint8_t			 ses_iv[EALG_MAX_BLOCK_LEN];
 	int			 ses_sid;
 	struct swcr_data	*ses_swd;
-	LIST_ENTRY(aesni_sess)	 ses_entries;
+	LIST_ENTRY(aesni_session)
+				 ses_entries;
 };
 
 struct aesni_softc {
@@ -57,7 +58,8 @@ struct aesni_softc {
 	size_t			 sc_buflen;
 	int32_t			 sc_cid;
 	uint32_t		 sc_sid;
-	LIST_HEAD(, aesni_sess)	 sc_sessions;
+	LIST_HEAD(, aesni_session)
+				 sc_sessions;
 } *aesni_sc;
 
 struct pool aesnipl;
@@ -65,20 +67,20 @@ struct pool aesnipl;
 uint32_t aesni_ops;
 
 /* assembler-assisted key setup */
-extern void aesni_set_key(struct aesni_sess *ses, uint8_t *key, size_t len);
+extern void aesni_set_key(struct aesni_session *ses, uint8_t *key, size_t len);
 
 /* aes encryption/decryption */
-extern void aesni_enc(struct aesni_sess *ses, uint8_t *dst, uint8_t *src);
-extern void aesni_dec(struct aesni_sess *ses, uint8_t *dst, uint8_t *src);
+extern void aesni_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src);
+extern void aesni_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src);
 
 /* assembler-assisted CBC mode */
-extern void aesni_cbc_enc(struct aesni_sess *ses, uint8_t *dst,
+extern void aesni_cbc_enc(struct aesni_session *ses, uint8_t *dst,
 	    uint8_t *src, size_t len, uint8_t *iv);
-extern void aesni_cbc_dec(struct aesni_sess *ses, uint8_t *dst,
+extern void aesni_cbc_dec(struct aesni_session *ses, uint8_t *dst,
 	    uint8_t *src, size_t len, uint8_t *iv);
 
 /* assembler-assisted CTR mode */
-extern void aesni_ctr_enc(struct aesni_sess *ses, uint8_t *dst,
+extern void aesni_ctr_enc(struct aesni_session *ses, uint8_t *dst,
 	    uint8_t *src, size_t len, uint8_t *icb);
 
 void	aesni_setup(void);
@@ -90,7 +92,7 @@ int	aesni_swauth(struct cryptop *, struct cryptodesc *, struct swcr_data *,
 	    caddr_t);
 
 int	aesni_encdec(struct cryptop *, struct cryptodesc *,
-	    struct aesni_sess *);
+	    struct aesni_session *);
 
 void
 aesni_setup(void)
@@ -123,7 +125,7 @@ aesni_setup(void)
 		return;
 	}
 
-	pool_init(&aesnipl, sizeof(struct aesni_sess), 16, 0, 0,
+	pool_init(&aesnipl, sizeof(struct aesni_session), 16, 0, 0,
 	    "aesnipl", NULL);
 	pool_prime(&aesnipl, 2);
 
@@ -134,8 +136,8 @@ aesni_setup(void)
 int
 aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 {
+	struct aesni_session *ses = NULL;
 	struct cryptoini *c;
-	struct aesni_sess *ses = NULL;
 	struct auth_hash *axf;
 	struct swcr_data *swd;
 	int i;
@@ -246,7 +248,7 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 int
 aesni_freesession(u_int64_t tid)
 {
-	struct aesni_sess *ses;
+	struct aesni_session *ses;
 	struct swcr_data *swd;
 	struct auth_hash *axf;
 	u_int32_t sid = (u_int32_t)tid;
@@ -298,7 +300,7 @@ aesni_swauth(struct cryptop *crp, struct cryptodesc *crd,
 
 int
 aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
-    struct aesni_sess *ses)
+    struct aesni_session *ses)
 {
 	uint8_t iv[EALG_MAX_BLOCK_LEN];
 	uint8_t icb[AESCTR_BLOCKSIZE];
@@ -425,7 +427,7 @@ out:
 int
 aesni_process(struct cryptop *crp)
 {
-	struct aesni_sess *ses;
+	struct aesni_session *ses;
 	struct cryptodesc *crd;
 	int err = 0;
 

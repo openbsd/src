@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.3 2010/11/10 17:05:39 mikeb Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.4 2010/11/15 14:48:17 mikeb Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -151,7 +151,7 @@ _key_expansion_256b:
 	ret
 
 /*
- * void aesni_set_key(struct aesni_sess *ses, uint8_t *key, size_t len)
+ * void aesni_set_key(struct aesni_session *ses, uint8_t *key, size_t len)
  */
 ENTRY(aesni_set_key)
 	movups (%rsi), %xmm0		# user key (first 16 bytes)
@@ -252,7 +252,7 @@ ENTRY(aesni_set_key)
 	ret
 
 /*
- * void aesni_enc(struct aesni_sess *ses, uint8_t *dst, uint8_t *src)
+ * void aesni_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src)
  */
 ENTRY(aesni_enc)
 	movl 480(KEYP), KLEN		# key length
@@ -425,7 +425,7 @@ _aesni_enc4:
 	ret
 
 /*
- * void aesni_dec(struct aesni_sess *ses, uint8_t *dst, uint8_t *src)
+ * void aesni_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src)
  */
 ENTRY(aesni_dec)
 	mov 480(KEYP), KLEN		# key length
@@ -600,7 +600,7 @@ _aesni_dec4:
 
 #if 0
 /*
- * void aesni_ecb_enc(struct aesni_sess *ses, uint8_t *dst, uint8_t *src,
+ * void aesni_ecb_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
  *     size_t len)
  */
 ENTRY(aesni_ecb_enc)
@@ -643,7 +643,7 @@ ENTRY(aesni_ecb_enc)
 	ret
 
 /*
- * void aesni_ecb_dec(struct aesni_sess *ses, uint8_t *dst, uint8_t *src,
+ * void aesni_ecb_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
  *     size_t len);
  */
 ENTRY(aesni_ecb_dec)
@@ -688,7 +688,7 @@ ENTRY(aesni_ecb_dec)
 #endif
 
 /*
- * void aesni_cbc_enc(struct aesni_sess *ses, uint8_t *dst, uint8_t *src,
+ * void aesni_cbc_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
  *     size_t len, uint8_t *iv)
  */
 ENTRY(aesni_cbc_enc)
@@ -712,7 +712,7 @@ ENTRY(aesni_cbc_enc)
 	ret
 
 /*
- * void aesni_cbc_dec(struct aesni_sess *ses, uint8_t *dst, uint8_t *src,
+ * void aesni_cbc_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
  *     size_t len, uint8_t *iv)
  */
 ENTRY(aesni_cbc_dec)
@@ -818,7 +818,7 @@ _aesni_inc:
 	ret
 
 /*
- * void aesni_ctr_enc(struct aesni_sess *ses, uint8_t *dst, uint8_t *src,
+ * void aesni_ctr_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
  *     size_t len, uint8_t *icb)
  */
 ENTRY(aesni_ctr_enc)
