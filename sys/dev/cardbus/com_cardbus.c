@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.39 2010/03/27 21:40:13 jsg Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.40 2010/11/15 23:19:34 mikeb Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -237,9 +237,9 @@ com_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = (struct com_softc*)self;
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)self;
 	struct cardbus_attach_args *ca = aux;
-	cardbus_devfunc_t ct = csc->cc_ct;
+	cardbus_devfunc_t ct;
 
-	csc->cc_ct = ca->ca_ct;
+	csc->cc_ct = ct = ca->ca_ct;
 	csc->cc_tag = pci_make_tag(ca->ca_pc, ct->ct_bus, ct->ct_dev, ct->ct_func);
 	csc->cc_pc = ca->ca_pc;
 
