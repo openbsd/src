@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.93 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.94 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -2081,6 +2081,9 @@ ipw_stop(struct ifnet *ifp, int disable)
 	 */
 	for (i = 0; i < IPW_NTBD; i++)
 		ipw_release_sbd(sc, &sc->stbd_list[i]);
+
+	/* in case we were scanning, release the scan "lock" */
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }
