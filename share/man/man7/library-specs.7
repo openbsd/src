@@ -1,4 +1,4 @@
-.\" $OpenBSD: library-specs.7,v 1.9 2010/11/14 07:26:11 espie Exp $
+.\" $OpenBSD: library-specs.7,v 1.10 2010/11/15 07:41:21 jmc Exp $
 .\"
 .\" Copyright (c) 2001-2010 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 14 2010 $
+.Dd $Mdocdate: November 15 2010 $
 .Dt LIBRARY-SPECS 7
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@ reached directly.
 However, distinct ports may install different major versions of the same
 library in
 .Pa /usr/local/lib ,
-and desambiguate the build by creating a link in a separate directory,
+and disambiguate the build by creating a link in a separate directory,
 and specifying the right options to the linker.
 .Pp
 These libraries will require a
