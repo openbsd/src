@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2010/09/23 16:21:47 yuo Exp $
+#	$OpenBSD: GENERIC,v 1.16 2010/11/15 19:07:34 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -75,6 +75,7 @@ uath*	at uhub?		# Atheros AR5005UR/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
 zyd*	at uhub?		# Zydas ZD1211
 uthum*	at uhidev?		# TEMPerHUM sensor
 utwitch* at uhidev?		# YUREX BBU sensor

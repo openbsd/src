@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2010/09/26 20:39:08 miod Exp $
+#	$OpenBSD: GENERIC,v 1.27 2010/11/15 19:07:34 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -149,6 +149,7 @@ upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host `network'
 ural*		at uhub?	# Ralink RT2500USB
 url*		at uhub?	# Realtek RTL8150L based adapters
 urtw*		at uhub?	# RealTek 8187
+urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
 zyd*		at uhub?	# Zydas ZD1211
 uberry*		at uhub?	# Research In Motion Blackberry 
