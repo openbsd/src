@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.10 2006/10/02 12:01:40 krw Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.11 2010/11/15 15:11:31 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <paths.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/disk.h>
 #include <sys/dkio.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
@@ -50,10 +51,27 @@ char *
 readlabelfs(char *device, int verbose)
 {
 	char rpath[MAXPATHLEN];
+	struct dk_diskmap dm;
 	struct disklabel dk;
 	char part, *type;
 	struct stat sbuf;
-	int fd;
+	int fd = -1;
+
+	/* Perform disk mapping if device is given as a DUID. */
+	if (isduid(device, 0)) {
+		if ((fd = open("/dev/diskmap", O_RDONLY)) != -1) {
+			bzero(&dm, sizeof(struct dk_diskmap));
+			strlcpy(rpath, device, sizeof(rpath));
+			part = rpath[strlen(rpath) - 1];
+			dm.device = rpath;
+			dm.fd = fd;
+			dm.flags = DM_OPENPART;
+			if (ioctl(fd, DIOCMAP, &dm) == -1)
+				close(fd);
+			else
+				goto disklabel;
+		}
+	}
 
 	/* Assuming device is of the form /dev/??p, build a raw partition. */
 	if (stat(device, &sbuf) < 0) {
@@ -64,8 +82,7 @@ readlabelfs(char *device, int verbose)
 	switch (sbuf.st_mode & S_IFMT) {
 	case S_IFCHR:
 		/* Ok... already a raw device.  Hmm. */
-		strncpy(rpath, device, sizeof(rpath));
-		rpath[sizeof(rpath) - 1] = '\0';
+		strlcpy(rpath, device, sizeof(rpath));
 
 		/* Change partition name. */
 		part = rpath[strlen(rpath) - 1];
@@ -105,6 +122,9 @@ readlabelfs(char *device, int verbose)
 			return (NULL);
 		}
 	}
+
+disklabel:
+
 	if (ioctl(fd, DIOCGDINFO, &dk) < 0) {
 		if (verbose)
 			warn("%s: couldn't read disklabel", rpath);
