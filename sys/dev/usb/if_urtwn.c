@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.4 2010/11/06 12:27:43 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.5 2010/11/15 18:56:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -271,9 +271,13 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	}
 	urtwn_read_rom(sc);
 
-	printf("%s: board type 0x%x, RF 6052 %dT%dR, address %s\n",
-	    sc->sc_dev.dv_xname, sc->board_type, sc->ntxchains,
-	    sc->nrxchains, ether_sprintf(ic->ic_myaddr));
+	printf("%s: MAC/BB RTL%s, RF 6052 %dT%dR, address %s\n",
+	    sc->sc_dev.dv_xname,
+	    (sc->chip & URTWN_CHIP_92C) ? "8192CU" :
+	    (sc->board_type == R92C_BOARD_TYPE_HIGHPA) ? "8188RU" :
+	    (sc->board_type == R92C_BOARD_TYPE_MINICARD) ? "8188CE-VAU" :
+	    "8188CUS", sc->ntxchains, sc->nrxchains,
+	    ether_sprintf(ic->ic_myaddr));
 
 	if (urtwn_open_pipes(sc) != 0)
 		return;
@@ -1015,7 +1019,7 @@ urtwn_tsf_sync_enable(struct urtwn_softc *sc)
 	tsf = letoh64(tsf);
 	tsf = tsf - (tsf % (ni->ni_intval * IEEE80211_DUR_TU));
 	tsf -= IEEE80211_DUR_TU;
-	urtwn_write_4(sc, R92C_TSFTR, tsf);
+	urtwn_write_4(sc, R92C_TSFTR + 0, tsf);
 	urtwn_write_4(sc, R92C_TSFTR + 4, tsf >> 32);
 
 	urtwn_write_1(sc, R92C_BCN_CTRL,
@@ -2514,7 +2518,7 @@ urtwn_rxfilter_init(struct urtwn_softc *sc)
 	    R92C_RCR_APP_ICV | R92C_RCR_AMF | R92C_RCR_HTC_LOC_CTRL |
 	    R92C_RCR_APP_MIC | R92C_RCR_APP_PHYSTS);
 	/* Accept all multicast frames. */
-	urtwn_write_4(sc, R92C_MAR, 0xffffffff);
+	urtwn_write_4(sc, R92C_MAR + 0, 0xffffffff);
 	urtwn_write_4(sc, R92C_MAR + 4, 0xffffffff);
 	/* Accept all management frames. */
 	urtwn_write_2(sc, R92C_RXFLTMAP0, 0xffff);
