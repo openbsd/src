@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.10 2010/11/10 17:05:39 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.11 2010/11/15 11:52:58 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -34,7 +34,6 @@
 #include <dev/rndvar.h>
 
 #include <machine/fpu.h>
-
 
 /* defines from crypto/xform.c */
 #define AESCTR_NONCESIZE	4
@@ -353,15 +352,12 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			if (crp->crp_flags & CRYPTO_F_IMBUF) {
 				if (m_copyback((struct mbuf *)crp->crp_buf,
 				    crd->crd_inject, ivlen, iv, M_NOWAIT)) {
-				    err = ENOMEM;
-				    goto out;
+					err = ENOMEM;
+					goto out;
 				}
-			} else if (crp->crp_flags & CRYPTO_F_IOV)
+			} else
 				cuio_copyback((struct uio *)crp->crp_buf,
 				    crd->crd_inject, ivlen, iv);
-			else
-				bcopy(iv, crp->crp_buf + crd->crd_inject,
-				    ivlen);
 		}
 	} else {
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
@@ -370,12 +366,9 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
 				    crd->crd_inject, ivlen, iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV)
+			else
 				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_inject, ivlen, iv);
-			else
-				bcopy(crp->crp_buf + crd->crd_inject,
-				    iv, ivlen);
 		}
 	}
 
@@ -383,11 +376,9 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copydata((struct mbuf *)crp->crp_buf, crd->crd_skip,
 		    crd->crd_len, buf);
-	else if (crp->crp_flags & CRYPTO_F_IOV)
+	else
 		cuio_copydata((struct uio *)crp->crp_buf, crd->crd_skip,
 		    crd->crd_len, buf);
-	else
-		bcopy(crp->crp_buf + crd->crd_skip, buf, crd->crd_len);
 
 	/* Apply cipher */
 	fpu_kernel_enter();
@@ -413,11 +404,9 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			err = ENOMEM;
 			goto out;
 		}
-	} else if (crp->crp_flags & CRYPTO_F_IOV)
+	} else
 		cuio_copyback((struct uio *)crp->crp_buf, crd->crd_skip,
 		    crd->crd_len, buf);
-	else
-		bcopy(buf, crp->crp_buf + crd->crd_skip, crd->crd_len);
 
 	/*
 	 * Copy out last block for use as next session IV for CBC,
@@ -429,13 +418,10 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				m_copydata((struct mbuf *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
 				    ses->ses_iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV)
+			else
 				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
 				    ses->ses_iv);
-			else
-				bcopy(crp->crp_buf + crd->crd_skip +
-				    crd->crd_len - ivlen, ses->ses_iv, ivlen);
 		} else if (crd->crd_alg == CRYPTO_AES_CTR)
 			arc4random_buf(ses->ses_iv, ivlen);
 	}
