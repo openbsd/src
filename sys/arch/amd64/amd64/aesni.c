@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.14 2010/11/15 14:24:13 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.15 2010/11/15 14:41:41 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 
 #include <crypto/cryptodev.h>
 #include <crypto/rijndael.h>
@@ -47,7 +48,6 @@ struct aesni_sess {
 	uint8_t			 ses_nonce[AESCTR_NONCESIZE];
 	uint8_t			 ses_iv[EALG_MAX_BLOCK_LEN];
 	int			 ses_sid;
-	int		 	 ses_used;
 	struct swcr_data	*ses_swd;
 	LIST_ENTRY(aesni_sess)	 ses_entries;
 };
@@ -56,10 +56,13 @@ struct aesni_softc {
 	uint8_t			*sc_buf;
 	size_t			 sc_buflen;
 	int32_t			 sc_cid;
+	uint32_t		 sc_sid;
 	LIST_HEAD(, aesni_sess)	 sc_sessions;
 } *aesni_sc;
 
-uint32_t aesni_nsessions, aesni_ops;
+struct pool aesnipl;
+
+uint32_t aesni_ops;
 
 /* assembler-assisted key setup */
 extern void aesni_set_key(struct aesni_sess *ses, uint8_t *key, size_t len);
@@ -120,6 +123,10 @@ aesni_setup(void)
 		return;
 	}
 
+	pool_init(&aesnipl, sizeof(struct aesni_sess), 16, 0, 0,
+	    "aesnipl", NULL);
+	pool_prime(&aesnipl, 2);
+
 	crypto_register(aesni_sc->sc_cid, algs, aesni_newsession,
 	    aesni_freesession, aesni_process);
 }
@@ -131,33 +138,16 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	struct aesni_sess *ses = NULL;
 	struct auth_hash *axf;
 	struct swcr_data *swd;
-	caddr_t ptr = NULL;
 	int i;
 
 	if (sidp == NULL || cri == NULL)
 		return (EINVAL);
 
-	LIST_FOREACH(ses, &aesni_sc->sc_sessions, ses_entries) {
-		if (ses->ses_used == 0)
-			break;
-	}
-
-	if (!ses) {
-		/* XXX use pool? */
-		ptr = malloc(sizeof(*ses) + 16, M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (!ptr)
-			return (ENOMEM);
-		/*
-		 * align to a 16 byte boundary, "the most utterly retarded
-		 * requirement".
-		 */
-		ses = (struct aesni_sess *)(roundup(((uint64_t)ptr), 16));
-
-		LIST_INSERT_HEAD(&aesni_sc->sc_sessions, ses, ses_entries);
-		ses->ses_sid = ++aesni_nsessions;
-	}
-
-	ses->ses_used = 1;
+	ses = pool_get(&aesnipl, PR_NOWAIT | PR_ZERO);
+	if (!ses)
+		return (ENOMEM);
+	LIST_INSERT_HEAD(&aesni_sc->sc_sessions, ses, ses_entries);
+	ses->ses_sid = ++aesni_sc->sc_sid;
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
@@ -287,9 +277,7 @@ aesni_freesession(u_int64_t tid)
 	}
 
 	bzero(ses, sizeof (*ses));
-
-	LIST_INSERT_HEAD(&aesni_sc->sc_sessions, ses, ses_entries);
-	ses->ses_sid = sid;
+	pool_put(&aesnipl, ses);
 
 	return (0);
 }
