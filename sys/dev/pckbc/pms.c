@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.12 2010/11/05 16:10:49 krw Exp $ */
+/* $OpenBSD: pms.c,v 1.13 2010/11/15 13:51:20 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -38,6 +38,8 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
+#define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
+
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
 
@@ -74,6 +76,14 @@ int	pms_enable(void *);
 void	pms_disable(void *);
 
 int	pms_cmd(struct pms_softc *, u_char *, int, u_char *, int);
+int	pms_get_devid(struct pms_softc *, u_char *);
+int	pms_get_status(struct pms_softc *, u_char *);
+int	pms_set_rate(struct pms_softc *, int);
+int	pms_set_resolution(struct pms_softc *, int);
+int	pms_set_scaling(struct pms_softc *, int);
+int	pms_reset(struct pms_softc *);
+int	pms_dev_enable(struct pms_softc *);
+int	pms_dev_disable(struct pms_softc *);
 
 int	pms_setintellimode(struct pms_softc *sc);
 
@@ -96,23 +106,113 @@ pms_cmd(struct pms_softc *sc, u_char *cmd, int len, u_char *resp, int resplen)
 }
 
 int
-pms_setintellimode(struct pms_softc *sc)
+pms_get_devid(struct pms_softc *sc, u_char *resp)
 {
-	u_char cmd[2], resp[1];
-	int i, res;
-	static const u_char rates[] = {200, 100, 80};
-
-	cmd[0] = PMS_SET_SAMPLE;
-	for (i = 0; i < 3; i++) {
-		cmd[1] = rates[i];
-		res = pms_cmd(sc, cmd, 2, NULL, 0);
-		if (res)
-			return (0);
-	}
+	u_char cmd[1];
 
 	cmd[0] = PMS_SEND_DEV_ID;
-	res = pms_cmd(sc, cmd, 1, resp, 1);
-	if (res || resp[0] != 3)
+	return (pms_cmd(sc, cmd, 1, resp, 1));
+}
+
+int
+pms_get_status(struct pms_softc *sc, u_char *resp)
+{
+	u_char cmd[1];
+
+	cmd[0] = PMS_SEND_DEV_STATUS;
+	return (pms_cmd(sc, cmd, 1, resp, 3));
+}
+
+int
+pms_set_rate(struct pms_softc *sc, int value)
+{
+	u_char cmd[2];
+
+	cmd[0] = PMS_SET_SAMPLE;
+	cmd[1] = value;
+	return (pms_cmd(sc, cmd, 2, NULL, 0));
+}
+
+int
+pms_set_resolution(struct pms_softc *sc, int value)
+{
+	u_char cmd[2];
+
+	cmd[0] = PMS_SET_RES;
+	cmd[1] = value;
+	return (pms_cmd(sc, cmd, 2, NULL, 0));
+}
+
+int
+pms_set_scaling(struct pms_softc *sc, int scale)
+{
+	u_char cmd[1];
+
+	switch (scale) {
+	case 1:
+	default:
+		cmd[0] = PMS_SET_SCALE11;
+		break;
+	case 2:
+		cmd[0] = PMS_SET_SCALE21;
+		break;
+	}
+	return (pms_cmd(sc, cmd, 1, NULL, 0));
+}
+
+int
+pms_reset(struct pms_softc *sc)
+{
+	u_char cmd[1], resp[2];
+	int res;
+
+	cmd[0] = PMS_RESET;
+	res = pms_cmd(sc, cmd, 1, resp, 2);
+#ifdef DEBUG
+	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0)
+		printf("%s: reset error %d (response 0x%02x, type 0x%02x)\n",
+		    DEVNAME(sc), res, resp[0], resp[1]);
+#endif
+	return (res);
+}
+
+int
+pms_dev_enable(struct pms_softc *sc)
+{
+	u_char cmd[1];
+	int res;
+
+	cmd[0] = PMS_DEV_ENABLE;
+	res = pms_cmd(sc, cmd, 1, NULL, 0);
+	if (res)
+		printf("%s: enable error\n", DEVNAME(sc));
+	return (res);
+}
+
+int
+pms_dev_disable(struct pms_softc *sc)
+{
+	u_char cmd[1];
+	int res;
+
+	cmd[0] = PMS_DEV_DISABLE;
+	res = pms_cmd(sc, cmd, 1, NULL, 0);
+	if (res)
+		printf("%s: disable error\n", DEVNAME(sc));
+	return (res);
+}
+
+int
+pms_setintellimode(struct pms_softc *sc)
+{
+	static const int rates[] = {200, 100, 80};
+	u_char resp;
+
+	if (pms_set_rate(sc, rates[0]) ||
+	    pms_set_rate(sc, rates[1]) ||
+	    pms_set_rate(sc, rates[2]) ||
+	    pms_get_devid(sc, &resp) ||
+	    resp != 0x03)
 		return (0);
 
 	return (1);
@@ -158,7 +258,7 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       pmsinput, sc, sc->sc_dev.dv_xname);
+	    pmsinput, sc, DEVNAME(sc));
 
 	a.accessops = &pms_accessops;
 	a.accesscookie = sc;
@@ -197,9 +297,6 @@ pmsactivate(struct device *self, int act)
 int
 pms_change_state(struct pms_softc *sc, int newstate)
 {
-	u_char cmd[1], resp[2];
-	int res;
-
 	switch (newstate) {
 	case PMS_STATE_ENABLED:
 		if (sc->sc_state == PMS_STATE_ENABLED)
@@ -213,22 +310,15 @@ pms_change_state(struct pms_softc *sc, int newstate)
 		if (sc->poll)
 			pckbc_flush(sc->sc_kbctag, sc->sc_kbcslot);
 
-		cmd[0] = PMS_RESET;
-		res = pms_cmd(sc, cmd, 1, resp, 2);
+		pms_reset(sc);
 
 		sc->intelli = pms_setintellimode(sc);
 
-		cmd[0] = PMS_DEV_ENABLE;
-		res = pms_cmd(sc, cmd, 1, NULL, 0);
-		if (res)
-			printf("pms_enable: command error\n");
+		pms_dev_enable(sc);
 		break;
 	case PMS_STATE_DISABLED:
 	case PMS_STATE_SUSPENDED:
-		cmd[0] = PMS_DEV_DISABLE;
-		res = pms_cmd(sc, cmd, 1, NULL, 0);
-		if (res)
-			printf("pms_disable: command error\n");
+		pms_dev_disable(sc);
 		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 		break;
 	}
