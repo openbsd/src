@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwnreg.h,v 1.2 2010/11/06 12:27:43 damien Exp $	*/
+/*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1105,6 +1105,8 @@ struct urtwn_softc {
 	uint8_t				regulatory;
 	uint8_t				pa_setting;
 	int				avg_pwdb;
+	int				thcal_state;
+	int				thcal_lctemp;
 	int				ntxchains;
 	int				nrxchains;
 	int				ledlink;

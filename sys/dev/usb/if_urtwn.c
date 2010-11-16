@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.5 2010/11/15 18:56:13 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.6 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -196,6 +196,7 @@ int		urtwn_iq_calib_chain(struct urtwn_softc *, int, uint16_t[],
 		    uint16_t[]);
 void		urtwn_iq_calib(struct urtwn_softc *);
 void		urtwn_lc_calib(struct urtwn_softc *);
+void		urtwn_temp_calib(struct urtwn_softc *);
 int		urtwn_init(struct ifnet *);
 void		urtwn_stop(struct ifnet *);
 
@@ -1064,6 +1065,9 @@ urtwn_calib_cb(struct urtwn_softc *sc, void *arg)
 		urtwn_fw_cmd(sc, R92C_CMD_RSSI_SETTING, &cmd, sizeof(cmd));
 	}
 
+	/* Do temperature compensation. */
+	urtwn_temp_calib(sc);
+
 	timeout_add_sec(&sc->calib_to, 2);
 }
 
@@ -1240,6 +1244,9 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		urtwn_set_led(sc, URTWN_LED_LINK, 1);
 
 		sc->avg_pwdb = -1;	/* Reset average RSSI. */
+		/* Reset temperature calibration state machine. */
+		sc->thcal_state = 0;
+		sc->thcal_lctemp = 0;
 		/* Start periodic calibration. */
 		timeout_add_sec(&sc->calib_to, 2);
 		break;
@@ -2897,6 +2904,41 @@ urtwn_lc_calib(struct urtwn_softc *sc)
 	} else {
 		/* Unblock all Tx queues. */
 		urtwn_write_1(sc, R92C_TXPAUSE, 0x00);
+	}
+}
+
+void
+urtwn_temp_calib(struct urtwn_softc *sc)
+{
+	int temp;
+
+	if (sc->thcal_state == 0) {
+		/* Start measuring temperature. */
+		urtwn_rf_write(sc, 0, R92C_RF_T_METER, 0x60);
+		sc->thcal_state = 1;
+		return;
+	}
+	sc->thcal_state = 0;
+
+	/* Read measured temperature. */
+	temp = urtwn_rf_read(sc, 0, R92C_RF_T_METER) & 0x1f;
+	if (temp == 0)	/* Read failed, skip. */
+		return;
+	DPRINTFN(2, ("temperature=%d\n", temp));
+
+	/*
+	 * Redo LC calibration if temperature changed significantly since
+	 * last calibration.
+	 */
+	if (sc->thcal_lctemp == 0) {
+		/* LC calibration was performed in urtwn_init(). */
+		sc->thcal_lctemp = temp;
+	} else if (abs(temp - sc->thcal_lctemp) > 1) {
+		DPRINTF(("LC calib triggered by temp: %d -> %d\n",
+		    sc->thcal_lctemp, temp));
+		urtwn_lc_calib(sc);
+		/* Record temperature of last LC calibration. */
+		sc->thcal_lctemp = temp;
 	}
 }
 
