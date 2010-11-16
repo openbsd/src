@@ -1,4 +1,4 @@
-.\" $OpenBSD: urtwn.4,v 1.7 2010/11/09 17:20:23 damien Exp $
+.\" $OpenBSD: urtwn.4,v 1.8 2010/11/16 20:01:31 damien Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2010 $
+.Dd $Mdocdate: November 16 2010 $
 .Dt URTWN 4
 .Os
 .Sh NAME
@@ -76,19 +76,20 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The driver needs at least version 1.0 of the following firmware files,
+The driver needs at least version 1.1 of the following firmware files,
 which are loaded when an interface is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It /etc/firmware/urtwn-rtl8192cfwT
 .It /etc/firmware/urtwn-rtl8192cfwU
+.It /etc/firmware/urtwn-rtl8723fw
 .El
 .Pp
 A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Bd -literal -offset 3n
-http://damien.bergamini.free.fr/packages/openbsd/urtwn-firmware-1.0.tgz
+http://damien.bergamini.free.fr/packages/openbsd/urtwn-firmware-1.1.tgz
 .Ed
 .Sh HARDWARE
 The following adapters should work:
