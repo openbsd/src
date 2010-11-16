@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.523 2010/11/06 16:50:41 deraadt Exp $
+$OpenBSD: usbdevs,v 1.524 2010/11/16 19:25:27 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -583,6 +583,7 @@ vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
 vendor WCH		0x4348	QinHeng Electronics
 vendor ACEECA		0x4766	Aceeca
+vendor FEIXUN		0x4855	FeiXun Communication
 vendor PAPOUCH		0x5050	Papouch s.r.o.
 vendor AVERATEC		0x50c2	Averatec
 vendor SWEEX		0x5173	Sweex
@@ -1490,7 +1491,11 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 product FALCOM TWIST		0x0001	Twist
 product FALCOM SAMBA		0x0005	Samba
 
-/* Fiberline */
+/* FeiXun Communication products */
+product FEIXUN RTL8188CU	0x0090	RTL8188CU
+product FEIXUN RTL8192CU	0x0091	RTL8192CU
+
+/* Fiberline products */
 product FIBERLINE WL430U	0x6003	WL-430U
 
 /* Fossil products */
