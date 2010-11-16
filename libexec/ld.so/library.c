@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.59 2010/10/25 20:34:44 kurt Exp $ */
+/*	$OpenBSD: library.c,v 1.60 2010/11/16 18:59:00 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -38,6 +38,7 @@
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+#include "sod.h"
 
 #define PFLAGS(X) ((((X) & PF_R) ? PROT_READ : 0) | \
 		   (((X) & PF_W) ? PROT_WRITE : 0) | \
@@ -242,6 +243,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
 		object->obj_flags |= flags;
+		_dl_build_sod(object->load_name, &object->sod);
 	} else {
 		/* XXX not possible. object cannot come back NULL */
 		_dl_munmap((void *)libaddr, maxva - minva);
