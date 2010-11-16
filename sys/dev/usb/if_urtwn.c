@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.6 2010/11/16 18:02:59 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.7 2010/11/16 19:28:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -89,6 +89,8 @@ static const struct usb_devno urtwn_devs[] = {
 	{ USB_VENDOR_DLINK,	USB_PRODUCT_DLINK_RTL8192CU_3 },
 	{ USB_VENDOR_EDIMAX,	USB_PRODUCT_EDIMAX_RTL8188CU },
 	{ USB_VENDOR_EDIMAX,	USB_PRODUCT_EDIMAX_RTL8192CU },
+	{ USB_VENDOR_FEIXUN,	USB_PRODUCT_FEIXUN_RTL8188CU },
+	{ USB_VENDOR_FEIXUN,	USB_PRODUCT_FEIXUN_RTL8192CU },
 	{ USB_VENDOR_GUILLEMOT,	USB_PRODUCT_GUILLEMOT_HWNUP150 },
 	{ USB_VENDOR_HP3,	USB_PRODUCT_HP3_RTL8188CU },
 	{ USB_VENDOR_NOVATECH,	USB_PRODUCT_NOVATECH_RTL8188CU },
@@ -2931,7 +2933,7 @@ urtwn_temp_calib(struct urtwn_softc *sc)
 	 * last calibration.
 	 */
 	if (sc->thcal_lctemp == 0) {
-		/* LC calibration was performed in urtwn_init(). */
+		/* First LC calibration is performed in urtwn_init(). */
 		sc->thcal_lctemp = temp;
 	} else if (abs(temp - sc->thcal_lctemp) > 1) {
 		DPRINTF(("LC calib triggered by temp: %d -> %d\n",
