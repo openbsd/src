@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.7 2009/11/12 16:08:17 deraadt Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.8 2010/11/16 19:55:34 jasper Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -680,10 +680,6 @@ do_encode(u_char *buff, size_t vec_max, size_t *used,
 	return encoded;
 }
 
-/* XXX: Should be a constant in scsiio.h
- */
-#define CMD_BUFLEN 16
-
 scsireq_t *
 scsireq_build(scsireq_t *scsireq, u_long datalen, caddr_t databuf,
     u_long flags, char *cmd_spec, ...)
@@ -714,7 +710,7 @@ scsireq_build(scsireq_t *scsireq, u_long datalen, caddr_t databuf,
 
  	va_start(ap, cmd_spec);
 
- 	if (do_encode(scsireq->cmd, CMD_BUFLEN, &cmdlen, 0, 0, cmd_spec, ap) == -1)
+ 	if (do_encode(scsireq->cmd, CMDBUFLEN, &cmdlen, 0, 0, cmd_spec, ap) == -1)
  		return 0;
 	va_end (ap);
 
@@ -750,7 +746,7 @@ scsireq_t
 		scsireq->flags = flags;
 	}
 
- 	if (do_encode(scsireq->cmd, CMD_BUFLEN, &cmdlen, arg_get, gethook,
+ 	if (do_encode(scsireq->cmd, CMDBUFLEN, &cmdlen, arg_get, gethook,
 	    cmd_spec, ap) == -1)
  		return 0;
 
