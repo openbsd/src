@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.123 2010/10/12 14:52:21 dhill Exp $	*/
+/*	$OpenBSD: relay.c,v 1.124 2010/11/16 15:31:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2491,6 +2491,22 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 				fatalx("relay_dispatch_pfe: desynchronized");
 			host->flags &= ~(F_DISABLE);
 			host->up = HOST_UNKNOWN;
+			break;
+		case IMSG_TABLE_DISABLE:
+			memcpy(&id, imsg.data, sizeof(id));
+			if ((table = table_find(env, id)) == NULL)
+				fatalx("relay_dispatch_pfe: desynchronized");
+			table->conf.flags |= F_DISABLE;
+			TAILQ_FOREACH(host, &table->hosts, entry)
+				host->up = HOST_UNKNOWN;
+			break;
+		case IMSG_TABLE_ENABLE:
+			memcpy(&id, imsg.data, sizeof(id));
+			if ((table = table_find(env, id)) == NULL)
+				fatalx("relay_dispatch_pfe: desynchronized");
+			table->conf.flags &= ~(F_DISABLE);
+			TAILQ_FOREACH(host, &table->hosts, entry)
+				host->up = HOST_UNKNOWN;
 			break;
 		case IMSG_HOST_STATUS:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(st))

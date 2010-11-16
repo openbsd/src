@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.65 2010/08/01 22:18:35 sthen Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.66 2010/11/16 15:31:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -739,8 +739,8 @@ int
 disable_table(struct ctl_conn *c, struct ctl_id *id)
 {
 	struct table	*table;
-	struct rdr	*rdr;
 	struct host	*host;
+	int		 n;
 
 	if (id->id == EMPTY_ID)
 		table = table_findbyname(env, id->name);
@@ -749,7 +749,7 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 	if (table == NULL)
 		return (-1);
 	id->id = table->conf.id;
-	if ((rdr = rdr_find(env, table->conf.rdrid)) == NULL)
+	if (table->conf.rdrid > 0 && rdr_find(env, table->conf.rdrid) == NULL)
 		fatalx("disable_table: desynchronised");
 
 	if (table->conf.flags & F_DISABLE)
@@ -760,6 +760,11 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 		host->up = HOST_UNKNOWN;
 	imsg_compose_event(iev_hce, IMSG_TABLE_DISABLE, 0, 0, -1,
 	    &table->conf.id, sizeof(table->conf.id));
+	/* Forward to relay engine(s) */
+	for (n = 0; n < env->sc_prefork_relay; n++)
+		imsg_compose_event(&iev_relay[n],
+		    IMSG_TABLE_DISABLE, 0, 0, -1,
+		    &table->conf.id, sizeof(table->conf.id));
 	log_debug("disable_table: disabled table %d", table->conf.id);
 	pfe_sync();
 	return (0);
@@ -768,9 +773,9 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 int
 enable_table(struct ctl_conn *c, struct ctl_id *id)
 {
-	struct rdr	*rdr;
 	struct table	*table;
 	struct host	*host;
+	int		 n;
 
 	if (id->id == EMPTY_ID)
 		table = table_findbyname(env, id->name);
@@ -780,7 +785,7 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 		return (-1);
 	id->id = table->conf.id;
 
-	if ((rdr = rdr_find(env, table->conf.rdrid)) == NULL)
+	if (table->conf.rdrid > 0 && rdr_find(env, table->conf.rdrid) == NULL)
 		fatalx("enable_table: desynchronised");
 
 	if (!(table->conf.flags & F_DISABLE))
@@ -792,6 +797,11 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 		host->up = HOST_UNKNOWN;
 	imsg_compose_event(iev_hce, IMSG_TABLE_ENABLE, 0, 0, -1,
 	    &table->conf.id, sizeof(table->conf.id));
+	/* Forward to relay engine(s) */
+	for (n = 0; n < env->sc_prefork_relay; n++)
+		imsg_compose_event(&iev_relay[n],
+		    IMSG_TABLE_ENABLE, 0, 0, -1,
+		    &table->conf.id, sizeof(table->conf.id));
 	log_debug("enable_table: enabled table %d", table->conf.id);
 	pfe_sync();
 	return (0);
