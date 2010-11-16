@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.127 2010/08/25 14:07:24 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.128 2010/11/16 19:39:17 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -792,7 +792,20 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			senderr(EINVAL);
 		if ((rt->rt_flags & RTF_CLONING) == 0)
 			senderr(EINVAL);
-		ifa = rt->rt_ifa;
+		if (rt->rt_ifa->ifa_ifp) {
+			info->rti_ifa = rt->rt_ifa;
+		} else {
+			/*
+			 * The interface address at the cloning route
+			 * is not longer referenced by an interface.
+			 * Try to find a similar active address and use
+			 * it for the cloned route.  The cloning route
+			 * will get the new address and interface later.
+			 */
+			info->rti_ifa = NULL;
+			info->rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+		}
+		info->rti_ifp = rt->rt_ifp;
 		info->rti_flags = rt->rt_flags & ~(RTF_CLONING | RTF_STATIC);
 		info->rti_flags |= RTF_CLONED;
 		info->rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -800,13 +813,12 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			info->rti_flags |= RTF_HOST;
 		info->rti_info[RTAX_LABEL] =
 		    rtlabel_id2sa(rt->rt_labelid, &sa_rl2);
-		goto makeroute;
+		/* FALLTHROUGH */
 
 	case RTM_ADD:
-		if (info->rti_ifa == 0 && (error = rt_getifa(info, tableid)))
+		if (info->rti_ifa == NULL && (error = rt_getifa(info, tableid)))
 			senderr(error);
 		ifa = info->rti_ifa;
-makeroute:
 		rt = pool_get(&rtentry_pool, PR_NOWAIT | PR_ZERO);
 		if (rt == NULL)
 			senderr(ENOBUFS);
@@ -898,6 +910,26 @@ makeroute:
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
+			/*
+			 * If the ifa of the cloning route was stale, a
+			 * successful lookup for an ifa with the same address
+			 * has been made.  Use this ifa also for the cloning
+			 * route.
+			 */
+			if ((*ret_nrt)->rt_ifa->ifa_ifp == NULL) {
+				printf("rtrequest1 RTM_RESOLVE: wrong ifa (%p) "
+				    "was (%p)\n", ifa, (*ret_nrt)->rt_ifa);
+				if ((*ret_nrt)->rt_ifa->ifa_rtrequest)
+					(*ret_nrt)->rt_ifa->ifa_rtrequest(
+					    RTM_DELETE, *ret_nrt, NULL);
+				IFAFREE((*ret_nrt)->rt_ifa);
+				(*ret_nrt)->rt_ifa = ifa;
+				(*ret_nrt)->rt_ifp = ifa->ifa_ifp;
+				ifa->ifa_refcnt++;
+				if (ifa->ifa_rtrequest)
+					ifa->ifa_rtrequest(RTM_ADD, *ret_nrt,
+					    NULL);
+			}
 			/*
 			 * Copy both metrics and a back pointer to the cloned
 			 * route's parent.
