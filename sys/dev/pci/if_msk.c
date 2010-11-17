@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.90 2010/09/20 07:40:38 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.91 2010/11/17 10:43:23 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -208,6 +208,7 @@ const struct pci_matchid mskc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8056 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8057 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8058 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8059 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8061CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8061X },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8062CU },
@@ -762,6 +763,7 @@ mskc_reset(struct sk_softc *sc)
 	case SK_YUKON_EC:
 	case SK_YUKON_XL:
 	case SK_YUKON_FE:
+	case SK_YUKON_OPTIMA:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
 		break;
 	default:
@@ -817,6 +819,7 @@ msk_probe(struct device *parent, void *match, void *aux)
 	case SK_YUKON_FE_P:
 	case SK_YUKON_SUPR:
 	case SK_YUKON_ULTRA2:
+	case SK_YUKON_OPTIMA:
 		return (1);
 	}
 
@@ -1235,6 +1238,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case SK_YUKON_ULTRA2:
 		sc->sk_name = "Yukon-2 Ultra2";
+		break;
+	case SK_YUKON_OPTIMA:
+		sc->sk_name = "Yukon-2 Optima";
 		break;
 	default:
 		sc->sk_name = "Yukon (Unknown)";

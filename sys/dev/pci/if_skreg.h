@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.53 2009/03/29 14:36:34 jsg Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.54 2010/11/17 10:43:23 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -353,13 +353,14 @@
 #define SK_YUKON_FE_P		0xB8
 #define SK_YUKON_SUPR		0xB9
 #define SK_YUKON_ULTRA2		0xBA
+#define SK_YUKON_OPTIMA		0xBC
 
 #define SK_IS_GENESIS(sc) \
     ((sc)->sk_type == SK_GENESIS)
 #define SK_IS_YUKON(sc) \
     ((sc)->sk_type >= SK_YUKON && (sc)->sk_type <= SK_YUKON_LP)
 #define SK_IS_YUKON2(sc) \
-    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_ULTRA2)
+    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_SK_YUKON_OPTIMA)
 
 /* Known revisions in SK_CONFIG */
 #define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
