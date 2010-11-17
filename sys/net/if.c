@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.227 2010/11/17 18:51:57 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.228 2010/11/17 19:34:49 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2184,18 +2184,26 @@ ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
 		TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
 	else
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
+	ifa_item_insert(ifa->ifa_addr, ifa, ifp);
+	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
+		ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 void
 ifa_del(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	ifa_item_remove(ifa->ifa_addr, ifa, ifp);
+	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
+		ifa_item_remove(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 void
 ifa_update_broadaddr(struct ifnet *ifp, struct ifaddr *ifa, struct sockaddr *sa)
 {
+	ifa_item_remove(ifa->ifa_broadaddr, ifa, ifp);
 	ifa->ifa_broadaddr = sa;
+	ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 int
