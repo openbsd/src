@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.27 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.28 2010/11/17 11:22:42 jsing Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 	for (; argc--; argv++) {
 		char *spec, *type;
 
-		if (strncmp(*argv, "/dev/", 5) == 0 &&
+		if ((strncmp(*argv, "/dev/", 5) == 0 || isduid(*argv, 0)) &&
 		    (type = readlabelfs(*argv, 0))) {
 			spec = *argv;
 		} else if ((fs = getfsfile(*argv)) == NULL &&
