@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.61 2010/11/17 18:48:26 henning Exp $	*/
+/*	$OpenBSD: in.c,v 1.62 2010/11/17 19:21:28 henning Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -350,7 +350,8 @@ in_control(so, cmd, data, ifp)
 	case SIOCSIFBRDADDR:
 		if ((ifp->if_flags & IFF_BROADCAST) == 0)
 			return (EINVAL);
-		ia->ia_broadaddr = *satosin(&ifr->ifr_broadaddr);
+		ifa_update_broadaddr(ifp, (struct ifaddr *)ia,
+		    &ifr->ifr_broadaddr);
 		break;
 
 	case SIOCSIFADDR:
@@ -395,13 +396,18 @@ in_control(so, cmd, data, ifp)
 			ia->ia_dstaddr = ifra->ifra_dstaddr;
 			maskIsNew  = 1; /* We lie; but the effect's the same */
 		}
+		if ((ifp->if_flags & IFF_BROADCAST) &&
+		    (ifra->ifra_broadaddr.sin_family == AF_INET)) {
+			if (newifaddr)
+				ia->ia_broadaddr = ifra->ifra_broadaddr;
+			else
+				ifa_update_broadaddr(ifp, (struct ifaddr *)ia,
+				    sintosa(&ifra->ifra_broadaddr));
+		}
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
 		}
-		if ((ifp->if_flags & IFF_BROADCAST) &&
-		    (ifra->ifra_broadaddr.sin_family == AF_INET))
-			ia->ia_broadaddr = ifra->ifra_broadaddr;
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
 		else if (newifaddr) {
