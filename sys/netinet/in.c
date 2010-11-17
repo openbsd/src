@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.60 2010/01/13 10:45:21 henning Exp $	*/
+/*	$OpenBSD: in.c,v 1.61 2010/11/17 18:48:26 henning Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -271,7 +271,6 @@ in_control(so, cmd, data, ifp)
 			LIST_INIT(&ia->ia_multiaddrs);
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in_interfaces++;
-			ifa_add(ifp, (struct ifaddr *)ia);
 			splx(s);
 
 			newifaddr = 1;
@@ -729,6 +728,9 @@ in_ifinit(ifp, ia, sin, scrub)
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
+
+	ifa_add(ifp, (struct ifaddr *)ia);
+
 	return (error);
 }
 
