@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.82 2010/09/13 08:53:06 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.83 2010/11/17 19:25:49 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4743,7 +4743,7 @@ sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 				*dest = new_dst; /* fix dstaddr in place */
 			}
 		}
-		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0)))
+		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0)))
 			dohooks(ifp->if_addrhooks, 0);
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
@@ -4795,7 +4795,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
-		if (!in_ifinit(ifp, ifatoia(ifa), &new_sin, 0))
+		if (!in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0))
 			dohooks(ifp->if_addrhooks, 0);
 		sppp_update_gw(ifp);
 	}

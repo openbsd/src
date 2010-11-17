@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.62 2010/11/17 19:21:28 henning Exp $	*/
+/*	$OpenBSD: in.c,v 1.63 2010/11/17 19:25:49 henning Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -356,7 +356,8 @@ in_control(so, cmd, data, ifp)
 
 	case SIOCSIFADDR:
 		s = splsoftnet();
-		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
+		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1,
+		    newifaddr);
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
 		else if (newifaddr) {
@@ -381,7 +382,7 @@ in_control(so, cmd, data, ifp)
 				ifra->ifra_addr = ia->ia_addr;
 				hostIsNew = 0;
 			} else if (ifra->ifra_addr.sin_addr.s_addr ==
-					       ia->ia_addr.sin_addr.s_addr)
+			    ia->ia_addr.sin_addr.s_addr && !newifaddr)
 				hostIsNew = 0;
 		}
 		if (ifra->ifra_mask.sin_len) {
@@ -406,7 +407,8 @@ in_control(so, cmd, data, ifp)
 		}
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
-			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
+			    newifaddr);
 		}
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
@@ -657,18 +659,22 @@ in_ifscrub(ifp, ia)
  * and routing table entry.
  */
 int
-in_ifinit(ifp, ia, sin, scrub)
+in_ifinit(ifp, ia, sin, scrub, newaddr)
 	struct ifnet *ifp;
 	struct in_ifaddr *ia;
 	struct sockaddr_in *sin;
 	int scrub;
+	int newaddr;
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
 	int s = splnet(), flags = RTF_UP, error;
 
+	if (!newaddr)
+		ifa_del(ifp, (struct ifaddr *)ia);
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
+
 	/*
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
@@ -724,6 +730,7 @@ in_ifinit(ifp, ia, sin, scrub)
 		flags |= RTF_HOST;
 	}
 	error = in_addprefix(ia, flags);
+
 	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
