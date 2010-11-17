@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.228 2010/11/17 19:34:49 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.229 2010/11/17 19:40:55 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -157,6 +157,9 @@ int	if_group_egress_build(void);
 int	ifai_cmp(struct ifaddr_item *,  struct ifaddr_item *);
 void	ifa_item_insert(struct sockaddr *, struct ifaddr *, struct ifnet *);
 void	ifa_item_remove(struct sockaddr *, struct ifaddr *, struct ifnet *);
+#ifndef SMALL_KERNEL
+void	ifa_print_rb(void);
+#endif
 RB_HEAD(ifaddr_items, ifaddr_item) ifaddr_items = RB_INITIALIZER(&ifaddr_items);
 RB_PROTOTYPE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
 RB_GENERATE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
@@ -2262,6 +2265,34 @@ ifa_item_remove(struct sockaddr *sa, struct ifaddr *ifa, struct ifnet *ifp)
 		ifai_last->ifai_next = ifai->ifai_next;
 	pool_put(&ifaddr_item_pl, ifai);
 }
+
+#ifndef SMALL_KERNEL
+/* debug function, can be called from ddb> */
+void
+ifa_print_rb(void)
+{
+	struct ifaddr_item *ifai, *p;
+	RB_FOREACH(p, ifaddr_items, &ifaddr_items) {
+		for (ifai = p; ifai; ifai = ifai->ifai_next) {
+			switch (ifai->ifai_addr->sa_family) {
+			case AF_INET:
+				printf("%s", inet_ntoa((satosin(
+				    ifai->ifai_addr))->sin_addr));
+				break;
+			case AF_INET6:
+				printf("%s", ip6_sprintf(&(satosin6(
+				    ifai->ifai_addr))->sin6_addr));
+				break;
+			case AF_LINK:
+				printf("%s",
+				    ether_sprintf(ifai->ifai_addr->sa_data));
+				break;
+			}
+			printf(" on %s\n", ifai->ifai_ifa->ifa_ifp->if_xname);
+		}
+	}
+}
+#endif /* SMALL_KERNEL */
 
 void
 ifnewlladdr(struct ifnet *ifp)
