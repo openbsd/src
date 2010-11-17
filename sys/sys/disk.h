@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.27 2010/09/23 13:11:37 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.28 2010/11/17 15:01:05 bluhm Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct diskstats {
 	u_int64_t	ds_rbytes;	/* total bytes read */
 	u_int64_t	ds_wbytes;	/* total bytes written */
 	struct timeval	ds_attachtime;	/* time disk was attached */
-	struct timeval	ds_timestamp;	/* timestamp of last unbusy */
+	struct timeval	ds_timestamp;	/* time of first busy or any unbusy */
 	struct timeval	ds_time;	/* total time spent busy */
 };
 
@@ -95,7 +95,7 @@ struct disk {
 	u_int64_t	dk_rbytes;	/* total bytes read */
 	u_int64_t	dk_wbytes;	/* total bytes written */
 	struct timeval	dk_attachtime;	/* time disk was attached */
-	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
+	struct timeval	dk_timestamp;	/* time of first busy or any unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
 
 	int		dk_bopenmask;	/* block devices open */

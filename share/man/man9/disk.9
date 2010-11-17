@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.28 2010/09/23 14:06:37 jmc Exp $
+.\"	$OpenBSD: disk.9,v 1.29 2010/11/17 15:01:05 bluhm Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 23 2010 $
+.Dd $Mdocdate: November 17 2010 $
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ struct disk {
 	u_int64_t dk_rbytes;	/* total bytes read */
 	u_int64_t dk_wbytes;	/* total bytes written */
 	struct timeval	dk_attachtime;	/* time disk was attached */
-	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
+	struct timeval	dk_timestamp; /*time of first busy or any unbusy*/
 	struct timeval	dk_time;	/* total time spent busy */
 
         int             dk_bopenmask;   /* block devices open */
