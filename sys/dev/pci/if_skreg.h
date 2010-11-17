@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.54 2010/11/17 10:43:23 kevlo Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.55 2010/11/17 13:19:39 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -360,7 +360,7 @@
 #define SK_IS_YUKON(sc) \
     ((sc)->sk_type >= SK_YUKON && (sc)->sk_type <= SK_YUKON_LP)
 #define SK_IS_YUKON2(sc) \
-    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_SK_YUKON_OPTIMA)
+    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_OPTIMA)
 
 /* Known revisions in SK_CONFIG */
 #define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
