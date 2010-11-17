@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.12 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: check.c,v 1.13 2010/11/17 12:31:11 jsing Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -48,27 +49,29 @@ checkfilesys(const char *fname)
 	int dosfs;
 	struct bootblock boot;
 	struct fatEntry *fat = NULL;
+	char *realdev;
 	int i;
 	int mod = 0;
 
 	rdonly = alwaysno;
-	if (!preen)
-		printf("** %s", fname);
 
-	dosfs = open(fname, rdonly ? O_RDONLY : O_RDWR, 0);
+	dosfs = opendev(fname, rdonly ? O_RDONLY : O_RDWR, 0, &realdev);
 	if (dosfs < 0 && !rdonly) {
-		dosfs = open(fname, O_RDONLY, 0);
-		if (dosfs >= 0)
-			pwarn(" (NO WRITE)\n");
-		else if (!preen)
-			printf("\n");
+		dosfs = opendev(fname, O_RDONLY, 0, &realdev);
 		rdonly = 1;
-	} else if (!preen)
-		printf("\n");
-
+	}
 	if (dosfs < 0) {
 		xperror("Can't open");
 		return (8);
+	}
+
+	if (!preen) {
+		printf("** %s", realdev);
+		if (strncmp(fname, realdev, PATH_MAX) != 0)
+			printf(" (%s)", fname);
+		if (rdonly)
+			printf(" (NO WRITE)");
+		printf("\n");
 	}
 
 	if (readboot(dosfs, &boot) != FSOK) {
