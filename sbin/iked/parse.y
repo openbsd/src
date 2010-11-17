@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2010/09/23 11:42:36 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2010/11/17 16:43:45 ckuethe Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -85,7 +85,6 @@ struct sym {
 };
 int		 symset(const char *, const char *, int);
 char		*symget(const char *);
-int		 cmdline_symset(char *);
 
 #define KEYSIZE_LIMIT	1024
 

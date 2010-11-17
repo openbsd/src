@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.6 2010/06/24 20:15:30 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.7 2010/11/17 16:43:45 ckuethe Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -87,11 +87,9 @@ main(int argc, char *argv[])
 			debug++;
 			break;
 		case 'D':
-#if 0
 			if (cmdline_symset(optarg) < 0)
 				log_warnx("could not parse macro definition %s",
 				    optarg);
-#endif
 			break;
 		case 'n':
 			debug = 1;
