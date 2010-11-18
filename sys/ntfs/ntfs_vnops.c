@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.20 2010/09/10 16:34:09 thib Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.21 2010/11/18 21:18:07 miod Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -587,12 +587,12 @@ ntfs_readdir(ap)
 		dpStart = (struct dirent *)
 		     ((caddr_t)uio->uio_iov->iov_base -
 			 (uio->uio_offset - off));
-		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
+		cookies = malloc(ncookies * sizeof(*cookies), M_TEMP, M_WAITOK);
 		for (dp = dpStart, cookiep = cookies, i=0;
 		     i < ncookies;
 		     dp = (struct dirent *)((caddr_t) dp + dp->d_reclen), i++) {
 			off += dp->d_reclen;
-			*cookiep++ = (u_int) off;
+			*cookiep++ = off;
 		}
 		*ap->a_ncookies = ncookies;
 		*ap->a_cookies = cookies;

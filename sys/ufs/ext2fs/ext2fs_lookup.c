@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.26 2010/09/23 18:49:39 oga Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.27 2010/11/18 21:18:10 miod Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -163,7 +163,7 @@ ext2fs_readdir(void *v)
 	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK | M_ZERO);
 	if (ap->a_ncookies) {
 		nc = ncookies = e2fs_count / 16;
-		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
+		cookies = malloc(sizeof(*cookies) * ncookies, M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
 	aiov.iov_base = dirbuf;
