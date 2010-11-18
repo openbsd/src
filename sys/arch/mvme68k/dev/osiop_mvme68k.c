@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_mvme68k.c,v 1.3 2009/03/01 21:39:59 miod Exp $	*/
+/*	$OpenBSD: osiop_mvme68k.c,v 1.4 2010/11/18 21:13:19 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -28,7 +28,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

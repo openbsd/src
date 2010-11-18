@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.81 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.82 2010/11/18 21:13:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -45,7 +45,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 

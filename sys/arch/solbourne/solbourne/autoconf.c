@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2010/11/18 21:13:19 miod Exp $	*/
 /*	OpenBSD: autoconf.c,v 1.64 2005/03/23 17:10:24 miod Exp 	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-#include <sys/dkstat.h>
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>

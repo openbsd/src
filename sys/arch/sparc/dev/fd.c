@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.79 2010/09/28 12:39:17 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.80 2010/11/18 21:13:19 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -77,7 +77,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>

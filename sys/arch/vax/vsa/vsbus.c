@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.20 2008/08/30 20:45:31 martin Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.21 2010/11/18 21:13:19 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2010/04/18 15:05:26 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2010/11/18 21:13:19 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -34,7 +34,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/device.h>
