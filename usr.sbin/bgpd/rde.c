@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.300 2010/11/10 15:14:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.301 2010/11/18 12:18:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1337,6 +1337,7 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
 	struct bgpd_addr nexthop;
 	u_char		*op = p, *npath;
 	u_int32_t	 tmp32;
+	int		 err;
 	u_int16_t	 attr_len, nlen;
 	u_int16_t	 plen = 0;
 	u_int8_t	 flags;
@@ -1396,7 +1397,17 @@ bad_flags:
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
-		if (aspath_verify(p, attr_len, rde_as4byte(peer)) != 0) {
+		err = aspath_verify(p, attr_len, rde_as4byte(peer));
+		if (err == AS_ERR_SOFT) {
+			/*
+			 * soft errors like unexpected segment types are
+			 * not considered fatal and the path is just
+			 * marked invalid.
+			 */
+			a->flags |= F_ATTR_PARSE_ERR;
+			log_peer_warnx(&peer->conf, "bad ASPATH, "
+			    "path invalidated and prefix withdrawn");
+		} else if (err != 0) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
 			    NULL, 0);
 			return (-1);
@@ -1603,7 +1614,7 @@ bad_flags:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (aspath_verify(p, attr_len, 1) != 0) {
+		if ((err = aspath_verify(p, attr_len, 1)) != 0) {
 			/*
 			 * XXX RFC does not specify how to handle errors.
 			 * XXX Instead of dropping the session because of a
@@ -1613,8 +1624,9 @@ bad_flags:
 			 * XXX or redistribution.
 			 * XXX We follow draft-ietf-idr-optional-transitive
 			 * XXX by looking at the partial bit.
+			 * XXX Consider soft errors similar to a partial attr.
 			 */
-			if (flags & ATTR_PARTIAL) {
+			if (flags & ATTR_PARTIAL || err == AS_ERR_SOFT) {
 				a->flags |= F_ATTR_PARSE_ERR;
 				log_peer_warnx(&peer->conf, "bad AS4_PATH, "
 				    "path invalidated and prefix withdrawn");

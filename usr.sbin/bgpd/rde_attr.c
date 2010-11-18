@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.86 2010/10/22 12:37:32 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.87 2010/11/18 12:18:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -408,6 +408,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 	u_int8_t	*seg = data;
 	u_int16_t	 seg_size, as_size = 2;
 	u_int8_t	 seg_len, seg_type;
+	int		 err = 0;
 
 	if (len & 1)
 		/* odd length aspath are invalid */
@@ -422,7 +423,15 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 		seg_type = seg[0];
 		seg_len = seg[1];
 
-		if (seg_type != AS_SET && seg_type != AS_SEQUENCE)
+		/*
+		 * BGP confederations should not show up but consider them
+		 * as a soft error which invalidates the path but keeps the
+		 * bgp session running.
+		 */
+		if (seg_type == AS_CONFED_SEQUENCE || seg_type == AS_CONFED_SET)
+			err = AS_ERR_SOFT;
+		if (seg_type != AS_SET && seg_type != AS_SEQUENCE &&
+		    seg_type != AS_CONFED_SEQUENCE && seg_type != AS_CONFED_SET)
 			return (AS_ERR_TYPE);
 
 		seg_size = 2 + as_size * seg_len;
@@ -434,7 +443,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 			/* empty aspath segments are not allowed */
 			return (AS_ERR_BAD);
 	}
-	return (0);	/* aspath is valid but probably not loop free */
+	return (err);	/* aspath is valid but probably not loop free */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.137 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: rde.h,v 1.138 2010/11/18 12:18:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -79,6 +79,8 @@ struct rde_peer {
 
 #define AS_SET			1
 #define AS_SEQUENCE		2
+#define AS_CONFED_SEQUENCE	3
+#define AS_CONFED_SET		4
 #define ASPATH_HEADER_SIZE	(sizeof(struct aspath) - sizeof(u_char))
 
 LIST_HEAD(aspath_list, aspath);
@@ -331,6 +333,7 @@ int		 aspath_verify(void *, u_int16_t, int);
 #define		 AS_ERR_LEN	-1
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_BAD	-3
+#define		 AS_ERR_SOFT	-4
 void		 aspath_init(u_int32_t);
 void		 aspath_shutdown(void);
 struct aspath	*aspath_get(void *, u_int16_t);
