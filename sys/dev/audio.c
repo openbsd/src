@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.110 2010/09/21 20:08:11 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.111 2010/11/18 21:15:14 miod Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -60,9 +60,6 @@
  * - Add softaudio() isr processing for wakeup, poll, signals,
  *   and silence fill.
  */
-
-#include "audio.h"
-#if NAUDIO > 0
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -536,7 +533,6 @@ audio_attach_mi(struct audio_hw_if *ahwp, void *hdlp, struct device *dev)
 	return config_found(dev, &arg, audioprint);
 }
 
-#if NAUDIO > 0
 int
 audioprint(void *aux, const char *pnp)
 {
@@ -561,8 +557,6 @@ audioprint(void *aux, const char *pnp)
 	}
 	return (UNCONF);
 }
-
-#endif /* NAUDIO > 0 */
 
 #ifdef AUDIO_DEBUG
 void	audio_printsc(struct audio_softc *);
@@ -3296,7 +3290,6 @@ mixer_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
-#endif
 
 int
 audiokqfilter(dev_t dev, struct knote *kn)
@@ -3363,7 +3356,7 @@ filt_audiowrite(struct knote *kn, long hint)
 	return AUDIO_FILTWRITE(sc);
 }
 
-#if NAUDIO > 0 && NWSKBD > 0
+#if NWSKBD > 0
 int
 wskbd_set_mixervolume(long dir)
 {
@@ -3429,4 +3422,4 @@ wskbd_set_mixervolume(long dir)
 
 	return (0);
 }
-#endif /* NAUDIO > 0 && NWSKBD > 0 */
+#endif /* NWSKBD > 0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.32 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: cy.c,v 1.33 2010/11/18 21:15:15 miod Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -49,10 +49,6 @@
  * This version uses the bus_space/io_??() stuff
  *
  */
-
-/* NCY is the number of Cyclom cards in the machine */
-#include "cy.h"
-#if NCY > 0
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1418,5 +1414,3 @@ cy_speed(speed_t speed, int *cor, int *bpr, int cy_clock)
 
 	return (-1);
 }
-
-#endif /* NCY > 0 */

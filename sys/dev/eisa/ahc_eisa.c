@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.19 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.20 2010/11/18 21:15:15 miod Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,11 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.19 2009/03/29 21:53:52 sthen Exp $
+ *	$Id: ahc_eisa.c,v 1.20 2010/11/18 21:15:15 miod Exp $
  */
-
-#include "eisa.h"
-#if NEISA > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,4 +324,3 @@ void *aux;
 	ahc_attach(ahc);
 
 }
-#endif /* NEISA > 0 */

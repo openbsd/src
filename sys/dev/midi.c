@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.22 2010/04/08 01:48:24 fgsch Exp $	*/
+/*	$OpenBSD: midi.c,v 1.23 2010/11/18 21:15:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -24,9 +24,7 @@
  *	  need this driver 
  */
 
-#include "midi.h"
 #include "sequencer.h"
-#if NMIDI > 0
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -759,4 +757,3 @@ midi_writebytes(int unit, unsigned char *mesg, int mesglen)
 }
 
 #endif /* NSEQUENCER > 0 */
-#endif /* NMIDI > 0 */

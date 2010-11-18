@@ -1,4 +1,4 @@
-/*	$OpenBSD: qv.c,v 1.15 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: qv.c,v 1.16 2010/11/18 21:15:14 miod Exp $	*/
 /*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
@@ -124,9 +124,6 @@
  */
 
 
-#include "qv.h"
-#if NQV > 0
-
 #include <machine/pte.h>
 
 #include <sys/param.h>
@@ -152,7 +149,6 @@ struct	uba_device *qvinfo[NQV];
 
 struct	tty qv_tty[NQV*4];
 
-#define	nNQV  NQV
 int	nqv = NQV*4;
 
 /*
@@ -1312,4 +1308,3 @@ int probed;
         qvaddr->qv_csr |= QV_VIDEO_ENA ;
 	return 1;
 }
-#endif

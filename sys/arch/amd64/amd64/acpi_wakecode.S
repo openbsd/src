@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.11 2010/07/01 01:02:31 pirofti Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.12 2010/11/18 21:15:13 miod Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -40,11 +40,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "acpi.h"
-
-#if NACPI > 0
-#ifndef SMALL_KERNEL
 
 #define _ACPI_WAKECODE
 
@@ -630,5 +625,3 @@ NENTRY(acpi_savecpu)
 
 	movl	$1, %eax
 	ret
-#endif /* SMALL_KERNEL */
-#endif /* NACPI > 0 */

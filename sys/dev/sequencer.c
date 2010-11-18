@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.19 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.20 2010/11/18 21:15:14 miod Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -29,9 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "sequencer.h"
-#if NSEQUENCER > 0
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1283,6 +1280,3 @@ midi_writebytes(int unit, u_char *buf, int cc)
 	return (ENXIO);
 }
 #endif /* NMIDI == 0 */
-
-#endif /* NSEQUENCER > 0 */
-

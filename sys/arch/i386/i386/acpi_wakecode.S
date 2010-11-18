@@ -40,11 +40,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "acpi.h"
-
-#if NACPI > 0
-#ifndef SMALL_KERNEL
-
 #define _ACPI_WAKECODE
 
 #include "assym.h"
@@ -480,5 +475,3 @@ NENTRY(acpi_savecpu)
 
 	movl	$1, %eax
 	ret
-#endif /* SMALL_KERNEL */
-#endif /* NACPI > 0 */
