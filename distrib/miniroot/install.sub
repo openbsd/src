@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.628 2010/11/12 06:47:40 halex Exp $
+#	$OpenBSD: install.sub,v 1.629 2010/11/18 23:25:46 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1721,7 +1721,7 @@ check_fs() {
 		[ -f "/sbin/fsck_$_fstype" ] || continue
 		# Make sure device exists before fsck'ing it.
 		_rest=${_dev#/dev/}
-		makedev ${_rest%[a-p]} || continue
+		[ ${_dev#/} == ${_dev} ] || makedev ${_rest%[a-p]} || continue
 		echo -n "fsck -${_f}p $_dev..."
 		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
 			echo "FAILED. You must fsck $_dev manually."
