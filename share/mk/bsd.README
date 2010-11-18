@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.41 2010/03/02 20:33:55 jmc Exp $
+#	$OpenBSD: bsd.README,v 1.42 2010/11/18 21:16:57 miod Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -347,37 +347,40 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 		The following libraries are predefined for DPADD:
 
-			LIB45		/usr/lib/lib45.a
 			LIBASN1		/usr/lib/libasn1.a
 			LIBC		/usr/lib/libc.a
+			LIBCOM_ERR	/usr/lib/libcom_err.a
 			LIBCOMPAT	/usr/lib/libcompat.a
 			LIBCRYPTO	/usr/lib/libcrypto.a
 			LIBCURSES	/usr/lib/libcurses.a
-			LIBDES		/usr/lib/libdes.a
 			LIBEDIT		/usr/lib/libedit.a
 			LIBEVENT	/usr/lib/libevent.a
-			LIBGCC		/usr/lib/libgcc.a
+			LIBEXPAT	/usr/lib/libexpat.a
+			LIBFORM		/usr/lib/libform.a
+			LIBFORMW	/usr/lib/libformw.a
 			LIBGSSAPI	/usr/lib/libgssapi.a
 			LIBHDB		/usr/lib/libhdb.a
-			LIBKADM		/usr/lib/libkadm.a
 			LIBKADM5CLNT	/usr/lib/libkadm5clnt.a
 			LIBKADM5SRV	/usr/lib/libkadm5srv.a
 			LIBKAFS		/usr/lib/libkafs.a
-			LIBKDB		/usr/lib/libkdb.a
 			LIBKEYNOTE	/usr/lib/libkeynote.a
-			LIBKRB		/usr/lib/libkrb.a
 			LIBKRB5		/usr/lib/libkrb5.a
 			LIBKVM		/usr/lib/libkvm.a
 			LIBL		/usr/lib/libl.a
 			LIBM		/usr/lib/libm.a
+			LIBMENU		/usr/lib/libmenu.a
+			LIBMENUW	/usr/lib/libmenuw.a
 			LIBOLDCURSES	/usr/lib/libocurses.a
+			LIBOSSAUDIO	/usr/lib/libossaudio.a
+			LIBPANEL	/usr/lib/libpanel.a
+			LIBPANELW	/usr/lib/libpanelw.a
 			LIBPCAP		/usr/lib/libpcap.a
 			LIBPERL		/usr/lib/libperl.a
+			LIBPTHREAD	/usr/lib/libpthread.a
 			LIBRPCSVC	/usr/lib/librpcsvc.a
-			LIBSECTOK	/usr/lib/libsectok.a
 			LIBSKEY		/usr/lib/libskey.a
+			LIBSNDIO	/usr/lib/libsndio.a
 			LIBSSL		/usr/lib/libssl.a
-			LIBTELNET	/usr/lib/libtelnet.a
 			LIBTERMCAP	/usr/lib/libtermcap.a
 			LIBTERMLIB	/usr/lib/libtermlib.a
 			LIBUSB		/usr/lib/libusbhid.a

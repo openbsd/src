@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.49 2006/06/30 19:00:29 otto Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.50 2010/11/18 21:16:57 miod Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -23,38 +23,40 @@ CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
 .endif
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
-LIB45?=		${DESTDIR}/usr/lib/lib45.a
-LIBACL?=	${DESTDIR}/usr/lib/libacl.a
 LIBASN1?=	${DESTDIR}/usr/lib/libasn1.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
+LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
-LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
-LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
+LIBFORM?=	${DESTDIR}/usr/lib/libform.a
+LIBFORMW?=	${DESTDIR}/usr/lib/libformw.a
 LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
 LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
-LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
 LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
 LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
 LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
-LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKEYNOTE?=	${DESTDIR}/usr/lib/libkeynote.a
-LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
 LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
+LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
+LIBMENUW?=	${DESTDIR}/usr/lib/libmenuw.a
 LIBOLDCURSES?=	${DESTDIR}/usr/lib/libocurses.a
+LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
+LIBPANEL?=	${DESTDIR}/usr/lib/libpanel.a
+LIBPANELW?=	${DESTDIR}/usr/lib/libpanelw.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 LIBPERL?=	${DESTDIR}/usr/lib/libperl.a
+LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
-LIBSECTOK?=	${DESTDIR}/usr/lib/libsectok.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+LIBSNDIO?=	${DESTDIR}/usr/lib/libsndio.a
 LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
-LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
 LIBUSB?=	${DESTDIR}/usr/lib/libusbhid.a
@@ -64,18 +66,11 @@ LIBY?=		${DESTDIR}/usr/lib/liby.a
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
 .if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "amd64" || \
-    ${MACHINE_ARCH} == "i386"
+    ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "i386"
 LIBARCH?=	${DESTDIR}/usr/lib/lib${MACHINE_ARCH}.a
 .else
 LIBARCH?=
 .endif
-
-# old stuff
-LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
-LIBMP?=		${DESTDIR}/usr/lib/libmp.a
-LIBPC?=		${DESTDIR}/usr/lib/libpc.a
-LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
-LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 
 .if defined(PROG)
 SRCS?=	${PROG}.c
