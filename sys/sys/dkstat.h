@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstat.h,v 1.7 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: dkstat.h,v 1.8 2010/11/18 21:12:48 miod Exp $	*/
 /*	$NetBSD: dkstat.h,v 1.8 1995/12/28 19:16:31 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #define	CP_IDLE		4
 #define	CPUSTATES	5
 
-#define	DK_NDRIVE	8
 #ifdef _KERNEL
 extern long cp_time[CPUSTATES];
 
