@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.37 2010/01/03 19:23:49 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.38 2010/11/18 21:21:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -120,7 +120,6 @@ boolean_t pmap_testbit(struct vm_page *, u_int);
 void pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva);
 void pmap_page_remove(struct vm_page *pg);
-void pmap_proc_iflush(struct proc *, vaddr_t, vsize_t);
 
 static __inline int
 pmap_prot(struct pmap *pmap, int prot)

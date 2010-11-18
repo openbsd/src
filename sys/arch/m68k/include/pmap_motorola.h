@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.18 2010/06/29 20:30:32 guenther Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.19 2010/11/18 21:21:38 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -133,8 +133,6 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
-
-void	pmap_proc_iflush(struct proc *, vaddr_t, vsize_t);
 
 int	pmap_enter_cache(pmap_t, vaddr_t, paddr_t, vm_prot_t, int, pt_entry_t);
 void	pmap_kenter_cache(vaddr_t, paddr_t, pt_entry_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 2010/01/01 13:17:50 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2010/11/18 21:21:38 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@ typedef struct pmap {
 extern struct pmap __pmap_kernel;
 
 void pmap_bootstrap(void);
-void pmap_proc_iflush(struct proc *, vaddr_t, size_t);
 #define	pmap_unuse_final(p)		do { /* nothing */ } while (0)
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 #define	pmap_kernel()			(&__pmap_kernel)

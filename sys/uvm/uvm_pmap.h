@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.20 2009/02/05 01:10:44 oga Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.21 2010/11/18 21:21:38 miod Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -151,8 +151,10 @@ void		 pmap_page_protect(struct vm_page *, vm_prot_t);
 #if !defined(pmap_phys_address)
 paddr_t		 pmap_phys_address(paddr_t);
 #endif
-void		 pmap_protect(pmap_t,
-		    vaddr_t, vaddr_t, vm_prot_t);
+#if !defined(pmap_proc_iflush)
+void		pmap_proc_iflush(struct proc *, vaddr_t, vsize_t);
+#endif
+void		 pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 #if !defined(pmap_reference)
 void		 pmap_reference(pmap_t);
 #endif

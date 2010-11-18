@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.45 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.46 2010/11/18 21:21:38 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -137,7 +137,6 @@ int pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr, int exec_fault);
 #define pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr) ;
 int reserve_dumppages(caddr_t p);
 
-void pmap_proc_iflush(struct proc *proc, vaddr_t va, vsize_t len);
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 

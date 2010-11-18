@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.2 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.3 2010/11/18 21:21:38 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -99,7 +99,6 @@ vaddr_t		pmap_map(vaddr_t, paddr_t, paddr_t, int);
 int		pmap_pa_exists(paddr_t);
 void		pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_prefer(vaddr_t, vaddr_t *);
-void		pmap_proc_iflush(struct proc *, vaddr_t, vsize_t);
 void		pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_reference(pmap_t);
 void		pmap_release(pmap_t);
