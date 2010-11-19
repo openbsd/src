@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.37 2010/09/24 01:48:03 yuo Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.38 2010/11/19 20:54:12 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -114,6 +114,8 @@ umass*		at uhub?	# USB Mass Storage devices
 atapiscsi*	at umass?
 scsibus*	at atapiscsi?
 scsibus*	at umass?
+urio*		at uhub?	# Diamond Multimedia Rio 500
+uscanner*	at uhub?	# USB Scanners
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse
 wsmouse*	at ums? mux 0
@@ -253,3 +255,5 @@ com*	at puc?
 #lpt*	at puc?
 
 pseudo-device	crypto	1
+pseudo-device	hotplug	1		# devices hot plugging
+pseudo-device	wsmux	2       	# Mouse and keyboard multiplexor
