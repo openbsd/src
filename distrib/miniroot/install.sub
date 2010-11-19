@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.629 2010/11/18 23:25:46 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.630 2010/11/19 19:33:13 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -134,7 +134,7 @@ get_cddevs () {
 }
 
 get_ifdevs() {
-	ifconfig \
+	ifconfig "$@" 2>&- \
 		| egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' \
 		| sed -ne 's/^\(.*\):.*/\1/p'
 }
@@ -732,7 +732,7 @@ __EOT
 		return 0
 	fi
 
-	ifconfig $_ifs delete down
+	ifconfig $_ifs delete down -group dhcp 2>&-
 	rm /etc/dhclient.conf /etc/resolv.conf.tail
 	return 1
 }
@@ -2038,6 +2038,13 @@ export EDITOR COLUMNS
 # umount all filesystems, just in case we are re-running install or upgrade.
 cd /
 umount -af 1>/dev/null 2>&1
+
+# make sure only successful dhcp requests retain their state
+for _ifs in $(get_ifdevs dhcp); do
+	set -- $(v4_info $_ifs)
+	[[ $1 == UP && -n $2 ]] && continue
+	ifconfig $_ifs delete down -group dhcp 2>&-
+done
 
 cat <<__EOT
 At any prompt except password prompts you can escape to a shell by
