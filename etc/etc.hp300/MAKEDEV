@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.41 2010/09/30 15:27:54 claudio Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.42 2010/11/19 20:55:48 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -63,6 +63,7 @@
 #	bpf*	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
+#	hotplug	devices hot plugging
 #	lkm	Loadable kernel modules interface
 #	nnpfs*	NNPFS filesystem node
 #	pf*	Packet Filter
@@ -320,6 +321,10 @@ lkm)
 	M lkm c 24 0 640 _lkm
 	;;
 
+hotplug)
+	M hotplug c 56 $U 400
+	;;
+
 fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
@@ -460,8 +465,9 @@ all)
 	R ct0 ct1 hd0 hd1 hd2 dcm0 dcm1 dcm2 dcm3 dca0 dca1 ccd0 ccd1
 	R ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1
 	R rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5
-	R bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 nnpfs0 ch0 ptm local
-	R ppi0 apci0 wscons uk0 random lkm pf systrace std st0 st1 fd
+	R bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 nnpfs0 ch0 hotplug
+	R ptm local ppi0 apci0 wscons uk0 random lkm pf systrace std
+	R st0 st1 fd
 	;;
 
 sd*|hd*|ccd*)

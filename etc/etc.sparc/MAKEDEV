@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.45 2010/09/30 15:27:54 claudio Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.46 2010/11/19 20:55:48 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -71,6 +71,7 @@
 #	bpf*	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
+#	hotplug	devices hot plugging
 #	lkm	Loadable kernel modules interface
 #	nnpfs*	NNPFS filesystem node
 #	openprom	PROM settings
@@ -270,6 +271,10 @@ nnpfs*)
 
 lkm)
 	M lkm c 112 0 640 _lkm
+	;;
+
+hotplug)
+	M hotplug c 131 $U 400
 	;;
 
 fd)
@@ -521,10 +526,10 @@ all)
 	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
 	R fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ch0 bio cuaa cuab
-	R cuac cuad ttya ttyb ttyc ttyd ptm local wscons audio0 audio1
-	R audio2 uk0 random lkm tty00 tty01 tty02 tty03 apm pf
-	R systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1
-	R fd
+	R cuac cuad ttya ttyb ttyc ttyd hotplug ptm local wscons
+	R audio0 audio1 audio2 uk0 random lkm tty00 tty01 tty02 tty03
+	R apm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std
+	R st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*|raid*|ccd*)
