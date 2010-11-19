@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.12 2008/01/30 02:13:04 krw Exp $ */
+/*	$OpenBSD: installboot.c,v 1.13 2010/11/19 18:11:19 deraadt Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -386,7 +386,7 @@ vid_to_disklabel(char *dkname, char *bootproto)
 	char *specname;
 	int exe_file, f;
 	struct mvmedisklabel *pcpul;
-	struct stat stat;
+	struct stat sb;
 	unsigned int exe_addr;
 	unsigned short exe_addr_u;
 	unsigned short exe_addr_l;
@@ -414,12 +414,15 @@ vid_to_disklabel(char *dkname, char *bootproto)
 	pcpul->version = 1;
 	strncpy(pcpul->vid_id, "M68K", 4);
 
-	fstat(exe_file, &stat);
+	if (fstat(exe_file, &sb);
+		err(1, "fstat: %s", bootproto);
+	if (sb.st_size < 0x20)
+		errx(1, "%s is too small", bootproto);
 
 	/* size in 256 byte blocks round up after a.out header removed */
 
 	pcpul->vid_oss = 2;
-	pcpul->vid_osl = (((stat.st_size -0x20) +511) / 512) *2;
+	pcpul->vid_osl = (((sb.st_size -0x20) +511) / 512) *2;
 
 	lseek(exe_file, 0x14, SEEK_SET);
 	read(exe_file, &exe_addr, 4);

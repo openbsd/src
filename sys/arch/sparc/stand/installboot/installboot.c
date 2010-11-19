@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.4 2003/08/25 23:36:46 tedu Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.5 2010/11/19 18:11:21 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.1 1997/06/01 03:39:45 mrg Exp $	*/
 
 /*
@@ -238,6 +238,12 @@ loadprotoblocks(fname, size)
 		close(fd);
 		return NULL;
 	}
+	if (statbuf.st_size == 0) {
+		warn(1, "%s is empty", fname);
+		close(fd);
+		return NULL;
+	}
+
 	if ((bp = calloc(roundup(statbuf.st_size, DEV_BSIZE), 1)) == NULL) {
 		warnx("malloc: %s: no memory", fname);
 		close(fd);

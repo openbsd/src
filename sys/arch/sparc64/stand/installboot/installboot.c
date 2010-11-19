@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.7 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.8 2010/11/19 18:11:21 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -196,6 +196,8 @@ main(argc, argv)
 
 		if (fstat(protofd, &sb) < 0)
 			err(1, "fstat: %s", proto);
+		if (sb.st_size == 0)
+			errx(1, "%s is empty", proto);
 
 		/* there must be a better way */
 		blanklen = DEV_BSIZE - ((sb.st_size + DEV_BSIZE) & (DEV_BSIZE - 1));

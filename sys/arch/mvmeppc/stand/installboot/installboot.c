@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.6 2007/06/17 00:28:57 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.7 2010/11/19 18:11:21 deraadt Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -332,11 +332,9 @@ int	devfd;
 	fs = (struct fs *)sblock;
 
 	/* Sanity-check super-block. */
-	
-   if (fs->fs_magic != FS_MAGIC)
+	if (fs->fs_magic != FS_MAGIC)
 		errx(1, "Bad magic number in superblock");
-	
-   if (fs->fs_inopb <= 0)
+	if (fs->fs_inopb <= 0)
 		err(1, "Bad inopb=%d in superblock", fs->fs_inopb);
 
 	/* Read inode */
@@ -397,7 +395,7 @@ char *bootproto;
 	char *specname;
 	int exe_file, f;
 	struct cpu_disklabel *pcpul;
-	struct stat stat;
+	struct stat sb;
 	unsigned int exe_addr;
 	unsigned short exe_addr_u;
 	unsigned short exe_addr_l;
@@ -425,12 +423,15 @@ char *bootproto;
 	pcpul->version = 1;
 	memcpy(pcpul->vid_id, "M88K", sizeof pcpul->vid_id);
 
-	fstat(exe_file, &stat);
+	if (fstat(exe_file, &sb) == -1)
+		err(1, "fstat: %s", bootproto);
+	if (sb.st_size < 0x20)
+		errx(1, "%s is too small", bootproto);
 
 	/* size in 256 byte blocks round up after a.out header removed */
 
 	pcpul->vid_oss = 2;
-	pcpul->vid_osl = (((stat.st_size -0x20) +511) / 512) *2;
+	pcpul->vid_osl = (((sb.st_size -0x20) +511) / 512) *2;
 
 	lseek(exe_file, 0x14, SEEK_SET);
 	read(exe_file, &exe_addr, 4);
