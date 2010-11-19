@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2010/09/23 05:02:14 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 2010/11/19 20:55:48 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -108,7 +108,7 @@ cdev_decl(com);
 #include "pf.h"
 
 #include "systrace.h"
-
+#include "hotplug.h"
 #include "vscsi.h"
 #include "pppx.h"
 
@@ -116,6 +116,17 @@ cdev_decl(com);
 #include "pci.h"
 cdev_decl(pci);
 #endif
+
+#include "usb.h"
+#include "uhid.h"
+#include "ugen.h"
+#include "ulpt.h"
+#include "urio.h"
+#include "ucom.h"
+#include "uscanner.h"
+
+#include "bthub.h"
+
 
 struct cdevsw   cdevsw[] =
 {
@@ -168,15 +179,24 @@ struct cdevsw   cdevsw[] =
 	cdev_bio_init(NBIO,bio),	/* 37: ioctl tunnel */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */
-	cdev_lkm_dummy(),		/* 40 */
-	cdev_lkm_dummy(),		/* 41 */
-	cdev_lkm_dummy(),		/* 42 */
-	cdev_lkm_dummy(),		/* 43 */
-	cdev_lkm_dummy(),		/* 44 */
-	cdev_lkm_dummy(),		/* 45 */
-	cdev_vscsi_init(NVSCSI,vscsi),	/* 46: vscsi */
-	cdev_disk_init(1,diskmap),	/* 47: disk mapper */
-	cdev_pppx_init(NPPPX,pppx),	/* 48: pppx */
+	cdev_usb_init(NUSB,usb),	/* 40: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 41: USB generic HID */
+	cdev_usbdev_init(NUGEN,ugen),	/* 42: USB generic driver */
+	cdev_ulpt_init(NULPT,ulpt),	/* 43: USB printers */
+	cdev_urio_init(NURIO,urio),	/* 44: USB Diamond Rio 500 */
+	cdev_tty_init(NUCOM,ucom),	/* 45: USB tty */
+	cdev_usbdev_init(NUSCANNER,uscanner), /* 46: USB scanners */
+	cdev_hotplug_init(NHOTPLUG,hotplug), /* 47: devices hot plugging */
+	cdev_lkm_dummy(),		/* 48: */
+	cdev_lkm_dummy(),		/* 49: */
+	cdev_lkm_dummy(),		/* 50: */
+	cdev_lkm_dummy(),		/* 51: */
+	cdev_lkm_dummy(),		/* 52: */
+	cdev_lkm_dummy(),		/* 53: */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: vscsi */
+	cdev_bthub_init(NBTHUB,bthub),	/* 55: bthub */
+	cdev_disk_init(1,diskmap),	/* 56: disk mapper */
+	cdev_pppx_init(NPPPX,pppx),	/* 57: pppx */
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

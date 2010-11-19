@@ -1,6 +1,6 @@
 define(MACHINE,socppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.12 2010/09/30 15:27:54 claudio Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.13 2010/11/19 20:55:48 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -18,7 +18,7 @@ dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
-__devitem(apm, apm, Power management device)dnl
+dnl __devitem(apm, apm, Power management device)dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramd)
@@ -49,8 +49,8 @@ _DEV(wsmux, 70)
 _TITLE(point)
 _DEV(wsmouse, 69)
 _TITLE(usb)
-_DEV(ttyU, 66)
 _DEV(uall)
+_DEV(ttyU, 66)
 _DEV(ugen, 63)
 _DEV(uhid, 62)
 _DEV(ulpt, 64)
@@ -58,29 +58,29 @@ _DEV(urio, 65)
 _DEV(usb, 61)
 _DEV(uscan, 74)
 _TITLE(spec)
-_DEV(apm, 25)
-_DEV(au, 44)
-_DEV(bio, 80)
-dnl _DEV(bktr, 75)
+dnl _DEV(apm, 25)
+dnl _DEV(au, 44)
+dnl _DEV(bio, 80)
+dnl dnl _DEV(bktr, 75)
 _DEV(bpf, 22)
 _DEV(bthub, 81)
-_DEV(cry, 47)
+dnl _DEV(cry, 47)
 _DEV(diskmap, 82)
 _DEV(fdesc, 21)
-_DEV(gpio, 79)
-_DEV(hotplug, 78)
-_DEV(iop, 73)
+dnl _DEV(gpio, 79)
+_DEV(hotplug, 84)
+dnl _DEV(iop, 73)
 _DEV(lkm, 24)
-_DEV(nnpfs, 51)
+dnl _DEV(nnpfs, 51)
 _DEV(pci, 71)
 _DEV(pf, 39)
 _DEV(pppx, 83)
-_DEV(radio, 76)
+dnl _DEV(radio, 76)
 _DEV(rnd, 40)
 _DEV(systrace, 50)
 _DEV(tun, 23)
 dnl _DEV(tuner, 75)
-_DEV(uk, 41)
+dnl _DEV(uk, 41)
 _DEV(vi, 44)
 _DEV(vscsi, 78)
 dnl
@@ -93,20 +93,17 @@ dnl
 dnl *** socppc specific targets
 dnl
 target(all, ch, 0)dnl
-target(all, nnpfs, 0)dnl
+dnl target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl
-twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
-twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
 target(all, pty, 0)dnl
 target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, tun, 0, 1, 2, 3)dnl
-target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
-target(all, gpio, 0, 1, 2)dnl
-target(all, bio)dnl
+dnl target(all, gpio, 0, 1, 2)dnl
+dnl target(all, bio)dnl
 target(all, bthub, 0, 1, 2)dnl

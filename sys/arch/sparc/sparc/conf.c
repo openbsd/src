@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.54 2010/09/23 05:02:14 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.55 2010/11/19 20:55:48 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -129,6 +129,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "tctrl.h"
 #include "vscsi.h"
 #include "pppx.h"
+#include "hotplug.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -270,6 +271,7 @@ struct cdevsw	cdevsw[] =
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 128: vscsi */
 	cdev_disk_init(1,diskmap),	/* 129: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 130: pppx */
+	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 131: devices hot plugging */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

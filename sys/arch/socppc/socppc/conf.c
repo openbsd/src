@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2010/09/23 05:02:14 claudio Exp $ */
+/*	$OpenBSD: conf.c,v 1.12 2010/11/19 20:55:48 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -109,10 +109,16 @@ cdev_decl(pci);
 #include "ksyms.h"
 #include "usb.h"
 #include "uhid.h"
+#include "ugen.h"
+#include "ulpt.h"
+#include "urio.h"
+#include "ucom.h"
+#include "uscanner.h"
 
 #include "bthub.h"
 #include "vscsi.h"
 #include "pppx.h"
+#include "hotplug.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -178,10 +184,10 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 60 */
 	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
-	cdev_notdef(),			/* 63 */
-	cdev_notdef(),			/* 64 */
-	cdev_notdef(),			/* 65 */
-	cdev_notdef(),			/* 66 */
+	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
+	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
+	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
+	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 67: frame buffers, etc. */
 		wsdisplay),
 	cdev_mouse_init(NWSKBD, wskbd),	/* 68: keyboards */
@@ -195,7 +201,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_notdef(),			/* 72 */
 	cdev_notdef(),			/* 73 */
-	cdev_notdef(),			/* 74 */
+	cdev_usbdev_init(NUSCANNER,uscanner), /* 74: usb scanner */
 	cdev_notdef(),			/* 75 */
 	cdev_notdef(),			/* 76 */
 	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */
@@ -205,6 +211,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bthub_init(NBTHUB,bthub),	/* 81: bluetooth hub */
 	cdev_disk_init(1,diskmap),	/* 82: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 83: pppx */
+	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 84: devices hot plugging */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -302,6 +309,7 @@ int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 
 #include <dev/cons.h>
 
+#define comcnpollc	nullcnpollc
 cons_decl(com);
 
 struct consdev constab[] = {

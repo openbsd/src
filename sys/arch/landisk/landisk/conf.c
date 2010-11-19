@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2010/09/23 05:02:14 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2010/11/19 20:55:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -39,7 +39,7 @@
  * Character and Block Device configuration
  * Console configuration
  *
- * Defines the structures cdevsw and constab
+ * Defines the structures [bc]devsw
  *
  * Created      : 17/09/94
  */
@@ -74,15 +74,6 @@
 #include "pty.h"
 #include "tun.h"
 #include "ksyms.h"
-
-/*
- * APM interface
- */
-#ifdef CONF_HAVE_APM
-#include "apm.h"
-#else
-#define NAPM	0
-#endif
 
 /*
  * Disk/Filesystem pseudo-devices
@@ -272,12 +263,6 @@ cdev_decl(nnpfs_dev);
 #include "vscsi.h"
 #include "pppx.h"
 
-#ifdef CONF_HAVE_GPIO
-#include "gpio.h"
-#else
-#define	NGPIO 0
-#endif
-
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),			/*  0: virtual console */
 	cdev_ctty_init(1,ctty),			/*  1: controlling terminal */
@@ -292,7 +277,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 10: */
 	cdev_tty_init(NSCIF,scif),		/* 11: scif */
 	cdev_tty_init(NCOM,com),		/* 12: serial port */
-	cdev_gpio_init(NGPIO,gpio),     	/* 13: GPIO interface */
+	cdev_lkm_dummy(),			/* 13: */
 	cdev_lkm_dummy(),			/* 14: */
 	cdev_lkm_dummy(),			/* 15: */
 	cdev_disk_init(NWD,wd),			/* 16: ST506/ESDI/IDE disk */
@@ -313,7 +298,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 31: */
 	cdev_lkm_dummy(),			/* 32: */
 	cdev_tun_init(NTUN,tun),		/* 33: network tunnel */
-	cdev_apm_init(NAPM,apm),		/* 34: APM interface */
+	cdev_lkm_dummy(),			/* 34: */
 	cdev_lkm_init(NLKM,lkm),		/* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),		/* 36: generic audio I/O */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 37: devices hot plugging*/
