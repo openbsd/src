@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.50 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: GENERIC,v 1.51 2010/11/19 20:52:39 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -132,4 +132,5 @@ uk*		at scsibus?			# unknown SCSI devices
 # ISA devices
 #isa*		at isabr?
 
-pseudo-device	wsmux	2	# mouse and keyboard multiplexor
+pseudo-device	hotplug		1	# devices hot plugging
+pseudo-device	wsmux		2	# mouse and keyboard multiplexor

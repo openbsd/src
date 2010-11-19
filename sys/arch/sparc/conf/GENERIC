@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.99 2010/08/30 20:40:39 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.100 2010/11/19 20:52:41 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -367,4 +367,5 @@ fd*	at fdc0					# the drive itself
 # Prestoserve NVRAM
 #presto*	at sbus?
 
-pseudo-device	wsmux	2	# mouse & keyboard multiplexor
+pseudo-device	hotplug		1	# devices hot plugging
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
