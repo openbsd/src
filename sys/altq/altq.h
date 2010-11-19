@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq.h,v 1.6 2003/04/03 05:11:28 kjc Exp $	*/
+/*	$OpenBSD: altq.h,v 1.7 2010/11/19 22:36:11 mikeb Exp $	*/
 /*	$KAME: altq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #define	ALTQT_PRIQ		11	/* priority queue */
 #define	ALTQT_MAX		12	/* should be max discipline type + 1 */
 
-/* simple token backet meter profile */
+/* simple token bucket meter profile */
 struct tb_profile {
 	u_int	rate;	/* rate in bit-per-sec */
 	u_int	depth;	/* depth in bytes */
