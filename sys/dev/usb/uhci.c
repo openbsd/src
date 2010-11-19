@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.84 2010/10/23 15:42:09 jakemsr Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.85 2010/11/19 18:42:27 miod Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2757,7 +2757,9 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 
 	upipe->u.intr.npoll = npoll;
 	upipe->u.intr.qhs =
-		malloc(npoll * sizeof(uhci_soft_qh_t *), M_USBHC, M_WAITOK);
+	    malloc(npoll * sizeof(uhci_soft_qh_t *), M_USBHC, M_NOWAIT);
+	if (upipe->u.intr.qhs == NULL)
+		return (USBD_NOMEM);
 
 	/*
 	 * Figure out which offset in the schedule that has most
