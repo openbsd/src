@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.27 2010/07/03 04:44:51 guenther Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.28 2010/11/19 08:00:56 ajacoutot Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -98,7 +98,8 @@ discover_interfaces(int *rdomain)
 		 */
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
-		    (!(ifa->ifa_flags & IFF_UP)))
+		    (!(ifa->ifa_flags & IFF_UP)) ||
+		    (!(ifa->ifa_flags & IFF_BROADCAST)))
 			continue;
 
 		/* See if we've seen an interface that matches this one. */
