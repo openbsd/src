@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.24 2009/05/31 13:03:21 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.25 2010/11/19 21:12:14 miod Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -109,7 +109,7 @@
 #define ZYD_MACB_MAX_RETRY	0x9b28
 
 /*
- * Miscellanous registers.
+ * Miscellaneous registers.
  */
 #define ZYD_FIRMWARE_START_ADDR	0xee00
 #define ZYD_FIRMWARE_BASE_ADDR	0xee1d /* Firmware base address */

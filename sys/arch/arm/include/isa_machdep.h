@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.4 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.5 2010/11/19 21:12:12 miod Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.3 2002/01/07 22:58:07 chris Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ int isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq);
 void	isa_intr_init(void);
 
 /*
- * Miscellanous functions.
+ * Miscellaneous functions.
  */
 void isa_fillw(u_int val, void *addr, size_t len);
 
