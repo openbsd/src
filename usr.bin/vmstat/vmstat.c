@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.117 2010/08/01 02:51:03 chl Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.118 2010/11/19 18:35:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -128,8 +128,6 @@ extern char *__progname;
 int verbose = 0;
 int zflag = 0;
 
-int ncpu;
-
 int
 main(int argc, char *argv[])
 {
@@ -210,11 +208,6 @@ main(int argc, char *argv[])
 				errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 		}
 	}
-
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU;
-	size = sizeof(ncpu);
-	(void) sysctl(mib, 2, &ncpu, &size, NULL, 0);
 
 	if (todo & VMSTAT) {
 		struct winsize winsize;
@@ -649,7 +642,6 @@ dkstats(void)
 	if (etime == 0)
 		etime = 1;
 	etime /= hz;
-	etime /= ncpu;
 	for (dn = 0; dn < dk_ndrive; ++dn) {
 		if (!dk_select[dn])
 			continue;

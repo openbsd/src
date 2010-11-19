@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.72 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.73 2010/11/19 18:35:16 mikeb Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -159,8 +159,6 @@ field_view views_vm[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-int ncpu = 1;
-
 int
 initvmstat(void)
 {
@@ -168,13 +166,7 @@ initvmstat(void)
 	int mib[4], i;
 	size_t size;
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU;
-	size = sizeof(ncpu);
-	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0)
-		return (-1);
-
-	hertz = stathz ? stathz : hz;
+	hertz = stathz;
 	if (!dkinit(1))
 		return(0);
 
@@ -343,7 +335,6 @@ showkre(void)
 	}
 	failcnt = 0;
 	etime /= hertz;
-	etime /= ncpu;
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
 		if (s.intrcnt[i] == 0)
