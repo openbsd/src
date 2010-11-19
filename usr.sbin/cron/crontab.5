@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.23 2010/09/20 07:41:17 jmc Exp $
+.\" $OpenBSD: crontab.5,v 1.24 2010/11/19 17:16:48 millert Exp $
 .\"
-.Dd $Mdocdate: September 20 2010 $
+.Dd $Mdocdate: November 19 2010 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -159,7 +159,7 @@ mail is sent to the user so named.
 If
 .Ev MAILTO
 is defined but empty
-.Pq Ev MAILTO \&= Sq ,
+.Pq Ev MAILTO \&= Qq ,
 no
 mail will be sent.
 Otherwise mail is sent to the owner of the
