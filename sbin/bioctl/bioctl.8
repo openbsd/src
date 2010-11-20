@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.81 2010/09/13 18:45:58 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.82 2010/11/20 17:46:24 stsp Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 13 2010 $
+.Dd $Mdocdate: November 20 2010 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -131,13 +131,19 @@ This is the default if no other option is given.
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
 .It Fl R Ar device \*(Ba channel:target[.lun]
-Manually kick off a rebuild using
+Manually kick off a rebuild of a RAID volume, using
 .Ar device
 or
 .Ar channel:target[.lun]
-on the provided drive name.
-This command requires a drive by name (e.g. sd1) instead of a controller
-by name (e.g. softraid0).
+as a new chunk (with
+.Xr softraid 4 ,
+a partition of fstype
+.Dq RAID )
+in the volume.
+.Ar device
+must be specified as a full path to the chunk device file (e.g. /dev/wd0d).
+A RAID volume rather than a RAID controller is expected as the
+final argument.
 .It Fl u Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]
@@ -264,6 +270,12 @@ Deleting a softraid volume requires the exact volume name.
 For example:
 .Bd -literal -offset 3n
 # bioctl -d sd2
+.Ed
+.Pp
+The following command starts a rebuild of the degraded softraid volume sd0
+using a new chunk on wd0d:
+.Bd -literal -offset 3n
+# bioctl -R /dev/wd0d sd0
 .Ed
 .Sh SEE ALSO
 .Xr bio 4 ,
