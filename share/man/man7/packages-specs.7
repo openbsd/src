@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.15 2010/11/15 07:44:23 jmc Exp $
+.\" $OpenBSD: packages-specs.7,v 1.16 2010/11/20 10:05:05 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 15 2010 $
+.Dd $Mdocdate: November 20 2010 $
 .Dt PACKAGES-SPECS 7
 .Os
 .Sh NAME
@@ -163,6 +163,13 @@ would match any version of foo between 1.3 and 1.5, inclusive.
 As a convenience, the ports tree recognizes a specification that starts
 with STEM, and will replace this with the correct stem, which can be useful
 for embarrassingly long package names.
+.Pp
+As another convenience, the ports tree recognizes constructs like
+.Qq graphics/png>=1.2.0
+and transforms it into
+.Qq STEM->=1.2.0:graphics/png .
+More specifically, package paths never contain <, >, or =, and those
+characters trigger the transform.
 .Pp
 If the flavor specification is left blank, any flavor will do.
 Note that most default package names don't contain flavor specification,
