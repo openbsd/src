@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.38 2010/10/31 15:14:30 mpf Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.39 2010/11/20 14:23:09 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1958,18 +1958,13 @@ bstp_create(struct ifnet *ifp)
 void
 bstp_destroy(struct bstp_state *bs)
 {
-	int s;
-
 	if (bs == NULL)
 		return;
 
 	if (!LIST_EMPTY(&bs->bs_bplist))
 		panic("bstp still active");
 
-	s = splnet();
-	LIST_REMOVE(bs, bs_list);
 	free(bs, M_DEVBUF);
-	splx(s);
 }
 
 void

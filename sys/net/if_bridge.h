@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.33 2010/10/31 15:14:30 mpf Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.34 2010/11/20 14:23:09 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -354,7 +354,6 @@ struct bstp_port {
  * Software state for each bridge STP.
  */
 struct bstp_state {
-	LIST_ENTRY(bstp_state)	bs_list;
 	struct ifnet		*bs_ifp;
 	struct bstp_pri_vector	bs_bridge_pv;
 	struct bstp_pri_vector	bs_root_pv;
