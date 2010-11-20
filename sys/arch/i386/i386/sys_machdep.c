@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.26 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.27 2010/11/20 20:21:13 miod Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -264,6 +264,10 @@ i386_set_ldt(struct proc *p, void *args, register_t *retval)
 		simple_unlock(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len);
+		if (new_ldt == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
 		simple_lock(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {

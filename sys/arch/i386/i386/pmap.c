@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.148 2010/05/08 16:54:08 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.149 2010/11/20 20:21:13 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1597,6 +1597,10 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 
 		len = pmap1->pm_ldt_len * sizeof(union descriptor);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
+		if (new_ldt == NULL) {
+			/* XXX needs to be able to fail properly */
+			panic("pmap_fork: out of kva");
+		}
 		bcopy(pmap1->pm_ldt, new_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
