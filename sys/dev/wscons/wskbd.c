@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.63 2010/11/20 20:47:38 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.64 2010/11/20 20:52:11 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -500,7 +500,7 @@ wskbd_repeat(void *v)
 	struct wskbd_softc *sc = (struct wskbd_softc *)v;
 	int s = spltty();
 
-	if (!sc->sc_repeating) {
+	if (sc->sc_repeating == 0) {
 		/*
 		 * race condition: a "key up" event came in when wskbd_repeat()
 		 * was already called but not yet spltty()'d
@@ -510,12 +510,9 @@ wskbd_repeat(void *v)
 	}
 	if (sc->sc_translating) {
 		/* deliver keys */
-		if (sc->sc_displaydv != NULL) {
-			int i;
-			for (i = 0; i < sc->sc_repeating; i++)
-				wsdisplay_kbdinput(sc->sc_displaydv,
-				    sc->id->t_symbols[i]);
-		}
+		if (sc->sc_displaydv != NULL)
+			wsdisplay_kbdinput(sc->sc_displaydv,
+			    sc->id->t_symbols, sc->sc_repeating);
 	} else {
 		/* queue event */
 		wskbd_deliver_event(sc, sc->sc_repeat_type,
@@ -604,7 +601,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev; 
 #if NWSDISPLAY > 0
-	int num, i;
+	int num;
 #endif
 
 #if NWSDISPLAY > 0
@@ -632,10 +629,8 @@ wskbd_input(struct device *dev, u_int type, int value)
 					    WSDISPLAY_SCROLL_RESET);
 				}
 #endif
-				for (i = 0; i < num; i++) {
-					wsdisplay_kbdinput(sc->sc_displaydv,
-					    sc->id->t_symbols[i]);
-				}
+				wsdisplay_kbdinput(sc->sc_displaydv,
+				    sc->id->t_symbols, num);
 			}
 
 			if (sc->sc_keyrepeat_data.del1 != 0) {
@@ -708,12 +703,9 @@ wskbd_rawinput(struct device *dev, u_char *buf, int len)
 {
 #if NWSDISPLAY > 0
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
-	int i;
 
 	if (sc->sc_displaydv != NULL)
-		for (i = 0; i < len; i++)
-			wsdisplay_kbdinput(sc->sc_displaydv, buf[i]);
-	/* this is KS_GROUP_Ascii */
+		wsdisplay_rawkbdinput(sc->sc_displaydv, buf, len);
 #endif
 }
 #endif /* WSDISPLAY_COMPAT_RAWKBD */

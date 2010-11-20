@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.102 2010/07/02 17:27:01 nicm Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.103 2010/11/20 20:52:10 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1579,7 +1579,7 @@ wsdisplay_emulinput(void *v, const u_char *data, u_int count)
  * Calls from the keyboard interface.
  */
 void
-wsdisplay_kbdinput(struct device *dev, keysym_t ks)
+wsdisplay_kbdinput(struct device *dev, keysym_t *ks, int num)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *scr;
@@ -1587,26 +1587,40 @@ wsdisplay_kbdinput(struct device *dev, keysym_t ks)
 	int count;
 	struct tty *tp;
 
-	KASSERT(sc != NULL);
-
 	scr = sc->sc_focus;
-
 	if (!scr || !WSSCREEN_HAS_TTY(scr))
 		return;
 
-	tp = scr->scr_tty;
 
-	if (KS_GROUP(ks) == KS_GROUP_Ascii)
-		(*linesw[tp->t_line].l_rint)(KS_VALUE(ks), tp);
-	else {
-		count = (*scr->scr_dconf->wsemul->translate)
-		    (scr->scr_dconf->wsemulcookie, ks, &dp);
-		while (count-- > 0)
-			(*linesw[tp->t_line].l_rint)(*dp++, tp);
+	tp = scr->scr_tty;
+	for (; num > 0; num--, ks++) {
+		if (KS_GROUP(*ks) == KS_GROUP_Ascii)
+			(*linesw[tp->t_line].l_rint)(KS_VALUE(*ks), tp);
+		else {
+			count = (*scr->scr_dconf->wsemul->translate)
+			    (scr->scr_dconf->wsemulcookie, *ks, &dp);
+			while (count-- > 0)
+				(*linesw[tp->t_line].l_rint)(*dp++, tp);
+		}
 	}
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
+void
+wsdisplay_rawkbdinput(struct device *dev, u_char *buf, int num)
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
+	struct wsscreen *scr;
+	struct tty *tp;
+
+	scr = sc->sc_focus;
+	if (!scr || !WSSCREEN_HAS_TTY(scr))
+		return;
+
+	tp = scr->scr_tty;
+	while (num-- > 0)
+		(*linesw[tp->t_line].l_rint)(*buf++, tp);
+}
 int
 wsdisplay_update_rawkbd(struct wsdisplay_softc *sc, struct wsscreen *scr)
 {
@@ -1919,7 +1933,6 @@ wsdisplay_reset(struct device *dev, enum wsdisplay_resetops op)
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *scr;
 
-	KASSERT(sc != NULL);
 	scr = sc->sc_focus;
 
 	if (!scr)
