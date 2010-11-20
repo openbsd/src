@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.87 2010/10/23 15:38:18 tedu Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.88 2010/11/20 23:58:13 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -60,6 +60,8 @@
 	((flags & PFR_FLAG_USERIOCTL) ?		\
 	copyout((from), (to), (size)) :		\
 	(bcopy((from), (to), (size)), 0))
+
+#define YIELD(cnt, ok) do { if ((cnt % 1024 == 1023) && (ok)) yield(); } while (0)
 
 #define	FILLIN_SIN(sin, addr)			\
 	do {					\
@@ -261,6 +263,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (ENOMEM);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 			senderr(EFAULT);
 		if (pfr_validate_addr(&ad))
@@ -349,6 +352,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	} else {
 		/* iterate over addresses to delete */
 		for (i = 0; i < size; i++) {
+			YIELD(i, flags & PFR_FLAG_USERIOCTL);
 			if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 				return (EFAULT);
 			if (pfr_validate_addr(&ad))
@@ -360,6 +364,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	}
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 			senderr(EFAULT);
 		if (pfr_validate_addr(&ad))
@@ -429,6 +434,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	SLIST_INIT(&delq);
 	SLIST_INIT(&changeq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 			senderr(EFAULT);
 		if (pfr_validate_addr(&ad))
@@ -527,6 +533,7 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (ESRCH);
 
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 			return (EFAULT);
 		if (pfr_validate_addr(&ad))
@@ -650,6 +657,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (ESRCH);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 			senderr(EFAULT);
 		if (pfr_validate_addr(&ad))
@@ -823,8 +831,10 @@ void
 pfr_destroy_kentries(struct pfr_kentryworkq *workq)
 {
 	struct pfr_kentry	*p, *q;
+	int			 i;
 
-	for (p = SLIST_FIRST(workq); p != NULL; p = q) {
+	for (i = 0, p = SLIST_FIRST(workq); p != NULL; i++, p = q) {
+		YIELD(i, 1);
 		q = SLIST_NEXT(p, pfrke_workq);
 		pfr_destroy_kentry(p);
 	}
@@ -855,6 +865,7 @@ pfr_insert_kentries(struct pfr_ktable *kt,
 		}
 		p->pfrke_tzero = tzero;
 		++n;
+		YIELD(n, 1);
 	}
 	kt->pfrkt_cnt += n;
 }
@@ -892,6 +903,7 @@ pfr_remove_kentries(struct pfr_ktable *kt,
 	SLIST_FOREACH(p, workq, pfrke_workq) {
 		pfr_unroute_kentry(kt, p);
 		++n;
+		YIELD(n, 1);
 	}
 	kt->pfrkt_cnt -= n;
 	pfr_destroy_kentries(workq);
@@ -934,6 +946,7 @@ pfr_reset_feedback(struct pfr_addr *addr, int size, int flags)
 	int		i;
 
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 			break;
 		ad.pfra_fback = PFR_FB_NONE;
@@ -1171,6 +1184,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 	SLIST_INIT(&addq);
 	SLIST_INIT(&changeq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t), flags))
 			senderr(EFAULT);
 		if (pfr_validate_table(&key.pfrkt_t, PFR_TFLAG_USRMASK,
@@ -1247,6 +1261,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t), flags))
 			return (EFAULT);
 		if (pfr_validate_table(&key.pfrkt_t, 0,
@@ -1364,6 +1379,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_ADDRSTOO);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t), flags))
 			return (EFAULT);
 		if (pfr_validate_table(&key.pfrkt_t, 0, 0))
@@ -1397,6 +1413,7 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 		return (EINVAL);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t), flags))
 			return (EFAULT);
 		if (pfr_validate_table(&key.pfrkt_t, 0,
@@ -1525,6 +1542,7 @@ _skip:
 	}
 	SLIST_INIT(&addrq);
 	for (i = 0; i < size; i++) {
+		YIELD(i, flags & PFR_FLAG_USERIOCTL);
 		if (COPYIN(addr+i, &ad, sizeof(ad), flags))
 			senderr(EFAULT);
 		if (pfr_validate_addr(&ad))
