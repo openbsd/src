@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.70 2010/04/20 23:27:00 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.71 2010/11/20 20:33:24 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -206,11 +206,6 @@ void	pmap_pinit(struct pmap *);
 void	pmap_release(struct pmap *);
 pv_entry_t pa_to_pvh(paddr_t);
 
-/*
- * First and last managed physical addresses.  XXX only used for dumping the system.
- */
-paddr_t	vm_first_phys, vm_num_phys;
-
 u_int64_t first_phys_addr;
 
 pv_entry_t
@@ -296,8 +291,6 @@ struct mem_region *mem, *avail, *orig;
 int memsize;
 
 static int memh = 0, vmemh = 0;	/* Handles to OBP devices */
-
-paddr_t avail_start, avail_end;
 
 static int ptelookup_va(vaddr_t va); /* sun4u */
 
@@ -1454,12 +1447,6 @@ remap_data:
 	}
 
 	vmmap = (vaddr_t)reserve_dumppages((caddr_t)(u_long)vmmap);
-	/*
-	 * Set up bounds of allocatable memory for vmstat et al.
-	 */
-	avail_start = avail->start;
-	for (mp = avail; mp->size; mp++)
-		avail_end = mp->start+mp->size;
 	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\r\n"));
 
 	pmap_bootstrap_cpu(cpus->ci_paddr);
@@ -1593,9 +1580,6 @@ pmap_init()
 	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr);
-
-	vm_first_phys = avail_start;
-	vm_num_phys = avail_end - avail_start;
 }
 
 /* Start of non-cachable physical memory on UltraSPARC-III. */

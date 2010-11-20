@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.22 2010/09/06 19:05:48 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.23 2010/11/20 20:33:24 miod Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -77,8 +77,6 @@
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
-
-extern paddr_t avail_end;
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int, paddr_t *, int *, int);

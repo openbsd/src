@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.33 2010/09/06 19:05:48 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.34 2010/11/20 20:33:23 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -108,8 +108,6 @@
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
 #endif
-
-extern	paddr_t avail_end;
 
 int _bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
     struct proc *, int, paddr_t *, int *, int);

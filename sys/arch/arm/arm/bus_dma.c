@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.17 2010/03/31 19:46:26 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.18 2010/11/20 20:33:23 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -604,9 +604,6 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
  * Common function for DMA-safe memory allocation.  May be called
  * by bus-specific DMA memory allocation functions.
  */
-
-extern paddr_t physical_start;
-extern paddr_t physical_end;
 
 int
 _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,

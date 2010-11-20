@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2010/07/24 21:27:57 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2010/11/20 20:33:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -121,7 +121,6 @@ u_int	fpu_version;
 
 dev_t	bootdev;
 int	physmem, resvmem, resvphysmem, esym;
-paddr_t	avail_end;
 
 /*
  * Things for MI glue to stick on.
@@ -182,6 +181,7 @@ hppa_init(start)
 {
 	extern int kernel_text;
 	int error;
+	paddr_t	avail_end;
 
 	mtctl((long)&cpu0_info, 24);
 

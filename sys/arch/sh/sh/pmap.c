@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2010/11/20 20:33:24 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -56,8 +56,6 @@
 
 struct pmap __pmap_kernel;
 STATIC vaddr_t __pmap_kve;	/* VA of last kernel virtual */
-paddr_t avail_start;		/* PA of first available physical page */
-paddr_t avail_end;		/* PA of last available physical page */
 
 /* pmap pool */
 STATIC struct pool __pmap_pmap_pool;
@@ -101,8 +99,6 @@ pmap_bootstrap()
 	/* Steal msgbuf area */
 	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	__pmap_kve = VM_MIN_KERNEL_ADDRESS;
 
 	pmap_kernel()->pm_refcnt = 1;

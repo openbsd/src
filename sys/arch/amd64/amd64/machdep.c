@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.128 2010/11/20 20:33:23 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -222,7 +222,8 @@ pid_t sigpid = 0;
 #define SDB_FOLLOW      0x01
 #endif
 
-extern	paddr_t avail_start, avail_end;
+paddr_t avail_start;
+paddr_t avail_end;
 
 void (*delay_func)(int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;

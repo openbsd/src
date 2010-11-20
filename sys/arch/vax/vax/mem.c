@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.15 2007/09/22 16:21:32 krw Exp $	*/
+/*	$OpenBSD: mem.c,v 1.16 2010/11/20 20:33:24 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.15 1999/03/24 05:51:17 mrg Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 
 #include <uvm/uvm_extern.h>
 
-extern unsigned int avail_end;
 caddr_t zeropage;
 
 #define	mmread	mmrw
@@ -117,7 +116,7 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			if (v < 0 || v >= avail_end) {
+			if (v < 0 || v >= ptoa(physmem)) {
 				return (EFAULT);
 			}
 

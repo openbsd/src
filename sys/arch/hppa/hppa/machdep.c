@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.193 2010/07/01 05:33:32 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.194 2010/11/20 20:33:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -143,7 +143,6 @@ int (*cpu_dbtlb_ins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 
 dev_t	bootdev;
 int	physmem, resvmem, resvphysmem, esym;
-paddr_t	avail_end;
 
 #ifdef MULTIPROCESSOR
 struct mutex mtx_atomic = MUTEX_INITIALIZER(IPL_NONE);
@@ -295,6 +294,7 @@ hppa_init(start)
 	extern int kernel_text;
 	struct cpu_info *ci;
 	int error;
+	paddr_t	avail_end;
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
 

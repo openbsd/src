@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.149 2010/11/20 20:21:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.150 2010/11/20 20:33:24 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -243,16 +243,6 @@ int pmap_pg_g = 0;
  * UC- so mtrrs can override the cacheability;
  */
 int pmap_pg_wc = PG_UCMINUS;
-
-/*
- * i386 physical memory comes in a big contig chunk with a small
- * hole toward the front of it...  the following 4 paddr_t's
- * (shared with machdep.c) describe the physical address space
- * of this machine.
- */
-paddr_t avail_start;	/* PA of first available physical page */
-paddr_t hole_start;	/* PA of start of "hole" */
-paddr_t hole_end;	/* PA of end of "hole" */
 
 /*
  * other data structures
