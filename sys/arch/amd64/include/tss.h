@@ -1,4 +1,4 @@
-/*	$OpenBSD: tss.h,v 1.2 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: tss.h,v 1.3 2010/11/20 20:11:17 miod Exp $	*/
 /*	$NetBSD: tss.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*
@@ -57,6 +57,6 @@ struct x86_64_tss {
 	u_int32_t	tss_reserved5;
 	u_int16_t	tss_reserved6;
 	u_int16_t	tss_iobase;
-} __attribute__((packed));
+} __packed;
 
 #endif /* _AMD64_TSS_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.8 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.9 2010/11/20 20:11:17 miod Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ struct sys_segment_descriptor {
 /*BITFIELDTYPE*/ u_int64_t sd_xx2:8;	/* reserved */
 /*BITFIELDTYPE*/ u_int64_t sd_zero:5;	/* must be zero */
 /*BITFIELDTYPE*/ u_int64_t sd_xx3:19;	/* reserved */
-} __attribute__((packed));
+} __packed;
 
 /*
  * Below is used for cs, ds, etc.
@@ -122,7 +122,7 @@ struct mem_segment_descriptor {
 	unsigned int sd_def32:1;            /* default 32 vs 16 bit size */
 	unsigned int sd_gran:1;             /* limit granularity (byte/page) */
 	unsigned int sd_hibase:8;           /* segment base address (msb) */
-} __attribute__((packed));
+} __packed;
 
 /*
  * Gate descriptors (e.g. indirect descriptors)
@@ -139,7 +139,7 @@ struct gate_descriptor {
 /*BITFIELDTYPE*/ u_int64_t gd_xx2:8;	/* reserved */
 /*BITFIELDTYPE*/ u_int64_t gd_zero:5;	/* must be zero */
 /*BITFIELDTYPE*/ u_int64_t gd_xx3:19;	/* reserved */
-} __attribute__((packed));
+} __packed;
 
 /*
  * region descriptors, used to load gdt/idt tables before segments yet exist.
@@ -147,7 +147,7 @@ struct gate_descriptor {
 struct region_descriptor {
 	u_int16_t rd_limit;		/* segment extent */
 	u_int64_t rd_base;		/* base address  */
-} __attribute__((packed));
+} __packed;
 
 #ifdef _KERNEL
 #if 0

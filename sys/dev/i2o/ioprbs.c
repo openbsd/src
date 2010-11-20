@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.24 2010/10/12 00:53:32 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.25 2010/11/20 20:11:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -180,7 +180,7 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_rbs_device_info bdi;
 			struct	i2o_param_rbs_operation op;
 		} p;
-	} param /* XXX gcc __attribute__ ((__packed__)) */;
+	} __packed param;
 	int i;
 
 	TAILQ_INIT(&sc->sc_free_ccb);

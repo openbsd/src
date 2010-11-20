@@ -1,4 +1,4 @@
-/*	$OpenBSD: videoio.h,v 1.5 2010/09/26 23:44:51 jakemsr Exp $	*/
+/*	$OpenBSD: videoio.h,v 1.6 2010/11/20 20:11:19 miod Exp $	*/
 /*
  *  Video for Linux Two header file
  *
@@ -752,7 +752,7 @@ struct v4l2_ext_control {
 		__s64           value64;
 		void           *reserved;
 	} un;
-}               __attribute__((packed));
+}               __packed;
 
 struct v4l2_ext_controls {
 	__u32           ctrl_class;

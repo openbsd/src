@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.9 2010/09/24 14:50:30 hsuenaga Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.10 2010/11/20 20:11:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -220,7 +220,7 @@ struct pipex_gre_header {
 
 	uint16_t len;			/* length not include gre header */
 	uint16_t call_id;			/* call_id */
-} __attribute__((__packed__));
+} __packed;
 
 /* pppoe header */
 struct pipex_pppoe_header {
@@ -232,7 +232,7 @@ struct pipex_pppoe_header {
 
 	uint16_t session_id;			/* session id */
 	uint16_t length;			/* length */
-} __attribute__((__packed__));
+} __packed;
 
 /* l2tp header */
 struct pipex_l2tp_header {
@@ -249,18 +249,18 @@ struct pipex_l2tp_header {
 	uint16_t tunnel_id;
 	uint16_t session_id;
 	/* can be followed by option header */
-} __attribute__((__packed__));
+} __packed;
 
 /* l2tp option header */
 struct pipex_l2tp_seq_header {
 	uint16_t ns;
 	uint16_t nr;
-} __attribute__((__packed__));
+} __packed;
 
 struct pipex_l2tp_offset_header {
 	uint16_t offset_size;
 	/* uint8_t offset_pad[] */
-} __attribute__((__packed__));
+} __packed;
 
 #ifdef PIPEX_DEBUG
 #define PIPEX_DBG(a) if (pipex_debug & 1) pipex_session_log a

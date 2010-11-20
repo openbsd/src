@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.23 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.24 2010/11/20 20:11:19 miod Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ struct atw_frame {
 			struct ieee80211_frame	ihdr;
 		} s2;
 	} u;
-} __attribute__((__packed__));
+} __packed;
 
 #define atw_hdrctl	u.s1.hdrctl
 #define atw_fragthr	u.s1.fragthr

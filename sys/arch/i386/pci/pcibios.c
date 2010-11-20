@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.39 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.40 2010/11/20 20:11:19 miod Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -387,7 +387,7 @@ pcibios_get_intr_routing(struct pcibios_softc *sc,
 		u_int16_t size;
 		u_int32_t offset;
 		u_int16_t segment;
-	} __attribute__((__packed__)) args;
+	} __packed args;
 
 	args.size = *nentries * sizeof(*table);
 	args.offset = (u_int32_t)table;

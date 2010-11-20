@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.h,v 1.4 2010/05/09 19:41:43 nicm Exp $ */
+/*	$OpenBSD: pxe.h,v 1.5 2010/11/20 20:11:19 miod Exp $ */
 /*	$NetBSD: pxe.h,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ typedef struct {
 	uint16_t	UNDICodeSize;	/* UNDI Code segment size (bytes) */
 	SEGOFF16_t	PXEPtr;		/* SEG:OFF to !PXE struct, 
 					   only present when Version > 2.1 */
-} __attribute__((__packed__)) pxenv_t;
+} __packed pxenv_t;
 
 /* !PXE */
 typedef struct {
@@ -113,7 +113,7 @@ typedef struct {
 	SEGDESC_t	BC_Data;
 	SEGDESC_t	BC_Code;
 	SEGDESC_t	BC_CodeWrite;
-} __attribute__((__packed__)) pxe_t;
+} __packed pxe_t;
 
 #define	PXENV_START_UNDI		0x0000
 typedef struct {
@@ -123,17 +123,17 @@ typedef struct {
 	uint16_t	dx;
 	uint16_t	di;
 	uint16_t	es;
-} __attribute__((__packed__)) t_PXENV_START_UNDI;
+} __packed t_PXENV_START_UNDI;
 
 #define	PXENV_UNDI_STARTUP		0x0001
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_UNDI_STARTUP;
+} __packed t_PXENV_UNDI_STARTUP;
 
 #define	PXENV_UNDI_CLEANUP		0x0002
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_UNDI_CLEANUP;
+} __packed t_PXENV_UNDI_CLEANUP;
 
 #define	PXENV_UNDI_INITIALIZE		0x0003
 typedef struct {
@@ -141,7 +141,7 @@ typedef struct {
 	ADDR32_t	ProtocolIni;	/* Phys addr of a copy of the
 					   driver module */
 	uint8_t		reserved[8];
-} __attribute__((__packed__)) t_PXENV_UNDI_INITIALIZE;
+} __packed t_PXENV_UNDI_INITIALIZE;
 
 
 #define	MAXNUM_MCADDR		8
@@ -149,18 +149,18 @@ typedef struct {
 	PXENV_STATUS_t	Status;
 	uint16_t	MCastAddrCount;
 	MAC_ADDR	McastAddr[MAXNUM_MCADDR];
-} __attribute__((__packed__)) t_PXENV_UNDI_MCAST_ADDRESS;
+} __packed t_PXENV_UNDI_MCAST_ADDRESS;
 
 #define	PXENV_UNDI_RESET_ADAPTER	0x0004		
 typedef struct {
 	PXENV_STATUS_t	Status;
 	t_PXENV_UNDI_MCAST_ADDRESS R_Mcast_Buf;
-} __attribute__((__packed__)) t_PXENV_UNDI_RESET;
+} __packed t_PXENV_UNDI_RESET;
 
 #define	PXENV_UNDI_SHUTDOWN		0x0005
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_UNDI_SHUTDOWN;
+} __packed t_PXENV_UNDI_SHUTDOWN;
 
 #define	PXENV_UNDI_OPEN			0x0006
 typedef struct {
@@ -173,12 +173,12 @@ typedef struct {
 #	define FLTR_SRC_RTG	0x0004
 
 	t_PXENV_UNDI_MCAST_ADDRESS R_Mcast_Buf;
-} __attribute__((__packed__)) t_PXENV_UNDI_OPEN;
+} __packed t_PXENV_UNDI_OPEN;
 
 #define	PXENV_UNDI_CLOSE		0x0007
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_UNDI_CLOSE;
+} __packed t_PXENV_UNDI_CLOSE;
 
 #define	PXENV_UNDI_TRANSMIT		0x0008
 typedef struct {
@@ -196,7 +196,7 @@ typedef struct {
 	SEGOFF16_t	DestAddr;
 	SEGOFF16_t	TBD;
 	uint32_t	Reserved[2];
-} __attribute__((__packed__)) t_PXENV_UNDI_TRANSMIT;
+} __packed t_PXENV_UNDI_TRANSMIT;
 
 #define	MAX_DATA_BLKS		8
 typedef struct {
@@ -209,25 +209,25 @@ typedef struct {
 		uint16_t	TDDataLen;
 		SEGOFF16_t	TDDataPtr;
 	} DataBlock[MAX_DATA_BLKS];
-} __attribute__((__packed__)) t_PXENV_UNDI_TBD;
+} __packed t_PXENV_UNDI_TBD;
 
 #define	PXENV_UNDI_SET_MCAST_ADDRESS	0x0009
 typedef struct {
 	PXENV_STATUS_t	Status;
 	t_PXENV_UNDI_MCAST_ADDRESS R_Mcast_Buf;
-} __attribute__((__packed__)) t_PXENV_UNDI_SET_MCAST_ADDR;
+} __packed t_PXENV_UNDI_SET_MCAST_ADDR;
 
 #define	PXENV_UNDI_SET_STATION_ADDRESS	0x000A
 typedef struct {
 	PXENV_STATUS_t	Status;
 	MAC_ADDR	StationAddress;		/* Temp MAC address to use */
-} __attribute__((__packed__)) t_PXENV_UNDI_SET_STATION_ADDR;
+} __packed t_PXENV_UNDI_SET_STATION_ADDR;
 
 #define	PXENV_UNDI_SET_PACKET_FILTER	0x000B
 typedef struct {
 	PXENV_STATUS_t	Status;
 	uint8_t		filter;			/* see UNDI_OPEN (0x0006) */
-} __attribute__((__packed__)) t_PXENV_UNDI_SET_PACKET_FILTER;
+} __packed t_PXENV_UNDI_SET_PACKET_FILTER;
 
 #define	PXENV_UNDI_GET_INFORMATION	0x000C
 typedef struct {
@@ -250,7 +250,7 @@ typedef struct {
 						   address */
 	uint16_t	RxBufCt;		/* Receive queue length */
 	uint16_t	TxBufCt;		/* Transmit queue length */
-} __attribute__((__packed__)) t_PXENV_UNDI_GET_INFORMATION;
+} __packed t_PXENV_UNDI_GET_INFORMATION;
 
 #define	PXENV_UNDI_GET_STATISTICS	0x000D
 typedef struct {
@@ -262,29 +262,29 @@ typedef struct {
 	uint32_t	RcvCRCErrors;		/* Number of frames with
 						   CRC errors */
 	uint32_t	RcvResourceErrors;	/* Number of frames dropped */
-} __attribute__((__packed__)) t_PXENV_UNDI_GET_STATISTICS;
+} __packed t_PXENV_UNDI_GET_STATISTICS;
 
 #define	PXENV_UNDI_CLEAR_STATISTICS	0x000E
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_UNDI_CLEAR_STATISTICS;
+} __packed t_PXENV_UNDI_CLEAR_STATISTICS;
 
 #define	PXENV_UNDI_INITIATE_DIAGS	0x000F
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_UNDI_INITIATE_DIAGS;
+} __packed t_PXENV_UNDI_INITIATE_DIAGS;
 
 #define	PXENV_UNDI_FORCE_INTERRUPT	0x0010
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_UNDI_FORCE_INTERRUPT;
+} __packed t_PXENV_UNDI_FORCE_INTERRUPT;
 
 #define	PXENV_UNDI_GET_MCAST_ADDRESS	0x0011
 typedef struct {
 	PXENV_STATUS_t	Status;
 	IP4_t		InetAddr;		/* IP mulicast address */
 	MAC_ADDR	MediaAddr;		/* MAC multicast address */
-} __attribute__((__packed__)) t_PXENV_UNDI_GET_MCAST_ADDR;
+} __packed t_PXENV_UNDI_GET_MCAST_ADDR;
 
 #define	PXENV_UNDI_GET_NIC_TYPE		0x0012
 typedef struct {
@@ -314,7 +314,7 @@ typedef struct {
 			uint16_t	CardSelNum;
 		} pnp;
 	} info;
-} __attribute__((__packed__)) t_PXENV_UNDI_GET_NIC_TYPE;
+} __packed t_PXENV_UNDI_GET_NIC_TYPE;
 
 #define	PXENV_UNDI_GET_IFACE_INFO	0x0013
 typedef struct {
@@ -323,7 +323,7 @@ typedef struct {
 	uint32_t	LinkSpeed;		/* Defined in NDIS 2.0 spec */
 	uint32_t	ServiceFlags;		/* Defined in NDIS 2.0 spec */
 	uint32_t	Reserved[4];		/* must be 0 */
-} __attribute__((__packed__)) t_PXENV_UNDI_GET_NDIS_INFO;
+} __packed t_PXENV_UNDI_GET_NDIS_INFO;
 
 #define	PXENV_UNDI_ISR			0x0014
 typedef struct {
@@ -353,12 +353,12 @@ typedef struct {
 #	define PXENV_UNDI_ISR_OUT_TRANSMIT	2
 #	define PXENV_UNDI_ISR_OUT_RECIEVE	3
 #	define PXENV_UNDI_ISR_OUT_BUSY		4
-} __attribute__((__packed__)) t_PXENV_UNDI_ISR;
+} __packed t_PXENV_UNDI_ISR;
 
 #define	PXENV_STOP_UNDI			0x0015
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_STOP_UNDI;
+} __packed t_PXENV_STOP_UNDI;
 
 #define	PXENV_TFTP_OPEN			0x0020
 typedef struct {
@@ -368,12 +368,12 @@ typedef struct {
 	uint8_t		FileName[128];
 	UDP_PORT_t	TFTPPort;
 	uint16_t	PacketSize;
-} __attribute__((__packed__)) t_PXENV_TFTP_OPEN;
+} __packed t_PXENV_TFTP_OPEN;
 
 #define	PXENV_TFTP_CLOSE		0x0021
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_TFTP_CLOSE;
+} __packed t_PXENV_TFTP_CLOSE;
 
 #define	PXENV_TFTP_READ			0x0022
 typedef struct {
@@ -381,7 +381,7 @@ typedef struct {
 	uint16_t	PacketNumber;
 	uint16_t	BufferSize;
 	SEGOFF16_t	Buffer;
-} __attribute__((__packed__)) t_PXENV_TFTP_READ;
+} __packed t_PXENV_TFTP_READ;
 
 #define	PXENV_TFTP_READ_FILE		0x0023
 typedef struct {
@@ -396,7 +396,7 @@ typedef struct {
 	UDP_PORT_t	TFTPSrvPort;
 	uint16_t	TFTPOpenTimeOut;
 	uint16_t	TFTPReopenDelay;
-} __attribute__((__packed__)) t_PXENV_TFTP_READ_FILE;
+} __packed t_PXENV_TFTP_READ_FILE;
 
 #define	PXENV_TFTP_GET_FSIZE		0x0025
 typedef struct {
@@ -405,18 +405,18 @@ typedef struct {
 	IP4_t		GatewayIPAddress;
 	uint8_t		FileName[128];
 	uint32_t	FileSize;
-} __attribute__((__packed__)) t_PXENV_TFTP_GET_FSIZE;
+} __packed t_PXENV_TFTP_GET_FSIZE;
 
 #define	PXENV_UDP_OPEN			0x0030
 typedef struct {
 	PXENV_STATUS_t	status;
 	IP4_t		src_ip;		/* IP address of this station */
-} __attribute__((__packed__)) t_PXENV_UDP_OPEN;
+} __packed t_PXENV_UDP_OPEN;
 
 #define	PXENV_UDP_CLOSE			0x0031
 typedef struct {
 	PXENV_STATUS_t	status;
-} __attribute__((__packed__)) t_PXENV_UDP_CLOSE;
+} __packed t_PXENV_UDP_CLOSE;
 
 #define	PXENV_UDP_READ			0x0032
 typedef struct {
@@ -429,7 +429,7 @@ typedef struct {
 					   this port */
 	uint16_t	buffer_size;	/* Size of the packet buffer */
 	SEGOFF16_t	buffer;		/* SEG:OFF to the packet buffer */
-} __attribute__((__packed__)) t_PXENV_UDP_READ;
+} __packed t_PXENV_UDP_READ;
 
 #define	PXENV_UDP_WRITE			0x0033
 typedef struct {
@@ -440,13 +440,13 @@ typedef struct {
 	UDP_PORT_t	dst_port;	/* destination udp port */
 	uint16_t	buffer_size;	/* Size of the packet buffer */
 	SEGOFF16_t	buffer;		/* SEG:OFF to the packet buffer */
-} __attribute__((__packed__)) t_PXENV_UDP_WRITE;
+} __packed t_PXENV_UDP_WRITE;
 
 #define	PXENV_UNLOAD_STACK		0x0070
 typedef struct {
 	PXENV_STATUS_t	Status;
 	uint8_t		reserved[10];
-} __attribute__((__packed__)) t_PXENV_UNLOAD_STACK;
+} __packed t_PXENV_UNLOAD_STACK;
 
 
 #define	PXENV_GET_CACHED_INFO		0x0071
@@ -460,7 +460,7 @@ typedef struct {
 					   pointer */
 	SEGOFF16_t	Buffer;		/* copy to, leave at 0 for pointer */
 	uint16_t	BufferLimit;	/* max size of buffer in BC dataseg ? */
-} __attribute__((__packed__)) t_PXENV_GET_CACHED_INFO;
+} __packed t_PXENV_GET_CACHED_INFO;
 
 
 /* structure filled in by PXENV_GET_CACHED_INFO 
@@ -508,7 +508,7 @@ typedef struct {
 						      does... */
 		} v;
 	} vendor;
-} __attribute__((__packed__)) BOOTPLAYER;
+} __packed BOOTPLAYER;
 
 #define	PXENV_RESTART_TFTP		0x0073
 #define	t_PXENV_RESTART_TFTP		t_PXENV_TFTP_READ_FILE
@@ -516,12 +516,12 @@ typedef struct {
 #define	PXENV_START_BASE		0x0075
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_START_BASE;
+} __packed t_PXENV_START_BASE;
 
 #define	PXENV_STOP_BASE			0x0076
 typedef struct {
 	PXENV_STATUS_t	Status;
-} __attribute__((__packed__)) t_PXENV_STOP_BASE;
+} __packed t_PXENV_STOP_BASE;
 
 #define	PXENV_STATUS_SUCCESS		0
 #define	PXENV_STATUS_FAILURE		1

@@ -1,4 +1,4 @@
-/* $OpenBSD: vesabiosreg.h,v 1.1 2006/11/27 18:04:28 gwk Exp $ */
+/* $OpenBSD: vesabiosreg.h,v 1.2 2010/11/20 20:11:19 miod Exp $ */
 
 /*
  * Written by M. Drochner
@@ -49,13 +49,13 @@ struct modeinfoblock {
 	uint32_t MaxPixelClock;
 	uint8_t Reserved4[189];
 #endif
-} __attribute__ ((packed));
+} __packed;
 
 struct paletteentry {
 	uint8_t Blue;
 	uint8_t Green;
 	uint8_t Red;
 	uint8_t Alignment;
-} __attribute__ ((packed));
+} __packed;
 
 #endif /* !_VESABIOSREG_H */
