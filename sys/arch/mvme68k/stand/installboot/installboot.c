@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.13 2010/11/19 18:11:19 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.14 2010/11/20 13:10:41 deraadt Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -414,7 +414,7 @@ vid_to_disklabel(char *dkname, char *bootproto)
 	pcpul->version = 1;
 	strncpy(pcpul->vid_id, "M68K", 4);
 
-	if (fstat(exe_file, &sb);
+	if (fstat(exe_file, &sb) == -1)
 		err(1, "fstat: %s", bootproto);
 	if (sb.st_size < 0x20)
 		errx(1, "%s is too small", bootproto);

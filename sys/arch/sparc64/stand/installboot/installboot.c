@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.8 2010/11/19 18:11:21 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.9 2010/11/20 13:10:42 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -194,7 +194,7 @@ main(argc, argv)
 		if ((protofd = open(proto, O_RDONLY)) < 0)
 			err(1, "open: %s", proto);
 
-		if (fstat(protofd, &sb) < 0)
+		if (fstat(protofd, &sb) == -1)
 			err(1, "fstat: %s", proto);
 		if (sb.st_size == 0)
 			errx(1, "%s is empty", proto);
