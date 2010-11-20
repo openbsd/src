@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.6 2010/08/03 08:24:23 pyr Exp $ */
+/*	$OpenBSD: yp.c,v 1.7 2010/11/20 05:12:38 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -225,7 +225,7 @@ yp_dispatch(struct svc_req *req, SVCXPRT *trans)
 		if (yp_check(req) == -1)
 			return;
 		cb = (void *)ypproc_all_2_svc;
-		break;;
+		break;
 	case YPPROC_MASTER:
 		log_debug("ypproc_master");
 		if (yp_check(req) == -1)

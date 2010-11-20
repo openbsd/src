@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.49 2010/02/20 12:39:41 sobrado Exp $ */
+/* 	$OpenBSD: isp.c,v 1.50 2010/11/20 05:12:38 deraadt Exp $ */
 /*	$FreeBSD: src/sys/dev/isp/isp.c,v 1.150 2008/12/15 21:42:38 marius Exp $*/
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -6162,8 +6162,8 @@ isp_mbox_continue(struct ispsoftc *isp)
 	ptr = isp->isp_mbxworkp;
 	switch (isp->isp_lastmbxcmd) {
 	case MBOX_WRITE_RAM_WORD:
-		mbs.param[1] = isp->isp_mbxwrk1++;;
-		mbs.param[2] = *ptr++;;
+		mbs.param[1] = isp->isp_mbxwrk1++;
+		mbs.param[2] = *ptr++;
 		break;
 	case MBOX_READ_RAM_WORD:
 		*ptr++ = isp->isp_mboxtmp[2];
@@ -6173,7 +6173,7 @@ isp_mbox_continue(struct ispsoftc *isp)
 		offset = isp->isp_mbxwrk1;
 		offset |= isp->isp_mbxwrk8 << 16;
 
-		mbs.param[2] = *ptr++;;
+		mbs.param[2] = *ptr++;
 		mbs.param[1] = offset;
 		mbs.param[8] = offset >> 16;
 		isp->isp_mbxwrk1 = ++offset;

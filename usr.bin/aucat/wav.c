@@ -873,7 +873,7 @@ rwav_new(struct file *f)
 
 	p = aproc_new(&rwav_ops, f->name);
 	p->u.io.file = f;
-	p->u.io.partial = 0;;
+	p->u.io.partial = 0;
 	f->rproc = p;
 	return p;
 }
@@ -925,7 +925,7 @@ wwav_new(struct file *f)
 
 	p = aproc_new(&wwav_ops, f->name);
 	p->u.io.file = f;
-	p->u.io.partial = 0;;
+	p->u.io.partial = 0;
 	f->wproc = p;
 	return p;
 }

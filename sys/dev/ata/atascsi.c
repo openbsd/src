@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.97 2010/10/12 00:53:32 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.98 2010/11/20 05:12:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -783,7 +783,7 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 	}
 
 	xa->data = xs->data;
-	xa->datalen = xs->datalen;;
+	xa->datalen = xs->datalen;
 	xa->flags = ATA_F_WRITE;
 	if (xs->flags & SCSI_POLL)
 		xa->flags |= ATA_F_POLL;
