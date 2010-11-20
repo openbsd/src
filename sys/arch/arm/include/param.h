@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2010/05/24 02:00:35 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 2010/11/20 20:15:28 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ void	delay (unsigned);
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)	((x) << (PAGE_SHIFT - DEV_BSHIFT))
 #define	dtoc(x)	((x) >> (PAGE_SHIFT - DEV_BSHIFT))
-/*#define	dtob(x)	((x) << DEV_BSHIFT)*/
 
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
 	((bytes) >> DEV_BSHIFT)
@@ -169,13 +168,9 @@ void	delay (unsigned);
 
 #define ovbcopy bcopy
 
-#ifdef _KERNEL
-#ifdef _LOCORE
-#include <machine/psl.h>
-#else
+#if defined(_KERNEL) && !defined(_LOCORE)
 #include <sys/param.h>
 #include <machine/cpu.h>
-#endif
 #endif
 
 #endif	/* _ARM_PARAM_H_ */
