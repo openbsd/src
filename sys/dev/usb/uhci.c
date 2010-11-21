@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.85 2010/11/19 18:42:27 miod Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.86 2010/11/21 01:29:07 matthew Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2740,7 +2740,7 @@ uhci_remove_intr(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 usbd_status
 uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 {
-	uhci_soft_qh_t *sqh;
+	uhci_soft_qh_t *sqh, **qhs;
 	int i, npoll, s;
 	u_int bestbw, bw, bestoffs, offs;
 
@@ -2755,10 +2755,8 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	npoll = (UHCI_VFRAMELIST_COUNT + ival - 1) / ival;
 	DPRINTFN(2, ("uhci_device_setintr: ival=%d npoll=%d\n", ival, npoll));
 
-	upipe->u.intr.npoll = npoll;
-	upipe->u.intr.qhs =
-	    malloc(npoll * sizeof(uhci_soft_qh_t *), M_USBHC, M_NOWAIT);
-	if (upipe->u.intr.qhs == NULL)
+	qhs = malloc(npoll * sizeof(uhci_soft_qh_t *), M_USBHC, M_NOWAIT);
+	if (qhs == NULL)
 		return (USBD_NOMEM);
 
 	/*
@@ -2777,12 +2775,22 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	DPRINTFN(1, ("uhci_device_setintr: bw=%d offs=%d\n", bestbw, bestoffs));
 
 	for(i = 0; i < npoll; i++) {
-		upipe->u.intr.qhs[i] = sqh = uhci_alloc_sqh(sc);
+		sqh = uhci_alloc_sqh(sc);
+		if (sqh == NULL) {
+			while (i > 0)
+				uhci_free_sqh(sc, qhs[--i]);
+			free(qhs, M_USBHC);
+			return (USBD_NOMEM);
+		}
 		sqh->elink = NULL;
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
 		sqh->pos = MOD(i * ival + bestoffs);
+		qhs[i] = sqh;
 	}
 #undef MOD
+
+	upipe->u.intr.npoll = npoll;
+	upipe->u.intr.qhs = qhs;
 
 	s = splusb();
 	/* Enter QHs into the controller data structures. */
