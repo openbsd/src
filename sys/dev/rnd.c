@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.103 2010/10/02 15:49:17 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.104 2010/11/21 22:58:40 tedu Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -1140,8 +1140,6 @@ randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int	ret = 0;
 	u_int	cnt;
 
-	add_timer_randomness((u_long)p ^ (u_long)data ^ cmd);
-
 	switch (cmd) {
 	case FIOASYNC:
 		/* rnd has no async flag in softc so this is really a no-op. */
@@ -1201,6 +1199,5 @@ randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ret = ENOTTY;
 	}
 
-	add_timer_randomness((u_long)p ^ (u_long)data ^ cmd);
 	return ret;
 }
