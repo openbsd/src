@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.42 2010/09/23 05:02:14 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.43 2010/11/22 21:10:45 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -283,12 +283,6 @@ int chrtoblktbl[] = {
 };
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console would be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
 #include <dev/cons.h>
 
 #define clcnpollc	nullcnpollc

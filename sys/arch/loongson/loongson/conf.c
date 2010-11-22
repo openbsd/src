@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2010/11/19 20:55:48 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.11 2010/11/22 21:10:45 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -296,12 +296,6 @@ int chrtoblktbl[] =  {
 
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(int);
 
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console would be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
 #include <dev/cons.h>
 
 cons_decl(ws);
