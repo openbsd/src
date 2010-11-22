@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.72 2010/07/05 21:57:13 sobrado Exp $
+.\"	$OpenBSD: fdisk.8,v 1.73 2010/11/22 01:43:43 krw Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 5 2010 $
+.Dd $Mdocdate: November 22 2010 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -153,23 +153,22 @@ When called with no special flags,
 .Nm
 prints the MBR partition table of the specified disk:
 .Bd -literal -offset 1n
-# fdisk wd0
-Disk: wd0       geometry: 5168/240/63 [78140160 Sectors]
+# fdisk sd0
+Disk: sd0       geometry: 121601/255/63 [1953525168 Sectors]
 Offset: 0       Signature: 0xAA55
-          Starting      Ending        LBA Info:
- #: id    C   H  S -    C   H  S [       start:      size   ]
--------------------------------------------------------------------------
- 0: 04    0   1  1 -  170   0 63 [          63:     2570462 ] DOS FAT-16
- 1: 00    0   0  0 -    0   0  0 [           0:           0 ] unused
- 2: 00    0   0  0 -    0   0  0 [           0:           0 ] unused
-*3: A6  170   1  1 - 5167 239 63 [     2570525:    75569697 ] OpenBSD
+          Starting     Ending    LBA Info:
+ #: id     C H S -      C   H  S [     start:       size ]
+------------------------------------------------------------------------
+ 0: 0B     0 1 1 -  26108   0 63 [        63:  419425020 ] Win95 FAT-32
+ 1: 00     0 0 0 -      0   0  0 [         0:          0 ] unused
+ 2: 00     0 0 0 -      0   0  0 [         0:          0 ] unused
+*3: A6 26108 1 1 - 121600 254 63 [ 419425083: 1534094982 ] OpenBSD
 .Ed
 .Pp
-This 78140160 sector (38154MB) disk drive is divided into two MBR
+This 1953525168 sector (931GB) disk drive is divided into two MBR
 partitions that span the whole disk.
-The first MBR partition is a 1225MB FAT-16 DOS partition
-(in this case containing a Phoenix BIOS Laptop Suspend-to-Disk file),
-the second is a 36GB
+The first MBR partition is a 200GB FAT-32 partition,
+the second is a 731GB
 .Ox
 MBR partition using the remainder of the disk.
 The fields of the output are:
@@ -212,40 +211,36 @@ which provides
 .Ox
 partitions.
 .Bd -literal -offset 1n
-# Inside MBR partition 3: type A6 start 2570463 size 75569697
-# /dev/rwd0c:
-type: ESDI
-disk: ESDI/IDE disk
-label: HITACHI_DK13FA-4
+# /dev/rsd0c:
+type: SCSI
+disk: SCSI disk
+label: WDC WD10EADS-65L
+uid: 085ef8d68623f5b3
 flags:
 bytes/sector: 512
 sectors/track: 63
-tracks/cylinder: 16
-sectors/cylinder: 1008
-cylinders: 16383
-total sectors: 78140160
-rpm: 3600
-interleave: 1
-trackskew: 0
-cylinderskew: 0
-headswitch: 0           # microseconds
-track-to-track seek: 0  # microseconds
+tracks/cylinder: 255
+sectors/cylinder: 16065
+cylinders: 121601
+total sectors: 1953525168
+boundstart: 419425083
+boundend: 1953520065
 drivedata: 0
 
 16 partitions:
-#           size     offset  fstype [fsize bsize  cpg]
-  a:     1740753    2570463  4.2BSD   2048 16384  328 # Cyl  2550*-  4276
-  b:      819504    4311216    swap                   # Cyl  4277 -  5089
-  c:    78140160          0  unused      0     0      # Cyl     0 - 77519
-  d:     2097648    5130720  4.2BSD   2048 16384  328 # Cyl  5090 -  7170
-  e:      614880    7228368  4.2BSD   2048 16384  328 # Cyl  7171 -  7780
-  g:     2097648    7843248  4.2BSD   2048 16384  328 # Cyl  7781 -  9861
-  h:      921312    9940896  4.2BSD   2048 16384  328 # Cyl  9862 - 10775
-  i:     2570462         63   MSDOS                   # Cyl     0*-  2549
-  j:     3355632   10862208  4.2BSD   2048 16384  328 # Cyl 10776 - 14104
-  k:     2097648   14217840  4.2BSD   2048 16384  328 # Cyl 14105 - 16185
-  l:     2097648   16315488  4.2BSD   2048 16384  328 # Cyl 16186 - 18266
-  m:    59727024   18413136  4.2BSD   2048 16384  328 # Cyl 18267 - 77519
+#                size           offset  fstype [fsize bsize  cpg]
+  a:          2097125        419425083  4.2BSD   2048 16384    1
+  b:          4715520        421522208    swap
+  c:       1953525168                0  unused
+  d:          8388608        426237728  4.2BSD   2048 16384    1
+  e:         16771072        434626336  4.2BSD   2048 16384    1
+  f:          4194304        451397408  4.2BSD   2048 16384    1
+  g:          2097152        455591712  4.2BSD   2048 16384    1
+  h:         20971520        457688864  4.2BSD   2048 16384    1
+  i:        419425020               63   MSDOS
+  j:          4194304        478660384  4.2BSD   2048 16384    1
+  k:          4194304        482854688  4.2BSD   2048 16384    1
+  l:        629145536        487049024  4.2BSD   4096 32768    1
 .Ed
 .Pp
 These
@@ -253,15 +248,16 @@ These
 partitions are then mounted as follows using
 .Pa /etc/fstab :
 .Bd -literal -offset indent
-/dev/wd0a / ffs rw,softdep 1 1
-/dev/wd0m /home ffs rw,softdep,nodev,nosuid 1 2
-/dev/wd0d /tmp ffs rw,softdep,nodev,nosuid 1 2
-/dev/wd0g /usr ffs rw,softdep,nodev 1 2
-/dev/wd0h /usr/X11R6 ffs rw,softdep,nodev 1 2
-/dev/wd0j /usr/local ffs rw,softdep,nodev 1 2
-/dev/wd0k /usr/obj ffs rw,softdep,nodev,nosuid 1 2
-/dev/wd0l /usr/src ffs rw,softdep,nodev,nosuid 1 2
-/dev/wd0e /var ffs rw,softdep,nodev,nosuid 1 2
+/dev/sd0a / ffs rw,softdep 1 1
+/dev/sd0d /tmp ffs rw,softdep,nodev,nosuid 1 2
+/dev/sd0e /var ffs rw,softdep,nodev,nosuid 1 2
+/dev/sd0f /usr ffs rw,softdep,nodev 1 2
+/dev/sd0g /usr/X11R6 ffs rw,softdep,nodev 1 2
+/dev/sd0h /usr/local ffs rw,softdep,nodev 1 2
+/dev/sd0i /mnt/example msdos rw,nodev,nosuid 1 2
+/dev/sd0j /usr/src ffs rw,softdep,nodev,nosuid 1 2
+/dev/sd0k /usr/obj ffs rw,softdep,nodev,nosuid 1 2
+/dev/sd0l /home ffs rw,softdep,nodev,nosuid 1 2
 .Ed
 .Sh COMMAND MODE
 The
