@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.32 2010/06/18 23:49:37 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.33 2010/11/22 20:28:31 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -136,7 +136,6 @@
  */
 #define	KERNBASE	0x001000000	/* start of kernel virtual space */
 #define	KERNEND		0x0e0000000	/* end of kernel virtual space */
-#define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
 
 #define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
 
