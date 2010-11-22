@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.52 2009/04/30 13:47:16 dlg Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.53 2010/11/22 21:08:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -251,11 +251,6 @@ struct proc;
 
 int bios_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
-void bioscnprobe(struct consdev *);
-void bioscninit(struct consdev *);
-void bioscnputc(dev_t, int);
-int bioscngetc(dev_t);
-void bioscnpollc(dev_t, int);
 void bios_getopt(void);
 
 /* bios32.c */

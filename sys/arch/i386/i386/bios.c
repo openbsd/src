@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.87 2010/03/28 12:08:49 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.88 2010/11/22 21:08:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -664,45 +664,6 @@ biosioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	(void)sc;
 
 	return 0;
-}
-
-void
-bioscnprobe(struct consdev *cn)
-{
-#if 0
-	bios_init(I386_BUS_SPACE_MEM); /* XXX */
-	if (!bios_cd.cd_ndevs)
-		return;
-
-	if (0 && bios_call(BOOTC_CHECK, NULL))
-		return;
-
-	cn->cn_pri = CN_LOWPRI;
-	cn->cn_dev = makedev(48, 0);
-#endif
-}
-
-void
-bioscninit(struct consdev *cn)
-{
-
-}
-
-void
-bioscnputc(dev_t dev, int ch)
-{
-
-}
-
-int
-bioscngetc(dev_t dev)
-{
-	return -1;
-}
-
-void
-bioscnpollc(dev_t dev, int on)
-{
 }
 
 int
