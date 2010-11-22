@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.59 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.60 2010/11/22 21:07:18 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -310,9 +310,6 @@ void	child_return(void *);
 
 /* dkcsum.c */
 void	dkcsumattach(void);
-
-/* consinit.c */
-void kgdb_port_init(void);
 
 /* bus_machdep.c */
 void x86_bus_space_init(void);
