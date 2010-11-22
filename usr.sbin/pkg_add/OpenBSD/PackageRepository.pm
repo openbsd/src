@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.90 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.91 2010/11/22 10:26:04 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -814,7 +814,7 @@ sub get_ftp_list
 sub obtain_list
 {
 	my ($self, $error) = @_;
-	if (defined $ENV{'ftp_proxy'}) {
+	if (defined $ENV{'ftp_proxy'} && $ENV{'ftp_proxy'} ne '') {
 		return $self->get_http_list($error);
 	} else {
 		return $self->get_ftp_list($error);
