@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.630 2010/11/19 19:33:13 halex Exp $
+#	$OpenBSD: install.sub,v 1.631 2010/11/22 14:10:42 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -504,7 +504,7 @@ makedev() {
 		return 1
 	fi
 
-	(cd /dev && sh MAKEDEV $_dev) >/dev/null 2>&1
+	(cd /dev && sh MAKEDEV "$_dev") >/dev/null 2>&1
 }
 
 # Create an entry in the hosts file. If an entry with the
@@ -1705,6 +1705,20 @@ __EOT
 	done </etc/fstab
 }
 
+# Return the device name for the supplied device, which may be a disklabel UID.
+getdevname() {
+	local _dev=$1
+	if [[ ${#_dev} == 18 && $_dev == +([0-9a-f]).[a-p] ||
+		${#_dev} == 16 && $_dev == +([0-9a-f]) ]]; then
+		# Lookup device name matching the disklabel UID
+		sysctl -n hw.disknames |
+			sed -nE "s/^(.*,)*(.*):${_dev%.?}.*/\\2/p"
+	else
+		_dev=${_dev#/dev/}
+		print -r -- "${_dev%[a-p]}"
+	fi
+}
+
 # Preen all filesystems in /etc/fstab that have a /sbin/fsck_XXX,
 # showing individual results, but skipping $ROOTDEV. This was already
 # fsck'ed successfully.
@@ -1720,8 +1734,7 @@ check_fs() {
 		[ "$_dev" != /dev/"$ROOTDEV" ] || continue
 		[ -f "/sbin/fsck_$_fstype" ] || continue
 		# Make sure device exists before fsck'ing it.
-		_rest=${_dev#/dev/}
-		[ ${_dev#/} == ${_dev} ] || makedev ${_rest%[a-p]} || continue
+		makedev "$(getdevname "$_dev")" || continue
 		echo -n "fsck -${_f}p $_dev..."
 		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
 			echo "FAILED. You must fsck $_dev manually."
