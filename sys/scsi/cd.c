@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.196 2010/09/23 13:11:38 jsing Exp $	*/
+/*	$OpenBSD: cd.c,v 1.197 2010/11/22 12:21:46 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -161,7 +161,11 @@ struct cfdriver cd_cd = {
 const struct scsi_inquiry_pattern cd_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "",         "",                 ""},
+	{T_CDROM, T_FIXED,
+	 "",         "",                 ""},
 	{T_WORM, T_REMOV,
+	 "",         "",                 ""},
+	{T_WORM, T_FIXED,
 	 "",         "",                 ""},
 	{T_DIRECT, T_REMOV,
 	 "NEC                 CD-ROM DRIVE:260", "", ""},
