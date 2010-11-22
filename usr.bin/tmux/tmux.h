@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.246 2010/11/11 20:51:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.247 2010/11/22 21:13:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -843,9 +843,8 @@ struct window {
 
 	int		 flags;
 #define WINDOW_BELL 0x1
-#define WINDOW_HIDDEN 0x2
-#define WINDOW_ACTIVITY 0x4
-#define WINDOW_REDRAW 0x8
+#define WINDOW_ACTIVITY 0x2
+#define WINDOW_REDRAW 0x4
 
 	struct options	 options;
 

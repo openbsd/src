@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.5 2010/06/21 01:27:46 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.6 2010/11/22 21:13:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -113,11 +113,8 @@ recalculate_sizes(void)
 					ssy = s->sy;
 			}
 		}
-		if (ssx == UINT_MAX || ssy == UINT_MAX) {
-			w->flags |= WINDOW_HIDDEN;
+		if (ssx == UINT_MAX || ssy == UINT_MAX)
 			continue;
-		}
-		w->flags &= ~WINDOW_HIDDEN;
 
 		limit = options_get_number(&w->options, "force-width");
 		if (limit != 0 && ssx > limit)

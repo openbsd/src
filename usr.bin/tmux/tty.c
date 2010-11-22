@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.92 2010/10/16 08:31:55 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.93 2010/11/22 21:13:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -547,7 +547,7 @@ tty_write(void (*cmdfn)(
 
 	if (wp->window->flags & WINDOW_REDRAW || wp->flags & PANE_REDRAW)
 		return;
-	if (wp->window->flags & WINDOW_HIDDEN || !window_pane_visible(wp))
+	if (!window_pane_visible(wp))
 		return;
 
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
