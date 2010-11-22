@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 2010/11/22 21:08:57 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -136,19 +136,6 @@ int	bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
 
 void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size);
-
-/*
- *	int luna88k_bus_space_probe(bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t offset, int sz);
- *
- * Probe the bus at t/bsh/offset, using sz as the size of the load.
- *
- * This is a machine-dependent extension, and is not to be used by
- * machine-independent code.
- */
-
-int	luna88k_bus_space_probe(bus_space_tag_t t,
-	    bus_space_handle_t bsh, bus_size_t offset, int sz);
 
 /*
  *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
