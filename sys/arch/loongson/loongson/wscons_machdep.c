@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.8 2010/07/18 13:36:14 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.9 2010/11/23 04:07:55 shadchin Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -209,7 +209,7 @@ setup_kbd:
 #if NPCKBC > 0
 	if (rc != 0)
 		rc = pckbc_cnattach(&bonito_pci_io_space_tag, IO_KBD,
-		    KBCMDP, PCKBC_KBD_SLOT, 0);
+		    KBCMDP, 0);
 #endif
 #if NUKBD > 0
 	if (rc != 0)

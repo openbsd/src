@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.26 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.27 2010/11/23 04:07:55 shadchin Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -1014,7 +1014,7 @@ pckbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 
 int
 pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr, bus_size_t cmd_offset,
-    pckbc_slot_t slot, int flags)
+    int flags)
 {
 	bus_space_handle_t ioh_d, ioh_c;
 	int res = 0;
@@ -1048,7 +1048,7 @@ pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr, bus_size_t cmd_offset,
 
 	if (!res) {
 #if (NPCKBD > 0)
-		res = pckbd_cnattach(&pckbc_consdata, slot);
+		res = pckbd_cnattach(&pckbc_consdata, PCKBC_KBD_SLOT);
 #else
 		res = ENXIO;
 #endif /* NPCKBD > 0 */
@@ -1058,7 +1058,7 @@ pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr, bus_size_t cmd_offset,
 		bus_space_unmap(iot, pckbc_consdata.t_ioh_d, 1);
 		bus_space_unmap(iot, pckbc_consdata.t_ioh_c, 1);
 	} else {
-		pckbc_consdata.t_slotdata[slot] = &pckbc_cons_slotdata;
+		pckbc_consdata.t_slotdata[PCKBC_KBD_SLOT] = &pckbc_cons_slotdata;
 		pckbc_init_slotdata(&pckbc_cons_slotdata);
 		pckbc_console = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.16 2009/08/25 19:16:36 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.17 2010/11/23 04:07:55 shadchin Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -185,8 +185,8 @@ wscn_input_init(int pass)
 	}
 
 #if (NPCKBC > 0)
-	if (pass == 0 && pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP,
-	    PCKBC_KBD_SLOT, 0) == 0)
+	if (pass == 0 &&
+	    pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, 0) == 0)
 		return;
 #endif
 #if (NUKBD > 0)

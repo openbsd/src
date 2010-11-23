@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.11 2010/07/21 20:10:17 miod Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.12 2010/11/23 04:07:55 shadchin Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -133,8 +133,7 @@ pckbc_ebus_attach(parent, self, aux)
 
 	if (console) {
 		if (pckbc_cnattach(sc->sc_iot,
-		    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), KBCMDP,
-		    PCKBC_KBD_SLOT, flags) == 0) {
+		    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), KBCMDP, flags) == 0) {
 			t = &pckbc_consdata;
 			pckbc_console_attached = 1;
 			sc->sc_ioh_c = t->t_ioh_c;

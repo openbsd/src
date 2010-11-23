@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_2100_a50.c,v 1.20 2008/07/24 16:34:22 miod Exp $ */
+/* $OpenBSD: dec_2100_a50.c,v 1.21 2010/11/23 04:07:55 shadchin Exp $ */
 /* $NetBSD: dec_2100_a50.c,v 1.43 2000/05/22 20:13:31 thorpej Exp $ */
 
 /*
@@ -150,8 +150,7 @@ dec_2100_a50_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&acp->ac_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT, 0);
+		(void) pckbc_cnattach(&acp->ac_iot, IO_KBD, KBCMDP, 0);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
