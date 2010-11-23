@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2010/11/08 12:36:57 syuu Exp $ */
+/*	$OpenBSD: locore.S,v 1.3 2010/11/23 22:06:57 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -51,24 +51,15 @@ start:
 	dmtc0	t0, COP_0_CVMCTL
 
 /* initialize cvmmemctl */
-/*
 	dli	t0, 0x1846104 # If you want to skip write buffer, use this
-*/
+/*
 	dli	t0, 0x46104
+*/
 	dmtc0	t0, COP_0_CVMMEMCTL
 
 /* initialize pagegrain */
 	dli	t0, 0x20000000
 	dmtc0	t0, COP_0_TLB_PG_GRAIN
-
-#if defined(MULTIPROCESSOR)
-	rdhwr	t2, $0
-	beqz	t2, 1f
-	nop
-	j	octeon_ap_wait
-	nop
-1:
-#endif
 
 	mfc0    v0, COP_0_STATUS_REG
 	li	v1, ~(SR_INT_ENAB | SR_ERL | SR_EXL)
@@ -77,11 +68,27 @@ start:
 
 	mtc0	zero, COP_0_CAUSE_REG	# Clear soft interrupts
 
+	LA	gp, _gp
+
+#if defined(MULTIPROCESSOR)
+	rdhwr	t2, $0
+	beqz	t2, 2f
+	nop
+1:	ll	t0, cpu_spinup_mask
+	bne	t2, t0, 1b
+	nop
+	move	t0, zero
+	sc	t0, cpu_spinup_mask
+	beqz	t0, 1b
+	nop
+	j	hw_cpu_spinup_trampoline
+	nop
+2:
+#endif
 	/*
 	 * Initialize stack and call machine startup.
 	 */
 	LA	t0, start - FRAMESZ(CF_SZ)
-	LA	gp, _gp
 	PTR_S	ra, CF_RA_OFFS(t0)		# save pmon return address
 	PTR_S	sp, 0(t0)			# and stack
 	move	sp, t0
@@ -121,15 +128,10 @@ END(get_cvmmemctl)
 
 #if defined(MULTIPROCESSOR)
 LEAF(hw_cpu_spinup_trampoline, 0)
-	mfc0	v0, COP_0_STATUS_REG
-	li	v1, ~(SR_INT_ENAB | SR_ERL | SR_EXL)
-	and	v0, v1
-	ori	v0, SR_KX | SR_UX
-	mtc0	v0, COP_0_STATUS_REG		# disable all interrupts
-	mtc0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
-	LA	gp, _gp
-	LA	a0, cpu_info_boot_secondary
-	ld	a0, 0(a0)
+	LA	t0, cpu_spinup_a0
+	ld	a0, 0(t0)
+	LA	t0, cpu_spinup_sp
+	ld	sp, 0(t0)
 	jal	hw_cpu_hatch
 	nop
 END(hw_cpu_spinup_trampoline)
@@ -145,22 +147,4 @@ LEAF(hw_setcurcpu, 0)
 	j	ra
 	nop
 END(hw_setcurcpu)
-
-/*
- * Called on APs to wait until they are told to launch.
- */
-LEAF(octeon_ap_wait, 0)
-1:	ll	t0, octeon_ap_boot
-	bne	t2, t0, 1b
-	nop
-
-	move	t0, zero
-	sc	t0, octeon_ap_boot
-
-	beqz	t0, 1b
-	nop
-
-	j	hw_cpu_spinup_trampoline
-	nop
-END(octeon_ap_wait)
 #endif /* MULTIPROCESSOR */

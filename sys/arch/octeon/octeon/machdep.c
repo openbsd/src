@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 2010/11/23 18:46:29 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.6 2010/11/23 22:06:57 syuu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -662,8 +662,8 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 }
 
 #ifdef MULTIPROCESSOR
-unsigned octeon_ap_boot = ~0;
-struct cpu_info *cpu_info_boot_secondary = NULL;
+uint32_t cpu_spinup_mask = 0;
+uint64_t cpu_spinup_a0, cpu_spinup_sp;
 static int (*ipi_handler)(void *);
 
 uint32_t ipi_intr(uint32_t, struct trap_frame *);
@@ -680,8 +680,9 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
 	if (kstack == NULL)
 		panic("unable to allocate idle stack\n");
 	ci->ci_curprocpaddr = (void *)kstack;
-	cpu_info_boot_secondary = ci;
-	octeon_ap_boot = ci->ci_cpuid;
+	cpu_spinup_a0 = (uint64_t)ci;
+	cpu_spinup_sp = (uint64_t)(kstack + USPACE);
+	cpu_spinup_mask = (uint32_t)ci->ci_cpuid;
 
 	while (!cpuset_isset(&cpus_running, ci))
 		;
@@ -721,6 +722,8 @@ hw_cpu_hatch(struct cpu_info *ci)
 	 */
 	Octeon_ConfigCache(ci);
 	Mips_SyncCache(ci);
+
+	printf("cpu%d launched\n", cpu_number());
 
 	cpu_startclock(ci);
 	ncpus++;
