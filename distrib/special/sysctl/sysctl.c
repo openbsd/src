@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.6 2010/04/03 21:32:53 miod Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.7 2010/11/23 12:37:25 halex Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -80,8 +80,7 @@ pstring(struct var *v)
 			if (sysctl(v->mib, v->nmib, p, &len, NULL, 0) != -1) {
 				if (nflag == 0)
 					printf("%s=", v->name);
-				fwrite(p, len, 1, stdout);
-				printf("\n");
+				printf("%s\n", p);
 				return (0);
 			}
 	return (1);
