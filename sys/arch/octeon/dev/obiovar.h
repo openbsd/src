@@ -1,4 +1,4 @@
-/*	$OpenBSD: obiovar.h,v 1.1 2010/09/20 06:32:30 syuu Exp $	*/
+/*	$OpenBSD: obiovar.h,v 1.2 2010/11/23 18:46:29 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,5 +48,6 @@ void	 obio_setintrmask(int);
 void   *obio_intr_establish(int, int, int (*)(void *),
 	    void *, const char *);
 void	obio_intr_disestablish(void *);
+void	obio_intr_init(void);
 
 #endif	/* _OBIOVAR_H_ */

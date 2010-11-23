@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.3 2010/10/26 00:02:01 syuu Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.4 2010/11/23 18:46:29 syuu Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -110,20 +110,24 @@
 #define CIU_INT1_SUM0		0x00000008
 #define CIU_INT2_SUM0		0x00000010
 #define CIU_INT3_SUM0		0x00000018
-#define CIU_INT_SUM0(x)		(CIU_INT0_SUM0+((x)*8))
+#define CIU_IP2_SUM0(x)		(CIU_INT0_SUM0+(0x10 * (x)))
+#define CIU_IP3_SUM0(x)		(CIU_INT1_SUM0+(0x10 * (x)))
 #define CIU_INT32_SUM0		0x00000100
 #define CIU_INT32_SUM1		0x00000108
 #define CIU_INT0_EN0		0x00000200
 #define CIU_INT1_EN0		0x00000210
 #define CIU_INT2_EN0		0x00000220
 #define CIU_INT3_EN0		0x00000230
-#define CIU_INT_EN0(x)		(CIU_INT0_EN0+((x)*8))
+#define CIU_IP2_EN0(x)		(CIU_INT0_EN0+(0x20 * (x)))
+#define CIU_IP3_EN0(x)		(CIU_INT1_EN0+(0x20 * (x)))
 #define CIU_INT32_EN0		0x00000400
 #define CIU_INT0_EN1		0x00000208
 #define CIU_INT1_EN1		0x00000218
 #define CIU_INT2_EN1		0x00000228
 #define CIU_INT3_EN1		0x00000238
 #define CIU_INT32_EN1		0x00000408
+#define CIU_IP2_EN1(x)		(CIU_INT0_EN1+(0x20 * (x)))
+#define CIU_IP3_EN1(x)		(CIU_INT1_EN1+(0x20 * (x)))
 #define CIU_TIM0                0x00000480
 #define CIU_TIM1                0x00000488
 #define CIU_TIM2                0x00000490
@@ -134,10 +138,10 @@
 #define CIU_PP_POKE1            0x00000588
 #define CIU_MBOX_SET0           0x00000600
 #define CIU_MBOX_SET1           0x00000608
-#define CIU_MBOX_SET(x)		(CIU_MBOX_SET0+((x)*8))
+#define CIU_MBOX_SET(x)		(CIU_MBOX_SET0+(0x08 * (x)))
 #define CIU_MBOX_CLR0           0x00000680
 #define CIU_MBOX_CLR1           0x00000688
-#define CIU_MBOX_CLR(x)		(CIU_MBOX_CLR0+((x)*8))
+#define CIU_MBOX_CLR(x)		(CIU_MBOX_CLR0+(0x08 * (x)))
 #define CIU_PP_RST              0x00000700
 #define CIU_PP_DBG              0x00000708
 #define CIU_GSTOP               0x00000710

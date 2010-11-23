@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.5 2010/10/28 22:52:10 syuu Exp $ */
+/*	$OpenBSD: obio.c,v 1.6 2010/11/23 18:46:29 syuu Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -145,15 +145,9 @@ struct machine_bus_dma_tag obio_bus_dma_tag = {
 	0
 };
 
-struct obio_intrhand {
-	struct	intrhand	ih;
-};
-struct obio_intrhand *obio_intrhand[OBIO_NINTS];
+struct intrhand *obio_intrhand[OBIO_NINTS];
 
 #define	INTPRI_CIU_0	(INTPRI_CLOCK + 1)
-#define INTPRI_CIU_1	(INTPRI_CIU_0 + 1)
-#define INTPRI_CIU_2	(INTPRI_CIU_1 + 1)
-#define INTPRI_CIU_3	(INTPRI_CIU_2 + 1)
 
 uint64_t obio_intem[MAXCPUS];
 uint64_t obio_imask[MAXCPUS][NIPLS];
@@ -226,25 +220,9 @@ obioattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT0_EN0, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT1_EN0, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT2_EN0, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT3_EN0, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT32_EN0, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT0_EN1, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT1_EN1, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT2_EN1, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT3_EN1, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT32_EN1, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT0_EN4_0, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT1_EN4_0, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT0_EN4_1, 0);
-	bus_space_write_8(&obio_tag, obio_h, CIU_INT1_EN4_1, 0);
+	obio_intr_init();
 
 	set_intr(INTPRI_CIU_0, CR_INT_0, obio_iointr);
-	set_intr(INTPRI_CIU_1, CR_INT_1, obio_iointr);
-	set_intr(INTPRI_CIU_2, CR_INT_2, obio_iointr);
-	set_intr(INTPRI_CIU_3, CR_INT_3, obio_iointr);
 	register_splx_handler(obio_splx);
 
 	/*
@@ -433,6 +411,16 @@ obio_device_to_pa(bus_addr_t addr)
  * Obio interrupt handler driver.
  */
 
+void
+obio_intr_init(void)
+{
+	int cpuid = cpu_number();
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP2_EN0(cpuid), 0);
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN0(cpuid), 0);
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP2_EN1(cpuid), 0);
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN1(cpuid), 0);
+}
+
 /*
  * Establish an interrupt handler called from the dispatcher.
  * The interrupt function established should return zero if there was nothing
@@ -447,7 +435,7 @@ obio_intr_establish(int irq, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
 	int cpuid = cpu_number();
-	struct obio_intrhand **p, *q, *ih;
+	struct intrhand **p, *q, *ih;
 	int s;
 
 #ifdef DIAGNOSTIC
@@ -459,12 +447,12 @@ obio_intr_establish(int irq, int level,
 	if (ih == NULL)
 		return NULL;
 
-	ih->ih.ih_next = NULL;
-	ih->ih.ih_fun = ih_fun;
-	ih->ih.ih_arg = ih_arg;
-	ih->ih.ih_level = level;
-	ih->ih.ih_irq = irq;
-	evcount_attach(&ih->ih.ih_count, ih_what, (void *)&ih->ih.ih_irq);
+	ih->ih_next = NULL;
+	ih->ih_fun = ih_fun;
+	ih->ih_arg = ih_arg;
+	ih->ih_level = level;
+	ih->ih_irq = irq;
+	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq);
 
 	s = splhigh();
 
@@ -474,7 +462,7 @@ obio_intr_establish(int irq, int level,
 	 * generally small.
 	 */
 	for (p = &obio_intrhand[irq]; (q = *p) != NULL;
-	    p = (struct obio_intrhand **)&q->ih.ih_next)
+	    p = (struct intrhand **)&q->ih_next)
 		;
 	*p = ih;
 
@@ -575,8 +563,8 @@ obio_iointr(uint32_t hwpend, struct trap_frame *frame)
 	int bit;
 	struct intrhand *ih;
 	int rc;
-	uint64_t sum0 = CIU_INT_SUM0(cpuid * 2);
-	uint64_t en0 = CIU_INT_EN0(cpuid * 2);
+	uint64_t sum0 = CIU_IP2_SUM0(cpuid);
+	uint64_t en0 = CIU_IP2_EN0(cpuid);
 
 	isr = bus_space_read_8(&obio_tag, obio_h, sum0);
 	imr = bus_space_read_8(&obio_tag, obio_h, en0);
@@ -674,8 +662,7 @@ void
 obio_setintrmask(int level)
 {
 	int cpuid = cpu_number();
-	uint64_t en0 = CIU_INT_EN0(cpuid * 2);
 
-	*(volatile uint64_t *)(PHYS_TO_XKPHYS(OCTEON_CIU_BASE, CCA_NC) +
-	    en0) = obio_intem[cpuid] & ~obio_imask[cpuid][level];
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP2_EN0(cpuid),
+		obio_intem[cpuid] & ~obio_imask[cpuid][level]);
 }

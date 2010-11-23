@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2010/10/24 15:40:03 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.5 2010/11/23 18:46:29 syuu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -76,8 +76,6 @@
 #include <dev/cons.h>
 
 #include <mips64/archtype.h>
-
-#include <machine/octeon_pcmap_regs.h>
 
 #include <octeon/dev/obiovar.h>
 #include <octeon/dev/octeonreg.h>
@@ -666,6 +664,13 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 #ifdef MULTIPROCESSOR
 unsigned octeon_ap_boot = ~0;
 struct cpu_info *cpu_info_boot_secondary = NULL;
+static int (*ipi_handler)(void *);
+
+uint32_t ipi_intr(uint32_t, struct trap_frame *);
+
+extern bus_space_t obio_tag;
+extern bus_space_handle_t obio_h;
+
 void
 hw_cpu_boot_secondary(struct cpu_info *ci)
 {
@@ -675,9 +680,7 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
 	if (kstack == NULL)
 		panic("unable to allocate idle stack\n");
 	ci->ci_curprocpaddr = (void *)kstack;
-
 	cpu_info_boot_secondary = ci;
-	
 	octeon_ap_boot = ci->ci_cpuid;
 
 	while (!cpuset_isset(&cpus_running, ci))
@@ -720,13 +723,11 @@ hw_cpu_hatch(struct cpu_info *ci)
 	Mips_SyncCache(ci);
 
 	cpu_startclock(ci);
-
 	ncpus++;
 	cpuset_add(&cpus_running, ci);
-
+	obio_intr_init();
 	mips64_ipi_init();
 	obio_setintrmask(0);
-
 	spl0();
 	(void)updateimask(0);
 
@@ -734,24 +735,67 @@ hw_cpu_hatch(struct cpu_info *ci)
 	cpu_switchto(NULL, sched_chooseproc());
 }
 
+/*
+ * IPI dispatcher.
+ */
+uint32_t
+ipi_intr(uint32_t hwpend, struct trap_frame *frame)
+{
+	u_long cpuid = cpu_number();
+
+	/*
+	 * Mask all pending interrupts.
+	 */
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN0(cpuid), 0);
+
+	ipi_handler((void *)cpuid);
+
+	/*
+	 * Reenable interrupts which have been serviced.
+	 */
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN0(cpuid),
+		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
+	return hwpend;
+}
+
 int
 hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
 {
-	obio_intr_establish(CIU_INT_MBOX(cpuid), IPL_IPI, func,
-		(void *)cpuid, NULL);
+	if (cpuid == 0)
+		ipi_handler = func;
+
+	bus_space_write_8(&obio_tag, obio_h, CIU_MBOX_CLR(cpuid),
+		0xffffffff);
+	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN0(cpuid),
+		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
+	set_intr(INTPRI_IPI, CR_INT_1, ipi_intr);
+
 	return 0;
 };
 
 void
 hw_ipi_intr_set(u_long cpuid)
 {
-	*(uint64_t *)OCTEON_CIU_MBOX_SETX(cpuid) = 1;
+	bus_space_write_8(&obio_tag, obio_h, CIU_MBOX_SET(cpuid), 1);
 }
 
 void
 hw_ipi_intr_clear(u_long cpuid)
 {
-	*(uint64_t *)OCTEON_CIU_MBOX_CLRX(cpuid) = 1;
+	uint64_t clr =
+		bus_space_read_8(&obio_tag, obio_h, CIU_MBOX_CLR(cpuid));
+	bus_space_write_8(&obio_tag, obio_h, CIU_MBOX_CLR(cpuid), clr);
 }
 
+void
+hw_cpu_init_secondary(struct cpu_info *ci)
+{
+	ci->ci_cacheways = 2;
+	ci->ci_l1instcachesize = 32 * 1024;
+	ci->ci_l1instcacheline = 64;
+	ci->ci_l1datacachesize = 32 * 1024;
+	ci->ci_l1datacacheline = 64;
+	ci->ci_l2size = ci->ci_hw.l2size;
+	ci->ci_l3size = 0;
+}
 #endif

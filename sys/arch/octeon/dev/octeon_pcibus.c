@@ -1,5 +1,5 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.1 2010/10/28 22:52:10 syuu Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.1 2010/10/28 22:52:10 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.2 2010/11/23 18:46:29 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.2 2010/11/23 18:46:29 syuu Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -454,13 +454,7 @@ void *
 octeon_pcibus_pci_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
     int (*cb)(void *), void *cbarg, char *name)
 {
-	struct octeon_pcibus_softc *sc;
-	struct obio_attach_args *oba;
-
-	sc = (struct octeon_pcibus_softc *)cookie;
-	oba = sc->sc_oba;
-
-	return obio_intr_establish(oba->oba_intr, level, cb, cbarg, name);
+	return obio_intr_establish(ih, level, cb, cbarg, name);
 }
 
 void
