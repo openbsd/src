@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.301 2010/11/18 12:18:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.302 2010/11/24 00:58:10 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2725,7 +2725,7 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 	struct rde_peer		*peer = ptr;
 
 	if (re->ribid != peer->ribid)
-		fatalx("King Bula: monsterous evil horror.");
+		fatalx("King Bula: monstrous evil horror.");
 	if (re->active == NULL)
 		return;
 	up_generate_updates(rules_l, peer, re->active, NULL);
