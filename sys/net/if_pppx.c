@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.2 2010/09/29 08:22:27 claudio Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.3 2010/11/24 00:56:08 sthen Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -631,15 +631,17 @@ pppx_if_next_unit(void)
 struct pppx_if *
 pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
 {
-	struct pppx_if s, *p;
+	struct pppx_if *s, *p;
+	s = malloc(sizeof(*s), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	s.pxi_key.pxik_session_id = session_id;
-	s.pxi_key.pxik_protocol = protocol;
+	s->pxi_key.pxik_session_id = session_id;
+	s->pxi_key.pxik_protocol = protocol;
 
 	rw_enter_read(&pppx_ifs_lk);
-	p = RB_FIND(pppx_ifs, &pppx_ifs, &s);
+	p = RB_FIND(pppx_ifs, &pppx_ifs, s);
 	rw_exit_read(&pppx_ifs_lk);
 
+	free(s, M_DEVBUF);
 	return (p);
 }
 
