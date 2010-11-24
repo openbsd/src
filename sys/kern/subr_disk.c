@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.113 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.114 2010/11/24 15:31:34 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -668,6 +668,9 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 	nlp->d_checksum = 0;
 	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
+
+	disk_change = 1;
+
 	return (0);
 }
 
