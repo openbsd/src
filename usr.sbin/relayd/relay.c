@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.124 2010/11/16 15:31:01 jsg Exp $	*/
+/*	$OpenBSD: relay.c,v 1.125 2010/11/24 13:57:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2497,6 +2497,7 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			if ((table = table_find(env, id)) == NULL)
 				fatalx("relay_dispatch_pfe: desynchronized");
 			table->conf.flags |= F_DISABLE;
+			table->up = 0;
 			TAILQ_FOREACH(host, &table->hosts, entry)
 				host->up = HOST_UNKNOWN;
 			break;
@@ -2505,6 +2506,7 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			if ((table = table_find(env, id)) == NULL)
 				fatalx("relay_dispatch_pfe: desynchronized");
 			table->conf.flags &= ~(F_DISABLE);
+			table->up = 0;
 			TAILQ_FOREACH(host, &table->hosts, entry)
 				host->up = HOST_UNKNOWN;
 			break;
