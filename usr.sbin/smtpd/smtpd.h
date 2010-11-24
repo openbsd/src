@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.197 2010/10/29 09:16:08 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.198 2010/11/24 23:27:04 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -102,6 +102,9 @@
 #define ADVERTISE_AUTH(s) \
 	((s)->s_l->flags & F_AUTH && (s)->s_flags & F_SECURE && \
 	 !((s)->s_flags & F_AUTHENTICATED))
+
+#define SET_IF_GREATER(x,y) do { y = MAX(x,y); } while(0)
+		
 
 typedef u_int32_t	objid_t;
 
@@ -641,19 +644,24 @@ struct s_queue {
 
 struct s_runner {
 	size_t		active;
+	size_t		maxactive;
 	size_t		bounces_active;
+	size_t		bounces_maxactive;
 	size_t		bounces;
 };
 
 struct s_session {
 	size_t		sessions;
 	size_t		sessions_active;
+	size_t		sessions_maxactive;
 
 	size_t		smtps;
 	size_t		smtps_active;
+	size_t		smtps_maxactive;
 
 	size_t		starttls;
 	size_t		starttls_active;
+	size_t		starttls_maxactive;
 
 	size_t		read_error;
 	size_t		read_timeout;
@@ -670,11 +678,13 @@ struct s_session {
 struct s_mda {
 	size_t		sessions;
 	size_t		sessions_active;
+	size_t		sessions_maxactive;
 };
 
 struct s_control {
 	size_t		sessions;
 	size_t		sessions_active;
+	size_t		sessions_maxactive;
 };
 
 struct stats {

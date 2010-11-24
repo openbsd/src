@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.92 2010/10/28 21:15:50 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.93 2010/11/24 23:27:04 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -461,6 +461,8 @@ runner_process_batchqueue(struct smtpd *env)
 			}
 			env->stats->runner.bounces_active++;
 			env->stats->runner.bounces++;
+			SET_IF_GREATER(env->stats->runner.bounces_active,
+				env->stats->runner.bounces_maxactive);
 			break;
 
 		case T_MDA_BATCH:
@@ -473,6 +475,8 @@ runner_process_batchqueue(struct smtpd *env)
 			free(m);
 			env->stats->mda.sessions_active++;
 			env->stats->mda.sessions++;
+			SET_IF_GREATER(env->stats->mda.sessions_active,
+				env->stats->mda.sessions_maxactive);
 			break;
 
 		case T_MTA_BATCH:
@@ -491,6 +495,8 @@ runner_process_batchqueue(struct smtpd *env)
 			    sizeof *batchp);
 			env->stats->mta.sessions_active++;
 			env->stats->mta.sessions++;
+			SET_IF_GREATER(env->stats->mta.sessions_active,
+				env->stats->mta.sessions_maxactive);
 			break;
 
 		default:
@@ -756,6 +762,8 @@ batch_record(struct smtpd *env, struct message *messagep)
 
 	TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 	env->stats->runner.active++;
+	SET_IF_GREATER(env->stats->runner.active,
+		env->stats->runner.maxactive);
 	return batchp;
 }
 

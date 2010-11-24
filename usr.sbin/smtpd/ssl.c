@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.29 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.30 2010/11/24 23:27:04 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -541,10 +541,14 @@ ssl_session_accept(int fd, short event, void *p)
 	if (s->s_l->flags & F_SMTPS) {
 		s->s_env->stats->smtp.smtps++;
 		s->s_env->stats->smtp.smtps_active++;
+		SET_IF_GREATER(s->s_env->stats->smtp.smtps_active,
+			s->s_env->stats->smtp.smtps_maxactive);
 	}
 	if (s->s_l->flags & F_STARTTLS) {
 		s->s_env->stats->smtp.starttls++;
 		s->s_env->stats->smtp.starttls_active++;
+		SET_IF_GREATER(s->s_env->stats->smtp.starttls_active,
+			s->s_env->stats->smtp.starttls_maxactive);
 	}
 
 	session_bufferevent_new(s);

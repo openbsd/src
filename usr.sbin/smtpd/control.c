@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.54 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.55 2010/11/24 23:27:04 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -294,6 +294,8 @@ control_accept(int listenfd, short event, void *arg)
 
 	env->stats->control.sessions++;
 	env->stats->control.sessions_active++;
+	SET_IF_GREATER(env->stats->control.sessions_active,
+		env->stats->control.sessions_maxactive);
 
 	if (env->stats->control.sessions_active >= env->sc_maxconn) {
 		log_warnx("ctl client limit hit, disabling new connections");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.52 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.53 2010/11/24 23:27:04 todd Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -278,13 +278,18 @@ show_stats_output(struct imsg *imsg)
 	stats = imsg->data;
 
 	printf("control.sessions=%zd\n", stats->control.sessions);
-	printf("control.sessions_active=%zd\n", stats->control.sessions_active);
+	printf("control.sessions_active=%zd\n",
+	    stats->control.sessions_active);
+	printf("control.sessions_maxactive=%zd\n",
+	    stats->control.sessions_maxactive);
 
 	printf("mda.sessions=%zd\n", stats->mda.sessions);
 	printf("mda.sessions.active=%zd\n", stats->mda.sessions_active);
+	printf("mda.sessions.maxactive=%zd\n", stats->mda.sessions_maxactive);
 
 	printf("mta.sessions=%zd\n", stats->mta.sessions);
 	printf("mta.sessions.active=%zd\n", stats->mta.sessions_active);
+	printf("mta.sessions.maxactive=%zd\n", stats->mta.sessions_maxactive);
 
 	printf("parent.uptime=%d\n", time(NULL) - stats->parent.start);
 
@@ -292,8 +297,11 @@ show_stats_output(struct imsg *imsg)
 	printf("queue.inserts.remote=%zd\n", stats->queue.inserts_remote);
 
 	printf("runner.active=%zd\n", stats->runner.active);
+	printf("runner.maxactive=%zd\n", stats->runner.maxactive);
 	printf("runner.bounces=%zd\n", stats->runner.bounces);
 	printf("runner.bounces.active=%zd\n", stats->runner.bounces_active);
+	printf("runner.bounces.maxactive=%zd\n",
+	    stats->runner.bounces_maxactive);
 
 	printf("smtp.errors.delays=%zd\n", stats->smtp.delays);
 	printf("smtp.errors.linetoolong=%zd\n", stats->smtp.linetoolong);
@@ -311,13 +319,19 @@ show_stats_output(struct imsg *imsg)
 	    stats->smtp.read_error + stats->smtp.write_eof +
 	    stats->smtp.write_error);
 	printf("smtp.sessions.active=%zd\n", stats->smtp.sessions_active);
+	printf("smtp.sessions.maxactive=%zd\n",
+	    stats->smtp.sessions_maxactive);
 	printf("smtp.sessions.timeout=%zd\n", stats->smtp.read_timeout +
 	    stats->smtp.write_timeout);
 	printf("smtp.sessions.smtps=%zd\n", stats->smtp.smtps);
 	printf("smtp.sessions.smtps.active=%zd\n", stats->smtp.smtps_active);
+	printf("smtp.sessions.smtps.maxactive=%zd\n",
+	    stats->smtp.smtps_maxactive);
 	printf("smtp.sessions.starttls=%zd\n", stats->smtp.starttls);
 	printf("smtp.sessions.starttls.active=%zd\n",
 	    stats->smtp.starttls_active);
+	printf("smtp.sessions.starttls.maxactive=%zd\n",
+	    stats->smtp.starttls_maxactive);
 
 	return (1);
 }
