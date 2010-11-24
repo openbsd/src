@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.20 2010/02/02 02:49:57 syuu Exp $ */
+/*      $OpenBSD: pmap.h,v 1.21 2010/11/24 20:59:17 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -43,21 +43,13 @@
 #include <machine/pte.h>
 
 /*
- * The user address space is 2Gb (0x0 - 0x80000000).
- * User programs are laid out in memory as follows:
- *			address
- *	USRTEXT		0x00400000
- *	USRDATA		0x10000000
- *	USRSTACK	0x7FFFFFFF
+ * The user address space is currently limited to 2Gb (0x0 - 0x80000000).
  *
  * The user address space is mapped using a two level structure where
  * virtual address bits 30..22 are used to index into a segment table which
  * points to a page worth of PTEs (4096 page can hold 1024 PTEs).
  * Bits 21..12 are then used to index a PTE which describes a page within
  * a segment.
- *
- * The wired entries in the TLB will contain the following:
- *	0-1	(UPAGES)	for curproc user struct and kernel stack.
  *
  * Note: The kernel doesn't use the same data structures as user programs.
  * All the PTE entries are stored in a single array in Sysmap which is
@@ -144,7 +136,6 @@ void	pmap_set_modify(vm_page_t);
 void	pmap_page_cache(vm_page_t, int);
 
 #define	pmap_collect(x)			do { /* nothing */ } while (0)
-#define pmap_proc_iflush(p,va,len)	do { /* nothing yet (handled in trap now) */ } while (0)
 #define pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2010/02/02 02:49:57 syuu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.50 2010/11/24 20:59:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1628,4 +1628,23 @@ pmap_pg_free(struct pool *pp, void *item)
 
 	Mips_HitInvalidateDCache(curcpu(), va, pa, PAGE_SIZE);
 	uvm_pagefree(pg);
+}
+
+void
+pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+{
+#ifdef MULTIPROCESSOR
+	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci->ci_curpmap == pmap) {
+			Mips_InvalidateICache(ci, va, len);
+			break;
+		}
+	}
+#else
+	Mips_InvalidateICache(curcpu(), va, len);
+#endif
 }
