@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.5 2009/12/07 19:01:03 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.6 2010/11/24 21:01:02 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,9 +44,12 @@ struct mdproc {
 	struct trap_frame *md_regs;	/* registers on current frame */
 	volatile int md_astpending;	/* AST pending for this process */
 	int	md_flags;		/* machine-dependent flags */
-	long	md_ss_addr;		/* single step address for ptrace */
-	int	md_ss_instr;		/* single step instruction for ptrace */
 	vaddr_t	md_uarea;		/* allocated uarea virtual addr */
+
+	/* ptrace fields */
+	vaddr_t	md_ss_addr;		/* single step address */
+	uint32_t md_ss_instr;		/* saved single step instruction */
+
 /* The following is RM7000 dependent, but kept in for compatibility */
 	int	md_pc_ctrl;		/* performance counter control */
 	int	md_pc_count;		/* performance counter */
