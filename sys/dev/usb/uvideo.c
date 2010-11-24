@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.146 2010/10/23 15:42:10 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.147 2010/11/24 19:53:07 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3106,8 +3106,8 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 		break;
 	case 2:
 		qctrl->minimum = uvideo_ctrls[i].sig ?
-		    letoh16(*(int16_t *)ctrl_data) :
-		    letoh16(*(uint16_t *)ctrl_data);
+		    (int16_t)UGETW(ctrl_data) :
+		    UGETW(ctrl_data);
 		break;
 	}
 
@@ -3125,8 +3125,8 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 		break;
 	case 2:
 		qctrl->maximum = uvideo_ctrls[i].sig ?
-		    letoh16(*(int16_t *)ctrl_data) :
-		    letoh16(*(uint16_t *)ctrl_data);
+		    (int16_t)UGETW(ctrl_data) :
+		    UGETW(ctrl_data);
 		break;
 	}
 
@@ -3144,8 +3144,8 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 		break;
 	case 2:
 		qctrl->step = uvideo_ctrls[i].sig ?
-		    letoh16(*(int16_t *)ctrl_data) :
-		    letoh16(*(uint16_t *)ctrl_data);
+		    (int16_t)UGETW(ctrl_data) :
+		    UGETW(ctrl_data);
 		break;
 	}
 
@@ -3163,8 +3163,8 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 		break;
 	case 2:
 		qctrl->default_value = uvideo_ctrls[i].sig ?
-		    letoh16(*(int16_t *)ctrl_data) :
-		    letoh16(*(uint16_t *)ctrl_data);
+		    (int16_t)UGETW(ctrl_data) :
+		    UGETW(ctrl_data);
 		break;
 	}
 
@@ -3182,7 +3182,7 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 	struct uvideo_softc *sc = v;
 	int i;
 	usbd_status error;
-	int8_t *ctrl_data;
+	uint8_t *ctrl_data;
 	uint16_t ctrl_len;
 
 	i = uvideo_find_ctrl(sc, gctrl->id);
@@ -3214,8 +3214,8 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 		break;
 	case 2:
 		gctrl->value = uvideo_ctrls[i].sig ?
-		    letoh16(*(int16_t *)ctrl_data) :
-		    letoh16(*(uint16_t *)ctrl_data);
+		    (int16_t)UGETW(ctrl_data) :
+		    UGETW(ctrl_data);
 		break;
 	}
 
@@ -3230,7 +3230,7 @@ uvideo_s_ctrl(void *v, struct v4l2_control *sctrl)
 	struct uvideo_softc *sc = v;
 	int i;
 	usbd_status error;
-	int8_t *ctrl_data;
+	uint8_t *ctrl_data;
 	uint16_t ctrl_len;
 
 	i = uvideo_find_ctrl(sc, sctrl->id);
@@ -3257,10 +3257,7 @@ uvideo_s_ctrl(void *v, struct v4l2_control *sctrl)
 			*ctrl_data = sctrl->value;
 		break;
 	case 2:
-		if (uvideo_ctrls[i].sig)
-			*(int16_t *)ctrl_data = htole16(sctrl->value);
-		else
-			*(uint16_t *)ctrl_data = htole16(sctrl->value);
+		USETW(ctrl_data, sctrl->value);
 		break;
 	}
 	error = uvideo_vc_set_ctrl(sc, ctrl_data, SET_CUR,
