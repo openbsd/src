@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.173 2010/09/23 13:59:10 jsing Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.174 2010/11/24 14:15:31 jsing Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -467,7 +467,7 @@ l_perror(char *s)
 void
 readlabel(int f)
 {
-	char *partname, *partuid;
+	char *partname, *partduid;
 	struct fstab *fsent;
 	int i;
 
@@ -483,21 +483,22 @@ readlabel(int f)
 	}
 
 	asprintf(&partname, "/dev/%s%c", dkname, 'a');
-	asprintf(&partuid, "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.a",
+	asprintf(&partduid,
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.a",
             lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
             lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
 	setfsent();
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		partname[strlen(dkname) + 5] = 'a' + i;
-		partuid[strlen(partuid) - 1] = 'a' + i;
+		partduid[strlen(partduid) - 1] = 'a' + i;
 		fsent = getfsspec(partname);
 		if (fsent == NULL)
-			fsent = getfsspec(partuid);
+			fsent = getfsspec(partduid);
 		if (fsent)
 			mountpoints[i] = strdup(fsent->fs_file);
 	}
 	endfsent();
-	free(partuid);
+	free(partduid);
 	free(partname);
 
 	if (aflag)
@@ -782,7 +783,7 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 	    lp->d_typename);
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname),
 	    lp->d_packname);
-	fprintf(f, "uid: %02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
+	fprintf(f, "duid: %02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
             lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
             lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 	fprintf(f, "flags:");
@@ -984,9 +985,9 @@ getnum(char *nptr, u_int64_t min, u_int64_t max, const char **errstr)
 }
 
 int
-uid_parse(struct disklabel *lp, char *s)
+duid_parse(struct disklabel *lp, char *s)
 {
-	u_char uid[8];
+	u_char duid[8];
 	char c;
 	int i;
 
@@ -1003,11 +1004,11 @@ uid_parse(struct disklabel *lp, char *s)
 			c -= ('A' - 10);
 		else
 			return -1;
-		uid[i / 2] <<= 4;
-		uid[i / 2] |= c & 0xf;
+		duid[i / 2] <<= 4;
+		duid[i / 2] |= c & 0xf;
 	}
 
-	memcpy(lp->d_uid, &uid, sizeof(lp->d_uid));
+	memcpy(lp->d_uid, &duid, sizeof(lp->d_uid));
 	return 0;
 }
 
@@ -1110,8 +1111,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			strncpy(lp->d_packname, tp, sizeof (lp->d_packname));
 			continue;
 		}
-		if (!strcmp(cp, "uid")) {
-			if (uid_parse(lp, tp) != 0) {
+		if (!strcmp(cp, "duid")) {
+			if (duid_parse(lp, tp) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			}

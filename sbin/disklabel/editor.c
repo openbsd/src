@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.245 2010/09/23 13:54:21 jsing Exp $	*/
+/*	$OpenBSD: editor.c,v 1.246 2010/11/24 14:15:31 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -130,7 +130,7 @@ struct partition **sort_partitions(struct disklabel *);
 void	getdisktype(struct disklabel *, char *, char *);
 void	find_bounds(struct disklabel *);
 void	set_bounds(struct disklabel *);
-void	set_uid(struct disklabel *);
+void	set_duid(struct disklabel *);
 struct diskchunk *free_chunks(struct disklabel *);
 void	mpcopy(char **, char **);
 int	micmp(const void *, const void *);
@@ -291,7 +291,7 @@ editor(struct disklabel *lp, int f)
 			break;
 
 		case 'i':
-			set_uid(&label);
+			set_duid(&label);
 			break;
 
 		case 'm':
@@ -1614,7 +1614,7 @@ set_bounds(struct disklabel *lp)
  * Allow user to interactively change disklabel UID.
  */
 void
-set_uid(struct disklabel *lp)
+set_duid(struct disklabel *lp)
 {
 	char *s;
 	int i;
@@ -1625,13 +1625,13 @@ set_uid(struct disklabel *lp)
             lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 
 	do {
-		s = getstring("uid", "The disklabel UID, given as a 16 "
+		s = getstring("duid", "The disklabel UID, given as a 16 "
 		    "character hexadecimal string.", NULL);
 		if (s == NULL || strlen(s) == 0) {
 			fputs("Command aborted\n", stderr);
 			return;
 		}
-		i = uid_parse(lp, s);
+		i = duid_parse(lp, s);
 		if (i != 0)
 			fputs("Invalid UID entered.\n", stderr);
 	} while (i != 0);
