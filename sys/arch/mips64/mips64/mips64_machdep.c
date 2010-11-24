@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.1 2010/10/24 15:40:03 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.2 2010/11/24 21:16:28 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -141,7 +141,9 @@ setregs(p, pack, stack, retval)
 #endif
 	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;
 	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
+#ifndef FPUEMUL
 	p->p_md.md_flags &= ~MDP_FPUSED;
+#endif
 	if (ci->ci_fpuproc == p)
 		ci->ci_fpuproc = NULL;
 	p->p_md.md_ss_addr = 0;
@@ -150,4 +152,34 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_watch_2 = 0;
 
 	retval[1] = 0;
+}
+
+int
+exec_md_map(struct proc *p, struct exec_package *pack)
+{
+#ifdef FPUEMUL
+	int rc;
+	vaddr_t va;
+
+	/*
+	 * If we are running with FPU instruction emulation, we need
+	 * to allocate a special page in the process' address space,
+	 * in order to be able to emulate delay slot instructions of
+	 * successful conditional branches.
+	 */
+
+	va = uvm_map_hint(p, UVM_PROT_RX);
+	rc = uvm_map(&p->p_vmspace->vm_map, &va, PAGE_SIZE, NULL,
+	    UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_ALL, UVM_INH_COPY,
+	      UVM_ADV_NORMAL, UVM_FLAG_COPYONW));
+	if (rc != 0)
+		return rc;
+#ifdef DEBUG
+	printf("%s: p %p fppgva %p\n", __func__, p, va);
+#endif
+	p->p_md.md_fppgva = va;
+#endif
+
+	return 0;
 }

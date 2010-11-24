@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2010/02/13 14:04:45 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.24 2010/11/24 21:16:28 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -87,6 +87,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		save_fpu();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FORKSAVE;
+#ifdef FPUEMUL
+	p2->p_md.md_fppgva = p1->p_md.md_fppgva;
+	KASSERT((p2->p_md.md_flags & MDP_FPUSED) == 0);
+#endif
 
 	/* Copy pcb from p1 to p2 */
 	if (p1 == curproc) {

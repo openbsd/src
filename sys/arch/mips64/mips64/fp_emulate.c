@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.2 2010/10/27 20:05:12 miod Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.3 2010/11/24 21:16:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -17,11 +17,9 @@
  */
 
 /*
- * Floating Point completion code (MI softfloat code control engine).
+ * Floating Point completion/emulation code (MI softfloat code control engine).
  *
  * Supports all MIPS IV COP1 and COP1X floating-point instructions.
- * Floating-point load and store instructions, as well as branch instructions,
- * are not handled, as they should not require completion code.
  */
 
 #include <sys/param.h>
@@ -48,6 +46,12 @@ int	fpu_emulate_cop1x(struct trap_frame *, uint32_t);
 uint64_t
 	fpu_load(struct trap_frame *, uint, uint);
 void	fpu_store(struct trap_frame *, uint, uint, uint64_t);
+#ifdef FPUEMUL
+int	nofpu_emulate_cop1(struct trap_frame *, uint32_t, union sigval *);
+int	nofpu_emulate_cop1x(struct trap_frame *, uint32_t, union sigval *);
+int	nofpu_emulate_loadstore(struct trap_frame *, uint32_t, union sigval *);
+int	nofpu_emulate_movci(struct trap_frame *, uint32_t);
+#endif
 
 typedef	int (fpu_fn3)(struct trap_frame *, uint, uint, uint, uint);
 typedef	int (fpu_fn4)(struct trap_frame *, uint, uint, uint, uint, uint);
@@ -125,10 +129,15 @@ MipsFPTrap(struct trap_frame *tf)
 	int fault_type = SI_NOINFO;
 	int update_pcb = 0;
 	int emulate = 0;
+#ifdef FPUEMUL
+	int skip_insn = 1;
+#else
 	uint32_t sr;
+#endif
 
 	KDASSERT(tf == p->p_md.md_regs);
 
+#ifndef FPUEMUL
 	/*
 	 * Enable FPU, and read its status register.
 	 */
@@ -148,6 +157,15 @@ MipsFPTrap(struct trap_frame *tf)
 		sig = SIGFPE;
 		goto deliver;
 	}
+#else
+#ifdef CPU_OCTEON
+	/*
+	 * SR_FR_32 is hardwired to zero on Octeon; make sure it is
+	 * set in the emulation view of the FPU state.
+	 */
+	tf->sr |= SR_FR_32;
+#endif
+#endif	/* FPUEMUL */
 
 	/*
 	 * Get the faulting instruction.  This should not fail, and
@@ -185,9 +203,40 @@ MipsFPTrap(struct trap_frame *tf)
 		 * Not a FPU instruction.
 		 */
 		break;
+#ifdef FPUEMUL
+	case OP_SPECIAL:
+		switch (inst.FRType.func) {
+		default:
+			/*
+			 * Not a FPU instruction.
+			 */
+			break;
+		case OP_MOVCI:
+			/*
+			 * This instruction should not require emulation,
+			 * unless there is no FPU.
+			 */
+			emulate = 1;
+			break;
+		}
+		break;
+	case OP_LDC1:
+	case OP_LWC1:
+	case OP_SDC1:
+	case OP_SWC1:
+		/*
+		 * These instructions should not require emulation,
+		 * unless there is no FPU.
+		 */
+		emulate = 1;
+		break;
+#endif
 	case OP_COP1:
 		switch (inst.RType.rs) {
 		case OP_BC:
+#ifdef FPUEMUL
+			skip_insn = 0;
+#endif
 		case OP_MF:
 		case OP_DMF:
 		case OP_CF:
@@ -198,6 +247,9 @@ MipsFPTrap(struct trap_frame *tf)
 			 * These instructions should not require emulation,
 			 * unless there is no FPU.
 			 */
+#ifdef FPUEMUL
+			emulate = 1;
+#endif
 			break;
 		default:
 			emulate = 1;
@@ -207,6 +259,25 @@ MipsFPTrap(struct trap_frame *tf)
 	case OP_COP1X:
 		switch (inst.FQType.op4) {
 		default:
+			switch (inst.FRType.func) {
+#ifdef FPUEMUL
+			case OP_LDXC1:
+			case OP_LWXC1:
+			case OP_SDXC1:
+			case OP_SWXC1:
+			case OP_PREFX:
+				/*
+				 * These instructions should not require
+				 * emulation, unless there is no FPU.
+				 */
+				emulate = 1;
+#endif
+			default:
+				/*
+				 * Not a valid instruction.
+				 */
+				break;
+			}
 			break;
 		case OP_MADD:
 		case OP_MSUB:
@@ -219,8 +290,10 @@ MipsFPTrap(struct trap_frame *tf)
 	}
 
 	if (emulate) {
+#ifndef FPUEMUL
 		KASSERT(p == ci->ci_fpuproc);
 		save_fpu();
+#endif
 		update_pcb = 1;
 
 		sig = fpu_emulate(tf, insn, &sv);
@@ -253,25 +326,39 @@ deliver:
 			fault_type = FPE_FLTOVF;
 		else /* if (excbits & FP_X_IMP) */
 			fault_type = FPE_FLTRES;
+
 		break;
+#ifdef FPUEMUL
+	case SIGBUS:
+		fault_type = BUS_ADRALN;
+		break;
+	case SIGSEGV:
+		fault_type = SEGV_MAPERR;
+		break;
+#endif
 	}
 
 	/*
 	 * Skip the instruction, unless we are delivering SIGILL.
 	 */
-
-	if (sig != SIGILL) {
-		if (tf->cause & CR_BR_DELAY) {
-			/*
-			 * Note that it doesn't matter, at this point,
-			 * that we pass the updated FSR value, as it is
-			 * only used to decide whether to branch or not
-			 * if the faulting instruction was BC1[FT].
-			 */
-			tf->pc = MipsEmulateBranch(tf, tf->pc, fsr, 0);
-		} else
-			tf->pc += 4;
+#ifdef FPUEMUL
+	if (skip_insn) {
+#endif
+		if (sig != SIGILL) {
+			if (tf->cause & CR_BR_DELAY) {
+				/*
+				 * Note that it doesn't matter, at this point,
+				 * that we pass the updated FSR value, as it is
+				 * only used to decide whether to branch or not
+				 * if the faulting instruction was BC1[FT].
+				 */
+				tf->pc = MipsEmulateBranch(tf, tf->pc, fsr, 0);
+			} else
+				tf->pc += 4;
+		}
+#ifdef FPUEMUL
 	}
+#endif
 
 	/*
 	 * Update the FPU status register.
@@ -287,12 +374,17 @@ deliver:
 	fsr &= ~FPCSR_C_MASK;
 	if (update_pcb)
 		tf->fsr = fsr;
+#ifndef FPUEMUL
 	__asm__ __volatile__ ("ctc1 %0, $31" :: "r" (fsr));
 	/* disable fpu before returning to trap() */
 	setsr(sr);
+#endif
 
 	if (sig != 0) {
-		sv.sival_ptr = (void *)pc;
+#ifdef FPUEMUL
+		if (sig != SIGBUS && sig != SIGSEGV)
+#endif
+			sv.sival_ptr = (void *)pc;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, 0, fault_type, sv);
 		KERNEL_PROC_UNLOCK(p);
@@ -314,10 +406,56 @@ fpu_emulate(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 	switch (inst.FRType.op) {
 	default:
 		break;
+#ifdef FPUEMUL
+	case OP_SPECIAL:
+		return nofpu_emulate_movci(tf, insn);
+	case OP_LDC1:
+	case OP_LWC1:
+	case OP_SDC1:
+	case OP_SWC1:
+		return nofpu_emulate_loadstore(tf, insn, sv);
+#endif
 	case OP_COP1:
-		return fpu_emulate_cop1(tf, insn);
+		switch (inst.RType.rs) {
+#ifdef FPUEMUL
+		case OP_MF:
+		case OP_DMF:
+		case OP_CF:
+		case OP_MT:
+		case OP_DMT:
+		case OP_CT:
+		case OP_BC:
+			return nofpu_emulate_cop1(tf, insn, sv);
+#endif
+		default:
+			return fpu_emulate_cop1(tf, insn);
+		}
+		break;
 	case OP_COP1X:
-		return fpu_emulate_cop1x(tf, insn);
+		switch (inst.FQType.op4) {
+#ifdef FPUEMUL
+		default:
+			switch (inst.FRType.func) {
+			case OP_LDXC1:
+			case OP_LWXC1:
+			case OP_SDXC1:
+			case OP_SWXC1:
+			case OP_PREFX:
+				return nofpu_emulate_cop1x(tf, insn, sv);
+			default:
+				break;
+			}
+			break;
+		case OP_MADD:
+		case OP_MSUB:
+		case OP_NMADD:
+		case OP_NMSUB:
+			return fpu_emulate_cop1x(tf, insn);
+#else
+		default:
+			return fpu_emulate_cop1x(tf, insn);
+#endif
+		}
 	}
 
 	return SIGILL;
@@ -1312,3 +1450,333 @@ fpu_trunc_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	/* round towards zero */
 	return fpu_int_w(tf, fmt, ft, fs, fd, FP_RZ);
 }
+
+#ifdef FPUEMUL
+
+/*
+ * Emulate a COP1 non-FPU instruction.
+ */
+int
+nofpu_emulate_cop1(struct trap_frame *tf, uint32_t insn, union sigval *sv)
+{
+	register_t *regs = (register_t *)tf;
+	InstFmt inst;
+	int32_t cval;
+
+	inst = *(InstFmt *)&insn;
+
+	switch (inst.RType.rs) {
+	case OP_MF:
+		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
+			return SIGILL;
+		if (inst.FRType.ft != ZERO)
+			regs[inst.FRType.ft] = 
+			    (int32_t)regs[FPBASE + inst.FRType.fs];
+		break;
+	case OP_DMF:
+		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
+			return SIGILL;
+		if ((tf->sr & SR_FR_32) != 0 || (inst.FRType.fs & 1) == 0) {
+			if (inst.FRType.ft != ZERO)
+				regs[inst.FRType.ft] =
+				    fpu_load(tf, FMT_L, inst.FRType.fs);
+		}
+		break;
+	case OP_CF:
+		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
+			return SIGILL;
+		if (inst.FRType.ft != ZERO) {
+			switch (inst.FRType.fs) {
+			case 0:	/* FPC_ID */
+				cval = MIPS_SOFT << 8;
+				break;
+			case 31: /* FPC_CSR */
+				cval = (int32_t)tf->fsr;
+				break;
+			default:
+				cval = 0;
+				break;
+			}
+			regs[inst.FRType.ft] = (int64_t)cval;
+		}
+		break;
+	case OP_MT:
+		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
+			return SIGILL;
+		regs[FPBASE + inst.FRType.fs] = (int32_t)regs[inst.FRType.ft];
+		break;
+	case OP_DMT:
+		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
+			return SIGILL;
+		if ((tf->sr & SR_FR_32) != 0 || (inst.FRType.fs & 1) == 0) {
+			fpu_store(tf, FMT_L, inst.FRType.fs,
+			    regs[inst.FRType.ft]);
+		}
+		break;
+	case OP_CT:
+		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
+			return SIGILL;
+		cval = (int32_t)regs[inst.FRType.ft];
+		switch (inst.FRType.fs) {
+		case 31: /* FPC_CSR */
+			cval &= ~FPCSR_C_E;
+			tf->fsr = cval;
+			break;
+		case 0:	/* FPC_ID */
+		default:
+			break;
+		}
+		break;
+	case OP_BC:
+	   {
+		uint cc, nd, istf;
+		int condition;
+		vaddr_t dest;
+		uint32_t dinsn;
+
+		cc = (inst.RType.rt & COPz_BC_CC_MASK) >> COPz_BC_CC_SHIFT;
+		nd = inst.RType.rt & COPz_BCL_TF_MASK;
+		istf = inst.RType.rt & COPz_BC_TF_MASK;
+		condition = tf->fsr & FPCSR_CONDVAL(cc);
+		if ((!condition && !istf) /*bc1f*/ ||
+		    (condition && istf) /*bc1t*/) {
+			/*
+			 * Branch taken: if the delay slot is not a nop,
+			 * copy the delay slot instruction to the dedicated
+			 * relocation page, in order to be able to have the
+			 * cpu process it and give control back to the
+			 * kernel, for us to redirect to the branch
+			 * destination.
+			 */
+			/* inline MipsEmulateBranch(tf, tf->pc, tf->fsr, insn)*/
+			dest = tf->pc + 4 + ((short)inst.IType.imm << 2);
+			if (copyin((const void *)(tf->pc + 4), &dinsn,
+			    sizeof dinsn)) {
+				sv->sival_ptr = (void *)(tf->pc + 4);
+				return SIGSEGV;
+			}
+			if (dinsn == 0x00000000 /* nop */ ||
+			    dinsn == 0x00000040 /* ssnop */) {
+				tf->pc = dest;
+			} else {
+				if (fpe_branch_emulate(curproc, tf, dinsn,
+				    dest) != 0)
+					return SIGILL;
+			}
+		} else {
+			/*
+			 * Branch not taken: skip the instruction, and
+			 * skip the delay slot if it was a `branch likely'
+			 * instruction.
+			 */
+			tf->pc += 4;
+			if (nd)
+				tf->pc += 4;
+		}
+	    }
+		break;
+	}
+
+	return 0;
+}
+
+/*
+ * Emulate a COP1X non-FPU instruction.
+ */
+int
+nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
+{
+	register_t *regs = (register_t *)tf;
+	InstFmt inst;
+	vaddr_t va;
+	uint64_t ddata;
+	uint32_t wdata;
+
+	inst = *(InstFmt *)&insn;
+	switch (inst.FRType.func) {
+	case OP_LDXC1:
+		if (inst.FQType.fs != 0)
+			return SIGILL;
+		va = (vaddr_t)regs[inst.FQType.fr] +
+		    (vaddr_t)regs[inst.FQType.ft];
+		if ((va & 0x07) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+		if (copyin((const void *)va, &ddata, sizeof ddata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		if ((tf->sr & SR_FR_32) != 0 || (inst.FQType.fd & 1) == 0)
+			fpu_store(tf, FMT_L, inst.FQType.fd, ddata);
+		break;
+	case OP_LWXC1:
+		if (inst.FQType.fs != 0)
+			return SIGILL;
+		va = (vaddr_t)regs[inst.FQType.fr] +
+		    (vaddr_t)regs[inst.FQType.ft];
+		if ((va & 0x03) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+#ifdef __MIPSEB__
+		va ^= 4;
+#endif
+		if (copyin((const void *)va, &wdata, sizeof wdata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		regs[FPBASE + inst.FQType.fd] = wdata;
+		break;
+	case OP_SDXC1:
+		if (inst.FQType.fd != 0)
+			return SIGILL;
+		va = (vaddr_t)regs[inst.FQType.fr] +
+		    (vaddr_t)regs[inst.FQType.ft];
+		if ((va & 0x07) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+		if ((tf->sr & SR_FR_32) != 0 || (inst.FQType.fs & 1) == 0)
+			ddata = fpu_load(tf, FMT_L, inst.FQType.fs);
+		else {
+			/* undefined behaviour, don't expose stack content */
+			ddata = 0;
+		}
+		if (copyout(&ddata, (void *)va, sizeof ddata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		break;
+	case OP_SWXC1:
+		if (inst.FQType.fd != 0)
+			return SIGILL;
+		va = (vaddr_t)regs[inst.FQType.fr] +
+		    (vaddr_t)regs[inst.FQType.ft];
+		if ((va & 0x03) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+#ifdef __MIPSEB__
+		va ^= 4;
+#endif
+		wdata = regs[FPBASE + inst.FQType.fs];
+		if (copyout(&wdata, (void *)va, sizeof wdata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		break;
+	case OP_PREFX:
+		/* nothing to do */
+		break;
+	}
+
+	return 0;
+}
+
+/*
+ * Emulate a load/store instruction on FPU registers.
+ */
+int
+nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
+{
+	register_t *regs = (register_t *)tf;
+	InstFmt inst;
+	vaddr_t va;
+	uint64_t ddata;
+	uint32_t wdata;
+
+	inst = *(InstFmt *)&insn;
+	switch (inst.IType.op) {
+	case OP_LDC1:
+		va = (vaddr_t)regs[inst.IType.rs] + (int16_t)inst.IType.imm;
+		if ((va & 0x07) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+		if (copyin((const void *)va, &ddata, sizeof ddata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		if ((tf->sr & SR_FR_32) != 0 || (inst.IType.rt & 1) == 0)
+			fpu_store(tf, FMT_L, inst.IType.rt, ddata);
+		break;
+	case OP_LWC1:
+		va = (vaddr_t)regs[inst.IType.rs] + (int16_t)inst.IType.imm;
+		if ((va & 0x03) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+#ifdef __MIPSEB__
+		va ^= 4;
+#endif
+		if (copyin((const void *)va, &wdata, sizeof wdata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		regs[FPBASE + inst.IType.rt] = wdata;
+		break;
+	case OP_SDC1:
+		va = (vaddr_t)regs[inst.IType.rs] + (int16_t)inst.IType.imm;
+		if ((va & 0x07) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+		if ((tf->sr & SR_FR_32) != 0 || (inst.IType.rt & 1) == 0)
+			ddata = fpu_load(tf, FMT_L, inst.IType.rt);
+		else {
+			/* undefined behaviour, don't expose stack content */
+			ddata = 0;
+		}
+		if (copyout(&ddata, (void *)va, sizeof ddata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		break;
+	case OP_SWC1:
+		va = (vaddr_t)regs[inst.IType.rs] + (int16_t)inst.IType.imm;
+		if ((va & 0x03) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGBUS;
+		}
+#ifdef __MIPSEB__
+		va ^= 4;
+#endif
+		wdata = regs[FPBASE + inst.IType.rt];
+		if (copyout(&wdata, (void *)va, sizeof wdata) != 0) {
+			sv->sival_ptr = (void *)va;
+			return SIGSEGV;
+		}
+		break;
+	}
+
+	return 0;
+}
+
+/*
+ * Emulate MOVF and MOVT.
+ */
+int
+nofpu_emulate_movci(struct trap_frame *tf, uint32_t insn)
+{
+	register_t *regs = (register_t *)tf;
+	InstFmt inst;
+	uint cc, istf;
+	int condition;
+
+	inst = *(InstFmt *)&insn;
+	if ((inst.RType.rt & 0x02) != 0 || inst.RType.shamt != 0)
+		return SIGILL;
+
+	cc = inst.RType.rt >> 2;
+	istf = inst.RType.rt & COPz_BC_TF_MASK;
+	condition = tf->fsr & FPCSR_CONDVAL(cc);
+	if ((!condition && !istf) /*movf*/ || (condition && istf) /*movt*/) {
+		if (inst.RType.rd != ZERO)
+			regs[inst.RType.rd] = regs[inst.RType.rs];
+	}
+
+	return 0;
+}
+
+#endif	/* FPUEMUL */

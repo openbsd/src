@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.6 2010/11/24 21:01:02 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.7 2010/11/24 21:16:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,11 @@ struct mdproc {
 	vaddr_t	md_ss_addr;		/* single step address */
 	uint32_t md_ss_instr;		/* saved single step instruction */
 
+	/* fpu emulation fields */
+	vaddr_t	md_fppgva;		/* vaddr of the branch emulation page */
+	vaddr_t	md_fpbranchva;		/* vaddr of fp branch destination */
+	vaddr_t	md_fpslotva;		/* initial vaddr of delay slot */
+
 /* The following is RM7000 dependent, but kept in for compatibility */
 	int	md_pc_ctrl;		/* performance counter control */
 	int	md_pc_count;		/* performance counter */
@@ -59,7 +64,13 @@ struct mdproc {
 	int	md_watch_m;
 };
 
-/* md_flags */
+/*
+ * Values for md_flags.
+ * MDP_FPUSED has two meanings: if the floating point hardware (coprocessor
+ * #1) is available, it means it has been used; if there is no floating
+ * point hardware, it means the process is currently running a duplicated
+ * delay slot, created by the branch emulation logic.
+ */
 #define	MDP_FPUSED	0x00000001	/* floating point coprocessor used */
 #define	MDP_PERF	0x00010000	/* Performance counter used */
 #define	MDP_WATCH1	0x00020000	/* Watch register 1 used */

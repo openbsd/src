@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.71 2010/11/24 21:01:03 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.72 2010/11/24 21:16:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -640,6 +640,32 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			i = SIGTRAP;
 			break;
 #endif
+#ifdef FPUEMUL
+		case BREAK_FPUEMUL_VAL:
+			/*
+			 * If this is a genuine FP emulation break,
+			 * resume execution to our branch destination.
+			 */
+			if ((p->p_md.md_flags & MDP_FPUSED) != 0 &&
+			    p->p_md.md_fppgva + 4 == (vaddr_t)va) {
+				struct vm_map *map = &p->p_vmspace->vm_map;
+
+				p->p_md.md_flags &= ~MDP_FPUSED;
+				locr0->pc = p->p_md.md_fpbranchva;
+
+				/*
+				 * Prevent access to the relocation page.
+				 * XXX needs to be fixed to work with rthreads
+				 */
+				uvm_fault_unwire(map, p->p_md.md_fppgva,
+				    p->p_md.md_fppgva + PAGE_SIZE);
+				(void)uvm_map_protect(map, p->p_md.md_fppgva,
+				    p->p_md.md_fppgva + PAGE_SIZE,
+				    UVM_PROT_NONE, FALSE);
+				goto out;
+			}
+			/* FALLTHROUGH */
+#endif
 		default:
 			typ = TRAP_TRACE;
 			i = SIGTRAP;
@@ -730,8 +756,11 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			typ = ILL_ILLOPC;
 			break;
 		}
-
+#ifdef FPUEMUL
+		MipsFPTrap(trapframe);
+#else
 		enable_fpu(p);
+#endif
 		goto out;
 
 	case T_FPE:
@@ -773,6 +802,16 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 #endif
 		panic("trap");
 	}
+#ifdef FPUEMUL
+	/*
+	 * If a relocated delay slot causes an exception, blame the
+	 * original delay slot address - userland is not supposed to
+	 * know anything about emulation bowels.
+	 */
+	if ((p->p_md.md_flags & MDP_FPUSED) != 0 &&
+	    trapframe->badvaddr == p->p_md.md_fppgva)
+		trapframe->badvaddr = p->p_md.md_fpslotva;
+#endif
 	p->p_md.md_regs->pc = trapframe->pc;
 	p->p_md.md_regs->cause = trapframe->cause;
 	p->p_md.md_regs->badvaddr = trapframe->badvaddr;
@@ -1361,3 +1400,135 @@ fn_name(vaddr_t addr)
 #endif	/* !DDB */
 
 #endif /* DDB || DEBUG */
+
+#ifdef FPUEMUL
+/*
+ * Set up a successful branch emulation.
+ * The delay slot instruction is copied to a reserved page, followed by a
+ * trap instruction to get control back, and resume at the branch
+ * destination.
+ */
+int
+fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
+    vaddr_t dest)
+{
+	struct vm_map *map = &p->p_vmspace->vm_map;
+	InstFmt inst;
+	int rc;
+
+	/*
+	 * Check the delay slot instruction: since it will run as a
+	 * non-delay slot instruction, we want to reject branch instructions
+	 * (which behaviour, when in a delay slot, is undefined anyway).
+	 */
+
+	inst = *(InstFmt *)&insn;
+	rc = 0;
+	switch ((int)inst.JType.op) {
+	case OP_SPECIAL:
+		switch ((int)inst.RType.func) {
+		case OP_JR:
+		case OP_JALR:
+			rc = EINVAL;
+			break;
+		}
+		break;
+	case OP_BCOND:
+		switch ((int)inst.IType.rt) {
+		case OP_BLTZ:
+		case OP_BLTZL:
+		case OP_BLTZAL:
+		case OP_BLTZALL:
+		case OP_BGEZ:
+		case OP_BGEZL:
+		case OP_BGEZAL:
+		case OP_BGEZALL:
+			rc = EINVAL;
+			break;
+		}
+		break;
+	case OP_J:
+	case OP_JAL:
+	case OP_BEQ:
+	case OP_BEQL:
+	case OP_BNE:
+	case OP_BNEL:
+	case OP_BLEZ:
+	case OP_BLEZL:
+	case OP_BGTZ:
+	case OP_BGTZL:
+		rc = EINVAL;
+		break;
+	case OP_COP1:
+		if (inst.RType.rs == OP_BC)	/* oh the irony */
+			rc = EINVAL;
+		break;
+	}
+
+	if (rc != 0) {
+#ifdef DEBUG
+		printf("%s: bogus delay slot insn %08x\n", __func__, insn);
+#endif
+		return rc;
+	}
+
+	/*
+	 * Temporarily change protection over the page used to relocate
+	 * the delay slot, and fault it in.
+	 */
+
+	rc = uvm_map_protect(map, p->p_md.md_fppgva,
+	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_RWX, FALSE);
+	if (rc != 0) {
+#ifdef DEBUG
+		printf("%s: uvm_map_protect on %p failed: %d\n",
+		    __func__, p->p_md.md_fppgva, rc);
+#endif
+		return rc;
+	}
+	rc = uvm_fault_wire(map, p->p_md.md_fppgva,
+	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_RWX);
+	if (rc != 0) {
+#ifdef DEBUG
+		printf("%s: uvm_fault_wire on %p failed: %d\n",
+		    __func__, p->p_md.md_fppgva, rc);
+#endif
+		goto err2;
+	}
+
+	rc = copyout(&insn, (void *)p->p_md.md_fppgva, sizeof insn);
+	if (rc != 0) {
+#ifdef DEBUG
+		printf("%s: copyout %p failed %d\n",
+		    __func__, p->p_md.md_fppgva, rc);
+#endif
+		goto err;
+	}
+	insn = BREAK_FPUEMUL;
+	rc = copyout(&insn, (void *)(p->p_md.md_fppgva + 4), sizeof insn);
+	if (rc != 0) {
+#ifdef DEBUG
+		printf("%s: copyout %p failed %d\n",
+		    __func__, p->p_md.md_fppgva + 4, rc);
+#endif
+		goto err;
+	}
+
+	(void)uvm_map_protect(map, p->p_md.md_fppgva,
+	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_RX, FALSE);
+	p->p_md.md_fpbranchva = dest;
+	p->p_md.md_fpslotva = (vaddr_t)tf->pc + 4;
+	p->p_md.md_flags |= MDP_FPUSED;
+	tf->pc = p->p_md.md_fppgva;
+	pmap_proc_iflush(p, tf->pc, 2 * 4);
+
+	return 0;
+
+err:
+	uvm_fault_unwire(map, p->p_md.md_fppgva, p->p_md.md_fppgva + PAGE_SIZE);
+err2:
+	(void)uvm_map_protect(map, p->p_md.md_fppgva,
+	    p->p_md.md_fppgva + PAGE_SIZE, UVM_PROT_NONE, FALSE);
+	return rc;
+}
+#endif

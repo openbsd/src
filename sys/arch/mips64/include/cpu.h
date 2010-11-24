@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.68 2010/10/24 15:40:03 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.69 2010/11/24 21:16:26 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -279,11 +279,13 @@ extern vaddr_t uncached_base;
 #define	BREAK_BRKPT_VAL		514
 #define	BREAK_SOVER_VAL		515
 #define	BREAK_DDB_VAL		516
+#define	BREAK_FPUEMUL_VAL	517
 #define	BREAK_KDB	(BREAK_INSTR | (BREAK_KDB_VAL << BREAK_VAL_SHIFT))
 #define	BREAK_SSTEP	(BREAK_INSTR | (BREAK_SSTEP_VAL << BREAK_VAL_SHIFT))
 #define	BREAK_BRKPT	(BREAK_INSTR | (BREAK_BRKPT_VAL << BREAK_VAL_SHIFT))
 #define	BREAK_SOVER	(BREAK_INSTR | (BREAK_SOVER_VAL << BREAK_VAL_SHIFT))
 #define	BREAK_DDB	(BREAK_INSTR | (BREAK_DDB_VAL << BREAK_VAL_SHIFT))
+#define	BREAK_FPUEMUL	(BREAK_INSTR | (BREAK_FPUEMUL_VAL << BREAK_VAL_SHIFT))
 
 /*
  * The floating point version and status registers.
@@ -550,6 +552,7 @@ void cpu_startclock(struct cpu_info *);
 
 extern vaddr_t CpuCacheAliasMask;
 
+struct exec_package;
 struct tlb_entry;
 struct user;
 
@@ -604,10 +607,13 @@ int	tlb_update(vaddr_t, unsigned);
 void	tlb_read(int, struct tlb_entry *);
 
 void	build_trampoline(vaddr_t, vaddr_t);
+int	exec_md_map(struct proc *, struct exec_package *);
 void	savectx(struct user *, int);
 
 void	enable_fpu(struct proc *);
 void	save_fpu(void);
+int	fpe_branch_emulate(struct proc *, struct trap_frame *, uint32_t,
+	    vaddr_t);
 
 int	guarded_read_4(paddr_t, uint32_t *);
 int	guarded_write_4(paddr_t, uint32_t);
