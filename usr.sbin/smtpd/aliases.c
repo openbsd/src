@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.37 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.38 2010/11/24 11:09:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,7 +45,7 @@ aliases_exist(struct smtpd *env, objid_t mapid, char *username)
 {
 	struct map *map;
 	struct map_alias *map_alias;
-	char buf[MAXLOGNAME];
+	char buf[MAX_LOCALPART_SIZE];
 
 	map = map_find(env, mapid);
 	if (map == NULL)
@@ -72,7 +72,7 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, cha
 	struct map *map;
 	struct map_alias *map_alias;
 	struct expandnode *expnode;
-	char buf[MAXLOGNAME];
+	char buf[MAX_LOCALPART_SIZE];
 	size_t nbaliases;
 
 	map = map_find(env, mapid);
