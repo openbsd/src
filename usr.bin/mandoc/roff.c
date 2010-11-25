@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.15 2010/10/26 23:34:38 schwarze Exp $ */
+/*	$Id: roff.c,v 1.16 2010/11/25 22:23:31 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -7,9 +7,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -54,6 +54,7 @@ enum	rofft {
 	ROFF_tr,
 	ROFF_cblock,
 	ROFF_ccond, /* FIXME: remove this. */
+	ROFF_USERDEF,
 	ROFF_MAX
 };
 
@@ -76,7 +77,8 @@ struct	roff {
 	enum roffrule	 rstack[RSTACK_MAX]; /* stack of !`ie' rules */
 	int		 rstackpos; /* position in rstack */
 	struct regset	*regs; /* read/writable registers */
-	struct roffstr	*first_string;
+	struct roffstr	*first_string; /* user-defined strings & macros */
+	const char	*current_string; /* value of last called user macro */
 };
 
 struct	roffnode {
@@ -84,6 +86,7 @@ struct	roffnode {
 	struct roffnode	*parent; /* up one in stack */
 	int		 line; /* parse line */
 	int		 col; /* parse col */
+	char		*name; /* node name, e.g. macro name */
 	char		*end; /* end-rules: custom token */
 	int		 endspan; /* end-rules: next-line or infty */
 	enum roffrule	 rule; /* current evaluation rule */
@@ -128,9 +131,9 @@ static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	int		 roff_res(struct roff *, 
 				char **, size_t *, int);
 static	void		 roff_setstr(struct roff *,
-				const char *, const char *);
+				const char *, const char *, int);
 static	enum rofferr	 roff_so(ROFF_ARGS);
-static	char		*roff_strdup(const char *);
+static	enum rofferr	 roff_userdef(ROFF_ARGS);
 
 /* See roff_hash_find() */
 
@@ -158,16 +161,17 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "tr", roff_line, NULL, NULL, 0, NULL },
 	{ ".", roff_cblock, NULL, NULL, 0, NULL },
 	{ "\\}", roff_ccond, NULL, NULL, 0, NULL },
+	{ NULL, roff_userdef, NULL, NULL, 0, NULL },
 };
 
 static	void		 roff_free1(struct roff *);
-static	enum rofft	 roff_hash_find(const char *);
+static	enum rofft	 roff_hash_find(const char *, size_t);
 static	void		 roff_hash_init(void);
 static	void		 roffnode_cleanscope(struct roff *);
-static	void		 roffnode_push(struct roff *, 
-				enum rofft, int, int);
+static	void		 roffnode_push(struct roff *, enum rofft,
+				const char *, int, int);
 static	void		 roffnode_pop(struct roff *);
-static	enum rofft	 roff_parse(const char *, int *);
+static	enum rofft	 roff_parse(struct roff *, const char *, int *);
 static	int		 roff_parse_nat(const char *, unsigned int *);
 
 /* See roff_hash_find() */
@@ -179,7 +183,7 @@ roff_hash_init(void)
 	struct roffmac	 *n;
 	int		  buc, i;
 
-	for (i = 0; i < (int)ROFF_MAX; i++) {
+	for (i = 0; i < (int)ROFF_USERDEF; i++) {
 		assert(roffs[i].name[0] >= ASCII_LO);
 		assert(roffs[i].name[0] <= ASCII_HI);
 
@@ -200,7 +204,7 @@ roff_hash_init(void)
  * the nil-terminated string name could be found.
  */
 static enum rofft
-roff_hash_find(const char *p)
+roff_hash_find(const char *p, size_t s)
 {
 	int		 buc;
 	struct roffmac	*n;
@@ -220,7 +224,7 @@ roff_hash_find(const char *p)
 	if (NULL == (n = hash[buc]))
 		return(ROFF_MAX);
 	for ( ; n; n = n->next)
-		if (0 == strcmp(n->name, p))
+		if (0 == strncmp(n->name, p, s) && '\0' == n->name[(int)s])
 			return((enum rofft)(n - roffs));
 
 	return(ROFF_MAX);
@@ -244,8 +248,8 @@ roffnode_pop(struct roff *r)
 			r->rstackpos--;
 
 	r->last = r->last->parent;
-	if (p->end)
-		free(p->end);
+	free(p->name);
+	free(p->end);
 	free(p);
 }
 
@@ -255,12 +259,15 @@ roffnode_pop(struct roff *r)
  * removed with roffnode_pop().
  */
 static void
-roffnode_push(struct roff *r, enum rofft tok, int line, int col)
+roffnode_push(struct roff *r, enum rofft tok, const char *name,
+		int line, int col)
 {
 	struct roffnode	*p;
 
 	p = mandoc_calloc(1, sizeof(struct roffnode));
 	p->tok = tok;
+	if (name)
+		p->name = mandoc_strdup(name);
 	p->parent = r->last;
 	p->line = line;
 	p->col = col;
@@ -392,7 +399,7 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 */
 
 	if (r->first_string && ! roff_res(r, bufp, szp, pos))
-		return(ROFF_RERUN);
+		return(ROFF_REPARSE);
 
 	/*
 	 * First, if a scope is open and we're not a macro, pass the
@@ -429,7 +436,7 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 */
 
 	ppos = pos;
-	if (ROFF_MAX == (t = roff_parse(*bufp, &pos)))
+	if (ROFF_MAX == (t = roff_parse(r, *bufp, &pos)))
 		return(ROFF_CONT);
 
 	assert(roffs[t].proc);
@@ -455,35 +462,28 @@ roff_endparse(struct roff *r)
  * form of ".foo xxx" in the usual way.
  */
 static enum rofft
-roff_parse(const char *buf, int *pos)
+roff_parse(struct roff *r, const char *buf, int *pos)
 {
-	int		 j;
-	char		 mac[5];
+	const char	*mac;
+	size_t		 maclen;
 	enum rofft	 t;
 
 	assert(ROFF_CTL(buf[*pos]));
 	(*pos)++;
 
-	while (buf[*pos] && (' ' == buf[*pos] || '\t' == buf[*pos]))
+	while (' ' == buf[*pos] || '\t' == buf[*pos])
 		(*pos)++;
 
 	if ('\0' == buf[*pos])
 		return(ROFF_MAX);
 
-	for (j = 0; j < 4; j++, (*pos)++)
-		if ('\0' == (mac[j] = buf[*pos]))
-			break;
-		else if (' ' == buf[*pos] || (j && '\\' == buf[*pos]))
-			break;
+	mac = buf + *pos;
+	maclen = strcspn(mac, " \\\t\0");
 
-	if (j == 4 || j < 1)
-		return(ROFF_MAX);
+	t = (r->current_string = roff_getstrn(r, mac, maclen))
+	    ? ROFF_USERDEF : roff_hash_find(mac, maclen);
 
-	mac[j] = '\0';
-
-	if (ROFF_MAX == (t = roff_hash_find(mac)))
-		return(t);
-
+	*pos += maclen;
 	while (buf[*pos] && ' ' == buf[*pos])
 		(*pos)++;
 
@@ -617,19 +617,32 @@ roff_block(ROFF_ARGS)
 {
 	int		sv;
 	size_t		sz;
+	char		*name;
 
-	if (ROFF_ig != tok && '\0' == (*bufp)[pos]) {
-		if ( ! (*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL))
-			return(ROFF_ERR);
-		return(ROFF_IGN);
-	} else if (ROFF_ig != tok) {
+	name = NULL;
+
+	if (ROFF_ig != tok) {
+		if ('\0' == (*bufp)[pos]) {
+			(*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL);
+			return(ROFF_IGN);
+		}
+		if (ROFF_de == tok)
+			name = *bufp + pos;
 		while ((*bufp)[pos] && ' ' != (*bufp)[pos])
 			pos++;
 		while (' ' == (*bufp)[pos])
-			pos++;
+			(*bufp)[pos++] = '\0';
 	}
 
-	roffnode_push(r, tok, ln, ppos);
+	roffnode_push(r, tok, name, ln, ppos);
+
+	/*
+	 * At the beginning of a `de' macro, clear the existing string
+	 * with the same name, if there is one.  New content will be
+	 * added from roff_block_text() in multiline mode.
+	 */
+	if (ROFF_de == tok)
+		roff_setstr(r, name, NULL, 0);
 
 	if ('\0' == (*bufp)[pos])
 		return(ROFF_IGN);
@@ -696,7 +709,7 @@ roff_block_sub(ROFF_ARGS)
 			roffnode_pop(r);
 			roffnode_cleanscope(r);
 
-			if (ROFF_MAX != roff_parse(*bufp, &pos))
+			if (ROFF_MAX != roff_parse(r, *bufp, &pos))
 				return(ROFF_RERUN);
 			return(ROFF_IGN);
 		}
@@ -708,11 +721,17 @@ roff_block_sub(ROFF_ARGS)
 	 */
 
 	ppos = pos;
-	t = roff_parse(*bufp, &pos);
+	t = roff_parse(r, *bufp, &pos);
 
-	/* If we're not a comment-end, then throw it away. */
-	if (ROFF_cblock != t)
+	/*
+	 * Macros other than block-end are only significant
+	 * in `de' blocks; elsewhere, simply throw them away.
+	 */
+	if (ROFF_cblock != t) {
+		if (ROFF_de == tok)
+			roff_setstr(r, r->last->name, *bufp + ppos, 1);
 		return(ROFF_IGN);
+	}
 
 	assert(roffs[t].proc);
 	return((*roffs[t].proc)(r, t, bufp, szp, 
@@ -724,6 +743,9 @@ roff_block_sub(ROFF_ARGS)
 static enum rofferr
 roff_block_text(ROFF_ARGS)
 {
+
+	if (ROFF_de == tok)
+		roff_setstr(r, r->last->name, *bufp + pos, 1);
 
 	return(ROFF_IGN);
 }
@@ -746,7 +768,7 @@ roff_cond_sub(ROFF_ARGS)
 
 	roffnode_cleanscope(r);
 
-	if (ROFF_MAX == (t = roff_parse(*bufp, &pos))) {
+	if (ROFF_MAX == (t = roff_parse(r, *bufp, &pos))) {
 		if ('\\' == (*bufp)[pos] && '}' == (*bufp)[pos + 1])
 			return(roff_ccond
 				(r, ROFF_ccond, bufp, szp,
@@ -880,7 +902,7 @@ roff_cond(ROFF_ARGS)
 		return(ROFF_ERR);
 	}
 
-	roffnode_push(r, tok, ln, ppos);
+	roffnode_push(r, tok, NULL, ln, ppos);
 
 	r->last->rule = rule;
 
@@ -967,7 +989,7 @@ roff_ds(ROFF_ARGS)
 		string++;
 
 	/* The rest is the value. */
-	roff_setstr(r, name, string);
+	roff_setstr(r, name, string, 0);
 	return(ROFF_IGN);
 }
 
@@ -1030,48 +1052,135 @@ roff_so(ROFF_ARGS)
 }
 
 
-static char *
-roff_strdup(const char *name)
+/* ARGSUSED */
+static enum rofferr
+roff_userdef(ROFF_ARGS)
 {
-	char		*namecopy, *sv;
+	const char	 *arg[9];
+	char		 *cp, *n1, *n2;
+	int		  i;
 
-	/* 
-	 * This isn't a nice simple mandoc_strdup() because we must
-	 * handle roff's stupid double-escape rule. 
+	/*
+	 * Collect pointers to macro argument strings
+	 * and null-terminate them.
 	 */
-	sv = namecopy = mandoc_malloc(strlen(name) + 1);
-	while (*name) {
-		if ('\\' == *name && '\\' == *(name + 1))
-			name++;
-		*namecopy++ = *name++;
+	cp = *bufp + pos;
+	for (i = 0; i < 9; i++) {
+		arg[i] = cp;
+		while ('\0' != *cp && ' ' != *cp)
+			cp++;
+		if ('\0' == *cp)
+			continue;
+		*cp++ = '\0';
+		while (' ' == *cp)
+			cp++;
 	}
 
-	*namecopy = '\0';
-	return(sv);
+	/*
+	 * Expand macro arguments.
+	 */
+	*szp = 0;
+	n1 = cp = mandoc_strdup(r->current_string);
+	while (NULL != (cp = strstr(cp, "\\$"))) {
+		i = cp[2] - '1';
+		if (0 > i || 8 < i) {
+			/* Not an argument invocation. */
+			cp += 2;
+			continue;
+		}
+
+		*szp = strlen(n1) - 3 + strlen(arg[i]) + 1;
+		n2 = mandoc_malloc(*szp);
+
+		strlcpy(n2, n1, (size_t)(cp - n1 + 1));
+		strlcat(n2, arg[i], *szp);
+		strlcat(n2, cp + 3, *szp);
+
+		cp = n2 + (cp - n1);
+		free(n1);
+		n1 = n2;
+	}
+
+	/*
+	 * Replace the macro invocation
+	 * by the expanded macro.
+	 */
+	free(*bufp);
+	*bufp = n1;
+	if (0 == *szp)
+		*szp = strlen(*bufp) + 1;
+
+	return(*szp && '\n' == (*bufp)[(int)*szp - 2] ?
+	   ROFF_REPARSE : ROFF_APPEND);
 }
 
-
+/*
+ * Store *string into the user-defined string called *name.
+ * In multiline mode, append to an existing entry and append '\n';
+ * else replace the existing entry, if there is one.
+ * To clear an existing entry, call with (*r, *name, NULL, 0).
+ */
 static void
-roff_setstr(struct roff *r, const char *name, const char *string)
+roff_setstr(struct roff *r, const char *name, const char *string,
+	int multiline)
 {
 	struct roffstr	 *n;
-	char		 *namecopy;
+	char		 *c;
+	size_t		  oldch, newch;
 
+	/* Search for an existing string with the same name. */
 	n = r->first_string;
 	while (n && strcmp(name, n->name))
 		n = n->next;
 
 	if (NULL == n) {
-		namecopy = mandoc_strdup(name);
+		/* Create a new string table entry. */
 		n = mandoc_malloc(sizeof(struct roffstr));
-		n->name = namecopy;
+		n->name = mandoc_strdup(name);
+		n->string = NULL;
 		n->next = r->first_string;
 		r->first_string = n;
-	} else
+	} else if (0 == multiline) {
+		/* In multiline mode, append; else replace. */
 		free(n->string);
+		n->string = NULL;
+	}
 
-	/* Don't use mandoc_strdup: clean out double-escapes. */
-	n->string = string ? roff_strdup(string) : NULL;
+	if (NULL == string)
+		return;
+
+	/*
+	 * One additional byte for the '\n' in multiline mode,
+	 * and one for the terminating '\0'.
+	 */
+	newch = strlen(string) + (multiline ? 2 : 1);
+	if (NULL == n->string) {
+		n->string = mandoc_malloc(newch);
+		*n->string = '\0';
+		oldch = 0;
+	} else {
+		oldch = strlen(n->string);
+		n->string = mandoc_realloc(n->string, oldch + newch);
+	}
+
+	/* Skip existing content in the destination buffer. */
+	c = n->string + oldch;
+
+	/* Append new content to the destination buffer. */
+	while (*string) {
+		/*
+		 * Rudimentary roff copy mode:
+		 * Handle escaped backslashes.
+		 */
+		if ('\\' == *string && '\\' == *(string + 1))
+			string++;
+		*c++ = *string++;
+	}
+
+	/* Append terminating bytes. */
+	if (multiline)
+		*c++ = '\n';
+	*c = '\0';
 }
 
 

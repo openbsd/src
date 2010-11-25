@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.54 2010/10/26 23:34:38 schwarze Exp $ */
+/*	$Id: main.c,v 1.55 2010/11/25 22:23:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -64,6 +64,7 @@ enum	outt {
 struct	curparse {
 	const char	 *file;		/* Current parse. */
 	int		  fd;		/* Current parse. */
+	int		  line;		/* Line number in the file. */
 	enum mandoclevel  wlevel;	/* Ignore messages below this. */
 	int		  wstop;	/* Stop after a file with a warning. */
 	enum intt	  inttype;	/* which parser to use */
@@ -190,10 +191,11 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"static buffer exhausted",
 };
 
+static	void		  parsebuf(struct curparse *, struct buf, int);
 static	void		  pdesc(struct curparse *);
 static	void		  fdesc(struct curparse *);
 static	void		  ffile(const char *, struct curparse *);
-static	int		  pfile(const char *, struct curparse *, int);
+static	int		  pfile(const char *, struct curparse *);
 static	int		  moptions(enum intt *, char *);
 static	int		  mmsg(enum mandocerr, void *, 
 				int, int, const char *);
@@ -320,7 +322,7 @@ ffile(const char *file, struct curparse *curp)
 }
 
 static int
-pfile(const char *file, struct curparse *curp, int ln)
+pfile(const char *file, struct curparse *curp)
 {
 	const char	*savefile;
 	int		 fd, savefd;
@@ -552,20 +554,8 @@ fdesc(struct curparse *curp)
 static void
 pdesc(struct curparse *curp)
 {
-	struct buf	 ln, blk;
-	int		 i, pos, lnn, lnn_start, with_mmap, of;
-	enum rofferr	 re;
-	unsigned char	 c;
-	struct man	*man;
-	struct mdoc	*mdoc;
-	struct roff	*roff;
-
-	memset(&ln, 0, sizeof(struct buf));
-
-	/*
-	 * Two buffers: ln and buf.  buf is the input file and may be
-	 * memory mapped.  ln is a line buffer and grows on-demand.
-	 */
+	struct buf	 blk;
+	int		 with_mmap;
 
 	if ( ! read_whole_file(curp, &blk, &with_mmap)) {
 		exit_status = MANDOCLEVEL_SYSERR;
@@ -575,14 +565,42 @@ pdesc(struct curparse *curp)
 	if (NULL == curp->roff) 
 		curp->roff = roff_alloc(&curp->regs, curp, mmsg);
 	assert(curp->roff);
-	roff = curp->roff;
-	mdoc = curp->mdoc;
-	man  = curp->man;
 
-	for (i = 0, lnn = 1; i < (int)blk.sz;) {
-		pos = 0;
-		lnn_start = lnn;
-		while (i < (int)blk.sz) {
+	curp->line = 1;
+	parsebuf(curp, blk, 1);
+
+	if (with_mmap)
+		munmap(blk.buf, blk.sz);
+	else
+		free(blk.buf);
+}
+
+static void
+parsebuf(struct curparse *curp, struct buf blk, int start)
+{
+	struct buf	 ln;
+	int		 i, pos, lnn, of;
+	unsigned char	 c;
+	struct man	*man;
+	struct mdoc	*mdoc;
+	struct roff	*roff;
+
+	man  = curp->man;
+	mdoc = curp->mdoc;
+	roff = curp->roff;
+
+	memset(&ln, 0, sizeof(struct buf));
+
+	lnn = curp->line;  /* line number in the real file */
+	pos = 0;  /* byte number in the ln buffer */
+
+	for (i = 0; i < (int)blk.sz;) {
+		if (0 == pos && '\0' == blk.buf[i])
+			break;
+		if (start)
+			curp->line = lnn;
+
+		while (i < (int)blk.sz && (start || '\0' != blk.buf[i])) {
 			if ('\n' == blk.buf[i]) {
 				++i;
 				++lnn;
@@ -601,7 +619,7 @@ pdesc(struct curparse *curp)
 			c = (unsigned char) blk.buf[i];
 			if ( ! (isascii(c) && (isgraph(c) || isblank(c)))) {
 				mmsg(MANDOCERR_BADCHAR, curp, 
-				    lnn_start, pos, "ignoring byte");
+				    curp->line, pos, "ignoring byte");
 				i++;
 				continue;
 			}
@@ -661,21 +679,32 @@ pdesc(struct curparse *curp)
 		 */
 
 		of = 0;
-		do {
-			re = roff_parseln(roff, lnn_start, 
-					&ln.buf, &ln.sz, of, &of);
-		} while (ROFF_RERUN == re);
-
-		if (ROFF_IGN == re) {
+rerun:
+		switch (roff_parseln(roff, curp->line, &ln.buf, &ln.sz,
+		    of, &of)) {
+		case (ROFF_REPARSE):
+			parsebuf(curp, ln, 0);
+			pos = 0;
 			continue;
-		} else if (ROFF_ERR == re) {
+		case (ROFF_APPEND):
+			pos = strlen(ln.buf);
+			continue;
+		case (ROFF_RERUN):
+			goto rerun;
+		case (ROFF_IGN):
+			pos = 0;
+			continue;
+		case (ROFF_ERR):
 			assert(MANDOCLEVEL_FATAL <= exit_status);
 			break;
-		} else if (ROFF_SO == re) {
-			if (pfile(ln.buf + of, curp, lnn_start))
+		case (ROFF_SO):
+			if (pfile(ln.buf + of, curp)) {
+				pos = 0;
 				continue;
-			else
+			} else
 				break;
+		case (ROFF_CONT):
+			break;
 		}
 
 		/*
@@ -690,21 +719,24 @@ pdesc(struct curparse *curp)
 
 		/* Lastly, push down into the parsers themselves. */
 
-		if (man && ! man_parseln(man, lnn_start, ln.buf, of)) {
+		if (man && ! man_parseln(man, curp->line, ln.buf, of)) {
 			assert(MANDOCLEVEL_FATAL <= exit_status);
 			break;
 		}
-		if (mdoc && ! mdoc_parseln(mdoc, lnn_start, ln.buf, of)) {
+		if (mdoc && ! mdoc_parseln(mdoc, curp->line, ln.buf, of)) {
 			assert(MANDOCLEVEL_FATAL <= exit_status);
 			break;
 		}
+
+		/* Temporary buffers typically are not full. */
+		if (0 == start && '\0' == blk.buf[i])
+			break;
+
+		/* Start the next input line. */
+		pos = 0;
 	}
 
 	free(ln.buf);
-	if (with_mmap)
-		munmap(blk.buf, blk.sz);
-	else
-		free(blk.buf);
 }
 
 
