@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.17 2010/11/25 22:41:51 schwarze Exp $ */
+/*	$Id: roff.c,v 1.18 2010/11/25 23:07:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -538,8 +538,6 @@ roff_cblock(ROFF_ARGS)
 		/* FALLTHROUGH */
 	case (ROFF_dei):
 		/* FALLTHROUGH */
-	case (ROFF_de1):
-		/* FALLTHROUGH */
 	case (ROFF_ig):
 		break;
 	default:
@@ -626,6 +624,8 @@ roff_block(ROFF_ARGS)
 			(*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL);
 			return(ROFF_IGN);
 		}
+		if (ROFF_de1 == tok)
+			tok = ROFF_de;
 		if (ROFF_de == tok)
 			name = *bufp + pos;
 		while ((*bufp)[pos] && ' ' != (*bufp)[pos])
