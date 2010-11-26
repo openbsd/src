@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.60 2010/11/22 21:07:18 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.61 2010/11/26 11:59:40 krw Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -210,8 +210,6 @@ extern struct cpu_info cpu_info_primary;
 #endif
 
 #define aston(p)	((p)->p_md.md_astpending = 1)
-
-extern u_int32_t cpus_attached;
 
 #define curpcb		curcpu()->ci_curpcb
 

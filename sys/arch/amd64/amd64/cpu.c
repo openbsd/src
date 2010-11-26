@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.38 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.39 2010/11/26 11:59:40 krw Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -134,8 +134,6 @@ struct cfdriver cpu_cd = {
 struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
-
-u_int32_t cpus_attached = 0;
 
 #ifdef MULTIPROCESSOR
 /*
@@ -345,8 +343,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		panic("unknown processor type??");
 	}
 	cpu_vm_init(ci);
-
-	cpus_attached |= (1 << ci->ci_cpuid);
 
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
