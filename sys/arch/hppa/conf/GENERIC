@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.139 2010/09/23 16:21:46 yuo Exp $
+#	$OpenBSD: GENERIC,v 1.140 2010/11/26 20:13:55 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -153,7 +153,7 @@ udav*	at uhub?		# Davicom DM9601 based Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 urio*	at uhub?		# Diamond Multimedia Rio 500
-uscanner* at uhub?		# USB Scanners
+uscanner* at uhub? disable	# USB Scanners
 uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio

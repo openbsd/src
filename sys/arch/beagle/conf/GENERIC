@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.3 2010/07/03 03:59:16 krw Exp $
+# $OpenBSD: GENERIC,v 1.4 2010/11/26 20:13:55 miod Exp $
 #
 # GENERIC machine description file
 #
@@ -140,7 +140,7 @@ udav*		at uhub?		# Davicom DM9601 based Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 urio*		at uhub?		# Diamond Multimedia Rio 500
-uscanner*	at uhub?		# USB Scanners
+uscanner*	at uhub? disable	# USB Scanners
 #uyap*		at uhub?		# Y@P firmware loader
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio

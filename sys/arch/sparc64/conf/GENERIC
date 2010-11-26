@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.259 2010/11/06 12:24:28 damien Exp $
+#	$OpenBSD: GENERIC,v 1.260 2010/11/26 20:13:55 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -233,7 +233,7 @@ zyd*	at uhub?		# Zydas ZD1211
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 urio*	at uhub?		# Diamond Multimedia Rio 500
-uscanner* at uhub?		# USB Scanners
+uscanner* at uhub? disable	# USB Scanners
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
