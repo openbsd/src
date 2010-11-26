@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.11 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.12 2010/11/26 21:03:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -645,7 +645,7 @@ gfxp_copyrect(struct gfxp_softc *sc, int sx, int sy, int dx, int dy,
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_CONFIG,
 	    PM2_CONFIG_FB_WRITE_EN | PM2_CONFIG_FB_READ_SRC_EN);
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_FB_SRC_DELTA,
-	    PM2_COORDS(sx - dx, sy - dy));
+	    PM2_COORDS((sx - dx) & 0xffff, (sy - dy) & 0xffff));
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RECT_ORIG,
 	    PM2_COORDS(dx, dy));
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RECT_SIZE,
