@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.17 2010/11/26 07:46:31 espie Exp $
+.\" $OpenBSD: packages-specs.7,v 1.18 2010/11/26 10:02:35 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -156,13 +156,13 @@ the dependent port may override this default, and set
 .Ev PKGSPEC
 to achieve a more restrictive default, for instance,
 .Pa databases/db/v3
-sets the default to 
+sets the default to
 .Qq PKGSPEC = db->=3,<4
-to avoid collision with 
+to avoid collision with
 .Pa databases/db/v4 .
 Be extra cautious with this functionality: this tweaks the depends line for
 any including package, thus usually requiring a version bump, and is in
-general only required for very messy cases where several incompatible versions 
+general only required for very messy cases where several incompatible versions
 of the same software coexist as packages with the same stem.
 .Pp
 An explicit specification such as
