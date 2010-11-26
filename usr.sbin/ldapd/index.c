@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.7 2010/06/26 23:19:42 martinh Exp $ */
+/*	$OpenBSD: index.c,v 1.8 2010/11/26 14:44:01 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -112,7 +112,7 @@ index_attribute(struct namespace *ns, char *attr, struct btval *dn,
 		rc = btree_txn_put(NULL, ns->indx_txn, &key, &val,
 		    BT_NOOVERWRITE);
 		free(t);
-		if (rc == BT_FAIL)
+		if (rc == -1 && errno != EEXIST)
 			return -1;
 	}
 
@@ -169,7 +169,7 @@ index_rdn(struct namespace *ns, struct btval *dn)
 	log_debug("indexing rdn on %.*s", (int)key.size, (char *)key.data);
 	rc = btree_txn_put(NULL, ns->indx_txn, &key, &val, BT_NOOVERWRITE);
 	btval_reset(&key);
-	if (rc == BT_FAIL)
+	if (rc == -1 && errno != EEXIST)
 		return -1;
 	return 0;
 }
