@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.271 2010/11/14 11:18:30 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.272 2010/11/26 07:46:31 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 14 2010 $
+.Dd $Mdocdate: November 26 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1669,6 +1669,15 @@ of ${PKGNAME}${SUBPACKAGE} is not appropriate.
 .It Ev PKGPATH
 Path to the current port's directory, relative to ${PORTSDIR}.
 Read-only.
+.It Ev PKGSPEC
+default package spec for using this port as a dependency.
+Defaults to
+.Sq stem-* ,
+derived from the
+.Ev FULLPKGNAME.
+Do not override without very good reasons,
+namely software that coexist as different incompatible versions with the
+same stem, e.g., already a mess.
 .It Ev PLIST_DB
 User settings.
 Directory used to save generated packing-lists, as persistent information.
@@ -2759,7 +2768,8 @@ The following variables are subpackage dependent:
 .Ev MESSAGE ,
 .Ev UNMESSAGE ,
 .Ev DESCR ,
-.Ev PLIST .
+.Ev PLIST ,
+.Ev PKSPEC .
 .Pp
 The usual non-MULTI_PACKAGES variables are simply used as default values
 for all subpackages.
