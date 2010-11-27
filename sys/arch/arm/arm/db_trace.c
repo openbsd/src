@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 2010/11/27 20:46:39 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /* 
@@ -129,7 +129,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	while (count-- && frame != NULL) {
 		db_addr_t	scp;
 		u_int32_t	savecode;
-		int		r;
+		int		r, n;
 		u_int32_t	*rp;
 		const char	*sep;
 
@@ -160,13 +160,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if ((savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
 			rp = frame - 4;
-			sep = "\n\t";
+			n = 0;
 			for (r = 10; r >= 0; r--) {
 				if (savecode & (1 << r)) {
-					(*pr)("%sr%d=0x%08x",
-					    sep, r, *rp--);
-					sep = (frame - rp) % 4 == 2 ?
-					    "\n\t" : " ";
+					sep = n++ % 4 == 0 ? "\n\t" : " ";
+					(*pr)("%sr%d=0x%08x", sep, r, *rp--);
 				}
 			}
 		}
