@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.162 2010/03/27 23:12:48 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.163 2010/11/27 18:04:23 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8318,7 +8318,7 @@ Lbzero_block:
 
 /*
  * kcopy() is exactly like bcopy except that it set pcb_onfault such that
- * when a fault occurs, it is able to return -1 to indicate this to the
+ * when a fault occurs, it is able to return EFAULT to indicate this to the
  * caller.
  */
 ENTRY(kcopy)
