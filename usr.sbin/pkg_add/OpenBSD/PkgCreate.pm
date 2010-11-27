@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.27 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.28 2010/11/27 11:54:25 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -237,6 +237,11 @@ sub prepare_for_archival
 sub copy_over
 {
 }
+
+sub discover_directories
+{
+}
+
 package OpenBSD::PackingElement::RcScript;
 sub archive
 {
@@ -381,6 +386,13 @@ sub copy_over
 	$e->copy_long($wrarc);
 }
 
+package OpenBSD::PackingElement::Dir;
+sub discover_directories
+{
+	my ($self, $state) = @_;
+	$state->{known_dirs}->{$self->fullname} = 1;
+}
+
 package OpenBSD::PackingElement::InfoFile;
 sub makesum_plist
 {
@@ -398,6 +410,8 @@ sub makesum_plist
 }
 
 package OpenBSD::PackingElement::Manpage;
+use File::Basename;
+
 sub makesum_plist
 {
 	my ($self, $plist, $state) = @_;
@@ -406,11 +420,19 @@ sub makesum_plist
 	}
 	my $dest = $self->source_to_dest;
 	my $out = $state->{base}.$self->cwd."/".$dest;
+	my $d = dirname($self->cwd."/".$dest);
+	if (-d $state->{base}.$d) {
+		undef $d;
+	}
 	$self->format($state, $self->cwd."/".$dest);
 	if (-z $out) {
 		$state->errsay("groff produced empty result for #1", $dest);
 		$state->errsay("\tkeeping source manpage");
 		return $self->SUPER::makesum_plist($plist, $state);
+	}
+	if (defined $d && !$state->{known_dirs}->{$d}) {
+		$state->{known_dirs}->{$d} = 1;
+		OpenBSD::PackingElement::Dir->add($plist, dirname($dest));
 	}
 	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
 	$e->compute_checksum($e, $state, $state->{base});
@@ -914,6 +936,7 @@ sub parse_and_run
 
 	$state->{base} = $base;
 
+	$plist->discover_directories($state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checksumming");
 		if ($regen_package) {
