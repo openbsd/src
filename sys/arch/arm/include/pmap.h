@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.12 2010/07/01 22:40:10 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.13 2010/11/27 20:45:27 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -177,7 +177,6 @@ struct pmap {
 	simple_lock_data_t	pm_lock;
 	struct l2_dtable	*pm_l2[L2_SIZE];
 	struct pmap_statistics	pm_stats;
-	LIST_ENTRY(pmap)	pm_list;
 };
 
 typedef struct pmap *pmap_t;

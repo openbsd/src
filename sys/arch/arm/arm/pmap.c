@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2010/07/01 22:40:10 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 2010/11/27 20:45:26 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -257,7 +257,6 @@ union pmap_cache_state pmap_deadproc_cache_state;
  * in pmap_create().
  */
 static struct pool pmap_pmap_pool;
-static LIST_HEAD(, pmap) pmap_pmaps;
 
 /*
  * Pool of PV structures
@@ -482,7 +481,6 @@ struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t);
 u_int		pmap_modify_pv(struct vm_page *, pmap_t, vaddr_t,
 		    u_int, u_int);
 
-void		pmap_pinit(pmap_t);
 int		pmap_pmap_ctor(void *, void *, int);
 
 void		pmap_alloc_l1(pmap_t);
@@ -837,20 +835,6 @@ pmap_modify_pv(struct vm_page *pg, pmap_t pm, vaddr_t va,
 	}
 
 	return (oflags);
-}
-
-void
-pmap_pinit(pmap_t pm)
-{
-
-	if (vector_page < KERNEL_BASE) {
-		/*
-		 * Map the vector page.
-		 */
-		pmap_enter(pm, vector_page, systempage.pv_pa,
-		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
-		pmap_update(pm);
-	}
 }
 
 /*
@@ -1892,9 +1876,14 @@ pmap_create(void)
 	 * initialised to zero.
 	 */
 
-	pmap_pinit(pm);
-
-	LIST_INSERT_HEAD(&pmap_pmaps, pm, pm_list);
+	if (vector_page < KERNEL_BASE) {
+		/*
+		 * Map the vector page.
+		 */
+		pmap_enter(pm, vector_page, systempage.pv_pa,
+		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
+		pmap_update(pm);
+	}
 
 	return (pm);
 }
@@ -3233,8 +3222,6 @@ pmap_destroy(pmap_t pm)
 		curpcb->pcb_pagedir = pcb->pcb_pagedir;
 	}
 
-	LIST_REMOVE(pm, pm_list);
-
 	if (pmap_cache_state == &pm->pm_cstate)
 		pmap_cache_state = &pmap_deadproc_cache_state;
 
@@ -4025,8 +4012,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr);
 	pool_set_ctordtor(&pmap_pmap_pool, pmap_pmap_ctor, NULL, NULL);
-	LIST_INIT(&pmap_pmaps);
-	LIST_INSERT_HEAD(&pmap_pmaps, pm, pm_list);
 
 	/*
 	 * Initialize the pv pool.
@@ -5050,150 +5035,6 @@ pmap_uarea(vaddr_t va)
 	cpu_cpwait();
 }
 #endif /* ARM_MMU_XSCALE == 1 */
-
-#if defined(DDB)
-/*
- * A couple of ddb-callable functions for dumping pmaps
- */
-void pmap_dump_all(void);
-void pmap_dump(pmap_t);
-
-void
-pmap_dump_all(void)
-{
-	pmap_t pm;
-
-	LIST_FOREACH(pm, &pmap_pmaps, pm_list) {
-		if (pm == pmap_kernel())
-			continue;
-		pmap_dump(pm);
-		printf("\n");
-	}
-}
-
-static pt_entry_t ncptes[64];
-void pmap_dump_ncpg(pmap_t);
-
-void
-pmap_dump(pmap_t pm)
-{
-	struct l2_dtable *l2;
-	struct l2_bucket *l2b;
-	pt_entry_t *ptep, pte;
-	vaddr_t l2_va, l2b_va, va;
-	int i, j, k, occ, rows = 0;
-
-	if (pm == pmap_kernel())
-		printf("pmap_kernel (%p): ", pm);
-	else
-		printf("user pmap (%p): ", pm);
-
-	printf("domain %d, l1 at %p\n", pm->pm_domain, pm->pm_l1->l1_kva);
-
-	l2_va = 0;
-	for (i = 0; i < L2_SIZE; i++, l2_va += 0x01000000) {
-		l2 = pm->pm_l2[i];
-
-		if (l2 == NULL || l2->l2_occupancy == 0)
-			continue;
-
-		l2b_va = l2_va;
-		for (j = 0; j < L2_BUCKET_SIZE; j++, l2b_va += 0x00100000) {
-			l2b = &l2->l2_bucket[j];
-
-			if (l2b->l2b_occupancy == 0 || l2b->l2b_kva == NULL)
-				continue;
-
-			ptep = l2b->l2b_kva;
-			
-			for (k = 0; k < 256 && ptep[k] == 0; k++)
-				;
-
-			k &= ~63;
-			occ = l2b->l2b_occupancy;
-			va = l2b_va + (k * 4096);
-			for (; k < 256; k++, va += 0x1000) {
-				char ch = ' ';
-				if ((k % 64) == 0) {
-					if ((rows % 8) == 0) {
-						printf(
-"          |0000   |8000   |10000  |18000  |20000  |28000  |30000  |38000\n");
-					}
-					printf("%08lx: ", va);
-				}
-
-				ncptes[k & 63] = 0;
-				pte = ptep[k];
-				if (pte == 0) {
-					ch = '.';
-				} else {
-					occ--;
-					switch (pte & 0x0c) {
-					case 0x00:
-						ch = 'D'; /* No cache No buff */
-						break;
-					case 0x04:
-						ch = 'B'; /* No cache buff */
-						break;
-					case 0x08:
-						if (pte & 0x40)
-							ch = 'm';
-						else
-						   ch = 'C'; /* Cache No buff */
-						break;
-					case 0x0c:
-						ch = 'F'; /* Cache Buff */
-						break;
-					}
-
-					if ((pte & L2_S_PROT_U) == L2_S_PROT_U)
-						ch += 0x20;
-
-					if ((pte & 0xc) == 0)
-						ncptes[k & 63] = pte;
-				}
-
-				if ((k % 64) == 63) {
-					rows++;
-					printf("%c\n", ch);
-					pmap_dump_ncpg(pm);
-					if (occ == 0)
-						break;
-				} else
-					printf("%c", ch);
-			}
-		}
-	}
-}
-
-void
-pmap_dump_ncpg(pmap_t pm)
-{
-	struct vm_page *pg;
-	struct pv_entry *pv;
-	int i;
-
-	for (i = 0; i < 63; i++) {
-		if (ncptes[i] == 0)
-			continue;
-
-		pg = PHYS_TO_VM_PAGE(l2pte_pa(ncptes[i]));
-		if (pg == NULL)
-			continue;
-
-		printf(" pa 0x%08lx: krw %d kro %d urw %d uro %d\n",
-		    pg->phys_addr,
-		    pg->mdpage.krw_mappings, pg->mdpage.kro_mappings,
-		    pg->mdpage.urw_mappings, pg->mdpage.uro_mappings);
-
-		for (pv = pg->mdpage.pvh_list; pv; pv = pv->pv_next) {
-			printf("   %c va 0x%08lx, flags 0x%x\n",
-			    (pm == pv->pv_pmap) ? '*' : ' ',
-			    pv->pv_va, pv->pv_flags);
-		}
-	}
-}
-#endif
 
 uint32_t pmap_alias_dist;
 uint32_t pmap_alias_bits;
