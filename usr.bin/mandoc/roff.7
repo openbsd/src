@@ -1,4 +1,4 @@
-.\"	$Id: roff.7,v 1.8 2010/07/31 21:43:07 schwarze Exp $
+.\"	$Id: roff.7,v 1.9 2010/11/27 02:17:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2010 $
+.Dd $Mdocdate: November 27 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -318,6 +318,23 @@ Note that invoking a new
 .Xr mdoc 7
 section will unset this value.
 .El
+.Ss \&so
+Include a source file.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&so Ar file
+.Pp
+The
+.Ar file
+will be read and its contents processed as input in place of the
+.Sq \&.so
+request line.
+To avoid inadvertant inclusion of unrelated files,
+.Xr mandoc 1
+only accepts relative paths not containing the strings
+.Qq ../
+and
+.Qq /.. .
 .Ss \&tr
 Output character translation.
 This macro is intended to have one argument,
