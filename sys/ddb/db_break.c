@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.13 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.14 2010/11/27 19:59:11 miod Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -79,13 +79,13 @@ db_breakpoint_free(db_breakpoint_t bkpt)
 }
 
 void
-db_set_breakpoint(struct vm_map *map, db_addr_t addr, int count)
+db_set_breakpoint(db_addr_t addr, int count)
 {
 	db_breakpoint_t	bkpt;
 
-	if (db_find_breakpoint(map, addr)) {
-	    db_printf("Already set.\n");
-	    return;
+	if (db_find_breakpoint(addr)) {
+		db_printf("Already set.\n");
+		return;
 	}
 
 #ifdef DB_VALID_BREAKPOINT
@@ -97,11 +97,10 @@ db_set_breakpoint(struct vm_map *map, db_addr_t addr, int count)
 
 	bkpt = db_breakpoint_alloc();
 	if (bkpt == 0) {
-	    db_printf("Too many breakpoints.\n");
-	    return;
+		db_printf("Too many breakpoints.\n");
+		return;
 	}
 
-	bkpt->map = map;
 	bkpt->address = addr;
 	bkpt->flags = 0;
 	bkpt->init_count = count;
@@ -112,48 +111,36 @@ db_set_breakpoint(struct vm_map *map, db_addr_t addr, int count)
 }
 
 void
-db_delete_breakpoint(struct vm_map *map, db_addr_t addr)
+db_delete_breakpoint(db_addr_t addr)
 {
 	db_breakpoint_t	bkpt;
 	db_breakpoint_t	*prev;
 
-	for (prev = &db_breakpoint_list;
-	     (bkpt = *prev) != 0;
-	     prev = &bkpt->link) {
-	    if (db_map_equal(bkpt->map, map) &&
-		(bkpt->address == addr)) {
-		*prev = bkpt->link;
-		break;
-	    }
+	for (prev = &db_breakpoint_list; (bkpt = *prev) != 0;
+	    prev = &bkpt->link) {
+		if (bkpt->address == addr) {
+			*prev = bkpt->link;
+			break;
+		}
 	}
 	if (bkpt == 0) {
-	    db_printf("Not set.\n");
-	    return;
+		db_printf("Not set.\n");
+		return;
 	}
 
 	db_breakpoint_free(bkpt);
 }
 
 db_breakpoint_t
-db_find_breakpoint(struct vm_map *map, db_addr_t addr)
+db_find_breakpoint(db_addr_t addr)
 {
 	db_breakpoint_t	bkpt;
 
-	for (bkpt = db_breakpoint_list;
-	     bkpt != 0;
-	     bkpt = bkpt->link)
-	{
-	    if (db_map_equal(bkpt->map, map) &&
-		(bkpt->address == addr))
-		return (bkpt);
-	}
-	return (0);
-}
+	for (bkpt = db_breakpoint_list; bkpt != 0; bkpt = bkpt->link)
+		if (bkpt->address == addr)
+			return (bkpt);
 
-db_breakpoint_t
-db_find_breakpoint_here(db_addr_t addr)
-{
-    return db_find_breakpoint(db_map_addr(addr), addr);
+	return (0);
 }
 
 boolean_t	db_breakpoints_inserted = TRUE;
@@ -164,17 +151,13 @@ db_set_breakpoints(void)
 	db_breakpoint_t	bkpt;
 
 	if (!db_breakpoints_inserted) {
-
-	    for (bkpt = db_breakpoint_list;
-	         bkpt != 0;
-	         bkpt = bkpt->link)
-		if (db_map_current(bkpt->map)) {
-		    bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE,
-			FALSE);
-		    db_put_value(bkpt->address, BKPT_SIZE,
-			BKPT_SET(bkpt->bkpt_inst));
+		for (bkpt = db_breakpoint_list; bkpt != 0; bkpt = bkpt->link) {
+			bkpt->bkpt_inst =
+			    db_get_value(bkpt->address, BKPT_SIZE, FALSE);
+			db_put_value(bkpt->address, BKPT_SIZE,
+			    BKPT_SET(bkpt->bkpt_inst));
 		}
-	    db_breakpoints_inserted = TRUE;
+		db_breakpoints_inserted = TRUE;
 	}
 }
 
@@ -184,14 +167,9 @@ db_clear_breakpoints(void)
 	db_breakpoint_t	bkpt;
 
 	if (db_breakpoints_inserted) {
-
-	    for (bkpt = db_breakpoint_list;
-	         bkpt != 0;
-		 bkpt = bkpt->link)
-		if (db_map_current(bkpt->map)) {
-		    db_put_value(bkpt->address, BKPT_SIZE, bkpt->bkpt_inst);
-		}
-	    db_breakpoints_inserted = FALSE;
+		for (bkpt = db_breakpoint_list; bkpt != 0; bkpt = bkpt->link)
+			db_put_value(bkpt->address, BKPT_SIZE, bkpt->bkpt_inst);
+		db_breakpoints_inserted = FALSE;
 	}
 }
 
@@ -218,7 +196,6 @@ db_set_temp_breakpoint(db_addr_t addr)
 	    return (0);
 	}
 
-	bkpt->map = NULL;
 	bkpt->address = addr;
 	bkpt->flags = BKPT_TEMP;
 	bkpt->init_count = 1;
@@ -244,21 +221,16 @@ db_list_breakpoints(void)
 {
 	db_breakpoint_t	bkpt;
 
-	if (db_breakpoint_list == 0) {
-	    db_printf("No breakpoints set\n");
-	    return;
+	if (db_breakpoint_list == NULL) {
+		db_printf("No breakpoints set\n");
+		return;
 	}
 
-	db_printf(" Map      Count    Address\n");
-	for (bkpt = db_breakpoint_list;
-	     bkpt != 0;
-	     bkpt = bkpt->link)
-	{
-	    db_printf("%s%p %5d    ",
-		      db_map_current(bkpt->map) ? "*" : " ",
-		      bkpt->map, bkpt->init_count);
-	    db_printsym(bkpt->address, DB_STGY_PROC, db_printf);
-	    db_printf("\n");
+	db_printf(" Count    Address\n");
+	for (bkpt = db_breakpoint_list; bkpt != 0; bkpt = bkpt->link) {
+		db_printf(" %5d    ", bkpt->init_count);
+		db_printsym(bkpt->address, DB_STGY_PROC, db_printf);
+		db_printf("\n");
 	}
 }
 
@@ -267,7 +239,7 @@ db_list_breakpoints(void)
 void
 db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	db_delete_breakpoint(db_map_addr(addr), (db_addr_t)addr);
+	db_delete_breakpoint((db_addr_t)addr);
 }
 
 /* Set breakpoint with skip count */
@@ -276,9 +248,9 @@ void
 db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (count == -1)
-	    count = 1;
+		count = 1;
 
-	db_set_breakpoint(db_map_addr(addr), (db_addr_t)addr, count);
+	db_set_breakpoint((db_addr_t)addr, count);
 }
 
 /* list breakpoints */
@@ -287,54 +259,4 @@ void
 db_listbreak_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_list_breakpoints();
-}
-
-/*
- *	We want ddb to be usable before most of the kernel has been
- *	initialized.  In particular, current_thread() or kernel_map
- *	(or both) may be null.
- */
-
-boolean_t
-db_map_equal(struct vm_map *map1, struct vm_map *map2)
-{
-	return ((map1 == map2) ||
-		((map1 == NULL) && (map2 == kernel_map)) ||
-		((map1 == kernel_map) && (map2 == NULL)));
-}
-
-boolean_t
-db_map_current(struct vm_map *map)
-{
-#if 0
-	thread_t	thread;
-
-	return ((map == NULL) ||
-		(map == kernel_map) ||
-		(((thread = current_thread()) != NULL) &&
-		 (map == thread->proc->map)));
-#else
-	return (1);
-#endif
-}
-
-struct vm_map *
-db_map_addr(vaddr_t addr)
-{
-#if 0
-	thread_t	thread;
-
-	/*
-	 *	We want to return kernel_map for all
-	 *	non-user addresses, even when debugging
-	 *	kernel tasks with their own maps.
-	 */
-
-	if ((VM_MIN_ADDRESS <= addr) &&
-	    (addr < VM_MAX_ADDRESS) &&
-	    ((thread = current_thread()) != NULL))
-	    return thread->proc->map;
-	else
-#endif
-	    return kernel_map;
 }

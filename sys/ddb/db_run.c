@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.21 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.22 2010/11/27 19:59:11 miod Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -96,7 +96,7 @@ db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 	/*
 	 * Now check for a breakpoint at this address.
 	 */
-	bkpt = db_find_breakpoint_here(pc);
+	bkpt = db_find_breakpoint(pc);
 	if (bkpt) {
 		if (--bkpt->count == 0) {
 			db_clear_single_step(regs);
@@ -204,7 +204,7 @@ db_restart_at_pc(db_regs_t *regs, boolean_t watchpt)
 	}
 
 	if (db_run_mode == STEP_CONTINUE) {
-		if (watchpt || db_find_breakpoint_here(pc)) {
+		if (watchpt || db_find_breakpoint(pc)) {
 			/*
 			 * Step over breakpoint/watchpoint.
 			 */

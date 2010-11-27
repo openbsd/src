@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.9 2006/03/13 06:23:20 jsg Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.10 2010/11/27 19:59:11 miod Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /* 
@@ -84,36 +84,26 @@ db_watchpoint_free(db_watchpoint_t watch)
 }
 
 void
-db_set_watchpoint(struct vm_map *map, db_addr_t addr, vsize_t size)
+db_set_watchpoint(db_addr_t addr, vsize_t size)
 {
 	db_watchpoint_t	watch;
-
-	if (map == NULL) {
-	    db_printf("No map.\n");
-	    return;
-	}
 
 	/*
 	 *	Should we do anything fancy with overlapping regions?
 	 */
 
-	for (watch = db_watchpoint_list;
-	     watch != 0;
-	     watch = watch->link)
-	    if (db_map_equal(watch->map, map) &&
-		(watch->loaddr == addr) &&
-		(watch->hiaddr == addr+size)) {
-		db_printf("Already set.\n");
-		return;
-	    }
+	for (watch = db_watchpoint_list; watch != 0; watch = watch->link)
+		if (watch->loaddr == addr && watch->hiaddr == addr + size) {
+			db_printf("Already set.\n");
+			return;
+		}
 
 	watch = db_watchpoint_alloc();
 	if (watch == 0) {
-	    db_printf("Too many watchpoints.\n");
-	    return;
+		db_printf("Too many watchpoints.\n");
+		return;
 	}
 
-	watch->map = map;
 	watch->loaddr = addr;
 	watch->hiaddr = addr+size;
 
@@ -124,21 +114,18 @@ db_set_watchpoint(struct vm_map *map, db_addr_t addr, vsize_t size)
 }
 
 void
-db_delete_watchpoint(struct vm_map *map, db_addr_t addr)
+db_delete_watchpoint(db_addr_t addr)
 {
 	db_watchpoint_t	watch;
 	db_watchpoint_t	*prev;
 
-	for (prev = &db_watchpoint_list;
-	     (watch = *prev) != 0;
-	     prev = &watch->link)
-	    if (db_map_equal(watch->map, map) &&
-		(watch->loaddr <= addr) &&
-		(addr < watch->hiaddr)) {
-		*prev = watch->link;
-		db_watchpoint_free(watch);
-		return;
-	    }
+	for (prev = &db_watchpoint_list; (watch = *prev) != 0;
+	   prev = &watch->link)
+		if (watch->loaddr <= addr && addr < watch->hiaddr) {
+			*prev = watch->link;
+			db_watchpoint_free(watch);
+			return;
+		}
 
 	db_printf("Not set.\n");
 }
@@ -153,14 +140,10 @@ db_list_watchpoints(void)
 	    return;
 	}
 
-	db_printf(" Map        Address  Size\n");
-	for (watch = db_watchpoint_list;
-	     watch != 0;
-	     watch = watch->link)
-	    db_printf("%s%p  %8lx  %lx\n",
-		      db_map_current(watch->map) ? "*" : " ",
-		      watch->map, watch->loaddr,
-		      watch->hiaddr - watch->loaddr);
+	db_printf("  Address  Size\n");
+	for (watch = db_watchpoint_list; watch != 0; watch = watch->link)
+		db_printf("%8lx  %lx\n",
+		    watch->loaddr, watch->hiaddr - watch->loaddr);
 }
 
 /* Delete watchpoint */
@@ -168,7 +151,7 @@ db_list_watchpoints(void)
 void
 db_deletewatch_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	db_delete_watchpoint(db_map_addr(addr), addr);
+	db_delete_watchpoint(addr);
 }
 
 /* Set watchpoint */
@@ -185,7 +168,7 @@ db_watchpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	    size = 4;
 	db_skip_to_eol();
 
-	db_set_watchpoint(db_map_addr(addr), addr, size);
+	db_set_watchpoint(addr, size);
 }
 
 /* list watchpoints */
@@ -202,15 +185,12 @@ db_set_watchpoints(void)
 	db_watchpoint_t	watch;
 
 	if (!db_watchpoints_inserted && db_watchpoint_list != NULL) {
-	    for (watch = db_watchpoint_list;
-	         watch != 0;
-	         watch = watch->link)
-		pmap_protect(watch->map->pmap,
-			     trunc_page(watch->loaddr),
-			     round_page(watch->hiaddr),
-			     VM_PROT_READ);
-	    pmap_update(watch->map->pmap);
-	    db_watchpoints_inserted = TRUE;
+		for (watch = db_watchpoint_list; watch != 0;
+		    watch = watch->link)
+			pmap_protect(pmap_kernel(), trunc_page(watch->loaddr),
+			    round_page(watch->hiaddr), VM_PROT_READ);
+		pmap_update(pmap_kernel());
+		db_watchpoints_inserted = TRUE;
 	}
 }
 
@@ -218,36 +198,4 @@ void
 db_clear_watchpoints(void)
 {
 	db_watchpoints_inserted = FALSE;
-}
-
-boolean_t
-db_find_watchpoint(struct vm_map *map, db_addr_t addr, db_regs_t *regs)
-{
-	db_watchpoint_t watch;
-	db_watchpoint_t found = 0;
-
-	for (watch = db_watchpoint_list;
-	     watch != 0;
-	     watch = watch->link)
-	    if (db_map_equal(watch->map, map)) {
-		if ((watch->loaddr <= addr) &&
-		    (addr < watch->hiaddr))
-		    return (TRUE);
-		else if ((trunc_page(watch->loaddr) <= addr) &&
-			 (addr < round_page(watch->hiaddr)))
-		    found = watch;
-	    }
-
-	/*
-	 *	We didn't hit exactly on a watchpoint, but we are
-	 *	in a protected region.  We want to single-step
-	 *	and then re-protect.
-	 */
-
-	if (found) {
-	    db_watchpoints_inserted = FALSE;
-	    db_single_step(regs);
-	}
-
-	return (FALSE);
 }
