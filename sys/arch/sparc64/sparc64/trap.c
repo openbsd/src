@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2010/08/07 00:13:09 krw Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2010/11/27 19:41:48 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -673,11 +673,6 @@ badtrap:
 			break;
 		}
 		
-		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
-		    fixalign(p, tf) == 0) {
-			ADVANCE;
-			break;
-		}
 		/* XXX sv.sival_ptr should be the fault address! */
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);	/* XXX code? */
@@ -753,12 +748,11 @@ badtrap:
 		break;
 
 	case T_FIXALIGN:
-#ifdef DEBUG_ALIGN
 		uprintf("T_FIXALIGN\n");
-#endif
-		/* User wants us to fix alignment faults */
-		p->p_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
+		KERNEL_PROC_LOCK(p);
+		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);	/* XXX code? */
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 	case T_INTOF:

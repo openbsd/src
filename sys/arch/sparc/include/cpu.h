@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2009/04/10 20:53:54 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.33 2010/11/27 19:41:45 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -180,7 +180,6 @@ void	iommu_enter(u_int, u_int);
 void	iommu_remove(u_int, u_int);
 /* emul.c */
 struct trapframe;
-int fixalign(struct proc *, struct trapframe *);
 int emulinstr(int, struct trapframe *);
 
 /*

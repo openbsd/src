@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2010/07/10 19:32:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2010/11/27 19:41:48 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -461,11 +461,6 @@ badtrap:
 		break;
 
 	case T_ALIGN:
-		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
-		    fixalign(p, tf) == 0) {
-			ADVANCE;
-			break;
-		}
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
 		break;
 
@@ -530,12 +525,9 @@ badtrap:
 		break;
 
 	case T_FIXALIGN:
-#ifdef DEBUG_ALIGN
 		uprintf("T_FIXALIGN\n");
-#endif
-		/* User wants us to fix alignment faults */
-		p->p_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
+		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
 		break;
 
 	case T_INTOF:

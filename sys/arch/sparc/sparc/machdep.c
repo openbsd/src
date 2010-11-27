@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.130 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.131 2010/11/27 19:41:48 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -263,9 +263,6 @@ setregs(p, pack, stack, retval)
 			(p->p_addr->u_pcb.pcb_wcookie & ~0x3);
 		break;
 	}
-
-	/* Don't allow misaligned code by default */
-	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * The syscall will ``return'' to npc or %g7 or %g2; set them all.

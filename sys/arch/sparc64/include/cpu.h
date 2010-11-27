@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.73 2010/09/28 20:27:55 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.74 2010/11/27 19:41:48 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -288,7 +288,6 @@ void	fb_unblank(void);
 /* tda.c */
 void	tda_full_blast(void);
 /* emul.c */
-int	fixalign(struct proc *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
 int	emul_qf(int32_t, struct proc *, union sigval, struct trapframe64 *);
 int	emul_popc(int32_t, struct proc *, union sigval, struct trapframe64 *);

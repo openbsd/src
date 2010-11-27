@@ -46,9 +46,5 @@
 struct mdproc {
 	struct	trapframe64 *md_tf;	/* trap/syscall registers */
 	struct	fpstate64 *md_fpstate;	/* fpu state, if any; always resident */
-	u_long	md_flags;
 	__volatile int md_astpending;
 };
-
-/* md_flags */
-#define	MDP_FIXALIGN	0x1		/* Fix unaligned memory accesses */
