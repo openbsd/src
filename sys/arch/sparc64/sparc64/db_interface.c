@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.29 2010/07/06 02:26:32 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.30 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -1288,87 +1288,6 @@ db_inst_trap_return(inst)
 
     return (insn.i_any.i_op == IOP_reg &&
 	    insn.i_op3.i_op3 == IOP3_RETT);
-}
-
-
-int
-db_inst_load(inst)
-	int inst;
-{
-    union instr insn;
-
-    insn.i_int = inst;
-
-    if (insn.i_any.i_op != IOP_mem)
-	return 0;
-
-    switch (insn.i_op3.i_op3) {
-      case IOP3_LD:
-      case IOP3_LDUB:
-      case IOP3_LDUH:
-      case IOP3_LDD:
-      case IOP3_LDSB:
-      case IOP3_LDSH:
-      case IOP3_LDSTUB:
-      case IOP3_SWAP:
-      case IOP3_LDA:
-      case IOP3_LDUBA:
-      case IOP3_LDUHA:
-      case IOP3_LDDA:
-      case IOP3_LDSBA:
-      case IOP3_LDSHA:
-      case IOP3_LDSTUBA:
-      case IOP3_SWAPA:
-      case IOP3_LDF:
-      case IOP3_LDFSR:
-      case IOP3_LDDF:
-      case IOP3_LFC:
-      case IOP3_LDCSR:
-      case IOP3_LDDC:
-	return 1;
-
-      default:
-	return 0;
-    }
-}
-
-int
-db_inst_store(inst)
-	int inst;
-{
-    union instr insn;
-
-    insn.i_int = inst;
-
-    if (insn.i_any.i_op != IOP_mem)
-	return 0;
-
-    switch (insn.i_op3.i_op3) {
-      case IOP3_ST:
-      case IOP3_STB:
-      case IOP3_STH:
-      case IOP3_STD:
-      case IOP3_LDSTUB:
-      case IOP3_SWAP:
-      case IOP3_STA:
-      case IOP3_STBA:
-      case IOP3_STHA:
-      case IOP3_STDA:
-      case IOP3_LDSTUBA:
-      case IOP3_SWAPA:
-      case IOP3_STF:
-      case IOP3_STFSR:
-      case IOP3_STQF:
-      case IOP3_STDF:
-      case IOP3_STC:
-      case IOP3_STCSR:
-      case IOP3_STQFA:
-      case IOP3_STDC:
-	return 1;
-
-      default:
-	return 0;
-    }
 }
 
 void

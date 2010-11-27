@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.8 2008/02/11 20:44:09 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.9 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -73,8 +73,6 @@ extern db_regs_t ddb_regs;	/* register state */
 #define	inst_call(ins)		(((ins)&0xff) == I_CALL || \
 				 (((ins)&0xff) == I_CALLI && \
 				  ((ins)&0x3800) == 0x1000))
-#define inst_load(ins)		0
-#define inst_store(ins)		0
 
 /* macros for printing OS server dependent task name */
 

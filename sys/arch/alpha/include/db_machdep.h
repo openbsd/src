@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.19 2005/12/17 07:31:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.20 2010/11/27 19:57:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -83,7 +83,6 @@ boolean_t db_inst_branch(int);
 boolean_t db_inst_call(int);
 boolean_t db_inst_load(int);
 boolean_t db_inst_return(int);
-boolean_t db_inst_store(int);
 boolean_t db_inst_trap_return(int);
 boolean_t db_inst_unconditional_flow_transfer(int);
 u_long	db_register_value(db_regs_t *, int);
@@ -98,8 +97,6 @@ db_addr_t next_instr_address(db_addr_t, int);
 #define branch_taken(ins, pc, fun, regs) db_branch_taken((ins), (pc), (regs))
 #define inst_branch db_inst_branch
 #define inst_call db_inst_call
-#define inst_load db_inst_load
-#define inst_store db_inst_store
 #endif
 
 #endif	/* _ALPHA_DB_MACHDEP_H_ */

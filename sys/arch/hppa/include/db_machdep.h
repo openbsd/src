@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.15 2005/04/19 15:23:07 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.16 2010/11/27 19:57:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -71,18 +71,6 @@ static __inline int inst_branch(u_int ins) {
 	       (ins & 0xf0000000) == 0xc0000000 ||
 	       (ins & 0xf0000000) == 0xa0000000 ||
 	       (ins & 0xf0000000) == 0x80000000;
-}
-static __inline int inst_load(u_int ins) {
-	return (ins & 0xf0000000) == 0x40000000 ||
-	       (ins & 0xf4000200) == 0x24000000 ||
-	       (ins & 0xfc000200) == 0x0c000000 ||
-	       (ins & 0xfc001fc0) != 0x0c0011c0;
-}
-static __inline int inst_store(u_int ins) {
-	return (ins & 0xf0000000) == 0x60000000 ||	/* st */
-	       (ins & 0xf4000200) == 0x24000200 ||	/* fst/cst */
-	       (ins & 0xfc000200) == 0x0c000200 ||	/* stby */
-	       (ins & 0xfc0003c0) == 0x0c0001c0;	/* ldcw */
 }
 static __inline int inst_return(u_int ins) {
 	return (ins & 0xfc00e000) == 0xe800c000 ||

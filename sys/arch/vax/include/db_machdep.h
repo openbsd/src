@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.12 2008/03/30 18:24:02 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.13 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.6 1998/08/10 14:33:33 ragge Exp $	*/
 
 /* 
@@ -69,9 +69,6 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	inst_trap_return(ins)	(((ins)&0xff) == I_IRET)
 #define	inst_return(ins)	(((ins)&0xff) == I_RET)
 #define	inst_call(ins)		(((ins)&0xff) == I_CALL)
-
-#define inst_load(ins)		0
-#define inst_store(ins)		0
 
 /* Prototypes */
 void	kdb_trap(struct trapframe *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.19 2008/02/11 20:44:11 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.20 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -70,8 +70,6 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	inst_call(ins)		(((ins)&0xff) == I_CALL || \
 				 (((ins)&0xff) == I_CALLI && \
 				  ((ins)&0x3800) == 0x1000))
-#define inst_load(ins)		0
-#define inst_store(ins)		0
 
 #define DB_MACHINE_COMMANDS
 

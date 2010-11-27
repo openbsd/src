@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.69 2010/11/05 15:18:54 claudio Exp $
+.\"	$OpenBSD: ddb.4,v 1.70 2010/11/27 19:57:21 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 5 2010 $
+.Dd $Mdocdate: November 27 2010 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -427,8 +427,8 @@ Otherwise, only print the last instruction.
 .Pp
 .Sy Warning:
 depending on machine type, it may not be possible to
-single-step through some low-level code paths or user space code.
-On machines with software-emulated single-stepping (e.g., pmax),
+single-step through some low-level code paths.
+On machines with software-emulated single-stepping (e.g., alpha),
 stepping through code executed by interrupt handlers will probably
 do the wrong thing.
 .\" --------------------
@@ -452,7 +452,6 @@ Continue execution until a breakpoint or watchpoint.
 If the
 .Cm /c
 modifier is given, instructions are counted while executing.
-Some machines (e.g., pmax) also count loads and stores.
 .Pp
 .Sy Warning:
 when counting with

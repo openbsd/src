@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.6 2007/12/09 19:57:50 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.7 2010/11/27 19:57:23 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -41,89 +41,6 @@
  * Author: Daniel Stodolsky (danner@cs.cmu.edu)
  *
  */
-
-/*
- * inst_load(ins)
- * Returns the number of words the instruction loads. byte,
- * half and word count as 1; double word as 2
- */
-int
-inst_load(u_int ins)
-{
-	/* look at the top six bits, for starters */
-	switch (ins >> (32 - 6)) {
-	case 0x0: /* xmem byte imm */
-	case 0x1: /* xmem word imm */
-	case 0x2: /* unsigned half-word load imm */
-	case 0x3: /* unsigned byte load imm */
-	case 0x5: /* signed word load imm */
-	case 0x6: /* signed half-word load imm */
-	case 0x7: /* signed byte load imm */
-		return (1);
-
-	case 0x4: /* signed double word load imm */
-		return (2);
-
-	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
-		if ((ins & 0x0000c0e0) == 0x00000000)	/* is ld/st/xmem */
-			/* look at bits 15-10 */
-			switch ((ins & 0x0000fc00) >> 10) {
-			case 0x0: /* xmem byte */
-			case 0x1: /* xmem word */
-			case 0x2: /* unsigned half word */
-			case 0x3: /* unsigned byte load */
-			case 0x5: /* signed word load */
-			case 0x6: /* signed half-word load */
-			case 0x7: /* signed byte load */
-				return (1);
-
-			case 0x4: /* signed double word load */
-				return (2);
-			}
-		break;
-	}
-
-	return (0);
-}
-
-/*
- * inst_store
- * Like inst_load, except for store instructions.
- */
-int
-inst_store(u_int ins)
-{
-	/* decode top 6 bits again */
-	switch (ins >> (32 - 6)) {
-	case 0x0: /* xmem byte imm */
-	case 0x1: /* xmem word imm */
-	case 0x9: /* store word imm */
-	case 0xa: /* store half-word imm */
-	case 0xb: /* store byte imm */
-		return (1);
-
-	case 0x8: /* store double word */
-		return (2);
-
-	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
-		if ((ins & 0x0000c0e0) == 0x00000000)	/* is ld/st/xmem */
-			/* look at bits 15-10 */
-			switch ((ins & 0x0000fc00) >> 10) {
-			case 0x0: /* xmem byte imm */
-			case 0x1: /* xmem word imm */
-			case 0x9: /* store word */
-			case 0xa: /* store half-word */
-			case 0xb: /* store byte */
-				return (1);
-
-			case 0x8: /* store double word */
-				return (2);
-			}
-		break;
-	}
-
-	return (0);
-}
 
 /*
  * We can not use the MI ddb SOFTWARE_SSTEP facility, since the 88110 will use

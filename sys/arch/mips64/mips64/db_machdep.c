@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.31 2010/09/17 00:25:11 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.32 2010/11/27 19:57:23 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -441,25 +441,6 @@ db_inst_type(ins)
 			ityp = IT_BRANCH;
 			break;
 		}
-		break;
-
-	case OP_LB:
-	case OP_LH:
-	case OP_LW:
-	case OP_LD:
-	case OP_LBU:
-	case OP_LHU:
-	case OP_LWU:
-	case OP_LWC1:
-		ityp = IT_LOAD;
-		break;
-
-	case OP_SB:
-	case OP_SH:
-	case OP_SW:
-	case OP_SD:
-	case OP_SWC1:
-		ityp = IT_STORE;
 		break;
 	}
 	return (ityp);

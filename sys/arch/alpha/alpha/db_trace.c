@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.14 2003/10/18 20:14:40 jmc Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.15 2010/11/27 19:57:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -247,7 +247,7 @@ trapframe:
 				 * XXX In here we might special case a frame
 				 * pointer setup, i.e. mov sp, fp.
 				 */
-			} else if (inst_load(inst))
+			} else if (db_inst_load(inst))
 				/* clobbers a register */
 				slot[rega(inst)] = 0;
 			else if (opcode[inst >> 26].opc_fmt == OPC_OP)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2005/04/19 15:23:34 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ extern db_regs_t		ddb_regs;	/* register state */
 					    0000000f  register */
 #define	inst_branch(ins)	(((ins) & 0x0f000000) == 0x0a000000 || \
 				 ((ins) & 0x0fdffff0) == 0x079ff100)
-#define inst_load(ins)		(0)
-#define inst_store(ins)		(0)
 #define inst_unconditional_flow_transfer(ins)	\
 	((((ins) & INSN_COND_MASK) == INSN_COND_AL) && \
 	 (inst_branch(ins) || inst_call(ins) || inst_return(ins)))

@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.16 2004/01/22 17:47:01 miod Exp $ */
+/* $OpenBSD: db_interface.c,v 1.17 2010/11/27 19:57:23 miod Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -401,35 +401,6 @@ db_inst_load(ins)
 		/* Note: MB is treated as a store. */
 		if ((insn.mem_format.displacement == (short)op_fetch) ||
 		    (insn.mem_format.displacement == (short)op_fetch_m))
-			return (TRUE);
-	}
-
-	return (FALSE);
-}
-
-boolean_t
-db_inst_store(ins)
-	int ins;
-{
-	alpha_instruction insn;
-
-	insn.bits = ins;
-
-	/* Stores. */
-	if (insn.mem_format.opcode == op_stw ||
-	    insn.mem_format.opcode == op_stb ||
-	    insn.mem_format.opcode == op_stq_u)
-		return (TRUE);
-	if ((insn.mem_format.opcode >= op_stf) &&
-	    (insn.mem_format.opcode <= op_stt))
-		return (TRUE);
-	if ((insn.mem_format.opcode >= op_stl) &&
-	    (insn.mem_format.opcode <= op_stq_c))
-		return (TRUE);
-
-	/* Barriers. */
-	if (insn.mem_format.opcode == op_special) {
-		if (insn.mem_format.displacement == op_mb)
 			return (TRUE);
 	}
 

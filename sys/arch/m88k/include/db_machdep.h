@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.13 2007/11/14 17:54:24 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.14 2010/11/27 19:57:23 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -62,8 +62,6 @@ typedef	struct reg	db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-int	inst_load(u_int);
-int	inst_store(u_int);
 int	ddb_break_trap(int, db_regs_t *);
 int	ddb_entry_trap(int, db_regs_t *);
 void	m88k_print_instruction(int, u_int, u_int32_t);	/* db_disasm.c */

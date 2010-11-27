@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.20 2007/11/14 17:52:36 miod Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.21 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -50,8 +50,6 @@ db_breakpoint_t	db_taken_bkpt = 0;
 #endif
 
 int		db_inst_count;
-int		db_load_count;
-int		db_store_count;
 
 #ifndef KGDB
 
@@ -195,16 +193,12 @@ db_restart_at_pc(db_regs_t *regs, boolean_t watchpt)
 		 */
 		ins = db_get_value(pc, sizeof(int), FALSE);
 		db_inst_count++;
-		db_load_count += inst_load(ins);
-		db_store_count += inst_store(ins);
 #ifdef	SOFTWARE_SSTEP
 		/* XXX works on mips, but... */
 		if (inst_branch(ins) || inst_call(ins)) {
 			ins = db_get_value(next_instr_address(pc, 1),
 			    sizeof(int), FALSE);
 			db_inst_count++;
-			db_load_count += inst_load(ins);
-			db_store_count += inst_store(ins);
 		}
 #endif	/* SOFTWARE_SSTEP */
 	}
@@ -251,8 +245,6 @@ db_single_step_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_loop_count = count;
 	db_sstep_print = print;
 	db_inst_count = 0;
-	db_load_count = 0;
-	db_store_count = 0;
 
 	db_cmd_loop_done = 1;
 }
@@ -271,8 +263,6 @@ db_trace_until_call_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	db_run_mode = STEP_CALLT;
 	db_sstep_print = print;
 	db_inst_count = 0;
-	db_load_count = 0;
-	db_store_count = 0;
 
 	db_cmd_loop_done = 1;
 }
@@ -291,8 +281,6 @@ db_trace_until_matching_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	db_call_depth = 1;
 	db_sstep_print = print;
 	db_inst_count = 0;
-	db_load_count = 0;
-	db_store_count = 0;
 
 	db_cmd_loop_done = 1;
 }
@@ -307,8 +295,6 @@ db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	else
 	    db_run_mode = STEP_CONTINUE;
 	db_inst_count = 0;
-	db_load_count = 0;
-	db_store_count = 0;
 
 	db_cmd_loop_done = 1;
 }

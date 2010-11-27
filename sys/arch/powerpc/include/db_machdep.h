@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.22 2008/09/16 04:20:42 drahn Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.23 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ extern	db_regs_t ddb_regs;		/* register state */
 #define	inst_return(ins)	(((ins)&M_RTS) == I_RTS)
 #define	inst_call(ins)		(((ins)&M_BC ) == I_BC  || \
 				 ((ins)&M_B  ) == I_B )
-#define inst_load(ins)		0
-#define inst_store(ins)		0
 
 #ifdef _KERNEL
 

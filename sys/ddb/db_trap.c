@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.14 2008/10/26 22:23:10 deraadt Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.15 2010/11/27 19:57:23 miod Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -60,9 +60,7 @@ db_trap(int type, int code)
 
 	if (db_stop_at_pc(DDB_REGS, &bkpt)) {
 		if (db_inst_count) {
-			db_printf("After %d instructions ", db_inst_count);
-			db_printf("(%d loads, %d stores),\n", db_load_count,
-			    db_store_count);
+			db_printf("After %d instructions\n", db_inst_count);
 		}
 		if (bkpt)
 			db_printf("Breakpoint at\t");
