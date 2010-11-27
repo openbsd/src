@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.18 2010/11/25 23:07:58 schwarze Exp $ */
+/*	$Id: roff.c,v 1.19 2010/11/27 20:52:34 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -642,7 +642,7 @@ roff_block(ROFF_ARGS)
 	 * added from roff_block_text() in multiline mode.
 	 */
 	if (ROFF_de == tok)
-		roff_setstr(r, name, NULL, 0);
+		roff_setstr(r, name, "", 0);
 
 	if ('\0' == (*bufp)[pos])
 		return(ROFF_IGN);
@@ -1140,7 +1140,7 @@ roff_userdef(ROFF_ARGS)
 	if (0 == *szp)
 		*szp = strlen(*bufp) + 1;
 
-	return(*szp && '\n' == (*bufp)[(int)*szp - 2] ?
+	return(*szp > 1 && '\n' == (*bufp)[(int)*szp - 2] ?
 	   ROFF_REPARSE : ROFF_APPEND);
 }
 
