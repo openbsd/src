@@ -1,4 +1,4 @@
-.\"	$Id: roff.7,v 1.9 2010/11/27 02:17:43 schwarze Exp $
+.\"	$Id: roff.7,v 1.10 2010/11/27 17:46:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,7 +37,8 @@ characters
 .Sq \.
 or
 .Sq \(aq
-are parsed for macros.  Other lines are interpreted within the scope of
+are parsed for requests and macros.
+Other lines are interpreted within the scope of
 prior macros:
 .Bd -literal -offset indent
 \&.xx Macro lines change control state.
@@ -51,75 +52,223 @@ manuals must have
 .Ux
 line terminators.
 .Sh MACRO SYNTAX
-Macros are arbitrary in length and begin with a control character ,
+Requests and macros are arbitrary in length and begin with a control
+character,
 .Sq \.
 or
 .Sq \(aq ,
 at the beginning of the line.
 An arbitrary amount of whitespace may sit between the control character
-and the macro name.
+and the request or macro name.
 Thus, the following are equivalent:
 .Bd -literal -offset indent
 \&.if
 \&.\ \ \ \&if
 .Ed
-.Sh REFERENCE
-This section is a canonical reference of all macros, arranged
-alphabetically.
+.Sh REQUEST REFERENCE
+This section is a canonical reference of all requests recognized by the
+.Xr mandoc 1
+.Nm
+parser.
+The
+.Nm
+language defines many more requests and macros not implemented in
+.Xr mandoc 1 .
 .Ss \&am
-The syntax of this macro is the same as that of
-.Sx \&ig ,
-except that a leading argument must be specified.
-It is ignored, as are its children.
+Append to a macro definition.
+The syntax of this request is the same as that of
+.Sx \&de .
+It is currently ignored by
+.Xr mandoc 1 ,
+as are its children.
 .Ss \&ami
-The syntax of this macro is the same as that of
-.Sx \&ig ,
-except that a leading argument must be specified.
-It is ignored, as are its children.
+Append to a macro definition, specifying the macro name indirectly.
+The syntax of this request is the same as that of
+.Sx \&dei .
+It is currently ignored by
+.Xr mandoc 1 ,
+as are its children.
 .Ss \&am1
-The syntax of this macro is the same as that of
-.Sx \&ig ,
-except that a leading argument must be specified.
-It is ignored, as are its children.
+Append to a macro definition, switching roff compatibility mode off
+during macro execution.
+The syntax of this request is the same as that of
+.Sx \&de1 .
+It is currently ignored by
+.Xr mandoc 1 ,
+as are its children.
 .Ss \&de
-The syntax of this macro is the same as that of
-.Sx \&ig ,
-except that a leading argument must be specified.
-It is ignored, as are its children.
+Define a user-defined
+.Nm
+macro.
+Its syntax can be either
+.Bd -literal -offset indent
+.Pf . Cm \&de Ar name
+.Ar macro definition
+\&..
+.Ed
+.Pp
+or
+.Bd -literal -offset indent
+.Pf . Cm \&de Ar name Ar end
+.Ar macro definition
+.Pf . Ar end
+.Ed
+.Pp
+Both forms define or redefine the macro
+.Ar name
+to represent the
+.Ar macro definition ,
+which may consist of one or more input lines, including the newline
+characters terminating each line, optionally containing calls to
+.Nm
+requests,
+.Nm
+macros or high-level macros like
+.Xr man 7
+or
+.Xr mdoc 7
+macros, whichever applies to the document in question.
+.Pp
+Specifying a custom
+.Ar end
+macro works in the same way as for
+.Sx \&ig ;
+namely, the call to
+.Sq Pf . Ar end
+first ends the
+.Ar macro definition ,
+and after that, it is also evaluated as a
+.Nm
+request or
+.Nm
+macro, but not as a high-level macro.
+.Pp
+A user-defined macro can be invoked later using the syntax
+.Pp
+.D1 Pf . Ar name Op Ar argument Op Ar argument ...
+.Pp
+Arguments are separated by blank characters and can be quoted
+using double-quotes
+.Pq Sq \(dq
+to allow inclusion of blank characters into arguments.
+To include the double-quote character into a quoted argument,
+escape it from ending the argument by doubling it.
+.Pp
+The line invoking the user-defined macro will be replaced
+in the input stream by the
+.Ar macro definition ,
+replacing all occurrences of
+.No \e\e$ Ns Ar N ,
+where 
+.Ar N
+is a digit, by the
+.Ar N Ns th Ar argument .
+For example,
+.Bd -literal -offset indent
+\&.de ZN
+\efI\e^\e\e$1\e^\efP\e\e$2
+\&..
+\&.ZN XtFree .
+.Ed
+.Pp
+produces
+.Pp
+.D1 \efI\e^XtFree\e^\efP.
+.Pp
+in the input stream, and thus in the output: \fI\^XtFree\^\fP.
+.Pp
+Since user-defined macros and strings share a common string table,
+defining a macro
+.Ar name
+clobbers the user-defined string
+.Ar name ,
+and the
+.Ar macro definition
+can also be printed using the
+.Sq \e*
+string interpolation syntax described below
+.Sx ds ,
+but this is rarely useful because every macro definition contains at least
+one explicit newline character.
 .Ss \&dei
+Define a user-defined
+.Nm
+macro, specifying the macro name indirectly.
 The syntax of this macro is the same as that of
-.Sx \&ig ,
-except that a leading argument must be specified.
-It is ignored, as are its children.
+.Sx \&de .
+It is currently ignored by
+.Xr mandoc 1 ,
+as are its children.
+.Ss \&de1
+Define a user-defined
+.Nm
+macro that will be executed with
+.Nm
+compatibility mode switched off during macro execution.
+This is a GNU extension not available in traditional
+.Nm
+implementations and not even in older versions of groff.
+Since
+.Xr mandoc 1
+does not implement
+.Nm
+compatibility mode at all, it handles this macro as an alias for
+.Sx \&de .
 .Ss \&ds
-Define a reserved word.
+Define a user-defined string.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&ds No Cm key val
+.D1 Pf . Cm \&ds Ar name Oo \(dq Oc Ns Ar string
 .Pp
 The
-.Cm key
+.Ar name
 and
-.Cm val
-strings are space-separated.
-The
-.Cm key
-values may be invoked in subsequent text by using \e*(NN for two-letter
-pairs, \e*N for one-letter, and \e*[NNN] for arbitrary-length values.
+.Ar string
+arguments are space-separated.
+If the
+.Ar string
+begins with a double-quote character, that character will not be part
+of the string.
+All remaining characters on the input line form the
+.Ar string ,
+including whitespace and double-quote characters, even trailing ones.
 .Pp
-If
-.Cm val
-is begun with a double-quote mark, the mark is passed over.
-.Cm val
-consists of
-.Em all
-text following this point, including whitespace and trailing
-double-quotes.
-.Ss \&de1
-The syntax of this macro is the same as that of
-.Sx \&ig ,
-except that a leading argument must be specified.
-It is ignored, as are its children.
+The
+.Ar string
+can be interpolated into subsequent text by using
+.No \e* Ns Bq Ar name
+for a
+.Ar name
+of arbitrary length, or \e*(NN or \e*N if the length of
+.Ar name
+is two or one characters, respectively.
+.Pp
+Since user-defined strings and macros share a common string table,
+defining a string
+.Ar name
+clobbers the user-defined macro
+.Ar name ,
+and the
+.Ar name
+used for defining a string can also be invoked as a macro,
+in which case the following input line will be appended to the
+.Ar string ,
+forming a new input line passed to the
+.Nm
+parser.
+For example,
+.Bd -literal -offset indent
+\&.ds badidea .S
+\&.badidea
+H SYNOPSIS
+.Ed
+.Pp
+invokes the
+.Cm SH
+macro when used in a
+.Xr man 7
+document.
+Such abuse is of course strongly discouraged.
 .Ss \&el
 The
 .Qq else
@@ -242,45 +391,48 @@ scope of the prior macro, not only the text preceding the close, with the
 collapsing into a zero-width space.
 .Ss \&ig
 Ignore input.
-Accepts the following syntax:
-.Pp
-.Bd -literal -offset indent -compact
-\&.ig
-BODY...
+Its syntax can be either
+.Bd -literal -offset indent
+.Pf . Cm \&ig
+.Ar ignored text
 \&..
 .Ed
-.Bd -literal -offset indent -compact
-\&.ig END
-BODY...
-\&.END
+.Pp
+or
+.Bd -literal -offset indent
+.Pf . Cm \&ig Ar end
+.Ar ignored text
+.Pf . Ar end
 .Ed
 .Pp
 In the first case, input is ignored until a
 .Sq \&..
 macro is encountered on its own line.
-In the second case, input is ignored until a
-.Sq \&.END
-is encountered.
-Text subsequent the
-.Sq \&.END
-or
-.Sq \&..
-is discarded.
-.Pp
-Do not use the escape
+In the second case, input is ignored until the specified
+.Sq Pf . Ar end
+macro is encountered.
+Do not use the escape character
 .Sq \e
-anywhere in the definition of END.
-It causes very strange behaviour.
-Furthermore, if you redefine a
-.Nm
-macro, such as
+anywhere in the definition of
+.Ar end ;
+it would cause very strange behaviour.
+.Pp
+When the
+.Ar end
+macro is a roff request or a roff macro, like in
 .Pp
 .D1 \&.ig if
 .Pp
 the subsequent invocation of
 .Sx \&if
-will first signify the end of comment, then be invoked as a macro.
-This behaviour really shouldn't be counted upon.
+will first terminate the
+.Ar ignored text ,
+then be invoked as usual.
+Otherwise, it only terminates the
+.Ar ignored text ,
+and arguments following it or the
+.Sq \&..
+macro are discarded.
 .Ss \&rm
 Remove a request, macro or string.
 This macro is intended to have one argument,
@@ -293,17 +445,17 @@ A register is an arbitrary string value that defines some sort of state,
 which influences parsing and/or formatting.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&nr Cm name value
+.D1 Pf \. Cm \&nr Ar name Ar value
 .Pp
 The
-.Cm value
+.Ar value
 may, at the moment, only be an integer.
 The
-.Cm name
+.Ar name
 is defined up to the next whitespace.
-The following register
-.Cm name
-requests are recognised:
+So far, only the following register
+.Ar name
+is recognised:
 .Bl -tag -width Ds
 .It Cm nS
 If set to a positive integer value, certain
@@ -322,7 +474,7 @@ section will unset this value.
 Include a source file.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&so Ar file
+.D1 Pf \. Cm \&so Ar file
 .Pp
 The
 .Ar file
@@ -371,7 +523,10 @@ and family would print funny white-spaces with historic groff when
 depending on next-line syntax.
 .El
 .Sh AUTHORS
-The
+.An -nosplit
+This partial
 .Nm
 reference was written by
-.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.An Kristaps Dzonsons Aq kristaps@bsd.lv
+and
+.An Ingo Schwarze Aq schwarze@openbsd.org .
