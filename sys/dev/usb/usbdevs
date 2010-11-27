@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.525 2010/11/16 22:28:35 deraadt Exp $
+$OpenBSD: usbdevs,v 1.526 2010/11/27 00:32:58 weerd Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2188,6 +2188,7 @@ product LOGITECH QUICKCAMWEB	0x0801	QuickCam Web
 product LOGITECH WEBCAMC200	0x0802	Webcam C200
 product LOGITECH WEBCAMC500	0x0807	Webcam C500
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
+product LOGITECH HDPROC910	0x0821	HD Pro Webcam C910
 product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
 product LOGITECH QUICKCAMNBDLX	0x08a9	QuickCam Notebook Deluxe
