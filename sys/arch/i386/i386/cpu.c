@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.41 2010/07/25 21:43:35 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.42 2010/11/27 13:03:04 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -157,14 +157,18 @@ struct cfdriver cpu_cd = {
 };
 
 int
-cpu_match(struct device *parent, void *matchv, void *aux)
+cpu_match(struct device *parent, void *match, void *aux)
 {
-  	struct cfdata *match = (struct cfdata *)matchv;
-	struct cpu_attach_args *caa = (struct cpu_attach_args *)aux;
+  	struct cfdata *cf = match;
+	struct cpu_attach_args *caa = aux;
 
-	if (strcmp(caa->caa_name, match->cf_driver->cd_name) == 0)
-		return (1);
-	return (0);
+	if (strcmp(caa->caa_name, cf->cf_driver->cd_name) != 0)
+		return 0;
+
+	if (cf->cf_unit >= MAXCPUS)
+		return 0;
+
+	return 1;
 }
 
 void
