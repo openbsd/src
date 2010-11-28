@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.63 2010/11/17 19:25:49 henning Exp $	*/
+/*	$OpenBSD: in.c,v 1.64 2010/11/28 20:24:33 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -431,7 +431,8 @@ cleanup:
 		 */
 		s = splsoftnet();
 		in_ifscrub(ifp, ia);
-		ifa_del(ifp, (struct ifaddr *)ia);
+		if (!error)
+			ifa_del(ifp, (struct ifaddr *)ia);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		if (ia->ia_allhosts != NULL) {
 			in_delmulti(ia->ia_allhosts);
@@ -440,7 +441,8 @@ cleanup:
 		/* remove backpointer, since ifp may die before ia */
 		ia->ia_ifp = NULL;
 		IFAFREE((&ia->ia_ifa));
-		dohooks(ifp->if_addrhooks, 0);
+		if (!error)
+			dohooks(ifp->if_addrhooks, 0);
 		splx(s);
 		return (error);
 		}
@@ -725,8 +727,10 @@ in_ifinit(ifp, ia, sin, scrub, newaddr)
 		ia->ia_dstaddr = ia->ia_addr;
 		flags |= RTF_HOST;
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
-		if (ia->ia_dstaddr.sin_family != AF_INET)
+		if (ia->ia_dstaddr.sin_family != AF_INET) {
+			ifa_add(ifp, (struct ifaddr *)ia);
 			return (0);
+		}
 		flags |= RTF_HOST;
 	}
 	error = in_addprefix(ia, flags);
@@ -742,7 +746,8 @@ in_ifinit(ifp, ia, sin, scrub, newaddr)
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 
-	ifa_add(ifp, (struct ifaddr *)ia);
+	if (!error)
+		ifa_add(ifp, (struct ifaddr *)ia);
 
 	return (error);
 }
