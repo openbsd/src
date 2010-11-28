@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.20 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.21 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -28,11 +28,13 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 struct map_backend *map_backend_lookup(enum map_src);
 struct map_parser *map_parser_lookup(enum map_kind);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.198 2010/11/24 23:27:04 todd Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.199 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -17,8 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include			 <imsg.h>
-
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
@@ -28,6 +26,8 @@
 		fatalx("bad length imsg received");		\
 } while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+
+
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAX_LISTEN		 16
@@ -852,8 +852,9 @@ struct map_virtual {
 };
 
 
-
 extern void (*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
+
+
 
 /* aliases.c */
 int aliases_exist(struct smtpd *, objid_t, char *);
@@ -863,36 +864,52 @@ int aliases_virtual_exist(struct smtpd *, objid_t, struct path *);
 int aliases_virtual_get(struct smtpd *, objid_t, struct expandtree *, struct path *);
 int alias_parse(struct expandnode *, char *);
 
+
 /* authenticate.c */
 int authenticate_user(char *, char *);
+
 
 /* bounce.c */
 int bounce_session(struct smtpd *, int, struct message *);
 int bounce_session_switch(struct smtpd *, FILE *, enum session_state *, char *,
 	struct message *);
+void bounce_event(int, short, void *);
 
-/* log.c */
-void		log_init(int);
-void		log_verbose(int);
-void		log_warn(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-void		log_warnx(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-void		log_info(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-void		log_debug(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-__dead void	fatal(const char *);
-__dead void	fatalx(const char *);
+
+/* config.c */
+#define		 PURGE_LISTENERS	0x01
+#define		 PURGE_MAPS		0x02
+#define		 PURGE_RULES		0x04
+#define		 PURGE_SSL		0x08
+#define		 PURGE_EVERYTHING	0xff
+void		 purge_config(struct smtpd *, u_int8_t);
+void		 unconfigure(struct smtpd *);
+void		 configure(struct smtpd *);
+void		 init_pipes(struct smtpd *);
+void		 config_pipes(struct smtpd *, struct peer *, u_int);
+void		 config_peers(struct smtpd *, struct peer *, u_int);
+
+
+/* control.c */
+pid_t		 control(struct smtpd *);
+void		 session_socket_blockmode(int, enum blockmodes);
+void		 session_socket_no_linger(int);
+int		 session_socket_error(int);
 
 
 /* dns.c */
 void		 dns_query_a(struct smtpd *, char *, int, u_int64_t);
 void		 dns_query_mx(struct smtpd *, char *, int, u_int64_t);
 void		 dns_query_ptr(struct smtpd *, struct sockaddr_storage *,
-		     u_int64_t);
-void		 dns_async(struct smtpd *, struct imsgev *, int,
-		     struct dns *);
+    u_int64_t);
+void		 dns_async(struct smtpd *, struct imsgev *, int, struct dns *);
+
+
+/* enqueue.c */
+int		 enqueue(int, char **);
+int		 enqueue_offline(int, char **);
+
+
 /* expand.c */
 int expand_cmp(struct expandnode *, struct expandnode *);
 void expandtree_increment_node(struct expandtree *, struct expandnode *);
@@ -902,25 +919,42 @@ struct expandnode *expandtree_lookup(struct expandtree *, struct expandnode *);
 void expandtree_free_nodes(struct expandtree *);
 RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
+
 /* forward.c */
 int forwards_get(int, struct expandtree *);
 
-/* smtpd.c */
-int	 child_cmp(struct child *, struct child *);
-SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
-void	 imsg_event_add(struct imsgev *);
-void	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
-	    int, void *, u_int16_t);
-void	 imsg_dispatch(int, short, void *);
 
 /* lka.c */
 pid_t		 lka(struct smtpd *);
 int		 lkasession_cmp(struct lkasession *, struct lkasession *);
 SPLAY_PROTOTYPE(lkatree, lkasession, nodes, lkasession_cmp);
 
+
+/* map.c */
+void		*map_lookup(struct smtpd *, objid_t, char *, enum map_kind);
+struct map	*map_find(struct smtpd *, objid_t);
+struct map	*map_findbyname(struct smtpd *, const char *);
+
+
+
+/* mda.c */
+pid_t		 mda(struct smtpd *);
+
+
 /* mfa.c */
-pid_t		 mfa(struct smtpd *);
-int		 msg_cmp(struct message *, struct message *);
+pid_t		mfa(struct smtpd *);
+
+
+/* mta.c */
+pid_t		 mta(struct smtpd *);
+int		 mta_session_cmp(struct mta_session *, struct mta_session *);
+SPLAY_PROTOTYPE(mtatree, mta_session, entry, mta_session_cmp);
+
+
+/* parse.y */
+int		 parse_config(struct smtpd *, const char *, int);
+int		 cmdline_symset(char *);
+
 
 /* queue.c */
 pid_t		 queue(struct smtpd *);
@@ -932,6 +966,7 @@ void		 queue_commit_envelopes(struct smtpd *, struct message*);
 int		 batch_cmp(struct batch *, struct batch *);
 struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 u_int16_t	 queue_hash(char *);
+
 
 /* queue_shared.c */
 int		 queue_create_layout_message(char *, char *);
@@ -965,38 +1000,19 @@ struct qwalk	*qwalk_new(char *);
 int		 qwalk(struct qwalk *, char *);
 void		 qwalk_close(struct qwalk *);
 void		 show_queue(char *, int);
+u_int16_t	 queue_hash(char *);
 
-u_int16_t	queue_hash(char *);
-
-/* map.c */
-void		*map_lookup(struct smtpd *, objid_t, char *, enum map_kind);
-
-/* mda.c */
-pid_t		 mda(struct smtpd *);
-
-/* mta.c */
-pid_t		 mta(struct smtpd *);
-int		 mta_session_cmp(struct mta_session *, struct mta_session *);
-SPLAY_PROTOTYPE(mtatree, mta_session, entry, mta_session_cmp);
-
-/* control.c */
-pid_t		 control(struct smtpd *);
-void		 session_socket_blockmode(int, enum blockmodes);
-void		 session_socket_no_linger(int);
-int		 session_socket_error(int);
-
-/* enqueue.c */
-int		 enqueue(int, char **);
-int		 enqueue_offline(int, char **);
 
 /* runner.c */
 pid_t		 runner(struct smtpd *);
 void		 message_reset_flags(struct message *);
 SPLAY_PROTOTYPE(batchtree, batch, b_nodes, batch_cmp);
 
+
 /* smtp.c */
 pid_t		 smtp(struct smtpd *);
 void		 smtp_resume(struct smtpd *);
+
 
 /* smtp_session.c */
 void		 session_init(struct listener *, struct session *);
@@ -1009,22 +1025,15 @@ void		 session_bufferevent_new(struct session *);
 
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 
-/* config.c */
-#define		 PURGE_LISTENERS	0x01
-#define		 PURGE_MAPS		0x02
-#define		 PURGE_RULES		0x04
-#define		 PURGE_SSL		0x08
-#define		 PURGE_EVERYTHING	0xff
-void		 purge_config(struct smtpd *, u_int8_t);
-void		 unconfigure(struct smtpd *);
-void		 configure(struct smtpd *);
-void		 init_pipes(struct smtpd *);
-void		 config_pipes(struct smtpd *, struct peer *, u_int);
-void		 config_peers(struct smtpd *, struct peer *, u_int);
 
-/* parse.y */
-int		 parse_config(struct smtpd *, const char *, int);
-int		 cmdline_symset(char *);
+/* smtpd.c */
+int	 child_cmp(struct child *, struct child *);
+SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
+void	 imsg_event_add(struct imsgev *);
+void	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
+	    int, void *, u_int16_t);
+void	 imsg_dispatch(int, short, void *);
+
 
 /* ssl.c */
 void	 ssl_init(void);
@@ -1037,13 +1046,11 @@ void	 ssl_setup(struct smtpd *, struct listener *);
 int	 ssl_cmp(struct ssl *, struct ssl *);
 SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
+
 /* ssl_privsep.c */
 int	 ssl_ctx_use_private_key(void *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
 
-/* map.c */
-struct map	*map_find(struct smtpd *, objid_t);
-struct map	*map_findbyname(struct smtpd *, const char *);
 
 /* util.c */
 typedef struct arglist arglist;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.h,v 1.12 2010/05/26 13:56:08 nicm Exp $	*/
+/*	$OpenBSD: client.h,v 1.13 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -114,3 +114,24 @@ void			 client_rcpt(struct smtp_client *, void *, char *, ...);
 void			 client_printf(struct smtp_client *, char *, ...);
 int			 client_talk(struct smtp_client *, int);
 void			 client_close(struct smtp_client *);
+
+
+struct client_cmd *cmd_new(int, char *, ...);
+void		 cmd_free(struct client_cmd *);
+int		 client_read(struct smtp_client *);
+void		 client_get_reply(struct smtp_client *, struct client_cmd *,
+    int *);
+int		 client_write(struct smtp_client *);
+int		 client_use_extensions(struct smtp_client *);
+void		 client_status(struct smtp_client *, char *, ...);
+int		 client_getln(struct smtp_client *, int);
+void		 client_putln(struct smtp_client *, char *, ...);
+struct ibuf	*client_content_read(FILE *, size_t);
+int		 client_poll(struct smtp_client *);
+void		 client_quit(struct smtp_client *);
+
+int		 client_socket_read(struct smtp_client *);
+int		 client_socket_write(struct smtp_client *);
+
+char		*buf_getln(struct ibuf_read *);
+int		 buf_read(int, struct ibuf_read *);

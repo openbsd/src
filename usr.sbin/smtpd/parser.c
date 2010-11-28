@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.16 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.17 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <imsg.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>

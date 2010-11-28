@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.33 2010/11/15 14:57:40 jsing Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.34 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -29,6 +29,7 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <imsg.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 #define	QWALK_AGAIN	0x1
 #define	QWALK_RECURSE	0x2

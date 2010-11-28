@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.32 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: client.c,v 1.33 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -37,23 +37,7 @@
 #include <openssl/ssl.h>
 
 #include "client.h"
-
-struct client_cmd *cmd_new(int, char *, ...);
-void		 cmd_free(struct client_cmd *);
-int		 client_read(struct smtp_client *);
-void		 client_get_reply(struct smtp_client *, struct client_cmd *,
-		     int *);
-int		 client_write(struct smtp_client *);
-int		 client_use_extensions(struct smtp_client *);
-void		 client_status(struct smtp_client *, char *, ...);
-int		 client_getln(struct smtp_client *, int);
-void		 client_putln(struct smtp_client *, char *, ...);
-struct ibuf	*client_content_read(FILE *, size_t);
-int		 client_poll(struct smtp_client *);
-void		 client_quit(struct smtp_client *);
-
-int		 client_socket_read(struct smtp_client *);
-int		 client_socket_write(struct smtp_client *);
+#include "log.h"
 
 #ifndef CLIENT_NO_SSL
 int		 client_ssl_connect(struct smtp_client *);
@@ -61,13 +45,6 @@ SSL		*ssl_client_init(int, char *, size_t, char *, size_t);
 int		 ssl_buf_read(SSL *, struct ibuf_read *);
 int		 ssl_buf_write(SSL *, struct msgbuf *);
 #endif
-
-char		*buf_getln(struct ibuf_read *);
-int		 buf_read(int, struct ibuf_read *);
-
-void		 log_debug(const char *, ...);	/* XXX */
-void		 fatal(const char *);	/* XXX */
-void		 fatalx(const char *);	/* XXX */
 
 /*
  * Initialize SMTP session.

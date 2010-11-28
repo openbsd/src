@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.94 2010/10/29 09:16:07 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.95 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -29,6 +29,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <imsg.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
@@ -40,6 +41,7 @@
 
 #include "smtpd.h"
 #include "client.h"
+#include "log.h"
 
 void			 mta_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 

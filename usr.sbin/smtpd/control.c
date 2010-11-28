@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.55 2010/11/24 23:27:04 todd Exp $	*/
+/*	$OpenBSD: control.c,v 1.56 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <imsg.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -36,6 +37,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 #define CONTROL_BACKLOG 5
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.23 2010/10/09 22:11:08 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.24 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <err.h>
 #include <event.h>
+#include <imsg.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -35,6 +36,7 @@
 
 #include "smtpd.h"
 #include "client.h"
+#include "log.h"
 
 struct client_ctx {
 	struct event		 ev;
@@ -42,8 +44,6 @@ struct client_ctx {
 	struct smtp_client	*pcb;
 	struct smtpd		*env;
 };
-
-void		 bounce_event(int, short, void *);
 
 int
 bounce_session(struct smtpd *env, int fd, struct message *messagep)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.52 2010/10/29 09:16:07 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.53 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <ctype.h>
 #include <event.h>
+#include <imsg.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -33,20 +34,15 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 void		mfa_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	mfa_shutdown(void);
 void		mfa_sig_handler(int, short, void *);
-void		mfa_setup_events(struct smtpd *);
-void		mfa_disable_events(struct smtpd *);
-
 void		mfa_test_mail(struct smtpd *, struct message *);
 void		mfa_test_rcpt(struct smtpd *, struct message *);
 void		mfa_test_rcpt_resume(struct smtpd *, struct submit_status *);
-
-int		strip_source_route(char *, size_t);
-
-struct rule    *ruleset_match(struct smtpd *, struct path *, struct sockaddr_storage *);
+int		mfa_strip_source_route(char *, size_t);
 
 void
 mfa_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
@@ -109,15 +105,6 @@ mfa_shutdown(void)
 	_exit(0);
 }
 
-void
-mfa_setup_events(struct smtpd *env)
-{
-}
-
-void
-mfa_disable_events(struct smtpd *env)
-{
-}
 
 pid_t
 mfa(struct smtpd *env)
@@ -174,26 +161,11 @@ mfa(struct smtpd *env)
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));
 
-	mfa_setup_events(env);
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
 	mfa_shutdown();
 
 	return (0);
-}
-
-int
-msg_cmp(struct message *m1, struct message *m2)
-{
-	/*
-	 * do not return u_int64_t's
-	 */
-	if (m1->id - m2->id > 0)
-		return (1);
-	else if (m1->id - m2->id < 0)
-		return (-1);
-	else
-		return (0);
 }
 
 void
@@ -205,7 +177,7 @@ mfa_test_mail(struct smtpd *env, struct message *m)
 	ss.code = 530;
 	ss.u.path = m->sender;
 
-	if (strip_source_route(ss.u.path.user, sizeof(ss.u.path.user)))
+	if (mfa_strip_source_route(ss.u.path.user, sizeof(ss.u.path.user)))
 		goto refuse;
 
 	if (! valid_localpart(ss.u.path.user) ||
@@ -247,7 +219,7 @@ mfa_test_rcpt(struct smtpd *env, struct message *m)
 	ss.msg.recipient = m->session_rcpt;
 	ss.flags = m->flags;
 
-	strip_source_route(ss.u.path.user, sizeof(ss.u.path.user));
+	mfa_strip_source_route(ss.u.path.user, sizeof(ss.u.path.user));
 
 	if (! valid_localpart(ss.u.path.user) ||
 	    ! valid_domainpart(ss.u.path.domain))
@@ -280,7 +252,7 @@ mfa_test_rcpt_resume(struct smtpd *env, struct submit_status *ss) {
 }
 
 int
-strip_source_route(char *buf, size_t len)
+mfa_strip_source_route(char *buf, size_t len)
 {
 	char *p;
 

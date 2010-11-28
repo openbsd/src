@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_parser.c,v 1.3 2010/04/27 09:49:23 gilles Exp $	*/
+/*	$OpenBSD: map_parser.c,v 1.4 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2010 Gilles Chehade <gilles@openbsd.org>
@@ -28,11 +28,13 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 struct map_parser *map_parser_lookup(enum map_kind);
 

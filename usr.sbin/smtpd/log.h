@@ -1,7 +1,7 @@
-/*	$OpenBSD: authenticate.c,v 1.2 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: log.h,v 1.1 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
- * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2010 Gilles Chehade <gilles@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,27 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#include <bsd_auth.h>
-#include <err.h>
-#include <event.h>
-#include <imsg.h>
-#include <pwd.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include "smtpd.h"
-
-int
-authenticate_user(char *username, char *password)
-{
-	return auth_userokay(username, NULL, "auth-smtp", password);
-}
+void		log_init(int);
+void		log_verbose(int);
+void		log_warn(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
+void		log_warnx(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
+void		log_info(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
+void		log_debug(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
+__dead void	fatal(const char *);
+__dead void	fatalx(const char *);

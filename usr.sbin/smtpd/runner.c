@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.93 2010/11/24 23:27:04 todd Exp $	*/
+/*	$OpenBSD: runner.c,v 1.94 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <imsg.h>
 #include <libgen.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -45,6 +46,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 void		runner_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 

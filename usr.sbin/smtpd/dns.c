@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.23 2010/09/08 13:32:13 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.24 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -27,6 +27,7 @@
 #include <arpa/nameser.h>
 
 #include <event.h>
+#include <imsg.h>
 #include <netdb.h>
 #include <resolv.h>
 #include <signal.h>
@@ -35,6 +36,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 struct resdata {
 	struct imsgev	 iev;

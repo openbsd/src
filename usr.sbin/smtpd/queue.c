@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.91 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.92 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <imsg.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <pwd.h>
@@ -36,6 +37,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 void		queue_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 void		queue_pass_to_runner(struct smtpd *, struct imsgev *, struct imsg *);

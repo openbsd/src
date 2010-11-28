@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.77 2010/11/24 23:27:04 todd Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.78 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
+#include <imsg.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
@@ -40,6 +41,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 void		smtp_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	smtp_shutdown(void);

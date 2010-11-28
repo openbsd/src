@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.136 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.137 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
+#include <imsg.h>
 #include <pwd.h>
 #include <regex.h>
 #include <resolv.h>
@@ -41,6 +42,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 int	 	 session_rfc5321_helo_handler(struct session *, char *);
 int		 session_rfc5321_ehlo_handler(struct session *, char *);

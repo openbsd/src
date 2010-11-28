@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.30 2010/11/24 23:27:04 todd Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.31 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <event.h>
 #include <fcntl.h>
+#include <imsg.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,7 @@
 #include <openssl/err.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 #define SSL_CIPHERS	"HIGH"
 

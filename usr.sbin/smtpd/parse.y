@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.70 2010/10/29 09:16:08 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.71 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <event.h>
 #include <ifaddrs.h>
+#include <imsg.h>
 #include <limits.h>
 #include <paths.h>
 #include <pwd.h>
@@ -50,6 +51,7 @@
 #include <util.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {

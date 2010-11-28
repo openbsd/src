@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.49 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.50 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <imsg.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -36,12 +37,11 @@
 #include <vis.h>
 
 #include "smtpd.h"
+#include "log.h"
 
 void			 mda_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void		 mda_shutdown(void);
 void			 mda_sig_handler(int, short, void *);
-void			 mda_setup_events(struct smtpd *);
-void			 mda_disable_events(struct smtpd *);
 void			 mda_store(struct mda_session *);
 void			 mda_store_event(int, short, void *);
 struct mda_session	*mda_lookup(struct smtpd *, u_int32_t);
@@ -265,16 +265,6 @@ mda_shutdown(void)
 	_exit(0);
 }
 
-void
-mda_setup_events(struct smtpd *env)
-{
-}
-
-void
-mda_disable_events(struct smtpd *env)
-{
-}
-
 pid_t
 mda(struct smtpd *env)
 {
@@ -330,7 +320,6 @@ mda(struct smtpd *env)
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));
 
-	mda_setup_events(env);
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
 	mda_shutdown();

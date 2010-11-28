@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: log.c,v 1.10 2010/11/28 13:56:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,7 @@
 #include <syslog.h>
 #include <time.h>
 
-#include "smtpd.h"
+#include "log.h"
 
 int	 debug;
 int	 verbose;
