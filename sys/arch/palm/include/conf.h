@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2009/09/05 01:22:11 marex Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2010/11/28 20:49:47 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 2002/02/10 12:26:03 chris Exp $	*/
 
 #ifndef _PALM_CONF_H
@@ -9,9 +9,6 @@
 /*
  * PALM specific device includes go in here
  */
-
-#define CONF_HAVE_USB
-#define	CONF_HAVE_WSCONS
 
 #include <arm/conf.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 2008/11/27 20:51:48 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 2010/11/28 20:49:47 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 2002/02/10 12:26:03 chris Exp $	*/
 
 #ifndef _GUMSTIX_CONF_H
@@ -11,8 +11,6 @@
  */
 
 #define CONF_HAVE_APM
-#define	CONF_HAVE_USB
-#define	CONF_HAVE_WSCONS
 
 #include <arm/conf.h>
 
