@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.26 2009/12/13 08:27:15 deraadt Exp $ */
+/*      $OpenBSD: param.h,v 1.27 2010/11/28 20:35:15 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,7 @@
 #define	NKMEMPAGES_MAX_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
 #endif /* _KERNEL */
 
-/* pages ("clicks") (4096 bytes) to disk blocks */
+/* pages ("clicks") to disk blocks */
 #define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
 #define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
 
