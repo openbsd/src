@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.24 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.25 2010/11/28 14:02:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -30,7 +30,7 @@
 #include <imsg.h>
 #include <netdb.h>
 #include <resolv.h>
-#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
