@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.55 2010/10/29 10:36:08 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.56 2010/11/28 15:45:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2010 $
+.Dd $Mdocdate: November 28 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -604,20 +604,21 @@ closes it out.
 .Pp
 The
 .Em Callable
-column indicates that the macro may be called subsequent to the initial
-line-macro.
-If a macro is not callable, then its invocation after the initial line
-macro is interpreted as opaque text, such that
+column indicates that the macro may also be called by passing its name
+as an argument to another macro.
+If a macro is not callable but its name appears as an argument
+to another macro, it is interpreted as opaque text.
+For example,
 .Sq \&.Fl \&Sh
 produces
 .Sq Fl \&Sh .
 .Pp
 The
 .Em Parsed
-column indicates whether the macro may be followed by further
-(ostensibly callable) macros.
-If a macro is not parsed, subsequent macro invocations on the line
-will be interpreted as opaque text.
+column indicates whether the macro may call other macros by receiving
+their names as arguments.
+If a macro is not parsed but the name of another macro appears
+as an argument, it is interpreted as opaque text.
 .Pp
 The
 .Em Scope
@@ -2714,10 +2715,10 @@ troff implementations, at this time limited to GNU troff
 .Pq Qq groff .
 The term
 .Qq historic groff
-refers to groff versions before the
+refers to groff versions before 1.17,
+which featured a significant update of the
 .Pa doc.tmac
-file re-write
-.Pq somewhere between 1.15 and 1.19 .
+file.
 .Pp
 Heirloom troff, the other significant troff implementation accepting
 \-mdoc, is similar to historic groff.
@@ -2807,6 +2808,11 @@ can only be called by other macros, but not at the beginning of a line.
 .It
 .Sx \&%C
 is not implemented.
+.It
+Historic groff only allows up to eight or nine arguments per macro input
+line, depending on the exact situation.
+Providing more arguments causes garbled output.
+The number of arguments on one input line is not limited with mandoc.
 .It
 Historic groff has many un-callable macros.
 Most of these (excluding some block-level macros) are callable
