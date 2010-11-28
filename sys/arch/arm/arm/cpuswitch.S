@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.10 2008/07/28 19:08:46 miod Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.11 2010/11/28 20:45:46 miod Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -86,24 +86,6 @@
 
 /* LINTSTUB: include <sys/param.h> */
 	
-#undef IRQdisable
-#undef IRQenable
-
-/*
- * New experimental definitions of IRQdisable and IRQenable
- * These keep FIQ's enabled since FIQ's are special.
- */
-
-#define IRQdisable \
-	mrs	r14, cpsr ; \
-	orr	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14 ; \
-
-#define IRQenable \
-	mrs	r14, cpsr ; \
-	bic	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14 ; \
-
 /*
  * These are used for switching the translation table/DACR.
  * Since the vector page can be invalid for a short time, we must
