@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.20 2010/11/28 01:00:40 schwarze Exp $ */
+/*	$Id: roff.c,v 1.21 2010/11/28 19:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -130,7 +130,8 @@ static	enum roffrule	 roff_evalcond(const char *, int *);
 static	void		 roff_freestr(struct roff *);
 static	const char	*roff_getstrn(const struct roff *, 
 				const char *, size_t);
-static	enum rofferr	 roff_line(ROFF_ARGS);
+static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
+static	enum rofferr	 roff_line_error(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	int		 roff_res(struct roff *, 
 				char **, size_t *, int);
@@ -148,7 +149,7 @@ static	enum rofferr	 roff_userdef(ROFF_ARGS);
 static	struct roffmac	*hash[HASHWIDTH];
 
 static	struct roffmac	 roffs[ROFF_MAX] = {
-	{ "ad", roff_line, NULL, NULL, 0, NULL },
+	{ "ad", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "am", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "ami", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "am1", roff_block, roff_block_text, roff_block_sub, 0, NULL },
@@ -157,16 +158,16 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "de1", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "ds", roff_ds, NULL, NULL, 0, NULL },
 	{ "el", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
-	{ "hy", roff_line, NULL, NULL, 0, NULL },
+	{ "hy", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "ig", roff_block, roff_block_text, roff_block_sub, 0, NULL },
-	{ "ne", roff_line, NULL, NULL, 0, NULL },
-	{ "nh", roff_line, NULL, NULL, 0, NULL },
+	{ "ne", roff_line_ignore, NULL, NULL, 0, NULL },
+	{ "nh", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "nr", roff_nr, NULL, NULL, 0, NULL },
-	{ "rm", roff_line, NULL, NULL, 0, NULL },
+	{ "rm", roff_line_error, NULL, NULL, 0, NULL },
 	{ "so", roff_so, NULL, NULL, 0, NULL },
-	{ "tr", roff_line, NULL, NULL, 0, NULL },
+	{ "tr", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ ".", roff_cblock, NULL, NULL, 0, NULL },
 	{ "\\}", roff_ccond, NULL, NULL, 0, NULL },
 	{ NULL, roff_userdef, NULL, NULL, 0, NULL },
@@ -636,6 +637,9 @@ roff_block(ROFF_ARGS)
 			tok = ROFF_de;
 		if (ROFF_de == tok)
 			name = *bufp + pos;
+		else
+			(*r->msg)(MANDOCERR_REQUEST, r->data, ln, ppos,
+			    roffs[tok].name);
 		while ((*bufp)[pos] && ' ' != (*bufp)[pos])
 			pos++;
 		while (' ' == (*bufp)[pos])
@@ -857,9 +861,19 @@ roff_evalcond(const char *v, int *pos)
 
 /* ARGSUSED */
 static enum rofferr
-roff_line(ROFF_ARGS)
+roff_line_ignore(ROFF_ARGS)
 {
 
+	return(ROFF_IGN);
+}
+
+
+/* ARGSUSED */
+static enum rofferr
+roff_line_error(ROFF_ARGS)
+{
+
+	(*r->msg)(MANDOCERR_REQUEST, r->data, ln, ppos, roffs[tok].name);
 	return(ROFF_IGN);
 }
 

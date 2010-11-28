@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.20 2010/10/26 23:34:38 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.21 2010/11/28 19:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,6 +103,7 @@ enum	mandocerr {
 	MANDOCERR_BADCHAR, /* skipping bad character */
 	MANDOCERR_NOTEXT, /* skipping text before the first section header */
 	MANDOCERR_MACRO, /* skipping unknown macro */
+	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */
 	MANDOCERR_LINESCOPE, /* line scope broken */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
 	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */
@@ -120,12 +121,12 @@ enum	mandocerr {
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
-	MANDOCERR_BADDISP, /* unsupported display type */
+	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
 	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
-	MANDOCERR_SOPATH, /* invalid path in include directive */
+	MANDOCERR_SOPATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
 	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
 	MANDOCERR_MEM, /* static buffer exhausted */

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.55 2010/11/25 22:23:31 schwarze Exp $ */
+/*	$Id: main.c,v 1.56 2010/11/28 19:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -163,6 +163,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping bad character",
 	"skipping text before the first section header",
 	"skipping unknown macro",
+	"NOT IMPLEMENTED: skipping request",
 	"line scope broken",
 	"argument count wrong",
 	"skipping end of block that is not open",
@@ -180,12 +181,12 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"generic fatal error",
 
 	"column syntax is inconsistent",
-	"unsupported display type",
+	"NOT IMPLEMENTED: .Bd -file",
 	"line scope broken, syntax violated",
 	"argument count wrong, violates syntax",
 	"child violates parent syntax",
 	"argument count wrong, violates syntax",
-	"invalid path in include directive",
+	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
 	"no document body",
 	"no document prologue",
 	"static buffer exhausted",

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.68 2010/10/16 20:49:37 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.69 2010/11/28 19:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -783,9 +783,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 
 	tok = (j > 1 || j < 4) ? mdoc_hash_find(mac) : MDOC_MAX;
 	if (MDOC_MAX == tok) {
-		mdoc_vmsg(m, MANDOCERR_MACRO, ln, sv, 
-		    "unknown macro: %s%s", 
-		    buf, strlen(buf) > 3 ? "..." : "");
+		mdoc_vmsg(m, MANDOCERR_MACRO, ln, sv, "%s", buf + sv - 1);
 		return(1);
 	}
 
