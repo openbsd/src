@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.29 2010/04/29 13:48:29 jsing Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.30 2010/11/28 20:09:40 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -52,27 +52,6 @@ struct cfdriver gsc_cd = {
 	NULL, "gsc", DV_DULL
 };
 
-int	gsc_dmamap_create(void *, bus_size_t, int,
-			       bus_size_t, bus_size_t, int, bus_dmamap_t *);
-void	gsc_dmamap_destroy(void *, bus_dmamap_t);
-int	gsc_dmamap_load(void *, bus_dmamap_t, void *,
-			     bus_size_t, struct proc *, int);
-int	gsc_dmamap_load_mbuf(void *, bus_dmamap_t, struct mbuf *, int);
-int	gsc_dmamap_load_uio(void *, bus_dmamap_t, struct uio *, int);
-int	gsc_dmamap_load_raw(void *, bus_dmamap_t,
-				 bus_dma_segment_t *, int, bus_size_t, int);
-void	gsc_dmamap_unload(void *, bus_dmamap_t);
-void	gsc_dmamap_sync(void *, bus_dmamap_t, bus_addr_t, bus_size_t,
-			     int);
-
-int	gsc_dmamem_alloc(void *, bus_size_t, bus_size_t,
-			      bus_size_t, bus_dma_segment_t *, int, int *, int);
-void	gsc_dmamem_free(void *, bus_dma_segment_t *, int);
-int	gsc_dmamem_map(void *, bus_dma_segment_t *,
-			    int, size_t, caddr_t *, int);
-void	gsc_dmamem_unmap(void *, caddr_t, size_t);
-paddr_t	gsc_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
-
 int
 gscmatch(parent, cfdata, aux)   
 	struct device *parent;
@@ -104,23 +83,6 @@ gscattach(parent, self, aux)
 
 	sc->sc_ih = cpu_intr_establish(IPL_NESTED, ga->ga_irq,
 	    gsc_intr, (void *)sc->sc_ic->gsc_base, sc->sc_dev.dv_xname);
-
-	/* DMA guts */
-	sc->sc_dmatag._cookie = sc;
-	sc->sc_dmatag._dmamap_create = gsc_dmamap_create;
-	sc->sc_dmatag._dmamap_destroy = gsc_dmamap_destroy;
-	sc->sc_dmatag._dmamap_load = gsc_dmamap_load;
-	sc->sc_dmatag._dmamap_load_mbuf = gsc_dmamap_load_mbuf;
-	sc->sc_dmatag._dmamap_load_uio = gsc_dmamap_load_uio;
-	sc->sc_dmatag._dmamap_load_raw = gsc_dmamap_load_raw;
-	sc->sc_dmatag._dmamap_unload = gsc_dmamap_unload;
-	sc->sc_dmatag._dmamap_sync = gsc_dmamap_sync;
-
-	sc->sc_dmatag._dmamem_alloc = gsc_dmamem_alloc;
-	sc->sc_dmatag._dmamem_free = gsc_dmamem_free;
-	sc->sc_dmatag._dmamem_map = gsc_dmamem_map;
-	sc->sc_dmatag._dmamem_unmap = gsc_dmamem_unmap;
-	sc->sc_dmatag._dmamem_mmap = gsc_dmamem_mmap;
 
 	pdc_scanbus(self, &ga->ga_ca, MAXMODBUS, 0, 0);
 }
@@ -173,143 +135,4 @@ gsc_intr_disestablish(sc, v)
 
 	cpu_intr_unmap(sc->sc_ih, v);
 #endif
-}
-
-int
-gsc_dmamap_create(v, size, nseg, maxsegsz, boundary, flags, dmamp)
-	void *v;
-	bus_size_t size;
-	int nseg;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	return 0;
-}
-
-void
-gsc_dmamap_destroy(v, map)
-	void *v;
-	bus_dmamap_t map;
-{
-}
-
-int
-gsc_dmamap_load(v, map, buf, buflen, p, flags)
-	void *v;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-{
-	return 0;
-}
-
-int
-gsc_dmamap_load_mbuf(v, map, mbuf, flags)
-	void *v;
-	bus_dmamap_t map;
-	struct mbuf *mbuf;
-	int flags;
-{
-	return 0;
-}
-
-int
-gsc_dmamap_load_uio(v, map, uio, flags)
-	void *v;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
-{
-	return 0;
-}
-
-int
-gsc_dmamap_load_raw(v, map, segs, nsegs, size, flags)
-	void *v;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
-{
-	return 0;
-}
-
-void
-gsc_dmamap_unload(v, map)
-	void *v;
-	bus_dmamap_t map;
-{
-
-}
-
-void
-gsc_dmamap_sync(v, map, offset, len, op)
-	void *v;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int op;
-{
-
-}
-
-int
-gsc_dmamem_alloc(v, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	void *v;
-	bus_size_t size;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-{
-	return 0;
-}
-
-void
-gsc_dmamem_free(v, segs, nsegs)
-	void *v;
-	bus_dma_segment_t *segs;
-	int nsegs;
-{
-
-}
-
-int
-gsc_dmamem_map(v, segs, nsegs, size, kvap, flags)
-	void *v;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
-{
-	return 0;
-}
-
-void
-gsc_dmamem_unmap(v, kva, size)
-	void *v;
-	caddr_t kva;
-	size_t size;
-{
-
-}
-
-paddr_t
-gsc_dmamem_mmap(v, segs, nsegs, off, prot, flags)
-	void *v;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot;
-	int flags;
-{
-	return (-1);
 }

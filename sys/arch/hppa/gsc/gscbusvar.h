@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbusvar.h,v 1.13 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.14 2010/11/28 20:09:40 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -52,7 +52,6 @@ struct gsc_softc {
 
 	bus_space_tag_t sc_iot;
 	struct gscbus_ic *sc_ic;
-	struct hppa_bus_dma_tag sc_dmatag;
 };
 
 void *gsc_intr_establish(struct gsc_softc *sc, int irq, int pri,
