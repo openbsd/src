@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.20 2009/12/08 22:15:47 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.21 2010/11/28 20:28:28 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -44,11 +44,7 @@
 /*
  * Machine dependent constants mips processors.
  */
-/*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
- */
-#define	USRTEXT		0x0000000000400000L
+
 #define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
 
 /*
@@ -91,7 +87,9 @@
 #ifndef	VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX	8	/* Max number of physical memory segments */
 #endif
+#ifndef	VM_PHYSSEG_STRAT
 #define VM_PHYSSEG_STRAT VM_PSTRAT_BSEARCH
+#endif
 #define VM_PHYSSEG_NOADD
 
 /* user/kernel map constants */
