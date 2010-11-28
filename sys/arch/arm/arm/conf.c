@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2010/09/23 05:02:14 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2010/11/28 20:48:44 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * Character and Block Device configuration
  * Console configuration
  *
- * Defines the structures cdevsw and constab
+ * Defines the structures [bc]devsw
  *
  * Created      : 17/09/94
  */
@@ -65,13 +65,6 @@
  * Standard MI devices (e.g. ones in dev/ic)
  */
 #include "com.h"		/* NS164x0 serial ports */
-
-#ifdef CONF_HAVE_SSCOM
-#include "sscom.h"
-cdev_decl(sscom);
-#else
-#define NSSCOM 0
-#endif
 
 /*
  * Standard pseudo-devices
@@ -158,11 +151,6 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 
 #include "lpt.h"
-#ifdef CONF_HAVE_FCOM
-#include "fcom.h"
-#else
-#define NFCOM	0
-#endif
 
 #include "radio.h"
 cdev_decl(radio);
@@ -314,7 +302,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 11: */
 	cdev_tty_init(NCOM,com),		/* 12: serial port */
 	cdev_gpio_init(NGPIO,gpio),     	/* 13: GPIO interface */
-	cdev_tty_init(NSSCOM,sscom),		/* 14: alternate serial port */
+	cdev_notdef(),				/* 14 was alternate serial port */
 	cdev_lkm_dummy(),			/* 15: */
 	cdev_disk_init(NWD,wd),			/* 16: ST506/ESDI/IDE disk */
 	cdev_lkm_dummy(),			/* 17: */
@@ -358,7 +346,7 @@ struct cdevsw cdevsw[] = {
 #endif
  	cdev_bio_init(NBIO,bio),		/* 52: ioctl tunnel */
 	cdev_notdef(),				/* 53: reserved */
-	cdev_tty_init(NFCOM,fcom),		/* 54: FOOTBRIDGE console */
+	cdev_notdef(),				/* 54 was FOOTBRIDGE console */
 	cdev_lkm_dummy(),			/* 55: Reserved for bypass device */	
 	cdev_notdef(),				/* 56: reserved */
 	cdev_midi_init(NMIDI,midi),		/* 57: MIDI I/O */
