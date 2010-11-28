@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.93 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.94 2010/11/28 15:32:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,8 +40,6 @@ void		queue_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 void		queue_pass_to_runner(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	queue_shutdown(void);
 void		queue_sig_handler(int, short, void *);
-void		queue_setup_events(struct smtpd *);
-void		queue_disable_events(struct smtpd *);
 void		queue_purge(char *);
 
 int		queue_create_layout_message(char *, char *);
@@ -246,16 +244,6 @@ queue_shutdown(void)
 	_exit(0);
 }
 
-void
-queue_setup_events(struct smtpd *env)
-{
-}
-
-void
-queue_disable_events(struct smtpd *env)
-{
-}
-
 pid_t
 queue(struct smtpd *env)
 {
@@ -326,8 +314,6 @@ queue(struct smtpd *env)
 	queue_purge(PATH_INCOMING);
 	queue_purge(PATH_ENQUEUE);
 
-	queue_setup_events(env);
-	
 	if (event_dispatch() <  0)
 		fatal("event_dispatch");
 	queue_shutdown();
