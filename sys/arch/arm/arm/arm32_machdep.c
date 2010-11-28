@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.35 2010/06/27 13:28:46 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.36 2010/11/28 20:44:15 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -102,12 +102,7 @@ struct cpu_info cpu_info_store;
 caddr_t	msgbufaddr;
 extern paddr_t msgbufphys;
 
-int kernel_debug = 0;
-
 struct user *proc0paddr;
-
-/* exported variable to be filled in by the bootloaders */
-char *booted_kernel;
 
 #ifdef APERTURE
 #ifdef INSECURE
@@ -346,9 +341,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-	case CPU_DEBUG:
-		return(sysctl_int(oldp, oldlenp, newp, newlen, &kernel_debug));
-
 	case CPU_CONSDEV: {
 		dev_t consdev;
 		if (cn_tab != NULL)
@@ -357,12 +349,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
-	}
-	case CPU_BOOTED_KERNEL: {
-		if (booted_kernel != NULL && booted_kernel[0] != '\0')
-			return sysctl_rdstring(oldp, oldlenp, newp,
-			    booted_kernel);
-		return (EOPNOTSUPP);
 	}
 
 	case CPU_ALLOWAPERTURE:

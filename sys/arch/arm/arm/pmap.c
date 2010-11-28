@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2010/11/27 20:45:26 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2010/11/28 20:44:15 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2894,20 +2894,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	    curcpu()->ci_arm_cpurev < 3) {
 		/* Always current pmap */
 		if (l2pte_valid(pte)) {
-			extern int kernel_debug;
-			if (kernel_debug & 1) {
-				struct proc *p = curproc;
-				printf("prefetch_abort: page is already "
-				    "mapped - pte=%p *pte=%08x\n", ptep, pte);
-				printf("prefetch_abort: pc=%08lx proc=%p "
-				    "process=%s\n", va, p, p->p_comm);
-				printf("prefetch_abort: far=%08x fs=%x\n",
-				    cpu_faultaddress(), cpu_faultstatus());
-			}
-#ifdef DDB
-			if (kernel_debug & 2)
-				Debugger();
-#endif
 			rv = 1;
 		}
 	}
