@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.59 2009/01/27 22:14:12 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.60 2010/11/28 21:01:41 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -216,8 +216,7 @@ u_long		kernel_pmap_asngen_store[ALPHA_MAXPROCS];
 
 paddr_t    	avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
-vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
-vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
+vaddr_t		pmap_maxkvaddr;	/* VA of last avail page (pmap_growkernel) */
 
 boolean_t	pmap_initialized;	/* Has pmap_init completed? */
 
@@ -260,7 +259,9 @@ struct pool pmap_pv_pool;
 /*
  * Canonical names for PGU_* constants.
  */
+#ifdef DIAGNOSTIC
 const char *pmap_pgu_strings[] = PGU_STRINGS;
+#endif
 
 /*
  * Address Space Numbers.
@@ -348,7 +349,7 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	  lock is held.
  *
  *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
- *	  and the virtual_end variable.
+ *	  and the pmap_maxkvaddr variable.
  *
  *	Address space number management (global ASN counters and per-pmap
  *	ASN state) are not locked; they use arrays of values indexed
@@ -877,14 +878,12 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
-	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
+
+	pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
 
 #if 0
 	printf("avail_start = 0x%lx\n", avail_start);
 	printf("avail_end = 0x%lx\n", avail_end);
-	printf("virtual_avail = 0x%lx\n", virtual_avail);
-	printf("virtual_end = 0x%lx\n", virtual_end);
 #endif
 
 	/*
@@ -982,13 +981,6 @@ pmap_uses_prom_console(void)
 }
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
-void
-pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
-{
-	*vstartp = VM_MIN_KERNEL_ADDRESS;
-	*vendp = VM_MAX_KERNEL_ADDRESS;
-}
-
 /*
  * pmap_steal_memory:		[ INTERFACE ]
  *
@@ -1074,7 +1066,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		 * but the upper layers still want to know.
 		 */
 		if (vstartp)
-			*vstartp = round_page(virtual_avail);
+			*vstartp = VM_MIN_KERNEL_ADDRESS;
 		if (vendp)
 			*vendp = VM_MAX_KERNEL_ADDRESS;
 
@@ -1232,17 +1224,17 @@ pmap_destroy(pmap_t pmap)
 	 * mappings at this point, this should never happen.
 	 */
 	if (pmap->pm_lev1map != kernel_lev1map) {
-		printf("pmap_release: pmap still contains valid mappings!\n");
+		printf("pmap_destroy: pmap still contains valid mappings!\n");
 		if (pmap->pm_nlev2)
-			printf("pmap_release: %ld level 2 tables left\n",
+			printf("pmap_destroy: %ld level 2 tables left\n",
 			    pmap->pm_nlev2);
 		if (pmap->pm_nlev3)
-			printf("pmap_release: %ld level 3 tables left\n",
+			printf("pmap_destroy: %ld level 3 tables left\n",
 			    pmap->pm_nlev3);
 		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
 		pmap_update(pmap);
 		if (pmap->pm_lev1map != kernel_lev1map)
-			panic("pmap_release: pmap_remove() didn't");
+			panic("pmap_destroy: pmap_remove() didn't");
 	}
 #endif
 
@@ -3328,13 +3320,13 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	vaddr_t va;
 	int s, l1idx;
 
-	if (maxkvaddr <= virtual_end)
+	if (maxkvaddr <= pmap_maxkvaddr)
 		goto out;		/* we are OK */
 
 	s = splhigh();			/* to be safe */
 	simple_lock(&pmap_growkernel_slock);
 
-	va = virtual_end;
+	va = pmap_maxkvaddr;
 
 	while (va < maxkvaddr) {
 		/*
@@ -3406,13 +3398,13 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	pool_cache_invalidate(&pmap_l1pt_cache);
 #endif
 
-	virtual_end = va;
+	pmap_maxkvaddr = va;
 
 	simple_unlock(&pmap_growkernel_slock);
 	splx(s);
 
  out:
-	return (virtual_end);
+	return (pmap_maxkvaddr);
 
  die:
 	panic("pmap_growkernel: out of memory");
