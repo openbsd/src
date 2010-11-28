@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2010/11/24 20:59:19 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.51 2010/11/28 20:30:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1648,3 +1648,26 @@ pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 	Mips_InvalidateICache(curcpu(), va, len);
 #endif
 }
+
+#ifdef __HAVE_PMAP_DIRECT
+vaddr_t
+pmap_map_direct(vm_page_t pg)
+{
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	vaddr_t va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
+
+	return va;
+}
+
+vm_page_t
+pmap_unmap_direct(vaddr_t va)
+{
+	paddr_t pa = XKPHYS_TO_PHYS(va);
+	vm_page_t pg = PHYS_TO_VM_PAGE(pa);
+
+	if (CpuCacheAliasMask)
+		Mips_HitInvalidateDCache(curcpu(), va, pa, PAGE_SIZE);
+
+	return pg;
+}
+#endif

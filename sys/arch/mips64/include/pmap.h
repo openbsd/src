@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.21 2010/11/24 20:59:17 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.22 2010/11/28 20:30:51 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -145,6 +145,23 @@ void pmap_update_kernel_page(vaddr_t, pt_entry_t);
 #else
 #define pmap_update_kernel_page(va, entry) tlb_update(va, entry)
 #endif
+
+/*
+ * Most R5000 processors (and related families) have a silicon bug preventing
+ * the ll/sc (and lld/scd) instructions from honouring the caching mode
+ * when accessing XKPHYS addresses.
+ *
+ * Since pool memory is allocated with pmap_map_direct() if __HAVE_PMAP_DIRECT,
+ * and many structures containing fields which will be used with
+ * <machine/atomic.h> routines are allocated from pools, __HAVE_PMAP_DIRECT can
+ * not be defined on systems which may use flawed processors.
+ */
+#if !defined(CPU_R5000) && !defined(CPU_RM7000)
+#define	__HAVE_PMAP_DIRECT
+vaddr_t	pmap_map_direct(vm_page_t);
+vm_page_t pmap_unmap_direct(vaddr_t);
+#endif
+
 #endif	/* _KERNEL */
 
 #endif	/* !_MIPS_PMAP_H_ */
