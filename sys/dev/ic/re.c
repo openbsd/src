@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.131 2010/11/28 22:08:59 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.132 2010/11/28 22:13:48 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1605,21 +1605,17 @@ re_intr(void *arg)
 		return (0);
 
 	rx = tx = 0;
-	for (;;) {
+	status = CSR_READ_2(sc, RL_ISR);
+	/* If the card has gone away the read returns 0xffff. */
+	if (status == 0xffff)
+		return (0);
+	if (status)
+		CSR_WRITE_2(sc, RL_ISR, status);
 
-		status = CSR_READ_2(sc, RL_ISR);
-		/* If the card has gone away the read returns 0xffff. */
-		if (status == 0xffff)
-			break;
-		if (status)
-			CSR_WRITE_2(sc, RL_ISR, status);
+	if (status & RL_ISR_TIMEOUT_EXPIRED)
+		claimed = 1;
 
-		if (status & RL_ISR_TIMEOUT_EXPIRED)
-			claimed = 1;
-
-		if ((status & RL_INTRS_CPLUS) == 0)
-			break;
-
+	if (status & RL_INTRS_CPLUS) {
 		if (status & (sc->rl_rx_ack | RL_ISR_RX_ERR)) {
 			rx |= re_rxeof(sc);
 			claimed = 1;
