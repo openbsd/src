@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.114 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.115 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -30,19 +30,15 @@
 
 #include <err.h>
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
+#include <event.h>
 #include <imsg.h>
-#include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
-#include <regex.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

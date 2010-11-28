@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.72 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -38,15 +38,10 @@
 #include <event.h>
 #include <ifaddrs.h>
 #include <imsg.h>
-#include <limits.h>
+#include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
-#include <netdb.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <util.h>
 

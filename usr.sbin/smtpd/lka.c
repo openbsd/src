@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.121 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.122 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -25,13 +25,11 @@
 #include <sys/wait.h>
 
 #include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
-#include <netdb.h>
 #include <pwd.h>
 #include <resolv.h>
 #include <signal.h>

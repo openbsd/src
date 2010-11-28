@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.94 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.95 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,24 +25,17 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
 #include <imsg.h>
 #include <libgen.h>
-#include <netdb.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

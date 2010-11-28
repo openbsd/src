@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.54 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.55 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -26,21 +26,13 @@
 #include <sys/un.h>
 #include <sys/param.h>
 
-#include <net/if.h>
-#include <net/if_media.h>
-#include <net/if_types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include <err.h>
-#include <errno.h>
+#include <event.h>
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
-#include <event.h>
 
 #include "smtpd.h"
 #include "parser.h"

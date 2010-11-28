@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.53 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.54 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -23,11 +23,9 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#include <ctype.h>
 #include <event.h>
 #include <imsg.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

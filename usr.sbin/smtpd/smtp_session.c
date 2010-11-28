@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.137 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.138 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,21 +25,16 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <openssl/ssl.h>
 
 #include <ctype.h>
-#include <errno.h>
 #include <event.h>
 #include <imsg.h>
-#include <pwd.h>
-#include <regex.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+
+#include <openssl/ssl.h>
 
 #include "smtpd.h"
 #include "log.h"

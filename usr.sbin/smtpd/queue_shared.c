@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.34 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.35 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -29,13 +29,11 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
-#include <imsg.h>
 #include <fcntl.h>
-#include <pwd.h>
+#include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.21 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.22 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,12 +22,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#include <ctype.h>
-#include <db.h>
-#include <err.h>
-#include <errno.h>
 #include <event.h>
-#include <fcntl.h>
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>

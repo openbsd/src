@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.17 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.18 2010/11/28 14:35:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -24,18 +24,8 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <err.h>
-#include <errno.h>
-#include <imsg.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <event.h>
+#include <imsg.h>
 
 #include <openssl/ssl.h>
 
