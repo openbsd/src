@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.27 2010/03/31 19:46:25 miod Exp $ */
+/* $OpenBSD: cpu.c,v 1.28 2010/11/28 20:57:09 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -112,8 +112,6 @@ struct cfattach cpu_ca = {
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
-
-extern struct cfdriver cpu_cd;
 
 static const char *ev4minor[] = {
 	"pass 2 or 2.1", "pass 3", 0
