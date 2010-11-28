@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.19 2010/11/27 20:52:34 schwarze Exp $ */
+/*	$Id: roff.c,v 1.20 2010/11/28 01:00:40 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,6 +37,7 @@
 	('.' == (c) || '\'' == (c))
 
 enum	rofft {
+	ROFF_ad,
 	ROFF_am,
 	ROFF_ami,
 	ROFF_am1,
@@ -45,9 +46,12 @@ enum	rofft {
 	ROFF_de1,
 	ROFF_ds,
 	ROFF_el,
+	ROFF_hy,
 	ROFF_ie,
 	ROFF_if,
 	ROFF_ig,
+	ROFF_ne,
+	ROFF_nh,
 	ROFF_nr,
 	ROFF_rm,
 	ROFF_so,
@@ -144,6 +148,7 @@ static	enum rofferr	 roff_userdef(ROFF_ARGS);
 static	struct roffmac	*hash[HASHWIDTH];
 
 static	struct roffmac	 roffs[ROFF_MAX] = {
+	{ "ad", roff_line, NULL, NULL, 0, NULL },
 	{ "am", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "ami", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "am1", roff_block, roff_block_text, roff_block_sub, 0, NULL },
@@ -152,9 +157,12 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "de1", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "ds", roff_ds, NULL, NULL, 0, NULL },
 	{ "el", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
+	{ "hy", roff_line, NULL, NULL, 0, NULL },
 	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "ig", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "ne", roff_line, NULL, NULL, 0, NULL },
+	{ "nh", roff_line, NULL, NULL, 0, NULL },
 	{ "nr", roff_nr, NULL, NULL, 0, NULL },
 	{ "rm", roff_line, NULL, NULL, 0, NULL },
 	{ "so", roff_so, NULL, NULL, 0, NULL },
