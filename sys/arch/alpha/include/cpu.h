@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.41 2010/09/28 20:27:54 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.42 2010/11/28 21:00:04 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -339,7 +339,6 @@ do {									\
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_ROOT_DEVICE		2	/* string: root device name */
 #define	CPU_UNALIGNED_PRINT	3	/* int: print unaligned accesses */
 #define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
@@ -362,7 +361,7 @@ do {									\
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "root_device", CTLTYPE_STRING }, \
+	{ 0, 0 }, \
 	{ "unaligned_print", CTLTYPE_INT }, \
 	{ "unaligned_fix", CTLTYPE_INT }, \
 	{ "unaligned_sigbus", CTLTYPE_INT }, \

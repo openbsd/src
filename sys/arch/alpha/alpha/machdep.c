@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.127 2010/06/30 20:38:49 tedu Exp $ */
+/* $OpenBSD: machdep.c,v 1.128 2010/11/28 21:00:03 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -180,7 +180,6 @@ int	bootdev_debug = 0;	/* patchable, or from DDB */
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	cpu_model[128];
-char	root_device[17];
 
 struct	user *proc0paddr;
 
@@ -1650,9 +1649,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
 
-	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp,
-		    root_device));
 #ifndef SMALL_KERNEL
 	case CPU_UNALIGNED_PRINT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,

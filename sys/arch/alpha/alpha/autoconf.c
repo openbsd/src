@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 2008/07/21 04:35:53 todd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.33 2010/11/28 21:00:03 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -58,8 +58,6 @@
 #include <machine/intr.h>
 
 #include <dev/cons.h>
-
-extern char		root_device[17];		/* XXX */
 
 struct device		*booted_device;
 int			booted_partition;
