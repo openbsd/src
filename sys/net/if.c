@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.230 2010/11/17 19:43:23 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.231 2010/11/29 19:38:59 miod Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2269,10 +2269,12 @@ ifa_print_rb(void)
 				printf("%s", inet_ntoa((satosin(
 				    ifai->ifai_addr))->sin_addr));
 				break;
+#ifdef INET6
 			case AF_INET6:
 				printf("%s", ip6_sprintf(&(satosin6(
 				    ifai->ifai_addr))->sin6_addr));
 				break;
+#endif
 			case AF_LINK:
 				printf("%s",
 				    ether_sprintf(ifai->ifai_addr->sa_data));
