@@ -1,6 +1,7 @@
-/*	$Id: man_validate.c,v 1.31 2010/10/27 10:17:45 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.32 2010/11/29 00:12:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +43,7 @@ static	int	  check_eq0(CHKARGS);
 static	int	  check_le1(CHKARGS);
 static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
+static	int	  check_ft(CHKARGS);
 static	int	  check_par(CHKARGS);
 static	int	  check_part(CHKARGS);
 static	int	  check_root(CHKARGS);
@@ -50,6 +52,7 @@ static	int	  check_text(CHKARGS);
 static	int	  check_title(CHKARGS);
 
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
+static	v_check	  posts_ft[] = { check_ft, NULL };
 static	v_check	  posts_th[] = { check_ge2, check_le5, check_title, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
@@ -97,6 +100,7 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, NULL }, /* in */
 	{ NULL, NULL }, /* TS */
 	{ NULL, NULL }, /* TE */
+	{ NULL, posts_ft }, /* ft */
 };
 
 
@@ -255,6 +259,59 @@ INEQ_DEFINE(0, ==, eq0)
 INEQ_DEFINE(1, <=, le1)
 INEQ_DEFINE(2, >=, ge2)
 INEQ_DEFINE(5, <=, le5)
+
+
+static int
+check_ft(CHKARGS)
+{
+	char	*cp;
+	int	 ok;
+
+	if (0 == n->nchild)
+		return(1);
+
+	ok = 0;
+	cp = n->child->string;
+	switch (*cp) {
+	case ('1'):
+		/* FALLTHROUGH */
+	case ('2'):
+		/* FALLTHROUGH */
+	case ('3'):
+		/* FALLTHROUGH */
+	case ('4'):
+		/* FALLTHROUGH */
+	case ('I'):
+		/* FALLTHROUGH */
+	case ('P'):
+		/* FALLTHROUGH */
+	case ('R'):
+		if ('\0' == cp[1])
+			ok = 1;
+		break;
+	case ('B'):
+		if ('\0' == cp[1] || ('I' == cp[1] && '\0' == cp[2]))
+			ok = 1;
+		break;
+	case ('C'):
+		if ('W' == cp[1] && '\0' == cp[2])
+			ok = 1;
+		break;
+	default:
+		break;
+	}
+
+	if (0 == ok) {
+		man_vmsg(m, MANDOCERR_BADFONT, n->line, n->pos, "%s", cp);
+		*cp = '\0';
+	}
+
+	if (1 < n->nchild)
+		man_vmsg(m, MANDOCERR_ARGCOUNT, n->line, n->pos,
+		    "want one child (have %d)", n->nchild);
+
+	return(1);
+}
 
 
 static int

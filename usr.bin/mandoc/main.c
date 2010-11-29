@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.56 2010/11/28 19:35:33 schwarze Exp $ */
+/*	$Id: main.c,v 1.57 2010/11/29 00:12:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -146,6 +146,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"duplicate list type",
 	"unknown AT&T UNIX version",
 	"bad Boolean value",
+	"unknown font",
 	"unknown library specifier",
 	"unknown standard specifier",
 	"bad width argument",
