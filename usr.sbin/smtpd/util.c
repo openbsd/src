@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.37 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.38 2010/11/29 15:25:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 
+#include <netinet/in.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -44,6 +46,9 @@
 
 #include "smtpd.h"
 #include "log.h"
+
+const char *log_in6addr(const struct in6_addr *);
+const char *log_sockaddr(struct sockaddr *);
 
 int
 bsnprintf(char *str, size_t size, const char *format, ...)
@@ -190,16 +195,99 @@ ss_to_text(struct sockaddr_storage *ss)
 	buf[0] = '\0';
 	p = buf;
 
-	if (ss->ss_family == PF_INET6) {
-		strlcpy(buf, "IPv6:", sizeof(buf));
-		p = buf + 5;
+	if (ss->ss_family == PF_INET) {
+		in_addr_t addr;
+		
+		addr = ((struct sockaddr_in *)ss)->sin_addr.s_addr;
+		bsnprintf(p, NI_MAXHOST,
+		    "%d.%d.%d.%d",
+		    addr & 0xff,
+		    (addr >> 8) & 0xff,
+		    (addr >> 16) & 0xff,
+		    (addr >> 24) & 0xff);
 	}
 
-	if (getnameinfo((struct sockaddr *)ss, ss->ss_len, p,
-	    NI_MAXHOST, NULL, 0, NI_NUMERICHOST))
-		fatalx("ss_to_text: getnameinfo");
+	if (ss->ss_family == PF_INET6) {
+		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)ss;
+		struct in6_addr	*in6_addr;
+
+		strlcpy(buf, "IPv6:", sizeof(buf));
+		p = buf + 5;
+		in6_addr = &in6->sin6_addr;
+		bsnprintf(p, NI_MAXHOST, "%s", log_in6addr(in6_addr));
+	}
 
 	return (buf);
+}
+
+char *
+ss_to_ptr(struct sockaddr_storage *ss)
+{
+	static char buffer[1024];
+
+	/* we need to construct a PTR query */
+	switch (ss->ss_family) {
+	case AF_INET: {
+		in_addr_t addr;
+		
+		addr = ((struct sockaddr_in *)ss)->sin_addr.s_addr;
+
+		bsnprintf(buffer, sizeof (buffer),
+		    "%d.%d.%d.%d.in-addr.arpa",
+		    (addr >> 24) & 0xff,
+		    (addr >> 16) & 0xff,
+		    (addr >> 8) & 0xff,
+		    addr & 0xff);
+		break;
+	}
+	case AF_INET6: {
+		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)ss;
+		struct in6_addr	*in6_addr;
+
+		in6_addr = &in6->sin6_addr;
+		bsnprintf(buffer, sizeof (buffer),
+		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
+		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
+		    "ip6.arpa",
+		    in6_addr->s6_addr[15] & 0xf,
+		    (in6_addr->s6_addr[15] >> 4) & 0xf,
+		    in6_addr->s6_addr[14] & 0xf,
+		    (in6_addr->s6_addr[14] >> 4) & 0xf,
+		    in6_addr->s6_addr[13] & 0xf,
+		    (in6_addr->s6_addr[13] >> 4) & 0xf,
+		    in6_addr->s6_addr[12] & 0xf,
+		    (in6_addr->s6_addr[12] >> 4) & 0xf,
+		    in6_addr->s6_addr[11] & 0xf,
+		    (in6_addr->s6_addr[11] >> 4) & 0xf,
+		    in6_addr->s6_addr[10] & 0xf,
+		    (in6_addr->s6_addr[10] >> 4) & 0xf,
+		    in6_addr->s6_addr[9] & 0xf,
+		    (in6_addr->s6_addr[9] >> 4) & 0xf,
+		    in6_addr->s6_addr[8] & 0xf,
+		    (in6_addr->s6_addr[8] >> 4) & 0xf,
+		    in6_addr->s6_addr[7] & 0xf,
+		    (in6_addr->s6_addr[7] >> 4) & 0xf,
+		    in6_addr->s6_addr[6] & 0xf,
+		    (in6_addr->s6_addr[6] >> 4) & 0xf,
+		    in6_addr->s6_addr[5] & 0xf,
+		    (in6_addr->s6_addr[5] >> 4) & 0xf,
+		    in6_addr->s6_addr[4] & 0xf,
+		    (in6_addr->s6_addr[4] >> 4) & 0xf,
+		    in6_addr->s6_addr[3] & 0xf,
+		    (in6_addr->s6_addr[3] >> 4) & 0xf,
+		    in6_addr->s6_addr[2] & 0xf,
+		    (in6_addr->s6_addr[2] >> 4) & 0xf,
+		    in6_addr->s6_addr[1] & 0xf,
+		    (in6_addr->s6_addr[1] >> 4) & 0xf,
+		    in6_addr->s6_addr[0] & 0xf,
+		    (in6_addr->s6_addr[0] >> 4) & 0xf);
+		break;
+	}
+	default:
+		fatalx("dns_query_ptr");
+	}
+
+	return buffer;
 }
 
 int
@@ -518,4 +606,39 @@ session_socket_error(int fd)
 		fatal("session_socket_error: getsockopt");
 
 	return (error);
+}
+
+const char *
+log_in6addr(const struct in6_addr *addr)
+{
+	struct sockaddr_in6	sa_in6;
+	u_int16_t		tmp16;
+
+	bzero(&sa_in6, sizeof(sa_in6));
+	sa_in6.sin6_len = sizeof(sa_in6);
+	sa_in6.sin6_family = AF_INET6;
+	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
+
+	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
+	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
+		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
+		sa_in6.sin6_scope_id = ntohs(tmp16);
+		sa_in6.sin6_addr.s6_addr[2] = 0;
+		sa_in6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	return (log_sockaddr((struct sockaddr *)&sa_in6));
+}
+
+const char *
+log_sockaddr(struct sockaddr *sa)
+{
+	static char	buf[NI_MAXHOST];
+
+	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0,
+	    NI_NUMERICHOST))
+		return ("(unknown)");
+	else
+		return (buf);
 }

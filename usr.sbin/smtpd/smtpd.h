@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.199 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.200 2010/11/29 15:25:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -188,8 +188,8 @@ enum imsg_type {
 	IMSG_SMTP_PAUSE,
 	IMSG_SMTP_RESUME,
 
-	IMSG_DNS_A,
-	IMSG_DNS_A_END,
+	IMSG_DNS_HOST,
+	IMSG_DNS_HOST_END,
 	IMSG_DNS_MX,
 	IMSG_DNS_PTR
 };
@@ -627,6 +627,7 @@ struct smtpd {
 	SPLAY_HEAD(batchtree, batch)		 batch_queue;
 	SPLAY_HEAD(childtree, child)		 children;
 	SPLAY_HEAD(lkatree, lkasession)		 lka_sessions;
+	SPLAY_HEAD(dnstree, dnssession)		 dns_sessions;
 	SPLAY_HEAD(mtatree, mta_session)	 mta_sessions;
 	LIST_HEAD(mdalist, mda_session)		 mda_sessions;
 
@@ -738,6 +739,8 @@ struct dns {
 	char			 host[MAXHOSTNAMELEN];
 	int			 port;
 	int			 error;
+	int			 type;
+	struct imsgev		*asker;
 	struct sockaddr_storage	 ss;
 	struct smtpd		*env;
 	struct dns		*next;
@@ -790,6 +793,23 @@ struct lkasession {
 	struct submit_status		 ss;
 };
 
+struct mx {
+        char    host[MAXHOSTNAMELEN];
+        int     prio;
+        struct mx *next;
+};
+
+struct dnssession {
+        SPLAY_ENTRY(dnssession)          nodes;
+        u_int64_t                        id;
+        struct dns                       query;
+        struct event                     ev;
+        struct asr_query                *aq;
+        struct mx                        mxarray[MAX_MX_COUNT];
+        size_t                           mxarraysz;
+        struct mx                       *mxcurrent;
+};
+
 enum mta_state {
 	MTA_INVALID_STATE,
 	MTA_INIT,
@@ -803,10 +823,11 @@ enum mta_state {
 };
 
 /* mta session flags */
-#define	MTA_FORCE_ANYSSL	0x1
-#define	MTA_FORCE_SMTPS		0x2
-#define	MTA_ALLOW_PLAIN		0x4
-#define	MTA_USE_AUTH		0x8
+#define	MTA_FORCE_ANYSSL	0x01
+#define	MTA_FORCE_SMTPS		0x02
+#define	MTA_ALLOW_PLAIN		0x04
+#define	MTA_USE_AUTH		0x08
+#define	MTA_FORCE_MX		0x10
 
 struct mta_relay {
 	TAILQ_ENTRY(mta_relay)	 entry;
@@ -898,7 +919,7 @@ int		 session_socket_error(int);
 
 
 /* dns.c */
-void		 dns_query_a(struct smtpd *, char *, int, u_int64_t);
+void		 dns_query_host(struct smtpd *, char *, int, u_int64_t);
 void		 dns_query_mx(struct smtpd *, char *, int, u_int64_t);
 void		 dns_query_ptr(struct smtpd *, struct sockaddr_storage *,
     u_int64_t);
@@ -927,7 +948,9 @@ int forwards_get(int, struct expandtree *);
 /* lka.c */
 pid_t		 lka(struct smtpd *);
 int		 lkasession_cmp(struct lkasession *, struct lkasession *);
+int		 dnssession_cmp(struct dnssession *, struct dnssession *);
 SPLAY_PROTOTYPE(lkatree, lkasession, nodes, lkasession_cmp);
+SPLAY_PROTOTYPE(dnstree, dnssession, nodes, dnssession_cmp);
 
 
 /* map.c */
@@ -1069,6 +1092,7 @@ int		 recipient_to_path(struct path *, char *);
 int		 valid_localpart(char *);
 int		 valid_domainpart(char *);
 char		*ss_to_text(struct sockaddr_storage *);
+char		*ss_to_ptr(struct sockaddr_storage *);
 int		 valid_message_id(char *);
 int		 valid_message_uid(char *);
 char		*time_to_text(time_t);

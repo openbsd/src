@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.122 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.123 2010/11/29 15:25:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -75,7 +75,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	struct map		*map;
 	void			*tmp;
 
-	if (imsg->hdr.type == IMSG_DNS_A || imsg->hdr.type == IMSG_DNS_MX ||
+	if (imsg->hdr.type == IMSG_DNS_HOST || imsg->hdr.type == IMSG_DNS_MX ||
 	    imsg->hdr.type == IMSG_DNS_PTR) {
 		dns_async(env, iev, imsg->hdr.type, imsg->data);
 		return;
