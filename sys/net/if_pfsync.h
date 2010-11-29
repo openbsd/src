@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.43 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.44 2010/11/29 05:31:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -292,7 +292,7 @@ int			pfsync_sysctl(int *, u_int,  void *, size_t *,
 #define	PFSYNC_SI_IOCTL		0x01
 #define	PFSYNC_SI_CKSUM		0x02
 #define	PFSYNC_SI_ACK		0x04
-int			pfsync_state_import(struct pfsync_state *, u_int8_t);
+int			pfsync_state_import(struct pfsync_state *, int);
 void			pfsync_state_export(struct pfsync_state *,
 			    struct pf_state *);
 
