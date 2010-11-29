@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 2010/06/22 05:20:40 dlg Exp $	*/
+/*	$OpenBSD: param.h,v 1.17 2010/11/29 00:06:04 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	8*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	16*NBPG		/* default message buffer size */
 #endif
 
 /*
