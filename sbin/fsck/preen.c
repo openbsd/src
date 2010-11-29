@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.17 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: preen.c,v 1.18 2010/11/29 17:28:29 ckuethe Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 	struct fstab *fs;
 	struct diskentry *d, *nextdisk;
 	struct partentry *p;
-	int ret, retcode, passno, sumstatus, status;
+	int ret, retcode, passno, sumstatus, status, maxp;
 	void *auxarg;
 	char *name;
 	pid_t pid;
@@ -88,8 +88,9 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 	TAILQ_INIT(&diskh);
 
 	sumstatus = 0;
+	maxp = 2;
 
-	for (passno = 1; passno <= 2; passno++) {
+	for (passno = 1; passno <= maxp; passno++) {
 		if (setfsent() == 0) {
 			warnx("Can't open checklist file: %s", _PATH_FSTAB);
 			return (8);
@@ -101,6 +102,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			name = blockcheck(fs->fs_spec);
 			if (flags & CHECK_DEBUG)
 				printf("pass %d, name %s\n", passno, name);
+			maxp = (fs->fs_passno > maxp) ? fs->fs_passno : maxp;
 
 			if ((flags & CHECK_PREEN) == 0 ||
 			    (passno == 1 && fs->fs_passno == 1)) {
@@ -115,15 +117,16 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 
 				if (sumstatus)
 					return (sumstatus);
-			} else if (passno == 2 && fs->fs_passno > 1) {
+			} else  {
 				if (name == NULL) {
 					(void) fprintf(stderr,
 					    "BAD DISK NAME %s\n", fs->fs_spec);
 					sumstatus |= 8;
 					continue;
 				}
-				addpart(fs->fs_vfstype, name, fs->fs_file,
-				    auxarg);
+				if (passno == fs->fs_passno)
+					addpart(fs->fs_vfstype, name,
+					    fs->fs_file, auxarg);
 			}
 		}
 		if ((flags & CHECK_PREEN) == 0)
