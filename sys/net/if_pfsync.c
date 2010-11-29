@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.158 2010/11/29 05:31:38 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.159 2010/11/29 06:48:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -665,19 +665,12 @@ pfsync_input(struct mbuf *m, ...)
 	}
 
 	offset = ip->ip_hl << 2;
-	if (m->m_pkthdr.len < offset + sizeof(*ph)) {
+	mp = m_pulldown(m, offset, sizeof(*ph), &offp);
+	if (mp == NULL) {
 		pfsyncstats.pfsyncs_hdrops++;
-		goto done;
+		return;
 	}
-
-	if (offset + sizeof(*ph) > m->m_len) {
-		if (m_pullup(m, offset + sizeof(*ph)) == NULL) {
-			pfsyncstats.pfsyncs_hdrops++;
-			return;
-		}
-		ip = mtod(m, struct ip *);
-	}
-	ph = (struct pfsync_header *)((char *)ip + offset);
+	ph = (struct pfsync_header *)(mp->m_data + offp);
 
 	/* verify the version */
 	if (ph->version != PFSYNC_VERSION) {
