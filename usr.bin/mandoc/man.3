@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.16 2010/10/23 17:11:31 schwarze Exp $
+.\"	$Id: man.3,v 1.17 2010/11/29 02:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2010 $
+.Dd $Mdocdate: November 29 2010 $
 .Dt MAN 3
 .Os
 .Sh NAME
@@ -81,28 +81,11 @@ Beyond the full set of macros defined in
 .Xr man 7 ,
 the
 .Nm
-library also accepts the following macros:
+library also accepts the following macro:
 .Pp
 .Bl -tag -width Ds -compact
 .It PD
 Has no effect.  Handled as a current-scope line macro.
-.It Sp
-A synonym for
-.Sq sp 0.5v
-.Pq part of the standard preamble for Perl documentation .
-Handled as a line macro.
-.It Vb
-A synonym for
-.Sq nf
-.Pq part of the standard preamble for Perl documentation .
-Handled as a current-scope line macro.
-.It Ve
-A synonym for
-.Sq fi ,
-closing
-.Sq Vb
-.Pq part of the standard preamble for Perl documentation .
-Handled as a current-scope line macro.
 .El
 .Ss Types
 .Bl -ohang

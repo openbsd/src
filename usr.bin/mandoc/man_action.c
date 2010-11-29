@@ -1,4 +1,4 @@
-/*	$Id: man_action.c,v 1.27 2010/11/29 00:12:02 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.28 2010/11/29 02:26:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,9 +71,6 @@ const	struct actions man_actions[MAN_MAX] = {
 	{ NULL }, /* DT */
 	{ post_UC }, /* UC */
 	{ NULL }, /* PD */
-	{ NULL }, /* Sp */
-	{ post_nf }, /* Vb */
-	{ post_fi }, /* Ve */
 	{ post_AT }, /* AT */
 	{ NULL }, /* in */
 	{ post_TS }, /* TS */

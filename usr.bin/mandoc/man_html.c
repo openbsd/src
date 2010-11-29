@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.20 2010/11/29 00:12:02 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.21 2010/11/29 02:26:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -110,9 +110,6 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_ign_pre, NULL }, /* DT */
 	{ man_ign_pre, NULL }, /* UC */
 	{ man_ign_pre, NULL }, /* PD */
-	{ man_br_pre, NULL }, /* Sp */
-	{ man_literal_pre, NULL }, /* Vb */
-	{ man_literal_pre, NULL }, /* Ve */
 	{ man_ign_pre, NULL }, /* AT */
 	{ man_in_pre, NULL }, /* in */
 	{ NULL, NULL }, /* TS */
@@ -366,18 +363,11 @@ man_br_pre(MAN_ARGS)
 
 	SCALE_VS_INIT(&su, 1);
 
-	switch (n->tok) {
-	case (MAN_Sp):
-		SCALE_VS_INIT(&su, 0.5);
-		break;
-	case (MAN_sp):
+	if (MAN_sp == n->tok) {
 		if (n->child)
 			a2roffsu(n->child->string, &su, SCALE_VS);
-		break;
-	default:
+	} else
 		su.scale = 0;
-		break;
-	}
 
 	bufcat_su(h, "height", &su);
 	PAIR_STYLE_INIT(&tag, h);
@@ -779,17 +769,11 @@ static int
 man_literal_pre(MAN_ARGS)
 {
 
-	switch (n->tok) {
-	case (MAN_nf):
-		/* FALLTHROUGH */
-	case (MAN_Vb):
+	if (MAN_nf == n->tok) {
 		print_otag(h, TAG_BR, 0, NULL);
 		mh->fl |= MANH_LITERAL;
-		return(MAN_Vb != n->tok);
-	default:
+	} else
 		mh->fl &= ~MANH_LITERAL;
-		break;
-	}
 
 	return(1);
 }

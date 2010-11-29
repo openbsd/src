@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.29 2010/11/29 00:12:02 schwarze Exp $ */
+/*	$Id: man.h,v 1.30 2010/11/29 02:26:45 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,9 +53,6 @@ enum	mant {
 	MAN_DT,
 	MAN_UC,
 	MAN_PD,
-	MAN_Sp,
-	MAN_Vb,
-	MAN_Ve,
 	MAN_AT,
 	MAN_in,
 	MAN_TS,
