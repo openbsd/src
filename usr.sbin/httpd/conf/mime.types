@@ -13,7 +13,7 @@ application/activemessage
 application/andrew-inset	ez
 application/applefile
 application/atomicmail
-application/atom+xml           atom
+application/atom+xml		atom
 application/batch-smtp
 application/beep+xml
 application/cals-1840
@@ -75,6 +75,7 @@ application/rdf+xml		rdf
 application/reginfo+xml
 application/remote-printing
 application/riscos
+application/rss+xml		rss
 application/rtf
 application/sdp
 application/set-payment
