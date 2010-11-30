@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.55 2010/05/14 11:13:36 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.56 2010/11/30 14:38:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -119,6 +119,9 @@ hce(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 #endif
 
 	event_init();
+
+	/* Allow maximum available sockets for TCP checks */
+	socket_rlimit(-1);
 
 	if ((iev_pfe = calloc(1, sizeof(struct imsgev))) == NULL ||
 	    (iev_main = calloc(1, sizeof(struct imsgev))) == NULL)

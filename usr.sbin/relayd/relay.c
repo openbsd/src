@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.125 2010/11/24 13:57:05 jsg Exp $	*/
+/*	$OpenBSD: relay.c,v 1.126 2010/11/30 14:38:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/un.h>
 #include <sys/tree.h>
 #include <sys/hash.h>
-#include <sys/resource.h>
 
 #include <net/if.h>
 #include <netinet/in_systm.h>
@@ -460,19 +459,9 @@ relay_init(void)
 	struct relay	*rlay;
 	struct host	*host;
 	struct timeval	 tv;
-	struct rlimit	 rl;
 
-	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("relay_init: failed to get resource limit");
-	log_debug("relay_init: max open files %d", rl.rlim_max);
-
-	/*
-	 * Allow the maximum number of open file descriptors for this
-	 * login class (which should be the class "daemon" by default).
-	 */
-	rl.rlim_cur = rl.rlim_max;
-	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("relay_init: failed to set resource limit");
+	/* Unlimited file descriptors (use system limits) */
+	socket_rlimit(-1);
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) &&
