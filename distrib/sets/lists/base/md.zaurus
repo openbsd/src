@@ -2465,7 +2465,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/pmap.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/proc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/profile.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/psl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/ptrace.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/reloc.ph

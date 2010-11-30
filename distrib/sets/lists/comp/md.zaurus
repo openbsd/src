@@ -235,7 +235,6 @@
 ./usr/include/zaurus/pmap.h
 ./usr/include/zaurus/proc.h
 ./usr/include/zaurus/profile.h
-./usr/include/zaurus/psl.h
 ./usr/include/zaurus/ptrace.h
 ./usr/include/zaurus/reg.h
 ./usr/include/zaurus/reloc.h
