@@ -1,4 +1,4 @@
-.\"	$Id: roff.7,v 1.4 2010/11/30 21:17:52 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.5 2010/11/30 22:40:13 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,7 +37,7 @@ language accepted by the
 utility.
 .Pp
 Input lines beginning with the control characters
-.Sq \.
+.Sq \&.
 or
 .Sq \(aq
 are parsed for requests and macros.
@@ -62,11 +62,12 @@ All manuals must have
 .Ux
 line terminators.
 .Sh REQUEST SYNTAX
-A request or macro line consists of
+A request or macro line consists of:
+.Pp
 .Bl -enum -compact
 .It
 the control character
-.Sq \.
+.Sq \&.
 or
 .Sq \(aq
 at the beginning of the line,
@@ -355,11 +356,7 @@ Begins a conditional.
 Right now, the conditional evaluates to true
 if and only if it starts with the letter
 .Sy n ,
-indicating processing in
-.Xr nroff 1
-style as opposed to
-.Xr troff 1
-style.
+indicating processing in nroff style as opposed to troff style.
 If a conditional is false, its children are not processed, but are
 syntactically interpreted to preserve the integrity of the input
 document.
@@ -378,22 +375,21 @@ conditional.
 Sub-conditionals, in this case, obviously inherit the truth value of
 the parent.
 This request has the following syntax:
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 \&.if COND \e{\e
 BODY...
 \&.\e}
 .Ed
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 \&.if COND \e{ BODY
 BODY... \e}
 .Ed
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 \&.if COND \e{ BODY
 BODY...
 \&.\e}
 .Ed
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 \&.if COND \e
 BODY
 .Ed
@@ -532,7 +528,7 @@ section itself.
 Note that starting a new
 .Xr mdoc 7
 section with the
-.Cm Sh
+.Cm \&Sh
 macro will reset this register.
 .El
 .Ss \&so
