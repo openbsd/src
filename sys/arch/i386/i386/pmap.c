@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.150 2010/11/20 20:33:24 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.151 2010/11/30 19:28:59 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2780,13 +2780,13 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int wait = 0;
-	int mask = 0;
+	u_int64_t mask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !pmap_is_active(pm, ci) ||
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
-		mask |= 1 << ci->ci_cpuid;
+		mask |= (1ULL << ci->ci_cpuid);
 		wait++;
 	}
 
@@ -2799,7 +2799,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 		}
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & 1 << ci->ci_cpuid) == 0)
+			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_INVLPG) != 0)
 				panic("pmap_tlb_shootpage: ipi failed");
@@ -2817,14 +2817,14 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int wait = 0;
-	int mask = 0;
+	u_int64_t mask = 0;
 	vaddr_t va;
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !pmap_is_active(pm, ci) ||
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
-		mask |= 1 << ci->ci_cpuid;
+		mask |= (1ULL << ci->ci_cpuid);
 		wait++;
 	}
 
@@ -2838,7 +2838,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & 1 << ci->ci_cpuid) == 0)
+			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_INVLRANGE) != 0)
 				panic("pmap_tlb_shootrange: ipi failed");
@@ -2857,12 +2857,12 @@ pmap_tlb_shoottlb(void)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int wait = 0;
-	int mask = 0;
+	u_int64_t mask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
 			continue;
-		mask |= 1 << ci->ci_cpuid;
+		mask |= (1ULL << ci->ci_cpuid);
 		wait++;
 	}
 
@@ -2875,7 +2875,7 @@ pmap_tlb_shoottlb(void)
 		}
 
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & 1 << ci->ci_cpuid) == 0)
+			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_INVLTLB) != 0)
 				panic("pmap_tlb_shoottlb: ipi failed");
@@ -2892,13 +2892,13 @@ pmap_tlb_droppmap(struct pmap *pm)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int wait = 0;
-	int mask = 0;
+	u_int64_t mask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !(ci->ci_flags & CPUF_RUNNING) ||
 		    ci->ci_curpmap != pm)
 			continue;
-		mask |= 1 << ci->ci_cpuid;
+		mask |= (1ULL << ci->ci_cpuid);
 		wait++;
 	}
 
@@ -2911,7 +2911,7 @@ pmap_tlb_droppmap(struct pmap *pm)
 		}
 
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & 1 << ci->ci_cpuid) == 0)
+			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_RELOADCR3) != 0)
 				panic("pmap_tlb_droppmap: ipi failed");
