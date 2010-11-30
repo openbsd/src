@@ -1,4 +1,4 @@
-.\"	$Id: roff.7,v 1.3 2010/11/29 00:12:02 schwarze Exp $
+.\"	$Id: roff.7,v 1.4 2010/11/30 21:17:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,64 +15,84 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2010 $
+.Dd $Mdocdate: November 30 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
 .Nm roff
-.Nd roff language reference
+.Nd roff language reference for mandoc
 .Sh DESCRIPTION
 The
 .Nm roff
-language is a general-purpose text-formatting language.  The purpose of
-this document is to consistently describe those language constructs
-accepted by the
-.Xr mandoc 1
-utility.  It is a work in progress.
-.Pp
-An
+language is a general purpose text formatting language.
+In particular, it serves as the basis for the
+.Xr mdoc 7
+and
+.Xr man 7
+manual formatting macro languages.
+This manual describes the subset of the
 .Nm
-document follows simple rules:  lines beginning with the control
-characters
+language accepted by the
+.Xr mandoc 1
+utility.
+.Pp
+Input lines beginning with the control characters
 .Sq \.
 or
 .Sq \(aq
 are parsed for requests and macros.
-Other lines are interpreted within the scope of
-prior macros:
-.Bd -literal -offset indent
-\&.xx Macro lines change control state.
-Other lines are interpreted within the current state.
-.Ed
+These define the document structure, change the processing state
+and manipulate the formatting.
+Some requests and macros also produce formatted output,
+while others do not.
+.Pp
+All other input lines provide free-form text to be printed;
+the formatting of free-form text depends on the respective
+processing context.
 .Sh LANGUAGE SYNTAX
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the space
-character, and, in certain circumstances, the tab character.  All
-manuals must have
+character, and, in certain circumstances, the tab character.
+To produce other characters in the output, use the escape sequences
+documented in the
+.Xr mandoc_char 7
+manual.
+.Pp
+All manuals must have
 .Ux
 line terminators.
-.Sh MACRO SYNTAX
-Requests and macros are arbitrary in length and begin with a control
-character,
+.Sh REQUEST SYNTAX
+A request or macro line consists of
+.Bl -enum -compact
+.It
+the control character
 .Sq \.
 or
-.Sq \(aq ,
-at the beginning of the line.
-An arbitrary amount of whitespace may sit between the control character
-and the request or macro name.
-Thus, the following are equivalent:
+.Sq \(aq
+at the beginning of the line,
+.It
+optionally an arbitrary amount of whitespace,
+.It
+the name of the request or the macro, which is one word of arbitrary
+length, terminated by whitespace,
+.It
+and zero or more arguments delimited by whitespace.
+.El
+.Pp
+Thus, the following request lines are all equivalent:
 .Bd -literal -offset indent
-\&.if
-\&.\ \ \ \&if
+\&.ig end
+\&.ig    end
+\&.   ig end
 .Ed
 .Sh REQUEST REFERENCE
-This section is a canonical reference of all requests recognized by the
+The
 .Xr mandoc 1
 .Nm
-parser.
-The
+parser recognizes the following requests.
+Note that the
 .Nm
-language defines many more requests and macros not implemented in
+language defines many more requests not implemented in
 .Xr mandoc 1 .
 .Ss \&ad
 Set line adjustment mode.
@@ -103,7 +123,7 @@ It is currently ignored by
 .Xr mandoc 1 ,
 as are its children.
 .Ss \&de
-Define a user-defined
+Define a
 .Nm
 macro.
 Its syntax can be either
@@ -149,7 +169,7 @@ request or
 .Nm
 macro, but not as a high-level macro.
 .Pp
-A user-defined macro can be invoked later using the syntax
+The macro can be invoked later using the syntax
 .Pp
 .D1 Pf . Ar name Op Ar argument Op Ar argument ...
 .Pp
@@ -160,12 +180,12 @@ to allow inclusion of blank characters into arguments.
 To include the double-quote character into a quoted argument,
 escape it from ending the argument by doubling it.
 .Pp
-The line invoking the user-defined macro will be replaced
+The line invoking the macro will be replaced
 in the input stream by the
 .Ar macro definition ,
 replacing all occurrences of
 .No \e\e$ Ns Ar N ,
-where 
+where
 .Ar N
 is a digit, by the
 .Ar N Ns th Ar argument .
@@ -183,7 +203,7 @@ produces
 .Pp
 in the input stream, and thus in the output: \fI\^XtFree\^\fP.
 .Pp
-Since user-defined macros and strings share a common string table,
+Since macros and user-defined strings share a common string table,
 defining a macro
 .Ar name
 clobbers the user-defined string
@@ -197,16 +217,16 @@ string interpolation syntax described below
 but this is rarely useful because every macro definition contains at least
 one explicit newline character.
 .Ss \&dei
-Define a user-defined
+Define a
 .Nm
 macro, specifying the macro name indirectly.
-The syntax of this macro is the same as that of
+The syntax of this request is the same as that of
 .Sx \&de .
 It is currently ignored by
 .Xr mandoc 1 ,
 as are its children.
 .Ss \&de1
-Define a user-defined
+Define a
 .Nm
 macro that will be executed with
 .Nm
@@ -218,7 +238,7 @@ Since
 .Xr mandoc 1
 does not implement
 .Nm
-compatibility mode at all, it handles this macro as an alias for
+compatibility mode at all, it handles this request as an alias for
 .Sx \&de .
 .Ss \&ds
 Define a user-defined string.
@@ -252,7 +272,7 @@ is two or one characters, respectively.
 Since user-defined strings and macros share a common string table,
 defining a string
 .Ar name
-clobbers the user-defined macro
+clobbers the macro
 .Ar name ,
 and the
 .Ar name
@@ -286,7 +306,7 @@ If no stack entries are present (e.g., due to no prior
 .Sx \&ie
 calls)
 then false is assumed.
-The syntax of this macro is similar to
+The syntax of this request is similar to
 .Sx \&if
 except that the conditional is missing.
 .Ss \&ft
@@ -345,19 +365,19 @@ syntactically interpreted to preserve the integrity of the input
 document.
 Thus,
 .Pp
-.D1 \&.if t \e .ig
+.D1 \&.if t .ig
 .Pp
 will discard the
 .Sq \&.ig ,
 which may lead to interesting results, but
 .Pp
-.D1 \&.if t \e .if t \e{\e
+.D1 \&.if t .if t \e{\e
 .Pp
 will continue to syntactically interpret to the block close of the final
 conditional.
 Sub-conditionals, in this case, obviously inherit the truth value of
 the parent.
-This macro has the following syntax:
+This request has the following syntax:
 .Pp
 .Bd -literal -offset indent -compact
 \&.if COND \e{\e
@@ -394,12 +414,12 @@ evaluate as false.
 .Pp
 If the BODY section is begun by an escaped brace
 .Sq \e{ ,
-scope continues until a closing-brace macro
+scope continues until a closing-brace escape sequence
 .Sq \.\e} .
-If the BODY is not enclosed in braces, scope continues until the next
-macro or word.
+If the BODY is not enclosed in braces, scope continues until
+the end of the line.
 If the COND is followed by a BODY on the same line, whether after a
-brace or not, then macros
+brace or not, then requests and macros
 .Em must
 begin with a control character.
 It is generally more intuitive, in this case, to write
@@ -410,20 +430,20 @@ bar
 \&.\e}
 .Ed
 .Pp
-than having the macro follow as
+than having the request or macro follow as
 .Pp
 .D1 \&.if COND \e{ .foo
 .Pp
 The scope of a conditional is always parsed, but only executed if the
 conditional evaluates to true.
 .Pp
-Note that text subsequent a
+Note that text following an
 .Sq \&.\e}
-macro is discarded.
+escape sequence is discarded.
 Furthermore, if an explicit closing sequence
 .Sq \e}
 is specified in a free-form line, the entire line is accepted within the
-scope of the prior macro, not only the text preceding the close, with the
+scope of the prior request, not only the text preceding the close, with the
 .Sq \e}
 collapsing into a zero-width space.
 .Ss \&ig
@@ -444,7 +464,7 @@ or
 .Pp
 In the first case, input is ignored until a
 .Sq \&..
-macro is encountered on its own line.
+request is encountered on its own line.
 In the second case, input is ignored until the specified
 .Sq Pf . Ar end
 macro is encountered.
@@ -469,7 +489,7 @@ Otherwise, it only terminates the
 .Ar ignored text ,
 and arguments following it or the
 .Sq \&..
-macro are discarded.
+request are discarded.
 .Ss \&ne
 Declare the need for the specified minimum vertical space
 before the next trap or the bottom of the page.
@@ -494,9 +514,6 @@ Its syntax is as follows:
 The
 .Ar value
 may, at the moment, only be an integer.
-The
-.Ar name
-is defined up to the next whitespace.
 So far, only the following register
 .Ar name
 is recognised:
@@ -504,15 +521,19 @@ is recognised:
 .It Cm nS
 If set to a positive integer value, certain
 .Xr mdoc 7
-macros will behave as if they were defined in the
+macros will behave in the same way as in the
 .Em SYNOPSIS
 section.
-Otherwise, this behaviour is unset (even if called within the
+If set to 0, these macros will behave in the same way as outside the
 .Em SYNOPSIS
-section itself).
-Note that invoking a new
+section, even when called within the
+.Em SYNOPSIS
+section itself.
+Note that starting a new
 .Xr mdoc 7
-section will unset this value.
+section with the
+.Cm Sh
+macro will reset this register.
 .El
 .Ss \&so
 Include a source file.
@@ -533,39 +554,69 @@ and
 .Qq /.. .
 .Ss \&tr
 Output character translation.
-This macro is intended to have one argument,
+This request is intended to have one argument,
 consisting of an even number of characters.
 Currently, it is ignored including its arguments,
 and the number of arguments is not checked.
 .Sh COMPATIBILITY
 This section documents compatibility between mandoc and other other
-troff implementations, at this time limited to GNU troff
+.Nm
+implementations, at this time limited to GNU troff
 .Pq Qq groff .
 The term
 .Qq historic groff
-refers to groff versions before the
-.Pa doc.tmac
-file re-write
-.Pq somewhere between 1.15 and 1.19 .
+refers to groff version 1.15.
 .Pp
 .Bl -dash -compact
 .It
 The
 .Cm nS
-request to
-.Sx \&nr
-is only compatible with OpenBSD's groff.
+register is only compatible with OpenBSD's groff-1.15.
 .It
-Historic groff did not accept white-space buffering the custom END tag
-for the
+Historic groff did not accept white-space before a custom
+.Ar end
+macro for the
 .Sx \&ig
-macro.
+request.
 .It
 The
 .Sx \&if
 and family would print funny white-spaces with historic groff when
-depending on next-line syntax.
+using the next-line syntax.
 .El
+.Sh SEE ALSO
+.Xr mandoc 1 ,
+.Xr man 7 ,
+.Xr mandoc_char 7 ,
+.Xr mdoc 7
+.Rs
+.%A Joseph F. Ossanna
+.%A Brian W. Kernighan
+.%I AT&T Bell Laboratories
+.%T Troff User's Manual
+.%R Computing Science Technical Report
+.%N 54
+.%C Murray Hill, New Jersey
+.%D 1976 and 1992
+.%U http://www.kohala.com/start/troff/cstr54.ps
+.Re
+.Rs
+.%A Joseph F. Ossanna
+.%A Brian W. Kernighan
+.%A Gunnar Ritter
+.%T Heirloom Documentation Tools Nroff/Troff User's Manual
+.%D September 17, 2007
+.%U http://heirloom.sourceforge.net/doctools/troff.pdf
+.Re
+.Sh HISTORY
+The RUNOFF typesetting system was written in PL/1 for the CTSS
+operating system by Jerome ("Jerry") E. Saltzer in 1961.
+It was first used as the main documentation tool by Multics since 1963.
+Robert ("Bob") H. Morris ported it to the GE-635 and called it
+.Nm ,
+Doug McIlroy rewrote it in BCPL in 1969,
+Joseph F. Ossanna rewrote it in PDP-11 assembly in 1973,
+and Brian W. Kernighan rewrote it in C in 1975.
 .Sh AUTHORS
 .An -nosplit
 This partial
