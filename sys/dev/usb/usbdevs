@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.527 2010/11/29 17:34:26 damien Exp $
+$OpenBSD: usbdevs,v 1.528 2010/11/30 00:52:07 jakemsr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3633,6 +3633,7 @@ product TI UTUSB41		0x1446	UT-USB41 hub
 product TI TUSB2046		0x2046	TUSB2046 hub
 product TI TUSB3410		0x3410	TUSB3410
 product TI NEXII		0x5409	Nex II Digital
+product TI MSP430		0xf432	MSP-FET430UIF
 
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
