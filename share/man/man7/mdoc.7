@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.56 2010/11/28 15:45:26 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.57 2010/11/30 20:35:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2010 $
+.Dd $Mdocdate: November 30 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2659,9 +2659,13 @@ and
 Close a scope opened by
 .Sx \&Xo .
 .Ss \&Xo
-Open an extension scope.
-This macro originally existed to extend the 9-argument limit of troff;
-since this limit has been lifted, the macro has been deprecated.
+Extend the header of an
+.Sx \&It
+macro or the body of a partial-implicit block macro
+beyond the end of the input line.
+This macro originally existed to work around the 9-argument limit
+of historic
+.Xr roff 7 .
 .Ss \&Xr
 Link to another manual
 .Pq Qq cross-reference .
