@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.126 2010/11/30 14:38:45 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.127 2010/11/30 14:49:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2710,11 +2710,11 @@ relay_ssl_ctx_create(struct relay *rlay)
 void
 relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 {
-	struct relay	*rlay = (struct relay *)con->se_relay;
-	SSL		*ssl;
-	SSL_METHOD	*method;
-	void		(*cb)(int, short, void *);
-	u_int		 flags = EV_TIMEOUT;
+	struct relay		*rlay = (struct relay *)con->se_relay;
+	SSL			*ssl;
+	const SSL_METHOD	*method;
+	void			(*cb)(int, short, void *);
+	u_int			 flags = EV_TIMEOUT;
 
 	ssl = SSL_new(rlay->rl_ssl_ctx);
 	if (ssl == NULL)
