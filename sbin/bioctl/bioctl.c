@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.97 2010/07/10 02:56:16 matthew Exp $       */
+/* $OpenBSD: bioctl.c,v 1.98 2010/12/01 19:40:18 ckuethe Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -86,6 +86,7 @@ int			rflag = 8192;
 char			*password;
 
 struct bio_locate	bl;
+int rpp_flag = RPP_REQUIRE_TTY;
 
 int
 main(int argc, char *argv[])
@@ -106,7 +107,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:Pp:qr:R:vu:")) !=
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:Pp:qr:R:svu:")) !=
 	    -1) {
 		switch (ch) {
 		case 'a': /* alarm */
@@ -173,6 +174,9 @@ main(int argc, char *argv[])
 			func |= BIOC_SETSTATE;
 			ss_func = BIOC_SSREBUILD;
 			al_arg = optarg;
+			break;
+		case 's':
+			rpp_flag = RPP_STDIN;
 			break;
 		case 'v':
 			verbose = 1;
@@ -252,12 +256,12 @@ usage(void)
 		"[-R device | channel:target[.lun]\n"
 		"\t[-u channel:target[.lun]] "
 		"device\n"
-                "       %s [-dhiPqv] "
-                "[-C flag[,flag,...]] [-c raidlevel] [-k keydisk]\n"
-                "\t[-l special[,special,...]] [-p passfile]\n"
-                "\t[-R device | channel:target[.lun] [-r rounds] "
+		"       %s [-dhiPqsv] "
+		"[-C flag[,flag,...]] [-c raidlevel] [-k keydisk]\n"
+		"\t[-l special[,special,...]] [-p passfile]\n"
+		"\t[-R device | channel:target[.lun] [-r rounds] "
 		"device\n", __progname, __progname);
-	
+
 	exit(1);
 }
 
@@ -1070,14 +1074,14 @@ derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		fclose(f);
 	} else {
 		if (readpassphrase(prompt, passphrase, sizeof(passphrase),
-		    RPP_REQUIRE_TTY) == NULL)
+		    rpp_flag) == NULL)
 			errx(1, "unable to read passphrase");
 	}
 
 	if (verify) {
 		/* request user to re-type it */
 		if (readpassphrase("Re-type passphrase: ", verifybuf,
-		    sizeof(verifybuf), RPP_REQUIRE_TTY) == NULL) {
+		    sizeof(verifybuf), rpp_flag) == NULL) {
 			memset(passphrase, 0, sizeof(passphrase));
 			errx(1, "unable to read passphrase");
 		}
