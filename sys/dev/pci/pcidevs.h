@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1577 2010/11/18 18:10:23 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1578 2010/12/01 17:07:37 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1407,6 +1407,7 @@
 #define	PCI_PRODUCT_ATHEROS_AR9227	0x002d		/* AR9227 */
 #define	PCI_PRODUCT_ATHEROS_AR9287	0x002e		/* AR9287 */
 #define	PCI_PRODUCT_ATHEROS_AR9300	0x0030		/* AR9300 */
+#define	PCI_PRODUCT_ATHEROS_AR9485	0x0032		/* AR9485 */
 #define	PCI_PRODUCT_ATHEROS_AR5210_AP	0x0207		/* AR5210 (Early) */
 #define	PCI_PRODUCT_ATHEROS_AR5212_IBM	0x1014		/* AR5212 (IBM MiniPCI) */
 #define	PCI_PRODUCT_ATHEROS_AR5210_DEFAULT	0x1107		/* AR5210 (no eeprom) */
