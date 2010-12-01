@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.58 2010/12/01 22:02:29 schwarze Exp $ */
+/*	$Id: main.c,v 1.59 2010/12/01 23:38:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,6 +68,8 @@ struct	curparse {
 	enum mandoclevel  wlevel;	/* Ignore messages below this. */
 	int		  wstop;	/* Stop after a file with a warning. */
 	enum intt	  inttype;	/* which parser to use */
+	struct man	 *pman;		/* persistent man parser */
+	struct mdoc	 *pmdoc;	/* persistent mdoc parser */
 	struct man	 *man;		/* man parser */
 	struct mdoc	 *mdoc;		/* mdoc parser */
 	struct roff	 *roff;		/* roff parser (!NULL) */
@@ -200,8 +202,7 @@ static	int		  pfile(const char *, struct curparse *);
 static	int		  moptions(enum intt *, char *);
 static	int		  mmsg(enum mandocerr, void *, 
 				int, int, const char *);
-static	void		  pset(const char *, int, struct curparse *,
-				struct man **, struct mdoc **);
+static	void		  pset(const char *, int, struct curparse *);
 static	int		  toptions(struct curparse *, char *);
 static	void		  usage(void) __attribute__((noreturn));
 static	void		  version(void) __attribute__((noreturn));
@@ -274,10 +275,10 @@ main(int argc, char *argv[])
 
 	if (curp.outfree)
 		(*curp.outfree)(curp.outdata);
-	if (curp.mdoc)
-		mdoc_free(curp.mdoc);
-	if (curp.man)
-		man_free(curp.man);
+	if (curp.pmdoc)
+		mdoc_free(curp.pmdoc);
+	if (curp.pman)
+		man_free(curp.pman);
 	if (curp.roff)
 		roff_free(curp.roff);
 
@@ -298,18 +299,32 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-V] [-foption] "
-			"[-mformat] [-Ooption] [-Toutput] "
-			"[-Werr] [file...]\n", progname);
+	(void)fprintf(stderr, "usage: %s "
+			"[-V] "
+			"[-foption] "
+			"[-mformat] "
+			"[-Ooption] "
+			"[-Toutput] "
+			"[-Werr] "
+			"[file...]\n", 
+			progname);
+
 	exit((int)MANDOCLEVEL_BADARG);
 }
-
 
 static void
 ffile(const char *file, struct curparse *curp)
 {
 
+	/*
+	 * Called once per input file.  Get the file ready for reading,
+	 * pass it through to the parser-driver, then close it out.
+	 * XXX: don't do anything special as this is only called for
+	 * files; stdin goes directly to fdesc().
+	 */
+
 	curp->file = file;
+
 	if (-1 == (curp->fd = open(curp->file, O_RDONLY, 0))) {
 		perror(curp->file);
 		exit_status = MANDOCLEVEL_SYSERR;
@@ -437,22 +452,39 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 static void
 fdesc(struct curparse *curp)
 {
-	struct man	*man;
-	struct mdoc	*mdoc;
-	struct roff	*roff;
+
+	/*
+	 * Called once per file with an opened file descriptor.  All
+	 * pre-file-parse operations (whether stdin or a file) should go
+	 * here.
+	 *
+	 * This calls down into the nested parser, which drills down and
+	 * fully parses a file and all its dependences (i.e., `so').  It
+	 * then runs the cleanup validators and pushes to output.
+	 */
+
+	/* Zero the parse type. */
+
+	curp->mdoc = NULL;
+	curp->man = NULL;
+
+	/* Make sure the mandotory roff parser is initialised. */
+
+	if (NULL == curp->roff) {
+		curp->roff = roff_alloc(&curp->regs, curp, mmsg);
+		assert(curp->roff);
+	}
+
+	/* Fully parse the file. */
 
 	pdesc(curp);
-
-	man  = curp->man;
-	mdoc = curp->mdoc;
-	roff = curp->roff;
 
 	if (MANDOCLEVEL_FATAL <= exit_status)
 		goto cleanup;
 
 	/* NOTE a parser may not have been assigned, yet. */
 
-	if ( ! (man || mdoc)) {
+	if ( ! (curp->man || curp->mdoc)) {
 		fprintf(stderr, "%s: Not a manual\n", curp->file);
 		exit_status = MANDOCLEVEL_FATAL;
 		goto cleanup;
@@ -460,15 +492,18 @@ fdesc(struct curparse *curp)
 
 	/* Clean up the parse routine ASTs. */
 
-	if (mdoc && ! mdoc_endparse(mdoc)) {
+	if (curp->mdoc && ! mdoc_endparse(curp->mdoc)) {
 		assert(MANDOCLEVEL_FATAL <= exit_status);
 		goto cleanup;
 	}
-	if (man && ! man_endparse(man)) {
+
+	if (curp->man && ! man_endparse(curp->man)) {
 		assert(MANDOCLEVEL_FATAL <= exit_status);
 		goto cleanup;
 	}
-	if (roff && ! roff_endparse(roff)) {
+
+	assert(curp->roff);
+	if ( ! roff_endparse(curp->roff)) {
 		assert(MANDOCLEVEL_FATAL <= exit_status);
 		goto cleanup;
 	}
@@ -534,23 +569,27 @@ fdesc(struct curparse *curp)
 
 	/* Execute the out device, if it exists. */
 
-	if (man && curp->outman)
-		(*curp->outman)(curp->outdata, man);
-	if (mdoc && curp->outmdoc)
-		(*curp->outmdoc)(curp->outdata, mdoc);
+	if (curp->man && curp->outman)
+		(*curp->outman)(curp->outdata, curp->man);
+	if (curp->mdoc && curp->outmdoc)
+		(*curp->outmdoc)(curp->outdata, curp->mdoc);
 
  cleanup:
+
 	memset(&curp->regs, 0, sizeof(struct regset));
-	if (mdoc)
-		mdoc_reset(mdoc);
-	if (man)
-		man_reset(man);
-	if (roff)
-		roff_reset(roff);
+
+	/* Reset the current-parse compilers. */
+
+	if (curp->mdoc)
+		mdoc_reset(curp->mdoc);
+	if (curp->man)
+		man_reset(curp->man);
+
+	assert(curp->roff);
+	roff_reset(curp->roff);
 
 	return;
 }
-
 
 static void
 pdesc(struct curparse *curp)
@@ -558,16 +597,22 @@ pdesc(struct curparse *curp)
 	struct buf	 blk;
 	int		 with_mmap;
 
+	/*
+	 * Run for each opened file; may be called more than once for
+	 * each full parse sequence if the opened file is nested (i.e.,
+	 * from `so').  Simply sucks in the whole file and moves into
+	 * the parse phase for the file.
+	 */
+
 	if ( ! read_whole_file(curp, &blk, &with_mmap)) {
 		exit_status = MANDOCLEVEL_SYSERR;
 		return;
 	}
 
-	if (NULL == curp->roff) 
-		curp->roff = roff_alloc(&curp->regs, curp, mmsg);
-	assert(curp->roff);
+	/* Line number is per-file. */
 
 	curp->line = 1;
+
 	parsebuf(curp, blk, 1);
 
 	if (with_mmap)
@@ -580,24 +625,27 @@ static void
 parsebuf(struct curparse *curp, struct buf blk, int start)
 {
 	struct buf	 ln;
-	int		 i, pos, lnn, of;
+	enum rofferr	 rr;
+	int		 i, of, rc;
+	int		 pos; /* byte number in the ln buffer */
+	int		 lnn; /* line number in the real file */
 	unsigned char	 c;
-	struct man	*man;
-	struct mdoc	*mdoc;
-	struct roff	*roff;
 
-	man  = curp->man;
-	mdoc = curp->mdoc;
-	roff = curp->roff;
+	/*
+	 * Main parse routine for an opened file.  This is called for
+	 * each opened file and simply loops around the full input file,
+	 * possibly nesting (i.e., with `so').
+	 */
 
 	memset(&ln, 0, sizeof(struct buf));
 
-	lnn = curp->line;  /* line number in the real file */
-	pos = 0;  /* byte number in the ln buffer */
+	lnn = curp->line; 
+	pos = 0; 
 
-	for (i = 0; i < (int)blk.sz;) {
+	for (i = 0; i < (int)blk.sz; ) {
 		if (0 == pos && '\0' == blk.buf[i])
 			break;
+
 		if (start)
 			curp->line = lnn;
 
@@ -618,27 +666,33 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 			 */
 
 			c = (unsigned char) blk.buf[i];
-			if ( ! (isascii(c) && (isgraph(c) || isblank(c)))) {
+
+			if ( ! (isascii(c) && 
+					(isgraph(c) || isblank(c)))) {
 				mmsg(MANDOCERR_BADCHAR, curp, 
 				    curp->line, pos, "ignoring byte");
 				i++;
 				continue;
 			}
 
-			/* Trailing backslash is like a plain character. */
+			/* Trailing backslash = a plain char. */
+
 			if ('\\' != blk.buf[i] || i + 1 == (int)blk.sz) {
 				if (pos >= (int)ln.sz)
 					resize_buf(&ln, 256);
 				ln.buf[pos++] = blk.buf[i++];
 				continue;
 			}
-			/* Found an escape and at least one other character. */
+
+			/* Found escape & at least one other char. */
+
 			if ('\n' == blk.buf[i + 1]) {
-				/* Escaped newlines are skipped over */
 				i += 2;
+				/* Escaped newlines are skipped over */
 				++lnn;
 				continue;
 			}
+
 			if ('"' == blk.buf[i + 1]) {
 				i += 2;
 				/* Comment, skip to end of line */
@@ -649,6 +703,7 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 						break;
 					}
 				}
+
 				/* Backout trailing whitespaces */
 				for (; pos > 0; --pos) {
 					if (ln.buf[pos - 1] != ' ')
@@ -658,7 +713,9 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 				}
 				break;
 			}
-			/* Some other escape sequence, copy and continue. */
+
+			/* Some other escape sequence, copy & cont. */
+
 			if (pos + 1 >= (int)ln.sz)
 				resize_buf(&ln, 256);
 
@@ -668,6 +725,7 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 
  		if (pos >= (int)ln.sz)
 			resize_buf(&ln, 256);
+
 		ln.buf[pos] = '\0';
 
 		/*
@@ -680,9 +738,13 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 		 */
 
 		of = 0;
+
 rerun:
-		switch (roff_parseln(roff, curp->line, &ln.buf, &ln.sz,
-		    of, &of)) {
+		rr = roff_parseln
+			(curp->roff, curp->line, 
+			 &ln.buf, &ln.sz, of, &of);
+
+		switch (rr) {
 		case (ROFF_REPARSE):
 			parsebuf(curp, ln, 0);
 			pos = 0;
@@ -715,35 +777,43 @@ rerun:
 		 * parsers with each one.
 		 */
 
-		if ( ! (man || mdoc))
-			pset(ln.buf + of, pos - of, curp, &man, &mdoc);
+		if ( ! (curp->man || curp->mdoc))
+			pset(ln.buf + of, pos - of, curp);
 
-		/* Lastly, push down into the parsers themselves. */
+		/* 
+		 * Lastly, push down into the parsers themselves.  One
+		 * of these will have already been set in the pset()
+		 * routine.
+		 */
 
-		if (man && ! man_parseln(man, curp->line, ln.buf, of)) {
-			assert(MANDOCLEVEL_FATAL <= exit_status);
-			break;
-		}
-		if (mdoc && ! mdoc_parseln(mdoc, curp->line, ln.buf, of)) {
-			assert(MANDOCLEVEL_FATAL <= exit_status);
-			break;
+		if (curp->man || curp->mdoc) {
+			rc = curp->man ?
+				man_parseln(curp->man, 
+					curp->line, ln.buf, of) :
+				mdoc_parseln(curp->mdoc, 
+					curp->line, ln.buf, of);
+
+			if ( ! rc) {
+				assert(MANDOCLEVEL_FATAL <= exit_status);
+				break;
+			}
 		}
 
 		/* Temporary buffers typically are not full. */
+
 		if (0 == start && '\0' == blk.buf[i])
 			break;
 
 		/* Start the next input line. */
+
 		pos = 0;
 	}
 
 	free(ln.buf);
 }
 
-
 static void
-pset(const char *buf, int pos, struct curparse *curp,
-		struct man **man, struct mdoc **mdoc)
+pset(const char *buf, int pos, struct curparse *curp)
 {
 	int		 i;
 
@@ -753,6 +823,9 @@ pset(const char *buf, int pos, struct curparse *curp,
 	 * explicitly.  If passed as -mandoc, then try to guess from the
 	 * line: either skip dot-lines, use -mdoc when finding `.Dt', or
 	 * default to -man, which is more lenient.
+	 *
+	 * Separate out pmdoc/pman from mdoc/man: the first persists
+	 * through all parsers, while the latter is used per-parse.
 	 */
 
 	if ('.' == buf[0] || '\'' == buf[0]) {
@@ -765,35 +838,37 @@ pset(const char *buf, int pos, struct curparse *curp,
 
 	switch (curp->inttype) {
 	case (INTT_MDOC):
-		if (NULL == curp->mdoc) 
-			curp->mdoc = mdoc_alloc(&curp->regs, curp, mmsg);
-		assert(curp->mdoc);
-		*mdoc = curp->mdoc;
+		if (NULL == curp->pmdoc) 
+			curp->pmdoc = mdoc_alloc
+				(&curp->regs, curp, mmsg);
+		assert(curp->pmdoc);
+		curp->mdoc = curp->pmdoc;
 		return;
 	case (INTT_MAN):
-		if (NULL == curp->man) 
-			curp->man = man_alloc(&curp->regs, curp, mmsg);
-		assert(curp->man);
-		*man = curp->man;
+		if (NULL == curp->pman) 
+			curp->pman = man_alloc
+				(&curp->regs, curp, mmsg);
+		assert(curp->pman);
+		curp->man = curp->pman;
 		return;
 	default:
 		break;
 	}
 
 	if (pos >= 3 && 0 == memcmp(buf, ".Dd", 3))  {
-		if (NULL == curp->mdoc) 
-			curp->mdoc = mdoc_alloc(&curp->regs, curp, mmsg);
-		assert(curp->mdoc);
-		*mdoc = curp->mdoc;
+		if (NULL == curp->pmdoc) 
+			curp->pmdoc = mdoc_alloc
+				(&curp->regs, curp, mmsg);
+		assert(curp->pmdoc);
+		curp->mdoc = curp->pmdoc;
 		return;
 	} 
 
-	if (NULL == curp->man) 
-		curp->man = man_alloc(&curp->regs, curp, mmsg);
-	assert(curp->man);
-	*man = curp->man;
+	if (NULL == curp->pman) 
+		curp->pman = man_alloc(&curp->regs, curp, mmsg);
+	assert(curp->pman);
+	curp->man = curp->pman;
 }
-
 
 static int
 moptions(enum intt *tflags, char *arg)
@@ -812,7 +887,6 @@ moptions(enum intt *tflags, char *arg)
 
 	return(1);
 }
-
 
 static int
 toptions(struct curparse *curp, char *arg)
@@ -841,7 +915,6 @@ toptions(struct curparse *curp, char *arg)
 
 	return(1);
 }
-
 
 static int
 woptions(struct curparse *curp, char *arg)
@@ -881,7 +954,6 @@ woptions(struct curparse *curp, char *arg)
 
 	return(1);
 }
-
 
 static int
 mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
