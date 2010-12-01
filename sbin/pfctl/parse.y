@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.594 2010/09/24 09:17:46 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.595 2010/12/01 10:35:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -452,10 +452,10 @@ int	parseport(char *, struct range *r, int);
 
 %token	PASS BLOCK MATCH SCRUB RETURN IN OS OUT LOG QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
-%token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINATTO NODF
+%token	ICMP6TYPE CODE KEEP MODULATE STATE PORT BINATTO NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE URPFFAILED FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
-%token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
+%token	REASSEMBLE ANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
 %token	ANTISPOOF FOR INCLUDE MATCHES
@@ -5028,13 +5028,11 @@ lookup(char *s)
 		{ "block-policy",	BLOCKPOLICY},
 		{ "cbq",		CBQ},
 		{ "code",		CODE},
-		{ "crop",		FRAGCROP},
 		{ "debug",		DEBUG},
 		{ "divert-packet",	DIVERTPACKET},
 		{ "divert-reply",	DIVERTREPLY},
 		{ "divert-to",		DIVERTTO},
 		{ "drop",		DROP},
-		{ "drop-ovl",		FRAGDROP},
 		{ "dup-to",		DUPTO},
 		{ "fastroute",		FASTROUTE},
 		{ "file",		FILENAME},
@@ -5073,8 +5071,6 @@ lookup(char *s)
 		{ "max-src-states",	MAXSRCSTATES},
 		{ "min-ttl",		MINTTL},
 		{ "modulate",		MODULATE},
-		{ "nat",		NAT},
-		{ "nat-anchor",		NATANCHOR},
 		{ "nat-to",		NATTO},
 		{ "no",			NO},
 		{ "no-df",		NODF},
@@ -5097,8 +5093,6 @@ lookup(char *s)
 		{ "quick",		QUICK},
 		{ "random",		RANDOM},
 		{ "random-id",		RANDOMID},
-		{ "rdr",		RDR},
-		{ "rdr-anchor",		RDRANCHOR},
 		{ "rdr-to",		RDRTO},
 		{ "realtime",		REALTIME},
 		{ "reassemble",		REASSEMBLE},
