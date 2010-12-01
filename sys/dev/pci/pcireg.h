@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.36 2009/05/28 15:41:48 damien Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.37 2010/12/01 18:47:51 damien Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -518,6 +518,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_LCSR		0x10
 #define PCI_PCIE_LCSR_ASPM_L0S	0x00000001
 #define PCI_PCIE_LCSR_ASPM_L1	0x00000002
+#define PCI_PCIE_LCSR_ES	0x00000080
 #define PCI_PCIE_SLCAP		0x14
 #define PCI_PCIE_SLCAP_ABP	0x00000001
 #define PCI_PCIE_SLCAP_PCP	0x00000002
