@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.69 2010/11/28 19:35:33 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.70 2010/12/01 22:02:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -340,8 +340,6 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 
 	if ( ! mdoc_valid_pre(mdoc, p))
 		return(0);
-	if ( ! mdoc_action_pre(mdoc, p))
-		return(0);
 
 	switch (p->type) {
 	case (MDOC_HEAD):
@@ -367,8 +365,6 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 	switch (p->type) {
 	case (MDOC_TEXT):
 		if ( ! mdoc_valid_post(mdoc))
-			return(0);
-		if ( ! mdoc_action_post(mdoc))
 			return(0);
 		break;
 	default:

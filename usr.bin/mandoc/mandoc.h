@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.22 2010/11/29 00:12:02 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.23 2010/12/01 22:02:29 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -88,7 +88,6 @@ enum	mandocerr {
 	MANDOCERR_BADATT, /* unknown AT&T UNIX version */
 	MANDOCERR_BADBOOL, /* bad Boolean value */
 	MANDOCERR_BADFONT, /* unknown font */
-	MANDOCERR_BADLIB, /* unknown library specifier */
 	MANDOCERR_BADSTANDARD, /* unknown standard specifier */
 	MANDOCERR_BADWIDTH, /* bad width argument */
 
