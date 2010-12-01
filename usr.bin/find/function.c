@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.35 2009/12/09 13:59:43 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.36 2010/12/01 01:20:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -315,7 +315,7 @@ f_empty(PLAN *plan, FTSENT *entry)
 		empty = 1;
 		dir = opendir(entry->fts_accpath);
 		if (dir == NULL)
-			err(1, "%s", entry->fts_accpath);
+			return (0);
 		for (dp = readdir(dir); dp; dp = readdir(dir))
 			if (dp->d_name[0] != '.' ||
 			    (dp->d_name[1] != '\0' &&
