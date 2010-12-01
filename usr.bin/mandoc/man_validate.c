@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.33 2010/11/29 02:26:45 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.34 2010/12/01 23:02:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,6 +29,10 @@
 #include "libman.h"
 #include "libmandoc.h"
 
+#include "out.h"
+#include "term.h"
+#include "tbl.h"
+
 #define	CHKARGS	  struct man *m, struct man_node *n
 
 typedef	int	(*v_check)(CHKARGS);
@@ -51,14 +55,27 @@ static	int	  check_sec(CHKARGS);
 static	int	  check_text(CHKARGS);
 static	int	  check_title(CHKARGS);
 
+static	int	  post_AT(CHKARGS);
+static	int	  post_fi(CHKARGS);
+static	int	  post_nf(CHKARGS);
+static	int	  post_TH(CHKARGS);
+static	int	  post_TS(CHKARGS);
+static	int	  post_UC(CHKARGS);
+
+static	v_check	  posts_at[] = { post_AT, NULL };
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
+static	v_check	  posts_fi[] = { check_eq0, post_fi, NULL };
+static	v_check	  posts_le1[] = { check_le1, NULL };
+static	v_check	  posts_nf[] = { check_eq0, post_nf, NULL };
 static	v_check	  posts_ft[] = { check_ft, NULL };
-static	v_check	  posts_th[] = { check_ge2, check_le5, check_title, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
-static	v_check	  posts_le1[] = { check_le1, NULL };
+static	v_check	  posts_th[] = { check_ge2, check_le5, check_title, post_TH, NULL };
+static	v_check	  posts_ts[] = { post_TS, NULL };
+static	v_check	  posts_uc[] = { post_UC, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
+
 
 static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_eq0 }, /* br */
@@ -85,17 +102,17 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_eq0 }, /* na */ /* FIXME: should warn only. */
 	{ NULL, NULL }, /* i */
 	{ NULL, posts_le1 }, /* sp */ /* FIXME: should warn only. */
-	{ pres_bline, posts_eq0 }, /* nf */
-	{ pres_bline, posts_eq0 }, /* fi */
+	{ pres_bline, posts_nf }, /* nf */
+	{ pres_bline, posts_fi }, /* fi */
 	{ NULL, NULL }, /* r */
 	{ NULL, NULL }, /* RE */
 	{ NULL, posts_part }, /* RS */
 	{ NULL, NULL }, /* DT */
-	{ NULL, NULL }, /* UC */
+	{ NULL, posts_uc }, /* UC */
 	{ NULL, NULL }, /* PD */
-	{ NULL, NULL }, /* AT */
+	{ NULL, posts_at }, /* AT */
 	{ NULL, NULL }, /* in */
-	{ NULL, NULL }, /* TS */
+	{ NULL, posts_ts }, /* TS */
 	{ NULL, NULL }, /* TE */
 	{ NULL, posts_ft }, /* ft */
 };
@@ -334,6 +351,187 @@ check_part(CHKARGS)
 	return(1);
 }
 
+static int
+post_TH(CHKARGS)
+{
+
+	if (m->meta.title)
+		free(m->meta.title);
+	if (m->meta.vol)
+		free(m->meta.vol);
+	if (m->meta.source)
+		free(m->meta.source);
+	if (m->meta.msec)
+		free(m->meta.msec);
+	if (m->meta.rawdate)
+		free(m->meta.rawdate);
+
+	m->meta.title = m->meta.vol = m->meta.rawdate =
+		m->meta.msec = m->meta.source = NULL;
+	m->meta.date = 0;
+
+	/* ->TITLE<- MSEC DATE SOURCE VOL */
+
+	n = n->child;
+	assert(n);
+	m->meta.title = mandoc_strdup(n->string);
+
+	/* TITLE ->MSEC<- DATE SOURCE VOL */
+
+	n = n->next;
+	assert(n);
+	m->meta.msec = mandoc_strdup(n->string);
+
+	/* TITLE MSEC ->DATE<- SOURCE VOL */
+
+	/*
+	 * Try to parse the date.  If this works, stash the epoch (this
+	 * is optimal because we can reformat it in the canonical form).
+	 * If it doesn't parse, isn't specified at all, or is an empty
+	 * string, then use the current date.
+	 */
+
+	n = n->next;
+	if (n && n->string && *n->string) {
+		m->meta.date = mandoc_a2time
+			(MTIME_ISO_8601, n->string);
+		if (0 == m->meta.date) {
+			man_nmsg(m, n, MANDOCERR_BADDATE);
+			m->meta.rawdate = mandoc_strdup(n->string);
+		}
+	} else
+		m->meta.date = time(NULL);
+
+	/* TITLE MSEC DATE ->SOURCE<- VOL */
+
+	if (n && (n = n->next))
+		m->meta.source = mandoc_strdup(n->string);
+
+	/* TITLE MSEC DATE SOURCE ->VOL<- */
+
+	if (n && (n = n->next))
+		m->meta.vol = mandoc_strdup(n->string);
+
+	/*
+	 * Remove the `TH' node after we've processed it for our
+	 * meta-data.
+	 */
+	man_node_delete(m, m->last);
+	return(1);
+}
+
+static int
+post_nf(CHKARGS)
+{
+
+	if (MAN_LITERAL & m->flags)
+		man_nmsg(m, n, MANDOCERR_SCOPEREP);
+
+	m->flags |= MAN_LITERAL;
+	return(1);
+}
+
+static int
+post_fi(CHKARGS)
+{
+
+	if ( ! (MAN_LITERAL & m->flags))
+		man_nmsg(m, n, MANDOCERR_NOSCOPE);
+
+	m->flags &= ~MAN_LITERAL;
+	return(1);
+}
+
+static int
+post_UC(CHKARGS)
+{
+	static const char * const bsd_versions[] = {
+	    "3rd Berkeley Distribution",
+	    "4th Berkeley Distribution",
+	    "4.2 Berkeley Distribution",
+	    "4.3 Berkeley Distribution",
+	    "4.4 Berkeley Distribution",
+	};
+
+	const char	*p, *s;
+
+	n = n->child;
+	n = m->last->child;
+
+	if (NULL == n || MAN_TEXT != n->type)
+		p = bsd_versions[0];
+	else {
+		s = n->string;
+		if (0 == strcmp(s, "3"))
+			p = bsd_versions[0];
+		else if (0 == strcmp(s, "4"))
+			p = bsd_versions[1];
+		else if (0 == strcmp(s, "5"))
+			p = bsd_versions[2];
+		else if (0 == strcmp(s, "6"))
+			p = bsd_versions[3];
+		else if (0 == strcmp(s, "7"))
+			p = bsd_versions[4];
+		else
+			p = bsd_versions[0];
+	}
+
+	if (m->meta.source)
+		free(m->meta.source);
+
+	m->meta.source = mandoc_strdup(p);
+	return(1);
+}
+
+static int
+post_AT(CHKARGS)
+{
+	static const char * const unix_versions[] = {
+	    "7th Edition",
+	    "System III",
+	    "System V",
+	    "System V Release 2",
+	};
+
+	const char	*p, *s;
+	struct man_node	*nn;
+
+	n = n->child;
+
+	if (NULL == n || MAN_TEXT != n->type)
+		p = unix_versions[0];
+	else {
+		s = n->string;
+		if (0 == strcmp(s, "3"))
+			p = unix_versions[0];
+		else if (0 == strcmp(s, "4"))
+			p = unix_versions[1];
+		else if (0 == strcmp(s, "5")) {
+			nn = n->next;
+			if (nn && MAN_TEXT == nn->type && nn->string[0])
+				p = unix_versions[3];
+			else
+				p = unix_versions[2];
+		} else
+			p = unix_versions[0];
+	}
+
+	if (m->meta.source)
+		free(m->meta.source);
+
+	m->meta.source = mandoc_strdup(p);
+	return(1);
+}
+
+static int
+post_TS(CHKARGS)
+{
+
+	if (MAN_HEAD == n->type)
+		n->parent->data.TS = tbl_alloc();
+
+	return(1);
+}
 
 static int
 check_par(CHKARGS)

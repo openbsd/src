@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.47 2010/11/29 02:26:45 schwarze Exp $ */
+/*	$Id: man.c,v 1.48 2010/12/01 23:02:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -227,8 +227,6 @@ man_node_append(struct man *man, struct man_node *p)
 	switch (p->type) {
 	case (MAN_TEXT):
 		if ( ! man_valid_post(man))
-			return(0);
-		if ( ! man_action_post(man))
 			return(0);
 		break;
 	default:
