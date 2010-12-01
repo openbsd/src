@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2010/06/29 21:04:42 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 2010/12/01 12:01:25 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -888,7 +888,7 @@ ibuf_data(struct ibuf *buf)
 }
 
 void *
-ibuf_get(struct ibuf *buf, size_t len)
+ibuf_getdata(struct ibuf *buf, size_t len)
 {
 	void	*data;
 
@@ -900,11 +900,11 @@ ibuf_get(struct ibuf *buf, size_t len)
 }
 
 struct ibuf *
-ibuf_copy(struct ibuf *buf, size_t len)
+ibuf_get(struct ibuf *buf, size_t len)
 {
 	void		*data;
 
-	if ((data = ibuf_get(buf, len)) == NULL)
+	if ((data = ibuf_getdata(buf, len)) == NULL)
 		return (NULL);
 
 	return (ibuf_new(data, len));

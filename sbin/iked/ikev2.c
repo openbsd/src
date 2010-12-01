@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.25 2010/09/22 09:12:18 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.26 2010/12/01 12:01:25 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2712,13 +2712,14 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa)
 		goto done;
 	}
 
-	if ((sa->sa_key_d = ibuf_copy(t, hash_length(prf))) == NULL ||
-	    (sa->sa_key_iauth = ibuf_copy(t, hash_keylength(integr))) == NULL ||
-	    (sa->sa_key_rauth = ibuf_copy(t, hash_keylength(integr))) == NULL ||
-	    (sa->sa_key_iencr = ibuf_copy(t, cipher_keylength(encr))) == NULL ||
-	    (sa->sa_key_rencr = ibuf_copy(t, cipher_keylength(encr))) == NULL ||
-	    (sa->sa_key_iprf = ibuf_copy(t, hash_length(prf))) == NULL ||
-	    (sa->sa_key_rprf = ibuf_copy(t, hash_length(prf))) == NULL) {
+	/* ibuf_get() returns a new buffer from the next read offset */
+	if ((sa->sa_key_d = ibuf_get(t, hash_length(prf))) == NULL ||
+	    (sa->sa_key_iauth = ibuf_get(t, hash_keylength(integr))) == NULL ||
+	    (sa->sa_key_rauth = ibuf_get(t, hash_keylength(integr))) == NULL ||
+	    (sa->sa_key_iencr = ibuf_get(t, cipher_keylength(encr))) == NULL ||
+	    (sa->sa_key_rencr = ibuf_get(t, cipher_keylength(encr))) == NULL ||
+	    (sa->sa_key_iprf = ibuf_get(t, hash_length(prf))) == NULL ||
+	    (sa->sa_key_rprf = ibuf_get(t, hash_length(prf))) == NULL) {
 		log_debug("%s: failed to get SA keys", __func__);
 		goto done;
 	}
@@ -3117,14 +3118,14 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			csa->csa_allocated = 1;
 		}
 
-		if (encrxf && (csa->csa_encrkey = ibuf_copy(keymat,
+		if (encrxf && (csa->csa_encrkey = ibuf_get(keymat,
 		    encrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA encryption key",
 			    __func__);
 			childsa_free(csa);
 			goto done;
 		}
-		if (integrxf && (csa->csa_integrkey = ibuf_copy(keymat,
+		if (integrxf && (csa->csa_integrkey = ibuf_get(keymat,
 		    integrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA integrity key",
 			    __func__);
@@ -3150,14 +3151,14 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		csb->csa_local = csa->csa_peer;
 		csb->csa_peer = csa->csa_local;
 
-		if (encrxf && (csb->csa_encrkey = ibuf_copy(keymat,
+		if (encrxf && (csb->csa_encrkey = ibuf_get(keymat,
 		    encrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA encryption key",
 			    __func__);
 			childsa_free(csb);
 			goto done;
 		}
-		if (integrxf && (csb->csa_integrkey = ibuf_copy(keymat,
+		if (integrxf && (csb->csa_integrkey = ibuf_get(keymat,
 		    integrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA integrity key",
 			    __func__);

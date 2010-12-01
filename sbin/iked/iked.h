@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.21 2010/11/17 16:43:45 ckuethe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.22 2010/12/01 12:01:25 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -746,9 +746,9 @@ size_t	 ibuf_length(struct ibuf *);
 int	 ibuf_setsize(struct ibuf *, size_t);
 u_int8_t *
 	 ibuf_data(struct ibuf *);
-void	*ibuf_get(struct ibuf *, size_t);
+void	*ibuf_getdata(struct ibuf *, size_t);
 struct ibuf *
-	 ibuf_copy(struct ibuf *, size_t);
+	 ibuf_get(struct ibuf *, size_t);
 struct ibuf *
 	 ibuf_dup(struct ibuf *);
 struct ibuf *
