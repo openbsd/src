@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.62 2010/10/03 17:25:21 armani Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.63 2010/12/02 06:39:09 jakemsr Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -129,6 +129,7 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BX50F,		ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_TENX, USB_PRODUCT_TENX_MISSILE,		ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_TERRATEC, USB_PRODUCT_TERRATEC_AUREON,	ANY,	{ UQ_BAD_HID }},
+ { USB_VENDOR_TI, USB_PRODUCT_TI_MSP430,		ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_VELLEMAN, USB_PRODUCT_VELLEMAN_K8055,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_DREAMLINK, USB_PRODUCT_DREAMLINK_ULMB1,	ANY,	{ UQ_BAD_HID }},
 
