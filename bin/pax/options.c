@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.73 2009/11/13 17:22:13 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.74 2010/12/02 04:08:27 tedu Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -620,7 +620,7 @@ tar_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hjmopqruts:vwxzBC:HI:LOPXZ014578")) != -1) {
+	    "b:cef:hjmopqruts:vwxzBC:HI:LNOPXZ014578")) != -1) {
 		switch (c) {
 		case 'b':
 			/*
@@ -784,6 +784,10 @@ tar_options(int argc, char **argv)
 			 * follow symlinks
 			 */
 			Lflag = 1;
+			break;
+		case 'N':
+			/* numeric uid and gid only */
+			Nflag = 1;
 			break;
 		case 'P':
 			/*
@@ -1577,10 +1581,10 @@ void
 tar_usage(void)
 {
 	(void)fputs(
-	    "usage: tar {crtux}[014578befHhjLmOoPpqsvwXZz]\n"
+	    "usage: tar {crtux}[014578befHhjLmNOoPpqsvwXZz]\n"
 	    "           [blocking-factor | archive | replstr] [-C directory] [-I file]\n"
 	    "           [file ...]\n"
-	    "       tar {-crtux} [-014578eHhjLmOoPpqvwXZz] [-b blocking-factor]\n"
+	    "       tar {-crtux} [-014578eHhjLmNOoPpqvwXZz] [-b blocking-factor]\n"
 	    "           [-C directory] [-f archive] [-I file] [-s replstr] [file ...]\n",
 	    stderr);
 	exit(1);

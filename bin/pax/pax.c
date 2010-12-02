@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.30 2009/10/28 20:30:41 guenther Exp $	*/
+/*	$OpenBSD: pax.c,v 1.31 2010/12/02 04:08:27 tedu Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -74,6 +74,7 @@ int	vflag;			/* produce verbose output */
 int	Dflag;			/* same as uflag except inode change time */
 int	Hflag;			/* follow command line symlinks (write only) */
 int	Lflag;			/* follow symlinks when writing */
+int	Nflag;			/* only use numeric uid and gid */
 int	Xflag;			/* archive files with same device id only */
 int	Yflag;			/* same as Dflag except after name mode */
 int	Zflag;			/* same as uflag except after name mode */

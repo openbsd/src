@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.54 2010/11/03 15:11:01 jsg Exp $
+.\"	$OpenBSD: tar.1,v 1.55 2010/12/02 04:08:27 tedu Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 3 2010 $
+.Dd $Mdocdate: December 2 2010 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.No { Cm crtux No } Op Cm 014578befHhjLmOoPpqsvwXZz
+.No { Cm crtux No } Op Cm 014578befHhjLmNOoPpqsvwXZz
 .Sm on
 .Bk -words
 .Op Ar blocking-factor | archive | replstr
@@ -43,7 +43,7 @@
 .Nm tar
 .No { Ns Fl crtux Ns }
 .Bk -words
-.Op Fl 014578eHhjLmOoPpqvwXZz
+.Op Fl 014578eHhjLmNOoPpqvwXZz
 .Op Fl b Ar blocking-factor
 .Op Fl C Ar directory
 .Op Fl f Ar archive
@@ -166,6 +166,9 @@ Synonym for the
 option.
 .It Fl m
 Do not preserve modification time.
+.It Fl N
+Use only the numeric UID and GID values when creating or extracting an
+archive.
 .It Fl O
 Write old-style (non-POSIX) archives.
 .It Fl o

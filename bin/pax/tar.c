@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.42 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: tar.c,v 1.43 2010/12/02 04:08:27 tedu Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -795,10 +795,10 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 * the posix spec wants).
 	 */
 	hd->gname[sizeof(hd->gname) - 1] = '\0';
-	if (gid_name(hd->gname, &(arcn->sb.st_gid)) < 0)
+	if (Nflag || gid_name(hd->gname, &(arcn->sb.st_gid)) < 0)
 		arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
 	hd->uname[sizeof(hd->uname) - 1] = '\0';
-	if (uid_name(hd->uname, &(arcn->sb.st_uid)) < 0)
+	if (Nflag || uid_name(hd->uname, &(arcn->sb.st_uid)) < 0)
 		arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 
 	/*
@@ -1061,8 +1061,13 @@ ustar_wr(ARCHD *arcn)
 	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3) ||
 	    ul_oct((u_long)(u_int)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		goto out;
-	strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));
-	strncpy(hd->gname, name_gid(arcn->sb.st_gid, 0), sizeof(hd->gname));
+	if (!Nflag) {
+		strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));
+		strncpy(hd->gname, name_gid(arcn->sb.st_gid, 0), sizeof(hd->gname));
+	} else {
+		strncpy(hd->uname, "", sizeof(hd->uname));
+		strncpy(hd->gname, "", sizeof(hd->gname));
+	}
 
 	/*
 	 * calculate and store the checksum write the header to the archive
