@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.59 2010/12/01 23:38:11 schwarze Exp $ */
+/*	$Id: main.c,v 1.60 2010/12/02 20:40:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -209,6 +209,7 @@ static	void		  version(void) __attribute__((noreturn));
 static	int		  woptions(struct curparse *, char *);
 
 static	const char	 *progname;
+static	enum mandoclevel  file_status = MANDOCLEVEL_OK;
 static	enum mandoclevel  exit_status = MANDOCLEVEL_OK;
 
 int
@@ -345,7 +346,7 @@ pfile(const char *file, struct curparse *curp)
 
 	if (-1 == (fd = open(file, O_RDONLY, 0))) {
 		perror(file);
-		exit_status = MANDOCLEVEL_SYSERR;
+		file_status = MANDOCLEVEL_SYSERR;
 		return(0);
 	}
 
@@ -363,7 +364,7 @@ pfile(const char *file, struct curparse *curp)
 	if (-1 == close(fd))
 		perror(file);
 
-	return(MANDOCLEVEL_FATAL > exit_status ? 1 : 0);
+	return(MANDOCLEVEL_FATAL > file_status ? 1 : 0);
 }
 
 
@@ -467,6 +468,7 @@ fdesc(struct curparse *curp)
 
 	curp->mdoc = NULL;
 	curp->man = NULL;
+	file_status = MANDOCLEVEL_OK;
 
 	/* Make sure the mandotory roff parser is initialised. */
 
@@ -479,32 +481,32 @@ fdesc(struct curparse *curp)
 
 	pdesc(curp);
 
-	if (MANDOCLEVEL_FATAL <= exit_status)
+	if (MANDOCLEVEL_FATAL <= file_status)
 		goto cleanup;
 
 	/* NOTE a parser may not have been assigned, yet. */
 
 	if ( ! (curp->man || curp->mdoc)) {
 		fprintf(stderr, "%s: Not a manual\n", curp->file);
-		exit_status = MANDOCLEVEL_FATAL;
+		file_status = MANDOCLEVEL_FATAL;
 		goto cleanup;
 	}
 
 	/* Clean up the parse routine ASTs. */
 
 	if (curp->mdoc && ! mdoc_endparse(curp->mdoc)) {
-		assert(MANDOCLEVEL_FATAL <= exit_status);
+		assert(MANDOCLEVEL_FATAL <= file_status);
 		goto cleanup;
 	}
 
 	if (curp->man && ! man_endparse(curp->man)) {
-		assert(MANDOCLEVEL_FATAL <= exit_status);
+		assert(MANDOCLEVEL_FATAL <= file_status);
 		goto cleanup;
 	}
 
 	assert(curp->roff);
 	if ( ! roff_endparse(curp->roff)) {
-		assert(MANDOCLEVEL_FATAL <= exit_status);
+		assert(MANDOCLEVEL_FATAL <= file_status);
 		goto cleanup;
 	}
 
@@ -513,7 +515,7 @@ fdesc(struct curparse *curp)
 	 * the requested level, do not produce output.
 	 */
 
-	if (MANDOCLEVEL_OK != exit_status && curp->wstop)
+	if (MANDOCLEVEL_OK != file_status && curp->wstop)
 		goto cleanup;
 
 	/* If unset, allocate output dev now (if applicable). */
@@ -588,6 +590,9 @@ fdesc(struct curparse *curp)
 	assert(curp->roff);
 	roff_reset(curp->roff);
 
+	if (exit_status < file_status)
+		exit_status = file_status;
+
 	return;
 }
 
@@ -605,7 +610,7 @@ pdesc(struct curparse *curp)
 	 */
 
 	if ( ! read_whole_file(curp, &blk, &with_mmap)) {
-		exit_status = MANDOCLEVEL_SYSERR;
+		file_status = MANDOCLEVEL_SYSERR;
 		return;
 	}
 
@@ -758,7 +763,7 @@ rerun:
 			pos = 0;
 			continue;
 		case (ROFF_ERR):
-			assert(MANDOCLEVEL_FATAL <= exit_status);
+			assert(MANDOCLEVEL_FATAL <= file_status);
 			break;
 		case (ROFF_SO):
 			if (pfile(ln.buf + of, curp)) {
@@ -794,7 +799,7 @@ rerun:
 					curp->line, ln.buf, of);
 
 			if ( ! rc) {
-				assert(MANDOCLEVEL_FATAL <= exit_status);
+				assert(MANDOCLEVEL_FATAL <= file_status);
 				break;
 			}
 		}
@@ -976,8 +981,8 @@ mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 		fprintf(stderr, ": %s", msg);
 	fputc('\n', stderr);
 
-	if (exit_status < level)
-		exit_status = level;
+	if (file_status < level)
+		file_status = level;
 	
 	return(level < MANDOCLEVEL_FATAL);
 }
