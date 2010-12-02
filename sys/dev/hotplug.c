@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.9 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.10 2010/12/02 04:12:35 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -26,13 +26,14 @@
 #include <sys/fcntl.h>
 #include <sys/hotplug.h>
 #include <sys/ioctl.h>
+#include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/vnode.h>
 
-#define HOTPLUG_MAXEVENTS	16
+#define HOTPLUG_MAXEVENTS	64
 
 static int opened;
-static struct hotplug_event evqueue[HOTPLUG_MAXEVENTS];
+static struct hotplug_event *evqueue;
 static int evqueue_head, evqueue_tail, evqueue_count;
 static struct selinfo hotplug_sel;
 
@@ -88,6 +89,8 @@ hotplug_put_event(struct hotplug_event *he)
 		printf("hotplug: event lost, queue full\n");
 		return (1);
 	}
+	if (!evqueue)
+		return (1);
 
 	evqueue[evqueue_head] = *he;
 	evqueue_head = EVQUEUE_NEXT(evqueue_head);
@@ -119,12 +122,22 @@ hotplug_get_event(struct hotplug_event *he)
 int
 hotplugopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	struct hotplug_event *q;
+
 	if (minor(dev) != 0)
 		return (ENXIO);
 	if ((flag & FWRITE))
 		return (EPERM);
 	if (opened)
 		return (EBUSY);
+	if (!evqueue) {
+		q = malloc(sizeof(*q) * HOTPLUG_MAXEVENTS, M_DEVBUF, M_WAITOK);
+		if (opened) {
+			free(q, M_DEVBUF);
+			return (EBUSY);
+		}
+		evqueue = q;
+	}
 	opened = 1;
 	return (0);
 }
@@ -155,7 +168,7 @@ again:
 	if (flags & IO_NDELAY)
 		return (EAGAIN);
 
-	error = tsleep(evqueue, PRIBIO | PCATCH, "htplev", 0);
+	error = tsleep(&evqueue, PRIBIO | PCATCH, "htplev", 0);
 	if (error)
 		return (error);
 	goto again;
