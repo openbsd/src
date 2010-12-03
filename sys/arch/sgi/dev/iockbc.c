@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.6 2010/04/06 19:12:26 miod Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.7 2010/12/03 18:29:56 shadchin Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -973,7 +973,7 @@ static struct pckbc_slotdata iockbc_cons_slotdata;
 static int iockbc_console;
 
 int
-iockbc_cnattach(pckbc_slot_t slot)
+iockbc_cnattach()
 {
 	bus_space_tag_t iot = &sys_config.console_io;
 	bus_space_handle_t ioh = (bus_space_handle_t)iot->bus_base;
@@ -988,13 +988,13 @@ iockbc_cnattach(pckbc_slot_t slot)
 	if (is_ioc) {
 #if NIOCKBC_IOC > 0
 		if (sys_config.system_type == SGI_IP35)
-			reginfo = &iockbc_ioc_inverted[slot];
+			reginfo = &iockbc_ioc_inverted[PCKBC_KBD_SLOT];
 		else
-			reginfo = &iockbc_ioc_normal[slot];
+			reginfo = &iockbc_ioc_normal[PCKBC_KBD_SLOT];
 #endif
 	} else {
 #if NIOCKBC_IOF > 0
-		reginfo = &iockbc_iof[slot];
+		reginfo = &iockbc_iof[PCKBC_KBD_SLOT];
 #endif
 	}
 	if (reginfo == NULL)
@@ -1022,9 +1022,9 @@ iockbc_cnattach(pckbc_slot_t slot)
 	timeout_set(&t->t_poll, iockbc_poll, t);
 
 	iockbc_init_slotdata(&iockbc_cons_slotdata, reginfo);
-	t->t_slotdata[slot] = &iockbc_cons_slotdata;
+	t->t_slotdata[PCKBC_KBD_SLOT] = &iockbc_cons_slotdata;
 
-	rc = pckbd_cnattach(t, slot);
+	rc = pckbd_cnattach(t);
 	if (rc == 0)
 		iockbc_console = 1;
 

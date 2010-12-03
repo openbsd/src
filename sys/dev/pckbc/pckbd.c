@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.28 2010/08/28 12:49:57 miod Exp $ */
+/* $OpenBSD: pckbd.c,v 1.29 2010/12/03 18:29:56 shadchin Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1030,14 +1030,13 @@ pckbd_hookup_bell(fn, arg)
 }
 
 int
-pckbd_cnattach(kbctag, kbcslot)
+pckbd_cnattach(kbctag)
 	pckbc_tag_t kbctag;
-	int kbcslot;
 {
 	char cmd[1];
 	int res;
 
-	res = pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
+	res = pckbd_init(&pckbd_consdata, kbctag, PCKBC_KBD_SLOT, 1);
 #if 0 /* we allow the console to be attached if no keyboard is present */
 	if (res)
 		return (res);
@@ -1045,7 +1044,7 @@ pckbd_cnattach(kbctag, kbcslot)
 
 	/* Just to be sure. */
 	cmd[0] = KBC_ENABLE;
-	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 0, NULL, 0);
+	res = pckbc_poll_cmd(kbctag, PCKBC_KBD_SLOT, cmd, 1, 0, NULL, 0);
 #if 0
 	if (res)
 		return (res);

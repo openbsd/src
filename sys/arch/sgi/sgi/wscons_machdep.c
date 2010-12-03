@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.8 2010/04/06 19:12:34 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.9 2010/12/03 18:29:56 shadchin Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -180,8 +180,7 @@ static int initted;
 #endif
 
 #if NMKBC > 0
-		if (mkbc_cnattach(&macebus_tag, MACE_IO_KBC_OFFS,
-		    PCKBC_KBD_SLOT) == 0)
+		if (mkbc_cnattach(&macebus_tag, MACE_IO_KBC_OFFS) == 0)
 			return;	/* console keyboard found */
 #endif
 #if NUKBD > 0
@@ -317,7 +316,7 @@ widget_cnattach()
 		return;
 
 #if NIOCKBC > 0
-	if (iockbc_cnattach(PCKBC_KBD_SLOT) == 0)
+	if (iockbc_cnattach() == 0)
 		return;	/* console keyboard found */
 #endif
 #if NUKBD > 0

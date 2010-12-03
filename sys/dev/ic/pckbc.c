@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.27 2010/11/23 04:07:55 shadchin Exp $ */
+/* $OpenBSD: pckbc.c,v 1.28 2010/12/03 18:29:56 shadchin Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -1048,7 +1048,7 @@ pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr, bus_size_t cmd_offset,
 
 	if (!res) {
 #if (NPCKBD > 0)
-		res = pckbd_cnattach(&pckbc_consdata, PCKBC_KBD_SLOT);
+		res = pckbd_cnattach(&pckbc_consdata);
 #else
 		res = ENXIO;
 #endif /* NPCKBD > 0 */

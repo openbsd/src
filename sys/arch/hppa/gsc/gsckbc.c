@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.12 2008/10/15 19:12:19 blambert Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.13 2010/12/03 18:29:56 shadchin Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -415,7 +415,7 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 		if (gsc->sc_type == PCKBC_KBD_SLOT &&
 		    ga->ga_dp.dp_mod == PAGE0->mem_kbd.pz_dp.dp_mod &&
 		    bcmp(ga->ga_dp.dp_bc, PAGE0->mem_kbd.pz_dp.dp_bc, 6) == 0)
-			pckbd_cnattach(t, PCKBC_KBD_SLOT);
+			pckbd_cnattach(t);
 #endif
 		pckbc_attach_slot(sc, gsc->sc_type);
 	}
