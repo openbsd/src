@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmdir.1,v 1.20 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: rmdir.1,v 1.21 2010/12/03 00:36:15 jmc Exp $
 .\"	$NetBSD: rmdir.1,v 1.10 1995/07/25 19:37:35 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rmdir.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: December 3 2010 $
 .Dt RMDIR 1
 .Os
 .Sh NAME
@@ -77,25 +77,25 @@ The
 utility exits with one of the following values:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Li \&0
+.It 0
 Each
 .Ar directory
 argument referred to an empty directory and was removed successfully.
-.It Li \&>\&0
+.It \*(Gt0
 An error occurred.
 .El
 .Sh EXAMPLES
-.Li $ rmdir foobar
-.Pp
 Remove the directory
-.Pa foobar
-if it is empty.
+.Pa foobar ,
+if it is empty:
 .Pp
-.Li $ rmdir -p cow/horse/monkey
+.Dl $ rmdir foobar
 .Pp
 Remove all directories up to and including
 .Pa cow ,
-stopping at the first non-empty directory (if any).
+stopping at the first non-empty directory (if any):
+.Pp
+.Dl $ rmdir -p cow/horse/monkey
 .Sh SEE ALSO
 .Xr rm 1 ,
 .Xr rmdir 2
