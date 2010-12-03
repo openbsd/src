@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-rsa.c,v 1.78 2010/07/13 23:13:16 djm Exp $ */
+/* $OpenBSD: auth-rsa.c,v 1.79 2010/12/03 23:55:27 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -90,9 +90,6 @@ auth_rsa_verify_response(Key *key, BIGNUM *challenge, u_char response[16])
 	u_char buf[32], mdbuf[16];
 	MD5_CTX md;
 	int len;
-
-	if (auth_key_is_revoked(key))
-		return 0;
 
 	/* don't allow short keys */
 	if (BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE) {
@@ -245,6 +242,10 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			logit("Warning: %s, line %lu: keysize mismatch: "
 			    "actual %d vs. announced %d.",
 			    file, linenum, BN_num_bits(key->rsa->n), bits);
+
+		/* Never accept a revoked key */
+		if (auth_key_is_revoked(key))
+			break;
 
 		/* We have found the desired key. */
 		/*
