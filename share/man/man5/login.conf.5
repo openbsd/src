@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.44 2010/09/30 21:00:47 sthen Exp $
+.\" $OpenBSD: login.conf.5,v 1.45 2010/12/03 12:39:19 millert Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: September 30 2010 $
+.Dd $Mdocdate: December 3 2010 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -406,14 +406,16 @@ A path name to program.
 .It size
 A
 .Va number
-which expresses a size in bytes.
+which expresses a size.
+By default, the size is specified in bytes.
 It may have a trailing
-.Li b
-to multiply the value by 512, a
-.Li k
-to multiply the value by 1 K (1024), and an
-.Li m
-to multiply the value by 1 M (1048576).
+.Li b ,
+.Li k ,
+.Li m ,
+.Li g or
+.Li t
+to indicate that the value is in 512-byte blocks,
+kilobytes, megabytes, gigabytes, or terrabytes, respectively.
 .\"
 .It time
 A time in seconds.
