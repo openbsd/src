@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.6 2010/11/20 20:11:19 miod Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.7 2010/12/03 17:02:29 jakemsr Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -109,7 +109,7 @@ static int	uticomdebug = 0;
 struct uticom_fw_header {
 	uint16_t	length;
 	uint8_t		checkSum;
-} __packed
+} __packed;
 
 struct uticom_buf {
 	unsigned int		buf_size;
