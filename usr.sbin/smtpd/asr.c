@@ -1174,6 +1174,7 @@ int
 asr_udp_send(struct asr_query *aq)
 {
 	ssize_t		 n;
+	int		 errno_save;
 
 	aq->aq_fd = sockaddr_connect(AQ_NS_SA(aq), SOCK_DGRAM);
 	if (aq->aq_fd == -1)
@@ -1183,7 +1184,10 @@ asr_udp_send(struct asr_query *aq)
 
 	n = send(aq->aq_fd, aq->aq_buf, aq->aq_buflen, 0);
 	if (n == -1) {
-		if (errno == EAGAIN)
+		errno_save = errno;
+		close(aq->aq_fd);
+		aq->aq_fd = -1;
+		if (errno_save == EAGAIN)
 			return (-2); /* timeout */
 		return (-1);
 	}
@@ -1195,10 +1199,14 @@ int
 asr_udp_recv(struct asr_query *aq)
 {
 	ssize_t		 n;
+	int		 errno_save;
 
 	n = recv(aq->aq_fd, aq->aq_buf, aq->aq_bufsize, 0);
+	errno_save = errno;
+	close(aq->aq_fd);
+	aq->aq_fd = -1;
 	if (n == -1) {
-		if (errno == EAGAIN)
+		if (errno_save == EAGAIN)
 			return (-2); /* timeout */
 		return (-1);
 	}
@@ -1223,9 +1231,8 @@ asr_tcp_write(struct asr_query *aq)
 	struct iovec	iov[2];
 	uint16_t	len;
 	ssize_t		n;
-	int		i;
+	int		i, ret, se;
 	socklen_t	sl;
-	int		se;
 
 	if (aq->aq_fd == -1) { /* connect */
 		aq->aq_fd = sockaddr_connect(AQ_NS_SA(aq), SOCK_STREAM);
@@ -1235,16 +1242,17 @@ asr_tcp_write(struct asr_query *aq)
 		return (1);
 	}
 
+	ret = -1;
 	i = 0;
 	if (aq->aq_datalen == 0) {
 		/* check connection first */
 		sl = sizeof(se);
 		if (getsockopt(aq->aq_fd, SOL_SOCKET, SO_ERROR, &se, &sl) == -1) {
 			warn("getsockopt");
-			return (-1);
+			goto close;
 		}
 		if (se)
-			return -1;
+			goto close;
 
 		/* need to send datalen first */
 		len = htons(aq->aq_buflen);
@@ -1260,15 +1268,16 @@ asr_tcp_write(struct asr_query *aq)
 	n = writev(aq->aq_fd, iov, i);
 	if (n == -1) {
 		if (errno == EAGAIN)
-			return (-2); /* timeout */
-		warn("writev");
-		return (-1);
+			ret = -2;
+		else
+			warn("writev");
+		goto close;
 	}
 
 	if (aq->aq_datalen == 0 && n < 2) {
 		/* we want to write the data len */
 		warnx("short write");
-		return (-1);
+		goto close;
 	}
 	
 	if (aq->aq_datalen == 0) {
@@ -1284,6 +1293,11 @@ asr_tcp_write(struct asr_query *aq)
 
 	aq->aq_timeout = AQ_DB(aq)->ad_timeout;
 	return (1);
+
+close:
+	close(aq->aq_fd);
+	aq->aq_fd = -1;
+	return (ret);
 }
 
 int
@@ -1291,24 +1305,31 @@ asr_tcp_read(struct asr_query *aq)
 {
 	uint16_t	len;
 	ssize_t		n;
+	int		ret;
+
+	ret = -1;
 
 	if (aq->aq_datalen == 0) {
 		n = read(aq->aq_fd, &len, sizeof(len));
 		if (n == -1) {
 			if (errno == EAGAIN) /* timeout */
-				return (-2);
-			return (-1);
+				ret = -2;
+			else
+				warn("read");
+			goto close;
 		}
 		if (n < 2) {
 			warnx("short read");
-			return (-1);
+			goto close;
 		}
 		aq->aq_datalen = ntohs(len);
 		aq->aq_bufoffset = 0;
 		aq->aq_buflen = 0;
 
-		if (asr_ensure_buf(aq, aq->aq_datalen) == -1)
-			return (-3); /* ENOMEM */
+		if (asr_ensure_buf(aq, aq->aq_datalen) == -1) {
+			ret = -3;
+			goto close;
+		}
 
 		return (1); /* need more data */
 	}
@@ -1316,13 +1337,14 @@ asr_tcp_read(struct asr_query *aq)
 	n = read(aq->aq_fd, AQ_BUF_WPOS(aq), AQ_BUF_LEFT(aq));
 	if (n == -1) {
 		if (errno == EAGAIN) /* timeout */
-			return (-2);
-		warn("read");
-		return (-1);
+			ret = -2;
+		else
+			warn("read");
+		goto close;
 	}
 	if (n == 0) {
 		warnx("closed");
-		return (-1);
+		goto close;
 	}
 	aq->aq_buflen += n;
 
@@ -1330,9 +1352,14 @@ asr_tcp_read(struct asr_query *aq)
 		return (1); /* need more data */
 
 	if (asr_validate_packet(aq) != 0)
-		return (-1);
+		goto close;
 
-	return (0);
+	ret = 0;
+
+close:
+	close(aq->aq_fd);
+	aq->aq_fd = -1;
+	return (ret);
 }
 
 int
@@ -1378,12 +1405,6 @@ asr_run_dns(struct asr_query *aq, struct asr_result *ar)
 		break;
 
 	case ASR_STATE_NEXT_NS:
-		/* close the current fd if any */
-		if (aq->aq_fd != -1) {
-			close(aq->aq_fd);
-			aq->aq_fd = -1;
-		}
-
 		aq->aq_ns_idx += 1;
 		if (aq->aq_ns_idx >= AQ_DB(aq)->ad_count) {
 			aq->aq_ns_idx = 0;
@@ -1439,8 +1460,6 @@ asr_run_dns(struct asr_query *aq, struct asr_result *ar)
 			aq->aq_state = ASR_STATE_PACKET;
 			break;
 		case 1: /* truncated */
-			close(aq->aq_fd);
-			aq->aq_fd = -1;
 			aq->aq_state = ASR_STATE_TCP_WRITE;
 			break;
 		}
@@ -1662,12 +1681,6 @@ asr_run_host(struct asr_query *aq, struct asr_result *ar)
 		break;
 
 	case ASR_STATE_NEXT_NS:
-		/* close the current fd if any */
-		if (aq->aq_fd != -1) {
-			close(aq->aq_fd);
-			aq->aq_fd = -1;
-		}
-
 		aq->aq_ns_idx += 1;
 		if (aq->aq_ns_idx >= AQ_DB(aq)->ad_count) {
 			aq->aq_ns_idx = 0;
@@ -1723,8 +1736,6 @@ asr_run_host(struct asr_query *aq, struct asr_result *ar)
 			aq->aq_state = ASR_STATE_PACKET;
 			break;
 		case 1: /* truncated */
-			close(aq->aq_fd);
-			aq->aq_fd = -1;
 			aq->aq_state = ASR_STATE_TCP_WRITE;
 			break;
 		}
