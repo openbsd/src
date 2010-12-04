@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.98 2010/09/26 12:53:27 thib Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.99 2010/12/04 05:18:10 jsing Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/pool.h>
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
+#include <sys/disk.h>
 
 #include <uvm/uvm.h>
 #ifdef UVM_SWAP_ENCRYPT
@@ -736,20 +737,13 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 		    copystr("miniroot", userpath, sizeof userpath, &len))
 			panic("swapctl: miniroot copy failed");
 	} else {
-		int	space;
-		char	*where;
-
-		if (SCARG(uap, cmd) == SWAP_ON) {
-			if ((error = copyinstr(SCARG(uap, arg), userpath,
-			    sizeof userpath, &len)))
-				goto out;
-			space = UIO_SYSSPACE;
-			where = userpath;
-		} else {
-			space = UIO_USERSPACE;
-			where = (char *)SCARG(uap, arg);
-		}
-		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, space, where, p);
+		error = copyinstr(SCARG(uap, arg), userpath,
+		    sizeof(userpath), &len);
+		if (error)
+			goto out;
+		disk_map(userpath, userpath, sizeof(userpath),
+		    DM_OPENBLCK);
+		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_SYSSPACE, userpath, p);
 		if ((error = namei(&nd)))
 			goto out;
 		vp = nd.ni_vp;
