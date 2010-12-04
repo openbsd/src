@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 2010/10/28 22:52:10 syuu Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 2010/12/04 16:46:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -116,6 +116,8 @@ struct mips_bus_space {
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define BUS_SPACE_MAP_KSEG0		0x02
+#define	BUS_SPACE_MAP_LINEAR		0x04
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x08
 
 #define	bus_space_vaddr(t, h)	(*(t)->_space_vaddr)((t), (h))
 
@@ -292,8 +294,12 @@ bus_space_copy_8(void *v, bus_space_handle_t h1, bus_size_t o1,
  *	    bus_size_t len, int flags);
  *
  */
-#define bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+static inline void
+bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offset,
+    bus_size_t length, int flags)
+{
+	__asm__ __volatile__ ("sync" ::: "memory");
+}
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
 
