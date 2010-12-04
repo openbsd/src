@@ -1,0 +1,18 @@
+LI-PUNCT(1)                OpenBSD Reference Manual                LI-PUNCT(1)
+
+NNAAMMEE
+     LLii--ppuunncctt - punctuation following a literal macro
+
+DDEESSCCRRIIPPTTIIOONN
+     before. after LLii--ppuunncctt
+
+     before . after Nm
+
+     . after LLii--ppuunncctt
+
+     . after Nm
+
+     .
+
+     .
+

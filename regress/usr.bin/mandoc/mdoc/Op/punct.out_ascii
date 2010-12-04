@@ -1,0 +1,9 @@
+OP-PUNCT(1)                OpenBSD Reference Manual                OP-PUNCT(1)
+
+NNAAMMEE
+     OOpp--ppuunncctt - punctuation handling by the Op macro
+
+DDEESSCCRRIIPPTTIIOONN
+     closing punctuation [a].  only one [].  only more than one []..  middle
+     [a. z] start [. z]
+

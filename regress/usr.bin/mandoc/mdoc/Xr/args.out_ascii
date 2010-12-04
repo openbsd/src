@@ -1,0 +1,16 @@
+XR-ARGS(1)                 OpenBSD Reference Manual                 XR-ARGS(1)
+
+NNAAMMEE
+     XXrr--aarrggss - additional arguments to cross references
+
+DDEESSCCRRIIPPTTIIOONN
+     One single echo(1) is fine.
+
+     But listen for multiple echo(1)s.
+
+     Listen for those echo(1)s really hard.
+
+     A call, an echo(1), and another echo(1).
+
+     Finally, no echo at all.
+

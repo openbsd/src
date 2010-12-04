@@ -1,0 +1,41 @@
+BL-MULTITAG(1)             OpenBSD Reference Manual             BL-MULTITAG(1)
+
+NNAAMMEE
+     BBll--mmuullttiittaagg - lists with multiple successive tags
+
+DDEESSCCRRIIPPTTIIOONN
+     inset:
+
+     first
+
+     second
+
+     third some text
+
+     fourth
+
+     fifth more text
+     tag:
+
+     first
+
+     second
+
+     third   some text
+
+     fourth
+
+     fifth   more text
+     inset compact:
+     first
+     second
+     third some text
+     fourth
+     fifth more text
+     tag compact:
+     first
+     second
+     third   some text
+     fourth
+     fifth   more text
+

@@ -1,0 +1,38 @@
+BL-HANG(1)                 OpenBSD Reference Manual                 BL-HANG(1)
+
+NNAAMMEE
+     BBll--hhaanngg - hanged lists
+
+DDEESSCCRRIIPPTTIIOONN
+     tag    x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x
+
+     four   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x
+
+     quint x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x
+
+     indent x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x
+
+     septime x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x
+
+     achtacht x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x
+
+     neun_neun x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x
+
+     zehn__zehn x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x x x x x x x x x x
+

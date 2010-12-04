@@ -1,0 +1,16 @@
+SM-SCOPE(1)                OpenBSD Reference Manual                SM-SCOPE(1)
+
+NNAAMMEE
+     SSmm--ssccooppee - scope of the spacing macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Using an abbreviated example from the ksh(1) manual.
+
+     Modifiers can be applied to the ${_n_a_m_e} form of parameter substitution:
+
+     ${_n_a_m_e:-_w_o_r_d}
+             If _n_a_m_e is set and not NULL, it is substituted; otherwise, _w_o_r_d
+             is substituted.
+
+     In the above modifiers, the `:' can be omitted, ...
+

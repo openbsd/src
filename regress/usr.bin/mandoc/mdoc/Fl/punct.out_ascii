@@ -1,0 +1,10 @@
+FL-PUNCT(1)                OpenBSD Reference Manual                FL-PUNCT(1)
+
+NNAAMMEE
+     FFll--ppuunncctt - punctuation handling by the Fl macro
+
+DDEESSCCRRIIPPTTIIOONN
+     closing punctuation --aa) only one --) only more than one --)) middle --aa) --zz
+     dot --. --zz comma --, --zz semicolon --; --zz colon --: --zz quest --? --zz excl --! --zz
+     paren --) --zz bracket --] --zz bar | --mm op paren (--aa op bracket [--aa
+

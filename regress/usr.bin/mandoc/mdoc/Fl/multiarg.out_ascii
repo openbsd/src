@@ -1,0 +1,10 @@
+FL-MULTIARG(1)             OpenBSD Reference Manual             FL-MULTIARG(1)
+
+NNAAMMEE
+     FFll--mmuullttiiaarrgg - multiple arguments to a Fl macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Each group of flags in --aa --bb --cc --ddeeff gets its own dash.
+
+     Punctuation characters like in [--aa | --bb] get no dash.
+

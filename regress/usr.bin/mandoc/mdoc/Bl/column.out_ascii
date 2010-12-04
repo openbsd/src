@@ -1,0 +1,36 @@
+BL-COLUMN(1)               OpenBSD Reference Manual               BL-COLUMN(1)
+
+NNAAMMEE
+     BBll--ccoolluummnn - lists with multiple columns
+
+DDEESSCCRRIIPPTTIIOONN
+     a
+
+     a    b
+
+     a    b    cc
+
+     a    b    cc    d
+
+     a   b   cc   d   e
+
+     5 + 35 + 4 + 34 = 78:
+
+     x35xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    x34xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+     a                                      b
+
+     5 + (22+4)*2 + 21 = 78:
+
+     x22xxxxxxxxxxxxxxxxxxx    x22xxxxxxxxxxxxxxxxxxx    x21xxxxxxxxxxxxxxxxxx
+     a                         b                         c
+
+     5 + 16 + (4+15)*3 = 78:
+
+     x16xxxxxxxxxxxxx    x15xxxxxxxxxxxx    x15xxxxxxxxxxxx    x15xxxxxxxxxxxx
+     a                   b                  c                  d
+
+     5 + 13 + (3+12)*4 = 78:
+
+     x13xxxxxxxxxx   x12xxxxxxxxx   x12xxxxxxxxx   x12xxxxxxxxx   x12xxxxxxxxx
+     a               b              c              d              e
+

@@ -1,0 +1,9 @@
+AR-PUNCT(1)                OpenBSD Reference Manual                AR-PUNCT(1)
+
+NNAAMMEE
+     AArr--ppuunncctt - punctuation handling by the Ar macro
+
+DDEESSCCRRIIPPTTIIOONN
+     closing punctuation _a) only one _f_i_l_e _._._.) only more than one _f_i_l_e _._._.))
+     middle _a) _z start _f_i_l_e _._._.) _z
+

@@ -1,0 +1,24 @@
+BL-NESTED(1)               OpenBSD Reference Manual               BL-NESTED(1)
+
+NNAAMMEE
+     BBll--nneesstteedd - nested lists
+
+DDEESSCCRRIIPPTTIIOONN
+     inset:
+
+     outer list
+
+     inner list
+     inset compact:
+     outer list
+     inner list
+     dash:
+
+     --   outer list
+
+         --   inner list
+     dash compact:
+     --   outer list
+         --   inner list
+     final text
+

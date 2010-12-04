@@ -1,0 +1,58 @@
+FN-SECTION(3)             OpenBSD Programmer's Manual            FN-SECTION(3)
+
+NNAAMMEE
+     FFnn--sseeccttiioonn - special handling of Fn in various sections
+
+SSYYNNOOPPSSIISS
+     _i_n_t
+     aabbss(_i_n_t _j);
+
+     _d_o_u_b_l_e
+     ssiinn(_d_o_u_b_l_e _x);
+
+DDEESSCCRRIIPPTTIIOONN
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+RREETTUURRNN VVAALLUUEESS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+EENNVVIIRROONNMMEENNTT
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+FFIILLEESS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+EEXXAAMMPPLLEESS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+DDIIAAGGNNOOSSTTIICCSS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+EERRRROORRSS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+SSEEEE AALLSSOO
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+SSTTAANNDDAARRDDSS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+HHIISSTTOORRYY
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+AAUUTTHHOORRSS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+CCAAVVEEAATTSS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+BBUUGGSS
+     _i_n_t aabbss(_i_n_t _j) _d_o_u_b_l_e ssiinn(_d_o_u_b_l_e _x)
+
+CCUUSSTTOOMM
+     _i_n_t
+     aabbss(_i_n_t _j);
+
+     _d_o_u_b_l_e
+     ssiinn(_d_o_u_b_l_e _x);
+

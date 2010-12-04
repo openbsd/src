@@ -1,0 +1,20 @@
+IN-BREAK(2)               OpenBSD Programmer's Manual              IN-BREAK(2)
+
+NNAAMMEE
+     IInn--bbrreeaakk - line break before header include file
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ffccnnttll..hh>>
+
+     _i_n_t
+     ooppeenn(_c_o_n_s_t _c_h_a_r _*_p_a_t_h, _i_n_t _f_l_a_g_s, _m_o_d_e___t _m_o_d_e);
+
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<uunniissttdd..hh>>
+
+     _i_n_t
+     dduupp(_i_n_t _o_l_d_d);
+
+     _s_s_i_z_e___t
+     wwrriittee(_i_n_t _d, _c_o_n_s_t _v_o_i_d _*_b_u_f, _s_i_z_e___t _n_b_y_t_e_s);
+

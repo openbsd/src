@@ -1,0 +1,17 @@
+BL-EXTEND(1)               OpenBSD Reference Manual               BL-EXTEND(1)
+
+NNAAMMEE
+     BBll--eexxtteenndd - extending block headers
+
+DDEESSCCRRIIPPTTIIOONN
+     <plain quoted text>
+
+     normal tag
+             normal text
+
+     <extended tag>
+             extended text
+
+     prefix <prefixed tag>
+             prefixed text
+

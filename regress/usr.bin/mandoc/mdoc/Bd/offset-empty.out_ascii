@@ -1,0 +1,10 @@
+BD-OFFSET-EMPTY(1)         OpenBSD Reference Manual         BD-OFFSET-EMPTY(1)
+
+NNAAMMEE
+     BBdd--ooffffsseett--eemmppttyy - no argument specified to Bd offset
+
+DDEESSCCRRIIPPTTIIOONN
+     Bd literal offset empty
+
+         Bd literal offset 4n
+

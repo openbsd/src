@@ -1,0 +1,20 @@
+BD-BLANK(1)                OpenBSD Reference Manual                BD-BLANK(1)
+
+NNAAMMEE
+     BBdd--bbllaannkk - handling of blank lines in literal displays
+
+DDEESSCCRRIIPPTTIIOONN
+     completely blank line:
+
+     line containing a blank character:
+
+     line containing two blank characters:
+
+     line starting with a blank character:
+      x
+     line starting with two blank characters:
+       x
+     finally, a trailing blank line:
+
+     end of test document
+

@@ -1,0 +1,12 @@
+FL-NOARG(1)                OpenBSD Reference Manual                FL-NOARG(1)
+
+NNAAMMEE
+     FFll--nnooaarrgg - Fl macro without arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     Without an argument, it yields -- a dash.
+
+     This is true even before punctuation --.
+
+     Following macros --[flag] follow without white space.
+

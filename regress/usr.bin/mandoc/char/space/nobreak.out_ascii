@@ -1,0 +1,24 @@
+SPACE-NOBREAK(1)           OpenBSD Reference Manual           SPACE-NOBREAK(1)
+
+NNAAMMEE
+     ssppaaccee--nnoobbrreeaakk - non-breaking, non-collapsing space
+
+DDEESSCCRRIIPPTTIIOONN
+     The following line has 78 characters and fits:
+
+     78 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x x
+
+     The following line has 79 characters and breaks:
+
+     79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x
+     x
+
+     With a non-breaking space, it breaks earlier:
+
+     79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+     x x
+
+     Only non-breaking spaces:
+
+     79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x x
+
