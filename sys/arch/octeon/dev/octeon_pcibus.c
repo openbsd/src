@@ -1,5 +1,5 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.2 2010/11/23 18:46:29 syuu Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.2 2010/11/23 18:46:29 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.3 2010/12/04 16:46:35 miod Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.3 2010/12/04 16:46:35 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -84,7 +84,6 @@
 int	octeon_pcibus_match(struct device *, void *, void *);
 void	octeon_pcibus_attach(struct device *, struct device *, void *);
 int	octeon_pcibus_intr_map(int dev, int fn, int pin);
-void	octeon_pcibus_pci_attach_hook(pci_chipset_tag_t pc);
 
 const struct cfattach pcibus_ca = {
 	sizeof(struct octeon_pcibus_softc),
@@ -103,7 +102,6 @@ int         octeon_pcibus_bus_maxdevs(void *, int);
 pcitag_t    octeon_pcibus_make_tag(void *, int, int, int);
 void        octeon_pcibus_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t    octeon_pcibus_pci_conf_read(void *, pcitag_t, int);
-pcireg_t    octeon_pcibus_pci_conf_read_internal(pcitag_t, int);
 void        octeon_pcibus_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 int         octeon_pcibus_pci_intr_map(struct pci_attach_args *,
                                        pci_intr_handle_t *);
@@ -211,8 +209,6 @@ octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 	oba = aux;
 	sc->sc_oba = oba;
 
-	SLIST_INIT(&sc->sc_hook);
-
 	/*
 	 * Attach PCI bus.
 	 */
@@ -309,53 +305,8 @@ octeon_pcibus_decompose_tag(void *unused, pcitag_t tag, int *bp, int *dp, int *f
 		*fp = (tag >> 8) & 0x7;
 }
 
-/* PCI Configuration Space access hook structure */
-struct octeon_pcibus_cfg_hook {
-	SLIST_ENTRY(octeon_pcibus_cfg_hook) next;
-	int	(*read)(void *, pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
-	int	(*write)(void *, pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-	void	*cookie;
-};
-
-int
-octeon_pcibus_pci_hook(pci_chipset_tag_t pc, void *cookie,
-    int (*r)(void *, pci_chipset_tag_t, pcitag_t, int, pcireg_t *),
-    int (*w)(void *, pci_chipset_tag_t, pcitag_t, int, pcireg_t))
-{
-	struct octeon_pcibus_softc *sc = pc->pc_conf_v;
-	struct octeon_pcibus_cfg_hook *och;
-
-	DEBUG_PRINT(("%s:%s:%d:\n", __FILE__, __FUNCTION__, __LINE__));
-	och = malloc(sizeof *och, M_DEVBUF, M_NOWAIT);
-	if (och == NULL)
-		return ENOMEM;
-
-	och->read = r;
-	och->write = w;
-	och->cookie = cookie;
-	SLIST_INSERT_HEAD(&sc->sc_hook, och, next);
-	return 0;
-}
-
 pcireg_t
 octeon_pcibus_pci_conf_read(void *v, pcitag_t tag, int offset)
-{
-	struct octeon_pcibus_softc *sc = v;
-	struct octeon_pcibus_cfg_hook *hook;
-	pcireg_t data;
-
-	SLIST_FOREACH(hook, &sc->sc_hook, next) {
-		if (hook->read != NULL &&
-		    (*hook->read)(hook->cookie, &sc->sc_pc, tag, offset,
-		      &data) != 0)
-			return data;
-	}
-
-	return octeon_pcibus_pci_conf_read_internal(tag, offset);
-}
-
-pcireg_t
-octeon_pcibus_pci_conf_read_internal(pcitag_t tag, int offset)
 {
 	pcireg_t data;
 	uint64_t cfgoff;
@@ -552,10 +503,6 @@ out:
 /*
  * PCI model specific routines
  */
-void
-octeon_pcibus_pci_attach_hook(pci_chipset_tag_t pc)
-{
-}
 
 int
 octeon_pcibus_intr_map(int dev, int fn, int pin)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibusvar.h,v 1.1 2010/10/28 22:52:10 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibusvar.h,v 1.2 2010/12/04 16:46:35 miod Exp $	*/
 /*	$NetBSD: octeon_pcibusvar.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
 
 /*-
@@ -33,30 +33,18 @@
 #ifndef _OCTEON_PCIBUSVAR_H_
 #define	_OCTEON_PCIBUSVAR_H_
 
-struct octeon_pcibus_cfg_hook;
 struct extent;
-
-struct octeon_pcibus_config {
-	int oc_adbase;	/* AD line base for config access */
-};
 
 struct octeon_pcibus_softc {
 	struct device sc_dev;
-	const struct octeon_pcibus_config *sc_octeon_pcibus;
 	struct mips_pci_chipset sc_pc;
 	struct obio_attach_args *sc_oba;
-
-	/* PCI Configuration Space access hooks */
-	SLIST_HEAD(, octeon_pcibus_cfg_hook) sc_hook;
 };
 
 #ifdef _KERNEL
 void	 octeon_pcibus_intr_disestablish(void *);
 void	*octeon_pcibus_intr_establish(int, int, int, int (*)(void *), void *,
 	    const char *);
-int	 octeon_pcibus_pci_hook(pci_chipset_tag_t, void *,
-	    int (*)(void *, pci_chipset_tag_t, pcitag_t, int, pcireg_t *),
-	    int (*)(void *, pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 int	 octeon_pcibus_print(void *, const char *);
 struct extent
 	*octeon_pcibus_get_resource_extent(pci_chipset_tag_t, int);
