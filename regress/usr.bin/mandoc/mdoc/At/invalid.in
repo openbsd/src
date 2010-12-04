@@ -1,0 +1,17 @@
+.Dd June 30, 2010
+.Dt AT-INVALID 1
+.Os
+.Sh NAME
+.Nm At-invalid
+.Nd handling of an invalid AT&T UNIX argument
+.Sh DESCRIPTION
+no argument:
+.At
+.Pp
+valid argument:
+.At v7
+.Pp
+invalid argument:
+.At murks
+.Pp
+end of file

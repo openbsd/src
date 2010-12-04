@@ -1,0 +1,12 @@
+.Dd June 30, 2010
+.Dt LB-BREAK 3
+.Os
+.Sh NAME
+.Nm Lb-break
+.Nd output line breaks after the library macro
+.Sh LIBRARY
+.Lb libc
+text
+.Sh DESCRIPTION
+.Lb libc
+text

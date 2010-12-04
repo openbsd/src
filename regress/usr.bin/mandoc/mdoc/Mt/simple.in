@@ -1,0 +1,9 @@
+.Dd February 17, 2010
+.Dt MT-SIMPLE 1
+.Os
+.Sh NAME
+.Nm Mt-simple
+.Nd mailto
+.Sh DESCRIPTION
+Please send mail to
+.Mt schwarze@openbsd.org .

@@ -1,0 +1,14 @@
+AT-INVALID(1)              OpenBSD Reference Manual              AT-INVALID(1)
+
+NNAAMMEE
+     AAtt--iinnvvaalliidd - handling of an invalid AT&T UNIX argument
+
+DDEESSCCRRIIPPTTIIOONN
+     no argument: AT&T UNIX
+
+     valid argument: Version 7 AT&T UNIX
+
+     invalid argument: AT&T UNIX murks
+
+     end of file
+

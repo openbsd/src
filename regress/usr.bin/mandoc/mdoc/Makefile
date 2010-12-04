@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.8 2010/07/01 05:29:57 schwarze Exp $
+# $OpenBSD: Makefile,v 1.9 2010/12/04 14:49:40 schwarze Exp $
 
-SUBDIR+= Ar Bd Bl Fl Fo In Li Op Rs Sm Xr
+SUBDIR+= Ar At Bd Bl Fl Fo In Lb Li Mt Nm Op Rs Sm Xr
 SUBDIR+= blank
 
 # disabled, mandoc must be fixed:

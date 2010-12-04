@@ -1,0 +1,9 @@
+.Dd June 30, 2010
+.Dt NM-EMPTY 2
+.Os
+.Sh NAME
+.Nm Nm-empty
+.Nd handling of empty name macros
+.Sh SYNOPSIS
+.Nm
+.Nm
