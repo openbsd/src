@@ -1,5 +1,5 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.4 2010/12/04 17:06:31 miod Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.4 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.5 2010/12/04 20:01:05 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.5 2010/12/04 20:01:05 syuu Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -310,7 +310,7 @@ octeon_pcibus_decompose_tag(void *unused, pcitag_t tag, int *bp, int *dp, int *f
 int
 octeon_pcibus_pci_conf_size(void *v, pcitag_t tag)
 {
-	return PCI_CONFIGURATION_SPACE_SIZE;
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t
