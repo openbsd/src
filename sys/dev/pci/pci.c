@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.86 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.87 2010/12/04 17:08:20 miod Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -966,6 +966,10 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		io = (struct pci_io *)data;
 		switch (io->pi_width) {
 		case 4:
+			/* Configuration space bounds check */
+			if (io->pi_reg < 0 ||
+			    io->pi_reg >= pci_conf_size(pc, tag))
+				return EINVAL;
 			/* Make sure the register is properly aligned */
 			if (io->pi_reg & 0x3) 
 				return EINVAL;
@@ -973,7 +977,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = 0;
 			break;
 		default:
-			error = ENODEV;
+			error = EINVAL;
 			break;
 		}
 		break;
@@ -982,6 +986,10 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		io = (struct pci_io *)data;
 		switch (io->pi_width) {
 		case 4:
+			/* Configuration space bounds check */
+			if (io->pi_reg < 0 ||
+			    io->pi_reg >= pci_conf_size(pc, tag))
+				return EINVAL;
 			/* Make sure the register is properly aligned */
 			if (io->pi_reg & 0x3)
 				return EINVAL;
@@ -989,7 +997,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = 0;
 			break;
 		default:
-			error = ENODEV;
+			error = EINVAL;
 			break;
 		}
 		break;
