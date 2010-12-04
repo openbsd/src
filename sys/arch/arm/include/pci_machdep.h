@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 2010/06/29 22:08:28 jordan Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.9 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 19:23:52 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct arm32_pci_chipset {
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
 			    int *, int *);
+	int		(*pc_conf_size)(void *, pcitag_t);
 	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -83,6 +84,8 @@ struct arm32_pci_chipset {
     (*(c)->pc_make_tag)((c)->pc_conf_v, (b), (d), (f))
 #define	pci_decompose_tag(c, t, bp, dp, fp)				\
     (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
+#define	pci_conf_size(c, t)						\
+    (*(c)->pc_conf_size)((c)->pc_conf_v, (t))
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate_pci.c,v 1.5 2008/06/26 05:42:08 ray Exp $	*/
+/*	$OpenBSD: irongate_pci.c,v 1.6 2010/12/04 17:06:31 miod Exp $	*/
 /* $NetBSD: irongate_pci.c,v 1.2 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
@@ -53,6 +53,7 @@ int		irongate_bus_maxdevs(void *, int);
 pcitag_t	irongate_make_tag(void *, int, int, int);
 void		irongate_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
+int		irongate_conf_size(void *, pcitag_t);
 pcireg_t	irongate_conf_read(void *, pcitag_t, int);
 void		irongate_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -74,6 +75,7 @@ irongate_pci_init(pci_chipset_tag_t pc, void *v)
 	pc->pc_bus_maxdevs = irongate_bus_maxdevs;
 	pc->pc_make_tag = irongate_make_tag;
 	pc->pc_decompose_tag = irongate_decompose_tag;
+	pc->pc_conf_size = irongate_conf_size;
 	pc->pc_conf_read = irongate_conf_read;
 	pc->pc_conf_write = irongate_conf_write;
 }
@@ -108,6 +110,12 @@ irongate_decompose_tag(void *ipv, pcitag_t tag, int *bp, int *dp, int *fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
+}
+
+int
+irongate_conf_size(void *ipv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

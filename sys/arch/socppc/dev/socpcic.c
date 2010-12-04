@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.8 2009/09/09 20:42:41 kettenis Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.9 2010/12/04 17:06:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -77,6 +77,7 @@ void	socpcic_attach_hook(struct device *, struct device *,
 int	socpcic_bus_maxdevs(void *, int);
 pcitag_t socpcic_make_tag(void *, int, int, int);
 void	socpcic_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	socpcic_conf_size(void *, pcitag_t);
 pcireg_t socpcic_conf_read(void *, pcitag_t, int);
 void	socpcic_conf_write(void *, pcitag_t, int, pcireg_t);
 int	 socpcic_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
@@ -239,6 +240,7 @@ socpcic_attach(struct socpcic_softc *sc)
 	sc->sc_pc.pc_bus_maxdevs = socpcic_bus_maxdevs;
 	sc->sc_pc.pc_make_tag = socpcic_make_tag;
 	sc->sc_pc.pc_decompose_tag = socpcic_decompose_tag;
+	sc->sc_pc.pc_conf_size = socpcic_conf_size;
 	sc->sc_pc.pc_conf_read = socpcic_conf_read;
 	sc->sc_pc.pc_conf_write = socpcic_conf_write;
 
@@ -302,6 +304,12 @@ socpcic_decompose_tag(void *cpv, pcitag_t tag, int *busp, int *devp, int *funp)
 		*devp = (tag >> 11) & 0x1f;
 	if (funp)
 		*funp = (tag >> 8) & 0x7;
+}
+
+int
+socpcic_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.54 2010/09/06 19:05:48 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.55 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -258,6 +258,12 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 	default:
 		panic("pci_decompose_tag: mode not configured");
 	}
+}
+
+int
+pci_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

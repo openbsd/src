@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.66 2009/03/29 22:52:11 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.67 2010/12/04 17:06:32 miod Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ int psycho_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 void psycho_identify_pbm(struct psycho_softc *sc, struct psycho_pbm *pp,
     struct pcibus_attach_args *pa);
 
+int psycho_conf_size(pci_chipset_tag_t, pcitag_t);
 pcireg_t psycho_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void psycho_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
@@ -590,6 +591,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
 	pba.pba_pc->bustag = sc->sc_configtag;
 	pba.pba_pc->bushandle = sc->sc_configaddr;
+	pba.pba_pc->conf_size = psycho_conf_size;
 	pba.pba_pc->conf_read = psycho_conf_read;
 	pba.pba_pc->conf_write = psycho_conf_write;
 	pba.pba_pc->intr_map = psycho_intr_map;
@@ -1105,6 +1107,11 @@ psycho_bus_addr(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h)
 	return (-1);
 }
 
+int
+psycho_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
+}
 
 pcireg_t
 psycho_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)

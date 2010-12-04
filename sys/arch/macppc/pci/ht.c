@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.13 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: ht.c,v 1.14 2010/12/04 17:06:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -39,6 +39,7 @@ void	 ht_attach_hook(struct device *, struct device *,
 int	 ht_bus_maxdevs(void *, int);
 pcitag_t ht_make_tag(void *, int, int, int);
 void	 ht_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	 ht_conf_size(void *, pcitag_t);
 pcireg_t ht_conf_read(void *, pcitag_t, int);
 void	 ht_conf_write(void *, pcitag_t, int, pcireg_t);
 int	 ht_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
@@ -173,6 +174,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_bus_maxdevs = ht_bus_maxdevs;
 	sc->sc_pc.pc_make_tag = ht_make_tag;
 	sc->sc_pc.pc_decompose_tag = ht_decompose_tag;
+	sc->sc_pc.pc_conf_size = ht_conf_size;
 	sc->sc_pc.pc_conf_read = ht_conf_read;
 	sc->sc_pc.pc_conf_write = ht_conf_write;
 
@@ -247,6 +249,12 @@ ht_decompose_tag(void *cpv, pcitag_t tag, int *busp, int *devp, int *fncp)
 		*devp = (tag >> DEVICE_SHIFT) & 0x1f;
 	if (fncp != NULL)
 		*fncp = (tag >> FNC_SHIFT) & 0x7;
+}
+
+int
+ht_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

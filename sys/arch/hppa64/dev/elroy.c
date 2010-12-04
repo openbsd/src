@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.9 2010/09/22 02:28:37 jsg Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.10 2010/12/04 17:06:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -63,6 +63,7 @@ int		 elroy_maxdevs(void *v, int bus);
 pcitag_t	 elroy_make_tag(void *v, int bus, int dev, int func);
 void		 elroy_decompose_tag(void *v, pcitag_t tag, int *bus,
 		    int *dev, int *func);
+int		 elroy_conf_size(void *v, pcitag_t tag);
 pcireg_t	 elroy_conf_read(void *v, pcitag_t tag, int reg);
 void		 elroy_conf_write(void *v, pcitag_t tag, int reg,
 		    pcireg_t data);
@@ -235,6 +236,12 @@ elroy_decompose_tag(void *v, pcitag_t tag, int *bus, int *dev, int *func)
 	*bus = (tag >> 16) & 0xff;
 	*dev = (tag >> 11) & 0x1f;
 	*func= (tag >>  8) & 0x07;
+}
+
+int
+elroy_conf_size(void *v, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t
@@ -1215,7 +1222,7 @@ const struct hppa64_bus_dma_tag elroy_dmat = {
 const struct hppa64_pci_chipset_tag elroy_pc = {
 	NULL,
 	elroy_attach_hook, elroy_maxdevs, elroy_make_tag, elroy_decompose_tag,
-	elroy_conf_read, elroy_conf_write,
+	elroy_conf_size, elroy_conf_read, elroy_conf_write,
 	apic_intr_map, apic_intr_string,
 	apic_intr_establish, apic_intr_disestablish,
 #if NCARDBUS > 0

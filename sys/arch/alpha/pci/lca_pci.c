@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca_pci.c,v 1.9 2006/03/26 20:23:08 brad Exp $	*/
+/*	$OpenBSD: lca_pci.c,v 1.10 2010/12/04 17:06:31 miod Exp $	*/
 /* $NetBSD: lca_pci.c,v 1.13 1997/09/02 13:19:35 thorpej Exp $ */
 
 /*
@@ -48,6 +48,7 @@ int		lca_bus_maxdevs(void *, int);
 pcitag_t	lca_make_tag(void *, int, int, int);
 void		lca_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
+int		lca_conf_size(void *, pcitag_t);
 pcireg_t	lca_conf_read(void *, pcitag_t, int);
 void		lca_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -62,6 +63,7 @@ lca_pci_init(pc, v)
 	pc->pc_bus_maxdevs = lca_bus_maxdevs;
 	pc->pc_make_tag = lca_make_tag;
 	pc->pc_decompose_tag = lca_decompose_tag;
+	pc->pc_conf_size = lca_conf_size;
 	pc->pc_conf_read = lca_conf_read;
 	pc->pc_conf_write = lca_conf_write;
 }
@@ -107,6 +109,12 @@ lca_decompose_tag(cpv, tag, bp, dp, fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
+}
+
+int
+lca_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

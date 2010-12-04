@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.77 2010/11/27 18:21:05 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.78 2010/12/04 17:06:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -204,6 +204,7 @@ void	xbridge_attach_hook(struct device *, struct device *,
 int	xbridge_bus_maxdevs(void *, int);
 pcitag_t xbridge_make_tag(void *, int, int, int);
 void	xbridge_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	xbridge_conf_size(void *, pcitag_t);
 pcireg_t xbridge_conf_read(void *, pcitag_t, int);
 void	xbridge_conf_write(void *, pcitag_t, int, pcireg_t);
 int	xbridge_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
@@ -580,6 +581,7 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	xb->xb_pc.pc_make_tag = xbridge_make_tag;
 	xb->xb_pc.pc_decompose_tag = xbridge_decompose_tag;
 	xb->xb_pc.pc_bus_maxdevs = xbridge_bus_maxdevs;
+	xb->xb_pc.pc_conf_size = xbridge_conf_size;
 	xb->xb_pc.pc_conf_read = xbridge_conf_read;
 	xb->xb_pc.pc_conf_write = xbridge_conf_write;
 	xb->xb_pc.pc_get_widget = xbridge_get_widget;
@@ -689,6 +691,30 @@ xbridge_bus_maxdevs(void *cookie, int busno)
 	struct xbpci_softc *xb = cookie;
 
 	return busno == 0 ? xb->xb_nslots : 32;
+}
+
+int
+xbridge_conf_size(void *cookie, pcitag_t tag)
+{
+#if 0
+	struct xbpci_softc *xb = cookie;
+	int bus, dev, fn;
+
+	xbridge_decompose_tag(cookie, tag, &bus, &dev, &fn);
+
+	/*
+	 * IOC3 devices only implement a subset of the PCI configuration
+	 * registers. Although xbridge_conf_{read,write} correctly
+	 * handle the unimplemented registers, better provide a limited
+	 * configuration space to userland.
+	 */
+
+	if (bus == 0 && xb->xb_devices[dev].id ==
+	    PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3))
+		return PCI_INTERRUPT_REG + 4;
+#endif
+
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

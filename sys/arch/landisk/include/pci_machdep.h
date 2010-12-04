@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.4 2010/06/29 22:08:28 jordan Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.5 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -64,6 +64,8 @@ void landisk_pci_conf_interrupt(void *v, int bus, int dev, int pin,
 	shpcic_make_tag(v, bus, dev, func)
 #define	pci_decompose_tag(v, tag, bp, dp, fp) \
 	shpcic_decompose_tag(v, tag, bp, dp, fp)
+#define	pci_conf_size(v, tag) \
+	shpcic_conf_size(v, tag)
 #define	pci_conf_read(v, tag, reg) \
 	shpcic_conf_read(v, tag, reg)
 #define	pci_conf_write(v, tag, reg, data) \

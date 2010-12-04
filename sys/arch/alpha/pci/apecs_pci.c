@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_pci.c,v 1.10 2006/03/26 20:23:08 brad Exp $	*/
+/*	$OpenBSD: apecs_pci.c,v 1.11 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: apecs_pci.c,v 1.10 1996/11/13 21:13:25 cgd Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ int		apecs_bus_maxdevs(void *, int);
 pcitag_t	apecs_make_tag(void *, int, int, int);
 void		apecs_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
+int		apecs_conf_size(void *, pcitag_t);
 pcireg_t	apecs_conf_read(void *, pcitag_t, int);
 void		apecs_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -62,6 +63,7 @@ apecs_pci_init(pc, v)
 	pc->pc_bus_maxdevs = apecs_bus_maxdevs;
 	pc->pc_make_tag = apecs_make_tag;
 	pc->pc_decompose_tag = apecs_decompose_tag;
+	pc->pc_conf_size = apecs_conf_size;
 	pc->pc_conf_read = apecs_conf_read;
 	pc->pc_conf_write = apecs_conf_write;
 }
@@ -104,6 +106,12 @@ apecs_decompose_tag(cpv, tag, bp, dp, fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
+}
+
+int
+apecs_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

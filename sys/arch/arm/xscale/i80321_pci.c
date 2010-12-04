@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_pci.c,v 1.3 2007/08/06 08:28:09 tom Exp $	*/
+/*	$OpenBSD: i80321_pci.c,v 1.4 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: i80321_pci.c,v 1.7 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ int		i80321_pci_bus_maxdevs(void *, int);
 pcitag_t	i80321_pci_make_tag(void *, int, int, int);
 void		i80321_pci_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
+int		i80321_pci_conf_size(void *, pcitag_t);
 pcireg_t	i80321_pci_conf_read(void *, pcitag_t, int);
 void		i80321_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -83,6 +84,7 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_bus_maxdevs = i80321_pci_bus_maxdevs;
 	pc->pc_make_tag = i80321_pci_make_tag;
 	pc->pc_decompose_tag = i80321_pci_decompose_tag;
+	pc->pc_conf_size = i80321_pci_conf_size;
 	pc->pc_conf_read = i80321_pci_conf_read;
 	pc->pc_conf_write = i80321_pci_conf_write;
 
@@ -198,6 +200,12 @@ i80321_pci_conf_setup(struct i80321_softc *sc, pcitag_t tag, int offset,
 	}
 
 	return (0);
+}
+
+int
+i80321_pci_conf_size(void *v, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

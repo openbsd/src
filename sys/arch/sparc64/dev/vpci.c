@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.4 2009/03/29 22:52:11 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.5 2010/12/04 17:06:32 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -79,6 +79,7 @@ bus_space_tag_t vpci_alloc_bus_tag(struct vpci_pbm *, const char *,
     int, int, int);
 bus_dma_tag_t vpci_alloc_dma_tag(struct vpci_pbm *);
 
+int vpci_conf_size(pci_chipset_tag_t, pcitag_t);
 pcireg_t vpci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void vpci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
@@ -167,6 +168,7 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = pbm->vp_dmat;
 	pba.pba_memt = pbm->vp_memt;
 	pba.pba_iot = pbm->vp_iot;
+	pba.pba_pc->conf_size = vpci_conf_size;
 	pba.pba_pc->conf_read = vpci_conf_read;
 	pba.pba_pc->conf_write = vpci_conf_write;
 	pba.pba_pc->intr_map = vpci_intr_map;
@@ -199,6 +201,12 @@ vpci_print(void *aux, const char *p)
 	if (p == NULL)
 		return (UNCONF);
 	return (QUIET);
+}
+
+int
+vpci_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

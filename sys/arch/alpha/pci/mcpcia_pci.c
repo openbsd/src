@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia_pci.c,v 1.1 2007/03/16 21:22:27 robert Exp $ */
+/* $OpenBSD: mcpcia_pci.c,v 1.2 2010/12/04 17:06:31 miod Exp $ */
 /* $NetBSD: mcpcia_pci.c,v 1.5 2007/03/04 05:59:11 christos Exp $ */
 
 /*
@@ -46,18 +46,14 @@
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static void mcpcia_attach_hook (struct device *, struct device *,
-	struct pcibus_attach_args *);
-static int
-mcpcia_bus_maxdevs (void *, int);
-static pcitag_t
-mcpcia_make_tag (void *, int, int, int);
-static void
-mcpcia_decompose_tag (void *, pcitag_t, int *, int *, int *);
-static pcireg_t
-mcpcia_conf_read (void *, pcitag_t, int);
-static void
-mcpcia_conf_write (void *, pcitag_t, int, pcireg_t);
+void	mcpcia_attach_hook(struct device *, struct device *,
+	    struct pcibus_attach_args *);
+int	mcpcia_bus_maxdevs(void *, int);
+pcitag_t mcpcia_make_tag(void *, int, int, int);
+void	mcpcia_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	mcpcia_conf_size(void *, pcitag_t);
+pcireg_t mcpcia_conf_read(void *, pcitag_t, int);
+void	mcpcia_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 mcpcia_pci_init(pc, v)
@@ -69,18 +65,19 @@ mcpcia_pci_init(pc, v)
 	pc->pc_bus_maxdevs = mcpcia_bus_maxdevs;
 	pc->pc_make_tag = mcpcia_make_tag;
 	pc->pc_decompose_tag = mcpcia_decompose_tag;
+	pc->pc_conf_size = mcpcia_conf_size;
 	pc->pc_conf_read = mcpcia_conf_read;
 	pc->pc_conf_write = mcpcia_conf_write;
 }
 
-static void
+void
 mcpcia_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
 }
 
-static int
+int
 mcpcia_bus_maxdevs(cpv, busno)
 	void *cpv;
 	int busno;
@@ -88,7 +85,7 @@ mcpcia_bus_maxdevs(cpv, busno)
 	return (MCPCIA_MAXDEV);
 }
 
-static pcitag_t
+pcitag_t
 mcpcia_make_tag(cpv, b, d, f)
 	void *cpv;
 	int b, d, f;
@@ -98,7 +95,7 @@ mcpcia_make_tag(cpv, b, d, f)
 	return (tag);
 }
 
-static void
+void
 mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
 	void *cpv;
 	pcitag_t tag;
@@ -112,7 +109,13 @@ mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
 		*fp = (tag >> 13) & 0x7;
 }
 
-static pcireg_t
+int
+mcpcia_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
+}
+
+pcireg_t
 mcpcia_conf_read(cpv, tag, offset)
 	void *cpv;
 	pcitag_t tag;
@@ -143,7 +146,7 @@ mcpcia_conf_read(cpv, tag, offset)
 	return (data);
 }
 
-static void
+void
 mcpcia_conf_write(cpv, tag, offset, data)
 	void *cpv;
 	pcitag_t tag;

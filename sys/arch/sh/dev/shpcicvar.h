@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcicvar.h,v 1.5 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: shpcicvar.h,v 1.6 2010/12/04 17:06:32 miod Exp $	*/
 /*	$NetBSD: shpcicvar.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@ bus_dma_tag_t shpcic_get_bus_dma_tag(void);
 int shpcic_bus_maxdevs(void *v, int busno);
 pcitag_t shpcic_make_tag(void *v, int bus, int device, int function);
 void shpcic_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp);
+int shpcic_conf_size(void *, pcitag_t);
 pcireg_t shpcic_conf_read(void *v, pcitag_t tag, int reg);
 void shpcic_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data);
 

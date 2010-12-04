@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.24 2010/06/29 22:08:29 jordan Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.25 2010/12/04 17:06:32 miod Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -68,6 +68,7 @@ struct sparc_pci_chipset {
 	bus_space_handle_t	bushandle;
 	int			rootnode;	/* PCI controller */
 	int			busnode[256];
+	int (*conf_size)(pci_chipset_tag_t, pcitag_t);
 	pcireg_t (*conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void (*conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 	int (*intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
@@ -79,6 +80,7 @@ int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
+int		pci_conf_size(pci_chipset_tag_t, pcitag_t);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				    pcireg_t);

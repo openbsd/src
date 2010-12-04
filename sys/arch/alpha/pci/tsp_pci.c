@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_pci.c,v 1.3 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: tsp_pci.c,v 1.4 2010/12/04 17:06:31 miod Exp $ */
 /* $NetBSD: tsp_pci.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -56,6 +56,7 @@ int		tsp_bus_maxdevs(void *, int);
 pcitag_t	tsp_make_tag(void *, int, int, int);
 void		tsp_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
+int		tsp_conf_size(void *, pcitag_t);
 pcireg_t	tsp_conf_read(void *, pcitag_t, int);
 void		tsp_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -69,6 +70,7 @@ tsp_pci_init(pc, v)
 	pc->pc_bus_maxdevs = tsp_bus_maxdevs;
 	pc->pc_make_tag = tsp_make_tag;
 	pc->pc_decompose_tag = tsp_decompose_tag;
+	pc->pc_conf_size = tsp_conf_size;
 	pc->pc_conf_read = tsp_conf_read;
 	pc->pc_conf_write = tsp_conf_write;
 }
@@ -109,6 +111,13 @@ tsp_decompose_tag(cpv, tag, bp, dp, fp)
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
 }
+
+int
+tsp_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
+}
+
 /*
  * Tsunami makes this a lot easier than it used to be, automatically
  * generating type 0 or type 1 cycles, and quietly returning -1 with

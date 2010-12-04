@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.1 2010/10/28 22:52:10 syuu Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.2 2010/12/04 17:06:31 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -45,6 +45,7 @@ struct mips_pci_chipset {
     pcitag_t	(*pc_make_tag)(void *, int, int, int);
     void	(*pc_decompose_tag)(void *, pcitag_t, int *,
 		    int *, int *);
+    int		(*pc_conf_size)(void *, pcitag_t);
     pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
     void	(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -70,6 +71,8 @@ struct mips_pci_chipset {
 #define	pci_decompose_tag(c, t, bp, dp, fp)				\
     (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 
+#define	pci_conf_size(c, t)						\
+    (*(c)->pc_conf_size)((c)->pc_conf_v, (t))
 #ifdef DEBUG_PCI_CONF
 static inline pcireg_t pci_conf_read_db(void * c, pcitag_t t, int r,
 				     char* f,char* func,int l)

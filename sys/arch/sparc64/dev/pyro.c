@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.18 2009/03/29 22:52:11 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.19 2010/12/04 17:06:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -92,6 +92,7 @@ bus_space_tag_t _pyro_alloc_bus_tag(struct pyro_pbm *, const char *,
     int, int, int);
 bus_dma_tag_t pyro_alloc_dma_tag(struct pyro_pbm *);
 
+int pyro_conf_size(pci_chipset_tag_t, pcitag_t);
 pcireg_t pyro_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void pyro_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
@@ -220,6 +221,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pba.pba_dmat = pbm->pp_dmat;
 	pba.pba_memt = pbm->pp_memt;
 	pba.pba_iot = pbm->pp_iot;
+	pba.pba_pc->conf_size = pyro_conf_size;
 	pba.pba_pc->conf_read = pyro_conf_read;
 	pba.pba_pc->conf_write = pyro_conf_write;
 	pba.pba_pc->intr_map = pyro_intr_map;
@@ -269,6 +271,12 @@ pyro_print(void *aux, const char *p)
 	if (p == NULL)
 		return (UNCONF);
 	return (QUIET);
+}
+
+int
+pyro_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

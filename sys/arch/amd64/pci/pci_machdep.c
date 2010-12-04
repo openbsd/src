@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.36 2010/09/06 19:05:48 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.37 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -170,6 +170,12 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
+}
+
+int
+pci_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

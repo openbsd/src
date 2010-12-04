@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.17 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.18 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -103,6 +103,7 @@ void	 bonito_attach_hook(struct device *, struct device *,
 int	 bonito_bus_maxdevs(void *, int);
 pcitag_t bonito_make_tag(void *, int, int, int);
 void	 bonito_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	 bonito_conf_size(void *, pcitag_t);
 pcireg_t bonito_conf_read(void *, pcitag_t, int);
 pcireg_t bonito_conf_read_internal(const struct bonito_config *, pcitag_t, int);
 void	 bonito_conf_write(void *, pcitag_t, int, pcireg_t);
@@ -326,6 +327,7 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	pc->pc_bus_maxdevs = bonito_bus_maxdevs;
 	pc->pc_make_tag = bonito_make_tag;
 	pc->pc_decompose_tag = bonito_decompose_tag;
+	pc->pc_conf_size = bonito_conf_size;
 	pc->pc_conf_read = bonito_conf_read;
 	pc->pc_conf_write = bonito_conf_write;
 
@@ -812,6 +814,12 @@ bonito_pci_hook(pci_chipset_tag_t pc, void *cookie,
 	bch->cookie = cookie;
 	SLIST_INSERT_HEAD(&sc->sc_hook, bch, next);
 	return 0;
+}
+
+int
+bonito_conf_size(void *v, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

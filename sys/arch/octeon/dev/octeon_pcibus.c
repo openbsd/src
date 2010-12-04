@@ -1,5 +1,5 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.3 2010/12/04 16:46:35 miod Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.3 2010/12/04 16:46:35 miod Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.4 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.4 2010/12/04 17:06:31 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -101,6 +101,7 @@ void        octeon_pcibus_attach_hook(struct device *, struct device *,
 int         octeon_pcibus_bus_maxdevs(void *, int);
 pcitag_t    octeon_pcibus_make_tag(void *, int, int, int);
 void        octeon_pcibus_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	    octeon_pcibus_pci_conf_size(void *, pcitag_t);
 pcireg_t    octeon_pcibus_pci_conf_read(void *, pcitag_t, int);
 void        octeon_pcibus_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 int         octeon_pcibus_pci_intr_map(struct pci_attach_args *,
@@ -141,7 +142,7 @@ int octeon_pcibus_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 #define _OCTEON_PCIBUS_PCIMEM_BASE	0x80000000
 #define _OCTEON_PCIBUS_PCIMEM_SIZE	0x40000000
 
-bus_space_t octeon_pcibus_pci_io_space_tag = {
+struct mips_bus_space octeon_pcibus_pci_io_space_tag = {
 	.bus_base = PHYS_TO_XKPHYS(_OCTEON_PCIBUS_PCIIO_BASE, CCA_NC),
 	.bus_private = NULL,
 	._space_read_1 =	generic_space_read_1,
@@ -164,7 +165,7 @@ bus_space_t octeon_pcibus_pci_io_space_tag = {
 	._space_vaddr =		generic_space_vaddr
 };
 
-bus_space_t octeon_pcibus_pci_mem_space_tag = {
+struct mips_bus_space octeon_pcibus_pci_mem_space_tag = {
 	.bus_base = PHYS_TO_XKPHYS(_OCTEON_PCIBUS_PCIMEM_BASE, CCA_NC),
 	.bus_private = NULL,
 	._space_read_1 =	generic_space_read_1,
@@ -218,6 +219,7 @@ octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_decompose_tag = octeon_pcibus_decompose_tag;
 
 	sc->sc_pc.pc_conf_v = sc;
+	sc->sc_pc.pc_conf_size = octeon_pcibus_pci_conf_size;
 	sc->sc_pc.pc_conf_read = octeon_pcibus_pci_conf_read;
 	sc->sc_pc.pc_conf_write = octeon_pcibus_pci_conf_write;
 
@@ -303,6 +305,12 @@ octeon_pcibus_decompose_tag(void *unused, pcitag_t tag, int *bp, int *dp, int *f
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
+}
+
+int
+octeon_pcibus_pci_conf_size(void *v, pcitag_t tag)
+{
+	return PCI_CONFIGURATION_SPACE_SIZE;
 }
 
 pcireg_t

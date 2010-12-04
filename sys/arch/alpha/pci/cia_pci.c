@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_pci.c,v 1.11 2006/03/26 20:23:08 brad Exp $ */
+/* $OpenBSD: cia_pci.c,v 1.12 2010/12/04 17:06:31 miod Exp $ */
 /* $NetBSD: cia_pci.c,v 1.25 2000/06/29 08:58:46 mrg Exp $ */
 
 /*
@@ -46,6 +46,7 @@ int		cia_bus_maxdevs(void *, int);
 pcitag_t	cia_make_tag(void *, int, int, int);
 void		cia_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
+int		cia_conf_size(void *, pcitag_t);
 pcireg_t	cia_conf_read(void *, pcitag_t, int);
 void		cia_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -60,6 +61,7 @@ cia_pci_init(pc, v)
 	pc->pc_bus_maxdevs = cia_bus_maxdevs;
 	pc->pc_make_tag = cia_make_tag;
 	pc->pc_decompose_tag = cia_decompose_tag;
+	pc->pc_conf_size = cia_conf_size;
 	pc->pc_conf_read = cia_conf_read;
 	pc->pc_conf_write = cia_conf_write;
 }
@@ -102,6 +104,12 @@ cia_decompose_tag(cpv, tag, bp, dp, fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
+}
+
+int
+cia_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

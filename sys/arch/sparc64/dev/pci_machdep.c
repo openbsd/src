@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.39 2009/08/22 02:54:51 mk Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.40 2010/12/04 17:06:32 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -314,6 +314,17 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 	}
 
 	return (0);
+}
+
+int
+pci_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	int val = 0;
+
+        if (PCITAG_NODE(tag) != -1)
+		val = pc->conf_size(pc, tag);
+
+        return (val);
 }
 
 pcireg_t

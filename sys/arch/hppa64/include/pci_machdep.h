@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.6 2010/06/29 22:08:28 jordan Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.7 2010/12/04 17:06:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -37,6 +37,7 @@ struct hppa64_pci_chipset_tag {
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
 			    int *, int *);
+	int		(*pc_conf_size)(void *, pcitag_t);
 	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -62,6 +63,8 @@ struct hppa64_pci_chipset_tag {
     (*(c)->pc_make_tag)((c)->_cookie, (b), (d), (f))
 #define	pci_decompose_tag(c, t, bp, dp, fp)				\
     (*(c)->pc_decompose_tag)((c)->_cookie, (t), (bp), (dp), (fp))
+#define	pci_conf_size(c, t)						\
+    (*(c)->pc_conf_size)((c)->_cookie, (t))
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->_cookie, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\

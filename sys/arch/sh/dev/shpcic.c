@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.11 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.12 2010/12/04 17:06:32 miod Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -309,6 +309,12 @@ shpcic_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
+}
+
+int
+shpcic_conf_size(void *v, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

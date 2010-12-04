@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.40 2010/09/22 02:28:37 jsg Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.41 2010/12/04 17:06:31 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -82,6 +82,7 @@ void	 mace_pcibr_attach_hook(struct device *, struct device *,
 int	 mace_pcibr_bus_maxdevs(void *, int);
 pcitag_t mace_pcibr_make_tag(void *, int, int, int);
 void	 mace_pcibr_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	 mace_pcibr_conf_size(void *, pcitag_t);
 pcireg_t mace_pcibr_conf_read(void *, pcitag_t, int);
 void	 mace_pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
 int	 mace_pcibr_get_widget(void *);
@@ -239,6 +240,7 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_make_tag = mace_pcibr_make_tag;
 	sc->sc_pc.pc_decompose_tag = mace_pcibr_decompose_tag;
 	sc->sc_pc.pc_bus_maxdevs = mace_pcibr_bus_maxdevs;
+	sc->sc_pc.pc_conf_size = mace_pcibr_conf_size;
 	sc->sc_pc.pc_conf_read = mace_pcibr_conf_read;
 	sc->sc_pc.pc_conf_write = mace_pcibr_conf_write;
 	sc->sc_pc.pc_get_widget = mace_pcibr_get_widget;
@@ -363,6 +365,12 @@ int
 mace_pcibr_bus_maxdevs(void *cpv, int busno)
 {
 	return busno == 0 ? 6 : 32;
+}
+
+int
+mace_pcibr_conf_size(void *cpv, pcitag_t tag)
+{
+	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t
