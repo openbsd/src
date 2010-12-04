@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.43 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.44 2010/12/04 05:20:18 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -762,7 +762,7 @@ ENTRY(cpu_switchto)
 	/* clear the old pmap's bit for the cpu */
 	movq	PCB_PMAP(%r13),%rcx
 	lock
-	btrl	%edi,PM_CPUS(%rcx)
+	btrq	%rdi,PM_CPUS(%rcx)
 
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%r13)
@@ -800,9 +800,8 @@ switch_exited:
 	/* set the new pmap's bit for the cpu */
 	movl	CPUVAR(CPUID),%edi
 	movq	PCB_PMAP(%r13),%rcx
-	movl	PM_CPUS(%rcx),%eax
 	lock
-	btsl	%edi,PM_CPUS(%rcx)
+	btsq	%rdi,PM_CPUS(%rcx)
 #ifdef DIAGNOSTIC
 	jc	_C_LABEL(switch_pmcpu_set)
 #endif
