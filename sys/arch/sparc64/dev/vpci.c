@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.5 2010/12/04 17:06:32 miod Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.6 2010/12/05 15:15:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -206,7 +206,7 @@ vpci_print(void *aux, const char *p)
 int
 vpci_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
 {
-	return PCI_CONFIG_SPACE_SIZE;
+	return PCIE_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t

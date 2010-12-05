@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.38 2010/12/04 17:06:29 miod Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.39 2010/12/05 15:15:14 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
  */
 
 #define	PCI_CONFIG_SPACE_SIZE		0x100
+#define	PCIE_CONFIG_SPACE_SIZE		0x1000
 
 /*
  * Device identification register; contains a vendor ID and a device ID.
