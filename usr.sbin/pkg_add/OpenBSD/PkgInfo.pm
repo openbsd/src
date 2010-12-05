@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.15 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.16 2010/12/05 09:41:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -515,7 +515,7 @@ sub parse_and_run
 			    is_installed($p) ? "#1 (installed)" : "#1", $p);
 		}
 
-		exit 0;
+		return 0;
 	}
 
 	if ($state->verbose) {
@@ -582,7 +582,7 @@ sub parse_and_run
 	if ($pkgs > 1) {
 		$state->say("Total size: #1", $total_size);
 	}
-	exit($exit_code);
+	return $exit_code;
 }
 
 1;

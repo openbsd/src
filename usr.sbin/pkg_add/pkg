@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg,v 1.18 2010/06/10 23:39:50 espie Exp $
+# $OpenBSD: pkg,v 1.19 2010/12/05 09:41:55 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -27,8 +27,7 @@ sub run
 	if ($@) {
 		die $@;
 	}
-	$module->parse_and_run($name);
-	exit(0);
+	exit($module->parse_and_run($name));
 }
 my @l = qw(add check create delete info);
 

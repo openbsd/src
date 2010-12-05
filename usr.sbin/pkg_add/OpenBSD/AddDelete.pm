@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.39 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.40 2010/12/05 09:41:55 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -34,7 +34,7 @@ sub do_the_main_work
 	my ($self, $state) = @_;
 
 	if ($state->{bad}) {
-		exit(1);
+		return;
 	}
 
 	my $handler = sub { $state->fatal("Caught SIG#1", shift); };
@@ -87,13 +87,10 @@ sub framework
 			if ($_ =~ m/^Caught SIG(\w+)/o) {
 				kill $1, $$;
 			}
-			exit(1);
+			$state->{bad}++;
 		};
 	}
 
-	if ($state->{bad}) {
-		exit(1);
-	}
 }
 
 sub parse_and_run
@@ -105,6 +102,7 @@ sub parse_and_run
 	local $SIG{'INFO'} = sub { $state->status->print($state); };
 
 	$self->framework($state);
+	return $state->{bad} != 0;
 }
 
 package OpenBSD::SharedItemsRecorder;

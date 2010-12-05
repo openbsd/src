@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.28 2010/11/27 11:54:25 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.29 2010/12/05 09:41:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -920,7 +920,7 @@ sub parse_and_run
 		for my $pkgname (@ARGV) {
 			$self->sign_existing($state, $pkgname, $cert, $privkey);
 		}
-		exit(0);
+		return 0;
 	} else {
 		$plist = $self->create_plist($state, $ARGV[0], \@contents,
 		    \%dependencies, \%wantlib);
@@ -950,7 +950,7 @@ sub parse_and_run
 
 	if (!defined $plist->pkgname) {
 		$state->error("can't write unnamed packing-list");
-		exit 1;
+		return 1;
 	}
 
 	if (defined $state->opt('q')) {
@@ -959,19 +959,19 @@ sub parse_and_run
 		} else {
 			$plist->write(\*STDOUT);
 		}
-		exit 0 if defined $state->opt('n');
+		return 0 if defined $state->opt('n');
 	}
 
 	if ($plist->{deprecated}) {
 		$state->error("found obsolete constructs");
-		exit 1;
+		return 1;
 	}
 
 	$plist->avert_duplicates_and_other_checks($state);
 	$state->{stash} = {};
 
 	if ($state->{bad} && $state->{subst}->empty('REGRESSION_TESTING')) {
-		exit 1;
+		return 1;
 	}
 	$state->{bad} = 0;
 
@@ -997,8 +997,9 @@ sub parse_and_run
 	}
 	}catch {
 		print STDERR "$0: $_\n";
-		exit(1);
+		return 1;
 	};
+	return 0;
 }
 
 1;
