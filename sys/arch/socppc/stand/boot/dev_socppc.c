@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_socppc.c,v 1.1 2008/05/10 20:06:26 kettenis Exp $	*/
+/*	$OpenBSD: dev_socppc.c,v 1.2 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -25,7 +25,7 @@ const char cdevs[][4] = {
 	"cn", "", "", "", "", "", "", "",
 	"", "", "", "", "com"
 };
-const int ncdevs = NENTS(cdevs);
+const int ncdevs = nitems(cdevs);
 
 void
 devboot(dev_t dev, char *p)

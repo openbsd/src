@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 2010/08/07 03:50:01 krw Exp $	*/;
+/*	$OpenBSD: if_le.c,v 1.7 2010/12/06 18:44:49 jasper Exp $	*/;
 /*	$NetBSD: if_le.c,v 1.9 1997/01/30 10:32:54 thorpej Exp $	*/
 
 /*
@@ -80,10 +80,10 @@ extern struct netif_stats	le_stats[];
 
 struct netif_dif le_ifs[] = {
 /*	dif_unit	dif_nsel	dif_stats	dif_private	*/
-{	0,		NENTS(le0conf),	&le_stats[0],	le0conf,	},
+{	0,		nitems(le0conf),&le_stats[0],	le0conf,	},
 };
 
-struct netif_stats le_stats[NENTS(le_ifs)];
+struct netif_stats le_stats[nitems(le_ifs)];
 
 struct netif_driver le_driver = {
 	"le",			/* netif_bname */
@@ -94,7 +94,7 @@ struct netif_driver le_driver = {
 	le_put,			/* netif_put */
 	le_end,			/* netif_end */
 	le_ifs,			/* netif_ifs */
-	NENTS(le_ifs)		/* netif_nifs */
+	nitems(le_ifs)		/* netif_nifs */
 };
 
 struct le_softc {

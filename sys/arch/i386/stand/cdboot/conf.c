@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2010/08/11 14:18:52 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -61,10 +61,10 @@ void (*i386_probe2[])(void) = {
 };
 
 struct i386_boot_probes probe_list[] = {
-	{ "probing", i386_probe1, NENTS(i386_probe1) },
-	{ "disk",    i386_probe2, NENTS(i386_probe2) },
+	{ "probing", i386_probe1, nitems(i386_probe1) },
+	{ "disk",    i386_probe2, nitems(i386_probe2) },
 };
-int nibprobes = NENTS(probe_list);
+int nibprobes = nitems(probe_list);
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
@@ -84,7 +84,7 @@ struct fs_ops file_system[] = {
 	  null_stat,   null_readdir   }
 #endif
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
 #ifdef _TEST
@@ -93,7 +93,7 @@ struct devsw	devsw[] = {
 	{ "BIOS", biosstrategy, biosopen, biosclose, biosioctl },
 #endif
 };
-int ndevs = NENTS(devsw);
+int ndevs = nitems(devsw);
 
 struct consdev constab[] = {
 #ifdef _TEST

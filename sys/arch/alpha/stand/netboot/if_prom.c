@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_prom.c,v 1.4 2008/03/09 12:03:03 sobrado Exp $	*/
+/*	$OpenBSD: if_prom.c,v 1.5 2010/12/06 18:44:49 jasper Exp $	*/
 /*	$NetBSD: if_prom.c,v 1.9 1997/04/06 08:41:26 cgd Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ struct netif_dif prom_ifs[] = {
 {	0,		1,		&prom_stats[0],	0,		},
 };
 
-struct netif_stats prom_stats[NENTS(prom_ifs)];
+struct netif_stats prom_stats[nitems(prom_ifs)];
 
 struct netbbinfo netbbinfo = {
 	0xfeedbabedeadbeef,			/* magic number */
@@ -82,7 +82,7 @@ struct netif_driver prom_netif_driver = {
 	prom_put,		/* netif_put */
 	prom_end,		/* netif_end */
 	prom_ifs,		/* netif_ifs */
-	NENTS(prom_ifs)		/* netif_nifs */
+	nitems(prom_ifs)	/* netif_nifs */
 };
 
 int netfd, broken_firmware;

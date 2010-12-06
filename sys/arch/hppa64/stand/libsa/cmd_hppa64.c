@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_hppa64.c,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: cmd_hppa64.c,v 1.2 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat
@@ -337,13 +337,13 @@ set_serial(console, port, arg)
 
 	speed = 0;
 	if (arg == NULL || *arg == '\0') {
-		for (i = 0; i < NENTS(i_speeds); i++)
+		for (i = 0; i < nitems(i_speeds); i++)
 			if (i_speeds[i] == 9600) {
 				speed = i;
 				break;
 			}
 	} else {
-		for (i = 0; i < NENTS(c_speeds); i++)
+		for (i = 0; i < nitems(c_speeds); i++)
 			if (strcmp(arg, c_speeds[i]) == 0) {
 				speed = i;
 				break;

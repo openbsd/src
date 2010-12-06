@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2010/08/11 14:18:52 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -57,10 +57,10 @@ void (*amd64_probe2[])(void) = {
 };
 
 struct i386_boot_probes probe_list[] = {
-	{ "probing", amd64_probe1, NENTS(amd64_probe1) },
-	{ "disk",    amd64_probe2, NENTS(amd64_probe2) }
+	{ "probing", amd64_probe1, nitems(amd64_probe1) },
+	{ "disk",    amd64_probe2, nitems(amd64_probe2) }
 };
-int nibprobes = NENTS(probe_list);
+int nibprobes = nitems(probe_list);
 
 struct fs_ops file_system[] = {
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
@@ -76,12 +76,12 @@ struct fs_ops file_system[] = {
 	  fat_stat,    fat_readdir    },
 #endif
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
 	{ "BIOS", biosstrategy, biosopen, biosclose, biosioctl },
 };
-int ndevs = NENTS(devsw);
+int ndevs = nitems(devsw);
 
 struct consdev constab[] = {
 	{ pc_probe, pc_init, pc_getc, pc_putc },

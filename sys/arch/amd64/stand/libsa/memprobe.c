@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.7 2010/07/02 00:36:52 weingart Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.8 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -221,14 +221,14 @@ addrprobe(u_int kloc)
 {
 	__volatile u_int *loc;
 	register u_int i, ret = 0;
-	u_int save[NENTS(addrprobe_pat)];
+	u_int save[nitems(addrprobe_pat)];
 
 	/* Get location */
 	loc = (int *)(kloc * 1024);
 
 	save[0] = *loc;
 	/* Probe address */
-	for(i = 0; i < NENTS(addrprobe_pat); i++){
+	for(i = 0; i < nitems(addrprobe_pat); i++){
 		*loc = addrprobe_pat[i];
 		if(*loc != addrprobe_pat[i])
 			ret++;
@@ -237,13 +237,13 @@ addrprobe(u_int kloc)
 
 	if (!ret) {
 		/* Write address */
-		for(i = 0; i < NENTS(addrprobe_pat); i++) {
+		for(i = 0; i < nitems(addrprobe_pat); i++) {
 			save[i] = loc[i];
 			loc[i] = addrprobe_pat[i];
 		}
 
 		/* Read address */
-		for(i = 0; i < NENTS(addrprobe_pat); i++) {
+		for(i = 0; i < nitems(addrprobe_pat); i++) {
 			if(loc[i] != addrprobe_pat[i])
 				ret++;
 			loc[i] = save[i];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2010/02/14 15:16:49 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 2010/12/06 18:44:49 jasper Exp $	*/
 /*	$NetBSD: conf.c,v 1.4 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ int	debug = 0;
 struct devsw devsw[] = {
 	{ "wd",	wdstrategy, wdopen, wdclose, noioctl },
 };
-int ndevs = NENTS(devsw);
+int ndevs = nitems(devsw);
 
 /*
  * Filesystem configuration
@@ -57,7 +57,7 @@ struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir }
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 /*
  * Console configuration

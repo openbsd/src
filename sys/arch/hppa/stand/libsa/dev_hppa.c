@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.11 2005/04/25 21:08:18 miod Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.12 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -42,7 +42,7 @@ const char cdevs[][4] = {
 	"ite", "", "", "", "", "", "", "",
 	"", "", "", "", ""
 };
-const int ncdevs = NENTS(cdevs);
+const int ncdevs = nitems(cdevs);
 
 const struct pdc_devs {
 	char	name[3];
@@ -78,11 +78,11 @@ devopen(f, fname, file)
 		printf("devopen: ");
 #endif
 
-	for (dp = pdc_devs; dp < &pdc_devs[NENTS(pdc_devs)]; dp++)
+	for (dp = pdc_devs; dp < &pdc_devs[nitems(pdc_devs)]; dp++)
 		if (!strncmp(fname, dp->name, sizeof(dp->name)-1))
 			break;
 
-	if (dp >= &pdc_devs[NENTS(pdc_devs)] || dp->dev_type < 0)
+	if (dp >= &pdc_devs[nitems(pdc_devs)] || dp->dev_type < 0)
 		return ENODEV;
 #ifdef DEBUGBUG
 	if (debug)

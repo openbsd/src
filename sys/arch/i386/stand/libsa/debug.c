@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.13 2004/03/09 19:12:12 tom Exp $	*/
+/*	$OpenBSD: debug.c,v 1.14 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,7 +34,7 @@
 #define	VBASE	(0xb8000)
 
 char *const reg_names[] = { REG_NAMES };
-const int nreg = NENTS(reg_names);
+const int nreg = nitems(reg_names);
 struct reg reg;
 u_int32_t *const reg_values[] = { REG_VALUES(reg) };
 char *const trap_names[] = { TRAP_NAMES };

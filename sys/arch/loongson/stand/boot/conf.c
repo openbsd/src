@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2010/04/03 19:13:27 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2010/12/06 18:44:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -53,7 +53,7 @@ struct devsw devsw[] = {
 	/* ATA storage device */
 	{ "wd",		pmon_iostrategy, pmon_ioopen, pmon_ioclose, noioctl }
 };
-int ndevs = NENTS(devsw);
+int ndevs = nitems(devsw);
 
 /*
  * Filesystem configuration
@@ -69,7 +69,7 @@ struct fs_ops file_system[] = {
 	{	cd9660_open,	cd9660_close,	cd9660_read,	cd9660_write,
 		cd9660_seek,	cd9660_stat,	cd9660_readdir	}
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 /*
  * Console configuration
