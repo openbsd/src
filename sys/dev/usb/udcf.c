@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.50 2010/10/23 16:14:07 jakemsr Exp $ */
+/*	$OpenBSD: udcf.c,v 1.51 2010/12/06 04:41:40 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -68,7 +68,6 @@ struct udcf_softc {
 	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
 	usbd_interface_handle	sc_iface;	/* data interface */
-	u_char			sc_dying;	/* disconnecting */
 
 	struct timeout		sc_to;
 	struct usb_task		sc_task;
@@ -326,7 +325,7 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 
 fishy:
 	DPRINTF(("udcf_attach failed\n"));
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -519,7 +518,7 @@ udcf_probe(void *xsc)
 	struct timespec		 now;
 	int			 data;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	data = sc->sc_signal(sc);
@@ -594,7 +593,7 @@ udcf_bv_probe(void *xsc)
 	struct udcf_softc	*sc = xsc;
 	int			 data;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	data = sc->sc_signal(sc);
@@ -751,7 +750,7 @@ udcf_sl_probe(void *xsc)
 {
 	struct udcf_softc *sc = xsc;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	DPRINTF(("no signal\n"));
@@ -766,7 +765,7 @@ udcf_it_intr(void *xsc)
 {
 	struct udcf_softc *sc = xsc;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (sc->sc_sensor.status == SENSOR_S_OK) {
@@ -789,7 +788,7 @@ udcf_ct_probe(void *xsc)
 	struct udcf_softc	*sc = xsc;
 	int			 data;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	data = sc->sc_signal(sc);
@@ -812,7 +811,7 @@ udcf_activate(struct device *self, int act)
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return 0;

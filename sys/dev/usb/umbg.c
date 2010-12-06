@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.14 2010/10/23 16:14:07 jakemsr Exp $ */
+/*	$OpenBSD: umbg.c,v 1.15 2010/12/06 04:41:40 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -53,7 +53,6 @@ struct umbg_softc {
 	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
 	usbd_interface_handle	sc_iface;	/* data interface */
-	u_char			sc_dying;	/* disconnecting */
 
 	int			sc_bulkin_no;
 	usbd_pipe_handle	sc_bulkin_pipe;
@@ -287,7 +286,7 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 fishy:
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -350,7 +349,7 @@ umbg_task(void *arg)
 	int64_t tlocal, trecv;
 	int signal;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (umbg_read(sc, MBG_GET_TIME_HR, (char *)&tframe, sizeof(tframe),
@@ -438,7 +437,7 @@ umbg_it_intr(void *xsc)
 {
 	struct umbg_softc *sc = xsc;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (sc->sc_timedelta.status == SENSOR_S_OK) {
@@ -461,7 +460,7 @@ umbg_activate(struct device *self, int act)
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return 0;

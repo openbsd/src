@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.29 2010/10/23 15:42:09 jakemsr Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.30 2010/12/06 04:41:40 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -318,6 +318,9 @@ ueagle_loadpage(void *xsc)
 	uint8_t *p;
 	int i;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return;
+
 	p = sc->dsp;
 	pagecount = *p++;
 
@@ -576,6 +579,8 @@ ueagle_stat_thread(void *arg)
 			break;
 
 		usbd_delay_ms(sc->sc_udev, 5000);
+		if (usbd_is_dying(sc->sc_udev))
+			break;
 	}
 
 	wakeup(sc->stat_thread);
@@ -1467,7 +1472,7 @@ ueagle_activate(struct device *self, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		sc->gone = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 

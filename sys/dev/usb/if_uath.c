@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.46 2010/10/27 17:51:11 jakemsr Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.47 2010/12/06 04:41:39 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -427,6 +427,7 @@ fail4:	uath_free_tx_data_list(sc);
 fail3:	uath_free_rx_cmd_list(sc);
 fail2:	uath_free_tx_cmd_list(sc);
 fail1:	uath_close_pipes(sc);
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -2130,11 +2131,14 @@ fail1:	return error;
 int
 uath_activate(struct device *self, int act)
 {
+	struct uath_softc *sc = (struct uath_softc *)self;
+
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
 
 	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return 0;

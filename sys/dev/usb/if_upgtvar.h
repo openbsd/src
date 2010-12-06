@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.15 2009/08/10 20:02:19 deraadt Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.16 2010/12/06 04:41:39 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -421,7 +421,6 @@ struct upgt_softc {
 	unsigned		 sc_cur_chan;
 	uint8_t			 sc_cur_rateset[8];
 
-	int			 sc_flags;
 	uint8_t			*sc_fw;
 	size_t			 sc_fw_size;
 	int			 sc_fw_type;

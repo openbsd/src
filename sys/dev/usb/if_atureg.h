@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.31 2007/11/27 16:22:13 martynas Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.32 2010/12/06 04:41:39 jakemsr Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -173,10 +173,6 @@ struct atu_softc {
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 
-	char			sc_state;
-#define ATU_S_DEAD		0
-#define ATU_S_OK		1
-#define ATU_S_UNCONFIG		2
 	char			sc_cmd;
 #define ATU_C_NONE		0
 #define ATU_C_SCAN		1

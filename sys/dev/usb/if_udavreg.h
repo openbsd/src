@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.10 2007/11/25 16:40:03 jmc Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.11 2010/12/06 04:41:39 jakemsr Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -185,8 +185,6 @@ struct udav_softc {
 #define	sc_media udav_mii.mii_media
 	struct udav_cdata	sc_cdata;
 
-	int                     sc_attached;
-	int			sc_dying;
         int                     sc_refcnt;
 
 	struct usb_task		sc_tick_task;

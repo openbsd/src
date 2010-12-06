@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.56 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.57 2010/12/06 04:41:39 jakemsr Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -166,7 +166,7 @@ cue_csr_read_1(struct cue_softc *sc, int reg)
 	usbd_status		err;
 	u_int8_t		val = 0;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return (0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -196,7 +196,7 @@ cue_csr_read_2(struct cue_softc *sc, int reg)
 	usbd_status		err;
 	uWord			val;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return (0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -225,7 +225,7 @@ cue_csr_write_1(struct cue_softc *sc, int reg, int val)
 	usb_device_request_t	req;
 	usbd_status		err;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return (0);
 
 	DPRINTFN(10,("%s: cue_csr_write_1 reg=0x%x val=0x%x\n",
@@ -260,7 +260,7 @@ cue_csr_write_2(struct cue_softc *sc, int reg, int aval)
 	uWord			val;
 	int			s;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return (0);
 
 	DPRINTFN(10,("%s: cue_csr_write_2 reg=0x%x val=0x%x\n",
@@ -405,7 +405,7 @@ cue_reset(struct cue_softc *sc)
 
 	DPRINTFN(2,("%s: cue_reset\n", sc->cue_dev.dv_xname));
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -459,6 +459,8 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(5,(" : cue_attach: sc=%p, dev=%p", sc, dev));
 
+	sc->cue_udev = dev;
+
 	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
@@ -466,7 +468,6 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->cue_udev = dev;
 	sc->cue_product = uaa->product;
 	sc->cue_vendor = uaa->vendor;
 
@@ -541,7 +542,6 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->cue_stat_ch, cue_tick, sc);
 
-	sc->cue_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cue_udev,
@@ -556,10 +556,6 @@ cue_detach(struct device *self, int flags)
 	int			s;
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->cue_dev.dv_xname, __func__));
-
-	/* Detached before attached finished, so just bail out. */
-	if (!sc->cue_attached)
-		return (0);
 
 	if (timeout_initialized(&sc->cue_stat_ch))
 		timeout_del(&sc->cue_stat_ch);
@@ -589,7 +585,6 @@ cue_detach(struct device *self, int flags)
 		       sc->cue_dev.dv_xname);
 #endif
 
-	sc->cue_attached = 0;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->cue_udev,
@@ -610,7 +605,7 @@ cue_activate(struct device *self, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		sc->cue_dying = 1;
+		usbd_deactivate(sc->cue_udev);
 		break;
 	}
 	return (0);
@@ -727,7 +722,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(10,("%s: %s: enter status=%d\n", sc->cue_dev.dv_xname,
 		     __func__, status));
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -817,7 +812,7 @@ cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	s = splnet();
@@ -861,7 +856,7 @@ cue_tick(void *xsc)
 	if (sc == NULL)
 		return;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->cue_dev.dv_xname, __func__));
@@ -876,7 +871,7 @@ cue_tick_task(void *xsc)
 	struct cue_softc	*sc = xsc;
 	struct ifnet		*ifp;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->cue_dev.dv_xname, __func__));
@@ -941,7 +936,7 @@ cue_start(struct ifnet *ifp)
 	struct cue_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->cue_dev.dv_xname,__func__));
@@ -985,7 +980,7 @@ cue_init(void *xsc)
 	int			i, s, ctl;
 	u_char			*eaddr;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->cue_dev.dv_xname,__func__));
@@ -1106,7 +1101,7 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return (EIO);
 
 	s = splnet();
@@ -1171,7 +1166,7 @@ cue_watchdog(struct ifnet *ifp)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->cue_dev.dv_xname,__func__));
 
-	if (sc->cue_dying)
+	if (usbd_is_dying(sc->cue_udev))
 		return;
 
 	ifp->if_oerrors++;

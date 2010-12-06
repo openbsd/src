@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.11 2010/10/27 17:51:11 jakemsr Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.12 2010/12/06 04:41:39 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -208,8 +208,8 @@ mos_reg_read_1(struct mos_softc *sc, int reg)
 	usbd_status		err;
 	uByte			val = 0;
 
-	if (sc->mos_dying)
-		return (0);
+	if (usbd_is_dying(sc->mos_udev))
+		return(0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = MOS_UR_READREG;
@@ -236,7 +236,7 @@ mos_reg_read_2(struct mos_softc *sc, int reg)
 
 	USETW(val,0);
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return(0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -264,7 +264,7 @@ mos_reg_write_1(struct mos_softc *sc, int reg, int aval)
 
 	val = aval;
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return(0);
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -292,7 +292,7 @@ mos_reg_write_2(struct mos_softc *sc, int reg, int aval)
 
 	USETW(val, aval);
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return (0);
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -317,7 +317,7 @@ mos_readmac(struct mos_softc *sc, u_char *mac)
 	usb_device_request_t	req;
 	usbd_status		err;
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return(0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -342,7 +342,7 @@ mos_writemac(struct mos_softc *sc, u_char *mac)
 	usb_device_request_t	req;
 	usbd_status		err;
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return(0);
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -367,7 +367,7 @@ mos_write_mcast(struct mos_softc *sc, u_char *hashtbl)
 	usb_device_request_t	req;
 	usbd_status		err;
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return(0);
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -393,7 +393,7 @@ mos_miibus_readreg(struct device *dev, int phy, int reg)
 	uWord			val;
 	int			i,res;
 
-	if (sc->mos_dying) {
+	if (usbd_is_dying(sc->mos_udev)) {
 		DPRINTF(("mos: dying\n"));
 		return (0);
 	}
@@ -429,7 +429,7 @@ mos_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	struct mos_softc	*sc = (void *)dev;
 	int			i;
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return;
 
 	mos_lock_mii(sc);
@@ -539,7 +539,7 @@ mos_setmulti(struct mos_softc *sc)
 	u_int8_t		rxmode;
 	u_int8_t		hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return;
 
 	ifp = GET_IFP(sc);
@@ -576,7 +576,7 @@ void
 mos_reset(struct mos_softc *sc)
 {
 	u_int8_t ctl;
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return;
 
 	ctl = mos_reg_read_1(sc, MOS_CTL);
@@ -643,6 +643,7 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 	u_char			eaddr[ETHER_ADDR_LEN];
 	int			i,s;
 
+	sc->mos_udev = dev;
 	sc->mos_unit = self->dv_unit;
 
 	err = usbd_set_config_no(dev, MOS_CONFIG_NO, 1);
@@ -665,7 +666,6 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->mos_udev = dev;
 	sc->mos_flags = mos_lookup(uaa->vendor, uaa->product)->mos_flags;
 
 	id = usbd_get_interface_descriptor(sc->mos_iface);
@@ -752,7 +752,6 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->mos_stat_ch, mos_tick, sc);
 
-	sc->mos_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->mos_udev,
@@ -767,9 +766,6 @@ mos_detach(struct device *self, int flags)
 	int			s;
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->mos_dev.dv_xname, __func__));
-
-	if (!sc->mos_attached)
-		return (0);
 
 	if (timeout_initialized(&sc->mos_stat_ch))
 		timeout_del(&sc->mos_stat_ch);
@@ -812,8 +808,6 @@ mos_detach(struct device *self, int flags)
 		    sc->mos_dev.dv_xname);
 #endif
 
-	sc->mos_attached = 0;
-
 	if (--sc->mos_refcnt >= 0) {
 		/* Wait for processes to go away. */
 		usb_detach_wait(&sc->mos_dev);
@@ -839,7 +833,7 @@ mos_activate(struct device *self, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		sc->mos_dying = 1;
+		usbd_deactivate(sc->mos_udev);
 		break;
 	}
 	return (0);
@@ -947,7 +941,7 @@ mos_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->mos_dev.dv_xname,__func__));
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -1049,7 +1043,7 @@ mos_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc = c->mos_sc;
 	ifp = &sc->arpcom.ac_if;
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return;
 
 	s = splnet();
@@ -1093,7 +1087,7 @@ mos_tick(void *xsc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", sc->mos_dev.dv_xname,
 			__func__));
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return;
 
 	/* Perform periodic stuff in process context */
@@ -1114,7 +1108,7 @@ mos_tick_task(void *xsc)
 	if (sc == NULL)
 		return;
 
-	if (sc->mos_dying)
+	if (usbd_is_dying(sc->mos_udev))
 		return;
 
 	ifp = GET_IFP(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.103 2010/11/14 20:38:43 weerd Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.104 2010/12/06 04:41:39 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -244,7 +244,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	usb_device_request_t	req;
 	usbd_status		err;
 
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return(0);
 
 	if (AXE_CMD_DIR(cmd))
@@ -274,7 +274,7 @@ axe_miibus_readreg(struct device *dev, int phy, int reg)
 	uWord			val;
 	int			ival;
 
-	if (sc->axe_dying) {
+	if (usbd_is_dying(sc->axe_udev)) {
 		DPRINTF(("axe: dying\n"));
 		return(0);
 	}
@@ -332,7 +332,7 @@ axe_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	usbd_status		err;
 	uWord			uval;
 
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return;
 	if (sc->axe_phyno != phy)
 		return;
@@ -465,7 +465,7 @@ axe_setmulti(struct axe_softc *sc)
 	u_int16_t		rxmode;
 	u_int8_t		hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return;
 
 	ifp = GET_IFP(sc);
@@ -502,7 +502,7 @@ allmulti:
 void
 axe_reset(struct axe_softc *sc)
 {
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return;
 	/* XXX What to reset? */
 
@@ -666,6 +666,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	int i, s;
 
 	sc->axe_unit = self->dv_unit; /*device_get_unit(self);*/
+	sc->axe_udev = dev;
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
@@ -689,7 +690,6 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->axe_udev = dev;
 	sc->axe_product = uaa->product;
 	sc->axe_vendor = uaa->vendor;
 
@@ -813,7 +813,6 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->axe_stat_ch, axe_tick, sc);
 
-	sc->axe_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev,
@@ -828,10 +827,6 @@ axe_detach(struct device *self, int flags)
 	struct ifnet		*ifp = GET_IFP(sc);
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->axe_dev.dv_xname, __func__));
-
-	/* Detached before attached finished, so just bail out. */
-	if (!sc->axe_attached)
-		return (0);
 
 	if (timeout_initialized(&sc->axe_stat_ch))
 		timeout_del(&sc->axe_stat_ch);
@@ -875,8 +870,6 @@ axe_detach(struct device *self, int flags)
 		    sc->axe_dev.dv_xname);
 #endif
 
-	sc->axe_attached = 0;
-
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away. */
 		usb_detach_wait(&sc->axe_dev);
@@ -901,7 +894,7 @@ axe_activate(struct device *self, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		sc->axe_dying = 1;
+		usbd_deactivate(sc->axe_udev);
 		break;
 	}
 	return (0);
@@ -1009,7 +1002,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->axe_dev.dv_xname,__func__));
 
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -1122,7 +1115,7 @@ axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc = c->axe_sc;
 	ifp = &sc->arpcom.ac_if;
 
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return;
 
 	s = splnet();
@@ -1166,7 +1159,7 @@ axe_tick(void *xsc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", sc->axe_dev.dv_xname,
 			__func__));
 
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return;
 
 	/* Perform periodic stuff in process context */
@@ -1187,7 +1180,7 @@ axe_tick_task(void *xsc)
 	if (sc == NULL)
 		return;
 
-	if (sc->axe_dying)
+	if (usbd_is_dying(sc->axe_udev))
 		return;
 
 	ifp = GET_IFP(sc);

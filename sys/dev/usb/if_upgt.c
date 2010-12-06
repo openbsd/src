@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.53 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.54 2010/12/06 04:41:39 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -454,9 +454,6 @@ upgt_attach_hook(void *arg)
 	printf("%s: address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr));
 
-	/* device attached */
-	sc->sc_flags |= UPGT_DEVICE_ATTACHED;
-
 	return;
 fail:
 	printf("%s: %s failed!\n", sc->sc_dev.dv_xname, __func__);
@@ -515,10 +512,13 @@ upgt_detach(struct device *self, int flags)
 int
 upgt_activate(struct device *self, int act)
 {
+	struct upgt_softc *sc = (struct upgt_softc *)self;
+
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 

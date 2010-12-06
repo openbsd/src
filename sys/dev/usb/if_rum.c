@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.93 2010/10/27 17:51:11 jakemsr Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.94 2010/12/06 04:41:39 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -644,6 +644,9 @@ rum_next_scan(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return;
+
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(ifp);
 }
@@ -656,6 +659,9 @@ rum_task(void *arg)
 	enum ieee80211_state ostate;
 	struct ieee80211_node *ni;
 	uint32_t tmp;
+
+	if (usbd_is_dying(sc->sc_udev))
+		return;
 
 	ostate = ic->ic_state;
 
@@ -2239,6 +2245,9 @@ rum_amrr_timeout(void *arg)
 	struct rum_softc *sc = arg;
 	usb_device_request_t req;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return;
+
 	/*
 	 * Asynchronously read statistic registers (cleared by read).
 	 */
@@ -2287,11 +2296,14 @@ rum_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 int
 rum_activate(struct device *self, int act)
 {
+	struct rum_softc *sc = (struct rum_softc *)self;
+
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
 
 	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 

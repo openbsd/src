@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.49 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.50 2010/12/06 04:41:39 jakemsr Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -204,6 +204,8 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s: ", devname);
 
+	sc->sc_udev = dev;
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UDAV_CONFIG_NO, 1);
 	if (err) {
@@ -224,7 +226,6 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	sc->sc_udev = dev;
 	sc->sc_ctl_iface = iface;
 	sc->sc_flags = udav_lookup(uaa->vendor, uaa->product)->udav_flags;
 
@@ -308,7 +309,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	timeout_set(&sc->sc_stat_ch, udav_tick, sc);
-	sc->sc_attached = 1;
+
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, &sc->sc_dev);
@@ -316,7 +317,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  bad:
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 /* detach */
@@ -329,9 +330,6 @@ udav_detach(struct device *self, int flags)
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	/* Detached before attached finished */
-	if (!sc->sc_attached)
-		return (0);
 
 	if (timeout_initialized(&sc->sc_stat_ch))
 		timeout_del(&sc->sc_stat_ch);
@@ -367,8 +365,6 @@ udav_detach(struct device *self, int flags)
 		printf("%s: detach has active intr endpoint.\n",
 		       sc->sc_dev.dv_xname);
 #endif
-	sc->sc_attached = 0;
-
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
@@ -391,7 +387,7 @@ udav_mem_read(struct udav_softc *sc, int offset, void *buf, int len)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (0);
 
 	offset &= 0xffff;
@@ -428,7 +424,7 @@ udav_mem_write(struct udav_softc *sc, int offset, void *buf, int len)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (0);
 
 	offset &= 0xffff;
@@ -465,7 +461,7 @@ udav_mem_write1(struct udav_softc *sc, int offset, unsigned char ch)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (0);
 
 	offset &= 0xffff;
@@ -502,7 +498,7 @@ udav_csr_read(struct udav_softc *sc, int offset, void *buf, int len)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (0);
 
 	offset &= 0xff;
@@ -539,7 +535,7 @@ udav_csr_write(struct udav_softc *sc, int offset, void *buf, int len)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (0);
 
 	offset &= 0xff;
@@ -574,9 +570,6 @@ udav_csr_read1(struct udav_softc *sc, int offset)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
-		return (0);
-
 	return (udav_csr_read(sc, offset, &val, 1) ? 0 : val);
 }
 
@@ -593,7 +586,7 @@ udav_csr_write1(struct udav_softc *sc, int offset, unsigned char ch)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (0);
 
 	offset &= 0xff;
@@ -625,9 +618,6 @@ udav_init(struct ifnet *ifp)
 	int s;
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
-
-	if (sc->sc_dying)
-		return (EIO);
 
 	s = splnet();
 
@@ -700,7 +690,7 @@ udav_reset(struct udav_softc *sc)
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	/* Select PHY */
@@ -740,7 +730,7 @@ udav_activate(struct device *self, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (0);
@@ -762,7 +752,7 @@ udav_setmulti(struct udav_softc *sc)
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	ifp = GET_IFP(sc);
@@ -811,7 +801,7 @@ udav_openpipes(struct udav_softc *sc)
 	int i;
 	int error = 0;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	sc->sc_refcnt++;
@@ -976,7 +966,7 @@ udav_start(struct ifnet *ifp)
 	DPRINTF(("%s: %s: enter, link=%d\n", sc->sc_dev.dv_xname,
 		 __func__, sc->sc_link));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (!sc->sc_link)
@@ -1067,7 +1057,7 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet *ifp = GET_IFP(sc);
 	int s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	s = splnet();
@@ -1119,7 +1109,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -1217,7 +1207,7 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	s = splnet();
@@ -1256,7 +1246,7 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				udav_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-			udav_stop(ifp, 1);
+				udav_stop(ifp, 1);
 		}
 		error = 0;
 		break;
@@ -1400,7 +1390,7 @@ udav_ifmedia_change(struct ifnet *ifp)
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (0);
 
 	sc->sc_link = 0;
@@ -1423,7 +1413,7 @@ udav_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1448,9 +1438,6 @@ udav_tick(void *xsc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", sc->sc_dev.dv_xname,
 			__func__));
 
-	if (sc->sc_dying)
-		return;
-
 	/* Perform periodic stuff in process context */
 	usb_add_task(sc->sc_udev, &sc->sc_tick_task);
 }
@@ -1469,7 +1456,7 @@ udav_tick_task(void *xsc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", sc->sc_dev.dv_xname,
 			__func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	ifp = GET_IFP(sc);
@@ -1532,7 +1519,7 @@ udav_miibus_readreg(struct device *dev, int phy, int reg)
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x\n",
 		 sc->sc_dev.dv_xname, __func__, phy, reg));
 
-	if (sc->sc_dying) {
+	if (usbd_is_dying(sc->sc_udev)) {
 #ifdef DIAGNOSTIC
 		printf("%s: %s: dying\n", sc->sc_dev.dv_xname,
 		       __func__);
@@ -1588,7 +1575,7 @@ udav_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x data=0x%04x\n",
 		 sc->sc_dev.dv_xname, __func__, phy, reg, data));
 
-	if (sc->sc_dying) {
+	if (usbd_is_dying(sc->sc_udev)) {
 #ifdef DIAGNOSTIC
 		printf("%s: %s: dying\n", sc->sc_dev.dv_xname,
 		       __func__);

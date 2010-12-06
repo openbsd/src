@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.82 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.83 2010/12/06 04:41:39 jakemsr Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -277,7 +277,7 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 	usbd_status		err;
 	uByte			val = 0;
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return (0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -304,7 +304,7 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 	usbd_status		err;
 	uWord			val;
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return (0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -331,7 +331,7 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 	usbd_status		err;
 	uByte			val;
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return (0);
 
 	val = aval;
@@ -359,7 +359,7 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 	usbd_status		err;
 	uWord			val;
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return (0);
 
 	USETW(val, aval);
@@ -446,7 +446,7 @@ aue_miibus_readreg(struct device *dev, int phy, int reg)
 	int			i;
 	u_int16_t		val;
 
-	if (sc->aue_dying) {
+	if (usbd_is_dying(sc->aue_udev)) {
 #ifdef DIAGNOSTIC
 		printf("%s: dying\n", sc->aue_dev.dv_xname);
 #endif
@@ -557,7 +557,7 @@ aue_miibus_statchg(struct device *dev)
 	 * This turns on the 'dual link LED' bin in the auxmode
 	 * register of the Broadcom PHY.
 	 */
-	if (!sc->aue_dying && (sc->aue_flags & LSYS)) {
+	if (!usbd_is_dying(sc->aue_udev) && (sc->aue_flags & LSYS)) {
 		u_int16_t auxmode;
 		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
 		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
@@ -727,6 +727,8 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
 
+	sc->aue_udev = dev;
+
 	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
@@ -749,7 +751,6 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
 
-	sc->aue_udev = dev;
 	sc->aue_iface = iface;
 	sc->aue_product = uaa->product;
 	sc->aue_vendor = uaa->vendor;
@@ -835,7 +836,6 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->aue_stat_ch, aue_tick, sc);
 
-	sc->aue_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev,
@@ -850,10 +850,6 @@ aue_detach(struct device *self, int flags)
 	int			s;
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));
-
-	/* Detached before attached finished, so just bail out. */
-	if (!sc->aue_attached) 
-		return (0);
 
 	if (timeout_initialized(&sc->aue_stat_ch))
 		timeout_del(&sc->aue_stat_ch);
@@ -885,8 +881,6 @@ aue_detach(struct device *self, int flags)
 		       sc->aue_dev.dv_xname);
 #endif
 
-	sc->aue_attached = 0;
-
 	if (--sc->aue_refcnt >= 0) {
 		/* Wait for processes to go away. */
 		usb_detach_wait(&sc->aue_dev);
@@ -911,7 +905,7 @@ aue_activate(struct device *self, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		sc->aue_dying = 1;
+		usbd_deactivate(sc->aue_udev);
 		break;
 	}
 	return (0);
@@ -1021,7 +1015,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(15,("%s: %s: enter\n", sc->aue_dev.dv_xname,__func__));
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -1067,7 +1061,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->aue_dev.dv_xname,__func__));
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -1165,7 +1159,7 @@ aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return;
 
 	s = splnet();
@@ -1211,7 +1205,7 @@ aue_tick(void *xsc)
 	if (sc == NULL)
 		return;
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return;
 
 	/* Perform periodic stuff in process context. */
@@ -1228,7 +1222,7 @@ aue_tick_task(void *xsc)
 
 	DPRINTFN(15,("%s: %s: enter\n", sc->aue_dev.dv_xname,__func__));
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return;
 
 	ifp = GET_IFP(sc);
@@ -1311,7 +1305,7 @@ aue_start(struct ifnet *ifp)
 	DPRINTFN(5,("%s: %s: enter, link=%d\n", sc->aue_dev.dv_xname,
 		    __func__, sc->aue_link));
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return;
 
 	if (!sc->aue_link)
@@ -1359,7 +1353,7 @@ aue_init(void *xsc)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return;
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -1479,7 +1473,7 @@ aue_ifmedia_upd(struct ifnet *ifp)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return (0);
 
 	sc->aue_link = 0;
@@ -1519,7 +1513,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct mii_data		*mii;
 	int			s, error = 0;
 
-	if (sc->aue_dying)
+	if (usbd_is_dying(sc->aue_udev))
 		return (EIO);
 
 	s = splnet();
