@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.30 2010/12/06 04:41:40 jakemsr Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.31 2010/12/06 05:46:17 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -256,7 +256,8 @@ ueagle_detach(struct device *self, int flags)
 		    sc->sc_dev.dv_xname));
 	}
 
-	if_detach(ifp);
+	if (ifp->if_softc != NULL)
+		if_detach(ifp);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    &sc->sc_dev);
