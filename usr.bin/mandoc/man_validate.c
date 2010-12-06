@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.34 2010/12/01 23:02:59 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.35 2010/12/06 23:03:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -170,9 +170,9 @@ check_root(CHKARGS)
 {
 
 	if (MAN_BLINE & m->flags)
-		return(man_nmsg(m, n, MANDOCERR_SCOPEEXIT));
-	if (MAN_ELINE & m->flags)
-		return(man_nmsg(m, n, MANDOCERR_SCOPEEXIT));
+		man_nmsg(m, n, MANDOCERR_SCOPEEXIT);
+	else if (MAN_ELINE & m->flags)
+		man_nmsg(m, n, MANDOCERR_SCOPEEXIT);
 
 	m->flags &= ~MAN_BLINE;
 	m->flags &= ~MAN_ELINE;
@@ -181,14 +181,13 @@ check_root(CHKARGS)
 		man_nmsg(m, n, MANDOCERR_NODOCBODY);
 		return(0);
 	} else if (NULL == m->meta.title) {
-		if ( ! man_nmsg(m, n, MANDOCERR_NOTITLE))
-			return(0);
+		man_nmsg(m, n, MANDOCERR_NOTITLE);
+
 		/*
 		 * If a title hasn't been set, do so now (by
 		 * implication, date and section also aren't set).
-		 * 
-		 * FIXME: this should be in man_action.c.
 		 */
+
 	        m->meta.title = mandoc_strdup("unknown");
 		m->meta.date = time(NULL);
 		m->meta.msec = mandoc_strdup("1");
@@ -211,9 +210,11 @@ check_title(CHKARGS)
 	}
 
 	for (p = n->child->string; '\0' != *p; p++)
-		if (isalpha((u_char)*p) && ! isupper((u_char)*p))
-			if ( ! man_nmsg(m, n, MANDOCERR_UPPERCASE))
-				return(0);
+		/* Only warn about this once... */
+		if (isalpha((u_char)*p) && ! isupper((u_char)*p)) {
+			man_nmsg(m, n, MANDOCERR_UPPERCASE);
+			break;
+		}
 
 	return(1);
 }
@@ -336,7 +337,7 @@ check_sec(CHKARGS)
 		man_nmsg(m, n, MANDOCERR_SYNTARGCOUNT);
 		return(0);
 	} else if (MAN_BODY == n->type && 0 == n->nchild)
-		return(man_nmsg(m, n, MANDOCERR_NOBODY));
+		man_nmsg(m, n, MANDOCERR_NOBODY);
 
 	return(1);
 }
@@ -347,7 +348,8 @@ check_part(CHKARGS)
 {
 
 	if (MAN_BODY == n->type && 0 == n->nchild)
-		return(man_nmsg(m, n, MANDOCERR_NOBODY));
+		man_nmsg(m, n, MANDOCERR_NOBODY);
+
 	return(1);
 }
 
@@ -547,9 +549,9 @@ check_par(CHKARGS)
 			/* Body-less lists are ok. */
 			break;
 		default:
-			if (n->nchild)
-				break;
-			return(man_nmsg(m, n, MANDOCERR_NOBODY));
+			if (0 == n->nchild)
+				man_nmsg(m, n, MANDOCERR_NOBODY);
+			break;
 		}
 	if (MAN_HEAD == n->type)
 		switch (n->tok) {
@@ -558,9 +560,9 @@ check_par(CHKARGS)
 		case (MAN_P):
 			/* FALLTHROUGH */
 		case (MAN_LP):
-			if (0 == n->nchild)
-				break;
-			return(man_nmsg(m, n, MANDOCERR_ARGSLOST));
+			if (n->nchild)
+				man_nmsg(m, n, MANDOCERR_ARGSLOST);
+			break;
 		default:
 			break;
 		}
