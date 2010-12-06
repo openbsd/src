@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.86 2010/11/21 01:29:07 matthew Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.87 2010/12/06 05:48:56 jakemsr Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -607,6 +607,11 @@ uhci_detach(struct uhci_softc *sc, int flags)
 
 	if (sc->sc_shutdownhook != NULL)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
+
+	if (sc->sc_intr_xfer != NULL) {
+		timeout_del(&sc->sc_poll_handle);
+		sc->sc_intr_xfer = NULL;
+	}
 
 	/* Free all xfers associated with this HC. */
 	for (;;) {
