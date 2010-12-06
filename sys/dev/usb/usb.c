@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.69 2010/10/23 15:42:09 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.70 2010/12/06 04:28:41 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 	    task->onqueue, task->type));
 
 	/* Don't add task if the device's root hub is dying. */
-	if (dev->bus->dying)
+	if (usbd_is_dying(dev))
 		return;
 
 	s = splusb();
@@ -429,7 +429,7 @@ usb_task_thread(void *arg)
 		}
 		task->onqueue = 0;
 		/* Don't execute the task if the root hub is gone. */
-		if (task->dev->bus->dying)
+		if (usbd_is_dying(task->dev))
 			continue;
 		task->running = 1;
 		splx(s);
@@ -466,7 +466,7 @@ usb_abort_task_thread(void *arg)
 		}
 		task->onqueue = 0;
 		/* Don't execute the task if the root hub is gone. */
-		if (task->dev->bus->dying)
+		if (usbd_is_dying(task->dev))
 			continue;
 		task->running = 1;
 		splx(s);
@@ -945,13 +945,15 @@ usb_detach(struct device *self, int flags)
 
 	sc->sc_bus->dying = 1;
 
-	/* Make all devices disconnect. */
-	if (sc->sc_port.device != NULL)
-		usb_disconnect_port(&sc->sc_port, self);
+	if (sc->sc_bus->root_hub != NULL) {
+		/* Make all devices disconnect. */
+		if (sc->sc_port.device != NULL)
+			usb_disconnect_port(&sc->sc_port, self);
 
-	usb_rem_wait_task(sc->sc_bus->root_hub, &sc->sc_explore_task);
+		usb_rem_wait_task(sc->sc_bus->root_hub, &sc->sc_explore_task);
 
-	usbd_finish();
+		usbd_finish();
+	}
 
 	if (sc->sc_bus->soft != NULL) {
 		softintr_disestablish(sc->sc_bus->soft);
