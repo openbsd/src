@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2010/12/06 18:44:49 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2010/12/06 22:11:01 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -44,9 +44,9 @@ struct fs_ops file_system[] = {
 	  cd9660_stat, cd9660_readdir },
 #endif
 };
-int nfsys = nitems(file_system);
+int nfsys = NENTS(file_system);
 
 struct devsw	devsw[] = {
 	{ "dk", blkdevstrategy, blkdevopen, blkdevclose, noioctl },
 };
-int ndevs = nitems(devsw);
+int ndevs = NENTS(devsw);
