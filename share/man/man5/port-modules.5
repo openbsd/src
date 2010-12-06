@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.85 2010/12/06 09:44:45 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.86 2010/12/06 10:02:14 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -199,27 +199,6 @@ hook that can be activated by defining
 It will be run right before installing the package with
 .Xr pkg_add 1 .
 .El
-.Pp
-Some modules take some steps entirely over, such as
-.Ar do-build .
-They should never do so directly.
-The proper way is to define a properly named cookie, and have the behavior
-attached to the cookie, then override the target only if it isn't already
-defined.
-.Bd -literal -offset indent
-MODFOO_BUILD_COOKIE = ${WRKDIR}/.modfoo_build_done
-${MODFOO_BUILD_COOKIE}:
-	# whatever I want to do
-	touch $@
-
-\&.if !defined(do-build)
-do-build: ${MODFOO_BUILD_COOKIE}
-\&.endif
-.Ed
-.Pp
-That way, the behavior can still be used from a port that requires other
-things to happen within the target, including ports that want to use several
-conflicting modules.
 .Sh OVERRIDING VARIABLE BEHAVIOR
 Some variables can be overridden by modules.
 Be very cautious, as this can make the module difficult to use,
