@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.84 2010/12/06 09:31:55 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.85 2010/12/06 09:44:45 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -207,7 +207,7 @@ The proper way is to define a properly named cookie, and have the behavior
 attached to the cookie, then override the target only if it isn't already
 defined.
 .Bd -literal -offset indent
-MODFOO_BUILD_COOKIE = ${WRKBUILD}/.modfoo_build_done
+MODFOO_BUILD_COOKIE = ${WRKDIR}/.modfoo_build_done
 ${MODFOO_BUILD_COOKIE}:
 	# whatever I want to do
 	touch $@
