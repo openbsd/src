@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.113 2010/10/23 15:42:09 jakemsr Exp $ */
+/*	$OpenBSD: ehci.c,v 1.114 2010/12/06 06:09:08 jakemsr Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -585,6 +585,13 @@ ehci_intr1(ehci_softc_t *sc)
 	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
 	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
+	if (eintrs & EHCI_STS_HSE) {
+		printf("%s: unrecoverable error, controller halted\n",
+		       sc->sc_bus.bdev.dv_xname);
+		sc->sc_dying = 1;
+		sc->sc_bus.intr_context--;
+		return (1);
+	}
 	if (eintrs & EHCI_STS_IAA) {
 		DPRINTF(("ehci_intr1: door bell\n"));
 		wakeup(&sc->sc_async_head);
@@ -596,11 +603,6 @@ ehci_intr1(ehci_softc_t *sc)
 			    eintrs & EHCI_STS_ERRINT ? "ERRINT" : ""));
 		usb_schedsoftintr(&sc->sc_bus);
 		eintrs &= ~(EHCI_STS_INT | EHCI_STS_ERRINT);
-	}
-	if (eintrs & EHCI_STS_HSE) {
-		printf("%s: unrecoverable error, controller halted\n",
-		       sc->sc_bus.bdev.dv_xname);
-		/* XXX what else */
 	}
 	if (eintrs & EHCI_STS_PCD) {
 		ehci_pcd(sc, sc->sc_intrxfer);
@@ -654,6 +656,9 @@ ehci_softintr(void *v)
 
 	DPRINTFN(10,("%s: ehci_softintr (%d)\n", sc->sc_bus.bdev.dv_xname,
 		     sc->sc_bus.intr_context));
+
+	if (sc->sc_dying)
+		return;
 
 	sc->sc_bus.intr_context++;
 
@@ -3091,11 +3096,14 @@ void
 ehci_intrlist_timeout(void *arg)
 {
 	ehci_softc_t *sc = arg;
-	int s = splusb();
+	int s;
 
+	if (sc->sc_dying)
+		return;
+
+	s = splusb();
 	DPRINTFN(1, ("ehci_intrlist_timeout\n"));
 	usb_schedsoftintr(&sc->sc_bus);
-
 	splx(s);
 }
 

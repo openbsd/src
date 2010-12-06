@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.101 2010/10/28 16:07:33 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.102 2010/12/06 06:09:08 jakemsr Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1214,6 +1214,9 @@ ohci_rhsc_enable(void *v_sc)
 	ohci_softc_t *sc = v_sc;
 	int s;
 
+	if (sc->sc_dying)
+		return;
+
 	s = splhardusb();
 	ohci_rhsc(sc, sc->sc_intrxfer);
 	DPRINTFN(2, ("%s: rhsc interrupt enabled\n",
@@ -1293,6 +1296,9 @@ ohci_softintr(void *v)
 	int i, j, actlen, iframes, uedir;
 
 	DPRINTFN(10,("ohci_softintr: enter\n"));
+
+	if (sc->sc_dying)
+		return;
 
 	sc->sc_bus.intr_context++;
 

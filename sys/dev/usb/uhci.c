@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.87 2010/12/06 05:48:56 jakemsr Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.88 2010/12/06 06:09:08 jakemsr Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -929,6 +929,9 @@ uhci_poll_hub(void *addr)
 
 	DPRINTFN(20, ("uhci_poll_hub\n"));
 
+	if (sc->sc_dying)
+		return;
+
 	timeout_del(&sc->sc_poll_handle);
 	timeout_set(&sc->sc_poll_handle, uhci_poll_hub, xfer);
 	timeout_add(&sc->sc_poll_handle, sc->sc_ival);
@@ -1220,6 +1223,9 @@ uhci_softintr(void *v)
 
 	DPRINTFN(10,("%s: uhci_softintr (%d)\n", sc->sc_bus.bdev.dv_xname,
 		     sc->sc_bus.intr_context));
+
+	if (sc->sc_dying)
+		return;
 
 	sc->sc_bus.intr_context++;
 
