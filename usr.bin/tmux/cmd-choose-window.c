@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-window.c,v 1.14 2010/06/21 01:27:46 nicm Exp $ */
+/* $OpenBSD: cmd-choose-window.c,v 1.15 2010/12/06 22:51:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -87,6 +87,8 @@ cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 			flag = '!';
 		else if (wm->flags & WINLINK_CONTENT)
 			flag = '+';
+		else if (wm->flags & WINLINK_SILENCE)
+			flag = '~';
 		else if (wm == s->curw)
 			flag = '*';
 		else if (wm == TAILQ_FIRST(&s->lastw))

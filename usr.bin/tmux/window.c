@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.59 2010/11/14 08:58:25 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.60 2010/12/06 22:51:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -639,6 +639,14 @@ window_pane_read_callback(unused struct bufferevent *bufev, void *data)
 	input_parse(wp);
 
 	wp->pipe_off = EVBUFFER_LENGTH(wp->event->input);
+
+	/*
+	 * If we get here, we're not outputting anymore, so set the silence
+	 * flag on the window.
+	 */
+	wp->window->flags |= WINDOW_SILENCE;
+	if (gettimeofday(&wp->window->silence_timer, NULL) != 0)
+		fatal("gettimeofday failed.");
 }
 
 /* ARGSUSED */

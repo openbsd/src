@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.63 2010/06/21 01:27:46 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.64 2010/12/06 22:51:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -395,6 +395,8 @@ status_replace1(struct client *c,struct winlink *wl,
 			tmp[0] = '!';
 		else if (wl->flags & WINLINK_ACTIVITY)
 			tmp[0] = '#';
+		else if (wl->flags & WINLINK_SILENCE)
+			tmp[0] = '~';
 		else if (wl == s->curw)
 			tmp[0] = '*';
 		else if (wl == TAILQ_FIRST(&s->lastw))
