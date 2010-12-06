@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.21 2010/11/29 02:26:45 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.22 2010/12/06 22:43:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -544,8 +544,10 @@ man_PP_pre(MAN_ARGS)
 	struct roffsu	 su;
 	int		 i;
 
-	if (MAN_BLOCK != n->type)
+	if (MAN_BODY == n->type)
 		return(1);
+	if (MAN_HEAD == n->type)
+		return(0);
 
 	i = 0;
 
@@ -562,6 +564,7 @@ man_PP_pre(MAN_ARGS)
 
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, i, &tag);
+
 	return(1);
 }
 

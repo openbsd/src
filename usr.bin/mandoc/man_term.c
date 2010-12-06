@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.53 2010/11/29 02:26:45 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.54 2010/12/06 22:43:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -510,7 +510,7 @@ pre_PP(DECL_ARGS)
 		break;
 	}
 
-	return(1);
+	return(MAN_HEAD != n->type);
 }
 
 
