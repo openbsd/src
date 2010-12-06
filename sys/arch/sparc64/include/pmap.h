@@ -168,7 +168,7 @@ extern struct pmap kernel_pmap_;
 
 void pmap_bootstrap(u_long, u_long, u_int, u_int);
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
-#define PMAP_PREFER(pa, va)	(*(va) += (((*(va)) ^ (pa)) & VA_ALIAS_MASK))
+#define PMAP_PREFER(pa, va)	((va) + (((va) ^ (pa)) & VA_ALIAS_MASK))
 
 #define PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 

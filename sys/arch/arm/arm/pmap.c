@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2010/11/28 20:44:15 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2010/12/06 20:57:13 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -5025,17 +5025,16 @@ pmap_uarea(vaddr_t va)
 uint32_t pmap_alias_dist;
 uint32_t pmap_alias_bits;
 
-void
-pmap_prefer(vaddr_t foff, vaddr_t *vap)
+vaddr_t
+pmap_prefer(vaddr_t foff, vaddr_t va)
 {
-	vaddr_t va = *vap;
 	long d, m;
 
 	m = pmap_alias_dist;
 	if (m == 0)             /* m=0 => no cache aliasing */
-		return;
+		return va;
 
 	d = foff - va;
 	d &= (m - 1);
-	*vap = va + d;
+	return va + d;
 }

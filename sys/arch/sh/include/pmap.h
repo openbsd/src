@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 2010/11/18 21:21:38 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 2010/12/06 20:57:17 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ pmap_remove_all(struct pmap *pmap)
  */
 #ifdef SH4
 #define	PMAP_PREFER(pa, va)		pmap_prefer((pa), (va))
-void pmap_prefer(vaddr_t, vaddr_t *);
+vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 #endif /* SH4 */
 
 #define	__HAVE_PMAP_DIRECT

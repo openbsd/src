@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.48 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.49 2010/12/06 20:57:18 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -270,7 +270,7 @@ int             pmap_dumpmmu(int (*)(dev_t, daddr64_t, caddr_t, size_t), daddr64
 struct proc;
 void		pmap_activate(struct proc *);
 void		pmap_bootstrap(int nmmu, int nctx, int nregion);
-void		pmap_prefer(vaddr_t, vaddr_t *);
+vaddr_t		pmap_prefer(vaddr_t, vaddr_t);
 int		pmap_pa_exists(paddr_t);
 void		pmap_unwire(pmap_t, vaddr_t);
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.157 2010/07/10 19:32:25 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.158 2010/12/06 20:57:18 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6239,13 +6239,10 @@ kvm_setcache(va, npages, cached)
  * least likely to cause cache aliases.
  * (This will just seg-align mappings.)
  */
-void
-pmap_prefer(foff, vap)
-	vaddr_t foff;
-	vaddr_t *vap;
+vaddr_t
+pmap_prefer(vaddr_t foff, vaddr_t va)
 {
-	vaddr_t va = *vap;
-	long d, m;
+	vaddr_t d, m;
 
 #if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
 	if (VA_INHOLE(va))
@@ -6253,12 +6250,13 @@ pmap_prefer(foff, vap)
 #endif
 
 	m = CACHE_ALIAS_DIST;
-	if (m == 0)		/* m=0 => no cache aliasing */
-		return;
+	if (m != 0) {		/* m=0 => no cache aliasing */
+		d = foff - va;
+		d &= (m - 1);
+		va += d;
+	}
 
-	d = foff - va;
-	d &= (m - 1);
-	*vap = va + d;
+	return va;
 }
 
 void

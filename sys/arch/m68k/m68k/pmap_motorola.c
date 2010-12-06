@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.58 2010/06/29 20:30:32 guenther Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.59 2010/12/06 20:57:16 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2004,22 +2004,21 @@ pmap_is_modified(pg)
  *	Find the first virtual address >= *vap that does not
  *	cause a virtually-tagged cache alias problem.
  */
-void
-pmap_prefer(foff, vap)
-	vaddr_t foff, *vap;
+vaddr_t
+pmap_prefer(vaddr_t foff, vaddr_t va)
 {
-	vaddr_t va;
 	vsize_t d;
 
 #ifdef M68K_MMU_MOTOROLA
 	if (pmap_aliasmask)
 #endif
 	{
-		va = *vap;
 		d = foff - va;
 		d &= pmap_aliasmask;
-		*vap = va + d;
+		va += d;
 	}
+
+	return va;
 }
 #endif /* M68K_MMU_HP */
 

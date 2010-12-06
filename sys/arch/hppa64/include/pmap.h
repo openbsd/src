@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.2 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.3 2010/12/06 20:57:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -58,13 +58,15 @@ extern struct pmap kernel_pmap_store;
  * according to the parisc manual aliased va's should be
  * different by high 12 bits only.
  */
-#define	PMAP_PREFER(o,h)	do {					\
-	vaddr_t pmap_prefer_hint;					\
-	pmap_prefer_hint = (*(h) & HPPA_PGAMASK) | ((o) & HPPA_PGAOFF);	\
-	if (pmap_prefer_hint < *(h))					\
-		pmap_prefer_hint += HPPA_PGALIAS;			\
-	*(h) = pmap_prefer_hint;					\
-} while(0)
+#define	PMAP_PREFER(o,h)	pmap_prefer(o, h)
+static __inline__ vaddr_t
+pmap_prefer(vaddr_t offs, vaddr_t hint)
+{
+	vaddr_t pmap_prefer_hint = (hint & HPPA_PGAMASK) | (offs & HPPA_PGAOFF);
+	if (pmap_prefer_hint < hint)
+		pmap_prefer_hint += HPPA_PGALIAS;
+	return pmap_prefer_hint;
+}
 
 #define	PMAP_GROWKERNEL
 #define	PMAP_STEAL_MEMORY

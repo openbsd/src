@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.38 2010/11/18 21:21:36 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.39 2010/12/06 20:57:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -91,13 +91,15 @@ struct vm_page *pmap_unmap_direct(vaddr_t);
  * according to the parisc manual aliased va's should be
  * different by high 12 bits only.
  */
-#define	PMAP_PREFER(o,h)	do {					\
-	vaddr_t pmap_prefer_hint;					\
-	pmap_prefer_hint = (*(h) & HPPA_PGAMASK) | ((o) & HPPA_PGAOFF);	\
-	if (pmap_prefer_hint < *(h))					\
-		pmap_prefer_hint += HPPA_PGALIAS;			\
-	*(h) = pmap_prefer_hint;					\
-} while(0)
+#define	PMAP_PREFER(o,h)	pmap_prefer(o, h)
+static __inline__ vaddr_t
+pmap_prefer(vaddr_t offs, vaddr_t hint)
+{
+	vaddr_t pmap_prefer_hint = (hint & HPPA_PGAMASK) | (offs & HPPA_PGAOFF);
+	if (pmap_prefer_hint < hint)
+		pmap_prefer_hint += HPPA_PGALIAS;
+	return pmap_prefer_hint;
+}
 
 #define	pmap_sid2pid(s)			(((s) + 1) << 1)
 #define pmap_kernel()			(&kernel_pmap_store)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 2009/04/10 20:57:28 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 2010/12/06 20:57:18 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -597,10 +597,11 @@ pmap_release(struct pmap *pmap)
  * Returns a preferred virtual address for the given address, which
  * does not cause a VAC aliasing situation.
  */
-void
-pmap_prefer(vaddr_t foff, vaddr_t *vap)
+vaddr_t
+pmap_prefer(vaddr_t foff, vaddr_t va)
 {
 	/* XXX assume no cache aliasing yet */
+	return va;
 }
 
 /*

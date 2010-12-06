@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.128 2010/09/29 18:04:33 thib Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.129 2010/12/06 20:57:19 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1181,7 +1181,7 @@ uvm_map_spacefits(struct vm_map *map, vaddr_t *phint, vsize_t length,
 	 * we only do this if a valid offset is specified.
 	 */
 	if (uoffset != UVM_UNKNOWN_OFFSET)
-		PMAP_PREFER(uoffset, &hint);
+		hint = PMAP_PREFER(uoffset, hint);
 #endif
 	if (align != 0)
 		if ((hint & (align - 1)) != 0)
@@ -1458,7 +1458,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		 * we only do this if a valid offset is specified.
 		 */
 		if (uoffset != UVM_UNKNOWN_OFFSET)
-			PMAP_PREFER(uoffset, &hint);
+			hint = PMAP_PREFER(uoffset, hint);
 #endif
 		if (align != 0) {
 			if ((hint & (align - 1)) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.3 2010/11/18 21:21:38 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.4 2010/12/06 20:57:18 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -79,35 +79,16 @@ extern struct pmap kernel_pmap_store;
 struct proc;
 void		kvm_setcache(caddr_t, int, int);
 void		switchexit(struct proc *);		/* locore.s */
-void		pmap_activate(struct proc *);
 void		pmap_bootstrap(size_t);
 void		pmap_cache_enable(void);
 void		pmap_changeprot(pmap_t, vaddr_t, vm_prot_t, int);
-boolean_t	pmap_clear_modify(struct vm_page *);
-boolean_t	pmap_clear_reference(struct vm_page *);
-void		pmap_copy_page(struct vm_page *, struct vm_page *);
-pmap_t		pmap_create(void);
-void		pmap_destroy(pmap_t);
-int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
-boolean_t	pmap_extract(pmap_t, vaddr_t, paddr_t *);
-void		pmap_init(void);
-boolean_t	pmap_is_modified(struct vm_page *);
-boolean_t	pmap_is_referenced(struct vm_page *);
-void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
-void		pmap_kremove(vaddr_t, vsize_t);
 vaddr_t		pmap_map(vaddr_t, paddr_t, paddr_t, int);
 int		pmap_pa_exists(paddr_t);
-void		pmap_page_protect(struct vm_page *, vm_prot_t);
-void		pmap_prefer(vaddr_t, vaddr_t *);
-void		pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
-void		pmap_reference(pmap_t);
+vaddr_t		pmap_prefer(vaddr_t, vaddr_t);
 void		pmap_release(pmap_t);
 void		pmap_redzone(void);
-void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
-void		pmap_unwire(pmap_t, vaddr_t);
 void		pmap_virtual_space(vaddr_t *, vaddr_t *);
 void		pmap_writetext(unsigned char *, int);
-void		pmap_zero_page(struct vm_page *);
 
 #endif /* _KERNEL */
 

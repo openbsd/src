@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.22 2010/11/28 20:30:51 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.23 2010/12/06 20:57:17 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -131,7 +131,7 @@ extern	struct pmap *const kernel_pmap_ptr;
 void	pmap_bootstrap(void);
 int	pmap_is_page_ro( pmap_t, vaddr_t, pt_entry_t);
 void	pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
-void	pmap_prefer(vaddr_t, vaddr_t *);
+vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 void	pmap_set_modify(vm_page_t);
 void	pmap_page_cache(vm_page_t, int);
 

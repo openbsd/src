@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.13 2010/11/27 20:45:27 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.14 2010/12/06 20:57:15 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #ifndef _LOCORE
 /* pmap_prefer bits for VIPT ARMv7 */
 #define PMAP_PREFER(fo, ap)	pmap_prefer((fo), (ap))
-void	pmap_prefer(vaddr_t, vaddr_t *);
+vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 
 extern uint32_t pmap_alias_dist;
 extern uint32_t pmap_alias_bits;
