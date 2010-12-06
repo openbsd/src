@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.59 2010/11/13 04:16:42 guenther Exp $
+#	$OpenBSD: files.amd64,v 1.60 2010/12/06 20:10:17 jasper Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -225,7 +225,7 @@ include "dev/gpio/files.gpio"
 #
 # ACPI
 #
-include "../../../dev/acpi/files.acpi"
+include "dev/acpi/files.acpi"
 file	arch/amd64/amd64/acpi_machdep.c		acpi
 file	arch/amd64/amd64/acpi_wakecode.S	acpi & !small_kernel
 

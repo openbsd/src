@@ -1,4 +1,4 @@
-#	$OpenBSD: files.gumstix,v 1.1 2008/11/26 14:18:11 drahn Exp $
+#	$OpenBSD: files.gumstix,v 1.2 2010/12/06 20:10:17 jasper Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -18,8 +18,8 @@ file	arch/gumstix/gumstix/gumstix_machdep.c
 #
 # Machine-independent SCSI drivers
 #
-include "../../../scsi/files.scsi"
-include "../../../dev/atapiscsi/files.atapiscsi"
+include "scsi/files.scsi"
+include "dev/atapiscsi/files.atapiscsi"
 
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"

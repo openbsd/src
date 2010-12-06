@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.199 2010/10/14 21:23:04 pirofti Exp $
+#	$OpenBSD: files.i386,v 1.200 2010/12/06 20:10:18 jasper Exp $
 #
 # new style config file for i386 architecture
 #
@@ -59,13 +59,13 @@ include "dev/wsfont/files.wsfont"
 #
 # Media Independent Interface (mii)
 #
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers
 #
 
-include "../../../scsi/files.scsi"
+include "scsi/files.scsi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
@@ -80,8 +80,8 @@ include "dev/i2o/files.i2o"
 # Machine-independent ATAPI drivers
 #
 
-include "../../../dev/atapiscsi/files.atapiscsi"
-include "../../../dev/ata/files.ata"
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
 
 #
 # System bus types
@@ -100,7 +100,7 @@ file	arch/i386/i386/mainbus.c	mainbus
 # XXX devices to 'pci'.
 #
 
-include "../../../dev/pci/files.pci"
+include "dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c		pci
 file	arch/i386/pci/pciide_machdep.c		pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
@@ -182,7 +182,7 @@ file	dev/pci/if_hme_pci.c		hme_pci
 major	{mcd = 7}
 major	{wd = 0}
 
-include "../../../dev/isa/files.isa"
+include "dev/isa/files.isa"
 file	arch/i386/isa/isa_machdep.c	isabus
 
 # PC clock
@@ -238,14 +238,14 @@ file	arch/i386/i386/nvram.c	nvram needs-flag
 # EISA-only drivers
 #
 
-include "../../../dev/eisa/files.eisa"
+include "dev/eisa/files.eisa"
 file	arch/i386/eisa/eisa_machdep.c	eisa
 
 #
 # ISA PnP
 #
 
-include "../../../dev/isa/files.isapnp"
+include "dev/isa/files.isapnp"
 file	arch/i386/isa/isapnp_machdep.c	isapnp
 
 # Game adapter (joystick)
@@ -268,22 +268,22 @@ file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
 
 # a.out binary compatibility (COMPAT_AOUT)
-include "../../../compat/aout/files.aout"
+include "compat/aout/files.aout"
 
 # SVR4 binary compatibility (COMPAT_SVR4)
-include "../../../compat/svr4/files.svr4"
+include "compat/svr4/files.svr4"
 file	arch/i386/i386/svr4_machdep.c		compat_svr4
 
 # Linux binary compatibility (COMPAT_LINUX)
-include "../../../compat/linux/files.linux"
+include "compat/linux/files.linux"
 file	arch/i386/i386/linux_machdep.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
-include "../../../compat/freebsd/files.freebsd"
+include "compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
 # OSS audio driver compatibility
-include "../../../compat/ossaudio/files.ossaudio"
+include "compat/ossaudio/files.ossaudio"
 
 device	bios {}
 attach	bios at mainbus
@@ -418,7 +418,7 @@ include "dev/sdmmc/files.sdmmc"
 #
 include "dev/bluetooth/files.bluetooth"
 
-include "../../../dev/acpi/files.acpi"
+include "dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c		acpi
 file	arch/i386/i386/acpi_wakecode.S		acpi & !small_kernel
 

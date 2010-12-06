@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvmeppc,v 1.9 2005/03/08 20:00:23 tdeval Exp $
+#	$OpenBSD: files.mvmeppc,v 1.10 2010/12/06 20:10:18 jasper Exp $
 
 #
 # mvmeppc-specific configuration info
@@ -42,10 +42,10 @@ file	arch/mvmeppc/dev/openpic.c
 # Various things that need to be included early...
 
 # Media Independent Interface (mii)
-include	"../../../dev/mii/files.mii"
+include	"dev/mii/files.mii"
 
 # I2O
-include	"../../../dev/i2o/files.i2o"
+include	"dev/i2o/files.i2o"
 
 #
 # ISA Bus support
@@ -87,9 +87,9 @@ file	arch/mvmeppc/pci/pcib.c			pcib
 # Block Devices
 #
 
-include	"../../../scsi/files.scsi"
-#include "../../../dev/atapiscsi/files.atapiscsi"
-#include "../../../dev/ata/files.ata"
+include	"scsi/files.scsi"
+#include "dev/atapiscsi/files.atapiscsi"
+#include "dev/ata/files.ata"
 
 device	bugtty: tty
 attach	bugtty at mainbus

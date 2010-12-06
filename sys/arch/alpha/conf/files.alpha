@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.90 2010/06/30 20:38:49 tedu Exp $
+#	$OpenBSD: files.alpha,v 1.91 2010/12/06 20:10:17 jasper Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -35,7 +35,7 @@ major	{vnd = 9}
 #
 # Media Independent Interface (mii)
 #
-include	"../../../dev/mii/files.mii"
+include	"dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers
@@ -269,7 +269,7 @@ file	dev/pci/if_hme_pci.c		hme_pci
 # ISA PnP
 #
 
-include	"../../../dev/isa/files.isapnp"
+include	"dev/isa/files.isapnp"
 file	arch/alpha/isa/isapnp_machdep.c		isapnp
 
 #

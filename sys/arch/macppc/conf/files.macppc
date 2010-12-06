@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.62 2010/04/09 19:24:17 jasper Exp $
+#	$OpenBSD: files.macppc,v 1.63 2010/12/06 20:10:18 jasper Exp $
 
 #
 # macppc-specific configuration info
@@ -26,7 +26,7 @@ file	arch/macppc/macppc/db_interface.c		ddb
 #
 # Media Independent Interface (mii)
 #
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"
 
 #
 # MAC generic
@@ -56,12 +56,12 @@ major	{wd = 0}
 major	{sd = 2}
 major	{cd = 3}
 
-include "../../../scsi/files.scsi"
+include "scsi/files.scsi"
 
 #
 # I2O
 #
-include "../../../dev/i2o/files.i2o"
+include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file	arch/macppc/pci/pciide_machdep.c		pciide
@@ -102,8 +102,8 @@ file	arch/macppc/pci/pchb.c				pchb
 # Machine-independent ATAPI drivers
 #
 
-include "../../../dev/atapiscsi/files.atapiscsi"
-include "../../../dev/ata/files.ata"
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
 
 # MAC periph
 

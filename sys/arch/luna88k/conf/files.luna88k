@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.14 2007/02/09 14:26:09 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.15 2010/12/06 20:10:18 jasper Exp $
 #
 maxpartitions 16
 
@@ -48,7 +48,7 @@ include "dev/wscons/files.wscons"
 device cpu
 attach cpu at mainbus
 
-include "../../../scsi/files.scsi"
+include "scsi/files.scsi"
 
 major {sd = 4}
 major {st = 5}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.43 2009/02/13 23:26:50 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.44 2010/12/06 20:10:18 jasper Exp $
 #
 maxpartitions 16
 
@@ -37,7 +37,7 @@ device	dart: tty
 attach	dart at syscon
 file	arch/mvme88k/dev/dart.c				dart needs-count
 
-include	"../../../scsi/files.scsi"
+include	"scsi/files.scsi"
 
 major	{sd = 4}
 major	{st = 5}

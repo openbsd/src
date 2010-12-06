@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.130 2009/12/31 11:58:41 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.131 2010/12/06 20:10:18 jasper Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -84,7 +84,7 @@ include	"dev/pcmcia/files.pcmcia"
 device	zs {[channel = -1]}
 
 # Sun specific files
-include	"../../../dev/sun/files.sun"
+include	"dev/sun/files.sun"
 
 define	iommu
 define	viommu
@@ -349,7 +349,7 @@ file	arch/sparc64/dev/md_root.c	memory_disk_hooks
 #
 # Machine-independent SCSI drivers
 #
-include	"../../../scsi/files.scsi"
+include	"scsi/files.scsi"
 major	{sd = 7}
 major	{vnd = 8}
 major	{cd = 18}

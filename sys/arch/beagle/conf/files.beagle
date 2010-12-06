@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.4 2010/06/01 03:01:02 drahn Exp $
+#	$OpenBSD: files.beagle,v 1.5 2010/12/06 20:10:17 jasper Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -28,7 +28,7 @@ file	arch/arm/armv7/armv7_mutex.c
 # note that the order of the devices in _this_ file
 # affects the order that the devices will configure.
 
-include "../../../dev/sdmmc/files.sdmmc"
+include "dev/sdmmc/files.sdmmc"
 
 device prcm
 attach prcm at ahb
@@ -77,8 +77,8 @@ file arch/beagle/dev/omdisplay.c		omdisplay
 #
 # Machine-independent SCSI drivers
 #
-include "../../../scsi/files.scsi"
-include "../../../dev/atapiscsi/files.atapiscsi"
+include "scsi/files.scsi"
+include "dev/atapiscsi/files.atapiscsi"
 
 # CPU support and integrated peripherals
 file	arch/arm/arm/irq_dispatch.S
