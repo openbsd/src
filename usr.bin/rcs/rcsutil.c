@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.37 2010/10/20 19:53:53 tobias Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.38 2010/12/06 22:52:55 chl Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -28,6 +28,7 @@
  */
 
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <ctype.h>
 #include <err.h>
