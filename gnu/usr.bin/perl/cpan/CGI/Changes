@@ -1,3 +1,21 @@
+Version 3.50
+  
+  [SECURITY]
+  1. The MIME boundary in multipart_init is now random. 
+     Thanks to Byron Jones, Masahiro Yamada, Reed Loden, and  Mark Stosberg
+  2. Further improvements to handling of newlines embedded in header values. 
+     An exception is thrown if header values contain invalid newlines. 
+     Thanks to Michal Zalewski, Max Kanat-Alexander, Yanick Champoux,
+     Lincoln Stein, Frédéric Buclin and Mark Stosberg
+
+  [DOCUMENTATION]
+  1. Correcting/clarifying documentation for param_fetch(). Thanks to 
+        Renée Bäcker. (RT#59132)
+
+  [INTERNALS]
+  1. Fixing https test in http.t. (RT#54768)
+  2. Tests were added for multipart_init(). Thanks to Mark Stosberg and CGI::Simple. 
+
 Version 3.49
 
   [BUG FIXES]

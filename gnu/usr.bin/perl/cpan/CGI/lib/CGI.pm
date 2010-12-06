@@ -18,8 +18,9 @@ use Carp 'croak';
 # The most recent version and complete docs are available at:
 #   http://stein.cshl.org/WWW/software/CGI/
 
+# The revision is no longer being updated since moving to git. 
 $CGI::revision = '$Id: CGI.pm,v 1.266 2009/07/30 16:32:34 lstein Exp $';
-$CGI::VERSION='3.49';
+$CGI::VERSION='3.50';
 
 # HARD-CODED LOCATION FOR FILE UPLOAD TEMPORARY FILES.
 # UNCOMMENT THIS ONLY IF YOU KNOW WHAT YOU'RE DOING.
@@ -1457,7 +1458,14 @@ END_OF_FUNC
 sub multipart_init {
     my($self,@p) = self_or_default(@_);
     my($boundary,@other) = rearrange_header([BOUNDARY],@p);
-    $boundary = $boundary || '------- =_aaaaaaaaaa0';
+    if (!$boundary) {
+        $boundary = '------- =_';
+        my @chrs = ('0'..'9', 'A'..'Z', 'a'..'z');
+        for (1..17) {
+            $boundary .= $chrs[rand(scalar @chrs)];
+        }
+    }
+
     $self->{'separator'} = "$CRLF--$boundary$CRLF";
     $self->{'final_separator'} = "$CRLF--$boundary--$CRLF";
     $type = SERVER_PUSH($boundary);
@@ -1545,12 +1553,19 @@ sub header {
     # CR escaping for values, per RFC 822
     for my $header ($type,$status,$cookie,$target,$expires,$nph,$charset,$attachment,$p3p,@other) {
         if (defined $header) {
-            $header =~ s/
-                (?<=\n)    # For any character proceeded by a newline
-                (?=\S)     # ... that is not whitespace
-            / /xg;         # ... inject a leading space in the new line
-        }
-    }
+            # From RFC 822:
+            # Unfolding  is  accomplished  by regarding   CRLF   immediately
+            # followed  by  a  LWSP-char  as equivalent to the LWSP-char.
+            $header =~ s/$CRLF(\s)/$1/g;
+
+            # All other uses of newlines are invalid input. 
+            if ($header =~ m/$CRLF/) {
+                # shorten very long values in the diagnostic
+                $header = substr($header,0,72).'...' if (length $header > 72);
+                die "Invalid header value contains a newline not followed by whitespace: $header";
+            }
+        } 
+   }
 
     $nph     ||= $NPH;
 
@@ -1614,7 +1629,6 @@ sub header {
     return $header;
 }
 END_OF_FUNC
-
 
 #### Method: cache
 # Control whether header() will produce the no-cache
@@ -4707,9 +4721,10 @@ specialized tasks.)
    unshift @{$q->param_fetch(-name=>'address')},'George Munster';
 
 If you need access to the parameter list in a way that isn't covered
-by the methods above, you can obtain a direct reference to it by
-calling the B<param_fetch()> method with the name of the .  This
-will return an array reference to the named parameters, which you then
+by the methods given in the previous sections, you can obtain a direct 
+reference to it by
+calling the B<param_fetch()> method with the name of the parameter.  This
+will return an array reference to the named parameter, which you then
 can manipulate in any way you like.
 
 You can also use a named argument style using the B<-name> argument.

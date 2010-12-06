@@ -305,7 +305,9 @@ it internally), you can use this module independently.
 
 For full information on cookies see 
 
-	http://www.ics.uci.edu/pub/ietf/http/rfc2109.txt
+	http://tools.ietf.org/html/rfc2109
+	http://tools.ietf.org/html/rfc2965
+	http://tools.ietf.org/html/draft-ietf-httpstate-cookie
 
 =head1 USING CGI::Cookie
 
@@ -355,18 +357,19 @@ that all scripts at your site will receive the cookie.
 If the "secure" attribute is set, the cookie will only be sent to your
 script if the CGI request is occurring on a secure channel, such as SSL.
 
-=item B<4. httponly flag>
+=item B<5. httponly flag>
 
 If the "httponly" attribute is set, the cookie will only be accessible
 through HTTP Requests. This cookie will be inaccessible via JavaScript
 (to prevent XSS attacks).
 
-But, currently this feature only used and recognised by 
-MS Internet Explorer 6 Service Pack 1 and later.
+This feature is only supported by recent browsers like Internet Explorer
+6 Service Pack 1, Firefox 3.0 and Opera 9.5 (and later of course).
 
-See this URL for more information:
+See these URLs for more information:
 
-L<http://msdn.microsoft.com/en-us/library/ms533046%28VS.85%29.aspx>
+	http://msdn.microsoft.com/en-us/library/ms533046.aspx
+	http://www.owasp.org/index.php/HTTPOnly#Browsers_Supporting_HTTPOnly
 
 =back
 
