@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.9 2010/12/06 22:11:01 jasper Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.10 2010/12/06 22:51:45 jasper Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -46,12 +46,12 @@ struct fs_ops file_system[] = {
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 struct devsw devsw[] = {
 	{ "dk",	iodcstrategy, dkopen, dkclose, noioctl },
 };
-int	ndevs = NENTS(devsw);
+int	ndevs = nitems(devsw);
 
 struct consdev	constab[] = {
 	{ ite_probe, ite_init, ite_getc, ite_putc },

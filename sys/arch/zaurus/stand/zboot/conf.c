@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2010/12/06 22:11:01 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2010/12/06 22:51:46 jasper Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -27,6 +27,7 @@
  *
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <libsa.h>
@@ -52,10 +53,10 @@ void (*zaurus_probe2[])(void) = {
 };
 
 struct zaurus_boot_probes probe_list[] = {
-	{ "probing", zaurus_probe1, NENTS(zaurus_probe1) },
-	{ "disk",    zaurus_probe2, NENTS(zaurus_probe2) }
+	{ "probing", zaurus_probe1, nitems(zaurus_probe1) },
+	{ "disk",    zaurus_probe2, nitems(zaurus_probe2) }
 };
-int nibprobes = NENTS(probe_list);
+int nibprobes = nitems(probe_list);
 
 
 void (*sa_cleanup)(void) = NULL;
@@ -76,7 +77,7 @@ struct fs_ops file_system[] = {
 	  null_stat,   null_readdir   }
 #endif
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
 	{ "UNIX", unixstrategy, unixopen, unixclose, unixioctl },
@@ -84,13 +85,13 @@ struct devsw	devsw[] = {
 	{ "TFTP", tftpstrategy, tftpopen, tftpclose, tftpioctl },
 #endif
 };
-int ndevs = NENTS(devsw);
+int ndevs = nitems(devsw);
 
 #ifdef notdef
 struct netif_driver	*netif_drivers[] = {
 	NULL
 };
-int n_netif_drivers = NENTS(netif_drivers);
+int n_netif_drivers = nitems(netif_drivers);
 #endif
 
 struct consdev constab[] = {

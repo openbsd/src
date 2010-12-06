@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.49 2010/12/06 22:11:01 jasper Exp $	*/
+/*	$OpenBSD: stand.h,v 1.50 2010/12/06 22:51:46 jasper Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@ struct open_file;
 /*
  * Useful macros
  */
-#define NENTS(x)	sizeof(x)/sizeof(x[0])
 /* don't define if libkern included */
 #ifndef LIBKERN_INLINE
 #define	max(a,b)	(((a)>(b))? (a) : (b))

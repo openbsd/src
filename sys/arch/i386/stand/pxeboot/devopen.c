@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.6 2010/12/06 22:11:01 jasper Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.7 2010/12/06 22:51:46 jasper Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -45,13 +45,13 @@ const char bdevs[][4] = {
 	"wd", "", "fd", "", "sd", "st", "cd", "mcd",
 	"", "", "", "", "", "", "", "scd", "", "hd", ""
 };
-const int nbdevs = NENTS(bdevs);
+const int nbdevs = nitems(bdevs);
 
 const char cdevs[][4] = {
 	"cn", "", "", "", "", "", "", "",
 	"com", "", "", "", "pc"
 };
-const int ncdevs = NENTS(cdevs);
+const int ncdevs = nitems(cdevs);
 
 /* pass dev_t to the open routines */
 int

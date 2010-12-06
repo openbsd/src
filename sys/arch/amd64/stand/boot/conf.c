@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2010/12/06 22:11:01 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2010/12/06 22:51:45 jasper Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <libsa.h>
@@ -56,10 +57,10 @@ void (*i386_probe2[])(void) = {
 };
 
 struct i386_boot_probes probe_list[] = {
-	{ "probing", i386_probe1, NENTS(i386_probe1) },
-	{ "disk",    i386_probe2, NENTS(i386_probe2) }
+	{ "probing", i386_probe1, nitems(i386_probe1) },
+	{ "disk",    i386_probe2, nitems(i386_probe2) }
 };
-int nibprobes = NENTS(probe_list);
+int nibprobes = nitems(probe_list);
 
 
 struct fs_ops file_system[] = {
@@ -74,7 +75,7 @@ struct fs_ops file_system[] = {
 	  cd9660_stat, cd9660_readdir },
 #endif
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
 	{ "BIOS", biosstrategy, biosopen, biosclose, biosioctl },
@@ -82,7 +83,7 @@ struct devsw	devsw[] = {
 	{ "TFTP", tftpstrategy, tftpopen, tftpclose, tftpioctl },
 #endif
 };
-int ndevs = NENTS(devsw);
+int ndevs = nitems(devsw);
 
 struct consdev constab[] = {
 	{ pc_probe, pc_init, pc_getc, pc_putc },

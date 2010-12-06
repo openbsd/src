@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot1.c,v 1.4 2010/12/06 22:11:01 jasper Exp $	*/
+/*	$OpenBSD: boot1.c,v 1.5 2010/12/06 22:51:46 jasper Exp $	*/
 /*	$NetBSD: boot1.c,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -55,12 +55,12 @@ struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
 	  ufs_stat, ufs_readdir },
 };
-int nfsys = NENTS(file_system);
+int nfsys = nitems(file_system);
 
 struct devsw devsw[] = {
 	{ "dk", blkdevstrategy, blkdevopen, blkdevclose, noioctl },
 };
-int     ndevs = NENTS(devsw);
+int     ndevs = nitems(devsw);
 
 const char *
 boot1(uint32_t *sector)
