@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.5 2010/08/19 19:31:53 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.6 2010/12/07 22:12:44 deraadt Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -245,19 +245,18 @@ wrmsr(u_int msr, u_int64_t newval)
 static __inline u_int64_t
 rdmsr_locked(u_int msr, u_int code)
 {
-	uint64_t rv;
-	__asm volatile("rdmsr"
-	    : "=A" (rv)
+	uint32_t hi, lo;
+	__asm __volatile("rdmsr"
+	    : "=d" (hi), "=a" (lo)
 	    : "c" (msr), "D" (code));
-	return (rv);
+	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
 static __inline void
 wrmsr_locked(u_int msr, u_int code, u_int64_t newval)
 {
-	__asm volatile("wrmsr"
-	    :
-	    : "A" (newval), "c" (msr), "D" (code));
+	__asm __volatile("wrmsr" :
+	    : "a" (newval & 0xffffffff), "d" (newval >> 32), "c" (msr), "D" (code));
 }
 
 static __inline void
