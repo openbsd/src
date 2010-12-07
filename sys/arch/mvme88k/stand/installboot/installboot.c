@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.12 2010/11/20 13:10:42 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.13 2010/12/07 18:11:07 miod Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -397,7 +397,7 @@ char *bootproto;
 	char *specname;
 	int exe_file, f;
 	struct mvmedisklabel *pcpul;
-	struct stat stat;
+	struct stat sb;
 	unsigned int exe_addr;
 
 	pcpul = (struct mvmedisklabel *)malloc(sizeof(struct mvmedisklabel));
