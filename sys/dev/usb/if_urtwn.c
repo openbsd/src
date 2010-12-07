@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.7 2010/11/16 19:28:56 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.8 2010/12/07 17:03:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -52,7 +52,6 @@
 #include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/usb/usb.h>
