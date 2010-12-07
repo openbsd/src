@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.21 2010/11/28 19:35:33 schwarze Exp $ */
+/*	$Id: roff.c,v 1.22 2010/12/07 00:08:52 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -633,6 +633,12 @@ roff_block(ROFF_ARGS)
 			(*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL);
 			return(ROFF_IGN);
 		}
+
+		/*
+		 * Re-write `de1', since we don't really care about
+		 * groff's strange compatibility mode, into `de'.
+		 */
+
 		if (ROFF_de1 == tok)
 			tok = ROFF_de;
 		if (ROFF_de == tok)
@@ -640,8 +646,10 @@ roff_block(ROFF_ARGS)
 		else
 			(*r->msg)(MANDOCERR_REQUEST, r->data, ln, ppos,
 			    roffs[tok].name);
+
 		while ((*bufp)[pos] && ' ' != (*bufp)[pos])
 			pos++;
+
 		while (' ' == (*bufp)[pos])
 			(*bufp)[pos++] = '\0';
 	}
@@ -653,14 +661,18 @@ roff_block(ROFF_ARGS)
 	 * with the same name, if there is one.  New content will be
 	 * added from roff_block_text() in multiline mode.
 	 */
+
 	if (ROFF_de == tok)
 		roff_setstr(r, name, "", 0);
 
 	if ('\0' == (*bufp)[pos])
 		return(ROFF_IGN);
 
+	/* If present, process the custom end-of-line marker. */
+
 	sv = pos;
-	while ((*bufp)[pos] && ' ' != (*bufp)[pos] && 
+	while ((*bufp)[pos] &&
+			' ' != (*bufp)[pos] && 
 			'\t' != (*bufp)[pos])
 		pos++;
 
@@ -682,8 +694,7 @@ roff_block(ROFF_ARGS)
 	r->last->end[(int)sz] = '\0';
 
 	if ((*bufp)[pos])
-		if ( ! (*r->msg)(MANDOCERR_ARGSLOST, r->data, ln, pos, NULL))
-			return(ROFF_ERR);
+		(*r->msg)(MANDOCERR_ARGSLOST, r->data, ln, pos, NULL);
 
 	return(ROFF_IGN);
 }
@@ -858,7 +869,6 @@ roff_evalcond(const char *v, int *pos)
 	return(ROFFRULE_DENY);
 }
 
-
 /* ARGSUSED */
 static enum rofferr
 roff_line_ignore(ROFF_ARGS)
@@ -866,7 +876,6 @@ roff_line_ignore(ROFF_ARGS)
 
 	return(ROFF_IGN);
 }
-
 
 /* ARGSUSED */
 static enum rofferr
@@ -876,7 +885,6 @@ roff_line_error(ROFF_ARGS)
 	(*r->msg)(MANDOCERR_REQUEST, r->data, ln, ppos, roffs[tok].name);
 	return(ROFF_IGN);
 }
-
 
 /* ARGSUSED */
 static enum rofferr
@@ -919,9 +927,8 @@ roff_cond(ROFF_ARGS)
 	 */
 
 	if ('\0' == (*bufp)[pos] && sv != pos) {
-		if ((*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL))
-			return(ROFF_IGN);
-		return(ROFF_ERR);
+		(*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL);
+		return(ROFF_IGN);
 	}
 
 	roffnode_push(r, tok, NULL, ln, ppos);
@@ -1054,7 +1061,6 @@ roff_nr(ROFF_ARGS)
 	return(ROFF_IGN);
 }
 
-
 /* ARGSUSED */
 static enum rofferr
 roff_so(ROFF_ARGS)
@@ -1062,6 +1068,13 @@ roff_so(ROFF_ARGS)
 	char *name;
 
 	(*r->msg)(MANDOCERR_SO, r->data, ln, ppos, NULL);
+
+	/*
+	 * Handle `so'.  Be EXTREMELY careful, as we shouldn't be
+	 * opening anything that's not in our cwd or anything beneath
+	 * it.  Thus, explicitly disallow traversing up the file-system
+	 * or using absolute paths.
+	 */
 
 	name = *bufp + pos;
 	if ('/' == *name || strstr(name, "../") || strstr(name, "/..")) {
@@ -1072,7 +1085,6 @@ roff_so(ROFF_ARGS)
 	*offs = pos;
 	return(ROFF_SO);
 }
-
 
 /* ARGSUSED */
 static enum rofferr

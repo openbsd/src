@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.35 2010/12/06 23:03:56 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.36 2010/12/07 00:08:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "mandoc.h"
 #include "libman.h"
@@ -44,10 +45,10 @@ struct	man_valid {
 
 static	int	  check_bline(CHKARGS);
 static	int	  check_eq0(CHKARGS);
+static	int	  check_ft(CHKARGS);
 static	int	  check_le1(CHKARGS);
 static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
-static	int	  check_ft(CHKARGS);
 static	int	  check_par(CHKARGS);
 static	int	  check_part(CHKARGS);
 static	int	  check_root(CHKARGS);
@@ -66,8 +67,8 @@ static	v_check	  posts_at[] = { post_AT, NULL };
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
 static	v_check	  posts_fi[] = { check_eq0, post_fi, NULL };
 static	v_check	  posts_le1[] = { check_le1, NULL };
-static	v_check	  posts_nf[] = { check_eq0, post_nf, NULL };
 static	v_check	  posts_ft[] = { check_ft, NULL };
+static	v_check	  posts_nf[] = { check_eq0, post_nf, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
@@ -275,7 +276,6 @@ INEQ_DEFINE(1, <=, le1)
 INEQ_DEFINE(2, >=, ge2)
 INEQ_DEFINE(5, <=, le5)
 
-
 static int
 check_ft(CHKARGS)
 {
@@ -317,17 +317,17 @@ check_ft(CHKARGS)
 	}
 
 	if (0 == ok) {
-		man_vmsg(m, MANDOCERR_BADFONT, n->line, n->pos, "%s", cp);
+		man_vmsg(m, MANDOCERR_BADFONT,
+				n->line, n->pos, "%s", cp);
 		*cp = '\0';
 	}
 
 	if (1 < n->nchild)
 		man_vmsg(m, MANDOCERR_ARGCOUNT, n->line, n->pos,
-		    "want one child (have %d)", n->nchild);
+				"want one child (have %d)", n->nchild);
 
 	return(1);
 }
-
 
 static int
 check_sec(CHKARGS)
@@ -349,6 +349,56 @@ check_part(CHKARGS)
 
 	if (MAN_BODY == n->type && 0 == n->nchild)
 		man_nmsg(m, n, MANDOCERR_NOBODY);
+
+	return(1);
+}
+
+
+static int
+check_par(CHKARGS)
+{
+
+	if (MAN_BODY == n->type) 
+		switch (n->tok) {
+		case (MAN_IP):
+			/* FALLTHROUGH */
+		case (MAN_HP):
+			/* FALLTHROUGH */
+		case (MAN_TP):
+			/* Body-less lists are ok. */
+			break;
+		default:
+			if (0 == n->nchild)
+				man_nmsg(m, n, MANDOCERR_NOBODY);
+			break;
+		}
+	if (MAN_HEAD == n->type)
+		switch (n->tok) {
+		case (MAN_PP):
+			/* FALLTHROUGH */
+		case (MAN_P):
+			/* FALLTHROUGH */
+		case (MAN_LP):
+			if (n->nchild)
+				man_nmsg(m, n, MANDOCERR_ARGSLOST);
+			break;
+		default:
+			break;
+		}
+
+	return(1);
+}
+
+
+static int
+check_bline(CHKARGS)
+{
+
+	assert( ! (MAN_ELINE & m->flags));
+	if (MAN_BLINE & m->flags) {
+		man_nmsg(m, n, MANDOCERR_SYNTLINESCOPE);
+		return(0);
+	}
 
 	return(1);
 }
@@ -534,53 +584,3 @@ post_TS(CHKARGS)
 
 	return(1);
 }
-
-static int
-check_par(CHKARGS)
-{
-
-	if (MAN_BODY == n->type) 
-		switch (n->tok) {
-		case (MAN_IP):
-			/* FALLTHROUGH */
-		case (MAN_HP):
-			/* FALLTHROUGH */
-		case (MAN_TP):
-			/* Body-less lists are ok. */
-			break;
-		default:
-			if (0 == n->nchild)
-				man_nmsg(m, n, MANDOCERR_NOBODY);
-			break;
-		}
-	if (MAN_HEAD == n->type)
-		switch (n->tok) {
-		case (MAN_PP):
-			/* FALLTHROUGH */
-		case (MAN_P):
-			/* FALLTHROUGH */
-		case (MAN_LP):
-			if (n->nchild)
-				man_nmsg(m, n, MANDOCERR_ARGSLOST);
-			break;
-		default:
-			break;
-		}
-
-	return(1);
-}
-
-
-static int
-check_bline(CHKARGS)
-{
-
-	assert( ! (MAN_ELINE & m->flags));
-	if (MAN_BLINE & m->flags) {
-		man_nmsg(m, n, MANDOCERR_SYNTLINESCOPE);
-		return(0);
-	}
-
-	return(1);
-}
-

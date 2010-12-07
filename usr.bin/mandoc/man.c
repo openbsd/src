@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.48 2010/12/01 23:02:59 schwarze Exp $ */
+/*	$Id: man.c,v 1.49 2010/12/07 00:08:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -517,12 +517,13 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 		n = m->last;
 		assert(MAN_TEXT != n->type);
 
-		/* .B .br .br .B: remove prior including children */
+		/* Remove repeated NSCOPED macros causing ELINE. */
+
 		if (MAN_NSCOPED & man_macros[n->tok].flags)
 			n = n->parent;
 
 		man_vmsg(m, MANDOCERR_LINESCOPE, n->line, n->pos,
-		    "%s", man_macronames[n->tok]);
+				"%s", man_macronames[n->tok]);
 
 		man_node_delete(m, n);
 		m->flags &= ~MAN_ELINE;

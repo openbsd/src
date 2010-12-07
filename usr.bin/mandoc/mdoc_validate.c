@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.76 2010/12/01 22:02:29 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.77 2010/12/07 00:08:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -2121,7 +2121,8 @@ post_os(POST_ARGS)
 	 * of filling in "sysname release" from uname().
  	 */
 
-	free(mdoc->meta.os);
+	if (mdoc->meta.os)
+		free(mdoc->meta.os);
 
 	if ( ! concat(mdoc, buf, n->child, BUFSIZ))
 		return(0);
@@ -2190,7 +2191,6 @@ post_std(POST_ARGS)
 	mdoc->last = nn;
 	return(1);
 }
-
 
 static int
 concat(struct mdoc *m, char *p, const struct mdoc_node *n, size_t sz)
