@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.32 2010/09/21 22:49:14 sthen Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.33 2010/12/07 11:39:40 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -347,7 +347,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 
 	if ((pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
 	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
-	    pfloghdr->dir, mfake))) {
+	    pfloghdr->dir))) {
 		m_copyback(mfake, off, min(mfake->m_len - off, hdrlen),
 		    pd.hdr.any, M_NOWAIT);
 		PF_ACPY(&pfloghdr->saddr, &osaddr, pd.af);
