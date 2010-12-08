@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.86 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.87 2010/12/08 20:22:49 miod Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -878,9 +878,8 @@ pccbb_checksockstat(struct pccbb_softc *sc)
 	if ((sockstate & CB_SOCKET_STAT_CD) != 0) {
 		/* A card should be removed. */
 		if (sc->sc_flags & CBB_CARDEXIST) {
-			DPRINTF(("%s: 0x%08x", sc->sc_dev.dv_xname,
-			    sockevent));
-			DPRINTF((" card removed, 0x%08x\n", sockstate));
+			DPRINTF(("%s: card removed, 0x%08x\n",
+			    sc->sc_dev.dv_xname, sockstate));
 			sc->sc_flags &= ~CBB_CARDEXIST;
 			if (sc->sc_csc->sc_status & CARDSLOT_STATUS_CARD_16) {
 #if 0
