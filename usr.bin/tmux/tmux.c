@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.95 2010/12/06 22:51:02 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.96 2010/12/08 19:57:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -396,7 +396,7 @@ main(int argc, char **argv)
 	options_set_number(wo, "force-height", 0);
 	options_set_number(wo, "force-width", 0);
 	options_set_number(wo, "main-pane-height", 24);
-	options_set_number(wo, "main-pane-width", 81);
+	options_set_number(wo, "main-pane-width", 80);
 	options_set_number(wo, "mode-attr", 0);
 	options_set_number(wo, "mode-bg", 3);
 	options_set_number(wo, "mode-fg", 0);
