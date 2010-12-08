@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.45 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.46 2010/12/08 21:57:47 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -594,7 +594,7 @@ osiop_scsidone(acb, status)
 
 #ifdef DIAGNOSTIC
 	if (acb == NULL || acb->xs == NULL) {
-		printf("osiop_scsidone: NULL acb or scsi_xfer\n");
+		printf("osiop_scsidone: NULL acb %p or scsi_xfer\n", acb);
 #if defined(OSIOP_DEBUG) && defined(DDB)
 		Debugger();
 #endif
@@ -709,6 +709,9 @@ osiop_scsidone(acb, status)
 		/* Put it on the free list. */
 FREE:
 		acb->status = ACB_S_FREE;
+#ifdef DIAGNOSTIC
+		acb->xs = NULL;
+#endif
 		sc->sc_tinfo[periph->target].cmds++;
 
 		xs->resid = 0;
