@@ -1,0 +1,12 @@
+STRING-INFINITE(1)                                          STRING-INFINITE(1)
+
+
+
+NNAAMMEE
+       string-infinite - endless recursion in string expansion
+
+DDEESSCCRRIIPPTTIIOONN
+       Blow up, but still render following text correctly.
+
+
+

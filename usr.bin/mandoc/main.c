@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.60 2010/12/02 20:40:43 schwarze Exp $ */
+/*	$Id: main.c,v 1.61 2010/12/09 23:01:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,6 +34,7 @@
 #include "man.h"
 #include "roff.h"
 
+#define	REPARSE_LIMIT	1000
 #define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
 typedef	void		(*out_mdoc)(void *, const struct mdoc *);
@@ -74,6 +75,7 @@ struct	curparse {
 	struct mdoc	 *mdoc;		/* mdoc parser */
 	struct roff	 *roff;		/* roff parser (!NULL) */
 	struct regset	  regs;		/* roff registers */
+	int		  reparse_count; /* finite interpolation stack */
 	enum outt	  outtype; 	/* which output to use */
 	out_mdoc	  outmdoc;	/* mdoc output ptr */
 	out_man	  	  outman;	/* man output ptr */
@@ -162,6 +164,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 
 	"generic error",
 
+	"input stack limit exceeded, infinite loop?",
 	"skipping bad character",
 	"skipping text before the first section header",
 	"skipping unknown macro",
@@ -651,8 +654,10 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 		if (0 == pos && '\0' == blk.buf[i])
 			break;
 
-		if (start)
+		if (start) {
 			curp->line = lnn;
+			curp->reparse_count = 0;
+		}
 
 		while (i < (int)blk.sz && (start || '\0' != blk.buf[i])) {
 			if ('\n' == blk.buf[i]) {
@@ -751,7 +756,11 @@ rerun:
 
 		switch (rr) {
 		case (ROFF_REPARSE):
-			parsebuf(curp, ln, 0);
+			if (REPARSE_LIMIT >= ++curp->reparse_count)
+				parsebuf(curp, ln, 0);
+			else
+				mmsg(MANDOCERR_ROFFLOOP, curp, 
+				    curp->line, pos, NULL);
 			pos = 0;
 			continue;
 		case (ROFF_APPEND):
