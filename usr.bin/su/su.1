@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.25 2010/12/09 15:45:30 millert Exp $
+.\"	$OpenBSD: su.1,v 1.26 2010/12/09 22:34:04 sobrado Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,11 +37,13 @@
 .Nd substitute user identity
 .Sh SYNOPSIS
 .Nm su
+.Bk -words
 .Op Fl fKLlm
 .Op Fl a Ar auth-type
 .Op Fl c Ar login-class
 .Op Fl s Ar login-shell
 .Op Ar login Op Ar "shell arguments"
+.Ek
 .Sh DESCRIPTION
 .Nm
 requests the Kerberos password for
