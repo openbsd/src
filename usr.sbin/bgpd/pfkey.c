@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.40 2009/12/14 17:38:18 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.41 2010/12/09 13:50:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -402,6 +402,33 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 }
 
 int
+pfkey_read(int sd, struct sadb_msg *h)
+{
+	struct sadb_msg hdr;
+
+	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
+		log_warn("pfkey peek");
+		return (-1);
+	}
+
+	/* XXX: Only one message can be outstanding. */
+	if (hdr.sadb_msg_seq == sadb_msg_seq &&
+	    hdr.sadb_msg_pid == pid) {
+		if (h)
+			bcopy(&hdr, h, sizeof(hdr));
+		return (0);
+	}
+
+	/* not ours, discard */
+	if (read(sd, &hdr, sizeof(hdr)) == -1) {
+		log_warn("pfkey read");
+		return (-1);
+	}
+
+	return (1);
+}
+
+int
 pfkey_reply(int sd, u_int32_t *spip)
 {
 	struct sadb_msg hdr, *msg;
@@ -409,23 +436,13 @@ pfkey_reply(int sd, u_int32_t *spip)
 	struct sadb_sa *sa;
 	u_int8_t *data;
 	ssize_t len;
+	int rv;
 
-	for (;;) {
-		if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
-			log_warn("pfkey peek");
+	do {
+		rv = pfkey_read(sd, &hdr);
+		if (rv == -1)
 			return (-1);
-		}
-
-		if (hdr.sadb_msg_seq == sadb_msg_seq &&
-		    hdr.sadb_msg_pid == pid)
-			break;
-
-		/* not ours, discard */
-		if (read(sd, &hdr, sizeof(hdr)) == -1) {
-			log_warn("pfkey read");
-			return (-1);
-		}
-	}
+	} while (rv);
 
 	if (hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
@@ -721,11 +738,9 @@ pfkey_init(struct bgpd_sysdep *sysdep)
 		if (errno == EPROTONOSUPPORT) {
 			log_warnx("PF_KEY not available, disabling ipsec");
 			sysdep->no_pfkey = 1;
-			return (0);
-		} else {
-			log_warn("PF_KEY socket");
 			return (-1);
-		}
+		} else
+			fatal("pfkey setup failed");
 	}
-	return (0);
+	return (fd);
 }

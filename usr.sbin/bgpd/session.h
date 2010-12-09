@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.110 2010/11/18 12:51:25 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.111 2010/12/09 13:50:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -273,6 +273,7 @@ int	control_dispatch_msg(struct pollfd *, u_int *);
 unsigned int	control_accept(int, int);
 
 /* pfkey.c */
+int	pfkey_read(int, struct sadb_msg *);
 int	pfkey_establish(struct peer *);
 int	pfkey_remove(struct peer *);
 int	pfkey_init(struct bgpd_sysdep *);

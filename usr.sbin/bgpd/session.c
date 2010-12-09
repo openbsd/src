@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.314 2010/11/18 12:51:24 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.315 2010/12/09 13:50:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -50,7 +50,8 @@
 #define PFD_PIPE_ROUTE_CTL	2
 #define PFD_SOCK_CTL		3
 #define PFD_SOCK_RCTL		4
-#define PFD_LISTENERS_START	5
+#define PFD_SOCK_PFKEY		5
+#define PFD_LISTENERS_START	6
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
@@ -177,7 +178,7 @@ pid_t
 session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
     int pipe_s2rctl[2])
 {
-	int			 nfds, timeout;
+	int			 nfds, timeout, pfkeysock;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
 	pid_t			 pid;
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
@@ -213,8 +214,7 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
-	if (pfkey_init(&sysdep) == -1)
-		fatalx("pfkey setup failed");
+	pfkeysock = pfkey_init(&sysdep);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -376,6 +376,8 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		pfd[PFD_SOCK_CTL].events = POLLIN;
 		pfd[PFD_SOCK_RCTL].fd = rcsock;
 		pfd[PFD_SOCK_RCTL].events = POLLIN;
+		pfd[PFD_SOCK_PFKEY].fd = pfkeysock;
+		pfd[PFD_SOCK_PFKEY].events = POLLIN;
 
 		i = PFD_LISTENERS_START;
 		TAILQ_FOREACH(la, conf->listen_addrs, entry) {
@@ -507,6 +509,14 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		if (nfds > 0 && pfd[PFD_SOCK_RCTL].revents & POLLIN) {
 			nfds--;
 			ctl_cnt += control_accept(rcsock, 1);
+		}
+
+		if (nfds > 0 && pfd[PFD_SOCK_PFKEY].revents & POLLIN) {
+			nfds--;
+			if (pfkey_read(pfkeysock, NULL) == -1) {
+				log_warnx("pfkey_read failed, exiting...");
+				session_quit = 1;
+			}
 		}
 
 		for (j = PFD_LISTENERS_START; nfds > 0 && j < idx_listeners;
