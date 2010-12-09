@@ -6,10 +6,6 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.8/2.95.3/include
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.8/2.95.3/specs
-./usr/lib/libformw.so.5.0
-./usr/lib/libmenuw.so.5.0
-./usr/lib/libncursesw.so.12.0
-./usr/lib/libpanelw.so.5.0
 ./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/.packlist
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/B
@@ -479,9 +475,8 @@
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/Unicode/Normalize/Normalize.a
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/Unicode/Normalize/extralibs.ld
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/attributes
-./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/attributes/attributes.so
-./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/attrs/attrs.a
-./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/attrs/extralibs.ld
+./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/attributes/attributes.a
+./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/attributes/extralibs.ld
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/mro
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/mro/extralibs.ld
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/mro/mro.a
