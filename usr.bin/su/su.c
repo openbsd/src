@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.60 2010/12/09 15:50:55 sobrado Exp $	*/
+/*	$OpenBSD: su.c,v 1.61 2010/12/09 16:02:42 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -431,7 +431,9 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-fKLlm] [-a auth-type] [-c login-class] "
-	    "[-s login-shell] [login [shell arguments]]\n", __progname);
+	    "[-s login-shell]\n"
+	    "%-*s[login [shell arguments]]\n", __progname,
+	    (int)strlen(__progname) +8, "");
 	exit(1);
 }
 
