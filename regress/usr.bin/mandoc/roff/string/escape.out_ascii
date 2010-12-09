@@ -1,0 +1,30 @@
+STRING-ESCAPE(1)                                              STRING-ESCAPE(1)
+
+
+
+NNAAMMEE
+       string-escape - preventing string interpolation
+
+DDEESSCCRRIIPPTTIIOONN
+   NNoorrmmaall iinntteerrppoollaattiioonn
+       result: *[right]
+
+       The above line must be "result: *[right]".
+
+   IInntteerrvveenniinngg cchhaarraacctteerr
+       result: \*[right]
+
+       The above line must be "result: backslash*[right]", not "result: rong".
+
+   EEssccaappeedd bbaacckkssllaasshh
+       result: \*[right]
+
+       The above line must be "result: backslash*[right]", not "result: rong".
+
+   DDeellaayyeedd iinntteerrppoollaattiioonn
+       result: *[right]
+
+       The above line must be "result: *[right]", not "result: wrong".
+
+
+

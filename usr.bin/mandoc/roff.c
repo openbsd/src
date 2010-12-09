@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.22 2010/12/07 00:08:52 schwarze Exp $ */
+/*	$Id: roff.c,v 1.23 2010/12/09 20:56:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -337,15 +337,43 @@ roff_alloc(struct regset *regs, void *data, const mandocmsg msg)
 static int
 roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 {
-	const char	*cp, *cpp, *st, *res;
+	const char	*stesc;	/* start of an escape sequence ('\\') */
+	const char	*stnam;	/* start of the name, after "[(*" */
+	const char	*cp;	/* end of the name, e.g. before ']' */
+	const char	*res;	/* the string to be substituted */
 	int		 i, maxl;
 	size_t		 nsz;
 	char		*n;
 
-	/* LINTED */
-	for (cp = &(*bufp)[pos]; (cpp = strstr(cp, "\\*")); cp++) {
-		cp = cpp + 2;
-		switch (*cp) {
+	/* String escape sequences have at least three characters. */
+
+	for (cp = *bufp + pos; cp[0] && cp[1] && cp[2]; cp++) {
+
+		/*
+		 * The first character must be a backslash.
+		 * Save a pointer to it.
+		 */
+
+		if ('\\' != *cp)
+			continue;
+		stesc = cp;
+
+		/*
+		 * The second character must be an asterisk.
+		 * If it isn't, skip it anyway:  It is escaped,
+		 * so it can't start another escape sequence.
+		 */
+
+		if ('*' != *(++cp))
+			continue;
+
+		/*
+		 * The third character decides the length
+		 * of the name of the string.
+		 * Save a pointer to the name.
+		 */
+
+		switch (*(++cp)) {
 		case ('('):
 			cp++;
 			maxl = 2;
@@ -358,8 +386,9 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 			maxl = 1;
 			break;
 		}
+		stnam = cp;
 
-		st = cp;
+		/* Advance to the end of the name. */
 
 		for (i = 0; 0 == maxl || i < maxl; i++, cp++) {
 			if ('\0' == *cp)
@@ -368,19 +397,24 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 				break;
 		}
 
-		res = roff_getstrn(r, st, (size_t)i);
+		/*
+		 * Retrieve the replacement string; if it is
+		 * undefined, resume searching for escapes.
+		 */
+
+		res = roff_getstrn(r, stnam, (size_t)i);
 
 		if (NULL == res) {
 			cp -= maxl ? 1 : 0;
 			continue;
 		}
 
+		/* Replace the escape sequence by the string. */
+
 		nsz = *szp + strlen(res) + 1;
 		n = mandoc_malloc(nsz);
 
-		*n = '\0';
-
-		strlcat(n, *bufp, (size_t)(cpp - *bufp + 1));
+		strlcpy(n, *bufp, (size_t)(stesc - *bufp + 1));
 		strlcat(n, res, nsz);
 		strlcat(n, cp + (maxl ? 0 : 1), nsz);
 
@@ -544,6 +578,7 @@ roff_cblock(ROFF_ARGS)
 	case (ROFF_am1):
 		/* FALLTHROUGH */
 	case (ROFF_de):
+		/* ROFF_de1 is remapped to ROFF_de in roff_block(). */
 		/* FALLTHROUGH */
 	case (ROFF_dei):
 		/* FALLTHROUGH */

@@ -1,0 +1,26 @@
+.TH STRING-ESCAPE 1 "December 3, 2010"
+.SH NAME
+string-escape - preventing string interpolation
+.SH DESCRIPTION
+.ds right wrong
+.ds inner *[right]
+.ds outer \\*[inner]
+.SS Normal interpolation
+result: \*[inner]
+.PP
+The above line must be "result: *[right]".
+.SS Intervening character
+result: \e*[right]
+.PP
+The above line must be "result: backslash*[right]",
+not "result: rong".
+.SS Escaped backslash
+result: \\*[right]
+.PP
+The above line must be "result: backslash*[right]",
+not "result: rong".
+.SS Delayed interpolation
+result: \*[outer]
+.PP
+The above line must be "result: *[right]",
+not "result: wrong".

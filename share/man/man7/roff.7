@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.5 2010/11/30 22:40:13 jmc Exp $
+.\"	$OpenBSD: roff.7,v 1.6 2010/12/09 20:56:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2010 $
+.Dd $Mdocdate: December 9 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -269,6 +269,9 @@ for a
 of arbitrary length, or \e*(NN or \e*N if the length of
 .Ar name
 is two or one characters, respectively.
+Interpolation can be prevented by escaping the leading backslash;
+that is, an asterisk preceded by an even number of backslashes
+does not trigger string interpolation.
 .Pp
 Since user-defined strings and macros share a common string table,
 defining a string
