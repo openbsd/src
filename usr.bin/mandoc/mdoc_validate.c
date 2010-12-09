@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.77 2010/12/07 00:08:52 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.78 2010/12/09 21:29:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -212,7 +212,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_defaults },		/* Li */
 	{ NULL, posts_nd },			/* Nd */
 	{ NULL, posts_nm },			/* Nm */
-	{ NULL, posts_wline },			/* Op */
+	{ NULL, NULL },				/* Op */
 	{ NULL, NULL },				/* Ot */
 	{ NULL, posts_defaults },		/* Pa */
 	{ pres_std, posts_std },		/* Rv */
@@ -233,18 +233,18 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* %V */
 	{ NULL, NULL },				/* Ac */
 	{ NULL, NULL },				/* Ao */
-	{ NULL, posts_wline },			/* Aq */
+	{ NULL, NULL },				/* Aq */
 	{ NULL, posts_at },			/* At */ 
 	{ NULL, NULL },				/* Bc */
 	{ NULL, posts_bf },			/* Bf */
 	{ NULL, NULL },				/* Bo */
-	{ NULL, posts_wline },			/* Bq */
+	{ NULL, NULL },				/* Bq */
 	{ NULL, NULL },				/* Bsx */
 	{ NULL, NULL },				/* Bx */
 	{ NULL, posts_bool },			/* Db */
 	{ NULL, NULL },				/* Dc */
 	{ NULL, NULL },				/* Do */
-	{ NULL, posts_wline },			/* Dq */
+	{ NULL, NULL },				/* Dq */
 	{ NULL, NULL },				/* Ec */
 	{ NULL, NULL },				/* Ef */ 
 	{ NULL, NULL },				/* Em */ 
@@ -258,16 +258,16 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Pc */
 	{ NULL, posts_text1 },			/* Pf */
 	{ NULL, NULL },				/* Po */
-	{ NULL, posts_wline },			/* Pq */
+	{ NULL, NULL },				/* Pq */
 	{ NULL, NULL },				/* Qc */
-	{ NULL, posts_wline },			/* Ql */
+	{ NULL, NULL },				/* Ql */
 	{ NULL, NULL },				/* Qo */
-	{ NULL, posts_wline },			/* Qq */
+	{ NULL, NULL },				/* Qq */
 	{ NULL, NULL },				/* Re */
 	{ NULL, posts_rs },			/* Rs */
 	{ NULL, NULL },				/* Sc */
 	{ NULL, NULL },				/* So */
-	{ NULL, posts_wline },			/* Sq */
+	{ NULL, NULL },				/* Sq */
 	{ NULL, posts_bool },			/* Sm */ 
 	{ NULL, posts_text },			/* Sx */
 	{ NULL, posts_text },			/* Sy */
@@ -289,7 +289,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_notext },			/* Lp */ 
 	{ NULL, posts_text },			/* Lk */ 
 	{ NULL, posts_defaults },		/* Mt */ 
-	{ NULL, posts_wline },			/* Brq */ 
+	{ NULL, NULL },				/* Brq */ 
 	{ NULL, NULL },				/* Bro */ 
 	{ NULL, NULL },				/* Brc */ 
 	{ NULL, posts_text },			/* %C */
