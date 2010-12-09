@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.58 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.59 2010/12/09 15:45:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -61,6 +61,7 @@ int
 main(int argc, char **argv)
 {
 	int asme = 0, asthem = 0, ch, fastlogin = 0, emlogin = 0, prio;
+	int altshell = 0;
 	char *user, *shell = NULL, *avshell, *username, **np;
 	char *class = NULL, *style = NULL, *p;
 	enum { UNSET, YES, NO } iscsh = UNSET;
@@ -72,7 +73,7 @@ main(int argc, char **argv)
 	uid_t ruid;
 	u_int flags;
 
-	while ((ch = getopt(argc, argv, "a:c:fKLlm-")) != -1)
+	while ((ch = getopt(argc, argv, "a:c:fKLlms:-")) != -1)
 		switch (ch) {
 		case 'a':
 			if (style)
@@ -104,6 +105,10 @@ main(int argc, char **argv)
 			asme = 1;
 			asthem = 0;
 			break;
+		case 's':
+			altshell = 1;
+			shell = optarg;
+			break;
 		default:
 			usage();
 		}
@@ -129,6 +134,9 @@ main(int argc, char **argv)
 	if (ruid && class)
 		auth_errx(as, 1, "only the superuser may specify a login class");
 
+	if (ruid && altshell)
+		auth_errx(as, 1, "only the superuser may specify a login shell");
+
 	if (username != NULL)
 		auth_setoption(as, "invokinguser", username);
 
@@ -139,7 +147,7 @@ main(int argc, char **argv)
 		auth_errx(as, 1, "who are you?");
 	if ((username = strdup(pwd->pw_name)) == NULL)
 		auth_errx(as, 1, "can't allocate memory");
-	if (asme) {
+	if (asme && !altshell) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
 			if ((shell = strdup(pwd->pw_shell)) == NULL)
 				auth_errx(as, 1, "can't allocate memory");
@@ -204,17 +212,19 @@ main(int argc, char **argv)
 		fprintf(stderr, "Login incorrect\n");
 	}
 
-	if (asme) {
-		/* if asme and non-standard target shell, must be root */
-		if (!chshell(pwd->pw_shell) && ruid)
-			auth_errx(as, 1, "permission denied (shell).");
-	} else if (pwd->pw_shell && *pwd->pw_shell) {
-		if ((shell = strdup(pwd->pw_shell)) == NULL)
-			auth_errx(as, 1, "can't allocate memory");
-		iscsh = UNSET;
-	} else {
-		shell = _PATH_BSHELL;
-		iscsh = NO;
+	if (!altshell) {
+		if (asme) {
+			/* if asme and non-std target shell, must be root */
+			if (ruid && !chshell(shell))
+				auth_errx(as, 1, "permission denied (shell).");
+		} else if (pwd->pw_shell && *pwd->pw_shell) {
+			if ((shell = strdup(pwd->pw_shell)) == NULL)
+				auth_errx(as, 1, "can't allocate memory");
+			iscsh = UNSET;
+		} else {
+			shell = _PATH_BSHELL;
+			iscsh = NO;
+		}
 	}
 
 	if ((p = strrchr(shell, '/')))
@@ -254,6 +264,9 @@ main(int argc, char **argv)
 		}
 		if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
 		    setenv("SHELL", shell, 1) == -1)
+			auth_err(as, 1, "unable to set environment");
+	} else if (altshell) {
+		if (setenv("SHELL", shell, 1) == -1)
 			auth_err(as, 1, "unable to set environment");
 	}
 

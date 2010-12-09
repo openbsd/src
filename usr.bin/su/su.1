@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.24 2007/05/31 19:20:17 jmc Exp $
+.\"	$OpenBSD: su.1,v 1.25 2010/12/09 15:45:30 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 9 2010 $
 .Dt SU 1
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Op Fl fKLlm
 .Op Fl a Ar auth-type
 .Op Fl c Ar login-class
+.Op Fl s Ar login-shell
 .Op Ar login Op Ar "shell arguments"
 .Sh DESCRIPTION
 .Nm
@@ -168,6 +169,12 @@ and the caller's real UID is
 non-zero,
 .Nm
 will fail.
+.It Fl s Ar login-shell
+Specify the path to an alternate login shell.
+You may only override the shell if you're already root.
+This option will override the shell even if the
+.Fl m
+option is specified.
 .El
 .Pp
 The
