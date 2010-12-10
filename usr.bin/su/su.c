@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.62 2010/12/09 16:10:00 sobrado Exp $	*/
+/*	$OpenBSD: su.c,v 1.63 2010/12/10 19:55:37 martynas Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 
 		/* If the user specified a login class, use it */
 		if (!class && pwd && pwd->pw_class && pwd->pw_class[0] != '\0')
-			class = pwd->pw_class;
+			class = strdup(pwd->pw_class);
 		if ((lc = login_getclass(class)) == NULL)
 			auth_errx(as, 1, "no such login class: %s",
 			    class ? class : LOGIN_DEFCLASS);
