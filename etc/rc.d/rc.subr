@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.8 2010/10/28 21:36:45 robert Exp $
+#	$OpenBSD: rc.subr,v 1.9 2010/12/10 21:25:50 robert Exp $
 
 [ -z "${local_rcconf}" ] && . /etc/rc.conf
 
@@ -9,7 +9,8 @@ rc_err() {
 
 rc_start() {
 	type rc_pre >/dev/null && rc_pre
-	${daemon} ${daemon_flags} >/dev/null
+	su -c ${_rcclass:-daemon} -s ${_rcshell:-/bin/sh} \
+		${_rcuser:-root} -c "${daemon} ${daemon_flags}" >/dev/null
 }
 
 rc_check() {
@@ -28,6 +29,9 @@ rc_stop() {
 rc_cmd() {
 	_name=`basename $0`
 	eval _rcflags=\${${_name}_flags}
+	eval _rcuser=\${${_name}_user}
+	eval _rcclass=\${${_name}_class}
+	eval _rcshell=\${${_name}_shell}
 
 	[ `id -u` -eq 0 -o X"$1" = "Xcheck" ] || \
 		rc_err "$0: need root privileges"
