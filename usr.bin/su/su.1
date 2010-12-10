@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.26 2010/12/09 22:34:04 sobrado Exp $
+.\"	$OpenBSD: su.1,v 1.27 2010/12/10 19:29:52 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
 .\"
-.Dd $Mdocdate: December 9 2010 $
+.Dd $Mdocdate: December 10 2010 $
 .Dt SU 1
 .Os
 .Sh NAME
@@ -45,21 +45,27 @@
 .Op Ar login Op Ar "shell arguments"
 .Ek
 .Sh DESCRIPTION
+The
 .Nm
-requests the Kerberos password for
+utility allows a user to run a shell with the user and group ID of another user
+without having to log out and in as that other user.
+.Pp
+If Kerberos is in use, the password for
 .Ar login
 (or for
 .Dq Ar login Ns .root ,
-if no login is provided), and switches to
+if no login is provided) is requested, and
+.Nm
+switches to
 that user and group ID after obtaining a Kerberos ticket granting access.
 A shell is then executed, and any additional
 .Ar "shell arguments"
 after the login name
 are passed to the shell.
+If Kerberos is not configured or if there is a Kerberos error,
 .Nm
-will resort to the local password file to find the password for
-.Ar login
-if there is a Kerberos error or if Kerberos is not installed.
+falls back to local password authentication to validate the password for
+.Ar login .
 If
 .Nm
 is executed by root, no password is requested and a shell
@@ -123,6 +129,9 @@ this option prevents it from reading the
 file.
 .It Fl K
 Do not attempt to use Kerberos to authenticate the user.
+This is shorthand for
+.Dq Nm Fl a Ar passwd ,
+provided for backwards compatibility.
 .It Fl L
 Loop until a correct username and password combination is entered,
 similar to
@@ -290,6 +299,4 @@ A
 command appeared in
 .At v7 .
 .Sh BUGS
-There is no direct way to force a particular shell to be used.
-.Pp
 The login name is not optional for root if there are shell arguments.
