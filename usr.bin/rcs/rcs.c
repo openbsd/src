@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.71 2010/10/27 08:35:45 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.72 2010/12/10 09:48:43 jasper Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -474,11 +474,14 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 	}
 	if ((dst = fopen(to, "w")) == NULL) {
 		warn("%s", to);
+		(void)fclose(src);
 		return (-1);
 	}
 	if (fchmod(fileno(dst), perm)) {
 		warn("%s", to);
 		(void)unlink(to);
+		(void)fclose(src);
+		(void)fclose(dst);
 		return (-1);
 	}
 
@@ -499,11 +502,11 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 
 	ret = 0;
 
-	(void)fclose(src);
-	(void)fclose(dst);
 	(void)unlink(from);
 
 out:
+	(void)fclose(src);
+	(void)fclose(dst);
 	xfree(buf);
 
 	return (ret);
