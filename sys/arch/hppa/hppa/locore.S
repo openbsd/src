@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.180 2010/11/28 20:09:14 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.181 2010/12/10 09:13:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2327,16 +2327,6 @@ LEAF_ENTRY(fpu_save)
 	fstds,ma %fr29, 8(arg0)
 	fstds,ma %fr30, 8(arg0)
 	fstds    %fr31, 0(arg0)
-	ldo	-24(arg0), arg0
-	ldi	-32, r25	/* gotta be free for all callers */
-	fdc,m	r25(arg0)
-	fdc,m	r25(arg0)
-	fdc,m	r25(arg0)
-	fdc,m	r25(arg0)
-	fdc,m	r25(arg0)
-	fdc,m	r25(arg0)
-	fdc,m	r25(arg0)
-	fdc,m	r25(arg0)
 	bv	r0(rp)
 	sync
 EXIT(fpu_save)
@@ -2412,16 +2402,6 @@ ENTRY($fpu_emulate,320)
 	ldw	4(r25), r17	/* fpu exception reg 0 */
 	zdep	ret0, 5, 6, r17	/* intentionally zero the insn */
 	stw	r17, 4(r25)
-
-	fdc,m	r1(r25)
-	fdc,m	r1(r25)
-	fdc,m	r1(r25)
-	fdc,m	r1(r25)
-	fdc,m	r1(r25)
-	fdc,m	r1(r25)
-	fdc,m	r1(r25)
-	fdc	r0(r25)
-	sync
 
 	mfctl	cr29, r31
 	ldw	CI_STACK(r31), r31
