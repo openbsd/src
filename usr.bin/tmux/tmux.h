@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.249 2010/12/11 16:05:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.250 2010/12/11 18:39:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1155,6 +1155,7 @@ struct client {
 	struct mode_key_data prompt_mdata;
 
 	struct session	*session;
+	u_int            last_session;
 
 	int		 references;
 };
