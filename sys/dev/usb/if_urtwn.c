@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.8 2010/12/07 17:03:19 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.9 2010/12/11 13:27:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1569,6 +1569,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 #endif
 
 	ni = ieee80211_find_rxnode(ic, wh);
+	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = 0;	/* Unused. */
 	ieee80211_input(ifp, m, ni, &rxi);
