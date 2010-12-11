@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.11 2010/12/11 10:15:23 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.12 2010/12/11 12:57:21 ajacoutot Exp $
 
 [ -z "${local_rcconf}" ] && . /etc/rc.conf
 
@@ -29,11 +29,13 @@ rc_stop() {
 rc_cmd() {
 	_name=`basename $0`
 
+	eval _enotsup=\${rc_${1}}
 	eval _rcflags=\${${_name}_flags}
 	eval _rcuser=\${${_name}_user}
 	eval _rcclass=\${${_name}_class}
 	eval _rcshell=\${${_name}_shell}
 
+	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
 	[ `id -u` -eq 0 -o X"$1" = "Xcheck" ] || \
 		rc_err "$0: need root privileges"
 	[ -n "${daemon}"   ] || rc_err "$0: daemon is not set"
