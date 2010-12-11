@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.9 2010/12/11 13:27:27 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.10 2010/12/11 21:07:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1486,8 +1486,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		ifp->if_ierrors++;
 		return;
 	}
-	if (__predict_false(pktlen < sizeof(*wh))) {
-		ic->ic_stats.is_rx_tooshort++;
+	if (__predict_false(pktlen < sizeof(*wh) || pktlen > MCLBYTES)) {
 		ifp->if_ierrors++;
 		return;
 	}
