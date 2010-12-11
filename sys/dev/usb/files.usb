@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.94 2010/11/05 16:58:12 damien Exp $
+#	$OpenBSD: files.usb,v 1.95 2010/12/11 20:48:21 damien Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -342,6 +342,11 @@ file	dev/usb/if_urtw.c		urtw
 device	urtwn: ether, ifnet, ifmedia, wlan, firmload
 attach	urtwn at uhub
 file	dev/usb/if_urtwn.c		urtwn
+
+# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+device	rsu: ether, ifnet, ifmedia, wlan, firmload
+attach	rsu at uhub
+file	dev/usb/if_rsu.c		rsu
 
 # Atheros AR9170
 device	otus: ether, ifnet, ifmedia, wlan, firmload
