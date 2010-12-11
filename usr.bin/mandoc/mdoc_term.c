@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.115 2010/12/06 22:10:13 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.116 2010/12/11 14:29:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -319,9 +319,12 @@ print_mdoc_node(DECL_ARGS)
 	/*
 	 * Keeps only work until the end of a line.  If a keep was
 	 * invoked in a prior line, revert it to PREKEEP.
+	 *
+	 * Also let SYNPRETTY sections behave as if they were wrapped
+	 * in a `Bk' block.
 	 */
 
-	if (TERMP_KEEP & p->flags) {
+	if (TERMP_KEEP & p->flags || MDOC_SYNPRETTY & n->flags) {
 		if (n->prev && n->prev->line != n->line) {
 			p->flags &= ~TERMP_KEEP;
 			p->flags |= TERMP_PREKEEP;
@@ -332,6 +335,16 @@ print_mdoc_node(DECL_ARGS)
 			}
 		}
 	}
+
+	/*
+	 * Since SYNPRETTY sections aren't "turned off" with `Ek',
+	 * we have to intuit whether we should disable formatting.
+	 */
+
+	if ( ! (MDOC_SYNPRETTY & n->flags) &&
+	    ((n->prev   && MDOC_SYNPRETTY & n->prev->flags) ||
+	     (n->parent && MDOC_SYNPRETTY & n->parent->flags)))
+		p->flags &= ~(TERMP_KEEP | TERMP_PREKEEP);
 
 	if (chld && n->child)
 		print_mdoc_nodelist(p, &npair, m, n->child);
