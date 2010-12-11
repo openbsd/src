@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.65 2010/12/11 16:05:57 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.66 2010/12/11 16:13:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -865,6 +865,7 @@ status_prompt_key(struct client *c, int key)
 {
 	struct paste_buffer	*pb;
 	char   			*s, *first, *last, word[64], swapc;
+	const char              *histstr;
 	u_char			 ch;
 	size_t			 size, n, off, idx;
 
@@ -977,20 +978,20 @@ status_prompt_key(struct client *c, int key)
 		}
 		break;
 	case MODEKEYEDIT_HISTORYUP:
-		s = status_prompt_up_history(&c->prompt_hindex);
-		if (s == NULL)
+		histstr = status_prompt_up_history(&c->prompt_hindex);
+		if (histstr == NULL)
 			break;
 	       	xfree(c->prompt_buffer);
-		c->prompt_buffer = xstrdup(s);
+		c->prompt_buffer = xstrdup(histstr);
 		c->prompt_index = strlen(c->prompt_buffer);
 		c->flags |= CLIENT_STATUS;
 		break;
 	case MODEKEYEDIT_HISTORYDOWN:
-		s = status_prompt_down_history(&c->prompt_hindex);
-		if (s == NULL)
+		histstr = status_prompt_down_history(&c->prompt_hindex);
+		if (histstr == NULL)
 			break;
 		xfree(c->prompt_buffer);
-		c->prompt_buffer = xstrdup(s);
+		c->prompt_buffer = xstrdup(histstr);
 		c->prompt_index = strlen(c->prompt_buffer);
 		c->flags |= CLIENT_STATUS;
 		break;
