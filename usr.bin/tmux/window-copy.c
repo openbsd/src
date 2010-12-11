@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.63 2010/09/11 15:39:55 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.64 2010/12/11 17:56:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1267,8 +1267,8 @@ window_copy_copy_selection(struct window_pane *wp, struct session *sess)
 			/* Cursor is on the left. */
 			lastex = data->selx + 1;
 			restex = data->selx + 1;
-			firstsx = data->cx + 1;
-			restsx = data->cx + 1;
+			firstsx = data->cx;
+			restsx = data->cx;
 		}
 	} else {
 		/*
