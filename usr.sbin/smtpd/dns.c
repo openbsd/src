@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.26 2010/11/29 15:25:55 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.27 2010/12/12 22:29:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -236,7 +236,7 @@ dns_asr_handler(int fd, short event, void *arg)
 	if (ret == ASR_YIELD) {
 		free(ar.ar_cname);
 		query->error = 0;
-		query->ss = *(struct sockaddr_storage *)&ar.ar_sa.sa;
+		memcpy(&query->ss, &ar.ar_sa.sa, sizeof(ar.ar_sa.sa));
 		imsg_compose_event(query->asker, IMSG_DNS_HOST, 0, 0, -1, query,
 		    sizeof(*query));
 		dns_asr_handler(-1, -1, dnssession);
@@ -373,7 +373,7 @@ dns_asr_mx_handler(int fd, short event, void *arg)
 
 	if (ret == ASR_YIELD) {
 		free(ar.ar_cname);
-		query->ss = *(struct sockaddr_storage *)&ar.ar_sa.sa;
+		memcpy(&query->ss, &ar.ar_sa.sa, sizeof(ar.ar_sa.sa));
 		query->error = 0;
 		imsg_compose_event(query->asker, IMSG_DNS_HOST, 0, 0, -1, query,
 		    sizeof(*query));
