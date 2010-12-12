@@ -43,6 +43,12 @@ Boston, MA 02110-1301, USA.  */
 "
 
 /* Layout of source language data types.  */
+#undef SIZE_TYPE
+#define SIZE_TYPE "long unsigned int"
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE "long int"
+
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
 
