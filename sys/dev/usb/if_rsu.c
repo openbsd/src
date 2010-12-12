@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.2 2010/12/12 13:55:23 jsg Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.3 2010/12/12 14:03:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -163,6 +163,7 @@ int		rsu_set_key(struct ieee80211com *, struct ieee80211_node *,
 void		rsu_set_key_cb(struct rsu_softc *, void *);
 void		rsu_delete_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
+void		rsu_delete_key_cb(struct rsu_softc *, void *);
 int		rsu_site_survey(struct rsu_softc *);
 int		rsu_join_bss(struct rsu_softc *, struct ieee80211_node *);
 int		rsu_disconnect(struct rsu_softc *);
@@ -940,7 +941,28 @@ void
 rsu_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
-	/* Nothing to do. */
+	struct rsu_softc *sc = ic->ic_softc;
+	struct rsu_cmd_key cmd;
+
+	if (!(ic->ic_if.if_flags & IFF_RUNNING) ||
+	    ic->ic_state != IEEE80211_S_RUN)
+		return;	/* Nothing to do. */
+
+	/* Do it in a process context. */
+	cmd.key = *k;
+	rsu_do_async(sc, rsu_delete_key_cb, &cmd, sizeof(cmd));
+}
+
+void
+rsu_delete_key_cb(struct rsu_softc *sc, void *arg)
+{
+	struct rsu_cmd_key *cmd = arg;
+	struct ieee80211_key *k = &cmd->key;
+	struct r92s_fw_cmd_set_key key;
+
+	memset(&key, 0, sizeof(key));
+	key.id = k->k_id;
+	(void)rsu_fw_cmd(sc, R92S_CMD_SET_KEY, &key, sizeof(key));
 }
 
 int
@@ -1014,7 +1036,7 @@ rsu_join_bss(struct rsu_softc *sc, struct ieee80211_node *ni)
 	memcpy(&fixed->tstamp, ni->ni_tstamp, 8);
 	fixed->bintval = htole16(ni->ni_intval);
 	fixed->capabilities = htole16(ni->ni_capinfo);
-	/* Write IEs to be included association request. */
+	/* Write IEs to be included in the association request. */
 	frm = (uint8_t *)&fixed[1];
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ni->ni_rsnprotos & IEEE80211_PROTO_RSN))
@@ -1145,11 +1167,11 @@ rsu_rx_event(struct rsu_softc *sc, uint8_t code, uint8_t *buf, int len)
 
 	DPRINTFN(4, ("Rx event code=%d len=%d\n", code, len));
 	switch (code) {
-	case R92S_EVENT_SURVEY:
+	case R92S_EVT_SURVEY:
 		if (ic->ic_state == IEEE80211_S_SCAN)
 			rsu_event_survey(sc, buf, len);
 		break;
-	case R92S_EVENT_SURVEY_DONE:
+	case R92S_EVT_SURVEY_DONE:
 		DPRINTF(("site survey pass %d done, found %d BSS\n",
 		    sc->scan_pass, letoh32(*(uint32_t *)buf)));
 		if (ic->ic_state != IEEE80211_S_SCAN)
@@ -1163,21 +1185,21 @@ rsu_rx_event(struct rsu_softc *sc, uint8_t code, uint8_t *buf, int len)
 		ieee80211_end_scan(ifp);
 		sc->scan_pass = 0;
 		break;
-	case R92S_EVENT_JOIN_BSS:
+	case R92S_EVT_JOIN_BSS:
 		if (ic->ic_state == IEEE80211_S_AUTH)
 			rsu_event_join_bss(sc, buf, len);
 		break;
-	case R92S_EVENT_DEL_STA:
+	case R92S_EVT_DEL_STA:
 		DPRINTF(("disassociated from %s\n", ether_sprintf(buf)));
 		if (ic->ic_state == IEEE80211_S_RUN &&
 		    IEEE80211_ADDR_EQ(ic->ic_bss->ni_bssid, buf))
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
-	case R92S_EVENT_WPS_PBC:
+	case R92S_EVT_WPS_PBC:
 		DPRINTF(("WPS PBC pushed.\n"));
 		break;
 #ifdef RSU_DEBUG
-	case R92S_EVENT_FWDBG:
+	case R92S_EVT_FWDBG:
 		buf[60] = '\0';
 		printf("FWDBG: %s\n", (char *)buf);
 		break;
