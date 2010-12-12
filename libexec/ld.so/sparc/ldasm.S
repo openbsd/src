@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.15 2006/05/03 16:10:52 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.16 2010/12/12 18:16:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -68,7 +68,7 @@
 #include <machine/asm.h>
 
 #define DL_DATA_SIZE	(16*4)
-#define ARGC		(16*4)
+#define ARGC		96
 
 	.section	".text"
 	.align	4
@@ -77,7 +77,7 @@
 _dl_start:
 	sub	%g0, %g0, %fp		! clear frame
 	mov	%g1, %l1		! save ps_strings
-	sub	%sp, DL_DATA_SIZE, %sp	! make room for dl_data
+	sub	%sp, 32 + DL_DATA_SIZE, %sp	! make room for dl_data
 	add	%sp, ARGC, %l3
 
 	add	%l3, DL_DATA_SIZE, %o0
@@ -112,7 +112,7 @@ _dl_start:
 	call	_dl_boot		! _dl_boot(argv,envp,loff,dl_data)
 	 nop
 
-	add	%sp, DL_DATA_SIZE, %sp	! restore stack
+	add	%sp, 32 + DL_DATA_SIZE, %sp	! restore stack
 
 	jmp	%o0
 	 mov	%l1, %g1		! restore ps_strings
