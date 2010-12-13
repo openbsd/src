@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.9 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.10 2010/12/13 12:14:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -60,22 +60,19 @@ use OpenBSD::PackageInfo;
 use OpenBSD::UpdateSet;
 
 
-my %done;
-my $removed;
-
-# Resolve pkg names
-my @realnames;
-my @todo;
-
 sub process_parameters
 {
 	my ($self, $state) = @_;
+
+	my @realnames;
+	my @toremove;
+
 	OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames,
 	    "(removing them all)", $state);
 
-	@todo = OpenBSD::RequiredBy->compute_closure(@realnames);
+	@toremove = OpenBSD::RequiredBy->compute_closure(@realnames);
 
-	if (@todo > @realnames) {
+	if (@toremove > @realnames) {
 		my $details = $state->verbose >= 2 ||
 		    $state->defines('verbosedeps');
 		my $show = sub {
@@ -85,7 +82,7 @@ sub process_parameters
 			    join(' ', @$p), join(' ', @$d));
 		};
 		if ($state->{interactive} || !$details) {
-			my %deps = map {($_, 1)} @todo;
+			my %deps = map {($_, 1)} @toremove;
 			for my $p (@realnames) {
 				delete $deps{$p};
 			}
@@ -103,7 +100,7 @@ sub process_parameters
 				&$show([$pkg], [@deps]);
 			}
 		}
-		my $them = @todo > 1 ? 'them' : 'it';
+		my $them = @toremove > 1 ? 'them' : 'it';
 		if ($state->defines('dependencies') or
 		    $state->confirm("Do you want to remove $them as well", 0)) {
 			$state->say("(removing #1 as well)", $them);
@@ -111,6 +108,7 @@ sub process_parameters
 			$state->{bad}++;
 		}
 	}
+	$state->{toremove} = \@toremove;
 }
 
 sub finish_display
@@ -121,6 +119,9 @@ sub main
 {
 	my ($self, $state) = @_;
 
+	my %done;
+	my $removed;
+
 	# and finally, handle the removal
 	do {
 		$removed = 0;
@@ -129,8 +130,8 @@ sub main
 		} else {
 			$state->status->what("Deleting");
 		}
-		$state->{total} = scalar @todo;
-		DELETE: for my $pkgname (@todo) {
+		$state->{total} = scalar @{$state->{toremove}};
+		DELETE: for my $pkgname (@{$state->{toremove}}) {
 			if ($done{$pkgname}) {
 				next;
 			}
