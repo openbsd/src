@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.13 2010/12/13 15:27:27 robert Exp $
+#	$OpenBSD: rc.subr,v 1.14 2010/12/13 16:06:45 ajacoutot Exp $
 
 [ -z "${local_rcconf}" ] && . /etc/rc.conf
 
@@ -9,7 +9,7 @@ rc_err() {
 
 rc_start() {
 	type rc_pre >/dev/null && rc_pre
-	su - -c ${daemon_class:-daemon} -s ${daemon_shell:-/bin/sh} \
+	su -l -c ${daemon_class:-daemon} -s ${daemon_shell:-/bin/sh} \
 		${daemon_user:-root} -c "${daemon} ${daemon_flags}" >/dev/null
 }
 
