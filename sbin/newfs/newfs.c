@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.87 2010/07/24 00:28:41 tedu Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.88 2010/12/13 00:02:58 marco Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 	char **saveargv = argv;
 	int ffsflag = 1;
 	const char *errstr;
-	
+
 	if (strstr(__progname, "mfs"))
 		mfs = Nflag = quiet = 1;
 
