@@ -1,4 +1,4 @@
-# $OpenBSD: dot.profile,v 1.8 2009/05/06 22:02:05 millert Exp $
+# $OpenBSD: dot.profile,v 1.9 2010/12/13 12:54:31 millert Exp $
 #
 # sh/ksh initialization
 
@@ -8,10 +8,14 @@ export PATH
 export HOME
 umask 022
 
-if [ -x /usr/bin/tset ]; then
-	if [ X"$XTERM_VERSION" = X"" ]; then
-		eval `/usr/bin/tset -sQ '-munknown:?vt220' $TERM`
-	else
-		eval `/usr/bin/tset -IsQ '-munknown:?vt220' $TERM`
+case "$-" in
+*i*)    # interactive shell
+	if [ -x /usr/bin/tset ]; then
+		if [ X"$XTERM_VERSION" = X"" ]; then
+			eval `/usr/bin/tset -sQ '-munknown:?vt220' $TERM`
+		else
+			eval `/usr/bin/tset -IsQ '-munknown:?vt220' $TERM`
+		fi
 	fi
-fi
+	;;
+esac
