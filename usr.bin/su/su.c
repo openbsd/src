@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.63 2010/12/10 19:55:37 martynas Exp $	*/
+/*	$OpenBSD: su.c,v 1.64 2010/12/13 14:46:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -306,9 +306,11 @@ main(int argc, char **argv)
 		 */
 		if (getsid(0) != getpid())
 			flags &= ~LOGIN_SETLOGIN;
-	} else
-		flags = (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
-		    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER;
+	} else {
+		flags = LOGIN_SETRESOURCES|LOGIN_SETGROUP|LOGIN_SETUSER;
+		if (asthem)
+			flags |= LOGIN_SETENV|LOGIN_SETPRIORITY|LOGIN_SETUMASK;
+	}
 	if (setusercontext(lc, pwd, pwd->pw_uid, flags) != 0)
 		auth_err(as, 1, "unable to set user context");
 	if (pwd->pw_uid && auth_approval(as, lc, pwd->pw_name, "su") <= 0)
