@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.3 2010/12/12 14:03:41 damien Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.4 2010/12/13 17:11:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -64,8 +64,6 @@
 #ifdef USB_DEBUG
 #define RSU_DEBUG
 #endif
-
-#define RSU_DEBUG
 
 #ifdef RSU_DEBUG
 #define DPRINTF(x)	do { if (rsu_debug) printf x; } while (0)
@@ -1198,12 +1196,12 @@ rsu_rx_event(struct rsu_softc *sc, uint8_t code, uint8_t *buf, int len)
 	case R92S_EVT_WPS_PBC:
 		DPRINTF(("WPS PBC pushed.\n"));
 		break;
-#ifdef RSU_DEBUG
 	case R92S_EVT_FWDBG:
-		buf[60] = '\0';
-		printf("FWDBG: %s\n", (char *)buf);
+		if (ifp->if_flags & IFF_DEBUG) {
+			buf[60] = '\0';
+			printf("FWDBG: %s\n", (char *)buf);
+		}
 		break;
-#endif
 	}
 }
 
@@ -2010,7 +2008,7 @@ rsu_load_firmware(struct rsu_softc *sc)
 	/* Read firmware image from the filesystem. */
 	if ((error = loadfirmware("rsu-rtl8712fw", &fw, &size)) != 0) {
 		printf("%s: failed loadfirmware of file %s (error %d)\n",
-		    sc->sc_dev.dv_xname, "rsu-rtl8192su", error);
+		    sc->sc_dev.dv_xname, "rsu-rtl8712fw", error);
 		return (error);
 	}
 	if (size < sizeof(*hdr)) {
