@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.174 2010/11/24 14:15:31 jsing Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.175 2010/12/13 01:01:41 marco Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -408,7 +408,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 			if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 				perror("ioctl DIOCWLABEL");
 	} else
-#endif /* NUMBOOT > 0 */	
+#endif /* NUMBOOT > 0 */
 	if (!donothing) {
 		if (ioctl(f, DIOCWDINFO, lp) < 0) {
 			l_perror("ioctl DIOCWDINFO");
@@ -1413,7 +1413,7 @@ setbootflag(struct disklabel *lp)
 				pp->p_fstype = FS_UNUSED;
 			continue;
 		}
-		
+
 		part = 'a' + i;
 		switch (pp->p_fstype) {
 		case FS_BOOT:	/* Already marked. */

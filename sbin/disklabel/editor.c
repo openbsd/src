@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.246 2010/11/24 14:15:31 jsing Exp $	*/
+/*	$OpenBSD: editor.c,v 1.247 2010/12/13 01:01:41 marco Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -65,7 +65,7 @@ struct space_allocation {
 	daddr64_t	minsz;	/* starts as blocks, xlated to sectors. */
 	daddr64_t	maxsz;	/* starts as blocks, xlated to sectors. */
 	int		rate;	/* % of extra space to use */
-	char 	       *mp;
+	char	       *mp;
 };
 
 /* entries for swap and var are changed by editor_allocspace() */
@@ -350,7 +350,7 @@ editor(struct disklabel *lp, int f)
 			 * there is no need to do anything before exiting. Note
 			 * that 'w' will reset dflag and aflag to allow 'q' to
 			 * exit without further questions.
- 			 */
+			 */
 			if (!dflag && !aflag &&
 			    memcmp(lp, &label, sizeof(label)) == 0) {
 				puts("No label changes.");
@@ -390,11 +390,11 @@ editor(struct disklabel *lp, int f)
 			    i++)
 				fprintf(stderr, "Free sectors: %16llu - %16llu "
 				    "(%16llu)\n",
-			    	    chunks[i].start, chunks[i].stop - 1,
-			   	    chunks[i].stop - chunks[i].start);
+				    chunks[i].start, chunks[i].stop - 1,
+				    chunks[i].stop - chunks[i].start);
 			fprintf(stderr, "Total free sectors: %llu.\n",
 			    editor_countfree(&label));
-		    	break;
+			break;
 		}
 
 		case 's':
@@ -842,7 +842,7 @@ editor_add(struct disklabel *lp, char *p)
 		fprintf(stderr, "Partition must be between 'a' and '%c' "
 		    "(excluding 'c').\n", 'a' + MAXPARTITIONS - 1);
 		return;
-	}	
+	}
 	pp = &lp->d_partitions[partno];
 
 	if (pp->p_fstype != FS_UNUSED && DL_GETPSIZE(pp) != 0) {
@@ -859,7 +859,7 @@ editor_add(struct disklabel *lp, char *p)
 		memset(&lp->d_partitions[lp->d_npartitions], 0, sizeof(*pp));
 
 	/* Make sure selected partition is zero'd too. */
-	memset(pp, 0, sizeof(*pp)); 
+	memset(pp, 0, sizeof(*pp));
 	chunks = free_chunks(lp);
 
 	/*
@@ -1731,7 +1731,7 @@ editor_countfree(struct disklabel *lp)
 	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++)
 		freesectors += chunks[i].stop - chunks[i].start;
 
-	return (freesectors);	
+	return (freesectors);
 }
 
 void
@@ -1941,7 +1941,7 @@ get_fsize(struct disklabel *lp, int partno)
 {
 	u_int64_t ui, fsize, frag;
 	struct partition *pp = &lp->d_partitions[partno];
-	
+
 	if (!expert || pp->p_fstype != FS_BSDFFS)
 		return (0);
 
@@ -2246,7 +2246,7 @@ max_partition_size(struct disklabel *lp, int partno)
 			continue;
 		maxsize = chunks[i].stop - offset;
 		break;
-	}	
+	}
 	return (maxsize);
 }
 
