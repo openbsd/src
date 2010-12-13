@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.109 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: Delete.pm,v 1.110 2010/12/13 12:13:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -92,7 +92,7 @@ sub remove_packing_info
 sub delete_package
 {
 	my ($pkgname, $state) = @_;
-	$state->progress->message("reading plist");
+	$state->progress->message($state->f("reading list for #1", $pkgname));
 	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
 	    $state->fatal("bad package #1", $pkgname);
 	if (!defined $plist->pkgname) {
@@ -176,7 +176,7 @@ package OpenBSD::PackingElement;
 
 sub rename_file_to_temp
 {
-	my $self = shift;
+	my ($self, $state) = @_;
 	require OpenBSD::Temp;
 
 	my $n = $self->fullname;
@@ -184,14 +184,14 @@ sub rename_file_to_temp
 	my ($fh, $j) = OpenBSD::Temp::permanent_file(undef, $n);
 	close $fh;
 	if (rename($n, $j)) {
-		print "Renaming old file $n to $j\n";
+		$state->say("Renaming old file #1 to #2", $n, $j);
 		if ($self->name !~ m/^\//o && $self->cwd ne '.') {
 			my $c = $self->cwd;
 			$j =~ s|^\Q$c\E/||;
 		}
 		$self->set_name($j);
 	} else {
-		print "Bad rename $n to $j: $!\n";
+		$state->errsay("Bad rename #1 to #2: #", $n, $j, $!);
 	}
 }
 
@@ -445,7 +445,7 @@ sub copy_old_stuff
 	if (defined $self->{stillaround}) {
 		delete $self->{stillaround};
 		if ($state->{replacing}) {
-			$self->rename_file_to_temp;
+			$self->rename_file_to_temp($state);
 		}
 		$self->add_object($plist);
 	}

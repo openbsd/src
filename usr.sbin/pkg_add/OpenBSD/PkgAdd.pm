@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.16 2010/10/02 13:36:56 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.17 2010/12/13 12:13:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -878,7 +878,7 @@ sub install_set
 
 	my @deps = $set->solver->solve_depends($state);
 	if ($state->verbose >= 2) {
-		$set->solver->dump;
+		$set->solver->dump($state);
 	}
 	if (@deps > 0) {
 		$state->build_deptree($set, @deps);

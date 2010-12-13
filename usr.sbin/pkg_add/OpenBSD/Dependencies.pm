@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.137 2010/11/27 11:58:12 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.138 2010/12/13 12:13:54 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -68,11 +68,11 @@ sub new
 
 sub dump
 {
-	my $self = shift;
+	my ($self, $state) = @_;
 
 	return unless %{$self->{done}};
-	print "Full dependency tree is ", join(' ', keys %{$self->{done}}),
-	    "\n";
+	$state->say("Full dependency tree is #1", 
+		join(' ', keys %{$self->{done}}));
 }
 
 package OpenBSD::lookup::library;
@@ -613,15 +613,14 @@ sub check_depends
 
 sub dump
 {
-	my $self = shift;
+	my ($self, $state) = @_;
 	if ($self->dependencies) {
-	    print "Direct dependencies for ", $self->{set}->print,
-	    	" resolve to: ", join(' ',  $self->dependencies);
-	    print " (todo: ",
-	    	join(' ', (map {$_->print} values %{$self->{deplist}})),
-		")"
+	    $state->print("Direct dependencies for #1 resolve to #2",
+	    	$self->{set}->print, join(' ',  $self->dependencies));
+	    $state->print(" (todo: #1)",
+	    	join(' ', (map {$_->print} values %{$self->{deplist}})))
 	    	if %{$self->{deplist}};
-	    print "\n";
+	    $state->print("\n");
 	}
 }
 
@@ -705,8 +704,8 @@ sub solve_wantlibs
 		}
 	}
 	if (!$okay) {
-		$solver->dump;
-		$lib_finder->dump;
+		$solver->dump($state);
+		$lib_finder->dump($state);
 	}
 	return $okay;
 }
@@ -724,8 +723,8 @@ sub solve_tags
 			$state->errsay("Can't install #1: tag definition not found #2",
 			    $h->pkgname, $tag);
 			if ($okay) {
-				$solver->dump;
-				$tag_finder->dump;
+				$solver->dump($state);
+				$tag_finder->dump($state);
 				$okay = 0;
 			}
 	    	}
