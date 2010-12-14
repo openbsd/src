@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.88 2010/12/06 06:09:08 jakemsr Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.89 2010/12/14 16:13:16 jakemsr Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -929,7 +929,7 @@ uhci_poll_hub(void *addr)
 
 	DPRINTFN(20, ("uhci_poll_hub\n"));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return;
 
 	timeout_del(&sc->sc_poll_handle);
@@ -1137,7 +1137,7 @@ uhci_intr(void *arg)
 {
 	uhci_softc_t *sc = arg;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (0);
 	if (sc->sc_bus.use_polling)
 		return (0);
@@ -1154,7 +1154,7 @@ uhci_intr1(uhci_softc_t *sc)
 	if (status == 0)	/* The interrupt was not for us. */
 		return (0);
 	if (status == 0xffffffff) {
-		sc->sc_dying = 1;
+		sc->sc_bus.dying = 1;
 		return (0);
 	}
 
@@ -1193,14 +1193,14 @@ uhci_intr1(uhci_softc_t *sc)
 	}
 	if (status & UHCI_STS_HCH) {
 		/* no acknowledge needed */
-		if (!sc->sc_dying) {
+		if (!sc->sc_bus.dying) {
 			printf("%s: host controller halted\n",
 			    sc->sc_bus.bdev.dv_xname);
 #ifdef UHCI_DEBUG
 			uhci_dump_all(sc);
 #endif
 		}
-		sc->sc_dying = 1;
+		sc->sc_bus.dying = 1;
 	}
 
 	if (!ack)
@@ -1224,7 +1224,7 @@ uhci_softintr(void *v)
 	DPRINTFN(10,("%s: uhci_softintr (%d)\n", sc->sc_bus.bdev.dv_xname,
 		     sc->sc_bus.intr_context));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return;
 
 	sc->sc_bus.intr_context++;
@@ -1452,7 +1452,7 @@ uhci_timeout(void *addr)
 
 	DPRINTF(("uhci_timeout: uxfer=%p\n", uxfer));
 
-	if (sc->sc_dying) {
+	if (sc->sc_bus.dying) {
 		uhci_abort_xfer(&uxfer->xfer, USBD_TIMEOUT);
 		return;
 	}
@@ -1788,7 +1788,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 	DPRINTFN(3, ("uhci_device_bulk_start: xfer=%p len=%u flags=%d ii=%p\n",
 		     xfer, xfer->length, xfer->flags, ii));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
@@ -1885,7 +1885,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	DPRINTFN(1,("uhci_abort_xfer: xfer=%p, status=%d\n", xfer, status));
 
-	if (sc->sc_dying) {
+	if (sc->sc_bus.dying) {
 		/* If we're dying, just do the software part. */
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
@@ -1969,7 +1969,7 @@ uhci_device_ctrl_start(usbd_xfer_handle xfer)
 	uhci_softc_t *sc = (uhci_softc_t *)xfer->pipe->device->bus;
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
@@ -2016,7 +2016,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	int isread, endpt;
 	int i, s;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 	DPRINTFN(3,("uhci_device_intr_start: xfer=%p len=%u flags=%d\n",
@@ -2308,7 +2308,7 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 		    "nframes=%d\n",
 		    iso->inuse, iso->next, xfer, xfer->nframes));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return;
 
 	if (xfer->status == USBD_IN_PROGRESS) {
@@ -2374,7 +2374,7 @@ uhci_device_isoc_start(usbd_xfer_handle xfer)
 
 	DPRINTFN(5,("uhci_device_isoc_start: xfer=%p\n", xfer));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
@@ -3095,7 +3095,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 	usb_port_status_t ps;
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
@@ -3474,7 +3474,7 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%u flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 	sc->sc_ival = mstohz(xfer->pipe->endpoint->edesc->bInterval);

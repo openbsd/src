@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.20 2010/09/29 20:06:38 kettenis Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.21 2010/12/14 16:13:16 jakemsr Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -164,8 +164,6 @@ typedef struct ehci_softc {
 	struct timeout sc_tmo_intrlist;
 
 	struct device *sc_child;		/* /dev/usb# device */
-
-	char sc_dying;
 } ehci_softc_t;
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.37 2010/10/20 20:34:19 mk Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.38 2010/12/14 16:13:16 jakemsr Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Ignore interrupts for now */
-	sc->sc.sc_dying = 1;
+	sc->sc.sc_bus.dying = 1;
 
 	config_defer(self, ohci_pci_attach_deferred);
 
@@ -180,7 +180,7 @@ ohci_pci_attach_deferred(struct device *self)
 
 	s = splusb();
 
-	sc->sc.sc_dying = 0;
+	sc->sc.sc_bus.dying = 0;
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {

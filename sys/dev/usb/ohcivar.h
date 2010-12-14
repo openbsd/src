@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.30 2010/09/07 16:21:46 deraadt Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.31 2010/12/14 16:13:16 jakemsr Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -128,8 +128,6 @@ typedef struct ohci_softc {
 	struct timeout sc_tmo_rhsc;
 
 	struct device *sc_child;
-
-	char sc_dying;
 } ohci_softc_t;
 
 struct ohci_xfer {

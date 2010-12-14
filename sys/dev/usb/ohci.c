@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.102 2010/12/06 06:09:08 jakemsr Exp $ */
+/*	$OpenBSD: ohci.c,v 1.103 2010/12/14 16:13:16 jakemsr Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -390,7 +390,7 @@ ohci_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
-		sc->sc_dying = 1;
+		sc->sc_bus.dying = 1;
 		break;
 	}
 	return (rv);
@@ -1071,7 +1071,7 @@ ohci_intr(void *p)
 {
 	ohci_softc_t *sc = p;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || sc->sc_bus.dying)
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */
@@ -1123,7 +1123,7 @@ ohci_intr1(ohci_softc_t *sc)
 	}
 
 	if (intrs == 0xffffffff) {
-		sc->sc_dying = 1;
+		sc->sc_bus.dying = 1;
 		return (0);
 	}
 
@@ -1214,7 +1214,7 @@ ohci_rhsc_enable(void *v_sc)
 	ohci_softc_t *sc = v_sc;
 	int s;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return;
 
 	s = splhardusb();
@@ -1297,7 +1297,7 @@ ohci_softintr(void *v)
 
 	DPRINTFN(10,("ohci_softintr: enter\n"));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return;
 
 	sc->sc_bus.intr_context++;
@@ -1593,7 +1593,7 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 	xfer->status = USBD_IN_PROGRESS;
 	for (timo = xfer->timeout; timo >= 0; timo--) {
 		usb_delay_ms(&sc->sc_bus, 1);
-		if (sc->sc_dying)
+		if (sc->sc_bus.dying)
 			break;
 		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs;
 		DPRINTFN(15,("ohci_waitintr: 0x%04x\n", intrs));
@@ -1894,7 +1894,7 @@ ohci_timeout(void *addr)
 
 	DPRINTF(("ohci_timeout: oxfer=%p\n", oxfer));
 
-	if (sc->sc_dying) {
+	if (sc->sc_bus.dying) {
 		ohci_abort_xfer(&oxfer->xfer, USBD_TIMEOUT);
 		return;
 	}
@@ -2018,7 +2018,7 @@ ohci_open(usbd_pipe_handle pipe)
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 	std = NULL;
@@ -2180,7 +2180,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	DPRINTF(("ohci_abort_xfer: xfer=%p pipe=%p sed=%p\n", xfer, opipe,
 		 sed));
 
-	if (sc->sc_dying) {
+	if (sc->sc_bus.dying) {
 		/* If we're dying, just do the software part. */
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
@@ -2376,7 +2376,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 	usbd_status err;
 	u_int32_t v;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
@@ -2639,7 +2639,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			for (i = 0; i < 5; i++) {
 				usb_delay_ms(&sc->sc_bus,
 					     USB_PORT_ROOT_RESET_DELAY);
-				if (sc->sc_dying) {
+				if (sc->sc_bus.dying) {
 					err = USBD_IOERROR;
 					goto ret;
 				}
@@ -2711,7 +2711,7 @@ ohci_root_intr_start(usbd_xfer_handle xfer)
 	usbd_pipe_handle pipe = xfer->pipe;
 	ohci_softc_t *sc = (ohci_softc_t *)pipe->device->bus;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 	sc->sc_intrxfer = xfer;
@@ -2768,7 +2768,7 @@ ohci_device_ctrl_start(usbd_xfer_handle xfer)
 	ohci_softc_t *sc = (ohci_softc_t *)xfer->pipe->device->bus;
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
@@ -2851,7 +2851,7 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 	int s, isread, endpt;
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
@@ -2989,7 +2989,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	ohci_soft_td_t *data, *tail;
 	int s, len, isread, endpt;
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 	DPRINTFN(3, ("ohci_device_intr_transfer: xfer=%p len=%u "
@@ -3214,7 +3214,7 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 		    "nframes=%d\n",
 		    iso->inuse, iso->next, xfer, xfer->nframes));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return;
 
 	if (iso->next == -1) {
@@ -3326,7 +3326,7 @@ ohci_device_isoc_start(usbd_xfer_handle xfer)
 
 	DPRINTFN(5,("ohci_device_isoc_start: xfer=%p\n", xfer));
 
-	if (sc->sc_dying)
+	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
