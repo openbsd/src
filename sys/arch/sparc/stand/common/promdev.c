@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.11 2010/07/06 20:41:06 miod Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.12 2010/12/14 21:14:46 kettenis Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -73,9 +73,9 @@ int	prom_nextsibling(int);
 
 static void	prom0_fake(void);
 
-extern struct filesystem file_system_nfs[];
-extern struct filesystem file_system_cd9660[];
-extern struct filesystem file_system_ufs[];
+extern struct fs_ops file_system_nfs[];
+extern struct fs_ops file_system_cd9660[];
+extern struct fs_ops file_system_ufs[];
 
 int
 prom_open(struct open_file *f, ...)
