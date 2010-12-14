@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.26 2009/07/25 11:38:09 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.27 2010/12/14 11:16:15 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -25,7 +25,11 @@
  * ANSI/POSIX
  */
 extern char __infinity[];
+#if __GNUC_PREREQ__(3, 3)
+#define HUGE_VAL	__builtin_huge_val()
+#else /* __GNUC_PREREQ__(3, 3) */
 #define HUGE_VAL	(*(double *)(void *)__infinity)
+#endif /* __GNUC_PREREQ__(3, 3) */
 
 /*
  * C99
@@ -34,6 +38,12 @@ extern char __infinity[];
 typedef	__double_t	double_t;
 typedef	__float_t	float_t;
 
+#if __GNUC_PREREQ__(3, 3)
+#define	HUGE_VALF	__builtin_huge_valf()
+#define	HUGE_VALL	__builtin_huge_vall()
+#define	INFINITY	__builtin_inff()
+#define	NAN		__builtin_nanf("")
+#else /* __GNUC_PREREQ__(3, 3) */
 #ifdef __vax__
 extern char __infinityf[];
 #define	HUGE_VALF	(*(float *)(void *)__infinityf)
@@ -46,6 +56,7 @@ extern char __infinityf[];
 extern char __nan[];
 #define	NAN		(*(float *)(void *)__nan)
 #endif /* !__vax__ */
+#endif /* __GNUC_PREREQ__(3, 3) */
 
 #define	FP_INFINITE	0x01
 #define	FP_NAN		0x02
