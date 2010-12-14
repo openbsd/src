@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.18 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: database.c,v 1.19 2010/12/14 23:31:33 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -48,7 +48,7 @@ load_database(cron_db *old_db) {
 	 */
 	if (stat(SPOOL_DIR, &statbuf) < OK) {
 		log_it("CRON", getpid(), "STAT FAILED", SPOOL_DIR);
-		(void) exit(ERROR_EXIT);
+		return;
 	}
 
 	/* track system crontab file
@@ -88,7 +88,7 @@ load_database(cron_db *old_db) {
 	 */
 	if (!(dir = opendir(SPOOL_DIR))) {
 		log_it("CRON", getpid(), "OPENDIR FAILED", SPOOL_DIR);
-		(void) exit(ERROR_EXIT);
+		return;
 	}
 
 	while (NULL != (dp = readdir(dir))) {
