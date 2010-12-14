@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2008/06/26 05:42:13 ray Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2010/12/14 20:24:25 jasper Exp $
 #	$NetBSD: genassym.cf,v 1.10 2005/12/11 12:19:00 christos Exp $
 
 #-
@@ -38,6 +38,7 @@ include <sh/fpu.h>
 include <sh/locore.h>
 include <sh/reg.h>
 include <sh/vmparam.h>
+include <sh/pte.h>
 
 struct	trapframe
 define	TF_SIZE			sizeof(struct trapframe)
@@ -72,6 +73,7 @@ struct	uvmexp		UVMEXP_
 member	intrs
 
 export	VM_MAXUSER_ADDRESS
+export	VM_MIN_KERNEL_ADDRESS
 
 export	EFAULT
 export	ENAMETOOLONG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2010/12/06 20:57:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2010/12/14 20:24:25 jasper Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -56,6 +56,9 @@
 
 struct pmap __pmap_kernel;
 STATIC vaddr_t __pmap_kve;	/* VA of last kernel virtual */
+
+/* For the fast tlb miss handler */
+pt_entry_t **curptd;		/* p1 va of curlwp->...->pm_ptp */
 
 /* pmap pool */
 STATIC struct pool __pmap_pmap_pool;
@@ -277,7 +280,9 @@ pmap_activate(struct proc *p)
 		pmap->pm_asid = __pmap_asid_alloc();
 
 	KDASSERT(pmap->pm_asid >=0 && pmap->pm_asid < 256);
+
 	sh_tlb_set_asid(pmap->pm_asid);
+	curptd = pmap->pm_ptp;
 }
 
 int
