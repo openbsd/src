@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_voyager.c,v 1.3 2010/09/07 16:21:38 deraadt Exp $	*/
+/*	$OpenBSD: ohci_voyager.c,v 1.4 2010/12/14 18:44:23 miod Exp $	*/
 /*	OpenBSD: ohci_pci.c,v 1.33 2008/06/26 05:42:17 ray Exp 	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
@@ -149,7 +149,7 @@ ohci_voyager_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Ignore interrupts for now */
-	sc->sc.sc_dying = 1;
+	sc->sc.sc_bus.dying = 1;
 
 	config_defer(self, ohci_voyager_attach_deferred);
 
@@ -165,7 +165,7 @@ ohci_voyager_attach_deferred(struct device *self)
 
 	s = splusb();
 
-	sc->sc.sc_dying = 0;
+	sc->sc.sc_bus.dying = 0;
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
