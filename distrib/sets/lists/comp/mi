@@ -828,6 +828,7 @@
 ./usr/include/dev/usb/if_otusreg.h
 ./usr/include/dev/usb/if_ralreg.h
 ./usr/include/dev/usb/if_ralvar.h
+./usr/include/dev/usb/if_rsureg.h
 ./usr/include/dev/usb/if_rumreg.h
 ./usr/include/dev/usb/if_rumvar.h
 ./usr/include/dev/usb/if_runvar.h

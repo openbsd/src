@@ -1477,6 +1477,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/if_otusreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/if_ralreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/if_ralvar.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/if_rsureg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/if_rumreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/if_rumvar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/if_runvar.ph
