@@ -1,4 +1,4 @@
-.\" $OpenBSD: uticom.4,v 1.3 2007/11/17 15:59:05 deraadt Exp $
+.\" $OpenBSD: uticom.4,v 1.4 2010/12/15 14:56:03 jasper Exp $
 .\" Copyright (c) 2007
 .\"     The DragonFly Project.  All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: December 15 2010 $
 .Dt UTICOM 4
 .Os
 .Sh NAME
@@ -43,8 +43,6 @@ The
 .Nm
 driver supports serial port functionality on devices based on the
 Texas Instruments TUSB3410 serial to USB converter chip.
-Note that the driver doesn't support devices which have internal
-EEPROM with firmware (yet).
 .Pp
 The device is accessed through the
 .Xr ucom 4
@@ -71,3 +69,12 @@ driver was written by
 and
 .An Hasso Tepper
 .Aq hasso@estpak.ee .
+.Sh CAVEATS
+The
+.Nm
+driver
+driver doesn't support devices which have internal EEPROM with
+firmware (yet).
+.Pp
+Devices with multiple ports will attach all ports, though only
+the first port can be used for now.
