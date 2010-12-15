@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.8 2010/12/15 11:09:03 jsg Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.9 2010/12/15 14:55:04 jasper Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -189,6 +189,11 @@ const struct cfattach uticom_ca = {
 	uticom_activate,
 };
 
+static const struct usb_devno uticom_devs[] = {
+	{ USB_VENDOR_TI, USB_PRODUCT_TI_TUSB3410 },
+	{ USB_VENDOR_STARTECH, USB_PRODUCT_STARTECH_ICUSB232X }
+};
+
 int
 uticom_match(struct device *parent, void *match, void *aux)
 {
@@ -197,10 +202,8 @@ uticom_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	if (uaa->vendor == USB_VENDOR_TI &&
-	    uaa->product == USB_PRODUCT_TI_TUSB3410)
-		return (UMATCH_VENDOR_PRODUCT);
-	return (0);
+	return (usb_lookup(uticom_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void
