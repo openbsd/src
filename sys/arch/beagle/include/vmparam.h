@@ -1,4 +1,4 @@
-/* 	$OpenBSD: vmparam.h,v 1.1 2009/05/08 03:13:27 drahn Exp $	*/
+/* 	$OpenBSD: vmparam.h,v 1.2 2010/12/15 05:30:19 tedu Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.23 2003/05/22 05:47:07 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,9 @@
 /* Allow armish to have bigger DSIZ than generic arm, allow user to override */
 #ifndef	MAXDSIZ
 #define	MAXDSIZ		(1024*1024*1024)		/* max data size */
+#endif
+#ifndef BRKSIZ
+#define	BRKSIZ		MAXDSIZ			/* heap gap size */
 #endif
 
 #include <arm/vmparam.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 2009/06/16 16:42:40 ariane Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.13 2010/12/15 05:30:19 tedu Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -61,6 +61,9 @@
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		((paddr_t)8*1024*1024*1024)	/* max data size */
+#endif
+#ifndef BRKSIZ
+#define	BRKSIZ		MAXDSIZ				/* heap gap size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		((paddr_t)2*1024*1024)		/* initial stack size limit */

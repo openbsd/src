@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2008/08/22 10:41:37 kurt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 2010/12/15 05:30:19 tedu Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.17 2006/03/04 01:55:03 uwe Exp $	*/
 
 /*-
@@ -52,6 +52,9 @@
 #define	MAXTSIZ			(64 * 1024 * 1024)	/* max text size */
 #ifndef MAXDSIZ
 #define	MAXDSIZ			(512 * 1024 * 1024)	/* max data size */
+#endif
+#ifndef BRKSIZ
+#define	BRKSIZ			MAXDSIZ			/* heap gap size */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ			(32 * 1024 * 1024)	/* max stack size */

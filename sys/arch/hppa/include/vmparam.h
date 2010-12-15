@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.36 2010/04/23 21:34:40 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.37 2010/12/15 05:30:19 tedu Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -48,6 +48,9 @@
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		(1*1024*1024*1024UL)	/* max data size */
+#endif
+#ifndef BRKSIZ
+#define	BRKSIZ		MAXDSIZ			/* heap gap size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
