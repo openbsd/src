@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.309 2010/12/11 20:48:21 damien Exp $
+#	$OpenBSD: GENERIC,v 1.310 2010/12/15 11:24:29 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -191,6 +191,8 @@ umsm*	at uhub?		# Qualcomm MSM EVDO
 ucom*	at umsm?
 uchcom*	at uhub?		# WinChipHead CH341/340 serial
 ucom*	at uchcom?
+uticom*	at uhub?		# TI serial
+ucom*	at uticom?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI
