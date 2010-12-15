@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.40 2010/07/03 04:44:51 guenther Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.41 2010/12/15 14:34:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	openlog_r(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY, &sdata);
 
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "Y:y:")) != -1)
+	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nY:y:")) != -1)
 		switch (ch) {
 		case 'Y':
 			syncsend = 1;
