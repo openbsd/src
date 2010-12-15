@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.7 2010/12/03 17:02:29 jakemsr Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.8 2010/12/15 11:09:03 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -209,7 +209,6 @@ uticom_attach(struct device *parent, struct device *self, void *aux)
 	struct uticom_softc *sc = (struct uticom_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -381,7 +380,7 @@ fwload_done:
 	sc->sc_iface_number = id->bInterfaceNumber;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
-		ed = usbd_interface2endpoint_descriptor(iface, i);
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 			    sc->sc_dev.dv_xname, i);
@@ -419,7 +418,7 @@ fwload_done:
 	uca.obufsize = UTICOM_OBUFSZ;
 	uca.ibufsizepad = UTICOM_IBUFSZ;
 	uca.device = dev;
-	uca.iface = iface;
+	uca.iface = sc->sc_iface;
 	uca.opkthdrlen = 0;
 	uca.methods = &uticom_methods;
 	uca.arg = sc;
