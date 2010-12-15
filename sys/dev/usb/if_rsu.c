@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.5 2010/12/14 21:38:03 kettenis Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.6 2010/12/15 16:51:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -100,7 +100,8 @@ static const struct usb_devno rsu_devs[] = {
 	{ USB_VENDOR_EDIMAX,		USB_PRODUCT_EDIMAX_RTL8192SU_1 },
 	{ USB_VENDOR_EDIMAX,		USB_PRODUCT_EDIMAX_RTL8192SU_2 },
 	{ USB_VENDOR_EDIMAX,		USB_PRODUCT_EDIMAX_RTL8192SU_3 },
-	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_RTL8192SU },
+	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWGUN54 },
+	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWNUM300 },
 	{ USB_VENDOR_HAWKING,		USB_PRODUCT_HAWKING_RTL8192SU_1 },
 	{ USB_VENDOR_HAWKING,		USB_PRODUCT_HAWKING_RTL8192SU_2 },
 	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUSNANO },
@@ -1419,8 +1420,7 @@ rsu_rx_multi_frame(struct rsu_softc *sc, uint8_t *buf, int len)
 }
 
 void
-rsu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status)
+rsu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct rsu_rx_data *data = priv;
 	struct rsu_softc *sc = data->sc;
@@ -1456,8 +1456,7 @@ rsu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-rsu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status)
+rsu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct rsu_tx_data *data = priv;
 	struct rsu_softc *sc = data->sc;
