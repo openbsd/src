@@ -960,7 +960,7 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		foff = 0;
 	}
 
-	vaddr = round_page((vaddr_t)vms->vm_daddr + MAXDSIZ);
+	vaddr = round_page((vaddr_t)vms->vm_daddr + BRKSIZ);
 	retcode = uvm_mmap(&vms->vm_map, &vaddr, size,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
 	    (caddr_t)vn, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.80 2010/05/21 23:22:33 oga Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.81 2010/12/15 04:59:53 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -189,12 +189,12 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 
 	/* prevent a user requested address from falling in heap space */
 	if ((vaddr + size > (vaddr_t)p->p_vmspace->vm_daddr) &&
-	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ)) {
+	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ)) {
 		if (flags & UVM_FLAG_FIXED) {
 			error = EINVAL;
 			goto done;
 		}
-		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ);
 	}
 	vm_map_lock(&p->p_vmspace->vm_map);
 
@@ -208,9 +208,9 @@ again:
 	} else {
 		/* prevent a returned address from falling in heap space */
 		if ((vaddr + size > (vaddr_t)p->p_vmspace->vm_daddr)
-		    && (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ)) {
+		    && (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ)) {
 			vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
-			    MAXDSIZ);
+			    BRKSIZ);
 			goto again;
 		}
 		error = 0;

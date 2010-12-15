@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.55 2010/07/26 01:56:27 guenther Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.56 2010/12/15 04:59:52 tedu Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -370,7 +370,7 @@ svr4_sys_mmap(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
@@ -404,7 +404,7 @@ svr4_sys_mmap64(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
