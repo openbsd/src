@@ -1,4 +1,4 @@
-/*	$OpenBSD: gamesupport.c,v 1.6 2003/04/25 21:37:47 deraadt Exp $	*/
+/*	$OpenBSD: gamesupport.c,v 1.7 2010/12/15 06:40:39 tedu Exp $	*/
 /*	$NetBSD: gamesupport.c,v 1.3 1995/04/24 12:24:28 cgd Exp $	*/
 
 /*
@@ -515,7 +515,7 @@ monstlist()
 
 	puts(" #)  Name                 Str  Brain  Quick  Energy  Exper  Treas  Type  Flock%\n");
 	fseek(Monstfp, 0L, SEEK_SET);
-	while (fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp) == 1)
+	while (fread(&Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp) == 1)
 		printf("%2d)  %-20.20s%4.0f   %4.0f     %2.0f   %5.0f  %5.0f     %2d    %2d     %3.0f\n", count++,
 		    Curmonster.m_name, Curmonster.m_strength, Curmonster.m_brains,
 		    Curmonster.m_speed, Curmonster.m_energy, Curmonster.m_experience,
@@ -552,7 +552,7 @@ scorelist()
 	FILE   *fp;		/* to open the file */
 
 	if ((fp = fopen(_PATH_SCORE, "r")) != NULL) {
-		while (fread((char *) &sbuf, SZ_SCORESTRUCT, 1, fp) == 1)
+		while (fread(&sbuf, SZ_SCORESTRUCT, 1, fp) == 1)
 			printf("%-20s   (%-9s)  Level: %6.0f  Type: %s\n",
 			    sbuf.sb_name, sbuf.sb_login, sbuf.sb_level, sbuf.sb_type);
 		fclose(fp);
@@ -588,7 +588,7 @@ activelist()
 	fseek(Playersfp, 0L, SEEK_SET);
 	printf("Current characters on file are:\n\n");
 
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_status != S_NOTUSED)
 			printf("%-20s   (%-9s)  Level: %6.0f  %s  (%s)\n",
 			    Other.p_name, Other.p_login, Other.p_level,
@@ -634,7 +634,7 @@ purgeoldplayers()
 
 	for (;;) {
 		fseek(Playersfp, loc, SEEK_SET);
-		if (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) != 1)
+		if (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) != 1)
 			break;
 
 		daysold = today - Other.p_lastused;
@@ -686,7 +686,7 @@ enterscore()
 	bool    found = FALSE;	/* set if we found an entry for this login */
 
 	if ((fp = fopen(_PATH_SCORE, "r+")) != NULL) {
-		while (fread((char *) &sbuf, SZ_SCORESTRUCT, 1, fp) == 1)
+		while (fread(&sbuf, SZ_SCORESTRUCT, 1, fp) == 1)
 			if (strcmp(Player.p_login, sbuf.sb_login) == 0) {
 				found = TRUE;
 				break;
@@ -716,6 +716,6 @@ enterscore()
 	}
 	/* update entry */
 	fseek(fp, loc, SEEK_SET);
-	fwrite((char *) &sbuf, SZ_SCORESTRUCT, 1, fp);
+	fwrite(&sbuf, SZ_SCORESTRUCT, 1, fp);
 	fclose(fp);
 }

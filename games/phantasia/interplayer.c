@@ -1,4 +1,4 @@
-/*	$OpenBSD: interplayer.c,v 1.4 2000/06/29 07:39:44 pjanzen Exp $	*/
+/*	$OpenBSD: interplayer.c,v 1.5 2010/12/15 06:40:39 tedu Exp $	*/
 /*	$NetBSD: interplayer.c,v 1.2 1995/03/24 03:58:47 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ checkbattle()
 	Users = 0;
 	fseek(Playersfp, 0L, SEEK_SET);
 
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
 		if (Other.p_status != S_OFF
 		    && Other.p_status != S_NOTUSED
 		    && Other.p_status != S_HUNGUP
@@ -469,7 +469,7 @@ checktampered()
 
 	/* first check for energy voids */
 	fseek(Energyvoidfp, 0L, SEEK_SET);
-	while (fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp) == 1)
+	while (fread(&Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp) == 1)
 		if (Enrgyvoid.ev_active
 		    && Enrgyvoid.ev_x == Player.p_x
 		    && Enrgyvoid.ev_y == Player.p_y)
@@ -650,7 +650,7 @@ tampered(what, arg1, arg2)
 					Player.p_lives = 5;
 					fseek(Playersfp, 0L, SEEK_SET);
 					loc = 0L;
-					while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
+					while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 						/* search for existing valar */
 						if (Other.p_specialtype == SC_VALAR
 						    && Other.p_status != S_NOTUSED)
@@ -721,7 +721,7 @@ userlist(ingameflag)
 	mvaddstr(8, 0,
 	    "Name                         X         Y    Lvl Type Login    Status\n");
 
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
 		if (Other.p_status == S_NOTUSED
 		/* record is unused */
 		    || (Other.p_specialtype == SC_VALAR && Other.p_status == S_CLOAKED))
@@ -808,7 +808,7 @@ throneroom()
 		/* not already king -- assumes crown */
 	{
 		fseek(Playersfp, 0L, SEEK_SET);
-		while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
+		while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 			if (Other.p_specialtype == SC_KING && Other.p_status != S_NOTUSED)
 				/* found old king */
 			{
@@ -844,9 +844,9 @@ throneroom()
 
 		/* clear all energy voids; retain location of holy grail */
 		fseek(Energyvoidfp, 0L, SEEK_SET);
-		fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp);
+		fread(&Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp);
 		fp = fopen(_PATH_VOID, "w");
-		fwrite((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, fp);
+		fwrite(&Enrgyvoid, SZ_VOIDSTRUCT, 1, fp);
 		fclose(fp);
 	}
 	mvaddstr(6, 0, "0:Decree  ");
@@ -944,11 +944,11 @@ dotampered()
 			if ((fp = fopen(_PATH_GOLD, "r+")) != NULL)
 				/* collect taxes */
 			{
-				fread((char *) &temp1, sizeof(double), 1, fp);
+				fread(&temp1, sizeof(double), 1, fp);
 				fseek(fp, 0L, SEEK_SET);
 				/* clear out value */
 				temp2 = 0.0;
-				fwrite((char *) &temp2, sizeof(double), 1, fp);
+				fwrite(&temp2, sizeof(double), 1, fp);
 				fclose(fp);
 			}
 			mvprintw(4, 0, "You have collected %.0f in gold.\n", temp1);
@@ -993,7 +993,7 @@ dotampered()
 				/* need a palantir to seek */
 			{
 				fseek(Energyvoidfp, 0L, SEEK_SET);
-				fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp);
+				fread(&Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp);
 				temp1 = distance(Player.p_x, Enrgyvoid.ev_x, Player.p_y, Enrgyvoid.ev_y);
 				temp1 += ROLL(-temp1 / 10.0, temp1 / 5.0);	/* add some error */
 				mvprintw(5, 0, "The palantir says the Grail is about %.0f away.\n", temp1);
@@ -1118,7 +1118,7 @@ writevoid(vp, loc)
 {
 
 	fseek(Energyvoidfp, loc, SEEK_SET);
-	fwrite((char *) vp, SZ_VOIDSTRUCT, 1, Energyvoidfp);
+	fwrite(vp, SZ_VOIDSTRUCT, 1, Energyvoidfp);
 	fflush(Energyvoidfp);
 	fseek(Energyvoidfp, 0L, SEEK_SET);
 }
@@ -1154,7 +1154,7 @@ allocvoid()
 	long    loc = 0L;	/* location of new energy void */
 
 	fseek(Energyvoidfp, 0L, SEEK_SET);
-	while (fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp) == 1)
+	while (fread(&Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp) == 1)
 		if (Enrgyvoid.ev_active)
 			loc += SZ_VOIDSTRUCT;
 		else

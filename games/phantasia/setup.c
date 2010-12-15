@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.9 2003/04/25 21:37:47 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.10 2010/12/15 06:40:39 tedu Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ main(argc, argv)
 		    &Curmonster.m_type, &Curmonster.m_flock);
 		Databuf[24] = '\0';
 		strlcpy(Curmonster.m_name, Databuf, sizeof Curmonster.m_name);
-		fwrite((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
+		fwrite(&Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 		}
 	    fclose(fp);
 	    fclose(Monstfp);

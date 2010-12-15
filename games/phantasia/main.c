@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2003/04/25 21:37:47 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2010/12/15 06:40:39 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -788,7 +788,7 @@ titlelist()
 	}
 	/* search for king */
 	fseek(Playersfp, 0L, SEEK_SET);
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_KING &&
 		    Other.p_status != S_NOTUSED)
 			/* found the king */
@@ -805,7 +805,7 @@ titlelist()
 
 	/* search for valar */
 	fseek(Playersfp, 0L, SEEK_SET);
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_VALAR && Other.p_status != S_NOTUSED)
 			/* found the valar */
 		{
@@ -818,7 +818,7 @@ titlelist()
 	/* search for council of the wise */
 	fseek(Playersfp, 0L, SEEK_SET);
 	Lines = 10;
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_COUNCIL && Other.p_status != S_NOTUSED)
 			/* found a member of the council */
 		{
@@ -837,7 +837,7 @@ titlelist()
 	nxtlvl = hilvl = 0;
 
 	fseek(Playersfp, 0L, SEEK_SET);
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_experience > hiexp && Other.p_specialtype <= SC_KING && Other.p_status != S_NOTUSED)
 			/* highest found so far */
 		{

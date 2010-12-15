@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2010/12/15 06:40:39 tedu Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -680,7 +680,7 @@ findname(name, playerp)
 	long    loc = 0;	/* location in the file */
 
 	fseek(Playersfp, 0L, SEEK_SET);
-	while (fread((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
+	while (fread(playerp, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
 		if (strcmp(playerp->p_name, name) == 0) {
 			if (playerp->p_status != S_NOTUSED || Wizard)
 				/* found it */
@@ -722,7 +722,7 @@ allocrecord()
 	long    loc = 0L;	/* location in file */
 
 	fseek(Playersfp, 0L, SEEK_SET);
-	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
+	while (fread(&Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
 		if (Other.p_status == S_NOTUSED)
 			/* found an empty record */
 			return (loc);
@@ -901,11 +901,11 @@ death(how)
 			mvaddstr(4, 0,
 			    "Your ring has taken control of you and turned you into a monster!\n");
 			fseek(Monstfp, 13L * SZ_MONSTERSTRUCT, SEEK_SET);
-			fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
+			fread(&Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 			strlcpy(Curmonster.m_name, Player.p_name,
 			    sizeof Curmonster.m_name);
 			fseek(Monstfp, 13L * SZ_MONSTERSTRUCT, SEEK_SET);
-			fwrite((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
+			fwrite(&Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 			fflush(Monstfp);
 		}
 	}
@@ -973,7 +973,7 @@ writerecord(playerp, place)
 	long    place;
 {
 	fseek(Playersfp, place, SEEK_SET);
-	fwrite((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
+	fwrite(playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
 	fflush(Playersfp);
 }
 /**/
@@ -1156,7 +1156,7 @@ readrecord(playerp, loc)
 	long    loc;
 {
 	fseek(Playersfp, loc, SEEK_SET);
-	fread((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
+	fread(playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
 }
 /**/
 /************************************************************************
@@ -1668,10 +1668,10 @@ collecttaxes(gold, gems)
 		/* update taxes */
 	{
 		dtemp = 0.0;
-		fread((char *) &dtemp, sizeof(double), 1, fp);
+		fread(&dtemp, sizeof(double), 1, fp);
 		dtemp += floor(taxes);
 		fseek(fp, 0L, SEEK_SET);
-		fwrite((char *) &dtemp, sizeof(double), 1, fp);
+		fwrite(&dtemp, sizeof(double), 1, fp);
 		fclose(fp);
 	}
 }

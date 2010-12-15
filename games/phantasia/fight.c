@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.9 2003/04/25 21:37:47 deraadt Exp $	*/
+/*	$OpenBSD: fight.c,v 1.10 2010/12/15 06:40:39 tedu Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -1041,7 +1041,7 @@ callmonster(which)
 
 	/* fill structure */
 	fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, SEEK_SET);
-	fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
+	fread(&Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 
 	/* handle some special monsters */
 	if (Curmonster.m_type == SM_MODNAR) {
