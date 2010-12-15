@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.235 2010/06/30 18:10:55 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.236 2010/12/15 14:22:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -111,6 +111,9 @@ int			 pf_addr_setup(struct pf_ruleset *,
 int			 pf_kif_setup(char *, struct pfi_kif **);
 void			 pf_addr_copyout(struct pf_addr_wrap *);
 void			 pf_trans_set_commit(void);
+void			 pf_pool_copyin(struct pf_pool *, struct pf_pool *);
+int			 pf_rule_copyin(struct pf_rule *, struct pf_rule *,
+			    struct pf_ruleset *);
 
 struct pf_rule		 pf_default_rule, pf_default_rule_new;
 struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER("pfcnslk");
@@ -1011,21 +1014,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-		rule = pool_get(&pf_rule_pl, PR_WAITOK|PR_LIMITFAIL);
+		rule = pool_get(&pf_rule_pl, PR_WAITOK|PR_LIMITFAIL|PR_ZERO);
 		if (rule == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		bcopy(&pr->rule, rule, sizeof(struct pf_rule));
+		if ((error = pf_rule_copyin(&pr->rule, rule, ruleset))) {
+			pool_put(&pf_rule_pl, rule);
+			break;
+		}
 		rule->cuid = p->p_cred->p_ruid;
 		rule->cpid = p->p_pid;
-		rule->anchor = NULL;
-		rule->kif = NULL;
-		rule->rcv_kif = NULL;
-		/* initialize refcounting */
-		rule->states_cur = 0;
-		rule->src_nodes = 0;
-		rule->entries.tqe_prev = NULL;
 
 		switch (rule->af) {
 		case 0:
@@ -1054,48 +1053,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    rule->dst.addr.type == PF_ADDR_NONE)
 			error = EINVAL;
 
-		if (pf_kif_setup(rule->ifname, &rule->kif))
-			error = EINVAL;
-		if (pf_kif_setup(rule->rcv_ifname, &rule->rcv_kif))
-			error = EINVAL;
-		if (pf_kif_setup(rule->rdr.ifname, &rule->rdr.kif))
-			error = EINVAL;
-		if (pf_kif_setup(rule->nat.ifname, &rule->nat.kif))
-			error = EINVAL;
-		if (pf_kif_setup(rule->route.ifname, &rule->route.kif))
-			error = EINVAL;
-
-		if (rule->rtableid > 0 && !rtable_exists(rule->rtableid))
-			error = EBUSY;
-
-#ifdef ALTQ
-		/* set queue IDs */
-		if (rule->qname[0] != 0) {
-			if ((rule->qid = pf_qname2qid(rule->qname)) == 0)
-				error = EBUSY;
-			else if (rule->pqname[0] != 0) {
-				if ((rule->pqid =
-				    pf_qname2qid(rule->pqname)) == 0)
-					error = EBUSY;
-			} else
-				rule->pqid = rule->qid;
-		}
-#endif
-		if (rule->tagname[0])
-			if ((rule->tag = pf_tagname2tag(rule->tagname)) == 0)
-				error = EBUSY;
-		if (rule->match_tagname[0])
-			if ((rule->match_tag =
-			    pf_tagname2tag(rule->match_tagname)) == 0)
-				error = EBUSY;
-		if (rule->rt && !rule->direction)
-			error = EINVAL;
-#if NPFLOG > 0
-		if (!rule->log)
-			rule->logif = 0;
-		if (rule->logif >= PFLOGIFS_MAX)
-			error = EINVAL;
-#endif
 		if (pf_addr_setup(ruleset, &rule->src.addr, rule->af))
 			error = EINVAL;
 		if (pf_addr_setup(ruleset, &rule->dst.addr, rule->af))
@@ -1108,22 +1065,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		if (pf_anchor_setup(rule, ruleset, pr->anchor_call))
 			error = EINVAL;
-
-		if (rule->overload_tblname[0]) {
-			if ((rule->overload_tbl = pfr_attach_table(ruleset,
-			    rule->overload_tblname, 0)) == NULL)
-				error = EINVAL;
-			else
-				rule->overload_tbl->pfrkt_flags |=
-				    PFR_TFLAG_ACTIVE;
-		}
+		if (rule->rt && !rule->direction)
+			error = EINVAL;
 
 		if (error) {
 			pf_rm_rule(NULL, rule);
 			break;
 		}
-		rule->evaluations = rule->packets[0] = rule->packets[1] =
-		    rule->bytes[0] = rule->bytes[1] = 0;
 		TAILQ_INSERT_TAIL(ruleset->rules.inactive.ptr,
 		    rule, entries);
 		ruleset->rules.inactive.rcount++;
@@ -1232,17 +1180,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (pcr->action != PF_CHANGE_REMOVE) {
-			newrule = pool_get(&pf_rule_pl, PR_WAITOK|PR_LIMITFAIL);
+			newrule = pool_get(&pf_rule_pl,
+			    PR_WAITOK|PR_LIMITFAIL|PR_ZERO);
 			if (newrule == NULL) {
 				error = ENOMEM;
 				break;
 			}
-			bcopy(&pcr->rule, newrule, sizeof(struct pf_rule));
+			pf_rule_copyin(&pcr->rule, newrule, ruleset);
 			newrule->cuid = p->p_cred->p_ruid;
 			newrule->cpid = p->p_pid;
-			/* initialize refcounting */
-			newrule->states_cur = 0;
-			newrule->entries.tqe_prev = NULL;
 
 			switch (newrule->af) {
 			case 0:
@@ -1261,51 +1207,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				goto fail;
 			}
 
-			if (pf_kif_setup(newrule->ifname, &newrule->kif))
-				error = EINVAL;
-			if (pf_kif_setup(newrule->rcv_ifname, &newrule->rcv_kif))
-				error = EINVAL;
-			if (pf_kif_setup(newrule->rdr.ifname, &newrule->rdr.kif))
-				error = EINVAL;
-			if (pf_kif_setup(newrule->nat.ifname, &newrule->nat.kif))
-				error = EINVAL;
-			if (pf_kif_setup(newrule->route.ifname, &newrule->route.kif))
-				error = EINVAL;
-
-			if (newrule->rtableid > 0 &&
-			    !rtable_exists(newrule->rtableid))
-				error = EBUSY;
-
-#ifdef ALTQ
-			/* set queue IDs */
-			if (newrule->qname[0] != 0) {
-				if ((newrule->qid =
-				    pf_qname2qid(newrule->qname)) == 0)
-					error = EBUSY;
-				else if (newrule->pqname[0] != 0) {
-					if ((newrule->pqid =
-					    pf_qname2qid(newrule->pqname)) == 0)
-						error = EBUSY;
-				} else
-					newrule->pqid = newrule->qid;
-			}
-#endif /* ALTQ */
-			if (newrule->tagname[0])
-				if ((newrule->tag =
-				    pf_tagname2tag(newrule->tagname)) == 0)
-					error = EBUSY;
-			if (newrule->match_tagname[0])
-				if ((newrule->match_tag = pf_tagname2tag(
-				    newrule->match_tagname)) == 0)
-					error = EBUSY;
 			if (newrule->rt && !newrule->direction)
 				error = EINVAL;
-#if NPFLOG > 0
-			if (!newrule->log)
-				newrule->logif = 0;
-			if (newrule->logif >= PFLOGIFS_MAX)
-				error = EINVAL;
-#endif
 			if (pf_addr_setup(ruleset, &newrule->src.addr, newrule->af))
 				error = EINVAL;
 			if (pf_addr_setup(ruleset, &newrule->dst.addr, newrule->af))
@@ -1319,23 +1222,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_anchor_setup(newrule, ruleset, pcr->anchor_call))
 				error = EINVAL;
 
-			if (newrule->overload_tblname[0]) {
-				if ((newrule->overload_tbl = pfr_attach_table(
-				    ruleset, newrule->overload_tblname, 0)) ==
-				    NULL)
-					error = EINVAL;
-				else
-					newrule->overload_tbl->pfrkt_flags |=
-					    PFR_TFLAG_ACTIVE;
-			}
-
 			if (error) {
 				pf_rm_rule(NULL, newrule);
 				break;
 			}
-			newrule->evaluations = 0;
-			newrule->packets[0] = newrule->packets[1] = 0;
-			newrule->bytes[0] = newrule->bytes[1] = 0;
 		}
 
 		if (pcr->action == PF_CHANGE_ADD_HEAD)
@@ -1753,6 +1643,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(&pa->altq, altq, sizeof(struct pf_altq));
+		altq->altq_disc = NULL;
 
 		/*
 		 * if this is for a queue, find the discipline and
@@ -1764,7 +1655,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pool_put(&pf_altq_pl, altq);
 				break;
 			}
-			altq->altq_disc = NULL;
 			TAILQ_FOREACH(a, pf_altqs_inactive, entries) {
 				if (strncmp(a->ifname, altq->ifname,
 				    IFNAMSIZ) == 0 && a->qname[0] == 0) {
@@ -2569,4 +2459,136 @@ pf_trans_set_commit(void)
 		pf_status.hostid = pf_trans_set.hostid;
 	if (pf_trans_set.mask & PF_TSET_REASS)
 		pf_status.reass = pf_trans_set.reass;
+}
+
+void
+pf_pool_copyin(struct pf_pool *from, struct pf_pool *to)
+{
+	bcopy(from, to, sizeof(*to));
+	to->kif = NULL;
+}
+
+int
+pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
+    struct pf_ruleset *ruleset)
+{
+	int i;
+
+	to->src = from->src;
+	to->dst = from->dst;
+
+	/* XXX union skip[] */
+
+	strlcpy(to->label, from->label, sizeof(to->label));
+	strlcpy(to->ifname, from->ifname, sizeof(to->ifname));
+	strlcpy(to->rcv_ifname, from->rcv_ifname, sizeof(to->rcv_ifname));
+	strlcpy(to->qname, from->qname, sizeof(to->qname));
+	strlcpy(to->pqname, from->pqname, sizeof(to->pqname));
+	strlcpy(to->tagname, from->tagname, sizeof(to->tagname));
+	strlcpy(to->match_tagname, from->match_tagname,
+	    sizeof(to->match_tagname));
+	strlcpy(to->overload_tblname, from->overload_tblname,
+	    sizeof(to->overload_tblname));
+
+	pf_pool_copyin(&from->nat, &to->nat);
+	pf_pool_copyin(&from->rdr, &to->rdr);
+	pf_pool_copyin(&from->route, &to->route);
+
+	if (pf_kif_setup(to->ifname, &to->kif))
+		return (EINVAL);
+	if (pf_kif_setup(to->rcv_ifname, &to->rcv_kif))
+		return (EINVAL);
+	if (to->overload_tblname[0]) {
+		if ((to->overload_tbl = pfr_attach_table(ruleset,
+		    to->overload_tblname, 0)) == NULL)
+			return (EINVAL);
+		else
+			to->overload_tbl->pfrkt_flags |= PFR_TFLAG_ACTIVE;
+	}
+
+	if (pf_kif_setup(to->rdr.ifname, &to->rdr.kif))
+		return (EINVAL);
+	if (pf_kif_setup(to->nat.ifname, &to->nat.kif))
+		return (EINVAL);
+	if (pf_kif_setup(to->route.ifname, &to->route.kif))
+		return (EINVAL);
+
+	to->os_fingerprint = from->os_fingerprint;
+
+	to->rtableid = from->rtableid;
+	if (to->rtableid > 0 && !rtable_exists(to->rtableid))
+		return (EBUSY);
+
+	for (i = 0; i < PFTM_MAX; i++)
+		to->timeout[i] = from->timeout[i];
+	to->states_tot = from->states_tot;
+	to->max_states = from->max_states;
+	to->max_src_nodes = from->max_src_nodes;
+	to->max_src_states = from->max_src_states;
+	to->max_src_conn = from->max_src_conn;
+	to->max_src_conn_rate.limit = from->max_src_conn_rate.limit;
+	to->max_src_conn_rate.seconds = from->max_src_conn_rate.seconds;
+
+#ifdef ALTQ
+	/* set queue IDs */
+	if (to->qname[0] != 0) {
+		if ((to->qid = pf_qname2qid(to->qname)) == 0)
+			return (EBUSY);
+		else if (to->pqname[0] != 0) {
+			if ((to->pqid = pf_qname2qid(to->pqname)) == 0)
+				return (EBUSY);
+		} else
+			to->pqid = to->qid;
+	}
+#endif
+	to->rt_listid = from->rt_listid;
+	to->prob = from->prob;
+	to->return_icmp = from->return_icmp;
+	to->return_icmp6 = from->return_icmp6;
+	to->max_mss = from->max_mss;
+	if (to->tagname[0])
+		if ((to->tag = pf_tagname2tag(to->tagname)) == 0)
+			return (EBUSY);
+	if (to->match_tagname[0])
+		if ((to->match_tag = pf_tagname2tag(to->match_tagname)) == 0)
+			return (EBUSY);
+	to->scrub_flags = from->scrub_flags;
+	to->uid = from->uid;
+	to->gid = from->gid;
+	to->rule_flag = from->rule_flag;
+	to->action = from->action;
+	to->direction = from->direction;
+	to->log = from->log;
+	to->logif = from->logif;
+#if NPFLOG > 0
+	if (!to->log)
+		to->logif = 0;
+	if (to->logif >= PFLOGIFS_MAX)
+		return (EINVAL);
+#endif
+	to->quick = from->quick;
+	to->ifnot = from->ifnot;
+	to->match_tag_not = from->match_tag_not;
+	to->keep_state = from->keep_state;
+	to->af = from->af;
+	to->proto = from->proto;
+	to->type = from->type;
+	to->code = from->code;
+	to->flags = from->flags;
+	to->flagset = from->flagset;
+	to->min_ttl = from->min_ttl;
+	to->allow_opts = from->allow_opts;
+	to->rt = from->rt;
+	to->return_ttl = from->return_ttl;
+	to->tos = from->tos;
+	to->set_tos = from->set_tos;
+	to->anchor_relative = from->anchor_relative; /* XXX */
+	to->anchor_wildcard = from->anchor_wildcard; /* XXX */
+	to->flush = from->flush;
+	to->divert.addr = from->divert.addr;
+	to->divert.port = from->divert.port;
+	to->divert_packet.addr = from->divert_packet.addr;
+	to->divert_packet.port = from->divert_packet.port;
+
+	return (0);
 }
