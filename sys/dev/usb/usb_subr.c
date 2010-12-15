@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.75 2010/12/06 04:30:57 jakemsr Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.76 2010/12/15 00:59:26 jakemsr Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -351,6 +351,9 @@ usb_delay_ms(usbd_bus_handle bus, u_int ms)
 void
 usbd_delay_ms(usbd_device_handle dev, u_int ms)
 {
+	if (usbd_is_dying(dev))
+		return;
+
 	usb_delay_ms(dev->bus, ms);
 }
 
