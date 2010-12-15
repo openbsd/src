@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.481 2010/09/24 10:57:16 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.482 2010/12/15 14:06:05 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 24 2010 $
+.Dd $Mdocdate: December 15 2010 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -593,10 +593,9 @@ The macro expansion for the
 directive occurs only at configuration file parse time, not during runtime.
 .Pp
 .It Ar probability Aq Ar number
-A probability attribute can be attached to a rule, with a value set between
-0 and 1, bounds not included.
-In that case, the rule will be honoured using the given probability value
-only.
+A probability attribute can be attached to a rule,
+with a value set between 0 and 100%,
+in which case the rule is honoured using the given probability value.
 For example, the following rule will drop 20% of incoming ICMP packets:
 .Pp
 .Dl block in proto icmp probability 20%
@@ -1190,7 +1189,6 @@ States are bound to an interface.
 States can match packets on any interfaces (the default).
 .El
 .It Ar set timeout
-.Pp
 .Bl -tag -width "src.track" -compact
 .It Ar frag
 Seconds before an unassembled fragment is expired.
