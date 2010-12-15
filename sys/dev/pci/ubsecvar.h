@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.38 2009/03/27 13:31:30 reyk Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.39 2010/12/15 23:34:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -152,7 +152,6 @@ struct ubsec_q {
 	bus_dmamap_t			q_dst_map;
 
 	int				q_sesn;
-	int				q_flags;
 };
 
 struct ubsec_softc {
@@ -184,8 +183,6 @@ struct ubsec_softc {
 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */
 };
-
-#define	UBSEC_QFLAGS_COPYOUTIV		0x1
 
 struct ubsec_session {
 	u_int32_t	ses_used;

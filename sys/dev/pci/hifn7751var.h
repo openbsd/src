@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.52 2004/01/20 21:01:55 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.53 2010/12/15 23:34:23 mikeb Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -104,7 +104,6 @@ struct hifn_dma {
 
 struct hifn_session {
 	int hs_used;
-	u_int8_t hs_iv[HIFN_MAX_IV_LENGTH];
 };
 
 #define	HIFN_RING_SYNC(sc, r, i, f)					\

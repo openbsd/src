@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.147 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.148 2010/12/15 23:34:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -711,9 +711,6 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	bzero(ses, sizeof(struct ubsec_session));
 	ses->ses_used = 1;
 	if (encini) {
-		/* get an IV, network byte order */
-		arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
-
 		/* Go ahead and compute key in ubsec's byte order */
 		if (encini->cri_alg == CRYPTO_AES_CBC) {
 			bcopy(encini->cri_key, ses->ses_key,
@@ -944,14 +941,10 @@ ubsec_process(struct cryptop *crp)
 		encoffset = enccrd->crd_skip;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
-
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, key.ses_iv, ivlen);
-			else {
-				for (i = 0; i < (ivlen / 4); i++)
-					key.ses_iv[i] = ses->ses_iv[i];
-			}
+			else
+				arc4random_buf(key.ses_iv, ivlen);
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -1434,26 +1427,6 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
 		crp->crp_buf = (caddr_t)q->q_dst_m;
-	}
-
-	/* copy out IV for future use */
-	if (q->q_flags & UBSEC_QFLAGS_COPYOUTIV) {
-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-			if (crd->crd_alg != CRYPTO_DES_CBC &&
-			    crd->crd_alg != CRYPTO_3DES_CBC &&
-			    crd->crd_alg != CRYPTO_AES_CBC)
-				continue;
-			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - 8, 8,
-				    (caddr_t)sc->sc_sessions[q->q_sesn].ses_iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				cuio_copydata((struct uio *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - 8, 8,
-				    (caddr_t)sc->sc_sessions[q->q_sesn].ses_iv);
-			}
-			break;
-		}
 	}
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {

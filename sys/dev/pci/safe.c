@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.29 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: safe.c,v 1.30 2010/12/15 23:34:23 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -472,7 +472,8 @@ safe_process(struct cryptop *crp)
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, iv, ivsize);
 			else
-				bcopy(ses->ses_iv, iv, ivsize);
+				arc4random_buf(iv, ivsize);
+
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback(re->re_src_m,
@@ -485,7 +486,6 @@ safe_process(struct cryptop *crp)
 			for (i = 0; i < ivsize / sizeof(iv[0]); i++)
 				re->re_sastate.sa_saved_iv[i] = htole32(iv[i]);
 			cmd0 |= SAFE_SA_CMD0_IVLD_STATE | SAFE_SA_CMD0_SAVEIV;
-			re->re_flags |= SAFE_QFLAGS_COPYOUTIV;
 		} else {
 			cmd0 |= SAFE_SA_CMD0_INBOUND;
 
@@ -1362,9 +1362,6 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	ses->ses_used = 1;
 
 	if (encini) {
-		/* get an IV */
-		arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
-
 		ses->ses_klen = encini->cri_klen;
 		bcopy(encini->cri_key, ses->ses_key, ses->ses_klen / 8);
 
@@ -1673,33 +1670,6 @@ safe_callback(struct safe_softc *sc, struct safe_ringentry *re)
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && re->re_src_m != re->re_dst_m) {
 		m_freem(re->re_src_m);
 		crp->crp_buf = (caddr_t)re->re_dst_m;
-	}
-
-	if (re->re_flags & SAFE_QFLAGS_COPYOUTIV) {
-		/* copy out IV for future use */
-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-			int ivsize;
-
-			if (crd->crd_alg == CRYPTO_DES_CBC ||
-			    crd->crd_alg == CRYPTO_3DES_CBC) {
-				ivsize = 2*sizeof(u_int32_t);
-			} else if (crd->crd_alg == CRYPTO_AES_CBC) {
-				ivsize = 4*sizeof(u_int32_t);
-			} else
-				continue;
-			if (crp->crp_flags & CRYPTO_F_IMBUF) {
-				m_copydata((struct mbuf *)crp->crp_buf,
-					crd->crd_skip + crd->crd_len - ivsize,
-					ivsize,
-					(caddr_t) sc->sc_sessions[re->re_sesn].ses_iv);
-			} else if (crp->crp_flags & CRYPTO_F_IOV) {
-				cuio_copydata((struct uio *)crp->crp_buf,
-					crd->crd_skip + crd->crd_len - ivsize,
-					ivsize,
-					(caddr_t)sc->sc_sessions[re->re_sesn].ses_iv);
-			}
-			break;
-		}
 	}
 
 	if (re->re_flags & SAFE_QFLAGS_COPYOUTICV) {

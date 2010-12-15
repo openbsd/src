@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.7 2010/07/06 09:49:47 blambert Exp $	*/
+/*	$OpenBSD: via.c,v 1.8 2010/12/15 23:34:23 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -64,7 +64,6 @@ void	viac3_rnd(void *);
 struct viac3_session {
 	u_int32_t	ses_ekey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
 	u_int32_t	ses_dkey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
-	u_int8_t	ses_iv[16];			/* 128 bit aligned */
 	u_int32_t	ses_cw0;
 	struct swcr_data *swd;
 	int		ses_klen;
@@ -194,7 +193,6 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			cw0 |= C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_SW |
 			    C3_CRYPT_CWLO_NORMAL;
 
-			arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
 			ses->ses_klen = c->cri_klen;
 			ses->ses_cw0 = cw0;
 
@@ -374,7 +372,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			bcopy(crd->crd_iv, sc->op_iv, 16);
 		else
-			bcopy(ses->ses_iv, sc->op_iv, 16);
+			arc4random_buf(sc->op_iv, 16);
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -427,21 +425,6 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	else
 		bcopy(sc->op_buf, crp->crp_buf + crd->crd_skip,
 		    crd->crd_len);
-
-	/* copy out last block for use as next session IV */
-	if (crd->crd_flags & CRD_F_ENCRYPT) {
-		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copydata((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 16, 16,
-			    ses->ses_iv);
-		else if (crp->crp_flags & CRYPTO_F_IOV)
-			cuio_copydata((struct uio *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 16, 16,
-			    ses->ses_iv);
-		else
-			bcopy(crp->crp_buf + crd->crd_skip +
-			    crd->crd_len - 16, ses->ses_iv, 16);
-	}
 
 	if (sc->op_buf != NULL) {
 		bzero(sc->op_buf, crd->crd_len);

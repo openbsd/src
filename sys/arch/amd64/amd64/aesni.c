@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.16 2010/11/15 14:48:17 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.17 2010/12/15 23:34:23 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -46,7 +46,6 @@ struct aesni_session {
 	uint32_t		 ses_dkey[4 * (AES_MAXROUNDS + 1)];
 	uint32_t		 ses_klen;
 	uint8_t			 ses_nonce[AESCTR_NONCESIZE];
-	uint8_t			 ses_iv[EALG_MAX_BLOCK_LEN];
 	int			 ses_sid;
 	struct swcr_data	*ses_swd;
 	LIST_ENTRY(aesni_session)
@@ -155,7 +154,6 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		switch (c->cri_alg) {
 		case CRYPTO_AES_CBC:
 			ses->ses_klen = c->cri_klen / 8;
-			arc4random_buf(ses->ses_iv, 16);
 			fpu_kernel_enter();
 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
 			fpu_kernel_exit();
@@ -165,7 +163,6 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			ses->ses_klen = c->cri_klen / 8 - AESCTR_NONCESIZE;
 			bcopy(c->cri_key + ses->ses_klen, ses->ses_nonce,
 			    AESCTR_NONCESIZE);
-			arc4random_buf(ses->ses_iv, 8);
 			fpu_kernel_enter();
 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
 			fpu_kernel_exit();
@@ -335,7 +332,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			bcopy(crd->crd_iv, iv, ivlen);
 		else
-			bcopy(ses->ses_iv, iv, ivlen);
+			arc4random_buf(iv, ivlen);
 
 		/* Do we need to write the IV */
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
@@ -400,24 +397,6 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	} else
 		cuio_copyback((struct uio *)crp->crp_buf, crd->crd_skip,
 		    crd->crd_len, buf);
-
-	/*
-	 * Copy out last block for use as next session IV for CBC,
-	 * generate new IV for CTR.
-	 */
-	if (crd->crd_flags & CRD_F_ENCRYPT) {
-		if (crd->crd_alg == CRYPTO_AES_CBC) {
-			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
-				    ses->ses_iv);
-			else
-				cuio_copydata((struct uio *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
-				    ses->ses_iv);
-		} else if (crd->crd_alg == CRYPTO_AES_CTR)
-			arc4random_buf(ses->ses_iv, ivlen);
-	}
 
 out:
 	bzero(buf, roundup(crd->crd_len, EALG_MAX_BLOCK_LEN));
