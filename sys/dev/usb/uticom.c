@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.9 2010/12/15 14:55:04 jasper Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.10 2010/12/15 16:22:16 jasper Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -304,8 +304,8 @@ uticom_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dying = 1;
 		return;
 	} else {
-		printf("%s: firmware download succeeded\n",
-		    sc->sc_dev.dv_xname);
+		DPRINTF(("%s: firmware download succeeded\n",
+		    sc->sc_dev.dv_xname));
 	}
 
 	status = usbd_reload_device_desc(dev);
