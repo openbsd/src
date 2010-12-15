@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.595 2010/12/01 10:35:18 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.596 2010/12/15 13:54:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2208,7 +2208,7 @@ filter_opt	: USER uids {
 
 			p = floor($2 * UINT_MAX + 0.5);
 			if (p < 0.0 || p > UINT_MAX) {
-				yyerror("invalid probability: %lf", p);
+				yyerror("invalid probability: %g%%", $2 * 100);
 				YYERROR;
 			}
 			filter_opts.prob = (u_int32_t)p;
