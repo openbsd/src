@@ -1,4 +1,4 @@
-.\" $OpenBSD: uticom.4,v 1.4 2010/12/15 14:56:03 jasper Exp $
+.\" $OpenBSD: uticom.4,v 1.5 2010/12/16 20:15:46 jmc Exp $
 .\" Copyright (c) 2007
 .\"     The DragonFly Project.  All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 15 2010 $
+.Dd $Mdocdate: December 16 2010 $
 .Dt UTICOM 4
 .Os
 .Sh NAME
@@ -72,8 +72,7 @@ and
 .Sh CAVEATS
 The
 .Nm
-driver
-driver doesn't support devices which have internal EEPROM with
+driver doesn't support devices which have an internal EEPROM with
 firmware (yet).
 .Pp
 Devices with multiple ports will attach all ports, though only
