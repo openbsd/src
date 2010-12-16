@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.126 2010/10/21 08:09:35 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.127 2010/12/16 18:47:01 dhill Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -1159,7 +1159,7 @@ omalloc(size_t sz, int zero_fill)
 		} else {
 			if (mopts.malloc_junk) {
 				if (zero_fill)
-					memset(p + sz - mopts.malloc_guard,
+					memset((char *)p + sz - mopts.malloc_guard,
 					    SOME_JUNK, psz - sz);
 				else
 					memset(p, SOME_JUNK,
@@ -1372,9 +1372,9 @@ orealloc(void *p, size_t newsz)
 		if (rnewsz > roldsz) {
 			if (!mopts.malloc_guard) {
 				STATS_INC(g_pool->cheap_realloc_tries);
-				zapcacheregion(g_pool, p + roldsz);
-				q = MMAPA(p + roldsz, rnewsz - roldsz);
-				if (q == p + roldsz) {
+				zapcacheregion(g_pool, (char *)p + roldsz);
+				q = MMAPA((char *)p + roldsz, rnewsz - roldsz);
+				if (q == (char *)p + roldsz) {
 					malloc_used += rnewsz - roldsz;
 					if (mopts.malloc_junk)
 						memset(q, SOME_JUNK,
