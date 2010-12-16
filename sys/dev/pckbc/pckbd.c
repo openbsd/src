@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.29 2010/12/03 18:29:56 shadchin Exp $ */
+/* $OpenBSD: pckbd.c,v 1.30 2010/12/16 20:18:31 shadchin Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -179,7 +179,6 @@ void	pckbd_input(void *, int);
 static int	pckbd_decode(struct pckbd_internal *, int,
 				  u_int *, int *);
 static int	pckbd_led_encode(int);
-static int	pckbd_led_decode(int);
 
 struct pckbd_internal pckbd_consdata;
 
@@ -890,22 +889,6 @@ pckbd_led_encode(led)
 	return(res);
 }
 
-static int
-pckbd_led_decode(led)
-	int led;
-{
-	int res;
-
-	res = 0;
-	if (led & 0x01)
-		res |= WSKBD_LED_SCROLL;
-	if (led & 0x02)
-		res |= WSKBD_LED_NUM;
-	if (led & 0x04)
-		res |= WSKBD_LED_CAPS;
-	return(res);
-}
-
 void
 pckbd_set_leds(v, leds)
 	void *v;
@@ -916,7 +899,7 @@ pckbd_set_leds(v, leds)
 
 	cmd[0] = KBC_MODEIND;
 	cmd[1] = pckbd_led_encode(leds);
-	sc->sc_ledstate = cmd[1];
+	sc->sc_ledstate = leds;
 
 	(void) pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 				 cmd, 2, 0, 0, 0);
@@ -980,13 +963,14 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		int res;
 		cmd[0] = KBC_MODEIND;
 		cmd[1] = pckbd_led_encode(*(int *)data);
-		sc->sc_ledstate = cmd[1];
+		sc->sc_ledstate = *(int *)data & (WSKBD_LED_SCROLL |
+		    WSKBD_LED_NUM | WSKBD_LED_CAPS);
 		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 					cmd, 2, 0, 1, 0);
 		return (res);
 		}
 	    case WSKBDIO_GETLEDS:
-		*(int *)data = pckbd_led_decode(sc->sc_ledstate);
+		*(int *)data = sc->sc_ledstate;
 		return (0);
 	    case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
