@@ -238,7 +238,7 @@ cipher_nid_to_cryptodev(int nid)
 static int
 get_cryptodev_ciphers(const int **cnids)
 {
-	static int nids[CRYPTO_ALGORITHM_MAX];
+	static int nids[CRYPTO_ALGORITHM_MAX + CRYPTO_VIAC3_MAX + 1];
 	struct session_op sess;
 	int fd, i, count = 0;
 
@@ -249,7 +249,7 @@ get_cryptodev_ciphers(const int **cnids)
 	memset(&sess, 0, sizeof(sess));
 	sess.key = (caddr_t)"123456781234567812345678";
 
-	for (i = 0; ciphers[i].c_id && count < CRYPTO_ALGORITHM_MAX; i++) {
+	for (i = 0; ciphers[i].c_id && count <= CRYPTO_ALGORITHM_MAX; i++) {
 		if (ciphers[i].c_nid == NID_undef)
 			continue;
 		sess.cipher = ciphers[i].c_id;
