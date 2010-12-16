@@ -74,6 +74,8 @@ ENGINE_load_cryptodev(void)
 static int check_viac3aes(void);
 #endif
 
+#define CRYPTO_VIAC3_MAX	3
+
 struct dev_crypto_state {
 	struct session_op d_sess;
 	int d_fd;
