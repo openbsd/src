@@ -922,7 +922,6 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_device_dma	*dma = dev->dma;
 	struct drm_buf_map	*request = data;
-	struct vmspace		*vms;
 	struct vnode		*vn;
 	vaddr_t			 address, vaddr;
 	voff_t			 foff;
@@ -932,8 +931,6 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	if (!vfinddev(file_priv->kdev, VCHR, &vn))
 		return EINVAL;
-
-	vms = curproc->p_vmspace;
 
 	rw_enter_write(&dma->dma_lock);
 	dev->dma->buf_use++;	/* Can't allocate more after this call */
@@ -960,8 +957,8 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		foff = 0;
 	}
 
-	vaddr = round_page((vaddr_t)vms->vm_daddr + BRKSIZ);
-	retcode = uvm_mmap(&vms->vm_map, &vaddr, size,
+	vaddr = uvm_map_hint(curproc, VM_PROT_READ | VM_PROT_WRITE);
+	retcode = uvm_mmap(&curproc->p_vmspace->vm_map, &vaddr, size,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
 	    (caddr_t)vn, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur,
 	    curproc);
