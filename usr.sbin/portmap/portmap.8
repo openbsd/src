@@ -1,4 +1,4 @@
-.\"	$OpenBSD: portmap.8,v 1.7 2007/05/31 19:20:27 jmc Exp $
+.\"	$OpenBSD: portmap.8,v 1.8 2010/12/16 20:22:07 jmc Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)portmap.8	5.3 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 16 2010 $
 .Dt PORTMAP 8
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ like any other daemon.
 then logs errors using
 .Xr syslog 3 .
 .Pp
-Option available:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 (debug) prevents
@@ -94,7 +94,6 @@ and causes errors and debugging information
 to be printed to the standard error output.
 .El
 .Sh SEE ALSO
-.Xr inetd.conf 5 ,
 .Xr inetd 8 ,
 .Xr rpcinfo 8
 .Sh HISTORY
