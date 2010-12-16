@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.74 2010/05/25 13:00:00 claudio Exp $
+#	$OpenBSD: services,v 1.75 2010/12/16 18:08:57 ajacoutot Exp $
 #
 # Network services, Internet style
 #
@@ -251,6 +251,10 @@ rfe		5002/udp			# Actually uses UDP only
 sip		5060/tcp			# SIP
 sip		5060/udp			# SIP
 postgresql	5432/tcp			# PostgreSQL
+zabbix-agent	10050/tcp			# Zabbix Agent
+zabbix-agent	10050/udp			# Zabbix Agent
+zabbix-trapper	10051/tcp			# Zabbix Trapper
+zabbix-trapper	10051/udp			# Zabbix Trapper
 #
 # AFS Services
 #
