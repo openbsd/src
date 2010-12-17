@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.11 2010/11/15 15:07:40 jsing Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.12 2010/12/17 19:35:34 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -46,7 +46,7 @@
  * disklabel(8).
  */
 int
-opendev(char *path, int oflags, int dflags, char **realpath)
+opendev(const char *path, int oflags, int dflags, char **realpath)
 {
 	static char namebuf[PATH_MAX];
 	struct dk_diskmap dm;
@@ -55,7 +55,7 @@ opendev(char *path, int oflags, int dflags, char **realpath)
 
 	/* Initial state */
 	if (realpath)
-		*realpath = path;
+		*realpath = (char *)path;
 	fd = -1;
 	errno = ENOENT;
 

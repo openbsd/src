@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.28 2010/11/15 15:07:40 jsing Exp $	*/
+/*	$OpenBSD: util.h,v 1.29 2010/12/17 19:35:34 millert Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ void	login(struct utmp *);
 int	login_tty(int);
 int	logout(const char *);
 void	logwtmp(const char *, const char *, const char *);
-int	opendev(char *, int, int, char **);
+int	opendev(const char *, int, int, char **);
 int	pidfile(const char *);
 void	pw_setdir(const char *);
 char   *pw_file(const char *);
