@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.532 2010/12/17 14:52:40 jasper Exp $
+$OpenBSD: usbdevs,v 1.533 2010/12/17 21:00:13 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -549,6 +549,7 @@ vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor ZTE		0x19d2	ZTE Inc.
 vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
+vendor ABBOTT		0x1a61	Abbott Labs
 vendor BAYER		0x1a79	Bayer Health Care
 vendor WCH2		0x1a86	QinHeng Electronics
 vendor MATRIXORB	0x1b3d	Matrix Orbital
@@ -636,6 +637,9 @@ product 3COMUSR HOMECONN	0x009d	3Com HomeConnect
 product 3COMUSR USR56K		0x3021	U.S.Robotics 56000
 
 product HUAWEI3COM WUB320G	0x0009	Aolynk WUB320g
+
+/* Abbott products */
+product ABBOTT STEREO_PLUG	0x3410	Stereo Plug Cable
 
 /* AboCom products */
 product ABOCOM XX1		0x110c	XX1
