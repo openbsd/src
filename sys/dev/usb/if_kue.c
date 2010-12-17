@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.61 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.62 2010/12/17 13:48:06 jasper Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -152,7 +152,6 @@ const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_SILICOM, USB_PRODUCT_SILICOM_GPE },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
 };
-#define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
 int kue_match(struct device *, void *, void *); 
 void kue_attach(struct device *, struct device *, void *); 
@@ -408,8 +407,8 @@ kue_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return (kue_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (usb_lookup(kue_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

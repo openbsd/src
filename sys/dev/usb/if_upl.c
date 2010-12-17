@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.45 2010/12/06 05:46:17 jakemsr Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.46 2010/12/17 13:48:06 jasper Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -104,11 +104,6 @@
 #define UPL_ENDPT_INTR		0x2
 #define UPL_ENDPT_MAX		0x3
 
-struct upl_type {
-	u_int16_t		upl_vid;
-	u_int16_t		upl_did;
-};
-
 struct upl_softc;
 
 struct upl_chain {
@@ -163,10 +158,9 @@ int	upldebug = 0;
 /*
  * Various supported device vendors/products.
  */
-struct upl_type sc_devs[] = {
+struct usb_devno upl_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2301 },
-	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2302 },
-	{ 0, 0 }
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2302 }
 };
 
 int upl_match(struct device *, void *, void *); 
@@ -211,16 +205,12 @@ int
 upl_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg		*uaa = aux;
-	struct upl_type			*t;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (t = sc_devs; t->upl_vid != 0; t++)
-		if (uaa->vendor == t->upl_vid && uaa->product == t->upl_did)
-			return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
+	return (usb_lookup(upl_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

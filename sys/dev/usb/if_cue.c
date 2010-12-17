@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.57 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.58 2010/12/17 13:48:06 jasper Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -107,7 +107,6 @@ struct usb_devno cue_devs[] = {
 	{ USB_VENDOR_SMARTBRIDGES, USB_PRODUCT_SMARTBRIDGES_SMARTLINK },
 	/* Belkin F5U111 adapter covered by NETMATE entry */
 };
-#define cue_lookup(v, p) (usb_lookup(cue_devs, v, p))
 
 int cue_match(struct device *, void *, void *); 
 void cue_attach(struct device *, struct device *, void *); 
@@ -434,8 +433,8 @@ cue_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return (cue_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (usb_lookup(cue_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 /*
