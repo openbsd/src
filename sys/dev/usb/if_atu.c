@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.97 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.98 2010/12/17 22:38:54 jasper Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -892,7 +892,7 @@ atu_internal_firmware(void *arg)
 	 */
 
 	/* Choose the right firmware for the device */
-	for (i = 0; i < sizeof(atu_radfirm)/sizeof(atu_radfirm[0]); i++)
+	for (i = 0; i < nitems(atu_radfirm); i++)
 		if (sc->atu_radio == atu_radfirm[i].atur_type)
 			name = atu_radfirm[i].atur_internal;
 
@@ -1003,7 +1003,7 @@ atu_external_firmware(void *arg)
 	size_t	bytes_left = 0;
 	char	*name = "unknown-device";
 
-	for (i = 0; i < sizeof(atu_radfirm)/sizeof(atu_radfirm[0]); i++)
+	for (i = 0; i < nitems(atu_radfirm); i++)
 		if (sc->atu_radio == atu_radfirm[i].atur_type)
 			name = atu_radfirm[i].atur_external;
 
@@ -1117,7 +1117,7 @@ atu_match(struct device *parent, void *match, void *aux)
 	if (!uaa->iface)
 		return(UMATCH_NONE);
 
-	for (i = 0; i < sizeof(atu_devs)/sizeof(atu_devs[0]); i++) {
+	for (i = 0; i < nitems(atu_devs); i++) {
 		struct atu_type *t = &atu_devs[i];
 
 		if (uaa->vendor == t->atu_vid &&
@@ -1283,7 +1283,7 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 	 * look up the radio_type for the device
 	 * basically does the same as USB_MATCH
 	 */
-	for (i = 0; i < sizeof(atu_devs)/sizeof(atu_devs[0]); i++) {
+	for (i = 0; i < nitems(atu_devs); i++) {
 		struct atu_type *t = &atu_devs[i];
 
 		if (uaa->vendor == t->atu_vid &&

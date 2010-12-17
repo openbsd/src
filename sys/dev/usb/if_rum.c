@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.94 2010/12/06 04:41:39 jakemsr Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.95 2010/12/17 22:38:54 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1939,7 +1939,6 @@ rum_read_eeprom(struct rum_softc *sc)
 int
 rum_bbp_init(struct rum_softc *sc)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	int i, ntries;
 
 	/* wait for BBP to be ready */
@@ -1956,7 +1955,7 @@ rum_bbp_init(struct rum_softc *sc)
 	}
 
 	/* initialize BBP registers to default values */
-	for (i = 0; i < N(rum_def_bbp); i++)
+	for (i = 0; i < nitems(rum_def_bbp); i++)
 		rum_bbp_write(sc, rum_def_bbp[i].reg, rum_def_bbp[i].val);
 
 	/* write vendor-specific BBP values (from EEPROM) */
@@ -1967,13 +1966,11 @@ rum_bbp_init(struct rum_softc *sc)
 	}
 
 	return 0;
-#undef N
 }
 
 int
 rum_init(struct ifnet *ifp)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
@@ -1983,7 +1980,7 @@ rum_init(struct ifnet *ifp)
 	rum_stop(ifp, 0);
 
 	/* initialize MAC registers to default values */
-	for (i = 0; i < N(rum_def_mac); i++)
+	for (i = 0; i < nitems(rum_def_mac); i++)
 		rum_write(sc, rum_def_mac[i].reg, rum_def_mac[i].val);
 
 	/* set host ready */
@@ -2110,7 +2107,6 @@ rum_init(struct ifnet *ifp)
 
 fail:	rum_stop(ifp, 1);
 	return error;
-#undef N
 }
 
 void

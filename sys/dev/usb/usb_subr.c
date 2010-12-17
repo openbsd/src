@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.76 2010/12/15 00:59:26 jakemsr Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.77 2010/12/17 22:38:54 jasper Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1381,7 +1381,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 
 	if (dev->hub) {
 		for (i = 0;
-		    i < sizeof(di->udi_ports) / sizeof(di->udi_ports[0]) &&
+		    i < nitems(di->udi_ports) &&
 		    i < dev->hub->hubdesc.bNbrPorts; i++) {
 			p = &dev->hub->ports[i];
 			if (p->device)

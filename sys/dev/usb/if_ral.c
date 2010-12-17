@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.117 2010/12/06 04:41:39 jakemsr Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.118 2010/12/17 22:38:54 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1852,7 +1852,6 @@ ural_read_eeprom(struct ural_softc *sc)
 int
 ural_bbp_init(struct ural_softc *sc)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	int i, ntries;
 
 	/* wait for BBP to be ready */
@@ -1867,7 +1866,7 @@ ural_bbp_init(struct ural_softc *sc)
 	}
 
 	/* initialize BBP registers to default values */
-	for (i = 0; i < N(ural_def_bbp); i++)
+	for (i = 0; i < nitems(ural_def_bbp); i++)
 		ural_bbp_write(sc, ural_def_bbp[i].reg, ural_def_bbp[i].val);
 
 #if 0
@@ -1880,7 +1879,6 @@ ural_bbp_init(struct ural_softc *sc)
 #endif
 
 	return 0;
-#undef N
 }
 
 void
@@ -1935,7 +1933,6 @@ ural_set_rxantenna(struct ural_softc *sc, int antenna)
 int
 ural_init(struct ifnet *ifp)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint16_t tmp;
@@ -1945,7 +1942,7 @@ ural_init(struct ifnet *ifp)
 	ural_stop(ifp, 0);
 
 	/* initialize MAC registers to default values */
-	for (i = 0; i < N(ural_def_mac); i++)
+	for (i = 0; i < nitems(ural_def_mac); i++)
 		ural_write(sc, ural_def_mac[i].reg, ural_def_mac[i].val);
 
 	/* wait for BBP and RF to wake up (this can take a long time!) */
@@ -2083,7 +2080,6 @@ ural_init(struct ifnet *ifp)
 
 fail:	ural_stop(ifp, 1);
 	return error;
-#undef N
 }
 
 void
