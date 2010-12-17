@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.25 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.26 2010/12/17 23:14:00 jakemsr Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -426,7 +426,7 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
     u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size, char *lbl)
 {
 	usbd_status err;
-	int s, error;
+	int s, error, pri;
 
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout,
 	    usbd_bulk_transfer_cb);
@@ -437,7 +437,8 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		splx(s);
 		return (err);
 	}
-	error = tsleep((caddr_t)xfer, PZERO | PCATCH, lbl, 0);
+	pri = timeout == 0 ? (PZERO | PCATCH) : PZERO;
+	error = tsleep((caddr_t)xfer, pri, lbl, 0);
 	splx(s);
 	if (error) {
 		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));
@@ -467,7 +468,7 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
     u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size, char *lbl)
 {
 	usbd_status err;
-	int s, error;
+	int s, error, pri;
 
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout,
 	    usbd_intr_transfer_cb);
@@ -478,7 +479,8 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		splx(s);
 		return (err);
 	}
-	error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
+	pri = timeout == 0 ? (PZERO | PCATCH) : PZERO;
+	error = tsleep(xfer, pri, lbl, 0);
 	splx(s);
 	if (error) {
 		DPRINTF(("usbd_intr_transfer: tsleep=%d\n", error));
