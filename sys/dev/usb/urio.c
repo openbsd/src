@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.36 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: urio.c,v 1.37 2010/12/17 21:53:34 jasper Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ static const struct usb_devno urio_devs[] = {
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO800USB},
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_PSAPLAY120},
 };
-#define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
 
 int urio_match(struct device *, void *, void *); 
 void urio_attach(struct device *, struct device *, void *); 
@@ -123,8 +122,8 @@ urio_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return (urio_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (usb_lookup(urio_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

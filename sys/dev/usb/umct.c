@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.30 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: umct.c,v 1.31 2010/12/17 21:53:34 jasper Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,7 +147,6 @@ static const struct usb_devno umct_devs[] = {
 	/* BELKIN F5U409 */
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U409 },
 };
-#define umct_lookup(v, p) usb_lookup(umct_devs, v, p)
 
 int umct_match(struct device *, void *, void *); 
 void umct_attach(struct device *, struct device *, void *); 
@@ -174,8 +173,8 @@ umct_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return (umct_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (usb_lookup(umct_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

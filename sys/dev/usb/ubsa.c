@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.50 2010/09/24 08:33:59 yuo Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.51 2010/12/17 21:53:34 jasper Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -219,7 +219,6 @@ const struct usb_devno ubsa_devs[] = {
 	/* ZTE Inc. AC8700 */
 	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_AC8700 },
 };
-#define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
 int ubsa_match(struct device *, void *, void *); 
 void ubsa_attach(struct device *, struct device *, void *); 
@@ -246,8 +245,8 @@ ubsa_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return (ubsa_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (usb_lookup(ubsa_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

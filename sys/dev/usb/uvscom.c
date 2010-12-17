@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.21 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.22 2010/12/17 21:53:34 jasper Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -205,7 +205,6 @@ static const struct usb_devno uvscom_devs [] = {
 	/* SUNTAC Ir-Trinity */
 	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_IS96U },
 };
-#define uvscom_lookup(v, p) usb_lookup(uvscom_devs, v, p)
 
 int uvscom_match(struct device *, void *, void *); 
 void uvscom_attach(struct device *, struct device *, void *); 
@@ -232,8 +231,8 @@ uvscom_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return (uvscom_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (usb_lookup(uvscom_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

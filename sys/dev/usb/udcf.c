@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.51 2010/12/06 04:41:40 jakemsr Exp $ */
+/*	$OpenBSD: udcf.c,v 1.52 2010/12/17 21:53:34 jasper Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -170,10 +170,8 @@ udcf_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
 
-	if (usb_lookup(udcf_devs, uaa->vendor, uaa->product) == NULL)
-		return UMATCH_NONE;
-
-	return UMATCH_VENDOR_PRODUCT;
+	return (usb_lookup(udcf_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

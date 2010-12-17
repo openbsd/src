@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.11 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.12 2010/12/17 21:53:34 jasper Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -225,7 +225,6 @@ static const struct usb_devno uchcom_devs[] = {
 	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH340 },
 	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH341A }
 };
-#define uchcom_lookup(v, p)	usb_lookup(uchcom_devs, v, p)
 
 struct cfdriver uchcom_cd = { 
 	NULL, "uchcom", DV_DULL 
@@ -251,8 +250,8 @@ uchcom_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
 
-	return (uchcom_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (usb_lookup(uchcom_devs, uaa->vendor, uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void
