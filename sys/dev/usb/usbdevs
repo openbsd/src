@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.531 2010/12/15 16:49:03 damien Exp $
+$OpenBSD: usbdevs,v 1.532 2010/12/17 14:52:40 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -466,6 +466,7 @@ vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
 vendor SILABS3		0x10c5	Silicon Labs
 vendor VELLEMAN		0x10cf	Velleman
+vendor MOXA		0x110a	Moxa Technologies
 vendor ANALOG		0x1110	Analog Devices
 vendor TENX		0x1130	Ten X Technology, Inc.
 vendor ISSC		0x1131	Integrated System Solution Corp.
@@ -3756,6 +3757,9 @@ product USI MC60		0x10c5	MC60 Serial
 
 /* Velleman products */
 product VELLEMAN K8055		0x5500	K8055 USB Experiment interface board
+
+/* Moxa products */
+product	MOXA UPORT1110		0x1110	UPort 1110
 
 /* VIA products */
 product VIA AR9271		0x3801	AR9271
