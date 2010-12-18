@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.533 2010/12/17 21:00:13 jasper Exp $
+$OpenBSD: usbdevs,v 1.534 2010/12/18 08:27:44 jakemsr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3586,6 +3586,7 @@ product SUSTEEN DCU11		0x0528	Ericsson DCU-10/11
 
 /* Sweex products */
 product SWEEX2 LW153		0x0153	LW153
+product SWEEX2 LW154		0x0154	LW154
 product SWEEX2 LW303		0x0302	LW303
 product SWEEX2 LW313		0x0313	LW313
 product SWEEX ZD1211		0x1809	ZD1211
