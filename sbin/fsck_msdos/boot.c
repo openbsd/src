@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.14 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.15 2010/12/18 04:57:34 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -48,7 +48,8 @@ readboot(int dosfs, struct bootblock *boot)
 	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
 	u_char backup[DOSBOOTBLOCKSIZE];
 	int ret = FSOK;
-	int n;
+	off_t o;
+	ssize_t n;
 
 	if ((n = read(dosfs, block, sizeof block)) == -1 || n != sizeof block) {
 		xperror("could not read boot block");
@@ -99,8 +100,9 @@ readboot(int dosfs, struct bootblock *boot)
 		boot->FSInfo = block[48] + (block[49] << 8);
 		boot->Backup = block[50] + (block[51] << 8);
 
-		if ((n = lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)) == -1
-		    || n != boot->FSInfo * boot->BytesPerSec
+		o = boot->FSInfo * boot->BytesPerSec;
+		if ((o = lseek(dosfs, o, SEEK_SET)) == -1
+		    || o != boot->FSInfo * boot->BytesPerSec
 		    || (n = read(dosfs, fsinfo, sizeof fsinfo)) == -1
 		    || n != sizeof fsinfo) {
 			xperror("could not read fsinfo block");
@@ -126,8 +128,10 @@ readboot(int dosfs, struct bootblock *boot)
 				fsinfo[0x3fc] = fsinfo[0x3fd] = 0;
 				fsinfo[0x3fe] = 0x55;
 				fsinfo[0x3ff] = 0xaa;
-				if ((n = lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)) == -1
-				    || n != boot->FSInfo * boot->BytesPerSec
+
+				o = boot->FSInfo * boot->BytesPerSec;
+				if ((o = lseek(dosfs, o, SEEK_SET)) == -1
+				    || o != boot->FSInfo * boot->BytesPerSec
 				    || (n = write(dosfs, fsinfo, sizeof fsinfo)) == -1
 				    || n != sizeof fsinfo) {
 					xperror("Unable to write FSInfo");
@@ -146,8 +150,9 @@ readboot(int dosfs, struct bootblock *boot)
 				       + (fsinfo[0x1ef] << 24);
 		}
 
-		if ((n = lseek(dosfs, boot->Backup * boot->BytesPerSec, SEEK_SET)) == -1
-		    || n != boot->Backup * boot->BytesPerSec
+		o = boot->Backup * boot->BytesPerSec;
+		if ((o = lseek(dosfs, o, SEEK_SET)) == -1
+		    || o != boot->Backup * boot->BytesPerSec
 		    || (n = read(dosfs, backup, sizeof backup)) == -1
 		    || n != sizeof backup) {
 			xperror("could not read backup bootblock");
@@ -240,12 +245,14 @@ int
 writefsinfo(int dosfs, struct bootblock *boot)
 {
 	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
-	int n;
+	off_t o;
+	ssize_t n;
 
-	if ((n = lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)) == -1
-	    || n != boot->FSInfo * boot->BytesPerSec
-	    || (n = read(dosfs, fsinfo, sizeof fsinfo)) == -1
-	    || n != sizeof fsinfo) {
+	o = boot->FSInfo * boot->BytesPerSec;
+	if ((o = lseek(dosfs, o, SEEK_SET)) == -1
+	   || o != boot->FSInfo * boot->BytesPerSec
+	   || (n = read(dosfs, fsinfo, sizeof fsinfo)) == -1
+	   || n != sizeof fsinfo) {
 		xperror("could not read fsinfo block");
 		return FSFATAL;
 	}
@@ -257,8 +264,10 @@ writefsinfo(int dosfs, struct bootblock *boot)
 	fsinfo[0x1ed] = (u_char)(boot->FSNext >> 8);
 	fsinfo[0x1ee] = (u_char)(boot->FSNext >> 16);
 	fsinfo[0x1ef] = (u_char)(boot->FSNext >> 24);
-	if ((n = lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)) == -1
-	    || n != boot->FSInfo * boot->BytesPerSec
+
+	o = boot->FSInfo * boot->BytesPerSec;
+	if ((o = lseek(dosfs, o, SEEK_SET)) == -1
+	    || o != boot->FSInfo * boot->BytesPerSec
 	    || (n = write(dosfs, fsinfo, sizeof fsinfo)) == -1
 	    || n != sizeof fsinfo) {
 		xperror("Unable to write FSInfo");
@@ -271,7 +280,7 @@ writefsinfo(int dosfs, struct bootblock *boot)
 	 * support for FAT32) doesn't maintain the FSINFO block
 	 * correctly, it has to be fixed pretty often.
 	 *
-	 * Therefor, we handle the FSINFO block only informally,
+	 * Therefore, we handle the FSINFO block only informally,
 	 * fixing it if necessary, but otherwise ignoring the
 	 * fact that it was incorrect.
 	 */
