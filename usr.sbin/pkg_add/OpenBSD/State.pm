@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.18 2010/10/24 17:04:47 espie Exp $
+# $OpenBSD: State.pm,v 1.19 2010/12/18 10:39:01 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -327,6 +327,12 @@ sub handle_options
 	}
 	local $Exporter::ExportLevel = $state->{export_level};
 	import OpenBSD::State;
+}
+
+sub defines
+{
+	my ($self, $k) = @_;
+	return $self->{subst}->value($k);
 }
 
 my @signal_name = ();
