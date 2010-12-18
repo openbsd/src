@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.187 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.188 2010/12/18 10:33:21 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1444,20 +1444,18 @@ sub update_fontalias
 
 sub restore_fontdir
 {
-	my $dirname = shift;
+	my ($dirname, $state) = @_;
 	if (-f "$dirname/fonts.dir.dist") {
-		require OpenBSD::Error;
 
 		unlink("$dirname/fonts.dir");
-		OpenBSD::Error::Copy("$dirname/fonts.dir.dist", "$dirname/fonts.dir");
+		$state->copy_file("$dirname/fonts.dir.dist", 
+		    "$dirname/fonts.dir");
 	}
 }
 
 sub run_if_exists
 {
 	my ($state, $cmd, @l) = @_;
-
-	require OpenBSD::Error;
 
 	if (-x $cmd) {
 		$state->vsystem($cmd, @l);
@@ -1480,7 +1478,7 @@ sub finish_fontdirs
 		run_if_exists($state, OpenBSD::Paths->mkfontscale, '--', @l);
 		run_if_exists($state, OpenBSD::Paths->mkfontdir, '--', @l);
 
-		map { restore_fontdir($_) } @l;
+		map { restore_fontdir($_, $state) } @l;
 
 		run_if_exists($state, OpenBSD::Paths->fc_cache, '--', @l);
 	}
