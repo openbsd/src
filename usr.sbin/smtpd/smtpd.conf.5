@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.36 2010/10/29 09:16:08 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.37 2010/12/18 22:25:24 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 29 2010 $
+.Dd $Mdocdate: December 18 2010 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -110,15 +110,28 @@ by default on port 25,
 or SMTPS
 .Pq Ic smtps ,
 by default on port 465.
+Host certificates may be used for these connections,
+and are searched for in the
+.Pa /etc/mail/certs
+directory.
+If
+.Ic certificate
+is specified,
+a certificate
+.Ao Ar name Ac Ns .crt
+and key
+.Ao Ar name Ac Ns .key
+are searched for.
+If no
+.Ic certificate
+is specified,
+the default interface name is instead used,
+for example
+.Pa fxp0.crt
+and
+.Pa fxp0.key .
 Creation of certificates is documented in
 .Xr starttls 8 .
-If no certificate
-.Ar name
-is specified, the
-.Pa /etc/mail/certs
-directory is searched for a file named by joining
-the interface name with a .crt extension, e.g.\&
-.Pa /etc/mail/certs/fxp0.crt .
 .Pp
 If the
 .Ic enable auth
