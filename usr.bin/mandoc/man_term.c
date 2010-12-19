@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.55 2010/12/07 00:08:52 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.56 2010/12/19 07:53:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -125,11 +125,9 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_alternate, NULL, 0 }, /* IR */
 	{ pre_alternate, NULL, 0 }, /* RI */
 	{ NULL, NULL, MAN_NOTEXT }, /* na */
-	{ pre_I, NULL, 0 }, /* i */
 	{ pre_sp, NULL, MAN_NOTEXT }, /* sp */
 	{ pre_literal, NULL, 0 }, /* nf */
 	{ pre_literal, NULL, 0 }, /* fi */
-	{ NULL, NULL, 0 }, /* r */
 	{ NULL, NULL, 0 }, /* RE */
 	{ pre_RS, post_RS, 0 }, /* RS */
 	{ pre_ign, NULL, 0 }, /* DT */
