@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.24 2010/09/05 18:14:33 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.25 2010/12/19 23:06:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -66,6 +66,7 @@ int pcifd;
 int romfd;
 int verbose = 0;
 int hex = 0;
+int size = 64;
 
 const char *pci_capnames[] = {
 	"Reserved",
@@ -130,6 +131,11 @@ main(int argc, char *argv[])
 		if (romfd == -1)
 			err(1, "%s", romfile);
 	}
+
+	if (hex > 1)
+		size = 256;
+	if (hex > 2)
+		size = 4096;
 
 	if (argc == 1)
 		dumpall = 0;
@@ -263,7 +269,7 @@ probe(int bus, int dev, int func)
 	if (verbose)
 		dump(bus, dev, func);
 	if (hex > 0)
-		hexdump(bus, dev, func, hex > 1);
+		hexdump(bus, dev, func, size);
 
 	return (0);
 }
@@ -616,17 +622,20 @@ dump(int bus, int dev, int func)
 }
 
 void
-hexdump(int bus, int dev, int func, int full)
+hexdump(int bus, int dev, int func, int size)
 {
 	u_int32_t reg;
 	int i;
 
-	for (i = 0; i < (full ? 256 : 64); i += 4) {
+	for (i = 0; i < size; i += 4) {
+		if (pci_read(bus, dev, func, i, &reg) != 0) {
+			if (errno == EINVAL)
+				return;
+			warn("unable to read 0x%02x", i);
+		}
+
 		if ((i % 16) == 0)
 			printf("\t0x%04x:", i);
-
-		if (pci_read(bus, dev, func, i, &reg) != 0)
-			warn("unable to read 0x%02x", i);
 		printf(" %08x", reg);
 
 		if ((i % 16) == 12)
