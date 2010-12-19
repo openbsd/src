@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.71 2010/08/18 17:42:12 marco Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.72 2010/12/19 19:54:46 kettenis Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	caddr_t data, memp;
 	int tmp;
 #define STK_PARAMS	128
-	u_long stkbuf[STK_PARAMS / sizeof(u_long)];
+	long long stkbuf[STK_PARAMS / sizeof(long long)];
 
 	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
