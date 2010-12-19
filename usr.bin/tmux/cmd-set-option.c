@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.40 2010/12/06 22:51:02 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.41 2010/12/19 18:35:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -159,6 +159,8 @@ const struct set_option_entry set_window_option_table[] = {
 	{ "monitor-activity", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "monitor-content", SET_OPTION_STRING, 0, 0, NULL },
 	{ "monitor-silence",SET_OPTION_NUMBER, 0, INT_MAX, NULL},
+	{ "other-pane-height", SET_OPTION_NUMBER, 0, INT_MAX, NULL },
+	{ "other-pane-width", SET_OPTION_NUMBER, 0, INT_MAX, NULL },
 	{ "remain-on-exit", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "synchronize-panes", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "utf8", SET_OPTION_FLAG, 0, 0, NULL },
