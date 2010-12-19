@@ -1,0 +1,24 @@
+.Dd June 30, 2010
+.Dt BK-BREAK 1
+.Os
+.Sh NAME
+.Nm Bk-break
+.Nd handling of word keeps
+.Sh DESCRIPTION
+.Nm
+.Ar x x x x x x x x
+.Ar x x x x x x x x
+.Ar x x x x x x x x
+.Ar x x x x x x
+.Bk -words
+.Op o Ar a
+.Ek
+.Pp
+.Bk -words
+.Nm
+.Ar x x x x x x x x
+.Ar x x x x x x x x
+.Ar x x x x x x x x
+.Ar x x x x x x
+.Op o Ar a
+.Ek

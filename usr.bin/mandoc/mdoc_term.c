@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.116 2010/12/11 14:29:56 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.117 2010/12/19 12:10:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -2137,7 +2137,8 @@ termp_bk_pre(DECL_ARGS)
 	case (MDOC_HEAD):
 		return(0);
 	case (MDOC_BODY):
-		p->flags |= TERMP_PREKEEP;
+		if (n->parent->args || 0 == n->prev->nchild)
+			p->flags |= TERMP_PREKEEP;
 		break;
 	default:
 		abort();
