@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.27 2010/12/12 22:29:39 jsg Exp $	*/
+/*	$OpenBSD: dns.c,v 1.28 2010/12/19 11:24:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -262,6 +262,18 @@ dns_asr_handler(int fd, short event, void *arg)
 		goto err;
 
 	if (h.ancount == 0) {
+		if (query->type == IMSG_DNS_MX) {
+			/* we were looking for MX and got no answer,
+			 * fallback to host.
+			 */
+			query->type = IMSG_DNS_HOST;
+			dnssession->aq = asr_query_host(asr, query->host,
+			    AF_UNSPEC);
+			if (dnssession->aq == NULL)
+				goto err;
+			dns_asr_handler(-1, -1, dnssession);
+			return;
+		}
 		query->error = EAI_NONAME;
 		goto err;
 	}
