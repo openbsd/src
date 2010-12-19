@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.39 2010/12/06 22:10:13 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.40 2010/12/19 09:22:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -68,7 +68,6 @@ static	int		  mdoc_bd_pre(MDOC_ARGS);
 static	int		  mdoc_bf_pre(MDOC_ARGS);
 static	void		  mdoc_bk_post(MDOC_ARGS);
 static	int		  mdoc_bk_pre(MDOC_ARGS);
-static	void		  mdoc_bl_post(MDOC_ARGS);
 static	int		  mdoc_bl_pre(MDOC_ARGS);
 static	int		  mdoc_bt_pre(MDOC_ARGS);
 static	int		  mdoc_bx_pre(MDOC_ARGS);
@@ -89,12 +88,6 @@ static	int		  mdoc_fo_pre(MDOC_ARGS);
 static	int		  mdoc_ic_pre(MDOC_ARGS);
 static	int		  mdoc_igndelim_pre(MDOC_ARGS);
 static	int		  mdoc_in_pre(MDOC_ARGS);
-static	int		  mdoc_it_block_pre(MDOC_ARGS, enum mdoc_list,
-				int, struct roffsu *, struct roffsu *);
-static	int		  mdoc_it_head_pre(MDOC_ARGS, enum mdoc_list, 
-				struct roffsu *);
-static	int		  mdoc_it_body_pre(MDOC_ARGS, enum mdoc_list,
-				struct roffsu *);
 static	int		  mdoc_it_pre(MDOC_ARGS);
 static	int		  mdoc_lb_pre(MDOC_ARGS);
 static	int		  mdoc_li_pre(MDOC_ARGS);
@@ -106,6 +99,7 @@ static	int		  mdoc_nm_pre(MDOC_ARGS);
 static	int		  mdoc_ns_pre(MDOC_ARGS);
 static	int		  mdoc_pa_pre(MDOC_ARGS);
 static	void		  mdoc_pf_post(MDOC_ARGS);
+static	int		  mdoc_pp_pre(MDOC_ARGS);
 static	void		  mdoc_quote_post(MDOC_ARGS);
 static	int		  mdoc_quote_pre(MDOC_ARGS);
 static	int		  mdoc_rs_pre(MDOC_ARGS);
@@ -129,12 +123,12 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Os */
 	{mdoc_sh_pre, NULL }, /* Sh */
 	{mdoc_ss_pre, NULL }, /* Ss */ 
-	{mdoc_sp_pre, NULL}, /* Pp */ 
+	{mdoc_pp_pre, NULL}, /* Pp */ 
 	{mdoc_d1_pre, NULL}, /* D1 */
 	{mdoc_d1_pre, NULL}, /* Dl */
 	{mdoc_bd_pre, NULL}, /* Bd */
 	{NULL, NULL}, /* Ed */
-	{mdoc_bl_pre, mdoc_bl_post}, /* Bl */
+	{mdoc_bl_pre, NULL}, /* Bl */
 	{NULL, NULL}, /* El */
 	{mdoc_it_pre, NULL}, /* It */
 	{mdoc_ad_pre, NULL}, /* Ad */ 
@@ -230,7 +224,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Fr */
 	{mdoc_ud_pre, NULL}, /* Ud */
 	{mdoc_lb_pre, NULL}, /* Lb */
-	{mdoc_sp_pre, NULL}, /* Lp */ 
+	{mdoc_pp_pre, NULL}, /* Lp */ 
 	{mdoc_lk_pre, NULL}, /* Lk */ 
 	{mdoc_mt_pre, NULL}, /* Mt */ 
 	{mdoc_quote_pre, mdoc_quote_post}, /* Brq */ 
@@ -249,6 +243,20 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* TE */ 
 };
 
+static	const char * const lists[LIST_MAX] = {
+	NULL,
+	"list-bul",
+	"list-col",
+	"list-dash",
+	"list-diag",
+	"list-enum",
+	"list-hang",
+	"list-hyph",
+	"list-inset",
+	"list-item",
+	"list-ohang",
+	"list-tag"
+};
 
 void
 html_mdoc(void *arg, const struct mdoc *m)
@@ -277,7 +285,7 @@ a2width(const char *p, struct roffsu *su)
 {
 
 	if ( ! a2roffsu(p, su, SCALE_MAX)) {
-		su->unit = SCALE_EM;
+		su->unit = SCALE_BU;
 		su->scale = (int)strlen(p);
 	}
 }
@@ -289,21 +297,15 @@ a2width(const char *p, struct roffsu *su)
 static void
 synopsis_pre(struct html *h, const struct mdoc_node *n)
 {
-	struct roffsu	 su;
-	struct htmlpair	 tag;
 
 	if (NULL == n->prev || ! (MDOC_SYNPRETTY & n->flags))
 		return;
-
-	SCALE_VS_INIT(&su, 1);
-	bufcat_su(h, "margin-top", &su);
-	PAIR_STYLE_INIT(&tag, h);
 
 	if (n->prev->tok == n->tok && 
 			MDOC_Fo != n->tok && 
 			MDOC_Ft != n->tok && 
 			MDOC_Fn != n->tok) {
-		print_otag(h, TAG_DIV, 0, NULL);
+		print_otag(h, TAG_BR, 0, NULL);
 		return;
 	}
 
@@ -317,16 +319,16 @@ synopsis_pre(struct html *h, const struct mdoc_node *n)
 	case (MDOC_In):
 		/* FALLTHROUGH */
 	case (MDOC_Vt):
-		print_otag(h, TAG_DIV, 1, &tag);
+		print_otag(h, TAG_P, 0, NULL);
 		break;
 	case (MDOC_Ft):
 		if (MDOC_Fn != n->tok && MDOC_Fo != n->tok) {
-			print_otag(h, TAG_DIV, 1, &tag);
+			print_otag(h, TAG_P, 0, NULL);
 			break;
 		}
 		/* FALLTHROUGH */
 	default:
-		print_otag(h, TAG_DIV, 0, NULL);
+		print_otag(h, TAG_BR, 0, NULL);
 		break;
 	}
 }
@@ -350,7 +352,7 @@ a2offs(const char *p, struct roffsu *su)
 	else if (0 == strcmp(p, "indent-two"))
 		SCALE_HS_INIT(su, INDENT * 2);
 	else if ( ! a2roffsu(p, su, SCALE_MAX)) {
-		su->unit = SCALE_EM;
+		su->unit = SCALE_BU;
 		su->scale = (int)strlen(p);
 	}
 }
@@ -360,18 +362,12 @@ static void
 print_mdoc(MDOC_ARGS)
 {
 	struct tag	*t;
-	struct htmlpair	 tag;
 
 	t = print_otag(h, TAG_HEAD, 0, NULL);
 	print_mdoc_head(m, n, h);
 	print_tagq(h, t);
 
 	t = print_otag(h, TAG_BODY, 0, NULL);
-
-	tag.key = ATTR_CLASS;
-	tag.val = "body";
-	print_otag(h, TAG_DIV, 1, &tag);
-
 	print_mdoc_nodelist(m, n, h);
 	print_tagq(h, t);
 }
@@ -459,43 +455,31 @@ print_mdoc_node(MDOC_ARGS)
 	}
 }
 
-
 /* ARGSUSED */
 static void
 mdoc_root_post(MDOC_ARGS)
 {
-	struct htmlpair	 tag[3];
+	struct htmlpair	 tag[2];
 	struct tag	*t, *tt;
 	char		 b[DATESIZ];
 
 	time2a(m->date, b, DATESIZ);
 
-	/*
-	 * XXX: this should use divs, but in Firefox, divs with nested
-	 * divs for some reason puke when trying to put a border line
-	 * below.  So I use tables, instead.
-	 */
+	PAIR_CLASS_INIT(&tag[0], "foot");
+	PAIR_SUMMARY_INIT(&tag[1], "Document Footer");
+	t = print_otag(h, TAG_TABLE, 2, tag);
 
-	PAIR_CLASS_INIT(&tag[0], "footer");
-	bufcat_style(h, "width", "100%");
-	PAIR_STYLE_INIT(&tag[1], h);
-	PAIR_SUMMARY_INIT(&tag[2], "footer");
-
-	t = print_otag(h, TAG_TABLE, 3, tag);
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
-	bufinit(h);
-	bufcat_style(h, "width", "50%");
-	PAIR_STYLE_INIT(&tag[0], h);
+	PAIR_CLASS_INIT(&tag[0], "foot-date");
 	print_otag(h, TAG_TD, 1, tag);
+
 	print_text(h, b);
 	print_stagq(h, tt);
 
-	bufinit(h);
-	bufcat_style(h, "width", "50%");
-	bufcat_style(h, "text-align", "right");
-	PAIR_STYLE_INIT(&tag[0], h);
+	PAIR_CLASS_INIT(&tag[0], "foot-os");
 	print_otag(h, TAG_TD, 1, tag);
+
 	print_text(h, m->os);
 	print_tagq(h, t);
 }
@@ -509,49 +493,37 @@ mdoc_root_pre(MDOC_ARGS)
 	struct tag	*t, *tt;
 	char		 b[BUFSIZ], title[BUFSIZ];
 
-	(void)strlcpy(b, m->vol, BUFSIZ);
+	strlcpy(b, m->vol, BUFSIZ);
 
 	if (m->arch) {
-		(void)strlcat(b, " (", BUFSIZ);
-		(void)strlcat(b, m->arch, BUFSIZ);
-		(void)strlcat(b, ")", BUFSIZ);
+		strlcat(b, " (", BUFSIZ);
+		strlcat(b, m->arch, BUFSIZ);
+		strlcat(b, ")", BUFSIZ);
 	}
 
-	(void)snprintf(title, BUFSIZ - 1, 
-			"%s(%s)", m->title, m->msec);
+	snprintf(title, BUFSIZ - 1, "%s(%s)", m->title, m->msec);
 
-	/* XXX: see note in mdoc_root_post() about divs. */
-
-	PAIR_CLASS_INIT(&tag[0], "header");
-	bufcat_style(h, "width", "100%");
-	PAIR_STYLE_INIT(&tag[1], h);
-	PAIR_SUMMARY_INIT(&tag[2], "header");
-
-	t = print_otag(h, TAG_TABLE, 3, tag);
+	PAIR_CLASS_INIT(&tag[0], "head");
+	PAIR_SUMMARY_INIT(&tag[1], "Document Header");
+	t = print_otag(h, TAG_TABLE, 2, tag);
 
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
-	bufinit(h);
-	bufcat_style(h, "width", "10%");
-	PAIR_STYLE_INIT(&tag[0], h);
+	PAIR_CLASS_INIT(&tag[0], "head-ltitle");
 	print_otag(h, TAG_TD, 1, tag);
+
 	print_text(h, title);
 	print_stagq(h, tt);
 
-	bufinit(h);
-	bufcat_style(h, "text-align", "center");
-	bufcat_style(h, "white-space", "nowrap");
-	bufcat_style(h, "width", "80%");
-	PAIR_STYLE_INIT(&tag[0], h);
+	PAIR_CLASS_INIT(&tag[0], "head-vol");
 	print_otag(h, TAG_TD, 1, tag);
+
 	print_text(h, b);
 	print_stagq(h, tt);
 
-	bufinit(h);
-	bufcat_style(h, "text-align", "right");
-	bufcat_style(h, "width", "10%");
-	PAIR_STYLE_INIT(&tag[0], h);
+	PAIR_CLASS_INIT(&tag[0], "head-rtitle");
 	print_otag(h, TAG_TD, 1, tag);
+
 	print_text(h, title);
 	print_tagq(h, t);
 	return(1);
@@ -562,46 +534,25 @@ mdoc_root_pre(MDOC_ARGS)
 static int
 mdoc_sh_pre(MDOC_ARGS)
 {
-	struct htmlpair		 tag[2];
-	const struct mdoc_node	*nn;
-	char			 buf[BUFSIZ];
-	struct roffsu		 su;
+	struct htmlpair	 tag;
+	char		 buf[BUFSIZ];
 
-	if (MDOC_BODY == n->type) {
-		SCALE_HS_INIT(&su, INDENT);
-		bufcat_su(h, "margin-left", &su);
-		PAIR_CLASS_INIT(&tag[0], "sec-body");
-		PAIR_STYLE_INIT(&tag[1], h);
-		print_otag(h, TAG_DIV, 2, tag);
+	if (MDOC_BLOCK == n->type) {
+		PAIR_CLASS_INIT(&tag, "section");
+		print_otag(h, TAG_DIV, 1, &tag);
 		return(1);
-	} else if (MDOC_BLOCK == n->type) {
-		PAIR_CLASS_INIT(&tag[0], "sec-block");
-		if (n->prev && NULL == n->prev->body->child) {
-			print_otag(h, TAG_DIV, 1, tag);
-			return(1);
-		}
-		
-		SCALE_VS_INIT(&su, 1);
-		bufcat_su(h, "margin-top", &su);
-		if (NULL == n->next)
-			bufcat_su(h, "margin-bottom", &su);
-
-		PAIR_STYLE_INIT(&tag[1], h);
-		print_otag(h, TAG_DIV, 2, tag);
+	} else if (MDOC_BODY == n->type)
 		return(1);
-	}
 
 	buf[0] = '\0';
-	for (nn = n->child; nn; nn = nn->next) {
-		html_idcat(buf, nn->string, BUFSIZ);
-		if (nn->next)
+	for (n = n->child; n; n = n->next) {
+		html_idcat(buf, n->string, BUFSIZ);
+		if (n->next)
 			html_idcat(buf, " ", BUFSIZ);
 	}
 
-	PAIR_CLASS_INIT(&tag[0], "sec-head");
-	PAIR_ID_INIT(&tag[1], buf);
-
-	print_otag(h, TAG_DIV, 2, tag);
+	PAIR_ID_INIT(&tag, buf);
+	print_otag(h, TAG_H1, 1, &tag);
 	return(1);
 }
 
@@ -610,51 +561,25 @@ mdoc_sh_pre(MDOC_ARGS)
 static int
 mdoc_ss_pre(MDOC_ARGS)
 {
-	struct htmlpair	 	 tag[3];
-	const struct mdoc_node	*nn;
-	char			 buf[BUFSIZ];
-	struct roffsu		 su;
+	struct htmlpair	 tag;
+	char		 buf[BUFSIZ];
 
-	SCALE_VS_INIT(&su, 1);
-
-	if (MDOC_BODY == n->type) {
-		PAIR_CLASS_INIT(&tag[0], "ssec-body");
-		if (n->parent->next && n->child) {
-			bufcat_su(h, "margin-bottom", &su);
-			PAIR_STYLE_INIT(&tag[1], h);
-			print_otag(h, TAG_DIV, 2, tag);
-		} else
-			print_otag(h, TAG_DIV, 1, tag);
+	if (MDOC_BLOCK == n->type) {
+		PAIR_CLASS_INIT(&tag, "subsection");
+		print_otag(h, TAG_DIV, 1, &tag);
 		return(1);
-	} else if (MDOC_BLOCK == n->type) {
-		PAIR_CLASS_INIT(&tag[0], "ssec-block");
-		if (n->prev) {
-			bufcat_su(h, "margin-top", &su);
-			PAIR_STYLE_INIT(&tag[1], h);
-			print_otag(h, TAG_DIV, 2, tag);
-		} else
-			print_otag(h, TAG_DIV, 1, tag);
+	} else if (MDOC_BODY == n->type)
 		return(1);
-	}
-
-	/* TODO: see note in mdoc_sh_pre() about duplicates. */
 
 	buf[0] = '\0';
-	for (nn = n->child; nn; nn = nn->next) {
-		html_idcat(buf, nn->string, BUFSIZ);
-		if (nn->next)
+	for (n = n->child; n; n = n->next) {
+		html_idcat(buf, n->string, BUFSIZ);
+		if (n->next)
 			html_idcat(buf, " ", BUFSIZ);
 	}
 
-	SCALE_HS_INIT(&su, INDENT - HALFINDENT);
-	su.scale = -su.scale;
-	bufcat_su(h, "margin-left", &su);
-
-	PAIR_CLASS_INIT(&tag[0], "ssec-head");
-	PAIR_STYLE_INIT(&tag[1], h);
-	PAIR_ID_INIT(&tag[2], buf);
-
-	print_otag(h, TAG_DIV, 3, tag);
+	PAIR_ID_INIT(&tag, buf);
+	print_otag(h, TAG_H2, 1, &tag);
 	return(1);
 }
 
@@ -696,7 +621,7 @@ mdoc_nd_pre(MDOC_ARGS)
 	/* XXX: this tag in theory can contain block elements. */
 
 	print_text(h, "\\(em");
-	PAIR_CLASS_INIT(&tag, "desc-body");
+	PAIR_CLASS_INIT(&tag, "desc");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	return(1);
 }
@@ -707,68 +632,46 @@ mdoc_nm_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
 	struct roffsu	 su;
-	const char	*cp;
+	size_t		 len;
 
-	/*
-	 * Accomodate for `Nm' being both an element (which may have
-	 * NULL children AND no m->name) and a block.
-	 */
-
-	cp = NULL;
-
-	if (MDOC_ELEM == n->type) {
-		if (NULL == n->child && NULL == m->name)
-			return(1);
+	switch (n->type) {
+	case (MDOC_ELEM):
 		synopsis_pre(h, n);
 		PAIR_CLASS_INIT(&tag, "name");
 		print_otag(h, TAG_SPAN, 1, &tag);
-		if (NULL == n->child)
+		if (NULL == n->child && m->name)
 			print_text(h, m->name);
-	} else if (MDOC_BLOCK == n->type) {
-		synopsis_pre(h, n);
-
-		bufcat_style(h, "clear", "both");
-		if (n->head->child || m->name) {
-			if (n->head->child && MDOC_TEXT == 
-					n->head->child->type)
-				cp = n->head->child->string;
-			if (NULL == cp || '\0' == *cp)
-				cp = m->name;
-
-			SCALE_HS_INIT(&su, (double)strlen(cp));
-			bufcat_su(h, "padding-left", &su);
-		}
-
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
-	} else if (MDOC_HEAD == n->type) { 
-		if (NULL == n->child && NULL == m->name)
-			return(1);
-
-		if (n->child && MDOC_TEXT == n->child->type)
-			cp = n->child->string;
-		if (NULL == cp || '\0' == *cp)
-			cp = m->name;
-
-		SCALE_HS_INIT(&su, (double)strlen(cp));
-
-		bufcat_style(h, "float", "left");
-		bufcat_su(h, "min-width", &su);
-		SCALE_INVERT(&su);
-		bufcat_su(h, "margin-left", &su);
-
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
-
-		if (NULL == n->child)
+		return(1);
+	case (MDOC_HEAD):
+		print_otag(h, TAG_TD, 0, NULL);
+		if (NULL == n->child && m->name)
 			print_text(h, m->name);
-	} else if (MDOC_BODY == n->type) {
-		SCALE_HS_INIT(&su, 2);
-		bufcat_su(h, "margin-left", &su);
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
+		return(1);
+	case (MDOC_BODY):
+		print_otag(h, TAG_TD, 0, NULL);
+		return(1);
+	default:
+		break;
 	}
 
+	synopsis_pre(h, n);
+	PAIR_CLASS_INIT(&tag, "synopsis");
+	print_otag(h, TAG_TABLE, 1, &tag);
+
+	for (len = 0, n = n->child; n; n = n->next)
+		if (MDOC_TEXT == n->type)
+			len += strlen(n->string);
+
+	if (0 == len && m->name)
+		len = strlen(m->name);
+
+	SCALE_HS_INIT(&su, (double)len);
+	bufcat_su(h, "width", &su);
+	PAIR_STYLE_INIT(&tag, h);
+	print_otag(h, TAG_COL, 1, &tag);
+	print_otag(h, TAG_COL, 0, NULL);
+	print_otag(h, TAG_TBODY, 0, NULL);
+	print_otag(h, TAG_TR, 0, NULL);
 	return(1);
 }
 
@@ -889,282 +792,206 @@ mdoc_bx_pre(MDOC_ARGS)
 	return(0);
 }
 
-
-/* ARGSUSED */
-static int
-mdoc_it_block_pre(MDOC_ARGS, enum mdoc_list type, int comp,
-		struct roffsu *offs, struct roffsu *width)
-{
-	struct htmlpair	 	 tag;
-	const struct mdoc_node	*nn;
-	struct roffsu		 su;
-
-	nn = n->parent->parent;
-
-	/* XXX: see notes in mdoc_it_pre(). */
-
-	if (LIST_column == type) {
-		/* Don't width-pad on the left. */
-		SCALE_HS_INIT(width, 0);
-		/* Also disallow non-compact. */
-		comp = 1;
-	}
-	if (LIST_diag == type)
-		/* Mandate non-compact with empty prior. */
-		if (n->prev && NULL == n->prev->body->child)
-			comp = 1;
-
-	bufcat_style(h, "clear", "both");
-	if (offs->scale > 0)
-		bufcat_su(h, "margin-left", offs);
-	if (width->scale > 0)
-		bufcat_su(h, "padding-left", width);
-
-	PAIR_STYLE_INIT(&tag, h);
-
-	/* Mandate compact following `Ss' and `Sh' starts. */
-
-	for (nn = n; nn && ! comp; nn = nn->parent) {
-		if (MDOC_BLOCK != nn->type)
-			continue;
-		if (MDOC_Ss == nn->tok || MDOC_Sh == nn->tok)
-			comp = 1;
-		if (nn->prev)
-			break;
-	}
-
-	if ( ! comp) {
-		SCALE_VS_INIT(&su, 1);
-		bufcat_su(h, "padding-top", &su);
-	}
-
-	PAIR_STYLE_INIT(&tag, h);
-	print_otag(h, TAG_DIV, 1, &tag);
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-mdoc_it_body_pre(MDOC_ARGS, enum mdoc_list type, struct roffsu *width)
-{
-	struct htmlpair	 tag;
-	struct roffsu	 su;
-
-	switch (type) {
-	case (LIST_item):
-		/* FALLTHROUGH */
-	case (LIST_ohang):
-		/* FALLTHROUGH */
-	case (LIST_column):
-		bufcat_su(h, "min-width", width);
-		bufcat_style(h, "clear", "none");
-		if (n->next)
-			bufcat_style(h, "float", "left");
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
-		break;
-	default:
-		/* 
-		 * XXX: this tricks CSS into aligning the bodies with
-		 * the right-padding in the head. 
-		 */
-		SCALE_HS_INIT(&su, 2);
-		bufcat_su(h, "margin-left", &su);
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
-		break;
-	}
-
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-mdoc_it_head_pre(MDOC_ARGS, enum mdoc_list type, struct roffsu *width)
-{
-	struct htmlpair	 tag;
-	struct ord	*ord;
-	char		 nbuf[BUFSIZ];
-
-	switch (type) {
-	case (LIST_item):
-		return(0);
-	case (LIST_ohang):
-		print_otag(h, TAG_DIV, 0, &tag);
-		return(1);
-	case (LIST_column):
-		break;
-	default:
-		bufcat_su(h, "min-width", width);
-		SCALE_INVERT(width);
-		bufcat_su(h, "margin-left", width);
-		if (n->next && n->next->child)
-			bufcat_style(h, "float", "left");
-
-		/* XXX: buffer if we run into body. */
-		SCALE_HS_INIT(width, 1);
-		bufcat_su(h, "margin-right", width);
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
-		break;
-	}
-
-	switch (type) {
-	case (LIST_diag):
-		PAIR_CLASS_INIT(&tag, "diag");
-		print_otag(h, TAG_SPAN, 1, &tag);
-		break;
-	case (LIST_enum):
-		ord = h->ords.head;
-		assert(ord);
-		nbuf[BUFSIZ - 1] = 0;
-		(void)snprintf(nbuf, BUFSIZ - 1, "%d.", ord->pos++);
-		print_text(h, nbuf);
-		return(0);
-	case (LIST_dash):
-		print_text(h, "\\(en");
-		return(0);
-	case (LIST_hyphen):
-		print_text(h, "\\(hy");
-		return(0);
-	case (LIST_bullet):
-		print_text(h, "\\(bu");
-		return(0);
-	default:
-		break;
-	}
-
-	return(1);
-}
-
-
 static int
 mdoc_it_pre(MDOC_ARGS)
 {
-	int			 i, comp;
-	const struct mdoc_node	*bl, *nn;
-	struct roffsu		 width, offs;
-	enum mdoc_list		 type;
+	struct roffsu	 su;
+	enum mdoc_list	 type;
+	struct htmlpair	 tag[2];
+	const struct mdoc_node *bl;
 
-	/* 
-	 * XXX: be very careful in changing anything, here.  Lists in
-	 * mandoc have many peculiarities; furthermore, they don't
-	 * translate well into HTML and require a bit of mangling.
-	 */
-
-	bl = n->parent->parent;
-	if (MDOC_BLOCK != n->type)
+	bl = n->parent;
+	while (bl && MDOC_Bl != bl->tok)
 		bl = bl->parent;
 
-	SCALE_HS_INIT(&offs, 0);
+	assert(bl);
 
-	assert(bl->data.Bl);
 	type = bl->data.Bl->type;
-	comp = bl->data.Bl->comp;
 
-	if (bl->data.Bl->offs)
-		a2offs(bl->data.Bl->offs, &offs);
+	assert(lists[type]);
+	PAIR_CLASS_INIT(&tag[0], lists[type]);
 
-	switch (type) {
-	case (LIST_enum):
-		/* FALLTHROUGH */
-	case (LIST_dash):
-		/* FALLTHROUGH */
-	case (LIST_hyphen):
-		/* FALLTHROUGH */
-	case (LIST_bullet):
-		SCALE_HS_INIT(&width, 2);
-		break;
-	default:
-		SCALE_HS_INIT(&width, INDENT);
-		break;
+	if (MDOC_HEAD == n->type) {
+		switch (type) {
+		case(LIST_bullet):
+			/* FALLTHROUGH */
+		case(LIST_dash):
+			/* FALLTHROUGH */
+		case(LIST_item):
+			/* FALLTHROUGH */
+		case(LIST_hyphen):
+			/* FALLTHROUGH */
+		case(LIST_enum):
+			return(0);
+		case(LIST_diag):
+			/* FALLTHROUGH */
+		case(LIST_hang):
+			/* FALLTHROUGH */
+		case(LIST_inset):
+			/* FALLTHROUGH */
+		case(LIST_ohang):
+			/* FALLTHROUGH */
+		case(LIST_tag):
+			SCALE_VS_INIT(&su, ! bl->data.Bl->comp);
+			bufcat_su(h, "margin-top", &su);
+			PAIR_STYLE_INIT(&tag[1], h);
+			print_otag(h, TAG_DT, 2, tag);
+			break;
+		case(LIST_column):
+			break;
+		default:
+			break;
+		}
+	} else if (MDOC_BODY == n->type) {
+		switch (type) {
+		case(LIST_bullet):
+			/* FALLTHROUGH */
+		case(LIST_hyphen):
+			/* FALLTHROUGH */
+		case(LIST_dash):
+			/* FALLTHROUGH */
+		case(LIST_enum):
+			/* FALLTHROUGH */
+		case(LIST_item):
+			SCALE_VS_INIT(&su, ! bl->data.Bl->comp);
+			bufcat_su(h, "margin-top", &su);
+			PAIR_STYLE_INIT(&tag[1], h);
+			print_otag(h, TAG_LI, 2, tag);
+			break;
+		case(LIST_diag):
+			/* FALLTHROUGH */
+		case(LIST_hang):
+			/* FALLTHROUGH */
+		case(LIST_inset):
+			/* FALLTHROUGH */
+		case(LIST_ohang):
+			/* FALLTHROUGH */
+		case(LIST_tag):
+			if (NULL == bl->data.Bl->width) {
+				print_otag(h, TAG_DD, 1, tag);
+				break;
+			}
+			a2width(bl->data.Bl->width, &su);
+			bufcat_su(h, "margin-left", &su);
+			PAIR_STYLE_INIT(&tag[1], h);
+			print_otag(h, TAG_DD, 2, tag);
+			break;
+		case(LIST_column):
+			SCALE_VS_INIT(&su, ! bl->data.Bl->comp);
+			bufcat_su(h, "margin-top", &su);
+			PAIR_STYLE_INIT(&tag[1], h);
+			print_otag(h, TAG_TD, 2, tag);
+			break;
+		default:
+			break;
+		}
+	} else {
+		switch (type) {
+		case (LIST_column):
+			print_otag(h, TAG_TR, 1, tag);
+			break;
+		default:
+			break;
+		}
 	}
 
-	if (bl->data.Bl->width)
-		a2width(bl->data.Bl->width, &width);
-
-	/* Override width in some cases. */
-
-	switch (type) {
-	case (LIST_ohang):
-		/* FALLTHROUGH */
-	case (LIST_item):
-		/* FALLTHROUGH */
-	case (LIST_inset):
-		/* FALLTHROUGH */
-	case (LIST_diag):
-		SCALE_HS_INIT(&width, 0);
-		break;
-	default:
-		if (0 == width.scale)
-			SCALE_HS_INIT(&width, INDENT);
-		break;
-	}
-
-	if (LIST_column == type && MDOC_BODY == n->type) {
-		nn = n->parent->child;
-		for (i = 0; nn && nn != n; nn = nn->next)
-			if (MDOC_BODY == nn->type)
-				i++;
-		if (i < (int)bl->data.Bl->ncols)
-			a2width(bl->data.Bl->cols[i], &width);
-	}
-
-	if (MDOC_HEAD == n->type)
-		return(mdoc_it_head_pre(m, n, h, type, &width));
-	else if (MDOC_BODY == n->type)
-		return(mdoc_it_body_pre(m, n, h, type, &width));
-
-	return(mdoc_it_block_pre(m, n, h, type, comp, &offs, &width));
+	return(1);
 }
-
 
 /* ARGSUSED */
 static int
 mdoc_bl_pre(MDOC_ARGS)
 {
-	struct ord	*ord;
+	size_t		 i;
+	struct htmlpair	 tag[3];
+	struct roffsu	 su;
 
-	if (MDOC_HEAD == n->type)
-		return(0);
-	if (MDOC_BLOCK != n->type)
+	if (MDOC_BODY == n->type) {
+		if (LIST_column == n->data.Bl->type)
+			print_otag(h, TAG_TBODY, 0, NULL);
 		return(1);
-	assert(n->data.Bl);
-	if (LIST_enum != n->data.Bl->type)
-		return(1);
-
-	ord = malloc(sizeof(struct ord));
-	if (NULL == ord) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
 	}
-	ord->cookie = n;
-	ord->pos = 1;
-	ord->next = h->ords.head;
-	h->ords.head = ord;
+
+	if (MDOC_HEAD == n->type) {
+		if (LIST_column != n->data.Bl->type)
+			return(0);
+
+		/*
+		 * For each column, print out the <COL> tag with our
+		 * suggested width.  The last column gets min-width, as
+		 * in terminal mode it auto-sizes to the width of the
+		 * screen and we want to preserve that behaviour.
+		 */
+
+		for (i = 0; i < n->data.Bl->ncols; i++) {
+			a2width(n->data.Bl->cols[i], &su);
+			bufinit(h);
+			if (i < n->data.Bl->ncols - 1)
+				bufcat_su(h, "width", &su);
+			else
+				bufcat_su(h, "min-width", &su);
+			PAIR_STYLE_INIT(&tag[0], h);
+			print_otag(h, TAG_COL, 1, tag);
+		}
+
+		return(0);
+	}
+
+	SCALE_VS_INIT(&su, 0);
+	bufcat_su(h, "margin-top", &su);
+	bufcat_su(h, "margin-bottom", &su);
+	PAIR_STYLE_INIT(&tag[0], h);
+
+	assert(lists[n->data.Bl->type]);
+	bufinit(h);
+	bufcat(h, "list ");
+	bufcat(h, lists[n->data.Bl->type]);
+	PAIR_INIT(&tag[1], ATTR_CLASS, h->buf);
+	i = 2;
+
+	/* Set the block's left-hand margin. */
+
+	if (n->data.Bl->offs) {
+		a2offs(n->data.Bl->offs, &su);
+		bufcat_su(h, "margin-left", &su);
+		PAIR_STYLE_INIT(&tag[2], h);
+		i = 3;
+	}
+
+	switch (n->data.Bl->type) {
+	case(LIST_bullet):
+		/* FALLTHROUGH */
+	case(LIST_dash):
+		/* FALLTHROUGH */
+	case(LIST_hyphen):
+		/* FALLTHROUGH */
+	case(LIST_item):
+		print_otag(h, TAG_UL, i, tag);
+		break;
+	case(LIST_enum):
+		print_otag(h, TAG_OL, i, tag);
+		break;
+	case(LIST_diag):
+		/* FALLTHROUGH */
+	case(LIST_hang):
+		/* FALLTHROUGH */
+	case(LIST_inset):
+		/* FALLTHROUGH */
+	case(LIST_ohang):
+		/* FALLTHROUGH */
+	case(LIST_tag):
+		print_otag(h, TAG_DL, i, tag);
+		break;
+	case(LIST_column):
+		print_otag(h, TAG_TABLE, i, tag);
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+
 	return(1);
 }
-
-
-/* ARGSUSED */
-static void
-mdoc_bl_post(MDOC_ARGS)
-{
-	struct ord	*ord;
-
-	if (MDOC_BLOCK != n->type)
-		return;
-	if (LIST_enum != n->data.Bl->type)
-		return;
-
-	ord = h->ords.head;
-	assert(ord);
-	h->ords.head = ord->next;
-	free(ord);
-}
-
 
 /* ARGSUSED */
 static int
@@ -1173,6 +1000,9 @@ mdoc_ex_pre(MDOC_ARGS)
 	const struct mdoc_node	*nn;
 	struct tag		*t;
 	struct htmlpair		 tag;
+
+	if (n->prev)
+		print_otag(h, TAG_BR, 0, NULL);
 
 	PAIR_CLASS_INIT(&tag, "utility");
 
@@ -1224,13 +1054,20 @@ mdoc_d1_pre(MDOC_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 
-	/* FIXME: D1 shouldn't be literal. */
+	SCALE_VS_INIT(&su, 0);
+	bufcat_su(h, "margin-top", &su);
+	bufcat_su(h, "margin-bottom", &su);
+	PAIR_STYLE_INIT(&tag[0], h);
+	print_otag(h, TAG_BLOCKQUOTE, 1, tag);
 
-	SCALE_VS_INIT(&su, INDENT - 2);
-	bufcat_su(h, "margin-left", &su);
-	PAIR_CLASS_INIT(&tag[0], "lit");
-	PAIR_STYLE_INIT(&tag[1], h);
-	print_otag(h, TAG_DIV, 2, tag);
+	/* BLOCKQUOTE needs a block body. */
+
+	if (MDOC_Dl == n->tok)
+		PAIR_CLASS_INIT(&tag[0], "lit display");
+	else
+		PAIR_CLASS_INIT(&tag[0], "display");
+
+	print_otag(h, TAG_DIV, 1, tag);
 	return(1);
 }
 
@@ -1270,19 +1107,8 @@ mdoc_bd_pre(MDOC_ARGS)
 	if (MDOC_HEAD == n->type)
 		return(0);
 
-	SCALE_VS_INIT(&su, 0);
-
-	assert(n->data.Bd);
-	if (n->data.Bd->offs)
-		a2offs(n->data.Bd->offs, &su);
-
-	comp = n->data.Bd->comp;
-
-	/* FIXME: -centered, etc. formatting. */
-	/* FIXME: does not respect -offset ??? */
-
 	if (MDOC_BLOCK == n->type) {
-		bufcat_su(h, "margin-left", &su);
+		comp = n->data.Bd->comp;
 		for (nn = n; nn && ! comp; nn = nn->parent) {
 			if (MDOC_BLOCK != nn->type)
 				continue;
@@ -1291,26 +1117,27 @@ mdoc_bd_pre(MDOC_ARGS)
 			if (nn->prev)
 				break;
 		}
-		if (comp) {
-			PAIR_STYLE_INIT(&tag[0], h);
-			print_otag(h, TAG_DIV, 1, tag);
-			return(1);
-		}
-		SCALE_VS_INIT(&su, 1);
-		bufcat_su(h, "margin-top", &su);
-		PAIR_STYLE_INIT(&tag[0], h);
-		print_otag(h, TAG_DIV, 1, tag);
+		if ( ! comp)
+			print_otag(h, TAG_P, 0, NULL);
 		return(1);
 	}
 
-	if (DISP_unfilled != n->data.Bd->type && 
-			DISP_literal != n->data.Bd->type)
-		return(1);
+	SCALE_HS_INIT(&su, 0);
+	if (n->data.Bd->offs)
+		a2offs(n->data.Bd->offs, &su);
 
-	PAIR_CLASS_INIT(&tag[0], "lit");
-	bufcat_style(h, "white-space", "pre");
-	PAIR_STYLE_INIT(&tag[1], h);
-	print_otag(h, TAG_DIV, 2, tag);
+	bufcat_su(h, "margin-left", &su);
+	PAIR_STYLE_INIT(&tag[0], h);
+
+	if (DISP_unfilled != n->data.Bd->type && 
+			DISP_literal != n->data.Bd->type) {
+		PAIR_CLASS_INIT(&tag[1], "display");
+		print_otag(h, TAG_DIV, 2, tag);
+		return(1);
+	}
+
+	PAIR_CLASS_INIT(&tag[1], "lit display");
+	print_otag(h, TAG_PRE, 2, tag);
 
 	for (nn = n->child; nn; nn = nn->next) {
 		print_mdoc_node(m, nn, h);
@@ -1342,7 +1169,9 @@ mdoc_bd_pre(MDOC_ARGS)
 		}
 		if (nn->next && nn->next->line == nn->line)
 			continue;
-		print_text(h, "\n");
+		else if (nn->next)
+			print_text(h, "\n");
+
 		h->flags |= HTML_NOSPACE;
 	}
 
@@ -1625,44 +1454,41 @@ mdoc_sm_pre(MDOC_ARGS)
 	return(0);
 }
 
+/* ARGSUSED */
+static int
+mdoc_pp_pre(MDOC_ARGS)
+{
+
+	print_otag(h, TAG_P, 0, NULL);
+	return(0);
+
+}
 
 /* ARGSUSED */
 static int
 mdoc_sp_pre(MDOC_ARGS)
 {
-	int		 len;
-	struct htmlpair	 tag;
 	struct roffsu	 su;
+	struct htmlpair	 tag;
 
-	switch (n->tok) {
-	case (MDOC_sp):
-		/* FIXME: can this have a scaling indicator? */
-		len = n->child ? atoi(n->child->string) : 1;
-		break;
-	case (MDOC_br):
-		len = 0;
-		break;
-	default:
-		assert(n->parent);
-		if ((NULL == n->next || NULL == n->prev) &&
-				(MDOC_Ss == n->parent->tok ||
-				 MDOC_Sh == n->parent->tok))
-			return(0);
-		len = 1;
-		break;
-	}
+	SCALE_VS_INIT(&su, 1);
 
-	SCALE_VS_INIT(&su, len);
+	if (MDOC_sp == n->tok) {
+		if (n->child)
+			a2roffsu(n->child->string, &su, SCALE_VS);
+	} else
+		su.scale = 0;
+
 	bufcat_su(h, "height", &su);
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, 1, &tag);
+
 	/* So the div isn't empty: */
 	print_text(h, "\\~");
 
 	return(0);
 
 }
-
 
 /* ARGSUSED */
 static int
@@ -1814,7 +1640,9 @@ mdoc_rv_pre(MDOC_ARGS)
 	struct htmlpair		 tag;
 	struct tag		*t;
 
-	print_otag(h, TAG_DIV, 0, NULL);
+	if (n->prev)
+		print_otag(h, TAG_BR, 0, NULL);
+
 	print_text(h, "The");
 
 	for (nn = n->child; nn; nn = nn->next) {
@@ -1950,10 +1778,8 @@ mdoc_rs_pre(MDOC_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 
-	if (n->prev && SEC_SEE_ALSO == n->sec) {
-		print_otag(h, TAG_BR, 0, NULL);
-		print_otag(h, TAG_BR, 0, NULL);
-	} 
+	if (n->prev && SEC_SEE_ALSO == n->sec)
+		print_otag(h, TAG_P, 0, NULL);
 
 	PAIR_CLASS_INIT(&tag, "ref");
 	print_otag(h, TAG_SPAN, 1, &tag);
@@ -2012,8 +1838,9 @@ mdoc_lb_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
 
-	if (SEC_LIBRARY == n->sec && MDOC_LINE & n->flags)
-		print_otag(h, TAG_DIV, 0, NULL);
+	if (SEC_LIBRARY == n->sec && MDOC_LINE & n->flags && n->prev)
+		print_otag(h, TAG_BR, 0, NULL);
+
 	PAIR_CLASS_INIT(&tag, "lib");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	return(1);
