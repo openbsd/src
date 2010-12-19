@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.17 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.18 2010/12/19 21:32:57 jasper Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ const struct usb_devno ucycom_devs[] = {
 	{ USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EMUSB },
 	{ USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EMLT20 },
 };
-#define ucycom_lookup(v, p) usb_lookup(ucycom_devs, v, p)
 
 int ucycom_match(struct device *, void *, void *); 
 void ucycom_attach(struct device *, struct device *, void *); 
@@ -180,7 +179,7 @@ ucycom_match(struct device *parent, void *match, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 
 	DPRINTF(("ucycom match\n"));
-	return (ucycom_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
+	return (usb_lookup(ucycom_devs, uha->uaa->vendor, uha->uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 

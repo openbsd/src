@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.5 2010/09/24 08:33:59 yuo Exp $   */
+/*	$OpenBSD: utrh.c,v 1.6 2010/12/19 21:32:58 jasper Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -77,7 +77,6 @@ struct utrh_softc {
 const struct usb_devno utrh_devs[] = {
 	{ USB_VENDOR_STRAWBERRYLINUX, USB_PRODUCT_STRAWBERRYLINUX_USBRH},
 };
-#define utrh_lookup(v, p) usb_lookup(utrh_devs, v, p)
 
 int utrh_match(struct device *, void *, void *);
 void utrh_attach(struct device *, struct device *, void *);
@@ -108,10 +107,8 @@ utrh_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 
-	if (utrh_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
-		return UMATCH_NONE;
-
-	return (UMATCH_VENDOR_PRODUCT);
+	return (usb_lookup(utrh_devs, uha->uaa->vendor, uha->uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

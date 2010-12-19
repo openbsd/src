@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.1 2010/09/23 14:33:34 yuo Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.2 2010/12/19 21:32:58 jasper Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -17,7 +17,7 @@
  */
 
 /* Driver for Maywa-Denki & KAYAC YUREX BBU sensor */
-/* formely the driver name was utwitch(4). */
+/* this driver was previously known as uyurex(4). */
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,7 +91,6 @@ struct utwitch_softc {
 const struct usb_devno utwitch_devs[] = {
 	{ USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_YUREX},
 };
-#define utwitch_lookup(v, p) usb_lookup(utwitch_devs, v, p)
 
 int utwitch_match(struct device *, void *, void *);
 void utwitch_attach(struct device *, struct device *, void *);
@@ -123,10 +122,8 @@ utwitch_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 
-	if (utwitch_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
-		return UMATCH_NONE;
-
-	return (UMATCH_VENDOR_PRODUCT);
+	return (usb_lookup(utwitch_devs, uha->uaa->vendor, uha->uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void
