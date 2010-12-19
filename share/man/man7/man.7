@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.10 2010/09/26 19:40:27 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.11 2010/12/19 08:07:38 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2010 $
+.Dd $Mdocdate: December 19 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -414,7 +414,6 @@ The syntax is as follows:
 .It Sx \&I   Ta    n         Ta    next-line Ta    \&
 .It Sx \&IB  Ta    n         Ta    current   Ta    \&
 .It Sx \&IR  Ta    n         Ta    current   Ta    \&
-.\" .It Sx \&PD  Ta    n         Ta    current   Ta    compat
 .It Sx \&R   Ta    n         Ta    next-line Ta    \&
 .It Sx \&RB  Ta    n         Ta    current   Ta    \&
 .It Sx \&RI  Ta    n         Ta    current   Ta    \&
@@ -424,15 +423,10 @@ The syntax is as follows:
 .It Sx \&UC  Ta    <=1       Ta    current   Ta    \&
 .It Sx \&br  Ta    0         Ta    current   Ta    compat
 .It Sx \&fi  Ta    0         Ta    current   Ta    compat
-.It Sx \&i   Ta    n         Ta    current   Ta    compat
 .It Sx \&in  Ta    1         Ta    current   Ta    compat
 .It Sx \&na  Ta    0         Ta    current   Ta    compat
 .It Sx \&nf  Ta    0         Ta    current   Ta    compat
-.It Sx \&r   Ta    0         Ta    current   Ta    compat
 .It Sx \&sp  Ta    1         Ta    current   Ta    compat
-.\" .It Sx \&Sp  Ta    <1        Ta    current   Ta    compat
-.\" .It Sx \&Vb  Ta    <1        Ta    current   Ta    compat
-.\" .It Sx \&Ve  Ta    0         Ta    current   Ta    compat
 .El
 .Pp
 Macros marked as
@@ -512,12 +506,9 @@ The optional arguments specify which release it is from.
 Text is rendered in bold face.
 .Pp
 See also
-.Sx \&I ,
-.Sx \&R ,
-.Sx \&b ,
-.Sx \&i ,
+.Sx \&I
 and
-.Sx \&r .
+.Sx \&R .
 .Ss \&BI
 Text is rendered alternately in bold face and italic.
 Thus,
@@ -594,12 +585,9 @@ and
 Text is rendered in italics.
 .Pp
 See also
-.Sx \&B ,
-.Sx \&R ,
-.Sx \&b ,
-.Sx \&i ,
+.Sx \&B
 and
-.Sx \&r .
+.Sx \&R .
 .Ss \&IB
 Text is rendered alternately in italics and bold face.
 Whitespace between arguments is omitted in output.
@@ -695,12 +683,9 @@ and
 Text is rendered in roman (the default font).
 .Pp
 See also
-.Sx \&I ,
-.Sx \&B ,
-.Sx \&b ,
-.Sx \&i ,
+.Sx \&I
 and
-.Sx \&r .
+.Sx \&B .
 .Ss \&RB
 Text is rendered alternately in roman (the default font) and bold face.
 Whitespace between arguments is omitted in output.
@@ -821,12 +806,6 @@ See also
 .Sx \&P ,
 and
 .Sx \&PP .
-.\" .
-.\" .
-.\" .Ss \&PD
-.\" Has no effect.  Included for compatibility.
-.\" .
-.\" .
 .Ss \&UC
 Sets the volume for the footer for compatibility with man pages from
 BSD releases.
@@ -840,18 +819,6 @@ See also
 .Ss \&fi
 End literal mode begun by
 .Sx \&nf .
-.Ss \&i
-Italicise arguments.
-Synonym for
-.Sx \&I .
-.Pp
-See also
-.Sx \&B ,
-.Sx \&I ,
-.Sx \&R .
-.Sx \&b ,
-and
-.Sx \&r .
 .Ss \&in
 Indent relative to the current indentation:
 .Pp
@@ -869,16 +836,6 @@ Begin literal mode: all subsequent free-form lines have their end of
 line boundaries preserved.
 May be ended by
 .Sx \&fi .
-.Ss \&r
-Fonts and styles (bold face, italics) reset to roman (default font).
-.Pp
-See also
-.Sx \&B ,
-.Sx \&I ,
-.Sx \&R ,
-.Sx \&b ,
-and
-.Sx \&i .
 .Ss \&sp
 Insert vertical spaces into output with the following syntax:
 .Bd -filled -offset indent
@@ -897,21 +854,6 @@ Defaults to 1, if unspecified.
 .Pp
 See also
 .Sx \&br .
-.\" .Ss \&Sp
-.\" A synonym for
-.\" .Sx \&sp
-.\" .Cm 0.5v .
-.\" .
-.\" .Ss \&Vb
-.\" A synonym for
-.\" .Sx \&nf .
-.\" Accepts an argument (the height of the formatted space) which is
-.\" disregarded.
-.\" .
-.\" .Ss \&Ve
-.\" A synonym for
-.\" .Sx \&fi .
-.\" .
 .Sh COMPATIBILITY
 This section documents areas of questionable portability between
 implementations of the
