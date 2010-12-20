@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.139 2010/12/20 08:58:03 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.140 2010/12/20 09:08:42 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -328,8 +328,8 @@ sub merge
 
 sub find_candidate
 {
-	    my $spec = shift;
-	    my @candidates = $spec->filter(@_);
+	    my ($self, $dep, @list) = @_;
+	    my @candidates = $dep->spec->filter(@list);
 	    if (@candidates >= 1) {
 		    return $candidates[0];
 	    } else {
@@ -434,14 +434,15 @@ sub find_dep_in_self
 {
 	my ($self, $state, $dep) = @_;
 
-	return find_candidate($dep->spec, $self->{set}->newer_names);
+	return $self->find_candidate($dep, $self->{set}->newer_names);
 }
 
 sub find_dep_in_stuff_to_install
 {
 	my ($self, $state, $dep) = @_;
 
-	my $v = find_candidate($dep->spec, keys %{$state->tracker->{uptodate}});
+	my $v = $self->find_candidate($dep, 
+	    keys %{$state->tracker->{uptodate}});
 	if ($v) {
 		$self->set_global($dep, _cache::installed->new($v));
 		return $v;
@@ -461,7 +462,7 @@ sub find_dep_in_stuff_to_install
 		return $candidates[0];
 	}
 
-	$v = find_candidate($dep->spec, keys %{$state->tracker->{to_install}});
+	$v = $self->find_candidate($dep, keys %{$state->tracker->{to_install}});
 	if ($v) {
 		$self->set_cache($dep, _cache::to_install->new($v));
 		$self->add_dep($state->tracker->{to_install}->{$v});
@@ -531,7 +532,7 @@ sub solve_dependency
 			push(@{$package->{before}}, $v);
 			return $v;
 		}
-		$v = find_candidate($dep->spec, $self->{set}->older_names);
+		$v = $self->find_candidate($dep, $self->{set}->older_names);
 		if ($v) {
 			push(@{$self->{bad}}, $dep->{pattern});
 			return $v;
@@ -540,7 +541,7 @@ sub solve_dependency
 		return $v if $v;
 	}
 
-	$v = find_candidate($dep->spec, @{$self->installed_list});
+	$v = $self->find_candidate($dep, @{$self->installed_list});
 	if ($v) {
 		if ($state->{newupdates}) {
 			if ($state->tracker->is_known($v)) {
