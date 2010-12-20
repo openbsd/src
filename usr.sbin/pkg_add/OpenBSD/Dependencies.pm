@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.143 2010/12/20 09:30:40 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.144 2010/12/20 09:38:40 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -407,7 +407,7 @@ sub solve_wantlibs
 			    $solver->{to_register}->{$h}, $state,
 			    $lib->spec);
 			if ($okay) {
-				$state->errsay("Can't install #1 because of libraries", $h->pkgname);
+				$solver->errsay_library($state, $h);
 			}
 			$okay = 0;
 			OpenBSD::SharedLibs::report_problem($state,
@@ -473,8 +473,8 @@ use OpenBSD::PackageInfo;
 OpenBSD::Auto::cache(installed_list,
 	sub {
 		my $self = shift;
-
 		my @l = installed_packages();
+
 		for my $o ($self->{set}->older_names) {
 			@l = grep {$_ ne $o} @l;
 		}
@@ -729,6 +729,13 @@ sub find_old_lib
 		}
 	}
 	return undef;
+}
+
+sub errsay_library
+{
+	my ($solver, $state, $h) = @_;
+
+	$state->errsay("Can't install #1 because of libraries", $h->pkgname);
 }
 
 sub solve_tags
