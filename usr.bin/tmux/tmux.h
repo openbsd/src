@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.252 2010/12/20 00:17:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.253 2010/12/20 00:19:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -948,7 +948,6 @@ struct session {
 	struct paste_stack buffers;
 
 #define SESSION_UNATTACHED 0x1	/* not attached to any clients */
-#define SESSION_DEAD 0x2
 	int		 flags;
 
 	struct termios	*tio;
