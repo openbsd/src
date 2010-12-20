@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.250 2010/12/11 18:39:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.251 2010/12/20 00:03:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1968,6 +1968,7 @@ void clear_signals(int);
 extern struct sessions sessions;
 extern struct sessions dead_sessions;
 extern struct session_groups session_groups;
+int		 session_alive(struct session *);
 struct session	*session_find(const char *);
 struct session	*session_create(const char *, const char *, const char *,
 		     struct environ *, struct termios *, int, u_int, u_int,

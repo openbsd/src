@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-window.c,v 1.15 2010/12/06 22:51:02 nicm Exp $ */
+/* $OpenBSD: cmd-choose-window.c,v 1.16 2010/12/20 00:03:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -129,20 +129,19 @@ void
 cmd_choose_window_callback(void *data, int idx)
 {
 	struct cmd_choose_window_data	*cdata = data;
+	struct session			*s = cdata->session;
 	struct cmd_list			*cmdlist;
 	struct cmd_ctx			 ctx;
 	char				*target, *template, *cause;
 
 	if (idx == -1)
 		return;
+	if (!session_alive(s))
+		return;
 	if (cdata->client->flags & CLIENT_DEAD)
 		return;
-	if (cdata->session->flags & SESSION_DEAD)
-		return;
-	if (cdata->client->session != cdata->session)
-		return;
 
-	xasprintf(&target, "%s:%d", cdata->session->name, idx);
+	xasprintf(&target, "%s:%d", s->name, idx);
 	template = cmd_template_replace(cdata->template, target, 1);
 	xfree(target);
 
