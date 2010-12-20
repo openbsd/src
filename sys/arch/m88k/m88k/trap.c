@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.69 2009/03/01 17:43:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.70 2010/12/20 20:07:49 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -742,7 +742,55 @@ lose:
 		return;
 #endif /* DDB */
 	case T_ILLFLT:
-		printf("Unimplemented opcode!\n");
+		/*
+		 * The 88110 seems to trigger an instruction fault in
+		 * supervisor mode when running the following sequence:
+		 *
+		 *	bcnd.n cond, reg, 1f
+		 *	arithmetic insn
+		 *	...
+		 *  	the same exact arithmetic insn
+		 *  1:	another arithmetic insn stalled by the previous one
+		 *	...
+		 *
+		 * The exception is reported with exip pointing to the
+		 * branch address. I don't know, at this point, if there
+		 * is any better workaround than the aggressive one
+		 * implemented below; I don't see how this could relate to
+		 * any of the 88110 errata (although it might be related to
+		 * branch prediction).
+		 *
+		 * For the record, the exact sequence triggering the
+		 * spurious exception is:
+		 *
+		 *	bcnd.n	eq0, r2,  1f
+		 *	 or	r25, r0,  r22
+		 *	bsr	somewhere
+		 *	or	r25, r0,  r22
+		 *  1:	cmp	r13, r25, r20
+		 *
+		 * within the same cache line.
+		 *
+		 * Simply ignoring the exception and returning does not
+		 * cause the exception to disappear. Clearing the
+		 * instruction cache works, but on 88110+88410 systems,
+		 * the 88410 needs to be invalidated as well. (note that
+		 * the size passed to the flush routines does not matter
+		 * since there is no way to flush a subset of the 88110
+		 * I$ anyway)
+		 */
+	    {
+		extern void *kernel_text, *etext;
+
+		if (fault_addr >= (vaddr_t)kernel_text &&
+		    fault_addr <(vaddr_t)&etext) {
+			cmmu_flush_inst_cache(curcpu()->ci_cpuid,
+			    trunc_page(fault_addr), PAGE_SIZE);
+			cmmu_flush_cache(curcpu()->ci_cpuid,
+			    trunc_page(fault_addr), PAGE_SIZE);
+			return;
+		}
+	    }
 		goto lose;
 	case T_MISALGNFLT:
 		printf("kernel mode misaligned access exception @ 0x%08x\n",
