@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.138 2010/12/13 12:13:54 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.139 2010/12/20 08:58:03 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -72,7 +72,7 @@ sub dump
 
 	return unless %{$self->{done}};
 	$state->say("Full dependency tree is #1", 
-		join(' ', keys %{$self->{done}}));
+	    join(' ', keys %{$self->{done}}));
 }
 
 package OpenBSD::lookup::library;
@@ -106,7 +106,7 @@ sub find_in_extra_sources
 	my ($self, $solver, $state, $obj) = @_;
 	return undef if !$obj->is_valid || defined $obj->{dir};
 
-	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
+	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir}, $state);
 	for my $dir (OpenBSD::SharedLibs::system_dirs()) {
 		if ($solver->check_lib_spec($dir, $obj, {system => 1})) {
 			$self->say_found($state, $obj, $state->f("#1/lib", $dir));
@@ -121,13 +121,12 @@ sub find_in_new_source
 	my ($self, $solver, $state, $obj, $dep) = @_;
 
 	if (defined $solver->{set}->{newer}->{$dep}) {
-		OpenBSD::SharedLibs::add_libs_from_plist($solver->{set}->{newer}->{$dep}->plist);
+		OpenBSD::SharedLibs::add_libs_from_plist($solver->{set}->{newer}->{$dep}->plist, $state);
 	} else {
-		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
+		OpenBSD::SharedLibs::add_libs_from_installed_package($dep, $state);
 	}
-	if ($solver->check_lib_spec($solver->{localbase}, $obj,
-	    {$dep => 1})) {
-	    	$self->say_found($state, $obj, $state->f("package #1", $dep));
+	if ($solver->check_lib_spec($solver->{localbase}, $obj, {$dep => 1})) {
+		$self->say_found($state, $obj, $state->f("package #1", $dep));
 		return $dep;
 	}
 	return undef;
@@ -166,7 +165,8 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 	my $r = $self->{known_tags}->{$obj};
 	if (defined $r) {
-		$state->say("Found tag #1 in #2", $obj, $r) if $state->verbose >= 3;
+		$state->say("Found tag #1 in #2", $obj, $r) 
+		    if $state->verbose >= 3;
 	}
 	return $r;
 }
@@ -274,7 +274,7 @@ sub do
 
 	if ($state->tracker->{to_update}{$$v}) {
 		$solver->add_dep($state->tracker->{to_update}{$$v});
-	    	return $$v;
+		return $$v;
 	}
 	if ($state->tracker->{uptodate}{$$v}) {
 		bless $v, "_cache::installed";
@@ -303,7 +303,7 @@ sub clone
 		while (my ($k, $e) = each %{$extra->{$h}}) {
 			$self->{$h}{$k} //= $e;
 		}
-    	}
+	}
 }
 
 package OpenBSD::Dependencies::Solver;
@@ -675,7 +675,7 @@ sub find_old_lib
 
 	my $r = $state->repo->installed->match_locations(OpenBSD::Search::PkgSpec->new(".libs-".$pattern));
 	for my $try (map {$_->name} @$r) {
-		OpenBSD::SharedLibs::add_libs_from_installed_package($try);
+		OpenBSD::SharedLibs::add_libs_from_installed_package($try, $state);
 		if ($self->check_lib_spec($base, $lib, {$try => 1})) {
 			return $try;
 		}

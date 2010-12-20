@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.52 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.53 2010/12/20 08:58:03 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -31,8 +31,8 @@ package OpenBSD::PackingElement::Lib;
 
 sub mark_available_lib
 {
-	my ($self, $pkgname) = @_;
-	OpenBSD::SharedLibs::register_lib($self->fullname, $pkgname);
+	my ($self, $pkgname, $state) = @_;
+	OpenBSD::SharedLibs::register_lib($self->fullname, $pkgname, $state);
 }
 
 package OpenBSD::SharedLibs;
@@ -90,12 +90,12 @@ our $repo = OpenBSD::LibRepo->new;
 
 sub register_lib
 {
-	my ($name, $pkgname) = @_;
+	my ($name, $pkgname, $state) = @_;
 	my $lib = OpenBSD::Library->from_string($name);
 	if ($lib->is_valid) {
 		$repo->register($lib, $pkgname);
 	} else {
-		print STDERR "Bogus library in $pkgname: $name\n"
+		$state->errsay("Bogus library in #1: #2", $pkgname, $name)
 		    unless $pkgname eq 'system';
 	}
 
@@ -110,7 +110,7 @@ sub system_dirs
 
 sub add_libs_from_system
 {
-	my ($destdir) = @_;
+	my ($destdir, $state) = @_;
 	return if $done_plist->{'system'};
 	$done_plist->{'system'} = 1;
 	for my $dirname (system_dirs()) {
@@ -125,23 +125,23 @@ sub add_libs_from_system
 
 sub add_libs_from_installed_package
 {
-	my $pkgname = shift;
+	my ($pkgname, $state) = @_;
 	return if $done_plist->{$pkgname};
 	$done_plist->{$pkgname} = 1;
 	my $plist = OpenBSD::PackingList->from_installation($pkgname,
 	    \&OpenBSD::PackingList::LibraryOnly);
 	return if !defined $plist;
 
-	$plist->mark_available_lib($pkgname);
+	$plist->mark_available_lib($pkgname, $state);
 }
 
 sub add_libs_from_plist
 {
-	my $plist = shift;
+	my ($plist, $state) = @_;
 	my $pkgname = $plist->pkgname;
 	return if $done_plist->{$pkgname};
 	$done_plist->{$pkgname} = 1;
-	$plist->mark_available_lib($pkgname);
+	$plist->mark_available_lib($pkgname, $state);
 }
 
 sub lookup_libspec
