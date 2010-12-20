@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.53 2010/12/20 08:58:03 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.54 2010/12/20 09:03:51 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -32,7 +32,8 @@ package OpenBSD::PackingElement::Lib;
 sub mark_available_lib
 {
 	my ($self, $pkgname, $state) = @_;
-	OpenBSD::SharedLibs::register_lib($self->fullname, $pkgname, $state);
+	OpenBSD::SharedLibs::register_libname($self->fullname, 
+	    $pkgname, $state);
 }
 
 package OpenBSD::SharedLibs;
@@ -88,12 +89,18 @@ sub ensure_ldconfig
 
 our $repo = OpenBSD::LibRepo->new;
 
-sub register_lib
+sub register_library
+{
+	my ($lib, $pkgname) = @_;
+	$repo->register($lib, $pkgname);
+}
+
+sub register_libname
 {
 	my ($name, $pkgname, $state) = @_;
 	my $lib = OpenBSD::Library->from_string($name);
 	if ($lib->is_valid) {
-		$repo->register($lib, $pkgname);
+		register_library($lib, $pkgname);
 	} else {
 		$state->errsay("Bogus library in #1: #2", $pkgname, $name)
 		    unless $pkgname eq 'system';
@@ -117,7 +124,7 @@ sub add_libs_from_system
 		opendir(my $dir, $destdir.$dirname."/lib") or next;
 		while (my $d = readdir($dir)) {
 			next unless $d =~ m/\.so/;
-			register_lib("$dirname/lib/$d", 'system');
+			register_libname("$dirname/lib/$d", 'system');
 		}
 		closedir($dir);
 	}
