@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.31 2010/12/20 11:32:30 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.32 2010/12/20 11:48:42 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1066,7 +1066,7 @@ sub parse_and_run
 	$state->{base} = $base;
 
 	$plist->discover_directories($state);
-	$self->check_dependencies($plist, $state);
+#	$self->check_dependencies($plist, $state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checksumming");
 		if ($regen_package) {
