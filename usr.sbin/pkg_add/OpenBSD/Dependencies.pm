@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.144 2010/12/20 09:38:40 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.145 2010/12/20 09:41:44 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -308,7 +308,7 @@ sub clone
 	}
 }
 
-package OpenBSD::Dependencies::Solver;
+package OpenBSD::Dependencies::SolverBase;
 our @ISA = qw(OpenBSD::Cloner);
 
 my $global_cache = {};
@@ -462,6 +462,9 @@ sub find_in_installed
 
 	return $self->find_candidate($dep, @{$self->installed_list});
 }
+
+package OpenBSD::Dependencies::Solver;
+our @ISA = qw(OpenBSD::Dependencies::SolverBase);
 
 sub add_dep
 {
