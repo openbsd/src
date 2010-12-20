@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.29 2010/12/05 09:41:55 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.30 2010/12/20 08:59:59 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -970,7 +970,7 @@ sub parse_and_run
 	$plist->avert_duplicates_and_other_checks($state);
 	$state->{stash} = {};
 
-	if ($state->{bad} && $state->{subst}->empty('REGRESSION_TESTING')) {
+	if ($state->{bad} && !$state->defines('REGRESSION_TESTING')) {
 		return 1;
 	}
 	$state->{bad} = 0;
