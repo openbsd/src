@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.30 2010/12/20 08:59:59 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.31 2010/12/20 11:32:30 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -20,6 +20,8 @@ use strict;
 use warnings;
 
 use OpenBSD::AddCreateDelete;
+use OpenBSD::Dependencies;
+use OpenBSD::SharedLibs;
 
 package OpenBSD::PkgCreate::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
@@ -518,6 +520,119 @@ sub close
 	close($self->{fh});
 }
 
+# special solver class for PkgCreate
+package OpenBSD::Dependencies::CreateSolver;
+our @ISA = qw(OpenBSD::Dependencies::SolverBase);
+
+# we need to "hack" a special set
+sub new
+{
+	my ($class, $plist) = @_;
+	bless { set => OpenBSD::PseudoSet->new($plist), bad => [] }, $class;
+}
+
+sub really_solve_dependency
+{
+	my ($self, $state, $dep, $package) = @_;
+
+	# look in installed packages
+	my $v = $self->find_in_installed($dep);
+	
+	# and in built tree if other packages have the same BASE_PKGPATH
+	if (!defined $v && !defined $self->{all_dependencies}{BUILD}) {
+		my $f = $state->{subst}->value('FULLPKGPATH');
+		$f =~ s/,.*//;
+		my $f2 = $dep->{pkgpath};
+		$f2 =~ s/,.*//;
+		if ($f eq $f2) {
+			return $self->add_built_libraries($state);	
+		}
+	}
+	return $v;
+}
+
+sub add_built_libraries
+{
+	my ($self, $state) = @_;
+	require File::Find;
+	File::Find::find(sub {
+		return unless -f $_;
+		my $libname = $File::Find::name;
+		$libname =~ s,^\Q$state->{base}\E,,;
+		my $lib = OpenBSD::Library->from_string($libname);
+		return unless $lib->is_valid;
+		OpenBSD::SharedLibs::register_library($lib, "BUILD");
+		}, $state->{base});
+	return "BUILD";
+}
+
+# the full installed list is okay
+OpenBSD::Auto::cache(installed_list,
+	sub {
+		require OpenBSD::PackageInfo;
+
+		my @l = OpenBSD::PackageInfo::installed_packages();
+		return \@l;
+	}
+);
+
+sub errsay_library
+{
+	my ($solver, $state, $h) = @_;
+	
+	$state->errsay("Can't create #1 because of libraries", $h->pkgname);
+}
+
+# we don't want old libs
+sub find_old_lib
+{
+	return undef;
+}
+
+package OpenBSD::PseudoHandle;
+sub new
+{
+	my ($class, $plist) = @_;
+	bless { plist => $plist}, $class;
+}
+
+sub pkgname
+{
+	my $self = shift;
+
+	return $self->{plist}->pkgname;
+}
+
+package OpenBSD::PseudoSet;
+sub new
+{
+	my ($class, $plist) = @_;
+
+	my $h = OpenBSD::PseudoHandle->new($plist);
+	bless {h => $h}, $class;
+}
+
+sub newer
+{
+	return (shift->{h});
+}
+	
+sub older
+{
+	return ();
+}
+
+sub kept
+{
+	return ();
+}
+
+sub print
+{
+	my $self = shift;
+	return $self->{h}->pkgname;
+}
+
 package OpenBSD::PkgCreate;
 our @ISA = qw(OpenBSD::AddCreateDelete);
 
@@ -841,6 +956,20 @@ sub show_bad_symlinks
 	}
 }
 
+sub check_dependencies
+{
+	my ($self, $plist, $state) = @_;
+
+	my $solver = OpenBSD::Dependencies::CreateSolver->new($plist);
+	$solver->solve_depends($state);
+	# look for libraries in the "real" tree
+	$state->{destdir} = '/';
+	if (!$solver->solve_wantlibs($state)) {
+		$state->{bad}++;
+	}
+}
+
+
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
@@ -937,6 +1066,7 @@ sub parse_and_run
 	$state->{base} = $base;
 
 	$plist->discover_directories($state);
+	$self->check_dependencies($plist, $state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checksumming");
 		if ($regen_package) {
@@ -949,8 +1079,7 @@ sub parse_and_run
 	}
 
 	if (!defined $plist->pkgname) {
-		$state->error("can't write unnamed packing-list");
-		return 1;
+		$state->fatal("can't write unnamed packing-list");
 	}
 
 	if (defined $state->opt('q')) {
@@ -963,15 +1092,14 @@ sub parse_and_run
 	}
 
 	if ($plist->{deprecated}) {
-		$state->error("found obsolete constructs");
-		return 1;
+		$state->fatal("found obsolete constructs");
 	}
 
 	$plist->avert_duplicates_and_other_checks($state);
 	$state->{stash} = {};
 
 	if ($state->{bad} && !$state->defines('REGRESSION_TESTING')) {
-		return 1;
+		$state->fatal("can't continue");
 	}
 	$state->{bad} = 0;
 

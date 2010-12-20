@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.68 2010/10/27 17:26:03 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.69 2010/12/20 11:32:30 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: October 27 2010 $
+.Dd $Mdocdate: December 20 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -86,6 +86,27 @@ see
 records extra information in the packing-list, such as the existence
 of symlinks and hard links, computes and stores file checksums, and
 verifies that all special objects are properly annotated in the packing-list.
+.Pp
+It will also check all
+.Cm @wantlib
+for reachability, by looking into all installed
+.Cm @depend .
+It will also look into the build directory itself as specified by
+.Fl B Ar pkg-destdir ,
+provided some other
+.Cm @depend
+refers to the same
+.Ev BASE_PKGPATH
+.Po
+see
+.Xr bsd.port.mk 5
+.Pc .
+The rationale is that those libraries must already be present for
+the package to build correctly, and thus be reachable through the
+subset of
+.Cm @depend
+that are not pure
+.Ev RUN_DEPENDS .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
