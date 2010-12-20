@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.146 2010/12/20 09:43:51 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.147 2010/12/20 11:55:48 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -403,6 +403,7 @@ sub solve_wantlibs
 
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
 	$lib_finder->{known}{BUILD} = 1;
+	$lib_finder->{done}{BUILD} = 1;
 	for my $h ($solver->{set}->newer) {
 		for my $lib (@{$h->{plist}->{wantlib}}) {
 			$solver->{localbase} = $h->{plist}->localbase;
