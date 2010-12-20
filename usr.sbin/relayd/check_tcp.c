@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.38 2010/11/30 14:38:45 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.39 2010/12/20 12:38:06 dhill Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -50,7 +50,6 @@ void
 check_tcp(struct ctl_tcp_event *cte)
 {
 	int			 s;
-	int			 type;
 	socklen_t		 len;
 	struct timeval		 tv;
 	struct linger		 lng;
@@ -79,10 +78,6 @@ check_tcp(struct ctl_tcp_event *cte)
 
 	bzero(&lng, sizeof(lng));
 	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof(lng)) == -1)
-		goto bad;
-
-	type = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &type, sizeof(type)) == -1)
 		goto bad;
 
 	if (cte->host->conf.ttl > 0) {

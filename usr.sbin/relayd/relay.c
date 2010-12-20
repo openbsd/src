@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.127 2010/11/30 14:49:14 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.128 2010/12/20 12:38:06 dhill Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,7 @@ void		 relay_protodebug(struct relay *);
 void		 relay_init(void);
 void		 relay_launch(void);
 int		 relay_socket(struct sockaddr_storage *, in_port_t,
-		    struct protocol *, int);
+		    struct protocol *, int, int);
 int		 relay_socket_listen(struct sockaddr_storage *, in_port_t,
 		    struct protocol *);
 int		 relay_socket_connect(struct sockaddr_storage *, in_port_t,
@@ -622,7 +622,7 @@ relay_socket_af(struct sockaddr_storage *ss, in_port_t port)
 
 int
 relay_socket(struct sockaddr_storage *ss, in_port_t port,
-    struct protocol *proto, int fd)
+    struct protocol *proto, int fd, int reuseport)
 {
 	int s = -1, val;
 	struct linger lng;
@@ -640,9 +640,12 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 	bzero(&lng, sizeof(lng));
 	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof(lng)) == -1)
 		goto bad;
-	val = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(int)) == -1)
-		goto bad;
+	if (reuseport) {
+		val = 1;
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &val,
+			sizeof(int)) == -1)
+			goto bad;
+	}
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto bad;
 	if (proto->tcpflags & TCPFLAG_BUFSIZ) {
@@ -708,7 +711,7 @@ relay_socket_connect(struct sockaddr_storage *ss, in_port_t port,
 {
 	int	s;
 
-	if ((s = relay_socket(ss, port, proto, fd)) == -1)
+	if ((s = relay_socket(ss, port, proto, fd, 0)) == -1)
 		return (-1);
 
 	if (connect(s, (struct sockaddr *)ss, ss->ss_len) == -1) {
@@ -729,7 +732,7 @@ relay_socket_listen(struct sockaddr_storage *ss, in_port_t port,
 {
 	int s;
 
-	if ((s = relay_socket(ss, port, proto, -1)) == -1)
+	if ((s = relay_socket(ss, port, proto, -1, 1)) == -1)
 		return (-1);
 
 	if (bind(s, (struct sockaddr *)ss, ss->ss_len) == -1)
