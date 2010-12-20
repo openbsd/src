@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.140 2010/12/20 09:08:42 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.141 2010/12/20 09:10:51 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -489,19 +489,17 @@ sub set_global
 	$global_cache->{$dep->{pattern}} = $value;
 }
 
-sub installed_list
-{
-	my $self = shift;
+OpenBSD::Auto::cache(installed_list,
+	sub {
+		my $self = shift;
 
-	if (!defined $self->{installed}) {
 		my @l = installed_packages();
 		for my $o ($self->{set}->older_names) {
 			@l = grep {$_ ne $o} @l;
 		}
-		$self->{installed} = \@l;
+		return \@l;
 	}
-	return $self->{installed};
-}
+);
 
 sub solve_dependency
 {
