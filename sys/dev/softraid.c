@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.216 2010/11/06 23:01:56 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.217 2010/12/20 17:47:48 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3506,22 +3506,24 @@ sr_raid_read_cap(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct scsi_read_cap_data rcd;
 	struct scsi_read_cap_data_16 rcd16;
+	daddr64_t		addr;
 	int			rv = 1;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_read_cap\n", DEVNAME(sd->sd_sc));
 
+	addr = sd->sd_meta->ssdi.ssd_size - 1;
 	if (xs->cmd->opcode == READ_CAPACITY) {
 		bzero(&rcd, sizeof(rcd));
-		if (sd->sd_meta->ssdi.ssd_size > 0xffffffffllu)
+		if (addr > 0xffffffffllu)
 			_lto4b(0xffffffff, rcd.addr);
 		else
-			_lto4b(sd->sd_meta->ssdi.ssd_size, rcd.addr);
+			_lto4b(addr, rcd.addr);
 		_lto4b(512, rcd.length);
 		sr_copy_internal_data(xs, &rcd, sizeof(rcd));
 		rv = 0;
 	} else if (xs->cmd->opcode == READ_CAPACITY_16) {
 		bzero(&rcd16, sizeof(rcd16));
-		_lto8b(sd->sd_meta->ssdi.ssd_size, rcd16.addr);
+		_lto8b(addr, rcd16.addr);
 		_lto4b(512, rcd16.length);
 		sr_copy_internal_data(xs, &rcd16, sizeof(rcd16));
 		rv = 0;
