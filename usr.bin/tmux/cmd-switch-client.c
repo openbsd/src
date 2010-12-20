@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.8 2010/12/11 18:39:25 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.9 2010/12/20 00:17:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -159,9 +159,8 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 			return (-1);
 		}
 	} else if (data->flag_last) {
-		if (c->last_session != UINT_MAX &&
-		    c->last_session < ARRAY_LENGTH(&sessions))
-			s = ARRAY_ITEM(&sessions, c->last_session);
+		if (c->last_session != NULL && session_alive(c->last_session))
+			s = c->last_session;
 		if (s == NULL) {
 			ctx->error(ctx, "can't find last session");
 			return (-1);
@@ -172,7 +171,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (-1);
 
 	if (c->session != NULL)
-		session_index(c->session, &c->last_session);
+		c->last_session = c->session;
 	c->session = s;
 
 	recalculate_sizes();

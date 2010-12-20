@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.31 2010/12/11 18:39:25 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.32 2010/12/20 00:17:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -122,7 +122,7 @@ int
 cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct cmd_new_session_data	*data = self->data;
-	struct session			*s, *groupwith;
+	struct session			*s, *old_s, *groupwith;
 	struct window			*w;
 	struct window_pane		*wp;
 	struct environ			 env;
@@ -279,17 +279,16 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (!detached) {
 		if (ctx->cmdclient != NULL) {
 			server_write_client(ctx->cmdclient, MSG_READY, NULL, 0);
-			if (ctx->cmdclient->session != NULL) {
-				session_index(ctx->cmdclient->session,
-				    &ctx->cmdclient->last_session);
-			}
+
+			old_s = ctx->cmdclient->session;
+			if (old_s != NULL)
+				ctx->cmdclient->last_session = old_s;
 			ctx->cmdclient->session = s;
 			server_redraw_client(ctx->cmdclient);
 		} else {
-			if (ctx->curclient->session != NULL) {
-				session_index(ctx->curclient->session,
-				    &ctx->curclient->last_session);
-			}
+			old_s = ctx->curclient->session;
+			if (old_s != NULL)
+				ctx->curclient->last_session = old_s;
 			ctx->curclient->session = s;
 			server_redraw_client(ctx->curclient);
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.44 2010/12/11 18:39:25 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.45 2010/12/20 00:17:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -78,7 +78,7 @@ server_client_create(int fd)
 	c->title = NULL;
 
 	c->session = NULL;
-	c->last_session = UINT_MAX;
+	c->last_session = NULL;
 	c->tty.sx = 80;
 	c->tty.sy = 24;
 
