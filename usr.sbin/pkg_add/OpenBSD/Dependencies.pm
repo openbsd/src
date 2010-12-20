@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.142 2010/12/20 09:23:23 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.143 2010/12/20 09:30:40 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -332,6 +332,12 @@ sub set_global
 	$global_cache->{$dep->{pattern}} = $value;
 }
 
+sub global_cache
+{
+	my ($self, $pattern) = @_;
+	return $global_cache->{$pattern};
+}
+
 sub find_candidate
 {
 	my ($self, $dep, @list) = @_;
@@ -351,7 +357,7 @@ sub solve_dependency
 
 	if (defined $self->cached($dep)) {
 		if ($state->defines('stat_cache')) {
-			if (defined $global_cache->{$dep->{pattern}}) {
+			if (defined $self->global_cache($dep->{pattern})) {
 				$state->print("Global ");
 			}
 			$state->say("Cache hit on #1: #2", $dep->{pattern},
@@ -364,59 +370,7 @@ sub solve_dependency
 		$state->say("No cache hit on #1", $dep->{pattern});
 	}
 
-	if ($state->{allow_replacing}) {
-
-		$v = $self->find_dep_in_self($state, $dep);
-		if ($v) {
-			$self->set_cache($dep, _cache::self->new($v));
-			push(@{$package->{before}}, $v);
-			return $v;
-		}
-		$v = $self->find_candidate($dep, $self->{set}->older_names);
-		if ($v) {
-			push(@{$self->{bad}}, $dep->{pattern});
-			return $v;
-		}
-		$v = $self->find_dep_in_stuff_to_install($state, $dep);
-		return $v if $v;
-	}
-
-	$v = $self->find_candidate($dep, @{$self->installed_list});
-	if ($v) {
-		if ($state->{newupdates}) {
-			if ($state->tracker->is_known($v)) {
-				return $v;
-			}
-			my $set = $state->updateset->add_older(OpenBSD::Handle->create_old($v, $state));
-			$set->merge_paths($self->{set});
-			$self->add_dep($set);
-			$self->set_cache($dep, _cache::to_update->new($v));
-			$state->tracker->todo($set);
-		}
-		return $v;
-	}
-	if (!$state->{allow_replacing}) {
-		$v = $self->find_dep_in_stuff_to_install($state, $dep);
-		return $v if $v;
-	}
-
-	$v = $self->find_dep_in_repositories($state, $dep);
-
-	my $s;
-	if ($v) {
-		$s = $state->updateset_from_location($v);
-		$v = $v->name;
-	} else {
-		# resort to default if nothing else
-		$v = $dep->{def};
-		$s = $state->updateset_with_new($v);
-	}
-
-	$s->merge_paths($self->{set});
-	$state->tracker->todo($s);
-	$self->add_dep($s);
-	$self->set_cache($dep, _cache::to_install->new($v));
-	return $v;
+	$self->really_solve_dependency($state, $dep, $package);
 }
 
 sub solve_depends
@@ -500,6 +454,13 @@ sub check_lib_spec
 		}
 	}
 	return;
+}
+
+sub find_in_installed
+{
+	my ($self, $dep) = @_;
+
+	return $self->find_candidate($dep, @{$self->installed_list});
 }
 
 sub add_dep
@@ -649,6 +610,67 @@ sub find_dep_in_stuff_to_install
 		$self->set_cache($dep, _cache::to_install->new($v));
 		$self->add_dep($state->tracker->{to_install}->{$v});
 	}
+	return $v;
+}
+
+sub really_solve_dependency
+{
+	my ($self, $state, $dep, $package) = @_;
+
+	my $v;
+
+	if ($state->{allow_replacing}) {
+
+		$v = $self->find_dep_in_self($state, $dep);
+		if ($v) {
+			$self->set_cache($dep, _cache::self->new($v));
+			push(@{$package->{before}}, $v);
+			return $v;
+		}
+		$v = $self->find_candidate($dep, $self->{set}->older_names);
+		if ($v) {
+			push(@{$self->{bad}}, $dep->{pattern});
+			return $v;
+		}
+		$v = $self->find_dep_in_stuff_to_install($state, $dep);
+		return $v if $v;
+	}
+
+	$v = $self->find_in_installed($dep);
+	if ($v) {
+		if ($state->{newupdates}) {
+			if ($state->tracker->is_known($v)) {
+				return $v;
+			}
+			my $set = $state->updateset->add_older(OpenBSD::Handle->create_old($v, $state));
+			$set->merge_paths($self->{set});
+			$self->add_dep($set);
+			$self->set_cache($dep, _cache::to_update->new($v));
+			$state->tracker->todo($set);
+		}
+		return $v;
+	}
+	if (!$state->{allow_replacing}) {
+		$v = $self->find_dep_in_stuff_to_install($state, $dep);
+		return $v if $v;
+	}
+
+	$v = $self->find_dep_in_repositories($state, $dep);
+
+	my $s;
+	if ($v) {
+		$s = $state->updateset_from_location($v);
+		$v = $v->name;
+	} else {
+		# resort to default if nothing else
+		$v = $dep->{def};
+		$s = $state->updateset_with_new($v);
+	}
+
+	$s->merge_paths($self->{set});
+	$state->tracker->todo($s);
+	$self->add_dep($s);
+	$self->set_cache($dep, _cache::to_install->new($v));
 	return $v;
 }
 
