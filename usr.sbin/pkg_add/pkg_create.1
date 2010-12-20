@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.69 2010/12/20 11:32:30 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.70 2010/12/20 16:30:03 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -45,6 +45,7 @@
 .Op Fl W Ar wantedlib
 .Fl d Ar desc
 .Fl D Ar COMMENT Ns = Ns Ar value
+.Fl D Ar PORTSDIR Ns = Ns Ar value
 .Fl f Ar packinglist
 .Fl p Ar prefix
 .Ar pkg-name
@@ -91,8 +92,7 @@ It will also check all
 .Cm @wantlib
 for reachability, by looking into all installed
 .Cm @depend .
-It will also look into the build directory itself as specified by
-.Fl B Ar pkg-destdir ,
+It may also ask the ports tree for extra dependencies,
 provided some other
 .Cm @depend
 refers to the same

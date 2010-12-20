@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.32 2010/12/20 11:48:42 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.33 2010/12/20 16:30:04 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -531,39 +531,61 @@ sub new
 	bless { set => OpenBSD::PseudoSet->new($plist), bad => [] }, $class;
 }
 
+sub solve_all_depends
+{
+	my ($solver, $state) = @_;
+
+
+	while (1) {
+		$solver->{more} = [];
+		$solver->solve_depends($state);
+		if (@{$solver->{more}}) {
+			for my $i (@{$solver->{more}}) {
+				push(@{$solver->{set}{new}}, 
+				    OpenBSD::PseudoHandle->new($i));
+			}
+		} else {
+			return;
+		}
+	}
+}
+
 sub really_solve_dependency
 {
 	my ($self, $state, $dep, $package) = @_;
 
 	# look in installed packages
 	my $v = $self->find_in_installed($dep);
+	if (!defined $v) {
+		$v = $self->find_dep_in_self($state, $dep);
+	}
 	
 	# and in built tree if other packages have the same BASE_PKGPATH
-	if (!defined $v && !defined $self->{all_dependencies}{BUILD}) {
+	if (!defined $v) {
 		my $f = $state->{subst}->value('FULLPKGPATH');
 		$f =~ s/,.*//;
 		my $f2 = $dep->{pkgpath};
 		$f2 =~ s/,.*//;
 		if ($f eq $f2) {
-			return $self->add_built_libraries($state);	
+			return $self->solve_from_ports($state, $dep, $package);
 		}
 	}
 	return $v;
 }
 
-sub add_built_libraries
+sub solve_from_ports
 {
-	my ($self, $state) = @_;
-	require File::Find;
-	File::Find::find(sub {
-		return unless -f $_;
-		my $libname = $File::Find::name;
-		$libname =~ s,^\Q$state->{base}\E,,;
-		my $lib = OpenBSD::Library->from_string($libname);
-		return unless $lib->is_valid;
-		OpenBSD::SharedLibs::register_library($lib, "BUILD");
-		}, $state->{base});
-	return "BUILD";
+	my ($self, $state, $dep, $package) = @_;
+
+	my $portsdir = $state->defines('PORTSDIR') 
+	    // $ENV{'PORTSDIR'} 
+	    // OpenBSD::Paths->portsdir;
+	my $make = OpenBSD::Paths->make;
+	open(my $fh, "cd $portsdir && SUBDIR=$dep->{pkgpath} ECHO_MSG=: $make print-plist-with-depends|") or return undef;
+	my $plist = OpenBSD::PackingList->read($fh);
+	OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
+	push(@{$self->{more}}, $plist);
+	return $plist->pkgname;
 }
 
 # the full installed list is okay
@@ -609,14 +631,20 @@ sub new
 	my ($class, $plist) = @_;
 
 	my $h = OpenBSD::PseudoHandle->new($plist);
-	bless {h => $h}, $class;
+	bless {new => [$h]}, $class;
 }
 
 sub newer
 {
-	return (shift->{h});
+	return @{shift->{new}};
 }
 	
+
+sub newer_names
+{
+	return map {$_->pkgname} @{shift->{new}};
+}
+
 sub older
 {
 	return ();
@@ -630,7 +658,7 @@ sub kept
 sub print
 {
 	my $self = shift;
-	return $self->{h}->pkgname;
+	return $self->{new}[0]->pkgname;
 }
 
 package OpenBSD::PkgCreate;
@@ -961,7 +989,7 @@ sub check_dependencies
 	my ($self, $plist, $state) = @_;
 
 	my $solver = OpenBSD::Dependencies::CreateSolver->new($plist);
-	$solver->solve_depends($state);
+	$solver->solve_all_depends($state);
 	# look for libraries in the "real" tree
 	$state->{destdir} = '/';
 	if (!$solver->solve_wantlibs($state)) {
@@ -1066,7 +1094,7 @@ sub parse_and_run
 	$state->{base} = $base;
 
 	$plist->discover_directories($state);
-#	$self->check_dependencies($plist, $state);
+	$self->check_dependencies($plist, $state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checksumming");
 		if ($regen_package) {
