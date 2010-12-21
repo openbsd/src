@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.16 2009/10/27 23:59:50 deraadt Exp $
+ *	$Id: amd.c,v 1.17 2010/12/21 18:45:54 deraadt Exp $
  */
 
 /*
@@ -132,7 +132,7 @@ sighup(int sig)
 static void
 parent_exit(int sig)
 {
-	exit(0);
+	_exit(0);
 }
 
 static pid_t
