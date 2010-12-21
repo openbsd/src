@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.6 2010/08/11 07:45:06 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.7 2010/12/21 22:37:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -53,8 +53,10 @@ cmd_rename_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if ((s = cmd_find_session(ctx, data->target)) == NULL)
 		return (-1);
 
+	RB_REMOVE(sessions, &sessions, s);
 	xfree(s->name);
 	s->name = xstrdup(data->arg);
+	RB_INSERT(sessions, &sessions, s);
 
 	server_status_session(s);
 
