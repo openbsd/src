@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.61 2010/12/09 23:01:18 schwarze Exp $ */
+/*	$Id: main.c,v 1.62 2010/12/21 01:22:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -375,7 +375,7 @@ static void
 resize_buf(struct buf *buf, size_t initial)
 {
 
-	buf->sz = buf->sz ? 2 * buf->sz : initial;
+	buf->sz = buf->sz > initial/2 ? 2 * buf->sz : initial;
 	buf->buf = realloc(buf->buf, buf->sz);
 	if (NULL == buf->buf) {
 		perror(NULL);
