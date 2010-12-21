@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.33 2010/12/20 16:30:04 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.34 2010/12/21 11:25:19 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -537,16 +537,11 @@ sub solve_all_depends
 
 
 	while (1) {
-		$solver->{more} = [];
-		$solver->solve_depends($state);
-		if (@{$solver->{more}}) {
-			for my $i (@{$solver->{more}}) {
-				push(@{$solver->{set}{new}}, 
-				    OpenBSD::PseudoHandle->new($i));
-			}
-		} else {
+		my @todo = $solver->solve_depends($state);
+		if (@todo == 0) {
 			return;
 		}
+		$solver->{set}->add_new(@todo);
 	}
 }
 
@@ -555,7 +550,7 @@ sub really_solve_dependency
 	my ($self, $state, $dep, $package) = @_;
 
 	# look in installed packages
-	my $v = $self->find_in_installed($dep);
+	my $v = $self->find_dep_in_installed($state, $dep);
 	if (!defined $v) {
 		$v = $self->find_dep_in_self($state, $dep);
 	}
@@ -582,21 +577,12 @@ sub solve_from_ports
 	    // OpenBSD::Paths->portsdir;
 	my $make = OpenBSD::Paths->make;
 	open(my $fh, "cd $portsdir && SUBDIR=$dep->{pkgpath} ECHO_MSG=: $make print-plist-with-depends|") or return undef;
-	my $plist = OpenBSD::PackingList->read($fh);
+	my $plist = OpenBSD::PackingList->read($fh, 
+	    \&OpenBSD::PackingList::PrelinkStuffOnly);
 	OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
-	push(@{$self->{more}}, $plist);
+	$self->add_dep($plist);
 	return $plist->pkgname;
 }
-
-# the full installed list is okay
-OpenBSD::Auto::cache(installed_list,
-	sub {
-		require OpenBSD::PackageInfo;
-
-		my @l = OpenBSD::PackageInfo::installed_packages();
-		return \@l;
-	}
-);
 
 sub errsay_library
 {
@@ -628,10 +614,19 @@ sub pkgname
 package OpenBSD::PseudoSet;
 sub new
 {
-	my ($class, $plist) = @_;
+	my ($class, @elements) = @_;
 
-	my $h = OpenBSD::PseudoHandle->new($plist);
-	bless {new => [$h]}, $class;
+	my $o = bless {}, $class;
+	$o->add_new(@elements);
+}
+
+sub add_new
+{
+	my ($self, @elements) = @_;
+	for my $i (@elements) {
+		push(@{$self->{new}}, OpenBSD::PseudoHandle->new($i));
+	}
+	return $self;
 }
 
 sub newer
@@ -646,6 +641,11 @@ sub newer_names
 }
 
 sub older
+{
+	return ();
+}
+
+sub older_names
 {
 	return ();
 }
