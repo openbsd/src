@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.10 2010/09/10 16:34:08 thib Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.11 2010/12/21 20:14:43 thib Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -99,10 +99,10 @@ int cd9660_check_export(struct mount *, struct mbuf *, int *,
 
 int cd9660_mountroot(void); 
 
-extern int (**cd9660_vnodeop_p)(void *);
-extern int (**cd9660_specop_p)(void *);
+extern struct vops	cd9660_vops;
+extern struct vops	cd9660_specvops;
 #ifdef FIFO
-extern int (**cd9660_fifoop_p)(void *);
+extern struct vops	cd9660_fifovops;
 #endif
 
 int isochar(const u_char *, const u_char *, int, u_char *);

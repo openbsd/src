@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.35 2010/09/10 16:34:08 thib Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.36 2010/12/21 20:14:43 thib Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -685,7 +685,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		 */
 		nvp->v_data = vp->v_data;
 		vp->v_data = NULL;
-		vp->v_op = spec_vnodeop_p;
+		vp->v_op = &spec_vops;
 		vrele(vp);
 		vgone(vp);
 		/*

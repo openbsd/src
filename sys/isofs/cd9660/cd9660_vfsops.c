@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.55 2010/09/10 16:34:08 thib Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.56 2010/12/21 20:14:43 thib Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -765,7 +765,7 @@ retry:
 		return (0);
 
 	/* Allocate a new vnode/iso_node. */
-	if ((error = getnewvnode(VT_ISOFS, mp, cd9660_vnodeop_p, &vp)) != 0) {
+	if ((error = getnewvnode(VT_ISOFS, mp, &cd9660_vops, &vp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -907,7 +907,7 @@ retry:
 	switch (vp->v_type = IFTOVT(ip->inode.iso_mode)) {
 	case VFIFO:
 #ifdef	FIFO
-		vp->v_op = cd9660_fifoop_p;
+		vp->v_op = &cd9660_fifovops;
 		break;
 #else
 		vput(vp);
@@ -922,7 +922,7 @@ retry:
 		if (dp = iso_dmap(dev, ino, 0))
 			ip->inode.iso_rdev = dp->d_dev;
 #endif
-		vp->v_op = cd9660_specop_p;
+		vp->v_op = &cd9660_specvops;
 		if ((nvp = checkalias(vp, ip->inode.iso_rdev, mp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its iso_node.
@@ -930,7 +930,7 @@ retry:
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
-			vp->v_op = spec_vnodeop_p;
+			vp->v_op = &spec_vops;
 			vrele(vp);
 			vgone(vp);
 			/*

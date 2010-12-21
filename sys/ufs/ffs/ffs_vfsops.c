@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.127 2010/09/10 16:34:09 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.128 2010/12/21 20:14:44 thib Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1259,7 +1259,7 @@ retry:
 		return (0);
 
 	/* Allocate a new vnode/inode. */
-	if ((error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, &vp)) != 0) {
+	if ((error = getnewvnode(VT_UFS, mp, &ffs_vops, &vp)) != 0) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -1339,7 +1339,7 @@ retry:
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ufs_vinit(mp, ffs_specop_p, FFS_FIFOOPS, &vp);
+	error = ufs_vinit(mp, &ffs_specvops, FFS_FIFOOPS, &vp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;

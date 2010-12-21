@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.75 2010/09/10 16:34:08 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.76 2010/12/21 20:14:43 thib Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1729,7 +1729,7 @@ msdosfs_strategy(void *v)
 
 	vp = dep->de_devvp;
 	bp->b_dev = vp->v_rdev;
-	VOCALL(vp->v_op, VOFFSET(vop_strategy), ap);
+	(vp->v_op->vop_strategy)(ap);
 	return (0);
 }
 
@@ -1815,43 +1815,39 @@ fileidhash(uint64_t fileid)
 }
 
 /* Global vfs data structures for msdosfs */
-int (**msdosfs_vnodeop_p)(void *);
-struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
-	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, msdosfs_lookup },
-	{ &vop_create_desc, msdosfs_create },
-	{ &vop_mknod_desc, msdosfs_mknod },
-	{ &vop_open_desc, msdosfs_open },
-	{ &vop_close_desc, msdosfs_close },
-	{ &vop_access_desc, msdosfs_access },
-	{ &vop_getattr_desc, msdosfs_getattr },
-	{ &vop_setattr_desc, msdosfs_setattr },
-	{ &vop_read_desc, msdosfs_read },
-	{ &vop_write_desc, msdosfs_write },
-	{ &vop_ioctl_desc, msdosfs_ioctl },
-	{ &vop_poll_desc, msdosfs_poll },
-	{ &vop_fsync_desc, msdosfs_fsync },
-	{ &vop_remove_desc, msdosfs_remove },
-	{ &vop_link_desc, msdosfs_link },
-	{ &vop_rename_desc, msdosfs_rename },
-	{ &vop_mkdir_desc, msdosfs_mkdir },
-	{ &vop_rmdir_desc, msdosfs_rmdir },
-	{ &vop_symlink_desc, msdosfs_symlink },
-	{ &vop_readdir_desc, msdosfs_readdir },
-	{ &vop_readlink_desc, msdosfs_readlink },
-	{ &vop_abortop_desc, vop_generic_abortop },
-	{ &vop_inactive_desc, msdosfs_inactive },
-	{ &vop_reclaim_desc, msdosfs_reclaim },
-	{ &vop_lock_desc, msdosfs_lock },
-	{ &vop_unlock_desc, msdosfs_unlock },
-	{ &vop_bmap_desc, msdosfs_bmap },
-	{ &vop_strategy_desc, msdosfs_strategy },
-	{ &vop_print_desc, msdosfs_print },
-	{ &vop_islocked_desc, msdosfs_islocked },
-	{ &vop_pathconf_desc, msdosfs_pathconf },
-	{ &vop_advlock_desc, msdosfs_advlock },
-	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc *)NULL, (int (*)(void *))NULL }
+struct vops msdosfs_vops = {
+	.vop_default	= eopnotsupp,
+	.vop_lookup	= msdosfs_lookup,
+	.vop_create	= msdosfs_create,
+	.vop_mknod	= msdosfs_mknod,
+	.vop_open	= msdosfs_open,
+	.vop_close	= msdosfs_close,
+	.vop_access	= msdosfs_access,
+	.vop_getattr	= msdosfs_getattr,
+	.vop_setattr	= msdosfs_setattr,
+	.vop_read	= msdosfs_read,
+	.vop_write	= msdosfs_write,
+	.vop_ioctl	= msdosfs_ioctl,
+	.vop_poll	= msdosfs_poll,
+	.vop_fsync	= msdosfs_fsync,
+	.vop_remove	= msdosfs_remove,
+	.vop_link	= msdosfs_link,
+	.vop_rename	= msdosfs_rename,
+	.vop_mkdir	= msdosfs_mkdir,
+	.vop_rmdir	= msdosfs_rmdir,
+	.vop_symlink	= msdosfs_symlink,
+	.vop_readdir	= msdosfs_readdir,
+	.vop_readlink	= msdosfs_readlink,
+	.vop_abortop	= vop_generic_abortop,
+	.vop_inactive	= msdosfs_inactive,
+	.vop_reclaim	= msdosfs_reclaim,
+	.vop_lock	= msdosfs_lock,
+	.vop_unlock	= msdosfs_unlock,
+	.vop_bmap	= msdosfs_bmap,
+	.vop_strategy	= msdosfs_strategy,
+	.vop_print	= msdosfs_print,
+	.vop_islocked	= msdosfs_islocked,
+	.vop_pathconf	= msdosfs_pathconf,
+	.vop_advlock	= msdosfs_advlock,
+	.vop_bwrite	= vop_generic_bwrite 
 };
-struct vnodeopv_desc msdosfs_vnodeop_opv_desc =
-	{ &msdosfs_vnodeop_p, msdosfs_vnodeop_entries };

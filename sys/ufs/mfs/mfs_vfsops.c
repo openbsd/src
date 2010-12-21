@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.41 2010/09/10 16:34:09 thib Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.42 2010/12/21 20:14:44 thib Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #include <ufs/mfs/mfs_extern.h>
 
 static	int mfs_minor;	/* used for building internal dev_t */
-
-extern int (**mfs_vnodeop_p)(void *);
 
 /*
  * mfs vfs operations.
@@ -124,7 +122,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 #endif
 		return (0);
 	}
-	error = getnewvnode(VT_MFS, (struct mount *)0, mfs_vnodeop_p, &devvp);
+	error = getnewvnode(VT_MFS, NULL, &mfs_vops, &devvp);
 	if (error)
 		return (error);
 	devvp->v_type = VBLK;
