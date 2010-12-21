@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.23 2010/12/09 20:56:30 schwarze Exp $ */
+/*	$Id: roff.c,v 1.24 2010/12/21 01:30:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -345,18 +345,11 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 	size_t		 nsz;
 	char		*n;
 
-	/* String escape sequences have at least three characters. */
+	/* Search for a leading backslash and save a pointer to it. */
 
-	for (cp = *bufp + pos; cp[0] && cp[1] && cp[2]; cp++) {
-
-		/*
-		 * The first character must be a backslash.
-		 * Save a pointer to it.
-		 */
-
-		if ('\\' != *cp)
-			continue;
-		stesc = cp;
+	cp = *bufp + pos;
+	while (NULL != (cp = strchr(cp, '\\'))) {
+		stesc = cp++;
 
 		/*
 		 * The second character must be an asterisk.
@@ -364,7 +357,9 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 		 * so it can't start another escape sequence.
 		 */
 
-		if ('*' != *(++cp))
+		if ('\0' == *cp)
+			return(1);
+		if ('*' != *cp++)
 			continue;
 
 		/*
@@ -373,7 +368,9 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 		 * Save a pointer to the name.
 		 */
 
-		switch (*(++cp)) {
+		switch (*cp) {
+		case ('\0'):
+			return(1);
 		case ('('):
 			cp++;
 			maxl = 2;
