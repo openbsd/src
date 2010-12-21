@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.44 2010/04/23 03:50:22 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.45 2010/12/21 14:56:24 claudio Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -114,11 +114,6 @@ void	 softintr_dispatch(int);
 void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_init(void);
 void	 softintr_schedule(void *);
-
-/* XXX For legacy software interrupts. */
-extern struct soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 #define	SINT_CLOCK	SINTMASK(SI_SOFTCLOCK)
 #define	SINT_NET	SINTMASK(SI_SOFTNET)

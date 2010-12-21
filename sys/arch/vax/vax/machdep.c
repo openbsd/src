@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.110 2010/06/29 18:46:34 tedu Exp $ */
+/* $OpenBSD: machdep.c,v 1.111 2010/12/21 14:56:24 claudio Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -76,7 +76,6 @@
 
 #include <uvm/uvm.h>
 
-#include <net/netisr.h>
 #include <net/if.h>
 
 #ifdef INET

@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.21 2010/01/11 23:09:52 kettenis Exp $ */
+/* $OpenBSD: apicvec.s,v 1.22 2010/12/21 14:56:23 claudio Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -207,13 +207,6 @@ XINTR(softclock):
 	decl	CPUVAR(IDEPTH)
 	jmp	_C_LABEL(Xdoreti)
 
-#define DONETISR(s, c) \
-	.globl  _C_LABEL(c)	;\
-	testl	$(1 << s),%edi	;\
-	jz	1f		;\
-	call	_C_LABEL(c)	;\
-1:
-
 XINTR(softnet):
 	pushl	$0
 	pushl	$T_ASTFLT
@@ -228,11 +221,6 @@ XINTR(softnet):
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(i386_softintlock)
 #endif
-	xorl	%edi,%edi
-	xchgl	_C_LABEL(netisr),%edi
-
-#include <net/netisr_dispatch.h>
-
 	pushl	$I386_SOFTINTR_SOFTNET
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp

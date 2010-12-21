@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.29 2009/04/19 19:13:57 oga Exp $ */
+/* $OpenBSD: interrupt.c,v 1.30 2010/12/21 14:56:23 claudio Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -88,26 +88,6 @@
 #include <sys/device.h>
 #endif
 
-#include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip_var.h>
-#endif
-
-#ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-
-#include "ppp.h"
-#include "bridge.h"
-
 #include "apecs.h"
 #include "cia.h"
 #include "lca.h"
@@ -118,8 +98,6 @@ static u_int schedclk2;
 extern struct evcount clk_count;
 
 struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)];
-
-void netintr(void);
 
 void	scb_stray(void *, u_long);
 
@@ -480,32 +458,7 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 #endif	/* NAPECS > 0 || NCIA > 0 || NLCA > 0 || NTCASIC > 0 */
 
-int netisr;
-
-void
-netintr()
-{
-	int n;
-
-	while ((n = netisr) != 0) {
-		atomic_clearbits_int(&netisr, n);
-
-#define	DONETISR(bit, fn)						\
-		do {							\
-			if (n & (1 << (bit)))				\
-				fn();					\
-		} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-	}
-}
-
 struct alpha_soft_intr alpha_soft_intrs[SI_NSOFT];
-
-/* XXX For legacy software interrupts. */
-struct alpha_soft_intrhand *softnet_intrhand;
 
 /*
  * softintr_init:
@@ -524,10 +477,6 @@ softintr_init()
 		mtx_init(&asi->softintr_mtx, IPL_HIGH);
 		asi->softintr_siq = i;
 	}
-
-	/* XXX Establish legacy software interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
 }
 
 /*

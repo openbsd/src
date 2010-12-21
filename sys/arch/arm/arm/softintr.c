@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.6 2009/04/19 18:54:06 oga Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.7 2010/12/21 14:56:23 claudio Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -39,19 +39,12 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 
-/* XXX Network interrupts should be converted to new softintrs. */
-#include <net/netisr.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/atomic.h>
 #include <machine/intr.h>
 
 struct soft_intrq soft_intrq[SI_NQUEUES];
-
-struct soft_intrhand *softnet_intrhand;
-
-void	netintr(void);
 
 /*
  * softintr_init:
@@ -70,12 +63,6 @@ softintr_init(void)
 		mtx_init(&siq->siq_mtx, IPL_HIGH);
 		siq->siq_si = i;
 	}
-
-	/* XXX Establish legacy software interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-
-	assert(softnet_intrhand != NULL);
 }
 
 /*
@@ -171,26 +158,4 @@ softintr_disestablish(void *arg)
 	mtx_leave(&siq->siq_mtx);
 
 	free(sih, M_DEVBUF);
-}
-
-int netisr; 
-
-void
-netintr(void)
-{
-	int n;
-
-	while ((n = netisr) != 0) {
-		atomic_clearbits_int(&netisr, n);
-
-#define	DONETISR(bit, fn)						\
-		do {							\
-			if (n & (1 << (bit)))				\
-				fn();					\
-		} while (/*CONSTCOND*/0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-	}
 }

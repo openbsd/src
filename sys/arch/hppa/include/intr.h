@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.34 2010/07/02 00:00:45 jsing Exp $	*/
+/*	$OpenBSD: intr.h,v 1.35 2010/12/21 14:56:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -156,7 +156,6 @@ int	 hppa_ipi_send(struct cpu_info *, u_long);
 #endif
 
 #define	setsoftast(p)	(p->p_md.md_astpending = 1)
-#define	setsoftnet()	softintr(1 << (IPL_SOFTNET - 1))
 
 void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_disestablish(void *);

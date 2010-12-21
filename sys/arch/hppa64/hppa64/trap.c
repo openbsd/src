@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2010/12/21 14:56:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -26,8 +26,6 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
-
-#include <net/netisr.h>
 
 #include "systrace.h"
 #include <dev/systrace.h>

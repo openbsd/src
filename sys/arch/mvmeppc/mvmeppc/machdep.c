@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.63 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.64 2010/12/21 14:56:24 claudio Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -48,8 +48,6 @@
 #include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-
-#include <net/netisr.h>
 
 #include <machine/bat.h>
 #include <machine/bugio.h>
@@ -594,22 +592,6 @@ dumpsys()
 
 volatile int cpl, ipending, astpending;
 int imask[IPL_NUM];
-int netisr;
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet(isr)
-	int isr;
-{
-#define	DONETISR(flag, func) \
-	if (isr & (1 << (flag))) \
-		(func)();
-
-#include <net/netisr_dispatch.h>
-#undef	DONETISR
-}
 
 int
 lcsplx(ipl)

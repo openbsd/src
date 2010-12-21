@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.1 2009/03/20 18:39:30 miod Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.2 2010/12/21 14:56:24 claudio Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -38,9 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-
-/* XXX Network interrupts should be converted to new softintrs. */
-#include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -170,23 +167,4 @@ softintr_schedule(void *arg)
 		mtpr(siq->siq_si, PR_SIRR);
 	}
 	mtx_leave(&siq->siq_mtx);
-}
-
-int netisr; 
-
-void
-netintr(void)
-{
-	int n;
-
-	while ((n = netisr) != 0) {
-		atomic_clearbits_int(&netisr, n);
-#define	DONETISR(bit, fn)						\
-		do {							\
-			if (n & (1 << (bit)))				\
-				fn();					\
-		} while (0)
-#include <net/netisr_dispatch.h>
-#undef DONETISR
-	}
 }

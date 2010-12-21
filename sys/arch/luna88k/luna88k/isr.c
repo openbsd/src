@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.8 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: isr.c,v 1.9 2010/12/21 14:56:24 claudio Exp $	*/
 /*	$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $	*/
 
 /*-
@@ -41,8 +41,6 @@
 #include <sys/evcount.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
 
 #include <machine/cpu.h>
 

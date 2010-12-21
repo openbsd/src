@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2009/04/19 18:54:06 oga Exp $	*/
+/*	$OpenBSD: intr.h,v 1.8 2010/12/21 14:56:24 claudio Exp $	*/
 /*	$NetBSD: intr.h,v 1.22 2006/01/24 23:51:42 uwe Exp $	*/
 
 /*-
@@ -113,11 +113,6 @@ void	 softintr_dispatch(int);
 void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_init(void);
 void	 softintr_schedule(void *);
-
-/* XXX For legacy software interrupts. */
-extern struct sh_soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 #endif	/* _KERNEL */
 

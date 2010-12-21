@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.34 2009/02/16 00:31:25 dlg Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.35 2010/12/21 14:56:24 claudio Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -41,9 +41,6 @@
  * The software interrupt level for the network is higher than the software
  * level for the clock (so you can enter the network in routines called
  * at timeout time).
- *
- * The routine to request a network software interrupt, setsoftnet(),
- * is defined in the machine-specific include files.
  */
 
 /*
@@ -86,11 +83,16 @@ void	mplsintr(void);
 void	pfsyncintr(void);
 
 #include <machine/atomic.h>
+
+extern void *netisr_intr;
 #define	schednetisr(anisr)						\
 do {									\
 	atomic_setbits_int(&netisr, (1 << (anisr)));			\
-	setsoftnet();							\
-} while (0)
+	softintr_schedule(netisr_intr);							\
+} while (/* CONSTCOND */0)
+
+void	netisr_init(void);
+
 #endif
 #endif
 

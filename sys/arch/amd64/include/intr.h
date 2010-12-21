@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2010/05/31 21:39:56 deraadt Exp $	*/
+/*	$OpenBSD: intr.h,v 1.20 2010/12/21 14:56:23 claudio Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -171,11 +171,6 @@ void splassert_check(int, const char *);
 #define splassert(wantipl)	do { /* nada */ } while (0)
 #define splsoftassert(wantipl)	do { /* nada */ } while (0)
 #endif
-
-/*
- * XXX
- */
-#define	setsoftnet()	softintr(SIR_NET)
 
 #define IPLSHIFT 4			/* The upper nibble of vectors is the IPL.      */
 #define IPL(level) ((level) >> IPLSHIFT)	/* Extract the IPL.    */

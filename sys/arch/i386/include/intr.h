@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.39 2009/08/13 13:24:48 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.40 2010/12/21 14:56:23 claudio Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -125,9 +125,6 @@ void splassert_check(int, const char *);
 #define	splsched()	splraise(IPL_SCHED)
 #define spllock() 	splhigh()
 #define	spl0()		spllower(IPL_NONE)
-
-#define	setsoftnet()	softintr(SIR_NET)
-#define	setsofttty()	softintr(SIR_TTY)
 
 #include <machine/pic.h>
 

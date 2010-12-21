@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2010/11/27 18:04:23 miod Exp $   */
+/*	$OpenBSD: locore.S,v 1.5 2010/12/21 14:56:24 claudio Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -35,7 +35,6 @@
 #include "assym.h"
 
 #include <machine/asm.h>
-#include <net/netisr.h>
 
 #define JSBENTRY(x) \
 	.text;	_ALIGN_TEXT;	.globl x;	x:
@@ -278,11 +277,6 @@ JSBENTRY(sbiflt)
 TRAPCALL(astintr, T_ASTFLT)
 
 FASTINTR(softintr,softintr_dispatch)
-
-	.data
-	.global _netisr
-_netisr:
-	.long	0	# scheduling bits for network
 
 TRAPCALL(ddbtrap, T_KDBTRAP)
 

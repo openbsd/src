@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.11 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.12 2010/12/21 14:56:24 claudio Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -35,8 +35,6 @@
 
 #include <uvm/uvm_extern.h>	/* uvmexp.intrs */
 
-#include <net/netisr.h>
-
 #include <sh/clock.h>
 #include <sh/trap.h>
 #include <sh/intcreg.h>
@@ -61,8 +59,6 @@ void tmu2_oneshot(void);
 int tmu2_intr(void *);
 void setsoft(int);
 
-int netisr;
-
 /*
  * EVTCODE to intc_intrhand mapper.
  * max #76 is SH4_INTEVT_TMU4 (0xb80)
@@ -75,7 +71,6 @@ struct intc_intrhand __intc_intrhand[_INTR_N + 1] = {
 };
 
 struct sh_soft_intr sh_soft_intrs[_IPL_NSOFT];
-struct sh_soft_intrhand *softnet_intrhand;
 
 /*
  * SH INTC support.
@@ -588,11 +583,6 @@ softintr_init(void)
 		asi->softintr_ipl = IPL_SOFT + i;
 	}
 
-	/* XXX Establish legacy soft interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-	KDASSERT(softnet_intrhand != NULL);
-
 	intc_intr_establish(SH_INTEVT_TMU1_TUNI1, IST_LEVEL, IPL_SOFT,
 	    tmu1_intr, NULL, "tmu1");
 	intc_intr_establish(SH_INTEVT_TMU2_TUNI2, IST_LEVEL, IPL_SOFTNET,
@@ -687,29 +677,6 @@ void softintr_schedule(void *arg)
 		setsoft(si->softintr_ipl);
 	}
 	mtx_leave(&si->softintr_lock);
-}
-
-/*
- * Software (low priority) network interrupt. i.e. softnet().
- */
-void
-netintr(void)
-{
-	int n;
-
-	while ((n = netisr) != 0) {
-		atomic_clearbits_int(&netisr, n);
-
-#define	DONETISR(bit, fn)						\
-		do {							\
-			if (n & (1 << bit))				\
-				fn();					\
-		} while (/*CONSTCOND*/0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2010/08/18 21:01:14 jasper Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2010/12/21 14:56:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -44,10 +44,6 @@
 
 	.data
 
-	.export netisr, data
-	.align	16
-netisr
-	.word	0
 	.align	16
 $kpsl
 	.word	PSL_W | PSL_Q | PSL_P | PSL_C | PSL_D | PSL_S | PSL_O

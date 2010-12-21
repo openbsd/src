@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.h,v 1.4 2009/04/19 18:54:06 oga Exp $	*/
+/*	$OpenBSD: softintr.h,v 1.5 2010/12/21 14:56:23 claudio Exp $	*/
 /*	$NetBSD: softintr.h,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
 
 /*
@@ -90,11 +90,6 @@ do {									\
 	}								\
 	mtx_leave(&__siq->siq_mtx);					\
 } while (/*CONSTCOND*/0)
-
-/* XXX For legacy software interrupts. */
-extern struct soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 #endif /* _KERNEL */
 

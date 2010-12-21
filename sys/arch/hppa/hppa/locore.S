@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.181 2010/12/10 09:13:02 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.182 2010/12/21 14:56:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -101,13 +101,6 @@
 #define	FPEMU_STACKSIZE	(1*NBPG)
 
 	.data
-
-	.export netisr, data
-	.align 16
-netisr
-	.word	0
-	.size	netisr, .-netisr
-	.align	16
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */
