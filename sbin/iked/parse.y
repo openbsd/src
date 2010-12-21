@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2010/11/17 16:43:45 ckuethe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2010/12/21 14:28:58 mikeb Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -266,6 +266,8 @@ struct ipsec_addr_wrap	*host_v4(const char *, int);
 struct ipsec_addr_wrap	*host_dns(const char *, int);
 struct ipsec_addr_wrap	*host_if(const char *, int);
 struct ipsec_addr_wrap	*host_any(void);
+u_int8_t		 mask2prefixlen(struct sockaddr_in *);
+u_int8_t		 mask2prefixlen6(struct sockaddr_in6 *);
 void			 ifa_load(void);
 int			 ifa_exists(const char *);
 struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
@@ -1712,6 +1714,65 @@ host_any(void)
 	return (ipa);
 }
 
+u_int8_t
+mask2prefixlen(struct sockaddr_in *sa_in)
+{
+	in_addr_t ina = sa_in->sin_addr.s_addr;
+
+	if (ina == 0)
+		return (0);
+	else
+		return (33 - ffs(ntohl(ina)));
+}
+
+u_int8_t
+mask2prefixlen6(struct sockaddr_in6 *sa_in6)
+{
+	u_int8_t	 l = 0, *ap, *ep;
+
+	/*
+	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * the possibly truncated sin6_addr struct.
+	 */
+	ap = (u_int8_t *)&sa_in6->sin6_addr;
+	ep = (u_int8_t *)sa_in6 + sa_in6->sin6_len;
+	for (; ap < ep; ap++) {
+		/* this "beauty" is adopted from sbin/route/show.c ... */
+		switch (*ap) {
+		case 0xff:
+			l += 8;
+			break;
+		case 0xfe:
+			l += 7;
+			return (l);
+		case 0xfc:
+			l += 6;
+			return (l);
+		case 0xf8:
+			l += 5;
+			return (l);
+		case 0xf0:
+			l += 4;
+			return (l);
+		case 0xe0:
+			l += 3;
+			return (l);
+		case 0xc0:
+			l += 2;
+			return (l);
+		case 0x80:
+			l += 1;
+			return (l);
+		case 0x00:
+			return (l);
+		default:
+			fatalx("non continguous inet6 netmask");
+		}
+	}
+
+	return (l);
+}
+
 /* interface lookup routintes */
 
 struct ipsec_addr_wrap	*iftab;
@@ -1721,6 +1782,8 @@ ifa_load(void)
 {
 	struct ifaddrs		*ifap, *ifa;
 	struct ipsec_addr_wrap	*n = NULL, *h = NULL;
+	struct sockaddr_in	*sa_in;
+	struct sockaddr_in6	*sa_in6;
 
 	if (getifaddrs(&ifap) < 0)
 		err(1, "ifa_load: getifaddrs");
@@ -1737,17 +1800,13 @@ ifa_load(void)
 		if ((n->name = strdup(ifa->ifa_name)) == NULL)
 			err(1, "ifa_load: strdup");
 		if (n->af == AF_INET) {
-			n->af = AF_INET;
-			memcpy(&n->address, ifa->ifa_addr,
-			    sizeof(struct sockaddr_in));
-			memcpy(&n->mask, ifa->ifa_addr,
-			    sizeof(struct sockaddr_in));
+			sa_in = (struct sockaddr_in *)ifa->ifa_addr;
+			memcpy(&n->address, sa_in, sizeof(*sa_in));
+			n->mask = mask2prefixlen(sa_in);
 		} else if (n->af == AF_INET6) {
-			n->af = AF_INET6;
-			memcpy(&n->address, ifa->ifa_addr,
-			    sizeof(struct sockaddr_in6));
-			memcpy(&n->mask, ifa->ifa_addr,
-			    sizeof(struct sockaddr_in6));
+			sa_in6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			memcpy(&n->address, sa_in6, sizeof(*sa_in6));
+			n->mask = mask2prefixlen6(sa_in6);
 		}
 		n->next = NULL;
 		n->tail = n;
