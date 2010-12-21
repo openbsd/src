@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.118 2010/12/21 23:46:18 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.119 2010/12/21 23:57:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1116,10 +1116,10 @@ termp_an_post(DECL_ARGS)
 		return;
 	}
 
-	if (AUTH_split == n->data.An.auth) {
+	if (AUTH_split == n->data.An->auth) {
 		p->flags &= ~TERMP_NOSPLIT;
 		p->flags |= TERMP_SPLIT;
-	} else if (AUTH_nosplit == n->data.An.auth) {
+	} else if (AUTH_nosplit == n->data.An->auth) {
 		p->flags &= ~TERMP_SPLIT;
 		p->flags |= TERMP_NOSPLIT;
 	}

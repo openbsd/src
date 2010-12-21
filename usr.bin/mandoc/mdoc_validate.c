@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.79 2010/12/21 23:46:18 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.80 2010/12/21 23:57:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -908,6 +908,9 @@ pre_an(PRE_ARGS)
 {
 	int		 i;
 
+	assert(NULL == n->data.An);
+	n->data.An = mandoc_calloc(1, sizeof(struct mdoc_an));
+
 	if (NULL == n->args)
 		return(1);
 	
@@ -916,9 +919,9 @@ pre_an(PRE_ARGS)
 			n->args->argv[i].pos, MANDOCERR_IGNARGV);
 
 	if (MDOC_Split == n->args->argv[0].arg)
-		n->data.An.auth = AUTH_split;
+		n->data.An->auth = AUTH_split;
 	else if (MDOC_Nosplit == n->args->argv[0].arg)
-		n->data.An.auth = AUTH_nosplit;
+		n->data.An->auth = AUTH_nosplit;
 	else
 		abort();
 
@@ -1251,14 +1254,14 @@ post_an(POST_ARGS)
 	struct mdoc_node *np;
 
 	np = mdoc->last;
-	if (AUTH__NONE != np->data.An.auth && np->child)
+	if (AUTH__NONE != np->data.An->auth && np->child)
 		return(eerr_eq0(mdoc));
 
 	/* 
 	 * FIXME: make this ewarn and make sure that the front-ends
 	 * don't print the arguments.
 	 */
-	if (AUTH__NONE != np->data.An.auth || np->child)
+	if (AUTH__NONE != np->data.An->auth || np->child)
 		return(1);
 
 	mdoc_nmsg(mdoc, np, MANDOCERR_NOARGS);

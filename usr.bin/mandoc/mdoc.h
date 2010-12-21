@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.37 2010/12/21 23:46:18 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.38 2010/12/21 23:57:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -361,7 +361,7 @@ struct	mdoc_an {
  * provided, etc.
  */
 union mdoc_data {
-	struct mdoc_an 	  An;
+	struct mdoc_an 	 *An;
 	struct mdoc_bd	 *Bd;
 	struct mdoc_bf	 *Bf;
 	struct mdoc_bl	 *Bl;
