@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.98 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.99 2010/12/21 19:16:15 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1013,6 +1013,9 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 
 	if (*offp < sizeof(struct ip6_hdr)) {
 		DPRINTF(("ah6_input(): bad offset\n"));
+		ahstat.ahs_hdrops++;
+		m_freem(*mp);
+		*mp = NULL;
 		return IPPROTO_DONE;
 	} else if (*offp == sizeof(struct ip6_hdr)) {
 		protoff = offsetof(struct ip6_hdr, ip6_nxt);
@@ -1102,6 +1105,9 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 
 	if (*offp < sizeof(struct ip6_hdr)) {
 		DPRINTF(("esp6_input(): bad offset\n"));
+		espstat.esps_hdrops++;
+		m_freem(*mp);
+		*mp = NULL;
 		return IPPROTO_DONE;
 	} else if (*offp == sizeof(struct ip6_hdr)) {
 		protoff = offsetof(struct ip6_hdr, ip6_nxt);
@@ -1159,6 +1165,9 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 
 	if (*offp < sizeof(struct ip6_hdr)) {
 		DPRINTF(("ipcomp6_input(): bad offset\n"));
+		ipcompstat.ipcomps_hdrops++;
+		m_freem(*mp);
+		*mp = NULL;
 		return IPPROTO_DONE;
 	} else if (*offp == sizeof(struct ip6_hdr)) {
 		protoff = offsetof(struct ip6_hdr, ip6_nxt);
