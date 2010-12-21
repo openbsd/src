@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.149 2010/12/21 11:25:19 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.150 2010/12/21 17:43:07 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -493,6 +493,8 @@ sub add_dep
 
 package OpenBSD::Dependencies::Solver;
 our @ISA = qw(OpenBSD::Dependencies::SolverBase);
+
+use OpenBSD::PackageInfo;
 
 sub merge
 {
