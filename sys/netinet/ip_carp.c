@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.179 2010/11/26 12:25:52 otto Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.180 2010/12/21 14:59:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1138,6 +1138,7 @@ carp_send_ad(void *v)
 		len = sizeof(*ip) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
+		m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
 		ip = mtod(m, struct ip *);
@@ -1227,6 +1228,7 @@ carp_send_ad(void *v)
 		len = sizeof(*ip6) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
+		/* XXX m->m_pkthdr.rdomain = sc->sc_if.if_rdomain; */
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
 		m->m_flags |= M_MCAST;
