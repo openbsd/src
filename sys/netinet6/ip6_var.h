@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.37 2010/07/08 19:42:46 jsg Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.38 2010/12/21 13:12:59 claudio Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -196,7 +196,6 @@ struct	ip6stat {
 	u_int64_t ip6s_m2m[32];		/* two or more mbuf */
 	u_int64_t ip6s_mext1;		/* one ext mbuf */
 	u_int64_t ip6s_mext2m;		/* two or more ext mbuf */
-	u_int64_t ip6s_exthdrtoolong;	/* ext hdr are not continuous */
 	u_int64_t ip6s_nogif;		/* no match gif found */
 	u_int64_t ip6s_toomanyhdr;	/* discarded due to too many headers */
 
