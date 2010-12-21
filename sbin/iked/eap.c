@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.3 2010/10/14 19:35:02 dhill Exp $	*/
+/*	$OpenBSD: eap.c,v 1.4 2010/12/21 13:24:11 mikeb Exp $	*/
 /*	$vantronix: eap.c,v 1.12 2010/05/31 11:30:08 reyk Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ eap_mschap(struct iked *env, struct iked_sa *sa, struct eap_message *eap)
 		else
 			name = get_string(ptr, len);
 		if (name == NULL) {
-			log_debug("%s: invalid response name");
+			log_debug("%s: invalid response name", __func__);
 			return (-1);
 		}
 		if ((usr = user_lookup(env, name)) == NULL) {
@@ -395,7 +395,8 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 			len = betoh16(eap->eap_length) -
 			    sizeof(*eap) - sizeof(*msc);
 			if ((str = get_string(ptr, len)) == NULL) {
-				log_debug("%s: invalid challenge name");
+				log_debug("%s: invalid challenge name",
+				    __func__);
 				return (-1);
 			}
 			log_info("%s: %s %s id %d "
@@ -415,7 +416,8 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 			len = betoh16(eap->eap_length) -
 			    sizeof(*eap) - sizeof(*msr);
 			if ((str = get_string(ptr, len)) == NULL) {
-				log_debug("%s: invalid response name");
+				log_debug("%s: invalid response name",
+				    __func__);
 				return (-1);
 			}
 			log_info("%s: %s %s id %d "
@@ -436,7 +438,8 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 				len = betoh16(eap->eap_length) -
 				    sizeof(*eap) - sizeof(*mss);
 				if ((str = get_string(ptr, len)) == NULL) {
-					log_debug("%s: invalid response name");
+					log_debug("%s: invalid response name",
+					    __func__);
 					return (-1);
 				}
 				log_info("%s: %s %s request id %d "
@@ -457,7 +460,7 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 				if (!sa_stateok(sa, IKEV2_STATE_AUTH_SUCCESS))
 					return (-1);
 
-				return (eap_success(env, sa, hdr));	
+				return (eap_success(env, sa, hdr));
 			}
 			break;
 		case EAP_MSOPCODE_FAILURE:
@@ -466,7 +469,8 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 			len = betoh16(eap->eap_length) -
 			    sizeof(*eap) - sizeof(*msf);
 			if ((str = get_string(ptr, len)) == NULL) {
-				log_debug("%s: invalid failure message");
+				log_debug("%s: invalid failure message",
+				    __func__);
 				return (-1);
 			}
 			log_info("%s: %s %s id %d "

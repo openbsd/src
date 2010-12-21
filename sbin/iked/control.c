@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2010/06/24 20:15:30 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2010/12/21 13:24:11 mikeb Exp $	*/
 /*	$vantronix: control.c,v 1.4 2010/05/14 07:35:52 reyk Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ control_listen(struct control_sock *cs)
 		return (0);
 
 	if (listen(cs->cs_fd, CONTROL_BACKLOG) == -1) {
-		log_warn("%s: listen");
+		log_warn("%s: listen", __func__);
 		return (-1);
 	}
 
@@ -150,7 +150,7 @@ control_accept(int listenfd, short event, void *arg)
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
 		if (errno != EWOULDBLOCK && errno != EINTR)
-			log_warn("%s: accept");
+			log_warn("%s: accept", __func__);
 		return;
 	}
 
