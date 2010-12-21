@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.12 2010/12/17 19:35:34 millert Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.13 2010/12/21 15:47:52 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -54,8 +54,6 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 	int fd;
 
 	/* Initial state */
-	if (realpath)
-		*realpath = (char *)path;
 	fd = -1;
 	errno = ENOENT;
 
@@ -64,12 +62,13 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 	else
 		prefix = "r";			/* character device */
 
-	if ((slash = strchr(path, '/')))
-		fd = open(path, oflags);
-	else if (isduid(path, dflags)) {
+	if ((slash = strchr(path, '/'))) {
+		strlcpy(namebuf, path, sizeof(namebuf));
+		fd = open(namebuf, oflags);
+	} else if (isduid(path, dflags)) {
+		strlcpy(namebuf, path, sizeof(namebuf));
 		if ((fd = open("/dev/diskmap", oflags)) != -1) {
 			bzero(&dm, sizeof(struct dk_diskmap));
-			strlcpy(namebuf, path, sizeof(namebuf));
 			dm.device = namebuf;
 			dm.fd = fd;
 			if (dflags & OPENDEV_PART)
@@ -81,8 +80,7 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 				close(fd);
 				fd = -1;
 				errno = ENOENT;
-			} else if (realpath)
-				*realpath = namebuf;
+			}
 		} else if (errno != ENOENT) {
 			errno = ENXIO;
 			return -1;
@@ -96,8 +94,6 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 		    _PATH_DEV, prefix, path, 'a' + getrawpartition())
 		    < sizeof(namebuf)) {
 			fd = open(namebuf, oflags);
-			if (realpath)
-				*realpath = namebuf;
 		} else
 			errno = ENAMETOOLONG;
 	}
@@ -105,10 +101,11 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 		if (snprintf(namebuf, sizeof(namebuf), "%s%s%s",
 		    _PATH_DEV, prefix, path) < sizeof(namebuf)) {
 			fd = open(namebuf, oflags);
-			if (realpath)
-				*realpath = namebuf;
 		} else
 			errno = ENAMETOOLONG;
 	}
+	if (realpath)
+		*realpath = namebuf;
+
 	return (fd);
 }
