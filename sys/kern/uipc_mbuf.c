@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.147 2010/11/05 15:17:50 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.148 2010/12/21 14:00:43 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -166,6 +166,14 @@ nmbclust_update(void)
 	for (i = 0; i < nitems(mclsizes); i++) {
 		(void)pool_sethardlimit(&mclpools[i], nmbclust,
 		    mclpool_warnmsg, 60);
+		/*
+		 * XXX this needs to be reconsidered.
+		 * Setting the high water mark to nmbclust is too high
+		 * but we need to have enough spare buffers around so that
+		 * allocations in interrupt context don't fail or mclgeti()
+		 * drivers may end up with empty rings.
+		 */
+		pool_sethiwat(&mclpools[i], nmbclust);
 	}
 	pool_sethiwat(&mbpool, nmbclust);
 }
