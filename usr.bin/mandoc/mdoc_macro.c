@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.60 2010/12/01 22:02:29 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.61 2010/12/21 23:46:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -250,6 +250,7 @@ lookup_raw(const char *p)
 static int
 rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 {
+	struct mdoc_node *n;
 
 	assert(to);
 	mdoc->next = MDOC_NEXT_SIBLING;
@@ -258,8 +259,10 @@ rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 	while (mdoc->last != to) {
 		if ( ! mdoc_valid_post(mdoc))
 			return(0);
+		n = mdoc->last;
 		mdoc->last = mdoc->last->parent;
 		assert(mdoc->last);
+		mdoc->last->last = n;
 	}
 
 	return(mdoc_valid_post(mdoc));

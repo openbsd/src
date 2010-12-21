@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.78 2010/12/09 21:29:17 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.79 2010/12/21 23:46:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -107,6 +107,7 @@ static	int	 post_it(POST_ARGS);
 static	int	 post_lb(POST_ARGS);
 static	int	 post_nm(POST_ARGS);
 static	int	 post_os(POST_ARGS);
+static	int	 post_ignpar(POST_ARGS);
 static	int	 post_prol(POST_ARGS);
 static	int	 post_root(POST_ARGS);
 static	int	 post_rs(POST_ARGS);
@@ -151,9 +152,9 @@ static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
 static	v_post	 posts_os[] = { post_os, post_prol, NULL };
 static	v_post	 posts_rs[] = { berr_ge1, herr_eq0, post_rs, NULL };
-static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
+static	v_post	 posts_sh[] = { post_ignpar, herr_ge1, bwarn_ge1, post_sh, NULL };
 static	v_post	 posts_sp[] = { eerr_le1, NULL };
-static	v_post	 posts_ss[] = { herr_ge1, NULL };
+static	v_post	 posts_ss[] = { post_ignpar, herr_ge1, bwarn_ge1, NULL };
 static	v_post	 posts_st[] = { eerr_eq1, post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
 static	v_post	 posts_text[] = { eerr_ge1, NULL };
@@ -170,7 +171,7 @@ static	v_pre	 pres_dd[] = { pre_dd, NULL };
 static	v_pre	 pres_dt[] = { pre_dt, NULL };
 static	v_pre	 pres_er[] = { NULL, NULL };
 static	v_pre	 pres_fd[] = { NULL, NULL };
-static	v_pre	 pres_it[] = { pre_it, NULL };
+static	v_pre	 pres_it[] = { pre_it, pre_par, NULL };
 static	v_pre	 pres_os[] = { pre_os, NULL };
 static	v_pre	 pres_pp[] = { pre_par, NULL };
 static	v_pre	 pres_sh[] = { pre_sh, NULL };
@@ -898,10 +899,6 @@ pre_it(PRE_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 
-	/* 
-	 * FIXME: this can probably be lifted if we make the It into
-	 * something else on-the-fly?
-	 */
 	return(check_parent(mdoc, n, MDOC_Bl, MDOC_BODY));
 }
 
@@ -1571,21 +1568,22 @@ post_bl(POST_ARGS)
 		return(post_bl_block(mdoc));
 	if (MDOC_BODY != mdoc->last->type)
 		return(1);
-	if (NULL == mdoc->last->child)
-		return(1);
 
-	/*
-	 * We only allow certain children of `Bl'.  This is usually on
-	 * `It', but apparently `Sm' occurs here and there, so we let
-	 * that one through, too.
-	 */
-
-	/* LINTED */
 	for (n = mdoc->last->child; n; n = n->next) {
-		if (MDOC_BLOCK == n->type && MDOC_It == n->tok)
+		switch (n->tok) {
+		case (MDOC_Lp):
+			/* FALLTHROUGH */
+		case (MDOC_Pp):
+			mdoc_nmsg(mdoc, n, MANDOCERR_CHILD);
+			/* FALLTHROUGH */
+		case (MDOC_It):
+			/* FALLTHROUGH */
+		case (MDOC_Sm):
 			continue;
-		if (MDOC_Sm == n->tok)
-			continue;
+		default:
+			break;
+		}
+
 		mdoc_nmsg(mdoc, n, MANDOCERR_SYNTCHILD);
 		return(0);
 	}
@@ -1887,6 +1885,29 @@ post_sh_head(POST_ARGS)
 }
 
 static int
+post_ignpar(POST_ARGS)
+{
+	struct mdoc_node *np;
+
+	if (MDOC_BODY != mdoc->last->type)
+		return(1);
+
+	if (NULL != (np = mdoc->last->child))
+		if (MDOC_Pp == np->tok || MDOC_Lp == np->tok) {
+			mdoc_nmsg(mdoc, np, MANDOCERR_IGNPAR);
+			mdoc_node_delete(mdoc, np);
+		}
+
+	if (NULL != (np = mdoc->last->last))
+		if (MDOC_Pp == np->tok || MDOC_Lp == np->tok) {
+			mdoc_nmsg(mdoc, np, MANDOCERR_IGNPAR);
+			mdoc_node_delete(mdoc, np);
+		}
+
+	return(1);
+}
+
+static int
 pre_ts(PRE_ARGS)
 {
 
@@ -1902,6 +1923,8 @@ pre_par(PRE_ARGS)
 
 	if (NULL == mdoc->last)
 		return(1);
+	if (MDOC_ELEM != n->type && MDOC_BLOCK != n->type)
+		return(1);
 
 	/* 
 	 * Don't allow prior `Lp' or `Pp' prior to a paragraph-type
@@ -1910,10 +1933,11 @@ pre_par(PRE_ARGS)
 
 	if (MDOC_Pp != mdoc->last->tok && MDOC_Lp != mdoc->last->tok)
 		return(1);
-
 	if (MDOC_Bl == n->tok && n->data.Bl->comp)
 		return(1);
 	if (MDOC_Bd == n->tok && n->data.Bd->comp)
+		return(1);
+	if (MDOC_It == n->tok && n->parent->data.Bl->comp)
 		return(1);
 
 	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_IGNPAR);
