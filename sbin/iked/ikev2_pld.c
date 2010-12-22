@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.16 2010/09/30 12:54:24 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.17 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
 			ret = ikev2_pld_sa(env, &pld, msg, offset);
 			break;
 		case IKEV2_PAYLOAD_KE:
+		case IKEV2_PAYLOAD_KE | IKED_E:
 			ret = ikev2_pld_ke(env, &pld, msg, offset);
 			break;
 		case IKEV2_PAYLOAD_IDi | IKED_E:
@@ -262,14 +263,18 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	    sap.sap_transforms, print_spi(spi, sap.sap_spisize));
 
 	if (ikev2_msg_frompeer(msg)) {
-		if ((msg->msg_prop = config_add_proposal(props,
+		if ((msg->msg_parent->msg_prop = config_add_proposal(props,
 		    sap.sap_proposalnr, sap.sap_protoid)) == NULL) {
 			log_debug("%s: invalid proposal", __func__);
 			return (-1);
 		}
-		prop = msg->msg_prop;
-		prop->prop_localspi.spi_size = sap.sap_spisize;
+		prop = msg->msg_parent->msg_prop;
 		prop->prop_peerspi.spi = spi;
+		prop->prop_peerspi.spi_protoid = sap.sap_protoid;
+		prop->prop_peerspi.spi_size = sap.sap_spisize;
+
+		prop->prop_localspi.spi_protoid = sap.sap_protoid;
+		prop->prop_localspi.spi_size = sap.sap_spisize;
 	}
 
 	/*
@@ -335,9 +340,9 @@ ikev2_pld_xform(struct iked *env, struct ikev2_sa_proposal *sap,
 		    betoh16(xfrm.xfrm_length) - sizeof(xfrm));
 
 	if (ikev2_msg_frompeer(msg)) {
-		if (config_add_transform(msg->msg_prop, xfrm.xfrm_type,
-		    betoh16(xfrm.xfrm_id), msg->msg_attrlength,
-		    msg->msg_attrlength) == NULL) {
+		if (config_add_transform(msg->msg_parent->msg_prop,
+		    xfrm.xfrm_type, betoh16(xfrm.xfrm_id),
+		    msg->msg_attrlength, msg->msg_attrlength) == NULL) {
 			log_debug("%s: failed to add transform", __func__);
 			return (-1);
 		}
@@ -401,8 +406,7 @@ ikev2_pld_ke(struct iked *env, struct ikev2_payload *pld,
 
 	memcpy(&kex, msgbuf + offset, sizeof(kex));
 
-	log_debug("%s: dh group %s reserved %d",
-	    __func__,
+	log_debug("%s: dh group %s reserved %d", __func__,
 	    print_map(betoh16(kex.kex_dhgroup), ikev2_xformdh_map),
 	    betoh16(kex.kex_reserved));
 
@@ -622,6 +626,7 @@ ikev2_pld_nonce(struct iked *env, struct ikev2_payload *pld,
 			log_debug("%s: failed to get peer nonce", __func__);
 			return (-1);
 		}
+		msg->msg_parent->msg_nonce = msg->msg_nonce;
 	}
 
 	return (0);
@@ -677,6 +682,38 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		print_hex(md, 0, sizeof(md));
 		break;
+	case IKEV2_N_INVALID_KE_PAYLOAD:
+		if (len != sizeof(group)) {
+			log_debug("%s: malformed notification", __func__);
+			return (-1);
+		}
+		if (!msg->msg_sa->sa_hdr.sh_initiator) {
+			log_debug("%s: not an initiator", __func__);
+			sa_free(env, msg->msg_sa);
+			msg->msg_sa = NULL;
+			return (-1);
+		}
+		memcpy(&group, buf, len);
+		group = betoh16(group);
+		if ((msg->msg_policy->pol_peerdh = group_get(group))
+		    == NULL) {
+			log_debug("%s: unable to select DH group %d", __func__,
+			    group);
+			return (-1);
+		}
+		log_debug("%s: responder selected DH group %d", __func__,
+		    group);
+		sa_free(env, msg->msg_sa);
+		msg->msg_sa = NULL;
+		timer_register_initiator(env, ikev2_init_ike_sa);
+		break;
+	case IKEV2_N_NO_ADDITIONAL_SAS:
+		/* This makes sense for Child SAs only atm */
+		if (msg->msg_sa->sa_stateflags & IKED_REQ_CHILDSA) {
+			ikev2_disable_rekeying(env, msg->msg_sa);
+			msg->msg_sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+		}
+		break;
 	case IKEV2_N_REKEY_SA:
 		if (len != n->n_spisize) {
 			log_debug("%s: malformed notification", __func__);
@@ -709,31 +746,6 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    print_map(n->n_protoid, ikev2_saproto_map),
 		    print_spi(rekey->spi, n->n_spisize));
 		break;
-	case IKEV2_N_INVALID_KE_PAYLOAD:
-		if (len != sizeof(group)) {
-			log_debug("%s: malformed notification", __func__);
-			return (-1);
-		}
-		if (!msg->msg_sa->sa_hdr.sh_initiator) {
-			log_debug("%s: not an initiator", __func__);
-			sa_free(env, msg->msg_sa);
-			msg->msg_sa = NULL;
-			return (-1);
-		}
-		memcpy(&group, buf, len);
-		group = betoh16(group);
-		if ((msg->msg_policy->pol_peerdh = group_get(group))
-		    == NULL) {
-			log_debug("%s: unable to select DH group %d", __func__,
-			    group);
-			return (-1);
-		}
-		log_debug("%s: responder selected DH group %d", __func__,
-		    group);
-		sa_free(env, msg->msg_sa);
-		msg->msg_sa = NULL;
-		timer_register_initiator(env, ikev2_init_ike_sa);
-		break;
 	}
 
 	return (0);
@@ -743,22 +755,31 @@ int
 ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, off_t offset)
 {
-	struct ikev2_delete	*del, *localdel;
-	u_int64_t		 spi64, spi = 0, *localspi = NULL;
-	u_int32_t		 spi32;
-	size_t			 len, i, cnt, sz, found = 0, failed = 0;
-	u_int8_t		*buf, firstpayload = 0;
-	u_int8_t		*msgbuf = ibuf_data(msg->msg_data);
+	struct iked_childsa	**peersas = NULL;
 	struct iked_sa		*sa = msg->msg_sa;
+	struct ikev2_delete	*del, *localdel;
 	struct ibuf		*resp = NULL;
-	int			 ret = -1;
+	u_int64_t		*localspi = NULL;
+	u_int64_t		 spi64, spi = 0;
+	u_int32_t		 spi32;
+	u_int8_t		*buf, *msgbuf = ibuf_data(msg->msg_data);
+	size_t			 found = 0, failed = 0;
+	int			 cnt, i, len, sz, ret = -1;
+
+	/* Skip if it's a reply and we don't have to deal with it */
+	if (ikev2_msg_frompeer(msg) && sa &&
+	    (sa->sa_stateflags & IKED_REQ_INF)) {
+		sa->sa_stateflags &= ~IKED_REQ_INF;
+		if ((sa->sa_stateflags & IKED_REQ_DELETE) == 0)
+			return (0);
+	}
 
 	if ((del = ibuf_seek(msg->msg_data, offset, sizeof(*del))) == NULL)
 		return (-1);
 	cnt = betoh16(del->del_nspi);
 	sz = del->del_spisize;
 
-	log_debug("%s: protoid %s spisize %d nspi %d",
+	log_debug("%s: proto %s spisize %d nspi %d",
 	    __func__, print_map(del->del_protoid, ikev2_saproto_map),
 	    sz, cnt);
 
@@ -774,8 +795,15 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	default:
 		if (ikev2_msg_frompeer(msg) &&
 		    del->del_protoid == IKEV2_SAPROTO_IKE) {
+			/* Send an empty informational response */
+			if ((resp = ibuf_static()) == NULL)
+				goto done;
+			ret = ikev2_send_ike_e(env, sa, resp,
+			    IKEV2_PAYLOAD_NONE,
+			    IKEV2_EXCHANGE_INFORMATIONAL, 1);
+			ibuf_release(resp);
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
-			return (0);
+			return (ret);
 		}
 		log_debug("%s: invalid SPI size", __func__);
 		return (-1);
@@ -788,13 +816,13 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	}
 
 	if (ikev2_msg_frompeer(msg) &&
-	    (localspi = calloc(cnt, sizeof(u_int64_t))) == NULL) {
+	    ((peersas = calloc(cnt, sizeof(struct iked_childsa *))) == NULL ||
+	     (localspi = calloc(cnt, sizeof(u_int64_t))) == NULL)) {
 		log_warn("%s", __func__);
-		return (-1);
+		goto done;
 	}
 
 	for (i = 0; i < cnt; i++) {
-		/* XXX delete SAs */
 		switch (sz) {
 		case 4:
 			memcpy(&spi32, buf + (i * sz), sizeof(spi32));
@@ -805,20 +833,39 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 			spi = betoh64(spi64);
 			break;
 		}
-		if (!ikev2_msg_frompeer(msg)) {
-			log_debug("%s: spi %s", __func__, print_spi(spi, sz));
+
+		log_debug("%s: spi %s", __func__, print_spi(spi, sz));
+
+		if (!ikev2_msg_frompeer(msg))
 			continue;
+
+		if ((peersas[i] = childsa_lookup(sa, spi,
+		    del->del_protoid)) == NULL) {
+			log_warnx("%s: CHILD SA doesn't exist for spi %s",
+			    __func__, print_spi(spi, del->del_spisize));
+			goto done;
 		}
 
-		if (ikev2_childsa_delete(env, sa,
-		    del->del_protoid, spi, &localspi[i], 0) == -1)
+		if (ikev2_childsa_delete(env, sa, del->del_protoid, spi,
+		    &localspi[i], peersas[i]->csa_rekey ? 0 :
+		    IKED_DEL_FLOWS) == -1)
 			failed++;
 		else
 			found++;
 	}
 
+	/* Parsed outgoing message? */
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
+
+	if (ikev2_msg_frompeer(msg) && (sa->sa_stateflags & IKED_REQ_DELETE)) {
+		/* Finish rekeying */
+		sa->sa_stateflags &= ~IKED_REQ_DELETE;
+		ret = 0;
+		goto done;
+	}
+
+	/* Response to the INFORMATIONAL with Delete payload */
 
 	if ((resp = ibuf_static()) == NULL)
 		goto done;
@@ -827,15 +874,11 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 		if ((localdel = ibuf_advance(resp, sizeof(*localdel))) == NULL)
 			goto done;
 
-		firstpayload = IKEV2_PAYLOAD_DELETE;
 		localdel->del_protoid = del->del_protoid;
 		localdel->del_spisize = del->del_spisize;
 		localdel->del_nspi = htobe16(found);
 
 		for (i = 0; i < cnt; i++) {
-			if (!localspi[i])
-				continue;
-
 			switch (sz) {
 			case 4:
 				spi32 = htobe32(localspi[i]);
@@ -850,19 +893,22 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 			}
 		}
 
+		log_warnx("%s: deleted %d spis", __func__, found);
 	}
 
 	if (found) {
-		ret = ikev2_send_ike_e(env, sa, resp,
-		    firstpayload, IKEV2_EXCHANGE_INFORMATIONAL, 1);
+		ret = ikev2_send_ike_e(env, sa, resp, IKEV2_PAYLOAD_DELETE,
+		    IKEV2_EXCHANGE_INFORMATIONAL, 1);
 	} else {
 		/* XXX should we send an INVALID_SPI notification? */
 		ret = 0;
 	}
 
  done:
-	if (localspi != NULL)
+	if (localspi)
 		free(localspi);
+	if (peersas)
+		free(peersas);
 	ibuf_release(resp);
 	return (ret);
 }
@@ -1005,7 +1051,7 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 	buf = msgbuf + offset;
 	len = betoh16(pld->pld_length) - sizeof(*pld) - sizeof(cp);
 
-	log_debug("%s: type %s",
+	log_debug("%s: type %s length %d",
 	    __func__, print_map(cp.cp_type, ikev2_cp_map), len);
 	print_hex(buf, 0, len);
 

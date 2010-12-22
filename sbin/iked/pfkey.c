@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.8 2010/09/23 11:42:36 mikeb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.9 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
 
-static u_int32_t sadb_msg_seq = 1;
+static u_int32_t sadb_msg_seq = 0;
 static u_int sadb_decoupled = 0;
 
 struct pfkey_constmap {
@@ -96,12 +96,14 @@ int	pfkey_sa(int, u_int8_t, u_int8_t, struct iked_childsa *);
 int	pfkey_sa_getspi(int, u_int8_t, struct iked_childsa *, u_int32_t *);
 int	pfkey_sagroup(int, u_int8_t, u_int8_t,
 	    struct iked_childsa *, struct iked_childsa *);
-int	pfkey_write(int sd, struct sadb_msg *, struct iovec *, int,
+int	pfkey_write(int, struct sadb_msg *, struct iovec *, int,
 	    u_int8_t **, ssize_t *);
 int	pfkey_reply(int, u_int8_t **, ssize_t *);
 
 struct sadb_ident *
 	pfkey_id2ident(struct iked_id *, u_int);
+void	*pfkey_find_ext(u_int8_t *, ssize_t, int);
+
 
 int
 pfkey_couple(int sd, struct iked_sas *sas, int couple)
@@ -240,7 +242,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
-	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_seq = ++sadb_msg_seq;
 	smsg.sadb_msg_pid = getpid();
 	smsg.sadb_msg_len = sizeof(smsg) / 8;
 	smsg.sadb_msg_type = action;
@@ -409,13 +411,16 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	struct sadb_sa		 sadb;
 	struct sadb_address	 sa_src, sa_dst;
 	struct sadb_key		 sa_authkey, sa_enckey;
+	struct sadb_lifetime	 sa_ltime_hard, sa_ltime_soft;
 	struct sadb_x_udpencap	 udpencap;
 	struct sadb_x_tag	 sa_tag;
 	struct sadb_x_tap	 sa_tap;
 	struct sockaddr_storage	 ssrc, sdst;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
+	struct iked_lifetime	*lt;
 	struct iked_policy	*pol;
 	struct iovec		 iov[IOV_CNT];
+	u_int32_t		 jitter;
 	int			 iov_cnt;
 	char			*tag = NULL;
 
@@ -426,6 +431,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		return (-1);
 	}
 	pol = sa->csa_ikesa->sa_policy;
+	lt = &pol->pol_lifetime;
 
 	bzero(&ssrc, sizeof(ssrc));
 	memcpy(&ssrc, &sa->csa_local->addr, sizeof(ssrc));
@@ -443,7 +449,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
-	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_seq = ++sadb_msg_seq;
 	smsg.sadb_msg_pid = getpid();
 	smsg.sadb_msg_len = sizeof(smsg) / 8;
 	smsg.sadb_msg_type = action;
@@ -470,9 +476,28 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	bzero(&sa_authkey, sizeof(sa_authkey));
 	bzero(&sa_enckey, sizeof(sa_enckey));
 	bzero(&udpencap, sizeof udpencap);
+	bzero(&sa_ltime_hard, sizeof(sa_ltime_hard));
+	bzero(&sa_ltime_soft, sizeof(sa_ltime_soft));
 
 	if (action == SADB_DELETE)
 		goto send;
+
+	if ((action == SADB_ADD || action == SADB_UPDATE) &&
+	    !sa->csa_persistent && (lt->lt_bytes || lt->lt_seconds)) {
+		sa_ltime_hard.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
+		sa_ltime_hard.sadb_lifetime_len = sizeof(sa_ltime_hard) / 8;
+		sa_ltime_hard.sadb_lifetime_bytes = lt->lt_bytes;
+		sa_ltime_hard.sadb_lifetime_addtime = lt->lt_seconds;
+
+		sa_ltime_soft.sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
+		sa_ltime_soft.sadb_lifetime_len = sizeof(sa_ltime_soft) / 8;
+		/* set randomly to 85-95% */
+		jitter = 850 + arc4random_uniform(100);
+		sa_ltime_soft.sadb_lifetime_bytes =
+		    (lt->lt_bytes * jitter) / 1000;
+		sa_ltime_soft.sadb_lifetime_addtime =
+		    (lt->lt_seconds * jitter) / 1000;
+	}
 
 	/* XXX handle NULL encryption or NULL auth or combined encr/auth */
 	if (action == SADB_ADD &&
@@ -489,9 +514,8 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		udpencap.sadb_x_udpencap_port =
 		    sa->csa_ikesa->sa_peer.addr_port;
 
-		log_debug("%s: udpencap port %d", __func__, 
-		    ntohs(udpencap.sadb_x_udpencap_port),
-		    udpencap.sadb_x_udpencap_port);
+		log_debug("%s: udpencap port %d", __func__,
+		    ntohs(udpencap.sadb_x_udpencap_port));
 	}
 
 	if (sa->csa_integrxf)
@@ -583,6 +607,22 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	smsg.sadb_msg_len += sa_dst.sadb_address_len;
 	iov_cnt++;
 
+	if (sa_ltime_soft.sadb_lifetime_len) {
+		/* soft lifetime */
+		iov[iov_cnt].iov_base = &sa_ltime_soft;
+		iov[iov_cnt].iov_len = sizeof(sa_ltime_soft);
+		smsg.sadb_msg_len += sa_ltime_soft.sadb_lifetime_len;
+		iov_cnt++;
+	}
+
+	if (sa_ltime_hard.sadb_lifetime_len) {
+		/* hard lifetime */
+		iov[iov_cnt].iov_base = &sa_ltime_hard;
+		iov[iov_cnt].iov_len = sizeof(sa_ltime_hard);
+		smsg.sadb_msg_len += sa_ltime_hard.sadb_lifetime_len;
+		iov_cnt++;
+	}
+
 	if (udpencap.sadb_x_udpencap_len) {
 		iov[iov_cnt].iov_base = &udpencap;
 		iov[iov_cnt].iov_len = sizeof(udpencap);
@@ -657,13 +697,12 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 	struct sadb_msg		*msg, smsg;
 	struct sadb_address	 sa_src, sa_dst;
 	struct sadb_sa		*sa_ext;
-	struct sadb_ext		*ext;
 	struct sadb_spirange	 sa_spirange;
 	struct sockaddr_storage	 ssrc, sdst;
 	struct iovec		 iov[IOV_CNT];
 	u_int8_t		*data;
 	ssize_t			 n;
-	int			 iov_cnt, ret = 0;
+	int			 iov_cnt, ret = -1;
 
 	bzero(&ssrc, sizeof(ssrc));
 	memcpy(&ssrc, &sa->csa_local->addr, sizeof(ssrc));
@@ -681,7 +720,7 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
-	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_seq = ++sadb_msg_seq;
 	smsg.sadb_msg_pid = getpid();
 	smsg.sadb_msg_len = sizeof(smsg) / 8;
 	smsg.sadb_msg_type = SADB_GETSPI;
@@ -733,29 +772,28 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 	smsg.sadb_msg_len += sa_dst.sadb_address_len;
 	iov_cnt++;
 
-	*spip = 0;	
+	*spip = 0;
 
 	if ((ret = pfkey_write(sd, &smsg, iov, iov_cnt, &data, &n)) != 0)
 		return (-1);
 
 	msg = (struct sadb_msg *)data;
-	for (ext = (struct sadb_ext *)(msg + 1);
-	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
-	    msg->sadb_msg_len * PFKEYV2_CHUNK;
-	    ext = (struct sadb_ext *)((u_int8_t *)ext +
-	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
-		if (ext->sadb_ext_type == SADB_EXT_SA) {
-			sa_ext = (struct sadb_sa *)ext;
-			*spip = ntohl(sa_ext->sadb_sa_spi);
-			break;
-		}
+	if (msg->sadb_msg_errno != 0) {
+		errno = msg->sadb_msg_errno;
+		log_warn("%s: message", __func__);
+		goto done;
+	}
+	if ((sa_ext = pfkey_find_ext(data, n, SADB_EXT_SA)) == NULL) {
+		log_debug("%s: erronous reply", __func__);
+		goto done;
 	}
 
-	bzero(data, n);
-	free(data);
-
+	*spip = ntohl(sa_ext->sadb_sa_spi);
 	log_debug("%s: spi 0x%08x", __func__, *spip);
 
+done:
+	bzero(data, n);
+	free(data);
 	return (ret);
 }
 
@@ -793,7 +831,7 @@ pfkey_sagroup(int sd, u_int8_t satype1, u_int8_t action,
 
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
-	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_seq = ++sadb_msg_seq;
 	smsg.sadb_msg_pid = getpid();
 	smsg.sadb_msg_len = sizeof(smsg) / 8;
 	smsg.sadb_msg_type = action;
@@ -911,10 +949,29 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 	ssize_t		 len;
 	u_int8_t	*data;
 
-	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
-		log_warnx("%s: short recv", __func__);
-		return (-1);
+	for (;;) {
+		if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
+			log_warn("%s: short recv", __func__);
+			return (-1);
+		}
+
+		if (hdr.sadb_msg_version != PF_KEY_V2) {
+			log_warnx("%s: wrong pfkey version", __func__);
+			return (-1);
+		}
+
+		/* XXX: Only one message can be outstanding. */
+		if (hdr.sadb_msg_seq == sadb_msg_seq &&
+		    hdr.sadb_msg_pid == (u_int32_t)getpid())
+			break;
+
+		/* not ours, discard */
+		if (read(sd, &hdr, sizeof(hdr)) == -1) {
+			log_warn("%s: read", __func__);
+			return (-1);
+		}
 	}
+
 	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
 	if ((data = malloc(len)) == NULL) {
 		log_warn("%s: malloc", __func__);
@@ -1058,7 +1115,7 @@ pfkey_flush(int sd)
 
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
-	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_seq = ++sadb_msg_seq;
 	smsg.sadb_msg_pid = getpid();
 	smsg.sadb_msg_len = sizeof(smsg) / 8;
 	smsg.sadb_msg_type = SADB_FLUSH;
@@ -1129,4 +1186,98 @@ pfkey_init(void)
 	pfkey_flush(fd);
 
 	return (fd);
+}
+
+void *
+pfkey_find_ext(u_int8_t *data, ssize_t len, int type)
+{
+	struct sadb_ext	*ext = (struct sadb_ext *)(data +
+	    sizeof(struct sadb_msg));
+
+	while (ext && ((u_int8_t *)ext - data < len)) {
+		if (ext->sadb_ext_type == type)
+			return (ext);
+		ext = (struct sadb_ext *)((u_int8_t *)ext +
+		    ext->sadb_ext_len * PFKEYV2_CHUNK);
+	}
+
+	return (NULL);
+}
+
+void
+pfkey_dispatch(int sd, short event, void *arg)
+{
+	struct iked		*env = (struct iked *)arg;
+	struct iked_spi		 spi;
+	struct sadb_msg		 hdr;
+	struct sadb_sa		*sa;
+	struct sadb_lifetime	*ltime;
+	ssize_t			 len;
+	u_int8_t		*data;
+
+	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
+		log_warn("%s: short recv", __func__);
+		return;
+	}
+
+	if (hdr.sadb_msg_version != PF_KEY_V2) {
+		log_warnx("%s: wrong pfkey version", __func__);
+		return;
+	}
+
+	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
+	if ((data = malloc(len)) == NULL) {
+		log_warn("%s: malloc", __func__);
+		return;
+	}
+	if (read(sd, data, len) != len) {
+		log_warn("%s: short read", __func__);
+		bzero(data, len);
+		free(data);
+		return;
+	}
+
+	switch (hdr.sadb_msg_type) {
+	case SADB_EXPIRE:
+		if ((sa = pfkey_find_ext(data, len, SADB_EXT_SA)) == NULL) {
+			log_warnx("%s: SADB_EXPIRE w/o SA payload", __func__);
+			return;
+		}
+		if ((ltime = pfkey_find_ext(data, len,
+			SADB_EXT_LIFETIME_SOFT)) == NULL &&
+		    (ltime = pfkey_find_ext(data, len,
+			SADB_EXT_LIFETIME_HARD)) == NULL) {
+			log_warnx("%s: SADB_EXPIRE w/o lifetime payload",
+			    __func__);
+			return;
+		}
+		spi.spi = ntohl(sa->sadb_sa_spi);
+		spi.spi_size = 4;
+		switch (hdr.sadb_msg_satype) {
+		case SADB_SATYPE_AH:
+			spi.spi_protoid = IKEV2_SAPROTO_AH;
+			break;
+		case SADB_SATYPE_ESP:
+			spi.spi_protoid = IKEV2_SAPROTO_ESP;
+			break;
+		default:
+			log_warnx("%s: usupported SA type %d spi %s",
+			    __func__, hdr.sadb_msg_satype,
+			    print_spi(spi.spi, spi.spi_size));
+			return;
+		}
+
+		log_debug("%s: SA %s is expired, pending %s", __func__,
+		    print_spi(spi.spi, spi.spi_size),
+		    ltime->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ?
+		    "rekeying" : "deletion");
+
+		if (ltime->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT)
+			ikev2_rekey_sa(env, &spi);
+		else
+			ikev2_drop_sa(env, &spi);
+		break;
+	}
+
+	free(data);
 }

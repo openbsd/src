@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.9 2010/09/23 11:42:36 mikeb Exp $
+.\" $OpenBSD: iked.conf.5,v 1.10 2010/12/22 16:22:27 mikeb Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2010 $
+.Dd $Mdocdate: December 22 2010 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -376,6 +376,32 @@ is similar to
 .Ic srcid ,
 but instead specifies the ID to be used
 by the remote peer.
+.It Ic lifetime Ar time Op Ar bytes
+The optional
+.Ic lifetime
+parameter defines the Child SA expiration timeout by the
+.Ar time
+SA was in use and by the number of
+.Ar bytes
+that were processed using the SA.
+Default values are 3 hours and 512 megabytes which means that SA will be
+rekeyed before reaching the time limit or 512 megabytes of data
+will pass through.
+Zero values disable rekeying.
+.Pp
+Several unit specifiers are recognized (ignoring case):
+.Ql m
+and
+.Ql h
+for minutes and hours, and
+.Ql K ,
+.Ql M
+and
+.Ql G
+for kilo-, mega- and gigabytes accordingly.
+.Pp
+Please note that rekeying must happen at least several times a day as
+IPsec security heavily depends on the frequent key renewals.
 .It Op Ar ikeauth
 Specify the mode to mutually authenticate the peers.
 Non-psk modes will require to set up certificates and RSA public keys;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.11 2010/07/03 16:59:35 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.12 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -47,6 +47,8 @@ static __inline int
 	 sa_cmp(struct iked_sa *, struct iked_sa *);
 static __inline int
 	 user_cmp(struct iked_user *, struct iked_user *);
+static __inline int
+	 childsa_cmp(struct iked_childsa *, struct iked_childsa *);
 
 void
 policy_init(struct iked *env)
@@ -54,6 +56,7 @@ policy_init(struct iked *env)
 	RB_INIT(&env->sc_policies);
 	RB_INIT(&env->sc_users);
 	RB_INIT(&env->sc_sas);
+	RB_INIT(&env->sc_ipsecsas);
 }
 
 int
@@ -299,6 +302,22 @@ childsa_free(struct iked_childsa *sa)
 	free(sa);
 }
 
+struct iked_childsa *
+childsa_lookup(struct iked_sa *sa, u_int64_t spi, u_int8_t protoid)
+{
+	struct iked_childsa	*csa;
+
+	if (sa == NULL || spi == 0 || protoid == 0)
+		return (NULL);
+
+	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
+		if (csa->csa_spi.spi_protoid == protoid &&
+		    (csa->csa_spi.spi == spi))
+			break;
+	}
+	return (csa);
+}
+
 void
 flow_free(struct iked_flow *flow)
 {
@@ -392,3 +411,15 @@ user_cmp(struct iked_user *a, struct iked_user *b)
 }
 
 RB_GENERATE(iked_users, iked_user, usr_entry, user_cmp);
+
+static __inline int
+childsa_cmp(struct iked_childsa *a, struct iked_childsa *b)
+{
+	if (a->csa_spi.spi > b->csa_spi.spi)
+		return (1);
+	if (a->csa_spi.spi < b->csa_spi.spi)
+		return (-1);
+	return (0);
+}
+
+RB_GENERATE(iked_ipsecsas, iked_childsa, csa_ipsec_entry, childsa_cmp);

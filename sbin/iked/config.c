@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2010/06/14 08:10:32 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.5 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 
 	config_free_proposals(&sa->sa_proposals, 0);
 	config_free_childsas(env, &sa->sa_childsas, NULL, NULL);
-	config_free_flows(env, &sa->sa_flows, NULL);
+	config_free_flows(env, &sa->sa_flows);
 
 	if (sa->sa_policy) {
 		(void)RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
@@ -170,7 +170,7 @@ config_free_policy(struct iked *env, struct iked_policy *pol)
 
  remove:
 	config_free_proposals(&pol->pol_proposals, 0);
-	config_free_flows(env, &pol->pol_flows, NULL);
+	config_free_flows(env, &pol->pol_flows);
 	free(pol);
 }
 
@@ -218,16 +218,12 @@ config_free_proposals(struct iked_proposals *head, u_int proto)
 }
 
 void
-config_free_flows(struct iked *env, struct iked_flows *head,
-    struct iked_spi *spi)
+config_free_flows(struct iked *env, struct iked_flows *head)
 {
 	struct iked_flow	*flow, *next;
 
 	for (flow = TAILQ_FIRST(head); flow != NULL; flow = next) {
 		next = TAILQ_NEXT(flow, flow_entry);
-
-		if (spi != NULL && spi->spi != flow->flow_peerspi)
-			continue;
 
 		log_debug("%s: free %p", __func__, flow);
 
@@ -262,7 +258,10 @@ config_free_childsas(struct iked *env, struct iked_childsas *head,
 		log_debug("%s: free %p", __func__, csa);
 
 		TAILQ_REMOVE(head, csa, csa_entry);
-		(void)pfkey_sa_delete(env->sc_pfkey, csa);
+		if (csa->csa_loaded) {
+			RB_REMOVE(iked_ipsecsas, &env->sc_ipsecsas, csa);
+			(void)pfkey_sa_delete(env->sc_pfkey, csa);
+		}
 		childsa_free(csa);
 	}
 }
@@ -551,10 +550,14 @@ config_setpfkey(struct iked *env, enum iked_procid id)
 }
 
 int
-config_getpfkey(struct iked *env, struct imsg *imsg)
+config_getpfkey(struct iked *env, struct imsg *imsg,
+    void (*dispatch)(int, short, void *))
 {
 	log_debug("%s: received pfkey fd %d", __func__, imsg->fd);
 	env->sc_pfkey = imsg->fd;
+	event_set(&env->sc_pfkeyev, env->sc_pfkey,
+	    EV_READ|EV_PERSIST, dispatch, env);
+	event_add(&env->sc_pfkeyev, NULL);
 	return (0);
 }
 

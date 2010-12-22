@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.8 2010/09/30 10:34:56 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.9 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -255,15 +255,14 @@ ikev2_msg_send(struct iked *env, int fd, struct iked_message *msg)
 u_int32_t
 ikev2_msg_id(struct iked *env, struct iked_sa *sa, int response)
 {
-	if (response)
-		return (sa->sa_msgid);
+	u_int32_t		*id;
 
-	if (++sa->sa_msgid == UINT32_MAX) {
+	id = response ? &sa->sa_msgid : &sa->sa_reqid;
+	if (++*id == UINT32_MAX) {
 		/* XXX we should close and renegotiate the connection now */
 		log_debug("%s: IKEv2 message sequence overflow", __func__);
 	}
-
-	return (sa->sa_msgid);
+	return (*id - 1);
 }
 
 struct ibuf *
@@ -470,7 +469,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		goto done;
 	}
 
-	log_debug("%s: integrity check succeeded", __func__, tmplen);
+	log_debug("%s: integrity check succeeded", __func__);
 	print_hex(tmp->buf, 0, tmplen);
 
 	ibuf_release(tmp);

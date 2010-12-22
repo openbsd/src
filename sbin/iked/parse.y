@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2010/12/21 14:28:58 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -235,6 +235,11 @@ const struct ipsec_xf cpxfs[] = {
 	{ "access-server", IKEV2_CFG_INTERNAL_IP6_SERVER,	AF_INET6 }
 };
 
+const struct iked_lifetime deflifetime = {
+	IKED_LIFETIME_BYTES,
+	IKED_LIFETIME_SECONDS
+};
+
 struct ipsec_addr_wrap {
 	struct sockaddr_storage	 address;
 	u_int8_t		 mask;
@@ -282,8 +287,9 @@ void			 copy_transforms(u_int, const struct ipsec_xf *,
 int			 create_ike(char *, u_int8_t, struct ipsec_hosts *,
 			     struct ipsec_hosts *, struct ipsec_mode *,
 			     struct ipsec_mode *, u_int8_t,
-			     u_int8_t, char *, char *, struct iked_auth *,
-			     struct ipsec_filters *, struct ipsec_addr_wrap *);
+			     u_int8_t, char *, char *, struct iked_lifetime *,
+			     struct iked_auth *, struct ipsec_filters *,
+			     struct ipsec_addr_wrap *);
 int			 create_user(const char *, const char *);
 int			 get_id_type(char *);
 u_int8_t		 x2i(unsigned char *);
@@ -313,6 +319,7 @@ typedef struct {
 		} ids;
 		char			*id;
 		u_int8_t		 type;
+		struct iked_lifetime	 lifetime;
 		struct iked_auth	 ikeauth;
 		struct iked_auth	 ikekey;
 		struct ipsec_transforms	*transforms;
@@ -328,7 +335,7 @@ typedef struct {
 %token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
-%token	INCLUDE
+%token	INCLUDE LIFETIME
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -349,6 +356,8 @@ typedef struct {
 %type	<v.ikeauth>		ikeauth
 %type	<v.ikekey>		keyspec
 %type	<v.mode>		ike_sa child_sa
+%type	<v.lifetime>		lifetime
+%type	<v.number>		byte_spec time_spec
 %type	<v.string>		name
 %type	<v.cfg>			cfg ikecfg ikecfgvals
 %%
@@ -391,14 +400,14 @@ set		: SET ACTIVE	{ passive = 0; }
 
 user		: USER STRING STRING		{
 			if (create_user($2, $3) == -1)
-				YYERROR;		
+				YYERROR;
 		}
 		;
 
 ikev2rule	: IKEV2 name ikemode satype proto hosts_list peers
-		    ike_sa child_sa ids ikeauth ikecfg filters {
+		    ike_sa child_sa ids lifetime ikeauth ikecfg filters {
 			if (create_ike($2, $5, $6, &$7, $8, $9, $4, $3,
-			    $10.srcid, $10.dstid, &$11, $13, $12) == -1)
+			    $10.srcid, $10.dstid, &$11, &$12, $14, $13) == -1)
 				YYERROR;
 		}
 		;
@@ -745,7 +754,7 @@ ikeauth		: /* empty */			{
 			for (i = 0; i < strlen($2); i++)
 				if ($2[i] == '-')
 					$2[i] = '_';
-	
+
 			if (strcasecmp("mschap_v2", $2) != 0) {
 				yyerror("unsupported EAP method: %s", $2);
 				free($2);
@@ -758,6 +767,77 @@ ikeauth		: /* empty */			{
 			$$.auth_length = 0;
 		}
 		;
+
+byte_spec	: /* empty */			{
+			$$ = deflifetime.lt_bytes;
+		}
+		| NUMBER			{
+			$$ = $1;
+		}
+		| STRING			{
+			u_int64_t	 bytes = 0;
+			char		 unit = 0;
+
+			if (sscanf($1, "%llu%c", &bytes, &unit) != 2) {
+				yyerror("invalid byte specification: %s", $1);
+				YYERROR;
+			}
+			switch (unit) {
+			case 'K':
+			case 'k':
+				bytes *= 1024;
+				break;
+			case 'M':
+			case 'm':
+				bytes *= 1024 * 1024;
+				break;
+			case 'G':
+			case 'g':
+				bytes *= 1024 * 1024 * 1024;
+				break;
+			default:
+				yyerror("invalid byte unit");
+				YYERROR;
+			}
+			$$ = bytes;
+		}
+		;
+
+time_spec	: NUMBER			{
+			$$ = $1;
+		}
+		| STRING			{
+			u_int64_t	 seconds = 0;
+			char		 unit = 0;
+
+			if (sscanf($1, "%llu%c", &seconds, &unit) != 2) {
+				yyerror("invalid time specification: %s", $1);
+				YYERROR;
+			}
+			switch (unit) {
+			case 'M':
+			case 'm':
+				seconds *= 60;
+				break;
+			case 'H':
+			case 'h':
+				seconds *= 60 * 60;
+				break;
+			default:
+				yyerror("invalid time unit");
+				YYERROR;
+			}
+			$$ = seconds;
+		}
+		;
+
+lifetime	: /* empty */			{
+			$$ = deflifetime;
+		}
+		| LIFETIME time_spec byte_spec	{
+			$$.lt_bytes = $3;
+			$$.lt_seconds = $2;
+		}
 
 keyspec		: STRING			{
 			u_int8_t	*hex;
@@ -949,6 +1029,7 @@ lookup(char *s)
 		{ "ikesa",		IKESA },
 		{ "ikev2",		IKEV2 },
 		{ "include",		INCLUDE },
+		{ "lifetime",		LIFETIME },
 		{ "local",		LOCAL },
 		{ "name",		NAME },
 		{ "passive",		PASSIVE },
@@ -2163,6 +2244,9 @@ print_policy(struct iked_policy *pol)
 	if (pol->pol_peerid.id_length != 0)
 		print_verbose(" dstid %s", pol->pol_peerid.id_data);
 
+	print_verbose(" lifetime %d %d", pol->pol_lifetime.lt_seconds,
+	    pol->pol_lifetime.lt_bytes);
+
 	if (pol->pol_auth.auth_method == IKEV2_AUTH_SHARED_KEY_MIC) {
 			print_verbose(" psk 0x");
 			for (i = 0; i < pol->pol_auth.auth_length; i++)
@@ -2229,7 +2313,7 @@ int
 create_ike(char *name, u_int8_t ipproto, struct ipsec_hosts *hosts,
     struct ipsec_hosts *peers, struct ipsec_mode *ike_sa,
     struct ipsec_mode *ipsec_sa, u_int8_t saproto,
-    u_int8_t mode, char *srcid, char *dstid,
+    u_int8_t mode, char *srcid, char *dstid, struct iked_lifetime *lt,
     struct iked_auth *authtype, struct ipsec_filters *filter,
     struct ipsec_addr_wrap *ikecfg)
 {
@@ -2334,6 +2418,11 @@ create_ike(char *name, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		pol.pol_peermask = ipb->mask;
 		pol.pol_peernet = ipb->netaddress;
 	}
+
+	if (lt)
+		pol.pol_lifetime = *lt;
+	else
+		pol.pol_lifetime = deflifetime;
 
 	TAILQ_INIT(&pol.pol_proposals);
 	TAILQ_INIT(&pol.pol_flows);

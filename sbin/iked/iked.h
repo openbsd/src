@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.22 2010/12/01 12:01:25 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.23 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -96,8 +96,8 @@ struct iked_proposal {
 	u_int8_t			 prop_id;
 	u_int8_t			 prop_protoid;
 
-	struct iked_spi			 prop_localspi;	
-	struct iked_spi			 prop_peerspi;	
+	struct iked_spi			 prop_localspi;
+	struct iked_spi			 prop_peerspi;
 
 	struct iked_transform		*prop_xforms;
 	u_int				 prop_nxforms;
@@ -119,9 +119,7 @@ struct iked_flow {
 	struct iked_addr		 flow_dst;
 	u_int				 flow_dir;	/* in/out */
 
-	u_int64_t			 flow_peerspi;	/* peer relation */
 	u_int				 flow_loaded;	/* pfkey done */
-	u_int				 flow_rekey;	/* will be deleted */
 
 	u_int8_t			 flow_saproto;
 	u_int8_t			 flow_ipproto;
@@ -145,6 +143,7 @@ struct iked_childsa {
 	u_int8_t			 csa_loaded;	/* pfkey done */
 	u_int8_t			 csa_rekey;	/* will be deleted */
 	u_int8_t			 csa_allocated;	/* from the kernel */
+	u_int8_t			 csa_persistent;/* do not rekey */
 
 	struct iked_spi			 csa_spi;
 
@@ -161,8 +160,12 @@ struct iked_childsa {
 	struct iked_addr		*csa_peer;	/* outer dest */
 	struct iked_sa			*csa_ikesa;	/* parent SA */
 
+	struct iked_childsa		*csa_peersa;	/* peer */
+
+	RB_ENTRY(iked_childsa)		 csa_ipsec_entry;
 	TAILQ_ENTRY(iked_childsa)	 csa_entry;
 };
+RB_HEAD(iked_ipsecsas, iked_childsa);
 TAILQ_HEAD(iked_childsas, iked_childsa);
 
 
@@ -189,6 +192,11 @@ struct iked_cfg {
 };
 
 RB_HEAD(iked_sapeers, iked_sa);
+
+struct iked_lifetime {
+	u_int64_t			 lt_bytes;
+	u_int64_t			 lt_seconds;
+};
 
 struct iked_policy {
 	u_int				 pol_id;
@@ -230,6 +238,8 @@ struct iked_policy {
 
 	struct iked_cfg			 pol_cfg[IKED_CFG_MAX];
 	u_int				 pol_ncfg;
+
+	struct iked_lifetime		 pol_lifetime;
 
 	struct iked_sapeers		 pol_sapeers;
 
@@ -283,9 +293,11 @@ struct iked_id {
 #define IKED_REQ_AUTH		0x04	/* AUTH payload */
 #define IKED_REQ_SA		0x08	/* SA available */
 #define IKED_REQ_CHILDSA	0x10	/* Child SA initiated */
+#define IKED_REQ_INF		0x20	/* Informational exchange initiated */
+#define IKED_REQ_DELETE		0x40	/* Rekeying continuation */
 
 #define IKED_REQ_BITS	\
-    "\10\01CERT\02VALID\03AUTH\04SA\05CHILDSA"
+    "\10\01CERT\02VALID\03AUTH\04SA"
 
 struct iked_sahdr {
 	u_int64_t			 sh_ispi;	/* Initiator SPI */
@@ -296,6 +308,7 @@ struct iked_sahdr {
 struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	u_int32_t			 sa_msgid;
+	u_int32_t			 sa_reqid;
 
 	int				 sa_type;
 #define IKED_SATYPE_LOOKUP		 0		/* Used for lookup */
@@ -429,11 +442,13 @@ struct iked {
 	struct iked_policy		*sc_defaultcon;
 
 	struct iked_sas			 sc_sas;
+	struct iked_ipsecsas		 sc_ipsecsas;
 	struct iked_users		 sc_users;
 
 	void				*sc_priv;	/* per-process */
 
 	int				 sc_pfkey;	/* ike process */
+	struct event			 sc_pfkeyev;
 	u_int8_t			 sc_certreqtype;
 	struct ibuf			*sc_certreq;
 
@@ -466,6 +481,10 @@ struct iked_socket {
 	struct sockaddr_storage	 sock_addr;
 };
 
+/* flags for ikev2_childsa_delete */
+#define IKED_DEL_FLOWS		 0x01
+#define IKED_DEL_NOTLOADED	 0x02
+
 /* iked.c */
 void	 parent_reload(struct iked *, int, const char *);
 
@@ -490,8 +509,7 @@ void	 config_free_policy(struct iked *, struct iked_policy *);
 struct iked_proposal *
 	 config_add_proposal(struct iked_proposals *, u_int, u_int);
 void	 config_free_proposals(struct iked_proposals *, u_int);
-void	 config_free_flows(struct iked *, struct iked_flows *,
-	    struct iked_spi *);
+void	 config_free_flows(struct iked *, struct iked_flows *);
 void	 config_free_childsas(struct iked *, struct iked_childsas *,
 	    struct iked_spi *, struct iked_spi *);
 struct iked_transform *
@@ -511,7 +529,8 @@ int	 config_setsocket(struct iked *, struct sockaddr_storage *, in_port_t,
 int	 config_getsocket(struct iked *env, struct imsg *,
 	    void (*cb)(int, short, void *));
 int	 config_setpfkey(struct iked *, enum iked_procid);
-int	 config_getpfkey(struct iked *, struct imsg *);
+int	 config_getpfkey(struct iked *, struct imsg *,
+	    void (*)(int, short, void *));
 int	 config_setuser(struct iked *, struct iked_user *, enum iked_procid);
 int	 config_getuser(struct iked *, struct imsg *);
 
@@ -530,6 +549,8 @@ void	 sa_free(struct iked *, struct iked_sa *);
 int	 sa_address(struct iked_sa *, struct iked_addr *,
 	    struct sockaddr_storage *);
 void	 childsa_free(struct iked_childsa *);
+struct iked_childsa *
+	 childsa_lookup(struct iked_sa *, u_int64_t, u_int8_t);
 void	 flow_free(struct iked_flow *);
 struct iked_sa *
 	 sa_lookup(struct iked *, u_int64_t, u_int64_t, u_int);
@@ -541,6 +562,7 @@ RB_PROTOTYPE(iked_policies, iked_policy, pol_entry, policy_cmp);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_PROTOTYPE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
 RB_PROTOTYPE(iked_users, iked_user, user_entry, user_cmp);
+RB_PROTOTYPE(iked_ipsecsas, iked_childsa, csa_ipsec_entry, childsa_cmp);
 
 /* crypto.c */
 struct iked_hash *
@@ -596,6 +618,7 @@ int	 ikev2_init_ike_sa(struct iked *, struct iked_policy *);
 int	 ikev2_sa_negotiate(struct iked_sa *, struct iked_proposals *,
 	    struct iked_proposals *, u_int8_t);
 int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
+int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
 	    u_int8_t, u_int64_t, u_int64_t *, int);
 struct ibuf *
@@ -614,6 +637,9 @@ struct ikev2_payload *
 	 ikev2_add_payload(struct ibuf *);
 int	 ikev2_next_payload(struct ikev2_payload *, size_t,
 	    u_int8_t);
+void	 ikev2_disable_rekeying(struct iked *, struct iked_sa *);
+void	 ikev2_rekey_sa(struct iked *, struct iked_spi *);
+void	 ikev2_drop_sa(struct iked *, struct iked_spi *);
 
 /* ikev2_msg.c */
 void	 ikev2_msg_cb(int, short, void *);
@@ -662,6 +688,7 @@ int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
 int	 pfkey_sa_delete(int, struct iked_childsa *);
 int	 pfkey_flush(int);
 int	 pfkey_init(void);
+void	 pfkey_dispatch(int, short, void *);
 
 /* ca.c */
 pid_t	 caproc(struct iked *, struct iked_proc *);

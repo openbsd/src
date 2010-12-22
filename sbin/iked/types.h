@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.6 2010/06/29 21:04:42 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.7 2010/12/22 16:22:27 mikeb Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -55,6 +55,9 @@
 #define IKED_TAG_SIZE		64
 #define IKED_CYCLE_BUFFERS	4	/* # of static buffers for mapping */
 #define IKED_PASSWORD_SIZE	256	/* limited by most EAP types */
+
+#define IKED_LIFETIME_BYTES	536870912 /* 512 Mb */
+#define IKED_LIFETIME_SECONDS	10800	  /* 3 hours */
 
 #define IKED_E			0x1000	/* Decrypted flag */
 
