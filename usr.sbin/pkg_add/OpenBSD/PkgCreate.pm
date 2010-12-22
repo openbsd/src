@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.34 2010/12/21 11:25:19 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.35 2010/12/22 06:49:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -579,6 +579,11 @@ sub solve_from_ports
 	open(my $fh, "cd $portsdir && SUBDIR=$dep->{pkgpath} ECHO_MSG=: $make print-plist-with-depends|") or return undef;
 	my $plist = OpenBSD::PackingList->read($fh, 
 	    \&OpenBSD::PackingList::PrelinkStuffOnly);
+	if ($dep->spec->filter($plist->pkgname) == 0) {
+		$state->fatal("Dependency #1 doesn't match FULLPKGNAME: #2", 
+		    $dep->{pattern}, $plist->pkgname);
+	}
+
 	OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
 	$self->add_dep($plist);
 	return $plist->pkgname;
