@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.5 2010/09/30 10:32:23 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.6 2010/12/22 17:30:13 mikeb Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2010 $
+.Dd $Mdocdate: December 22 2010 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ is an Internet Key Exchange (IKEv2) daemon which performs mutual
 authentication and which establishes and maintains IPsec flows and
 security associations (SAs) between the two peers.
 .Pp
-The IKEv2 protocol is defined in RFC 4306,
+The IKEv2 protocol is defined in RFC 5996,
 which combines and updates the previous standards:
 ISAKMP/Oakley (RFC 2408),
 IKE (RFC 2409),
@@ -126,9 +126,9 @@ control socket.
 .Xr ikectl 8 ,
 .Xr isakmpd 8
 .Rs
-.%R RFC 4306
-.%T Internet Key Exchange (IKEv2) Protocol
-.%D December 2005
+.%R RFC 5996
+.%T Internet Key Exchange Protocol Version 2 (IKEv2)
+.%D September 2010
 .Re
 .Sh HISTORY
 The
