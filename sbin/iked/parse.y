@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2010/12/22 16:40:06 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ typedef struct {
 %token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
-%token	INCLUDE LIFETIME
+%token	INCLUDE LIFETIME BYTES
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -768,10 +768,7 @@ ikeauth		: /* empty */			{
 		}
 		;
 
-byte_spec	: /* empty */			{
-			$$ = deflifetime.lt_bytes;
-		}
-		| NUMBER			{
+byte_spec	: NUMBER			{
 			$$ = $1;
 		}
 		| STRING			{
@@ -782,17 +779,14 @@ byte_spec	: /* empty */			{
 				yyerror("invalid byte specification: %s", $1);
 				YYERROR;
 			}
-			switch (unit) {
+			switch (toupper(unit)) {
 			case 'K':
-			case 'k':
 				bytes *= 1024;
 				break;
 			case 'M':
-			case 'm':
 				bytes *= 1024 * 1024;
 				break;
 			case 'G':
-			case 'g':
 				bytes *= 1024 * 1024 * 1024;
 				break;
 			default:
@@ -814,12 +808,10 @@ time_spec	: NUMBER			{
 				yyerror("invalid time specification: %s", $1);
 				YYERROR;
 			}
-			switch (unit) {
-			case 'M':
+			switch (tolower(unit)) {
 			case 'm':
 				seconds *= 60;
 				break;
-			case 'H':
 			case 'h':
 				seconds *= 60 * 60;
 				break;
@@ -831,13 +823,18 @@ time_spec	: NUMBER			{
 		}
 		;
 
-lifetime	: /* empty */			{
+lifetime	: /* empty */				{
 			$$ = deflifetime;
 		}
-		| LIFETIME time_spec byte_spec	{
-			$$.lt_bytes = $3;
+		| LIFETIME time_spec			{
 			$$.lt_seconds = $2;
+			$$.lt_bytes = deflifetime.lt_bytes;
 		}
+		| LIFETIME time_spec BYTES byte_spec	{
+			$$.lt_seconds = $2;
+			$$.lt_bytes = $4;
+		}
+		;
 
 keyspec		: STRING			{
 			u_int8_t	*hex;
@@ -1013,6 +1010,7 @@ lookup(char *s)
 		{ "ah",			AH },
 		{ "any",		ANY },
 		{ "auth",		AUTHXF },
+		{ "bytes",		BYTES },
 		{ "childsa",		CHILDSA },
 		{ "config",		CONFIG },
 		{ "couple",		COUPLE },
@@ -2244,8 +2242,8 @@ print_policy(struct iked_policy *pol)
 	if (pol->pol_peerid.id_length != 0)
 		print_verbose(" dstid %s", pol->pol_peerid.id_data);
 
-	print_verbose(" lifetime %d %d", pol->pol_lifetime.lt_seconds,
-	    pol->pol_lifetime.lt_bytes);
+	print_verbose(" lifetime %llu bytes %llu",
+	    pol->pol_lifetime.lt_seconds, pol->pol_lifetime.lt_bytes);
 
 	if (pol->pol_auth.auth_method == IKEV2_AUTH_SHARED_KEY_MIC) {
 			print_verbose(" psk 0x");
