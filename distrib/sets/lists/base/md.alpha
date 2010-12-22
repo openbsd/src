@@ -1922,7 +1922,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/netisr.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/net/netisr_dispatch.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/pfvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/pipex.ph
