@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.58 2010/12/21 22:24:21 markus Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.59 2010/12/22 00:55:45 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -80,11 +80,19 @@ u_int32_t swcr_sesnum = 0;
 int32_t swcr_id = -1;
 
 #define COPYBACK(x, a, b, c, d) \
-	(x) == CRYPTO_BUF_MBUF ? m_copyback((struct mbuf *)a,b,c,d,M_NOWAIT) \
-	: cuio_copyback((struct uio *)a,b,c,d)
+	do { \
+		if ((x) == CRYPTO_BUF_MBUF) \
+			m_copyback((struct mbuf *)a,b,c,d,M_NOWAIT); \
+		else \
+			cuio_copyback((struct uio *)a,b,c,d); \
+	} while (0)
 #define COPYDATA(x, a, b, c, d) \
-	(x) == CRYPTO_BUF_MBUF ? m_copydata((struct mbuf *)a,b,c,d) \
-	: cuio_copydata((struct uio *)a,b,c,d)
+	do { \
+		if ((x) == CRYPTO_BUF_MBUF) \
+			m_copydata((struct mbuf *)a,b,c,d); \
+		else \
+			cuio_copydata((struct uio *)a,b,c,d); \
+	} while (0)
 
 /*
  * Apply a symmetric encryption/decryption algorithm.
@@ -122,9 +130,8 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 			arc4random_buf(iv, ivlen);
 
 		/* Do we need to write the IV */
-		if (!(crd->crd_flags & CRD_F_IV_PRESENT)) {
+		if (!(crd->crd_flags & CRD_F_IV_PRESENT))
 			COPYBACK(outtype, buf, crd->crd_inject, ivlen, iv);
-		}
 
 	} else {	/* Decryption */
 			/* IV explicitly provided ? */
@@ -538,9 +545,8 @@ swcr_combined(struct cryptop *crp)
 			arc4random_buf(iv, ivlen);
 
 		/* Do we need to write the IV */
-		if (!(crde->crd_flags & CRD_F_IV_PRESENT)) {
+		if (!(crde->crd_flags & CRD_F_IV_PRESENT))
 			COPYBACK(outtype, buf, crde->crd_inject, ivlen, iv);
-		}
 
 	} else {	/* Decryption */
 			/* IV explicitly provided ? */
