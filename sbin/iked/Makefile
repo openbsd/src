@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.5 2010/06/11 12:47:18 reyk Exp $
+# $OpenBSD: Makefile,v 1.6 2010/12/22 17:43:10 reyk Exp $
 # $vantronix: Makefile,v 1.22 2010/06/02 12:22:58 reyk Exp $
 
 PROG=		iked
 SRCS=		ca.c chap_ms.c config.c control.c crypto.c dh.c \
 		eap.c iked.c ikev1.c ikev2.c ikev2_msg.c ikev2_pld.c \
-		log.c pfkey.c policy.c proc.c timer.c util.c
+		log.c pfkey.c policy.c proc.c timer.c util.c imsg_util.c
 SRCS+=		${.OBJDIR}/eap_map.c ${.OBJDIR}/ikev2_map.c
 SRCS+=		parse.y
 MAN=		iked.conf.5 iked.8

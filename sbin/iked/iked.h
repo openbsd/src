@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.23 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.24 2010/12/22 17:43:10 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -721,18 +721,6 @@ pid_t	 run_proc(struct iked *, struct iked_proc *, struct iked_proc *,
 
 /* util.c */
 void	 socket_set_blockmode(int, enum blockmodes);
-void	 imsg_event_add(struct imsgev *);
-int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
-	    pid_t, int, void *, u_int16_t);
-int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
-	    pid_t, int, const struct iovec *, int);
-int	 imsg_compose_proc(struct iked *, enum iked_procid,
-	    u_int16_t, int, void *, u_int16_t);
-int	 imsg_composev_proc(struct iked *, enum iked_procid,
-	    u_int16_t, int, const struct iovec *, int);
-int	 imsg_forward_proc(struct iked *, struct imsg *,
-	    enum iked_procid);
-void	 imsg_flush_proc(struct iked *, enum iked_procid);
 int	 socket_af(struct sockaddr *, in_port_t);
 in_port_t
 	 socket_getport(struct sockaddr_storage *);
@@ -763,6 +751,19 @@ const char *
 int	 expand_string(char *, size_t, const char *, const char *);
 u_int8_t *string2unicode(const char *, size_t *);
 
+/* imsg_util.c */
+void	 imsg_event_add(struct imsgev *);
+int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, void *, u_int16_t);
+int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, const struct iovec *, int);
+int	 imsg_compose_proc(struct iked *, enum iked_procid,
+	    u_int16_t, int, void *, u_int16_t);
+int	 imsg_composev_proc(struct iked *, enum iked_procid,
+	    u_int16_t, int, const struct iovec *, int);
+int	 imsg_forward_proc(struct iked *, struct imsg *,
+	    enum iked_procid);
+void	 imsg_flush_proc(struct iked *, enum iked_procid);
 struct ibuf *
 	 ibuf_new(void *, size_t);
 struct ibuf *
