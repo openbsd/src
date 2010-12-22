@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.59 2010/10/17 20:26:51 guenther Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.60 2010/12/22 14:54:44 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -176,7 +176,7 @@ static int exponent(char *, int, int);
  */
 #define	ALT		0x0001		/* alternate form */
 #define	LADJUST		0x0004		/* left adjustment */
-#define	LONGDBL		0x0008		/* long double; unimplemented */
+#define	LONGDBL		0x0008		/* long double */
 #define	LONGINT		0x0010		/* long integer */
 #define	LLONGINT	0x0020		/* long long integer */
 #define	SHORTINT	0x0040		/* short integer */
