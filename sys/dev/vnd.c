@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.103 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.104 2010/12/22 13:12:14 jsing Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ struct pool     vndbufpl;
 struct vnd_softc {
 	struct device	 sc_dev;
 	struct disk	 sc_dk;
+	char		 sc_dk_name[16];
 
 	char		 sc_file[VNDNLEN];	/* file we're covering */
 	int		 sc_flags;		/* flags */
@@ -780,10 +781,21 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (error);
 		}
 
+		/* Set device name. */
 		bzero(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname));
 		if (snprintf(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname),
 		    "vnd%d", unit) >= sizeof(vnd->sc_dev.dv_xname)) {
 			printf("VNDIOCSET: device name too long\n");
+			vndunlock(vnd);
+			return(ENXIO);
+		}
+
+		/* Set disk name depending on how we were created. */
+		bzero(vnd->sc_dk_name, sizeof(vnd->sc_dk_name));
+		if (snprintf(vnd->sc_dk_name, sizeof(vnd->sc_dk_name),
+		    "%svnd%d", ((vnd->sc_flags & VNF_SIMPLE) ? "s" : ""),
+		    unit) >= sizeof(vnd->sc_dk_name)) {
+			printf("VNDIOCSET: disk name too long\n");
 			vndunlock(vnd);
 			return(ENXIO);
 		}
@@ -865,7 +877,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    vnd->sc_vp, (unsigned long long)vnd->sc_size);
 
 		/* Attach the disk. */
-		vnd->sc_dk.dk_name = vnd->sc_dev.dv_xname;
+		vnd->sc_dk.dk_name = vnd->sc_dk_name;
 		disk_attach(&vnd->sc_dev, &vnd->sc_dk);
 
 		vndunlock(vnd);
