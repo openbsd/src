@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.48 2010/10/30 21:16:58 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.49 2010/12/22 09:54:27 jakemsr Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -140,7 +140,8 @@ void ewx_codec_write(struct envy_softc *, int, int, int);
 void revo51_init(struct envy_softc *);
 void revo51_codec_write(struct envy_softc *, int, int, int);
 
-void tremor51_init(struct envy_softc *);
+void envy_ac97_init(struct envy_softc *);
+void dynex_sc51_init(struct envy_softc *);
 
 void julia_init(struct envy_softc *);
 void julia_codec_write(struct envy_softc *, int, int, int);
@@ -335,7 +336,13 @@ struct envy_card envy_cards[] = {
 		PCI_ID_CODE(0x1412, 0x2403),
 		"VIA Tremor 5.1",
 		2, &unkenvy_codec, 6, &unkenvy_codec,
-		tremor51_init,
+		envy_ac97_init,
+		unkenvy_codec_write
+	}, {
+		PCI_ID_CODE(0x14c3, 0x1705),
+		"Dynex DX-SC51",
+		2, &unkenvy_codec, 6, &unkenvy_codec,
+		dynex_sc51_init,
 		unkenvy_codec_write
 	}, {
 		0,
@@ -619,11 +626,11 @@ revo51_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 }
 
 /*
- * VIA Tremor 5.1 specific code
+ * Generic AC'97 initialization
  */
 
 void
-tremor51_init(struct envy_softc *sc)
+envy_ac97_init(struct envy_softc *sc)
 {
 	sc->isac97 = 1;
 	sc->host_if.arg = sc;
@@ -632,10 +639,20 @@ tremor51_init(struct envy_softc *sc)
 	sc->host_if.write = envy_ac97_write_codec;
 	sc->host_if.reset = envy_ac97_reset_codec;
 	sc->host_if.flags = envy_ac97_flags_codec;
-	sc->codec_flags = 0;
 
 	if (ac97_attach(&sc->host_if) != 0)
 		printf("%s: can't attach ac97\n", DEVNAME(sc));
+}
+
+/*
+ * Dynex
+ */
+
+void
+dynex_sc51_init(struct envy_softc *sc)
+{
+	sc->codec_flags |= AC97_HOST_VT1616_DYNEX;
+	envy_ac97_init(sc);
 }
 
 /*

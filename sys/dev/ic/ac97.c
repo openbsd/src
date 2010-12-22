@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.74 2010/08/08 20:37:33 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.75 2010/12/22 09:54:27 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -351,6 +351,7 @@ void	ac97_ad1886_init(struct ac97_softc *, int);
 void	ac97_ad198x_init(struct ac97_softc *, int);
 void	ac97_alc650_init(struct ac97_softc *, int);
 void	ac97_cx20468_init(struct ac97_softc *, int);
+void	ac97_vt1616_init(struct ac97_softc *, int);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -446,7 +447,7 @@ const struct ac97_codecid {
 	{ 0x11, 0xff, 0, 0,	"ICE1232" },
 	{ 0x14, 0xff, 0, 0,	"ICE1232A" },
 	{ 0x51, 0xff, 0, 0,	"VIA VT1616" },
-	{ 0x52, 0xff, 0, 0,	"VIA VT1616i" },
+	{ 0x52, 0xff, 0, 0,	"VIA VT1616i",	ac97_vt1616_init },
 }, ac97_it[] = {
 	{ 0x20, 0xff, 0, 0,	"ITE2226E" },
 	{ 0x60, 0xff, 0, 0,	"ITE2646E" },
@@ -1508,4 +1509,25 @@ ac97_cx20468_init(struct ac97_softc *as, int resuming)
 	ac97_read(as, AC97_CX_REG_MISC, &misc);
 	ac97_write(as, AC97_CX_REG_MISC, misc &
 	    ~(AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK));
+}
+
+void
+ac97_vt1616_init(struct ac97_softc *as, int resuming)
+{
+	u_int16_t reg;
+
+	if (as->host_if->flags(as->host_if->arg) & AC97_HOST_VT1616_DYNEX) {
+		ac97_read(as, AC97_VT_REG_TEST, &reg);
+
+		/* disable 'hp' mixer controls controlling the surround pins */
+		reg &= ~(AC97_VT_LVL);
+
+		/* disable downmixing */
+		reg &= ~(AC97_VT_LCTF | AC97_VT_STF);
+
+		/* enable DC offset removal */
+		reg |= AC97_VT_BPDC;
+
+		ac97_write(as, AC97_VT_REG_TEST, reg);
+	}
 }

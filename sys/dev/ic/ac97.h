@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.24 2010/08/08 20:37:33 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.25 2010/12/22 09:54:27 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -36,7 +36,8 @@ enum ac97_host_flags {
 	AC97_HOST_DONT_READ = 0x1,
 	AC97_HOST_DONT_READANY = 0x2,
 	AC97_HOST_SWAPPED_CHANNELS = 0x4,
-	AC97_HOST_ALC650_PIN47_IS_EAPD = 0x8
+	AC97_HOST_ALC650_PIN47_IS_EAPD = 0x8,
+	AC97_HOST_VT1616_DYNEX = 0x10
 };
 
 struct ac97_host_if {
@@ -236,6 +237,15 @@ void ac97_get_default_params(struct audio_params *);
 #define AC97_CX_MASK		0x03
 #define AC97_CX_COPYRIGHT	0x04
 #define AC97_CX_SPDIFEN		0x08
+
+
+/* VIA codec specific data */
+#define AC97_VT_REG_TEST	0x5a
+#define AC97_VT_LVL		0x8000	/* hp controls rear */
+#define AC97_VT_LCTF		0x1000	/* lfe/center to front downmix */
+#define AC97_VT_STF		0x0800	/* surround to front downmix */
+#define AC97_VT_BPDC		0x0400	/* enable DC-offset cancellation */
+#define AC97_VT_DC		0x0200	/* DC offset cancellation capable */
 
 #define AC97_IS_FIXED_RATE(codec)	!((codec)->vtbl->get_caps(codec) & \
     AC97_EXT_AUDIO_VRA)
