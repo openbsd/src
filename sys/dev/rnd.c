@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.104 2010/11/21 22:58:40 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.105 2010/12/22 18:16:24 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -1105,7 +1105,7 @@ filt_rndwrite(struct knote *kn, long hint)
 int
 randomwrite(dev_t dev, struct uio *uio, int flags)
 {
-	int		ret = 0;
+	int		ret = 0, newdata = 0;
 	u_int32_t	*buf;
 
 	if (minor(dev) == RND_RND)
@@ -1117,18 +1117,22 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
 
 	while (!ret && uio->uio_resid > 0) {
-		u_short	n = min(POOLBYTES, uio->uio_resid);
+		u_int	n = min(POOLBYTES, uio->uio_resid);
 
-		ret = uiomove((caddr_t)buf, n, uio);
-		if (!ret) {
-			while (n % sizeof(u_int32_t))
-				((u_int8_t *) buf)[n++] = 0;
-			add_entropy_words(buf, n / 4);
-		}
+		ret = uiomove(buf, n, uio);
+		if (ret)
+			break;
+		while (n % sizeof(u_int32_t))
+			((u_int8_t *) buf)[n++] = 0;
+		add_entropy_words(buf, n / 4);
+		newdata = 1;
 	}
 
-	if (!ret)
+	if (newdata) {
+		mtx_enter(&rndlock);
 		arc4random_initialized = 0;
+		mtx_leave(&rndlock);
+	}
 
 	free(buf, M_TEMP);
 	return ret;
