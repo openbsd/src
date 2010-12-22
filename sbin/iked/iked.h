@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.24 2010/12/22 17:43:10 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.25 2010/12/22 17:53:54 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -640,6 +640,7 @@ int	 ikev2_next_payload(struct ikev2_payload *, size_t,
 void	 ikev2_disable_rekeying(struct iked *, struct iked_sa *);
 void	 ikev2_rekey_sa(struct iked *, struct iked_spi *);
 void	 ikev2_drop_sa(struct iked *, struct iked_spi *);
+int	 ikev2_print_id(struct iked_id *, char *, size_t);
 
 /* ikev2_msg.c */
 void	 ikev2_msg_cb(int, short, void *);
@@ -745,7 +746,6 @@ u_int32_t
 const char *
 	 print_host(struct sockaddr_storage *, char *, size_t);
 char	*get_string(u_int8_t *, size_t);
-int	 print_id(struct iked_id *, char *, size_t);
 const char *
 	 print_proto(u_int8_t);
 int	 expand_string(char *, size_t, const char *, const char *);

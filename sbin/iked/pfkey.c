@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.9 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.10 2010/12/22 17:53:54 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1160,7 +1160,7 @@ pfkey_id2ident(struct iked_id *id, u_int exttype)
 
 	bzero(&idstr, sizeof(idstr));
 
-	if (print_id(id, idstr, sizeof(idstr)) == -1)
+	if (ikev2_print_id(id, idstr, sizeof(idstr)) == -1)
 		return (NULL);
 
 	len = ROUNDUP(strlen(idstr) + 1) + sizeof(*sa_id);

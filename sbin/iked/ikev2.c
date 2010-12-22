@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.27 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.28 2010/12/22 17:53:54 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1001,7 +1001,7 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 		break;
 	}
 
-	if (print_id(id, idstr, sizeof(idstr)) == -1)
+	if (ikev2_print_id(id, idstr, sizeof(idstr)) == -1)
 		return (-1);
 
 	log_debug("%s: %s %s length %d", __func__,
@@ -3265,7 +3265,7 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 		goto fail;
 	}
 
-	if (print_id(id, idstr, sizeof(idstr)) == -1) {
+	if (ikev2_print_id(id, idstr, sizeof(idstr)) == -1) {
 		log_debug("%s: invalid id", __func__);
 		goto fail;
 	}
@@ -3850,3 +3850,94 @@ done:
 	ibuf_release(buf);
 	return;
 }
+
+int
+ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
+{
+	u_int8_t			 buf[BUFSIZ], *ptr;
+	struct sockaddr_in		*s4;
+	struct sockaddr_in6		*s6;
+	char				*str;
+	ssize_t				 len;
+	int				 i;
+	const char			*type;
+
+	bzero(buf, sizeof(buf));
+	bzero(idstr, idstrlen);
+
+	if (id->id_buf == NULL)
+		return (-1);
+
+	len = ibuf_size(id->id_buf);
+	ptr = ibuf_data(id->id_buf);
+
+	if (len <= id->id_offset)
+		return (-1);
+
+	len -= id->id_offset;
+	ptr += id->id_offset;
+
+	type = print_map(id->id_type, ikev2_id_map);
+
+	if (strlcpy(idstr, type, idstrlen) >= idstrlen ||
+	    strlcat(idstr, "/", idstrlen) >= idstrlen)
+		return (-1);
+
+	idstr += strlen(idstr);
+	idstrlen -= strlen(idstr);
+
+	switch (id->id_type) {
+	case IKEV2_ID_IPV4:
+		s4 = (struct sockaddr_in *)buf;
+		s4->sin_family = AF_INET;
+		s4->sin_len = sizeof(*s4);
+		memcpy(&s4->sin_addr.s_addr, ptr, len);
+
+		if (print_host((struct sockaddr_storage *)s4,
+		    idstr, idstrlen) == NULL)
+			return (-1);
+		break;
+	case IKEV2_ID_FQDN:
+	case IKEV2_ID_UFQDN:
+		if (len >= (ssize_t)sizeof(buf))
+			return (-1);
+
+		if ((str = get_string(ptr, len)) == NULL)
+			return (-1);
+
+		if (strlcpy(idstr, str, idstrlen) >= idstrlen) {
+			free(str);
+			return (-1);
+		}
+		free(str);
+		break;
+	case IKEV2_ID_IPV6:
+		s6 = (struct sockaddr_in6 *)buf;
+		s6->sin6_family = AF_INET6;
+		s6->sin6_len = sizeof(*s6);
+		memcpy(&s6->sin6_addr, ptr, len);
+
+		if (print_host((struct sockaddr_storage *)s6,
+		    idstr, idstrlen) == NULL)
+			return (-1);
+		break;
+	case IKEV2_ID_ASN1_DN:
+		if ((str = ca_asn1_name(ptr, len)) == NULL)
+			return (-1);
+		if (strlcpy(idstr, str, idstrlen) >= idstrlen) {
+			free(str);
+			return (-1);
+		}
+		free(str);
+		break;
+	default:
+		/* XXX test */
+		for (i = 0; i < ((ssize_t)idstrlen - 1) && i < len; i++)
+			snprintf(idstr + i, idstrlen - i,
+			    "%02x", ptr[i]);
+		break;
+	}
+
+	return (0);
+}
+ 

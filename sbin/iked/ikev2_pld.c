@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.17 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.18 2010/12/22 17:53:54 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	if ((idb.id_buf = ibuf_new(ptr, len)) == NULL)
 		return (-1);
 
-	if (print_id(&idb, idstr, sizeof(idstr)) == -1) {
+	if (ikev2_print_id(&idb, idstr, sizeof(idstr)) == -1) {
 		log_debug("%s: malformed id", __func__);
 		return (-1);
 	}
