@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.13 2010/12/21 15:47:52 millert Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.14 2010/12/22 17:24:32 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -86,23 +86,25 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 			return -1;
 		}
 	}
-	if (fd == -1 && errno == ENOENT && (dflags & OPENDEV_PART)) {
-		/*
-		 * First try raw partition (for removable drives)
-		 */
-		if (snprintf(namebuf, sizeof(namebuf), "%s%s%s%c",
-		    _PATH_DEV, prefix, path, 'a' + getrawpartition())
-		    < sizeof(namebuf)) {
-			fd = open(namebuf, oflags);
-		} else
-			errno = ENAMETOOLONG;
-	}
 	if (!slash && fd == -1 && errno == ENOENT) {
-		if (snprintf(namebuf, sizeof(namebuf), "%s%s%s",
-		    _PATH_DEV, prefix, path) < sizeof(namebuf)) {
-			fd = open(namebuf, oflags);
-		} else
-			errno = ENAMETOOLONG;
+		if (dflags & OPENDEV_PART) {
+			/*
+			 * First try raw partition (for removable drives)
+			 */
+			if (snprintf(namebuf, sizeof(namebuf), "%s%s%s%c",
+			    _PATH_DEV, prefix, path, 'a' + getrawpartition())
+			    < sizeof(namebuf)) {
+				fd = open(namebuf, oflags);
+			} else
+				errno = ENAMETOOLONG;
+		}
+		if (fd == -1 && errno == ENOENT) {
+			if (snprintf(namebuf, sizeof(namebuf), "%s%s%s",
+			    _PATH_DEV, prefix, path) < sizeof(namebuf)) {
+				fd = open(namebuf, oflags);
+			} else
+				errno = ENAMETOOLONG;
+		}
 	}
 	if (realpath)
 		*realpath = namebuf;
