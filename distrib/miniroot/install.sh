@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.212 2010/12/22 18:23:54 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.213 2010/12/22 21:23:26 todd Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -272,7 +272,8 @@ for _f in fstab hostname* kbdtype my* ttys *.conf *.tail; do
 done )
 
 # Feed the random pool some junk before we read from it
-dmesg >/mnt/dev/arandom
+(dmesg; cat $SERVERLISTALL; sysctl; route -n show; df;
+    ifconfig -A; hostname) >/mnt/dev/arandom 2>&1
 cat $SERVERLISTALL >/mnt/dev/arandom 2>/dev/null
 
 echo -n "done.\nGenerating initial host.random file..."
