@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.483 2010/12/22 21:05:19 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.484 2010/12/22 22:20:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -981,12 +981,25 @@ an ICMP UNREACHABLE is returned for blocked UDP packets,
 and all other packets are silently dropped.
 .El
 .It Ar set debug
-Set the debug level which limits the severity of log messages printed by pf(4).
-This should be a keyword from the following ordered list (highest to lowest):
-emerg, alert, crit, err, warning, notice, info, and debug.
-The last keyword, debug, must be quoted.
+Set the debug
+.Ar level ,
+which limits the severity of log messages printed by
+.Xr pf 4 .
+This should be a keyword from the following ordered list
+(highest to lowest):
+.Cm emerg ,
+.Cm alert ,
+.Cm crit ,
+.Cm err ,
+.Cm warning ,
+.Cm notice ,
+.Cm info ,
+and
+.Cm debug .
 These keywords correspond to the similar (LOG_) values specified to the
-syslog(3) library routine, and may be abbreviated.
+.Xr syslog 3
+library routine,
+and may be abbreviated.
 .It Ar set fingerprints
 Load fingerprints of known operating systems from the given filename.
 By default fingerprints of known operating systems are automatically
