@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2010/12/21 13:24:11 mikeb Exp $	*/
+/*	$OpenBSD: control.c,v 1.5 2010/12/22 16:37:52 reyk Exp $	*/
 /*	$vantronix: control.c,v 1.4 2010/05/14 07:35:52 reyk Exp $	*/
 
 /*
@@ -165,8 +165,9 @@ control_accept(int listenfd, short event, void *arg)
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
+	c->iev.data = env;
 	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
-	    c->iev.handler, env);
+	    c->iev.handler, c->iev.data);
 	event_add(&c->iev.ev, NULL);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
