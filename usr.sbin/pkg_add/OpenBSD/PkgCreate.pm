@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.35 2010/12/22 06:49:24 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.36 2010/12/22 14:50:45 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -555,15 +555,9 @@ sub really_solve_dependency
 		$v = $self->find_dep_in_self($state, $dep);
 	}
 	
-	# and in built tree if other packages have the same BASE_PKGPATH
+	# and in portstree otherwise
 	if (!defined $v) {
-		my $f = $state->{subst}->value('FULLPKGPATH');
-		$f =~ s/,.*//;
-		my $f2 = $dep->{pkgpath};
-		$f2 =~ s/,.*//;
-		if ($f eq $f2) {
-			return $self->solve_from_ports($state, $dep, $package);
-		}
+		$v = $self->solve_from_ports($state, $dep, $package);
 	}
 	return $v;
 }
@@ -580,7 +574,7 @@ sub solve_from_ports
 	my $plist = OpenBSD::PackingList->read($fh, 
 	    \&OpenBSD::PackingList::PrelinkStuffOnly);
 	if ($dep->spec->filter($plist->pkgname) == 0) {
-		$state->fatal("Dependency #1 doesn't match FULLPKGNAME: #2", 
+		$state->error("Dependency #1 doesn't match FULLPKGNAME: #2", 
 		    $dep->{pattern}, $plist->pkgname);
 	}
 
@@ -1099,8 +1093,9 @@ sub parse_and_run
 	$state->{base} = $base;
 
 	$plist->discover_directories($state);
-	$self->check_dependencies($plist, $state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
+		$state->set_status("checking dependencies");
+		$self->check_dependencies($plist, $state);
 		$state->set_status("checksumming");
 		if ($regen_package) {
 			$state->progress->visit_with_count($plist, 'verify_checksum', $state);
