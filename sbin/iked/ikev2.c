@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.28 2010/12/22 17:53:54 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.29 2010/12/23 15:11:19 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2428,10 +2428,10 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto done;
 		if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
 			goto done;
-
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
-			goto done;
 	}
+
+	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
+		goto done;
 
 	ret = ikev2_msg_send_encrypt(env, sa, &e,
 	    IKEV2_EXCHANGE_CREATE_CHILD_SA, IKEV2_PAYLOAD_SA, 1);
