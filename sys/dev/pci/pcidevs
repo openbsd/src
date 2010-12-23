@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1579 2010/12/23 01:33:47 krw Exp $
+$OpenBSD: pcidevs,v 1.1580 2010/12/23 15:00:49 jasper Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -312,6 +312,7 @@ vendor	ASPEED		0x1a03	ASPEED Technology
 vendor	AWT		0x1a3b	AWT
 vendor	FUSIONIO	0x1aed	Fusion-io
 vendor	QUMRANET	0x1af4	Qumranet
+vendor	MARVELL2	0x1b4b	Marvell
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	TEHUTI		0x1fc9	Tehuti Networks
@@ -3252,16 +3253,16 @@ product INTEL 21152		0xb152	S21152BB PCI-PCI
 product INTEL 21154		0xb154	21154AE/BE PCI-PCI
 product INTEL CORE_DMI_0	0xd130	Core DMI
 product INTEL CORE_DMI_1	0xd131	Core DMI
-product INTEL CORE_DMI_5	0xd132	Core DMI
+product INTEL CORE_DMI_2	0xd132	Core DMI
 product INTEL CORE_PCIE_2	0xd138	Core PCIE
 product INTEL CORE_PCIE_3	0xd139	Core PCIE
 product INTEL CORE_PCIE_4	0xd13a	Core PCIE
 product INTEL CORE_PCIE_5	0xd13b	Core PCIE
 product INTEL CORE_QPI_L	0xd150	Core QPI Link
 product INTEL CORE_QPI_R	0xd151	Core QPI Routing
-product INTEL CORE_DMI_2	0xd152	Core DMI
-product INTEL CORE_DMI_3	0xd153	Core DMI
-product INTEL CORE_DMI_4	0xd154	Core DMI
+product INTEL CORE_DMI_3	0xd152	Core DMI
+product INTEL CORE_DMI_4	0xd153	Core DMI
+product INTEL CORE_DMI_5	0xd154	Core DMI
 product INTEL CORE_MANAGEMENT	0xd155	Core Management
 product INTEL CORE_SCRATCH	0xd156	Core Scratch
 product INTEL CORE_CONTROL	0xd157	Core Control
@@ -3495,6 +3496,7 @@ product MARVELL 88SE6140	0x6140	88SE6140 SATA
 product MARVELL 88SE6141	0x6141	88SE6141 SATA
 product MARVELL 88SE6145	0x6145	88SE6145 SATA
 product MARVELL 88SX7042	0x7042	88SX7042 SATA
+product MARVELL2 88SE9123	0x9123	88SE9123 SATA
 
 /* Matrox products */
 product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
