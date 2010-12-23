@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 2010/06/27 12:41:23 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.54 2010/12/23 19:53:29 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -430,7 +430,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 		panic("pmap_map: start greater than end address");
 #endif
 
-	template = m88k_protection(prot) | cmode | PG_V;
+	template = m88k_protection(prot) | cmode | PG_W | PG_V;
 #ifdef M88110
 	if (CPU_IS88110 && m88k_protection(prot) != PG_RO)
 		template |= PG_M;
@@ -452,6 +452,8 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 		*pte = template | page;
 		virt += PAGE_SIZE;
 		page += PAGE_SIZE;
+		kernel_pmap->pm_stats.resident_count++;
+		kernel_pmap->pm_stats.wired_count++;
 	}
 	return virt;
 }
@@ -677,12 +679,11 @@ pmap_bootstrap(vaddr_t load_start)
 	e_text = round_page((vaddr_t)&etext);	/* paddr of end of text */
 
 	/* map the PROM area */
-	vaddr = pmap_map(0, 0, s_text, VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
+	pmap_map(0, 0, s_text, VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 	/* map the kernel text read only */
-	vaddr = pmap_map(s_text, s_text, e_text, VM_PROT_READ, 0);
-
-	vaddr = pmap_map(vaddr, e_text, (paddr_t)kmap,
+	pmap_map(s_text, s_text, e_text, VM_PROT_READ, 0);
+	vaddr = pmap_map(e_text, e_text, (paddr_t)kmap,
 	    VM_PROT_WRITE | VM_PROT_READ, 0);
 
 	/*
