@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2010/12/22 16:40:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2010/12/23 16:39:38 mikeb Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -1881,10 +1881,12 @@ ifa_load(void)
 		if (n->af == AF_INET) {
 			sa_in = (struct sockaddr_in *)ifa->ifa_addr;
 			memcpy(&n->address, sa_in, sizeof(*sa_in));
+			sa_in = (struct sockaddr_in *)ifa->ifa_netmask;
 			n->mask = mask2prefixlen(sa_in);
 		} else if (n->af == AF_INET6) {
 			sa_in6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 			memcpy(&n->address, sa_in6, sizeof(*sa_in6));
+			sa_in6 = (struct sockaddr_in6 *)ifa->ifa_netmask;
 			n->mask = mask2prefixlen6(sa_in6);
 		}
 		n->next = NULL;
