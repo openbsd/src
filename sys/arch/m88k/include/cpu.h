@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.50 2010/09/28 20:27:55 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.51 2010/12/23 20:05:08 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -276,6 +276,8 @@ void	signotify(struct proc *);
 void	softipi(void);
 
 int	badaddr(vaddr_t addr, int size);
+void	set_vbr(register_t);
+extern register_t kernel_vbr;
 
 #endif /* _KERNEL */
 #endif /* __M88K_CPU_H__ */

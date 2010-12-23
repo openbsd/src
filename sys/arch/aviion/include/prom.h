@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.3 2010/04/24 18:46:55 miod Exp $	*/
+/*	$OpenBSD: prom.h,v 1.4 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -81,7 +81,5 @@ void	scm_putc(int);
 void	scm_putcrlf(void);
 __dead void scm_reboot(const char *);
 u_int	scm_sysid(void);
-
-extern u_int32_t scmvec[2], osvec[2];		/* SCM trap vector copies */
 
 #endif /* __AVIION_PROM_H__ */

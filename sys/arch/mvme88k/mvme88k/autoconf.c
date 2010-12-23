@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.46 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.47 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -40,8 +40,11 @@
 #include <sys/disklabel.h>
 #include <sys/kernel.h>
 
+#include <uvm/uvm.h>
+
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
 #include <machine/autoconf.h>
+#include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
 
@@ -71,16 +74,12 @@ struct device *bootdv;	/* set by device drivers (if found) */
 void
 cpu_configure()
 {
+	extern void cpu_hatch_secondary_processors(void *);
 	softintr_init();
 
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 
-	/*
-	 * Turn external interrupts on.
-	 */
-	set_psr(get_psr() & ~PSR_IND);
-	spl0();
 
 	/*
 	 * Finally switch to the real console driver,
@@ -89,7 +88,35 @@ cpu_configure()
 	cn_tab = NULL;
 	cninit();
 
+#ifdef MULTIPROCESSOR
+	/*
+	 * Spin up the other processors, but do not give them work to
+	 * do yet. This is normally done when attaching mainbus, but
+	 * on MVME188 boards, the system hangs if secondary processors
+	 * try to issue BUG calls (i.e. when printing their information
+	 * on console), so this has been postponed until now.
+	 */
+	if (brdtyp == BRD_188)
+		cpu_hatch_secondary_processors(NULL);
+#endif
+
+	/* NO BUG CALLS FROM NOW ON */
+
+	/*
+	 * Switch to our final trap vectors, and unmap whatever is below
+	 * the kernel.
+	 */
+	set_vbr(kernel_vbr);
+	pmap_kremove(0, (vsize_t)kernel_vbr);
+	pmap_update(pmap_kernel());
+
 	cold = 0;
+
+	/*
+	 * Turn external interrupts on.
+	 */
+	set_psr(get_psr() & ~PSR_IND);
+	spl0();
 }
 
 void

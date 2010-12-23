@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.18 2010/04/20 20:28:18 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.19 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1193,3 +1193,37 @@ ASENTRY(setup_psr)
 	FLUSH_PIPELINE
 
 	jmp	r1
+
+/*
+ * Update the VBR value.
+ * This needs to be done with interrupts and shadowing disabled.
+ */
+GLOBAL(set_vbr)
+	ldcr	r3, PSR
+	set	r4, r3, 1<PSR_INTERRUPT_DISABLE_BIT>
+	set	r4, r4, 1<PSR_SHADOW_FREEZE_BIT>
+	stcr	r4, PSR
+	FLUSH_PIPELINE
+
+	stcr	r2, VBR
+	FLUSH_PIPELINE
+
+#if defined(M88100) && defined(M88110)
+	ldcr	r2,  PID
+	extu	r5,  r2, 8<8>
+	cmp	r4, r5, CPU_88110
+	bb1	eq, r4, 1f
+#endif
+#ifdef M88100
+	/* 88100 */
+	stcr	r3, PSR
+	FLUSH_PIPELINE
+	jmp	r1
+#endif
+#ifdef M88110
+1:
+	/* 88110 */
+	stcr	r1, EXIP
+	stcr	r3, EPSR
+	RTE
+#endif

@@ -1,5 +1,29 @@
-/*	$OpenBSD: bugio.c,v 1.18 2007/12/15 19:35:50 miod Exp $ */
-/*  Copyright (c) 1998 Steve Murphree, Jr. */
+/*	$OpenBSD: bugio.c,v 1.19 2010/12/23 20:05:08 miod Exp $ */
+/*
+ * Copyright (c) 2006, 2010, Miodrag Vallat.
+ * Copyright (c) 1998 Steve Murphree, Jr.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -10,11 +34,6 @@
 
 register_t ossr3;
 register_t bugsr3;
-
-unsigned long bugvec[32], sysbugvec[32];
-
-void bug_vector(void);
-void sysbug_vector(void);
 
 #ifdef MULTIPROCESSOR
 #include <sys/lock.h>
@@ -27,39 +46,15 @@ __cpu_simple_lock_t bug_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
 #define MVMEPROM_CALL(x)						\
-	__asm__ __volatile__ ("or r9,r0," __STRING(x));			\
-	__asm__ __volatile__ ("tb0 0,r0,496" :::			\
-	    "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",		\
-	    "r9", "r10", "r11", "r12", "r13")
-
-void
-bug_vector()
-{
-	unsigned long *vbr;
-	int i;
-
-	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
-	for (i = 0; i < 32; i++)
-		vbr[2 * MVMEPROM_VECTOR + i] = bugvec[i];
-}
-
-void
-sysbug_vector()
-{
-	unsigned long *vbr;
-	int i;
-
-	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
-	for (i = 0; i < 32; i++)
-		vbr[2 * MVMEPROM_VECTOR + i] = sysbugvec[i];
-}
+	__asm__ __volatile__ ("or r9,r0," __STRING(x) "; tb0 0,r0,496"	\
+	    :::	"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",		\
+	        "r9", "r10", "r11", "r12", "r13", "memory")
 
 #define	BUGCTXT()							\
 {									\
 	BUG_LOCK();							\
 	psr = get_psr();						\
 	set_psr(psr | PSR_IND);			/* paranoia */		\
-	bug_vector();							\
 	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (ossr3));		\
 	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(bugsr3));		\
 }
@@ -68,7 +63,6 @@ sysbug_vector()
 {									\
 	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (bugsr3));		\
 	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(ossr3));		\
-	sysbug_vector();						\
 	set_psr(psr);							\
 	BUG_UNLOCK();							\
 }
@@ -77,6 +71,11 @@ void
 bugpcrlf(void)
 {
 	u_int psr;
+
+#ifdef DIAGNOSTIC
+	if (!cold)
+		panic("%s: BUG calls are forbidden at this point", __func__);
+#endif
 
 	BUGCTXT();
 	MVMEPROM_CALL(MVMEPROM_OUTCRLF);
@@ -95,6 +94,11 @@ buginchr(void)
 	u_int psr;
 	int ret;
 
+#ifdef DIAGNOSTIC
+	if (!cold)
+		panic("%s: BUG calls are forbidden at this point", __func__);
+#endif
+
 	BUGCTXT();
 	MVMEPROM_CALL(MVMEPROM_INCHR);
 	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (ret));
@@ -107,6 +111,11 @@ bugoutchr(int c)
 {
 	u_int psr;
 
+#ifdef DIAGNOSTIC
+	if (!cold)
+		panic("%s: BUG calls are forbidden at this point", __func__);
+#endif
+
 	BUGCTXT();
 	__asm__ __volatile__ ("or r2,r0,%0" : : "r" (c));
 	MVMEPROM_CALL(MVMEPROM_OUTCHR);
@@ -118,6 +127,11 @@ bugreturn(void)
 {
 	u_int psr;
 
+#ifdef DIAGNOSTIC
+	if (!cold)
+		panic("%s: BUG calls are forbidden at this point", __func__);
+#endif
+
 	BUGCTXT();
 	MVMEPROM_CALL(MVMEPROM_EXIT);
 	OSCTXT();
@@ -128,6 +142,11 @@ bugbrdid(struct mvmeprom_brdid *id)
 {
 	u_int psr;
 	struct mvmeprom_brdid *ptr;
+
+#ifdef DIAGNOSTIC
+	if (!cold)
+		panic("%s: BUG calls are forbidden at this point", __func__);
+#endif
 
 	BUGCTXT();
 	MVMEPROM_CALL(MVMEPROM_GETBRDID);
@@ -141,6 +160,11 @@ void
 bugdiskrd(struct mvmeprom_dskio *dio)
 {
 	u_int psr;
+
+#ifdef DIAGNOSTIC
+	if (!cold)
+		panic("%s: BUG calls are forbidden at this point", __func__);
+#endif
 
 	BUGCTXT();
 	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (dio));
@@ -159,9 +183,14 @@ spin_cpu(cpuid_t cpu, vaddr_t address)
 	u_int psr;
 	int ret;
 
+#ifdef DIAGNOSTIC
+	if (!cold)
+		panic("%s: BUG calls are forbidden at this point", __func__);
+#endif
+
 	BUGCTXT();
-	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (cpu));
-	__asm__ __volatile__ ("or r3, r0, %0" : : "r" (address));
+	__asm__ __volatile__ ("or r2, r0, %0; or r3, r0, %1" ::
+	    "r" (cpu), "r" (address));
 	MVMEPROM_CALL(MVMEPROM_FORKMPU);
 	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (ret));
 	OSCTXT();

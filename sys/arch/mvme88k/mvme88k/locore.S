@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.66 2009/09/20 19:17:47 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.67 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -90,6 +90,33 @@ ASGLOBAL(start)
 	br	_ASM_LABEL(main_start)
 
 	/*
+	 * Room for the kernel (post-autoconf) VBR page. This is allocating
+	 * a bit too much (since kernel_text starts after the a.out header),
+	 * but it's a waste we can afford.
+	 * Note this page is in kernel text, in order to be write-protected
+	 * by pmap_bootstrap().
+	 */
+#ifdef __ELF__
+	space	PAGE_SIZE - 4 * 4
+#else
+	space	PAGE_SIZE - 4 * 4 - 0x20
+#endif
+
+#ifdef M88100
+	/*
+	 * The 88100 may execute the first instruction of the next trap
+	 * handler, as documented in its Errata. Processing trap #511
+	 * would then fall into the next page, unless the address computation
+	 * wraps, or software traps are exempt from the issue - the Errata
+	 * does not provide more detail.
+	 * Although the MVME BUG does not add an extra NOP after its VBR page,
+	 * it is cheap to add an extra NOP for safety.
+	 */
+	NOP
+#endif
+
+
+	/*
 	 * Startup code for main processor.
 	 */
 ASLOCAL(main_start)
@@ -126,12 +153,9 @@ ASLOCAL(main_start)
 	ldcr	r1,  PID
 	extu	r8,  r1, 8<8>
 	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
-	st	r8,  r13, lo16(_C_LABEL(cputyp))
 
-	bsr	_ASM_LABEL(setup_psr)
-
-	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
-	FLUSH_PIPELINE
+	bsr.n	_ASM_LABEL(setup_psr)
+	 st	r8,  r13, lo16(_C_LABEL(cputyp))
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -154,6 +178,7 @@ ASLOCAL(main_start)
 	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
 	or	r31, r31, lo16(_ASM_LABEL(initstack_end))
 
+	/* ...and to our exception vectors */
 #ifdef M88110
 #ifdef M88100
 	cmp	r2, r8, CPU_88110
@@ -171,6 +196,10 @@ ASLOCAL(main_start)
 2:
 	bsr.n	_C_LABEL(mvme88k_vector_init)
 	 ldcr	r2, VBR
+
+#ifdef MULTIPROCESSOR
+	bsr	_C_LABEL(atomic_init)
+#endif
 
 	/*
 	 * mvme_bootstrap(), among other things, clears proc0's u area.
@@ -198,12 +227,13 @@ ASLOCAL(main_start)
 	 */
 GLOBAL(secondary_start)
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
-	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
+	bsr.n	_ASM_LABEL(setup_psr)
+	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
-	bsr	_ASM_LABEL(setup_psr)
-
-	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
-	FLUSH_PIPELINE
+	/*
+	 * We expect secondary processors to start running with the same 
+	 * VBR value as the primary one.
+	 */
 
 	/*
 	 * Have curcpu() point at the dummy cpuinfo structure,
@@ -348,6 +378,7 @@ ASLOCAL(slavestack_end)
 	.align	PAGE_SIZE
 ASLOCAL(u0)
 	space	USPACE
+
 GLOBAL(proc0paddr)
 	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 

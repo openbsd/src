@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.50 2009/04/19 17:56:13 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.51 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -83,7 +83,8 @@ typedef struct {
 void	dumpconf(void);
 void	dumpsys(void);
 void	regdump(struct trapframe *f);
-void	vector_init(m88k_exception_vector_area *, u_int32_t *);
+void	vector_init(m88k_exception_vector_area *, u_int32_t *, int);
+void	atomic_init(void);
 
 /*
  * CMMU and CPU variables
@@ -393,7 +394,7 @@ spl0()
 #define NO_OP 		0xf4005800	/* "or r0, r0, r0" */
 
 #define BRANCH(FROM, TO) \
-	(EMPTY_BR | ((vaddr_t)(TO) - (vaddr_t)(FROM)) >> 2)
+	(EMPTY_BR | ((((vaddr_t)(TO) - (vaddr_t)(FROM)) >> 2) & 0x03ffffff))
 
 #define SET_VECTOR_88100(NUM, VALUE) \
 	do { \
@@ -408,7 +409,7 @@ spl0()
 	} while (0)
 
 /*
- * vector_init(vector, vector_init_list)
+ * vector_init(vector, vector_init_list, bootstrap)
  *
  * This routine sets up the m88k vector table for the running processor,
  * as well as the atomic operation routines for multiprocessor kernels.
@@ -419,11 +420,12 @@ spl0()
  * next trap handler, as documented in its Errata. Processing trap #511
  * would then fall into the next page, unless the address computation wraps,
  * or software traps can not trigger the issue - the Errata does not provide
- * more detail. And since the MVME BUG does not add an extra NOP after their
+ * more detail. And since the MVME BUG does not add an extra NOP after its
  * VBR page, I'll assume this is safe for now -- miod
  */
 void
-vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
+vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list,
+    int bootstrap)
 {
 	u_int num;
 	u_int32_t vec;
@@ -441,6 +443,9 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 
 		for (num = 0; (vec = vector_init_list[num]) != 0; num++)
 			SET_VECTOR_88110(num, vec);
+
+		if (bootstrap)
+			SET_VECTOR_88110(0x03, vector_init_list[num + 1]);
 
 		for (; num < 512; num++)
 			SET_VECTOR_88110(num, m88110_sigsys);
@@ -469,6 +474,9 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 		for (num = 0; (vec = vector_init_list[num]) != 0; num++)
 			SET_VECTOR_88100(num, vec);
 
+		if (bootstrap)
+			SET_VECTOR_88100(0x03, vector_init_list[num + 1]);
+
 		for (; num < 512; num++)
 			SET_VECTOR_88100(num, sigsys);
 
@@ -485,16 +493,20 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 		break;
 #endif
 	}
+}
 
 #ifdef MULTIPROCESSOR
-	/*
-	 * Setting up the proper atomic operation code is not really
-	 * related to vector initialization, but is crucial enough to
-	 * be worth doing right now, rather than too late in the C code.
-	 *
-	 * This is only necessary for SMP kernels with 88100 and 88110
-	 * support compiled-in, which happen to run on 88100.
-	 */
+/*
+ * void atomic_init(void);
+ *
+ * This routine sets up proper atomic operation code for SMP kernels
+ * with both 88100 and 88110 support compiled-in. This is crucial enough
+ * to have to be done as early as possible.
+ * This is among the first C code to run, before anything is initialized.
+ */
+void
+atomic_init()
+{
 #if defined(M88100) && defined(M88110)
 	if (cputyp == CPU_88100) {
 		extern uint32_t __atomic_lock[];
@@ -517,8 +529,8 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 				*d++ = *s++;
 	}
 #endif	/* M88100 && M88110 */
-#endif	/* MULTIPROCESSOR */
 }
+#endif	/* MULTIPROCESSOR */
 
 #ifdef MULTIPROCESSOR
 

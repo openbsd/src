@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2010/04/24 18:46:51 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2010/12/23 20:05:07 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -120,15 +120,15 @@ ASLOCAL(main_start)
 	extu	r8,  r1,  8<8>
 
 	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
-	st	r8,  r13, lo16(_C_LABEL(cputyp))
-
-	bsr	_ASM_LABEL(setup_psr)
+	bsr.n	_ASM_LABEL(setup_psr)
+	 st	r8,  r13, lo16(_C_LABEL(cputyp))
 
 	/* save PROM vbr */
 	ldcr	r12, VBR
 	or.u	r13, r0,  hi16(_C_LABEL(prom_vbr))
 	st	r12, r13, lo16(_C_LABEL(prom_vbr))
 	stcr	r0,  VBR
+	FLUSH_PIPELINE
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -166,8 +166,13 @@ ASLOCAL(main_start)
 	or	r3, r3, lo16(_C_LABEL(vector_list))
 #endif /* M88100 */
 2:
+	or	r4, r0, 1
 	bsr.n	_C_LABEL(vector_init)
 	 ldcr	r2, VBR
+
+#ifdef MULTIPROCESSOR
+	bsr	_C_LABEL(atomic_init)
+#endif
 
 	/*
 	 * aviion_bootstrap(), among other things, clears proc0's u area.
@@ -235,9 +240,8 @@ GLOBAL(secondary_start)
 	 */
 
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
-	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
-
-	bsr	_ASM_LABEL(setup_psr)
+	bsr.n	_ASM_LABEL(setup_psr)
+	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
 	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE

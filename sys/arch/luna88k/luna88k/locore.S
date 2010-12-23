@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2007/12/22 17:14:39 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.21 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -153,7 +153,7 @@ ASLOCAL(main_init)
 
 	or.u	r3, r0, hi16(_C_LABEL(vector_list))
 	or	r3, r3, lo16(_C_LABEL(vector_list))
-
+	or	r4, r0, 1
 	bsr.n	_C_LABEL(vector_init)
 	 ldcr	r2, VBR
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.238 2010/09/20 06:33:47 matthew Exp $	*/
+/* $OpenBSD: machdep.c,v 1.239 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -99,7 +99,7 @@ void	dumpsys(void);
 int	getcpuspeed(struct mvmeprom_brdid *);
 void	identifycpu(void);
 void	mvme_bootstrap(void);
-void	mvme88k_vector_init(u_int32_t *, u_int32_t *);
+void	mvme88k_vector_init(uint32_t *, uint32_t *);
 void	myetheraddr(u_char *);
 void	savectx(struct pcb *);
 void	secondary_main(void);
@@ -116,6 +116,8 @@ extern void	m197_bootstrap(void);
 extern vaddr_t	m197_memsize(void);
 extern void	m197_startup(void);
 
+extern int kernelstart;
+register_t kernel_vbr;
 intrhand_t intr_handlers[NVMEINTR];
 
 /* board dependent pointers */
@@ -431,7 +433,9 @@ cpu_startup()
 __dead void
 _doboot()
 {
+	cold = 0;
 	cmmu_shutdown();
+	set_vbr(0);		/* restore BUG VBR */
 	bugreturn();
 	/*NOTREACHED*/
 	for (;;);		/* appease gcc */
@@ -712,7 +716,6 @@ secondary_main()
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
 	ci->ci_randseed = random();
-	SET(ci->ci_flags, CIF_ALIVE);
 
 	__cpu_simple_unlock(&cpu_hatch_mutex);
 
@@ -720,9 +723,14 @@ secondary_main()
 	__cpu_simple_lock(&cpu_boot_mutex);
 	__cpu_simple_unlock(&cpu_boot_mutex);
 
+	set_vbr(kernel_vbr);
+
 	spl0();
 	SCHED_LOCK(s);
 	set_psr(get_psr() & ~PSR_IND);
+
+	SET(ci->ci_flags, CIF_ALIVE);
+
 	cpu_switchto(NULL, sched_chooseproc());
 }
 
@@ -880,20 +888,29 @@ myetheraddr(cp)
 }
 
 void
-mvme88k_vector_init(u_int32_t *vbr, u_int32_t *vectors)
+mvme88k_vector_init(uint32_t *bugvbr, uint32_t *vectors)
 {
-	extern void vector_init(u_int32_t *, u_int32_t *);	/* gross */
-	int i;
+	extern vaddr_t vector_init(uint32_t *, uint32_t *, int); /* gross */
+	unsigned long bugvec[32];
+	uint i;
 
-	/* Save BUG vector */
+	/*
+	 * Set up bootstrap vectors, overwriting the existing BUG vbr
+	 * page. This allows us to keep the BUG system call vectors.
+	 */
+
 	for (i = 0; i < 16 * 2; i++)
-		bugvec[i] = vbr[MVMEPROM_VECTOR * 2 + i];
-
-	vector_init(vbr, vectors);
-
-	/* Save new BUG vector */
+		bugvec[i] = bugvbr[MVMEPROM_VECTOR * 2 + i];
+	vector_init(bugvbr, vectors, 1);
 	for (i = 0; i < 16 * 2; i++)
-		sysbugvec[i] = vbr[MVMEPROM_VECTOR * 2 + i];
+		bugvbr[MVMEPROM_VECTOR * 2 + i] = bugvec[i];
+
+	/*
+	 * Set up final vectors.
+	 */
+
+	kernel_vbr = trunc_page((vaddr_t)&kernelstart);
+	vector_init((uint32_t *)kernel_vbr, vectors, 0);
 }
 
 /*
@@ -903,7 +920,6 @@ mvme88k_vector_init(u_int32_t *vbr, u_int32_t *vectors)
 void
 mvme_bootstrap()
 {
-	extern int kernelstart;
 	extern struct consdev *cn_tab;
 	struct mvmeprom_brdid brdid;
 #ifndef MULTIPROCESSOR

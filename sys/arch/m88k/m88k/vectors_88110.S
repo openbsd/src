@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors_88110.S,v 1.5 2007/12/02 21:32:08 miod Exp $	*/
+/*	$OpenBSD: vectors_88110.S,v 1.6 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991, 1992 Carnegie Mellon University
@@ -86,3 +86,4 @@ GLOBAL(m88110_vector_list)
 	VECTOR(m88110_entry)			/* 84 */
 #endif
 	word	0
+	VECTOR(m88110_data_exception_handler_bootstrap)

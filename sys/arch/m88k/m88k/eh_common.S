@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.54 2009/03/15 20:39:53 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.55 2010/12/23 20:05:08 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -386,8 +386,12 @@ GLOBAL(instruction_access_handler)
  * data access exception handler --
  *  See badaddr() below for info about Data_Precheck.
  */
-GLOBAL(data_exception_handler)
+GLOBAL(data_exception_handler_bootstrap)
 	PREP88100("data", 3,, M88100_Data_Precheck)
+	/* No need to call m88100_trap(T_DATAFLT) as PREP will do this for us */
+	br	_ASM_LABEL(check_ast)
+GLOBAL(data_exception_handler)
+	PREP88100("data", 3,,)
 	/* No need to call m88100_trap(T_DATAFLT) as PREP will do this for us */
 	br	_ASM_LABEL(check_ast)
 
@@ -723,7 +727,7 @@ ASLOCAL(m88110_ignore_data_exception)
 #endif /* M88110 */
 
 /*
- * extern boolean_t badaddr(vaddr_t addr, u_int len)
+ * extern int badaddr(vaddr_t addr, int len)
  *
  * Returns true (non-zero) if the given LEN bytes starting at ADDR are
  * not all currently accessible by the kernel.
@@ -764,7 +768,6 @@ GLOBAL(badaddr)
 	sub	r6,  r3, 4
 	bcnd.n	ne0, r6, _ASM_LABEL(badaddr__maybe_halfword)
 	 stcr	r5,  SR1
-	FLUSH_PIPELINE
 
 	/*
 	 * It's a bad address if it's misaligned.
@@ -780,6 +783,7 @@ GLOBAL(badaddr)
 	 *
 	 * If there is no fault, execution just continues as normal.
 	 */
+	FLUSH_PIPELINE
 	ld	r5, r2, 0
 	FLUSH_PIPELINE
 	br.n	_ASM_LABEL(badaddr__return)
@@ -1542,8 +1546,13 @@ GLOBAL(m88110_instruction_access_handler)
  * data access exception handler --
  *  See badaddr() below for info about Data_Precheck.
  */
-GLOBAL(m88110_data_exception_handler)
+GLOBAL(m88110_data_exception_handler_bootstrap)
 	PREP88110("data", 3, M88110_Data_Precheck)
+	or	r2, r0, T_DATAFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(check_ast))
+GLOBAL(m88110_data_exception_handler)
+	PREP88110("data", 3,)
 	or	r2, r0, T_DATAFLT
 	or	r3, r0, r30
 	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(check_ast))
