@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.315 2010/12/09 13:50:41 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.316 2010/12/23 17:41:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,8 @@
 
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/un.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
@@ -178,6 +180,7 @@ pid_t
 session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
     int pipe_s2rctl[2])
 {
+	struct rlimit		 rl;
 	int			 nfds, timeout, pfkeysock;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
 	pid_t			 pid;
@@ -213,6 +216,12 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
+
+	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
+		fatal("getrlimit");
+	rl.rlim_cur = rl.rlim_max;
+	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
+		fatal("setrlimit");
 
 	pfkeysock = pfkey_init(&sysdep);
 
