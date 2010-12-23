@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1579 2010/12/23 01:33:47 krw Exp 
+ *	OpenBSD: pcidevs,v 1.1580 2010/12/23 15:00:49 jasper Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10696,7 +10696,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core DMI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_5,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_2,
 	    "Core DMI",
 	},
 	{
@@ -10724,15 +10724,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core QPI Routing",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_2,
-	    "Core DMI",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_3,
 	    "Core DMI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_4,
+	    "Core DMI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_5,
 	    "Core DMI",
 	},
 	{
@@ -11482,6 +11482,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX7042,
 	    "88SX7042 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9123,
+	    "88SE9123 SATA",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
@@ -20074,6 +20078,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_QUMRANET,
 	    "Qumranet",
+	},
+	{
+	    PCI_VENDOR_MARVELL2,
+	    "Marvell",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1579 2010/12/23 01:33:47 krw Exp 
+ *	OpenBSD: pcidevs,v 1.1580 2010/12/23 15:00:49 jasper Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -317,6 +317,7 @@
 #define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
 #define	PCI_VENDOR_FUSIONIO	0x1aed		/* Fusion-io */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
+#define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
@@ -3257,16 +3258,16 @@
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE PCI-PCI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_1	0xd131		/* Core DMI */
-#define	PCI_PRODUCT_INTEL_CORE_DMI_5	0xd132		/* Core DMI */
+#define	PCI_PRODUCT_INTEL_CORE_DMI_2	0xd132		/* Core DMI */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_2	0xd138		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_3	0xd139		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_4	0xd13a		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_5	0xd13b		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_QPI_L	0xd150		/* Core QPI Link */
 #define	PCI_PRODUCT_INTEL_CORE_QPI_R	0xd151		/* Core QPI Routing */
-#define	PCI_PRODUCT_INTEL_CORE_DMI_2	0xd152		/* Core DMI */
-#define	PCI_PRODUCT_INTEL_CORE_DMI_3	0xd153		/* Core DMI */
-#define	PCI_PRODUCT_INTEL_CORE_DMI_4	0xd154		/* Core DMI */
+#define	PCI_PRODUCT_INTEL_CORE_DMI_3	0xd152		/* Core DMI */
+#define	PCI_PRODUCT_INTEL_CORE_DMI_4	0xd153		/* Core DMI */
+#define	PCI_PRODUCT_INTEL_CORE_DMI_5	0xd154		/* Core DMI */
 #define	PCI_PRODUCT_INTEL_CORE_MANAGEMENT	0xd155		/* Core Management */
 #define	PCI_PRODUCT_INTEL_CORE_SCRATCH	0xd156		/* Core Scratch */
 #define	PCI_PRODUCT_INTEL_CORE_CONTROL	0xd157		/* Core Control */
@@ -3500,6 +3501,7 @@
 #define	PCI_PRODUCT_MARVELL_88SE6141	0x6141		/* 88SE6141 SATA */
 #define	PCI_PRODUCT_MARVELL_88SE6145	0x6145		/* 88SE6145 SATA */
 #define	PCI_PRODUCT_MARVELL_88SX7042	0x7042		/* 88SX7042 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9123	0x9123		/* 88SE9123 SATA */
 
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (Atlas) */
