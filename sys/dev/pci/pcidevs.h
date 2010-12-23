@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1578 2010/12/01 17:07:37 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1579 2010/12/23 01:33:47 krw Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3257,6 +3257,7 @@
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE PCI-PCI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_1	0xd131		/* Core DMI */
+#define	PCI_PRODUCT_INTEL_CORE_DMI_5	0xd132		/* Core DMI */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_2	0xd138		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_3	0xd139		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_4	0xd13a		/* Core PCIE */
@@ -3318,6 +3319,10 @@
 #define	PCI_PRODUCT_JMICRON_SDMMC	0x2382		/* SD/MMC */
 #define	PCI_PRODUCT_JMICRON_MS	0x2383		/* Memory Stick */
 #define	PCI_PRODUCT_JMICRON_XD	0x2384		/* xD */
+#define	PCI_PRODUCT_JMICRON_SD_2	0x2391		/* SD Host Controller */
+#define	PCI_PRODUCT_JMICRON_SDMMC_2	0x2392		/* SD/MMC */
+#define	PCI_PRODUCT_JMICRON_MS_2	0x2393		/* Memory Stick */
+#define	PCI_PRODUCT_JMICRON_XD_2	0x2394		/* xD */
 
 /* KTI */
 #define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI */
@@ -4376,6 +4381,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_10	0x0ad9		/* MCP77 AHCI */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_11	0x0ada		/* MCP77 AHCI */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_12	0x0adb		/* MCP77 AHCI */
+#define	PCI_PRODUCT_NVIDIA_GF108_HDA	0x0bea		/* GF108 HD Audio */
 #define	PCI_PRODUCT_NVIDIA_MCP89_HB	0x0d60		/* MCP89 Host */
 #define	PCI_PRODUCT_NVIDIA_MCP89_MEM_1	0x0d68		/* MCP89 Memory */
 #define	PCI_PRODUCT_NVIDIA_MCP89_MEM_2	0x0d69		/* MCP89 Memory */
@@ -4405,6 +4411,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP89_PPB_3	0x0d9b		/* MCP89 PCIE */
 #define	PCI_PRODUCT_NVIDIA_MCP89_OHCI	0x0d9c		/* MCP89 USB */
 #define	PCI_PRODUCT_NVIDIA_MCP89_EHCI	0x0d9d		/* MCP89 USB */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_425M	0x0df0		/* GeForce 425M */
 
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
