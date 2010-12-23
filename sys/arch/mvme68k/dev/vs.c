@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.34 2010/11/18 21:13:19 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.35 2010/12/23 20:25:15 miod Exp $ */
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -810,7 +810,7 @@ vs_initialize(struct vs_softc *sc)
 			sc->sc_nwq = targets;
 		else {
 			/*
-			 * We can't drive the daugther board if there is not
+			 * We can't drive the daughter board if there is not
 			 * enough on-board memory for all the work queues.
 			 * XXX This might work by moving everything off-board?
 			 */
@@ -940,7 +940,7 @@ vs_alloc_sg(struct vs_softc *sc)
 	int nseg;
 	int rc;
 
-	sglen = sc->sc_nwq * MAX_SG_ELEMENTS * sizeof(struct vs_sg_entry);
+	sglen = (sc->sc_nwq + 1) * MAX_SG_ELEMENTS * sizeof(struct vs_sg_entry);
 	sglen = round_page(sglen);
 
 	rc = bus_dmamem_alloc(sc->sc_dmat, sglen, 0, 0,
@@ -994,7 +994,7 @@ vs_alloc_wq(struct vs_softc *sc)
 	u_int i;
 	int rc;
 
-	sc->sc_cb = malloc(sc->sc_nwq * sizeof(struct vs_cb), M_DEVBUF,
+	sc->sc_cb = malloc((sc->sc_nwq + 1) * sizeof(struct vs_cb), M_DEVBUF,
 	    M_ZERO | M_NOWAIT);
 	if (sc->sc_cb == NULL) {
 		printf("%s: unable to allocate %d work queues\n",
