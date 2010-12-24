@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.16 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: Paths.pm,v 1.17 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #

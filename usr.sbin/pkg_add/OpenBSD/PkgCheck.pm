@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.25 2010/12/05 09:41:55 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.26 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #

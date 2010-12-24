@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.65 2010/10/02 13:36:56 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.66 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -403,7 +403,7 @@ sub set_modes
 	chown $self->{uid}, $self->{gid}, $self->{destdir}.$self->name;
 	chmod $self->{mode}, $self->{destdir}.$self->name;
 	if (defined $self->{mtime} || defined $self->{atime}) {
-		utime $self->{atime} // time, $self->{mtime} // time, 
+		utime $self->{atime} // time, $self->{mtime} // time,
 		    $self->{destdir}.$self->name;
 	}
 }

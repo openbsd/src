@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.19 2010/10/02 13:33:05 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.20 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #

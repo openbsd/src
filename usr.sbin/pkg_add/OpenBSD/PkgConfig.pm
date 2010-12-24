@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.17 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.18 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #

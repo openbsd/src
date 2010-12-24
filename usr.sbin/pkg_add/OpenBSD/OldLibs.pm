@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: OldLibs.pm,v 1.7 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: OldLibs.pm,v 1.8 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #

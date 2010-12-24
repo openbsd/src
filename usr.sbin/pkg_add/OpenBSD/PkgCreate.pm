@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.36 2010/12/22 14:50:45 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.37 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -161,7 +161,7 @@ sub compute_checksum
 	}
 	for my $field (qw(symlink link size)) {  # md5
 		if (defined $result->{$field}) {
-			$state->error("User tried to define @#1 for #2", 
+			$state->error("User tried to define @#1 for #2",
 			    $field, $fname);
 		}
 	}
@@ -554,7 +554,7 @@ sub really_solve_dependency
 	if (!defined $v) {
 		$v = $self->find_dep_in_self($state, $dep);
 	}
-	
+
 	# and in portstree otherwise
 	if (!defined $v) {
 		$v = $self->solve_from_ports($state, $dep, $package);
@@ -566,16 +566,23 @@ sub solve_from_ports
 {
 	my ($self, $state, $dep, $package) = @_;
 
-	my $portsdir = $state->defines('PORTSDIR') 
-	    // $ENV{'PORTSDIR'} 
-	    // OpenBSD::Paths->portsdir;
-	my $make = OpenBSD::Paths->make;
-	open(my $fh, "cd $portsdir && SUBDIR=$dep->{pkgpath} ECHO_MSG=: $make print-plist-with-depends|") or return undef;
-	my $plist = OpenBSD::PackingList->read($fh, 
-	    \&OpenBSD::PackingList::PrelinkStuffOnly);
+	my $portsdir = $state->defines('PORTSDIR');
+	return undef unless defined $portsdir;
+	my $plist = $self->ask_tree($state, $dep, $portsdir, 
+	    'print-plist-with-depends');
+	if ($? != 0 || !defined $plist->pkgname) {
+		$plist = $self->ask_tree($state, $dep, $portsdir, 
+		    'print-plist');
+	}
+	if ($? != 0 || !defined $plist->pkgname) {
+		$state->error("Can't obtain dependency #1 from ports tree",
+		    $dep->{pattern});
+		return undef;
+	}
 	if ($dep->spec->filter($plist->pkgname) == 0) {
-		$state->error("Dependency #1 doesn't match FULLPKGNAME: #2", 
+		$state->error("Dependency #1 doesn't match FULLPKGNAME: #2",
 		    $dep->{pattern}, $plist->pkgname);
+		return undef;
 	}
 
 	OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
@@ -583,10 +590,32 @@ sub solve_from_ports
 	return $plist->pkgname;
 }
 
+sub ask_tree
+{
+	my ($self, $state, $dep, $portsdir, $action) = @_;
+
+	my $make = OpenBSD::Paths->make;
+	my $pid = open(my $fh, "-|");
+	if (!defined $pid) {
+		$state->fatal("cannot fork: $!");
+	}
+	if ($pid == 0) {
+		chdir $portsdir or exit 2;
+		open STDERR, '>', '/dev/null';
+		$ENV{SUBDIR} = $dep->{pkgpath};
+		$ENV{ECHO_MSG} = ':';
+		exec $make ('make', $action);
+	}
+	my $plist = OpenBSD::PackingList->read($fh,
+	    \&OpenBSD::PackingList::PrelinkStuffOnly);
+	close($fh);
+	return $plist;
+}
+
 sub errsay_library
 {
 	my ($solver, $state, $h) = @_;
-	
+
 	$state->errsay("Can't create #1 because of libraries", $h->pkgname);
 }
 
@@ -632,7 +661,7 @@ sub newer
 {
 	return @{shift->{new}};
 }
-	
+
 
 sub newer_names
 {

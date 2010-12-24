@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.29 2010/10/27 14:35:56 espie Exp $
+# $OpenBSD: Error.pm,v 1.30 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #

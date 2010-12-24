@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.150 2010/12/21 17:43:07 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.151 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -73,7 +73,7 @@ sub dump
 	my ($self, $state) = @_;
 
 	return unless %{$self->{done}};
-	$state->say("Full dependency tree is #1", 
+	$state->say("Full dependency tree is #1",
 	    join(' ', keys %{$self->{done}}));
 }
 
@@ -167,7 +167,7 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 	my $r = $self->{known_tags}->{$obj};
 	if (defined $r) {
-		$state->say("Found tag #1 in #2", $obj, $r) 
+		$state->say("Found tag #1 in #2", $obj, $r)
 		    if $state->verbose >= 3;
 	}
 	return $r;
@@ -590,7 +590,7 @@ sub find_dep_in_stuff_to_install
 {
 	my ($self, $state, $dep) = @_;
 
-	my $v = $self->find_candidate($dep, 
+	my $v = $self->find_candidate($dep,
 	    keys %{$state->tracker->{uptodate}});
 	if ($v) {
 		$self->set_global($dep, _cache::installed->new($v));

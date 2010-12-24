@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: x509.pm,v 1.10 2010/10/25 21:03:25 espie Exp $
+# $OpenBSD: x509.pm,v 1.11 2010/12/24 09:04:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -92,7 +92,7 @@ sub check_signature
 	close $fh;
 	close $fh2;
 	my ($fh3, $fname3) = mkstemp("/tmp/commandresult.XXXXXXXXX");
-	if ($state->system(sub { open STDERR ,">&", $fh3}, 
+	if ($state->system(sub { open STDERR ,">&", $fh3},
 	    OpenBSD::Paths->openssl, "smime", "-verify",
 	    "-binary", "-inform", "DEM", "-in", $fname2, "-content", $fname,
 	    "-CAfile", OpenBSD::Paths->pkgca, "-out", "/dev/null") != 0) {
