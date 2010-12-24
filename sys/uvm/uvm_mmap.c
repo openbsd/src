@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.81 2010/12/15 04:59:53 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.82 2010/12/24 21:49:04 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -604,6 +604,13 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
 	    flags, handle, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
+	if (error == ENOMEM && !(flags & (MAP_FIXED | MAP_TRYFIXED))) {
+		/* once more, with feeling */
+		addr = uvm_map_hint1(p, prot, 0);
+		error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot,
+		    maxprot, flags, handle, pos,
+		    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
+	}
 
 	if (error == 0)
 		/* remember to add offset */

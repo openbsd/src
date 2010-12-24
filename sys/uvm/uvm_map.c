@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.130 2010/12/15 04:59:52 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.131 2010/12/24 21:49:04 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1241,7 +1241,7 @@ uvm_map_pie(vaddr_t align)
  * creating a new mapping with "prot" protection.
  */
 vaddr_t
-uvm_map_hint(struct proc *p, vm_prot_t prot)
+uvm_map_hint1(struct proc *p, vm_prot_t prot, int skipheap)
 {
 	vaddr_t addr;
 
@@ -1258,7 +1258,9 @@ uvm_map_hint(struct proc *p, vm_prot_t prot)
 	}
 #endif
 	/* start malloc/mmap after the brk */
-	addr = (vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ;
+	addr = (vaddr_t)p->p_vmspace->vm_daddr;
+	if (skipheap)
+		addr += BRKSIZ;
 #if !defined(__vax__)
 	addr += arc4random() & (MIN((256 * 1024 * 1024), BRKSIZ) - 1);
 #endif
