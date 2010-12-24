@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.15 2010/12/23 20:04:09 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.16 2010/12/24 18:22:20 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -413,6 +413,8 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 
 	/* no interrupts until enabled */
 	sc->poll = 1;
+	pms_change_state(sc, PMS_STATE_ENABLED);
+	sc->poll = 1; /* XXX */
 	pms_change_state(sc, PMS_STATE_DISABLED);
 }
 
@@ -502,7 +504,10 @@ pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pms_softc *sc = v;
 
-	return (sc->protocol->ioctl(sc, cmd, data, flag, p));
+	if (sc->protocol && sc->protocol->ioctl)
+		return(sc->protocol->ioctl(sc, cmd, data, flag, p));
+	else
+		return (-1);
 }
 
 void
