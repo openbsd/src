@@ -1,13 +1,10 @@
-/*	$OpenBSD: rnd.c,v 1.105 2010/12/22 18:16:24 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.106 2010/12/24 06:23:36 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
  *
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
  * Copyright (c) 2008 Damien Miller.
- *
- * Version 1.89, last modified 19-Sep-99
- *
  * Copyright Theodore Ts'o, 1994, 1995, 1996, 1997, 1998, 1999.
  * All rights reserved.
  *
@@ -47,11 +44,8 @@
  * (now, with legal B.S. out of the way.....)
  *
  * This routine gathers environmental noise from device drivers, etc.,
- * and returns good random numbers, suitable for cryptographic use.
- * Besides the obvious cryptographic uses, these numbers are also good
- * for seeding TCP sequence numbers, and other places where it is
- * desirable to have numbers which are not only random, but hard to
- * predict by an attacker.
+ * and returns good random numbers, suitable for cryptographic or
+ * other use.
  *
  * Theory of operation
  * ===================
@@ -99,29 +93,18 @@
  * Nonetheless, these numbers should be useful for the vast majority
  * of purposes.
  *
- * Exported interfaces ---- output
- * ===============================
+ * However, this MD5 output is not exported outside the subsystem.  It
+ * is next used as input to seed a RC4 stream cipher.  Attempts are
+ * made to follow best practice regarding this stream cipher - the first
+ * chunk of output is discarded and the cipher is re-seeded from time to
+ * time.  This design provides very high amounts of output data from a
+ * potentially small entropy base, at high enough speeds to encourage
+ * use of random numbers in nearly any situation.
  *
- * There are three exported interfaces.
- * The first set are designed to be used from within the kernel:
- *
- *	void get_random_bytes(void *buf, int nbytes);
- *
- * This interface will return the requested number of random bytes,
- * and place it in the requested buffer.
- *
- * Two other interfaces are two character devices /dev/random and
- * /dev/urandom.  /dev/random is suitable for use when very high
- * quality randomness is desired (for example, for key generation or
- * one-time pads), as it will only return a maximum of the number of
- * bits of randomness (as estimated by the random number generator)
- * contained in the entropy pool.
- *
- * The /dev/urandom device does not have this limit, and will return
- * as many bytes as were requested.  As more and more random bytes
- * requested without giving time for the entropy pool to recharge,
- * this will result in random numbers that are merely cryptographically
- * strong.  For many applications, however, this is acceptable.
+ * The output of this single RC4 engine is then shared amongst many
+ * consumers in the kernel and userland via various interfaces:
+ * arc4random_buf(), arc4random(), arc4random_uniform(), the set of
+ * /dev/random nodes, and the sysctl kern.arandom.
  *
  * Exported interfaces ---- input
  * ==============================
@@ -166,59 +149,6 @@
  * randomness source.  They do this by keeping track of the first and
  * second order deltas of the event timings.
  *
- * Ensuring unpredictability at system startup
- * ============================================
- *
- * When any operating system starts up, it will go through a sequence
- * of actions that are fairly predictable by an adversary, especially
- * if the start-up does not involve interaction with a human operator.
- * This reduces the actual number of bits of unpredictability in the
- * entropy pool below the value in entropy_count.  In order to
- * counteract this effect, it helps to carry information in the
- * entropy pool across shut-downs and start-ups.  To do this, put the
- * following lines in appropriate script which is run during the boot
- * sequence:
- *
- *	echo "Initializing random number generator..."
- *	# Carry a random seed from start-up to start-up
- *	# Load and then save 512 bytes, which is the size of the entropy pool
- *	if [ -f /etc/random-seed ]; then
- *		cat /etc/random-seed >/dev/urandom
- *	fi
- *	dd if=/dev/urandom of=/etc/random-seed count=1
- *
- * and the following lines in appropriate script which is run when
- * the system is shutting down:
- *
- *	# Carry a random seed from shut-down to start-up
- *	# Save 512 bytes, which is the size of the entropy pool
- *	echo "Saving random seed..."
- *	dd if=/dev/urandom of=/etc/random-seed count=1
- *
- * For example, on OpenBSD systems, the appropriate scripts are
- * usually /etc/rc.local and /etc/rc.shutdown, respectively.
- *
- * Effectively, these commands cause the contents of the entropy pool
- * to be saved at shutdown time and reloaded into the entropy pool at
- * start-up.  (The 'dd' in the addition to the bootup script is to
- * make sure that /etc/random-seed is different for every start-up,
- * even if the system crashes without executing rc.shutdown) Even with
- * complete knowledge of the start-up activities, predicting the state
- * of the entropy pool requires knowledge of the previous history of
- * the system.
- *
- * Configuring the random(4) driver under OpenBSD
- * ==============================================
- *
- * The special files for the random(4) driver should have been created
- * during the installation process.  However, if your system does not have
- * /dev/random and /dev/[s|u|p|a]random created already, they can be created
- * by using the MAKEDEV(8) script in /dev:
- *
- *	/dev/MAKEDEV random
- *
- * Check MAKEDEV for information about major and minor numbers.
- *
  * Acknowledgements:
  * =================
  *
@@ -235,6 +165,9 @@
  * Further background information on this topic may be obtained from
  * RFC 1750, "Randomness Recommendations for Security", by Donald
  * Eastlake, Steve Crocker, and Jeff Schiller.
+ * 
+ * Using a RC4 stream cipher as 2nd stage after the MD5 output
+ * is the result of work by David Mazieres.
  */
 
 #include <sys/param.h>
