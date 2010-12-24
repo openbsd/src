@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.42 2010/11/09 16:03:38 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.43 2010/12/24 14:12:51 grange Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: November 9 2010 $
+.Dd $Mdocdate: December 24 2010 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -497,7 +497,7 @@ on the memory described in
 .Ft vaddr_t
 .Fn uvm_km_zalloc "vm_map_t map" "vsize_t size"
 .Ft vaddr_t
-.Fn uvm_km_alloc1 "vm_map_t map" "vsize_t size" "boolean_t zeroit"
+.Fn uvm_km_alloc1 "vm_map_t map" "vsize_t size" "vsize_t align" "boolean_t zeroit"
 .Ft vaddr_t
 .Fn uvm_km_kmemalloc "vm_map_t map" "struct uvm_object *obj" "vsize_t size" "int flags"
 .Ft vaddr_t
@@ -532,7 +532,9 @@ The
 .Fn uvm_km_alloc1
 function allocates and returns
 .Fa size
-bytes of wired memory in the kernel map, zeroing the memory if the
+bytes of wired memory in the kernel map aligned to the
+.Fa align
+boundary, zeroing the memory if the
 .Fa zeroit
 argument is non-zero.
 .Pp
