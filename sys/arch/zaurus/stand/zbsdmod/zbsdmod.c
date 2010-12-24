@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.8 2010/12/24 14:16:58 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -266,7 +266,7 @@ init_module()
 	rc = register_chrdev(ZBOOTDEV_MAJOR, ZBOOTDEV_NAME, &fops);
 	if (rc != 0) {
 		printk("%s: register_chrdev(%d, ...): error %d\n",
-		    ZBOOTMOD_NAME, -rc);
+		    ZBOOTMOD_NAME, ZBOOTDEV_MAJOR, -rc);
 		return 1;
 	}
 
