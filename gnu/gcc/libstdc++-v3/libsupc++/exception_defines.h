@@ -42,7 +42,7 @@
 // Iff -fno-exceptions, transform error handling code to work without it.
 # define try      if (true)
 # define catch(X) if (false)
-# define __throw_exception_again
+# define __throw_exception_again ((void)0)
 #else
 // Else proceed normally.
 # define __throw_exception_again throw
