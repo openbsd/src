@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.218 2010/09/24 01:41:34 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.219 2010/12/24 02:45:33 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -343,12 +343,17 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = sdlookup(unit);
 	if (sc == NULL)
 		return (ENXIO);
+	sc_link = sc->sc_link;
+
 	if (sc->flags & SDF_DYING) {
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
+	if (ISSET(flag, FWRITE) && ISSET(sc_link->flags, SDEV_READONLY)) {
+		device_unref(&sc->sc_dev);
+		return (EACCES);
+	}
 
-	sc_link = sc->sc_link;
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
@@ -1403,10 +1408,30 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	struct page_rigid_geometry *rigid = NULL;
 	struct page_flex_geometry *flex = NULL;
 	struct page_reduced_geometry *reduced = NULL;
+	u_char *page0 = NULL;
 	u_int32_t heads = 0, sectors = 0, cyls = 0, secsize = 0, sssecsize;
-	int err = 0;
+	int err = 0, big;
 
 	dp->disksize = scsi_size(sc->sc_link, flags, &sssecsize);
+
+	buf = malloc(sizeof(*buf), M_TEMP, M_NOWAIT);
+	if (buf == NULL)
+		goto validate;
+
+	/*
+	 * Ask for page 0 (vendor specific) mode sense data to find
+	 * READONLY info. The only thing USB devices will ask for. 
+	 */
+	err = scsi_do_mode_sense(sc->sc_link, 0, buf, (void **)&page0,
+	    NULL, NULL, NULL, 1, flags | SCSI_SILENT, &big);
+	if (err == 0) {
+		if (big && buf->hdr_big.dev_spec & SMH_DSP_WRITE_PROT)
+			SET(sc->sc_link->flags, SDEV_READONLY);
+		else if (!big && buf->hdr.dev_spec & SMH_DSP_WRITE_PROT)
+			SET(sc->sc_link->flags, SDEV_READONLY);
+		else
+			CLR(sc->sc_link->flags, SDEV_READONLY);
+	}
 
 	/*
 	 * Many UMASS devices choke when asked about their geometry. Most
@@ -1414,10 +1439,6 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	 * scsi_size() worked.
 	 */
 	if ((sc->sc_link->flags & SDEV_UMASS) && (dp->disksize > 0))
-		goto validate;	 /* N.B. buf will be NULL at validate. */
-
-	buf = malloc(sizeof(*buf), M_TEMP, M_NOWAIT);
-	if (buf == NULL)
 		goto validate;
 
 	switch (sc->sc_link->inqdata.device & SID_TYPE) {

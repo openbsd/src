@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.51 2010/09/02 11:54:44 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.52 2010/12/24 02:45:33 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -430,6 +430,9 @@ struct scsi_mode_header_big {
 	u_int8_t reserved2;
 	u_int8_t blk_desc_len[2];
 };
+
+/* Both disks and tapes use dev_spec to report READONLY status. */
+#define	SMH_DSP_WRITE_PROT	0x80
 
 union scsi_mode_sense_buf {
 	struct scsi_mode_header hdr;

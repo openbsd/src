@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.115 2010/10/13 02:14:52 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.116 2010/12/24 02:45:33 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -262,7 +262,6 @@ struct cfdriver st_cd = {
 #define	ST_FIXEDBLOCKS	0x0008
 #define	ST_AT_FILEMARK	0x0010
 #define	ST_EIO_PENDING	0x0020	/* we couldn't report it then (had data) */
-#define	ST_READONLY	0x0080	/* st_mode_sense says write protected */
 #define	ST_FM_WRITTEN	0x0100	/*
 				 * EOF file mark written  -- used with
 				 * ~ST_WRITTEN to indicate that multiple file
@@ -276,9 +275,6 @@ struct cfdriver st_cd = {
 #define ST_WAITING	0x2000
 
 #define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_BLANK_READ)
-#define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN | \
-			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN | \
-			 ST_2FM_AT_EOD | ST_PER_ACTION)
 
 #define stlookup(unit) (struct st_softc *)device_lookup(&st_cd, (unit))
 
@@ -457,11 +453,16 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
 		return (ENXIO);
+	sc_link = st->sc_link;
+
 	if (st->flags & ST_DYING) {
 		error = ENXIO;
 		goto done;
 	}
-	sc_link = st->sc_link;
+	if (ISSET(flags, FWRITE) && ISSET(sc_link->flags, SDEV_READONLY)) {
+		error = EACCES;
+		goto done;
+	}
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    STUNIT(dev), st_cd.cd_ndevs));
@@ -836,6 +837,7 @@ ststrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
+
 	sc_link = st->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %d\n",
@@ -1205,7 +1207,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		g->mt_density = st->density;
  		g->mt_mblksiz = st->modes.blksize;
  		g->mt_mdensity = st->modes.density;
-		if (st->flags & ST_READONLY)
+		if (st->sc_link->flags & SDEV_READONLY)
 			g->mt_dsreg |= MT_DS_RDONLY;
 		if (st->flags & ST_MOUNTED)
 			g->mt_dsreg |= MT_DS_MOUNTED;
@@ -1483,9 +1485,9 @@ st_mode_sense(struct st_softc *st, int flags)
 		dev_spec = data->hdr.dev_spec;
 
 	if (dev_spec & SMH_DSP_WRITE_PROT)
-		st->flags |= ST_READONLY;
+		SET(sc_link->flags, SDEV_READONLY);
 	else
-		st->flags &= ~ST_READONLY;
+		CLR(sc_link->flags, SDEV_READONLY);
 
 	st->numblks = block_count;
 	st->media_blksize = block_size;
@@ -1494,7 +1496,7 @@ st_mode_sense(struct st_softc *st, int flags)
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("density code 0x%x, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
-	    st->flags & ST_READONLY ? "protected" : "enabled"));
+	    sc_link->flags & SDEV_READONLY ? "protected" : "enabled"));
 	SC_DEBUGN(sc_link, SDEV_DB3,
 	    ("%sbuffered\n", dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 
