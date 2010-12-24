@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1580 2010/12/23 15:00:49 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1581 2010/12/24 06:10:14 shadchin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1208,6 +1208,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_X700_SE_S	0x5e6f		/* Radeon X700 SE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_HD5800	0x6899		/* Radeon HD 5800 */
 #define	PCI_PRODUCT_ATI_RADEON_HD5700	0x68b8		/* Radeon HD 5700 */
+#define	PCI_PRODUCT_ATI_RADEON_HD5670	0x68d8		/* Radeon HD 5670 */
 #define	PCI_PRODUCT_ATI_RS100_PCI	0x700f		/* RS100 PCI */
 #define	PCI_PRODUCT_ATI_RS200_PCI	0x7010		/* RS200 PCI */
 #define	PCI_PRODUCT_ATI_RADEON_X1800A	0x7100		/* Radeon X1800 */
@@ -1372,6 +1373,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD4000_HDA	0xaa38		/* Radeon HD 4000 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD5800_HDA	0xaa50		/* Radeon HD 5800 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD5700_HDA	0xaa58		/* Radeon HD 5700 Audio */
+#define	PCI_PRODUCT_ATI_RADEON_HD5600_HDA	0xaa60		/* Radeon HD 5600 Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */
@@ -2238,10 +2240,11 @@
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_EESISA	0x0008		/* EES ISA */
 #define	PCI_PRODUCT_INTEL_21145	0x0039		/* 21145 */
-#define	PCI_PRODUCT_INTEL_CORE_HB	0x0040		/* Core Host */
+#define	PCI_PRODUCT_INTEL_CORE_HB_0	0x0040		/* Core Host */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_0	0x0041		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CLARKDALE_IGD	0x0042		/* HD graphics */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_1	0x0043		/* Core PCIE */
+#define	PCI_PRODUCT_INTEL_CORE_HB_1	0x0044		/* Core Host */
 #define	PCI_PRODUCT_INTEL_ARRANDALE_IGD	0x0046		/* Mobile HD graphics */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_1	0x0082		/* Centrino Advanced-N 6205a */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1	0x0083		/* WiFi Link 1000 */
