@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.117 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Add.pm,v 1.118 2010/12/24 09:09:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -649,7 +649,7 @@ sub install
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	return if $state->{do_faked};
-	$self->mark_ldconfig_directory($state->{destdir});
+	$self->mark_ldconfig_directory($state);
 }
 
 package OpenBSD::PackingElement::SpecialFile;

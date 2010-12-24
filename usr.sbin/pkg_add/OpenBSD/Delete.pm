@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.111 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Delete.pm,v 1.112 2010/12/24 09:09:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -655,7 +655,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	$self->SUPER::delete($state);
-	$self->mark_ldconfig_directory($state->{destdir});
+	$self->mark_ldconfig_directory($state);
 }
 
 package OpenBSD::PackingElement::FDEINSTALL;

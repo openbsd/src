@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.55 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.56 2010/12/24 09:09:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -39,53 +39,6 @@ sub mark_available_lib
 package OpenBSD::SharedLibs;
 use File::Basename;
 use OpenBSD::Error;
-
-my $path;
-my @ldconfig = (OpenBSD::Paths->ldconfig);
-
-
-sub init_path($)
-{
-	my $destdir = shift;
-	$path={};
-	if ($destdir ne '') {
-		unshift @ldconfig, OpenBSD::Paths->chroot, '--', $destdir;
-	}
-	open my $fh, "-|", @ldconfig, "-r";
-	if (defined $fh) {
-		my $_;
-		while (<$fh>) {
-			if (m/^\s*search directories:\s*(.*?)\s*$/o) {
-				for my $d (split(/\:/o, $1)) {
-					$path->{$d} = 1;
-				}
-				last;
-			}
-		}
-		close($fh);
-	} else {
-		print STDERR "Can't find ldconfig\n";
-	}
-}
-
-sub mark_ldconfig_directory
-{
-	my ($name, $destdir) = @_;
-	if (!defined $path) {
-		init_path($destdir);
-	}
-	my $d = dirname($name);
-	if ($path->{$d}) {
-		$OpenBSD::PackingElement::Lib::todo = 1;
-	}
-}
-
-sub ensure_ldconfig
-{
-	my $state = shift;
-	$state->vsystem(@ldconfig, "-R") unless $state->{not};
-	$OpenBSD::PackingElement::Lib::todo = 0;
-}
 
 our $repo = OpenBSD::LibRepo->new;
 

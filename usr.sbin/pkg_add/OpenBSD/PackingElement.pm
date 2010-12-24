@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.189 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.190 2010/12/24 09:09:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -584,20 +584,8 @@ __PACKAGE__->register_with_factory;
 
 sub mark_ldconfig_directory
 {
-	require OpenBSD::SharedLibs;
-
-	my ($self, $destdir) = @_;
-	OpenBSD::SharedLibs::mark_ldconfig_directory($self->fullname,
-	    $destdir);
-}
-
-sub ensure_ldconfig
-{
-	if ($todo) {
-		require OpenBSD::SharedLibs;
-
-		&OpenBSD::SharedLibs::ensure_ldconfig;
-	}
+	my ($self, $state) = @_;
+	$state->ldconfig->mark_directory($self->fullname);
 }
 
 sub parse
@@ -1291,7 +1279,7 @@ sub run
 {
 	my ($self, $state) = @_;
 
-	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
+	$state->ldconfig->ensure;
 	$state->say("#1 #2", $self->keyword, $self->{expanded})
 	    if $state->verbose >= 2;
 	$state->log->system(OpenBSD::Paths->sh, '-c', $self->{expanded})
@@ -1603,7 +1591,7 @@ sub run
 
 	return if $state->{dont_run_scripts};
 
-	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
+	$state->ldconfig->ensure;
 	$state->say("#1 script: #2 #3 #4", $self->beautify, $name, $pkgname,
 	    join(' ', @args)) if $state->verbose >= 2;
 	return if $state->{not};
