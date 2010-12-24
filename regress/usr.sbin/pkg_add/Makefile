@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.39 2010/08/07 19:39:33 espie Exp $
+# $OpenBSD: Makefile,v 1.40 2010/12/24 10:36:48 espie Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 collision-check5 partial-update-test conflict-update \
@@ -270,7 +270,7 @@ rep0/tcl-8.5.7.tgz:
 	@${CREATE_PKG} -f ${.CURDIR}/empty $@
 
 rep1/o-1.tgz:
-	@${CREATE_PKG} -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
 
 rep1/o1-1.tgz:
 	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p1:p1-*:p1-0' -W'coincoin.0' -f ${.CURDIR}/empty $@
@@ -279,7 +279,7 @@ rep1/o2-1.tgz:
 	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p2:p2-*:p2-0' -W'coincoin.0' -f ${.CURDIR}/empty $@
 
 rep0/o3-0.tgz:
-	@${CREATE_PKG} -W'unlikelylibraryname.0.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'unlikelylibraryname.0.0' -f ${.CURDIR}/empty $@
 
 rep1/p-0.tgz rep1/p1-0.tgz: plist8
 	@mkdir -p ${SRC13}/lib
@@ -297,19 +297,19 @@ rep0/p4-0.tgz: plist12
 	@${CREATE_PKG} -B src15 -DLIBa_VERSION=0.0 -f plist12 $@
 
 rep0/o4-0.tgz:
-	@${CREATE_PKG} -W'a.1.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.1.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
 
 rep0/o5-0.tgz:
-	@${CREATE_PKG} -W'a.0.2' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.2' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
 
 rep0/o6-0.tgz:
-	@${CREATE_PKG} -W'a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
 
 rep0/oo6-0.tgz:
-	@${CREATE_PKG} -W'a.0.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -f ${.CURDIR}/empty $@
 
 rep0/o7-0.tgz:
-	@${CREATE_PKG} -W'dir/a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'dir/a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
 
 rep1/b-1.tgz:
 	@${CREATE_PKG} -P't/a:a-*:a-1' -f ${.CURDIR}/empty $@
