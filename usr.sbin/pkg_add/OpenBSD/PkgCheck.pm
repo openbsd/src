@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.26 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.27 2010/12/24 10:31:59 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -516,7 +516,7 @@ sub sanity_check
 sub dependencies_check
 {
 	my ($self, $state, $l) = @_;
-	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
+	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir}, $state);
 	$self->for_all_packages($state, $l, "Direct dependencies", sub {
 		my $name = shift;
 		my $plist = OpenBSD::PackingList->from_installation($name,

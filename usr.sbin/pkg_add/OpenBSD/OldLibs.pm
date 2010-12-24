@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: OldLibs.pm,v 1.8 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: OldLibs.pm,v 1.9 2010/12/24 10:31:59 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -175,7 +175,7 @@ sub do_save_libs
 	if ($state->{not}) {
 		require OpenBSD::SharedLibs;
 
-		OpenBSD::SharedLibs::add_libs_from_plist($stub_list);
+		OpenBSD::SharedLibs::add_libs_from_plist($stub_list, $state);
 		$stub_list->to_cache;
 		$o->plist->to_cache;
 	} else {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.56 2010/12/24 09:09:54 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.57 2010/12/24 10:31:59 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -77,7 +77,7 @@ sub add_libs_from_system
 		opendir(my $dir, $destdir.$dirname."/lib") or next;
 		while (my $d = readdir($dir)) {
 			next unless $d =~ m/\.so/;
-			register_libname("$dirname/lib/$d", 'system');
+			register_libname("$dirname/lib/$d", 'system', $state);
 		}
 		closedir($dir);
 	}
