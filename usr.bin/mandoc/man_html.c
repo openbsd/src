@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.26 2010/12/22 22:35:05 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.27 2010/12/25 13:23:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -207,11 +207,9 @@ print_man_node(MAN_ARGS)
 		 * scope.  Assert that the metafont is on the top of the
 		 * stack (it's never nested).
 		 */
-		if (h->metaf) {
-			assert(h->metaf == t);
-			print_tagq(h, h->metaf);
-			assert(NULL == h->metaf);
-			t = h->tags.head;
+		if (HTMLFONT_NONE != h->metac) {
+			h->metal = h->metac;
+			h->metac = HTMLFONT_NONE;
 		}
 		if (mans[n->tok].pre)
 			child = (*mans[n->tok].pre)(m, n, mh, h);
@@ -407,29 +405,30 @@ static int
 man_alt_pre(MAN_ARGS)
 {
 	const struct man_node	*nn;
-	struct tag		*t;
-	int			 i;
-	enum htmlfont		 fp;
+	int		 i;
+	enum htmltag	 fp;
+	struct tag	*t;
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
+		t = NULL;
 		switch (n->tok) {
 		case (MAN_BI):
-			fp = i % 2 ? HTMLFONT_ITALIC : HTMLFONT_BOLD;
+			fp = i % 2 ? TAG_I : TAG_B;
 			break;
 		case (MAN_IB):
-			fp = i % 2 ? HTMLFONT_BOLD : HTMLFONT_ITALIC;
+			fp = i % 2 ? TAG_B : TAG_I;
 			break;
 		case (MAN_RI):
-			fp = i % 2 ? HTMLFONT_ITALIC : HTMLFONT_NONE;
+			fp = i % 2 ? TAG_I : TAG_MAX;
 			break;
 		case (MAN_IR):
-			fp = i % 2 ? HTMLFONT_NONE : HTMLFONT_ITALIC;
+			fp = i % 2 ? TAG_MAX : TAG_I;
 			break;
 		case (MAN_BR):
-			fp = i % 2 ? HTMLFONT_NONE : HTMLFONT_BOLD;
+			fp = i % 2 ? TAG_MAX : TAG_B;
 			break;
 		case (MAN_RB):
-			fp = i % 2 ? HTMLFONT_BOLD : HTMLFONT_NONE;
+			fp = i % 2 ? TAG_B : TAG_MAX;
 			break;
 		default:
 			abort();
@@ -439,14 +438,13 @@ man_alt_pre(MAN_ARGS)
 		if (i)
 			h->flags |= HTML_NOSPACE;
 
-		/* 
-		 * Open and close the scope with each argument, so that
-		 * internal \f escapes, which are common, are also
-		 * closed out with the scope.
-		 */
-		t = print_ofont(h, fp);
+		if (TAG_MAX != fp)
+			t = print_otag(h, fp, 0, NULL);
+
 		print_man_node(m, nn, mh, h);
-		print_tagq(h, t);
+
+		if (t)
+			print_tagq(h, t);
 	}
 
 	return(0);
@@ -457,13 +455,10 @@ man_alt_pre(MAN_ARGS)
 static int
 man_SM_pre(MAN_ARGS)
 {
-	struct htmlpair	 tag;
 	
-	/* FIXME: print_ofont(). */
-	PAIR_CLASS_INIT(&tag, "small");
-	print_otag(h, TAG_SPAN, 1, &tag);
+	print_otag(h, TAG_SMALL, 0, NULL);
 	if (MAN_SB == n->tok)
-		print_ofont(h, HTMLFONT_BOLD);
+		print_otag(h, TAG_B, 0, NULL);
 	return(1);
 }
 
@@ -628,7 +623,7 @@ static int
 man_B_pre(MAN_ARGS)
 {
 
-	print_ofont(h, HTMLFONT_BOLD);
+	print_otag(h, TAG_B, 0, NULL);
 	return(1);
 }
 
@@ -638,7 +633,7 @@ static int
 man_I_pre(MAN_ARGS)
 {
 	
-	print_ofont(h, HTMLFONT_ITALIC);
+	print_otag(h, TAG_I, 0, NULL);
 	return(1);
 }
 

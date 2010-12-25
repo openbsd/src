@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.42 2010/12/22 00:33:25 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.43 2010/12/25 13:23:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -468,8 +468,8 @@ mdoc_root_post(MDOC_ARGS)
 	PAIR_SUMMARY_INIT(&tag[0], "Document Footer");
 	PAIR_CLASS_INIT(&tag[1], "foot");
 	if (NULL == h->style) {
-		PAIR_INIT(&tag[1], ATTR_WIDTH, "100%");
-		t = print_otag(h, TAG_TABLE, 2, tag);
+		PAIR_INIT(&tag[2], ATTR_WIDTH, "100%");
+		t = print_otag(h, TAG_TABLE, 3, tag);
 		PAIR_INIT(&tag[0], ATTR_WIDTH, "50%");
 		print_otag(h, TAG_COL, 1, tag);
 		print_otag(h, TAG_COL, 1, tag);
@@ -1094,12 +1094,14 @@ mdoc_d1_pre(MDOC_ARGS)
 
 	/* BLOCKQUOTE needs a block body. */
 
-	if (MDOC_Dl == n->tok)
-		PAIR_CLASS_INIT(&tag[0], "lit display");
-	else
-		PAIR_CLASS_INIT(&tag[0], "display");
-
+	PAIR_CLASS_INIT(&tag[0], "display");
 	print_otag(h, TAG_DIV, 1, tag);
+
+	if (MDOC_Dl == n->tok) {
+		PAIR_CLASS_INIT(&tag[0], "lit");
+		print_otag(h, TAG_CODE, 1, tag);
+	} 
+
 	return(1);
 }
 
@@ -1593,7 +1595,7 @@ mdoc_fo_pre(MDOC_ARGS)
 	assert(n->child->string);
 
 	PAIR_CLASS_INIT(&tag, "fname");
-	t = print_otag(h, TAG_SPAN, 1, &tag);
+	t = print_otag(h, TAG_B, 1, &tag);
 	print_text(h, n->child->string);
 	print_tagq(h, t);
 	return(0);
@@ -1680,7 +1682,7 @@ mdoc_rv_pre(MDOC_ARGS)
 
 	for (nn = n->child; nn; nn = nn->next) {
 		PAIR_CLASS_INIT(&tag, "fname");
-		t = print_otag(h, TAG_SPAN, 1, &tag);
+		t = print_otag(h, TAG_B, 1, &tag);
 		print_text(h, nn->string);
 		print_tagq(h, t);
 
@@ -1931,7 +1933,6 @@ mdoc__x_pre(MDOC_ARGS)
 		break;
 	case(MDOC__T):
 		PAIR_CLASS_INIT(&tag[0], "ref-title");
-		t = TAG_U;
 		break;
 	case(MDOC__U):
 		PAIR_CLASS_INIT(&tag[0], "link-ref");
