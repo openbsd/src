@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.98 2010/09/26 21:03:57 tedu Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.99 2010/12/25 00:13:21 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -301,9 +301,9 @@
 	"NTFS node",	/* 129 M_NTFSNTNODE */ \
 	"NTFS fnode",	/* 130 M_NTFSFNODE */ \
 	"NTFS dir",	/* 131 M_NTFSDIR */ \
-	"NTFS hash tables",	/* 132 M_NTFSNTHASH */ \
-	"NTFS file attr",	/* 133 M_NTFSNTVATTR */ \
-	"NTFS resident data ",	/* 134 M_NTFSRDATA */ \
+	"NTFS hash",	/* 132 M_NTFSNTHASH */ \
+	"NTFS attr",	/* 133 M_NTFSNTVATTR */ \
+	"NTFS data",	/* 134 M_NTFSRDATA */ \
 	"NTFS decomp",	/* 135 M_NTFSDECOMP */ \
 	"NTFS vrun",	/* 136 M_NTFSRUN */ \
 	"kqueue",	/* 137 M_KEVENT */ \
