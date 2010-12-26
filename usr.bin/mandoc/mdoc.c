@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.73 2010/12/21 23:57:31 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.74 2010/12/26 21:04:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -541,6 +541,9 @@ mdoc_node_free(struct mdoc_node *p)
 	if (MDOC_An == p->tok)
 		if (p->data.An)
 			free(p->data.An);
+	if (MDOC_Rs == p->tok && MDOC_BLOCK == p->type)
+		if (p->data.Rs)
+			free(p->data.Rs);
 	if (MDOC_TS == p->tok && MDOC_BLOCK == p->type)
 		if (p->data.TS)
 			tbl_free(p->data.TS);

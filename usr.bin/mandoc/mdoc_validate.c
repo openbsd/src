@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.80 2010/12/21 23:57:31 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.81 2010/12/26 21:04:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,6 +127,7 @@ static	int	 pre_it(PRE_ARGS);
 static	int	 pre_literal(PRE_ARGS);
 static	int	 pre_os(PRE_ARGS);
 static	int	 pre_par(PRE_ARGS);
+static	int	 pre_rs(PRE_ARGS);
 static	int	 pre_sh(PRE_ARGS);
 static	int	 pre_ss(PRE_ARGS);
 static	int	 pre_std(PRE_ARGS);
@@ -174,6 +175,7 @@ static	v_pre	 pres_fd[] = { NULL, NULL };
 static	v_pre	 pres_it[] = { pre_it, pre_par, NULL };
 static	v_pre	 pres_os[] = { pre_os, NULL };
 static	v_pre	 pres_pp[] = { pre_par, NULL };
+static	v_pre	 pres_rs[] = { pre_rs, NULL };
 static	v_pre	 pres_sh[] = { pre_sh, NULL };
 static	v_pre	 pres_ss[] = { pre_ss, NULL };
 static	v_pre	 pres_std[] = { pre_std, NULL };
@@ -265,7 +267,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Qo */
 	{ NULL, NULL },				/* Qq */
 	{ NULL, NULL },				/* Re */
-	{ NULL, posts_rs },			/* Rs */
+	{ pres_rs, posts_rs },			/* Rs */
 	{ NULL, NULL },				/* Sc */
 	{ NULL, NULL },				/* So */
 	{ NULL, NULL },				/* Sq */
@@ -979,6 +981,16 @@ pre_dd(PRE_ARGS)
 	return(1);
 }
 
+static int
+pre_rs(PRE_ARGS)
+{
+
+	assert(NULL == n->data.Rs);
+	n->data.Rs = mandoc_calloc(1, sizeof(struct mdoc_rs));
+
+	return(1);
+}
+
 
 static int
 post_bf(POST_ARGS)
@@ -1687,6 +1699,8 @@ post_rs(POST_ARGS)
 				break;
 
 		if (i < RSORD_MAX) {
+			if (MDOC__J == rsord[i])
+				mdoc->last->parent->data.Rs->child_J = nn;
 			next = nn->next;
 			continue;
 		}
@@ -1704,6 +1718,7 @@ post_rs(POST_ARGS)
 
 	next = NULL;
 	for (nn = mdoc->last->child->next; nn; nn = next) {
+
 		/* Determine order of `nn'. */
 		for (i = 0; i < RSORD_MAX; i++)
 			if (rsord[i] == nn->tok)

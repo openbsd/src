@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.119 2010/12/21 23:57:31 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.120 2010/12/26 21:04:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -65,6 +65,7 @@ static	void	  synopsis_pre(struct termp *,
 			const struct mdoc_node *);
 
 static	void	  termp____post(DECL_ARGS);
+static	void	  termp__t_post(DECL_ARGS);
 static	void	  termp_an_post(DECL_ARGS);
 static	void	  termp_bd_post(DECL_ARGS);
 static	void	  termp_bk_post(DECL_ARGS);
@@ -82,6 +83,7 @@ static	void	  termp_sh_post(DECL_ARGS);
 static	void	  termp_ss_post(DECL_ARGS);
 
 static	int	  termp__a_pre(DECL_ARGS);
+static	int	  termp__t_pre(DECL_ARGS);
 static	int	  termp_an_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
@@ -172,7 +174,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, termp____post }, /* %O */
 	{ NULL, termp____post }, /* %P */
 	{ NULL, termp____post }, /* %R */
-	{ termp_under_pre, termp____post }, /* %T */
+	{ termp__t_pre, termp__t_post }, /* %T */
 	{ NULL, termp____post }, /* %V */
 	{ NULL, NULL }, /* Ac */
 	{ termp_quote_pre, termp_quote_post }, /* Ao */
@@ -1833,7 +1835,7 @@ static int
 termp_quote_pre(DECL_ARGS)
 {
 
-	if (MDOC_BODY != n->type)
+	if (MDOC_BODY != n->type && MDOC_ELEM != n->type)
 		return(1);
 
 	switch (n->tok) {
@@ -1866,6 +1868,8 @@ termp_quote_pre(DECL_ARGS)
 	case (MDOC_Pq):
 		term_word(p, "(");
 		break;
+	case (MDOC__T):
+		/* FALLTHROUGH */
 	case (MDOC_Qo):
 		/* FALLTHROUGH */
 	case (MDOC_Qq):
@@ -1893,7 +1897,7 @@ static void
 termp_quote_post(DECL_ARGS)
 {
 
-	if (MDOC_BODY != n->type)
+	if (MDOC_BODY != n->type && MDOC_ELEM != n->type)
 		return;
 
 	p->flags |= TERMP_NOSPACE;
@@ -1928,6 +1932,8 @@ termp_quote_post(DECL_ARGS)
 	case (MDOC_Pq):
 		term_word(p, ")");
 		break;
+	case (MDOC__T):
+		/* FALLTHROUGH */
 	case (MDOC_Qo):
 		/* FALLTHROUGH */
 	case (MDOC_Qq):
@@ -2152,6 +2158,41 @@ termp_bk_post(DECL_ARGS)
 	if (MDOC_BODY == n->type)
 		p->flags &= ~(TERMP_KEEP | TERMP_PREKEEP);
 }
+
+/* ARGSUSED */
+static void
+termp__t_post(DECL_ARGS)
+{
+	struct mdoc_node *nn;
+
+	/*
+	 * If we're in an `Rs' and there's a journal present, then quote
+	 * us instead of underlining us (for disambiguation).
+	 */
+	nn = n->parent->parent;
+	if (nn && MDOC_Rs == nn->tok && nn->data.Rs->child_J)
+		termp_quote_post(p, pair, m, n);
+
+	termp____post(p, pair, m, n);
+}
+
+/* ARGSUSED */
+static int
+termp__t_pre(DECL_ARGS)
+{
+	struct mdoc_node *nn;
+
+	/*
+	 * If we're in an `Rs' and there's a journal present, then quote
+	 * us instead of underlining us (for disambiguation).
+	 */
+	nn = n->parent->parent;
+	if (nn && MDOC_Rs == nn->tok && nn->data.Rs->child_J)
+		return(termp_quote_pre(p, pair, m, n));
+
+	term_fontpush(p, TERMFONT_UNDER);
+	return(1);
+ }
 
 /* ARGSUSED */
 static int
