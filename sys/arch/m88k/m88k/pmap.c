@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 2010/12/23 19:53:29 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2010/12/26 22:18:20 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -2400,9 +2400,9 @@ unsetbit_Retry:
 next:
 		PMAP_UNLOCK(pmap);
 	}
-	splx(spl);
 
 done:
+	splx(spl);
 #ifdef PMAPDEBUG
 	if (pmap_debug & CD_USBIT)
 		printf(rv ? "TRUE\n" : "FALSE\n");
