@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.19 2010/06/26 23:24:44 guenther Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.20 2010/12/26 15:41:00 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -529,7 +529,7 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return (atop((*t->_device_to_pa)(segs[i].ds_addr) + off));
+		return ((*t->_device_to_pa)(segs[i].ds_addr) + off);
 	}
 
 	/* Page not found. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.14 2008/12/21 21:39:50 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.15 2010/12/26 15:41:00 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -491,7 +491,7 @@ lcg_mmap(void *v, off_t offset, int prot)
 	if (offset >= ss->ss_fbsize || offset < 0)
 		return (-1);
 
-	return (LCG_FB_ADDR + offset) >> PGSHIFT;
+	return (LCG_FB_ADDR + offset);
 }
 
 int

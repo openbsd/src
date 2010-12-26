@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.49 2010/12/06 20:57:18 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.50 2010/12/26 15:41:00 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -297,7 +297,6 @@ void		pmap_writetext(unsigned char *, int);
 #define		pmap_collect(pm)		do { /* nothing */ } while (0)
 #define		pmap_copy(DP,SP,D,L,S)		do { /* nothing */ } while (0)
 #define		pmap_deactivate(p)		do { /* nothing */ } while (0)
-#define		pmap_phys_address(frame)	(frame)
 #define		pmap_proc_iflush(p,va,len)	do { /* nothing */ } while (0)
 #define		pmap_update(pm)			do { /* nothing */ } while (0)
 

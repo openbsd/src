@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.28 2009/04/20 00:46:47 oga Exp $
+.\"	$OpenBSD: bus_dma.9,v 1.29 2010/12/26 15:40:57 miod Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 20 2009 $
+.Dd $Mdocdate: December 26 2010 $
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -781,8 +781,9 @@ of DMA-safe memory.
 is to be called by a device driver's
 .Fn (*d_mmap)
 entry point, which is called by the device pager for each page to be mapped.
-This function returns an opaque value to be interpreted by the device
-pager, or -1 on failure.
+This function returns a physical address to be passed to
+.Fn pmap_enter
+by the device pager, or -1 on failure.
 .Fn bus_dmamem_mmap
 arguments are
 as follows:

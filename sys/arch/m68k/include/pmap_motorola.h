@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.20 2010/12/06 20:57:16 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.21 2010/12/26 15:40:59 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -124,7 +124,6 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define	pmap_phys_address(frame)	((paddr_t)ptoa(frame))
 
 #define	pmap_copy(dp,sp,d,l,s)		do { /* nothing */ } while (0)
 #define	pmap_update(pmap)		do { /* nothing (yet) */ } while (0)

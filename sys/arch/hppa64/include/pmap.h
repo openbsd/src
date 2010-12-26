@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.3 2010/12/06 20:57:16 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.4 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -81,7 +81,6 @@ pmap_prefer(vaddr_t offs, vaddr_t hint)
 #define pmap_clear_reference(pg) pmap_changebit(pg, PTE_REFTRAP, 0)
 #define pmap_is_modified(pg)	pmap_testbit(pg, PTE_DIRTY)
 #define pmap_is_referenced(pg)	pmap_testbit(pg, PTE_REFTRAP)
-#define pmap_phys_address(ppn)	((ppn) << PAGE_SHIFT)
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */

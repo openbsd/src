@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.16 2010/06/27 22:04:03 miod Exp $ */
+/*	$OpenBSD: vmel.c,v 1.17 2010/12/26 15:40:59 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -171,5 +171,5 @@ vmelmmap(dev, off, prot)
 #endif
 	if (pa == NULL)
 		return (-1);
-	return (atop(pa));
+	return (pa);
 }

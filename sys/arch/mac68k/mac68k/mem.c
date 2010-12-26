@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.21 2007/09/22 16:21:32 krw Exp $	*/
+/*	$OpenBSD: mem.c,v 1.22 2010/12/26 15:40:59 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.22 1999/03/27 00:30:07 mycroft Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ mmmmap(dev, off, prot)
 	if ((u_int)off >= maxaddr)
 		return (-1);
 
-	return (atop((u_int)off));
+	return ((paddr_t)off);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sisfb.c,v 1.1 2010/02/28 22:32:50 miod Exp $	*/
+/*	$OpenBSD: sisfb.c,v 1.2 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -349,7 +349,6 @@ sisfb_mmap(void *v, off_t offset, int prot)
 {
 	struct sisfb_softc *sc = (struct sisfb_softc *)v;
 	struct rasops_info *ri = &sc->sc_fb->ri;
-	paddr_t pa;
 
 	if ((offset & PAGE_MASK) != 0)
 		return -1;
@@ -365,8 +364,7 @@ sisfb_mmap(void *v, off_t offset, int prot)
 	if (((paddr_t)ri->ri_bits & PAGE_MASK) != 0)
 		return -1;
 
-	pa = XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset;
-	return atop(pa);
+	return XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset;
 }
 
 /*

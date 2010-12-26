@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.6 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.7 2010/12/26 15:40:59 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $	*/
 
 /*-
@@ -709,6 +709,6 @@ paddr_t
 bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t offset, int prot,
     int flags)
 {
-	return (((paddr_t)addr + offset) >> PAGE_SHIFT);
+	return ((paddr_t)addr + offset);
 }
 #endif

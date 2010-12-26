@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.34 2010/05/23 15:30:25 deraadt Exp $ */
+/* $OpenBSD: tga.c,v 1.35 2010/12/26 15:41:00 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -716,7 +716,7 @@ tga_mmap(v, offset, prot)
 		offset += dc->dc_tgaconf->tgac_cspace_size / 2;
 	}
 #if defined(__alpha__) || defined(__mips__)
-	return atop(sc->sc_dc->dc_paddr + offset);
+	return (sc->sc_dc->dc_paddr + offset);
 #else
 	return (-1);
 #endif

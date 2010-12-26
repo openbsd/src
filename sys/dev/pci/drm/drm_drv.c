@@ -863,7 +863,7 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 
 		rw_enter_write(&dma->dma_lock);
 		if (dma->pagelist != NULL)
-			phys = atop(dma->pagelist[offset >> PAGE_SHIFT]);
+			phys = dma->pagelist[offset >> PAGE_SHIFT];
 		rw_exit_write(&dma->dma_lock);
 
 		return (phys);
@@ -904,7 +904,7 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 	case _DRM_FRAME_BUFFER:
 	case _DRM_REGISTERS:
 	case _DRM_AGP:
-		return (atop(offset + map->offset));
+		return (offset + map->offset);
 		break;
 	/* XXX unify all the bus_dmamem_mmap bits */
 	case _DRM_SCATTER_GATHER:

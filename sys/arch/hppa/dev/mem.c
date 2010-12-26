@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.31 2009/02/04 17:21:23 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.32 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -422,7 +422,7 @@ mmmmap(dev, off, prot)
 	    off >= ptoa(lastusablepage + 1))
 		return (-1);
 #endif
-	return (atop(off));
+	return (off);
 }
 
 int

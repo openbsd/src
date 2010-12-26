@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.27 2010/05/25 01:59:12 deraadt Exp $	*/
+/*	$OpenBSD: asc.c,v 1.28 2010/12/26 15:40:59 miod Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -287,7 +287,7 @@ ascmmap(dev, off, prot)
 	if (off >= 0 && off < MAC68K_ASC_LEN) {
 		(void)pmap_extract(pmap_kernel(),
 		    (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_handle), &pa);
-		return atop(pa + off);
+		return (pa + off);
 	}
 
 	return (-1);

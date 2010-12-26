@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.19 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.20 2010/12/26 15:40:58 miod Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ sfbmmap(v, offset, prot)
 
 	if (offset >= SFB_SIZE || offset < 0)
 		return (-1);
-	return atop(sc->sc_dc->dc_paddr + offset);
+	return sc->sc_dc->dc_paddr + offset;
 }
 
 int

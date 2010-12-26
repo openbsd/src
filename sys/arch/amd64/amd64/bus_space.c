@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.17 2010/05/08 16:54:07 oga Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -407,7 +407,7 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot, int flag
 	 * Note we are called for each "page" in the device that
 	 * the upper layers want to map.
 	 */
-	return (atop(addr + off));
+	return (addr + off);
 }
 
 u_int8_t

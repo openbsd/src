@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.18 2006/11/29 12:13:54 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.19 2010/12/26 15:40:59 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -437,7 +437,7 @@ macfb_mmap(void *v, off_t offset, int prot)
 
 	if (offset >= 0 &&
 	    offset < round_page(dc->dc_size))
-		addr = atop(dc->dc_paddr + dc->dc_offset + offset);
+		addr = (dc->dc_paddr + dc->dc_offset + offset);
 	else
 		addr = (-1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.14 2008/11/05 06:32:47 matthieu Exp $ */
+/*	$OpenBSD: mem.c,v 1.15 2010/12/26 15:40:59 miod Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -217,7 +217,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 	case 0:
 		if (suser(p, 0) != 0 && amd64_pa_used(off))
 			return -1;
-		return atop(off);
+		return off;
 
 #ifdef APERTURE
 /* minor device 4 is aperture driver */
@@ -226,15 +226,15 @@ mmmmap(dev_t dev, off_t off, int prot)
 		case 1:
 			/* Allow mapping of the VGA framebuffer & BIOS only */
 			if ((off >= VGA_START && off <= BIOS_END) ||
-				!amd64_pa_used(off))
-				return atop(off);
+			    !amd64_pa_used(off))
+				return off;
 			else
 				return -1;
 		case 2:
 			/* Allow mapping of the whole 1st megabyte 
 			   for x86emu */
 			if (off <= BIOS_END || !amd64_pa_used(off))
-				return atop(off);
+				return off;
 			else
 				return -1;
 		default:

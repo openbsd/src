@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.17 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -487,12 +487,12 @@ diofb_mmap(void * v, off_t offset, int prot)
 	switch (fb->mapmode) {
 	case WSDISPLAYIO_MODE_MAPPED:
 		if (offset >= 0 && offset < DIOFB_REGSPACE)
-			return (((paddr_t)fb->regaddr + offset) >> PGSHIFT);
+			return ((paddr_t)fb->regaddr + offset);
 		offset -= DIOFB_REGSPACE;
 		/* FALLTHROUGH */
 	case WSDISPLAYIO_MODE_DUMBFB:
 		if (offset >= 0 && offset < fb->fbsize)
-			return (((paddr_t)fb->fbaddr + offset) >> PGSHIFT);
+			return ((paddr_t)fb->fbaddr + offset);
 		break;
 	}
 

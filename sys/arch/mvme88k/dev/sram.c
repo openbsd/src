@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.20 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: sram.c,v 1.21 2010/12/26 15:40:59 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -173,5 +173,5 @@ srammmap(dev, off, prot)
 	/* allow access only in RAM */
 	if (off < 0 || off >= round_page(sc->sc_len))
 		return (-1);
-	return (atop(sc->sc_base + off));
+	return (sc->sc_base + off);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.25 2010/07/14 21:24:33 jakemsr Exp $	*/
+/*	$OpenBSD: video.c,v 1.26 2010/12/26 15:41:00 miod Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -375,11 +375,7 @@ videommap(dev_t dev, off_t off, int prot)
 		panic("videommap: invalid page");
 	sc->sc_vidmode = VIDMODE_MMAP;
 
-#if defined(__powerpc__) || defined(__sparc64__)
 	return (pa);
-#else
-	return (atop(pa));
-#endif
 }
 
 /*

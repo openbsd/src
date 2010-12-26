@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.46 2010/11/18 21:21:38 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.47 2010/12/26 15:41:00 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -111,7 +111,6 @@ boolean_t pteclrbits(struct vm_page *pg, u_int mask, u_int clear);
 	(pteclrbits((page), PG_PMAP_REF, FALSE))
 
 #define	pmap_unwire(pm, va)
-#define	pmap_phys_address(x)		(x)
 #define pmap_update(pmap)	/* nothing (yet) */
 
 #define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count) 

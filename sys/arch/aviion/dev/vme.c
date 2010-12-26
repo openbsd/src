@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.9 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: vme.c,v 1.10 2010/12/26 15:40:59 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -1007,5 +1007,5 @@ vmemmap(dev_t dev, off_t off, int prot)
 	if (r->vr_width == 0)
 		return -1;
 
-	return atop(r->vr_base + (paddr_t)off);
+	return r->vr_base + (paddr_t)off;
 }

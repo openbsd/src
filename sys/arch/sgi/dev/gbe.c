@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.12 2010/03/08 20:54:42 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.13 2010/12/26 15:41:00 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -917,7 +917,7 @@ gbe_mmap(void *v, off_t offset, int protection)
 	paddr_t pa;
 
 	if (offset >= 0 && offset < screen->fb_size)
-		pa = atop(screen->fb_phys + offset);
+		pa = screen->fb_phys + offset;
 	else
 		pa = -1;
 

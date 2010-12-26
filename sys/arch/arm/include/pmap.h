@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.14 2010/12/06 20:57:15 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.15 2010/12/26 15:40:59 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -242,8 +242,6 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 #define	pmap_deactivate(p)		do { /* nothing */ } while (0)
 #define	pmap_copy(dp, sp, da, l, sa)	do { /* nothing */ } while (0)
-
-#define pmap_phys_address(ppn)		(ptoa(ppn))
 
 #define pmap_proc_iflush(p, va, len)	do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.64 2010/10/16 07:06:20 maja Exp $ */
+/*	$OpenBSD: udl.c,v 1.65 2010/12/26 15:41:00 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -593,11 +593,7 @@ udl_mmap(void *v, off_t off, int prot)
 		udl_fbmem_free(sc);
 		return (-1);
 	}
-#if defined(__powerpc__) || defined(__sparc64__)
 	return (pa);
-#else
-	return (atop(pa));
-#endif
 }
 
 int

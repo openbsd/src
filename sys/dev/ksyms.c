@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.19 2007/09/11 13:39:33 gilles Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.20 2010/12/26 15:41:00 miod Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -244,6 +244,6 @@ ksymsmmap(dev, off, prot)
 	if (pmap_extract(pmap_kernel, va, &pa) == FALSE)
 		panic("ksymsmmap: unmapped page");
 
-	return atop(pa);
+	return (pa);
 }
 #endif

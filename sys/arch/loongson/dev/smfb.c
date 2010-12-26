@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.10 2010/08/31 10:24:46 pirofti Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.11 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -303,7 +303,6 @@ smfb_mmap(void *v, off_t offset, int prot)
 {
 	struct smfb_softc *sc = (struct smfb_softc *)v;
 	struct rasops_info *ri = &sc->sc_fb->ri;
-	paddr_t pa;
 
 	if ((offset & PAGE_MASK) != 0)
 		return -1;
@@ -311,8 +310,7 @@ smfb_mmap(void *v, off_t offset, int prot)
 	if (offset < 0 || offset >= ri->ri_stride * ri->ri_height)
 		return -1;
 
-	pa = XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset;
-	return atop(pa);
+	return XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.38 2010/04/30 21:56:39 oga Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.39 2010/12/26 15:41:00 miod Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
 	struct uvm_device *udv = (struct uvm_device *)uobj;
 	vaddr_t curr_va;
 	off_t curr_offset;
-	paddr_t paddr, mdpgno;
+	paddr_t paddr;
 	int lcv, retval;
 	dev_t device;
 	paddr_t (*mapfn)(dev_t, off_t, int);
@@ -410,12 +410,11 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
-		mdpgno = (*mapfn)(device, curr_offset, access_type);
-		if (mdpgno == -1) {
+		paddr = (*mapfn)(device, curr_offset, access_type);
+		if (paddr == -1) {
 			retval = VM_PAGER_ERROR;
 			break;
 		}
-		paddr = pmap_phys_address(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=%p, va=0x%lx, pa=0x%lx, at=%ld",

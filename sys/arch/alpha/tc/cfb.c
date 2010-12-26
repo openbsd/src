@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.21 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.22 2010/12/26 15:40:58 miod Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ cfbmmap(v, offset, prot)
 
 	if (offset > CFB_SIZE)
 		return (-1);
-	return atop(sc->sc_dc->dc_paddr + offset);
+	return sc->sc_dc->dc_paddr + offset;
 }
 
 int

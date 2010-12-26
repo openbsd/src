@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.23 2010/12/06 20:57:17 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.24 2010/12/26 15:40:59 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -120,7 +120,6 @@ extern	struct pmap *const kernel_pmap_ptr;
 #define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_kernel()			(kernel_pmap_ptr)
-#define	pmap_phys_address(ppn)		ptoa(ppn)
 
 #define	PMAP_STEAL_MEMORY		/* Enable 'stealing' during boot */
 

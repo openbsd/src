@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2007/10/06 23:50:54 krw Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2010/12/26 15:41:00 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.21 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 
 	if (__mm_mem_addr((paddr_t)off) == FALSE && suser(p, 0) != 0)
 		return (-1);
-	return (atop((paddr_t)off));
+	return ((paddr_t)off);
 }
 
 /*ARGSUSED*/

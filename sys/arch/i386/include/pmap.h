@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.55 2010/05/08 16:54:08 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.56 2010/12/26 15:40:59 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -364,7 +364,6 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_phys_address(ppn)		ptoa(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */

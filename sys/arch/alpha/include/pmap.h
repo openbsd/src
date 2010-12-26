@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.24 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: pmap.h,v 1.25 2010/12/26 15:40:58 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -183,7 +183,6 @@ void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_update(pmap)		/* nothing (yet) */
-#define pmap_phys_address(ppn)		ptoa(ppn)
 
 #define pmap_proc_iflush(p, va, len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */

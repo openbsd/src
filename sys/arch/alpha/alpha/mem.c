@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.24 2010/04/21 03:03:25 deraadt Exp $ */
+/* $OpenBSD: mem.c,v 1.25 2010/12/26 15:40:58 miod Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -234,7 +234,7 @@ mmmmap(dev, off, prot)
 	 */
 		if ((prot & alpha_pa_access(atop(off))) != prot)
 			return (-1);
-		return (atop(off));
+		return off;
 		
 #ifdef APERTURE
 	case 4:
@@ -243,7 +243,7 @@ mmmmap(dev, off, prot)
 		case 1:
 			if ((prot & alpha_pa_access(atop(off))) != prot)
 				return (-1);
-			return atop(off);
+			return off;
 		default:
 			return -1;
 		}

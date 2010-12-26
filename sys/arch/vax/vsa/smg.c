@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.23 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.24 2010/12/26 15:41:00 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -435,7 +435,7 @@ smg_mmap(void *v, off_t offset, int prot)
 	if (offset >= SMSIZE || offset < 0)
 		return (-1);
 
-	return (SMADDR + offset) >> PGSHIFT;
+	return (SMADDR + offset);
 }
 
 int

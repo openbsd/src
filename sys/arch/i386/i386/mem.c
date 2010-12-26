@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.36 2009/01/13 19:44:20 grange Exp $ */
+/*	$OpenBSD: mem.c,v 1.37 2010/12/26 15:40:59 miod Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -214,10 +214,9 @@ mmmmap(dev_t dev, off_t off, int prot)
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
-		if ((u_int)off > ptoa(physmem) &&
-		    suser(p, 0) != 0)
+		if ((u_int)off > ptoa(physmem) && suser(p, 0) != 0)
 			return -1;
-		return atop(off);
+		return off;
 
 #ifdef APERTURE
 /* minor device 4 is aperture driver */
@@ -227,7 +226,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 			/* Allow mapping of the VGA framebuffer & BIOS only */
 			if ((off >= VGA_START && off <= BIOS_END) ||
 			    (unsigned)off > (unsigned)ptoa(physmem))
-				return atop(off);
+				return off;
 			else
 				return -1;
 		case 2:
@@ -235,7 +234,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 			   for x86emu */
 			if (off <= BIOS_END ||
 			    (unsigned)off > (unsigned)ptoa(physmem))
-				return atop(off);
+				return off;
 			else
 				return -1;
 		default:
