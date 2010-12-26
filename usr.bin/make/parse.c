@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.99 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.100 2010/12/26 13:09:22 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1102,12 +1102,14 @@ resolve_include_filename(const char *file, bool isSystem)
 	if (!isSystem && file[0] != '/') {
 		/* ... by looking first under the same directory as the
 		 * current file */
-		char *slash;
+		char *slash = NULL;
 		const char *fname;
 
 		fname = Parse_Getfilename();
 
-		slash = strrchr(fname, '/');
+		if (fname != NULL)
+			slash = strrchr(fname, '/');
+
 		if (slash != NULL) {
 			char *newName;
 

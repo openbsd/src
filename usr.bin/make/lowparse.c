@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.24 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.25 2010/12/26 13:09:22 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -163,8 +163,8 @@ Parse_FromString(char *str, unsigned long lineno)
 	if (DEBUG(FOR))
 		(void)fprintf(stderr, "%s\n----\n", str);
 
-	if (current != NULL)
-		Lst_Push(&input_stack, current);
+	Lst_Push(&input_stack, current);
+	assert(current != NULL);
 	current = new_input_string(str, current->fname, lineno);
 }
 
