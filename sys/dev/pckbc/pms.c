@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.16 2010/12/24 18:22:20 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.17 2010/12/27 12:22:20 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -97,6 +97,11 @@ static const u_int butmap[8] = {
 #define PMS_PS2_BUTTON3		0x02	/* right */
 #define PMS_PS2_XNEG		0x10
 #define PMS_PS2_YNEG		0x20
+
+#define PMS_INTELLI_MAGIC1	200
+#define PMS_INTELLI_MAGIC2	100
+#define PMS_INTELLI_MAGIC3	80
+#define PMS_INTELLI_ID		0x03
 
 int	pmsprobe(struct device *, void *, void *);
 void	pmsattach(struct device *, struct device *, void *);
@@ -273,14 +278,14 @@ pms_dev_disable(struct pms_softc *sc)
 int
 pms_enable_intelli(struct pms_softc *sc)
 {
-	static const int rates[] = {200, 100, 80};
 	u_char resp;
 
-	if (pms_set_rate(sc, rates[0]) ||
-	    pms_set_rate(sc, rates[1]) ||
-	    pms_set_rate(sc, rates[2]) ||
+	/* the special sequence to enable the third button and the roller */
+	if (pms_set_rate(sc, PMS_INTELLI_MAGIC1) ||
+	    pms_set_rate(sc, PMS_INTELLI_MAGIC2) ||
+	    pms_set_rate(sc, PMS_INTELLI_MAGIC3) ||
 	    pms_get_devid(sc, &resp) ||
-	    resp != 0x03)
+	    resp != PMS_INTELLI_ID)
 		return (0);
 
 	return (1);
@@ -505,7 +510,7 @@ pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct pms_softc *sc = v;
 
 	if (sc->protocol && sc->protocol->ioctl)
-		return(sc->protocol->ioctl(sc, cmd, data, flag, p));
+		return (sc->protocol->ioctl(sc, cmd, data, flag, p));
 	else
 		return (-1);
 }
