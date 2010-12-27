@@ -1,6 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.15 2010/12/24 10:37:24 ajacoutot Exp $
-
-[ -z "${local_rcconf}" ] && . /etc/rc.conf
+#	$OpenBSD: rc.subr,v 1.16 2010/12/27 14:49:05 ajacoutot Exp $
 
 rc_err() {
 	echo $1
@@ -80,3 +78,6 @@ rc_cmd() {
 		rc_err "usage: $0 {start|check|reload|restart|stop}"
 	esac
 }
+
+[ -z "${local_rcconf}" ] && . /etc/rc.conf
+rc_conf
