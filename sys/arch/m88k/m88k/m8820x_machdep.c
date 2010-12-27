@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.40 2010/04/25 21:03:53 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.41 2010/12/27 19:18:37 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -619,20 +619,19 @@ m8820x_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	CMMU_LOCK;
 
 	while (size != 0) {
-		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
-		    PAGE_SIZE : MC88200_CACHE_LINE;
-
-		if (count <= MC88200_CACHE_LINE)
-			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_LINE,
-			    0, cpu, 0, pa);
-		else
+		if ((pa & PAGE_MASK) == 0 && size >= PAGE_SIZE) {
 			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_PAGE,
 			    0, cpu, 0, pa);
-
+			count = PAGE_SIZE;
+		} else {
+			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_LINE,
+			    0, cpu, 0, pa);
+			count = MC88200_CACHE_LINE;
+		}
 		pa += count;
 		size -= count;
+		m8820x_cmmu_wait(cpu);
 	}
-	m8820x_cmmu_wait(cpu);
 
 	CMMU_UNLOCK;
 	set_psr(psr);
@@ -655,20 +654,19 @@ m8820x_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	CMMU_LOCK;
 
 	while (size != 0) {
-		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
-		    PAGE_SIZE : MC88200_CACHE_LINE;
-
-		if (count <= MC88200_CACHE_LINE)
-			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE,
-			    MODE_VAL, cpu, INST_CMMU, pa);
-		else
+		if ((pa & PAGE_MASK) == 0 && size >= PAGE_SIZE) {
 			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_PAGE,
 			    MODE_VAL, cpu, INST_CMMU, pa);
-
+			count = PAGE_SIZE;
+		} else {
+			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE,
+			    MODE_VAL, cpu, INST_CMMU, pa);
+			count = MC88200_CACHE_LINE;
+		}
 		pa += count;
 		size -= count;
+		m8820x_cmmu_wait(cpu);
 	}
-	m8820x_cmmu_wait(cpu);
 
 	CMMU_UNLOCK;
 	set_psr(psr);
