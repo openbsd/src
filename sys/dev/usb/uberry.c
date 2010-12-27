@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.17 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.18 2010/12/27 03:03:50 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -158,11 +158,14 @@ uberry_detach(struct device *self, int flags)
 int
 uberry_activate(struct device *self, int act)
 {
+	struct uberry_softc *sc = (struct uberry_softc *)self;
+
 	switch (act) {
 	case DVACT_ACTIVATE:
 		break;
 
 	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return 0;

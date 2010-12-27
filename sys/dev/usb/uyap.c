@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap.c,v 1.17 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: uyap.c,v 1.18 2010/12/27 03:03:50 jakemsr Exp $ */
 /*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
 
 /*
@@ -125,5 +125,16 @@ uyap_detach(struct device *self, int flags)
 int
 uyap_activate(struct device *self, int act)
 {
+	struct uyap_softc *sc = (struct uyap_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+
+	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
+		break;
+	}
+
 	return 0;
 }

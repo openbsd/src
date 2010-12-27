@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.7 2010/12/18 22:55:18 jakemsr Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.8 2010/12/27 03:03:50 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -130,6 +130,7 @@ static const struct usb_devno rsu_devs_noht[] = {
 int		rsu_match(struct device *, void *, void *);
 void		rsu_attach(struct device *, struct device *, void *);
 int		rsu_detach(struct device *, int);
+int		rsu_activate(struct device *, int);
 int		rsu_open_pipes(struct rsu_softc *);
 void		rsu_close_pipes(struct rsu_softc *);
 int		rsu_alloc_rx_list(struct rsu_softc *);
@@ -200,7 +201,8 @@ const struct cfattach rsu_ca = {
 	sizeof(struct rsu_softc),
 	rsu_match,
 	rsu_attach,
-	rsu_detach
+	rsu_detach,
+	rsu_activate
 };
 
 int
@@ -362,6 +364,23 @@ rsu_detach(struct device *self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 	return (0);
+}
+
+int
+rsu_activate(struct device *self, int act)
+{
+	struct rsu_softc *sc = (struct rsu_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+
+	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
+		break;
+	}
+
+	return 0;
 }
 
 int

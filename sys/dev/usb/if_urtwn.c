@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.10 2010/12/11 21:07:38 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.11 2010/12/27 03:03:50 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -113,6 +113,7 @@ static const struct usb_devno urtwn_devs[] = {
 int		urtwn_match(struct device *, void *, void *);
 void		urtwn_attach(struct device *, struct device *, void *);
 int		urtwn_detach(struct device *, int);
+int		urtwn_activate(struct device *, int);
 int		urtwn_open_pipes(struct urtwn_softc *);
 void		urtwn_close_pipes(struct urtwn_softc *);
 int		urtwn_alloc_rx_list(struct urtwn_softc *);
@@ -213,7 +214,8 @@ const struct cfattach urtwn_ca = {
 	sizeof(struct urtwn_softc),
 	urtwn_match,
 	urtwn_attach,
-	urtwn_detach
+	urtwn_detach,
+	urtwn_activate
 };
 
 int
@@ -392,6 +394,23 @@ urtwn_detach(struct device *self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 	return (0);
+}
+
+int
+urtwn_activate(struct device *self, int act)
+{
+	struct urtwn_softc *sc = (struct urtwn_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+
+	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
+		break;
+	}
+
+	return 0;
 }
 
 int
