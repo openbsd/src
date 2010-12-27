@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.26 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: mv.1,v 1.27 2010/12/27 23:27:53 schwarze Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: December 27 2010 $
 .Dt MV 1
 .Os
 .Sh NAME
@@ -61,17 +61,24 @@ In its second form,
 .Nm
 moves each file named by a
 .Ar source
-operand to a destination specified by the
+operand to the destination specified by the
 .Ar directory
 operand.
 It is an error if the
 .Ar directory
-operand does not exist.
+does not exist.
 The destination path for each
 .Ar source
 operand is the pathname produced by the concatenation of the
 .Ar directory
 operand, a slash, and the final pathname component of the named file.
+.Pp
+In both forms, a
+.Ar source
+operand is skipped with an error message
+when the respective destination path is a non-empy directory,
+or when the source is a non-directory file but the destination path
+is a directory, or vice versa.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -117,9 +124,9 @@ and
 to accomplish the move.
 The effect is equivalent to:
 .Bd -literal -offset indent
-$ rm -f destination_path && \e
-    cp -PRp source_file destination && \e
-    rm -rf source_file
+$ rm -df -- destination_path && \e
+    cp -PRp -- source destination_path && \e
+    rm -rf -- source
 .Ed
 .Sh EXIT STATUS
 .Ex -std mv
@@ -162,19 +169,27 @@ A
 command appeared in
 .At v1 .
 .Sh CAVEATS
-In the second synopsis form
-if the destination path exists,
-the
+In the second synopsis form, incompatible file types in
 .Ar source
-operand and the destination path
-must both be a file or must both be a directory
-for the operation to succeed.
+and
+.Ar directory
+cause partial moves:
 For example, if
 .Pa f
-is a file and
+and
+.Pa g
+are non-directory files and
 .Pa d
 and
 .Pa d/f
-are directories, the following command will fail:
+are directories, the command
 .Pp
-.Dl $ mv f d
+.Dl $ mv f g d
+.Pp
+will print an error message, leave
+.Pa f
+where it is, move
+.Pa g
+to
+.Pa d/g
+and return a non-zero exit status.
