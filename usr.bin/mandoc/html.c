@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.20 2010/12/25 13:23:03 schwarze Exp $ */
+/*	$Id: html.c,v 1.21 2010/12/27 21:44:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -767,20 +767,24 @@ html_idcat(char *dst, const char *src, int sz)
 {
 	int		 ssz;
 
-	assert(sz);
+	assert(sz > 2);
 
 	/* Cf. <http://www.w3.org/TR/html4/types.html#h-6.2>. */
 
-	for ( ; *dst != '\0' && sz; dst++, sz--)
-		/* Jump to end. */ ;
-
-	assert(sz > 2);
-
 	/* We can't start with a number (bah). */
 
-	*dst++ = 'x';
-	*dst = '\0';
-	sz--;
+	if ('#' == *dst) {
+		dst++;
+		sz--;
+	}
+	if ('\0' == *dst) {
+		*dst++ = 'x';
+		*dst = '\0';
+		sz--;
+	}
+
+	for ( ; *dst != '\0' && sz; dst++, sz--)
+		/* Jump to end. */ ;
 
 	for ( ; *src != '\0' && sz > 1; src++) {
 		ssz = snprintf(dst, (size_t)sz, "%.2x", *src);
