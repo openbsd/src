@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.20 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: intr.h,v 1.21 2010/12/27 19:51:27 guenther Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -210,7 +210,6 @@ void intr_printconfig(void);
 int x86_send_ipi(struct cpu_info *, int);
 int x86_fast_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
-void x86_multicast_ipi(int, int);
 void x86_ipi_handler(void);
 void x86_intlock(struct intrframe);
 void x86_intunlock(struct intrframe);
