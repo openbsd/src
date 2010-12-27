@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.6 2007/05/25 16:22:11 art Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.7 2010/12/27 20:22:23 guenther Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -120,12 +120,10 @@ x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits)
 	__asm __volatile(LOCK " andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
-#define x86_atomic_testset_ul	x86_atomic_testset_u32
+#define x86_atomic_testset_ul	x86_atomic_testset_u64
 #define x86_atomic_testset_i	x86_atomic_testset_i32
-#define x86_atomic_setbits_l	x86_atomic_setbits_u32
-#define x86_atomic_setbits_ul	x86_atomic_setbits_u32
-#define x86_atomic_clearbits_l	x86_atomic_clearbits_u32
-#define x86_atomic_clearbits_ul	x86_atomic_clearbits_u32
+#define x86_atomic_setbits_ul	x86_atomic_setbits_u64
+#define x86_atomic_clearbits_ul	x86_atomic_clearbits_u64
 
 #define atomic_setbits_int x86_atomic_setbits_u32
 #define atomic_clearbits_int x86_atomic_clearbits_u32

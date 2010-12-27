@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.25 2010/09/20 06:33:46 matthew Exp $	*/
+/*	$OpenBSD: intr.c,v 1.26 2010/12/27 20:22:23 guenther Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ intr_disestablish(struct intrhand *ih)
 
 	simple_lock(&ci->ci_slock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
-	x86_atomic_clearbits_l(&ci->ci_ipending, (1 << ih->ih_slot));
+	x86_atomic_clearbits_u32(&ci->ci_ipending, (1 << ih->ih_slot));
 
 	/*
 	 * Remove the handler from the chain.

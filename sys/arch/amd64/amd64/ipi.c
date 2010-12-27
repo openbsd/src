@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.9 2010/12/27 19:51:27 guenther Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.10 2010/12/27 20:22:23 guenther Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 {
 	int ret;
 
-	x86_atomic_setbits_l(&ci->ci_ipis, ipimask);
+	x86_atomic_setbits_u32(&ci->ci_ipis, ipimask);
 
 	/* Don't send IPI to cpu which isn't (yet) running. */
 	if (!(ci->ci_flags & CPUF_RUNNING))
@@ -88,7 +88,7 @@ x86_broadcast_ipi(int ipimask)
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;
-		x86_atomic_setbits_l(&ci->ci_ipis, ipimask);
+		x86_atomic_setbits_u32(&ci->ci_ipis, ipimask);
 		count++;
 	}
 	if (!count)
@@ -105,7 +105,7 @@ x86_ipi_handler(void)
 	u_int32_t pending;
 	int bit;
 
-	pending = x86_atomic_testset_ul(&ci->ci_ipis, 0);
+	pending = x86_atomic_testset_u32(&ci->ci_ipis, 0);
 
 	for (bit = 0; bit < X86_NIPI && pending; bit++) {
 		if (pending & (1<<bit)) {
