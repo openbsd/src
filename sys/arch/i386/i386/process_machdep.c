@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.25 2010/09/29 15:11:31 joshe Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.26 2010/12/27 12:48:35 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -299,8 +299,15 @@ process_write_fpregs(struct proc *p, struct fpreg *regs)
 #if NNPX > 0
 		npxsave_proc(p, 0);
 #endif
-	} else
+	} else {
+		/*
+		 * Make sure MXCSR and the XMM registers are
+		 * initialized to sane defaults.
+		 */
+		if (i386_use_fxsave)
+			process_fninit_xmm(&frame->sv_xmm);
 		p->p_md.md_flags |= MDP_USEDFPU;
+	}
 
 	if (i386_use_fxsave) {
 		struct save87 s87;
