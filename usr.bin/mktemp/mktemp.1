@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.25 2007/05/31 19:20:13 jmc Exp $
+.\"	$OpenBSD: mktemp.1,v 1.26 2010/12/27 21:18:44 millert Exp $
 .\"
 .\" Copyright (c) 1996, 2000, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 27 2010 $
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -48,8 +48,7 @@ flag is implied (see below).
 .Pp
 The trailing
 .Ql X Ns s
-are replaced with a combination of the current process number and
-random letters.
+are replaced with a unique digit and letter combination.
 The name chosen depends both on the number of
 .Ql X Ns s
 in the
@@ -138,7 +137,7 @@ The temp file will be unlinked before
 .Nm
 exits.
 This is slightly better than
-.Fn mktemp 3
+.Xr mktemp 3
 but still introduces a race condition.
 Use of this option is not encouraged.
 .El
