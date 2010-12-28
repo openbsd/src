@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2010/12/28 14:30:50 jasper Exp $
+# $OpenBSD: Makefile,v 1.16 2010/12/28 20:07:47 jasper Exp $
 
 .include <bsd.own.mk> # for KERBEROS5
 
@@ -21,7 +21,8 @@ beforeinstall:
 .else
 	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
 .endif
-
+	[ -d ${DESTDIR}/usr/lib/pkgconfig/ ] || \
+		${INSTALL} -o root -g ${SHAREGRP} -d ${DESTDIR}/usr/lib/pkgconfig/
 .for p in ${PC_FILES}
 	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
 	    -m ${SHAREMODE} ${.OBJDIR}/$p ${DESTDIR}/usr/lib/pkgconfig/
