@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.14 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.15 2010/12/28 14:31:38 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: December 28 2010 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -38,7 +38,9 @@ Yoyodyne package would likely be described by "yoyodyne.pc".
 Not all software packages provide
 .Nm
 metadata.
-Packages controlled by the
+Libraries from base install their metadata in
+.Pa /usr/lib/pkgconfig ;
+packages controlled by the
 .Xr ports 7
 system store their metadata, if provided, in
 .Pa ${LOCALBASE}/lib/pkgconfig ;
