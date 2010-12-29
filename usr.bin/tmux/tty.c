@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.93 2010/11/22 21:13:13 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.94 2010/12/29 21:49:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -403,17 +403,25 @@ tty_update_mode(struct tty *tty, int mode)
 		else
 			tty_putcode(tty, TTYC_CIVIS);
 	}
-	if (changed & (MODE_MOUSE|MODE_MOUSEMOTION)) {
-		if (mode & MODE_MOUSE) {
-			if (mode & MODE_MOUSEMOTION)
-				tty_puts(tty, "\033[?1003h");
-			else
+	if (changed & ALL_MOUSE_MODES) {
+		if (mode & ALL_MOUSE_MODES) {
+			if (mode & MODE_MOUSE_STANDARD)
 				tty_puts(tty, "\033[?1000h");
+			else if (mode & MODE_MOUSE_HIGHLIGHT)
+				tty_puts(tty, "\033[?1001h");
+			else if (mode & MODE_MOUSE_BUTTON)
+				tty_puts(tty, "\033[?1002h");
+			else if (mode & MODE_MOUSE_ANY)
+				tty_puts(tty, "\033[?1003h");
 		} else {
-			if (mode & MODE_MOUSEMOTION)
-				tty_puts(tty, "\033[?1003l");
-			else
+			if (tty->mode & MODE_MOUSE_STANDARD)
 				tty_puts(tty, "\033[?1000l");
+			else if (tty->mode & MODE_MOUSE_HIGHLIGHT)
+				tty_puts(tty, "\033[?1001l");
+			else if (tty->mode & MODE_MOUSE_BUTTON)
+				tty_puts(tty, "\033[?1002l");
+			else if (tty->mode & MODE_MOUSE_ANY)
+				tty_puts(tty, "\033[?1003l");
 		}
 	}
 	if (changed & MODE_KKEYPAD) {
