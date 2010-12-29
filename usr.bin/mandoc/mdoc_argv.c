@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.34 2010/09/13 20:10:11 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.35 2010/12/29 00:47:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -357,8 +357,7 @@ mdoc_args(struct mdoc *m, int line, int *pos,
 		if (MDOC_Bl == n->tok)
 			break;
 
-	assert(n->data.Bl);
-	if (n && LIST_column == n->data.Bl->type) {
+	if (n && LIST_column == n->norm->Bl.type) {
 		fl |= ARGS_TABSEP;
 		fl &= ~ARGS_DELIM;
 	}

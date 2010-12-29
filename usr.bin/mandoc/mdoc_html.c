@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.43 2010/12/25 13:23:03 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.44 2010/12/29 00:47:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -837,7 +837,7 @@ mdoc_it_pre(MDOC_ARGS)
 
 	assert(bl);
 
-	type = bl->data.Bl->type;
+	type = bl->norm->Bl.type;
 
 	assert(lists[type]);
 	PAIR_CLASS_INIT(&tag[0], lists[type]);
@@ -863,7 +863,7 @@ mdoc_it_pre(MDOC_ARGS)
 		case(LIST_ohang):
 			/* FALLTHROUGH */
 		case(LIST_tag):
-			SCALE_VS_INIT(&su, ! bl->data.Bl->comp);
+			SCALE_VS_INIT(&su, ! bl->norm->Bl.comp);
 			bufcat_su(h, "margin-top", &su);
 			PAIR_STYLE_INIT(&tag[1], h);
 			print_otag(h, TAG_DT, 2, tag);
@@ -888,7 +888,7 @@ mdoc_it_pre(MDOC_ARGS)
 		case(LIST_enum):
 			/* FALLTHROUGH */
 		case(LIST_item):
-			SCALE_VS_INIT(&su, ! bl->data.Bl->comp);
+			SCALE_VS_INIT(&su, ! bl->norm->Bl.comp);
 			bufcat_su(h, "margin-top", &su);
 			PAIR_STYLE_INIT(&tag[1], h);
 			print_otag(h, TAG_LI, 2, tag);
@@ -902,17 +902,17 @@ mdoc_it_pre(MDOC_ARGS)
 		case(LIST_ohang):
 			/* FALLTHROUGH */
 		case(LIST_tag):
-			if (NULL == bl->data.Bl->width) {
+			if (NULL == bl->norm->Bl.width) {
 				print_otag(h, TAG_DD, 1, tag);
 				break;
 			}
-			a2width(bl->data.Bl->width, &su);
+			a2width(bl->norm->Bl.width, &su);
 			bufcat_su(h, "margin-left", &su);
 			PAIR_STYLE_INIT(&tag[1], h);
 			print_otag(h, TAG_DD, 2, tag);
 			break;
 		case(LIST_column):
-			SCALE_VS_INIT(&su, ! bl->data.Bl->comp);
+			SCALE_VS_INIT(&su, ! bl->norm->Bl.comp);
 			bufcat_su(h, "margin-top", &su);
 			PAIR_STYLE_INIT(&tag[1], h);
 			print_otag(h, TAG_TD, 2, tag);
@@ -943,13 +943,13 @@ mdoc_bl_pre(MDOC_ARGS)
 	char		 buf[BUFSIZ];
 
 	if (MDOC_BODY == n->type) {
-		if (LIST_column == n->data.Bl->type)
+		if (LIST_column == n->norm->Bl.type)
 			print_otag(h, TAG_TBODY, 0, NULL);
 		return(1);
 	}
 
 	if (MDOC_HEAD == n->type) {
-		if (LIST_column != n->data.Bl->type)
+		if (LIST_column != n->norm->Bl.type)
 			return(0);
 
 		/*
@@ -959,10 +959,10 @@ mdoc_bl_pre(MDOC_ARGS)
 		 * screen and we want to preserve that behaviour.
 		 */
 
-		for (i = 0; i < n->data.Bl->ncols; i++) {
-			a2width(n->data.Bl->cols[i], &su);
+		for (i = 0; i < n->norm->Bl.ncols; i++) {
+			a2width(n->norm->Bl.cols[i], &su);
 			bufinit(h);
-			if (i < n->data.Bl->ncols - 1)
+			if (i < n->norm->Bl.ncols - 1)
 				bufcat_su(h, "width", &su);
 			else
 				bufcat_su(h, "min-width", &su);
@@ -978,19 +978,19 @@ mdoc_bl_pre(MDOC_ARGS)
 	bufcat_su(h, "margin-bottom", &su);
 	PAIR_STYLE_INIT(&tag[0], h);
 
-	assert(lists[n->data.Bl->type]);
+	assert(lists[n->norm->Bl.type]);
 	strlcpy(buf, "list ", BUFSIZ);
-	strlcat(buf, lists[n->data.Bl->type], BUFSIZ);
+	strlcat(buf, lists[n->norm->Bl.type], BUFSIZ);
 	PAIR_INIT(&tag[1], ATTR_CLASS, buf);
 
 	/* Set the block's left-hand margin. */
 
-	if (n->data.Bl->offs) {
-		a2offs(n->data.Bl->offs, &su);
+	if (n->norm->Bl.offs) {
+		a2offs(n->norm->Bl.offs, &su);
 		bufcat_su(h, "margin-left", &su);
 	}
 
-	switch (n->data.Bl->type) {
+	switch (n->norm->Bl.type) {
 	case(LIST_bullet):
 		/* FALLTHROUGH */
 	case(LIST_dash):
@@ -1143,7 +1143,7 @@ mdoc_bd_pre(MDOC_ARGS)
 		return(0);
 
 	if (MDOC_BLOCK == n->type) {
-		comp = n->data.Bd->comp;
+		comp = n->norm->Bd.comp;
 		for (nn = n; nn && ! comp; nn = nn->parent) {
 			if (MDOC_BLOCK != nn->type)
 				continue;
@@ -1158,14 +1158,14 @@ mdoc_bd_pre(MDOC_ARGS)
 	}
 
 	SCALE_HS_INIT(&su, 0);
-	if (n->data.Bd->offs)
-		a2offs(n->data.Bd->offs, &su);
+	if (n->norm->Bd.offs)
+		a2offs(n->norm->Bd.offs, &su);
 
 	bufcat_su(h, "margin-left", &su);
 	PAIR_STYLE_INIT(&tag[0], h);
 
-	if (DISP_unfilled != n->data.Bd->type && 
-			DISP_literal != n->data.Bd->type) {
+	if (DISP_unfilled != n->norm->Bd.type && 
+			DISP_literal != n->norm->Bd.type) {
 		PAIR_CLASS_INIT(&tag[1], "display");
 		print_otag(h, TAG_DIV, 2, tag);
 		return(1);
@@ -1748,13 +1748,11 @@ mdoc_bf_pre(MDOC_ARGS)
 	else if (MDOC_BODY != n->type)
 		return(1);
 
-	assert(n->data.Bf);
-
-	if (FONT_Em == n->data.Bf->font) 
+	if (FONT_Em == n->norm->Bf.font) 
 		PAIR_CLASS_INIT(&tag[0], "emph");
-	else if (FONT_Sy == n->data.Bf->font) 
+	else if (FONT_Sy == n->norm->Bf.font) 
 		PAIR_CLASS_INIT(&tag[0], "symb");
-	else if (FONT_Li == n->data.Bf->font) 
+	else if (FONT_Li == n->norm->Bf.font) 
 		PAIR_CLASS_INIT(&tag[0], "lit");
 	else
 		PAIR_CLASS_INIT(&tag[0], "none");

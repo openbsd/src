@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.40 2010/12/27 23:57:13 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.41 2010/12/29 00:47:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -364,12 +364,12 @@ struct	mdoc_rs {
  * of iterating through the mdoc_arg pointers of a node: defaults are
  * provided, etc.
  */
-union mdoc_data {
-	struct mdoc_an 	 *An;
-	struct mdoc_bd	 *Bd;
-	struct mdoc_bf	 *Bf;
-	struct mdoc_bl	 *Bl;
-	struct mdoc_rs	 *Rs;
+union	mdoc_data {
+	struct mdoc_an 	  An;
+	struct mdoc_bd	  Bd;
+	struct mdoc_bf	  Bf;
+	struct mdoc_bl	  Bl;
+	struct mdoc_rs	  Rs;
 	struct tbl	 *TS;
 };
 
@@ -394,6 +394,7 @@ struct	mdoc_node {
 #define	MDOC_ENDED	 (1 << 5) /* rendering has been ended */
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
+	union mdoc_data	 *norm; /* normalised args */
 	/* FIXME: these can be union'd to shave a few bytes. */
 	struct mdoc_arg	 *args; /* BLOCK/ELEM */
 	struct mdoc_node *pending; /* BLOCK */
@@ -402,7 +403,6 @@ struct	mdoc_node {
 	struct mdoc_node *tail; /* BLOCK */
 	char		 *string; /* TEXT */
 	enum mdoc_endbody end; /* BODY */
-	union mdoc_data	  data;
 };
 
 /*

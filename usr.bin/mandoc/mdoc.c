@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.74 2010/12/26 21:04:19 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.75 2010/12/29 00:47:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -241,7 +241,7 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 	if (n && MDOC_TS == n->tok && MDOC_BODY == n->type &&
 	    strncmp(buf+offs, ".TE", 3)) {
 		n = n->parent;
-		if ( ! tbl_read(n->data.TS, "mdoc tbl parser",
+		if ( ! tbl_read(n->norm->TS, "mdoc tbl parser",
 		    ln, buf+offs, strlen(buf+offs)))
 			mdoc_nmsg(m, n, MANDOCERR_TBL);
 		return(1);
@@ -339,6 +339,23 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 	}
 
 	p->parent->nchild++;
+
+	/*
+	 * Copy over the normalised-data pointer of our parent.  Not
+	 * everybody has one, but copying a null pointer is fine.
+	 */
+
+	switch (p->type) {
+	case (MDOC_BODY):
+		/* FALLTHROUGH */
+	case (MDOC_TAIL):
+		/* FALLTHROUGH */
+	case (MDOC_HEAD):
+		p->norm = p->parent->norm;
+		break;
+	default:
+		break;
+	}
 
 	if ( ! mdoc_valid_pre(mdoc, p))
 		return(0);
@@ -472,6 +489,23 @@ mdoc_block_alloc(struct mdoc *m, int line, int pos,
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
+
+	switch (tok) {
+	case (MDOC_Bd):
+		/* FALLTHROUGH */
+	case (MDOC_Bf):
+		/* FALLTHROUGH */
+	case (MDOC_Bl):
+		/* FALLTHROUGH */
+	case (MDOC_Rs):
+		/* FALLTHROUGH */
+	case (MDOC_TS):
+		p->norm = mandoc_calloc(1, sizeof(union mdoc_data));
+		break;
+	default:
+		break;
+	}
+
 	if ( ! node_append(m, p))
 		return(0);
 	m->next = MDOC_NEXT_CHILD;
@@ -489,6 +523,15 @@ mdoc_elem_alloc(struct mdoc *m, int line, int pos,
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
+
+	switch (tok) {
+	case (MDOC_An):
+		p->norm = mandoc_calloc(1, sizeof(union mdoc_data));
+		break;
+	default:
+		break;
+	}
+
 	if ( ! node_append(m, p))
 		return(0);
 	m->next = MDOC_NEXT_CHILD;
@@ -523,31 +566,12 @@ static void
 mdoc_node_free(struct mdoc_node *p)
 {
 
-	/*
-	 * XXX: if these end up being problematic in terms of memory
-	 * management and dereferencing freed blocks, then make them
-	 * into reference-counted double-pointers.
-	 */
-
-	if (MDOC_Bd == p->tok && MDOC_BLOCK == p->type)
-		if (p->data.Bd)
-			free(p->data.Bd);
-	if (MDOC_Bl == p->tok && MDOC_BLOCK == p->type)
-		if (p->data.Bl)
-			free(p->data.Bl);
-	if (MDOC_Bf == p->tok && MDOC_HEAD == p->type)
-		if (p->data.Bf)
-			free(p->data.Bf);
-	if (MDOC_An == p->tok)
-		if (p->data.An)
-			free(p->data.An);
-	if (MDOC_Rs == p->tok && MDOC_BLOCK == p->type)
-		if (p->data.Rs)
-			free(p->data.Rs);
 	if (MDOC_TS == p->tok && MDOC_BLOCK == p->type)
-		if (p->data.TS)
-			tbl_free(p->data.TS);
+		if (p->norm->TS)
+			tbl_free(p->norm->TS);
 
+	if (MDOC_BLOCK == p->type || MDOC_ELEM == p->type)
+		free(p->norm);
 	if (p->string)
 		free(p->string);
 	if (p->args)
@@ -642,7 +666,7 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	 */
 
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-			LIST_column == n->data.Bl->type) {
+			LIST_column == n->norm->Bl.type) {
 		/* `Bl' is open without any children. */
 		m->flags |= MDOC_FREECOL;
 		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
@@ -651,7 +675,7 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
 			NULL != n->parent &&
 			MDOC_Bl == n->parent->tok &&
-			LIST_column == n->parent->data.Bl->type) {
+			LIST_column == n->parent->norm->Bl.type) {
 		/* `Bl' has block-level `It' children. */
 		m->flags |= MDOC_FREECOL;
 		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
@@ -832,7 +856,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	 */
 
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-			LIST_column == n->data.Bl->type) {
+			LIST_column == n->norm->Bl.type) {
 		m->flags |= MDOC_FREECOL;
 		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf))
 			goto err;
@@ -848,7 +872,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
 			NULL != n->parent &&
 			MDOC_Bl == n->parent->tok &&
-			LIST_column == n->parent->data.Bl->type) {
+			LIST_column == n->parent->norm->Bl.type) {
 		m->flags |= MDOC_FREECOL;
 		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
 			goto err;
