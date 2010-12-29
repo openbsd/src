@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2005/07/31 10:11:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2010/12/29 17:51:48 deraadt Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -15,7 +15,6 @@ ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	    ${DESTDIR}/usr/include/dev/biovar.h \
 	    ${DESTDIR}/usr/include/dev/ccdvar.h \
 	    ${DESTDIR}/usr/include/dev/ramdisk.h \
-	    ${DESTDIR}/usr/include/dev/rndioctl.h \
 	    ${DESTDIR}/usr/include/dev/systrace.h \
 	    ${DESTDIR}/usr/include/dev/wscons/wsconsio.h \
 	    ${DESTDIR}/usr/include/dev/vndioctl.h \

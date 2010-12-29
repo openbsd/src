@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.22 2007/06/02 15:14:36 deraadt Exp $
+#	$OpenBSD: mkioctls,v 1.23 2010/12/29 17:51:48 deraadt Exp $
 
 #
 # Copyright (c) 1994
@@ -77,7 +77,6 @@ BEGIN {
 	print "#include <dev/biovar.h>"
 	print "#include <dev/ccdvar.h>"
 	print "#include <dev/ramdisk.h>"
-	print "#include <dev/rndioctl.h>"
 	print "#include <dev/systrace.h>"
 	print "#include <dev/wscons/wsconsio.h>"
 	print "#include <dev/vndioctl.h>"

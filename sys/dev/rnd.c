@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.106 2010/12/24 06:23:36 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.107 2010/12/29 17:51:48 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -189,7 +189,6 @@
 #include <crypto/arc4.h>
 
 #include <dev/rndvar.h>
-#include <dev/rndioctl.h>
 
 #ifdef	RNDEBUG
 int	rnd_debug = 0x0000;
@@ -1075,7 +1074,6 @@ int
 randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int	ret = 0;
-	u_int	cnt;
 
 	switch (cmd) {
 	case FIOASYNC:
@@ -1086,52 +1084,6 @@ randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* Handled in the upper FS layer. */
 		break;
 
-	case RNDGETENTCNT:
-		mtx_enter(&rndlock);
-		*(u_int *)data = random_state.entropy_count;
-		mtx_leave(&rndlock);
-		break;
-	case RNDADDTOENTCNT:
-		if (suser(p, 0) != 0)
-			ret = EPERM;
-		else {
-			cnt = *(u_int *)data;
-			mtx_enter(&rndlock);
-			random_state.entropy_count += cnt;
-			if (random_state.entropy_count > POOLBITS)
-				random_state.entropy_count = POOLBITS;
-			mtx_leave(&rndlock);
-		}
-		break;
-	case RNDZAPENTCNT:
-		if (suser(p, 0) != 0)
-			ret = EPERM;
-		else {
-			mtx_enter(&rndlock);
-			random_state.entropy_count = 0;
-			mtx_leave(&rndlock);
-		}
-		break;
-	case RNDSTIRARC4:
-		if (suser(p, 0) != 0)
-			ret = EPERM;
-		else if (random_state.entropy_count < 64)
-			ret = EAGAIN;
-		else {
-			mtx_enter(&rndlock);
-			arc4random_initialized = 0;
-			mtx_leave(&rndlock);
-		}
-		break;
-	case RNDCLRSTATS:
-		if (suser(p, 0) != 0)
-			ret = EPERM;
-		else {
-			mtx_enter(&rndlock);
-			bzero(&rndstats, sizeof(rndstats));
-			mtx_leave(&rndlock);
-		}
-		break;
 	default:
 		ret = ENOTTY;
 	}
