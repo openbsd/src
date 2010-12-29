@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.43 2010/12/24 09:09:54 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.44 2010/12/29 13:03:05 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -58,7 +58,7 @@ sub framework
 	my ($self, $state) = @_;
 
 	my $do = sub {
-		lock_db($state->{not}) unless $state->defines('nolock');
+		lock_db($state->{not}, $state) unless $state->defines('nolock');
 		$state->check_root;
 		$self->process_parameters($state);
 		my $dielater = $self->do_the_main_work($state);
@@ -82,7 +82,7 @@ sub framework
 		try {
 			&$do;
 		} catch {
-			print STDERR "$0: $_\n";
+			$state->errsay("#1: #2", $0, $_);
 			OpenBSD::Handler->reset;
 			if ($_ =~ m/^Caught SIG(\w+)/o) {
 				kill $1, $$;

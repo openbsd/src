@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.19 2010/12/24 10:31:59 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.20 2010/12/29 13:03:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -790,7 +790,7 @@ sub really_add
 		OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
 		OpenBSD::Add::tweak_plist_status($plist, $state);
 		$plist->to_cache;
-		OpenBSD::Add::register_installation($plist);
+		OpenBSD::Add::register_installation($plist, $state);
 		add_installed($pkgname);
 		delete $handle->{partial};
 		OpenBSD::PkgCfl::register($plist, $state);

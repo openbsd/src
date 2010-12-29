@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.27 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.28 2010/12/29 13:03:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -194,7 +194,7 @@ sub grab_info
 			if ($@) {
 				unlink($e->{name});
 				$@ =~ s/\s+at.*//o;
-				print STDERR $@;
+				$self->{state}->errprint('#1', $@);
 				return 0;
 			}
 		} else {

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.18 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.19 2010/12/29 13:03:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -69,7 +69,7 @@ sub lock
 	my $state = shift;
 	return if $state->{locked};
 	return if $state->{subst}->value('nolock');
-	lock_db(1, $state->opt('q'));
+	lock_db(1, $state->opt('q') ? undef : $state);
 	$state->{locked} = 1;
 }
 
