@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.109 2010/12/29 18:19:42 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.110 2010/12/29 18:21:42 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -189,13 +189,6 @@
 #include <crypto/arc4.h>
 
 #include <dev/rndvar.h>
-
-#ifdef	RNDEBUG
-int	rnd_debug = 0x0000;
-#define	RD_INPUT	0x000f	/* input data */
-#define	RD_OUTPUT	0x00f0	/* output data */
-#define	RD_WAIT		0x0100	/* sleep/wakeup for good data */
-#endif
 
 /*
  * Master random number pool functions
@@ -654,12 +647,6 @@ dequeue_randomness(void *v)
 			rs->entropy_count = POOLBITS;
 
 		if (rs->asleep && rs->entropy_count > 8) {
-#ifdef	RNDEBUG
-			if (rnd_debug & RD_WAIT)
-				printf("rnd: wakeup[%u]{%u}\n",
-				    rs->asleep,
-				    rs->entropy_count);
-#endif
 			rs->asleep--;
 			wakeup((void *)&rs->asleep);
 			selwakeup(&rnd_rsel);
@@ -752,12 +739,8 @@ arc4maybeinit(void)
 void
 randomattach(void)
 {
-	if (rnd_attached) {
-#ifdef RNDEBUG
-		printf("random: second attach\n");
-#endif
+	if (rnd_attached)
 		return;
-	}
 
 	timeout_set(&rnd_timeout, dequeue_randomness, &random_state);
 	timeout_set(&arc4_timeout, arc4_reinit, NULL);
