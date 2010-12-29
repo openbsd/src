@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.108 2010/12/29 18:16:59 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.109 2010/12/29 18:19:42 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -932,7 +932,6 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 			break;
 		case RND_SRND:
 		case RND_URND:
-		case RND_ARND_OLD:
 		case RND_ARND:
 			arc4random_buf(buf, n);
 			break;
