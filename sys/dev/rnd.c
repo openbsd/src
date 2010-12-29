@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.111 2010/12/29 18:23:12 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.112 2010/12/29 18:28:16 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -362,7 +362,6 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 static void
 extract_entropy(u_int8_t *buf, int nbytes)
 {
-	struct random_bucket *rs = &random_state;
 	u_char buffer[16];
 	MD5_CTX tmp;
 	u_int i;
@@ -378,11 +377,12 @@ extract_entropy(u_int8_t *buf, int nbytes)
 		/* Hash the pool to get the output */
 		MD5Init(&tmp);
 		mtx_enter(&rndlock);
-		MD5Update(&tmp, (u_int8_t*)rs->pool, sizeof(rs->pool));
-		if (rs->entropy_count / 8 > i)
-			rs->entropy_count -= i * 8;
+		MD5Update(&tmp, (u_int8_t*)random_state.pool,
+		    sizeof(random_state.pool));
+		if (random_state.entropy_count / 8 > i)
+			random_state.entropy_count -= i * 8;
 		else
-			rs->entropy_count = 0;
+			random_state.entropy_count = 0;
 		mtx_leave(&rndlock);
 		MD5Final(buffer, &tmp);
 
@@ -406,7 +406,7 @@ extract_entropy(u_int8_t *buf, int nbytes)
 
 		/* Modify pool so next hash will produce different results */
 		add_timer_randomness(nbytes);
-		dequeue_randomness(&random_state);
+		dequeue_randomness(NULL);
 	}
 
 	/* Wipe data from memory */
@@ -620,10 +620,10 @@ enqueue_randomness(int state, int val)
 	mtx_leave(&rndlock);
 }
 
+/* ARGSUSED */
 static void
 dequeue_randomness(void *v)
 {
-	struct random_bucket *rs = v;
 	struct rand_event *rep;
 	u_int32_t buf[2];
 	u_int nbits;
@@ -642,20 +642,20 @@ dequeue_randomness(void *v)
 		add_entropy_words(buf, 2);
 
 		rndstats.rnd_total += nbits;
-		rs->entropy_count += nbits;
-		if (rs->entropy_count > POOLBITS)
-			rs->entropy_count = POOLBITS;
+		random_state.entropy_count += nbits;
+		if (random_state.entropy_count > POOLBITS)
+			random_state.entropy_count = POOLBITS;
 
-		if (rs->asleep && rs->entropy_count > 8) {
-			rs->asleep--;
-			wakeup((void *)&rs->asleep);
+		if (random_state.asleep && random_state.entropy_count > 8) {
+			random_state.asleep--;
+			wakeup((void *)&random_state.asleep);
 			selwakeup(&rnd_rsel);
 		}
 
 		mtx_enter(&rndlock);
 	}
 
-	rs->tmo = 0;
+	random_state.tmo = 0;
 	mtx_leave(&rndlock);
 }
 
@@ -740,7 +740,7 @@ randomattach(void)
 	if (rnd_attached)
 		return;
 
-	timeout_set(&rnd_timeout, dequeue_randomness, &random_state);
+	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
 	timeout_set(&arc4_timeout, arc4_reinit, NULL);
 
 	random_state.add_ptr = 0;
@@ -977,10 +977,8 @@ filt_rndrdetach(struct knote *kn)
 int
 filt_rndread(struct knote *kn, long hint)
 {
-	struct random_bucket *rs = (struct random_bucket *)kn->kn_hook;
-
-	kn->kn_data = (int)rs->entropy_count;
-	return rs->entropy_count > 0;
+	kn->kn_data = (int)random_state.entropy_count;
+	return random_state.entropy_count > 0;
 }
 
 void
