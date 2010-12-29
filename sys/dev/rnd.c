@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.107 2010/12/29 17:51:48 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.108 2010/12/29 18:16:59 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -695,19 +695,6 @@ struct rc4_ctx arc4random_state;
 int arc4random_initialized;
 u_long arc4random_count = 0;
 
-/*
- * This function returns some number of good random numbers but is quite
- * slow. Please use arc4random_buf() instead unless very high quality
- * randomness is required.
- * XXX: rename this
- */
-void
-get_random_bytes(void *buf, size_t nbytes)
-{
-	extract_entropy((u_int8_t *) buf, nbytes);
-	rndstats.rnd_used += nbytes * 8;
-}
-
 static void
 arc4_stir(void)
 {
@@ -716,9 +703,8 @@ arc4_stir(void)
 
 	nanotime((struct timespec *) buf);
 	len = sizeof(buf) - sizeof(struct timespec);
-	get_random_bytes(buf + sizeof (struct timespec), len);
+	extract_entropy((u_int8_t *)(buf + sizeof (struct timespec)), len);
 	len += sizeof(struct timespec);
-
 	mtx_enter(&rndlock);
 	if (rndstats.arc4_nstirs > 0)
 		rc4_crypt(&arc4random_state, buf, buf, sizeof(buf));
