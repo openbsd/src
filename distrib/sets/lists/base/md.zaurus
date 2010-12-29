@@ -1467,7 +1467,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/rasops/rasops.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/rasops/rasops_bitops.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/rasops/rasops_masks.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/rndioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/rndvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/asioreg.ph
