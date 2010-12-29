@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.36 2010/12/29 03:48:30 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.37 2010/12/29 03:55:09 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1757,7 +1757,8 @@ struct mpii_ccb {
 	volatile enum {
 		MPII_CCB_FREE,
 		MPII_CCB_READY,
-		MPII_CCB_QUEUED
+		MPII_CCB_QUEUED,
+		MPII_CCB_TIMEOUT
 	}			ccb_state;
 
 	void			(*ccb_done)(struct mpii_ccb *);
@@ -1821,6 +1822,15 @@ struct mpii_softc {
 	struct mpii_ccb		*sc_ccbs;
 	struct mpii_ccb_list	sc_ccb_free;
 	struct mutex		sc_ccb_free_mtx;
+
+	struct mutex		sc_ccb_mtx;
+				/*
+				 * this protects the ccb state and list entry
+				 * between mpii_scsi_cmd and scsidone.
+				 */
+
+	struct mpii_ccb_list	sc_ccb_tmos;
+	struct scsi_iohandler	sc_ccb_tmo_handler;
 
 	struct scsi_iopool	sc_iopool;
 
@@ -1893,6 +1903,10 @@ int		mpii_alloc_replies(struct mpii_softc *);
 int		mpii_alloc_queues(struct mpii_softc *);
 void		mpii_push_reply(struct mpii_softc *, struct mpii_rcb *);
 void		mpii_push_replies(struct mpii_softc *);
+
+void		mpii_scsi_cmd_tmo(void *);
+void		mpii_scsi_cmd_tmo_handler(void *, void *);
+void		mpii_scsi_cmd_tmo_done(struct mpii_ccb *);
 
 int		mpii_alloc_dev(struct mpii_softc *);
 int		mpii_insert_dev(struct mpii_softc *, struct mpii_device *);
@@ -4029,7 +4043,11 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	int			i;
 
 	SLIST_INIT(&sc->sc_ccb_free);
+	SLIST_INIT(&sc->sc_ccb_tmos);
 	mtx_init(&sc->sc_ccb_free_mtx, IPL_BIO);
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_ioh_set(&sc->sc_ccb_tmo_handler, &sc->sc_iopool,
+	    mpii_scsi_cmd_tmo_handler, sc);
 
 	sc->sc_ccbs = malloc(sizeof(*ccb) * (sc->sc_request_depth-1),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -4442,6 +4460,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(MPII_D_CMD, "%s:  Offset0: 0x%02x\n", DEVNAME(sc),
 	    io->sgl_offset0);
 
+	timeout_set(&xs->stimeout, mpii_scsi_cmd_tmo, ccb);
 	if (xs->flags & SCSI_POLL) {
 		if (mpii_poll(sc, ccb) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
@@ -4453,7 +4472,63 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(MPII_D_CMD, "%s:    mpii_scsi_cmd(): opcode: %02x "
 	    "datalen: %d\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen);
 
+	timeout_add_msec(&xs->stimeout, xs->timeout);
 	mpii_start(sc, ccb);
+}
+
+void
+mpii_scsi_cmd_tmo(void *xccb)
+{
+	struct mpii_ccb		*ccb = xccb;
+	struct mpii_softc	*sc = ccb->ccb_sc;
+
+	printf("%s: mpii_scsi_cmd_tmo\n", DEVNAME(sc));
+
+	mtx_enter(&sc->sc_ccb_mtx);
+	if (ccb->ccb_state == MPII_CCB_QUEUED) {
+		ccb->ccb_state = MPII_CCB_TIMEOUT;
+		SLIST_INSERT_HEAD(&sc->sc_ccb_tmos, ccb, ccb_link);
+	}
+	mtx_leave(&sc->sc_ccb_mtx);
+
+	scsi_ioh_add(&sc->sc_ccb_tmo_handler);
+}
+
+void
+mpii_scsi_cmd_tmo_handler(void *cookie, void *io)
+{
+	struct mpii_softc			*sc = cookie;
+	struct mpii_ccb				*tccb = io;
+	struct mpii_ccb				*ccb;
+	struct mpii_msg_scsi_task_request	*stq;
+
+	mtx_enter(&sc->sc_ccb_mtx);
+	ccb = SLIST_FIRST(&sc->sc_ccb_tmos);
+	if (ccb != NULL) {
+		SLIST_REMOVE_HEAD(&sc->sc_ccb_tmos, ccb_link);
+		ccb->ccb_state = MPII_CCB_QUEUED;
+	}
+	/* should remove any other ccbs for the same dev handle */
+	mtx_leave(&sc->sc_ccb_mtx);
+
+	if (ccb == NULL) {
+		scsi_io_put(&sc->sc_iopool, tccb);
+		return;
+	}
+
+	stq = tccb->ccb_cmd;
+	stq->function = MPII_FUNCTION_SCSI_TASK_MGMT;
+	stq->task_type = MPII_SCSI_TASK_TARGET_RESET;
+	stq->dev_handle = htole16(ccb->ccb_dev_handle);
+
+	tccb->ccb_done = mpii_scsi_cmd_tmo_done;
+	mpii_start(sc, tccb);
+}
+
+void
+mpii_scsi_cmd_tmo_done(struct mpii_ccb *tccb)
+{
+	mpii_scsi_cmd_tmo_handler(tccb->ccb_sc, tccb);
 }
 
 void
@@ -4464,6 +4539,14 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	struct scsi_xfer	*xs = ccb->ccb_cookie;
 	struct mpii_ccb_bundle	*mcb = ccb->ccb_cmd;
 	bus_dmamap_t		dmap = ccb->ccb_dmamap;
+
+	timeout_del(&xs->stimeout);
+	mtx_enter(&sc->sc_ccb_mtx);
+	if (ccb->ccb_state == MPII_CCB_TIMEOUT)
+		SLIST_REMOVE(&sc->sc_ccb_tmos, ccb, mpii_ccb, ccb_link);
+
+	ccb->ccb_state = MPII_CCB_READY;
+	mtx_leave(&sc->sc_ccb_mtx);
 
 	if (xs->datalen != 0) {
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
