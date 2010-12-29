@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.21 2010/07/05 22:47:41 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.22 2010/12/29 18:10:17 kettenis Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -216,9 +216,11 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		}
 		break;
-	case 0x1a: /* Core i7 */
-	case 0x1e: /* Core i5 */
-	case 0x25: /* Core i3 */
+	case 0x1a: /* Core i7, Xeon 3500/5500 */
+	case 0x1e: /* Core i5/i7, Xeon 3400 */
+	case 0x25: /* Core i3/i5, Xeon 3400 */
+	case 0x2c: /* Core i7, Xeon 3600/5600 */
+	case 0x2e: /* Xeon 6500/7500 */
 		break;
 	default:
 		printf("%s: unknown i686 model 0x%x, can't get bus clock\n",
