@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.59 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.60 2010/12/29 21:28:45 thib Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ struct vops ffs_vops = {
 	.vop_bwrite	= vop_generic_bwrite
 };
 
-/* OK. Matches. */
 struct vops ffs_specvops = {
 	.vop_default	= eopnotsupp,
 	.vop_close	= ufsspec_close,
@@ -145,7 +144,6 @@ struct vops ffs_specvops = {
 };
 
 #ifdef FIFO
-/* OK. Matches. */
 struct vops ffs_fifovops = {
 	.vop_default	= eopnotsupp,
 	.vop_close	= ufsfifo_close,
