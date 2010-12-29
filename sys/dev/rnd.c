@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.110 2010/12/29 18:21:42 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.111 2010/12/29 18:23:12 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -680,7 +680,6 @@ dequeue_randomness(void *v)
 struct timeout arc4_timeout;
 struct rc4_ctx arc4random_state;
 int arc4random_initialized;
-u_long arc4random_count = 0;
 
 static void
 arc4_stir(void)
@@ -697,7 +696,6 @@ arc4_stir(void)
 		rc4_crypt(&arc4random_state, buf, buf, sizeof(buf));
 
 	rc4_keysetup(&arc4random_state, buf, sizeof(buf));
-	arc4random_count = 0;
 	rndstats.arc4_stirs += len;
 	rndstats.arc4_nstirs++;
 
@@ -770,7 +768,6 @@ arc4random(void)
 	mtx_enter(&rndlock);
 	rc4_getbytes(&arc4random_state, (u_char*)&ret, sizeof(ret));
 	rndstats.arc4_reads += sizeof(ret);
-	arc4random_count += sizeof(ret);
 	mtx_leave(&rndlock);
 	return ret;
 }
@@ -788,7 +785,6 @@ arc4random_buf_large(void *buf, size_t n)
 	mtx_enter(&rndlock);
 	rc4_getbytes(&arc4random_state, lbuf, sizeof(lbuf));
 	rndstats.arc4_reads += n;
-	arc4random_count += sizeof(lbuf);
 	mtx_leave(&rndlock);
 
 	rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
@@ -815,7 +811,6 @@ arc4random_buf(void *buf, size_t n)
 	mtx_enter(&rndlock);
 	rc4_getbytes(&arc4random_state, (u_char*)buf, n);
 	rndstats.arc4_reads += n;
-	arc4random_count += n;
 	mtx_leave(&rndlock);
 }
 
