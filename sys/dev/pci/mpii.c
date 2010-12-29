@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.35 2010/08/23 00:53:36 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.36 2010/12/29 03:48:30 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -3417,6 +3417,8 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 			mpii_remove_dev(sc, dev);
 			if (sc->sc_scsibus) {
 				SET(dev->flags, MPII_DF_DETACH);
+				scsi_activate(sc->sc_scsibus, dev->slot, -1,
+				    DVACT_DEACTIVATE);
 				if (scsi_task(mpii_event_defer, sc,
 				    dev, 0) != 0)
 					printf("%s: unable to run device "
@@ -3529,27 +3531,19 @@ mpii_event_defer(void *xsc, void *arg)
 	struct mpii_softc	*sc = xsc;
 	struct mpii_device	*dev = arg;
 
-	/*
-	 * SAS and IR events are delivered separately, so it won't hurt
-	 * to wait for a second.
-	 */
-	tsleep(sc, PRIBIO, "mpiipause", hz);
-
-	if (!ISSET(dev->flags, MPII_DF_HIDDEN)) {
-		if (ISSET(dev->flags, MPII_DF_ATTACH))
-			scsi_probe_target(sc->sc_scsibus, dev->slot);
-		else if (ISSET(dev->flags, MPII_DF_DETACH))
-			scsi_detach_target(sc->sc_scsibus, dev->slot,
-			    DETACH_FORCE);
-	}
-
 	if (ISSET(dev->flags, MPII_DF_DETACH)) {
 		mpii_sas_remove_device(sc, dev->dev_handle);
+		if (!ISSET(dev->flags, MPII_DF_HIDDEN)) {
+			scsi_detach_target(sc->sc_scsibus, dev->slot,
+			    DETACH_FORCE);
+		}
 		free(dev, M_DEVBUF);
-		return;
-	}
 
-	CLR(dev->flags, MPII_DF_ATTACH);
+	} else if (ISSET(dev->flags, MPII_DF_ATTACH)) {
+		CLR(dev->flags, MPII_DF_ATTACH);
+		if (!ISSET(dev->flags, MPII_DF_HIDDEN))
+			scsi_probe_target(sc->sc_scsibus, dev->slot);
+	}
 }
 
 void
@@ -4547,9 +4541,12 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 	case MPII_IOCSTATUS_BUSY:
 	case MPII_IOCSTATUS_INSUFFICIENT_RESOURCES:
+		xs->error = XS_BUSY;
+		break;
+
 	case MPII_IOCSTATUS_SCSI_IOC_TERMINATED:
 	case MPII_IOCSTATUS_SCSI_TASK_TERMINATED:
-		xs->error = XS_BUSY;
+		xs->error = XS_RESET;
 		break;
 
 	case MPII_IOCSTATUS_SCSI_INVALID_DEVHANDLE:
@@ -4559,6 +4556,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 	default:
 		xs->error = XS_DRIVER_STUFFUP;
+		break;
 	}
 
 	if (sie->scsi_state & MPII_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
