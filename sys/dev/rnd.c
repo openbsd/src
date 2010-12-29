@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.112 2010/12/29 18:28:16 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.113 2010/12/29 20:11:17 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -766,7 +766,7 @@ arc4random(void)
 
 	arc4maybeinit();
 	mtx_enter(&rndlock);
-	rc4_getbytes(&arc4random_state, (u_char*)&ret, sizeof(ret));
+	rc4_getbytes(&arc4random_state, (u_char *)&ret, sizeof(ret));
 	rndstats.arc4_reads += sizeof(ret);
 	mtx_leave(&rndlock);
 	return ret;
@@ -789,7 +789,7 @@ arc4random_buf_large(void *buf, size_t n)
 
 	rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
 	rc4_skip(&lctx, 256 * 4);
-	rc4_getbytes(&lctx, (u_char*)buf, n);
+	rc4_getbytes(&lctx, (u_char *)buf, n);
 	bzero(lbuf, sizeof(lbuf));
 	bzero(&lctx, sizeof(lctx));
 }
@@ -809,7 +809,7 @@ arc4random_buf(void *buf, size_t n)
 	}
 
 	mtx_enter(&rndlock);
-	rc4_getbytes(&arc4random_state, (u_char*)buf, n);
+	rc4_getbytes(&arc4random_state, (u_char *)buf, n);
 	rndstats.arc4_reads += n;
 	mtx_leave(&rndlock);
 }
@@ -904,7 +904,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	while (!ret && uio->uio_resid > 0) {
 		int	n = min(POOLBYTES, uio->uio_resid);
 
-		switch(minor(dev)) {
+		switch (minor(dev)) {
 		case RND_RND:
 			ret = EIO;	/* no chip -- error */
 			break;
