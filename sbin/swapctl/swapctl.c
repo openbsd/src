@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.17 2007/11/26 13:36:33 deraadt Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.18 2010/12/29 12:14:41 stsp Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fstab.h>
+#include <util.h>
 
 #include "swapctl.h"
 
@@ -395,8 +396,12 @@ do_fstab(void)
 				errx(1, "path too long");
 			if (system(cmd) != 0) {
 				warnx("%s: mount failed", fp->fs_spec);
+				free((char *)spec);
 				continue;
 			}
+		} else if (isduid(spec, 0)) {
+			if (rejecttype == S_IFBLK)
+				continue;
 		} else {
 			/*
 			 * Determine blk-ness.  Don't even consider a
