@@ -1,9 +1,11 @@
-dnl	$OpenBSD: contents,v 1.23 2010/10/18 04:24:07 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.24 2010/12/30 19:29:34 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
 OpenBSDbsd
+
+OpenBSDbsdmp
 
 OpenBSDrd
 
