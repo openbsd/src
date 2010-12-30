@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.18 2010/11/26 10:02:35 jmc Exp $
+.\" $OpenBSD: packages-specs.7,v 1.19 2010/12/30 00:17:45 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 26 2010 $
+.Dd $Mdocdate: December 30 2010 $
 .Dt PACKAGES-SPECS 7
 .Os
 .Sh NAME
@@ -74,6 +74,48 @@ See
 .Ev REVISION
 in
 .Xr bsd.port.mk 5 .
+.Pp
+Version comparison is done using the dewey notation with a few specific rules.
+.Bl -bullet
+.It
+The version number is cut into separate parts on each dot
+.Sq \&. .
+.It
+Comparison checks each part in turn, the first part that differs yields
+a comparison result.
+.It
+If parts are numbers they are compared numerically.
+.It
+Parts can also be numbers with an optional letter appended.
+The numbers are compared numerically, and in case of equality, the letter
+makes the difference.
+.It
+Other parts are compared alphabetically.
+.It
+The last part may contain an extra suffix matching
+.Ar rc[N] ,
+.Ar beta[N] ,
+.Ar pre[N] ,
+or
+.Ar pl[N] ,
+with
+.Ar N
+an optional number.
+These correspond to traditional notations for
+.Sq release candidate ,
+.Sq beta version ,
+.Sq pre-release ,
+.Sq patch-level ,
+and are ordered accordingly, e.g.,
+.Ar beta
+is oldest,
+.Ar rc
+and
+.Ar pre
+are next (and non-comparable to one another),
+then normal version, and finally
+.Ar pl .
+.El
 .Pp
 In some rare cases, version numbering changes completely upstream.
 A version style marker, of the form
