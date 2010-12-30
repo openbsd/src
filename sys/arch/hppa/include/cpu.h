@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.77 2010/12/30 14:10:14 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.78 2010/12/30 14:26:14 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -200,7 +200,6 @@ extern int cpu_hvers;
 #define	CLKF_USERMODE(framep)	((framep)->tf_flags & T_USER)
 #define	CLKF_SYSCALL(framep)	((framep)->tf_flags & TFF_SYS)
 
-#define	signotify(p)		setsoftast(p)
 #define	need_resched(ci)						\
 	do {								\
 		(ci)->ci_want_resched = 1;				\
@@ -222,6 +221,7 @@ extern int cpu_hvers;
 
 extern int (*cpu_desidhash)(void);
 
+void	signotify(struct proc *);
 void	delay(u_int us);
 void	hppa_init(paddr_t start);
 void	trap(int type, struct trapframe *frame);

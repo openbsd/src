@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.194 2010/11/20 20:33:23 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.195 2010/12/30 14:26:14 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1435,6 +1435,13 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
+}
+
+void
+signotify(struct proc *p)
+{
+	setsoftast(p);
+	cpu_unidle(p->p_cpu);
 }
 
 /*
