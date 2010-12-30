@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.9 2010/06/21 21:44:09 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.10 2010/12/30 23:16:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,19 +28,6 @@
  * Stack of paste buffers. Note that paste buffer data is not necessarily a C
  * string!
  */
-
-void
-paste_init_stack(struct paste_stack *ps)
-{
-	ARRAY_INIT(ps);
-}
-
-void
-paste_free_stack(struct paste_stack *ps)
-{
-	while (paste_free_top(ps) == 0)
-		;
-}
 
 /* Return each item of the stack in turn. */
 struct paste_buffer *

@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.25 2010/12/21 22:37:59 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.26 2010/12/30 23:16:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -105,8 +105,6 @@ session_create(const char *name, const char *cmd, const char *cwd,
 	TAILQ_INIT(&s->lastw);
 	RB_INIT(&s->windows);
 
-	paste_init_stack(&s->buffers);
-
 	options_init(&s->options, &global_s_options);
 	environ_init(&s->environ);
 	if (env != NULL)
@@ -155,7 +153,6 @@ session_destroy(struct session *s)
 	session_group_remove(s);
 	environ_free(&s->environ);
 	options_free(&s->options);
-	paste_free_stack(&s->buffers);
 
 	while (!TAILQ_EMPTY(&s->lastw))
 		winlink_stack_remove(&s->lastw, TAILQ_FIRST(&s->lastw));
