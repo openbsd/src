@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.62 2010/12/02 20:57:08 deraadt Exp $
+#	$OpenBSD: Makefile.hppa,v 1.63 2010/12/30 18:49:30 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -111,9 +111,8 @@ LINKFLAGS+=	-S -x
 assym.h: $S/kern/genassym.sh Makefile \
 	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
-	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} | \
-	    sort -u > assym.h.tmp && \
-	    mv -f assym.h.tmp assym.h
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} > assym.h.tmp
+	sort -u assym.h.tmp > assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
