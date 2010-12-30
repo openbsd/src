@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.6 2008/10/23 21:25:07 kettenis Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.7 2010/12/30 05:01:36 tedu Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@ typedef __va_list	va_list;
 
 #ifdef lint
 #define	va_start(ap,lastarg)	((ap) = (ap))
+#define	__va_copy(dst, src)	((dst) = (src))
 #else
 #define	va_start(ap, last) \
 	((ap) = (va_list)&(last) + __va_size(last))
