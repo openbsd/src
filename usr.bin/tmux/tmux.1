@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.198 2010/12/30 23:16:18 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.199 2010/12/30 23:17:41 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -2524,8 +2524,7 @@ with the exception that #() are not handled.
 .Sh BUFFERS
 .Nm
 maintains a stack of
-.Em paste buffers
-for each session.
+.Em paste buffers .
 Up to the value of the
 .Ic buffer-limit
 option are kept; when a new buffer is added, the buffer at the bottom of the
