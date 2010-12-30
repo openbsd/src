@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.81 2010/11/06 00:09:30 deraadt Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.82 2010/12/30 05:22:51 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -283,6 +283,7 @@ static const struct usb_devno run_devs[] = {
 int		run_match(struct device *, void *, void *);
 void		run_attach(struct device *, struct device *, void *);
 int		run_detach(struct device *, int);
+int		run_activate(struct device *, int);
 int		run_alloc_rx_ring(struct run_softc *);
 void		run_free_rx_ring(struct run_softc *);
 int		run_alloc_tx_ring(struct run_softc *, int);
@@ -368,7 +369,8 @@ struct cfdriver run_cd = {
 };
 
 const struct cfattach run_ca = {
-	sizeof (struct run_softc), run_match, run_attach, run_detach
+	sizeof (struct run_softc), run_match, run_attach, run_detach,
+	    run_activate
 };
 
 static const struct {
@@ -590,16 +592,31 @@ run_detach(struct device *self, int flags)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int qid, s;
 
-	s = splnet();
-
-	/* wait for all queued asynchronous commands to complete */
-	while (sc->cmdq.queued > 0)
-		tsleep(&sc->cmdq, 0, "cmdq", 0);
+	s = splusb();
 
 	if (timeout_initialized(&sc->scan_to))
 		timeout_del(&sc->scan_to);
 	if (timeout_initialized(&sc->calib_to))
 		timeout_del(&sc->calib_to);
+
+	/* wait for all queued asynchronous commands to complete */
+#if 0
+	while (sc->cmdq.queued > 0)
+		tsleep(&sc->cmdq, 0, "cmdq", 0);
+#endif
+	/* the async commands are run in a task */
+	usb_rem_wait_task(sc->sc_udev, &sc->sc_task);
+
+	/* but the task might not have run if it did not start before
+	 * usbd_deactivate() was called, so wakeup now.  we're
+	 * detaching, no need to try to run more commands.
+	 */
+	if (sc->cmdq.queued > 0) {
+		sc->cmdq.queued = 0;
+		wakeup(&sc->cmdq);
+	}
+
+	usbd_ref_wait(sc->sc_udev);
 
 	if (ifp->if_softc != NULL) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1437,8 +1454,15 @@ run_next_scan(void *arg)
 {
 	struct run_softc *sc = arg;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return;
+
+	usbd_ref_incr(sc->sc_udev);
+
 	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(&sc->sc_ic.ic_if);
+
+	usbd_ref_decr(sc->sc_udev);
 }
 
 void
@@ -1448,6 +1472,9 @@ run_task(void *arg)
 	struct run_host_cmd_ring *ring = &sc->cmdq;
 	struct run_host_cmd *cmd;
 	int s;
+
+	if (usbd_is_dying(sc->sc_udev))
+		return;
 
 	/* process host commands */
 	s = splusb();
@@ -1471,6 +1498,9 @@ run_do_async(struct run_softc *sc, void (*cb)(struct run_softc *, void *),
 	struct run_host_cmd_ring *ring = &sc->cmdq;
 	struct run_host_cmd *cmd;
 	int s;
+
+	if (usbd_is_dying(sc->sc_udev))
+		return;
 
 	s = splusb();
 	cmd = &ring->cmd[ring->cur];
@@ -1530,7 +1560,8 @@ run_newstate_cb(struct run_softc *sc, void *arg)
 
 	case IEEE80211_S_SCAN:
 		run_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add_msec(&sc->scan_to, 200);
+		if (!usbd_is_dying(sc->sc_udev))
+			timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -1566,7 +1597,8 @@ run_newstate_cb(struct run_softc *sc, void *arg)
 			run_read_region_1(sc, RT2860_TX_STA_CNT0,
 			    (uint8_t *)sta, sizeof sta);
 			/* start calibration timer */
-			timeout_add_sec(&sc->calib_to, 1);
+			if (!usbd_is_dying(sc->sc_udev))
+				timeout_add_sec(&sc->calib_to, 1);
 		}
 
 		/* turn link LED on */
@@ -1812,7 +1844,9 @@ run_calibrate_cb(struct run_softc *sc, void *arg)
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 	splx(s);
 
-skip:	timeout_add_sec(&sc->calib_to, 1);
+skip:
+	if (!usbd_is_dying(sc->sc_udev))
+		timeout_add_sec(&sc->calib_to, 1);
 }
 
 void
@@ -2290,6 +2324,11 @@ run_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return ENXIO;
+
+	usbd_ref_incr(sc->sc_udev);
+
 	s = splnet();
 
 	switch (cmd) {
@@ -2351,6 +2390,8 @@ run_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	splx(s);
+
+	usbd_ref_decr(sc->sc_udev);
 
 	return error;
 }
@@ -3263,6 +3304,9 @@ run_init(struct ifnet *ifp)
 	uint8_t bbp1, bbp3;
 	int i, error, qid, ridx, ntries;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return ENXIO;
+
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT2860_ASIC_VER_ID, &tmp)) != 0)
 			goto fail;
@@ -3520,4 +3564,21 @@ run_stop(struct ifnet *ifp, int disable)
 	for (qid = 0; qid < 4; qid++)
 		run_free_tx_ring(sc, qid);
 	run_free_rx_ring(sc);
+}
+
+int
+run_activate(struct device *self, int act)
+{
+	struct run_softc *sc = (struct run_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+
+	case DVACT_DEACTIVATE:
+		usbd_deactivate(sc->sc_udev);
+		break;
+	}
+
+	return 0;
 }
