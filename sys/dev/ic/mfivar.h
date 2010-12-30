@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.39 2010/06/30 19:10:05 mk Exp $ */
+/* $OpenBSD: mfivar.h,v 1.40 2010/12/30 08:53:50 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -109,6 +109,7 @@ struct mfi_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
 	struct scsi_link	sc_link;
+	struct scsi_iopool	sc_iopool;
 
 	const struct mfi_iop_ops *sc_iop;
 
