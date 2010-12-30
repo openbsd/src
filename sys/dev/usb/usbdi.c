@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.41 2010/12/06 04:25:27 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.42 2010/12/30 05:10:35 jakemsr Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -95,6 +95,26 @@ void
 usbd_deactivate(usbd_device_handle dev)
 {
 	dev->dying = 1;
+}
+
+void
+usbd_ref_incr(usbd_device_handle dev)
+{
+	dev->ref_cnt++;
+}
+
+void
+usbd_ref_decr(usbd_device_handle dev)
+{
+	if (--dev->ref_cnt == 0 && dev->dying)
+		wakeup(&dev->ref_cnt);
+}
+
+void
+usbd_ref_wait(usbd_device_handle dev)
+{
+	while (dev->ref_cnt > 0)
+		tsleep(&dev->ref_cnt, PWAIT, "usbref", hz * 60);
 }
 
 static __inline int

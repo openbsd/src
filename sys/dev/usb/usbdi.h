@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.36 2010/12/06 04:25:27 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.37 2010/12/30 05:10:35 jakemsr Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -167,6 +167,10 @@ int usbd_ratecheck(struct timeval *last);
 
 int usbd_is_dying(usbd_device_handle);
 void usbd_deactivate(usbd_device_handle);
+
+void usbd_ref_incr(usbd_device_handle);
+void usbd_ref_decr(usbd_device_handle);
+void usbd_ref_wait(usbd_device_handle);
 
 /* An iterator for descriptors. */
 typedef struct {
