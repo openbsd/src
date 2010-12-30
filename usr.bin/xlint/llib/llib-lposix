@@ -1,4 +1,4 @@
-/*	$OpenBSD: llib-lposix,v 1.3 2002/12/11 23:01:40 millert Exp $	*/
+/*	$OpenBSD: llib-lposix,v 1.4 2010/12/30 21:45:31 guenther Exp $	*/
 /*	$NetBSD: llib-lposix,v 1.2 1995/07/03 21:25:09 cgd Exp $	*/
 
 /*
@@ -58,7 +58,10 @@
 #include <locale.h>
 #include <setjmp.h>
 #include <string.h>
+#include <syslog.h>
 #include <utime.h>
+#include <wchar.h>
+#include <wctype.h>
 
 
 /* PROTOLIB1 */
@@ -80,6 +83,7 @@ int	(atoi)(const char *nptr);
 long	(atol)(const char *nptr);
 void	*(bsearch)(const void *key, const void *base, size_t nmemb,
 		   size_t size, int (*compar)(const void *, const void *));
+wint_t	(btowc)(int);
 void	*(calloc)(size_t nmemb, size_t size);
 double	(ceil)(double x);
 speed_t	(cfgetispeed)(const struct termios *p);
@@ -93,6 +97,7 @@ void	(clearerr)(FILE *stream);
 clock_t	(clock)(void);
 int	(close)(int fildes);
 int	(closedir)(DIR *dirp);
+void	(closelog)(void);
 double	(cos)(double x);
 double	(cosh)(double x);
 int	(creat)(const char *path, mode_t mode);
@@ -123,6 +128,8 @@ int	(fflush)(FILE *stream);
 int	(fgetc)(FILE *stream);
 int	(fgetpos)(FILE *stream, fpos_t *pos);
 char	*(fgets)(char *s, int n, FILE *stream);
+wint_t	(fgetwc)(FILE *);
+wchar_t	*(fgetws)(wchar_t *, int, FILE *);
 int	(fileno)(FILE *stream);
 double	(floor)(double x);
 double	(fmod)(double x, double y);
@@ -133,6 +140,8 @@ long	(fpathconf)(int fildes, int name);
 int	(fprintf)(FILE *stream, const char *format, ...);
 int	(fputc)(int c, FILE *stream);
 int	(fputs)(const char *s, FILE *stream);
+wint_t	(fputwc)(wchar_t, FILE *);
+int	(fputws)(const wchar_t *, FILE *);
 size_t	(fread)(void *ptr, size_t size, size_t nmemb, FILE *stream);
 void	(free)(void *ptr);
 FILE	*(freopen)(const char *filename, const char *mode, FILE *stream);
@@ -143,6 +152,7 @@ int	(fseek)(FILE *stream, long int offset, int whence);
 int	(fsetpos)(FILE *stream, const fpos_t *pos);
 int	(fstat)(int fildes, struct stat *buf);
 long	(ftell)(FILE *stream);
+int	(fwide)(FILE *, int);
 size_t	(fwrite)(const void *ptr, size_t size, size_t nmemb, FILE *stream);
 int	(getc)(FILE *stream);
 int	(getchar)(void);
@@ -162,6 +172,8 @@ struct	passwd *(getpwnam)(const char *name);
 struct	passwd *(getpwuid)(uid_t uid);
 char	*(gets)(char *s);
 uid_t	(getuid)(void);
+wint_t	(getwc)(FILE *);
+wint_t	(getwchar)(void);
 struct	tm *(gmtime)(const time_t *timer);
 int	(isalnum)(int c);
 int	(isalpha)(int c);
@@ -174,6 +186,18 @@ int	(isprint)(int c);
 int	(ispunct)(int c);
 int	(isspace)(int c);
 int	(isupper)(int c);
+int	(iswalnum)(wint_t wc);
+int	(iswalpha)(wint_t wc);
+int	(iswcntrl)(wint_t wc);
+int	(iswctype)(wint_t wc, wctype_t charclass);
+int	(iswdigit)(wint_t wc);
+int	(iswgraph)(wint_t wc);
+int	(iswlower)(wint_t wc);
+int	(iswprint)(wint_t wc);
+int	(iswpunct)(wint_t wc);
+int	(iswspace)(wint_t wc);
+int	(iswupper)(wint_t wc);
+int	(iswxdigit)(wint_t wc);
 int	(isxdigit)(int c);
 int	(kill)(pid_t pid, int sig);
 long	(labs)(long j);
@@ -186,8 +210,13 @@ double	(log)(double x);
 double	(log10)(double x);
 void	(longjmp)(jmp_buf env, int val);
 off_t	(lseek)(int fildes, off_t offset, int whence);
+int	(lstat)(const char *path, struct stat *buf);
 void	*(malloc)(size_t size);
 int	(mblen)(const char *s, size_t n);
+size_t	(mbrlen)(const char *, size_t, mbstate_t *);
+size_t	(mbrtowc)(wchar_t *, const char *, size_t, mbstate_t *);
+int	(mbsinit)(const mbstate_t *);
+size_t	(mbsrtowcs)(wchar_t *, const char **, size_t, mbstate_t *);
 size_t	(mbstowcs)(wchar_t *pwcs, const char *s, size_t n);
 int	(mbtowc)(wchar_t *pwc, const char *s, size_t n);
 void	*(memchr)(const void *s, int c, size_t n);
@@ -200,6 +229,7 @@ int	(mkfifo)(const char *path, mode_t mode);
 time_t	(mktime)(struct tm *timeptr);
 double	(modf)(double value, double *iptr);
 int	(open)(const char *path, int oflag, ...);
+void	(openlog)(const char *, int, int);
 DIR	*(opendir)(const char *dirname);
 long	(pathconf)(const char *path, int name);
 int	(pause)(void);
@@ -211,6 +241,8 @@ int	(printf)(const char *format, ...);
 int	(putc)(int c, FILE *stream);
 int	(putchar)(int c);
 int	(puts)(const char *s);
+wint_t	(putwc)(wchar_t, FILE *);
+wint_t	(putwchar)(wchar_t);
 void	(qsort)(void *base, size_t nmemb, size_t size,
 	        int (*compar)(const void *, const void *));
 int	(raise)(int sig);
@@ -229,6 +261,7 @@ void	(setbuf)(FILE *stream, char *buf);
 int	(setgid)(gid_t gid);
 int	(setjmp)(jmp_buf env);
 char	*(setlocale)(int category, const char *locale);
+int	(setlogmask)(int);
 int	(setpgid)(pid_t pid, pid_t pgid);
 pid_t	(setsid)(void);
 int	(setuid)(uid_t uid);
@@ -279,6 +312,8 @@ long	(strtol)(const char *nptr, char **endptr, int base);
 unsigned long (strtoul)(const char *nptr, char **endptr, int base);
 size_t	(strxfrm)(char *s1, const char *s2, size_t n);
 long	(sysconf)(int name);
+/* PRINTFLIKE2 */
+void	(syslog)(int, const char *, ...);
 int	(system)(const char *string);
 double	(tan)(double x);
 double	(tanh)(double x);
@@ -296,11 +331,15 @@ FILE	*(tmpfile)(void);
 char	*(tmpnam)(char *s);
 int	(tolower)(int c);
 int	(toupper)(int c);
+wint_t	(towctrans)(wint_t wc, wctrans_t charmap);
+wint_t	(towlower)(wint_t wc);
+wint_t	(towupper)(wint_t wc);
 char	*(ttyname)(int filedes);
 void	(tzset)(void);
 mode_t	(umask)(mode_t cmask);
 int	(uname)(struct utsname *name);
 int	(ungetc)(int c, FILE *stream);
+wint_t	(ungetwc)(wint_t, FILE *);
 int	(unlink)(const char *path);
 int	(utime)(const char *path, const struct utimbuf *times);
 int	(vfprintf)(FILE *stream, const char *format, va_list arg);
@@ -308,6 +347,64 @@ int	(vprintf)(const char *format, va_list arg);
 int	(vsprintf)(char *s, const char *format, va_list arg);
 pid_t	(wait)(int *statloc);
 pid_t	(waitpid)(pid_t pid, int *stat_loc, int options);
+size_t	(wcrtomb)(char *, wchar_t, mbstate_t *);
+wchar_t	*(wcscat)(wchar_t *, const wchar_t *);
+wchar_t	*(wcschr)(const wchar_t *, wchar_t);
+int	(wcscmp)(const wchar_t *, const wchar_t *);
+wchar_t	*(wcscpy)(wchar_t *, const wchar_t *);
+size_t	(wcscspn)(const wchar_t *, const wchar_t *);
+size_t	(wcslen)(const wchar_t *);
+wchar_t	*(wcsncat)(wchar_t *, const wchar_t *, size_t);
+int	(wcsncmp)(const wchar_t *, const wchar_t *, size_t);
+wchar_t	*(wcsncpy)(wchar_t *, const wchar_t *, size_t);
+wchar_t	*(wcspbrk)(const wchar_t *, const wchar_t *);
+wchar_t	*(wcsrchr)(const wchar_t *, wchar_t);
+size_t	(wcsrtombs)(char *, const wchar_t **, size_t, mbstate_t *);
+size_t	(wcsspn)(const wchar_t *, const wchar_t *);
+wchar_t	*(wcsstr)(const wchar_t *, const wchar_t *);
+double	(wcstod)(const wchar_t *, wchar_t **);
+wchar_t	*(wcstok)(wchar_t *, const wchar_t *, wchar_t **);
+long	(wcstol)(const wchar_t *, wchar_t **, int);
 size_t	(wcstombs)(char *s, const wchar_t *pwcs, size_t n);
+unsigned long (wcstoul)(const wchar_t *, wchar_t **, int);
+int	(wctob)(wint_t);
+wchar_t	*(wmemchr)(const wchar_t *, wchar_t, size_t);
+int	(wmemcmp)(const wchar_t *, const wchar_t *, size_t);
+wchar_t	*(wmemcpy)(wchar_t *, const wchar_t *, size_t);
+wchar_t	*(wmemmove)(wchar_t *, const wchar_t *, size_t);
+wchar_t	*(wmemset)(wchar_t *, wchar_t, size_t);
+float	(wcstof)(const wchar_t *, wchar_t **);
+long double (wcstold)(const wchar_t *, wchar_t **);
+long long (wcstoll)(const wchar_t *, wchar_t **, int);
+unsigned long long (wcstoull)(const wchar_t *, wchar_t **, int);
 int	(wctomb)(char *s, wchar_t wchar);
+wctrans_t (wctrans)(const char *charmap);
+wctype_t (wctype)(const char *charclass);
 ssize_t	(write)(int fildes, const void *buf, size_t nbyte);
+
+#if 0 /* not yet implemented */
+/* PRINTFLIKE2 */
+int	(fwprintf)(FILE *, const wchar_t *, ...);
+/* SCANFLIKE2 */
+int	(fwscanf)(FILE *, const wchar_t *, ...);
+/* PRINTFLIKE3 */
+int	(swprintf)(wchar_t *, size_t, const wchar_t *, ...);
+/* SCANFLIKE3 */
+int	(swscanf)(const wchar_t *, const wchar_t *, ...);
+int	(vfwprintf)(FILE *, const wchar_t *, va_list);
+int	(vfwscanf)(FILE *, const wchar_t *, va_list);
+int	(vswprintf)(wchar_t *, size_t, const wchar_t *, va_list);
+int	(vswscanf)(const wchar_t *, const wchar_t *, va_list);
+int	(vwprintf)(const wchar_t *, va_list);
+int	(vwscanf)(const wchar_t *, va_list);
+int	(wcscoll)(const wchar_t *, const wchar_t *);
+size_t	(wcsftime)(wchar_t *, size_t, const wchar_t *, const struct tm *);
+int	(wcswidth)(const wchar_t *, size_t);
+size_t	(wcsxfrm)(wchar_t *, const wchar_t *, size_t);
+int	(wcwidth)(wchar_t);
+/* PRINTFLIKE1 */
+int	(wprintf)(const wchar_t *, ...);
+/* SCANFLIKE1 */
+int	(wscanf)(const wchar_t *, ...);
+#endif
+
