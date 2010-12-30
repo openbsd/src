@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.26 2010/12/27 03:03:50 jakemsr Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.27 2010/12/30 03:06:31 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -87,7 +87,6 @@ struct cdcef_softc {
 
 int		cdcef_match(struct device *, void *, void *);
 void		cdcef_attach(struct device *, struct device *, void *);
-int		cdcef_activate(struct device *, int);
 
 usbf_status	cdcef_do_request(usbf_function_handle,
 				 usb_device_request_t *, void **);
@@ -107,8 +106,7 @@ struct mbuf *	cdcef_newbuf(void);
 void		cdcef_start_timeout (void *);
 
 struct cfattach cdcef_ca = {
-	sizeof(struct cdcef_softc), cdcef_match, cdcef_attach, NULL,
-	    cdcef_activate
+	sizeof(struct cdcef_softc), cdcef_match, cdcef_attach
 };
 
 struct cfdriver cdcef_cd = {
@@ -266,23 +264,6 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_attached = 1;
 	splx(s);
-}
-
-int
-cdcef_activate(struct device *self, int act)
-{
-	struct cdcef_softc *sc = (struct cdcef_softc *)self;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
-	case DVACT_DEACTIVATE:
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
-
-	return 0;
 }
 
 usbf_status
