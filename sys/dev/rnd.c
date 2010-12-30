@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.113 2010/12/29 20:11:17 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.114 2010/12/30 22:05:45 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -176,6 +176,7 @@
 #include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/limits.h>
+#include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
@@ -505,7 +506,7 @@ enqueue_randomness(int state, int val)
 {
 	struct timer_rand_state *p;
 	struct rand_event *rep;
-	struct timespec	tv;
+	struct timespec	ts;
 	u_int	time, nbits;
 
 #ifdef DIAGNOSTIC
@@ -529,8 +530,8 @@ enqueue_randomness(int state, int val)
 		return;
 	}
 
-	nanotime(&tv);
-	time = (tv.tv_nsec >> 10) + (tv.tv_sec << 20);
+	nanotime(&ts);
+	time = (ts.tv_nsec >> 10) + (ts.tv_sec << 20);
 	nbits = 0;
 
 	/*
@@ -605,7 +606,7 @@ enqueue_randomness(int state, int val)
 
 	rep->re_state = p;
 	rep->re_nbits = nbits;
-	rep->re_time = tv.tv_nsec ^ (tv.tv_sec << 20);
+	rep->re_time = ts.tv_nsec ^ (ts.tv_sec << 20);
 	rep->re_val = val;
 
 	rndstats.rnd_enqs++;
@@ -684,19 +685,29 @@ int arc4random_initialized;
 static void
 arc4_stir(void)
 {
-	u_int8_t buf[256];
-	int len;
+	struct timespec ts;
+	u_int8_t buf[256], *p;
+	int i;
 
-	nanotime((struct timespec *) buf);
-	len = sizeof(buf) - sizeof(struct timespec);
-	extract_entropy((u_int8_t *)(buf + sizeof (struct timespec)), len);
-	len += sizeof(struct timespec);
+	/*
+	 * Use MD5 PRNG data and a system timespec; early in the boot
+	 * process this is the best we can do -- some architectures do
+	 * not collect entropy very well during this time, but may have
+	 * clock information which is better than nothing.
+	 */
+	extract_entropy((u_int8_t *)buf, sizeof buf);
+	nanotime(&ts);
+	for (p = (u_int8_t *)&ts, i = 0; i < sizeof(ts); i++)
+		buf[i] ^= p[i];
+
 	mtx_enter(&rndlock);
+	rndstats.rnd_used += sizeof(buf) * 8;
+
 	if (rndstats.arc4_nstirs > 0)
 		rc4_crypt(&arc4random_state, buf, buf, sizeof(buf));
 
 	rc4_keysetup(&arc4random_state, buf, sizeof(buf));
-	rndstats.arc4_stirs += len;
+	rndstats.arc4_stirs += sizeof(buf);
 	rndstats.arc4_nstirs++;
 
 	/*
@@ -1016,7 +1027,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 		if (ret)
 			break;
 		while (n % sizeof(u_int32_t))
-			((u_int8_t *) buf)[n++] = 0;
+			((u_int8_t *)buf)[n++] = 0;
 		add_entropy_words(buf, n / 4);
 		newdata = 1;
 	}
