@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.534 2010/12/18 08:27:44 jakemsr Exp $
+$OpenBSD: usbdevs,v 1.535 2010/12/30 16:28:12 ajacoutot Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1301,6 +1301,7 @@ product DELL BLUETOOTH350	0x8103	Bluetooth
 product	DELL PRISM_GT_2		0x8104	PrismGT USB 2.0 WLAN
 product DELL W5500		0x8115	W5500 HSDPA 
 product DELL U740		0x8135	Dell U740 CDMA
+product DELL EU870D		0x8138	EU870D HSDPA
 
 /* DeLorme products */
 product DELORME EMUSB		0x0100	Earthmate GPS
