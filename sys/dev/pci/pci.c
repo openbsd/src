@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.87 2010/12/04 17:08:20 miod Exp $	*/
+/*	$OpenBSD: pci.c,v 1.88 2010/12/30 00:58:22 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ void
 pci_suspend(struct pci_softc *sc)
 {
 	struct pci_dev *pd;
-	pcireg_t bhlc, csr;
+	pcireg_t bhlc;
 	int i;
 
 	LIST_FOREACH(pd, &sc->sc_devs, pd_next) {
@@ -240,18 +240,7 @@ pci_suspend(struct pci_softc *sc)
 		    PCI_INTERRUPT_REG);
 
 		if (pci_dopm) {
-			/*
-			 * Place the device into D3.  The PCI Power
-			 * Management spec says we should disable I/O
-			 * and memory space as well as bus mastering
-			 * before we do so.
-			 */
-			csr = pd->pd_csr;
-			csr &= ~PCI_COMMAND_IO_ENABLE;
-			csr &= ~PCI_COMMAND_MEM_ENABLE;
-			csr &= ~PCI_COMMAND_MASTER_ENABLE;
-			pci_conf_write(sc->sc_pc, pd->pd_tag,
-			    PCI_COMMAND_STATUS_REG, csr);
+			/* Place the device into D3. */
 			pd->pd_pmcsr_state = pci_get_powerstate(sc->sc_pc,
 			    pd->pd_tag);
 			pci_set_powerstate(sc->sc_pc, pd->pd_tag,
@@ -567,6 +556,19 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state)
 	int offset;
 
 	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, 0)) {
+		if (state == PCI_PMCSR_STATE_D3) {
+			/*
+			 * The PCI Power Management spec says we
+			 * should disable I/O and memory space as well
+			 * as bus mastering before we place the device
+			 * into D3.
+			 */
+			reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+			reg &= ~PCI_COMMAND_IO_ENABLE;
+			reg &= ~PCI_COMMAND_MEM_ENABLE;
+			reg &= ~PCI_COMMAND_MASTER_ENABLE;
+			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+		}
 		reg = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 		if ((reg & PCI_PMCSR_STATE_MASK) != state) {
 			pci_conf_write(pc, tag, offset + PCI_PMCSR,

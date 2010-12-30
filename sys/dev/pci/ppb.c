@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.46 2010/09/25 19:23:39 mlarkin Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.47 2010/12/30 00:58:22 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ ppbactivate(struct device *self, int act)
 	struct ppb_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag = sc->sc_tag;
-	pcireg_t blr, csr, reg;
+	pcireg_t blr, reg;
 	int rv = 0;
 
 	switch (act) {
@@ -367,17 +367,7 @@ ppbactivate(struct device *self, int act)
 			    sc->sc_cap_off + PCI_PCIE_SLCSR);
 
 		if (pci_dopm) {	
-			/*
-		 	 * Place the bridge into D3.  The PCI Power
-			 * Management spec says we should disable I/O
-			 * and memory space as well as bus mastering
-			 * before we do so.
-		 	 */
-			csr = sc->sc_csr;
-			csr &= ~PCI_COMMAND_IO_ENABLE;
-			csr &= ~PCI_COMMAND_MEM_ENABLE;
-			csr &= ~PCI_COMMAND_MASTER_ENABLE;
-			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+			/* Place the bridge into D3. */
 			sc->sc_pmcsr_state = pci_get_powerstate(pc, tag);
 			pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D3);
 		}
