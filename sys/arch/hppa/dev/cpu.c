@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.37 2010/06/26 23:33:32 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.38 2010/12/30 14:10:14 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -268,5 +268,12 @@ cpu_hatch(void)
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
+}
+
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		hppa_ipi_send(ci, HPPA_IPI_NOP);
 }
 #endif
