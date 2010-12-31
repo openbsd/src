@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.139 2010/11/30 14:38:45 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.140 2010/12/31 21:22:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -20,6 +20,8 @@
 
 #include <sys/tree.h>
 
+#include <sys/param.h>		/* MAXHOSTNAMELEN */
+#include <limits.h>
 #include <imsg.h>
 
 #define CONF_FILE		"/etc/relayd.conf"

@@ -31,6 +31,7 @@
 #include <isc/entropy.h>
 #include <isc/file.h>
 #include <isc/hash.h>
+#include <isc/net.h>
 #include <isc/os.h>
 #include <isc/platform.h>
 #include <isc/privsep.h>

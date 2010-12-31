@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.17 2010/11/04 09:52:16 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.18 2010/12/31 21:22:42 guenther Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -29,6 +29,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 

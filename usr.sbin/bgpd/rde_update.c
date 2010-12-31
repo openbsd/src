@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.78 2010/02/11 13:18:05 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.79 2010/12/31 21:22:42 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/queue.h>
 #include <sys/hash.h>
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 

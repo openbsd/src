@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.87 2010/11/18 12:18:31 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.88 2010/12/31 21:22:42 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <netinet/in.h>
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
