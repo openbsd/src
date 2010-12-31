@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.13 2010/12/31 18:08:14 damien Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.14 2010/12/31 21:23:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -93,6 +93,7 @@ struct ar9380_base_eep_hdr {
 
 	uint8_t		miscConfiguration;
 #define AR_EEP_DRIVE_STRENGTH		0x01
+#define AR_EEP_CHAIN_MASK_REDUCE	0x08
 
 	uint8_t		eepromWriteEnableGpio;
 	uint8_t		wlanDisableGpio;

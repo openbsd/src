@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.26 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.27 2010/12/31 21:23:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -419,6 +419,8 @@ struct athn_softc {
 	void				(*sc_disable)(struct athn_softc *);
 	void				(*sc_power)(struct athn_softc *, int);
 	void				(*sc_disable_aspm)(struct athn_softc *);
+	void				(*sc_enable_extsynch)(
+					    struct athn_softc *);
 
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
@@ -446,6 +448,7 @@ struct athn_softc {
 #define ATHN_FLAG_11N			(1 << 11)
 #define ATHN_FLAG_AN_TOP2_FIXUP		(1 << 12)
 #define ATHN_FLAG_NON_ENTERPRISE	(1 << 13)
+#define ATHN_FLAG_3TREDUCE_CHAIN	(1 << 14)
 
 	uint8_t				ngpiopins;
 	int				led_pin;

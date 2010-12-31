@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.8 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.9 2010/12/31 21:23:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,7 @@
 
 /*
  * Driver for Atheros 802.11a/g/n chipsets.
- * Routines for AR9380 and AR9381 chipsets.
+ * Routines for AR9380 and AR9485 chipsets.
  */
 
 #include "bpfilter.h"
@@ -158,6 +158,13 @@ ar9380_setup(struct athn_softc *sc)
 	/* Enable PA predistortion if supported. */
 	if (base->featureEnable & AR_EEP_PAPRD)
 		sc->flags |= ATHN_FLAG_PAPRD;
+	/*
+	 * Some 3-stream chips may exceed the PCIe power requirements,
+	 * requiring to reduce the number of Tx chains in some cases.
+	 */
+	if ((base->miscConfiguration & AR_EEP_CHAIN_MASK_REDUCE) &&
+	    sc->txchainmask == 0x7)
+		sc->flags |= ATHN_FLAG_3TREDUCE_CHAIN;
 
 	/* Select initialization values based on ROM. */
 	type = MS(eep->baseEepHeader.txrxgain, AR_EEP_RX_GAIN);

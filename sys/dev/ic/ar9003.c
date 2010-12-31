@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.19 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.20 2010/12/31 21:23:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -868,7 +868,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 			ieee80211_michael_mic_failure(ic, 0);
 			/*
 			 * XXX Check that it is not a control frame
-			 * (invalid MIC failures on valid ctl frames.)
+			 * (invalid MIC failures on valid ctl frames).
 			 */
 		}
 		ifp->if_ierrors++;
@@ -1546,12 +1546,29 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	    SM(AR_TXC16_PACKET_DUR2, series[2].dur) |
 	    SM(AR_TXC16_PACKET_DUR3, series[3].dur);
 
-	/* Use the same Tx chains for all tries. */
-	ds->ds_ctl18 =
-	    SM(AR_TXC18_CHAIN_SEL0, sc->txchainmask) |
-	    SM(AR_TXC18_CHAIN_SEL1, sc->txchainmask) |
-	    SM(AR_TXC18_CHAIN_SEL2, sc->txchainmask) |
-	    SM(AR_TXC18_CHAIN_SEL3, sc->txchainmask);
+	if ((sc->flags & ATHN_FLAG_3TREDUCE_CHAIN) &&
+	    ic->ic_curmode == IEEE80211_MODE_11A) {
+		/*
+		 * In order to not exceed PCIe power requirements, we only
+		 * use two Tx chains for MCS0~15 on 5GHz band on these chips.
+		 */
+		ds->ds_ctl18 =
+		    SM(AR_TXC18_CHAIN_SEL0,
+			(ridx[0] <= ATHN_RIDX_MCS15) ? 0x3 : sc->txchainmask) |
+		    SM(AR_TXC18_CHAIN_SEL1,
+			(ridx[1] <= ATHN_RIDX_MCS15) ? 0x3 : sc->txchainmask) |
+		    SM(AR_TXC18_CHAIN_SEL2,
+			(ridx[2] <= ATHN_RIDX_MCS15) ? 0x3 : sc->txchainmask) |
+		    SM(AR_TXC18_CHAIN_SEL3,
+			(ridx[3] <= ATHN_RIDX_MCS15) ? 0x3 : sc->txchainmask);
+	} else {
+		/* Use the same Tx chains for all tries. */
+		ds->ds_ctl18 =
+		    SM(AR_TXC18_CHAIN_SEL0, sc->txchainmask) |
+		    SM(AR_TXC18_CHAIN_SEL1, sc->txchainmask) |
+		    SM(AR_TXC18_CHAIN_SEL2, sc->txchainmask) |
+		    SM(AR_TXC18_CHAIN_SEL3, sc->txchainmask);
+	}
 #ifdef notyet
 #ifndef IEEE80211_NO_HT
 	/* Use the same short GI setting for all tries. */
@@ -1572,7 +1589,7 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 			ds->ds_ctl15 |= AR_TXC15_RTSCTS_QUAL01;
 			ds->ds_ctl16 |= AR_TXC16_RTSCTS_QUAL23;
 		}
-		/* Select protection rate (suboptimal but ok.) */
+		/* Select protection rate (suboptimal but ok). */
 		protridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
 		    ATHN_RIDX_OFDM6 : ATHN_RIDX_CCK2;
 		if (ds->ds_ctl11 & AR_TXC11_RTS_ENABLE) {
@@ -1781,7 +1798,14 @@ ar9003_init_chains(struct athn_softc *sc)
 	AR_WRITE(sc, AR_PHY_RX_CHAINMASK,  sc->rxchainmask);
 	AR_WRITE(sc, AR_PHY_CAL_CHAINMASK, sc->rxchainmask);
 
-	AR_WRITE(sc, AR_SELFGEN_MASK, sc->txchainmask);
+	if (sc->flags & ATHN_FLAG_3TREDUCE_CHAIN) {
+		/*
+		 * All self-generated frames are sent using two Tx chains
+		 * on these chips to not exceed PCIe power requirements.
+		 */
+		AR_WRITE(sc, AR_SELFGEN_MASK, 0x3);
+	} else
+		AR_WRITE(sc, AR_SELFGEN_MASK, sc->txchainmask);
 	AR_WRITE_BARRIER(sc);
 }
 
@@ -1798,7 +1822,7 @@ ar9003_set_rxchains(struct athn_softc *sc)
 void
 ar9003_read_noisefloor(struct athn_softc *sc, int16_t *nf, int16_t *nf_ext)
 {
-/* Sign-extends 9-bit value (assumes upper bits are zeroes.) */
+/* Sign-extends 9-bit value (assumes upper bits are zeroes). */
 #define SIGN_EXT(v)	(((v) ^ 0x100) - 0x100)
 	uint32_t reg;
 	int i;
@@ -2068,7 +2092,7 @@ ar9003_calib_iq(struct athn_softc *sc)
 int
 ar9003_get_iq_corr(struct athn_softc *sc, int32_t res[6], int32_t coeff[2])
 {
-/* Sign-extends 12-bit value (assumes upper bits are zeroes.) */
+/* Sign-extends 12-bit value (assumes upper bits are zeroes). */
 #define SIGN_EXT(v)	(((v) ^ 0x800) - 0x800)
 #define SCALE		(1 << 15)
 #define SHIFT		(1 <<  8)
@@ -2123,7 +2147,7 @@ ar9003_get_iq_corr(struct athn_softc *sc, int32_t res[6], int32_t coeff[2])
 		cos[i] = (cos[i] * SCALE) / div;
 	}
 
-	/* Compute IQ mismatch (solve 4x4 linear equation.) */
+	/* Compute IQ mismatch (solve 4x4 linear equation). */
 	f1 = cos[0] - cos[1];
 	f3 = sin[0] - sin[1];
 	f2 = (f1 * f1 + f3 * f3) / SCALE;
@@ -2362,7 +2386,7 @@ ar9003_paprd_calib(struct athn_softc *sc, struct ieee80211_channel *c)
 	for (i = 0; i < AR9003_TX_GAIN_TABLE_SIZE; i++)
 		sc->txgain[i] = AR_READ(sc, AR_PHY_TXGAIN_TABLE(i));
 
-	/* Set Tx power of training signal (use setting for MCS0.) */
+	/* Set Tx power of training signal (use setting for MCS0). */
 	sc->trainpow = MS(AR_READ(sc, AR_PHY_PWRTX_RATE5),
 	    AR_PHY_PWRTX_RATE5_POWERTXHT20_0) - 4;
 
@@ -2455,7 +2479,7 @@ ar9003_set_training_gain(struct athn_softc *sc, int chain)
 
 	/*
 	 * Get desired gain for training signal power (take into account
-	 * current temperature/voltage.)
+	 * current temperature/voltage).
 	 */
 	gain = ar9003_get_desired_txgain(sc, chain, sc->trainpow);
 	/* Find entry in table. */
@@ -2505,7 +2529,7 @@ get_scale(int val)
 {
 	int log = 0;
 
-	/* Find the log base 2 (position of highest bit set.) */
+	/* Find the log base 2 (position of highest bit set). */
 	while (val >>= 1)
 		log++;
 
@@ -2691,7 +2715,7 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		sc->pa_in[chain][i] = in;
 	}
 
-	/* Compute average theta of first 5 bins (linear region.) */
+	/* Compute average theta of first 5 bins (linear region). */
 	tavg = 0;
 	for (i = 1; i <= 5; i++)
 		tavg += t[i];
@@ -2782,7 +2806,7 @@ ar9003_enable_predistorter(struct athn_softc *sc, int chain)
 	reg = RW(reg, AR_PHY_PA_GAIN123_PA_GAIN1, sc->gain1[chain]);
 	AR_WRITE(sc, AR_PHY_PA_GAIN123_B(chain), reg);
 
-	/* Indicate Tx power used for calibration (training signal.) */
+	/* Indicate Tx power used for calibration (training signal). */
 	reg = AR_READ(sc, AR_PHY_PAPRD_CTRL1_B(chain));
 	reg = RW(reg, AR_PHY_PAPRD_CTRL1_POWER_AT_AM2AM_CAL, sc->trainpow);
 	AR_WRITE(sc, AR_PHY_PAPRD_CTRL1_B(chain), reg);
