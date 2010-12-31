@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.23 2006/05/06 16:59:28 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.24 2010/12/31 21:38:08 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -40,16 +40,15 @@
 #define	CI	CACHE_INH
 #define	CG	CACHE_GLOBAL
 
-/*  phys_start, virt_start, size, prot, cacheability */
 #ifdef MVME187
 #include <machine/mvme187.h>
 const pmap_table_entry
 m187_board_table[] = {
-	{ BUG187_START,		BUG187_START,	BUG187_SIZE,	RW, CI },
+	{ BUG187_START,		BUG187_SIZE,	RW, CI },
 #if 0	/* mapped by the hardcoded BATC entries */
-	{ OBIO187_START,	OBIO187_START,	OBIO187_SIZE,	RW, CI },
+	{ OBIO187_START,	OBIO187_SIZE,	RW, CI },
 #endif
-	{ 0, 0, 0xffffffff, 0, 0 },
+	{ 0, 0xffffffff, 0, 0 },
 };
 #endif
 
@@ -57,11 +56,11 @@ m187_board_table[] = {
 #include <machine/mvme188.h>
 const pmap_table_entry
 m188_board_table[] = {
-	{ MVME188_EPROM,	MVME188_EPROM,	MVME188_EPROM_SIZE, RW, CI },
+	{ MVME188_EPROM,	MVME188_EPROM_SIZE, RW, CI },
 #if 0	/* mapped by the hardcoded BATC entries */
-	{ MVME188_UTILITY,	MVME188_UTILITY, MVME188_UTILITY_SIZE, RW, CI },
+	{ MVME188_UTILITY,	MVME188_UTILITY_SIZE, RW, CI },
 #endif
-	{ 0, 0, 0xffffffff, 0, 0 },
+	{ 0, 0xffffffff, 0, 0 },
 };
 #endif
 
@@ -70,10 +69,10 @@ m188_board_table[] = {
 const pmap_table_entry
 m197_board_table[] = {
 	/* We need flash 1:1 mapped to access the 88410 chip underneath */
-	{ FLASH_START,		FLASH_START,	FLASH_SIZE,	RW, CI },
-	{ OBIO197_START,	OBIO197_START,	OBIO197_SIZE,	RW, CI },
+	{ FLASH_START,		FLASH_SIZE,	RW, CI },
+	{ OBIO197_START,	OBIO197_SIZE,	RW, CI },
 	/* No need to mention BUG here - it is contained inside OBIO */
-	{ 0, 0, 0xffffffff, 0, 0 },
+	{ 0, 0xffffffff, 0, 0 },
 };
 #endif
 

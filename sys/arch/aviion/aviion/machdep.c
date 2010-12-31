@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2010/06/27 12:41:21 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2010/12/31 21:38:07 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -247,16 +247,6 @@ cpu_startup()
 {
 	int i;
 	vaddr_t minaddr, maxaddr;
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in aviion_bootstrap() to compensate.
-	 */
-	for (i = 0; i < atop(MSGBUFSIZE); i++)
-		pmap_kenter_pa((paddr_t)msgbufp + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE);
-	pmap_update(pmap_kernel());
-	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -764,10 +754,6 @@ aviion_bootstrap()
 	avail_start = round_page(first_addr);
 	avail_end = last_addr;
 
-	/* Steal MSGBUFSIZE at the top of physical memory for msgbuf. */
-	avail_end -= round_page(MSGBUFSIZE);
-	pmap_bootstrap((vaddr_t)trunc_page((vaddr_t)&kernelstart));
-
 	/*
 	 * Tell the VM system about available physical memory.
 	 * The aviion systems only have one contiguous area.
@@ -777,6 +763,14 @@ aviion_bootstrap()
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+
+	/*
+	 * Initialize message buffer.
+	 */
+	initmsgbuf((caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL),
+	    MSGBUFSIZE);
+
+	pmap_bootstrap();
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);

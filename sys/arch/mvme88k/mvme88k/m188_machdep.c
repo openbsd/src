@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.53 2009/03/15 20:39:53 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.54 2010/12/31 21:38:08 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -163,7 +163,6 @@ vaddr_t	m188_memsize(void);
 u_int	m188_raiseipl(u_int);
 void	m188_send_ipi(int, cpuid_t);
 u_int	m188_setipl(u_int);
-void	m188_startup(void);
 
 /*
  * The MVME188 interrupt arbiter has 25 orthogonal interrupt sources.
@@ -217,11 +216,6 @@ m188_memsize()
 	}
 
 	return (pgnum << 22);
-}
-
-void
-m188_startup()
-{
 }
 
 void

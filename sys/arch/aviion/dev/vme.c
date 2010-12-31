@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.10 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.11 2010/12/31 21:38:08 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -507,7 +507,7 @@ vme_map_r(const struct vme_range *r, paddr_t pa, psize_t len, int flags,
 		pa += PAGE_SIZE;
 	}
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
-		pmap_cache_ctrl(pmap_kernel(), ova, ova + len, CACHE_GLOBAL);
+		pmap_cache_ctrl(ova, ova + len, CACHE_GLOBAL);
 	pmap_update(pmap_kernel());
 
 	*rva = ova;

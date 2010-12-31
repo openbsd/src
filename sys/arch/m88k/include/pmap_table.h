@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.h,v 1.1 2004/07/25 11:06:42 miod Exp $	*/
+/*	$OpenBSD: pmap_table.h,v 1.2 2010/12/31 21:38:08 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,15 +30,14 @@
 
 /*
  * Built-in mappings list.
- * An entry is considered invalid if pm_size = 0, and
- * end of list is indicated by pm_size 0xffffffff
+ * An entry is considered invalid if size = 0, and
+ * end of list is indicated by size 0xffffffff
  */
 typedef struct {
-	vaddr_t		phys_start;	/* in bytes */
-	vaddr_t		virt_start;	/* in bytes */
-	vsize_t		size;		/* in bytes */
-	unsigned int	prot;		/* vm_prot_read, vm_prot_write */
-	unsigned int	cacheability;	/* none, writeback, normal */
+	paddr_t		start;
+	psize_t		size;
+	vm_prot_t	prot;
+	unsigned int	cacheability;
 } pmap_table_entry;
 
 typedef const pmap_table_entry *pmap_table_t;

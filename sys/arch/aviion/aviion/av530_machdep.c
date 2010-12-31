@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.4 2010/04/24 18:46:51 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.5 2010/12/31 21:38:07 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -57,13 +57,11 @@ void	av530_clock_ipi_handler(struct trapframe *);
 void	av530_ipi_handler(struct trapframe *);
 
 const pmap_table_entry av530_ptable[] = {
-	{ AV530_PROM,	AV530_PROM,	AV530_PROM_SIZE,
-	  UVM_PROT_RW,	CACHE_INH },
+	{ AV530_PROM,	AV530_PROM_SIZE,	UVM_PROT_RW,	CACHE_INH },
 #if 0	/* mapped by the hardcoded BATC entries */
-	{ AV530_UTILITY,AV530_UTILITY,	AV530_UTILITY_SIZE,
-	  UVM_PROT_RW,	CACHE_INH },
+	{ AV530_UTILITY,AV530_UTILITY_SIZE,	UVM_PROT_RW,	CACHE_INH },
 #endif
-	{ 0, 0, (vsize_t)-1, 0, 0 }
+	{ 0, (vsize_t)-1, 0, 0 }
 };
 
 const struct vme_range vme_av530[] = {

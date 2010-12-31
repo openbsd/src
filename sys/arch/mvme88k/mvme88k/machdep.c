@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.239 2010/12/23 20:05:08 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.240 2010/12/31 21:38:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -108,13 +108,10 @@ void	_doboot(void);
 
 extern void	m187_bootstrap(void);
 extern vaddr_t	m187_memsize(void);
-extern void	m187_startup(void);
 extern void	m188_bootstrap(void);
 extern vaddr_t	m188_memsize(void);
-extern void	m188_startup(void);
 extern void	m197_bootstrap(void);
 extern vaddr_t	m197_memsize(void);
-extern void	m197_startup(void);
 
 extern int kernelstart;
 register_t kernel_vbr;
@@ -185,9 +182,6 @@ int cpuspeed = 25;				/* safe guess */
 vaddr_t first_addr;
 vaddr_t last_addr;
 
-vaddr_t avail_start, avail_end;
-vaddr_t virtual_avail, virtual_end;
-
 extern struct user *proc0paddr;
 
 struct intrhand	clock_ih;
@@ -203,6 +197,12 @@ struct intrhand	statclock_ih;
  */
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
+
+#if defined (MVME187) || defined (MVME197)
+#define ETHERPAGES 16
+void *etherbuf = NULL;
+int etherlen;
+#endif
 
 /*
  * This is to fake out the console routines, while booting.
@@ -351,44 +351,12 @@ cpu_startup()
 	vaddr_t minaddr, maxaddr;
 
 	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in mvme_bootstrap() to compensate.
-	 */
-	for (i = 0; i < atop(MSGBUFSIZE); i++)
-		pmap_kenter_pa((paddr_t)msgbufp + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE);
-	pmap_update(pmap_kernel());
-	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
-
-	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
 	identifycpu();
 	printf("real mem = %u (%uMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
-
-	/*
-	 * Grab machine dependent memory spaces
-	 */
-	switch (brdtyp) {
-#ifdef MVME187
-	case BRD_187:
-	case BRD_8120:
-		m187_startup();
-		break;
-#endif
-#ifdef MVME188
-	case BRD_188:
-		m188_startup();
-		break;
-#endif
-#ifdef MVME197
-	case BRD_197:
-		m197_startup();
-		break;
-#endif
-	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -615,10 +583,7 @@ dumpsys()
 		if (pg != 0 && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
-		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+		error = (*dump)(dumpdev, blkno, (caddr_t)maddr, PAGE_SIZE);
 		if (error == 0) {
 			maddr += PAGE_SIZE;
 			blkno += btodb(PAGE_SIZE);
@@ -922,6 +887,8 @@ mvme_bootstrap()
 {
 	extern struct consdev *cn_tab;
 	struct mvmeprom_brdid brdid;
+	vaddr_t avail_start;
+	extern vaddr_t avail_end;
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;
 #endif
@@ -1008,20 +975,13 @@ mvme_bootstrap()
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	avail_start = first_addr;
-	avail_end = last_addr;
-
-	/*
-	 * Steal MSGBUFSIZE at the top of physical memory for msgbuf
-	 */
-	avail_end -= round_page(MSGBUFSIZE);
+	avail_start = first_addr;	/* first page of memory after kernel image */
+	avail_end = last_addr;		/* last page of memory */
 
 #ifdef DEBUG
 	printf("MVME%x boot: memory from 0x%x to 0x%x\n",
 	    brdtyp, avail_start, avail_end);
 #endif
-	pmap_bootstrap((vaddr_t)trunc_page((vaddr_t)&kernelstart));
-
 	/*
 	 * Tell the VM system about available physical memory.
 	 *
@@ -1031,6 +991,30 @@ mvme_bootstrap()
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+
+	/*
+	 * Initialize message buffer.
+	 */
+	initmsgbuf((caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL),
+	    MSGBUFSIZE);
+
+#if defined (MVME187) || defined (MVME197)
+	/*
+	 * Get ethernet buffer - need ETHERPAGES pages physically contiguous.
+	 * XXX need to fix ie(4) to support non-1:1 mapped buffers
+	 */
+	if (brdtyp == BRD_187 || brdtyp == BRD_8120 || brdtyp == BRD_197) {
+		etherlen = ETHERPAGES * PAGE_SIZE;
+		etherbuf = (void *)uvm_pageboot_alloc(etherlen);
+	}
+#endif /* defined (MVME187) || defined (MVME197) */
+
+	pmap_bootstrap();
+
+#if defined (MVME187) || defined (MVME197)
+	if (etherlen != 0)
+		pmap_cache_ctrl((paddr_t)etherbuf, (paddr_t)etherbuf + etherlen,		    CACHE_INH);
+#endif
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);

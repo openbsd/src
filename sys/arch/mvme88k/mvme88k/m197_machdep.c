@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.43 2010/12/31 20:54:21 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.44 2010/12/31 21:38:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -97,10 +97,6 @@ u_int	m197_raiseipl(u_int);
 u_int	m197_setipl(u_int);
 void	m197_smp_setup(struct cpu_info *);
 void	m197_soft_ipi(void);
-void	m197_startup(void);
-
-vaddr_t obiova;
-vaddr_t flashva;
 
 /*
  * Figure out how much real memory is available.
@@ -156,32 +152,6 @@ m197_memsize()
 	 * Return a ``safe'' 32MB.
 	 */
 	return (32 * 1024 * 1024);
-}
-
-void
-m197_startup()
-{
-	/*
-	 * Grab the FLASH space that we hardwired in pmap_bootstrap
-	 */
-	flashva = FLASH_START;
-	uvm_map(kernel_map, (vaddr_t *)&flashva, FLASH_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, UVM_FLAG_FIXED));
-	if (flashva != FLASH_START)
-		panic("flashva %lx: FLASH not free", flashva);
-
-	/*
-	 * Grab the OBIO space that we hardwired in pmap_bootstrap
-	 */
-	obiova = OBIO197_START;
-	uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO197_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, UVM_FLAG_FIXED));
-	if (obiova != OBIO197_START)
-		panic("obiova %lx: OBIO not free", obiova);
 }
 
 /*

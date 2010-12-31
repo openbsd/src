@@ -1,4 +1,4 @@
-#	$OpenBSD: files.aviion,v 1.8 2010/12/06 20:10:17 jasper Exp $
+#	$OpenBSD: files.aviion,v 1.9 2010/12/31 21:38:07 miod Exp $
 #
 maxpartitions 16
 
@@ -75,7 +75,6 @@ file	arch/aviion/aviion/av6280_machdep.c		av6280
 file	arch/aviion/aviion/cio_clock.c			av400 |
 							av5000 | av6280
 file	arch/aviion/aviion/m8820x.c			m88100
-file	arch/aviion/aviion/mem.c
 file	arch/aviion/aviion/pmap_table.c
 file	arch/aviion/aviion/prom.c
 file	arch/aviion/aviion/rtc_clock.c			av530

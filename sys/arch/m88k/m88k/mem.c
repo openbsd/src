@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2007/12/09 13:14:53 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.1 2010/12/31 21:38:08 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,13 +46,14 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
-#include <machine/board.h>
 #include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 
 caddr_t zpage;
-extern vaddr_t last_addr;
+extern vaddr_t first_addr, last_addr;
+extern caddr_t kernelstart;
+extern void *etext;
 
 /*ARGSUSED*/
 int
@@ -91,24 +92,11 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vaddr_t o, v;
+	vaddr_t v;
 	int c;
 	struct iovec *iov;
 	int error = 0;
-	static int physlock = 0;
-	extern caddr_t vmmap;
 
-	if (minor(dev) == 0) {
-		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
-	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -122,48 +110,22 @@ mmrw(dev, uio, flags)
 
 /* minor device 0 is physical memory */
 		case 0:
-			/* move one page at a time */
 			v = uio->uio_offset;
-			if (v > last_addr) {
-				error = EFAULT;
-				goto unlock;
-			}
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v),
-			    uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
-			    (uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE) | PMAP_WIRED);
-			pmap_update(pmap_kernel());
-			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
-			pmap_update(pmap_kernel());
+			error = uiomove((caddr_t)v, uio->uio_resid, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
+			if (v >= (vaddr_t)&kernelstart &&
+			    v < (vaddr_t)first_addr) {
+				if (v < (vaddr_t)etext &&
+				    uio->uio_rw == UIO_WRITE)
+					return (EFAULT);
+			} else if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			if (v < NBPG) {
-#ifdef DEBUG
-				/*
-				 * For now, return zeros on read of page 0
-				 * and EFAULT for writes.
-				 */
-				if (uio->uio_rw == UIO_READ) {
-					if (zpage == NULL)
-						zpage = malloc(PAGE_SIZE,
-						    M_TEMP, M_WAITOK | M_ZERO);
-					c = min(c, NBPG - (int)v);
-					v = (vaddr_t)zpage;
-				} else
-#endif
-					return (EFAULT);
-			}
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
@@ -172,8 +134,6 @@ mmrw(dev, uio, flags)
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
-
-/* should add vme bus so that we can do user level probes */
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
@@ -198,12 +158,7 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (minor(dev) == 0) {
-unlock:
-		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
-		physlock = 0;
-	}
+
 	return (error);
 }
 

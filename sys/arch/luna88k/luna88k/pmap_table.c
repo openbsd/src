@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.5 2005/04/27 14:07:36 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.6 2010/12/31 21:38:08 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,38 +41,38 @@
 #define	CI	CACHE_INH
 #define	CG	CACHE_GLOBAL
 
-/*  phys_start, virt_start, size, prot, cacheability */
+/*  start, size, prot, cacheability */
 const pmap_table_entry
 luna88k_board_table[] = {
-	{ PROM_ADDR   , PROM_ADDR   , PROM_SPACE  ,  R,   CI },
-	{ FUSE_ROM_ADDR, FUSE_ROM_ADDR, FUSE_ROM_SPACE,  RW,    CI },
-	{ NVRAM_ADDR   , NVRAM_ADDR   , NVRAM_SPACE  ,   RW,     CI },
-	{ NVRAM_ADDR_88K2,    NVRAM_ADDR_88K2, PAGE_SIZE, RW,     CI },
-	{ OBIO_PIO0_BASE,     OBIO_PIO0_BASE, PAGE_SIZE,  RW,     CI },
-	{ OBIO_PIO1_BASE,     OBIO_PIO1_BASE, PAGE_SIZE,  RW,     CI },
-	{ OBIO_SIO      ,     OBIO_SIO,       PAGE_SIZE,  RW,     CI },
-	{ OBIO_TAS      ,     OBIO_TAS,       PAGE_SIZE,  RW,     CI },
-	{ OBIO_CLOCK0   ,     OBIO_CLOCK0,    PAGE_SIZE,  RW,     CI },
-	{ INT_ST_MASK0  ,     INT_ST_MASK0,   PAGE_SIZE,  RW,     CI },
-	{ SOFT_INT0     ,     SOFT_INT0,      PAGE_SIZE,  RW,     CI },
-	{ SOFT_INT_FLAG0,     SOFT_INT_FLAG0, PAGE_SIZE,  RW,     CI },
-	{ RESET_CPU0    ,     RESET_CPU0,     PAGE_SIZE,  RW,     CI },
-	{ TRI_PORT_RAM, TRI_PORT_RAM, TRI_PORT_RAM_SPACE, RW, CI },
+	{ PROM_ADDR,		PROM_SPACE,		R,	CI },
+	{ FUSE_ROM_ADDR,	FUSE_ROM_SPACE,		RW,	CI },
+	{ NVRAM_ADDR,		NVRAM_SPACE,		RW,	CI },
+	{ NVRAM_ADDR_88K2,	PAGE_SIZE,		RW,	CI },
+	{ OBIO_PIO0_BASE,	PAGE_SIZE,		RW,	CI },
+	{ OBIO_PIO1_BASE,	PAGE_SIZE,		RW,	CI },
+	{ OBIO_SIO,		PAGE_SIZE,		RW,	CI },
+	{ OBIO_TAS,		PAGE_SIZE,		RW,	CI },
+	{ OBIO_CLOCK0,		PAGE_SIZE,		RW,	CI },
+	{ INT_ST_MASK0,		PAGE_SIZE,		RW,	CI },
+	{ SOFT_INT0,		PAGE_SIZE,		RW,	CI },
+	{ SOFT_INT_FLAG0,	PAGE_SIZE,		RW,	CI },
+	{ RESET_CPU0,		PAGE_SIZE,		RW,	CI },
+	{ TRI_PORT_RAM,		TRI_PORT_RAM_SPACE,	RW,	CI },
 #if 0
-	{ EXT_A_ADDR    ,     EXT_A_ADDR,     EXT_A_SPACE,  RW,     CI },
-	{ EXT_B_ADDR    ,     EXT_B_ADDR,     EXT_B_SPACE,  RW,     CI },
-	{ PC_BASE       ,     PC_BASE,        PC_SPACE,    RW,     CI },
+	{ EXT_A_ADDR,		EXT_A_SPACE,		RW,	CI },
+	{ EXT_B_ADDR,		EXT_B_SPACE,		RW,	CI },
+	{ PC_BASE,		PC_SPACE,		RW,	CI },
 #endif
-	{ MROM_ADDR     ,     MROM_ADDR,      MROM_SPACE, R,      CI },
-	{ BMAP_START    ,     BMAP_START,     BMAP_SPACE, RW,     CI },
-	{ BMAP_PALLET0  ,     BMAP_PALLET0,   PAGE_SIZE,      RW,     CI },
-	{ BMAP_PALLET1  ,     BMAP_PALLET1,   PAGE_SIZE,      RW,     CI },
-	{ BMAP_PALLET2  ,     BMAP_PALLET2,   PAGE_SIZE,      RW,     CI },
-	{ BOARD_CHECK_REG,    BOARD_CHECK_REG,PAGE_SIZE,      RW,     CI },
-	{ BMAP_CRTC,          BMAP_CRTC,      PAGE_SIZE,      RW,     CI },
-	{ SCSI_ADDR,          SCSI_ADDR,      PAGE_SIZE,      RW,     CI },
-	{ LANCE_ADDR,         LANCE_ADDR,     PAGE_SIZE,      RW,     CI },
-	{ 0,           0,          0xffffffff,             0,      0  },
+	{ MROM_ADDR,		MROM_SPACE,		R,	CI },
+	{ BMAP_START,		BMAP_SPACE,		RW,	CI },
+	{ BMAP_PALLET0,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_PALLET1,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_PALLET2,		PAGE_SIZE,		RW,	CI },
+	{ BOARD_CHECK_REG,	PAGE_SIZE,		RW,	CI },
+	{ BMAP_CRTC,		PAGE_SIZE,		RW,	CI },
+	{ SCSI_ADDR,		PAGE_SIZE,		RW,	CI },
+	{ LANCE_ADDR,		PAGE_SIZE,		RW,	CI },
+	{ 0,			0xffffffff,		0,	0 },
 };
 
 pmap_table_t 
