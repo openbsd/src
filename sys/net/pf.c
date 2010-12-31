@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.715 2010/12/24 20:12:56 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.716 2010/12/31 12:21:36 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -297,6 +297,8 @@ enum { PF_ICMP_MULTI_NONE, PF_ICMP_MULTI_SOLICITED, PF_ICMP_MULTI_LINK };
 			mrm->r->states_cur--;			\
 	} while (0)
 
+static __inline int pf_addr_compare(struct pf_addr *, struct pf_addr *,
+	sa_family_t);
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
 static __inline int pf_state_compare_key(struct pf_state_key *,
 	struct pf_state_key *);
@@ -314,6 +316,42 @@ RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 
 static __inline int
+pf_addr_compare(struct pf_addr *a, struct pf_addr *b, sa_family_t af)
+{
+	switch (af) {
+#ifdef INET
+	case AF_INET:
+		if (a->addr32[0] > b->addr32[0])
+			return (1);
+		if (a->addr32[0] < b->addr32[0])
+			return (-1);
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		if (a->addr32[3] > b->addr32[3])
+			return (1);
+		if (a->addr32[3] < b->addr32[3])
+			return (-1);
+		if (a->addr32[2] > b->addr32[2])
+			return (1);
+		if (a->addr32[2] < b->addr32[2])
+			return (-1);
+		if (a->addr32[1] > b->addr32[1])
+			return (1);
+		if (a->addr32[1] < b->addr32[1])
+			return (-1);
+		if (a->addr32[0] > b->addr32[0])
+			return (1);
+		if (a->addr32[0] < b->addr32[0])
+			return (-1);
+		break;
+#endif /* INET6 */
+	}
+	return (0);
+}
+
+static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
 {
 	int	diff;
@@ -326,36 +364,8 @@ pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
 		return (diff);
 	if ((diff = a->af - b->af) != 0)
 		return (diff);
-	switch (a->af) {
-#ifdef INET
-	case AF_INET:
-		if (a->addr.addr32[0] > b->addr.addr32[0])
-			return (1);
-		if (a->addr.addr32[0] < b->addr.addr32[0])
-			return (-1);
-		break;
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		if (a->addr.addr32[3] > b->addr.addr32[3])
-			return (1);
-		if (a->addr.addr32[3] < b->addr.addr32[3])
-			return (-1);
-		if (a->addr.addr32[2] > b->addr.addr32[2])
-			return (1);
-		if (a->addr.addr32[2] < b->addr.addr32[2])
-			return (-1);
-		if (a->addr.addr32[1] > b->addr.addr32[1])
-			return (1);
-		if (a->addr.addr32[1] < b->addr.addr32[1])
-			return (-1);
-		if (a->addr.addr32[0] > b->addr.addr32[0])
-			return (1);
-		if (a->addr.addr32[0] < b->addr.addr32[0])
-			return (-1);
-		break;
-#endif /* INET6 */
-	}
+	if ((diff = pf_addr_compare(&a->addr, &b->addr, a->af)) != 0)
+		return (diff);
 	return (0);
 }
 
@@ -635,65 +645,16 @@ pf_state_compare_key(struct pf_state_key *a, struct pf_state_key *b)
 		return (diff);
 	if ((diff = a->af - b->af) != 0)
 		return (diff);
-	switch (a->af) {
-#ifdef INET
-	case AF_INET:
-		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
-			return (1);
-		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
-			return (-1);
-		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
-			return (1);
-		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
-			return (-1);
-		break;
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		if (a->addr[0].addr32[3] > b->addr[0].addr32[3])
-			return (1);
-		if (a->addr[0].addr32[3] < b->addr[0].addr32[3])
-			return (-1);
-		if (a->addr[1].addr32[3] > b->addr[1].addr32[3])
-			return (1);
-		if (a->addr[1].addr32[3] < b->addr[1].addr32[3])
-			return (-1);
-		if (a->addr[0].addr32[2] > b->addr[0].addr32[2])
-			return (1);
-		if (a->addr[0].addr32[2] < b->addr[0].addr32[2])
-			return (-1);
-		if (a->addr[1].addr32[2] > b->addr[1].addr32[2])
-			return (1);
-		if (a->addr[1].addr32[2] < b->addr[1].addr32[2])
-			return (-1);
-		if (a->addr[0].addr32[1] > b->addr[0].addr32[1])
-			return (1);
-		if (a->addr[0].addr32[1] < b->addr[0].addr32[1])
-			return (-1);
-		if (a->addr[1].addr32[1] > b->addr[1].addr32[1])
-			return (1);
-		if (a->addr[1].addr32[1] < b->addr[1].addr32[1])
-			return (-1);
-		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
-			return (1);
-		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
-			return (-1);
-		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
-			return (1);
-		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
-			return (-1);
-		break;
-#endif /* INET6 */
-	}
-
+	if ((diff = pf_addr_compare(&a->addr[0], &b->addr[0], a->af)) != 0)
+		return (diff);
+	if ((diff = pf_addr_compare(&a->addr[1], &b->addr[1], a->af)) != 0)
+		return (diff);
 	if ((diff = a->port[0] - b->port[0]) != 0)
 		return (diff);
 	if ((diff = a->port[1] - b->port[1]) != 0)
 		return (diff);
-
 	if ((diff = a->rdomain - b->rdomain) != 0)
 		return (diff);
-
 	return (0);
 }
 
