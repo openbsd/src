@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.96 2010/12/30 20:29:13 kettenis Exp $ */
+/*	$OpenBSD: wd.c,v 1.97 2010/12/31 22:58:40 kettenis Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -76,6 +76,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/dkio.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1240,4 +1241,6 @@ wd_shutdown(void *arg)
 	struct wd_softc *wd = arg;
 
 	wd_flushcache(wd, AT_POLL);
+	if (boothowto & RB_POWERDOWN)
+		wd_standby(wd, AT_POLL);
 }
