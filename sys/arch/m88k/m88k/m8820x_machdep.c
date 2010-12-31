@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.42 2010/12/31 20:54:21 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.43 2010/12/31 21:12:16 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -100,12 +100,12 @@ void	m8820x_set_sapr(apr_t);
 void	m8820x_set_uapr(apr_t);
 void	m8820x_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
 void	m8820x_cache_wbinv(cpuid_t, paddr_t, psize_t);
+void	m8820x_dcache_wb(cpuid_t, paddr_t, psize_t);
 void	m8820x_icache_inv(cpuid_t, paddr_t, psize_t);
 void	m8820x_dma_cachectl(paddr_t, psize_t, int);
 void	m8820x_dma_cachectl_local(paddr_t, psize_t, int);
 void	m8820x_initialize_cpu(cpuid_t);
 
-/* This is the function table for the MC8820x CMMUs */
 struct cmmu_p cmmu8820x = {
 	m8820x_init,
 	m8820x_setup_board_config,
@@ -116,6 +116,7 @@ struct cmmu_p cmmu8820x = {
 	m8820x_set_uapr,
 	m8820x_tlb_inv,
 	m8820x_cache_wbinv,
+	m8820x_dcache_wb,
 	m8820x_icache_inv,
 	m8820x_dma_cachectl,
 #ifdef MULTIPROCESSOR
@@ -638,7 +639,42 @@ m8820x_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 }
 
 /*
- *	flush Instruction caches
+ * writeback D$
+ */
+void
+m8820x_dcache_wb(cpuid_t cpu, paddr_t pa, psize_t size)
+{
+	u_int32_t psr;
+	psize_t count;
+
+	size = round_cache_line(pa + size) - trunc_cache_line(pa);
+	pa = trunc_cache_line(pa);
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+	CMMU_LOCK;
+
+	while (size != 0) {
+		if ((pa & PAGE_MASK) == 0 && size >= PAGE_SIZE) {
+			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CB_PAGE,
+			    0, cpu, 0, pa);
+			count = PAGE_SIZE;
+		} else {
+			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CB_LINE,
+			    0, cpu, 0, pa);
+			count = MC88200_CACHE_LINE;
+		}
+		pa += count;
+		size -= count;
+		m8820x_cmmu_wait(cpu);
+	}
+
+	CMMU_UNLOCK;
+	set_psr(psr);
+}
+
+/*
+ * invalidate I$
  */
 void
 m8820x_icache_inv(cpuid_t cpu, paddr_t pa, psize_t size)

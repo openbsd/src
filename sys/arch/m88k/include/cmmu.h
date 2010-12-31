@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.24 2010/12/31 20:54:21 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.25 2010/12/31 21:12:16 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -44,6 +44,7 @@ struct cmmu_p {
 	void (*set_uapr)(apr_t);
 	void (*tlb_inv)(cpuid_t, u_int, vaddr_t, u_int);
 	void (*cache_wbinv)(cpuid_t, paddr_t, psize_t);
+	void (*dcache_wb)(cpuid_t, paddr_t, psize_t);
 	void (*icache_inv)(cpuid_t, paddr_t, psize_t);
 	void (*dma_cachectl)(paddr_t, psize_t, int);
 #ifdef MULTIPROCESSOR
@@ -78,6 +79,7 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 #define	cmmu_set_uapr(apr)		(cmmu->set_uapr)(apr)
 #define	cmmu_tlb_inv(cpu, k, va, c) 	(cmmu->tlb_inv)(cpu, k, va, c)
 #define	cmmu_cache_wbinv(cpu, pa, s)	(cmmu->cache_wbinv)(cpu, pa, s)
+#define	cmmu_dcache_wb(cpu, pa, s)	(cmmu->dcache_wb)(cpu, pa, s)
 #define	cmmu_icache_inv(cpu,pa,s)	(cmmu->icache_inv)(cpu, pa, s)
 #define	dma_cachectl(pa, s, op)		(cmmu->dma_cachectl)(pa, s, op)
 #define	dma_cachectl_local(pa, s, op)	(cmmu->dma_cachectl_local)(pa, s, op)

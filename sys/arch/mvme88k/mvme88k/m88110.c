@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.66 2010/12/31 20:54:21 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.67 2010/12/31 21:12:16 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -89,6 +89,8 @@ void	m88110_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
 void	m88410_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
 void	m88110_cache_wbinv(cpuid_t, paddr_t, psize_t);
 void	m88410_cache_wbinv(cpuid_t, paddr_t, psize_t);
+void	m88110_dcache_wb(cpuid_t, paddr_t, psize_t);
+void	m88410_dcache_wb(cpuid_t, paddr_t, psize_t);
 void	m88110_icache_inv(cpuid_t, paddr_t, psize_t);
 void	m88410_icache_inv(cpuid_t, paddr_t, psize_t);
 void	m88110_dma_cachectl(paddr_t, psize_t, int);
@@ -112,6 +114,7 @@ struct cmmu_p cmmu88110 = {
 	m88110_set_uapr,
 	m88110_tlb_inv,
 	m88110_cache_wbinv,
+	m88110_dcache_wb,
 	m88110_icache_inv,
 	m88110_dma_cachectl,
 #ifdef MULTIPROCESSOR
@@ -134,6 +137,7 @@ struct cmmu_p cmmu88410 = {
 	m88110_set_uapr,
 	m88110_tlb_inv,
 	m88410_cache_wbinv,
+	m88410_dcache_wb,
 	m88410_icache_inv,
 	m88410_dma_cachectl,
 #ifdef MULTIPROCESSOR
@@ -560,7 +564,77 @@ m88410_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 }
 
 /*
- * Flush Instruction caches
+ * writeback D$
+ */
+
+void
+m88110_dcache_wb(cpuid_t cpu, paddr_t pa, psize_t size)
+{
+	u_int32_t psr;
+	psize_t count;
+
+	size = round_cache_line(pa + size) - trunc_cache_line(pa);
+	pa = trunc_cache_line(pa);
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	while (size != 0) {
+		if ((pa & PAGE_MASK) == 0 && size >= PAGE_SIZE) {
+			mc88110_wb_data_page(pa);
+			count = PAGE_SIZE;
+		} else {
+			mc88110_wb_data_line(pa);
+			count = MC88110_CACHE_LINE;
+		}
+		pa += count;
+		size -= count;
+	}
+
+	set_psr(psr);
+}
+
+void
+m88410_dcache_wb(cpuid_t cpu, paddr_t pa, psize_t size)
+{
+	u_int32_t psr;
+	psize_t count;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+
+	if (cpu != ci->ci_cpuid) {
+		m197_send_complex_ipi(CI_IPI_CACHE_FLUSH, cpu, pa, size);
+		return;
+	}
+#endif
+
+	size = round_cache_line(pa + size) - trunc_cache_line(pa);
+	pa = trunc_cache_line(pa);
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	while (size != 0) {
+		if ((pa & PAGE_MASK) == 0 && size >= PAGE_SIZE) {
+			mc88110_wb_data_page(pa);
+			count = PAGE_SIZE;
+		} else {
+			mc88110_wb_data_line(pa);
+			count = MC88110_CACHE_LINE;
+		}
+		pa += count;
+		size -= count;
+	}
+
+	CMMU_LOCK;
+	mc88410_wb();
+	CMMU_UNLOCK;
+
+	set_psr(psr);
+}
+
+/*
+ * invalidate I$
  */
 
 void
