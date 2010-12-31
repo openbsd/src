@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.117 2010/12/31 22:39:11 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.118 2010/12/31 22:40:19 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -944,20 +944,15 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 int
 randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int	ret = 0;
-
 	switch (cmd) {
 	case FIOASYNC:
-		/* rnd has no async flag in softc so this is really a no-op. */
+		/* No async flag in softc so this is a no-op. */
 		break;
-
 	case FIONBIO:
 		/* Handled in the upper FS layer. */
 		break;
-
 	default:
-		ret = ENOTTY;
+		return ENOTTY;
 	}
-
-	return ret;
+	return 0;
 }
