@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.67 2010/12/31 18:24:41 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.68 2010/12/31 21:44:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -861,7 +861,7 @@ athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 		athn_tx_reclaim(sc, qid);
 
 	/* Stop Rx. */
-	AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS);
+	AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT);
 	AR_WRITE(sc, AR_MIBC, AR_MIBC_FMC);
 	AR_WRITE(sc, AR_MIBC, AR_MIBC_CMC);
 	AR_WRITE(sc, AR_FILT_OFDM, 0);
@@ -2781,7 +2781,7 @@ athn_stop(struct ifnet *ifp, int disable)
 		athn_tx_reclaim(sc, qid);
 
 	/* Stop Rx. */
-	AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS);
+	AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT);
 	AR_WRITE(sc, AR_MIBC, AR_MIBC_FMC);
 	AR_WRITE(sc, AR_MIBC, AR_MIBC_CMC);
 	AR_WRITE(sc, AR_FILT_OFDM, 0);
