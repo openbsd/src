@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2010/12/26 22:18:20 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.56 2010/12/31 20:54:21 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -206,7 +206,7 @@ flush_atc_entry(pmap_t pmap, vaddr_t va)
 	if (CPU_IS88100) {
 		CPU_INFO_FOREACH(cpu, ci) {
 			if (kernel || pmap == ci->ci_curpmap)
-				cmmu_flush_tlb(ci->ci_cpuid, kernel, va, 1);
+				cmmu_tlb_inv(ci->ci_cpuid, kernel, va, 1);
 		}
 	}
 
@@ -227,7 +227,7 @@ flush_atc_entry(pmap_t pmap, vaddr_t va)
 
 	if (kernel || pmap == ci->ci_curpmap) {
 		if (CPU_IS88100)
-			cmmu_flush_tlb(ci->ci_cpuid, kernel, va, 1);
+			cmmu_tlb_inv(ci->ci_cpuid, kernel, va, 1);
 		if (CPU_IS88110)
 			ci->ci_pmap_ipi |= kernel ?
 			    CI_IPI_TLB_FLUSH_KERNEL : CI_IPI_TLB_FLUSH_USER;
@@ -255,9 +255,9 @@ pmap_update(pmap_t pm)
 		/* CPU_INFO_FOREACH(cpu, ci) */ {
 			ipi = atomic_clear_int(&ci->ci_pmap_ipi);
 			if (ipi & CI_IPI_TLB_FLUSH_KERNEL)
-				cmmu_flush_tlb(ci->ci_cpuid, TRUE, 0 ,0);
+				cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0 ,0);
 			if (ipi & CI_IPI_TLB_FLUSH_USER)
-				cmmu_flush_tlb(ci->ci_cpuid, FALSE, 0 ,0);
+				cmmu_tlb_inv(ci->ci_cpuid, FALSE, 0 ,0);
 		}
 	}
 }
@@ -527,7 +527,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 #else
 			cpu = cpu_number();
 #endif
-					cmmu_flush_cache(cpu, pa, PAGE_SIZE);
+					cmmu_cache_wbinv(cpu, pa, PAGE_SIZE);
 		}
 	}
 	PMAP_UNLOCK(pmap);
@@ -773,7 +773,7 @@ pmap_bootstrap_cpu(cpuid_t cpu)
 		cmmu_initialize_cpu(cpu);
 	else
 #endif
-		cmmu_flush_tlb(cpu, TRUE, 0, -1);
+		cmmu_tlb_inv(cpu, TRUE, 0, -1);
 
 	/* Load supervisor pointer to segment table. */
 	cmmu_set_sapr(kernel_pmap->pm_apr);
@@ -855,7 +855,7 @@ pmap_zero_page(struct vm_page *pg)
 	 * We don't need the flush_atc_entry() dance, as these pages are
 	 * bound to only one cpu.
 	 */
-	cmmu_flush_tlb(cpu, TRUE, va, 1);
+	cmmu_tlb_inv(cpu, TRUE, va, 1);
 	zeropage(va);
 	splx(spl);
 }
@@ -2026,7 +2026,7 @@ pmap_activate(struct proc *p)
 	} else {
 		if (pmap != ci->ci_curpmap) {
 			cmmu_set_uapr(pmap->pm_apr);
-			cmmu_flush_tlb(ci->ci_cpuid, FALSE, 0, -1);
+			cmmu_tlb_inv(ci->ci_cpuid, FALSE, 0, -1);
 			ci->ci_curpmap = pmap;
 		}
 	}
@@ -2102,8 +2102,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * We don't need the flush_atc_entry() dance, as these pages are
 	 * bound to only one cpu.
 	 */
-	cmmu_flush_tlb(cpu, TRUE, dstva, 2);
-	cmmu_flush_cache(cpu, src, PAGE_SIZE);
+	cmmu_tlb_inv(cpu, TRUE, dstva, 2);
+	cmmu_cache_wbinv(cpu, src, PAGE_SIZE);
 	copypage(srcva, dstva);
 
 	splx(spl);
@@ -2596,7 +2596,7 @@ pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 			ci = curcpu();
 #endif
 			/* CPU_INFO_FOREACH(cpu, ci) */ {
-				cmmu_flush_inst_cache(ci->ci_cpuid, pa, count);
+				cmmu_icache_inv(ci->ci_cpuid, pa, count);
 			}
 		}
 		va += count;

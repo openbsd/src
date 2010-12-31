@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.72 2010/12/23 19:55:24 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.73 2010/12/31 20:54:21 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -794,9 +794,9 @@ lose:
 
 		if (fault_addr >= (vaddr_t)&kernel_text &&
 		    fault_addr < (vaddr_t)&etext) {
-			cmmu_flush_inst_cache(curcpu()->ci_cpuid,
+			cmmu_icache_inv(curcpu()->ci_cpuid,
 			    trunc_page(fault_addr), PAGE_SIZE);
-			cmmu_flush_cache(curcpu()->ci_cpuid,
+			cmmu_cache_wbinv(curcpu()->ci_cpuid,
 			    trunc_page(fault_addr), PAGE_SIZE);
 			return;
 		}

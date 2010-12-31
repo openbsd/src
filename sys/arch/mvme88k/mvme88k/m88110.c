@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.65 2010/06/22 17:42:37 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.66 2010/12/31 20:54:21 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -85,12 +85,12 @@ void	m88110_shutdown(void);
 cpuid_t	m88110_cpu_number(void);
 void	m88110_set_sapr(apr_t);
 void	m88110_set_uapr(apr_t);
-void	m88110_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
-void	m88410_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
-void	m88110_flush_cache(cpuid_t, paddr_t, psize_t);
-void	m88410_flush_cache(cpuid_t, paddr_t, psize_t);
-void	m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
-void	m88410_flush_inst_cache(cpuid_t, paddr_t, psize_t);
+void	m88110_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
+void	m88410_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
+void	m88110_cache_wbinv(cpuid_t, paddr_t, psize_t);
+void	m88410_cache_wbinv(cpuid_t, paddr_t, psize_t);
+void	m88110_icache_inv(cpuid_t, paddr_t, psize_t);
+void	m88410_icache_inv(cpuid_t, paddr_t, psize_t);
 void	m88110_dma_cachectl(paddr_t, psize_t, int);
 void	m88110_dma_cachectl_local(paddr_t, psize_t, int);
 void	m88410_dma_cachectl(paddr_t, psize_t, int);
@@ -110,9 +110,9 @@ struct cmmu_p cmmu88110 = {
 	m88110_cpu_number,
 	m88110_set_sapr,
 	m88110_set_uapr,
-	m88110_flush_tlb,
-	m88110_flush_cache,
-	m88110_flush_inst_cache,
+	m88110_tlb_inv,
+	m88110_cache_wbinv,
+	m88110_icache_inv,
 	m88110_dma_cachectl,
 #ifdef MULTIPROCESSOR
 	m88110_dma_cachectl_local,
@@ -132,9 +132,9 @@ struct cmmu_p cmmu88410 = {
 	m88110_cpu_number,
 	m88110_set_sapr,
 	m88110_set_uapr,
-	m88110_flush_tlb,
-	m88410_flush_cache,
-	m88410_flush_inst_cache,
+	m88110_tlb_inv,
+	m88410_cache_wbinv,
+	m88410_icache_inv,
 	m88410_dma_cachectl,
 #ifdef MULTIPROCESSOR
 	m88410_dma_cachectl_local,
@@ -378,9 +378,9 @@ m88410_initialize_cpu(cpuid_t cpu)
 			junk += *(uint32_t *)va;
 
 		/* to make sure the above loop isn't optimized away */
-		mc88110_sync_data_page(junk & PAGE_SIZE);
+		mc88110_wbinv_data_page(junk & PAGE_SIZE);
 	}
-	mc88410_flush();
+	mc88410_wb();
 	mc88410_inval();
 #endif
 	CMMU_UNLOCK;
@@ -443,7 +443,7 @@ m88110_set_uapr(apr_t ap)
  *	flush any tlb
  */
 void
-m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
+m88110_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 #ifdef MULTIPROCESSOR
@@ -520,7 +520,7 @@ m88110_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
  */
 
 void
-m88110_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
+m88110_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 
@@ -528,13 +528,13 @@ m88110_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
-	mc88110_flush_data();
+	mc88110_wb_data();
 
 	set_psr(psr);
 }
 
 void
-m88410_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
+m88410_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 #ifdef MULTIPROCESSOR
@@ -551,9 +551,9 @@ m88410_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 
 	mc88110_inval_inst();
 	/* flush all data to avoid errata invalidate */
-	mc88110_flush_data();
+	mc88110_wb_data();
 	CMMU_LOCK;
-	mc88410_flush();
+	mc88410_wb();
 	CMMU_UNLOCK;
 
 	set_psr(psr);
@@ -564,14 +564,14 @@ m88410_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
  */
 
 void
-m88110_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
+m88110_icache_inv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	/* atomic so no psr games */
 	mc88110_inval_inst();
 }
 
 void
-m88410_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
+m88410_icache_inv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 #ifdef MULTIPROCESSOR
@@ -588,7 +588,7 @@ m88410_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 
 	mc88110_inval_inst();
 	CMMU_LOCK;
-	mc88410_flush();
+	mc88410_wb();
 	CMMU_UNLOCK;
 
 	set_psr(psr);
@@ -602,12 +602,12 @@ void
 m88110_cmmu_sync_cache(paddr_t pa, psize_t size)
 {
 #ifdef ENABLE_88110_ERRATA_17
-	mc88110_flush_data_page(pa);
+	mc88110_wb_data_page(pa);
 #else
 	if (size <= MC88110_CACHE_LINE)
-		mc88110_flush_data_line(pa);
+		mc88110_wb_data_line(pa);
 	else
-		mc88110_flush_data_page(pa);
+		mc88110_wb_data_page(pa);
 #endif
 }
 
@@ -615,13 +615,13 @@ void
 m88110_cmmu_sync_inval_cache(paddr_t pa, psize_t size)
 {
 #ifdef ENABLE_88110_ERRATA_17
-	mc88110_flush_data_page(pa);
-	mc88110_sync_data_page(pa);
+	mc88110_wb_data_page(pa);
+	mc88110_wbinv_data_page(pa);
 #else
 	if (size <= MC88110_CACHE_LINE)
-		mc88110_sync_data_line(pa);
+		mc88110_wbinv_data_line(pa);
 	else
-		mc88110_sync_data_page(pa);
+		mc88110_wbinv_data_page(pa);
 #endif
 }
 
@@ -711,12 +711,12 @@ m88410_dma_cachectl_local(paddr_t pa, psize_t size, int op)
 	case DMA_CACHE_SYNC:
 #if 0
 		flusher = m88110_cmmu_sync_cache;
-		ext_flusher = mc88410_flush;
+		ext_flusher = mc88410_wb;
 #endif
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_sync_inval_cache;
-		ext_flusher = mc88410_sync;
+		ext_flusher = mc88410_wbinv;
 		break;
 	default:
 #ifdef ENABLE_88110_ERRATA_17
@@ -727,7 +727,7 @@ m88410_dma_cachectl_local(paddr_t pa, psize_t size, int op)
 #ifdef notyet
 		ext_flusher = mc88410_inval;
 #else
-		ext_flusher = mc88410_sync;
+		ext_flusher = mc88410_wbinv;
 #endif
 		break;
 	}
@@ -739,7 +739,7 @@ m88410_dma_cachectl_local(paddr_t pa, psize_t size, int op)
 		CMMU_LOCK;
 		while (size != 0) {
 			m88110_cmmu_sync_cache(pa, PAGE_SIZE);
-			mc88410_flush_page(pa);
+			mc88410_wb_page(pa);
 			pa += PAGE_SIZE;
 			size -= PAGE_SIZE;
 		}

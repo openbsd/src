@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.c,v 1.4 2009/02/27 05:17:53 miod Exp $	*/
+/*	$OpenBSD: m88410.c,v 1.5 2010/12/31 20:54:21 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -48,18 +48,18 @@
  */
 
 /*
- * Flush physical page number (specified in the low 20 bits of the
+ * Writeback physical page number (specified in the low 20 bits of the
  * address).
  */
-#define XCC_FLUSH_PAGE	0x01
+#define XCC_WB_PAGE	0x01
 /*
- * Flush the whole cache.
+ * Writeback the whole cache.
  */
-#define XCC_FLUSH_ALL	0x02
+#define XCC_WB_ALL	0x02
 /*
  * Invalidate the whole cache.
  */
-#define XCC_INVAL_ALL	0x03
+#define XCC_INV_ALL	0x03
 
 /*
  * Base address of the 88410 when mapped.
@@ -67,7 +67,7 @@
 #define XCC_ADDR	0xff800000
 
 void
-mc88410_flush_page(paddr_t physaddr)
+mc88410_wb_page(paddr_t physaddr)
 {
 	paddr_t xccaddr = XCC_ADDR | (physaddr >> PGSHIFT);
 	u_int psr;
@@ -93,7 +93,7 @@ mc88410_flush_page(paddr_t physaddr)
 	__asm__ __volatile__ (
 	    "or   r2, r0, %0\n\t"
 	    "or   r3, r0, r0\n\t"
-	    "st.d r2, %1, 0" : : "i" (XCC_FLUSH_PAGE), "r" (xccaddr) : "r2", "r3");
+	    "st.d r2, %1, 0" : : "i" (XCC_WB_PAGE), "r" (xccaddr) : "r2", "r3");
 
 	/* spin until the operation is complete */
 	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) != 0)
@@ -107,7 +107,7 @@ mc88410_flush_page(paddr_t physaddr)
 }
 
 void
-mc88410_flush(void)
+mc88410_wb(void)
 {
 	u_int16_t bs_gcsr, bs_romcr;
 
@@ -125,7 +125,7 @@ mc88410_flush(void)
 	__asm__ __volatile__ (
 	    "or   r2, r0, %0\n\t"
 	    "or   r3, r0, r0\n\t"
-	    "st.d r2, %1, 0" : : "i" (XCC_FLUSH_ALL), "r" (XCC_ADDR) : "r2", "r3");
+	    "st.d r2, %1, 0" : : "i" (XCC_WB_ALL), "r" (XCC_ADDR) : "r2", "r3");
 
 	/* spin until the operation is complete */
 	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) != 0)
@@ -136,7 +136,7 @@ mc88410_flush(void)
 }
 
 void
-mc88410_inval(void)
+mc88410_inv(void)
 {
 	u_int16_t bs_gcsr, bs_romcr;
 	u_int32_t dummy;
@@ -155,7 +155,7 @@ mc88410_inval(void)
 	__asm__ __volatile__ (
 	    "or   r2, r0, %0\n\t"
 	    "or   r3, r0, r0\n\t"
-	    "st.d r2, %1, 0" : : "i" (XCC_INVAL_ALL), "r" (XCC_ADDR) : "r2", "r3");
+	    "st.d r2, %1, 0" : : "i" (XCC_INV_ALL), "r" (XCC_ADDR) : "r2", "r3");
 
 	/*
 	 * The 88410 will not let the 88110 access it until the

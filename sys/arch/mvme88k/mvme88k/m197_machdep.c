@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.42 2010/06/22 17:42:37 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.43 2010/12/31 20:54:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -603,16 +603,16 @@ m197_ipi_handler(struct trapframe *eframe)
 		arg2 = ci->ci_ipi_arg2;
 
 		if (ipi & CI_IPI_TLB_FLUSH_KERNEL) {
-			cmmu_flush_tlb(ci->ci_cpuid, 1, 0, 0);
+			cmmu_tlb_inv(ci->ci_cpuid, 1, 0, 0);
 		}
 		else if (ipi & CI_IPI_TLB_FLUSH_USER) {
-			cmmu_flush_tlb(ci->ci_cpuid, 0, 0, 0);
+			cmmu_tlb_inv(ci->ci_cpuid, 0, 0, 0);
 		}
 		else if (ipi & CI_IPI_CACHE_FLUSH) {
-			cmmu_flush_cache(ci->ci_cpuid, arg1, arg2);
+			cmmu_cache_wbinv(ci->ci_cpuid, arg1, arg2);
 		}
 		else if (ipi & CI_IPI_ICACHE_FLUSH) {
-			cmmu_flush_inst_cache(ci->ci_cpuid, arg1, arg2);
+			cmmu_icache_inv(ci->ci_cpuid, arg1, arg2);
 		}
 		else if (ipi & CI_IPI_DMA_CACHECTL) {
 			dma_cachectl_local(arg1, arg2, DMA_CACHE_INV);

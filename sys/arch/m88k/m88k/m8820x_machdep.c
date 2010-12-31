@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.41 2010/12/27 19:18:37 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.42 2010/12/31 20:54:21 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -98,9 +98,9 @@ void	m8820x_cpu_configuration_print(int);
 void	m8820x_shutdown(void);
 void	m8820x_set_sapr(apr_t);
 void	m8820x_set_uapr(apr_t);
-void	m8820x_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
-void	m8820x_flush_cache(cpuid_t, paddr_t, psize_t);
-void	m8820x_flush_inst_cache(cpuid_t, paddr_t, psize_t);
+void	m8820x_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
+void	m8820x_cache_wbinv(cpuid_t, paddr_t, psize_t);
+void	m8820x_icache_inv(cpuid_t, paddr_t, psize_t);
 void	m8820x_dma_cachectl(paddr_t, psize_t, int);
 void	m8820x_dma_cachectl_local(paddr_t, psize_t, int);
 void	m8820x_initialize_cpu(cpuid_t);
@@ -114,9 +114,9 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cpu_number,
 	m8820x_set_sapr,
 	m8820x_set_uapr,
-	m8820x_flush_tlb,
-	m8820x_flush_cache,
-	m8820x_flush_inst_cache,
+	m8820x_tlb_inv,
+	m8820x_cache_wbinv,
+	m8820x_icache_inv,
 	m8820x_dma_cachectl,
 #ifdef MULTIPROCESSOR
 	m8820x_dma_cachectl_local,
@@ -546,7 +546,7 @@ m8820x_set_uapr(apr_t ap)
  *	flush any tlb
  */
 void
-m8820x_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
+m8820x_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 
@@ -606,7 +606,7 @@ m8820x_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
  *	flush both Instruction and Data caches
  */
 void
-m8820x_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
+m8820x_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 	psize_t count;
@@ -641,7 +641,7 @@ m8820x_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
  *	flush Instruction caches
  */
 void
-m8820x_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
+m8820x_icache_inv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 	psize_t count;
