@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.14 2009/11/02 20:28:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.15 2010/12/31 21:49:54 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>		/* for MIN() */
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
