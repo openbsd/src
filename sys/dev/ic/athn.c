@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.66 2010/12/31 17:17:14 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.67 2010/12/31 18:24:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -173,6 +173,9 @@ athn_attach(struct athn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	int error;
+
+	/* Read hardware revision. */
+	athn_get_chipid(sc);
 
 	if ((error = athn_reset_power_on(sc)) != 0) {
 		printf("%s: could not reset chip\n", sc->sc_dev.dv_xname);
@@ -602,7 +605,6 @@ athn_reset_power_on(struct athn_softc *sc)
 	AR_WRITE(sc, AR_RTC_FORCE_WAKE,
 	    AR_RTC_FORCE_WAKE_EN | AR_RTC_FORCE_WAKE_ON_INT);
 
-	/* XXX on first call, we do not know the chip id yet. */
 	if (!AR_SREV_9380_10_OR_LATER(sc)) {
 		/* Make sure no DMA is active by doing an AHB reset. */
 		AR_WRITE(sc, AR_RC, AR_RC_AHB);
@@ -626,10 +628,6 @@ athn_reset_power_on(struct athn_softc *sc)
 		DPRINTF(("RTC not waking up\n"));
 		return (ETIMEDOUT);
 	}
-
-	/* Read hardware revision. */
-	athn_get_chipid(sc);
-
 	return (athn_reset(sc, 0));
 }
 
