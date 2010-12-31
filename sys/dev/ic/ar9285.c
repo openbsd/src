@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.13 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.14 2010/12/31 17:17:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -73,8 +73,10 @@ const	struct ar_spur_chan *ar9285_get_spur_chans(struct athn_softc *, int);
 void	ar9285_init_from_rom(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9285_pa_calib(struct athn_softc *);
+void	ar9271_pa_calib(struct athn_softc *);
 int	ar9285_cl_cal(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
+void	ar9271_load_ani(struct athn_softc *);
 int	ar9285_init_calib(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9285_get_pdadcs(struct athn_softc *, struct ieee80211_channel *,
@@ -132,7 +134,12 @@ ar9285_setup(struct athn_softc *sc)
 	/* Select initialization values based on ROM. */
 	type = eep->baseEepHeader.txGainType;
 	DPRINTF(("Tx gain type=0x%x\n", type));
-	if ((AR_READ(sc, AR_AN_SYNTH9) & 0x7) == 0x1) {	/* XE rev. */
+	if (AR_SREV_9271(sc)) {
+		if (type == AR_EEP_TXGAIN_HIGH_POWER)
+			sc->tx_gain = &ar9271_tx_gain_high_power;
+		else
+			sc->tx_gain = &ar9271_tx_gain;
+	} else if ((AR_READ(sc, AR_AN_SYNTH9) & 0x7) == 0x1) {	/* XE rev. */
 		if (type == AR_EEP_TXGAIN_HIGH_POWER)
 			sc->tx_gain = &ar9285_2_0_tx_gain_high_power;
 		else
@@ -299,29 +306,45 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		db2[0] = modal->db1_01;
 		db2[1] = db2[2] = db2[3] = db2[4] = db2[0];
 	}
-	reg = AR_READ(sc, AR9285_AN_RF2G3);
-	reg = RW(reg, AR9285_AN_RF2G3_OB_0,  ob [0]);
-	reg = RW(reg, AR9285_AN_RF2G3_OB_1,  ob [1]);
-	reg = RW(reg, AR9285_AN_RF2G3_OB_2,  ob [2]);
-	reg = RW(reg, AR9285_AN_RF2G3_OB_3,  ob [3]);
-	reg = RW(reg, AR9285_AN_RF2G3_OB_4,  ob [4]);
-	reg = RW(reg, AR9285_AN_RF2G3_DB1_0, db1[0]);
-	reg = RW(reg, AR9285_AN_RF2G3_DB1_1, db1[1]);
-	reg = RW(reg, AR9285_AN_RF2G3_DB1_2, db1[2]);
-	AR_WRITE(sc, AR9285_AN_RF2G3, reg);
-	AR_WRITE_BARRIER(sc);
-	DELAY(100);
-	reg = AR_READ(sc, AR9285_AN_RF2G4);
-	reg = RW(reg, AR9285_AN_RF2G4_DB1_3, db1[3]);
-	reg = RW(reg, AR9285_AN_RF2G4_DB1_4, db1[4]);
-	reg = RW(reg, AR9285_AN_RF2G4_DB2_0, db2[0]);
-	reg = RW(reg, AR9285_AN_RF2G4_DB2_1, db2[1]);
-	reg = RW(reg, AR9285_AN_RF2G4_DB2_2, db2[2]);
-	reg = RW(reg, AR9285_AN_RF2G4_DB2_3, db2[3]);
-	reg = RW(reg, AR9285_AN_RF2G4_DB2_4, db2[4]);
-	AR_WRITE(sc, AR9285_AN_RF2G4, reg);
-	AR_WRITE_BARRIER(sc);
-	DELAY(100);
+	if (AR_SREV_9271(sc)) {
+		reg = AR_READ(sc, AR9285_AN_RF2G3);
+		reg = RW(reg, AR9271_AN_RF2G3_OB_CCK, ob [0]);
+		reg = RW(reg, AR9271_AN_RF2G3_OB_PSK, ob [1]);
+		reg = RW(reg, AR9271_AN_RF2G3_OB_QAM, ob [2]);
+		reg = RW(reg, AR9271_AN_RF2G3_DB1,    db1[0]);
+		AR_WRITE(sc, AR9285_AN_RF2G3, reg);
+		AR_WRITE_BARRIER(sc);
+		DELAY(100);
+		reg = AR_READ(sc, AR9285_AN_RF2G4);
+		reg = RW(reg, AR9271_AN_RF2G4_DB2,    db2[0]);
+		AR_WRITE(sc, AR9285_AN_RF2G4, reg);
+		AR_WRITE_BARRIER(sc);
+		DELAY(100);
+	} else {
+		reg = AR_READ(sc, AR9285_AN_RF2G3);
+		reg = RW(reg, AR9285_AN_RF2G3_OB_0,  ob [0]);
+		reg = RW(reg, AR9285_AN_RF2G3_OB_1,  ob [1]);
+		reg = RW(reg, AR9285_AN_RF2G3_OB_2,  ob [2]);
+		reg = RW(reg, AR9285_AN_RF2G3_OB_3,  ob [3]);
+		reg = RW(reg, AR9285_AN_RF2G3_OB_4,  ob [4]);
+		reg = RW(reg, AR9285_AN_RF2G3_DB1_0, db1[0]);
+		reg = RW(reg, AR9285_AN_RF2G3_DB1_1, db1[1]);
+		reg = RW(reg, AR9285_AN_RF2G3_DB1_2, db1[2]);
+		AR_WRITE(sc, AR9285_AN_RF2G3, reg);
+		AR_WRITE_BARRIER(sc);
+		DELAY(100);
+		reg = AR_READ(sc, AR9285_AN_RF2G4);
+		reg = RW(reg, AR9285_AN_RF2G4_DB1_3, db1[3]);
+		reg = RW(reg, AR9285_AN_RF2G4_DB1_4, db1[4]);
+		reg = RW(reg, AR9285_AN_RF2G4_DB2_0, db2[0]);
+		reg = RW(reg, AR9285_AN_RF2G4_DB2_1, db2[1]);
+		reg = RW(reg, AR9285_AN_RF2G4_DB2_2, db2[2]);
+		reg = RW(reg, AR9285_AN_RF2G4_DB2_3, db2[3]);
+		reg = RW(reg, AR9285_AN_RF2G4_DB2_4, db2[4]);
+		AR_WRITE(sc, AR9285_AN_RF2G4, reg);
+		AR_WRITE_BARRIER(sc);
+		DELAY(100);
+	}
 
 	reg = AR_READ(sc, AR_PHY_SETTLING);
 	reg = RW(reg, AR_PHY_SETTLING_SWITCH, modal->switchSettling);
@@ -431,7 +454,6 @@ ar9285_pa_calib(struct athn_softc *sc)
 	AR_CLRBITS(sc, AR9285_AN_RF2G6, AR9285_AN_RF2G6_OFFS_6_1);
 	/* Clear offset 0. */
 	AR_CLRBITS(sc, AR9285_AN_RF2G3, AR9285_AN_RF2G3_PDVCCOMP);
-
 	/* Set offsets 6-1. */
 	for (i = 6; i >= 1; i--) {
 		AR_SETBITS(sc, AR9285_AN_RF2G6, AR9285_AN_RF2G6_OFFS(i));
@@ -454,6 +476,8 @@ ar9285_pa_calib(struct athn_softc *sc)
 	else
 		AR_CLRBITS(sc, AR9285_AN_RF2G3, AR9285_AN_RF2G3_PDVCCOMP);
 
+	AR_WRITE_BARRIER(sc);
+
 	AR_SETBITS(sc, AR9285_AN_RF2G6, 1);
 	AR_CLRBITS(sc, AR_PHY(2), 1 << 27);
 
@@ -465,6 +489,91 @@ ar9285_pa_calib(struct athn_softc *sc)
 	reg = AR_READ(sc, AR9285_AN_RF2G6);
 	reg = RW(reg, AR9285_AN_RF2G6_CCOMP, ccomp_svg);
 	AR_WRITE(sc, AR9285_AN_RF2G6, reg);
+	AR_WRITE_BARRIER(sc);
+}
+
+void
+ar9271_pa_calib(struct athn_softc *sc)
+{
+	/* List of registers that need to be saved/restored. */
+	static const uint16_t regs[] = {
+		AR9285_AN_TOP3,
+		AR9285_AN_RXTXBB1,
+		AR9285_AN_RF2G1,
+		AR9285_AN_RF2G2,
+		AR9285_AN_TOP2,
+		AR9285_AN_RF2G8,
+		AR9285_AN_RF2G7
+	};
+	uint32_t svg[7], reg, ccomp_svg;
+	int i;
+
+	/* Save registers. */
+	for (i = 0; i < nitems(regs); i++)
+		svg[i] = AR_READ(sc, regs[i]);
+
+	AR_CLRBITS(sc, AR9285_AN_RF2G6, 1);
+	AR_SETBITS(sc, AR_PHY(2), 1 << 27);
+
+	AR_SETBITS(sc, AR9285_AN_TOP3, AR9285_AN_TOP3_PWDDAC);
+	AR_SETBITS(sc, AR9285_AN_RXTXBB1, AR9285_AN_RXTXBB1_PDRXTXBB1);
+	AR_SETBITS(sc, AR9285_AN_RXTXBB1, AR9285_AN_RXTXBB1_PDV2I);
+	AR_SETBITS(sc, AR9285_AN_RXTXBB1, AR9285_AN_RXTXBB1_PDDACIF);
+	AR_CLRBITS(sc, AR9285_AN_RF2G2, AR9285_AN_RF2G2_OFFCAL);
+	AR_CLRBITS(sc, AR9285_AN_RF2G7, AR9285_AN_RF2G7_PWDDB);
+	AR_CLRBITS(sc, AR9285_AN_RF2G1, AR9285_AN_RF2G1_ENPACAL);
+	/* Power down PA drivers. */
+	AR_CLRBITS(sc, AR9285_AN_RF2G1, AR9285_AN_RF2G1_PDPADRV1);
+	AR_CLRBITS(sc, AR9285_AN_RF2G1, AR9285_AN_RF2G1_PDPADRV2);
+	AR_CLRBITS(sc, AR9285_AN_RF2G1, AR9285_AN_RF2G1_PDPAOUT);
+
+	reg = AR_READ(sc, AR9285_AN_RF2G8);
+	reg = RW(reg, AR9285_AN_RF2G8_PADRVGN2TAB0, 7);
+	AR_WRITE(sc, AR9285_AN_RF2G8, reg);
+
+	reg = AR_READ(sc, AR9285_AN_RF2G7);
+	reg = RW(reg, AR9285_AN_RF2G7_PADRVGN2TAB0, 0);
+	AR_WRITE(sc, AR9285_AN_RF2G7, reg);
+
+	reg = AR_READ(sc, AR9285_AN_RF2G3);
+	/* Save compensation capacitor value. */
+	ccomp_svg = MS(reg, AR9271_AN_RF2G3_CCOMP);
+	/* Program compensation capacitor for dynamic PA. */
+	reg = RW(reg, AR9271_AN_RF2G3_CCOMP, 0xfff);
+	AR_WRITE(sc, AR9285_AN_RF2G3, reg);
+
+	AR_WRITE(sc, AR9285_AN_TOP2, AR9285_AN_TOP2_DEFAULT);
+	AR_WRITE_BARRIER(sc);
+	DELAY(30);
+
+	/* Clear offsets 6-0. */
+	AR_CLRBITS(sc, AR9285_AN_RF2G6, AR9271_AN_RF2G6_OFFS_6_0);
+	/* Set offsets 6-1. */
+	for (i = 6; i >= 1; i--) {
+		AR_SETBITS(sc, AR9285_AN_RF2G6, AR9285_AN_RF2G6_OFFS(i));
+		AR_WRITE_BARRIER(sc);
+		DELAY(1);
+		if (AR_READ(sc, AR9285_AN_RF2G9) & AR9285_AN_RXTXBB1_SPARE9) {
+			AR_SETBITS(sc, AR9285_AN_RF2G6,
+			    AR9271_AN_RF2G6_OFFS(i));
+		} else {
+			AR_CLRBITS(sc, AR9285_AN_RF2G6,
+			    AR9271_AN_RF2G6_OFFS(i));
+		}
+	}
+	AR_WRITE_BARRIER(sc);
+
+	AR_SETBITS(sc, AR9285_AN_RF2G6, 1);
+	AR_CLRBITS(sc, AR_PHY(2), 1 << 27);
+
+	/* Restore registers. */
+	for (i = 0; i < nitems(regs); i++)
+		AR_WRITE(sc, regs[i], svg[i]);
+
+	/* Restore compensation capacitor value. */
+	reg = AR_READ(sc, AR9285_AN_RF2G3);
+	reg = RW(reg, AR9271_AN_RF2G3_CCOMP, ccomp_svg);
+	AR_WRITE(sc, AR9285_AN_RF2G3, reg);
 	AR_WRITE_BARRIER(sc);
 }
 
@@ -516,6 +625,21 @@ ar9285_cl_cal(struct athn_softc *sc, struct ieee80211_channel *c,
 	AR_CLRBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_FLTR_CAL);
 	AR_WRITE_BARRIER(sc);
 	return (0);
+}
+
+void
+ar9271_load_ani(struct athn_softc *sc)
+{
+	/* Write ANI registers. */
+	AR_WRITE(sc, AR_PHY_DESIRED_SZ, 0x6d4000e2);
+	AR_WRITE(sc, AR_PHY_AGC_CTL1,   0x3139605e);
+	AR_WRITE(sc, AR_PHY_FIND_SIG,   0x7ec84d2e);
+	AR_WRITE(sc, AR_PHY_SFCORR_LOW, 0x06903881);
+	AR_WRITE(sc, AR_PHY_SFCORR,     0x5ac640d0);
+	AR_WRITE(sc, AR_PHY_CCK_DETECT, 0x803e68c8);
+	AR_WRITE(sc, AR_PHY_TIMING5,    0xd00a8007);
+	AR_WRITE(sc, AR_PHY_SFCORR_EXT, 0x05eea6d4);
+	AR_WRITE_BARRIER(sc);
 }
 
 int

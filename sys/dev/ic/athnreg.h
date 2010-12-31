@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.14 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.15 2010/12/31 17:17:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -116,6 +116,7 @@
 #define AR_RTC_REG_CONTROL0		0x7008
 #define AR_RTC_REG_CONTROL1		0x700c
 #define AR_RTC_PLL_CONTROL		0x7014
+#define AR_RTC_PLL_CONTROL2		0x703c
 #define AR_RTC_RESET			0x7040
 #define AR_RTC_STATUS 			0x7044
 #define AR_RTC_SLEEP_CLK		0x7048
@@ -775,6 +776,9 @@
 #define AR_SREV_REVISION_9285_10	0
 #define AR_SREV_REVISION_9285_11	1
 #define AR_SREV_REVISION_9285_12	2
+#define AR_SREV_VERSION_9271		0x140
+#define AR_SREV_REVISION_9271_10	0
+#define AR_SREV_REVISION_9271_11	1
 #define AR_SREV_VERSION_9287		0x180
 #define AR_SREV_REVISION_9287_10	0
 #define AR_SREV_REVISION_9287_11	1
@@ -783,6 +787,8 @@
 #define AR_SREV_VERSION_9380		0x1c0
 #define AR_SREV_REVISION_9380_10	0
 #define AR_SREV_REVISION_9380_20	2
+#define AR_SREV_VERSION_9485		0x240
+#define AR_SREV_REVISION_9485_10	0
 
 /* Bits for AR_AHB_MODE. */
 #define AR_AHB_EXACT_WR_EN			0x00000000
@@ -1354,6 +1360,9 @@
 	((sc)->mac_ver > AR_SREV_VERSION_9285 || \
 	 (AR_SREV_9285(sc) && (sc)->mac_rev >= AR_SREV_REVISION_9285_12))
 
+#define AR_SREV_9271(sc) \
+	((sc)->mac_ver == AR_SREV_VERSION_9271)
+
 #define AR_SREV_9287(sc) \
 	((sc)->mac_ver == AR_SREV_VERSION_9287)
 #define AR_SREV_9287_10_OR_LATER(sc) \
@@ -1387,6 +1396,9 @@
 #define AR_SREV_9380_20_OR_LATER(sc) \
 	((sc)->mac_ver > AR_SREV_VERSION_9380 || \
 	 (AR_SREV_9380(sc) && (sc)->mac_rev >= AR_SREV_REVISION_9380_20))
+
+#define AR_SREV_9485(sc) \
+	((sc)->mac_ver == AR_SREV_VERSION_9485)
 
 #define AR_SINGLE_CHIP(sc)	AR_SREV_9280_10_OR_LATER(sc)
 
@@ -1440,13 +1452,13 @@ static const uint32_t ar_nonpcie_serdes[] = {
  * Macros to access registers.
  */
 #define AR_READ(sc, reg)						\
-	sc->ops.read((sc), (reg))
+	(sc)->ops.read((sc), (reg))
 
 #define AR_WRITE(sc, reg, val)						\
-	sc->ops.write((sc), (reg), (val))
+	(sc)->ops.write((sc), (reg), (val))
 
 #define AR_WRITE_BARRIER(sc)						\
-	sc->ops.write_barrier((sc))
+	(sc)->ops.write_barrier((sc))
 
 #define AR_SETBITS(sc, reg, mask)					\
 	AR_WRITE(sc, reg, AR_READ(sc, reg) | (mask))

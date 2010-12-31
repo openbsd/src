@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.15 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.16 2010/12/31 17:17:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -817,7 +817,7 @@ ar5008_rx_process(struct athn_softc *sc)
 			ieee80211_michael_mic_failure(ic, 0);
 			/*
 			 * XXX Check that it is not a control frame
-			 * (invalid MIC failures on valid ctl frames.)
+			 * (invalid MIC failures on valid ctl frames).
 			 */
 		}
 		ifp->if_ierrors++;
@@ -1492,7 +1492,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 			ds->ds_ctl4 |= AR_TXC4_RTSCTS_QUAL01;
 			ds->ds_ctl5 |= AR_TXC5_RTSCTS_QUAL23;
 		}
-		/* Select protection rate (suboptimal but ok.) */
+		/* Select protection rate (suboptimal but ok). */
 		protridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
 		    ATHN_RIDX_OFDM6 : ATHN_RIDX_CCK2;
 		if (ds->ds_ctl0 & AR_TXC0_RTS_ENABLE) {
@@ -1515,7 +1515,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		ds->ds_ctl7 |= SM(AR_TXC7_RTSCTS_RATE, hwrate);
 	}
 
-	/* Finalize first Tx descriptor and fill others (if any.) */
+	/* Finalize first Tx descriptor and fill others (if any). */
 	ds->ds_ctl0 |= SM(AR_TXC0_FRAME_LEN, totlen);
 
 	for (i = 0; i < bf->bf_map->dm_nsegs; i++, ds++) {
@@ -1729,7 +1729,7 @@ ar5008_set_rxchains(struct athn_softc *sc)
 void
 ar5008_read_noisefloor(struct athn_softc *sc, int16_t *nf, int16_t *nf_ext)
 {
-/* Sign-extends 9-bit value (assumes upper bits are zeroes.) */
+/* Sign-extends 9-bit value (assumes upper bits are zeroes). */
 #define SIGN_EXT(v)	(((v) ^ 0x100) - 0x100)
 	uint32_t reg;
 	int i;
@@ -2149,7 +2149,7 @@ ar5008_set_viterbi_mask(struct athn_softc *sc, int bin)
 	for (cur = -100; cur >= -6100; cur -= 100)
 		m[-cur / 100] = abs(cur - bin) < 75;
 
-	/* Write viterbi mask (XXX needs to be reworked.) */
+	/* Write viterbi mask (XXX needs to be reworked). */
 	reg =
 	    m[46] << 30 | m[47] << 28 | m[48] << 26 | m[49] << 24 |
 	    m[50] << 22 | m[51] << 20 | m[52] << 18 | m[53] << 16 |
@@ -2221,6 +2221,7 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	struct athn_ops *ops = &sc->ops;
 	const struct athn_ini *ini = sc->ini;
 	const uint32_t *pvals;
+	uint32_t reg;
 	int i;
 
 	AR_WRITE(sc, AR_PHY(0), 0x00000007);
@@ -2312,13 +2313,15 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT);
 
 	/* Hardware workarounds for occasional Rx data corruption. */
-	if (AR_SREV_9287_10_OR_LATER(sc))
-		AR_CLRBITS(sc, AR_PCU_MISC_MODE2, AR_PCU_MISC_MODE2_HWWAR1);
-	else if (AR_SREV_9280_10_OR_LATER(sc))
-		AR_CLRBITS(sc, AR_PCU_MISC_MODE2, AR_PCU_MISC_MODE2_HWWAR1 |
-		    AR_PCU_MISC_MODE2_HWWAR2);
+	if (AR_SREV_9280_10_OR_LATER(sc)) {
+		reg = AR_READ(sc, AR_PCU_MISC_MODE2);
+		if (!AR_SREV_9271(sc))
+			reg &= ~AR_PCU_MISC_MODE2_HWWAR1;
+		if (AR_SREV_9287_10_OR_LATER(sc))
+			reg &= ~AR_PCU_MISC_MODE2_HWWAR2;
+		AR_WRITE(sc, AR_PCU_MISC_MODE2, reg);
 
-	if (AR_SREV_5416_20_OR_LATER(sc) && !AR_SREV_9280_10_OR_LATER(sc)) {
+	} else if (AR_SREV_5416_20_OR_LATER(sc)) {
 		/* Disable baseband clock gating. */
 		AR_WRITE(sc, AR_PHY(651), 0x11);
 
@@ -2397,7 +2400,7 @@ ar5008_get_pdadcs(struct athn_softc *sc, uint8_t fbin,
 			boundaries[i] = AR_MAX_RATE_POWER;
 
 		if (i == 0 && !AR_SREV_5416_20_OR_LATER(sc)) {
-			/* Fix the gain delta (AR5416 1.0 only.) */
+			/* Fix the gain delta (AR5416 1.0 only). */
 			delta = boundaries[0] - 23;
 			boundaries[0] = 23;
 		} else
@@ -2483,7 +2486,7 @@ ar5008_get_lg_tpow(struct athn_softc *sc, struct ieee80211_channel *c,
 	uint8_t fbin;
 	int i, lo, hi;
 
-	/* Find interval (lower and upper indices.) */
+	/* Find interval (lower and upper indices). */
 	fbin = athn_chan2fbin(c);
 	for (i = 0; i < nchans; i++) {
 		if (tgt[i].bChannel == AR_BCHAN_UNUSED ||
@@ -2515,7 +2518,7 @@ ar5008_get_ht_tpow(struct athn_softc *sc, struct ieee80211_channel *c,
 	uint8_t fbin;
 	int i, lo, hi;
 
-	/* Find interval (lower and upper indices.) */
+	/* Find interval (lower and upper indices). */
 	fbin = athn_chan2fbin(c);
 	for (i = 0; i < nchans; i++) {
 		if (tgt[i].bChannel == AR_BCHAN_UNUSED ||
