@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.118 2010/12/31 22:40:19 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.119 2010/12/31 22:45:18 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -663,6 +663,33 @@ struct timeout arc4_timeout;
 struct rc4_ctx arc4random_state;
 int arc4random_initialized;
 
+static void arc4_reinit(void *v);
+static void arc4_stir(void);
+static void arc4_reinit(void *v);
+static void arc4maybeinit(void);
+
+void
+randomattach(void)
+{
+	mtx_init(&rndlock, IPL_HIGH);
+
+	random_state.add_ptr = 0;
+	random_state.entropy_count = 0;
+	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
+	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
+	rnd_states[RND_SRC_TRUE].max_entropy = 1;
+
+	if (msgbufp && msgbufp->msg_magic == MSG_MAGIC)
+		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
+		    msgbufp->msg_bufs / sizeof(u_int32_t));
+
+	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
+	timeout_set(&arc4_timeout, arc4_reinit, NULL);
+	arc4_reinit(NULL);
+
+	rnd_attached = 1;
+}
+
 static void
 arc4_stir(void)
 {
@@ -724,30 +751,6 @@ arc4maybeinit(void)
 		/* 10 minutes, per dm@'s suggestion */
 		timeout_add_sec(&arc4_timeout, 10 * 60);
 	}
-}
-
-void
-randomattach(void)
-{
-	if (rnd_attached)
-		return;
-
-	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
-	timeout_set(&arc4_timeout, arc4_reinit, NULL);
-
-	random_state.add_ptr = 0;
-	random_state.entropy_count = 0;
-	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
-	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
-	rnd_states[RND_SRC_TRUE].max_entropy = 1;
-
-	mtx_init(&rndlock, IPL_HIGH);
-	arc4_reinit(NULL);
-
-	if (msgbufp && msgbufp->msg_magic == MSG_MAGIC)
-		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
-		    msgbufp->msg_bufs / sizeof(u_int32_t));
-	rnd_attached = 1;
 }
 
 /* Return one word of randomness from an RC4 generator */
