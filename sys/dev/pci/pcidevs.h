@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1581 2010/12/24 06:10:14 shadchin Exp 
+ *	OpenBSD: pcidevs,v 1.1582 2010/12/31 19:47:50 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2246,17 +2246,16 @@
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_1	0x0043		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_HB_1	0x0044		/* Core Host */
 #define	PCI_PRODUCT_INTEL_ARRANDALE_IGD	0x0046		/* Mobile HD graphics */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_1	0x0082		/* Centrino Advanced-N 6205a */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1	0x0083		/* WiFi Link 1000 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_2	0x0084		/* WiFi Link 1000 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_2	0x0085		/* Centrino Advanced-N 6205a */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1	0x0087		/* Centrino Advanced-N 6250 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2	0x0089		/* Centrino Advanced-N 6250 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_1X1_1	0x008a		/* Centrino Advanced-N 6205b */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_1X1_2	0x008b		/* Centrino Advanced-N 6205b */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_1	0x008f		/* Centrino Advanced-N 6205b */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_2	0x0090		/* Centrino Advanced-N 6205b */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_3	0x0091		/* Centrino Advanced-N 6205b */
+#define	PCI_PRODUCT_INTEL_WL_6005_1	0x0082		/* Centrino Advanced-N 6005 */
+#define	PCI_PRODUCT_INTEL_WL_1000_1	0x0083		/* WiFi Link 1000 */
+#define	PCI_PRODUCT_INTEL_WL_1000_2	0x0084		/* WiFi Link 1000 */
+#define	PCI_PRODUCT_INTEL_WL_6005_2	0x0085		/* Centrino Advanced-N 6205 */
+#define	PCI_PRODUCT_INTEL_WL_6050_1	0x0087		/* Centrino Advanced-N 6250 */
+#define	PCI_PRODUCT_INTEL_WL_6050_2	0x0089		/* Centrino Advanced-N 6250 */
+#define	PCI_PRODUCT_INTEL_WL_1030_1	0x008a		/* WiFi Link 1030 */
+#define	PCI_PRODUCT_INTEL_WL_1030_2	0x008b		/* WiFi Link 1030 */
+#define	PCI_PRODUCT_INTEL_WL_6030_1	0x0090		/* Centrino Advanced-N 6030 */
+#define	PCI_PRODUCT_INTEL_WL_6030_2	0x0091		/* Centrino Advanced-N 6030 */
 #define	PCI_PRODUCT_INTEL_80303	0x0309		/* 80303 IOP */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion */
 #define	PCI_PRODUCT_INTEL_IOXAPIC_A	0x0326		/* IOxAPIC */
@@ -2278,6 +2277,12 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI/Cache/DRAM */
 #define	PCI_PRODUCT_INTEL_GDT_RAID1	0x0600		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
+#define	PCI_PRODUCT_INTEL_WL_6150_1	0x0885		/* WiFi Link 6150 */
+#define	PCI_PRODUCT_INTEL_WL_6150_2	0x0886		/* WiFi Link 6150 */
+#define	PCI_PRODUCT_INTEL_WL_130_1	0x0896		/* WiFi Link 130 */
+#define	PCI_PRODUCT_INTEL_WL_130_2	0x0897		/* WiFi Link 130 */
+#define	PCI_PRODUCT_INTEL_WL_100_1	0x08ae		/* WiFi Link 100 */
+#define	PCI_PRODUCT_INTEL_WL_100_2	0x08af		/* WiFi Link 100 */
 #define	PCI_PRODUCT_INTEL_80960RP	0x0960		/* i960 RP PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
@@ -3133,20 +3138,20 @@
 #define	PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1	0x4223		/* PRO/Wireless 2915ABG */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2	0x4224		/* PRO/Wireless 2915ABG */
 #define	PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2	0x4227		/* PRO/Wireless 3945ABG */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_1	0x4229		/* Wireless WiFi Link 4965 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1	0x422b		/* Centrino Ultimate-N 6300 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1	0x422c		/* Centrino Advanced-N 6200 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_2	0x4230		/* Wireless WiFi Link 4965 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5100_1	0x4232		/* WiFi Link 5100 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5300_1	0x4235		/* WiFi Link 5300 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5300_2	0x4236		/* WiFi Link 5300 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5100_2	0x4237		/* WiFi Link 5100 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2	0x4238		/* Centrino Ultimate-N 6300 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2	0x4239		/* Centrino Advanced-N 6200 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5350_1	0x423a		/* WiFi Link 5350 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5350_2	0x423b		/* WiFi Link 5350 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5150_1	0x423c		/* WiFi Link 5150 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_5150_2	0x423d		/* WiFi Link 5150 */
+#define	PCI_PRODUCT_INTEL_WL_4965_1	0x4229		/* Wireless WiFi Link 4965 */
+#define	PCI_PRODUCT_INTEL_WL_6300_1	0x422b		/* Centrino Ultimate-N 6300 */
+#define	PCI_PRODUCT_INTEL_WL_6200_1	0x422c		/* Centrino Advanced-N 6200 */
+#define	PCI_PRODUCT_INTEL_WL_4965_2	0x4230		/* Wireless WiFi Link 4965 */
+#define	PCI_PRODUCT_INTEL_WL_5100_1	0x4232		/* WiFi Link 5100 */
+#define	PCI_PRODUCT_INTEL_WL_5300_1	0x4235		/* WiFi Link 5300 */
+#define	PCI_PRODUCT_INTEL_WL_5300_2	0x4236		/* WiFi Link 5300 */
+#define	PCI_PRODUCT_INTEL_WL_5100_2	0x4237		/* WiFi Link 5100 */
+#define	PCI_PRODUCT_INTEL_WL_6300_2	0x4238		/* Centrino Ultimate-N 6300 */
+#define	PCI_PRODUCT_INTEL_WL_6200_2	0x4239		/* Centrino Advanced-N 6200 */
+#define	PCI_PRODUCT_INTEL_WL_5350_1	0x423a		/* WiFi Link 5350 */
+#define	PCI_PRODUCT_INTEL_WL_5350_2	0x423b		/* WiFi Link 5350 */
+#define	PCI_PRODUCT_INTEL_WL_5150_1	0x423c		/* WiFi Link 5150 */
+#define	PCI_PRODUCT_INTEL_WL_5150_2	0x423d		/* WiFi Link 5150 */
 #define	PCI_PRODUCT_INTEL_TURBO_MEMORY	0x444e		/* Turbo Memory */
 #define	PCI_PRODUCT_INTEL_EP80579_HB	0x5020		/* EP80579 Host */
 #define	PCI_PRODUCT_INTEL_EP80579_MEM	0x5021		/* EP80579 Memory */
