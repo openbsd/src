@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.14 2010/11/07 18:00:42 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.15 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -371,6 +371,7 @@ ar5008_gpio_write(struct athn_softc *sc, int pin, int set)
 	else
 		reg &= ~(1 << pin);
 	AR_WRITE(sc, AR_GPIO_IN_OUT, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -382,6 +383,7 @@ ar5008_gpio_config_input(struct athn_softc *sc, int pin)
 	reg &= ~(AR_GPIO_OE_OUT_DRV_M << (pin * 2));
 	reg |= AR_GPIO_OE_OUT_DRV_NO << (pin * 2);
 	AR_WRITE(sc, AR_GPIO_OE_OUT, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -404,6 +406,7 @@ ar5008_gpio_config_output(struct athn_softc *sc, int pin, int type)
 	reg &= ~(AR_GPIO_OE_OUT_DRV_M << (pin * 2));
 	reg |= AR_GPIO_OE_OUT_DRV_ALL << (pin * 2);
 	AR_WRITE(sc, AR_GPIO_OE_OUT, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -422,6 +425,7 @@ ar5008_rfsilent_init(struct athn_softc *sc)
 		AR_SETBITS(sc, AR_GPIO_INTR_POL,
 		    AR_GPIO_INTR_POL_PIN(sc->rfsilent_pin));
 	}
+	AR_WRITE_BARRIER(sc);
 }
 
 int
@@ -674,6 +678,7 @@ ar5008_rx_enable(struct athn_softc *sc)
 	/* Enable Rx. */
 	AR_WRITE(sc, AR_RXDP, SIMPLEQ_FIRST(&rxq->head)->bf_daddr);
 	AR_WRITE(sc, AR_CR, AR_CR_RXE);
+	AR_WRITE_BARRIER(sc);
 }
 
 #if NBPFILTER > 0
@@ -784,6 +789,7 @@ ar5008_rx_process(struct athn_softc *sc)
 			    ds->ds_status8));
 			/* HW will not "move" RXDP in this case, so do it. */
 			AR_WRITE(sc, AR_RXDP, nbf->bf_daddr);
+			AR_WRITE_BARRIER(sc);
 			ifp->if_ierrors++;
 			goto skip;
 		}
@@ -911,6 +917,7 @@ ar5008_rx_process(struct athn_softc *sc)
 
 	/* Re-enable Rx. */
 	AR_WRITE(sc, AR_CR, AR_CR_RXE);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -1101,6 +1108,7 @@ ar5008_swba_intr(struct athn_softc *sc)
 
 	/* Kick Tx. */
 	AR_WRITE(sc, AR_Q_TXE, 1 << ATHN_QID_BEACON);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 #endif
@@ -1152,8 +1160,8 @@ ar5008_intr(struct athn_softc *sc)
 		    AR_ISR_TXERR | AR_ISR_TXEOL))
 			ar5008_tx_intr(sc);
 
+		intr5 = AR_READ(sc, AR_ISR_S5_S);
 		if (intr & AR_ISR_GENTMR) {
-			intr5 = AR_READ(sc, AR_ISR_S5_S);
 			if (intr5 & AR_ISR_GENTMR) {
 				DPRINTF(("GENTMR trigger=%d thresh=%d\n",
 				    MS(intr5, AR_ISR_S5_GENTIMER_TRIG),
@@ -1161,7 +1169,6 @@ ar5008_intr(struct athn_softc *sc)
 			}
 		}
 
-		intr5 = AR_READ(sc, AR_ISR_S5_S);
 		if (intr5 & AR_ISR_S5_TIM_TIMER)
 			/* TBD */;
 	}
@@ -1542,6 +1549,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	/* Kick Tx. */
 	AR_WRITE(sc, AR_Q_TXE, 1 << qid);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -1560,6 +1568,7 @@ ar5008_set_rf_mode(struct athn_softc *sc, struct ieee80211_channel *c)
 		reg |= AR_PHY_MODE_DYNAMIC | AR_PHY_MODE_DYN_CCK_DISABLE;
 	}
 	AR_WRITE(sc, AR_PHY_MODE, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 static __inline uint32_t
@@ -1599,6 +1608,7 @@ ar5008_rf_bus_release(struct athn_softc *sc)
 
 	/* Release the RF Bus grant. */
 	AR_WRITE(sc, AR_PHY_RFBUS_REQ, 0);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1629,6 +1639,7 @@ ar5008_set_phy(struct athn_softc *sc, struct ieee80211_channel *c,
 	AR_WRITE(sc, AR_GTXTO, SM(AR_GTXTO_TIMEOUT_LIMIT, 25));
 	/* Set carrier sense timeout. */
 	AR_WRITE(sc, AR_CST, SM(AR_CST_TIMEOUT_LIMIT, 15));
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1656,6 +1667,7 @@ ar5008_set_delta_slope(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg = RW(reg, AR_PHY_HALFGI_DSC_EXP, exp);
 	reg = RW(reg, AR_PHY_HALFGI_DSC_MAN, man);
 	AR_WRITE(sc, AR_PHY_HALFGI, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1663,6 +1675,7 @@ ar5008_enable_antenna_diversity(struct athn_softc *sc)
 {
 	AR_SETBITS(sc, AR_PHY_CCK_DETECT,
 	    AR_PHY_CCK_DETECT_BB_ENABLE_ANT_FAST_DIV);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1673,6 +1686,7 @@ ar5008_init_baseband(struct athn_softc *sc)
 	synth_delay = ar5008_synth_delay(sc);
 	/* Activate the PHY (includes baseband activate and synthesizer on). */
 	AR_WRITE(sc, AR_PHY_ACTIVE, AR_PHY_ACTIVE_EN);
+	AR_WRITE_BARRIER(sc);
 	DELAY(AR_BASE_PHY_ACTIVE_DELAY + synth_delay);
 }
 
@@ -1680,6 +1694,7 @@ void
 ar5008_disable_phy(struct athn_softc *sc)
 {
 	AR_WRITE(sc, AR_PHY_ACTIVE, AR_PHY_ACTIVE_DIS);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1698,6 +1713,7 @@ ar5008_init_chains(struct athn_softc *sc)
 		AR_WRITE(sc, AR_PHY_CAL_CHAINMASK, sc->rxchainmask);
 	}
 	AR_WRITE(sc, AR_SELFGEN_MASK, sc->txchainmask);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1706,6 +1722,7 @@ ar5008_set_rxchains(struct athn_softc *sc)
 	if (sc->rxchainmask == 0x3 || sc->rxchainmask == 0x5) {
 		AR_WRITE(sc, AR_PHY_RX_CHAINMASK,  sc->rxchainmask);
 		AR_WRITE(sc, AR_PHY_CAL_CHAINMASK, sc->rxchainmask);
+		AR_WRITE_BARRIER(sc);
 	}
 }
 
@@ -1750,6 +1767,7 @@ ar5008_write_noisefloor(struct athn_softc *sc, int16_t *nf, int16_t *nf_ext)
 		reg = RW(reg, AR_PHY_EXT_MAXCCA_PWR, nf_ext[i]);
 		AR_WRITE(sc, AR_PHY_EXT_CCA(i), reg);
 	}
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1814,12 +1832,14 @@ ar5008_noisefloor_calib(struct athn_softc *sc)
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_ENABLE_NF);
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NO_UPDATE_NF);
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NF);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
 ar5008_do_noisefloor_calib(struct athn_softc *sc)
 {
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NF);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1843,6 +1863,7 @@ ar5008_do_calib(struct athn_softc *sc)
 
 	DPRINTF(("starting calibration mode=0x%x\n", mode));
 	AR_SETBITS(sc, AR_PHY_TIMING_CTRL4_0, AR_PHY_TIMING_CTRL4_DO_CAL);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1924,6 +1945,7 @@ ar5008_calib_iq(struct athn_softc *sc)
 	/* Apply new settings. */
 	AR_SETBITS(sc, AR_PHY_TIMING_CTRL4_0,
 	    AR_PHY_TIMING_CTRL4_IQCORR_ENABLE);
+	AR_WRITE_BARRIER(sc);
 
 	/* IQ calibration done. */
 	sc->cur_calib_mask &= ~ATHN_CAL_IQ;
@@ -1974,6 +1996,7 @@ ar5008_calib_adc_gain(struct athn_softc *sc)
 	/* Apply new settings. */
 	AR_SETBITS(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(0),
 	    AR_PHY_NEW_ADC_GAIN_CORR_ENABLE);
+	AR_WRITE_BARRIER(sc);
 
 	/* ADC gain calibration done. */
 	sc->cur_calib_mask &= ~ATHN_CAL_ADC_GAIN;
@@ -2028,6 +2051,7 @@ ar5008_calib_adc_dc_off(struct athn_softc *sc)
 	/* Apply new settings. */
 	AR_SETBITS(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(0),
 	    AR_PHY_NEW_ADC_DC_OFFSET_CORR_ENABLE);
+	AR_WRITE_BARRIER(sc);
 
 	/* ADC DC offset calibration done. */
 	sc->cur_calib_mask &= ~ATHN_CAL_ADC_DC;
@@ -2084,6 +2108,7 @@ ar5008_write_txpower(struct athn_softc *sc, int16_t power[ATHN_POWER_COUNT])
 	    (power[ATHN_POWER_OFDM_DUP] & 0x3f) <<  8 |
 	    (power[ATHN_POWER_CCK_DUP ] & 0x3f));
 #endif
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2186,6 +2211,7 @@ ar5008_set_viterbi_mask(struct athn_softc *sc, int bin)
 	    p[49] <<  6 | p[48] <<  4 | p[47] <<  2 | p[46] <<  0;
 	AR_WRITE(sc, AR_PHY_BIN_MASK2_4, reg);
 	AR_WRITE(sc, AR_PHY_VIT_MASK2_P_61_46, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2229,11 +2255,14 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 		    (sc->flags & ATHN_FLAG_AN_TOP2_FIXUP))
 			val &= ~AR_AN_TOP2_PWDCLKIND;
 		AR_WRITE(sc, ini->regs[i], val);
-		if (AR_IS_ANALOG_REG(ini->regs[i]))
+		if (AR_IS_ANALOG_REG(ini->regs[i])) {
+			AR_WRITE_BARRIER(sc);
 			DELAY(100);
+		}
 		if ((i & 0x1f) == 0)
 			DELAY(1);
 	}
+	AR_WRITE_BARRIER(sc);
 
 	if (sc->rx_gain != NULL)
 		ar9280_reset_rx_gain(sc, c);
@@ -2244,8 +2273,10 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	DPRINTFN(4, ("writing common init vals\n"));
 	for (i = 0; i < ini->ncmregs; i++) {
 		AR_WRITE(sc, ini->cmregs[i], ini->cmvals[i]);
-		if (AR_IS_ANALOG_REG(ini->cmregs[i]))
+		if (AR_IS_ANALOG_REG(ini->cmregs[i])) {
+			AR_WRITE_BARRIER(sc);
 			DELAY(100);
+		}
 		if ((i & 0x1f) == 0)
 			DELAY(1);
 	}
@@ -2265,8 +2296,10 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 		DPRINTFN(4, ("writing fast pll clock init vals\n"));
 		for (i = 0; i < ini->nfastregs; i++) {
 			AR_WRITE(sc, ini->fastregs[i], pvals[i]);
-			if (AR_IS_ANALOG_REG(ini->fastregs[i]))
+			if (AR_IS_ANALOG_REG(ini->fastregs[i])) {
+				AR_WRITE_BARRIER(sc);
 				DELAY(100);
+			}
 			if ((i & 0x1f) == 0)
 				DELAY(1);
 		}
@@ -2295,6 +2328,7 @@ ar5008_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 			    AR_PHY_RIFS_INIT_DELAY_M);
 		}
 	}
+	AR_WRITE_BARRIER(sc);
 
 	ar5008_set_phy(sc, c, extc);
 	ar5008_init_chains(sc);
@@ -2526,6 +2560,8 @@ ar5008_set_noise_immunity_level(struct athn_softc *sc, int level)
 	reg = AR_READ(sc, AR_PHY_FIND_SIG);
 	reg = RW(reg, AR_PHY_FIND_SIG_FIRPWR, high ? -80 : -78);
 	AR_WRITE(sc, AR_PHY_FIND_SIG, reg);
+
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2554,6 +2590,7 @@ ar5008_enable_ofdm_weak_signal(struct athn_softc *sc)
 
 	AR_SETBITS(sc, AR_PHY_SFCORR_LOW,
 	    AR_PHY_SFCORR_LOW_USE_SELF_CORR_LOW);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2582,6 +2619,7 @@ ar5008_disable_ofdm_weak_signal(struct athn_softc *sc)
 
 	AR_CLRBITS(sc, AR_PHY_SFCORR_LOW,
 	    AR_PHY_SFCORR_LOW_USE_SELF_CORR_LOW);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2592,6 +2630,7 @@ ar5008_set_cck_weak_signal(struct athn_softc *sc, int high)
 	reg = AR_READ(sc, AR_PHY_CCK_DETECT);
 	reg = RW(reg, AR_PHY_CCK_DETECT_WEAK_SIG_THR_CCK, high ? 6 : 8);
 	AR_WRITE(sc, AR_PHY_CCK_DETECT, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2602,6 +2641,7 @@ ar5008_set_firstep_level(struct athn_softc *sc, int level)
 	reg = AR_READ(sc, AR_PHY_FIND_SIG);
 	reg = RW(reg, AR_PHY_FIND_SIG_FIRSTEP, level * 4);
 	AR_WRITE(sc, AR_PHY_FIND_SIG, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2612,4 +2652,5 @@ ar5008_set_spur_immunity_level(struct athn_softc *sc, int level)
 	reg = AR_READ(sc, AR_PHY_TIMING5);
 	reg = RW(reg, AR_PHY_TIMING5_CYCPWR_THR1, (level + 1) * 2);
 	AR_WRITE(sc, AR_PHY_TIMING5, reg);
+	AR_WRITE_BARRIER(sc);
 }

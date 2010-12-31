@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.13 2010/06/21 19:54:28 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.14 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1440,10 +1440,13 @@ static const uint32_t ar_nonpcie_serdes[] = {
  * Macros to access registers.
  */
 #define AR_READ(sc, reg)						\
-	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
+	sc->ops.read((sc), (reg))
 
 #define AR_WRITE(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+	sc->ops.write((sc), (reg), (val))
+
+#define AR_WRITE_BARRIER(sc)						\
+	sc->ops.write_barrier((sc))
 
 #define AR_SETBITS(sc, reg, mask)					\
 	AR_WRITE(sc, reg, AR_READ(sc, reg) | (mask))

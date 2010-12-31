@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.13 2010/09/03 15:40:08 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.14 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -231,8 +231,10 @@ ar9280_set_synth(struct athn_softc *sc, struct ieee80211_channel *c,
 			AR_WRITE(sc, AR_AN_SYNTH9, reg);
 		}
 	}
+	AR_WRITE_BARRIER(sc);
 	DPRINTFN(4, ("AR9280_PHY_SYNTH_CONTROL=0x%08x\n", phy));
 	AR_WRITE(sc, AR9280_PHY_SYNTH_CONTROL, phy);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -295,24 +297,28 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		reg = RW(reg, AR_AN_RF2G1_CH0_OB, modal->ob);
 		reg = RW(reg, AR_AN_RF2G1_CH0_DB, modal->db);
 		AR_WRITE(sc, AR_AN_RF2G1_CH0, reg);
+		AR_WRITE_BARRIER(sc);
 		DELAY(100);
 
 		reg = AR_READ(sc, AR_AN_RF2G1_CH1);
 		reg = RW(reg, AR_AN_RF2G1_CH1_OB, modal->ob_ch1);
 		reg = RW(reg, AR_AN_RF2G1_CH1_DB, modal->db_ch1);
 		AR_WRITE(sc, AR_AN_RF2G1_CH1, reg);
+		AR_WRITE_BARRIER(sc);
 		DELAY(100);
 	} else {
 		reg = AR_READ(sc, AR_AN_RF5G1_CH0);
 		reg = RW(reg, AR_AN_RF5G1_CH0_OB5, modal->ob);
 		reg = RW(reg, AR_AN_RF5G1_CH0_DB5, modal->db);
 		AR_WRITE(sc, AR_AN_RF5G1_CH0, reg);
+		AR_WRITE_BARRIER(sc);
 		DELAY(100);
 
 		reg = AR_READ(sc, AR_AN_RF5G1_CH1);
 		reg = RW(reg, AR_AN_RF5G1_CH1_OB5, modal->ob_ch1);
 		reg = RW(reg, AR_AN_RF5G1_CH1_DB5, modal->db_ch1);
 		AR_WRITE(sc, AR_AN_RF5G1_CH1, reg);
+		AR_WRITE_BARRIER(sc);
 		DELAY(100);
 	}
 	reg = AR_READ(sc, AR_AN_TOP2);
@@ -322,6 +328,7 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	else
 		reg &= ~AR_AN_TOP2_LOCALBIAS;
 	AR_WRITE(sc, AR_AN_TOP2, reg);
+	AR_WRITE_BARRIER(sc);
 	DELAY(100);
 
 	reg = AR_READ(sc, AR_PHY_XPA_CFG);
@@ -388,6 +395,7 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		else
 			reg &= ~AR_AN_TOP1_DACLPMODE;
 		AR_WRITE(sc, AR_AN_TOP1, reg);
+		AR_WRITE_BARRIER(sc);
 		DELAY(100);
 
 		reg = AR_READ(sc, AR_PHY_FRAME_CTL);
@@ -400,6 +408,7 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		    eep->baseEepHeader.desiredScaleCCK);
 		AR_WRITE(sc, AR_PHY_TX_PWRCTRL9, reg);
 	}
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -523,6 +532,7 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	AR_WRITE(sc, AR_PHY_SFCORR_EXT,
 	    SM(AR_PHY_SFCORR_SPUR_SUBCHNL_SD, spur_subchannel_sd));
+	AR_WRITE_BARRIER(sc);
 
 	bin = spur * 320;
 	ar5008_set_viterbi_mask(sc, bin);
@@ -609,4 +619,5 @@ ar9280_olpc_temp_compensation(struct athn_softc *sc)
 		reg = RW(reg, AR_PHY_TX_GAIN, txgain);
 		AR_WRITE(sc, AR_PHY_TX_GAIN_TBL(i), reg);
 	}
+	AR_WRITE_BARRIER(sc);
 }

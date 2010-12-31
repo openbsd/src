@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.12 2010/08/12 16:34:53 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.13 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -309,6 +309,7 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg = RW(reg, AR9285_AN_RF2G3_DB1_1, db1[1]);
 	reg = RW(reg, AR9285_AN_RF2G3_DB1_2, db1[2]);
 	AR_WRITE(sc, AR9285_AN_RF2G3, reg);
+	AR_WRITE_BARRIER(sc);
 	DELAY(100);
 	reg = AR_READ(sc, AR9285_AN_RF2G4);
 	reg = RW(reg, AR9285_AN_RF2G4_DB1_3, db1[3]);
@@ -319,6 +320,7 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg = RW(reg, AR9285_AN_RF2G4_DB2_3, db2[3]);
 	reg = RW(reg, AR9285_AN_RF2G4_DB2_4, db2[4]);
 	AR_WRITE(sc, AR9285_AN_RF2G4, reg);
+	AR_WRITE_BARRIER(sc);
 	DELAY(100);
 
 	reg = AR_READ(sc, AR_PHY_SETTLING);
@@ -362,6 +364,7 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		AR_WRITE(sc, AR_PHY_SETTLING, reg);
 	}
 #endif
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -421,6 +424,7 @@ ar9285_pa_calib(struct athn_softc *sc)
 	AR_WRITE(sc, AR9285_AN_RF2G6, reg);
 
 	AR_WRITE(sc, AR9285_AN_TOP2, AR9285_AN_TOP2_DEFAULT);
+	AR_WRITE_BARRIER(sc);
 	DELAY(30);
 
 	/* Clear offsets 6-1. */
@@ -431,6 +435,7 @@ ar9285_pa_calib(struct athn_softc *sc)
 	/* Set offsets 6-1. */
 	for (i = 6; i >= 1; i--) {
 		AR_SETBITS(sc, AR9285_AN_RF2G6, AR9285_AN_RF2G6_OFFS(i));
+		AR_WRITE_BARRIER(sc);
 		DELAY(1);
 		if (AR_READ(sc, AR9285_AN_RF2G9) & AR9285_AN_RXTXBB1_SPARE9) {
 			AR_SETBITS(sc, AR9285_AN_RF2G6,
@@ -442,6 +447,7 @@ ar9285_pa_calib(struct athn_softc *sc)
 	}
 	/* Set offset 0. */
 	AR_SETBITS(sc, AR9285_AN_RF2G3, AR9285_AN_RF2G3_PDVCCOMP);
+	AR_WRITE_BARRIER(sc);
 	DELAY(1);
 	if (AR_READ(sc, AR9285_AN_RF2G9) & AR9285_AN_RXTXBB1_SPARE9)
 		AR_SETBITS(sc, AR9285_AN_RF2G3, AR9285_AN_RF2G3_PDVCCOMP);
@@ -459,6 +465,7 @@ ar9285_pa_calib(struct athn_softc *sc)
 	reg = AR_READ(sc, AR9285_AN_RF2G6);
 	reg = RW(reg, AR9285_AN_RF2G6_CCOMP, ccomp_svg);
 	AR_WRITE(sc, AR9285_AN_RF2G6, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 /*
@@ -507,6 +514,7 @@ ar9285_cl_cal(struct athn_softc *sc, struct ieee80211_channel *c,
 	AR_SETBITS(sc, AR_PHY_ADC_CTL, AR_PHY_ADC_CTL_OFF_PWDADC);
 	AR_CLRBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_CL_CAL_ENABLE);
 	AR_CLRBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_FLTR_CAL);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -553,8 +561,10 @@ ar9285_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 	else
 		reg = RW(reg, AR9285_AN_RF2G5_IC50TX, 0x4);
 	AR_WRITE(sc, AR9285_AN_RF2G5, reg);
+	AR_WRITE_BARRIER(sc);
 	error = ar9285_cl_cal(sc, c, extc);
 	AR_WRITE(sc, AR9285_AN_RF2G5, rf2g5_svg);
+	AR_WRITE_BARRIER(sc);
 	return (error);
 }
 
@@ -639,6 +649,7 @@ ar9285_set_power_calib(struct athn_softc *sc, struct ieee80211_channel *c)
 		    pdadcs[i + 2] << 16 |
 		    pdadcs[i + 3] << 24);
 	}
+	AR_WRITE_BARRIER(sc);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.63 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: athn.c,v 1.64 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -482,6 +482,7 @@ athn_rx_start(struct athn_softc *sc)
 
 	/* Start PCU Rx. */
 	AR_CLRBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -502,6 +503,7 @@ athn_set_rxfilter(struct athn_softc *sc, uint32_t rfilt)
 	AR_WRITE(sc, AR_PHY_ERR, 0);
 	AR_CLRBITS(sc, AR_RXCFG, AR_RXCFG_ZLFDMA);
 #endif
+	AR_WRITE_BARRIER(sc);
 }
 
 int
@@ -595,6 +597,7 @@ athn_reset_power_on(struct athn_softc *sc)
 	}
 	/* RTC reset and clear. */
 	AR_WRITE(sc, AR_RTC_RESET, 0);
+	AR_WRITE_BARRIER(sc);
 	DELAY(2);
 	if (!AR_SREV_9380_10_OR_LATER(sc))
 		AR_WRITE(sc, AR_RC, 0);
@@ -637,6 +640,7 @@ athn_reset(struct athn_softc *sc, int cold)
 
 	AR_WRITE(sc, AR_RTC_RC, AR_RTC_RC_MAC_WARM |
 	    (cold ? AR_RTC_RC_MAC_COLD : 0));
+	AR_WRITE_BARRIER(sc);
 	DELAY(50);
 	AR_WRITE(sc, AR_RTC_RC, 0);
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -650,6 +654,7 @@ athn_reset(struct athn_softc *sc, int cold)
 		return (ETIMEDOUT);
 	}
 	AR_WRITE(sc, AR_RC, 0);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -667,6 +672,7 @@ athn_set_power_awake(struct athn_softc *sc)
 			athn_init_pll(sc, NULL);
 	}
 	AR_SETBITS(sc, AR_RTC_FORCE_WAKE, AR_RTC_FORCE_WAKE_EN);
+	AR_WRITE_BARRIER(sc);
 	DELAY(50);	/* Give chip the chance to awake. */
 
 	/* Poll until RTC is ON. */
@@ -683,6 +689,7 @@ athn_set_power_awake(struct athn_softc *sc)
 	}
 
 	AR_CLRBITS(sc, AR_STA_ID1, AR_STA_ID1_PWR_SAV);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -700,6 +707,7 @@ athn_set_power_sleep(struct athn_softc *sc)
 	 */
 	if (!AR_SREV_5416(sc))
 		AR_CLRBITS(sc, AR_RTC_RESET, AR_RTC_RESET_EN);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -736,8 +744,10 @@ athn_init_pll(struct athn_softc *sc, const struct ieee80211_channel *c)
 	}
 	DPRINTFN(5, ("AR_RTC_PLL_CONTROL=0x%08x\n", pll));
 	AR_WRITE(sc, AR_RTC_PLL_CONTROL, pll);
+	AR_WRITE_BARRIER(sc);
 	DELAY(100);
 	AR_WRITE(sc, AR_RTC_SLEEP_CLK, AR_RTC_FORCE_DERIVED_CLK);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -749,6 +759,7 @@ athn_write_serdes(struct athn_softc *sc, const uint32_t val[9])
 	for (i = 0; i < 288 / 32; i++)
 		AR_WRITE(sc, AR_PCIE_SERDES, val[i]);
 	AR_WRITE(sc, AR_PCIE_SERDES2, 0);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -766,6 +777,7 @@ athn_config_pcie(struct athn_softc *sc)
 #else
 	AR_WRITE(sc, AR_WA, ATHN_PCIE_WAEN);
 #endif
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -909,6 +921,8 @@ athn_reset_key(struct athn_softc *sc, int entry)
 
 	AR_WRITE(sc, AR_KEYTABLE_MAC0(entry), 0);
 	AR_WRITE(sc, AR_KEYTABLE_MAC1(entry), 0);
+
+	AR_WRITE_BARRIER(sc);
 }
 
 int
@@ -987,6 +1001,7 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		lo = hi = 0;
 	AR_WRITE(sc, AR_KEYTABLE_MAC0(entry), lo);
 	AR_WRITE(sc, AR_KEYTABLE_MAC1(entry), hi | AR_KEYTABLE_VALID);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -1044,6 +1059,7 @@ athn_btcoex_init(struct athn_softc *sc)
 		reg = RW(reg, AR_GPIO_INPUT_MUX1_BT_ACTIVE,
 		    AR_GPIO_BTACTIVE_PIN);
 		AR_WRITE(sc, AR_GPIO_INPUT_MUX1, reg);
+		AR_WRITE_BARRIER(sc);
 
 		ops->gpio_config_input(sc, AR_GPIO_BTACTIVE_PIN);
 	} else {	/* 3-wire. */
@@ -1057,6 +1073,7 @@ athn_btcoex_init(struct athn_softc *sc)
 		reg = RW(reg, AR_GPIO_INPUT_MUX1_BT_PRIORITY,
 		    AR_GPIO_BTPRIORITY_PIN);
 		AR_WRITE(sc, AR_GPIO_INPUT_MUX1, reg);
+		AR_WRITE_BARRIER(sc);
 
 		ops->gpio_config_input(sc, AR_GPIO_BTACTIVE_PIN);
 		ops->gpio_config_input(sc, AR_GPIO_BTPRIORITY_PIN);
@@ -1086,6 +1103,7 @@ athn_btcoex_enable(struct athn_softc *sc)
 
 		AR_SETBITS(sc, AR_QUIET1, AR_QUIET1_QUIET_ACK_CTS_ENABLE);
 		AR_CLRBITS(sc, AR_PCU_MISC, AR_PCU_BT_ANT_PREVENT_RX);
+		AR_WRITE_BARRIER(sc);
 
 		ops->gpio_config_output(sc, AR_GPIO_WLANACTIVE_PIN,
 		    AR_GPIO_OUTPUT_MUX_AS_RX_CLEAR_EXTERNAL);
@@ -1098,6 +1116,7 @@ athn_btcoex_enable(struct athn_softc *sc)
 	reg &= ~(0x3 << (AR_GPIO_WLANACTIVE_PIN * 2));
 	reg |= 0x2 << (AR_GPIO_WLANACTIVE_PIN * 2);
 	AR_WRITE(sc, AR_GPIO_PDPU, reg);
+	AR_WRITE_BARRIER(sc);
 
 	/* Disable PCIe Active State Power Management (ASPM). */
 	if (sc->sc_disable_aspm != NULL)
@@ -1123,6 +1142,7 @@ athn_btcoex_disable(struct athn_softc *sc)
 		AR_WRITE(sc, AR_BT_COEX_MODE2, 0);
 		/* XXX Stop periodic timer. */
 	}
+	AR_WRITE_BARRIER(sc);
 	/* XXX Restore ASPM setting? */
 }
 #endif
@@ -1416,6 +1436,7 @@ athn_ani_restart(struct athn_softc *sc)
 	AR_WRITE(sc, AR_PHY_ERR_2, 0);
 	AR_WRITE(sc, AR_PHY_ERR_MASK_1, AR_PHY_ERR_OFDM_TIMING);
 	AR_WRITE(sc, AR_PHY_ERR_MASK_2, AR_PHY_ERR_CCK_TIMING);
+	AR_WRITE_BARRIER(sc);
 
 	ani->listen_time = 0;
 	ani->ofdm_phy_err_count = 0;
@@ -1465,9 +1486,10 @@ athn_ani_monitor(struct athn_softc *sc)
 		AR_WRITE(sc, AR_PHY_ERR_2, ani->cck_phy_err_base);
 		AR_WRITE(sc, AR_PHY_ERR_MASK_2, AR_PHY_ERR_CCK_TIMING);
 	}
-	if (phy1 < ani->ofdm_phy_err_base || phy2 < ani->cck_phy_err_base)
+	if (phy1 < ani->ofdm_phy_err_base || phy2 < ani->cck_phy_err_base) {
+		AR_WRITE_BARRIER(sc);
 		return;
-
+	}
 	ani->ofdm_phy_err_count = phy1 - ani->ofdm_phy_err_base;
 	ani->cck_phy_err_count = phy2 - ani->cck_phy_err_base;
 
@@ -1562,6 +1584,7 @@ athn_init_dma(struct athn_softc *sc)
 	AR_WRITE(sc, AR_PCU_TXBUF_CTRL, AR_SREV_9285(sc) ?
 	    AR9285_PCU_TXBUF_CTRL_USABLE_SIZE :
 	    AR_PCU_TXBUF_CTRL_USABLE_SIZE);
+	AR_WRITE_BARRIER(sc);
 
 	/* Reset Tx status ring. */
 	if (AR_SREV_9380_10_OR_LATER(sc))
@@ -1583,6 +1606,7 @@ athn_inc_tx_trigger_level(struct athn_softc *sc)
 		return;		/* Already at max. */
 	reg = RW(reg, AR_TXCFG_FTRIG, ftrig + 1);
 	AR_WRITE(sc, AR_TXCFG, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 int
@@ -1614,6 +1638,7 @@ athn_rx_abort(struct athn_softc *sc)
 	}
 	DPRINTF(("Rx failed to go idle in 10ms\n"));
 	AR_CLRBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT);
+	AR_WRITE_BARRIER(sc);
 	return (ETIMEDOUT);
 }
 
@@ -1671,8 +1696,10 @@ athn_stop_tx_dma(struct athn_softc *sc, int qid)
 				break;
 		}
 		AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_FORCE_CH_IDLE_HIGH);
+		AR_WRITE_BARRIER(sc);
 		DELAY(200);
 		AR_CLRBITS(sc, AR_TIMER_MODE, AR_QUIET_TIMER_EN);
+		AR_WRITE_BARRIER(sc);
 
 		for (ntries = 0; ntries < 40; ntries++) {
 			if (!athn_tx_pending(sc, qid))
@@ -1683,6 +1710,7 @@ athn_stop_tx_dma(struct athn_softc *sc, int qid)
 		AR_CLRBITS(sc, AR_DIAG_SW, AR_DIAG_FORCE_CH_IDLE_HIGH);
 	}
 	AR_WRITE(sc, AR_Q_TXD, 0);
+	AR_WRITE_BARRIER(sc);
 }
 
 int
@@ -1768,6 +1796,7 @@ athn_init_tx_queues(struct athn_softc *sc)
 	AR_WRITE(sc, AR_IMR_S0, 0x00ff0000);
 	/* Enable EOL interrupts for all Tx queues except UAPSD. */
 	AR_WRITE(sc, AR_IMR_S1, 0x00df0000);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1834,6 +1863,8 @@ athn_set_sta_timers(struct athn_softc *sc)
 
 	/* Set TSF out-of-range threshold (fixed at 16k us). */
 	AR_WRITE(sc, AR_TSFOOR_THRESHOLD, 0x4240);
+
+	AR_WRITE_BARRIER(sc);
 }
 
 #ifndef IEEE80211_STA_ONLY
@@ -1860,6 +1891,8 @@ athn_set_hostap_timers(struct athn_softc *sc)
 
 	AR_WRITE(sc, AR_TIMER_MODE,
 	    AR_TBTT_TIMER_EN | AR_DBA_TIMER_EN | AR_SWBA_TIMER_EN);
+
+	AR_WRITE_BARRIER(sc);
 }
 #endif
 
@@ -1895,6 +1928,7 @@ athn_set_opmode(struct athn_softc *sc)
 		AR_WRITE(sc, AR_STA_ID1, reg);
 		break;
 	}
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1905,6 +1939,7 @@ athn_set_bss(struct athn_softc *sc, struct ieee80211_node *ni)
 	AR_WRITE(sc, AR_BSS_ID0, LE_READ_4(&bssid[0]));
 	AR_WRITE(sc, AR_BSS_ID1, LE_READ_2(&bssid[4]) |
 	    SM(AR_BSS_ID1_AID, IEEE80211_AID(ni->ni_associd)));
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1931,6 +1966,7 @@ athn_enable_interrupts(struct athn_softc *sc)
 
 	AR_WRITE(sc, AR_INTR_SYNC_ENABLE, sc->isync);
 	AR_WRITE(sc, AR_INTR_SYNC_MASK, sc->isync);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1952,6 +1988,7 @@ athn_disable_interrupts(struct athn_softc *sc)
 	    AR_IMR_S2_TSFOOR | AR_IMR_S2_GTT | AR_IMR_S2_CST);
 
 	AR_CLRBITS(sc, AR_IMR_S5, AR_IMR_S5_TIM_TIMER);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -1970,6 +2007,7 @@ athn_init_qos(struct athn_softc *sc)
 	AR_WRITE(sc, AR_TXOP_4_7,   0xffffffff);
 	AR_WRITE(sc, AR_TXOP_8_11,  0xffffffff);
 	AR_WRITE(sc, AR_TXOP_12_15, 0xffffffff);
+	AR_WRITE_BARRIER(sc);
 }
 
 int
@@ -2168,6 +2206,8 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	/* Default is little-endian, turn on swapping for big-endian. */
 	AR_WRITE(sc, AR_CFG, AR_CFG_SWTD | AR_CFG_SWRD);
 #endif
+	AR_WRITE_BARRIER(sc);
+
 	return (0);
 }
 
@@ -2315,6 +2355,7 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			reg = (reg & ~AR_RX_FILTER_BEACON) |
 			    AR_RX_FILTER_MYBEACON;
 			AR_WRITE(sc, AR_RX_FILTER, reg);
+			AR_WRITE_BARRIER(sc);
 		}
 		athn_enable_interrupts(sc);
 
@@ -2356,6 +2397,7 @@ athn_updateedca(struct ieee80211com *ic)
 		} else
 			AR_WRITE(sc, AR_DCHNTIME(qid), 0);
 	}
+	AR_WRITE_BARRIER(sc);
 #undef ATHN_EXP2
 }
 
@@ -2389,6 +2431,7 @@ athn_updateslot(struct ieee80211com *ic)
 
 	slot = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
 	AR_WRITE(sc, AR_D_GBL_IFS_SLOT, slot * athn_clock_rate(sc));
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -2502,6 +2545,7 @@ athn_set_multi(struct athn_softc *sc)
  done:
 	AR_WRITE(sc, AR_MCAST_FIL0, lo);
 	AR_WRITE(sc, AR_MCAST_FIL1, hi);
+	AR_WRITE_BARRIER(sc);
 }
 
 int
@@ -2710,6 +2754,7 @@ athn_stop(struct ifnet *ifp, int disable)
 	AR_WRITE(sc, AR_MIBC, AR_MIBC_CMC);
 	AR_WRITE(sc, AR_FILT_OFDM, 0);
 	AR_WRITE(sc, AR_FILT_CCK, 0);
+	AR_WRITE_BARRIER(sc);
 	athn_set_rxfilter(sc, 0);
 	athn_stop_rx_dma(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.7 2010/11/10 21:06:44 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.8 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -253,13 +253,16 @@ ar9380_set_synth(struct athn_softc *sc, struct ieee80211_channel *c,
 	/* Enable Long Shift Select for synthesizer. */
 	AR_SETBITS(sc, AR_PHY_65NM_CH0_SYNTH4,
 	    AR_PHY_SYNTH4_LONG_SHIFT_SELECT);
+	AR_WRITE_BARRIER(sc);
 
 	/* Program synthesizer. */
 	phy = (chansel << 2) | AR9380_FRACMODE;
 	DPRINTFN(4, ("AR_PHY_65NM_CH0_SYNTH7=0x%08x\n", phy));
 	AR_WRITE(sc, AR_PHY_65NM_CH0_SYNTH7, phy);
+	AR_WRITE_BARRIER(sc);
 	/* Toggle Load Synth Channel bit. */
 	AR_WRITE(sc, AR_PHY_65NM_CH0_SYNTH7, phy | AR9380_LOAD_SYNTH);
+	AR_WRITE_BARRIER(sc);
 	return (0);
 }
 
@@ -361,6 +364,7 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		    AR_RTC_REG_CONTROL1_SWREG_PROGRAM);
 	} else
 		AR_SETBITS(sc, AR_RTC_SLEEP_CLK, AR_RTC_FORCE_SWREG_PRD);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -386,6 +390,7 @@ ar9380_spur_mitigate_cck(struct athn_softc *sc, struct ieee80211_channel *c,
 		reg = RW(reg, AR_PHY_CCK_SPUR_MIT_CCK_SPUR_FREQ, 0);
 		reg &= ~AR_PHY_CCK_SPUR_MIT_USE_CCK_SPUR_MIT;
 		AR_WRITE(sc, AR_PHY_CCK_SPUR_MIT, reg);
+		AR_WRITE_BARRIER(sc);
 		return;
 	}
 	freq = (spur * 524288) / 11;
@@ -400,6 +405,7 @@ ar9380_spur_mitigate_cck(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg = RW(reg, AR_PHY_CCK_SPUR_MIT_SPUR_FILTER_TYPE, 0x2);
 	reg |= AR_PHY_CCK_SPUR_MIT_USE_CCK_SPUR_MIT;
 	AR_WRITE(sc, AR_PHY_CCK_SPUR_MIT, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -440,6 +446,7 @@ ar9380_spur_mitigate_ofdm(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg &= ~AR_PHY_SPUR_REG_ENABLE_NF_RSSI_SPUR_MIT;
 	reg &= ~AR_PHY_SPUR_REG_ENABLE_MASK_PPM;
 	AR_WRITE(sc, AR_PHY_SPUR_REG, reg);
+	AR_WRITE_BARRIER(sc);
 
 	freq = c->ic_freq;
 #ifndef IEEE80211_NO_HT
@@ -541,6 +548,7 @@ ar9380_spur_mitigate_ofdm(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg = RW(reg, AR_PHY_CHAN_SPUR_MASK_CF_CHAN_MASK_IDX_A, idx);
 	reg = RW(reg, AR_PHY_CHAN_SPUR_MASK_CF_CHAN_MASK_A, 0x0c);
 	AR_WRITE(sc, AR_PHY_CHAN_SPUR_MASK, reg);
+	AR_WRITE_BARRIER(sc);
 }
 
 void
@@ -747,4 +755,5 @@ ar9380_set_correction(struct athn_softc *sc, struct ieee80211_channel *c)
 	reg = AR_READ(sc, AR_PHY_TPC_18);
 	reg = RW(reg, AR_PHY_TPC_18_THERM_CAL, temp0);
 	AR_WRITE(sc, AR_PHY_TPC_18, reg);
+	AR_WRITE_BARRIER(sc);
 }

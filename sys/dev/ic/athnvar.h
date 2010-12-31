@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.25 2010/11/10 21:06:44 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.26 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -16,7 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*#define ATHN_BT_COEXISTENCE	1*/
+#ifdef notyet
+#define ATHN_BT_COEXISTENCE	1
+#endif
 
 #ifdef ATHN_DEBUG
 #define DPRINTF(x)	do { if (athn_debug > 0) printf x; } while (0)
@@ -346,6 +348,11 @@ struct athn_calib {
 struct athn_softc;
 
 struct athn_ops {
+	/* Bus callbacks. */
+	uint32_t	(*read)(struct athn_softc *, uint32_t);
+	void		(*write)(struct athn_softc *, uint32_t, uint32_t);
+	void		(*write_barrier)(struct athn_softc *);
+
 	void	(*setup)(struct athn_softc *);
 	void	(*set_txpower)(struct athn_softc *, struct ieee80211_channel *,
 		    struct ieee80211_channel *);
@@ -417,8 +424,6 @@ struct athn_softc {
 					    enum ieee80211_state, int);
 
 	bus_dma_tag_t			sc_dmat;
-	bus_space_tag_t			sc_st;
-	bus_space_handle_t		sc_sh;
 
 	struct timeout			scan_to;
 	struct timeout			calib_to;
@@ -426,20 +431,21 @@ struct athn_softc {
 
 	u_int				flags;
 #define ATHN_FLAG_PCIE			(1 << 0)
-#define ATHN_FLAG_OLPC			(1 << 1)
-#define ATHN_FLAG_PAPRD			(1 << 2)
-#define ATHN_FLAG_FAST_PLL_CLOCK	(1 << 3)
-#define ATHN_FLAG_RFSILENT		(1 << 4)
-#define ATHN_FLAG_RFSILENT_REVERSED	(1 << 5)
-#define ATHN_FLAG_BTCOEX2WIRE		(1 << 6)
-#define ATHN_FLAG_BTCOEX3WIRE		(1 << 7)
+#define ATHN_FLAG_USB			(1 << 1)
+#define ATHN_FLAG_OLPC			(1 << 2)
+#define ATHN_FLAG_PAPRD			(1 << 3)
+#define ATHN_FLAG_FAST_PLL_CLOCK	(1 << 4)
+#define ATHN_FLAG_RFSILENT		(1 << 5)
+#define ATHN_FLAG_RFSILENT_REVERSED	(1 << 6)
+#define ATHN_FLAG_BTCOEX2WIRE		(1 << 7)
+#define ATHN_FLAG_BTCOEX3WIRE		(1 << 8)
 /* Shortcut. */
 #define ATHN_FLAG_BTCOEX	(ATHN_FLAG_BTCOEX2WIRE | ATHN_FLAG_BTCOEX3WIRE)
-#define ATHN_FLAG_11A			(1 << 8)
-#define ATHN_FLAG_11G			(1 << 9)
-#define ATHN_FLAG_11N			(1 << 10)
-#define ATHN_FLAG_AN_TOP2_FIXUP		(1 << 11)
-#define ATHN_FLAG_NON_ENTERPRISE	(1 << 12)
+#define ATHN_FLAG_11A			(1 << 9)
+#define ATHN_FLAG_11G			(1 << 10)
+#define ATHN_FLAG_11N			(1 << 11)
+#define ATHN_FLAG_AN_TOP2_FIXUP		(1 << 12)
+#define ATHN_FLAG_NON_ENTERPRISE	(1 << 13)
 
 	uint8_t				ngpiopins;
 	int				led_pin;

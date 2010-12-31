@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.8 2010/08/04 19:49:49 damien Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.9 2010/12/31 14:06:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -65,17 +65,22 @@ struct athn_pci_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void			*sc_ih;
+	bus_space_tag_t		sc_st;
+	bus_space_handle_t	sc_sh;
 	bus_size_t		sc_mapsize;
 	int			sc_cap_off;
 	struct workq_task	sc_resume_wqt;
 };
 
-int	athn_pci_match(struct device *, void *, void *);
-void	athn_pci_attach(struct device *, struct device *, void *);
-int	athn_pci_detach(struct device *, int);
-int	athn_pci_activate(struct device *, int);
-void	athn_pci_resume(void *, void *);
-void	athn_pci_disable_aspm(struct athn_softc *);
+int		athn_pci_match(struct device *, void *, void *);
+void		athn_pci_attach(struct device *, struct device *, void *);
+int		athn_pci_detach(struct device *, int);
+int		athn_pci_activate(struct device *, int);
+void		athn_pci_resume(void *, void *);
+uint32_t	athn_pci_read(struct athn_softc *, uint32_t);
+void		athn_pci_write(struct athn_softc *, uint32_t, uint32_t);
+void		athn_pci_write_barrier(struct athn_softc *);
+void		athn_pci_disable_aspm(struct athn_softc *);
 
 struct cfattach athn_pci_ca = {
 	sizeof (struct athn_pci_softc),
@@ -121,6 +126,10 @@ athn_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_tag = pa->pa_tag;
 
+	sc->ops.read = athn_pci_read;
+	sc->ops.write = athn_pci_write;
+	sc->ops.write_barrier = athn_pci_write_barrier;
+
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
 	 * Configuration Space (Linux hardcodes it as 0x60.)
@@ -157,8 +166,8 @@ athn_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map control/status registers. */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
-	error = pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_st,
-	    &sc->sc_sh, NULL, &psc->sc_mapsize, 0);
+	error = pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &psc->sc_st,
+	    &psc->sc_sh, NULL, &psc->sc_mapsize, 0);
 	if (error != 0) {
 		printf(": can't map mem space\n");
 		return;
@@ -194,7 +203,7 @@ athn_pci_detach(struct device *self, int flags)
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 	}
 	if (psc->sc_mapsize > 0)
-		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->sc_mapsize);
+		bus_space_unmap(psc->sc_st, psc->sc_sh, psc->sc_mapsize);
 
 	return (0);
 }
@@ -228,6 +237,31 @@ athn_pci_resume(void *arg1, void *arg2)
 	s = splnet();
 	athn_resume(sc);
 	splx(s);
+}
+
+uint32_t
+athn_pci_read(struct athn_softc *sc, uint32_t addr)
+{
+	struct athn_pci_softc *psc = (struct athn_pci_softc *)sc;
+
+	return (bus_space_read_4(psc->sc_st, psc->sc_sh, addr));
+}
+
+void
+athn_pci_write(struct athn_softc *sc, uint32_t addr, uint32_t val)
+{
+	struct athn_pci_softc *psc = (struct athn_pci_softc *)sc;
+
+	bus_space_write_4(psc->sc_st, psc->sc_sh, addr, val);
+}
+
+void
+athn_pci_write_barrier(struct athn_softc *sc)
+{
+	struct athn_pci_softc *psc = (struct athn_pci_softc *)sc;
+
+	bus_space_barrier(psc->sc_st, psc->sc_sh, 0, psc->sc_mapsize,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 void
