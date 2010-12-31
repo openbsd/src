@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.107 2010/09/22 13:03:48 claudio Exp $	*/
+/*	$OpenBSD: conf.h,v 1.108 2010/12/31 22:32:19 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -389,8 +389,8 @@ extern struct cdevsw cdevsw[];
 #define	cdev_random_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, \
-	0, D_KQFILTER, dev_init(c,n,kqfilter) }
+	0, seltrue, (dev_type_mmap((*))) enodev, \
+	0, D_KQFILTER, seltrue_kqfilter }
 void	randomattach(void);
 
 /* open, close, ioctl, poll, nokqfilter */

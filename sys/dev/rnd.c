@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.114 2010/12/30 22:05:45 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.115 2010/12/31 22:32:20 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -182,7 +182,6 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/timeout.h>
-#include <sys/poll.h>
 #include <sys/mutex.h>
 #include <sys/msgbuf.h>
 
@@ -300,7 +299,6 @@ struct random_bucket {
 	u_int	entropy_count;
 	u_char	input_rotate;
 	u_int32_t pool[POOLWORDS];
-	u_int	asleep;
 	u_int	tmo;
 };
 struct random_bucket random_state;
@@ -446,7 +444,6 @@ struct rand_event rnd_event_space[QEVLEN];
 struct rand_event *rnd_event_head = rnd_event_space;
 struct rand_event *rnd_event_tail = rnd_event_space;
 struct timeout rnd_timeout;
-struct selinfo rnd_rsel;
 struct rndstats rndstats;
 int rnd_attached;
 
@@ -646,12 +643,6 @@ dequeue_randomness(void *v)
 		random_state.entropy_count += nbits;
 		if (random_state.entropy_count > POOLBITS)
 			random_state.entropy_count = POOLBITS;
-
-		if (random_state.asleep && random_state.entropy_count > 8) {
-			random_state.asleep--;
-			wakeup((void *)&random_state.asleep);
-			selwakeup(&rnd_rsel);
-		}
 
 		mtx_enter(&rndlock);
 	}
@@ -875,20 +866,6 @@ arc4random_uniform(u_int32_t upper_bound)
  * -------------------------------------------------------
  */
 
-void filt_rndrdetach(struct knote *kn);
-int filt_rndread(struct knote *kn, long hint);
-
-struct filterops rndread_filtops =
-	{ 1, NULL, filt_rndrdetach, filt_rndread};
-
-void filt_rndwdetach(struct knote *kn);
-int filt_rndwrite(struct knote *kn, long hint);
-
-struct filterops rndwrite_filtops =
-	{ 1, NULL, filt_rndwdetach, filt_rndwrite};
-
-struct selinfo rnd_wsel;
-
 int
 randomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -936,74 +913,6 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 
 	free(buf, M_TEMP);
 	return ret;
-}
-
-int
-randompoll(dev_t dev, int events, struct proc *p)
-{
-	int revents;
-
-	revents = events & (POLLOUT | POLLWRNORM);	/* always writable */
-	if (events & (POLLIN | POLLRDNORM)) {
-		revents |= events & (POLLIN | POLLRDNORM);
-	}
-
-	return (revents);
-}
-
-int
-randomkqfilter(dev_t dev, struct knote *kn)
-{
-	struct klist *klist;
-
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		klist = &rnd_rsel.si_note;
-		kn->kn_fop = &rndread_filtops;
-		break;
-	case EVFILT_WRITE:
-		klist = &rnd_wsel.si_note;
-		kn->kn_fop = &rndwrite_filtops;
-		break;
-	default:
-		return (1);
-	}
-	kn->kn_hook = (void *)&random_state;
-
-	mtx_enter(&rndlock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	mtx_leave(&rndlock);
-
-	return (0);
-}
-
-void
-filt_rndrdetach(struct knote *kn)
-{
-	mtx_enter(&rndlock);
-	SLIST_REMOVE(&rnd_rsel.si_note, kn, knote, kn_selnext);
-	mtx_leave(&rndlock);
-}
-
-int
-filt_rndread(struct knote *kn, long hint)
-{
-	kn->kn_data = (int)random_state.entropy_count;
-	return random_state.entropy_count > 0;
-}
-
-void
-filt_rndwdetach(struct knote *kn)
-{
-	mtx_enter(&rndlock);
-	SLIST_REMOVE(&rnd_wsel.si_note, kn, knote, kn_selnext);
-	mtx_leave(&rndlock);
-}
-
-int
-filt_rndwrite(struct knote *kn, long hint)
-{
-	return (1);
 }
 
 int
