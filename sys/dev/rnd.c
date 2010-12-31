@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.116 2010/12/31 22:38:07 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.117 2010/12/31 22:39:11 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -163,7 +163,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
@@ -172,7 +171,6 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
-#include <sys/vnode.h>
 #include <sys/timeout.h>
 #include <sys/mutex.h>
 #include <sys/msgbuf.h>
