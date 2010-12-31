@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.50 2010/11/20 05:12:38 deraadt Exp $ */
+/* 	$OpenBSD: isp.c,v 1.51 2010/12/31 19:26:00 kettenis Exp $ */
 /*	$FreeBSD: src/sys/dev/isp/isp.c,v 1.150 2008/12/15 21:42:38 marius Exp $*/
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -4054,6 +4054,18 @@ isp_start(XS_T *xs)
 		isp_prt(isp, ISP_LOGERR,
 		    "unsupported cdb length (%d, CDB[0]=0x%x)",
 		    XS_CDBLEN(xs), XS_CDBP(xs)[0] & 0xff);
+		XS_SETERR(xs, HBA_BOTCH);
+		return (CMD_COMPLETE);
+	}
+
+	/*
+	 * The firmware on the 1020/1020A doesn't seem to implement
+	 * extended commands.  Bail out early since we don't seem to
+	 * be able to recover from issuing a command that isn't
+	 * implemented.
+	 */
+
+	if (XS_CDBLEN(xs) > 12 && isp->isp_type < ISP_HA_SCSI_1040) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
