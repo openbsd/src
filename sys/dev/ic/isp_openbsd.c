@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.44 2010/06/28 18:31:02 krw Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.45 2010/12/31 19:20:42 kettenis Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -376,6 +376,7 @@ ispcmd(XS_T *xs)
 		XS_CMD_S_TIMER(xs);
 		break;
 	case CMD_COMPLETE:
+		scsi_done(xs);
 		break;
 	}
 	ISP_UNLOCK(isp);
