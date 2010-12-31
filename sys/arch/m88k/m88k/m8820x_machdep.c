@@ -1,27 +1,18 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.43 2010/12/31 21:12:16 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.44 2010/12/31 21:16:31 miod Exp $	*/
 /*
- * Copyright (c) 2004, 2007, Miodrag Vallat.
+ * Copyright (c) 2004, 2007, 2010, Miodrag Vallat.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -126,7 +117,8 @@ struct cmmu_p cmmu8820x = {
 };
 
 /*
- * Systems with more than 2 CMMUs per CPU use programmable split schemes.
+ * Systems with more than 2 CMMUs per CPU use split schemes, which sometimes
+ * are programmable (well, no more than having a few hardwired choices).
  *
  * The following schemes are available on MVME188 boards:
  * - split on A12 address bit (A14 for 88204)
@@ -142,8 +134,8 @@ struct cmmu_p cmmu8820x = {
  * splits seem less efficient.
  *
  * The really nasty part of this choice is in the exception handling code,
- * when it needs to get error information from up to 4 CMMUs. See eh.S on
- * mvme88k for the gory details, luna88k is more sane.
+ * when it needs to get error information from up to 4 CMMUs. See eh.S for
+ * the gory details.
  */
 
 struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
@@ -154,11 +146,11 @@ u_int cmmu_shift;
 void	m8820x_cmmu_set_reg(int, u_int, int, int, int);
 void	m8820x_cmmu_set_cmd(u_int, int, int, int, vaddr_t);
 void	m8820x_cmmu_wait(int);
-void	m8820x_cmmu_sync_cache(int, paddr_t, psize_t);
-void	m8820x_cmmu_sync_inval_cache(int, paddr_t, psize_t);
-void	m8820x_cmmu_inval_cache(int, paddr_t, psize_t);
+void	m8820x_cmmu_wb_locked(int, paddr_t, psize_t);
+void	m8820x_cmmu_wbinv_locked(int, paddr_t, psize_t);
+void	m8820x_cmmu_inv_locked(int, paddr_t, psize_t);
 
-/* Flags passed to m8820x_cmmu_set() */
+/* Flags passed to m8820x_cmmu_set_*() */
 #define MODE_VAL		0x01
 #define ADDR_VAL		0x02
 
@@ -252,9 +244,7 @@ m8820x_cmmu_wait(int cpu)
 			panic("cache flush failed!");
 		}
 #else
-		/* force the read access, but do not issue this statement... */
-		__asm__ __volatile__ ("|or r0, r0, %0" ::
-		    "r" (cmmu->cmmu_regs[CMMU_SSR]));
+		(void)cmmu->cmmu_regs[CMMU_SSR];
 #endif
 	}
 }
@@ -398,7 +388,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 	struct cpu_info *ci;
 	struct m8820x_cmmu *cmmu;
 	u_int line, cnt;
-	int cssp, sctr, type;
+	int cssp, type;
 	apr_t apr;
 
 	apr = ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL | CACHE_INH) &
@@ -440,7 +430,20 @@ m8820x_initialize_cpu(cpuid_t cpu)
 			for (line = 0; line <= 255; line++) {
 				cmmu->cmmu_regs[CMMU_SAR] =
 				    line << MC88200_CACHE_SHIFT;
+				if (cmmu->cmmu_regs[CMMU_CSSP(cssp)] &
+				    (CMMU_CSSP_D3 | CMMU_CSSP_D2 |
+				     CMMU_CSSP_D1 | CMMU_CSSP_D0)) {
+					printf("cpu%d: CMMU@%p has disabled"
+					    " cache lines in set 0x%03x,"
+					    " cssp %08x\n",
+					    cpu, cmmu->cmmu_regs,
+					    (cssp << 8) | line,
+					    cmmu->cmmu_regs[CMMU_CSSP(cssp)]);
+				}
 				cmmu->cmmu_regs[CMMU_CSSP(cssp)] =
+				    (cmmu->cmmu_regs[CMMU_CSSP(cssp)] &
+				     ~(CMMU_CSSP_D3 | CMMU_CSSP_D2 |
+				       CMMU_CSSP_D1 | CMMU_CSSP_D0)) |
 				    CMMU_CSSP_L5 | CMMU_CSSP_L4 |
 				    CMMU_CSSP_L3 | CMMU_CSSP_L2 |
 				    CMMU_CSSP_L1 | CMMU_CSSP_L0 |
@@ -452,18 +455,11 @@ m8820x_initialize_cpu(cpuid_t cpu)
 
 		/*
 		 * Set the SCTR, SAPR, and UAPR to some known state.
-		 * Snooping is enabled as soon as the system uses more than
-		 * two CMMUs; for instruction CMMUs as well so that we can
-		 * share breakpoints.
+		 * Snooping is always enabled, so that we do not need to
+		 * writeback userland code pages when they first get filled
+		 * as data pages.
 		 */
-		sctr = 0;
-		if (cmmu_shift > 1)
-			sctr |= CMMU_SCTR_SE;
-#ifdef MULTIPROCESSOR
-		if (ncpusfound > 1)
-			sctr |= CMMU_SCTR_SE;
-#endif
-		cmmu->cmmu_regs[CMMU_SCTR] = sctr;
+		cmmu->cmmu_regs[CMMU_SCTR] = CMMU_SCTR_SE;
 
 		cmmu->cmmu_regs[CMMU_SAPR] = cmmu->cmmu_regs[CMMU_UAPR] = apr;
 
@@ -472,8 +468,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 		cmmu->cmmu_regs[CMMU_BWP4] = cmmu->cmmu_regs[CMMU_BWP5] =
 		cmmu->cmmu_regs[CMMU_BWP6] = cmmu->cmmu_regs[CMMU_BWP7] = 0;
 		cmmu->cmmu_regs[CMMU_SCR] = CMMU_FLUSH_CACHE_INV_ALL;
-		__asm__ __volatile__ ("|or r0, r0, %0" ::
-		    "r" (cmmu->cmmu_regs[CMMU_SSR]));
+		(void)cmmu->cmmu_regs[CMMU_SSR];
 		cmmu->cmmu_regs[CMMU_SCR] = CMMU_FLUSH_SUPER_ALL;
 		cmmu->cmmu_regs[CMMU_SCR] = CMMU_FLUSH_USER_ALL;
 	}
@@ -543,9 +538,6 @@ m8820x_set_uapr(apr_t ap)
  * Functions that invalidate TLB entries.
  */
 
-/*
- *	flush any tlb
- */
 void
 m8820x_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 {
@@ -589,11 +581,10 @@ m8820x_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 /*
  * Functions that invalidate caches.
  *
- * Cache invalidates require physical addresses. 
+ * Cache operations require physical addresses. 
  *
- * We don't push Instruction Caches prior to invalidate because they are not
- * snooped and never modified (I guess it doesn't matter then which form
- * of the command we use then).
+ * We don't writeback instruction caches prior to invalidate because they
+ * are never modified.
  *
  * Note that on systems with more than two CMMUs per CPU, we can not benefit
  * from the address split - the split is done on virtual (not translated yet)
@@ -604,7 +595,7 @@ m8820x_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 #define	round_cache_line(a)	trunc_cache_line((a) + MC88200_CACHE_LINE - 1)
 
 /*
- *	flush both Instruction and Data caches
+ * invalidate I$, writeback and invalidate D$
  */
 void
 m8820x_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
@@ -709,10 +700,10 @@ m8820x_icache_inv(cpuid_t cpu, paddr_t pa, psize_t size)
 }
 
 /*
- * sync dcache - icache is never dirty but needs to be invalidated as well.
+ * writeback D$
  */
 void
-m8820x_cmmu_sync_cache(int cpu, paddr_t pa, psize_t size)
+m8820x_cmmu_wb_locked(int cpu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CB_LINE,
@@ -724,25 +715,27 @@ m8820x_cmmu_sync_cache(int cpu, paddr_t pa, psize_t size)
 	m8820x_cmmu_wait(cpu);
 }
 
+/*
+ * invalidate I$, writeback and invalidate D$
+ */
 void
-m8820x_cmmu_sync_inval_cache(int cpu, paddr_t pa, psize_t size)
+m8820x_cmmu_wbinv_locked(int cpu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE) {
-		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE,
-		    MODE_VAL, cpu, INST_CMMU, pa);
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_LINE,
-		    MODE_VAL, cpu, DATA_CMMU, pa);
+		    MODE_VAL, cpu, 0, pa);
 	} else {
-		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_PAGE,
-		    MODE_VAL, cpu, INST_CMMU, pa);
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_PAGE,
-		    MODE_VAL, cpu, DATA_CMMU, pa);
+		    MODE_VAL, cpu, 0, pa);
 	}
 	m8820x_cmmu_wait(cpu);
 }
 
+/*
+ * invalidate I$ and D$
+ */
 void
-m8820x_cmmu_inval_cache(int cpu, paddr_t pa, psize_t size)
+m8820x_cmmu_inv_locked(int cpu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE, 0, cpu, 0, pa);
@@ -771,30 +764,113 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	paddr_t pa;
 	psize_t size, count;
 	void (*flusher)(int, paddr_t, psize_t);
+	struct {
+		paddr_t pa;
+		psize_t size;
+		void (*flusher)(int, paddr_t, psize_t);
+	} ops[3], *curop;
+	uint nops;
 
 	pa = trunc_cache_line(_pa);
 	size = round_cache_line(_pa + _size) - pa;
+	nops = 0;
+	curop = ops;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
-		flusher = m8820x_cmmu_sync_cache;
+		/*
+		 * If the range does not span complete cache lines,
+		 * force invalidation of the incomplete lines.  The
+		 * rationale behind this is that these incomplete lines
+		 * will probably need to be invalidated later, and
+		 * we do not want to risk having stale data in the way.
+		 */
+		if (pa != _pa) {
+			curop->pa = pa;
+			curop->size = MC88200_CACHE_LINE;
+			curop->flusher = m8820x_cmmu_wbinv_locked;
+			curop++;
+			pa += MC88200_CACHE_LINE;
+			size -= MC88200_CACHE_LINE;
+			if (size == 0)
+				break;
+		}
+		if (pa + size == _pa + _size) {
+			curop->pa = pa;
+			curop->size = size;
+			curop->flusher = m8820x_cmmu_wb_locked;
+			curop++;
+		} else {
+			if (size != MC88200_CACHE_LINE) {
+				curop->pa = pa;
+				curop->size = size - MC88200_CACHE_LINE;
+				curop->flusher = m8820x_cmmu_wb_locked;
+				pa += curop->size;
+				curop++;
+			}
+			curop->pa = pa;
+			curop->size = MC88200_CACHE_LINE;
+			curop->flusher = m8820x_cmmu_wbinv_locked;
+			curop++;
+		}
 		break;
 	case DMA_CACHE_SYNC_INVAL:
-		flusher = m8820x_cmmu_sync_inval_cache;
+		curop->pa = pa;
+		curop->size = size;
+		curop->flusher = m8820x_cmmu_wbinv_locked;
+		curop++;
 		break;
 	default:
-		if (pa != _pa || size != _size) {
-			/*
-			 * Theoretically, we should preserve the data from
-			 * the two incomplete cache lines.
-			 * However, callers are expected to have asked
-			 * for a cache sync before, so we do not risk too
-			 * much by not doing this.
-			 */
+	case DMA_CACHE_INV:
+#if 0
+		/*
+		 * Preserve the data from the incomplete cache lines (up to
+		 * two), and discard the lines in-between (if any).
+		 */
+		if (pa != _pa) {
+			curop->pa = pa;
+			curop->size = MC88200_CACHE_LINE;
+			curop->flusher = m8820x_cmmu_wbinv_locked;
+			curop++;
+			pa += MC88200_CACHE_LINE;
+			size -= MC88200_CACHE_LINE;
+			if (size == 0)
+				break;
 		}
-		flusher = m8820x_cmmu_inval_cache;
+		if (pa + size == _pa + _size) {
+			curop->pa = pa;
+			curop->size = size;
+			curop->flusher = m8820x_cmmu_inv_locked;
+			curop++;
+		} else {
+			if (size != MC88200_CACHE_LINE) {
+				curop->pa = pa;
+				curop->size = size - MC88200_CACHE_LINE;
+				curop->flusher = m8820x_cmmu_inv_locked;
+				pa += curop->size;
+				curop++;
+			}
+			curop->pa = pa;
+			curop->size = MC88200_CACHE_LINE;
+			curop->flusher = m8820x_cmmu_wbinv_locked;
+			curop++;
+		}
+#else
+		/*
+		 * Even if there are incomplete cache lines affected, assume
+		 * they were evicted earlier.
+		 * XXX We ought to save the partial cache lines, invalidate,
+		 * XXX and put outside-the-range bytes back...
+		 */
+		curop->pa = pa;
+		curop->size = size;
+		curop->flusher = m8820x_cmmu_inv_locked;
+		curop++;
+#endif
 		break;
 	}
+
+	nops = curop - ops;
 
 #ifndef MULTIPROCESSOR
 	cpu = cpu_number();
@@ -804,31 +880,36 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
-	while (size != 0) {
-		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
+	for (curop = ops; nops != 0; curop++, nops--) {
+		pa = curop->pa;
+		size = curop->size;
+		flusher = curop->flusher;
+		while (size != 0) {
+			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88200_CACHE_LINE;
 
 #ifdef MULTIPROCESSOR
-		/* writeback on a single cpu... */
-		(*flusher)(ci->ci_cpuid, pa, count);
+			/* writeback on a single cpu... */
+			(*flusher)(ci->ci_cpuid, pa, count);
 
-		/* invalidate on all... */
-		if (flusher != m8820x_cmmu_sync_cache) {
-			for (cpu = 0; cpu < MAX_CPUS; cpu++) {
-				if (!ISSET(m88k_cpus[cpu].ci_flags,
-				    CIF_ALIVE))
-					continue;
-				if (cpu == ci->ci_cpuid)
-					continue;
-				m8820x_cmmu_inval_cache(cpu, pa, count);
+			/* invalidate on all... */
+			if (flusher != m8820x_cmmu_wb_locked) {
+				for (cpu = 0; cpu < MAX_CPUS; cpu++) {
+					if (!ISSET(m88k_cpus[cpu].ci_flags,
+					    CIF_ALIVE))
+						continue;
+					if (cpu == ci->ci_cpuid)
+						continue;
+					m8820x_cmmu_inv_locked(cpu, pa, count);
+				}
 			}
-		}
 #else	/* MULTIPROCESSOR */
-		(*flusher)(cpu, pa, count);
+			(*flusher)(cpu, pa, count);
 #endif	/* MULTIPROCESSOR */
 
-		pa += count;
-		size -= count;
+			pa += count;
+			size -= count;
+		}
 	}
 
 	CMMU_UNLOCK;
