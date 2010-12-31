@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.596 2010/12/15 13:54:50 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.597 2010/12/31 12:15:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4012,6 +4012,12 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 	if (r->direction == PF_INOUT && (r->nat.addr.type != PF_ADDR_NONE ||
 	    r->rdr.addr.type != PF_ADDR_NONE)) {
 		yyerror("nat-to and rdr-to require a direction");
+		problems++;
+	}
+	if (r->af == AF_INET6 && (r->scrub_flags &
+	    (PFSTATE_NODF|PFSTATE_RANDOMID|PFSTATE_SETTOS))) {
+		yyerror("address family inet6 does not support scrub options "
+		    "no-df, random-id, set-tos");
 		problems++;
 	}
 
