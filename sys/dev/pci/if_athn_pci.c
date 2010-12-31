@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.9 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.10 2010/12/31 14:52:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -187,7 +187,7 @@ athn_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
 	athn_attach(sc);
 }

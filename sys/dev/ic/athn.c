@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.64 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.65 2010/12/31 14:52:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -173,12 +173,12 @@ athn_attach(struct athn_softc *sc)
 	int error;
 
 	if ((error = athn_reset_power_on(sc)) != 0) {
-		printf(": could not reset chip\n");
+		printf("%s: could not reset chip\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
 	if ((error = athn_set_power_awake(sc)) != 0) {
-		printf(": could not wakeup chip\n");
+		printf("%s: could not wakeup chip\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -192,11 +192,12 @@ athn_attach(struct athn_softc *sc)
 		error = ar9287_attach(sc);
 	else if (AR_SREV_9380(sc))
 		error = ar9380_attach(sc);
+	else
+		error = ENOTSUP;
 	if (error != 0) {
-		printf(": could not attach chip\n");
+		printf("%s: could not attach chip\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* We can put the chip in sleep state now. */
 	athn_set_power_sleep(sc);
@@ -241,14 +242,16 @@ athn_attach(struct athn_softc *sc)
 	    ((sc->rxchainmask >> 0) & 1);
 
 	if (AR_SINGLE_CHIP(sc)) {
-		printf("%s: %s rev %d (%dT%dR), ROM rev %d\n",
+		printf("%s: %s rev %d (%dT%dR), ROM rev %d, address %s\n",
 		    sc->sc_dev.dv_xname, athn_get_mac_name(sc), sc->mac_rev,
-		    sc->ntxchains, sc->nrxchains, sc->eep_rev);
+		    sc->ntxchains, sc->nrxchains, sc->eep_rev,
+		    ether_sprintf(ic->ic_myaddr));
 	} else {
-		printf("%s: MAC %s rev %d, RF %s (%dT%dR), ROM rev %d\n",
+		printf("%s: MAC %s rev %d, RF %s (%dT%dR), ROM rev %d, "
+		    "address %s\n",
 		    sc->sc_dev.dv_xname, athn_get_mac_name(sc), sc->mac_rev,
 		    athn_get_rf_name(sc), sc->ntxchains, sc->nrxchains,
-		    sc->eep_rev);
+		    sc->eep_rev, ether_sprintf(ic->ic_myaddr));
 	}
 
 	timeout_set(&sc->scan_to, athn_next_scan, sc);
