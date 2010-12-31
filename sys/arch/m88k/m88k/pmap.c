@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.56 2010/12/31 20:54:21 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.57 2010/12/31 21:22:33 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -115,6 +115,8 @@ pt_entry_t *vmpte, *msgbufmap;
 struct pmap kernel_pmap_store;
 pmap_t kernel_pmap = &kernel_pmap_store;
 
+apr_t	kernel_apr_cmode = CACHE_WT;	/* XXX CACHE_DFL does not work yet */
+apr_t	userland_apr_cmode = CACHE_DFL;
 apr_t	default_apr = CACHE_GLOBAL | APR_V;
 
 typedef struct kpdt_entry *kpdt_entry_t;
@@ -517,17 +519,25 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 
 		/*
 		 * Data cache should be copied back and invalidated if
-		 * the old mapping was cached.
+		 * the old mapping was cached, or if we are downgrading
+		 * from writeback to writethrough.
 		 */
-		if ((opte & CACHE_INH) == 0) {
+		if (((opte & CACHE_INH) == 0 && (mode & CACHE_INH) != 0) ||
+		    ((opte & CACHE_WT) == 0 && (mode & CACHE_WT) != 0)) {
 			pa = ptoa(PG_PFNUM(opte));
 #ifdef MULTIPROCESSOR
 			for (cpu = 0; cpu < MAX_CPUS; cpu++)
-				if (ISSET(m88k_cpus[cpu].ci_flags, CIF_ALIVE))
+				if (ISSET(m88k_cpus[cpu].ci_flags, CIF_ALIVE)) {
 #else
 			cpu = cpu_number();
 #endif
-					cmmu_cache_wbinv(cpu, pa, PAGE_SIZE);
+					if (mode & CACHE_INH)
+						cmmu_cache_wbinv(cpu, pa, PAGE_SIZE);
+					else
+						cmmu_dcache_wb(cpu, pa, PAGE_SIZE);
+#ifdef MULTIPROCESSOR
+				}
+#endif
 		}
 	}
 	PMAP_UNLOCK(pmap);
@@ -687,17 +697,16 @@ pmap_bootstrap(vaddr_t load_start)
 	    VM_PROT_WRITE | VM_PROT_READ, 0);
 
 	/*
-	 * Map system segment & page tables - should be cache inhibited?
-	 * 88200 manual says that CI bit is driven on the Mbus while accessing
-	 * the translation tree. I don't think we need to map it CACHE_INH
-	 * here...
+	 * Map system segment & page tables - should be cache inhibited on
+	 * 88200 systems, because of the hardware update of PG_M and PG_U
+	 * bits in ptes.
 	 */
 	if (kmapva != vaddr) {
 		while (vaddr < (virtual_avail - kernel_pmap_size))
 			vaddr = round_page(vaddr + 1);
 	}
 	vaddr = pmap_map(vaddr, (paddr_t)kmap, avail_start,
-	    VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
+	    VM_PROT_WRITE | VM_PROT_READ, CPU_IS88100 ? CACHE_INH : CACHE_WT);
 
 	vaddr = pmap_bootstrap_md(vaddr);
 
@@ -758,8 +767,8 @@ pmap_bootstrap(vaddr_t load_start)
 	if (CPU_IS88110)
 		default_apr &= ~CACHE_GLOBAL;
 #endif
-	kernel_pmap->pm_apr = (atop((paddr_t)kmap) << PG_SHIFT) | default_apr |
-	    CACHE_WT;
+	kernel_pmap->pm_apr = (atop((paddr_t)kmap) << PG_SHIFT) |
+	    default_apr | kernel_apr_cmode;
 
 	pmap_bootstrap_cpu(cpu_number());
 }
@@ -897,11 +906,8 @@ pmap_create(void)
 	if (pmap_extract(kernel_pmap, (vaddr_t)segdt,
 	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
-	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | default_apr;
-#if !defined(MULTIPROCESSOR) && defined(M88110)
-	if (CPU_IS88110)
-		pmap->pm_apr &= ~CACHE_GLOBAL;
-#endif
+	pmap->pm_apr = (atop(stpa) << PG_SHIFT) |
+	    default_apr | userland_apr_cmode;
 
 #ifdef PMAPDEBUG
 	if (pmap_debug & CD_CREAT)
@@ -911,7 +917,7 @@ pmap_create(void)
 
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
-	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_WT);
+	    (vaddr_t)segdt, (vaddr_t)segdt + s, CPU_IS88100 ? CACHE_INH : CACHE_WT);
 
 	/*
 	 * Initialize SDT_ENTRIES.
@@ -1154,6 +1160,16 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, boolean_t flush)
 			pool_put(&pvpool, cur);
 		} else {
 			pvl->pv_pmap = NULL;
+			if (CPU_IS88100 &&
+			    kernel_apr_cmode != userland_apr_cmode) {
+				/* XXX Why isn't cmmu_dcache_wb() enough? */
+				if (0)
+					cmmu_dcache_wb(cpu_number(),
+					    pa, PAGE_SIZE);
+				else
+					cmmu_cache_wbinv(cpu_number(),
+					    pa, PAGE_SIZE);
+			}
 		}
 	} else {
 		prev->pv_next = cur->pv_next;
@@ -1507,7 +1523,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
-	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_WT);
+	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CPU_IS88100 ? CACHE_INH : CACHE_WT);
 
 	spl = splvm();
 	PMAP_LOCK(pmap);
@@ -2103,7 +2119,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * bound to only one cpu.
 	 */
 	cmmu_tlb_inv(cpu, TRUE, dstva, 2);
-	cmmu_cache_wbinv(cpu, src, PAGE_SIZE);
+	if (CPU_IS88100 && kernel_apr_cmode != userland_apr_cmode)
+		cmmu_dcache_wb(cpu, src, PAGE_SIZE);
 	copypage(srcva, dstva);
 
 	splx(spl);
