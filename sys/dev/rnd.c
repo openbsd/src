@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.115 2010/12/31 22:32:20 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.116 2010/12/31 22:38:07 deraadt Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -41,8 +41,6 @@
  */
 
 /*
- * (now, with legal B.S. out of the way.....)
- *
  * This routine gathers environmental noise from device drivers, etc.,
  * and returns good random numbers, suitable for cryptographic or
  * other use.
@@ -85,26 +83,20 @@
  * bits of "true randomness" are contained in the entropy pool as it
  * outputs random numbers.
  *
- * If this estimate goes to zero, the routine can still generate
- * random numbers; however, an attacker may (at least in theory) be
- * able to infer the future output of the generator from prior
- * outputs.  This requires successful cryptanalysis of MD5, which is
- * believed to be not feasible, but there is a remote possibility.
- * Nonetheless, these numbers should be useful for the vast majority
- * of purposes.
- *
- * However, this MD5 output is not exported outside the subsystem.  It
- * is next used as input to seed a RC4 stream cipher.  Attempts are
- * made to follow best practice regarding this stream cipher - the first
- * chunk of output is discarded and the cipher is re-seeded from time to
- * time.  This design provides very high amounts of output data from a
- * potentially small entropy base, at high enough speeds to encourage
- * use of random numbers in nearly any situation.
- *
+ * If this estimate goes to zero, the MD5 hash will continue to generate
+ * output since there is no true risk because the MD5 output is not
+ * exported outside this subsystem.  It is next used as input to seed a
+ * RC4 stream cipher.  Attempts are made to follow best practice
+ * regarding this stream cipher - the first chunk of output is discarded
+ * and the cipher is re-seeded from time to time.  This design provides
+ * very high amounts of output data from a potentially small entropy
+ * base, at high enough speeds to encourage use of random numbers in
+ * nearly any situation.
+ * 
  * The output of this single RC4 engine is then shared amongst many
- * consumers in the kernel and userland via various interfaces:
- * arc4random_buf(), arc4random(), arc4random_uniform(), the set of
- * /dev/random nodes, and the sysctl kern.arandom.
+ * consumers in the kernel and userland via a few interfaces:
+ * arc4random_buf(), arc4random(), arc4random_uniform(), randomread()
+ * for the set of /dev/random nodes, and the sysctl kern.arandom.
  *
  * Exported interfaces ---- input
  * ==============================
