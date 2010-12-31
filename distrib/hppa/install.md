@@ -1,11 +1,21 @@
-#	$OpenBSD: install.md,v 1.16 2009/06/14 00:12:21 deraadt Exp $
+#	$OpenBSD: install.md,v 1.17 2010/12/31 19:26:46 deraadt Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
 
 MDTERM=vt100
+NCPU=$(sysctl -n hw.ncpufound)
+
+((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
+	cd /mnt
+	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
+		echo "Multiprocessor machine; using bsd.mp instead of bsd."
+		mv bsd bsd.sp 2>/dev/null
+		mv bsd.mp bsd
+	fi
+
 	/sbin/disklabel -B $1
 }
 
