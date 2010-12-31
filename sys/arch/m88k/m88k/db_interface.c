@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.15 2009/03/15 20:39:53 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.16 2010/12/31 20:38:55 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -514,26 +514,35 @@ db_write_bytes(db_addr_t addr, size_t size, char *data)
 
 	while (size != 0) {
 		va = trunc_page((vaddr_t)dst);
-		pte = pmap_pte(pmap_kernel(), va);
-		opte = *pte;
-
-		pa = (opte & PG_FRAME) | ((vaddr_t)dst & PAGE_MASK);
+#ifdef M88100
+		if (CPU_IS88100 && va >= BATC8_VA)
+			pte = NULL;
+		else
+#endif
+			pte = pmap_pte(pmap_kernel(), va);
+		if (pte != NULL) {
+			opte = *pte;
+			pa = (opte & PG_FRAME) | ((vaddr_t)dst & PAGE_MASK);
+		}
 		len = PAGE_SIZE - ((vaddr_t)dst & PAGE_MASK);
 		if (len > size)
 			len = size;
 		size -= olen = len;
 
-		if (opte & PG_RO) {
+		if (pte != NULL && (opte & PG_RO)) {
 			*pte = opte & ~PG_RO;
-			cmmu_flush_tlb(cpu, TRUE, va, 1);
+			cmmu_tlb_inv(cpu, TRUE, va, 1);
 		}
 		while (len-- != 0)
 			*dst++ = *data++;
-		if (opte & PG_RO) {
+		if (pte != NULL && (opte & PG_RO)) {
 			*pte = opte;
-			cmmu_flush_tlb(cpu, TRUE, va, 1);
+			cmmu_tlb_inv(cpu, TRUE, va, 1);
 		}
-		cmmu_flush_cache(cpu, pa, olen);
+		if (pte != NULL && (opte & (CACHE_INH | CACHE_WT)) == 0) {
+			cmmu_dcache_wb(cpu, pa, olen);
+			cmmu_icache_inv(cpu, pa, olen);
+		}
 	}
 }
 
