@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.19 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.20 2010/12/31 19:54:05 guenther Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -54,6 +54,10 @@
 #define	d_ino		d_fileno	/* backward compatibility */
 #endif
 
+#if __BSD_VISIBLE || __XPG_VISIBLE > 600
+#define	dirfd(dirp)	((dirp)->dd_fd)
+#endif
+
 #if __BSD_VISIBLE
 
 /* definitions for library routines operating on directories. */
@@ -73,8 +77,6 @@ typedef struct _dirdesc {
 	struct _telldir *dd_td; /* telldir position recording */
 	void	*dd_lock;	/* mutex to protect struct */
 } DIR;
-
-#define	dirfd(dirp)	((dirp)->dd_fd)
 
 /* flags for opendir2 */
 #define DTF_NODUP	0x0002	/* don't return duplicate names */
@@ -101,9 +103,6 @@ void rewinddir(DIR *);
 int closedir(DIR *);
 #if __BSD_VISIBLE
 DIR *__opendir2(const char *, int);
-int scandir(const char *, struct dirent ***,
-    int (*)(struct dirent *), int (*)(const void *, const void *));
-int alphasort(const void *, const void *);
 int getdirentries(int, char *, int, off_t *)
 		__attribute__ ((__bounded__(__string__,2,3)));
 #endif /* __BSD_VISIBLE */
@@ -113,6 +112,11 @@ void seekdir(DIR *, long);
 #endif
 #if __POSIX_VISIBLE >= 199506 || __XPG_VISIBLE >= 500
 int readdir_r(DIR *, struct dirent *, struct dirent **);
+#endif
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
+int scandir(const char *, struct dirent ***,
+    int (*)(struct dirent *), int (*)(const void *, const void *));
+int alphasort(const void *, const void *);
 #endif
 __END_DECLS
 
