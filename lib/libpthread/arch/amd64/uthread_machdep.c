@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.3 2004/02/25 04:10:53 deraadt Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.4 2010/12/31 03:02:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt
@@ -53,7 +53,7 @@ struct frame {
 };
 
 #define copyreg(reg, lval) \
-	__asm__("mov %%" #reg ", %0" : "=g"(lval))
+	__asm__("movl %%" #reg ", %0" : "=g"(lval))
 
 /*
  * Given a stack and an entry function, initialise a state

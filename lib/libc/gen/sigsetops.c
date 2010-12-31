@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetops.c,v 1.5 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: sigsetops.c,v 1.6 2010/12/31 02:58:57 guenther Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,6 +30,7 @@
  *	@(#)sigsetops.c	8.1 (Berkeley) 6/4/93
  */
 
+#define _ANSI_LIBRARY
 #include <errno.h>
 #include <signal.h>
 
