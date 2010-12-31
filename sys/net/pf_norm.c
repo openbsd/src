@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.123 2010/07/08 19:30:16 sthen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.124 2010/12/31 12:26:57 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -68,16 +68,7 @@ struct pf_frent {
 	struct mbuf *fr_m;
 };
 
-struct pf_frcache {
-	LIST_ENTRY(pf_frcache) fr_next;
-	uint16_t	fr_off;
-	uint16_t	fr_end;
-};
-
 #define PFFRAG_SEENLAST	0x0001		/* Seen the last fragment for this */
-#define PFFRAG_NOBUFFER	0x0002		/* Non-buffering fragment cache */
-#define PFFRAG_DROP	0x0004		/* Drop all fragments */
-#define BUFFER_FRAGMENTS(fr)	(!((fr)->fr_flags & PFFRAG_NOBUFFER))
 
 struct pf_fragment {
 	RB_ENTRY(pf_fragment) fr_entry;
@@ -89,16 +80,10 @@ struct pf_fragment {
 	u_int16_t	fr_id;		/* fragment id for reassemble */
 	u_int16_t	fr_max;		/* fragment data max */
 	u_int32_t	fr_timeout;
-#define fr_queue	fr_u.fru_queue
-#define fr_cache	fr_u.fru_cache
-	union {
-		LIST_HEAD(pf_fragq, pf_frent) fru_queue;	/* buffering */
-		LIST_HEAD(pf_cacheq, pf_frcache) fru_cache;	/* non-buf */
-	} fr_u;
+	LIST_HEAD(pf_fragq, pf_frent) fr_queue;
 };
 
 TAILQ_HEAD(pf_fragqueue, pf_fragment)	pf_fragqueue;
-TAILQ_HEAD(pf_cachequeue, pf_fragment)	pf_cachequeue;
 
 static __inline int	 pf_frag_compare(struct pf_fragment *,
 			    struct pf_fragment *);
@@ -116,9 +101,9 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment **,
 			    struct pf_frent *, int);
 
 /* Globals */
-struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
+struct pool		 pf_frent_pl, pf_frag_pl;
 struct pool		 pf_state_scrub_pl;
-int			 pf_nfrents, pf_ncache;
+int			 pf_nfrents;
 
 void
 pf_normalize_init(void)
@@ -127,20 +112,13 @@ pf_normalize_init(void)
 	    NULL);
 	pool_init(&pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag",
 	    NULL);
-	pool_init(&pf_cache_pl, sizeof(struct pf_fragment), 0, 0, 0,
-	    "pffrcache", NULL);
-	pool_init(&pf_cent_pl, sizeof(struct pf_frcache), 0, 0, 0, "pffrcent",
-	    NULL);
 	pool_init(&pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
 	    "pfstscr", NULL);
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
-	pool_sethardlimit(&pf_cache_pl, PFFRAG_FRCACHE_HIWAT, NULL, 0);
-	pool_sethardlimit(&pf_cent_pl, PFFRAG_FRCENT_HIWAT, NULL, 0);
 
 	TAILQ_INIT(&pf_fragqueue);
-	TAILQ_INIT(&pf_cachequeue);
 }
 
 static __inline int
@@ -171,23 +149,11 @@ pf_purge_expired_fragments(void)
 				    pf_default_rule.timeout[PFTM_FRAG];
 
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
-		KASSERT(BUFFER_FRAGMENTS(frag));
 		if (frag->fr_timeout > expire)
 			break;
 
 		DPFPRINTF(LOG_NOTICE, "expiring %d(%p)", frag->fr_id, frag);
 		pf_free_fragment(frag);
-	}
-
-	while ((frag = TAILQ_LAST(&pf_cachequeue, pf_cachequeue)) != NULL) {
-		KASSERT(!BUFFER_FRAGMENTS(frag));
-		if (frag->fr_timeout > expire)
-			break;
-
-		DPFPRINTF(LOG_NOTICE, "expiring %d(%p)", frag->fr_id, frag);
-		pf_free_fragment(frag);
-		KASSERT(TAILQ_EMPTY(&pf_cachequeue) ||
-		    TAILQ_LAST(&pf_cachequeue, pf_cachequeue) != frag);
 	}
 }
 
@@ -210,17 +176,6 @@ pf_flush_fragments(void)
 			break;
 		pf_free_fragment(frag);
 	}
-
-
-	goal = pf_ncache * 9 / 10;
-	DPFPRINTF(LOG_NOTICE, "trying to free > %d cache entries",
-	    pf_ncache - goal);
-	while (goal < pf_ncache) {
-		frag = TAILQ_LAST(&pf_cachequeue, pf_cachequeue);
-		if (frag == NULL)
-			break;
-		pf_free_fragment(frag);
-	}
 }
 
 /* Frees the fragments and all associated entries */
@@ -229,30 +184,15 @@ void
 pf_free_fragment(struct pf_fragment *frag)
 {
 	struct pf_frent		*frent;
-	struct pf_frcache	*frcache;
 
 	/* Free all fragments */
-	if (BUFFER_FRAGMENTS(frag)) {
-		for (frent = LIST_FIRST(&frag->fr_queue); frent;
-		    frent = LIST_FIRST(&frag->fr_queue)) {
-			LIST_REMOVE(frent, fr_next);
+	for (frent = LIST_FIRST(&frag->fr_queue); frent;
+	    frent = LIST_FIRST(&frag->fr_queue)) {
+		LIST_REMOVE(frent, fr_next);
 
-			m_freem(frent->fr_m);
-			pool_put(&pf_frent_pl, frent);
-			pf_nfrents--;
-		}
-	} else {
-		for (frcache = LIST_FIRST(&frag->fr_cache); frcache;
-		    frcache = LIST_FIRST(&frag->fr_cache)) {
-			LIST_REMOVE(frcache, fr_next);
-
-			KASSERT(LIST_EMPTY(&frag->fr_cache) ||
-			    LIST_FIRST(&frag->fr_cache)->fr_off >
-			    frcache->fr_end);
-
-			pool_put(&pf_cent_pl, frcache);
-			pf_ncache--;
-		}
+		m_freem(frent->fr_m);
+		pool_put(&pf_frent_pl, frent);
+		pf_nfrents--;
 	}
 
 	pf_remove_fragment(frag);
@@ -279,13 +219,8 @@ pf_find_fragment(struct ip *ip, struct pf_frag_tree *tree)
 	if (frag != NULL) {
 		/* XXX Are we sure we want to update the timeout? */
 		frag->fr_timeout = time_second;
-		if (BUFFER_FRAGMENTS(frag)) {
-			TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
-			TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
-		} else {
-			TAILQ_REMOVE(&pf_cachequeue, frag, frag_next);
-			TAILQ_INSERT_HEAD(&pf_cachequeue, frag, frag_next);
-		}
+		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
+		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 	}
 
 	return (frag);
@@ -296,15 +231,9 @@ pf_find_fragment(struct ip *ip, struct pf_frag_tree *tree)
 void
 pf_remove_fragment(struct pf_fragment *frag)
 {
-	if (BUFFER_FRAGMENTS(frag)) {
-		RB_REMOVE(pf_frag_tree, &pf_frag_tree, frag);
-		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
-		pool_put(&pf_frag_pl, frag);
-	} else {
-		RB_REMOVE(pf_frag_tree, &pf_cache_tree, frag);
-		TAILQ_REMOVE(&pf_cachequeue, frag, frag_next);
-		pool_put(&pf_cache_pl, frag);
-	}
+	RB_REMOVE(pf_frag_tree, &pf_frag_tree, frag);
+	TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
+	pool_put(&pf_frag_pl, frag);
 }
 
 #define FR_IP_OFF(fr)	((ntohs((fr)->fr_ip->ip_off) & IP_OFFMASK) << 3)
@@ -320,8 +249,6 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 	u_int16_t	 off = (ntohs(ip->ip_off) & IP_OFFMASK) << 3;
 	u_int16_t	 ip_len = ntohs(ip->ip_len) - ip->ip_hl * 4;
 	u_int16_t	 max = ip_len + off;
-
-	KASSERT(*frag == NULL || BUFFER_FRAGMENTS(*frag));
 
 	/* Strip off ip header */
 	m->m_data += hlen;
@@ -592,9 +519,6 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 
 	if (m == NULL)
 		return (PF_DROP);
-
-	if (frag != NULL && (frag->fr_flags & PFFRAG_DROP))
-		goto drop;
 
 	h = mtod(m, struct ip *);
 
