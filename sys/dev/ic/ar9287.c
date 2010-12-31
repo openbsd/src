@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.15 2010/12/31 14:06:05 damien Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.16 2010/12/31 17:50:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -108,7 +108,7 @@ ar9287_attach(struct athn_softc *sc)
 	sc->eep_base = AR9287_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar9287_eeprom);
 	sc->def_nf = AR9287_PHY_CCA_MAX_GOOD_VALUE;
-	sc->ngpiopins = 11;
+	sc->ngpiopins = (sc->flags & ATHN_FLAG_USB) ? 16 : 11;
 	sc->led_pin = 8;
 	sc->workaround = AR9285_WA_DEFAULT;
 	sc->ops.setup = ar9287_setup;

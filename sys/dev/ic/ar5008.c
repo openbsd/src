@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.16 2010/12/31 17:17:14 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.17 2010/12/31 17:50:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -356,6 +356,8 @@ int
 ar5008_gpio_read(struct athn_softc *sc, int pin)
 {
 	KASSERT(pin < sc->ngpiopins);
+	if ((sc->flags & ATHN_FLAG_USB) && !AR_SREV_9271(sc))
+		return (!(AR_READ(sc, AR7010_GPIO_IN) >> pin) & 1);
 	return ((AR_READ(sc, AR_GPIO_IN_OUT) >> (sc->ngpiopins + pin)) & 1);
 }
 
@@ -365,12 +367,26 @@ ar5008_gpio_write(struct athn_softc *sc, int pin, int set)
 	uint32_t reg;
 
 	KASSERT(pin < sc->ngpiopins);
-	reg = AR_READ(sc, AR_GPIO_IN_OUT);
-	if (set)
-		reg |= 1 << pin;
-	else
-		reg &= ~(1 << pin);
-	AR_WRITE(sc, AR_GPIO_IN_OUT, reg);
+
+	if (sc->flags & ATHN_FLAG_USB)
+		set = !set;	/* AR9271/AR7010 is reversed. */
+
+	if ((sc->flags & ATHN_FLAG_USB) && !AR_SREV_9271(sc)) {
+		/* Special case for AR7010. */
+		reg = AR_READ(sc, AR7010_GPIO_OUT);
+		if (set)
+			reg |= 1 << pin;
+		else
+			reg &= ~(1 << pin);
+		AR_WRITE(sc, AR7010_GPIO_OUT, reg);
+	} else {
+		reg = AR_READ(sc, AR_GPIO_IN_OUT);
+		if (set)
+			reg |= 1 << pin;
+		else
+			reg &= ~(1 << pin);
+		AR_WRITE(sc, AR_GPIO_IN_OUT, reg);
+	}
 	AR_WRITE_BARRIER(sc);
 }
 
@@ -379,10 +395,15 @@ ar5008_gpio_config_input(struct athn_softc *sc, int pin)
 {
 	uint32_t reg;
 
-	reg = AR_READ(sc, AR_GPIO_OE_OUT);
-	reg &= ~(AR_GPIO_OE_OUT_DRV_M << (pin * 2));
-	reg |= AR_GPIO_OE_OUT_DRV_NO << (pin * 2);
-	AR_WRITE(sc, AR_GPIO_OE_OUT, reg);
+	if ((sc->flags & ATHN_FLAG_USB) && !AR_SREV_9271(sc)) {
+		/* Special case for AR7010. */
+		AR_SETBITS(sc, AR7010_GPIO_OE, 1 << pin);
+	} else {
+		reg = AR_READ(sc, AR_GPIO_OE_OUT);
+		reg &= ~(AR_GPIO_OE_OUT_DRV_M << (pin * 2));
+		reg |= AR_GPIO_OE_OUT_DRV_NO << (pin * 2);
+		AR_WRITE(sc, AR_GPIO_OE_OUT, reg);
+	}
 	AR_WRITE_BARRIER(sc);
 }
 
@@ -392,6 +413,12 @@ ar5008_gpio_config_output(struct athn_softc *sc, int pin, int type)
 	uint32_t reg;
 	int mux, off;
 
+	if ((sc->flags & ATHN_FLAG_USB) && !AR_SREV_9271(sc)) {
+		/* Special case for AR7010. */
+		AR_CLRBITS(sc, AR7010_GPIO_OE, 1 << pin);
+		AR_WRITE_BARRIER(sc);
+		return;
+	}
 	mux = pin / 6;
 	off = pin % 6;
 

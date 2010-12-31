@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.14 2010/12/31 17:17:14 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.15 2010/12/31 17:50:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -109,7 +109,7 @@ ar9285_attach(struct athn_softc *sc)
 	sc->eep_base = AR9285_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar9285_eeprom);
 	sc->def_nf = AR9285_PHY_CCA_MAX_GOOD_VALUE;
-	sc->ngpiopins = 12;
+	sc->ngpiopins = (sc->flags & ATHN_FLAG_USB) ? 16 : 12;
 	sc->led_pin = 1;
 	sc->workaround = AR9285_WA_DEFAULT;
 	sc->ops.setup = ar9285_setup;
