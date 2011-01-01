@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.31 2010/05/31 19:51:29 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.32 2011/01/01 02:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,7 +54,7 @@ struct tty_key_ent {
  * Default key tables. Those flagged with TTYKEY_RAW are inserted directly,
  * otherwise they are looked up in terminfo(5).
  */
-struct tty_key_ent tty_keys[] = {
+const struct tty_key_ent tty_keys[] = {
 	/*
 	 * Numeric keypad. Just use the vt100 escape sequences here and always
 	 * put the terminal into keypad_xmit mode. Translation of numbers
@@ -343,9 +343,9 @@ tty_keys_add1(struct tty_key **tkp, const char *s, int key)
 void
 tty_keys_init(struct tty *tty)
 {
-	struct tty_key_ent	*tke;
-	u_int		 	 i;
-	const char		*s;
+	const struct tty_key_ent	*tke;
+	u_int		 		 i;
+	const char			*s;
 
 	tty->key_tree = NULL;
 	for (i = 0; i < nitems(tty_keys); i++) {
