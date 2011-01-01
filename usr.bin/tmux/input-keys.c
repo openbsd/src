@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.19 2010/12/29 21:49:06 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.20 2011/01/01 03:43:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,7 +40,7 @@ struct input_key_ent {
 #define INPUTKEY_CURSOR 0x2	/* cursor key */
 };
 
-struct input_key_ent input_keys[] = {
+const struct input_key_ent input_keys[] = {
 	/* Backspace key. */
 	{ KEYC_BSPACE,		"\177",		0 },
 
@@ -137,11 +137,11 @@ struct input_key_ent input_keys[] = {
 void
 input_key(struct window_pane *wp, int key)
 {
-	struct input_key_ent   *ike;
-	u_int			i;
-	size_t			dlen;
-	char		       *out;
-	u_char			ch;
+	const struct input_key_ent     *ike;
+	u_int				i;
+	size_t				dlen;
+	char			       *out;
+	u_char				ch;
 
 	log_debug2("writing key 0x%x", key);
 
