@@ -1,7 +1,7 @@
-/*	$OpenBSD: m88110.c,v 1.69 2011/01/01 20:58:32 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.70 2011/01/01 22:09:33 miod Exp $	*/
 
 /*
- * Copyright (c) 2010 Miodrag Vallat.
+ * Copyright (c) 2010, 2011, Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -760,38 +760,30 @@ m88110_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	paddr_t pa;
 	psize_t size, count;
 	void (*flusher)(paddr_t, psize_t);
+	uint8_t lines[2 * MC88110_CACHE_LINE];
+	paddr_t pa1, pa2;
+	psize_t sz1, sz2;
 
 	pa = trunc_cache_line(_pa);
 	size = round_cache_line(_pa + _size) - pa;
+	sz1 = sz2 = 0;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
-                /*
-                 * If the range does not span complete cache lines,
-                 * force invalidation of the incomplete lines.  The
-                 * rationale behind this is that these incomplete lines
-                 * will probably need to be invalidated later, and
-                 * we do not want to risk having stale data in the way.
-                 */
-		if (pa != _pa || size != _size || size >= PAGE_SIZE)
-			flusher = m88110_cmmu_wbinv_locked;
-		else
-			flusher = m88110_cmmu_wb_locked;
+		flusher = m88110_cmmu_wb_locked;
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_wbinv_locked;
 		break;
 	default:
+	case DMA_CACHE_INV:
+		pa1 = pa;
+		sz1 = _pa - pa1;
+		pa2 = _pa + _size;
+		sz2 = pa + size - pa2;
 		flusher = m88110_cmmu_inv_locked;
 		break;
 	}
-
-#ifdef ENABLE_88110_ERRATA_17
-	if (flusher == m88110_cmmu_wbinv_locked) {
-		pa = trunc_page(_pa);
-		size = trunc_page(_pa + _size) - pa;
-	}
-#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
@@ -799,12 +791,30 @@ m88110_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	if (op != DMA_CACHE_SYNC)
 		mc88110_inval_inst();
 	if (flusher == m88110_cmmu_inv_locked) {
+		/*
+		 * Preserve the data from the incomplete cache lines about
+		 * to be invalidated, if necessary.
+		 */
+		if (sz1 != 0)
+			bcopy((void *)pa1, lines, sz1);
+		if (sz2 != 0)
+			bcopy((void *)pa2, lines + MC88110_CACHE_LINE, sz2);
+
 		while (size != 0) {
 			count = MC88110_CACHE_LINE;
 			(*flusher)(pa, count);
 			pa += count;
 			size -= count;
 		}
+
+		/*
+		 * Restore data from the incomplete cache lines having
+		 * been invalidated, if necessary.
+		 */
+		if (sz1 != 0)
+			bcopy(lines, (void *)pa1, sz1);
+		if (sz2 != 0)
+			bcopy(lines + MC88110_CACHE_LINE, (void *)pa2, sz2);
 	} else {
 		while (size != 0) {
 			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
@@ -825,54 +835,30 @@ m88410_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
 	paddr_t pa;
 	psize_t size, count;
 	void (*flusher)(paddr_t, psize_t);
-	void (*ext_flusher)(void);
+	uint8_t lines[2 * MC88110_CACHE_LINE];
+	paddr_t pa1, pa2;
+	psize_t sz1, sz2;
 
-	if (op == DMA_CACHE_SYNC) {
-		/*
-		 * Enlarge the range to integral pages, to match the
-		 * 88410 operation granularity.
-		 */
-		pa = trunc_page(_pa);
-		size = trunc_page(_pa + _size) - pa;
-	} else {
-		pa = trunc_cache_line(_pa);
-		size = round_cache_line(_pa + _size) - pa;
-	}
+	pa = trunc_cache_line(_pa);
+	size = round_cache_line(_pa + _size) - pa;
+	sz1 = sz2 = 0;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
-                /*
-                 * If the range does not span complete cache lines,
-                 * force invalidation of the incomplete lines.  The
-                 * rationale behind this is that these incomplete lines
-                 * will probably need to be invalidated later, and
-                 * we do not want to risk having stale data in the way.
-                 */
-		if (pa != _pa || size != _size || size >= PAGE_SIZE)
-			flusher = m88110_cmmu_wbinv_locked;
-		else
-			flusher = m88110_cmmu_wb_locked;
+		flusher = m88110_cmmu_wb_locked;
 		break;
 	case DMA_CACHE_SYNC_INVAL:
 		flusher = m88110_cmmu_wbinv_locked;
-		ext_flusher = mc88410_wbinv;
 		break;
 	default:
+	case DMA_CACHE_INV:
+		pa1 = pa;
+		sz1 = _pa - pa1;
+		pa2 = _pa + _size;
+		sz2 = pa + size - pa2;
 		flusher = m88110_cmmu_inv_locked;
-#ifdef notyet
-		ext_flusher = mc88410_inv;
-#else
-		ext_flusher = mc88410_wbinv;
-#endif
 		break;
 	}
-
-#ifdef ENABLE_88110_ERRATA_17
-	if (flusher == m88110_cmmu_wbinv_locked) {
-		pa = trunc_page(_pa);
-		size = trunc_page(_pa + _size) - pa;
-	}
-#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
@@ -880,12 +866,30 @@ m88410_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
 	if (op != DMA_CACHE_SYNC)
 		mc88110_inval_inst();
 	if (flusher == m88110_cmmu_inv_locked) {
+		/*
+		 * Preserve the data from the incomplete cache lines about
+		 * to be invalidated, if necessary.
+		 */
+		if (sz1 != 0)
+			bcopy((void *)pa1, lines, sz1);
+		if (sz2 != 0)
+			bcopy((void *)pa2, lines + MC88110_CACHE_LINE, sz2);
+
 		while (size != 0) {
 			count = MC88110_CACHE_LINE;
 			(*flusher)(pa, count);
 			pa += count;
 			size -= count;
 		}
+
+		/*
+		 * Restore data from the incomplete cache lines having
+		 * been invalidated, if necessary.
+		 */
+		if (sz1 != 0)
+			bcopy(lines, (void *)pa1, sz1);
+		if (sz2 != 0)
+			bcopy(lines + MC88110_CACHE_LINE, (void *)pa2, sz2);
 	} else {
 		while (size != 0) {
 			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
@@ -899,13 +903,20 @@ m88410_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
 
 	CMMU_LOCK;
 	if (op == DMA_CACHE_SYNC) {
+		/*
+		 * Enlarge the range to integral pages, to match the
+		 * 88410 operation granularity.
+		 */
+		pa = trunc_page(_pa);
+		size = trunc_page(_pa + _size) - pa;
+
 		while (size != 0) {
 			mc88410_wb_page(pa);
 			pa += PAGE_SIZE;
 			size -= PAGE_SIZE;
 		}
 	} else {
-		(*ext_flusher)();
+		mc88410_wbinv();
 	}
 	CMMU_UNLOCK;
 
@@ -913,15 +924,28 @@ m88410_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
 }
 
 void
-m88410_dma_cachectl(paddr_t pa, psize_t size, int op)
+m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 {
-	m88410_dma_cachectl_local(pa, size, op);
+#ifdef MULTIPROCESSOR
+	paddr_t pa;
+	psize_t size;
+#endif
+
+	m88410_dma_cachectl_local(_pa, _size, op);
 #ifdef MULTIPROCESSOR
 	/*
 	 * Since snooping is enabled, all we need is to propagate invalidate 
 	 * requests if necessary.
+	 *
+	 * Note that we round the range to integral cache lines, in order
+	 * to avoid trying to preserve incomplete lines - this has already
+	 * been done by the cachectl_local() call above, and as long as one
+	 * cpu has the correct data in its cache, it's not lost.
 	 */
-	if (op != DMA_CACHE_SYNC)
+	if (op != DMA_CACHE_SYNC) {
+		pa = trunc_cache_line(_pa);
+		size = round_cache_line(_pa + _size) - pa;
 		m197_broadcast_complex_ipi(CI_IPI_DMA_CACHECTL, pa, size);
+	}
 #endif
 }

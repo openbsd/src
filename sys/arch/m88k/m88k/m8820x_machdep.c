@@ -1,6 +1,6 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.44 2010/12/31 21:16:31 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.45 2011/01/01 22:09:33 miod Exp $	*/
 /*
- * Copyright (c) 2004, 2007, 2010, Miodrag Vallat.
+ * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -764,113 +764,30 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	paddr_t pa;
 	psize_t size, count;
 	void (*flusher)(int, paddr_t, psize_t);
-	struct {
-		paddr_t pa;
-		psize_t size;
-		void (*flusher)(int, paddr_t, psize_t);
-	} ops[3], *curop;
-	uint nops;
+	uint8_t lines[2 * MC88200_CACHE_LINE];
+	paddr_t pa1, pa2;
+	psize_t sz1, sz2;
 
 	pa = trunc_cache_line(_pa);
 	size = round_cache_line(_pa + _size) - pa;
-	nops = 0;
-	curop = ops;
+	sz1 = sz2 = 0;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
-		/*
-		 * If the range does not span complete cache lines,
-		 * force invalidation of the incomplete lines.  The
-		 * rationale behind this is that these incomplete lines
-		 * will probably need to be invalidated later, and
-		 * we do not want to risk having stale data in the way.
-		 */
-		if (pa != _pa) {
-			curop->pa = pa;
-			curop->size = MC88200_CACHE_LINE;
-			curop->flusher = m8820x_cmmu_wbinv_locked;
-			curop++;
-			pa += MC88200_CACHE_LINE;
-			size -= MC88200_CACHE_LINE;
-			if (size == 0)
-				break;
-		}
-		if (pa + size == _pa + _size) {
-			curop->pa = pa;
-			curop->size = size;
-			curop->flusher = m8820x_cmmu_wb_locked;
-			curop++;
-		} else {
-			if (size != MC88200_CACHE_LINE) {
-				curop->pa = pa;
-				curop->size = size - MC88200_CACHE_LINE;
-				curop->flusher = m8820x_cmmu_wb_locked;
-				pa += curop->size;
-				curop++;
-			}
-			curop->pa = pa;
-			curop->size = MC88200_CACHE_LINE;
-			curop->flusher = m8820x_cmmu_wbinv_locked;
-			curop++;
-		}
+		flusher = m8820x_cmmu_wb_locked;
 		break;
 	case DMA_CACHE_SYNC_INVAL:
-		curop->pa = pa;
-		curop->size = size;
-		curop->flusher = m8820x_cmmu_wbinv_locked;
-		curop++;
+		flusher = m8820x_cmmu_wbinv_locked;
 		break;
 	default:
 	case DMA_CACHE_INV:
-#if 0
-		/*
-		 * Preserve the data from the incomplete cache lines (up to
-		 * two), and discard the lines in-between (if any).
-		 */
-		if (pa != _pa) {
-			curop->pa = pa;
-			curop->size = MC88200_CACHE_LINE;
-			curop->flusher = m8820x_cmmu_wbinv_locked;
-			curop++;
-			pa += MC88200_CACHE_LINE;
-			size -= MC88200_CACHE_LINE;
-			if (size == 0)
-				break;
-		}
-		if (pa + size == _pa + _size) {
-			curop->pa = pa;
-			curop->size = size;
-			curop->flusher = m8820x_cmmu_inv_locked;
-			curop++;
-		} else {
-			if (size != MC88200_CACHE_LINE) {
-				curop->pa = pa;
-				curop->size = size - MC88200_CACHE_LINE;
-				curop->flusher = m8820x_cmmu_inv_locked;
-				pa += curop->size;
-				curop++;
-			}
-			curop->pa = pa;
-			curop->size = MC88200_CACHE_LINE;
-			curop->flusher = m8820x_cmmu_wbinv_locked;
-			curop++;
-		}
-#else
-		/*
-		 * Even if there are incomplete cache lines affected, assume
-		 * they were evicted earlier.
-		 * XXX We ought to save the partial cache lines, invalidate,
-		 * XXX and put outside-the-range bytes back...
-		 */
-		curop->pa = pa;
-		curop->size = size;
-		curop->flusher = m8820x_cmmu_inv_locked;
-		curop++;
-#endif
+		pa1 = pa;
+		sz1 = _pa - pa1;
+		pa2 = _pa + _size;
+		sz2 = pa + size - pa2;
+		flusher = m8820x_cmmu_inv_locked;
 		break;
 	}
-
-	nops = curop - ops;
 
 #ifndef MULTIPROCESSOR
 	cpu = cpu_number();
@@ -880,37 +797,49 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
 
-	for (curop = ops; nops != 0; curop++, nops--) {
-		pa = curop->pa;
-		size = curop->size;
-		flusher = curop->flusher;
-		while (size != 0) {
-			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
+	/*
+	 * Preserve the data from incomplete cache lines about to be
+	 * invalidated, if necessary.
+	 */
+	if (sz1 != 0)
+		bcopy((void *)pa1, lines, sz1);
+	if (sz2 != 0)
+		bcopy((void *)pa2, lines + MC88200_CACHE_LINE, sz2);
+
+	while (size != 0) {
+		count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
 		    PAGE_SIZE : MC88200_CACHE_LINE;
 
 #ifdef MULTIPROCESSOR
-			/* writeback on a single cpu... */
-			(*flusher)(ci->ci_cpuid, pa, count);
+		/* writeback on a single cpu... */
+		(*flusher)(ci->ci_cpuid, pa, count);
 
-			/* invalidate on all... */
-			if (flusher != m8820x_cmmu_wb_locked) {
-				for (cpu = 0; cpu < MAX_CPUS; cpu++) {
-					if (!ISSET(m88k_cpus[cpu].ci_flags,
-					    CIF_ALIVE))
-						continue;
-					if (cpu == ci->ci_cpuid)
-						continue;
-					m8820x_cmmu_inv_locked(cpu, pa, count);
-				}
+		/* invalidate on all... */
+		if (flusher != m8820x_cmmu_wb_locked) {
+			for (cpu = 0; cpu < MAX_CPUS; cpu++) {
+				if (!ISSET(m88k_cpus[cpu].ci_flags, CIF_ALIVE))
+					continue;
+				if (cpu == ci->ci_cpuid)
+					continue;
+				m8820x_cmmu_inv_locked(cpu, pa, count);
 			}
+		}
 #else	/* MULTIPROCESSOR */
-			(*flusher)(cpu, pa, count);
+		(*flusher)(cpu, pa, count);
 #endif	/* MULTIPROCESSOR */
 
-			pa += count;
-			size -= count;
-		}
+		pa += count;
+		size -= count;
 	}
+
+	/*
+	 * Restore data from incomplete cache lines having been invalidated,
+	 * if necessary.
+	 */
+	if (sz1 != 0)
+		bcopy(lines, (void *)pa1, sz1);
+	if (sz2 != 0)
+		bcopy(lines + MC88200_CACHE_LINE, (void *)pa2, sz2);
 
 	CMMU_UNLOCK;
 	set_psr(psr);
