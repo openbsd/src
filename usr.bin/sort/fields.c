@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.14 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: fields.c,v 1.15 2011/01/01 12:11:37 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -164,14 +164,14 @@ enterfield(u_char *tablepos, u_char *endkey, struct field *cur_fld, int gflags)
 	for (; start < end; start++)
 		if (mask[*start]) {
 			if (*start <= 1) {
-				if (tablepos+2 >= endkey)
+				if (tablepos + 2 >= endkey)
 					return (NULL);
 				*tablepos++ = lweight[1];
 				*tablepos++ = lweight[*start ? 2 : 1];
 			} else {
-				*tablepos++ = lweight[*start];
-				if (tablepos == endkey)
+				if (tablepos + 1 >= endkey)
 					return (NULL);
+				*tablepos++ = lweight[*start];
 			}
 		}
 	*tablepos++ = lweight[0];
