@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.68 2010/12/31 21:16:31 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.69 2011/01/01 20:58:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -492,13 +492,7 @@ m88110_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
  *
  * This really only matters to us when running a MULTIPROCESSOR kernel
  * (otherwise there is no snooping happening), and given the intrusive
- * changes it requires (see the comment about invalidates being turned
- * into flushes with invalidate in m88110_cmmu_inv_locked below), as
- * well as the small performance impact it has), we define a specific
- * symbol to enable the suggested workaround.
- *
- * Also, note that m88110_dma_cachectl() is never invoked when running on
- * a multiprocessor system, therefore does not need to implement this
+ * changes it requires, we define a specific symbol to enable the suggested
  * workaround.
  */
 #define	ENABLE_88110_ERRATA_17
@@ -517,32 +511,27 @@ m88110_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 	u_int32_t psr;
 	psize_t count;
 
-#ifdef ENABLE_88110_ERRATA_17
-	size = round_page(pa + size) - trunc_page(pa);
-	pa = trunc_page(pa);
-#else
 	size = round_cache_line(pa + size) - trunc_cache_line(pa);
 	pa = trunc_cache_line(pa);
-#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
 	while (size != 0) {
-#ifdef ENABLE_88110_ERRATA_17
-		mc88110_wb_data_page(pa);
-		mc88110_wbinv_data_page(pa);
-		count = PAGE_SIZE;
-#else
 		if ((pa & PAGE_MASK) == 0 && size >= PAGE_SIZE) {
+#ifdef ENABLE_88110_ERRATA_17
+			mc88110_wb_data_page(pa);
+#endif
 			mc88110_wbinv_data_page(pa);
 			count = PAGE_SIZE;
 		} else {
+#ifdef ENABLE_88110_ERRATA_17
+			mc88110_wb_data_line(pa);
+#endif
 			mc88110_wbinv_data_line(pa);
 			count = MC88110_CACHE_LINE;
 		}
-#endif
 		pa += count;
 		size -= count;
 	}
@@ -564,32 +553,27 @@ m88410_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 	}
 #endif
 
-#ifdef ENABLE_88110_ERRATA_17
-	size = round_page(pa + size) - trunc_page(pa);
-	pa = trunc_page(pa);
-#else
 	size = round_cache_line(pa + size) - trunc_cache_line(pa);
 	pa = trunc_cache_line(pa);
-#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
 	mc88110_inval_inst();
 	while (size != 0) {
-#ifdef ENABLE_88110_ERRATA_17
-		mc88110_wb_data_page(pa);
-		mc88110_wbinv_data_page(pa);
-		count = PAGE_SIZE;
-#else
 		if ((pa & PAGE_MASK) == 0 && size >= PAGE_SIZE) {
+#ifdef ENABLE_88110_ERRATA_17
+			mc88110_wb_data_page(pa);
+#endif
 			mc88110_wbinv_data_page(pa);
 			count = PAGE_SIZE;
 		} else {
+#ifdef ENABLE_88110_ERRATA_17
+			mc88110_wb_data_line(pa);
+#endif
 			mc88110_wbinv_data_line(pa);
 			count = MC88110_CACHE_LINE;
 		}
-#endif
 		pa += count;
 		size -= count;
 	}
@@ -724,15 +708,17 @@ m88110_cmmu_wb_locked(paddr_t pa, psize_t size)
 void
 m88110_cmmu_wbinv_locked(paddr_t pa, psize_t size)
 {
+	if (size <= MC88110_CACHE_LINE) {
 #ifdef ENABLE_88110_ERRATA_17
-	mc88110_wb_data_page(pa);
-	mc88110_wbinv_data_page(pa);
-#else
-	if (size <= MC88110_CACHE_LINE)
-		mc88110_wbinv_data_line(pa);
-	else
-		mc88110_wbinv_data_page(pa);
+		mc88110_wb_data_line(pa);
 #endif
+		mc88110_wbinv_data_line(pa);
+	} else {
+#ifdef ENABLE_88110_ERRATA_17
+		mc88110_wb_data_page(pa);
+#endif
+		mc88110_wbinv_data_page(pa);
+	}
 }
 
 /*
