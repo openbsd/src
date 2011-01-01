@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.15 2010/12/31 17:50:48 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.16 2011/01/01 14:25:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,7 @@
 
 /*
  * Driver for Atheros 802.11a/g/n chipsets.
- * Routines for AR9285 chipsets.
+ * Routines for AR9285 and AR9271 chipsets.
  */
 
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.11 2011/01/01 13:44:42 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.12 2011/01/01 14:25:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -472,6 +472,8 @@ ar9485_pmu_write(struct athn_softc *sc, uint32_t addr, uint32_t val)
 	return (ETIMEDOUT);
 }
 
+#define ar9486_pmu_read	AR_READ
+
 void
 ar9485_init_swreg(struct athn_softc *sc)
 {
@@ -479,12 +481,12 @@ ar9485_init_swreg(struct athn_softc *sc)
 	uint32_t reg;
 
 	ar9485_pmu_write(sc, AR_PHY_PMU2,
-	    AR_READ(sc, AR_PHY_PMU2) & ~AR_PHY_PMU2_PGM);
+	    ar9486_pmu_read(sc, AR_PHY_PMU2) & ~AR_PHY_PMU2_PGM);
 
 	if (eep->baseEepHeader.featureEnable & AR_EEP_INTERNAL_REGULATOR) {
 		ar9485_pmu_write(sc, AR_PHY_PMU1, 0x131dc17a);
 
-		reg = AR_READ(sc, AR_PHY_PMU2);
+		reg = ar9486_pmu_read(sc, AR_PHY_PMU2);
 		reg = (reg & ~0xffc00000) | 0x10000000;
 		ar9485_pmu_write(sc, AR_PHY_PMU2, reg);
 	} else {
@@ -493,7 +495,7 @@ ar9485_init_swreg(struct athn_softc *sc)
 	}
 
 	ar9485_pmu_write(sc, AR_PHY_PMU2,
-	    AR_READ(sc, AR_PHY_PMU2) | AR_PHY_PMU2_PGM);
+	    ar9486_pmu_read(sc, AR_PHY_PMU2) | AR_PHY_PMU2_PGM);
 }
 
 void

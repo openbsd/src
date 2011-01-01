@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.15 2010/12/31 17:50:48 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.16 2011/01/01 14:25:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -474,7 +474,6 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 	spurchans = sc->ops.get_spur_chans(sc, IEEE80211_IS_CHAN_2GHZ(c));
 	for (i = 0; i < AR_EEPROM_MODAL_SPURS; i++) {
 		spur = spurchans[i].spurChan;
-		/* XXX Linux checks this too late? */
 		if (spur == AR_NO_SPUR)
 			return;	/* XXX disable if it was enabled! */
 		spur /= 10;
