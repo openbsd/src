@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.14 2010/12/31 21:23:55 damien Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.15 2011/01/01 10:48:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -29,7 +29,6 @@
 /*
  * ROM layout used by AR9380.
  */
-#define AR9380_EEP_START_LOC		0x3ff
 #define AR9380_NUM_5G_CAL_PIERS		8
 #define AR9380_NUM_2G_CAL_PIERS		3
 #define AR9380_NUM_5G_20_TARGET_POWERS	8

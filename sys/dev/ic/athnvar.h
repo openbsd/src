@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.27 2010/12/31 21:23:55 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.28 2011/01/01 10:48:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -364,6 +364,7 @@ struct athn_ops {
 		    struct ieee80211_channel *, struct ieee80211_channel *);
 	int	(*set_synth)(struct athn_softc *, struct ieee80211_channel *,
 		    struct ieee80211_channel *);
+	int	(*read_rom_data)(struct athn_softc *, uint32_t, void *, int);
 	const uint8_t *
 		(*get_rom_template)(struct athn_softc *, uint8_t);
 	void	(*swap_rom)(struct athn_softc *);

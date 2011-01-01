@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003reg.h,v 1.5 2010/11/10 21:06:44 damien Exp $	*/
+/*	$OpenBSD: ar9003reg.h,v 1.6 2011/01/01 10:48:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -846,6 +846,21 @@
 #define AR_PHY_65NM_CH0_THERM_SAR_ADC_OUT_S	8
 #define AR_PHY_65NM_CH0_THERM_START		0x20000000
 #define AR_PHY_65NM_CH0_THERM_LOCAL		0x80000000
+
+/*
+ * OTP registers.
+ */
+#define AR_OTP_BASE(i)			(0x14000 + (i) * 4)
+#define AR_OTP_STATUS			0x15f18
+#define AR_OTP_READ_DATA		0x15f1c
+
+/* Bits for AR_OTP_STATUS. */
+#define AR_OTP_STATUS_TYPE_M		0x00000007
+#define AR_OTP_STATUS_TYPE_S		0
+#define AR_OTP_STATUS_SM_BUSY		0x1
+#define AR_OTP_STATUS_ACCESS_BUSY	0x2
+#define AR_OTP_STATUS_VALID		0x4
+
 
 #define AR9003_MAX_CHAINS	3
 

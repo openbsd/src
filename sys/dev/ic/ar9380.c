@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.9 2010/12/31 21:23:55 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.10 2011/01/01 10:48:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -101,8 +101,6 @@ void	ar9003_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
 int
 ar9380_attach(struct athn_softc *sc)
 {
-	sc->eep_base = AR9380_EEP_START_LOC;
-	sc->eep_size = sizeof(struct ar9380_eeprom);
 	sc->ngpiopins = 17;
 	sc->ops.setup = ar9380_setup;
 	sc->ops.get_rom_template = ar9380_get_rom_template;

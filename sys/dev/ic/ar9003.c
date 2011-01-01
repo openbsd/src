@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.20 2010/12/31 21:23:55 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.21 2011/01/01 10:48:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -66,8 +66,11 @@
 #include <dev/ic/ar9003reg.h>
 
 int	ar9003_attach(struct athn_softc *);
-int	ar9003_read_rom_word(struct athn_softc *, uint32_t, uint16_t *);
-int	ar9003_read_rom_data(struct athn_softc *, uint32_t, void *, int);
+int	ar9003_read_eep_word(struct athn_softc *, uint32_t, uint16_t *);
+int	ar9003_read_eep_data(struct athn_softc *, uint32_t, void *, int);
+int	ar9003_read_otp_word(struct athn_softc *, uint32_t, uint32_t *);
+int	ar9003_read_otp_data(struct athn_softc *, uint32_t, void *, int);
+int	ar9003_find_rom(struct athn_softc *);
 int	ar9003_restore_rom_block(struct athn_softc *, uint8_t, uint8_t,
 	    const uint8_t *, int);
 int	ar9003_read_rom(struct athn_softc *);
@@ -208,9 +211,14 @@ ar9003_attach(struct athn_softc *sc)
 	else
 		athn_config_pcie(sc);
 
+	/* Determine ROM type and location. */
+	if ((error = ar9003_find_rom(sc)) != 0) {
+		printf("%s: could not find ROM\n", sc->sc_dev.dv_xname);
+		return (error);
+	}
 	/* Read entire ROM content in memory. */
 	if ((error = ar9003_read_rom(sc)) != 0) {
-		printf(": could not read ROM\n");
+		printf("%s: could not read ROM\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
@@ -223,10 +231,10 @@ ar9003_attach(struct athn_softc *sc)
 }
 
 /*
- * Read 16-bit value from ROM.
+ * Read 16-bit word from ROM.
  */
 int
-ar9003_read_rom_word(struct athn_softc *sc, uint32_t addr, uint16_t *val)
+ar9003_read_eep_word(struct athn_softc *sc, uint32_t addr, uint16_t *val)
 {
 	uint32_t reg;
 	int ntries;
@@ -250,7 +258,7 @@ ar9003_read_rom_word(struct athn_softc *sc, uint32_t addr, uint16_t *val)
  * NB: The address may not be 16-bit aligned.
  */
 int
-ar9003_read_rom_data(struct athn_softc *sc, uint32_t addr, void *buf, int len)
+ar9003_read_eep_data(struct athn_softc *sc, uint32_t addr, void *buf, int len)
 {
 	uint8_t *dst = buf;
 	uint16_t val;
@@ -259,7 +267,7 @@ ar9003_read_rom_data(struct athn_softc *sc, uint32_t addr, void *buf, int len)
 	if (len > 0 && (addr & 1)) {
 		/* Deal with non-aligned reads. */
 		addr >>= 1;
-		error = ar9003_read_rom_word(sc, addr, &val);
+		error = ar9003_read_eep_word(sc, addr, &val);
 		if (error != 0)
 			return (error);
 		*dst++ = val & 0xff;
@@ -268,19 +276,104 @@ ar9003_read_rom_data(struct athn_softc *sc, uint32_t addr, void *buf, int len)
 	} else
 		addr >>= 1;
 	for (; len >= 2; addr--, len -= 2) {
-		error = ar9003_read_rom_word(sc, addr, &val);
+		error = ar9003_read_eep_word(sc, addr, &val);
 		if (error != 0)
 			return (error);
 		*dst++ = val >> 8;
 		*dst++ = val & 0xff;
 	}
 	if (len > 0) {
-		error = ar9003_read_rom_word(sc, addr, &val);
+		error = ar9003_read_eep_word(sc, addr, &val);
 		if (error != 0)
 			return (error);
 		*dst++ = val >> 8;
 	}
 	return (0);
+}
+
+/*
+ * Read 32-bit word from OTPROM.
+ */
+int
+ar9003_read_otp_word(struct athn_softc *sc, uint32_t addr, uint32_t *val)
+{
+	uint32_t reg;
+	int ntries;
+
+	reg = AR_READ(sc, AR_OTP_BASE(addr));
+	for (ntries = 0; ntries < 1000; ntries++) {
+		reg = AR_READ(sc, AR_OTP_STATUS);
+		if (MS(reg, AR_OTP_STATUS_TYPE) == AR_OTP_STATUS_VALID) {
+			*val = AR_READ(sc, AR_OTP_READ_DATA);
+			return (0);
+		}
+		DELAY(10);
+	}
+	return (ETIMEDOUT);
+}
+
+/*
+ * Read an arbitrary number of bytes at a specified address in OTPROM.
+ * NB: The address may not be 32-bit aligned.
+ */
+int
+ar9003_read_otp_data(struct athn_softc *sc, uint32_t addr, void *buf, int len)
+{
+	uint8_t *dst = buf;
+	uint32_t val;
+	int error;
+
+	/* NB: not optimal for non-aligned reads, but correct. */
+	for (; len > 0; addr--, len--) {
+		error = ar9003_read_otp_word(sc, addr >> 2, &val);
+		if (error != 0)
+			return (error);
+		*dst++ = (val >> ((addr & 3) * 8)) & 0xff;
+	}
+	return (0);
+}
+
+/*
+ * Determine if the chip has an external EEPROM or an OTPROM and its size.
+ */
+int
+ar9003_find_rom(struct athn_softc *sc)
+{
+	struct athn_ops *ops = &sc->ops;
+	uint32_t hdr;
+	int error;
+
+	/* Try EEPROM. */
+	ops->read_rom_data = ar9003_read_eep_data;
+
+	sc->eep_size = AR_SREV_9485(sc) ? 4096 : 1024;
+	sc->eep_base = sc->eep_size - 1;
+	error = ops->read_rom_data(sc, sc->eep_base, &hdr, sizeof(hdr));
+	if (error == 0 && hdr != 0 && hdr != 0xffffffff)
+		return (0);
+
+	sc->eep_size = 512;
+	sc->eep_base = sc->eep_size - 1;
+	error = ops->read_rom_data(sc, sc->eep_base, &hdr, sizeof(hdr));
+	if (error == 0 && hdr != 0 && hdr != 0xffffffff)
+		return (0);
+
+	/* Try OTPROM. */
+	ops->read_rom_data = ar9003_read_otp_data;
+
+	sc->eep_size = 1024;
+	sc->eep_base = sc->eep_size - 1;
+	error = ops->read_rom_data(sc, sc->eep_base, &hdr, sizeof(hdr));
+	if (error == 0 && hdr != 0 && hdr != 0xffffffff)
+		return (0);
+
+	sc->eep_size = 512;
+	sc->eep_base = sc->eep_size - 1;
+	error = ops->read_rom_data(sc, sc->eep_base, &hdr, sizeof(hdr));
+	if (error == 0 && hdr != 0 && hdr != 0xffffffff)
+		return (0);
+
+	return (EIO);	/* Not found. */
 }
 
 int
@@ -334,6 +427,7 @@ ar9003_restore_rom_block(struct athn_softc *sc, uint8_t alg, uint8_t ref,
 int
 ar9003_read_rom(struct athn_softc *sc)
 {
+	struct athn_ops *ops = &sc->ops;
 	uint8_t *buf, *ptr, alg, ref;
 	uint16_t sum, rsum;
 	uint32_t hdr;
@@ -353,7 +447,7 @@ ar9003_read_rom(struct athn_softc *sc)
 	addr = sc->eep_base;
 	for (i = 0; i < 100; i++) {
 		/* Read block header. */
-		error = ar9003_read_rom_data(sc, addr, &hdr, sizeof(hdr));
+		error = ops->read_rom_data(sc, addr, &hdr, sizeof(hdr));
 		if (error != 0)
 			break;
 		if (hdr == 0 || hdr == 0xffffffff)
@@ -369,13 +463,13 @@ ar9003_read_rom(struct athn_softc *sc)
 		    i, alg, ref, len));
 
 		/* Read block data (len <= 0x7ff). */
-		error = ar9003_read_rom_data(sc, addr, buf, len);
+		error = ops->read_rom_data(sc, addr, buf, len);
 		if (error != 0)
 			break;
 		addr -= len;
 
 		/* Read block checksum. */
-		error = ar9003_read_rom_data(sc, addr, &sum, sizeof(sum));
+		error = ops->read_rom_data(sc, addr, &sum, sizeof(sum));
 		if (error != 0)
 			break;
 		addr -= sizeof(sum);
@@ -396,7 +490,7 @@ ar9003_read_rom(struct athn_softc *sc)
 #if BYTE_ORDER == BIG_ENDIAN
 	/* NB: ROM is always little endian. */
 	if (error == 0)
-		sc->ops.swap_rom(sc);
+		ops->swap_rom(sc);
 #endif
 	free(buf, M_DEVBUF);
 	return (error);
@@ -1217,6 +1311,8 @@ ar9003_intr(struct athn_softc *sc)
 			if (intr2 & AR_ISR_S2_TIM)
 				/* TBD */;
 			if (intr2 & AR_ISR_S2_TSFOOR)
+				/* TBD */;
+			if (intr2 & AR_ISR_S2_BB_WATCHDOG)
 				/* TBD */;
 		}
 		intr = AR_READ(sc, AR_ISR_RAC);
