@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.120 2011/01/01 01:41:02 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.121 2011/01/01 19:43:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
@@ -351,10 +351,7 @@ extract_entropy(u_int8_t *buf, int nbytes)
 	add_timer_randomness(nbytes);
 
 	while (nbytes) {
-		if (nbytes < sizeof(buffer) / 2)
-			i = nbytes;
-		else
-			i = sizeof(buffer) / 2;
+		i = MIN(nbytes, sizeof(buffer));
 
 		/* Hash the pool to get the output */
 		MD5Init(&tmp);
@@ -367,19 +364,6 @@ extract_entropy(u_int8_t *buf, int nbytes)
 			random_state.entropy_count = 0;
 		mtx_leave(&rndlock);
 		MD5Final(buffer, &tmp);
-
-		/*
-		 * In case the hash function has some recognizable
-		 * output pattern, we fold it in half.
-		 */
-		buffer[0] ^= buffer[15];
-		buffer[1] ^= buffer[14];
-		buffer[2] ^= buffer[13];
-		buffer[3] ^= buffer[12];
-		buffer[4] ^= buffer[11];
-		buffer[5] ^= buffer[10];
-		buffer[6] ^= buffer[ 9];
-		buffer[7] ^= buffer[ 8];
 
 		/* Copy data to destination buffer */
 		bcopy(buffer, buf, i);
