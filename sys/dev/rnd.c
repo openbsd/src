@@ -1,8 +1,6 @@
-/*	$OpenBSD: rnd.c,v 1.119 2010/12/31 22:45:18 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.120 2011/01/01 01:41:02 deraadt Exp $	*/
 
 /*
- * rnd.c -- A strong random number generator
- *
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
  * Copyright (c) 2008 Damien Miller.
  * Copyright Theodore Ts'o, 1994, 1995, 1996, 1997, 1998, 1999.
@@ -179,11 +177,6 @@
 #include <crypto/arc4.h>
 
 #include <dev/rndvar.h>
-
-/*
- * Master random number pool functions
- * -----------------------------------
- */
 
 /*
  * For the purposes of better mixing, we use the CRC-32 polynomial as
@@ -403,12 +396,8 @@ extract_entropy(u_int8_t *buf, int nbytes)
 	bzero(buffer, sizeof(buffer));
 }
 
-/*
- * Kernel-side entropy crediting API and handling of entropy-bearing events
- * ------------------------------------------------------------------------
- */
+/* Entropy crediting API and handling of entropy-bearing events */
 
-/* pIII/333 reported to have some drops w/ these numbers */
 #define QEVLEN (1024 / sizeof(struct rand_event))
 #define QEVSLOW (QEVLEN * 3 / 4) /* yet another 0.75 for 60-minutes hour /-; */
 #define QEVSBITS 10
@@ -642,11 +631,6 @@ dequeue_randomness(void *v)
 }
 
 /*
- * Exported kernel CPRNG API: arc4random() and friends
- * ---------------------------------------------------
- */
-
-/*
  * Maximum number of bytes to serve directly from the main arc4random
  * pool. Larger requests are served from discrete arc4 instances keyed
  * from the main pool.
@@ -728,7 +712,7 @@ arc4_stir(void)
 }
 
 /*
- * called by timeout to mark arc4 for stirring,
+ * Called by timeout to mark arc4 for stirring,
  * actual stirring happens on any access attempt.
  */
 static void
@@ -853,11 +837,6 @@ arc4random_uniform(u_int32_t upper_bound)
 
 	return r % upper_bound;
 }
-
-/*
- * random, srandom, urandom, arandom char devices
- * -------------------------------------------------------
- */
 
 int
 randomopen(dev_t dev, int flag, int mode, struct proc *p)
