@@ -1,0 +1,14 @@
+STRING-ZEROLENGTH(1)                                      STRING-ZEROLENGTH(1)
+
+
+
+NNAAMMEE
+       string-zerolength - handling of zero-length user-defined strings
+
+DDEESSCCRRIIPPTTIIOONN
+       use zero-length string: xx x
+
+       use zero-length macro: xx x
+
+
+

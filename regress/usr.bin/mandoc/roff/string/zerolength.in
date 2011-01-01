@@ -1,0 +1,16 @@
+.TH STRING-ZEROLENGTH 1 "December 19, 2010"
+.SH NAME
+string-zerolength - handling of zero-length user-defined strings
+.SH DESCRIPTION
+.ds dszero "
+.de dezero
+..
+use zero-length string:
+x\*[dszero]x
+.dszero
+x
+.PP
+use zero-length macro:
+x\*[dezero]x
+.dezero
+x
