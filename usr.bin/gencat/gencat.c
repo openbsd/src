@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.13 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.14 2011/01/01 11:25:54 lum Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -314,89 +314,89 @@ getmsg(int fd, char *cptr, char quote)
 		if (quote && *cptr == quote) {
 			char   *tmp;
 			tmp = cptr + 1;
+
 			if (*tmp && (!ISSPACE(*tmp) || *wskip(tmp))) {
 				warning(cptr, "unexpected quote character, ignoring");
 				*tptr++ = *cptr++;
 			} else {
 				*cptr = '\0';
 			}
-		} else
-			if (*cptr == '\\') {
+		} else if (*cptr == '\\') {
+			++cptr;
+			switch (*cptr) {
+			case '\0':
+				cptr = getline(fd);
+				if (!cptr)
+					error(NULL, "premature end of file");
+				msglen += strlen(cptr);
+				i = tptr - msg;
+				msg = xrealloc(msg, msglen);
+				tptr = msg + i;
+				break;
+			case 'n':
+				*tptr++ = '\n';
 				++cptr;
-				switch (*cptr) {
-				case '\0':
-					cptr = getline(fd);
-					if (!cptr)
-						error(NULL, "premature end of file");
-					msglen += strlen(cptr);
-					i = tptr - msg;
-					msg = xrealloc(msg, msglen);
-					tptr = msg + i;
-					break;
-				case 'n':
-					*tptr++ = '\n';
-					++cptr;
-					break;
-				case 't':
-					*tptr++ = '\t';
-					++cptr;
-					break;
-				case 'v':
-					*tptr++ = '\v';
-					++cptr;
-					break;
-				case 'b':
-					*tptr++ = '\b';
-					++cptr;
-					break;
-				case 'r':
-					*tptr++ = '\r';
-					++cptr;
-					break;
-				case 'f':
-					*tptr++ = '\f';
-					++cptr;
-					break;
-				case '\\':
-					*tptr++ = '\\';
-					++cptr;
-					break;
-				case '"':
-					/* FALLTHROUGH */
-				case '\'':
-					/*
-					 * While it isn't necessary to
-					 * escape ' and ", let's accept
-					 * them escaped and not complain.
-					 * (XPG4 states that '\' should be
-					 * ignored when not used in a 
-					 * valid escape sequence)
-					 */
-					*tptr++ = '"';
-					++cptr;
-					break;
-				default:
-					if (quote && *cptr == quote) {
-						*tptr++ = *cptr++;
-					} else if (isdigit((unsigned char) *cptr)) {
-						*tptr = 0;
-						for (i = 0; i < 3; ++i) {
-							if (!isdigit((unsigned char) *cptr))
-								break;
-							if (*cptr > '7')
-								warning(cptr, "octal number greater than 7?!");
-							*tptr *= 8;
-							*tptr += (*cptr - '0');
-							++cptr;
-						}
-					} else {
-						warning(cptr, "unrecognized escape sequence; ignoring esacpe character");
+				break;
+			case 't':
+				*tptr++ = '\t';
+				++cptr;
+				break;
+			case 'v':
+				*tptr++ = '\v';
+				++cptr;
+				break;
+			case 'b':
+				*tptr++ = '\b';
+				++cptr;
+				break;
+			case 'r':
+				*tptr++ = '\r';
+				++cptr;
+				break;
+			case 'f':
+				*tptr++ = '\f';
+				++cptr;
+				break;
+			case '\\':
+				*tptr++ = '\\';
+				++cptr;
+				break;
+			case '"':
+				/* FALLTHROUGH */
+			case '\'':
+				/*
+				 * While it isn't necessary to
+				 * escape ' and ", let's accept
+				 * them escaped and not complain.
+				 * (XPG4 states that '\' should be
+				 * ignored when not used in a 
+				 * valid escape sequence)
+				 */
+				*tptr++ = '"';
+				++cptr;
+				break;
+			default:
+				if (quote && *cptr == quote) {
+					*tptr++ = *cptr++;
+				} else if (isdigit((unsigned char) *cptr)) {
+					*tptr = 0;
+					for (i = 0; i < 3; ++i) {
+						if (!isdigit((unsigned char) *cptr))
+							break;
+						if (*cptr > '7')
+							warning(cptr, "octal number greater than 7?!");
+						*tptr *= 8;
+						*tptr += (*cptr - '0');
+						++cptr;
 					}
-					break;
+				} else {
+					warning(cptr, "unrecognized escape sequence; ignoring esacpe character");
 				}
-			} else {
-				*tptr++ = *cptr++;
+				break;
 			}
+		} else {
+			*tptr++ = *cptr++;
+		}
 	}
 	*tptr = '\0';
 	return (msg);
