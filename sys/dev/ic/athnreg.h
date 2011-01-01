@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.15 2010/12/31 17:17:14 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.16 2011/01/01 12:58:33 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -421,6 +421,7 @@
 /* Bits for AR_ISR_S2. */
 #define AR_ISR_S2_QCU_TXURN_M		0x000003ff
 #define AR_ISR_S2_QCU_TXURN_S		0
+#define AR_ISR_S2_BB_WATCHDOG		0x00010000
 #define AR_ISR_S2_CST			0x00400000
 #define AR_ISR_S2_GTT			0x00800000
 #define AR_ISR_S2_TIM			0x01000000
