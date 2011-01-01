@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar9380.c,v 1.10 2011/01/01 10:48:31 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.11 2011/01/01 13:44:42 damien Exp $	*/
 
 /*-
- * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2010 Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -72,6 +72,9 @@ void	ar9380_get_paprd_masks(struct athn_softc *, struct ieee80211_channel *,
 	    uint32_t *, uint32_t *);
 void	ar9380_init_from_rom(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
+void	ar9380_init_swreg(struct athn_softc *);
+int	ar9485_pmu_write(struct athn_softc *, uint32_t, uint32_t);
+void	ar9485_init_swreg(struct athn_softc *);
 void	ar9380_spur_mitigate_cck(struct athn_softc *,
 	    struct ieee80211_channel *, struct ieee80211_channel *);
 void	ar9380_spur_mitigate_ofdm(struct athn_softc *,
@@ -114,7 +117,10 @@ ar9380_attach(struct athn_softc *sc)
 	sc->cca_max_2g = AR9380_PHY_CCA_MAX_GOOD_VAL_2GHZ;
 	sc->cca_min_5g = AR9380_PHY_CCA_MIN_GOOD_VAL_5GHZ;
 	sc->cca_max_5g = AR9380_PHY_CCA_MAX_GOOD_VAL_5GHZ;
-	sc->ini = &ar9380_2_2_ini;
+	if (AR_SREV_9485(sc))
+		sc->ini = &ar9485_1_0_ini;
+	else
+		sc->ini = &ar9380_2_2_ini;
 
 	return (ar9003_attach(sc));
 }
@@ -166,19 +172,27 @@ ar9380_setup(struct athn_softc *sc)
 
 	/* Select initialization values based on ROM. */
 	type = MS(eep->baseEepHeader.txrxgain, AR_EEP_RX_GAIN);
-	if (type == AR_EEP_RX_GAIN_WO_XLNA)
-		sc->rx_gain = &ar9380_2_2_rx_gain_wo_xlna;
-	else
-		sc->rx_gain = &ar9380_2_2_rx_gain;
+	if (!AR_SREV_9485(sc)) {
+		if (type == AR_EEP_RX_GAIN_WO_XLNA)
+			sc->rx_gain = &ar9380_2_2_rx_gain_wo_xlna;
+		else
+			sc->rx_gain = &ar9380_2_2_rx_gain;
+	} else
+		sc->rx_gain = &ar9485_1_0_rx_gain;
 
 	/* Select initialization values based on ROM. */
 	type = MS(eep->baseEepHeader.txrxgain, AR_EEP_TX_GAIN);
-	if (type == AR_EEP_TX_GAIN_HIGH_OB_DB)
-		sc->tx_gain = &ar9380_2_2_tx_gain_high_ob_db;
-	else if (type == AR_EEP_TX_GAIN_LOW_OB_DB)
-		sc->tx_gain = &ar9380_2_2_tx_gain_low_ob_db;
-	else
-		sc->tx_gain = &ar9380_2_2_tx_gain;
+	if (!AR_SREV_9485(sc)) {
+		if (type == AR_EEP_TX_GAIN_HIGH_OB_DB)
+			sc->tx_gain = &ar9380_2_2_tx_gain_high_ob_db;
+		else if (type == AR_EEP_TX_GAIN_LOW_OB_DB)
+			sc->tx_gain = &ar9380_2_2_tx_gain_low_ob_db;
+		else if (type == AR_EEP_TX_GAIN_HIGH_POWER)
+			sc->tx_gain = &ar9380_2_2_tx_gain_high_power;
+		else
+			sc->tx_gain = &ar9380_2_2_tx_gain;
+	} else
+		sc->tx_gain = &ar9485_1_0_tx_gain;
 }
 
 const uint8_t *
@@ -247,7 +261,10 @@ ar9380_set_synth(struct athn_softc *sc, struct ieee80211_channel *c,
 	uint32_t chansel, phy;
 
 	if (IEEE80211_IS_CHAN_2GHZ(c)) {
-		chansel = (freq << 16) / 15;
+		if (AR_SREV_9485(sc))
+			chansel = ((freq << 16) - 215) / 15;
+		else
+			chansel = (freq << 16) / 15;
 		AR_WRITE(sc, AR_PHY_SYNTH_CONTROL, AR9380_BMODE);
 	} else {
 		chansel = (freq << 15) / 15;
@@ -277,9 +294,9 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 {
 	const struct ar9380_eeprom *eep = sc->eep;
 	const struct ar9380_modal_eep_header *modal;
-	uint8_t db, margin;
+	uint8_t db, margin, ant_div_ctrl;
 	uint32_t reg;
-	int i;
+	int i, maxchains;
 
 	if (IEEE80211_IS_CHAN_2GHZ(c))
 		modal = &eep->modalHeader2G;
@@ -287,15 +304,22 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		modal = &eep->modalHeader5G;
 
 	/* Apply XPA bias level. */
-	reg = AR_READ(sc, AR_PHY_65NM_CH0_TOP);
-	reg = RW(reg, AR_PHY_65NM_CH0_TOP_XPABIASLVL,
-	    modal->xpaBiasLvl & 0x3);
-	AR_WRITE(sc, AR_PHY_65NM_CH0_TOP, reg);
-	reg = AR_READ(sc, AR_PHY_65NM_CH0_THERM);
-	reg = RW(reg, AR_PHY_65NM_CH0_THERM_XPABIASLVL_MSB,
-	    modal->xpaBiasLvl >> 2);
-	reg |= AR_PHY_65NM_CH0_THERM_XPASHORT2GND;
-	AR_WRITE(sc, AR_PHY_65NM_CH0_THERM, reg);
+	if (AR_SREV_9485(sc)) {
+		reg = AR_READ(sc, AR9485_PHY_65NM_CH0_TOP2);
+		reg = RW(reg, AR9485_PHY_65NM_CH0_TOP2_XPABIASLVL,
+		    modal->xpaBiasLvl);
+		AR_WRITE(sc, AR9485_PHY_65NM_CH0_TOP2, reg);
+	} else {
+		reg = AR_READ(sc, AR_PHY_65NM_CH0_TOP);
+		reg = RW(reg, AR_PHY_65NM_CH0_TOP_XPABIASLVL,
+		    modal->xpaBiasLvl & 0x3);
+		AR_WRITE(sc, AR_PHY_65NM_CH0_TOP, reg);
+		reg = AR_READ(sc, AR_PHY_65NM_CH0_THERM);
+		reg = RW(reg, AR_PHY_65NM_CH0_THERM_XPABIASLVL_MSB,
+		    modal->xpaBiasLvl >> 2);
+		reg |= AR_PHY_65NM_CH0_THERM_XPASHORT2GND;
+		AR_WRITE(sc, AR_PHY_65NM_CH0_THERM, reg);
+	}
 
 	/* Apply antenna control. */
 	reg = AR_READ(sc, AR_PHY_SWITCH_COM);
@@ -305,29 +329,64 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	reg = RW(reg, AR_SWITCH_TABLE_COM_2_ALL, modal->antCtrlCommon2);
 	AR_WRITE(sc, AR_PHY_SWITCH_COM_2, reg);
 
-	for (i = 0; i < AR9380_MAX_CHAINS; i++) {
+	maxchains = AR_SREV_9485(sc) ? 1 : AR9380_MAX_CHAINS;
+	for (i = 0; i < maxchains; i++) {
 		reg = AR_READ(sc, AR_PHY_SWITCH_CHAIN(i));
 		reg = RW(reg, AR_SWITCH_TABLE_ALL, modal->antCtrlChain[i]);
 		AR_WRITE(sc, AR_PHY_SWITCH_CHAIN(i), reg);
 	}
 
+	if (AR_SREV_9485(sc)) {
+		ant_div_ctrl = eep->base_ext1.ant_div_control;
+		reg = AR_READ(sc, AR_PHY_MC_GAIN_CTRL);
+		reg = RW(reg, AR_PHY_MC_GAIN_CTRL_ANT_DIV_CTRL_ALL,
+		    MS(ant_div_ctrl, AR_EEP_ANT_DIV_CTRL_ALL));
+		if (ant_div_ctrl & AR_EEP_ANT_DIV_CTRL_ANT_DIV)
+			reg |= AR_PHY_MC_GAIN_CTRL_ENABLE_ANT_DIV;
+		else
+			reg &= ~AR_PHY_MC_GAIN_CTRL_ENABLE_ANT_DIV;
+		AR_WRITE(sc, AR_PHY_MC_GAIN_CTRL, reg);
+		reg = AR_READ(sc, AR_PHY_CCK_DETECT);
+		if (ant_div_ctrl & AR_EEP_ANT_DIV_CTRL_FAST_DIV)
+			reg |= AR_PHY_CCK_DETECT_BB_ENABLE_ANT_FAST_DIV;
+		else
+			reg &= ~AR_PHY_CCK_DETECT_BB_ENABLE_ANT_FAST_DIV;
+		AR_WRITE(sc, AR_PHY_CCK_DETECT, reg);
+	}
+
 	if (eep->baseEepHeader.miscConfiguration & AR_EEP_DRIVE_STRENGTH) {
 		/* Apply drive strength. */
 		reg = AR_READ(sc, AR_PHY_65NM_CH0_BIAS1);
-		reg = (reg & ~0x00ffffc0) | 0x00b6db40;
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS1_0, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS1_1, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS1_2, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS1_3, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS1_4, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS1_5, 5);
 		AR_WRITE(sc, AR_PHY_65NM_CH0_BIAS1, reg);
 
 		reg = AR_READ(sc, AR_PHY_65NM_CH0_BIAS2);
-		reg = (reg & ~0xffffffe0) | 0xb6db6da0;
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_0, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_1, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_2, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_3, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_4, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_5, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_6, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_7, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS2_8, 5);
 		AR_WRITE(sc, AR_PHY_65NM_CH0_BIAS2, reg);
 
 		reg = AR_READ(sc, AR_PHY_65NM_CH0_BIAS4);
-		reg = (reg & ~0xff800000) | 0xb6800000;
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS4_0, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS4_1, 5);
+		reg = RW(reg, AR_PHY_65NM_CH0_BIAS4_2, 5);
 		AR_WRITE(sc, AR_PHY_65NM_CH0_BIAS4, reg);
 	}
 
 	/* Apply attenuation settings. */
-	for (i = 0; i < AR9380_MAX_CHAINS; i++) {
+	maxchains = AR_SREV_9485(sc) ? 1 : AR9380_MAX_CHAINS;
+	for (i = 0; i < maxchains; i++) {
 		if (IEEE80211_IS_CHAN_5GHZ(c) &&
 		    eep->base_ext2.xatten1DBLow[i] != 0) {
 			if (c->ic_freq <= 5500) {
@@ -360,6 +419,30 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		AR_WRITE(sc, AR_PHY_EXT_ATTEN_CTL(i), reg);
 	}
 
+	/* Initialize switching regulator. */
+	if (AR_SREV_9485(sc))
+		ar9485_init_swreg(sc);
+	else
+		ar9485_init_swreg(sc);
+
+	/* Apply tuning capabilities. */
+	if (AR_SREV_9485(sc) &&
+	    (eep->baseEepHeader.featureEnable & AR_EEP_TUNING_CAPS)) {
+		reg = AR_READ(sc, AR9485_PHY_CH0_XTAL);
+		reg = RW(reg, AR9485_PHY_CH0_XTAL_CAPINDAC,
+		    eep->baseEepHeader.params_for_tuning_caps[0]);
+		reg = RW(reg, AR9485_PHY_CH0_XTAL_CAPOUTDAC,
+		    eep->baseEepHeader.params_for_tuning_caps[0]);
+		AR_WRITE(sc, AR9485_PHY_CH0_XTAL, reg);
+	}
+	AR_WRITE_BARRIER(sc);
+}
+
+void
+ar9380_init_swreg(struct athn_softc *sc)
+{
+	const struct ar9380_eeprom *eep = sc->eep;
+
 	if (eep->baseEepHeader.featureEnable & AR_EEP_INTERNAL_REGULATOR) {
 		/* Internal regulator is ON. */
 		AR_CLRBITS(sc, AR_RTC_REG_CONTROL1,
@@ -370,6 +453,47 @@ ar9380_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	} else
 		AR_SETBITS(sc, AR_RTC_SLEEP_CLK, AR_RTC_FORCE_SWREG_PRD);
 	AR_WRITE_BARRIER(sc);
+}
+
+int
+ar9485_pmu_write(struct athn_softc *sc, uint32_t addr, uint32_t val)
+{
+	int ntries;
+
+	AR_WRITE(sc, addr, val);
+	/* Wait for write to complete. */
+	for (ntries = 0; ntries < 100; ntries++) {
+		if (AR_READ(sc, addr) == val)
+			return (0);
+		AR_WRITE(sc, addr, val);	/* Insist. */
+		AR_WRITE_BARRIER(sc);
+		DELAY(10);
+	}
+	return (ETIMEDOUT);
+}
+
+void
+ar9485_init_swreg(struct athn_softc *sc)
+{
+	const struct ar9380_eeprom *eep = sc->eep;
+	uint32_t reg;
+
+	ar9485_pmu_write(sc, AR_PHY_PMU2,
+	    AR_READ(sc, AR_PHY_PMU2) & ~AR_PHY_PMU2_PGM);
+
+	if (eep->baseEepHeader.featureEnable & AR_EEP_INTERNAL_REGULATOR) {
+		ar9485_pmu_write(sc, AR_PHY_PMU1, 0x131dc17a);
+
+		reg = AR_READ(sc, AR_PHY_PMU2);
+		reg = (reg & ~0xffc00000) | 0x10000000;
+		ar9485_pmu_write(sc, AR_PHY_PMU2, reg);
+	} else {
+		ar9485_pmu_write(sc, AR_PHY_PMU1,
+		    AR_READ(sc, AR_PHY_PMU1) | AR_PHY_PMU1_PWD);
+	}
+
+	ar9485_pmu_write(sc, AR_PHY_PMU2,
+	    AR_READ(sc, AR_PHY_PMU2) | AR_PHY_PMU2_PGM);
 }
 
 void

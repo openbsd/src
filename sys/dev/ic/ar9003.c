@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.21 2011/01/01 10:48:31 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.22 2011/01/01 13:44:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -231,7 +231,7 @@ ar9003_attach(struct athn_softc *sc)
 }
 
 /*
- * Read 16-bit word from ROM.
+ * Read 16-bit word from EEPROM.
  */
 int
 ar9003_read_eep_word(struct athn_softc *sc, uint32_t addr, uint16_t *val)
@@ -254,7 +254,7 @@ ar9003_read_eep_word(struct athn_softc *sc, uint32_t addr, uint16_t *val)
 }
 
 /*
- * Read an arbitrary number of bytes at a specified address in ROM.
+ * Read an arbitrary number of bytes at a specified address in EEPROM.
  * NB: The address may not be 16-bit aligned.
  */
 int
@@ -2461,7 +2461,10 @@ ar9003_paprd_calib(struct athn_softc *sc, struct ieee80211_channel *c)
 	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_COARSE_CORR_LEN, 4);
 	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_NUM_CORR_STAGES, 7);
 	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_MIN_LOOPBACK_DEL, 1);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_QUICK_DROP, -6);
+	if (AR_SREV_9485(sc))
+		reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_QUICK_DROP, -3);
+	else
+		reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_QUICK_DROP, -6);
 	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_ADC_DESIRED_SIZE, -15);
 	reg |= AR_PHY_PAPRD_TRAINER_CNTL3_BBTXMIX_DISABLE;
 	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL3, reg);
