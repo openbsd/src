@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.196 2011/01/01 18:59:26 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.197 2011/01/01 19:00:56 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -289,7 +289,6 @@ hppa_cpuspeed(int *mhz)
 void
 hppa_init(paddr_t start)
 {
-	extern u_long cpu_hzticks;
 	extern int kernel_text;
 	struct cpu_info *ci;
 	int error;
@@ -297,7 +296,6 @@ hppa_init(paddr_t start)
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
-	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
 	delay_init();	/* calculate cpu clock ratio */
 
 	/* cache parameters */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.25 2010/08/01 09:01:45 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.26 2011/01/01 19:00:56 jasper Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -62,6 +62,8 @@ cpu_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_long __itmr;
+
+	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
 
 	itmr_timecounter.tc_frequency = PAGE0->mem_10msec * 100;
 	tc_init(&itmr_timecounter);
