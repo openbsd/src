@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.75 2010/12/29 00:47:30 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.76 2011/01/01 17:38:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -289,15 +289,16 @@ mdoc_macro(MACRO_PROT_ARGS)
 	/* If we're in the body, deny prologue calls. */
 
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
-			MDOC_PBODY & m->flags)
-		return(mdoc_pmsg(m, line, ppos, MANDOCERR_BADBODY));
+			MDOC_PBODY & m->flags) {
+		mdoc_pmsg(m, line, ppos, MANDOCERR_BADBODY);
+		return(1);
+	}
 
 	/* If we're in the prologue, deny "body" macros.  */
 
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
 			! (MDOC_PBODY & m->flags)) {
-		if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_BADPROLOG))
-			return(0);
+		mdoc_pmsg(m, line, ppos, MANDOCERR_BADPROLOG);
 		if (NULL == m->meta.msec)
 			m->meta.msec = mandoc_strdup("1");
 		if (NULL == m->meta.title)
@@ -647,13 +648,17 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 
 	if ('\\' == buf[offs] && 
 			'.' == buf[offs + 1] && 
-			'"' == buf[offs + 2])
-		return(mdoc_pmsg(m, line, offs, MANDOCERR_BADCOMMENT));
+			'"' == buf[offs + 2]) {
+		mdoc_pmsg(m, line, offs, MANDOCERR_BADCOMMENT);
+		return(1);
+	}
 
 	/* No text before an initial macro. */
 
-	if (SEC_NONE == m->lastnamed)
-		return(mdoc_pmsg(m, line, offs, MANDOCERR_NOTEXT));
+	if (SEC_NONE == m->lastnamed) {
+		mdoc_pmsg(m, line, offs, MANDOCERR_NOTEXT);
+		return(1);
+	}
 
 	assert(m->last);
 	n = m->last;
@@ -728,12 +733,10 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	*end = '\0';
 
 	if (ws)
-		if ( ! mdoc_pmsg(m, line, (int)(ws-buf), MANDOCERR_EOLNSPACE))
-			return(0);
+		mdoc_pmsg(m, line, (int)(ws-buf), MANDOCERR_EOLNSPACE);
 
 	if ('\0' == buf[offs] && ! (MDOC_LITERAL & m->flags)) {
-		if ( ! mdoc_pmsg(m, line, (int)(c-buf), MANDOCERR_NOBLANKLN))
-			return(0);
+		mdoc_pmsg(m, line, (int)(c-buf), MANDOCERR_NOBLANKLN);
 
 		/*
 		 * Insert a `sp' in the case of a blank line.  Technically,
@@ -833,8 +836,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	 */
 
 	if ('\0' == buf[i] && ' ' == buf[i - 1])
-		if ( ! mdoc_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE))
-			goto err;
+		mdoc_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE);
 
 	/*
 	 * If an initial macro or a list invocation, divert directly
