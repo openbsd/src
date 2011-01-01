@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2010/11/20 20:33:23 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2011/01/01 18:59:26 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -176,8 +176,7 @@ hppa_cpuspeed(int *mhz)
 }
 
 void
-hppa_init(start)
-	paddr_t start;
+hppa_init(paddr_t start)
 {
 	extern int kernel_text;
 	int error;
@@ -430,8 +429,7 @@ printf("here7\n");
  * initialize the system time from the time of day clock
  */
 void
-inittodr(t)
-	time_t t;
+inittodr(time_t t)
 {
 	struct pdc_tod tod PDC_ALIGNMENT;
 	int 	error, tbad = 0;
@@ -509,8 +507,7 @@ printf("nom=%lu denom=%lu\n", cpu_ticksnum, cpu_ticksdenom);
 }
 
 void
-delay(us)
-	u_int us;
+delay(u_int us)
 {
 	u_long start, end, n;
 
@@ -534,8 +531,7 @@ delay(us)
 }
 
 static __inline void
-fall(c_base, c_count, c_loop, c_stride, data)
-	int c_base, c_count, c_loop, c_stride, data;
+fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
 	int loop;
 
@@ -600,8 +596,7 @@ ptlball(void)
 }
 
 void
-boot(howto)
-	int howto;
+boot(int howto)
 {
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -798,30 +793,19 @@ dumpsys(void)
 
 /* bcopy(), error on fault */
 int
-kcopy(from, to, size)
-	const void *from;
-	void *to;
-	size_t size;
+kcopy(const void *src, void *dst, size_t size)
 {
 	return spcopy(HPPA_SID_KERNEL, from, HPPA_SID_KERNEL, to, size);
 }
 
 int
-copystr(src, dst, size, lenp)
-	const void *src;
-	void *dst;
-	size_t size;
-	size_t *lenp;
+copystr(const void *src, void *dst, size_t size, size_t *lenp)
 {
 	return spstrcpy(HPPA_SID_KERNEL, src, HPPA_SID_KERNEL, dst, size, lenp);
 }
 
 int
-copyinstr(src, dst, size, lenp)
-	const void *src;
-	void *dst;
-	size_t size;
-	size_t *lenp;
+copyinstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
 	return spstrcpy(curproc->p_addr->u_pcb.pcb_space, src,
 	    HPPA_SID_KERNEL, dst, size, lenp);
@@ -829,11 +813,7 @@ copyinstr(src, dst, size, lenp)
 
 
 int
-copyoutstr(src, dst, size, lenp)
-	const void *src;
-	void *dst;
-	size_t size;
-	size_t *lenp;
+copyoutstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
 	return spstrcpy(HPPA_SID_KERNEL, src,
 	    curproc->p_addr->u_pcb.pcb_space, dst, size, lenp);
@@ -841,20 +821,14 @@ copyoutstr(src, dst, size, lenp)
 
 
 int
-copyin(src, dst, size)
-	const void *src;
-	void *dst;
-	size_t size;
+copyin(const void *src, void *dst, size_t size)
 {
 	return spcopy(curproc->p_addr->u_pcb.pcb_space, src,
 	    HPPA_SID_KERNEL, dst, size);
 }
 
 int
-copyout(src, dst, size)
-	const void *src;
-	void *dst;
-	size_t size;
+copyout(const void *src, void *dst, size_t size)
 {
 	return spcopy(HPPA_SID_KERNEL, src,
 	    curproc->p_addr->u_pcb.pcb_space, dst, size);
@@ -864,11 +838,8 @@ copyout(src, dst, size)
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack, retval)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
+setregs(struct proc *p, truct exec_package *pack, u_long stack,
+    register_t *retval)
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct trapframe *tf = p->p_md.md_regs;
@@ -909,12 +880,8 @@ setregs(p, pack, stack, retval)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
 	extern u_int fpu_enable;
@@ -1016,10 +983,7 @@ sendsig(catcher, sig, mask, code, type, val)
 }
 
 int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct sys_sigreturn_args /* {
@@ -1080,14 +1044,8 @@ sys_sigreturn(p, v, retval)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	dev_t consdev;
 

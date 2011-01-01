@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.195 2010/12/30 14:26:14 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.196 2011/01/01 18:59:26 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -287,8 +287,7 @@ hppa_cpuspeed(int *mhz)
 }
 
 void
-hppa_init(start)
-	paddr_t start;
+hppa_init(paddr_t start)
 {
 	extern u_long cpu_hzticks;
 	extern int kernel_text;
@@ -695,8 +694,7 @@ delay_init(void)
 }
 
 void
-delay(us)
-	u_int us;
+delay(u_int us)
 {
 	register u_int start, end, n;
 
@@ -720,8 +718,7 @@ delay(us)
 }
 
 static __inline void
-fall(c_base, c_count, c_loop, c_stride, data)
-	int c_base, c_count, c_loop, c_stride, data;
+fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
 	register int loop;
 
@@ -784,29 +781,20 @@ ptlball(void)
 }
 
 int
-hpti_g(hpt, hptsize)
-	vaddr_t hpt;
-	vsize_t hptsize;
+hpti_g(vaddr_t hpt, vsize_t hptsize)
 {
 	return pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_CONFIG,
 	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
 }
 
 int
-pbtlb_g(i)
-	int i;
+pbtlb_g(int i)
 {
 	return -1;
 }
 
 int
-ibtlb_g(i, sp, va, pa, sz, prot)
-	int i;
-	pa_space_t sp;
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t sz;
-	u_int prot;
+ibtlb_g(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
 {
 	int error;
 
@@ -820,12 +808,7 @@ ibtlb_g(i, sp, va, pa, sz, prot)
 }
 
 int
-btlb_insert(space, va, pa, lenp, prot)
-	pa_space_t space;
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t *lenp;
-	u_int prot;
+btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *lenp, u_int prot)
 {
 	static u_int32_t mask;
 	register vsize_t len;
@@ -908,8 +891,7 @@ btlb_insert(space, va, pa, lenp, prot)
 int waittime = -1;
 
 void
-boot(howto)
-	int howto;
+boot(int howto)
 {
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -1110,30 +1092,19 @@ dumpsys(void)
 
 /* bcopy(), error on fault */
 int
-kcopy(from, to, size)
-	const void *from;
-	void *to;
-	size_t size;
+kcopy(const void *from, void *to, size_t size)
 {
 	return spcopy(HPPA_SID_KERNEL, from, HPPA_SID_KERNEL, to, size);
 }
 
 int
-copystr(src, dst, size, lenp)
-	const void *src;
-	void *dst;
-	size_t size;
-	size_t *lenp;
+copystr(const void *src, void *dst, size_t size, size_t *lenp)
 {
 	return spstrcpy(HPPA_SID_KERNEL, src, HPPA_SID_KERNEL, dst, size, lenp);
 }
 
 int
-copyinstr(src, dst, size, lenp)
-	const void *src;
-	void *dst;
-	size_t size;
-	size_t *lenp;
+copyinstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
 	return spstrcpy(curproc->p_addr->u_pcb.pcb_space, src,
 	    HPPA_SID_KERNEL, dst, size, lenp);
@@ -1141,11 +1112,7 @@ copyinstr(src, dst, size, lenp)
 
 
 int
-copyoutstr(src, dst, size, lenp)
-	const void *src;
-	void *dst;
-	size_t size;
-	size_t *lenp;
+copyoutstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
 	return spstrcpy(HPPA_SID_KERNEL, src,
 	    curproc->p_addr->u_pcb.pcb_space, dst, size, lenp);
@@ -1153,20 +1120,14 @@ copyoutstr(src, dst, size, lenp)
 
 
 int
-copyin(src, dst, size)
-	const void *src;
-	void *dst;
-	size_t size;
+copyin(const void *src, void *dst, size_t size)
 {
 	return spcopy(curproc->p_addr->u_pcb.pcb_space, src,
 	    HPPA_SID_KERNEL, dst, size);
 }
 
 int
-copyout(src, dst, size)
-	const void *src;
-	void *dst;
-	size_t size;
+copyout(const void *src, void *dst, size_t size)
 {
 	return spcopy(HPPA_SID_KERNEL, src,
 	    curproc->p_addr->u_pcb.pcb_space, dst, size);
@@ -1176,11 +1137,8 @@ copyout(src, dst, size)
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack, retval)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
+setregs(struct proc *p, struct exec_package *pack, u_long stack,
+    register_t *retval)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -1218,12 +1176,8 @@ setregs(p, pack, stack, retval)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
@@ -1348,10 +1302,7 @@ sendsig(catcher, sig, mask, code, type, val)
 }
 
 int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -1448,14 +1399,8 @@ signotify(struct proc *p)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	extern u_int fpu_enable;
 	extern int cpu_fpuena;
