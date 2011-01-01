@@ -7,3 +7,6 @@
 .Sh DESCRIPTION
 Please send mail to
 .Mt schwarze@openbsd.org .
+.Pp
+Do not send mail to
+.Mt .
