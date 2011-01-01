@@ -14,6 +14,8 @@ DDEESSCCRRIIPPTTIIOONN
       x
      line starting with two blank characters:
        x
+     line containing a Pp macro:
+
      finally, a trailing blank line:
 
      end of test document

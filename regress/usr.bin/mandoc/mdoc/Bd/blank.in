@@ -16,6 +16,8 @@ line starting with a blank character:
  x
 line starting with two blank characters:
   x
+line containing a Pp macro:
+.Pp
 finally, a trailing blank line:
 
 .Ed
