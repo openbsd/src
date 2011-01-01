@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.26 2011/01/01 20:32:18 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.27 2011/01/01 20:49:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1100,11 +1100,11 @@ vdsk_scsi_capacity(struct scsi_xfer *xs)
 
 	bzero(&rcd, sizeof(rcd));
 
-	capacity = sc->sc_vdisk_size;
+	capacity = sc->sc_vdisk_size - 1;
 	if (capacity > 0xffffffff)
 		capacity = 0xffffffff;
 
-	_lto4b(capacity - 1, rcd.addr);
+	_lto4b(capacity, rcd.addr);
 	_lto4b(sc->sc_vdisk_block_size, rcd.length);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
