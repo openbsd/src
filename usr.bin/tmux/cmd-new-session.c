@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.32 2010/12/20 00:17:22 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.33 2011/01/01 01:12:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -284,12 +284,14 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 			if (old_s != NULL)
 				ctx->cmdclient->last_session = old_s;
 			ctx->cmdclient->session = s;
+			session_update_activity(s);
 			server_redraw_client(ctx->cmdclient);
 		} else {
 			old_s = ctx->curclient->session;
 			if (old_s != NULL)
 				ctx->curclient->last_session = old_s;
 			ctx->curclient->session = s;
+			session_update_activity(s);
 			server_redraw_client(ctx->curclient);
 		}
 	}

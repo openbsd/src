@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.26 2010/12/30 23:16:18 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.27 2011/01/01 01:12:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ session_create(const char *name, const char *cmd, const char *cwd,
 
 	if (gettimeofday(&s->creation_time, NULL) != 0)
 		fatal("gettimeofday failed");
-	memcpy(&s->activity_time, &s->creation_time, sizeof s->activity_time);
+	session_update_activity(s);
 
 	s->cwd = xstrdup(cwd);
 
@@ -162,6 +162,14 @@ session_destroy(struct session *s)
 	xfree(s->cwd);
 
 	RB_INSERT(sessions, &dead_sessions, s);
+}
+
+/* Update session active time. */
+void
+session_update_activity(struct session *s)
+{
+	if (gettimeofday(&s->activity_time, NULL) != 0)
+		fatal("gettimeofday");
 }
 
 /* Find the next usable session. */

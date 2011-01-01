@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.258 2010/12/30 23:20:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.259 2011/01/01 01:12:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1980,6 +1980,7 @@ struct session	*session_create(const char *, const char *, const char *,
 		     struct environ *, struct termios *, int, u_int, u_int,
 		     char **);
 void		 session_destroy(struct session *);
+void		 session_update_activity(struct session *);
 struct session	*session_next_session(struct session *);
 struct session	*session_previous_session(struct session *);
 struct winlink	*session_new(struct session *,
