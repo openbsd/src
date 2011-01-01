@@ -1,0 +1,18 @@
+.Dd April 7, 2010
+.Dt FL-PARSED 1
+.Os
+.Sh NAME
+.Nm Fl-parsed
+.Nd is the Fl macro parsed?
+.Sh DESCRIPTION
+.Op Fl Ux
+.Pp
+.Op Ux
+.Pp
+.Op Fl Cm x
+.Pp
+.Fl W all
+versus
+.Fl W Ns Cm all
+.Pp
+.Fl Cm help
