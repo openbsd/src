@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 2011/01/02 13:16:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -36,11 +36,11 @@
 #include <machine/psl.h>
 
 #ifdef DDB
-#ifdef TRAPDEBUG
-#include <ddb/db_output.h>
-#else
 #include <machine/db_machdep.h>
 #endif
+
+#ifdef TRAPDEBUG
+#include <ddb/db_output.h>
 #endif
 
 static __inline int inst_store(u_int ins) {
