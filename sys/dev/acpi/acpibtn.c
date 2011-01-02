@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.33 2010/08/07 16:21:20 deraadt Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.34 2011/01/02 04:56:57 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -198,14 +198,16 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 sleep:
 			/* Request to go to sleep */
 			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
-				sc->sc_acpi->sc_sleepmode = ACPI_STATE_S3;
+				acpi_addtask(sc->sc_acpi, acpi_sleep_task,
+				    sc->sc_acpi, ACPI_STATE_S3);
 			break;
 		}
 #endif /* SMALL_KERNEL */
 		break;
 	case ACPIBTN_POWER:
 		if (notify_type == 0x80)
-			sc->sc_acpi->sc_powerdown = 1;
+			acpi_addtask(sc->sc_acpi, acpi_powerdown_task,
+			    sc->sc_acpi, 0);
 		break;
 	default:
 		printf("%s: spurious acpi button interrupt %i\n", DEVNAME(sc),

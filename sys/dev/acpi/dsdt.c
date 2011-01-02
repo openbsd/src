@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.180 2010/10/31 21:52:46 guenther Exp $ */
+/* $OpenBSD: dsdt.c,v 1.181 2011/01/02 04:56:57 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -103,6 +103,9 @@ int64_t			aml_hextoint(const char *);
 void			aml_dump(int, u_int8_t *);
 void			_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
+
+void aml_notify_task(void *, int);
+void acpi_poll_notify_task(void *, int);
 
 /*
  * @@@: Global variables
@@ -515,18 +518,31 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 /*
  * @@@: Notify functions
  */
+#ifndef SMALL_KERNEL
 void
 acpi_poll(void *arg)
 {
 	int s;
 
 	s = spltty();
-	acpi_softc->sc_poll = 1;
+	acpi_addtask(acpi_softc, acpi_poll_notify_task, NULL, 0);
 	acpi_softc->sc_threadwaiting = 0;
 	wakeup(acpi_softc);
 	splx(s);
 
 	timeout_add_sec(&acpi_softc->sc_dev_timeout, 10);
+}
+#endif
+
+void
+aml_notify_task(void *node, int notify_value)
+{
+	struct aml_notify_data	*pdata = NULL;
+
+	dnprintf(10,"run notify: %s %x\n", aml_nodename(node), notify_value);
+	SLIST_FOREACH(pdata, &aml_notify_list, link)
+		if (pdata->node == node)
+			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
 }
 
 void
@@ -557,14 +573,11 @@ aml_register_notify(struct aml_node *node, const char *pnpid,
 void
 aml_notify(struct aml_node *node, int notify_value)
 {
-	struct aml_notify_data	*pdata = NULL;
-
 	if (node == NULL)
 		return;
 
-	SLIST_FOREACH(pdata, &aml_notify_list, link)
-		if (pdata->node == node)
-			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
+	dnprintf(10,"queue notify: %s %x\n", aml_nodename(node), notify_value);
+	acpi_addtask(acpi_softc, aml_notify_task, node, notify_value);
 }
 
 #ifndef SMALL_KERNEL
@@ -582,7 +595,7 @@ aml_notify_dev(const char *pnpid, int notify_value)
 }
 
 void
-acpi_poll_notify(void)
+acpi_poll_notify_task(void *arg0, int arg1)
 {
 	struct aml_notify_data	*pdata = NULL;
 
@@ -2472,6 +2485,14 @@ acpi_xmutex_release(struct aml_scope *scope, struct aml_value *mtx)
 int
 acpi_xevent_wait(struct aml_scope *scope, struct aml_value *evt, int timeout)
 {
+	/* Wait for event to occur; do work in meantime */
+	evt->v_evt.state = 0;
+	while (!evt->v_evt.state) {
+		if (!acpi_dotask(acpi_softc) && !cold)
+			tsleep(evt, PWAIT, "acpievt", 1);
+		else
+			delay(100);
+	}
 	if (evt->v_evt.state == 1) {
 		/* Object is signaled */
 		return (0);

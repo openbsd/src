@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.55 2010/08/04 18:11:56 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.56 2011/01/02 04:56:57 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -274,7 +274,6 @@ int			aml_rdpciaddr(struct aml_node *pcidev,
 #ifndef SMALL_KERNEL
 void			acpi_getdevlist(struct acpi_devlist_head *,
 			    struct aml_node *, struct aml_value *, int);
-void			acpi_poll_notify(void);
 void			aml_notify_dev(const char *, int);
 #endif
 

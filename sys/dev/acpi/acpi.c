@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.221 2010/10/31 21:52:46 guenther Exp $ */
+/* $OpenBSD: acpi.c,v 1.222 2011/01/02 04:56:57 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -85,6 +85,10 @@ struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *,
 	    const char *, const char *, int);
 
 void	acpi_init_states(struct acpi_softc *);
+
+void 	acpi_gpe_task(void *, int);
+void	acpi_sbtn_task(void *, int);
+void	acpi_pbtn_task(void *, int);
 
 #ifndef SMALL_KERNEL
 
@@ -1204,6 +1208,54 @@ acpi_init_states(struct acpi_softc *sc)
 	}
 }
 
+/* ACPI Workqueue support */
+SIMPLEQ_HEAD(,acpi_taskq) acpi_taskq =
+    SIMPLEQ_HEAD_INITIALIZER(acpi_taskq);
+
+void
+acpi_addtask(struct acpi_softc *sc, void (*handler)(void *, int), 
+    void *arg0, int arg1)
+{
+	struct acpi_taskq *wq;
+	int s;
+
+	wq = malloc(sizeof(*wq), M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (wq == NULL)
+		return;
+	wq->handler = handler;
+	wq->arg0 = arg0;
+	wq->arg1 = arg1;
+	
+	s = spltty();
+	SIMPLEQ_INSERT_TAIL(&acpi_taskq, wq, next);
+	splx(s);
+}
+
+int
+acpi_dotask(struct acpi_softc *sc)
+{
+	struct acpi_taskq *wq;
+	int s;
+
+	s = spltty();
+	if (SIMPLEQ_EMPTY(&acpi_taskq)) {
+		splx(s);
+
+		/* we don't have anything to do */
+		return (0);
+	}
+	wq = SIMPLEQ_FIRST(&acpi_taskq);
+	SIMPLEQ_REMOVE_HEAD(&acpi_taskq, next);
+	splx(s);
+
+	wq->handler(wq->arg0, wq->arg1);
+
+	free(wq, M_DEVBUF);
+
+	/* We did something */
+	return (1);	
+}
+
 #ifndef SMALL_KERNEL
 int
 is_ata(struct aml_node *node)
@@ -1346,6 +1398,82 @@ acpi_reset(void)
 	delay(100000);
 }
 
+void
+acpi_gpe_task(void *arg0, int gpe)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct gpe_block *pgpe = &sc->gpe_table[gpe];
+
+	dnprintf(10, "handle gpe: %x\n", gpe);
+	if (pgpe->handler && pgpe->active) {
+		pgpe->active = 0;
+		pgpe->handler(sc, gpe, pgpe->arg);
+	}
+}
+
+void
+acpi_pbtn_task(void *arg0, int dummy)
+{
+	struct acpi_softc *sc = arg0;
+	uint16_t en;
+	int s;
+
+	dnprintf(1,"power button pressed\n");
+
+	/* Reset the latch and re-enable the GPE */
+	s = spltty();
+	en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
+	acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
+	    en | ACPI_PM1_PWRBTN_EN);
+	splx(s);
+
+	acpi_addtask(sc, acpi_powerdown_task, sc, 0);
+}
+
+void
+acpi_sbtn_task(void *arg0, int dummy)
+{
+	struct acpi_softc *sc = arg0;
+	uint16_t en;
+	int s;
+
+	dnprintf(1,"sleep button pressed\n");
+	aml_notify_dev(ACPI_DEV_SBD, 0x80);
+
+	/* Reset the latch and re-enable the GPE */
+	s = spltty();
+	en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
+	acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
+	    en | ACPI_PM1_SLPBTN_EN);
+	splx(s);
+}
+
+void
+acpi_powerdown_task(void *arg0, int dummy)
+{
+	/* XXX put a knob in front of this */
+	psignal(initproc, SIGUSR2);
+}
+
+void
+acpi_sleep_task(void *arg0, int sleepmode)
+{
+	struct acpi_softc *sc = arg0;
+	struct acpi_ac *ac;
+	struct acpi_bat *bat;
+
+	/* System goes to sleep here.. */
+	acpi_sleep_state(sc, sleepmode);
+
+	/* AC and battery information needs refreshing */
+	SLIST_FOREACH(ac, &sc->sc_ac, aac_link)
+		aml_notify(ac->aac_softc->sc_devnode,
+		    0x80);
+	SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
+		aml_notify(bat->aba_softc->sc_devnode,
+		    0x80);
+}
+
 int
 acpi_interrupt(void *arg)
 {
@@ -1366,6 +1494,8 @@ acpi_interrupt(void *arg)
 				if (en & sts & (1L << jdx)) {
 					/* Signal this GPE */
 					sc->gpe_table[idx+jdx].active = 1;
+					dnprintf(10, "queue gpe: %x\n", idx+jdx);
+					acpi_addtask(sc, acpi_gpe_task, NULL, idx+jdx);
 
 					/*
 					 * Edge interrupts need their STS bits
@@ -1395,7 +1525,8 @@ acpi_interrupt(void *arg)
 			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 			    ACPI_PM1_PWRBTN_STS);
 			sts &= ~ACPI_PM1_PWRBTN_STS;
-			sc->sc_powerbtn = 1;
+
+			acpi_addtask(sc, acpi_pbtn_task, sc, 0);
 		}
 		if (sts & ACPI_PM1_SLPBTN_STS) {
 			/* Mask and acknowledge */
@@ -1404,7 +1535,8 @@ acpi_interrupt(void *arg)
 			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 			    ACPI_PM1_SLPBTN_STS);
 			sts &= ~ACPI_PM1_SLPBTN_STS;
-			sc->sc_sleepbtn = 1;
+
+			acpi_addtask(sc, acpi_sbtn_task, sc, 0);
 		}
 		if (sts) {
 			printf("%s: PM1 stuck (en 0x%x st 0x%x), clearing\n",
@@ -2017,7 +2149,6 @@ acpi_thread(void *arg)
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
 	extern int aml_busy;
-	u_int32_t gpe;
 	int s;
 
 	rw_enter_write(&sc->sc_lck);
@@ -2065,77 +2196,9 @@ acpi_thread(void *arg)
 			continue;
 		}
 
-		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
-			struct gpe_block *pgpe = &sc->gpe_table[gpe];
-
-			if (pgpe->active) {
-				pgpe->active = 0;
-				dnprintf(50, "softgpe: %.2x\n", gpe);
-				if (pgpe->handler)
-					pgpe->handler(sc, gpe, pgpe->arg);
-			}
-		}
-		if (sc->sc_powerbtn) {
-			uint16_t en;
-
-			sc->sc_powerbtn = 0;
-			dnprintf(1,"power button pressed\n");
-			sc->sc_powerdown = 1;
-
-			/* Reset the latch and re-enable the GPE */
-			s = spltty();
-			en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
-			acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
-			    en | ACPI_PM1_PWRBTN_EN);
-			splx(s);
-
-		}
-		if (sc->sc_sleepbtn) {
-			uint16_t en;
-
-			sc->sc_sleepbtn = 0;
-			dnprintf(1,"sleep button pressed\n");
-			aml_notify_dev(ACPI_DEV_SBD, 0x80);
-
-			/* Reset the latch and re-enable the GPE */
-			s = spltty();
-			en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
-			acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
-			    en | ACPI_PM1_SLPBTN_EN);
-			splx(s);
-		}
-
-		/* handle polling here to keep code non-concurrent*/
-		if (sc->sc_poll) {
-			sc->sc_poll = 0;
-			acpi_poll_notify();
-		}
-
-		if (sc->sc_powerdown) {
-			sc->sc_powerdown = 0;
-
-			/* XXX put a knob in front of this */
-			psignal(initproc, SIGUSR2);
-		}
-
-		if (sc->sc_sleepmode) {
-			struct acpi_ac *ac;
-			struct acpi_bat *bat;
-			int sleepmode = sc->sc_sleepmode;
-
-			sc->sc_sleepmode = 0;
-			acpi_sleep_state(sc, sleepmode);
-
-			/* AC and battery information needs refreshing */
-			SLIST_FOREACH(ac, &sc->sc_ac, aac_link)
-				aml_notify(ac->aac_softc->sc_devnode,
-				    0x80);
-			SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
-				aml_notify(bat->aba_softc->sc_devnode,
-				    0x80);
-
-			continue;
-		}
+		/* Run ACPI taskqueue */
+		while(acpi_dotask(acpi_softc))
+			;
 	}
 	free(thread, M_DEVBUF);
 
@@ -2425,7 +2488,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;
 		} else {
-			sc->sc_sleepmode = ACPI_STATE_S3;
+			acpi_addtask(sc, acpi_sleep_task, sc, ACPI_STATE_S3);
 			acpi_wakeup(sc);
 		}
 		break;
