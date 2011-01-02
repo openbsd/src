@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2011/01/01 18:59:26 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2011/01/02 13:25:17 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -426,60 +426,6 @@ printf("here7\n");
 }
 
 /*
- * initialize the system time from the time of day clock
- */
-void
-inittodr(time_t t)
-{
-	struct pdc_tod tod PDC_ALIGNMENT;
-	int 	error, tbad = 0;
-	struct timespec ts;
-
-	if (t < 12*SECYR) {
-		printf ("WARNING: preposterous time in file system");
-		t = 6*SECYR + 186*SECDAY + SECDAY/2;
-		tbad = 1;
-	}
-
-	if ((error = pdc_call((iodcio_t)pdc,
-	    1, PDC_TOD, PDC_TOD_READ, &tod, 0, 0, 0, 0, 0)))
-		printf("clock: failed to fetch (%d)\n", error);
-
-	ts.tv_sec = tod.sec;
-	ts.tv_nsec = tod.usec * 1000;
-	tc_setclock(&ts);
-
-	if (!tbad) {
-		u_long	dt;
-
-		dt = (tod.sec < t)?  t - tod.sec : tod.sec - t;
-
-		if (dt < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %ld days",
-		    tod.sec < t? "lost" : "gained", dt / SECDAY);
-	}
-
-	printf (" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * reset the time of day clock to the value in time
- */
-void
-resettodr()
-{
-	struct timeval tv;
-	int error;
-
-	microtime(&tv);
-
-	if ((error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_WRITE,
-	    tv.tv_sec, tv.tv_usec)))
-		printf("clock: failed to save (%d)\n", error);
-}
-
-/*
  * compute cpu clock ratio such as:
  *	cpu_ticksnum / cpu_ticksdenom = t + delta
  *	delta -> 0
@@ -793,7 +739,7 @@ dumpsys(void)
 
 /* bcopy(), error on fault */
 int
-kcopy(const void *src, void *dst, size_t size)
+kcopy(const void *from, void *to, size_t size)
 {
 	return spcopy(HPPA_SID_KERNEL, from, HPPA_SID_KERNEL, to, size);
 }
@@ -838,7 +784,7 @@ copyout(const void *src, void *dst, size_t size)
  * Set registers on exec.
  */
 void
-setregs(struct proc *p, truct exec_package *pack, u_long stack,
+setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
@@ -1044,7 +990,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t oldlenp, void *newp,
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	dev_t consdev;
