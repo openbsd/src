@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.78 2010/12/30 14:26:14 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.79 2011/01/02 20:41:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -200,13 +200,6 @@ extern int cpu_hvers;
 #define	CLKF_USERMODE(framep)	((framep)->tf_flags & T_USER)
 #define	CLKF_SYSCALL(framep)	((framep)->tf_flags & TFF_SYS)
 
-#define	need_resched(ci)						\
-	do {								\
-		(ci)->ci_want_resched = 1;				\
-		if ((ci)->ci_curproc != NULL)				\
-			setsoftast((ci)->ci_curproc);			\
-	} while (0)
-#define clear_resched(ci) 	(ci)->ci_want_resched = 0
 #define	need_proftick(p)	setsoftast(p)
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_iioq_head)
 
@@ -242,6 +235,10 @@ void	cpu_unidle(struct cpu_info *);
 #else
 #define	cpu_unidle(ci)
 #endif
+
+extern void need_resched(struct cpu_info *);
+#define clear_resched(ci) 	(ci)->ci_want_resched = 0
+
 #endif
 
 /*
