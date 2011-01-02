@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.2 2010/04/20 23:26:59 deraadt Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.3 2011/01/02 00:35:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -480,6 +480,7 @@ vdsp_rx_vio_ver_info(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 		vi->tag.stype = VIO_SUBTYPE_ACK;
 		vi->tag.sid = sc->sc_local_sid;
 		vi->minor = VDSK_MINOR;
+		vi->dev_class = VDEV_DISK_SERVER;
 		vdsp_sendmsg(sc, vi, sizeof(*vi));
 		sc->sc_vio_state |= VIO_RCV_VER_INFO;
 		break;
