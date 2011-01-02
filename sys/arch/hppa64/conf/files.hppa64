@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.12 2010/08/18 21:01:14 jasper Exp $
+#	$OpenBSD: files.hppa64,v 1.13 2011/01/02 13:08:36 jsing Exp $
 #
 # hppa64-specific configuration info
 
@@ -54,6 +54,11 @@ include	"dev/pcmcia/files.pcmcia"
 # Machine-independent USB drivers
 #
 include "dev/usb/files.usb"
+
+#
+# Bluetooth
+#
+include "dev/bluetooth/files.bluetooth"
 
 #
 # Machine-independent 1-Wire drivers
