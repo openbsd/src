@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.190 2010/12/24 09:09:54 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.191 2011/01/02 15:25:45 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -531,11 +531,10 @@ sub source_to_dest
 # assumes the source is nroff, launches nroff
 sub format
 {
-	my ($self, $state, $dest) = @_;
+	my ($self, $state, $dest, $destfh) = @_;
 
 	my $base = $state->{base};
 	my $fname = $base.$self->fullname;
-	$dest = "$base$dest";
 	open(my $fh, '<', $fname) or die "Can't read $fname";
 	my $line = <$fh>;
 	close $fh;
@@ -556,8 +555,9 @@ sub format
 	}
 	if (my ($dir, $file) = $fname =~ m/^(.*)\/([^\/]+\/[^\/]+)$/) {
 		$state->system(sub {
-		    open STDOUT, '>', "$dest" or
+		    open STDOUT, '>&', $destfh or
 			die "Can't write to $dest";
+		    close $destfh;
 		    chdir($dir) or die "Can't chdir to $dir";
 		    },
 		    OpenBSD::Paths->groff,

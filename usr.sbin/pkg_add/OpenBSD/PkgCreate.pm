@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.37 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.38 2011/01/02 15:25:45 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -165,6 +165,9 @@ sub compute_checksum
 			    $field, $fname);
 		}
 	}
+	if (defined $self->{wtempname}) {
+		$fname = $self->{wtempname};
+	}
 	if (-l $fname) {
 		if (!defined $base) {
 			$state->error("special file #1 can't be a symlink",
@@ -241,6 +244,10 @@ sub copy_over
 }
 
 sub discover_directories
+{
+}
+
+sub remove_temp
 {
 }
 
@@ -421,13 +428,15 @@ sub makesum_plist
 		return $self->SUPER::makesum_plist($plist, $state);
 	}
 	my $dest = $self->source_to_dest;
-	my $out = $state->{base}.$self->cwd."/".$dest;
 	my $d = dirname($self->cwd."/".$dest);
+	my ($fh, $tempname) = OpenBSD::Temp::permanent_file($state->{base}.$d, 
+	    "manpage.".basename($dest));
+	chmod 0444, $fh;
 	if (-d $state->{base}.$d) {
 		undef $d;
 	}
-	$self->format($state, $self->cwd."/".$dest);
-	if (-z $out) {
+	$self->format($state, $tempname, $fh);
+	if (-z $tempname) {
 		$state->errsay("groff produced empty result for #1", $dest);
 		$state->errsay("\tkeeping source manpage");
 		return $self->SUPER::makesum_plist($plist, $state);
@@ -437,7 +446,18 @@ sub makesum_plist
 		OpenBSD::PackingElement::Dir->add($plist, dirname($dest));
 	}
 	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
+	$e->{wtempname} = $tempname;
 	$e->compute_checksum($e, $state, $state->{base});
+}
+
+sub remove_temp
+{
+	my $self = shift;
+
+	if (defined $self->{wtempname}) {
+		unlink($self->{wtempname});
+		$self->{wtempname} = undef;
+	}
 }
 
 package OpenBSD::PackingElement::Depend;
@@ -568,10 +588,10 @@ sub solve_from_ports
 
 	my $portsdir = $state->defines('PORTSDIR');
 	return undef unless defined $portsdir;
-	my $plist = $self->ask_tree($state, $dep, $portsdir, 
+	my $plist = $self->ask_tree($state, $dep, $portsdir,
 	    'print-plist-with-depends');
 	if ($? != 0 || !defined $plist->pkgname) {
-		$plist = $self->ask_tree($state, $dep, $portsdir, 
+		$plist = $self->ask_tree($state, $dep, $portsdir,
 		    'print-plist');
 	}
 	if ($? != 0 || !defined $plist->pkgname) {
@@ -1180,6 +1200,7 @@ sub parse_and_run
 	} else {
 		$self->create_package($state, $plist, $wname);
 	}
+	$plist->remove_temp;
 	}catch {
 		print STDERR "$0: $_\n";
 		return 1;
