@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.5 2011/01/02 12:11:22 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.6 2011/01/02 22:28:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -19,6 +19,7 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
@@ -35,6 +36,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+
+#include <dev/sun/disklabel.h>
 
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/ldcvar.h>
@@ -93,6 +96,37 @@ struct vd_attr_info {
 #define VD_OP_SET_ACCESS	0x10
 #define VD_OP_GET_CAPACITY	0x11
 
+struct vd_vtoc_part {
+	uint16_t	id_tag;
+	uint16_t	perm;
+	uint32_t	reserved;
+	uint64_t	start;
+	uint64_t	nblocks;
+	
+};
+struct vd_vtoc {
+	uint8_t		volume_name[8];
+	uint16_t	sector_size;
+	uint16_t	num_partitions;
+	uint32_t	reserved;
+	uint8_t		ascii_label[128];
+	struct vd_vtoc_part partition[8];
+};
+
+struct vd_diskgeom {
+	uint16_t	ncyl;
+	uint16_t	acyl;
+	uint16_t	bcyl;
+	uint16_t	nhead;
+	uint16_t	nsect;
+	uint16_t	intrlv;
+	uint16_t	apc;
+	uint16_t	rpm;
+	uint16_t	pcyl;
+	uint16_t	write_reinstruct;
+	uint16_t	read_reinstruct;
+};
+
 struct vd_desc {
 	struct vio_dring_hdr	hdr;
 	uint64_t		req_id;
@@ -132,10 +166,11 @@ struct vdsk_desc_msg {
 #define VDSK_MINOR	0
 
 /*
- * And we only support Block Read, Block Write and Flush commands.
+ * And we only support a subset of the defined commands.
  */
 #define VD_OP_MASK \
-    ((1 << VD_OP_BREAD) | (1 << VD_OP_BWRITE) | (1 << VD_OP_FLUSH))
+    ((1 << VD_OP_BREAD) | (1 << VD_OP_BWRITE) | (1 << VD_OP_FLUSH) | \
+     (1 << VD_OP_GET_DISKGEOM) | (1 << VD_OP_GET_VTOC))
 
 struct vdsp_softc {
 	struct device	sc_dv;
@@ -187,6 +222,8 @@ struct vdsp_softc {
 	uint64_t	sc_vdisk_size;
 
 	struct vnode	*sc_vp;
+
+	struct sun_disklabel *sc_label;
 };
 
 int	vdsp_match(struct device *, void *, void *);
@@ -222,11 +259,16 @@ void	vdsp_sendmsg(struct vdsp_softc *, void *, size_t);
 void	vdsp_mountroot(void *);
 void	vdsp_open(void *, void *);
 void	vdsp_alloc(void *, void *);
+void	vdsp_readlabel(struct vdsp_softc *);
 void	vdsp_read(void *, void *);
 void	vdsp_read_dring(void *, void *);
 void	vdsp_write_dring(void *, void *);
 void	vdsp_flush_dring(void *, void *);
-void	vdsp_fail_dring(struct vdsp_softc *, struct vd_desc *);
+void	vdsp_get_vtoc(void *, void *);
+void	vdsp_get_diskgeom(void *, void *);
+void	vdsp_unimp(void *, void *);
+
+void	vdsp_ack_desc(struct vdsp_softc *, struct vd_desc *);
 
 int
 vdsp_match(struct device *parent, void *match, void *aux)
@@ -625,7 +667,9 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 {
 	struct vio_dring_msg *dm = (struct vio_dring_msg *)tag;
 	struct vd_desc *vd;
-	paddr_t pa, offset;
+	vaddr_t va;
+	paddr_t pa;
+	uint64_t size, off;
 	psize_t nbytes;
 	int err;
 
@@ -640,19 +684,28 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 			return;
 		}
 
-		sc->sc_seq_no = dm->seq_no;
-
-		offset = dm->start_idx * sc->sc_descriptor_size;
-		vd = (struct vd_desc *)(sc->sc_vd + offset);
-		pmap_extract(pmap_kernel(), (vaddr_t)vd, &pa);
-		err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_IN,
-		    sc->sc_dring_cookie.addr | offset, pa,
-		    sc->sc_descriptor_size, &nbytes);
+		off = dm->start_idx * sc->sc_descriptor_size;
+		vd = (struct vd_desc *)(sc->sc_vd + off);
+		va = (vaddr_t)vd;
+		size = sc->sc_descriptor_size;
+		while (size > 0) {
+			pmap_extract(pmap_kernel(), va, &pa);
+			nbytes = min(size, PAGE_SIZE - (off & PAGE_MASK));
+			err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_IN,
+			    sc->sc_dring_cookie.addr | off, pa,
+			    nbytes, &nbytes);
+			va += nbytes;
+			size -= nbytes;
+			off += nbytes;
+		}
 		if (err != H_EOK) {
-			printf("hv_ldc_copy %d\n", err);
+			printf("%s: hv_ldc_copy %d\n", __func__, err);
 			return;
 		}
 
+		DPRINTF(("%s: start_idx %d, end_idx %d, operation %x\n",
+		    sc->sc_dv.dv_xname, dm->start_idx, dm->end_idx,
+		    vd->operation));
 		switch (vd->operation) {
 		case VD_OP_BREAD:
 			workq_add_task(NULL, 0, vdsp_read_dring, sc, vd);
@@ -663,10 +716,16 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 		case VD_OP_FLUSH:
 			workq_add_task(NULL, 0, vdsp_flush_dring, sc, vd);
 			break;
+		case VD_OP_GET_VTOC:
+			workq_add_task(NULL, 0, vdsp_get_vtoc, sc, vd);
+			break;
+		case VD_OP_GET_DISKGEOM:
+			workq_add_task(NULL, 0, vdsp_get_diskgeom, sc, vd);
+			break;
 		default:
 			printf("%s: unsupported operation 0x%02x\n",
 			    sc->sc_dv.dv_xname, vd->operation);
-			vdsp_fail_dring(sc, vd);
+			workq_add_task(NULL, 0, vdsp_unimp, sc, vd);
 			break;
 		}
 		break;
@@ -725,11 +784,15 @@ vdsp_ldc_reset(struct ldc_conn *lc)
 	struct vdsp_softc *sc = lc->lc_sc;
 
 	sc->sc_vio_state = 0;
+	sc->sc_seq_no = 0;
 	if (sc->sc_vd) {
 		free(sc->sc_vd, M_DEVBUF);
 		sc->sc_vd = NULL;
 	}
-
+	if (sc->sc_label) {
+		free(sc->sc_label, M_DEVBUF);
+		sc->sc_label = NULL;
+	}
 }
 
 void
@@ -784,12 +847,12 @@ vdsp_mountroot(void *arg)
 	err = hv_ldc_tx_qconf(lc->lc_id,
 	    lc->lc_txq->lq_map->dm_segs[0].ds_addr, lc->lc_txq->lq_nentries);
 	if (err != H_EOK)
-		printf("hv_ldc_tx_qconf %d\n", err);
+		printf("%s: hv_ldc_tx_qconf %d\n", __func__, err);
 
 	err = hv_ldc_rx_qconf(lc->lc_id,
 	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
 	if (err != H_EOK)
-		printf("hv_ldc_rx_qconf %d\n", err);
+		printf("%s: hv_ldc_rx_qconf %d\n", err, __func__);
 
 	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
 	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
@@ -827,6 +890,8 @@ vdsp_open(void *arg1, void *arg2)
 
 		VOP_UNLOCK(nd.ni_vp, 0, p);
 		sc->sc_vp = nd.ni_vp;
+
+		vdsp_readlabel(sc);
 	}
 
 	bzero(&ai, sizeof(ai));
@@ -841,6 +906,38 @@ vdsp_open(void *arg1, void *arg2)
 	ai.vdisk_size = sc->sc_vdisk_size;
 	ai.max_xfer_sz = MAXPHYS / sc->sc_vdisk_block_size;
 	vdsp_sendmsg(sc, &ai, sizeof(ai));
+}
+
+void
+vdsp_readlabel(struct vdsp_softc *sc)
+{
+	struct proc *p = curproc;
+	struct iovec iov;
+	struct uio uio;
+	int err;
+
+	if (sc->sc_vp == NULL)
+		return;
+
+	sc->sc_label = malloc(sizeof(*sc->sc_label), M_DEVBUF, M_WAITOK);
+
+	iov.iov_base = sc->sc_label;
+	iov.iov_len = sizeof(*sc->sc_label);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = 0;
+	uio.uio_resid = sizeof(*sc->sc_label);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = p;
+
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
+	VOP_UNLOCK(sc->sc_vp, 0, p);
+	if (err) {
+		free(sc->sc_label, M_DEVBUF);
+		sc->sc_label = NULL;
+	}
 }
 
 void
@@ -910,7 +1007,7 @@ vdsp_read(void *arg1, void *arg2)
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 			    dm->cookie[i].addr + off, pa, nbytes, &nbytes);
 			if (err != H_EOK)
-				printf("hv_ldc_copy: %d\n", err);
+				printf("%s: hv_ldc_copy: %d\n", __func__, err);
 			va += nbytes;
 			size -= nbytes;
 			off += nbytes;
@@ -936,13 +1033,12 @@ vdsp_read_dring(void *arg1, void *arg2)
 	struct vdsp_softc *sc = arg1;
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct vd_desc *vd = arg2;
-	struct vio_dring_msg dm;
 	struct proc *p = curproc;
 	struct iovec iov;
 	struct uio uio;
 	caddr_t buf;
 	vaddr_t va;
-	paddr_t pa, offset;
+	paddr_t pa;
 	uint64_t size, off;
 	psize_t nbytes;
 	int err, i;
@@ -978,7 +1074,7 @@ vdsp_read_dring(void *arg1, void *arg2)
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 			    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 			if (err != H_EOK)
-				printf("hv_ldc_copy: %d\n", err);
+				printf("%s: hv_ldc_copy: %d\n", __func__, err);
 			va += nbytes;
 			size -= nbytes;
 			off += nbytes;
@@ -991,28 +1087,9 @@ vdsp_read_dring(void *arg1, void *arg2)
 
 	free(buf, M_DEVBUF);
 
-	vd->hdr.dstate = VIO_DESC_DONE;
-	pmap_extract(pmap_kernel(), (vaddr_t)vd, &pa);
-	offset = (caddr_t)vd - sc->sc_vd;
-	err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_OUT,
-	    sc->sc_dring_cookie.addr | offset, pa,
-	    sc->sc_descriptor_size, &nbytes);
-	if (err != H_EOK) {
-		printf("hv_ldc_copy %d\n", err);
-		return;
-	}
-
 	/* ACK the descriptor. */
-	bzero(&dm, sizeof(dm));
-	dm.tag.type = VIO_TYPE_DATA;
-	dm.tag.stype = VIO_SUBTYPE_ACK;
-	dm.tag.stype_env = VIO_DRING_DATA;
-	dm.tag.sid = sc->sc_local_sid;
-	dm.seq_no = sc->sc_seq_no;
-	dm.dring_ident = sc->sc_dring_ident;
-	dm.start_idx = offset / sc->sc_descriptor_size;
-	dm.end_idx = offset / sc->sc_descriptor_size;
-	vdsp_sendmsg(sc, &dm, sizeof(dm));
+	vd->hdr.dstate = VIO_DESC_DONE;
+	vdsp_ack_desc(sc, vd);
 }
 
 void
@@ -1021,13 +1098,12 @@ vdsp_write_dring(void *arg1, void *arg2)
 	struct vdsp_softc *sc = arg1;
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct vd_desc *vd = arg2;
-	struct vio_dring_msg dm;
 	struct proc *p = curproc;
 	struct iovec iov;
 	struct uio uio;
 	caddr_t buf;
 	vaddr_t va;
-	paddr_t pa, offset;
+	paddr_t pa;
 	uint64_t size, off;
 	psize_t nbytes;
 	int err, i;
@@ -1048,7 +1124,7 @@ vdsp_write_dring(void *arg1, void *arg2)
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK)
-			printf("hv_ldc_copy: %d\n", err);
+			printf("%s: hv_ldc_copy: %d\n", __func__, err);
 		va += nbytes;
 		size -= nbytes;
 		off += nbytes;
@@ -1074,28 +1150,9 @@ vdsp_write_dring(void *arg1, void *arg2)
 
 	free(buf, M_DEVBUF);
 
-	vd->hdr.dstate = VIO_DESC_DONE;
-	pmap_extract(pmap_kernel(), (vaddr_t)vd, &pa);
-	offset = (caddr_t)vd - sc->sc_vd;
-	err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_OUT,
-	    sc->sc_dring_cookie.addr | offset, pa,
-	    sc->sc_descriptor_size, &nbytes);
-	if (err != H_EOK) {
-		printf("hv_ldc_copy %d\n", err);
-		return;
-	}
-
 	/* ACK the descriptor. */
-	bzero(&dm, sizeof(dm));
-	dm.tag.type = VIO_TYPE_DATA;
-	dm.tag.stype = VIO_SUBTYPE_ACK;
-	dm.tag.stype_env = VIO_DRING_DATA;
-	dm.tag.sid = sc->sc_local_sid;
-	dm.seq_no = sc->sc_seq_no;
-	dm.dring_ident = sc->sc_dring_ident;
-	dm.start_idx = offset / sc->sc_descriptor_size;
-	dm.end_idx = offset / sc->sc_descriptor_size;
-	vdsp_sendmsg(sc, &dm, sizeof(dm));
+	vd->hdr.dstate = VIO_DESC_DONE;
+	vdsp_ack_desc(sc, vd);
 }
 
 void
@@ -1103,56 +1160,201 @@ vdsp_flush_dring(void *arg1, void *arg2)
 {
 	struct vdsp_softc *sc = arg1;
 	struct vd_desc *vd = arg2;
-	struct vio_dring_msg dm;
-	paddr_t pa, offset;
-	psize_t nbytes;
-	int err;
 
 	if (sc->sc_vp == NULL)
 		return;
 
+	/* ACK the descriptor. */
 	vd->status = 0;
 	vd->hdr.dstate = VIO_DESC_DONE;
-	pmap_extract(pmap_kernel(), (vaddr_t)vd, &pa);
-	offset = (caddr_t)vd - sc->sc_vd;
-	err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_OUT,
-	    sc->sc_dring_cookie.addr | offset, pa,
-	    sc->sc_descriptor_size, &nbytes);
-	if (err != H_EOK) {
-		printf("hv_ldc_copy %d\n", err);
-		return;
-	}
-
-	/* ACK the descriptor. */
-	bzero(&dm, sizeof(dm));
-	dm.tag.type = VIO_TYPE_DATA;
-	dm.tag.stype = VIO_SUBTYPE_ACK;
-	dm.tag.stype_env = VIO_DRING_DATA;
-	dm.tag.sid = sc->sc_local_sid;
-	dm.seq_no = sc->sc_seq_no;
-	dm.dring_ident = sc->sc_dring_ident;
-	dm.start_idx = offset / sc->sc_descriptor_size;
-	dm.end_idx = offset / sc->sc_descriptor_size;
-	vdsp_sendmsg(sc, &dm, sizeof(dm));
+	vdsp_ack_desc(sc, vd);
 }
 
 void
-vdsp_fail_dring(struct vdsp_softc *sc, struct vd_desc *vd)
+vdsp_get_vtoc(void *arg1, void *arg2)
+{
+	struct vdsp_softc *sc = arg1;
+	struct ldc_conn *lc = &sc->sc_lc;
+	struct vd_desc *vd = arg2;
+	struct sun_preamble *sl;
+	struct vd_vtoc *vt;
+	vaddr_t va;
+	paddr_t pa;
+	uint64_t size, off;
+	psize_t nbytes;
+	int err, i;
+
+	vd->status = EINVAL;
+
+	if (sc->sc_label == NULL)
+		vdsp_readlabel(sc);
+
+	if (sc->sc_label && sc->sc_label->sl_magic == SUN_DKMAGIC) {
+		sl = (struct sun_preamble *)sc->sc_label;
+		vt = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK | M_ZERO);
+
+		memcpy(vt->ascii_label, sl->sl_text, sizeof(vt->ascii_label));
+		memcpy(vt->volume_name, sl->sl_volume, sizeof(sl->sl_volume));
+		vt->sector_size = DEV_BSIZE;
+		vt->num_partitions = sl->sl_nparts;
+		for (i = 0; i < vt->num_partitions; i++) {
+			vt->partition[i].id_tag = sl->sl_part[i].spi_tag;
+			vt->partition[i].perm = sl->sl_part[i].spi_flag;
+			vt->partition[i].start =
+			    sc->sc_label->sl_part[i].sdkp_cyloffset *
+				sc->sc_label->sl_ntracks *
+				sc->sc_label->sl_nsectors;
+			vt->partition[i].nblocks =
+			    sc->sc_label->sl_part[i].sdkp_nsectors;
+		}
+
+		i = 0;
+		va = (vaddr_t)vt;
+		size = roundup(sizeof(*vt), 64);
+		off = 0;
+		while (size > 0 && i < vd->ncookies) {
+			pmap_extract(pmap_kernel(), va, &pa);
+			nbytes = min(size, vd->cookie[i].size - off);
+			nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
+			    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
+			if (err != H_EOK)
+				printf("%s: hv_ldc_copy: %d\n", __func__, err);
+			va += nbytes;
+			size -= nbytes;
+			off += nbytes;
+			if (off >= vd->cookie[i].size) {
+				off = 0;
+				i++;
+			}
+		}
+
+		vd->status = 0;
+		free(vt, M_DEVBUF);
+	}
+
+	/* ACK the descriptor. */
+	vd->hdr.dstate = VIO_DESC_DONE;
+	vdsp_ack_desc(sc, vd);
+}
+
+void
+vdsp_get_diskgeom(void *arg1, void *arg2)
+{
+	struct vdsp_softc *sc = arg1;
+	struct ldc_conn *lc = &sc->sc_lc;
+	struct vd_desc *vd = arg2;
+	struct vd_diskgeom *vg;
+	vaddr_t va;
+	paddr_t pa;
+	uint64_t size, off;
+	psize_t nbytes;
+	int err, i;
+
+	vg = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK | M_ZERO);
+
+	if (sc->sc_label == NULL)
+		vdsp_readlabel(sc);
+
+	if (sc->sc_label && sc->sc_label->sl_magic == SUN_DKMAGIC) {
+		vg->ncyl = sc->sc_label->sl_ncylinders;
+		vg->acyl = sc->sc_label->sl_acylinders;
+		vg->nhead = sc->sc_label->sl_ntracks;
+		vg->nsect = sc->sc_label->sl_nsectors;
+		vg->intrlv = sc->sc_label->sl_interleave;
+		vg->apc = sc->sc_label->sl_sparespercyl;
+		vg->rpm = sc->sc_label->sl_rpm;
+		vg->pcyl = sc->sc_label->sl_pcylinders;
+	} else {
+		uint64_t disk_size, block_size;
+
+		disk_size = sc->sc_vdisk_size * sc->sc_vdisk_block_size;
+		block_size = sc->sc_vdisk_block_size;
+
+		if (disk_size >= 8L * 1024 * 1024 * 1024) {
+			vg->nhead = 96;
+			vg->nsect = 768;
+		} else if (disk_size >= 2 *1024 * 1024) {
+			vg->nhead = 1;
+			vg->nsect = 600;
+		} else {
+			vg->nhead = 1;
+			vg->nsect = 200;
+		}
+
+		vg->pcyl = disk_size / (block_size * vg->nhead * vg->nsect);
+		if (vg->pcyl == 0)
+			vg->pcyl = 1;
+		if (vg->pcyl > 2)
+			vg->acyl = 2;
+		vg->ncyl = vg->pcyl - vg->acyl;
+
+		vg->rpm = 3600;
+	}
+
+	i = 0;
+	va = (vaddr_t)vg;
+	size = roundup(sizeof(*vg), 64);
+	off = 0;
+	while (size > 0 && i < vd->ncookies) {
+		pmap_extract(pmap_kernel(), va, &pa);
+		nbytes = min(size, vd->cookie[i].size - off);
+		nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+		err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
+		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
+		if (err != H_EOK)
+			printf("%s: hv_ldc_copy: %d\n", __func__, err);
+		va += nbytes;
+		size -= nbytes;
+		off += nbytes;
+		if (off >= vd->cookie[i].size) {
+			off = 0;
+			i++;
+		}
+	}
+
+	/* ACK the descriptor. */
+	vd->status = 0;
+	vd->hdr.dstate = VIO_DESC_DONE;
+	vdsp_ack_desc(sc, vd);
+}
+
+void
+vdsp_unimp(void *arg1, void *arg2)
+{
+	struct vdsp_softc *sc = arg1;
+	struct vd_desc *vd = arg2;
+
+	/* ACK the descriptor. */
+	vd->status = ENOTSUP;
+	vd->hdr.dstate = VIO_DESC_DONE;
+	vdsp_ack_desc(sc, vd);
+}
+
+void
+vdsp_ack_desc(struct vdsp_softc *sc, struct vd_desc *vd)
 {
 	struct vio_dring_msg dm;
-	paddr_t pa, offset;
+	vaddr_t va;
+	paddr_t pa;
+	uint64_t size, off;
 	psize_t nbytes;
 	int err;
 
-	vd->status = ENOTSUP;
-	vd->hdr.dstate = VIO_DESC_DONE;
-	pmap_extract(pmap_kernel(), (vaddr_t)vd, &pa);
-	offset = (caddr_t)vd - sc->sc_vd;
-	err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_OUT,
-	    sc->sc_dring_cookie.addr | offset, pa,
-	    sc->sc_descriptor_size, &nbytes);
+	va = (vaddr_t)vd;
+	off = (caddr_t)vd - sc->sc_vd;
+	size = sc->sc_descriptor_size;
+	while (size > 0) {
+		pmap_extract(pmap_kernel(), va, &pa);
+		nbytes = min(size, PAGE_SIZE - (off & PAGE_MASK));
+		err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_OUT,
+		    sc->sc_dring_cookie.addr | off, pa, nbytes, &nbytes);
+		va += nbytes;
+		size -= nbytes;
+		off += nbytes;
+	}
 	if (err != H_EOK) {
-		printf("hv_ldc_copy %d\n", err);
+		printf("%s: hv_ldc_copy %d\n", __func__, err);
 		return;
 	}
 
@@ -1162,9 +1364,10 @@ vdsp_fail_dring(struct vdsp_softc *sc, struct vd_desc *vd)
 	dm.tag.stype = VIO_SUBTYPE_ACK;
 	dm.tag.stype_env = VIO_DRING_DATA;
 	dm.tag.sid = sc->sc_local_sid;
-	dm.seq_no = sc->sc_seq_no;
+	dm.seq_no = sc->sc_seq_no++;
 	dm.dring_ident = sc->sc_dring_ident;
-	dm.start_idx = offset / sc->sc_descriptor_size;
-	dm.end_idx = offset / sc->sc_descriptor_size;
+	off = (caddr_t)vd - sc->sc_vd;
+	dm.start_idx = off / sc->sc_descriptor_size;
+	dm.end_idx = off / sc->sc_descriptor_size;
 	vdsp_sendmsg(sc, &dm, sizeof(dm));
 }
