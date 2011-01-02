@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.86 2010/08/18 21:01:14 jasper Exp $
+#	$OpenBSD: files.hppa,v 1.87 2011/01/02 14:01:18 matthieu Exp $
 #
 # hppa-specific configuration info
 
@@ -12,6 +12,9 @@ maxusers 2 8 128
 #
 include "dev/wscons/files.wscons"
 file	arch/hppa/hppa/wscons_machdep.c	wsdisplay
+
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # Media Independent Interface (mii)

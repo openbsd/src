@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.140 2010/11/26 20:13:55 miod Exp $
+#	$OpenBSD: GENERIC,v 1.141 2011/01/02 14:01:18 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,6 +28,7 @@ option		HP8700_CPU		# PCXW2 (in 32bit mode)
 option		FPEMUL
 option		USELEDS		# blink 'em
 option		USER_PCICONF	# user-space PCI configuration
+option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 
 config	bsd swap generic
 
@@ -166,6 +167,8 @@ uthum*	at uhidev?		# TEMPerHUM sensor
 utwitch* at uhidev?		# YUREX BBU sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
+udl*	at uhub?		# DisplayLink USB displays
+wsdisplay* at udl?
 
 # Bluetooth controllers
 ubt*	at uhub?		# USB Bluetooth
