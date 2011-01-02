@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.40 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.41 2011/01/02 14:26:17 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,22 @@
 
 use strict;
 use warnings;
+
+package OpenBSD::PackingElement;
+sub handle_collisions
+{
+}
+
+package OpenBSD::PackingElement::FileBase;
+sub handle_collisions
+{
+	my ($self, $todo, $pkg, $bypkg) = @_;
+	my $name = $self->fullname;
+	if (defined $todo->{$name}) {
+		push(@{$bypkg->{$pkg}}, $name);
+		delete $todo->{$name};
+	}
+}
 
 package OpenBSD::CollisionReport;
 use OpenBSD::PackingList;
@@ -44,14 +60,7 @@ sub find_collisions
 		my $plist = OpenBSD::PackingList->from_installation($pkg,
 		    \&OpenBSD::PackingList::FilesOnly);
 		next if !defined $plist;
-		for my $item (@{$plist->{items}}) {
-			next unless $item->IsFile;
-			my $name = $item->fullname;
-			if (defined $todo->{$name}) {
-				push(@{$bypkg->{$pkg}}, $name);
-				delete $todo->{$name};
-			}
-		}
+		$plist->handle_collisions($todo, $pkg, $bypkg);
 	}
 	return $bypkg;
 }
