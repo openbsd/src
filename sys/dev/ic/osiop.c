@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.46 2010/12/08 21:57:47 miod Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.47 2011/01/02 13:38:27 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -714,6 +714,9 @@ FREE:
 #endif
 		sc->sc_tinfo[periph->target].cmds++;
 
+#ifdef DIAGNOSTIC
+		acb->xs = NULL;
+#endif
 		xs->resid = 0;
 		scsi_done(xs);
 	} else {
@@ -1674,7 +1677,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 	 */
 	printf("osiop_chkintr: target %x ds %p\n", target, ds);
 	printf("scripts %lx ds %lx dsp %x dcmd %x\n", scraddr,
-	    sc->sc_dsdma->dm_segs[0].ds_addr + acb->dsoffset,
+	    acb ? sc->sc_dsdma->dm_segs[0].ds_addr + acb->dsoffset : 0,
 	    osiop_read_4(sc, OSIOP_DSP),
 	    osiop_read_4(sc, OSIOP_DBC));
 	printf("osiop_chkintr: istat %x dstat %x sstat0 %x "
@@ -1682,7 +1685,9 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 	    istat, dstat, sstat0, intcode,
 	    osiop_read_4(sc, OSIOP_DSA),
 	    osiop_read_1(sc, OSIOP_SBCL),
-	    ds->stat[0], ds->msgbuf[0], ds->msgbuf[1],
+	    ds ? ds->stat[0] : 0,
+	    ds ? ds->msgbuf[0] : 0,
+	    ds ? ds->msgbuf[1] : 0,
 	    osiop_read_1(sc, OSIOP_SFBR));
 #ifdef OSIOP_DEBUG
 	if (osiop_debug & DEBUG_DMA)
