@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme197.h,v 1.10 2009/02/16 23:03:33 miod Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.11 2011/01/02 17:55:27 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -45,6 +45,8 @@
  */
 #ifndef __MACHINE_MVME197_H__
 #define __MACHINE_MVME197_H__
+
+#define	ECDM_BASE	0xfff01100	/* not what the doc says... */
 
 #define	FLASH_START	0xff800000	/* start of flash memory area */
 #define	FLASH_SIZE	0x00400000

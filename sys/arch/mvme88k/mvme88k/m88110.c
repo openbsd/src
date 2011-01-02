@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.70 2011/01/01 22:09:33 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.71 2011/01/02 17:55:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -87,9 +87,7 @@
 #include <machine/psl.h>
 
 #include <mvme88k/dev/busswreg.h>
-#ifdef MULTIPROCESSOR
 #include <machine/mvme197.h>
-#endif
 
 cpuid_t	m88110_init(void);
 cpuid_t	m88410_init(void);
@@ -162,6 +160,9 @@ struct cmmu_p cmmu88410 = {
 #endif
 };
 
+size_t mc88410_linesz[2] = { 5, 5 };		/* log2 of L2 cache line size */
+size_t mc88410_cachesz[2] = { 256, 256 };	/* L2 cache size in KB */
+
 void patc_clear(void);
 
 void m88110_cmmu_wb_locked(paddr_t, psize_t);
@@ -228,7 +229,7 @@ m88110_cpu_configuration_print(int master)
 		    proctype, procvers);
 		break;
 	case ARN_88110:
-		printf("M88110 version 0x%x, 8K I/D caches", procvers);
+		printf("M88110 version 0x%x, 8K I/D caches (32b/l)", procvers);
 		break;
 	}
 	printf("\n");
@@ -237,9 +238,11 @@ m88110_cpu_configuration_print(int master)
 void
 m88410_cpu_configuration_print(int master)
 {
+	int cpu = cpu_number();
+
 	m88110_cpu_configuration_print(master);
-	/* XXX how to get its size? */
-	printf("cpu%d: external M88410 cache controller\n", cpu_number());
+	printf("cpu%d: external M88410 %dK cache controller (%db/l)\n",
+	    cpu, mc88410_cachesz[cpu], 1 << mc88410_linesz[cpu]);
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -368,14 +371,49 @@ void
 m88410_initialize_cpu(cpuid_t cpu)
 {
 	u_int dctl;
+	uint32_t tcr1, tcr2;
+	uint clkspeed, lines, linelog;
 
 	m88110_initialize_cpu(cpu);
 	dctl = get_dctl();
 	dctl |= CMMU_DCTL_SEN;
 	set_dctl(dctl);
+
+	/*
+	 * There does not seem to be an easy way to figure out the size of
+	 * the secondary cache.  According to the 197SP/DP documentation,
+	 * the L2 configuration is always 256KB and 32 bytes per line.
+	 * However, the 88410 documentation mentions 512KB and 1MB as
+	 * possible configurations, and there might have been some late
+	 * 197SP/DP models fitted with more than 256KB of L2.
+	 *
+	 * Timing the invalidate operation is good enough to let us know
+	 * how many cache lines are available (it will take two clock
+	 * cycles per line), and the ECDM configuration register will tell
+	 * us the cache line size.
+	 */
+
+	/* enable BusSwitch timer1 */
+	*(volatile uint8_t *)(BS_BASE + BS_TINT1) = 0;
+	*(volatile uint8_t *)(BS_BASE + BS_TCTRL1) =
+	    BS_TCTRL_CEN | BS_TCTRL_COVF;
+	*(volatile uint32_t *)(BS_BASE + BS_TCOMP1) = 0xffffffff;
+
 	CMMU_LOCK;
+	tcr1 = *(volatile uint32_t *)(BS_BASE + BS_TCOUNT1);
 	mc88410_inv();	/* clear external data cache */
+	tcr2 = *(volatile uint32_t *)(BS_BASE + BS_TCOUNT1);
 	CMMU_UNLOCK;
+
+	mc88410_linesz[cpu] = *(volatile uint8_t *)(ECDM_BASE) & 0x40 ? 6 : 5;
+	clkspeed = 256 - *(volatile uint8_t *)(BS_BASE + BS_PADJUST);
+	lines = ((tcr2 - tcr1) * clkspeed) >> 1;
+	for (linelog = 16; linelog != 12; linelog--)
+		if ((lines >> linelog) != 0) {
+			mc88410_cachesz[cpu] =
+			    1 << (linelog + mc88410_linesz[cpu] - 10);
+			break;
+		}
 }
 
 /*
