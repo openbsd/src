@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.3 2011/01/02 00:35:23 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.4 2011/01/02 00:49:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -129,6 +129,12 @@ struct vdsk_desc_msg {
  */
 #define VDSK_MAJOR	1
 #define VDSK_MINOR	0
+
+/*
+ * And we only support Block Read, Block Write and Flush commands.
+ */
+#define VD_OP_MASK \
+    ((1 << VD_OP_BREAD) | (1 << VD_OP_BWRITE) | (1 << VD_OP_FLUSH))
 
 struct vdsp_softc {
 	struct device	sc_dv;
@@ -477,8 +483,9 @@ vdsp_rx_vio_ver_info(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 			return;
 		}
 
+		sc->sc_local_sid = vi->tag.sid;
+
 		vi->tag.stype = VIO_SUBTYPE_ACK;
-		vi->tag.sid = sc->sc_local_sid;
 		vi->minor = VDSK_MINOR;
 		vi->dev_class = VDEV_DISK_SERVER;
 		vdsp_sendmsg(sc, vi, sizeof(*vi));
@@ -823,8 +830,11 @@ vdsp_open(void *arg1, void *arg2)
 	ai.tag.stype_env = VIO_ATTR_INFO;
 	ai.tag.sid = sc->sc_local_sid;
 	ai.xfer_mode = sc->sc_xfer_mode;
+	ai.vd_type = VD_DISK_TYPE_DISK;
 	ai.vdisk_block_size = sc->sc_vdisk_block_size;
+	ai.operations = VD_OP_MASK;
 	ai.vdisk_size = sc->sc_vdisk_size;
+	ai.max_xfer_sz = MAXPHYS / sc->sc_vdisk_block_size;
 	vdsp_sendmsg(sc, &ai, sizeof(ai));
 }
 
