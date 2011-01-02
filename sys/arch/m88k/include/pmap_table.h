@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.h,v 1.2 2010/12/31 21:38:08 miod Exp $	*/
+/*	$OpenBSD: pmap_table.h,v 1.3 2011/01/02 13:40:07 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -33,15 +33,13 @@
  * An entry is considered invalid if size = 0, and
  * end of list is indicated by size 0xffffffff
  */
-typedef struct {
+struct pmap_table {
 	paddr_t		start;
 	psize_t		size;
 	vm_prot_t	prot;
 	unsigned int	cacheability;
-} pmap_table_entry;
+};
 
-typedef const pmap_table_entry *pmap_table_t;
-
-pmap_table_t pmap_table_build(void);
+const struct pmap_table *pmap_table_build(void);
 
 #endif	/* __M88K_PMAP_TABLE_H__ */

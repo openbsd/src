@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.19 2010/12/31 21:38:07 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.20 2011/01/02 13:40:05 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -147,6 +147,7 @@
 #include <machine/bus.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/pmap_table.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 
@@ -167,7 +168,7 @@ u_int	av400_safe_level(u_int, u_int);
 void	av400_clock_ipi_handler(struct trapframe *);
 void	av400_ipi_handler(struct trapframe *);
 
-const pmap_table_entry
+const struct pmap_table
 av400_ptable[] = {
 	{ AV400_PROM,	AV400_PROM_SIZE,	UVM_PROT_RW,	CACHE_INH },
 #if 0	/* mapped by the hardcoded BATC entries */
@@ -204,7 +205,7 @@ const struct board board_av400 = {
 	av400_intsrc,
 	av400_get_vme_ranges,
 
-	av400_ptable,
+	av400_ptable
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.24 2010/12/31 21:38:08 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.25 2011/01/02 13:40:07 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cmmu.h>
 #include <machine/pmap_table.h>
 
 #define	R	UVM_PROT_R
@@ -42,7 +41,7 @@
 
 #ifdef MVME187
 #include <machine/mvme187.h>
-const pmap_table_entry
+const struct pmap_table
 m187_board_table[] = {
 	{ BUG187_START,		BUG187_SIZE,	RW, CI },
 #if 0	/* mapped by the hardcoded BATC entries */
@@ -54,7 +53,7 @@ m187_board_table[] = {
 
 #ifdef MVME188
 #include <machine/mvme188.h>
-const pmap_table_entry
+const struct pmap_table
 m188_board_table[] = {
 	{ MVME188_EPROM,	MVME188_EPROM_SIZE, RW, CI },
 #if 0	/* mapped by the hardcoded BATC entries */
@@ -66,7 +65,7 @@ m188_board_table[] = {
 
 #ifdef MVME197
 #include <machine/mvme197.h>
-const pmap_table_entry
+const struct pmap_table
 m197_board_table[] = {
 	/* We need flash 1:1 mapped to access the 88410 chip underneath */
 	{ FLASH_START,		FLASH_SIZE,	RW, CI },
@@ -76,8 +75,8 @@ m197_board_table[] = {
 };
 #endif
 
-pmap_table_t
-pmap_table_build(void)
+const struct pmap_table *
+pmap_table_build()
 {
 	switch (brdtyp) {
 #ifdef MVME187

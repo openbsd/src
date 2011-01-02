@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.2 2006/05/21 12:22:01 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.3 2011/01/02 13:40:05 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,10 +29,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/board.h>
 #include <machine/pmap_table.h>
 
-pmap_table_t
+const struct pmap_table *
 pmap_table_build(void)
 {
 	return (platform->ptable);

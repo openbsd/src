@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.5 2010/12/31 21:38:07 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.6 2011/01/02 13:40:05 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -37,6 +37,7 @@
 #include <machine/bus.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/pmap_table.h>
 #include <machine/trap.h>
 
 #include <machine/m88100.h>
@@ -56,7 +57,8 @@ u_int	av530_safe_level(u_int, u_int, u_int);
 void	av530_clock_ipi_handler(struct trapframe *);
 void	av530_ipi_handler(struct trapframe *);
 
-const pmap_table_entry av530_ptable[] = {
+const struct pmap_table
+av530_ptable[] = {
 	{ AV530_PROM,	AV530_PROM_SIZE,	UVM_PROT_RW,	CACHE_INH },
 #if 0	/* mapped by the hardcoded BATC entries */
 	{ AV530_UTILITY,AV530_UTILITY_SIZE,	UVM_PROT_RW,	CACHE_INH },
@@ -92,7 +94,7 @@ const struct board board_av530 = {
 	av530_intsrc,
 	av530_get_vme_ranges,
 
-	av530_ptable,
+	av530_ptable
 };
 
 /*

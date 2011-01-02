@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.8 2010/04/24 18:46:55 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.9 2011/01/02 13:40:07 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -71,7 +71,7 @@
 
 extern int32_t cpuid;
 
-#include <machine/pmap_table.h>
+struct pmap_table;
 struct vme_range;
 
 struct board {
@@ -92,7 +92,7 @@ struct board {
 	u_int64_t	(*intsrc)(int);
 	const struct vme_range *(*get_vme_ranges)(void);
 
-	pmap_table_t	ptable;
+	const struct pmap_table *ptable;
 };
 
 #define	md_interrupt_func(f)	platform->intr(f)

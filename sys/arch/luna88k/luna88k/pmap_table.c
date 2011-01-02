@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.6 2010/12/31 21:38:08 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.7 2011/01/02 13:40:07 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,7 +32,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/board.h>
-#include <machine/cmmu.h>
 #include <machine/pmap_table.h>
 
 #define	R	VM_PROT_READ
@@ -42,7 +41,7 @@
 #define	CG	CACHE_GLOBAL
 
 /*  start, size, prot, cacheability */
-const pmap_table_entry
+const struct pmap_table
 luna88k_board_table[] = {
 	{ PROM_ADDR,		PROM_SPACE,		R,	CI },
 	{ FUSE_ROM_ADDR,	FUSE_ROM_SPACE,		RW,	CI },
@@ -75,8 +74,8 @@ luna88k_board_table[] = {
 	{ 0,			0xffffffff,		0,	0 },
 };
 
-pmap_table_t 
-pmap_table_build(void)
+const struct pmap_table *
+pmap_table_build()
 {
 	return luna88k_board_table;
 }
