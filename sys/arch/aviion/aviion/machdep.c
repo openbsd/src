@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2010/12/31 21:38:07 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2011/01/02 13:39:37 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -245,7 +245,6 @@ setstatclockrate(int newhz)
 void
 cpu_startup()
 {
-	int i;
 	vaddr_t minaddr, maxaddr;
 
 	/*
@@ -477,10 +476,7 @@ dumpsys()
 		if (pg != 0 && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
-		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+		error = (*dump)(dumpdev, blkno, (caddr_t)maddr, PAGE_SIZE);
 		if (error == 0) {
 			maddr += PAGE_SIZE;
 			blkno += btodb(PAGE_SIZE);
@@ -688,7 +684,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 aviion_bootstrap()
 {
-	extern int kernelstart;
 	extern char *end;
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;

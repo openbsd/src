@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.73 2010/12/31 21:38:08 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.74 2011/01/02 13:39:38 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -354,7 +354,6 @@ identifycpu()
 void
 cpu_startup()
 {
-	int i;
 	vaddr_t minaddr, maxaddr;
 
 	/* Determine the machine type from FUSE ROM data.  */
@@ -646,10 +645,7 @@ dumpsys()
 		if (pg != 0 && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
-		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+		error = (*dump)(dumpdev, blkno, (caddr_t)maddr, PAGE_SIZE);
 		if (error == 0) {
 			maddr += PAGE_SIZE;
 			blkno += btodb(PAGE_SIZE);
@@ -911,13 +907,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 luna88k_bootstrap()
 {
-	extern int kernelstart;
 	extern struct cmmu_p cmmu8820x;
 	extern char *end;
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;
 #endif
-	cpuid_t cpu;
 	extern void m8820x_initialize_cpu(cpuid_t);
 	extern void m8820x_set_sapr(cpuid_t, apr_t);
 
@@ -979,18 +973,6 @@ luna88k_bootstrap()
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);
 
-	/*
-	 * On the luna88k, secondary processors are not disabled while the
-	 * kernel is initializing. We just initialized the CMMUs tied to the
-	 * currently-running CPU; initialize the others with similar settings
-	 * as well, after calling pmap_bootstrap() above.
-	 */
-	for (cpu = 0; cpu < ncpusfound; cpu++) {
-		if (cpu == master_cpu)
-			continue;
-		m8820x_initialize_cpu(cpu);
-		cmmu_set_sapr(kernel_pmap->pm_apr);
-	}
 	/* Release the cpu_mutex */
 	cpu_boot_secondary_processors();
 
