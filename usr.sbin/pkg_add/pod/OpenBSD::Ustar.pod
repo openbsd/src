@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.16 2010/09/14 10:04:36 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.17 2011/01/02 14:49:49 espie Exp $
 
 =head1 NAME
 
@@ -65,6 +65,16 @@ queried to decide whether to extract this entry or not.
 Write access to an archive object C<$wrarc> occurs through a user-directed
 loop: obtain an archive entry through C<$o = $wrarc-E<gt>prepare($filename)>,
 which can be tweaked manually and then written to the archive.
+
+C<prepare> takes an optional C<$destdir> parameter that will override the
+archive destdination directory.
+This can be used to prepare an archive entry from a temporary file, that
+will be used for the real checks and contents of the archive, then set
+the name to save before writing the actual entry:
+
+    $o = $wrarc->prepare($tempfile, '');
+    $o->set_name("othername");
+    $o->write;
 
 Most client software will specialize C<OpenBSD::Ustar> to their own needs.
 Note however that C<OpenBSD::Ustar> is not designed for inheritance.
