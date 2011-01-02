@@ -10,13 +10,19 @@ DDEESSCCRRIIPPTTIIOONN
 
      line containing two blank characters:
 
+     line containing space tab space:
+
      line starting with a blank character:
       x
      line starting with two blank characters:
        x
+     line ending in one blank character:
+     line ending in two blank characters:
+     line ending in space tab space:
      line containing a Pp macro:
 
      finally, a trailing blank line:
 
+     An empty one-line literal display:
      end of test document
 

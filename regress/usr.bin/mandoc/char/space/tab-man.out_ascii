@@ -1,0 +1,49 @@
+SPACE-TAB-MAN(1)                                              SPACE-TAB-MAN(1)
+
+
+
+NNAAMMEE
+       SPACE-TAB-MAN - handling of literal tab characters
+
+DDEESSCCRRIIPPTTIIOONN
+       In plain text:
+       1    x
+       22   x
+       333  x
+       4444 x
+       55555     x
+       666666    x
+       7777777   x
+       88888888  x
+       999999999 x
+       aaaaaaaaaa     x
+       bbbbbbbbbbb    x
+       cccccccccccc   x
+       ddddddddddddd  x
+       tab   space
+       tab       tab
+       space     tab
+            tab
+                 tab
+       In a literal display:
+       1    x
+       22   x
+       333  x
+       4444 x
+       55555     x
+       666666    x
+       7777777   x
+       88888888  x
+       999999999 x
+       aaaaaaaaaa     x
+       bbbbbbbbbbb    x
+       cccccccccccc   x
+       ddddddddddddd  x
+       tab   space
+       tab       tab
+       space     tab
+            tab
+                 tab
+
+
+

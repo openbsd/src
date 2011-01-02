@@ -1,4 +1,4 @@
-.Dd February 17, 2010
+.Dd January 2, 2011
 .Dt BD-BLANK 1
 .Os
 .Sh NAME
@@ -12,13 +12,20 @@ line containing a blank character:
  
 line containing two blank characters:
   
+line containing space tab space:
+ 	 
 line starting with a blank character:
  x
 line starting with two blank characters:
   x
+line ending in one blank character: 
+line ending in two blank characters:  
+line ending in space tab space: 	 
 line containing a Pp macro:
 .Pp
 finally, a trailing blank line:
 
 .Ed
+An empty one-line literal display:
+.Dl     
 end of test document

@@ -1,0 +1,12 @@
+.Dd April 23, 2010
+.Dt SPACE-MULTIPLE 1
+.Os
+.Sh NAME
+.Nm space-multiple
+.Nd handling of multiple adjacent space characters
+.Sh DESCRIPTION
+one space here
+.Pp
+two spaces  here
+.Pp
+three spaces   here
