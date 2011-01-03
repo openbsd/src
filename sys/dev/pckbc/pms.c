@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.17 2010/12/27 12:22:20 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.18 2011/01/03 19:46:34 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -58,7 +58,6 @@ struct pms_softc {		/* driver status information */
 	struct device sc_dev;
 
 	pckbc_tag_t sc_kbctag;
-	int sc_kbcslot;
 
 	int sc_state;
 #define PMS_STATE_DISABLED	0
@@ -170,10 +169,10 @@ int
 pms_cmd(struct pms_softc *sc, u_char *cmd, int len, u_char *resp, int resplen)
 {
 	if (sc->poll) {
-		return pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		return pckbc_poll_cmd(sc->sc_kbctag, PCKBC_AUX_SLOT,
 		    cmd, len, resplen, resp, 1);
 	} else {
-		return pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		return pckbc_enqueue_cmd(sc->sc_kbctag, PCKBC_AUX_SLOT,
 		    cmd, len, resplen, 1, resp);
 	}
 }
@@ -398,11 +397,10 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	struct wsmousedev_attach_args a;
 
 	sc->sc_kbctag = pa->pa_tag;
-	sc->sc_kbcslot = pa->pa_slot;
 
 	printf("\n");
 
-	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
+	pckbc_set_inputhandler(sc->sc_kbctag, PCKBC_AUX_SLOT,
 	    pmsinput, sc, DEVNAME(sc));
 
 	a.accessops = &pms_accessops;
@@ -453,10 +451,10 @@ pms_change_state(struct pms_softc *sc, int newstate)
 
 		sc->inputstate = 0;
 
-		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
+		pckbc_slot_enable(sc->sc_kbctag, PCKBC_AUX_SLOT, 1);
 
 		if (sc->poll)
-			pckbc_flush(sc->sc_kbctag, sc->sc_kbcslot);
+			pckbc_flush(sc->sc_kbctag, PCKBC_AUX_SLOT);
 
 		pms_reset(sc);
 
@@ -478,7 +476,7 @@ pms_change_state(struct pms_softc *sc, int newstate)
 		if (sc->protocol && sc->protocol->disable)
 			sc->protocol->disable(sc);
 
-		pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+		pckbc_slot_enable(sc->sc_kbctag, PCKBC_AUX_SLOT, 0);
 		break;
 	}
 
