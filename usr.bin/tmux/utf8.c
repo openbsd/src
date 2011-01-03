@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.5 2009/10/20 22:17:33 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.6 2011/01/03 23:35:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -316,6 +316,19 @@ utf8_combine(const struct utf8_data *utf8data)
 		break;
 	}
 	return (value);
+}
+
+/* Split a two-byte UTF-8 character. */
+u_int
+utf8_split2(u_int uc, u_char *ptr)
+{
+	if (uc > 0x7f) {
+		ptr[0] = (uc >> 6) | 0xc0;
+		ptr[1] = (uc & 0x3f) | 0x80;
+		return (2);
+	}
+	ptr[0] = uc;
+	return (1);
 }
 
 /* Lookup width of UTF-8 data in tree. */

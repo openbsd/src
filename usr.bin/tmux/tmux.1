@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.202 2011/01/01 11:24:45 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.203 2011/01/03 23:35:21 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2011 $
+.Dd $Mdocdate: January 3 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1806,6 +1806,10 @@ flag to
 Repeat is enabled for the default keys bound to the
 .Ic resize-pane
 command.
+.It Xo Ic mouse-utf8
+.Op Ic on | off
+.Xc
+If enabled, request mouse input as UTF-8 on UTF-8 terminals.
 .It Xo Ic set-remain-on-exit
 .Op Ic on | off
 .Xc

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.99 2011/01/01 16:51:21 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.100 2011/01/03 23:35:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -334,6 +334,7 @@ main(int argc, char **argv)
 	/* Enable UTF-8 if the first client is on UTF-8 terminal. */
 	if (flags & IDENTIFY_UTF8) {
 		options_set_number(&global_s_options, "status-utf8", 1);
+		options_set_number(&global_s_options, "mouse-utf8", 1);
 		options_set_number(&global_w_options, "utf8", 1);
 	}
 
