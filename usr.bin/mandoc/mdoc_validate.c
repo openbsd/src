@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.82 2010/12/29 00:47:31 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.83 2011/01/03 23:39:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,7 +53,6 @@ enum	check_ineq {
 enum	check_lvl {
 	CHECK_WARN,
 	CHECK_ERROR,
-	CHECK_FATAL
 };
 
 typedef	int	(*v_pre)(PRE_ARGS);
@@ -78,16 +77,14 @@ static	int	 concat(struct mdoc *, char *,
 static	int	 ebool(POST_ARGS);
 static	int	 berr_ge1(POST_ARGS);
 static	int	 bwarn_ge1(POST_ARGS);
-static	int	 eerr_eq0(POST_ARGS);
-static	int	 eerr_eq1(POST_ARGS);
 static	int	 eerr_ge1(POST_ARGS);
-static	int	 eerr_le1(POST_ARGS);
 static	int	 ewarn_eq0(POST_ARGS);
+static	int	 ewarn_eq1(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
-static	int	 herr_eq0(POST_ARGS);
-static	int	 herr_ge1(POST_ARGS);
+static	int	 ewarn_le1(POST_ARGS);
 static	int	 hwarn_eq0(POST_ARGS);
 static	int	 hwarn_eq1(POST_ARGS);
+static	int	 hwarn_ge1(POST_ARGS);
 static	int	 hwarn_le1(POST_ARGS);
 
 static	int	 post_an(POST_ARGS);
@@ -138,29 +135,29 @@ static	v_post	 posts_bd[] = { post_literal, hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	 posts_bk[] = { hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
-static	v_post	 posts_bool[] = { eerr_eq1, ebool, NULL };
+static	v_post	 posts_bool[] = { ebool, NULL };
 static	v_post	 posts_eoln[] = { post_eoln, NULL };
 static	v_post	 posts_defaults[] = { post_defaults, NULL };
 static	v_post	 posts_dd[] = { ewarn_ge1, post_dd, post_prol, NULL };
-static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, herr_eq0, NULL };
+static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, NULL };
 static	v_post	 posts_dt[] = { post_dt, post_prol, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
 static	v_post	 posts_it[] = { post_it, NULL };
-static	v_post	 posts_lb[] = { eerr_eq1, post_lb, NULL };
+static	v_post	 posts_lb[] = { post_lb, NULL };
 static	v_post	 posts_nd[] = { berr_ge1, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
 static	v_post	 posts_os[] = { post_os, post_prol, NULL };
-static	v_post	 posts_rs[] = { berr_ge1, herr_eq0, post_rs, NULL };
-static	v_post	 posts_sh[] = { post_ignpar, herr_ge1, bwarn_ge1, post_sh, NULL };
-static	v_post	 posts_sp[] = { eerr_le1, NULL };
-static	v_post	 posts_ss[] = { post_ignpar, herr_ge1, bwarn_ge1, NULL };
-static	v_post	 posts_st[] = { eerr_eq1, post_st, NULL };
+static	v_post	 posts_rs[] = { post_rs, NULL };
+static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, bwarn_ge1, post_sh, NULL };
+static	v_post	 posts_sp[] = { ewarn_le1, NULL };
+static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, bwarn_ge1, NULL };
+static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
 static	v_post	 posts_text[] = { eerr_ge1, NULL };
-static	v_post	 posts_text1[] = { eerr_eq1, NULL };
+static	v_post	 posts_text1[] = { ewarn_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
-static	v_post	 posts_wline[] = { bwarn_ge1, herr_eq0, NULL };
+static	v_post	 posts_wline[] = { bwarn_ge1, NULL };
 static	v_post	 posts_wtext[] = { ewarn_ge1, NULL };
 static	v_pre	 pres_an[] = { pre_an, NULL };
 static	v_pre	 pres_bd[] = { pre_display, pre_bd, pre_literal, pre_par, NULL };
@@ -380,6 +377,7 @@ check_count(struct mdoc *m, enum mdoc_type type,
 		enum check_lvl lvl, enum check_ineq ineq, int val)
 {
 	const char	*p;
+	enum mandocerr	 t;
 
 	if (m->last->type != type)
 		return(1);
@@ -391,7 +389,7 @@ check_count(struct mdoc *m, enum mdoc_type type,
 			return(1);
 		break;
 	case (CHECK_GT):
-		p = "greater than ";
+		p = "more than ";
 		if (m->last->nchild > val)
 			return(1);
 		break;
@@ -405,18 +403,10 @@ check_count(struct mdoc *m, enum mdoc_type type,
 		/* NOTREACHED */
 	}
 
-	if (CHECK_WARN == lvl) {
-		return(mdoc_vmsg(m, MANDOCERR_ARGCOUNT,
-				m->last->line, m->last->pos,
-				"want %s%d children (have %d)",
-				p, val, m->last->nchild));
-	}
+	t = lvl == CHECK_WARN ? MANDOCERR_ARGCWARN : MANDOCERR_ARGCOUNT;
 
-	/* FIXME: THIS IS THE SAME AS THE ABOVE. */
-
-	return(mdoc_vmsg(m, MANDOCERR_ARGCOUNT,
-			m->last->line, m->last->pos,
-			"require %s%d children (have %d)",
+	return(mdoc_vmsg(m, t, m->last->line, m->last->pos,
+			"want %s%d children (have %d)",
 			p, val, m->last->nchild));
 }
 
@@ -424,7 +414,7 @@ static int
 berr_ge1(POST_ARGS)
 {
 
-	return(check_count(mdoc, MDOC_BODY, CHECK_FATAL, CHECK_GT, 0));
+	return(check_count(mdoc, MDOC_BODY, CHECK_ERROR, CHECK_GT, 0));
 }
 
 static int
@@ -434,27 +424,9 @@ bwarn_ge1(POST_ARGS)
 }
 
 static int
-eerr_eq0(POST_ARGS)
-{
-	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_EQ, 0));
-}
-
-static int
-eerr_eq1(POST_ARGS)
-{
-	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_EQ, 1));
-}
-
-static int
 eerr_ge1(POST_ARGS)
 {
-	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_GT, 0));
-}
-
-static int
-eerr_le1(POST_ARGS)
-{
-	return(check_count(mdoc, MDOC_ELEM, CHECK_FATAL, CHECK_LT, 2));
+	return(check_count(mdoc, MDOC_ELEM, CHECK_ERROR, CHECK_GT, 0));
 }
 
 static int
@@ -464,21 +436,21 @@ ewarn_eq0(POST_ARGS)
 }
 
 static int
+ewarn_eq1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 1));
+}
+
+static int
 ewarn_ge1(POST_ARGS)
 {
 	return(check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_GT, 0));
 }
 
 static int
-herr_eq0(POST_ARGS)
+ewarn_le1(POST_ARGS)
 {
-	return(check_count(mdoc, MDOC_HEAD, CHECK_FATAL, CHECK_EQ, 0));
-}
-
-static int
-herr_ge1(POST_ARGS)
-{
-	return(check_count(mdoc, MDOC_HEAD, CHECK_FATAL, CHECK_GT, 0));
+	return(check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_LT, 2));
 }
 
 static int
@@ -491,6 +463,12 @@ static int
 hwarn_eq1(POST_ARGS)
 {
 	return(check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_EQ, 1));
+}
+
+static int
+hwarn_ge1(POST_ARGS)
+{
+	return(check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_GT, 0));
 }
 
 static int
@@ -1046,6 +1024,8 @@ post_lb(POST_ARGS)
 	char		*buf;
 	size_t		 sz;
 
+	check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 1);
+
 	assert(mdoc->last->child);
 	assert(MDOC_TEXT == mdoc->last->child->type);
 
@@ -1238,8 +1218,10 @@ post_an(POST_ARGS)
 	struct mdoc_node *np;
 
 	np = mdoc->last;
-	if (AUTH__NONE != np->norm->An.auth && np->child)
-		return(eerr_eq0(mdoc));
+	if (AUTH__NONE != np->norm->An.auth && np->child) {
+		check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 0);
+		return(1);
+	}
 
 	/* 
 	 * FIXME: make this ewarn and make sure that the front-ends
@@ -1581,8 +1563,12 @@ static int
 ebool(struct mdoc *mdoc)
 {
 
-	if (NULL == mdoc->last->child)
+	if (NULL == mdoc->last->child) {
+		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_MACROEMPTY);
+		mdoc_node_delete(mdoc, mdoc->last);
 		return(1);
+	}
+	check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 1);
 
 	assert(MDOC_TEXT == mdoc->last->child->type);
 
@@ -1631,18 +1617,23 @@ post_root(POST_ARGS)
 static int
 post_st(POST_ARGS)
 {
-	const char	*p;
+	struct mdoc_node	 *ch;
+	const char		 *p;
 
-	assert(MDOC_TEXT == mdoc->last->child->type);
+	if (NULL == (ch = mdoc->last->child)) {
+		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_MACROEMPTY);
+		mdoc_node_delete(mdoc, mdoc->last);
+		return(1);
+	}
 
-	p = mdoc_a2st(mdoc->last->child->string);
+	assert(MDOC_TEXT == ch->type);
 
-	if (p == NULL) {
+	if (NULL == (p = mdoc_a2st(ch->string))) {
 		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADSTANDARD);
 		mdoc_node_delete(mdoc, mdoc->last);
 	} else {
-		free(mdoc->last->child->string);
-		mdoc->last->child->string = mandoc_strdup(p);
+		free(ch->string);
+		ch->string = mandoc_strdup(p);
 	}
 
 	return(1);
@@ -1654,8 +1645,18 @@ post_rs(POST_ARGS)
 	struct mdoc_node *nn, *next, *prev;
 	int		  i, j;
 
-	if (MDOC_BODY != mdoc->last->type)
+	switch (mdoc->last->type) {
+	case (MDOC_HEAD):
+		check_count(mdoc, MDOC_HEAD, CHECK_WARN, CHECK_EQ, 0);
 		return(1);
+	case (MDOC_BODY):
+		if (mdoc->last->child)
+			break;
+		check_count(mdoc, MDOC_BODY, CHECK_WARN, CHECK_GT, 0);
+		return(1);
+	default:
+		return(1);
+	}
 
 	/*
 	 * Make sure only certain types of nodes are allowed within the

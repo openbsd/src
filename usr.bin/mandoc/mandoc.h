@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.25 2010/12/09 23:01:18 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.26 2011/01/03 23:39:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,6 +75,7 @@ enum	mandocerr {
 
 	/* related to missing macro arguments */
 	MANDOCERR_MACROEMPTY, /* skipping empty macro */
+	MANDOCERR_ARGCWARN, /* argument count wrong */
 	MANDOCERR_DISPTYPE, /* missing display type */
 	MANDOCERR_LISTFIRST, /* list type must come first */
 	MANDOCERR_NOWIDTHARG, /* tag lists require a width argument */

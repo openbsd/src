@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.62 2010/12/21 01:22:00 schwarze Exp $ */
+/*	$Id: main.c,v 1.63 2011/01/03 23:39:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -138,6 +138,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 
 	/* related to missing macro arguments */
 	"skipping empty macro",
+	"argument count wrong",
 	"missing display type",
 	"list type must come first",
 	"tag lists require a width argument",
