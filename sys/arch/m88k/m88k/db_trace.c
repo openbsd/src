@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.11 2009/12/16 16:54:43 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.12 2011/01/03 05:58:19 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -39,6 +39,12 @@
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 
+#ifdef DEBUG
+#define	DPRINTF(stmt) printf stmt
+#else
+#define	DPRINTF(stmt) do { } while (0)
+#endif
+
 static inline
 u_int br_dest(vaddr_t addr, u_int inst)
 {
@@ -56,17 +62,17 @@ u_int db_trace_get_val(vaddr_t addr, u_int *ptr);
 /*
  * Some macros to tell if the given text is the instruction.
  */
-#define JMPN_R1(I)	    ( (I) == 0xf400c401)	/* jmp.n   r1 */
-#define JMP_R1(I)	    ( (I) == 0xf400c001)	/* jmp     r1 */
+#define JMPN_R1(I)		((I) == 0xf400c401)	/* jmp.n r1 */
+#define JMP_R1(I)		((I) == 0xf400c001)	/* jmp r1 */
 
 /* gets the IMM16 value from an instruction */
-#define IMM16VAL(I)	    ((I) & 0x0000ffff)
+#define IMM16VAL(I)		((I) & 0x0000ffff)
 
 /* subu r31, r31, IMM */
-#define SUBU_R31_R31_IMM(I) (((I) & 0xffff0000) == 0x67ff0000U)
+#define SUBU_R31_R31_IMM(I)	(((I) & 0xffff0000) == 0x67ff0000U)
 
-/* st r1, r31, IMM */
-#define ST_R1_R31_IMM(I)    (((I) & 0xffff0000) == 0x243f0000U)
+/* st r30, r31, IMM */
+#define ST_R30_R31_IMM(I)	(((I) & 0xffff0000) == 0x27df0000U)
 
 extern label_t *db_recover;
 
@@ -400,7 +406,7 @@ static int
 is_jump_source_ok(vaddr_t return_to, vaddr_t jump_to)
 {
 	u_int flags;
-	u_int instruction;
+	uint32_t instruction;
 
 	/*
 	 * Delayed branches are the most common... look two instructions before
@@ -442,7 +448,6 @@ is_jump_source_ok(vaddr_t return_to, vaddr_t jump_to)
 	return JUMP_SOURCE_IS_UNLIKELY;
 }
 
-static const char *note;
 static int next_address_likely_wrong = 0;
 
 /* How much slop we expect in the stack trace */
@@ -466,18 +471,20 @@ static int next_address_likely_wrong = 0;
  *	Note that even is zero is returned (the second case) the
  *	stack pointer can be adjusted.
  */
-static int
+static vaddr_t
 stack_decode(db_addr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
 {
 	db_sym_t proc;
 	db_expr_t offset_from_proc;
-	u_int instructions_to_search;
+	uint instructions_to_search;
 	db_addr_t check_addr;
 	db_addr_t function_addr;    /* start of function */
-	u_int32_t r31 = *stack;	    /* the r31 of the function */
-	u_int32_t inst;		    /* text of an instruction */
+	uint32_t r31;
+	uint32_t inst;
 	vaddr_t ret_addr;	    /* address to which we return */
 	u_int tried_to_save_r1 = 0;
+	vaddr_t str30_addr = 0;
+	vaddr_t last_subu_addr = 0;
 
 	/* get what we hope will be the db_sym_t for the function name */
 	proc = db_search_symbol(addr, DB_STGY_PROC, &offset_from_proc);
@@ -485,65 +492,73 @@ stack_decode(db_addr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
 		proc = DB_SYM_NULL;
 
 	/*
-	 * Somehow, find the start of this function.
-	 * If we found a symbol above, it'll have the address.
-	 * Otherwise, we've got to search for it....
+	 * Try and find the start of this function, and its stack usage.
+	 * If we do not have symbols available, we will need to
+	 * look back in memory for a prologue pattern.
 	 */
 	if (proc != DB_SYM_NULL) {
-		char *names;
+		char *names = NULL;
 		db_symbol_values(proc, &names, &function_addr);
-		if (names == 0)
+		if (names == NULL)
 			return 0;
 	} else {
-		int instructions_to_check = 400;
 		/*
-		 * hmm - unable to find symbol. Search back
-		 * looking for a function prolog.
+		 * Unable to find symbol. Search back looking for a function
+		 * prolog.
+		 *
+		 * This is a difficult game because of the compiler
+		 * optimizations. However, we can rely upon the first two
+		 * instructions of the function being:
+		 *	subu	r31, r31, imm16
+		 *	st	r30, r31, imm16
+		 * unless the function did not need a frame, in which case
+		 * the store of r30 is missing...
 		 */
-		for (check_addr = addr; instructions_to_check-- > 0; check_addr -= 4) {
+		instructions_to_search = 400;
+		for (check_addr = addr; instructions_to_search-- != 0;
+		    check_addr -= 4) {
 			if (!db_trace_get_val(check_addr, &inst))
 				break;
 
-			if (SUBU_R31_R31_IMM(inst)) {
-#if 0
-				/*
-				 * If the next instruction is "st r1, r31, ####"
-				 * then we can feel safe we have the start of
-				 * a function.
-				 */
-				if (!db_trace_get_val(check_addr + 4, &inst))
-					continue;
-				if (ST_R1_R31_IMM(instr))
-					break; /* success */
-#else
-				/*
-				 * Latest GCC optimizer is just too good... the store
-				 * of r1 might come much later... so we'll have to
-				 * settle for just the "subr r31, r31, ###" to mark
-				 * the start....
-				 */
-				break;
-#endif
+			if (ST_R30_R31_IMM(inst)) {
+				DPRINTF(("{st r30 found at %p}\n",
+				    check_addr));
+				str30_addr = (vaddr_t)check_addr;
+			} else if (SUBU_R31_R31_IMM(inst)) {
+				DPRINTF(("{subu r31 found at %p}\n",
+				    check_addr));
+				if (str30_addr == (vaddr_t)check_addr + 4)
+					break;	/* success */
+				else
+					last_subu_addr = (vaddr_t)check_addr;
 			}
+
 			/*
-			 * if we come across a [jmp r1] or [jmp.n r1] assume we have hit
-			 * the previous functions epilogue and stop our search.
-			 * Since we know we would have hit the "subr r31, r31" if it was
-			 * right in front of us, we know this doesn't have one so
-			 * we just return failure....
+			 * if we come across a [jmp r1] or [jmp.n r1] assume
+			 * we have hit the previous functions epilogue and
+			 * stop our search.
+			 * Since we know we would have hit the "subu r31, r31"
+			 * if it was right in front of us, we know this doesn't
+			 * have one so we just return failure....
 			 */
-			if (JMP_R1(inst) || JMPN_R1(inst))
-				return 0;
+			if (JMP_R1(inst) || JMPN_R1(inst)) {
+				if (last_subu_addr != 0) {
+					check_addr = last_subu_addr;
+					break;
+				} else
+					return 0;
+			}
 		}
-		if (instructions_to_check < 0)
+		if (instructions_to_search == 0)
 			return 0; /* bummer, couldn't find it */
 		function_addr = check_addr;
 	}
 
+	DPRINTF(("{start of function at %p}\n", function_addr));
 	/*
 	 * We now know the start of the function (function_addr).
 	 * If we're stopped right there, or if it's not a
-	 *		subu r31, r31, ####
+	 *		subu r31, r31, imm16
 	 * then we're done.
 	 */
 	if (addr == function_addr)
@@ -553,53 +568,90 @@ stack_decode(db_addr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
 	if (!SUBU_R31_R31_IMM(inst))
 		return 0;
 
-	/* add the size of this frame to the stack (for the next frame) */
+ 	/*
+	 * Unfortunately for us, functions with variable number of
+	 * arguments will further alter r31 in va_start(), through the
+	 * use of __builtin_alloca(). Since panic() is one such
+	 * function, we need to take this into account to be able to
+	 * backtrack further.
+	 *
+	 * So we need to look for further addu/subu r31 sequences after the
+	 * prologue.
+	 *
+	 * Of course, control flow may cause execution to NOT pass
+	 * through the __builtin_alloca() expansion...
+	 */
+	DPRINTF(("{orig r31 is %p}\n", *stack));
 	*stack += IMM16VAL(inst);
 
+	if (function_addr == (vaddr_t)&panic) /* XXX others? */ {
+		check_addr = function_addr + 4;
+		instructions_to_search = (addr - check_addr) / 4;
+		while (instructions_to_search-- != 0) {
+			if (!db_trace_get_val(check_addr, &inst))
+				break;
+			if (SUBU_R31_R31_IMM(inst)) {
+				DPRINTF(("{variadic subu r31 found at %p}\n",
+				    check_addr));
+				*stack += IMM16VAL(inst);
+			}
+			check_addr += 4;
+		}
+	}
+
 	/*
-	 * Search from the beginning of the function (funstart) to where we are
-	 * in the function (addr) looking to see what kind of registers have
-	 * been saved on the stack.
+	 * Search from the beginning of the function (function_addr) to where
+	 * we are in the function (addr) looking to see what kind of registers
+	 * have been saved on the stack.
 	 *
-	 * We'll stop looking before we get to ADDR if we hit a branch.
+	 * We'll stop looking before we get to addr if we hit a branch.
 	 */
 	clear_local_saved_regs();
-	check_addr = function_addr + 4;	/* we know the first inst isn't a store */
-
-	for (instructions_to_search = (addr - check_addr)/sizeof(long);
-	    instructions_to_search-- > 0;
-	    check_addr += 4) {
-		u_int32_t instruction, s1, d;
-		u_int flags;
+	check_addr = function_addr;
+	r31 = *stack;
+	DPRINTF(("{entry r31 would be %p}\n", r31));
+	for (instructions_to_search = (addr - check_addr) / sizeof(uint32_t);
+	    instructions_to_search-- != 0; check_addr += 4) {
+		uint32_t s1, d;
+		uint flags;
 
 		/* read the instruction */
-		if (!db_trace_get_val(check_addr, &instruction))
+		if (!db_trace_get_val(check_addr, &inst))
 			break;
 
+		if (SUBU_R31_R31_IMM(inst)) {
+			r31 -= IMM16VAL(inst);
+			DPRINTF(("{adjust r31 to %p at %p}\n",
+			    r31, check_addr));
+		}
+
 		/* find out the particulars about this instruction */
-		flags = m88k_instruction_info(instruction);
+		flags = m88k_instruction_info(inst);
 
 		/* split the instruction in its diatic components anyway */
-		s1 = (instruction >> 16) & 0x1f;
-		d = (instruction >> 21) & 0x1f;
+		s1 = (inst >> 16) & 0x1f;
+		d = (inst >> 21) & 0x1f;
 
 		/* if a store to something off the stack pointer, note the value */
 		if ((flags & STORE) && s1 == 31 /*stack pointer*/) {
 			u_int value;
 			if (!have_local_reg(d)) {
 				if (d == 1)
-					tried_to_save_r1 = r31 +
-					    IMM16VAL(instruction);
-				if (db_trace_get_val(r31 +
-				    IMM16VAL(instruction), &value))
+					tried_to_save_r1 = r31 + IMM16VAL(inst);
+				DPRINTF(("{r%d saved at %p to %p}\n",
+				    d, check_addr, r31 + IMM16VAL(inst)));
+				if (db_trace_get_val(r31 + IMM16VAL(inst),
+				    &value))
 					save_reg(d, value);
 			}
 			if ((flags & DOUBLE) && !have_local_reg(d + 1)) {
 				if (d == 0)
 					tried_to_save_r1 = r31 +
-					    IMM16VAL(instruction) + 4;
-				if (db_trace_get_val(r31 +
-				    IMM16VAL(instruction) + 4, &value))
+					    IMM16VAL(inst) + 4;
+				DPRINTF(("{r%d saved at %p to %p}\n",
+				    d + 1, check_addr, r31 + IMM16VAL(inst)));
+				if (db_trace_get_val(r31 + IMM16VAL(inst) + 4,
+				    &value))
 					save_reg(d + 1, value);
 			}
 		}
@@ -620,7 +672,7 @@ stack_decode(db_addr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
 	 * If we didn't save r1 at some point, we're hosed.
 	 */
 	if (!have_local_reg(1)) {
-		if (tried_to_save_r1) {
+		if (tried_to_save_r1 != 0) {
 			(*pr)("    <return value of next fcn unreadable in %08x>\n",
 				  tried_to_save_r1);
 		}
@@ -651,7 +703,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 {
 	vaddr_t stack;
 	u_int depth=1;
-	u_int where;
+	vaddr_t where;
 	u_int ft;
 	u_int pair[2];
 	int i;
@@ -687,10 +739,6 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	} else
 		print_args();
 	(*pr)("\n");
-	if (note) {
-		(*pr)("   %s\n", note);
-		note = NULL;
-	}
 
 	do {
 		/*
@@ -706,10 +754,6 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		where = stack_decode(where, &stack, pr);
 		print_args();
 		(*pr)("\n");
-		if (note) {
-			(*pr)("   %s\n", note);
-			note = NULL;
-		}
 	} while (where);
 
 	/* try to trace back over trap/exception */
