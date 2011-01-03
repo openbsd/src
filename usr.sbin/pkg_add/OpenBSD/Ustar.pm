@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.69 2011/01/03 14:22:48 jasper Exp $
+# $OpenBSD: Ustar.pm,v 1.70 2011/01/03 19:02:01 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -74,9 +74,10 @@ sub fatal
 
 sub new_object
 {
-	my ($self, $h) = @_;
+	my ($self, $h, $class) = @_;
 	$h->{archive} = $self;
 	$h->{destdir} = $self->{destdir};
+	bless $h, $class;
 	return $h;
 }
 
@@ -157,7 +158,7 @@ sub next
 	}
 
 	$size = oct($size);
-	my $result= $self->new_object({
+	my $result= {
 	    name => $name,
 	    mode => $mode,
 	    atime => $mtime,
@@ -170,12 +171,17 @@ sub next
 	    size => $size,
 	    major => $major,
 	    minor => $minor,
-	});
+	};
 	if (defined $types->{$type}) {
-		$types->{$type}->new($result);
+		$self->new_object($result, $types->{$type});
 	} else {
 		$self->fatal("Unsupported type #1", $type);
 	}
+	if (!$result->isFile && $result->{size} != 0) {
+		$self->fatal("Bad archive: non null size for #1 (#2)", 
+		    $types->{$type}, $result->{name});
+	}
+
 	# adjust swallow
 	$self->{swallow} = $size;
 	if ($size % 512) {
@@ -208,9 +214,6 @@ sub mkheader
 	my ($prefix, $name) = split_name($entry->name);
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
-	if (!$entry->isFile) {
-		$size = 0;
-	}
 	my ($major, $minor);
 	if ($entry->isDevice) {
 		$major = $entry->{major};
@@ -288,7 +291,7 @@ sub prepare
 	my ($dev, $ino, $mode, $uid, $gid, $rdev, $size, $mtime) =
 	    (lstat $realname)[0,1,2,4,5,6, 7,9];
 
-	my $entry = $self->new_object({
+	my $entry = {
 		key => "$dev/$ino",
 		name => $filename,
 		realname => $realname,
@@ -301,16 +304,14 @@ sub prepare
 		gname => $gnamecache->lookup($gid),
 		major => $rdev/256,
 		minor => $rdev%256,
-	});
+	};
 	my $k = $entry->{key};
 	my $class = "OpenBSD::Ustar::File"; # default
 	if (defined $self->{key}->{$k}) {
 		$entry->{linkname} = $self->{key}->{$k};
-		$entry->{size} = 0;
 		$class = "OpenBSD::Ustar::HardLink";
 	} elsif (-l $realname) {
 		$entry->{linkname} = readlink($realname);
-		$entry->{size} = 0;
 		$class = "OpenBSD::Ustar::SoftLink";
 	} elsif (-p _) {
 		$class = "OpenBSD::Ustar::Fifo";
@@ -321,7 +322,11 @@ sub prepare
 	} elsif (-d _) {
 		$class = "OpenBSD::Ustar::Dir";
 	}
-	$class->new($entry);
+	$self->new_object($entry, $class);
+	if (!$entry->isFile) {
+		$entry->{size} = 0;
+	}
+	return $entry;
 }
 
 sub pad
@@ -356,18 +361,6 @@ sub fh
 }
 
 package OpenBSD::Ustar::Object;
-
-sub new
-{
-	my ($class, $object) = @_;
-
-	bless $object, $class;
-	if ($object->{size} != 0) {
-		$object->fatal("Bad archive: non null size for #1 (#2)", 
-		    $class, $object->{name});
-	}
-	return $object;
-}
 
 sub fatal
 {
@@ -676,12 +669,6 @@ sub close
 
 package OpenBSD::Ustar::File;
 our @ISA=qw(OpenBSD::Ustar::Object);
-sub new
-{
-	my ($class, $object) = @_;
-
-	bless $object, $class;
-}
 
 sub create
 {
