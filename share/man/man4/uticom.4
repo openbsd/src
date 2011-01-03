@@ -1,4 +1,4 @@
-.\" $OpenBSD: uticom.4,v 1.6 2011/01/03 09:04:04 jasper Exp $
+.\" $OpenBSD: uticom.4,v 1.7 2011/01/03 10:32:48 jmc Exp $
 .\" Copyright (c) 2007
 .\"     The DragonFly Project.  All rights reserved.
 .\"
@@ -72,8 +72,8 @@ and
 .Sh CAVEATS
 The
 .Nm
-driver doesn't support devices that have an internal EEPROM with firmware.
-Because such firmware is different from the firmware supplied with
+driver doesn't support devices that have an internal EEPROM with firmware,
+since such firmware is different to that supplied with
 .Ox .
 .Pp
 Devices with multiple ports will attach all ports, though only
