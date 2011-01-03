@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ipc_35.c,v 1.3 2004/07/15 11:00:12 millert Exp $	*/
+/*	$OpenBSD: kern_ipc_35.c,v 1.4 2011/01/03 23:08:07 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -26,6 +26,63 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+/*
+ * Old-style (OpenBSD 3.5 and earlier) structures, where ipc_perm
+ * used a 16bit int for 'mode'.
+ */
+struct ipc_perm35 {
+	uid_t		cuid;	/* creator user id */
+	gid_t		cgid;	/* creator group id */
+	uid_t		uid;	/* user id */
+	gid_t		gid;	/* group id */
+	u_int16_t	mode;	/* r/w permission */
+	unsigned short	seq;	/* sequence # (to generate unique id) */
+	key_t		key;	/* user specified msg/sem/shm key */
+};
+
+struct msqid_ds35 {
+	struct ipc_perm35 msg_perm;	/* msg queue permission bits */
+	struct msg	  *msg_first;	/* first message in the queue */
+	struct msg	  *msg_last;	/* last message in the queue */
+	unsigned long	  msg_cbytes;	/* number of bytes in use on queue */
+	unsigned long	  msg_qnum;	/* number of msgs in the queue */
+	unsigned long	  msg_qbytes;	/* max # of bytes on the queue */
+	pid_t		  msg_lspid;	/* pid of last msgsnd() */
+	pid_t		  msg_lrpid;	/* pid of last msgrcv() */
+	time_t		  msg_stime;	/* time of last msgsnd() */
+	long		  msg_pad1;
+	time_t		  msg_rtime;	/* time of last msgrcv() */
+	long		  msg_pad2;
+	time_t		  msg_ctime;	/* time of last msgctl() */
+	long		  msg_pad3;
+	long		  msg_pad4[4];
+};
+
+struct semid_ds35 {
+	struct ipc_perm35 sem_perm;	/* operation permission struct */
+	struct sem	  *sem_base;	/* pointer to first semaphore in set */
+	unsigned short	  sem_nsems;	/* number of sems in set */
+	time_t		  sem_otime;	/* last operation time */
+	long		  sem_pad1;	/* SVABI/386 says I need this here */
+	time_t		  sem_ctime;	/* last change time */
+	    				/* Times measured in secs since */
+	    				/* 00:00:00 GMT, Jan. 1, 1970 */
+	long		  sem_pad2;	/* SVABI/386 says I need this here */
+	long		  sem_pad3[4];	/* SVABI/386 says I need this here */
+};
+
+struct shmid_ds35 {
+	struct ipc_perm35 shm_perm;	/* operation permission structure */
+	int		  shm_segsz;	/* size of segment in bytes */
+	pid_t		  shm_lpid;	/* process ID of last shm op */
+	pid_t		  shm_cpid;	/* process ID of creator */
+	shmatt_t	  shm_nattch;	/* number of current attaches */
+	time_t		  shm_atime;	/* time of last shmat() */
+	time_t		  shm_dtime;	/* time of last shmdt() */
+	time_t		  shm_ctime;	/* time of last change by shmctl() */
+	void		  *shm_internal;/* implementation specific data */
+};
 
 #ifdef SYSVMSG
 /*

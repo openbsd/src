@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.20 2009/04/03 04:22:49 guenther Exp $	*/
+/*	$OpenBSD: sem.h,v 1.21 2011/01/03 23:08:07 guenther Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -64,34 +64,6 @@ struct semid_ds {
 	long		sem_pad2;	/* SVABI/386 says I need this here */
 	long		sem_pad3[4];	/* SVABI/386 says I need this here */
 };
-
-#ifdef _KERNEL
-struct semid_ds23 {
-	struct ipc_perm23 sem_perm;	/* operation permission struct */
-	struct sem	*sem_base;	/* pointer to first semaphore in set */
-	unsigned short	sem_nsems;	/* number of sems in set */
-	time_t		sem_otime;	/* last operation time */
-	long		sem_pad1;	/* SVABI/386 says I need this here */
-	time_t		sem_ctime;	/* last change time */
-	    				/* Times measured in secs since */
-	    				/* 00:00:00 GMT, Jan. 1, 1970 */
-	long		sem_pad2;	/* SVABI/386 says I need this here */
-	long		sem_pad3[4];	/* SVABI/386 says I need this here */
-};
-
-struct semid_ds35 {
-	struct ipc_perm35 sem_perm;	/* operation permission struct */
-	struct sem	  *sem_base;	/* pointer to first semaphore in set */
-	unsigned short	  sem_nsems;	/* number of sems in set */
-	time_t		  sem_otime;	/* last operation time */
-	long		  sem_pad1;	/* SVABI/386 says I need this here */
-	time_t		  sem_ctime;	/* last change time */
-	    				/* Times measured in secs since */
-	    				/* 00:00:00 GMT, Jan. 1, 1970 */
-	long		  sem_pad2;	/* SVABI/386 says I need this here */
-	long		  sem_pad3[4];	/* SVABI/386 says I need this here */
-};
-#endif
 
 /*
  * semop's sops parameter structure
@@ -211,7 +183,6 @@ int	semctl(int, int, int, ...);
 int	__semctl(int, int, int, union semun *);
 int	semget(key_t, int, int);
 int	semop(int, struct sembuf *, size_t);
-int	semconfig(int);
 __END_DECLS
 #else
 void	seminit(void);
