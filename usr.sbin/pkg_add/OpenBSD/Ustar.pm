@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.67 2011/01/02 14:39:18 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.68 2011/01/03 00:12:06 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -309,6 +309,7 @@ sub prepare
 		$class = "OpenBSD::Ustar::HardLink";
 	} elsif (-l $realname) {
 		$entry->{linkname} = readlink($realname);
+		$entry->{size} = 0;
 		$class = "OpenBSD::Ustar::SoftLink";
 	} elsif (-p _) {
 		$class = "OpenBSD::Ustar::Fifo";
@@ -361,7 +362,8 @@ sub new
 
 	bless $object, $class;
 	if ($object->{size} != 0) {
-		$object->fatal("Bad archive: non null size for #1", $class);
+		$object->fatal("Bad archive: non null size for #1 (#2)", 
+		    $class, $object->{name});
 	}
 	return $object;
 }
