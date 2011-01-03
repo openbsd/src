@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.631 2010/11/22 14:10:42 halex Exp $
+#	$OpenBSD: install.sub,v 1.632 2011/01/03 00:36:50 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1943,18 +1943,16 @@ finish_up() {
 	fi
 
 	echo -n "Making all device nodes..."
-	(cd /mnt/dev
-	sh MAKEDEV all
-	# Make sure any devices we found during probe are created in the
-	# installed system.
-	for _dev in $(get_dkdevs) $(get_cddevs) $MTDEVS ; do
-		sh MAKEDEV $_dev
-	done
+	(cd /mnt/dev; sh MAKEDEV all
+		# Make sure any devices we found during probe are created in the
+		# installed system.
+		for _dev in $(get_dkdevs) $(get_cddevs) $MTDEVS ; do
+			sh MAKEDEV $_dev
+		done
 	)
 	echo "done."
 
-	(cd /; md_installboot $ROOTDISK)
-	cd /
+	md_installboot $ROOTDISK
 
 	populateusrlocal
 

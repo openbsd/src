@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.33 2009/06/04 00:44:47 krw Exp $
+#	$OpenBSD: install.md,v 1.34 2011/01/03 00:36:50 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -43,11 +43,10 @@ NCPU=$(sysctl -n hw.ncpufound)
 md_installboot() {
 	local _prefix
 
-	cd /mnt
-	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
+	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
 		echo "Multiprocessor machine; using bsd.mp instead of bsd."
-		mv bsd bsd.sp 2>/dev/null
-		mv bsd.mp bsd
+		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
+		mv /mnt/bsd.mp /mnt/bsd
 	fi
 
 	# Figure out which /usr/mdec directory to use

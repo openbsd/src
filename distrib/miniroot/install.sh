@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.214 2010/12/22 22:22:40 todd Exp $
+#	$OpenBSD: install.sh,v 1.215 2011/01/03 00:36:50 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -63,7 +63,6 @@ MODE=install
 # include common subroutines and initialization code
 . install.sub
 
-cd /tmp
 DISK=
 DISKS_DONE=
 _DKDEVS=$(get_dkdevs)
@@ -78,7 +77,7 @@ while :; do
 	# Always do ROOTDISK first, and repeat until it is configured.
 	if isin $ROOTDISK $_DKDEVS; then
 		resp=$ROOTDISK
-		rm -f fstab
+		rm -f /tmp/fstab
 		# Make sure empty files exist so we don't have to
 		# keep checking for their existence before grep'ing.
 	else
@@ -97,26 +96,26 @@ while :; do
 	# Deal with disklabels, including editing the root disklabel
 	# and labeling additional disks. This is machine-dependent since
 	# some platforms may not be able to provide this functionality.
-	# fstab.$DISK is created here with 'disklabel -f'.
-	rm -f *.$DISK
+	# /tmp/fstab.$DISK is created here with 'disklabel -f'.
+	rm -f /tmp/*.$DISK
 	AUTOROOT=n
 	md_prep_disklabel $DISK || { DISK= ; continue ; }
 
 	# Make sure there is a '/' mount point.
-	grep -qs " / ffs " fstab.$ROOTDISK || \
+	grep -qs " / ffs " /tmp/fstab.$ROOTDISK || \
 		{ DISK= ; echo "'/' must be configured!" ; continue ; }
 
-	if [[ -f fstab.$DISK ]]; then
+	if [[ -f /tmp/fstab.$DISK ]]; then
 		# Avoid duplicate mount points on different disks.
 		while read _pp _mp _rest; do
-			[[ fstab.$DISK == $(grep -l " $_mp " fstab.*) ]] || \
+			[[ /tmp/fstab.$DISK == $(grep -l " $_mp " /tmp/fstab.*) ]] || \
 				{ _rest=$DISK ; DISK= ; break ; }
-		done <fstab.$DISK
+		done </tmp/fstab.$DISK
 		if [[ -z $DISK ]]; then
 			# Allow disklabel(8) to read mountpoint info.
-			cat fstab.$_rest >/etc/fstab
-			rm fstab.$_rest
-			set -- $(grep -h " $_mp " fstab.*[0-9])
+			cat /tmp/fstab.$_rest >/etc/fstab
+			rm /tmp/fstab.$_rest
+			set -- $(grep -h " $_mp " /tmp/fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
 			continue
 		fi
@@ -134,13 +133,13 @@ while :; do
 			#	mount points.
 			_fsent[$_i]="$_mp!$_pp"
 			: $(( _i += 1 ))
-		done <fstab.$DISK
+		done </tmp/fstab.$DISK
 	fi
 
 	# New swap partitions?
 	disklabel $DISK 2>&1 | sed -ne \
 		"/^ *\([a-p]\): .* swap /s,,/dev/$DISK\1 none swap sw 0 0,p" | \
-		grep -v "^/dev/$SWAPDEV " >>fstab
+		grep -v "^/dev/$SWAPDEV " >>/tmp/fstab
 done
 
 # Write fstab entries to fstab in mount point alphabetic order
@@ -185,8 +184,7 @@ for _mp in $(bsort ${_fsent[*]}); do
 	*)	echo -n ",nosuid"	;;
 	esac
 	echo " 1 2"
-done >>fstab
-cd /
+done >>/tmp/fstab
 
 munge_fstab
 mount_fs "-o async"
@@ -196,8 +194,8 @@ install_sets
 # If we did not succeed at setting TZ yet, we try again
 # using the timezone names extracted from the base set
 if [[ -z $TZ ]]; then
-	( cd /mnt/usr/share/zoneinfo
-	ls -1dF `tar cvf /dev/null [A-Za-y]*` >/mnt/tmp/tzlist )
+	(cd /mnt/usr/share/zoneinfo
+	    ls -1dF `tar cvf /dev/null [A-Za-y]*` >/mnt/tmp/tzlist )
 	echo
 	set_timezone /mnt/tmp/tzlist
 	rm -f /mnt/tmp/tzlist
@@ -237,12 +235,10 @@ mv /tmp/ttys /mnt/etc/ttys
 echo -n "Saving configuration files..."
 
 # Save any leases obtained during install.
-( cd /var/db
-[ -f dhclient.leases ] && mv dhclient.leases /mnt/var/db/. )
+(cd /var/db; [ -f dhclient.leases ] && mv dhclient.leases /mnt/var/db/. )
 
 # Move configuration files from /tmp to /mnt/etc.
-( cd /tmp
-hostname >myname
+hostname >/tmp/myname
 
 # Append entries to installed hosts file, changing '1.2.3.4 hostname'
 # to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched lines containing
@@ -256,20 +252,20 @@ if [[ -f hosts ]]; then
 		else
 			echo "$_addr\t$_hn.$_dn $_hn"
 		fi
-	done <hosts >>/mnt/etc/hosts
-	rm hosts
+	done </tmp/hosts >>/mnt/etc/hosts
+	rm /tmp/hosts
 fi
 
 # Append dhclient.conf to installed dhclient.conf.
 _f=dhclient.conf
-[[ -f $_f ]] && { cat $_f >>/mnt/etc/$_f ; rm $_f ; }
+[[ -f /tmp/$_f ]] && { cat /tmp/$_f >>/mnt/etc/$_f ; rm /tmp/$_f ; }
 
-# Possible files: fstab hostname.* kbdtype mygate myname ttys
-#		  boot.conf resolv.conf sysctl.conf resolv.conf.tail
+# Possible files to copy from /tmp: fstab hostname.* kbdtype mygate
+#     myname ttys boot.conf resolv.conf sysctl.conf resolv.conf.tail
 # Save only non-empty (-s) regular (-f) files.
-for _f in fstab hostname* kbdtype my* ttys *.conf *.tail; do
+(cd /tmp; for _f in fstab hostname* kbdtype my* ttys *.conf *.tail; do
 	[[ -f $_f && -s $_f ]] && mv $_f /mnt/etc/.
-done )
+done)
 
 # Feed the random pool some junk before we read from it
 (dmesg; cat $SERVERLISTALL; sysctl; route -n show; df;
@@ -292,7 +288,7 @@ if [[ -n $user ]]; then
 
 	mkdir -p /mnt/home/$user
 	(cd /mnt/etc/skel; cp -pR . /mnt/home/$user)
-	( umask 077 &&
+	(umask 077 &&
 		sed "s,^To: root\$,To: ${username} <${user}>," \
 		/mnt/var/mail/root > /mnt/var/mail/$user )
 	chown -R 1000:1000 /mnt/home/$user /mnt/var/mail/$user

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.49 2010/08/08 21:06:06 krw Exp $
+#	$OpenBSD: install.md,v 1.50 2011/01/03 00:36:49 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,11 +39,10 @@ NCPU=$(sysctl -n hw.ncpufound)
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
-	cd /mnt
-	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
+	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
 		echo "Multiprocessor machine; using bsd.mp instead of bsd."
-		mv bsd bsd.sp 2>/dev/null
-		mv bsd.mp bsd
+		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
+		mv /mnt/bsd.mp /mnt/bsd
 	fi
 
 	# LBA biosboot uses /boot's i-node number. Using 'cat' preserves that

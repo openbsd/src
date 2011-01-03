@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2010/06/26 23:16:41 krw Exp $
+#	$OpenBSD: install.md,v 1.24 2011/01/03 00:36:50 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,21 +46,20 @@ fi
 DEFAULTSETS=${MDSETS}
 
 md_installboot() {
-	cd /mnt
-	if [[ -f bsd.${IPARCH} ]]; then
-		mv bsd.${IPARCH} bsd
+	if [[ -f /mnt/bsd.${IPARCH} ]]; then
+		mv /mnt/bsd.${IPARCH} /mnt/bsd
 	fi
-	if [[ -f bsd.mp.${IPARCH} ]]; then
-		mv bsd.mp.${IPARCH} bsd.mp
+	if [[ -f /mnt/bsd.mp.${IPARCH} ]]; then
+		mv /mnt/bsd.mp.${IPARCH} /mnt/bsd.mp
 	fi
-	if [[ -f bsd.rd.${IPARCH} ]]; then
-		mv bsd.rd.${IPARCH} bsd.rd
+	if [[ -f /mnt/bsd.rd.${IPARCH} ]]; then
+		mv /mnt/bsd.rd.${IPARCH} /mnt/bsd.rd
 	fi
 
-	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
+	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
 		echo "Multiprocessor machine; using bsd.mp instead of bsd."
-		mv bsd bsd.sp 2>/dev/null
-		mv bsd.mp bsd
+		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
+		mv /mnt/bsd.mp /mnt/bsd
 	fi
 }
 
