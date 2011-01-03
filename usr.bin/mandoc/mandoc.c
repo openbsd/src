@@ -1,14 +1,15 @@
-/*	$Id: mandoc.c,v 1.20 2010/09/27 21:25:28 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.21 2011/01/03 22:27:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -277,6 +278,83 @@ mandoc_strdup(const char *ptr)
 	}
 
 	return(p);
+}
+
+/*
+ * Parse a quoted or unquoted roff-style request or macro argument.
+ * Return a pointer to the parsed argument, which is either the original
+ * pointer or advanced by one byte in case the argument is quoted.
+ * Null-terminate the argument in place.
+ * Collapse pairs of quotes inside quoted arguments.
+ * Advance the argument pointer to the next argument,
+ * or to the null byte terminating the argument line.
+ */
+char *
+mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
+{
+	char	 *start, *cp;
+	int	  quoted, pairs, white;
+
+	/* Quoting can only start with a new word. */
+	start = *cpp;
+	if ('"' == *start) {
+		quoted = 1;
+		start++;
+	} else
+		quoted = 0;
+
+	pairs = 0;
+	white = 0;
+	for (cp = start; '\0' != *cp; cp++) {
+		/* Move left after quoted quotes and escaped backslashes. */
+		if (pairs)
+			cp[-pairs] = cp[0];
+		if ('\\' == cp[0]) {
+			if ('\\' == cp[1]) {
+				/* Poor man's copy mode. */
+				pairs++;
+				cp++;
+			} else if (0 == quoted && ' ' == cp[1])
+				/* Skip escaped blanks. */
+				cp++;
+		} else if (0 == quoted) {
+			if (' ' == cp[0]) {
+				/* Unescaped blanks end unquoted args. */
+				white = 1;
+				break;
+			}
+		} else if ('"' == cp[0]) {
+			if ('"' == cp[1]) {
+				/* Quoted quotes collapse. */
+				pairs++;
+				cp++;
+			} else {
+				/* Unquoted quotes end quoted args. */
+				quoted = 2;
+				break;
+			}
+		}
+	}
+
+	/* Quoted argument without a closing quote. */
+	if (1 == quoted && msg)
+		(*msg)(MANDOCERR_BADQUOTE, data, ln, *pos, NULL);
+
+	/* Null-terminate this argument and move to the next one. */
+	if (pairs)
+		cp[-pairs] = '\0';
+	if ('\0' != *cp) {
+		*cp++ = '\0';
+		while (' ' == *cp)
+			cp++;
+	}
+	*pos += (cp - start) + (quoted ? 1 : 0);
+	*cpp = cp;
+
+	if ('\0' == *cp && msg && (white || ' ' == cp[-1]))
+		(*msg)(MANDOCERR_EOLNSPACE, data, ln, *pos, NULL);
+
+	return(start);
 }
 
 

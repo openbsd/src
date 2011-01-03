@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2010/12/09 20:56:30 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2011/01/03 22:27:21 schwarze Exp $
 
-SUBDIR+= cond string
+SUBDIR+= args cond string
 
 groff groff-clean: _SUBDIRUSE
 

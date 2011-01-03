@@ -1,7 +1,7 @@
-/*	$Id: roff.c,v 1.24 2010/12/21 01:30:58 schwarze Exp $ */
+/*	$Id: roff.c,v 1.25 2011/01/03 22:27:21 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1124,53 +1124,16 @@ roff_userdef(ROFF_ARGS)
 {
 	const char	 *arg[9];
 	char		 *cp, *n1, *n2;
-	int		  i, quoted, pairs;
+	int		  i;
 
 	/*
 	 * Collect pointers to macro argument strings
 	 * and null-terminate them.
 	 */
 	cp = *bufp + pos;
-	for (i = 0; i < 9; i++) {
-		/* Quoting can only start with a new word. */
-		if ('"' == *cp) {
-			quoted = 1;
-			cp++;
-		} else
-			quoted = 0;
-		arg[i] = cp;
-		for (pairs = 0; '\0' != *cp; cp++) {
-			/* Unquoted arguments end at blanks. */
-			if (0 == quoted) {
-				if (' ' == *cp)
-					break;
-				continue;
-			}
-			/* After pairs of quotes, move left. */
-			if (pairs)
-				cp[-pairs] = cp[0];
-			/* Pairs of quotes do not end words, ... */
-			if ('"' == cp[0] && '"' == cp[1]) {
-				pairs++;
-				cp++;
-				continue;
-			}
-			/* ... but solitary quotes do. */
-			if ('"' != *cp)
-				continue;
-			if (pairs)
-				cp[-pairs] = '\0';
-			*cp = ' ';
-			break;
-		}
-		/* Last argument; the remaining ones are empty strings. */
-		if ('\0' == *cp)
-			continue;
-		/* Null-terminate argument and move to the next one. */
-		*cp++ = '\0';
-		while (' ' == *cp)
-			cp++;
-	}
+	for (i = 0; i < 9; i++)
+		arg[i] = '\0' == *cp ? NULL :
+		    mandoc_getarg(&cp, r->msg, r->data, ln, &pos);
 
 	/*
 	 * Expand macro arguments.

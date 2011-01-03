@@ -1,6 +1,6 @@
-/*	$Id: man_argv.c,v 1.3 2010/07/31 23:42:04 schwarze Exp $ */
+/*	$Id: man_argv.c,v 1.4 2011/01/03 22:27:21 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,84 +17,24 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "mandoc.h"
 #include "libman.h"
+#include "libmandoc.h"
 
 
 int
 man_args(struct man *m, int line, int *pos, char *buf, char **v)
 {
+	char	 *start;
 
 	assert(*pos);
-	assert(' ' != buf[*pos]);
+	*v = start = buf + *pos;
+	assert(' ' != *start);
 
-	if (0 == buf[*pos])
+	if ('\0' == *start)
 		return(ARGS_EOLN);
 
-	*v = &buf[*pos];
-
-	/* 
-	 * Process a quoted literal.  A quote begins with a double-quote
-	 * and ends with a double-quote NOT preceded by a double-quote.
-	 * Whitespace is NOT involved in literal termination.
-	 */
-
-	if ('\"' == buf[*pos]) {
-		*v = &buf[++(*pos)];
-
-		for ( ; buf[*pos]; (*pos)++) {
-			if ('\"' != buf[*pos])
-				continue;
-			if ('\"' != buf[*pos + 1])
-				break;
-			(*pos)++;
-		}
-
-		if (0 == buf[*pos]) {
-			if ( ! man_pmsg(m, line, *pos, MANDOCERR_BADQUOTE))
-				return(ARGS_ERROR);
-			return(ARGS_QWORD);
-		}
-
-		buf[(*pos)++] = 0;
-
-		if (0 == buf[*pos])
-			return(ARGS_QWORD);
-
-		while (' ' == buf[*pos])
-			(*pos)++;
-
-		if (0 == buf[*pos])
-			if ( ! man_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE))
-				return(ARGS_ERROR);
-
-		return(ARGS_QWORD);
-	}
-
-	/* 
-	 * A non-quoted term progresses until either the end of line or
-	 * a non-escaped whitespace.
-	 */
-
-	for ( ; buf[*pos]; (*pos)++)
-		if (' ' == buf[*pos] && '\\' != buf[*pos - 1])
-			break;
-
-	if (0 == buf[*pos])
-		return(ARGS_WORD);
-
-	buf[(*pos)++] = 0;
-
-	while (' ' == buf[*pos])
-		(*pos)++;
-
-	if (0 == buf[*pos])
-		if ( ! man_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE))
-			return(ARGS_ERROR);
-
-	return(ARGS_WORD);
+	*v = mandoc_getarg(v, m->msg, m->data, line, pos);
+	return('"' == *start ? ARGS_QWORD : ARGS_WORD);
 }
-

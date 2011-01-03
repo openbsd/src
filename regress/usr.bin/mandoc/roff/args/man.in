@@ -1,0 +1,113 @@
+.TH ARGS-MAN 1 "January 1, 2011"
+.SH NAME
+args-man - arguments to man macros
+.SH DESCRIPTION
+standard unquoted:
+.IB one two
+text
+.br
+escaped blanks:
+.IB one\ one two\ two
+text
+.br
+escaped 'e' character:
+.IB one\eone two
+text
+.br
+.\"escaped backslash before blank:
+.\"IB one\\ two
+.\"text
+.\"br
+escaped backslash before 'e' character:
+.IB one\\e two
+text
+.br
+double inter-argument space:
+.IB one  two
+text
+.br
+triple inter-argument space:
+.IB one   two
+text
+.br
+single eol blank:
+.IB one two 
+text
+.br
+double eol blank:
+.IB one two  
+text
+.br
+triple eol blank:
+.IB one two   
+text
+.br
+standard quoted:
+.IB "one" "two"
+text
+.br
+quoted quotes:
+.IB "one""one" """two"""
+text
+.br
+quoted whitespace:
+.IB "one one" "two two"
+text
+.br
+escaped 'e' characters:
+.IB "one \e one" "\e"
+text
+.br
+escaped backslash before blank:
+.IB "one\\ one" "\\ "
+text
+.br
+escaped backslash before 'e' character:
+.IB "one\\eone" "\\e"
+text
+.br
+double inter-argument space:
+.IB "one one"  "two two"
+text
+.br
+triple inter-argument space:
+.IB "one one"   "two two"
+text
+.br
+missing inter-argument space:
+.IB "one one"two\ two
+text
+.br
+single eol blank:
+.IB "one one" "two two" 
+text
+.br
+double eol blank:
+.IB "one one" "two two"  
+text
+.br
+triple eol blank:
+.IB "one one" "two two"   
+text
+.br
+.\"trailing blanks in arguments:
+.\"IB "one " "two "
+.\"text
+.\"br
+unterminated quotes:
+.IB "one
+.IB one "two
+text
+.br
+.\"single trailing blank in unterminated quotes:
+.\"IB "one 
+.\"IB one "two 
+.\"text
+.\"br
+.\"double trailing blank in unterminated quotes:
+.\"IB "one  
+.\"IB one "two  
+.\"text
+.\"br
+backslash at eol:
+.IB one two\
