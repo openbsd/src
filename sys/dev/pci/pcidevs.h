@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1582 2010/12/31 19:47:50 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1583 2011/01/03 06:58:24 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1353,6 +1353,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD3470	0x95c0		/* Radeon HD 3470 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3400_M82	0x95c4		/* Mobility Radeon HD 3400 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3450	0x95c5		/* Radeon HD 3450 */
+#define	PCI_PRODUCT_ATI_RADEON_HD3450_AGP	0x95c6		/* Radeon HD 3450 AGP */
 #define	PCI_PRODUCT_ATI_RS780_HB	0x9600		/* RS780 Host */
 #define	PCI_PRODUCT_ATI_RS780_PCIE_1	0x9602		/* RS780 PCIE */
 #define	PCI_PRODUCT_ATI_RS780_PCIE_2	0x9609		/* RS780 PCIE */
