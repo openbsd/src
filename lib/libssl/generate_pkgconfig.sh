@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.1 2010/12/28 14:30:50 jasper Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.2 2011/01/03 09:32:01 jasper Exp $
 #
 # Generate pkg-config files for OpenSSL.
 
@@ -26,7 +26,7 @@ while getopts "c:ko:" flag; do
 		*)
 			usage
 			;;
-	esac		
+	esac
 done
 
 [ -n "${curdir}" ] || usage
@@ -56,10 +56,9 @@ Version: ${ssl_version}
 Requires: 
 __EOF__
 echo -n 'Libs: -L${libdir} -lcrypto ' >> ${pc_file}
-${enable_krb5} && echo -n '-L/usr/kerberos/lib ' >> ${pc_file}
 echo '-lz' >> ${pc_file}
 echo -n 'Cflags: -I${includedir} ' >> ${pc_file}
-${enable_krb5} && echo -n '-I/usr/kerberos/include' >> ${pc_file}
+${enable_krb5} && echo -n '-I/usr/include/kerberosV' >> ${pc_file}
 echo '' >> ${pc_file}
 
 
@@ -76,10 +75,9 @@ Version: ${ssl_version}
 Requires: 
 __EOF__
 echo -n 'Libs: -L${libdir} -lssl -lcrypto ' >> ${pc_file}
-${enable_krb5} && echo -n '-L/usr/kerberos/lib ' >> ${pc_file}
 echo '-lz' >> ${pc_file}
 echo -n 'Cflags: -I${includedir} ' >> ${pc_file}
-${enable_krb5} && echo -n '-I/usr/kerberos/include' >> ${pc_file}
+${enable_krb5} && echo -n '-I/usr/include/kerberosV' >> ${pc_file}
 echo '' >> ${pc_file}
 
 
@@ -96,8 +94,7 @@ Version: ${ssl_version}
 Requires: 
 __EOF__
 echo -n 'Libs: -L${libdir} -lssl -lcrypto ' >> ${pc_file}
-${enable_krb5} && echo -n '-L/usr/kerberos/lib ' >> ${pc_file}
 echo '-lz' >> ${pc_file}
 echo -n 'Cflags: -I${includedir} ' >> ${pc_file}
-${enable_krb5} && echo -n '-I/usr/kerberos/include' >> ${pc_file}
+${enable_krb5} && echo -n '-I/usr/include/kerberosV' >> ${pc_file}
 echo '' >> ${pc_file}
