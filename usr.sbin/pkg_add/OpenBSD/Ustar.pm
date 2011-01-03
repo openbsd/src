@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.68 2011/01/03 00:12:06 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.69 2011/01/03 14:22:48 jasper Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -306,6 +306,7 @@ sub prepare
 	my $class = "OpenBSD::Ustar::File"; # default
 	if (defined $self->{key}->{$k}) {
 		$entry->{linkname} = $self->{key}->{$k};
+		$entry->{size} = 0;
 		$class = "OpenBSD::Ustar::HardLink";
 	} elsif (-l $realname) {
 		$entry->{linkname} = readlink($realname);
