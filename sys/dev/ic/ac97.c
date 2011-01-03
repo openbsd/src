@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.76 2011/01/03 10:00:22 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.77 2011/01/03 15:28:46 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -1516,8 +1516,7 @@ ac97_vt1616_init(struct ac97_softc *as, int resuming)
 {
 	u_int16_t reg;
 
-	if (as->host_if->flags &&
-	    (as->host_if->flags(as->host_if->arg) & AC97_HOST_VT1616_DYNEX)) {
+	if (as->host_flags & AC97_HOST_VT1616_DYNEX) {
 		ac97_read(as, AC97_VT_REG_TEST, &reg);
 
 		/* disable 'hp' mixer controls controlling the surround pins */
