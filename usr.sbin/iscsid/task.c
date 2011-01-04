@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.c,v 1.4 2011/01/04 09:53:17 claudio Exp $ */
+/*	$OpenBSD: task.c,v 1.5 2011/01/04 13:19:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -93,6 +93,14 @@ task_pdu_cb(struct connection *c, struct pdu *p)
 	ipdu = pdu_getbuf(p, NULL, PDU_HEADER);
 	switch (ISCSI_PDU_OPCODE(ipdu->opcode)) {
 	case ISCSI_OP_T_NOP:
+		itt = ntohl(ipdu->itt);
+		if (itt == 0xffffffff) {
+			/* target issued a ping, must answer back immediately */
+			c->expstatsn = ntohl(ipdu->cmdsn) + 1;
+			initiator_nop_in_imm(c, p);
+			break;
+		}
+		/* FALLTHROUGH */
 	case ISCSI_OP_LOGIN_RESPONSE:
 	case ISCSI_OP_TEXT_RESPONSE:
 	case ISCSI_OP_LOGOUT_RESPONSE:

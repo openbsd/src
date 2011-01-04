@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.3 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: initiator.c,v 1.4 2011/01/04 13:19:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -326,6 +326,7 @@ initiator_discovery(struct session *s)
 
 	if (!(p = initiator_text_build(t, s, kvp))) {
 		log_warnx("initiator_text_build failed");
+		free(t);
 		return;
 	}
 
@@ -392,6 +393,30 @@ fail:
 		conn_fail(c);
 	}
 	pdu_free(p);
+}
+
+void
+initiator_nop_in_imm(struct connection *c, struct pdu *p)
+{
+	struct iscsi_pdu_nop_in *nopin;
+	struct task *t;
+
+	/* fixup NOP-IN to make it a NOP-OUT */
+	nopin = pdu_getbuf(p, NULL, PDU_HEADER);
+	nopin->maxcmdsn = 0;
+	nopin->opcode = ISCSI_OP_I_NOP | ISCSI_OP_F_IMMEDIATE;
+
+	/* and schedule an immediate task */
+	if (!(t = calloc(1, sizeof(*t)))) {
+		log_warn("initiator_nop_in_imm");
+		pdu_free(p);
+		return;
+	}
+
+	task_init(t, c->session, 1, NULL, NULL);
+	t->itt = 0xffffffff; /* change ITT because it is just a ping reply */
+	task_pdu_add(t, p);
+	conn_task_issue(c, t);
 }
 
 char *
