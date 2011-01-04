@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-commands.c,v 1.5 2009/11/26 21:37:13 nicm Exp $ */
+/* $OpenBSD: cmd-list-commands.c,v 1.6 2011/01/04 00:42:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,13 +28,12 @@ int	cmd_list_commands_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_list_commands_entry = {
 	"list-commands", "lscm",
+	"", 0, 0,
 	"",
-	0, "",
+	0,
 	NULL,
 	NULL,
-	cmd_list_commands_exec,
-	NULL,
-	NULL
+	cmd_list_commands_exec
 };
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.7 2009/11/26 21:37:13 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.8 2011/01/04 00:42:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -32,13 +32,12 @@ int	cmd_lock_server_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_lock_server_entry = {
 	"lock-server", "lock",
+	"", 0, 0,
 	"",
-	0, "",
+	0,
 	NULL,
 	NULL,
-	cmd_lock_server_exec,
-	NULL,
-	NULL,
+	cmd_lock_server_exec
 };
 
 /* ARGSUSED */

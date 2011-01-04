@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.10 2010/12/30 23:16:18 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.11 2011/01/04 00:42:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,13 +30,12 @@ int	cmd_list_buffers_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_list_buffers_entry = {
 	"list-buffers", "lsb",
+	"", 0, 0,
 	"",
-	0, "",
+	0,
 	NULL,
 	NULL,
-	cmd_list_buffers_exec,
-	NULL,
-	NULL	
+	cmd_list_buffers_exec
 };
 
 /* ARGSUSED */
