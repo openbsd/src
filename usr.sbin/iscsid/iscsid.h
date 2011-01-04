@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.2 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.3 2011/01/04 09:50:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -153,6 +153,8 @@ struct session_params {
 				 /* 1, 1-to-65535 (min()): LS */
 	u_int16_t		 TargetPortalGroupTag;
 				 /* 1- 65535: IS */
+	u_int16_t		 MaxConnections;
+				 /* 1, 1-65535 (min()): LO */
 	u_int8_t		 InitialR2T;
 				 /* yes, bool (||): LS  */
 	u_int8_t		 ImmediateData;
