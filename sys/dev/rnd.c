@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.121 2011/01/01 19:43:04 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.122 2011/01/04 19:42:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
@@ -662,7 +662,7 @@ static void
 arc4_stir(void)
 {
 	struct timespec ts;
-	u_int8_t buf[256], *p;
+	u_int8_t buf[64], *p;
 	int i;
 
 	/*
