@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.76 2010/09/21 04:06:37 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.77 2011/01/04 15:24:11 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -184,9 +184,9 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 		return (EIO);
 	}
 
-	len = uio->uio_resid;
-	if (len > MCLBYTES)
+	if (uio->uio_resid > MCLBYTES)
 		return (EIO);
+	len = uio->uio_resid;
 
 	MGETHDR(m, M_WAIT, MT_DATA);
 	m->m_pkthdr.rcvif = 0;
