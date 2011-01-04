@@ -1,0 +1,11 @@
+.Dd January 2, 2011
+.Dt LB-BADARGS 3
+.Os
+.Sh NAME
+.Nm Lb-badargs
+.Nd bad arguments to the library macro
+.Sh LIBRARY
+.Lb libc
+.Lb murks
+.Lb
+.Lb libc another

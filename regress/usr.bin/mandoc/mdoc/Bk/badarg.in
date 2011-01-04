@@ -49,3 +49,8 @@
 .Bk -words -murks
 .Op o Ar a
 .Ek
+.Sh DESCRIPTION
+Here is an empty keep:
+.Bk -words
+.Ek
+End of test document.

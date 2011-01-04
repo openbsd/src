@@ -1,0 +1,41 @@
+.Dd January 2, 2011
+.Dt BL-EMPTY 1
+.Os
+.Sh NAME
+.Nm Bl-empty
+.Nd empty lists
+.Sh DESCRIPTION
+bullet list:
+.Bl -bullet
+.El
+column list:
+.Bl -column one two
+.El
+dash list:
+.Bl -dash
+.El
+diag list:
+.Bl -diag
+.El
+enum list:
+.Bl -enum
+.El
+hang list:
+.Bl -hang
+.El
+hyphen list:
+.Bl -hyphen
+.El
+inset list:
+.Bl -inset
+.El
+item list:
+.Bl -item
+.El
+ohang list:
+.Bl -ohang
+.El
+tag list:
+.Bl -tag -width Ds
+.El
+end of test document

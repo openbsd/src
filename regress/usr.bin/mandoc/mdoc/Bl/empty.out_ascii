@@ -1,0 +1,19 @@
+BL-EMPTY(1)                OpenBSD Reference Manual                BL-EMPTY(1)
+
+NNAAMMEE
+     BBll--eemmppttyy - empty lists
+
+DDEESSCCRRIIPPTTIIOONN
+     bullet list:
+     column list:
+     dash list:
+     diag list:
+     enum list:
+     hang list:
+     hyphen list:
+     inset list:
+     item list:
+     ohang list:
+     tag list:
+     end of test document
+

@@ -1,0 +1,20 @@
+.Dd January 2, 2010
+.Dt BD-EMPTY 1
+.Os
+.Sh NAME
+.Nm Bd-empty
+.Nd empty displays
+.Sh DESCRIPTION
+An empty filled display:
+.Bd -filled
+.Ed
+An empty literal display:
+.Bd -literal
+.Ed
+An empty ragged display:
+.Bd -ragged
+.Ed
+An empty unfilled display:
+.Bd -unfilled
+.Ed
+end of test document

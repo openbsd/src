@@ -1,0 +1,16 @@
+BD-EMPTY(1)                OpenBSD Reference Manual                BD-EMPTY(1)
+
+NNAAMMEE
+     BBdd--eemmppttyy - empty displays
+
+DDEESSCCRRIIPPTTIIOONN
+     An empty filled display:
+
+     An empty literal display:
+
+     An empty ragged display:
+
+     An empty unfilled display:
+
+     end of test document
+
