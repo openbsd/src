@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.38 2011/01/02 15:25:45 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.39 2011/01/04 13:48:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -429,7 +429,7 @@ sub makesum_plist
 	}
 	my $dest = $self->source_to_dest;
 	my $d = dirname($self->cwd."/".$dest);
-	my ($fh, $tempname) = OpenBSD::Temp::permanent_file($state->{base}.$d, 
+	my ($fh, $tempname) = OpenBSD::Temp::permanent_file($state->{base}, 
 	    "manpage.".basename($dest));
 	chmod 0444, $fh;
 	if (-d $state->{base}.$d) {
