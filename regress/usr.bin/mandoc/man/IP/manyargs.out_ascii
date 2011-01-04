@@ -1,0 +1,39 @@
+TP-MANYARGS(1)                                                  TP-MANYARGS(1)
+
+
+
+NNAAMMEE
+       TP-manyargs - too many header args for indented blocks
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+
+       tag1      indented text
+
+       regular text
+
+       tag2      indented text
+
+       regular text
+
+       tag3      indented text
+                 literal
+                 text
+
+       tag1      indented
+                 text
+
+       literal
+       text
+
+       tag2      indented
+                 text
+
+       literal
+       text
+
+       tag3      indented
+                 text
+
+
+

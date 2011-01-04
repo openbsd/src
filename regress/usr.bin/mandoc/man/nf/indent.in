@@ -1,0 +1,17 @@
+.TH NF-INDENT 1
+.SH NAME
+nf-indent \- indentation of literal blocks
+.SH DESCRIPTION
+Here comes
+an indented block:
+.nf
+oneword
+two words
+and three words
+This is a very long line; because it is indented, it is a bit too long to fit.
+blank line:
+
+end of literal
+.fi
+He is some more
+regular text.

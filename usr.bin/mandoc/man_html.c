@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.27 2010/12/25 13:23:03 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.28 2011/01/04 01:15:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -522,14 +522,11 @@ man_IP_pre(MAN_ARGS)
 	SCALE_HS_INIT(&su, INDENT);
 	width = 0;
 
-	/* Width is the last token. */
+	/* Width is the second token. */
 
 	if (MAN_IP == n->tok && NULL != nn)
-		if (NULL != (nn = nn->next)) {
-			for ( ; nn->next; nn = nn->next)
-				/* Do nothing. */ ;
+		if (NULL != (nn = nn->next))
 			width = a2width(nn, &su);
-		}
 
 	/* Width is the first token. */
 
@@ -555,26 +552,17 @@ man_IP_pre(MAN_ARGS)
 
 	print_otag(h, TAG_TD, 0, NULL);
 
-	/*
-	 * Without a length string, we can print all of our children.
-	 */
+	/* For IP, only print the first header element. */
 
-	if ( ! width)
-		return(1);
+	if (MAN_IP == n->tok && n->child)
+		print_man_node(m, n->child, mh, h);
 
-	/*
-	 * When a length has been specified, we need to carefully print
-	 * our child context:  IP gets all children printed but the last
-	 * (the width), while TP gets all children printed but the first
-	 * (the width).
-	 */
+	/* For TP, only print next-line header elements. */
 
-	if (MAN_IP == n->tok)
-		for (nn = n->child; nn->next; nn = nn->next)
-			print_man_node(m, nn, mh, h);
 	if (MAN_TP == n->tok)
-		for (nn = n->child->next; nn; nn = nn->next)
-			print_man_node(m, nn, mh, h);
+		for (nn = n->child; nn; nn = nn->next)
+			if (nn->line > n->line)
+				print_man_node(m, nn, mh, h);
 
 	return(0);
 }

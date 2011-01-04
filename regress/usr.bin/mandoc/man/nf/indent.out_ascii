@@ -1,0 +1,20 @@
+NF-INDENT(1)                                                      NF-INDENT(1)
+
+
+
+NNAAMMEE
+       nf-indent - indentation of literal blocks
+
+DDEESSCCRRIIPPTTIIOONN
+       Here comes an indented block:
+       oneword
+       two words
+       and three words
+       This is a very long line; because it is indented, it is a bit too long to fit.
+       blank line:
+
+       end of literal
+       He is some more regular text.
+
+
+

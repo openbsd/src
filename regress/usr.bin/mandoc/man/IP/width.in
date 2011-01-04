@@ -1,0 +1,43 @@
+.TH IP-WIDTH 1
+.SH NAME
+IP-width \- indentation width of indented paragraphs
+.SH DESCRIPTION
+Regular mode:
+.IP tag 1n
+indented
+.br
+text
+.IP tag 2n
+indented
+.br
+text
+.IP tag 3n
+indented
+.br
+text
+.IP tag 4n
+indented
+.br
+text
+.IP tag 5n
+indented
+.br
+text
+.PP
+Literal mode:
+.nf
+.IP tag 1n
+indented
+text
+.IP tag 2n
+indented
+text
+.IP tag 3n
+indented
+text
+.IP tag 4n
+indented
+text
+.IP tag 5n
+indented
+text

@@ -1,0 +1,24 @@
+.TH IP-LITERAL 1
+.SH NAME
+IP-literal \- indented paragraphs in literal context
+.SH DESCRIPTION
+regular
+text
+.IP tag 10n
+indented
+text
+.PP
+regular
+text
+.nf
+literal
+text
+.IP tag 10n
+indented
+text
+.PP
+literal
+text
+.fi
+regular
+text

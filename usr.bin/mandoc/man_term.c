@@ -1,7 +1,7 @@
-/*	$Id: man_term.c,v 1.56 2010/12/19 07:53:12 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.57 2011/01/04 01:15:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -514,7 +514,7 @@ pre_IP(DECL_ARGS)
 {
 	const struct man_node	*nn;
 	size_t			 len;
-	int			 ival;
+	int			 savelit, ival;
 
 	switch (n->type) {
 	case (MAN_BODY):
@@ -534,15 +534,11 @@ pre_IP(DECL_ARGS)
 	len = mt->lmargin;
 	ival = -1;
 
-	/* Calculate offset. */
-
+	/* Calculate the offset from the optional second argument. */
 	if (NULL != (nn = n->parent->head->child))
-		if (NULL != (nn = nn->next)) {
-			for ( ; nn->next; nn = nn->next)
-				/* Do nothing. */ ;
+		if (NULL != (nn = nn->next))
 			if ((ival = a2width(p, nn->string)) >= 0)
 				len = (size_t)ival;
-		}
 
 	switch (n->type) {
 	case (MAN_HEAD):
@@ -558,9 +554,15 @@ pre_IP(DECL_ARGS)
 		/* Set the saved left-margin. */
 		mt->lmargin = (size_t)ival;
 
-		/* Don't print the length value. */
-		for (nn = n->child; nn->next; nn = nn->next)
-			print_man_node(p, mt, nn, m);
+		savelit = MANT_LITERAL & mt->fl;
+		mt->fl &= ~MANT_LITERAL;
+
+		if (n->child)
+			print_man_node(p, mt, n->child, m);
+
+		if (savelit)
+			mt->fl |= MANT_LITERAL;
+
 		return(0);
 	case (MAN_BODY):
 		p->offset = mt->offset + len;
@@ -586,7 +588,7 @@ post_IP(DECL_ARGS)
 		p->rmargin = p->maxrmargin;
 		break;
 	case (MAN_BODY):
-		term_flushln(p);
+		term_newln(p);
 		p->flags &= ~TERMP_NOLPAD;
 		break;
 	default:
@@ -601,12 +603,11 @@ pre_TP(DECL_ARGS)
 {
 	const struct man_node	*nn;
 	size_t			 len;
-	int			 ival;
+	int			 savelit, ival;
 
 	switch (n->type) {
 	case (MAN_HEAD):
 		p->flags |= TERMP_NOBREAK;
-		p->flags |= TERMP_TWOSPACE;
 		break;
 	case (MAN_BODY):
 		p->flags |= TERMP_NOLPAD;
@@ -641,10 +642,16 @@ pre_TP(DECL_ARGS)
 		p->offset = mt->offset;
 		p->rmargin = mt->offset + len;
 
+		savelit = MANT_LITERAL & mt->fl;
+		mt->fl &= ~MANT_LITERAL;
+
 		/* Don't print same-line elements. */
-		for (nn = n->child; nn; nn = nn->next) 
+		for (nn = n->child; nn; nn = nn->next)
 			if (nn->line > n->line)
 				print_man_node(p, mt, nn, m);
+
+		if (savelit)
+			mt->fl |= MANT_LITERAL;
 
 		if (ival >= 0)
 			mt->lmargin = (size_t)ival;
@@ -675,7 +682,7 @@ post_TP(DECL_ARGS)
 		p->rmargin = p->maxrmargin;
 		break;
 	case (MAN_BODY):
-		term_flushln(p);
+		term_newln(p);
 		p->flags &= ~TERMP_NOLPAD;
 		break;
 	default:
@@ -877,6 +884,7 @@ print_man_node(DECL_ARGS)
 			p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
 			p->flags |= TERMP_NOSPACE;
 			term_flushln(p);
+			p->flags &= ~TERMP_NOLPAD;
 			p->rmargin = rm;
 			p->maxrmargin = rmax;
 		}
