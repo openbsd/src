@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.2 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.3 2011/01/04 19:21:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -168,7 +168,8 @@ radeonfb_match(struct device *parent, void *cf, void *aux)
 
 	node = PCITAG_NODE(pa->pa_tag);
 	OF_getprop(node, "name", buf, sizeof(buf));
-	if (strcmp(buf, "SUNW,XVR-100") == 0)
+	if (strcmp(buf, "SUNW,XVR-100") == 0 ||
+	    strcmp(buf, "SUNW,XVR-300") == 0)
 		return (10);
 
 	return (0);
