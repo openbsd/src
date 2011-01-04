@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.94 2010/09/09 04:13:15 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.95 2011/01/04 23:08:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -133,6 +133,7 @@ int	cpu_apmwarn = 10;
 #define APMDEV_CTL	8
 
 int	apm_standbys;
+int	apm_lidclose;
 int	apm_userstandbys;
 int	apm_suspends;
 int	apm_resumes;
@@ -531,6 +532,12 @@ apm_periodic_check(struct apm_softc *sc)
 	if (apm_error || APM_ERR_CODE(&regs) == APM_ERR_NOTCONN)
 		ret = -1;
 
+	if (apm_lidclose) {
+		apm_lidclose = 0;
+		/* Fake a suspend request */
+		regs.bx = APM_SUSPEND_REQ;
+		apm_handle_event(sc, &regs);
+	}
 	if (apm_suspends /*|| (apm_battlow && apm_userstandbys)*/) {
 		apm_op_inprog = 0;
 		apm_suspend(APM_SYS_SUSPEND);
