@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.10 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.11 2011/01/04 20:48:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -79,7 +79,8 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 	struct vcons_softc *sc = (struct vcons_softc *)self;
 	struct vbus_attach_args *va = aux;
 	uint64_t sysino;
-	int maj;
+	int vcons_is_input, vcons_is_output;
+	int node, maj;
 
 	sc->sc_si = softintr_establish(IPL_TTY, vcons_softintr, sc);
 	if (sc->sc_si == NULL)
@@ -87,23 +88,38 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 
 	if (vbus_intr_map(va->va_node, va->va_intr[0], &sysino))
 		printf(": can't map interrupt\n");
-	printf(": ivec 0x%lx\n", sysino);
+	printf(": ivec 0x%lx", sysino);
 
-	sc->sc_ih = bus_intr_establish(va->va_bustag, sysino, IPL_TTY, 0, vcons_intr, sc, sc->sc_dv.dv_xname);
+	sc->sc_ih = bus_intr_establish(va->va_bustag, sysino, IPL_TTY, 0,
+	    vcons_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n", sc->sc_dv.dv_xname);
+		printf(", can't establish interrupt\n");
 		return;
 	}
 
-	cn_tab->cn_pollc = nullcnpollc;
-	cn_tab->cn_getc = vcons_cngetc;
-	cn_tab->cn_putc = vcons_cnputc;
+	node = OF_instance_to_package(OF_stdin());
+	vcons_is_input = (va->va_node == node);
+	node = OF_instance_to_package(OF_stdout());
+	vcons_is_output = (va->va_node == node);
 
-	/* Locate the major number. */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == vconsopen)
-			break;
-	cn_tab->cn_dev = makedev(maj, self->dv_unit);
+	if (vcons_is_input || vcons_is_output) {
+		if (vcons_is_input) {
+			cn_tab->cn_pollc = nullcnpollc;
+			cn_tab->cn_getc = vcons_cngetc;
+
+			/* Locate the major number. */
+			for (maj = 0; maj < nchrdev; maj++)
+				if (cdevsw[maj].d_open == vconsopen)
+					break;
+			cn_tab->cn_dev = makedev(maj, self->dv_unit);
+		}
+		if (vcons_is_output) 
+			cn_tab->cn_putc = vcons_cnputc;
+
+		printf(", console");
+	}
+
+	printf("\n");
 }
 
 int
