@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2011/01/02 13:25:17 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 2011/01/04 17:59:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -220,7 +220,7 @@ TODO hpmc/toc/pfr
 	/* setup hpmc handler */
 	{
 		extern u_int hpmc_v[];	/* from locore.s */
-		register u_int *p = hpmc_v;
+		u_int *p = hpmc_v;
 
 		if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
 			*p = 0x08000240;
@@ -232,7 +232,7 @@ TODO hpmc/toc/pfr
 
 	{
 		extern u_int hppa_toc[], hppa_toc_end[];
-		register u_int cksum, *p;
+		u_int cksum, *p;
 
 		for (cksum = 0, p = hppa_toc; p < hppa_toc_end; p++)
 			cksum += *p;
@@ -244,7 +244,7 @@ TODO hpmc/toc/pfr
 
 	{
 		extern u_int hppa_pfr[], hppa_pfr_end[];
-		register u_int cksum, *p;
+		u_int cksum, *p;
 
 		for (cksum = 0, p = hppa_pfr; p < hppa_pfr_end; p++)
 			cksum += *p;
@@ -513,13 +513,13 @@ fdcacheall(void)
 void
 ptlball(void)
 {
-	register pa_space_t sp;
-	register int i, j, k;
+	pa_space_t sp;
+	int i, j, k;
 
 	/* instruction TLB */
 	sp = pdc_cache.it_sp_base;
 	for (i = 0; i < pdc_cache.it_sp_count; i++) {
-		register vaddr_t off = pdc_cache.it_off_base;
+		vaddr_t off = pdc_cache.it_off_base;
 		for (j = 0; j < pdc_cache.it_off_count; j++) {
 			for (k = 0; k < pdc_cache.it_loop; k++)
 				pitlb(sp, off);
@@ -531,7 +531,7 @@ ptlball(void)
 	/* data TLB */
 	sp = pdc_cache.dt_sp_base;
 	for (i = 0; i < pdc_cache.dt_sp_count; i++) {
-		register vaddr_t off = pdc_cache.dt_off_base;
+		vaddr_t off = pdc_cache.dt_off_base;
 		for (j = 0; j < pdc_cache.dt_off_count; j++) {
 			for (k = 0; k < pdc_cache.dt_loop; k++)
 				pdtlb(sp, off);

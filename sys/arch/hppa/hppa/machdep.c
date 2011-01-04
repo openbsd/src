@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.197 2011/01/01 19:00:56 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.198 2011/01/04 17:59:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -326,7 +326,7 @@ hppa_init(paddr_t start)
 	/* setup hpmc handler */
 	{
 		extern u_int hpmc_v[];	/* from locore.s */
-		register u_int *p = hpmc_v;
+		u_int *p = hpmc_v;
 
 		if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
 			*p = 0x08000240;
@@ -338,7 +338,7 @@ hppa_init(paddr_t start)
 
 	{
 		extern u_int hppa_toc[], hppa_toc_end[];
-		register u_int cksum, *p;
+		u_int cksum, *p;
 
 		for (cksum = 0, p = hppa_toc; p < hppa_toc_end; p++)
 			cksum += *p;
@@ -350,7 +350,7 @@ hppa_init(paddr_t start)
 
 	{
 		extern u_int hppa_pfr[], hppa_pfr_end[];
-		register u_int cksum, *p;
+		u_int cksum, *p;
 
 		for (cksum = 0, p = hppa_pfr; p < hppa_pfr_end; p++)
 			cksum += *p;
@@ -673,7 +673,7 @@ cpu_startup(void)
 void
 delay_init(void)
 {
-	register u_int num, denom, delta, mdelta;
+	u_int num, denom, delta, mdelta;
 
 	mdelta = UINT_MAX;
 	for (denom = 1; denom < 1000; denom++) {
@@ -694,7 +694,7 @@ delay_init(void)
 void
 delay(u_int us)
 {
-	register u_int start, end, n;
+	u_int start, end, n;
 
 	mfctl(CR_ITMR, start);
 	while (us) {
@@ -718,7 +718,7 @@ delay(u_int us)
 static __inline void
 fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
-	register int loop;
+	int loop;
 
 	for (; c_count--; c_base += c_stride)
 		for (loop = c_loop; loop--; )
@@ -750,13 +750,13 @@ fdcacheall(void)
 void
 ptlball(void)
 {
-	register pa_space_t sp;
-	register int i, j, k;
+	pa_space_t sp;
+	int i, j, k;
 
 	/* instruction TLB */
 	sp = pdc_cache.it_sp_base;
 	for (i = 0; i < pdc_cache.it_sp_count; i++) {
-		register vaddr_t off = pdc_cache.it_off_base;
+		vaddr_t off = pdc_cache.it_off_base;
 		for (j = 0; j < pdc_cache.it_off_count; j++) {
 			for (k = 0; k < pdc_cache.it_loop; k++)
 				pitlbe(sp, off);
@@ -768,7 +768,7 @@ ptlball(void)
 	/* data TLB */
 	sp = pdc_cache.dt_sp_base;
 	for (i = 0; i < pdc_cache.dt_sp_count; i++) {
-		register vaddr_t off = pdc_cache.dt_off_base;
+		vaddr_t off = pdc_cache.dt_off_base;
 		for (j = 0; j < pdc_cache.dt_off_count; j++) {
 			for (k = 0; k < pdc_cache.dt_loop; k++)
 				pdtlbe(sp, off);
@@ -809,8 +809,8 @@ int
 btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *lenp, u_int prot)
 {
 	static u_int32_t mask;
-	register vsize_t len;
-	register int error, i, btlb_max;
+	vsize_t len;
+	int error, i, btlb_max;
 
 	if (!pdc_btlb.min_size && !pdc_btlb.max_size)
 		return -(ENXIO);
