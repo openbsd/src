@@ -1,6 +1,6 @@
-/*	$Id: mdoc.c,v 1.76 2011/01/01 17:38:11 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.77 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -27,10 +27,6 @@
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
-
-#include "out.h"
-#include "term.h"
-#include "tbl.h"
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 
 	"Ap",		"Dd",		"Dt",		"Os",
@@ -69,7 +65,7 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	/* LINTED */
 	"Dx",		"%Q",		"br",		"sp",
 	/* LINTED */
-	"%U",		"Ta",		"TS",		"TE"
+	"%U",		"Ta"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -98,6 +94,8 @@ static	int		  node_append(struct mdoc *,
 				struct mdoc_node *);
 static	int		  mdoc_ptext(struct mdoc *, int, char *, int);
 static	int		  mdoc_pmacro(struct mdoc *, int, char *, int);
+static	int		  mdoc_span_alloc(struct mdoc *, 
+				const struct tbl_span *);
 
 
 const struct mdoc_node *
@@ -221,6 +219,24 @@ mdoc_endparse(struct mdoc *m)
 	return(0);
 }
 
+int
+mdoc_addspan(struct mdoc *m, const struct tbl_span *sp)
+{
+
+	if (MDOC_HALT & m->flags)
+		return(0);
+
+	/* No text before an initial macro. */
+
+	if (SEC_NONE == m->lastnamed) {
+		/* FIXME: grab from span. */
+		mdoc_pmsg(m, 0, 0, MANDOCERR_NOTEXT);
+		return(1);
+	}
+
+	return(mdoc_span_alloc(m, sp));
+}
+
 
 /*
  * Main parse routine.  Parses a single line -- really just hands off to
@@ -229,23 +245,11 @@ mdoc_endparse(struct mdoc *m)
 int
 mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 {
-	struct mdoc_node *n;
 
 	if (MDOC_HALT & m->flags)
 		return(0);
 
 	m->flags |= MDOC_NEWLINE;
-
-	n = m->last;
-
-	if (n && MDOC_TS == n->tok && MDOC_BODY == n->type &&
-	    strncmp(buf+offs, ".TE", 3)) {
-		n = n->parent;
-		if ( ! tbl_read(n->norm->TS, "mdoc tbl parser",
-		    ln, buf+offs, strlen(buf+offs)))
-			mdoc_nmsg(m, n, MANDOCERR_TBL);
-		return(1);
-	}
 
 	/*
 	 * Let the roff nS register switch SYNOPSIS mode early,
@@ -383,6 +387,8 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 	mdoc->last = p;
 
 	switch (p->type) {
+	case (MDOC_TBL):
+		/* FALLTHROUGH */
 	case (MDOC_TEXT):
 		if ( ! mdoc_valid_post(mdoc))
 			return(0);
@@ -499,8 +505,6 @@ mdoc_block_alloc(struct mdoc *m, int line, int pos,
 	case (MDOC_Bl):
 		/* FALLTHROUGH */
 	case (MDOC_Rs):
-		/* FALLTHROUGH */
-	case (MDOC_TS):
 		p->norm = mandoc_calloc(1, sizeof(union mdoc_data));
 		break;
 	default:
@@ -539,6 +543,22 @@ mdoc_elem_alloc(struct mdoc *m, int line, int pos,
 	return(1);
 }
 
+static int
+mdoc_span_alloc(struct mdoc *m, const struct tbl_span *sp)
+{
+	struct mdoc_node *n;
+
+	/* FIXME: grab from tbl_span. */
+	n = node_alloc(m, 0, 0, MDOC_MAX, MDOC_TBL);
+	n->span = sp;
+
+	if ( ! node_append(m, n))
+		return(0);
+
+	m->next = MDOC_NEXT_SIBLING;
+	return(1);
+}
+
 
 int
 mdoc_word_alloc(struct mdoc *m, int line, int pos, const char *p)
@@ -566,10 +586,6 @@ mdoc_word_alloc(struct mdoc *m, int line, int pos, const char *p)
 static void
 mdoc_node_free(struct mdoc_node *p)
 {
-
-	if (MDOC_TS == p->tok && MDOC_BLOCK == p->type)
-		if (p->norm->TS)
-			tbl_free(p->norm->TS);
 
 	if (MDOC_BLOCK == p->type || MDOC_ELEM == p->type)
 		free(p->norm);

@@ -1,6 +1,6 @@
-.\"	$Id: man.3,v 1.19 2010/12/22 00:33:25 schwarze Exp $
+.\"	$Id: man.3,v 1.20 2011/01/04 22:28:17 schwarze Exp $
 .\"
-.\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2010 $
+.Dd $Mdocdate: January 4 2011 $
 .Dt MAN 3
 .Os
 .Sh NAME
@@ -31,6 +31,11 @@
 .In mandoc.h
 .In man.h
 .Vt extern const char * const * man_macronames;
+.Ft int
+.Fo man_addspan
+.Fa "struct man *man"
+.Fa "const struct tbl_span *span"
+.Fc
 .Ft "struct man *"
 .Fo man_alloc
 .Fa "struct regset *regs"
@@ -101,6 +106,9 @@ for details.
 .El
 .Ss Functions
 .Bl -ohang
+.It Fn man_addspan
+Add a table span to the parsing stream.
+Returns 0 on failure, 1 on success.
 .It Fn man_alloc
 Allocates a parsing structure.
 The

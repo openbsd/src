@@ -1,6 +1,6 @@
-/*	$Id: mdoc_validate.c,v 1.83 2011/01/03 23:39:27 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.84 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,10 +31,6 @@
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
-
-#include "out.h"
-#include "term.h"
-#include "tbl.h"
 
 /* FIXME: .Bl -diag can't have non-text children in HEAD. */
 
@@ -127,7 +123,6 @@ static	int	 pre_par(PRE_ARGS);
 static	int	 pre_sh(PRE_ARGS);
 static	int	 pre_ss(PRE_ARGS);
 static	int	 pre_std(PRE_ARGS);
-static	int	 pre_ts(PRE_ARGS);
 
 static	v_post	 posts_an[] = { post_an, NULL };
 static	v_post	 posts_at[] = { post_at, post_defaults, NULL };
@@ -174,7 +169,6 @@ static	v_pre	 pres_pp[] = { pre_par, NULL };
 static	v_pre	 pres_sh[] = { pre_sh, NULL };
 static	v_pre	 pres_ss[] = { pre_ss, NULL };
 static	v_pre	 pres_std[] = { pre_std, NULL };
-static	v_pre	 pres_ts[] = { pre_ts, NULL };
 
 const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
@@ -299,8 +293,6 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_pp, posts_sp },			/* sp */
 	{ NULL, posts_text1 },			/* %U */
 	{ NULL, NULL },				/* Ta */
-	{ pres_ts, NULL },			/* TS */
-	{ NULL, NULL },				/* TE */
 };
 
 #define	RSORD_MAX 14 /* Number of `Rs' blocks. */
@@ -330,12 +322,19 @@ mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 	int		 line, pos;
 	char		*tp;
 
-	if (MDOC_TEXT == n->type) {
+	switch (n->type) {
+	case (MDOC_TEXT):
 		tp = n->string;
 		line = n->line;
 		pos = n->pos;
 		check_text(mdoc, line, pos, tp);
+		/* FALLTHROUGH */
+	case (MDOC_TBL):
+		/* FALLTHROUGH */
+	case (MDOC_ROOT):
 		return(1);
+	default:
+		break;
 	}
 
 	check_args(mdoc, n);
@@ -358,10 +357,16 @@ mdoc_valid_post(struct mdoc *mdoc)
 		return(1);
 	mdoc->last->flags |= MDOC_VALID;
 
-	if (MDOC_TEXT == mdoc->last->type)
+	switch (mdoc->last->type) {
+	case (MDOC_TEXT):
+		/* FALLTHROUGH */
+	case (MDOC_TBL):
 		return(1);
-	if (MDOC_ROOT == mdoc->last->type)
+	case (MDOC_ROOT):
 		return(post_root(mdoc));
+	default:
+		break;
+	}
 
 	if (NULL == mdoc_valids[mdoc->last->tok].post)
 		return(1);
@@ -1892,16 +1897,6 @@ post_ignpar(POST_ARGS)
 			mdoc_nmsg(mdoc, np, MANDOCERR_IGNPAR);
 			mdoc_node_delete(mdoc, np);
 		}
-
-	return(1);
-}
-
-static int
-pre_ts(PRE_ARGS)
-{
-
-	if (MDOC_BLOCK == mdoc->last->type)
-		mdoc->last->norm->TS = tbl_alloc();
 
 	return(1);
 }

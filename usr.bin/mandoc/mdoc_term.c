@@ -1,6 +1,6 @@
-/*	$Id: mdoc_term.c,v 1.121 2010/12/29 00:47:31 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.122 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -30,7 +30,6 @@
 #include "mdoc.h"
 #include "chars.h"
 #include "main.h"
-#include "tbl.h"
 
 #define	INDENT		  5
 #define	HALFINDENT	  3
@@ -116,7 +115,6 @@ static	int	  termp_sh_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
 static	int	  termp_sp_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
-static	int	  termp_ts_pre(DECL_ARGS);
 static	int	  termp_under_pre(DECL_ARGS);
 static	int	  termp_ud_pre(DECL_ARGS);
 static	int	  termp_vt_pre(DECL_ARGS);
@@ -246,8 +244,6 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_sp_pre, NULL }, /* sp */ 
 	{ termp_under_pre, termp____post }, /* %U */ 
 	{ NULL, NULL }, /* Ta */ 
-	{ termp_ts_pre, NULL }, /* TS */ 
-	{ NULL, NULL }, /* TE */ 
 };
 
 
@@ -312,11 +308,20 @@ print_mdoc_node(DECL_ARGS)
 
 	memset(&npair, 0, sizeof(struct termpair));
 	npair.ppair = pair;
-
-	if (MDOC_TEXT == n->type)
-		term_word(p, n->string); 
-	else if (termacts[n->tok].pre && ENDBODY_NOT == n->end)
-		chld = (*termacts[n->tok].pre)(p, &npair, m, n);
+	
+	switch (n->type) {
+	case (MDOC_TEXT):
+		term_word(p, n->string);
+		break;
+	case (MDOC_TBL):
+		term_tbl(p, n->span);
+		break;
+	default:
+		if (termacts[n->tok].pre && ENDBODY_NOT == n->end)
+			chld = (*termacts[n->tok].pre)
+				(p, &npair, m, n);
+		break;
+	}
 
 	/*
 	 * Keeps only work until the end of a line.  If a keep was
@@ -353,8 +358,14 @@ print_mdoc_node(DECL_ARGS)
 
 	term_fontpopq(p, font);
 
-	if (MDOC_TEXT != n->type && termacts[n->tok].post && 
-			! (MDOC_ENDED & n->flags)) {
+	switch (n->type) {
+	case (MDOC_TEXT):
+		break;
+	case (MDOC_TBL):
+		break;
+	default:
+		if ( ! termacts[n->tok].post || MDOC_ENDED & n->flags)
+			break;
 		(void)(*termacts[n->tok].post)(p, &npair, m, n);
 
 		/*
@@ -372,6 +383,7 @@ print_mdoc_node(DECL_ARGS)
 		 */
 		if (ENDBODY_NOSPACE == n->end)
 			p->flags |= TERMP_NOSPACE;
+		break;
 	}
 
 	if (MDOC_EOS & n->flags)
@@ -2102,21 +2114,6 @@ termp_lk_pre(DECL_ARGS)
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, sv->string);
 	term_fontpop(p);
-
-	return(0);
-}
-
-
-/* ARGSUSED */
-static int
-termp_ts_pre(DECL_ARGS)
-{
-
-	if (MDOC_BLOCK != n->type)
-		return(0);
-
-	if (tbl_close(p, n->norm->TS, "mdoc tbl postprocess", n->line))
-		tbl_write(p, n->norm->TS);
 
 	return(0);
 }

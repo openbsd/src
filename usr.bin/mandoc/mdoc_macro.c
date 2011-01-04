@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.61 2010/12/21 23:46:18 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.62 2011/01/04 22:28:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -185,8 +185,6 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* sp */
 	{ in_line_eoln, 0 }, /* %U */
 	{ phrase_ta, MDOC_CALLABLE | MDOC_PARSED }, /* Ta */
-	{ blk_part_exp, MDOC_EXPLICIT }, /* TS */
-	{ blk_exp_close, MDOC_EXPLICIT }, /* TE */
 };
 
 const	struct mdoc_macro * const mdoc_macros = __mdoc_macros;
@@ -309,8 +307,6 @@ rew_alt(enum mdoct tok)
 		return(MDOC_So);
 	case (MDOC_Xc):
 		return(MDOC_Xo);
-	case (MDOC_TE):
-		return(MDOC_TS);
 	default:
 		return(tok);
 	}

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.44 2010/12/29 00:47:31 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.45 2011/01/04 22:28:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -239,8 +239,6 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_sp_pre, NULL}, /* sp */ 
 	{mdoc__x_pre, mdoc__x_post}, /* %U */ 
 	{NULL, NULL}, /* Ta */ 
-	{NULL, NULL}, /* TS */ 
-	{NULL, NULL}, /* TE */ 
 };
 
 static	const char * const lists[LIST_MAX] = {
@@ -420,6 +418,9 @@ print_mdoc_node(MDOC_ARGS)
 	case (MDOC_TEXT):
 		print_text(h, n->string);
 		return;
+	case (MDOC_TBL):
+		print_tbl(h, n->span);
+		break;
 	default:
 		if (mdocs[n->tok].pre && ENDBODY_NOT == n->end)
 			child = (*mdocs[n->tok].pre)(m, n, h);
@@ -447,6 +448,8 @@ print_mdoc_node(MDOC_ARGS)
 	switch (n->type) {
 	case (MDOC_ROOT):
 		mdoc_root_post(m, n, h);
+		break;
+	case (MDOC_TBL):
 		break;
 	default:
 		if (mdocs[n->tok].post && ENDBODY_NOT == n->end)

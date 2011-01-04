@@ -1,4 +1,4 @@
-/*	$Id: term_ascii.c,v 1.3 2010/07/13 01:09:13 schwarze Exp $ */
+/*	$Id: term_ascii.c,v 1.4 2011/01/04 22:28:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,10 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/types.h>
 
 #include <assert.h>
@@ -26,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "mandoc.h"
 #include "out.h"
 #include "term.h"
 #include "main.h"

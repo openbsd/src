@@ -1,6 +1,6 @@
-/*	$Id: mandoc.h,v 1.26 2011/01/03 23:39:27 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.27 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -100,7 +100,19 @@ enum	mandocerr {
 	MANDOCERR_BADESCAPE, /* unknown escape sequence */
 	MANDOCERR_BADQUOTE, /* unterminated quoted string */
 
+	/* related to tables */
+	MANDOCERR_TBLEXTRADAT, /* extra data cells */
+
 	MANDOCERR_ERROR, /* ===== start of errors ===== */
+
+	/* related to tables */
+	MANDOCERR_TBL, /* bad table syntax */
+	MANDOCERR_TBLOPT, /* bad table option */
+	MANDOCERR_TBLLAYOUT, /* bad table layout */
+	MANDOCERR_TBLNOLAYOUT, /* no table layout cells specified */
+	MANDOCERR_TBLNODATA, /* no table data cells specified */
+	MANDOCERR_TBLIGNDATA, /* ignore data in cell */
+	MANDOCERR_TBLBLOCK, /* data block still open */
 
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character */
@@ -120,7 +132,6 @@ enum	mandocerr {
 	MANDOCERR_LISTTYPE, /* missing list type */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
-	MANDOCERR_TBL, /* tbl(1) error */
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 
@@ -135,6 +146,124 @@ enum	mandocerr {
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
 	MANDOCERR_MEM, /* static buffer exhausted */
 	MANDOCERR_MAX
+};
+
+struct	tbl {
+	char		  tab; /* cell-separator */
+	char		  decimal; /* decimal point */
+	int		  linesize;
+	char		  delims[2]; /* FIXME: deprecate */
+	int		  opts;
+#define	TBL_OPT_CENTRE	 (1 << 0)
+#define	TBL_OPT_EXPAND	 (1 << 1)
+#define	TBL_OPT_BOX	 (1 << 2)
+#define	TBL_OPT_DBOX	 (1 << 3)
+#define	TBL_OPT_ALLBOX	 (1 << 4)
+#define	TBL_OPT_NOKEEP	 (1 << 5)
+#define	TBL_OPT_NOSPACE	 (1 << 6)
+	int		  cols; /* number of columns */
+};
+
+enum	tbl_headt {
+	TBL_HEAD_DATA, /* plug in data from tbl_dat */
+	TBL_HEAD_VERT, /* vertical spacer */
+	TBL_HEAD_DVERT  /* double-vertical spacer */
+};
+
+/*
+ * The head of a table specifies all of its columns.  When formatting a
+ * tbl_span, iterate over these and plug in data from the tbl_span when
+ * appropriate, using tbl_cell as a guide to placement.
+ */
+struct	tbl_head {
+	enum tbl_headt	  pos;
+	int		  ident; /* 0 <= unique id < cols */
+	struct tbl_head	 *next;
+	struct tbl_head	 *prev;
+};
+
+enum	tbl_cellt {
+	TBL_CELL_CENTRE, /* c, C */
+	TBL_CELL_RIGHT, /* r, R */
+	TBL_CELL_LEFT, /* l, L */
+	TBL_CELL_NUMBER, /* n, N */
+	TBL_CELL_SPAN, /* s, S */
+	TBL_CELL_LONG, /* a, A */
+	TBL_CELL_DOWN, /* ^ */
+	TBL_CELL_HORIZ, /* _, - */
+	TBL_CELL_DHORIZ, /* = */
+	TBL_CELL_VERT, /* | */
+	TBL_CELL_DVERT, /* || */
+	TBL_CELL_MAX
+};
+
+/*
+ * A cell in a layout row.
+ */
+struct	tbl_cell {
+	struct tbl_cell	 *next;
+	enum tbl_cellt	  pos;
+	int		  spacing;
+	int		  flags;
+#define	TBL_CELL_TALIGN	 (1 << 0) /* t, T */
+#define	TBL_CELL_BALIGN	 (1 << 1) /* d, D */
+#define	TBL_CELL_BOLD	 (1 << 2) /* fB, B, b */
+#define	TBL_CELL_ITALIC	 (1 << 3) /* fI, I, i */
+#define	TBL_CELL_EQUAL	 (1 << 4) /* e, E */
+#define	TBL_CELL_UP	 (1 << 5) /* u, U */
+#define	TBL_CELL_WIGN	 (1 << 6) /* z, Z */
+	struct tbl_head	 *head;
+};
+
+/*
+ * A layout row.
+ */
+struct	tbl_row {
+	struct tbl_row	 *next;
+	struct tbl_cell	 *first;
+	struct tbl_cell	 *last;
+};
+
+enum	tbl_datt {
+	TBL_DATA_NONE,
+	TBL_DATA_DATA,
+	TBL_DATA_HORIZ,
+	TBL_DATA_DHORIZ,
+	TBL_DATA_NHORIZ,
+	TBL_DATA_NDHORIZ
+};
+
+/*
+ * A cell within a row of data.  The "string" field contains the actual
+ * string value that's in the cell.  The rest is layout.
+ */
+struct	tbl_dat {
+	struct tbl_cell	 *layout; /* layout cell: CAN BE NULL */
+	struct tbl_dat	 *next;
+	char		 *string;
+	enum tbl_datt	  pos;
+};
+
+enum	tbl_spant {
+	TBL_SPAN_DATA, /* span consists of data */
+	TBL_SPAN_HORIZ, /* span is horizontal line */
+	TBL_SPAN_DHORIZ /* span is double horizontal line */
+};
+
+/*
+ * A row of data in a table.
+ */
+struct	tbl_span {
+	struct tbl	 *tbl;
+	struct tbl_head	 *head;
+	struct tbl_row	 *layout; /* layout row: CAN BE NULL */
+	struct tbl_dat	 *first;
+	struct tbl_dat	 *last;
+	int		  flags;
+#define	TBL_SPAN_FIRST	 (1 << 0)
+#define	TBL_SPAN_LAST	 (1 << 1)
+	enum tbl_spant	  pos;
+	struct tbl_span	 *next;
 };
 
 /*

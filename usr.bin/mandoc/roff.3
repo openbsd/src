@@ -1,6 +1,6 @@
-.\"	$Id: roff.3,v 1.5 2010/08/20 00:53:35 schwarze Exp $
+.\"	$Id: roff.3,v 1.6 2011/01/04 22:28:17 schwarze Exp $
 .\"
-.\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2010 $
+.Dd $Mdocdate: January 4 2011 $
 .Dt ROFF 3
 .Os
 .Sh NAME
@@ -23,7 +23,8 @@
 .Nm roff_endparse ,
 .Nm roff_free ,
 .Nm roff_parseln ,
-.Nm roff_reset
+.Nm roff_reset ,
+.Nm roff_span
 .Nd roff macro compiler library
 .Sh SYNOPSIS
 .In mandoc.h
@@ -34,7 +35,7 @@
 .Fa "void *data"
 .Fa "mandocmsg msgs"
 .Fc
-.Ft int
+.Ft void
 .Fn roff_endparse "struct roff *roff"
 .Ft void
 .Fn roff_free "struct roff *roff"
@@ -49,6 +50,8 @@
 .Fc
 .Ft void
 .Fn roff_reset "struct roff *roff"
+.Ft "const struct tbl_span *"
+.Fn roff_span "const struct roff *roff"
 .Sh DESCRIPTION
 The
 .Nm
@@ -138,7 +141,13 @@ This line should not contain the trailing newline.
 Returns 0 on failure, 1 on success.
 .It Fn roff_endparse
 Signals that the parse is complete.
-Returns 0 on failure, 1 on success.
+.It Fn roff_span
+If
+.Fn roff_parseln
+returned
+.Va ROFF_TBL ,
+return the last parsed table row.
+Returns NULL otherwise.
 .El
 .Sh EXAMPLES
 See

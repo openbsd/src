@@ -1,6 +1,6 @@
-/*	$Id: man_term.c,v 1.57 2011/01/04 01:15:39 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.58 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -29,7 +29,6 @@
 #include "term.h"
 #include "chars.h"
 #include "main.h"
-#include "tbl.h"
 
 #define	INDENT		  7
 #define	HALFINDENT	  3
@@ -92,7 +91,6 @@ static	int		  pre_ign(DECL_ARGS);
 static	int		  pre_in(DECL_ARGS);
 static	int		  pre_literal(DECL_ARGS);
 static	int		  pre_sp(DECL_ARGS);
-static	int		  pre_TS(DECL_ARGS);
 static	int		  pre_ft(DECL_ARGS);
 
 static	void		  post_IP(DECL_ARGS);
@@ -135,8 +133,6 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_ign, NULL, 0 }, /* PD */
 	{ pre_ign, NULL, 0 }, /* AT */
 	{ pre_in, NULL, MAN_NOTEXT }, /* in */
-	{ pre_TS, NULL, 0 }, /* TS */
-	{ NULL, NULL, 0 }, /* TE */
 	{ pre_ft, NULL, MAN_NOTEXT }, /* ft */
 };
 
@@ -844,21 +840,6 @@ post_RS(DECL_ARGS)
 }
 
 
-/* ARGSUSED */
-static int
-pre_TS(DECL_ARGS)
-{
-
-	if (MAN_BLOCK != n->type)
-		return(0);
-
-	if (tbl_close(p, n->data.TS, "man tbl postprocess", n->line))
-		tbl_write(p, n->data.TS);
-
-	return(0);
-}
-
-
 static void
 print_man_node(DECL_ARGS)
 {
@@ -889,6 +870,11 @@ print_man_node(DECL_ARGS)
 			p->maxrmargin = rmax;
 		}
 		break;
+	case (MAN_TBL):
+		if (TBL_SPAN_FIRST & n->span->flags) 
+			term_newln(p);
+		term_tbl(p, n->span);
+		break;
 	default:
 		if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
 			term_fontrepl(p, TERMFONT_NONE);
@@ -900,11 +886,17 @@ print_man_node(DECL_ARGS)
 	if (c && n->child)
 		print_man_nodelist(p, mt, n->child, m);
 
-	if (MAN_TEXT != n->type) {
+	switch (n->type) {
+	case (MAN_TEXT):
+		/* FALLTHROUGH */
+	case (MAN_TBL):
+		break;
+	default:
 		if (termacts[n->tok].post)
 			(*termacts[n->tok].post)(p, mt, n, m);
 		if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
 			term_fontrepl(p, TERMFONT_NONE);
+		break;
 	}
 
 	if (MAN_EOS & n->flags)

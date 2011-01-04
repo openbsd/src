@@ -1,6 +1,6 @@
-/*	$Id: man_html.c,v 1.28 2011/01/04 01:15:39 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.29 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -107,8 +107,6 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_ign_pre, NULL }, /* PD */
 	{ man_ign_pre, NULL }, /* AT */
 	{ man_in_pre, NULL }, /* in */
-	{ NULL, NULL }, /* TS */
-	{ NULL, NULL }, /* TE */
 	{ man_ign_pre, NULL }, /* ft */
 };
 
@@ -196,11 +194,12 @@ print_man_node(MAN_ARGS)
 		break;
 	case (MAN_TEXT):
 		print_text(h, n->string);
-
 		if (MANH_LITERAL & mh->fl)
 			print_otag(h, TAG_BR, 0, NULL);
-
 		return;
+	case (MAN_TBL):
+		print_tbl(h, n->span);
+		break;
 	default:
 		/* 
 		 * Close out scope of font prior to opening a macro
@@ -228,7 +227,7 @@ print_man_node(MAN_ARGS)
 	case (MAN_ROOT):
 		man_root_post(m, n, mh, h);
 		break;
-	case (MAN_TEXT):
+	case (MAN_TBL):
 		break;
 	default:
 		if (mans[n->tok].post)

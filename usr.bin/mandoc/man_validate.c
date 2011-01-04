@@ -1,6 +1,6 @@
-/*	$Id: man_validate.c,v 1.37 2010/12/19 07:53:12 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.38 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -30,10 +30,6 @@
 #include "libman.h"
 #include "libmandoc.h"
 
-#include "out.h"
-#include "term.h"
-#include "tbl.h"
-
 #define	CHKARGS	  struct man *m, struct man_node *n
 
 typedef	int	(*v_check)(CHKARGS);
@@ -60,7 +56,6 @@ static	int	  post_AT(CHKARGS);
 static	int	  post_fi(CHKARGS);
 static	int	  post_nf(CHKARGS);
 static	int	  post_TH(CHKARGS);
-static	int	  post_TS(CHKARGS);
 static	int	  post_UC(CHKARGS);
 
 static	v_check	  posts_at[] = { post_AT, NULL };
@@ -73,7 +68,6 @@ static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
 static	v_check	  posts_th[] = { check_ge2, check_le5, check_title, post_TH, NULL };
-static	v_check	  posts_ts[] = { post_TS, NULL };
 static	v_check	  posts_uc[] = { post_UC, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
 
@@ -111,8 +105,6 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, NULL }, /* PD */
 	{ NULL, posts_at }, /* AT */
 	{ NULL, NULL }, /* in */
-	{ NULL, posts_ts }, /* TS */
-	{ NULL, NULL }, /* TE */
 	{ NULL, posts_ft }, /* ft */
 };
 
@@ -122,10 +114,16 @@ man_valid_pre(struct man *m, struct man_node *n)
 {
 	v_check		*cp;
 
-	if (MAN_TEXT == n->type)
+	switch (n->type) {
+	case (MAN_TEXT):
+		/* FALLTHROUGH */
+	case (MAN_ROOT):
+		/* FALLTHROUGH */
+	case (MAN_TBL):
 		return(1);
-	if (MAN_ROOT == n->type)
-		return(1);
+	default:
+		break;
+	}
 
 	if (NULL == (cp = man_valids[n->tok].pres))
 		return(1);
@@ -150,6 +148,8 @@ man_valid_post(struct man *m)
 		return(check_text(m, m->last));
 	case (MAN_ROOT):
 		return(check_root(m, m->last));
+	case (MAN_TBL):
+		return(1);
 	default:
 		break;
 	}
@@ -570,15 +570,5 @@ post_AT(CHKARGS)
 		free(m->meta.source);
 
 	m->meta.source = mandoc_strdup(p);
-	return(1);
-}
-
-static int
-post_TS(CHKARGS)
-{
-
-	if (MAN_HEAD == n->type)
-		n->parent->data.TS = tbl_alloc();
-
 	return(1);
 }

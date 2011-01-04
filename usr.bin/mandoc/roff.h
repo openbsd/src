@@ -1,4 +1,4 @@
-/*	$Id: roff.h,v 1.6 2010/11/25 22:23:31 schwarze Exp $ */
+/*	$Id: roff.h,v 1.7 2011/01/04 22:28:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,6 +24,7 @@ enum	rofferr {
 	ROFF_REPARSE, /* re-run main parser on the result */
 	ROFF_SO, /* include another file */
 	ROFF_IGN, /* ignore current line */
+	ROFF_TBL, /* a table row was successfully parsed */
 	ROFF_ERR /* badness: puke and stop */
 };
 
@@ -36,7 +37,8 @@ struct	roff	 *roff_alloc(struct regset *, void *, mandocmsg);
 void		  roff_reset(struct roff *);
 enum	rofferr	  roff_parseln(struct roff *, int, 
 			char **, size_t *, int, int *);
-int		  roff_endparse(struct roff *);
+void		  roff_endparse(struct roff *);
+const struct tbl_span *roff_span(const struct roff *);
 
 __END_DECLS
 

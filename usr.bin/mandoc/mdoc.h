@@ -1,6 +1,6 @@
-/*	$Id: mdoc.h,v 1.41 2010/12/29 00:47:30 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.42 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -143,8 +143,6 @@ enum	mdoct {
 	MDOC_sp,
 	MDOC__U,
 	MDOC_Ta,
-	MDOC_TS,
-	MDOC_TE,
 	MDOC_MAX
 };
 
@@ -192,6 +190,7 @@ enum	mdoc_type {
 	MDOC_TAIL,
 	MDOC_BODY,
 	MDOC_BLOCK,
+	MDOC_TBL,
 	MDOC_ROOT
 };
 
@@ -370,7 +369,6 @@ union	mdoc_data {
 	struct mdoc_bf	  Bf;
 	struct mdoc_bl	  Bl;
 	struct mdoc_rs	  Rs;
-	struct tbl	 *TS;
 };
 
 /* 
@@ -402,6 +400,7 @@ struct	mdoc_node {
 	struct mdoc_node *body; /* BLOCK */
 	struct mdoc_node *tail; /* BLOCK */
 	char		 *string; /* TEXT */
+	const struct tbl_span *span; /* TBL */
 	enum mdoc_endbody end; /* BODY */
 };
 
@@ -429,6 +428,8 @@ int	 	  mdoc_parseln(struct mdoc *, int, char *, int);
 const struct mdoc_node *mdoc_node(const struct mdoc *);
 const struct mdoc_meta *mdoc_meta(const struct mdoc *);
 int		  mdoc_endparse(struct mdoc *);
+int		  mdoc_addspan(struct mdoc *,
+			const struct tbl_span *);
 
 __END_DECLS
 

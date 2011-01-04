@@ -1,6 +1,6 @@
-/*	$Id: main.c,v 1.63 2011/01/03 23:39:27 schwarze Exp $ */
+/*	$Id: main.c,v 1.64 2011/01/04 22:28:17 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -162,8 +162,20 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"bad comment style",
 	"unknown escape sequence",
 	"unterminated quoted string",
+	
+	/* related to tables */
+	"extra data cells",
 
 	"generic error",
+
+	/* related to tables */
+	"bad table syntax",
+	"bad table option",
+	"bad table layout",
+	"no table layout cells specified",
+	"no table data cells specified",
+	"ignore data in cell",
+	"data block still open",
 
 	"input stack limit exceeded, infinite loop?",
 	"skipping bad character",
@@ -182,7 +194,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"missing list type",
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
-	"tbl(1) error",
 
 	"generic fatal error",
 
@@ -509,10 +520,7 @@ fdesc(struct curparse *curp)
 	}
 
 	assert(curp->roff);
-	if ( ! roff_endparse(curp->roff)) {
-		assert(MANDOCLEVEL_FATAL <= file_status);
-		goto cleanup;
-	}
+	roff_endparse(curp->roff);
 
 	/*
 	 * With -Wstop and warnings or errors of at least
@@ -781,7 +789,7 @@ rerun:
 				continue;
 			} else
 				break;
-		case (ROFF_CONT):
+		default:
 			break;
 		}
 
@@ -799,9 +807,20 @@ rerun:
 		 * Lastly, push down into the parsers themselves.  One
 		 * of these will have already been set in the pset()
 		 * routine.
+		 * If libroff returns ROFF_TBL, then add it to the
+		 * currently open parse.  Since we only get here if
+		 * there does exist data (see tbl_data.c), we're
+		 * guaranteed that something's been allocated.
 		 */
 
-		if (curp->man || curp->mdoc) {
+		if (ROFF_TBL == rr) {
+			assert(curp->man || curp->mdoc);
+			if (curp->man)
+				man_addspan(curp->man, roff_span(curp->roff));
+			else
+				mdoc_addspan(curp->mdoc, roff_span(curp->roff));
+
+		} else if (curp->man || curp->mdoc) {
 			rc = curp->man ?
 				man_parseln(curp->man, 
 					curp->line, ln.buf, of) :
