@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.4 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: connection.c,v 1.5 2011/01/04 13:12:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -229,6 +229,11 @@ conn_task_schedule(struct connection *c)
 		TAILQ_REMOVE(&t->sendq, p, entry);
 		conn_pdu_write(c, p);	/* maybe inline ? */
 	}
+	if (t->callback == NULL) {
+		/* no callback, immediate command expecting no answer */
+		task_cleanup(t, c);
+		free(t);
+	}
 }
 
 void
@@ -239,7 +244,14 @@ conn_pdu_write(struct connection *c, struct pdu *p)
 /* XXX I GUESS THIS SHOULD BE MOVED TO PDU SOMEHOW... */
 	ipdu = pdu_getbuf(p, NULL, PDU_HEADER);
 	switch (ISCSI_PDU_OPCODE(ipdu->opcode)) {
+	case ISCSI_OP_I_NOP:
+	case ISCSI_OP_SCSI_REQUEST:
 	case ISCSI_OP_TASK_REQUEST:
+	case ISCSI_OP_LOGIN_REQUEST:
+	case ISCSI_OP_TEXT_REQUEST:
+	case ISCSI_OP_DATA_OUT:
+	case ISCSI_OP_LOGOUT_REQUEST:
+	case ISCSI_OP_SNACK_REQUEST:
 		ipdu->expstatsn = ntohl(c->expstatsn);
 		break;
 	}
