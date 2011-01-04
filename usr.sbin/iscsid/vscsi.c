@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.2 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.3 2011/01/04 10:02:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -149,8 +149,7 @@ vscsi_status(int tag, int status, void *buf, size_t len)
 	t2i.status = status;
 	if (buf) {
 		if (len > sizeof(t2i.sense))
-			fatal("vscsi_status: I'm sorry, Dave. "
-			    "I'm afraid I can't do that.");
+			len = sizeof(t2i.sense);
 		bcopy(buf, &t2i.sense, len);
 	}
 
