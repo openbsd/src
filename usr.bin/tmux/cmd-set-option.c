@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.44 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.45 2011/01/04 01:58:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -115,7 +115,7 @@ cmd_set_option_exec(struct cmd *self, struct cmd_ctx *ctx)
 		ctx->error(ctx, "invalid option");
 		return (-1);
 	}
-	if (args->argc < 1)
+	if (args->argc < 2)
 		valstr = NULL;
 	else
 		valstr = args->argv[1];
