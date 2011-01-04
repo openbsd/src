@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.c,v 1.3 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: task.c,v 1.4 2011/01/04 09:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -113,12 +113,13 @@ task_pdu_cb(struct connection *c, struct pdu *p)
 			t->callback(c, t->callarg, p);
 		else {
 			log_debug("no task for PDU found");
+			log_pdu(p, 1);
 			pdu_free(p);
 		}
 		break;
 	default:
-log_pdu(p, 1);
 		log_warnx("not handled yet. fix me");
+		log_pdu(p, 1);
 		pdu_free(p);
 	}
 }
