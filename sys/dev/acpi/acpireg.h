@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.23 2010/07/21 19:35:15 deraadt Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.24 2011/01/04 21:17:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -378,6 +378,17 @@ struct acpi_hpet {
 	u_int8_t	hpet_number;
 	u_int16_t	main_counter_min_clock_tick;
 	u_int8_t	page_protection;
+} __packed;
+
+struct acpi_mcfg {
+	struct acpi_table_header	hdr;
+#define MCFG_SIG	"MCFG"
+	u_int8_t	reserved[8];
+	u_int64_t	base_address;
+	u_int16_t	segment;
+	u_int8_t	min_bus_number;
+	u_int8_t	max_bus_number;
+	u_int32_t	reserved1;
 } __packed;
 
 struct acpi_facs {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.20 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.21 2011/01/04 21:17:49 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -75,6 +75,9 @@ struct {
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 extern int pci_mode;
+extern bus_addr_t pci_mcfg_addr;
+extern int pci_mcfg_min_bus, pci_mcfg_max_bus;
+
 int		pci_mode_detect(void);
 
 extern struct extent *pciio_ex;

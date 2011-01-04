@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.24 2010/07/26 11:29:23 pirofti Exp $
+#	$OpenBSD: files.acpi,v 1.25 2011/01/04 21:17:49 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -55,6 +55,11 @@ file	dev/acpi/acpitz.c		acpitz
 device	acpimadt
 attach	acpimadt at acpi
 file	dev/acpi/acpimadt.c		acpimadt
+
+# Memory Mapped Configuration Space Address Description Table
+device	acpimcfg
+attach	acpimcfg at acpi
+file	dev/acpi/acpimcfg.c		acpimcfg
 
 # PCI Routing Table
 device	acpiprt

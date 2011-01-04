@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.55 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.56 2011/01/04 21:17:49 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -114,6 +114,19 @@ extern bios_pciinfo_t *bios_pciinfo;
 
 int pci_mode = -1;
 
+/*
+ * Memory Mapped Configuration space access.
+ *
+ * Since mapping the whole configuration space will cost us up to
+ * 256MB of kernel virtual memory, we use seperate mappings per bus.
+ * The mappings are created on-demand, such that we only use kernel
+ * virtual memory for busses that are actually present.
+ */
+bus_addr_t pci_mcfg_addr;
+int pci_mcfg_min_bus, pci_mcfg_max_bus;
+bus_space_tag_t pci_mcfgt = I386_BUS_SPACE_MEM;
+bus_space_handle_t pci_mcfgh[256];
+
 struct mutex pci_conf_lock = MUTEX_INITIALIZER(IPL_HIGH);
 
 #define	PCI_CONF_LOCK()							\
@@ -211,6 +224,15 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
+	if (pci_mcfg_addr) {
+		if (bus < pci_mcfg_min_bus  || bus > pci_mcfg_max_bus ||
+		    device >= 32 || function >= 8)
+			panic("pci_make_tag: bad request");
+
+		tag.mode1 = (bus << 20) | (device << 15) | (function << 12);
+		return tag;
+	}
+
 	switch (pci_mode) {
 	case 1:
 		if (bus >= 256 || device >= 32 || function >= 8)
@@ -237,6 +259,15 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 void
 pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 {
+	if (pci_mcfg_addr) {
+		if (bp != NULL)
+			*bp = (tag.mode1 >> 20) & 0xff;
+		if (dp != NULL)
+			*dp = (tag.mode1 >> 15) & 0x1f;
+		if (fp != NULL)
+			*fp = (tag.mode1 >> 12) & 0x7;
+		return;
+	}
 
 	switch (pci_mode) {
 	case 1:
@@ -263,6 +294,9 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 int
 pci_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
 {
+	if (pci_mcfg_addr)
+		return PCIE_CONFIG_SPACE_SIZE;
+
 	return PCI_CONFIG_SPACE_SIZE;
 }
 
@@ -270,6 +304,18 @@ pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
+	int bus;
+
+	if (pci_mcfg_addr) {
+		pci_decompose_tag(pc, tag, &bus, NULL, NULL);
+		if (pci_mcfgh[bus] == 0 &&
+		    bus_space_map(pci_mcfgt, pci_mcfg_addr + (bus << 20),
+		    1 << 20, 0, &pci_mcfgh[bus]))
+			panic("pci_conf_read: cannot map mcfg space");
+		data = bus_space_read_4(pci_mcfgt, pci_mcfgh[bus],
+		    (tag.mode1 & 0x000ff000) | reg);
+		return data;
+	}
 
 	PCI_CONF_LOCK();
 	switch (pci_mode) {
@@ -295,6 +341,18 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
+	int bus;
+
+	if (pci_mcfg_addr) {
+		pci_decompose_tag(pc, tag, &bus, NULL, NULL);
+		if (pci_mcfgh[bus] == 0 &&
+		    bus_space_map(pci_mcfgt, pci_mcfg_addr + (bus << 20),
+		    1 << 20, 0, &pci_mcfgh[bus]))
+			panic("pci_conf_write: cannot map mcfg space");
+		bus_space_write_4(pci_mcfgt, pci_mcfgh[bus],
+		    (tag.mode1 & 0x000ff000) | reg, data);
+		return;
+	}
 
 	PCI_CONF_LOCK();
 	switch (pci_mode) {
