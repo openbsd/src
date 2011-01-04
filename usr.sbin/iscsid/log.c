@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: log.c,v 1.3 2011/01/04 10:36:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -214,8 +214,8 @@ log_pdu(struct pdu *p, int all)
 		pdu->flags, pdu->_reserved1[0], pdu->_reserved1[1],
 		pdu->ahslen, pdu->datalen[0] << 16 | pdu->datalen[1] << 8 |
 		pdu->datalen[2]);
-	fprintf(stderr, "     lun %02x%02x%02x%02x%02x%02x%02x%02x itt %d "
-	    "cmdsn %d expstatsn %d\n", pdu->lun[0], pdu->lun[1], pdu->lun[2],
+	fprintf(stderr, "     lun %02x%02x%02x%02x%02x%02x%02x%02x itt %u "
+	    "cmdsn %u expstatsn %u\n", pdu->lun[0], pdu->lun[1], pdu->lun[2],
 	    pdu->lun[3], pdu->lun[4], pdu->lun[5], pdu->lun[6], pdu->lun[7],
 	    ntohl(pdu->itt), ntohl(pdu->cmdsn), ntohl(pdu->expstatsn));
 	log_hexdump(pdu, sizeof(*pdu));
