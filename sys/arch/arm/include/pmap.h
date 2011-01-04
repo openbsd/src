@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.15 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.16 2011/01/04 21:11:41 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -253,6 +253,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 void	pmap_procwr(struct proc *, vaddr_t, int);
 void	pmap_remove_all(pmap_t);
 boolean_t pmap_extract(pmap_t, vaddr_t, paddr_t *);
+void	pmap_uncache_page(paddr_t, vaddr_t);
 
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */

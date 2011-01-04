@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 2010/12/06 20:57:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.30 2011/01/04 21:11:39 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1496,6 +1496,29 @@ pmap_vac_me_user(struct vm_page *pg, pmap_t pm, vaddr_t va)
 }
 
 /*
+ * Make a pmap_kernel() mapping uncached. Used by bus_dma for coherent pages.
+ */
+void
+pmap_uncache_page(paddr_t va, vaddr_t pa)
+{
+	struct vm_page *pg;
+	struct pv_entry *pv;
+	pt_entry_t *pte;
+
+	if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
+		simple_lock(&pg->mdpage.pvh_slock);
+		pv = pmap_find_pv(pg, pmap_kernel(), va);
+		if (pv != NULL)
+			pv->pv_flags |= PVF_NC;
+		simple_unlock(&pg->mdpage.pvh_slock);
+	}
+
+	pte = vtopte(va);
+	*pte &= ~L2_S_CACHE_MASK;
+	PTE_SYNC(pte);
+}
+
+/*
  * Modify pte bits for all ptes corresponding to the given physical address.
  * We use `maskbits' rather than `clearbits' because we're always passing
  * constants and the latter would require an extra inversion at run-time.
@@ -2438,25 +2461,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 void
 pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable)
 {
-	struct vm_page *pg;
-	struct pv_entry *pv;
-	pt_entry_t *pte;
-
 	pmap_kenter_pa(va, pa, prot);
-
-	if (cacheable == 0) {
-		if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
-			simple_lock(&pg->mdpage.pvh_slock);
-			pv = pmap_find_pv(pg, pmap_kernel(), va);
-			if (pv != NULL)
-				pv->pv_flags |= PVF_NC;
-			simple_unlock(&pg->mdpage.pvh_slock);
-		}
-
-		pte = vtopte(va);
-		*pte &= ~L2_S_CACHE_MASK;
-		PTE_SYNC(pte);
-	}
+	if (cacheable == 0)
+		pmap_uncache_page(va, pa);
 }
 
 void
