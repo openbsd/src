@@ -1,4 +1,4 @@
-/*	$Id: tbl_layout.c,v 1.4 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: tbl_layout.c,v 1.5 2011/01/04 23:44:20 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -125,6 +125,8 @@ mod:
 		goto mod;
 	case ('d'):
 		cp->flags |= TBL_CELL_BALIGN;
+		goto mod;
+	case ('w'):  /* XXX for now, ignore minimal column width */
 		goto mod;
 	case ('f'):
 		break;
