@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.61 2009/04/25 15:08:50 ajacoutot Exp $
+.\"	$OpenBSD: release.8,v 1.62 2011/01/04 19:19:04 deraadt Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 25 2009 $
+.Dd $Mdocdate: January 4 2011 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -190,7 +190,7 @@ $ cd /usr/obj && mkdir -p .old && sudo mv * .old && \e
 .Pp
 Re-build your obj directories:
 .Pp
-.Dl $ cd /usr/src && nice make obj
+.Dl $ cd /usr/src && make obj
 .Pp
 Create directories that might be missing:
 .Pp
@@ -198,7 +198,7 @@ Create directories that might be missing:
 .Pp
 Begin the build:
 .Pp
-.Dl $ cd /usr/src && nice make SUDO=sudo build
+.Dl $ cd /usr/src && make SUDO=sudo build
 .Pp
 Update
 .Pa /etc ,
@@ -269,7 +269,7 @@ Make the release and check that the contents of
 pretty much match the contents of the release
 .Sq tarballs :
 .Bd -literal -offset indent
-# cd /usr/src/etc && nice make release
+# cd /usr/src/etc && make release
 # cd /usr/src/distrib/sets && sh checkflist
 # unset RELEASEDIR DESTDIR
 .Ed
@@ -323,7 +323,7 @@ The steps to build the release are (assuming you are still root, and still in
 # test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e
 	rm -rf ${DESTDIR}- &
 # mkdir -p ${DESTDIR} ${RELEASEDIR}
-# nice make release
+# make release
 # unset RELEASEDIR DESTDIR
 .Ed
 .Pp
