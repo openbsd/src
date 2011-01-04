@@ -1,0 +1,53 @@
+.TH TP-WIDTH 1
+.SH NAME
+TP-width \- indentation width of indented paragraphs
+.SH DESCRIPTION
+Regular mode:
+.TP 1n
+tag
+indented
+.br
+text
+.TP 2n
+tag
+indented
+.br
+text
+.TP 3n
+tag
+indented
+.br
+text
+.TP 4n
+tag
+indented
+.br
+text
+.TP 5n
+tag
+indented
+.br
+text
+.PP
+Literal mode:
+.nf
+.TP 1n
+tag
+indented
+text
+.TP 2n
+tag
+indented
+text
+.TP 3n
+tag
+indented
+text
+.TP 4n
+tag
+indented
+text
+.TP 5n
+tag
+indented
+text

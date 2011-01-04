@@ -1,0 +1,26 @@
+.TH TP-LITERAL 1
+.SH NAME
+TP-literal \- indented paragraphs in literal context
+.SH DESCRIPTION
+regular
+text
+.TP 10n
+tag
+indented
+text
+.PP
+regular
+text
+.nf
+literal
+text
+.TP 10n
+tag
+indented
+text
+.PP
+literal
+text
+.fi
+regular
+text
