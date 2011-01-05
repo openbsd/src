@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.22 2011/01/04 23:08:55 deraadt Exp $	*/
+/*	$OpenBSD: aps.c,v 1.23 2011/01/05 07:37:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -483,11 +483,9 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 #if NAPM > 0
 	if (lid_suspend &&
 	    (sc->sensors[APS_SENSOR_LIDOPEN].value == 1) &&
-	    (sc->aps_data.input & APS_INPUT_LIDOPEN) == 0) {
+	    (sc->aps_data.input & APS_INPUT_LIDOPEN) == 0)
 		/* Inform APM that the lid has closed */
-		printf("lid close\n");
 		apm_lidclose = 1;
-	}
 #endif
 	sc->sensors[APS_SENSOR_LIDOPEN].value =
 	    (sc->aps_data.input & APS_INPUT_LIDOPEN) ? 1 : 0;
