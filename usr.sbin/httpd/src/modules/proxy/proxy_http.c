@@ -169,6 +169,8 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
     int result, major, minor;
     const char *content_length;
     const char *peer;
+    int destportstrtonum;
+    const char *errstr;
 
     void *sconf = r->server->module_config;
     proxy_server_conf *conf =
@@ -367,7 +369,11 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
 		    AP_HOOK_DECLINE(DECLINED),
 		    &rc, r, f, desthost, destportstr, destportstr);
         if (rc == DECLINED) {
-	    if (destportstr != NULL && destport != DEFAULT_HTTP_PORT)
+	    destportstrtonum = strtonum(destportstr, 0, 65535, &errstr);
+	    if (errstr)
+		errx(1, "The destination port is %s: %s", errstr, destportstr);
+
+	    if (destportstr != NULL && destportstrtonum != destport)
 		ap_bvputs(f, "Host: ", desthost, ":", destportstr, CRLF, NULL);
 	    else
 		ap_bvputs(f, "Host: ", desthost, CRLF, NULL);
