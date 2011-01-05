@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.716 2010/12/31 12:21:36 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.717 2011/01/05 17:36:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6052,7 +6052,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 {
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0, pflog = 0;
-	struct mbuf		*m = *m0, *n = NULL;
+	struct mbuf		*m = *m0;
 	struct ip6_hdr		*h;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
 	struct pf_state		*s = NULL;
@@ -6116,9 +6116,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		goto done;
 	}
 #endif
-
-	/* ptr to original, normalization can get us a new one */
-	n = m;
 
 	if (pf_setup_pdesc(AF_INET6, dir, &pd, m, &action, &reason, kif, &a, &r,
 	    &ruleset, &off, &hdrlen) == -1) {
@@ -6210,12 +6207,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 done:
-	/* if normalization got us a new mbuf, free original */
-	if (n != m) {
-		m_freem(n);
-		n = NULL;
-	}
-
 	/* handle dangerous IPv6 extension headers. */
 	if (action == PF_PASS && pd.rh_cnt &&
 	    !((s && s->state_flags & PFSTATE_ALLOWOPTS) || r->allow_opts)) {
