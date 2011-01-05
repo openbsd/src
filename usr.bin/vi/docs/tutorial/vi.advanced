@@ -933,7 +933,7 @@ or {:set sections} commands so that it will.
 
 Section 39: more about inserting text
 
-There are a number of characters which you can use to make correnctions
+There are a number of characters which you can use to make corrections
 during input mode.  These are summarized in the following table.
 
     ^H      deletes the last input character
