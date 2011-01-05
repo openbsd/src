@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimcfg.c,v 1.1 2011/01/04 21:17:49 kettenis Exp $ */
+/* $OpenBSD: acpimcfg.c,v 1.2 2011/01/05 22:29:31 kettenis Exp $ */
 /*
  * Copyright (c) 2010 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -66,6 +66,13 @@ acpimcfg_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(" addr 0x%llx, bus %d-%d\n", mcfg->base_address,
 	    mcfg->min_bus_number, mcfg->max_bus_number);
+
+	/*
+	 * Some (broken?) BIOSen have an MCFG table for an empty bus
+	 * range.  Ignore those tables.
+	 */
+	if (mcfg->min_bus_number == mcfg->max_bus_number)
+		return;
 
 	pci_mcfg_addr = mcfg->base_address;
 	pci_mcfg_min_bus = mcfg->min_bus_number;
