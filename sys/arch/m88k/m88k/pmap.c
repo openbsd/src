@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2011/01/05 22:16:16 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.62 2011/01/05 22:18:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -958,7 +958,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			pmap->pm_stats.wired_count--;
 	} else {
 		/* Remove old mapping from the PV list if necessary. */
-		pmap_remove_pte(pmap, va, pte, NULL, FALSE);
+		if (PDT_VALID(pte))
+			pmap_remove_pte(pmap, va, pte, NULL, FALSE);
 
 		if (pvl != NULL) {
 			/*
@@ -1112,9 +1113,6 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 	splassert(IPL_VM);
 	DPRINTF(CD_RM, ("pmap_remove_pte(%p, %p, %d)\n", pmap, va, flush));
 
-	if (pte == NULL || !PDT_VALID(pte))
-		return;	 	/* no page mapping, nothing to do! */
-
 	/*
 	 * Update statistics.
 	 */
@@ -1147,7 +1145,8 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 
 #ifdef DIAGNOSTIC
 	if (pvl->pv_pmap == NULL)
-		panic("pmap_remove_pte: null pv_list");
+		panic("pmap_remove_pte(%p, %p, %p, %p/%p, %d): null pv_list",
+		   pmap, va, pte, pa, pg, flush);
 #endif
 
 	prev = NULL;
@@ -1157,9 +1156,9 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 		prev = cur;
 	}
 	if (cur == NULL) {
-		panic("pmap_remove_pte: mapping for va "
-		    "0x%lx (pa 0x%lx) not in pv list at %p",
-		    va, pa, pvl);
+		panic("pmap_remove_pte(%p, %p, %p, %p, %d): mapping for va "
+		    "(pa %p) not in pv list at %p",
+		    pmap, va, pte, pg, flush, pa, pvl);
 	}
 
 	if (prev == NULL) {
@@ -1205,6 +1204,7 @@ void
 pmap_remove_range(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t va, eseg;
+	pt_entry_t *pte;
 
 	DPRINTF(CD_RM, ("pmap_remove_range(%p, %p, %p)\n", pmap, sva, eva));
 
@@ -1224,10 +1224,13 @@ pmap_remove_range(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		if (!SDT_VALID(sdt))
 			va = eseg;
 		else {
+			pte = sdt_pte(sdt, va);
 			while (va != eseg) {
-				pmap_remove_pte(pmap, va, sdt_pte(sdt, va),
-				    NULL, TRUE);
+				if (PDT_VALID(pte))
+					pmap_remove_pte(pmap, va, pte, NULL,
+					    TRUE);
 				va += PAGE_SIZE;
+				pte++;
 			}
 		}
 	}
@@ -1273,9 +1276,9 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		if (!SDT_VALID(sdt))
 			va = eseg;
 		else {
+			pte = sdt_pte(sdt, va);
 			while (va != eseg) {
-				pte = sdt_pte(sdt, va);
-				if (pte != NULL && PDT_VALID(pte)) {
+				if (PDT_VALID(pte)) {
 					/* Update the counts */
 					pmap_kernel()->pm_stats.resident_count--;
 					pmap_kernel()->pm_stats.wired_count--;
@@ -1284,6 +1287,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 					tlb_kflush(va);
 				}
 				va += PAGE_SIZE;
+				pte++;
 			}
 		}
 	}
@@ -1368,9 +1372,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if (!SDT_VALID(sdt))
 			va = eseg;
 		else {
+			pte = sdt_pte(sdt, va);
 			while (va != eseg) {
-				pte = sdt_pte(sdt, va);
-				if (pte != NULL && PDT_VALID(pte)) {
+				if (PDT_VALID(pte)) {
 					/*
 					 * Invalidate pte temporarily to avoid
 					 * the modified bit and/or the
@@ -1382,6 +1386,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 					tlb_flush(pmap, va);
 				}
 				va += PAGE_SIZE;
+				pte++;
 			}
 		}
 	}
