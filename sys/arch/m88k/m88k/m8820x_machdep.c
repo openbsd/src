@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.46 2011/01/05 22:14:29 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.47 2011/01/05 22:16:16 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -83,6 +83,9 @@
 #include <machine/lock.h>
 #include <machine/m8820x.h>
 #include <machine/psl.h>
+
+extern	void m8820x_zeropage(vaddr_t);
+extern	void m8820x_copypage(vaddr_t, vaddr_t);
 
 cpuid_t	m8820x_init(void);
 void	m8820x_cpu_configuration_print(int);
@@ -481,6 +484,9 @@ m8820x_initialize_cpu(cpuid_t cpu)
 	 */
 	apr &= ~CACHE_INH;
 	m8820x_cmmu_set_reg(CMMU_SAPR, apr, MODE_VAL, cpu, INST_CMMU);
+
+	ci->ci_zeropage = m8820x_zeropage;
+	ci->ci_copypage = m8820x_copypage;
 }
 
 /*

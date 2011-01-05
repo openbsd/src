@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2011/01/05 22:14:29 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2011/01/05 22:16:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -1417,7 +1417,6 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
 	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
 	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
-	extern void copypage(vaddr_t, vaddr_t);
 
 	DPRINTF(CD_COPY, ("pmap_copy_page(%p,%p) pa %p %p\n",
 	    srcpg, dstpg, src, dst));
@@ -1426,7 +1425,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	    kernel_apr_cmode != userland_apr_cmode)
 		cmmu_dcache_wb(cpu_number(), src, PAGE_SIZE);
 #endif
-	copypage((vaddr_t)src, (vaddr_t)dst);
+	curcpu()->ci_copypage((vaddr_t)src, (vaddr_t)dst);
 }
 
 /*
@@ -1437,10 +1436,9 @@ void
 pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	extern void zeropage(vaddr_t);
 
 	DPRINTF(CD_ZERO, ("pmap_zero_page(%p) pa %p\n", pg, pa));
-	zeropage((vaddr_t)pa);
+	curcpu()->ci_zeropage((vaddr_t)pa);
 }
 
 /*

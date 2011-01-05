@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.72 2011/01/05 22:14:39 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.73 2011/01/05 22:16:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -88,6 +88,9 @@
 
 #include <mvme88k/dev/busswreg.h>
 #include <machine/mvme197.h>
+
+extern	void m88110_zeropage(vaddr_t);
+extern	void m88110_copypage(vaddr_t, vaddr_t);
 
 cpuid_t	m88110_init(void);
 cpuid_t	m88410_init(void);
@@ -290,9 +293,12 @@ m88110_cpu_number(void)
 void
 m88110_initialize_cpu(cpuid_t cpu)
 {
+	struct cpu_info *ci;
 	u_int ictl, dctl;
 	int i;
 	int procvers = (get_cpu_pid() & PID_VN) >> VN_SHIFT;
+
+	ci = &m88k_cpus[cpu];
 
 	/* clear BATCs */
 	for (i = 0; i < 8; i++) {
@@ -367,6 +373,9 @@ m88110_initialize_cpu(cpuid_t cpu)
 
 	set_isr(0);
 	set_dsr(0);
+
+	ci->ci_zeropage = m88110_zeropage;
+	ci->ci_copypage = m88110_copypage;
 }
 
 void
