@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.16 2010/12/31 20:38:55 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.17 2011/01/05 22:14:29 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -531,13 +531,13 @@ db_write_bytes(db_addr_t addr, size_t size, char *data)
 
 		if (pte != NULL && (opte & PG_RO)) {
 			*pte = opte & ~PG_RO;
-			cmmu_tlb_inv(cpu, TRUE, va, 1);
+			cmmu_tlb_inv(cpu, TRUE, va);
 		}
 		while (len-- != 0)
 			*dst++ = *data++;
 		if (pte != NULL && (opte & PG_RO)) {
 			*pte = opte;
-			cmmu_tlb_inv(cpu, TRUE, va, 1);
+			cmmu_tlb_inv(cpu, TRUE, va);
 		}
 		if (pte != NULL && (opte & (CACHE_INH | CACHE_WT)) == 0) {
 			cmmu_dcache_wb(cpu, pa, olen);

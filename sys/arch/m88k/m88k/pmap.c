@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.59 2011/01/02 13:40:07 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.60 2011/01/05 22:14:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -354,7 +354,7 @@ tlb_flush(pmap_t pmap, vaddr_t va)
 	if (CPU_IS88100) {
 		CPU_INFO_FOREACH(cpu, ci) {
 			if (kernel || pmap == ci->ci_curpmap)
-				cmmu_tlb_inv(ci->ci_cpuid, kernel, va, 1);
+				cmmu_tlb_inv(ci->ci_cpuid, kernel, va);
 		}
 	}
 
@@ -375,7 +375,7 @@ tlb_flush(pmap_t pmap, vaddr_t va)
 
 	if (kernel || pmap == ci->ci_curpmap) {
 		if (CPU_IS88100)
-			cmmu_tlb_inv(ci->ci_cpuid, kernel, va, 1);
+			cmmu_tlb_inv(ci->ci_cpuid, kernel, va);
 		if (CPU_IS88110)
 			ci->ci_pmap_ipi |= kernel ?
 			    CI_IPI_TLB_FLUSH_KERNEL : CI_IPI_TLB_FLUSH_USER;
@@ -397,17 +397,17 @@ tlb_kflush(vaddr_t va)
 
 	if (CPU_IS88100)
 		CPU_INFO_FOREACH(cpu, ci)
-			cmmu_tlb_inv(ci->ci_cpuid, TRUE, va, 1);
+			cmmu_tlb_inv(ci->ci_cpuid, TRUE, va);
 	if (CPU_IS88110)
 		CPU_INFO_FOREACH(cpu, ci)
-			cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0 ,0);
+			cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0);
 #else	/* MULTIPROCESSOR */	/* } { */
 	ci = curcpu();
 
 	if (CPU_IS88100)
-		cmmu_tlb_inv(ci->ci_cpuid, TRUE, va, 1);
+		cmmu_tlb_inv(ci->ci_cpuid, TRUE, va);
 	if (CPU_IS88110)
-		cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0 ,0);
+		cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0);
 #endif	/* MULTIPROCESSOR */	/* } */
 }
 
@@ -437,9 +437,9 @@ pmap_update(pmap_t pm)
 		/* CPU_INFO_FOREACH(cpu, ci) */ {
 			ipi = atomic_clear_int(&ci->ci_pmap_ipi);
 			if (ipi & CI_IPI_TLB_FLUSH_KERNEL)
-				cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0 ,0);
+				cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0);
 			if (ipi & CI_IPI_TLB_FLUSH_USER)
-				cmmu_tlb_inv(ci->ci_cpuid, FALSE, 0 ,0);
+				cmmu_tlb_inv(ci->ci_cpuid, FALSE, 0);
 		}
 #ifdef M88100
 	}
@@ -464,7 +464,7 @@ pmap_activate(struct proc *p)
 	} else {
 		if (pmap != ci->ci_curpmap) {
 			cmmu_set_uapr(pmap->pm_apr);
-			cmmu_tlb_inv(ci->ci_cpuid, FALSE, 0, -1);
+			cmmu_tlb_inv_all(ci->ci_cpuid);
 			ci->ci_curpmap = pmap;
 		}
 	}
@@ -756,9 +756,7 @@ pmap_bootstrap_cpu(cpuid_t cpu)
 #ifdef MULTIPROCESSOR
 	if (cpu != master_cpu)
 		cmmu_initialize_cpu(cpu);
-	else
 #endif
-		cmmu_tlb_inv(cpu, TRUE, 0, -1);
 
 	/* Load supervisor pointer to segment table. */
 	cmmu_set_sapr(pmap_kernel()->pm_apr);

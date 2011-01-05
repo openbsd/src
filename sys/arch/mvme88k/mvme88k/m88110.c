@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.71 2011/01/02 17:55:27 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.72 2011/01/05 22:14:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -99,8 +99,8 @@ void	m88110_shutdown(void);
 cpuid_t	m88110_cpu_number(void);
 void	m88110_set_sapr(apr_t);
 void	m88110_set_uapr(apr_t);
-void	m88110_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
-void	m88410_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
+void	m88110_tlb_inv(cpuid_t, u_int, vaddr_t);
+void	m88110_tlb_inv_all(cpuid_t);
 void	m88110_cache_wbinv(cpuid_t, paddr_t, psize_t);
 void	m88410_cache_wbinv(cpuid_t, paddr_t, psize_t);
 void	m88110_dcache_wb(cpuid_t, paddr_t, psize_t);
@@ -127,6 +127,7 @@ struct cmmu_p cmmu88110 = {
 	m88110_set_sapr,
 	m88110_set_uapr,
 	m88110_tlb_inv,
+	m88110_tlb_inv_all,
 	m88110_cache_wbinv,
 	m88110_dcache_wb,
 	m88110_icache_inv,
@@ -150,6 +151,7 @@ struct cmmu_p cmmu88410 = {
 	m88110_set_sapr,
 	m88110_set_uapr,
 	m88110_tlb_inv,
+	m88110_tlb_inv_all,
 	m88410_cache_wbinv,
 	m88410_dcache_wb,
 	m88410_icache_inv,
@@ -469,11 +471,8 @@ m88110_set_uapr(apr_t ap)
  *	Functions that invalidate TLB entries.
  */
 
-/*
- *	flush any tlb
- */
 void
-m88110_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
+m88110_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr)
 {
 	u_int32_t psr;
 #ifdef MULTIPROCESSOR
@@ -497,6 +496,19 @@ m88110_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 		set_dcmd(CMMU_DCMD_INV_UATC);
 	}
 
+	set_psr(psr);
+}
+
+void
+m88110_tlb_inv_all(cpuid_t cpu)
+{
+	u_int32_t psr;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+	/* always invoked on the current processor, no need to check */
+	set_icmd(CMMU_ICMD_INV_UATC);
+	set_dcmd(CMMU_DCMD_INV_UATC);
 	set_psr(psr);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.25 2010/12/31 21:12:16 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.26 2011/01/05 22:14:28 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -42,7 +42,8 @@ struct cmmu_p {
 	cpuid_t (*cpu_number)(void);
 	void (*set_sapr)(apr_t);
 	void (*set_uapr)(apr_t);
-	void (*tlb_inv)(cpuid_t, u_int, vaddr_t, u_int);
+	void (*tlb_inv)(cpuid_t, u_int, vaddr_t);
+	void (*tlb_inv_all)(cpuid_t);
 	void (*cache_wbinv)(cpuid_t, paddr_t, psize_t);
 	void (*dcache_wb)(cpuid_t, paddr_t, psize_t);
 	void (*icache_inv)(cpuid_t, paddr_t, psize_t);
@@ -77,7 +78,8 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 #define	cmmu_cpu_number			(cmmu->cpu_number)
 #define	cmmu_set_sapr(apr)		(cmmu->set_sapr)(apr)
 #define	cmmu_set_uapr(apr)		(cmmu->set_uapr)(apr)
-#define	cmmu_tlb_inv(cpu, k, va, c) 	(cmmu->tlb_inv)(cpu, k, va, c)
+#define	cmmu_tlb_inv(cpu, k, va) 	(cmmu->tlb_inv)(cpu, k, va)
+#define	cmmu_tlb_inv_all(cpu) 		(cmmu->tlb_inv_all)(cpu)
 #define	cmmu_cache_wbinv(cpu, pa, s)	(cmmu->cache_wbinv)(cpu, pa, s)
 #define	cmmu_dcache_wb(cpu, pa, s)	(cmmu->dcache_wb)(cpu, pa, s)
 #define	cmmu_icache_inv(cpu,pa,s)	(cmmu->icache_inv)(cpu, pa, s)

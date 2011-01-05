@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.45 2011/01/01 22:09:33 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.46 2011/01/05 22:14:29 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -89,7 +89,8 @@ void	m8820x_cpu_configuration_print(int);
 void	m8820x_shutdown(void);
 void	m8820x_set_sapr(apr_t);
 void	m8820x_set_uapr(apr_t);
-void	m8820x_tlb_inv(cpuid_t, u_int, vaddr_t, u_int);
+void	m8820x_tlb_inv(cpuid_t, u_int, vaddr_t);
+void	m8820x_tlb_inv_all(cpuid_t);
 void	m8820x_cache_wbinv(cpuid_t, paddr_t, psize_t);
 void	m8820x_dcache_wb(cpuid_t, paddr_t, psize_t);
 void	m8820x_icache_inv(cpuid_t, paddr_t, psize_t);
@@ -106,6 +107,7 @@ struct cmmu_p cmmu8820x = {
 	m8820x_set_sapr,
 	m8820x_set_uapr,
 	m8820x_tlb_inv,
+	m8820x_tlb_inv_all,
 	m8820x_cache_wbinv,
 	m8820x_dcache_wb,
 	m8820x_icache_inv,
@@ -539,41 +541,28 @@ m8820x_set_uapr(apr_t ap)
  */
 
 void
-m8820x_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
+m8820x_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr)
 {
 	u_int32_t psr;
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
+	m8820x_cmmu_set_cmd(kernel ? CMMU_FLUSH_SUPER_PAGE :
+	    CMMU_FLUSH_USER_PAGE, ADDR_VAL, cpu, 0, vaddr);
+	CMMU_UNLOCK;
+	set_psr(psr);
+}
 
-	/*
-	 * Since segment operations are horribly expensive, don't
-	 * do any here. Invalidations of up to three pages are performed
-	 * as page invalidations, otherwise the entire tlb is flushed.
-	 *
-	 * Note that this code relies upon vaddr being page-aligned.
-	 */
-	switch (count) {
-	default:
-		m8820x_cmmu_set_reg(CMMU_SCR,
-		    kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL,
-		    0, cpu, 0);
-		break;
-	case 2:
-		m8820x_cmmu_set_cmd(
-		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
-		    ADDR_VAL, cpu, 0, vaddr);
-		vaddr += PAGE_SIZE;
-		/* FALLTHROUGH */
-	case 1:			/* most frequent situation */
-	case 0:
-		m8820x_cmmu_set_cmd(
-		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
-		    ADDR_VAL, cpu, 0, vaddr);
-		break;
-	}
+void
+m8820x_tlb_inv_all(cpuid_t cpu)
+{
+	u_int32_t psr;
 
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+	CMMU_LOCK;
+	m8820x_cmmu_set_reg(CMMU_SCR, CMMU_FLUSH_USER_ALL, 0, cpu, 0);
 	CMMU_UNLOCK;
 	set_psr(psr);
 }
