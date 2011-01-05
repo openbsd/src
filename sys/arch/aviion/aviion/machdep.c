@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2011/01/02 13:39:37 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2011/01/05 22:20:19 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -765,7 +765,7 @@ aviion_bootstrap()
 	initmsgbuf((caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL),
 	    MSGBUFSIZE);
 
-	pmap_bootstrap();
+	pmap_bootstrap(0, 0);	/* ROM image is on top of physical memory */
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);

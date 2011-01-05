@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2011/01/05 22:18:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.63 2011/01/05 22:20:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -617,7 +617,7 @@ pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode)
 	DPRINTF(CD_MAP, ("pmap_map(%p, %p, %x, %x)\n",
 	    pa, sz, prot, cmode));
 #ifdef DIAGNOSTIC
-	if (pa < VM_MAX_KERNEL_ADDRESS)
+	if (pa != 0 && pa < VM_MAX_KERNEL_ADDRESS)
 		panic("pmap_map: virtual range %p-%p overlaps KVM",
 		    pa, pa + sz);
 #endif
@@ -646,14 +646,14 @@ pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode)
  * Initialize kernel translation tables.
  */
 void
-pmap_bootstrap()
+pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 {
 	paddr_t s_text, e_text;
 	unsigned int nsdt, npdt;
 	unsigned int i;
 	sdt_entry_t *sdt;
-	pt_entry_t *pdt;
-	paddr_t pa, epdtpa;
+	pt_entry_t *pdt, template;
+	paddr_t pa, sptpa, eptpa;
 	const struct pmap_table *ptable;
 	extern void *kernelstart;
 	extern void *etext;
@@ -681,9 +681,10 @@ pmap_bootstrap()
 	pdt = (pt_entry_t *)
 	    uvm_pageboot_alloc(round_page(npdt * sizeof(pt_entry_t)));
 	DPRINTF(CD_BOOT, ("kernel sdt %p", sdt));
+	sptpa = (paddr_t)sdt;
 	pmap_kernel()->pm_stab = sdt;
 	pa = (paddr_t)pdt;
-	epdtpa = pa + round_page(npdt * sizeof(pt_entry_t));
+	eptpa = pa + round_page(npdt * sizeof(pt_entry_t));
 	for (i = nsdt; i != 0; i--) {
 		*sdt++ = pa | SG_SO | SG_RW | PG_M | SG_V;
 		pa += PAGE_SIZE;
@@ -693,26 +694,35 @@ pmap_bootstrap()
 		*sdt++ = SG_NV;
 	KDASSERT((vaddr_t)sdt == (vaddr_t)pdt);
 	DPRINTF(CD_BOOT, ("kernel pdt %p", pdt));
-	for (pa = 0; pa != avail_end; pa += PAGE_SIZE) {
-		if (s_text != 0 && pa < s_text)
-			/* PROM */
-			*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V | CACHE_INH;
-		else if (pa < e_text)
-			/* kernel text */
-			*pdt++ = pa | PG_SO | PG_RO | PG_W | PG_V;
-		else if (pa < (paddr_t)pmap_kernel()->pm_stab)
-			/* kernel data */
-			*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V;
-		else if (pa < epdtpa) {
-			/* kernel page tables */
-			*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V |
-			    (CPU_IS88100 ? CACHE_INH : CACHE_WT);
-		} else
-			/* regular memory */
-			*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_V;
+
+	/* memory below the kernel image */
+	for (i = atop(s_text); i != 0; i--)
+		*pdt++ = PG_NV;
+	/* kernel text */
+	pa = s_text;
+	for (i = atop(e_text) - atop(pa); i != 0; i--) {
+		*pdt++ = pa | PG_SO | PG_RO | PG_W | PG_V;
+		pa += PAGE_SIZE;
+	}
+	/* kernel data */
+	for (i = atop(sptpa) - atop(pa); i != 0; i--) {
+		*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V;
+		pa += PAGE_SIZE;
+	}
+	/* kernel page tables */
+	template = PG_SO | PG_RW | PG_M_U | PG_W | PG_V |
+	    (CPU_IS88100 ? CACHE_INH : CACHE_WT);
+	for (i = atop(eptpa) - atop(pa); i != 0; i--) {
+		*pdt++ = pa | template;
+		pa += PAGE_SIZE;
+	}
+	/* regular memory */
+	for (i = atop(avail_end) - atop(pa); i != 0; i--) {
+		*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_V;
+		pa += PAGE_SIZE;
 	}
 	DPRINTF(CD_BOOT, ("-%p, pa %08x\n", pdt, pa));
-	while (((vaddr_t)pdt & ~PG_FRAME) != 0)
+	for (i = (pt_entry_t *)round_page((vaddr_t)pdt) - pdt; i != 0; i--)
 		*pdt++ = PG_NV;
 
 	/*
@@ -722,9 +732,11 @@ pmap_bootstrap()
 	 * XXX VM_MAX_KERNEL_ADDRESS.
 	 */
 
+	if (e_rom != s_rom)
+		pmap_map(s_rom, e_rom - s_rom, UVM_PROT_RW, CACHE_INH);
 	for (ptable = pmap_table_build(); ptable->size != (vsize_t)-1; ptable++)
 		if (ptable->size != 0)
-			(void)pmap_map(ptable->start, ptable->size,
+			pmap_map(ptable->start, ptable->size,
 			    ptable->prot, ptable->cacheability);
 
 	/*
@@ -736,11 +748,10 @@ pmap_bootstrap()
 		default_apr &= ~CACHE_GLOBAL;
 #endif
 	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_apr = ((vaddr_t)pmap_kernel()->pm_stab) |
-	    default_apr | kernel_apr_cmode;
+	pmap_kernel()->pm_apr = sptpa | default_apr | kernel_apr_cmode;
 
 	DPRINTF(CD_BOOT, ("default apr %08x kernel apr %08x\n",
-	    default_apr, pmap_kernel()->pm_apr));
+	    default_apr, sptpa));
 
 	pmap_bootstrap_cpu(cpu_number());
 }

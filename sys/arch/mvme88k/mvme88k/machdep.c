@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.240 2010/12/31 21:38:08 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.241 2011/01/05 22:20:22 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1009,7 +1009,7 @@ mvme_bootstrap()
 	}
 #endif /* defined (MVME187) || defined (MVME197) */
 
-	pmap_bootstrap();
+	pmap_bootstrap(0, 0x10000);	/* BUG needs 64KB */
 
 #if defined (MVME187) || defined (MVME197)
 	if (etherlen != 0)

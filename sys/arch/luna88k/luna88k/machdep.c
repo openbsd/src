@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2011/01/02 13:39:38 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 2011/01/05 22:20:22 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -968,7 +968,7 @@ luna88k_bootstrap()
 	initmsgbuf((caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL),
 	    MSGBUFSIZE);
 
-	pmap_bootstrap();
+	pmap_bootstrap(0, 0x20000);	/* ROM needs 128KB */
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);
