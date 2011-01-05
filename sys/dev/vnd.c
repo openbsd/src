@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.104 2010/12/22 13:12:14 jsing Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.105 2011/01/05 15:35:43 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -127,6 +127,8 @@ struct vnd_softc {
 	struct disk	 sc_dk;
 	char		 sc_dk_name[16];
 
+	struct bufq	 sc_bufq;
+
 	char		 sc_file[VNDNLEN];	/* file we're covering */
 	int		 sc_flags;		/* flags */
 	size_t		 sc_size;		/* size of vnd in sectors */
@@ -135,7 +137,6 @@ struct vnd_softc {
 	size_t		 sc_ntracks;		/* # of tracks per cylinder */
 	struct vnode	*sc_vp;			/* vnode */
 	struct ucred	*sc_cred;		/* credentials */
-	struct buf	 sc_tab;		/* transfer queue */
 	blf_ctx		*sc_keyctx;		/* key context */
 	struct rwlock	 sc_rwlock;
 };
@@ -209,6 +210,7 @@ vndattach(int num)
 	vnd_softc = (struct vnd_softc *)mem;
 	for (i = 0; i < num; i++) {
 		rw_init(&vnd_softc[i].sc_rwlock, "vndlock");
+		bufq_init(&vnd_softc[i].sc_bufq, BUFQ_DEFAULT);
 	}
 	numvnd = num;
 
@@ -489,8 +491,8 @@ vndstrategy(struct buf *bp)
 			biodone(bp);
 			splx(s);
 
-			/* If nothing more is queued, we are done.  */
-			if (!vnd->sc_tab.b_active)
+			/* If nothing more is queued, we are done. */
+			if (!bufq_peek(&vnd->sc_bufq))
 				return;
 
 			/*
@@ -498,9 +500,8 @@ vndstrategy(struct buf *bp)
 			 * routine might queue using same links.
 			 */
 			s = splbio();
-			bp = vnd->sc_tab.b_actf;
-			vnd->sc_tab.b_actf = bp->b_actf;
-			vnd->sc_tab.b_active--;
+			bp = bufq_dequeue(&vnd->sc_bufq);
+			KASSERT(bp != NULL);
 			splx(s);
 		}
 	}
@@ -596,13 +597,9 @@ vndstrategy(struct buf *bp)
 			splx(s);
 			return;
 		}
-		/*
-		 * Just sort by block number
-		 */
-		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
+
+		bufq_queue(&vnd->sc_bufq, &nbp->vb_buf);
 		s = splbio();
-		disksort(&vnd->sc_tab, &nbp->vb_buf);
-		vnd->sc_tab.b_active++;
 		vndstart(vnd);
 		splx(s);
 		bn += sz;
@@ -625,8 +622,9 @@ vndstart(struct vnd_softc *vnd)
 	 * Dequeue now since lower level strategy routine might
 	 * queue using same links
 	 */
-	bp = vnd->sc_tab.b_actf;
-	vnd->sc_tab.b_actf = bp->b_actf;
+	bp = bufq_dequeue(&vnd->sc_bufq);
+	if (bp == NULL)
+		return;
 
 	DNPRINTF(VDB_IO,
 	    "vndstart(%d): bp %p vp %p blkno %lld addr %p cnt %lx\n",
@@ -675,13 +673,8 @@ vndiodone(struct buf *bp)
 
 out:
 	putvndbuf(vbp);
-
-	if (vnd->sc_tab.b_active) {
-		disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid),
-		    (pbp->b_flags & B_READ));
-		if (!vnd->sc_tab.b_actf)
-			vnd->sc_tab.b_active--;
-	}
+	disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid),
+	    (pbp->b_flags & B_READ));
 }
 
 /* ARGSUSED */
