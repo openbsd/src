@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.12 2011/01/01 14:25:03 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.13 2011/01/05 21:31:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -491,7 +491,7 @@ ar9485_init_swreg(struct athn_softc *sc)
 		ar9485_pmu_write(sc, AR_PHY_PMU2, reg);
 	} else {
 		ar9485_pmu_write(sc, AR_PHY_PMU1,
-		    AR_READ(sc, AR_PHY_PMU1) | AR_PHY_PMU1_PWD);
+		    ar9486_pmu_read(sc, AR_PHY_PMU1) | AR_PHY_PMU1_PWD);
 	}
 
 	ar9485_pmu_write(sc, AR_PHY_PMU2,
