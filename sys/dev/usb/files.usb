@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.96 2011/01/06 07:27:15 damien Exp $
+#	$OpenBSD: files.usb,v 1.97 2011/01/06 19:32:09 damien Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -376,7 +376,7 @@ attach	uath at uhub
 file	dev/usb/if_uath.c		uath
 
 # Atheros AR9002U
-attach	athn at uhub with athn_usb
+attach	athn at uhub with athn_usb: firmload
 file	dev/usb/if_athn_usb.c		athn_usb		needs-flag
 
 # Maxim/Dallas DS2490 1-Wire adapter
