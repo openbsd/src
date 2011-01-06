@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.1 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.2 2011/01/06 17:45:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1004,9 +1004,11 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 {
 	struct athn_usb_cmd_newstate *cmd = arg;
 	struct athn_softc *sc = &usc->sc_sc;
+	struct athn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate;
-	uint32_t imask;
+	uint32_t reg, imask;
+	uint8_t sta_index;
 	int s, error;
 
 	timeout_del(&sc->calib_to);
@@ -1015,27 +1017,38 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	ostate = ic->ic_state;
 	DPRINTF(("newstate %d -> %d\n", ostate, cmd->state));
 
+	if (ostate == IEEE80211_S_RUN) {
+		sta_index = ((struct athn_node *)ic->ic_bss)->sta_index;
+		(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
+		    &sta_index, sizeof(sta_index), NULL);
+	}
 	switch (cmd->state) {
 	case IEEE80211_S_INIT:
+		ops->gpio_write(sc, sc->led_pin, 1);
 		break;
 	case IEEE80211_S_SCAN:
+		/* Make the LED blink while scanning. */
+		ops->gpio_write(sc, sc->led_pin,
+		    !ops->gpio_read(sc, sc->led_pin));
 		(void)athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 		timeout_add_msec(&sc->scan_to, 200);
 		break;
 	case IEEE80211_S_AUTH:
+		ops->gpio_write(sc, sc->led_pin, 1);
 		error = athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 		break;
 	case IEEE80211_S_ASSOC:
 		break;
 	case IEEE80211_S_RUN:
+		ops->gpio_write(sc, sc->led_pin, 0);
+
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;
-#if 0
+
 		/* Create node entry for our BSS. */
 		error = athn_usb_create_node(usc, ic->ic_bss);
-#endif
-		athn_set_bss(sc, ic->ic_bss);
 
+		athn_set_bss(sc, ic->ic_bss);
 		athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
@@ -1049,11 +1062,15 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 			/* Enable beacon miss interrupts. */
 			imask = htobe32(AR_IMR_BMISS);
 
-			/* XXX rxfilter */
+			/* Stop receiving beacons from other BSS. */
+			reg = AR_READ(sc, AR_RX_FILTER);
+			reg = (reg & ~AR_RX_FILTER_BEACON) |
+			    AR_RX_FILTER_MYBEACON;
+			AR_WRITE(sc, AR_RX_FILTER, reg);
+			AR_WRITE_BARRIER(sc);
 		}
 		athn_usb_wmi_xcmd(usc, AR_WMI_CMD_ENABLE_INTR,
 		    &imask, sizeof(imask), NULL);
-
 		break;
 	}
 	(void)sc->sc_newstate(ic, cmd->state, cmd->arg);
@@ -1066,7 +1083,7 @@ athn_usb_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct athn_usb_softc *usc = ic->ic_softc;
 
-	if (/*ic->ic_opmode != IEEE80211_M_HOSTAP ||*/ !isnew)
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP || !isnew)
 		return;
 	/* Do it in a process context. */
 	ieee80211_ref_node(ni);
@@ -1218,9 +1235,6 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 void
 athn_usb_rx_enable(struct athn_softc *sc)
 {
-	struct athn_usb_softc *usc = (struct athn_usb_softc *)sc;
-
-	(void)athn_usb_wmi_cmd(usc, AR_WMI_CMD_START_RECV);
 	AR_WRITE(sc, AR_CR, AR_CR_RXE);
 	AR_WRITE_BARRIER(sc);
 }
@@ -1253,6 +1267,10 @@ athn_usb_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	/* Set transmit power values for new channel. */
 	ops->set_txpower(sc, c, extc);
+
+	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_START_RECV);
+	if (error != 0)
+		goto fail;
 
 	athn_rx_start(sc);
 
@@ -2151,6 +2169,10 @@ athn_usb_init(struct ifnet *ifp)
 	if (error != 0)
 		goto fail;
 
+	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_START_RECV);
+	if (error != 0)
+		goto fail;
+
 	athn_rx_start(sc);
 
 	/* Create main interface on target. */
@@ -2301,5 +2323,6 @@ athn_usb_stop(struct ifnet *ifp)
 	/* Flush Rx stream. */
 	if (usc->rx_stream.m != NULL)
 		m_freem(usc->rx_stream.m);
+	usc->rx_stream.m = NULL;
 	usc->rx_stream.left = 0;
 }
