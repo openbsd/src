@@ -1472,6 +1472,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hidkbdsc.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hidkbdvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/hidmsvar.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/if_athn_usb.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/if_atureg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/if_axereg.ph
