@@ -1,6 +1,6 @@
-/*	$OpenBSD: vdsp.c,v 1.7 2011/01/06 18:40:09 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.8 2011/01/06 23:26:48 kettenis Exp $	*/
 /*
- * Copyright (c) 2009 Mark Kettenis
+ * Copyright (c) 2009, 2011 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -96,6 +96,19 @@ struct vd_attr_info {
 #define VD_OP_SET_ACCESS	0x10
 #define VD_OP_GET_CAPACITY	0x11
 
+/* Sun standard fields. */
+struct sun_vtoc_preamble {
+	char	sl_text[128];
+	u_int	sl_version;	/* label version */
+	char	sl_volume[8];	/* short volume name */
+	u_short	sl_nparts;	/* partition count */
+
+	struct sun_partinfo sl_part[8];
+
+	u_int	sl_bootinfo[3];
+	u_int	sl_sanity;
+};
+
 struct vd_vtoc_part {
 	uint16_t	id_tag;
 	uint16_t	perm;
@@ -160,17 +173,18 @@ struct vdsk_desc_msg {
 };
 
 /*
- * For now, we only support vDisk 1.0.
+ * We support vDisk 1.1.
  */
 #define VDSK_MAJOR	1
-#define VDSK_MINOR	0
+#define VDSK_MINOR	1
 
 /*
- * And we only support a subset of the defined commands.
+ * But we only support a subset of the defined commands.
  */
 #define VD_OP_MASK \
     ((1 << VD_OP_BREAD) | (1 << VD_OP_BWRITE) | (1 << VD_OP_FLUSH) | \
-     (1 << VD_OP_GET_DISKGEOM) | (1 << VD_OP_GET_VTOC))
+     (1 << VD_OP_GET_VTOC) | (1 << VD_OP_SET_VTOC) | \
+     (1 << VD_OP_GET_DISKGEOM))
 
 struct vdsp_softc {
 	struct device	sc_dv;
@@ -224,6 +238,10 @@ struct vdsp_softc {
 	struct vnode	*sc_vp;
 
 	struct sun_disklabel *sc_label;
+	uint16_t	sc_ncyl;
+	uint16_t	sc_acyl;
+	uint16_t	sc_nhead;
+	uint16_t	sc_nsect;
 };
 
 int	vdsp_match(struct device *, void *, void *);
@@ -260,11 +278,13 @@ void	vdsp_mountroot(void *);
 void	vdsp_open(void *, void *);
 void	vdsp_alloc(void *, void *);
 void	vdsp_readlabel(struct vdsp_softc *);
+int	vdsp_writelabel(struct vdsp_softc *);
 void	vdsp_read(void *, void *);
 void	vdsp_read_dring(void *, void *);
 void	vdsp_write_dring(void *, void *);
 void	vdsp_flush_dring(void *, void *);
 void	vdsp_get_vtoc(void *, void *);
+void	vdsp_set_vtoc(void *, void *);
 void	vdsp_get_diskgeom(void *, void *);
 void	vdsp_unimp(void *, void *);
 
@@ -527,10 +547,13 @@ vdsp_rx_vio_ver_info(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 			return;
 		}
 
+		sc->sc_major = vi->major;
+		sc->sc_minor = vi->minor;
 		sc->sc_local_sid = vi->tag.sid;
 
 		vi->tag.stype = VIO_SUBTYPE_ACK;
-		vi->minor = VDSK_MINOR;
+		if (vi->minor > VDSK_MINOR)
+			vi->minor = VDSK_MINOR;
 		vi->dev_class = VDEV_DISK_SERVER;
 		vdsp_sendmsg(sc, vi, sizeof(*vi));
 		sc->sc_vio_state |= VIO_RCV_VER_INFO;
@@ -719,6 +742,9 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 		case VD_OP_GET_VTOC:
 			workq_add_task(NULL, 0, vdsp_get_vtoc, sc, vd);
 			break;
+		case VD_OP_SET_VTOC:
+			workq_add_task(NULL, 0, vdsp_set_vtoc, sc, vd);
+			break;
 		case VD_OP_GET_DISKGEOM:
 			workq_add_task(NULL, 0, vdsp_get_diskgeom, sc, vd);
 			break;
@@ -901,6 +927,8 @@ vdsp_open(void *arg1, void *arg2)
 	ai.tag.sid = sc->sc_local_sid;
 	ai.xfer_mode = sc->sc_xfer_mode;
 	ai.vd_type = VD_DISK_TYPE_DISK;
+	if (sc->sc_major > 1 || sc->sc_minor >= 1)
+		ai.vd_mtype = VD_MEDIA_TYPE_FIXED;
 	ai.vdisk_block_size = sc->sc_vdisk_block_size;
 	ai.operations = VD_OP_MASK;
 	ai.vdisk_size = sc->sc_vdisk_size;
@@ -938,6 +966,34 @@ vdsp_readlabel(struct vdsp_softc *sc)
 		free(sc->sc_label, M_DEVBUF);
 		sc->sc_label = NULL;
 	}
+}
+
+int
+vdsp_writelabel(struct vdsp_softc *sc)
+{
+	struct proc *p = curproc;
+	struct iovec iov;
+	struct uio uio;
+	int err;
+
+	if (sc->sc_vp == NULL || sc->sc_label == NULL)
+		return (EINVAL);
+
+	iov.iov_base = sc->sc_label;
+	iov.iov_len = sizeof(*sc->sc_label);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = 0;
+	uio.uio_resid = sizeof(*sc->sc_label);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = p;
+
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	err = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
+	VOP_UNLOCK(sc->sc_vp, 0, p);
+
+	return (err);
 }
 
 void
@@ -1176,7 +1232,7 @@ vdsp_get_vtoc(void *arg1, void *arg2)
 	struct vdsp_softc *sc = arg1;
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct vd_desc *vd = arg2;
-	struct sun_preamble *sl;
+	struct sun_vtoc_preamble *sl;
 	struct vd_vtoc *vt;
 	vaddr_t va;
 	paddr_t pa;
@@ -1184,16 +1240,15 @@ vdsp_get_vtoc(void *arg1, void *arg2)
 	psize_t nbytes;
 	int err, i;
 
-	vd->status = EINVAL;
+	vt = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	if (sc->sc_label == NULL)
 		vdsp_readlabel(sc);
 
 	if (sc->sc_label && sc->sc_label->sl_magic == SUN_DKMAGIC) {
-		sl = (struct sun_preamble *)sc->sc_label;
-		vt = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK | M_ZERO);
+		sl = (struct sun_vtoc_preamble *)sc->sc_label;
 
-		memcpy(vt->ascii_label, sl->sl_text, sizeof(vt->ascii_label));
+		memcpy(vt->ascii_label, sl->sl_text, sizeof(sl->sl_text));
 		memcpy(vt->volume_name, sl->sl_volume, sizeof(sl->sl_volume));
 		vt->sector_size = DEV_BSIZE;
 		vt->num_partitions = sl->sl_nparts;
@@ -1207,31 +1262,146 @@ vdsp_get_vtoc(void *arg1, void *arg2)
 			vt->partition[i].nblocks =
 			    sc->sc_label->sl_part[i].sdkp_nsectors;
 		}
+	} else {
+		uint64_t disk_size;
+		int unit;
 
-		i = 0;
-		va = (vaddr_t)vt;
-		size = roundup(sizeof(*vt), 64);
-		off = 0;
-		while (size > 0 && i < vd->ncookies) {
-			pmap_extract(pmap_kernel(), va, &pa);
-			nbytes = min(size, vd->cookie[i].size - off);
-			nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
-			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
-			    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
-			if (err != H_EOK)
-				printf("%s: hv_ldc_copy: %d\n", __func__, err);
-			va += nbytes;
-			size -= nbytes;
-			off += nbytes;
-			if (off >= vd->cookie[i].size) {
-				off = 0;
-				i++;
-			}
+		/* Human-readable disk size. */
+		disk_size = sc->sc_vdisk_size * sc->sc_vdisk_block_size;
+		disk_size >>= 10;
+		unit = 'K';
+		if (disk_size > (2 << 10)) {
+			disk_size >>= 10;
+			unit = 'M';
+		}
+		if (disk_size > (2 << 10)) {
+			disk_size >>= 10;
+			unit = 'G';
 		}
 
-		vd->status = 0;
-		free(vt, M_DEVBUF);
+		snprintf(vt->ascii_label, sizeof(vt->ascii_label),
+		    "OpenBSD-DiskImage-%lld%cB cyl %d alt %d hd %d sec %d",
+		    disk_size, unit, sc->sc_ncyl, sc->sc_acyl,
+		    sc->sc_nhead, sc->sc_nsect);
+		vt->sector_size = sc->sc_vdisk_block_size;
+		vt->num_partitions = 8;
+		vt->partition[2].id_tag = SPTAG_WHOLE_DISK;
+		vt->partition[2].nblocks =
+		    sc->sc_ncyl * sc->sc_nhead * sc->sc_nsect;
 	}
+
+	i = 0;
+	va = (vaddr_t)vt;
+	size = roundup(sizeof(*vt), 64);
+	off = 0;
+	while (size > 0 && i < vd->ncookies) {
+		pmap_extract(pmap_kernel(), va, &pa);
+		nbytes = min(size, vd->cookie[i].size - off);
+		nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+		err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
+		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
+		if (err != H_EOK)
+			printf("%s: hv_ldc_copy: %d\n", __func__, err);
+		va += nbytes;
+		size -= nbytes;
+		off += nbytes;
+		if (off >= vd->cookie[i].size) {
+			off = 0;
+			i++;
+		}
+	}
+
+	free(vt, M_DEVBUF);
+
+	/* ACK the descriptor. */
+	vd->status = 0;
+	vd->hdr.dstate = VIO_DESC_DONE;
+	vdsp_ack_desc(sc, vd);
+}
+
+void
+vdsp_set_vtoc(void *arg1, void *arg2)
+{
+	struct vdsp_softc *sc = arg1;
+	struct ldc_conn *lc = &sc->sc_lc;
+	struct vd_desc *vd = arg2;
+	struct sun_vtoc_preamble *sl;
+	struct vd_vtoc *vt;
+	u_short cksum = 0, *sp1, *sp2;
+	vaddr_t va;
+	paddr_t pa;
+	uint64_t size, off;
+	psize_t nbytes;
+	int err, i;
+
+	vt = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK | M_ZERO);
+
+	i = 0;
+	va = (vaddr_t)vt;
+	size = sizeof(*vt);
+	off = 0;
+	while (size > 0 && i < vd->ncookies) {
+		pmap_extract(pmap_kernel(), va, &pa);
+		nbytes = min(size, vd->cookie[i].size - off);
+		nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
+		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
+		if (err != H_EOK)
+			printf("%s: hv_ldc_copy: %d\n", __func__, err);
+		va += nbytes;
+		size -= nbytes;
+		off += nbytes;
+		if (off >= vd->cookie[i].size) {
+			off = 0;
+			i++;
+		}
+	}
+
+	if (vt->num_partitions > nitems(sc->sc_label->sl_part)) {
+		vd->status = EINVAL;
+		goto fail;
+	}
+
+	if (sc->sc_label == NULL || sc->sc_label->sl_magic != SUN_DKMAGIC) {
+		sc->sc_label = malloc(sizeof(*sc->sc_label),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+
+		sc->sc_label->sl_ntracks = sc->sc_nhead;
+		sc->sc_label->sl_nsectors = sc->sc_nsect;
+		sc->sc_label->sl_ncylinders = sc->sc_ncyl;
+		sc->sc_label->sl_acylinders = sc->sc_acyl;
+		sc->sc_label->sl_pcylinders = sc->sc_ncyl + sc->sc_acyl;
+		sc->sc_label->sl_rpm = 3600;
+
+		sc->sc_label->sl_magic = SUN_DKMAGIC;
+	}
+
+	sl = (struct sun_vtoc_preamble *)sc->sc_label;
+	memcpy(sl->sl_text, vt->ascii_label, sizeof(sl->sl_text));
+	sl->sl_version = 0x01;
+	memcpy(sl->sl_volume, sl->sl_volume, sizeof(sl->sl_volume));
+	sl->sl_nparts = vt->num_partitions;
+	for (i = 0; i < vt->num_partitions; i++) {
+		sl->sl_part[i].spi_tag = vt->partition[i].id_tag;
+		sl->sl_part[i].spi_flag = vt->partition[i].perm;
+		sc->sc_label->sl_part[i].sdkp_cyloffset =
+		    vt->partition[i].start / (sc->sc_nhead * sc->sc_nsect);
+		sc->sc_label->sl_part[i].sdkp_nsectors =
+		    vt->partition[i].nblocks;
+	}
+	sl->sl_sanity = 0x600ddeee;
+
+	/* Compute the checksum. */
+	sp1 = (u_short *)sc->sc_label;
+	sp2 = (u_short *)(sc->sc_label + 1);
+	while (sp1 < sp2)
+		cksum ^= *sp1++;
+	sc->sc_label->sl_cksum = cksum;
+
+	vd->status = vdsp_writelabel(sc);
+
+fail:
+	free(vt, M_DEVBUF);
 
 	/* ACK the descriptor. */
 	vd->hdr.dstate = VIO_DESC_DONE;
@@ -1291,6 +1461,11 @@ vdsp_get_diskgeom(void *arg1, void *arg2)
 
 		vg->rpm = 3600;
 	}
+
+	sc->sc_ncyl = vg->ncyl;
+	sc->sc_acyl = vg->acyl;
+	sc->sc_nhead = vg->nhead;
+	sc->sc_nsect = vg->nsect;
 
 	i = 0;
 	va = (vaddr_t)vg;
