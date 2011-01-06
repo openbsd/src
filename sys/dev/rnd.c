@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.123 2011/01/06 15:41:50 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.124 2011/01/06 22:49:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
@@ -837,18 +837,34 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
 {
-	int		ret = 0;
-	u_int32_t 	*buf;
+	u_char lbuf[ARC4_SUB_KEY_BYTES];
+	struct rc4_ctx lctx;
+	size_t		total = uio->uio_resid;
+	u_char	 	*buf;
+	int		myctx = 0, ret = 0;
 
 	if (uio->uio_resid == 0)
 		return 0;
 
-	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
+	buf = malloc(2 * PAGE_SIZE, M_TEMP, M_WAITOK);
+	if (total > ARC4_MAIN_MAX_BYTES) {
+		mtx_enter(&rndlock);
+		rc4_getbytes(&arc4random_state, lbuf, sizeof(lbuf));
+		rndstats.arc4_reads += sizeof(lbuf);
+		mtx_leave(&rndlock);
+
+		rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
+		rc4_skip(&lctx, 256 * 4);
+		myctx = 1;
+	}	
 
 	while (ret == 0 && uio->uio_resid > 0) {
-		int	n = min(POOLBYTES, uio->uio_resid);
+		int	n = min(2 * PAGE_SIZE, uio->uio_resid);
 
-		arc4random_buf(buf, n);
+		if (myctx)
+			rc4_getbytes(&lctx, buf, n);
+		else
+			arc4random_buf(buf, n);
 		ret = uiomove((caddr_t)buf, n, uio);
 		if (ret == 0 && uio->uio_resid > 0)
 			yield();
