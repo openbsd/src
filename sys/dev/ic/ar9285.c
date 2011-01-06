@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.16 2011/01/01 14:25:03 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.17 2011/01/06 07:27:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,6 +22,7 @@
  * Routines for AR9285 and AR9271 chipsets.
  */
 
+#include "athn_usb.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -110,7 +111,7 @@ ar9285_attach(struct athn_softc *sc)
 	sc->eep_size = sizeof(struct ar9285_eeprom);
 	sc->def_nf = AR9285_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = (sc->flags & ATHN_FLAG_USB) ? 16 : 12;
-	sc->led_pin = 1;
+	sc->led_pin = (sc->flags & ATHN_FLAG_USB) ? 15 : 1;
 	sc->workaround = AR9285_WA_DEFAULT;
 	sc->ops.setup = ar9285_setup;
 	sc->ops.swap_rom = ar9285_swap_rom;
@@ -119,7 +120,12 @@ ar9285_attach(struct athn_softc *sc)
 	sc->ops.set_synth = ar9280_set_synth;
 	sc->ops.spur_mitigate = ar9280_spur_mitigate;
 	sc->ops.get_spur_chans = ar9285_get_spur_chans;
-	sc->ini = &ar9285_1_2_ini;
+#if NATHN_USB > 0
+	if (AR_SREV_9271(sc))
+		sc->ini = &ar9271_ini;
+	else
+#endif
+		sc->ini = &ar9285_1_2_ini;
 	sc->serdes = ar9280_2_0_serdes;
 
 	return (ar5008_attach(sc));
@@ -134,12 +140,15 @@ ar9285_setup(struct athn_softc *sc)
 	/* Select initialization values based on ROM. */
 	type = eep->baseEepHeader.txGainType;
 	DPRINTF(("Tx gain type=0x%x\n", type));
+#if NATHN_USB > 0
 	if (AR_SREV_9271(sc)) {
 		if (type == AR_EEP_TXGAIN_HIGH_POWER)
 			sc->tx_gain = &ar9271_tx_gain_high_power;
 		else
 			sc->tx_gain = &ar9271_tx_gain;
-	} else if ((AR_READ(sc, AR_AN_SYNTH9) & 0x7) == 0x1) {	/* XE rev. */
+	} else
+#endif	/* NATHN_USB */
+	if ((AR_READ(sc, AR_AN_SYNTH9) & 0x7) == 0x1) {	/* XE rev. */
 		if (type == AR_EEP_TXGAIN_HIGH_POWER)
 			sc->tx_gain = &ar9285_2_0_tx_gain_high_power;
 		else
@@ -306,6 +315,7 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		db2[0] = modal->db1_01;
 		db2[1] = db2[2] = db2[3] = db2[4] = db2[0];
 	}
+#if NATHN_USB > 0
 	if (AR_SREV_9271(sc)) {
 		reg = AR_READ(sc, AR9285_AN_RF2G3);
 		reg = RW(reg, AR9271_AN_RF2G3_OB_CCK, ob [0]);
@@ -320,7 +330,9 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		AR_WRITE(sc, AR9285_AN_RF2G4, reg);
 		AR_WRITE_BARRIER(sc);
 		DELAY(100);
-	} else {
+	} else
+#endif	/* ATHN_USB */
+	{
 		reg = AR_READ(sc, AR9285_AN_RF2G3);
 		reg = RW(reg, AR9285_AN_RF2G3_OB_0,  ob [0]);
 		reg = RW(reg, AR9285_AN_RF2G3_OB_1,  ob [1]);
@@ -495,6 +507,7 @@ ar9285_pa_calib(struct athn_softc *sc)
 void
 ar9271_pa_calib(struct athn_softc *sc)
 {
+#if NATHN_USB > 0
 	/* List of registers that need to be saved/restored. */
 	static const uint16_t regs[] = {
 		AR9285_AN_TOP3,
@@ -505,7 +518,7 @@ ar9271_pa_calib(struct athn_softc *sc)
 		AR9285_AN_RF2G8,
 		AR9285_AN_RF2G7
 	};
-	uint32_t svg[7], reg, ccomp_svg;
+	uint32_t svg[7], reg, rf2g3_svg;
 	int i;
 
 	/* Save registers. */
@@ -535,9 +548,8 @@ ar9271_pa_calib(struct athn_softc *sc)
 	reg = RW(reg, AR9285_AN_RF2G7_PADRVGN2TAB0, 0);
 	AR_WRITE(sc, AR9285_AN_RF2G7, reg);
 
-	reg = AR_READ(sc, AR9285_AN_RF2G3);
 	/* Save compensation capacitor value. */
-	ccomp_svg = MS(reg, AR9271_AN_RF2G3_CCOMP);
+	reg = rf2g3_svg = AR_READ(sc, AR9285_AN_RF2G3);
 	/* Program compensation capacitor for dynamic PA. */
 	reg = RW(reg, AR9271_AN_RF2G3_CCOMP, 0xfff);
 	AR_WRITE(sc, AR9285_AN_RF2G3, reg);
@@ -550,16 +562,14 @@ ar9271_pa_calib(struct athn_softc *sc)
 	AR_CLRBITS(sc, AR9285_AN_RF2G6, AR9271_AN_RF2G6_OFFS_6_0);
 	/* Set offsets 6-1. */
 	for (i = 6; i >= 1; i--) {
-		AR_SETBITS(sc, AR9285_AN_RF2G6, AR9285_AN_RF2G6_OFFS(i));
+		reg = AR_READ(sc, AR9285_AN_RF2G6);
+		reg |= AR9271_AN_RF2G6_OFFS(i);
+		AR_WRITE(sc, AR9285_AN_RF2G6, reg);
 		AR_WRITE_BARRIER(sc);
 		DELAY(1);
-		if (AR_READ(sc, AR9285_AN_RF2G9) & AR9285_AN_RXTXBB1_SPARE9) {
-			AR_SETBITS(sc, AR9285_AN_RF2G6,
-			    AR9271_AN_RF2G6_OFFS(i));
-		} else {
-			AR_CLRBITS(sc, AR9285_AN_RF2G6,
-			    AR9271_AN_RF2G6_OFFS(i));
-		}
+		if (!(AR_READ(sc, AR9285_AN_RF2G9) & AR9285_AN_RXTXBB1_SPARE9))
+			reg &= ~AR9271_AN_RF2G6_OFFS(i);
+		AR_WRITE(sc, AR9285_AN_RF2G6, reg);
 	}
 	AR_WRITE_BARRIER(sc);
 
@@ -571,10 +581,9 @@ ar9271_pa_calib(struct athn_softc *sc)
 		AR_WRITE(sc, regs[i], svg[i]);
 
 	/* Restore compensation capacitor value. */
-	reg = AR_READ(sc, AR9285_AN_RF2G3);
-	reg = RW(reg, AR9271_AN_RF2G3_CCOMP, ccomp_svg);
-	AR_WRITE(sc, AR9285_AN_RF2G3, reg);
+	AR_WRITE(sc, AR9285_AN_RF2G3, rf2g3_svg);
 	AR_WRITE_BARRIER(sc);
+#endif	/* NATHN_USB */
 }
 
 /*
@@ -630,6 +639,7 @@ ar9285_cl_cal(struct athn_softc *sc, struct ieee80211_channel *c,
 void
 ar9271_load_ani(struct athn_softc *sc)
 {
+#if NATHN_USB > 0
 	/* Write ANI registers. */
 	AR_WRITE(sc, AR_PHY_DESIRED_SZ, 0x6d4000e2);
 	AR_WRITE(sc, AR_PHY_AGC_CTL1,   0x3139605e);
@@ -640,6 +650,7 @@ ar9271_load_ani(struct athn_softc *sc)
 	AR_WRITE(sc, AR_PHY_TIMING5,    0xd00a8007);
 	AR_WRITE(sc, AR_PHY_SFCORR_EXT, 0x05eea6d4);
 	AR_WRITE_BARRIER(sc);
+#endif	/* NATHN_USB */
 }
 
 int

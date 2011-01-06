@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.11 2010/11/01 17:59:09 jmc Exp $
+.\" $OpenBSD: athn.4,v 1.12 2011/01/06 07:27:15 damien Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 1 2010 $
+.Dd $Mdocdate: January 6 2011 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Cd "athn* at cardbus?"
 .Cd "athn* at pci?"
+.Cd "athn* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -56,8 +57,8 @@ The AR9220, AR9223 and AR9280 (codenamed Merlin) are the
 first generation of
 Atheros single-chip 802.11n solutions.
 The AR9220 and AR9223 exist in PCI and Mini-PCI form factors.
-The AR9280 exists in PCIe Mini Card (XB92) and half Mini Card (HB92)
-form factors.
+The AR9280 exists in PCIe Mini Card (XB92), half Mini Card (HB92)
+and USB 2.0 (AR9280+AR7010) form factors.
 The AR9220 and AR9280 operate in the 2GHz and 5GHz spectra and
 support 2 transmit paths and 2 receiver paths (2T2R).
 The AR9223 operates in the 2GHz spectrum and supports 2
@@ -76,6 +77,9 @@ It operates in the 2GHz spectrum and supports a single stream (1T1R).
 It can be combined with the AR3011 chip to form a combo WiFi/Bluetooth
 device (WB195).
 .Pp
+The AR9271 is a single-chip USB 2.0 802.11n solution.
+It operates in the 2GHz spectrum and supports a single stream (1T1R).
+.Pp
 The AR2427 is a single-chip PCIe 802.11b/g solution similar to the other
 AR9280 solutions but with 802.11n capabilities removed.
 It exists in PCIe Mini Card form factor only.
@@ -84,7 +88,8 @@ It operates in the 2GHz spectrum.
 The AR9227 and AR9287 are single-chip 802.11n solutions that
 target mid-tier PCs.
 The AR9227 exists in PCI and Mini-PCI form factors.
-The AR9287 exists in PCIe half Mini Card (HB97) form factor only.
+The AR9287 exists in PCIe half Mini Card (HB97)
+and USB 2.0 (AR9287+AR7010) form factors.
 They operate in the 2GHz spectrum and support 2 transmit paths and 2
 receiver paths (2T2R).
 .Pp
@@ -106,11 +111,14 @@ The following table summarizes the supported chips and their capabilities.
 .It AR9220	2GHz/5GHz	2x2	PCI
 .It AR9223	2GHz	2x2	PCI
 .It AR9280	2GHz/5GHz	2x2	PCIe
+.It AR9280+AR7010	2GHz/5GHz	2x2	USB 2.0
 .It AR9281	2GHz	1x2	PCIe
 .It AR9285	2GHz	1x1	PCIe
+.It AR9271	2GHz	1x1	USB 2.0
 .It AR2427	2GHz	1x1	PCIe
 .It AR9227	2GHz	2x2	PCI
 .It AR9287	2GHz	2x2	PCIe
+.It AR9287+AR7010	2GHz	2x2	USB 2.0
 .El
 .Pp
 These are the modes the
@@ -153,6 +161,22 @@ of data frames.
 .Pp
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
+.Sh FILES
+For USB devices, the driver needs at least version 1.1 of the following
+firmware files, which are loaded when an interface is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It /etc/firmware/athn-ar7010
+.It /etc/firmware/athn-ar7010-11
+.It /etc/firmware/athn-ar9271
+.El
+.Pp
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Bd -literal -offset 3n
+http://damien.bergamini.free.fr/packages/openbsd/athn-firmware-1.1.tgz
+.Ed
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
@@ -198,6 +222,10 @@ Make sure the laptop radio switch is on.
 .It "athn%d: radio switch turned off"
 The radio switch has been turned off while the interface was up and running.
 The driver will turn the interface down.
+.It "athn%d: error %d, could not read firmware %s"
+For some reason, the driver was unable to read the firmware file from the
+filesystem.
+The file might be missing or corrupted.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
@@ -206,6 +234,7 @@ The driver will turn the interface down.
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr usb 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Pp
@@ -216,6 +245,8 @@ The
 .Nm
 driver first appeared in
 .Ox 4.7 .
+Support for USB 2.0 devices first appeared in
+.Ox 4.9 .
 .Sh AUTHORS
 The
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.28 2011/01/01 10:48:31 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.29 2011/01/06 07:27:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -290,6 +290,7 @@ struct athn_node {
 	struct ieee80211_amrr_node	amn;
 	uint8_t				ridx[IEEE80211_RATE_MAXSIZE];
 	uint8_t				fallback[IEEE80211_RATE_MAXSIZE];
+	uint8_t				sta_index;
 };
 
 /*

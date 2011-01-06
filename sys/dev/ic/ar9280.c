@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.16 2011/01/01 14:25:03 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.17 2011/01/06 07:27:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -322,7 +322,15 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		DELAY(100);
 	}
 	reg = AR_READ(sc, AR_AN_TOP2);
-	reg = RW(reg, AR_AN_TOP2_XPABIAS_LVL, modal->xpaBiasLvl);
+	if ((sc->flags & ATHN_FLAG_USB) && IEEE80211_IS_CHAN_5GHZ(c)) {
+		/*
+		 * Hardcode the output voltage of x-PA bias LDO to the
+		 * lowest value for UB94 such that the card doesn't get
+		 * too hot.
+		 */
+		reg = RW(reg, AR_AN_TOP2_XPABIAS_LVL, 0);
+	} else
+		reg = RW(reg, AR_AN_TOP2_XPABIAS_LVL, modal->xpaBiasLvl);
 	if (modal->flagBits & AR5416_EEP_FLAG_LOCALBIAS)
 		reg |= AR_AN_TOP2_LOCALBIAS;
 	else

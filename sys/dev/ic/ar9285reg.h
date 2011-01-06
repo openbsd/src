@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285reg.h,v 1.6 2010/12/31 17:17:14 damien Exp $	*/
+/*	$OpenBSD: ar9285reg.h,v 1.7 2011/01/06 07:27:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -599,6 +599,7 @@ static const struct athn_ini ar9285_1_2_ini = {
 	ar9285_1_2_cm_vals
 };
 
+#if NATHN_USB > 0
 /*
  * AR9271 programming.
  */
@@ -945,6 +946,7 @@ static const struct athn_ini ar9271_ini = {
 	ar9271_cm_regs,
 	ar9271_cm_vals
 };
+#endif	/* NATHN_USB */
 
 /*
  * AR9285 1.2 Tx gains.
@@ -1035,6 +1037,7 @@ static const struct athn_gain ar9285_2_0_tx_gain_high_power = {
 	ar9285_2_0_tx_gain_high_power_vals_2g
 };
 
+#if NATHN_USB > 0
 /*
  * AR9271 Tx gains.
  */
@@ -1081,3 +1084,4 @@ static const struct athn_gain ar9271_tx_gain_high_power = {
 	NULL,	/* 2GHz only. */
 	ar9271_tx_gain_high_power_vals_2g
 };
+#endif	/* NATHN_USB */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.506 2010/12/21 20:14:43 thib Exp $
+#	$OpenBSD: files,v 1.507 2011/01/06 07:27:15 damien Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -366,7 +366,7 @@ device	ath: ether, ifnet, ifmedia, ar5xxx, wlan, gpiobus
 file	dev/ic/ath.c			ath
 
 # Atheros AR9k (802.11a/g/n) driver
-device	athn: ether, ifnet, ifmedia, wlan
+device	athn: ether, ifnet, ifmedia, wlan, firmload
 file	dev/ic/athn.c			athn
 file	dev/ic/ar5008.c			athn
 file	dev/ic/ar5416.c			athn
