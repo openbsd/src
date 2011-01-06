@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.105 2011/01/05 15:35:43 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.106 2011/01/06 17:32:42 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ vndattach(int num)
 	vnd_softc = (struct vnd_softc *)mem;
 	for (i = 0; i < num; i++) {
 		rw_init(&vnd_softc[i].sc_rwlock, "vndlock");
-		bufq_init(&vnd_softc[i].sc_bufq, BUFQ_DEFAULT);
 	}
 	numvnd = num;
 
@@ -872,6 +871,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		/* Attach the disk. */
 		vnd->sc_dk.dk_name = vnd->sc_dk_name;
 		disk_attach(&vnd->sc_dev, &vnd->sc_dk);
+		bufq_init(&vnd->sc_bufq, BUFQ_DEFAULT);
 
 		vndunlock(vnd);
 
@@ -908,6 +908,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		/* Detach the disk. */
+		bufq_destroy(&vnd->sc_bufq);
 		disk_detach(&vnd->sc_dk);
 
 		/* This must be atomic. */
