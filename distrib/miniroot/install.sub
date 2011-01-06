@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.632 2011/01/03 00:36:50 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.633 2011/01/06 16:59:06 otto Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1727,7 +1727,7 @@ getdevname() {
 check_fs() {
 	local _dev _mp _fstype _rest _fail _f
 
-	ask_yn "Force checking of non-root filesystems?" yes
+	ask_yn "Force checking of clean non-root filesystems?"
 	[[ $resp == y ]] && _f=f
 
 	while read _dev _mp _fstype _rest; do
