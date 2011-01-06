@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.6 2011/01/02 22:28:29 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.7 2011/01/06 18:40:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -1364,7 +1364,7 @@ vdsp_ack_desc(struct vdsp_softc *sc, struct vd_desc *vd)
 	dm.tag.stype = VIO_SUBTYPE_ACK;
 	dm.tag.stype_env = VIO_DRING_DATA;
 	dm.tag.sid = sc->sc_local_sid;
-	dm.seq_no = sc->sc_seq_no++;
+	dm.seq_no = ++sc->sc_seq_no;
 	dm.dring_ident = sc->sc_dring_ident;
 	off = (caddr_t)vd - sc->sc_vd;
 	dm.start_idx = off / sc->sc_descriptor_size;
