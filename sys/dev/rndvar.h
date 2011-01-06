@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.25 2011/01/05 00:23:16 deraadt Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.26 2011/01/06 15:41:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -32,12 +32,6 @@
 #define __RNDVAR_H__
 
 #define POOLWORDS 2048	/* Power of 2 - note that this is 32-bit words */
-
-#define	RND_RND		0	/* real randomness like nuclear chips */
-#define	RND_SRND	1	/* strong random source */
-#define	RND_URND	2	/* less strong random source */
-#define	RND_ARND	3	/* aRC4 based random number generator */
-#define	RND_NODEV	4	/* First invalid minor device number */
 
 #define	RND_SRC_TRUE	0
 #define	RND_SRC_TIMER	1

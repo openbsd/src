@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.122 2011/01/04 19:42:22 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.123 2011/01/06 15:41:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
@@ -825,7 +825,7 @@ arc4random_uniform(u_int32_t upper_bound)
 int
 randomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	return (minor(dev) < RND_NODEV ? 0 : ENXIO);
+	return 0;
 }
 
 int
@@ -845,26 +845,13 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
 
-	while (!ret && uio->uio_resid > 0) {
+	while (ret == 0 && uio->uio_resid > 0) {
 		int	n = min(POOLBYTES, uio->uio_resid);
 
-		switch (minor(dev)) {
-		case RND_RND:
-			ret = EIO;	/* no chip -- error */
-			break;
-		case RND_SRND:
-		case RND_URND:
-		case RND_ARND:
-			arc4random_buf(buf, n);
-			break;
-		default:
-			ret = ENXIO;
-		}
-		if (n != 0 && ret == 0) {
-			ret = uiomove((caddr_t)buf, n, uio);
-			if (!ret && uio->uio_resid > 0)
-				yield();
-		}
+		arc4random_buf(buf, n);
+		ret = uiomove((caddr_t)buf, n, uio);
+		if (ret == 0 && uio->uio_resid > 0)
+			yield();
 	}
 
 	free(buf, M_TEMP);
@@ -876,9 +863,6 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int		ret = 0, newdata = 0;
 	u_int32_t	*buf;
-
-	if (minor(dev) == RND_RND)
-		return ENXIO;
 
 	if (uio->uio_resid == 0)
 		return 0;
