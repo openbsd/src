@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.24 2010/12/29 17:51:47 deraadt Exp $
+.\"	$OpenBSD: random.4,v 1.25 2011/01/06 15:53:51 deraadt Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 29 2010 $
+.Dd $Mdocdate: January 6 2011 $
 .Dt RANDOM 4
 .Os
 .Sh NAME
@@ -37,21 +37,20 @@
 The various
 .Nm
 devices produce random output data with different random qualities.
-Entropy data is collected from system activity (like disk and
-network device interrupts and such), and then run through various
+Entropy data is collected from system activity (like disk, network,
+and clock device interrupts and such), and then run through various
 hash or message digest functions to generate the output.
-.Bl -hang -width /dev/arandomX
-.It Pa /dev/random
-This device is reserved for future support of hardware
-random generators.
-.It Pa /dev/arandom
-As required, entropy pool data re-seeds an ARC4 generator,
-which then generates high-quality pseudo-random output data.
+All the random devices are expected to provide high high-quality
+pseudo-random output data.
 .Pp
 The
 .Xr arc4random 3
-function in userland libraries seeds itself from this device,
-providing a second level of ARC4 hashed data.
+function in userland libraries seeds itself from this device (or with
+the
+.Xr sysctl 3
+interface)
+providing a second level of ARC4 hashed data without the need to access
+these devices every time.
 .El
 .Sh FILES
 .Bl -tag -width /dev/arandom -compact
@@ -72,16 +71,6 @@ A
 .Nm
 device first appeared in the Linux operating system.
 This is a cloned interface.
-.Pp
-Previous versions of
-.Ox
-included the
-.Nm srandom
-and
-.Nm urandom
-devices.
-These interfaces have been deprecated and replaced with
-.Nm arandom .
 .Pp
 ARC4 routines added by David Mazieres.
 .Sh BUGS
