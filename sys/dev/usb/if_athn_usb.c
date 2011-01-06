@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.3 2011/01/06 19:03:12 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.4 2011/01/06 19:20:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1670,61 +1670,65 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
 	struct ar_rx_status *rs;
 	uint16_t datalen;
 
-	if (__predict_false(m->m_len < sizeof(*htc))) {
-		m_freem(m);
-		return;
-	}
+	if (__predict_false(m->m_len < sizeof(*htc)))
+		goto skip;
 	htc = mtod(m, struct ar_htc_frame_hdr *);
 	if (__predict_false(htc->endpoint_id == 0)) {
 		DPRINTF(("bad endpoint %d\n", htc->endpoint_id));
-		m_freem(m);
-		return;
+		goto skip;
 	}
 	if (htc->flags & AR_HTC_FLAG_TRAILER) {
-		if (m->m_len < htc->control[0]) {
-			m_freem(m);
-			return;
-		}
+		if (m->m_len < htc->control[0])
+			goto skip;
 		m_adj(m, -(int)htc->control[0]);
 	}
-	/* XXX Check HTC payload_len too? */
 	m_adj(m, sizeof(*htc));	/* Strip HTC header. */
-	if (__predict_false(m->m_len < sizeof(*rs))) {
-		m_freem(m);
-		return;
-	}
+
+	if (__predict_false(m->m_len < sizeof(*rs)))
+		goto skip;
 	rs = mtod(m, struct ar_rx_status *);
+
 	/* Make sure that payload fits. */
 	datalen = betoh16(rs->rs_datalen);
-	if (__predict_false(m->m_len < sizeof(*rs) + datalen)) {
-		m_freem(m);
-		return;
-	}
-	if (__predict_false(datalen < sizeof(*wh) + IEEE80211_CRC_LEN)) {
-		m_freem(m);
-		return;
-	}
+	if (__predict_false(m->m_len < sizeof(*rs) + datalen))
+		goto skip;
+
+	if (__predict_false(datalen < sizeof(*wh) + IEEE80211_CRC_LEN))
+		goto skip;
+
 	m_adj(m, sizeof(*rs));	/* Strip Rx status. */
 	m->m_pkthdr.rcvif = ifp;
 
-	/* XXX L2 aligned on 4-byte boundary. */
+	/* Grab a reference to the source node. */
+	wh = mtod(m, struct ieee80211_frame *);
+	ni = ieee80211_find_rxnode(ic, wh);
 
+	/* Remove any HW padding after the 802.11 header. */
+	if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL)) {
+		u_int hdrlen = ieee80211_get_hdrlen(wh);
+		if (hdrlen & 3) {
+			ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
+			m_adj(m, 2);
+		}
+	}
 #if NBPFILTER > 0
 	if (__predict_false(sc->sc_drvbpf != NULL))
 		athn_usb_rx_radiotap(sc, m, rs);
 #endif
-
 	/* Trim 802.11 FCS after radiotap. */
 	m_adj(m, -IEEE80211_CRC_LEN);
 
-	wh = mtod(m, struct ieee80211_frame *);
-	ni = ieee80211_find_rxnode(ic, wh);
+	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = rs->rs_rssi + AR_USB_DEFAULT_NF;
 	rxi.rxi_tstamp = betoh64(rs->rs_tstamp);
 	ieee80211_input(ifp, m, ni, &rxi);
+
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
+	return;
+ skip:
+	m_freem(m);
 }
 
 void
