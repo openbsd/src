@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.47 2010/12/06 04:41:39 jakemsr Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.48 2011/01/06 19:49:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -19,8 +19,6 @@
 
 /*-
  * Driver for Atheros AR5005UG/AR5005UX chipsets.
- * http://www.atheros.com/pt/bulletins/AR5005UGBulletin.pdf
- * http://www.atheros.com/pt/bulletins/AR5005UXBulletin.pdf
  *
  * IMPORTANT NOTICE:
  * This driver was written without any documentation or support from Atheros

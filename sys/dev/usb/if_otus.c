@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.25 2010/12/27 03:03:50 jakemsr Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.26 2011/01/06 19:49:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -16,9 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*-
+/*
  * Driver for Atheros AR9001U chipset.
- * http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
  */
 
 #include "bpfilter.h"
