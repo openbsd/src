@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.2 2011/01/06 17:45:36 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.3 2011/01/06 19:03:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -147,6 +147,8 @@ void		athn_usb_ampdu_tx_stop_cb(struct athn_usb_softc *, void *);
 int		athn_usb_create_node(struct athn_usb_softc *,
 		    struct ieee80211_node *);
 void		athn_usb_rx_enable(struct athn_softc *);
+int		athn_set_chan(struct athn_softc *, struct ieee80211_channel *,
+		    struct ieee80211_channel *);
 int		athn_usb_switch_chan(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
 void		athn_usb_updateedca(struct ieee80211com *);
@@ -179,6 +181,7 @@ void		athn_usb_watchdog(struct ifnet *);
 int		athn_usb_ioctl(struct ifnet *, u_long, caddr_t);
 int		athn_usb_init(struct ifnet *);
 void		athn_usb_stop(struct ifnet *);
+void		ar9271_load_ani(struct athn_softc *);
 
 /* Shortcut. */
 #define athn_usb_wmi_cmd(sc, cmd_id)	\
@@ -1244,34 +1247,43 @@ athn_usb_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
     struct ieee80211_channel *extc)
 {
 	struct athn_usb_softc *usc = (struct athn_usb_softc *)sc;
-	struct athn_ops *ops = &sc->ops;
 	uint16_t mode;
 	int error;
 
 	/* Disable interrupts. */
 	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
 	if (error != 0)
-		goto fail;
+		goto reset;
 	/* Stop all Tx queues. */
 	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_DRAIN_TXQ_ALL);
 	if (error != 0)
-		goto fail;
+		goto reset;
 	/* Stop Rx. */
 	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_STOP_RECV);
 	if (error != 0)
-		goto fail;
+		goto reset;
 
-	error = athn_hw_reset(sc, c, extc, 0);
-	if (error != 0)
-		goto fail;
+	/* If band or bandwidth changes, we need to do a full reset. */
+	if (c->ic_flags != sc->curchan->ic_flags ||
+	    ((extc != NULL) ^ (sc->curchanext != NULL))) {
+		DPRINTFN(2, ("channel band switch\n"));
+		goto reset;
+	}
 
-	/* Set transmit power values for new channel. */
-	ops->set_txpower(sc, c, extc);
+	error = athn_set_chan(sc, c, extc);
+	if (AR_SREV_9271(sc) && error == 0)
+		ar9271_load_ani(sc);
+	if (error != 0) {
+ reset:		/* Error found, try a full reset. */
+		DPRINTFN(3, ("needs a full reset\n"));
+		error = athn_hw_reset(sc, c, extc, 0);
+		if (error != 0)	/* Hopeless case. */
+			return (error);
+	}
 
 	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_START_RECV);
 	if (error != 0)
-		goto fail;
-
+		return (error);
 	athn_rx_start(sc);
 
 	mode = htobe16(IEEE80211_IS_CHAN_2GHZ(c) ?
@@ -1279,12 +1291,10 @@ athn_usb_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 	error = athn_usb_wmi_xcmd(usc, AR_WMI_CMD_SET_MODE,
 	    &mode, sizeof(mode), NULL);
 	if (error != 0)
-		goto fail;
+		return (error);
+
 	/* Re-enable interrupts. */
 	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_ENABLE_INTR);
-	if (error != 0)
-		goto fail;
- fail:
 	return (error);
 }
 
