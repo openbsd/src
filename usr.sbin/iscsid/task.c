@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.c,v 1.5 2011/01/04 13:19:55 claudio Exp $ */
+/*	$OpenBSD: task.c,v 1.6 2011/01/06 15:40:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -130,4 +130,5 @@ task_pdu_cb(struct connection *c, struct pdu *p)
 		log_pdu(p, 1);
 		pdu_free(p);
 	}
+	session_schedule(c->session);
 }
