@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.111 2010/10/28 17:18:35 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.112 2011/01/06 14:45:07 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -345,8 +345,7 @@ route_input(struct mbuf *m0, ...)
 			continue;
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
-		if (rp->rcb_proto.sp_protocol  &&
-		    proto->sp_protocol &&
+		if (rp->rcb_proto.sp_protocol && proto->sp_protocol &&
 		    rp->rcb_proto.sp_protocol != proto->sp_protocol)
 			continue;
 		/*
