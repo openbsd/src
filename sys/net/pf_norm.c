@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.124 2010/12/31 12:26:57 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.125 2011/01/06 14:01:36 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1333,7 +1333,7 @@ pf_scrub_ip(struct mbuf **m0, u_int16_t flags, u_int8_t min_ttl, u_int8_t tos)
 	if (flags & PFSTATE_RANDOMID && !(h->ip_off & ~htons(IP_DF))) {
 		u_int16_t ip_id = h->ip_id;
 
-		h->ip_id = ip_randomid();
+		h->ip_id = htons(ip_randomid());
 		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_id, h->ip_id, 0);
 	}
 }
