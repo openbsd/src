@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.42 2010/05/02 22:34:31 stsp Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.43 2011/01/06 11:52:41 claudio Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -752,9 +752,6 @@ slinput(c, tp)
 	}
 	c &= TTY_CHARMASK;
 
-	/* mark incoming routing domain */
-	m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
-
 	++sc->sc_if.if_ibytes;
 
 	if (sc->sc_if.if_flags & IFF_DEBUG) {
@@ -854,6 +851,9 @@ slinput(c, tp)
 		m = sl_btom(sc, len);
 		if (m == NULL)
 			goto error;
+
+		/* mark incoming routing domain */
+		m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
 
 #if NBPFILTER > 0
 		if (sc->sc_bpf) {
