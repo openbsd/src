@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.5 2011/01/04 13:12:40 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.6 2011/01/06 15:35:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -330,7 +330,7 @@ int
 c_do_loggedin(struct connection *c, enum c_event ev)
 {
 	if (ev == CONN_EV_LOGGED_IN)
-		vscsi_event(VSCSI_REQPROBE, c->session->target, 0);
+		vscsi_event(VSCSI_REQPROBE, c->session->target, -1);
 	else
 		initiator_discovery(c->session);
 	return (CONN_LOGGED_IN);
