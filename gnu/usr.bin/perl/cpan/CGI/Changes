@@ -1,3 +1,59 @@
+Version 3.51
+
+  [NEW FEATURES]  
+  - A new option to set $CGI::Carp::TO_BROWSER = 0, allows you to explicitly  
+    exclude a particular scope from triggering printing to the browser when
+    fatatlsToBrowser is set. (RT#62783, Thanks to papowell) 
+  - The <script> tag now supports the "charset" attribute. 
+    (RT#62907, Thanks to Fabrice Metge)
+  - In CGI::Cookie, "Max-Age" is now supported for better spec compliance. 
+    (Mark Stosberg)
+
+  [BUG FIXES]  
+  - Setting charset() now works for all content types, not just "text/*". 
+    (RT#57945, Thanks to Yanick and Gerv.)
+  - support for user temporary directories ($HOME/tmp) was commented out
+    in 2.61 but the documentation wasn't updated (Peter Gervai, Niko Tyni)
+  - setting $CGITempFile::TMPDIRECTORY before loading CGI.pm has been
+    working but undocumented since 3.12 (which listed it in Changes as
+    $CGI::TMPDIRECTORY) (Peter Gervai, Niko Tyni)
+  - unfortunately the previous change broke the runtime check for looking
+    for a new temporary directory if the current one suddenly became
+    unwritable (Peter Gervai, Niko Tyni)
+  - A bug was fixed in CGI::Carp triggered by certain death cases in
+    the BEGIN phase of parent classes. 
+    (RT#57224, Thanks to UNERA, Yanick Champoux, Mark Stosberg)
+  - CGI::Cookie->new() now follows the documentation and returns undef 
+    if the -name and -value args aren't provided. This new behavior is also
+    consistent with the docs and code of CGI::Simple::Cookie. (Mark Stosberg)
+  - CGI::Cookie->parse() now trims leading and trailing whitespace from cookie  
+    elements as intended. The change also makes this part of the parsing 
+    identical to CGI::Simple::Cookie (Mark Stosberg) 
+  - Temp file handling was improved (RT#62762)  
+
+  [SECURITY]
+  - Further improvements have been made to guard against newline injections
+    in headers. (Thanks to Max Kanat-Alexander, Yanick Champoux, Mark Stosberg)
+
+  [PERFORMANCE]
+  - Make EBCDIC a compile-time constant so there's zero overhead (and less
+    compiled code) in subroutines that test for it. (Tim Bunce) 
+  - If you just want to use CGI::Cookie, CGI.pm will no longer be loaded
+    unless you call the bake() method, which requires it. (Mark Stosberg)
+
+  [DOCUMENTATION]
+  - quit referring to the <link> tag as being "rarely used".  (Victor Sanders)
+  - typo and whitespace fixes (RT#62785, thanks to  scop@cpan.org) 
+  - The -dtd argument to start_html() is now documented 
+    (RT#60473, Thanks to giecrilj and steve@fisharerojo.org) 
+  - CGI::Carp doc are updated to reflect that it can work with mod_perl 2.0. 
+  - when creating a temporary file in the directory fails, the error message
+    could indicate the root of the problem better (Peter Gervai, Niko Tyni)
+
+  [INTERNALS]
+  - Re-fixing https test in http.t. (RT#54768, thanks to SPROUT)
+  - param_fetch no longer triggers a warning when called with no arguments (ysth, Mark Stosberg)
+
 Version 3.50
   
   [SECURITY]
@@ -23,6 +79,7 @@ Version 3.49
      Thanks to Alex Vandiver (RT#51109)
   2. Suppress uninitialized warnings under -w. Thanks to burak.  (RT#50301)
   3. url() now uses virtual_port() instead of server_port(). Thanks to MKANAT and Yanick Champoux. (RT#51562)
+  4. CGI::Carp now properly handles stringifiable objects, like Exception::Class throws (RT#39904)
 
   [SECURITY]
   1. embedded newlines are now filtered out of header values in header(). 

@@ -116,7 +116,7 @@ occur in the early compile phase will be seen.
 Nonfatal errors will still be directed to the log file only (unless redirected
 with carpout).
 
-Note that fatalsToBrowser does B<not> work with mod_perl version 2.0
+Note that fatalsToBrowser may B<not> work well with mod_perl version 2.0
 and higher.
 
 =head2 Changing the default message
@@ -183,6 +183,28 @@ attempting to set SIG{__DIE__} yourself, you may interfere with
 this module's functionality, or this module may interfere with 
 your module's functionality.
 
+=head2 SUPPRESSING PERL ERRORS APPEARING IN THE BROWSER WINDOW
+
+A problem sometimes encountered when using fatalsToBrowser is
+when a C<die()> is done inside an C<eval> body or expression.
+Even though the
+fatalsToBrower support takes precautions to avoid this,
+you still may get the error message printed to STDOUT.
+This may have some undesireable effects when the purpose of doing the
+eval is to determine which of several algorithms is to be used.
+
+By setting C<$CGI::Carp::TO_BROWSER> to 0 you can suppress printing the C<die> messages
+but without all of the complexity of using C<set_die_handler>.
+You can localize this effect to inside C<eval> bodies if this is desireable:
+For example:
+
+ eval {
+   local $CGI::Carp::TO_BROWSER = 0;
+   die "Fatal error messages not sent browser"
+ }
+ # $@ will contain error message
+
+
 =head1 MAKING WARNINGS APPEAR AS HTML COMMENTS
 
 It is now also possible to make non-fatal errors appear as HTML
@@ -244,6 +266,8 @@ compiled, so any compile-time errors will still show up with the
 non-overridden program name
   
 =head1 CHANGE LOG
+
+3.51 Added $CGI::Carp::TO_BROWSER
 
 1.29 Patch from Peter Whaite to fix the unfixable problem of CGI::Carp
      not behaving correctly in an eval() context.
@@ -321,9 +345,10 @@ use File::Spec;
 
 $main::SIG{__WARN__}=\&CGI::Carp::warn;
 
-$CGI::Carp::VERSION     = '3.45';
+$CGI::Carp::VERSION     = '3.51';
 $CGI::Carp::CUSTOM_MSG  = undef;
 $CGI::Carp::DIE_HANDLER = undef;
+$CGI::Carp::TO_BROWSER  = 1;
 
 
 # fancy import routine detects and handles 'errorWrap' specially.
@@ -421,23 +446,27 @@ sub ineval {
 }
 
 sub die {
-  my ($arg,@rest) = @_;
+    # if no argument is passed, propagate $@ like
+    # the real die
+  my ($arg,@rest) = @_ ? @_ 
+                  : $@ ? "$@\t...propagated" 
+                  :      "Died"
+                  ;
 
   &$DIE_HANDLER($arg,@rest) if $DIE_HANDLER;
 
+  # the "$arg" is done on purpose!
   # if called as die( $object, 'string' ),
   # all is stringified, just like with
   # the real 'die'
   $arg = join '' => "$arg", @rest if @rest;
-
-  $arg ||= 'Died';
 
   my($file,$line,$id) = id(1);
 
   $arg .= " at $file line $line.\n" unless ref $arg or $arg=~/\n$/;
 
   realdie $arg           if ineval();
-  &fatalsToBrowser($arg) if $WRAP;
+  &fatalsToBrowser($arg) if ($WRAP and $CGI::Carp::TO_BROWSER);
 
   $arg=~s/^/ stamp() /gme if $arg =~ /\n$/ or not exists $ENV{MOD_PERL};
 

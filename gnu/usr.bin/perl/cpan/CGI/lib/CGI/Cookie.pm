@@ -12,23 +12,20 @@ use warnings;
 
 # Copyright 1995-1999, Lincoln D. Stein.  All rights reserved.
 # It may be used and modified freely, but I do request that this copyright
-# notice remain attached to the file.  You may modify this module as you 
+# notice remain attached to the file.  You may modify this module as you
 # wish, but if you redistribute a modified version, please attach a note
 # listing the modifications you have made.
 
-$CGI::Cookie::VERSION='1.29';
+our $VERSION='1.30';
 
 use CGI::Util qw(rearrange unescape escape);
-use CGI;
-use overload '""' => \&as_string,
-    'cmp' => \&compare,
-    'fallback'=>1;
+use overload '""' => \&as_string, 'cmp' => \&compare, 'fallback' => 1;
 
 my $PERLEX = 0;
 # Turn on special checking for ActiveState's PerlEx
 $PERLEX++ if defined($ENV{'GATEWAY_INTERFACE'}) && $ENV{'GATEWAY_INTERFACE'} =~ /^CGI-PerlEx/;
 
-# Turn on special checking for Doug MacEachern's modperl
+# Turn on special checking for mod_perl
 # PerlEx::DBI tries to fool DBI by setting MOD_PERL
 my $MOD_PERL = 0;
 if (exists $ENV{MOD_PERL} && ! $PERLEX) {
@@ -60,20 +57,14 @@ sub fetch {
    my($key,$value);
    
    my @pairs = split("[;,] ?",$raw_cookie);
-   foreach (@pairs) {
-     s/\s*(.*?)\s*/$1/;
-     if (/^([^=]+)=(.*)/) {
-       $key = $1;
-       $value = $2;
-     }
-     else {
-       $key = $_;
-       $value = '';
-     }
-     $results{$key} = $value;
-   }
-   return \%results unless wantarray;
-   return %results;
+  for my $pair ( @pairs ) {
+    $pair =~ s/^\s+|\s+$//g;    # trim leading trailing whitespace
+    my ( $key, $value ) = split "=", $pair;
+
+    $value = defined $value ? $value : '';
+    $results{$key} = $value;
+  }
+  return wantarray ? %results : \%results;
 }
 
 sub get_raw_cookie {
@@ -93,11 +84,15 @@ sub get_raw_cookie {
 
 sub parse {
   my ($self,$raw_cookie) = @_;
+  return wantarray ? () : {} unless $raw_cookie;
+
   my %results;
 
   my @pairs = split("[;,] ?",$raw_cookie);
-  foreach (@pairs) {
-    s/\s*(.*?)\s*/$1/;
+  for (@pairs) {
+    s/^\s+//;
+    s/\s+$//;
+
     my($key,$value) = split("=",$_,2);
 
     # Some foreign cookies are not in name=value format, so ignore
@@ -113,49 +108,37 @@ sub parse {
     # appear.  The FIRST one in HTTP_COOKIE is the most recent version.
     $results{$key} ||= $self->new(-name=>$key,-value=>\@values);
   }
-  return \%results unless wantarray;
-  return %results;
+  return wantarray ? %results : \%results;
 }
 
 sub new {
-  my $class = shift;
-  $class = ref($class) if ref($class);
-  # Ignore mod_perl request object--compatability with Apache::Cookie.
-  shift if ref $_[0]
-        && eval { $_[0]->isa('Apache::Request::Req') || $_[0]->isa('Apache') };
-  my($name,$value,$path,$domain,$secure,$expires,$httponly) =
-    rearrange([ 'NAME', ['VALUE','VALUES'], qw/ PATH DOMAIN SECURE EXPIRES
-        HTTPONLY / ], @_);
-  
-  # Pull out our parameters.
-  my @values;
-  if (ref($value)) {
-    if (ref($value) eq 'ARRAY') {
-      @values = @$value;
-    } elsif (ref($value) eq 'HASH') {
-      @values = %$value;
-    }
-  } else {
-    @values = ($value);
-  }
-  
-  bless my $self = {
-		    'name'=>$name,
-		    'value'=>[@values],
-		   },$class;
-
-  # IE requires the path and domain to be present for some reason.
-  $path   ||= "/";
-  # however, this breaks networks which use host tables without fully qualified
-  # names, so we comment it out.
-  #    $domain = CGI::virtual_host()    unless defined $domain;
-
-  $self->path($path)     if defined $path;
-  $self->domain($domain) if defined $domain;
-  $self->secure($secure) if defined $secure;
-  $self->expires($expires) if defined $expires;
-  $self->httponly($httponly) if defined $httponly;
-#  $self->max_age($expires) if defined $expires;
+  my ( $class, @params ) = @_;
+  $class = ref( $class ) || $class;
+  # Ignore mod_perl request object--compatibility with Apache::Cookie.
+  shift if ref $params[0]
+        && eval { $params[0]->isa('Apache::Request::Req') || $params[0]->isa('Apache') };
+  my ( $name, $value, $path, $domain, $secure, $expires, $max_age, $httponly )
+   = rearrange(
+    [
+      'NAME', [ 'VALUE', 'VALUES' ],
+      'PATH',   'DOMAIN',
+      'SECURE', 'EXPIRES',
+      'MAX-AGE','HTTPONLY'
+    ],
+    @params
+   );
+  return undef unless defined $name and defined $value;
+  my $self = {};
+  bless $self, $class;
+  $self->name( $name );
+  $self->value( $value );
+  $path ||= "/";
+  $self->path( $path )         if defined $path;
+  $self->domain( $domain )     if defined $domain;
+  $self->secure( $secure )     if defined $secure;
+  $self->expires( $expires )   if defined $expires;
+  $self->max_age($expires)     if defined $max_age;
+  $self->httponly( $httponly ) if defined $httponly;
   return $self;
 }
 
@@ -163,23 +146,24 @@ sub as_string {
     my $self = shift;
     return "" unless $self->name;
 
-    my(@constant_values,$domain,$path,$expires,$max_age,$secure,$httponly);
+    no warnings; # some things may be undefined, that's OK.
 
-    push(@constant_values,"domain=$domain")   if $domain = $self->domain;
-    push(@constant_values,"path=$path")       if $path = $self->path;
-    push(@constant_values,"expires=$expires") if $expires = $self->expires;
-    push(@constant_values,"max-age=$max_age") if $max_age = $self->max_age;
-    push(@constant_values,"secure") if $secure = $self->secure;
-    push(@constant_values,"HttpOnly") if $httponly = $self->httponly;
+    my $name  = escape( $self->name );
+    my $value = join "&", map { escape($_) } $self->value;
+    my @cookie = ( "$name=$value" );
 
-    my($key) = escape($self->name);
-    my($cookie) = join("=",(defined $key ? $key : ''),join("&",map escape(defined $_ ? $_ : ''),$self->value));
-    return join("; ",$cookie,@constant_values);
+    push @cookie,"domain=".$self->domain   if $self->domain;
+    push @cookie,"path=".$self->path       if $self->path;
+    push @cookie,"expires=".$self->expires if $self->expires;
+    push @cookie,"max-age=".$self->max_age if $self->max_age;
+    push @cookie,"secure"                  if $self->secure;
+    push @cookie,"HttpOnly"                if $self->httponly;
+
+    return join "; ", @cookie;
 }
 
 sub compare {
-    my $self = shift;
-    my $value = shift;
+    my ( $self, $value ) = @_;
     return "$self" cmp $value;
 }
 
@@ -194,6 +178,7 @@ sub bake {
   if ($r) {
       $r->headers_out->add('Set-Cookie' => $self->as_string);
   } else {
+      require CGI;
       print CGI::header(-cookie => $self);
   }
 
@@ -201,70 +186,56 @@ sub bake {
 
 # accessors
 sub name {
-    my $self = shift;
-    my $name = shift;
+    my ( $self, $name ) = @_;
     $self->{'name'} = $name if defined $name;
     return $self->{'name'};
 }
 
 sub value {
-    my $self = shift;
-    my $value = shift;
-      if (defined $value) {
-              my @values;
-        if (ref($value)) {
-            if (ref($value) eq 'ARRAY') {
-                @values = @$value;
-            } elsif (ref($value) eq 'HASH') {
-                @values = %$value;
-            }
-        } else {
-            @values = ($value);
-        }
-      $self->{'value'} = [@values];
-      }
-    return wantarray ? @{$self->{'value'}} : $self->{'value'}->[0]
+  my ( $self, $value ) = @_;
+  if ( defined $value ) {
+    my @values
+     = ref $value eq 'ARRAY' ? @$value
+     : ref $value eq 'HASH'  ? %$value
+     :                         ( $value );
+    $self->{'value'} = [@values];
+  }
+  return wantarray ? @{ $self->{'value'} } : $self->{'value'}->[0];
 }
 
 sub domain {
-    my $self = shift;
-    my $domain = shift;
+    my ( $self, $domain ) = @_;
     $self->{'domain'} = lc $domain if defined $domain;
     return $self->{'domain'};
 }
 
 sub secure {
-    my $self = shift;
-    my $secure = shift;
+    my ( $self, $secure ) = @_;
     $self->{'secure'} = $secure if defined $secure;
     return $self->{'secure'};
 }
 
 sub expires {
-    my $self = shift;
-    my $expires = shift;
+    my ( $self, $expires ) = @_;
     $self->{'expires'} = CGI::Util::expires($expires,'cookie') if defined $expires;
     return $self->{'expires'};
 }
 
 sub max_age {
-  my $self = shift;
-  my $expires = shift;
-  $self->{'max-age'} = CGI::Util::expire_calc($expires)-time() if defined $expires;
-  return $self->{'max-age'};
+    my ( $self, $max_age ) = @_;
+    $self->{'max-age'} = CGI::Util::expire_calc($max_age)-time() if defined $max_age;
+    return $self->{'max-age'};
 }
 
 sub path {
-    my $self = shift;
-    my $path = shift;
+    my ( $self, $path ) = @_;
     $self->{'path'} = $path if defined $path;
     return $self->{'path'};
 }
 
 
 sub httponly { # HttpOnly
-    my $self     = shift;
-    my $httponly = shift;
+    my ( $self, $httponly ) = @_;
     $self->{'httponly'} = $httponly if defined $httponly;
     return $self->{'httponly'};
 }
@@ -273,7 +244,7 @@ sub httponly { # HttpOnly
 
 =head1 NAME
 
-CGI::Cookie - Interface to Netscape Cookies
+CGI::Cookie - Interface to HTTP Cookies
 
 =head1 SYNOPSIS
 
@@ -281,23 +252,23 @@ CGI::Cookie - Interface to Netscape Cookies
     use CGI::Cookie;
 
     # Create new cookies and send them
-    $cookie1 = new CGI::Cookie(-name=>'ID',-value=>123456);
-    $cookie2 = new CGI::Cookie(-name=>'preferences',
+    $cookie1 = CGI::Cookie->new(-name=>'ID',-value=>123456);
+    $cookie2 = CGI::Cookie->new(-name=>'preferences',
                                -value=>{ font => Helvetica,
                                          size => 12 } 
                                );
     print header(-cookie=>[$cookie1,$cookie2]);
 
     # fetch existing cookies
-    %cookies = fetch CGI::Cookie;
+    %cookies = CGI::Cookie->fetch;
     $id = $cookies{'ID'}->value;
 
     # create cookies returned from an external source
-    %cookies = parse CGI::Cookie($ENV{COOKIE});
+    %cookies = CGI::Cookie->parse($ENV{COOKIE});
 
 =head1 DESCRIPTION
 
-CGI::Cookie is an interface to Netscape (HTTP/1.1) cookies, an
+CGI::Cookie is an interface to HTTP/1.1 cookies, an
 innovation that allows Web servers to store persistent information on
 the browser's side of the connection.  Although CGI::Cookie is
 intended to be used in conjunction with CGI.pm (and is in fact used by
@@ -334,7 +305,7 @@ the user quits the browser.
 This is a partial or complete domain name for which the cookie is 
 valid.  The browser will return the cookie to any host that matches
 the partial domain name.  For example, if you specify a domain name
-of ".capricorn.com", then Netscape will return the cookie to
+of ".capricorn.com", then the browser will return the cookie to
 Web servers running on any of the machines "www.capricorn.com", 
 "ftp.capricorn.com", "feckless.capricorn.com", etc.  Domain names
 must contain at least two periods to prevent attempts to match
@@ -375,7 +346,7 @@ See these URLs for more information:
 
 =head2 Creating New Cookies
 
-	my $c = new CGI::Cookie(-name    =>  'foo',
+	my $c = CGI::Cookie->new(-name    =>  'foo',
                              -value   =>  'bar',
                              -expires =>  '+3M',
                              -domain  =>  '.capricorn.com',
@@ -392,6 +363,14 @@ object serialization protocols for full generality).
 B<-expires> accepts any of the relative or absolute date formats
 recognized by CGI.pm, for example "+3M" for three months in the
 future.  See CGI.pm's documentation for details.
+
+B<-max-age> accepts the same data formats as B<< -expires >>, but sets a
+relative value instead of an absolute like B<< -expires >>. This is intended to be
+more secure since a clock could be changed to fake an absolute time. In
+practice, as of 2011, C<< -max-age >> still does not enjoy the widespread support
+that C<< -expires >> has. You can set both, and browsers that support
+C<< -max-age >> should ignore the C<< Expires >> header. The drawback
+to this approach is the bit of bandwidth for sending an extra header on each cookie.
 
 B<-domain> points to a domain name or to a fully qualified host name.
 If not specified, the cookie will be returned only to the Web server
@@ -412,7 +391,7 @@ For compatibility with Apache::Cookie, you may optionally pass in
 a mod_perl request object as the first argument to C<new()>. It will
 simply be ignored:
 
-  my $c = new CGI::Cookie($r,
+  my $c = CGI::Cookie->new($r,
                           -name    =>  'foo',
                           -value   =>  ['bar','baz']);
 
@@ -423,6 +402,10 @@ method:
 
   $c->bake;
 
+This will print the Set-Cookie HTTP header to STDOUT using CGI.pm. CGI.pm
+will be loaded for this purpose if it is not already. Otherwise CGI.pm is not
+required or used by this module.
+
 Under mod_perl, pass in an Apache request object:
 
   $c->bake($r);
@@ -431,7 +414,7 @@ If you want to set the cookie yourself, Within a CGI script you can send
 a cookie to the browser by creating one or more Set-Cookie: fields in the
 HTTP header.  Here is a typical sequence:
 
-  my $c = new CGI::Cookie(-name    =>  'foo',
+  my $c = CGI::Cookie->new(-name    =>  'foo',
                           -value   =>  ['bar','baz'],
                           -expires =>  '+3M');
 
@@ -459,14 +442,14 @@ representation.  You may call as_string() yourself if you prefer:
 
 =head2 Recovering Previous Cookies
 
-	%cookies = fetch CGI::Cookie;
+	%cookies = CGI::Cookie->fetch;
 
 B<fetch> returns an associative array consisting of all cookies
 returned by the browser.  The keys of the array are the cookie names.  You
 can iterate through the cookies this way:
 
-	%cookies = fetch CGI::Cookie;
-	foreach (keys %cookies) {
+	%cookies = CGI::Cookie->fetch;
+	for (keys %cookies) {
 	   do_something($cookies{$_});
         }
 
@@ -482,12 +465,15 @@ You may also retrieve cookies that were stored in some external
 form using the parse() class method:
 
        $COOKIES = `cat /usr/tmp/Cookie_stash`;
-       %cookies = parse CGI::Cookie($COOKIES);
+       %cookies = CGI::Cookie->parse($COOKIES);
 
 If you are in a mod_perl environment, you can save some overhead by
 passing the request object to fetch() like this:
 
    CGI::Cookie->fetch($r);
+
+If the value passed to parse() is undefined, an empty array will returned in list
+contact, and an empty hashref will be returned in scalar context.
 
 =head2 Manipulating Cookies
 
@@ -548,5 +534,7 @@ This section intentionally left blank.
 =head1 SEE ALSO
 
 L<CGI::Carp>, L<CGI>
+
+L<RFC 2109|http://www.ietf.org/rfc/rfc2109.txt>, L<RFC 2695|http://www.ietf.org/rfc/rfc2965.txt>
 
 =cut

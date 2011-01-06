@@ -63,11 +63,14 @@ is h1( { -align => 'CENTER' }, [ 'fred', 'agnes' ] ),
 is header(), "Content-Type: text/html; charset=ISO-8859-1${CRLF}${CRLF}",
   "header()";
 
-is header( -type => 'image/gif' ), "Content-Type: image/gif${CRLF}${CRLF}",
+is header( -type => 'image/gif', -charset => '' ), "Content-Type: image/gif${CRLF}${CRLF}",
   "header()";
 
 is header( -type => 'image/gif', -status => '500 Sucks' ),
   "Status: 500 Sucks${CRLF}Content-Type: image/gif${CRLF}${CRLF}", "header()";
+ 
+# return to normal 
+charset( 'ISO-8859-1' );
 
 like header( -nph => 1 ),
   qr!HTTP/1.0 200 OK${CRLF}Server: cmdline${CRLF}Date:.+${CRLF}Content-Type: text/html; charset=ISO-8859-1${CRLF}${CRLF}!,
@@ -85,13 +88,17 @@ is start_html(), <<END, "start_html()";
 <body>
 END
 
-is start_html( -Title => 'The world of foo' ), <<END, "start_html()";
+is start_html(
+    -Title  => 'The world of foo' ,
+    -Script => [ {-src=> 'foo.js', -charset=>'utf-8'} ],
+    ), <<END, "start_html()";
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
 <head>
 <title>The world of foo</title>
+<script src="foo.js" charset="utf-8" type="text/javascript"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 </head>
 <body>

@@ -16,7 +16,7 @@ package CGI::Push;
 # The most recent version and complete docs are available at:
 #   http://stein.cshl.org/WWW/software/CGI/
 
-$CGI::Push::VERSION='1.04';
+$CGI::Push::VERSION='1.05';
 use CGI;
 use CGI::Util 'rearrange';
 @ISA = ('CGI');
@@ -214,7 +214,7 @@ itself should have exactly the same calling conventions as the
 
 This optional parameter indicates the content type of each page.  It
 defaults to "text/html".  Normally the module assumes that each page
-is of a homogenous MIME type.  However if you provide either of the
+is of a homogeneous MIME type.  However if you provide either of the
 magic values "heterogeneous" or "dynamic" (the latter provided for the
 convenience of those who hate long parameter names), you can specify
 the MIME type -- and other header fields -- on a per-page basis.  See 

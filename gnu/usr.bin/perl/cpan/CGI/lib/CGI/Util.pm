@@ -1,15 +1,16 @@
 package CGI::Util;
 
 use strict;
-use vars qw($VERSION @EXPORT_OK @ISA $EBCDIC @A2E @E2A);
+use vars qw($VERSION @EXPORT_OK @ISA @A2E @E2A);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(rearrange rearrange_header make_attributes unescape escape 
 		expires ebcdic2ascii ascii2ebcdic);
 
-$VERSION = '3.48';
+$VERSION = '3.51';
 
-$EBCDIC = "\t" ne "\011";
+use constant EBCDIC => "\t" ne "\011";
+
 # (ord('^') == 95) for codepage 1047 as on os390, vmesa
 @A2E = (
    0,  1,  2,  3, 55, 45, 46, 47, 22,  5, 21, 11, 12, 13, 14, 15,
@@ -48,7 +49,7 @@ $EBCDIC = "\t" ne "\011";
   48, 49, 50, 51, 52, 53, 54, 55, 56, 57,179,219,220,217,218,159
 	 );
 
-if ($EBCDIC && ord('^') == 106) { # as in the BS2000 posix-bc coded character set
+if (EBCDIC && ord('^') == 106) { # as in the BS2000 posix-bc coded character set
      $A2E[91] = 187;   $A2E[92] = 188;  $A2E[94] = 106;  $A2E[96] = 74;
      $A2E[123] = 251;  $A2E[125] = 253; $A2E[126] = 255; $A2E[159] = 95;
      $A2E[162] = 176;  $A2E[166] = 208; $A2E[168] = 121; $A2E[172] = 186;
@@ -61,7 +62,7 @@ if ($EBCDIC && ord('^') == 106) { # as in the BS2000 posix-bc coded character se
      $E2A[221] = 219; $E2A[224] = 217; $E2A[251] = 123; $E2A[253] = 125;
      $E2A[255] = 126;
    }
-elsif ($EBCDIC && ord('^') == 176) { # as in codepage 037 on os400
+elsif (EBCDIC && ord('^') == 176) { # as in codepage 037 on os400
   $A2E[10] = 37;  $A2E[91] = 186;  $A2E[93] = 187; $A2E[94] = 176;
   $A2E[133] = 21; $A2E[168] = 189; $A2E[172] = 95; $A2E[221] = 173;
 
@@ -210,10 +211,10 @@ sub unescape {
   my $todecode = shift;
   return undef unless defined($todecode);
   $todecode =~ tr/+/ /;       # pluses become spaces
-    if ($EBCDIC) {
+    if (EBCDIC) {
       $todecode =~ s/%([0-9a-fA-F]{2})/chr $A2E[hex($1)]/ge;
     } else {
-	# handle surrogate pairs first -- dankogai
+	# handle surrogate pairs first -- dankogai. Ref: http://unicode.org/faq/utf_bom.html#utf16-2
 	$todecode =~ s{
 			%u([Dd][89a-bA-B][0-9a-fA-F]{2}) # hi
 		        %u([Dd][c-fC-F][0-9a-fA-F]{2})   # lo
@@ -272,11 +273,12 @@ EOR
 }
 
 sub escape {
+  # If we being called in an OO-context, discard the first argument.
   shift() if @_ > 1 and ( ref($_[0]) || (defined $_[1] && $_[0] eq $CGI::DefaultClass));
   my $toencode = shift;
   return undef unless defined($toencode);
   utf8::encode($toencode) if ($] >= 5.008 && utf8::is_utf8($toencode));
-    if ($EBCDIC) {
+    if (EBCDIC) {
       $toencode=~s/([^a-zA-Z0-9_.~-])/uc sprintf("%%%02x",$E2A[ord($1)])/eg;
     } else {
       $toencode=~s/([^a-zA-Z0-9_.~-])/uc sprintf("%%%02x",ord($1))/eg;
@@ -340,7 +342,8 @@ sub expire_calc {
     } else {
       return $time;
     }
-    return (time+$offset);
+    my $cur_time = time; 
+    return ($cur_time+$offset);
 }
 
 sub ebcdic2ascii {
@@ -373,7 +376,7 @@ no public subroutines
 
 =head1 AUTHOR INFORMATION
 
-Copyright 1995-1998, Lincoln D. Stein.  All rights reserved.  
+Copyright 1995-1998, Lincoln D. Stein.  All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -383,7 +386,7 @@ bug reports, please provide the version of CGI.pm, the version of
 Perl, the name and version of your Web server, and the name and
 version of the operating system you are using.  If the problem is even
 remotely browser dependent, please provide information about the
-affected browers as well.
+affected browsers as well.
 
 =head1 SEE ALSO
 

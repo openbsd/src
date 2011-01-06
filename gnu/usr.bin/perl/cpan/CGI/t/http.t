@@ -34,8 +34,11 @@ my $cgi = CGI->new();
     # https()
     # The same as http(), but operates on the HTTPS environment variables present when the SSL protocol is in
     # effect.  Can be used to determine whether SSL is turned on.
-    local %ENV;
-    @ENV{qw/ HTTPS HTTPS_KEYSIZE /} = ('ON', 512);
+    my @expect = grep /^HTTPS/, keys %ENV;
+    push @expect, 'HTTPS'         if not exists $ENV{HTTPS};
+    push @expect, 'HTTPS_KEYSIZE' if not exists $ENV{HTTPS_KEYSIZE};
+    local $ENV{'HTTPS'} = 'ON';
+    local $ENV{'HTTPS_KEYSIZE'} = 512;
     is $cgi->https(), 'ON', 'scalar context to check SSL is on';
-    ok eq_set( [$cgi->https()], [qw(HTTPS HTTPS_KEYSIZE)]), 'list context returns https keys';
+    ok eq_set( [$cgi->https()], \@expect), 'list context returns https keys';
 }

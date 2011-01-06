@@ -252,7 +252,7 @@ now produces the following output:
 =head2 Recommendation for when to use CGI::Pretty
 
 CGI::Pretty is far slower than using CGI.pm directly. A benchmark showed that
-it could be about 10 times slower. Adding newslines and spaces may alter the
+it could be about 10 times slower. Adding newlines and spaces may alter the
 rendered appearance of HTML. Also, the extra newlines and spaces also make the
 file size larger, making the files take longer to download.
 

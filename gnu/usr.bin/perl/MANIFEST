@@ -199,18 +199,21 @@ cpan/CGI/t/apache.t			See if CGI::Apache still loads
 cpan/CGI/t/autoescape.t			See if CGI.pm works
 cpan/CGI/t/can.t			See if CGI.pm works
 cpan/CGI/t/carp.t			See if CGI::Carp works
+cpan/CGI/t/charset.t			See if CGI.pm works
 cpan/CGI/t/checkbox_group.t		See if CGI.pm works
 cpan/CGI/t/cookie.t			See if CGI::Cookie works
 cpan/CGI/t/Dump.t			See if CGI->Dump works
 cpan/CGI/t/end_form.t			See if CGI.pm works
 cpan/CGI/t/form.t			See if CGI.pm works
 cpan/CGI/t/function.t			See if CGI.pm works
+cpan/CGI/t/headers.t			See if CGI.pm works
 cpan/CGI/t/hidden.t			See if CGI.pm works
 cpan/CGI/t/html.t			See if CGI.pm works
 cpan/CGI/t/http.t			See if CGI.pm works
 cpan/CGI/t/init.t			See if CGI.pm works
 cpan/CGI/t/init_test.txt		See if CGI.pm works
 cpan/CGI/t/no_tabindex.t		See if CGI.pm works
+cpan/CGI/t/param_fetch.t		See if CGI.pm works
 cpan/CGI/t/popup_menu.t			See if CGI pop menus work
 cpan/CGI/t/pretty.t			See if CGI.pm works
 cpan/CGI/t/push.t			See if CGI::Push works
