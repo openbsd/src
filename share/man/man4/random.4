@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.25 2011/01/06 15:53:51 deraadt Exp $
+.\"	$OpenBSD: random.4,v 1.26 2011/01/07 08:23:27 jmc Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2011 $
+.Dd $Mdocdate: January 7 2011 $
 .Dt RANDOM 4
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ devices produce random output data with different random qualities.
 Entropy data is collected from system activity (like disk, network,
 and clock device interrupts and such), and then run through various
 hash or message digest functions to generate the output.
-All the random devices are expected to provide high high-quality
+All the random devices are expected to provide high quality
 pseudo-random output data.
 .Pp
 The
@@ -48,10 +48,9 @@ The
 function in userland libraries seeds itself from this device (or with
 the
 .Xr sysctl 3
-interface)
+interface),
 providing a second level of ARC4 hashed data without the need to access
 these devices every time.
-.El
 .Sh FILES
 .Bl -tag -width /dev/arandom -compact
 .It Pa /dev/random
