@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.126 2011/01/07 04:56:51 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.127 2011/01/07 23:13:48 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -181,47 +181,13 @@
  * The reultant polynomial is:
  *   2^POOLWORDS + 2^POOL_TAP1 + 2^POOL_TAP2 + 2^POOL_TAP3 + 2^POOL_TAP4 + 1
  */
-#define POOLBITS	(POOLWORDS*32)
+#define POOLWORDS	2048
 #define POOLBYTES	(POOLWORDS*4)
 #define POOLMASK	(POOLWORDS - 1)
-#if POOLWORDS == 2048
 #define	POOL_TAP1	1638
 #define	POOL_TAP2	1231
 #define	POOL_TAP3	819
 #define	POOL_TAP4	411
-#elif POOLWORDS == 1024	/* also (819, 616, 410, 207, 2) */
-#define	POOL_TAP1	817
-#define	POOL_TAP2	615
-#define	POOL_TAP3	412
-#define	POOL_TAP4	204
-#elif POOLWORDS == 512	/* also (409,307,206,102,2), (409,309,205,103,2) */
-#define	POOL_TAP1	411
-#define	POOL_TAP2	308
-#define	POOL_TAP3	208
-#define	POOL_TAP4	104
-#elif POOLWORDS == 256
-#define	POOL_TAP1	205
-#define	POOL_TAP2	155
-#define	POOL_TAP3	101
-#define	POOL_TAP4	52
-#elif POOLWORDS == 128	/* also (103, 78, 51, 27, 2) */
-#define	POOL_TAP1	103
-#define	POOL_TAP2	76
-#define	POOL_TAP3	51
-#define	POOL_TAP4	25
-#elif POOLWORDS == 64
-#define	POOL_TAP1	52
-#define	POOL_TAP2	39
-#define	POOL_TAP3	26
-#define	POOL_TAP4	14
-#elif POOLWORDS == 32
-#define	POOL_TAP1	26
-#define	POOL_TAP2	20
-#define	POOL_TAP3	14
-#define	POOL_TAP4	7
-#else
-#error No primitive polynomial available for chosen POOLWORDS
-#endif
 
 struct mutex entropylock = MUTEX_INITIALIZER(IPL_HIGH);
 
@@ -544,17 +510,24 @@ extract_entropy(u_int8_t *buf, int nbytes)
 }
 
 /*
+ * Bytes of key material for each rc4 instance.
+ */
+#define	ARC4_KEY_BYTES		64
+
+/*
  * Maximum number of bytes to serve directly from the main arc4random
  * pool. Larger requests are served from discrete arc4 instances keyed
- * from the main pool.
+ * from the main pool.  Must be larger than ARC4_KEY_BYTES.
  */
 #define ARC4_MAIN_MAX_BYTES	2048
 
 /*
- * Key size (in bytes) for arc4 instances setup to serve requests larger
- * than ARC4_MAIN_MAX_BYTES.
+ * Throw away the first N words of output, as suggested in the
+ * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
+ * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
  */
-#define ARC4_SUB_KEY_BYTES	(256 / 8)
+#define	ARC4_STATE		256
+#define	ARC4_PARANOIA		4
 
 struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
 struct rc4_ctx arc4random_state;
@@ -583,16 +556,13 @@ arc4random(void)
 static void
 arc4random_buf_large(void *buf, size_t n)
 {
-	u_char lbuf[ARC4_SUB_KEY_BYTES];
+	u_char lbuf[ARC4_KEY_BYTES];
 	struct rc4_ctx lctx;
 
-	mtx_enter(&rndlock);
-	rc4_getbytes(&arc4random_state, lbuf, sizeof(lbuf));
-	rndstats.arc4_reads += n;
-	mtx_leave(&rndlock);
+	arc4random_buf(lbuf, sizeof(lbuf));
 
 	rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
-	rc4_skip(&lctx, 256 * 4);
+	rc4_skip(&lctx, ARC4_STATE * ARC4_PARANOIA);
 	rc4_getbytes(&lctx, (u_char *)buf, n);
 	bzero(lbuf, sizeof(lbuf));
 	bzero(&lctx, sizeof(lctx));
@@ -667,7 +637,7 @@ arc4_init(void *v, void *w)
 {
 	struct rc4_ctx new_ctx;
 	struct timespec ts;
-	u_int8_t buf[64], *p;
+	u_int8_t buf[ARC4_KEY_BYTES], *p;
 	int i;
 
 	/*
@@ -682,18 +652,16 @@ arc4_init(void *v, void *w)
 		buf[i] ^= p[i];
 
 	rc4_keysetup(&new_ctx, buf, sizeof(buf));
-	/*
-	 * Throw away the first N words of output, as suggested in the
-	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
-	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
-	 */
-	rc4_skip(&new_ctx, 256 * 4);
+	rc4_skip(&new_ctx, ARC4_STATE * ARC4_PARANOIA);
 
 	mtx_enter(&rndlock);
 	bcopy(&new_ctx, &arc4random_state, sizeof(new_ctx));
 	rndstats.rnd_used += sizeof(buf) * 8;
 	rndstats.arc4_nstirs++;
 	mtx_leave(&rndlock);
+
+	bzero(buf, sizeof(buf));
+	bzero(&new_ctx, sizeof(new_ctx));
 }
 
 /*
@@ -741,7 +709,7 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
 {
-	u_char lbuf[ARC4_SUB_KEY_BYTES];
+	u_char lbuf[ARC4_KEY_BYTES];
 	struct rc4_ctx lctx;
 	size_t		total = uio->uio_resid;
 	u_char	 	*buf;
@@ -752,13 +720,10 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 
 	buf = malloc(2 * PAGE_SIZE, M_TEMP, M_WAITOK);
 	if (total > ARC4_MAIN_MAX_BYTES) {
-		mtx_enter(&rndlock);
-		rc4_getbytes(&arc4random_state, lbuf, sizeof(lbuf));
-		rndstats.arc4_reads += sizeof(lbuf);
-		mtx_leave(&rndlock);
-
+		arc4random_buf(lbuf, sizeof(lbuf));
 		rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
-		rc4_skip(&lctx, 256 * 4);
+		rc4_skip(&lctx, ARC4_STATE * ARC4_PARANOIA);
+		bzero(lbuf, sizeof(lbuf));
 		myctx = 1;
 	}	
 
@@ -773,7 +738,9 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 		if (ret == 0 && uio->uio_resid > 0)
 			yield();
 	}
-
+	if (myctx)
+		bzero(&lctx, sizeof(lctx));
+	bzero(buf, 2 * PAGE_SIZE);
 	free(buf, M_TEMP);
 	return ret;
 }

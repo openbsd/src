@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.27 2011/01/07 04:56:52 deraadt Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.28 2011/01/07 23:13:48 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -30,8 +30,6 @@
 
 #ifndef __RNDVAR_H__
 #define __RNDVAR_H__
-
-#define POOLWORDS 2048	/* Power of 2 - note that this is 32-bit words */
 
 #define	RND_SRC_TRUE	0
 #define	RND_SRC_TIMER	1
