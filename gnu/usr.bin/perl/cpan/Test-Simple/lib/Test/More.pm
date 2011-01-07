@@ -17,7 +17,7 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '0.94';
+our $VERSION = '0.96';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 use Test::Builder::Module;
@@ -716,6 +716,23 @@ considered a skip.
 
 Returns true if the subtest passed, false otherwise.
 
+Due to how subtests work, you may omit a plan if you desire.  This adds an
+implicit C<done_testing()> to the end of your subtest.  The following two
+subtests are equivalent:
+
+  subtest 'subtest with implicit done_testing()', sub {
+      ok 1, 'subtests with an implicit done testing should work';
+      ok 1, '... and support more than one test';
+      ok 1, '... no matter how many tests are run';
+  };
+
+  subtest 'subtest with explicit done_testing()', sub {
+      ok 1, 'subtests with an explicit done testing should work';
+      ok 1, '... and support more than one test';
+      ok 1, '... no matter how many tests are run';
+      done_testing();
+  };
+
 =cut
 
 sub subtest($&) {
@@ -880,7 +897,7 @@ sub require_ok ($) {
 
     my $pack = caller;
 
-    # Try to deterine if we've been given a module name or file.
+    # Try to determine if we've been given a module name or file.
     # Module names must be barewords, files not.
     $module = qq['$module'] unless _is_module_name($module);
 
@@ -1049,7 +1066,7 @@ sub _type {
 
     return '' if !ref $thing;
 
-    for my $type (qw(ARRAY HASH REF SCALAR GLOB CODE Regexp)) {
+    for my $type (qw(Regexp ARRAY HASH REF SCALAR GLOB CODE)) {
         return $type if UNIVERSAL::isa( $thing, $type );
     }
 
@@ -1330,7 +1347,7 @@ but want to put tests in your testing script (always a good idea).
     BAIL_OUT($reason);
 
 Indicates to the harness that things are going so badly all testing
-should terminate.  This includes the running any additional test scripts.
+should terminate.  This includes the running of any additional test scripts.
 
 This is typically used when testing cannot continue such as a critical
 module failing to compile or a necessary external utility not being
@@ -1403,6 +1420,8 @@ sub _eq_array {
         my $e1 = $_ > $#$a1 ? $DNE : $a1->[$_];
         my $e2 = $_ > $#$a2 ? $DNE : $a2->[$_];
 
+        next if _equal_nonrefs($e1, $e2);
+
         push @Data_Stack, { type => 'ARRAY', idx => $_, vals => [ $e1, $e2 ] };
         $ok = _deep_check( $e1, $e2 );
         pop @Data_Stack if $ok;
@@ -1411,6 +1430,21 @@ sub _eq_array {
     }
 
     return $ok;
+}
+
+sub _equal_nonrefs {
+    my( $e1, $e2 ) = @_;
+
+    return if ref $e1 or ref $e2;
+
+    if ( defined $e1 ) {
+        return 1 if defined $e2 and $e1 eq $e2;
+    }
+    else {
+        return 1 if !defined $e2;
+    }
+
+    return;
 }
 
 sub _deep_check {
@@ -1425,9 +1459,6 @@ sub _deep_check {
     local %Refs_Seen = %Refs_Seen;
 
     {
-        # Quiet uninitialized value warnings when comparing undefs.
-        no warnings 'uninitialized';
-
         $tb->_unoverload_str( \$e1, \$e2 );
 
         # Either they're both references or both not.
@@ -1438,7 +1469,7 @@ sub _deep_check {
             $ok = 0;
         }
         elsif( !defined $e1 and !defined $e2 ) {
-            # Shortcut if they're both defined.
+            # Shortcut if they're both undefined.
             $ok = 1;
         }
         elsif( _dne($e1) xor _dne($e2) ) {
@@ -1534,6 +1565,8 @@ sub _eq_hash {
     foreach my $k ( keys %$bigger ) {
         my $e1 = exists $a1->{$k} ? $a1->{$k} : $DNE;
         my $e2 = exists $a2->{$k} ? $a2->{$k} : $DNE;
+
+        next if _equal_nonrefs($e1, $e2);
 
         push @Data_Stack, { type => 'HASH', idx => $k, vals => [ $e1, $e2 ] };
         $ok = _deep_check( $e1, $e2 );

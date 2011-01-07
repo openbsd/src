@@ -4,7 +4,7 @@ use 5.006;
 
 use strict;
 
-our $VERSION = '0.94';
+our $VERSION = '0.96';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 use Test::Builder::Module;
@@ -121,7 +121,7 @@ Here's an example of a simple .t file for the fictional Film module.
                              Rating   => 'R',
                              NumExplodingSheep => 1
                            });
-    ok( defined($btaste) && ref $btaste eq 'Film,     'new() works' );
+    ok( defined($btaste) && ref $btaste eq 'Film',     'new() works' );
 
     ok( $btaste->Title      eq 'Bad Taste',     'Title() get'    );
     ok( $btaste->Director   eq 'Peter Jackson', 'Director() get' );

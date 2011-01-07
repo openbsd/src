@@ -7,7 +7,7 @@ use Test::Builder;
 require Exporter;
 our @ISA = qw(Exporter);
 
-our $VERSION = '0.94';
+our $VERSION = '0.96';
 $VERSION = eval $VERSION;      ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 
@@ -52,7 +52,7 @@ for you.
 =head3 import
 
 Test::Builder::Module provides an import() method which acts in the
-same basic way as Test::More's, setting the plan and controling
+same basic way as Test::More's, setting the plan and controlling
 exporting of functions and variables.  This allows your module to set
 the plan independent of Test::More.
 

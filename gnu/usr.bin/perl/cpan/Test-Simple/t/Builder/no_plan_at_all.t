@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# Test what happens when no plan is delcared and done_testing() is not seen
+# Test what happens when no plan is declared and done_testing() is not seen
 
 use strict;
 BEGIN {

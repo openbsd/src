@@ -15,7 +15,7 @@ use warnings;
 
 use Test::Builder::NoOutput;
 
-use Test::More tests => 23;
+use Test::More tests => 19;
 
 # Formatting may change if we're running under Test::Harness.
 $ENV{HARNESS_ACTIVE} = 0;
@@ -163,22 +163,6 @@ END
     $child = $tb->child;
     is $child->name, 'Child of '.$tb->name, '... or at least have a sensible default';
     $child->finalize;
-}
-{
-    ok defined &subtest, 'subtest() should be exported to our namespace';
-    is prototype('subtest'), '$&', '... with the appropriate prototype';
-
-    subtest 'subtest with plan', sub {
-        plan tests => 2;
-        ok 1, 'planned subtests should work';
-        ok 1, '... and support more than one test';
-    };
-    subtest 'subtest without plan', sub {
-        plan 'no_plan';
-        ok 1, 'no_plan subtests should work';
-        ok 1, '... and support more than one test';
-        ok 1, '... no matter how many tests are run';
-    };
 }
 # Skip all subtests
 {

@@ -411,19 +411,19 @@ ERR
     my $warnings = '';
     local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
 
-# line 404
+# line 415
     cmp_ok( 42,    '==', "foo", '       == with strings' );
     out_ok( <<OUT, <<ERR );
 not ok -        == with strings
 OUT
 #   Failed test '       == with strings'
-#   at $0 line 404.
+#   at $0 line 415.
 #          got: 42
 #     expected: foo
 ERR
     My::Test::like(
         $warnings,
-        qr/^Argument "foo" isn't numeric in .* at cmp_ok \[from $Filename line 404\] line 1\.\n$/
+        qr/^Argument "foo" isn't numeric in .* at \(eval in cmp_ok\) $Filename line 415\.\n$/
     );
     $warnings = '';
 }
@@ -433,7 +433,7 @@ ERR
     my $warnings = '';
     local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
 
-#line 426
+#line 437
     cmp_ok( undef, "ne", "", "undef ne empty string" );
 
     $TB->is_eq( $out->read, <<OUT );
@@ -445,7 +445,7 @@ OUT
 
         $TB->is_eq( $err->read, <<ERR );
 #   Failed test 'undef ne empty string'
-#   at $0 line 426.
+#   at $0 line 437.
 #          got: undef
 #     expected: ''
 ERR
@@ -453,7 +453,7 @@ ERR
 
     My::Test::like(
         $warnings,
-        qr/^Use of uninitialized value.* in string ne at cmp_ok \[from $Filename line 426\] line 1\.\n\z/
+        qr/^Use of uninitialized value.* in string ne at \(eval in cmp_ok\) $Filename line 437.\n\z/
     );
 }
 

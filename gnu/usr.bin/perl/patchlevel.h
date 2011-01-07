@@ -129,6 +129,7 @@ static const char * const local_patches[] = {
 	NULL
 	,"CVE-2010-0405"
 	,"Updated CGI to 3.51"
+	,"Updated Test::Simple to 0.96"
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
 	,"uncommitted-changes"
 #endif

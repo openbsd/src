@@ -70,9 +70,9 @@ eq_hash ( { foo => undef, bar => { baz => undef, moo => 23 } },
 no_warnings;
 
 
-#line 64
+#line 74
 cmp_ok( undef, '<=', 2, '  undef <= 2' );
-warnings_like(qr/Use of uninitialized value.* at cmp_ok \[from $Filename line 64\] line 1\.\n/);
+warnings_like(qr/Use of uninitialized value.* at \(eval in cmp_ok\) $Filename line 74\.\n/);
 
 
 

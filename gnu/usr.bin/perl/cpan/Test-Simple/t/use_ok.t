@@ -22,7 +22,7 @@ use Test::More tests => 15;
 {
     package Foo::two;
     ::use_ok("Symbol", qw(qualify));
-    ::ok( !defined &gensym,       '  one arg, defaults overriden' );
+    ::ok( !defined &gensym,       '  one arg, defaults overridden' );
     ::ok( defined &qualify,       '  right function exported' );
 }
 

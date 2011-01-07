@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use lib 't/lib';
-use Test::More tests => 53;
+use Test::More tests => 54;
 
 # Make sure we don't mess with $@ or $!.  Test at bottom.
 my $Err   = "this should not be touched";
@@ -173,6 +173,11 @@ is_deeply( $glob, $glob, 'the same glob' );
 is_deeply( { foo => $sub, bar => [1, $glob] },
            { foo => $sub, bar => [1, $glob] }
          );
+
+
+# rt.cpan.org 53469  is_deeply with regexes
+is_deeply( qr/a/, qr/a/, "same regex" );
+
 
 # These two tests must remain at the end.
 is( $@, $Err,               '$@ untouched' );

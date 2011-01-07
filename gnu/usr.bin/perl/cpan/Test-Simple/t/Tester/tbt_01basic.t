@@ -46,7 +46,7 @@ test_test("testing failing on the same line with the same name");
 
 
 test_out("not ok 1 - name # TODO Something");
-test_err("#     Failed (TODO) test ($0 at line 52)");
+test_out("#     Failed (TODO) test ($0 at line 52)");
 TODO: { 
     local $TODO = "Something";
     fail("name");

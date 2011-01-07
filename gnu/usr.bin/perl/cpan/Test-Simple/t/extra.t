@@ -5,55 +5,56 @@ BEGIN {
         chdir 't';
         @INC = '../lib';
     }
+    else {
+        unshift @INC, 't/lib';
+    }
 }
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
+use strict;
 
-# This has to be a require or else the END block below runs before
-# Test::Builder's own and the ending diagnostics don't come out right.
-require Test::Builder;
-my $TB = Test::Builder->create;
-$TB->plan(tests => 2);
+use Test::Builder;
+use Test::Builder::NoOutput;
+use Test::Simple;
 
+my $TB   = Test::Builder->new;
+my $test = Test::Builder::NoOutput->create;
+$test->plan( tests => 3 );
 
-package main;
-
-require Test::Simple;
-
-chdir 't';
-push @INC, '../t/lib/';
-require Test::Simple::Catch;
-my($out, $err) = Test::Simple::Catch::caught();
 local $ENV{HARNESS_ACTIVE} = 0;
 
-Test::Simple->import(tests => 3);
-
-#line 30
-ok(1, 'Foo');
-ok(0, 'Bar');
-ok(1, 'Yar');
-ok(1, 'Car');
-ok(0, 'Sar');
-
-END {
-    $TB->is_eq($$out, <<OUT);
+$test->ok(1, 'Foo');
+$TB->is_eq($test->read(), <<END);
 1..3
 ok 1 - Foo
+END
+
+#line 30
+$test->ok(0, 'Bar');
+$TB->is_eq($test->read(), <<END);
 not ok 2 - Bar
+#   Failed test 'Bar'
+#   at $0 line 30.
+END
+
+$test->ok(1, 'Yar');
+$test->ok(1, 'Car');
+$TB->is_eq($test->read(), <<END);
 ok 3 - Yar
 ok 4 - Car
-not ok 5 - Sar
-OUT
+END
 
-    $TB->is_eq($$err, <<ERR);
-#   Failed test 'Bar'
-#   at $0 line 31.
+#line 45
+$test->ok(0, 'Sar');
+$TB->is_eq($test->read(), <<END);
+not ok 5 - Sar
 #   Failed test 'Sar'
-#   at $0 line 34.
+#   at $0 line 45.
+END
+
+$test->_ending();
+$TB->is_eq($test->read(), <<END);
 # Looks like you planned 3 tests but ran 5.
 # Looks like you failed 2 tests of 5 run.
-ERR
+END
 
-    exit 0;
-}
+$TB->done_testing(5);

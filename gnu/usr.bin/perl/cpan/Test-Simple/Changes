@@ -1,3 +1,45 @@
+0.96  Tue Aug 10 21:13:04 PDT 2010
+    Bug Fixes
+    * You can call done_testing() again after reset() [googlecode 59]
+
+    Other
+    * Bug tracker moved to github
+
+
+0.95_02  Wed May 19 15:46:52 PDT 2010
+    Bug Fixes
+    * Correct various typos and spelling errors (Nick Cleaton)
+    * Fix alignment of indented multi-line diagnostics from subtests
+      (Nick Cleaton)
+    * Fix incorrect operation when subtest called from within a todo block
+      (Nick Cleaton)
+    * Avoid spurious output after a fork within a subtest
+      (Nick Cleaton)
+
+
+0.95_01  Wed Mar  3 15:36:59 PST 2010
+    Bug Fixes
+    * is_deeply() didn't see a difference in regexes [rt.cpan.org 53469]
+    * Test::Builder::Tester now sets $tb->todo_output to the output handle and
+      not the error handle (to be in accordance with the default behaviour of
+      Test::Builder and allow for testing TODO test behaviour).
+    * Fixed file/line in failing subtest() diagnostics. (Nick Cleaton)
+    * Protect against subtests setting $Level (Nick Cleaton)
+
+    New Features
+    * subtests without a 'plan' or 'no_plan' have an implicit 'done_testing()'
+      added to them.
+    * is_deeply() performance boost for large structures consisting of
+      mostly non-refs (Nick Cleaton)
+
+    Feature Changes
+    * is() and others will no longer stringify its arguments before
+      comparing.  Overloaded objects will make use of their eq
+      overload rather than their "" overload.  This can break tests of
+      impolitely string overloaded objects.  DateTime prior to 0.54 is
+      the biggest example.
+
+
 0.94  Wed Sep  2 11:17:47 PDT 2009
     Releasing 0.93_01 as stable.
 
@@ -127,7 +169,7 @@
     - Fixed the file and line number reported by like when it gets a bad
       regex.
 
-    Features Changed
+    Feature Changes
     - Now preserves the tests' exit code if it exits abnormally, rather than
       setting it to 255.
     - Changed the "Looks like your test died" message to
@@ -147,7 +189,7 @@
     * Added note() and explain() to both Test::More and Test::Builder.
       [rt.cpan.org 14764] [test-more.googlecode.com 3]
 
-    Features Changed
+    Feature Changes
     * Changed the message for extra tests run to show the number of tests run rather than
       the number extra to avoid the user having to do mental math.
       [rt.cpan.org 7022]    
@@ -410,7 +452,7 @@
     - cmp_ok() will now throw warnings as if the comparison were run 
       normally, for example cmp_ok(2, '==', 'foo') will warn about 'foo' 
       not being numeric.  Previously all warnings in the comparison were
-      supressed. [rt.cpan.org 13155]
+      suppressed. [rt.cpan.org 13155]
     - Tests will now report *both* the number of tests failed and if the
       wrong number of tests were run.  Previously if tests failed and the
       wrong number were run it would only report the latter. 
@@ -434,7 +476,7 @@
     * Use of eq_* now officially discouraged.
     - Removed eq_* from the SYNOPSIS.
     - is_deeply(undef, $not_undef); now works. [rt.cpan.org 9441]
-    - is_deeply() was mistakenly interpeting the same reference used twice
+    - is_deeply() was mistakenly interpreting the same reference used twice
       in a data structure as being circular causing failures.
       [rt.cpan.org 11623]
     - Loading Test::Builder but not using it would interfere with the
@@ -558,7 +600,7 @@
     * Test::Builder is once again ithread safe.
 
 0.46  Sat Jul 20 19:57:40 EDT 2002
-    - Noted eq_set() isn't really a set comparision.
+    - Noted eq_set() isn't really a set comparison.
     - Test fix, exit codes are broken on MacPerl (bleadperl@16868)
     - Make Test::Simple install itself into the core for >= 5.8
     - Small fixes to Test::Tutorial and skip examples
@@ -639,7 +681,7 @@
     - Minor VMS test nit.
 
 0.32  Tue Oct 16 16:52:02 EDT 2001
-    * Finally added a seperate plan() function
+    * Finally added a separate plan() function
     * Adding a name field to isa_ok()
       (Requested by Dave Rolsky)
     - Test::More was using Carp.pm, causing the occasional false positive.
@@ -685,7 +727,7 @@
     * Added can_ok() and isa_ok() to Test::More
 
 0.16  Tue Aug 28 19:52:11 EDT 2001
-    * vmsperl foiled my sensisble exit codes.  Reverting to a much more
+    * vmsperl foiled my sensible exit codes.  Reverting to a much more
       coarse scheme.
 
 0.15  Tue Aug 28 06:18:35 EDT 2001  *UNRELEASED*

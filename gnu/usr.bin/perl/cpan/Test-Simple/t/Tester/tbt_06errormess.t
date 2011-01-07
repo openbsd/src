@@ -50,7 +50,7 @@ sub start_testing
     $out->reset();
     $err->reset();
 
-    # remeber that we're testing
+    # remember that we're testing
     $testing_num = $t->current_test;
     $t->current_test(0);
 }
