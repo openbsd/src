@@ -1,4 +1,4 @@
-/*	$OpenBSD: globtest.c,v 1.2 2010/09/24 13:32:55 djm Exp $	*/
+/*	$OpenBSD: globtest.c,v 1.3 2011/01/07 19:45:44 millert Exp $	*/
 
 /*
  * Public domain, 2008, Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@ struct gl_entry {
 	int nresults;
 	char pattern[1024];
 	char *results[MAX_RESULTS];
-	long modes[MAX_RESULTS];
+	mode_t modes[MAX_RESULTS];
 };
 
 int test_glob(struct gl_entry *);
@@ -26,9 +26,8 @@ int
 main(int argc, char **argv)
 {
 	FILE *fp = stdin;
-	char *buf, *cp, *want, *got, *last;
-	const char *errstr;
-	int errors = 0, i, lineno, mode;
+	char *buf, *cp;
+	int errors = 0, lineno, mode;
 	struct gl_entry entry;
 	size_t len;
 
@@ -94,7 +93,7 @@ main(int argc, char **argv)
 			mode = strtol(cp, NULL, 8);
 		} else
 			mode = -1;
-		entry.modes[entry.nresults] = mode;
+		entry.modes[entry.nresults] = (mode_t)mode;
 		entry.results[entry.nresults++] = strdup(buf);
 	}
 	if (entry.pattern[0])
@@ -105,7 +104,7 @@ main(int argc, char **argv)
 int test_glob(struct gl_entry *entry)
 {
 	glob_t gl;
-	int i;
+	int i = 0;
 
 	if (glob(entry->pattern, entry->flags, NULL, &gl) != 0)
 		errx(1, "glob failed: %s", entry->pattern);
@@ -139,6 +138,5 @@ int test_glob(struct gl_entry *entry)
 	while (i < gl.gl_matchc) {
 		free(entry->results[i++]);
 	}
-	return (0);
 	return (1);
 }
