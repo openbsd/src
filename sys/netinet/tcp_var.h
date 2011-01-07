@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.97 2010/10/21 11:38:27 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.98 2011/01/07 17:50:42 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -95,6 +95,8 @@ struct tcpcb {
 #define TF_LASTIDLE	0x00100000	/* no outstanding ACK on last send */
 #define TF_DEAD		0x00200000	/* dead and to-be-released */
 #define TF_PMTUD_PEND	0x00400000	/* Path MTU Discovery pending */
+#define TF_NEEDOUTPUT	0x00800000	/* call tcp_output after tcp_input */
+#define TF_BLOCKOUTPUT	0x01000000	/* avert tcp_output during tcp_input */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */

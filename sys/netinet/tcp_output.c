@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.92 2010/09/24 02:59:45 claudio Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.93 2011/01/07 17:50:42 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -227,6 +227,12 @@ tcp_output(struct tcpcb *tp)
 #ifdef TCP_ECN
 	int needect;
 #endif
+
+	if (tp->t_flags & TF_BLOCKOUTPUT) {
+		tp->t_flags |= TF_NEEDOUTPUT;
+		return (0);
+	} else
+		tp->t_flags &= ~TF_NEEDOUTPUT;
 
 #if defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC)
 	if (tp->sack_enable && (tp->t_flags & TF_SIGNATURE))

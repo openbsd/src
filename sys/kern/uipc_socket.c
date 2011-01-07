@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.84 2010/09/24 02:59:45 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.85 2011/01/07 17:50:42 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -50,6 +51,8 @@
 #include <net/route.h>
 #include <sys/pool.h>
 
+int	sosplice(struct socket *, int, off_t);
+int	somove(struct socket *, int);
 void 	filt_sordetach(struct knote *kn);
 int 	filt_soread(struct knote *kn, long hint);
 void 	filt_sowdetach(struct knote *kn);
@@ -144,8 +147,13 @@ sobind(struct socket *so, struct mbuf *nam, struct proc *p)
 int
 solisten(struct socket *so, int backlog)
 {
-	int s = splsoftnet(), error;
+	int s, error;
 
+#ifdef SOCKET_SPLICE
+	if (so->so_splice || so->so_spliceback)
+		return (EOPNOTSUPP);
+#endif /* SOCKET_SPLICE */
+	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL, NULL, NULL,
 	    curproc);
 	if (error) {
@@ -183,6 +191,21 @@ sofree(struct socket *so)
 		if (!soqremque(so, 0))
 			return;
 	}
+#ifdef SOCKET_SPLICE
+	if (so->so_spliceback) {
+		so->so_snd.sb_flags &= ~SB_SPLICE;
+		so->so_spliceback->so_rcv.sb_flags &= ~SB_SPLICE;
+		so->so_spliceback->so_splice = NULL;
+		if (soreadable(so->so_spliceback))
+			sorwakeup(so->so_spliceback);
+	}
+	if (so->so_splice) {
+		so->so_splice->so_snd.sb_flags &= ~SB_SPLICE;
+		so->so_rcv.sb_flags &= ~SB_SPLICE;
+		so->so_splice->so_spliceback = NULL;
+	}
+	so->so_spliceback = so->so_splice = NULL;
+#endif /* SOCKET_SPLICE */
 	sbrelease(&so->so_snd);
 	sorflush(so);
 	pool_put(&socket_pool, so);
@@ -967,6 +990,311 @@ sorflush(struct socket *so)
 	sbrelease(&asb);
 }
 
+#ifdef SOCKET_SPLICE
+int
+sosplice(struct socket *so, int fd, off_t max)
+{
+	struct file	*fp;
+	struct socket	*sosp;
+	int		 s, error = 0;
+
+	if ((so->so_proto->pr_flags & PR_SPLICE) == 0)
+		return (EPROTONOSUPPORT);
+	if (so->so_options & SO_ACCEPTCONN)
+		return (EOPNOTSUPP);
+	if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) == 0)
+		return (ENOTCONN);
+
+	/* If no fd is given, unsplice by removing existing link. */
+	if (fd < 0) {
+		s = splsoftnet();
+		if (so->so_splice) {
+			so->so_splice->so_snd.sb_flags &= ~SB_SPLICE;
+			so->so_rcv.sb_flags &= ~SB_SPLICE;
+			so->so_splice->so_spliceback = NULL;
+			so->so_splice = NULL;
+			if (soreadable(so))
+				sorwakeup(so);
+		}
+		splx(s);
+		return (0);
+	}
+
+	if (max && max < 0)
+		return (EINVAL);
+
+	/* Find sosp, the drain socket where data will be spliced into. */
+	if ((error = getsock(curproc->p_fd, fd, &fp)) != 0)
+		return (error);
+	sosp = fp->f_data;
+
+	/* Lock both receive and send buffer. */
+	if ((error = sblock(&so->so_rcv,
+	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
+		FRELE(fp);
+		return (error);
+	}
+	if ((error = sblock(&sosp->so_snd, M_WAITOK)) != 0) {
+		sbunlock(&so->so_rcv);
+		FRELE(fp);
+		return (error);
+	}
+	s = splsoftnet();
+
+	if (so->so_splice || sosp->so_spliceback) {
+		error = EBUSY;
+		goto release;
+	}
+	if (sosp->so_proto->pr_usrreq != so->so_proto->pr_usrreq) {
+		error = EPROTONOSUPPORT;
+		goto release;
+	}
+	if (sosp->so_options & SO_ACCEPTCONN) {
+		error = EOPNOTSUPP;
+		goto release;
+	}
+	if ((sosp->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) == 0) {
+		error = ENOTCONN;
+		goto release;
+	}
+
+	/* Splice so and sosp together. */
+	so->so_splice = sosp;
+	sosp->so_spliceback = so;
+	so->so_splicelen = 0;
+	so->so_splicemax = max;
+
+	/*
+	 * To prevent softnet interrupt from calling somove() while
+	 * we sleep, the socket buffers are not marked as spliced yet.
+	 */
+	if (somove(so, M_WAIT)) {
+		so->so_rcv.sb_flags |= SB_SPLICE;
+		sosp->so_snd.sb_flags |= SB_SPLICE;
+	}
+
+ release:
+	splx(s);
+	sbunlock(&sosp->so_snd);
+	sbunlock(&so->so_rcv);
+	FRELE(fp);
+	return (error);
+}
+
+/*
+ * Move data from receive buffer of spliced source socket to send
+ * buffer of drain socket.  Try to move as much as possible in one
+ * big chunk.  It is a TCP only implementation.
+ * Return value 0 means splicing has been finished, 1 continue.
+ */
+int
+somove(struct socket *so, int wait)
+{
+	struct socket	*sosp = so->so_splice;
+	struct mbuf	*m = NULL, **mp;
+	u_long		 len, off, oobmark;
+	long		 space;
+	int		 error = 0, maxreached = 0;
+	short		 state;
+
+	splsoftassert(IPL_SOFTNET);
+
+	if (so->so_error) {
+		error = so->so_error;
+		goto release;
+	}
+	if (sosp->so_state & SS_CANTSENDMORE) {
+		error = EPIPE;
+		goto release;
+	}
+	if (sosp->so_error) {
+		error = sosp->so_error;
+		goto release;
+	}
+	if ((sosp->so_state & SS_ISCONNECTED) == 0)
+		goto release;
+
+	/* Calculate how many bytes can be copied now. */
+	len = so->so_rcv.sb_cc;
+	if (len == 0)
+		goto release;
+	if (so->so_splicemax) {
+		KASSERT(so->so_splicelen < so->so_splicemax);
+		if (so->so_splicemax <= so->so_splicelen + len) {
+			len = so->so_splicemax - so->so_splicelen;
+			maxreached = 1;
+		}
+	}
+	space = sbspace(&sosp->so_snd);
+	if (so->so_oobmark && so->so_oobmark < len &&
+	    so->so_oobmark < space + 1024)
+		space += 1024;
+	if (space <= 0) {
+		maxreached = 0;
+		goto release;
+	}
+	if (space < len) {
+		maxreached = 0;
+		if (space < sosp->so_snd.sb_lowat)
+			goto release;
+		len = space;
+	}
+	sosp->so_state |= SS_ISSENDING;
+
+	/* Take at most len mbufs out of receive buffer. */
+	m = so->so_rcv.sb_mb;
+	for (off = 0, mp = &m; off < len;
+	    off += (*mp)->m_len, mp = &(*mp)->m_next) {
+		u_long size = len - off;
+
+		if ((*mp)->m_len > size) {
+			if (!maxreached || (*mp = m_copym(
+			    so->so_rcv.sb_mb, 0, size, wait)) == NULL) {
+				len -= size;
+				break;
+			}
+			so->so_rcv.sb_mb->m_data += size;
+			so->so_rcv.sb_mb->m_len -= size;
+			so->so_rcv.sb_cc -= size;
+			so->so_rcv.sb_datacc -= size;
+		} else {
+			*mp = so->so_rcv.sb_mb;
+			sbfree(&so->so_rcv, *mp);
+			so->so_rcv.sb_mb = (*mp)->m_next;
+		}
+	}
+	*mp = NULL;
+	SB_EMPTY_FIXUP(&so->so_rcv);
+	so->so_rcv.sb_lastrecord = so->so_rcv.sb_mb;
+
+	SBLASTRECORDCHK(&so->so_rcv, "somove");
+	SBLASTMBUFCHK(&so->so_rcv, "somove");
+	KDASSERT(m->m_nextpkt == NULL);
+	KASSERT(so->so_rcv.sb_mb == so->so_rcv.sb_lastrecord);
+#ifdef SOCKBUF_DEBUG
+	sbcheck(&so->so_rcv);
+#endif
+
+	/* Send window update to source peer if receive buffer has changed. */
+	if (m)
+		(so->so_proto->pr_usrreq)(so, PRU_RCVD, NULL,
+		    (struct mbuf *)0L, NULL, NULL);
+
+	/* Receive buffer did shrink by len bytes, adjust oob. */
+	state = so->so_state;
+	so->so_state &= ~SS_RCVATMARK;
+	oobmark = so->so_oobmark;
+	so->so_oobmark = oobmark > len ? oobmark - len : 0;
+	if (oobmark) {
+		if (oobmark == len)
+			so->so_state |= SS_RCVATMARK;
+		if (oobmark >= len)
+			oobmark = 0;
+	}
+
+	/*
+	 * Handle oob data.  If any malloc fails, ignore error.
+	 * TCP urgent data is not very reliable anyway.
+	 */
+	while (m && ((state & SS_RCVATMARK) || oobmark) &&
+	    (so->so_options & SO_OOBINLINE)) {
+		struct mbuf *o = NULL;
+
+		if (state & SS_RCVATMARK) {
+			o = m_get(wait, MT_DATA);
+			state &= ~SS_RCVATMARK;
+		} else if (oobmark) {
+			o = m_split(m, oobmark, wait);
+			if (o) {
+				error = (*sosp->so_proto->pr_usrreq)(sosp,
+				    PRU_SEND, m, NULL, NULL, NULL);
+				m = NULL;
+				if (error) {
+					m_freem(o);
+					if (sosp->so_state & SS_CANTSENDMORE)
+						error = EPIPE;
+					goto release;
+				}
+				len -= oobmark;
+				so->so_splicelen += oobmark;
+				m = o;
+				o = m_get(wait, MT_DATA);
+			}
+			oobmark = 0;
+		}
+		if (o) {
+			o->m_len = 1;
+			*mtod(o, caddr_t) = *mtod(m, caddr_t);
+			error = (*sosp->so_proto->pr_usrreq)(sosp, PRU_SENDOOB,
+			    o, NULL, NULL, NULL);
+			if (error) {
+				if (sosp->so_state & SS_CANTSENDMORE)
+					error = EPIPE;
+				goto release;
+			}
+			len -= 1;
+			so->so_splicelen += 1;
+			if (oobmark) {
+				oobmark -= 1;
+				if (oobmark == 0)
+					state |= SS_RCVATMARK;
+			}
+			m_adj(m, 1);
+		}
+	}
+
+	/* Append all remaining data to drain socket. */
+	if (m) {
+		if (so->so_rcv.sb_cc == 0)
+			sosp->so_state &= ~SS_ISSENDING;
+		error = (*sosp->so_proto->pr_usrreq)(sosp, PRU_SEND, m, NULL,
+		    NULL, NULL);
+		m = NULL;
+		if (error) {
+			if (sosp->so_state & SS_CANTSENDMORE)
+				error = EPIPE;
+			goto release;
+		}
+		so->so_splicelen += len;
+	}
+
+ release:
+	if (m)
+		m_freem(m);
+	sosp->so_state &= ~SS_ISSENDING;
+	if (error)
+		so->so_error = error;
+	if (((so->so_state & SS_CANTRCVMORE) && so->so_rcv.sb_cc == 0) ||
+	    (sosp->so_state & SS_CANTSENDMORE) || maxreached || error) {
+		sosp->so_snd.sb_flags &= ~SB_SPLICE;
+		so->so_rcv.sb_flags &= ~SB_SPLICE;
+		so->so_splice = sosp->so_spliceback = NULL;
+		if (soreadable(so))
+			sorwakeup(so);
+		return (0);
+	}
+	return (1);
+}
+
+void
+sorwakeup(struct socket *so)
+{
+	if (so->so_rcv.sb_flags & SB_SPLICE) {
+		(void) somove(so, M_DONTWAIT);
+		return;
+	}
+	_sorwakeup(so);
+}
+
+void
+sowwakeup(struct socket *so)
+{
+	if (so->so_snd.sb_flags & SB_SPLICE)
+		(void) somove(so->so_spliceback, M_DONTWAIT);
+	_sowwakeup(so);
+}
+#endif /* SOCKET_SPLICE */
+
 int
 sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 {
@@ -1096,6 +1424,23 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			break;
 		    }
 
+#ifdef SOCKET_SPLICE
+		case SO_SPLICE:
+			if (m == NULL) {
+				error = sosplice(so, -1, 0);
+			} else if (m->m_len < sizeof(int)) {
+				error = EINVAL;
+				goto bad;
+			} else if (m->m_len < sizeof(struct splice)) {
+				error = sosplice(so, *mtod(m, int *), 0);
+			} else {
+				error = sosplice(so,
+				    mtod(m, struct splice *)->sp_fd,
+				    mtod(m, struct splice *)->sp_max);
+			}
+			break;
+#endif /* SOCKET_SPLICE */
+
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1187,6 +1532,18 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			    (val % hz) * tick;
 			break;
 		    }
+
+#ifdef SOCKET_SPLICE
+		case SO_SPLICE:
+		    {
+			int s = splsoftnet();
+
+			m->m_len = sizeof(off_t);
+			*mtod(m, off_t *) = so->so_splicelen;
+			splx(s);
+			break;
+		    }
+#endif /* SOCKET_SPLICE */
 
 		case SO_PEERCRED:
 			if (so->so_proto->pr_protocol == AF_UNIX) {

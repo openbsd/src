@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.70 2010/07/05 22:20:22 tedu Exp $	*/
+/*	$OpenBSD: socket.h,v 1.71 2011/01/07 17:50:42 bluhm Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
 #define	SO_NETPROC	0x1020		/* multiplex; network processing */
 #define	SO_RTABLE	0x1021		/* routing table to be used */
 #define	SO_PEERCRED	0x1022		/* get connect-time credentials */
+#define	SO_SPLICE	0x1023		/* splice data to other socket */
 
 /*
  * Structure used for manipulating linger option.
@@ -94,6 +95,14 @@
 struct	linger {
 	int	l_onoff;		/* option on/off */
 	int	l_linger;		/* linger time */
+};
+
+/*
+ * Structure used for manipulating splice option.
+ */
+struct	splice {
+	int	sp_fd;			/* drain socket file descriptor */
+	off_t	sp_max;			/* if set, maximum bytes to splice */
 };
 
 /*

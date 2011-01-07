@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.168 2010/10/18 15:01:21 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.169 2011/01/07 17:50:42 bluhm Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -42,6 +42,7 @@ option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
 option		NNPFS		# NNPFS filesystem
 
+option		SOCKET_SPLICE	# Socket Splicing for TCP
 option		TCP_SACK	# Selective Acknowledgements for TCP
 option		TCP_ECN		# Explicit Congestion Notification for TCP
 option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions

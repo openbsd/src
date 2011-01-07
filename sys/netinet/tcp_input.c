@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.239 2010/09/29 19:42:11 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.240 2011/01/07 17:50:42 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -328,7 +328,9 @@ present:
 		pool_put(&tcpqe_pool, q);
 		q = nq;
 	} while (q != NULL && q->tcpqe_tcp->th_seq == tp->rcv_nxt);
+	tp->t_flags |= TF_BLOCKOUTPUT;
 	sorwakeup(so);
+	tp->t_flags &= ~TF_BLOCKOUTPUT;
 	return (flags);
 }
 
@@ -368,7 +370,7 @@ tcp_input(struct mbuf *m, ...)
 	struct tcpcb *tp = 0;
 	int tiflags;
 	struct socket *so = NULL;
-	int todrop, acked, ourfinisacked, needoutput = 0;
+	int todrop, acked, ourfinisacked;
 	int hdroptlen = 0;
 	short ostate = 0;
 	tcp_seq iss, *reuse = NULL;
@@ -1090,9 +1092,13 @@ after_listen:
 					TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
 				tcp_update_sndspace(tp);
-				if (sb_notify(&so->so_snd))
+				if (sb_notify(&so->so_snd)) {
+					tp->t_flags |= TF_BLOCKOUTPUT;
 					sowwakeup(so);
-				if (so->so_snd.sb_cc)
+					tp->t_flags &= ~TF_BLOCKOUTPUT;
+				}
+				if (so->so_snd.sb_cc ||
+				    tp->t_flags & TF_NEEDOUTPUT)
 					(void) tcp_output(tp);
 				return;
 			}
@@ -1136,8 +1142,10 @@ after_listen:
 				m_adj(m, iphlen + off);
 				sbappendstream(&so->so_rcv, m);
 			}
+			tp->t_flags |= TF_BLOCKOUTPUT;
 			sorwakeup(so);
-			if (tp->t_flags & TF_ACKNOW)
+			tp->t_flags &= ~TF_BLOCKOUTPUT;
+			if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 				(void) tcp_output(tp);
 			return;
 		}
@@ -1773,10 +1781,10 @@ trimthenstep6:
 #if defined(TCP_SACK) && defined(TCP_FACK)
 					/* Force call to tcp_output */
 					if (tp->snd_awnd < tp->snd_cwnd)
-						needoutput = 1;
+						tp->t_flags |= TF_NEEDOUTPUT;
 #else
 					tp->snd_cwnd += tp->t_maxseg;
-					needoutput = 1;
+					tp->t_flags |= TF_NEEDOUTPUT;
 #endif /* TCP_FACK */
 				} else {
 					/* Out of fast recovery */
@@ -1844,7 +1852,7 @@ trimthenstep6:
 		 */
 		if (th->th_ack == tp->snd_max) {
 			TCP_TIMER_DISARM(tp, TCPT_REXMT);
-			needoutput = 1;
+			tp->t_flags |= TF_NEEDOUTPUT;
 		} else if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0)
 			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		/*
@@ -1877,8 +1885,11 @@ trimthenstep6:
 		}
 
 		tcp_update_sndspace(tp);
-		if (sb_notify(&so->so_snd))
+		if (sb_notify(&so->so_snd)) {
+			tp->t_flags |= TF_BLOCKOUTPUT;
 			sowwakeup(so);
+			tp->t_flags &= ~TF_BLOCKOUTPUT;
+		}
 
 		/*
 		 * If we had a pending ICMP message that referred to data
@@ -1996,7 +2007,7 @@ step6:
 		tp->snd_wl2 = th->th_ack;
 		if (tp->snd_wnd > tp->max_sndwnd)
 			tp->max_sndwnd = tp->snd_wnd;
-		needoutput = 1;
+		tp->t_flags |= TF_NEEDOUTPUT;
 	}
 
 	/*
@@ -2088,7 +2099,9 @@ dodata:							/* XXX */
 				m_adj(m, hdroptlen);
 				sbappendstream(&so->so_rcv, m);
 			}
+			tp->t_flags |= TF_BLOCKOUTPUT;
 			sorwakeup(so);
+			tp->t_flags &= ~TF_BLOCKOUTPUT;
 		} else {
 			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
@@ -2182,9 +2195,8 @@ dodata:							/* XXX */
 	/*
 	 * Return any desired output.
 	 */
-	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
+	if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 		(void) tcp_output(tp);
-	}
 	return;
 
 badsyn:
