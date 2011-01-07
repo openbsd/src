@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.8 2011/01/06 23:26:48 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.9 2011/01/07 00:43:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1005,7 +1005,7 @@ vdsp_alloc(void *arg1, void *arg2)
 	KASSERT(sc->sc_num_descriptors <= VDSK_MAX_DESCRIPTORS);
 	KASSERT(sc->sc_descriptor_size <= VDSK_MAX_DESCRIPTOR_SIZE);
 	sc->sc_vd = malloc(sc->sc_num_descriptors * sc->sc_descriptor_size,
-	    M_WAITOK, M_DEVBUF);
+	    M_DEVBUF, M_WAITOK);
 
 	bzero(&dr, sizeof(dr));
 	dr.tag.type = VIO_TYPE_CTRL;
