@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.26 2011/01/06 15:41:51 deraadt Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.27 2011/01/07 04:56:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -49,7 +49,7 @@ struct rndstats {
 	quad_t rnd_reads;	/* strong read calls -- unused */
 	quad_t arc4_reads;	/* aRC4 data bytes read so far */
 	quad_t arc4_nstirs;	/* arc4 pool stirs */
-	quad_t arc4_stirs;	/* arc4 pool stirs (bits used) */
+	quad_t arc4_stirs;	/* arc4 pool stirs (bits used) -- unused */
 
 	quad_t rnd_pad[5];
 
