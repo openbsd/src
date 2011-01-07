@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.9 2011/01/07 00:43:11 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.10 2011/01/07 00:46:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -36,6 +36,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+
+#include <isofs/cd9660/iso.h>
 
 #include <dev/sun/disklabel.h>
 
@@ -279,6 +281,7 @@ void	vdsp_open(void *, void *);
 void	vdsp_alloc(void *, void *);
 void	vdsp_readlabel(struct vdsp_softc *);
 int	vdsp_writelabel(struct vdsp_softc *);
+int	vdsp_is_iso(struct vdsp_softc *);
 void	vdsp_read(void *, void *);
 void	vdsp_read_dring(void *, void *);
 void	vdsp_write_dring(void *, void *);
@@ -927,8 +930,12 @@ vdsp_open(void *arg1, void *arg2)
 	ai.tag.sid = sc->sc_local_sid;
 	ai.xfer_mode = sc->sc_xfer_mode;
 	ai.vd_type = VD_DISK_TYPE_DISK;
-	if (sc->sc_major > 1 || sc->sc_minor >= 1)
-		ai.vd_mtype = VD_MEDIA_TYPE_FIXED;
+	if (sc->sc_major > 1 || sc->sc_minor >= 1) {
+		if (vdsp_is_iso(sc))
+			ai.vd_mtype = VD_MEDIA_TYPE_CD;
+		else
+			ai.vd_mtype = VD_MEDIA_TYPE_FIXED;
+	}
 	ai.vdisk_block_size = sc->sc_vdisk_block_size;
 	ai.operations = VD_OP_MASK;
 	ai.vdisk_size = sc->sc_vdisk_size;
@@ -994,6 +1001,41 @@ vdsp_writelabel(struct vdsp_softc *sc)
 	VOP_UNLOCK(sc->sc_vp, 0, p);
 
 	return (err);
+}
+
+int
+vdsp_is_iso(struct vdsp_softc *sc)
+{
+	struct proc *p = curproc;
+	struct iovec iov;
+	struct uio uio;
+	struct iso_volume_descriptor *vdp;
+	int err;
+
+	if (sc->sc_vp == NULL)
+		return (0);
+
+	vdp = malloc(sizeof(*vdp), M_DEVBUF, M_WAITOK);
+
+	iov.iov_base = vdp;
+	iov.iov_len = sizeof(*vdp);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = 16 * ISO_DEFAULT_BLOCK_SIZE;
+	uio.uio_resid = sizeof(*vdp);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = p;
+
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
+	VOP_UNLOCK(sc->sc_vp, 0, p);
+
+	if (err == 0 && memcmp(vdp->id, ISO_STANDARD_ID, sizeof(vdp->id)))
+		err = ENOENT;
+
+	free(vdp, M_DEVBUF);
+	return (err == 0);
 }
 
 void
