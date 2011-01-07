@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.706 2011/01/06 07:28:45 damien Exp $
+#	$OpenBSD: GENERIC,v 1.707 2011/01/07 19:33:08 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -573,7 +573,6 @@ sm0	at isa? port 0x300 irq 10		# SMC 91cxx-based ethernet
 #tr0	at isa? port 0xa20 iomem 0xd8000	# IBM TROPIC based Token-Ring
 #tr1	at isa? port 0xa24 iomem 0xd0000	# IBM TROPIC based Token-Ring
 #tr*	at isa?				# 3COM TROPIC based Token-Ring
-ep0	at eisa?
 ep*	at eisa?			# 3C579 ethernet
 fea*	at eisa?			# DEC DEFEA FDDI
 lmc*	at pci?				# Lan Media Corp SSI/T3/HSSI
@@ -584,7 +583,6 @@ de*	at pci?				# DC21X4X-based ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 fxp*	at cardbus?			# Intel PRO/100 ethernet
 ne*	at pci?				# NE2000-compat ethernet
-ep0	at pci?				# 3C59x ethernet
 ep*	at pci?				# 3C59x ethernet
 ne*	at pcmcia?			# PCMCIA based NE2000 ethernet
 ep*	at pcmcia?			# PCMCIA based 3C5xx ethernet

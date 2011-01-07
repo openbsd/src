@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.181 2010/10/19 20:23:53 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.182 2011/01/07 19:33:08 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -317,7 +317,6 @@ ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #ie1	at isa? port 0x300 irq 10	# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
 ex0	at isa? port 0x320 irq 5	# Intel EtherExpress PRO/10
-ep0	at eisa?
 ep*	at eisa?			# 3C579 ethernet
 ef*	at isapnp?			# 3C515 ethernet
 #fea*	at eisa?			# DEC DEFEA FDDI
@@ -326,7 +325,6 @@ pcn*	at pci?				# AMD PCnet-PCI Ethernet
 de*	at pci?				# DC21X4X-based ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 fxp*	at cardbus?			# Intel PRO/100 ethernet
-ep0	at pci?				# 3C59x ethernet
 ep*	at pci?				# 3C59x ethernet
 ne*	at pci?				# NE2000-compat ethernet
 ne*	at pcmcia?			# PCMCIA based NE2000 ethernet

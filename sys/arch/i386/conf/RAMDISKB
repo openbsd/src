@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.116 2010/10/19 20:23:53 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.117 2011/01/07 19:33:08 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -237,14 +237,12 @@ scsibus* at atapiscsi?
 #ie1	at isa? port 0x300 irq 10	# EtherExpress
 #le0	at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
 #ex0	at isa? port 0x320 irq 5	# Intel EtherExpress PRO/10
-#ep0	at eisa?
 #ep*	at eisa?			# 3C579 ethernet cards
 #fea*	at eisa?			# DEC DEFEA FDDI cards
 #ep*	at isapnp?			# 3C509 PnP ethernet cards
 #le*	at isapnp?
 de*	at pci?				# DC21X4X-based ethernet cards
 fxp*	at pci?				# EtherExpress 10/100B ethernet cards
-ep0	at pci?				# 3C59x ethernet cards
 ep*	at pci?				# 3C59x ethernet cards
 #ne*	at pci?				# NE2000-compat ethernet cards
 #ne*	at pcmcia?			# PCMCIA based NE2000 cards
