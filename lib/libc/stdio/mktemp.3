@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.45 2010/12/27 21:18:44 millert Exp $
+.\"	$OpenBSD: mktemp.3,v 1.46 2011/01/07 21:57:01 nicm Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 27 2010 $
+.Dd $Mdocdate: January 7 2011 $
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -72,12 +72,12 @@ does not actually create the temporary file there is a window of
 opportunity during which another process can open the file instead.
 Because of this race condition,
 .Fn mktemp
-should not be used in new code.
+should not be used where
+.Fn mkstemp
+can be used instead.
 .Fn mktemp
 was marked as a legacy interface in
-.St -p1003.1-2001
-and may be removed in a future release of
-.Ox .
+.St -p1003.1-2001 .
 .Pp
 The
 .Fn mkstemp
