@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.130 2011/01/08 02:23:02 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.131 2011/01/08 19:45:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -529,8 +529,13 @@ extract_entropy(u_int8_t *buf, int nbytes)
 #define	ARC4_STATE		256
 #define	ARC4_PARANOIA		4
 
+/*
+ * Start with an unstable state so that rc4_getbytes() can
+ * operate (poorly) before rc4_keysetup().
+ */
+struct rc4_ctx arc4random_state = { 0, 0, { 1, 2, 3, 4, 5, 6 } };
+
 struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
-struct rc4_ctx arc4random_state;
 struct timeout arc4_timeout;
 
 void arc4_reinit(void *v);		/* timeout to start reinit */
@@ -677,12 +682,23 @@ arc4_reinit(void *v)
 }
 
 void
-randomattach(void)
+random_init(void)
 {
 	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].max_entropy = 1;
 
+	/*
+	 * Load some code as input data until we are more alive.
+	 * NOTE: We assume there are at 8192 bytes mapped after version,
+	 * because we want to pull some "code" in as well.
+	 */
+	rc4_keysetup(&arc4random_state, (u_int8_t *)&version, 8192);
+}
+
+void
+random_start(void)
+{
 	if (msgbufp && msgbufp->msg_magic == MSG_MAGIC)
 		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
 		    msgbufp->msg_bufs / sizeof(u_int32_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.173 2011/01/01 06:54:51 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.174 2011/01/08 19:45:09 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -220,6 +220,8 @@ main(void *framep)
 	KERNEL_LOCK_INIT();
 	SCHED_LOCK_INIT();
 
+	random_init();
+
 	uvm_init();
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty's */
@@ -345,6 +347,8 @@ main(void *framep)
 	/* Initialize work queues */
 	workq_init();
 
+	random_start();
+
 	/* Initialize the interface/address trees */
 	ifinit();
 
@@ -382,7 +386,6 @@ main(void *framep)
 #endif
 
 	/* Attach pseudo-devices. */
-	randomattach();
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		if (pdev->pdev_count > 0)
 			(*pdev->pdev_attach)(pdev->pdev_count);

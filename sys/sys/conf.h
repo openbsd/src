@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.108 2010/12/31 22:32:19 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.109 2011/01/08 19:45:09 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -391,7 +391,6 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, \
 	0, D_KQFILTER, seltrue_kqfilter }
-void	randomattach(void);
 
 /* open, close, ioctl, poll, nokqfilter */
 #define	cdev_usb_init(c,n) { \
