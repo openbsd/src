@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.127 2011/01/07 23:13:48 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.128 2011/01/08 00:55:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -224,9 +224,9 @@ u_int32_t entropy_pool[POOLWORDS];
 u_int	entropy_add_ptr;
 u_char	entropy_input_rotate;
 
-static void dequeue_randomness(void *);
-static void add_entropy_words(const u_int32_t *, u_int);
-static void extract_entropy(u_int8_t *buf, int nbytes);
+void dequeue_randomness(void *);
+void add_entropy_words(const u_int32_t *, u_int);
+void extract_entropy(u_int8_t *buf, int nbytes);
 
 static __inline struct rand_event *
 rnd_get(void)
@@ -398,7 +398,7 @@ done:
  * then the upper bits of the entropy pool will frequently remain
  * untouched.
  */
-static void
+void
 add_entropy_words(const u_int32_t *buf, u_int n)
 {
 	/* derived from IEEE 802.3 CRC-32 */
@@ -438,7 +438,7 @@ add_entropy_words(const u_int32_t *buf, u_int n)
  * with the CRC.
  */
 /* ARGSUSED */
-static void
+void
 dequeue_randomness(void *v)
 {
 	struct rand_event *rep;
@@ -468,7 +468,7 @@ dequeue_randomness(void *v)
  * Grabs a chunk from the entropy_pool[] and slams it through MD5 when
  * requested.
  */
-static void
+void
 extract_entropy(u_int8_t *buf, int nbytes)
 {
 	static u_int32_t extract_pool[POOLWORDS];
@@ -533,8 +533,9 @@ struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
 struct rc4_ctx arc4random_state;
 struct timeout arc4_timeout;
 
-static void arc4_reinit(void *v);		/* timeout to start reinit */
-static void arc4_init(void *, void *);		/* actually do the reinit */
+void arc4_reinit(void *v);		/* timeout to start reinit */
+void arc4_init(void *, void *);		/* actually do the reinit */
+void arc4random_buf_large(void *, size_t);
 
 /* Return one word of randomness from an RC4 generator */
 u_int32_t
@@ -553,7 +554,7 @@ arc4random(void)
  * Return a "large" buffer of randomness using an independantly-keyed RC4
  * generator.
  */
-static void
+void
 arc4random_buf_large(void *buf, size_t n)
 {
 	u_char lbuf[ARC4_KEY_BYTES];
@@ -632,7 +633,7 @@ arc4random_uniform(u_int32_t upper_bound)
 }
 
 /* ARGSUSED */
-static void
+void
 arc4_init(void *v, void *w)
 {
 	struct rc4_ctx new_ctx;
@@ -667,7 +668,7 @@ arc4_init(void *v, void *w)
 /*
  * Called by timeout to mark arc4 for stirring,
  */
-static void
+void
 arc4_reinit(void *v)
 {
 	workq_add_task(NULL, 0, arc4_init, NULL, NULL);
