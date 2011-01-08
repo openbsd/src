@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.129 2011/01/08 02:22:43 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.130 2011/01/08 02:23:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -61,7 +61,7 @@
  * it is adequate assuming the randomness is not chosen maliciously,
  * and it very fast because the interrupt-time event is only to add
  * a small random token to the "rnd states" queue.
- * 
+ *
  * When random bytes are desired, they are obtained by pulling from
  * the entropy pool and running a MD5 hash. The MD5 hash avoids
  * exposing the internal state of the entropy pool.  Even if it is
@@ -81,7 +81,7 @@
  * very high amounts of output data from a potentially small entropy
  * base, at high enough speeds to encourage use of random numbers in
  * nearly any situation.
- * 
+ *
  * The output of this single RC4 engine is then shared amongst many
  * consumers in the kernel and userland via a few interfaces:
  * arc4random_buf(), arc4random(), arc4random_uniform(), randomread()
@@ -103,7 +103,7 @@
  * Further background information on this topic may be obtained from
  * RFC 1750, "Randomness Recommendations for Security", by Donald
  * Eastlake, Steve Crocker, and Jeff Schiller.
- * 
+ *
  * Using a RC4 stream cipher as 2nd stage after the MD5 output
  * is the result of work by David Mazieres.
  */
@@ -173,7 +173,7 @@
 /*
  * Stirring polynomials over GF(2) for various pool sizes. Used in
  * add_entropy_words() below.
- * 
+ *
  * The polynomial terms are chosen to be evenly spaced (minimum RMS
  * distance from evenly spaced; except for the last tap, which is 1 to
  * get the twisting happening as fast as possible.
@@ -713,7 +713,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	u_char lbuf[ARC4_KEY_BYTES];
 	struct rc4_ctx lctx;
 	size_t		total = uio->uio_resid;
-	u_char	 	*buf;
+	u_char		*buf;
 	int		myctx = 0, ret = 0;
 
 	if (uio->uio_resid == 0)
@@ -726,7 +726,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 		rc4_skip(&lctx, ARC4_STATE * ARC4_PARANOIA);
 		bzero(lbuf, sizeof(lbuf));
 		myctx = 1;
-	}	
+	}
 
 	while (ret == 0 && uio->uio_resid > 0) {
 		int	n = min(POOLBYTES, uio->uio_resid);
