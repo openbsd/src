@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.41 2010/12/04 17:06:31 miod Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.42 2011/01/08 18:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -520,11 +520,11 @@ find_node_intr(int parent, u_int32_t *addr, u_int32_t *intr)
 	int iparent, len, mlen, alen, ilen;
 	int match, i, step;
 	u_int32_t map[144], *mp, *mp1;
-	u_int32_t imask[8], maskedaddr[8];
+	u_int32_t cpu_imask[8], maskedaddr[8];
 	u_int32_t address_cells, interrupt_cells, mask_cells;
 
 	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
-	mlen = OF_getprop(parent, "interrupt-map-mask", imask, sizeof(imask));
+	mlen = OF_getprop(parent, "interrupt-map-mask", cpu_imask, sizeof(cpu_imask));
 	alen = OF_getprop(parent, "#address-cells",
 	    &address_cells, sizeof(address_cells));
 	ilen = OF_getprop(parent, "#interrupt-cells",
@@ -537,7 +537,7 @@ find_node_intr(int parent, u_int32_t *addr, u_int32_t *intr)
 	if (mask_cells != (mlen / sizeof(u_int32_t)))
 		goto nomap;
 	for (i = 0; i < mask_cells; i++)
-		maskedaddr[i] = addr[i] & imask[i];
+		maskedaddr[i] = addr[i] & cpu_imask[i];
 
 	/* interrupt-map is formatted as follows
 	 * int * #address-cells, int * #interrupt-cells, int, int, int

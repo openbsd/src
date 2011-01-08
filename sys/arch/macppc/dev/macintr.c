@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.40 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.41 2011/01/08 18:10:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -373,7 +373,7 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (m_intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | SINT_ALLMASK;
+		cpu_imask[level] = irqs | SINT_ALLMASK;
 	}
 
 	/*
@@ -383,22 +383,22 @@ intr_calculatemasks()
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
+	cpu_imask[IPL_NET] |= cpu_imask[IPL_BIO];
+	cpu_imask[IPL_TTY] |= cpu_imask[IPL_NET];
+	cpu_imask[IPL_VM] |= cpu_imask[IPL_TTY];
+	cpu_imask[IPL_CLOCK] |= cpu_imask[IPL_VM] | SPL_CLOCKMASK;
 
 	/*
 	 * These are pseudo-levels.
 	 */
-	imask[IPL_NONE] = 0x00000000;
-	imask[IPL_HIGH] = 0xffffffff;
+	cpu_imask[IPL_NONE] = 0x00000000;
+	cpu_imask[IPL_HIGH] = 0xffffffff;
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int irqs = 1 << irq;
 		for (q = m_intrhand[irq]; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
+			irqs |= cpu_imask[q->ih_level];
 		m_intrmask[irq] = irqs | SINT_ALLMASK;
 	}
 

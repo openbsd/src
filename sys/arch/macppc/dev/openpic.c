@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.62 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.63 2011/01/08 18:10:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -398,9 +398,9 @@ openpic_calc_mask()
 		if (o_virq[irq] != 0) {
 			/* Enable (dont mask) interrupts at lower levels */ 
 			for (i = IPL_NONE; i < min; i++)
-				imask[i] &= ~(1 << o_virq[irq]);
+				cpu_imask[i] &= ~(1 << o_virq[irq]);
 			for (; i <= IPL_HIGH; i++)
-				imask[i] |= (1 << o_virq[irq]);
+				cpu_imask[i] |= (1 << o_virq[irq]);
 		}
 	}
 
@@ -409,11 +409,11 @@ openpic_calc_mask()
 
 	for (i = IPL_NONE; i <= IPL_HIGH; i++) {
 		if (i > IPL_NONE)
-			imask[i] |= SINT_ALLMASK;
+			cpu_imask[i] |= SINT_ALLMASK;
 		if (i >= IPL_CLOCK)
-			imask[i] |= SPL_CLOCKMASK;
+			cpu_imask[i] |= SPL_CLOCKMASK;
 	}
-	imask[IPL_HIGH] = 0xffffffff;
+	cpu_imask[IPL_HIGH] = 0xffffffff;
 }
 
 /*
@@ -483,12 +483,12 @@ openpic_do_pending_int()
 	while (hwpend) {
 		/* this still doesn't handle the interrupts in priority order */
 		for (pri = IPL_HIGH; pri >= IPL_NONE; pri--) {
-			pripending = hwpend & ~imask[pri];
+			pripending = hwpend & ~cpu_imask[pri];
 			if (pripending == 0)
 				continue;
 			irq = 31 - cntlzw(pripending);
 			ci->ci_ipending &= ~(1 << irq);
-			ci->ci_cpl = imask[o_intrmaxlvl[o_hwirq[irq]]];
+			ci->ci_cpl = cpu_imask[o_intrmaxlvl[o_hwirq[irq]]];
 			openpic_enable_irq_mask(~ci->ci_cpl);
 			ih = o_intrhand[irq];
 			while(ih) {
@@ -713,12 +713,12 @@ ext_intr_openpic()
 		if ((pcpl & r_imen) != 0) {
 			/* Masked! Mark this as pending. */
 			ci->ci_ipending |= r_imen;
-			openpic_enable_irq_mask(~imask[o_intrmaxlvl[realirq]]);
+			openpic_enable_irq_mask(~cpu_imask[o_intrmaxlvl[realirq]]);
 			openpic_eoi(ci->ci_cpuid);
 		} else {
-			openpic_enable_irq_mask(~imask[o_intrmaxlvl[realirq]]);
+			openpic_enable_irq_mask(~cpu_imask[o_intrmaxlvl[realirq]]);
 			openpic_eoi(ci->ci_cpuid);
-			ocpl = splraise(imask[o_intrmaxlvl[realirq]]);
+			ocpl = splraise(cpu_imask[o_intrmaxlvl[realirq]]);
 
 			ih = o_intrhand[irq];
 			while (ih) {

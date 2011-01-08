@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.45 2010/12/21 14:56:24 claudio Exp $ */
+/*	$OpenBSD: intr.h,v 1.46 2011/01/08 18:10:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -67,7 +67,7 @@ void	splx(int);
 
 void do_pending_int(void);
 
-extern int imask[IPL_NUM];
+extern int cpu_imask[IPL_NUM];
 
 /* SPL asserts */
 #define	splassert(wantipl)	/* nothing */
@@ -119,12 +119,12 @@ void	 softintr_schedule(void *);
 #define	SINT_NET	SINTMASK(SI_SOFTNET)
 #define	SINT_TTY	SINTMASK(SI_SOFTTTY)
 
-#define splbio()	splraise(imask[IPL_BIO])
-#define splnet()	splraise(imask[IPL_NET])
-#define spltty()	splraise(imask[IPL_TTY])
-#define splaudio()	splraise(imask[IPL_AUDIO])
-#define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_VM])
+#define splbio()	splraise(cpu_imask[IPL_BIO])
+#define splnet()	splraise(cpu_imask[IPL_NET])
+#define spltty()	splraise(cpu_imask[IPL_TTY])
+#define splaudio()	splraise(cpu_imask[IPL_AUDIO])
+#define splclock()	splraise(cpu_imask[IPL_CLOCK])
+#define splvm()		splraise(cpu_imask[IPL_VM])
 #define splsched()	splhigh()
 #define spllock()	splhigh()
 #define splstatclock()	splhigh()

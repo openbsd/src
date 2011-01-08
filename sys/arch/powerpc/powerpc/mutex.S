@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.11 2010/09/28 20:27:55 miod Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.12 2011/01/08 18:10:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -39,9 +39,9 @@ ENTRY(mtx_enter)
 .L_retry:
 	GET_CPUINFO(%r4)
 	lwz	%r5,MTX_WANTIPL(%r3)		# load new ipl
-	lis	%r6,_C_LABEL(imask)@ha		# convert into cpl
+	lis	%r6,_C_LABEL(cpu_imask)@ha	# convert into cpl
 	slwi	%r5,%r5,2
-	addi	%r5,%r5,_C_LABEL(imask)@l
+	addi	%r5,%r5,_C_LABEL(cpu_imask)@l
 	lwzx	%r5,%r5,%r6
 	lwz	%r7,CI_CPL(%r4)			# load current cpl
 	or	%r6,%r5,%r7			# raise	cpl
@@ -94,9 +94,9 @@ ENTRY(mtx_enter_try)
 	stw	%r0,36(%r1)			# save return address
 	GET_CPUINFO(%r4)
 	lwz	%r5,MTX_WANTIPL(%r3)		# load new ipl
-	lis	%r6,_C_LABEL(imask)@ha		# convert into cpl
+	lis	%r6,_C_LABEL(cpu_imask)@ha	# convert into cpl
 	slwi	%r5,%r5,2
-	addi	%r5,%r5,_C_LABEL(imask)@l
+	addi	%r5,%r5,_C_LABEL(cpu_imask)@l
 	lwzx	%r5,%r5,%r6
 	lwz	%r7,CI_CPL(%r4)			# load current cpl
 	or	%r6,%r5,%r7			# raise	cpl

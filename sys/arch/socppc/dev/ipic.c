@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.13 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.14 2011/01/08 18:10:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -223,7 +223,7 @@ intr_calculatemasks(void)
 	int level;
 
 	for (level = IPL_NONE; level < IPL_NUM; level++)
-		imask[level] = SINT_ALLMASK | (1 << level);
+		cpu_imask[level] = SINT_ALLMASK | (1 << level);
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
@@ -232,16 +232,16 @@ intr_calculatemasks(void)
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
+	cpu_imask[IPL_NET] |= cpu_imask[IPL_BIO];
+	cpu_imask[IPL_TTY] |= cpu_imask[IPL_NET];
+	cpu_imask[IPL_VM] |= cpu_imask[IPL_TTY];
+	cpu_imask[IPL_CLOCK] |= cpu_imask[IPL_VM] | SPL_CLOCKMASK;
 
 	/*
 	 * These are pseudo-levels.
 	 */
-	imask[IPL_NONE] = 0x00000000;
-	imask[IPL_HIGH] = 0xffffffff;
+	cpu_imask[IPL_NONE] = 0x00000000;
+	cpu_imask[IPL_HIGH] = 0xffffffff;
 
 	sc->sc_simsr_h[IPL_NET] |= sc->sc_simsr_h[IPL_BIO];
 	sc->sc_simsr_h[IPL_TTY] |= sc->sc_simsr_h[IPL_NET];
@@ -341,7 +341,7 @@ ext_intr(void)
 		ipic_write(sc, IPIC_SIMSR_H, sc->sc_simsr_h[ih->ih_level]);
 		ipic_write(sc, IPIC_SIMSR_L, sc->sc_simsr_l[ih->ih_level]);
 		ipic_write(sc, IPIC_SEMSR, sc->sc_semsr[ih->ih_level]);
-		ocpl = splraise(imask[ih->ih_level]);
+		ocpl = splraise(cpu_imask[ih->ih_level]);
 		ppc_intr_enable(1);
 
 		KERNEL_LOCK();
