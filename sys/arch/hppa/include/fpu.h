@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.3 2010/07/02 00:00:45 jsing Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.4 2011/01/08 23:02:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -26,6 +26,8 @@ struct hppa_fpstate {
 	struct fpreg hfp_regs;
 	volatile struct cpu_info *hfp_cpu;	/* CPU which FPU state is on. */
 };
+
+struct proc;
 
 void	fpu_proc_flush(struct proc *);
 void	fpu_proc_save(struct proc *);
