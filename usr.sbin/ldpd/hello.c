@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.7 2010/11/04 09:52:16 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.8 2011/01/08 14:50:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -227,7 +227,7 @@ tlv_decode_opt_hello_prms(char *buf, u_int16_t len, struct in_addr *addr,
 
 		len -= sizeof(tlv);
 		buf += sizeof(tlv);
-		cons += sizeof(cons);
+		cons += sizeof(tlv);
 	}
 
 	return (cons);
