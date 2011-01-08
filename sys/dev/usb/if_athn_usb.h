@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.1 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.2 2011/01/08 15:18:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -351,7 +351,7 @@ struct ar_rx_status {
  * Driver definitions.
  */
 #define ATHN_USB_RX_LIST_COUNT	1
-#define ATHN_USB_TX_LIST_COUNT	8
+#define ATHN_USB_TX_LIST_COUNT	(8 + 1)		/* NB: +1 for beacons. */
 
 #define ATHN_USB_HOST_CMD_RING_COUNT	32
 
@@ -449,7 +449,7 @@ struct athn_usb_softc {
 	struct athn_usb_tx_data		tx_data[ATHN_USB_TX_LIST_COUNT];
 	TAILQ_HEAD(, athn_usb_tx_data)	tx_free_list;
 	struct athn_usb_tx_data		tx_cmd;
-	struct athn_usb_tx_data		*bcndata;
+	struct athn_usb_tx_data		*tx_bcn;
 
 	uint8_t				ep_ctrl;
 	uint8_t				ep_bcn;

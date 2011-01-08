@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.5 2011/01/08 15:05:24 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.6 2011/01/08 15:18:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1410,7 +1410,7 @@ athn_usb_bcneof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	if (__predict_false(status == USBD_STALLED))
 		usbd_clear_endpoint_stall_async(usc->tx_data_pipe);
-	usc->bcndata = data;
+	usc->tx_bcn = data;
 }
 
 /*
@@ -1435,9 +1435,9 @@ athn_usb_swba(struct athn_usb_softc *usc)
 		ic->ic_dtim_count--;
 
 	/* Make sure previous beacon has been sent. */
-	if (usc->bcndata == NULL)
+	if (usc->tx_bcn == NULL)
 		return;
-	data = usc->bcndata;
+	data = usc->tx_bcn;
 
 	/* Get new beacon. */
 	m = ieee80211_beacon_alloc(ic, ic->ic_bss);
@@ -1470,10 +1470,10 @@ athn_usb_swba(struct athn_usb_softc *usc)
 	    athn_usb_bcneof);
 
 	m_freem(m);
-	usc->bcndata = NULL;
+	usc->tx_bcn = NULL;
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS && error != 0))
-		usc->bcndata = data;
+		usc->tx_bcn = data;
 }
 #endif
 
@@ -2149,7 +2149,9 @@ athn_usb_init(struct ifnet *ifp)
 	error = athn_usb_alloc_tx_list(usc);
 	if (error != 0)
 		goto fail;
-	/* XXX Steal one buffer for beacons. */
+	/* Steal one buffer for beacons. */
+	usc->tx_bcn = TAILQ_FIRST(&usc->tx_free_list);
+	TAILQ_REMOVE(&usc->tx_free_list, usc->tx_bcn, next);
 
 	c = ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	extc = NULL;
