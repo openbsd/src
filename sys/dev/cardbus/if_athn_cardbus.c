@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.12 2010/12/31 14:52:47 damien Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.13 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -257,8 +257,8 @@ athn_cardbus_setup(struct athn_cardbus_softc *csc)
 	 * the card: http://bugzilla.kernel.org/show_bug.cgi?id=13483
 	 */
 	reg = pci_conf_read(pc, csc->sc_tag, 0x40);
-	reg &= ~0xff00;
-	pci_conf_write(pc, csc->sc_tag, 0x40, reg);
+	if (reg & 0xff00)
+		pci_conf_write(pc, csc->sc_tag, 0x40, reg & ~0xff00);
 
 	/* Change latency timer; default value yields poor results. */
 	reg = pci_conf_read(pc, csc->sc_tag, PCI_BHLC_REG);

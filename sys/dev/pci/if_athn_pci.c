@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.10 2010/12/31 14:52:46 damien Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -146,8 +146,8 @@ athn_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * the card: http://bugzilla.kernel.org/show_bug.cgi?id=13483
 	 */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
-	reg &= ~0xff00;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, reg);
+	if (reg & 0xff00)
+		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, reg & ~0xff00);
 
 	/* Change latency timer; default value yields poor results. */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
@@ -232,7 +232,12 @@ athn_pci_resume(void *arg1, void *arg2)
 {
 	struct athn_pci_softc *psc = arg1;
 	struct athn_softc *sc = &psc->sc_sc;
+	pcireg_t reg;
 	int s;
+
+	reg = pci_conf_read(psc->sc_pc, psc->sc_tag, 0x40);
+	if (reg & 0xff00)
+		pci_conf_write(psc->sc_pc, psc->sc_tag, 0x40, reg & ~0xff00);
 
 	s = splnet();
 	athn_resume(sc);
