@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.69 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.70 2011/01/08 10:42:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -152,7 +152,6 @@ int		ar9280_attach(struct athn_softc *);
 int		ar9285_attach(struct athn_softc *);
 int		ar9287_attach(struct athn_softc *);
 int		ar9380_attach(struct athn_softc *);
-void		ar9271_load_ani(struct athn_softc *);
 int		ar5416_init_calib(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
 int		ar9285_init_calib(struct athn_softc *,
@@ -893,8 +892,6 @@ athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 		goto reset;
 
 	error = athn_set_chan(sc, c, extc);
-	if (AR_SREV_9271(sc) && error == 0)
-		ar9271_load_ani(sc);
 	if (error != 0) {
  reset:		/* Error found, try a full reset. */
 		DPRINTFN(3, ("needs a full reset\n"));
