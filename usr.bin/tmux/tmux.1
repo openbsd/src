@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.204 2011/01/04 02:03:41 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.205 2011/01/08 00:48:54 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2011 $
+.Dd $Mdocdate: January 8 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1793,8 +1793,11 @@ is one of:
 .Ic colour0
 to
 .Ic colour255
-from the 256-colour palette, or
-.Ic default .
+from the 256-colour set,
+.Ic default ,
+or a hexadecimal RGB string such as
+.Ql #ffffff ,
+which chooses the closest match from the default 256-colour set.
 .It Ic message-fg Ar colour
 Set status line message foreground colour.
 .It Ic message-limit Ar number
