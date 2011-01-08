@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.128 2011/01/08 00:55:30 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.129 2011/01/08 02:22:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -719,7 +719,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	if (uio->uio_resid == 0)
 		return 0;
 
-	buf = malloc(2 * PAGE_SIZE, M_TEMP, M_WAITOK);
+	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
 	if (total > ARC4_MAIN_MAX_BYTES) {
 		arc4random_buf(lbuf, sizeof(lbuf));
 		rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
@@ -729,7 +729,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	}	
 
 	while (ret == 0 && uio->uio_resid > 0) {
-		int	n = min(2 * PAGE_SIZE, uio->uio_resid);
+		int	n = min(POOLBYTES, uio->uio_resid);
 
 		if (myctx)
 			rc4_getbytes(&lctx, buf, n);
@@ -741,7 +741,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	}
 	if (myctx)
 		bzero(&lctx, sizeof(lctx));
-	bzero(buf, 2 * PAGE_SIZE);
+	bzero(buf, POOLBYTES);
 	free(buf, M_TEMP);
 	return ret;
 }
