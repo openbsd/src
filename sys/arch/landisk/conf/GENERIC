@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.30 2010/12/12 14:33:57 damien Exp $
+# $OpenBSD: GENERIC,v 1.31 2011/01/08 11:56:30 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -148,6 +148,7 @@ udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
+athn*	at uhub?		# Atheros AR9002U
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U

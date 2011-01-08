@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 2010/12/12 14:33:57 damien Exp $
+#	$OpenBSD: GENERIC,v 1.31 2011/01/08 11:56:30 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -142,6 +142,7 @@ cue*		at uhub?	# CATC USB-EL1201A based Ethernet
 kue*		at uhub?	# Kawasaki KL5KUSB101B based Ethernet
 mos*		at uhub?	# MOSCHIP MCS7730/7830 10/100 Ethernet
 otus*		at uhub?	# Atheros AR9001U
+athn*		at uhub?	# Atheros AR9002U
 rum*		at uhub?	# Ralink RT2501USB/RT2601USB
 run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
 uath*		at uhub?	# Atheros AR5005UG/AR5005UX
