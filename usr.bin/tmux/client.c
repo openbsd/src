@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.46 2010/10/18 20:00:02 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.47 2011/01/08 01:52:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,7 +54,7 @@ client_connect(char *path, int start_server)
 {
 	struct sockaddr_un	sa;
 	size_t			size;
-	int			fd, mode;
+	int			fd;
 
 	memset(&sa, 0, sizeof sa);
 	sa.sun_family = AF_UNIX;
@@ -84,10 +84,7 @@ client_connect(char *path, int start_server)
 		}
 	}
 
-	if ((mode = fcntl(fd, F_GETFL)) == -1)
-		fatal("fcntl failed");
-	if (fcntl(fd, F_SETFL, mode|O_NONBLOCK) == -1)
-		fatal("fcntl failed");
+	setblocking(fd, 0);
 	return (fd);
 
 failed:

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.264 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.265 2011/01/08 01:52:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1308,6 +1308,7 @@ void		 logfile(const char *);
 const char	*getshell(void);
 int		 checkshell(const char *);
 int		 areshell(const char *);
+void		 setblocking(int, int);
 __dead void	 shell_exec(const char *, const char *);
 
 /* cfg.c */
