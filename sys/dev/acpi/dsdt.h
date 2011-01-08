@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.56 2011/01/02 04:56:57 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.57 2011/01/08 05:05:09 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -31,7 +31,6 @@ struct aml_scope {
 	struct aml_value	*retv;
 	uint8_t			*start;
 	int			type;
-	int			rep;
 };
 
 
