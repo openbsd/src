@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.70 2011/01/08 10:42:18 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.71 2011/01/08 15:05:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -72,6 +72,7 @@ void		athn_get_chanlist(struct athn_softc *);
 const char *	athn_get_mac_name(struct athn_softc *);
 const char *	athn_get_rf_name(struct athn_softc *);
 void		athn_led_init(struct athn_softc *);
+void		athn_set_led(struct athn_softc *, int);
 void		athn_btcoex_init(struct athn_softc *);
 void		athn_btcoex_enable(struct athn_softc *);
 void		athn_btcoex_disable(struct athn_softc *);
@@ -876,8 +877,8 @@ athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 		goto reset;
 
 #ifdef notyet
-	/* AR9280 (but not AR9280+AR7010) needs a full reset. */
-	if (AR_SREV_9280(sc) && !(sc->flags & ATHN_FLAG_USB))
+	/* AR9280 needs a full reset. */
+	if (AR_SREV_9280(sc))
 #endif
 		goto reset;
 
@@ -1061,7 +1062,16 @@ athn_led_init(struct athn_softc *sc)
 
 	ops->gpio_config_output(sc, sc->led_pin, AR_GPIO_OUTPUT_MUX_AS_OUTPUT);
 	/* LED off, active low. */
-	ops->gpio_write(sc, sc->led_pin, 1);
+	athn_set_led(sc, 0);
+}
+
+void
+athn_set_led(struct athn_softc *sc, int on)
+{
+	struct athn_ops *ops = &sc->ops;
+
+	sc->led_state = on;
+	ops->gpio_write(sc, sc->led_pin, !sc->led_state);
 }
 
 #ifdef ATHN_BT_COEXISTENCE
@@ -2358,27 +2368,25 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct athn_softc *sc = ifp->if_softc;
-	struct athn_ops *ops = &sc->ops;
 	uint32_t reg;
 	int error;
 
 	timeout_del(&sc->calib_to);
-	if (nstate != IEEE80211_S_SCAN)
-		ops->gpio_write(sc, sc->led_pin, 1);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
+		athn_set_led(sc, 0);
 		break;
 	case IEEE80211_S_SCAN:
 		/* Make the LED blink while scanning. */
-		ops->gpio_write(sc, sc->led_pin,
-		    !ops->gpio_read(sc, sc->led_pin));
+		athn_set_led(sc, !sc->led_state);
 		error = athn_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 		if (error != 0)
 			return (error);
 		timeout_add_msec(&sc->scan_to, 200);
 		break;
 	case IEEE80211_S_AUTH:
+		athn_set_led(sc, 0);
 		error = athn_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 		if (error != 0)
 			return (error);
@@ -2386,7 +2394,7 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_ASSOC:
 		break;
 	case IEEE80211_S_RUN:
-		ops->gpio_write(sc, sc->led_pin, 0);
+		athn_set_led(sc, 1);
 
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;

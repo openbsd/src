@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.4 2011/01/06 19:20:54 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.5 2011/01/08 15:05:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -189,6 +189,7 @@ void		ar9271_load_ani(struct athn_softc *);
 
 /* Extern functions. */
 void		athn_led_init(struct athn_softc *);
+void		athn_set_led(struct athn_softc *, int);
 void		athn_btcoex_init(struct athn_softc *);
 void		athn_set_rxfilter(struct athn_softc *, uint32_t);
 int		athn_reset(struct athn_softc *, int);
@@ -1007,7 +1008,6 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 {
 	struct athn_usb_cmd_newstate *cmd = arg;
 	struct athn_softc *sc = &usc->sc_sc;
-	struct athn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate;
 	uint32_t reg, imask;
@@ -1027,23 +1027,22 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	}
 	switch (cmd->state) {
 	case IEEE80211_S_INIT:
-		ops->gpio_write(sc, sc->led_pin, 1);
+		athn_set_led(sc, 0);
 		break;
 	case IEEE80211_S_SCAN:
 		/* Make the LED blink while scanning. */
-		ops->gpio_write(sc, sc->led_pin,
-		    !ops->gpio_read(sc, sc->led_pin));
+		athn_set_led(sc, !sc->led_state);
 		(void)athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 		timeout_add_msec(&sc->scan_to, 200);
 		break;
 	case IEEE80211_S_AUTH:
-		ops->gpio_write(sc, sc->led_pin, 1);
+		athn_set_led(sc, 0);
 		error = athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 		break;
 	case IEEE80211_S_ASSOC:
 		break;
 	case IEEE80211_S_RUN:
-		ops->gpio_write(sc, sc->led_pin, 0);
+		athn_set_led(sc, 1);
 
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;
