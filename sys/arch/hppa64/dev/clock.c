@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2011/01/02 13:25:17 jasper Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2011/01/09 19:37:51 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -28,6 +28,7 @@
 #include <dev/clock_subr.h>
 
 u_long	cpu_hzticks;
+int	timeset;
 
 u_int	itmr_get_timecount(struct timecounter *);
 
@@ -75,6 +76,7 @@ inittodr(time_t t)
 	ts.tv_sec = tod.sec;
 	ts.tv_nsec = tod.usec * 1000;
 	tc_setclock(&ts);
+	timeset = 1;
 
 	if (!tbad) {
 		u_long	dt;
@@ -98,6 +100,13 @@ resettodr()
 {
 	struct timeval tv;
 	int error;
+
+	/*
+	 * We might have been called by boot() due to a crash early
+	 * on.  Don't reset the clock chip in this case.
+	 */
+	if (!timeset)
+		return;
 
 	microtime(&tv);
 
