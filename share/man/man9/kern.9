@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.13 2010/09/24 13:33:00 matthew Exp $
+.\"	$OpenBSD: kern.9,v 1.14 2011/01/09 02:26:31 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 24 2010 $
+.Dd $Mdocdate: January 9 2011 $
 .Dt KERN 9
 .Os
 .Sh NAME
@@ -184,29 +184,6 @@ Those functions have the same semantics as their libc counterparts,
 .Xr strncmp 3
 and
 .Xr strncasecmp 3 .
-.Sh RANDOM NUMBER GENERATION
-.nr nS 1
-.Ft u_long
-.Fn random "void"
-.Ft void
-.Fn srandom "u_long seed"
-.nr nS 0
-.Pp
-The
-.Fn random
-function returns a random number.
-The
-.Fn srandom
-function initializes the random seed.
-.Fn random
-will by default produce a sequence of numbers that can be duplicated
-by calling
-.Fn srandom
-with `1' as the seed.
-The
-.Fn random
-function is discouraged in favor of
-.Xr arc4random 9 .
 .Sh MISCELLANEOUS
 .nr nS 1
 .Ft int
@@ -227,8 +204,7 @@ bytes long.
 .Xr ffs 3 ,
 .Xr memchr 3 ,
 .Xr memcmp 3 ,
-.Xr string 3 ,
-.Xr arc4random 9
+.Xr string 3
 .Sh STANDARDS
 The
 .Fn abs ,
