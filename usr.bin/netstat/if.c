@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.62 2009/11/22 22:22:14 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.63 2011/01/09 19:12:19 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -488,6 +489,46 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	}
 }
 
+
+static int
+isegress(char *name)
+{
+	static int s = -1;
+	int len;
+	struct ifgroupreq ifgr;
+	struct ifg_req *ifg;
+	int rv = 0;
+
+	if (s == -1) {
+		if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+			return 0;
+	}
+
+	memset(&ifgr, 0, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
+
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
+		return 0;
+	}
+
+	len = ifgr.ifgr_len;
+	ifgr.ifgr_groups = calloc(len, 1);
+	if (ifgr.ifgr_groups == NULL)
+		err(1, "getifgroups");
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
+		err(1, "SIOCGIFGROUP");
+
+	ifg = ifgr.ifgr_groups;
+	for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
+		len -= sizeof(struct ifg_req);
+		if (strcmp(ifg->ifgrq_group, IFG_EGRESS) == 0)
+			rv = 1;
+	}
+
+	free(ifgr.ifgr_groups);
+	return rv;
+}
+
 static void
 fetchifs(void)
 {
@@ -500,6 +541,8 @@ fetchifs(void)
 	char *buf, *next, *lim;
 	char name[IFNAMSIZ];
 	size_t len;
+	int takeit = 0;
+	int foundone = 0;
 
 	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
@@ -508,6 +551,7 @@ fetchifs(void)
 	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
+	memset(&ip_cur, 0, sizeof(ip_cur));
 	lim = buf + len;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -531,6 +575,14 @@ fetchifs(void)
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
 			if (interface != NULL && !strcmp(name, interface)) {
+				takeit = 1;
+			} else if (interface == NULL && foundone == 0 &&
+			    isegress(name)) {
+				takeit = 1;
+				foundone = 1;
+			} else
+				takeit = 0;
+			if (takeit) {
 				strlcpy(ip_cur.ift_name, name,
 				    sizeof(ip_cur.ift_name));
 				ip_cur.ift_ip = ifd->ifi_ipackets;
@@ -555,7 +607,7 @@ fetchifs(void)
 			break;
 		}
 	}
-	if (interface == NULL) {
+	if (interface == NULL && foundone == 0) {
 		strlcpy(ip_cur.ift_name, name,
 		    sizeof(ip_cur.ift_name));
 		ip_cur.ift_ip = ifd->ifi_ipackets;
