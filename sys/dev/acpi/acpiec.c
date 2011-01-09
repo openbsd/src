@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.43 2010/08/08 17:25:41 kettenis Exp $ */
+/* $OpenBSD: acpiec.c,v 1.44 2011/01/09 22:27:21 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -509,7 +509,7 @@ acpiec_reg(struct acpiec_softc *sc)
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_REG", 2,
 	    arg, NULL) != 0) {
 		dnprintf(10, "%s: eval method _REG failed\n", DEVNAME(sc));
-		return (1);
+		printf("acpiec _REG failed, broken BIOS\n");
 	}
 
 	return (0);
