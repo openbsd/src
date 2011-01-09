@@ -1,0 +1,12 @@
+.Dd January 9, 2011
+.Dt BL-UNCLOSED 1
+.Os
+.Sh NAME
+.Nm Bl-unclosed
+.Nd list lacking an end macro
+.Sh DESCRIPTION
+.Bl -item
+.It
+item
+.Sh SEE ALSO
+.Xr mdoc 7
