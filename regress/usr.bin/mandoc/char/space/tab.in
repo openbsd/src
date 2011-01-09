@@ -81,6 +81,27 @@ space 	tab
 .br
 		tab
 .Ed
+unfilled display
+.Bd -unfilled -offset 2n
+1	x
+22	x
+333	x
+4444	x
+55555	x
+666666	x
+7777777	x
+88888888	x
+999999999	x
+aaaaaaaaaa	x
+bbbbbbbbbbb	x
+cccccccccccc	x
+ddddddddddddd	x
+tab	 space
+tab		tab
+space 	tab
+	tab
+		tab
+.Ed
 literal display
 .Bd -literal -offset 2n
 1	x
