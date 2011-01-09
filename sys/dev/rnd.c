@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.131 2011/01/08 19:45:07 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.132 2011/01/09 22:40:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -290,7 +290,8 @@ enqueue_randomness(int state, int val)
 		return;
 #endif
 
-	nanotime(&ts);
+	if (timeout_initialized(&rnd_timeout))
+		nanotime(&ts);
 
 	p = &rnd_states[state];
 	val += state << 13;
@@ -447,7 +448,8 @@ dequeue_randomness(void *v)
 
 	mtx_enter(&entropylock);
 
-	timeout_del(&rnd_timeout);
+	if (timeout_initialized(&rnd_timeout))
+		timeout_del(&rnd_timeout);
 
 	rndstats.rnd_deqs++;
 	while ((rep = rnd_get())) {
@@ -653,7 +655,8 @@ arc4_init(void *v, void *w)
 	 * clock information which is better than nothing.
 	 */
 	extract_entropy((u_int8_t *)buf, sizeof buf);
-	nanotime(&ts);
+	if (timeout_initialized(&rnd_timeout))
+		nanotime(&ts);
 	for (p = (u_int8_t *)&ts, i = 0; i < sizeof(ts); i++)
 		buf[i] ^= p[i];
 
@@ -703,12 +706,11 @@ random_start(void)
 		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
 		    msgbufp->msg_bufs / sizeof(u_int32_t));
 
-	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
 	dequeue_randomness(NULL);
-
-	timeout_set(&arc4_timeout, arc4_reinit, NULL);
 	arc4_init(NULL, NULL);
+	timeout_set(&arc4_timeout, arc4_reinit, NULL);
 	arc4_reinit(NULL);
+	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
 }
 
 int
