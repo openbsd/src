@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.49 2010/07/09 16:58:06 reyk Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.50 2011/01/09 20:25:46 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -425,7 +425,8 @@ reroute:
 			 * type/code is based on suggestion by Rich Draves.
 			 * not sure if it is the best pick.
 			 */
-			icmp6_error(mcopy, ICMP6_DST_UNREACH,
+			if (mcopy)
+				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0);
 			m_freem(m);
 			goto freert;
