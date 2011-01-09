@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.52 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: man.c,v 1.53 2011/01/09 13:16:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -60,7 +60,8 @@ const struct man_node *
 man_node(const struct man *m)
 {
 
-	return(MAN_HALT & m->flags ? NULL : m->first);
+	assert( ! (MAN_HALT & m->flags));
+	return(m->first);
 }
 
 
@@ -68,7 +69,8 @@ const struct man_meta *
 man_meta(const struct man *m)
 {
 
-	return(MAN_HALT & m->flags ? NULL : &m->meta);
+	assert( ! (MAN_HALT & m->flags));
+	return(&m->meta);
 }
 
 
@@ -111,9 +113,8 @@ int
 man_endparse(struct man *m)
 {
 
-	if (MAN_HALT & m->flags)
-		return(0);
-	else if (man_macroend(m))
+	assert( ! (MAN_HALT & m->flags));
+	if (man_macroend(m))
 		return(1);
 	m->flags |= MAN_HALT;
 	return(0);
@@ -124,9 +125,7 @@ int
 man_parseln(struct man *m, int ln, char *buf, int offs)
 {
 
-	if (MAN_HALT & m->flags)
-		return(0);
-
+	assert( ! (MAN_HALT & m->flags));
 	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
 			man_pmacro(m, ln, buf, offs) : 
 			man_ptext(m, ln, buf, offs));
@@ -359,6 +358,7 @@ int
 man_addspan(struct man *m, const struct tbl_span *sp)
 {
 
+	assert( ! (MAN_HALT & m->flags));
 	if ( ! man_span_alloc(m, sp))
 		return(0);
 	return(man_descope(m, 0, 0));
@@ -461,7 +461,7 @@ man_ptext(struct man *m, int line, char *buf, int offs)
 }
 
 
-int
+static int
 man_pmacro(struct man *m, int ln, char *buf, int offs)
 {
 	int		 i, j, ppos;

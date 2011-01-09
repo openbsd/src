@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.64 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: main.c,v 1.65 2011/01/09 13:16:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -792,6 +792,14 @@ rerun:
 		default:
 			break;
 		}
+
+		/*
+		 * If we encounter errors in the recursive parsebuf()
+		 * call, make sure we don't continue parsing.
+		 */
+
+		if (MANDOCLEVEL_FATAL <= file_status)
+			break;
 
 		/*
 		 * If input parsers have not been allocated, do so now.

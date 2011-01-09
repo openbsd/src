@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.77 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.78 2011/01/09 13:16:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -102,7 +102,8 @@ const struct mdoc_node *
 mdoc_node(const struct mdoc *m)
 {
 
-	return(MDOC_HALT & m->flags ? NULL : m->first);
+	assert( ! (MDOC_HALT & m->flags));
+	return(m->first);
 }
 
 
@@ -110,7 +111,8 @@ const struct mdoc_meta *
 mdoc_meta(const struct mdoc *m)
 {
 
-	return(MDOC_HALT & m->flags ? NULL : &m->meta);
+	assert( ! (MDOC_HALT & m->flags));
+	return(&m->meta);
 }
 
 
@@ -211,9 +213,8 @@ int
 mdoc_endparse(struct mdoc *m)
 {
 
-	if (MDOC_HALT & m->flags)
-		return(0);
-	else if (mdoc_macroend(m))
+	assert( ! (MDOC_HALT & m->flags));
+	if (mdoc_macroend(m))
 		return(1);
 	m->flags |= MDOC_HALT;
 	return(0);
@@ -223,8 +224,7 @@ int
 mdoc_addspan(struct mdoc *m, const struct tbl_span *sp)
 {
 
-	if (MDOC_HALT & m->flags)
-		return(0);
+	assert( ! (MDOC_HALT & m->flags));
 
 	/* No text before an initial macro. */
 
@@ -246,8 +246,7 @@ int
 mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 {
 
-	if (MDOC_HALT & m->flags)
-		return(0);
+	assert( ! (MDOC_HALT & m->flags));
 
 	m->flags |= MDOC_NEWLINE;
 

@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.20 2011/01/04 22:28:17 schwarze Exp $
+.\"	$Id: man.3,v 1.21 2011/01/09 13:16:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2011 $
+.Dd $Mdocdate: January 9 2011 $
 .Dt MAN 3
 .Os
 .Sh NAME
@@ -105,6 +105,16 @@ See
 for details.
 .El
 .Ss Functions
+If
+.Fn man_addspan ,
+.Fn man_parseln ,
+or
+.Fn man_endparse
+return 0, calls to any function but
+.Fn man_reset
+or
+.Fn man_free
+will raise an assertion.
 .Bl -ohang
 .It Fn man_addspan
 Add a table span to the parsing stream.
@@ -115,8 +125,8 @@ The
 .Fa data
 pointer is passed to
 .Fa msgs .
-Returns NULL on failure.
-If non-NULL, the pointer must be freed with
+Always returns a valid pointer.
+The pointer must be freed with
 .Fn man_free .
 .It Fn man_reset
 Reset the parser for another parse routine.
@@ -135,26 +145,11 @@ The input buffer
 is modified by this function.
 .It Fn man_endparse
 Signals that the parse is complete.
-Note that if
-.Fn man_endparse
-is called subsequent to
-.Fn man_node ,
-the resulting tree is incomplete.
 Returns 0 on failure, 1 on success.
 .It Fn man_node
 Returns the first node of the parse.
-Note that if
-.Fn man_parseln
-or
-.Fn man_endparse
-return 0, the tree will be incomplete.
 .It Fn man_meta
 Returns the document's parsed meta-data.
-If this information has not yet been supplied or
-.Fn man_parseln
-or
-.Fn man_endparse
-return 0, the data will be incomplete.
 .El
 .Ss Variables
 The following variables are also defined:
