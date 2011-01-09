@@ -1,0 +1,17 @@
+GETTEXT(3)                                                          GETTEXT(3)
+
+
+
+NNAAMMEE
+       gettext, dgettext, dcgettext - translate message
+
+SSYYNNOOPPSSIISS
+       ##iinncclluuddee <<lliibbiinnttll..hh>>
+
+       cchhaarr ** ggeetttteexxtt ((ccoonnsstt cchhaarr ** _m_s_g_i_d));;
+       cchhaarr ** ddggeetttteexxtt ((ccoonnsstt cchhaarr ** _d_o_m_a_i_n_n_a_m_e,, ccoonnsstt cchhaarr ** _m_s_g_i_d));;
+       cchhaarr ** ddccggeetttteexxtt ((ccoonnsstt cchhaarr ** _d_o_m_a_i_n_n_a_m_e,, ccoonnsstt cchhaarr ** _m_s_g_i_d,,
+                         iinntt _c_a_t_e_g_o_r_y));;
+
+
+

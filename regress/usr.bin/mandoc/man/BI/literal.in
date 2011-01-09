@@ -1,0 +1,12 @@
+.TH GETTEXT 3 "May 2001" "GNU gettext 0.18"
+.SH NAME
+gettext, dgettext, dcgettext \- translate message
+.SH SYNOPSIS
+.nf
+.B "#include <libintl.h>"
+.sp
+.BI "char * gettext (const char * " msgid );
+.BI "char * dgettext (const char * " domainname ", const char * " msgid );
+.BI "char * dcgettext (const char * " domainname ", const char * " msgid ,
+.BI "                  int " category );
+.fi
