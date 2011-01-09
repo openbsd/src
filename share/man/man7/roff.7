@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.7 2010/12/09 23:01:18 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.8 2011/01/09 15:24:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2010 $
+.Dd $Mdocdate: January 9 2011 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -563,6 +563,20 @@ This request is intended to have one argument,
 consisting of an even number of characters.
 Currently, it is ignored including its arguments,
 and the number of arguments is not checked.
+.Ss \&T&
+Re-start a table layout, retaining the options of the prior table
+invocation.
+See
+.Sx \&TS .
+.Ss \&TE
+End a table context.
+See
+.Sx \&TS .
+.Ss \&TS
+Begin a table, which formats input in aligned rows and columns.
+See
+.Xr tbl 7
+for a description of the tbl language.
 .Sh COMPATIBILITY
 This section documents compatibility between mandoc and other other
 .Nm
@@ -593,7 +607,8 @@ using the next-line syntax.
 .Xr mandoc 1 ,
 .Xr man 7 ,
 .Xr mandoc_char 7 ,
-.Xr mdoc 7
+.Xr mdoc 7 ,
+.Xr tbl 7
 .Rs
 .%A Joseph F. Ossanna
 .%A Brian W. Kernighan
