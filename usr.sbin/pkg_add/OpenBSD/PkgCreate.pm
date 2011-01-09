@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.40 2011/01/04 14:23:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.41 2011/01/09 13:06:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -488,14 +488,21 @@ sub avert_duplicates_and_other_checks
 {
 	my ($self, $state) = @_;
 
+	$self->SUPER::avert_duplicates_and_other_checks($state);
+
 	my @issues = OpenBSD::PackageName->from_string($self->{def})->has_issues;
 	if (@issues > 0) {
-		$state->error("invalid \@#1 #2 in packing-list\n#3, #4",
+		$state->error("\@#1 #2\n  #3, #4",
 		    $self->keyword, $self->stringize,
 		    $self->{def}, join(' ', @issues));
+	} elsif ($self->spec->is_valid) {
+		my @m = $self->spec->filter($self->{def});
+		if (@m == 0) {
+			$state->error("\@#1 #2\n  pattern #3 doesn't match default #4\n",
+			    $self->keyword, $self->stringize,
+			    $self->{pattern}, $self->{def});
+		}
 	}
-
-	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
 
 package OpenBSD::PackingElement::Name;
