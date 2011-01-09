@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.26 2010/10/02 15:58:30 tedu Exp $
+.\"	$OpenBSD: arc4random.9,v 1.4 2011/01/09 00:06:50 deraadt Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -23,12 +23,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 2 2010 $
-.Dt RND 9
+.Dd $Mdocdate: January 9 2011 $
+.Dt ARC4RANDOM 9
 .Os
 .Sh NAME
-.Nm random
-.Nd device kernel interface
+.Nm arc4random
+.Nd kernel random subsystem
 .Sh SYNOPSIS
 .Fd #include <dev/rndvar.h>
 .Ft void
@@ -45,8 +45,6 @@
 .Fn add_disk_randomness "int"
 .Ft void
 .Fn add_audio_randomness "int"
-.Ft void
-.Fn get_random_bytes "void *buf" "size_t nbytes"
 .Ft u_int32_t
 .Fn arc4random "void"
 .Ft void
@@ -77,15 +75,10 @@ will not cause the entropy counter to rise.
 It is used to change the state of the pool periodically,
 mostly by means of timing the random driver's operations.
 .Pp
-.Fn get_random_bytes
-may be used to retrieve strong random data.
-.Pp
 .Fn arc4random
 and
 .Fn arc4random_buf
-will give random 32 bit numbers hashed with
-the ARC4 algorithm, which appears to be faster and less abusive
-to the entropy pool.
+provide random numbers.  They may be called safely in any kernel context.
 .Pp
 .Fn arc4random_uniform
 will return a uniformly distributed random number less than
@@ -95,7 +88,3 @@ avoiding "modulo bias" when the upper bound is not a power of two.
 .Xr arc4random 3 ,
 .Xr pchb 4 ,
 .Xr random 4
-.Sh CAVEATS
-None of these functions should really be called during the
-.Xr autoconf 4
-process.

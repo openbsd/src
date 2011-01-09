@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.159 2010/09/24 13:33:00 matthew Exp $
+#	$OpenBSD: Makefile,v 1.160 2011/01/09 00:06:50 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -20,7 +20,7 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	mountroothook_establish.9 mutex.9 namei.9 \
 	panic.9 pci_conf_read.9 pci_intr_map.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
-	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 rwlock.9 \
+	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 rwlock.9 \
 	sensor_attach.9 \
 	shutdownhook_establish.9 tsleep.9 spl.9 startuphook_establish.9 \
 	socreate.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
@@ -247,17 +247,15 @@ MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=printf.9 snprintf.9 printf.9 vsnprintf.9 printf.9 vprintf.9 \
 	printf.9 uprintf.9 printf.9 ttyprintf.9 printf.9 db_printf.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
-MLINKS+=random.9 add_true_randomness.9 \
-	random.9 add_timer_randomness.9 \
-	random.9 add_mouse_randomness.9 \
-	random.9 add_tty_randomness.9 \
-	random.9 add_net_randomness.9 \
-	random.9 add_disk_randomness.9 \
-	random.9 add_audio_randomness.9 \
-	random.9 get_random_bytes.9 \
-	random.9 arc4random.9 \
-	random.9 arc4random_buf.9 \
-	random.9 arc4random_uniform.9
+MLINKS+=arc4random.9 add_true_randomness.9 \
+	arc4random.9 add_timer_randomness.9 \
+	arc4random.9 add_mouse_randomness.9 \
+	arc4random.9 add_tty_randomness.9 \
+	arc4random.9 add_net_randomness.9 \
+	arc4random.9 add_disk_randomness.9 \
+	arc4random.9 add_audio_randomness.9 \
+	arc4random.9 arc4random_buf.9 \
+	arc4random.9 arc4random_uniform.9
 MLINKS+=rasops.9 rasops_init.9 rasops.9 rasops_reconfig.9
 MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_input.9 \
