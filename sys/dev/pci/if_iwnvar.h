@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.21 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.22 2011/01/09 15:45:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -156,7 +156,7 @@ struct iwn_fw_info {
 	struct iwn_fw_part	boot;
 };
 
-struct iwn_hal {
+struct iwn_ops {
 	int		(*load_firmware)(struct iwn_softc *);
 	void		(*read_eeprom)(struct iwn_softc *);
 	int		(*post_alive)(struct iwn_softc *);
@@ -178,15 +178,6 @@ struct iwn_hal {
 	void		(*ampdu_tx_stop)(struct iwn_softc *, uint8_t,
 			    uint16_t);
 #endif
-	int		ntxqs;
-	int		ndmachnls;
-	uint8_t		broadcast_id;
-	int		rxonsz;
-	int		schedsz;
-	uint32_t	fw_text_maxsz;
-	uint32_t	fw_data_maxsz;
-	uint32_t	fwsz;
-	bus_size_t	sched_txfact_addr;
 };
 
 struct iwn_softc {
@@ -208,12 +199,24 @@ struct iwn_softc {
 #define IWN_FLAG_USE_ICT	(1 << 3)
 #define IWN_FLAG_INTERNAL_PA	(1 << 4)
 #define IWN_FLAG_BUSY		(1 << 5)
+#define IWN_FLAG_HAS_11N	(1 << 6)
+#define IWN_FLAG_ENH_SENS	(1 << 7)
 
 	uint8_t 		hw_type;
-	const struct iwn_hal	*sc_hal;
+
+	struct iwn_ops		ops;
 	const char		*fwname;
 	const struct iwn_sensitivity_limits
 				*limits;
+	int			ntxqs;
+	int			ndmachnls;
+	uint8_t			broadcast_id;
+	int			rxonsz;
+	int			schedsz;
+	uint32_t		fw_text_maxsz;
+	uint32_t		fw_data_maxsz;
+	uint32_t		fwsz;
+	bus_size_t		sched_txfact_addr;
 
 	/* TX scheduler rings. */
 	struct iwn_dma_info	sched_dma;
@@ -243,8 +246,6 @@ struct iwn_softc {
 	bus_size_t		sc_sz;
 	int			sc_cap_off;	/* PCIe Capabilities. */
 
-	struct ksensordev	sensordev;
-	struct ksensor		sensor;
 	struct timeout		calib_to;
 	int			calib_cnt;
 	struct iwn_calib_state	calib;
@@ -269,6 +270,7 @@ struct iwn_softc {
 	uint8_t			calib_ver;
 	char			eeprom_domain[4];
 	uint32_t		eeprom_crystal;
+	int16_t			eeprom_temp;
 	int16_t			eeprom_voltage;
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;

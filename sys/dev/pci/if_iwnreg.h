@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.41 2010/07/20 19:24:31 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.42 2011/01/09 15:45:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -72,6 +72,7 @@
 #define IWN_UCODE_GP1_CLR	0x05c
 #define IWN_LED			0x094
 #define IWN_DRAM_INT_TBL	0x0a0
+#define IWN_SHADOW_REG_CTRL	0x0a8
 #define IWN_GIO_CHICKEN		0x100
 #define IWN_ANA_PLL		0x20c
 #define IWN_HW_REV_WA		0x22c
@@ -217,6 +218,7 @@
 #define IWN_GP_DRIVER_RADIO_2X2_HYB	(1 << 0)
 #define IWN_GP_DRIVER_RADIO_2X2_IPA	(2 << 0)
 #define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
+#define IWN_GP_DRIVER_6050_1X2		(1 << 3)
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
@@ -855,7 +857,7 @@ struct iwn_critical_temp {
 #define IWN_CTOMUK(c)	(((c) * 1000000) + 273150000)
 } __packed;
 
-/* Structure for command IWN_CMD_SET_SENSITIVITY. */
+/* Structures for command IWN_CMD_SET_SENSITIVITY. */
 struct iwn_sensitivity_cmd {
 	uint16_t	which;
 #define IWN_SENSITIVITY_DEFAULTTBL	0
@@ -874,6 +876,34 @@ struct iwn_sensitivity_cmd {
 	uint16_t	energy_ofdm_th;
 } __packed;
 
+struct iwn_enhanced_sensitivity_cmd {
+	uint16_t	which;
+	uint16_t	energy_cck;
+	uint16_t	energy_ofdm;
+	uint16_t	corr_ofdm_x1;
+	uint16_t	corr_ofdm_mrc_x1;
+	uint16_t	corr_cck_mrc_x4;
+	uint16_t	corr_ofdm_x4;
+	uint16_t	corr_ofdm_mrc_x4;
+	uint16_t	corr_barker;
+	uint16_t	corr_barker_mrc;
+	uint16_t	corr_cck_x4;
+	uint16_t	energy_ofdm_th;
+	/* "Enhanced" part. */
+	uint16_t	ina_det_ofdm;
+	uint16_t	ina_det_cck;
+	uint16_t	corr_11_9_en;
+	uint16_t	ofdm_det_slope_mrc;
+	uint16_t	ofdm_det_icept_mrc;
+	uint16_t	ofdm_det_slope;
+	uint16_t	ofdm_det_icept;
+	uint16_t	cck_det_slope_mrc;
+	uint16_t	cck_det_icept_mrc;
+	uint16_t	cck_det_slope;
+	uint16_t	cck_det_icept;
+	uint16_t	reserved;
+} __packed;
+
 /* Structures for command IWN_CMD_PHY_CALIB. */
 struct iwn_phy_calib {
 	uint8_t	code;
@@ -884,6 +914,8 @@ struct iwn_phy_calib {
 #define IWN5000_PHY_CALIB_CRYSTAL		15
 #define IWN5000_PHY_CALIB_BASE_BAND		16
 #define IWN5000_PHY_CALIB_TX_IQ_PERIODIC	17
+#define IWN5000_PHY_CALIB_TEMP_OFFSET		18
+
 #define IWN5000_PHY_CALIB_RESET_NOISE_GAIN	18
 #define IWN5000_PHY_CALIB_NOISE_GAIN		19
 
@@ -900,6 +932,17 @@ struct iwn5000_phy_calib_crystal {
 
 	uint8_t	cap_pin[2];
 	uint8_t	reserved[2];
+} __packed;
+
+struct iwn5000_phy_calib_temp_offset {
+	uint8_t		code;
+	uint8_t		group;
+	uint8_t		ngroups;
+	uint8_t		isvalid;
+	int16_t		offset;
+#define IWN_DEFAULT_TEMP_OFFSET	2700
+
+	uint16_t	reserved;
 } __packed;
 
 struct iwn_phy_calib_gain {
@@ -1287,6 +1330,7 @@ struct iwn_fw_tlv {
  * Offsets into EEPROM.
  */
 #define IWN_EEPROM_MAC		0x015
+#define IWN_EEPROM_SKU_CAP	0x045
 #define IWN_EEPROM_RFCFG	0x048
 #define IWN4965_EEPROM_DOMAIN	0x060
 #define IWN4965_EEPROM_BAND1	0x063
@@ -1314,6 +1358,11 @@ struct iwn_fw_tlv {
 #define IWN5000_EEPROM_CRYSTAL	0x128
 #define IWN5000_EEPROM_TEMP	0x12a
 #define IWN5000_EEPROM_VOLT	0x12b
+
+/* Possible flags for IWN_EEPROM_SKU_CAP. */
+#define IWN_EEPROM_SKU_CAP_11N	(1 << 6)
+#define IWN_EEPROM_SKU_CAP_AMT	(1 << 7)
+#define IWN_EEPROM_SKU_CAP_IPAN	(1 << 8)
 
 /* Possible flags for IWN_EEPROM_RFCFG. */
 #define IWN_RFCFG_TYPE(x)	(((x) >>  0) & 0x3)
