@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.16 2010/10/25 21:02:44 espie Exp $
+# $OpenBSD: Term.pm,v 1.17 2011/01/09 13:32:18 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -193,7 +193,7 @@ sub hmove
 	s/\%B// and $v = 16 * ($v/10) + $v%10;
 	s/\%D// and $v = $v - 2*($v%16);
 	s/\%\./sprintf('%c', $v)/e;
-	s/\%d/sprintf($&, $v)/e;
+	s/\%d/sprintf('%d', $v)/e;
 	s/\%2/sprintf('%2d', $v)/e;
 	s/\%3/sprintf('%3d', $v)/e;
 	s/\%\+(.)/sprintf('%c', $v+ord($1))/e;
