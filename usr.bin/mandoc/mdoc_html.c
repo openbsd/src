@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.45 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.46 2011/01/09 16:31:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -826,6 +826,7 @@ mdoc_bx_pre(MDOC_ARGS)
 	return(0);
 }
 
+/* ARGSUSED */
 static int
 mdoc_it_pre(MDOC_ARGS)
 {
@@ -940,7 +941,7 @@ mdoc_it_pre(MDOC_ARGS)
 static int
 mdoc_bl_pre(MDOC_ARGS)
 {
-	size_t		 i;
+	int		 i;
 	struct htmlpair	 tag[3];
 	struct roffsu	 su;
 	char		 buf[BUFSIZ];
@@ -962,10 +963,10 @@ mdoc_bl_pre(MDOC_ARGS)
 		 * screen and we want to preserve that behaviour.
 		 */
 
-		for (i = 0; i < n->norm->Bl.ncols; i++) {
+		for (i = 0; i < (int)n->norm->Bl.ncols; i++) {
 			a2width(n->norm->Bl.cols[i], &su);
 			bufinit(h);
-			if (i < n->norm->Bl.ncols - 1)
+			if (i < (int)n->norm->Bl.ncols - 1)
 				bufcat_su(h, "width", &su);
 			else
 				bufcat_su(h, "min-width", &su);

@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.29 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.30 2011/01/09 16:31:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -501,7 +501,6 @@ man_IP_pre(MAN_ARGS)
 	struct roffsu		 su;
 	struct htmlpair	 	 tag;
 	const struct man_node	*nn;
-	int			 width;
 
 	/*
 	 * This scattering of 1-BU margins and pads is to make sure that
@@ -519,13 +518,12 @@ man_IP_pre(MAN_ARGS)
 		n->head->child : n->parent->head->child;
 
 	SCALE_HS_INIT(&su, INDENT);
-	width = 0;
 
 	/* Width is the second token. */
 
 	if (MAN_IP == n->tok && NULL != nn)
 		if (NULL != (nn = nn->next))
-			width = a2width(nn, &su);
+			a2width(nn, &su);
 
 	/* Width is the first token. */
 
@@ -534,7 +532,7 @@ man_IP_pre(MAN_ARGS)
 		while (nn && MAN_TEXT != nn->type)
 			nn = nn->next;
 		if (nn)
-			width = a2width(nn, &su);
+			a2width(nn, &su);
 	}
 
 	if (MAN_BLOCK == n->type) {
