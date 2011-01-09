@@ -6373,7 +6373,6 @@
 ./usr/share/man/cat9/file.0
 ./usr/share/man/cat9/fork1.0
 ./usr/share/man/cat9/free.0
-./usr/share/man/cat9/get_random_bytes.0
 ./usr/share/man/cat9/getblk.0
 ./usr/share/man/cat9/getdevvp.0
 ./usr/share/man/cat9/geteblk.0
@@ -6599,7 +6598,6 @@
 ./usr/share/man/cat9/profhz.0
 ./usr/share/man/cat9/psignal.0
 ./usr/share/man/cat9/radio.0
-./usr/share/man/cat9/random.0
 ./usr/share/man/cat9/rasops.0
 ./usr/share/man/cat9/rasops_init.0
 ./usr/share/man/cat9/rasops_reconfig.0
@@ -6664,7 +6662,6 @@
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splvm.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat9/srandom.0
 ./usr/share/man/cat9/startuphook_disestablish.0
 ./usr/share/man/cat9/startuphook_establish.0
 ./usr/share/man/cat9/stathz.0
