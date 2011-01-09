@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.107 2011/01/09 15:45:37 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.108 2011/01/09 15:53:06 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -561,6 +561,7 @@ iwn4965_attach(struct iwn_softc *sc, pci_product_id_t pid)
 	sc->sched_txfact_addr = IWN4965_SCHED_TXFACT;
 	sc->limits = &iwn4965_sensitivity_limits;
 	sc->fwname = "iwn-4965";
+	/* Override chains masks, ROM is known to be broken. */
 	sc->txchainmask = IWN_ANT_AB;
 	sc->rxchainmask = IWN_ANT_ABC;
 
@@ -602,55 +603,37 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 	case IWN_HW_REV_TYPE_5100:
 		sc->limits = &iwn5000_sensitivity_limits;
 		sc->fwname = "iwn-5000";
+		/* Override chains masks, ROM is known to be broken. */
 		sc->txchainmask = IWN_ANT_B;
 		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_5150:
 		sc->limits = &iwn5150_sensitivity_limits;
 		sc->fwname = "iwn-5150";
-		sc->txchainmask = IWN_ANT_A;
-		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_5300:
 	case IWN_HW_REV_TYPE_5350:
 		sc->limits = &iwn5000_sensitivity_limits;
 		sc->fwname = "iwn-5000";
-		sc->txchainmask = IWN_ANT_ABC;
-		sc->rxchainmask = IWN_ANT_ABC;
 		break;
 	case IWN_HW_REV_TYPE_1000:
 		sc->limits = &iwn1000_sensitivity_limits;
 		sc->fwname = "iwn-1000";
-		sc->txchainmask = IWN_ANT_A;
-		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_6000:
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6000";
-		switch (pid) {
-		case PCI_PRODUCT_INTEL_WL_6200_1:
-		case PCI_PRODUCT_INTEL_WL_6200_2:
+		if (pid == PCI_PRODUCT_INTEL_WL_6200_1 ||
+		    pid == PCI_PRODUCT_INTEL_WL_6200_2)
 			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
-			sc->txchainmask = IWN_ANT_BC;
-			sc->rxchainmask = IWN_ANT_BC;
-			break;
-		default:
-			sc->txchainmask = IWN_ANT_ABC;
-			sc->rxchainmask = IWN_ANT_ABC;
-			break;
-		}
 		break;
 	case IWN_HW_REV_TYPE_6050:
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6050";
-		sc->txchainmask = IWN_ANT_AB;
-		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_6005:
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6005";
-		sc->txchainmask = IWN_ANT_AB;
-		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	default:
 		printf(": adapter type %d not supported\n", sc->hw_type);
