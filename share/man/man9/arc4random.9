@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arc4random.9,v 1.4 2011/01/09 00:06:50 deraadt Exp $
+.\"	$OpenBSD: arc4random.9,v 1.5 2011/01/09 02:20:53 jmc Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -78,7 +78,8 @@ mostly by means of timing the random driver's operations.
 .Fn arc4random
 and
 .Fn arc4random_buf
-provide random numbers.  They may be called safely in any kernel context.
+provide random numbers.
+They may be called safely in any kernel context.
 .Pp
 .Fn arc4random_uniform
 will return a uniformly distributed random number less than
