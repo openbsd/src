@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.58 2010/12/22 23:45:42 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.59 2011/01/09 12:49:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2010 $
+.Dd $Mdocdate: January 9 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -125,7 +125,7 @@ Terms may be text-decorated using the
 escape followed by an indicator: B (bold), I (italic), R (Roman), or P
 (revert to previous mode):
 .Pp
-.D1 \efBbold\efR \efIitalic\efP
+.Dl \efBbold\efR \efIitalic\efP
 .Pp
 A numerical representation 3, 2, or 1 (bold, italic, and Roman,
 respectively) may be used instead.
@@ -293,8 +293,8 @@ The proper spacing is also intelligently preserved if a sentence ends at
 the boundary of a macro line.
 For example:
 .Pp
-.D1 \&Xr mandoc 1 \.
-.D1 \&Fl T \&Ns \&Cm ascii \.
+.Dl \&Xr mandoc 1 \.
+.Dl \&Fl T \&Ns \&Cm ascii \.
 .Sh MANUAL STRUCTURE
 A well-formed
 .Nm
@@ -939,8 +939,8 @@ Memory address.
 Do not use this for postal addresses.
 .Pp
 Examples:
-.D1 \&.Ad [0,$]
-.D1 \&.Ad 0x00000000
+.Dl \&.Ad [0,$]
+.Dl \&.Ad 0x00000000
 .Ss \&An
 Author name.
 Requires either the name of an author or one of the following arguments:
@@ -970,14 +970,14 @@ for the first author listing and
 for all other author listings.
 .Pp
 Examples:
-.D1 \&.An -nosplit
-.D1 \&.An Kristaps Dzonsons \&Aq kristaps@bsd.lv
+.Dl \&.An -nosplit
+.Dl \&.An Kristaps Dzonsons \&Aq kristaps@bsd.lv
 .Ss \&Ao
 Begin a block enclosed by angle brackets.
 Does not have any head arguments.
 .Pp
 Examples:
-.D1 \&.Fl -key= \&Ns \&Ao \&Ar val \&Ac
+.Dl \&.Fl -key= \&Ns \&Ao \&Ar val \&Ac
 .Pp
 See also
 .Sx \&Aq .
@@ -987,12 +987,12 @@ This is generally used as a grammatical device when referring to the verb
 form of a function.
 .Pp
 Examples:
-.D1 \&.Fn execve \&Ap d
+.Dl \&.Fn execve \&Ap d
 .Ss \&Aq
 Encloses its arguments in angle brackets.
 .Pp
 Examples:
-.D1 \&.Fl -key= \&Ns \&Aq \&Ar val
+.Dl \&.Fl -key= \&Ns \&Aq \&Ar val
 .Pp
 .Em Remarks :
 this macro is often abused for rendering URIs, which should instead use
@@ -1013,9 +1013,9 @@ If an argument is not provided, the string
 is used as a default.
 .Pp
 Examples:
-.D1 \&.Fl o \&Ns \&Ar file1
-.D1 \&.Ar
-.D1 \&.Ar arg1 , arg2 .
+.Dl \&.Fl o \&Ns \&Ar file1
+.Dl \&.Ar
+.Dl \&.Ar arg1 , arg2 .
 .Ss \&At
 Formats an AT&T version.
 Accepts one optional argument:
@@ -1032,8 +1032,8 @@ A version of
 Note that these arguments do not begin with a hyphen.
 .Pp
 Examples:
-.D1 \&.At
-.D1 \&.At V.1
+.Dl \&.At
+.Dl \&.At V.1
 .Pp
 See also
 .Sx \&Bsx ,
@@ -1336,7 +1336,7 @@ See also
 Encloses its arguments in square brackets.
 .Pp
 Examples:
-.D1 \&.Bq 1 , \&Dv BUFSIZ
+.Dl \&.Bq 1 , \&Dv BUFSIZ
 .Pp
 .Em Remarks :
 this macro is sometimes abused to emulate optional arguments for
@@ -1369,7 +1369,7 @@ See also
 Encloses its arguments in curly braces.
 .Pp
 Examples:
-.D1 \&.Brq 1 , ... , \&Va n
+.Dl \&.Brq 1 , ... , \&Va n
 .Pp
 See also
 .Sx \&Bro .
@@ -1378,8 +1378,8 @@ Format the BSD/OS version provided as an argument, or a default value if
 no argument is provided.
 .Pp
 Examples:
-.D1 \&.Bsx 1.0
-.D1 \&.Bsx
+.Dl \&.Bsx 1.0
+.Dl \&.Bsx
 .Pp
 See also
 .Sx \&At ,
@@ -1398,8 +1398,8 @@ Format the BSD version provided as an argument, or a default value if no
 argument is provided.
 .Pp
 Examples:
-.D1 \&.Bx 4.4
-.D1 \&.Bx
+.Dl \&.Bx 4.4
+.Dl \&.Bx
 .Pp
 See also
 .Sx \&At ,
@@ -1416,7 +1416,7 @@ This denotes strings accepted by
 .Xr config 8 .
 .Pp
 Examples:
-.D1 \&.Cd device le0 at scode?
+.Dl \&.Cd device le0 at scode?
 .Pp
 .Em Remarks :
 this macro is commonly abused by using quoted literals to retain
@@ -1429,8 +1429,8 @@ Command modifiers.
 Useful when specifying configuration options or keys.
 .Pp
 Examples:
-.D1 \&.Cm ControlPath
-.D1 \&.Cm ControlMaster
+.Dl \&.Cm ControlPath
+.Dl \&.Cm ControlMaster
 .Pp
 See also
 .Sx \&Fl .
@@ -1441,7 +1441,7 @@ statements.
 It is followed by a newline.
 .Pp
 Examples:
-.D1 \&.D1 \&Fl abcdefgh
+.Dl \&.D1 \&Fl abcdefgh
 .Pp
 See also
 .Sx \&Bd
@@ -1480,9 +1480,9 @@ or instead a valid canonical date as specified by
 If a date does not conform or is empty, the current date is used.
 .Pp
 Examples:
-.D1 \&.Dd $\&Mdocdate$
-.D1 \&.Dd $\&Mdocdate: July 21 2007$
-.D1 \&.Dd July 21, 2007
+.Dl \&.Dd $\&Mdocdate$
+.Dl \&.Dd $\&Mdocdate: July 21 2007$
+.Dl \&.Dd July 21, 2007
 .Pp
 See also
 .Sx \&Dt
@@ -1495,7 +1495,7 @@ invocations.
 It is followed by a newline.
 .Pp
 Examples:
-.D1 \&.Dl % mandoc mdoc.7 \e(ba less
+.Dl \&.Dl % mandoc mdoc.7 \e(ba less
 .Pp
 See also
 .Sx \&Bd
@@ -1663,9 +1663,9 @@ or
 .El
 .Pp
 Examples:
-.D1 \&.Dt FOO 1
-.D1 \&.Dt FOO 4 KM
-.D1 \&.Dt FOO 9 i386
+.Dl \&.Dt FOO 1
+.Dl \&.Dt FOO 4 KM
+.Dl \&.Dt FOO 9 i386
 .Pp
 See also
 .Sx \&Dd
@@ -1675,8 +1675,8 @@ and
 Defined variables such as preprocessor constants.
 .Pp
 Examples:
-.D1 \&.Dv BUFSIZ
-.D1 \&.Dv STDOUT_FILENO
+.Dl \&.Dv BUFSIZ
+.Dl \&.Dv STDOUT_FILENO
 .Pp
 See also
 .Sx \&Er .
@@ -1685,8 +1685,8 @@ Format the DragonFly BSD version provided as an argument, or a default
 value if no argument is provided.
 .Pp
 Examples:
-.D1 \&.Dx 2.4.1
-.D1 \&.Dx
+.Dl \&.Dx 2.4.1
+.Dl \&.Dx
 .Pp
 See also
 .Sx \&At ,
@@ -1732,8 +1732,8 @@ Note that this is a presentation term and should not be used for
 stylistically decorating technical terms.
 .Pp
 Examples:
-.D1 \&.Em Warnings!
-.D1 \&.Em Remarks :
+.Dl \&.Em Warnings!
+.Dl \&.Em Remarks :
 .Pp
 See also
 .Sx \&Bf ,
@@ -1758,8 +1758,8 @@ will emulate
 Display error constants.
 .Pp
 Examples:
-.D1 \&.Er EPERM
-.D1 \&.Er ENOENT
+.Dl \&.Er EPERM
+.Dl \&.Er ENOENT
 .Pp
 See also
 .Sx \&Dv .
@@ -1770,8 +1770,8 @@ Environmental variables such as those specified in
 .Xr environ 7 .
 .Pp
 Examples:
-.D1 \&.Ev DISPLAY
-.D1 \&.Ev PATH
+.Dl \&.Ev DISPLAY
+.Dl \&.Ev PATH
 .Ss \&Ex
 Insert a standard sentence regarding exit values.
 Its syntax is as follows:
@@ -1811,9 +1811,9 @@ Furthermore, if the following macro is another
 the last argument will also have a trailing comma.
 .Pp
 Examples:
-.D1 \&.Fa \(dqconst char *p\(dq
-.D1 \&.Fa \(dqint a\(dq \(dqint b\(dq \(dqint c\(dq
-.D1 \&.Fa foo
+.Dl \&.Fa \(dqconst char *p\(dq
+.Dl \&.Fa \(dqint a\(dq \(dqint b\(dq \(dqint c\(dq
+.Dl \&.Fa foo
 .Pp
 See also
 .Sx \&Fo .
@@ -1841,10 +1841,10 @@ If the argument is a macro, a hyphen is prefixed to the subsequent macro
 output.
 .Pp
 Examples:
-.D1 \&.Fl a b c
-.D1 \&.Fl \&Pf a b
-.D1 \&.Fl
-.D1 \&.Op \&Fl o \&Ns \&Ar file
+.Dl \&.Fl a b c
+.Dl \&.Fl \&Pf a b
+.Dl \&.Fl
+.Dl \&.Op \&Fl o \&Ns \&Ar file
 .Pp
 See also
 .Sx \&Cm .
@@ -1863,9 +1863,9 @@ are delimited by commas.
 If no arguments are specified, blank parenthesis are output.
 .Pp
 Examples:
-.D1 \&.Fn "int funcname" "int arg0" "int arg1"
-.D1 \&.Fn funcname "int arg0"
-.D1 \&.Fn funcname arg0
+.Dl \&.Fn "int funcname" "int arg0" "int arg1"
+.Dl \&.Fn funcname "int arg0"
+.Dl \&.Fn funcname arg0
 .Bd -literal -offset indent -compact
 \&.Ft functype
 \&.Fn funcname
@@ -1916,7 +1916,7 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Ft Cm functype
 .Pp
 Examples:
-.D1 \&.Ft int
+.Dl \&.Ft int
 .Bd -literal -offset indent -compact
 \&.Ft functype
 \&.Fn funcname
@@ -1934,8 +1934,8 @@ version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
-.D1 \&.Fx 7.1
-.D1 \&.Fx
+.Dl \&.Fx 7.1
+.Dl \&.Fx
 .Pp
 See also
 .Sx \&At ,
@@ -1955,8 +1955,8 @@ This is similar to
 but used for instructions rather than values.
 .Pp
 Examples:
-.D1 \&.Ic hash
-.D1 \&.Ic alias
+.Dl \&.Ic hash
+.Dl \&.Ic alias
 .Pp
 Note that using
 .Sx \&Bd Fl literal
@@ -1977,7 +1977,7 @@ preceded by
 the arguments is enclosed in angle brackets.
 .Pp
 Examples:
-.D1 \&.In sys/types
+.Dl \&.In sys/types
 .Pp
 See also
 .Sx MANUAL STRUCTURE .
@@ -2057,7 +2057,7 @@ phrases on an
 .Sx \&It ,
 for example,
 .Pp
-.D1 .It \(dqcol1 ; <TAB> col2 ;\(dq \&;
+.Dl .It \(dqcol1 ; <TAB> col2 ;\(dq \&;
 .Pp
 will preserve the semicolon whitespace except for the last.
 .Pp
@@ -2084,8 +2084,8 @@ section as described in
 .Sx MANUAL STRUCTURE .
 .Pp
 Examples:
-.D1 \&.Lb libz
-.D1 \&.Lb mdoc
+.Dl \&.Lb libz
+.Dl \&.Lb mdoc
 .Ss \&Li
 Denotes text that should be in a literal font mode.
 Note that this is a presentation term and should not be used for
@@ -2103,8 +2103,8 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Lk Cm uri Op Cm name
 .Pp
 Examples:
-.D1 \&.Lk http://bsd.lv \*qThe BSD.lv Project\*q
-.D1 \&.Lk http://bsd.lv
+.Dl \&.Lk http://bsd.lv \*qThe BSD.lv Project\*q
+.Dl \&.Lk http://bsd.lv
 .Pp
 See also
 .Sx \&Mt .
@@ -2118,8 +2118,8 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Ms Cm symbol
 .Pp
 Examples:
-.D1 \&.Ms sigma
-.D1 \&.Ms aleph
+.Dl \&.Ms sigma
+.Dl \&.Ms aleph
 .Ss \&Mt
 Format a
 .Dq mailto:
@@ -2129,7 +2129,7 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Mt Cm address
 .Pp
 Examples:
-.D1 \&.Mt discuss@manpages.bsd.lv
+.Dl \&.Mt discuss@manpages.bsd.lv
 .Ss \&Nd
 A one line description of the manual's content.
 This may only be invoked in the
@@ -2139,8 +2139,8 @@ section subsequent the
 macro.
 .Pp
 Examples:
-.D1 \&.Sx \&Nd mdoc language reference
-.D1 \&.Sx \&Nd format and display UNIX manuals
+.Dl \&.Sx \&Nd mdoc language reference
+.Dl \&.Sx \&Nd format and display UNIX manuals
 .Pp
 The
 .Sx \&Nd
@@ -2197,14 +2197,14 @@ A
 macro used to terminate prior macro contexts.
 .Pp
 Examples:
-.D1 \&.Sx \&Fl ab \&No cd \&Fl ef
+.Dl \&.Sx \&Fl ab \&No cd \&Fl ef
 .Ss \&Ns
 Suppress a space.
 Following invocation, text is interpreted as free-form text until a
 macro is encountered.
 .Pp
 Examples:
-.D1 \&.Fl o \&Ns \&Ar output
+.Dl \&.Fl o \&Ns \&Ar output
 .Pp
 See also
 .Sx \&No
@@ -2217,8 +2217,8 @@ version provided as an argument, or a default value if
 no argument is provided.
 .Pp
 Examples:
-.D1 \&.Nx 5.01
-.D1 \&.Nx
+.Dl \&.Nx 5.01
+.Dl \&.Nx
 .Pp
 See also
 .Sx \&At ,
@@ -2249,8 +2249,8 @@ Used when listing options to command-line utilities.
 Prints the argument(s) in brackets.
 .Pp
 Examples:
-.D1 \&.Op \&Fl a \&Ar b
-.D1 \&.Op \&Ar a | b
+.Dl \&.Op \&Fl a \&Ar b
+.Dl \&.Op \&Ar a | b
 .Pp
 See also
 .Sx \&Oo .
@@ -2271,9 +2271,9 @@ Left unspecified, it defaults to the local operating system version.
 This is the suggested form.
 .Pp
 Examples:
-.D1 \&.Os
-.D1 \&.Os KTH/CSC/TCS
-.D1 \&.Os BSD 4.3
+.Dl \&.Os
+.Dl \&.Os KTH/CSC/TCS
+.Dl \&.Os BSD 4.3
 .Pp
 See also
 .Sx \&Dd
@@ -2291,8 +2291,8 @@ version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
-.D1 \&.Ox 4.5
-.D1 \&.Ox
+.Dl \&.Ox 4.5
+.Dl \&.Ox
 .Pp
 See also
 .Sx \&At ,
@@ -2310,8 +2310,8 @@ If an argument is not provided, the string
 is used as a default.
 .Pp
 Examples:
-.D1 \&.Pa /usr/bin/mandoc
-.D1 \&.Pa /usr/share/man/man7/mdoc.7
+.Dl \&.Pa /usr/bin/mandoc
+.Dl \&.Pa /usr/share/man/man7/mdoc.7
 .Pp
 See also
 .Sx \&Lk .
@@ -2331,7 +2331,7 @@ The
 argument may be a macro.
 .Pp
 Examples:
-.D1 \&.Pf \e. \&Sx \&Pf \&Cm prefix suffix
+.Dl \&.Pf \e. \&Sx \&Pf \&Cm prefix suffix
 .Ss \&Po
 Multi-line version of
 .Sx \&Pq .
@@ -2591,7 +2591,12 @@ The referenced section or sub-section name must be identical to the
 enclosed argument, including whitespace.
 .Pp
 Examples:
-.D1 \&.Sx MANUAL STRUCTURE
+.Dl \&.Sx MANUAL STRUCTURE
+.Pp
+See also
+.Sx \&Sh
+and
+.Sx \&Ss .
 .Ss \&Sy
 Format enclosed arguments in symbolic
 .Pq Dq boldface .
@@ -2607,7 +2612,7 @@ and
 Format a tradename.
 .Pp
 Examples:
-.D1 \&.Tn IBM
+.Dl \&.Tn IBM
 .Ss \&Ud
 Prints out
 .Dq currently under development .
@@ -2616,7 +2621,7 @@ Format the UNIX name.
 Accepts no argument.
 .Pp
 Examples:
-.D1 \&.Ux
+.Dl \&.Ux
 .Pp
 See also
 .Sx \&At ,
@@ -2631,8 +2636,8 @@ and
 A variable name.
 .Pp
 Examples:
-.D1 \&.Va foo
-.D1 \&.Va const char *bar ;
+.Dl \&.Va foo
+.Dl \&.Va const char *bar ;
 .Ss \&Vt
 A variable type.
 This is also used for indicating global variables in the
@@ -2651,8 +2656,8 @@ Note that this should not be confused with
 which is used for function return types.
 .Pp
 Examples:
-.D1 \&.Vt unsigned char
-.D1 \&.Vt extern const char * const sys_signame[] \&;
+.Dl \&.Vt unsigned char
+.Dl \&.Vt extern const char * const sys_signame[] \&;
 .Pp
 See also
 .Sx MANUAL STRUCTURE
@@ -2690,9 +2695,9 @@ This behaviour is for compatibility with
 GNU troff.
 .Pp
 Examples:
-.D1 \&.Xr mandoc 1
-.D1 \&.Xr mandoc 1 \&;
-.D1 \&.Xr mandoc 1 \&Ns s behaviour
+.Dl \&.Xr mandoc 1
+.Dl \&.Xr mandoc 1 \&;
+.Dl \&.Xr mandoc 1 \&Ns s behaviour
 .Ss \&br
 Emits a line-break.
 This macro should not be used; it is implemented for compatibility with
