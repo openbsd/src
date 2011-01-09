@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.4 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.5 2011/01/09 14:30:48 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,10 +41,14 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 	else if (NULL == dp->last)
 		cp = dp->layout->first;
 
-	/* Skip over spanners to data formats. */
+	/* 
+	 * Skip over spanners and vertical lines to data formats, since
+	 * we want to match data with data layout cells in the header.
+	 */
 
 	while (cp && (TBL_CELL_VERT == cp->pos || 
-				TBL_CELL_DVERT == cp->pos))
+				TBL_CELL_DVERT == cp->pos ||
+				TBL_CELL_SPAN == cp->pos))
 		cp = cp->next;
 
 	dat = mandoc_calloc(1, sizeof(struct tbl_dat));
@@ -104,19 +108,32 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 	return(1);
 }
 
+/* ARGSUSED */
 int
 tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 {
 	struct tbl_dat	*dat;
 	size_t	 	 sz;
+	int		 pos;
 
-	if (0 == strcmp(p, "T}")) {
-		tbl->part = TBL_PART_DATA;
-		return(1);
-	}
+	pos = 0;
 
 	dat = tbl->last_span->last;
 	dat->pos = TBL_DATA_DATA;
+
+	if (p[pos] == 'T' && p[pos + 1] == '}') {
+		pos += 2;
+		if (p[pos] == tbl->opts.tab) {
+			tbl->part = TBL_PART_DATA;
+			pos++;
+			return(data(tbl, tbl->last_span, ln, p, &pos));
+		} else if ('\0' == p[pos]) {
+			tbl->part = TBL_PART_DATA;
+			return(1);
+		}
+
+		/* Fallthrough: T} is part of a word. */
+	}
 
 	if (dat->string) {
 		sz = strlen(p) + strlen(dat->string) + 2;

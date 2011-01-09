@@ -1,6 +1,6 @@
-/*	$Id: out.c,v 1.8 2010/09/13 22:04:01 schwarze Exp $ */
+/*	$Id: out.c,v 1.9 2011/01/09 14:30:48 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,15 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "out.h"
+
+static	void	tblcalc_data(struct rofftbl *, struct roffcol *,
+			const struct tbl *, const struct tbl_dat *);
+static	void	tblcalc_literal(struct rofftbl *, struct roffcol *,
+			const struct tbl_dat *);
+static	void	tblcalc_number(struct rofftbl *, struct roffcol *,
+			const struct tbl *, const struct tbl_dat *);
 
 /* 
  * Convert a `scaling unit' to a consistent form, or fail.  Scaling
@@ -354,3 +362,199 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 
 	return(i);
 }
+
+/*
+ * Calculate the abstract widths and decimal positions of columns in a
+ * table.  This routine allocates the columns structures then runs over
+ * all rows and cells in the table.  The function pointers in "tbl" are
+ * used for the actual width calculations.
+ */
+void
+tblcalc(struct rofftbl *tbl, const struct tbl_span *sp)
+{
+	const struct tbl_dat	*dp;
+	const struct tbl_head	*hp;
+	struct roffcol		*col;
+
+	/*
+	 * Allocate the master column specifiers.  These will hold the
+	 * widths and decimal positions for all cells in the column.  It
+	 * must be freed and nullified by the caller.
+	 */
+
+	assert(NULL == tbl->cols);
+	tbl->cols = calloc(sp->tbl->cols, sizeof(struct roffcol));
+
+	hp = sp->head;
+
+	for ( ; sp; sp = sp->next) {
+		if (TBL_SPAN_DATA != sp->pos)
+			continue;
+		/*
+		 * Account for the data cells in the layout, matching it
+		 * to data cells in the data section.
+		 */
+		for (dp = sp->first; dp; dp = dp->next) {
+			if (NULL == dp->layout)
+				continue;
+			col = &tbl->cols[dp->layout->head->ident];
+			tblcalc_data(tbl, col, sp->tbl, dp);
+		}
+	}
+
+	/* 
+	 * Calculate width of the spanners.  These get one space for a
+	 * vertical line, two for a double-vertical line. 
+	 */
+
+	for ( ; hp; hp = hp->next) {
+		col = &tbl->cols[hp->ident];
+		switch (hp->pos) {
+		case (TBL_HEAD_VERT):
+			col->width = (*tbl->len)(1, tbl->arg);
+			break;
+		case (TBL_HEAD_DVERT):
+			col->width = (*tbl->len)(2, tbl->arg);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+static void
+tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
+		const struct tbl *tp, const struct tbl_dat *dp)
+{
+	size_t		 sz;
+
+	/* Branch down into data sub-types. */
+
+	switch (dp->layout->pos) {
+	case (TBL_CELL_HORIZ):
+		/* FALLTHROUGH */
+	case (TBL_CELL_DHORIZ):
+		sz = (*tbl->len)(1, tbl->arg);
+		if (col->width < sz)
+			col->width = sz;
+		break;
+	case (TBL_CELL_LONG):
+		/* FALLTHROUGH */
+	case (TBL_CELL_CENTRE):
+		/* FALLTHROUGH */
+	case (TBL_CELL_LEFT):
+		/* FALLTHROUGH */
+	case (TBL_CELL_RIGHT):
+		tblcalc_literal(tbl, col, dp);
+		break;
+	case (TBL_CELL_NUMBER):
+		tblcalc_number(tbl, col, tp, dp);
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+}
+
+static void
+tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
+		const struct tbl_dat *dp)
+{
+	size_t		 sz, bufsz, spsz;
+
+	/* 
+	 * Calculate our width and use the spacing, with a minimum
+	 * spacing dictated by position (centre, e.g,. gets a space on
+	 * either side, while right/left get a single adjacent space).
+	 */
+
+	sz = bufsz = spsz = 0;
+	if (dp->string)
+		sz = (*tbl->slen)(dp->string, tbl->arg);
+
+	assert(dp->layout);
+	switch (dp->layout->pos) {
+	case (TBL_CELL_LONG):
+		/* FALLTHROUGH */
+	case (TBL_CELL_CENTRE):
+		bufsz = (*tbl->len)(2, tbl->arg);
+		break;
+	default:
+		bufsz = (*tbl->len)(1, tbl->arg);
+		break;
+	}
+
+	if (dp->layout->spacing) {
+		spsz = (*tbl->len)(dp->layout->spacing, tbl->arg);
+		bufsz = bufsz > spsz ? bufsz : spsz;
+	}
+
+	sz += bufsz;
+	if (col->width < sz)
+		col->width = sz;
+}
+
+static void
+tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
+		const struct tbl *tp, const struct tbl_dat *dp)
+{
+	int 		 i;
+	size_t		 sz, psz, ssz, d, max;
+	char		*cp;
+	const char	*str;
+	char		 buf[2];
+
+	/*
+	 * First calculate number width and decimal place (last + 1 for
+	 * no-decimal numbers).  If the stored decimal is subsequent
+	 * ours, make our size longer by that difference
+	 * (right-"shifting"); similarly, if ours is subsequent the
+	 * stored, then extend the stored size by the difference.
+	 * Finally, re-assign the stored values.
+	 */
+
+	str = dp && dp->string ? dp->string : "";
+	max = dp && dp->layout ? dp->layout->spacing : 0;
+
+	sz = (*tbl->slen)(str, tbl->arg);
+
+	buf[0] = tp->decimal;
+	buf[1] = '\0';
+
+	psz = (*tbl->slen)(buf, tbl->arg);
+
+	if (NULL != (cp = strrchr(str, tp->decimal))) {
+		buf[1] = '\0';
+		for (ssz = 0, i = 0; cp != &str[i]; i++) {
+			buf[0] = str[i];
+			ssz += (*tbl->slen)(buf, tbl->arg);
+		}
+		d = ssz + psz;
+	} else
+		d = sz + psz;
+
+	/* Padding. */
+
+	sz += (*tbl->len)(2, tbl->arg);
+	d += (*tbl->len)(1, tbl->arg);
+
+	/* Adjust the settings for this column. */
+
+	if (col->decimal > d) {
+		sz += col->decimal - d;
+		d = col->decimal;
+	} else
+		col->width += d - col->decimal;
+
+	if (sz > col->width)
+		col->width = sz;
+	if (d > col->decimal)
+		col->decimal = d;
+
+	/* Adjust for stipulated width. */
+
+	if (col->width < max)
+		col->width = max;
+}
+
+

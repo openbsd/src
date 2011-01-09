@@ -1,6 +1,6 @@
-/*	$Id: out.h,v 1.6 2010/07/25 18:05:54 schwarze Exp $ */
+/*	$Id: out.h,v 1.7 2011/01/09 14:30:48 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,21 @@
 
 __BEGIN_DECLS
 
+struct	roffcol {
+	size_t		 width; /* width of cell */
+	size_t		 decimal; /* decimal position in cell */
+};
+
+typedef	size_t (*tbl_strlen)(const char *, void *);
+typedef	size_t (*tbl_len)(size_t, void *);
+
+struct	rofftbl {
+	tbl_strlen	 slen; /* calculate string length */
+	tbl_len		 len; /* produce width of empty space */
+	struct roffcol	*cols; /* master column specifiers */
+	void		*arg; /* passed to slen and len */
+};
+
 enum	roffscale {
 	SCALE_CM,
 	SCALE_IN,
@@ -40,11 +55,11 @@ enum	roffdeco {
 	DECO_SPECIAL, /* special character */
 	DECO_SSPECIAL, /* single-char special */
 	DECO_RESERVED, /* reserved word */
-	DECO_BOLD,
-	DECO_ITALIC,
-	DECO_ROMAN,
-	DECO_PREVIOUS,
-	DECO_NOSPACE,
+	DECO_BOLD, /* bold font */
+	DECO_ITALIC, /* italic font */
+	DECO_ROMAN, /* "normal" undecorated font */
+	DECO_PREVIOUS, /* revert to previous font */
+	DECO_NOSPACE, /* suppress spacing */
 	DECO_FONT, /* font */
 	DECO_FFONT, /* font family */
 	DECO_MAX
@@ -54,10 +69,6 @@ struct	roffsu {
 	enum roffscale	  unit;
 	double		  scale;
 };
-
-#define	SCALE_INVERT(p) \
-	do { (p)->scale = -(p)->scale; } \
-	while (/* CONSTCOND */ 0)
 
 #define	SCALE_VS_INIT(p, v) \
 	do { (p)->unit = SCALE_VS; \
@@ -69,11 +80,11 @@ struct	roffsu {
 	     (p)->scale = (v); } \
 	while (/* CONSTCOND */ 0)
 
-int		  a2roffsu(const char *, 
-			struct roffsu *, enum roffscale);
-int		  a2roffdeco(enum roffdeco *, const char **, size_t *);
-void		  time2a(time_t, char *, size_t);
+int	  a2roffsu(const char *, struct roffsu *, enum roffscale);
+int	  a2roffdeco(enum roffdeco *, const char **, size_t *);
+void	  time2a(time_t, char *, size_t);
+void	  tblcalc(struct rofftbl *tbl, const struct tbl_span *);
 
 __END_DECLS
 
-#endif /*!HTML_H*/
+#endif /*!OUT_H*/

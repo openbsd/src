@@ -1,4 +1,4 @@
-/*	$Id: tbl_html.c,v 1.1 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: tbl_html.c,v 1.2 2011/01/09 14:30:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,47 +27,100 @@
 #include "out.h"
 #include "html.h"
 
+static	size_t	 html_tbl_len(size_t, void *);
+static	size_t	 html_tbl_strlen(const char *, void *);
+
+/* ARGSUSED */
+static size_t
+html_tbl_len(size_t sz, void *arg)
+{
+	
+	return(sz);
+}
+
+/* ARGSUSED */
+static size_t
+html_tbl_strlen(const char *p, void *arg)
+{
+
+	return(strlen(p));
+}
+
 void
 print_tbl(struct html *h, const struct tbl_span *sp)
 {
 	const struct tbl_head *hp;
 	const struct tbl_dat *dp;
-	struct tag	 *tt;
-
-	switch (sp->pos) {
-	case (TBL_SPAN_HORIZ):
-		/* FALLTHROUGH */
-	case (TBL_SPAN_DHORIZ):
-		return;
-	default:
-		break;
-	}
+	struct tag	*tt;
+	struct htmlpair	 tag;
+	struct roffsu	 su;
+	struct roffcol	*col;
 
 	/* Inhibit printing of spaces: we do padding ourselves. */
 
 	h->flags |= HTML_NONOSPACE;
 	h->flags |= HTML_NOSPACE;
 
-	print_otag(h, TAG_TABLE, 0, NULL);
-	print_otag(h, TAG_TR, 0, NULL);
+	/* First pass: calculate widths. */
 
-	dp = sp->first;
-	for (hp = sp->head; hp; hp = hp->next) {
-		switch (hp->pos) {
-		case (TBL_HEAD_VERT):
-			/* FALLTHROUGH */
-		case (TBL_HEAD_DVERT):
-			continue;
-		case (TBL_HEAD_DATA):
-			break;
-		}
-		tt = print_otag(h, TAG_TD, 0, NULL);
-		if (dp) {
-			if (dp->string)
-				print_text(h, dp->string);
-			dp = dp->next;
-		}
-		print_tagq(h, tt);
+	if (TBL_SPAN_FIRST & sp->flags) {
+		h->tbl.len = html_tbl_len;
+		h->tbl.slen = html_tbl_strlen;
+		tblcalc(&h->tbl, sp);
 	}
+
+	switch (sp->pos) {
+	case (TBL_SPAN_HORIZ):
+		/* FALLTHROUGH */
+	case (TBL_SPAN_DHORIZ):
+		break;
+	default:
+		PAIR_CLASS_INIT(&tag, "tbl");
+		print_otag(h, TAG_TABLE, 1, &tag);
+		print_otag(h, TAG_TR, 0, NULL);
+
+		/* Iterate over template headers. */
+
+		dp = sp->first;
+		for (hp = sp->head; hp; hp = hp->next) {
+			switch (hp->pos) {
+			case (TBL_HEAD_VERT):
+				/* FALLTHROUGH */
+			case (TBL_HEAD_DVERT):
+				continue;
+			case (TBL_HEAD_DATA):
+				break;
+			}
+
+			/*
+			 * For the time being, use the simplest possible
+			 * table styling: setting the widths of data
+			 * columns.
+			 */
+
+			col = &h->tbl.cols[hp->ident];
+			SCALE_HS_INIT(&su, col->width);
+			bufcat_su(h, "width", &su);
+			PAIR_STYLE_INIT(&tag, h);
+			tt = print_otag(h, TAG_TD, 1, &tag);
+
+			if (dp && dp->string) 
+				print_text(h, dp->string);
+			if (dp)
+				dp = dp->next;
+
+			print_tagq(h, tt);
+		}
+		break;
+	}
+
 	h->flags &= ~HTML_NONOSPACE;
+
+	/* Close out column specifiers on the last span. */
+
+	if (TBL_SPAN_LAST & sp->flags) {
+		assert(h->tbl.cols);
+		free(h->tbl.cols);
+		h->tbl.cols = NULL;
+	}
 }

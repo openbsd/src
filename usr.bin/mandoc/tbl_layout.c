@@ -1,4 +1,4 @@
-/*	$Id: tbl_layout.c,v 1.5 2011/01/04 23:44:20 schwarze Exp $ */
+/*	$Id: tbl_layout.c,v 1.6 2011/01/09 14:30:48 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,6 +28,12 @@ struct	tbl_phrase {
 	char		 name;
 	enum tbl_cellt	 key;
 };
+
+/*
+ * FIXME: we can make this parse a lot nicer by, when an error is
+ * encountered in a layout key, bailing to the next key (i.e. to the
+ * next whitespace then continuing).
+ */
 
 #define	KEYS_MAX	 11
 
@@ -84,6 +90,20 @@ mod:
 		break;
 	}
 
+	/* Throw away parenthesised expression. */
+
+	if ('(' == p[*pos]) {
+		(*pos)++;
+		while (p[*pos] && ')' != p[*pos])
+			(*pos)++;
+		if (')' == p[*pos]) {
+			(*pos)++;
+			goto mod;
+		}
+		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		return(0);
+	}
+
 	/* Parse numerical spacing from modifier string. */
 
 	if (isdigit((unsigned char)p[*pos])) {
@@ -110,7 +130,7 @@ mod:
 
 	/* TODO: GNU has many more extensions. */
 
-	switch (tolower(p[(*pos)++])) {
+	switch (tolower((unsigned char)p[(*pos)++])) {
 	case ('z'):
 		cp->flags |= TBL_CELL_WIGN;
 		goto mod;
@@ -140,7 +160,7 @@ mod:
 		return(0);
 	}
 
-	switch (tolower(p[(*pos)++])) {
+	switch (tolower((unsigned char)p[(*pos)++])) {
 	case ('b'):
 		cp->flags |= TBL_CELL_BOLD;
 		goto mod;
@@ -165,7 +185,7 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 	/* Parse the column position (`r', `R', `|', ...). */
 
 	for (i = 0; i < KEYS_MAX; i++)
-		if (tolower(p[*pos]) == keys[i].name)
+		if (tolower((unsigned char)p[*pos]) == keys[i].name)
 			break;
 
 	if (KEYS_MAX == i) {
@@ -173,8 +193,19 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 		return(0);
 	}
 
-	(*pos)++;
 	c = keys[i].key;
+
+	/*
+	 * If a span cell is found first, raise a warning and abort the
+	 * parse.  FIXME: recover from this somehow?
+	 */
+
+	if (NULL == rp->first && TBL_CELL_SPAN == c) {
+		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		return(0);
+	}
+
+	(*pos)++;
 
 	/* Extra check for the double-vertical. */
 

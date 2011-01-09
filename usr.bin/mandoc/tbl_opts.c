@@ -1,6 +1,6 @@
-/*	$Id: tbl_opts.c,v 1.1 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: tbl_opts.c,v 1.2 2011/01/09 14:30:48 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -72,12 +72,12 @@ static	const struct tbl_phrase keys[KEY_MAXKEYS] = {
 };
 
 static	int		 arg(struct tbl_node *, int, 
-				const char *, int *, int);
+				const char *, int *, enum tbl_ident);
 static	void		 opt(struct tbl_node *, int, 
 				const char *, int *);
 
 static int
-arg(struct tbl_node *tbl, int ln, const char *p, int *pos, int key)
+arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 {
 	int		 i;
 	char		 buf[KEY_MAXNUMSZ];
@@ -102,12 +102,12 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, int key)
 
 	switch (key) {
 	case (KEY_DELIM):
-		if ('\0' == (tbl->opts.delims[0] = p[(*pos)++])) {
+		if ('\0' == p[(*pos)++]) {
 			TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos - 1);
 			return(0);
 		} 
 
-		if ('\0' == (tbl->opts.delims[1] = p[(*pos)++])) {
+		if ('\0' == p[(*pos)++]) {
 			TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos - 1);
 			return(0);
 		} 
@@ -188,7 +188,7 @@ again:	/*
 	/* Copy up to first non-alpha character. */
 
 	for (sv = *pos, i = 0; i < KEY_MAXNAME; i++, (*pos)++) {
-		buf[i] = tolower(p[*pos]);
+		buf[i] = tolower((unsigned char)p[*pos]);
 		if ( ! isalpha((unsigned char)buf[i]))
 			break;
 	}
