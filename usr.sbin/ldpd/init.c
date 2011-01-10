@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2010/11/04 09:52:16 claudio Exp $ */
+/*	$OpenBSD: init.c,v 1.7 2011/01/10 12:02:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -38,6 +38,7 @@
 #include "ldpe.h"
 
 int	gen_init_prms_tlv(struct ibuf *, struct nbr *, u_int16_t);
+int	tlv_decode_opt_init_prms(char *, u_int16_t);
 
 void
 send_init(struct nbr *nbr)
@@ -88,12 +89,19 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 	bcopy(buf, &sess, sizeof(sess));
 
 	if (ntohs(sess.length) != SESS_PRMS_SIZE - TLV_HDR_LEN ||
-	    ntohs(sess.length) != len - TLV_HDR_LEN) {
+	    ntohs(sess.length) > len - TLV_HDR_LEN) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, init.msgid, init.type);
 		return (-1);
 	}
 
-	/* ATM and Frame Relay optional attributes not supported */
+	buf += SESS_PRMS_SIZE;
+	len -= SESS_PRMS_SIZE;
+
+	/* just ignore all optional TLVs for now */
+	if (tlv_decode_opt_init_prms(buf, len) == -1) {
+		session_shutdown(nbr, S_BAD_TLV_VAL, init.msgid, init.type);
+		return (-1);
+	}
 
 	if (nbr->iface->keepalive < ntohs(sess.keepalive_time))
 		nbr->keepalive = nbr->iface->keepalive;
@@ -126,4 +134,35 @@ gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr, u_int16_t size)
 	parms.lspace_id = 0;
 
 	return (ibuf_add(buf, &parms, SESS_PRMS_SIZE));
+}
+
+int
+tlv_decode_opt_init_prms(char *buf, u_int16_t len)
+{
+	struct tlv	tlv;
+	int		cons = 0;
+	u_int16_t	tlv_len;
+
+	 while (len >= sizeof(tlv)) {
+		bcopy(buf, &tlv, sizeof(tlv));
+		tlv_len = ntohs(tlv.length);
+		switch (ntohs(tlv.type)) {
+		case TLV_TYPE_ATMSESSIONPAR:
+			log_warnx("ATM session parameter present");
+			return (-1);
+		case TLV_TYPE_FRSESSION:
+			log_warnx("FR session parameter present");
+			return (-1);
+		default:
+			/* if unknown flag set, ignore TLV */
+			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
+				return (-1);
+			break;
+		}
+		buf += TLV_HDR_LEN + tlv_len;
+		len -= TLV_HDR_LEN + tlv_len;
+		cons += TLV_HDR_LEN + tlv_len;
+	}
+
+	return (cons);
 }
