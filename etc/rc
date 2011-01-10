@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.346 2010/12/22 18:13:14 deraadt Exp $
+#	$OpenBSD: rc,v 1.347 2011/01/10 06:44:49 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -102,12 +102,12 @@ wsconsctl_conf()
 random_seed()
 {
 	if [ -f /var/db/host.random -a "X$random_seed_done" = "X" ]; then
-		dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
+		dd if=/var/db/host.random of=/dev/arandom bs=65536 count=1 \
 		    > /dev/null 2>&1
 
 		# reset seed file, so that if a shutdown-less reboot occurs,
 		# the next seed is not a repeat
-		dd if=/dev/arandom of=/var/db/host.random bs=1024 count=64 \
+		dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 \
 		    > /dev/null 2>&1
 
 		random_seed_done=1
@@ -159,7 +159,7 @@ export PATH
 . /etc/rc.conf
 
 if [ X"$1" = X"shutdown" ]; then
-	dd if=/dev/arandom of=/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
+	dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 >/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
 	if [ $? -eq 0 -a -f /etc/rc.shutdown ]; then
 		echo /etc/rc.shutdown in progress...
@@ -310,7 +310,7 @@ mount -s /var >/dev/null 2>&1
 
 # if there's no /var/db/host.random, use /dev/arandom to create one
 if [ ! -f /var/db/host.random ]; then
-	dd if=/dev/arandom of=/var/db/host.random bs=1024 count=64 \
+	dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 \
 		>/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
 else
