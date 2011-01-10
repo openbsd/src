@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.86 2010/09/21 01:09:10 matthew Exp $	*/
+/*	$OpenBSD: systm.h,v 1.87 2011/01/10 23:23:56 tedu Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -194,6 +194,8 @@ void	ovbcopy(const void *, void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,3)))
 		__attribute__ ((__bounded__(__buffer__,2,3)));
 void	bzero(void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,2)));
+void	explicit_bzero(void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,2)));
 int	bcmp(const void *, const void *, size_t);
 void	*memcpy(void *, const void *, size_t)
