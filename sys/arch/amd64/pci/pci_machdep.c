@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.39 2011/01/09 11:38:10 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.40 2011/01/10 16:26:27 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -217,7 +217,7 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pcireg_t data;
 	int bus;
 
-	if (pci_mcfg_addr) {
+	if (pci_mcfg_addr && reg >= PCI_CONFIG_SPACE_SIZE) {
 		pci_decompose_tag(pc, tag, &bus, NULL, NULL);
 		if (bus >= pci_mcfg_min_bus && bus <= pci_mcfg_max_bus) {
 			pci_mcfg_map_bus(bus);
@@ -241,7 +241,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	int bus;
 
-	if (pci_mcfg_addr) {
+	if (pci_mcfg_addr && reg >= PCI_CONFIG_SPACE_SIZE) {
 		pci_decompose_tag(pc, tag, &bus, NULL, NULL);
 		if (bus >= pci_mcfg_min_bus && bus <= pci_mcfg_max_bus) {
 			pci_mcfg_map_bus(bus);
