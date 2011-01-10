@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.20 2011/01/03 19:33:46 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.21 2011/01/10 13:04:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -491,24 +491,31 @@ sub parse_and_run
 	    '[-AaCcdfIKLMmPqRSstUv] [-D nolock][-E filename] [-e pkg-name] ',
 	    '[-l str] [-Q query] [-r pkgspec] [pkg-name] [...]');
 
-	$state->lock;
-
 	if ($state->opt('r')) {
 
 		require OpenBSD::PkgSpec;
 
-		my $s = OpenBSD::PkgSpec->new($state->opt('r'));
+		my $pattern = $state->opt('r');
+		my $s = OpenBSD::PkgSpec->new($pattern);
 		if (!$s->is_valid) {
-			$state->errsay("Invalid spec: #1", $state->opt('r'));
+			$state->errsay("Invalid pkgspec: #1", $pattern);
 			return 1;
 		}
-		if ($s->match_ref(\@ARGV) != 0) {
+		my @l = $s->match_ref(\@ARGV);
+		unless ($state->opt('q')) {
+			$state->say("Pkgspec #1 matched #2", $pattern, 
+			    join(' ', @l));
+		}
+		if (@l != 0) {
 			return 0;
 		} else {
 			return 1;
 		}
 		
 	}
+
+	$state->lock;
+
 	my $nonames = @ARGV == 0 && @extra == 0;
 
 	unless ($state->hasanyopt('cMUdfILRsSP') || $state->{terse}) {
