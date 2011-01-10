@@ -1,0 +1,33 @@
+.Dd January 10, 2011
+.Dt STRING-NAME 1
+.Os
+.Sh NAME
+.Nm string-name
+.Nd torturing .ds with weird string names
+.Sh DESCRIPTION
+.ds norm value of norm
+.ds "quot" value of "quot"
+.ds bs\e value of bs\ee
+.ds bs\\e value of bs\e\ee
+.ds bl\ e value of bl\e e
+norm: \*[norm]
+.br
+quot: \*[quot]
+.br
+"quot": \*["quot"]
+.br
+bs\e\ee: \*[bs\\e]
+.\".br
+.\"bs\ee: \*[bs\e]
+.br
+bse: \*[bse]
+.br
+bs: \*[bs]
+.\".br
+.\"bl\e e: \*[bl\ e]
+.br
+bl e: \*[bl e]
+.br
+ble: \*[ble]
+.br
+bl: \*[bl]

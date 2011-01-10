@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.28 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.29 2011/01/10 23:53:32 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -116,6 +116,7 @@ enum	mandocerr {
 
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character */
+	MANDOCERR_NAMESC, /* escaped character not allowed in a name */
 	MANDOCERR_NOTEXT, /* skipping text before the first section header */
 	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */

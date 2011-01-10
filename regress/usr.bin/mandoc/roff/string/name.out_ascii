@@ -1,0 +1,16 @@
+STRING-NAME(1)             OpenBSD Reference Manual             STRING-NAME(1)
+
+NNAAMMEE
+     ssttrriinngg--nnaammee - torturing .ds with weird string names
+
+DDEESSCCRRIIPPTTIIOONN
+     norm: value of norm
+     quot:
+     "quot": value of "quot"
+     bs\\e: value of bs\\e
+     bse:
+     bs:
+     bl e:
+     ble:
+     bl:
+

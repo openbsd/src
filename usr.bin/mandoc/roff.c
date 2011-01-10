@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.27 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: roff.c,v 1.28 2011/01/10 23:53:32 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -130,6 +130,7 @@ static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
 static	enum roffrule	 roff_evalcond(const char *, int *);
 static	void		 roff_freestr(struct roff *);
+static	char		*roff_getname(struct roff *, char **, int, int);
 static	const char	*roff_getstrn(const struct roff *, 
 				const char *, size_t);
 static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
@@ -1052,25 +1053,13 @@ roff_ds(ROFF_ARGS)
 	 * will have `bar  "     ' as its value.
 	 */
 
-	name = *bufp + pos;
+	string = *bufp + pos;
+	name = roff_getname(r, &string, ln, pos);
 	if ('\0' == *name)
 		return(ROFF_IGN);
 
-	string = name;
-	/* Read until end of name. */
-	while (*string && ' ' != *string)
-		string++;
-
-	/* Nil-terminate name. */
-	if (*string)
-		*(string++) = '\0';
-	
-	/* Read past spaces. */
-	while (*string && ' ' == *string)
-		string++;
-
-	/* Read passed initial double-quote. */
-	if (*string && '"' == *string)
+	/* Read past initial double-quote. */
+	if ('"' == *string)
 		string++;
 
 	/* The rest is the value. */
@@ -1083,30 +1072,13 @@ roff_ds(ROFF_ARGS)
 static enum rofferr
 roff_nr(ROFF_ARGS)
 {
-	const char	*key, *val;
+	const char	*key;
+	char		*val;
 	struct reg	*rg;
 
-	key = &(*bufp)[pos];
+	val = *bufp + pos;
+	key = roff_getname(r, &val, ln, pos);
 	rg = r->regs->regs;
-
-	/* Parse register request. */
-	while ((*bufp)[pos] && ' ' != (*bufp)[pos])
-		pos++;
-
-	/*
-	 * Set our nil terminator.  Because this line is going to be
-	 * ignored anyway, we can munge it as we please.
-	 */
-	if ((*bufp)[pos])
-		(*bufp)[pos++] = '\0';
-
-	/* Skip whitespace to register token. */
-	while ((*bufp)[pos] && ' ' == (*bufp)[pos])
-		pos++;
-
-	val = &(*bufp)[pos];
-
-	/* Process register token. */
 
 	if (0 == strcmp(key, "nS")) {
 		rg[(int)REG_nS].set = 1;
@@ -1245,6 +1217,41 @@ roff_userdef(ROFF_ARGS)
 	return(*szp > 1 && '\n' == (*bufp)[(int)*szp - 2] ?
 	   ROFF_REPARSE : ROFF_APPEND);
 }
+
+
+static char *
+roff_getname(struct roff *r, char **cpp, int ln, int pos)
+{
+	char	 *name, *cp;
+
+	name = *cpp;
+	if ('\0' == *name)
+		return(name);
+
+	/* Read until end of name. */
+	for (cp = name; '\0' != *cp && ' ' != *cp; cp++) {
+		if ('\\' != *cp)
+			continue;
+		cp++;
+		if ('\\' == *cp)
+			continue;
+		(*r->msg)(MANDOCERR_NAMESC, r->data, ln, pos, NULL);
+		*cp = '\0';
+		name = cp;
+	}
+
+	/* Nil-terminate name. */
+	if ('\0' != *cp)
+		*(cp++) = '\0';
+
+	/* Read past spaces. */
+	while (' ' == *cp)
+		cp++;
+
+	*cpp = cp;
+	return(name);
+}
+
 
 /*
  * Store *string into the user-defined string called *name.
