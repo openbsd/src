@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.12 2010/07/21 19:35:15 deraadt Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.13 2011/01/10 13:36:57 mikeb Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -28,6 +28,8 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
+
+int acpihpet_attached;
 
 int acpihpet_match(struct device *, void *, void *);
 void acpihpet_attach(struct device *, struct device *, void *);
@@ -87,9 +89,9 @@ acpihpet_match(struct device *parent, void *match, void *aux)
 	struct acpi_table_header *hdr;
 
 	/*
-	 * If we do not have a table, it is not us
+	 * If we do not have a table, it is not us; attach only once
 	 */
-	if (aaa->aaa_table == NULL)
+	if (acpihpet_attached || aaa->aaa_table == NULL)
 		return (0);
 
 	/*
@@ -170,6 +172,7 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	hpet_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&hpet_timecounter);
 #endif
+	acpihpet_attached++;
 }
 
 #ifdef __HAVE_TIMECOUNTER
