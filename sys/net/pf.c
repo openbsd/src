@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.718 2011/01/10 10:26:38 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.719 2011/01/10 18:57:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -125,14 +125,14 @@ struct pf_anchor_stackframe {
 } pf_anchor_stack[64];
 
 /* cannot fold into pf_pdesc directly, unknown storage size outside pf.c */
-union {
+union pf_headers {
 	struct tcphdr		tcp;
 	struct udphdr		udp;
 	struct icmp		icmp;
 #ifdef INET6
 	struct icmp6_hdr	icmp6;
 #endif /* INET6 */
-} pf_hdrs;
+};
 
 
 struct pool		 pf_src_tree_pl, pf_rule_pl;
@@ -5792,6 +5792,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
+	union pf_headers	 hdrs;
 	int			 off, hdrlen;
 	u_int32_t		 qid, pqid = 0;
 
@@ -5799,7 +5800,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 
 	memset(&pd, 0, sizeof(pd));
-	pd.hdr.any = &pf_hdrs;
+	pd.hdr.any = &hdrs;
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
@@ -6057,13 +6058,14 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
+	union pf_headers	 hdrs;
 	int			 off, hdrlen;
 
 	if (!pf_status.running)
 		return (PF_PASS);
 
 	memset(&pd, 0, sizeof(pd));
-	pd.hdr.any = &pf_hdrs;
+	pd.hdr.any = &hdrs;
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
