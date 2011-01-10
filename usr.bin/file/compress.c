@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.14 2009/10/27 23:59:37 deraadt Exp $ */
+/*	$OpenBSD: compress.c,v 1.15 2011/01/10 20:59:42 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -235,20 +235,10 @@ file_pipe2file(struct magic_set *ms, int fd, const void *startbuf,
 	int r, tfd;
 
 	(void)strlcpy(buf, "/tmp/file.XXXXXX", sizeof buf);
-#ifndef HAVE_MKSTEMP
-	{
-		char *ptr = mktemp(buf);
-		tfd = open(ptr, O_RDWR|O_TRUNC|O_EXCL|O_CREAT, 0600);
-		r = errno;
-		(void)unlink(ptr);
-		errno = r;
-	}
-#else
 	tfd = mkstemp(buf);
 	r = errno;
 	(void)unlink(buf);
 	errno = r;
-#endif
 	if (tfd == -1) {
 		file_error(ms, errno,
 		    "cannot create temporary file for pipe copy");
