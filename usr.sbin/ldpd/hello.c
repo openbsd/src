@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.8 2011/01/08 14:50:29 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.9 2011/01/10 11:58:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -202,32 +202,37 @@ int
 tlv_decode_opt_hello_prms(char *buf, u_int16_t len, struct in_addr *addr,
     u_int32_t *conf_number)
 {
-	struct hello_opt_parms_tlv	tlv;
-	int				cons = 0;
+	struct tlv	tlv;
+	int		cons = 0;
+	u_int16_t	tlv_len;
 
 	bzero(addr, sizeof(*addr));
 	*conf_number = 0;
 
 	while (len >= sizeof(tlv)) {
 		bcopy(buf, &tlv, sizeof(tlv));
-
-		if (ntohs(tlv.length) < sizeof(u_int32_t))
-			return (-1);
-
+		tlv_len = ntohs(tlv.length);
 		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_IPV4TRANSADDR:
-			addr->s_addr = tlv.value;
+			if (tlv_len < sizeof(u_int32_t))
+				return (-1);
+			bcopy(buf + TLV_HDR_LEN, addr, sizeof(u_int32_t));
 			break;
 		case TLV_TYPE_CONFIG:
-			*conf_number = ntohl(tlv.value);
+			if (tlv_len < sizeof(u_int32_t))
+				return (-1);
+			bcopy(buf + TLV_HDR_LEN, conf_number,
+			    sizeof(u_int32_t));
 			break;
 		default:
-			return (-1);
+			/* if unknown flag set, ignore TLV */
+			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
+				return (-1);
+			break;
 		}
-
-		len -= sizeof(tlv);
-		buf += sizeof(tlv);
-		cons += sizeof(tlv);
+		buf += TLV_HDR_LEN + tlv_len;
+		len -= TLV_HDR_LEN + tlv_len;
+		cons += TLV_HDR_LEN + tlv_len;
 	}
 
 	return (cons);
