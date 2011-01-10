@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.6 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.7 2011/01/10 12:28:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -133,7 +133,6 @@ if_new(struct kif *kif, struct kif_addr *ka)
 
 	iface->state = IF_STA_DOWN;
 
-	LIST_INIT(&iface->nbr_list);
 	LIST_INIT(&iface->lde_nbr_list);
 
 	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
@@ -170,13 +169,7 @@ if_new(struct kif *kif, struct kif_addr *ka)
 void
 if_del(struct iface *iface)
 {
-	struct nbr	*nbr = NULL;
-
 	log_debug("if_del: interface %s", iface->name);
-
-	/* clear lists etc */
-	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)
-		nbr_del(nbr);
 
 	if (evtimer_pending(&iface->hello_timer, NULL))
 		evtimer_del(&iface->hello_timer);
@@ -267,7 +260,6 @@ if_act_start(struct iface *iface)
 int
 if_act_reset(struct iface *iface)
 {
-/*	struct nbr		*nbr = NULL; */
 	struct in_addr		 addr;
 
 	inet_aton(AllRouters, &addr);
@@ -275,14 +267,6 @@ if_act_reset(struct iface *iface)
 		log_warnx("if_act_reset: error leaving group %s, "
 		    "interface %s", inet_ntoa(addr), iface->name);
 	}
-/*
-	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-		if (nbr_fsm(nbr, NBR_EVT_KILL_NBR)) {
-			log_debug("if_act_reset: error killing neighbor %s",
-			    inet_ntoa(nbr->id));
-		}
-	}
-*/
 	return (0);
 }
 
@@ -291,7 +275,6 @@ if_to_ctl(struct iface *iface)
 {
 	static struct ctl_iface	 ictl;
 	struct timeval		 tv, now, res;
-	struct nbr		*nbr;
 
 	memcpy(ictl.name, iface->name, sizeof(ictl.name));
 	memcpy(&ictl.addr, &iface->addr, sizeof(ictl.addr));
@@ -300,8 +283,6 @@ if_to_ctl(struct iface *iface)
 	ictl.ifindex = iface->ifindex;
 	ictl.state = iface->state;
 	ictl.mtu = iface->mtu;
-	ictl.nbr_cnt = 0;
-	ictl.adj_cnt = 0;
 	ictl.baudrate = iface->baudrate;
 	ictl.holdtime = iface->holdtime;
 	ictl.hello_interval = iface->hello_interval;
@@ -323,9 +304,6 @@ if_to_ctl(struct iface *iface)
 		ictl.uptime = now.tv_sec - iface->uptime;
 	} else
 		ictl.uptime = 0;
-
-	LIST_FOREACH(nbr, &iface->nbr_list, entry)
-		ictl.nbr_cnt++;
 
 	return (&ictl);
 }

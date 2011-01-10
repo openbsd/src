@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.13 2010/11/04 09:52:16 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.14 2011/01/10 12:28:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,7 +42,6 @@
 int		 ldp_hdr_sanity_check(struct ldp_hdr *, u_int16_t,
 		    const struct iface *);
 struct iface	*find_iface(struct ldpd_conf *, unsigned int, struct in_addr);
-struct iface	*session_find_iface(struct ldpd_conf *, struct in_addr);
 ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 
 static int	 msgcnt = 0;
@@ -60,7 +59,8 @@ gen_ldp_hdr(struct ibuf *buf, struct iface *iface, u_int16_t size)
 
 	ldp_hdr.length = htons(size);
 	ldp_hdr.lsr_id = ldpe_router_id();
-	ldp_hdr.lspace_id = iface->lspace_id;
+	if (iface)
+		ldp_hdr.lspace_id = iface->lspace_id;
 
 	return (ibuf_add(buf, &ldp_hdr, LDP_HDR_SIZE));
 }
@@ -253,8 +253,6 @@ void
 session_accept(int fd, short event, void *bula)
 {
 	struct sockaddr_in	 src;
-	struct ldpd_conf	*xconf = bula;
-	struct iface		*iface;
 	struct nbr		*nbr = NULL;
 	int			 newfd;
 	socklen_t		 len = sizeof(src);
@@ -271,18 +269,12 @@ session_accept(int fd, short event, void *bula)
 
 	session_socket_blockmode(newfd, BM_NONBLOCK);
 
-	if ((iface = session_find_iface(xconf, src.sin_addr)) == NULL) {
-		log_debug("sess_recv_packet: cannot find a matching interface");
-		close(newfd);
-		return;
-	}
-
-	nbr = nbr_find_ip(iface, src.sin_addr.s_addr);
+	nbr = nbr_find_ip(src.sin_addr.s_addr);
 	if (nbr == NULL) {
 		struct ibuf	*buf;
 		/* If there is no neighbor matching there is no
 		   Hello adjacency: try to send notification */
-		buf = send_notification(S_NO_HELLO, iface, 0, 0);
+		buf = send_notification(S_NO_HELLO, NULL, 0, 0);
 		write(newfd, buf->buf, buf->wpos);
 		ibuf_free(buf);
 		close(newfd);
@@ -460,31 +452,6 @@ session_close(struct nbr *nbr)
 		evtimer_del(&nbr->keepalive_timeout);
 
 	close(nbr->fd);
-}
-
-struct iface *
-session_find_iface(struct ldpd_conf *xconf, struct in_addr src)
-{
-	struct iface	*iface = NULL;
-
-	/* returned interface needs to be active */
-	LIST_FOREACH(iface, &xconf->iface_list, entry) {
-		switch (iface->type) {
-		case IF_TYPE_POINTOPOINT:
-			if (iface->dst.s_addr == src.s_addr &&
-			    !iface->passive)
-				return (iface);
-			break;
-		default:
-			if ((iface->addr.s_addr & iface->mask.s_addr) ==
-			    (src.s_addr & iface->mask.s_addr) &&
-			    !iface->passive)
-				return (iface);
-			break;
-		}
-	}
-
-	return (NULL);
 }
 
 ssize_t

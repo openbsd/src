@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.13 2010/10/26 12:03:11 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.14 2011/01/10 12:28:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -160,7 +160,6 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 		fatal("can't drop privileges");
 
 	event_init();
-	nbr_init(NBR_HASHSIZE);
 
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, ldpe_sig_handler, NULL);
@@ -497,23 +496,4 @@ ldpe_iface_ctl(struct ctl_conn *c, unsigned int idx)
 			    0, 0, -1, ictl, sizeof(struct ctl_iface));
 		}
 	}
-}
-
-void
-ldpe_nbr_ctl(struct ctl_conn *c)
-{
-	struct iface	*iface;
-	struct nbr	*nbr;
-	struct ctl_nbr	*nctl;
-
-	LIST_FOREACH(iface, &leconf->iface_list, entry) {
-		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-			nctl = nbr_to_ctl(nbr);
-			imsg_compose_event(&c->iev,
-			    IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
-			    sizeof(struct ctl_nbr));
-		}
-	}
-
-	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }

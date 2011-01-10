@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.22 2010/10/26 12:22:35 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.23 2011/01/10 12:28:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -37,6 +37,7 @@
 #include "ldpd.h"
 #include "ldp.h"
 #include "ldpe.h"
+#include "control.h"
 #include "log.h"
 #include "lde.h"
 
@@ -44,15 +45,43 @@ int	nbr_establish_connection(struct nbr *);
 void	nbr_send_labelmappings(struct nbr *);
 int	nbr_act_session_operational(struct nbr *);
 
-LIST_HEAD(nbr_head, nbr);
+static __inline int nbr_id_compare(struct nbr *, struct nbr *);
+static __inline int nbr_addr_compare(struct nbr *, struct nbr *);
+static __inline int nbr_pid_compare(struct nbr *, struct nbr *);
 
-struct nbr_table {
-	struct nbr_head		*hashtbl;
-	u_int32_t		 hashmask;
-} nbrtable;
+RB_HEAD(nbr_id_head, nbr);
+RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
+RB_GENERATE(nbr_id_head, nbr, id_tree, nbr_id_compare)
+RB_HEAD(nbr_addr_head, nbr);
+RB_PROTOTYPE(nbr_addr_head, nbr, addr_tree, nbr_addr_compare)
+RB_GENERATE(nbr_addr_head, nbr, addr_tree, nbr_addr_compare)
+RB_HEAD(nbr_pid_head, nbr);
+RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
+RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 
-#define NBR_HASH(x)		\
-	&nbrtable.hashtbl[(x) & nbrtable.hashmask]
+static __inline int
+nbr_id_compare(struct nbr *a, struct nbr *b)
+{
+	if (ntohl(a->id.s_addr) - ntohl(b->id.s_addr) == 0)
+		return (a->lspace - b->lspace);
+	return (ntohl(a->id.s_addr) - ntohl(b->id.s_addr));
+}
+
+static __inline int
+nbr_addr_compare(struct nbr *a, struct nbr *b)
+{
+	return (ntohl(a->addr.s_addr) - ntohl(b->addr.s_addr));
+}
+
+static __inline int
+nbr_pid_compare(struct nbr *a, struct nbr *b)
+{
+	return (a->peerid - b->peerid);
+}
+
+struct nbr_id_head nbrs_by_id = RB_INITIALIZER(&nbrs_by_id);
+struct nbr_addr_head nbrs_by_addr = RB_INITIALIZER(&nbrs_by_addr);
+struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
 
 u_int32_t	peercnt = NBR_CNTSTART;
 
@@ -206,27 +235,9 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	return (ret);
 }
 
-void
-nbr_init(u_int32_t hashsize)
-{
-	u_int32_t        hs, i;
-
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	nbrtable.hashtbl = calloc(hs, sizeof(struct nbr_head));
-	if (nbrtable.hashtbl == NULL)
-		fatal("nbr_init");
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&nbrtable.hashtbl[i]);
-
-	nbrtable.hashmask = hs - 1;
-}
-
 struct nbr *
 nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 {
-	struct nbr_head	*head;
 	struct nbr	*nbr;
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
@@ -237,17 +248,19 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 	nbr->state = NBR_STA_DOWN;
 	nbr->id.s_addr = nbr_id;
 	nbr->lspace = lspace;
+	nbr->iface = iface;
 
 	/* get next unused peerid */
 	while (nbr_find_peerid(++peercnt))
 		;
 	nbr->peerid = peercnt;
-	head = NBR_HASH(nbr->peerid);
-	LIST_INSERT_HEAD(head, nbr, hash);
 
-	/* add to peer list */
-	nbr->iface = iface;
-	LIST_INSERT_HEAD(&iface->nbr_list, nbr, entry);
+	if (RB_INSERT(nbr_pid_head, &nbrs_by_pid, nbr) != NULL)
+		fatalx("nbr_new: RB_INSERT(nbrs_by_pid) failed");
+	if (RB_INSERT(nbr_addr_head, &nbrs_by_addr, nbr) != NULL)
+		fatalx("nbr_new: RB_INSERT(nbrs_by_addr) failed");
+	if (RB_INSERT(nbr_id_head, &nbrs_by_id, nbr) != NULL)
+		fatalx("nbr_new: RB_INSERT(nbrs_by_id) failed");
 
 	TAILQ_INIT(&nbr->mapping_list);
 	TAILQ_INIT(&nbr->withdraw_list);
@@ -280,8 +293,9 @@ nbr_del(struct nbr *nbr)
 
 	nbr_mapping_list_clr(nbr, &nbr->mapping_list);
 
-	LIST_REMOVE(nbr, entry);
-	LIST_REMOVE(nbr, hash);
+	RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
+	RB_REMOVE(nbr_addr_head, &nbrs_by_addr, nbr);
+	RB_REMOVE(nbr_id_head, &nbrs_by_id, nbr);
 
 	free(nbr->rbuf);
 	free(nbr);
@@ -290,43 +304,26 @@ nbr_del(struct nbr *nbr)
 struct nbr *
 nbr_find_peerid(u_int32_t peerid)
 {
-	struct nbr_head	*head;
-	struct nbr	*nbr;
-
-	head = NBR_HASH(peerid);
-
-	LIST_FOREACH(nbr, head, hash) {
-		if (nbr->peerid == peerid)
-			return (nbr);
-	}
-
-	return (NULL);
+	struct nbr	n;
+	n.peerid = peerid;
+	return (RB_FIND(nbr_pid_head, &nbrs_by_pid, &n));
 }
 
 struct nbr *
-nbr_find_ip(struct iface *iface, u_int32_t rtr_id)
+nbr_find_ip(u_int32_t addr)
 {
-	struct nbr	*nbr;
-
-	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-		if (nbr->addr.s_addr == rtr_id)
-			return (nbr);
-	}
-
-	return (NULL);
+	struct nbr	n;
+	n.addr.s_addr = addr;
+	return (RB_FIND(nbr_addr_head, &nbrs_by_addr, &n));
 }
 
 struct nbr *
-nbr_find_ldpid(struct iface *iface, u_int32_t rtr_id, u_int16_t lspace)
+nbr_find_ldpid(u_int32_t rtr_id, u_int16_t lspace)
 {
-	struct nbr	*nbr;
-
-	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-		if (nbr->id.s_addr == rtr_id && nbr->lspace == lspace)
-			return (nbr);
-	}
-
-	return (NULL);
+	struct nbr	n;
+	n.id.s_addr = rtr_id;
+	n.lspace = lspace;
+	return (RB_FIND(nbr_id_head, &nbrs_by_id, &n));
 }
 
 /* timers */
@@ -628,4 +625,18 @@ nbr_to_ctl(struct nbr *nbr)
 		nctl.uptime = 0;
 
 	return (&nctl);
+}
+
+void
+ldpe_nbr_ctl(struct ctl_conn *c)
+{
+	struct nbr	*nbr;
+	struct ctl_nbr	*nctl;
+
+	RB_FOREACH(nbr, nbr_addr_head, &nbrs_by_addr) {
+		nctl = nbr_to_ctl(nbr);
+		imsg_compose_event(&c->iev, IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
+		    sizeof(struct ctl_nbr));
+	}
+	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }

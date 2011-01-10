@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.27 2010/10/07 12:02:23 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.28 2011/01/10 12:28:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -199,7 +199,6 @@ struct iface {
 	LIST_ENTRY(iface)	 entry;
 	struct event		 hello_timer;
 
-	LIST_HEAD(, nbr)	 nbr_list;
 	LIST_HEAD(, lde_nbr)	 lde_nbr_list;
 
 	char			 name[IF_NAMESIZE];

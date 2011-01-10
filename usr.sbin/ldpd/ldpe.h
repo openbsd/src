@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.13 2010/11/04 09:52:16 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.14 2011/01/10 12:28:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -35,7 +35,7 @@ struct mapping_entry {
 };
 
 struct nbr {
-	LIST_ENTRY(nbr)		 entry, hash;
+	RB_ENTRY(nbr)		 id_tree, addr_tree, pid_tree;
 	struct evbuf		 wbuf;
 	struct event		 rev;
 	struct event		 inactivity_timer;
@@ -119,7 +119,6 @@ int		 ldpe_imsg_compose_lde(int, u_int32_t, pid_t, void *,
 u_int32_t	 ldpe_router_id(void);
 void		 ldpe_fib_update(int);
 void		 ldpe_iface_ctl(struct ctl_conn *, unsigned int);
-void		 ldpe_nbr_ctl(struct ctl_conn *);
 
 /* interface.c */
 int		 if_fsm(struct iface *, enum iface_event);
@@ -144,12 +143,11 @@ int	 if_set_tos(int, int);
 int	 if_set_reuse(int, int);
 
 /* neighbor.c */
-void		 nbr_init(u_int32_t);
 struct nbr	*nbr_new(u_int32_t, u_int16_t, struct iface *);
 void		 nbr_del(struct nbr *);
 
-struct nbr	*nbr_find_ip(struct iface *, u_int32_t);
-struct nbr	*nbr_find_ldpid(struct iface *, u_int32_t, u_int16_t);
+struct nbr	*nbr_find_ip(u_int32_t);
+struct nbr	*nbr_find_ldpid(u_int32_t, u_int16_t);
 struct nbr	*nbr_find_peerid(u_int32_t);
 
 int	 nbr_fsm(struct nbr *, enum nbr_event);
@@ -180,6 +178,7 @@ void			 nbr_mapping_list_clr(struct nbr *,
 			    struct mapping_head *);
 
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
+void		 ldpe_nbr_ctl(struct ctl_conn *);
 
 /* packet.c */
 int	 gen_ldp_hdr(struct ibuf *, struct iface *, u_int16_t);

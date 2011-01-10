@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.10 2011/01/10 12:05:22 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.11 2011/01/10 12:28:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -122,7 +122,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		return;
 	}
 
-	nbr = nbr_find_ldpid(iface, ldp.lsr_id, ldp.lspace_id);
+	nbr = nbr_find_ldpid(ldp.lsr_id, ldp.lspace_id);
 	if (!nbr) {
 		nbr = nbr_new(ldp.lsr_id, ldp.lspace_id, iface);
 
