@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.134 2011/01/10 03:23:30 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.135 2011/01/10 05:40:06 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -543,7 +543,6 @@ struct timeout arc4_timeout;
 
 void arc4_reinit(void *v);		/* timeout to start reinit */
 void arc4_init(void *, void *);		/* actually do the reinit */
-void arc4random_buf_large(void *, size_t);
 
 /* Return one word of randomness from an RC4 generator */
 u_int32_t
@@ -559,36 +558,11 @@ arc4random(void)
 }
 
 /*
- * Return a "large" buffer of randomness using an independantly-keyed RC4
- * generator.
- */
-void
-arc4random_buf_large(void *buf, size_t n)
-{
-	u_char lbuf[ARC4_KEY_BYTES];
-	struct rc4_ctx lctx;
-
-	arc4random_buf(lbuf, sizeof(lbuf));
-
-	rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
-	rc4_skip(&lctx, ARC4_STATE * ARC4_PARANOIA);
-	rc4_getbytes(&lctx, (u_char *)buf, n);
-	bzero(lbuf, sizeof(lbuf));
-	bzero(&lctx, sizeof(lctx));
-}
-
-/*
  * Fill a buffer of arbitrary length with RC4-derived randomness.
  */
 void
 arc4random_buf(void *buf, size_t n)
 {
-	/* Satisfy large requests via an independent ARC4 instance */
-	if (n > ARC4_MAIN_MAX_BYTES) {
-		arc4random_buf_large(buf, n);
-		return;
-	}
-
 	mtx_enter(&rndlock);
 	rc4_getbytes(&arc4random_state, (u_char *)buf, n);
 	rndstats.arc4_reads += n;
