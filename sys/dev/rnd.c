@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.135 2011/01/10 05:40:06 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.136 2011/01/10 06:05:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -518,13 +518,6 @@ extract_entropy(u_int8_t *buf, int nbytes)
 #define	ARC4_KEY_BYTES		64
 
 /*
- * Maximum number of bytes to serve directly from the main arc4random
- * pool. Larger requests are served from discrete arc4 instances keyed
- * from the main pool.  Must be larger than ARC4_KEY_BYTES.
- */
-#define ARC4_MAIN_MAX_BYTES	2048
-
-/*
  * Throw away the first N words of output, as suggested in the
  * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
  * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
@@ -699,6 +692,13 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return 0;
 }
+
+/*
+ * Maximum number of bytes to serve directly from the main arc4random
+ * pool. Larger requests are served from a discrete arc4 instance keyed
+ * from the main pool.
+ */
+#define ARC4_MAIN_MAX_BYTES	2048
 
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
