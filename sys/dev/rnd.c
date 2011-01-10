@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.133 2011/01/10 02:44:18 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.134 2011/01/10 03:23:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -793,6 +793,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 	if (newdata)
 		arc4_init(NULL, NULL);
 
+	bzero(buf, POOLBYTES);
 	free(buf, M_TEMP);
 	return ret;
 }
