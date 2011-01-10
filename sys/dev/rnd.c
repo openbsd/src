@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.136 2011/01/10 06:05:23 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.137 2011/01/10 06:08:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -518,12 +518,16 @@ extract_entropy(u_int8_t *buf, int nbytes)
 #define	ARC4_KEY_BYTES		64
 
 /*
- * Throw away the first N words of output, as suggested in the
- * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
- * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
+ * Throw away a multiple of the first N words of output, as suggested
+ * in the paper "Weaknesses in the Key Scheduling Algorithm of RC4"
+ * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)  If the start
+ * of a new RC stream is an event that a consumer could spot, we drop
+ * the strictly recommended amount (ceil(n/log e) = 6).  If consumers
+ * only see random sub-streams, we cheat and do less computation.
  */
 #define	ARC4_STATE		256
-#define	ARC4_PARANOIA		4
+#define	ARC4_DISCARD_SAFE	6
+#define	ARC4_DISCARD_CHEAP	4
 
 /*
  * Start with an unstable state so that rc4_getbytes() can
@@ -629,7 +633,7 @@ arc4_init(void *v, void *w)
 		buf[i] ^= p[i];
 
 	rc4_keysetup(&new_ctx, buf, sizeof(buf));
-	rc4_skip(&new_ctx, ARC4_STATE * ARC4_PARANOIA);
+	rc4_skip(&new_ctx, ARC4_STATE * ARC4_DISCARD_CHEAP);
 
 	mtx_enter(&rndlock);
 	bcopy(&new_ctx, &arc4random_state, sizeof(new_ctx));
@@ -716,7 +720,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	if (total > ARC4_MAIN_MAX_BYTES) {
 		arc4random_buf(lbuf, sizeof(lbuf));
 		rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
-		rc4_skip(&lctx, ARC4_STATE * ARC4_PARANOIA);
+		rc4_skip(&lctx, ARC4_STATE * ARC4_DISCARD_SAFE);
 		bzero(lbuf, sizeof(lbuf));
 		myctx = 1;
 	}
