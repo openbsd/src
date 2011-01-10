@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.717 2011/01/05 17:36:55 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.718 2011/01/10 10:26:38 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4304,7 +4304,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, ipoff2, &h2, sizeof(h2),
 			    NULL, reason, pd2.af)) {
 				DPFPRINTF(LOG_NOTICE,
-				    "pf: ICMP error message too short (ip)");
+				    "ICMP error message too short (ip)");
 				return (PF_DROP);
 			}
 			/*
@@ -4332,7 +4332,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, ipoff2, &h2_6, sizeof(h2_6),
 			    NULL, reason, pd2.af)) {
 				DPFPRINTF(LOG_NOTICE,
-				    "pf: ICMP error message too short (ip6)");
+				    "ICMP error message too short (ip6)");
 				return (PF_DROP);
 			}
 			pd2.proto = h2_6.ip6_nxt;
@@ -4360,7 +4360,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    sizeof(opt6), NULL, reason,
 					    pd2.af)) {
 						DPFPRINTF(LOG_NOTICE,
-						    "pf: ICMPv6 short opt");
+						    "ICMPv6 short opt");
 						return (PF_DROP);
 					}
 					if (pd2.proto == IPPROTO_AH)
@@ -4396,7 +4396,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, off2, &th, 8, NULL, reason,
 			    pd2.af)) {
 				DPFPRINTF(LOG_NOTICE,
-				    "pf: ICMP error message too short (tcp)");
+				    "ICMP error message too short (tcp)");
 				return (PF_DROP);
 			}
 
@@ -4525,7 +4525,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, off2, &uh, sizeof(uh),
 			    NULL, reason, pd2.af)) {
 				DPFPRINTF(LOG_NOTICE,
-				    "pf: ICMP error message too short (udp)");
+				    "ICMP error message too short (udp)");
 				return (PF_DROP);
 			}
 
@@ -4600,7 +4600,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, off2, &iih, ICMP_MINLEN,
 			    NULL, reason, pd2.af)) {
 				DPFPRINTF(LOG_NOTICE,
-				    "pf: ICMP error message too short (icmp)");
+				    "ICMP error message too short (icmp)");
 				return (PF_DROP);
 			}
 
@@ -4663,8 +4663,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, off2, &iih,
 			    sizeof(struct icmp6_hdr), NULL, reason, pd2.af)) {
 				DPFPRINTF(LOG_NOTICE,
-				    "pf: ICMP error message too short "
-				    "(icmp6)");
+				    "ICMP error message too short (icmp6)");
 				return (PF_DROP);
 			}
 
@@ -5613,7 +5612,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
 
 				if (pd->rh_cnt++) {
 					DPFPRINTF(LOG_NOTICE,
-					    "pf: IPv6 more than one rthdr");
+					    "IPv6 more than one rthdr");
 					*action = PF_DROP;
 					REASON_SET(reason, PFRES_IPOPTIONS);
 					return (-1);
@@ -5621,14 +5620,14 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
 				if (!pf_pull_hdr(m, *off, &rthdr, sizeof(rthdr),
 				    NULL, reason, pd->af)) {
 					DPFPRINTF(LOG_NOTICE,
-					    "pf: IPv6 short rthdr");
+					    "IPv6 short rthdr");
 					*action = PF_DROP;
 					REASON_SET(reason, PFRES_SHORT);
 					return (-1);
 				}
 				if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
 					DPFPRINTF(LOG_NOTICE,
-					    "pf: IPv6 rthdr0");
+					    "IPv6 rthdr0");
 					*action = PF_DROP;
 					REASON_SET(reason, PFRES_IPOPTIONS);
 					return (-1);
@@ -5644,7 +5643,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
 				if (!pf_pull_hdr(m, *off, &opt6, sizeof(opt6),
 				    NULL, reason, pd->af)) {
 					DPFPRINTF(LOG_NOTICE,
-					    "pf: IPv6 short opt");
+					    "IPv6 short opt");
 					*action = PF_DROP;
 					return (-1);
 				}
@@ -5921,7 +5920,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	case IPPROTO_ICMPV6: {
 		action = PF_DROP;
 		DPFPRINTF(LOG_NOTICE,
-		    "pf: dropping IPv4 packet with ICMPv6 payload");
+		    "dropping IPv4 packet with ICMPv6 payload");
 		goto done;
 	}
 
@@ -6171,7 +6170,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	case IPPROTO_ICMP: {
 		action = PF_DROP;
 		DPFPRINTF(LOG_NOTICE,
-		    "pf: dropping IPv6 packet with ICMPv4 payload");
+		    "dropping IPv6 packet with ICMPv4 payload");
 		goto done;
 	}
 
@@ -6214,7 +6213,7 @@ done:
 		REASON_SET(&reason, PFRES_IPOPTIONS);
 		pflog |= PF_LOG_FORCE;
 		DPFPRINTF(LOG_NOTICE,
-		    "pf: dropping packet with dangerous v6 headers");
+		    "dropping packet with dangerous v6 headers");
 	}
 
 	if (s)
