@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.6 2011/01/06 15:35:06 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.7 2011/01/10 12:53:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -91,8 +91,6 @@ conn_new(struct session *s, struct connection_config *cc)
 	if (setsockopt(c->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,
 	    sizeof(nodelay)) == -1)
 		log_warn("conn_new: setting TCP_NODELAY");
-
-
 
 	event_set(&c->ev, c->fd, EV_READ|EV_PERSIST, conn_dispatch, c);
 	event_set(&c->wev, c->fd, EV_WRITE, conn_write_dispatch, c);
