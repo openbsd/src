@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.18 2010/12/31 21:22:42 guenther Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.19 2011/01/10 11:52:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -93,7 +93,7 @@ int
 recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct ldp_msg		lm;
-	struct fec_tlv		ft;
+	struct tlv		ft;
 	struct map		map;
 	u_int32_t		label;
 	int			feclen, lbllen, tlen;
@@ -202,7 +202,7 @@ int
 recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct ldp_msg	lr;
-	struct fec_tlv	ft;
+	struct tlv	ft;
 	struct map	map;
 	int		feclen, tlen;
 	u_int8_t	addr_type;
@@ -308,7 +308,7 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct map	map;
 	struct ldp_msg	lw;
-	struct fec_tlv	ft;
+	struct tlv	ft;
 	u_int32_t	label = NO_LABEL;
 	int		feclen, tlen, numfec = 0;
 	u_int8_t	addr_type;
@@ -449,7 +449,7 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct map	map;
 	struct ldp_msg	lr;
-	struct fec_tlv	ft;
+	struct tlv	ft;
 	u_int32_t	label = NO_LABEL;
 	int		feclen, tlen, numfec = 0;
 	u_int8_t	addr_type;
@@ -568,7 +568,7 @@ recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct map	map;
 	struct ldp_msg	la;
-	struct fec_tlv	ft;
+	struct tlv	ft;
 	int		feclen, tlen;
 	u_int8_t	addr_type;
 
@@ -707,7 +707,7 @@ tlv_decode_reqid(char *buf, u_int16_t len, u_int32_t *reqid)
 void
 gen_fec_tlv(struct ibuf *buf, struct in_addr prefix, u_int8_t prefixlen)
 {
-	struct fec_tlv	ft;
+	struct tlv	ft;
 	u_int8_t	type;
 	u_int16_t	family;
 	u_int8_t	len;

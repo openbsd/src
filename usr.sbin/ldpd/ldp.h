@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.7 2010/11/04 09:52:16 claudio Exp $ */
+/*	$OpenBSD: ldp.h,v 1.8 2011/01/10 11:52:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -97,6 +97,12 @@ struct ldp_hdr {
 #define	INFINITE_HOLDTIME	0xffff
 
 /* TLV record */
+struct tlv {
+	u_int16_t	type;
+	u_int16_t	length;
+};
+#define	TLV_HDR_LEN		4
+
 struct ldp_msg {
 	u_int16_t	type;
 	u_int16_t	length;
@@ -106,7 +112,6 @@ struct ldp_msg {
 } __packed;
 
 #define LDP_MSG_LEN		8
-#define	TLV_HDR_LEN		4
 
 #define	UNKNOWN_FLAGS_MASK	0xc000
 #define	UNKNOWN_FLAG		0x8000
@@ -189,12 +194,6 @@ struct address_list_tlv {
 #define	ADDR_IPV4		0x1
 #define	ADDR_IPV6		0x2
 
-struct fec_tlv {
-	u_int16_t	type;
-	u_int16_t	length;
-	/* fec elm entries */
-};
-
 /* This struct is badly aligned so use two 32 bit fields */
 struct fec_elm {
 	u_int32_t	hdr;
@@ -202,10 +201,8 @@ struct fec_elm {
 };
 
 #define FEC_ELM_MIN_LEN		4
-
 #define	FEC_WILDCARD		0x01
 #define	FEC_PREFIX		0x02
-
 #define	FEC_IPV4		0x0001
 
 struct label_tlv {
