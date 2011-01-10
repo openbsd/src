@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.96 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.97 2011/01/10 16:18:03 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -368,8 +368,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, nfe_ifmedia_upd,
 	    nfe_ifmedia_sts);
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
