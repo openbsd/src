@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.64 2010/12/13 14:46:19 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.65 2011/01/11 10:07:56 robert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -61,7 +61,7 @@ int
 main(int argc, char **argv)
 {
 	int asme = 0, asthem = 0, ch, fastlogin = 0, emlogin = 0, prio;
-	int altshell = 0;
+	int altshell = 0, homeless = 0;
 	char *user, *shell = NULL, *avshell, *username, **np;
 	char *class = NULL, *style = NULL, *p;
 	enum { UNSET, YES, NO } iscsh = UNSET;
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 			*p++ = '\0';
 			style = p;	/* XXX overrides -a flag */
 		}
-		
+
 		/*
 		 * Clean and setup our current authentication session.
 		 * Note that options *are* not cleared.
@@ -248,8 +248,18 @@ main(int argc, char **argv)
 
 			setegid(pwd->pw_gid);
 			seteuid(pwd->pw_uid);
-			if (chdir(pwd->pw_dir) < 0)
-				auth_err(as, 1, "%s", pwd->pw_dir);
+
+			homeless = chdir(pwd->pw_dir);
+			if (homeless) {
+				if (login_getcapbool(lc, "requirehome", 0)) {
+					auth_err(as, 1, "%s", pwd->pw_dir);
+				} else {
+					(void)printf("No home directory %s!\n", pwd->pw_dir);
+					(void)printf("Logging in with home = \"/\".\n");
+					if (chdir("/") < 0)
+						auth_err(as, 1, "/");
+				}
+			}
 			setegid(0);	/* XXX use a saved gid instead? */
 			seteuid(0);
 		} else if (pwd->pw_uid == 0) {
@@ -262,7 +272,7 @@ main(int argc, char **argv)
 			    setenv("USER", pwd->pw_name, 1) == -1)
 				auth_err(as, 1, "unable to set environment");
 		}
-		if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
+		if (setenv("HOME", homeless ? "/" : pwd->pw_dir, 1) == -1 ||
 		    setenv("SHELL", shell, 1) == -1)
 			auth_err(as, 1, "unable to set environment");
 	} else if (altshell) {
