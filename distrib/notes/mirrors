@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.97 2011/01/11 11:15:54 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.98 2011/01/11 15:13:18 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -16,6 +16,8 @@ Australia:
     ftp://mirror.aarnet.edu.au/pub/OpenBSD (Brisbane)
 
 Austria:
+    http://ftp5.eu.openbsd.org/ftp/pub/OpenBSD (Vienna)
+    ftp://ftp5.eu.openbsd.org/pub/OpenBSD (Vienna)
     http://ftp.wu-wien.ac.at/pub/OpenBSD (Vienna)
 
 Canada:
