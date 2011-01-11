@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.36 2010/12/30 05:22:51 jakemsr Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.37 2011/01/11 21:04:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -3216,8 +3216,8 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		struct urtw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 		/* XXX Are variables correct? */
-		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wr_dbm_antsignal = (int8_t)rssi;
 
 		mb.m_data = (caddr_t)tap;
