@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.c,v 1.2 2010/11/08 10:27:50 mikeb Exp $	*/
+/*	$OpenBSD: gmac.c,v 1.3 2011/01/11 15:44:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mike@vantronix.net>
@@ -153,4 +153,5 @@ AES_GMAC_Final(uint8_t digest[GMAC_DIGEST_LEN], AES_GMAC_CTX *ctx)
 	rijndaelEncrypt(ctx->K, ctx->rounds, ctx->J, keystream);
 	for (i = 0; i < GMAC_DIGEST_LEN; i++)
 		digest[i] = ctx->ghash.S[i] ^ keystream[i];
+	explicit_bzero(keystream, sizeof(keystream));
 }
