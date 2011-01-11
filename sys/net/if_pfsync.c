@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.159 2010/11/29 06:48:09 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.160 2011/01/11 08:33:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1695,8 +1695,6 @@ pfsync_insert_state(struct pf_state *st)
 	st->sync_updates = 0;
 }
 
-int defer = 10;
-
 int
 pfsync_defer(struct pf_state *st, struct mbuf *m)
 {
@@ -1725,7 +1723,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	TAILQ_INSERT_TAIL(&sc->sc_deferrals, pd, pd_entry);
 
 	timeout_set(&pd->pd_tmo, pfsync_defer_tmo, pd);
-	timeout_add(&pd->pd_tmo, defer);
+	timeout_add_msec(&pd->pd_tmo, 20);
 
 	schednetisr(NETISR_PFSYNC);
 
