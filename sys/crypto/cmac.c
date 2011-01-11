@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmac.c,v 1.1 2008/08/12 15:43:00 damien Exp $	*/
+/*	$OpenBSD: cmac.c,v 1.2 2011/01/11 15:42:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -116,5 +116,5 @@ AES_CMAC_Final(u_int8_t digest[AES_CMAC_DIGEST_LENGTH], AES_CMAC_CTX *ctx)
 	XOR(ctx->M_last, ctx->X);
 	rijndael_encrypt(&ctx->rijndael, ctx->X, digest);
 
-	memset(K, 0, sizeof K);
+	explicit_bzero(K, sizeof K);
 }

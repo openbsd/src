@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.83 2010/11/17 19:25:49 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.84 2011/01/11 15:42:05 deraadt Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4945,9 +4945,10 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 		spr->cmd = cmd;
 		bcopy(sp, &spr->defs, sizeof(struct sppp));
 		
-		bzero(&spr->defs.myauth, sizeof(spr->defs.myauth));
-		bzero(&spr->defs.hisauth, sizeof(spr->defs.hisauth));
-		bzero(&spr->defs.chap_challenge, sizeof(spr->defs.chap_challenge));
+		explicit_bzero(&spr->defs.myauth, sizeof(spr->defs.myauth));
+		explicit_bzero(&spr->defs.hisauth, sizeof(spr->defs.hisauth));
+		explicit_bzero(&spr->defs.chap_challenge,
+		    sizeof(spr->defs.chap_challenge));
 
 		if (copyout(spr, (caddr_t)ifr->ifr_data, sizeof(*spr)) != 0) {
 			free(spr, M_DEVBUF);
@@ -5069,7 +5070,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 			if (auth->secret != NULL)
 				free(auth->secret, M_DEVBUF);
 			bzero(auth, sizeof *auth);
-			bzero(sp->chap_challenge, sizeof sp->chap_challenge);
+			explicit_bzero(sp->chap_challenge, sizeof sp->chap_challenge);
 		} else {
 			/* setting/changing auth */
 			auth->proto = spa->proto;

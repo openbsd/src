@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmac.c,v 1.2 2008/09/06 22:23:20 djm Exp $	*/
+/*	$OpenBSD: hmac.c,v 1.3 2011/01/11 15:42:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -53,7 +53,7 @@ HMAC_MD5_Init(HMAC_MD5_CTX *ctx, const u_int8_t *key, u_int key_len)
 	MD5Init(&ctx->ctx);
 	MD5Update(&ctx->ctx, k_ipad, MD5_BLOCK_LENGTH);
 
-	bzero(k_ipad, sizeof k_ipad);
+	explicit_bzero(k_ipad, sizeof k_ipad);
 }
 
 void
@@ -80,7 +80,7 @@ HMAC_MD5_Final(u_int8_t digest[MD5_DIGEST_LENGTH], HMAC_MD5_CTX *ctx)
 	MD5Update(&ctx->ctx, digest, MD5_DIGEST_LENGTH);
 	MD5Final(digest, &ctx->ctx);
 
-	bzero(k_opad, sizeof k_opad);
+	explicit_bzero(k_opad, sizeof k_opad);
 }
 
 void
@@ -107,7 +107,7 @@ HMAC_SHA1_Init(HMAC_SHA1_CTX *ctx, const u_int8_t *key, u_int key_len)
 	SHA1Init(&ctx->ctx);
 	SHA1Update(&ctx->ctx, k_ipad, SHA1_BLOCK_LENGTH);
 
-	bzero(k_ipad, sizeof k_ipad);
+	explicit_bzero(k_ipad, sizeof k_ipad);
 }
 
 void
@@ -134,7 +134,7 @@ HMAC_SHA1_Final(u_int8_t digest[SHA1_DIGEST_LENGTH], HMAC_SHA1_CTX *ctx)
 	SHA1Update(&ctx->ctx, digest, SHA1_DIGEST_LENGTH);
 	SHA1Final(digest, &ctx->ctx);
 
-	bzero(k_opad, sizeof k_opad);
+	explicit_bzero(k_opad, sizeof k_opad);
 }
 
 void
@@ -161,7 +161,7 @@ HMAC_SHA256_Init(HMAC_SHA256_CTX *ctx, const u_int8_t *key, u_int key_len)
 	SHA256Init(&ctx->ctx);
 	SHA256Update(&ctx->ctx, k_ipad, SHA256_BLOCK_LENGTH);
 
-	bzero(k_ipad, sizeof k_ipad);
+	explicit_bzero(k_ipad, sizeof k_ipad);
 }
 
 void
@@ -188,5 +188,5 @@ HMAC_SHA256_Final(u_int8_t digest[SHA256_DIGEST_LENGTH], HMAC_SHA256_CTX *ctx)
 	SHA256Update(&ctx->ctx, digest, SHA256_DIGEST_LENGTH);
 	SHA256Final(digest, &ctx->ctx);
 
-	bzero(k_opad, sizeof k_opad);
+	explicit_bzero(k_opad, sizeof k_opad);
 }

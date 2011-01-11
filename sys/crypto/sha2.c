@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.7 2008/09/06 22:23:20 djm Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.8 2011/01/11 15:42:05 deraadt Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -548,7 +548,7 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 	}
 
 	/* Clean up state data: */
-	bzero(context, sizeof(*context));
+	explicit_bzero(context, sizeof(*context));
 	usedspace = 0;
 }
 
@@ -844,7 +844,7 @@ SHA512Final(u_int8_t digest[], SHA2_CTX *context)
 	}
 
 	/* Zero out state data */
-	bzero(context, sizeof(*context));
+	explicit_bzero(context, sizeof(*context));
 }
 
 
@@ -892,5 +892,5 @@ SHA384Final(u_int8_t digest[], SHA2_CTX *context)
 	}
 
 	/* Zero out state data */
-	bzero(context, sizeof(*context));
+	explicit_bzero(context, sizeof(*context));
 }

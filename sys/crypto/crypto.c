@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.58 2010/09/08 14:15:56 jsing Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.59 2011/01/11 15:42:05 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -201,7 +201,7 @@ crypto_freesession(u_int64_t sid)
 	 */
 	if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) &&
 	    crypto_drivers[hid].cc_sessions == 0)
-		bzero(&crypto_drivers[hid], sizeof(struct cryptocap));
+		explicit_bzero(&crypto_drivers[hid], sizeof(struct cryptocap));
 
 	splx(s);
 	return err;

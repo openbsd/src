@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.21 2010/12/15 23:34:23 mikeb Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.22 2011/01/11 15:42:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -522,11 +522,11 @@ glxsb_crypto_freesession(uint64_t tid)
 		axf = swd->sw_axf;
 
 		if (swd->sw_ictx) {
-			bzero(swd->sw_ictx, axf->ctxsize);
+			explicit_bzero(swd->sw_ictx, axf->ctxsize);
 			free(swd->sw_ictx, M_CRYPTO_DATA);
 		}
 		if (swd->sw_octx) {
-			bzero(swd->sw_octx, axf->ctxsize);
+			explicit_bzero(swd->sw_octx, axf->ctxsize);
 			free(swd->sw_octx, M_CRYPTO_DATA);
 		}
 		free(swd, M_CRYPTO_DATA);
@@ -749,7 +749,7 @@ glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	}
 
 	/* All AES processing has now been done. */
-	bzero(sc->sc_dma.dma_vaddr, xlen * 2);
+	explicit_bzero(sc->sc_dma.dma_vaddr, xlen * 2);
 
 out:
 	return (err);

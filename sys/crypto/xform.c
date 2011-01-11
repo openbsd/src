@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.40 2010/10/06 22:19:20 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.41 2011/01/11 15:42:05 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -386,7 +386,7 @@ des1_setkey(u_int8_t **sched, u_int8_t *key, int len)
 void
 des1_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, 128);
+	explicit_bzero(*sched, 128);
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -420,7 +420,7 @@ des3_setkey(u_int8_t **sched, u_int8_t *key, int len)
 void
 des3_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, 384);
+	explicit_bzero(*sched, 384);
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -449,7 +449,7 @@ blf_setkey(u_int8_t **sched, u_int8_t *key, int len)
 void
 blf_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(blf_ctx));
+	explicit_bzero(*sched, sizeof(blf_ctx));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -499,7 +499,7 @@ cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
 void
 cast5_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(cast_key));
+	explicit_bzero(*sched, sizeof(cast_key));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -533,7 +533,7 @@ rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
 void
 rijndael128_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(rijndael_ctx));
+	explicit_bzero(*sched, sizeof(rijndael_ctx));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -615,7 +615,7 @@ aes_ctr_setkey(u_int8_t **sched, u_int8_t *key, int len)
 void
 aes_ctr_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(struct aes_ctr_ctx));
+	explicit_bzero(*sched, sizeof(struct aes_ctr_ctx));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -678,7 +678,7 @@ aes_xts_crypt(struct aes_xts_ctx *ctx, u_int8_t *data, u_int do_encrypt)
 	}
 	if (carry_in)
 		ctx->tweak[0] ^= AES_XTS_ALPHA;
-	bzero(block, sizeof(block));
+	explicit_bzero(block, sizeof(block));
 }
 
 void
@@ -714,7 +714,7 @@ aes_xts_setkey(u_int8_t **sched, u_int8_t *key, int len)
 void
 aes_xts_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(struct aes_xts_ctx));
+	explicit_bzero(*sched, sizeof(struct aes_xts_ctx));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }

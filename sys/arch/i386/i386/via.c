@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.25 2010/12/15 23:34:23 mikeb Exp $	*/
+/*	$OpenBSD: via.c,v 1.26 2011/01/11 15:42:04 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -303,11 +303,11 @@ viac3_crypto_freesession(u_int64_t tid)
 		axf = swd->sw_axf;
 
 		if (swd->sw_ictx) {
-			bzero(swd->sw_ictx, axf->ctxsize);
+			explicit_bzero(swd->sw_ictx, axf->ctxsize);
 			free(swd->sw_ictx, M_CRYPTO_DATA);
 		}
 		if (swd->sw_octx) {
-			bzero(swd->sw_octx, axf->ctxsize);
+			explicit_bzero(swd->sw_octx, axf->ctxsize);
 			free(swd->sw_octx, M_CRYPTO_DATA);
 		}
 		free(swd, M_CRYPTO_DATA);
@@ -428,7 +428,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		    crd->crd_len);
 
 	if (sc->op_buf != NULL) {
-		bzero(sc->op_buf, crd->crd_len);
+		explicit_bzero(sc->op_buf, crd->crd_len);
 		free(sc->op_buf, M_DEVBUF);
 		sc->op_buf = NULL;
 	}

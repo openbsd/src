@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.98 2010/07/20 15:36:03 matthew Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.99 2011/01/11 15:42:05 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -178,7 +178,7 @@ ah_zeroize(struct tdb *tdbp)
 	int err;
 
 	if (tdbp->tdb_amxkey) {
-		bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+		explicit_bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 		free(tdbp->tdb_amxkey, M_XDATA);
 		tdbp->tdb_amxkey = NULL;
 	}

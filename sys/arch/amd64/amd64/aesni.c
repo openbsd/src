@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.17 2010/12/15 23:34:23 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.18 2011/01/11 15:42:05 deraadt Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -265,11 +265,11 @@ aesni_freesession(u_int64_t tid)
 		axf = swd->sw_axf;
 
 		if (swd->sw_ictx) {
-			bzero(swd->sw_ictx, axf->ctxsize);
+			explicit_bzero(swd->sw_ictx, axf->ctxsize);
 			free(swd->sw_ictx, M_CRYPTO_DATA);
 		}
 		if (swd->sw_octx) {
-			bzero(swd->sw_octx, axf->ctxsize);
+			explicit_bzero(swd->sw_octx, axf->ctxsize);
 			free(swd->sw_octx, M_CRYPTO_DATA);
 		}
 		free(swd, M_CRYPTO_DATA);
@@ -311,7 +311,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 	if (crd->crd_len > aesni_sc->sc_buflen) {
 		if (buf != NULL) {
-			bzero(buf, aesni_sc->sc_buflen);
+			explicit_bzero(buf, aesni_sc->sc_buflen);
 			free(buf, M_DEVBUF);
 		}
 
@@ -399,7 +399,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		    crd->crd_len, buf);
 
 out:
-	bzero(buf, roundup(crd->crd_len, EALG_MAX_BLOCK_LEN));
+	explicit_bzero(buf, roundup(crd->crd_len, EALG_MAX_BLOCK_LEN));
 	return (err);
 }
 

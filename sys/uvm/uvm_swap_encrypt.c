@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.16 2010/04/20 22:05:44 tedu Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.17 2011/01/11 15:42:06 deraadt Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -95,7 +95,7 @@ swap_key_delete(struct swap_key *key)
 	/* Make sure that this key gets removed if we just used it */
 	swap_key_cleanup(key);
 
-	memset(key, 0, sizeof(*key));
+	explicit_bzero(key, sizeof(*key));
 	uvm_swpkeysdeleted++;
 }
 
@@ -223,7 +223,7 @@ swap_key_cleanup(struct swap_key *key)
 		return;
 
 	/* Zero out the subkeys */
-	memset(&swap_ctxt, 0, sizeof(swap_ctxt));
+	explicit_bzero(&swap_ctxt, sizeof(swap_ctxt));
 
 	kcur = NULL;
 }

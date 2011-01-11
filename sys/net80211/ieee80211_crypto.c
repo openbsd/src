@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.59 2010/07/20 15:36:03 matthew Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.60 2011/01/11 15:42:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -87,7 +87,7 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 	/* purge the PMKSA cache */
 	while ((pmk = TAILQ_FIRST(&ic->ic_pmksa)) != NULL) {
 		TAILQ_REMOVE(&ic->ic_pmksa, pmk, pmk_next);
-		memset(pmk, 0, sizeof(*pmk));
+		explicit_bzero(pmk, sizeof(*pmk));
 		free(pmk, M_DEVBUF);
 	}
 
@@ -96,11 +96,11 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 		struct ieee80211_key *k = &ic->ic_nw_keys[i];
 		if (k->k_cipher != IEEE80211_CIPHER_NONE)
 			(*ic->ic_delete_key)(ic, NULL, k);
-		memset(k, 0, sizeof(*k));
+		explicit_bzero(k, sizeof(*k));
 	}
 
 	/* clear pre-shared key from memory */
-	memset(ic->ic_psk, 0, IEEE80211_PMK_LEN);
+	explicit_bzero(ic->ic_psk, IEEE80211_PMK_LEN);
 }
 
 /*
@@ -174,7 +174,7 @@ ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		/* should not get there */
 		break;
 	}
-	memset(k, 0, sizeof(*k));
+	explicit_bzero(k, sizeof(*k));
 }
 
 struct ieee80211_key *

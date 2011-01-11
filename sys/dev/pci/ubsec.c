@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.148 2010/12/15 23:34:23 mikeb Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.149 2011/01/11 15:42:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1604,10 +1604,10 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		crypto_kdone(krp);
 
 		/* bzero all potentially sensitive data */
-		bzero(me->me_E.dma_vaddr, me->me_E.dma_size);
-		bzero(me->me_M.dma_vaddr, me->me_M.dma_size);
-		bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
-		bzero(me->me_q.q_ctx.dma_vaddr, me->me_q.q_ctx.dma_size);
+		explicit_bzero(me->me_E.dma_vaddr, me->me_E.dma_size);
+		explicit_bzero(me->me_M.dma_vaddr, me->me_M.dma_size);
+		explicit_bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+		explicit_bzero(me->me_q.q_ctx.dma_vaddr, me->me_q.q_ctx.dma_size);
 
 		/* Can't free here, so put us on the free list. */
 		SIMPLEQ_INSERT_TAIL(&sc->sc_q2free, &me->me_q, q_next);
