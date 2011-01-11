@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.26 2009/06/05 06:47:12 jmc Exp $
+.\"	$OpenBSD: arp.8,v 1.27 2011/01/11 16:34:20 jasper Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: January 11 2011 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -48,6 +48,8 @@
 .Fl s Ar hostname ether_addr
 .Op Cm temp | permanent
 .Op Cm pub
+.Nm
+.Fl W Ar ether_addr Op iface
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,6 +63,14 @@ when no optional parameters are supplied.
 .Ar hostname
 may be specified by name or by number,
 using Internet dot notation.
+.Pp
+.Nm
+can also used to send Wake on LAN (WoL) frames over a local
+Ethernet network to one or more hosts using their link layer (hardware)
+addresses.
+WoL functionality is generally enabled in a machine's BIOS
+and can be used to power on machines from a remote system without
+having physical access to them.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -146,6 +156,22 @@ is given.
 .It Fl V Ar rdomain
 Select the routing domain.
 The default is 0.
+.It Fl W Ar ether_addr Op Ar iface
+Send the Wake on Lan frame from all interfaces on the local machine
+that are up, if
+.Ar iface
+has not been specified.
+Otherwise the frame will be sent from
+.Ar iface .
+.Ar ether_addr
+is the Ethernet address of the remote machine or a hostname entry in
+.Pa /etc/ethers .
+This option cannot be used in combination with any other option.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ethers" -compact
+.It /etc/ethers
+Ethernet host name database.
 .El
 .Sh EXAMPLES
 View the current
@@ -171,6 +197,7 @@ for IP addresses 204.1.2.3 and 204.1.2.4:
 .Sh SEE ALSO
 .Xr inet 3 ,
 .Xr arp 4 ,
+.Xr ethers 5 ,
 .Xr ifconfig 8 ,
 .Xr ndp 8
 .Sh HISTORY
@@ -178,3 +205,5 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
+Wake on Lan functionality was added in
+.Ox 4.9 .
