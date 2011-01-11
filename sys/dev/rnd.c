@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.138 2011/01/11 06:08:28 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.139 2011/01/11 06:15:03 djm Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -631,6 +631,12 @@ arc4_init(void *v, void *w)
 		nanotime(&ts);
 	for (p = (u_int8_t *)&ts, i = 0; i < sizeof(ts); i++)
 		buf[i] ^= p[i];
+
+	/* Carry over some state from the previous PRNG instance */
+	mtx_enter(&rndlock);
+	if (rndstats.arc4_nstirs > 0)
+		rc4_crypt(&arc4random_state, buf, buf, sizeof(buf));
+	mtx_leave(&rndlock);
 
 	rc4_keysetup(&new_ctx, buf, sizeof(buf));
 	rc4_skip(&new_ctx, ARC4_STATE * ARC4_DISCARD_CHEAP);
