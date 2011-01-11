@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.76 2011/01/11 16:04:19 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.77 2011/01/11 16:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -266,11 +266,11 @@ cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 bail:
 		if (error) {
 			if (crie.cri_key) {
-				explicit_bzero(crie.cri_key, crie.cri_klen);
+				explicit_bzero(crie.cri_key, crie.cri_klen / 8);
 				free(crie.cri_key, M_XDATA);
 			}
 			if (cria.cri_key) {
-				explicit_bzero(cria.cri_key, cria.cri_klen);
+				explicit_bzero(cria.cri_key, cria.cri_klen / 8);
 				free(cria.cri_key, M_XDATA);
 			}
 		}
