@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.75 2010/12/14 20:26:44 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.76 2011/01/11 16:04:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -265,10 +265,14 @@ cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 bail:
 		if (error) {
-			if (crie.cri_key)
+			if (crie.cri_key) {
+				explicit_bzero(crie.cri_key, crie.cri_klen);
 				free(crie.cri_key, M_XDATA);
-			if (cria.cri_key)
+			}
+			if (cria.cri_key) {
+				explicit_bzero(cria.cri_key, cria.cri_klen);
 				free(cria.cri_key, M_XDATA);
+			}
 		}
 		break;
 	case CIOCFSESSION:
@@ -578,8 +582,11 @@ fail:
 	if (krp) {
 		kop->crk_status = krp->krp_status;
 		for (i = 0; i < CRK_MAXPARAM; i++) {
-			if (krp->krp_param[i].crp_p)
+			if (krp->krp_param[i].crp_p) {
+				explicit_bzero(krp->krp_param[i].crp_p,
+				    (krp->krp_param[i].crp_nbits + 7) / 8);
 				free(krp->krp_param[i].crp_p, M_XDATA);
+			}
 		}
 		free(krp, M_XDATA);
 	}

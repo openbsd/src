@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.61 2011/01/11 15:46:47 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.62 2011/01/11 16:04:19 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -984,11 +984,11 @@ swcr_freesession(u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				bzero(swd->sw_ictx, axf->ctxsize);
+				explicit_bzero(swd->sw_ictx, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				bzero(swd->sw_octx, axf->ctxsize);
+				explicit_bzero(swd->sw_octx, axf->ctxsize);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;
@@ -998,11 +998,11 @@ swcr_freesession(u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				bzero(swd->sw_ictx, axf->ctxsize);
+				explicit_bzero(swd->sw_ictx, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				bzero(swd->sw_octx, swd->sw_klen);
+				explicit_bzero(swd->sw_octx, swd->sw_klen);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;
@@ -1015,7 +1015,7 @@ swcr_freesession(u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				bzero(swd->sw_ictx, axf->ctxsize);
+				explicit_bzero(swd->sw_ictx, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			break;
