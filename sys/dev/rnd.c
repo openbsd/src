@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.137 2011/01/10 06:08:38 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.138 2011/01/11 06:08:28 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -507,9 +507,9 @@ extract_entropy(u_int8_t *buf, int nbytes)
 	}
 
 	/* Wipe data from memory */
-	bzero(extract_pool, sizeof(extract_pool));
-	bzero(&tmp, sizeof(tmp));
-	bzero(buffer, sizeof(buffer));
+	explicit_bzero(extract_pool, sizeof(extract_pool));
+	explicit_bzero(&tmp, sizeof(tmp));
+	explicit_bzero(buffer, sizeof(buffer));
 }
 
 /*
@@ -641,8 +641,8 @@ arc4_init(void *v, void *w)
 	rndstats.arc4_nstirs++;
 	mtx_leave(&rndlock);
 
-	bzero(buf, sizeof(buf));
-	bzero(&new_ctx, sizeof(new_ctx));
+	explicit_bzero(buf, sizeof(buf));
+	explicit_bzero(&new_ctx, sizeof(new_ctx));
 }
 
 /*
@@ -721,7 +721,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 		arc4random_buf(lbuf, sizeof(lbuf));
 		rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
 		rc4_skip(&lctx, ARC4_STATE * ARC4_DISCARD_SAFE);
-		bzero(lbuf, sizeof(lbuf));
+		explicit_bzero(lbuf, sizeof(lbuf));
 		myctx = 1;
 	}
 
@@ -737,8 +737,8 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 			yield();
 	}
 	if (myctx)
-		bzero(&lctx, sizeof(lctx));
-	bzero(buf, POOLBYTES);
+		explicit_bzero(&lctx, sizeof(lctx));
+	explicit_bzero(buf, POOLBYTES);
 	free(buf, M_TEMP);
 	return ret;
 }
@@ -771,7 +771,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 	if (newdata)
 		arc4_init(NULL, NULL);
 
-	bzero(buf, POOLBYTES);
+	explicit_bzero(buf, POOLBYTES);
 	free(buf, M_TEMP);
 	return ret;
 }
