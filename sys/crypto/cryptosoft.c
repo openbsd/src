@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.60 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.61 2011/01/11 15:46:47 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -293,7 +293,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 			 */
 			if (uio->uio_iov[ind].iov_len < k + blks &&
 			    uio->uio_iov[ind].iov_len != k) {
-				cuio_copydata(uio, count, blks, blk);
+				cuio_copydata(uio, k, blks, blk);
 
 				/* Actual encryption/decryption */
 				if (exf->reinit) {
@@ -334,7 +334,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 				}
 
 				/* Copy back decrypted block */
-				cuio_copyback(uio, count, blks, blk);
+				cuio_copyback(uio, k, blks, blk);
 
 				count += blks;
 
@@ -394,19 +394,6 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 				count += blks;
 				k += blks;
 				i -= blks;
-			}
-
-			/*
-			 * Advance to the next iov if the end of the current iov
-			 * is aligned with the end of a cipher block.
-			 * Note that the code is equivalent to calling:
-			 *	ind = cuio_getptr(uio, count, &k);
-			 */
-			if (i > 0 && k == uio->uio_iov[ind].iov_len) {
-				k = 0;
-				ind++;
-				if (ind >= uio->uio_iovcnt)
-					return (EINVAL);
 			}
 		}
 	}
@@ -997,11 +984,11 @@ swcr_freesession(u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				explicit_bzero(swd->sw_ictx, axf->ctxsize);
+				bzero(swd->sw_ictx, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				explicit_bzero(swd->sw_octx, axf->ctxsize);
+				bzero(swd->sw_octx, axf->ctxsize);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;
@@ -1011,11 +998,11 @@ swcr_freesession(u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				explicit_bzero(swd->sw_ictx, axf->ctxsize);
+				bzero(swd->sw_ictx, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				explicit_bzero(swd->sw_octx, swd->sw_klen);
+				bzero(swd->sw_octx, swd->sw_klen);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;
@@ -1028,7 +1015,7 @@ swcr_freesession(u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				explicit_bzero(swd->sw_ictx, axf->ctxsize);
+				bzero(swd->sw_ictx, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			break;
