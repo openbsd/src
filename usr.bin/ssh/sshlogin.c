@@ -1,4 +1,4 @@
-/* $OpenBSD: sshlogin.c,v 1.26 2007/09/11 15:47:17 gilles Exp $ */
+/* $OpenBSD: sshlogin.c,v 1.27 2011/01/11 06:06:09 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -86,10 +86,12 @@ get_last_login_time(uid_t uid, const char *logname,
 	r = lseek(fd, pos, SEEK_SET);
 	if (r == -1) {
 		error("%s: lseek: %s", __func__, strerror(errno));
+		close(fd);
 		return (0);
 	}
 	if (r != pos) {
 		debug("%s: truncated lastlog", __func__);
+		close(fd);
 		return (0);
 	}
 	if (read(fd, &ll, sizeof(ll)) != sizeof(ll)) {
