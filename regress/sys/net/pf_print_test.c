@@ -1,11 +1,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <arpa/inet.h>
+
 #include <net/if.h>
 #include <net/pfvar.h>
 #include <net/route.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <err.h>
 #include <stdio.h>
