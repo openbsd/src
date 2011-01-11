@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.319 2010/12/07 11:39:40 jsg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.320 2011/01/11 13:35:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1228,6 +1228,7 @@ struct pf_pdesc {
 	u_int8_t	 sidx;		/* key index for source */
 	u_int8_t	 didx;		/* key index for destination */
 	u_int8_t	 destchg;	/* flag set when destination changed */
+	u_int8_t	 pflog;		/* flags for packet logging */
 };
 
 /* flags for RDR options */

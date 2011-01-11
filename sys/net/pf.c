@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.719 2011/01/10 18:57:59 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.720 2011/01/11 13:35:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3000,6 +3000,18 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	    rtable_l2(act.rtableid) != pd->rdomain)
 		pd->destchg = 1;
 
+	if (r->action == PF_PASS && af == AF_INET && ! r->allow_opts) {
+		struct ip	*h4 = mtod(m, struct ip *);
+			
+		if (h4->ip_hl > 5) {
+			REASON_SET(&reason, PFRES_IPOPTIONS);
+			pd->pflog |= PF_LOG_FORCE;
+			DPFPRINTF(LOG_NOTICE, "dropping packet with "
+			    "ip options in pf_test_rule()");
+			goto cleanup;
+		}
+	}
+
 	if (!state_icmp && r->keep_state) {
 		int action;
 
@@ -5785,7 +5797,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
     struct ether_header *eh)
 {
 	struct pfi_kif		*kif;
-	u_short			 action, reason = 0, pflog = 0;
+	u_short			 action, reason = 0;
 	struct mbuf		*m = *m0;
 	struct ip		*h;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
@@ -5822,7 +5834,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
-		pflog |= PF_LOG_FORCE;
+		pd.pflog |= PF_LOG_FORCE;
 		goto done;
 	}
 
@@ -5845,7 +5857,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (pf_setup_pdesc(AF_INET, dir, &pd, m, &action, &reason, kif, &a, &r,
 	    &ruleset, &off, &hdrlen) == -1) {
 		if (action != PF_PASS)
-			pflog |= PF_LOG_FORCE;
+			pd.pflog |= PF_LOG_FORCE;
 		goto done;
 	}
 	pd.eh = eh;
@@ -5873,7 +5885,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
 			    m, off, &pd, &a, &ruleset, &ipintrq, hdrlen);
@@ -5895,7 +5907,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
 			    m, off, &pd, &a, &ruleset, &ipintrq, hdrlen);
@@ -5911,7 +5923,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
 			    m, off, &pd, &a, &ruleset, &ipintrq, hdrlen);
@@ -5933,7 +5945,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif, m, off,
 			    &pd, &a, &ruleset, &ipintrq, hdrlen);
@@ -5941,16 +5953,18 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 done:
-	if (action == PF_PASS && h->ip_hl > 5 &&
-	    !((s && s->state_flags & PFSTATE_ALLOWOPTS) || r->allow_opts)) {
-		action = PF_DROP;
-		REASON_SET(&reason, PFRES_IPOPTIONS);
-		pflog |= PF_LOG_FORCE;
-		DPFPRINTF(LOG_NOTICE,
-		    "pf: dropping packet with ip options");
-	}
 
 	if (s) {
+		/* The non-state case is handled in pf_test_rule() */
+		if (action == PF_PASS && h->ip_hl > 5 &&
+	    	    !(s->state_flags & PFSTATE_ALLOWOPTS)) {
+			action = PF_DROP;
+			REASON_SET(&reason, PFRES_IPOPTIONS);
+			pd.pflog |= PF_LOG_FORCE;
+			DPFPRINTF(LOG_NOTICE, "dropping packet with "
+			    "ip options in pf_test()");
+		}
+
 		pf_scrub_ip(&m, s->state_flags, s->min_ttl, s->set_tos);
 		pf_tag_packet(m, s->tag, s->rtableid[pd.didx]);
 		if (pqid || (pd.tos & IPTOS_LOWDELAY))
@@ -6006,10 +6020,10 @@ done:
 		action = PF_DIVERT;
 	}
 
-	if (pflog) {
+	if (pd.pflog) {
 		struct pf_rule_item	*ri;
 
-		if (pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
+		if (pd.pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
 			PFLOG_PACKET(kif, h, m, AF_INET, dir, reason, r, a,
 			    ruleset, &pd);
 		if (s) {
@@ -6051,7 +6065,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
     struct ether_header *eh)
 {
 	struct pfi_kif		*kif;
-	u_short			 action, reason = 0, pflog = 0;
+	u_short			 action, reason = 0;
 	struct mbuf		*m = *m0;
 	struct ip6_hdr		*h;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
@@ -6087,7 +6101,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
-		pflog |= PF_LOG_FORCE;
+		pd.pflog |= PF_LOG_FORCE;
 		goto done;
 	}
 
@@ -6113,7 +6127,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (htons(h->ip6_plen) == 0) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_NORM);
-		pflog |= PF_LOG_FORCE;
+		pd.pflog |= PF_LOG_FORCE;
 		goto done;
 	}
 #endif
@@ -6121,7 +6135,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (pf_setup_pdesc(AF_INET6, dir, &pd, m, &action, &reason, kif, &a, &r,
 	    &ruleset, &off, &hdrlen) == -1) {
 		if (action != PF_PASS)
-			pflog |= PF_LOG_FORCE;
+			pd.pflog |= PF_LOG_FORCE;
 		goto done;
 	}
 	pd.eh = eh;
@@ -6140,7 +6154,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
 			    m, off, &pd, &a, &ruleset, &ip6intrq, hdrlen);
@@ -6162,7 +6176,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
 			    m, off, &pd, &a, &ruleset, &ip6intrq, hdrlen);
@@ -6185,7 +6199,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
 			    m, off, &pd, &a, &ruleset, &ip6intrq, hdrlen);
@@ -6200,7 +6214,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
-			pflog |= s->log;
+			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif, m, off,
 			    &pd, &a, &ruleset, &ip6intrq, hdrlen);
@@ -6213,7 +6227,7 @@ done:
 	    !((s && s->state_flags & PFSTATE_ALLOWOPTS) || r->allow_opts)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_IPOPTIONS);
-		pflog |= PF_LOG_FORCE;
+		pd.pflog |= PF_LOG_FORCE;
 		DPFPRINTF(LOG_NOTICE,
 		    "dropping packet with dangerous v6 headers");
 	}
@@ -6266,10 +6280,10 @@ done:
 		action = PF_DIVERT;
 	}
 
-	if (pflog) {
+	if (pd.pflog) {
 		struct pf_rule_item	*ri;
 
-		if (pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
+		if (pd.pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
 			PFLOG_PACKET(kif, h, m, AF_INET6, dir, reason, r, a,
 			    ruleset, &pd);
 		if (s) {
