@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.62 2011/01/11 16:04:19 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.63 2011/01/11 23:00:21 markus Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -293,7 +293,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 			 */
 			if (uio->uio_iov[ind].iov_len < k + blks &&
 			    uio->uio_iov[ind].iov_len != k) {
-				cuio_copydata(uio, k, blks, blk);
+				cuio_copydata(uio, count, blks, blk);
 
 				/* Actual encryption/decryption */
 				if (exf->reinit) {
@@ -334,7 +334,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 				}
 
 				/* Copy back decrypted block */
-				cuio_copyback(uio, k, blks, blk);
+				cuio_copyback(uio, count, blks, blk);
 
 				count += blks;
 
@@ -394,6 +394,19 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 				count += blks;
 				k += blks;
 				i -= blks;
+			}
+
+			/*
+			 * Advance to the next iov if the end of the current iov
+			 * is aligned with the end of a cipher block.
+			 * Note that the code is equivalent to calling:
+			 *	ind = cuio_getptr(uio, count, &k);
+			 */
+			if (i > 0 && k == uio->uio_iov[ind].iov_len) {
+				k = 0;
+				ind++;
+				if (ind >= uio->uio_iovcnt)
+					return (EINVAL);
 			}
 		}
 	}
