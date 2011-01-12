@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.29 2010/12/23 15:11:19 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.30 2011/01/12 14:22:25 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3496,6 +3496,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 			csa->csa_peer = &sa->sa_peer;
 			csa->csa_peerspi = prop->prop_localspi.spi;
 			csa->csa_spi.spi = prop->prop_peerspi.spi;
+			csa->csa_spi.spi_size = prop->prop_peerspi.spi_size;
 		} else {
 			csa->csa_dir = IPSP_DIRECTION_IN;
 			csa->csa_local = &sa->sa_peer;
@@ -3508,6 +3509,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 
 			csa->csa_peerspi = prop->prop_peerspi.spi;
 			csa->csa_spi.spi = prop->prop_localspi.spi = spi;
+			csa->csa_spi.spi_size = 4;
 		}
 
 		if (encrxf && (csa->csa_encrkey = ibuf_get(keymat,
