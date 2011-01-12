@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.88 2010/09/25 13:28:43 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.89 2011/01/12 15:07:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -57,10 +57,10 @@ void		 rde_req_list_del(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_free(struct rde_nbr *);
 
 struct iface	*rde_asext_lookup(u_int32_t, int);
-struct lsa	*rde_asext_get(struct rroute *);
-struct lsa	*rde_asext_put(struct rroute *);
+struct lsa	*rde_asext_get(struct kroute *);
+struct lsa	*rde_asext_put(struct kroute *);
 
-struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
+struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
 
 struct ospfd_conf	*rdeconf = NULL, *nconf = NULL;
@@ -591,7 +591,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	static struct area	*narea;
 	struct iface		*niface;
 	struct imsg		 imsg;
-	struct rroute		 rr;
+	struct kroute		 rr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
 	struct lsa		*lsa;
@@ -1065,12 +1065,12 @@ rde_asext_lookup(u_int32_t prefix, int plen)
 }
 
 struct lsa *
-rde_asext_get(struct rroute *rr)
+rde_asext_get(struct kroute *rr)
 {
-	if (rde_asext_lookup(rr->kr.prefix.s_addr, rr->kr.prefixlen)) {
+	if (rde_asext_lookup(rr->prefix.s_addr, rr->prefixlen)) {
 		/* already announced as (stub) net LSA */
 		log_debug("rde_asext_get: %s/%d is net LSA",
-		    inet_ntoa(rr->kr.prefix), rr->kr.prefixlen);
+		    inet_ntoa(rr->prefix), rr->prefixlen);
 		return (NULL);
 	}
 	/* update of seqnum is done by lsa_merge */
@@ -1078,7 +1078,7 @@ rde_asext_get(struct rroute *rr)
 }
 
 struct lsa *
-rde_asext_put(struct rroute *rr)
+rde_asext_put(struct kroute *rr)
 {
 	/*
 	 * just try to remove the LSA. If the prefix is announced as
@@ -1157,7 +1157,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
  * functions for self-originated LSA
  */
 struct lsa *
-orig_asext_lsa(struct rroute *rr, u_int16_t age)
+orig_asext_lsa(struct kroute *rr, u_int16_t age)
 {
 	struct lsa	*lsa;
 	struct iface	*iface;
@@ -1168,7 +1168,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 		fatal("orig_asext_lsa");
 
 	log_debug("orig_asext_lsa: %s/%d age %d",
-	    inet_ntoa(rr->kr.prefix), rr->kr.prefixlen, age);
+	    inet_ntoa(rr->prefix), rr->prefixlen, age);
 
 	/* LSA header */
 	lsa->hdr.age = htons(age);
@@ -1184,8 +1184,8 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 	 * not be true. In this case a hack needs to be done to
 	 * make the ls_id unique.
 	 */
-	lsa->hdr.ls_id = rr->kr.prefix.s_addr;
-	lsa->data.asext.mask = prefixlen2mask(rr->kr.prefixlen);
+	lsa->hdr.ls_id = rr->prefix.s_addr;
+	lsa->data.asext.mask = prefixlen2mask(rr->prefixlen);
 
 	if (age == MAX_AGE) {
 		/* inherit metric and ext_tag from the current LSA,
@@ -1197,7 +1197,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 		    lsa->hdr.adv_rtr);
 		if (v != NULL) {
 			rr->metric = ntohl(v->lsa->data.asext.metric);
-			rr->kr.ext_tag = ntohl(v->lsa->data.asext.ext_tag);
+			rr->ext_tag = ntohl(v->lsa->data.asext.ext_tag);
 		}
 	}
 
@@ -1211,17 +1211,17 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 	 * Some implementations actually check that there are multiple
 	 * neighbors on the particular segment, we skip that check.
 	 */
-	iface = rde_asext_lookup(rr->kr.nexthop.s_addr, -1);
-	if (rr->kr.flags & F_CONNECTED)
+	iface = rde_asext_lookup(rr->nexthop.s_addr, -1);
+	if (rr->flags & F_CONNECTED)
 		lsa->data.asext.fw_addr = 0;
 	else if (iface && (iface->type == IF_TYPE_BROADCAST ||
 	    iface->type == IF_TYPE_NBMA))
-		lsa->data.asext.fw_addr = rr->kr.nexthop.s_addr;
+		lsa->data.asext.fw_addr = rr->nexthop.s_addr;
 	else
 		lsa->data.asext.fw_addr = 0;
 
 	lsa->data.asext.metric = htonl(rr->metric);
-	lsa->data.asext.ext_tag = htonl(rr->kr.ext_tag);
+	lsa->data.asext.ext_tag = htonl(rr->ext_tag);
 
 	lsa->hdr.ls_chksum = 0;
 	lsa->hdr.ls_chksum =
