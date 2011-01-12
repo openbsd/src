@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.21 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: noct.c,v 1.22 2011/01/12 17:01:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -1729,7 +1729,7 @@ noct_kload_cb(sc, wp, err)
 	struct noct_bnc_sw *sw = &sc->sc_pkh_bnsw[wp];
 
 	extent_free(sc->sc_pkh_bn, sw->bn_off, sw->bn_siz, EX_NOWAIT);
-	bzero(&sc->sc_bncache[sw->bn_off * 16], sw->bn_siz * 16);
+	explicit_bzero(&sc->sc_bncache[sw->bn_off * 16], sw->bn_siz * 16);
 }
 
 void
@@ -1753,7 +1753,7 @@ noct_modmul_cb(sc, wp, err)
 
 out:
 	extent_free(sc->sc_pkh_bn, sw->bn_off, sw->bn_siz, EX_NOWAIT);
-	bzero(&sc->sc_bncache[sw->bn_off * 16], sw->bn_siz * 16);
+	explicit_bzero(&sc->sc_bncache[sw->bn_off * 16], sw->bn_siz * 16);
 	krp->krp_status = err;
 	crypto_kdone(krp);
 }

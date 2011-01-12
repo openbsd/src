@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.17 2010/04/06 22:28:07 tedu Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.18 2011/01/12 17:01:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -637,7 +637,7 @@ nofn_modexp_start(sc, q)
 	return (0);
 
 errout:
-	bzero(&sc->sc_pk_tmp, sizeof(sc->sc_pk_tmp));
+	explicit_bzero(&sc->sc_pk_tmp, sizeof(sc->sc_pk_tmp));
 	nofn_pk_zero_reg(sc, 0);
 	nofn_pk_zero_reg(sc, 1);
 	nofn_pk_zero_reg(sc, 2);
@@ -670,7 +670,7 @@ nofn_modexp_finish(sc, q)
 		bzero(krp->krp_param[krp->krp_iparams].crp_p + reglen,
 		    crplen - reglen);
 	}
-	bzero(&sc->sc_pk_tmp, sizeof(sc->sc_pk_tmp));
+	explicit_bzero(&sc->sc_pk_tmp, sizeof(sc->sc_pk_tmp));
 	nofn_pk_zero_reg(sc, 0);
 	nofn_pk_zero_reg(sc, 1);
 	nofn_pk_zero_reg(sc, 2);
