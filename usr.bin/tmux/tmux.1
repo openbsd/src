@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.207 2011/01/09 18:46:46 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.208 2011/01/12 22:23:58 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2011 $
+.Dd $Mdocdate: January 12 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -134,7 +134,10 @@ will report an error and exit without executing further commands.
 .It Fl L Ar socket-name
 .Nm
 stores the server socket in a directory under
-.Pa /tmp ;
+.Pa /tmp
+(or
+.Ev TMPDIR
+if set);
 the default socket is named
 .Em default .
 This option allows a different socket name to be specified, allowing several

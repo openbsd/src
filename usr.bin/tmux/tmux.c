@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.101 2011/01/08 01:52:37 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.102 2011/01/12 22:23:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -169,12 +169,15 @@ parseenvironment(void)
 char *
 makesocketpath(const char *label)
 {
-	char		base[MAXPATHLEN], *path;
+	char		base[MAXPATHLEN], *path, *s;
 	struct stat	sb;
 	u_int		uid;
 
 	uid = getuid();
-	xsnprintf(base, MAXPATHLEN, "%s/tmux-%d", _PATH_TMP, uid);
+	if ((s = getenv("TMPDIR")) == NULL || *s == '\0')
+		xsnprintf(base, sizeof base, "%s/tmux-%u", _PATH_TMP, uid);
+	else
+		xsnprintf(base, sizeof base, "%s/tmux-%u", s, uid);
 
 	if (mkdir(base, S_IRWXU) != 0 && errno != EEXIST)
 		return (NULL);
