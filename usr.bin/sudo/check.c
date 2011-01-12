@@ -93,7 +93,12 @@ check_user(validated, mode)
 	/* do not check or update timestamp */
 	status = TS_ERROR;
     } else {
-	if (user_uid == 0 || user_uid == runas_pw->pw_uid || user_is_exempt())
+	/*
+	 * Don't prompt for the root passwd or if the user is exempt.
+	 * If the user is not changing uid/gid, no need for a password.
+	 */
+	if (user_uid == 0 || (user_uid == runas_pw->pw_uid &&
+	    (!runas_gr || user_gid == runas_gr->gr_gid)) || user_is_exempt())
 	    return;
 
 	build_timestamp(&timestampdir, &timestampfile);
