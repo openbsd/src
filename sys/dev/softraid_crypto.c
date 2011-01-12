@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.61 2011/01/12 20:41:48 deraadt Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.62 2011/01/12 20:48:34 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -522,7 +522,7 @@ out:
 	/* we don't need the mask key anymore */
 	explicit_bzero(&sd->mds.mdd_crypto.scr_maskkey,
 	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
-	
+
 	explicit_bzero(check_digest, sizeof(check_digest));
 
 	return rv;
