@@ -1,0 +1,9 @@
+RM-BASIC(1)                OpenBSD Reference Manual                RM-BASIC(1)
+
+NNAAMMEE
+     rrmm--bbaassiicc - the remove macro request
+
+DDEESSCCRRIIPPTTIIOONN
+     before rm: Hello world!
+     after rm: !
+

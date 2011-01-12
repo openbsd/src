@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.28 2011/01/10 23:53:32 schwarze Exp $ */
+/*	$Id: roff.c,v 1.29 2011/01/12 20:56:40 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -134,10 +134,10 @@ static	char		*roff_getname(struct roff *, char **, int, int);
 static	const char	*roff_getstrn(const struct roff *, 
 				const char *, size_t);
 static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
-static	enum rofferr	 roff_line_error(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	int		 roff_res(struct roff *, 
 				char **, size_t *, int);
+static	enum rofferr	 roff_rm(ROFF_ARGS);
 static	void		 roff_setstr(struct roff *,
 				const char *, const char *, int);
 static	enum rofferr	 roff_so(ROFF_ARGS);
@@ -171,7 +171,7 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "ne", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "nh", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "nr", roff_nr, NULL, NULL, 0, NULL },
-	{ "rm", roff_line_error, NULL, NULL, 0, NULL },
+	{ "rm", roff_rm, NULL, NULL, 0, NULL },
 	{ "so", roff_so, NULL, NULL, 0, NULL },
 	{ "tr", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "TS", roff_TS, NULL, NULL, 0, NULL },
@@ -936,15 +936,6 @@ roff_line_ignore(ROFF_ARGS)
 
 /* ARGSUSED */
 static enum rofferr
-roff_line_error(ROFF_ARGS)
-{
-
-	(*r->msg)(MANDOCERR_REQUEST, r->data, ln, ppos, roffs[tok].name);
-	return(ROFF_IGN);
-}
-
-/* ARGSUSED */
-static enum rofferr
 roff_cond(ROFF_ARGS)
 {
 	int		 sv;
@@ -1086,6 +1077,22 @@ roff_nr(ROFF_ARGS)
 			rg[(int)REG_nS].v.u = 0;
 	}
 
+	return(ROFF_IGN);
+}
+
+/* ARGSUSED */
+static enum rofferr
+roff_rm(ROFF_ARGS)
+{
+	const char	 *name;
+	char		 *cp;
+
+	cp = *bufp + pos;
+	while ('\0' != *cp) {
+		name = roff_getname(r, &cp, ln, cp - *bufp);
+		if ('\0' != *name)
+			roff_setstr(r, name, NULL, 0);
+	}
 	return(ROFF_IGN);
 }
 

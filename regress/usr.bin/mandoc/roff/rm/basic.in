@@ -1,0 +1,19 @@
+.Dd January 11, 2011
+.Dt RM-BASIC 1
+.Os
+.Sh NAME
+.Nm rm-basic
+.Nd the remove macro request
+.Sh DESCRIPTION
+.de mymacro
+Hello
+..
+.ds mystring world
+before rm:
+.mymacro
+\*[mystring]!
+.br
+.rm mymacro mystring
+after rm:
+.mymacro
+\*[mystring]!
