@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.10 2010/12/22 17:53:54 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.11 2011/01/12 14:35:45 mikeb Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -48,6 +48,18 @@
 
 static u_int32_t sadb_msg_seq = 0;
 static u_int sadb_decoupled = 0;
+
+static struct event pfkey_timer_ev;
+static struct timeval pfkey_timer_tv;
+
+struct pfkey_message {
+	SIMPLEQ_ENTRY(pfkey_message)
+			 pm_entry;
+	u_int8_t	*pm_data;
+	ssize_t		 pm_lenght;
+};
+SIMPLEQ_HEAD(, pfkey_message) pfkey_postponed =
+    SIMPLEQ_HEAD_INITIALIZER(pfkey_postponed);
 
 struct pfkey_constmap {
 	u_int8_t	 pfkey_id;
@@ -104,6 +116,8 @@ struct sadb_ident *
 	pfkey_id2ident(struct iked_id *, u_int);
 void	*pfkey_find_ext(u_int8_t *, ssize_t, int);
 
+void	pfkey_timer_cb(int, short, void *);
+void	pfkey_process(struct iked *, struct pfkey_message *);
 
 int
 pfkey_couple(int sd, struct iked_sas *sas, int couple)
@@ -945,9 +959,10 @@ pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
 int
 pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 {
-	struct sadb_msg	 hdr;
-	ssize_t		 len;
-	u_int8_t	*data;
+	struct pfkey_message	*pm;
+	struct sadb_msg		 hdr;
+	ssize_t			 len;
+	u_int8_t		*data;
 
 	for (;;) {
 		if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
@@ -960,37 +975,41 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 			return (-1);
 		}
 
+		len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
+		if ((data = malloc(len)) == NULL) {
+			log_warn("%s: malloc", __func__);
+			return (-1);
+		}
+		if (read(sd, data, len) != len) {
+			log_warnx("%s: short read", __func__);
+			free(data);
+			return (-1);
+		}
+
 		/* XXX: Only one message can be outstanding. */
 		if (hdr.sadb_msg_seq == sadb_msg_seq &&
 		    hdr.sadb_msg_pid == (u_int32_t)getpid())
 			break;
 
-		/* not ours, discard */
-		if (read(sd, &hdr, sizeof(hdr)) == -1) {
-			log_warn("%s: read", __func__);
+		/* not the reply, enqueue */
+		if ((pm = malloc(sizeof(*pm))) == NULL) {
+			log_warn("%s", __func__);
+			free(data);
 			return (-1);
 		}
+		pm->pm_data = data;
+		pm->pm_lenght = len;
+		SIMPLEQ_INSERT_TAIL(&pfkey_postponed, pm, pm_entry);
+		evtimer_add(&pfkey_timer_ev, &pfkey_timer_tv);
 	}
 
-	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
-	if ((data = malloc(len)) == NULL) {
-		log_warn("%s: malloc", __func__);
-		return (-1);
-	}
-	if (read(sd, data, len) != len) {
-		log_warnx("%s: short read", __func__);
-		bzero(data, len);
-		free(data);
-		return (-1);
-	}
 	if (datap) {
 		*datap = data;
 		if (lenp)
 			*lenp = len;
-	} else {
-		bzero(data, len);
+	} else
 		free(data);
-	}
+
 	if (datap == NULL && hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
 		if (errno != EEXIST) {
@@ -1176,14 +1195,19 @@ pfkey_id2ident(struct iked_id *id, u_int exttype)
 }
 
 int
-pfkey_init(void)
+pfkey_init(struct iked *env)
 {
-	int	 fd;
+	int	 		fd;
 
 	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1)
 		fatal("pfkey_init: failed to open PF_KEY socket");
 
 	pfkey_flush(fd);
+
+	/* Set up a timer to process messages deferred by the pfkey_reply */
+	pfkey_timer_tv.tv_sec = 1;
+	pfkey_timer_tv.tv_usec = 0;
+	evtimer_set(&pfkey_timer_ev, pfkey_timer_cb, env);
 
 	return (fd);
 }
@@ -1208,10 +1232,8 @@ void
 pfkey_dispatch(int sd, short event, void *arg)
 {
 	struct iked		*env = (struct iked *)arg;
-	struct iked_spi		 spi;
+	struct pfkey_message	 pm;
 	struct sadb_msg		 hdr;
-	struct sadb_sa		*sa;
-	struct sadb_lifetime	*ltime;
 	ssize_t			 len;
 	u_int8_t		*data;
 
@@ -1232,12 +1254,48 @@ pfkey_dispatch(int sd, short event, void *arg)
 	}
 	if (read(sd, data, len) != len) {
 		log_warn("%s: short read", __func__);
-		bzero(data, len);
 		free(data);
 		return;
 	}
 
-	switch (hdr.sadb_msg_type) {
+	pm.pm_data = data;
+	pm.pm_lenght = len;
+	pfkey_process(env, &pm);
+
+	free(data);
+}
+
+void
+pfkey_timer_cb(int unused, short event, void *arg)
+{
+	struct iked		*env = arg;
+	struct pfkey_message	*pm;
+
+	while (!SIMPLEQ_EMPTY(&pfkey_postponed)) {
+		pm = SIMPLEQ_FIRST(&pfkey_postponed);
+		SIMPLEQ_REMOVE_HEAD(&pfkey_postponed, pm_entry);
+		pfkey_process(env, pm);
+		free(pm->pm_data);
+		free(pm);
+	}
+}
+
+void
+pfkey_process(struct iked *env, struct pfkey_message *pm)
+{
+	struct iked_spi		 spi;
+	struct sadb_msg		*hdr;
+	struct sadb_sa		*sa;
+	struct sadb_lifetime	*ltime;
+	u_int8_t		*data = pm->pm_data;
+	ssize_t			 len = pm->pm_lenght;
+
+	if (!env || !data || !len)
+		return;
+
+	hdr = (struct sadb_msg *)data;
+
+	switch (hdr->sadb_msg_type) {
 	case SADB_EXPIRE:
 		if ((sa = pfkey_find_ext(data, len, SADB_EXT_SA)) == NULL) {
 			log_warnx("%s: SADB_EXPIRE w/o SA payload", __func__);
@@ -1253,7 +1311,7 @@ pfkey_dispatch(int sd, short event, void *arg)
 		}
 		spi.spi = ntohl(sa->sadb_sa_spi);
 		spi.spi_size = 4;
-		switch (hdr.sadb_msg_satype) {
+		switch (hdr->sadb_msg_satype) {
 		case SADB_SATYPE_AH:
 			spi.spi_protoid = IKEV2_SAPROTO_AH;
 			break;
@@ -1262,7 +1320,7 @@ pfkey_dispatch(int sd, short event, void *arg)
 			break;
 		default:
 			log_warnx("%s: usupported SA type %d spi %s",
-			    __func__, hdr.sadb_msg_satype,
+			    __func__, hdr->sadb_msg_satype,
 			    print_spi(spi.spi, spi.spi_size));
 			return;
 		}
@@ -1278,6 +1336,4 @@ pfkey_dispatch(int sd, short event, void *arg)
 			ikev2_drop_sa(env, &spi);
 		break;
 	}
-
-	free(data);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2011/01/12 14:35:45 mikeb Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -543,7 +543,7 @@ config_setpfkey(struct iked *env, enum iked_procid id)
 {
 	int	 s;
 
-	if ((s = pfkey_init()) == -1)
+	if ((s = pfkey_init(env)) == -1)
 		return (-1);
 	imsg_compose_proc(env, id, IMSG_PFKEY_SOCKET, s, NULL, 0);
 	return (0);

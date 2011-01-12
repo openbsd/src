@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.26 2011/01/12 14:26:26 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.27 2011/01/12 14:35:45 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -686,7 +686,7 @@ int	 pfkey_sa_init(int, struct iked_childsa *, u_int32_t *);
 int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
 int	 pfkey_sa_delete(int, struct iked_childsa *);
 int	 pfkey_flush(int);
-int	 pfkey_init(void);
+int	 pfkey_init(struct iked *);
 void	 pfkey_dispatch(int, short, void *);
 
 /* ca.c */
