@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.26 2010/12/19 23:23:21 jmc Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.27 2011/01/12 20:17:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -34,6 +34,10 @@
 #include <unistd.h>
 
 #define PCIDEV	"/dev/pci"
+
+#ifndef nitems
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 __dead void usage(void);
 void scanpcidomain(void);
@@ -86,9 +90,9 @@ const char *pci_capnames[] = {
 	"AGP8",
 	"Secure",
 	"PCI Express",
-	"Extended Message Signaled Interrupts (MSI-X)"
+	"Extended Message Signaled Interrupts (MSI-X)",
+	"SATA"
 };
-#define PCI_CAPNAMES_MAX	PCI_CAP_MSIX
 
 int
 main(int argc, char *argv[])
@@ -337,7 +341,7 @@ dump_caplist(int bus, int dev, int func, u_int8_t ptr)
 			return;
 		cap = PCI_CAPLIST_CAP(reg);
 		printf("\t0x%04x: Capability 0x%02x: ", ptr, cap);
-		if (cap > PCI_CAPNAMES_MAX)
+		if (cap > nitems(pci_capnames))
 			cap = 0;
 		printf("%s\n", pci_capnames[cap]);
 		if (cap == PCI_CAP_PCIEXPRESS)
