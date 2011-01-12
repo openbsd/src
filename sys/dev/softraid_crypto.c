@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.58 2010/11/06 23:01:56 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.59 2011/01/12 19:45:03 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -398,7 +398,7 @@ sr_crypto_get_kdf(struct bioc_createraid *bc, struct sr_discipline *sd)
 	bc->bc_opaque_status = BIOC_SOINOUT_OK;
 	rv = 0;
 out:
-	bzero(kdfinfo, bc->bc_opaque_size);
+	explicit_bzero(kdfinfo, bc->bc_opaque_size);
 	free(kdfinfo, M_DEVBUF);
 
 	return (rv);
@@ -426,7 +426,7 @@ sr_crypto_encrypt(u_char *p, u_char *c, u_char *key, size_t size, int alg)
 	}
 
 out:
-	bzero(&ctx, sizeof(ctx));
+	explicit_bzero(&ctx, sizeof(ctx));
 	return (rv);
 }
 
@@ -452,7 +452,7 @@ sr_crypto_decrypt(u_char *c, u_char *p, u_char *key, size_t size, int alg)
 	}
 
 out:
-	bzero(&ctx, sizeof(ctx));
+	explicit_bzero(&ctx, sizeof(ctx));
 	return (rv);
 }
 
@@ -478,9 +478,9 @@ sr_crypto_calculate_check_hmac_sha1(u_int8_t *maskkey, int maskkey_size,
 	HMAC_SHA1_Update(&hmacctx, key, key_size);
 	HMAC_SHA1_Final(check_digest, &hmacctx);
 
-	bzero(check_key, sizeof(check_key));
-	bzero(&hmacctx, sizeof(hmacctx));
-	bzero(&shactx, sizeof(shactx));
+	explicit_bzero(check_key, sizeof(check_key));
+	explicit_bzero(&hmacctx, sizeof(hmacctx));
+	explicit_bzero(&shactx, sizeof(shactx));
 }
 
 int
@@ -512,7 +512,7 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 	    check_digest);
 	if (memcmp(sd->mds.mdd_crypto.scr_meta->chk_hmac_sha1.sch_mac,
 	    check_digest, sizeof(check_digest)) != 0) {
-		bzero(sd->mds.mdd_crypto.scr_key,
+		explicit_bzero(sd->mds.mdd_crypto.scr_key,
 		    sizeof(sd->mds.mdd_crypto.scr_key));
 		goto out;
 	}
@@ -520,10 +520,10 @@ sr_crypto_decrypt_key(struct sr_discipline *sd)
 	rv = 0; /* Success */
 out:
 	/* we don't need the mask key anymore */
-	bzero(&sd->mds.mdd_crypto.scr_maskkey,
+	explicit_bzero(&sd->mds.mdd_crypto.scr_maskkey,
 	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
 	
-	bzero(check_digest, sizeof(check_digest));
+	explicit_bzero(check_digest, sizeof(check_digest));
 
 	return rv;
 }
@@ -561,7 +561,8 @@ sr_crypto_create_keys(struct sr_discipline *sd)
 	    sd->mds.mdd_crypto.scr_meta->chk_hmac_sha1.sch_mac);
 
 	/* Erase the plaintext disk keys */
-	bzero(sd->mds.mdd_crypto.scr_key, sizeof(sd->mds.mdd_crypto.scr_key));
+	explicit_bzero(sd->mds.mdd_crypto.scr_key,
+	    sizeof(sd->mds.mdd_crypto.scr_key));
 
 #ifdef SR_DEBUG0
 	sr_crypto_dumpkeys(sd);
@@ -630,13 +631,13 @@ sr_crypto_change_maskkey(struct sr_discipline *sd,
 
 out:
 	if (p) {
-		bzero(p, ksz);
+		explicit_bzero(p, ksz);
 		free(p, M_DEVBUF);
 	}
 
-	bzero(check_digest, sizeof(check_digest));
-	bzero(&kdfinfo1->maskkey, sizeof(kdfinfo1->maskkey));
-	bzero(&kdfinfo2->maskkey, sizeof(kdfinfo2->maskkey));
+	explicit_bzero(check_digest, sizeof(check_digest));
+	explicit_bzero(&kdfinfo1->maskkey, sizeof(kdfinfo1->maskkey));
+	explicit_bzero(&kdfinfo2->maskkey, sizeof(kdfinfo2->maskkey));
 
 	return (rv);
 }
