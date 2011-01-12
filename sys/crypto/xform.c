@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.41 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: xform.c,v 1.42 2011/01/12 16:58:23 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -589,6 +589,7 @@ aes_ctr_crypt(caddr_t key, u_int8_t *data)
 	rijndaelEncrypt(ctx->ac_ek, ctx->ac_nr, ctx->ac_block, keystream);
 	for (i = 0; i < AESCTR_BLOCKSIZE; i++)
 		data[i] ^= keystream[i];
+	explicit_bzero(keystream, sizeof(keystream));
 }
 
 int
