@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.123 2010/10/06 22:19:20 mikeb Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.124 2011/01/12 18:49:21 mikeb Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1083,6 +1083,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 			headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
+			headers[SADB_X_EXT_REMOTE_AUTH] = NULL;
 
 			newsa->tdb_seq = smsg->sadb_msg_seq;
 
@@ -1251,6 +1252,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 			headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
+			headers[SADB_X_EXT_REMOTE_AUTH] = NULL;
 
 			newsa->tdb_seq = smsg->sadb_msg_seq;
 
