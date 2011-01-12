@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.18 2010/12/22 17:53:54 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.19 2011/01/12 14:26:26 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -847,11 +847,13 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 		}
 
 		if (ikev2_childsa_delete(env, sa, del->del_protoid, spi,
-		    &localspi[i], peersas[i]->csa_rekey ? 0 :
-		    IKED_DEL_FLOWS) == -1)
+		    &localspi[i], 0) == -1)
 			failed++;
 		else
 			found++;
+
+		if (!peersas[i]->csa_rekey)
+			ikev2_flows_delete(env, sa, del->del_protoid);
 	}
 
 	/* Parsed outgoing message? */

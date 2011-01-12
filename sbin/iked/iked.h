@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.25 2010/12/22 17:53:54 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.26 2011/01/12 14:26:26 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -481,10 +481,6 @@ struct iked_socket {
 	struct sockaddr_storage	 sock_addr;
 };
 
-/* flags for ikev2_childsa_delete */
-#define IKED_DEL_FLOWS		 0x01
-#define IKED_DEL_NOTLOADED	 0x02
-
 /* iked.c */
 void	 parent_reload(struct iked *, int, const char *);
 
@@ -621,6 +617,8 @@ int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
 	    u_int8_t, u_int64_t, u_int64_t *, int);
+int	 ikev2_flows_delete(struct iked *, struct iked_sa *, u_int8_t);
+
 struct ibuf *
 	 ikev2_prfplus(struct iked_hash *, struct ibuf *, struct ibuf *,
 	    size_t);

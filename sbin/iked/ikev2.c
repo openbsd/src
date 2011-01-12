@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.31 2011/01/12 14:23:53 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.32 2011/01/12 14:26:26 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -938,7 +938,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
 
 	if (ret)
-		ikev2_childsa_delete(env, sa, 0, 0, NULL, IKED_DEL_NOTLOADED);
+		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	return (ret);
 }
 
@@ -1896,7 +1896,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 
  done:
 	if (ret)
-		ikev2_childsa_delete(env, sa, 0, 0, NULL, IKED_DEL_NOTLOADED);
+		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	ibuf_release(e);
 	return (ret);
 }
@@ -2202,7 +2202,7 @@ done:
 	sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
 
 	if (ret)
-		ikev2_childsa_delete(env, sa, 0, 0, NULL, IKED_DEL_NOTLOADED);
+		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	ibuf_release(buf);
 	return (ret);
 }
@@ -2446,8 +2446,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		if (protoid == IKEV2_SAPROTO_IKE)
 			sa_free(env, nsa);
 		else
-			ikev2_childsa_delete(env, sa, 0, 0, NULL,
-			    IKED_DEL_NOTLOADED);
+			ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	}
 	ibuf_release(e);
 	return (ret);
@@ -3618,10 +3617,9 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 
 int
 ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
-    u_int64_t spi, u_int64_t *spiptr, int flags)
+    u_int64_t spi, u_int64_t *spiptr, int cleanup)
 {
 	struct iked_childsa	*csa, key, *nextcsa = NULL;
-	struct iked_flow	*flow, *nextflow;
 	u_int64_t		 peerspi = 0;
 	int			 found = 0;
 
@@ -3631,7 +3629,7 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
 		if ((saproto && csa->csa_saproto != saproto) ||
 		    (spi && (csa->csa_spi.spi != spi &&
 			     csa->csa_peerspi != spi)) ||
-		    ((flags & IKED_DEL_NOTLOADED) && !csa->csa_loaded))
+		    (cleanup && csa->csa_loaded))
 			continue;
 
 		if (pfkey_sa_delete(env->sc_pfkey, csa) != 0)
@@ -3657,8 +3655,14 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
 	if (spiptr)
 		*spiptr = peerspi;
 
-	if ((flags & IKED_DEL_FLOWS) == 0)
-		return (found ? 0 : -1);
+	return (found ? 0 : -1);
+}
+
+int
+ikev2_flows_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto)
+{
+	struct iked_flow	*flow, *nextflow;
+	int			 found = 0;
 
 	for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL; flow = nextflow) {
 		nextflow = TAILQ_NEXT(flow, flow_entry);
@@ -3735,7 +3739,7 @@ ikev2_disable_rekeying(struct iked *env, struct iked_sa *sa)
 		csa->csa_rekey = 0;
 	}
 
-	(void)ikev2_childsa_delete(env, sa, 0, 0, NULL, IKED_DEL_NOTLOADED);
+	(void)ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 }
 
 void
@@ -3825,10 +3829,13 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 
 		/* delete peer's SPI */
 		if (ikev2_childsa_delete(env, sa, csa->csa_saproto,
-		    csa->csa_peerspi, NULL, IKED_DEL_FLOWS |
-		    IKED_DEL_NOTLOADED))
+		    csa->csa_peerspi, NULL, 1))
 			log_debug("%s: failed to delete CHILD SA %s", __func__,
 			    print_spi(csa->csa_peerspi, drop->spi_size));
+
+		/* delete flows for the specified protocol */
+		if (ikev2_flows_delete(env, sa, csa->csa_saproto))
+			log_debug("%s: failed to delete flows", __func__);
 
 		/* Send PAYLOAD_DELETE */
 
@@ -3941,4 +3948,3 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 
 	return (0);
 }
- 
