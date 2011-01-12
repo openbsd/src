@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.9 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.10 2011/01/12 17:15:23 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			if (ses == NULL)
 				return (ENOMEM);
 			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
-			bzero(sc->sc_sessions, sesn * sizeof(*ses));
+			explicit_bzero(sc->sc_sessions, sesn * sizeof(*ses));
 			free(sc->sc_sessions, M_DEVBUF);
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sesn];
@@ -312,7 +312,7 @@ viac3_crypto_freesession(u_int64_t tid)
 		free(swd, M_CRYPTO_DATA);
 	}
 
-	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
+	explicit_bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 	return (0);
 }
 
