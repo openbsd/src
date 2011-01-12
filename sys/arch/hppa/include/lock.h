@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.3 2011/01/12 21:07:12 kettenis Exp $	*/
+/*	$OpenBSD: lock.h,v 1.4 2011/01/12 21:11:12 kettenis Exp $	*/
 
 /* public domain */
 
@@ -46,5 +46,10 @@ __cpu_simple_unlock(__cpu_simple_lock_t *l)
 {
 	*l = __SIMPLELOCK_UNLOCKED;
 }
+
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+int	rw_cas_hppa(volatile unsigned long *, unsigned long, unsigned long);
+#define	rw_cas rw_cas_hppa
+#endif
 
 #endif	/* _HPPA_LOCK_H_ */
