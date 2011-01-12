@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.30 2011/01/12 14:22:25 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.31 2011/01/12 14:23:53 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3648,8 +3648,7 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
 			peerspi = csa->csa_peerspi;
 
 		key.csa_spi = csa->csa_spi;
-		if (csa->csa_loaded ||
-		    RB_FIND(iked_ipsecsas, &env->sc_ipsecsas, &key))
+		if (RB_FIND(iked_ipsecsas, &env->sc_ipsecsas, &key))
 			RB_REMOVE(iked_ipsecsas, &env->sc_ipsecsas, csa);
 		TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
 		childsa_free(csa);
