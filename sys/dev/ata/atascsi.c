@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.98 2010/11/20 05:12:39 deraadt Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.99 2011/01/12 21:00:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1186,7 +1186,7 @@ atascsi_disk_start_stop(struct scsi_xfer *xs)
 	}
 
 	/*
-	 * A SCSI START_STOP UNIT command with the START bit set to
+	 * A SCSI START STOP UNIT command with the START bit set to
 	 * zero gets translated into an ATA FLUSH CACHE command
 	 * followed by an ATA STANDBY IMMEDIATE command.
 	 */
@@ -1236,6 +1236,7 @@ atascsi_disk_start_stop_done(struct ata_xfer *xa)
 	 */
 	xa->datalen = 0;
 	xa->flags = ATA_F_READ;
+	xa->state = ATA_S_SETUP;
 	xa->complete = atascsi_disk_cmd_done;
 	/* Spec says flush cache can take >30 sec, so give it at least 45. */
 	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
