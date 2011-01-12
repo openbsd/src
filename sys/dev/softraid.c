@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.217 2010/12/20 17:47:48 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.218 2011/01/12 20:38:33 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3380,6 +3380,7 @@ sr_discipline_free(struct sr_discipline *sd)
 			break;
 		}
 
+	explicit_bzero(sd, sizeof *sd);
 	free(sd, M_DEVBUF);
 }
 

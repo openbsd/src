@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.59 2011/01/12 19:45:03 deraadt Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.60 2011/01/12 20:38:33 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1003,8 +1003,11 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_free_resources\n",
 	    DEVNAME(sd->sd_sc));
 
-	if (sd->mds.mdd_crypto.key_disk != NULL)
+	if (sd->mds.mdd_crypto.key_disk != NULL) {
+		explicit_bzero(sd->mds.mdd_crypto.key_disk, sizeof
+		    sd->mds.mdd_crypto.key_disk);
 		free(sd->mds.mdd_crypto.key_disk, M_DEVBUF);
+	}
 
 	sr_hotplug_unregister(sd, sr_crypto_hotplug);
 
