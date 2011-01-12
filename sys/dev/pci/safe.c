@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.30 2010/12/15 23:34:23 mikeb Exp $	*/
+/*	$OpenBSD: safe.c,v 1.31 2011/01/12 17:16:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1349,7 +1349,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				return (ENOMEM);
 			bcopy(sc->sc_sessions, ses, sesn *
 			    sizeof(struct safe_session));
-			bzero(sc->sc_sessions, sesn *
+			explicit_bzero(sc->sc_sessions, sesn *
 			    sizeof(struct safe_session));
 			free(sc->sc_sessions, M_DEVBUF);
 			sc->sc_sessions = ses;
@@ -1449,7 +1449,8 @@ safe_freesession(u_int64_t tid)
 
 	session = SAFE_SESSION(sid);
 	if (session < sc->sc_nsessions) {
-		bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
+		explicit_bzero(&sc->sc_sessions[session],
+		    sizeof(sc->sc_sessions[session]));
 		ret = 0;
 	} else
 		ret = EINVAL;
@@ -1989,6 +1990,7 @@ safe_kpoll(void *vsc)
 	for (i = SAFE_PK_RAM_START; i < SAFE_PK_RAM_END; i += 4)
 		WRITE_REG(sc, i, 0);
 
+	explicit_bzero(&buf, sizeof(buf));
 	crypto_kdone(q->pkq_krp);
 	free(q, M_DEVBUF);
 	sc->sc_pkq_cur = NULL;
