@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.60 2011/01/12 20:38:33 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.61 2011/01/12 20:41:48 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1085,6 +1085,9 @@ sr_crypto_ioctl(struct sr_discipline *sd, struct bioc_discipline *bd)
 	}
 
 bad:
+	explicit_bzero(&kdfpair, sizeof(kdfpair));
+	explicit_bzero(&kdfinfo1, sizeof(kdfinfo1));
+	explicit_bzero(&kdfinfo2, sizeof(&kdfinfo2));
 	return (rv);
 }
 
