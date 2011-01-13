@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.4 2009/06/26 17:24:31 canacar Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.5 2011/01/13 19:10:02 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -47,19 +47,19 @@ int	num_server = 0;
 field_def fields_nfs[] = {
 	/* Client */
 	{"RPC COUNTS", 10, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"", 12, 14, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"", 12, 14, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"RPC INFO", 14, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"", 12, 14, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"", 12, 14, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"CACHE INFO", 10, 12, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
-	{"", 12, 14, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"", 12, 14, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 
 	/* Server */
 	{"RPC COUNTS", 10, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"", 12, 14, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"", 12, 14, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"CACHE STATS", 14, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"", 12, 14, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"", 12, 14, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"WRITES", 10, 12, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
-	{"", 12, 14, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"", 10, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 };
 
 /* _V suffixed fields indicate a value column. */
