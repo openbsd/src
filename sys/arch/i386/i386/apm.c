@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.95 2011/01/04 23:08:56 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.96 2011/01/13 23:19:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -525,6 +525,9 @@ apm_periodic_check(struct apm_softc *sc)
 			break;
 		}
 
+		/* If the APM BIOS tells us to suspend, don't do it twice */
+		if (regs.bx == APM_SUSPEND_REQ)
+			apm_lidclose = 0;
 		if (apm_handle_event(sc, &regs))
 			break;
 	}
