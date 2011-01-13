@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.9 2011/01/13 06:07:42 martinh Exp $ */
+/*	$OpenBSD: yp.c,v 1.10 2011/01/13 06:09:35 martinh Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -453,7 +453,7 @@ ypproc_next_2_svc(ypreq_key *arg, struct svc_req *req)
 		    &ukey)) == NULL) {
 			/*
 			 * canacar's trick:
-			 * the user might have been deleted in between calls to
+			 * the user might have been deleted in between calls
 			 * to next since the tree may be modified by a reload.
 			 * next should still return the next user in
 			 * lexicographical order, hence insert the search key
