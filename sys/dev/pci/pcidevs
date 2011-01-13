@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1584 2011/01/08 18:49:51 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1585 2011/01/13 22:40:30 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1204,6 +1204,7 @@ product ATI RADEON_X700_SE_S	0x5e6f	Radeon X700 SE Sec
 product ATI RADEON_HD5800	0x6899	Radeon HD 5800
 product ATI RADEON_HD5700	0x68b8	Radeon HD 5700
 product ATI RADEON_HD5670	0x68d8	Radeon HD 5670
+product ATI MOBILITY_HD5470	0x68e0	Radeon Mobility HD 5470
 product ATI RS100_PCI		0x700f	RS100 PCI
 product ATI RS200_PCI		0x7010	RS200 PCI
 product ATI RADEON_X1800A	0x7100	Radeon X1800
@@ -1371,6 +1372,7 @@ product ATI RADEON_HD4000_HDA	0xaa38	Radeon HD 4000 HD Audio
 product ATI RADEON_HD5800_HDA	0xaa50	Radeon HD 5800 Audio
 product ATI RADEON_HD5700_HDA	0xaa58	Radeon HD 5700 Audio
 product ATI RADEON_HD5600_HDA	0xaa60	Radeon HD 5600 Audio
+product ATI RADEON_HD5470_HDA	0xaa68	Radeon HD 5470 Audio
 product ATI RS100_AGP		0xcab0	RS100 AGP
 product ATI RS200_AGP		0xcab2	RS200 AGP
 product ATI RS250_AGP		0xcab3	RS250 AGP
@@ -2242,6 +2244,7 @@ product INTEL CORE_PCIE_0	0x0041	Core PCIE
 product INTEL CLARKDALE_IGD	0x0042	HD graphics
 product INTEL CORE_PCIE_1	0x0043	Core PCIE
 product INTEL CORE_HB_1		0x0044	Core Host
+product INTEL 3400_PCIE_ROOT	0x0045	3400 PCIE Root
 product INTEL ARRANDALE_IGD	0x0046	Mobile HD graphics
 product INTEL WL_6005_1		0x0082	Centrino Advanced-N 6005
 product INTEL WL_1000_1		0x0083	WiFi Link 1000
