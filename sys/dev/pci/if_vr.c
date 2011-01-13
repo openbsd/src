@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.106 2010/09/03 18:14:54 kettenis Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.107 2011/01/13 11:28:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1048,15 +1048,11 @@ vr_intr(void *arg)
 	/* Disable interrupts. */
 	CSR_WRITE_2(sc, VR_IMR, 0x0000);
 
-	for (;;) {
+	status = CSR_READ_2(sc, VR_ISR);
+	if (status)
+		CSR_WRITE_2(sc, VR_ISR, status);
 
-		status = CSR_READ_2(sc, VR_ISR);
-		if (status)
-			CSR_WRITE_2(sc, VR_ISR, status);
-
-		if ((status & VR_INTRS) == 0)
-			break;
-
+	if (status & VR_INTRS) {
 		claimed = 1;
 
 		if (status & VR_ISR_RX_OK)
@@ -1092,7 +1088,7 @@ vr_intr(void *arg)
 				    sc->sc_dev.dv_xname);
 			vr_reset(sc);
 			vr_init(sc);
-			break;
+			status = 0;
 		}
 
 		if ((status & VR_ISR_TX_OK) || (status & VR_ISR_TX_ABRT) ||
