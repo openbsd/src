@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1584 2011/01/08 18:49:51 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1585 2011/01/13 22:40:30 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1209,6 +1209,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD5800	0x6899		/* Radeon HD 5800 */
 #define	PCI_PRODUCT_ATI_RADEON_HD5700	0x68b8		/* Radeon HD 5700 */
 #define	PCI_PRODUCT_ATI_RADEON_HD5670	0x68d8		/* Radeon HD 5670 */
+#define	PCI_PRODUCT_ATI_MOBILITY_HD5470	0x68e0		/* Radeon Mobility HD 5470 */
 #define	PCI_PRODUCT_ATI_RS100_PCI	0x700f		/* RS100 PCI */
 #define	PCI_PRODUCT_ATI_RS200_PCI	0x7010		/* RS200 PCI */
 #define	PCI_PRODUCT_ATI_RADEON_X1800A	0x7100		/* Radeon X1800 */
@@ -1376,6 +1377,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD5800_HDA	0xaa50		/* Radeon HD 5800 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD5700_HDA	0xaa58		/* Radeon HD 5700 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDA	0xaa60		/* Radeon HD 5600 Audio */
+#define	PCI_PRODUCT_ATI_RADEON_HD5470_HDA	0xaa68		/* Radeon HD 5470 Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */
@@ -2247,6 +2249,7 @@
 #define	PCI_PRODUCT_INTEL_CLARKDALE_IGD	0x0042		/* HD graphics */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_1	0x0043		/* Core PCIE */
 #define	PCI_PRODUCT_INTEL_CORE_HB_1	0x0044		/* Core Host */
+#define	PCI_PRODUCT_INTEL_3400_PCIE_ROOT	0x0045		/* 3400 PCIE Root */
 #define	PCI_PRODUCT_INTEL_ARRANDALE_IGD	0x0046		/* Mobile HD graphics */
 #define	PCI_PRODUCT_INTEL_WL_6005_1	0x0082		/* Centrino Advanced-N 6005 */
 #define	PCI_PRODUCT_INTEL_WL_1000_1	0x0083		/* WiFi Link 1000 */
