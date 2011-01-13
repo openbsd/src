@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.55 2010/04/20 23:27:00 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.56 2011/01/13 22:55:33 matthieu Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -781,11 +781,13 @@ cpu_idle_enter(void)
 void
 cpu_idle_cycle(void)
 {
+#ifdef SUN4V
 	if (CPU_ISSUN4V) {
 		hv_cpu_yield();
 		sparc_wrpr(pstate, sparc_rdpr(pstate) | PSTATE_IE, 0);
 		sparc_wrpr(pstate, sparc_rdpr(pstate) & ~PSTATE_IE, 0);
 	}
+#endif
 }
 
 void
