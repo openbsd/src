@@ -116,6 +116,7 @@
 ./usr/include/dev/ata/atareg.h
 ./usr/include/dev/ata/atascsi.h
 ./usr/include/dev/ata/atavar.h
+./usr/include/dev/ata/pmreg.h
 ./usr/include/dev/ata/satareg.h
 ./usr/include/dev/ata/wdvar.h
 ./usr/include/dev/auconv.h

@@ -730,6 +730,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata/atascsi.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata/atavar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata/pmreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata/satareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata/wdvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/auconv.ph
