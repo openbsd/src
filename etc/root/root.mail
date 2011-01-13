@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Wed Sep  1 07:47:47 MDT 2010
+From deraadt@do-not-reply.openbsd.org Sun May  1 07:47:47 MDT 2011
 Return-Path: root
-Date: Sep 1 07:47:47 MDT 2010
+Date: May 1 07:47:47 MDT 2011
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 4.8!
+Subject: Welcome to OpenBSD 4.9!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -27,13 +27,13 @@ find further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
 for most architectures.  If you installed from a CD-ROM the packages
-are on the same CD-ROM you installed from in the directory 4.8/packages.
+are on the same CD-ROM you installed from in the directory 4.9/packages.
 
 CD-ROM space permitted us to include a subset of the full FTP packages
 for the most common architectures.  Please see the FTP sites to see a
 full list of packages for each architecture:
 
-	ftp://ftp.openbsd.org/pub/OpenBSD/4.8/packages/
+	ftp://ftp.openbsd.org/pub/OpenBSD/4.9/packages/
 
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
@@ -41,9 +41,9 @@ nearest FTP mirror site.
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute:
  # mount /dev/cd0a /cdrom
- # pkg_add -v /cdrom/4.8/packages/i386/emacs-22.3p6.tgz
+ # pkg_add -v /cdrom/4.9/packages/i386/emacs-22.3p6.tgz
 or alternatively install them via FTP this way:
- # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/4.8/packages/i386/emacs-22.3p6.tgz
+ # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/4.9/packages/i386/emacs-22.3p6.tgz
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files

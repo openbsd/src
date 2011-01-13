@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.108 2010/10/18 19:17:29 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.109 2011/01/13 23:17:50 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -61,13 +61,13 @@ id=`basename ${d}`
 #	and disable POOL_DEBUG in sys/conf/GENERIC
 
 ost="OpenBSD"
-osr="4.8"
+osr="4.9"
 
 cat >vers.c <<eof
-#define STATUS "-current"		/* just after a release */
-#if 0
-#define STATUS ""			/* release */
 #define STATUS "-beta"			/* just before a release */
+#if 0
+#define STATUS "-current"		/* just after a release */
+#define STATUS ""			/* release */
 #endif
 
 const char ostype[] = "${ost}";
