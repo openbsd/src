@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.208 2011/01/12 22:23:58 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.209 2011/01/13 09:50:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2011 $
+.Dd $Mdocdate: January 13 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2153,8 +2153,11 @@ may use the terminal alternate screen feature, which allows the
 and
 .Em rmcup
 .Xr terminfo 5
-capabilities to be issued to preserve the existing window content on start and
-restore it on exit.
+capabilities.
+The alternate screen feature preserves the contents of the window when an
+interactive application starts and restores it on exit, so that any output
+visible before the application starts reappears unchanged after it exits.
+The default is on.
 .Pp
 .It Xo Ic automatic-rename
 .Op Ic on | off
