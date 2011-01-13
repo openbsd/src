@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.8 2011/01/13 06:05:18 martinh Exp $ */
+/*	$OpenBSD: yp.c,v 1.9 2011/01/13 06:07:42 martinh Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -323,6 +323,9 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 	static struct ypresp_val res;
 	const char		*estr;
 	char			 key[YPMAXRECORD+1];
+
+	log_debug("matching '%.*s' in map %s", arg->key.keydat_len,
+	   arg->key.keydat_val, arg->map);
 
 	if (yp_valid_domain(arg->domain, (struct ypresp_val *)&res) == -1)
 		return (&res);
