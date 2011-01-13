@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.18 2010/07/09 12:17:34 zinovik Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.19 2011/01/13 06:12:29 martinh Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -48,8 +48,6 @@ void    client_connect(int, short, void *);
 void    client_configure(struct env *);
 void    client_periodic_update(int, short, void *);
 int	client_try_idm(struct env *, struct idm *);
-void	client_try_idm_wrapper(int, short, void *);
-void	client_try_server_wrapper(int, short, void *);
 int	client_addr_init(struct idm *);
 int	client_addr_free(struct idm *);
 
