@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.19 2010/12/30 00:17:45 espie Exp $
+.\" $OpenBSD: packages-specs.7,v 1.20 2011/01/13 12:00:37 landry Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 30 2010 $
+.Dd $Mdocdate: January 13 2011 $
 .Dt PACKAGES-SPECS 7
 .Os
 .Sh NAME
@@ -115,6 +115,18 @@ and
 are next (and non-comparable to one another),
 then normal version, and finally
 .Ar pl .
+.Bl -dash
+.It
+"foo-1.01" is equal to "foo-1.1", which can lead to surprises..
+.It
+"foo-1.001" is older than "foo-1.002", which in turns is older than "foo-1.0010"
+.It
+"foo-1.0rc2" is not comparable to "foo-1.0pre3"
+.It
+"bar-1.0beta3" is older than "bar-1.0rc1"
+.It
+"baz-1.0" is older than "baz-1.0pl1"
+.El
 .El
 .Pp
 In some rare cases, version numbering changes completely upstream.
