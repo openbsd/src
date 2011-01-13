@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.7 2010/11/20 05:12:38 deraadt Exp $ */
+/*	$OpenBSD: yp.c,v 1.8 2011/01/13 06:05:18 martinh Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -333,12 +333,16 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 		 */
 		return (NULL);
 	}
+
+	if (arg->key.keydat_len > YPMAXRECORD) {
+		log_debug("argument too long");
+		return (NULL);
+	}
+	bzero(key, sizeof(key));
+	(void)strncpy(key, arg->key.keydat_val, arg->key.keydat_len);
+
 	if (strcmp(arg->map, "passwd.byname") == 0 ||
 	    strcmp(arg->map, "master.passwd.byname") == 0) {
-		bzero(key, sizeof(key));
-		(void)strncpy(key, arg->key.keydat_val,
-		    arg->key.keydat_len);
-		
 		ukey.ue_line = key;
 		if ((ue = RB_FIND(user_name_tree, env->sc_user_names,
 		    &ukey)) == NULL) {
@@ -350,9 +354,6 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 		return (&res);
 	} else if (strcmp(arg->map, "passwd.byuid") == 0 ||
 		   strcmp(arg->map, "master.passwd.byuid") == 0) {
-		bzero(key, sizeof(key));
-		(void)strncpy(key, arg->key.keydat_val,
-		    arg->key.keydat_len);
 		ukey.ue_uid = strtonum(key, 0, UID_MAX, &estr); 
 		if (estr) {
 			res.stat = YP_BADARGS;
@@ -368,9 +369,6 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 		yp_make_val(&res, ue->ue_line);
 		return (&res);
 	} else if (strcmp(arg->map, "group.bygid") == 0) {
-		bzero(key, sizeof(key));
-		(void)strncpy(key, arg->key.keydat_val,
-		    arg->key.keydat_len);
 		gkey.ge_gid = strtonum(key, 0, GID_MAX, &estr); 
 		if (estr) {
 			res.stat = YP_BADARGS;
@@ -385,10 +383,6 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 		yp_make_val(&res, ge->ge_line);
 		return (&res);
 	} else if (strcmp(arg->map, "group.byname") == 0) {
-		bzero(key, sizeof(key));
-		(void)strncpy(key, arg->key.keydat_val,
-		    arg->key.keydat_len);
-		
 		gkey.ge_line = key;
 		if ((ge = RB_FIND(group_name_tree, env->sc_group_names,
 		    &gkey)) == NULL) {
