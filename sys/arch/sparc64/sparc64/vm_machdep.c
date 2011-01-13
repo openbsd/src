@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2008/09/30 18:54:29 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.27 2011/01/13 21:19:42 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -335,21 +335,14 @@ fpusave_proc(struct proc *p, int save)
 	}
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		int spincount = 0;
-
 		if (ci == curcpu())
 			continue;
 		if (ci->ci_fpproc != p)
 			continue;
 		sparc64_send_ipi(ci->ci_itid,
 		    save ? ipi_save_fpstate : ipi_drop_fpstate, (vaddr_t)p, 0);
-		while(ci->ci_fpproc == p) {
-			spincount++;
-			if (spincount > 10000000) {
-				panic("ipi_save_fpstate didn't");
-			}
+		while(ci->ci_fpproc == p)
 			sparc_membar(Sync);
-		}
 		break;
 	}
 #else
