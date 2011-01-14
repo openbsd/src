@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.209 2011/01/13 09:50:11 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.210 2011/01/14 23:49:23 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2011 $
+.Dd $Mdocdate: January 14 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -591,6 +591,8 @@ Lock all clients attached to
 .Op Fl n Ar window-name
 .Op Fl s Ar session-name
 .Op Fl t Ar target-session
+.Op Fl x Ar width
+.Op Fl y Ar height
 .Op Ar shell-command
 .Xc
 .D1 (alias: Ic new )
@@ -604,6 +606,13 @@ is given.
 and
 .Ar shell-command
 are the name of and shell command to execute in the initial window.
+If
+.Fl d
+is used,
+.Fl x
+and
+.Fl y
+specify the size of the initial window (80 by 24 if not given).
 .Pp
 If run from a terminal, any
 .Xr termios 4
