@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.198 2011/01/04 17:59:14 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.199 2011/01/14 13:32:43 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -923,6 +923,10 @@ boot(int howto)
 			dumpsys();
 
 		doshutdownhooks();
+
+#ifdef MULTIPROCESSOR
+		hppa_ipi_broadcast(HPPA_IPI_HALT);
+#endif
 	}
 
 	/* in case we came on powerfail interrupt */
@@ -955,7 +959,7 @@ boot(int howto)
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 
-	for(;;); /* loop while bus reset is comming up */
+	for (;;) ; /* loop while bus reset is coming up */
 	/* NOTREACHED */
 }
 
