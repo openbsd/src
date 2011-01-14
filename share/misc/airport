@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.22 2010/09/03 14:14:56 jasper Exp $
+#	$OpenBSD: airport,v 1.23 2011/01/14 18:48:11 jasper Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -296,6 +296,7 @@ CEI:Chiang Rai, Thailand
 CEN:Ciudad Obregon, Sonora, Mexico
 CER:Maupertus, Cherbourg, France
 CEZ:Montezuma County, Cortez, CO, USA
+CFE:Clermont-Ferrand, Auvergne, France
 CFR:Carpiquet, Caen, France
 CFU:Kerkyra, Greece
 CGA:Craig, AK, USA
