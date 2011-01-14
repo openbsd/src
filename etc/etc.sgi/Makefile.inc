@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2010/08/17 19:17:14 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2011/01/14 17:18:50 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP27/bsd \
@@ -30,6 +30,6 @@ bootblocks:
 
 MDEXT=	bsd.IP27 bsd.rd.IP27 bsd.IP30 bsd.mp.IP30 bsd.rd.IP30 \
 	bsd.IP32 bsd.rd.IP32 \
-	boot32 boot64 cd${OSrev}.iso install${OSrev}.iso
+	boot32 boot64 cd${OSrev}.iso
 
 .PHONY: bsd bootblocks

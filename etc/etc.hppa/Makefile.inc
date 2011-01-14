@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2010/12/30 19:22:26 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2011/01/14 17:18:50 deraadt Exp $
 
 kernels: bootblocks bsd bsd.mp
 	cp ${.CURDIR}/../sys/arch/hppa/compile/GENERIC/bsd \
@@ -19,7 +19,7 @@ bsd.mp:
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/xxboot ${RELEASEDIR}
 
-MDEXT=	bsd bsd.mp bsd.rd cd${OSrev}.iso install${OSrev}.iso lif${OSrev}.fs \
+MDEXT=	bsd bsd.mp bsd.rd cd${OSrev}.iso lif${OSrev}.fs \
 	xxboot
 
 .PHONY: bsd bsd.mp bootblocks
