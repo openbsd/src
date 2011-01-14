@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.127 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.128 2011/01/14 20:07:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -216,6 +216,7 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 
         if (RB_INSERT(rib_tree, &rib->rib, re) != NULL) {
 		log_warnx("rib_add: insert failed");
+		free(re);
 		return (NULL);
 	}
 
