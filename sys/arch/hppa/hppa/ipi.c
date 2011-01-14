@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.2 2010/07/02 00:00:45 jsing Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.3 2011/01/14 13:09:45 jsing Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -30,12 +30,14 @@
 #include <machine/reg.h>
 
 void hppa_ipi_nop(void);
+void hppa_ipi_halt(void);
 void hppa_ipi_fpu_save(void);
 void hppa_ipi_fpu_flush(void);
 
 void (*ipifunc[HPPA_NIPI])(void) =
 {
 	hppa_ipi_nop,
+	hppa_ipi_halt,
 	hppa_ipi_fpu_save,
 	hppa_ipi_fpu_flush
 };
@@ -95,6 +97,17 @@ hppa_ipi_send(struct cpu_info *ci, u_long ipi)
 void
 hppa_ipi_nop(void)
 {
+}
+
+void
+hppa_ipi_halt(void)
+{
+	/* Turn off interrupts and halt CPU. */
+	SCHED_ASSERT_UNLOCKED();
+	hppa_intr_disable();
+	curcpu()->ci_flags &= ~CPUF_RUNNING;
+
+	for (;;) ;
 }
 
 void

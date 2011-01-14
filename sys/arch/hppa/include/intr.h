@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.35 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: intr.h,v 1.36 2011/01/14 13:09:45 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -57,9 +57,10 @@
 
 #ifdef MULTIPROCESSOR
 #define	HPPA_IPI_NOP		0
-#define	HPPA_IPI_FPU_SAVE	1
-#define	HPPA_IPI_FPU_FLUSH	2
-#define	HPPA_NIPI		3
+#define	HPPA_IPI_HALT		1
+#define	HPPA_IPI_FPU_SAVE	2
+#define	HPPA_IPI_FPU_FLUSH	3
+#define	HPPA_NIPI		4
 #endif
 
 #if !defined(_LOCORE) && defined(_KERNEL)
