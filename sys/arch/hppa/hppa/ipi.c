@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.3 2011/01/14 13:09:45 jsing Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -92,6 +92,21 @@ hppa_ipi_send(struct cpu_info *ci, u_long ipi)
 	asm volatile ("sync" ::: "memory");
 
 	return 0;
+}
+
+int
+hppa_ipi_broadcast(u_long ipi)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int count = 0;
+
+	CPU_INFO_FOREACH(cii, ci)
+		if (ci != curcpu() && (ci->ci_flags & CPUF_RUNNING))
+			if (hppa_ipi_send(ci, ipi))
+				count++;
+
+	return count;	
 }
 
 void
