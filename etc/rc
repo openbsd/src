@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.347 2011/01/10 06:44:49 deraadt Exp $
+#	$OpenBSD: rc,v 1.348 2011/01/14 00:05:42 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -294,6 +294,7 @@ if [ -f /etc/resolv.conf.save ]; then
 	touch /etc/resolv.conf
 fi
 . /etc/netstart
+echo rekey > /dev/arandom	# any write triggers an RC4 rekey
 
 if [ X"${pf}" != X"NO" ]; then
 	if [ -f ${pf_rules} ]; then
