@@ -1,4 +1,4 @@
-/*	$OpenBSD: yacc.y,v 1.3 2009/08/08 19:37:14 sobrado Exp $	*/
+/*	$OpenBSD: yacc.y,v 1.4 2011/01/14 23:15:40 nicm Exp $	*/
 /*	$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $	*/
 
 %{
@@ -172,37 +172,41 @@ entry	:	ENCODING STRING
 
 list	:	RUNE
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($1 & charsetmask) | charsetbits;
 		    $$->max = ($1 & charsetmask) | charsetbits;
+		    $$->map = 0;
 		    $$->next = 0;
 		}
 	|	RUNE THRU RUNE
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($1 & charsetmask) | charsetbits;
 		    $$->max = ($3 & charsetmask) | charsetbits;
+		    $$->map = 0;
 		    $$->next = 0;
 		}
 	|	list RUNE
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($2 & charsetmask) | charsetbits;
 		    $$->max = ($2 & charsetmask) | charsetbits;
+		    $$->map = 0;
 		    $$->next = $1;
 		}
 	|	list RUNE THRU RUNE
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($2 & charsetmask) | charsetbits;
 		    $$->max = ($4 & charsetmask) | charsetbits;
+		    $$->map = 0;
 		    $$->next = $1;
 		}
 	;
 
 map	:	LBRK RUNE RUNE RBRK
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($2 & charsetmask) | charsetbits;
 		    $$->max = ($2 & charsetmask) | charsetbits;
 		    $$->map = $3;
@@ -210,7 +214,7 @@ map	:	LBRK RUNE RUNE RBRK
 		}
 	|	map LBRK RUNE RUNE RBRK
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($3 & charsetmask) | charsetbits;
 		    $$->max = ($3 & charsetmask) | charsetbits;
 		    $$->map = $4;
@@ -218,7 +222,7 @@ map	:	LBRK RUNE RUNE RBRK
 		}
 	|	LBRK RUNE THRU RUNE ':' RUNE RBRK
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($2 & charsetmask) | charsetbits;
 		    $$->max = ($4 & charsetmask) | charsetbits;
 		    $$->map = $6;
@@ -226,7 +230,7 @@ map	:	LBRK RUNE RUNE RBRK
 		}
 	|	map LBRK RUNE THRU RUNE ':' RUNE RBRK
 		{
-		    $$ = (rune_list *)malloc(sizeof(rune_list));
+		    $$ = (rune_list *)xmalloc(sizeof(rune_list));
 		    $$->min = ($3 & charsetmask) | charsetbits;
 		    $$->max = ($5 & charsetmask) | charsetbits;
 		    $$->map = $7;
