@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.191 2011/01/02 15:25:45 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.192 2011/01/14 14:32:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -201,6 +201,7 @@ sub fullname
 	my $fullname = $self->name;
 	if ($fullname !~ m|^/|o && $self->cwd ne '.') {
 		$fullname = $self->cwd."/".$fullname;
+		$fullname =~ s,^//,/,;
 	}
 	return $fullname;
 }
