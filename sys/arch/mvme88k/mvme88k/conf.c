@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2010/11/22 21:10:45 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.44 2011/01/14 19:04:08 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -129,7 +129,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 17 */
 	bdev_lkm_dummy(),		/* 18 */
 };
-int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
+int	nblkdev = nitems(bdevsw);
 
 struct cdevsw	cdevsw[] =
 {
@@ -207,7 +207,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 54: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 55: pppx */
 };
-int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
+int	nchrdev = nitems(cdevsw);
 
 int	mem_no = 2;	/* major device number of memory special file */
 
@@ -281,7 +281,7 @@ int chrtoblktbl[] = {
 	/* 25 */	NODEV,
 	/* 26 */	10,	/* xd */
 };
-int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
+int nchrtoblktbl = nitems(chrtoblktbl);
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2011/01/12 22:16:19 kettenis Exp $ */
+/*	$OpenBSD: conf.c,v 1.14 2011/01/14 19:04:08 jasper Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -74,7 +74,7 @@ struct bdevsw bdevsw[] = {
 	bdev_notdef(),			/* 18 unknown*/
 	bdev_disk_init(NRAID,raid),	/* 19 RAIDframe disk driver */
 };
-int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
+int nblkdev = nitems(bdevsw);
 
 #include "pty.h"
 
@@ -215,7 +215,7 @@ struct cdevsw cdevsw[] = {
 	cdev_pppx_init(NPPPX,pppx),	/* 83: pppx */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 84: devices hot plugging */
 };
-int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
+int nchrdev = nitems(cdevsw);
 
 int mem_no = 2;				/* major number of /dev/mem */
 
@@ -307,7 +307,7 @@ int chrtoblktbl[] = {
 	/* 53 */	NODEV,
 	/* 54 */	19,		/* raid */
 };
-int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
+int nchrtoblktbl = nitems(chrtoblktbl);
 
 #include <dev/cons.h>
 

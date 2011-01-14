@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2010/11/22 21:10:42 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.32 2011/01/14 19:04:08 jasper Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -81,7 +81,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 18 */
 	bdev_disk_init(NRAID,raid),	/* 19: RAIDframe disk driver */
 };
-int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
+int	nblkdev = nitems(bdevsw);
 
 /* open, close, read, write, ioctl, tty, mmap */
 #define cdev_pc_init(c,n) { \
@@ -307,7 +307,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 90: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),     /* 91: pppx */
 };
-int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
+int	nchrdev = nitems(cdevsw);
 
 int	mem_no = 2; 	/* major device number of memory special file */
 
@@ -408,7 +408,7 @@ int chrtoblktbl[] = {
 	/* 54 */	19,		/* raid */
 };
 
-int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
+int nchrtoblktbl = nitems(chrtoblktbl);
 
 /*
  * In order to map BSD bdev numbers of disks to their BIOS equivalents

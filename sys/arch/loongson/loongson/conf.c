@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2010/11/22 21:10:45 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.12 2011/01/14 19:04:08 jasper Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 15:  */
 };
 
-int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
+int	nblkdev = nitems(bdevsw);
 
 /*
  *	Character devices.
@@ -221,7 +221,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 72: USB scanners */
 };
 
-int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
+int	nchrdev = nitems(cdevsw);
 
 /*
  * Swapdev is a fake device implemented
@@ -294,7 +294,7 @@ int chrtoblktbl[] =  {
 	/* 23 */	6		/* ccd */
 };
 
-int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(int);
+int nchrtoblktbl = nitems(chrtoblktbl);
 
 #include <dev/cons.h>
 

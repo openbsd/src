@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.58 2010/10/08 18:21:34 ratchov Exp $	*/
+/*	$OpenBSD: conf.c,v 1.59 2011/01/14 19:04:08 jasper Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -152,7 +152,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 24 */
 	bdev_disk_init(NRAID,raid),	/* 25: RAIDframe disk driver */
 };
-int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
+int	nblkdev = nitems(bdevsw);
 
 struct cdevsw	cdevsw[] =
 {
@@ -298,7 +298,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 130: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 131: pppx */
 };
-int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
+int	nchrdev = nitems(cdevsw);
 
 int	mem_no = 3; 	/* major device number of memory special file */
 
@@ -466,4 +466,4 @@ int chrtoblktbl[] = {
 	/*121 */	25,
 	/*122 */	NODEV,
 };
-int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
+int nchrtoblktbl = nitems(chrtoblktbl);

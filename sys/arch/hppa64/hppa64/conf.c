@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2010/11/19 20:55:48 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2011/01/14 19:04:08 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -78,7 +78,7 @@ struct bdevsw   bdevsw[] =
 	bdev_lkm_dummy(),
 	bdev_lkm_dummy(),
 };
-int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
+int	nblkdev = nitems(bdevsw);
 
 #include "audio.h"
 #include "video.h"
@@ -198,7 +198,7 @@ struct cdevsw   cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 56: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 57: pppx */
 };
-int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
+int nchrdev = nitems(cdevsw);
 
 int mem_no = 2;		/* major device number of memory special file */
 
@@ -257,7 +257,7 @@ int chrtoblktbl[] = {
 	/* 38 */	NODEV,
 	/* 39 */	8,		/* wd */
 };
-int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
+int nchrtoblktbl = nitems(chrtoblktbl);
 
 /*
  * Returns true if dev is /dev/zero.
