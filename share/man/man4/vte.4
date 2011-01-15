@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vte.4,v 1.2 2011/01/15 04:45:32 kevlo Exp $
+.\"	$OpenBSD: vte.4,v 1.3 2011/01/15 08:58:41 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Kevin Lo <kevlo@openbsd.org>
 .\"
@@ -27,13 +27,13 @@
 The
 .Nm
 driver provides support for Ethernet interfaces based on the
-RDC R6040 Ethernet chipset which is commonly found on 
+RDC R6040 Ethernet chipset which is commonly found on
 Vortex86 System On a Chip (SoC).
 .Pp
 The
 .Nm
 driver supports interrupt moderation mechanism, a 64-bit multicast
-hash filter. 
+hash filter.
 .Pp
 The following
 .Ar media
@@ -56,11 +56,11 @@ For example,
 .Ic ifconfig vte0 media .
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr rdcphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr rdcphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
