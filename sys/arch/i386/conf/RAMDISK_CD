@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.182 2011/01/07 19:33:08 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.183 2011/01/15 04:39:27 kevlo Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -376,6 +376,7 @@ alc*	at pci?				# Attansic L1C/L2C Ethernet
 ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
+vte*	at pci?				# RDC R6040 Ethernet
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
@@ -434,6 +435,7 @@ etphy*	at mii?				# Agere/LSI ET1011 TruePHY
 jmphy*	at mii?				# JMicron JMP202/JMP211 PHYs
 ipgphy*	at mii?				# IC Plus IP1000A PHYs
 atphy*	at mii?				# Attansic F1 PHYs
+rdcphy*	at mii?				# RDC R6040 PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
