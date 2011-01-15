@@ -2015,6 +2015,7 @@
 ./usr/share/man/cat4/random.0
 ./usr/share/man/cat4/ray.0
 ./usr/share/man/cat4/rd.0
+./usr/share/man/cat4/rdcphy.0
 ./usr/share/man/cat4/re.0
 ./usr/share/man/cat4/rgephy.0
 ./usr/share/man/cat4/ricohrtc.0
@@ -2384,6 +2385,7 @@
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
 ./usr/share/man/cat4/vscsi.0
+./usr/share/man/cat4/vte.0
 ./usr/share/man/cat4/watchdog.0
 ./usr/share/man/cat4/wb.0
 ./usr/share/man/cat4/wbenv.0

@@ -598,6 +598,7 @@
 ./usr/include/dev/pci/if_vgereg.h
 ./usr/include/dev/pci/if_vgevar.h
 ./usr/include/dev/pci/if_vrreg.h
+./usr/include/dev/pci/if_vtereg.h
 ./usr/include/dev/pci/if_wbreg.h
 ./usr/include/dev/pci/if_wpireg.h
 ./usr/include/dev/pci/if_wpivar.h

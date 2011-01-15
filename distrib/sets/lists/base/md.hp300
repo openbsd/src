@@ -1224,6 +1224,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_vgereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_vgevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_vrreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_vtereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_wpireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_wpivar.ph
