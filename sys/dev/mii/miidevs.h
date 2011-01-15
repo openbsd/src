@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.117 2010/11/23 06:59:55 kevlo Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.118 2011/01/15 04:40:30 kevlo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.114 2010/11/23 06:59:27 kevlo Exp 
+ *	OpenBSD: miidevs,v 1.115 2011/01/15 04:35:34 kevlo Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -47,6 +47,7 @@
 #define	MII_OUI_CICADA	0x0003f1	/* Cicada */
 #define	MII_OUI_CENIX	0x000749	/* CENiX */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom */
+#define	MII_OUI_RDC	0x000bb4	/* RDC Semi. */
 #define	MII_OUI_ASIX	0x000ec6	/* ASIX */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom */
 #define	MII_OUI_3COM	0x00105a	/* 3com */
@@ -394,6 +395,10 @@
 /* Quality Semi. PHYs */
 #define	MII_MODEL_QUALITYSEMI_QS6612	0x0000
 #define	MII_STR_QUALITYSEMI_QS6612	"QS6612 10/100 PHY"
+
+/* RDC Semi. PHYs */
+#define	MII_MODEL_RDC_R6040	0x0003
+#define	MII_STR_RDC_R6040	"R6040 10/100 PHY"
 
 /* Realtek PHYs */
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
