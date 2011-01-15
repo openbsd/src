@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.28 2008/09/26 21:39:34 brad Exp $
+.\"	$OpenBSD: mii.4,v 1.29 2011/01/15 04:35:34 kevlo Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 26 2008 $
+.Dd $Mdocdate: January 15 2011 $
 .Dt MII 4
 .Os
 .Sh NAME
@@ -59,6 +59,7 @@
 .Cd "nsphy* at mii?"
 .Cd "nsphyter* at mii?"
 .Cd "qsphy* at mii?"
+.Cd "rdcphy* at mii?"
 .Cd "rgephy* at mii?"
 .Cd "rlphy* at mii?"
 .Cd "sqphy* at mii?"
@@ -126,6 +127,7 @@ program.
 .Xr nsphy 4 ,
 .Xr nsphyter 4 ,
 .Xr qsphy 4 ,
+.Xr rdcphy 4 ,
 .Xr rgephy 4 ,
 .Xr rlphy 4 ,
 .Xr sqphy 4 ,

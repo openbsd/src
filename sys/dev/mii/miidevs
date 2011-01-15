@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.114 2010/11/23 06:59:27 kevlo Exp $
+$OpenBSD: miidevs,v 1.115 2011/01/15 04:35:34 kevlo Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -40,6 +40,7 @@ oui VITESSE			0x0001c1	Vitesse
 oui CICADA			0x0003f1	Cicada
 oui CENIX			0x000749	CENiX
 oui BROADCOM2			0x000af7	Broadcom
+oui RDC				0x000bb4	RDC Semi.
 oui ASIX			0x000ec6	ASIX
 oui BROADCOM			0x001018	Broadcom
 oui 3COM			0x00105a	3com
@@ -268,6 +269,9 @@ model PLESSEY NWK914		0x0000	NWK914 10/100 PHY
 
 /* Quality Semi. PHYs */
 model QUALITYSEMI QS6612	0x0000	QS6612 10/100 PHY
+
+/* RDC Semi. PHYs */
+model RDC R6040			0x0003	R6040 10/100 PHY
 
 /* Realtek PHYs */
 model xxREALTEK RTL8169S	0x0011	RTL8169S/8110S PHY
