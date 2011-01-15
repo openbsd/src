@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.33 2011/01/03 23:35:21 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.34 2011/01/15 00:16:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1200,10 +1200,6 @@ input_csi_dispatch(struct input_ctx *ictx)
 		case 1000:
 			screen_write_mousemode_on(
 			    &ictx->ctx, MODE_MOUSE_STANDARD);
-			break;
-		case 1001:
-			screen_write_mousemode_on(
-			    &ictx->ctx, MODE_MOUSE_HIGHLIGHT);
 			break;
 		case 1002:
 			screen_write_mousemode_on(
