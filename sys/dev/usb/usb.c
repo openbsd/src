@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.70 2010/12/06 04:28:41 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.71 2011/01/15 23:58:43 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -684,6 +684,26 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (dev == NULL)
 			return (ENXIO);
 		usbd_fill_deviceinfo(dev, di, 1);
+		break;
+	}
+
+	case USB_DEVICEINFO_48:
+	{
+		struct usb_device_info_48 *di_48 = (void *)data;
+		struct usb_device_info di_tmp;
+		int addr = di_48->udi_addr;
+		usbd_device_handle dev;
+
+		if (addr < 1 || addr >= USB_MAX_DEVICES)
+			return (EINVAL);
+		dev = sc->sc_bus->devices[addr];
+		if (dev == NULL)
+			return (ENXIO);
+
+		bzero(&di_tmp, sizeof(struct usb_device_info));
+		bcopy(di_48, &di_tmp, sizeof(struct usb_device_info_48));
+		usbd_fill_deviceinfo(dev, &di_tmp, 1);
+		bcopy(&di_tmp, di_48, sizeof(struct usb_device_info_48));
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.77 2010/12/17 22:38:54 jasper Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.78 2011/01/15 23:58:43 jakemsr Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1402,6 +1402,10 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 		di->udi_nports = dev->hub->hubdesc.bNbrPorts;
 	} else
 		di->udi_nports = 0;
+
+	bzero(di->udi_serial, sizeof(di->udi_serial));
+	usbd_get_string(dev, dev->ddesc.iSerialNumber, di->udi_serial,
+	    sizeof(di->udi_serial));
 }
 
 void
