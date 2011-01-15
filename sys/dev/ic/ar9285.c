@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.17 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.18 2011/01/15 11:39:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -663,6 +663,10 @@ ar9285_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 	/* Do carrier leakage calibration. */
 	if ((error = ar9285_cl_cal(sc, c, extc)) != 0)
 		return (error);
+
+	/* Workaround for high temperature is not applicable on AR9271. */
+	if (AR_SREV_9271(sc))
+		return (0);
 
 	mask = 0;
 	nclcs = 0;
