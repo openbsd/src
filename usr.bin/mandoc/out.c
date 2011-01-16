@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.9 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: out.c,v 1.10 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -395,8 +395,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp)
 		 * to data cells in the data section.
 		 */
 		for (dp = sp->first; dp; dp = dp->next) {
-			if (NULL == dp->layout)
-				continue;
+			assert(dp->layout);
 			col = &tbl->cols[dp->layout->head->ident];
 			tblcalc_data(tbl, col, sp->tbl, dp);
 		}
@@ -450,6 +449,8 @@ tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
 	case (TBL_CELL_NUMBER):
 		tblcalc_number(tbl, col, tp, dp);
 		break;
+	case (TBL_CELL_DOWN):
+		break;
 	default:
 		abort();
 		/* NOTREACHED */
@@ -461,6 +462,7 @@ tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
 		const struct tbl_dat *dp)
 {
 	size_t		 sz, bufsz, spsz;
+	const char	*str;
 
 	/* 
 	 * Calculate our width and use the spacing, with a minimum
@@ -468,9 +470,11 @@ tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
 	 * either side, while right/left get a single adjacent space).
 	 */
 
-	sz = bufsz = spsz = 0;
-	if (dp->string)
-		sz = (*tbl->slen)(dp->string, tbl->arg);
+	bufsz = spsz = 0;
+	str = dp->string ? dp->string : "";
+	sz = (*tbl->slen)(str, tbl->arg);
+
+	/* FIXME: TBL_DATA_HORIZ et al.? */
 
 	assert(dp->layout);
 	switch (dp->layout->pos) {
@@ -499,9 +503,9 @@ tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
 		const struct tbl *tp, const struct tbl_dat *dp)
 {
 	int 		 i;
-	size_t		 sz, psz, ssz, d, max;
-	char		*cp;
+	size_t		 sz, psz, ssz, d;
 	const char	*str;
+	char		*cp;
 	char		 buf[2];
 
 	/*
@@ -513,10 +517,10 @@ tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
 	 * Finally, re-assign the stored values.
 	 */
 
-	str = dp && dp->string ? dp->string : "";
-	max = dp && dp->layout ? dp->layout->spacing : 0;
-
+	str = dp->string ? dp->string : "";
 	sz = (*tbl->slen)(str, tbl->arg);
+
+	/* FIXME: TBL_DATA_HORIZ et al.? */
 
 	buf[0] = tp->decimal;
 	buf[1] = '\0';
@@ -553,8 +557,8 @@ tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
 
 	/* Adjust for stipulated width. */
 
-	if (col->width < max)
-		col->width = max;
+	if (col->width < dp->layout->spacing)
+		col->width = dp->layout->spacing;
 }
 
 

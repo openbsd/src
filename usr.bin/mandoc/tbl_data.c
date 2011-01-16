@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.5 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.6 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,7 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 {
 	struct tbl_dat	*dat;
 	struct tbl_cell	*cp;
-	int		 sv;
+	int		 sv, spans;
 
 	cp = NULL;
 	if (dp->last && dp->last->layout)
@@ -51,12 +51,32 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 				TBL_CELL_SPAN == cp->pos))
 		cp = cp->next;
 
+	/*
+	 * Stop processing when we reach the end of the available layout
+	 * cells.  This means that we have extra input.
+	 */
+
+	if (NULL == cp) {
+		TBL_MSG(tbl, MANDOCERR_TBLEXTRADAT, ln, *pos);
+		/* Skip to the end... */
+		while (p[*pos])
+			(*pos)++;
+		return(1);
+	}
+
 	dat = mandoc_calloc(1, sizeof(struct tbl_dat));
 	dat->layout = cp;
 	dat->pos = TBL_DATA_NONE;
 
-	if (NULL == dat->layout)
-		TBL_MSG(tbl, MANDOCERR_TBLEXTRADAT, ln, *pos);
+	assert(TBL_CELL_SPAN != cp->pos);
+
+	for (spans = 0, cp = cp->next; cp; cp = cp->next)
+		if (TBL_CELL_SPAN == cp->pos)
+			spans++;
+		else
+			break;
+	
+	dat->spans = spans;
 
 	if (dp->last) {
 		dp->last->next = dat;
@@ -97,11 +117,9 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 	else
 		dat->pos = TBL_DATA_DATA;
 
-	if (NULL == dat->layout)
-		return(1);
-
 	if (TBL_CELL_HORIZ == dat->layout->pos ||
-			TBL_CELL_DHORIZ == dat->layout->pos)
+			TBL_CELL_DHORIZ == dat->layout->pos ||
+			TBL_CELL_DOWN == dat->layout->pos)
 		if (TBL_DATA_DATA == dat->pos && '\0' != *dat->string)
 			TBL_MSG(tbl, MANDOCERR_TBLIGNDATA, ln, sv);
 
@@ -119,7 +137,6 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 	pos = 0;
 
 	dat = tbl->last_span->last;
-	dat->pos = TBL_DATA_DATA;
 
 	if (p[pos] == 'T' && p[pos + 1] == '}') {
 		pos += 2;
@@ -135,6 +152,8 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 		/* Fallthrough: T} is part of a word. */
 	}
 
+	dat->pos = TBL_DATA_DATA;
+
 	if (dat->string) {
 		sz = strlen(p) + strlen(dat->string) + 2;
 		dat->string = mandoc_realloc(dat->string, sz);
@@ -142,6 +161,9 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 		strlcat(dat->string, p, sz);
 	} else
 		dat->string = mandoc_strdup(p);
+
+	if (TBL_CELL_DOWN == dat->layout->pos) 
+		TBL_MSG(tbl, MANDOCERR_TBLIGNDATA, ln, pos);
 
 	return(0);
 }
@@ -163,17 +185,24 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 	/* 
 	 * Choose a layout row: take the one following the last parsed
 	 * span's.  If that doesn't exist, use the last parsed span's.
-	 * If there's no last parsed span, use the first row.  This can
-	 * be NULL!
+	 * If there's no last parsed span, use the first row.  Lastly,
+	 * if the last span was a horizontal line, use the same layout
+	 * (it doesn't "consume" the layout).
 	 */
 
 	if (tbl->last_span) {
 		assert(tbl->last_span->layout);
-		rp = tbl->last_span->layout->next;
+		if (tbl->last_span->pos == TBL_SPAN_DATA)
+			rp = tbl->last_span->layout->next;
+		else
+			rp = tbl->last_span->layout;
+
 		if (NULL == rp)
 			rp = tbl->last_span->layout;
 	} else
 		rp = tbl->first_row;
+
+	assert(rp);
 
 	dp = mandoc_calloc(1, sizeof(struct tbl_span));
 	dp->tbl = &tbl->opts;

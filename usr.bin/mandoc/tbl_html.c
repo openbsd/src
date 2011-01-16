@@ -1,4 +1,4 @@
-/*	$Id: tbl_html.c,v 1.2 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: tbl_html.c,v 1.3 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -104,10 +104,18 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 			PAIR_STYLE_INIT(&tag, h);
 			tt = print_otag(h, TAG_TD, 1, &tag);
 
-			if (dp && dp->string) 
-				print_text(h, dp->string);
-			if (dp)
+			if (dp) {
+				switch (dp->layout->pos) {
+				case (TBL_CELL_DOWN):
+					break;
+				default:
+					if (NULL == dp->string)
+						break;
+					print_text(h, dp->string);
+					break;
+				}
 				dp = dp->next;
+			}
 
 			print_tagq(h, tt);
 		}

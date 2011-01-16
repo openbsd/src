@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.66 2011/01/10 23:53:32 schwarze Exp $ */
+/*	$Id: main.c,v 1.67 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -163,9 +163,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown escape sequence",
 	"unterminated quoted string",
 	
-	/* related to tables */
-	"extra data cells",
-
 	"generic error",
 
 	/* related to tables */
@@ -176,6 +173,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no table data cells specified",
 	"ignore data in cell",
 	"data block still open",
+	"ignoring extra data cells",
 
 	"input stack limit exceeded, infinite loop?",
 	"skipping bad character",

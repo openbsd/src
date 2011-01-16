@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.29 2011/01/10 23:53:32 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.30 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -100,9 +100,6 @@ enum	mandocerr {
 	MANDOCERR_BADESCAPE, /* unknown escape sequence */
 	MANDOCERR_BADQUOTE, /* unterminated quoted string */
 
-	/* related to tables */
-	MANDOCERR_TBLEXTRADAT, /* extra data cells */
-
 	MANDOCERR_ERROR, /* ===== start of errors ===== */
 
 	/* related to tables */
@@ -113,6 +110,7 @@ enum	mandocerr {
 	MANDOCERR_TBLNODATA, /* no table data cells specified */
 	MANDOCERR_TBLIGNDATA, /* ignore data in cell */
 	MANDOCERR_TBLBLOCK, /* data block still open */
+	MANDOCERR_TBLEXTRADAT, /* ignoring extra data cells */
 
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character */
@@ -203,7 +201,7 @@ enum	tbl_cellt {
 struct	tbl_cell {
 	struct tbl_cell	 *next;
 	enum tbl_cellt	  pos;
-	int		  spacing;
+	size_t		  spacing;
 	int		  flags;
 #define	TBL_CELL_TALIGN	 (1 << 0) /* t, T */
 #define	TBL_CELL_BALIGN	 (1 << 1) /* d, D */
@@ -225,12 +223,12 @@ struct	tbl_row {
 };
 
 enum	tbl_datt {
-	TBL_DATA_NONE,
-	TBL_DATA_DATA,
-	TBL_DATA_HORIZ,
-	TBL_DATA_DHORIZ,
-	TBL_DATA_NHORIZ,
-	TBL_DATA_NDHORIZ
+	TBL_DATA_NONE, /* has no data */
+	TBL_DATA_DATA, /* consists of data/string */
+	TBL_DATA_HORIZ, /* horizontal line */
+	TBL_DATA_DHORIZ, /* double-horizontal line */
+	TBL_DATA_NHORIZ, /* squeezed horizontal line */
+	TBL_DATA_NDHORIZ /* squeezed double-horizontal line */
 };
 
 /*
@@ -238,9 +236,10 @@ enum	tbl_datt {
  * string value that's in the cell.  The rest is layout.
  */
 struct	tbl_dat {
-	struct tbl_cell	 *layout; /* layout cell: CAN BE NULL */
+	struct tbl_cell	 *layout; /* layout cell */
+	int		  spans; /* how many spans follow */
 	struct tbl_dat	 *next;
-	char		 *string;
+	char		 *string; /* data (NULL if not TBL_DATA_DATA) */
 	enum tbl_datt	  pos;
 };
 
@@ -256,7 +255,7 @@ enum	tbl_spant {
 struct	tbl_span {
 	struct tbl	 *tbl;
 	struct tbl_head	 *head;
-	struct tbl_row	 *layout; /* layout row: CAN BE NULL */
+	struct tbl_row	 *layout; /* layout row */
 	struct tbl_dat	 *first;
 	struct tbl_dat	 *last;
 	int		  flags;

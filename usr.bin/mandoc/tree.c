@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.11 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: tree.c,v 1.12 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -278,7 +278,12 @@ print_span(const struct tbl_span *sp, int indent)
 		default:
 			break;
 		}
-		printf("[%s%s]", dp->string, dp->layout ?  "" : "*");
+		printf("[\"%s\"", dp->string ? dp->string : "");
+		if (dp->spans)
+			printf("(%d)", dp->spans);
+		if (NULL == dp->layout)
+			putchar('*');
+		putchar(']');
 		if (dp->next)
 			putchar(' ');
 	}

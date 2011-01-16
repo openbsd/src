@@ -1,4 +1,4 @@
-/*	$Id: tbl_term.c,v 1.6 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.7 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -60,6 +60,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	const struct tbl_head	*hp;
 	const struct tbl_dat	*dp;
 	struct roffcol		*col;
+	int			 spans;
 	size_t		   	 rmargin, maxrmargin;
 
 	rmargin = tp->rmargin;
@@ -111,23 +112,39 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	case (TBL_SPAN_DATA):
 		/* Iterate over template headers. */
 		dp = sp->first;
+		spans = 0;
 		for (hp = sp->head; hp; hp = hp->next) {
+			/* 
+			 * If the current data header is invoked during
+			 * a spanner ("spans" > 0), don't emit anything
+			 * at all.
+			 */
 			switch (hp->pos) {
 			case (TBL_HEAD_VERT):
 				/* FALLTHROUGH */
 			case (TBL_HEAD_DVERT):
-				tbl_vrule(tp, hp);
+				if (spans <= 0)
+					tbl_vrule(tp, hp);
 				continue;
 			case (TBL_HEAD_DATA):
 				break;
 			}
 
+			if (--spans >= 0)
+				continue;
+
 			col = &tp->tbl.cols[hp->ident];
 			tbl_data(tp, sp->tbl, dp, col);
 
-			/* Go to the next data cell. */
-			if (dp)
+			/* 
+			 * Go to the next data cell and assign the
+			 * number of subsequent spans, if applicable.
+			 */
+
+			if (dp) {
+				spans = dp->spans;
 				dp = dp->next;
+			}
 		}
 		break;
 	}
@@ -240,12 +257,12 @@ tbl_data(struct termp *tp, const struct tbl *tbl,
 		const struct tbl_dat *dp, 
 		const struct roffcol *col)
 {
-	enum tbl_cellt	 pos;
 
 	if (NULL == dp) {
 		tbl_char(tp, ASCII_NBRSP, col->width);
 		return;
 	}
+	assert(dp->layout);
 
 	switch (dp->pos) {
 	case (TBL_DATA_NONE):
@@ -265,9 +282,7 @@ tbl_data(struct termp *tp, const struct tbl *tbl,
 		break;
 	}
 	
-	pos = dp && dp->layout ? dp->layout->pos : TBL_CELL_LEFT;
-
-	switch (pos) {
+	switch (dp->layout->pos) {
 	case (TBL_CELL_HORIZ):
 		tbl_char(tp, '-', col->width);
 		break;
@@ -285,6 +300,9 @@ tbl_data(struct termp *tp, const struct tbl *tbl,
 		break;
 	case (TBL_CELL_NUMBER):
 		tbl_number(tp, tbl, dp, col);
+		break;
+	case (TBL_CELL_DOWN):
+		tbl_char(tp, ASCII_NBRSP, col->width);
 		break;
 	default:
 		abort();
@@ -336,38 +354,35 @@ tbl_literal(struct termp *tp, const struct tbl_dat *dp,
 		const struct roffcol *col)
 {
 	size_t		 padl, padr, ssz;
-	enum tbl_cellt	 pos;
-	const char	*str;
 
 	padl = padr = 0;
 
-	pos = dp && dp->layout ? dp->layout->pos : TBL_CELL_LEFT;
-	str = dp && dp->string ? dp->string : "";
+	assert(dp->string);
 
 	ssz = term_len(tp, 1);
 
-	switch (pos) {
+	switch (dp->layout->pos) {
 	case (TBL_CELL_LONG):
 		padl = ssz;
-		padr = col->width - term_strlen(tp, str) - ssz;
+		padr = col->width - term_strlen(tp, dp->string) - ssz;
 		break;
 	case (TBL_CELL_CENTRE):
-		padl = col->width - term_strlen(tp, str);
+		padl = col->width - term_strlen(tp, dp->string);
 		if (padl % 2)
 			padr++;
 		padl /= 2;
 		padr += padl;
 		break;
 	case (TBL_CELL_RIGHT):
-		padl = col->width - term_strlen(tp, str);
+		padl = col->width - term_strlen(tp, dp->string);
 		break;
 	default:
-		padr = col->width - term_strlen(tp, str);
+		padr = col->width - term_strlen(tp, dp->string);
 		break;
 	}
 
 	tbl_char(tp, ASCII_NBRSP, padl);
-	term_word(tp, str);
+	term_word(tp, dp->string);
 	tbl_char(tp, ASCII_NBRSP, padr);
 }
 
@@ -378,7 +393,6 @@ tbl_number(struct termp *tp, const struct tbl *tbl,
 {
 	char		*cp;
 	char		 buf[2];
-	const char	*str;
 	size_t		 sz, psz, ssz, d, padl;
 	int		 i;
 
@@ -387,19 +401,19 @@ tbl_number(struct termp *tp, const struct tbl *tbl,
 	 * and the maximum decimal; right-pad by the remaining amount.
 	 */
 
-	str = dp && dp->string ? dp->string : "";
+	assert(dp->string);
 
-	sz = term_strlen(tp, str);
+	sz = term_strlen(tp, dp->string);
 
 	buf[0] = tbl->decimal;
 	buf[1] = '\0';
 
 	psz = term_strlen(tp, buf);
 
-	if (NULL != (cp = strrchr(str, tbl->decimal))) {
+	if (NULL != (cp = strrchr(dp->string, tbl->decimal))) {
 		buf[1] = '\0';
-		for (ssz = 0, i = 0; cp != &str[i]; i++) {
-			buf[0] = str[i];
+		for (ssz = 0, i = 0; cp != &dp->string[i]; i++) {
+			buf[0] = dp->string[i];
 			ssz += term_strlen(tp, buf);
 		}
 		d = ssz + psz;
@@ -412,7 +426,7 @@ tbl_number(struct termp *tp, const struct tbl *tbl,
 	padl = col->decimal - d;
 
 	tbl_char(tp, ASCII_NBRSP, padl);
-	term_word(tp, str);
+	term_word(tp, dp->string);
 	tbl_char(tp, ASCII_NBRSP, col->width - sz - padl);
 }
 

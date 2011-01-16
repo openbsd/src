@@ -1,4 +1,4 @@
-/*	$Id: tbl_layout.c,v 1.6 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: tbl_layout.c,v 1.7 2011/01/16 01:11:50 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -122,7 +122,7 @@ mod:
 		}
 
 		*pos += i;
-		cp->spacing = atoi(buf);
+		cp->spacing = (size_t)atoi(buf);
 
 		goto mod;
 		/* NOTREACHED */
@@ -197,10 +197,35 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 
 	/*
 	 * If a span cell is found first, raise a warning and abort the
-	 * parse.  FIXME: recover from this somehow?
+	 * parse.  If a span cell is found and the last layout element
+	 * isn't a "normal" layout, bail.
+	 *
+	 * FIXME: recover from this somehow?
 	 */
 
-	if (NULL == rp->first && TBL_CELL_SPAN == c) {
+	if (TBL_CELL_SPAN == c) {
+		if (NULL == rp->first) {
+			TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+			return(0);
+		} else if (rp->last)
+			switch (rp->last->pos) {
+			case (TBL_CELL_VERT):
+			case (TBL_CELL_DVERT):
+			case (TBL_CELL_HORIZ):
+			case (TBL_CELL_DHORIZ):
+				TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+				return(0);
+			default:
+				break;
+			}
+	}
+
+	/*
+	 * If a vertical spanner is found, we may not be in the first
+	 * row.
+	 */
+
+	if (TBL_CELL_DOWN == c && rp == tbl->first_row) {
 		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
 		return(0);
 	}
