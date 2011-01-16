@@ -1,6 +1,6 @@
-/*	$Id: html.c,v 1.21 2010/12/27 21:44:30 schwarze Exp $ */
+/*	$Id: html.c,v 1.22 2011/01/16 19:41:16 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -86,6 +86,7 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"id", /* ATTR_ID */
 	"summary", /* ATTR_SUMMARY */
 	"align", /* ATTR_ALIGN */
+	"colspan", /* ATTR_COLSPAN */
 };
 
 static	void		  print_spec(struct html *, enum roffdeco,
@@ -577,8 +578,14 @@ print_tagq(struct html *h, const struct tag *until)
 	struct tag	*tag;
 
 	while ((tag = h->tags.head) != NULL) {
+		/* 
+		 * Remember to close out and nullify the current
+		 * meta-font and table, if applicable.
+		 */
 		if (tag == h->metaf)
 			h->metaf = NULL;
+		if (tag == h->tblt)
+			h->tblt = NULL;
 		print_ctag(h, tag->tag);
 		h->tags.head = tag->next;
 		free(tag);
@@ -596,8 +603,14 @@ print_stagq(struct html *h, const struct tag *suntil)
 	while ((tag = h->tags.head) != NULL) {
 		if (suntil && tag == suntil)
 			return;
+		/* 
+		 * Remember to close out and nullify the current
+		 * meta-font and table, if applicable.
+		 */
 		if (tag == h->metaf)
 			h->metaf = NULL;
+		if (tag == h->tblt)
+			h->tblt = NULL;
 		print_ctag(h, tag->tag);
 		h->tags.head = tag->next;
 		free(tag);

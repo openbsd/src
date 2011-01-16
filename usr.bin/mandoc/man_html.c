@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.32 2011/01/16 03:46:21 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.33 2011/01/16 19:41:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -201,17 +201,31 @@ print_man_node(MAN_ARGS)
 			print_otag(h, TAG_BR, 0, NULL);
 		return;
 	case (MAN_TBL):
+		/*
+		 * This will take care of initialising all of the table
+		 * state data for the first table, then tearing it down
+		 * for the last one.
+		 */
 		print_tbl(h, n->span);
 		return;
 	default:
 		/* 
 		 * Close out scope of font prior to opening a macro
-		 * scope.  Assert that the metafont is on the top of the
-		 * stack (it's never nested).
+		 * scope.
 		 */
 		if (HTMLFONT_NONE != h->metac) {
 			h->metal = h->metac;
 			h->metac = HTMLFONT_NONE;
+		}
+
+		/*
+		 * Close out the current table, if it's open, and unset
+		 * the "meta" table state.  This will be reopened on the
+		 * next table element.
+		 */
+		if (h->tblt) {
+			print_tblclose(h);
+			t = h->tags.head;
 		}
 		if (mans[n->tok].pre)
 			child = (*mans[n->tok].pre)(m, n, mh, h);
