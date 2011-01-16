@@ -2954,9 +2954,11 @@
 ./usr/share/man/cat8/rc.0
 ./usr/share/man/cat8/rc.conf.0
 ./usr/share/man/cat8/rc.conf.local.0
+./usr/share/man/cat8/rc.d.0
 ./usr/share/man/cat8/rc.local.0
 ./usr/share/man/cat8/rc.securelevel.0
 ./usr/share/man/cat8/rc.shutdown.0
+./usr/share/man/cat8/rc.subr.0
 ./usr/share/man/cat8/rdate.0
 ./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
