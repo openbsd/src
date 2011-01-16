@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.37 2010/12/30 05:10:35 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.38 2011/01/16 22:35:29 jakemsr Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -164,6 +164,10 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor(
 usbd_status usbd_reload_device_desc(usbd_device_handle);
 
 int usbd_ratecheck(struct timeval *last);
+
+int usbd_get_devcnt(usbd_device_handle);
+void usbd_claim_iface(usbd_device_handle, int);
+int usbd_iface_claimed(usbd_device_handle, int);
 
 int usbd_is_dying(usbd_device_handle);
 void usbd_deactivate(usbd_device_handle);

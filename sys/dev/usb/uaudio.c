@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.89 2010/08/18 22:54:58 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.90 2011/01/16 22:35:29 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ struct uaudio_softc {
 	struct device	 sc_dev;	/* base device */
 	usbd_device_handle sc_udev;	/* USB device */
 	int		 sc_ac_iface;	/* Audio Control interface */
-	usbd_interface_handle	sc_ac_ifaceh;
 	struct chan	 sc_playchan;	/* play channel */
 	struct chan	 sc_recchan;	/* record channel */
 	int		 sc_nullalt;
@@ -520,10 +519,9 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_ac_ifaceh = uaa->iface;
 	/* Pick up the AS interface. */
 	for (i = 0; i < uaa->nifaces; i++) {
-		if (uaa->ifaces[i] == NULL)
+		if (usbd_iface_claimed(sc->sc_udev, i))
 			continue;
 		id = usbd_get_interface_descriptor(uaa->ifaces[i]);
 		if (id == NULL)
@@ -537,7 +535,7 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 		if (found)
-			uaa->ifaces[i] = NULL;
+			usbd_claim_iface(sc->sc_udev, i);
 	}
 
 	for (j = 0; j < sc->sc_nalts; j++) {

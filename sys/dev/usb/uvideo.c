@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.147 2010/11/24 19:53:07 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.148 2011/01/16 22:35:29 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -468,13 +468,24 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	struct usb_attach_arg *uaa = aux;
+	usb_interface_descriptor_t *id;
+	int i;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_nifaces = uaa->nifaces;
-	sc->sc_ifaces = malloc(uaa->nifaces * sizeof(usbd_interface_handle),
-	    M_USB, M_WAITOK);
-	bcopy(uaa->ifaces, sc->sc_ifaces,
-	    uaa->nifaces * sizeof(usbd_interface_handle));
+	/*
+	 * Claim all video interfaces.  Interfaces must be claimed during
+	 * attach, during attach hooks is too late.
+	 */
+	for (i = 0; i < sc->sc_nifaces; i++) {
+		if (usbd_iface_claimed(sc->sc_udev, i))
+			continue;
+		id = usbd_get_interface_descriptor(&sc->sc_udev->ifaces[i]);
+		if (id == NULL)
+			continue;
+		if (id->bInterfaceClass == UICLASS_VIDEO)
+			usbd_claim_iface(sc->sc_udev, i);
+	}
 
 	/* maybe the device has quirks */
 	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
@@ -556,8 +567,6 @@ uvideo_detach(struct device *self, int flags)
 {
 	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	int rv = 0;
-
-	free(sc->sc_ifaces, M_USB);
 
 	/* Wait for outstanding requests to complete */
 	usbd_delay_ms(sc->sc_udev, UVIDEO_NFRAMES_MAX);
@@ -837,12 +846,13 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, usb_config_descriptor_t *cdesc)
 	for (i = 0; i < sc->sc_desc_vc_header.fix->bInCollection; i++) {
 		iface = sc->sc_desc_vc_header.baInterfaceNr[i];
 
-		id = usbd_get_interface_descriptor(sc->sc_ifaces[iface]);
+		id = usbd_get_interface_descriptor(&sc->sc_udev->ifaces[iface]);
 		if (id == NULL) {
 			printf("%s: can't get VS interface %d!\n",
 			    DEVNAME(sc), iface);
 			return (USBD_INVAL);
 		}
+		usbd_claim_iface(sc->sc_udev, iface);
 
 		numalts = usbd_get_no_alts(cdesc, id->bInterfaceNumber);
 
@@ -1197,7 +1207,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 
 		/* save endpoint with largest bandwidth */
 		if (UGETW(ed->wMaxPacketSize) > vs->psize) {
-			vs->ifaceh = sc->sc_ifaces[iface];
+			vs->ifaceh = &sc->sc_udev->ifaces[iface];
 			vs->endpoint = ed->bEndpointAddress;
 			vs->numalts = numalts;
 			vs->curalt = id->bAlternateSetting;

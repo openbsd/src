@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.27 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.28 2011/01/16 22:35:29 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1389,12 +1389,12 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 		DPRINTF(("urndis_attach: union interface: ctl %u, data %u\n",
 		    if_ctl, if_data));
 		for (i = 0; i < uaa->nifaces; i++) {
-			if (uaa->ifaces[i] == NULL)
+			if (usbd_iface_claimed(sc->sc_udev, i))
 				continue;
 			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
 			if (id && id->bInterfaceNumber == if_data) {
 				sc->sc_iface_data = uaa->ifaces[i];
-				uaa->ifaces[i] = NULL;
+				usbd_claim_iface(sc->sc_udev, i);
 			}
 		}
 	}

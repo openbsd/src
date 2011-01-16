@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.42 2010/12/30 05:10:35 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.43 2011/01/16 22:35:29 jakemsr Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -115,6 +115,24 @@ usbd_ref_wait(usbd_device_handle dev)
 {
 	while (dev->ref_cnt > 0)
 		tsleep(&dev->ref_cnt, PWAIT, "usbref", hz * 60);
+}
+
+int
+usbd_get_devcnt(usbd_device_handle dev)
+{
+	return (dev->ndevs);
+}
+
+void
+usbd_claim_iface(usbd_device_handle dev, int ifaceidx)
+{
+	dev->ifaces[ifaceidx].claimed = 1;
+}
+
+int
+usbd_iface_claimed(usbd_device_handle dev, int ifaceidx)
+{
+	return (dev->ifaces[ifaceidx].claimed);
 }
 
 static __inline int

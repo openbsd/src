@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.39 2010/12/02 01:37:45 jakemsr Exp $ */
+/*	$OpenBSD: umodem.c,v 1.40 2011/01/16 22:35:29 jakemsr Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -280,12 +280,12 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get the data interface too. */
 	for (i = 0; i < uaa->nifaces; i++) {
-		if (uaa->ifaces[i] != NULL) {
+		if (!usbd_iface_claimed(sc->sc_udev, i)) {
 			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
 			if (id != NULL &&
                             id->bInterfaceNumber == data_iface_no) {
 				sc->sc_data_iface = uaa->ifaces[i];
-				uaa->ifaces[i] = NULL;
+				usbd_claim_iface(sc->sc_udev, i);
 			}
 		}
 	}

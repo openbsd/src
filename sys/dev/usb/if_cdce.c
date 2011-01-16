@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.47 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.48 2011/01/16 22:35:29 jakemsr Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -224,12 +224,12 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 		DPRINTF(("cdce_attach: union interface: ctl=%d, data=%d\n",
 		    ctl_ifcno, data_ifcno));
 		for (i = 0; i < uaa->nifaces; i++) {
-			if (uaa->ifaces[i] == NULL)
+			if (usbd_iface_claimed(sc->cdce_udev, i))
 				continue;
 			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
 			if (id != NULL && id->bInterfaceNumber == data_ifcno) {
 				sc->cdce_data_iface = uaa->ifaces[i];
-				uaa->ifaces[i] = NULL;
+				usbd_claim_iface(sc->cdce_udev, i);
 			}
 		}
 	}
