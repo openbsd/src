@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.26 2010/12/01 23:02:57 schwarze Exp $ */
+/*	$Id: libman.h,v 1.27 2011/01/16 02:56:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,6 +34,7 @@ struct	man {
 #define	MAN_ILINE	(1 << 3) /* Ignored in next-line scope. */
 #define	MAN_LITERAL	(1 << 4) /* Literal input. */
 #define	MAN_BPLINE	(1 << 5)
+#define	MAN_NEWLINE	(1 << 6) /* first macro/text in a line */
 	enum man_next	 next; /* where to put the next node */
 	struct man_node	*last; /* the last parsed node */
 	struct man_node	*first; /* the first parsed node */

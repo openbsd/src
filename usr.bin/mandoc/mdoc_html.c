@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.46 2011/01/09 16:31:46 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.47 2011/01/16 02:56:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -416,6 +416,8 @@ print_mdoc_node(MDOC_ARGS)
 		child = mdoc_root_pre(m, n, h);
 		break;
 	case (MDOC_TEXT):
+		if (' ' == *n->string && MDOC_LINE & n->flags)
+			print_otag(h, TAG_BR, 0, NULL);
 		print_text(h, n->string);
 		return;
 	case (MDOC_TBL):

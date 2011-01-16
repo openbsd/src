@@ -1,0 +1,12 @@
+.TH SPACE-LEADING-MAN 1 "January 15, 2011"
+.SH NAME
+pace-leading-man \- leading spaces on text lines in man documents
+.SH DESCRIPTION
+normal line of text
+second normal line
+ leading space
+.BI bold italic
+normal after macro
+.B
+.BI bold italic
+ leading space after a macro line

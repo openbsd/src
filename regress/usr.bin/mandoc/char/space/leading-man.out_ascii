@@ -1,0 +1,14 @@
+SPACE-LEADING-MAN(1)                                      SPACE-LEADING-MAN(1)
+
+
+
+NNAAMMEE
+       pace-leading-man - leading spaces on text lines in man documents
+
+DDEESSCCRRIIPPTTIIOONN
+       normal line of text second normal line
+        leading space bboolldd_i_t_a_l_i_c normal after macro bboolldd_i_t_a_l_i_c
+        leading space after a macro line
+
+
+

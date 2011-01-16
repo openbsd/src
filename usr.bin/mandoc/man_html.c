@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.30 2011/01/09 16:31:45 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.31 2011/01/16 02:56:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -193,7 +193,16 @@ print_man_node(MAN_ARGS)
 		child = man_root_pre(m, n, mh, h);
 		break;
 	case (MAN_TEXT):
+		if ('\0' == *n->string) {
+			print_otag(h, TAG_P, 0, NULL);
+			return;
+		}
+
+		if (' ' == *n->string && MAN_LINE & n->flags)
+			print_otag(h, TAG_BR, 0, NULL);
+
 		print_text(h, n->string);
+
 		if (MANH_LITERAL & mh->fl)
 			print_otag(h, TAG_BR, 0, NULL);
 		return;

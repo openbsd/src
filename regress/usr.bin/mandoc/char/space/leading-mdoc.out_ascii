@@ -1,0 +1,10 @@
+SPACE-LEADING_MDOC(1)      OpenBSD Reference Manual      SPACE-LEADING_MDOC(1)
+
+NNAAMMEE
+     ssppaaccee--lleeaaddiinngg--mmddoocc - leading spaces on text lines in mdoc documents
+
+DDEESSCCRRIIPPTTIIOONN
+     normal line of text second normal line
+      line with a leading space UNIX normal line after a macro line UNIX
+      leading space after a macro line
+

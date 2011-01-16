@@ -1,0 +1,14 @@
+.Dd January 15, 2011
+.Dt SPACE-LEADING_MDOC 1
+.Os
+.Sh NAME
+.Nm space-leading-mdoc
+.Nd leading spaces on text lines in mdoc documents
+.Sh DESCRIPTION
+normal line of text
+second normal line
+ line with a leading space
+.Ux
+normal line after a macro line
+.Ux
+ leading space after a macro line
