@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.67 2011/01/16 01:11:50 schwarze Exp $ */
+/*	$Id: main.c,v 1.68 2011/01/16 19:27:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -143,6 +143,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"list type must come first",
 	"tag lists require a width argument",
 	"missing font type",
+	"skipping end of block that is not open",
 
 	/* related to bad macro arguments */
 	"skipping argument",

@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.26 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.27 2011/01/16 19:27:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,19 +103,27 @@ rew_warn(struct man *m, struct man_node *n, enum mandocerr er)
  * will be used if an explicit block scope is being closed out.
  */
 int
-man_unscope(struct man *m, const struct man_node *n, 
+man_unscope(struct man *m, const struct man_node *to, 
 		enum mandocerr er)
 {
+	struct man_node	*n;
 
-	assert(n);
+	assert(to);
 
 	/* LINTED */
-	while (m->last != n) {
+	while (m->last != to) {
+		/*
+		 * Save the parent here, because we may delete the
+		 * m->last node in the post-validation phase and reset
+		 * it to m->last->parent, causing a step in the closing
+		 * out to be lost.
+		 */
+		n = m->last->parent;
 		if ( ! rew_warn(m, m->last, er))
 			return(0);
 		if ( ! man_valid_post(m))
 			return(0);
-		m->last = m->last->parent;
+		m->last = n;
 		assert(m->last);
 	}
 
