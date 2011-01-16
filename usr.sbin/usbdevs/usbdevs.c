@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.19 2010/05/31 21:33:04 deraadt Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.20 2011/01/16 00:04:47 jakemsr Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@ int showdevs = 0;
 void usage(void);
 void usbdev(int f, int a, int rec);
 int getdevicedesc(int, int, usb_device_descriptor_t *);
-void getstring(int, int, int, char *, int);
 void usbdump(int f);
 void dumpone(char *name, int f, int addr);
 int main(int, char **);
@@ -69,12 +68,7 @@ void
 usbdev(int f, int a, int rec)
 {
 	struct usb_device_info di;
-	usb_device_descriptor_t dd;
-	char serialnum[USB_MAX_STRING_LEN];
-	struct usb_ctl_request req;
-	usb_string_descriptor_t us;
 	int e, p, i;
-	int langid = 0;
 
 	di.udi_addr = a;
 	e = ioctl(f, USB_DEVICEINFO, &di);
@@ -83,21 +77,6 @@ usbdev(int f, int a, int rec)
 			printf("addr %d: I/O error\n", a);
 		return;
 	}
-
-	req.ucr_addr = a;
-	req.ucr_request.bmRequestType = UT_READ_DEVICE;
-	req.ucr_request.bRequest = UR_GET_DESCRIPTOR;
-	req.ucr_data = &us;
-	USETW2(req.ucr_request.wValue, UDESC_STRING, 0);
-	USETW(req.ucr_request.wIndex, 0);
-	USETW(req.ucr_request.wLength, 4);
-	req.ucr_flags = 0;
-	if (ioctl(f, USB_REQUEST, &req) >= 0)
-		langid = UGETW(us.bString[0]);
-
-	bzero(serialnum, sizeof serialnum);
-	if (getdevicedesc(f, a, &dd))
-		getstring(f, a, dd.iSerialNumber, serialnum, langid);
 
 	printf("addr %d: ", a);
 	done[a] = 1;
@@ -129,8 +108,8 @@ usbdev(int f, int a, int rec)
 		printf("%s(0x%04x), %s(0x%04x), rev %s",
 		    di.udi_product, di.udi_productNo,
 		    di.udi_vendor, di.udi_vendorNo, di.udi_release);
-		if (strlen(serialnum))
-			printf(", iSerialNumber %s", serialnum);
+		if (strlen(di.udi_serial))
+			printf(", iSerialNumber %s", di.udi_serial);
 	} else
 		printf("%s, %s", di.udi_product, di.udi_vendor);
 	printf("\n");
@@ -185,56 +164,6 @@ getdevicedesc(int f, int addr, usb_device_descriptor_t *d)
 	if ((r = ioctl(f, USB_REQUEST, &req)) == -1)
 		perror("getdevicedesc: ioctl");
 	return (r != -1);
-}
-
-void
-getstring(int f, int addr, int si, char *s, int langid)
-{
-	struct usb_ctl_request req;
-	usb_string_descriptor_t us;
-	int r, i, n;
-	u_int16_t c;
-
-	if (si == 0) {
-		*s = 0;
-		return;
-	}
-	req.ucr_addr = addr;
-	req.ucr_request.bmRequestType = UT_READ_DEVICE;
-	req.ucr_request.bRequest = UR_GET_DESCRIPTOR;
-	req.ucr_data = &us;
-	USETW2(req.ucr_request.wValue, UDESC_STRING, si);
-	USETW(req.ucr_request.wIndex, langid);
-	USETW(req.ucr_request.wLength, 2);
-	req.ucr_flags = USBD_SHORT_XFER_OK;
-
-	if (ioctl(f, USB_REQUEST, &req) == -1){
-		perror("getstring: ioctl");
-		*s = 0;
-		return;
-	}
-
-	USETW(req.ucr_request.wLength, us.bLength);
-
-	if (ioctl(f, USB_REQUEST, &req) == -1){
-		perror("getstring: ioctl");
-		*s = 0;
-		return;
-	}
-
-	n = us.bLength / 2 - 1;
-	for (i = 0; i < n; i++) {
-		c = UGETW(us.bString[i]);
-		if ((c & 0xff00) == 0)
-			*s++ = c;
-		else if ((c & 0x00ff) == 0)
-			*s++ = c >> 8;
-		else {
-			snprintf(s, 6, "\\u%04x", c);
-			s += 6;
-		}
-	}
-	*s++ = 0;
 }
 
 void
@@ -297,7 +226,7 @@ main(int argc, char **argv)
 	if (dev == 0) {
 		for (ncont = 0, i = 0; i < 10; i++) {
 			snprintf(buf, sizeof buf, "%s%d", USBDEV, i);
-			f = open(buf, O_RDWR);
+			f = open(buf, O_RDONLY);
 			if (f >= 0) {
 				dumpone(buf, f, addr);
 				close(f);
@@ -312,7 +241,7 @@ main(int argc, char **argv)
 			printf("%s: no USB controllers found\n",
 			    __progname);
 	} else {
-		f = open(dev, O_RDWR);
+		f = open(dev, O_RDONLY);
 		if (f >= 0)
 			dumpone(dev, f, addr);
 		else
