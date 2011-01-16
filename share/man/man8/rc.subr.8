@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.3 2011/01/16 13:19:47 jasper Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.4 2011/01/16 14:59:19 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Robert Nagy and Antoine Jacoutot
 .\" All rights reserved.
@@ -28,24 +28,20 @@
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
-.Nm rc.subr
-.Nd functions used by
-.Xr rc.d 8
-scripts
+.Nm rc.subr ,
+.Nm rc.d
+.Nd functions used by rc.d scripts
 .Sh SYNOPSIS
-.Bl -item -compact
-.It
-.Ic .\& Pa /etc/rc.d/rc.subr
-.Pp
-.It
-.Ic rc_cmd Ar argument
-.El
+.Nm .\&
+.Pa /etc/rc.d/rc.subr
+.Nm rc_cmd
+.Ar argument
 .Sh DESCRIPTION
 The
 .Nm
 script contains commonly used shell script functions and variable
 definitions which are used by various
-.Xr rc.d 8
+.Nm rc.d
 scripts.
 .Pp
 The
@@ -60,24 +56,24 @@ The following shell functions are available:
 Run the
 .Ar argument
 method for the current
-.Xr rc.d 8
+.Nm rc.d
 script, based on the settings of various shell variables.
 .Ic rc_cmd
 is extremely flexible, and allows fully functional
-.Xr rc.d 8
+.Nm rc.d
 scripts to be implemented in a small amount of shell code.
 For a given method
 .Ar argument ,
 if the
 .Ar rc_${argument}()
 function is not defined, then a default method is provided by
-.Xr rc.subr 8 .
+.Nm rc.subr .
 In addition methods can be disabled by setting the
 .Ar rc_${name}
 variable to
 .Ar NO .
 For example, if rc_reload=NO is set in the
-.Ar rc.d 8
+.Nm rc.d
 script, and
 .Ic rc_cmd
 is called with the reload argument, an error will be raised.
@@ -92,26 +88,29 @@ It checks if the service is already running by calling
 .Ar rc_check
 and refuses to start if it is.
 In addition if the
-.Ar rc_pre()
-function exists, it is going to be called before
+.Fn rc_pre
+function exists, it is called before
 starting the daemon.
 .It Cm stop
 It checks that the service is running by calling
 .Ar rc_check
-and if it's not, no action is going to be taken.
+and if it's not, no action is taken.
 In addition if the
-.Ar rc_post()
-function exists, it is going to be called right
+.Fn rc_post
+function exists, it is called right
 after the daemon has been stopped.
 .It Cm reload
 Find the process using
 .Xr pkill 1
 with the regular expression as specified in the
 .Ar pexp
-variable and send a SIGHUP signal.
-One has to make sure that sending SIGHUP to a daemon will
-have the desired effect, which is reloading the configuration
-files.
+variable and send a
+.Dv SIGHUP
+signal.
+One has to make sure that sending
+.Dv SIGHUP
+to a daemon will have the desired effect,
+which is reloading the configuration files.
 .It Cm restart
 Perform a
 .Cm stop
@@ -119,6 +118,7 @@ then a
 .Cm start .
 .It Cm check
 Return 0 if the daemon is running or 1 if it is not.
+.El
 .El
 .Pp
 .Ic rc_cmd
@@ -131,13 +131,13 @@ Arguments to call
 .Va daemon
 with.
 This is usually set in
-.Xr rc.conf 5 ,
+.Xr rc.conf 8 ,
 and not in the
-.Xr rc.d 8
+.Nm rc.d
 script except when there is a sane default value specified.
 .Ar ${name}_flags
 can be used in
-.Xr rc.conf 5
+.Xr rc.conf 8
 to override this.
 .It Va daemon_user
 User to run
@@ -147,23 +147,23 @@ as, using
 This defaults to root unless specified by the
 .Ar daemon_user
 variable in the
-.Xr rc.d 8
+.Nm rc.d
 script or the
 .Ar ${name}_user
 variable in
-.Xr rc.conf 5 .
+.Xr rc.conf 8 .
 .It Va daemon_class
 Login class to run the
 .Va daemon
 with, using
 .Xr su 1 .
 This is a read only variable that gets set by
-.Xr rc.subr 8
+.Nm rc.subr
 itself.
 It searches
 .Xr login.conf 5
 for a login class that has the same name as the
-.Xr rc.d 8
+.Nm rc.d
 script itself and uses that.
 If no such login class exists then daemon will be used.
 .It Va daemon_shell
@@ -176,11 +176,11 @@ This defaults to
 unless specified by the
 .Ar daemon_shell
 variable in the
-.Xr rc.d 8
+.Nm rc.d
 script or the
 .Ar ${name}_shell
 variable in
-.Xr rc.conf 5 .
+.Xr rc.conf 8 .
 .It Va pexp
 A regular expression to be passed to
 .Xr pgrep 1
@@ -202,12 +202,12 @@ file resides in
 .Pa /etc/rc.d .
 .It Pa /usr/ports/infrastructure/templates/rc.template
 A sample
-.Xr rc.d 8
+.Nm rc.d
 script.
 .El
 .Sh SEE ALSO
-.Xr rc.conf 5 ,
-.Xr rc 8
+.Xr rc 8 ,
+.Xr rc.conf 8
 .Sh HISTORY
 The
 .Nm
@@ -217,10 +217,9 @@ first appeared in
 .Sh AUTHORS
 .An -nosplit
 The
-.Xr rc.subr 8
+.Nm rc.subr
 framework was written by
-.An Robert Nagy Aq robert@openbsd.org
-,
-.An Antoine Jacoutot Aq ajacoutot@openbsd.org
+.An Robert Nagy Aq robert@openbsd.org ,
+.An Antoine Jacoutot Aq ajacoutot@openbsd.org ,
 and
 .An Ingo Schwarze Aq schwarze@openbsd.org .
