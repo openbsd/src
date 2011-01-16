@@ -3,7 +3,7 @@
 gettext, dgettext, dcgettext \- translate message
 .SH SYNOPSIS
 .nf
-.B "#include <libintl.h>"
+.B #include <libintl.h>
 .sp
 .BI "char * gettext (const char * " msgid );
 .BI "char * dgettext (const char * " domainname ", const char * " msgid );

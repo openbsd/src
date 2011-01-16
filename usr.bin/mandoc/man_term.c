@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.60 2011/01/16 02:56:47 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.61 2011/01/16 03:46:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -851,23 +851,31 @@ print_man_node(DECL_ARGS)
 	size_t		 rm, rmax;
 	int		 c;
 
-	c = 1;
-
 	switch (n->type) {
 	case(MAN_TEXT):
+		/*
+		 * If we have a blank line, output a vertical space.
+		 * If we have a space as the first character, break
+		 * before printing the line's data.
+		 */
 		if ('\0' == *n->string) {
 			term_vspace(p);
-			break;
-		} 
-
-		if (' ' == *n->string && MAN_LINE & n->flags)
+			return;
+		} else if (' ' == *n->string && MAN_LINE & n->flags)
 			term_newln(p);
 
 		term_word(p, n->string);
 
-		/* FIXME: this means that macro lines are munged!  */
-
-		if (MANT_LITERAL & mt->fl) {
+		/*
+		 * If we're in a literal context, make sure that words
+		 * togehter on the same line stay together.  This is a
+		 * POST-printing call, so we check the NEXT word.  Since
+		 * -man doesn't have nested macros, we don't need to be
+		 * more specific than this.
+		 */
+		if (MANT_LITERAL & mt->fl && 
+				(NULL == n->next || 
+				 n->next->line > n->line)) {
 			rm = p->rmargin;
 			rmax = p->maxrmargin;
 			p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
@@ -877,36 +885,34 @@ print_man_node(DECL_ARGS)
 			p->rmargin = rm;
 			p->maxrmargin = rmax;
 		}
-
-		break;
+		return;
 	case (MAN_TBL):
+		/*
+		 * Tables are preceded by a newline.  Then process a
+		 * table line, which will cause line termination,
+		 */
 		if (TBL_SPAN_FIRST & n->span->flags) 
 			term_newln(p);
 		term_tbl(p, n->span);
-		break;
+		return;
 	default:
-		if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
-			term_fontrepl(p, TERMFONT_NONE);
-		if (termacts[n->tok].pre)
-			c = (*termacts[n->tok].pre)(p, mt, n, m);
 		break;
 	}
+
+	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
+		term_fontrepl(p, TERMFONT_NONE);
+
+	c = 1;
+	if (termacts[n->tok].pre)
+		c = (*termacts[n->tok].pre)(p, mt, n, m);
 
 	if (c && n->child)
 		print_man_nodelist(p, mt, n->child, m);
 
-	switch (n->type) {
-	case (MAN_TEXT):
-		/* FALLTHROUGH */
-	case (MAN_TBL):
-		break;
-	default:
-		if (termacts[n->tok].post)
-			(*termacts[n->tok].post)(p, mt, n, m);
-		if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
-			term_fontrepl(p, TERMFONT_NONE);
-		break;
-	}
+	if (termacts[n->tok].post)
+		(*termacts[n->tok].post)(p, mt, n, m);
+	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
+		term_fontrepl(p, TERMFONT_NONE);
 
 	if (MAN_EOS & n->flags)
 		p->flags |= TERMP_SENTENCE;
