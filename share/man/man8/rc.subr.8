@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.2 2011/01/16 13:08:50 jasper Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.3 2011/01/16 13:19:47 jasper Exp $
 .\"
 .\" Copyright (c) 2010 Robert Nagy and Antoine Jacoutot
 .\" All rights reserved.
@@ -43,8 +43,7 @@ scripts
 .Sh DESCRIPTION
 The
 .Nm
-script
-contains commonly used shell script functions and variable
+script contains commonly used shell script functions and variable
 definitions which are used by various
 .Xr rc.d 8
 scripts.
@@ -107,7 +106,7 @@ after the daemon has been stopped.
 .It Cm reload
 Find the process using
 .Xr pkill 1
-with the regexp specified in the
+with the regular expression as specified in the
 .Ar pexp
 variable and send a SIGHUP signal.
 One has to make sure that sending SIGHUP to a daemon will
@@ -158,14 +157,15 @@ Login class to run the
 .Va daemon
 with, using
 .Xr su 1 .
-This is a read only variable that gets populated by
+This is a read only variable that gets set by
 .Xr rc.subr 8
-itself. It searches
+itself.
+It searches
 .Xr login.conf 5
 for a login class that has the same name as the
 .Xr rc.d 8
-script itself and uses that. If no such login class
-exists then daemon will be used.
+script itself and uses that.
+If no such login class exists then daemon will be used.
 .It Va daemon_shell
 Shell to run the
 .Va daemon
@@ -182,7 +182,7 @@ script or the
 variable in
 .Xr rc.conf 5 .
 .It Va pexp
-A pattern to be passed to to
+A regular expression to be passed to
 .Xr pgrep 1
 or
 .Xr pkill 1
