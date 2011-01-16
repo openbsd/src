@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.1 2011/01/16 13:05:17 robert Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.2 2011/01/16 13:08:50 jasper Exp $
 .\"
 .\" Copyright (c) 2010 Robert Nagy and Antoine Jacoutot
 .\" All rights reserved.
@@ -171,7 +171,9 @@ Shell to run the
 .Va daemon
 in, using
 .Xr su 1 .
-This defaults to /bin/sh unless specified by the
+This defaults to
+.Pa /bin/sh
+unless specified by the
 .Ar daemon_shell
 variable in the
 .Xr rc.d 8
