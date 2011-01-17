@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.33 2011/01/17 18:49:35 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.34 2011/01/17 18:57:42 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2018,7 +2018,7 @@ int
 ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
     struct iked_spi *rekey, u_int8_t protoid)
 {
-	struct iked_childsa		*csa, *csb = NULL;
+	struct iked_childsa		*csa = NULL, *csb = NULL;
 	struct ikev2_notify		*n;
 	struct ikev2_payload		*pld;
 	struct ibuf			*e, *nonce = NULL;
