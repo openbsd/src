@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.20 2011/01/17 14:24:01 martinh Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.21 2011/01/17 14:34:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -49,6 +49,8 @@ void    client_configure(struct env *);
 void    client_periodic_update(int, short, void *);
 int	client_build_req(struct idm *, struct idm_req *, struct aldap_message *,
 	    int, int);
+int	client_search_idm(struct env *, struct idm *, struct aldap *,
+	    char **, char *, int, int, enum imsg_type);
 int	client_try_idm(struct env *, struct idm *);
 int	client_addr_init(struct idm *);
 int	client_addr_free(struct idm *);
@@ -506,12 +508,52 @@ client_build_req(struct idm *idm, struct idm_req *ir, struct aldap_message *m,
 }
 
 int
+client_search_idm(struct env *env, struct idm *idm, struct aldap *al,
+    char **attrs, char *filter, int min_attr, int max_attr,
+    enum imsg_type type)
+{
+	struct idm_req		 ir;
+	struct aldap_message	*m;
+	const char		*errstr;
+
+	if (aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
+		    filter, attrs, 0, 0, 0) == -1) {
+		aldap_get_errno(al, &errstr);
+		log_debug("%s", errstr);
+		return (-1);
+	}
+
+	while ((m = aldap_parse(al)) != NULL) {
+		if (al->msgid != m->msgid) {
+			aldap_freemsg(m);
+			return (-1);
+		}
+		/* end of the search result chain */
+		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
+			aldap_freemsg(m);
+			break;
+		}
+		/* search entry; the rest we won't handle */
+		if (m->message_type != LDAP_RES_SEARCH_ENTRY) {
+			aldap_freemsg(m);
+			return (-1);
+		}
+
+		if (client_build_req(idm, &ir, m, min_attr, max_attr) == 0)
+			imsg_compose_event(env->sc_iev, type, 0, 0, -1,
+			    &ir, sizeof(ir));
+		aldap_freemsg(m);
+	}
+
+	return (0);
+}
+
+int
 client_try_idm(struct env *env, struct idm *idm)
 {
-	const char		*where, *errstr;
+	const char		*where;
 	char			*attrs[ATTR_MAX+1];
 	int			 i, j;
-	struct idm_req		 ir;
 	struct aldap_message	*m;
 	struct aldap		*al;
 
@@ -543,40 +585,14 @@ client_try_idm(struct env *env, struct idm *idm)
 	}
 	attrs[j] = NULL;
 
-	where = "search";
-	if (aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
-		    idm->idm_filters[FILTER_USER], attrs, 0, 0, 0) == -1) {
-		aldap_get_errno(al, &errstr);
-		log_debug("%s\n", errstr);
-		goto bad;
-	}
-
 	/*
 	 * build password line.
 	 */
-	while ((m = aldap_parse(al)) != NULL) {
-		where = "verifying msgid";
-		if (al->msgid != m->msgid) {
-			aldap_freemsg(m);
-			goto bad;
-		}
-		/* end of the search result chain */
-		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
-			aldap_freemsg(m);
-			break;
-		}
-		/* search entry; the rest we won't handle */
-		where = "verifying message_type";
-		if (m->message_type != LDAP_RES_SEARCH_ENTRY) {
-			aldap_freemsg(m);
-			goto bad;
-		}
-
-		if (client_build_req(idm, &ir, m, 0, ATTR_MAX) == 0)
-			imsg_compose_event(env->sc_iev, IMSG_PW_ENTRY, 0, 0, -1,
-			    &ir, sizeof(ir));
-		aldap_freemsg(m);
-	}
+	where = "search";
+	log_debug("searching password entries");
+	if (client_search_idm(env, idm, al, attrs,
+	    idm->idm_filters[FILTER_USER], 0, ATTR_MAX, IMSG_PW_ENTRY) == -1)
+		goto bad;
 
 	bzero(attrs, sizeof(attrs));
 	for (i = ATTR_GR_MIN, j = 0; i < ATTR_GR_MAX; i++) {
@@ -586,42 +602,15 @@ client_try_idm(struct env *env, struct idm *idm)
 	}
 	attrs[j] = NULL;
 
-	where = "search";
-	if (aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
-		    idm->idm_filters[FILTER_GROUP], attrs, 0, 0, 0) == -1) {
-		aldap_get_errno(al, &errstr);
-		log_debug("%s\n", errstr);
-		
-		goto bad;
-	}
-
 	/*
 	 * build group line.
 	 */
-	while ((m = aldap_parse(al)) != NULL) {
-		where = "verifying msgid";
-		if (al->msgid != m->msgid) {
-			aldap_freemsg(m);
-			goto bad;
-		}
-		/* end of the search result chain */
-		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
-			aldap_freemsg(m);
-			break;
-		}
-		/* search entry; the rest we won't handle */
-		where = "verifying message_type";
-		if (m->message_type != LDAP_RES_SEARCH_ENTRY) {
-			aldap_freemsg(m);
-			goto bad;
-		}
-
-		if (client_build_req(idm, &ir, m, ATTR_GR_MIN, ATTR_GR_MAX) == 0)
-			imsg_compose_event(env->sc_iev, IMSG_GRP_ENTRY, 0, 0, -1,
-			    &ir, sizeof(ir));
-
-		aldap_freemsg(m);
-	}
+	where = "search";
+	log_debug("searching group entries");
+	if (client_search_idm(env, idm, al, attrs,
+	    idm->idm_filters[FILTER_GROUP], ATTR_GR_MIN, ATTR_GR_MAX,
+	    IMSG_GRP_ENTRY) == -1)
+		goto bad;
 
 	aldap_close(al);
 
