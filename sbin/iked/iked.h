@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.27 2011/01/12 14:35:45 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.28 2011/01/17 17:16:43 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -737,6 +737,8 @@ void	 print_hexval(u_int8_t *, off_t, size_t);
 const char *
 	 print_bits(u_short, char *);
 int	 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
+u_int8_t mask2prefixlen(struct sockaddr *);
+u_int8_t mask2prefixlen6(struct sockaddr *);
 struct in6_addr *
 	 prefixlen2mask6(u_int8_t, u_int32_t *);
 u_int32_t

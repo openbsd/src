@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2010/12/22 17:53:54 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2011/01/17 17:16:43 mikeb Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -480,6 +480,67 @@ print_bits(u_short v, char *bits)
 	}
 
 	return (buf[idx]);
+}
+
+u_int8_t
+mask2prefixlen(struct sockaddr *sa)
+{
+	struct sockaddr_in	*sa_in = (struct sockaddr_in *)sa;
+	in_addr_t		 ina = sa_in->sin_addr.s_addr;
+
+	if (ina == 0)
+		return (0);
+	else
+		return (33 - ffs(ntohl(ina)));
+}
+
+u_int8_t
+mask2prefixlen6(struct sockaddr *sa)
+{
+	struct sockaddr_in6	*sa_in6 = (struct sockaddr_in6 *)sa;
+	u_int8_t	 	 l = 0, *ap, *ep;
+
+	/*
+	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * the possibly truncated sin6_addr struct.
+	 */
+	ap = (u_int8_t *)&sa_in6->sin6_addr;
+	ep = (u_int8_t *)sa_in6 + sa_in6->sin6_len;
+	for (; ap < ep; ap++) {
+		/* this "beauty" is adopted from sbin/route/show.c ... */
+		switch (*ap) {
+		case 0xff:
+			l += 8;
+			break;
+		case 0xfe:
+			l += 7;
+			return (l);
+		case 0xfc:
+			l += 6;
+			return (l);
+		case 0xf8:
+			l += 5;
+			return (l);
+		case 0xf0:
+			l += 4;
+			return (l);
+		case 0xe0:
+			l += 3;
+			return (l);
+		case 0xc0:
+			l += 2;
+			return (l);
+		case 0x80:
+			l += 1;
+			return (l);
+		case 0x00:
+			return (l);
+		default:
+			return (0);
+		}
+	}
+
+	return (l);
 }
 
 u_int32_t
