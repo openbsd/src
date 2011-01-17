@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.26 2008/09/15 16:13:35 kjell Exp $	*/
+/*	$OpenBSD: random.c,v 1.27 2011/01/17 03:12:06 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -440,3 +440,16 @@ space_to_tabstop(int f, int n)
 	return (linsert((n << 3) - (curwp->w_doto & 7), ' '));
 }
 #endif /* NOTAB */
+
+/*
+ * Move the dot to the first non-whitespace character of the current line.
+ */
+int
+backtoindent(int f, int n)
+{
+	gotobol(FFRAND, 1);
+	while (curwp->w_doto < llength(curwp->w_dotp) &&
+	    (isspace(lgetc(curwp->w_dotp, curwp->w_doto))))
+		++curwp->w_doto;
+	return (TRUE);
+}
