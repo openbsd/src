@@ -1,0 +1,5 @@
+.TH TH-SIXARGS 1 2011-01-16 OpenBSD regress SIX
+.SH NAME
+TH-sixargs \- six arguments to the TH macro
+.SH DESCRIPTION
+some text

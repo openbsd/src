@@ -1,0 +1,9 @@
+.TH NA-ARGS 1
+.SH NAME
+na-args \- arguments to .na macros
+.SH DESCRIPTION
+some
+text
+.na arg1 arg2 arg3
+more
+text

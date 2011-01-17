@@ -1,0 +1,11 @@
+.TH SP-BADARGS-MAN 1
+.SH NAME
+sp-badargs-man \- bad numbers of arguments to .sp macros in man(7)
+.SH DESCRIPTION
+no arguments:
+.sp
+one argument:
+.sp 2v
+two arguments:
+.sp 3v 2i
+end of test document
