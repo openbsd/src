@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.537 2011/01/10 16:56:43 damien Exp $
+$OpenBSD: usbdevs,v 1.538 2011/01/17 10:26:43 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2714,6 +2714,7 @@ product MOSCHIP MCS7703		0x7703	MCS7703 Serial
 product	MOSCHIP	MCS7715		0x7715	MCS7715	Serial Parallel
 product MOSCHIP MCS7730		0x7730	MCS7730 Ethernet
 product MOSCHIP MCS7830		0x7830	MCS7830 Ethernet
+product MOSCHIP MCS7832		0x7832	MCS7832 Ethernet
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
