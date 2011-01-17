@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.88 2011/01/13 17:44:54 lum Exp $
+.\"	$OpenBSD: systat.1,v 1.89 2011/01/17 13:50:07 lum Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 13 2011 $
+.Dd $Mdocdate: January 17 2011 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -501,8 +501,9 @@ The rest of the column breaks down the total on a device
 by device basis.
 Only devices that have interrupted at least once since boot time are shown.
 .Pp
-Below the Interrupts display is a summary of
-total number of input packets and output packets for all interfaces.
+Below the Interrupts display are
+the average number of input and output packets per second
+for all interfaces over the last refresh interval.
 .Pp
 Below the SWAPPING display and slightly to the left of the Interrupts
 display is a list of virtual memory statistics.
