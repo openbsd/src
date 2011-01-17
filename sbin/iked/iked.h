@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.28 2011/01/17 17:16:43 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.29 2011/01/17 18:49:35 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ struct iked_flow {
 	u_int				 flow_dir;	/* in/out */
 
 	u_int				 flow_loaded;	/* pfkey done */
+	u_int				 flow_acquire;
 
 	u_int8_t			 flow_saproto;
 	u_int8_t			 flow_ipproto;
@@ -131,8 +132,10 @@ struct iked_flow {
 	struct iked_addr		*flow_peer;	/* outer dest */
 	struct iked_sa			*flow_ikesa;	/* parent SA */
 
+	RB_ENTRY(iked_flow)		 flow_acq_entry;
 	TAILQ_ENTRY(iked_flow)		 flow_entry;
 };
+RB_HEAD(iked_acqflows, iked_flow);
 TAILQ_HEAD(iked_flows, iked_flow);
 
 struct iked_childsa {
@@ -147,7 +150,7 @@ struct iked_childsa {
 
 	struct iked_spi			 csa_spi;
 
-	struct ibuf			*csa_encrkey;	/* encryption key */	
+	struct ibuf			*csa_encrkey;	/* encryption key */
 	struct iked_transform		*csa_encrxf;	/* encryption xform */
 
 	struct ibuf			*csa_integrkey;	/* auth key */
@@ -443,6 +446,7 @@ struct iked {
 
 	struct iked_sas			 sc_sas;
 	struct iked_ipsecsas		 sc_ipsecsas;
+	struct iked_acqflows		 sc_acqflows;
 	struct iked_users		 sc_users;
 
 	void				*sc_priv;	/* per-process */
@@ -559,6 +563,7 @@ RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_PROTOTYPE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
 RB_PROTOTYPE(iked_users, iked_user, user_entry, user_cmp);
 RB_PROTOTYPE(iked_ipsecsas, iked_childsa, csa_ipsec_entry, childsa_cmp);
+RB_PROTOTYPE(iked_acqflows, iked_flow, flow_acq_entry, acquire_flow_cmp);
 
 /* crypto.c */
 struct iked_hash *
@@ -617,7 +622,7 @@ int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
 	    u_int8_t, u_int64_t, u_int64_t *, int);
-int	 ikev2_flows_delete(struct iked *, struct iked_sa *, u_int8_t);
+int	 ikev2_flows_delete(struct iked *, struct iked_sa *, u_int8_t, int);
 
 struct ibuf *
 	 ikev2_prfplus(struct iked_hash *, struct ibuf *, struct ibuf *,
@@ -635,6 +640,7 @@ struct ikev2_payload *
 	 ikev2_add_payload(struct ibuf *);
 int	 ikev2_next_payload(struct ikev2_payload *, size_t,
 	    u_int8_t);
+void	 ikev2_acquire(struct iked *, struct iked_flow *);
 void	 ikev2_disable_rekeying(struct iked *, struct iked_sa *);
 void	 ikev2_rekey_sa(struct iked *, struct iked_spi *);
 void	 ikev2_drop_sa(struct iked *, struct iked_spi *);

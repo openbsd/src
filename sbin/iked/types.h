@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.7 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: types.h,v 1.8 2011/01/17 18:49:35 mikeb Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #define IKED_MSGBUF_MAX		8192
 #define IKED_CFG_MAX		16	/* maximum CP attributes */
 #define IKED_TAG_SIZE		64
-#define IKED_CYCLE_BUFFERS	4	/* # of static buffers for mapping */
+#define IKED_CYCLE_BUFFERS	8	/* # of static buffers for mapping */
 #define IKED_PASSWORD_SIZE	256	/* limited by most EAP types */
 
 #define IKED_LIFETIME_BYTES	536870912 /* 512 Mb */

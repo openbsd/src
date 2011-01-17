@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.12 2010/12/22 16:22:27 mikeb Exp $	*/
+/*	$OpenBSD: policy.c,v 1.13 2011/01/17 18:49:35 mikeb Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -49,6 +49,9 @@ static __inline int
 	 user_cmp(struct iked_user *, struct iked_user *);
 static __inline int
 	 childsa_cmp(struct iked_childsa *, struct iked_childsa *);
+static __inline int
+	 flow_cmp(struct iked_flow *, struct iked_flow *);
+
 
 void
 policy_init(struct iked *env)
@@ -57,6 +60,7 @@ policy_init(struct iked *env)
 	RB_INIT(&env->sc_users);
 	RB_INIT(&env->sc_sas);
 	RB_INIT(&env->sc_ipsecsas);
+	RB_INIT(&env->sc_acqflows);
 }
 
 int
@@ -423,3 +427,36 @@ childsa_cmp(struct iked_childsa *a, struct iked_childsa *b)
 }
 
 RB_GENERATE(iked_ipsecsas, iked_childsa, csa_ipsec_entry, childsa_cmp);
+
+static __inline int
+addr_cmp(struct iked_addr *a, struct iked_addr *b, int useports)
+{
+	int		diff = 0;
+	int		prefix;
+
+	prefix = MAX(a->addr_mask, b->addr_mask);
+	diff = sockaddr_cmp((struct sockaddr *)&a->addr,
+	    (struct sockaddr *)&b->addr, prefix);
+	if (!diff && useports)
+		diff = a->addr_port - b->addr_port;
+
+	return (diff);
+}
+
+static __inline int
+flow_cmp(struct iked_flow *a, struct iked_flow *b)
+{
+	int		diff = 0;
+
+	diff = addr_cmp(a->flow_peer, b->flow_peer, 0);
+	if (!diff)
+		diff = addr_cmp(&a->flow_dst, &b->flow_dst, 1);
+	if (!diff)
+		diff = addr_cmp(&a->flow_src, &b->flow_src, 1);
+	if (!diff)
+		diff = (int)a->flow_dir - (int)b->flow_dir;
+
+	return (diff);
+}
+
+RB_GENERATE(iked_acqflows, iked_flow, flow_acq_entry, flow_cmp);

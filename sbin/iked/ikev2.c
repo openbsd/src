@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.32 2011/01/12 14:26:26 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.33 2011/01/17 18:49:35 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -71,8 +71,8 @@ int	 ikev2_resp_ike_sa_init(struct iked *, struct iked_message *);
 int	 ikev2_resp_ike_auth(struct iked *, struct iked_sa *);
 int	 ikev2_resp_ike_eap(struct iked *, struct iked_sa *, struct ibuf *);
 
-int	 ikev2_rekey_child_sa(struct iked *, struct iked_sa *,
-	    struct iked_spi *);
+int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
+	    struct iked_spi *, u_int8_t);
 int	 ikev2_init_create_child_sa(struct iked *, struct iked_message *);
 int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
 
@@ -2015,8 +2015,8 @@ ikev2_send_ike_e(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 }
 
 int
-ikev2_rekey_child_sa(struct iked *env, struct iked_sa *sa,
-    struct iked_spi *rekey)
+ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
+    struct iked_spi *rekey, u_int8_t protoid)
 {
 	struct iked_childsa		*csa, *csb = NULL;
 	struct ikev2_notify		*n;
@@ -2027,15 +2027,19 @@ ikev2_rekey_child_sa(struct iked *env, struct iked_sa *sa,
 	ssize_t				 len = 0;
 	int				 initiator, ret = -1;
 
-	log_debug("%s: rekey %s spi %s", __func__,
-	    print_map(rekey->spi_protoid, ikev2_saproto_map),
-	    print_spi(rekey->spi, rekey->spi_size));
+	if (rekey)
+		log_debug("%s: rekeying %s spi %s", __func__,
+		    print_map(rekey->spi_protoid, ikev2_saproto_map),
+		    print_spi(rekey->spi, rekey->spi_size));
+	else
+		log_debug("%s: creating new CHILD SAs", __func__);
 
 	initiator = sa->sa_hdr.sh_initiator ? 1 : 0;
 
-	if ((csa = childsa_lookup(sa, rekey->spi,
+	if (rekey &&
+	    ((csa = childsa_lookup(sa, rekey->spi,
 	    rekey->spi_protoid)) == NULL ||
-	    (csb = csa->csa_peersa) == NULL) {
+	    (csb = csa->csa_peersa) == NULL)) {
 		log_debug("%s: CHILD SA %s wasn't found", __func__,
 		    print_spi(rekey->spi, rekey->spi_size));
 	}
@@ -2055,7 +2059,7 @@ ikev2_rekey_child_sa(struct iked *env, struct iked_sa *sa,
 	if ((pld = ikev2_add_payload(e)) == NULL)
 		goto done;
 	if ((len = ikev2_add_proposals(env, sa, e, &sa->sa_proposals,
-	    rekey->spi_protoid, 1, 0)) == -1)
+	    protoid, 1, 0)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONCE) == -1)
@@ -2088,23 +2092,25 @@ ikev2_rekey_child_sa(struct iked *env, struct iked_sa *sa,
 	if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
 		goto done;
 
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
-		goto done;
+	if (rekey) {
+		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+			goto done;
 
-	/* REKEY_SA notification */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((n = ibuf_advance(e, sizeof(*n))) == NULL)
-		goto done;
-	n->n_type = htobe16(IKEV2_N_REKEY_SA);
-	n->n_protoid = rekey->spi_protoid;
-	n->n_spisize = rekey->spi_size;
-	if ((ptr = ibuf_advance(e, rekey->spi_size)) == NULL)
-		goto done;
-	len = rekey->spi_size;
-	spi = htobe32((u_int32_t)csa->csa_peerspi);
-	memcpy(ptr, &spi, rekey->spi_size);
-	len += sizeof(*n);
+		/* REKEY_SA notification */
+		if ((pld = ikev2_add_payload(e)) == NULL)
+			goto done;
+		if ((n = ibuf_advance(e, sizeof(*n))) == NULL)
+			goto done;
+		n->n_type = htobe16(IKEV2_N_REKEY_SA);
+		n->n_protoid = rekey->spi_protoid;
+		n->n_spisize = rekey->spi_size;
+		if ((ptr = ibuf_advance(e, rekey->spi_size)) == NULL)
+			goto done;
+		len = rekey->spi_size;
+		spi = htobe32((u_int32_t)csa->csa_peerspi);
+		memcpy(ptr, &spi, rekey->spi_size);
+		len += sizeof(*n);
+	}
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
 		goto done;
@@ -2112,8 +2118,10 @@ ikev2_rekey_child_sa(struct iked *env, struct iked_sa *sa,
 	ret = ikev2_msg_send_encrypt(env, sa, &e,
 	    IKEV2_EXCHANGE_CREATE_CHILD_SA, IKEV2_PAYLOAD_SA, 0);
 	if (ret == 0) {
-		csa->csa_rekey = 1;
-		csb->csa_rekey = 1;
+		if (rekey) {
+			csa->csa_rekey = 1;
+			csb->csa_rekey = 1;
+		}
 		sa->sa_stateflags |= IKED_REQ_CHILDSA;
 	}
 
@@ -2129,10 +2137,10 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	struct iked_proposal		*prop, *mprop = msg->msg_prop;
 	struct iked_sa			*sa = msg->msg_sa;
 	struct ikev2_delete		*del;
-	struct ibuf			*buf;
-	u_int64_t			 peerspi/* , localspi */;
+	struct ibuf			*buf = NULL;
+	u_int64_t			 peerspi;
 	u_int32_t			 spi32;
-	int				 ret = -1;
+	int				 rekeying = 0, ret = -1;
 
 	if (!ikev2_msg_frompeer(msg) ||
 	    (sa->sa_stateflags & IKED_REQ_CHILDSA) == 0)
@@ -2157,10 +2165,10 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	peerspi = prop->prop_peerspi.spi;
 	prop->prop_peerspi.spi = msg->msg_prop->prop_peerspi.spi;
 
-	if ((csa = childsa_lookup(sa, peerspi, prop->prop_protoid)) == NULL) {
-		log_debug("%s: failed to find a CHILD SA %s", __func__,
+	if ((csa = childsa_lookup(sa, peerspi, prop->prop_protoid)) != NULL) {
+		rekeying = 1;
+		log_debug("%s: rekeying CHILD SA %s", __func__,
 		    print_spi(peerspi, prop->prop_peerspi.spi_size));
-		return (-1);
 	}
 
 	/* Update responder's nonce */
@@ -2176,25 +2184,29 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		return (-1);
 	}
 
-	if ((buf = ibuf_static()) == NULL)
-		goto done;
+	if (rekeying) {
+		/* Child SA rekeying */
 
-	if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
-		goto done;
+		if ((buf = ibuf_static()) == NULL)
+			goto done;
 
-	del->del_protoid = prop->prop_protoid;
-	del->del_spisize = sizeof(spi32);
-	del->del_nspi = htobe16(1);
+		if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
+			goto done;
 
-	spi32 = htobe32(csa->csa_peerspi);
-	if (ibuf_add(buf, &spi32, sizeof(spi32)))
-		goto done;
+		del->del_protoid = prop->prop_protoid;
+		del->del_spisize = sizeof(spi32);
+		del->del_nspi = htobe16(1);
 
-	if (ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
-	    IKEV2_EXCHANGE_INFORMATIONAL, 0))
-		goto done;
+		spi32 = htobe32(csa->csa_peerspi);
+		if (ibuf_add(buf, &spi32, sizeof(spi32)))
+			goto done;
 
-	sa->sa_stateflags |= IKED_REQ_INF | IKED_REQ_DELETE;
+		if (ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
+		    IKEV2_EXCHANGE_INFORMATIONAL, 0))
+			goto done;
+
+		sa->sa_stateflags |= IKED_REQ_INF | IKED_REQ_DELETE;
+	}
 
 	ret = ikev2_childsa_enable(env, sa);
 
@@ -2218,7 +2230,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	struct ikev2_keyexchange	*ke;
 	struct ikev2_notify		*n;
 	struct ikev2_payload		*pld;
-	struct ibuf			*buf, *e = NULL, *nonce = NULL;
+	struct ibuf			*buf = NULL, *e = NULL, *nonce = NULL;
 	struct group			*group;
 	ssize_t				 len = 0;
 	int				 initiator, protoid, rekeying = 1;
@@ -3659,7 +3671,8 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
 }
 
 int
-ikev2_flows_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto)
+ikev2_flows_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
+    int acquire)
 {
 	struct iked_flow	*flow, *nextflow;
 	int			 found = 0;
@@ -3669,16 +3682,45 @@ ikev2_flows_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto)
 
 		if (saproto && flow->flow_saproto != saproto)
 			continue;
-		if (pfkey_flow_delete(env->sc_pfkey, flow) != 0)
-			log_debug("%s: failed to delete flow %p",
-			    __func__, flow);
-		else
-			log_debug("%s: deleted flow %p",
-			    __func__, flow);
-		found++;
 
-		TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
-		flow_free(flow);
+		/*
+		 * If we're asked to put a flow into acquire mode for
+		 * the first time then remove it and add back with an
+		 * appropriate configuration, otherwise there's nothing
+		 * to do.
+		 */
+		if (!acquire) {
+			if (flow->flow_acquire)
+				RB_REMOVE(iked_acqflows, &env->sc_acqflows,
+				    flow);
+			if (pfkey_flow_delete(env->sc_pfkey, flow) != 0)
+				log_debug("%s: failed to delete flow %p",
+				    __func__, flow);
+			else
+				log_debug("%s: deleted flow %p",
+				    __func__, flow);
+			TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
+			flow_free(flow);
+		} else if (!flow->flow_acquire) {
+			if (pfkey_flow_delete(env->sc_pfkey, flow) != 0)
+				log_debug("%s: failed to delete flow %p",
+				    __func__, flow);
+			else
+				log_debug("%s: deleted flow %p",
+				    __func__, flow);
+			flow->flow_acquire = 1;
+			if (pfkey_flow_add(env->sc_pfkey, flow) != 0)
+				log_debug("%s: failed to load acquire flow",
+				    __func__);
+			else {
+				RB_INSERT(iked_acqflows, &env->sc_acqflows,
+				    flow);
+				log_debug("%s: loaded acquire flow %p",
+				    __func__, flow);
+			}
+		}
+
+		found++;
 	}
 
 	return (found ? 0 : -1);
@@ -3728,6 +3770,28 @@ ikev2_valid_proposal(struct iked_proposal *prop,
 }
 
 void
+ikev2_acquire(struct iked *env, struct iked_flow *acquire)
+{
+	struct iked_flow	*flow;
+	struct iked_sa		*sa;
+
+	if ((flow = RB_FIND(iked_acqflows, &env->sc_acqflows,
+	    acquire)) == NULL) {
+		log_warnx("%s: flow wasn't found", __func__);
+		return;
+	}
+
+	if ((sa = flow->flow_ikesa) == NULL) {
+		log_warnx("%s: flow without SA", __func__);
+		return;
+	}
+
+	if (ikev2_send_create_child_sa(env, sa, NULL, flow->flow_saproto))
+		log_warnx("%s: failed to initiate a CREATE_CHILD_SA exchange",
+		    __func__);
+}
+
+void
 ikev2_disable_rekeying(struct iked *env, struct iked_sa *sa)
 {
 	struct iked_childsa		*csa;
@@ -3768,7 +3832,7 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 	}
 	if (csa->csa_allocated)	/* Peer SPI died first, get the local one */
 		rekey->spi = csa->csa_peerspi;
-	if (ikev2_rekey_child_sa(env, sa, rekey))
+	if (ikev2_send_create_child_sa(env, sa, rekey, rekey->spi_protoid))
 		log_warnx("%s: failed to initiate a CREATE_CHILD_SA exchange",
 		    __func__);
 }
@@ -3776,11 +3840,11 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 void
 ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 {
+	struct ibuf			*buf = NULL;
 	struct iked_childsa		*csa, key;
 	struct iked_proposal		*prop;
 	struct iked_sa			*sa;
 	struct ikev2_delete		*del;
-	struct ibuf			*buf;
 	u_int32_t			 spi32;
 	int				 nprop = 0;
 
@@ -3834,7 +3898,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 			    print_spi(csa->csa_peerspi, drop->spi_size));
 
 		/* delete flows for the specified protocol */
-		if (ikev2_flows_delete(env, sa, csa->csa_saproto))
+		if (ikev2_flows_delete(env, sa, csa->csa_saproto, 0))
 			log_debug("%s: failed to delete flows", __func__);
 
 		/* Send PAYLOAD_DELETE */
