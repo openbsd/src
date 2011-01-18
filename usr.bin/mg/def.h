@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.114 2011/01/17 03:12:06 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.115 2011/01/18 16:25:40 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -512,6 +512,7 @@ int		 forwdel(int, int);
 int		 backdel(int, int);
 int		 space_to_tabstop(int, int);
 int		 backtoindent(int, int);
+int		 joinline(int, int);
 
 /* extend.c X */
 int		 insert(int, int);
