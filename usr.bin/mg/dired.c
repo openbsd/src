@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.46 2010/06/26 16:18:43 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.47 2011/01/18 17:35:42 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -36,6 +36,7 @@ static int	 d_rename(int, int);
 static int	 d_shell_command(int, int);
 static int	 d_create_directory(int, int);
 static int	 d_makename(struct line *, char *, size_t);
+static void	 reaper(int);
 
 extern struct keymap_s helpmap, cXmap, metamap;
 

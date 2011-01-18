@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2008/12/17 10:27:33 sobrado Exp $
+# $OpenBSD: Makefile,v 1.23 2011/01/18 17:35:42 lum Exp $
 
 PROG=	mg
 
@@ -15,7 +15,7 @@ DPADD+=	${LIBCURSES}
 #
 CFLAGS+=-Wall -DFKEYS -DREGEX -DXKEYS
 
-SRCS=	autoexec.c basic.c buffer.c cinfo.c dir.c dired.c display.c \
+SRCS=	autoexec.c basic.c buffer.c cinfo.c dir.c display.c \
 	echo.c extend.c file.c fileio.c funmap.c help.c kbd.c keymap.c \
 	line.c macro.c main.c match.c modes.c paragraph.c random.c \
 	re_search.c region.c search.c spawn.c tty.c ttyio.c ttykbd.c \
@@ -24,6 +24,6 @@ SRCS=	autoexec.c basic.c buffer.c cinfo.c dir.c dired.c display.c \
 #
 # More or less standalone extensions.
 #
-SRCS+=	cmode.c grep.c theo.c
+SRCS+=	cmode.c dired.c grep.c theo.c
 
 .include <bsd.prog.mk>

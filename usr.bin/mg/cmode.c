@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.6 2008/12/17 10:28:27 sobrado Exp $ */
+/* $OpenBSD: cmode.c,v 1.7 2011/01/18 17:35:42 lum Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -30,6 +30,7 @@ static int findcolpos(const struct buffer *, const struct line *, int);
 static struct line *findnonblank(struct line *);
 static int isnonblank(const struct line *, int);
 
+void cmode_init(void);
 int cc_comment(int, int);
 
 /* Keymaps */

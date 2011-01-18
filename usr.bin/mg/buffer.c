@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.74 2010/06/30 19:12:54 oga Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.75 2011/01/18 17:35:42 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -14,6 +14,8 @@
 
 static struct buffer  *makelist(void);
 static struct buffer *bnew(const char *);
+
+static int usebufname(const char *);
 
 /* Flag for global working dir */
 extern int globalwd;
