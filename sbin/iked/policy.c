@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.13 2011/01/17 18:49:35 mikeb Exp $	*/
+/*	$OpenBSD: policy.c,v 1.14 2011/01/18 11:34:44 mikeb Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -432,11 +432,11 @@ static __inline int
 addr_cmp(struct iked_addr *a, struct iked_addr *b, int useports)
 {
 	int		diff = 0;
-	int		prefix;
 
-	prefix = MAX(a->addr_mask, b->addr_mask);
 	diff = sockaddr_cmp((struct sockaddr *)&a->addr,
-	    (struct sockaddr *)&b->addr, prefix);
+	    (struct sockaddr *)&b->addr, 128);
+	if (!diff)
+		diff = (int)a->addr_mask - (int)b->addr_mask;
 	if (!diff && useports)
 		diff = a->addr_port - b->addr_port;
 
