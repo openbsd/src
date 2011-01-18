@@ -32,7 +32,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_driver.c,v 1.9 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: frm_driver.c,v 1.10 2011/01/18 18:57:51 nicm Exp $")
 
 /*----------------------------------------------------------------------------
   This is the core module of the form library. It contains the majority
@@ -4347,7 +4347,9 @@ set_field_buffer(FIELD *field, int buffer, const char *value)
 						     * field->cols))))
 	    RETURN(E_SYSTEM_ERROR);
 
+#if !USE_WIDEC_SUPPORT
 	  len = vlen;
+#endif
 	}
     }
 
@@ -4366,6 +4368,7 @@ set_field_buffer(FIELD *field, int buffer, const char *value)
       delwin(field->working);
       field->working = newpad(field->drows, field->dcols);
     }
+  len = Buffer_Length(field);
   wclear(field->working);
   mvwaddstr(field->working, 0, 0, value);
 
