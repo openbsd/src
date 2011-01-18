@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.90 2011/01/17 17:20:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.91 2011/01/18 20:46:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1150,12 +1150,16 @@ rde_asext_get(struct kroute *rr)
 		    rdeconf->rtr_id.s_addr);
 	}
 
+	v = lsa_find(NULL, LSA_TYPE_EXTERNAL, an->ls_id,
+	    rdeconf->rtr_id.s_addr);
 	lsa = orig_asext_lsa(rr, an->ls_id, DEFAULT_AGE);
 	lsa_merge(nbrself, lsa, v);
 
 	if (oan != an) {
+		v = lsa_find(NULL, LSA_TYPE_EXTERNAL, oan->ls_id,
+		    rdeconf->rtr_id.s_addr);
 		lsa = orig_asext_lsa(&oan->r, oan->ls_id, DEFAULT_AGE);
-		lsa_merge(nbrself, lsa, NULL);
+		lsa_merge(nbrself, lsa, v);
 	}
 }
 
