@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.72 2010/06/26 16:18:44 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.73 2011/01/18 16:29:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -516,7 +516,7 @@ filewrite(int f, int n)
 		(void)strlcpy(curbp->b_fname, adjfname, sizeof(curbp->b_fname));
 		if (getbufcwd(curbp->b_cwd, sizeof(curbp->b_cwd)) != TRUE)
 			(void)strlcpy(curbp->b_cwd, "/", sizeof(curbp->b_cwd));
-		if (augbname(bn, basename(curbp->b_fname), sizeof(bn))
+		if (augbname(bn, curbp->b_fname, sizeof(bn))
 		    == FALSE)
 			return (FALSE);
 		free(curbp->b_bname);
