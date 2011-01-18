@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.49 2009/11/12 16:37:14 millert Exp $	*/
+/*	$OpenBSD: line.c,v 1.50 2011/01/18 16:28:00 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -618,11 +618,11 @@ lreplace(RSIZE plen, char *st)
 char *
 linetostr(const struct line *ln)
 {
-	size_t	 len;
+	int	 len;
 	char	*line;
 
 	len = llength(ln);
-	if (len == SIZE_MAX)  /* (len + 1) overflow */
+	if (len == INT_MAX)  /* (len + 1) overflow */
 		return (NULL);
 
 	if ((line = malloc(len + 1)) == NULL)
