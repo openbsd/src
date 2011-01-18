@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.231 2010/11/29 19:38:59 miod Exp $	*/
+/*	$OpenBSD: if.c,v 1.232 2011/01/18 19:10:25 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2195,7 +2195,9 @@ void
 ifa_update_broadaddr(struct ifnet *ifp, struct ifaddr *ifa, struct sockaddr *sa)
 {
 	ifa_item_remove(ifa->ifa_broadaddr, ifa, ifp);
-	ifa->ifa_broadaddr = sa;
+	if (ifa->ifa_broadaddr->sa_len != sa->sa_len)
+		panic("ifa_update_broadaddr does not support dynamic length");
+	bcopy(sa, ifa->ifa_broadaddr, sa->sa_len);
 	ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
 }
 
