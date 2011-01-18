@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.89 2011/01/17 13:50:07 lum Exp $
+.\"	$OpenBSD: systat.1,v 1.90 2011/01/18 03:38:05 lum Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 17 2011 $
+.Dd $Mdocdate: January 18 2011 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -477,7 +477,7 @@ handled by the per process name translation cache.
 At the bottom left is the disk usage display.
 It reports the number of seeks, transfers, number
 of kilobyte blocks transferred per second averaged over the
-refresh period of the display (by default, five seconds), and
+refresh period of the display, and
 the time spent in disk accesses.
 .Pp
 Under the date in the upper right hand quadrant are statistics
