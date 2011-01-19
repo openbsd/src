@@ -1,4 +1,4 @@
-/*      $OpenBSD: misc.c,v 1.5 2009/10/27 23:59:36 deraadt Exp $      */
+/*      $OpenBSD: misc.c,v 1.6 2011/01/19 13:01:25 okan Exp $      */
 /*      $NetBSD: misc.c,v 1.2 1995/09/08 03:22:58 tls Exp $      */
 
 /*-
@@ -39,8 +39,7 @@
 #include "extern.h"
 
 void
-eofmsg(file)
-	char *file;
+eofmsg(char *file)
 {
 	if (!sflag)
 		warnx("EOF on %s", file);
@@ -48,9 +47,7 @@ eofmsg(file)
 }
 
 void
-diffmsg(file1, file2, byte, line)
-	char *file1, *file2;
-	off_t byte, line;
+diffmsg(char *file1, char *file2, off_t byte, off_t line)
 {
 	if (!sflag)
 		(void)printf("%s %s differ: char %lld, line %lld\n",

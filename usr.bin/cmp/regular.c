@@ -1,4 +1,4 @@
-/*      $OpenBSD: regular.c,v 1.9 2009/10/27 23:59:36 deraadt Exp $      */
+/*      $OpenBSD: regular.c,v 1.10 2011/01/19 13:01:25 okan Exp $      */
 /*      $NetBSD: regular.c,v 1.2 1995/09/08 03:22:59 tls Exp $      */
 
 /*-
@@ -43,10 +43,8 @@
 #include "extern.h"
 
 void
-c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
-	int fd1, fd2;
-	char *file1, *file2;
-	off_t skip1, len1, skip2, len2;
+c_regular(int fd1, char *file1, off_t skip1, off_t len1,
+    int fd2, char *file2, off_t skip2, off_t len2)
 {
 	u_char ch, *p1, *p2;
 	off_t byte, length, line;

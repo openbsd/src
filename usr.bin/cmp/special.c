@@ -1,4 +1,4 @@
-/*      $OpenBSD: special.c,v 1.6 2009/10/27 23:59:36 deraadt Exp $      */
+/*      $OpenBSD: special.c,v 1.7 2011/01/19 13:01:25 okan Exp $      */
 /*      $NetBSD: special.c,v 1.2 1995/09/08 03:23:00 tls Exp $      */
 
 /*-
@@ -40,10 +40,7 @@
 #include "extern.h"
 
 void
-c_special(fd1, file1, skip1, fd2, file2, skip2)
-	int fd1, fd2;
-	char *file1, *file2;
-	off_t skip1, skip2;
+c_special(int fd1, char *file1, off_t skip1, int fd2, char *file2, off_t skip2)
 {
 	int ch1, ch2;
 	off_t byte, line;
