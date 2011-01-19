@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.70 2011/01/19 05:58:57 david Exp $
+#	$OpenBSD: changelist,v 1.71 2011/01/19 18:34:58 david Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -47,9 +47,12 @@
 +/etc/iked.conf
 /etc/inetd.conf
 +/etc/ipsec.conf
++/etc/isakmpd/isakmpd.conf
++/etc/isakmpd/isakmpd.policy
 /etc/isakmpd/local.pub
 +/etc/isakmpd/private/local.key
 /etc/ksh.kshrc
+/etc/ldapd.conf
 /etc/ldpd.conf
 /etc/locate.rc
 /etc/login.conf
@@ -90,12 +93,14 @@
 /etc/netstart
 /etc/networks
 /etc/newsyslog.conf
+/etc/nsd.conf
 /etc/ntpd.conf
 /etc/ospf6d.conf
 /etc/ospfd.conf
 /etc/passwd
 /etc/pf.conf
 /etc/pf.os
+/etc/pkg.conf
 /etc/portal.conf
 /etc/printcap
 /etc/profile
@@ -105,6 +110,7 @@
 /etc/rc
 /etc/rc.conf
 /etc/rc.conf.local
+/etc/rc.d/rc.subr
 /etc/rc.local
 /etc/rc.securelevel
 /etc/rc.shutdown
@@ -147,6 +153,8 @@
 /etc/weekly
 /etc/weekly.local
 /etc/wsconsctl.conf
+/etc/ypldap.conf
+/root/.Xdefaults
 /root/.cshrc
 /root/.klogin
 /root/.login
