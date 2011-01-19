@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.125 2011/01/06 14:01:36 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.126 2011/01/19 11:39:57 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -518,7 +518,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	*m0 = m = pf_reassemble(m0, &frag, frent, mff);
 
 	if (m == NULL)
-		return (PF_DROP);
+		return (PF_PASS);  /* packet has been reassembled, no error */
 
 	h = mtod(m, struct ip *);
 
