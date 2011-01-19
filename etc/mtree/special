@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.91 2011/01/19 05:48:41 david Exp $
+#	$OpenBSD: special,v 1.92 2011/01/19 21:26:35 david Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -45,6 +45,7 @@ isakmpd.policy	type=file mode=0600 uname=root gname=wheel optional
 ..	#isakmpd
 kerberosV	type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#kerberosV
+ldapd.conf	type=file mode=0600 uname=root gname=wheel
 ldpd.conf	type=file mode=0600 uname=root gname=wheel
 login.conf	type=file mode=0644 uname=root gname=wheel
 mail.rc		type=file mode=0644 uname=root gname=wheel
