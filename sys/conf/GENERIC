@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.169 2011/01/07 17:50:42 bluhm Exp $
+#	$OpenBSD: GENERIC,v 1.170 2011/01/19 21:37:03 thib Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -41,21 +41,19 @@ option		QUOTA		# UFS quotas
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
 option		NNPFS		# NNPFS filesystem
+option		NFSCLIENT	# Network File System client
+option		NFSSERVER	# Network File System server
+option		CD9660		# ISO 9660 + Rock Ridge file system
+option		UDF		# UDF (DVD) file system
+option		MSDOSFS		# MS-DOS file system
+option		FIFO		# FIFOs; RECOMMENDED
+#option		PORTAL		# dynamically created filesystem objects
 
 option		SOCKET_SPLICE	# Socket Splicing for TCP
 option		TCP_SACK	# Selective Acknowledgements for TCP
 option		TCP_ECN		# Explicit Congestion Notification for TCP
 option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 #option		TCP_FACK	# Forward Acknowledgements for TCP
-
-option		NFSCLIENT	# Network File System client
-option		NFSSERVER	# Network File System server
-
-option		CD9660		# ISO 9660 + Rock Ridge file system
-option		UDF		# UDF (DVD) file system
-option		MSDOSFS		# MS-DOS file system
-option		FIFO		# FIFOs; RECOMMENDED
-#option		PORTAL		# dynamically created filesystem objects
 
 option		INET		# IP + ICMP + TCP + UDP
 option		ALTQ		# ALTQ base
