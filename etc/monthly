@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: monthly,v 1.12 2009/05/25 21:31:24 schwarze Exp $
+#	$OpenBSD: monthly,v 1.13 2011/01/19 06:18:05 david Exp $
 #
 # For local additions, create the file /etc/monthly.local.
 # To get section headers, use the function next_part in monthly.local.
@@ -45,5 +45,5 @@ run_script "monthly.local"
 
 end_part
 rm -f $PARTOUT
-                        
+
 [ -s $MAINOUT ] && mail -s "`hostname` monthly output" root < $MAINOUT
