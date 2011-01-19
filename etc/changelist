@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.69 2010/09/06 17:10:19 naddy Exp $
+#	$OpenBSD: changelist,v 1.70 2011/01/19 05:58:57 david Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -38,7 +38,6 @@
 /etc/gettytab
 /etc/group
 /etc/hostapd.conf
-/etc/relayd.conf
 /etc/hosts
 /etc/hosts.allow
 /etc/hosts.deny
@@ -48,8 +47,8 @@
 +/etc/iked.conf
 /etc/inetd.conf
 +/etc/ipsec.conf
-+/etc/isakmpd/private/local.key
 /etc/isakmpd/local.pub
++/etc/isakmpd/private/local.key
 /etc/ksh.kshrc
 /etc/ldpd.conf
 /etc/locate.rc
@@ -92,8 +91,8 @@
 /etc/networks
 /etc/newsyslog.conf
 /etc/ntpd.conf
-/etc/ospfd.conf
 /etc/ospf6d.conf
+/etc/ospfd.conf
 /etc/passwd
 /etc/pf.conf
 /etc/pf.os
@@ -109,12 +108,13 @@
 /etc/rc.local
 /etc/rc.securelevel
 /etc/rc.shutdown
+/etc/relayd.conf
 /etc/remote
 /etc/resolv.conf
 /etc/resolv.conf.tail
+/etc/ripd.conf
 +/etc/rndc.key
 /etc/rpc
-/etc/ripd.conf
 /etc/rtadvd.conf
 /etc/sasyncd.conf
 /etc/security
