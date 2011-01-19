@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.90 2010/10/01 20:51:55 jakob Exp $
+#	$OpenBSD: special,v 1.91 2011/01/19 05:48:41 david Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -45,7 +45,6 @@ isakmpd.policy	type=file mode=0600 uname=root gname=wheel optional
 ..	#isakmpd
 kerberosV	type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#kerberosV
-host.random	type=file mode=0600 uname=root gname=wheel optional
 ldpd.conf	type=file mode=0600 uname=root gname=wheel
 login.conf	type=file mode=0644 uname=root gname=wheel
 mail.rc		type=file mode=0644 uname=root gname=wheel
@@ -173,6 +172,7 @@ tabs		type=dir mode=01730 uname=root gname=crontab ignore
 ..	#var/cron/tabs
 ..	#var/cron
 db		type=dir mode=0755 uname=root gname=wheel
+host.random	type=file mode=0600 uname=root gname=wheel optional
 kvm_bsd.db	type=file mode=0644 uname=root gname=wheel
 ..	#var/db
 log		type=dir mode=0755 uname=root gname=wheel
