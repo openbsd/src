@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.17 2010/10/11 14:25:05 sthen Exp $
+.\" $OpenBSD: ikectl.8,v 1.18 2011/01/20 13:58:16 jmc Exp $
 .\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2010 $
+.Dd $Mdocdate: January 20 2011 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -80,7 +80,7 @@ subsystems.
 .It Cm reload
 Reload the configuration from the default configuration file.
 .It Cm reset all
-Reset the the running state.
+Reset the running state.
 .It Cm reset ca
 Reset the X.509 CA and certificate state.
 .It Cm reset policy
@@ -168,7 +168,7 @@ argument.
 .Cm ca Ar name Cm certificate Ar host
 .Cm delete
 .Xc
-Deletes the private key and and certificates associated with
+Deletes the private key and certificates associated with
 .Ar host .
 .It Xo
 .Cm ca Ar name Cm certificate Ar host
