@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.68 2011/01/16 19:27:25 schwarze Exp $ */
+/*	$Id: main.c,v 1.69 2011/01/20 21:33:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -181,7 +181,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"escaped character not allowed in a name",
 	"skipping text before the first section header",
 	"skipping unknown macro",
-	"NOT IMPLEMENTED: skipping request",
+	"NOT IMPLEMENTED, please use groff: skipping request",
 	"line scope broken",
 	"argument count wrong",
 	"skipping end of block that is not open",

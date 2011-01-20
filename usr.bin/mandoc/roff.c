@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.29 2011/01/12 20:56:40 schwarze Exp $ */
+/*	$Id: roff.c,v 1.30 2011/01/20 21:33:11 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -47,6 +47,7 @@ enum	rofft {
 	ROFF_ie,
 	ROFF_if,
 	ROFF_ig,
+	ROFF_it,
 	ROFF_ne,
 	ROFF_nh,
 	ROFF_nr,
@@ -168,6 +169,7 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "ig", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "it", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "ne", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "nh", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "nr", roff_nr, NULL, NULL, 0, NULL },
@@ -930,6 +932,9 @@ roff_evalcond(const char *v, int *pos)
 static enum rofferr
 roff_line_ignore(ROFF_ARGS)
 {
+
+	if (ROFF_it == tok)
+		(*r->msg)(MANDOCERR_REQUEST, r->data, ln, ppos, "it");
 
 	return(ROFF_IGN);
 }
