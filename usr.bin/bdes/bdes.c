@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.16 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.17 2011/01/20 22:12:42 jasper Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -102,31 +102,12 @@ void 	usage(void);
 #define	MEMZERO(dest,len)	bzero((dest),(len))
 
 /* Hide the calls to the primitive encryption routines. */
-#define	FASTWAY
-#ifdef	FASTWAY
 #define	DES_KEY(buf) \
 	if (des_setkey(buf)) \
 		err(1, "des_setkey");
 #define	DES_XFORM(buf) \
 	if (des_cipher(buf, buf, 0L, (inverse ? -1 : 1))) \
 		err(1, "des_cipher");
-#else
-#define	DES_KEY(buf)	{						\
-				char bits1[64];	/* bits of key */	\
-				expand(buf, bits1);			\
-				if (setkey(bits1))			\
-					err(1, "setkey");		\
-			}
-#define	DES_XFORM(buf)	{						\
-				char bits1[64];	/* bits of message */	\
-				expand(buf, bits1);			\
-				if (encrypt(bits1, inverse))		\
-					err(1, "encrypt");		\
-				compress(bits1, buf);			\
-			}
-void	expand(Desbuf, char *);
-void	compress(Desbuf, char *);
-#endif
 
 /*
  * this does an error-checking write
@@ -1009,36 +990,6 @@ cfbauth(void)
 		(void)putchar(CHAR(msgbuf, 0));
 	}
 }
-
-#ifndef FASTWAY
-/*
- * change from 8 bits/Uchar to 1 bit/Uchar
- */
-void
-expand(Desbuf from, char *to)
-{
-	int i, j;			/* counters in for loop */
-
-	for (i = 0; i < 8; i++)
-		for (j = 0; j < 8; j++)
-			*to++ = (CHAR(from, i)>>(7-j))&01;
-}
-
-/*
- * change from 1 bit/char to 8 bits/Uchar
- */
-void
-compress(char *from, Desbuf to)
-{
-	int i, j;			/* counters in for loop */
-
-	for (i = 0; i < 8; i++) {
-	 	CHAR(to, i) = 0;
-		for (j = 0; j < 8; j++)
-			CHAR(to, i) = ((*from++)<<(7-j))|CHAR(to, i);
-	}
-}
-#endif
 
 extern char *__progname;
 /*
