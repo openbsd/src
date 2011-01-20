@@ -1,4 +1,4 @@
-/* $OpenBSD: pptpd.c,v 1.7 2010/09/27 00:12:16 yasuoka Exp $	*/
+/* $OpenBSD: pptpd.c,v 1.8 2011/01/20 23:12:33 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.7 2010/09/27 00:12:16 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.8 2011/01/20 23:12:33 jasper Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.7 2010/09/27 00:12:16 yasuoka Exp $
+ * $Id: pptpd.c,v 1.8 2011/01/20 23:12:33 jasper Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -182,7 +182,7 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 		plistener->bind_sin.sin_port = htons(PPTPD_DEFAULT_TCP_PORT);
 
 	/* When a raw socket binds both of an INADDR_ANY and specific IP
-	 * address sockets, packets will be recieved by those sockets
+	 * address sockets, packets will be received by those sockets
 	 * simultaneously. To avoid this duplicate receives, not
 	 * permit such kind of configuration */
 	inaddr_any = 0;
@@ -843,7 +843,7 @@ pptpd_gre_io_event(int fd, short evmask, void *ctx)
 	}
 }
 
-/* recieve GRE then route to pptp_call */
+/* receive GRE then route to pptp_call */
 static void
 pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
     int lpkt)

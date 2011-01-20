@@ -1,4 +1,4 @@
-/* $OpenBSD: eap.c,v 1.5 2010/09/22 11:48:38 yasuoka Exp $ */
+/* $OpenBSD: eap.c,v 1.6 2011/01/20 23:12:33 jasper Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  *	    RADIUS (Remote Authentication Dial In User Service) Support For
  *	    Extensible Authentication Protocol (EAP). B. Aboba, P. Calhoun.
  */
-/* $Id: eap.c,v 1.5 2010/09/22 11:48:38 yasuoka Exp $ */
+/* $Id: eap.c,v 1.6 2011/01/20 23:12:33 jasper Exp $ */
 
 /* FIXME: This must be rewritten. */
 
@@ -236,7 +236,7 @@ eap_input(eap *_this, unsigned char *pktp, int len){
 	if (code == EAP_FAILURE) {
 		/* discard */
 		eap_log(_this, LOG_NOTICE,
-		    "Recieved unexpected packet from peer (code = %d)", code);
+		    "Received unexpected packet from peer (code = %d)", code);
 		return;
 	}
 
@@ -292,11 +292,11 @@ eap_input(eap *_this, unsigned char *pktp, int len){
          * discard
          */
 	eap_log(_this, LOG_DEBUG,
-	    "recieve eap length = %d, "
+	    "receive eap length = %d, "
 	    "eap info: code = %d, id = %d, length = %d, type = %d, "
 	    "name length = %d",
 	    len, code, id, length, type, _this->name_len );
-        eap_log(_this, LOG_NOTICE, "Recieved unexpected eap packet from peer");
+        eap_log(_this, LOG_NOTICE, "Received unexpected eap packet from peer");
 	return;
 }
 

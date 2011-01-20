@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_call.c,v 1.6 2010/09/24 14:50:30 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_call.c,v 1.7 2011/01/20 23:12:33 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.6 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.7 2011/01/20 23:12:33 jasper Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,7 +155,7 @@ l2tp_call_disconnect(l2tp_call *_this, int result_code, int error_code,
  * control packet
  */
 
-/* call it when control packet is recieved */
+/* call it when control packet is received */
 int
 l2tp_call_recv_packet(l2tp_ctrl *ctrl, l2tp_call *_this, int mestype,
     u_char *pkt, int pktlen)

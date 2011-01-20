@@ -1,4 +1,4 @@
-/* $OpenBSD: pptp.h,v 1.4 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: pptp.h,v 1.5 2011/01/20 23:12:33 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -300,7 +300,7 @@ typedef struct _pptp_call {
 	pptp_ctrl	*ctrl; /* parent */
 	unsigned	id;
 
-	int		ifidx; /* recieve interface index */
+	int		ifidx; /* receive interface index */
 
 	int		state;
 
@@ -310,8 +310,8 @@ typedef struct _pptp_call {
 	uint32_t	snd_una;	/* next ack notification */
 	uint32_t	snd_nxt;	/* next transmit sequence # */
 
-	uint32_t	rcv_nxt;	/* recieved sequence # */
-	uint32_t	rcv_acked;	/* latest acked recieved sequence # */
+	uint32_t	rcv_nxt;	/* received sequence # */
+	uint32_t	rcv_acked;	/* latest acked received sequence # */
 
 	int		winsz;		/* current window size */
 	int		maxwinsz;	/* maximum window size */

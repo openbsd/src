@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_ctrl.c,v 1.5 2010/09/24 14:50:30 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_ctrl.c,v 1.6 2011/01/20 23:12:33 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.5 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.6 2011/01/20 23:12:33 jasper Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -535,7 +535,7 @@ l2tp_ctrl_timeout(int fd, short evtype, void *ctx)
 		    curr_time - _this->last_snd_ctrl >=
 			    L2TP_CTRL_WAIT_CALL_TIMEOUT) {
 			if (_this->ncalls == 0)
-				/* fail to recieve first call */
+				/* fail to receive first call */
 				l2tp_ctrl_log(_this, LOG_WARNING,
 				    "timeout waiting call");
 			l2tp_ctrl_stop(_this,
@@ -706,7 +706,7 @@ l2tp_ctrl_reset_timeout(l2tp_ctrl *_this)
 /*
  * protocols / send and receive
  */
-/* Recieve packet */
+/* Receive packet */
 void
 l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
     struct sockaddr *sock, void *nat_t_ctx, u_char *pkt, int pktlen)
@@ -1037,7 +1037,7 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 			/*
 			 * RFC specifies that sent of StopCCN in the state,
 			 * However as this implementation only support Passive
-			 * open, this packet will not recieved.
+			 * open, this packet will not received.
 			 */
 			/* FALLTHROUGH */
 		case L2TP_AVP_MESSAGE_TYPE_SCCCN:
