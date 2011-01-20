@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.126 2011/01/19 11:39:57 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.127 2011/01/20 15:03:03 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -97,8 +97,8 @@ void			 pf_remove_fragment(struct pf_fragment *);
 void			 pf_flush_fragments(void);
 void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct ip *, struct pf_frag_tree *);
-struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment **,
-			    struct pf_frent *, int);
+int			 pf_reassemble(struct mbuf **, struct pf_fragment **,
+			    struct pf_frent *, int, u_short *);
 
 /* Globals */
 struct pool		 pf_frent_pl, pf_frag_pl;
@@ -237,9 +237,9 @@ pf_remove_fragment(struct pf_fragment *frag)
 }
 
 #define FR_IP_OFF(fr)	((ntohs((fr)->fr_ip->ip_off) & IP_OFFMASK) << 3)
-struct mbuf *
+int
 pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
-    struct pf_frent *frent, int mff)
+    struct pf_frent *frent, int mff, u_short *reason)
 {
 	struct mbuf	*m = *m0, *m2;
 	struct pf_frent	*frea, *next;
@@ -260,8 +260,10 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		if (*frag == NULL) {
 			pf_flush_fragments();
 			*frag = pool_get(&pf_frag_pl, PR_NOWAIT);
-			if (*frag == NULL)
+			if (*frag == NULL) {
+				REASON_SET(reason, PFRES_MEMORY);
 				goto drop_fragment;
+			}
 		}
 
 		(*frag)->fr_flags = 0;
@@ -302,7 +304,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		precut = FR_IP_OFF(frep) + ntohs(frep->fr_ip->ip_len) -
 		    frep->fr_ip->ip_hl * 4 - off;
 		if (precut >= ip_len)
-			goto drop_fragment;
+			goto bad_fragment;
 		m_adj(frent->fr_m, precut);
 		DPFPRINTF(LOG_NOTICE, "overlap -%d", precut);
 		/* Enforce 8 byte boundaries */
@@ -351,9 +353,12 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 	else
 		LIST_INSERT_AFTER(frep, frent, fr_next);
 
+	/* The mbuf is part of the fragment entry, no direct free or access */
+	m = *m0 = NULL;
+
 	/* Check if we are completely reassembled */
 	if (!((*frag)->fr_flags & PFFRAG_SEENLAST))
-		return (NULL);
+		return (PF_PASS);
 
 	/* Check if we have all the data */
 	off = 0;
@@ -368,22 +373,16 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 			    "missing fragment at %d, next %d, max %d",
 			    off, next == NULL ? -1 : FR_IP_OFF(next),
 			    (*frag)->fr_max);
-			return (NULL);
+			return (PF_PASS);
 		}
 	}
 	DPFPRINTF(LOG_NOTICE, "%d < %d?", off, (*frag)->fr_max);
 	if (off < (*frag)->fr_max)
-		return (NULL);
+		return (PF_PASS);
 
 	/* We have all the data */
 	frent = LIST_FIRST(&(*frag)->fr_queue);
 	KASSERT(frent != NULL);
-	if ((frent->fr_ip->ip_hl << 2) + off > IP_MAXPACKET) {
-		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", off);
-		pf_free_fragment(*frag);
-		*frag = NULL;
-		return (NULL);
-	}
 	next = LIST_NEXT(frent, fr_next);
 
 	/* Magic from ip_input */
@@ -409,6 +408,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 	/* Remove from fragment queue */
 	pf_remove_fragment(*frag);
 	*frag = NULL;
+	*m0 = m;
 
 	hlen = ip->ip_hl << 2;
 	ip->ip_len = htons(off + hlen);
@@ -424,15 +424,25 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		m->m_pkthdr.len = plen;
 	}
 
-	DPFPRINTF(LOG_NOTICE, "complete: %p(%d)", m, ntohs(ip->ip_len));
-	return (m);
+	if (hlen + off > IP_MAXPACKET) {
+		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", off);
+		ip->ip_len = 0;
+		REASON_SET(reason, PFRES_SHORT);
+		/* PF_DROP requires a valid mbuf *m0 in pf_test() */
+		return (PF_DROP);
+	}
 
+	DPFPRINTF(LOG_NOTICE, "complete: %p(%d)", m, ntohs(ip->ip_len));
+	return (PF_PASS);
+
+ bad_fragment:
+	REASON_SET(reason, PFRES_FRAG);
  drop_fragment:
 	/* Oops - fail safe - drop packet */
 	pool_put(&pf_frent_pl, frent);
 	pf_nfrents--;
-	m_freem(m);
-	return (NULL);
+	/* PF_DROP requires a valid mbuf *m0 in pf_test(), will free later */
+	return (PF_DROP);
 }
 
 int
@@ -512,11 +522,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	frent->fr_ip = h;
 	frent->fr_m = m;
 
-	/* Might return a completely reassembled mbuf, or NULL */
+	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
 	DPFPRINTF(LOG_NOTICE,
-	    "reass frag %d @ %d-%d\n", h->ip_id, fragoff, max);
-	*m0 = m = pf_reassemble(m0, &frag, frent, mff);
-
+	    "reass frag %d @ %d-%d", h->ip_id, fragoff, max);
+	if (pf_reassemble(m0, &frag, frent, mff, reason) != PF_PASS)
+		return (PF_DROP);
+	m = *m0;
 	if (m == NULL)
 		return (PF_PASS);  /* packet has been reassembled, no error */
 
