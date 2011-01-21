@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.31 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.32 2011/01/21 16:51:38 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -384,7 +384,6 @@ struct iked_sa {
 	struct iked_proposals		 sa_proposals;	/* SA proposals */
 	struct iked_childsas		 sa_childsas;	/* IPSec Child SAs */
 	struct iked_flows		 sa_flows;	/* IPSec flows */
-	u_int8_t			 sa_flowhash[20]; /* SHA1 */
 
 	RB_ENTRY(iked_sa)		 sa_peer_entry;
 	RB_ENTRY(iked_sa)		 sa_entry;

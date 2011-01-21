@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.38 2011/01/21 13:19:35 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.39 2011/01/21 16:51:38 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -92,7 +92,9 @@ ssize_t	 ikev2_add_proposals(struct iked *, struct iked_sa *, struct ibuf *,
 ssize_t	 ikev2_add_cp(struct iked *, struct iked_sa *, struct ibuf *);
 ssize_t	 ikev2_add_transform(struct ibuf *,
 	    u_int8_t, u_int8_t, u_int16_t, u_int16_t);
-ssize_t	 ikev2_add_ts(struct ibuf *, u_int, struct iked_sa *);
+ssize_t	 ikev2_add_ts(struct ibuf *, struct ikev2_payload **, ssize_t,
+	    struct iked_sa *);
+ssize_t	 ikev2_add_ts_payload(struct ibuf *, u_int, struct iked_sa *);
 int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
 
@@ -895,22 +897,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 	    IKEV2_SAPROTO_ESP, sa->sa_hdr.sh_initiator, 0)) == -1)
 		goto done;
 
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_TSi) == -1)
-		goto done;
-
-	/* TSi payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSi, sa)) == -1)
-		goto done;
-
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_TSr) == -1)
-		goto done;
-
-	/* TSr payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
+	if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
@@ -1072,7 +1059,7 @@ ikev2_add_payload(struct ibuf *buf)
 }
 
 ssize_t
-ikev2_add_ts(struct ibuf *buf, u_int type, struct iked_sa *sa)
+ikev2_add_ts_payload(struct ibuf *buf, u_int type, struct iked_sa *sa)
 {
 	struct iked_policy	*pol = sa->sa_policy;
 	struct ikev2_tsp	*tsp;
@@ -1094,11 +1081,17 @@ ikev2_add_ts(struct ibuf *buf, u_int type, struct iked_sa *sa)
 		if ((ts = ibuf_advance(buf, sizeof(*ts))) == NULL)
 			return (-1);
 
-		if (type == IKEV2_PAYLOAD_TSi)
-			addr = &flow->flow_src;
-		else if (type == IKEV2_PAYLOAD_TSr)
-			addr = &flow->flow_dst;
-		else
+		if (type == IKEV2_PAYLOAD_TSi) {
+			if (sa->sa_hdr.sh_initiator)
+				addr = &flow->flow_src;
+			else
+				addr = &flow->flow_dst;
+		} else if (type == IKEV2_PAYLOAD_TSr) {
+			if (sa->sa_hdr.sh_initiator)
+				addr = &flow->flow_dst;
+			else
+				addr = &flow->flow_src;
+		} else
 			return (-1);
 
 		ts->ts_protoid = flow->flow_ipproto;
@@ -1162,6 +1155,31 @@ ikev2_add_ts(struct ibuf *buf, u_int type, struct iked_sa *sa)
 
 		len += betoh16(ts->ts_length);
 	}
+
+	return (len);
+}
+
+ssize_t
+ikev2_add_ts(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
+    struct iked_sa *sa)
+{
+	if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_TSi) == -1)
+		return (-1);
+
+	/* TSi payload */
+	if ((*pld = ikev2_add_payload(e)) == NULL)
+		return (-1);
+	if ((len = ikev2_add_ts_payload(e, IKEV2_PAYLOAD_TSi, sa)) == -1)
+		return (-1);
+
+	if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_TSr) == -1)
+		return (-1);
+
+	/* TSr payload */
+	if ((*pld = ikev2_add_payload(e)) == NULL)
+		return (-1);
+	if ((len = ikev2_add_ts_payload(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
+		return (-1);
 
 	return (len);
 }
@@ -1867,22 +1885,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	    IKEV2_SAPROTO_ESP, sa->sa_hdr.sh_initiator, 0)) == -1)
 		goto done;
 
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_TSi) == -1)
-		goto done;
-
-	/* TSi payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSi, sa)) == -1)
-		goto done;
-
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_TSr) == -1)
-		goto done;
-
-	/* TSr payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
+	if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
 		goto done;
 
  send:
@@ -2074,24 +2077,7 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 		goto done;
 	len = ibuf_size(nonce);
 
-	if (ikev2_next_payload(pld, len,
-	    initiator ? IKEV2_PAYLOAD_TSi : IKEV2_PAYLOAD_TSr) == -1)
-		goto done;
-
-	/* TSi payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSi, sa)) == -1)
-		goto done;
-
-	if (ikev2_next_payload(pld, len,
-	    initiator ? IKEV2_PAYLOAD_TSr : IKEV2_PAYLOAD_TSi) == -1)
-		goto done;
-
-	/* TSr payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
+	if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
 		goto done;
 
 	if (rekey) {
@@ -2422,24 +2408,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto done;
 		len = sizeof(*ke) + dh_getlen(group);
 	} else {
-		if (ikev2_next_payload(pld, len,
-		    initiator ? IKEV2_PAYLOAD_TSr : IKEV2_PAYLOAD_TSi) == -1)
-			goto done;
-
-		/* TSi payload */
-		if ((pld = ikev2_add_payload(e)) == NULL)
-			goto done;
-		if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSi, sa)) == -1)
-			goto done;
-
-		if (ikev2_next_payload(pld, len,
-		    initiator ? IKEV2_PAYLOAD_TSi : IKEV2_PAYLOAD_TSr) == -1)
-			goto done;
-
-		/* TSr payload */
-		if ((pld = ikev2_add_payload(e)) == NULL)
-			goto done;
-		if ((len = ikev2_add_ts(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
+		if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
 			goto done;
 	}
 
@@ -2450,6 +2419,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	    IKEV2_EXCHANGE_CREATE_CHILD_SA, IKEV2_PAYLOAD_SA, 1);
 
 	if (ret == 0 && protoid == IKEV2_SAPROTO_IKE) {
+		log_debug("%s: activating new IKE SA", __func__);
 		sa_state(env, sa, IKEV2_STATE_CLOSED);
 		sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
 	}
@@ -3347,10 +3317,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 	struct iked_flow	*flow, *saflow, *flowa, *flowb;
 	struct iked_id		*peerid, *localid;
 	struct ibuf		*keymat = NULL, *seed = NULL;
-	EVP_MD_CTX		 ctx;
-	u_int8_t		 md[SHA_DIGEST_LENGTH];
 	u_int32_t		 spi = 0;
-	u_int			 i, mdlen;
+	u_int			 i;
 	size_t			 ilen = 0;
 	int			 skip, ret = -1;
 
@@ -3407,29 +3375,6 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 		goto done;
 	}
 
-	/*
-	 * Generate a hash of the negotiated flows to detect a possible
-	 * IKEv2 traffic selector re-negotiation.
-	 */
-	EVP_DigestInit(&ctx, EVP_sha1());
-	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
-		if (ikev2_valid_proposal(prop, NULL, NULL) != 0)
-			continue;
-
-		TAILQ_FOREACH(flow, &sa->sa_policy->pol_flows, flow_entry) {
-			/* Use the inbound flow to generate the hash */
-			i = IPSP_DIRECTION_IN;
-			EVP_DigestUpdate(&ctx, &i, sizeof(i));
-			EVP_DigestUpdate(&ctx, &flow->flow_src,
-			    sizeof(flow->flow_src));
-			EVP_DigestUpdate(&ctx, &flow->flow_dst,
-			    sizeof(flow->flow_dst));
-		}
-	}
-	mdlen = sizeof(sa->sa_flowhash);
-	EVP_DigestFinal(&ctx, md, &mdlen);
-	memcpy(&sa->sa_flowhash, &md, sizeof(md));
-
 	/* Create the new flows */
 	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
 		if (ikev2_valid_proposal(prop, NULL, NULL) != 0)
@@ -3454,8 +3399,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 			}
 
 			memcpy(flowa, flow, sizeof(*flow));
-			flowa->flow_dir = sa->sa_hdr.sh_initiator ?
-			    IPSP_DIRECTION_OUT : IPSP_DIRECTION_IN;
+			flowa->flow_dir = IPSP_DIRECTION_OUT;
 			flowa->flow_saproto = prop->prop_protoid;
 			flowa->flow_srcid = localid;
 			flowa->flow_dstid = peerid;
@@ -3471,8 +3415,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 
 			memcpy(flowb, flowa, sizeof(*flow));
 
-			flowb->flow_dir = sa->sa_hdr.sh_initiator ?
-			    IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
+			flowb->flow_dir = IPSP_DIRECTION_IN;
 			memcpy(&flowb->flow_src, &flow->flow_dst,
 			    sizeof(flow->flow_dst));
 			memcpy(&flowb->flow_dst, &flow->flow_src,
@@ -3881,7 +3824,9 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
 		    IKEV2_EXCHANGE_INFORMATIONAL, 0);
 
+		log_debug("%s: reinitiate IKE SA", __func__);
 		sa_state(env, sa, IKEV2_STATE_CLOSED);
+
 		sa_free(env, sa);
 		timer_register_initiator(env, ikev2_init_ike_sa);
 	} else {
