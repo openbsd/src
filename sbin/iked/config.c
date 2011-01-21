@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2011/01/12 14:35:45 mikeb Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2011/01/21 11:37:02 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -543,21 +543,17 @@ config_setpfkey(struct iked *env, enum iked_procid id)
 {
 	int	 s;
 
-	if ((s = pfkey_init(env)) == -1)
+	if ((s = pfkey_socket()) == -1)
 		return (-1);
 	imsg_compose_proc(env, id, IMSG_PFKEY_SOCKET, s, NULL, 0);
 	return (0);
 }
 
 int
-config_getpfkey(struct iked *env, struct imsg *imsg,
-    void (*dispatch)(int, short, void *))
+config_getpfkey(struct iked *env, struct imsg *imsg)
 {
 	log_debug("%s: received pfkey fd %d", __func__, imsg->fd);
-	env->sc_pfkey = imsg->fd;
-	event_set(&env->sc_pfkeyev, env->sc_pfkey,
-	    EV_READ|EV_PERSIST, dispatch, env);
-	event_add(&env->sc_pfkeyev, NULL);
+	pfkey_init(env, imsg->fd);
 	return (0);
 }
 

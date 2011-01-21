@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.29 2011/01/17 18:49:35 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.30 2011/01/21 11:37:02 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -529,8 +529,7 @@ int	 config_setsocket(struct iked *, struct sockaddr_storage *, in_port_t,
 int	 config_getsocket(struct iked *env, struct imsg *,
 	    void (*cb)(int, short, void *));
 int	 config_setpfkey(struct iked *, enum iked_procid);
-int	 config_getpfkey(struct iked *, struct imsg *,
-	    void (*)(int, short, void *));
+int	 config_getpfkey(struct iked *, struct imsg *);
 int	 config_setuser(struct iked *, struct iked_user *, enum iked_procid);
 int	 config_getuser(struct iked *, struct imsg *);
 
@@ -692,8 +691,8 @@ int	 pfkey_sa_init(int, struct iked_childsa *, u_int32_t *);
 int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
 int	 pfkey_sa_delete(int, struct iked_childsa *);
 int	 pfkey_flush(int);
-int	 pfkey_init(struct iked *);
-void	 pfkey_dispatch(int, short, void *);
+int	 pfkey_socket(void);
+void	 pfkey_init(struct iked *, int fd);
 
 /* ca.c */
 pid_t	 caproc(struct iked *, struct iked_proc *);

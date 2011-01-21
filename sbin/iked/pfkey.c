@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.12 2011/01/17 18:49:35 mikeb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.13 2011/01/21 11:37:02 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ int	pfkey_sagroup(int, u_int8_t, u_int8_t,
 int	pfkey_write(int, struct sadb_msg *, struct iovec *, int,
 	    u_int8_t **, ssize_t *);
 int	pfkey_reply(int, u_int8_t **, ssize_t *);
+void	pfkey_dispatch(int, short, void *);
 
 struct sadb_ident *
 	pfkey_id2ident(struct iked_id *, u_int);
@@ -1197,16 +1198,32 @@ pfkey_id2ident(struct iked_id *id, u_int exttype)
 }
 
 int
-pfkey_init(struct iked *env)
+pfkey_socket(void)
+{
+	int	 		fd;
+
+	if (iked_process != PROC_PARENT)
+		fatal("pfkey_socket: called from unprivileged process");
+
+	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1)
+		fatal("pfkey_socket: failed to open PF_KEY socket");
+
+	pfkey_flush(fd);
+
+	return (fd);
+}
+
+void
+pfkey_init(struct iked *env, int fd)
 {
 	struct sadb_msg		smsg;
 	struct iovec		iov;
-	int	 		fd;
 
-	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1)
-		fatal("pfkey_init: failed to open PF_KEY socket");
-
-	pfkey_flush(fd);
+	/* Register the pfkey socket event handler */
+	env->sc_pfkey = fd;
+	event_set(&env->sc_pfkeyev, env->sc_pfkey,
+	    EV_READ|EV_PERSIST, pfkey_dispatch, env);
+	event_add(&env->sc_pfkeyev, NULL);
 
 	/* Register it to get ESP and AH acquires from the kernel */
 	bzero(&smsg, sizeof(smsg));
@@ -1241,8 +1258,6 @@ pfkey_init(struct iked *env)
 	pfkey_timer_tv.tv_sec = 1;
 	pfkey_timer_tv.tv_usec = 0;
 	evtimer_set(&pfkey_timer_ev, pfkey_timer_cb, env);
-
-	return (fd);
 }
 
 void *

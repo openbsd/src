@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.34 2011/01/17 18:57:42 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.35 2011/01/21 11:37:02 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ ikev2_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
 	case IMSG_PFKEY_SOCKET:
-		return (config_getpfkey(env, imsg, pfkey_dispatch));
+		return (config_getpfkey(env, imsg));
 	case IMSG_CFG_POLICY:
 		return (config_getpolicy(env, imsg));
 	case IMSG_CFG_USER:
