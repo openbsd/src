@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.30 2010/10/07 12:34:15 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.31 2011/01/21 17:42:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,9 @@ extern int	mpls_inkloop;
 #endif
 
 int	mpls_ip_adjttl(struct mbuf *, u_int8_t);
+#ifdef INET6
 int	mpls_ip6_adjttl(struct mbuf *, u_int8_t);
+#endif
 
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
 
@@ -171,6 +173,7 @@ do_v4:
 					goto done;
 				}
 				continue;
+#ifdef INET6
 			case MPLS_LABEL_IPV6NULL:
 				if (hasbos) {
 do_v6:
@@ -183,13 +186,16 @@ do_v6:
 					goto done;
 				}
 				continue;
+#endif	/* INET6 */
 			case MPLS_LABEL_IMPLNULL:
 				if (hasbos) {
 					switch (*mtod(m, u_char *) >> 4) {
 					case IPVERSION:
 						goto do_v4;
+#ifdef INET6
 					case IPV6_VERSION >> 4:
 						goto do_v6;
+#endif
 					default:
 						m_freem(m);
 						goto done;
@@ -248,6 +254,7 @@ do_v6:
 				schednetisr(NETISR_IP);
 				splx(s);
 				break;
+#ifdef INET6
 			case AF_INET6:
 				if (mpls_ip6_adjttl(m, ttl))
 					break;
@@ -256,6 +263,7 @@ do_v6:
 				schednetisr(NETISR_IPV6);
 				splx(s);
 				break;
+#endif
 			default:
 				m_freem(m);
 			}
@@ -284,10 +292,12 @@ do_v6:
 				if (mpls_ip_adjttl(m, ttl))
 					goto done;
 				break;
+#ifdef INET6
 			case AF_INET6:
 				if (mpls_ip6_adjttl(m, ttl))
 					goto done;
 				break;
+#endif
 			default:
 				m_freem(m);
 				goto done;
@@ -385,6 +395,7 @@ mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 	return 0;
 }
 
+#ifdef INET6
 int
 mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 {
@@ -402,6 +413,7 @@ mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 	}
 	return 0;
 }
+#endif	/* INET6 */
 
 struct mbuf *
 mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
@@ -486,7 +498,9 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 		m->m_len += sizeof(*ip);
 
 		break;
+#ifdef INET6
 	case IPV6_VERSION >> 4:
+#endif
 	default:
 		m_freem(m);
 		return (NULL);

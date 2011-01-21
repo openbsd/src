@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.12 2010/09/08 08:00:56 claudio Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.13 2011/01/21 17:42:57 mikeb Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -195,7 +195,9 @@ mpls_getttl(struct mbuf *m, sa_family_t af)
 {
 	struct shim_hdr *shim;
 	struct ip *ip;
+#ifdef INET6
 	struct ip6_hdr *ip6hdr;
+#endif
 	u_int8_t ttl = mpls_defttl;
 
 	/* If the AF is MPLS then inherit the TTL from the present label. */
@@ -214,6 +216,7 @@ mpls_getttl(struct mbuf *m, sa_family_t af)
 		ip = mtod(m, struct ip *);
 		ttl = ip->ip_ttl;
 		break;
+#ifdef INET6
 	case IPV6_VERSION >> 4:
 		if (!mpls_mapttl_ip6)
 			break;
@@ -222,6 +225,7 @@ mpls_getttl(struct mbuf *m, sa_family_t af)
 		ip6hdr = mtod(m, struct ip6_hdr *);
 		ttl = ip6hdr->ip6_hlim;
 		break;
+#endif
 	default:
 		break;
 	}
