@@ -1,6 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2010/12/28 20:07:47 jasper Exp $
-
-.include <bsd.own.mk> # for KERBEROS5
+# $OpenBSD: Makefile,v 1.17 2011/01/21 09:24:45 jasper Exp $
 
 SUBDIR=crypto ssl man
 PC_FILES=openssl.pc libssl.pc libcrypto.pc
@@ -16,11 +14,7 @@ distribution:
 	   ${.CURDIR}/x509v3.cnf ${DESTDIR}/etc/ssl/x509v3.cnf
 
 beforeinstall:
-.if (${KERBEROS5:L} == "yes")
-	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR} -k
-.else
 	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
-.endif
 	[ -d ${DESTDIR}/usr/lib/pkgconfig/ ] || \
 		${INSTALL} -o root -g ${SHAREGRP} -d ${DESTDIR}/usr/lib/pkgconfig/
 .for p in ${PC_FILES}

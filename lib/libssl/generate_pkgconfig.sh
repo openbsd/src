@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.2 2011/01/03 09:32:01 jasper Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.3 2011/01/21 09:24:46 jasper Exp $
 #
 # Generate pkg-config files for OpenSSL.
 
@@ -9,16 +9,12 @@ usage() {
 	exit 1
 }
 
-enable_krb5=false
 curdir=
 objdir=
 while getopts "c:ko:" flag; do
 	case "$flag" in
 		c)
 			curdir=$OPTARG
-			;;
-		k)
-			enable_krb5=true
 			;;
 		o)
 			objdir=$OPTARG
@@ -54,12 +50,9 @@ Name: OpenSSL-libcrypto
 Description: OpenSSL cryptography library
 Version: ${ssl_version}
 Requires: 
+Libs: -lcrypto
+Cflags: 
 __EOF__
-echo -n 'Libs: -L${libdir} -lcrypto ' >> ${pc_file}
-echo '-lz' >> ${pc_file}
-echo -n 'Cflags: -I${includedir} ' >> ${pc_file}
-${enable_krb5} && echo -n '-I/usr/include/kerberosV' >> ${pc_file}
-echo '' >> ${pc_file}
 
 
 pc_file="${objdir}/libssl.pc"
@@ -73,12 +66,9 @@ Name: OpenSSL
 Description: Secure Sockets Layer and cryptography libraries
 Version: ${ssl_version}
 Requires: 
+Libs: -lssl -lcrypto
+Cflags: 
 __EOF__
-echo -n 'Libs: -L${libdir} -lssl -lcrypto ' >> ${pc_file}
-echo '-lz' >> ${pc_file}
-echo -n 'Cflags: -I${includedir} ' >> ${pc_file}
-${enable_krb5} && echo -n '-I/usr/include/kerberosV' >> ${pc_file}
-echo '' >> ${pc_file}
 
 
 pc_file="${objdir}/openssl.pc"
@@ -92,9 +82,6 @@ Name: OpenSSL
 Description: Secure Sockets Layer and cryptography libraries and tools
 Version: ${ssl_version}
 Requires: 
+Libs: -lssl -lcrypto
+Cflags: 
 __EOF__
-echo -n 'Libs: -L${libdir} -lssl -lcrypto ' >> ${pc_file}
-echo '-lz' >> ${pc_file}
-echo -n 'Cflags: -I${includedir} ' >> ${pc_file}
-${enable_krb5} && echo -n '-I/usr/include/kerberosV' >> ${pc_file}
-echo '' >> ${pc_file}
