@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.32 2011/01/21 16:51:38 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.33 2011/01/21 17:01:33 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -61,6 +61,11 @@ struct imsgev {
 		fatalx("bad length imsg received");		\
 } while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+
+#define IKED_ADDR_EQ(_a, _b)						\
+	((_a)->addr_mask == (_b)->addr_mask &&				\
+	sockaddr_cmp((struct sockaddr *)&(_a)->addr,			\
+	(struct sockaddr *)&(_b)->addr, (_a)->addr_mask) == 0)
 
 #define IKED_ADDR_NEQ(_a, _b)						\
 	((_a)->addr_mask != (_b)->addr_mask ||				\

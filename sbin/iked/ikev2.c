@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.39 2011/01/21 16:51:38 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.40 2011/01/21 17:01:33 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3383,10 +3383,10 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 		TAILQ_FOREACH(flow, &sa->sa_policy->pol_flows, flow_entry) {
 			skip = 0;
 			TAILQ_FOREACH(saflow, &sa->sa_flows, flow_entry) {
-				if (memcmp(&saflow->flow_src, &flow->flow_src,
-				    sizeof(struct iked_addr)) == 0 &&
-				    memcmp(&saflow->flow_dst, &flow->flow_dst,
-				    sizeof(struct iked_addr)) == 0 &&
+				if (IKED_ADDR_EQ(&saflow->flow_src,
+				    &flow->flow_src) &&
+				    IKED_ADDR_EQ(&saflow->flow_dst,
+				    &flow->flow_dst) &&
 				    saflow->flow_saproto == prop->prop_protoid)
 					skip = 1;
 			}
