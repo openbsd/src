@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.83 2011/01/21 18:58:55 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.84 2011/01/21 19:10:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,7 +6,6 @@
  *	POSIX fileio.c
  */
 #include "def.h"
-
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.75 2011/01/18 17:35:42 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.76 2011/01/21 19:10:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,11 +6,11 @@
  *		Buffer handling.
  */
 
-#include <libgen.h>
-#include <stdarg.h>
-
 #include "def.h"
 #include "kbd.h"		/* needed for modes */
+
+#include <libgen.h>
+#include <stdarg.h>
 
 static struct buffer  *makelist(void);
 static struct buffer *bnew(const char *);

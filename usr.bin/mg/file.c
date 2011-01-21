@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.73 2011/01/18 16:29:37 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.74 2011/01/21 19:10:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,9 +6,9 @@
  *	File commands.
  */
 
-#include <libgen.h>
-
 #include "def.h"
+
+#include <libgen.h>
 
 static char *xdirname(const char *);
 
