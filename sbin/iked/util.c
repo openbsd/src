@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2011/01/17 17:16:43 mikeb Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2011/01/21 11:56:00 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -225,9 +225,11 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 	struct sockaddr_in6	*a6, *b6;
 	u_int32_t		 av[4], bv[4], mv[4];
 
-	if (b->sa_family != AF_UNSPEC && (a->sa_family > b->sa_family))
+	if (a->sa_family == AF_UNSPEC || b->sa_family == AF_UNSPEC)
+		return (0);
+	else if (a->sa_family > b->sa_family)
 		return (1);
-	if (b->sa_family != AF_UNSPEC && (a->sa_family < b->sa_family))
+	else if (a->sa_family < b->sa_family)
 		return (-1);
 
 	if (prefixlen == -1)

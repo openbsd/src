@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.30 2011/01/21 11:37:02 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.31 2011/01/21 11:56:00 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -61,6 +61,11 @@ struct imsgev {
 		fatalx("bad length imsg received");		\
 } while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+
+#define IKED_ADDR_NEQ(_a, _b)						\
+	((_a)->addr_mask != (_b)->addr_mask ||				\
+	sockaddr_cmp((struct sockaddr *)&(_a)->addr,			\
+	(struct sockaddr *)&(_b)->addr, (_a)->addr_mask) != 0)
 
 /* initially control.h */
 struct control_sock {
@@ -205,27 +210,33 @@ struct iked_policy {
 	u_int				 pol_id;
 	char				 pol_name[IKED_ID_SIZE];
 
+#define IKED_SKIP_FLAGS			 0
+#define IKED_SKIP_AF			 1
+#define IKED_SKIP_PROTO			 2
+#define IKED_SKIP_SRC_ADDR		 3
+#define IKED_SKIP_DST_ADDR		 4
+#define IKED_SKIP_COUNT			 5
+	struct iked_policy		*pol_skip[IKED_SKIP_COUNT];
+
 	u_int8_t			 pol_flags;
 #define IKED_POLICY_PASSIVE		 0x00
 #define IKED_POLICY_DEFAULT		 0x01
 #define IKED_POLICY_ACTIVE		 0x02
 #define IKED_POLICY_REFCNT		 0x04
+#define IKED_POLICY_QUICK		 0x08
+#define IKED_POLICY_SKIP		 0x10
 
 	int				 pol_refcnt;
 
+	int				 pol_af;
 	u_int8_t			 pol_saproto;
 	u_int				 pol_ipproto;
 
-	struct sockaddr_storage		 pol_peer;
-	u_int8_t			 pol_peermask;
-	int				 pol_peernet;
+	struct iked_addr		 pol_peer;
 	struct group			*pol_peerdh;
-
-	struct sockaddr_storage		 pol_local;
-	u_int8_t			 pol_localmask;
-	int				 pol_localnet;
-
 	struct iked_static_id		 pol_peerid;
+
+	struct iked_addr		 pol_local;
 	struct iked_static_id		 pol_localid;
 
 	struct iked_auth		 pol_auth;
@@ -246,9 +257,9 @@ struct iked_policy {
 
 	struct iked_sapeers		 pol_sapeers;
 
-	RB_ENTRY(iked_policy)		 pol_entry;
+	TAILQ_ENTRY(iked_policy)	 pol_entry;
 };
-RB_HEAD(iked_policies, iked_policy);
+TAILQ_HEAD(iked_policies, iked_policy);
 
 struct iked_hash {
 	u_int8_t	 hash_type;	/* PRF or INTEGR */
@@ -532,10 +543,15 @@ int	 config_setpfkey(struct iked *, enum iked_procid);
 int	 config_getpfkey(struct iked *, struct imsg *);
 int	 config_setuser(struct iked *, struct iked_user *, enum iked_procid);
 int	 config_getuser(struct iked *, struct imsg *);
+int	 config_setcompile(struct iked *, enum iked_procid);
+int	 config_getcompile(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);
 int	 policy_lookup(struct iked *, struct iked_message *);
+struct iked_policy *
+	 policy_test(struct iked *, struct iked_policy *);
+void	 policy_calc_skip_steps(struct iked_policies *);
 void	 policy_ref(struct iked *, struct iked_policy *);
 void	 policy_unref(struct iked *, struct iked_policy *);
 void	 sa_state(struct iked *, struct iked_sa *, int);
@@ -557,7 +573,6 @@ struct iked_sa *
 	 sa_peer_lookup(struct iked_policy *, struct sockaddr_storage *);
 struct iked_user *
 	 user_lookup(struct iked *, const char *);
-RB_PROTOTYPE(iked_policies, iked_policy, pol_entry, policy_cmp);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_PROTOTYPE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
 RB_PROTOTYPE(iked_users, iked_user, user_entry, user_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.8 2011/01/17 18:49:35 mikeb Exp $	*/
+/*	$OpenBSD: types.h,v 1.9 2011/01/21 11:56:00 reyk Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ enum imsg_type {
 	IMSG_CTL_DECOUPLE,
 	IMSG_CTL_ACTIVE,
 	IMSG_CTL_PASSIVE,
+	IMSG_COMPILE,
 	IMSG_UDP_SOCKET,
 	IMSG_PFKEY_SOCKET,
 	IMSG_IKE_MESSAGE,

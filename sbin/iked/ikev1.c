@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.5 2010/06/24 20:15:30 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.6 2011/01/21 11:56:00 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -80,6 +80,8 @@ ikev1_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 		return (0);
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev1_msg_cb));
+	case IMSG_COMPILE:
+		return (0);
 	default:
 		break;
 	}

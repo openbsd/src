@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.35 2011/01/21 11:37:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.36 2011/01/21 11:56:00 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -136,6 +136,8 @@ ikev2_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 		return (config_getpolicy(env, imsg));
 	case IMSG_CFG_USER:
 		return (config_getuser(env, imsg));
+	case IMSG_COMPILE:
+		return (config_getcompile(env, imsg));
 	default:
 		break;
 	}
@@ -637,7 +639,7 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 	in_port_t			 port;
 
 	if ((sock = ikev2_msg_getsocket(env,
-	    pol->pol_peer.ss_family)) == NULL)
+	    pol->pol_peer.addr_af)) == NULL)
 		return (-1);
 
 	/* Create a new initiator SA */
@@ -651,8 +653,8 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 		goto done;
 
 	if ((buf = ikev2_msg_init(env, &req,
-	    &pol->pol_peer, pol->pol_peer.ss_len,
-	    &pol->pol_local, pol->pol_local.ss_len, 0)) == NULL)
+	    &pol->pol_peer.addr, pol->pol_peer.addr.ss_len,
+	    &pol->pol_local.addr, pol->pol_local.addr.ss_len, 0)) == NULL)
 		goto done;
 
 	/* Inherit the port from the 1st send socket */
