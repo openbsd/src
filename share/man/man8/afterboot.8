@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.128 2010/10/18 14:42:16 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.129 2011/01/21 08:17:50 lum Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 18 2010 $
+.Dd $Mdocdate: January 21 2011 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -111,9 +111,9 @@ It is a good idea to always specify the full path name for the
 .Xr su 1
 and
 .Xr sudo 8
-commands as this inhibits the possibility of files placed in your execution
+commands as this inhibits the possibility of rogue files placed in your
 .Ev PATH
-for most shells.
+being executed for most shells.
 Furthermore, the superuser's
 .Ev PATH
 should never contain the current directory
