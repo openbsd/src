@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.2 2011/01/15 10:08:50 kevlo Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.3 2011/01/21 06:34:04 kevlo Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1470,7 +1470,6 @@ vte_iff(struct vte_softc *sc)
 		else
 			mcr |= MCR0_MULTICAST;
 		mchash[0] = mchash[1] = mchash[2] = mchash[3] = 0xFFFF;
-		goto chipit;
 	} else {
 		nperf = 0;
 		ETHER_FIRST_MULTI(step, ac, enm);
@@ -1495,12 +1494,11 @@ vte_iff(struct vte_softc *sc)
 			mchash[crc >> 30] |= 1 << ((crc >> 26) & 0x0F);
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		if (mchash[0] != 0 || mchash[1] != 0 || mchash[2] != 0 ||
+		    mchash[3] != 0)
+			mcr |= MCR0_MULTICAST;
 	}
-	if (mchash[0] != 0 || mchash[1] != 0 || mchash[2] != 0 ||
-	    mchash[3] != 0)
-		mcr |= MCR0_MULTICAST;
 
-chipit:
 	/* Program multicast hash table. */
 	CSR_WRITE_2(sc, VTE_MAR0, mchash[0]);
 	CSR_WRITE_2(sc, VTE_MAR1, mchash[1]);
