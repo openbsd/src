@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.115 2011/01/15 04:35:34 kevlo Exp $
+$OpenBSD: miidevs,v 1.116 2011/01/21 09:46:13 kevlo Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -120,6 +120,7 @@ model AGERE ET1011		0x0004	ET1011 10/100/1000baseT PHY
 /* Atheros PHYs */
 model ATHEROS F1		0x0001	F1 10/100/1000 PHY
 model ATHEROS F2		0x0002	F2 10/100 PHY
+model ATHEROS F1_7		0x0007	F1 10/100/1000 PHY
 
 /* Altima PHYs */
 model xxALTIMA AC_UNKNOWN	0x0001	AC_UNKNOWN 10/100 PHY

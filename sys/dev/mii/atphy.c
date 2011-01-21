@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.4 2009/07/25 12:23:40 martynas Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.5 2011/01/21 09:46:13 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -81,9 +81,13 @@ const struct mii_phy_funcs atphy_funcs = {
         atphy_service, atphy_status, atphy_reset,
 };
 
-static const struct mii_phydesc etphys[] = {
+static const struct mii_phydesc atphys[] = {
 	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1,
 	  MII_STR_ATHEROS_F1 },
+	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1_7,
+	  MII_STR_ATHEROS_F1_7 },
+	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F2,
+	  MII_STR_ATHEROS_F2 },
 	{ 0,			0,
 	  NULL },
 };
@@ -102,7 +106,7 @@ atphy_match(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (mii_phy_match(ma, etphys) != NULL)
+	if (mii_phy_match(ma, atphys) != NULL)
 		return (10);
 
 	return (0);
@@ -116,7 +120,7 @@ atphy_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
 
-	mpd = mii_phy_match(ma, etphys);
+	mpd = mii_phy_match(ma, atphys);
 	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
