@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.37 2011/01/21 13:09:46 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.38 2011/01/21 13:19:35 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3814,11 +3814,9 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 	struct iked_sa			*sa;
 
 	key.csa_spi = *rekey;
-	if ((csa = RB_FIND(iked_ipsecsas, &env->sc_ipsecsas, &key)) == NULL) {
-		log_warnx("%s: SA %s is not registered as active", __func__,
-		    print_spi(rekey->spi, rekey->spi_size));
+	if ((csa = RB_FIND(iked_ipsecsas, &env->sc_ipsecsas, &key)) == NULL)
 		return;
-	}
+
 	if (csa->csa_rekey)	/* See if it's already taken care of */
 		return;
 	if ((sa = csa->csa_ikesa) == NULL) {
