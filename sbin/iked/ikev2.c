@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.36 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.37 2011/01/21 13:09:46 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2136,7 +2136,7 @@ int
 ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 {
 	struct iked_childsa		*csa;
-	struct iked_proposal		*prop, *mprop = msg->msg_prop;
+	struct iked_proposal		*prop;
 	struct iked_sa			*sa = msg->msg_sa;
 	struct ikev2_delete		*del;
 	struct ibuf			*buf = NULL;
@@ -2148,7 +2148,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	    (sa->sa_stateflags & IKED_REQ_CHILDSA) == 0)
 		return (0);
 
-	if (mprop == NULL) {
+	if (msg->msg_prop == NULL) {
 		log_debug("%s: no proposal specified", __func__);
 		return (-1);
 	}
@@ -2240,7 +2240,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 
 	initiator = sa->sa_hdr.sh_initiator ? 1 : 0;
 
-	if (!ikev2_msg_frompeer(msg))
+	if (!ikev2_msg_frompeer(msg) || msg->msg_prop == NULL)
 		return (0);
 
 	if ((protoid = rekey->spi_protoid) == 0) {
@@ -2249,8 +2249,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		 * IKE SA rekeying or the client wants to create additional
 		 * CHILD SAs
 		 */
-		if (msg->msg_prop &&
-		    msg->msg_prop->prop_protoid == IKEV2_SAPROTO_IKE) {
+		if (msg->msg_prop->prop_protoid == IKEV2_SAPROTO_IKE) {
 			protoid = rekey->spi_protoid = IKEV2_SAPROTO_IKE;
 			if (sa->sa_hdr.sh_initiator)
 				rekey->spi = sa->sa_hdr.sh_rspi;
