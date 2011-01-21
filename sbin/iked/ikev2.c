@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.40 2011/01/21 17:01:33 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.41 2011/01/21 18:02:53 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ ssize_t	 ikev2_add_cp(struct iked *, struct iked_sa *, struct ibuf *);
 ssize_t	 ikev2_add_transform(struct ibuf *,
 	    u_int8_t, u_int8_t, u_int16_t, u_int16_t);
 ssize_t	 ikev2_add_ts(struct ibuf *, struct ikev2_payload **, ssize_t,
-	    struct iked_sa *);
+	    struct iked_sa *, int);
 ssize_t	 ikev2_add_ts_payload(struct ibuf *, u_int, struct iked_sa *);
 int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
@@ -897,7 +897,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 	    IKEV2_SAPROTO_ESP, sa->sa_hdr.sh_initiator, 0)) == -1)
 		goto done;
 
-	if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
+	if ((len = ikev2_add_ts(e, &pld, len, sa, 0)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
@@ -1161,7 +1161,7 @@ ikev2_add_ts_payload(struct ibuf *buf, u_int type, struct iked_sa *sa)
 
 ssize_t
 ikev2_add_ts(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
-    struct iked_sa *sa)
+    struct iked_sa *sa, int reverse)
 {
 	if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_TSi) == -1)
 		return (-1);
@@ -1169,7 +1169,8 @@ ikev2_add_ts(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
 	/* TSi payload */
 	if ((*pld = ikev2_add_payload(e)) == NULL)
 		return (-1);
-	if ((len = ikev2_add_ts_payload(e, IKEV2_PAYLOAD_TSi, sa)) == -1)
+	if ((len = ikev2_add_ts_payload(e, reverse ? IKEV2_PAYLOAD_TSr :
+	    IKEV2_PAYLOAD_TSi, sa)) == -1)
 		return (-1);
 
 	if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_TSr) == -1)
@@ -1178,7 +1179,8 @@ ikev2_add_ts(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
 	/* TSr payload */
 	if ((*pld = ikev2_add_payload(e)) == NULL)
 		return (-1);
-	if ((len = ikev2_add_ts_payload(e, IKEV2_PAYLOAD_TSr, sa)) == -1)
+	if ((len = ikev2_add_ts_payload(e, reverse ? IKEV2_PAYLOAD_TSi :
+	    IKEV2_PAYLOAD_TSr, sa)) == -1)
 		return (-1);
 
 	return (len);
@@ -1885,7 +1887,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	    IKEV2_SAPROTO_ESP, sa->sa_hdr.sh_initiator, 0)) == -1)
 		goto done;
 
-	if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
+	if ((len = ikev2_add_ts(e, &pld, len, sa, 0)) == -1)
 		goto done;
 
  send:
@@ -2077,7 +2079,7 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 		goto done;
 	len = ibuf_size(nonce);
 
-	if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
+	if ((len = ikev2_add_ts(e, &pld, len, sa, !initiator)) == -1)
 		goto done;
 
 	if (rekey) {
@@ -2408,7 +2410,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto done;
 		len = sizeof(*ke) + dh_getlen(group);
 	} else {
-		if ((len = ikev2_add_ts(e, &pld, len, sa)) == -1)
+		if ((len = ikev2_add_ts(e, &pld, len, sa, !initiator)) == -1)
 			goto done;
 	}
 
