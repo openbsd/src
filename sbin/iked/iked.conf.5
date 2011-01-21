@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.12 2011/01/21 11:56:00 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.13 2011/01/21 12:34:11 jmc Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -207,7 +207,7 @@ It can be one of
 .Ar quick ,
 .Ar skip
 or
-.Ar default.
+.Ar default .
 If a new incoming connection matches a policy with the
 .Ar quick
 option set, that policy is considered the last matching policy,
@@ -263,7 +263,7 @@ or
 .Ar inet6 .
 Note that this only matters for IKEv2 endpoints and does not
 restrict the traffic selectors to negotiate flows with different
-address families, eg. IPv6 flows negotiated by IPv4 endpoints.
+address families, e.g. IPv6 flows negotiated by IPv4 endpoints.
 .It Ic proto Ar protocol
 The optional
 .Ic proto
