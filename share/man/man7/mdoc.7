@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.61 2011/01/16 02:56:47 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.62 2011/01/22 14:05:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2011 $
+.Dd $Mdocdate: January 22 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -798,8 +798,8 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&%T  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%U  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%V  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&Ad  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&An  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Ad  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&An  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Ap  Ta    Yes      Ta    Yes      Ta    0
 .It Sx \&Ar  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&At  Ta    Yes      Ta    Yes      Ta    1
@@ -807,31 +807,31 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Bt  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Bx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Cd  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Cm  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Cm  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Db  Ta    \&No     Ta    \&No     Ta    1
 .It Sx \&Dd  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Dt  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Dv  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Dv  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Dx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Em  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&En  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Er  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Es  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Ev  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Ev  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Ex  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Fa  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Fa  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fd  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&Fl  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Fn  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fr  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Ft  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Ft  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Hf  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Ic  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&In  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Lb  Ta    \&No     Ta    \&No     Ta    1
-.It Sx \&Li  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Lk  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Li  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Lk  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Lp  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Ms  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Mt  Ta    Yes      Ta    Yes      Ta    >0
