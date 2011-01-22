@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.218 2011/01/12 20:38:33 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.219 2011/01/22 15:23:45 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3187,6 +3187,12 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 
 	if (sd == NULL)
 		goto done;
+
+	/* Ensure that boot storage area is large enough. */
+	if (sd->sd_meta->ssd_data_offset < (SR_BOOT_OFFSET + SR_BOOT_SIZE)) {
+		printf("%s: insufficient boot storage!\n", DEVNAME(sd->sd_sc));
+		goto done;
+	}
 
 	if (bb->bb_bootblk_size > SR_BOOT_BLOCKS_SIZE * 512)
 		goto done;
