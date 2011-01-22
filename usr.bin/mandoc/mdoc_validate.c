@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.84 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.85 2011/01/22 13:55:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -73,7 +73,6 @@ static	int	 concat(struct mdoc *, char *,
 static	int	 ebool(POST_ARGS);
 static	int	 berr_ge1(POST_ARGS);
 static	int	 bwarn_ge1(POST_ARGS);
-static	int	 eerr_ge1(POST_ARGS);
 static	int	 ewarn_eq0(POST_ARGS);
 static	int	 ewarn_eq1(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
@@ -149,11 +148,10 @@ static	v_post	 posts_sp[] = { ewarn_le1, NULL };
 static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, bwarn_ge1, NULL };
 static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
-static	v_post	 posts_text[] = { eerr_ge1, NULL };
+static	v_post	 posts_text[] = { ewarn_ge1, NULL };
 static	v_post	 posts_text1[] = { ewarn_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
 static	v_post	 posts_wline[] = { bwarn_ge1, NULL };
-static	v_post	 posts_wtext[] = { ewarn_ge1, NULL };
 static	v_pre	 pres_an[] = { pre_an, NULL };
 static	v_pre	 pres_bd[] = { pre_display, pre_bd, pre_literal, pre_par, NULL };
 static	v_pre	 pres_bl[] = { pre_bl, pre_par, NULL };
@@ -185,21 +183,21 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_bl, posts_bl },			/* Bl */ 
 	{ NULL, NULL },				/* El */
 	{ pres_it, posts_it },			/* It */
-	{ NULL, posts_text },			/* Ad */ 
+	{ NULL, NULL },				/* Ad */ 
 	{ pres_an, posts_an },			/* An */ 
 	{ NULL, posts_defaults },		/* Ar */
-	{ NULL, posts_text },			/* Cd */ 
+	{ NULL, NULL },				/* Cd */ 
 	{ NULL, NULL },				/* Cm */
 	{ NULL, NULL },				/* Dv */ 
-	{ pres_er, posts_text },		/* Er */ 
+	{ pres_er, NULL },			/* Er */ 
 	{ NULL, NULL },				/* Ev */ 
 	{ pres_std, posts_std },		/* Ex */ 
 	{ NULL, NULL },				/* Fa */ 
-	{ pres_fd, posts_wtext },		/* Fd */
+	{ pres_fd, posts_text },		/* Fd */
 	{ NULL, NULL },				/* Fl */
-	{ NULL, posts_text },			/* Fn */ 
-	{ NULL, posts_wtext },			/* Ft */ 
-	{ NULL, posts_text },			/* Ic */ 
+	{ NULL, NULL },				/* Fn */ 
+	{ NULL, NULL },				/* Ft */ 
+	{ NULL, NULL },				/* Ic */ 
 	{ NULL, posts_text1 },			/* In */ 
 	{ NULL, posts_defaults },		/* Li */
 	{ NULL, posts_nd },			/* Nd */
@@ -211,7 +209,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_st },			/* St */ 
 	{ NULL, NULL },				/* Va */
 	{ NULL, posts_vt },			/* Vt */ 
-	{ NULL, posts_wtext },			/* Xr */ 
+	{ NULL, posts_text },			/* Xr */ 
 	{ NULL, posts_text },			/* %A */
 	{ NULL, posts_text },			/* %B */ /* FIXME: can be used outside Rs/Re. */
 	{ NULL, posts_text },			/* %D */ /* FIXME: check date with mandoc_a2time(). */
@@ -242,7 +240,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Em */ 
 	{ NULL, NULL },				/* Eo */
 	{ NULL, NULL },				/* Fx */
-	{ NULL, posts_text },			/* Ms */ 
+	{ NULL, NULL },				/* Ms */ 
 	{ NULL, posts_notext },			/* No */
 	{ NULL, posts_notext },			/* Ns */
 	{ NULL, NULL },				/* Nx */
@@ -261,9 +259,9 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* So */
 	{ NULL, NULL },				/* Sq */
 	{ NULL, posts_bool },			/* Sm */ 
-	{ NULL, posts_text },			/* Sx */
-	{ NULL, posts_text },			/* Sy */
-	{ NULL, posts_text },			/* Tn */
+	{ NULL, NULL },				/* Sx */
+	{ NULL, NULL },				/* Sy */
+	{ NULL, NULL },				/* Tn */
 	{ NULL, NULL },				/* Ux */
 	{ NULL, NULL },				/* Xc */
 	{ NULL, NULL },				/* Xo */
@@ -279,7 +277,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_eoln },			/* Ud */
 	{ NULL, posts_lb },			/* Lb */
 	{ NULL, posts_notext },			/* Lp */ 
-	{ NULL, posts_text },			/* Lk */ 
+	{ NULL, NULL },				/* Lk */ 
 	{ NULL, posts_defaults },		/* Mt */ 
 	{ NULL, NULL },				/* Brq */ 
 	{ NULL, NULL },				/* Bro */ 
@@ -426,12 +424,6 @@ static int
 bwarn_ge1(POST_ARGS)
 {
 	return(check_count(mdoc, MDOC_BODY, CHECK_WARN, CHECK_GT, 0));
-}
-
-static int
-eerr_ge1(POST_ARGS)
-{
-	return(check_count(mdoc, MDOC_ELEM, CHECK_ERROR, CHECK_GT, 0));
 }
 
 static int
@@ -1074,12 +1066,11 @@ post_vt(POST_ARGS)
 	/*
 	 * The Vt macro comes in both ELEM and BLOCK form, both of which
 	 * have different syntaxes (yet more context-sensitive
-	 * behaviour).  ELEM types must have a child; BLOCK types,
+	 * behaviour).  ELEM types must have a child, which is already
+	 * guaranteed by the in_line parsing routine; BLOCK types,
 	 * specifically the BODY, should only have TEXT children.
 	 */
 
-	if (MDOC_ELEM == mdoc->last->type)
-		return(eerr_ge1(mdoc));
 	if (MDOC_BODY != mdoc->last->type)
 		return(1);
 	
@@ -1223,19 +1214,12 @@ post_an(POST_ARGS)
 	struct mdoc_node *np;
 
 	np = mdoc->last;
-	if (AUTH__NONE != np->norm->An.auth && np->child) {
+	if (AUTH__NONE == np->norm->An.auth) {
+		if (0 == np->child)
+			check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_GT, 0);
+	} else if (np->child)
 		check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 0);
-		return(1);
-	}
 
-	/* 
-	 * FIXME: make this ewarn and make sure that the front-ends
-	 * don't print the arguments.
-	 */
-	if (AUTH__NONE != np->norm->An.auth || np->child)
-		return(1);
-
-	mdoc_nmsg(mdoc, np, MANDOCERR_NOARGS);
 	return(1);
 }
 
