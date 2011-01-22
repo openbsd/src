@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tbl.7,v 1.1 2011/01/09 15:24:57 schwarze Exp $
+.\"	$OpenBSD: tbl.7,v 1.2 2011/01/22 19:38:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2011 $
+.Dd $Mdocdate: January 22 2011 $
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -180,8 +180,6 @@ Accepts a single-character argument.
 This character will be used as the decimal point with the
 .Cm n
 layout key.
-This option is not supported by
-.Xr mandoc 1 .
 .It Cm nospaces
 This option is not supported by
 .Xr mandoc 1 .
@@ -209,13 +207,25 @@ Justify a number around its last decimal point.
 If the decimal point is not found on the number, it's assumed to trail
 the number.
 .It Cm s
+Horizontally span columns from the last non-
+.Ns Cm s
+data cell.
+It is an error if spanning columns follow a
+.Cm \-
+or
+.Cm \(ba
+cell, or come first.
 This option is not supported by
 .Xr mandoc 1 .
 .It Cm a
 Left-justify a literal string and pad with one space.
 .It Cm ^
-This option is not supported by
-.Xr mandoc 1 .
+Vertically span rows from the last non-
+.Ns Cm ^
+data cell.
+It is an error to invoke a vertical span on the first layout row.
+Unlike a horizontal spanner, you must specify an empty cell (if it not
+empty, the data is discarded) in the corresponding data cell.
 .It Cm \-
 Replace the data cell (its contents will be lost) with a single
 horizontal line.
