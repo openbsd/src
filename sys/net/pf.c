@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.721 2011/01/19 11:39:56 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.722 2011/01/22 11:43:57 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5955,30 +5955,31 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 done:
+	if (action != PF_DROP) {
+		if (s) {
+			/* The non-state case is handled in pf_test_rule() */
+			if (action == PF_PASS && h->ip_hl > 5 &&
+			    !(s->state_flags & PFSTATE_ALLOWOPTS)) {
+				action = PF_DROP;
+				REASON_SET(&reason, PFRES_IPOPTIONS);
+				pd.pflog |= PF_LOG_FORCE;
+				DPFPRINTF(LOG_NOTICE, "dropping packet with "
+				    "ip options in pf_test()");
+			}
 
-	if (s) {
-		/* The non-state case is handled in pf_test_rule() */
-		if (action == PF_PASS && h->ip_hl > 5 &&
-	    	    !(s->state_flags & PFSTATE_ALLOWOPTS)) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_IPOPTIONS);
-			pd.pflog |= PF_LOG_FORCE;
-			DPFPRINTF(LOG_NOTICE, "dropping packet with "
-			    "ip options in pf_test()");
+			pf_scrub_ip(&m, s->state_flags, s->min_ttl, s->set_tos);
+			pf_tag_packet(m, s->tag, s->rtableid[pd.didx]);
+			if (pqid || (pd.tos & IPTOS_LOWDELAY))
+				qid = s->pqid;
+			else
+				qid = s->qid;
+		} else {
+			pf_scrub_ip(&m, r->scrub_flags, r->min_ttl, r->set_tos);
+			if (pqid || (pd.tos & IPTOS_LOWDELAY))
+				qid = r->pqid;
+			else
+				qid = r->qid;
 		}
-
-		pf_scrub_ip(&m, s->state_flags, s->min_ttl, s->set_tos);
-		pf_tag_packet(m, s->tag, s->rtableid[pd.didx]);
-		if (pqid || (pd.tos & IPTOS_LOWDELAY))
-			qid = s->pqid;
-		else
-			qid = s->qid;
-	} else {
-		pf_scrub_ip(&m, r->scrub_flags, r->min_ttl, r->set_tos);
-		if (pqid || (pd.tos & IPTOS_LOWDELAY))
-			qid = r->pqid;
-		else
-			qid = r->qid;
 	}
 
 	if (dir == PF_IN && s && s->key[PF_SK_STACK])
@@ -6236,11 +6237,12 @@ done:
 		    "dropping packet with dangerous v6 headers");
 	}
 
-	if (s)
-		pf_scrub_ip6(&m, s->min_ttl);
-	else
-		pf_scrub_ip6(&m, r->min_ttl);
-
+	if (action != PF_DROP) {
+		if (s)
+			pf_scrub_ip6(&m, s->min_ttl);
+		else
+			pf_scrub_ip6(&m, r->min_ttl);
+	}
 	if (s && s->tag)
 		pf_tag_packet(m, s ? s->tag : 0, s->rtableid[pd.didx]);
 
