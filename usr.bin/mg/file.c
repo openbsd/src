@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.74 2011/01/21 19:10:13 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.75 2011/01/23 00:45:03 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -10,7 +10,7 @@
 
 #include <libgen.h>
 
-static char *xdirname(const char *);
+size_t xdirname(char *, const char *, size_t);
 
 /*
  * Insert a file into the current buffer.  Real easy - just call the
@@ -292,7 +292,6 @@ insertfile(char *fname, char *newname, int replacebuf)
 	int	 nbytes, s, nline = 0, siz, x, x2;
 	int	 opos;			/* offset we started at */
 	int	 oline;			/* original line number */
-	char *dp;
 
 	if (replacebuf == TRUE)
 		x = undo_enable(FFRAND, 0);
@@ -311,10 +310,8 @@ insertfile(char *fname, char *newname, int replacebuf)
 	bp = curbp;
 	if (newname != NULL) {
 		(void)strlcpy(bp->b_fname, newname, sizeof(bp->b_fname));
-		dp = xdirname(newname);
-		(void)strlcpy(bp->b_cwd, dp, sizeof(bp->b_cwd));
+		(void)xdirname(bp->b_cwd, newname, sizeof(bp->b_cwd));
 		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));
-		free(dp);
 	}
 
 	/* hard file open */
@@ -335,16 +332,15 @@ insertfile(char *fname, char *newname, int replacebuf)
 			goto cleanup;
 		}
 		killbuffer(bp);
-		if ((bp = dired_(fname)) == NULL)
-			return (FALSE);
+		bp = dired_(fname);
 		undo_enable(FFRAND, x);
+		if (bp == NULL)
+			return (FALSE);
 		curbp = bp;
 		return (showbuffer(bp, curwp, WFFULL | WFMODE));
 	} else {
-		dp = xdirname(fname);
-		(void)strlcpy(bp->b_cwd, dp, sizeof(bp->b_cwd));
+		(void)xdirname(bp->b_cwd, fname, sizeof(bp->b_cwd));
 		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));
-		free(dp);
 	}
 	opos = curwp->w_doto;
 	oline = curwp->w_dotline;
@@ -661,19 +657,38 @@ upmodes(struct buffer *bp)
 }
 
 /*
- * Same as dirname, except an empty string is returned in
+ * dirname using strlcpy semantic.
+ * Like dirname() except an empty string is returned in
  * place of "/". This means we can always add a trailing
  * slash and be correct.
- * Unlike dirname, we allocate. Caller must free.
+ * Address portability issues by copying argument
+ * before using. Some implementations modify the input string.
  */
-static char *
-xdirname(const char *path)
+size_t
+xdirname(char *dp, const char *path, size_t dplen)
 {
-	char *dp;
-	
-	dp = dirname(path);
-	if (*dp && dp[0] == '/' && dp[1] == '\0')
-		return (strdup(""));
-		
-	return (strdup(dp));	
+	char ts[NFILEN];
+	size_t len;
+
+	(void)strlcpy(ts, path, NFILEN);
+	len = strlcpy(dp, dirname(ts), dplen);
+	if (dplen > 0 && dp[0] == '/' && dp[1] == '\0') {
+		dp[0] = '\0';
+		len = 0;
+	}
+	return (len);
+}
+
+/*
+ * basename using strlcpy/strlcat semantic.
+ * Address portability issue by copying argument
+ * before using: some implementations modify the input string.
+ */
+size_t
+xbasename(char *bp, const char *path, size_t bplen)
+{
+	char ts[NFILEN];
+
+	(void)strlcpy(ts, path, NFILEN);
+	return (strlcpy(bp, basename(ts), bplen));
 }

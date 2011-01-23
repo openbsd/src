@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.115 2011/01/18 16:25:40 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.116 2011/01/23 00:45:03 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -357,6 +357,7 @@ int		 buffsave(struct buffer *);
 int		 makebkfile(int, int);
 int		 writeout(struct buffer *, char *);
 void		 upmodes(struct buffer *);
+size_t		 xbasename(char *, const char *, size_t);
 
 /* line.c X */
 struct line	*lalloc(int);

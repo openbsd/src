@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.76 2011/01/21 19:10:13 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.77 2011/01/23 00:45:03 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -666,8 +666,7 @@ augbname(char *bn, const char *fn, size_t bs)
 	int	 count;
 	size_t	 remain, len;
 
-	len = strlcpy(bn, basename(fn), bs);
-	if (len >= bs)
+	if ((len = xbasename(bn, fn, bs)) >= bs)
 		return (FALSE);
 
 	remain = bs - len;
