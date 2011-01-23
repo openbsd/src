@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.22 2011/01/08 01:52:36 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.23 2011/01/23 11:03:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -137,7 +137,8 @@ job_free(struct job *job)
 int
 job_run(struct job *job)
 {
-	int	nullfd, out[2];
+	struct environ	env;
+	int		nullfd, out[2];
 
 	if (job->fd != -1 || job->pid != -1)
 		return (0);
@@ -145,13 +146,19 @@ job_run(struct job *job)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, out) != 0)
 		return (-1);
 
+	environ_init(&env);
+	environ_copy(&global_environ, &env);
+	server_fill_environ(NULL, &env);
+
 	switch (job->pid = fork()) {
 	case -1:
+		environ_free(&env);
 		return (-1);
 	case 0:		/* child */
 		clear_signals(1);
 
-		environ_push(&global_environ);
+		environ_push(&env);
+		environ_free(&env);
 
 		if (dup2(out[1], STDOUT_FILENO) == -1)
 			fatal("dup2 failed");
@@ -174,6 +181,7 @@ job_run(struct job *job)
 		execl(_PATH_BSHELL, "sh", "-c", job->cmd, (char *) NULL);
 		fatal("execl failed");
 	default:	/* parent */
+		environ_free(&env);
 		close(out[1]);
 
 		job->fd = out[0];

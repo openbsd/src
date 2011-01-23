@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.49 2011/01/01 01:12:09 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.50 2011/01/23 11:03:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,14 +30,20 @@ void		server_callback_identify(int, short, void *);
 void
 server_fill_environ(struct session *s, struct environ *env)
 {
-	char	tmuxvar[MAXPATHLEN], *term;
+	char	var[MAXPATHLEN], *term;
+	u_int	idx;
+	long	pid;
 
-	xsnprintf(tmuxvar, sizeof tmuxvar,
-	    "%s,%ld,%u", socket_path, (long) getpid(), s->idx);
-	environ_set(env, "TMUX", tmuxvar);
+	if (s != NULL) {
+		term = options_get_string(&s->options, "default-terminal");
+		environ_set(env, "TERM", term);
 
-	term = options_get_string(&s->options, "default-terminal");
-	environ_set(env, "TERM", term);
+		idx = s->idx;
+	} else
+		idx = -1;
+	pid = getpid();
+	xsnprintf(var, sizeof var, "%s,%ld,%d", socket_path, pid, idx);
+	environ_set(env, "TMUX", var);
 }
 
 void

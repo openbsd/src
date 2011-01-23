@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.49 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.50 2011/01/23 11:03:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -356,7 +356,7 @@ cmd_current_session(struct cmd_ctx *ctx)
 	}
 
 	/* Use the session from the TMUX environment variable. */
-	if (data != NULL && data->pid == getpid()) {
+	if (data != NULL && data->pid == getpid() && data->idx != -1) {
 		s = session_find_by_index(data->idx);
 		if (s != NULL)
 			return (s);
