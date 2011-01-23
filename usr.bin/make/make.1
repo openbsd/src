@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.90 2010/10/18 14:42:16 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.91 2011/01/23 20:43:55 schwarze Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 18 2010 $
+.Dd $Mdocdate: January 23 2011 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1093,13 +1093,9 @@ is found.
 For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
 .Bd -unfilled -offset indent
-.Xo
-.Ic .for Ar variable Op Ar variable ...
-.Ic in
-.Ar expression
-.Xc
+.Ic .for Ar variable Oo Ar variable ... Oc Ic in Ar expression
 	<make-rules>
-.Ic \&.endfor
+.Ic .endfor
 .Ed
 .Pp
 After the for
