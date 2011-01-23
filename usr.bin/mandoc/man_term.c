@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.62 2011/01/17 00:15:19 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.63 2011/01/23 14:54:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -885,6 +885,9 @@ print_man_node(DECL_ARGS)
 			p->rmargin = rm;
 			p->maxrmargin = rmax;
 		}
+
+		if (MAN_EOS & n->flags)
+			p->flags |= TERMP_SENTENCE;
 		return;
 	case (MAN_TBL):
 		/*
