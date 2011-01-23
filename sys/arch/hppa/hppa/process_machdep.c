@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.19 2010/07/01 05:33:32 jsing Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.20 2011/01/23 09:46:25 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -26,7 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -38,9 +37,7 @@
 #include <machine/frame.h>
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 
@@ -83,9 +80,7 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+process_read_fpregs(struct proc *p, struct fpreg *fpregs)
 {
 	fpu_proc_save(p);
 
@@ -97,9 +92,7 @@ process_read_fpregs(p, fpregs)
 #ifdef PTRACE
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 
@@ -142,9 +135,7 @@ process_write_regs(p, regs)
 }
 
 int
-process_write_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+process_write_fpregs(struct proc *p, struct fpreg *fpregs)
 {
 	fpu_proc_flush(p);
 
@@ -156,9 +147,7 @@ process_write_fpregs(p, fpregs)
 /* process_sstep() is in trap.c */
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	p->p_md.md_regs->tf_iioq_head = (register_t)addr | HPPA_PC_PRIV_USER;
 	p->p_md.md_regs->tf_iioq_tail = p->p_md.md_regs->tf_iioq_head + 4;
