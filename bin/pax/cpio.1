@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.31 2010/11/03 15:11:01 jsg Exp $
+.\"	$OpenBSD: cpio.1,v 1.32 2011/01/23 21:33:22 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 3 2010 $
+.Dd $Mdocdate: January 23 2011 $
 .Dt CPIO 1
 .Os
 .Sh NAME
@@ -37,8 +37,8 @@
 .Op Fl F Ar archive
 .Op Fl H Ar format
 .Op Fl O Ar archive
-.Ar \*(Lt name-list
-.Op Ar \*(Gt archive
+.No \*(Lt Ar name-list
+.Op \*(Gt Ar archive
 .Nm cpio
 .Fl i
 .Op Fl 6BbcdfjmrSstuvZz
@@ -48,12 +48,12 @@
 .Op Fl H Ar format
 .Op Fl I Ar archive
 .Op Ar pattern ...
-.Op Ar \*(Lt archive
+.Op \*(Lt Ar archive
 .Nm cpio
 .Fl p
 .Op Fl adLlmuv
 .Ar destination-directory
-.Ar \*(Lt name-list
+.No \*(Lt Ar name-list
 .Sh DESCRIPTION
 The
 .Nm
