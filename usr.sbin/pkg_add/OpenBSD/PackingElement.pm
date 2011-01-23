@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.192 2011/01/14 14:32:18 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.193 2011/01/23 06:56:53 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -163,6 +163,16 @@ sub copy_deep_if
 {
 	my ($self, $copy, $h) = @_;
 	$self->clone->add_object($copy) if defined $h->{$self};
+}
+
+sub finish
+{
+	my ($class, $state) = @_;
+	OpenBSD::PackingElement::Fontdir->finish($state);
+	OpenBSD::PackingElement::RcScript->report($state);
+	if ($state->{readmes}) {
+		$state->say("Look in /usr/local/share/doc/pkg-readmes for extra documentation");
+	}
 }
 
 # Basic class hierarchy
@@ -482,6 +492,22 @@ sub destate
 	$state->{lastfile} = $self;
 	$state->{lastchecksummable} = $self;
 	$self->compute_modes($state);
+}
+
+sub report
+{
+	my ($class, $state) = @_;
+
+	my @l;
+	for my $script (sort keys %{$state->{add_rcscripts}}) {
+		next if $state->{delete_rcscripts}{$script};
+		push(@l, $script);
+	}
+	if (@l > 0) {
+		$state->say("The following new rcscripts were installed: #1",
+		    join(' ', @l));
+		$state->say("See rc.d(8) for details");
+	}
 }
 
 package OpenBSD::PackingElement::InfoFile;
@@ -1453,9 +1479,9 @@ sub run_if_exists
 	}
 }
 
-sub finish_fontdirs
+sub finish
 {
-	my $state = shift;
+	my ($class, $state) = @_;
 	my @l = keys %fonts_todo;
 	if (@l != 0) {
 		require OpenBSD::Error;
