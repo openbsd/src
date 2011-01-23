@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.219 2011/01/22 15:23:45 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.220 2011/01/23 14:21:20 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -127,6 +127,8 @@ void			sr_rebuild_thread(void *);
 void			sr_roam_chunks(struct sr_discipline *);
 int			sr_chunk_in_use(struct sr_softc *, dev_t);
 void			sr_startwu_callback(void *, void *);
+int			sr_rw(struct sr_softc *, dev_t, char *, size_t,
+			    daddr64_t, long);
 
 /* don't include these on RAMDISK */
 #ifndef SMALL_KERNEL
@@ -387,53 +389,89 @@ sr_meta_getdevname(struct sr_softc *sc, dev_t dev, char *buf, int size)
 }
 
 int
-sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t sz,
-    daddr64_t ofs, long flags)
+sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr64_t offset,
+    long flags)
 {
-	struct sr_softc		*sc = sd->sd_sc;
+	struct vnode		*vp;
 	struct buf		b;
+	size_t			bufsize;
+	int			rv = 1;
+
+	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %d, %llu 0x%x)\n",
+	    DEVNAME(sc), dev, buf, size, offset, flags);
+
+	if (bdevvp(dev, &vp)) {
+		printf("%s: sr_rw: failed to allocate vnode\n", DEVNAME(sc));
+		goto done;
+	}
+
+	while (size > 0) {
+	
+		DNPRINTF(SR_D_MISC, "%s: buf %p, size %d, offset %llu)\n",
+		    DEVNAME(sc), buf, size, offset);
+
+		bufsize = (size > MAXPHYS) ? MAXPHYS : size;
+
+		bzero(&b, sizeof(b));
+
+		b.b_flags = flags | B_PHYS;
+		b.b_proc = curproc;
+		b.b_dev = dev;
+		b.b_iodone = NULL;
+		b.b_error = 0;
+		b.b_blkno = offset;
+		b.b_data = buf;
+		b.b_bcount = bufsize;
+		b.b_bufsize = bufsize;
+		b.b_resid = bufsize;
+		b.b_vp = vp;
+
+		if ((b.b_flags & B_READ) == 0)
+			vp->v_numoutput++;
+
+		LIST_INIT(&b.b_dep);
+		VOP_STRATEGY(&b);
+		biowait(&b);
+
+		if (b.b_flags & B_ERROR) {
+			printf("%s: I/O error %d on dev 0x%x at block %llu\n",
+			    DEVNAME(sc), b.b_error, dev, b.b_blkno);
+			goto done;
+		}
+
+		size -= bufsize;
+		buf += bufsize;
+		offset += howmany(bufsize, DEV_BSIZE);
+
+	}
+
+	rv = 0;
+
+done:
+	if (vp)
+		vput(vp);
+
+	return (rv);
+}
+
+int
+sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
+    daddr64_t offset, long flags)
+{
 	int			rv = 1;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, %d, %llu 0x%x)\n",
-	    DEVNAME(sc), dev, md, sz, ofs, flags);
-
-	bzero(&b, sizeof(b));
+	    DEVNAME(sd->sd_sc), dev, md, size, offset, flags);
 
 	if (md == NULL) {
-		printf("%s: read invalid metadata pointer\n", DEVNAME(sc));
+		printf("%s: sr_meta_rw: invalid metadata pointer\n",
+		    DEVNAME(sd->sd_sc));
 		goto done;
 	}
-	b.b_flags = flags | B_PHYS;
-	b.b_blkno = ofs;
-	b.b_bcount = sz;
-	b.b_bufsize = sz;
-	b.b_resid = sz;
-	b.b_data = md;
-	b.b_error = 0;
-	b.b_proc = curproc;
-	b.b_dev = dev;
-	b.b_iodone = NULL;
-	if (bdevvp(dev, &b.b_vp)) {
-		printf("%s: sr_meta_rw: can't allocate vnode\n", DEVNAME(sc));
-		goto done;
-	}
-	if ((b.b_flags & B_READ) == 0)
-		b.b_vp->v_numoutput++;
 
-	LIST_INIT(&b.b_dep);
-	VOP_STRATEGY(&b);
-	biowait(&b);
+	rv = sr_rw(sd->sd_sc, dev, md, size, offset, flags);
 
-	if (b.b_flags & B_ERROR) {
-		printf("%s: 0x%x i/o error on block %llu while reading "
-		    "metadata %d\n", DEVNAME(sc), dev, b.b_blkno, b.b_error);
-		goto done;
-	}
-	rv = 0;
 done:
-	if (b.b_vp)
-		vput(b.b_vp);
-
 	return (rv);
 }
 
@@ -3167,7 +3205,6 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 	void			*bootblk = NULL, *bootldr = NULL;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*chunk;
-	struct buf		b;
 	u_int32_t		bbs, bls;
 	int			rv = EINVAL;
 	int			i;
@@ -3222,34 +3259,9 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 		    "sr_ioctl_installboot: saving boot block to %s "
 		    "(%u bytes)\n", chunk->src_devname, bbs);
 
-		bzero(&b, sizeof(b));
-		b.b_flags = B_WRITE | B_PHYS;
-		b.b_blkno = SR_BOOT_BLOCKS_OFFSET;
-		b.b_bcount = bbs;
-		b.b_bufsize = bbs;
-		b.b_resid = bbs;
-		b.b_data = bootblk;
-		b.b_error = 0;
-		b.b_proc = curproc;
-		b.b_dev = chunk->src_dev_mm;
-		b.b_vp = NULL;
-		b.b_iodone = NULL;
-		if (bdevvp(chunk->src_dev_mm, &b.b_vp)) {
-			printf("%s: sr_ioctl_installboot: vnode allocation "
-			    "failed\n", DEVNAME(sc));
-			goto done;
-		}
-		if ((b.b_flags & B_READ) == 0)
-			b.b_vp->v_numoutput++;
-		LIST_INIT(&b.b_dep);
-		VOP_STRATEGY(&b);
-		biowait(&b);
-		vput(b.b_vp);
-
-		if (b.b_flags & B_ERROR) {
-			printf("%s: 0x%x i/o error on block %llu while "
-			    "writing boot block %d\n", DEVNAME(sc),
-			    chunk->src_dev_mm, b.b_blkno, b.b_error);
+		if (sr_rw(sc, chunk->src_dev_mm, bootblk, bbs,
+		    SR_BOOT_BLOCKS_OFFSET, B_WRITE)) {
+			printf("%s: failed to write boot block\n", DEVNAME(sc));
 			goto done;
 		}
 
@@ -3258,34 +3270,10 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 		    "sr_ioctl_installboot: saving boot loader to %s "
 		    "(%u bytes)\n", chunk->src_devname, bls);
 
-		bzero(&b, sizeof(b));
-		b.b_flags = B_WRITE | B_PHYS;
-		b.b_blkno = SR_BOOT_LOADER_OFFSET;
-		b.b_bcount = bls;
-		b.b_bufsize = bls;
-		b.b_resid = bls;
-		b.b_data = bootldr;
-		b.b_error = 0;
-		b.b_proc = curproc;
-		b.b_dev = chunk->src_dev_mm;
-		b.b_vp = NULL;
-		b.b_iodone = NULL;
-		if (bdevvp(chunk->src_dev_mm, &b.b_vp)) {
-			printf("%s: sr_ioctl_installboot: vnode alocation "
-			    "failed\n", DEVNAME(sc));
-			goto done;
-		}
-		if ((b.b_flags & B_READ) == 0)
-			b.b_vp->v_numoutput++;
-		LIST_INIT(&b.b_dep);
-		VOP_STRATEGY(&b);
-		biowait(&b);
-		vput(b.b_vp);
-
-		if (b.b_flags & B_ERROR) {
-			printf("%s: 0x%x i/o error on block %llu while "
-			    "writing boot blocks %d\n", DEVNAME(sc),
-			    chunk->src_dev_mm, b.b_blkno, b.b_error);
+		if (sr_rw(sc, chunk->src_dev_mm, bootldr, bls,
+		    SR_BOOT_LOADER_OFFSET, B_WRITE)) {
+			printf("%s: failed to write boot loader\n",
+			   DEVNAME(sc));
 			goto done;
 		}
 
