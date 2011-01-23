@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.5 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.6 2011/01/23 15:46:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -89,8 +89,8 @@ cmd_join_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 		type = LAYOUT_LEFTRIGHT;
 
 	size = -1;
-	if (args_has(args, 's')) {
-		size = args_strtonum(args, 's', 0, INT_MAX, &cause);
+	if (args_has(args, 'l')) {
+		size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
 		if (cause != NULL) {
 			ctx->error(ctx, "size %s", cause);
 			xfree(cause);
