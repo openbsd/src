@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.112 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: trap.c,v 1.113 2011/01/23 15:09:12 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -161,9 +161,7 @@ userret(struct proc *p)
 }
 
 void
-trap(type, frame)
-	int type;
-	struct trapframe *frame;
+trap(int type, struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	vaddr_t va;
