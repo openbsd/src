@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.487 2011/01/20 08:44:12 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.488 2011/01/23 23:34:18 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 20 2011 $
+.Dd $Mdocdate: January 23 2011 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -823,6 +823,16 @@ external interface.
 Redirections cannot reflect packets back through the interface they arrive
 on, they can only be redirected to hosts connected to different interfaces
 or to the firewall itself.
+.Pp
+However packets may be redirected to hosts connected to the interface the
+packet arrived on by using redirection with NAT.
+For example:
+.Bd -literal -offset indent
+pass in on $int_if proto tcp from $int_net to $ext_if port 80 \e
+	rdr-to $server
+pass out on $int_if proto tcp to $server port 80 \e
+	received-on $int_if nat-to $int_if
+.Ed
 .Pp
 Note that redirecting external incoming connections to the loopback address
 will effectively allow an external host to connect to daemons
