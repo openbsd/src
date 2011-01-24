@@ -5108,6 +5108,11 @@
 ./var/named/dev
 ./var/named/etc
 ./var/named/tmp
+./var/nsd
+./var/nsd/db
+./var/nsd/dev
+./var/nsd/run
+./var/nsd/zones
 ./var/quotas
 ./var/run
 ./var/rwho
