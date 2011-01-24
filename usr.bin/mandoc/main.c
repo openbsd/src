@@ -1,7 +1,7 @@
-/*	$Id: main.c,v 1.69 2011/01/20 21:33:11 schwarze Exp $ */
+/*	$Id: main.c,v 1.70 2011/01/24 23:40:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -669,6 +669,16 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 		}
 
 		while (i < (int)blk.sz && (start || '\0' != blk.buf[i])) {
+
+			/*
+			 * When finding an unescaped newline character,
+			 * leave the character loop to process the line.
+			 * Skip a preceding carriage return, if any.
+			 */
+
+			if ('\r' == blk.buf[i] && i + 1 < (int)blk.sz &&
+			    '\n' == blk.buf[i + 1])
+				++i;
 			if ('\n' == blk.buf[i]) {
 				++i;
 				++lnn;
@@ -703,11 +713,18 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 				continue;
 			}
 
-			/* Found escape & at least one other char. */
+			/*
+			 * Found escape and at least one other character.
+			 * When it's a newline character, skip it.
+			 * When there is a carriage return in between,
+			 * skip that one as well.
+			 */
 
+			if ('\r' == blk.buf[i + 1] && i + 2 < (int)blk.sz &&
+			    '\n' == blk.buf[i + 2])
+				++i;
 			if ('\n' == blk.buf[i + 1]) {
 				i += 2;
-				/* Escaped newlines are skipped over */
 				++lnn;
 				continue;
 			}
