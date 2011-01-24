@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.108 2011/01/09 15:53:06 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.109 2011/01/24 18:32:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -624,8 +624,12 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6000";
 		if (pid == PCI_PRODUCT_INTEL_WL_6200_1 ||
-		    pid == PCI_PRODUCT_INTEL_WL_6200_2)
+		    pid == PCI_PRODUCT_INTEL_WL_6200_2) {
 			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
+			/* Override chains masks, ROM is known to be broken. */
+			sc->txchainmask = IWN_ANT_BC;
+			sc->rxchainmask = IWN_ANT_BC;
+		}
 		break;
 	case IWN_HW_REV_TYPE_6050:
 		sc->limits = &iwn6000_sensitivity_limits;
@@ -1861,7 +1865,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		/* Check for prior RX_PHY notification. */
 		if (!sc->last_rx_valid) {
 			DPRINTF(("missing RX_PHY\n"));
-			ifp->if_ierrors++;
 			return;
 		}
 		sc->last_rx_valid = 0;
@@ -1875,7 +1878,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	if (stat->cfg_phy_len > IWN_STAT_MAXLEN) {
 		printf("%s: invalid RX statistic header\n",
 		    sc->sc_dev.dv_xname);
-		ifp->if_ierrors++;
 		return;
 	}
 	if (desc->type == IWN_MPDU_RX_DONE) {
