@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.41 2011/01/21 18:02:53 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.42 2011/01/24 17:44:28 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2410,7 +2410,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto done;
 		len = sizeof(*ke) + dh_getlen(group);
 	} else {
-		if ((len = ikev2_add_ts(e, &pld, len, sa, !initiator)) == -1)
+		if ((len = ikev2_add_ts(e, &pld, len, sa, initiator)) == -1)
 			goto done;
 	}
 
