@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.8 2011/01/09 15:24:57 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.9 2011/01/24 23:13:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2011 $
+.Dd $Mdocdate: January 24 2011 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -86,6 +86,38 @@ Thus, the following request lines are all equivalent:
 \&.ig    end
 \&.   ig end
 .Ed
+.Sh MACRO SYNTAX
+Macros can be defined by the
+.Sx \&de
+request.
+When called, they follow the same syntax as requests, except that
+macro arguments may optionally be quoted by enclosing them
+in double quote characters
+.Pq Sq \(dq .
+To be recognized as the beginning of a quoted argument, the opening
+quote character must be preceded by a space character.
+.Pp
+A quoted argument may contain whitespace, and pairs of double quote
+characters
+.Pq Sq Qq
+resolve to single double quote characters.
+A quoted argument extends to the next double quote character that is not
+part of a pair, or to the end of the input line, whichever comes earlier.
+Leaving out the terminating double quote character at the end of the line
+is discouraged.
+For clarity, if more arguments follow on the same input line,
+it is recommended to follow the terminating double quote character
+by a space character; in case the next character after the terminating
+double quote character is anything else, it is regarded as the beginning
+of the next, unquoted argument.
+.Pp
+Both in quoted and unquoted arguments, pairs of backslashes
+.Pq Sq \e\e
+resolve to single backslashes.
+In unquoted arguments, space characters can alternatively be included
+by preceding them with a backslash
+.Pq Sq \e\~ ,
+but quoting is usually better for clarity.
 .Sh REQUEST REFERENCE
 The
 .Xr mandoc 1
@@ -174,12 +206,9 @@ The macro can be invoked later using the syntax
 .Pp
 .D1 Pf . Ar name Op Ar argument Op Ar argument ...
 .Pp
-Arguments are separated by blank characters and can be quoted
-using double-quotes
-.Pq Sq \(dq
-to allow inclusion of blank characters into arguments.
-To include the double-quote character into a quoted argument,
-escape it from ending the argument by doubling it.
+Regarding argument parsing, see
+.Sx MACRO SYNTAX
+above.
 .Pp
 The line invoking the macro will be replaced
 in the input stream by the
