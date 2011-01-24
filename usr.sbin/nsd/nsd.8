@@ -118,7 +118,7 @@ Turn on debugging mode, do not fork, stay in the foreground.
 Use the specified
 .I database
 instead of the default of
-.IR /var/db/nsd/nsd.db .
+.IR /var/nsd/db/nsd.db .
 If a 
 .B zonesdir: 
 is specified in the config file this path can be relative to that 
@@ -167,7 +167,7 @@ default is 10.
 Use the specified
 .I pidfile
 instead of the platform specific default, which is mostly
-.IR /var/run/nsd.pid .
+.IR /var/nsd/run/nsd.pid .
 If a 
 .B zonesdir: 
 is specified in the config file, this path can be relative to that 
@@ -227,15 +227,15 @@ SIGUSR1
 Dump BIND8\-style statistics into the log. Ignored otherwise.
 .SH "FILES"
 .TP
-/var/db/nsd/nsd.db
+/var/nsd/db/nsd.db
 default
 .B NSD
 database
 .TP
-/var/run/nsd.pid
+/var/nsd/run/nsd.pid
 the process id of the name server.
 .TP
-/etc/nsd/nsd.conf
+/etc/nsd.conf
 default
 .B NSD
 configuration file

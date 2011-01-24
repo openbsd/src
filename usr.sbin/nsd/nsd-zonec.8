@@ -33,13 +33,13 @@ It is normally invoked via nsdc(8) rebuild command.
 .B Zonec
 will then parse every zone in nsd.conf(5) file and add it to the 
 name space database,
-.I /var/db/nsd/nsd.db
+.I /var/nsd/db/nsd.db
 by default, that is used by nsd(8) to answer incoming queries.
 .SH "OPTIONS"
 .TP
 .B \-c\fI configfile
 Read specified configfile instead of the default 
-.IR /etc/nsd/nsd.conf .
+.IR /etc/nsd.conf .
 .TP
 .B \-C 
 No config file is read (use with \-f, \-o and \-z).
@@ -91,7 +91,7 @@ Set debug facilities. (If compiled with \-\-enable\-checking.)
 Set debug level. (If compiled with \-\-enable\-checking.)
 .SH "FILES"
 .TP
-/var/db/nsd/nsd.db
+/var/nsd/db/nsd.db
 default
 .B NSD
 database

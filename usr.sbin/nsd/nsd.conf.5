@@ -31,7 +31,7 @@ An example of a short nsd.conf file is below.
 .TP
 server:
 .RS 5
-database: "/var/db/nsd/nsd.db"
+database: "/var/nsd/db/nsd.db"
 .RE
 .RS 5
 username: nsd
@@ -40,13 +40,13 @@ username: nsd
 logfile: "/var/log/nsd.log"
 .RE
 .RS 5
-pidfile: "/var/run/nsd.pid"
+pidfile: "/var/nsd/run/nsd.pid"
 .RE
 .RS 5
-difffile: "/var/db/nsd/ixfr.db"
+difffile: "/var/nsd/run/ixfr.db"
 .RE
 .RS 5
-xfrdfile: "/var/db/nsd/xfrd.state"
+xfrdfile: "/var/nsd/run/rfrd.state"
 .RE
 .TP
 zone:
@@ -57,7 +57,7 @@ name: example.com
 # note that quotes are optional on the value
 .RE
 .RS 5
-zonefile: /etc/nsd/example.com.zone 
+zonefile: /var/nsd/zones/example.com
 .RE
 .SH "FILE FORMAT"
 There must be whitespace between keywords. Attribute keywords end 
@@ -124,7 +124,7 @@ option
 .TP
 .B database:\fR <filename>
 By default 
-.I /var/db/nsd/nsd.db
+.I /var/nsd/db/nsd.db
 is used. The specified file is used to store the compiled 
 zone information. Same as commandline option 
 .BR \-f.
@@ -208,7 +208,7 @@ file, log file) relative to this directory. Set the value to ""
 When NSD receives IXFR updates it will store them in this file. 
 This file contains the differences between the database file and the 
 latest zone version. Default is 
-.IR /var/db/nsd/ixfr.db .
+.IR /var/nsd/run/ixfr.db .
 .TP
 .B xfrdfile:\fR <filename>
 The soa timeout and zone transfer daemon in NSD will save its state 
@@ -216,7 +216,7 @@ to this file. State is read back after a restart. The state file can
 be deleted without too much harm, but timestamps of zones will be 
 gone. For more details see the section on zone expiry behavior of 
 NSD. Default is
-.IR /var/db/nsd/xfrd.state .
+.IR /var/nsd/run/xfrd.state .
 .TP
 .B xrfd\-reload\-timeout:\fR <number>
 If this value is \-1, xfrd will not trigger a reload after a zone 
@@ -494,12 +494,12 @@ also function as a resolver or cache. The configuration options that
 BIND9 has for the resolver or caching thus have no equivalents for NSD.
 .SH "FILES"
 .TP
-/var/db/nsd/nsd.db
+/var/nsd/db/nsd.db
 default
 .B NSD
 database
 .TP
-/etc/nsd/nsd.conf
+/etc/nsd.conf
 default
 .B NSD
 configuration file

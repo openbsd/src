@@ -28,7 +28,7 @@ difffile does not grow infinitely.
 .TP
 .B \-c\fI configfile
 Read specified configfile instead of the default
-.IR /etc/nsd/nsd.conf .
+.IR /etc/nsd.conf .
 .TP
 .B \-f
 Forces writing zone files. Also zones that have not changed are written
@@ -50,12 +50,12 @@ Skip writing zone files. No zones are written back to their zone files.
 Read specified difffile. Overrides the config file setting.
 .SH "FILES"
 .TP
-/var/db/nsd/nsd.db
+/var/nsd/db/nsd.db
 default
 .B NSD
 database
 .TP
-/etc/nsd/nsd.conf
+/etc/nsd.conf
 default
 .B NSD
 configuration file

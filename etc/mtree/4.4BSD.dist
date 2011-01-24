@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.213 2010/12/28 14:31:12 jasper Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.214 2011/01/24 10:39:46 jakob Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2362,6 +2362,32 @@ tmp		uname=root gname=named mode=0775
 ..
 
 # ./var/named
+..
+
+# ./var/nsd
+nsd
+
+# ./var/nsd/db
+db		uname=root gname=wheel mode=0755
+# ./var/nsd/db
+..
+
+# ./var/nsd/dev
+dev
+# ./var/nsd/dev
+..
+
+# ./var/nsd/run
+run		uname=root gname=_nsd mode=0775
+# ./var/nsd/run
+..
+
+# ./var/nsd/zones
+zones		uname=root gname=wheel mode=0755
+# ./var/nsd/zones
+..
+
+# ./var/nsd
 ..
 
 # ./var/obj				XXX
