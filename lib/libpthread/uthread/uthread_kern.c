@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.36 2007/05/21 16:50:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.37 2011/01/25 22:55:14 stsp Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -440,6 +440,12 @@ _thread_kern_sched(struct sigcontext * scp)
 				_queue_signals = 0;
 			}
 
+			/*
+			 * Prevent the signal handler from fiddling with this
+			 * thread before its state is set.
+			 */
+			_queue_signals = 1;
+
 			/* Make the selected thread the current thread: */
 			_set_curthread(pthread_h);
 			curthread = pthread_h;
@@ -480,6 +486,11 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * before use.
 			 */
 			curthread = _get_curthread();
+
+			/* Allow signals again. */
+			_queue_signals = 0;
+
+			/* Done with scheduling. */
 			_thread_kern_in_sched = 0;
 
 			/* run any installed switch-hooks */
