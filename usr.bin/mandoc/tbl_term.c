@@ -1,6 +1,7 @@
-/*	$Id: tbl_term.c,v 1.7 2011/01/16 01:11:50 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.8 2011/01/25 12:07:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -193,6 +194,8 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp)
 		width = tp->tbl.cols[hp->ident].width;
 		switch (hp->pos) {
 		case (TBL_HEAD_DATA):
+			if (hp->next)
+				width += 2;
 			tbl_char(tp, c, width);
 			break;
 		case (TBL_HEAD_DVERT):
@@ -367,11 +370,11 @@ tbl_literal(struct termp *tp, const struct tbl_dat *dp,
 		padr = col->width - term_strlen(tp, dp->string) - ssz;
 		break;
 	case (TBL_CELL_CENTRE):
-		padl = col->width - term_strlen(tp, dp->string);
-		if (padl % 2)
-			padr++;
-		padl /= 2;
-		padr += padl;
+		padr = col->width - term_strlen(tp, dp->string);
+		if (3 > padr)
+			break;
+		padl = (padr - 1) / 2;
+		padr -= padl;
 		break;
 	case (TBL_CELL_RIGHT):
 		padl = col->width - term_strlen(tp, dp->string);
@@ -383,7 +386,7 @@ tbl_literal(struct termp *tp, const struct tbl_dat *dp,
 
 	tbl_char(tp, ASCII_NBRSP, padl);
 	term_word(tp, dp->string);
-	tbl_char(tp, ASCII_NBRSP, padr);
+	tbl_char(tp, ASCII_NBRSP, padr + 2);
 }
 
 static void

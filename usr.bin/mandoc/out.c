@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.10 2011/01/16 01:11:50 schwarze Exp $ */
+/*	$Id: out.c,v 1.11 2011/01/25 12:07:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -481,7 +481,7 @@ tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
 	case (TBL_CELL_LONG):
 		/* FALLTHROUGH */
 	case (TBL_CELL_CENTRE):
-		bufsz = (*tbl->len)(2, tbl->arg);
+		bufsz = (*tbl->len)(1, tbl->arg);
 		break;
 	default:
 		bufsz = (*tbl->len)(1, tbl->arg);
