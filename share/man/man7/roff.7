@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.10 2011/01/25 00:37:39 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.11 2011/01/25 01:09:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -565,6 +565,16 @@ section with the
 .Cm \&Sh
 macro will reset this register.
 .El
+.Ss \&ns
+Turn on no-space mode.
+This line-scoped request is intended to take no arguments.
+Currently, it is ignored including its arguments,
+and the number of arguments is not checked.
+.Ss \&ps
+Change point size.
+This line-scoped request is intended to take one numerical argument.
+Currently, it is ignored including its arguments,
+and the number of arguments is not checked.
 .Ss \&so
 Include a source file.
 Its syntax is as follows:
@@ -582,6 +592,10 @@ only accepts relative paths not containing the strings
 .Qq ../
 and
 .Qq /.. .
+.Ss \&ta
+Set tab stops.
+This line-scoped request can take an arbitrary number of arguments.
+Currently, it is ignored including its arguments.
 .Ss \&tr
 Output character translation.
 This request is intended to have one argument,
