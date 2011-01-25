@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.7 2011/01/25 12:16:19 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.8 2011/01/25 12:24:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -186,6 +186,7 @@ newspan(struct tbl_node *tbl, struct tbl_row *rp)
 		tbl->last_span = dp;
 	} else {
 		tbl->last_span = tbl->first_span = dp;
+		tbl->current_span = NULL;
 		dp->flags |= TBL_SPAN_FIRST;
 	}
 

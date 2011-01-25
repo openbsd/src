@@ -1,6 +1,7 @@
-/*	$Id: tbl.c,v 1.4 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: tbl.c,v 1.5 2011/01/25 12:24:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -136,11 +137,16 @@ tbl_restart(int line, int pos, struct tbl_node *tbl)
 }
 
 const struct tbl_span *
-tbl_span(const struct tbl_node *tbl)
+tbl_span(struct tbl_node *tbl)
 {
+	struct tbl_span	 *span;
 
 	assert(tbl);
-	return(tbl->last_span);
+	span = tbl->current_span ? tbl->current_span->next
+				 : tbl->first_span;
+	if (span)
+		tbl->current_span = span;
+	return(span);
 }
 
 void
