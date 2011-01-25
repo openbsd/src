@@ -1,6 +1,7 @@
-/*	$Id: tbl_data.c,v 1.6 2011/01/16 01:11:50 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.7 2011/01/25 12:16:19 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +27,8 @@
 
 static	int	data(struct tbl_node *, struct tbl_span *, 
 			int, const char *, int *);
+static	struct tbl_span	*newspan(struct tbl_node *, struct tbl_row *);
+
 
 static int
 data(struct tbl_node *tbl, struct tbl_span *dp, 
@@ -168,6 +171,27 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 	return(0);
 }
 
+static struct tbl_span *
+newspan(struct tbl_node *tbl, struct tbl_row *rp)
+{
+	struct tbl_span	*dp;
+
+	dp = mandoc_calloc(1, sizeof(struct tbl_span));
+	dp->tbl = &tbl->opts;
+	dp->layout = rp;
+	dp->head = tbl->first_head;
+
+	if (tbl->last_span) {
+		tbl->last_span->next = dp;
+		tbl->last_span = dp;
+	} else {
+		tbl->last_span = tbl->first_span = dp;
+		dp->flags |= TBL_SPAN_FIRST;
+	}
+
+	return(dp);
+}
+
 int
 tbl_data(struct tbl_node *tbl, int ln, const char *p)
 {
@@ -192,9 +216,24 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 
 	if (tbl->last_span) {
 		assert(tbl->last_span->layout);
-		if (tbl->last_span->pos == TBL_SPAN_DATA)
-			rp = tbl->last_span->layout->next;
-		else
+		if (tbl->last_span->pos == TBL_SPAN_DATA) {
+			for (rp = tbl->last_span->layout->next;
+					rp && rp->first; rp = rp->next) {
+				switch (rp->first->pos) {
+				case (TBL_CELL_HORIZ):
+					dp = newspan(tbl, rp);
+					dp->pos = TBL_SPAN_HORIZ;
+					continue;
+				case (TBL_CELL_DHORIZ):
+					dp = newspan(tbl, rp);
+					dp->pos = TBL_SPAN_DHORIZ;
+					continue;
+				default:
+					break;
+				}
+				break;
+			}
+		} else
 			rp = tbl->last_span->layout;
 
 		if (NULL == rp)
@@ -204,18 +243,7 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 
 	assert(rp);
 
-	dp = mandoc_calloc(1, sizeof(struct tbl_span));
-	dp->tbl = &tbl->opts;
-	dp->layout = rp;
-	dp->head = tbl->first_head;
-
-	if (tbl->last_span) {
-		tbl->last_span->next = dp;
-		tbl->last_span = dp;
-	} else {
-		tbl->last_span = tbl->first_span = dp;
-		dp->flags |= TBL_SPAN_FIRST;
-	}
+	dp = newspan(tbl, rp);
 
 	if ( ! strcmp(p, "_")) {
 		dp->pos = TBL_SPAN_HORIZ;
