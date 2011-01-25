@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.3 2011/01/21 09:24:46 jasper Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.4 2011/01/25 20:53:18 naddy Exp $
 #
 # Generate pkg-config files for OpenSSL.
 
@@ -39,6 +39,10 @@ fi
 ssl_version=$(sed -nE 's/^#define[[:blank:]]+SHLIB_VERSION_NUMBER[[:blank:]]+"(.*)".*/\1/p' \
 	${curdir}/src/crypto/opensslv.h)
 
+# Put -I${includedir} into Cflags so configure script tests like
+#   test -n "`pkg-config --cflags openssl`"
+# don't assume that OpenSSL isn't available.
+
 pc_file="${objdir}/libcrypto.pc"
 cat > ${pc_file} << __EOF__
 prefix=/usr
@@ -51,7 +55,7 @@ Description: OpenSSL cryptography library
 Version: ${ssl_version}
 Requires: 
 Libs: -lcrypto
-Cflags: 
+Cflags: -I\${includedir}
 __EOF__
 
 
@@ -67,7 +71,7 @@ Description: Secure Sockets Layer and cryptography libraries
 Version: ${ssl_version}
 Requires: 
 Libs: -lssl -lcrypto
-Cflags: 
+Cflags: -I\${includedir}
 __EOF__
 
 
@@ -83,5 +87,5 @@ Description: Secure Sockets Layer and cryptography libraries and tools
 Version: ${ssl_version}
 Requires: 
 Libs: -lssl -lcrypto
-Cflags: 
+Cflags: -I\${includedir}
 __EOF__
