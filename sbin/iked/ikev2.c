@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.42 2011/01/24 17:44:28 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.43 2011/01/25 10:58:41 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3837,9 +3837,8 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		else
 			spi32 = htobe32(csa->csa_peerspi);
 
-		/* delete peer's SPI */
 		if (ikev2_childsa_delete(env, sa, csa->csa_saproto,
-		    csa->csa_peerspi, NULL, 1))
+		    csa->csa_peerspi, NULL, 0))
 			log_debug("%s: failed to delete CHILD SA %s", __func__,
 			    print_spi(csa->csa_peerspi, drop->spi_size));
 
