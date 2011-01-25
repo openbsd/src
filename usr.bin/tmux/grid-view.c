@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.8 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.9 2011/01/25 23:40:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -72,6 +72,30 @@ grid_view_set_utf8(
     struct grid *gd, u_int px, u_int py, const struct grid_utf8 *gu)
 {
 	grid_set_utf8(gd, grid_view_x(gd, px), grid_view_y(gd, py), gu);
+}
+
+/* Clear into history. */
+void
+grid_view_clear_history(struct grid *gd)
+{
+	struct grid_line	*gl;
+	u_int			 yy, last;
+
+	GRID_DEBUG(gd, "");
+
+	/* Find the last used line. */
+	last = 0;
+	for (yy = 0; yy < gd->sy; yy++) {
+		gl = &gd->linedata[grid_view_y(gd, yy)];
+		if (gl->cellsize != 0 || gl->utf8size != 0)
+			last = yy + 1;
+	}
+	if (last == 0)
+		return;
+
+	/* Scroll the lines into the history. */
+	for (yy = 0; yy < last; yy++)
+		grid_scroll_history(gd);
 }
 
 /* Clear area. */
