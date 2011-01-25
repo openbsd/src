@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.95 2010/06/29 00:28:14 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.96 2011/01/25 18:42:45 stsp Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -428,8 +428,11 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 
 		if (timespeccmp(&ats, &now, <)) {
 			/* already passed: still do the unlock */
-			if (lock)
-				copyout(&unlocked, lock, sizeof(unlocked));
+			if (lock) {
+				if ((error = copyout(&unlocked, lock,
+				    sizeof(unlocked))) != 0)
+					return (error);
+			}
 			return (EWOULDBLOCK);
 		}
 
@@ -444,8 +447,10 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 
 	p->p_thrslpid = ident;
 
-	if (lock)
-		copyout(&unlocked, lock, sizeof(unlocked));
+	if (lock) {
+		if ((error = copyout(&unlocked, lock, sizeof(unlocked))) != 0)
+			return (error);
+	}
 	error = tsleep(&p->p_thrslpid, PUSER | PCATCH, "thrsleep",
 	    (int)to_ticks);
 
