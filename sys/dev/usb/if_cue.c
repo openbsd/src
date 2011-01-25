@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.58 2010/12/17 13:48:06 jasper Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.59 2011/01/25 20:03:35 jakemsr Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -542,9 +542,6 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->cue_stat_ch, cue_tick, sc);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cue_udev,
-	    &sc->cue_dev);
 }
 
 int
@@ -585,9 +582,6 @@ cue_detach(struct device *self, int flags)
 #endif
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->cue_udev,
-	    &sc->cue_dev);
 
 	return (0);
 }

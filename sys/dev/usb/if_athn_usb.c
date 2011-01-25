@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.6 2011/01/08 15:18:01 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.7 2011/01/25 20:03:35 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -281,8 +281,6 @@ athn_usb_attach(struct device *parent, struct device *self, void *aux)
 		mountroothook_establish(athn_usb_attachhook, usc);
 	else
 		athn_usb_attachhook(usc);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, usc->sc_udev, &sc->sc_dev);
 }
 
 int
@@ -304,7 +302,6 @@ athn_usb_detach(struct device *self, int flags)
 	athn_usb_free_tx_list(usc);
 	athn_usb_free_rx_list(usc);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, usc->sc_udev, &sc->sc_dev);
 	return (0);
 }
 

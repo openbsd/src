@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.104 2010/12/06 04:41:39 jakemsr Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.105 2011/01/25 20:03:35 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -814,9 +814,6 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->axe_stat_ch, axe_tick, sc);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev,
-			   &sc->axe_dev);
 }
 
 int
@@ -875,9 +872,6 @@ axe_detach(struct device *self, int flags)
 		usb_detach_wait(&sc->axe_dev);
 	}
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->axe_udev,
-			   &sc->axe_dev);
 
 	return (0);
 }

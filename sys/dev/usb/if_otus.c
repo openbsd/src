@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.26 2011/01/06 19:49:58 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.27 2011/01/25 20:03:35 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -234,8 +234,6 @@ otus_attach(struct device *parent, struct device *self, void *aux)
 		mountroothook_establish(otus_attachhook, sc);
 	else
 		otus_attachhook(sc);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
 }
 
 int
@@ -265,8 +263,6 @@ otus_detach(struct device *self, int flags)
 	otus_close_pipes(sc);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 
 	return 0;
 }

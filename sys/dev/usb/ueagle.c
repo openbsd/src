@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.31 2010/12/06 05:46:17 jakemsr Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.32 2011/01/25 20:03:36 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -229,9 +229,6 @@ ueagle_attach(struct device *parent, struct device *self, void *aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_RAW, 0);
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_dev);
 }
 
 int
@@ -258,9 +255,6 @@ ueagle_detach(struct device *self, int flags)
 
 	if (ifp->if_softc != NULL)
 		if_detach(ifp);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 
 	return 0;
 }

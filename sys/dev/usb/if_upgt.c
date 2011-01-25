@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.54 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.55 2011/01/25 20:03:35 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -449,8 +449,6 @@ upgt_attach_hook(void *arg)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(UPGT_TX_RADIOTAP_PRESENT);
 #endif
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
-
 	printf("%s: address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr));
 
@@ -503,8 +501,6 @@ upgt_detach(struct device *self, int flags)
 	}
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.28 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.29 2011/01/25 20:03:35 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1509,8 +1509,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_attached = 1;
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
 }
 
 int
@@ -1541,9 +1539,6 @@ urndis_detach(struct device *self, int flags)
 	sc->sc_attached = 0;
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 
 	return 0;
 }

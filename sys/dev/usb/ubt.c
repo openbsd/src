@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.19 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.20 2011/01/25 20:03:36 jakemsr Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -443,9 +443,6 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach HCI */
 	sc->sc_unit = hci_attach(&ubt_hci, &sc->sc_dev, 0);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
-
 	sc->sc_ok = 1;
 	/* XXX pmf_device_deregister in NetBSD (power hook) */
 }
@@ -484,9 +481,6 @@ ubt_detach(struct device *self, int flags)
 		usb_detach_wait(&sc->sc_dev);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	DPRINTFN(1, "driver detached\n");
 

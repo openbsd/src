@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.27 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.28 2011/01/25 20:03:36 jakemsr Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -222,9 +222,6 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 		(void)start_input_transfer(&sc->sc_in_ep[i]);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH,
-			   sc->sc_udev, &sc->sc_dev);
-
 	return;
 error:
 	printf("%s: disabled.\n", sc->sc_dev.dv_xname);
@@ -260,9 +257,6 @@ umidi_detach(struct device *self, int flags)
 	free_all_mididevs(sc);
 	free_all_jacks(sc);
 	free_all_endpoints(sc);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return 0;
 }

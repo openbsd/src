@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.62 2010/12/17 13:48:06 jasper Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.63 2011/01/25 20:03:35 jakemsr Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -543,9 +543,6 @@ kue_attach(struct device *parent, struct device *self, void *aux)
 		mountroothook_establish(kue_attachhook, sc);
 	else
 		kue_attachhook(sc);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev,
-			   &sc->kue_dev);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.119 2010/12/30 05:22:51 jakemsr Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.120 2011/01/25 20:03:35 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -349,9 +349,6 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RAL_TX_RADIOTAP_PRESENT);
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_dev);
 }
 
 int
@@ -396,9 +393,6 @@ ural_detach(struct device *self, int flags)
 	ural_free_tx_list(sc);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 
 	return 0;
 }

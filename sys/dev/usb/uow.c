@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.28 2010/12/27 03:03:50 jakemsr Exp $	*/
+/*	$OpenBSD: uow.c,v 1.29 2011/01/25 20:03:36 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -259,9 +259,6 @@ uow_detach(struct device *self, int flags)
 		rv = config_detach(sc->sc_ow_dev, flags);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 
 	return (rv);
 }

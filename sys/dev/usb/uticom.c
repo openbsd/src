@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.12 2010/12/17 21:02:58 jasper Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.13 2011/01/25 20:03:36 jakemsr Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -497,8 +497,6 @@ uticom_detach(struct device *self, int flags)
 		sc->sc_intr_pipe = NULL;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.15 2010/09/24 08:33:59 yuo Exp $   */
+/*	$OpenBSD: uthum.c,v 1.16 2011/01/25 20:03:36 jakemsr Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -220,8 +220,6 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_hdev.sc_dev);
 	printf("\n");
 
 	if (sc->sc_flen < 32) {
@@ -281,9 +279,6 @@ uthum_detach(struct device *self, int flags)
 		if (sc->sc_sensortask != NULL)
 			sensor_task_unregister(sc->sc_sensortask);
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_hdev.sc_dev);
 
 	return (rv);
 }

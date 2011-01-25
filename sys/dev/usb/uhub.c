@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.56 2010/12/06 04:41:40 jakemsr Exp $ */
+/*	$OpenBSD: uhub.c,v 1.57 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -251,8 +251,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Wait with power off for a while. */
 	usbd_delay_ms(dev, USB_POWER_DOWN_TIME);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, &sc->sc_dev);
 
 	/*
 	 * To have the best chance of success we do things in the exact same
@@ -570,9 +568,6 @@ uhub_detach(struct device *self, int flags)
 		if (rup->device)
 			usb_disconnect_port(rup, self);
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
-			   &sc->sc_dev);
 
 	if (hub->ports[0].tt)
 		free(hub->ports[0].tt, M_USBDEV);

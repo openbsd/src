@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.42 2010/09/24 08:33:59 yuo Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.43 2011/01/25 20:03:36 jakemsr Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -289,9 +289,6 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
-
 	if (sc->sc_flags & VISOR) {
 		sc->sc_numcon = UGETW(coninfo.num_ports);
 		if (sc->sc_numcon > UVISOR_MAX_CONN)
@@ -414,9 +411,6 @@ uvisor_detach(struct device *self, int flags)
 			sc->sc_subdevs[i] = NULL;
 		}
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (rv);
 }

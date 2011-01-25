@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.37 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.38 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -298,8 +298,6 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	}
 	}
 #endif
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
 }
 
 int
@@ -349,9 +347,6 @@ ulpt_detach(struct device *self, int flags)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | ULPT_NOPRIME , mn | ULPT_NOPRIME, VCHR);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (0);
 }

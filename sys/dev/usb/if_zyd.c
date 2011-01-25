@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.86 2010/12/06 04:41:39 jakemsr Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.87 2011/01/25 20:03:36 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -427,9 +427,6 @@ zyd_complete_attach(struct zyd_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(ZYD_TX_RADIOTAP_PRESENT);
 #endif
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_dev);
-
 fail:	return error;
 }
 
@@ -466,9 +463,6 @@ zyd_detach(struct device *self, int flags)
 	sc->attached = 0;
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.66 2010/12/27 03:03:50 jakemsr Exp $ */
+/*	$OpenBSD: udl.c,v 1.67 2011/01/25 20:03:36 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -389,8 +389,6 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wsdisplay = config_found(self, &aa, wsemuldisplaydevprint);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
-
 	/*
 	 * Load Huffman table.
 	 */
@@ -478,8 +476,6 @@ udl_detach(struct device *self, int flags)
 	 */
 	if (sc->sc_wsdisplay != NULL)
 		config_detach(sc->sc_wsdisplay, DETACH_FORCE);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 
 	return (0);
 }

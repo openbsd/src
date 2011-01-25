@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.22 2010/12/17 21:53:34 jasper Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.23 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -359,9 +359,6 @@ uvscom_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(("uvscom: in = 0x%x out = 0x%x intr = 0x%x\n",
 		 ucom->sc_bulkin_no, ucom->sc_bulkout_no, sc->sc_intr_number));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
-
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
 			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
@@ -386,9 +383,6 @@ uvscom_detach(struct device *self, int flags)
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (rv);
 }

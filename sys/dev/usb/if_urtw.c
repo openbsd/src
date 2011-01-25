@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.37 2011/01/11 21:04:46 damien Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.38 2011/01/25 20:03:35 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -756,9 +756,6 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(URTW_TX_RADIOTAP_PRESENT);
 #endif
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_dev);
-
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	return;
@@ -796,9 +793,6 @@ urtw_detach(struct device *self, int flags)
 	urtw_close_pipes(sc);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.37 2010/12/17 21:53:34 jasper Exp $	*/
+/*	$OpenBSD: urio.c,v 1.38 2011/01/25 20:03:36 jakemsr Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -183,9 +183,6 @@ urio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	DPRINTFN(10, ("urio_attach: %p\n", sc->sc_udev));
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
 }
 
 int
@@ -224,9 +221,6 @@ urio_detach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (0);
 }

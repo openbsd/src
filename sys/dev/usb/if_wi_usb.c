@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.49 2010/10/27 17:51:11 jakemsr Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.50 2011/01/25 20:03:35 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -386,9 +386,6 @@ wi_usb_attach(struct device *parent, struct device *self, void *aux)
 	sc->wi_usb_attached = 1;
 
 	kthread_create_deferred(wi_usb_start_thread, sc);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->wi_usb_udev,
-			   &sc->wi_usb_dev);
 }
 
 int
@@ -488,8 +485,6 @@ wi_usb_detach(struct device *self, int flags)
 
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->wi_usb_udev,
-	    &sc->wi_usb_dev);
 	return (0);
 }
 

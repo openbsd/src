@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.15 2010/12/06 04:41:40 jakemsr Exp $ */
+/*	$OpenBSD: umbg.c,v 1.16 2011/01/25 20:03:36 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -275,9 +275,6 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	printf("\n");
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_dev);
-
 	t_wait = 5;
 
 	t_trust = TRUSTTIME;
@@ -328,7 +325,6 @@ umbg_detach(struct device *self, int flags)
 	/* Unregister the clock with the kernel */
 	sensordev_deinstall(&sc->sc_sensordev);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 	return 0;
 }
 

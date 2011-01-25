@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.83 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.84 2011/01/25 20:03:35 jakemsr Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -837,9 +837,6 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->aue_stat_ch, aue_tick, sc);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev,
-			   &sc->aue_dev);
 }
 
 int
@@ -886,9 +883,6 @@ aue_detach(struct device *self, int flags)
 		usb_detach_wait(&sc->aue_dev);
 	}
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev,
-			   &sc->aue_dev);
 
 	return (0);
 }

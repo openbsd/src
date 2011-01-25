@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.148 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.149 2011/01/25 20:03:36 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -556,8 +556,6 @@ uvideo_attach_hook(void *arg)
 	sc->sc_mmap_cur = 0;
 	sc->sc_mmap_count = 0;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
-
 	DPRINTF(1, "uvideo_attach: doing video_attach_mi\n");
 	sc->sc_videodev = video_attach_mi(&uvideo_hw_if, sc, &sc->sc_dev);
 }
@@ -575,8 +573,6 @@ uvideo_detach(struct device *self, int flags)
 
 	if (sc->sc_videodev != NULL)
 		rv = config_detach(sc->sc_videodev, flags);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 
 	return (rv);
 }

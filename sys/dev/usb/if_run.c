@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.83 2011/01/10 16:59:05 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.84 2011/01/25 20:03:35 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -582,8 +582,6 @@ run_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RUN_TX_RADIOTAP_PRESENT);
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
 }
 
 int
@@ -630,8 +628,6 @@ run_detach(struct device *self, int flags)
 	run_free_rx_ring(sc);
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 
 	return 0;
 }

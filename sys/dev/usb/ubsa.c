@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.51 2010/12/17 21:53:34 jasper Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.52 2011/01/25 20:03:36 jakemsr Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -365,9 +365,6 @@ ubsa_attach(struct device *parent, struct device *self, void *aux)
 	uca.arg = sc;
 	uca.info = NULL;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
-
 	DPRINTF(("ubsa: in = 0x%x, out = 0x%x, intr = 0x%x\n",
 	    uca.bulkin, uca.bulkout, sc->sc_intr_number));
 
@@ -397,9 +394,6 @@ ubsa_detach(struct device *self, int flags)
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (rv);
 }

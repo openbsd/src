@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.71 2011/01/15 23:58:43 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.72 2011/01/25 20:03:36 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -60,8 +60,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
-#define USB_DEV_MINOR 255
-
 #include <machine/bus.h>
 
 #include <dev/usb/usbdivar.h>
@@ -115,21 +113,6 @@ struct proc *usb_task_thread_proc = NULL;
 void	usb_abort_task_thread(void *);
 struct proc *usb_abort_task_thread_proc = NULL;
 
-#define USB_MAX_EVENTS 100
-struct usb_event_q {
-	struct usb_event ue;
-	SIMPLEQ_ENTRY(usb_event_q) next;
-};
-SIMPLEQ_HEAD(, usb_event_q) usb_events =
-	SIMPLEQ_HEAD_INITIALIZER(usb_events);
-int usb_nevents = 0;
-struct selinfo usb_selevent;
-struct proc *usb_async_proc;  /* process that wants USB SIGIO */
-int usb_dev_open = 0;
-void usb_add_event(int, struct usb_event *);
-
-int usb_get_next_event(struct usb_event *);
-
 const char *usbrev_str[] = USBREV_STR;
 
 int usb_match(struct device *, void *, void *); 
@@ -164,7 +147,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status err;
 	int usbrev;
 	int speed;
-	struct usb_event ue;
 
 	DPRINTF(("usbd_attach\n"));
 
@@ -200,9 +182,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	/* explore task */
 	usb_init_task(&sc->sc_explore_task, usb_explore, sc,
 	    USB_TASK_TYPE_EXPLORE);
-
-	ue.u.ue_ctrlr.ue_bus = sc->sc_dev.dv_unit;
-	usb_add_event(USB_EVENT_CTRLR_ATTACH, &ue);
 
 	/* XXX we should have our own level */
 	sc->sc_bus->soft = softintr_establish(IPL_SOFTNET,
@@ -496,14 +475,6 @@ usbopen(dev_t dev, int flag, int mode, struct proc *p)
 	int unit = minor(dev);
 	struct usb_softc *sc;
 
-	if (unit == USB_DEV_MINOR) {
-		if (usb_dev_open)
-			return (EBUSY);
-		usb_dev_open = 1;
-		usb_async_proc = 0;
-		return (0);
-	}
-
 	if (unit >= usb_cd.cd_ndevs)
 		return (ENXIO);
 	sc = usb_cd.cd_devs[unit];
@@ -517,48 +488,8 @@ usbopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-usbread(dev_t dev, struct uio *uio, int flag)
-{
-	struct usb_event ue;
-	int s, error, n;
-
-	if (minor(dev) != USB_DEV_MINOR)
-		return (ENXIO);
-
-	if (uio->uio_resid != sizeof(struct usb_event))
-		return (EINVAL);
-
-	error = 0;
-	s = splusb();
-	for (;;) {
-		n = usb_get_next_event(&ue);
-		if (n != 0)
-			break;
-		if (flag & IO_NDELAY) {
-			error = EWOULDBLOCK;
-			break;
-		}
-		error = tsleep(&usb_events, PZERO | PCATCH, "usbrea", 0);
-		if (error)
-			break;
-	}
-	splx(s);
-	if (!error)
-		error = uiomove((void *)&ue, uio->uio_resid, uio);
-
-	return (error);
-}
-
-int
 usbclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	int unit = minor(dev);
-
-	if (unit == USB_DEV_MINOR) {
-		usb_async_proc = 0;
-		usb_dev_open = 0;
-	}
-
 	return (0);
 }
 
@@ -568,24 +499,6 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct usb_softc *sc;
 	int unit = minor(devt);
 	int error;
-
-	if (unit == USB_DEV_MINOR) {
-		switch (cmd) {
-		case FIONBIO:
-			/* All handled in the upper FS layer. */
-			return (0);
-
-		case FIOASYNC:
-			if (*(int *)data)
-				usb_async_proc = p;
-			else
-				usb_async_proc = 0;
-			return (0);
-
-		default:
-			return (EINVAL);
-		}
-	}
 
 	sc = usb_cd.cd_devs[unit];
 
@@ -717,83 +630,6 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (0);
 }
 
-int
-usbpoll(dev_t dev, int events, struct proc *p)
-{
-	int revents, mask, s;
-
-	if (minor(dev) == USB_DEV_MINOR) {
-		revents = 0;
-		mask = POLLIN | POLLRDNORM;
-
-		s = splusb();
-		if (events & mask && usb_nevents > 0)
-			revents |= events & mask;
-		if (revents == 0 && events & mask)
-			selrecord(p, &usb_selevent);
-		splx(s);
-
-		return (revents);
-	} else {
-		return (POLLERR);
-	}
-}
-
-void filt_usbrdetach(struct knote *);
-int filt_usbread(struct knote *, long);
-int usbkqfilter(dev_t, struct knote *);
-
-void
-filt_usbrdetach(struct knote *kn)
-{
-	int s;
-
-	s = splusb();
-	SLIST_REMOVE(&usb_selevent.si_note, kn, knote, kn_selnext);
-	splx(s);
-}
-
-int
-filt_usbread(struct knote *kn, long hint)
-{
-
-	if (usb_nevents == 0)
-		return (0);
-
-	kn->kn_data = sizeof(struct usb_event);
-	return (1);
-}
-
-struct filterops usbread_filtops =
-	{ 1, NULL, filt_usbrdetach, filt_usbread };
-
-int
-usbkqfilter(dev_t dev, struct knote *kn)
-{
-	struct klist *klist;
-	int s;
-
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		if (minor(dev) != USB_DEV_MINOR)
-			return (1);
-		klist = &usb_selevent.si_note;
-		kn->kn_fop = &usbread_filtops;
-		break;
-
-	default:
-		return (1);
-	}
-
-	kn->kn_hook = NULL;
-
-	s = splusb();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	splx(s);
-
-	return (0);
-}
-
 /*
  * Explore device tree from the root.  We need mutual exclusion to this
  * hub while traversing the device tree, but this is guaranteed since this
@@ -846,78 +682,6 @@ usb_needs_reattach(usbd_device_handle dev)
 	usb_needs_explore(dev, 0);
 }
 
-/* Called at splusb() */
-int
-usb_get_next_event(struct usb_event *ue)
-{
-	struct usb_event_q *ueq;
-
-	if (usb_nevents <= 0)
-		return (0);
-	ueq = SIMPLEQ_FIRST(&usb_events);
-#ifdef DIAGNOSTIC
-	if (ueq == NULL) {
-		printf("usb: usb_nevents got out of sync! %d\n", usb_nevents);
-		usb_nevents = 0;
-		return (0);
-	}
-#endif
-	*ue = ueq->ue;
-	SIMPLEQ_REMOVE_HEAD(&usb_events, next);
-	free(ueq, M_USBDEV);
-	usb_nevents--;
-	return (1);
-}
-
-void
-usbd_add_dev_event(int type, usbd_device_handle udev)
-{
-	struct usb_event ue;
-
-	usbd_fill_deviceinfo(udev, &ue.u.ue_device, USB_EVENT_IS_ATTACH(type));
-	usb_add_event(type, &ue);
-}
-
-void
-usbd_add_drv_event(int type, usbd_device_handle udev, struct device *dev)
-{
-	struct usb_event ue;
-
-	ue.u.ue_driver.ue_cookie = udev->cookie;
-	strncpy(ue.u.ue_driver.ue_devname, dev->dv_xname,
-	    sizeof ue.u.ue_driver.ue_devname);
-	usb_add_event(type, &ue);
-}
-
-void
-usb_add_event(int type, struct usb_event *uep)
-{
-	struct usb_event_q *ueq;
-	struct usb_event ue;
-	struct timespec thetime;
-	int s;
-
-	nanotime(&thetime);
-	/* Don't want to wait here inside splusb() */
-	ueq = malloc(sizeof *ueq, M_USBDEV, M_WAITOK);
-	ueq->ue = *uep;
-	ueq->ue.ue_type = type;
-	ueq->ue.ue_time = thetime;
-
-	s = splusb();
-	if (++usb_nevents >= USB_MAX_EVENTS) {
-		/* Too many queued events, drop an old one. */
-		DPRINTFN(-1,("usb: event dropped\n"));
-		(void)usb_get_next_event(&ue);
-	}
-	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
-	wakeup(&usb_events);
-	selwakeup(&usb_selevent);
-	if (usb_async_proc != NULL)
-		psignal(usb_async_proc, SIGIO);
-	splx(s);
-}
-
 void
 usb_schedsoftintr(usbd_bus_handle bus)
 {
@@ -959,7 +723,6 @@ int
 usb_detach(struct device *self, int flags)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
-	struct usb_event ue;
 
 	DPRINTF(("usb_detach: start\n"));
 
@@ -979,9 +742,6 @@ usb_detach(struct device *self, int flags)
 		softintr_disestablish(sc->sc_bus->soft);
 		sc->sc_bus->soft = NULL;
 	}
-
-	ue.u.ue_ctrlr.ue_bus = sc->sc_dev.dv_unit;
-	usb_add_event(USB_EVENT_CTRLR_DETACH, &ue);
 
 	return (0);
 }

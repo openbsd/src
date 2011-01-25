@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.50 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: uhid.c,v 1.51 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -194,12 +194,6 @@ uhid_detach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
-
-#if 0
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH,
-			   sc->sc_hdev.sc_parent->sc_udev,
-			   &sc->sc_hdev.sc_dev);
-#endif
 
 	return (0);
 }

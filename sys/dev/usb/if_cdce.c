@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.48 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.49 2011/01/25 20:03:35 jakemsr Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -360,9 +360,6 @@ found:
 
 	sc->cdce_attached = 1;
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cdce_udev,
-	    &sc->cdce_dev);
 }
 
 int
@@ -387,9 +384,6 @@ cdce_detach(struct device *self, int flags)
 
 	sc->cdce_attached = 0;
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->cdce_udev,
-	    &sc->cdce_dev);
 
 	return (0);
 }

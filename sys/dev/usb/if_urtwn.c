@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.12 2010/12/31 20:50:14 damien Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.13 2011/01/25 20:03:35 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -360,8 +360,6 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(URTWN_TX_RADIOTAP_PRESENT);
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
 }
 
 int
@@ -392,7 +390,6 @@ urtwn_detach(struct device *self, int flags)
 	urtwn_free_rx_list(sc);
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 	return (0);
 }
 

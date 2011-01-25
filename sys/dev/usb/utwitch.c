@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.2 2010/12/19 21:32:58 jasper Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.3 2011/01/25 20:03:36 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -154,8 +154,6 @@ utwitch_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_ibuf = malloc(sc->sc_ilen, M_USBDEV, M_WAITOK);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_hdev.sc_dev);
 	printf("\n");
 
 
@@ -207,9 +205,6 @@ utwitch_detach(struct device *self, int flags)
 		free(sc->sc_ibuf, M_USBDEV);
 		sc->sc_ibuf = NULL;
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_hdev.sc_dev);
 
 	return (rv);
 }

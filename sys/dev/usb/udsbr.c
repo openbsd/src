@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.21 2009/10/13 19:33:17 pirofti Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.22 2011/01/25 20:03:36 jakemsr Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -147,9 +147,6 @@ udsbr_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(10, ("udsbr_attach: %p\n", sc->sc_udev));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
-
 	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, &sc->sc_dev);
 }
 
@@ -161,9 +158,6 @@ udsbr_detach(struct device *self, int flags)
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (rv);
 }

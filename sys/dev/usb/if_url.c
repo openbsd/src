@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.60 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_url.c,v 1.61 2011/01/25 20:03:35 jakemsr Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -318,8 +318,6 @@ url_attach(struct device *parent, struct device *self, void *aux)
 
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, &sc->sc_dev);
-
 	return;
 
  bad:
@@ -373,9 +371,6 @@ url_detach(struct device *self, int flags)
 #endif
 
 	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.79 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.80 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1234,8 +1234,6 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	DPRINTF(("usbd_new_device: new dev (addr %d), dev=%p, parent=%p\n",
 		 addr, dev, parent));
 
-	usbd_add_dev_event(USB_EVENT_DEVICE_ATTACH, dev);
-
 	err = usbd_probe_and_attach(parent, dev, port, addr);
 	if (err) {
 		usbd_remove_device(dev, up);
@@ -1489,7 +1487,6 @@ usb_disconnect_port(struct usbd_port *up, struct device *parent)
 		}
 	}
 
-	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
 	dev->bus->devices[dev->address] = NULL;
 	up->device = NULL;
 	usb_free_device(dev);

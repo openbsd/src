@@ -1,4 +1,4 @@
-/*	$OpenBSD: udfu.c,v 1.2 2010/12/27 03:03:50 jakemsr Exp $	*/
+/*	$OpenBSD: udfu.c,v 1.3 2011/01/25 20:03:36 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2009 Federico G. Schwindt <fgsch@openbsd.org>
@@ -154,18 +154,13 @@ udfu_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!sc->sc_will_detach && err == 0)
 		usb_needs_reattach(sc->sc_udev);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    &sc->sc_dev);
 }
 
 int
 udfu_detach(struct device *self, int flags)
 {
-	struct udfu_softc *sc = (struct udfu_softc *)self;
+	/* struct udfu_softc *sc = (struct udfu_softc *)self; */
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 	return (0);
 }
 

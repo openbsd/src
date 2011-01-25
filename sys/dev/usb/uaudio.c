@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.90 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.91 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -560,9 +560,6 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 
 	uaudio_create_encodings(sc);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
-
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 }
@@ -604,9 +601,6 @@ uaudio_detach(struct device *self, int flags)
 
 	if (sc->sc_audiodev != NULL)
 		rv = config_detach(sc->sc_audiodev, flags);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    &sc->sc_dev);
 
 	return (rv);
 }

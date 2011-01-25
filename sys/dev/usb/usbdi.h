@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.38 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.39 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -151,9 +151,6 @@ void usbd_set_polling(usbd_device_handle iface, int on);
 
 const char *usbd_errstr(usbd_status err);
 
-void usbd_add_dev_event(int, usbd_device_handle);
-void usbd_add_drv_event(int, usbd_device_handle, struct device *);
-
 char *usbd_devinfo_alloc(usbd_device_handle dev, int showclass);
 void usbd_devinfo_free(char *devinfop);
 
@@ -185,8 +182,8 @@ void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
 const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
 
 /*
- * The usb_task structs form a queue of things to run in the USB event
- * thread.  Normally this is just device discovery when a connect/disconnect
+ * The usb_task structs form a queue of things to run in the USB task
+ * threads.  Normally this is just device discovery when a connect/disconnect
  * has been detected.  But it may also be used by drivers that need to
  * perform (short) tasks that must have a process context.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.59 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: umass.c,v 1.60 2011/01/25 20:03:36 jakemsr Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -620,9 +620,6 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
-
 	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", sc->sc_dev.dv_xname));
 }
 
@@ -673,9 +670,6 @@ umass_detach(struct device *self, int flags)
 		return (rv);
 
 	umass_disco(sc);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
 
 	return (rv);
 }
