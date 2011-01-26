@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.43 2011/01/25 10:58:41 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.44 2011/01/26 16:35:17 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2275,22 +2275,6 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 
 		sa_state(env, nsa, IKEV2_STATE_AUTH_SUCCESS);
 
-		/* Transfer all Child SAs and flows from the old IKE SA */
-		for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL;
-		     flow = nextflow) {
-			nextflow = TAILQ_NEXT(flow, flow_entry);
-			TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
-			TAILQ_INSERT_TAIL(&nsa->sa_flows, flow,
-			    flow_entry);
-		}
-		for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL;
-		     csa = nextcsa) {
-			nextcsa = TAILQ_NEXT(csa, csa_entry);
-			TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
-			TAILQ_INSERT_TAIL(&nsa->sa_childsas, csa,
-			    csa_entry);
-		}
-
 		nonce = nsa->sa_rnonce;
 	} else {
 		/* Child SA creating/rekeying */
@@ -2363,11 +2347,6 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			log_debug("%s: failed to get CHILD SAs", __func__);
 			return (-1);
 		}
-
-		if (ikev2_childsa_enable(env, sa)) {
-			log_debug("%s: failed to enable CHILD SAs", __func__);
-			goto done;
-		}
 	}
 
 	if ((e = ibuf_static()) == NULL)
@@ -2417,14 +2396,34 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
 		goto done;
 
-	ret = ikev2_msg_send_encrypt(env, sa, &e,
-	    IKEV2_EXCHANGE_CREATE_CHILD_SA, IKEV2_PAYLOAD_SA, 1);
+	if ((ret = ikev2_msg_send_encrypt(env, sa, &e,
+	    IKEV2_EXCHANGE_CREATE_CHILD_SA, IKEV2_PAYLOAD_SA, 1)) == -1)
+		goto done;
 
-	if (ret == 0 && protoid == IKEV2_SAPROTO_IKE) {
+	if (protoid == IKEV2_SAPROTO_IKE) {
+		/* Transfer all Child SAs and flows from the old IKE SA */
+		for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL;
+		     flow = nextflow) {
+			nextflow = TAILQ_NEXT(flow, flow_entry);
+			TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
+			TAILQ_INSERT_TAIL(&nsa->sa_flows, flow,
+			    flow_entry);
+			flow->flow_ikesa = nsa;
+		}
+		for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL;
+		     csa = nextcsa) {
+			nextcsa = TAILQ_NEXT(csa, csa_entry);
+			TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
+			TAILQ_INSERT_TAIL(&nsa->sa_childsas, csa,
+			    csa_entry);
+			csa->csa_ikesa = nsa;
+		}
+
 		log_debug("%s: activating new IKE SA", __func__);
 		sa_state(env, sa, IKEV2_STATE_CLOSED);
 		sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
-	}
+	} else
+		ret = ikev2_childsa_enable(env, sa);
 
  done:
 	if (ret) {
