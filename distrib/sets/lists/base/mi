@@ -943,6 +943,7 @@
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Check.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Find.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Formated.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Subject.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Unformated.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Whatis.pm
 ./usr/libdata/perl5/OpenBSD/Mtree.pm
