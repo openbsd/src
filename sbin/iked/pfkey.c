@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.13 2011/01/21 11:37:02 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.14 2011/01/26 16:59:24 mikeb Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -267,11 +267,9 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	sa_flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
 	sa_flowtype.sadb_protocol_len = sizeof(sa_flowtype) / 8;
 	sa_flowtype.sadb_protocol_direction = flow->flow_dir;
-	if (flow->flow_dir == IPSP_DIRECTION_IN)
-		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_USE;
-	else
-		sa_flowtype.sadb_protocol_proto = flow->flow_acquire ?
-		    SADB_X_FLOW_TYPE_ACQUIRE : SADB_X_FLOW_TYPE_REQUIRE;
+	sa_flowtype.sadb_protocol_proto =
+	    flow->flow_dir == IPSP_DIRECTION_IN ?
+	    SADB_X_FLOW_TYPE_USE : SADB_X_FLOW_TYPE_REQUIRE;
 
 	bzero(&sa_protocol, sizeof(sa_protocol));
 	sa_protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
@@ -1496,7 +1494,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 		    print_host(sdst, NULL, 0), print_host(dmask, NULL, 0),
 		    print_host(speer, NULL, 0));
 
-		ikev2_acquire(env, &flow);
+		ikev2_acquire_sa(env, &flow);
 
 out:
 		if (errmsg)

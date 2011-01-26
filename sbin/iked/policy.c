@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.15 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.16 2011/01/26 16:59:24 mikeb Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -58,8 +58,8 @@ policy_init(struct iked *env)
 	TAILQ_INIT(&env->sc_policies);
 	RB_INIT(&env->sc_users);
 	RB_INIT(&env->sc_sas);
-	RB_INIT(&env->sc_ipsecsas);
-	RB_INIT(&env->sc_acqflows);
+	RB_INIT(&env->sc_activesas);
+	RB_INIT(&env->sc_activeflows);
 }
 
 int
@@ -486,7 +486,7 @@ childsa_cmp(struct iked_childsa *a, struct iked_childsa *b)
 	return (0);
 }
 
-RB_GENERATE(iked_ipsecsas, iked_childsa, csa_ipsec_entry, childsa_cmp);
+RB_GENERATE(iked_activesas, iked_childsa, csa_node, childsa_cmp);
 
 static __inline int
 addr_cmp(struct iked_addr *a, struct iked_addr *b, int useports)
@@ -519,4 +519,4 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 	return (diff);
 }
 
-RB_GENERATE(iked_acqflows, iked_flow, flow_acq_entry, flow_cmp);
+RB_GENERATE(iked_activeflows, iked_flow, flow_node, flow_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.20 2011/01/17 18:49:35 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.21 2011/01/26 16:59:24 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -853,11 +853,9 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 			found++;
 
 		/*
-		 * Change flows to acquire mode so that it would be possible
-		 * to negotiate a new Child SA quickly
+		 * Flows are left in the require mode so that it would be
+		 * possible to quickly negotiate a new Child SA
 		 */
-		if (!peersas[i]->csa_rekey)
-			ikev2_flows_delete(env, sa, del->del_protoid, 1);
 	}
 
 	/* Parsed outgoing message? */

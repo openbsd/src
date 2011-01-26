@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2011/01/26 16:59:23 mikeb Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -224,6 +224,8 @@ config_free_flows(struct iked *env, struct iked_flows *head)
 
 		log_debug("%s: free %p", __func__, flow);
 
+		if (flow->flow_loaded)
+			RB_REMOVE(iked_activeflows, &env->sc_activeflows, flow);
 		TAILQ_REMOVE(head, flow, flow_entry);
 		(void)pfkey_flow_delete(env->sc_pfkey, flow);
 		flow_free(flow);
@@ -256,7 +258,7 @@ config_free_childsas(struct iked *env, struct iked_childsas *head,
 
 		TAILQ_REMOVE(head, csa, csa_entry);
 		if (csa->csa_loaded) {
-			RB_REMOVE(iked_ipsecsas, &env->sc_ipsecsas, csa);
+			RB_REMOVE(iked_activesas, &env->sc_activesas, csa);
 			(void)pfkey_sa_delete(env->sc_pfkey, csa);
 		}
 		childsa_free(csa);
