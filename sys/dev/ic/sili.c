@@ -1,7 +1,9 @@
-/*	$OpenBSD: sili.c,v 1.46 2010/08/05 20:21:36 kettenis Exp $ */
+/*	$OpenBSD: sili.c,v 1.47 2011/01/26 21:41:00 drahn Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2010 Conformal Systems LLC <info@conformal.com>
+ * Copyright (c) 2010 Jonathan Matthew <jonathan@d14n.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +30,7 @@
 #include <machine/bus.h>
 
 #include <dev/ata/atascsi.h>
+#include <dev/ata/pmreg.h>
 
 #include <dev/ic/silireg.h>
 #include <dev/ic/silivar.h>
@@ -44,6 +47,16 @@ int silidebug = SILI_D_VERBOSE;
 #define DPRINTF(m, a...)	do { if ((m) & silidebug) printf(a); } while (0)
 #else
 #define DPRINTF(m, a...)
+#endif
+
+/* these can be used to simulate read and write errors on specific PMP ports */
+#undef SILI_ERROR_TEST
+int sili_error_pmp_ports = 0;		/* bitmask containing ports to fail*/
+int sili_error_test_inv_p = 500;	/* 1/P(error) */
+int sili_error_restart_type = SILI_PREG_PCS_PORTINIT; /* or _DEVRESET */
+
+#ifdef SILI_ERROR_TEST
+#include <dev/rndvar.h>
 #endif
 
 struct cfdriver sili_cd = {
@@ -86,6 +99,13 @@ struct sili_port {
 	volatile u_int32_t	sp_active;
 	TAILQ_HEAD(, sili_ccb)	sp_active_ccbs;
 	TAILQ_HEAD(, sili_ccb)	sp_deferred_ccbs;
+
+	int			sp_port;
+	int			sp_pmp_ports;
+	int			sp_active_pmp_ports;
+	int			sp_pmp_error_recovery;	/* port bitmask */
+	volatile u_int32_t	sp_err_active;		/* cmd bitmask */
+	volatile u_int32_t	sp_err_cmds;		/* cmd bitmask */
 
 #ifdef SILI_DEBUG
 	char			sp_name[16];
@@ -150,21 +170,42 @@ void			sili_post_indirect(struct sili_port *,
 void			sili_pread_fis(struct sili_port *, u_int,
 			    struct ata_fis_d2h *);
 u_int32_t		sili_signature(struct sili_port *, u_int);
+u_int32_t		sili_port_softreset(struct sili_port *sp);
 int			sili_load(struct sili_ccb *, struct sili_sge *, int);
 void			sili_unload(struct sili_ccb *);
 int			sili_poll(struct sili_ccb *, int, void (*)(void *));
 void			sili_start(struct sili_port *, struct sili_ccb *);
-int			sili_read_ncq_error(struct sili_port *, int *);
+int			sili_read_ncq_error(struct sili_port *, int *, int);
+int			sili_pmp_port_start_error_recovery(struct sili_port *,
+			    int);
+void			sili_pmp_port_do_error_recovery(struct sili_port *,
+			    int, u_int32_t *);
+void			sili_port_clear_commands(struct sili_port *sp);
+
+/* pmp operations */
+int			sili_pmp_read(struct sili_port *, int, int,
+			    u_int32_t *);
+int			sili_pmp_write(struct sili_port *, int, int, u_int32_t);
+int			sili_pmp_phy_status(struct sili_port *, int,
+			    u_int32_t *);
+int 			sili_pmp_identify(struct sili_port *, int *);
 
 /* port interrupt handler */
 u_int32_t		sili_port_intr(struct sili_port *, int);
 
 /* atascsi interface */
-int			sili_ata_probe(void *, int);
-void			sili_ata_free(void *, int);
+int			sili_ata_probe(void *, int, int);
+void			sili_ata_free(void *, int, int);
 struct ata_xfer		*sili_ata_get_xfer(void *, int);
 void			sili_ata_put_xfer(struct ata_xfer *);
 void			sili_ata_cmd(struct ata_xfer *);
+int			sili_pmp_portreset(struct sili_softc *, int, int);
+int			sili_pmp_softreset(struct sili_softc *, int, int);
+
+#ifdef SILI_ERROR_TEST
+void 			sili_simulate_error(struct sili_ccb *ccb,
+			    int *need_restart, int *err_port);
+#endif
 
 struct atascsi_methods sili_atascsi_methods = {
 	sili_ata_probe,
@@ -176,6 +217,9 @@ struct atascsi_methods sili_atascsi_methods = {
 /* completion paths */
 void			sili_ata_cmd_done(struct sili_ccb *, int);
 void			sili_ata_cmd_timeout(void *);
+void			sili_dummy_done(struct ata_xfer *);
+
+void			sili_pmp_op_timeout(void *);
 
 int
 sili_attach(struct sili_softc *sc)
@@ -199,7 +243,7 @@ sili_attach(struct sili_softc *sc)
 	aaa.aaa_minphys = NULL;
 	aaa.aaa_nports = sc->sc_nports;
 	aaa.aaa_ncmds = SILI_MAX_CMDS;
-	aaa.aaa_capability = ASAA_CAP_NCQ;
+	aaa.aaa_capability = ASAA_CAP_NCQ | ASAA_CAP_PMP_NCQ;
 
 	sc->sc_atascsi = atascsi_attach(&sc->sc_dev, &aaa);
 
@@ -226,21 +270,145 @@ sili_detach(struct sili_softc *sc, int flags)
 void
 sili_resume(struct sili_softc *sc)
 {
-	int i;
+	int i, j;
 
 	/* bounce the controller */
 	sili_write(sc, SILI_REG_GC, SILI_REG_GC_GR);
 	sili_write(sc, SILI_REG_GC, 0x0);
 
-	for (i = 0; i < sc->sc_nports; i++)
-		sili_ata_probe(sc, i);
+	for (i = 0; i < sc->sc_nports; i++) {
+		if (sili_ata_probe(sc, i, 0) == ATA_PORT_T_PM) {
+			struct sili_port *sp = &sc->sc_ports[i];
+			for (j = 0; j < sp->sp_pmp_ports; j++) {
+				sili_ata_probe(sc, i, j);
+			}
+		}
+	}
 }
+
+int
+sili_pmp_port_start_error_recovery(struct sili_port *sp, int err_port)
+{
+	struct sili_ccb *ccb;
+
+	sp->sp_pmp_error_recovery |= (1 << err_port);
+
+	/* create a bitmask of active commands on non-error ports */
+	sp->sp_err_active = 0;
+	TAILQ_FOREACH(ccb, &sp->sp_active_ccbs, ccb_entry) {
+		int bit = (1 << ccb->ccb_xa.pmp_port);
+		if ((sp->sp_pmp_error_recovery & bit) == 0) {
+			DPRINTF(SILI_D_VERBOSE, "%s: slot %d active on port "
+			    "%d\n", PORTNAME(sp), ccb->ccb_xa.tag,
+			    ccb->ccb_xa.pmp_port);
+			sp->sp_err_active |= (1 << ccb->ccb_xa.tag);
+		}
+	}
+
+	if (sp->sp_err_active == 0) {
+		DPRINTF(SILI_D_VERBOSE, "%s: no other PMP ports active\n",
+		    PORTNAME(sp));
+		sp->sp_pmp_error_recovery = 0;
+		return (0);
+	}
+
+	/* set port resume */
+	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_RESUME);
+
+	DPRINTF(SILI_D_VERBOSE, "%s: beginning error recovery (port %d); "
+	    "error port mask %x, active slot mask %x\n", PORTNAME(sp), err_port,
+	    sp->sp_pmp_error_recovery, sp->sp_err_active);
+	return (1);
+}
+
+void
+sili_port_clear_commands(struct sili_port *sp)
+{
+	int port;
+
+	DPRINTF(SILI_D_VERBOSE, "%s: clearing active commands\n",
+	    PORTNAME(sp));
+
+	/* clear port resume */
+	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_RESUME);
+	delay(10000);
+
+	/* clear port status and port active for all ports */
+	for (port = 0; port < 16; port++) {
+		sili_pwrite(sp, SILI_PREG_PMP_STATUS(port), 0);
+		sili_pwrite(sp, SILI_PREG_PMP_QACTIVE(port), 0);
+	}
+}
+
+void
+sili_pmp_port_do_error_recovery(struct sili_port *sp, int slot,
+    u_int32_t *need_restart)
+{
+	if (sp->sp_pmp_error_recovery == 0) {
+		return;
+	}
+
+	/* have all outstanding commands finished yet? */
+	if (sp->sp_err_active != 0) {
+		DPRINTF(SILI_D_VERBOSE, "%s: PMP error recovery still waiting "
+		    "for %x\n", PORTNAME(sp), sp->sp_err_active);
+		*need_restart = 0;
+		return;
+	}
+
+	sili_port_clear_commands(sp);
+
+	/* get the main error recovery code to reset the port and
+	 * resubmit commands.  it will also reset the error recovery flags.
+	 */
+	*need_restart = SILI_PREG_PCS_PORTINIT;
+	DPRINTF(SILI_D_VERBOSE, "%s: PMP error recovery complete\n",
+	    PORTNAME(sp));
+}
+
+#ifdef SILI_ERROR_TEST
+void
+sili_simulate_error(struct sili_ccb *ccb, int *need_restart, int *err_port)
+{
+	struct sili_port *sp = ccb->ccb_port;
+
+	if (*need_restart == 0 &&
+	    ((1 << ccb->ccb_xa.pmp_port) & sili_error_pmp_ports)) {
+		switch (ccb->ccb_xa.fis->command) {
+		case ATA_C_WRITE_FPDMA:
+		case ATA_C_READ_FPDMA:
+		case ATA_C_WRITEDMA_EXT:
+		case ATA_C_READDMA_EXT:
+		case ATA_C_WRITEDMA:
+		case ATA_C_READDMA:
+			if ((arc4random() % sili_error_test_inv_p) == 0) {
+				printf("%s: faking error on slot %d\n",
+				    PORTNAME(sp), ccb->ccb_xa.tag);
+				ccb->ccb_xa.state = ATA_S_ERROR;
+				*need_restart = sili_error_restart_type;
+				*err_port = ccb->ccb_xa.pmp_port;
+
+				ccb->ccb_port->sp_err_cmds |=
+				    (1 << ccb->ccb_xa.tag);
+			}
+			break;
+
+		default:
+			/* leave other commands alone, we only want to mess
+			 * with normal read/write ops
+			 */
+			break;
+		}
+	}
+}
+#endif
 
 u_int32_t
 sili_port_intr(struct sili_port *sp, int timeout_slot)
 {
 	u_int32_t			is, pss_saved, pss_masked;
 	u_int32_t			processed = 0, need_restart = 0;
+	u_int32_t			err_port = 0;
 	int				slot;
 	struct sili_ccb			*ccb;
 
@@ -273,29 +441,63 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 		case SILI_PREG_CE_DATAFISERROR:
 			/* Extract error from command slot in LRAM. */
 			sili_pread_fis(sp, err_slot, &ccb->ccb_xa.rfis);
+			err_port = ccb->ccb_xa.pmp_port;
 			break;
 
 		case SILI_PREG_CE_SDBERROR:
-			/* No NCQ commands active?  Treat as a normal error. */
-			sactive = sili_pread(sp, SILI_PREG_SACT);/* XXX Pmult */
-			if (sactive == 0)
-				break;
 
-			/* Extract real NCQ error slot & RFIS from log page. */
-			if (!sili_read_ncq_error(sp, &err_slot)) {
+			if (sp->sp_pmp_ports > 0) {
+				/* get the PMP port number for the error */
+				err_port = (sili_pread(sp, SILI_PREG_CONTEXT)
+				    >> SILI_PREG_CONTEXT_PMPORT_SHIFT) &
+				    SILI_PREG_CONTEXT_PMPORT_MASK;
+				DPRINTF(SILI_D_VERBOSE, "%s: error port is "
+				    "%d\n", PORTNAME(sp), err_port);
+
+				/* were there any NCQ commands active for
+				 * the port?
+				 */
+				sactive = sili_pread(sp,
+				    SILI_PREG_PMP_QACTIVE(err_port));
+				DPRINTF(SILI_D_VERBOSE, "%s: error SActive "
+				    "%x\n", PORTNAME(sp), sactive);
+				if (sactive == 0)
+					break;
+			} else {
+				/* No NCQ commands active?  Treat as a normal
+				 * error.
+				 */
+				sactive = sili_pread(sp, SILI_PREG_SACT);
+				if (sactive == 0)
+					break;
+			}
+
+			/* Extract real NCQ error slot & RFIS from
+			 * log page.
+			 */ 
+			if (!sili_read_ncq_error(sp, &err_slot, err_port)) {
 				/* got real err_slot */
+				DPRINTF(SILI_D_VERBOSE, "%s.%d: error slot "
+				    "%d\n", PORTNAME(sp), err_port, err_slot);
 				ccb = &sp->sp_ccbs[err_slot];
 				break;
 			}
+			DPRINTF(SILI_D_VERBOSE, "%s.%d: failed to get error "
+			    "slot\n", PORTNAME(sp), err_port);
 
 			/* failed to get error or not NCQ */
 
 			/* FALLTHROUGH */
 		default:
 			/* All other error types are fatal. */
-			printf("%s: fatal error (%d), aborting active slots "
+			if (err_code != SILI_PREG_CE_SDBERROR) {
+				err_port = (sili_pread(sp, SILI_PREG_CONTEXT)
+				    >> SILI_PREG_CONTEXT_PMPORT_SHIFT) &
+				    SILI_PREG_CONTEXT_PMPORT_MASK;
+			}
+			printf("%s.%d: fatal error (%d), aborting active slots "
 			    "(%08x) and resetting device.\n", PORTNAME(sp),
-			    err_code, pss_saved);
+			    err_port, err_code, pss_saved);
 			while (pss_saved) {
 				slot = ffs(pss_saved) - 1;
 				pss_saved &= ~(1 << slot);
@@ -308,12 +510,14 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 			goto fatal;
 		}
 
-		DPRINTF(SILI_D_VERBOSE, "%s: %serror, code %d, slot %d, "
-		    "active %08x\n", PORTNAME(sp), sactive ? "NCQ " : "",
-		    err_code, err_slot, sp->sp_active);
+		DPRINTF(SILI_D_VERBOSE, "%s.%d: %serror, code %d, slot %d, "
+		    "active %08x\n", PORTNAME(sp), err_port,
+		    sactive ? "NCQ " : "", err_code, err_slot, sp->sp_active);
 
 		/* Clear the failed commmand in saved PSS so cmd_done runs. */
 		pss_saved &= ~(1 << err_slot);
+		/* Track errored commands until we finish recovery */
+		sp->sp_err_cmds |= (1 << err_slot);
 
 		KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
 		ccb->ccb_xa.state = ATA_S_ERROR;
@@ -334,8 +538,13 @@ fatal:
 		KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
 		ccb->ccb_xa.state = ATA_S_TIMEOUT;
 
-		/* Reset device to abort all commands (including this one). */
-		need_restart = SILI_PREG_PCS_DEVRESET;
+		/* Reinitialise the port and clear all active commands */
+		need_restart = SILI_PREG_PCS_PORTINIT;
+
+		err_port = ccb->ccb_xa.pmp_port;
+		sp->sp_err_cmds |= (1 << timeout_slot);
+
+		sili_port_clear_commands(sp);
 	}
 
 	/* Command slot is complete if its bit in PSS is 0 but 1 in active. */
@@ -345,31 +554,79 @@ fatal:
 		ccb = &sp->sp_ccbs[slot];
 		pss_masked &= ~(1 << slot);
 
-		DPRINTF(SILI_D_INTR, "%s: slot %d is complete%s\n",
+		/* copy the rfis into the ccb if we were asked for it */
+		if (ccb->ccb_xa.state == ATA_S_ONCHIP &&
+		    ccb->ccb_xa.flags & ATA_F_GET_RFIS) {
+			sili_pread_fis(sp, slot, &ccb->ccb_xa.rfis);
+		}
+
+#ifdef SILI_ERROR_TEST
+		/* introduce random errors on reads and writes for testing */
+		sili_simulate_error(ccb, &need_restart, &err_port);
+#endif
+
+		DPRINTF(SILI_D_INTR, "%s: slot %d is complete%s%s\n",
 		    PORTNAME(sp), slot, ccb->ccb_xa.state == ATA_S_ERROR ?
 		    " (error)" : (ccb->ccb_xa.state == ATA_S_TIMEOUT ?
-		    " (timeout)" : ""));
+		    " (timeout)" : ""),
+		    ccb->ccb_xa.flags & ATA_F_NCQ ? " (ncq)" : "");
 
 		sili_ata_cmd_done(ccb, need_restart);
 
 		processed |= 1 << slot;
+
+		sili_pmp_port_do_error_recovery(sp, slot, &need_restart);
 	}
 
 	if (need_restart) {
+
+		if (sp->sp_pmp_error_recovery) {
+			if (sp->sp_err_active != 0) {
+				DPRINTF(SILI_D_VERBOSE, "%s: still waiting for "
+				    "non-error commands to finish; port mask "
+				    "%x, slot mask %x\n", PORTNAME(sp),
+				    sp->sp_pmp_error_recovery,
+				    sp->sp_err_active);
+				return (processed);
+			}
+		} else if (timeout_slot < 0 && sp->sp_pmp_ports > 0) {
+			/* wait until all other commands have finished before
+			 * attempting to reinit the port.
+			 */
+			DPRINTF(SILI_D_VERBOSE, "%s: error on port with PMP "
+			    "attached, error port %d\n", PORTNAME(sp),
+			    err_port);
+			if (sili_pmp_port_start_error_recovery(sp, err_port)) {
+				DPRINTF(SILI_D_VERBOSE, "%s: need to wait for "
+				    "other commands to finish\n", PORTNAME(sp));
+				return (processed);
+			}
+		} else if (sp->sp_pmp_ports > 0) {
+			DPRINTF(SILI_D_VERBOSE, "%s: timeout on PMP port\n",
+			    PORTNAME(sp));
+		} else {
+			DPRINTF(SILI_D_VERBOSE, "%s: error on non-PMP port\n",
+			    PORTNAME(sp));
+		}
+
 		/* Re-enable transfers on port. */
 		sili_pwrite(sp, SILI_PREG_PCS, need_restart);
+		if (!sili_pwait_eq(sp, SILI_PREG_PCS, need_restart, 0, 5000)) {
+			printf("%s: port reset bit didn't clear after error\n",
+			    PORTNAME(sp));
+		}
 		if (!sili_pwait_eq(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTRDY,
 		    SILI_PREG_PCS_PORTRDY, 1000)) {
 			printf("%s: couldn't restart port after error\n",
 			    PORTNAME(sp));
 		}
+		sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_RESUME);
 
-		/* Restart CCBs in the order they were originally queued. */
-		pss_masked = pss_saved;
+		/* check that our active CCB list matches the restart mask */
+		pss_masked = pss_saved & ~(sp->sp_err_cmds);
+		DPRINTF(SILI_D_VERBOSE, "%s: restart mask %x\n",
+		    PORTNAME(sp), pss_masked);
 		TAILQ_FOREACH(ccb, &sp->sp_active_ccbs, ccb_entry) {
-			DPRINTF(SILI_D_VERBOSE, "%s: restarting slot %d "
-			    "after error, state %02x\n", PORTNAME(sp),
-			    ccb->ccb_xa.tag, ccb->ccb_xa.state);
 			if (!(pss_masked & (1 << ccb->ccb_xa.tag))) {
 				panic("sili_intr: slot %d not active in "
 				    "pss_masked: %08x, state %02x",
@@ -377,12 +634,69 @@ fatal:
 				    ccb->ccb_xa.state);
 			}
 			pss_masked &= ~(1 << ccb->ccb_xa.tag);
+		}
+		if (pss_masked != 0) {
+			printf("%s: mask excluding active slots: %x\n",
+			    PORTNAME(sp), pss_masked);
+		}
+		KASSERT(pss_masked == 0);
+		
+		/* if we had a timeout on a PMP port, do a portreset.
+		 * exclude the control port here as there isn't a real
+		 * device there to reset.
+		 */
+		if (timeout_slot >= 0 && sp->sp_pmp_ports > 0 &&
+		    err_port != 15) {
 
+			DPRINTF(SILI_D_VERBOSE,
+			    "%s.%d: doing portreset after timeout\n",
+			    PORTNAME(sp), err_port);
+			sili_pmp_portreset(sp->sp_sc, sp->sp_port, err_port);
+
+			/* wait a bit to let the port settle down */
+			delay(2000000);
+		}
+
+		/* if we sent a device reset to a PMP, we need to reset the
+		 * devices behind it too.
+		 */
+		if (need_restart == SILI_PREG_PCS_DEVRESET &&
+		    sp->sp_pmp_ports > 0) {
+			int port_type;
+			int i;
+
+			port_type = sili_port_softreset(sp);
+			if (port_type != ATA_PORT_T_PM) {
+				/* device disappeared or changed type? */
+				printf("%s: expected to find a port multiplier,"
+				    " got %d\n", PORTNAME(sp), port_type);
+			}
+
+			/* and now portreset all active ports */
+			for (i = 0; i < sp->sp_pmp_ports; i++) {
+				struct sili_softc *sc = sp->sp_sc;
+
+				if ((sp->sp_active_pmp_ports & (1 << i)) == 0)
+					continue;
+
+				if (sili_pmp_portreset(sc, sp->sp_port, i)) {
+					printf("%s.%d: failed to portreset "
+					    "after error\n", PORTNAME(sp), i);
+				}
+			}
+		}
+
+		/* Restart CCBs in the order they were originally queued. */
+		TAILQ_FOREACH(ccb, &sp->sp_active_ccbs, ccb_entry) {
+			DPRINTF(SILI_D_VERBOSE, "%s: restarting slot %d "
+			    "after error, state %02x\n", PORTNAME(sp),
+			    ccb->ccb_xa.tag, ccb->ccb_xa.state);
 			KASSERT(ccb->ccb_xa.state == ATA_S_ONCHIP);
 			sili_post_indirect(sp, ccb);
 		}
-		KASSERT(pss_masked == 0);
-
+		sp->sp_err_cmds = 0;
+		sp->sp_pmp_error_recovery = 0;
+		
 		/*
 		 * Finally, run atascsi completion for any finished CCBs.  If
 		 * we had run these during cmd_done above, any ccbs that their
@@ -391,6 +705,9 @@ fatal:
 		while ((ccb = TAILQ_FIRST(&sp->sp_deferred_ccbs)) != NULL) {
 			TAILQ_REMOVE(&sp->sp_deferred_ccbs, ccb, ccb_entry);
 
+			DPRINTF(SILI_D_VERBOSE, "%s: running deferred "
+			    "completion for slot %d, state %02x\n",
+			    PORTNAME(sp), ccb->ccb_xa.tag, ccb->ccb_xa.state);
 			KASSERT(ccb->ccb_xa.state == ATA_S_COMPLETE ||
 			    ccb->ccb_xa.state == ATA_S_ERROR ||
 			    ccb->ccb_xa.state == ATA_S_TIMEOUT);
@@ -437,6 +754,7 @@ sili_ports_alloc(struct sili_softc *sc)
 		sp = &sc->sc_ports[i];
 
 		sp->sp_sc = sc;
+		sp->sp_port = i;
 #ifdef SILI_DEBUG
 		snprintf(sp->sp_name, sizeof(sp->sp_name), "%s.%d",
 		    DEVNAME(sc), i);
@@ -549,6 +867,13 @@ struct sili_ccb *
 sili_get_ccb(struct sili_port *sp)
 {
 	struct sili_ccb			*ccb;
+
+	/* don't allow new commands to start while doing PMP error
+	 * recovery
+	 */
+	if (sp->sp_pmp_error_recovery != 0) {
+		return (NULL);
+	}
 
 	mtx_enter(&sp->sp_free_ccb_mtx);
 	ccb = TAILQ_FIRST(&sp->sp_free_ccbs);
@@ -753,28 +1078,193 @@ sili_signature(struct sili_port *sp, u_int slot)
 	return (sig_hi | sig_lo);
 }
 
-int
-sili_ata_probe(void *xsc, int port)
+void
+sili_dummy_done(struct ata_xfer *xa)
 {
-	struct sili_softc		*sc = xsc;
-	struct sili_port		*sp = &sc->sc_ports[port];
+}
+
+int
+sili_pmp_portreset(struct sili_softc *sc, int port, int pmp_port)
+{
+	struct sili_port	*sp;
+	u_int32_t 		data;
+	int			loop;
+
+	sp = &sc->sc_ports[port];
+	DPRINTF(SILI_D_VERBOSE, "%s: resetting pmp port %d\n", PORTNAME(sp),
+	    pmp_port);
+
+	if (sili_pmp_write(sp, pmp_port, SATA_PMREG_SERR, -1))
+		goto err;
+	if (sili_pmp_write(sp, pmp_port, SATA_PMREG_SCTL,
+	    SATA_PM_SCTL_IPM_DISABLED))
+		goto err;
+	delay(10000);
+
+	/* enable PHY by writing 1 then 0 to Scontrol DET field, using
+	 * Write Port Multiplier commands
+	 */
+	data = SATA_PM_SCTL_IPM_DISABLED | SATA_PM_SCTL_DET_INIT |
+	    SATA_PM_SCTL_SPD_ANY;
+	if (sili_pmp_write(sp, pmp_port, SATA_PMREG_SCTL, data))
+		goto err;
+	delay(100000);
+	
+	if (sili_pmp_phy_status(sp, pmp_port, &data)) {
+		printf("%s: cannot clear phy status for PMP probe\n",
+			PORTNAME(sp));
+		goto err;
+	}
+	
+	sili_pmp_write(sp, pmp_port, SATA_PMREG_SERR, -1);
+	data = SATA_PM_SCTL_IPM_DISABLED | SATA_PM_SCTL_DET_NONE;
+	if (sili_pmp_write(sp, pmp_port, SATA_PMREG_SCTL, data))
+		goto err;
+	delay(100000);
+	
+	/* wait for PHYRDY by polling SStatus */
+	for (loop = 3; loop; loop--) {
+		if (sili_pmp_read(sp, pmp_port, SATA_PMREG_SSTS, &data))
+			goto err;
+		if (data & SATA_PM_SSTS_DET)
+			break;
+		delay(100000);
+	}
+	if (loop == 0) {
+		DPRINTF(SILI_D_VERBOSE, "%s.%d: port appears to be unplugged\n",
+		    PORTNAME(sp), pmp_port);
+		goto err;
+	}
+	
+	/* give it a bit more time to complete negotiation */
+	for (loop = 30; loop; loop--) {
+		if (sili_pmp_read(sp, pmp_port, SATA_PMREG_SSTS, &data))
+			goto err;
+		if ((data & SATA_PM_SSTS_DET) == SATA_PM_SSTS_DET_DEV)
+			break;
+		delay(10000);
+	}
+	if (loop == 0) {
+		printf("%s.%d: device may be powered down\n", PORTNAME(sp),
+		    pmp_port);
+		goto err;
+	}
+
+	DPRINTF(SILI_D_VERBOSE, "%s.%d: device detected; SStatus=%08x\n",
+	    PORTNAME(sp), pmp_port, data);
+
+	/* clear the X-bit and all other error bits in Serror (PCSR[1]) */
+	sili_pmp_write(sp, pmp_port, SATA_PMREG_SERR, -1);
+	return (0);
+
+err:
+	DPRINTF(SILI_D_VERBOSE, "%s.%d: port reset failed\n", PORTNAME(sp),
+	    pmp_port);
+	sili_pmp_write(sp, pmp_port, SATA_PMREG_SERR, -1);
+	return (1);
+}
+
+void
+sili_pmp_op_timeout(void *cookie)
+{
+	struct sili_ccb *ccb = cookie;
+	struct sili_port *sp = ccb->ccb_port;
+	int s;
+
+	switch (ccb->ccb_xa.state) {
+	case ATA_S_PENDING:
+		TAILQ_REMOVE(&sp->sp_active_ccbs, ccb, ccb_entry);
+		ccb->ccb_xa.state = ATA_S_TIMEOUT;
+		break;
+	case ATA_S_ONCHIP:
+		KASSERT(sp->sp_active == (1 << ccb->ccb_xa.tag));
+		s = splbio();
+		sili_port_intr(sp, ccb->ccb_xa.tag);
+		splx(s);
+		break;
+	case ATA_S_ERROR:
+		/* don't do anything? */
+		break;
+	default:
+		panic("%s: sili_pmp_op_timeout: ccb in bad state %d",
+		      PORTNAME(sp), ccb->ccb_xa.state);
+	}
+}
+
+int
+sili_pmp_softreset(struct sili_softc *sc, int port, int pmp_port)
+{
+	struct sili_ccb		*ccb;
+	struct sili_prb		*prb;
+	struct sili_port	*sp;
+	struct ata_fis_h2d	*fis;
+	u_int32_t 		data;
+	u_int32_t		signature;
+
+	sp = &sc->sc_ports[port];
+
+	ccb = sili_get_ccb(sp);
+	ccb->ccb_xa.flags = ATA_F_POLL | ATA_F_GET_RFIS;
+	ccb->ccb_xa.complete = sili_dummy_done;
+	ccb->ccb_xa.pmp_port = pmp_port;
+	
+	prb = ccb->ccb_cmd;
+	bzero(prb, sizeof(*prb));
+	fis = (struct ata_fis_h2d *)&prb->fis;
+	fis->flags = pmp_port;
+	prb->control = SILI_PRB_SOFT_RESET;
+
+	ccb->ccb_xa.state = ATA_S_PENDING;
+
+	if (sili_poll(ccb, 8000, sili_pmp_op_timeout) != 0) {
+		DPRINTF(SILI_D_VERBOSE, "%s.%d: softreset FIS failed\n",
+		    PORTNAME(sp), pmp_port);
+
+		sili_put_ccb(ccb);
+		/* don't return a valid device type here so the caller knows
+		 * it can retry if it wants to
+		 */
+		return (-1);
+	}
+
+	signature = ccb->ccb_xa.rfis.sector_count |
+	    (ccb->ccb_xa.rfis.lba_low << 8) |
+	    (ccb->ccb_xa.rfis.lba_mid << 16) |
+	    (ccb->ccb_xa.rfis.lba_high << 24);
+	DPRINTF(SILI_D_VERBOSE, "%s.%d: signature: %08x\n", PORTNAME(sp),
+	    pmp_port, signature);
+
+	sili_put_ccb(ccb);
+
+	/* clear phy status and error bits */
+	if (sili_pmp_phy_status(sp, pmp_port, &data)) {
+		printf("%s.%d: cannot clear phy status after softreset\n",
+		       PORTNAME(sp), pmp_port);
+	}
+	sili_pmp_write(sp, pmp_port, SATA_PMREG_SERR, -1);
+
+	/* classify the device based on its signature */
+	switch (signature) {
+	case SATA_SIGNATURE_DISK:
+		return (ATA_PORT_T_DISK);
+	case SATA_SIGNATURE_ATAPI:
+		return (ATA_PORT_T_ATAPI);
+	case SATA_SIGNATURE_PORT_MULTIPLIER:
+		return (ATA_PORT_T_NONE);
+	default:
+		return (ATA_PORT_T_NONE);
+	}
+}
+
+u_int32_t
+sili_port_softreset(struct sili_port *sp)
+{
 	struct sili_prb_softreset	sreset;
 	u_int32_t			signature;
-	int				port_type;
-
-	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_PORTRESET);
-	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_A32B);
-
-	if (!sili_pwait_eq(sp, SILI_PREG_SSTS, SATA_SStatus_DET,
-	    SATA_SStatus_DET_DEV, 1000))
-		return (ATA_PORT_T_NONE);
-
-	DPRINTF(SILI_D_VERBOSE, "%s: SSTS 0x%08x\n", PORTNAME(sp),
-	    sili_pread(sp, SILI_PREG_SSTS));
 
 	bzero(&sreset, sizeof(sreset));
 	sreset.control = htole16(SILI_PRB_SOFT_RESET | SILI_PRB_INTERRUPT_MASK);
-	/* XXX sreset fis pmp field */
+	sreset.fis[1] = SATA_PMP_CONTROL_PORT;
 
 	/* we use slot 0 */
 	sili_post_direct(sp, 0, &sreset, sizeof(sreset));
@@ -792,19 +1282,109 @@ sili_ata_probe(void *xsc, int port)
 
 	switch (signature) {
 	case SATA_SIGNATURE_DISK:
-		port_type = ATA_PORT_T_DISK;
-		break;
+		return (ATA_PORT_T_DISK);
 	case SATA_SIGNATURE_ATAPI:
-		port_type = ATA_PORT_T_ATAPI;
-		break;
+		return (ATA_PORT_T_ATAPI);
 	case SATA_SIGNATURE_PORT_MULTIPLIER:
+		return (ATA_PORT_T_PM);
 	default:
 		return (ATA_PORT_T_NONE);
 	}
+}
+
+int
+sili_ata_probe(void *xsc, int port, int lun)
+{
+	struct sili_softc		*sc = xsc;
+	struct sili_port		*sp = &sc->sc_ports[port];
+	int				port_type;
+
+	/* handle pmp port probes */
+	if (lun != 0) {
+		int i;
+		int rc;
+		int pmp_port = lun - 1;
+
+		if (lun > sp->sp_pmp_ports)
+			return (ATA_PORT_T_NONE);
+
+		for (i = 0; i < 2; i++) {
+			if (sili_pmp_portreset(sc, port, pmp_port)) {
+				continue;
+			}
+
+			/* small delay between attempts to allow error
+			 * conditions to settle down.  this doesn't seem
+			 * to affect portreset operations, just
+			 * commands sent to the device.
+			 */
+			if (i != 0) {
+				delay(5000000);
+			}
+
+			rc = sili_pmp_softreset(sc, port, pmp_port);
+			switch (rc) {
+			case -1:
+				/* possibly try again */
+				break;
+			case ATA_PORT_T_DISK:
+			case ATA_PORT_T_ATAPI:
+				/* mark this port as active */
+				sp->sp_active_pmp_ports |= (1 << pmp_port);
+			default:
+				return (rc);
+			}
+		}
+		DPRINTF(SILI_D_VERBOSE, "%s.%d: probe failed\n", PORTNAME(sp),
+		    pmp_port);
+		return (ATA_PORT_T_NONE);
+	}
+
+	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTRESET);
+	delay(10000);
+	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_PORTRESET);
+
+	sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTINIT);
+	if (!sili_pwait_eq(sp, SILI_PREG_PCS, SILI_PREG_PCS_PORTRDY,
+	    SILI_PREG_PCS_PORTRDY, 1000)) {
+		printf("%s: couldn't initialize port\n", PORTNAME(sp));
+		return (ATA_PORT_T_NONE);
+	}
+
+	sili_pwrite(sp, SILI_PREG_PCC, SILI_PREG_PCC_A32B);
+
+	if (!sili_pwait_eq(sp, SILI_PREG_SSTS, SATA_SStatus_DET,
+	    SATA_SStatus_DET_DEV, 2000)) {
+		DPRINTF(SILI_D_VERBOSE, "%s: unattached\n", PORTNAME(sp));
+		return (ATA_PORT_T_NONE);
+	}
+
+	DPRINTF(SILI_D_VERBOSE, "%s: SSTS 0x%08x\n", PORTNAME(sp),
+	    sili_pread(sp, SILI_PREG_SSTS));
+
+	port_type = sili_port_softreset(sp);
+	if (port_type == ATA_PORT_T_NONE)
+		return (port_type);
 
 	/* allocate port resources */
 	if (sili_ccb_alloc(sp) != 0)
 		return (ATA_PORT_T_NONE);
+
+	/* do PMP probe now that we can talk to the device */
+	if (port_type == ATA_PORT_T_PM) {
+		int i;
+
+		sili_pwrite(sp, SILI_PREG_PCS, SILI_PREG_PCS_PMEN);
+
+		if (sili_pmp_identify(sp, &sp->sp_pmp_ports)) {
+			return (ATA_PORT_T_NONE);
+		}
+
+		/* reset all the PMP ports to wake devices up */
+		for (i = 0; i < sp->sp_pmp_ports; i++) {
+			sili_pmp_portreset(sp->sp_sc, sp->sp_port, i);
+		}
+	}
 
 	/* enable port interrupts */
 	sili_write(sc, SILI_REG_GC, sili_read(sc, SILI_REG_GC) | 1 << port);
@@ -815,15 +1395,17 @@ sili_ata_probe(void *xsc, int port)
 }
 
 void
-sili_ata_free(void *xsc, int port)
+sili_ata_free(void *xsc, int port, int lun)
 {
 	struct sili_softc		*sc = xsc;
 	struct sili_port		*sp = &sc->sc_ports[port];
 
-	if (sp->sp_ccbs != NULL)
-		sili_ccb_free(sp);
+	if (lun == 0) {
+		if (sp->sp_ccbs != NULL)
+			sili_ccb_free(sp);
 
-	/* XXX we should do more here */
+		/* XXX we should do more here */
+	}
 }
 
 void
@@ -838,7 +1420,7 @@ sili_ata_cmd(struct ata_xfer *xa)
 	int				sgllen;
 	int				s;
 
-	KASSERT(xa->state == ATA_S_SETUP);
+	KASSERT(xa->state == ATA_S_SETUP || xa->state == ATA_S_TIMEOUT);
 
 	if (xa->flags & ATA_F_PACKET) {
 		atapi = ccb->ccb_cmd;
@@ -905,6 +1487,11 @@ sili_ata_cmd_done(struct sili_ccb *ccb, int defer_completion)
 
 	TAILQ_REMOVE(&sp->sp_active_ccbs, ccb, ccb_entry);
 	sp->sp_active &= ~(1 << xa->tag);
+	if (sp->sp_err_active & (1 << xa->tag)) {
+		sp->sp_err_active &= ~(1 << xa->tag);
+		DPRINTF(SILI_D_VERBOSE, "%s: slot %d complete, error mask now "
+		    "%x\n", PORTNAME(sp), xa->tag, sp->sp_err_active);
+	}
 
 	if (xa->state == ATA_S_ONCHIP)
 		xa->state = ATA_S_COMPLETE;
@@ -1031,7 +1618,7 @@ sili_poll(struct sili_ccb *ccb, int timeout, void (*timeout_fn)(void *))
 	do {
 		if (sili_port_intr(sp, -1) & (1 << ccb->ccb_xa.tag)) {
 			splx(s);
-			return (0);
+			return (ccb->ccb_xa.state != ATA_S_COMPLETE);
 		}
 
 		delay(1000);
@@ -1053,6 +1640,7 @@ sili_start(struct sili_port *sp, struct sili_ccb *ccb)
 
 	splassert(IPL_BIO);
 	KASSERT(ccb->ccb_xa.state == ATA_S_PENDING);
+	KASSERT(sp->sp_pmp_error_recovery == 0);
 
 	TAILQ_INSERT_TAIL(&sp->sp_active_ccbs, ccb, ccb_entry);
 	sp->sp_active |= 1 << slot;
@@ -1062,7 +1650,7 @@ sili_start(struct sili_port *sp, struct sili_ccb *ccb)
 }
 
 int
-sili_read_ncq_error(struct sili_port *sp, int *err_slotp)
+sili_read_ncq_error(struct sili_port *sp, int *err_slotp, int pmp_port)
 {
 	struct sili_softc		*sc = sp->sp_sc;
 	struct sili_prb_ata		read_10h;
@@ -1092,7 +1680,7 @@ sili_read_ncq_error(struct sili_port *sp, int *err_slotp)
 
 	fis = (struct ata_fis_h2d *)read_10h.fis;
 	fis->type = ATA_FIS_TYPE_H2D;
-	fis->flags = ATA_H2D_FLAGS_CMD;	/* XXX fis pmp field */
+	fis->flags = ATA_H2D_FLAGS_CMD | pmp_port;
 	fis->command = ATA_C_READ_LOG_EXT;
 	fis->lba_low = 0x10;		/* queued error log page (10h) */
 	fis->sector_count = 1;		/* number of sectors (1) */
@@ -1146,7 +1734,6 @@ sili_ata_get_xfer(void *xsc, int port)
 
 	ccb = sili_get_ccb(sp);
 	if (ccb == NULL) {
-		printf("sili_ata_get_xfer: NULL ccb\n");
 		return (NULL);
 	}
 
@@ -1161,4 +1748,133 @@ sili_ata_put_xfer(struct ata_xfer *xa)
 	struct sili_ccb			*ccb = (struct sili_ccb *)xa;
 
 	sili_put_ccb(ccb);
+}
+
+/* PMP register ops */
+int
+sili_pmp_read(struct sili_port *sp, int target, int which, u_int32_t *datap)
+{
+	struct sili_ccb	*ccb;
+	struct sili_prb	*prb;
+	struct ata_fis_h2d *fis;
+	int error;
+
+	ccb = sili_get_ccb(sp);
+	if (ccb == NULL) {
+		printf("%s: NULL ccb!\n", PORTNAME(sp));
+		return (1);
+	}
+	ccb->ccb_xa.flags = ATA_F_POLL | ATA_F_GET_RFIS;
+	ccb->ccb_xa.complete = sili_dummy_done;
+	ccb->ccb_xa.pmp_port = SATA_PMP_CONTROL_PORT;
+	ccb->ccb_xa.state = ATA_S_PENDING;
+	
+	prb = ccb->ccb_cmd;
+	bzero(prb, sizeof(*prb));
+	fis = (struct ata_fis_h2d *)&prb->fis;
+	fis->type = ATA_FIS_TYPE_H2D;
+	fis->flags = ATA_H2D_FLAGS_CMD | SATA_PMP_CONTROL_PORT;
+	fis->command = ATA_C_READ_PM;
+	fis->features = which;
+	fis->device = target | ATA_H2D_DEVICE_LBA;
+	fis->control = ATA_FIS_CONTROL_4BIT;
+
+	if (sili_poll(ccb, 1000, sili_pmp_op_timeout) != 0) {
+		printf("sili_pmp_read(%d, %d) failed\n", target, which);
+		error = 1;
+	} else {
+		*datap = ccb->ccb_xa.rfis.sector_count |
+		    (ccb->ccb_xa.rfis.lba_low << 8) |
+		    (ccb->ccb_xa.rfis.lba_mid << 16) |
+		    (ccb->ccb_xa.rfis.lba_high << 24);
+		error = 0;
+	}
+	sili_put_ccb(ccb);
+	return (error);
+}
+
+int
+sili_pmp_write(struct sili_port *sp, int target, int which, u_int32_t data)
+{
+	struct sili_ccb	*ccb;
+	struct sili_prb	*prb;
+	struct ata_fis_h2d *fis;
+	int error;
+
+	ccb = sili_get_ccb(sp);
+	if (ccb == NULL) {
+		printf("%s: NULL ccb!\n", PORTNAME(sp));
+		return (1);
+	}
+	ccb->ccb_xa.complete = sili_dummy_done;
+	ccb->ccb_xa.flags = ATA_F_POLL;
+	ccb->ccb_xa.pmp_port = SATA_PMP_CONTROL_PORT;
+	ccb->ccb_xa.state = ATA_S_PENDING;
+
+	prb = ccb->ccb_cmd;
+	bzero(prb, sizeof(*prb));
+	fis = (struct ata_fis_h2d *)&prb->fis;
+	fis->type = ATA_FIS_TYPE_H2D;
+	fis->flags = ATA_H2D_FLAGS_CMD | SATA_PMP_CONTROL_PORT;
+	fis->command = ATA_C_WRITE_PM;
+	fis->features = which;
+	fis->device = target | ATA_H2D_DEVICE_LBA;
+	fis->sector_count = (u_int8_t)data;
+	fis->lba_low = (u_int8_t)(data >> 8);
+	fis->lba_mid = (u_int8_t)(data >> 16);
+	fis->lba_high = (u_int8_t)(data >> 24);
+	fis->control = ATA_FIS_CONTROL_4BIT;
+
+	error = sili_poll(ccb, 1000, sili_pmp_op_timeout);
+	sili_put_ccb(ccb);
+	return (error);
+}
+
+int
+sili_pmp_phy_status(struct sili_port *sp, int target, u_int32_t *datap)
+{
+	int error;
+
+	error = sili_pmp_read(sp, target, SATA_PMREG_SSTS, datap);
+	if (error == 0)
+		error = sili_pmp_write(sp, target, SATA_PMREG_SERR, -1);
+	if (error)
+		*datap = 0;
+
+	return (error);
+}
+
+int
+sili_pmp_identify(struct sili_port *sp, int *ret_nports)
+{
+	u_int32_t chipid;
+	u_int32_t rev;
+	u_int32_t nports;
+	u_int32_t features;
+	u_int32_t enabled;
+
+	if (sili_pmp_read(sp, 15, 0, &chipid) ||
+	    sili_pmp_read(sp, 15, 1, &rev) ||
+	    sili_pmp_read(sp, 15, 2, &nports) ||
+	    sili_pmp_read(sp, 15, SATA_PMREG_FEA, &features) ||
+	    sili_pmp_read(sp, 15, SATA_PMREG_FEAEN, &enabled)) {
+		printf("%s: port multiplier identification failed\n",
+		    PORTNAME(sp));
+		return (1);
+	}
+
+	nports &= 0x0F;
+
+	/* ignore SEMB port on SiI3726 port multiplier chips */
+	if (chipid == 0x37261095) {
+		nports--;
+	}
+
+	printf("%s: port multiplier found: chip=%08x rev=0x%b nports=%d, "
+	    "features: 0x%b, enabled: 0x%b\n", PORTNAME(sp), chipid, rev,
+	    SATA_PFMT_PM_REV, nports, features, SATA_PFMT_PM_FEA, enabled,
+	    SATA_PFMT_PM_FEA);
+
+	*ret_nports = nports;
+	return (0);
 }

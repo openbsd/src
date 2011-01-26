@@ -1,7 +1,9 @@
-/*	$OpenBSD: atascsi.h,v 1.44 2010/09/23 11:41:54 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.45 2011/01/26 21:41:00 drahn Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2010 Conformal Systems LLC <info@conformal.com>
+ * Copyright (c) 2010 Jonathan Matthew <jonathan@d14n.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +35,8 @@ struct scsi_link;
 #define ATA_C_READDMA		0xc8
 #define ATA_C_WRITEDMA		0xca
 #define ATA_C_STANDBY_IMMED	0xe0
+#define ATA_C_READ_PM		0xe4
+#define ATA_C_WRITE_PM		0xe8
 #define ATA_C_FLUSH_CACHE	0xe7
 #define ATA_C_FLUSH_CACHE_EXT	0xea /* lba48 */
 #define ATA_C_IDENTIFY		0xec
@@ -201,6 +205,8 @@ struct ata_fis_h2d {
 	u_int8_t		sector_count_exp;
 	u_int8_t		reserved0;
 	u_int8_t		control;
+#define ATA_FIS_CONTROL_SRST		0x04
+#define ATA_FIS_CONTROL_4BIT		0x08
 
 	u_int8_t		reserved1;
 	u_int8_t		reserved2;
@@ -302,9 +308,11 @@ struct ata_xfer {
 #define ATA_F_PACKET			(1<<5)
 #define ATA_F_NCQ			(1<<6)
 #define ATA_F_DONE			(1<<7)
-#define ATA_FMT_FLAGS			"\020" "\007DONE" "\007NCQ" \
-					"\006PACKET" "\005PIO" "\004POLL" \
-					"\003NOWAIT" "\002WRITE" "\001READ"
+#define ATA_F_GET_RFIS			(1<<8)
+#define ATA_FMT_FLAGS			"\020" "\011GET_RFIS" "\010DONE" \
+					"\007NCQ" "\006PACKET" "\005PIO" \
+					"\004POLL" "\003NOWAIT" "\002WRITE" \
+					"\001READ"
 
 	volatile int		state;
 #define ATA_S_SETUP			0
@@ -318,6 +326,8 @@ struct ata_xfer {
 
 	void			*atascsi_private;
 
+	int			pmp_port;
+
 	void			(*ata_put_xfer)(struct ata_xfer *);
 };
 
@@ -326,9 +336,9 @@ struct ata_xfer {
  */
 
 struct atascsi_methods {
-	int			(*probe)(void *, int);
-	void			(*free)(void *, int);
-	struct ata_xfer *	(*ata_get_xfer)(void *, int );
+	int			(*probe)(void *, int, int);
+	void			(*free)(void *, int, int);
+	struct ata_xfer *	(*ata_get_xfer)(void *, int);
 	void			(*ata_cmd)(struct ata_xfer *);
 };
 
@@ -343,16 +353,18 @@ struct atascsi_attach_args {
 	int			aaa_capability;
 #define ASAA_CAP_NCQ		(1 << 0)
 #define ASAA_CAP_NEEDS_RESERVED	(1 << 1)
+#define ASAA_CAP_PMP_NCQ	(1 << 2)
 };
 
 #define ATA_PORT_T_NONE		0
 #define ATA_PORT_T_DISK		1
 #define ATA_PORT_T_ATAPI	2
+#define ATA_PORT_T_PM		3
 
 struct atascsi	*atascsi_attach(struct device *, struct atascsi_attach_args *);
 int		atascsi_detach(struct atascsi *, int);
 
-int		atascsi_probe_dev(struct atascsi *, int);
-int		atascsi_detach_dev(struct atascsi *, int, int);
+int		atascsi_probe_dev(struct atascsi *, int, int);
+int		atascsi_detach_dev(struct atascsi *, int, int, int);
 
 void		ata_complete(struct ata_xfer *);

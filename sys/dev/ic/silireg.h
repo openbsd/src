@@ -1,7 +1,9 @@
-/*	$OpenBSD: silireg.h,v 1.20 2007/04/07 13:02:52 pascoe Exp $ */
+/*	$OpenBSD: silireg.h,v 1.21 2011/01/26 21:41:00 drahn Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2010 Conformal Systems LLC <info@conformal.com>
+ * Copyright (c) 2010 Jonathan Matthew <jonathan@d14n.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +68,17 @@
 #define SILI_PREG_SIG_HI_SHIFT	8
 #define SILI_PREG_SIG_LO(_s)	(SILI_PREG_SLOT(_s) + 0x14)
 #define SILI_PREG_SIG_LO_MASK	0xff
-/* XXX PMP Bits */
+
+#define SILI_PREG_PMP_BASE	0xF80	/* PMP Device Status/QActive Registers */
+#define SILI_PREG_PMP_STATUS(_p) (SILI_PREG_PMP_BASE + (_p * 8))
+#define SILI_PREG_PMP_QACTIVE(_p) (SILI_PREG_PMP_BASE + 4 + (_p * 8))
+#define  SILI_PREG_PMP_STATUS_PIO	0x000000FF
+#define  SILI_PREG_PMP_STATUS_ACTIVE	0x00000F00
+#define  SILI_PREG_PMP_STATUS_BUSY	(1 << 13)
+#define  SILI_PREG_PMP_STATUS_NCQ	(1 << 14)
+#define  SILI_PREG_PMP_STATUS_LEGACY_Q	(1 << 15)
+#define  SILI_PREG_PMP_STATUS_PENDING	(1 << 16)
+
 #define SILI_PREG_PCS		0x1000 /* Port Control Set / Status */
 #define  SILI_PREG_PCS_PORTRDY		(1<<31) /* Port Ready */
 #define  SILI_PREG_PCS_OOBB		(1<<25) /* OOB Bypass */
@@ -159,11 +171,20 @@
 #define SILI_PREG_PSS_ALL_SLOTS		0x7fffffff
 #define SILI_PREG_CAR_LO(_s)	(0x1c00 + ((_s) * 0x8)) /* Cmd Activate Reg */
 #define SILI_PREG_CAR_HI(_s)	(0x1c00 + ((_s) * 0x8) + 0x4)
-#define SILI_PREG_CONTEXT	0x1e0f /* Port Context Register */
+#define SILI_PREG_CONTEXT	0x1e04 /* Port Context Register */
+#define  SILI_PREG_CONTEXT_SLOT_MASK	0x1F
+#define  SILI_PREG_CONTEXT_PMPORT_MASK	0x0F
+#define  SILI_PREG_CONTEXT_SLOT_SHIFT	0
+#define  SILI_PREG_CONTEXT_PMPORT_SHIFT	5
 #define SILI_PREG_SCTL		0x1f00 /* SControl */
+#define  SILI_PREG_SCTL_PMP		0x000F0000
+#define  SILI_PREG_SCTL_PMP_SHIFT	16
 #define SILI_PREG_SSTS		0x1f04 /* SStatus */
 #define SILI_PREG_SERR		0x1f08 /* SError */
 #define SILI_PREG_SACT		0x1f0c /* SActive */
+#define SILI_PREG_SNOT		0x1f10 /* SNotification */
+
+
 
 
 struct sili_sge {
