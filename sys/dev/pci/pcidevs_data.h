@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1589 2011/01/26 01:45:01 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.1590 2011/01/26 07:09:09 kevlo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4040,16 +4040,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "L1C",
 	},
 	{
-	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2,
-	    "L2",
-	},
-	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1D,
 	    "L1D",
 	},
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1D_1,
 	    "L1D",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2,
+	    "L2",
 	},
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2C_1,
