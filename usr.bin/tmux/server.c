@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.100 2011/01/08 01:52:36 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.101 2011/01/26 00:11:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -415,7 +415,7 @@ server_child_exited(pid_t pid, int status)
 		}
 	}
 
-	SLIST_FOREACH(job, &all_jobs, lentry) {
+	LIST_FOREACH(job, &all_jobs, lentry) {
 		if (pid == job->pid) {
 			job_died(job, status);	/* might free job */
 			break;
