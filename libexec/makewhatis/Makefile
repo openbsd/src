@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2008/09/01 17:18:19 drahn Exp $
+#	$OpenBSD: Makefile,v 1.9 2011/01/26 15:10:59 espie Exp $
 
 MAN=makewhatis.8
 NOPROG=
@@ -7,6 +7,7 @@ PACKAGES= \
 	OpenBSD/Makewhatis/Check.pm \
 	OpenBSD/Makewhatis/Find.pm \
 	OpenBSD/Makewhatis/Formated.pm \
+	OpenBSD/Makewhatis/Subject.pm \
 	OpenBSD/Makewhatis/Unformated.pm \
 	OpenBSD/Makewhatis/Whatis.pm
 
