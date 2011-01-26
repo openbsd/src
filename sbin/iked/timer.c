@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.3 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: timer.c,v 1.4 2011/01/26 17:07:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -54,6 +54,9 @@ timer_register_initiator(struct iked *env,
 	struct timer_cbarg	*tmr;
 
 	timer_unregister_initiator(env);
+
+	if (env->sc_passive)
+		return;
 
 	tmr = &timer_initiator;
 	gettimeofday(&tmr->tmr_first, NULL);
