@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.10 2010/11/03 10:15:23 dlg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -255,14 +255,17 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmt_softc *sc = (struct vmt_softc *)self;
 
+	printf("\n");
 	sc->sc_rpc_buf = malloc(VMT_RPC_BUFLEN, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_rpc_buf == NULL) {
-		printf(": unable to allocate buffer for RPC\n");
+		printf("%s: unable to allocate buffer for RPC\n",
+		    DEVNAME(sc));
 		return;
 	}
 
 	if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
-		printf(": failed to open backdoor RPC channel (TCLO protocol)\n");
+		printf("%s: failed to open backdoor RPC channel "
+		    "(TCLO protocol)\n", DEVNAME(sc));
 		goto free;
 	}
 
@@ -290,7 +293,6 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 	timeout_add_sec(&sc->sc_tclo_tick, 1);
 	sc->sc_tclo_ping = 1;
 
-	printf("\n");
 	return;
 
 free:
