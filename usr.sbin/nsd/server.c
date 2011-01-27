@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
+#ifndef SHUT_WR
+#define SHUT_WR 1
+#endif
 
 #include "axfr.h"
 #include "namedb.h"
@@ -567,7 +570,7 @@ close_all_sockets(struct nsd_socket sockets[], size_t n)
 	for (i = 0; i < n; ++i) {
 		if (sockets[i].s != -1) {
 			close(sockets[i].s);
-			free(sockets[i].addr);
+			freeaddrinfo(sockets[i].addr);
 			sockets[i].s = -1;
 		}
 	}
@@ -771,6 +774,16 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		exit(1);
 	}
 
+	/* if the parent has quit, we must quit too, poll the fd for cmds */
+	if(block_read(nsd, cmdsocket, &cmd, sizeof(cmd), 0) == sizeof(cmd)) {
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc command from main %d", cmd));
+		if(cmd == NSD_QUIT) {
+			DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: quit to follow nsd"));
+			send_children_quit(nsd);
+			exit(0);
+		}
+	}
+
 	/* Overwrite pid before closing old parent, to avoid race condition:
 	 * - parent process already closed
 	 * - pidfile still contains old_pid
@@ -802,6 +815,12 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 			strerror(errno));
 	}
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc reply main %d %d", ret, cmd));
+	if(cmd == NSD_QUIT) {
+		/* small race condition possible here, parent got quit cmd. */
+		send_children_quit(nsd);
+		unlinkpid(nsd->pidfile);
+		exit(1);
+	}
 	assert(ret==-1 || ret == 0 || cmd == NSD_RELOAD);
 
 	/* inform xfrd of new SOAs */
@@ -1150,8 +1169,17 @@ server_main(struct nsd *nsd)
 	/* Unlink it if possible... */
 	unlinkpid(nsd->pidfile);
 
-	if(reload_listener.fd > 0)
+	if(reload_listener.fd > 0) {
+		sig_atomic_t cmd = NSD_QUIT;
+		DEBUG(DEBUG_IPC,1, (LOG_INFO,
+			"main: ipc send quit to reload-process"));
+		if(!write_socket(reload_listener.fd, &cmd, sizeof(cmd))) {
+			log_msg(LOG_ERR, "server_main: could not send quit to reload: %s",
+				strerror(errno));
+		}
+		fsync(reload_listener.fd);
 		close(reload_listener.fd);
+	}
 	if(xfrd_listener.fd > 0) {
 		/* complete quit, stop xfrd */
 		sig_atomic_t cmd = NSD_QUIT;

@@ -243,7 +243,7 @@ write_to_zonefile(struct zone* zone, struct diff_log* commit_log)
 	time_t now = time(0);
 	FILE *out;
 
-	fprintf(stderr, "writing zone %s to file %s\n", zone->opts->name,
+	fprintf(stdout, "writing zone %s to file %s\n", zone->opts->name,
 		filename);
 
 	if(!zone->apex) {

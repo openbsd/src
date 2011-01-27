@@ -334,11 +334,11 @@ wire_rel_dname:	wire_label
 
 str_seq:	STR
     {
-	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $1.str, $1.len));
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->region, $1.str, $1.len), 1);
     }
     |	str_seq sp STR
     {
-	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $3.str, $3.len));
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->region, $3.str, $3.len), 0);
     }
     ;
 
@@ -661,6 +661,9 @@ rdata_mx:	STR sp dname trail
     ;
 
 rdata_txt:	str_seq trail
+    {
+	zadd_rdata_txt_clean_wireformat();
+    }
     ;
 
 /* RFC 1183 */

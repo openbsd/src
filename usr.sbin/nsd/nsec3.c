@@ -475,7 +475,7 @@ nsec3_answer_wildcard(struct query *query, struct answer *answer,
 
 static void
 nsec3_add_ds_proof(struct query *query, struct answer *answer,
-	struct domain *domain)
+	struct domain *domain, int delegpt)
 {
 	/* assert we are above the zone cut */
 	assert(domain != query->zone->apex);
@@ -483,10 +483,14 @@ nsec3_add_ds_proof(struct query *query, struct answer *answer,
 		/* use NSEC3 record from above the zone cut. */
 		nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 			domain->nsec3_ds_parent_cover);
+	} else if (!delegpt && domain->nsec3_is_exact) {
+		nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+			domain->nsec3_cover);
 	} else {
 		/* prove closest provable encloser */
 		domain_type* par = domain->parent;
 		domain_type* prev_par = 0;
+
 		while(par && !par->nsec3_is_exact)
 		{
 			prev_par = par;
@@ -528,7 +532,7 @@ nsec3_answer_nodata(struct query *query, struct answer *answer,
 			return;
 		}
 		/* query->zone must be the parent zone */
-		nsec3_add_ds_proof(query, answer, original);
+		nsec3_add_ds_proof(query, answer, original, 0);
 	}
 	/* the nodata is result from a wildcard match */
 	else if (original==original->wildcard_child_closest_match
@@ -554,7 +558,7 @@ nsec3_answer_delegation(struct query *query, struct answer *answer)
 {
 	if(!query->zone->nsec3_soa_rr)
 		return;
-	nsec3_add_ds_proof(query, answer, query->delegation_domain);
+	nsec3_add_ds_proof(query, answer, query->delegation_domain, 1);
 }
 
 int

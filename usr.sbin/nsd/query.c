@@ -39,9 +39,10 @@
 #include "tsig.h"
 
 /* [Bug #253] Adding unnecessary NS RRset may lead to undesired truncation.
- * This function determines if the final response packet needs the NS RRset included.
- * Currently, it will only return negative if QTYPE == DNSKEY. This way, resolvers
- * won't fallback to TCP unnecessarily when priming DNSKEYs. 
+ * This function determines if the final response packet needs the NS RRset
+ * included. Currently, it will only return negative if QTYPE == DNSKEY|DS.
+ * This way, resolvers won't fallback to TCP unnecessarily when priming
+ * trust anchors.
  */
 static int answer_needs_ns(struct query  *query);
 
@@ -617,8 +618,9 @@ static int
 answer_needs_ns(struct query* query)
 {
 	assert(query);
-	/* Currently, only troublesome for DNSKEYs, cuz their RRSETs are quite large. */
-	return (query->qtype != TYPE_DNSKEY);
+	/* Currently, only troublesome for DNSKEY and DS,
+         * cuz their RRSETs are quite large. */
+	return (query->qtype != TYPE_DNSKEY && query->qtype != TYPE_DS);
 }
 
 static int

@@ -422,7 +422,7 @@ zone_outgoing_interface: VAR_OUTGOING_INTERFACE STRING
 	{ 
 		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $2, "NOKEY");
 		OUTYY(("P(zone_outgoing_interface:%s)\n", $2)); 
-
+		if(acl->rangetype!=acl_range_single) c_error("address range used for outgoing interface");
 		if(cfg_parser->current_outgoing_interface)
 			cfg_parser->current_outgoing_interface->next = acl;
 		else

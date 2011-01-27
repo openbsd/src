@@ -935,7 +935,7 @@ zparser_ttl2int(const char *ttlstr, int* error)
 void
 zadd_rdata_wireformat(uint16_t *data)
 {
-	if (parser->current_rr.rdata_count > MAXRDATALEN) {
+	if (parser->current_rr.rdata_count >= MAXRDATALEN) {
 		zc_error_prev_line("too many rdata elements");
 	} else {
 		parser->current_rr.rdatas[parser->current_rr.rdata_count].data
@@ -944,10 +944,62 @@ zadd_rdata_wireformat(uint16_t *data)
 	}
 }
 
+/**
+ * Used for TXT RR's to grow with undefined number of strings.
+ */
+void
+zadd_rdata_txt_wireformat(uint16_t *data, int first)
+{
+	rdata_atom_type *rd;
+	
+	/* First STR in str_seq, allocate 65K in first unused rdata
+	 * else find last used rdata */
+	if (first) {
+		rd = &parser->current_rr.rdatas[parser->current_rr.rdata_count];
+		if ((rd->data = (uint16_t *) region_alloc(parser->rr_region,
+			sizeof(uint16_t) + 65535 * sizeof(uint8_t))) == NULL) {
+			zc_error_prev_line("Could not allocate memory for TXT RR");
+			return;
+		}
+		parser->current_rr.rdata_count++;
+		rd->data[0] = 0;
+	}
+	else
+		rd = &parser->current_rr.rdatas[parser->current_rr.rdata_count-1];
+	
+	if ((size_t)rd->data[0] + (size_t)data[0] > 65535) {
+		zc_error_prev_line("too large rdata element");
+		return;
+	}
+	
+	memcpy((uint8_t *)rd->data + 2 + rd->data[0], data + 1, data[0]);
+	rd->data[0] += data[0];
+}
+
+/**
+ * Clean up after last call of zadd_rdata_txt_wireformat
+ */
+void
+zadd_rdata_txt_clean_wireformat()
+{
+	uint16_t *tmp_data;
+	rdata_atom_type *rd = &parser->current_rr.rdatas[parser->current_rr.rdata_count-1];
+	if ((tmp_data = (uint16_t *) region_alloc(parser->region, 
+		rd->data[0] + 2)) != NULL) {
+		memcpy(tmp_data, rd->data, rd->data[0] + 2);
+		rd->data = tmp_data;
+	}
+	else {
+		/* We could not get memory in non-volatile region */
+		zc_error_prev_line("could not allocate memory for rdata");
+		return;
+	}
+}
+
 void
 zadd_rdata_domain(domain_type *domain)
 {
-	if (parser->current_rr.rdata_count > MAXRDATALEN) {
+	if (parser->current_rr.rdata_count >= MAXRDATALEN) {
 		zc_error_prev_line("too many rdata elements");
 	} else {
 		parser->current_rr.rdatas[parser->current_rr.rdata_count].domain
@@ -1260,10 +1312,10 @@ domain_find_rrset_any(domain_type *domain, uint16_t type)
 	while (result) {
 		if (rrset_rrtype(result) == type) {
 			return result;
-                }
+		}
 		result = result->next;
-        }
-        return NULL;
+	}
+	return NULL;
 }
 
 /*
@@ -1556,8 +1608,12 @@ main (int argc, char **argv)
 
 	/* Print the total number of errors */
 	if (vflag > 0 || totalerrors > 0) {
-		fprintf(stderr, "\nnsd-zonec: done with %ld errors.\n",
+		if (totalerrors > 0) {
+			fprintf(stderr, "\nnsd-zonec: done with %ld errors.\n",
 			totalerrors);
+		} else {
+			fprintf(stdout, "\nnsd-zonec: done with no errors.\n");
+		}
 	}
 
 	/* Disable this to save some time.  */
