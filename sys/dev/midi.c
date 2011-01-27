@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.24 2011/01/01 16:34:42 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.25 2011/01/27 20:37:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -544,7 +544,7 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 			midi_out_start(sc);
 		while (sc->isbusy) {
 			sc->wchan = 1;
-			error = tsleep(&sc->wchan, PWAIT|PCATCH, "mid_dr", 0);
+			error = tsleep(&sc->wchan, PWAIT, "mid_dr", 5 * hz);
 			if (error || sc->isdying)
 				break;
 		}
@@ -560,7 +560,7 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	 * Note: we'd better sleep in the corresponding hw_if->close()
 	 */
 
-	tsleep(&sc->wchan, PWAIT|PCATCH, "mid_cl", 2 * sc->wait);
+	tsleep(&sc->wchan, PWAIT, "mid_cl", 2 * sc->wait);
 	sc->hw_if->close(sc->hw_hdl);
 	sc->isopen = 0;
 	return 0;
