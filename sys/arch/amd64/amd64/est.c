@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.22 2010/12/29 18:10:17 kettenis Exp $ */
+/*	$OpenBSD: est.c,v 1.23 2011/01/27 21:27:44 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -209,6 +209,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		case 3:
 			bus_clock = BUS166;
+			break;
+		case 2:
+			bus_clock = BUS200:
 			break;
 		default:
 			printf("%s: unknown Atom FSB_FREQ value %d",

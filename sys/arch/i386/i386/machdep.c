@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.486 2010/12/29 18:10:17 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.487 2011/01/27 21:27:44 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2068,6 +2068,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		case 3:
 			bus_clock = BUS166;
+			break;
+		case 2:
+			bus_clock = BUS200;
 			break;
 		default:
 			printf("%s: unknown Atom FSB_FREQ value %d",
