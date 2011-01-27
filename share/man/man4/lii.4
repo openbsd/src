@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lii.4,v 1.6 2008/09/07 06:55:34 jmc Exp $
+.\"	$OpenBSD: lii.4,v 1.7 2011/01/27 02:18:31 kevlo Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,14 +30,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 7 2008 $
+.Dd $Mdocdate: January 27 2011 $
 .Dt LII 4
 .Os
 .Sh NAME
 .Nm lii
 .Nd Attansic L2 10/100 Ethernet device
 .Sh SYNOPSIS
-.Cd lii* at pci?
+.Cd "lii* at pci?"
+.Cd "atphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -94,6 +95,7 @@ For example,
 .Ic ifconfig lii0 media .
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr atphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
