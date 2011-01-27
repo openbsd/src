@@ -377,7 +377,7 @@ clean:
 	rm -f $(TARGETS)
 
 realclean: clean
-	rm -f Makefile config.h config.h.in config.log config.status configure
+	rm -f Makefile config.h config.log config.status configure
 	rm -rf autom4te*
 	rm -f zlexer.c zparser.h zparser.c zparser.stamp
 	rm -f configlexer.c configparser.h configparser.c configparser.stamp
