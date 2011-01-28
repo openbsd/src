@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.8,v 1.8 2010/11/10 08:00:54 martinh Exp $
+.\"	$OpenBSD: ldapd.8,v 1.9 2011/01/28 09:26:22 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2010 $
+.Dd $Mdocdate: January 28 2011 $
 .Dt LDAPD 8
 .Os
 .Sh NAME
@@ -70,6 +70,49 @@ together with the
 .Fl d
 flag produces debug traces of decoded BER messages on stderr.
 .El
+.Sh AUTHENTICATION
+.Nm
+can authenticate users via simple binds or SASL with the PLAIN
+mechanism.
+.Pp
+When using simple binds, the bind DN entry must exist in a namespace
+and have a
+.Ic userPassword
+attribute.
+The following formats of the
+.Ic userPassword
+attribute are recognized:
+.Bl -tag -width Ds
+.It Ic {SHA}digest
+Verify the password against the SHA-1 digest.
+.It Ic {SSHA}digest
+Verify the password against the salted SHA-1 digest.
+.It Ic {CRYPT}hash
+Verify the password against the
+.Xr crypt 3
+hash.
+.It Ic {BSDAUTH}username
+Use BSD Authentication with the given username and authentication style
+.Dq auth-ldap .
+This is similar to using SASL PLAIN authentication with
+.Ar username
+as the authentication ID.
+.It Ic {BSDAUTH}username#class
+Same as above, but overrides the login class.
+.El
+.Pp
+Without a prefix, the
+.Ic userPassword
+attribute is compared literally with the provided plain text password.
+.Pp
+When using SASL binds, the authentication ID should be a valid
+username for BSD Authentication.
+.Pp
+For plain text passwords to be accepted, the connection must be
+considered secure, either by using an encrypted connection, or by
+using the
+.Ic secure
+keyword in the configuration file.
 .Sh FILES
 .Bl -tag -width "/var/run/ldapd.sockXXXXXXX" -compact
 .It Pa /etc/ldapd.conf
@@ -86,6 +129,7 @@ database files
 .El
 .Sh SEE ALSO
 .Xr ldapd.conf 5 ,
+.Xr login.conf 5 ,
 .Xr ldapctl 8
 .Rs
 .%R RFC 4511

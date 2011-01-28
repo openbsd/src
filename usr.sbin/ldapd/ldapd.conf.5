@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.12 2010/11/04 20:22:34 martinh Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.13 2011/01/28 09:26:22 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 4 2010 $
+.Dd $Mdocdate: January 28 2011 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -130,6 +130,10 @@ local namespaces.
 .It rootpw Ar password
 Password for the root user.
 Specified either in plain text, or in hashed format.
+See
+.Sx AUTHENTICATION
+in
+.Xr ldapd 8 .
 .It schema Ar filename
 Add schema definitions from the specified file.
 For a description of the schema file syntax see
@@ -165,6 +169,10 @@ The distinguished name must have the same suffix as the namespace.
 .It rootpw Ar password
 Password for the root user.
 Specified either in plain text, or in hashed format.
+See
+.Sx AUTHENTICATION
+in
+.Xr ldapd 8 .
 .It index Ar attribute
 Maintain an index on the specified attribute.
 This index can be used for equality, presence, prefix substring and range searches.
