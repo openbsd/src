@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.147 2010/10/11 11:31:14 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.148 2011/01/28 13:19:44 reyk Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -670,7 +670,7 @@ ether_input(ifp0, eh, m)
 	 * If packet has been filtered by the bpf listener, drop it now
 	 */
 	if (m->m_flags & M_FILDROP) {
-		m_free(m);
+		m_freem(m);
 		return;
 	}
 
