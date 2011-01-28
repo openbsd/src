@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.170 2011/01/26 21:41:00 drahn Exp $ */
+/*	$OpenBSD: ahci.c,v 1.171 2011/01/28 06:30:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1881,8 +1881,8 @@ ahci_pmp_probe_timeout(void *cookie)
 		ap->ap_active &= ~(1 << ccb->ccb_slot);
 		KASSERT(ap->ap_active_cnt > 0);
 		--ap->ap_active_cnt;
-		printf("%s: timed out %d, active %x, count %d\n", PORTNAME(ap),
-		    ccb->ccb_slot, ap->ap_active, ap->ap_active_cnt);
+		DPRINTF(AHCI_D_VERBOSE, "%s: timed out %d, active %x, count %d\n",
+		    PORTNAME(ap), ccb->ccb_slot, ap->ap_active, ap->ap_active_cnt);
 		break;
 
 	default:
