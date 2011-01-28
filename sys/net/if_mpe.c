@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.24 2011/01/21 17:42:57 mikeb Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.25 2011/01/28 14:58:24 reyk Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -384,7 +384,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		}
 
 		if (in_cksum(m, hlen) != 0) {
-			m_free(m);
+			m_freem(m);
 			return;
 		}
 
