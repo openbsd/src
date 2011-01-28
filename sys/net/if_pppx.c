@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.3 2010/11/24 00:56:08 sthen Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.4 2011/01/28 06:43:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -675,16 +675,23 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #endif
 		switch (req->peer_address.ss_family) {
 		case AF_INET:
-#ifdef INET6
-		case AF_INET6:
-#endif
-			if (req->peer_address.ss_family !=
-			    req->local_address.ss_family)
+			if (req->peer_address.ss_len != sizeof(struct sockaddr_in))
 				return (EINVAL);
 			break;
+#ifdef INET6
+		case AF_INET6:
+			if (req->peer_address.ss_len != sizeof(struct sockaddr_in6))
+				return (EINVAL);
+			break;
+#endif
 		default:
 			return (EPROTONOSUPPORT);
 		}
+		if (req->peer_address.ss_family !=
+		    req->local_address.ss_family ||
+		    req->peer_address.ss_len !=
+		    req->local_address.ss_len)
+			return (EINVAL);
 		break;
 	default:
 		return (EPROTONOSUPPORT);
@@ -727,6 +734,12 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	session->ip_address.sin_addr.s_addr &=
 	    session->ip_netmask.sin_addr.s_addr;
 
+	if (req->peer_address.ss_len > 0)
+		memcpy(&session->peer, &req->peer_address,
+		    MIN(req->peer_address.ss_len, sizeof(session->peer)));
+	if (req->local_address.ss_len > 0)
+		memcpy(&session->local, &req->local_address,
+		    MIN(req->local_address.ss_len, sizeof(session->local)));
 #ifdef PIPEX_PPPOE
 	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
 		session->proto.pppoe.over_ifp = over_ifp;
