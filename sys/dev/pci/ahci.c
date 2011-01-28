@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.171 2011/01/28 06:30:04 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.172 2011/01/28 06:32:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2360,8 +2360,8 @@ ahci_poll(struct ahci_ccb *ccb, int timeout, void (*timeout_fn)(void *))
 			return (0);
 		}
 		if (ccb->ccb_xa.state == ATA_S_ERROR) {
-			printf("%s: ccb in slot %d errored\n", PORTNAME(ap),
-			    ccb->ccb_slot);
+			DPRINTF(AHCI_D_VERBOSE, "%s: ccb in slot %d errored\n",
+			    PORTNAME(ap), ccb->ccb_slot);
 			/* pretend it timed out? */
 			if (timeout_fn != NULL) {
 				timeout_fn(ccb);
