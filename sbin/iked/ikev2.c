@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.46 2011/01/26 17:07:59 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.47 2011/01/28 18:21:37 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3760,11 +3760,9 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 {
 	struct ibuf			*buf = NULL;
 	struct iked_childsa		*csa, key;
-	struct iked_proposal		*prop;
 	struct iked_sa			*sa;
 	struct ikev2_delete		*del;
 	u_int32_t			 spi32;
-	int				 nprop = 0;
 
 	key.csa_spi = *drop;
 	csa = RB_FIND(iked_activesas, &env->sc_activesas, &key);
@@ -3777,59 +3775,43 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		return;
 	}
 
-	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
-		nprop++;
-	}
-
 	if ((buf = ibuf_static()) == NULL)
 		goto done;
 	if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
 		goto done;
 
-	/*
-	 * If that was the only Child SA pair and we initiated the
-	 * exchange, drop SA altogether and reinitiate
-	 */
-	if (nprop == 2 && sa->sa_hdr.sh_initiator) {
-		del->del_protoid = IKEV2_SAPROTO_IKE;
-		del->del_spisize = 0;
-		del->del_nspi = 0;
+	if (csa->csa_allocated)
+		spi32 = htobe32(csa->csa_spi.spi);
+	else
+		spi32 = htobe32(csa->csa_peerspi);
 
-		ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
-		    IKEV2_EXCHANGE_INFORMATIONAL, 0);
+	if (ikev2_childsa_delete(env, sa, csa->csa_saproto,
+	    csa->csa_peerspi, NULL, 0))
+		log_debug("%s: failed to delete CHILD SA %s", __func__,
+		    print_spi(csa->csa_peerspi, drop->spi_size));
 
-		log_debug("%s: reinitiate IKE SA", __func__);
-		sa_state(env, sa, IKEV2_STATE_CLOSED);
+	/* Send PAYLOAD_DELETE */
 
-		sa_free(env, sa);
-		timer_register_initiator(env, ikev2_init_ike_sa);
-	} else {
-		if (csa->csa_allocated)
-			spi32 = htobe32(csa->csa_spi.spi);
-		else
-			spi32 = htobe32(csa->csa_peerspi);
+	if ((buf = ibuf_static()) == NULL)
+		return;
+	if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
+		goto done;
+	del->del_protoid = drop->spi_protoid;
+	del->del_spisize = 4;
+	del->del_nspi = htobe16(1);
+	if (ibuf_add(buf, &spi32, sizeof(spi32)))
+		goto done;
 
-		if (ikev2_childsa_delete(env, sa, csa->csa_saproto,
-		    csa->csa_peerspi, NULL, 0))
-			log_debug("%s: failed to delete CHILD SA %s", __func__,
-			    print_spi(csa->csa_peerspi, drop->spi_size));
+	if (ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
+	    IKEV2_EXCHANGE_INFORMATIONAL, 0) == -1)
+		goto done;
 
-		/* Send PAYLOAD_DELETE */
+	sa->sa_stateflags |= IKED_REQ_INF;
 
-		if ((buf = ibuf_static()) == NULL)
-			return;
-		if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
-			goto done;
-		del->del_protoid = drop->spi_protoid;
-		del->del_spisize = 4;
-		del->del_nspi = htobe16(1);
-		if (ibuf_add(buf, &spi32, sizeof(spi32)))
-			goto done;
-
-		if (ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
-		    IKEV2_EXCHANGE_INFORMATIONAL, 0) == 0)
-			sa->sa_stateflags |= IKED_REQ_INF;
-	}
+	/* Initiate Child SA creation */
+	if (ikev2_send_create_child_sa(env, sa, NULL, drop->spi_protoid))
+		log_warnx("%s: failed to initiate a CREATE_CHILD_SA exchange",
+		    __func__);
 
 done:
 	ibuf_release(buf);
