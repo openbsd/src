@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.9 2010/04/12 01:44:08 tedu Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.10 2011/01/29 03:43:13 tedu Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -296,17 +296,14 @@ config(char *dev, char *file, int action, struct disklabel *dp, char *key,
     size_t keylen)
 {
 	struct vnd_ioctl vndio;
-	FILE *f;
 	char *rdev;
-	int rv = -1;
+	int fd, rv = -1;
 
-	if (opendev(dev, O_RDONLY, OPENDEV_PART, &rdev) < 0)
+	if ((fd = opendev(dev, O_RDONLY, OPENDEV_PART, &rdev)) < 0) {
 		err(4, "%s", rdev);
-	f = fopen(rdev, "r");
-	if (f == NULL) {
-		warn("%s", rdev);
 		goto out;
 	}
+
 	vndio.vnd_file = file;
 	vndio.vnd_secsize = (dp && dp->d_secsize) ? dp->d_secsize : DEV_BSIZE;
 	vndio.vnd_nsectors = (dp && dp->d_nsectors) ? dp->d_nsectors : 100;
@@ -318,7 +315,7 @@ config(char *dev, char *file, int action, struct disklabel *dp, char *key,
 	 * Clear (un-configure) the device
 	 */
 	if (action == VND_UNCONFIG) {
-		rv = ioctl(fileno(f), VNDIOCCLR, &vndio);
+		rv = ioctl(fd, VNDIOCCLR, &vndio);
 		if (rv)
 			warn("VNDIOCCLR");
 		else if (verbose)
@@ -328,7 +325,7 @@ config(char *dev, char *file, int action, struct disklabel *dp, char *key,
 	 * Configure the device
 	 */
 	if (action == VND_CONFIG) {
-		rv = ioctl(fileno(f), VNDIOCSET, &vndio);
+		rv = ioctl(fd, VNDIOCSET, &vndio);
 		if (rv)
 			warn("VNDIOCSET");
 		else if (verbose)
@@ -336,7 +333,7 @@ config(char *dev, char *file, int action, struct disklabel *dp, char *key,
 			    file);
 	}
 
-	fclose(f);
+	close(fd);
 	fflush(stdout);
  out:
 	if (key)
