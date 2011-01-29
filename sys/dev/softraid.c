@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.220 2011/01/23 14:21:20 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.221 2011/01/29 15:01:22 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -406,7 +406,6 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr64_t offset,
 	}
 
 	while (size > 0) {
-	
 		DNPRINTF(SR_D_MISC, "%s: buf %p, size %d, offset %llu)\n",
 		    DEVNAME(sc), buf, size, offset);
 
@@ -875,7 +874,7 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 
 	} else if (sm->ssdi.ssd_version == SR_META_VERSION) {
 
-		/* 
+		/*
 		 * Version 4 - original metadata format did not store
 		 * data offset so fix this up if necessary.
 		 */
@@ -1231,7 +1230,7 @@ sr_boot_assembly(struct sr_softc *sc)
 		DNPRINTF(SR_D_META, " volid %u with %u chunks\n",
 		    vol->sbv_volid, vol->sbv_chunk_no);
 #endif
-	
+
 		/* Create hotspare chunk metadata. */
 		hotspare = malloc(sizeof(struct sr_chunk), M_DEVBUF,
 		    M_NOWAIT | M_CANFAIL | M_ZERO);
@@ -2320,10 +2319,10 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 			printf("%s: chunk not part of array\n", DEVNAME(sc));
 			goto done;
 		}
-		
+
 		/* XXX: check current state first */
 		sd->sd_set_chunk_state(sd, c, BIOC_SSOFFLINE);
-		
+
 		if (sr_meta_save(sd, SR_META_DIRTY)) {
 			printf("%s: could not save metadata to %s\n",
 			    DEVNAME(sc), sd->sd_meta->ssd_devname);
@@ -2510,7 +2509,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 		    DEVNAME(sc), devname);
 		goto fail;
 	}
-	
+
 	/*
 	 * Add chunk to hotspare list.
 	 */
@@ -2608,14 +2607,14 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 				panic("%s: sr_hotspare_rebuild",
 				    DEVNAME(sd->sd_sc));
 			TAILQ_FOREACH(wu, &sd->sd_wu_pendq, swu_link) {
-        			TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
-                			if (ccb->ccb_target == chunk_no)
+				TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
+					if (ccb->ccb_target == chunk_no)
 						busy = 1;
 				}
 			}
 			TAILQ_FOREACH(wu, &sd->sd_wu_defq, swu_link) {
-        			TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
-                			if (ccb->ccb_target == chunk_no)
+				TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
+					if (ccb->ccb_target == chunk_no)
 						busy = 1;
 				}
 			}
@@ -2809,9 +2808,7 @@ sr_roam_chunks(struct sr_discipline *sd)
 
 	/* Have any chunks roamed? */
 	SLIST_FOREACH(chunk, &sd->sd_vol.sv_chunk_list, src_link) {
-		
 		meta = &chunk->src_meta;
-	
 		if (strncmp(meta->scmi.scm_devname, chunk->src_devname,
 		    sizeof(meta->scmi.scm_devname))) {
 
