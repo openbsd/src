@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.8 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.9 2011/01/29 08:13:46 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -2191,7 +2191,7 @@ alc_stop_mac(struct alc_softc *sc)
 	/* Disable Rx/Tx MAC. */
 	reg = CSR_READ_4(sc, ALC_MAC_CFG);
 	if ((reg & (MAC_CFG_TX_ENB | MAC_CFG_RX_ENB)) != 0) {
-		reg &= ~MAC_CFG_TX_ENB | MAC_CFG_RX_ENB;
+		reg &= ~(MAC_CFG_TX_ENB | MAC_CFG_RX_ENB);
 		CSR_WRITE_4(sc, ALC_MAC_CFG, reg);
 	}
 	for (i = ALC_TIMEOUT; i > 0; i--) {
@@ -2242,7 +2242,7 @@ alc_stop_queue(struct alc_softc *sc)
 	}
 	/* Disable TxQ. */
 	reg = CSR_READ_4(sc, ALC_TXQ_CFG);
-	if ((reg & TXQ_CFG_ENB) == 0) {
+	if ((reg & TXQ_CFG_ENB) != 0) {
 		reg &= ~TXQ_CFG_ENB;
 		CSR_WRITE_4(sc, ALC_TXQ_CFG, reg);
 	}
