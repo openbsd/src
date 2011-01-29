@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.130 2011/01/21 12:20:04 lum Exp $
+.\"	$OpenBSD: afterboot.8,v 1.131 2011/01/29 08:49:17 lum Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2011 $
+.Dd $Mdocdate: January 29 2011 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -47,7 +47,7 @@ A basic knowledge of
 .Ux
 is assumed, otherwise type:
 .Pp
-.Dl # help
+.Dl $ help
 .Pp
 Complete instructions for correcting and fixing items is not provided.
 There are manual pages and other methodologies available for doing that.
@@ -55,7 +55,7 @@ For example, to view the man page for the
 .Xr ls 1
 command, type:
 .Pp
-.Dl # man 1 ls
+.Dl $ man 1 ls
 .Pp
 Administrators will rapidly become more familiar with
 .Ox
@@ -67,19 +67,8 @@ Any security or reliability fixes can be found at
 .Pa http://www.openbsd.org/errata.html .
 It is recommended that you check this page regularly.
 .Ss Login
-Log in as
-.Dq root .
-You can do so on the console, or over the network using
+Log in on the console, or over the network using
 .Xr ssh 1 .
-If you wish to deny root logins over the network, edit the
-.Pa /etc/ssh/sshd_config
-file and set
-.Cm PermitRootLogin
-to
-.Dq no
-(see
-.Xr sshd_config 5 ) .
-.Pp
 For security reasons, it is bad practice to log in as root during regular use
 and maintenance of the system.
 Instead, administrators are encouraged to add a
@@ -91,7 +80,23 @@ group, then use the
 and
 .Xr sudo 8
 commands when root privileges are required.
-This process is described in more detail later.
+During the installation you were given the option to set up a user account.
+By default, accounts created via this method are automatically added to
+the
+.Dq wheel
+group.
+If you did not use this option see the paragraph
+.Sx Add new users
+below for details.
+.Pp
+If you wish to deny root logins over the network, edit the
+.Pa /etc/ssh/sshd_config
+file and set
+.Cm PermitRootLogin
+to
+.Dq no
+(see
+.Xr sshd_config 5 ) .
 .Ss Root password
 Change the password for the root user.
 (Note that throughout the documentation, the term
@@ -102,7 +107,9 @@ as well as from the upper and lower case alphabet.
 Do not choose any word in any language.
 It is common for an intruder to use dictionary attacks.
 Type the command
-.Ic /usr/bin/passwd
+.Pp
+.Dl $ /usr/bin/sudo /usr/bin/passwd root
+.Pp
 to change it.
 .Pp
 It is a good idea to always specify the full path name for the
