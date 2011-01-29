@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.148 2010/12/21 14:00:43 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.149 2011/01/29 13:15:39 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1362,6 +1362,8 @@ m_trailingspace(struct mbuf *m)
 int
 m_dup_pkthdr(struct mbuf *to, struct mbuf *from)
 {
+	int error;
+
 	KASSERT(from->m_flags & M_PKTHDR);
 
 	to->m_flags = (to->m_flags & (M_EXT | M_CLUSTER));
@@ -1370,8 +1372,8 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from)
 
 	SLIST_INIT(&to->m_pkthdr.tags);
 
-	if (m_tag_copy_chain(to, from))
-		return (ENOMEM);
+	if ((error = m_tag_copy_chain(to, from)) != 0)
+		return (error);
 
 	if ((to->m_flags & M_EXT) == 0)
 		to->m_data = to->m_pktdat;

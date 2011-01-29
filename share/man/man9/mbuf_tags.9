@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.25 2010/03/13 06:39:33 jmc Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.26 2011/01/29 13:15:39 bluhm Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: March 13 2010 $
+.Dd $Mdocdate: January 29 2011 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -215,8 +215,9 @@ copies all tags from packet
 .Va mbuf
 to packet
 .Va mbuf2 .
-On success, it returns 1.
-Otherwise, it returns 0.
+On success, it returns 0.
+Otherwise, it returns
+.Er ENOMEM .
 .Pp
 .Fn m_tag_first
 returns the first tag attached to packet
