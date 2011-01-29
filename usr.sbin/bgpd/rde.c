@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.305 2011/01/27 17:19:09 sthen Exp $ */
+/*	$OpenBSD: rde.c,v 1.306 2011/01/29 17:10:45 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -858,6 +858,7 @@ rde_update_dispatch(struct imsg *imsg)
 	u_int16_t		 attrpath_len;
 	u_int16_t		 nlri_len;
 	u_int8_t		 aid, prefixlen, safi, subtype;
+	u_int32_t		 fas;
 
 	peer = peer_get(imsg->hdr.peerid);
 	if (peer == NULL)	/* unknown peer, cannot happen */
@@ -917,15 +918,17 @@ rde_update_dispatch(struct imsg *imsg)
 
 		/* enforce remote AS if requested */
 		if (asp->flags & F_ATTR_ASPATH &&
-		    peer->conf.enforce_as == ENFORCE_AS_ON)
-			if (peer->conf.remote_as !=
-			    aspath_neighbor(asp->aspath)) {
-				log_peer_warnx(&peer->conf, "bad path, "
-				    "enforce neighbor-as enabled");
-				rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
+		    peer->conf.enforce_as == ENFORCE_AS_ON) {
+			fas = aspath_neighbor(asp->aspath);
+			if (peer->conf.remote_as != fas) {
+			    log_peer_warnx(&peer->conf, "bad path, "
+				"starting with %i, "
+				"enforce neighbor-as enabled", fas);
+			    rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
 				    NULL, 0);
-				goto done;
+			    goto done;
 			}
+		}
 
 		rde_reflector(peer, asp);
 	}
