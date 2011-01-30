@@ -1,10 +1,10 @@
-.\"	$OpenBSD: zs.4,v 1.16 2009/05/20 20:13:42 jmc Exp $
+.\"	$OpenBSD: zs.4,v 1.17 2011/01/30 07:53:57 jmc Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd $Mdocdate: May 20 2009 $
+.Dd $Mdocdate: January 30 2011 $
 .Dt ZS 4 sparc64
 .Os
 .Sh NAME
@@ -137,7 +137,7 @@ This switches off the
 .Dq dead accents .
 .Sh EXAMPLES
 To set a German keyboard layout, use
-.Ic wsconsctl -w keyboard.encoding=de .
+.Ic wsconsctl keyboard.encoding=de .
 To set it at kernel build time, add
 the following to the kernel configuration file for a type 4 keyboard:
 .Bd -literal -offset indent
