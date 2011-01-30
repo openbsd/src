@@ -1,6 +1,7 @@
-/*	$Id: html.c,v 1.22 2011/01/16 19:41:16 schwarze Exp $ */
+/*	$Id: html.c,v 1.23 2011/01/30 16:05:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -89,6 +90,7 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"colspan", /* ATTR_COLSPAN */
 };
 
+static	void		  print_num(struct html *, const char *, size_t);
 static	void		  print_spec(struct html *, enum roffdeco,
 				const char *, size_t);
 static	void		  print_res(struct html *, const char *, size_t);
@@ -206,6 +208,17 @@ print_gen_head(struct html *h)
 		tag[3].val = "all";
 		print_otag(h, TAG_LINK, 4, tag);
 	}
+}
+
+
+static void
+print_num(struct html *h, const char *p, size_t len)
+{
+	const char	*rhs;
+
+	rhs = chars_num2char(p, len);
+	if (rhs)
+		putchar((int)*rhs);
 }
 
 
@@ -329,6 +342,9 @@ print_encode(struct html *h, const char *p, int norecurse)
 		len = a2roffdeco(&deco, &seq, &sz);
 
 		switch (deco) {
+		case (DECO_NUMBERED):
+			print_num(h, seq, sz);
+			break;
 		case (DECO_RESERVED):
 			print_res(h, seq, sz);
 			break;

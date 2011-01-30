@@ -1,6 +1,7 @@
-/*	$Id: out.c,v 1.11 2011/01/25 12:07:26 schwarze Exp $ */
+/*	$Id: out.c,v 1.12 2011/01/30 16:05:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -247,6 +248,49 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 			break;
 		}
 		break;
+
+	case ('N'):
+
+		/*
+		 * Sequence of characters:  backslash,  'N' (i = 0),
+		 * starting delimiter (i = 1), character number (i = 2).
+		 */
+
+		*word = wp + 2;
+		*sz = 0;
+
+		/*
+		 * Cannot use a digit as a starting delimiter;
+		 * but skip the digit anyway.
+		 */
+
+		if (isdigit((int)wp[1]))
+			return(2);
+
+		/*
+		 * Any non-digit terminates the character number.
+		 * That is, the terminating delimiter need not
+		 * match the starting delimiter.
+		 */
+
+		for (i = 2; isdigit((int)wp[i]); i++)
+			(*sz)++;
+
+		/*
+		 * This is only a numbered character
+		 * if the character number has at least one digit.
+		 */
+
+		if (*sz)
+			*d = DECO_NUMBERED;
+
+		/*
+		 * Skip the terminating delimiter, even if it does not
+		 * match, and even if there is no character number.
+		 */
+
+		return(++i);
+
 	case ('h'):
 		/* FALLTHROUGH */
 	case ('v'):

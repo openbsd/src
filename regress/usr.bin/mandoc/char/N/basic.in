@@ -1,0 +1,23 @@
+.TH N-BASIC 1 "January 29, 2011"
+.SH NAME
+N-basic \- basic handling of character number escapes
+.SH DESCRIPTION
+basic usage: x\N'65'x
+.br
+too large: x\N'259'x
+.br
+much too large: x\N'2259'x
+.br
+null: x\N'0'x
+.br
+non-numerical content: x\N'XX'x
+.br
+mixed content: x\N'65XX'x
+.br
+empty: x\N''x
+.br
+no quoting: x\N65x
+.br
+non-matching quoting characters: x\NX65Yx
+.br
+end of test document

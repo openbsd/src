@@ -1,6 +1,7 @@
-/*	$Id: chars.c,v 1.15 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: chars.c,v 1.16 2011/01/30 16:05:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -145,6 +146,27 @@ chars_res2cp(void *arg, const char *p, size_t sz)
 	if (NULL == ln)
 		return(-1);
 	return(ln->unicode);
+}
+
+
+/*
+ * Numbered character to literal character,
+ * represented as a null-terminated string for additional safety.
+ */
+const char *
+chars_num2char(const char *p, size_t sz)
+{
+	int		  i;
+	static char	  c[2];
+
+	if (sz > 3)
+		return(NULL);
+	i = atoi(p);
+	if (i < 0 || i > 255)
+		return(NULL);
+	c[0] = (char)i;
+	c[1] = '\0';
+	return(c);
 }
 
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.6 2010/10/28 18:13:52 jmc Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.7 2011/01/30 16:05:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: January 30 2011 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -513,6 +513,21 @@ implementations:
 .It \e*(aa   Ta \*(aa       Ta acute
 .It \e*(ga   Ta \*(ga       Ta grave
 .El
+.Sh NUMBERED CHARACTERS
+For backward compatibility with existing manuals,
+.Xr mandoc 1
+also supports the
+.Pp
+.Dl \eN\(aq Ns Ar number Ns \(aq
+.Pp
+escape sequence, inserting the character
+.Ar number
+from the current character set into the output.
+Of course, this is inherently non-portable and is already marked
+as deprecated in the Heirloom roff manual.
+For example, do not use \eN'34', use \e(dq, or even the plain
+.Sq \(dq
+character where possible.
 .Sh COMPATIBILITY
 This section documents compatibility of
 .Nm

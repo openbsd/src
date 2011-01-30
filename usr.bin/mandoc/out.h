@@ -1,4 +1,4 @@
-/*	$Id: out.h,v 1.7 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: out.h,v 1.8 2011/01/30 16:05:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,6 +52,7 @@ enum	roffscale {
 
 enum	roffdeco {
 	DECO_NONE,
+	DECO_NUMBERED, /* numbered character */
 	DECO_SPECIAL, /* special character */
 	DECO_SSPECIAL, /* single-char special */
 	DECO_RESERVED, /* reserved word */
