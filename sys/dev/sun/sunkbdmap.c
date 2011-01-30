@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdmap.c,v 1.3 2009/01/12 17:45:37 miod Exp $	*/
+/*	$OpenBSD: sunkbdmap.c,v 1.4 2011/01/30 16:21:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -121,7 +121,7 @@ const u_int8_t sunkbd_rawmap[0x80] = {
 	RAWKEY_bracketleft,
 	RAWKEY_bracketright,
 	RAWKEY_Delete,
-	RAWKEY_Alt_R,
+	RAWKEY_Compose,
 	RAWKEY_KP_Home,
 	RAWKEY_KP_Up,
 	RAWKEY_KP_Prior,

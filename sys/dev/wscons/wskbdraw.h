@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdraw.h,v 1.2 2009/01/11 18:59:57 miod Exp $	*/
+/*	$OpenBSD: wskbdraw.h,v 1.3 2011/01/30 16:21:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -142,6 +142,7 @@
 
 #define	RAWKEY_Begin			0x5d
 #define	RAWKEY_Menu			0x6d
+#define	RAWKEY_Compose			0x72
 
 /*
  * The following keys have no KS_xxx equivalents
