@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.47 2010/07/07 09:16:36 blambert Exp $
+.\"     $OpenBSD: mbuf.9,v 1.48 2011/01/30 15:20:13 stsp Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 7 2010 $
+.Dd $Mdocdate: January 30 2011 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -221,7 +221,7 @@ the data is a fragment reassembly header.
 .It Dv MT_CONTROL
 the mbuf contains extra-data protocol message.
 .It Dv MT_OOBDATA
-the data consists of out-of-banddata.
+the data consists of out-of-band data.
 .El
 .Pp
 The
