@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.85 2011/01/22 13:55:50 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.86 2011/01/30 17:41:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1660,8 +1660,8 @@ post_rs(POST_ARGS)
 				break;
 
 		if (i < RSORD_MAX) {
-			if (MDOC__J == rsord[i])
-				mdoc->last->norm->Rs.child_J = nn;
+			if (MDOC__J == rsord[i] || MDOC__B == rsord[i])
+				mdoc->last->norm->Rs.quote_T++;
 			next = nn->next;
 			continue;
 		}

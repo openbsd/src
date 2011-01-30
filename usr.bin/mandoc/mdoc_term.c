@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.124 2011/01/16 02:56:47 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.125 2011/01/30 17:41:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -2165,7 +2165,7 @@ termp__t_post(DECL_ARGS)
 	 * us instead of underlining us (for disambiguation).
 	 */
 	if (n->parent && MDOC_Rs == n->parent->tok &&
-			n->parent->norm->Rs.child_J)
+			n->parent->norm->Rs.quote_T)
 		termp_quote_post(p, pair, m, n);
 
 	termp____post(p, pair, m, n);
@@ -2181,7 +2181,7 @@ termp__t_pre(DECL_ARGS)
 	 * us instead of underlining us (for disambiguation).
 	 */
 	if (n->parent && MDOC_Rs == n->parent->tok &&
-			n->parent->norm->Rs.child_J)
+			n->parent->norm->Rs.quote_T)
 		return(termp_quote_pre(p, pair, m, n));
 
 	term_fontpush(p, TERMFONT_UNDER);
