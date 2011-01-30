@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.84 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.85 2011/01/30 17:31:08 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -142,6 +142,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(CONCEPTRONIC2,	RT2870_8),
 	USB_ID(CONCEPTRONIC2,	RT3070_1),
 	USB_ID(CONCEPTRONIC2,	RT3070_2),
+	USB_ID(CONCEPTRONIC2,	RT3070_3),
 	USB_ID(CONCEPTRONIC2,	VIGORN61),
 	USB_ID(COREGA,		CGWLUSB300GNM),
 	USB_ID(COREGA,		RT2870_1),
