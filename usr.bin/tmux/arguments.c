@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.1 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.2 2011/01/30 12:09:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -183,11 +183,12 @@ args_has(struct args *args, u_char ch)
 void
 args_set(struct args *args, u_char ch, const char *value)
 {
-	if (value != NULL) {
-		if (args->values[ch] != NULL)
-			xfree(args->values[ch]);
+	if (args->values[ch] != NULL)
+		xfree(args->values[ch]);
+	if (value != NULL)
 		args->values[ch] = xstrdup(value);
-	}
+	else
+		args->values[ch] = NULL;
 	bit_set(args->flags, ch);
 }
 
