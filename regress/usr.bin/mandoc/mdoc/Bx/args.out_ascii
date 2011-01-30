@@ -1,0 +1,18 @@
+BX-ARGS(1)                 OpenBSD Reference Manual                 BX-ARGS(1)
+
+NNAAMMEE
+     BBxx--aarrggss - arguments to the BSD macro
+
+DDEESSCCRRIIPPTTIIOONN
+     no arguments: BSD
+
+     one standard argument: 4.4BSD
+
+     one non-standard argument: nettBSD
+
+     two standard arguments: 4.3BSD-Reno
+
+     more arguments: 4.3BSD-Tahoe and some additional words
+
+     end of test document
+

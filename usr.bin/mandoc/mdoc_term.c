@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.125 2011/01/30 17:41:59 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.126 2011/01/30 18:28:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -69,7 +69,6 @@ static	void	  termp_an_post(DECL_ARGS);
 static	void	  termp_bd_post(DECL_ARGS);
 static	void	  termp_bk_post(DECL_ARGS);
 static	void	  termp_bl_post(DECL_ARGS);
-static	void	  termp_bx_post(DECL_ARGS);
 static	void	  termp_d1_post(DECL_ARGS);
 static	void	  termp_fo_post(DECL_ARGS);
 static	void	  termp_in_post(DECL_ARGS);
@@ -91,6 +90,7 @@ static	int	  termp_bk_pre(DECL_ARGS);
 static	int	  termp_bl_pre(DECL_ARGS);
 static	int	  termp_bold_pre(DECL_ARGS);
 static	int	  termp_bt_pre(DECL_ARGS);
+static	int	  termp_bx_pre(DECL_ARGS);
 static	int	  termp_cd_pre(DECL_ARGS);
 static	int	  termp_d1_pre(DECL_ARGS);
 static	int	  termp_ex_pre(DECL_ARGS);
@@ -183,7 +183,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_quote_pre, termp_quote_post }, /* Bo */
 	{ termp_quote_pre, termp_quote_post }, /* Bq */
 	{ termp_xx_pre, NULL }, /* Bsx */
-	{ NULL, termp_bx_post }, /* Bx */
+	{ termp_bx_pre, NULL }, /* Bx */
 	{ NULL, NULL }, /* Db */
 	{ NULL, NULL }, /* Dc */
 	{ termp_quote_pre, termp_quote_post }, /* Do */
@@ -1670,13 +1670,27 @@ termp_bd_post(DECL_ARGS)
 
 
 /* ARGSUSED */
-static void
-termp_bx_post(DECL_ARGS)
+static int
+termp_bx_pre(DECL_ARGS)
 {
 
-	if (n->child)
+	if (NULL != (n = n->child)) {
+		term_word(p, n->string);
 		p->flags |= TERMP_NOSPACE;
-	term_word(p, "BSD");
+		term_word(p, "BSD");
+	} else {
+		term_word(p, "BSD");
+		return(0);
+	}
+
+	if (NULL != (n = n->next)) {
+		p->flags |= TERMP_NOSPACE;
+		term_word(p, "-");
+		p->flags |= TERMP_NOSPACE;
+		term_word(p, n->string);
+	}
+
+	return(0);
 }
 
 

@@ -1,6 +1,6 @@
-/*	$Id: mdoc_macro.c,v 1.63 2011/01/16 19:27:25 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.64 2011/01/30 18:28:01 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1457,6 +1457,8 @@ in_line_argn(MACRO_PROT_ARGS)
 	case (MDOC_Ux):
 		maxargs = 0;
 		break;
+	case (MDOC_Bx):
+		/* FALLTHROUGH */
 	case (MDOC_Xr):
 		maxargs = 2;
 		break;

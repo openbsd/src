@@ -1,0 +1,23 @@
+.Dd January 30, 2011
+.Dt BX-ARGS 1
+.Os
+.Sh NAME
+.Nm Bx-args
+.Nd arguments to the BSD macro
+.Sh DESCRIPTION
+no arguments:
+.Bx
+.Pp
+one standard argument:
+.Bx 4.4
+.Pp
+one non-standard argument:
+.Bx nett
+.Pp
+two standard arguments:
+.Bx 4.3 reno
+.Pp
+more arguments:
+.Bx 4.3 tahoe and some additional words
+.Pp
+end of test document
