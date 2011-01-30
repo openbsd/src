@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.131 2011/01/29 08:49:17 lum Exp $
+.\"	$OpenBSD: afterboot.8,v 1.132 2011/01/30 15:37:17 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 29 2011 $
+.Dd $Mdocdate: January 30 2011 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -65,7 +65,7 @@ By the time that you have installed your system, it is quite likely that
 bugs in the release have been found.
 Any security or reliability fixes can be found at
 .Pa http://www.openbsd.org/errata.html .
-It is recommended that you check this page regularly.
+It is recommended to check this page regularly.
 .Ss Login
 Log in on the console, or over the network using
 .Xr ssh 1 .
@@ -80,16 +80,17 @@ group, then use the
 and
 .Xr sudo 8
 commands when root privileges are required.
-During the installation you were given the option to set up a user account.
+.Pp
+The installation process provides an option to set up a user account.
 By default, accounts created via this method are automatically added to
 the
 .Dq wheel
 group.
-If you did not use this option see the paragraph
+If that option was not used, see the paragraph
 .Sx Add new users
-below for details.
+below.
 .Pp
-If you wish to deny root logins over the network, edit the
+To deny root logins over the network, edit the
 .Pa /etc/ssh/sshd_config
 file and set
 .Cm PermitRootLogin
