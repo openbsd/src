@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.205 2010/09/20 10:36:03 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.206 2011/01/31 13:27:05 bluhm Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 20 2010 $
+.Dd $Mdocdate: January 31 2011 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -650,6 +650,12 @@ Enables BSD compressor for PPP connections.
 .It Cd option PPP_DEFLATE
 For use in conjunction with PPP_BSDCOMP; provides an interface to zlib for PPP
 for deflate compression/decompression.
+.It Cd option SOCKET_SPLICE
+Enables zero-copy socket splicing in the kernel.
+See
+.Dv SO_SPLICE
+in
+.Xr setsockopt 2 .
 .It Cd option TCP_ECN
 Turns on Explicit Congestion Notification (RFC 3168).
 .Em ECN

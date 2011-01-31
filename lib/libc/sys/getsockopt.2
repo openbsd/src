@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.27 2010/07/01 13:39:19 jmc Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.28 2011/01/31 13:27:05 bluhm Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 1 2010 $
+.Dd $Mdocdate: January 31 2011 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -150,6 +150,7 @@ and set with
 .It Dv SO_RCVTIMEO Ta "set timeout value for input"
 .It Dv SO_TIMESTAMP Ta "enables reception of a timestamp with datagrams"
 .It Dv SO_PEERCRED Ta "get the credentials from other side of connection"
+.It Dv SO_SPLICE Ta "splice two sockets together or get data length"
 .It Dv SO_TYPE Ta "get the type of the socket (get only)"
 .It Dv SO_ERROR Ta "get and clear error on the socket (get only)"
 .El
@@ -335,6 +336,59 @@ These credentials are from the time that
 or
 .Xr connect 2
 were called.
+.Pp
+.Dv SO_SPLICE
+can splice together two connected TCP sockets for zero-copy data
+transfers.
+In the first form,
+.Fn setsockopt
+is called with the source socket
+.Fa s
+and the drain socket's
+.Vt int
+file descriptor as
+.Fa optval .
+In the second form,
+.Fa optval
+is a
+.Vt struct splice
+with the drain socket in
+.Va sp_fd
+and a positive maximum number of bytes or 0 in
+.Va sp_max .
+If \-1 is given as drain socket, the source socket
+.Fa s
+gets unspliced.
+Otherwise the spliced data transfer continues within the kernel
+until the optional maximum is reached, one of the connections
+terminates or an error occurs.
+A successful
+.Xr select 2
+or
+.Xr poll 2
+operation testing the ability to read from the source socket,
+indicates that the splicing has terminated.
+In this case, the error status can be examined with
+.Dv SO_ERROR
+at the source socket.
+Note that if a maximum is given, it is only guaranteed that no more
+bytes are transferred.
+A short splice can happen but then a second call to splice will
+transfer the remaining data immediately.
+Also the readability check will not indicate that the maximum has
+been reached but that data after the maximum is available.
+The
+.Dv SO_SPLICE
+option with
+.Fn getsockopt
+and an
+.Vt off_t
+value as
+.Fa optval
+can be used to retrieve the number of bytes transferred so far from the
+source socket
+.Fa s .
+A successful new splice resets this number.
 .Pp
 Finally,
 .Dv SO_TYPE
