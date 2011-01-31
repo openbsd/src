@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.633 2011/01/06 16:59:06 otto Exp $
+#	$OpenBSD: install.sub,v 1.634 2011/01/31 16:48:18 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1638,7 +1638,6 @@ install_sets() {
 #	2) mount non-ffs filesystems read only,
 #	3) prepend '/mnt' to all mount points,
 #	4) delete any trailing '/' from the mount point (e.g. root),
-#	5) leave out fs_freq and fs_passno fields.
 #
 # If no /etc/fstab is created, do not proceed with install/upgrade.
 munge_fstab() {
@@ -1666,8 +1665,7 @@ munge_fstab() {
 		# Write fs entry in fstab.
 		# 1) prepend '/mnt' to the mount point.
 		# 2) remove a trailing '/' from the mount point (e.g. root).
-		# 3) leave out fs_freq and fs_passno fields (i.e. $_rest).
-		echo $_dev /mnt${_mp%/} $_fstype $_opt
+		echo $_dev /mnt${_mp%/} $_fstype $_opt $_rest
 
 	done </tmp/fstab >/etc/fstab
 
@@ -1681,28 +1679,27 @@ munge_fstab() {
 # Must mount filesystems manually, one at a time, so we can make
 # sure the mount points exist.
 mount_fs() {
-	local _async=$1 _dev _mp _fstype _opt _rest _err _msg
+	local _async=$1 _dev _mp _fstype _opt _rest _msg _fail
 
 	while read _dev _mp _fstype _opt _rest; do
 		# If not the root filesystem, make sure the mount
 		# point is present.
 		[ "$_mp" = "/mnt" ] || mkdir -p $_mp
 
-		# Mount the filesystem. If the mount fails, exit.
-		_msg=$(mount -v -t $_fstype $_async -o $_opt $_dev $_mp)
-		_err=$?
+		# Mount the filesystem. Remember any failure.
+		_msg=$(mount -v -t $_fstype $_async -o $_opt $_dev $_mp) ||
+			_fail="$_fail\n$_mp ($_dev)"
 		echo $_msg | sed -e 's/, ctime=[^,)]*//'
-		if [ $_err != 0 ]; then
-			# In addition to the error message displayed by mount ...
-			cat <<__EOT
+	done </etc/fstab
 
-FATAL ERROR:	Cannot mount filesystems. Double-check your configuration
-		and restart the $MODE.
-
-__EOT
+	if [[ -n $_fail ]]; then
+		# One or more mounts failed. Continue or abort?
+		echo "\nWARNING! The following filesystems were not properly mounted:$_fail"
+		ask_yn "Continue anyway?" no
+		if [[ $resp == n ]]; then
 			exit
 		fi
-	done </etc/fstab
+	fi
 }
 
 # Return the device name for the supplied device, which may be a disklabel UID.
@@ -1719,22 +1716,23 @@ getdevname() {
 	fi
 }
 
-# Preen all filesystems in /etc/fstab that have a /sbin/fsck_XXX,
-# showing individual results, but skipping $ROOTDEV. This was already
-# fsck'ed successfully.
+# Preen all filesystems in /etc/fstab that have a /sbin/fsck_XXX and a
+# fs_passno > 0, showing individual results, but skipping $ROOTDEV. This was
+# already fsck'ed successfully.
 #
 # Exit if any fsck's fail (but do them all before exiting!).
 check_fs() {
-	local _dev _mp _fstype _rest _fail _f
+	local _dev _mp _fstype _rest _fail _f _passno
 
 	ask_yn "Force checking of clean non-root filesystems?"
 	[[ $resp == y ]] && _f=f
 
-	while read _dev _mp _fstype _rest; do
+	while read _dev _mp _fstype _rest _rest _passno _rest; do
 		[ "$_dev" != /dev/"$ROOTDEV" ] || continue
 		[ -f "/sbin/fsck_$_fstype" ] || continue
 		# Make sure device exists before fsck'ing it.
 		makedev "$(getdevname "$_dev")" || continue
+		[[ $_passno > 0 ]] || continue
 		echo -n "fsck -${_f}p $_dev..."
 		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
 			echo "FAILED. You must fsck $_dev manually."
