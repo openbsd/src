@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.13 2010/09/27 21:25:28 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.14 2011/01/31 02:36:55 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -428,8 +428,7 @@ pspdf_alloc(char *outopts)
 	const char	*pp;
 	char		*v;
 
-	if (NULL == (p = term_alloc(TERMENC_ASCII)))
-		return(NULL);
+	p = term_alloc(TERMENC_ASCII);
 
 	p->advance = ps_advance;
 	p->begin = ps_begin;
