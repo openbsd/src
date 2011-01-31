@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.27 2011/01/31 18:02:56 millert Exp $
+.\" $OpenBSD: crontab.1,v 1.28 2011/01/31 19:13:31 millert Exp $
 .\"
 .Dd $Mdocdate: January 31 2011 $
 .Dt CRONTAB 1
@@ -118,6 +118,21 @@ option for safety's sake.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width "TMPDIR"
+.It Ev EDITOR , VISUAL
+Specifies an editor to use.
+If both
+.Ev EDITOR
+and
+.Ev VISUAL
+are set,
+.Ev VISUAL
+takes precedence.
+If neither
+.Ev EDITOR
+nor
+.Ev VISUAL
+are set, the default is
+.Xr vi 1 .
 .It Ev TMPDIR
 Directory in which to place temporary files used by
 .Nm Fl e .
