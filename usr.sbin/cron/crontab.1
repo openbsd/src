@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.26 2009/02/08 17:15:11 jmc Exp $
+.\" $OpenBSD: crontab.1,v 1.27 2011/01/31 18:02:56 millert Exp $
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: January 31 2011 $
 .Dt CRONTAB 1
 .Os
 .Sh NAME
@@ -115,6 +115,15 @@ and that if you are running inside of
 you should always use the
 .Fl u
 option for safety's sake.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "TMPDIR"
+.It Ev TMPDIR
+Directory in which to place temporary files used by
+.Nm Fl e .
+If unset,
+.Pa /tmp
+is used.
 .El
 .Sh FILES
 .Bl -tag -width "/var/cron/cron.allow" -compact

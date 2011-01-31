@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.58 2009/10/27 23:52:16 deraadt Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.59 2011/01/31 18:02:56 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -288,6 +288,7 @@ check_error(const char *msg) {
 static void
 edit_cmd(void) {
 	char n[MAX_FNAME], q[MAX_TEMPSTR];
+	const char *tmpdir;
 	FILE *f;
 	int ch, t;
 	struct stat statbuf, xstatbuf;
@@ -329,12 +330,26 @@ edit_cmd(void) {
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
 
-	if (snprintf(Filename, sizeof Filename, "%scrontab.XXXXXXXXXX",
-	    _PATH_TMP) >= sizeof(Filename)) {
+	tmpdir = getenv("TMPDIR");
+	if (tmpdir == NULL || tmpdir[0] == '\0')
+		tmpdir = _PATH_TMP;
+	for (t = strlen(tmpdir); t != 0 && tmpdir[t - 1] == '/'; t--)
+		continue;
+	if (snprintf(Filename, sizeof Filename, "%.*s/crontab.XXXXXXXXXX",
+	    t, tmpdir) >= sizeof(Filename)) {
 		fprintf(stderr, "path too long\n");
 		goto fatal;
 	}
-	if (-1 == (t = mkstemp(Filename))) {
+	if (swap_gids() < OK) {
+		perror("swapping gids");
+		exit(ERROR_EXIT);
+	}
+	t = mkstemp(Filename);
+	if (swap_gids_back() < OK) {
+		perror("swapping gids back");
+		exit(ERROR_EXIT);
+	}
+	if (t == -1) {
 		perror(Filename);
 		goto fatal;
 	}
@@ -366,7 +381,15 @@ edit_cmd(void) {
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
 			ProgramName, Filename);
  fatal:
+		if (swap_gids() < OK) {
+			perror("swapping gids");
+			exit(ERROR_EXIT);
+		}
 		unlink(Filename);
+		if (swap_gids_back() < OK) {
+			perror("swapping gids back");
+			exit(ERROR_EXIT);
+		}
 		exit(ERROR_EXIT);
 	}
 
@@ -387,10 +410,18 @@ edit_cmd(void) {
 		goto fatal;
 	}
 	if (timespeccmp(&mtimespec, &statbuf.st_mtimespec, -) == 0) {
+		if (swap_gids() < OK) {
+			perror("swapping gids");
+			exit(ERROR_EXIT);
+		}
 		if (lstat(Filename, &xstatbuf) == 0 &&
 		    statbuf.st_ino != xstatbuf.st_ino) {
 			fprintf(stderr, "%s: crontab temp file moved, editor "
 			   "may create backup files improperly\n", ProgramName);
+		}
+		if (swap_gids_back() < OK) {
+			perror("swapping gids back");
+			exit(ERROR_EXIT);
 		}
 		fprintf(stderr, "%s: no changes made to crontab\n",
 			ProgramName);
@@ -432,7 +463,15 @@ edit_cmd(void) {
 		goto fatal;
 	}
  remove:
+	if (swap_gids() < OK) {
+		perror("swapping gids");
+		exit(ERROR_EXIT);
+	}
 	unlink(Filename);
+	if (swap_gids_back() < OK) {
+		perror("swapping gids back");
+		exit(ERROR_EXIT);
+	}
  done:
 	log_it(RealUser, Pid, "END EDIT", User);
 }
