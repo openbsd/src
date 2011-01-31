@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.49 2011/01/30 18:28:01 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.50 2011/01/31 03:04:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -418,8 +418,14 @@ print_mdoc_node(MDOC_ARGS)
 	case (MDOC_TEXT):
 		/* No tables in this mode... */
 		assert(NULL == h->tblt);
+
+		/*
+		 * Make sure that if we're in a literal mode already
+		 * (i.e., within a <PRE>) don't print the newline.
+		 */
 		if (' ' == *n->string && MDOC_LINE & n->flags)
-			print_otag(h, TAG_BR, 0, NULL);
+			if ( ! (HTML_LITERAL & h->flags))
+				print_otag(h, TAG_BR, 0, NULL);
 		print_text(h, n->string);
 		return;
 	case (MDOC_TBL):
@@ -1165,7 +1171,7 @@ static int
 mdoc_bd_pre(MDOC_ARGS)
 {
 	struct htmlpair	 	 tag[2];
-	int		 	 comp;
+	int		 	 comp, sv;
 	const struct mdoc_node	*nn;
 	struct roffsu		 su;
 
@@ -1204,6 +1210,11 @@ mdoc_bd_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[1], "lit display");
 	print_otag(h, TAG_PRE, 2, tag);
 
+	/* This can be recursive: save & set our literal state. */
+
+	sv = h->flags & HTML_LITERAL;
+	h->flags |= HTML_LITERAL;
+
 	for (nn = n->child; nn; nn = nn->next) {
 		print_mdoc_node(m, nn, h);
 		/*
@@ -1239,6 +1250,9 @@ mdoc_bd_pre(MDOC_ARGS)
 
 		h->flags |= HTML_NOSPACE;
 	}
+
+	if (0 == sv)
+		h->flags &= ~HTML_LITERAL;
 
 	return(0);
 }

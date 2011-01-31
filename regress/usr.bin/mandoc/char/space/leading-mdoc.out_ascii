@@ -8,3 +8,10 @@ DDEESSCCRRIIPPTTIIOONN
       line with a leading space UNIX normal line after a macro line UNIX
       leading space after a macro line
 
+     normal line in a literal display
+      leading space in a literal display
+     another normal line
+
+     normal line in a filled display
+      leading space in a filled display another normal line
+
