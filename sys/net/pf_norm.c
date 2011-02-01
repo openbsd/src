@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.127 2011/01/20 15:03:03 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.128 2011/02/01 16:10:31 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -676,7 +676,8 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, NULL, AF_INET6))
 		goto shortpkt;
 	fragoff = ntohs(frag.ip6f_offlg & IP6F_OFF_MASK);
-	if (fragoff + (plen - off - sizeof(frag)) > IPV6_MAXPACKET)
+	if (fragoff + (sizeof(struct ip6_hdr) + plen - off - sizeof(frag)) >
+	    IPV6_MAXPACKET)
 		goto badfrag;
 
 	/* do something about it */
