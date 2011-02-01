@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.71 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.72 2011/02/01 18:31:11 dcoppa Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -230,6 +230,8 @@ static const struct umsm_type umsm_devs[] = {
 
 	{{ USB_VENDOR_TCTMOBILE, USB_PRODUCT_TCTMOBILE_UMASS }, DEV_UMASS3},
 	{{ USB_VENDOR_TCTMOBILE, USB_PRODUCT_TCTMOBILE_UMSM }, 0},
+
+	{{ USB_VENDOR_TOSHIBA, USB_PRODUCT_TOSHIBA_HSDPA }, 0},
 
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_HS2300 }, 0},
 
