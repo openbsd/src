@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.539 2011/01/30 17:28:05 tedu Exp $
+$OpenBSD: usbdevs,v 1.540 2011/02/01 18:23:59 dcoppa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3681,6 +3681,7 @@ product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard
 
 /* Toshiba Corp products */
 product TOSHIBA RT3070		0x0a07	RT3070
+product TOSHIBA HSDPA		0x1302	HSDPA
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
