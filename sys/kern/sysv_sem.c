@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.40 2009/06/02 12:11:16 guenther Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.41 2011/02/02 09:33:11 fgsch Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -258,6 +258,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 	int i, ix, error = 0;
 	struct semid_ds sbuf;
 	struct semid_ds *semaptr;
+	unsigned short *semval = NULL;
 
 	DPRINTF(("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg));
 
@@ -349,6 +350,8 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return (EINVAL);
+		if (arg->val > seminfo.semvmx)
+			return (ERANGE);
 		semaptr->sem_base[semnum].semval = arg->val;
 		semundo_clear(ix, semnum);
 		wakeup(&sema[ix]);
@@ -357,13 +360,20 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 	case SETALL:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
 			return (error);
+		semval = malloc(semaptr->sem_nsems * sizeof(arg->array[0]),
+		    M_TEMP, M_WAITOK);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			error = ds_copyin(&arg->array[i],
-			    &semaptr->sem_base[i].semval,
+			error = ds_copyin(&arg->array[i], &semval[i],
 			    sizeof(arg->array[0]));
 			if (error != 0)
-				break;
+				goto error;
+			if (semval[i] > seminfo.semvmx) {
+				error = ERANGE;
+				goto error;
+			}
 		}
+		for (i = 0; i < semaptr->sem_nsems; i++)
+			semaptr->sem_base[i].semval = semval[i];
 		semundo_clear(ix, -1);
 		wakeup(&sema[ix]);
 		break;
@@ -371,6 +381,10 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 	default:
 		return (EINVAL);
 	}
+
+error:
+	if (semval)
+		free(semval, M_TEMP);
 
 	return (error);
 }
