@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2011/01/18 17:35:42 lum Exp $
+# $OpenBSD: Makefile,v 1.24 2011/02/02 05:21:36 lum Exp $
 
 PROG=	mg
 
@@ -25,5 +25,10 @@ SRCS=	autoexec.c basic.c buffer.c cinfo.c dir.c display.c \
 # More or less standalone extensions.
 #
 SRCS+=	cmode.c dired.c grep.c theo.c
+
+afterinstall:
+	${INSTALL} -d ${DESTDIR}${DOCDIR}/mg
+	${INSTALL} -m ${NONBINMODE} -c ${.CURDIR}/tutorial \
+		${DESTDIR}${DOCDIR}/mg
 
 .include <bsd.prog.mk>
