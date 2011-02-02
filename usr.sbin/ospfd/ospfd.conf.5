@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.43 2010/05/17 17:47:46 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.44 2011/02/02 23:27:51 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2010 $
+.Dd $Mdocdate: February 2 2011 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -190,22 +190,22 @@ AS-external OSPF LSAs.
 .It Xo
 .Ic spf-delay
 .Po Ar seconds Ns \&| Ns
-.Ic msec Ar microseconds Pc
+.Ic msec Ar milliseconds Pc
 .Xc
 Set the SPF delay.
 The delay between receiving an update to the link
 state database and starting the shortest path first calculation.
-The default value is 1 second; valid range is 10 microseconds\-10 seconds.
+The default value is 1 second; valid range is 10 milliseconds\-10 seconds.
 .Pp
 .It Xo
 .Ic spf-holdtime
 .Po Ar seconds Ns \&| Ns
-.Ic msec Ar microseconds Pc
+.Ic msec Ar milliseconds Pc
 .Xc
 Set the SPF holdtime.
 The minimum time between two consecutive
 shortest path first calculations.
-The default value is 5 seconds; the valid range is 10 microseconds\-5 seconds.
+The default value is 5 seconds; the valid range is 10 milliseconds\-5 seconds.
 .Pp
 .It Xo
 .Ic stub Ic router
@@ -341,11 +341,11 @@ demotion counter by 1 on the given interface group, usually
 when the interface state is going down.
 The demotion counter will be decreased when the interface
 state is active again.
-.It Ic fast-hello-interval Ic msec Ar microseconds
+.It Ic fast-hello-interval Ic msec Ar milliseconds
 If the interface is configured to use
 .Ic router-dead-time minimal ,
 hello packets will be sent using this timer.
-The default value is 333; valid range is 50\-333 microseconds.
+The default value is 333; valid range is 50\-333 milliseconds.
 .It Ic hello-interval Ar seconds
 Set the hello interval.
 The default value is 10; valid range is 1\-65535 seconds.
