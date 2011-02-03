@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.30 2009/01/28 17:57:15 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.31 2011/02/03 08:49:46 phessler Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -394,7 +394,8 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 
 	/*
 	 * Don't bother with interfaces that are down.
-	 * Note: This socket is only used to collect the interface status.
+	 * Note: This socket is only used to collect the interface status,
+	 * rtables and inet6 addresses.
 	 */
 	s = socket(if_addr->sa_family, SOCK_DGRAM, 0);
 	if (s == -1) {
@@ -438,6 +439,22 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 			return 0;
 		}
 	}
+
+	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&flags_ifr) == -1) {
+		log_error("virtual_bind_if: "
+		    "ioctl (%d, SIOCGIFRDOMAIN, ...) failed", s);
+		close(s);
+		return -1;
+	}
+
+	/*
+	 * Ignore interfaces outside of our rtable
+	 */
+	if (getrtable() != flags_ifr.ifr_rdomainid) {
+		close(s);
+		return 0;
+	}
+
 	close(s);
 
 	/* Set the port number to zero.  */
