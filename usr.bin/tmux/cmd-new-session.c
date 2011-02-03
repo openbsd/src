@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.35 2011/01/14 23:49:23 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.36 2011/02/03 20:50:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -48,9 +48,6 @@ int
 cmd_new_session_check(struct args *args)
 {
 	if (args_has(args, 't') && (args->argc != 0 || args_has(args, 'n')))
-		return (-1);
-	if (!args_has(args, 'd') &&
-	    (args_has(args, 'x') || args_has(args, 'y')))
 		return (-1);
 	return (0);
 }
