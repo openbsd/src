@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.100 2011/01/26 21:41:00 drahn Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.101 2011/02/03 21:22:19 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1539,6 +1539,7 @@ atascsi_pmp_inq(struct scsi_xfer *xs)
 		return;
 	}
 
+	bzero(&inq, sizeof(inq));
 	inq.device = 0x1E;	/* "well known logical unit" seems reasonable */
 	inq.version = 0x05;	/* SPC-3? */
 	inq.response_format = 2;
