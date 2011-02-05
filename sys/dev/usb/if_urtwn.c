@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.13 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.14 2011/02/05 18:10:44 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -369,14 +369,18 @@ urtwn_detach(struct device *self, int flags)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	s = splnet();
-	/* Wait for all async commands to complete. */
-	urtwn_wait_async(sc);
+	s = splusb();
 
 	if (timeout_initialized(&sc->scan_to))
 		timeout_del(&sc->scan_to);
 	if (timeout_initialized(&sc->calib_to))
 		timeout_del(&sc->calib_to);
+
+	/* Wait for all async commands to complete. */
+	usb_rem_wait_task(sc->sc_udev, &sc->sc_task);
+
+	usbd_ref_wait(sc->sc_udev);
+
 	if (ifp->if_softc != NULL) {
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
@@ -592,7 +596,6 @@ urtwn_task(void *arg)
 		ring->queued--;
 		ring->next = (ring->next + 1) % URTWN_HOST_CMD_RING_COUNT;
 	}
-	wakeup(ring);
 	splx(s);
 }
 
@@ -621,8 +624,7 @@ void
 urtwn_wait_async(struct urtwn_softc *sc)
 {
 	/* Wait for all queued asynchronous commands to complete. */
-	while (sc->cmdq.queued > 0)
-		tsleep(&sc->cmdq, 0, "cmdq", 0);
+	usb_wait_task(sc->sc_udev, &sc->sc_task);
 }
 
 int
@@ -1061,8 +1063,15 @@ urtwn_calib_to(void *arg)
 {
 	struct urtwn_softc *sc = arg;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return;
+
+	usbd_ref_incr(sc->sc_udev);
+
 	/* Do it in a process context. */
 	urtwn_do_async(sc, urtwn_calib_cb, NULL, 0);
+
+	usbd_ref_decr(sc->sc_udev);
 }
 
 /* ARGSUSED */
@@ -1083,7 +1092,8 @@ urtwn_calib_cb(struct urtwn_softc *sc, void *arg)
 	/* Do temperature compensation. */
 	urtwn_temp_calib(sc);
 
-	timeout_add_sec(&sc->calib_to, 2);
+	if (!usbd_is_dying(sc->sc_udev))
+		timeout_add_sec(&sc->calib_to, 2);
 }
 
 void
@@ -1093,10 +1103,17 @@ urtwn_next_scan(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return;
+
+	usbd_ref_incr(sc->sc_udev);
+
 	s = splnet();
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(&ic->ic_if);
 	splx(s);
+
+	usbd_ref_decr(sc->sc_udev);
 }
 
 int
@@ -1185,7 +1202,8 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		    urtwn_read_1(sc, R92C_TXPAUSE) | 0x0f);
 
 		urtwn_set_chan(sc, ic->ic_bss->ni_chan, NULL);
-		timeout_add_msec(&sc->scan_to, 200);
+		if (!usbd_is_dying(sc->sc_udev))
+			timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -1263,7 +1281,8 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		sc->thcal_state = 0;
 		sc->thcal_lctemp = 0;
 		/* Start periodic calibration. */
-		timeout_add_sec(&sc->calib_to, 2);
+		if (!usbd_is_dying(sc->sc_udev))
+			timeout_add_sec(&sc->calib_to, 2);
 		break;
 	}
 	(void)sc->sc_newstate(ic, cmd->state, cmd->arg);
@@ -1926,6 +1945,11 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
+	if (usbd_is_dying(sc->sc_udev))
+		return ENXIO;
+
+	usbd_ref_incr(sc->sc_udev);
+
 	s = splnet();
 
 	switch (cmd) {
@@ -1978,6 +2002,9 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 	splx(s);
+
+	usbd_ref_decr(sc->sc_udev);
+
 	return (error);
 }
 
