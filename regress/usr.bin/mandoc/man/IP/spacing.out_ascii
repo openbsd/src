@@ -1,0 +1,28 @@
+IP-SPACING(1)                                                    IP-SPACING(1)
+
+
+
+NNAAMMEE
+       IP-spacing - spacing in indentend paragraphs
+
+DDEESSCCRRIIPPTTIIOONN
+       Normal text.
+
+       tag    Indented text.
+
+       four   Indented text.
+
+       ffive  Indented text.
+
+       sixsix Indented text.
+
+       seseven
+              Indented text.
+
+       a much longer tag
+              Indented text.
+
+       Normal text.
+
+
+

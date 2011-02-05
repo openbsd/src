@@ -1,0 +1,19 @@
+.TH IP-SPACING 1 "2011-02-05"
+.SH NAME
+IP-spacing \- spacing in indentend paragraphs
+.SH DESCRIPTION
+Normal text.
+.IP tag
+Indented text.
+.IP four
+Indented text.
+.IP ffive
+Indented text.
+.IP sixsix
+Indented text.
+.IP seseven
+Indented text.
+.IP "a much longer tag"
+Indented text.
+.LP
+Normal text.
