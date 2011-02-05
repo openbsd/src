@@ -1,0 +1,20 @@
+.Dd January 19, 2011
+.Dt FN-NOARG 1
+.Os
+.Sh NAME
+.Nm Fn-noarg
+.Nd function name macro without arguments
+.Sh DESCRIPTION
+with arguments:
+.Ft int
+.Fn abs "int i"
+no name arguments:
+.Ft int
+.Fn
+no type arguments:
+.Ft
+.Fn abs "int i"
+no arguments at all:
+.Ft
+.Fn
+end of test document

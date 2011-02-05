@@ -20,6 +20,8 @@ A call, an
 another
 .Xr echo 1 .
 .Pp
-Finally, no
+Finally, half an
+.Xr echo
+and no
 .Xr
 echo at all.

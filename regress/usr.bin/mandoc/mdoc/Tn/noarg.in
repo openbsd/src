@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt TN-NOARG 1
+.Os
+.Sh NAME
+.Nm Tn-noarg
+.Nd trade name macro without argument
+.Sh DESCRIPTION
+with argument
+.Tn IBM
+no argument
+.Tn
+end of test document

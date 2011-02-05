@@ -1,0 +1,16 @@
+ST-INVALID(1)              OpenBSD Reference Manual              ST-INVALID(1)
+
+NNAAMMEE
+     SStt--iinnvvaalliidd - handling of invalid standard argument
+
+SSTTAANNDDAARRDDSS
+     valid argument: IEEE Std 1003.1-2004 (``POSIX.1'')
+
+     invalid argument:
+
+     no arguments:
+
+     two arguments: IEEE Std 1003.1-2004 (``POSIX.1'') murks
+
+     end of file
+

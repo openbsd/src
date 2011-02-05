@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt SX-NOARG 1
+.Os
+.Sh NAME
+.Nm Sx-noarg
+.Nd internal cross reference without a target
+.Sh DESCRIPTION
+with target:
+.Sx DESCRIPTION
+no target:
+.Sx
+end of test document

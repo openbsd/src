@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt ER-NOARG 1
+.Os
+.Sh NAME
+.Nm Er-noarg
+.Nd error constant macro without an argument
+.Sh DESCRIPTION
+with error:
+.Er ENOENT
+no error:
+.Er
+end of test document

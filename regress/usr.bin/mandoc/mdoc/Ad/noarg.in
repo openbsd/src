@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt AD-NOARG 1
+.Os
+.Sh NAME
+.Nm Ad-noarg
+.Nd address macro without an argument
+.Sh DESCRIPTION
+with address:
+.Ad 0x3bc
+no address:
+.Ad
+end of test document

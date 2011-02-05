@@ -1,0 +1,9 @@
+FN-NOARG(1)                OpenBSD Reference Manual                FN-NOARG(1)
+
+NNAAMMEE
+     FFnn--nnooaarrgg - function name macro without arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     with arguments: _i_n_t aabbss(_i_n_t _i) no name arguments: _i_n_t no type arguments:
+     aabbss(_i_n_t _i) no arguments at all: end of test document
+

@@ -1,0 +1,8 @@
+SX-NOARG(1)                OpenBSD Reference Manual                SX-NOARG(1)
+
+NNAAMMEE
+     SSxx--nnooaarrgg - internal cross reference without a target
+
+DDEESSCCRRIIPPTTIIOONN
+     with target: _D_E_S_C_R_I_P_T_I_O_N no target: end of test document
+

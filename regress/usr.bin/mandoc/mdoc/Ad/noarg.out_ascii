@@ -1,0 +1,8 @@
+AD-NOARG(1)                OpenBSD Reference Manual                AD-NOARG(1)
+
+NNAAMMEE
+     AAdd--nnooaarrgg - address macro without an argument
+
+DDEESSCCRRIIPPTTIIOONN
+     with address: _0_x_3_b_c no address: end of test document
+

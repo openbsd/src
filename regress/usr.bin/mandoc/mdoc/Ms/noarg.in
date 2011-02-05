@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt MS-NOARG 1
+.Os
+.Sh NAME
+.Nm Ms-noarg
+.Nd mathematical symbol without an argument
+.Sh DESCRIPTION
+with command:
+.Ms alpha
+no command:
+.Ms
+end of test document

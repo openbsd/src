@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt IC-NOARG 1
+.Os
+.Sh NAME
+.Nm Ic-noarg
+.Nd interactive command without an argument
+.Sh DESCRIPTION
+with command:
+.Ic ls
+no command:
+.Ic
+end of test document

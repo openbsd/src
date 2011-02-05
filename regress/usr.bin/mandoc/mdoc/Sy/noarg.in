@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt SY-NOARG 1
+.Os
+.Sh NAME
+.Nm Sy-noarg
+.Nd symbolic macro without arguments
+.Sh DESCRIPTION
+with argument
+.Sy arg
+no argument
+.Sy
+end of test document

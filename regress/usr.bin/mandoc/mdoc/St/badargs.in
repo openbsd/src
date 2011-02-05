@@ -1,0 +1,20 @@
+.Dd June 30, 2010
+.Dt ST-INVALID 1
+.Os
+.Sh NAME
+.Nm St-invalid
+.Nd handling of invalid standard argument
+.Sh STANDARDS
+valid argument:
+.St -p1003.1-2004
+.Pp
+invalid argument:
+.St -murks
+.Pp
+no arguments:
+.St
+.Pp
+two arguments:
+.St -p1003.1-2004 murks
+.Pp
+end of file

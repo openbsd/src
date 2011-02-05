@@ -1,0 +1,9 @@
+.TH PS-IGNORE 1
+.SH NAME
+ps-ignore \- ignoreing point size macros
+.SH DESCRIPTION
+normal text
+.ps -1
+small text
+.ps +1
+big text

@@ -1,0 +1,8 @@
+.Dd January 2, 2011
+.Dt ND-ARG0 1
+.Os
+.Sh NAME
+.Nm Nd-arg0
+.Nd
+.Sh DESCRIPTION
+empty description line

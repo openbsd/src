@@ -1,0 +1,12 @@
+.Dd January 19, 2011
+.Dt CD-NOARG 1
+.Os
+.Sh NAME
+.Nm Cd-noarg
+.Nd kernel configuration directive without arguments
+.Sh DESCRIPTION
+with arguments:
+.Cd wd* at pciide?
+without arguments:
+.Cd
+end of test document
