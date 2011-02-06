@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.32 2009/10/27 23:51:21 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.33 2011/02/06 18:34:00 jasper Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -354,6 +354,9 @@ show_symtab(off_t off, u_long len, const char *name, FILE *fp)
 	char *strtab, *p;
 	int num, rval = 0;
 	int namelen;
+	off_t restore;
+
+	restore = ftello(fp);
 
 	MMAP(symtab, len, PROT_READ, MAP_PRIVATE|MAP_FILE, fileno(fp), off);
 	if (symtab == MAP_FAILED)
@@ -390,6 +393,8 @@ show_symtab(off_t off, u_long len, const char *name, FILE *fp)
 
 		printf("%s in %s\n", strtab, p);
 	}
+
+	fseeko(fp, restore, SEEK_SET);
 
 	free(p);
 	MUNMAP(symtab, len);
@@ -544,7 +549,6 @@ show_archive(int count, const char *fname, FILE *fp)
 			} else {
 				symtaboff = 0;
 				symtablen = 0;
-				goto skip;
 			}
 		}
 
