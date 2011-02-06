@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.58 2010/09/19 13:10:21 yasuoka Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.59 2011/02/06 23:47:14 dlg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -5353,8 +5353,14 @@ em_init_eeprom_params(struct em_hw *hw)
 			    E1000_EECD_SIZE_EX_SHIFT);
 		}
 
-		eeprom->word_size = 1 << 
-		    (eeprom_size + EEPROM_WORD_SIZE_SHIFT);
+		/* EEPROM access above 16k is unsupported */
+		if (eeprom_size + EEPROM_WORD_SIZE_SHIFT >
+		    EEPROM_WORD_SIZE_SHIFT_MAX) {
+			eeprom->word_size = 1 << EEPROM_WORD_SIZE_SHIFT_MAX;
+		} else {
+			eeprom->word_size = 1 << 
+			    (eeprom_size + EEPROM_WORD_SIZE_SHIFT);
+		}
 	}
 	return ret_val;
 }
