@@ -1,0 +1,13 @@
+.Dd May 1, 2009
+.Dt RS-THREE_AUTHORS 1
+.Os
+.Sh NAME
+.Nm Rs-three_authors
+.Nd listing three authors in a reference block
+.Sh AUTHORS
+.Rs
+.%A kristaps
+.%A joerg
+.%A ingo
+.%T mandoc
+.Re

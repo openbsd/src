@@ -1,0 +1,10 @@
+NO-SPACING(1)              OpenBSD Reference Manual              NO-SPACING(1)
+
+NNAAMMEE
+     NNoo--ssppaacciinngg - spacing around the normal macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Text before and after the macro.  Macros on the line [before] and [after]
+     the macro.  Macros _b_e_f_o_r_e and _a_f_t_e_r the macro on the same line.
+     Punctuation before ( and ) after the macro.  The macro [in] an enclosure.
+

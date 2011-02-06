@@ -1,0 +1,20 @@
+.Dd October 1, 2010
+.Dt PF-SPACING 1
+.Os
+.Sh NAME
+.Nm Pf-spacing
+.Nd spacing around the prefix macro
+.Sh DESCRIPTION
+Closing punctuation goes
+.Pf . right .
+But
+.Pf . . double
+prefixes don't work.
+Opening punctuation goes
+.Pf ( right as
+well.
+But again, prefix
+.Pf ( ) pairs
+don't work.
+Even normal text gets
+.Pf pre fixed .

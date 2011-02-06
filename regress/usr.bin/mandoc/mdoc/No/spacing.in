@@ -1,0 +1,24 @@
+.Dd October 1, 2010
+.Dt NO-SPACING 1
+.Os
+.Sh NAME
+.Nm No-spacing
+.Nd spacing around the normal macro
+.Sh DESCRIPTION
+Text before
+.No and
+after the macro.
+Macros on the line
+.Op before
+.No and
+.Op after
+the macro.
+Macros
+.Em before No and Em after
+the macro on the same line.
+Punctuation before (
+.No and
+) after the macro.
+The macro
+.Op No in
+an enclosure.

@@ -1,0 +1,9 @@
+NS-PUNCT(1)                OpenBSD Reference Manual                NS-PUNCT(1)
+
+NNAAMMEE
+     NNss--ppuunncctt - punctuation after the no space macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Normal words: nons no Opening punctuation: no(ns no Closing punctuation:
+     nons) no
+

@@ -1,0 +1,32 @@
+.Dd August 3, 2010
+.Dt DS-QUOTING 1
+.Os
+.Sh NAME
+.Nm ds-quoting
+.Nd quote handling by the define string request
+.Sh DESCRIPTION
+.ds foo initial definition
+no quoting: \*[foo]
+.br
+.ds foo redefinition
+still no quoting: \*[foo]
+.br
+.ds foo "string value
+leading quotes: \*[foo]
+.br
+.ds foo "string value"
+leading and trailing quotes: \*[foo]
+.br
+.ds foo "string" value
+leading and middle quotes: \*[foo]
+.br
+.ds foo 'string value"
+leading apostrophe, trailing quotes: \*[foo]
+.br
+.ds foo  string value"
+leading blank, trailing quotes: \*[foo]
+.br
+.ds foo
+empty string: x\*[foo]x
+.br
+end of test document

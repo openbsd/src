@@ -1,0 +1,27 @@
+SM-SPACING-OP(1)           OpenBSD Reference Manual           SM-SPACING-OP(1)
+
+NNAAMMEE
+     SSmm--ssppaacciinngg--OOpp - spacing mode, demonstrated using the .Op macro
+
+SSYYNNOOPPSSIISS
+     mmaannddoocc --TT_m_o_d_e _f_i_l_e _._._.
+
+DDEESSCCRRIIPPTTIIOONN
+     text1 text2 text3 text4
+
+     text1 text2 text3 [macro4]
+
+     text1 [macro2macro3] text4
+
+     text1 [macro2[macro3]] [macro4]
+
+     [macro1] text2 text3 text4
+
+     [macro1] text2 text3 [macro4]
+
+     [macro1] [macro2[macro3]] text4
+
+     [macro1] [macro2[macro3]] [macro4]
+
+     [macro1]
+

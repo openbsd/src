@@ -1,0 +1,10 @@
+PF-SPACING(1)              OpenBSD Reference Manual              PF-SPACING(1)
+
+NNAAMMEE
+     PPff--ssppaacciinngg - spacing around the prefix macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Closing punctuation goes .right.  But .. double prefixes don't work.
+     Opening punctuation goes (right as well.  But again, prefix () pairs
+     don't work.  Even normal text gets prefixed.
+

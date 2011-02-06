@@ -1,0 +1,12 @@
+NO-PUNCT(1)                OpenBSD Reference Manual                NO-PUNCT(1)
+
+NNAAMMEE
+     NNoo--ppuunncctt - punctuation after the normal macro
+
+DDEESSCCRRIIPPTTIIOONN
+     One arg: one Two args: one two Trailing punctuation: arg.  Leading
+     punctuation: (arg Multiple punctuation: [(arg)].  Isolated opening
+     punctuation: pre (post.  Isolated closing punctuation: pre ) post.
+     Multiple opening punctuation: pre ([post.  Multiple closing punctuation:
+     pre )] post.
+

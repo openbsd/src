@@ -53,3 +53,12 @@
 .It          x13xxxxxxxxxx Ta x12xxxxxxxxx Ta x12xxxxxxxxx Ta x12xxxxxxxxx Ta x12xxxxxxxxx
 .It a Ta b Ta c Ta d Ta e
 .El
+.\" Trailing white space in phrases.
+.Bl -column "aaaa" "bbbb"
+.It "a" Ta "b"
+.It "a " Ta "b"
+.It "a  " Ta "b"
+.It a	b
+.It a 	b
+.It a  	b
+.El

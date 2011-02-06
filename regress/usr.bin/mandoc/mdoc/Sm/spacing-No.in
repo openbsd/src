@@ -1,0 +1,60 @@
+.Dd July 4, 2010
+.Dt SM-SPACING 1
+.Os
+.Sh NAME
+.Nm Sm-spacing
+.Nd basic tests of spacing mode
+.Sh SYNOPSIS
+.Nm mandoc
+.Sm off
+.Fl T Ar mode
+.Sm on
+.Ar
+.Sh DESCRIPTION
+text1
+.Sm off
+text2 text3
+.Sm on
+text4
+.Pp
+text1
+.Sm off
+text2 text3
+.Sm on
+.No macro4
+.Pp
+text1
+.Sm off
+.No macro2 macro3
+.Sm on
+text4
+.Pp
+text1
+.Sm off
+.No macro2 No macro3
+.Sm on
+.No macro4
+.Pp
+.No macro1
+.Sm off
+text2 text3
+.Sm on
+text4
+.Pp
+.No macro1
+.Sm off
+text2 text3
+.Sm on
+.No macro4
+.Pp
+.No macro1
+.Sm off
+.No macro2 No macro3
+.Sm on
+text4
+.Pp
+.No macro1
+.Sm off
+.No macro2 No macro3
+.Sm on
+.No macro4

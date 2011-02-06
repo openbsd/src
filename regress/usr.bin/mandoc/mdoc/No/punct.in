@@ -1,0 +1,25 @@
+.Dd October 1, 2010
+.Dt NO-PUNCT 1
+.Os
+.Sh NAME
+.Nm No-punct
+.Nd punctuation after the normal macro
+.Sh DESCRIPTION
+One arg:
+.No one
+Two args:
+.No one two
+Trailing punctuation:
+.No arg .
+Leading punctuation:
+.No ( arg
+Multiple punctuation:
+.No [ ( arg ) ] .
+Isolated opening punctuation:
+.No pre No ( No post .
+Isolated closing punctuation:
+.No pre No ) No post .
+Multiple opening punctuation:
+.No pre No ( [ No post .
+Multiple closing punctuation:
+.No pre No ) ] No post .

@@ -37,3 +37,12 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .It zehn__zehn
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .El
+.\" Trailing white space in the head.
+.Bl -inset
+.It "a"
+b
+.It "a "
+b
+.It "a  "
+b
+.El

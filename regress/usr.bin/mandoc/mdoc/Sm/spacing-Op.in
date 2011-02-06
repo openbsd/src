@@ -1,0 +1,63 @@
+.Dd July 4, 2010
+.Dt SM-SPACING-OP 1
+.Os
+.Sh NAME
+.Nm Sm-spacing-Op
+.Nd spacing mode, demonstrated using the .Op macro
+.Sh SYNOPSIS
+.Nm mandoc
+.Sm off
+.Fl T Ar mode
+.Sm on
+.Ar
+.Sh DESCRIPTION
+text1
+.Sm off
+text2 text3
+.Sm on
+text4
+.Pp
+text1
+.Sm off
+text2 text3
+.Sm on
+.Op macro4
+.Pp
+text1
+.Sm off
+.Op macro2 macro3
+.Sm on
+text4
+.Pp
+text1
+.Sm off
+.Op macro2 Op macro3
+.Sm on
+.Op macro4
+.Pp
+.Op macro1
+.Sm off
+text2 text3
+.Sm on
+text4
+.Pp
+.Op macro1
+.Sm off
+text2 text3
+.Sm on
+.Op macro4
+.Pp
+.Op macro1
+.Sm off
+.Op macro2 Op macro3
+.Sm on
+text4
+.Pp
+.Op macro1
+.Sm off
+.Op macro2 Op macro3
+.Sm on
+.Op macro4
+.Pp
+.Sm on
+.Op macro1

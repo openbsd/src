@@ -4,10 +4,49 @@ NNAAMMEE
      bbllaannkk--lliinnee - handling of blank line
 
 DDEESSCCRRIIPPTTIIOONN
-     Let us ignore this
+     Single br:
+     Single Pp:
 
-     blank line, an these two
+     Single sp:
+
+     Single blank:
+
+     Double br:
+     br Pp:
+
+     Pp br:
+
+     Double Pp:
+
+     br sp:
+
+     sp br:
+
+     Pp sp:
+
+     sp Pp:
 
 
-     as well.
+     Double sp:
+
+
+     br blank:
+
+     blank br:
+
+     Pp blank:
+
+     blank Pp:
+
+
+     sp blank:
+
+
+     blank sp:
+
+
+     Double blank:
+
+
+     End.
 

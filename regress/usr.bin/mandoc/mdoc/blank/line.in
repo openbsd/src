@@ -5,9 +5,60 @@
 .Nm blank-line
 .Nd handling of blank line
 .Sh DESCRIPTION
-Let us ignore this
+Single br:
+.br
+Single Pp:
+.Pp
+Single sp:
+.sp
+Single blank:
 
-blank line, an these two
+Double br:
+.br
+.br
+br Pp:
+.br
+.Pp
+Pp br:
+.Pp
+.br
+Double Pp:
+.Pp
+.Pp
+br sp:
+.br
+.sp
+sp br:
+.sp
+.br
+Pp sp:
+.Pp
+.sp
+sp Pp:
+.sp
+.Pp
+Double sp:
+.sp
+.sp
+br blank:
+.br
+
+blank br:
+
+.br
+Pp blank:
+.Pp
+
+blank Pp:
+
+.Pp
+sp blank:
+.sp
+
+blank sp:
+
+.sp
+Double blank:
 
 
-as well.
+End.

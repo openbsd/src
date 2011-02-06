@@ -1,0 +1,16 @@
+DS-QUOTING(1)              OpenBSD Reference Manual              DS-QUOTING(1)
+
+NNAAMMEE
+     ddss--qquuoottiinngg - quote handling by the define string request
+
+DDEESSCCRRIIPPTTIIOONN
+     no quoting: initial definition
+     still no quoting: redefinition
+     leading quotes: string value
+     leading and trailing quotes: string value"
+     leading and middle quotes: string" value
+     leading apostrophe, trailing quotes: 'string value"
+     leading blank, trailing quotes: string value"
+     empty string: xx
+     end of test document
+

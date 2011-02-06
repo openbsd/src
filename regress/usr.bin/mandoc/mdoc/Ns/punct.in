@@ -1,0 +1,13 @@
+.Dd October 1, 2010
+.Dt NS-PUNCT 1
+.Os
+.Sh NAME
+.Nm Ns-punct
+.Nd punctuation after the no space macro
+.Sh DESCRIPTION
+Normal words:
+.No no Ns ns No no
+Opening punctuation:
+.No no Ns ( ns No no
+Closing punctuation:
+.No no Ns ns ) No no
