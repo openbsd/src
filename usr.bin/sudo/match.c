@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005, 2007-2009
+ * Copyright (c) 1996, 1998-2005, 2007-2010
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -171,76 +171,79 @@ _runaslist_matches(user_list, group_list)
 {
     struct member *m;
     struct alias *a;
-    int rval, matched = UNSPEC;
-
-    if (runas_gr != NULL) {
-	if (tq_empty(group_list))
-	    return(DENY); /* group was specified but none in sudoers */
-	if (runas_pw != NULL && strcmp(runas_pw->pw_name, user_name) &&
-	    tq_empty(user_list))
-	    return(DENY); /* user was specified but none in sudoers */
-    }
-
-    if (tq_empty(user_list) && tq_empty(group_list))
-	return(userpw_matches(def_runas_default, runas_pw->pw_name, runas_pw));
+    int rval;
+    int user_matched = UNSPEC;
+    int group_matched = UNSPEC;
 
     if (runas_pw != NULL) {
+	/* If no runas user or runas group listed in sudoers, use default. */
+	if (tq_empty(user_list) && tq_empty(group_list))
+	    return(userpw_matches(def_runas_default, runas_pw->pw_name, runas_pw));
+
 	tq_foreach_rev(user_list, m) {
 	    switch (m->type) {
 		case ALL:
-		    matched = !m->negated;
+		    user_matched = !m->negated;
 		    break;
 		case NETGROUP:
 		    if (netgr_matches(m->name, NULL, NULL, runas_pw->pw_name))
-			matched = !m->negated;
+			user_matched = !m->negated;
 		    break;
 		case USERGROUP:
 		    if (usergr_matches(m->name, runas_pw->pw_name, runas_pw))
-			matched = !m->negated;
+			user_matched = !m->negated;
 		    break;
 		case ALIAS:
 		    if ((a = alias_find(m->name, RUNASALIAS)) != NULL) {
 			rval = _runaslist_matches(&a->members, &empty);
 			if (rval != UNSPEC)
-			    matched = m->negated ? !rval : rval;
+			    user_matched = m->negated ? !rval : rval;
 			break;
 		    }
 		    /* FALLTHROUGH */
 		case WORD:
 		    if (userpw_matches(m->name, runas_pw->pw_name, runas_pw))
-			matched = !m->negated;
+			user_matched = !m->negated;
 		    break;
 	    }
-	    if (matched != UNSPEC)
+	    if (user_matched != UNSPEC)
 		break;
 	}
     }
 
     if (runas_gr != NULL) {
+	if (user_matched == UNSPEC) {
+	    if (runas_pw == NULL || strcmp(runas_pw->pw_name, user_name) == 0)
+		user_matched = ALLOW;	/* only changing group */
+	}
 	tq_foreach_rev(group_list, m) {
 	    switch (m->type) {
 		case ALL:
-		    matched = !m->negated;
+		    group_matched = !m->negated;
 		    break;
 		case ALIAS:
 		    if ((a = alias_find(m->name, RUNASALIAS)) != NULL) {
 			rval = _runaslist_matches(&a->members, &empty);
 			if (rval != UNSPEC)
-			    matched = m->negated ? !rval : rval;
+			    group_matched = m->negated ? !rval : rval;
 			break;
 		    }
 		    /* FALLTHROUGH */
 		case WORD:
 		    if (group_matches(m->name, runas_gr))
-			matched = !m->negated;
+			group_matched = !m->negated;
 		    break;
 	    }
-	    if (matched != UNSPEC)
+	    if (group_matched != UNSPEC)
 		break;
 	}
     }
 
-    return(matched);
+    if (user_matched == DENY || group_matched == DENY)
+	return(DENY);
+    if (user_matched == group_matched || runas_gr == NULL)
+	return(user_matched);
+    return(UNSPEC);
 }
 
 int
