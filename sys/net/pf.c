@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.723 2011/02/05 17:29:05 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.724 2011/02/06 13:08:49 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2776,8 +2776,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		break;
 #ifdef INET
 	case IPPROTO_ICMP:
-		if (pd->af != AF_INET)
-			break;
 		icmptype = pd->hdr.icmp->icmp_type;
 		icmpcode = pd->hdr.icmp->icmp_code;
 		state_icmp = pf_icmp_mapping(pd, icmptype,
@@ -2793,8 +2791,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 #endif /* INET */
 #ifdef INET6
 	case IPPROTO_ICMPV6:
-		if (af != AF_INET6)
-			break;
 		icmptype = pd->hdr.icmp6->icmp6_type;
 		icmpcode = pd->hdr.icmp6->icmp6_code;
 		state_icmp = pf_icmp_mapping(pd, icmptype,
