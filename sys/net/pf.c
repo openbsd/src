@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.724 2011/02/06 13:08:49 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.725 2011/02/06 23:12:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3306,6 +3306,10 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 
 #ifdef INET
 	case IPPROTO_ICMP:
+		/* pf_translate() is also used when logging invalid packets */
+		if (pd->af != AF_INET)
+			return (0);
+
 		if (PF_ANEQ(saddr, pd->src, pd->af)) {
 			pf_change_a(&pd->src->v4.s_addr, pd->ip_sum,
 			    saddr->v4.s_addr, 0);
@@ -3332,20 +3336,21 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 
 #ifdef INET6
 	case IPPROTO_ICMPV6:
-		if (pd->af == AF_INET6) {
-			if (PF_ANEQ(saddr, pd->src, pd->af)) {
-				pf_change_a6(pd->src,
-				    &pd->hdr.icmp6->icmp6_cksum, saddr, 0);
-				rewrite = 1;
-			}
-			if (PF_ANEQ(daddr, pd->dst, pd->af)) {
-				pf_change_a6(pd->dst,
-				    &pd->hdr.icmp6->icmp6_cksum, daddr, 0);
-				rewrite = 1;
-			}
-			break;
+		/* pf_translate() is also used when logging invalid packets */
+		if (pd->af != AF_INET6)
+			return (0);
+
+		if (PF_ANEQ(saddr, pd->src, pd->af)) {
+			pf_change_a6(pd->src, &pd->hdr.icmp6->icmp6_cksum,
+			    saddr, 0);
+			rewrite = 1;
 		}
-		/* FALLTHROUGH */
+		if (PF_ANEQ(daddr, pd->dst, pd->af)) {
+			pf_change_a6(pd->dst, &pd->hdr.icmp6->icmp6_cksum,
+			    daddr, 0);
+			rewrite = 1;
+		}
+		break;
 #endif /* INET6 */
 
 	default:
