@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.28 2010/10/18 04:08:30 deraadt Exp $
+#	$OpenBSD: list,v 1.29 2011/02/06 21:49:55 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -99,5 +99,5 @@ SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade sbin/dhclient-script
 
-HASH	var/hash	bsd.IP27 bsd.IP30 bsd.IP32
+HASH	var/hash	bsd.IP27 bsd.IP30 bsd.mp.IP30 bsd.IP32
 TZ
