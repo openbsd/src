@@ -1,0 +1,9 @@
+OX-KEEP(1)                 OpenBSD Reference Manual                 OX-KEEP(1)
+
+NNAAMMEE
+     OOxx--kkeeeepp - interaction of unix variant macros and word keeps
+
+DDEESSCCRRIIPPTTIIOONN
+     Because we use a keep,
+     OpenBSD 4.9 must be at the beginning of a new line.
+

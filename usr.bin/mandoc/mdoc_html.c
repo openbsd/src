@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.51 2011/02/06 17:33:20 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.52 2011/02/06 22:56:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -800,6 +800,7 @@ mdoc_xx_pre(MDOC_ARGS)
 {
 	const char	*pp;
 	struct htmlpair	 tag;
+	int		 flags;
 
 	switch (n->tok) {
 	case (MDOC_Bsx):
@@ -826,8 +827,15 @@ mdoc_xx_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag, "unix");
 	print_otag(h, TAG_SPAN, 1, &tag);
+
 	print_text(h, pp);
-	return(1);
+	if (n->child) {
+		flags = h->flags;
+		h->flags |= HTML_KEEP;
+		print_text(h, n->child->string);
+		h->flags = flags;
+	}
+	return(0);
 }
 
 

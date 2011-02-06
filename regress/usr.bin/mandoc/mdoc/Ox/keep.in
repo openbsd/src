@@ -1,0 +1,11 @@
+.Dd January 30, 2011
+.Dt OX-KEEP 1
+.Os
+.Sh NAME
+.Nm Ox-keep
+.Nd interaction of unix variant macros and word keeps
+.Sh DESCRIPTION
+Because we use a keep,
+.Bk -words
+.Ox 4.9 must be at the beginning of a new line.
+.Ek

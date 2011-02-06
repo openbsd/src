@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.128 2011/02/06 22:25:36 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.129 2011/02/06 22:56:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1705,6 +1705,7 @@ static int
 termp_xx_pre(DECL_ARGS)
 {
 	const char	*pp;
+	int		 flags;
 
 	pp = NULL;
 	switch (n->tok) {
@@ -1730,9 +1731,14 @@ termp_xx_pre(DECL_ARGS)
 		break;
 	}
 
-	assert(pp);
 	term_word(p, pp);
-	return(1);
+	if (n->child) {
+		flags = p->flags;
+		p->flags |= TERMP_KEEP;
+		term_word(p, n->child->string);
+		p->flags = flags;
+	}
+	return(0);
 }
 
 
