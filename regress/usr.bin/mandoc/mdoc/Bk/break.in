@@ -5,6 +5,24 @@
 .Nm Bk-break
 .Nd handling of word keeps
 .Sh DESCRIPTION
+Even though it is called a word keep,
+.Bk -words
+it will not keep words together in free-form text.
+.Ek
+However, even the noop macro
+.Bk -words
+.No is sufficient to let the keep take effect .
+.Ek
+Even text generated in pre-handlers must be kept together with
+the text following it:
+.Bk -words
+.Xr one 1 No and Xr two 2
+.Ek
+should be on the same line.
+.Pp
+Including the whole output line into the keep is not required,
+including just the macros to be kept together is sufficient:
+.Pp
 .Nm
 .Ar x x x x x x x x
 .Ar x x x x x x x x

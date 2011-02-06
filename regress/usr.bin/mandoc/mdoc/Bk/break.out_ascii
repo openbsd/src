@@ -4,6 +4,15 @@ NNAAMMEE
      BBkk--bbrreeaakk - handling of word keeps
 
 DDEESSCCRRIIPPTTIIOONN
+     Even though it is called a word keep, it will not keep words together in
+     free-form text.  However, even the noop macro
+     is sufficient to let the keep take effect.  Even text generated in pre-
+     handlers must be kept together with the text following it:
+     one(1) and two(2) should be on the same line.
+
+     Including the whole output line into the keep is not required, including
+     just the macros to be kept together is sufficient:
+
      BBkk--bbrreeaakk _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x
      [o _a]
 
