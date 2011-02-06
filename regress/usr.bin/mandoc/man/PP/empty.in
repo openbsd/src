@@ -1,0 +1,15 @@
+.TH PP-EMPTY 1 "24 May 2010"
+.SH NAME
+PP-empty \- handling of empty paragraphs
+.SH DESCRIPTION
+.PP
+empty PP between two PPs:
+.PP
+.PP
+empty PP between PP and IP:
+.PP
+.IP head
+empty PP between IP and PP:
+.PP
+.PP
+the end
