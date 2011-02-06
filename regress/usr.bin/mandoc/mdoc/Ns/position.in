@@ -1,0 +1,17 @@
+.Dd February 6, 2011
+.Dt NS-POSITION 1
+.Os
+.Sh NAME
+.Nm Ns-position
+.Nd effect of the position of the no space macro on the line
+.Sh DESCRIPTION
+In the middle of a macro line:
+.Oo before Oc Ns Op after
+.Pp
+At the beginning of a macro line:
+.Op before
+.Ns Op after
+.Pp
+At the end of a macro line:
+.Oo before Oc Ns
+.Op after

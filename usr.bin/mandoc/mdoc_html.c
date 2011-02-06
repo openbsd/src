@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.50 2011/01/31 03:04:26 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.51 2011/02/06 17:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -776,7 +776,8 @@ static int
 mdoc_ns_pre(MDOC_ARGS)
 {
 
-	h->flags |= HTML_NOSPACE;
+	if ( ! (MDOC_LINE & n->flags))
+		h->flags |= HTML_NOSPACE;
 	return(1);
 }
 

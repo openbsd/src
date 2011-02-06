@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.71 2011/01/25 12:24:26 schwarze Exp $ */
+/*	$Id: main.c,v 1.72 2011/02/06 17:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -131,6 +131,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	/* related to macros and nesting */
 	"skipping obsolete macro",
 	"skipping paragraph macro",
+	"skipping no-space macro",
 	"blocks badly nested",
 	"child violates parent syntax",
 	"nested displays are not portable",

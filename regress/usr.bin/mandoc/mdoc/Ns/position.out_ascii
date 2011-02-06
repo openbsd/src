@@ -1,0 +1,12 @@
+NS-POSITION(1)             OpenBSD Reference Manual             NS-POSITION(1)
+
+NNAAMMEE
+     NNss--ppoossiittiioonn - effect of the position of the no space macro on the line
+
+DDEESSCCRRIIPPTTIIOONN
+     In the middle of a macro line: [before][after]
+
+     At the beginning of a macro line: [before] [after]
+
+     At the end of a macro line: [before][after]
+

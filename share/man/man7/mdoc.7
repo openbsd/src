@@ -1,6 +1,6 @@
-.\"	$OpenBSD: mdoc.7,v 1.63 2011/01/25 00:37:39 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.64 2011/02/06 17:33:20 schwarze Exp $
 .\"
-.\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2011 $
+.Dd $Mdocdate: February 6 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2202,6 +2202,8 @@ Examples:
 Suppress a space.
 Following invocation, text is interpreted as free-form text until a
 macro is encountered.
+.Pp
+This has no effect when invoked at the start of a macro line.
 .Pp
 Examples:
 .Dl \&.Fl o \&Ns \&Ar output
