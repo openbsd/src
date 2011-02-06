@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.16 2010/10/28 16:08:10 deraadt Exp $	 */
+/* $OpenBSD: pftop.c,v 1.17 2011/02/06 05:20:25 lum Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -87,9 +87,6 @@ void print_states(void);
 int select_rules(void);
 int read_rules(void);
 void print_rules(void);
-
-int print_header(void);
-int keyboard_callback(int ch);
 
 int select_queues(void);
 int read_queues(void);
