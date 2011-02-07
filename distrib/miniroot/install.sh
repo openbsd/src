@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.216 2011/01/10 06:49:08 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.217 2011/02/07 18:01:08 miod Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -244,7 +244,7 @@ hostname >/tmp/myname
 # to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched lines containing
 # domain information or aliases. These are lines the user added/changed
 # manually. Note we may have no hosts file if no interfaces were configured.
-if [[ -f hosts ]]; then
+if [[ -f /tmp/hosts ]]; then
 	_dn=$(get_fqdn)
 	while read _addr _hn _aliases; do
 		if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
