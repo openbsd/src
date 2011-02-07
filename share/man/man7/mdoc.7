@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.64 2011/02/06 17:33:20 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.65 2011/02/07 00:02:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2011 $
+.Dd $Mdocdate: February 7 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -283,11 +283,13 @@ a line.
 By doing so, front-ends will be able to apply the proper amount of
 spacing after the end of sentence (unescaped) period, exclamation mark,
 or question mark followed by zero or more non-sentence closing
-delimiters (
-.Ns Sq \&) ,
+delimiters
+.Po
+.Sq \&) ,
 .Sq \&] ,
 .Sq \&' ,
-.Sq \&" ) .
+.Sq \&"
+.Pc .
 .Pp
 The proper spacing is also intelligently preserved if a sentence ends at
 the boundary of a macro line.

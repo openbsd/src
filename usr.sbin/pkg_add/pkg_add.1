@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.103 2010/10/28 22:33:43 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.104 2011/02/07 00:02:50 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: February 7 2011 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -27,10 +27,7 @@
 .Op Fl acIimnqrsUuvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
-.Oo Fl D Ar name
-.Ns Oo Ns = Ns Ar value
-.Oc
-.Oc
+.Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl L Ar localbase
 .Op Fl l Ar file
 .Op Fl P Ar type
