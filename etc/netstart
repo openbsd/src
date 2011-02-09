@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.130 2010/06/16 23:45:57 todd Exp $
+#	$OpenBSD: netstart,v 1.131 2011/02/09 17:22:06 sobrado Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -201,8 +201,8 @@ if [ -f /etc/defaultdomain ]; then
 	domainname `stripcom /etc/defaultdomain`
 fi
 
-# Set the address for the loopback interface.  Bringing the
-# interface up, automatically invokes the IPv6 address ::1)
+# Set the address for the loopback interface.  Bringing the interface up,
+# automatically invokes the IPv6 address ::1.
 ifconfig lo0 inet 127.0.0.1/8
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
