@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.41 2011/02/09 04:25:32 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.42 2011/02/09 20:24:39 jakemsr Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -139,6 +139,7 @@ usbd_status usbd_set_interface(usbd_interface_handle, int);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 usbd_status  usbd_get_interface(usbd_interface_handle iface, u_int8_t *aiface);
 void usbd_fill_deviceinfo(usbd_device_handle, struct usb_device_info *, int);
+void usbd_fill_di_task(void *);
 int usbd_get_interface_altindex(usbd_interface_handle iface);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *cd,
@@ -193,22 +194,25 @@ struct usb_task {
 	void (*fun)(void *);
 	void *arg;
 	char type;
-#define USB_TASK_TYPE_GENERIC	0
+#define	USB_TASK_TYPE_GENERIC	0
 #define USB_TASK_TYPE_EXPLORE	1
 #define USB_TASK_TYPE_ABORT	2
-	char onqueue;
-	char running;
+	u_int state;
+#define	USB_TASK_STATE_NONE	0x0
+#define	USB_TASK_STATE_ONQ	0x1
+#define	USB_TASK_STATE_RUN	0x2
+
 };
 
 void usb_add_task(usbd_device_handle, struct usb_task *);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
+void usb_wait_task(usbd_device_handle, struct usb_task *);
 void usb_rem_wait_task(usbd_device_handle, struct usb_task *);
 #define usb_init_task(t, f, a, y) \
 	((t)->fun = (f),	\
 	(t)->arg = (a),		\
 	(t)->type = (y),	\
-	(t)->onqueue = 0,	\
-	(t)->running = 0)
+	(t)->state = USB_TASK_STATE_NONE)
 
 struct usb_devno {
 	u_int16_t ud_vendor;

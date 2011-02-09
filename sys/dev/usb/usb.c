@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.74 2011/02/09 04:25:32 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.75 2011/02/09 20:24:39 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -275,15 +275,15 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 {
 	int s;
 
-	DPRINTFN(2,("%s: task=%p onqueue=%d type=%d\n", __func__, task,
-	    task->onqueue, task->type));
+	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
+	    task->state, task->type));
 
 	/* Don't add task if the device's root hub is dying. */
 	if (usbd_is_dying(dev))
 		return;
 
 	s = splusb();
-	if (!task->onqueue) {
+	if (!(task->state & USB_TASK_STATE_ONQ)) {
 		switch (task->type) {
 		case USB_TASK_TYPE_ABORT:
 			TAILQ_INSERT_TAIL(&usb_abort_tasks, task, next);
@@ -295,7 +295,7 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 			TAILQ_INSERT_TAIL(&usb_generic_tasks, task, next);
 			break;
 		}
-		task->onqueue = 1;
+		task->state |= USB_TASK_STATE_ONQ;
 		task->dev = dev;
 	}
 	if (task->type == USB_TASK_TYPE_ABORT)
@@ -310,23 +310,47 @@ usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 {
 	int s;
 
-	DPRINTFN(2,("%s: task=%p onqueue=%d type=%d\n", __func__, task,
-	    task->onqueue, task->type));
+	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
+	    task->state, task->type));
+
+	if (!(task->state & USB_TASK_STATE_ONQ))
+		return;
 
 	s = splusb();
-	if (task->onqueue) {
-		switch (task->type) {
-		case USB_TASK_TYPE_ABORT:
-			TAILQ_REMOVE(&usb_abort_tasks, task, next);
-			break;
-		case USB_TASK_TYPE_EXPLORE:
-			TAILQ_REMOVE(&usb_explore_tasks, task, next);
-			break;
-		case USB_TASK_TYPE_GENERIC:
-			TAILQ_REMOVE(&usb_generic_tasks, task, next);
-			break;
-		}
-		task->onqueue = 0;
+
+	switch (task->type) {
+	case USB_TASK_TYPE_ABORT:
+		TAILQ_REMOVE(&usb_abort_tasks, task, next);
+		break;
+	case USB_TASK_TYPE_EXPLORE:
+		TAILQ_REMOVE(&usb_explore_tasks, task, next);
+		break;
+	case USB_TASK_TYPE_GENERIC:
+		TAILQ_REMOVE(&usb_generic_tasks, task, next);
+		break;
+	}
+	task->state &= ~USB_TASK_STATE_ONQ;
+	if (task->state == USB_TASK_STATE_NONE)
+		wakeup(task);
+
+	splx(s);
+}
+
+void
+usb_wait_task(usbd_device_handle dev, struct usb_task *task)
+{
+	int s;
+
+	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
+	    task->state, task->type));
+
+	if (task->state == USB_TASK_STATE_NONE)
+		return;
+
+	s = splusb();
+	while (task->state != USB_TASK_STATE_NONE) {
+		DPRINTF(("%s: waiting for task to complete\n", __func__));
+		tsleep(task, PWAIT, "endtask", 0);
 	}
 	splx(s);
 }
@@ -334,18 +358,8 @@ usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 void
 usb_rem_wait_task(usbd_device_handle dev, struct usb_task *task)
 {
-	int s;
-
-	DPRINTFN(2,("%s: task=%p onqueue=%d type=%d\n", __func__, task,
-	    task->onqueue, task->type));
-
-	s = splusb();
 	usb_rem_task(dev, task);
-	while (task->running) {
-		DPRINTF(("%s: waiting for task to complete\n", __func__));
-		tsleep(task, PWAIT, "endtask", 0);
-	}
-	splx(s);
+	usb_wait_task(dev, task);
 }
 
 void
@@ -406,16 +420,23 @@ usb_task_thread(void *arg)
 			tsleep(&usb_run_tasks, PWAIT, "usbtsk", 0);
 			continue;
 		}
-		task->onqueue = 0;
-		/* Don't execute the task if the root hub is gone. */
-		if (usbd_is_dying(task->dev))
-			continue;
-		task->running = 1;
-		splx(s);
-		task->fun(task->arg);
-		s = splusb();
-		task->running = 0;
-		wakeup(task);
+		/*
+		 * Set the state run bit before clearing the onq bit.
+		 * This avoids state == none between dequeue and
+		 * execution, which could cause usb_wait_task() to do
+		 * the wrong thing.
+		 */
+		task->state |= USB_TASK_STATE_RUN;
+		task->state &= ~USB_TASK_STATE_ONQ;
+		/* Don't actually execute the task if dying. */
+		if (!usbd_is_dying(task->dev)) {
+			splx(s);
+			task->fun(task->arg);
+			s = splusb();
+		}
+		task->state &= ~USB_TASK_STATE_RUN;
+		if (task->state == USB_TASK_STATE_NONE)
+			wakeup(task);
 	}
 	splx(s);
 
@@ -443,16 +464,23 @@ usb_abort_task_thread(void *arg)
 			tsleep(&usb_run_abort_tasks, PWAIT, "usbatsk", 0);
 			continue;
 		}
-		task->onqueue = 0;
-		/* Don't execute the task if the root hub is gone. */
-		if (usbd_is_dying(task->dev))
-			continue;
-		task->running = 1;
-		splx(s);
-		task->fun(task->arg);
-		s = splusb();
-		task->running = 0;
-		wakeup(task);
+		/*
+		 * Set the state run bit before clearing the onq bit.
+		 * This avoids state == none between dequeue and
+		 * execution, which could cause usb_wait_task() to do
+		 * the wrong thing.
+		 */
+		task->state |= USB_TASK_STATE_RUN;
+		task->state &= ~USB_TASK_STATE_ONQ;
+		/* Don't actually execute the task if dying. */
+		if (!usbd_is_dying(task->dev)) {
+			splx(s);
+			task->fun(task->arg);
+			s = splusb();
+		}
+		task->state &= ~USB_TASK_STATE_RUN;
+		if (task->state == USB_TASK_STATE_NONE)
+			wakeup(task);
 	}
 	splx(s);
 
@@ -491,6 +519,26 @@ int
 usbclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (0);
+}
+
+void
+usbd_fill_di_task(void *arg)
+{
+	struct usb_device_info *di = (struct usb_device_info *)arg;
+	struct usb_softc *sc;
+	usbd_device_handle dev;
+
+	/* check that the bus and device are still present */
+	if (di->udi_bus >= usb_cd.cd_ndevs)
+		return;
+	sc = usb_cd.cd_devs[di->udi_bus];
+	if (sc == NULL)
+		return;
+	dev = sc->sc_bus->devices[di->udi_addr];
+	if (dev == NULL)
+		return;
+
+	usbd_fill_deviceinfo(dev, di, 1);
 }
 
 int
@@ -589,14 +637,31 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	{
 		struct usb_device_info *di = (void *)data;
 		int addr = di->udi_addr;
+		struct usb_task di_task;
 		usbd_device_handle dev;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
+
 		dev = sc->sc_bus->devices[addr];
 		if (dev == NULL)
 			return (ENXIO);
-		usbd_fill_deviceinfo(dev, di, 1);
+
+		di->udi_bus = unit;
+
+		/* All devices get a driver, thanks to ugen(4).  If the
+		 * task ends without adding a driver name, there was an error.
+		 */
+		di->udi_devnames[0][0] = '\0';
+
+		usb_init_task(&di_task, usbd_fill_di_task, di,
+		    USB_TASK_TYPE_GENERIC);
+		usb_add_task(sc->sc_bus->root_hub, &di_task);
+		usb_wait_task(sc->sc_bus->root_hub, &di_task);
+
+		if (di->udi_devnames[0][0] == '\0')
+			return (ENXIO);
+
 		break;
 	}
 
