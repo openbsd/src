@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.28 2011/02/05 18:10:44 jakemsr Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.29 2011/02/09 04:25:31 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -243,17 +243,16 @@ otus_detach(struct device *self, int flags)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	s = splusb();
+	s = splnet();
+
+	/* Wait for all queued asynchronous commands to complete. */
+	while (sc->cmdq.queued > 0)
+		tsleep(&sc->cmdq, 0, "cmdq", 0);
 
 	if (timeout_initialized(&sc->scan_to))
 		timeout_del(&sc->scan_to);
 	if (timeout_initialized(&sc->calib_to))
 		timeout_del(&sc->calib_to);
-
-	/* Wait for all queued asynchronous commands to complete. */
-	usb_rem_wait_task(sc->sc_udev, &sc->sc_task);
-
-	usbd_ref_wait(sc->sc_udev);
 
 	if (ifp->if_softc != NULL) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -728,15 +727,8 @@ otus_next_scan(void *arg)
 {
 	struct otus_softc *sc = arg;
 
-	if (usbd_is_dying(sc->sc_udev))
-		return;
-
-	usbd_ref_incr(sc->sc_udev);
-
 	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(&sc->sc_ic.ic_if);
-
-	usbd_ref_decr(sc->sc_udev);
 }
 
 void
@@ -758,6 +750,7 @@ otus_task(void *arg)
 		ring->queued--;
 		ring->next = (ring->next + 1) % OTUS_HOST_CMD_RING_COUNT;
 	}
+	wakeup(ring);
 	splx(s);
 }
 
@@ -811,8 +804,7 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 
 	case IEEE80211_S_SCAN:
 		(void)otus_set_chan(sc, ic->ic_bss->ni_chan, 0);
-		if (!usbd_is_dying(sc->sc_udev))
-			timeout_add_msec(&sc->scan_to, 200);
+		timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -833,8 +825,7 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 			otus_newassoc(ic, ni, 1);
 
 			/* Start calibration timer. */
-			if (!usbd_is_dying(sc->sc_udev))
-				timeout_add_sec(&sc->calib_to, 1);
+			timeout_add_sec(&sc->calib_to, 1);
 		}
 		break;
 	}
@@ -1503,11 +1494,6 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	if (usbd_is_dying(sc->sc_udev))
-		return ENXIO;
-
-	usbd_ref_incr(sc->sc_udev);
-
 	s = splnet();
 
 	switch (cmd) {
@@ -1564,9 +1550,6 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	splx(s);
-
-	usbd_ref_decr(sc->sc_udev);
-
 	return error;
 }
 
@@ -2188,20 +2171,12 @@ otus_calibrate_to(void *arg)
 	struct ieee80211_node *ni;
 	int s;
 
-	if (usbd_is_dying(sc->sc_udev))
-		return;
-
-	usbd_ref_incr(sc->sc_udev);
-
 	s = splnet();
 	ni = ic->ic_bss;
 	ieee80211_amrr_choose(&sc->amrr, ni, &((struct otus_node *)ni)->amn);
 	splx(s);
 
-	if (!usbd_is_dying(sc->sc_udev))
-		timeout_add_sec(&sc->calib_to, 1);
-
-	usbd_ref_decr(sc->sc_udev);
+	timeout_add_sec(&sc->calib_to, 1);
 }
 
 int
@@ -2349,7 +2324,8 @@ otus_stop(struct ifnet *ifp)
 	s = splusb();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 	/* Wait for all queued asynchronous commands to complete. */
-	usb_wait_task(sc->sc_udev, &sc->sc_task);
+	while (sc->cmdq.queued > 0)
+		tsleep(&sc->cmdq, 0, "cmdq", 0);
 	splx(s);
 
 	/* Stop Rx. */

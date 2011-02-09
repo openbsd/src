@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.11 2011/02/05 18:10:44 jakemsr Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.12 2011/02/09 04:25:32 jakemsr Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -341,16 +341,12 @@ rsu_detach(struct device *self, int flags)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	s = splusb();
+	s = splnet();
+	/* Wait for all async commands to complete. */
+	rsu_wait_async(sc);
 
 	if (timeout_initialized(&sc->calib_to))
 		timeout_del(&sc->calib_to);
-
-	/* Wait for all async commands to complete. */
-	usb_rem_wait_task(sc->sc_udev, &sc->sc_task);
-
-	usbd_ref_wait(sc->sc_udev);
-
 	if (ifp->if_softc != NULL) {
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
@@ -541,6 +537,7 @@ rsu_task(void *arg)
 		ring->queued--;
 		ring->next = (ring->next + 1) % RSU_HOST_CMD_RING_COUNT;
 	}
+	wakeup(ring);
 	splx(s);
 }
 
@@ -569,7 +566,8 @@ void
 rsu_wait_async(struct rsu_softc *sc)
 {
 	/* Wait for all queued asynchronous commands to complete. */
-	usb_wait_task(sc->sc_udev, &sc->sc_task);
+	while (sc->cmdq.queued > 0)
+		tsleep(&sc->cmdq, 0, "cmdq", 0);
 }
 
 int
@@ -804,15 +802,8 @@ rsu_calib_to(void *arg)
 {
 	struct rsu_softc *sc = arg;
 
-	if (usbd_is_dying(sc->sc_udev))
-		return;
-
-	usbd_ref_incr(sc->sc_udev);
-
 	/* Do it in a process context. */
 	rsu_do_async(sc, rsu_calib_cb, NULL, 0);
-
-	usbd_ref_decr(sc->sc_udev);
 }
 
 /* ARGSUSED */
@@ -837,8 +828,7 @@ rsu_calib_cb(struct rsu_softc *sc, void *arg)
 		DPRINTFN(8, ("RSSI=%d%%\n", reg >> 4));
 	}
 
-	if (!usbd_is_dying(sc->sc_udev))
-		timeout_add_sec(&sc->calib_to, 2);
+	timeout_add_sec(&sc->calib_to, 2);
 }
 
 int
@@ -905,8 +895,7 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 		ic->ic_bss->ni_txrate = ic->ic_bss->ni_rates.rs_nrates - 1;
 
 		/* Start periodic calibration. */
-		if (!usbd_is_dying(sc->sc_udev))
-			timeout_add_sec(&sc->calib_to, 2);
+		timeout_add_sec(&sc->calib_to, 2);
 		break;
 	}
 	(void)sc->sc_newstate(ic, cmd->state, cmd->arg);
@@ -1710,11 +1699,6 @@ rsu_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	if (usbd_is_dying(sc->sc_udev))
-		return ENXIO;
-
-	usbd_ref_incr(sc->sc_udev);
-
 	s = splnet();
 
 	switch (cmd) {
@@ -1757,9 +1741,6 @@ rsu_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 	splx(s);
-
-	usbd_ref_decr(sc->sc_udev);
-
 	return (error);
 }
 
