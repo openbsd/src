@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.153 2010/09/24 13:05:00 dlg Exp $
+#	$OpenBSD: Makefile,v 1.154 2011/02/09 17:17:47 jasper Exp $
 
 .include <bsd.own.mk>
 
@@ -16,14 +16,14 @@ SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
 	sa sasyncd sensorsd sliplogin slstats smtpd snmpctl snmpd spamdb \
 	spray syslogc syslogd sysmerge tcpdrop tcpdump timed tokenadm \
 	tokeninit traceroute traceroute6 trpt usbdevs user vipw watchdogd \
-	wsconscfg wsfontload wsmoused ypldap zdump zic ztsscale
+	wsconscfg wsfontload wsmoused zdump zic ztsscale
 
 .if (${AFS:L} == "yes")
 SUBDIR+=afs
 .endif
 
 .if (${YP:L} == "yes")
-SUBDIR+=ypbind yppoll ypset ypserv
+SUBDIR+=ypbind ypldap yppoll ypset ypserv
 .endif
 
 .include <bsd.subdir.mk>
