@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.7 2011/01/30 16:05:29 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.8 2011/02/09 22:53:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 30 2011 $
+.Dd $Mdocdate: February 9 2011 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -529,30 +529,38 @@ For example, do not use \eN'34', use \e(dq, or even the plain
 .Sq \(dq
 character where possible.
 .Sh COMPATIBILITY
-This section documents compatibility of
-.Nm
-with older or existing versions of groff.
+This section documents compatibility between mandoc and other other
+troff implementations, at this time limited to GNU troff
+.Pq Qq groff .
 .Pp
-The following render differently in
-.Fl T Ns Ar ascii
-output mode:
-.Bd -ragged -offset indent
+.Bl -dash -compact
+.It
+In
+.Fl T Ns Cm ascii ,
+the
 \e(ss, \e(nm, \e(nb, \e(nc, \e(ib, \e(ip, \e(pp, \e[sum], \e[product],
-\e[coproduct], \e(gr, \e(-h, \e(a.
-.Ed
-.Pp
-The following render differently in
-.Fl T Ns Ar html
-output mode:
-.Bd -ragged -offset indent
-\e(~=, \e(nb, \e(nc
-.Ed
-.Pp
-Finally, the following have been omitted by being poorly documented or
-having no known representation:
-.Bd -ragged -offset indent
-\e[radicalex], \e[sqrtex], \e(ru
-.Ed
+\e[coproduct], \e(gr, \e(\-h, and \e(a. special characters render
+differently between mandoc and groff.
+.It
+In
+.Fl T Ns Cm html
+and
+.Fl T Ns Cm xhtml ,
+the \e(~=, \e(nb, and \e(nc special characters render differently
+between mandoc and groff.
+.It
+The
+.Fl T Ns Cm ps
+and
+.Fl T Ns Cm pdf
+modes format like
+.Fl T Ns Cm ascii
+instead of rendering glyphs as in groff.
+.It
+The \e[radicalex], \e[sqrtex], and \e(ru special characters have been omitted
+from mandoc either because they are poorly documented or they have no
+known representation.
+.El
 .Sh SEE ALSO
 .Xr mandoc 1
 .Sh AUTHORS
