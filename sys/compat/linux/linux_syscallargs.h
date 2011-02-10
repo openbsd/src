@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscallargs.h,v 1.56 2010/06/30 21:54:35 guenther Exp $	*/
+/*	$OpenBSD: linux_syscallargs.h,v 1.57 2011/02/10 12:00:01 pirofti Exp $	*/
 
 /*
  * System call argument lists.
@@ -538,6 +538,16 @@ struct linux_sys_fcntl64_args {
 	syscallarg(void *) arg;
 };
 
+struct linux_sys_clock_gettime_args {
+	syscallarg(clockid_t) which;
+	syscallarg(struct l_timespec *) tp;
+};
+
+struct linux_sys_clock_getres_args {
+	syscallarg(clockid_t) which;
+	syscallarg(struct l_timespec *) tp;
+};
+
 /*
  * System call prototypes.
  */
@@ -796,3 +806,5 @@ int	linux_sys_lremovexattr(struct proc *, void *, register_t *);
 int	linux_sys_fremovexattr(struct proc *, void *, register_t *);
 int	linux_sys_fadvise64(struct proc *, void *, register_t *);
 int	sys_exit(struct proc *, void *, register_t *);
+int	linux_sys_clock_gettime(struct proc *, void *, register_t *);
+int	linux_sys_clock_getres(struct proc *, void *, register_t *);

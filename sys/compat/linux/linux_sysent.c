@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sysent.c,v 1.55 2010/06/30 21:54:35 guenther Exp $	*/
+/*	$OpenBSD: linux_sysent.c,v 1.56 2011/02/10 12:00:01 pirofti Exp $	*/
 
 /*
  * System call switch table.
@@ -576,10 +576,10 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 263 = unimplemented linux_sys_timer_delete */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 264 = unimplemented linux_sys_clock_settime */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 265 = unimplemented linux_sys_clock_gettime */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 266 = unimplemented linux_sys_clock_getres */
+	{ 2, s(struct linux_sys_clock_gettime_args), 0,
+	    linux_sys_clock_gettime },		/* 265 = clock_gettime */
+	{ 2, s(struct linux_sys_clock_getres_args), 0,
+	    linux_sys_clock_getres },		/* 266 = clock_getres */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 267 = unimplemented linux_sys_clock_nanosleep */
 };

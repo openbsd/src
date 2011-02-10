@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscalls.c,v 1.54 2010/06/30 21:54:35 guenther Exp $	*/
+/*	$OpenBSD: linux_syscalls.c,v 1.55 2011/02/10 12:00:01 pirofti Exp $	*/
 
 /*
  * System call names.
@@ -293,7 +293,7 @@ char *linux_syscallnames[] = {
 	"#262 (unimplemented linux_sys_timer_getoverrun)",		/* 262 = unimplemented linux_sys_timer_getoverrun */
 	"#263 (unimplemented linux_sys_timer_delete)",		/* 263 = unimplemented linux_sys_timer_delete */
 	"#264 (unimplemented linux_sys_clock_settime)",		/* 264 = unimplemented linux_sys_clock_settime */
-	"#265 (unimplemented linux_sys_clock_gettime)",		/* 265 = unimplemented linux_sys_clock_gettime */
-	"#266 (unimplemented linux_sys_clock_getres)",		/* 266 = unimplemented linux_sys_clock_getres */
+	"clock_gettime",			/* 265 = clock_gettime */
+	"clock_getres",			/* 266 = clock_getres */
 	"#267 (unimplemented linux_sys_clock_nanosleep)",		/* 267 = unimplemented linux_sys_clock_nanosleep */
 };
