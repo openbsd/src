@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.51 2010/06/30 21:54:12 guenther Exp $
+	$OpenBSD: syscalls.master,v 1.52 2011/02/10 11:58:43 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -405,6 +405,8 @@
 262	UNIMPL		linux_sys_timer_getoverrun
 263	UNIMPL		linux_sys_timer_delete
 264	UNIMPL		linux_sys_clock_settime
-265	UNIMPL		linux_sys_clock_gettime
-266	UNIMPL		linux_sys_clock_getres
+265	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct l_timespec *tp); }
+266	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct l_timespec *tp); }
 267	UNIMPL		linux_sys_clock_nanosleep
