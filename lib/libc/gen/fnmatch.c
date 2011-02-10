@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.c,v 1.14 2008/10/01 23:04:13 millert Exp $	*/
+/*	$OpenBSD: fnmatch.c,v 1.15 2011/02/10 21:31:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fnmatch.h>
+#include <limits.h>
 
 #include "charclass.h"
 
@@ -50,15 +51,38 @@
 #define	RANGE_NOMATCH	0
 #define	RANGE_ERROR	(-1)
 
+/* Limit of recursion during matching attempts. */
+#define __FNM_MAX_RECUR	64
+
 static int rangematch(const char *, char, int, char **);
 static int classmatch(const char *, char, int, const char **);
+static int __fnmatch(const char *, const char *, int, int);
 
 int
 fnmatch(const char *pattern, const char *string, int flags)
 {
+	int e;
+
+	if (strnlen(pattern, PATH_MAX) == PATH_MAX ||
+	    strnlen(string, PATH_MAX) == PATH_MAX)
+		return (FNM_NOMATCH);
+		
+	e = __fnmatch(pattern, string, flags, __FNM_MAX_RECUR);
+	if (e == -1)
+		e = FNM_NOMATCH;
+	return (e);
+}
+
+static int
+__fnmatch(const char *pattern, const char *string, int flags, int recur)
+{
 	const char *stringstart;
 	char *newp;
 	char c, test;
+	int e;
+
+	if (recur-- == 0)
+		return (-1);
 
 	for (stringstart = string;;)
 		switch (c = *pattern++) {
@@ -104,8 +128,10 @@ fnmatch(const char *pattern, const char *string, int flags)
 
 			/* General case, use recursion. */
 			while ((test = *string) != EOS) {
-				if (!fnmatch(pattern, string, flags & ~FNM_PERIOD))
-					return (0);
+				e = __fnmatch(pattern, string,
+				    flags & ~FNM_PERIOD, recur);
+				if (e != FNM_NOMATCH)
+					return (e);
 				if (test == '/' && (flags & FNM_PATHNAME))
 					break;
 				++string;
