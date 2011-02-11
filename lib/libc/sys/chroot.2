@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.16 2010/04/01 17:06:55 jmc Exp $
+.\"	$OpenBSD: chroot.2,v 1.17 2011/02/11 22:12:28 weerd Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 1 2010 $
+.Dd $Mdocdate: February 11 2011 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ There may be other privileges which need to be dropped as well.
 
 if (chroot(newroot) != 0 || chdir("/") != 0)
 	err(1, "%s", newroot);
-setreseuid(getuid(), getuid(), getuid());
+setresuid(getuid(), getuid(), getuid());
 .Ed
 .Sh ERRORS
 .Fn chroot
