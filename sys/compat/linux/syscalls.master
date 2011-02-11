@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.52 2011/02/10 11:58:43 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.53 2011/02/11 21:40:04 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -223,7 +223,7 @@
 123	STD		{ int linux_sys_modify_ldt(void); }
 #endif
 124	STD		{ int linux_sys_adjtimex(void); }
-125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
+125	STD		{ int linux_sys_mprotect(caddr_t addr, int len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
 			    linux_old_sigset_t *set, linux_old_sigset_t *oset); }
 127	STD		{ int linux_sys_create_module(void); }
