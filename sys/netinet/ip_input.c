@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.185 2011/02/03 17:29:16 millert Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.186 2011/02/11 12:16:30 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1578,7 +1578,7 @@ ip_forward(m, srcrt)
 
  freecopy:
 	if (mcopy)
-		m_free(mcopy);
+		m_freem(mcopy);
  freert:
 #ifndef SMALL_KERNEL
 	if (ipmultipath && ipforward_rt.ro_rt &&
