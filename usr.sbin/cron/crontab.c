@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.59 2011/01/31 18:02:56 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.60 2011/02/11 07:14:49 guenther Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -56,9 +56,9 @@ static	void		list_cmd(void),
 			edit_cmd(void),
 			check_error(const char *),
 			parse_args(int c, char *v[]),
+			copy_crontab(FILE *, FILE *),
 			die(int);
 static	int		replace_cmd(void);
-static	int		ignore_comments(FILE *);
 
 static void
 usage(const char *msg) {
@@ -251,12 +251,7 @@ list_cmd(void) {
 	 */
 	Set_LineNum(1)
 
-	/* ignore the top few comments since we probably put them there.
-	 */
-	ch = ignore_comments(f);
-
-	while (EOF != (ch = get_char(f)))
-		putchar(ch);
+	copy_crontab(f, stdout);
 	fclose(f);
 }
 
@@ -360,15 +355,7 @@ edit_cmd(void) {
 
 	Set_LineNum(1)
 
-	/* ignore the top few comments since we probably put them there.
-	 */
-	ch = ignore_comments(f);
-
-	/* copy the rest of the crontab (if any) to the temp file.
-	 */
-	if (EOF != ch)
-		while (EOF != (ch = get_char(f)))
-			putc(ch, NewCrontab);
+	copy_crontab(f, NewCrontab);
 	fclose(f);
 	if (fflush(NewCrontab) < OK) {
 		perror(Filename);
@@ -686,14 +673,16 @@ die(int x) {
 	_exit(ERROR_EXIT);
 }
 
-static int
-ignore_comments(FILE *f) {
+static void
+copy_crontab(FILE *f, FILE *out) {
 	int ch, x;
 
+	/* ignore the top few comments since we probably put them there.
+	 */
 	x = 0;
 	while (EOF != (ch = get_char(f))) {
 		if ('#' != ch) {
-			putc(ch, NewCrontab);
+			putc(ch, out);
 			break;
 		}
 		while (EOF != (ch = get_char(f)))
@@ -703,5 +692,9 @@ ignore_comments(FILE *f) {
 			break;
 	}
 
-	return ch;
+	/* copy out the rest of the crontab (if any)
+	 */
+	if (EOF != ch)
+		while (EOF != (ch = get_char(f)))
+			putc(ch, out);
 }
