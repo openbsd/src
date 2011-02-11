@@ -995,17 +995,19 @@ inteldrm_chipset_flush(struct inteldrm_softc *dev_priv)
 		bus_space_write_4(dev_priv->ifp.i9xx.bst,
 		    dev_priv->ifp.i9xx.bsh, 0, 1);
 	} else {
-		/*
-		 * I8XX don't have a flush page mechanism, but do have the
-		 * cache. Do it the bruteforce way. we write 1024 byes into
-		 * the cache, then clflush them out so they'll kick the stuff
-		 * we care about out of the chipset cache.
-		 */
-		if (dev_priv->ifp.i8xx.kva != NULL) {
-			memset(dev_priv->ifp.i8xx.kva, 0, 1024);
-			agp_flush_cache_range((vaddr_t)dev_priv->ifp.i8xx.kva,
-			    1024);
+		int i;
+
+		wbinvd();
+
+#define I830_HIC        0x70
+
+		I915_WRITE(I830_HIC, (I915_READ(I830_HIC) | (1<<31)));
+		for (i = 1000; i; i--) {
+			if (!(I915_READ(I830_HIC) & (1<<31)))
+				break;
+			delay(100);
 		}
+
 	}
 }
 
