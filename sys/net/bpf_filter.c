@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.21 2010/04/21 16:49:34 otto Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.22 2011/02/12 20:45:19 canacar Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -161,6 +161,8 @@ bpf_filter(pc, p, wirelen, buflen)
 	u_int32_t A = 0, X = 0;
 	u_int32_t k;
 	int32_t mem[BPF_MEMWORDS];
+
+	bzero(mem, sizeof(mem));
 
 	if (pc == 0)
 		/*
