@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.16 2008/05/07 12:05:35 claudio Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.17 2011/02/12 11:22:31 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 7 2008 $
+.Dd $Mdocdate: February 12 2011 $
 .Dt RC.CONF 8
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ file.
 Variables set in this file will override variables previously set in
 .Pa /etc/rc.conf .
 .Pp
-There are three sections in this file.
+There are four sections in this file.
 The first is used to turn features on or off.
 For example, whether the system runs the
 .Nm dhcpd
@@ -100,6 +100,26 @@ This particular line instructs
 .Xr nfsd 8
 to start four copies of the server.
 On a busy file server, 8 (or more) copies are recommended.
+.Pp
+The fourth section contains the
+.Va rc_scripts
+variable, responsible for starting and stopping
+.Xr rc.d 8
+scripts in the specified order.
+For example, the following line
+.Bd -literal -offset indent
+rc_scripts="dbus_daemon cupsd"
+.Ed
+.Pp
+will run
+.Pa /etc/rc.d/dbus_daemon
+then
+.Pa /etc/rc.d/cupsd
+with the
+.Va start
+argument at boot time and in reverse order with the
+.Va stop
+argument at shutdown.
 .Sh SEE ALSO
 .Xr init 8 ,
 .Xr intro 8 ,
