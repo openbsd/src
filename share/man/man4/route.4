@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.31 2010/07/03 04:44:51 guenther Exp $
+.\"	$OpenBSD: route.4,v 1.32 2011/02/12 09:40:33 sthen Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: February 12 2011 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -236,6 +236,7 @@ Messages include:
 #define RTM_DELADDR	0xd	/* address being removed from iface */
 #define RTM_IFINFO	0xe	/* iface going up/down etc. */
 #define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
+#define RTM_DESYNC	0x10	/* route socket buffer overflow */
 .Ed
 .Pp
 A message header consists of one of the following:
@@ -244,15 +245,18 @@ struct rt_msghdr {
 	u_short	rtm_msglen;	/* to skip over non-understood messages */
 	u_char	rtm_version;	/* future binary compatibility */
 	u_char	rtm_type;	/* message type */
+	u_short	rtm_hdrlen;	/* sizeof(rt_msghdr) to skip over the header */
 	u_short	rtm_index;	/* index for associated ifp */
-	int	rtm_flags;	/* flags, incl. kern & message, eg DONE */
+	u_short rtm_tableid;	/* routing table id */
+	u_char	rtm_priority;	/* routing priority */
+	u_char	rtm_mpls;	/* MPLS additional infos */
 	int	rtm_addrs;	/* bitmask identifying sockaddrs in msg */
+	int	rtm_flags;	/* flags, incl. kern & message, e.g. DONE */
+	int	rtm_fmask;	/* bitmask used in RTM_CHANGE message */
 	pid_t	rtm_pid;	/* identify sender */
 	int	rtm_seq;	/* for sender to identify action */
 	int	rtm_errno;	/* why failed */
-	int	rtm_use;	/* deprecated use rtm_rmx->rmx_pksent */
-#define rtm_fmask	rtm_use	/* bitmask used in RTM_CHANGE message */
-	u_long	rtm_inits;	/* which metrics we are initializing */
+	u_int	rtm_inits;	/* which metrics we are initializing */
 	struct	rt_metrics rtm_rmx; /* metrics themselves */
 };
 
@@ -260,9 +264,14 @@ struct if_msghdr {
 	u_short	ifm_msglen;	/* to skip over non-understood messages */
 	u_char	ifm_version;	/* future binary compatibility */
 	u_char	ifm_type;	/* message type */
+	u_short ifm_hdrlen;	/* sizeof(if_msghdr) to skip over the header */
+	u_short	ifm_index;	/* index for associated ifp */
+	u_short	ifm_tableid;	/* routing table id */
+	u_char	ifm_pad1;
+	u_char	ifm_pad2;
 	int	ifm_addrs;	/* like rtm_addrs */
 	int	ifm_flags;	/* value of if_flags */
-	u_short	ifm_index;	/* index for associated ifp */
+	int	ifm_xflags;
 	struct	if_data ifm_data;/* statistics and other data about if */
 };
 
@@ -270,9 +279,13 @@ struct ifa_msghdr {
 	u_short	ifam_msglen;	/* to skip over non-understood messages */
 	u_char	ifam_version;	/* future binary compatibility */
 	u_char	ifam_type;	/* message type */
+	u_short ifam_hdrlen;	/* sizeof(ifa_msghdr) to skip over the header */
+	u_short	ifam_index;	/* index for associated ifp */
+	u_short	ifam_tableid;	/* routing table id */
+	u_char	ifam_pad1;
+	u_char	ifam_pad2;
 	int	ifam_addrs;	/* like rtm_addrs */
 	int	ifam_flags;	/* value of ifa_flags */
-	u_short	ifam_index;	/* index for associated ifp */
 	int	ifam_metric;	/* value of ifa_metric */
 };
 
@@ -280,9 +293,10 @@ struct if_announcemsghdr {
 	u_short	ifan_msglen;	/* to skip over non-understood messages */
 	u_char	ifan_version;	/* future binary compatibility */
 	u_char	ifan_type;	/* message type */
+	u_short ifan_hdrlen;	/* sizeof(ifa_msghdr) to skip over the header */
 	u_short	ifan_index;	/* index for associated ifp */
-	char	ifan_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	u_short	ifan_what;	/* what type of announcement */
+	char	ifan_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 };
 .Ed
 .Pp
@@ -309,16 +323,17 @@ header.
 The metrics structure is:
 .Bd -literal
 struct rt_metrics {
-	u_long	rmx_locks;	/* Kernel must leave these values alone */
-	u_long	rmx_mtu;	/* MTU for this path */
-	u_long	rmx_hopcount;	/* max hops expected */
-	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
-	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
-	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
-	u_long	rmx_ssthresh;	/* outbound gateway buffer limit */
-	u_long	rmx_rtt;	/* estimated round trip time */
-	u_long	rmx_rttvar;	/* estimated rtt variance */
-	u_long	rmx_pksent;	/* packets sent using this route */
+	u_int64_t	rmx_pksent;	/* packets sent using this route */
+	u_int		rmx_locks;	/* Kernel must leave these values */
+	u_int		rmx_mtu;	/* MTU for this path */
+	u_int		rmx_expire;	/* lifetime for route, e.g. redirect */
+	u_int		rmx_refcnt;	/* # references hold */
+	u_int		rmx_hopcount;	/* max hops expected */
+	u_int		rmx_recvpipe;	/* inbound delay-bandwidth product */
+	u_int		rmx_sendpipe;	/* outbound delay-bandwidth product */
+	u_int		rmx_ssthresh;	/* outbound gateway buffer limit */
+	u_int		rmx_rtt;	/* estimated round trip time */
+	u_int		rmx_rttvar;	/* estimated rtt variance */
 };
 .Ed
 .Pp
@@ -350,6 +365,8 @@ Flags include the values:
 #define	RTF_PROTO1    0x8000    /* protocol specific routing flag */
 #define	RTF_CLONED    0x10000   /* this is a cloned route */
 #define RTF_MPATH     0x40000   /* multipath route or operation */
+#define RTF_JUMBO     0x80000   /* try to use jumbo frames */
+#define RTF_MPLS      0x100000  /* MPLS additional infos */
 .Ed
 .Pp
 Specifiers for metric values in
