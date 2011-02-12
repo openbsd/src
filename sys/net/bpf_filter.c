@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.22 2011/02/12 20:45:19 canacar Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.23 2011/02/12 20:58:28 canacar Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #ifndef _KERNEL
