@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.100 2011/02/01 08:34:35 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.101 2011/02/13 20:47:22 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -91,6 +91,10 @@ The Netherlands:
     http://ftp.bit.nl/pub/OpenBSD (Ede)
     ftp://ftp.bit.nl/pub/OpenBSD (Ede)
 
+Norway:
+    http://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
+    ftp://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
+
 Poland:
     http://piotrkosoft.net/pub/OpenBSD (Oswiecim)
     ftp://ftp.piotrkosoft.net/pub/OpenBSD (Oswiecim)
@@ -122,7 +126,6 @@ Spain:
 Sweden:
     http://ftp.eu.openbsd.org/pub/OpenBSD (Stockholm)
     ftp://ftp.eu.openbsd.org/pub/OpenBSD (Stockholm)
-    http://ftp.netbsd.se/OpenBSD (Stockholm)
 
 Switzerland:
     http://mirror.switch.ch/ftp/pub/OpenBSD (Zurich)
@@ -149,10 +152,10 @@ USA:
     ftp://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO)
     http://mirror.team-cymru.org/pub/OpenBSD (Chicago, IL)
     ftp://mirror.team-cymru.org/pub/OpenBSD (Chicago, IL)
+    http://mirror.planetunix.net/pub/OpenBSD (Chicago, IL)
+    ftp://mirror.planetunix.net/pub/OpenBSD (Chicago, IL)
     http://mirrors.24-7-solutions.net/pub/OpenBSD (New York, NY)
     ftp://mirrors.24-7-solutions.net/pub/OpenBSD (New York, NY)
-    http://openbsd.mirrors.tds.net/pub/OpenBSD (Madison, WI)
-    ftp://openbsd.mirrors.tds.net/pub/OpenBSD (Madison, WI)
     http://obsd.cec.mtu.edu/pub/OpenBSD (Houghton, Michigan)
     ftp://obsd.cec.mtu.edu/pub/OpenBSD (Houghton, Michigan)
     http://filedump.se.rit.edu/pub/OpenBSD (Rochester, NY)
