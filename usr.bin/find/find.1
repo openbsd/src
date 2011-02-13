@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.81 2010/09/29 07:44:56 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.82 2011/02/13 12:35:02 schwarze Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: February 13 2011 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -643,7 +643,8 @@ and
 .Ql \&;
 may have to be escaped from the shell.
 .Pp
-Passing the output of
+As file names may contain whitespace and shell metacharacters,
+passing the output of
 .Nm
 to other programs requires some care:
 .Pp
