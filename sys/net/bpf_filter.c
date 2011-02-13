@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.23 2011/02/12 20:58:28 canacar Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.24 2011/02/13 22:41:10 canacar Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -38,12 +38,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #ifndef _KERNEL
 #include <stdlib.h>
+#include <string.h>
 #include "pcap.h"
+#else
+#include <sys/systm.h>
 #endif
 
 #include <sys/endian.h>
