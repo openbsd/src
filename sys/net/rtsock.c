@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.113 2011/01/06 14:50:11 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.114 2011/02/14 12:53:27 tedu Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -309,6 +309,8 @@ rt_senddesync(void *data)
 			rop->flags &= ~ROUTECB_FLAG_DESYNC;
 			sorwakeup(rp->rcb_socket);
 		} else {
+			if (desync_mbuf)
+				m_freem(desync_mbuf);
 			/* Re-add timeout to try sending msg again */
 			timeout_add(&rop->timeout, ROUTE_DESYNC_RESEND_TIMEOUT);
 		}
