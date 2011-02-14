@@ -3462,6 +3462,7 @@
 ./usr/share/zoneinfo/America/Nome
 ./usr/share/zoneinfo/America/Noronha
 ./usr/share/zoneinfo/America/North_Dakota
+./usr/share/zoneinfo/America/North_Dakota/Beulah
 ./usr/share/zoneinfo/America/North_Dakota/Center
 ./usr/share/zoneinfo/America/North_Dakota/New_Salem
 ./usr/share/zoneinfo/America/Ojinaga
@@ -4058,6 +4059,7 @@
 ./usr/share/zoneinfo/posix/America/Nome
 ./usr/share/zoneinfo/posix/America/Noronha
 ./usr/share/zoneinfo/posix/America/North_Dakota
+./usr/share/zoneinfo/posix/America/North_Dakota/Beulah
 ./usr/share/zoneinfo/posix/America/North_Dakota/Center
 ./usr/share/zoneinfo/posix/America/North_Dakota/New_Salem
 ./usr/share/zoneinfo/posix/America/Ojinaga
@@ -4655,6 +4657,7 @@
 ./usr/share/zoneinfo/right/America/Nome
 ./usr/share/zoneinfo/right/America/Noronha
 ./usr/share/zoneinfo/right/America/North_Dakota
+./usr/share/zoneinfo/right/America/North_Dakota/Beulah
 ./usr/share/zoneinfo/right/America/North_Dakota/Center
 ./usr/share/zoneinfo/right/America/North_Dakota/New_Salem
 ./usr/share/zoneinfo/right/America/Ojinaga
