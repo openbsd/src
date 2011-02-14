@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.1 2011/01/07 22:06:08 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.2 2011/02/14 22:36:15 bluhm Exp $
 
 # Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -188,9 +188,6 @@ sub relay_splice {
 	my $splicelen;
 	my $shortsplice = 0;
 	do {
-		$shortsplice++ > 1
-		    and die ref($self), " more than one short splice";
-
 		my $splicemax = $max ? $max - $len : 0;  # XXX should be quad
 		# XXX this works for i386 only
 		my $sosplice = pack('iii', fileno(STDOUT), $splicemax, 0);
@@ -215,7 +212,7 @@ sub relay_splice {
 		    or die ref($self), " splice len $splicelen ".
 		    "greater than max $splicemax";
 		$len += $splicelen;
-	} while ($splicelen and !$max || $max > $len);
+	} while ($max && $max > $len && !$shortsplice++);
 
 	if ($max && $max == $len) {
 		print STDERR "Max\n";
