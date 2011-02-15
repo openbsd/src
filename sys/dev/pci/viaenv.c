@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.14 2010/07/06 09:05:41 blambert Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.15 2011/02/15 21:46:21 miod Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -272,13 +272,13 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	pcireg_t iobase, control;
 	int i;
 
+	sc->sc_iot = pa->pa_iot;
 	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x70);
 	control = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x74);
 	if ((iobase & 0xff80) == 0 || (control & 1) == 0) {
 		printf(": HWM disabled");
 		goto nohwm;
 	}
-	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, iobase & 0xff80, 128, 0, &sc->sc_ioh)) {
 		printf(": can't map HWM i/o space");
 		goto nohwm;
