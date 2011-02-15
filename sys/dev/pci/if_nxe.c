@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.61 2010/05/19 15:27:35 oga Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.62 2011/02/15 12:37:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -229,7 +229,7 @@ int nxedebug = 0;
 #define  NXE_0_XG_CFG1_PAUSE_FR_DIS	(1<<8) /* disable pause frame detect */
 #define  NXE_0_XG_CFG1_SEQ_ERR_EN	(1<<10) /* enable seq err detection */
 #define  NXE_0_XG_CFG1_MULTICAST	(1<<12) /* accept all multicast */
-#define  NXE_0_XG_CFG1_PROMISC		(1<<13) /* accept all multicast */
+#define  NXE_0_XG_CFG1_PROMISC		(1<<13) /* accept all frames */
 #define NXE_0_XG_IPG(_p)	(0x00670008 + _P(_p))
 #define NXE_0_XG_MAC_LO(_p)	(0x00670010 + _P(_p))
 #define NXE_0_XG_MAC_HI(_p)	(0x0067000c + _P(_p))
