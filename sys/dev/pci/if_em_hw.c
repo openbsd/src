@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.59 2011/02/06 23:47:14 dlg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.60 2011/02/15 19:15:25 miod Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -7115,6 +7115,7 @@ em_clear_hw_cntrs(struct em_hw *hw)
 	temp = E1000_READ_REG(hw, ICRXDMTC);
 }
 
+#ifndef SMALL_KERNEL
 /******************************************************************************
  * Adjusts the statistic counters when a frame is accepted by TBI_ACCEPT
  *
@@ -7194,6 +7195,7 @@ em_tbi_adjust_stats(struct em_hw *hw, struct em_hw_stats *stats,
 		stats->prc1522++;
 	}
 }
+#endif	/* !SMALL_KERNEL */
 
 /******************************************************************************
  * Gets the current PCI bus type, speed, and width of the hardware
