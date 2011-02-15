@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.106 2011/01/06 17:32:42 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.107 2011/02/15 20:02:11 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -671,6 +671,12 @@ vndiodone(struct buf *bp)
 	}
 
 out:
+	/*
+	 * A bufq_done call is actually done on this buf in the context
+	 * of the bufq for the device on which the vnd image resides on.
+	 * Meaning we have to do one ourselves too.
+	 */
+	bufq_done(&vnd->sc_bufq, bp);
 	putvndbuf(vbp);
 	disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid),
 	    (pbp->b_flags & B_READ));
