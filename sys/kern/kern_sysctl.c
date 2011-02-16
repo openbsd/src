@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.196 2010/12/14 20:26:44 mikeb Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.197 2011/02/16 10:37:45 mikeb Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -511,17 +511,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 #ifdef CRYPTO
 	case KERN_USERCRYPTO:
-		if (newp && newlen)
-			return (EINVAL);
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &usercrypto));
 	case KERN_USERASYMCRYPTO:
-		if (newp && newlen)
-			return (EINVAL);
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &userasymcrypto));
 	case KERN_CRYPTODEVALLOWSOFT:
-		if (newp && newlen)
-			return (EINVAL);
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &cryptodevallowsoft));
 #endif
