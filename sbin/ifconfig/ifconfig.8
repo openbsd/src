@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.212 2010/12/23 08:54:59 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.213 2011/02/17 08:32:29 camield Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: December 23 2010 $
+.Dd $Mdocdate: February 17 2011 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -97,12 +97,14 @@ for example,
 .Dq en0 .
 If no optional parameters are supplied, this string can instead be just
 .Dq name .
-In this case, all interfaces of that type will be displayed.
-For example,
-.Dq carp
-will display the current configuration of all
-.Xr carp 4
-interfaces.
+If an interface group of that name exists, all interfaces in the group
+will be shown.
+Otherwise all interfaces of the same type will be displayed
+(for example,
+.Dq fxp
+will display all
+.Xr fxp 4
+interfaces).
 .It Ar address_family
 Specifies the address family
 which affects interpretation of the remaining parameters.
