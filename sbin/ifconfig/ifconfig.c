@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.242 2010/11/09 21:14:47 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.243 2011/02/17 06:46:30 camield Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3351,7 +3351,7 @@ setvlantag(const char *val, int d)
 	struct vlanreq vreq;
 	const char *errmsg = NULL;
 
-	__tag = tag = strtonum(val, 0, 65535, &errmsg);
+	__tag = tag = strtonum(val, 0, 4095, &errmsg);
 	if (errmsg)
 		errx(1, "vlan tag %s: %s", val, errmsg);
 	__have_tag = 1;
@@ -3411,7 +3411,7 @@ setvlandev(const char *val, int d)
 
 	if (!__have_tag && vreq.vlr_tag == 0) {
 		skip = strcspn(ifr.ifr_name, "0123456789");
-		tag = strtonum(ifr.ifr_name + skip, 1, 4095, &estr);
+		tag = strtonum(ifr.ifr_name + skip, 0, 4095, &estr);
 		if (estr != NULL)
 			errx(1, "invalid vlan tag and device specification");
 		vreq.vlr_tag = tag;
