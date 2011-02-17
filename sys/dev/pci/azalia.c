@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.189 2011/02/17 16:02:22 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.190 2011/02/17 17:38:55 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2247,7 +2247,7 @@ azalia_codec_select_spkrdac(codec_t *this)
 				}
 			}
 		}
-		if (conn != -1) {
+		if (conn != -1 && conv != -1) {
 			err = azalia_comresp(this, w->nid,
 			    CORB_SET_CONNECTION_SELECT_CONTROL, conn, 0);
 			if (err)
