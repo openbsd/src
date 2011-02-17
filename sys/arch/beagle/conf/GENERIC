@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.4 2010/11/26 20:13:55 miod Exp $
+# $OpenBSD: GENERIC,v 1.5 2011/02/17 20:14:30 miod Exp $
 #
 # GENERIC machine description file
 #
@@ -144,7 +144,7 @@ uscanner*	at uhub? disable	# USB Scanners
 #uyap*		at uhub?		# Y@P firmware loader
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
-#ubt*		at uhub?		# USB Bluetooth
+#ubt*		at uhub? disable	# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 
 ukphy*	at mii?				# "unknown" PHYs
@@ -169,7 +169,7 @@ sdmmc*	at ommmc?		# SD/MMC bus
 scsibus* at sdmmc?		# SCSI emulation
 
 # Bluetooth controllers
-#sbt*	at sdmmc?		# SDIO Bluetooth
+#sbt*	at sdmmc? disable	# SDIO Bluetooth
 
 # APM emulation
 #apm0		at pxaip?

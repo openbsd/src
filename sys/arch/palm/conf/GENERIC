@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2010/11/26 20:13:55 miod Exp $
+#	$OpenBSD: GENERIC,v 1.10 2011/02/17 20:14:30 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -195,9 +195,9 @@ sdmmc*		at pxammc?		# SD/MMC bus
 scsibus*	at sdmmc?		# SCSI emulation
 
 # Bluetooth controllers
-sbt*	at sdmmc?			# SDIO Bluetooth
+sbt*	at sdmmc? disable		# SDIO Bluetooth
 bthub*	at sbt?
-ubt*	at uhub?			# USB Bluetooth
+ubt*	at uhub? disable		# USB Bluetooth
 bthub*	at ubt?
 
 # USB Video

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.205 2011/01/08 11:56:30 damien Exp $g
+#	$OpenBSD: GENERIC,v 1.206 2011/02/17 20:14:30 miod Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -316,7 +316,7 @@ udl*		at uhub?
 wsdisplay*	at udl?
 
 # Bluetooth controllers
-ubt*	at uhub?		# USB Bluetooth
+ubt*	at uhub? disable	# USB Bluetooth
 bthub*	at ubt?
 
 bthidev* at bthub?		# Bluetooth HID support

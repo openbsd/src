@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.16 2010/07/03 03:59:16 krw Exp $ 
+# $OpenBSD: RAMDISK,v 1.17 2011/02/17 20:14:30 miod Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -139,7 +139,7 @@ wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #uyap*	at uhub?		# Y@P firmware loader
 #udsbr*	at uhub?		# D-Link DSB-R100 radio
 #radio*	at udsbr?		# USB radio
-#ubt*	at uhub?		# USB Bluetooth
+#ubt*	at uhub? disable	# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500
 #udcf*	at uhub?		# Gude Expert mouseCLOCK
