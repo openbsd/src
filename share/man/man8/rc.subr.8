@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.6 2011/02/12 11:22:31 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.7 2011/02/17 18:22:44 espie Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,13 +24,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 12 2011 $
+.Dd $Mdocdate: February 17 2011 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
-.Nm rc.subr ,
-.Nm rc.d
-.Nd daemon control scripts
+.Nm rc.subr
+.Nd daemon control scripts routines
 .Sh SYNOPSIS
 .Nm daemon Ns = Ns Ar path_to_executable
 .Nm .\&
@@ -38,30 +37,9 @@
 .Nm rc_cmd
 .Ar action
 .Sh DESCRIPTION
-The
-.Nm rc.d
-directory contains shell scripts to start, stop, and reconfigure daemon
-programs.
-It is currently used for daemons installed from
-.Xr packages 7
-only, not for daemons contained in the
-.Ox
-base system.
-The order in which scripts are started and stopped at boot time and
-shutdown is defined by the
-.Va rc_scripts
-variable in
-.Xr rc.conf 8 .
-.Pp
-The
-.Nm
-script defines shell functions and variables used by
-.Nm rc.d
-scripts.
-.Pp
-Each
-.Nm rc.d
-script consists of the following parts, always given in the following order:
+Every script under
+.Pa /etc/rc.d
+follows the following pattern:
 .Pp
 .Bl -enum -compact
 .It
@@ -69,32 +47,33 @@ Define the
 .Va daemon
 variable.
 .It
-Optionally define service-specific defaults for one or more
+Define service-specific defaults for one or more
 .Va daemon_*
-variables.
+variables (optional).
 .It
-Source the
-.Nm
-script.
+Source
+.Nm ,
+which defines default shell functions and variable values.
 .It
-Optionally override the
+Override the
 .Va pexp
 or
 .Va rc_reload
-variables or any of the
+variables
+or any of the
 .Ic rc_*
-functions.
-Optionally define an
+functions, if needed.
+.It
+Define an
 .Ic rc_pre
 and/or
 .Ic rc_post
-function.
+function, if needed.
 .It
 Call the
 .Ic rc_cmd
-function, passing through the
-.Ar action
-argument.
+function as
+.Dq "rc_cmd $0" .
 .El
 .Pp
 The following shell functions are defined by
@@ -137,34 +116,30 @@ or
 .Cm check ,
 each running one of the functions described below.
 .It Ic rc_start
-Start the service.
-It checks if the service is already running by calling
-.Ar rc_check
-and refuses to start if it is.
-In addition if the
+Check whether the service is already running by calling
+.Ar rc_check ,
+If it's not running, call
 .Fn rc_pre
-function exists, it is called before
-starting the daemon.
+if it exists, then start the daemon.
 .It Ic rc_stop
-It checks that the service is running by calling
-.Ar rc_check
-and if it's not, no action is taken.
-In addition if the
+Check that the service is running by calling
+.Ar rc_check .
+If it is running, stop the daemon,
+then call
 .Fn rc_post
-function exists, it is called right
-after the daemon has been stopped.
+if it exists.
 .It Ic rc_reload
-Find the process using
-.Xr pkill 1
-with the regular expression as specified in the
-.Ar pexp
-variable and send a
+Send a
 .Dv SIGHUP
-signal.
+signal using
+.Xr pkill 1
+on the regular expression given in the
+.Ar pexp
+variable.
 One has to make sure that sending
 .Dv SIGHUP
 to a daemon will have the desired effect,
-which is reloading the configuration files.
+that is, that it will reload its configuration.
 .It Ic rc_restart
 Perform a
 .Cm stop
@@ -208,8 +183,6 @@ for a login class that has the same name as the
 .Nm rc.d
 script itself and uses that.
 If no such login class exists then daemon will be used.
-This variable cannot be overridden from
-.Xr rc.conf.local 8 .
 .It Va daemon_shell
 Shell to run the
 .Va daemon
@@ -232,8 +205,6 @@ script has to redefine this variable
 .Em after
 sourcing
 .Nm .
-This variable cannot be overridden from
-.Xr rc.conf.local 8 .
 .It Va rc_reload
 Can be set to
 .Cm NO
@@ -249,10 +220,10 @@ The same is possible, but almost never useful, for other actions.
 .Pp
 All
 .Va daemon_*
-variables can be set in three ways:
+variables are set in the following ways:
 .Bl -enum
 .It
-The global defaults are provided by
+Global defaults are provided by
 .Nm :
 .Bd -literal -offset indent
 daemon_class=daemon
@@ -267,22 +238,17 @@ script
 .Em before
 sourcing
 .Nm ,
-overriding the global defaults.
+thus overriding the global defaults.
 .It
-Site-specific values provided in
+As noted in
+.Xr rc.d 8 ,
+site-specific values provided in
 .Xr rc.conf.local 8
-override all defaults.
-These are defined by replacing the string "daemon" in the variable name
-by the name of the respective
-.Nm rc.d
-script.
-For example, to run the postgres database daemon using a site-specific
-user account, define
-.Pp
-.Dl postgresql_user=mypgsqluser
-.Pp
-in
-.Xr rc.conf.local 8 .
+for
+.Va daemon_flags
+and
+.Va daemon_user
+will override those defaults.
 .El
 .Sh FILES
 .Bl -tag -width Ds
@@ -299,17 +265,18 @@ script.
 .El
 .Sh SEE ALSO
 .Xr rc 8 ,
-.Xr rc.conf 8
+.Xr rc.conf 8 ,
+.Xr rc.d 8
 .Sh HISTORY
 The
 .Nm
-script
+framework
 first appeared in
 .Ox 4.9 .
 .Sh AUTHORS
 .An -nosplit
 The
-.Nm rc.subr
+.Nm
 framework was written by
 .An Robert Nagy Aq robert@openbsd.org ,
 .An Antoine Jacoutot Aq ajacoutot@openbsd.org ,
