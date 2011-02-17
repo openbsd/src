@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.41 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: umodem.c,v 1.42 2011/02/17 16:12:22 jakemsr Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -173,13 +173,19 @@ umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
 	usbd_desc_iter_t iter;
 	int current_iface_no = -1;
 
+	*data_iface_no = -1;
 	*cm_cap = *acm_cap = 0;
 	usb_desc_iter_init(uaa->device, &iter);
 	desc = usb_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType == UDESC_INTERFACE) {
-		    id = (usb_interface_descriptor_t *)desc;
-		    current_iface_no = id->bInterfaceNumber;
+			id = (usb_interface_descriptor_t *)desc;
+			current_iface_no = id->bInterfaceNumber;
+			if (current_iface_no != ctl_iface_no &&
+			    id->bInterfaceClass == UICLASS_CDC_DATA &&
+			    id->bInterfaceSubClass == UISUBCLASS_DATA &&
+			    *data_iface_no == -1)
+				*data_iface_no = current_iface_no;
 		}
 		if (current_iface_no == ctl_iface_no &&
 		    desc->bDescriptorType == UDESC_CS_INTERFACE) {
@@ -234,10 +240,10 @@ umodem_match(struct device *parent, void *match, void *aux)
 	if (ret == UMATCH_NONE)
 		return (ret);
 
-	/* umodem doesn't yet support devices without a data iface */
+	/* umodem doesn't support devices without a data iface */
 	umodem_get_caps(uaa, id->bInterfaceNumber, &data_iface_no,
 	    &cm_cap, &acm_cap);
-	if (data_iface_no == 0)
+	if (data_iface_no == -1)
 		ret = UMATCH_NONE;
 
 	return (ret);
@@ -267,8 +273,8 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	/* Get the capabilities. */
 	umodem_get_caps(uaa, id->bInterfaceNumber, &data_iface_no,
 	    &sc->sc_cm_cap, &sc->sc_acm_cap);
-	if (data_iface_no == 0) {
-		printf("%s: no pointer to data interface\n",
+	if (data_iface_no == -1) {
+		printf("%s: no data interface\n",
 		       sc->sc_dev.dv_xname);
 		goto bad;
 	}
