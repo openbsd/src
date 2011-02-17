@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.188 2010/09/12 03:17:34 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.189 2011/02/17 16:02:22 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3330,7 +3330,7 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	uint32_t result;
 	int err;
 	int i, j, k;
-	int length, bits, conn, last;
+	int length, nconn, bits, conn, last;
 
 	this->selected = -1;
 	if ((this->widgetcap & COP_AWCAP_CONNLIST) == 0)
@@ -3349,12 +3349,13 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	if (length == 0)
 		return 0;
 
-	this->nconnections = length;
-	this->connections = malloc(sizeof(nid_t) * length, M_DEVBUF, M_NOWAIT);
-	if (this->connections == NULL) {
-		printf("%s: out of memory\n", XNAME(codec->az));
-		return ENOMEM;
-	}
+	/*
+	 * 'length' is the number of entries, not the number of
+	 * connections.  Find the number of connections, 'nconn', so
+	 * enough space can be allocated for the list of connected
+	 * nids.
+	 */
+	nconn = last = 0;
 	for (i = 0; i < length;) {
 		err = azalia_comresp(codec, this->nid,
 		    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
@@ -3365,16 +3366,42 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 			/* If high bit is set, this is the end of a continuous
 			 * list that started with the last connection.
 			 */
+			if ((nconn > 0) && (conn & (1 << (bits - 1))))
+				nconn += (conn & ~(1 << (bits - 1))) - last;
+			else
+				nconn++;
+			last = conn;
+			i++;
+		}
+	}
+
+	this->connections = malloc(sizeof(nid_t) * nconn, M_DEVBUF, M_NOWAIT);
+	if (this->connections == NULL) {
+		printf("%s: out of memory\n", XNAME(codec->az));
+		return ENOMEM;
+	}
+	for (i = 0; i < nconn;) {
+		err = azalia_comresp(codec, this->nid,
+		    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
+		if (err)
+			return err;
+		for (k = 0; i < nconn && (k < 32 / bits); k++) {
+			conn = (result >> (k * bits)) & ((1 << bits) - 1);
+			/* If high bit is set, this is the end of a continuous
+			 * list that started with the last connection.
+			 */
 			if ((i > 0) && (conn & (1 << (bits - 1)))) {
-				last = this->connections[i - 1];
-				for (j = 1; i < length && j <= conn - last; j++)
+				for (j = 1; i < nconn && j <= conn - last; j++)
 					this->connections[i++] = last + j;
 			} else {
 				this->connections[i++] = conn;
 			}
+			last = conn;
 		}
 	}
-	if (length > 0) {
+	this->nconnections = nconn;
+
+	if (nconn > 0) {
 		err = azalia_comresp(codec, this->nid,
 		    CORB_GET_CONNECTION_SELECT_CONTROL, 0, &result);
 		if (err)
