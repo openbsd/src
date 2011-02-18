@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.86 2011/01/03 11:18:13 reyk Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.87 2011/02/18 17:06:45 reyk Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -85,7 +85,7 @@ LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
 void	vlan_start(struct ifnet *ifp);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
-int	vlan_unconfig(struct ifnet *ifp);
+int	vlan_unconfig(struct ifnet *ifp, struct ifnet *newp);
 int	vlan_config(struct ifvlan *, struct ifnet *, u_int16_t);
 void	vlan_vlandev_state(void *);
 void	vlanattach(int count);
@@ -93,6 +93,7 @@ int	vlan_set_promisc(struct ifnet *ifp);
 int	vlan_ether_addmulti(struct ifvlan *, struct ifreq *);
 int	vlan_ether_delmulti(struct ifvlan *, struct ifreq *);
 void	vlan_ether_purgemulti(struct ifvlan *);
+void	vlan_ether_resetmulti(struct ifvlan *, struct ifnet *);
 int	vlan_clone_create(struct if_clone *, int);
 int	vlan_clone_destroy(struct ifnet *);
 void	vlan_ifdetach(void *);
@@ -163,7 +164,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
 
-	vlan_unconfig(ifp);
+	vlan_unconfig(ifp, NULL);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -359,6 +360,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	struct ifaddr *ifa1, *ifa2;
 	struct sockaddr_dl *sdl1, *sdl2;
 	struct vlan_taghash *tagh;
+	u_int flags;
 	int s;
 
 	if (p->if_type != IFT_ETHER)
@@ -366,8 +368,9 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	if (ifv->ifv_p == p && ifv->ifv_tag == tag) /* noop */
 		return (0);
 
-	/* Reset the interface */
-	vlan_unconfig(&ifv->ifv_if);
+	/* Remember existing interface flags and reset the interface */
+	flags = ifv->ifv_flags;
+	vlan_unconfig(&ifv->ifv_if, p);
 
 	ifv->ifv_p = p;
 
@@ -388,6 +391,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 
 	ifv->ifv_if.if_flags = p->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
+
+	/* Reset promisc mode on the interface and its parent */
+	if (flags & IFVF_PROMISC) {
+		ifv->ifv_if.if_flags |= IFF_PROMISC;
+		vlan_set_promisc(&ifv->ifv_if);
+	}
 
 	/*
 	 * Inherit the if_type from the parent.  This allows us to
@@ -458,7 +467,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 }
 
 int
-vlan_unconfig(struct ifnet *ifp)
+vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -471,6 +480,12 @@ vlan_unconfig(struct ifnet *ifp)
 	if (p == NULL)
 		return 0;
 
+	/* Unset promisc mode on the interface and its parent */
+	if (ifv->ifv_flags & IFVF_PROMISC) {
+		ifp->if_flags &= ~IFF_PROMISC;
+		vlan_set_promisc(ifp);
+	}
+
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
 	if (ifv->lh_cookie != NULL)
@@ -478,6 +493,11 @@ vlan_unconfig(struct ifnet *ifp)
 	/* The cookie is NULL if disestablished externally */
 	if (ifv->dh_cookie != NULL)
 		hook_disestablish(p->if_detachhooks, ifv->dh_cookie);
+	/* Reset link state */
+	if (newp != NULL) {
+		ifp->if_link_state = LINK_STATE_INVALID;
+		if_link_state_change(ifp);
+	}
 	splx(s);
 
 	/*
@@ -486,11 +506,12 @@ vlan_unconfig(struct ifnet *ifp)
 	 * while we were alive and remove them from the parent's list
 	 * as well.
 	 */
-	vlan_ether_purgemulti(ifv);
+	vlan_ether_resetmulti(ifv, newp);
 
 	/* Disconnect from parent. */
 	ifv->ifv_p = NULL;
 	ifv->ifv_if.if_mtu = ETHERMTU;
+	ifv->ifv_flags = 0;
 
 	/* Clear our MAC address. */
 	ifa = ifnet_addrs[ifv->ifv_if.if_index];
@@ -606,7 +627,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		if (vlr.vlr_parent[0] == '\0') {
 			s = splnet();
-			vlan_unconfig(ifp);
+			vlan_unconfig(ifp, NULL);
 			if (ifp->if_flags & IFF_UP)
 				if_down(ifp);
 			ifp->if_flags &= ~IFF_RUNNING;
@@ -810,5 +831,38 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF);
+	}
+}
+
+void
+vlan_ether_resetmulti(struct ifvlan *ifv, struct ifnet *p)
+{
+	struct ifnet *ifp = ifv->ifv_p;		/* Parent. */
+	struct vlan_mc_entry *mc;
+	union {
+		struct ifreq ifreq;
+		struct {
+			char ifr_name[IFNAMSIZ];
+			struct sockaddr_storage ifr_ss;
+		} ifreq_storage;
+	} ifreq;
+	struct ifreq *ifr = &ifreq.ifreq;
+
+	if (p == NULL) {
+		vlan_ether_purgemulti(ifv);
+		return;
+	} else if (ifp == p)
+		return;
+
+	LIST_FOREACH(mc, &ifv->vlan_mc_listhead, mc_entries) {
+		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
+	
+		/* Remove from the old parent */
+		memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
+		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
+
+		/* Try to add to the new parent */
+		memcpy(ifr->ifr_name, p->if_xname, IFNAMSIZ);
+		(void)(*p->if_ioctl)(p, SIOCADDMULTI, (caddr_t)ifr);
 	}
 }
