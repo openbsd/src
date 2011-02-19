@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgs.c,v 1.1 2010/04/09 19:24:17 jasper Exp $	*/
+/*	$OpenBSD: pgs.c,v 1.2 2011/02/19 22:15:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Jasper Lievisse Adriaanse <jasper@openbsd.org>
  *
@@ -54,11 +54,16 @@ int
 pgs_match(struct device *parent, void *arg, void *aux)
 {
 	struct confargs *ca = aux;
+	char type[32];
 
-	if (strcmp(ca->ca_name, "programmer-switch") == 0)
-		return 1;
+	if (strcmp(ca->ca_name, "programmer-switch") != 0)
+		return 0;
 
-	return 0;
+	OF_getprop(ca->ca_node, "device_type", type, sizeof(type));
+	if (strcmp(type, "programmer-switch") != 0)
+		return 0;
+
+	return 1;
 }
 
 void
