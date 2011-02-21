@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.6 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.7 2011/02/21 07:55:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -342,7 +342,6 @@ machfb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 			fbwscons_setcolormap(&sc->sc_sunfb, machfb_setcolor);
 
 			/* Clear screen. */
-			ri = &sc->sc_sunfb.sf_ro;
 			machfb_fillrect(sc, 0, 0, ri->ri_width, ri->ri_height,
 			    ri->ri_devcmap[WSCOL_WHITE]);
 		}
