@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.3 2011/01/04 19:21:51 kettenis Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.4 2011/02/21 07:54:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -154,6 +154,7 @@ int	radeonfb_erasecols(void *, int, int, int, long);
 int	radeonfb_copyrows(void *, int, int, int);
 int	radeonfb_eraserows(void *, int, int, long);
 
+void	radeonfb_init(struct radeonfb_softc *);
 void	radeonfb_wait_fifo(struct radeonfb_softc *, int);
 void	radeonfb_wait(struct radeonfb_softc *);
 void	radeonfb_copyrect(struct radeonfb_softc *, int, int, int, int, int, int);
@@ -233,16 +234,7 @@ radeonfb_attach(struct device *parent, struct device *self, void *aux)
 	fbwscons_setcolormap(&sc->sc_sunfb, radeonfb_setcolor);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
-	/*
-	 * Setup acceleration engine.
-	 */
-	radeonfb_wait_fifo(sc, 2);
-	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
-	    RADEON_DEFAULT_PITCH_OFFSET,
-	    ((sc->sc_sunfb.sf_linebytes >> 6) << 22) | (sc->sc_memoff >> 10));
-	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
-	    RADEON_DEFAULT_SC_BOTTOM_RIGHT, 0x1fff1fff);
-
+	radeonfb_init(sc);
 	ri->ri_ops.copyrows = radeonfb_copyrows;
 	ri->ri_ops.copycols = radeonfb_copycols;
 	ri->ri_ops.eraserows = radeonfb_eraserows;
@@ -273,7 +265,7 @@ radeonfb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 			fbwscons_setcolormap(&sc->sc_sunfb, radeonfb_setcolor);
 
 			/* Clear screen. */
-			ri = &sc->sc_sunfb.sf_ro;
+			radeonfb_init(sc);
 			radeonfb_fillrect(sc, 0, 0, ri->ri_width,
 			    ri->ri_height, ri->ri_devcmap[WSCOL_WHITE]);
 		} 
@@ -540,6 +532,17 @@ radeonfb_eraserows(void *cookie, int row, int num, long attr)
 	radeonfb_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
 
 	return 0;
+}
+
+void
+radeonfb_init(struct radeonfb_softc *sc)
+{
+	radeonfb_wait_fifo(sc, 2);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    RADEON_DEFAULT_PITCH_OFFSET,
+	    ((sc->sc_sunfb.sf_linebytes >> 6) << 22) | (sc->sc_memoff >> 10));
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    RADEON_DEFAULT_SC_BOTTOM_RIGHT, 0x1fff1fff);
 }
 
 void
