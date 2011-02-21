@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.219 2010/12/24 02:45:33 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.220 2011/02/21 20:51:02 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1226,6 +1226,9 @@ sd_interpret_sense(struct scsi_xfer *xs)
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_NOSLEEP);
 		if (retval == 0)
 			retval = ERESTART;
+		else if (retval == ENOMEM)
+			/* Can't issue the command. Fall back on a delay. */
+			retval = scsi_delay(xs, 5);
 		else
 			SC_DEBUG(sc_link, SDEV_DB1, ("spin up failed (%#x)\n",
 			    retval));
