@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.44 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.45 2011/02/21 20:00:54 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -704,7 +704,6 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		if (ni == ic->ic_bss) {
 			ni = ieee80211_alloc_node(ic, wh->i_addr2);
 			if (ni == NULL) {
-				ic->ic_stats.is_rx_nodealloc++;
 				return;
 			}
 			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
