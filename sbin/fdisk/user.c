@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.24 2009/02/08 18:03:18 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.25 2011/02/21 19:26:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -92,7 +92,7 @@ USER_modify(disk_t *disk, mbr_t *tt, off_t offset, off_t reloff)
 	char mbr_buf[DEV_BSIZE];
 	mbr_t mbr;
 	cmd_t cmd;
-	int i, st, fd;
+	int i, st, fd, error;
 
 	/* One level deeper */
 	editlevel += 1;
@@ -102,8 +102,10 @@ USER_modify(disk_t *disk, mbr_t *tt, off_t offset, off_t reloff)
 
 	/* Read MBR & partition */
 	fd = DISK_open(disk->name, O_RDONLY);
-	MBR_read(fd, offset, mbr_buf);
+	error = MBR_read(fd, offset, mbr_buf);
 	close(fd);
+	if (error == -1)
+		goto done;
 
 	/* Parse the sucker */
 	MBR_parse(disk, mbr_buf, offset, reloff, &mbr);
@@ -158,6 +160,7 @@ again:
 			printf("Aborting changes to current MBR.\n");
 	}
 
+done:
 	/* One level less */
 	editlevel -= 1;
 
@@ -167,7 +170,8 @@ again:
 int
 USER_print_disk(disk_t *disk)
 {
-	int fd, offset, firstoff, i;
+	off_t offset, firstoff;
+	int fd, i, error;
 	char mbr_buf[DEV_BSIZE];
 	mbr_t mbr;
 
@@ -177,17 +181,19 @@ USER_print_disk(disk_t *disk)
 	DISK_printmetrics(disk, NULL);
 
 	do {
-		MBR_read(fd, (off_t)offset, mbr_buf);
+		error = MBR_read(fd, offset, mbr_buf);
+		if (error == -1)
+			break;
 		MBR_parse(disk, mbr_buf, offset, firstoff, &mbr);
 
-		printf("Offset: %d\t", (int)offset);
+		printf("Offset: %lld\t", offset);
 		MBR_print(&mbr, NULL);
 
 		/* Print out extended partitions too */
 		for (offset = i = 0; i < 4; i++)
 			if (mbr.part[i].id == DOSPTYP_EXTEND ||
 			    mbr.part[i].id == DOSPTYP_EXTENDL) {
-				offset = mbr.part[i].bs;
+				offset = (off_t)mbr.part[i].bs;
 				if (firstoff == 0)
 					firstoff = offset;
 			}
