@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.37 2010/12/29 03:55:09 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.38 2011/02/21 09:36:15 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -29,6 +29,7 @@
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
+#include <sys/dkio.h>
 #include <sys/tree.h>
 
 #include <machine/bus.h>
@@ -981,6 +982,51 @@ struct mpii_msg_sas_oper_reply {
 	u_int32_t		ioc_loginfo;
 } __packed;
 
+struct mpii_msg_raid_action_request {
+	u_int8_t	action;
+#define MPII_RAID_ACTION_CHANGE_VOL_WRITE_CACHE	(0x17)
+	u_int8_t	reserved1;
+	u_int8_t	chain_offset;
+	u_int8_t	function;
+
+	u_int16_t	vol_dev_handle;
+	u_int8_t	phys_disk_num;
+	u_int8_t	msg_flags;
+
+	u_int8_t	vp_id;
+	u_int8_t	vf_if;
+	u_int16_t	reserved2;
+
+	u_int32_t	reserved3;
+
+	u_int32_t	action_data;
+#define MPII_RAID_VOL_WRITE_CACHE_MASK			(0x03)
+#define MPII_RAID_VOL_WRITE_CACHE_DISABLE		(0x01)
+#define MPII_RAID_VOL_WRITE_CACHE_ENABLE		(0x02)
+
+	struct mpii_sge	action_sge;
+} __packed;
+
+struct mpii_msg_raid_action_reply {
+	u_int8_t	action;
+	u_int8_t	reserved1;
+	u_int8_t	chain_offset;
+	u_int8_t	function;
+
+	u_int16_t	vol_dev_handle;
+	u_int8_t	phys_disk_num;
+	u_int8_t	msg_flags;
+
+	u_int8_t	vp_id;
+	u_int8_t	vf_if;
+	u_int16_t	reserved2;
+
+	u_int16_t	reserved3;
+	u_int16_t	ioc_status;
+
+	u_int32_t	action_data[5];
+} __packed;
+
 struct mpii_cfg_hdr {
 	u_int8_t		page_version;
 	u_int8_t		page_length;
@@ -1256,6 +1302,11 @@ struct mpii_cfg_raid_vol_pg0 {
 #define MPII_CFG_RAID_VOL_0_STATUS_RESYNC		(1<<16)
 
 	u_int16_t		volume_settings;
+#define MPII_CFG_RAID_VOL_0_SETTINGS_CACHE_MASK		(0x3<<0)
+#define MPII_CFG_RAID_VOL_0_SETTINGS_CACHE_UNCHANGED	(0x0<<0)
+#define MPII_CFG_RAID_VOL_0_SETTINGS_CACHE_DISABLED	(0x1<<0)
+#define MPII_CFG_RAID_VOL_0_SETTINGS_CACHE_ENABLED	(0x2<<0)
+
 	u_int8_t		hot_spare_pool;
 	u_int8_t		reserved1;
 
@@ -1971,6 +2022,8 @@ int		mpii_req_cfg_page(struct mpii_softc *, u_int32_t, int,
 		    void *, int, void *, size_t);
 
 int		mpii_get_ioc_pg8(struct mpii_softc *);
+
+int		mpii_ioctl_cache(struct scsi_link *, u_long, struct dk_cache *);
 
 #if NBIO > 0
 int		mpii_ioctl(struct device *, u_long, caddr_t);
@@ -4650,19 +4703,123 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	scsi_done(xs);
-}
+}        
 
 int
 mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 	struct mpii_softc	*sc = (struct mpii_softc *)link->adapter_softc;
+	struct mpii_device	*dev = sc->sc_devs[link->target];
 
 	DNPRINTF(MPII_D_IOCTL, "%s: mpii_scsi_ioctl\n", DEVNAME(sc));
 
-	if (sc->sc_ioctl)
-		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
-	else
-		return (ENOTTY);
+	switch (cmd) {
+	case DIOCGCACHE:
+	case DIOCSCACHE:
+		if (dev != NULL && ISSET(dev->flags, MPII_DF_VOLUME)) {
+			return (mpii_ioctl_cache(link, cmd,
+			    (struct dk_cache *)addr));
+		}
+		break;
+
+	default:
+		if (sc->sc_ioctl)
+			return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+
+		break;
+	}
+
+	return (ENOTTY);
+}
+
+int
+mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
+{
+	struct mpii_softc *sc = (struct mpii_softc *)link->adapter_softc;
+	struct mpii_device *dev = sc->sc_devs[link->target];
+	struct mpii_cfg_raid_vol_pg0 *vpg;
+	struct mpii_msg_raid_action_request *req;
+ 	struct mpii_msg_raid_action_reply *rep;
+	struct mpii_cfg_hdr hdr;
+	struct mpii_ccb	*ccb;
+	u_int32_t addr = MPII_CFG_RAID_VOL_ADDR_HANDLE | dev->dev_handle;
+	size_t pagelen;
+	int rv = 0;
+	int enabled;
+
+	if (mpii_req_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	    addr, MPII_PG_POLL, &hdr) != 0)
+		return (EINVAL);
+
+	pagelen = hdr.page_length * 4;
+	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	if (vpg == NULL)
+		return (ENOMEM);
+
+	if (mpii_req_cfg_page(sc, addr, MPII_PG_POLL, &hdr, 1,
+	    vpg, pagelen) != 0) {
+		rv = EINVAL;
+		goto done;
+		free(vpg, M_TEMP);
+		return (EINVAL);
+	}
+
+	enabled = ((letoh16(vpg->volume_settings) &
+	    MPII_CFG_RAID_VOL_0_SETTINGS_CACHE_MASK) ==
+	    MPII_CFG_RAID_VOL_0_SETTINGS_CACHE_ENABLED) ? 1 : 0;
+
+	if (cmd == DIOCGCACHE) {
+		dc->wrcache = enabled;
+		dc->rdcache = 0;
+		goto done;
+	} /* else DIOCSCACHE */
+
+	if (dc->rdcache) {
+		rv = EOPNOTSUPP;
+		goto done;
+	}
+
+	if (((dc->wrcache) ? 1 : 0) == enabled)
+		goto done;
+
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_POLL);
+	if (ccb == NULL) {
+		rv = ENOMEM;
+		goto done;
+	}
+
+	ccb->ccb_done = mpii_empty_done;
+
+	req = ccb->ccb_cmd;
+	bzero(req, sizeof(*req));
+	req->function = MPII_FUNCTION_RAID_ACTION;
+	req->action = MPII_RAID_ACTION_CHANGE_VOL_WRITE_CACHE;
+	req->vol_dev_handle = htole16(dev->dev_handle);
+	req->action_data = htole32(dc->wrcache ?
+	    MPII_RAID_VOL_WRITE_CACHE_ENABLE :
+	    MPII_RAID_VOL_WRITE_CACHE_DISABLE);
+
+	if (mpii_poll(sc, ccb) != 0) {
+		rv = EIO;
+		goto done;
+	}
+
+	if (ccb->ccb_rcb != NULL) {
+		rep = ccb->ccb_rcb->rcb_reply;
+		if ((rep->ioc_status != MPII_IOCSTATUS_SUCCESS) ||
+		    ((rep->action_data[0] &
+		     MPII_RAID_VOL_WRITE_CACHE_MASK) !=
+		    (dc->wrcache ? MPII_RAID_VOL_WRITE_CACHE_ENABLE :
+		     MPII_RAID_VOL_WRITE_CACHE_DISABLE)))
+			rv = EINVAL;
+		mpii_push_reply(sc, ccb->ccb_rcb);
+	}
+
+	scsi_io_put(&sc->sc_iopool, ccb);
+
+done:
+	free(vpg, M_TEMP);
+	return (rv);
 }
 
 #if NBIO > 0
