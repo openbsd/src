@@ -286,7 +286,7 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		return (0);
 
 	crtc = modeset->crtc;
-	if (crtc >= dev->vblank->vb_num)
+	if (crtc >= dev->vblank->vb_num || crtc < 0)
 		return (EINVAL);
 
 	vbl = &dev->vblank->vb_crtcs[crtc];
