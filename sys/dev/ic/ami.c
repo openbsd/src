@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.217 2010/10/12 00:53:32 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.218 2011/02/22 02:30:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -575,6 +575,10 @@ ami_attach(struct ami_softc *sc)
 	for (sc->sc_rawsoftcs = rsc;
 	     rsc < &sc->sc_rawsoftcs[sc->sc_channels]; rsc++) {
 
+		struct scsibus_softc *ptbus;
+		struct scsi_link *proclink;
+		struct device *procdev;
+
 		rsc->sc_softc = sc;
 		rsc->sc_channel = rsc - sc->sc_rawsoftcs;
 		rsc->sc_link.openings = sc->sc_maxcmds;
@@ -589,7 +593,19 @@ ami_attach(struct ami_softc *sc)
 		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = &rsc->sc_link;
 
-		config_found(&sc->sc_dev, &saa, scsiprint);
+		ptbus = (struct scsibus_softc *)config_found(&sc->sc_dev,
+		    &saa, scsiprint);
+
+		if (ptbus == NULL || rsc->sc_proctarget == -1)
+			continue;
+
+		proclink = scsi_get_link(ptbus, rsc->sc_proctarget, 0);
+		if (proclink == NULL)
+			continue;
+
+		procdev = proclink->device_softc;
+		strlcpy(rsc->sc_procdev, procdev->dv_xname,
+		    sizeof(rsc->sc_procdev));
 	}
 
 	return (0);
@@ -1203,14 +1219,9 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	struct ami_rawsoftc *rsc = link->adapter_softc;
 	struct ami_softc *sc = rsc->sc_softc;
 	u_int8_t channel = rsc->sc_channel, target = link->target;
-	struct device *dev = link->device_softc;
 	struct ami_ccb *ccb;
 
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_raw_cmd "));
-
-	if (!cold && target == rsc->sc_proctarget)
-		strlcpy(rsc->sc_procdev, dev->dv_xname,
-		    sizeof(rsc->sc_procdev));
 
 	if (xs->cmdlen > AMI_MAX_CDB) {
 		AMI_DPRINTF(AMI_D_CMD, ("CDB too big %p ", xs));
