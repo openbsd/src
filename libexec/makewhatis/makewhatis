@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis,v 1.1 2004/08/06 12:05:08 espie Exp $
+# $OpenBSD: makewhatis,v 1.2 2011/02/22 00:23:14 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -28,7 +28,7 @@ use OpenBSD::Makewhatis;
 # main code
     
 my %opts;
-getopts('tpd:u:', \%opts);
+getopts('tpvd:u:', \%opts);
 
 OpenBSD::Makewhatis::makewhatis(\@ARGV, \%opts);
 

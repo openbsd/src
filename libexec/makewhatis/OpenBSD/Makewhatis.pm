@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.9 2010/10/25 17:42:29 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.10 2011/02/22 00:23:14 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -63,6 +63,11 @@ sub picky
 	return shift->{picky};
 }
 
+sub verbose
+{
+	return shift->{verbose};
+}
+
 sub testmode
 {
 	return shift->{testmode};
@@ -89,10 +94,13 @@ sub scan_manpages
     my $_;
     my $done=[];
 
-    for (@$list) {
+    require OpenBSD::Makewhatis::Subject;
+    my $h = OpenBSD::Makewhatis::SubjectHandler->new($p);
+
+    for my $_ (@$list) {
 	my ($file, $subjects);
 	if (m/\.(?:Z|gz)$/) {
-	    unless (open $file, '-|', "gzip -fdc $_") {
+	    unless (open $file, '-|', "gzip", "-fdc", $_) {
 	    	$p->errsay("#1: can't decompress #2: #3", $0, $_, $!);
 		next;
 	    }
@@ -107,23 +115,24 @@ sub scan_manpages
 		next;
 	    }
 	}
+	$h->set_filename($_);
 	if (m/\.(?:[1-9ln][^.]*|tbl)$/) {
 	    require OpenBSD::Makewhatis::Unformated;
 
-	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $_, $p);
+	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $h);
 	} elsif (m/\.0$/) {
 	    require OpenBSD::Makewhatis::Formated;
 
-	    $subjects = OpenBSD::Makewhatis::Formated::handle($file, $_, $p);
+	    $subjects = OpenBSD::Makewhatis::Formated::handle($file, $h);
 	    # in test mode, we try harder
 	} elsif ($p->testmode) {
 	    require OpenBSD::Makewhatis::Unformated;
 
-	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $_, $p);
+	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $h);
 	    if (@$subjects == 0) {
 		require OpenBSD::Makewhatis::Formated;
 
-	    	$subjects = OpenBSD::Makewhatis::Formated::handle($file, $_, $p);
+	    	$subjects = OpenBSD::Makewhatis::Formated::handle($file, $h);
 	    }
 	} else {
 	    $p->errsay("Can't find type of #1", $_);
@@ -239,6 +248,10 @@ sub makewhatis
 	    $p->print("#1", join("\n", @$subjects)."\n");
 	    return;
 	} 
+
+	if (defined $opts->{'v'}) {
+		$p->{verbose} = 1;
+	}
 
 	if (defined $opts->{'d'}) {
 	    merge($opts->{'d'}, $args, $p);

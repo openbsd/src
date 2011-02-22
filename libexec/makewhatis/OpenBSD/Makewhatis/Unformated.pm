@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Unformated.pm,v 1.6 2010/07/13 15:39:03 espie Exp $
+# $OpenBSD: Unformated.pm,v 1.7 2011/02/22 00:23:14 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -18,20 +18,20 @@ use strict;
 use warnings;
 package OpenBSD::Makewhatis::Unformated;
 
-# add_unformated_subject($lines, $toadd, $section, $filename, $toexpand, $p) :
+# add_unformated_subject($lines, $toadd, $section, $p) :
 #
 #   build subject from list of $toadd lines, and add it to the list
 #   of current subjects as section $section
 #
 sub add_unformated_subject
 {
-    my ($subjects, $toadd, $section, $filename, $toexpand, $p) = @_;
+    my ($subjects, $toadd, $section, $toexpand, $h) = @_;
 
     my $exp = sub {
     	if (defined $toexpand->{$_[0]}) {
 		return $toexpand->{$_[0]};
 	} else {
-		$p->errsay("#1: can't expand #2", $filename, $_[0]);
+		$h->errsay("#2: can't expand #1", $_[0]);
 		return "";
 	}
     };
@@ -64,7 +64,7 @@ sub add_unformated_subject
     	{}
     unless (s/\s+\\-\s+/ ($section) - / || s/\s*\\\-/ ($section) -/ ||
     	s/\s-\s/ ($section) - /) {
-	$p->errsay("Weird subject line in #1:\n#2", $filename, $_) if $p->picky;
+	$h->weird_subject($_) if $h->p->picky;
 	    # Try guessing where the separation falls...
 	s/\s+\:\s+/ ($section) - / || s/\S+\s+/$& ($section) - / || s/\s*$/ ($section) - (empty subject)/;
     }
@@ -81,14 +81,13 @@ sub add_unformated_subject
     s/\s+/ /g;
     	# some damage control
     if (m/^\Q($section) - \E/) {
-    	$p->errsay("Rejecting non-subject line from #1:\n#2", $filename, $_)
-	    if $p->picky;
+    	$h->weird_subject($_) if $h->p->picky;
 	return;
     }
     push(@$subjects, $_);
 }
 
-# $lines = handle($file, $filename, $p)
+# $lines = handle($file, $h)
 #
 #   handle an unformated manpage in $file
 #
@@ -96,7 +95,7 @@ sub add_unformated_subject
 #
 sub handle
 {
-    my ($f, $filename, $p) = @_;
+    my ($f, $h) = @_;
     my @lines = ();
     my %toexpand = (Tm => '(tm)');
     my $so_found = 0;
@@ -110,7 +109,7 @@ sub handle
     my $nd_seen = 0;
     my $_;
 	# retrieve basename of file
-    my ($name, $section) = $filename =~ m|(?:.*/)?(.*)\.([\w\d]+)|;
+    my ($name, $section) = $h->filename =~ m|(?:.*/)?(.*)\.([\w\d]+)|;
 	# scan until macro
     while (<$f>) {
 	next unless m/^\./ || $found_old || $found_new;
@@ -155,8 +154,7 @@ sub handle
 		    # several subjects in one manpage
 		if (m/^\.\s*(?:PP|Pp|br|PD|LP|sp)/) {
 		    add_unformated_subject(\@lines, \@subject,
-			$section, $filename, \%toexpand, $p)
-			    if @subject != 0;
+			$section, \%toexpand, $h) if @subject != 0;
 		    @subject = ();
 		    next;
 		}
@@ -169,8 +167,8 @@ sub handle
 		chomp;
 		s/\.\s*(?:B|I|IR|SM|BR)\s+//;
 		if (m/^\.\s*(\S\S)/) {
-		    $p->errsay("#1: not grokking #2", $filename, $_)
-			if $p->picky;
+		    $h->errsay("#2: not grokking #1", $_)
+			if $h->p->picky;
 		    next;
 		}
 		push(@subject, $_) unless m/^\s*$/;
@@ -190,7 +188,7 @@ sub handle
 		    if ($macro eq 'Nd') {
 			if (@keep != 0) {
 			    add_unformated_subject(\@lines, \@keep, 
-				$section, $filename, \%toexpand, $p);
+				$section, \%toexpand, $h);
 			    @keep = ();
 			}
 			push(@subject, "\\-");
@@ -206,16 +204,16 @@ sub handle
 	}
     }
     if ($found_th && !$found_old) {
-	    $p->errsay("Couldn't find subject in old manpage #1", $filename);
+    		$h->cant_find_subject;
     }
     if ($found_dt && !$found_new) {
-	    $p->errsay("Couldn't find subject in new manpage #1", $filename);
+    		$h->cant_find_subject;
     }
     unshift(@subject, @keep) if @keep != 0;
     add_unformated_subject(\@lines, \@subject, $section,
-	$filename, \%toexpand, $p) if @subject != 0;
+	\%toexpand, $h) if @subject != 0;
     if (!$so_found && !$found_old && !$found_new) {
-    	$p->errsay("Unknown manpage type #1", $filename);
+    	$h->errsay("Unknown manpage type #1");
     }
     return \@lines;
 }

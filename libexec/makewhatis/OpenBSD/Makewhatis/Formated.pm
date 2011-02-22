@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Formated.pm,v 1.5 2010/07/09 08:12:49 espie Exp $
+# $OpenBSD: Formated.pm,v 1.6 2011/02/22 00:23:14 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -18,12 +18,12 @@ use strict;
 use warnings;
 package OpenBSD::Makewhatis::Formated;
 
-# add_formated_subject($subjects, $_, $section, $filename, $p):
+# add_formated_subject($subjects, $_, $section, $h):
 #   add subject $_ to the list of current $subjects, in section $section.
 #
 sub add_formated_subject
 {
-    my ($subjects, $line, $section, $filename, $p) = @_;
+    my ($subjects, $line, $section, $h) = @_;
     my $_ = $line;
 
     if (m/-/) {
@@ -43,7 +43,7 @@ sub add_formated_subject
 	}
     }
 
-    $p->errsay("Weird subject line in #1:\n#2", $filename, $_) if $p->picky;
+    $h->weird_subject($_) if $h->p->picky;
 
     # try to find subject in line anyway
     if (m/^\s*(.*\S)(?:\s{3,}|\(\)\s+)(.*?)\s*$/) {
@@ -55,10 +55,10 @@ sub add_formated_subject
 	return;
     }
 
-    $p->errsay("Weird subject line in #1:\n#2", $filename, $_) unless $p->picky;
+    $h->weird_subject($_) unless $h->p->picky;
 }
 
-# $lines = handle($file, $filename, $p)
+# $lines = handle($file, $h)
 #
 #   handle a formatted manpage in $file
 #
@@ -66,7 +66,7 @@ sub add_formated_subject
 #
 sub handle
 {
-    my ($file, $filename, $p) = @_;
+    my ($file, $h) = @_;
     my $_;
     my ($section, $subject);
     my @lines=();
@@ -76,7 +76,7 @@ sub handle
 	if (m/^$/) {
 	    # perl aggregates several subjects in one manpage
 	    # so we don't stop after we've got one subject
-	    add_formated_subject(\@lines, $subject, $section, $filename, $p) 
+	    add_formated_subject(\@lines, $subject, $section, $h) 
 		if defined $subject;
 	    $subject = undef;
 	    next;
@@ -96,15 +96,15 @@ sub handle
 	}
 	# Not all man pages are in english
 	# weird hex is `Namae' in japanese
-	if (m/^(?:NAME|NAMES|NAMN|NOMBRE|NOME|Name|\xbe|\xcc\xbe\xbe\xce|\xcc\xbe\xc1\xb0)\s*$/) {
+	if (m/^(?:NAME|NAMES|NAZEV|NAMN|NOMBRE|NOME|Name|\xbe|\xcc\xbe\xbe\xce|\xcc\xbe\xc1\xb0)\s*$/) {
 	    unless (defined $section) {
 		# try to retrieve section from filename
-		if ($filename =~ m/(?:cat|man)([\dln])\//) {
+		if ($h->filename =~ m/(?:cat|man)([\dln])\//) {
 		    $section = $1;
-		    $p->errsay("Can't find section in #1, deducting #2 from context", $filename, $section) if $p->picky;
+		    $h->errsay("Can't find section in #2, deducting #1 from context", $section) if $h->p->picky;
 		} else {
 		    $section='??';
-		    $p->errsay("Can't find section in #1", $filename);
+		    $h->errsay("Can't find section in #1");
 		}
 	    }
 	    $foundname = 1;
@@ -112,7 +112,7 @@ sub handle
 	}
 	if ($foundname) {
 	    if (m/^\S/ || m/^\s+\*{3,}\s*$/) {
-		add_formated_subject(\@lines, $subject, $section, $filename, $p)
+		add_formated_subject(\@lines, $subject, $section, $h)
 		    if defined $subject;
 		last;
 	    } else {
@@ -132,7 +132,7 @@ sub handle
 	}
     }
 
-    $p->errsay("Can't parse #1 (not a manpage ?)", $filename) if @lines == 0;
+    $h->cant_find_subject if @lines == 0;
     return \@lines;
 }
 

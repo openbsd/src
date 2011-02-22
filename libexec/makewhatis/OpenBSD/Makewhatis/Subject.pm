@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subject.pm,v 1.1 2011/01/26 15:10:59 espie Exp $
+# $OpenBSD: Subject.pm,v 1.2 2011/02/22 00:23:14 espie Exp $
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -21,12 +21,52 @@ package OpenBSD::Makewhatis::SubjectHandler;
 
 sub new
 {
-	my $class = shift;
-	bless {}, $class;
+	my ($class, $p) = @_;
+	return bless { p => $p}, $class;
 }
 
 sub add
 {
+}
+
+sub p
+{
+	my $h = shift;
+	return $h->{p};
+}
+
+sub set_filename
+{
+	my ($h, $name) = @_;
+	$h->{current} = $name;
+	$h->{has_subjects} = 0;
+}
+
+sub filename
+{
+	my $h = shift;
+	return $h->{current};
+}
+
+sub errsay
+{
+	my $h = shift;
+	if ($h->p->verbose) {
+		push(@_, $h->filename);
+		$h->p->errsay(@_);
+	}
+}
+
+sub weird_subject
+{
+	my ($h, $line) = @_;
+	$h->errsay("Weird subject line in #2:\n#1", $line) ;
+}
+
+sub cant_find_subject
+{
+	my $h = shift;
+	$h->errsay("No subject found in #1");
 }
 
 package OpenBSD::MakeWhatis::Subject;
