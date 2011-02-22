@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.304 2011/02/15 19:49:47 robert Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.305 2011/02/22 18:00:44 robert Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1802,12 +1802,12 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	const struct bge_revision *br;
-	pcireg_t		pm_ctl, memtype, subid;
+	pcireg_t		pm_ctl, memtype, subid, reg;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	bus_size_t		size;
 	bus_dma_segment_t	seg;
-	int			rseg, gotenaddr = 0;
+	int			rseg, gotenaddr = 0, aspm_off;
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
 	u_int32_t		misccfg;
@@ -1893,7 +1893,13 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 * PCI Express or PCI-X controller check.
 	 */
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
-	    NULL, NULL) != 0) {
+	    &aspm_off, NULL) != 0) {
+		/* Disable PCIe Active State Power Management (ASPM). */
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    aspm_off + PCI_PCIE_LCSR);
+		reg &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1);
+		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		    aspm_off + PCI_PCIE_LCSR, reg);
 		sc->bge_flags |= BGE_PCIE;
 	} else {
 		if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
