@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.57 2010/09/07 16:21:42 deraadt Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.58 2011/02/22 20:05:03 kettenis Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -974,6 +974,13 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 			ifp->if_oerrors++;
 		}
 
+		/* descriptor is no longer valid */
+		desc->flags &= ~htole32(RT2560_TX_VALID);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
+		    sc->txq.next * RT2560_TX_DESC_SIZE, RT2560_TX_DESC_SIZE,
+		    BUS_DMASYNC_PREWRITE);
+
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, data->map);
@@ -981,13 +988,6 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 		data->m = NULL;
 		ieee80211_release_node(ic, data->ni);
 		data->ni = NULL;
-
-		/* descriptor is no longer valid */
-		desc->flags &= ~htole32(RT2560_TX_VALID);
-
-		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
-		    sc->txq.next * RT2560_TX_DESC_SIZE, RT2560_TX_DESC_SIZE,
-		    BUS_DMASYNC_PREWRITE);
 
 		DPRINTFN(15, ("tx done idx=%u\n", sc->txq.next));
 
@@ -1040,6 +1040,13 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 			    sc->sc_dev.dv_xname, letoh32(desc->flags));
 		}
 
+		/* descriptor is no longer valid */
+		desc->flags &= ~htole32(RT2560_TX_VALID);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->prioq.map,
+		    sc->prioq.next * RT2560_TX_DESC_SIZE, RT2560_TX_DESC_SIZE,
+		    BUS_DMASYNC_PREWRITE);
+
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, data->map);
@@ -1047,13 +1054,6 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 		data->m = NULL;
 		ieee80211_release_node(ic, data->ni);
 		data->ni = NULL;
-
-		/* descriptor is no longer valid */
-		desc->flags &= ~htole32(RT2560_TX_VALID);
-
-		bus_dmamap_sync(sc->sc_dmat, sc->prioq.map,
-		    sc->prioq.next * RT2560_TX_DESC_SIZE, RT2560_TX_DESC_SIZE,
-		    BUS_DMASYNC_PREWRITE);
 
 		DPRINTFN(15, ("prio done idx=%u\n", sc->prioq.next));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.63 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.64 2011/02/22 20:05:03 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1004,19 +1004,19 @@ rt2661_tx_dma_intr(struct rt2661_softc *sc, struct rt2661_tx_ring *txq)
 		    !(letoh32(desc->flags) & RT2661_TX_VALID))
 			break;
 
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, data->map);
-		m_freem(data->m);
-		data->m = NULL;
-		/* node reference is released in rt2661_tx_intr() */
-
 		/* descriptor is no longer valid */
 		desc->flags &= ~htole32(RT2661_TX_VALID);
 
 		bus_dmamap_sync(sc->sc_dmat, txq->map,
 		    txq->next * RT2661_TX_DESC_SIZE, RT2661_TX_DESC_SIZE,
 		    BUS_DMASYNC_PREWRITE);
+
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, data->map);
+		m_freem(data->m);
+		data->m = NULL;
+		/* node reference is released in rt2661_tx_intr() */
 
 		DPRINTFN(15, ("tx dma done q=%p idx=%u\n", txq, txq->next));
 
