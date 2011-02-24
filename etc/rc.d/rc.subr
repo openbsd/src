@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.19 2011/01/05 16:04:21 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.20 2011/02/24 07:07:03 ajacoutot Exp $
 
 rc_err() {
 	echo $1
@@ -61,20 +61,17 @@ rc_cmd() {
 
 _name=`basename $0`
 eval _rcflags=\${${_name}_flags}
-eval _rcshell=\${${_name}_shell}
 eval _rcuser=\${${_name}_user}
 
 getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 	daemon_class=${_name}
 
 [ -z "${daemon_class}" ] && daemon_class=daemon
-[ -z "${daemon_shell}" ] && daemon_shell=/bin/sh
 [ -z "${daemon_user}"  ] && daemon_user=root
 
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
-[ -n "${_rcshell}" ] && daemon_shell=${_rcshell}
 [ -n "${_rcuser}"  ] && daemon_user=${_rcuser}
 
 daemon_flags=`echo ${daemon_flags} | tr -s "[:space:]"`
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
-rcexec="su -l -c ${daemon_class} -s ${daemon_shell} ${daemon_user} -c"
+rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
