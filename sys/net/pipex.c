@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.14 2011/01/28 06:43:00 dlg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.15 2011/02/24 04:21:34 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -965,8 +965,11 @@ pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 	}
 #endif /* PIPEX_MPPE */
 	cp = hdr;
-	PUTCHAR(PPP_ALLSTATIONS, cp);
-	PUTCHAR(PPP_UI, cp);
+	if (session->protocol != PIPEX_PROTO_PPPOE) {
+		/* PPPoE has not address and control field */
+		PUTCHAR(PPP_ALLSTATIONS, cp);
+		PUTCHAR(PPP_UI, cp);
+	}
 	PUTSHORT(proto, cp);
 
 	M_PREPEND(m0, cp - hdr, M_NOWAIT);
