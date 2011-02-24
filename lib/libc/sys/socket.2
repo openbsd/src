@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.31 2008/11/26 22:40:21 mk Exp $
+.\"	$OpenBSD: socket.2,v 1.32 2011/02/24 17:20:08 mikeb Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 26 2008 $
+.Dd $Mdocdate: February 24 2011 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -77,7 +77,6 @@ Currently defined types are:
 .It SOCK_DGRAM
 .It SOCK_RAW
 .It SOCK_SEQPACKET
-.It SOCK_RDM
 .El
 .Pp
 A
@@ -98,7 +97,7 @@ of fixed maximum length; a consumer may be required to read
 an entire packet with each read system call.
 This facility is protocol specific, and presently implemented
 only for
-.Dv PF_NS .
+.Dv AF_BLUETOOTH .
 .Dv SOCK_RAW
 sockets provide access to internal network protocols and interfaces,
 and are available only to the superuser.
