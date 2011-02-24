@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.152 2010/09/26 20:39:06 miod Exp $
+dnl	$OpenBSD: hardware,v 1.153 2011/02/24 19:22:51 kettenis Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -517,12 +517,21 @@ Supported devices {:-include-:}:
 			ZX (aka Leo) - 8/24-bit color, overlay planes,
 			    double-buffered, 3-D acceleration
 		PCI video boards:
-			ATI Rage (vgafb), includes the on-board PGX (8 bit
-			    color, unaccelerated), PGX24 and PGX32 (24/32 bit
-			    color, accelerated) framebuffers
-			Expert3D and Expert3D-Lite (XVR-500) (ifb)
-			    (currently restricted to 8-bit unaccelerated)
-		UPA Creator/Creator3D/Elite3D (24 bit color, accelerated)
+			Sun PGX, PGX24 and PGX64 (machfb) - 8/24-bit color,
+			    accelerated
+			Tech Source Raptor GFX-4M/8M (raptor) -
+			    8/24-bit color, accelerated
+			Tech Source Raptor GFX-8P/Sun PGX32 (gfxp) -
+			    8/24-bit color, accelerated
+			Sun XVR-100 and XVR-300 (radeonfb) - 8/24-bit color,
+			    accelerated
+			Sun Exper3D, Expert3D-Lite, XVR-500, XVR-600 and
+			     XVR-1200 (ifb) - 24-bit color, accelerated
+			     (currently restricted to 8-bit, unaccelerated on
+			     the XVR-500 and XVR-600, accelerated on the
+			     Exper3D, Exper3D-Lite and XVR-1200)
+		UPA Creator/Creator3D/Elite3D (creator) - 24-bit color,
+		     accelerated
 
 	PC Cards (PCMCIA)
 		PCMCIA Controllers:
