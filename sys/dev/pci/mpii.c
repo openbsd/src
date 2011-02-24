@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.38 2011/02/21 09:36:15 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.39 2011/02/24 23:40:31 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -4958,7 +4958,7 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 
 	bv->bv_size = letoh64(vpg->max_lba) * letoh16(vpg->block_size);
 
-	lnk = scsi_get_link(sc->sc_scsibus, bv->bv_volid, 0);
+	lnk = scsi_get_link(sc->sc_scsibus, dev->slot, 0);
 	if (lnk != NULL) {
 		scdev = lnk->device_softc;
 		strlcpy(bv->bv_dev, scdev->dv_xname, sizeof(bv->bv_dev));
