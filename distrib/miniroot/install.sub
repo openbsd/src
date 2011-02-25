@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.634 2011/01/31 16:48:18 halex Exp $
+#	$OpenBSD: install.sub,v 1.635 2011/02/25 12:55:45 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1334,7 +1334,7 @@ install_url() {
 	# name. This means the last install from a mirror will not keep
 	# the specific directory info. But an install from a local
 	# server *will* remember the specific directory info.
-	set -- $(sed "/^$_server_ip/x;\$!d;x" $SERVERLIST)
+	set -- $(sed "/^$_server_ip/x;\$!d;x" $SERVERLIST 2>&-)
 	resp=${1#*/}
 	# If there is no directory specified, don't use the server name!
 	[[ $resp == "$1" ]] && resp=
