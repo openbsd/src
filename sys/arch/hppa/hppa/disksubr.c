@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.76 2009/08/13 15:23:10 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.77 2011/02/26 13:07:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -89,6 +89,7 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
+	disk_change = 1;
 	return (error);
 }
 
@@ -279,5 +280,6 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
+	disk_change = 1;
 	return (error);
 }
