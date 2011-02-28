@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.27 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.28 2011/02/28 00:12:19 halex Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -52,6 +52,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 union {
 	struct fs fs;
@@ -70,7 +71,7 @@ long	dev_bsize;
 int	dumpfs(int, const char *);
 int	dumpcg(const char *, int, int);
 int	marshal(const char *);
-int	open_disk(const char *name);
+int	open_disk(const char *);
 void	pbits(void *, int);
 __dead void	usage(void);
 
@@ -124,7 +125,7 @@ open_disk(const char *name)
 	ssize_t n;
 
 	/* XXX - should retry w/raw device on failure */
-	if ((fd = open(name, O_RDONLY, 0)) < 0) {
+	if ((fd = opendev(name, O_RDONLY, 0, NULL)) < 0) {
 		warn("%s", name);
 		return(-1);
 	}
