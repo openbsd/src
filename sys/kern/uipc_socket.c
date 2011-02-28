@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.85 2011/01/07 17:50:42 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.86 2011/02/28 16:29:42 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1245,7 +1245,7 @@ somove(struct socket *so, int wait)
 
 	/* Append all remaining data to drain socket. */
 	if (m) {
-		if (so->so_rcv.sb_cc == 0)
+		if (so->so_rcv.sb_cc == 0 || maxreached)
 			sosp->so_state &= ~SS_ISSENDING;
 		error = (*sosp->so_proto->pr_usrreq)(sosp, PRU_SEND, m, NULL,
 		    NULL, NULL);
