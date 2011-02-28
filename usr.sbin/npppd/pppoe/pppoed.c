@@ -1,4 +1,4 @@
-/* $OpenBSD: pppoed.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: pppoed.c,v 1.7 2011/02/28 02:31:55 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $
+ * $Id: pppoed.c,v 1.7 2011/02/28 02:31:55 dlg Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -739,6 +739,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 	int session_id;
 	slist tag_list;
 	const char *reason;
+#define tlvspace_remaining() (sizeof(tlvspace) - (p_tlvspace - tlvspace))
 
 	reason = "";
 	p_tlvspace = tlvspace;
@@ -795,6 +796,10 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 			    "Remaining octet is too short.";
 			goto fail;
 		}
+		if (tlvspace_remaining() < 4) {
+			reason = "parsing TAGs reached the buffer size limit.";
+			goto fail;
+		}
 		tlv = (struct pppoe_tlv *)p_tlvspace;
 		GETSHORT(tlv->type, pkt);
 		GETSHORT(tlv->length, pkt);
@@ -804,8 +809,12 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 			reason = "tlv list is broken.  length is wrong.";
 			goto fail;
 		}
+		if (tlvspace_remaining() < tlv->length) {
+			reason = "parsing TAGs reached the buffer size limit.";
+			goto fail;
+		}
 		if (tlv->length > 0) {
-			memcpy(&tlv->value, pkt, tlv->length);
+			memcpy(tlv->value, pkt, tlv->length);
 			pkt += tlv->length;
 			lpkt -= tlv->length;
 			p_tlvspace += tlv->length;
