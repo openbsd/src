@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.25 2009/06/26 22:45:20 martynas Exp $
+ * $OpenBSD: calendar.music,v 1.26 2011/03/01 15:20:30 deraadt Exp $
  */
 
 #ifndef _calendar_music_
@@ -89,7 +89,7 @@
 02/23	George Friedrich Handel is born in Halle on the Salle, Germany, 1685
 02/23	Johnny Winter is born in Leland, Mississippi, 1944
 02/23	Sir Edward William Elgar dies 1934
-02/24	Howard Hanson in Rochester, New York, 1981
+02/24	Howard Hanson dies in Rochester, New York, 1981
 02/25	George Harrison born in Liverpool, England, 1943
 02/27	Alexander Borodin dies, 1887
 02/29	Jimmy Dorsey born, 1904
