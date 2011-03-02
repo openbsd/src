@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.160 2011/01/11 08:33:27 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.161 2011/03/02 12:02:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -74,7 +74,11 @@
 #endif
 
 #ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet/in_pcb.h>
+#include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6_divert.h>
 #endif /* INET6 */
 
 #include "carp.h"
@@ -1745,8 +1749,18 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 	if (drop)
 		m_freem(pd->pd_m);
 	else {
-		ip_output(pd->pd_m, (void *)NULL, (void *)NULL, 0,
-		    (void *)NULL, (void *)NULL);
+		switch (pd->pd_st->key[PF_SK_WIRE]->af) {
+#ifdef INET
+		case AF_INET:
+			ip_output(pd->pd_m, NULL, NULL, 0, NULL, NULL);
+			break;
+#endif /* INET */
+#ifdef INET6
+                case AF_INET6:
+	                ip6_output(pd->pd_m, NULL, NULL, 0, NULL, NULL, NULL);
+			break;
+#endif /* INET6 */
+                }
 	}
 
 	pool_put(&sc->sc_pool, pd);
