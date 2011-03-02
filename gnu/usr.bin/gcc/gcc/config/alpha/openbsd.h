@@ -80,7 +80,7 @@ Boston, MA 02111-1307, USA.  */
 #undef STACK_CHECK_BUILTIN
 #define STACK_CHECK_BUILTIN 0
 
-/* OpenBSD doesn't currently supprot thread-local storage. */
+/* OpenBSD doesn't currently support thread-local storage. */
 /* alpha.c undefs TARGET_HAVE_TLS and redefines it to HAVE_AS_TLS !?!?! */
 #undef HAVE_AS_TLS
 #define HAVE_AS_TLS false
