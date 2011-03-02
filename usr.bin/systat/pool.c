@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.5 2008/12/31 05:37:24 canacar Exp $	*/
+/*	$OpenBSD: pool.c,v 1.6 2011/03/02 06:48:17 jasper Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -63,20 +63,18 @@ field_def fields_pool[] = {
 };
 
 
-#define FIELD_ADDR(x) (&fields_pool[x])
-
-#define FLD_POOL_NAME	FIELD_ADDR(0)
-#define FLD_POOL_SIZE	FIELD_ADDR(1)
-#define FLD_POOL_REQS	FIELD_ADDR(2)
-#define FLD_POOL_FAIL	FIELD_ADDR(3)
-#define FLD_POOL_INUSE	FIELD_ADDR(4)
-#define FLD_POOL_PGREQ	FIELD_ADDR(5)
-#define FLD_POOL_PGREL	FIELD_ADDR(6)
-#define FLD_POOL_NPAGE	FIELD_ADDR(7)
-#define FLD_POOL_HIWAT	FIELD_ADDR(8)
-#define FLD_POOL_MINPG	FIELD_ADDR(9)
-#define FLD_POOL_MAXPG	FIELD_ADDR(10)
-#define FLD_POOL_IDLE	FIELD_ADDR(11)
+#define FLD_POOL_NAME	FIELD_ADDR(fields_pool,0)
+#define FLD_POOL_SIZE	FIELD_ADDR(fields_pool,1)
+#define FLD_POOL_REQS	FIELD_ADDR(fields_pool,2)
+#define FLD_POOL_FAIL	FIELD_ADDR(fields_pool,3)
+#define FLD_POOL_INUSE	FIELD_ADDR(fields_pool,4)
+#define FLD_POOL_PGREQ	FIELD_ADDR(fields_pool,5)
+#define FLD_POOL_PGREL	FIELD_ADDR(fields_pool,6)
+#define FLD_POOL_NPAGE	FIELD_ADDR(fields_pool,7)
+#define FLD_POOL_HIWAT	FIELD_ADDR(fields_pool,8)
+#define FLD_POOL_MINPG	FIELD_ADDR(fields_pool,9)
+#define FLD_POOL_MAXPG	FIELD_ADDR(fields_pool,10)
+#define FLD_POOL_IDLE	FIELD_ADDR(fields_pool,11)
 
 /* Define views */
 field_def *view_pool_0[] = {

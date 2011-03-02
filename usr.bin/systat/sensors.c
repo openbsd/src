@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.23 2010/04/21 19:40:59 deraadt Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.24 2011/03/02 06:48:17 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -72,12 +72,10 @@ field_def fields_sn[] = {
 	{"DESCRIPTION", 20, 45, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0}
 };
 
-#define FIELD_ADDR(x) (&fields_sn[x])
-
-#define FLD_SN_SENSOR	FIELD_ADDR(0)
-#define FLD_SN_VALUE	FIELD_ADDR(1)
-#define FLD_SN_STATUS	FIELD_ADDR(2)
-#define FLD_SN_DESCR	FIELD_ADDR(3)
+#define FLD_SN_SENSOR	FIELD_ADDR(fields_sn,0)
+#define FLD_SN_VALUE	FIELD_ADDR(fields_sn,1)
+#define FLD_SN_STATUS	FIELD_ADDR(fields_sn,2)
+#define FLD_SN_DESCR	FIELD_ADDR(fields_sn,3)
 
 /* Define views */
 field_def *view_sn_0[] = {

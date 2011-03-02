@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.17 2011/02/06 05:20:25 lum Exp $	 */
+/* $OpenBSD: pftop.c,v 1.18 2011/03/02 06:48:17 jasper Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -164,49 +164,47 @@ field_def fields[] = {
 };
 
 
-#define FIELD_ADDR(x) (&fields[x])
-
 /* for states */
-#define FLD_SRC     FIELD_ADDR(0)
-#define FLD_DEST    FIELD_ADDR(1)
-#define FLD_GW      FIELD_ADDR(2)
-#define FLD_STATE   FIELD_ADDR(3)
-#define FLD_AGE     FIELD_ADDR(4)
-#define FLD_EXP     FIELD_ADDR(5)
+#define FLD_SRC     FIELD_ADDR(fields,0)
+#define FLD_DEST    FIELD_ADDR(fields,1)
+#define FLD_GW      FIELD_ADDR(fields,2)
+#define FLD_STATE   FIELD_ADDR(fields,3)
+#define FLD_AGE     FIELD_ADDR(fields,4)
+#define FLD_EXP     FIELD_ADDR(fields,5)
 /* common */
-#define FLD_PROTO   FIELD_ADDR(6)
-#define FLD_DIR     FIELD_ADDR(7)
-#define FLD_PKTS    FIELD_ADDR(8)
-#define FLD_BYTES   FIELD_ADDR(9)
-#define FLD_RULE    FIELD_ADDR(10)
+#define FLD_PROTO   FIELD_ADDR(fields,6)
+#define FLD_DIR     FIELD_ADDR(fields,7)
+#define FLD_PKTS    FIELD_ADDR(fields,8)
+#define FLD_BYTES   FIELD_ADDR(fields,9)
+#define FLD_RULE    FIELD_ADDR(fields,10)
 /* for rules */
-#define FLD_LABEL   FIELD_ADDR(11)
-#define FLD_STATS   FIELD_ADDR(12)
-#define FLD_EVAL    FIELD_ADDR(13)
-#define FLD_ACTION  FIELD_ADDR(14)
-#define FLD_LOG     FIELD_ADDR(15)
-#define FLD_QUICK   FIELD_ADDR(16)
-#define FLD_KST     FIELD_ADDR(17)
-#define FLD_IF      FIELD_ADDR(18)
-#define FLD_RINFO   FIELD_ADDR(19)
-#define FLD_STMAX   FIELD_ADDR(20)
+#define FLD_LABEL   FIELD_ADDR(fields,11)
+#define FLD_STATS   FIELD_ADDR(fields,12)
+#define FLD_EVAL    FIELD_ADDR(fields,13)
+#define FLD_ACTION  FIELD_ADDR(fields,14)
+#define FLD_LOG     FIELD_ADDR(fields,15)
+#define FLD_QUICK   FIELD_ADDR(fields,16)
+#define FLD_KST     FIELD_ADDR(fields,17)
+#define FLD_IF      FIELD_ADDR(fields,18)
+#define FLD_RINFO   FIELD_ADDR(fields,19)
+#define FLD_STMAX   FIELD_ADDR(fields,20)
 /* other */
-#define FLD_SI      FIELD_ADDR(21)    /* instantaneous speed */
-#define FLD_SA      FIELD_ADDR(22)    /* average speed */
-#define FLD_SP      FIELD_ADDR(23)    /* peak speed */
-#define FLD_ANCHOR  FIELD_ADDR(24)
+#define FLD_SI      FIELD_ADDR(fields,21)    /* instantaneous speed */
+#define FLD_SA      FIELD_ADDR(fields,22)    /* average speed */
+#define FLD_SP      FIELD_ADDR(fields,23)    /* peak speed */
+#define FLD_ANCHOR  FIELD_ADDR(fields,24)
 /* for queues */
-#define FLD_QUEUE   FIELD_ADDR(25)
-#define FLD_BANDW   FIELD_ADDR(26)
-#define FLD_SCHED   FIELD_ADDR(27)
-#define FLD_PRIO    FIELD_ADDR(28)
-#define FLD_DROPP   FIELD_ADDR(29)
-#define FLD_DROPB   FIELD_ADDR(30)
-#define FLD_QLEN    FIELD_ADDR(31)
-#define FLD_BORR    FIELD_ADDR(32)
-#define FLD_SUSP    FIELD_ADDR(33)
-#define FLD_PKTSPS  FIELD_ADDR(34)
-#define FLD_BYTESPS FIELD_ADDR(35)
+#define FLD_QUEUE   FIELD_ADDR(fields,25)
+#define FLD_BANDW   FIELD_ADDR(fields,26)
+#define FLD_SCHED   FIELD_ADDR(fields,27)
+#define FLD_PRIO    FIELD_ADDR(fields,28)
+#define FLD_DROPP   FIELD_ADDR(fields,29)
+#define FLD_DROPB   FIELD_ADDR(fields,30)
+#define FLD_QLEN    FIELD_ADDR(fields,31)
+#define FLD_BORR    FIELD_ADDR(fields,32)
+#define FLD_SUSP    FIELD_ADDR(fields,33)
+#define FLD_PKTSPS  FIELD_ADDR(fields,34)
+#define FLD_BYTESPS FIELD_ADDR(fields,35)
 
 /* Define views */
 field_def *view0[] = {

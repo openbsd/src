@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.23 2008/12/07 02:56:06 canacar Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.24 2011/03/02 06:48:17 jasper Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -75,13 +75,11 @@ field_def fields_pg[] = {
 	{"", 30, 60, 1, FLD_ALIGN_BAR, -1, 0, 0, 100},
 };
 
-#define FIELD_ADDR(x) (&fields_pg[x])
-
-#define FLD_PG_USER	FIELD_ADDR(0)
-#define FLD_PG_NAME	FIELD_ADDR(1)
-#define FLD_PG_PID	FIELD_ADDR(2)
-#define FLD_PG_VALUE	FIELD_ADDR(3)
-#define FLD_PG_BAR	FIELD_ADDR(4)
+#define FLD_PG_USER	FIELD_ADDR(fields_pg,0)
+#define FLD_PG_NAME	FIELD_ADDR(fields_pg,1)
+#define FLD_PG_PID	FIELD_ADDR(fields_pg,2)
+#define FLD_PG_VALUE	FIELD_ADDR(fields_pg,3)
+#define FLD_PG_BAR	FIELD_ADDR(fields_pg,4)
 
 /* Define views */
 field_def *view_pg_0[] = {

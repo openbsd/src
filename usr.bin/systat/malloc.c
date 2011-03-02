@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.1 2008/11/08 06:38:27 canacar Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.2 2011/03/02 06:48:17 jasper Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -84,24 +84,22 @@ field_def fields_malloc[] = {
 };
 
 
-#define FIELD_ADDR(x) (&fields_malloc[x])
+#define FLD_TYPE_NAME		FIELD_ADDR(fields_malloc,0)
+#define FLD_TYPE_INUSE		FIELD_ADDR(fields_malloc,1)
+#define FLD_TYPE_MEMUSE		FIELD_ADDR(fields_malloc,2)
+#define FLD_TYPE_HIGHUSE	FIELD_ADDR(fields_malloc,3)
+#define FLD_TYPE_LIMIT		FIELD_ADDR(fields_malloc,4)
+#define FLD_TYPE_REQUESTS	FIELD_ADDR(fields_malloc,5)
+#define FLD_TYPE_TLIMIT		FIELD_ADDR(fields_malloc,6)
+#define FLD_TYPE_KLIMIT		FIELD_ADDR(fields_malloc,7)
+#define FLD_TYPE_SIZES		FIELD_ADDR(fields_malloc,8)
 
-#define FLD_TYPE_NAME		FIELD_ADDR(0)
-#define FLD_TYPE_INUSE		FIELD_ADDR(1)
-#define FLD_TYPE_MEMUSE		FIELD_ADDR(2)
-#define FLD_TYPE_HIGHUSE	FIELD_ADDR(3)
-#define FLD_TYPE_LIMIT		FIELD_ADDR(4)
-#define FLD_TYPE_REQUESTS	FIELD_ADDR(5)
-#define FLD_TYPE_TLIMIT		FIELD_ADDR(6)
-#define FLD_TYPE_KLIMIT		FIELD_ADDR(7)
-#define FLD_TYPE_SIZES		FIELD_ADDR(8)
-
-#define FLD_BUCKET_SIZE		FIELD_ADDR(9)
-#define FLD_BUCKET_REQUESTS	FIELD_ADDR(10)
-#define FLD_BUCKET_INUSE	FIELD_ADDR(11)
-#define FLD_BUCKET_FREE		FIELD_ADDR(12)
-#define FLD_BUCKET_HIWAT	FIELD_ADDR(13)
-#define FLD_BUCKET_COULDFREE	FIELD_ADDR(14)
+#define FLD_BUCKET_SIZE		FIELD_ADDR(fields_malloc,9)
+#define FLD_BUCKET_REQUESTS	FIELD_ADDR(fields_malloc,10)
+#define FLD_BUCKET_INUSE	FIELD_ADDR(fields_malloc,11)
+#define FLD_BUCKET_FREE		FIELD_ADDR(fields_malloc,12)
+#define FLD_BUCKET_HIWAT	FIELD_ADDR(fields_malloc,13)
+#define FLD_BUCKET_COULDFREE	FIELD_ADDR(fields_malloc,14)
 
 
 

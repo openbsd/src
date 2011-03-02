@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.18 2010/07/05 14:31:44 lum Exp $ */
+/*	$OpenBSD: if.c,v 1.19 2011/03/02 06:48:17 jasper Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -71,18 +71,16 @@ field_def fields_if[] = {
 };
 
 
-#define FIELD_ADDR(x) (&fields_if[x])
-
-#define FLD_IF_IFACE	FIELD_ADDR(0)
-#define FLD_IF_STATE	FIELD_ADDR(1)
-#define FLD_IF_IPKTS	FIELD_ADDR(2)
-#define FLD_IF_IBYTES	FIELD_ADDR(3)
-#define FLD_IF_IERRS	FIELD_ADDR(4)
-#define FLD_IF_OPKTS	FIELD_ADDR(5)
-#define FLD_IF_OBYTES	FIELD_ADDR(6)
-#define FLD_IF_OERRS	FIELD_ADDR(7)
-#define FLD_IF_COLLS	FIELD_ADDR(8)
-#define FLD_IF_DESC	FIELD_ADDR(9)
+#define FLD_IF_IFACE	FIELD_ADDR(fields_if,0)
+#define FLD_IF_STATE	FIELD_ADDR(fields_if,1)
+#define FLD_IF_IPKTS	FIELD_ADDR(fields_if,2)
+#define FLD_IF_IBYTES	FIELD_ADDR(fields_if,3)
+#define FLD_IF_IERRS	FIELD_ADDR(fields_if,4)
+#define FLD_IF_OPKTS	FIELD_ADDR(fields_if,5)
+#define FLD_IF_OBYTES	FIELD_ADDR(fields_if,6)
+#define FLD_IF_OERRS	FIELD_ADDR(fields_if,7)
+#define FLD_IF_COLLS	FIELD_ADDR(fields_if,8)
+#define FLD_IF_DESC	FIELD_ADDR(fields_if,9)
 
 
 /* Define views */

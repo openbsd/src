@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.22 2008/12/07 02:56:06 canacar Exp $	*/
+/*	$OpenBSD: swap.c,v 1.23 2011/03/02 06:48:17 jasper Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -66,12 +66,10 @@ field_def fields_sw[] = {
 	{"", 40, 80, 1, FLD_ALIGN_BAR, -1, 0, 0, 100},
 };
 
-#define FIELD_ADDR(x) (&fields_sw[x])
-
-#define FLD_SW_NAME	FIELD_ADDR(0)
-#define FLD_SW_BLOCKS	FIELD_ADDR(1)
-#define FLD_SW_USED	FIELD_ADDR(2)
-#define FLD_SW_BAR	FIELD_ADDR(3)
+#define FLD_SW_NAME	FIELD_ADDR(fields_sw,0)
+#define FLD_SW_BLOCKS	FIELD_ADDR(fields_sw,1)
+#define FLD_SW_USED	FIELD_ADDR(fields_sw,2)
+#define FLD_SW_BAR	FIELD_ADDR(fields_sw,3)
 
 /* Define views */
 field_def *view_sw_0[] = {

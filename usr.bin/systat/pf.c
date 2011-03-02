@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.3 2010/07/19 18:57:32 lum Exp $ */
+/*	$OpenBSD: pf.c,v 1.4 2011/03/02 06:48:17 jasper Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -58,13 +58,11 @@ field_def fields_pf[] = {
 	{"NOTES", 10, 20, 1, FLD_ALIGN_LEFT, -1, 0, 0, 60},
 };
 
-#define FIELD_ADDR(x) (&fields_pf[x])
-
-#define FLD_PF_TYPE	FIELD_ADDR(0)
-#define FLD_PF_NAME	FIELD_ADDR(1)
-#define FLD_PF_VALUE	FIELD_ADDR(2)
-#define FLD_PF_RATE	FIELD_ADDR(3)
-#define FLD_PF_DESC	FIELD_ADDR(4)
+#define FLD_PF_TYPE	FIELD_ADDR(fields_pf,0)
+#define FLD_PF_NAME	FIELD_ADDR(fields_pf,1)
+#define FLD_PF_VALUE	FIELD_ADDR(fields_pf,2)
+#define FLD_PF_RATE	FIELD_ADDR(fields_pf,3)
+#define FLD_PF_DESC	FIELD_ADDR(fields_pf,4)
 
 /* Define views */
 field_def *view_pf_0[] = {

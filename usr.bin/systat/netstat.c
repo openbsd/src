@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.33 2010/07/22 12:33:29 giovanni Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.34 2011/03/02 06:48:17 jasper Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -131,14 +131,12 @@ field_def fields_ns[] = {
 	{"STATE", 5, 11, 6, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 };
 
-#define FIELD_ADDR(x) (&fields_ns[x])
-
-#define FLD_NS_LOCAL	FIELD_ADDR(0)
-#define FLD_NS_FOREIGN	FIELD_ADDR(1)
-#define FLD_NS_PROTO	FIELD_ADDR(2)
-#define FLD_NS_RECV_Q	FIELD_ADDR(3)
-#define FLD_NS_SEND_Q	FIELD_ADDR(4)
-#define FLD_NS_STATE	FIELD_ADDR(5)
+#define FLD_NS_LOCAL	FIELD_ADDR(fields_ns,0)
+#define FLD_NS_FOREIGN	FIELD_ADDR(fields_ns,1)
+#define FLD_NS_PROTO	FIELD_ADDR(fields_ns,2)
+#define FLD_NS_RECV_Q	FIELD_ADDR(fields_ns,3)
+#define FLD_NS_SEND_Q	FIELD_ADDR(fields_ns,4)
+#define FLD_NS_STATE	FIELD_ADDR(fields_ns,5)
 
 /* Define views */
 field_def *view_ns_0[] = {

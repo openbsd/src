@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.37 2009/08/09 14:38:36 art Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.38 2011/03/02 06:48:17 jasper Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -70,18 +70,16 @@ field_def fields_io[] = {
 	{"STATS", 12, 15, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0}
 };
 
-#define FIELD_ADDR(x) (&fields_io[x])
-
-#define FLD_IO_DEVICE	FIELD_ADDR(0)
-#define FLD_IO_READ	FIELD_ADDR(1)
-#define FLD_IO_WRITE	FIELD_ADDR(2)
-#define FLD_IO_RTPS	FIELD_ADDR(3)
-#define FLD_IO_WTPS	FIELD_ADDR(4)
-#define FLD_IO_SEC	FIELD_ADDR(5)
+#define FLD_IO_DEVICE	FIELD_ADDR(fields_io,0)
+#define FLD_IO_READ	FIELD_ADDR(fields_io,1)
+#define FLD_IO_WRITE	FIELD_ADDR(fields_io,2)
+#define FLD_IO_RTPS	FIELD_ADDR(fields_io,3)
+#define FLD_IO_WTPS	FIELD_ADDR(fields_io,4)
+#define FLD_IO_SEC	FIELD_ADDR(fields_io,5)
 
 /* This is a hack that stuffs bcache statistics to the last two columns! */
-#define FLD_IO_SVAL	FIELD_ADDR(6)
-#define FLD_IO_SSTR	FIELD_ADDR(7)
+#define FLD_IO_SVAL	FIELD_ADDR(fields_io,6)
+#define FLD_IO_SSTR	FIELD_ADDR(fields_io,7)
 
 /* Define views */
 field_def *view_io_0[] = {

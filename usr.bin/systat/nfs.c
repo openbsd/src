@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.5 2011/01/13 19:10:02 jasper Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.6 2011/03/02 06:48:17 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -63,23 +63,21 @@ field_def fields_nfs[] = {
 };
 
 /* _V suffixed fields indicate a value column. */
-#define FIELD_ADDR(x) (&fields_nfs[x])
-
 /* Client */
-#define	FLD_NFS_C_RPC_COUNTS	FIELD_ADDR(0)
-#define	FLD_NFS_C_RPC_COUNTS_V	FIELD_ADDR(1)
-#define	FLD_NFS_C_RPC_INFO	FIELD_ADDR(2)
-#define	FLD_NFS_C_RPC_INFO_V	FIELD_ADDR(3)
-#define	FLD_NFS_C_CACHE_INFO	FIELD_ADDR(4)
-#define	FLD_NFS_C_CACHE_V	FIELD_ADDR(5)
+#define	FLD_NFS_C_RPC_COUNTS	FIELD_ADDR(fields_nfs,0)
+#define	FLD_NFS_C_RPC_COUNTS_V	FIELD_ADDR(fields_nfs,1)
+#define	FLD_NFS_C_RPC_INFO	FIELD_ADDR(fields_nfs,2)
+#define	FLD_NFS_C_RPC_INFO_V	FIELD_ADDR(fields_nfs,3)
+#define	FLD_NFS_C_CACHE_INFO	FIELD_ADDR(fields_nfs,4)
+#define	FLD_NFS_C_CACHE_V	FIELD_ADDR(fields_nfs,5)
 
 /* Server */
-#define	FLD_NFS_S_RPC_COUNTS	FIELD_ADDR(6)
-#define	FLD_NFS_S_RPC_COUNTS_V	FIELD_ADDR(7)
-#define	FLD_NFS_S_CACHE_STATS	FIELD_ADDR(8)
-#define	FLD_NFS_S_CACHE_STATS_V	FIELD_ADDR(9)
-#define	FLD_NFS_S_WRITES	FIELD_ADDR(10)
-#define	FLD_NFS_S_WRITES_V	FIELD_ADDR(11)
+#define	FLD_NFS_S_RPC_COUNTS	FIELD_ADDR(fields_nfs,6)
+#define	FLD_NFS_S_RPC_COUNTS_V	FIELD_ADDR(fields_nfs,7)
+#define	FLD_NFS_S_CACHE_STATS	FIELD_ADDR(fields_nfs,8)
+#define	FLD_NFS_S_CACHE_STATS_V	FIELD_ADDR(fields_nfs,9)
+#define	FLD_NFS_S_WRITES	FIELD_ADDR(fields_nfs,10)
+#define	FLD_NFS_S_WRITES_V	FIELD_ADDR(fields_nfs,11)
 
 /* Define views */
 field_def *view_nfs_0[] = {

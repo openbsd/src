@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.31 2010/11/05 10:07:30 claudio Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.32 2011/03/02 06:48:17 jasper Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -70,17 +70,15 @@ field_def fields_mbuf[] = {
 };
 
 
-#define FIELD_ADDR(x) (&fields_mbuf[x])
-
-#define FLD_MB_IFACE	FIELD_ADDR(0)
-#define FLD_MB_RXDELAY	FIELD_ADDR(1)
-#define FLD_MB_TXDELAY	FIELD_ADDR(2)
-#define FLD_MB_LLOCKS	FIELD_ADDR(3)
-#define FLD_MB_MSIZE	FIELD_ADDR(4)
-#define FLD_MB_MALIVE	FIELD_ADDR(5)
-#define FLD_MB_MLWM	FIELD_ADDR(6)
-#define FLD_MB_MHWM	FIELD_ADDR(7)
-#define FLD_MB_MCWM	FIELD_ADDR(8)
+#define FLD_MB_IFACE	FIELD_ADDR(fields_mbuf,0)
+#define FLD_MB_RXDELAY	FIELD_ADDR(fields_mbuf,1)
+#define FLD_MB_TXDELAY	FIELD_ADDR(fields_mbuf,2)
+#define FLD_MB_LLOCKS	FIELD_ADDR(fields_mbuf,3)
+#define FLD_MB_MSIZE	FIELD_ADDR(fields_mbuf,4)
+#define FLD_MB_MALIVE	FIELD_ADDR(fields_mbuf,5)
+#define FLD_MB_MLWM	FIELD_ADDR(fields_mbuf,6)
+#define FLD_MB_MHWM	FIELD_ADDR(fields_mbuf,7)
+#define FLD_MB_MCWM	FIELD_ADDR(fields_mbuf,8)
 
 
 /* Define views */
