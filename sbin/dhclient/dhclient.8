@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.7 2010/10/08 15:43:45 sobrado Exp $
+.\" $OpenBSD: dhclient.8,v 1.8 2011/03/02 07:44:42 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: October 8 2010 $
+.Dd $Mdocdate: March 2 2011 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -147,12 +147,11 @@ In that case, it may be advantageous to
 arrange with the network administrator for an entry on the BOOTP
 database, so that the host can boot quickly on that network rather
 than cycling through the list of old leases.
-.Sh NOTES
-You must have the Berkeley Packet Filter (BPF) configured in your kernel.
+.Pp
 .Nm
 requires at least one
 .Pa /dev/bpf*
-file for each broadcast network interface that is attached to your system.
+file for each broadcast network interface.
 See
 .Xr bpf 4
 for more information.
