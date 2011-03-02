@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.38 2008/11/21 23:44:04 tedu Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.39 2011/03/02 17:30:48 bluhm Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -841,20 +841,20 @@ ra_input(int len, struct nd_router_advert *ra,
 	if ((ra->nd_ra_flags_reserved & ND_RA_FLAG_MANAGED) !=
 	    rai->managedflg) {
 		log_info("M flag inconsistent on %s: %s from %s, %s from us",
-		    rai->ifname, on_off[!rai->managedflg],
+		    rai->ifname, on_off[rai->managedflg ? 0 : 1],
 		    inet_ntop(AF_INET6, &from->sin6_addr,
 			ntopbuf, INET6_ADDRSTRLEN),
-		    on_off[rai->managedflg]);
+		    on_off[rai->managedflg ? 1 : 0]);
 		inconsistent++;
 	}
 	/* O flag */
 	if ((ra->nd_ra_flags_reserved & ND_RA_FLAG_OTHER) !=
 	    rai->otherflg) {
 		log_info("O flag inconsistent on %s: %s from %s, %s from us",
-		    rai->ifname, on_off[!rai->otherflg],
+		    rai->ifname, on_off[rai->otherflg ? 0 : 1],
 		    inet_ntop(AF_INET6, &from->sin6_addr,
 			ntopbuf, INET6_ADDRSTRLEN),
-		    on_off[rai->otherflg]);
+		    on_off[rai->otherflg ? 1 : 0]);
 		inconsistent++;
 	}
 	/* Reachable Time */
