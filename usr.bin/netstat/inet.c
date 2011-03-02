@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.114 2010/10/30 23:06:05 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.115 2011/03/02 21:51:14 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1180,6 +1180,10 @@ socket_dump(u_long off)
 	p("%u", so_siguid, ", ");
 	p("%u", so_sigeuid, "\n ");
 	p("%lu", so_oobmark, "\n ");
+	p("%p", so_splice, ", ");
+	p("%p", so_spliceback, "\n ");
+	p("%lld", so_splicelen, ", ");
+	p("%lld", so_splicemax, "\n ");
 	sockbuf_dump(&so.so_rcv, "so_rcv");
 	sockbuf_dump(&so.so_snd, "so_snd");
 	p("%u", so_euid, ", ");
