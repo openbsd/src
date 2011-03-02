@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_rssadapt.c,v 1.9 2010/07/17 16:25:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_rssadapt.c,v 1.10 2011/03/02 08:48:59 fgsch Exp $	*/
 /*	$NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 dyoung Exp $	*/
 
 /*-
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 
