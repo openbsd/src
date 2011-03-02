@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.3 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.4 2011/03/02 07:15:45 jasper Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -245,7 +245,7 @@ utwitch_intr(struct uhidev *addr, void *ibuf, u_int len)
 	switch (buf[0]) {
 	case CMD_ACK:
 		if (buf[1] == sc->issueing_cmd) {
-			DPRINTF(("ack recieved for cmd 0x%.2x\n", buf[1]));
+			DPRINTF(("ack received for cmd 0x%.2x\n", buf[1]));
 			sc->accepted_cmd = buf[1];
 		} else {
 			DPRINTF(("cmd-ack mismatch: recved 0x%.2x, expect 0x%.2x\n",

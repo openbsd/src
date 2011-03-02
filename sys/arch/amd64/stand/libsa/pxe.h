@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.h,v 1.5 2010/11/20 20:11:19 miod Exp $ */
+/*	$OpenBSD: pxe.h,v 1.6 2011/03/02 07:15:45 jasper Exp $ */
 /*	$NetBSD: pxe.h,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ typedef struct {
 	PXENV_STATUS_t	Status;
 	uint16_t	FuncFlag;		/* PXENV_UNDI_ISR_OUT_xxx */
 	uint16_t	BufferLength;		/* Length of Frame */
-	uint16_t	FrameLength;		/* Total length of reciever
+	uint16_t	FrameLength;		/* Total length of receiver
 						   frame */
 	uint16_t	FrameHeaderLength;	/* Length of the media header
 						   in Frame */
@@ -351,7 +351,7 @@ typedef struct {
 	 */
 #	define PXENV_UNDI_ISR_OUT_DONE		0
 #	define PXENV_UNDI_ISR_OUT_TRANSMIT	2
-#	define PXENV_UNDI_ISR_OUT_RECIEVE	3
+#	define PXENV_UNDI_ISR_OUT_RECEIVE	3
 #	define PXENV_UNDI_ISR_OUT_BUSY		4
 } __packed t_PXENV_UNDI_ISR;
 
