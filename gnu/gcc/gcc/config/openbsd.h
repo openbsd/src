@@ -325,6 +325,9 @@ do {									 \
    as this depends on a few other details as well...  */
 #define HANDLE_SYSV_PRAGMA 1
 
+/* Define this so we can compile MS code for use with WINE.  */
+#define HANDLE_PRAGMA_PACK_PUSH_POP
+
 /* Stack is explicitly denied execution rights on OpenBSD platforms.  */
 #define ENABLE_EXECUTE_STACK						\
 extern void __enable_execute_stack (void *);				\
