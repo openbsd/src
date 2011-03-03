@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.271 2011/01/26 01:54:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.272 2011/03/03 08:51:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -375,6 +375,7 @@ enum msgtype {
 	MSG_SHELL,
 	MSG_STDERR,
 	MSG_STDOUT,
+	MSG_DETACHKILL
 };
 
 /*
