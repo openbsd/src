@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhts.c,v 1.1 2009/12/09 21:27:19 matthieu Exp $ */
+/*	$OpenBSD: uhts.c,v 1.2 2011/03/03 21:48:49 kettenis Exp $ */
 /*
  * Copyright (c) 2009 Matthieu Herrb <matthieu@herrb.eu>
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -291,7 +291,9 @@ uhts_intr(struct uhidev *addr, void *buf, u_int len)
 			tp.x = x;
 			tp.y = y;
 		}
-		if (!sc->sc_rawmode) {
+		if (!sc->sc_rawmode &&
+		    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx) != 0 &&
+		    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny) != 0) {
 			/* Scale down to the screen resolution. */
 			tp.x = ((tp.x - sc->sc_tsscale.minx) *
 			    sc->sc_tsscale.resx) /
@@ -374,6 +376,8 @@ uhts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    wsmc->resx >= 0 && wsmc->resy >= 0 &&
 		    wsmc->minx < 32768 && wsmc->maxx < 32768 &&
 		    wsmc->miny < 32768 && wsmc->maxy < 32768 &&
+		    (wsmc->maxx - wsmc->minx) != 0 &&
+		    (wsmc->maxy - wsmc->miny) != 0 &&
 		    wsmc->resx < 32768 && wsmc->resy < 32768 &&
 		    wsmc->swapxy >= 0 && wsmc->swapxy <= 1 &&
 		    wsmc->samplelen >= 0 && wsmc->samplelen <= 1))
