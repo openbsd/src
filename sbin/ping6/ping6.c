@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.80 2010/06/26 18:30:03 phessler Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.81 2011/03/03 00:30:31 mikeb Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1359,6 +1359,13 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			/* check the data */
 			cp = buf + off + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
 			dp = outpack + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
+			if (cc != ICMP6ECHOLEN + datalen) {
+				int delta = cc - (datalen + ICMP6ECHOLEN);
+
+				(void)printf(" (%d bytes %s)",
+				    abs(delta), delta > 0 ? "extra" : "short");
+				end = buf + MIN(cc, ICMP6ECHOLEN + datalen);
+			}
 			for (i = 8; cp < end; ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d should be 0x%x but was 0x%x", i, *dp, *cp);
