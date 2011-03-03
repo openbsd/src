@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.38 2010/11/29 15:25:56 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.39 2011/03/03 08:09:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -199,12 +199,13 @@ ss_to_text(struct sockaddr_storage *ss)
 		in_addr_t addr;
 		
 		addr = ((struct sockaddr_in *)ss)->sin_addr.s_addr;
-		bsnprintf(p, NI_MAXHOST,
-		    "%d.%d.%d.%d",
-		    addr & 0xff,
-		    (addr >> 8) & 0xff,
-		    (addr >> 16) & 0xff,
-		    (addr >> 24) & 0xff);
+                addr = ntohl(addr);
+                bsnprintf(p, NI_MAXHOST,
+                    "%d.%d.%d.%d",
+                    (addr >> 24) & 0xff,
+                    (addr >> 16) & 0xff,
+                    (addr >> 8) & 0xff,
+                    addr & 0xff);
 	}
 
 	if (ss->ss_family == PF_INET6) {
@@ -231,13 +232,13 @@ ss_to_ptr(struct sockaddr_storage *ss)
 		in_addr_t addr;
 		
 		addr = ((struct sockaddr_in *)ss)->sin_addr.s_addr;
-
-		bsnprintf(buffer, sizeof (buffer),
-		    "%d.%d.%d.%d.in-addr.arpa",
-		    (addr >> 24) & 0xff,
-		    (addr >> 16) & 0xff,
-		    (addr >> 8) & 0xff,
-		    addr & 0xff);
+                addr = ntohl(addr);
+                bsnprintf(buffer, sizeof (buffer),
+                    "%d.%d.%d.%d.in-addr.arpa",
+                    addr & 0xff,
+                    (addr >> 8) & 0xff,
+                    (addr >> 16) & 0xff,
+                    (addr >> 24) & 0xff);
 		break;
 	}
 	case AF_INET6: {
