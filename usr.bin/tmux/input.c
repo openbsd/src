@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.35 2011/01/28 20:39:22 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.36 2011/03/03 08:53:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1277,7 +1277,7 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 					gc->fg = 8;
 				} else if (n == 48) {
 					gc->flags &= ~GRID_FLAG_BG256;
-					gc->fg = 8;
+					gc->bg = 8;
 				}
 
 			} else {
