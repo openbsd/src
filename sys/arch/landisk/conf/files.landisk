@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.7 2009/05/15 16:20:48 deraadt Exp $
+#	$OpenBSD: files.landisk,v 1.8 2011/03/03 09:36:25 jasper Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -96,13 +96,6 @@ file	arch/landisk/dev/obio.c		obio needs-flag
 
 attach	wdc at obio with wdc_obio
 file	arch/landisk/dev/wdc_obio.c	wdc_obio needs-flag
-
-define	button
-file    arch/landisk/dev/button.c	button
-
-device	btn: button
-attach	btn at obio with btn_obio
-file	arch/landisk/dev/btn_obio.c	btn_obio needs-flag
 
 device	power
 attach	power at obio
