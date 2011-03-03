@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.50 2010/10/06 09:38:02 stephan Exp $	*/
+/*	$OpenBSD: grey.c,v 1.51 2011/03/03 21:58:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -100,7 +100,7 @@ time_t startup;
 
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
-	"spamd-white", "-T", "replace", "-f" "-", NULL
+	"spamd-white", "-T", "replace", "-f", "-", NULL
 };
 
 /* If the parent gets a signal, kill off the children and exit */
