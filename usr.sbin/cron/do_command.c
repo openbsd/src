@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.34 2010/12/14 23:32:06 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.35 2011/03/03 15:08:14 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -246,6 +246,8 @@ child_process(entry *e, user *u) {
 
 #endif /* LOGIN_CAP */
 		chdir(env_get("HOME", e->envp));
+
+		(void) signal(SIGPIPE, SIG_DFL);
 
 		/*
 		 * Exec the command.

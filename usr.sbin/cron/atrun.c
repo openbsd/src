@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.16 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.17 2011/03/03 15:08:14 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -488,6 +488,8 @@ run_job(atjob *job, char *atfile)
 			_exit(OK_EXIT);
 		}
 #endif /*DEBUGGING*/
+
+		(void) signal(SIGPIPE, SIG_DFL);
 
 		/*
 		 * Exec /bin/sh with stdin connected to the at job file
