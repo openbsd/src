@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.166 2011/03/01 23:48:33 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.167 2011/03/04 15:44:39 mikeb Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -886,6 +886,9 @@ mpi_intr(void *arg)
 	struct mpi_softc		*sc = arg;
 	u_int32_t			reg;
 	int				rv = 0;
+
+	if ((mpi_read_intr(sc) & MPI_INTR_STATUS_REPLY) == 0)
+		return (rv);
 
 	while ((reg = mpi_pop_reply(sc)) != 0xffffffff) {
 		mpi_reply(sc, reg);
