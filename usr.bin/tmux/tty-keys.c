@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.33 2011/01/03 23:35:22 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.34 2011/03/04 23:26:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -630,10 +630,10 @@ tty_keys_mouse(struct tty *tty,
 				utf8_append(&utf8data, buf[*size]);
 				value = utf8_combine(&utf8data);
 			} else
-				value = buf[*size];
+				value = (unsigned char)buf[*size];
 			(*size)++;
 		} else {
-			value = buf[*size];
+			value = (unsigned char)buf[*size];
 			(*size)++;
 		}
 
