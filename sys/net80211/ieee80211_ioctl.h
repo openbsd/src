@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.17 2009/02/15 08:34:36 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.18 2011/03/04 23:48:15 fgsch Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -56,7 +56,6 @@ struct ieee80211_stats {
 	u_int32_t	is_rx_elem_missing;	/* rx required element missing*/
 	u_int32_t	is_rx_elem_toobig;	/* rx element too big */
 	u_int32_t	is_rx_elem_toosmall;	/* rx element too small */
-	u_int32_t	is_rx_elem_unknown;	/* rx element unknown */
 	u_int32_t	is_rx_badchan;		/* rx frame w/ invalid chan */
 	u_int32_t	is_rx_chanmismatch;	/* rx frame chan mismatch */
 	u_int32_t	is_rx_nodealloc;	/* rx frame dropped */

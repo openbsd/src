@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.6 2008/12/17 19:27:40 jcs Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.7 2011/03/04 23:48:15 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -78,7 +78,6 @@ net80211_ifstats(char *ifname)
 	p(is_rx_elem_missing, "\t%lu input packet%s with missing elements\n");
 	p(is_rx_elem_toobig, "\t%lu input packet%s with elements too big\n");
 	p(is_rx_elem_toosmall, "\t%lu input packet%s with elements too small\n");
-	p(is_rx_elem_unknown, "\t%lu input packet%s with unknown elements\n");
 	p(is_rx_badchan, "\t%lu input packet%s with invalid channel\n");
 	p(is_rx_chanmismatch, "\t%lu input packet%s with mismatched channel\n");
 	p(is_rx_nodealloc, "\t%lu input packet%s dropped\n");
