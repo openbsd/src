@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.36 2010/09/12 20:16:29 sobrado Exp $	*/
+/*	$OpenBSD: ls.c,v 1.37 2011/03/04 21:03:19 okan Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTacdfghiklmnopqrstux")) != -1) {
+	while ((ch = getopt(argc, argv, "1ACFHLRSTacdfghiklmnopqrstux")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C and -l, -m, -n and -x options all override each
@@ -175,6 +175,9 @@ ls_main(int argc, char *argv[])
 			break;
 		case 'F':
 			f_type = 1;
+			break;
+		case 'H':
+			fts_options |= FTS_COMFOLLOW;
 			break;
 		case 'L':
 			fts_options &= ~FTS_PHYSICAL;
