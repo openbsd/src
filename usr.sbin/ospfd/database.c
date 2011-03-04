@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.27 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: database.c,v 1.28 2011/03/04 09:24:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -187,9 +187,9 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 	    nbr->last_rx_bits == dd_hdr.bits &&
 	    ntohl(dd_hdr.dd_seq_num) == nbr->dd_seq_num - nbr->dd_master ?
 	    1 : 0) {
-			log_debug("recv_db_description: dupe from ID %s",
-			    inet_ntoa(nbr->id));
-			dupe = 1;
+		log_debug("recv_db_description: dupe from ID %s",
+		    inet_ntoa(nbr->id));
+		dupe = 1;
 	}
 
 	switch (nbr->state) {
