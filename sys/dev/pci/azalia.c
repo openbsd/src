@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.190 2011/02/17 17:38:55 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.191 2011/03/04 22:04:21 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -198,6 +198,7 @@ int	azalia_pci_match(struct device *, void *, void *);
 void	azalia_pci_attach(struct device *, struct device *, void *);
 int	azalia_pci_activate(struct device *, int);
 int	azalia_pci_detach(struct device *, int);
+void	azalia_configure_pci(azalia_t *);
 int	azalia_intr(void *);
 void	azalia_print_codec(codec_t *);
 int	azalia_reset(azalia_t *);
@@ -375,66 +376,37 @@ azalia_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, uint8_t val)
 	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
 }
 
-int
-azalia_pci_match(struct device *parent, void *match, void *aux)
-{
-	struct pci_attach_args *pa;
-
-	pa = aux;
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MULTIMEDIA
-	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MULTIMEDIA_HDAUDIO)
-		return 1;
-	return 0;
-}
-
 void
-azalia_pci_attach(struct device *parent, struct device *self, void *aux)
+azalia_configure_pci(azalia_t *az)
 {
-	azalia_t *sc;
-	struct pci_attach_args *pa;
 	pcireg_t v;
-	pci_intr_handle_t ih;
-	const char *interrupt_str;
 	uint8_t reg;
 
-	sc = (azalia_t*)self;
-	pa = aux;
-
-	sc->dmat = pa->pa_dmat;
-
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDBARL);
-	v &= PCI_MAPREG_TYPE_MASK | PCI_MAPREG_MEM_TYPE_MASK;
-	if (pci_mapreg_map(pa, ICH_PCI_HDBARL, v, 0,
-			   &sc->iot, &sc->ioh, NULL, &sc->map_size, 0)) {
-		printf(": can't map device i/o space\n");
-		return;
-	}
-
 	/* enable back-to-back */
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	v = pci_conf_read(az->pc, az->tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(az->pc, az->tag, PCI_COMMAND_STATUS_REG,
 	    v | PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	/* traffic class select */
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL,
+	v = pci_conf_read(az->pc, az->tag, ICH_PCI_HDTCSEL);
+	pci_conf_write(az->pc, az->tag, ICH_PCI_HDTCSEL,
 	    v & ~(ICH_PCI_HDTCSEL_MASK));
 
 	/* disable MSI, use INTx instead */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
-		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, ICH_PCI_MMC);
+	if (PCI_VENDOR(az->pciid) == PCI_VENDOR_INTEL) {
+		reg = azalia_pci_read(az->pc, az->tag, ICH_PCI_MMC);
 		reg &= ~(ICH_PCI_MMC_ME);
-		azalia_pci_write(pa->pa_pc, pa->pa_tag, ICH_PCI_MMC, reg);
+		azalia_pci_write(az->pc, az->tag, ICH_PCI_MMC, reg);
 	}
 
 	/* enable PCIe snoop */
-	switch (PCI_PRODUCT(pa->pa_id)) {
+	switch (PCI_PRODUCT(az->pciid)) {
 	case PCI_PRODUCT_ATI_SB450_HDA:
 	case PCI_PRODUCT_ATI_SBX00_HDA:
-		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, ATI_PCIE_SNOOP_REG);
+		reg = azalia_pci_read(az->pc, az->tag, ATI_PCIE_SNOOP_REG);
 		reg &= ATI_PCIE_SNOOP_MASK;
 		reg |= ATI_PCIE_SNOOP_ENABLE;
-		azalia_pci_write(pa->pa_pc, pa->pa_tag, ATI_PCIE_SNOOP_REG, reg);
+		azalia_pci_write(az->pc, az->tag, ATI_PCIE_SNOOP_REG, reg);
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP51_HDA:
 	case PCI_PRODUCT_NVIDIA_MCP55_HDA:
@@ -458,26 +430,26 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP89_HDA_2:
 	case PCI_PRODUCT_NVIDIA_MCP89_HDA_3:
 	case PCI_PRODUCT_NVIDIA_MCP89_HDA_4:
-		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		reg = azalia_pci_read(az->pc, az->tag,
 		    NVIDIA_HDA_OSTR_COH_REG);
 		reg |= NVIDIA_HDA_STR_COH_ENABLE;
-		azalia_pci_write(pa->pa_pc, pa->pa_tag,
+		azalia_pci_write(az->pc, az->tag,
 		    NVIDIA_HDA_OSTR_COH_REG, reg);
 
-		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		reg = azalia_pci_read(az->pc, az->tag,
 		    NVIDIA_HDA_ISTR_COH_REG);
 		reg |= NVIDIA_HDA_STR_COH_ENABLE;
-		azalia_pci_write(pa->pa_pc, pa->pa_tag,
+		azalia_pci_write(az->pc, az->tag,
 		    NVIDIA_HDA_ISTR_COH_REG, reg);
 
-		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		reg = azalia_pci_read(az->pc, az->tag,
 		    NVIDIA_PCIE_SNOOP_REG);
 		reg &= NVIDIA_PCIE_SNOOP_MASK;
 		reg |= NVIDIA_PCIE_SNOOP_ENABLE;
-		azalia_pci_write(pa->pa_pc, pa->pa_tag,
+		azalia_pci_write(az->pc, az->tag,
 		    NVIDIA_PCIE_SNOOP_REG, reg);
 
-		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		reg = azalia_pci_read(az->pc, az->tag,
 		    NVIDIA_PCIE_SNOOP_REG);
 		if ((reg & NVIDIA_PCIE_SNOOP_ENABLE) !=
 		    NVIDIA_PCIE_SNOOP_ENABLE) {
@@ -486,14 +458,54 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 
 		break;
 	}
+}
+
+int
+azalia_pci_match(struct device *parent, void *match, void *aux)
+{
+	struct pci_attach_args *pa;
+
+	pa = aux;
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MULTIMEDIA
+	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MULTIMEDIA_HDAUDIO)
+		return 1;
+	return 0;
+}
+
+void
+azalia_pci_attach(struct device *parent, struct device *self, void *aux)
+{
+	azalia_t *sc;
+	struct pci_attach_args *pa;
+	pcireg_t v;
+	pci_intr_handle_t ih;
+	const char *interrupt_str;
+
+	sc = (azalia_t*)self;
+	pa = aux;
+
+	sc->dmat = pa->pa_dmat;
+
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDBARL);
+	v &= PCI_MAPREG_TYPE_MASK | PCI_MAPREG_MEM_TYPE_MASK;
+	if (pci_mapreg_map(pa, ICH_PCI_HDBARL, v, 0,
+			   &sc->iot, &sc->ioh, NULL, &sc->map_size, 0)) {
+		printf(": can't map device i/o space\n");
+		return;
+	}
+
+	sc->pc = pa->pa_pc;
+	sc->tag = pa->pa_tag;
+	sc->pciid = pa->pa_id;
+	sc->subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	azalia_configure_pci(sc);
 
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
 		return;
 	}
-	sc->pc = pa->pa_pc;
-	sc->tag = pa->pa_tag;
 	interrupt_str = pci_intr_string(pa->pa_pc, ih);
 	sc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, azalia_intr,
 	    sc, sc->dev.dv_xname);
@@ -505,9 +517,6 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s\n", interrupt_str);
-
-	sc->pciid = pa->pa_id;
-	sc->subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 	if (azalia_init(sc, 0))
 		goto err_exit;
@@ -1409,21 +1418,12 @@ azalia_resume_codec(codec_t *this)
 int
 azalia_resume(azalia_t *az)
 {
-	pcireg_t v;
 	int err;
 
 	if (az->detached)
 		return 0;
 
-	/* enable back-to-back */
-	v = pci_conf_read(az->pc, az->tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(az->pc, az->tag, PCI_COMMAND_STATUS_REG,
-	    v | PCI_COMMAND_BACKTOBACK_ENABLE);
-
-	/* traffic class select */
-	v = pci_conf_read(az->pc, az->tag, ICH_PCI_HDTCSEL);
-	pci_conf_write(az->pc, az->tag, ICH_PCI_HDTCSEL,
-	    v & ~(ICH_PCI_HDTCSEL_MASK));
+	azalia_configure_pci(az);
 
 	/* is this necessary? */
 	pci_conf_write(az->pc, az->tag, PCI_SUBSYS_ID_REG, az->subid);
