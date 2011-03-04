@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.19 2007/03/05 14:55:09 beck Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.20 2011/03/04 21:01:49 okan Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -73,6 +73,7 @@ char			*pflogif = "pflog0";
 char			 errbuf[PCAP_ERRBUF_SIZE];
 pcap_t			*hpcap = NULL;
 struct syslog_data	 sdata	= SYSLOG_DATA_INIT;
+time_t			 whiteexp = WHITEEXP;
 extern char		*__progname;
 
 void	logmsg(int , const char *, ...);
@@ -236,7 +237,7 @@ dbupdate(char *dbname, char *ip)
 		gd.first = now;
 		gd.bcount = 1;
 		gd.pass = now;
-		gd.expire = now + WHITEEXP;
+		gd.expire = now + whiteexp;
 		memset(&dbk, 0, sizeof(dbk));
 		dbk.size = strlen(ip);
 		dbk.data = ip;
@@ -256,7 +257,7 @@ dbupdate(char *dbname, char *ip)
 		}
 		memcpy(&gd, dbd.data, sizeof(gd));
 		gd.pcount++;
-		gd.expire = now + WHITEEXP;
+		gd.expire = now + whiteexp;
 		memset(&dbk, 0, sizeof(dbk));
 		dbk.size = strlen(ip);
 		dbk.data = ip;
@@ -272,7 +273,7 @@ dbupdate(char *dbname, char *ip)
 	db->close(db);
 	db = NULL;
 	if (syncsend)
-		sync_white(now, now + WHITEEXP, ip);
+		sync_white(now, now + whiteexp, ip);
 	return (0);
  bad:
 	db->close(db);
@@ -284,7 +285,8 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-DI] [-i interface] [-l pflog_interface] [-Y synctarget]\n",
+	    "usage: %s [-DI] [-i interface] [-l pflog_interface] "
+	    "[-W whiteexp] [-Y synctarget]\n",
 	    __progname);
 	exit(1);
 }
@@ -292,19 +294,20 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int		 ch;
+	int		 ch, i;
 	struct passwd	*pw;
 	pcap_handler	 phandler = logpkt_handler;
 	int syncfd = 0;
 	struct servent *ent;
 	char *sync_iface = NULL;
 	char *sync_baddr = NULL;
+	const char *errstr;
 
 	if ((ent = getservbyname("spamd-sync", "udp")) == NULL)
 		errx(1, "Can't find service \"spamd-sync\" in /etc/services");
 	sync_port = ntohs(ent->s_port);
 
-	while ((ch = getopt(argc, argv, "DIi:l:Y:")) != -1) {
+	while ((ch = getopt(argc, argv, "DIi:l:W:Y:")) != -1) {
 		switch (ch) {
 		case 'D':
 			flag_debug = 1;
@@ -317,6 +320,14 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			pflogif = optarg;
+			break;
+		case 'W':
+			/* limit whiteexp to 2160 hours (90 days) */
+			i = strtonum(optarg, 1, (24 * 90), &errstr);
+			if (errstr)
+				usage();
+			/* convert to seconds from hours */
+			whiteexp *= (60 * 60);
 			break;
 		case 'Y':
 			if (sync_addhost(optarg, sync_port) != 0)

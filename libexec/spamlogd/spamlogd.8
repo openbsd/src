@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.16 2009/09/17 06:37:54 jmc Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.17 2011/03/04 21:01:49 okan Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2009 $
+.Dd $Mdocdate: March 4 2011 $
 .Dt SPAMLOGD 8
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Op Fl DI
 .Op Fl i Ar interface
 .Op Fl l Ar pflog_interface
+.Op Fl W Ar whiteexp
 .Op Fl Y Ar synctarget
 .Sh DESCRIPTION
 .Nm
@@ -77,6 +78,12 @@ Specify a
 interface to listen for connection notifications.
 The default is to watch for connections logged on
 .Dq pflog0 .
+.It Fl W Ar whiteexp
+Adjust the time for
+.Ar whiteexp
+in hours.
+The default is 864 hours (approximately 36 days); maximum is 2160 hours
+(approximately 90 days).
 .It Fl Y Ar synctarget
 Add a target to receive synchronisation messages; see
 .Sx SYNCHRONISATION
