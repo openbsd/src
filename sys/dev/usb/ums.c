@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.33 2010/08/02 23:17:34 miod Exp $ */
+/*	$OpenBSD: ums.c,v 1.34 2011/03/04 23:57:52 kettenis Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -227,15 +227,18 @@ ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct hidms *ms = &sc->sc_ms;
 	int rc;
 
+	rc = uhidev_ioctl(&sc->sc_hdev, cmd, data, flag, p);
+	if (rc != -1)
+		return rc;
+	rc = hidms_ioctl(ms, cmd, data, flag, p);
+	if (rc != -1)
+		return rc;
+
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_USB;
 		return 0;
 	default:
-		rc = uhidev_ioctl(&sc->sc_hdev, cmd, data, flag, p);
-		if (rc != -1)
-			return rc;
-		else
-			return hidms_ioctl(ms, cmd, data, flag, p);
+		return -1;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidmsvar.h,v 1.1 2010/07/31 16:04:50 miod Exp $ */
+/*	$OpenBSD: hidmsvar.h,v 1.2 2011/03/04 23:57:52 kettenis Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -33,6 +33,13 @@
 
 #define MAX_BUTTONS	31	/* must not exceed size of sc_buttons */
 
+struct tsscale {
+	int	minx, maxx;
+	int	miny, maxy;
+	int	swapxy;
+	int	resx, resy;
+};
+
 struct hidms {
 	int		sc_enabled;
 	int		sc_flags;	/* device configuration */
@@ -42,6 +49,8 @@ struct hidms {
 #define HIDMS_W			0x08	/* W direction available */
 #define HIDMS_REVW		0x10	/* W-axis is reversed */
 #define HIDMS_LEADINGBYTE	0x20	/* Unknown leading byte */
+#define HIDMS_ABSX		0x40	/* X-axis is absolute */
+#define HIDMS_ABSY		0x80	/* Y-axis is absolute */
 
 	int		sc_num_buttons;
 	u_int32_t	sc_buttons;	/* mouse button status */
@@ -55,6 +64,9 @@ struct hidms {
 	struct hid_location sc_loc_z;
 	struct hid_location sc_loc_w;
 	struct hid_location sc_loc_btn[MAX_BUTTONS];
+
+	struct tsscale	sc_tsscale;
+	int		sc_rawmode;
 };
 
 void	hidms_attach(struct hidms *, const struct wsmouse_accessops *);

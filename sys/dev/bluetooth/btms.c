@@ -1,4 +1,4 @@
-/*	$OpenBSD: btms.c,v 1.5 2010/07/31 16:04:50 miod Exp $	*/
+/*	$OpenBSD: btms.c,v 1.6 2011/03/04 23:57:52 kettenis Exp $	*/
 /*	$NetBSD: btms.c,v 1.8 2008/09/09 03:54:56 cube Exp $	*/
 
 /*
@@ -170,13 +170,18 @@ btms_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
 	struct hidms *ms = &sc->sc_ms;
+	int rc;
+
+	rc = hidms_ioctl(ms, cmd, data, flag, p);
+	if (rc != -1)
+		return rc;
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_BLUETOOTH;
 		return 0;
 	default:
-		return hidms_ioctl(ms, cmd, data, flag, p);
+		return -1;
 	}
 }
 

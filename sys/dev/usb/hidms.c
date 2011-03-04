@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.1 2010/07/31 16:04:50 miod Exp $ */
+/*	$OpenBSD: hidms.c,v 1.2 2011/03/04 23:57:52 kettenis Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -63,7 +63,8 @@ int	hidmsdebug = 0;
 
 #define HIDMS_BUT(i)	((i) == 1 || (i) == 2 ? 3 - (i) : i)
 
-#define NOTMOUSE(f)	(((f) & (HIO_CONST | HIO_RELATIVE)) != HIO_RELATIVE)
+#define MOUSE_FLAGS_MASK	(HIO_CONST | HIO_RELATIVE)
+#define NOTMOUSE(f)		(((f) & MOUSE_FLAGS_MASK) != HIO_RELATIVE)
 
 int
 hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
@@ -73,6 +74,7 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	int i, wheel, twheel;
 
 	ms->sc_device = self;
+	ms->sc_rawmode = 1;
 
 	if (quirks & UQ_MS_REVZ)
 		ms->sc_flags |= HIDMS_REVZ;
@@ -86,7 +88,13 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 		printf("\n%s: mouse has no X report\n", self->dv_xname);
 		return ENXIO;
 	}
-	if (NOTMOUSE(flags)) {
+	switch(flags & MOUSE_FLAGS_MASK) {
+	case 0:
+		ms->sc_flags |= HIDMS_ABSX;
+		break;
+	case HIO_RELATIVE:
+		break;
+	default:
 		printf("\n%s: X report 0x%04x not supported\n",
 		    self->dv_xname, flags);
 		return ENXIO;
@@ -97,7 +105,13 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 		printf("\n%s: mouse has no Y report\n", self->dv_xname);
 		return ENXIO;
 	}
-	if (NOTMOUSE(flags)) {
+	switch(flags & MOUSE_FLAGS_MASK) {
+	case 0:
+		ms->sc_flags |= HIDMS_ABSY;
+		break;
+	case HIO_RELATIVE:
+		break;
+	default:
 		printf("\n%s: Y report 0x%04x not supported\n",
 		    self->dv_xname, flags);
 		return ENXIO;
@@ -225,7 +239,7 @@ hidms_attach(struct hidms *ms, const struct wsmouse_accessops *ops)
 	printf("\n");
 
 #ifdef HIDMS_DEBUG
-	DPRINTF(("hidms_attach: sc=%p\n", sc));
+	DPRINTF(("hidms_attach: ms=%p\n", ms));
 	DPRINTF(("hidms_attach: X\t%d/%d\n",
 	     ms->sc_loc_x.pos, ms->sc_loc_x.size));
 	DPRINTF(("hidms_attach: Y\t%d/%d\n",
@@ -252,7 +266,7 @@ hidms_detach(struct hidms *ms, int flags)
 {
 	int rv = 0;
 
-	DPRINTF(("hidms_detach: sc=%p flags=%d\n", sc, flags));
+	DPRINTF(("hidms_detach: ms=%p flags=%d\n", ms, flags));
 
 	/* No need to do reference counting of hidms, wsmouse has all the goo */
 	if (ms->sc_wsmousedev != NULL)
@@ -266,6 +280,7 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 {
 	int dx, dy, dz, dw;
 	u_int32_t buttons = 0;
+	int flags;
 	int i, s;
 
 	DPRINTFN(5,("hidms_input: len=%d\n", len));
@@ -292,15 +307,39 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 			return;
 	}
 
+	flags = WSMOUSE_INPUT_DELTA;
+	if (ms->sc_flags & HIDMS_ABSX)
+		flags |= WSMOUSE_INPUT_ABSOLUTE_X;
+	if (ms->sc_flags & HIDMS_ABSY)
+		flags |= WSMOUSE_INPUT_ABSOLUTE_Y;
+
 	dx =  hid_get_data(data, &ms->sc_loc_x);
 	dy = -hid_get_data(data, &ms->sc_loc_y);
 	dz =  hid_get_data(data, &ms->sc_loc_z);
 	dw =  hid_get_data(data, &ms->sc_loc_w);
 
+	if (ms->sc_flags & HIDMS_ABSY)
+		dy = -dy;
 	if (ms->sc_flags & HIDMS_REVZ)
 		dz = -dz;
 	if (ms->sc_flags & HIDMS_REVW)
 		dw = -dw;
+
+	if (ms->sc_tsscale.swapxy && !ms->sc_rawmode) {
+		int tmp = dx;
+		dx = dy;
+		dy = tmp;
+	}
+
+	if (!ms->sc_rawmode &&
+	    (ms->sc_tsscale.maxx - ms->sc_tsscale.minx) != 0 &&
+	    (ms->sc_tsscale.maxy - ms->sc_tsscale.miny) != 0) {
+		/* Scale down to the screen resolution. */
+		dx = ((dx - ms->sc_tsscale.minx) * ms->sc_tsscale.resx) /
+		    (ms->sc_tsscale.maxx - ms->sc_tsscale.minx);
+		dy = ((dy - ms->sc_tsscale.miny) * ms->sc_tsscale.resy) /
+		    (ms->sc_tsscale.maxy - ms->sc_tsscale.miny);
+	}
 
 	for (i = 0; i < ms->sc_num_buttons; i++)
 		if (hid_get_data(data, &ms->sc_loc_btn[i]))
@@ -314,7 +353,7 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 		if (ms->sc_wsmousedev != NULL) {
 			s = spltty();
 			wsmouse_input(ms->sc_wsmousedev, buttons,
-			    dx, dy, dz, dw, WSMOUSE_INPUT_DELTA);
+			    dx, dy, dz, dw, flags);
 			splx(s);
 		}
 	}
@@ -335,7 +374,47 @@ int
 hidms_ioctl(struct hidms *ms, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
+	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
+
 	switch (cmd) {
+	case WSMOUSEIO_SCALIBCOORDS:
+		if (!(wsmc->minx >= 0 && wsmc->maxx >= 0 &&
+		    wsmc->miny >= 0 && wsmc->maxy >= 0 &&
+		    wsmc->resx >= 0 && wsmc->resy >= 0 &&
+		    wsmc->minx < 32768 && wsmc->maxx < 32768 &&
+		    wsmc->miny < 32768 && wsmc->maxy < 32768 &&
+		    (wsmc->maxx - wsmc->minx) != 0 &&
+		    (wsmc->maxy - wsmc->miny) != 0 &&
+		    wsmc->resx < 32768 && wsmc->resy < 32768 &&
+		    wsmc->swapxy >= 0 && wsmc->swapxy <= 1 &&
+		    wsmc->samplelen >= 0 && wsmc->samplelen <= 1))
+			return (EINVAL);
+
+		ms->sc_tsscale.minx = wsmc->minx;
+		ms->sc_tsscale.maxx = wsmc->maxx;
+		ms->sc_tsscale.miny = wsmc->miny;
+		ms->sc_tsscale.maxy = wsmc->maxy;
+		ms->sc_tsscale.swapxy = wsmc->swapxy;
+		ms->sc_tsscale.resx = wsmc->resx;
+		ms->sc_tsscale.resy = wsmc->resy;
+		ms->sc_rawmode = wsmc->samplelen;
+		return 0;
+	case WSMOUSEIO_GCALIBCOORDS:
+		wsmc->minx = ms->sc_tsscale.minx;
+		wsmc->maxx = ms->sc_tsscale.maxx;
+		wsmc->miny = ms->sc_tsscale.miny;
+		wsmc->maxy = ms->sc_tsscale.maxy;
+		wsmc->swapxy = ms->sc_tsscale.swapxy;
+		wsmc->resx = ms->sc_tsscale.resx;
+		wsmc->resy = ms->sc_tsscale.resy;
+		wsmc->samplelen = ms->sc_rawmode;
+		return 0;
+	case WSMOUSEIO_GTYPE:
+		if (ms->sc_flags & HIDMS_ABSX && ms->sc_flags & HIDMS_ABSY) {
+			*(u_int *)data = WSMOUSE_TYPE_TPANEL;
+			return 0;
+		}
+		/* FALLTHROUGH */
 	default:
 		return -1;
 	}
