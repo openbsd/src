@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.8 2011/02/24 07:06:35 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.9 2011/03/05 12:56:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 24 2011 $
+.Dd $Mdocdate: March 5 2011 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -37,8 +37,7 @@
 .Nm rc_cmd
 .Ar action
 .Sh DESCRIPTION
-.Pp
-Apart from a few notable exceptions, rc scripts must follow the following
+Apart from a few notable exceptions, rc scripts must follow this
 naming policy:
 .Pp
 .Bl -enum -compact
@@ -54,7 +53,7 @@ have to be converted to
 .Pp
 Every script under
 .Pa /etc/rc.d
-follows the following pattern:
+follows this pattern:
 .Pp
 .Bl -enum -compact
 .It
@@ -176,18 +175,12 @@ without defining
 .Va daemon
 first.
 .It Va daemon_flags
-Arguments to call
-.Va daemon
-with.
+Arguments to call the daemon with.
 .It Va daemon_user
-User to run
-.Va daemon
-as, using
+User to run the daemon as, using
 .Xr su 1 .
 .It Va daemon_class
-Login class to run the
-.Va daemon
-with, using
+Login class to run the daemon with, using
 .Xr su 1 .
 This is a read only variable that gets set by
 .Nm rc.subr
@@ -220,8 +213,7 @@ Can be set to
 .Cm NO
 in an
 .Nm rc.d
-script to disable the reload action if the respective
-.Va daemon
+script to disable the reload action if the respective daemon
 does not support the
 .Dv SIGHUP
 signal to reload its configuration.
@@ -229,8 +221,7 @@ The same is possible, but almost never useful, for other actions.
 .It Va rcexec
 Holds the full
 .Xr su 1
-arguments used to run
-.Va daemon .
+arguments used to run the daemon.
 Defaults to:
 .Va su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c .
 .El

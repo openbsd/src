@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.2 2011/02/24 07:06:35 ajacoutot Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.3 2011/03/05 12:56:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,14 +24,14 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 24 2011 $
+.Dd $Mdocdate: March 5 2011 $
 .Dt RC.D 8
 .Os
 .Sh NAME
 .Nm rc.d
 .Nd daemon control scripts
 .Sh SYNOPSIS
-.Nm /etc/rc.d/ Ns Ar daemond action
+.Nm /etc/rc.d/ Ns Ar daemon action
 .Sh DESCRIPTION
 The
 .Pa /etc/rc.d
@@ -77,13 +77,9 @@ with the name of the actual script
 .Pp
 .Bl -tag -width daemon_flags -offset indent -compact
 .It Ar daemon Ns _flags
-Arguments to call
-.Nm daemon
-with.
+Arguments to call the daemon with.
 .It Ar daemon Ns _user
-User to run
-.Nm daemon
-as, using
+User to run the daemon as, using
 .Xr su 1 .
 .El
 .Pp
@@ -113,7 +109,9 @@ directory
 first appeared in
 .Ox 4.9 .
 .Sh BUGS
-Changing flag values will change the corresponding pattern used with
+Changing flag values in
+.Xr rc.conf.local 8
+will change the corresponding pattern used with
 .Xr pkill 1 ,
 so that
 .Ar stop
