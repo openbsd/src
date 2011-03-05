@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.41 2009/04/12 23:13:36 okan Exp $
+.\"	$OpenBSD: getopt.3,v 1.42 2011/03/05 22:10:11 guenther Exp $
 .\"
-.Dd $Mdocdate: April 12 2009 $
+.Dd $Mdocdate: March 5 2011 $
 .Dt GETOPT 3
 .Os
 .Sh NAME
@@ -158,15 +158,6 @@ is set to the character that caused the error.
 The
 .Fn getopt
 function returns \-1 when the argument list is exhausted.
-.Sh ENVIRONMENT
-.Bl -tag -width POSIXLY_CORRECTXX
-.It Ev POSIXLY_CORRECT
-If set, a leading
-.Sq -
-in
-.Ar optstring
-is ignored.
-.El
 .Sh EXAMPLES
 The following code accepts the options
 .Fl b

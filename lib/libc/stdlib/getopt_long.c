@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.24 2010/07/22 19:31:53 blambert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.25 2011/03/05 22:10:11 guenther Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -285,24 +285,24 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 		return (-1);
 
 	/*
-	 * Disable GNU extensions if POSIXLY_CORRECT is set or options
-	 * string begins with a '+'.
-	 */
-	if (posixly_correct == -1)
-		posixly_correct = (getenv("POSIXLY_CORRECT") != NULL);
-	if (posixly_correct || *options == '+')
-		flags &= ~FLAG_PERMUTE;
-	else if (*options == '-')
-		flags |= FLAG_ALLARGS;
-	if (*options == '+' || *options == '-')
-		options++;
-
-	/*
 	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
 	 * XXX using optreset.  Work around this braindamage.
 	 */
 	if (optind == 0)
 		optind = optreset = 1;
+
+	/*
+	 * Disable GNU extensions if POSIXLY_CORRECT is set or options
+	 * string begins with a '+'.
+	 */
+	if (posixly_correct == -1 || optreset)
+		posixly_correct = (getenv("POSIXLY_CORRECT") != NULL);
+	if (*options == '-')
+		flags |= FLAG_ALLARGS;
+	else if (posixly_correct || *options == '+')
+		flags &= ~FLAG_PERMUTE;
+	if (*options == '+' || *options == '-')
+		options++;
 
 	optarg = NULL;
 	if (optreset)

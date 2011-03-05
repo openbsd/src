@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.17 2011/01/24 01:50:25 schwarze Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.18 2011/03/05 22:10:11 guenther Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.Dd $Mdocdate: January 24 2011 $
+.Dd $Mdocdate: March 5 2011 $
 .Dt GETOPT_LONG 3
 .Os
 .Sh NAME
@@ -211,23 +211,6 @@ found in glibc-2.1.3:
 .It
 handling of
 .Ql -
-as the first character of the option string in the presence of the
-environment variable
-.Ev POSIXLY_CORRECT :
-.Bl -tag -width "OpenBSD"
-.It GNU
-ignores
-.Ev POSIXLY_CORRECT
-and returns non-options as arguments to option
-.Ql \e1 .
-.It OpenBSD
-honors
-.Ev POSIXLY_CORRECT
-and stops at the first non-option.
-.El
-.It
-handling of
-.Ql -
 within the option string (not the first character):
 .Bl -tag -width "OpenBSD"
 .It GNU
@@ -402,8 +385,6 @@ relative to current positions) are the same, though.
 .It Ev POSIXLY_CORRECT
 If set, option processing stops when the first non-option is found and
 a leading
-.Sq -
-or
 .Sq +
 in the
 .Ar optstring
