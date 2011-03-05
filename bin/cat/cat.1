@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.30 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: cat.1,v 1.31 2011/03/05 18:48:26 schwarze Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cat.1	8.3 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: March 5 2011 $
 .Dt CAT 1
 .Os
 .Sh NAME
@@ -174,10 +174,18 @@ A
 .Nm
 utility appeared in
 .At v1 .
-.Sh BUGS
+.Sh CAVEATS
 Because of the shell language mechanism used to perform output
-redirection, the command
-.Ic cat file1 file2 > file1
-will cause the original data in
+redirection, the following command will cause the original data in
 .Ar file1
-to be destroyed!
+to be destroyed:
+.Pp
+.Dl $ cat file1 file2 > file1
+.Pp
+To append
+.Ar file2
+to
+.Ar file1 ,
+instead use:
+.Pp
+.Dl $ cat file2 >> file1
