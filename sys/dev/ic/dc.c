@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.121 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.122 2011/03/05 13:39:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -3056,6 +3056,7 @@ void
 dc_stop(struct dc_softc *sc, int softonly)
 {
 	struct ifnet *ifp;
+	u_int32_t isr;
 	int i;
 
 	ifp = &sc->sc_arpcom.ac_if;
@@ -3067,6 +3068,28 @@ dc_stop(struct dc_softc *sc, int softonly)
 
 	if (!softonly) {
 		DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_RX_ON|DC_NETCFG_TX_ON));
+
+		for (i = 0; i < DC_TIMEOUT; i++) {
+			isr = CSR_READ_4(sc, DC_ISR);
+			if ((isr & DC_ISR_TX_IDLE ||
+			    (isr & DC_ISR_TX_STATE) == DC_TXSTATE_RESET) &&
+			    (isr & DC_ISR_RX_STATE) == DC_RXSTATE_STOPPED)
+				break;
+			DELAY(10);
+		}
+
+		if (i == DC_TIMEOUT) {
+			if (!((isr & DC_ISR_TX_IDLE) ||
+			    (isr & DC_ISR_TX_STATE) == DC_TXSTATE_RESET) &&
+			    !DC_IS_ASIX(sc) && !DC_IS_DAVICOM(sc))
+				printf("%s: failed to force tx to idle state\n",
+				    sc->sc_dev.dv_xname);
+			if (!((isr & DC_ISR_RX_STATE) == DC_RXSTATE_STOPPED) &&
+			    !DC_HAS_BROKEN_RXSTATE(sc))
+				printf("%s: failed to force rx to idle state\n",
+				    sc->sc_dev.dv_xname);
+		}
+
 		CSR_WRITE_4(sc, DC_IMR, 0x00000000);
 		CSR_WRITE_4(sc, DC_TXADDR, 0x00000000);
 		CSR_WRITE_4(sc, DC_RXADDR, 0x00000000);
