@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.249 2011/03/02 04:48:24 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.250 2011/03/05 06:50:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -587,8 +587,14 @@ again:
 		for (j = 0;  j < MAXPARTITIONS; j++)
 			if (DL_GETPSIZE(&lp->d_partitions[j]) == 0)
 				break;
-		if (j == MAXPARTITIONS)
-			return;
+		if (j == MAXPARTITIONS) {
+			/* It did not work out, try next strategy */
+			free(alloc);
+			if (++index < nitems(alloc_table))
+				goto again;
+			else
+				return;
+		}
 		partno = j;
 		pp = &lp->d_partitions[j];
 		partmp = &mountpoints[j];
