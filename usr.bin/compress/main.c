@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.76 2010/07/28 23:52:01 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.77 2011/03/05 20:12:42 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.76 2010/07/28 23:52:01 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.77 2011/03/05 20:12:42 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -138,8 +138,7 @@ main(int argc, char *argv[])
 	const char *s;
 	char *p, *infile;
 	char outfile[MAXPATHLEN], _infile[MAXPATHLEN], suffix[16];
-	char *nargv[512];	/* some estimate based on ARG_MAX */
-	int bits, ch, error, i, rc, cflag, oflag;
+	int bits, ch, error, rc, cflag, oflag;
 	static const char *optstr[3] = {
 		"123456789ab:cdfghLlNnOo:qrS:tVv",
 		"cfhlNno:qrtVv",
@@ -180,21 +179,30 @@ main(int argc, char *argv[])
 
 	strlcpy(suffix, method->suffix, sizeof(suffix));
 
-	nargv[0] = NULL;
 	if (method == M_DEFLATE && (p = getenv("GZIP")) != NULL) {
-		char *last;
+		char *evbuf, *last, **nargv = NULL;
+		int argc_extra = 0, nargc = 0;
 
-		nargv[0] = *argv++;
-		for (i = 1, (p = strtok_r(p, " ", &last)); p != NULL;
-		    (p = strtok_r(NULL, " ", &last)), i++)
-			if (i < sizeof(nargv)/sizeof(nargv[1]) - argc - 1)
-				nargv[i] = p;
-			else
-				errx(1, "GZIP is too long");
-		argc += i - 1;
-		while ((nargv[i++] = *argv++))
-			;
-		argv = nargv;
+		if ((evbuf = strdup(p)) == NULL)
+			err(1, NULL);
+		for ((p = strtok_r(evbuf, " ", &last)); p != NULL;
+		    (p = strtok_r(NULL, " ", &last))) {
+			if (nargc + 1 >= argc_extra) {
+				argc_extra += 1024;
+				nargv = realloc(nargv,
+				    (argc + argc_extra + 1) * sizeof(char *));
+				if (nargv == NULL)
+					err(1, NULL);
+			}
+			nargv[++nargc] = p;
+		}
+		if (nargv != NULL) {
+			nargv[0] = *argv++;
+			while ((nargv[++nargc] = *argv++))
+				;
+			argv = nargv;
+			argc = nargc;
+		}
 	}
 
 	while ((ch = getopt_long(argc, argv, optstr[pmode], longopts, NULL)) != -1)
@@ -305,11 +313,11 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc == 0) {
-		if (nargv[0] == NULL)
-			argv = nargv;
-		/* XXX - make sure we don't oflow nargv in $GZIP case (millert) */
+		argv = calloc(2, sizeof(char *));
+		if (argv == NULL)
+			err(1, NULL);
 		argv[0] = "-";
-		argv[1] = NULL;
+		argc = 1;
 	}
 	if (oflag && (recurse || argc > 1))
 		errx(1, "-o option may only be used with a single input file");
