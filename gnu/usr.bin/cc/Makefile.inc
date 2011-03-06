@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/Makefile.inc,v 1.66.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile.inc,v 1.3 2010/09/25 17:44:34 drahn Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2011/03/06 20:18:22 guenther Exp $
 
 .include "../Makefile.inc"
 
@@ -21,7 +21,7 @@ MD_FILE=	${GCCDIR}/config/${GCC_CPU}/${GCC_CPU}.md
 GCC_TARGET=	${TARGET_ARCH}-unknown-openbsd${OSREV}
 
 CFLAGS+=	-DIN_GCC -DHAVE_CONFIG_H
-CFLAGS+=	-DPREFIX=\"${TOOLS_PREFIX}/usr/\"
+CFLAGS+=	-DPREFIX=\"${TOOLS_PREFIX}/usr\"
 #CFLAGS+=	-DWANT_COMPILER_INVARIANTS
 
 # If building 64-bit longs for the i386, "_LARGE_LONG" should also be defined
