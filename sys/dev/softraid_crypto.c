@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.62 2011/01/12 20:48:34 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.63 2011/03/06 21:41:57 stsp Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -835,12 +835,12 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 
 	/* Open device. */
 	if (bdevvp(dev, &vn)) {
-		printf("%s:, sr_create_key_disk: can't allocate vnode\n",
+		printf("%s:, sr_read_key_disk: can't allocate vnode\n",
 		    DEVNAME(sc));
 		goto done;
 	}
 	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
-		DNPRINTF(SR_D_META,"%s: sr_create_key_disk cannot open %s\n",
+		DNPRINTF(SR_D_META,"%s: sr_read_key_disk cannot open %s\n",
 		    DEVNAME(sc), devname);
 		vput(vn);
 		goto done;
@@ -851,7 +851,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	part = DISKPART(dev);
 	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD,
 	    NOCRED, curproc)) {
-		DNPRINTF(SR_D_META, "%s: sr_create_key_disk ioctl failed\n",
+		DNPRINTF(SR_D_META, "%s: sr_read_key_disk ioctl failed\n",
 		    DEVNAME(sc));
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
