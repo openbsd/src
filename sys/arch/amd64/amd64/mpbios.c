@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.18 2009/04/21 19:18:09 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.19 2011/03/06 22:40:05 deraadt Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -1022,7 +1022,6 @@ mpbios_int(const u_int8_t *ent, int enttype, struct mp_intr_map *mpi)
 	}
 	mpi->bus = mpb;
 	mpi->bus_pin = dev;
-	mpi->global_int = -1;
 
 	mpi->type = type;
 	mpi->flags = flags;

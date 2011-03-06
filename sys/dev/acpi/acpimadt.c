@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.23 2009/04/19 17:53:39 deraadt Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.24 2011/03/06 22:40:05 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -316,9 +316,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			map->ioapic_pin = pin - apic->sc_apic_vecbase;
 			map->bus_pin = entry->madt_override.source;
 			map->flags = entry->madt_override.flags;
-#ifdef __amd64__ /* XXX	*/
-			map->global_int = entry->madt_override.global_int;
-#endif
+
 			acpimadt_cfg_intr(entry->madt_override.flags, &map->redir);
 
 			map->ioapic_ih = APIC_INT_VIA_APIC |
@@ -380,9 +378,6 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		map->ioapic = apic;
 		map->ioapic_pin = pin;
 		map->bus_pin = pin;
-#ifdef __amd64__ /* XXX */
-		map->global_int = -1;
-#endif
 		map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
 
 		map->ioapic_ih = APIC_INT_VIA_APIC |
