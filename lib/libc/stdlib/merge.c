@@ -1,4 +1,4 @@
-/*	$OpenBSD: merge.c,v 1.8 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: merge.c,v 1.9 2011/03/06 00:55:38 deraadt Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -248,8 +248,8 @@ void
 setup(u_char *list1, u_char *list2, size_t n, size_t size,
     int (*cmp)(const void *, const void *))
 {
-	int i, length, size2, tmp, sense;
-	u_char *f1, *f2, *s, *l2, *last, *p2;
+	int i, length, size2, sense;
+	u_char tmp, *f1, *f2, *s, *l2, *last, *p2;
 
 	size2 = size*2;
 	if (n <= 5) {
