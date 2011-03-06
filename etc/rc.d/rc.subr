@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.20 2011/02/24 07:07:03 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.21 2011/03/06 16:49:48 ajacoutot Exp $
 
 rc_err() {
 	echo $1
@@ -7,7 +7,7 @@ rc_err() {
 
 rc_start() {
 	type rc_pre >/dev/null && rc_pre
-	${rcexec} "${daemon} ${daemon_flags}" >/dev/null
+	${rcexec} "${daemon} ${daemon_flags} >/dev/null ${_bg}"
 }
 
 rc_check() {
@@ -29,6 +29,8 @@ rc_cmd() {
 
 	eval _enotsup=\${rc_${1}}
 	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
+
+	[ X"${rc_bg}" = X"YES" ] && local _bg="&"
 
 	case "$1" in
 	check)
