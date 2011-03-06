@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.38 2010/12/21 13:12:59 claudio Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.39 2011/03/06 19:55:54 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -303,6 +303,7 @@ int	route6_input(struct mbuf **, int *, int);
 
 void	frag6_init(void);
 int	frag6_input(struct mbuf **, int *, int);
+int	frag6_deletefraghdr(struct mbuf *, int);
 void	frag6_slowtimo(void);
 void	frag6_drain(void);
 

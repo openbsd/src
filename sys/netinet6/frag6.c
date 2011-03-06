@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.31 2011/01/13 23:36:53 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.32 2011/03/06 19:55:54 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -546,23 +546,12 @@ insert:
 #endif
 
 	/* Delete frag6 header */
-	if (m->m_len >= offset + sizeof(struct ip6_frag)) {
-		/* This is the only possible case with !PULLDOWN_TEST */
-		ovbcopy((caddr_t)ip6, (caddr_t)ip6 + sizeof(struct ip6_frag),
-		    offset);
-		m->m_data += sizeof(struct ip6_frag);
-		m->m_len -= sizeof(struct ip6_frag);
-	} else {
-		/* this comes with no copy if the boundary is on cluster */
-		if ((t = m_split(m, offset, M_DONTWAIT)) == NULL) {
-			frag6_remque(q6);
-			frag6_nfrags -= q6->ip6q_nfrag;
-			free(q6, M_FTABLE);
-			frag6_nfragpackets--;
-			goto dropfrag;
-		}
-		m_adj(t, sizeof(struct ip6_frag));
-		m_cat(m, t);
+	if (frag6_deletefraghdr(m, offset) != 0) {
+		frag6_remque(q6);
+		frag6_nfrags -= q6->ip6q_nfrag;
+		free(q6, M_FTABLE);
+		frag6_nfragpackets--;
+		goto dropfrag;
 	}
 
 	/*
@@ -604,6 +593,30 @@ insert:
 	m_freem(m);
 	IP6Q_UNLOCK();
 	return IPPROTO_DONE;
+}
+
+/*
+ * Delete fragment header after the unfragmentable header portions.
+ */
+int
+frag6_deletefraghdr(struct mbuf *m, int offset)
+{
+	struct mbuf *t;
+
+	if (m->m_len >= offset + sizeof(struct ip6_frag)) {
+		ovbcopy(mtod(m, caddr_t), mtod(m, caddr_t) +
+		    sizeof(struct ip6_frag), offset);
+		m->m_data += sizeof(struct ip6_frag);
+		m->m_len -= sizeof(struct ip6_frag);
+	} else {
+		/* this comes with no copy if the boundary is on cluster */
+		if ((t = m_split(m, offset, M_DONTWAIT)) == NULL)
+			return (ENOBUFS);
+		m_adj(t, sizeof(struct ip6_frag));
+		m_cat(m, t);
+	}
+
+	return (0);
 }
 
 /*
