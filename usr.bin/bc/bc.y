@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.33 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: bc.y,v 1.34 2011/03/07 08:11:15 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <histedit.h>
 #include <limits.h>
 #include <search.h>
 #include <signal.h>
@@ -1073,6 +1074,13 @@ sigchld(int signo)
 	}
 }
 
+static const char *
+dummy_prompt(void)
+{
+
+        return ("");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1129,6 +1137,16 @@ main(int argc, char *argv[])
 			dup(p[1]);
 			close(p[0]);
 			close(p[1]);
+			if (interactive) {
+				el = el_init("bc", stdin, stderr, stderr);
+				hist = history_init();
+				history(hist, &he, H_SETSIZE, 100);
+				el_set(el, EL_HIST, history, hist);
+				el_set(el, EL_EDITOR, "emacs");
+				el_set(el, EL_SIGNAL, 1);
+				el_set(el, EL_PROMPT, dummy_prompt);
+				el_source(el, NULL);
+			}
 		} else {
 			close(STDIN_FILENO);
 			dup(p[0]);

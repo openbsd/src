@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.6 2006/03/18 20:44:43 otto Exp $	*/
+/*      $OpenBSD: extern.h,v 1.7 2011/03/07 08:11:15 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -35,5 +35,10 @@ extern int	fileindex;
 extern int	sargc;
 extern char	**sargv;
 extern char	*filename;
+extern bool		 interactive;
+extern EditLine		*el;
+extern History		*hist;
+extern HistEvent	 he;
 extern char	*cmdexpr;
+
 bool		interactive;

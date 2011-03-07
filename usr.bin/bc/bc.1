@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.26 2010/10/18 14:42:16 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.27 2011/03/07 08:11:15 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)bc.1	6.8 (Berkeley) 8/8/91
 .\"
-.Dd $Mdocdate: October 18 2010 $
+.Dd $Mdocdate: March 7 2011 $
 .Dt BC 1
 .Os
 .Sh NAME
@@ -337,6 +337,23 @@ $ bc -l -e 'scale = 500; 2 * a(2^10000)' -e quit
 .Ed
 .Pp
 prints an approximation of pi.
+.Sh COMMAND LINE EDITING
+.Nm
+supports interactive command line editing, via the
+.Xr editline 3
+library.
+It is enabled by default if input is from a tty.
+Previous lines can be recalled and edited with the arrow keys,
+and other GNU Emacs-style editing keys may be used as well.
+.Pp
+The
+.Xr editline 3
+library is configured with a
+.Pa .editrc
+file \- refer to
+.Xr editrc 5
+for more information.
+.Pp
 .Sh FILES
 .Bl -tag -width /usr/share/misc/bc.library -compact
 .It Pa /usr/share/misc/bc.library
