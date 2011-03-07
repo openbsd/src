@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.10 2010/09/04 21:31:04 tedu Exp $ */
+/*	$OpenBSD: parser.c,v 1.11 2011/03/07 07:43:02 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -385,7 +385,7 @@ mask2prefixlen(struct sockaddr_in6 *sa_in6)
 		case 0x00:
 			return (l);
 		default:
-			errx(1, "non continguous inet6 netmask");
+			errx(1, "non contiguous inet6 netmask");
 		}
 	}
 
