@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.219 2011/02/17 20:14:28 miod Exp $
+#	$OpenBSD: GENERIC,v 1.220 2011/03/07 07:05:50 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,7 +43,6 @@ option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 option		APERTURE		# in-kernel aperture driver for XFree86
 option		USER_PCICONF		# user-space PCI configuration
-#option		NTFS			# Experimental NTFS support
 
 config		bsd	swap generic
 
