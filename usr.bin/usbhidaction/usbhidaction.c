@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.14 2010/06/29 17:16:35 deraadt Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.15 2011/03/07 14:59:06 jasper Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -46,6 +46,7 @@
 #include <util.h>
 #include <syslog.h>
 #include <signal.h>
+#include <paths.h>
 
 int verbose = 0;
 int isdemon = 0;
@@ -399,6 +400,7 @@ docmd(struct command *cmd, int value, const char *hid, int argc, char **argv)
 	char cmdbuf[SIZE], *p, *q;
 	size_t len;
 	int n, r;
+	pid_t pid;
 
 	if (cmd->action == NULL) {
 		if (verbose)
@@ -437,11 +439,16 @@ docmd(struct command *cmd, int value, const char *hid, int argc, char **argv)
 	}
 	*q = 0;
 
-	if (verbose)
-		printf("system '%s'\n", cmdbuf);
-	r = system(cmdbuf);
-	if (verbose > 1 && r)
-		printf("return code = 0x%x\n", r);
+	pid = fork();
+	if (pid == -1)
+		warn("fork failed");
+	else if (pid == 0) {
+		setpgid(0, 0);
+		if (verbose)
+			printf("executing '%s'\n", cmdbuf);
+		r = execl(_PATH_BSHELL, "sh", "-c", cmdbuf, NULL);
+		err(1, "execl");
+	}
 }
 
 void
