@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.71 2010/08/20 22:03:22 matthew Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.72 2011/03/07 07:07:13 guenther Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -491,7 +491,7 @@ statclock(struct clockframe *frame)
 		 * If this process is being profiled record the tick.
 		 */
 		p->p_uticks++;
-		if (p->p_nice > NZERO)
+		if (p->p_p->ps_nice > NZERO)
 			spc->spc_cp_time[CP_NICE]++;
 		else
 			spc->spc_cp_time[CP_USER]++;

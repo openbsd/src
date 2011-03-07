@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.116 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.117 2011/03/07 07:07:13 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -858,8 +858,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		else {
 			action = SIG_DFL;
 
-			if (prop & SA_KILL && p->p_nice > NZERO)
-				p->p_nice = NZERO;
+			if (prop & SA_KILL &&  p->p_p->ps_nice > NZERO)
+				 p->p_p->ps_nice = NZERO;
 
 			/*
 			 * If sending a tty stop signal to a member of an

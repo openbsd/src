@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.36 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.37 2011/03/07 07:07:13 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -81,10 +81,8 @@ sys_getpriority(struct proc *curp, void *v, register_t *retval)
 			pr = prfind(SCARG(uap, who));
 		if (pr == NULL)
 			break;
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
-			if (p->p_nice < low)
-				low = p->p_nice;
-		}
+		if (pr->ps_nice < low)
+			low = pr->ps_nice;
 		break;
 
 	case PRIO_PGRP: {
@@ -95,10 +93,8 @@ sys_getpriority(struct proc *curp, void *v, register_t *retval)
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
 		LIST_FOREACH(pr, &pg->pg_members, ps_pglist)
-			TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
-				if (p->p_nice < low)
-					low = p->p_nice;
-			}
+			if (pr->ps_nice < low)
+				low = pr->ps_nice;
 		break;
 	}
 
@@ -106,9 +102,10 @@ sys_getpriority(struct proc *curp, void *v, register_t *retval)
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		LIST_FOREACH(p, &allproc, p_list)
-			if (p->p_ucred->cr_uid == SCARG(uap, who) &&
-			    p->p_nice < low)
-				low = p->p_nice;
+			if ((p->p_flag & P_THREAD) == 0 &&
+			    p->p_ucred->cr_uid == SCARG(uap, who) &&
+			    p->p_p->ps_nice < low)
+				low = p->p_p->ps_nice;
 		break;
 
 	default:
@@ -196,10 +193,9 @@ donice(struct proc *curp, struct process *chgpr, int n)
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	/* XXX wrong: p_nice should be in process */
-	if (n < chgpr->ps_mainproc->p_nice && suser(curp, 0))
+	if (n < chgpr->ps_nice && suser(curp, 0))
 		return (EACCES);
-	chgpr->ps_mainproc->p_nice = n;
+	chgpr->ps_nice = n;
 	SCHED_LOCK(s);
 	TAILQ_FOREACH(p, &chgpr->ps_threads, p_thr_link)
 		(void)resetpriority(p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.132 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.133 2011/03/07 07:07:13 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -164,6 +164,7 @@ struct process {
 	struct	plimit *ps_limit;	/* Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
 	u_int	ps_rtableid;		/* Process routing table/domain. */
+	char	ps_nice;		/* Process "nice" value. */
 
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt
@@ -282,8 +283,7 @@ struct proc {
 	sigset_t p_sigcatch;	/* Signals being caught by user. */
 
 	u_char	p_priority;	/* Process priority. */
-	u_char	p_usrpri;	/* User-priority based on p_cpu and p_nice. */
-	char	p_nice;		/* Process "nice" value. */
+	u_char	p_usrpri;	/* User-priority based on p_cpu and ps_nice. */
 	char	p_comm[MAXCOMLEN+1];
 
 	struct	emul *p_emul;		/* Emulation information */

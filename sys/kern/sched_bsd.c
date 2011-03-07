@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.24 2010/09/24 13:21:30 matthew Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.25 2011/03/07 07:07:13 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -537,7 +537,8 @@ resetpriority(struct proc *p)
 
 	SCHED_ASSERT_LOCKED();
 
-	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
+	newpriority = PUSER + p->p_estcpu +
+	    NICE_WEIGHT * (p->p_p->ps_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
 	resched_proc(p, p->p_usrpri);
