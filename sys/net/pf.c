@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.728 2011/03/05 01:53:16 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.729 2011/03/07 23:30:18 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -297,8 +297,6 @@ enum { PF_ICMP_MULTI_NONE, PF_ICMP_MULTI_SOLICITED, PF_ICMP_MULTI_LINK };
 			mrm->r->states_cur--;			\
 	} while (0)
 
-static __inline int pf_addr_compare(struct pf_addr *, struct pf_addr *,
-	sa_family_t);
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
 static __inline int pf_state_compare_key(struct pf_state_key *,
 	struct pf_state_key *);
@@ -315,7 +313,7 @@ RB_GENERATE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
 RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 
-static __inline int
+__inline int
 pf_addr_compare(struct pf_addr *a, struct pf_addr *b, sa_family_t af)
 {
 	switch (af) {
