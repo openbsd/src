@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.46 2011/01/25 23:40:26 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.47 2011/03/07 23:46:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1190,4 +1190,16 @@ screen_write_overwrite(struct screen_write_ctx *ctx, u_int width)
 			break;
 		grid_view_set_cell(gd, xx, s->cy, &grid_default_cell);
 	}
+}
+
+void
+screen_write_rawstring(struct screen_write_ctx *ctx, u_char *str, u_int len)
+{
+	struct tty_ctx		 ttyctx;
+
+	screen_write_initctx(ctx, &ttyctx, 0);
+	ttyctx.ptr = str;
+	ttyctx.num = len;
+
+	tty_write(tty_cmd_rawstring, &ttyctx);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.99 2011/01/29 08:39:43 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.100 2011/03/07 23:46:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -929,6 +929,16 @@ tty_cmd_utf8character(struct tty *tty, const struct tty_ctx *ctx)
 	 * whole line.
 	 */
 	tty_draw_line(tty, wp->screen, ctx->ocy, wp->xoff, wp->yoff);
+}
+
+void
+tty_cmd_rawstring(struct tty *tty, const struct tty_ctx *ctx)
+{
+	u_int	 i;
+	u_char	*str = ctx->ptr;
+
+	for (i = 0; i < ctx->num; i++)
+		tty_putc(tty, str[i]);
 }
 
 void
