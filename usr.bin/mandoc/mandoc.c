@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.21 2011/01/03 22:27:21 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.22 2011/03/07 01:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,8 +27,10 @@
 #include "mandoc.h"
 #include "libmandoc.h"
 
-static	int	 a2time(time_t *, const char *, const char *);
+#define DATESIZE 32
 
+static	int	 a2time(time_t *, const char *, const char *);
+static	char	*time2a(time_t);
 
 int
 mandoc_special(char *p)
@@ -376,38 +378,55 @@ a2time(time_t *t, const char *fmt, const char *p)
 }
 
 
-/*
- * Convert from a manual date string (see mdoc(7) and man(7)) into a
- * date according to the stipulated date type.
- */
-time_t
-mandoc_a2time(int flags, const char *p)
+static char *
+time2a(time_t t)
 {
+	struct tm	 tm;
+	char		 buf[DATESIZE];
+	char		*p;
+	size_t		 nsz, rsz;
+	int		 isz;
+
+	localtime_r(&t, &tm);
+
+	p = buf;
+	rsz = DATESIZE;
+
+	if (0 == (nsz = strftime(p, rsz, "%B ", &tm)))
+		return(NULL);
+
+	p += (int)nsz;
+	rsz -= nsz;
+
+	if (-1 == (isz = snprintf(p, rsz, "%d, ", tm.tm_mday)))
+		return(NULL);
+
+	p += isz;
+	rsz -= isz;
+
+	return(strftime(p, rsz, "%Y", &tm) ? buf : NULL);
+}
+
+
+char *
+mandoc_normdate(char *in, mandocmsg msg, void *data, int ln, int pos)
+{
+	char		*out;
 	time_t		 t;
 
-	if (MTIME_MDOCDATE & flags) {
-		if (0 == strcmp(p, "$" "Mdocdate$"))
-			return(time(NULL));
-		if (a2time(&t, "$" "Mdocdate: %b %d %Y $", p))
-			return(t);
+	if (NULL == in || '\0' == *in ||
+	    0 == strcmp(in, "$" "Mdocdate$")) {
+		(*msg)(MANDOCERR_NODATE, data, ln, pos, NULL);
+		time(&t);
 	}
-
-	if (MTIME_CANONICAL & flags || MTIME_REDUCED & flags) 
-		if (a2time(&t, "%b %d, %Y", p))
-			return(t);
-
-	if (MTIME_ISO_8601 & flags) 
-		if (a2time(&t, "%Y-%m-%d", p))
-			return(t);
-
-	if (MTIME_REDUCED & flags) {
-		if (a2time(&t, "%d, %Y", p))
-			return(t);
-		if (a2time(&t, "%Y", p))
-			return(t);
+	else if (!a2time(&t, "$" "Mdocdate: %b %d %Y $", in) &&
+	    !a2time(&t, "%b %d, %Y", in) &&
+	    !a2time(&t, "%Y-%m-%d", in)) {
+		(*msg)(MANDOCERR_BADDATE, data, ln, pos, NULL);
+		t = 0;
 	}
-
-	return(0);
+	out = t ? time2a(t) : NULL;
+	return(mandoc_strdup(out ? out : in));
 }
 
 

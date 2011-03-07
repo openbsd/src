@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.65 2011/02/07 00:02:50 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.66 2011/03/07 01:35:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2011 $
+.Dd $Mdocdate: March 7 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -197,34 +197,6 @@ Thus, the following produces
 .Ed
 .Pp
 In free-form mode, quotes are regarded as opaque text.
-.Ss Dates
-There are several macros in
-.Nm
-that require a date argument.
-The canonical form for dates is the American format:
-.Pp
-.D1 Cm Month Day , Year
-.Pp
-The
-.Cm Day
-value is an optionally zero-padded numeral.
-The
-.Cm Month
-value is the full month name.
-The
-.Cm Year
-value is the full four-digit year.
-.Pp
-Reduced form dates are broken-down canonical form dates:
-.Pp
-.D1 Cm Month , Year
-.D1 Cm Year
-.Pp
-Some examples of valid dates follow:
-.Pp
-.D1 "May, 2009" Pq reduced form
-.D1 "2009" Pq reduced form
-.D1 "May 20, 2009" Pq canonical form
 .Ss Scaling Widths
 Many macros support scaled widths for their arguments, such as
 stipulating a two-inch list indentation with the following:
@@ -886,8 +858,10 @@ block.
 Publication date of an
 .Sx \&Rs
 block.
-This should follow the reduced or canonical form syntax described in
-.Sx Dates .
+Recommended formats of arguments are
+.Ar month day , year
+or just
+.Ar year .
 .Ss \&%I
 Publisher or issuer name of an
 .Sx \&Rs
@@ -1469,17 +1443,36 @@ This is the mandatory first macro of any
 manual.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Dd Op Ar date
+.D1 Pf \. Sx \&Dd Ar month day , year
 .Pp
 The
-.Ar date
-may be either
-.Ar $\&Mdocdate$ ,
-which signifies the current manual revision date dictated by
+.Ar month
+is the full English month name, the
+.Ar day
+is an optionally zero-padded numeral, and the
+.Ar year
+is the full four-digit year.
+.Pp
+Other arguments are not portable; the
+.Xr mandoc 1
+utility handles them as follows:
+.Bl -dash -offset 3n -compact
+.It
+To have the date automatically filled in by the
+.Ox
+version of
 .Xr cvs 1 ,
-or instead a valid canonical date as specified by
-.Sx Dates .
-If a date does not conform or is empty, the current date is used.
+the special string
+.Dq $\&Mdocdate$
+can be given as an argument.
+.It
+A few alternative date formats are accepted as well
+and converted to the standard form.
+.It
+If a date string cannot be parsed, it is used verbatim.
+.It
+If no date string is given, the current date is used.
+.El
 .Pp
 Examples:
 .Dl \&.Dd $\&Mdocdate$
@@ -2771,9 +2764,12 @@ does not start a new line.
 \*[hist]
 .It
 .Sx \&Dd
-without an argument prints
-.Dq Epoch .
-In mandoc, it resolves to the current date.
+with non-standard arguments behaves very strangely.
+When there are three arguments, they are printed verbatim.
+Any other number of arguments is replaced by the current date,
+but without any arguments the string
+.Dq Epoch
+is printed.
 .It
 .Sx \&Fl
 does not print a dash for an empty argument.

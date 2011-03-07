@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.72 2011/02/06 17:33:20 schwarze Exp $ */
+/*	$Id: main.c,v 1.73 2011/03/07 01:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -113,7 +113,8 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no title in document",
 	"document title should be all caps",
 	"unknown manual section",
-	"cannot parse date argument",
+	"date missing, using today's date",
+	"cannot parse date, using it verbatim",
 	"prologue macros out of order",
 	"duplicate prologue macro",
 	"macro not allowed in prologue",

@@ -1,6 +1,7 @@
-/*	$Id: mdoc_validate.c,v 1.88 2011/02/06 17:33:21 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.89 2011/03/07 01:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -135,7 +136,7 @@ static	v_post	 posts_bx[] = { post_bx, NULL };
 static	v_post	 posts_bool[] = { ebool, NULL };
 static	v_post	 posts_eoln[] = { post_eoln, NULL };
 static	v_post	 posts_defaults[] = { post_defaults, NULL };
-static	v_post	 posts_dd[] = { ewarn_ge1, post_dd, post_prol, NULL };
+static	v_post	 posts_dd[] = { post_dd, post_prol, NULL };
 static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, NULL };
 static	v_post	 posts_dt[] = { post_dt, post_prol, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
@@ -216,7 +217,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* Xr */ 
 	{ NULL, posts_text },			/* %A */
 	{ NULL, posts_text },			/* %B */ /* FIXME: can be used outside Rs/Re. */
-	{ NULL, posts_text },			/* %D */ /* FIXME: check date with mandoc_a2time(). */
+	{ NULL, posts_text },			/* %D */
 	{ NULL, posts_text },			/* %I */
 	{ NULL, posts_text },			/* %J */
 	{ NULL, posts_text },			/* %N */
@@ -910,7 +911,7 @@ static int
 pre_dt(PRE_ARGS)
 {
 
-	if (0 == mdoc->meta.date || mdoc->meta.os)
+	if (NULL == mdoc->meta.date || mdoc->meta.os)
 		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGOOO);
 
 	if (mdoc->meta.title)
@@ -923,7 +924,7 @@ static int
 pre_os(PRE_ARGS)
 {
 
-	if (NULL == mdoc->meta.title || 0 == mdoc->meta.date)
+	if (NULL == mdoc->meta.title || NULL == mdoc->meta.date)
 		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGOOO);
 
 	if (mdoc->meta.os)
@@ -1962,23 +1963,21 @@ post_dd(POST_ARGS)
 	char		  buf[DATESIZE];
 	struct mdoc_node *n;
 
-	n = mdoc->last;
+	if (mdoc->meta.date)
+		free(mdoc->meta.date);
 
-	if (NULL == n->child) {
-		mdoc->meta.date = time(NULL);
+	n = mdoc->last;
+	if (NULL == n->child || '\0' == n->child->string[0]) {
+		mdoc->meta.date = mandoc_normdate(NULL,
+		    mdoc->msg, mdoc->data, n->line, n->pos);
 		return(1);
 	}
 
 	if ( ! concat(mdoc, buf, n->child, DATESIZE))
 		return(0);
 
-	mdoc->meta.date = mandoc_a2time
-		(MTIME_MDOCDATE | MTIME_CANONICAL, buf);
-
-	if (0 == mdoc->meta.date) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_BADDATE);
-		mdoc->meta.date = time(NULL);
-	}
+	mdoc->meta.date = mandoc_normdate(buf,
+	    mdoc->msg, mdoc->data, n->line, n->pos);
 
 	return(1);
 }

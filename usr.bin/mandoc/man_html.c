@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.34 2011/01/17 00:15:19 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.35 2011/03/07 01:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -330,12 +330,6 @@ man_root_post(MAN_ARGS)
 {
 	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
-	char		 b[DATESIZ];
-
-	if (m->rawdate)
-		strlcpy(b, m->rawdate, DATESIZ);
-	else
-		time2a(m->date, b, DATESIZ);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Footer");
 	PAIR_CLASS_INIT(&tag[1], "foot");
@@ -353,7 +347,7 @@ man_root_post(MAN_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "foot-date");
 	print_otag(h, TAG_TD, 1, tag);
 
-	print_text(h, b);
+	print_text(h, m->date);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "foot-os");

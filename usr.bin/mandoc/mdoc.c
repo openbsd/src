@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.79 2011/02/10 00:06:30 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.80 2011/03/07 01:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -314,8 +314,9 @@ mdoc_macro(MACRO_PROT_ARGS)
 			m->meta.vol = mandoc_strdup("LOCAL");
 		if (NULL == m->meta.os)
 			m->meta.os = mandoc_strdup("LOCAL");
-		if (0 == m->meta.date)
-			m->meta.date = time(NULL);
+		if (NULL == m->meta.date)
+			m->meta.date = mandoc_normdate(NULL,
+			    m->msg, m->data, line, ppos);
 		m->flags |= MDOC_PBODY;
 	}
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.16 2011/01/25 00:37:39 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.17 2011/03/07 01:35:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2011 $
+.Dd $Mdocdate: March 7 2011 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -118,15 +118,6 @@ rendered as an empty line.
 .Pp
 In macro lines, whitespace delimits arguments and is discarded.
 If arguments are quoted, whitespace within the quotes is retained.
-.Ss Dates
-The
-.Sx \&TH
-macro is the only
-.Nm
-macro that requires a date.
-The form for this date is the ISO-8601
-standard
-.Cm YYYY-MM-DD .
 .Ss Scaling Widths
 Many macros support scaled widths for their arguments, such as
 stipulating a two-inch paragraph indentation with the following:
@@ -762,26 +753,27 @@ The paragraph left-margin width is reset to the default.
 Sets the title of the manual page with the following syntax:
 .Bd -filled -offset indent
 .Pf \. Sx \&TH
-.Cm title section
-.Op Cm date Op Cm source Op Cm volume
+.Ar title section date
+.Op Ar source Op Ar volume
 .Ed
 .Pp
-At least the upper-case document
-.Cm title
-and the manual
-.Cm section
-arguments must be provided.
-The
-.Cm date
-argument should be formatted as described in
-.Sx Dates ,
-but will be printed verbatim if it is not.
-If the date is not specified, the current date is used.
-The
-.Cm source
+Conventionally, the document
+.Ar title
+is given in all caps.
+The recommended
+.Ar date
+format is
+.Sy YYYY-MM-DD
+as specified in the ISO-8601 standard;
+if the argument does not conform, it is printed verbatim.
+If the
+.Ar date
+is empty or not specified, the current date is used.
+The optional
+.Ar source
 string specifies the organisation providing the utility.
 The
-.Cm volume
+.Ar volume
 string replaces the default rendered volume, which is dictated by the
 manual section.
 .Pp

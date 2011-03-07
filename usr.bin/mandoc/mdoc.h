@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.43 2011/01/30 17:41:59 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.44 2011/03/07 01:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -231,7 +231,7 @@ struct	mdoc_meta {
 	char		 *msec; /* `Dt' section (1, 3p, etc.) */
 	char		 *vol; /* `Dt' volume (implied) */
 	char		 *arch; /* `Dt' arch (i386, etc.) */
-	time_t		  date; /* `Dd' normalised date */
+	char		 *date; /* `Dd' normalised date */
 	char		 *title; /* `Dt' title (FOO, etc.) */
 	char		 *os; /* `Os' system (OpenBSD, etc.) */
 	char		 *name; /* leading `Nm' name */

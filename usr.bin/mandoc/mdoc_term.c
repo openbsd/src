@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.129 2011/02/06 22:56:45 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.130 2011/03/07 01:35:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -404,7 +404,6 @@ print_mdoc_node(DECL_ARGS)
 static void
 print_mdoc_foot(struct termp *p, const void *arg)
 {
-	char		buf[DATESIZ], os[BUFSIZ];
 	const struct mdoc_meta *m;
 
 	m = (const struct mdoc_meta *)arg;
@@ -419,24 +418,21 @@ print_mdoc_foot(struct termp *p, const void *arg)
 	 * SYSTEM                  DATE                    SYSTEM
 	 */
 
-	time2a(m->date, buf, DATESIZ);
-	strlcpy(os, m->os, BUFSIZ);
-
 	term_vspace(p);
 
 	p->offset = 0;
 	p->rmargin = (p->maxrmargin - 
-			term_strlen(p, buf) + term_len(p, 1)) / 2;
+			term_strlen(p, m->date) + term_len(p, 1)) / 2;
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
 
-	term_word(p, os);
+	term_word(p, m->os);
 	term_flushln(p);
 
 	p->offset = p->rmargin;
-	p->rmargin = p->maxrmargin - term_strlen(p, os);
+	p->rmargin = p->maxrmargin - term_strlen(p, m->os);
 	p->flags |= TERMP_NOLPAD | TERMP_NOSPACE;
 
-	term_word(p, buf);
+	term_word(p, m->date);
 	term_flushln(p);
 
 	p->offset = p->rmargin;
@@ -444,7 +440,7 @@ print_mdoc_foot(struct termp *p, const void *arg)
 	p->flags &= ~TERMP_NOBREAK;
 	p->flags |= TERMP_NOLPAD | TERMP_NOSPACE;
 
-	term_word(p, os);
+	term_word(p, m->os);
 	term_flushln(p);
 
 	p->offset = 0;
