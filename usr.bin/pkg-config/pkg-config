@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.27 2010/12/28 14:31:38 jasper Exp $
+# $OpenBSD: pkg-config,v 1.28 2011/03/07 22:21:50 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -521,9 +521,7 @@ sub compare
 {
 	my ($a, $b) = @_;
 
-	if ($a eq $b) {
-		return 0;
-	}
+	return 0 if ($a eq $b);
 
 	my @a = split /\./, $a;
 	my @b = split /\./, $b;
@@ -555,8 +553,7 @@ sub versionmatch
 	my $value = compare($inst, $want);
 	if ($op eq '>=') {
 		return $value >= 0;
-	}
-	elsif ($op eq '=') {
+	} elsif ($op eq '=') {
 		return $value == 0;
 	} elsif ($op eq '!=') {
 		return $value != 0;
