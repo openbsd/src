@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.45 2011/01/23 06:56:53 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.46 2011/03/07 09:26:47 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -307,25 +307,6 @@ sub updateset_from_location
 
 	return $self->updateset->add_newer(
 	    OpenBSD::Handle->from_location($location));
-}
-
-# those are required for makewhatis integration
-sub picky
-{
-	return shift->{picky};
-}
-
-sub testmode
-{
-	return shift->{testmode};
-}
-
-sub check_dir
-{
-	my ($self, $dir) = @_;
-	unless (-d $dir) {
-	    $self->fatal("#1: #2 is not a directory", $0, $dir);
-	}
 }
 
 OpenBSD::Auto::cache(ldconfig,

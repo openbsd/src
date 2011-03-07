@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.13 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.14 2011/03/07 09:26:47 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -69,6 +69,25 @@ sub handle_options
 
 	$state->progress->setup($state->opt('x'), $state->opt('m'), $state);
 	$state->{not} = $state->opt('n');
+}
+
+# those are required for makewhatis integration
+sub picky
+{
+	return shift->{picky};
+}
+
+sub testmode
+{
+	return shift->{testmode};
+}
+
+sub check_dir
+{
+	my ($self, $dir) = @_;
+	unless (-d $dir) {
+		$self->fatal("#1: #2 is not a directory", $0, $dir);
+	}
 }
 
 package OpenBSD::AddCreateDelete;
