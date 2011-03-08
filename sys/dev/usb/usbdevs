@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.540 2011/02/01 18:23:59 dcoppa Exp $
+$OpenBSD: usbdevs,v 1.541 2011/03/08 15:20:20 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -519,6 +519,7 @@ vendor FIBERLINE	0x1582	Fiberline
 vendor SPARKLAN		0x15a9	SparkLAN
 vendor OLIMEX		0x15ba	Olimex
 vendor AMIT2		0x15c5	AMIT
+vendor TRUST		0x15d9	Trust
 vendor SOHOWARE		0x15e8	SOHOware
 vendor UMAX		0x1606	UMAX Data Systems
 vendor INSIDEOUT	0x1608	Inside Out Networks
@@ -3696,6 +3697,10 @@ product TRIPPLITE U209		0x2008	U209 Serial
 /* Trumpion products */
 product	TRUMPION T33521		0x1003	USB/MP3 decoder
 product TRUMPION XXX1100	0x1100	XXX 1100
+
+/* Trust products */
+product	TRUST OPTMOUSE		0x0a33	Optical Mouse
+product	TRUST MOUSE		0x0a37	Mouse
 
 /* Tsunami products */
 product TSUNAMI SM2000		0x1111	SM-2000
