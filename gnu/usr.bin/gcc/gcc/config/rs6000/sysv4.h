@@ -1477,7 +1477,7 @@ ncrtn.o%s"
    be stacked, so that invocations of #pragma pack(pop)' will return
    to the previous value.  */
 
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
+#define HANDLE_PRAGMA_PACK_PUSH_POP
 
 /* Define library calls for quad FP operations.  These are all part of the
    PowerPC 32bit ABI.  */
