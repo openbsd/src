@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.100 2011/03/07 23:46:27 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.101 2011/03/08 19:23:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -454,7 +454,7 @@ tty_redraw_region(struct tty *tty, const struct tty_ctx *ctx)
 	 * without this, the entire pane ends up being redrawn many times which
 	 * can be much more data.
 	 */
-	if (ctx->orupper - ctx->orlower >= screen_size_y(s) / 2) {
+	if (ctx->orlower - ctx->orupper >= screen_size_y(s) / 2) {
 		wp->flags |= PANE_REDRAW;
 		return;
 	}
