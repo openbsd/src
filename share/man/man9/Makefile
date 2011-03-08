@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.162 2011/01/09 02:26:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.163 2011/03/08 00:13:41 bluhm Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -23,7 +23,7 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 rwlock.9 \
 	sensor_attach.9 \
 	shutdownhook_establish.9 tsleep.9 spl.9 startuphook_establish.9 \
-	socreate.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
+	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
 	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 vfs_busy.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
@@ -279,6 +279,7 @@ MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=socreate.9 sobind.9 socreate.9 soclose.9 socreate.9 soconnect.9 \
 	socreate.9 sogetopt.9 socreate.9 soreceive.9 socreate.9 sosetopt.9 \
 	socreate.9 sosend.9 socreate.9 soshutdown.9
+MLINKS+=sosplice.9 somove.9
 MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splhigh.9 spl.9 spllowersoftclock.9 \
 	spl.9 splnet.9 spl.9 splsched.9 spl.9 splserial.9 spl.9 splsoftclock.9 \

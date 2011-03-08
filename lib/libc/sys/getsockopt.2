@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.28 2011/01/31 13:27:05 bluhm Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.29 2011/03/08 00:13:41 bluhm Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 31 2011 $
+.Dd $Mdocdate: March 8 2011 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -437,7 +437,8 @@ is not in a valid part of the process address space.
 .Xr socket 2 ,
 .Xr getprotoent 3 ,
 .Xr pf.conf 5 ,
-.Xr protocols 5
+.Xr protocols 5 ,
+.Xr sosplice 9
 .Sh HISTORY
 The
 .Fn getsockopt
