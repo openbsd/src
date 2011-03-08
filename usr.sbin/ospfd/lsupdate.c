@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.39 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.40 2011/03/08 11:00:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -152,7 +152,8 @@ prepare_ls_update(struct iface *iface)
 {
 	struct ibuf		*buf;
 
-	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_dynamic(iface->mtu - sizeof(struct ip),
+	    IP_MAXPACKET - sizeof(struct ip))) == NULL)
 		fatal("prepare_ls_update");
 
 	/* OSPF header */
@@ -177,8 +178,13 @@ add_ls_update(struct ibuf *buf, struct iface *iface, void *data, u_int16_t len,
 	void		*lsage;
 	u_int16_t	 age;
 
-	if (ibuf_left(buf) < (size_t)len + MD5_DIGEST_LENGTH)
-		return (0);
+	if ((size_t)iface->mtu < sizeof(struct ip) + sizeof(struct ospf_hdr) +
+	    sizeof(u_int32_t) + ibuf_size(buf) + len + MD5_DIGEST_LENGTH) {
+		/* start new packet unless this is the first LSA to pack */
+		if (ibuf_size(buf) > sizeof(struct ospf_hdr) +
+		    sizeof(u_int32_t))
+			return (0);
+	}
 
 	lsage = ibuf_reserve(buf, 0);
 	if (ibuf_add(buf, data, len)) {
@@ -475,8 +481,19 @@ ls_retrans_timer(int fd, short event, void *bula)
 			d = MAX_AGE;
 
 		if (add_ls_update(buf, nbr->iface, le->le_ref->data,
-		    le->le_ref->len, d) == 0)
+		    le->le_ref->len, d) == 0) {
+			if (nlsa == 0) {
+				/* something bad happend retry later */
+				log_warnx("ls_retrans_timer: sending LS update "
+				    "to neighbor ID %s failed",
+				    inet_ntoa(nbr->id));
+				TAILQ_REMOVE(&nbr->ls_retrans_list, le, entry);
+				nbr->ls_ret_cnt--;
+				le->le_when = nbr->iface->rxmt_interval;
+				ls_retrans_list_insert(nbr, le);
+			}
 			break;
+		}
 		nlsa++;
 		if (le->le_oneshot)
 			ls_retrans_list_free(nbr, le);
@@ -487,7 +504,10 @@ ls_retrans_timer(int fd, short event, void *bula)
 			ls_retrans_list_insert(nbr, le);
 		}
 	}
-	send_ls_update(buf, nbr->iface, addr, nlsa);
+	if (nlsa)
+		send_ls_update(buf, nbr->iface, addr, nlsa);
+	else
+		ibuf_free(buf);
 
 done:
 	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL) {
