@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.56 2011/01/23 14:57:08 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.57 2011/03/08 17:24:31 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -103,12 +103,14 @@ static void	devread(int, void *, daddr_t, size_t, char *);
 static void	sym_set_value(struct sym_data *, char *, u_int32_t);
 static void	pbr_set_symbols(char *, char *, struct sym_data *);
 static void	usage(void);
-static long	findopenbsd(int, struct disklabel *, off_t, int *);
+static daddr64_t findopenbsd(int, struct disklabel *, daddr64_t, int *);
 static void	write_bootblocks(int devfd, struct disklabel *);
 
 static int	sr_volume(int, int *, int *);
 static void	sr_installboot(int);
 static void	sr_installpbr(int, int, int);
+
+static daddr64_t mbr_eoff; /* Offset of the MBR extended partition. */
 
 static void
 usage(void)
@@ -210,10 +212,9 @@ main(int argc, char *argv[])
 void
 write_bootblocks(int devfd, struct disklabel *dl)
 {
-	struct	stat sb;
-	off_t	startoff = 0;
-	long	start = 0;
-	int	n = 8;
+	struct		stat sb;
+	daddr64_t	start = 0;
+	int		n = 8;
 
 	/* Write patched proto bootblock(s) into the superblock. */
 	if (fstat(devfd, &sb) < 0)
@@ -233,64 +234,76 @@ write_bootblocks(int devfd, struct disklabel *dl)
 	if (dl->d_type != 0 && dl->d_type != DTYPE_FLOPPY &&
 	    dl->d_type != DTYPE_VND) {
 		/* Find OpenBSD partition. */
-		start = findopenbsd(devfd, dl, (off_t)DOSBBSECTOR, &n);
+		mbr_eoff = 0;	/* Offset of MBR extended partition. */
+		start = findopenbsd(devfd, dl, (daddr64_t)DOSBBSECTOR, &n);
 		if (start == -1)
  			errx(1, "no OpenBSD partition");
-		startoff = (off_t)start * dl->d_secsize;
 	}
 
+	if (verbose)
+		fprintf(stderr, "/boot will be written at sector %lld\n",
+		    (long long)start);
+
 	if (!nowrite) {
-		if (lseek(devfd, startoff, SEEK_SET) < 0 ||
+		if (lseek(devfd, (off_t)start * dl->d_secsize, SEEK_SET) < 0 ||
 		    write(devfd, protostore, protosize) != protosize)
 			err(1, "write bootstrap");
 	}
 }
 
-long
-findopenbsd(int devfd, struct disklabel *dl, off_t mbroff, int *n)
+daddr64_t
+findopenbsd(int devfd, struct disklabel *dl, daddr64_t mbroff, int *n)
 {
 	struct		dos_mbr mbr;
 	struct		dos_partition *dp;
-	off_t		startoff;
-	long		start;
+	daddr64_t	start = -1;
+	int		i;
 
 	/* Limit the number of recursions */
 	if (!(*n)--)
 		return (-1);
 
+	if (verbose)
+		fprintf(stderr, "%s boot record (%cBR) at sector %lld\n",
+		    (mbroff == (off_t)DOSBBSECTOR) ? "master" : "extended",
+		    (mbroff == (off_t)DOSBBSECTOR) ? 'M' : 'E',
+		    (long long)mbroff);
+
 	if (lseek(devfd, mbroff * dl->d_secsize, SEEK_SET) < 0 ||
 	    read(devfd, &mbr, sizeof(mbr)) != sizeof(mbr))
-		err(4, "can't read master boot record");
+		err(4, "can't read boot record");
 
 	if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
-		errx(1, "broken MBR");
+		errx(1, "invalid boot record signature (0x%04X) @ sector %lld",
+		    mbr.dmbr_sign, (long long)mbroff);
 
-	for (dp = mbr.dmbr_parts; dp < &mbr.dmbr_parts[NDOSPART];
-	    dp++) {
+	for (i = 0; i < NDOSPART; i++) {
+		dp = &mbr.dmbr_parts[i];
 		if (!dp->dp_size)
 			continue;
+
+		if (verbose)
+			fprintf(stderr,
+			    "\tpartition %d: type 0x%02X offset %d size %d\n",
+			    i, dp->dp_typ, dp->dp_start, dp->dp_size);
+
 		if (dp->dp_typ == DOSPTYP_OPENBSD) {
-			if (verbose)
-				fprintf(stderr,
-				    "using MBR partition %ld: type 0x%02X offset %d\n",
-				    (long)(dp - mbr.dmbr_parts),
-				    dp->dp_typ, dp->dp_start);
-			return (dp->dp_start + mbroff);
-		} else if (dp->dp_typ == DOSPTYP_EXTEND ||
+			start = (daddr64_t)dp->dp_start + mbroff;
+			break;
+		}
+
+		if (dp->dp_typ == DOSPTYP_EXTEND ||
 		    dp->dp_typ == DOSPTYP_EXTENDL) {
-			if (verbose)
-				fprintf(stderr,
-				    "extended partition %ld: type 0x%02X offset %d\n",
-				    (long)(dp - mbr.dmbr_parts),
-				    dp->dp_typ, dp->dp_start);
-			startoff = (off_t)dp->dp_start + mbroff;
-			start = findopenbsd(devfd, dl, startoff, n);
+			mbroff = (daddr64_t)dp->dp_start + mbr_eoff;
+			if (!mbr_eoff)
+				mbr_eoff = (daddr64_t)dp->dp_start;
+			start = findopenbsd(devfd, dl, mbroff, n);
 			if (start != -1)
-				return (start);
+				break;
 		}
 	}
 
-	return (-1);
+	return (start);
 }
 
 /*
