@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.180 2010/12/21 14:59:14 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.181 2011/03/08 22:53:28 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1941,11 +1941,11 @@ carp_addr_updated(void *v)
 			new_naddrs++;
 		else if (ifa->ifa_addr->sa_family == AF_INET6 &&
 		    !IN6_IS_ADDR_LINKLOCAL(&ifatoia6(ifa)->ia_addr.sin6_addr))
-				new_naddrs6++;
+			new_naddrs6++;
 	}
 
-	/* Handle a callback after SIOCDIFADDR */
-	if (new_naddrs < sc->sc_naddrs || new_naddrs6 < sc->sc_naddrs6) {
+	/* We received address changes from if_addrhooks callback */
+	if (new_naddrs != sc->sc_naddrs || new_naddrs6 != sc->sc_naddrs6) {
 		struct in_addr mc_addr;
 		struct in_multi *inm;
 
@@ -1988,6 +1988,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	struct in_ifaddr *ia, *ia_if;
 	int error = 0;
 
+	/* XXX is this necessary? */
 	if (sin->sin_addr.s_addr == 0) {
 		if (!(sc->sc_if.if_flags & IFF_UP))
 			carp_set_state_all(sc, INIT);
@@ -2033,7 +2034,6 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	if (sc->sc_naddrs == 0 && (error = carp_join_multicast(sc)) != 0)
 		return (error);
 
-	sc->sc_naddrs++;
 	if (sc->sc_carpdev != NULL)
 		sc->sc_if.if_flags |= IFF_UP;
 
@@ -2131,8 +2131,6 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	if (sc->sc_naddrs6 == 0 && (error = carp_join_multicast6(sc)) != 0)
 		return (error);
 
-	if (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-		sc->sc_naddrs6++;
 	if (sc->sc_carpdev != NULL && sc->sc_naddrs6)
 		sc->sc_if.if_flags |= IFF_UP;
 	carp_set_state_all(sc, INIT);
@@ -2313,6 +2311,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			error = EINVAL;
 		else {
 			error = 0;
+			carp_hmac_prepare(sc);
 			carp_setrun_all(sc, 0);
 		}
 		break;
@@ -2359,7 +2358,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	if (bcmp(sc->sc_ac.ac_enaddr, sc->sc_curlladdr, ETHER_ADDR_LEN) != 0)
 		carp_set_enaddr(sc);
-	carp_hmac_prepare(sc);
 	return (error);
 }
 
