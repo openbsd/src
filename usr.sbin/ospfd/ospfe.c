@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.77 2010/10/01 13:29:25 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.78 2011/03/08 10:56:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -183,7 +183,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
-	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
+	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
 		fatal("ospfe");
 
 	/* start interfaces */
@@ -756,8 +756,9 @@ orig_rtr_lsa(struct area *area)
 
 	log_debug("orig_rtr_lsa: area %s", inet_ntoa(area->id));
 
-	/* XXX IBUF_READ_SIZE */
-	if ((buf = ibuf_dynamic(sizeof(lsa_hdr), READ_BUF_SIZE)) == NULL)
+	if ((buf = ibuf_dynamic(sizeof(lsa_hdr),
+	    IP_MAXPACKET - sizeof(struct ip) - sizeof(struct ospf_hdr) -
+	    sizeof(u_int32_t) - MD5_DIGEST_LENGTH)) == NULL)
 		fatal("orig_rtr_lsa");
 
 	/* reserve space for LSA header and LSA Router header */
@@ -1024,8 +1025,9 @@ orig_net_lsa(struct iface *iface)
 	int			 num_rtr = 0;
 	u_int16_t		 chksum;
 
-	/* XXX IBUF_READ_SIZE */
-	if ((buf = ibuf_dynamic(sizeof(lsa_hdr), IBUF_READ_SIZE)) == NULL)
+	if ((buf = ibuf_dynamic(sizeof(lsa_hdr),
+	    IP_MAXPACKET - sizeof(struct ip) - sizeof(struct ospf_hdr) -
+	    sizeof(u_int32_t) - MD5_DIGEST_LENGTH)) == NULL)
 		fatal("orig_net_lsa");
 
 	/* reserve space for LSA header and LSA Router header */

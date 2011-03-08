@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.19 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: hello.c,v 1.20 2011/03/08 10:56:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -64,8 +64,8 @@ send_hello(struct iface *iface)
 		fatalx("send_hello: unknown interface type");
 	}
 
-	/* XXX IBUF_READ_SIZE */
-	if ((buf = ibuf_dynamic(PKG_DEF_SIZE, IBUF_READ_SIZE)) == NULL)
+	if ((buf = ibuf_dynamic(PKG_DEF_SIZE,
+	    IP_MAXPACKET - sizeof(struct ip))) == NULL)
 		fatal("send_hello");
 
 	/* OSPF header */
