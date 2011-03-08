@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.98 2010/04/19 10:44:33 dcoppa Exp $
+#	$OpenBSD: RAMDISK,v 1.99 2011/03/08 19:57:51 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -130,6 +130,7 @@ timer*	at mainbus0			# Timer chip
 # Virtual devices for sun4v systems.
 vcons0	at vbus?
 vrtc0	at vbus?
+vrng0	at vbus?
 vdsk*	at cbus?
 scsibus* at vdsk?
 vnet*	at cbus?
