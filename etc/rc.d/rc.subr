@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.23 2011/03/09 18:50:46 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.24 2011/03/09 19:37:16 ajacoutot Exp $
 
 rc_err() {
 	echo $1
@@ -10,7 +10,7 @@ rc_start() {
 }
 
 rc_check() {
-	pgrep -f "^${pexp}" >/dev/null
+	pgrep -f "^${pexp}"
 }
 
 rc_reload() {
@@ -32,7 +32,7 @@ rc_cmd() {
 
 	case "$1" in
 	check)
-		rc_check
+		rc_check >/dev/null
 		;;
 	start)
 		if ! rc_check; then
@@ -51,7 +51,7 @@ rc_cmd() {
 		type rc_post >/dev/null && rc_post || return 0
 		;;
 	reload)
-		rc_check && rc_reload
+		(rc_check && rc_reload) >/dev/null
 		;;
 	restart)
 		/etc/rc.d/${_name} stop && /etc/rc.d/${_name} start
