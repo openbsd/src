@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.26 2010/01/12 19:30:53 jasper Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.27 2011/03/09 12:32:02 okan Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -336,11 +336,11 @@ usage(void)
 		    __progname, ischmod ? "mode" : "flags");
 	else
 		fprintf(stderr,
-		    "usage: %s [-fh] [-R [-H | -L | -P]] %s file ...\n",
+		    "usage: %s [-h] [-R [-H | -L | -P]] %s file ...\n",
 		    __progname, ischown ? "owner[:group]" : "group");
 	if (ischown)
 		fprintf(stderr,
-		    "       %s [-fh] [-R [-H | -L | -P]] :group file ...\n",
+		    "       %s [-h] [-R [-H | -L | -P]] :group file ...\n",
 		    __progname);
 	exit(1);
 }
