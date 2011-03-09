@@ -31,20 +31,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.249 2011/02/13 19:45:54 miod Exp $ */
+/* $OpenBSD: if_em.c,v 1.250 2011/03/09 12:24:15 mpf Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
 #include <dev/pci/if_em_soc.h>
-
-#ifndef SMALL_KERNEL
-#ifdef EM_DEBUG
-/*********************************************************************
- *  Set this to one to display debug statistics
- *********************************************************************/
-int             em_display_debug_stats = 0;
-#endif
-#endif
 
 /*********************************************************************
  *  Driver version
@@ -1418,7 +1409,7 @@ em_local_timer(void *arg)
 #ifndef SMALL_KERNEL
 	em_update_stats_counters(sc);
 #ifdef EM_DEBUG
-	if (em_display_debug_stats && ifp->if_flags & IFF_RUNNING)
+	if (ifp->if_flags & IFF_DEBUG && ifp->if_flags & IFF_RUNNING)
 		em_print_hw_stats(sc);
 #endif
 #endif
@@ -3211,7 +3202,7 @@ em_update_stats_counters(struct em_softc *sc)
 #ifdef EM_DEBUG
 /**********************************************************************
  *
- *  This routine is called only when em_display_debug_stats is enabled.
+ *  This routine is called only when IFF_DEBUG is enabled.
  *  This routine provides a way to take a look at important statistics
  *  maintained by the driver and hardware.
  *
