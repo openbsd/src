@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setlocale.3,v 1.12 2007/05/31 19:19:29 jmc Exp $
+.\"	$OpenBSD: setlocale.3,v 1.13 2011/03/09 01:27:37 schwarze Exp $
 .\"	$NetBSD: setlocale.3,v 1.3 1997/07/14 23:19:47 kleink Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 9 2011 $
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
@@ -105,11 +105,11 @@ function.
 .Pp
 Only three locales are defined by default,
 the empty string
-.Li "\&""\|""
+.Qq
 which denotes the native environment, and the
-.Li "\&""C""
+.Qq C
 and
-.Li "\&""POSIX""
+.Qq POSIX
 locales, which denote the C language environment.
 A
 .Fa locale
@@ -119,7 +119,7 @@ causes
 .Fn setlocale
 to return the current locale.
 By default, C programs start in the
-.Li "\&""C""
+.Qq C
 locale.
 The only function in the library that sets the locale is
 .Fn setlocale ;
@@ -290,9 +290,9 @@ functions first appeared in
 .Bx 4.4 .
 .Sh BUGS
 The current implementation supports only the
-.Li "\&""C""
+.Qq C
 and
-.Li "\&""POSIX""
+.Qq POSIX
 locales for all but the
 .Dv LC_CTYPE
 locale.
