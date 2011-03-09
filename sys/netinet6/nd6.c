@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.85 2010/06/28 16:48:15 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.86 2011/03/09 23:31:24 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1571,6 +1571,10 @@ fail:
 	 *	1	--	y	--	(7) * STALE
 	 */
 
+	if (llchange) {
+		log(LOG_INFO, "ndp info overwritten for %s by %s on %s\n",
+		    ip6_sprintf(from), ether_sprintf(lladdr), ifp->if_xname);
+	}
 	if (lladdr) {		/* (3-5) and (7) */
 		/*
 		 * Record source link-layer address

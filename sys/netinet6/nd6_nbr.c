@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.55 2010/02/08 11:56:09 jsing Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.56 2011/03/09 23:31:25 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -750,6 +750,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			/*
 			 * Update link-local address, if any.
 			 */
+			if (llchange) {
+				log(LOG_INFO, "ndp info overwritten for %s "
+				    "by %s on %s\n", ip6_sprintf(&taddr6),
+				    ether_sprintf(lladdr), ifp->if_xname);
+			}
 			if (lladdr) {
 				sdl->sdl_alen = ifp->if_addrlen;
 				bcopy(lladdr, LLADDR(sdl), ifp->if_addrlen);
