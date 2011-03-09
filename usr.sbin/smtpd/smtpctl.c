@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.55 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.56 2011/03/09 20:59:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -306,6 +306,9 @@ show_stats_output(struct imsg *imsg)
 	printf("smtp.errors.write_eof=%zd\n", stats->smtp.write_eof);
 	printf("smtp.errors.write_system=%zd\n", stats->smtp.write_error);
 	printf("smtp.errors.write_timeout=%zd\n", stats->smtp.write_timeout);
+
+	printf("smtp.sessions.inet4=%zd\n", stats->smtp.sessions_inet4);
+	printf("smtp.sessions.inet6=%zd\n", stats->smtp.sessions_inet6);
 
 	printf("smtp.sessions=%zd\n", stats->smtp.sessions);
 	printf("smtp.sessions.aborted=%zd\n", stats->smtp.read_eof +

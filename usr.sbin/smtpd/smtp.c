@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.79 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.80 2011/03/09 20:59:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -509,6 +509,7 @@ smtp_accept(int fd, short event, void *p)
 		fatal("smtp_accept");
 	}
 
+	
 	s->s_flags |= F_WRITEONLY;
 	dns_query_ptr(l->env, &s->s_ss, s->s_id);
 }
@@ -541,6 +542,12 @@ smtp_new(struct listener *l)
 
 	env->stats->smtp.sessions++;
 	env->stats->smtp.sessions_active++;
+
+	if (s->s_l->ss.ss_family == AF_INET)
+		env->stats->smtp.sessions_inet4++;
+	if (s->s_l->ss.ss_family == AF_INET6)
+		env->stats->smtp.sessions_inet6++;
+
 	SET_IF_GREATER(env->stats->smtp.sessions_active,
 		env->stats->smtp.sessions_maxactive);
 

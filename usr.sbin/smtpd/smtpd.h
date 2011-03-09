@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.200 2010/11/29 15:25:56 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.201 2011/03/09 20:59:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -653,6 +653,8 @@ struct s_runner {
 
 struct s_session {
 	size_t		sessions;
+	size_t		sessions_inet4;
+	size_t		sessions_inet6;
 	size_t		sessions_active;
 	size_t		sessions_maxactive;
 
