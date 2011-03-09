@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.72 2010/10/18 04:24:07 deraadt Exp $
+dnl	$OpenBSD: install,v 1.73 2011/03/09 17:11:40 ian Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk.  The normal way
@@ -92,6 +92,10 @@ boot image is only known to work on sun4c and sun4m architectures.
 If it does not work, you'll have to create a boot floppy or bootable
 hard disk using the instructions under preparing boot media.
 
+Note that older SPARC machines will not boot from CD-ROM drives
+unless the drive is set to use 512-byte blocks instead of the usual
+2048-byte blocks. Sun-provided CD-ROM drives from that era are OK;
+some third-party drives have a dip-switch or jumper setting.
 
 Booting from SCSI disk (miniroot or floppy image):
 
