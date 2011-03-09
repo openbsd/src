@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.22 2011/03/09 09:10:44 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.23 2011/03/09 18:50:46 ajacoutot Exp $
 
 rc_err() {
 	echo $1
@@ -6,7 +6,7 @@ rc_err() {
 }
 
 rc_start() {
-	${rcexec} "${daemon} ${daemon_flags} >/dev/null ${_bg}"
+	${rcexec} "${daemon} ${daemon_flags} ${_bg}"
 }
 
 rc_check() {
@@ -37,11 +37,11 @@ rc_cmd() {
 	start)
 		if ! rc_check; then
 			type rc_pre >/dev/null && rc_pre
-			rc_start
+			rc_start >/dev/null
 		fi
 		;;
 	stop)
-		rc_stop
+		rc_stop >/dev/null
 		i=0
 		while [ $i -lt 5 ]; do
 			rc_check || break
