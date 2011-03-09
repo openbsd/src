@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.21 2011/03/06 16:49:48 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.22 2011/03/09 09:10:44 ajacoutot Exp $
 
 rc_err() {
 	echo $1
@@ -6,7 +6,6 @@ rc_err() {
 }
 
 rc_start() {
-	type rc_pre >/dev/null && rc_pre
 	${rcexec} "${daemon} ${daemon_flags} >/dev/null ${_bg}"
 }
 
@@ -20,7 +19,6 @@ rc_reload() {
 
 rc_stop() {
 	pkill -f "^${pexp}"
-	type rc_post >/dev/null && rc_post || return 0
 }
 
 rc_cmd() {
@@ -37,20 +35,26 @@ rc_cmd() {
 		rc_check
 		;;
 	start)
-		rc_check || rc_start
+		if ! rc_check; then
+			type rc_pre >/dev/null && rc_pre
+			rc_start
+		fi
 		;;
 	stop)
 		rc_stop
+		i=0
+		while [ $i -lt 5 ]; do
+			rc_check || break
+			sleep 1
+			i=$((i+1))
+		done
+		type rc_post >/dev/null && rc_post || return 0
 		;;
 	reload)
 		rc_check && rc_reload
 		;;
 	restart)
-		rc_stop
-		while rc_check; do
-			sleep 1
-		done
-		rc_start
+		/etc/rc.d/${_name} stop && /etc/rc.d/${_name} start
 		;;
 	*)
 		rc_err "usage: $0 {start|check|reload|restart|stop}"
