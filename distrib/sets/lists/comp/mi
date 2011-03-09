@@ -6643,10 +6643,12 @@
 ./usr/share/man/cat9/soconnect.0
 ./usr/share/man/cat9/socreate.0
 ./usr/share/man/cat9/sogetopt.0
+./usr/share/man/cat9/somove.0
 ./usr/share/man/cat9/soreceive.0
 ./usr/share/man/cat9/sosend.0
 ./usr/share/man/cat9/sosetopt.0
 ./usr/share/man/cat9/soshutdown.0
+./usr/share/man/cat9/sosplice.0
 ./usr/share/man/cat9/spl.0
 ./usr/share/man/cat9/spl0.0
 ./usr/share/man/cat9/splassert.0
