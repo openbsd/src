@@ -15,7 +15,7 @@ CDIAGFLAGS+=    -Wshadow
 
 PROG=tcpbench
 
-LDADD=-lkvm
+LDADD=-lkvm -levent
 
 #BINGRP= kmem
 #BINMODE=2555

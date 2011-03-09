@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.10 2010/10/26 20:26:37 fkr Exp $
+.\" $OpenBSD: tcpbench.1,v 1.11 2011/03/09 18:13:18 claudio Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,22 +14,23 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2010 $
+.Dd $Mdocdate: March 9 2011 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
 .Nm tcpbench
-.Nd TCP benchmarking and measurement tool
+.Nd TCP and UDP benchmarking and measurement tool
 .Sh SYNOPSIS
 .Nm
 .Fl l
 .Nm
 .Op Fl v
+.Op Fl u
 .Op Fl B Ar buf
 .Op Fl k Ar kvars
 .Op Fl n Ar connections
 .Op Fl p Ar port
-.Op Fl r Ar rate
+.Op Fl r Ar interval
 .Op Fl S Ar space
 .Op Fl V Ar rtable
 .Ar hostname
@@ -37,10 +38,11 @@
 .Bk -words
 .Fl s
 .Op Fl v
+.Op Fl u
 .Op Fl B Ar buf
 .Op Fl k Ar kvars
 .Op Fl p Ar port
-.Op Fl r Ar rate
+.Op Fl r Ar interval
 .Op Fl S Ar space
 .Op Fl V Ar rtable
 .Ek
@@ -58,13 +60,13 @@ The client must be invoked with the
 .Ar hostname
 of a listening server to connect to.
 .Pp
-Once connected, the client will send TCP traffic as fast as possible to
+Once connected, the client will send TCP or UDP traffic as fast as possible to
 the server.
 Both the client and server will periodically display throughput
 statistics along with any kernel variables the user has selected to
 sample (using the
 .Fl k
-option).
+option, which is only available in TCP mode).
 A list of available kernel variables may be obtained using the
 .Fl l
 option.
@@ -74,30 +76,43 @@ The options are as follows:
 .It Fl B Ar buf
 Specify the size of the internal read/write buffer used by
 .Nm .
-The default is 262144 bytes.
+The default is 262144 bytes for TCP client/server and UDP server.
+
+In UDP client mode, this may be used to specify the packet size on the test
+stream.
 .It Fl k Ar kvars
 Specify one or more kernel variables to monitor; multiple variables must be
-separated with commas.
+separated with commas. This option is only valid in TCP mode.
 The default is not to monitor any variables.
 Using this option requires read access to
 .Pa /dev/kmem .
 .It Fl l
 List the name of kernel variables available for monitoring and exit.
 .It Fl n Ar connections
-Use the given number of TCP connections (default: 1).
+Use the given number of TCP connections (default: 1). UDP is connectionless so
+this option isn't valid.
 .It Fl p Ar port
-Specify the port used for the TCP test stream (default: 12345).
-.It Fl r Ar rate
-Specify the statistics reporting rate in milliseconds (default: 1000).
+Specify the port used for the TCP or UDP test stream (default: 12345).
+.It Fl r Ar interval
+Specify the statistics interval reporting rate in milliseconds (default: 1000).
 .It Fl S Ar space
-Set the size of the socket buffer used for the TCP test stream.
+Set the size of the socket buffer used for the TCP or UDP test stream.
 On the client this option will resize the send buffer;
 on the server it will resize the receive buffer.
 .It Fl s
 Place
 .Nm
 in server mode, where it will listen on all interfaces for incoming
-connections.
+connections. Defaults to TCP if
+.Fl u
+not specified.
+.It Fl u
+Use UDP instead of TCP, this must be specified on both client and
+server. Transmitted packets per second (TX PPS) will be accounted on the client
+side, while received packets per second (RX PPS) whill be accounted on the
+server side. UDP has no Protocol Control Block (PCB) so the
+.Fl k
+flags don't apply.
 .It Fl V Ar rtable
 Set the routing table to be used.
 The default is 0.
@@ -118,3 +133,6 @@ The
 .Nm
 program was written by
 .An Damien Miller Aq djm@openbsd.org .
+
+UDP mode and libevent port by
+.An Christiano F. Haesbaert Aq haesbaert@haesbaert.org .
