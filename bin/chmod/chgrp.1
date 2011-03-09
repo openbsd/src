@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chgrp.1,v 1.13 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: chgrp.1,v 1.14 2011/03/09 11:30:38 okan Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: March 9 2011 $
 .Dt CHGRP 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd change group
 .Sh SYNOPSIS
 .Nm chgrp
-.Op Fl fh
+.Op Fl h
 .Oo
 .Fl R
 .Op Fl H | L | P
@@ -53,8 +53,6 @@ sets the group ID of the specified files.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl f
-The force option ignores errors, except for usage errors.
 .It Fl H
 If the
 .Fl R
@@ -122,7 +120,3 @@ The
 utility is compliant with the
 .St -p1003.1-2008
 specification.
-.Pp
-The flag
-.Op Fl f
-is an extension to that specification.
