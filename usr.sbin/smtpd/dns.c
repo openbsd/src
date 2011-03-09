@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.29 2011/03/09 00:34:01 todd Exp $	*/
+/*	$OpenBSD: dns.c,v 1.30 2011/03/09 00:35:42 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -235,8 +235,8 @@ dns_asr_handler(int fd, short event, void *arg)
 
 	if (ret == ASR_YIELD) {
 		free(ar.ar_cname);
-		query->error = 0;
 		memcpy(&query->ss, &ar.ar_sa.sa, ar.ar_sa.sa.sa_len);
+		query->error = 0;
 		imsg_compose_event(query->asker, IMSG_DNS_HOST, 0, 0, -1, query,
 		    sizeof(*query));
 		dns_asr_handler(-1, -1, dnssession);
