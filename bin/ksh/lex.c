@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.44 2008/07/03 17:52:08 otto Exp $	*/
+/*	$OpenBSD: lex.c,v 1.45 2011/03/09 09:30:39 okan Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1324,7 +1324,11 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 				break;
 			case 'W':	/* '\' 'W' basename(cwd) */
 				p = str_val(global("PWD"));
-				strlcpy(strbuf, basename(p), sizeof strbuf);
+				if (strcmp(p, str_val(global("HOME"))) == 0) {
+					strbuf[0] = '~';
+					strbuf[1] = '\0';
+				} else
+					strlcpy(strbuf, basename(p), sizeof strbuf);
 				break;
 			case '!':	/* '\' '!' history line number */
 				snprintf(strbuf, sizeof strbuf, "%d",

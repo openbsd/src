@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.138 2010/09/20 07:41:17 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.139 2011/03/09 09:30:39 okan Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: September 20 2010 $
+.Dd $Mdocdate: March 9 2011 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1622,6 +1622,9 @@ is abbreviated as
 .It Li \eW
 The basename of
 the current working directory.
+.Dv $HOME
+is abbreviated as
+.Sq ~ .
 .It Li \e!
 The current history number.
 An unescaped
