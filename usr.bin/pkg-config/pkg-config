@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.28 2011/03/07 22:21:50 jasper Exp $
+# $OpenBSD: pkg-config,v 1.29 2011/03/10 19:06:30 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -54,6 +54,8 @@ my $D = 0; # debug flag
 	    $variables->{pc_top_builddir} = '$(top_builddir)';
     }
 }
+
+$D = 1 if defined($ENV{PKG_CONFIG_DEBUG_SPEW});
 
 if ($logfile) {
 	open my $L, ">>" . $logfile;
