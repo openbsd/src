@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.29 2011/03/10 19:06:30 jasper Exp $
+# $OpenBSD: pkg-config,v 1.30 2011/03/10 19:13:14 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -82,6 +82,9 @@ GetOptions(	'debug' => \$D,
 		'silence-errors' => sub { $mode{printerr} = 0},
 		'short-errors' => sub { $mode{printerr} = 0},
 		'atleast-pkgconfig-version=s' => \$mode{myminvers},
+		'print-provides' => \$mode{printprovides},
+		'print-requires' => \$mode{printrequires},
+		'print-requires-private' => \$mode{printrequiresprivate},
 
 		'cflags' => sub { $mode{cflags} = 3},
 		'cflags-only-I' => sub { $mode{cflags} |= 1},
@@ -156,9 +159,15 @@ if ($mode{uninstalled}) {
 	exit $rc;
 }
 
-if ($mode{modversion}) {
+if ($mode{modversion} || $mode{printprovides}) {
 	for my $pkg (@$top_config) {
 		do_modversion($pkg);
+	}
+}
+
+if ($mode{printrequires} || $mode{printrequiresprivate}) {
+	for my $pkg (@$top_config) {
+		print_requires($pkg);
 	}
 }
 
@@ -364,7 +373,8 @@ sub do_variable
 	$rc = 1;
 }
 
-#if the modversion option is set, pull out the compiler flags
+#if the modversion or print-provides options are set,
+#pull out the compiler flags
 sub do_modversion
 {
 	my ($p) = @_;
@@ -374,8 +384,13 @@ sub do_modversion
 	if (defined $cfg) {
 		my $value = $cfg->get_property('Version', $variables);
 		if (defined $value) {
-			print stringize($value), "\n";
-			return undef;
+			if (!defined($mode{printprovides})){
+				print stringize($value), "\n";
+				return undef;
+			} else {
+				print "$p = " . stringize($value) . "\n";
+				return undef;
+			}
 		}
 	}
 	$rc = 1;
@@ -589,4 +604,32 @@ sub simplify_and_reverse
 		}
 	}
 	return $result;
+}
+
+# retrieve and print Requires(.private)
+sub print_requires
+{
+	my ($p) = @_;
+
+	my $cfg = cache_find_config($p);
+
+	if (defined($cfg)) {
+		my $value;
+
+		if (defined($mode{printrequires})) {
+			$value = $cfg->get_property('Requires', $variables);
+		} elsif (defined($mode{printrequiresprivate})) {
+			$value = $cfg->get_property('Requires.private', $variables);
+		} else {
+			print STDERR "Unknown mode for print_requires.\n" if $D;
+			return 1;
+		}
+
+		if (defined($value)) {
+			print "$_\n" foreach (@$value);
+			return undef;
+		}
+	}
+
+	$rc = 1;
 }

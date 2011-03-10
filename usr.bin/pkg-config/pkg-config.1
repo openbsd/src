@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.16 2011/03/10 19:07:45 jasper Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.17 2011/03/10 19:13:14 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -106,6 +106,12 @@ returns its own version.
 .It Cm --print-errors
 Print error messages and exit with an error when errors occur.
 This is the default operation.
+.It Cm --print-provides
+Print all the modules the given package provides.
+.It Cm --print-requires
+Print all the modules the given package requires.
+.It Cm --print-requires-private
+Print all the modules the given package requires for static linking.
 .It Cm --silence-errors
 Do not print error messages, just exit with an error.
 .It Cm --static
