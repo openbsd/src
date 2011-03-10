@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.15 2010/12/28 14:31:38 jasper Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.16 2011/03/10 19:07:45 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2010 $
+.Dd $Mdocdate: March 10 2011 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -122,11 +122,38 @@ Print version of
 and exit.
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width PKG_CONFIG_PATH
+.Bl -tag -width Ds
+.It Ev PKG_CONFIG_DEBUG_SPEW
+If set, this will cause
+.Nm
+to print various debugging information.
+.It Ev PKG_CONFIG_DISABLE_UNINSTALLED
+By default
+.Nm
+prefers a package named "foo-uninstalled" over "foo" when the package
+"foo" is requested.
+This allows linking/compiling against uninstalled packages.
+Setting this flag disables the default behaviour.
+.It Ev PKG_CONFIG_LIBDIR
+This can be used to specify a colon-separated list of paths to search for
+package files.
+This will replace the default
+.Nm
+search directory.
+.It Ev PKG_CONFIG_LOGFILE
+This is used to specify a logfile to which
+.Nm
+will write the passed arguments.
 .It Ev PKG_CONFIG_PATH
 This can be used to specify a colon-separated list of paths to search for
 package files.
 If given, this list of paths is prepended to the standard search path.
+.It Ev PKG_CONFIG_TOP_BUILD_DIR
+If set
+.Nm
+uses the specified value for
+.Em pc_top_builddir
+instead of $(top_builddir).
 .El
 .Sh EXIT STATUS
 .Ex -std pkg-config
