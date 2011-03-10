@@ -1,4 +1,6 @@
-#	$OpenBSD: rc.subr,v 1.24 2011/03/09 19:37:16 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.25 2011/03/10 10:21:39 ajacoutot Exp $
+
+# Default functions and variables used by rc.d(8) scripts.
 
 rc_err() {
 	echo $1
@@ -10,7 +12,7 @@ rc_start() {
 }
 
 rc_check() {
-	pgrep -f "^${pexp}"
+	pkill -0 -f "^${pexp}"
 }
 
 rc_reload() {
@@ -22,7 +24,7 @@ rc_stop() {
 }
 
 rc_cmd() {
-	[ `id -u` -eq 0 -o X"$1" = "Xcheck" ] || \
+	[ $(id -u) -eq 0 -o X"$1" = "Xcheck" ] || \
 		rc_err "$0: need root privileges"
 
 	eval _enotsup=\${rc_${1}}
@@ -51,7 +53,7 @@ rc_cmd() {
 		type rc_post >/dev/null && rc_post || return 0
 		;;
 	reload)
-		(rc_check && rc_reload) >/dev/null
+		rc_check && rc_reload >/dev/null
 		;;
 	restart)
 		/etc/rc.d/${_name} stop && /etc/rc.d/${_name} start
@@ -65,7 +67,7 @@ rc_cmd() {
 
 [ -n "${daemon}" ] || rc_err "$0: daemon is not set"
 
-_name=`basename $0`
+_name=$(basename $0)
 eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}
 
@@ -78,6 +80,6 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}"  ] && daemon_user=${_rcuser}
 
-daemon_flags=`echo ${daemon_flags} | tr -s "[:space:]"`
+daemon_flags=$(echo ${daemon_flags} | tr -s "[:space:]")
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
 rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
