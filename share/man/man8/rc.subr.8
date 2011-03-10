@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.12 2011/03/10 10:24:33 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.13 2011/03/10 15:09:38 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -136,7 +136,7 @@ Call
 Return 0 if the daemon is running or 1 if it is not.
 .It Ic start
 Check that the service is running by calling
-.Fn rc_check ,
+.Fn rc_check .
 If it's not running, call
 .Fn rc_pre
 if it exists, then
@@ -174,7 +174,8 @@ on the regular expression given in the
 .Ar pexp
 variable.
 .It Ic rc_start
-Start the daemon. Defaults to
+Start the daemon.
+Defaults to
 .Va ${rcexec} "${daemon} ${daemon_flags} ${_bg}" .
 .It Ic rc_stop
 Stop the daemon.
