@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.30 2011/03/10 19:13:14 jasper Exp $
+# $OpenBSD: pkg-config,v 1.31 2011/03/10 19:15:55 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -568,19 +568,12 @@ sub versionmatch
 
 	print "comparing $want (wanted) to $inst (installed)\n" if $D;
 	my $value = compare($inst, $want);
-	if ($op eq '>=') {
-		return $value >= 0;
-	} elsif ($op eq '=') {
-		return $value == 0;
-	} elsif ($op eq '!=') {
-		return $value != 0;
-	} elsif ($op eq '<') {
-		return $value < 0;
-	} elsif ($op eq '>') {
-		return $value > 0;
-	} elsif ($op eq '<=') {
-		return $value <= 0;
-	}
+	if    ($op eq '>=') { return $value >= 0; }
+	elsif ($op eq '=')  { return $value == 0; }
+	elsif ($op eq '!=') { return $value != 0; }
+	elsif ($op eq '<')  { return $value < 0; }
+	elsif ($op eq '>')  { return $value > 0; }
+	elsif ($op eq '<=') { return $value <= 0; }
 }
 
 sub mismatch
