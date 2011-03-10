@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.4 2011/03/06 07:03:49 ajacoutot Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.5 2011/03/10 16:49:48 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 6 2011 $
+.Dd $Mdocdate: March 10 2011 $
 .Dt RC.D 8
 .Os
 .Sh NAME
@@ -114,7 +114,5 @@ Changing flag values in
 will change the corresponding pattern used with
 .Xr pkill 1 ,
 so that
-.Ar stop
-or
-.Ar reload
+.Ar actions
 may not work on already running processes.
