@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.78 2011/03/08 17:24:31 krw Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.79 2011/03/11 21:08:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -361,6 +361,7 @@ findopenbsd(bios_diskinfo_t *bd, daddr64_t mbroff, const char **err, int *n)
 	}
 
 	/* Read MBR */
+	bzero(&mbr, sizeof(mbr));
 	error = biosd_io(F_READ, bd, mbroff, 1, &mbr);
 	if (error) {
 		*err = biosdisk_err(error);
