@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.34 2011/03/11 17:11:15 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.35 2011/03/11 18:22:49 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -63,13 +63,13 @@ main(int argc, char *argv[])
 {
 	struct timezone tz;
 	int ch, rflag;
-	char *format, buf[1024];
+	char *format, buf[1024], *outzone = NULL;
 
 	setlocale(LC_ALL, "");
 
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "ad:jnr:ut:")) != -1)
+	while ((ch = getopt(argc, argv, "ad:jnr:ut:z:")) != -1)
 		switch((char)ch) {
 		case 'd':		/* daylight saving time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
@@ -98,6 +98,9 @@ main(int argc, char *argv[])
 				break;
 			}
 			/* FALLTHROUGH */
+		case 'z':
+			outzone = optarg;
+			break;
 		default:
 			usage();
 		}
@@ -137,6 +140,9 @@ main(int argc, char *argv[])
 
 	if (argc > 0)
 		errx(1, "too many arguments");
+
+	if (outzone)
+		setenv("TZ", outzone, 1);
 
 	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
 	(void)printf("%s\n", buf);
@@ -270,9 +276,9 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-ajnu] [-d dst] [-r seconds] [-t minutes_west] [+format]\n",
+	    "usage: %s [-ajnu] [-d dst] [-r seconds] [-t minutes_west] [-z output_zone]\n",
 	     __progname);
 	(void)fprintf(stderr,
-	    "%-*s[[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n", (int)strlen(__progname) + 8, "");
+	    "%-*s[+format] [[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n", (int)strlen(__progname) + 8, "");
 	exit(1);
 }
