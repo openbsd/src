@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.33 2010/03/31 17:51:21 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.34 2011/03/11 17:11:15 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -120,16 +120,23 @@ main(int argc, char *argv[])
 	/* allow the operands in any order */
 	if (*argv && **argv == '+') {
 		format = *argv + 1;
-		++argv;
+		argv++;
+		argc--;
 	}
 
 	if (*argv) {
 		setthetime(*argv);
-		++argv;
+		argv++;
+		argc--;
 	}
 
-	if (*argv && **argv == '+')
+	if (*argv && **argv == '+') {
 		format = *argv + 1;
+		argc--;
+	}
+
+	if (argc > 0)
+		errx(1, "too many arguments");
 
 	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
 	(void)printf("%s\n", buf);
