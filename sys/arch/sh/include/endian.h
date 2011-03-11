@@ -1,10 +1,10 @@
-/*	$OpenBSD: endian.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: endian.h,v 1.2 2011/03/11 15:17:08 pirofti Exp $	*/
 /*	$NetBSD: endian.h,v 1.4 2000/03/17 00:09:25 mycroft Exp $	*/
 
 /* Written by Manuel Bouyer. Public domain */
 
-#ifndef _SH_ENDIAN_H_
-#define	_SH_ENDIAN_H_
+#ifndef _MACHINE_ENDIAN_H_
+#define	_MACHINE_ENDIAN_H_
 
 #ifdef  __GNUC__
 
@@ -40,4 +40,4 @@
 
 #define	__STRICT_ALIGNMENT
 
-#endif /* !_SH_ENDIAN_H_ */
+#endif /* !_MACHINE_ENDIAN_H_ */

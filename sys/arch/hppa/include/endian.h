@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.10 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: endian.h,v 1.11 2011/03/11 15:17:08 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -26,12 +26,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPPA_ENDIAN_H_
-#define	_HPPA_ENDIAN_H_
+#ifndef _MACHINE_ENDIAN_H_
+#define	_MACHINE_ENDIAN_H_
 
 #define	_BYTE_ORDER _BIG_ENDIAN
 #include <sys/endian.h>
 
 #define	__STRICT_ALIGNMENT
 
-#endif /* !_HPPA_ENDIAN_H_ */
+#endif /* !_MACHINE_ENDIAN_H_ */

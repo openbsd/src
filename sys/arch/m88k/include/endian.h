@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.3 2005/12/13 00:35:23 millert Exp $ */
+/*	$OpenBSD: endian.h,v 1.4 2011/03/11 15:17:08 pirofti Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -24,13 +24,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __M88K_ENDIAN_H__
-#define __M88K_ENDIAN_H__
+#ifndef __MACHINE_ENDIAN_H__
+#define __MACHINE_ENDIAN_H__
 
 #define _BYTE_ORDER _BIG_ENDIAN
 #include <sys/endian.h>
 
 #define	__STRICT_ALIGNMENT
 
-#endif /* __M88K_ENDIAN_H__ */
+#endif /* __MACHINE_ENDIAN_H__ */
 
