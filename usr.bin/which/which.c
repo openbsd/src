@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.16 2010/05/31 14:01:49 sobrado Exp $	*/
+/*	$OpenBSD: which.c,v 1.17 2011/03/11 04:30:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,11 +55,7 @@ main(int argc, char *argv[])
 
 	(void)setlocale(LC_ALL, "");
 
-	if (argc == 1)
-		usage();
-
-	/* Don't accept command args but check since old whereis(1) used to */
-	while ((ch = getopt(argc, argv, "a")) != -1) {
+	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch (ch) {
 		case 'a':
 			allmatches = 1;
@@ -67,7 +63,11 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
-	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
+		usage();
 
 	/*
 	 * which(1) uses user's $PATH.
@@ -98,11 +98,11 @@ main(int argc, char *argv[])
 	if (setuid(geteuid()))
 		err(1, "Can't set uid to %u", geteuid());
 
-	for (n = optind; n < argc; n++)
+	for (n = 0; n < argc; n++)
 		if (findprog(argv[n], path, progmode, allmatches) == 0)
 			notfound++;
 
-	exit((notfound == 0) ? 0 : ((notfound == argc - 1) ? 2 : 1));
+	exit((notfound == 0) ? 0 : ((notfound == argc) ? 2 : 1));
 }
 
 int
