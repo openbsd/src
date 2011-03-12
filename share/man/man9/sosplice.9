@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sosplice.9,v 1.1 2011/03/08 00:13:41 bluhm Exp $
+.\"	$OpenBSD: sosplice.9,v 1.2 2011/03/12 18:31:41 bluhm Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Bluhm <bluhm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 8 2011 $
+.Dd $Mdocdate: March 12 2011 $
 .Dt SOSPLICE 9
 .Os
 .Sh NAME
@@ -152,8 +152,10 @@ and
 will call
 .Fn somove
 to trigger the transfer when new data or buffer space is available.
-While socket splicing is active, the read wakeup will not be delivered
-to the source file descriptor.
+While socket splicing is active, any
+.Xr read 2
+from the source socket will block and the wakeup will not be delivered
+to the file descriptor.
 A read event is signaled to user-land after dissolving.
 .Sh RETURN VALUES
 .Fn sosplice

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.86 2011/02/28 16:29:42 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.87 2011/03/12 18:31:41 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -612,6 +612,10 @@ restart:
 	s = splsoftnet();
 
 	m = so->so_rcv.sb_mb;
+#ifdef SOCKET_SPLICE
+	if (so->so_splice)
+		m = NULL;
+#endif /* SOCKET_SPLICE */
 	/*
 	 * If we have less data than requested, block awaiting more
 	 * (subject to any timeout) if:
@@ -630,6 +634,9 @@ restart:
 	    m->m_nextpkt == NULL && (pr->pr_flags & PR_ATOMIC) == 0)) {
 #ifdef DIAGNOSTIC
 		if (m == NULL && so->so_rcv.sb_cc)
+#ifdef SOCKET_SPLICE
+		    if (so->so_splice == NULL)
+#endif /* SOCKET_SPLICE */
 			panic("receive 1");
 #endif
 		if (so->so_error) {
