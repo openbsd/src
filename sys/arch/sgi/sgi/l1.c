@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.6 2010/05/09 18:37:47 miod Exp $	*/
+/*	$OpenBSD: l1.c,v 1.7 2011/03/12 23:43:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -83,7 +83,7 @@ int	l1_response_to_errno(uint32_t);
 int	l1_read_board_ia(int16_t, int, u_char **, size_t *);
 
 static inline
-size_t	ia_skip(u_char *, size_t);
+size_t	ia_skip(u_char *, size_t, size_t);
 
 /* l1_packet_get() return values */
 #define	L1PG_TIMEOUT		-1
@@ -833,16 +833,18 @@ fail:
 #define	IA_EOF		IA_TL(IA_TYPE_ASCII, 1)
 
 static inline size_t
-ia_skip(u_char *ia, size_t iapos)
+ia_skip(u_char *ia, size_t iapos, size_t ialen)
 {
+	size_t npos;
+
 	ia += iapos;
 
 	/* don't go past EOF marker */
 	if (*ia == IA_EOF)
 		return iapos;
 
-	iapos += 1 + (*ia & IA_LENGTH_MASK);
-	return iapos;
+	npos = iapos + 1 + (*ia & IA_LENGTH_MASK);
+	return npos >= ialen ? iapos : npos;
 }
 
 int
@@ -869,7 +871,7 @@ l1_get_brick_ethernet_address(int16_t nasid, uint8_t *enaddr)
 		return rc;
 
 	/* simple sanity checks */
-	if (ia[0] != 0 || ia[1] * 8 > ialen) {
+	if (ia[0] != 0 || ia[1] < 2 || ia[1] * 8UL > ialen) {
 		rc = EINVAL;
 		goto out;
 	}
@@ -877,24 +879,25 @@ l1_get_brick_ethernet_address(int16_t nasid, uint8_t *enaddr)
 	/* skip fixed part */
 	iapos = 6;
 	/* skip 4 records */
-	iapos = ia_skip(ia, iapos);
-	iapos = ia_skip(ia, iapos);
-	iapos = ia_skip(ia, iapos);
-	iapos = ia_skip(ia, iapos);
+	iapos = ia_skip(ia, iapos, ialen);
+	iapos = ia_skip(ia, iapos, ialen);
+	iapos = ia_skip(ia, iapos, ialen);
+	iapos = ia_skip(ia, iapos, ialen);
 	/* skip FRU */
-	iapos++;
+	if (iapos < ialen - 1)
+		iapos++;
 	/* skip 3 records */
-	iapos = ia_skip(ia, iapos);
-	iapos = ia_skip(ia, iapos);
-	iapos = ia_skip(ia, iapos);
+	iapos = ia_skip(ia, iapos, ialen);
+	iapos = ia_skip(ia, iapos, ialen);
+	iapos = ia_skip(ia, iapos, ialen);
 	/* skip encryption key records if applicable */
-	if (ia[iapos] == IA_TL(IA_TYPE_BINARY, 4)) {
-		iapos = ia_skip(ia, iapos);
-		iapos = ia_skip(ia, iapos);
-		iapos = ia_skip(ia, iapos);
+	if (iapos < ialen && ia[iapos] == IA_TL(IA_TYPE_BINARY, 4)) {
+		iapos = ia_skip(ia, iapos, ialen);
+		iapos = ia_skip(ia, iapos, ialen);
+		iapos = ia_skip(ia, iapos, ialen);
 	}
 	/* check the next record looks like an Ethernet address */
-	if (ia[iapos] != IA_TL(IA_TYPE_ASCII, 12)) {
+	if (iapos >= ialen - 1 - 12 || ia[iapos] != IA_TL(IA_TYPE_ASCII, 12)) {
 		rc = EINVAL;
 		goto out;
 	}
