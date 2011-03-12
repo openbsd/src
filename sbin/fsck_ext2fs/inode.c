@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.16 2005/10/06 17:43:13 pedro Exp $	*/
+/*	$OpenBSD: inode.c,v 1.17 2011/03/12 17:50:47 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -198,8 +198,8 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 static int
 iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 {
-	daddr_t *ap;
-	daddr_t *aplim;
+	daddr32_t *ap;
+	daddr32_t *aplim;
 	struct bufarea *bp;
 	int i, n, (*func)(struct inodesc *), nif;
 	u_int64_t sizepb;
@@ -281,7 +281,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
  * Return 0 if in range, 1 if out of range.
  */
 int
-chkrange(daddr_t blk, int cnt)
+chkrange(daddr32_t blk, int cnt)
 {
 	int c, overh;
 
@@ -326,7 +326,7 @@ chkrange(daddr_t blk, int cnt)
 struct ext2fs_dinode *
 ginode(ino_t inumber)
 {
-	daddr_t iblk;
+	daddr32_t iblk;
 
 	if ((inumber < EXT2_FIRSTINO && inumber != EXT2_ROOTINO)
 		|| inumber > maxino)
@@ -354,7 +354,7 @@ struct ext2fs_dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
-	daddr_t dblk;
+	daddr32_t dblk;
 	static struct ext2fs_dinode *dp;
 
 	if (inumber != nextino++ || inumber > maxino)
@@ -429,7 +429,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
 	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks - 1) * sizeof(daddr_t));
+		malloc(sizeof(*inp) + (blks - 1) * sizeof(daddr32_t));
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
@@ -443,7 +443,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	inp->i_dotdot = (ino_t)0;
 	inp->i_number = inumber;
 	inp->i_isize = inosize(dp);
-	inp->i_numblks = blks * sizeof(daddr_t);
+	inp->i_numblks = blks * sizeof(daddr32_t);
 	memcpy(&inp->i_blks[0], &dp->e2di_blocks[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
 		listmax += 100;
@@ -579,7 +579,7 @@ pinode(ino_t ino)
 }
 
 void
-blkerror(ino_t ino, char *type, daddr_t blk)
+blkerror(ino_t ino, char *type, daddr32_t blk)
 {
 
 	pfatal("%d %s I=%u", blk, type, ino);

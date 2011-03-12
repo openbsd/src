@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.17 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: setup.c,v 1.18 2011/03/12 17:50:47 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ badsblabel:
 static int
 readsb(int listerr)
 {
-	daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
+	daddr32_t super = bflag ? bflag : SBOFF / dev_bsize;
 
 	if (bread(fsreadfd, (char *)sblk.b_un.b_fs, super, (long)SBSIZE) != 0)
 		return (0);
@@ -480,7 +480,7 @@ getdisklabel(char *s, int fd)
 	return (&lab);
 }
 
-daddr_t
+daddr32_t
 cgoverhead(int c)
 {
 	int overh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.14 2006/03/20 21:35:37 dhill Exp $	*/
+/*	$OpenBSD: dir.c,v 1.15 2011/03/12 17:50:46 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct	ext2fs_dirtemplate dirhead = {
 static int expanddir(struct ext2fs_dinode *, char *);
 static void freedir(ino_t, ino_t);
 static struct ext2fs_direct *fsck_readdir(struct inodesc *);
-static struct bufarea *getdirblk(daddr_t, long);
+static struct bufarea *getdirblk(daddr32_t, long);
 static int lftempname(char *, ino_t);
 static int mkentry(struct inodesc *);
 static int chgino(struct  inodesc *);
@@ -511,7 +511,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
 static int
 expanddir(struct ext2fs_dinode *dp, char *name)
 {
-	daddr_t lastbn, newblk;
+	daddr32_t lastbn, newblk;
 	struct bufarea *bp;
 	char *firstblk;
 
@@ -671,7 +671,7 @@ lftempname(char *bufp, ino_t ino)
  * Insure that it is held until another is requested.
  */
 static struct bufarea *
-getdirblk(daddr_t blkno, long size)
+getdirblk(daddr32_t blkno, long size)
 {
 
 	if (pdirbp != 0)

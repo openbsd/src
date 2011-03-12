@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.2 2010/02/16 12:25:35 otto Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.3 2011/03/12 17:50:48 deraadt Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@
 #include "extern.h"
 
 static void initcg(uint);
-static void zap_old_sblock(daddr_t);
+static void zap_old_sblock(daddr32_t);
 static uint cgoverhead(uint);
 static int fsinit(const struct timeval *);
 static int makedir(struct ext2fs_direct *, int);
@@ -128,8 +128,8 @@ static void copy_dir(struct ext2fs_direct *, struct ext2fs_direct *);
 static void init_resizeino(const struct timeval *);
 static uint32_t alloc(uint32_t, uint16_t);
 static void iput(struct ext2fs_dinode *, ino_t);
-static void rdfs(daddr_t, int, void *);
-static void wtfs(daddr_t, int, void *);
+static void rdfs(daddr32_t, int, void *);
+static void wtfs(daddr32_t, int, void *);
 static int ilog2(uint);
 static int skpc(int, size_t, uint8_t *);
 static void uuid_get(struct m_ext2fs *);
@@ -569,7 +569,7 @@ mke2fs(const char *fsys, int fi, int fo)
 			for (pblock = ((pbsize[i] == SBSIZE) ? 1 : 0);
 			    pblock < epblock;
 			    pblock += pbsize[i] * NBBY /* bpg */)
-				zap_old_sblock((daddr_t)pblock *
+				zap_old_sblock((daddr32_t)pblock *
 				    pbsize[i] / sectorsize);
 		}
 	}
@@ -762,9 +762,9 @@ initcg(uint cylno)
  * Zap possible lingering old superblock data
  */
 static void
-zap_old_sblock(daddr_t sec)
+zap_old_sblock(daddr32_t sec)
 {
-	static daddr_t cg0_data;
+	static daddr32_t cg0_data;
 	uint32_t oldfs[SBSIZE / sizeof(uint32_t)];
 	static const struct fsm {
 		uint32_t offset;
@@ -791,7 +791,7 @@ zap_old_sblock(daddr_t sec)
 
 	if (cg0_data == 0) {
 		cg0_data =
-		    ((daddr_t)sblock.e2fs.e2fs_first_dblock + cgoverhead(0)) *
+		    ((daddr32_t)sblock.e2fs.e2fs_first_dblock + cgoverhead(0)) *
 		    sblock.e2fs_bsize / sectorsize;
 	}
 
@@ -1299,7 +1299,7 @@ alloc(uint32_t size, uint16_t mode)
 static void
 iput(struct ext2fs_dinode *ip, ino_t ino)
 {
-	daddr_t d;
+	daddr32_t d;
 	uint c, i;
 	struct ext2fs_dinode *dp;
 	uint8_t *bp;
@@ -1364,7 +1364,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
  * Read a block from the file system
  */
 void
-rdfs(daddr_t bno, int size, void *bf)
+rdfs(daddr32_t bno, int size, void *bf)
 {
 	int n;
 	off_t offset;
@@ -1380,7 +1380,7 @@ rdfs(daddr_t bno, int size, void *bf)
  * Write a block to the file system
  */
 void
-wtfs(daddr_t bno, int size, void *bf)
+wtfs(daddr32_t bno, int size, void *bf)
 {
 	int n;
 	off_t offset;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.13 2006/03/20 21:35:37 dhill Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.14 2011/03/12 17:50:47 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $ */
 
 /*
@@ -53,8 +53,8 @@ pass5(void)
 {
 	int c;
 	struct m_ext2fs *fs = &sblock;
-	daddr_t dbase, dmax;
-	daddr_t d;
+	daddr32_t dbase, dmax;
+	daddr32_t d;
 	long i, j;
 	struct inodesc idesc[3];
 	struct bufarea *ino_bitmap = NULL, *blk_bitmap = NULL;

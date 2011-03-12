@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.7 2005/04/30 13:56:16 niallo Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.8 2011/03/12 17:50:47 deraadt Exp $	*/
 /*	$NetBSD: pass4.c,v 1.2 1997/09/14 14:27:29 lukem Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ pass4check(struct inodesc *idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;
-	daddr_t blkno = idesc->id_blkno;
+	daddr32_t blkno = idesc->id_blkno;
 
 	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
 		if (chkrange(blkno, 1)) {

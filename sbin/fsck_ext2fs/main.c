@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2010/08/12 15:26:34 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2011/03/12 17:50:47 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ argtoi(int flag, char *req, char *str, int base)
 static int
 checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 {
-	daddr_t n_bfree;
+	daddr32_t n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
 	int i;
