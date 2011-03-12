@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.4 2011/03/11 15:17:08 pirofti Exp $	*/
+/*	$OpenBSD: endian.h,v 1.5 2011/03/12 22:27:48 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -29,25 +29,24 @@
 
 #ifdef __GNUC__
 
-#define	__swap32md(x) ({						\
+#define	__swap32md(x) __statement({					\
 	u_int32_t __swap32md_x = (x);					\
 									\
-	__asm ("bswap %1" : "+r" (__swap32md_x));			\
+	__asm ("bswap %0" : "+r" (__swap32md_x));			\
 	__swap32md_x;							\
 })
 
-/* XXX - I'm sure there is a better way on this cpu. */
-#define	__swap64md(x) ({						\
+#define	__swap64md(x) __statement({					\
 	u_int64_t __swap64md_x = (x);					\
 									\
-	(u_int64_t)__swap32md(__swap64md_x >> 32) |			\
-	    (u_int64_t)__swap32md(__swap64md_x & 0xffffffff) << 32;	\
+	__asm ("bswapq %0" : "+r" (__swap64md_x));			\
+	__swap64md_x;							\
 })
 
-#define	__swap16md(x) ({						\
+#define	__swap16md(x) __statement({					\
 	u_int16_t __swap16md_x = (x);					\
 									\
-	__asm ("rorw $8, %w1" : "+r" (__swap16md_x));			\
+	__asm ("rorw $8, %w0" : "+r" (__swap16md_x));			\
 	__swap16md_x;							\
 })
 
