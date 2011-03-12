@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_43.c,v 1.15 2003/08/15 20:32:15 tedu Exp $	*/
+/*	$OpenBSD: kern_info_43.c,v 1.16 2011/03/12 04:54:28 guenther Exp $	*/
 /*	$NetBSD: kern_info_43.c,v 1.5 1996/02/04 02:02:22 christos Exp $	*/
 
 /*
@@ -223,14 +223,6 @@ compat_43_sys_getkerninfo(p, v, retval)
 		name[0] = KERN_VNODE;
 		error =
 		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
-		break;
-
-	case KINFO_PROC:
-		name[0] = KERN_PROC;
-		name[1] = SCARG(uap, op) & 0xff;
-		name[2] = SCARG(uap, arg);
-		error =
-		    kern_sysctl(name, 3, SCARG(uap, where), &size, NULL, 0, p);
 		break;
 
 	case KINFO_FILE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.16 2010/01/12 08:15:51 jasper Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.17 2011/03/12 04:54:28 guenther Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@ struct __kvm {
 	int	swfd;		/* swap file (e.g., /dev/drum) */
 	int	nlfd;		/* namelist file (e.g., /vmunix) */
 	struct kinfo_proc *procbase;
-	struct kinfo_proc2 *procbase2;
 	struct kinfo_file *filebase;
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
@@ -93,7 +92,6 @@ struct __kvm {
  */
 void	 _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...);
 int	 _kvm_dump_mkheader(kvm_t *kd_live, kvm_t *kd_dump);
-void	 _kvm_freeprocs(kvm_t *kd);
 void	 _kvm_freevtop(kvm_t *);
 int	 _kvm_initvtop(kvm_t *);
 int	 _kvm_kvatop(kvm_t *, u_long, paddr_t *);

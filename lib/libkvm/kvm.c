@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.48 2009/10/27 23:59:28 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.49 2011/03/12 04:54:28 guenther Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -178,7 +178,6 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 	kd->alive = 0;
 	kd->filebase = 0;
 	kd->procbase = 0;
-	kd->procbase2 = 0;
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
 	kd->argspc = 0;
@@ -638,8 +637,6 @@ kvm_close(kvm_t *kd)
 		free((void *)kd->filebase);
 	if (kd->procbase != 0)
 		free((void *)kd->procbase);
-	if (kd->procbase2 != 0)
-		free(kd->procbase2);
 	if (kd->swapspc != 0)
 		free((void *)kd->swapspc);
 	if (kd->argspc != 0)

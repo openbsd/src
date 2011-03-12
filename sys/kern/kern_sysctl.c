@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.197 2011/02/16 10:37:45 mikeb Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.198 2011/03/12 04:54:28 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -275,7 +275,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	if (namelen != 1) {
 		switch (name[0]) {
 		case KERN_PROC:
-		case KERN_PROC2:
 		case KERN_PROF:
 		case KERN_MALLOCSTATS:
 		case KERN_TTY:
@@ -362,8 +361,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_vnode(oldp, oldlenp, p));
 #ifndef SMALL_KERNEL
 	case KERN_PROC:
-	case KERN_PROC2:
-		return (sysctl_doproc(name, namelen, oldp, oldlenp));
+		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_PROC_ARGS:
 		return (sysctl_proc_args(name + 1, namelen - 1, oldp, oldlenp,
 		     p));
@@ -1323,42 +1321,33 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 /*
  * try over estimating by 5 procs
  */
-#define KERN_PROCSLOP	(5 * sizeof (struct kinfo_proc))
+#define KERN_PROCSLOP	5
 
 int
 sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 {
-	struct kinfo_proc2 *kproc2 = NULL;
-	struct eproc *eproc = NULL;
+	struct kinfo_proc *kproc = NULL;
 	struct proc *p;
 	struct process *pr;
 	char *dp;
 	int arg, buflen, doingzomb, elem_size, elem_count;
-	int error, needed, type, op;
+	int error, needed, op;
 
 	dp = where;
 	buflen = where != NULL ? *sizep : 0;
 	needed = error = 0;
-	type = name[0];
 
-	if (type == KERN_PROC) {
-		if (namelen != 3 && !(namelen == 2 &&
-		    (name[1] == KERN_PROC_ALL || name[1] == KERN_PROC_KTHREAD)))
-			return (EINVAL);
-		op = name[1];
-		arg = op == KERN_PROC_ALL ? 0 : name[2];
-		elem_size = elem_count = 0;
-		eproc = malloc(sizeof(struct eproc), M_TEMP, M_WAITOK);
-	} else /* if (type == KERN_PROC2) */ {
-		if (namelen != 5 || name[3] < 0 || name[4] < 0 ||
-		    name[3] > sizeof(*kproc2))
-			return (EINVAL);
-		op = name[1];
-		arg = name[2];
-		elem_size = name[3];
-		elem_count = name[4];
-		kproc2 = malloc(sizeof(struct kinfo_proc2), M_TEMP, M_WAITOK);
-	}
+	if (namelen != 4 || name[2] < 0 || name[3] < 0 ||
+	    name[2] > sizeof(*kproc))
+		return (EINVAL);
+	op = name[0];
+	arg = name[1];
+	elem_size = name[2];
+	elem_count = name[3];
+
+	if (where != NULL)
+		kproc = malloc(sizeof(*kproc), M_TEMP, M_WAITOK);
+
 	p = LIST_FIRST(&allproc);
 	doingzomb = 0;
 again:
@@ -1418,47 +1407,26 @@ again:
 			if (p->p_flag & P_SYSTEM)
 				continue;
 			break;
+
 		case KERN_PROC_KTHREAD:
 			/* no filtering */
 			break;
+
 		default:
 			error = EINVAL;
 			goto err;
 		}
-		if (type == KERN_PROC) {
-			if (buflen >= sizeof(struct kinfo_proc)) {
-				fill_eproc(p, eproc);
-				error = copyout((caddr_t)p,
-				    &((struct kinfo_proc *)dp)->kp_proc,
-				    sizeof(struct proc));
-				if (error)
-					goto err;
-				error = copyout((caddr_t)eproc,
-				    &((struct kinfo_proc *)dp)->kp_eproc,
-				    sizeof(*eproc));
-				if (error)
-					goto err;
-				dp += sizeof(struct kinfo_proc);
-				buflen -= sizeof(struct kinfo_proc);
-			}
-			needed += sizeof(struct kinfo_proc);
-		} else /* if (type == KERN_PROC2) */ {
-			if (buflen >= elem_size && elem_count > 0) {
-				fill_kproc2(p, kproc2);
-				/*
-				 * Copy out elem_size, but not larger than
-				 * the size of a struct kinfo_proc2.
-				 */
-				error = copyout(kproc2, dp,
-				    min(sizeof(*kproc2), elem_size));
-				if (error)
-					goto err;
-				dp += elem_size;
-				buflen -= elem_size;
-				elem_count--;
-			}
-			needed += elem_size;
+
+		if (buflen >= elem_size && elem_count > 0) {
+			fill_kproc(p, kproc);
+			error = copyout(kproc, dp, elem_size);
+			if (error)
+				goto err;
+			dp += elem_size;
+			buflen -= elem_size;
+			elem_count--;
 		}
+		needed += elem_size;
 	}
 	if (doingzomb == 0) {
 		p = LIST_FIRST(&zombproc);
@@ -1472,86 +1440,27 @@ again:
 			goto err;
 		}
 	} else {
-		needed += KERN_PROCSLOP;
+		needed += KERN_PROCSLOP * elem_size;
 		*sizep = needed;
 	}
 err:
-	if (eproc)
-		free(eproc, M_TEMP);
-	if (kproc2)
-		free(kproc2, M_TEMP);
+	if (kproc)
+		free(kproc, M_TEMP);
 	return (error);
 }
 
 /*
- * Fill in an eproc structure for the specified process.
+ * Fill in a kproc structure for the specified process.
  */
 void
-fill_eproc(struct proc *p, struct eproc *ep)
-{
-	struct tty *tp;
-
-	ep->e_paddr = p;
-	ep->e_sess = p->p_p->ps_pgrp->pg_session;
-	ep->e_pcred = *p->p_cred;
-	ep->e_ucred = *p->p_ucred;
-	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
-		ep->e_vm.vm_rssize = 0;
-		ep->e_vm.vm_tsize = 0;
-		ep->e_vm.vm_dsize = 0;
-		ep->e_vm.vm_ssize = 0;
-		bzero(&ep->e_pstats, sizeof(ep->e_pstats));
-		ep->e_pstats_valid = 0;
-	} else {
-		struct vmspace *vm = p->p_vmspace;
-
-		ep->e_vm.vm_rssize = vm_resident_count(vm);
-		ep->e_vm.vm_tsize = vm->vm_tsize;
-		ep->e_vm.vm_dsize = vm->vm_dused;
-		ep->e_vm.vm_ssize = vm->vm_ssize;
-		ep->e_pstats = *p->p_stats;
-		ep->e_pstats_valid = 1;
-	}
-	if (p->p_p->ps_pptr)
-		ep->e_ppid = p->p_p->ps_pptr->ps_pid;
-	else
-		ep->e_ppid = 0;
-	ep->e_pgid = p->p_p->ps_pgrp->pg_id;
-	ep->e_jobc = p->p_p->ps_pgrp->pg_jobc;
-	if ((p->p_p->ps_flags & PS_CONTROLT) &&
-	     (tp = ep->e_sess->s_ttyp)) {
-		ep->e_tdev = tp->t_dev;
-		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
-		ep->e_tsess = tp->t_session;
-	} else
-		ep->e_tdev = NODEV;
-	ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
-	if (SESS_LEADER(p->p_p))
-		ep->e_flag |= EPROC_SLEADER;
-	strncpy(ep->e_wmesg, p->p_wmesg ? p->p_wmesg : "", WMESGLEN);
-	ep->e_wmesg[WMESGLEN] = '\0';
-	ep->e_xsize = ep->e_xrssize = 0;
-	ep->e_xccount = ep->e_xswrss = 0;
-	strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME-1);
-	ep->e_login[MAXLOGNAME-1] = '\0';
-	strncpy(ep->e_emul, p->p_emul->e_name, EMULNAMELEN);
-	ep->e_emul[EMULNAMELEN] = '\0';
-	ep->e_maxrss = p->p_rlimit ? p->p_rlimit[RLIMIT_RSS].rlim_cur : 0;
-	ep->e_limit = p->p_p->ps_limit;
-}
-
-/*
- * Fill in a kproc2 structure for the specified process.
- */
-void
-fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
+fill_kproc(struct proc *p, struct kinfo_proc *ki)
 {
 	struct process *pr = p->p_p;
 	struct session *s = pr->ps_session;
 	struct tty *tp;
 	struct timeval ut, st;
 
-	FILL_KPROC2(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
+	FILL_KPROC(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
 	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_stats);
 
 	/* stuff that's too painful to generalize into the macros */

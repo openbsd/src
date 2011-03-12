@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.108 2011/03/07 07:07:13 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.109 2011/03/12 04:54:28 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -42,9 +42,7 @@
  * These are for the eproc structure defined below.
  */
 #ifndef _KERNEL
-#include <sys/time.h>
-#include <sys/ucred.h>
-#include <sys/proc.h>
+#include <sys/proc.h>		/* for SRUN, SIDL, etc */
 #include <sys/resource.h>
 #endif
 
@@ -126,9 +124,7 @@ struct ctlname {
 #define	KERN_HOSTID		11	/* int: host identifier */
 #define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
 #define	KERN_VNODE		13	/* struct: vnode structures */
-#if defined(_KERNEL) || defined(_LIBKVM)
-#define	KERN_PROC		14	/* struct: process entries */
-#endif
+/*define gap: was KERN_PROC	14	*/
 #define	KERN_FILE		15	/* struct: file entries */
 #define	KERN_PROF		16	/* node: kernel profiling info */
 #define	KERN_POSIX1		17	/* int: POSIX.1 version */
@@ -180,7 +176,8 @@ struct ctlname {
 #define KERN_INTRCNT		63	/* node: interrupt counters */
 #define	KERN_WATCHDOG		64	/* node: watchdog */
 #define	KERN_EMUL		65	/* node: emuls */
-#define	KERN_PROC2		66	/* struct: process entries */
+#define	KERN_PROC		66	/* struct: process entries */
+#define	KERN_PROC2		KERN_PROC	/* backwards compat name */
 #define	KERN_MAXCLUSTERS	67	/* number of mclusters */
 #define KERN_EVCOUNT		68	/* node: event counters */
 #define	KERN_TIMECOUNTER	69	/* node: timecounter */
@@ -208,7 +205,7 @@ struct ctlname {
 	{ "hostid", CTLTYPE_INT }, \
 	{ "clockrate", CTLTYPE_STRUCT }, \
 	{ "vnode", CTLTYPE_STRUCT }, \
-	{ "proc", CTLTYPE_STRUCT }, \
+	{ "gap", 0 }, \
 	{ "file", CTLTYPE_STRUCT }, \
 	{ "profiling", CTLTYPE_NODE }, \
 	{ "posix1version", CTLTYPE_INT }, \
@@ -260,7 +257,7 @@ struct ctlname {
 	{ "intrcnt", CTLTYPE_NODE }, \
  	{ "watchdog", CTLTYPE_NODE }, \
  	{ "emul", CTLTYPE_NODE }, \
- 	{ "proc2", CTLTYPE_STRUCT }, \
+ 	{ "proc", CTLTYPE_STRUCT }, \
  	{ "maxclusters", CTLTYPE_INT }, \
 	{ "evcount", CTLTYPE_NODE }, \
  	{ "timecounter", CTLTYPE_NODE }, \
@@ -310,43 +307,7 @@ struct ctlname {
 #define KERN_PROC_NENV		4
 
 /*
- * KERN_PROC subtype ops return arrays of augmented proc structures:
- */
-struct kinfo_proc {
-	struct	proc kp_proc;			/* proc structure */
-	struct	eproc {
-		struct	proc *e_paddr;		/* address of proc */
-		struct	session *e_sess;	/* session pointer */
-		struct	pcred e_pcred;		/* process credentials */
-		struct	ucred e_ucred;		/* current credentials */
-		struct	vmspace e_vm;		/* address space */
-		struct  pstats e_pstats;	/* process stats */
-		int	e_pstats_valid;		/* pstats valid? */
-		pid_t	e_ppid;			/* parent process id */
-		pid_t	e_pgid;			/* process group id */
-		short	e_jobc;			/* job control counter */
-		dev_t	e_tdev;			/* controlling tty dev */
-		pid_t	e_tpgid;		/* tty process group id */
-		struct	session *e_tsess;	/* tty session pointer */
-#define	WMESGLEN	7
-		char	e_wmesg[WMESGLEN+1];	/* wchan message */
-		segsz_t e_xsize;		/* text size */
-		short	e_xrssize;		/* text rss */
-		short	e_xccount;		/* text references */
-		short	e_xswrss;
-		long	e_flag;
-#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
-#define	EPROC_SLEADER	0x02	/* session leader */
-		char	e_login[MAXLOGNAME];	/* setlogin() name */
-#define	EMULNAMELEN	7
-		char	e_emul[EMULNAMELEN+1];	/* syscall emulation name */
-	        rlim_t	e_maxrss;
-		struct plimit *e_limit;
-	} kp_eproc;
-};
-
-/*
- * KERN_PROC2 subtype ops return arrays of relatively fixed size
+ * KERN_PROC subtype ops return arrays of relatively fixed size
  * structures of process info.   Use 8 byte alignment, and new
  * elements should only be added to the end of this structure so
  * binary compatibility can be preserved.
@@ -359,7 +320,10 @@ struct kinfo_proc {
 
 #define KI_NOCPU	(~(u_int64_t)0)
 
-struct kinfo_proc2 {
+struct kinfo_proc {
+#ifndef kinfo_proc2
+#define kinfo_proc2	kinfo_proc
+#endif
 	u_int64_t p_forw;		/* PTR: linked run/sleep queue. */
 	u_int64_t p_back;
 	u_int64_t p_paddr;		/* PTR: address of proc */
@@ -374,7 +338,9 @@ struct kinfo_proc2 {
 	u_int64_t p_tsess;		/* PTR: tty session pointer */
 	u_int64_t p_ru;			/* PTR: Exit information. XXX */
 
-	int32_t	p_eflag;		/* LONG: extra kinfo_proc2 flags */
+	int32_t	p_eflag;		/* LONG: extra kinfo_proc flags */
+#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
+#define	EPROC_SLEADER	0x02	/* session leader */
 	int32_t	p_exitsig;		/* INT: signal to sent to parent on exit */
 	int32_t	p_flag;			/* INT: P_* flags. */
 
@@ -478,11 +444,11 @@ struct kinfo_proc2 {
 #if defined(_KERNEL) || defined(_LIBKVM)
 
 /*
- * Macros for filling in the bulk of a kinfo_proc2 structure, used
- * in the kernel to implement the KERN_PROC2 sysctl and in userland
+ * Macros for filling in the bulk of a kinfo_proc structure, used
+ * in the kernel to implement the KERN_PROC sysctl and in userland
  * in libkvm to implement reading from kernel crashes.  The macro
  * arguments are all pointers; by name they are:
- *	kp - target kinfo_proc2 structure
+ *	kp - target kinfo_proc structure
  *	copy_str - a function or macro invoked as copy_str(dst,src,maxlen)
  *	    that has strlcpy or memcpy semantics; the destination is
  *	    pre-filled with zeros
@@ -503,7 +469,7 @@ struct kinfo_proc2 {
 
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
-#define FILL_KPROC2(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, ps) \
+#define FILL_KPROC(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, ps) \
 do {									\
 	memset((kp), 0, sizeof(*(kp)));					\
 									\
@@ -958,12 +924,10 @@ int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
 #endif
 int sysctl_dopool(int *, u_int, char *, size_t *);
 
-void fill_eproc(struct proc *, struct eproc *);
-
 void fill_file2(struct kinfo_file2 *, struct file *, struct filedesc *,
     int, struct vnode *, struct proc *, struct proc *);
 
-void fill_kproc2(struct proc *, struct kinfo_proc2 *);
+void fill_kproc(struct proc *, struct kinfo_proc *);
 
 int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		     struct proc *);

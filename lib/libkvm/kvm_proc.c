@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.41 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.42 2011/03/12 04:54:28 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@
  * most other applications are interested only in open/close/read/nlist).
  */
 
-#define __need_process
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
@@ -97,7 +96,7 @@
 #include "kvm_private.h"
 
 /*
- * Common info from kinfo_proc and kinfo_proc2 used by helper routines.
+ * Common info from kinfo_proc used by helper routines.
  */
 struct miniproc {
 	struct	vmspace *p_vmspace;
@@ -107,25 +106,9 @@ struct miniproc {
 };
 
 /*
- * Convert from struct proc and kinfo_proc{,2} to miniproc.
+ * Convert from struct kinfo_proc to miniproc.
  */
-#define PTOMINI(kp, p) \
-	do { \
-		(p)->p_stat = (kp)->p_stat; \
-		(p)->p_pid = (kp)->p_pid; \
-		(p)->p_paddr = NULL; \
-		(p)->p_vmspace = (kp)->p_vmspace; \
-	} while (/*CONSTCOND*/0);
-
 #define KPTOMINI(kp, p) \
-	do { \
-		(p)->p_stat = (kp)->kp_proc.p_stat; \
-		(p)->p_pid = (kp)->kp_proc.p_pid; \
-		(p)->p_paddr = (kp)->kp_eproc.e_paddr; \
-		(p)->p_vmspace = (kp)->kp_proc.p_vmspace; \
-	} while (/*CONSTCOND*/0);
-
-#define KP2TOMINI(kp, p) \
 	do { \
 		(p)->p_stat = (kp)->p_stat; \
 		(p)->p_pid = (kp)->p_pid; \
@@ -134,18 +117,13 @@ struct miniproc {
 	} while (/*CONSTCOND*/0);
 
 
-ssize_t		kvm_uread(kvm_t *, const struct proc *, u_long, char *, size_t);
-
 static char	*_kvm_ureadm(kvm_t *, const struct miniproc *, u_long, u_long *);
 static ssize_t	kvm_ureadm(kvm_t *, const struct miniproc *, u_long, char *, size_t);
 
 static char	**kvm_argv(kvm_t *, const struct miniproc *, u_long, int, int);
 
-static int	kvm_deadprocs(kvm_t *, int, int, u_long, u_long, int);
 static char	**kvm_doargv(kvm_t *, const struct miniproc *, int,
 		    void (*)(struct ps_strings *, u_long *, int *));
-static int	kvm_proclist(kvm_t *, int, int, struct proc *,
-		    struct kinfo_proc *, int);
 static int	proc_verify(kvm_t *, const struct miniproc *);
 static void	ps_str_a(struct ps_strings *, u_long *, int *);
 static void	ps_str_e(struct ps_strings *, u_long *, int *);
@@ -231,261 +209,6 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	return (&kd->swapspc[offset]);
 }
 
-char *
-_kvm_uread(kvm_t *kd, const struct proc *p, u_long va, u_long *cnt)
-{
-	struct miniproc mp;
-
-	PTOMINI(p, &mp);
-	return (_kvm_ureadm(kd, &mp, va, cnt));
-}
-
-/*
- * Read proc's from memory file into buffer bp, which has space to hold
- * at most maxcnt procs.
- */
-static int
-kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
-    struct kinfo_proc *bp, int maxcnt)
-{
-	struct session sess;
-	struct eproc eproc;
-	struct proc proc;
-	struct process process;
-	struct pgrp pgrp;
-	struct tty tty;
-	int cnt = 0;
-
-	for (; cnt < maxcnt && p != NULL; p = LIST_NEXT(&proc, p_list)) {
-		if (KREAD(kd, (u_long)p, &proc)) {
-			_kvm_err(kd, kd->program, "can't read proc at %x", p);
-			return (-1);
-		}
-		if (KREAD(kd, (u_long)proc.p_p, &process)) {
-			_kvm_err(kd, kd->program, "can't read process at %x", proc.p_p);
-			return (-1);
-		}
-		if (KREAD(kd, (u_long)process.ps_cred, &eproc.e_pcred) == 0)
-			KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
-			    &eproc.e_ucred);
-
-		switch (what) {
-		case KERN_PROC_PID:
-			if (proc.p_pid != (pid_t)arg)
-				continue;
-			break;
-
-		case KERN_PROC_UID:
-			if (eproc.e_ucred.cr_uid != (uid_t)arg)
-				continue;
-			break;
-
-		case KERN_PROC_RUID:
-			if (eproc.e_pcred.p_ruid != (uid_t)arg)
-				continue;
-			break;
-
-		case KERN_PROC_ALL:
-			if (proc.p_flag & P_SYSTEM)
-				continue;
-			break;
-		}
-		/*
-		 * We're going to add another proc to the set.  If this
-		 * will overflow the buffer, assume the reason is because
-		 * nprocs (or the proc list) is corrupt and declare an error.
-		 */
-		if (cnt >= maxcnt) {
-			_kvm_err(kd, kd->program, "nprocs corrupt");
-			return (-1);
-		}
-		/*
-		 * gather eproc
-		 */
-		eproc.e_paddr = p;
-		if (KREAD(kd, (u_long)process.ps_pgrp, &pgrp)) {
-			_kvm_err(kd, kd->program, "can't read pgrp at %x",
-			    process.ps_pgrp);
-			return (-1);
-		}
-		eproc.e_sess = pgrp.pg_session;
-		eproc.e_pgid = pgrp.pg_id;
-		eproc.e_jobc = pgrp.pg_jobc;
-		if (KREAD(kd, (u_long)pgrp.pg_session, &sess)) {
-			_kvm_err(kd, kd->program, "can't read session at %x",
-			    pgrp.pg_session);
-			return (-1);
-		}
-		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL) {
-			if (KREAD(kd, (u_long)sess.s_ttyp, &tty)) {
-				_kvm_err(kd, kd->program,
-				    "can't read tty at %x", sess.s_ttyp);
-				return (-1);
-			}
-			eproc.e_tdev = tty.t_dev;
-			eproc.e_tsess = tty.t_session;
-			if (tty.t_pgrp != NULL) {
-				if (KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
-					_kvm_err(kd, kd->program,
-					    "can't read tpgrp at &x",
-					    tty.t_pgrp);
-					return (-1);
-				}
-				eproc.e_tpgid = pgrp.pg_id;
-			} else
-				eproc.e_tpgid = -1;
-		} else
-			eproc.e_tdev = NODEV;
-		eproc.e_flag = sess.s_ttyvp ? EPROC_CTTY : 0;
-		if (sess.s_leader == proc.p_p)
-			eproc.e_flag |= EPROC_SLEADER;
-		if (proc.p_wmesg)
-			(void)kvm_read(kd, (u_long)proc.p_wmesg,
-			    eproc.e_wmesg, WMESGLEN);
-
-		(void)kvm_read(kd, (u_long)proc.p_vmspace,
-		    &eproc.e_vm, sizeof(eproc.e_vm));
-
-		eproc.e_xsize = eproc.e_xrssize = 0;
-		eproc.e_xccount = eproc.e_xswrss = 0;
-
-		switch (what) {
-		case KERN_PROC_PGRP:
-			if (eproc.e_pgid != (pid_t)arg)
-				continue;
-			break;
-
-		case KERN_PROC_TTY:
-			if ((process.ps_flags & PS_CONTROLT) == 0 ||
-			    eproc.e_tdev != (dev_t)arg)
-				continue;
-			break;
-		}
-		proc.p_flag |= process.ps_flags;
-		bcopy(&proc, &bp->kp_proc, sizeof(proc));
-		bcopy(&eproc, &bp->kp_eproc, sizeof(eproc));
-		++bp;
-		++cnt;
-	}
-	return (cnt);
-}
-
-/*
- * Build proc info array by reading in proc list from a crash dump.
- * Return number of procs read.  maxcnt is the max we will read.
- */
-static int
-kvm_deadprocs(kvm_t *kd, int what, int arg, u_long a_allproc,
-    u_long a_zombproc, int maxcnt)
-{
-	struct kinfo_proc *bp = kd->procbase;
-	struct proc *p;
-	int acnt, zcnt;
-
-	if (KREAD(kd, a_allproc, &p)) {
-		_kvm_err(kd, kd->program, "cannot read allproc");
-		return (-1);
-	}
-	acnt = kvm_proclist(kd, what, arg, p, bp, maxcnt);
-	if (acnt < 0)
-		return (acnt);
-
-	if (KREAD(kd, a_zombproc, &p)) {
-		_kvm_err(kd, kd->program, "cannot read zombproc");
-		return (-1);
-	}
-	zcnt = kvm_proclist(kd, what, arg, p, bp + acnt, maxcnt - acnt);
-	if (zcnt < 0)
-		zcnt = 0;
-
-	return (acnt + zcnt);
-}
-
-struct kinfo_proc *
-kvm_getprocs(kvm_t *kd, int op, int arg, int *cnt)
-{
-	int mib[4], st, nprocs;
-	size_t size;
-
-	if (kd->procbase != 0) {
-		free((void *)kd->procbase);
-		/*
-		 * Clear this pointer in case this call fails.  Otherwise,
-		 * kvm_close() will free it again.
-		 */
-		kd->procbase = 0;
-	}
-	if (ISALIVE(kd)) {
-		size = 0;
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROC;
-		mib[2] = op;
-		mib[3] = arg;
-		st = sysctl(mib, 4, NULL, &size, NULL, 0);
-		if (st == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getprocs");
-			return (0);
-		}
-		kd->procbase = _kvm_malloc(kd, size);
-		if (kd->procbase == 0)
-			return (0);
-		st = sysctl(mib, 4, kd->procbase, &size, NULL, 0);
-		if (st == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getprocs");
-			return (0);
-		}
-		if (size % sizeof(struct kinfo_proc) != 0) {
-			_kvm_err(kd, kd->program,
-			    "proc size mismatch (%d total, %d chunks)",
-			    size, sizeof(struct kinfo_proc));
-			return (0);
-		}
-		nprocs = size / sizeof(struct kinfo_proc);
-	} else {
-		struct nlist nl[4], *p;
-
-		memset(nl, 0, sizeof(nl));
-		nl[0].n_name = "_nprocs";
-		nl[1].n_name = "_allproc";
-		nl[2].n_name = "_zombproc";
-		nl[3].n_name = NULL;
-
-		if (kvm_nlist(kd, nl) != 0) {
-			for (p = nl; p->n_type != 0; ++p)
-				;
-			_kvm_err(kd, kd->program,
-			    "%s: no such symbol", p->n_name);
-			return (0);
-		}
-		if (KREAD(kd, nl[0].n_value, &nprocs)) {
-			_kvm_err(kd, kd->program, "can't read nprocs");
-			return (0);
-		}
-		size = nprocs * sizeof(struct kinfo_proc);
-		kd->procbase = _kvm_malloc(kd, size);
-		if (kd->procbase == 0)
-			return (0);
-
-		nprocs = kvm_deadprocs(kd, op, arg, nl[1].n_value,
-		    nl[2].n_value, nprocs);
-#ifdef notdef
-		size = nprocs * sizeof(struct kinfo_proc);
-		(void)realloc(kd->procbase, size);
-#endif
-	}
-	*cnt = nprocs;
-	return (kd->procbase);
-}
-
-void
-_kvm_freeprocs(kvm_t *kd)
-{
-	if (kd->procbase) {
-		free(kd->procbase);
-		kd->procbase = 0;
-	}
-}
-
 void *
 _kvm_realloc(kvm_t *kd, void *p, size_t n)
 {
@@ -511,7 +234,7 @@ kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
 	int len, cc;
 
 	/*
-	 * Check that there aren't an unreasonable number of agruments,
+	 * Check that there aren't an unreasonable number of arguments,
 	 * and that the address is in user space.
 	 */
 	if (narg > ARG_MAX || addr < VM_MIN_ADDRESS || addr >= VM_MAXUSER_ADDRESS)
@@ -745,9 +468,15 @@ kvm_getargv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 	struct miniproc p;
 
 	if (ISALIVE(kd))
-		return (kvm_arg_sysctl(kd, kp->kp_proc.p_pid, nchr, 0));
+		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 0));
 	KPTOMINI(kp, &p);
 	return (kvm_doargv(kd, &p, nchr, ps_str_a));
+}
+
+char **
+kvm_getargv2(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
+{
+	return (kvm_getargv(kd, kp, nchr));
 }
 
 char **
@@ -756,31 +485,15 @@ kvm_getenvv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 	struct miniproc p;
 
 	if (ISALIVE(kd))
-		return (kvm_arg_sysctl(kd, kp->kp_proc.p_pid, nchr, 1));
+		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 1));
 	KPTOMINI(kp, &p);
 	return (kvm_doargv(kd, &p, nchr, ps_str_e));
 }
 
 char **
-kvm_getargv2(kvm_t *kd, const struct kinfo_proc2 *kp, int nchr)
+kvm_getenvv2(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
-	struct miniproc p;
-
-	if (ISALIVE(kd))
-		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 0));
-	KP2TOMINI(kp, &p);
-	return (kvm_doargv(kd, &p, nchr, ps_str_a));
-}
-
-char **
-kvm_getenvv2(kvm_t *kd, const struct kinfo_proc2 *kp, int nchr)
-{
-	struct miniproc p;
-
-	if (ISALIVE(kd))
-		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 1));
-	KP2TOMINI(kp, &p);
-	return (kvm_doargv(kd, &p, nchr, ps_str_e));
+	return (kvm_getenvv(kd, kp, nchr));
 }
 
 /*
@@ -809,14 +522,4 @@ kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long uva, char *buf,
 		len -= cc;
 	}
 	return (ssize_t)(cp - buf);
-}
-
-ssize_t
-kvm_uread(kvm_t *kd, const struct proc *p, u_long uva, char *buf,
-    size_t len)
-{
-	struct miniproc mp;
-
-	PTOMINI(p, &mp);
-	return (kvm_ureadm(kd, &mp, uva, buf, len));
 }

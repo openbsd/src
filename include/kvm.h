@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.h,v 1.14 2009/06/07 03:09:34 millert Exp $	*/
+/*	$OpenBSD: kvm.h,v 1.15 2011/03/12 04:54:28 guenther Exp $	*/
 /*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
@@ -54,24 +54,19 @@ __BEGIN_DECLS
 typedef struct __kvm kvm_t;
 
 struct kinfo_proc;
-struct kinfo_proc2;
 int	  kvm_close(kvm_t *);
 int	  kvm_dump_inval(kvm_t *);
 int	  kvm_dump_mkheader(kvm_t *, off_t);
 int	  kvm_dump_wrtheader(kvm_t *, FILE *, int);
 char	**kvm_getargv(kvm_t *, const struct kinfo_proc *, int);
-char	**kvm_getargv2(kvm_t *, const struct kinfo_proc2 *, int);
 char	**kvm_getenvv(kvm_t *, const struct kinfo_proc *, int);
-char	**kvm_getenvv2(kvm_t *, const struct kinfo_proc2 *, int);
 char	 *kvm_geterr(kvm_t *);
 int	  kvm_getloadavg(kvm_t *, double [], int);
 char	 *kvm_getfiles(kvm_t *, int, int, int *);
 struct kinfo_file2 *
 	  kvm_getfile2(kvm_t *, int, int, size_t, int *);
 struct kinfo_proc *
-	  kvm_getprocs(kvm_t *, int, int, int *);
-struct kinfo_proc2 *
-	  kvm_getproc2(kvm_t *, int, int, size_t, int *);
+	  kvm_getprocs(kvm_t *, int, int, size_t, int *);
 int	  kvm_nlist(kvm_t *, struct nlist *);
 kvm_t	 *kvm_open(const char *, const char *, const char *, int, const char *);
 kvm_t	 *kvm_openfiles(const char *, const char *, const char *,
@@ -80,6 +75,17 @@ ssize_t	  kvm_read(kvm_t *, unsigned long, void *, size_t)
 		__attribute__((__bounded__(__buffer__,3,4)));
 ssize_t	  kvm_write(kvm_t *, unsigned long, const void *, size_t)
 		__attribute__((__bounded__(__buffer__,3,4)));
+
+/*
+ * Old names that will disappear in a few revisions
+ */
+#ifndef kinfo_proc2
+#define kinfo_proc2	kinfo_proc
+#endif
+char	**kvm_getargv2(kvm_t *, const struct kinfo_proc *, int);
+char	**kvm_getenvv2(kvm_t *, const struct kinfo_proc *, int);
+struct kinfo_proc *
+	  kvm_getproc2(kvm_t *, int, int, size_t, int *);
 
 __END_DECLS
 

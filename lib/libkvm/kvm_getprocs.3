@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.13 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.14 2011/03/12 04:54:28 guenther Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 12 2011 $
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
@@ -50,17 +50,17 @@
 .Fd #include <sys/sysctl.h>
 .Fd #include <kvm.h>
 .Ft struct kinfo_proc *
-.Fn kvm_getprocs "kvm_t *kd" "int op" "int arg" "int *cnt"
+.Fn kvm_getprocs "kvm_t *kd" "int op" "int arg" "size_t elemsize" "int *cnt"
 .Ft char **
 .Fn kvm_getargv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Ft char **
 .Fn kvm_getenvv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
-.Ft struct kinfo_proc2 *
+.Ft struct kinfo_proc *
 .Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "size_t elemsize" "int *cnt"
 .Ft char **
-.Fn kvm_getargv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
+.Fn kvm_getargv2 "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Ft char **
-.Fn kvm_getenvv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
+.Fn kvm_getenvv2 "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Sh DESCRIPTION
 .Fn kvm_getprocs
 returns a (sub-)set of active processes in the kernel indicated by
@@ -100,6 +100,17 @@ processes with real user ID
 .Fa arg
 .El
 .Pp
+Only the first
+.Fa elemsize
+bytes of each array entry are returned.
+If the size of the
+.Vt kinfo_proc
+structure increases in size in a future release of
+.Ox ,
+the library will only return the requested amount of data for
+each array entry and programs that use
+.Fn kvm_getprocs
+will continue to function without the need for recompilation.
 The number of processes found is returned in the reference parameter
 .Fa cnt .
 The processes are returned as a contiguous array of
@@ -162,35 +173,16 @@ function is similar to
 but returns the vector of environment strings.
 This data is also alterable by the process.
 .Pp
-.Fn kvm_getproc2
-is similar to
-.Fn kvm_getprocs
-but returns an array of
-.Vt kinfo_proc2
-structures.
-Additionally, only the first
-.Fa elemsize
-bytes of each array entry are returned.
-If the size of the
-.Vt kinfo_proc2
-structure increases in size in a future release of
-.Ox ,
-the kernel will only return the requested amount of data for
-each array entry and programs that use
-.Fn kvm_getproc2
-will continue to function without the need for recompilation.
-.Pp
-The
-.Fn kvm_getargv2
+.Fn kvm_getproc2 ,
+.Fn kvm_getargv2 ,
 and
 .Fn kvm_getenvv2
-functions are equivalents to the
-.Fn kvm_getargv
+functions are obsolete equivalents for
+.Fn kvm_getprocs ,
+.Fn kvm_getargv ,
 and
 .Fn kvm_getenvv
-functions that use a
-.Vt kinfo_proc2
-structure to specify the process.
+and have identical signatures and behavior.
 .Sh RETURN VALUES
 .Fn kvm_getprocs ,
 .Fn kvm_getargv ,
