@@ -1,4 +1,4 @@
-/*	$OpenBSD: divrem.m4,v 1.2 2003/06/02 20:18:32 millert Exp $	*/
+/*	$OpenBSD: divrem.m4,v 1.3 2011/03/12 18:50:07 deraadt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@ define(V, `%o5')
 
 /* m4 reminder: ifelse(a,b,c,d) => if a is b, then c, else d */
 define(T, `%g1')
-define(SC, `%g7')
+define(SC, `%g5')
 ifelse(S, `true', `define(SIGN, `%g6')')
 
 /*

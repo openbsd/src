@@ -1,4 +1,4 @@
-/*	$OpenBSD: divrem.m4,v 1.7 2007/11/24 19:47:05 deraadt Exp $	*/
+/*	$OpenBSD: divrem.m4,v 1.8 2011/03/12 18:50:07 deraadt Exp $	*/
 /*	$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ define(V, `%o5')
 
 /* m4 reminder: ifelse(a,b,c,d) => if a is b, then c, else d */
 define(T, `%g1')
-define(SC, `%g7')
+define(SC, `%g5')
 ifelse(S, `true', `define(SIGN, `%g6')')
 
 /*
