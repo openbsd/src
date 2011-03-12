@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.42 2010/11/18 21:16:57 miod Exp $
+#	$OpenBSD: bsd.README,v 1.43 2011/03/12 05:12:14 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -7,7 +7,6 @@ source tree.  The files are installed in /usr/share/mk, and are, by
 convention, named with the suffix ".mk".
 
 bsd.dep.mk		- handle Makefile dependencies
-bsd.doc.mk		- building troff system documents
 bsd.lib.mk		- support for building libraries
 bsd.lkm.mk		- building loadable kernel modules
 bsd.man.mk		- installing manual pages and their links
