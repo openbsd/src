@@ -47,7 +47,7 @@
 ./usr/lib/libiberty.so.10.1
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
-./usr/lib/libkvm.so.9.1
+./usr/lib/libkvm.so.10.0
 ./usr/lib/libm.so.5.2
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0

@@ -2000,9 +2000,13 @@
 ./usr/share/man/cat2/getsockopt.0
 ./usr/share/man/cat2/gettimeofday.0
 ./usr/share/man/cat2/getuid.0
+./usr/share/man/cat2/i386/i386_get_fsbase.0
+./usr/share/man/cat2/i386/i386_get_gsbase.0
 ./usr/share/man/cat2/i386/i386_get_ioperm.0
 ./usr/share/man/cat2/i386/i386_get_ldt.0
 ./usr/share/man/cat2/i386/i386_iopl.0
+./usr/share/man/cat2/i386/i386_set_fsbase.0
+./usr/share/man/cat2/i386/i386_set_gsbase.0
 ./usr/share/man/cat2/i386/i386_set_ioperm.0
 ./usr/share/man/cat2/i386/i386_set_ldt.0
 ./usr/share/man/cat2/i386/i386_vm86.0

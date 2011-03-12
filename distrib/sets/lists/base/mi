@@ -3011,7 +3011,6 @@
 ./usr/share/mk
 ./usr/share/mk/bsd.README
 ./usr/share/mk/bsd.dep.mk
-./usr/share/mk/bsd.doc.mk
 ./usr/share/mk/bsd.lib.mk
 ./usr/share/mk/bsd.lkm.mk
 ./usr/share/mk/bsd.man.mk
