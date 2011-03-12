@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.14 2011/03/11 15:17:08 pirofti Exp $	*/
+/*	$OpenBSD: endian.h,v 1.15 2011/03/12 04:03:04 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #define	__swap64md	__swap64gen
 
-#define	__swap32md(x) ({						\
+#define	__swap32md(x) __statement({					\
 	u_int32_t __swap32md_y, __swap32md_x = (x);			\
 									\
 	__asm ("rotl $-8, %1, %0; insv %0, $16, $8, %0; "		\
@@ -40,7 +40,7 @@
 	__swap32md_y;							\
 })
 
-#define __swap16md(x) ({						\
+#define __swap16md(x) __statement({					\
 	u_int16_t __swap16md_y, __swap16md_x = (x);			\
 									\
 	__asm ("rotl $8, %1, %0; rotl $-8, %1, r1; movb r1, %0; "	\
