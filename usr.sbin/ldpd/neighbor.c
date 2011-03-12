@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.23 2011/01/10 12:28:25 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.24 2011/03/12 01:57:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -236,7 +236,8 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
+nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface,
+    struct in_addr a)
 {
 	struct nbr	*nbr;
 
@@ -249,6 +250,7 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 	nbr->id.s_addr = nbr_id;
 	nbr->lspace = lspace;
 	nbr->iface = iface;
+	nbr->addr = a;
 
 	/* get next unused peerid */
 	while (nbr_find_peerid(++peercnt))
