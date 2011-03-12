@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.151 2010/11/30 19:28:59 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.152 2011/03/12 03:52:26 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1692,6 +1692,8 @@ pmap_switch(struct proc *o, struct proc *p)
 	 * correct code segment X limit) in the GDT.
 	 */
 	self->ci_gdt[GUCODE_SEL].sd = pmap->pm_codeseg;
+	self->ci_gdt[GUFS_SEL].sd = pcb->pcb_threadsegs[TSEG_FS];
+	self->ci_gdt[GUGS_SEL].sd = pcb->pcb_threadsegs[TSEG_GS];
 
 	lldt(pcb->pcb_ldt_sel);
 }
@@ -2297,7 +2299,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 			md_prot |= PG_u;
 		else if (va < VM_MAX_ADDRESS)
 			/* XXX: write-prot our PTES? never! */
-			md_prot |= (PG_u | PG_RW);
+			md_prot |= PG_RW;
 
 		spte = &ptes[atop(va)];
 		epte = &ptes[atop(blockend)];
@@ -2576,7 +2578,7 @@ enter_now:
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
-		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
+		npte |= PG_RW;	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
 	if (flags & VM_PROT_READ)

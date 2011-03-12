@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.487 2011/01/27 21:27:44 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.488 2011/03/12 03:52:26 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2282,8 +2282,8 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
@@ -2708,25 +2708,33 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 
 	/*
 	 * Reset the code segment limit to I386_MAX_EXE_ADDR in the pmap;
-	 * this gets copied into the GDT and LDT for {G,L}UCODE_SEL by
-	 * pmap_activate().
+	 * this gets copied into the GDT for GUCODE_SEL by pmap_activate().
+	 * Similarly, reset the base of each of the two thread data
+	 * segments to zero in the pcb; they'll get copied into the
+	 * GDT for GUFS_SEL and GUGS_SEL.
 	 */
 	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&pcb->pcb_threadsegs[TSEG_FS], 0,
+	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&pcb->pcb_threadsegs[TSEG_GS], 0,
+	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
 
 	/*
 	 * And update the GDT since we return to the user process
 	 * by leaving the syscall (we don't do another pmap_activate()).
 	 */
 	curcpu()->ci_gdt[GUCODE_SEL].sd = pmap->pm_codeseg;
+	curcpu()->ci_gdt[GUFS_SEL].sd = pcb->pcb_threadsegs[TSEG_FS];
+	curcpu()->ci_gdt[GUGS_SEL].sd = pcb->pcb_threadsegs[TSEG_GS];
 
 	/*
 	 * And reset the hiexec marker in the pmap.
 	 */
 	pmap->pm_hiexec = 0;
 
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;
@@ -2928,6 +2936,10 @@ init386(paddr_t first_avail)
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
 	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 0, 0);
+	setsegment(&gdt[GUFS_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GUGS_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMRWA, SEL_UPL, 1, 1);
 
 	/* exceptions */
 	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);

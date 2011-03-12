@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.130 2010/07/03 04:54:32 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.131 2011/03/12 03:52:26 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -112,6 +112,7 @@
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movw	%ax,%ds		; \
 	movw	%ax,%es		; \
+	xorl	%eax,%eax	; /* $GSEL(GNULL_SEL, SEL_KPL) == 0 */ \
 	movw	%ax,%gs		; \
 	pushl	%fs		; \
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
@@ -1495,7 +1496,7 @@ NENTRY(resume_pop_ds)
 	movw	%ax,%es
 NENTRY(resume_pop_es)
 	pushl	%gs
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	xorl	%eax,%eax	/* $GSEL(GNULL_SEL, SEL_KPL) == 0 */
 	movw	%ax,%gs
 NENTRY(resume_pop_gs)
 	pushl	%fs

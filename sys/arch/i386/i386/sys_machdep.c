@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.27 2010/11/20 20:21:13 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.28 2011/03/12 03:52:26 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -72,6 +72,8 @@ extern struct vm_map *kernel_map;
 int i386_iopl(struct proc *, void *, register_t *);
 int i386_get_ioperm(struct proc *, void *, register_t *);
 int i386_set_ioperm(struct proc *, void *, register_t *);
+int i386_get_threadbase(struct proc *, void *, int);
+int i386_set_threadbase(struct proc *, void *, int);
 
 #ifdef USER_LDT
 
@@ -395,6 +397,41 @@ i386_set_ioperm(struct proc *p, void *args, register_t *retval)
 }
 
 int
+i386_get_threadbase(struct proc *p, void *args, int which)
+{
+	struct segment_descriptor *sdp =
+	    &p->p_addr->u_pcb.pcb_threadsegs[which];
+	uint32_t base = sdp->sd_hibase << 24 | sdp->sd_lobase;
+
+	return copyout(&base, args, sizeof(base));
+}
+
+int
+i386_set_threadbase(struct proc *p, void *args, int which)
+{
+	int error;
+	uint32_t base;
+	struct segment_descriptor *sdp;
+
+	if ((error = copyin(args, &base, sizeof(base))) != 0)
+		return error;
+
+	/*
+	 * We can't place a limit on the segment used by the library
+	 * thread register (%gs) because the ELF ABI for i386 places
+	 * data structures both before and after base pointer, using
+	 * negative offsets for some bits (the static (load-time)
+	 * TLS slots) and non-negative for others (the TCB block,
+	 * including the pointer to the TLS dynamic thread vector).
+	 * Protection must be provided by the paging subsystem.
+	 */
+	sdp = &p->p_addr->u_pcb.pcb_threadsegs[which];
+	setsegment(sdp, (void *)base, 0xfffff, SDT_MEMRWA, SEL_UPL, 1, 1);
+	curcpu()->ci_gdt[which == TSEG_FS ? GUFS_SEL : GUGS_SEL].sd = *sdp;
+	return 0;
+}
+
+int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
@@ -431,6 +468,22 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		error = i386_vm86(p, SCARG(uap, parms), retval);
 		break;
 #endif
+
+	case I386_GET_FSBASE:
+		error = i386_get_threadbase(p, SCARG(uap, parms), TSEG_FS);
+		break;
+
+	case I386_SET_FSBASE:
+		error = i386_set_threadbase(p, SCARG(uap, parms), TSEG_FS);
+		break;
+
+	case I386_GET_GSBASE:
+		error = i386_get_threadbase(p, SCARG(uap, parms), TSEG_GS);
+		break;
+
+	case I386_SET_GSBASE:
+		error = i386_set_threadbase(p, SCARG(uap, parms), TSEG_GS);
+		break;
 
 	default:
 		error = EINVAL;
