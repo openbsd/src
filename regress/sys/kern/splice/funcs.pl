@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.2 2011/02/14 22:36:15 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.3 2011/03/12 18:58:54 bluhm Exp $
 
-# Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -194,10 +194,19 @@ sub relay_splice {
 		setsockopt(STDIN, SOL_SOCKET, SO_SPLICE, $sosplice)
 		    or die ref($self), " splice stdin to stdout failed: $!";
 
-		my $rin = '';
-		vec($rin, fileno(STDIN), 1) = 1;
-		select($rin, undef, undef, undef)
-		    or die ref($self), " select failed: $!";
+		if ($self->{readblocking}) {
+			# block by reading from the source socket
+			defined(my $read = sysread(STDIN, my $buf, 2**16))
+			    or die ref($self), " read blocking failed: $!";
+			$read > 0 and die ref($self),
+			    " read blocking has data: $read";
+			print STDERR "Read\n";
+		} else {
+			my $rin = '';
+			vec($rin, fileno(STDIN), 1) = 1;
+			select($rin, undef, undef, undef)
+			    or die ref($self), " select failed: $!";
+		}
 
 		my $error = getsockopt(STDIN, SOL_SOCKET, SO_ERROR)
 		    or die ref($self), " get error from stdin failed: $!";
@@ -221,7 +230,7 @@ sub relay_splice {
 	} elsif ($max && $max > $len && $splicelen) {
 		die ref($self), " max $max greater than len $len";
 	} else {
-		defined(my $read  = sysread(STDIN, my $buf, 2**16))
+		defined(my $read = sysread(STDIN, my $buf, 2**16))
 		    or die ref($self), " sysread stdin failed: $!";
 		$read > 0
 		    and die ref($self), " sysread stdin has data: $read";
@@ -297,6 +306,7 @@ sub shutout {
 
 sub read_char {
 	my $self = shift;
+	my $max = shift // $self->{max};
 
 	my $ctx = Digest::MD5->new();
 	my $len = 0;
@@ -304,6 +314,10 @@ sub read_char {
 		$len += length($_);
 		$ctx->add($_);
 		print STDERR ".";
+		if ($max && $len >= $max) {
+			print STDERR "\nMax";
+			last;
+		}
 	}
 	print STDERR "\n";
 
