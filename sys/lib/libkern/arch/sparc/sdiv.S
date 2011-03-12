@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: sdiv.S,v 1.1 2007/11/25 18:25:36 deraadt Exp $	*/
+/*	$OpenBSD: sdiv.S,v 1.2 2011/03/12 18:51:31 deraadt Exp $	*/
 /*	$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $	*/
 
 /*
@@ -156,15 +156,15 @@ FUNC(.div)
 	1:
 		cmp	%o5, %g1
 		bgeu	3f
-		mov	1, %g7
+		mov	1, %g5
 		sll	%o5, 4, %o5
 		b	1b
 		inc	%o4
 
-	! Now compute %g7.
+	! Now compute %g5.
 	2:	addcc	%o5, %o5, %o5
 		bcc	Lnot_too_big
-		inc	%g7
+		inc	%g5
 
 		! We get here if the %o1 overflowed while shifting.
 		! This means that %o3 has the high-order bit set.
@@ -173,7 +173,7 @@ FUNC(.div)
 		srl	%o5, 1, %o5		! rest of %o5
 		add	%o5, %g1, %o5
 		b	Ldo_single_div
-		dec	%g7
+		dec	%g5
 
 	Lnot_too_big:
 	3:	cmp	%o5, %o3
@@ -185,7 +185,7 @@ FUNC(.div)
 	/* (I do not understand this) */
 	! %o5 > %o3: went too far: back up 1 step
 	!	srl	%o5, 1, %o5
-	!	dec	%g7
+	!	dec	%g5
 	! do single-bit divide steps
 	!
 	! We have to be careful here.  We know that %o3 >= %o5, so we can do the
@@ -195,7 +195,7 @@ FUNC(.div)
 	! division loop will mess up the first time around.
 	! So we unroll slightly...
 	Ldo_single_div:
-		deccc	%g7
+		deccc	%g5
 		bl	Lend_regular_divide
 		nop
 		sub	%o3, %o5, %o3
@@ -215,7 +215,7 @@ FUNC(.div)
 		dec	%o2
 	2:
 	Lend_single_divloop:
-		deccc	%g7
+		deccc	%g5
 		bge	Lsingle_divloop
 		tst	%o3
 		b,a	Lend_regular_divide
