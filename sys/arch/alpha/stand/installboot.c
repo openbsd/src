@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.15 2009/08/24 08:52:13 jasper Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.16 2011/03/13 00:13:51 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ int	max_block_count;
 
 char		*loadprotoblocks(char *, long *);
 int		loadblocknums(char *, int, unsigned long);
-static void	devread(int, void *, daddr_t, size_t, char *);
+static void	devread(int, void *, daddr32_t, size_t, char *);
 static void	usage(void);
 int		main(int, char *[]);
 
@@ -302,7 +302,7 @@ loadprotoblocks(char *fname, long *size)
 }
 
 static void
-devread(int fd, void *buf, daddr_t blk, size_t size, char *msg)
+devread(int fd, void *buf, daddr32_t blk, size_t size, char *msg)
 {
 	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk))
 		err(1, "%s: devread: lseek", msg);
@@ -321,7 +321,7 @@ loadblocknums(char *boot, int devfd, unsigned long partoffset)
 	struct	statfs	statfsbuf;
 	struct fs	*fs;
 	char		*buf;
-	daddr_t		blk, *ap;
+	daddr32_t	blk, *ap;
 	struct ufs1_dinode	*ip;
 	int32_t		cksum;
 
@@ -426,7 +426,7 @@ loadblocknums(char *boot, int devfd, unsigned long partoffset)
 	blk = ip->di_ib[0];
 	devread(devfd, buf, blk + partoffset, fs->fs_bsize,
 	    "indirect block");
-	ap = (daddr_t *)buf;
+	ap = (daddr32_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
 		bbinfop->blocks[i] = blk + partoffset;

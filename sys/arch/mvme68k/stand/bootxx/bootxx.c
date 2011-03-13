@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.7 2003/08/20 00:24:43 deraadt Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.8 2011/03/13 00:13:53 deraadt Exp $ */
 /*	$NetBSD: bootxx.c,v 1.5 1995/10/13 21:44:57 gwr Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 int     	block_size = 512;	/* default */
 int     	block_count = MAXBLOCKNUM;	/* length of table */
-daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
+daddr32_t 	block_table[MAXBLOCKNUM] = { 0 };
 
 extern		char *version;
 

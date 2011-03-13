@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.9 2010/11/20 13:10:42 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.10 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -74,14 +74,14 @@ struct nlist nl[] = {
 	{ {SYMNAME("block_size")} },
 	{ {NULL} }
 };
-daddr_t	*block_table;		/* block number array in prototype image */
+daddr32_t *block_table;		/* block number array in prototype image */
 int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
 char		*loadprotoblocks(char *, size_t *);
 int		loadblocknums(char *, int);
-static void	devread(int, void *, daddr_t, size_t, char *);
+static void	devread(int, void *, daddr32_t, size_t, char *);
 static void	usage(void);
 int 		main(int, char *[]);
 
@@ -283,7 +283,7 @@ loadprotoblocks(fname, size)
 	}
 	(void)close(fd);
 
-	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value - st);
+	block_table = (daddr32_t *) (bp + nl[X_BLOCKTABLE].n_value - st);
 	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value - st);
 	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value - st);
 	if ((int)(u_long)block_table & 3) {
@@ -342,7 +342,7 @@ static void
 devread(fd, buf, blk, size, msg)
 	int	fd;
 	void	*buf;
-	daddr_t	blk;
+	daddr32_t	blk;
 	size_t	size;
 	char	*msg;
 {
@@ -365,7 +365,7 @@ int	devfd;
 	struct	statfs	statfsbuf;
 	struct fs	*fs;
 	char		*buf;
-	daddr_t		blk, *ap;
+	daddr32_t		blk, *ap;
 	struct ufs1_dinode	*ip;
 	int		ndb;
 
@@ -444,7 +444,7 @@ int	devfd;
 		printf("%s: block numbers (indirect): ", boot);
 	blk = ip->di_ib[0];
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
-	ap = (daddr_t *)buf;
+	ap = (daddr32_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
 		block_table[i] = blk;

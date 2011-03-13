@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.8 2010/04/23 15:25:20 jsing Exp $	*/
+/*	$OpenBSD: wd.c,v 1.9 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -263,13 +263,13 @@ int
 wdstrategy(f, rw, dblk, size, buf, rsize)
 	void *f;
 	int rw;
-	daddr_t dblk;
+	daddr32_t dblk;
 	size_t size;
 	void *buf;
 	size_t *rsize;
 {
 	int i, nsect;
-	daddr_t blkno;
+	daddr32_t blkno;
 	struct wd_softc *wd = f;
 
 	if (size == 0)

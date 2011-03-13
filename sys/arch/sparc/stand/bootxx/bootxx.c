@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.6 2010/06/29 21:33:54 miod Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.2 1997/09/14 19:28:17 pk Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct open_file	io;
 #define MAXBLOCKNUM	256	/* enough for a 2MB boot program (bs 8K) */
 int32_t			block_size = 0;
 int32_t			block_count = MAXBLOCKNUM;
-daddr_t			block_table[MAXBLOCKNUM] = { 0 };
+daddr32_t		block_table[MAXBLOCKNUM] = { 0 };
 
 
 void	loadboot(struct open_file *, caddr_t);
@@ -89,7 +89,7 @@ loadboot(f, addr)
 	register int	i;
 	register char	*buf;
 	size_t		n;
-	daddr_t		blk;
+	daddr32_t	blk;
 
 	/*
 	 * Allocate a buffer that we can map into DVMA space; only

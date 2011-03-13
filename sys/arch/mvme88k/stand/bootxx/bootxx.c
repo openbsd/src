@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.8 2008/09/19 20:18:03 miod Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.9 2011/03/13 00:13:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -63,7 +63,7 @@
  */
 size_t     	block_size = 512;	/* default */
 int     	block_count = MAXBLOCKNUM;	/* length of table */
-daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
+daddr32_t 	block_table[MAXBLOCKNUM] = { 0 };
 
 void	bugexec(void (*)());
 int	copyboot(struct open_file *, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.19 2008/01/06 11:17:18 otto Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.20 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -88,14 +88,14 @@ struct file {
 					   level i */
 	size_t		f_blksize[NIADDR];
 					/* size of buffer */
-	daddr_t		f_blkno[NIADDR];/* disk address of block in buffer */
+	daddr32_t	f_blkno[NIADDR];/* disk address of block in buffer */
 	char		*f_buf;		/* buffer for data block */
 	size_t		f_buf_size;	/* size of data block */
-	daddr_t		f_buf_blkno;	/* block number of data block */
+	daddr32_t	f_buf_blkno;	/* block number of data block */
 };
 
 static int	read_inode(ino_t, struct open_file *);
-static int	block_map(struct open_file *, daddr_t, daddr_t *);
+static int	block_map(struct open_file *, daddr32_t, daddr32_t *);
 static int	buf_read_file(struct open_file *, char **, size_t *);
 static int	search_directory(char *, struct open_file *, ino_t *);
 #ifdef COMPAT_UFS
@@ -120,7 +120,7 @@ read_inode(ino_t inumber, struct open_file *f)
 	buf = alloc(fs->fs_bsize);
 	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-	    fsbtodb(fs, (daddr_t)ino_to_fsba(fs, inumber)), fs->fs_bsize,
+	    fsbtodb(fs, (daddr32_t)ino_to_fsba(fs, inumber)), fs->fs_bsize,
 	    buf, &rsize);
 	if (rc)
 		goto out;
@@ -157,10 +157,10 @@ out:
  * contains that block.
  */
 static int
-block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
+block_map(struct open_file *f, daddr32_t file_block, daddr32_t *disk_block_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	daddr_t ind_block_num, *ind_p;
+	daddr32_t ind_block_num, *ind_p;
 	struct fs *fs = fp->f_fs;
 	int level, idx, rc;
 
@@ -234,7 +234,7 @@ block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
 			fp->f_blkno[level] = ind_block_num;
 		}
 
-		ind_p = (daddr_t *)fp->f_blk[level];
+		ind_p = (daddr32_t *)fp->f_blk[level];
 
 		if (level > 0) {
 			idx = file_block / fp->f_nindir[level - 1];
@@ -258,7 +258,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
-	daddr_t file_block, disk_block;
+	daddr32_t file_block, disk_block;
 	size_t block_size;
 	long off;
 	int rc;
@@ -485,12 +485,12 @@ ufs_open(char *path, struct open_file *f)
 				 * Read file for symbolic link
 				 */
 				size_t buf_size;
-				daddr_t	disk_block;
+				daddr32_t disk_block;
 				struct fs *fs = fp->f_fs;
 
 				if (!buf)
 					buf = alloc(fs->fs_bsize);
-				rc = block_map(f, (daddr_t)0, &disk_block);
+				rc = block_map(f, (daddr32_t)0, &disk_block);
 				if (rc)
 					goto out;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe_net.h,v 1.2 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: pxe_net.h,v 1.3 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -34,4 +34,4 @@
 int	net_open(struct open_file *, ...);
 int	net_close(struct open_file *);
 int	net_ioctl(struct open_file *, u_long, void *);
-int	net_strategy(void *, int , daddr_t , size_t, void *, size_t *);
+int	net_strategy(void *, int , daddr32_t , size_t, void *, size_t *);

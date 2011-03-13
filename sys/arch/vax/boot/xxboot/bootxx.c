@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.10 2003/08/15 23:16:30 deraadt Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.11 2011/03/13 00:13:53 deraadt Exp $ */
 /* $NetBSD: bootxx.c,v 1.16 2002/03/29 05:45:08 matt Exp $ */
 
 /*-
@@ -208,7 +208,7 @@ struct rom_softc {
        int unit;
 } rom_softc;
 
-int    romstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int    romstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int romopen(struct open_file *, int, int, int, int);
 struct devsw   devsw[] = {
        SADEV("rom", romstrategy, romopen, nullsys, noioctl),
@@ -273,7 +273,7 @@ int
 romstrategy(sc, func, dblk, size, buf, rsize)
 	void    *sc;
 	int     func;
-	daddr_t dblk;
+	daddr32_t dblk;
 	size_t	size;
 	void    *buf;
 	size_t	*rsize;

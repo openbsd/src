@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_tape.c,v 1.3 2002/03/14 03:15:56 millert Exp $	*/
+/*	$OpenBSD: dev_tape.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: dev_tape.c,v 1.2 1995/10/17 22:58:20 gwr Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ int
 tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	void	*devdata;
 	int	flag;
-	daddr_t	dblk;
+	daddr32_t	dblk;
 	u_int	size;
 	char	*buf;
 	u_int	*rsize;

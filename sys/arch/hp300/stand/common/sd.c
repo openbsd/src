@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ int	sdgetinfo(struct sd_softc *);
 int	sdinit(int, int);
 int	sdopen(struct open_file *, int, int, int);
 void	sdreset(int, int);
-int	sdstrategy(struct sd_softc *, int, daddr_t, size_t, void *, size_t *);
+int	sdstrategy(struct sd_softc *, int, daddr32_t, size_t, void *, size_t *);
 
 int
 sdinit(int ctlr, int unit)
@@ -215,14 +215,14 @@ sdclose(struct open_file *f)
 }
 
 int
-sdstrategy(struct sd_softc *ss, int func, daddr_t dblk, size_t size,
+sdstrategy(struct sd_softc *ss, int func, daddr32_t dblk, size_t size,
     void *v_buf, size_t *rsize)
 {
 	char *buf = v_buf;
 	int ctlr = ss->sc_ctlr;
 	int unit = ss->sc_unit;
 	u_int nblk = size >> ss->sc_blkshift;
-	daddr_t blk;
+	daddr32_t blk;
 	char stat;
 
 	if (size == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ra.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: ra.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $ */
 /*	$NetBSD: ra.c,v 1.11 2002/06/04 15:13:55 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -258,7 +258,7 @@ igen:	uda.uda_cmd.mscp_opcode = cmd;
 }
 
 int
-rastrategy(void *f, int func, daddr_t dblk,
+rastrategy(void *f, int func, daddr32_t dblk,
     size_t size, void *buf, size_t *rsize)
 {
 	u_int	pfnum, mapnr, nsize;

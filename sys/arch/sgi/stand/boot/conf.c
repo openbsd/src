@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2009/05/14 18:57:43 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -31,7 +31,7 @@ extern void	nullsys();
 extern int	nodev();
 extern int	noioctl();
 
-int	diostrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	diostrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	dioopen(struct open_file *, ...);
 int	dioclose(struct open_file *);
 

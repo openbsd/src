@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.16 2010/09/08 15:25:43 jsing Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.17 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ filename(char *str, char *ppart)
 }
 
 static int
-strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct of_dev *dev = devdata;

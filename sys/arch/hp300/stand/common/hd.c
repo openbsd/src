@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ int	hdident(int, int);
 int	hdinit(int, int);
 int	hdopen(struct open_file *, int, int, int);
 void	hdreset(int, int);
-int	hdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	hdstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 
 int
 hdinit(int ctlr, int unit)
@@ -287,14 +287,14 @@ hdclose(struct open_file *f)
 }
 
 int
-hdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+hdstrategy(void *devdata, int func, daddr32_t dblk, size_t size, void *v_buf,
     size_t *rsize)
 {
 	char *buf = v_buf;
 	struct hd_softc *rs = devdata;
 	int ctlr = rs->sc_ctlr;
 	int unit = rs->sc_unit;
-	daddr_t blk;
+	daddr32_t blk;
 	char stat;
 
 	if (size == 0)

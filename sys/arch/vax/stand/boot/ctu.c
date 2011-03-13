@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctu.c,v 1.4 2003/08/15 23:16:30 deraadt Exp $ */
+/*	$OpenBSD: ctu.c,v 1.5 2011/03/13 00:13:53 deraadt Exp $ */
 /*	$NetBSD: ctu.c,v 1.3 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -80,7 +80,7 @@ ctuopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 }
 
 int
-ctustrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
+ctustrategy(void *f, int func, daddr32_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 

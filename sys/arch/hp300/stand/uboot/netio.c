@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.3 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: netio.c,v 1.4 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: netio.c,v 1.5 1997/01/30 10:32:56 thorpej Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ static	char input_line[100];
 int	netclose(struct open_file *);
 int	netmountroot(struct open_file *, char *);
 int	netopen(struct open_file *, char *);
-int	netstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	netstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -121,7 +121,7 @@ netclose(struct open_file *f)
 }
 
 int
-netstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+netstrategy(void *devdata, int func, daddr32_t dblk, size_t size, void *v_buf,
     size_t *rsize)
 {
 

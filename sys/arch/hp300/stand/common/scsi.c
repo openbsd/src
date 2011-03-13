@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ scsi_read_capacity(int ctlr, int slave, u_char *buf, u_int len)
 }
 
 int
-scsi_tt_read(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
+scsi_tt_read(int ctlr, int slave, u_char *buf, u_int len, daddr32_t blk,
     u_int nblk)
 {
 	struct scsi_softc *hs = &scsi_softc[ctlr];
@@ -410,7 +410,7 @@ scsi_tt_read(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
 }
 
 int
-scsi_tt_write(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
+scsi_tt_write(int ctlr, int slave, u_char *buf, u_int len, daddr32_t blk,
     u_int nblk)
 {
 	struct scsi_softc *hs = &scsi_softc[ctlr];

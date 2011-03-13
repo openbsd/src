@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.12 2004/07/09 19:20:17 drahn Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.13 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct ucred;
 
 struct file {
 	off_t off;			/* Current offset within file */
-	daddr_t bno;			/* Starting block number  */
+	daddr32_t bno;			/* Starting block number  */
 	off_t size;			/* Size of file */
 };
 
@@ -134,7 +134,7 @@ cd9660_open(char *path, struct open_file *f)
 	void *buf;
 	struct iso_primary_descriptor *vd;
 	size_t buf_size, nread, psize, dsize;
-	daddr_t bno;
+	daddr32_t bno;
 	int parent, ent;
 	struct ptable_ent *pp;
 	struct iso_directory_record *dp;
@@ -293,7 +293,7 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	int rc = 0;
-	daddr_t bno;
+	daddr32_t bno;
 	char buf[ISO_DEFAULT_BLOCK_SIZE];
 	char *dp;
 	size_t nread, off;

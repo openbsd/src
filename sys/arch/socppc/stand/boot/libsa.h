@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.1 2008/05/10 20:06:26 kettenis Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.2 2011/03/13 00:13:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -37,6 +37,6 @@ void com_putc(dev_t, int);
 /*
  * wd
  */
-int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int wdstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int wdopen(struct open_file *, ...);
 int wdclose(struct open_file *);

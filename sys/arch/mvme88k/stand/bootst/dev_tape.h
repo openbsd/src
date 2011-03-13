@@ -1,7 +1,7 @@
-/*	$OpenBSD: dev_tape.h,v 1.2 2002/03/14 01:26:40 millert Exp $ */
+/*	$OpenBSD: dev_tape.h,v 1.3 2011/03/13 00:13:53 deraadt Exp $ */
 
 int	tape_open(struct open_file *, ...);
 int	tape_close(struct open_file *);
-int	tape_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	tape_strategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	tape_ioctl();
 

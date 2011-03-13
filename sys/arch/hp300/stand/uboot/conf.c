@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -54,28 +54,28 @@ int	debug = 0;	/* XXX */
 /*
  * Device configuration
  */
-int	netstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	netstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	netopen(struct open_file *, ...);
 int	netclose(struct open_file *);
 #define netioctl	noioctl
 
-int	ctstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	ctstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	ctopen(struct open_file *, ...);
 int	ctclose(struct open_file *);
 #define	ctioctl		noioctl
 
-int	hdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	hdstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	hdopen(struct open_file *, ...);
 int	hdclose(struct open_file *);
 #define hdioctl		noioctl
 
-int	sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	sdstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	sdopen(struct open_file *, ...);
 int	sdclose(struct open_file *);
 #define	sdioctl		noioctl
 
 #define xxstrategy	\
-	(int (*)(void *, int, daddr_t, size_t, void *, size_t *))nullsys
+	(int (*)(void *, int, daddr32_t, size_t, void *, size_t *))nullsys
 #define xxopen		(int (*)(struct open_file *, ...))nodev
 #define xxclose		(int (*)(struct open_file *))nullsys
 

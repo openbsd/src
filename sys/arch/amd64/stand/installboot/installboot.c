@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.14 2011/03/08 17:24:31 krw Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.15 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -103,7 +103,7 @@ struct sym_data pbr_symbols[] = {
 
 static char	*loadproto(char *, long *);
 static int	getbootparams(char *, int, struct disklabel *);
-static void	devread(int, void *, daddr_t, size_t, char *);
+static void	devread(int, void *, daddr64_t, size_t, char *);
 static void	sym_set_value(struct sym_data *, char *, u_int32_t);
 static void	pbr_set_symbols(char *, char *, struct sym_data *);
 static void	usage(void);
@@ -380,7 +380,7 @@ loadproto(char *fname, long *size)
 }
 
 static void
-devread(int fd, void *buf, daddr_t blk, size_t size, char *msg)
+devread(int fd, void *buf, daddr64_t blk, size_t size, char *msg)
 {
 	if (lseek(fd, dbtob((off_t)blk), SEEK_SET) != dbtob((off_t)blk))
 		err(1, "%s: devread: lseek", msg);
@@ -404,7 +404,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	struct partition *pl;
 	struct fs	*fs;
 	char		*buf;
-	daddr_t		blk, *ap;
+	u_int		blk, *ap;
 	struct ufs1_dinode	*ip;
 	int		ndb;
 	int		mib[3];

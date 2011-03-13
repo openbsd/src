@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsireg.h,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: scsireg.h,v 1.3 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: scsireg.h,v 1.4 1994/10/26 07:24:59 cgd Exp $	*/
 
 /*
@@ -479,5 +479,5 @@ struct scsi_fmt_sense {
 int	scsialive(int);
 int	scsi_read_capacity(int, int, u_char *, u_int);
 int	scsi_test_unit_rdy(int, int);
-int	scsi_tt_read(int, int, u_char *, u_int, daddr_t, u_int);
-int	scsi_tt_write(int, int, u_char *, u_int, daddr_t, u_int);
+int	scsi_tt_read(int, int, u_char *, u_int, daddr32_t, u_int);
+int	scsi_tt_write(int, int, u_char *, u_int, daddr32_t, u_int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rom.c,v 1.4 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: rom.c,v 1.5 2011/03/13 00:13:53 deraadt Exp $ */
 /*	$NetBSD: rom.c,v 1.3 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -93,7 +93,7 @@ int
 romstrategy (f, func, dblk, size, buf, rsize)
 	void *f;
 	int func;
-	daddr_t dblk;
+	daddr32_t dblk;
 	size_t size;
 	void *buf;
 	size_t *rsize;

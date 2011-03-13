@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.2 2009/09/07 21:16:57 dms Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.3 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.6 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ struct wdc_command {
 int	wdc_init		(struct wd_softc*, u_int);
 int	wdccommand		(struct wd_softc*, struct wdc_command*);
 int	wdccommandext		(struct wd_softc*, struct wdc_command*);
-int	wdc_exec_read		(struct wd_softc*, u_int8_t, daddr_t, void*);
+int	wdc_exec_read		(struct wd_softc*, u_int8_t, daddr32_t, void*);
 int	wdc_exec_identify	(struct wd_softc*, void*);
 
 

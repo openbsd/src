@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.2 2010/02/16 21:28:39 miod Exp $	*/
+/*	$OpenBSD: dev.c,v 1.3 2011/03/13 00:13:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -67,7 +67,7 @@ struct pmon_iodata {
 int	pmon_getdisklabel(struct pmon_iodata *pi);
 
 int
-pmon_iostrategy(void *f, int rw, daddr_t dblk, size_t size, void *buf,
+pmon_iostrategy(void *f, int rw, daddr32_t dblk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct pmon_iodata *pi = (struct pmon_iodata *)f;

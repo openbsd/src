@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpfs.c,v 1.4 2006/08/13 23:08:44 miod Exp $	*/
+/*	$OpenBSD: tftpfs.c,v 1.5 2011/03/13 00:13:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -50,7 +50,7 @@ struct tftp_file {
 	off_t		f_seekp;	/* seek pointer */
 	char		*f_buf;		/* buffer for data block */
 	off_t		f_off;		/* index into buffer for data block */
-	daddr_t		f_buf_blkno;	/* block number of data block */
+	daddr32_t	f_buf_blkno;	/* block number of data block */
 	size_t		f_buf_size;
 };
 
@@ -60,7 +60,7 @@ struct tftp_file {
 #define TFTP_BLOCK_OFF(x)	(x % TFTP_BLOCK_SIZE)
 
 static int	read_inode(ino_t, struct open_file *);
-static int	block_map(struct open_file *, daddr_t, daddr_t *);
+static int	block_map(struct open_file *, daddr32_t, daddr32_t *);
 static int	tftp_read_file(struct open_file *, char **, size_t *);
 
 /*
@@ -79,7 +79,7 @@ tftp_read_file(f, buf_p, size_p)
 {
 	register struct tftp_file *fp = (struct tftp_file *)f->f_fsdata;
 	long off;
-	register daddr_t file_block;
+	register daddr32_t file_block;
 	size_t block_size;
 	int i, rc;
 

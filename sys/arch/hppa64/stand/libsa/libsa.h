@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.2 2011/03/13 00:13:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -30,7 +30,7 @@ void pdc_init(void);
 struct pz_device;
 struct pz_device *pdc_findev(int, int);
 
-int iodcstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int iodcstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 
 int ctopen(struct open_file *, ...);
 int ctclose(struct open_file *);
@@ -39,7 +39,7 @@ int dkopen(struct open_file *, ...);
 int dkclose(struct open_file *);
 
 int lfopen(struct open_file *, ...);
-int lfstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int lfstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int lfclose(struct open_file *);
 
 void ite_probe(struct consdev *);

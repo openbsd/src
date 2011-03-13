@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.12 2010/12/14 21:14:46 kettenis Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.13 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -50,11 +50,11 @@
 
 
 int	obp_close(struct open_file *);
-int	obp_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	obp_strategy(void *, int, daddr32_t, size_t, void *, size_t *);
 ssize_t	obp_xmit(struct promdata *, void *, size_t);
 ssize_t	obp_recv(struct promdata *, void *, size_t);
 int	prom0_close(struct open_file *);
-int	prom0_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	prom0_strategy(void *, int, daddr32_t, size_t, void *, size_t *);
 void	prom0_iclose(struct saioreq *);
 int	prom0_iopen(struct promdata *);
 ssize_t	prom0_xmit(struct promdata *, void *, size_t);
@@ -171,7 +171,7 @@ int
 obp_strategy(devdata, flag, dblk, size, buf, rsize)
 	void	*devdata;
 	int	flag;
-	daddr_t	dblk;
+	daddr32_t	dblk;
 	size_t	size;
 	void	*buf;
 	size_t	*rsize;
@@ -194,8 +194,8 @@ obp_strategy(devdata, flag, dblk, size, buf, rsize)
 		    (fd, buf, size);
 	} else {
 		int n = (*((flag == F_READ) ?
-		    (u_int (*)(int, int, daddr_t, void *))promvec->pv_v0devops.v0_rbdev :
-		    (u_int (*)(int, int, daddr_t, void *))promvec->pv_v0devops.v0_wbdev))
+		    (u_int (*)(int, int, daddr32_t, void *))promvec->pv_v0devops.v0_rbdev :
+		    (u_int (*)(int, int, daddr32_t, void *))promvec->pv_v0devops.v0_wbdev))
 		    (fd, btodb(size), dblk, buf);
 		*rsize = dbtob(n);
 	}
@@ -213,7 +213,7 @@ int
 prom0_strategy(devdata, flag, dblk, size, buf, rsize)
 	void	*devdata;
 	int	flag;
-	daddr_t	dblk;
+	daddr32_t	dblk;
 	size_t	size;
 	void	*buf;
 	size_t	*rsize;

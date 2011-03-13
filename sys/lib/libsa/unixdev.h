@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.h,v 1.6 2003/06/02 20:20:54 mickey Exp $	*/
+/*	$OpenBSD: unixdev.h,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -29,7 +29,7 @@
 
 
 /* unixdev.c */
-int unixstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int unixstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int unixopen(struct open_file *, ...);
 int unixclose(struct open_file *);
 int unixioctl(struct open_file *, u_long, void *);

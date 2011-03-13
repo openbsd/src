@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.79 2011/03/11 21:08:25 krw Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.80 2011/03/13 00:13:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,9 +35,9 @@
 #include <machine/biosvar.h>
 #include <lib/libsa/saerrno.h>
 #include <isofs/cd9660/iso.h>
+#include "libsa.h"
 #include "disk.h"
 #include "debug.h"
-#include "libsa.h"
 #include "biosdev.h"
 
 static const char *biosdisk_err(u_int);
@@ -246,7 +246,7 @@ EDD_rw(int rw, int dev, u_int64_t daddr, u_int32_t nblk, void *buf)
  * Read given sector, handling retry/errors/etc.
  */
 int
-biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
+biosd_io(int rw, bios_diskinfo_t *bd, daddr32_t off, int nsect, void *buf)
 {
 	int dev = bd->bios_number;
 	int j, error;
@@ -439,7 +439,7 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 		printf("loading disklabel @ %lld\n", start);
 #endif
 	/* read disklabel */
-	error = biosd_io(F_READ, bd, (daddr_t)start, 1, buf);
+	error = biosd_io(F_READ, bd, (daddr32_t)start, 1, buf);
 
 	if (error)
 		return "failed to read disklabel";
@@ -648,7 +648,7 @@ biosdisk_errno(u_int error)
 }
 
 int
-biosstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+biosstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct diskinfo *dip = (struct diskinfo *)devdata;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmscp.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: tmscp.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $ */
 /*	$NetBSD: tmscp.c,v 1.3 1999/06/30 18:19:26 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -160,7 +160,7 @@ command(cmd, arg)
 tmscpstrategy(ra, func, dblk, size, buf, rsize)
 	struct ra_softc *ra;
 	int func;
-	daddr_t	dblk;
+	daddr32_t	dblk;
 	char *buf;
 	u_int size, *rsize;
 {

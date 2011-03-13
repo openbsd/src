@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaxstand.h,v 1.1 2000/04/27 02:26:26 bjc Exp $ */
+/*	$OpenBSD: vaxstand.h,v 1.2 2011/03/13 00:13:53 deraadt Exp $ */
 /*	$NetBSD: vaxstand.h,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -46,7 +46,7 @@ extern dev_t bootdev;
 /* devsw type definitions, used in bootxx and conf */
 #define SADEV(name,strategy,open,close,ioctl) \
         { (char *)name, \
-         (int(*)(void *, int ,daddr_t , size_t, void *, size_t *))strategy, \
+         (int(*)(void *, int, daddr32_t, size_t, void *, size_t *))strategy, \
          (int(*)(struct open_file *, ...))open, \
          (int(*)(struct open_file *))close, \
          (int(*)(struct open_file *,u_long, void *))ioctl}

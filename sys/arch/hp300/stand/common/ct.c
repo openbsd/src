@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: ct.c,v 1.6 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: ct.c,v 1.9 1996/10/14 07:29:57 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ int	ctident(int, int);
 int	ctinit(int, int);
 int	ctopen(struct open_file *, int, int, int);
 int	ctpunit(int, int, int *);
-int	ctstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	ctstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 
 char ctio_buf[MAXBSIZE];
 
@@ -211,7 +211,7 @@ ctclose(struct open_file *f)
 }
 
 int
-ctstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+ctstrategy(void *devdata, int func, daddr32_t dblk, size_t size, void *v_buf,
     size_t *rsize)
 {
 	struct ct_softc *rs = devdata;

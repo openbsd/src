@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdev.c,v 1.2 2006/05/16 22:52:09 miod Exp $ */
+/*	$OpenBSD: netdev.c,v 1.3 2011/03/13 00:13:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -67,7 +67,7 @@ int
 net_strategy(devdata, func, nblk, size, buf, rsize)
 	void *devdata;
 	int func;
-	daddr_t nblk;
+	daddr32_t nblk;
 	size_t size;
 	void *buf;
 	size_t *rsize;

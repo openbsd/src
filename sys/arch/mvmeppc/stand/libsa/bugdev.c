@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.4 2006/10/12 12:14:17 krw Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.5 2011/03/13 00:13:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -321,14 +321,14 @@ int
 dsk_strategy(devdata, func, dblk, size, buf, rsize)
 	void *devdata;
 	int func;
-	daddr_t dblk;
+	daddr32_t dblk;
 	size_t size;
 	void *buf;
 	size_t *rsize;
 {
 	struct mvmeprom_dskio dio;
 	register struct bugdev_softc *pp = (struct bugdev_softc *)devdata;
-	daddr_t	blk = dblk + pp->poff;
+	daddr32_t blk = dblk + pp->poff;
 
 	twiddle();
 
@@ -391,7 +391,7 @@ int
 net_strategy(devdata, func, nblk, size, buf, rsize)
 	void *devdata;
 	int func;
-	daddr_t nblk;
+	daddr32_t nblk;
 	size_t size;
 	void *buf;
 	size_t *rsize;
@@ -570,7 +570,7 @@ int
 tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	void	*devdata;
 	int	flag;
-	daddr_t	dblk;
+	daddr32_t dblk;
 	size_t  size;
 	void    *buf;
 	size_t  *rsize;

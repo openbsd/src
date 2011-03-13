@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.11 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: disk.c,v 1.12 2011/03/13 00:13:52 deraadt Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ int
 diskstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 	void *devdata;
 	int rw;
-	daddr_t bn;
+	daddr32_t bn;
 	size_t reqcnt;
 	void *addrvoid;
 	size_t *cnt;	/* out: number of bytes transferred */
@@ -135,7 +135,7 @@ diskopen(f, ctlr, unit, part)
 	lp->d_partitions[part].p_offset = 0;
 	lp->d_partitions[part].p_size = 0x7fffffff;
 	i = diskstrategy(sc, F_READ,
-	    (daddr_t)LABELSECTOR, DEV_BSIZE, buf, &cnt);
+	    (daddr32_t)LABELSECTOR, DEV_BSIZE, buf, &cnt);
 	if (i || cnt != DEV_BSIZE) {
 		printf("disk%d: error reading disk label\n", unit);
 		goto bad;

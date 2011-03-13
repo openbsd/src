@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.3 2009/09/07 21:16:57 dms Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.7 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -334,7 +334,7 @@ int
 wdc_exec_read(wd, cmd, blkno, data)
 	struct wd_softc *wd;
 	u_int8_t cmd;
-	daddr_t blkno;
+	daddr32_t blkno;
 	void *data;
 {
 	int error;

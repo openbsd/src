@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.6 2011/03/12 19:40:34 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.1 1997/06/01 03:39:45 mrg Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct nlist nl[] = {
 	{"_block_size"},
 	{NULL}
 };
-daddr_t	*block_table;		/* block number array in prototype image */
+daddr32_t	*block_table;		/* block number array in prototype image */
 int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
@@ -73,7 +73,7 @@ int	isofseblk = 0;
 
 char		*loadprotoblocks(char *, long *);
 int		loadblocknums(char *, int);
-static void	devread(int, void *, daddr_t, size_t, char *);
+static void	devread(int, void *, daddr32_t, size_t, char *);
 static void	usage(void);
 int 		main(int, char *[]);
 
@@ -263,7 +263,7 @@ loadprotoblocks(fname, size)
 
 	/* Calculate the symbols' location within the proto file */
 	off = N_DATOFF(*hp) - N_DATADDR(*hp) - (hp->a_entry - N_TXTADDR(*hp));
-	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value + off);
+	block_table = (daddr32_t *) (bp + nl[X_BLOCKTABLE].n_value + off);
 	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value + off);
 	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value + off);
 	if ((int)block_table & 3) {
@@ -324,7 +324,7 @@ static void
 devread(fd, buf, blk, size, msg)
 	int	fd;
 	void	*buf;
-	daddr_t	blk;
+	daddr32_t	blk;
 	size_t	size;
 	char	*msg;
 {
@@ -347,7 +347,7 @@ int	devfd;
 	struct	statfs	statfsbuf;
 	struct fs	*fs;
 	char		*buf;
-	daddr_t		blk, *ap;
+	daddr32_t		blk, *ap;
 	struct ufs1_dinode	*ip;
 	int		ndb;
 
@@ -446,7 +446,7 @@ int	devfd;
 		printf("%s: block numbers (indirect): ", boot);
 	blk = ip->di_ib[0];
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
-	ap = (daddr_t *)buf;
+	ap = (daddr32_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
 		block_table[i] = blk;

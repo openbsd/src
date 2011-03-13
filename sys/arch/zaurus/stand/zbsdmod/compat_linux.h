@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.7 2010/12/24 14:22:59 grange Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.8 2011/03/13 00:13:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -57,8 +57,11 @@ struct file;
 struct inode;
 
 typedef long loff_t;
-typedef long ssize_t;
-typedef unsigned long size_t;
+
+/* BSD headers */
+#include <sys/types.h>
+#include <sys/exec_elf.h>
+#include <errno.h>
 
 struct file_operations {
 	struct module *owner;
@@ -93,11 +96,6 @@ extern	int unregister_chrdev(unsigned int, const char *);
 extern	void printk(const char *, ...)
     __attribute__((__format__(printf, 1, 2)));
 extern	void *memcpy(void *, const void *, size_t);
-
-/* BSD headers */
-#include <sys/types.h>
-#include <sys/exec_elf.h>
-#include <errno.h>
 
 /* Linux LKM support */
 static const char __module_kernel_version[] __attribute__((section(".modinfo"))) =

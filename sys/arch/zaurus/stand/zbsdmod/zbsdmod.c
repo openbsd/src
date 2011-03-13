@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.8 2010/12/24 14:16:58 grange Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.9 2011/03/13 00:13:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -338,7 +338,7 @@ zbsdmod_close(struct inode *ino, struct file *f)
 
 	if (isopen) {
 		if (position > 0) {
-			printk("%s: loaded %d bytes\n", ZBOOTDEV_NAME,
+			printk("%s: loaded %ld bytes\n", ZBOOTDEV_NAME,
 			    position);
 
 			if (position < BOOTARGS_BUFSIZ) {
