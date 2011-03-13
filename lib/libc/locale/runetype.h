@@ -1,7 +1,7 @@
 #ifndef _NB_RUNETYPE_H_
 #define _NB_RUNETYPE_H_
 
-/* $OpenBSD: runetype.h,v 1.5 2007/10/08 08:17:15 gilles Exp $ */
+/* $OpenBSD: runetype.h,v 1.6 2011/03/13 11:42:22 stsp Exp $ */
 /*	$NetBSD: runetype.h,v 1.18 2003/08/07 16:43:04 agc Exp $	*/
 /*-
  * Copyright (c) 1993
@@ -69,9 +69,9 @@ typedef uint32_t _RuneType;
 #define	_RUNETYPE_I	0x00080000U	/* Ideogram */
 #define	_RUNETYPE_T	0x00100000U	/* Special */
 #define	_RUNETYPE_Q	0x00200000U	/* Phonogram */
-#define	_RUNETYPE_SWM	0xc0000000U/* Mask to get screen width data */
+#define	_RUNETYPE_SWM	0xe0000000U	/* Mask to get screen width data */
 #define	_RUNETYPE_SWS	30		/* Bits to shift to get width */
-#define	_RUNETYPE_SW0	0x00000000U	/* 0 width character */
+#define	_RUNETYPE_SW0	0x20000000U	/* 0 width character */
 #define	_RUNETYPE_SW1	0x40000000U	/* 1 width character */
 #define	_RUNETYPE_SW2	0x80000000U	/* 2 width character */
 #define	_RUNETYPE_SW3	0xc0000000U	/* 3 width character */
