@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.72 2010/11/28 22:08:59 kettenis Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.73 2011/03/13 15:35:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -987,6 +987,7 @@ struct rl_softc {
 #define RL_PCI_INTPIN		0x3D
 #define RL_PCI_MINGNT		0x3E
 #define RL_PCI_MINLAT		0x0F
+#define RL_PCI_PMCSR		0x44
 #define RL_PCI_RESETOPT		0x48
 #define RL_PCI_EEPROM_DATA	0x4C
 
@@ -1000,7 +1001,7 @@ struct rl_softc {
 #define RL_PSTATE_D1		0x0001
 #define RL_PSTATE_D2		0x0002
 #define RL_PSTATE_D3		0x0003
-#define RL_PME_EN		0x0010
+#define RL_PME_EN		0x0100
 #define RL_PME_STATUS		0x8000
 
 extern int rl_attach(struct rl_softc *);

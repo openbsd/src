@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.132 2010/11/28 22:13:48 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.133 2011/03/13 15:35:20 stsp Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -194,6 +194,9 @@ void	re_disable_hw_im(struct rl_softc *);
 void	re_disable_sim_im(struct rl_softc *);
 void	re_config_imtype(struct rl_softc *, int);
 void	re_setup_intr(struct rl_softc *, int, int);
+#ifndef SMALL_KERNEL
+int	re_wol(struct ifnet*, int);
+#endif
 
 #ifdef RE_DIAG
 int	re_diag(struct rl_softc *);
@@ -1118,6 +1121,11 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
+#ifndef SMALL_KERNEL
+	ifp->if_capabilities |= IFCAP_WOL;
+	ifp->if_wol = re_wol;
+	re_wol(ifp, 0);
+#endif
 	timeout_set(&sc->timer_handle, re_tick, sc);
 
 	/* Take PHY out of power down mode. */
@@ -2335,3 +2343,52 @@ re_setup_intr(struct rl_softc *sc, int enable_intrs, int imtype)
 		      sc->sc_dev.dv_xname, imtype);
 	}
 }
+
+#ifndef SMALL_KERNEL
+int
+re_wol(struct ifnet *ifp, int enable)
+{
+	struct rl_softc *sc = ifp->if_softc;
+	int i;
+	u_int8_t val;
+	struct re_wolcfg {
+		u_int8_t	enable;
+		u_int8_t	reg;
+		u_int8_t	bit;
+	} re_wolcfg[] = {
+		/* Always disable all wake events expect magic packet. */
+		{ 0,	RL_CFG5,	RL_CFG5_WOL_UCAST },
+		{ 0,	RL_CFG5,	RL_CFG5_WOL_MCAST },
+		{ 0,	RL_CFG5,	RL_CFG5_WOL_BCAST },
+		{ 1,	RL_CFG3,	RL_CFG3_WOL_MAGIC },
+		{ 0,	RL_CFG3,	RL_CFG3_WOL_LINK }
+	};
+
+	if (enable) {
+		if ((CSR_READ_1(sc, RL_CFG1) & RL_CFG1_PME) == 0) {
+			printf("%s: power management is disabled, "
+			    "cannot do WOL\n", sc->sc_dev.dv_xname);
+			return (ENOTSUP);
+		}
+		if ((CSR_READ_1(sc, RL_CFG2) & RL_CFG2_AUXPWR) == 0)
+			printf("%s: no auxiliary power, cannot do WOL from D3 "
+			    "(power-off) state\n", sc->sc_dev.dv_xname);
+	}
+
+	/* Temporarily enable write to configuration registers. */
+	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
+
+	for (i = 0; i < nitems(re_wolcfg); i++) {
+		val = CSR_READ_1(sc, re_wolcfg[i].reg);
+		if (enable && re_wolcfg[i].enable)
+			val |= re_wolcfg[i].bit;
+		else
+			val &= ~re_wolcfg[i].bit;
+		CSR_WRITE_1(sc, re_wolcfg[i].reg, val);
+	}
+
+	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
+
+	return (0);
+}
+#endif

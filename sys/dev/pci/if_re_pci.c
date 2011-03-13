@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.30 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.31 2011/03/13 15:35:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -162,6 +162,11 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		pci_conf_write(pc, pa->pa_tag, RL_PCI_LOMEM, membase);
 		pci_conf_write(pc, pa->pa_tag, RL_PCI_INTLINE, irq);
 	}
+
+#ifndef SMALL_KERNEL
+	/* Enable power management for wake on lan. */
+	pci_conf_write(pc, pa->pa_tag, RL_PCI_PMCSR, RL_PME_EN);
+#endif
 
 	/*
 	 * Map control/status registers.
