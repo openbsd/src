@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.3 2011/03/12 18:58:54 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.4 2011/03/13 01:27:23 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -195,8 +195,14 @@ sub relay_splice {
 		    or die ref($self), " splice stdin to stdout failed: $!";
 
 		if ($self->{readblocking}) {
+			my $read;
 			# block by reading from the source socket
-			defined(my $read = sysread(STDIN, my $buf, 2**16))
+			do {
+				# busy loop to test soreceive
+				$read = sysread(STDIN, my $buf, 2**16);
+			} while ($self->{nonblocking} && !defined($read) &&
+			    $!{EAGAIN});
+			defined($read)
 			    or die ref($self), " read blocking failed: $!";
 			$read > 0 and die ref($self),
 			    " read blocking has data: $read";
