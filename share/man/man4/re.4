@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.46 2011/03/13 21:24:20 jmc Exp $
+.\" $OpenBSD: re.4,v 1.47 2011/03/13 21:32:29 jmc Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -116,6 +116,15 @@ utility configures the adapter to transmit Jumbo frames.
 .Pp
 The
 .Nm
+driver additionally supports Wake on LAN (WoL).
+See
+.Xr arp 8
+and
+.Xr ifconfig 8
+for more details.
+.Pp
+The
+.Nm
 driver supports the following media types:
 .Bl -tag -width 10baseTXUTP
 .It autoselect
@@ -167,10 +176,6 @@ Force full duplex operation.
 .It half-duplex
 Force half duplex operation.
 .El
-.Pp
-The
-.Nm
-driver supports Wake on LAN (WoL).
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .

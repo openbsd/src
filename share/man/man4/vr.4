@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vr.4,v 1.24 2011/03/13 21:24:20 jmc Exp $
+.\"	$OpenBSD: vr.4,v 1.25 2011/03/13 21:32:29 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -64,6 +64,15 @@ They support both 10 and 100Mbps speeds in either full or half duplex.
 .Pp
 The
 .Nm
+driver additionally supports Wake on LAN (WoL).
+See
+.Xr arp 8
+and
+.Xr ifconfig 8
+for more details.
+.Pp
+The
+.Nm
 driver supports the following media types:
 .Bl -tag -width full-duplex
 .It autoselect
@@ -104,10 +113,6 @@ Force half duplex operation.
 .Pp
 Note that the 100baseTX media type is only available if supported
 by the adapter.
-.Pp
-The
-.Nm
-driver supports Wake on LAN (WoL).
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
