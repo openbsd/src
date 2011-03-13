@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.27 2009/06/18 17:48:15 claudio Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.28 2011/03/13 15:38:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -284,6 +284,21 @@
 #define VR_STICKHW_WOL_ENB	0x04
 #define VR_STICKHW_WOL_STS	0x08
 #define VR_STICKHW_LEGWOL_ENB	0x80
+
+/* Wake on Lan */
+#define VR_WOLCRSET		0xA0
+#define VR_PWRCFGSET		0xA1
+#define VR_WOLCFGSET		0xA3
+#define VR_WOLCRCLR		0xA4
+#define VR_PWRCFGCLR		0xA5
+#define VR_WOLCFGCLR		0xA7
+#define VR_PWRCSRSET		0xA8
+#define VR_PWRCSRCLR		0xAC
+#define VR_WOLCR_UCAST		0x10
+#define VR_WOLCR_MAGIC		0x20
+#define VR_WOLCR_LINKON		0x40
+#define VR_WOLCR_LINKOFF	0x80
+#define VR_WOLCFG_PMEOVR	0x80
 
 /*
  * BCR0 register bits. (At least for the VT6102 chip.)

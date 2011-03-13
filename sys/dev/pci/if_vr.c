@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.107 2011/01/13 11:28:14 kettenis Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.108 2011/03/13 15:38:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -137,6 +137,9 @@ void vr_reset(struct vr_softc *);
 int vr_list_rx_init(struct vr_softc *);
 void vr_fill_rx_ring(struct vr_softc *);
 int vr_list_tx_init(struct vr_softc *);
+#ifndef SMALL_KERNEL
+int vr_wol(struct ifnet *, int);
+#endif
 
 int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *);
 
@@ -643,6 +646,13 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->vr_quirks & VR_Q_CSUM)
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
 					IFCAP_CSUM_UDPv4;
+#ifndef SMALL_KERNEL
+	if (sc->vr_revid >= REV_ID_VT3065_A) {
+		ifp->if_capabilities |= IFCAP_WOL;
+		ifp->if_wol = vr_wol;
+		vr_wol(ifp, 0);
+	}
+#endif
 
 	/*
 	 * Do MII setup.
@@ -1528,6 +1538,34 @@ vr_stop(struct vr_softc *sc)
 	bzero((char *)&sc->vr_ldata->vr_tx_list,
 		sizeof(sc->vr_ldata->vr_tx_list));
 }
+
+#ifndef SMALL_KERNEL
+int
+vr_wol(struct ifnet *ifp, int enable)
+{
+	struct vr_softc *sc = ifp->if_softc;
+
+	/* Clear WOL configuration */
+	CSR_WRITE_1(sc, VR_WOLCRCLR, 0xFF);
+
+	/* Clear event status bits. */
+	CSR_WRITE_1(sc, VR_PWRCSRCLR, 0xFF);
+
+	/* Disable PME# assertion upon wake event. */
+	VR_CLRBIT(sc, VR_STICKHW, VR_STICKHW_WOL_ENB);
+	VR_SETBIT(sc, VR_WOLCFGCLR, VR_WOLCFG_PMEOVR);
+
+	if (enable) {
+		VR_SETBIT(sc, VR_WOLCRSET, VR_WOLCR_MAGIC);
+
+		/* Enable PME# assertion upon wake event. */
+		VR_SETBIT(sc, VR_STICKHW, VR_STICKHW_WOL_ENB);
+		VR_SETBIT(sc, VR_WOLCFGSET, VR_WOLCFG_PMEOVR);
+	}
+
+	return (0);
+}
+#endif
 
 int
 vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r)
