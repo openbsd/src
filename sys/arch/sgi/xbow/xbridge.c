@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.78 2010/12/04 17:06:32 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.79 2011/03/13 20:45:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -319,6 +319,12 @@ static __inline__ void
 xbridge_write_reg(struct xbpci_softc *xb, bus_addr_t a, uint64_t v)
 {
 	(*xb->xb_write_reg)(xb->xb_regt, xb->xb_regh, a, v);
+}
+
+static __inline__ void
+xbridge_wbflush(struct xbpci_softc *xb, uint d)
+{
+	while (xbridge_read_reg(xb, BRIDGE_DEVICE_WBFLUSH(d)) != 0) ;
 }
 
 const struct machine_bus_dma_tag xbridge_dma_tag = {
@@ -1206,7 +1212,7 @@ xbridge_pci_intr_handler(void *v)
 	 * Flush PCI write buffers before servicing the interrupt.
 	 */
 	LIST_FOREACH(xih, &xi->xi_handlers, xih_nxt)
-		xbridge_read_reg(xb, BRIDGE_DEVICE_WBFLUSH(xih->xih_device));
+		xbridge_wbflush(xb, xih->xih_device);
 
 	isr = xbridge_read_reg(xb, BRIDGE_ISR);
 	if ((isr & ~BRIDGE_ISR_HWINTR_MASK) != 0) {
@@ -1657,7 +1663,7 @@ xbridge_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
 			devmax = xb->xb_nslots;
 		}
 		for (d = devmin; d < devmax; d++)
-			xbridge_read_reg(xb, BRIDGE_DEVICE_WBFLUSH(d));
+			xbridge_wbflush(xb, d);
 		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 	}
 }
@@ -1686,9 +1692,6 @@ xbridge_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
  * many concurrent consumers of ATE at once.
  *
  * All ATE share the same page size, which is configurable as 4KB or 16KB.
- * In order to minimize the number of ATE used by the various drivers,
- * we use 16KB pages, at the expense of trickier code to account for
- * ATE shared by various dma maps.
  *
  * ATE management:
  *
@@ -2362,7 +2365,7 @@ xbridge_setup(struct xbpci_softc *xb)
 	 * power button interrupt (and to make things more complicated than
 	 * necessary, this pin is wired to a particular Heart interrupt
 	 * register bit, so interrupts on this pin will never be seen at the
-	 * Bridge level.
+	 * Bridge level).
 	 */
 
 #ifdef TGT_OCTANE
@@ -2492,9 +2495,10 @@ xbridge_rrb_setup(struct xbpci_softc *xb, int odd)
 		dev = (i << 1) + !!odd;
 		if (dev >= xb->xb_nslots || SLOT_EMPTY(xb, dev))
 			rrb[i] = 0;
-		else
+		else {
 			rrb[i] = 4;	/* optimistic value */
-		total += rrb[i];
+			total += 4;
+		}
 	}
 
 	/*
@@ -2646,16 +2650,20 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 		 * Enable byte swapping for DMA, except on IOC3, IOC4 and
 		 * RAD1 devices.
 		 */
-		if (ISSET(xb->xb_flags, XF_XBRIDGE))
-			devio &= ~BRIDGE_DEVICE_SWAP_PMU;
-		else
-			devio |= BRIDGE_DEVICE_SWAP_PMU;
-		devio |= BRIDGE_DEVICE_SWAP_DIR;
 		if (id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3) ||
 		    id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4) ||
 		    id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_RAD1))
 			devio &=
-			    ~(BRIDGE_DEVICE_SWAP_DIR | BRIDGE_DEVICE_SWAP_PMU);
+			    ~(BRIDGE_DEVICE_SWAP_PMU | BRIDGE_DEVICE_SWAP_DIR);
+		else
+			devio |=
+			    BRIDGE_DEVICE_SWAP_PMU | BRIDGE_DEVICE_SWAP_DIR;
+
+		/*
+		 * Disable write gathering.
+		 */
+		devio &=
+		    ~(BRIDGE_DEVICE_WGATHER_PMU | BRIDGE_DEVICE_WGATHER_DIR);
 
 		/*
 		 * Disable prefetching - on-board isp(4) controllers on
@@ -3489,7 +3497,7 @@ xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 			/*
 			 * We know that the direct I/O resource range fits
 			 * within the 32 bit address space, so our allocation,
-			 * if successfull, will work as a 32 bit i/o range.
+			 * if successful, will work as a 32 bit i/o range.
 			 */
 			if (exsize < 1UL << 12)
 				exsize = 1UL << 12;
@@ -3544,7 +3552,7 @@ xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 			/*
 			 * We know that the direct memory resource range fits
 			 * within the 32 bit address space, and is limited to
-			 * 30 bits, so our allocation, if successfull, will
+			 * 30 bits, so our allocation, if successful, will
 			 * work as a 32 bit memory range.
 			 */
 			if (exsize < 1UL << 20)

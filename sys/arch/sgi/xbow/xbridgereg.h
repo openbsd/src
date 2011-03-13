@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridgereg.h,v 1.11 2009/12/26 20:16:19 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.12 2011/03/13 20:45:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -214,6 +214,10 @@
 
 #define	BRIDGE_DEVICE(d)		(0x00000200 + 8 * (d))
 /* flags applying to the device itself */
+/* enable write gathering through ATE */
+#define	BRIDGE_DEVICE_WGATHER_PMU		0x01000000
+/* enable write gathering through the direct window */
+#define	BRIDGE_DEVICE_WGATHER_DIR		0x00800000
 /* byteswap DMA done through ATE */
 #define	BRIDGE_DEVICE_SWAP_PMU			0x00100000
 /* byteswap DMA done through the direct window */
