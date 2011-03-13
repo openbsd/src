@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.215 2011/03/13 16:11:06 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.216 2011/03/13 21:24:20 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -437,14 +437,14 @@ If the interface was reset when previously marked down,
 the hardware will be re-initialized.
 .Pp
 .It Cm wol
-Enable Wake On LAN (WOL).
-When enabled, reception of a WOL frame will cause the network card to
+Enable Wake on LAN (WoL).
+When enabled, reception of a WoL frame will cause the network card to
 power up the system from standby or suspend mode.
-WOL frames are sent using
+WoL frames are sent using
 .Xr arp 8 .
 .It Fl wol
-Disable WOL.
-WOL is disabled at boot by the driver, if possible.
+Disable WoL.
+WoL is disabled at boot by the driver, if possible.
 .El
 .Pp
 .Nm
