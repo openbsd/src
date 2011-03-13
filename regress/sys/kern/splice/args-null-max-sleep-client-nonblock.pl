@@ -5,7 +5,7 @@ use warnings;
 
 our %args = (
     client => {
-	func => sub { sleep 3 },
+	func => sub { sleep 3; write_char(@_); },
 	len => 0,
     },
     relay => {

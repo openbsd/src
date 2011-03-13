@@ -11,13 +11,13 @@ our %args = (
     relay => {
 	oobinline => 1,
 	max => 61,
-	nocheck => 1,
     },
     server => {
 	func => sub { sleep 3; read_oob(@_); },
     },
     len => 61,
     md5 => "c9f459db9b4f369980c79bff17e1c2a0",
+    noecho => 1,
 );
 
 1;

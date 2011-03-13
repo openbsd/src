@@ -10,6 +10,7 @@ our %args = (
 	sndbuf => 2**10,  # small buffer triggers error during write
 	# the error message seems to be timing dependent
 	down => "Client print failed: (Broken pipe|Connection reset by peer)",
+	nocheck => 1,
 	error => 54,
     },
     relay => {
@@ -23,6 +24,7 @@ our %args = (
     },
     server => {
 	rcvbuf => 2**10,
+	nocheck => 1,
     },
 );
 

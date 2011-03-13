@@ -10,6 +10,7 @@ our %args = (
 	sndbuf => 2**10,  # small buffer triggers error during write
 	# the error message seems to be timing dependent
 	down => "Client print failed: (Broken pipe|Connection reset by peer)",
+	nocheck => 1,
 	error => 54,
     },
     relay => {
@@ -24,6 +25,7 @@ our %args = (
     server => {
 	func => sub { $SIG{ALRM} = sub { print STDERR "\nShutdown\n"; exit 0 };
 	  alarm(3); read_char(@_); },
+	nocheck => 1,
     },
     noecho => 1,
 );

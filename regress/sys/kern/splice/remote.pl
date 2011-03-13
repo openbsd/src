@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.1 2011/01/07 22:06:08 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.2 2011/03/13 03:15:41 bluhm Exp $
 
 # Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -128,8 +128,10 @@ $s->down;
 
 exit if $args{nocheck};
 
-my $clen = $c->loggrep(qr/^LEN: /) unless $args{client}{nocheck};
-my $slen = $s->loggrep(qr/^LEN: /) unless $args{server}{nocheck};
+my $clen = $c->loggrep(qr/^LEN: /) // die "no client len"
+    unless $args{client}{nocheck};
+my $slen = $s->loggrep(qr/^LEN: /) // die "no server len"
+    unless $args{server}{nocheck};
 !$clen || !$slen || $clen eq $slen
     or die "client: $clen", "server: $slen", "len mismatch";
 !defined($args{len}) || !$clen || $clen eq "LEN: $args{len}\n"

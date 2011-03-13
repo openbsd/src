@@ -17,6 +17,7 @@ our %args = (
     },
     len => 32117,
     md5 => "ee338e9693fb2a2ec101bb28935ed123",
+    noecho => 1,
 );
 
 1;
