@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.5 2011/03/10 16:49:48 ajacoutot Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.6 2011/03/13 02:00:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 10 2011 $
+.Dd $Mdocdate: March 13 2011 $
 .Dt RC.D 8
 .Os
 .Sh NAME
@@ -65,15 +65,12 @@ Perform a stop, then a start.
 .It Cm check
 Return 0 if the daemon is running or 1 if it is not.
 .El
-.Pp
-Each script defines its own defaults, some of which can be overridden
-by site-specific values provided in
-.Xr rc.conf.local 8
-.Po
-variable names are obtained by replacing
-.Ar daemon
-with the name of the actual script
-.Pc :
+.Sh ENVIRONMENT
+Daemon control scripts use a fixed number of
+.Xr sh 1
+variables when starting a daemon.
+The following two can be overridden by site-specific values provided in
+.Xr rc.conf.local 8 :
 .Pp
 .Bl -tag -width daemon_flags -offset indent -compact
 .It Ar daemon Ns _flags
@@ -83,12 +80,18 @@ User to run the daemon as, using
 .Xr su 1 .
 .El
 .Pp
+To obtain the actual variable names, replace
+.Ar daemon
+with the name of the script.
 For example, postgres is managed through
 .Pa /etc/rc.d/postgresql .
 To run the daemon using a site-specific user account, define the following in
 .Xr rc.conf.local 8 :
 .Pp
 .Dl postgresql_user=mypgsqluser
+.Pp
+Each script may define its own defaults, as explained in
+.Xr rc.subr 8 .
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa /etc/rc.d/
@@ -109,7 +112,9 @@ directory
 first appeared in
 .Ox 4.9 .
 .Sh BUGS
-Changing flag values in
+Changing
+.Ar daemon Ns _flags
+in
 .Xr rc.conf.local 8
 will change the corresponding pattern used with
 .Xr pkill 1 ,
