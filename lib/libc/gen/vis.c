@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.21 2010/08/24 23:49:06 djm Exp $ */
+/*	$OpenBSD: vis.c,v 1.22 2011/03/13 22:21:32 guenther Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,8 @@
 #include <vis.h>
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
-#define	isvisible(c)							\
+#define	isvisible(c,flag)						\
+	(((c) == '\\' || (flag & VIS_ALL) == 0) &&			\
 	(((u_int)(c) <= UCHAR_MAX && isascii((u_char)(c)) &&		\
 	(((c) != '*' && (c) != '?' && (c) != '[' && (c) != '#') ||	\
 		(flag & VIS_GLOB) == 0) && isgraph((u_char)(c))) ||	\
@@ -44,7 +45,7 @@
 	((flag & VIS_NL) == 0 && (c) == '\n') ||			\
 	((flag & VIS_SAFE) && ((c) == '\b' ||				\
 		(c) == '\007' || (c) == '\r' ||				\
-		isgraph((u_char)(c)))))
+		isgraph((u_char)(c))))))
 
 /*
  * vis - visually encode characters
@@ -52,7 +53,7 @@
 char *
 vis(char *dst, int c, int flag, int nextc)
 {
-	if (isvisible(c) && (flag & VIS_ALL) == 0) {
+	if (isvisible(c, flag)) {
 		*dst++ = c;
 		if (c == '\\' && (flag & VIS_NOSLASH) == 0)
 			*dst++ = '\\';
@@ -167,7 +168,7 @@ strnvis(char *dst, const char *src, size_t siz, int flag)
 
 	i = 0;
 	for (start = dst, end = start + siz - 1; (c = *src) && dst < end; ) {
-		if (isvisible(c)) {
+		if (isvisible(c, flag)) {
 			i = 1;
 			*dst++ = c;
 			if (c == '\\' && (flag & VIS_NOSLASH) == 0) {
