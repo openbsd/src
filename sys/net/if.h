@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.121 2010/11/17 18:51:57 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.122 2011/03/13 15:31:41 stsp Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -278,6 +278,7 @@ struct ifnet {				/* and the entries */
 	int	(*if_stop)(struct ifnet *, int);
 					/* timer routine */
 	void	(*if_watchdog)(struct ifnet *);
+	int	(*if_wol)(struct ifnet *, int);
 	struct	ifaltq if_snd;		/* output queue (includes altq) */
 	struct sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 
@@ -329,6 +330,7 @@ struct ifnet {				/* and the entries */
 #define	IFXF_NOINET6		0x2		/* don't do inet6 */
 #define	IFXF_INET6_PRIVACY	0x4		/* autoconf privacy extension */
 #define	IFXF_MPLS		0x8		/* supports MPLS */
+#define	IFXF_WOL		0x10		/* wake on lan enabled */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_TXREADY)
@@ -352,6 +354,7 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_UDPv6	0x00000100	/* can do IPv6/UDP checksums */
 #define	IFCAP_CSUM_TCPv4_Rx	0x00000200	/* can do IPv4/TCP (Rx only) */
 #define	IFCAP_CSUM_UDPv4_Rx	0x00000400	/* can do IPv4/UDP (Rx only) */
+#define	IFCAP_WOL		0x00008000	/* can do wake on lan */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)

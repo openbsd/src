@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.233 2011/01/25 05:44:05 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.234 2011/03/13 15:31:41 stsp Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1357,6 +1357,31 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		}
 #endif
 
+#ifndef SMALL_KERNEL
+		if (ifp->if_capabilities & IFCAP_WOL) {
+			if (ISSET(ifr->ifr_flags, IFXF_WOL) &&
+			    !ISSET(ifp->if_xflags, IFXF_WOL)) {
+				int s = splnet();
+				ifp->if_xflags |= IFXF_WOL;
+				error = ifp->if_wol(ifp, 1);
+				splx(s);
+				if (error)
+					return (error);
+			}
+			if (ISSET(ifp->if_xflags, IFXF_WOL) &&
+			    !ISSET(ifr->ifr_flags, IFXF_WOL)) {
+				int s = splnet();
+				ifp->if_xflags &= ~IFXF_WOL;
+				error = ifp->if_wol(ifp, 0);
+				splx(s);
+				if (error)
+					return (error);
+			}
+		} else if (ISSET(ifr->ifr_flags, IFXF_WOL)) {
+			ifr->ifr_flags &= ~IFXF_WOL;
+			error = ENOTSUP;
+		}
+#endif
 
 		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
 			(ifr->ifr_flags & ~IFXF_CANTCHANGE);

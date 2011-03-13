@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.213 2011/02/17 08:32:29 camield Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.214 2011/03/13 15:31:41 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 17 2011 $
+.Dd $Mdocdate: March 13 2011 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -435,6 +435,16 @@ This may be used to enable an interface after an
 It happens automatically when setting the first address on an interface.
 If the interface was reset when previously marked down,
 the hardware will be re-initialized.
+.Pp
+.It Cm wol
+Enable Wake On LAN (WOL).
+When enabled, reception of a WOL frame will cause the network card to
+power up the system from standby or suspend mode.
+WOL frames can be sent using
+.Xr arp 8 .
+.It Fl wol
+Disable WOL.
+WOL is disabled at boot by the driver, if possible.
 .El
 .Pp
 .Nm

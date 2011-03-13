@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.244 2011/03/01 09:37:31 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.245 2011/03/13 15:31:41 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -461,6 +461,8 @@ const struct	cmd {
 	{ "descr",	NEXTARG,	0,		setifdesc },
 	{ "-description", 1,		0,		unsetifdesc },
 	{ "-descr",	1,		0,		unsetifdesc },
+	{ "wol",	IFXF_WOL,	0,		setifxflags },
+	{ "-wol",	-IFXF_WOL,	0,		setifxflags },
 #else /* SMALL */
 	{ "group",	NEXTARG,	0,		setignore },
 	{ "powersave",	NEXTARG0,	0,		setignore },
@@ -474,6 +476,8 @@ const struct	cmd {
 	{ "-inet6",	IFXF_NOINET6,	0,		setignore } ,
 	{ "description", NEXTARG,	0,		setignore },
 	{ "descr",	NEXTARG,	0,		setignore },
+	{ "wol",	IFXF_WOL,	0,		setignore },
+	{ "-wol",	-IFXF_WOL,	0,		setignore },
 #endif /* SMALL */
 #if 0
 	/* XXX `create' special-cased below */
