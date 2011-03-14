@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.10 2010/11/20 20:11:19 miod Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.11 2011/03/14 06:36:17 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -76,7 +76,7 @@ struct pipex_mppe {
 
 #ifdef PIPEX_PPPOE
 struct pipex_pppoe_session {
-	struct ifnet *over_ifp;			/* ether inteface */
+	struct ifnet *over_ifp;                 /* ether interface */
 };
 #endif /* PIPEX_PPPOE */
 
