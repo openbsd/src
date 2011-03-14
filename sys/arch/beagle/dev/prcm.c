@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.4 2010/08/07 03:50:01 krw Exp $ */
+/* $OpenBSD: prcm.c,v 1.5 2011/03/14 15:16:46 jasper Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -13,6 +13,10 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * Driver for the Power, Reset and Clock Management Module (PRCM).
  */
 
 #include <sys/types.h>
@@ -106,10 +110,15 @@
 #define PM_WKEN_WKUP		0x0cA0
 #define PM_WKST_WKUP		0x0cB0
 #define CM_CLKEN_PLL		0x0d00
+#define CM_CLKEN2_PLL		0x0d04
 #define CM_IDLEST_CKGEN		0x0d20
 #define CM_AUTOIDLE_PLL		0x0d30
+#define CM_AUTOIDLE2_PLL	0x0d34
 #define CM_CLKSEL1_PLL		0x0d40
 #define CM_CLKSEL2_PLL		0x0d44
+#define CM_CLKSEL3_PLL		0x0d48
+#define CM_CLKSEL4_PLL		0x0d4C
+#define CM_CLKSEL5_PLL		0x0d50
 #define CM_FCLKEN_PER		0x1000
 #define CM_ICLKEN_PER		0x1010
 #define CM_IDLEST_PER		0x1020
@@ -147,14 +156,15 @@ uint32_t prcm_fmask_addr[PRCM_REG_MAX];
 
 #define PRCM_SIZE	0x2000
 
-bus_space_tag_t prcm_iot;
-bus_space_handle_t prcm_ioh;
+#define SYS_CLK		13 /* SYS_CLK speed in MHz */
+
+bus_space_tag_t		prcm_iot;
+bus_space_handle_t	prcm_ioh;
 int prcm_attached;
 
 int     prcm_match(struct device *, void *, void *);
 void    prcm_attach(struct device *, struct device *, void *);
-
-
+int	prcm_setup_dpll5(void);
 
 struct cfattach	prcm_ca = {
 	sizeof (struct device), prcm_match, prcm_attach
@@ -187,6 +197,9 @@ prcm_attach(struct device *parent, struct device *self, void *args)
 	printf(" rev %d.%d\n", reg >> 4 & 0xf, reg & 0xf);
 	
 	prcm_attached = 1;
+
+	/* Setup the 120MHZ DPLL5 clock, to be used by USB. */
+	prcm_setup_dpll5();
 
 	/* XXX */
 #if 1
@@ -295,4 +308,50 @@ prcm_enableclock(int bit)
 		printf(" iclk %08x %08x",  iclk, iclk | mbit);
 	}
 	printf ("\n");
+}
+
+/*
+ * OMAP35xx Power, Reset, and Clock Management Reference Guide
+ * (sprufa5.pdf) and AM/DM37x Multimedia Device Technical Reference
+ * Manual (sprugn4h.pdf) note that DPLL5 provides a 120MHz clock for
+ * peripheral domain modules (page 107 and page 302).
+ * The reference clock for DPLL5 is DPLL5_ALWON_FCLK which is
+ * SYS_CLK, running at 13MHz.
+ */
+int
+prcm_setup_dpll5(void)
+{
+	uint32_t val;
+
+	/*
+	 * We need to set the multiplier and divider values for PLL.
+	 * To end up with 120MHz we take SYS_CLK, divide by it and multiply
+	 * with 120 (sprugn4h.pdf, 13.4.11.4.1 SSC Configuration)
+	 */
+	val = ((120 & 0x7ff) << 8) | ((SYS_CLK - 1) & 0x7f);
+	bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKSEL4_PLL, val);
+
+	/* Clock divider from the PLL to the 120MHz clock. */
+	bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKSEL5_PLL, val);
+
+	/*
+	 * spruf98o.pdf, page 2319:
+	 * PERIPH2_DPLL_FREQSEL is 0x7 1.75MHz to 2.1MHz
+	 * EN_PERIPH2_DPLL is 0x7
+	 */
+	val = (7 << 4) | (7 << 0);
+	bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKEN2_PLL, val);
+
+	/* Disable the interconnect clock auto-idle. */
+	bus_space_write_4(prcm_iot, prcm_ioh, CM_AUTOIDLE2_PLL, 0x0);
+
+	/* Wait until DPLL5 is locked and there's clock activity. */
+	while ((val = bus_space_read_4(prcm_iot, prcm_ioh,
+	    CM_IDLEST_CKGEN) & 0x01) == 0x00) {
+#ifdef DIAGNOSTIC
+		printf("CM_IDLEST_PLL = 0x&08x\n", val);
+#endif
+	}
+
+	return 0;
 }
