@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.26 2010/08/24 23:49:06 djm Exp $
+.\"	$OpenBSD: vis.3,v 1.27 2011/03/14 15:56:48 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 24 2010 $
+.Dd $Mdocdate: March 14 2011 $
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -44,9 +44,9 @@
 .Ft int
 .Fn strvis "char *dst" "const char *src" "int flag"
 .Ft int
-.Fn strnvis "char *dst" "const char *src" "size_t size" "int flag"
+.Fn strnvis "char *dst" "const char *src" "size_t dstsize" "int flag"
 .Ft int
-.Fn strvisx "char *dst" "const char *src" "size_t len" "int flag"
+.Fn strvisx "char *dst" "const char *src" "size_t srclen" "int flag"
 .Sh DESCRIPTION
 The
 .Fn vis
@@ -57,7 +57,7 @@ a string which represents the character
 If
 .Fa c
 needs no encoding, it is copied in unaltered.
-The string is NUL terminated and a pointer to the end of the string is
+The string is NUL-terminated and a pointer to the end of the string is
 returned.
 The maximum length of any encoding is four
 characters (not including the trailing NUL);
@@ -86,46 +86,45 @@ functions copy into
 a visual representation of
 the string
 .Fa src .
+.Pp
 The
 .Fn strvis
 function encodes characters from
 .Fa src
-up to the first NUL.
+up to the first NUL, into a buffer
+.Fa dst
+(which must be at least 4 * srclen + 1 long).
+.Pp
 The
 .Fn strnvis
 function encodes characters from
 .Fa src
-up to the first NUL or the end of
+up to the first NUL or the end of the buffer
 .Fa dst ,
 as indicated by
-.Fa size .
+.Fa dstsize .
+.Pp
 The
 .Fn strvisx
 function encodes exactly
-.Fa len
+.Fa srclen
 characters from
 .Fa src
-(this
-is useful for encoding a block of data that may contain NULs).
-All three forms NUL terminate
+into a buffer
+.Fa dst
+(which must be at least 4 * srclen + 1 long).
+This
+is useful for encoding a block of data that may contain NULs.
+.Pp
+All three forms NUL-terminate
 .Fa dst ,
 except for
 .Fn strnvis
 when
-.Fa size
+.Fa dstsize
 is zero, in which case
 .Fa dst
 is not touched.
-For
-.Fn strvis
-and
-.Fn strvisx ,
-the size of
-.Fa dst
-must be four times the number
-of characters encoded from
-.Fa src
-(plus one for the NUL).
 .Fn strvis
 and
 .Fn strvisx
@@ -143,7 +142,7 @@ This can be used to detect truncation but it also means that
 the return value of
 .Fn strnvis
 must not be used without checking it against
-.Fa size .
+.Fa dstsize .
 .Pp
 The encoding is a unique, invertible representation composed entirely of
 graphic characters; it can be decoded back into the original form using
