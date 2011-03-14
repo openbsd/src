@@ -1127,7 +1127,7 @@ ncrtn.o%s"
    be stacked, so that invocations of #pragma pack(pop)' will return
    to the previous value.  */
 
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
+#define HANDLE_PRAGMA_PACK_PUSH_POP
 
 /* Select a format to encode pointers in exception handling data.  CODE
    is 0 for data, 1 for code labels, 2 for function pointers.  GLOBAL is
