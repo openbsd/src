@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.114 2010/11/24 15:31:34 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.115 2011/03/14 17:20:00 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -400,7 +400,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 	 * Read dos partition table, follow extended partitions.
 	 * Map the partitions to disklabel entries i-p
 	 */
-	while (wander && n < 8 && loop < 8) {
+	while (wander && loop < 8) {
 		loop++;
 		wander = 0;
 		if (part_blkno < extoff)
@@ -466,8 +466,8 @@ donot:
 		 * In case the disklabel read below fails, we want to
 		 * provide a fake label in i-p.
 		 */
-		for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
-			struct partition *pp = &lp->d_partitions[8+n];
+		for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+			struct partition *pp;
 			u_int8_t fstype;
 
 			if (dp2->dp_typ == DOSPTYP_OPENBSD)
@@ -524,10 +524,14 @@ donot:
 			 * Don't set fstype/offset/size when just looking for
 			 * the offset of the OpenBSD partition. It would
 			 * invalidate the disklabel checksum!
+			 *
+			 * Don't try to spoof more than 8 partitions, i.e.
+			 * 'i' -'p'.
 			 */
-			if (partoffp)
+			if (partoffp || n >= 8)
 				continue;
 
+			pp = &lp->d_partitions[8+n];
 			pp->p_fstype = fstype;
 			if (letoh32(dp2->dp_start))
 				DL_SETPOFFSET(pp,
