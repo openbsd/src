@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.80 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.81 2011/03/14 22:14:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -44,15 +44,14 @@ static const char *biosdisk_err(u_int);
 static int biosdisk_errno(u_int);
 
 int CHS_rw (int, int, int, int, int, int, void *);
-static int EDD_rw (int, int, u_int64_t, u_int32_t, void *);
+static int EDD_rw (int, int, u_int32_t, u_int32_t, void *);
 
-static daddr64_t findopenbsd(bios_diskinfo_t *, daddr64_t, const char **,
-    int *);
+static u_int findopenbsd(bios_diskinfo_t *, u_int, const char **, int *);
 
 extern int debug;
 int bios_bootdev;
 int bios_cddev = -1;		/* Set by srt0 if coming from CD */
-daddr64_t mbr_eoff;		/* Offset of MBR extended partition. */
+u_int mbr_eoff;			/* Offset of MBR extended partition. */
 
 #if 0
 struct biosdisk {
@@ -214,10 +213,14 @@ CHS_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void *buf)
 }
 
 static __inline int
-EDD_rw(int rw, int dev, u_int64_t daddr, u_int32_t nblk, void *buf)
+EDD_rw(int rw, int dev, u_int32_t daddr, u_int32_t nblk, void *buf)
 {
 	int rv;
 	volatile static struct EDD_CB cb;
+
+	/* Some (most?) BIOSen get confused by i/o above 2 ^ 28 - 1 sector. */
+	if ((daddr + nblk) > BOOTBIOS_MAXSEC)
+		return (1); /* Invalid function/parameter. */
 
 	/* Zero out reserved stuff */
 	cb.edd_res1 = 0;
@@ -246,7 +249,7 @@ EDD_rw(int rw, int dev, u_int64_t daddr, u_int32_t nblk, void *buf)
  * Read given sector, handling retry/errors/etc.
  */
 int
-biosd_io(int rw, bios_diskinfo_t *bd, daddr32_t off, int nsect, void *buf)
+biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 {
 	int dev = bd->bios_number;
 	int j, error;
@@ -346,12 +349,12 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr32_t off, int nsect, void *buf)
 /*
  * Try to read the bsd label on the given BIOS device
  */
-static daddr64_t
-findopenbsd(bios_diskinfo_t *bd, daddr64_t mbroff, const char **err, int *n)
+static u_int
+findopenbsd(bios_diskinfo_t *bd, u_int mbroff, const char **err, int *n)
 {
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
-	daddr64_t start = -1; 
+	u_int start = (u_int)-1; 
 	int error, i;
 
 	/* Limit the number of recursions */
@@ -388,17 +391,21 @@ findopenbsd(bios_diskinfo_t *bd, daddr64_t mbroff, const char **err, int *n)
 			    dp->dp_start, dp->dp_start);
 #endif
 		if (dp->dp_typ == DOSPTYP_OPENBSD) {
-			start = (daddr64_t)dp->dp_start + mbroff;
+			if (dp->dp_start > (dp->dp_start + mbroff))
+				continue;
+			start = dp->dp_start + mbroff;
 			break;
 		}
 
 		if (dp->dp_typ == DOSPTYP_EXTEND ||
 		    dp->dp_typ == DOSPTYP_EXTENDL) {
-			mbroff = (daddr64_t)dp->dp_start + mbr_eoff;
-			if (!mbr_eoff)
-				mbr_eoff = (daddr64_t)dp->dp_start;
+			mbroff = dp->dp_start + mbr_eoff;
+			if (mbr_eoff == DOSBBSECTOR)
+				mbr_eoff = dp->dp_start;
+			if (mbroff < dp->dp_start)
+				continue;
 			start = findopenbsd(bd, mbroff, err, n);
-			if (start != -1)
+			if (start != (u_int)-1)
 				break;	
 		}
 	}
@@ -409,7 +416,7 @@ findopenbsd(bios_diskinfo_t *bd, daddr64_t mbroff, const char **err, int *n)
 const char *
 bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 {
-	daddr64_t start = 0;
+	u_int start = 0;
 	char *buf;
 	const char *err = NULL;
 	int error;
@@ -422,9 +429,9 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 
 	/* MBR is a harddisk thing */
 	if (bd->bios_number & 0x80) {
-		mbr_eoff = 0;
-		start = findopenbsd(bd, (daddr64_t)DOSBBSECTOR, &err, &n);
-		if (start == -1) {
+		mbr_eoff = DOSBBSECTOR;
+		start = findopenbsd(bd, DOSBBSECTOR, &err, &n);
+		if (start == (u_int)-1) {
 			if (err != NULL)
 				return (err);
  			return "no OpenBSD partition\n";
@@ -439,7 +446,7 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 		printf("loading disklabel @ %lld\n", start);
 #endif
 	/* read disklabel */
-	error = biosd_io(F_READ, bd, (daddr32_t)start, 1, buf);
+	error = biosd_io(F_READ, bd, start, 1, buf);
 
 	if (error)
 		return "failed to read disklabel";
@@ -662,7 +669,10 @@ biosstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 			d_partitions[B_PARTITION(dip->bsddev)].p_offset;
 
 	/* Read all, sub-functions handle track boundaries */
-	error = biosd_io(rw, bd, blk, nsect, buf);
+	if (blk < 0)
+		error = EINVAL;
+	else
+		error = biosd_io(rw, bd, blk, nsect, buf);
 
 #ifdef BIOS_DEBUG
 	if (debug) {

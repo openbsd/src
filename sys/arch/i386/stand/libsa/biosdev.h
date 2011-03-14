@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.32 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.33 2011/03/14 22:14:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -49,7 +49,7 @@ int biosopen(struct open_file *, ...);
 int biosclose(struct open_file *);
 int biosioctl(struct open_file *, u_long, void *);
 int bios_getdiskinfo(int, bios_diskinfo_t *);
-int biosd_io(int, bios_diskinfo_t *, daddr32_t, int, void *);
+int biosd_io(int, bios_diskinfo_t *, u_int, int, void *);
 const char * bios_getdisklabel(bios_diskinfo_t *, struct disklabel *);
 
 /* diskprobe.c */

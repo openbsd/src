@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: biosvar.h,v 1.11 2010/11/22 21:07:18 miod Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.12 2011/03/14 22:14:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -36,6 +36,7 @@
 #define	BOOTARG_OFF	(NBPG*2)
 #define	BOOTARG_LEN	(NBPG*1)
 #define	BOOTBIOS_ADDR	(0x7c00)
+#define	BOOTBIOS_MAXSEC	((1 << 28) - 1)
 
 	/* BIOS configure flags */
 #define	BIOSF_BIOS32	0x0001
