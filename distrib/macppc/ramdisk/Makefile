@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2011/03/14 19:07:46 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -113,8 +113,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso \
-	rdsetroot
+	    *.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso rdsetroot
 	rm -rf cd-dir
 
 .ifdef RELEASEDIR

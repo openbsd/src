@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2011/03/14 19:07:46 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -93,8 +93,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd ${BSD_RD} \
-	rdsetroot
+	    *.o *.lo *.c bsd ${BSD_RD} rdsetroot
 
 .ifdef RELEASEDIR
 install:

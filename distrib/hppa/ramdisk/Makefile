@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2010/10/18 04:07:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2011/03/14 19:07:46 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -107,7 +107,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF} ${CDROM}
+	    ${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF} ${CDROM}
 
 .ifdef RELEASEDIR
 beforeinstall:
