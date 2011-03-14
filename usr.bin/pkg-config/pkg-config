@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.32 2011/03/14 08:35:08 jasper Exp $
+# $OpenBSD: pkg-config,v 1.33 2011/03/14 08:40:13 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -35,7 +35,7 @@ if (defined($ENV{PKG_CONFIG_LOGFILE}) && $ENV{PKG_CONFIG_LOGFILE}) {
 	$logfile = $ENV{PKG_CONFIG_LOGFILE};
 }
 
-my $allow_uninstalled = 
+my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
@@ -112,7 +112,7 @@ GetOptions(	'debug' => \$D,
 
 # Initial value of printerr depends on the options...
 if (!defined $mode{printerr}) {
-	if (defined $mode{libs} || defined $mode{cflags} 
+	if (defined $mode{libs} || defined $mode{cflags}
 	    || defined $mode{version} || defined $mode{list}) {
 		$mode{printerr} = 1;
 	} else {
@@ -312,7 +312,7 @@ sub get_config
 	my ($f) = @_;
 
 	my $cfg;
-	eval { 
+	eval {
 	    $cfg = OpenBSD::PkgConfig->read_file($f);
 	};
 	if (!$@) {
@@ -344,7 +344,7 @@ sub find_config
 		return get_config($f);
 	}
 	if ($mode{printerr}) {
-	    print STDERR 
+	    print STDERR
 	    	"Package $p was not found in the pkg-config search path\n";
 	}
 	return undef;
@@ -471,8 +471,8 @@ sub do_list
 	my ($p, $x, $y, @files, $fname, $name);
 	my $error = 0;
 
-	foreach my $p (@PKGPATH) { 
-		push(@files, <$p/*.pc>); 
+	foreach my $p (@PKGPATH) {
+		push(@files, <$p/*.pc>);
 	}
 
 	# Scan the lengths of the package names so I can make a format
@@ -493,8 +493,8 @@ sub do_list
 			next;
 		}
 		$fname = basename($f, '.pc');
-		printf("%${x}s %s - %s\n", $fname, 
-		    stringize($cfg->get_property('Name', $variables)), 
+		printf("%${x}s %s - %s\n", $fname,
+		    stringize($cfg->get_property('Name', $variables)),
 		    stringize($cfg->get_property('Description', $variables),
 		    ' '));
 	}
@@ -572,7 +572,7 @@ sub compare
 sub versionmatch
 {
 	my ($cfg, $op, $want) = @_;
-	
+
 	# can't possibly match if we can't find the file
 	return 0 if !defined $cfg;
 
