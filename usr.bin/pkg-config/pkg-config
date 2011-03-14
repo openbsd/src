@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.33 2011/03/14 08:40:13 jasper Exp $
+# $OpenBSD: pkg-config,v 1.34 2011/03/14 08:43:59 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -75,7 +75,7 @@ if ($logfile) {
 #
 # as each .pc file is loaded, it is stored in %configs, indexed by package
 # name. this makes it possible to then pull out flags or do substitutions
-# without having to go back and reload the files from disk
+# without having to go back and reload the files from disk.
 
 Getopt::Long::Configure('no_ignore_case');
 GetOptions(	'debug' => \$D,
@@ -512,6 +512,9 @@ Usage: $0 [options]
 --version - print version of pkgconfig
 --errors-to-stdout - direct error messages to stdout rather than stderr
 --print-errors - print error messages in case of error
+--print-provides - print all the modules the given package provides
+--print-requires - print all the modules the given package requires
+--print-requires-private - print all the private modules the given package requires
 --silence-errors - don't print error messages in case of error
 --atleast-pkgconfig-version [version] - require a certain version of pkgconfig
 --cflags package [versionspec] [package [versionspec]]
