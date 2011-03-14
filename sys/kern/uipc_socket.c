@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.87 2011/03/12 18:31:41 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.88 2011/03/14 01:06:20 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ restart:
 		if (so->so_state & SS_CANTRCVMORE) {
 			if (m)
 				goto dontblock;
-			else
+			else if (so->so_rcv.sb_cc == 0)
 				goto release;
 		}
 		for (; m; m = m->m_next)
@@ -1633,6 +1633,10 @@ filt_soread(struct knote *kn, long hint)
 	struct socket *so = (struct socket *)kn->kn_fp->f_data;
 
 	kn->kn_data = so->so_rcv.sb_cc;
+#ifdef SOCKET_SPLICE
+	if (so->so_splice)
+		return (0);
+#endif /* SOCKET_SPLICE */
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
 		kn->kn_fflags = so->so_error;
