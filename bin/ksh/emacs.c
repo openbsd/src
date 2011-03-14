@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.42 2009/06/02 06:47:47 halex Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.43 2011/03/14 21:20:01 okan Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -205,11 +205,7 @@ static const struct x_ftab x_ftab[] = {
 	{ x_fold_upper,		"upcase-word",			XF_ARG },
 	{ x_set_arg,		"set-arg",			XF_NOBIND },
 	{ x_comment,		"comment",			0 },
-#ifdef SILLY
-	{ x_game_of_life,	"play-game-of-life",		0 },
-#else
 	{ 0, 0, 0 },
-#endif
 #ifdef DEBUG
 	{ x_debug_info,		"debug-info",			0 },
 #else
@@ -1534,62 +1530,9 @@ x_noop(int c)
 	return KSTD;
 }
 
-#ifdef SILLY
-static int
-x_game_of_life(int c)
-{
-	char	newbuf [256+1];
-	char	*ip, *op;
-	int	i, len;
-
-	i = xep - xbuf;
-	*xep = 0;
-	len = x_size_str(xbuf);
-	xcp = xbp = xbuf;
-	memmove(newbuf+1, xbuf, i);
-	newbuf[0] = 'A';
-	newbuf[i] = 'A';
-	for (ip = newbuf+1, op = xbuf; --i >= 0; ip++, op++) {
-		/*  Empty space  */
-		if (*ip < '@' || *ip == '_' || *ip == 0x7F) {
-			/*  Two adults, make whoopee */
-			if (ip[-1] < '_' && ip[1] < '_') {
-				/*  Make kid look like parents.  */
-				*op = '`' + ((ip[-1] + ip[1])/2)%32;
-				if (*op == 0x7F) /* Birth defect */
-					*op = '`';
-			}
-			else
-				*op = ' ';	/* nothing happens */
-			continue;
-		}
-		/*  Child */
-		if (*ip > '`') {
-			/*  All alone, dies  */
-			if (ip[-1] == ' ' && ip[1] == ' ')
-				*op = ' ';
-			else	/*  Gets older */
-				*op = *ip-'`'+'@';
-			continue;
-		}
-		/*  Adult  */
-		/*  Overcrowded, dies */
-		if (ip[-1] >= '@' && ip[1] >= '@') {
-			*op = ' ';
-			continue;
-		}
-		*op = *ip;
-	}
-	*op = 0;
-	x_redraw(len);
-	return KSTD;
-}
-#endif
-
 /*
  *	File/command name completion routines
  */
-
 
 static int
 x_comp_comm(int c)
