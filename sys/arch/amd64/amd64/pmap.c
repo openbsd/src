@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2010/11/30 19:30:16 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2011/03/14 00:05:46 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2436,7 +2436,7 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
  * cpus we need to send the IPI to, then we grab the counter, then
  * we send the IPIs, then we finally do our own shootdown.
  *
- * Our shootdown is last to make it parallell with the other cpus
+ * Our shootdown is last to make it parallel with the other cpus
  * to shorten the spin time.
  *
  * Notice that we depend on failures to send IPIs only being able to
