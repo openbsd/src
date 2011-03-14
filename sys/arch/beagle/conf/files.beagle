@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.5 2010/12/06 20:10:17 jasper Exp $
+#	$OpenBSD: files.beagle,v 1.6 2011/03/14 15:09:28 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -36,7 +36,7 @@ file	arch/beagle/dev/prcm.c			prcm
 
 device omgpio
 attach omgpio at ahb
-file	arch/beagle/dev/omgpio.c			omgpio needs-count
+file	arch/beagle/dev/omgpio.c		omgpio needs-count
 
 device intc
 attach intc at ahb
@@ -44,7 +44,7 @@ file	arch/beagle/dev/intc.c			intc
 
 device gptimer
 attach gptimer at ahb
-file	arch/beagle/dev/gptimer.c			gptimer
+file	arch/beagle/dev/gptimer.c		gptimer
 
 device omdog
 attach omdog at ahb
@@ -55,18 +55,23 @@ attach ommmc at ahb
 file	arch/beagle/dev/ommmc.c			ommmc
 
 attach ohci at ahb with omohci
-file	arch/beagle/dev/omohci.c			omohci
+file	arch/beagle/dev/omohci.c		omohci
 
 attach ehci at ahb with omehci
-file	arch/beagle/dev/omehci.c			omehci
+file	arch/beagle/dev/omehci.c		omehci
 
 # NS16550 compatible serial ports
 attach	com at ahb with com_ahb
 file	arch/beagle/dev/omap_com.c		com_ahb
 
+device omusbtll
+attach omusbtll at ahb
+file arch/beagle/dev/omusbtll.c			omusbtll
+
+
 device omkbd: wskbddev
 attach omkbd at ahb
-file	arch/beagle/dev/omkbd.c		omkbd
+file	arch/beagle/dev/omkbd.c			omkbd
 
 # LCD frame buffer
 device omdisplay: wsemuldisplaydev, rasops16
@@ -84,15 +89,10 @@ include "dev/atapiscsi/files.atapiscsi"
 file	arch/arm/arm/irq_dispatch.S
 file	arch/arm/arm/softintr.c                         
 
-# MCSPI - spi connection to atlas 
+# MCSPI - spi 
 device mcspi 
 attach mcspi at ahb
-file	arch/beagle/dev/mcspi.c		mcspi
-
-# ATLAS (spi) driver
-device atlas: wskbddev
-attach atlas at ahb				# create a spi bus for this?
-file arch/beagle/dev/atlas.c			atlas
+file	arch/beagle/dev/mcspi.c			mcspi
 
 # pseudo-Audio Device Driver
 device oaudio: audio
