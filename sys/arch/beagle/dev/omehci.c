@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.4 2010/09/07 16:21:37 deraadt Exp $ */
+/*	$OpenBSD: omehci.c,v 1.5 2011/03/14 14:20:58 jasper Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -37,6 +37,8 @@
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+#define EHCI_HCPCAPBASE 0x48064800
+
 int	omehci_match(struct device *, void *, void *);
 void	omehci_attach(struct device *, struct device *, void *);
 int	omehci_detach(struct device *, int);
@@ -58,10 +60,9 @@ struct cfattach omehci_ca = {
 int
 omehci_match(struct device *parent, void *match, void *aux)
 {
-        struct ahb_attach_args	*aa = aux;
+	struct ahb_attach_args	*aa = aux;
 
-	/* XXX - 3[45]30 */
-	if (aa->aa_addr != 0x48064800)
+	if (aa->aa_addr != EHCI_HCPCAPBASE)
 		return 0;
 
 	return (1);
