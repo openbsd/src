@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.31 2011/03/10 19:15:55 jasper Exp $
+# $OpenBSD: pkg-config,v 1.32 2011/03/14 08:35:08 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -39,7 +39,7 @@ my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
-my $version = 0.22; # pretend to be this version of pkgconfig
+my $version = 0.23; # pretend to be this version of pkgconfig
 
 my %configs = ();
 my %mode = ();
@@ -53,6 +53,12 @@ my $D = 0; # debug flag
     } else {
 	    $variables->{pc_top_builddir} = '$(top_builddir)';
     }
+
+    my $s = $ENV{PKG_CONFIG_SYSROOT_DIR};
+    if (defined $s) {
+	    $variables->{pc_sysrootdir} = $s;
+    }
+    # The default '/' is implied.
 }
 
 $D = 1 if defined($ENV{PKG_CONFIG_DEBUG_SPEW});
@@ -407,7 +413,7 @@ sub do_cflags
 		my $l = $configs{$pkg}->get_property('Cflags', $variables);
 		push(@$cflags, @$l) if defined $l;
 	}
-	return OpenBSD::PkgConfig->compress($cflags,
+	my $a = OpenBSD::PkgConfig->compress($cflags,
 		sub {
 			local $_ = shift;
 			if (($mode{cflags} & 1) && /^-I/ ||
@@ -417,7 +423,11 @@ sub do_cflags
 			    return 0;
 			}
 		});
-	return undef;
+	if (defined($a) && defined($variables->{pc_sysrootdir})){
+		$a =~ s/^-I/$&$variables->{pc_sysrootdir}/g;
+	}
+
+	return $a;
 }
 
 #if the lib option is set, pull out the linker flags
@@ -441,6 +451,11 @@ sub do_libs
 			    return 0;
 			}
 		});
+
+	if (defined($variables->{pc_sysrootdir})){
+		$a =~ s/^-[lL]/$&$variables->{pc_sysrootdir}/g;
+	}
+
 	if ($mode{libs} & 1) {
 		my $b = OpenBSD::PkgConfig->rcompress($libs,
 			sub { shift =~ m/^-l/; });
