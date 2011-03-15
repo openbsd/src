@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.221 2011/01/29 15:01:22 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.222 2011/03/15 13:29:41 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1640,6 +1640,12 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ioctl = sr_ioctl;
 #endif /* NBIO > 0 */
 
+#ifndef SMALL_KERNEL
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+	sensordev_install(&sc->sc_sensordev);
+#endif /* SMALL_KERNEL */
+
 	printf("\n");
 
 	softraid_disk_attach = sr_disk_attach;
@@ -1650,6 +1656,12 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 int
 sr_detach(struct device *self, int flags)
 {
+#ifndef SMALL_KERNEL
+	struct sr_softc		*sc = (void *)self;
+
+	sensordev_deinstall(&sc->sc_sensordev);
+#endif /* SMALL_KERNEL */
+
 	return (0);
 }
 
@@ -4066,22 +4078,19 @@ sr_sensors_create(struct sr_discipline *sd)
 	DNPRINTF(SR_D_STATE, "%s: %s: sr_sensors_create\n",
 	    DEVNAME(sc), sd->sd_meta->ssd_devname);
 
-	strlcpy(sd->sd_vol.sv_sensordev.xname, DEVNAME(sc),
-	    sizeof(sd->sd_vol.sv_sensordev.xname));
-
 	sd->sd_vol.sv_sensor.type = SENSOR_DRIVE;
 	sd->sd_vol.sv_sensor.status = SENSOR_S_UNKNOWN;
 	strlcpy(sd->sd_vol.sv_sensor.desc, sd->sd_meta->ssd_devname,
 	    sizeof(sd->sd_vol.sv_sensor.desc));
 
-	sensor_attach(&sd->sd_vol.sv_sensordev, &sd->sd_vol.sv_sensor);
+	sensor_attach(&sc->sc_sensordev, &sd->sd_vol.sv_sensor);
+	sd->sd_vol.sv_sensor_attached = 1;
 
 	if (sc->sc_sensors_running == 0) {
 		if (sensor_task_register(sc, sr_sensors_refresh, 10) == NULL)
 			goto bad;
 		sc->sc_sensors_running = 1;
 	}
-	sensordev_install(&sd->sd_vol.sv_sensordev);
 
 	rv = 0;
 bad:
@@ -4093,8 +4102,8 @@ sr_sensors_delete(struct sr_discipline *sd)
 {
 	DNPRINTF(SR_D_STATE, "%s: sr_sensors_delete\n", DEVNAME(sd->sd_sc));
 
-	if (sd->sd_vol.sv_sensor_valid)
-		sensordev_deinstall(&sd->sd_vol.sv_sensordev);
+	if (sd->sd_vol.sv_sensor_attached)
+		sensor_detach(&sd->sd_sc->sc_sensordev, &sd->sd_vol.sv_sensor);
 }
 
 void
