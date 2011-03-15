@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.115 2011/03/02 21:51:14 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.116 2011/03/15 13:10:31 jsing Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ protopr(u_long off, char *name, int af, u_long pcbaddr)
 	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
 	int istcp, israw, isany;
+	int addrlen = 22;
 	int first = 1;
 	char *name0;
 	char namebuf[20];
@@ -180,16 +181,18 @@ protopr(u_long off, char *name, int af, u_long pcbaddr)
 			if (aflag)
 				printf(" (including servers)");
 			putchar('\n');
-			if (Aflag)
-				printf("%-*.*s %-7.7s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n",
-				    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
-				    "Send-Q", "Local Address",
-				    "Foreign Address", "(state)");
-			else
-				printf("%-7.7s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
-				    "Proto", "Recv-Q", "Send-Q",
-				    "Local Address", "Foreign Address",
-				    "(state)");
+			if (Aflag) {
+				addrlen = 18;
+				printf("%-*.*s ", PLEN, PLEN, "PCB");
+			}
+			printf("%-7.7s %-6.6s %-6.6s ",
+			    "Proto", "Recv-Q", "Send-Q");
+			if (Bflag && istcp)
+				printf("%-6.6s %-6.6s %-6.6s ",
+				    "Recv-W", "Send-W", "Cgst-W");
+			printf(" %-*.*s %-*.*s %s\n",
+			    addrlen, addrlen, "Local Address",
+			    addrlen, addrlen, "Foreign Address", "(state)");
 			first = 0;
 		}
 		if (Aflag) {
@@ -204,8 +207,13 @@ protopr(u_long off, char *name, int af, u_long pcbaddr)
 			name = namebuf;
 		} else
 			name = name0;
-		printf("%-7.7s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
-		    sockb.so_snd.sb_cc);
+		printf("%-7.7s %6lu %6lu ",
+		    name, sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc);
+		if (Bflag && istcp)
+			printf("%6lu %6lu %6lu ", tcpcb.rcv_wnd, tcpcb.snd_wnd,
+			    (tcpcb.t_state == TCPS_ESTABLISHED) ?
+			    tcpcb.snd_cwnd : 0);
+
 		if (inpcb.inp_flags & INP_IPV6) {
 			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
 			    name);

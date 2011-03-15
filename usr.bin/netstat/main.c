@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.87 2010/10/30 23:06:05 bluhm Exp $	*/
+/*	$OpenBSD: main.c,v 1.88 2011/03/15 13:10:31 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -169,13 +169,17 @@ main(int argc, char *argv[])
 
 	af = AF_UNSPEC;
 
-	while ((ch = getopt(argc, argv, "Aabc:dFf:gI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
+	while ((ch = getopt(argc, argv,
+	    "AaBbc:dFf:gI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
 			break;
 		case 'a':
 			aflag = 1;
+			break;
+		case 'B':
+			Bflag = 1;
 			break;
 		case 'b':
 			bflag = 1;
@@ -527,7 +531,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n"
+	    "usage: %s [-AaBn] [-f address_family] [-M core] [-N system]\n"
 	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
 	    "               [-T tableid]\n"
 	    "       %s [-bdn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
