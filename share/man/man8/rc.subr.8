@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.14 2011/03/15 10:31:47 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.15 2011/03/15 12:58:31 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -227,7 +227,9 @@ It searches
 for a login class that has the same name as the
 .Nm rc.d
 script itself and uses that.
-If no such login class exists then daemon will be used.
+If no such login class exists then
+.Dq daemon
+will be used.
 .It Va pexp
 A regular expression to be passed to
 .Xr pkill 1
