@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.35 2010/03/24 08:27:26 fgsch Exp $	*/
+/*	$OpenBSD: eval.c,v 1.36 2011/03/15 08:39:54 okan Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -152,7 +152,10 @@ expand(char *cp,	/* input word */
 	char *dp, *sp;		/* dest., source */
 	int fdo, word;		/* second pass flags; have word */
 	int doblank;		/* field splitting of parameter/command subst */
-	Expand x;		/* expansion variables */
+	Expand x = {
+		/* expansion variables */
+		NULL, { NULL }, NULL, 0
+	};
 	SubType st_head, *st;
 	int newlines = 0; /* For trailing newlines in COMSUB */
 	int saw_eq, tilde_ok;
@@ -265,7 +268,7 @@ expand(char *cp,	/* input word */
 			    {
 				char *varname = ++sp; /* skip the { or x (}) */
 				int stype;
-				int slen;
+				int slen = 0;
 
 				sp = strchr(sp, '\0') + 1; /* skip variable */
 				type = varsub(&x, varname, sp, &stype, &slen);
