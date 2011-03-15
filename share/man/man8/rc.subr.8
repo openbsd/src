@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.13 2011/03/10 15:09:38 jmc Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.14 2011/03/15 10:31:47 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 10 2011 $
+.Dd $Mdocdate: March 15 2011 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -256,9 +256,7 @@ Can be set to
 in an
 .Nm rc.d
 script to disable the reload action if the respective daemon
-does not support the
-.Dv SIGHUP
-signal to reload its configuration.
+does not support reloading its configuration.
 The same is possible, but almost never useful, for other actions.
 .It Va rcexec
 Holds the full
