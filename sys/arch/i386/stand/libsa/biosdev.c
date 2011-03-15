@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.81 2011/03/14 22:14:40 krw Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.82 2011/03/15 14:00:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,9 +35,9 @@
 #include <machine/biosvar.h>
 #include <lib/libsa/saerrno.h>
 #include <isofs/cd9660/iso.h>
-#include "libsa.h"
 #include "disk.h"
 #include "debug.h"
+#include "libsa.h"
 #include "biosdev.h"
 
 static const char *biosdisk_err(u_int);
@@ -354,7 +354,7 @@ findopenbsd(bios_diskinfo_t *bd, u_int mbroff, const char **err, int *n)
 {
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
-	u_int start = (u_int)-1; 
+	u_int start = (u_int)-1;
 	int error, i;
 
 	/* Limit the number of recursions */
@@ -406,7 +406,7 @@ findopenbsd(bios_diskinfo_t *bd, u_int mbroff, const char **err, int *n)
 				continue;
 			start = findopenbsd(bd, mbroff, err, n);
 			if (start != (u_int)-1)
-				break;	
+				break;
 		}
 	}
 
@@ -443,7 +443,7 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 	buf = alloca(DEV_BSIZE);
 #ifdef BIOS_DEBUG
 	if (debug)
-		printf("loading disklabel @ %lld\n", start);
+		printf("loading disklabel @ %u\n", start);
 #endif
 	/* read disklabel */
 	error = biosd_io(F_READ, bd, start, 1, buf);
@@ -556,7 +556,7 @@ biosopen(struct open_file *f, ...)
 #endif
 
 	/* Try for disklabel again (might be removable media) */
-	if (dip->bios_info.flags & BDI_BADLABEL){
+	if (dip->bios_info.flags & BDI_BADLABEL) {
 		const char *st = bios_getdisklabel(&dip->bios_info,
 		    &dip->disklabel);
 #ifdef BIOS_DEBUG
