@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.201 2011/03/09 20:59:22 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.202 2011/03/15 19:24:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -526,6 +526,8 @@ struct ssl {
 	off_t			 ssl_cert_len;
 	char			*ssl_key;
 	off_t			 ssl_key_len;
+	char			*ssl_dhparams;
+	off_t			 ssl_dhparams_len;
 	u_int8_t		 flags;
 };
 

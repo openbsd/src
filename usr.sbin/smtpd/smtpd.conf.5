@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.37 2010/12/18 22:25:24 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.38 2011/03/15 19:24:55 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 18 2010 $
+.Dd $Mdocdate: March 15 2011 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -118,18 +118,23 @@ If
 .Ic certificate
 is specified,
 a certificate
-.Ao Ar name Ac Ns .crt
-and key
+.Ao Ar name Ac Ns .crt ,
+a key
 .Ao Ar name Ac Ns .key
+and Diffie-Hellman parameters
+.Ao Ar name Ac Ns .dh
 are searched for.
 If no
 .Ic certificate
 is specified,
 the default interface name is instead used,
 for example
-.Pa fxp0.crt
+.Pa fxp0.crt ,
+.Pa fxp0.key ,
 and
-.Pa fxp0.key .
+.Pa fxp0.dh .
+If no DH parameters are provided, smtpd will use
+built-in parameters.
 Creation of certificates is documented in
 .Xr starttls 8 .
 .Pp

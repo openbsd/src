@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.31 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.32 2011/03/15 19:24:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,36 +57,12 @@ SSL	*ssl_client_init(int, char *, size_t, char *, size_t);
 int	 ssl_buf_read(SSL *, struct ibuf_read *);
 int	 ssl_buf_write(SSL *, struct msgbuf *);
 
-DH	*get_dh512(void);
-void	 ssl_set_ephemeral_key_exchange(SSL_CTX *);
+DH	*get_dh1024(void);
+DH	*get_dh_from_memory(u_int8_t *, size_t);
+void	 ssl_set_ephemeral_key_exchange(SSL_CTX *, DH *);
 
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
-
-/* From OpenSSL's documentation:
- *
- * If "strong" primes were used to generate the DH parameters, it is
- * not strictly necessary to generate a new key for each handshake
- * but it does improve forward secrecy.
- *
- * These are the parameters used by both sendmail and openssl's
- * s_server.
- *
- * -- gilles@
- */
-
-unsigned char dh512_p[] = {
-        0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
-        0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
-        0xED,0x94,0xEF,0x9C,0x8A,0x44,0x03,0xED,0x57,0x46,0x50,0xD3,
-        0x69,0x99,0xDB,0x29,0xD7,0x76,0x27,0x6B,0xA2,0xD3,0xD4,0x12,
-        0xE2,0x18,0xF4,0xDD,0x1E,0x08,0x4C,0xF6,0xD8,0x00,0x3E,0x7C,
-        0x47,0x74,0xE8,0x33,    
-};
-
-unsigned char dh512_g[] = {
-        0x02,
-};
 
 void
 ssl_connect(int fd, short event, void *p)
@@ -395,32 +371,42 @@ ssl_load_certfile(struct smtpd *env, const char *name, u_int8_t flags)
 	(void)strlcpy(s->ssl_name, key.ssl_name, sizeof(s->ssl_name));
 
 	if (! bsnprintf(certfile, sizeof(certfile),
-		"/etc/mail/certs/%s.crt", name)) {
-		free(s);
-		return (-1);
-	}
+		"/etc/mail/certs/%s.crt", name))
+		goto err;
 
-	if ((s->ssl_cert = ssl_load_file(certfile, &s->ssl_cert_len)) == NULL) {
-		free(s);
-		return (-1);
-	}
+	if ((s->ssl_cert = ssl_load_file(certfile, &s->ssl_cert_len)) == NULL)
+		goto err;
 
 	if (! bsnprintf(certfile, sizeof(certfile),
-		"/etc/mail/certs/%s.key", name)) {
-		free(s->ssl_cert);
-		free(s);
-		return -1;
-	}
+		"/etc/mail/certs/%s.key", name))
+		goto err;
 
-	if ((s->ssl_key = ssl_load_file(certfile, &s->ssl_key_len)) == NULL) {
-		free(s->ssl_cert);
-		free(s);
-		return (-1);
+	if ((s->ssl_key = ssl_load_file(certfile, &s->ssl_key_len)) == NULL)
+		goto err;
+
+	if (! bsnprintf(certfile, sizeof(certfile),
+		"/etc/mail/certs/%s.dh", name))
+		goto err;
+
+	if ((s->ssl_dhparams = ssl_load_file(certfile,
+		    &s->ssl_dhparams_len)) == NULL) {
+		log_warnx("no DH parameters found in %s", certfile);
+		log_warnx("using built-in DH parameters");
 	}
 
 	SPLAY_INSERT(ssltree, env->sc_ssl, s);
 
 	return (0);
+err:
+	if (s->ssl_cert != NULL)
+		free(s->ssl_cert);
+	if (s->ssl_key != NULL)
+		free(s->ssl_key);
+	if (s->ssl_dhparams != NULL)
+		free(s->ssl_dhparams);
+	if (s != NULL)
+		free(s);
+	return (-1);
 }
 
 void
@@ -440,6 +426,7 @@ void
 ssl_setup(struct smtpd *env, struct listener *l)
 {
 	struct ssl	key;
+	DH *dh;
 
 	if (!(l->flags & F_SSL))
 		return;
@@ -463,10 +450,18 @@ ssl_setup(struct smtpd *env, struct listener *l)
 	if (!SSL_CTX_check_private_key(l->ssl_ctx))
 		goto err;
 	if (!SSL_CTX_set_session_id_context(l->ssl_ctx,
-		(const unsigned char *)l->ssl_cert_name, strlen(l->ssl_cert_name) + 1))
+		(const unsigned char *)l->ssl_cert_name,
+		strlen(l->ssl_cert_name) + 1))
 		goto err;
 
-	ssl_set_ephemeral_key_exchange(l->ssl_ctx);
+
+
+	if (l->ssl->ssl_dhparams_len == 0)
+		dh = get_dh1024();
+	else
+		dh = get_dh_from_memory(l->ssl->ssl_dhparams,
+		    l->ssl->ssl_dhparams_len);
+	ssl_set_ephemeral_key_exchange(l->ssl_ctx, dh);
 
 	log_debug("ssl_setup: ssl setup finished for listener: %p", l);
 	return;
@@ -694,29 +689,83 @@ ssl_buf_write(SSL *s, struct msgbuf *msgbuf)
 	return SSL_get_error(s, ret);
 }
 
+/* From OpenSSL's documentation:
+ *
+ * If "strong" primes were used to generate the DH parameters, it is
+ * not strictly necessary to generate a new key for each handshake
+ * but it does improve forward secrecy.
+ *
+ * -- gilles@
+ */
 DH *
-get_dh512(void)
+get_dh1024(void)
 {
-        DH *dh;
-	
+	DH *dh;
+	unsigned char dh1024_p[] = {
+		0xAD,0x37,0xBB,0x26,0x75,0x01,0x27,0x75,
+		0x06,0xB5,0xE7,0x1E,0x1F,0x2B,0xBC,0x51,
+		0xC0,0xF4,0xEB,0x42,0x7A,0x2A,0x83,0x1E,
+		0xE8,0xD1,0xD8,0xCC,0x9E,0xE6,0x15,0x1D,
+		0x06,0x46,0x50,0x94,0xB9,0xEE,0xB6,0x89,
+		0xB7,0x3C,0xAC,0x07,0x5E,0x29,0x37,0xCC,
+		0x8F,0xDF,0x48,0x56,0x85,0x83,0x26,0x02,
+		0xB8,0xB6,0x63,0xAF,0x2D,0x4A,0x57,0x93,
+		0x6B,0x54,0xE1,0x8F,0x28,0x76,0x9C,0x5D,
+		0x90,0x65,0xD1,0x07,0xFE,0x5B,0x05,0x65,
+		0xDA,0xD2,0xE2,0xAF,0x23,0xCA,0x2F,0xD6,
+		0x4B,0xD2,0x04,0xFE,0xDF,0x21,0x2A,0xE1,
+		0xCD,0x1B,0x70,0x76,0xB3,0x51,0xA4,0xC9,
+		0x2B,0x68,0xE3,0xDD,0xCB,0x97,0xDA,0x59,
+		0x50,0x93,0xEE,0xDB,0xBF,0xC7,0xFA,0xA7,
+		0x47,0xC4,0x4D,0xF0,0xC6,0x09,0x4A,0x4B
+	};
+	unsigned char dh1024_g[] = {
+		0x02
+	};
+
         if ((dh = DH_new()) == NULL)
 		return NULL;
 
-        dh->p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
-        dh->g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
-        if (dh->p == NULL || dh->g == NULL)
-                return NULL;
+        dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+        dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+        if (dh->p == NULL || dh->g == NULL) {
+		DH_free(dh);
+		return NULL;
+	}
 
         return dh;
 }
 
+DH *
+get_dh_from_memory(u_int8_t *params, size_t len)
+{
+	BIO *mem;
+        DH *dh;
+
+	mem = BIO_new_mem_buf(params, len);
+	if (mem == NULL)
+		return NULL;
+	dh = PEM_read_bio_DHparams(mem, NULL, NULL, NULL);
+	if (dh == NULL)
+		goto err;
+        if (dh->p == NULL || dh->g == NULL)
+		goto err;
+	return dh;
+
+err:
+	if (mem != NULL)
+		BIO_free(mem);
+	if (dh != NULL)
+		DH_free(dh);
+	return NULL;
+}
+
 
 void
-ssl_set_ephemeral_key_exchange(SSL_CTX *ctx)
+ssl_set_ephemeral_key_exchange(SSL_CTX *ctx, DH *dh)
 {
-	DH *dh;
-
-	dh = get_dh512();
-	if (dh != NULL)
-		SSL_CTX_set_tmp_dh(ctx, dh);
+	if (dh == NULL || !SSL_CTX_set_tmp_dh(ctx, dh)) {
+		ssl_error("ssl_set_ephemeral_key_exchange");
+		fatal("ssl_set_ephemeral_key_exchange: cannot set tmp dh");
+	}
 }
