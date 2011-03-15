@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.38 2010/07/07 21:52:00 stsp Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.39 2011/03/15 08:38:07 okan Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -144,8 +144,7 @@ main(int argc, char *argv[])
 	signal_add(&sigchld_ev, NULL);
 
 	/* Loading the config needs to happen in the event loop */
-	tv.tv_usec = 0;
-	tv.tv_sec = 0;
+	timerclear(&tv);
 	evtimer_set(&startup_ev, startup_handler, NULL);
 	evtimer_add(&startup_ev, &tv);
 
@@ -252,7 +251,7 @@ external_handler(int fd, short event, void *arg)
 	struct timeval tv;
 
 	/* re-schedule */
-	tv.tv_usec = 0;
+	timerclear(&tv);
 	tv.tv_sec = external->frequency;
 	evtimer_set(&external->ev, external_handler, external);
 	evtimer_add(&external->ev, &tv);
@@ -382,7 +381,7 @@ external_evtimer_setup(struct ifsd_state *state, int action)
 				external_exec(external, 0);
 
 				/* schedule it for later */
-				tv.tv_usec = 0;
+				timerclear(&tv);
 				tv.tv_sec = external->frequency;
 				evtimer_set(&external->ev, external_handler,
 				    external);
