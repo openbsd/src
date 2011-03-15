@@ -3448,6 +3448,7 @@
 ./usr/share/zoneinfo/America/Mendoza
 ./usr/share/zoneinfo/America/Menominee
 ./usr/share/zoneinfo/America/Merida
+./usr/share/zoneinfo/America/Metlakatla
 ./usr/share/zoneinfo/America/Mexico_City
 ./usr/share/zoneinfo/America/Miquelon
 ./usr/share/zoneinfo/America/Moncton
@@ -3488,6 +3489,7 @@
 ./usr/share/zoneinfo/America/Sao_Paulo
 ./usr/share/zoneinfo/America/Scoresbysund
 ./usr/share/zoneinfo/America/Shiprock
+./usr/share/zoneinfo/America/Sitka
 ./usr/share/zoneinfo/America/St_Barthelemy
 ./usr/share/zoneinfo/America/St_Johns
 ./usr/share/zoneinfo/America/St_Kitts
@@ -4045,6 +4047,7 @@
 ./usr/share/zoneinfo/posix/America/Mendoza
 ./usr/share/zoneinfo/posix/America/Menominee
 ./usr/share/zoneinfo/posix/America/Merida
+./usr/share/zoneinfo/posix/America/Metlakatla
 ./usr/share/zoneinfo/posix/America/Mexico_City
 ./usr/share/zoneinfo/posix/America/Miquelon
 ./usr/share/zoneinfo/posix/America/Moncton
@@ -4085,6 +4088,7 @@
 ./usr/share/zoneinfo/posix/America/Sao_Paulo
 ./usr/share/zoneinfo/posix/America/Scoresbysund
 ./usr/share/zoneinfo/posix/America/Shiprock
+./usr/share/zoneinfo/posix/America/Sitka
 ./usr/share/zoneinfo/posix/America/St_Barthelemy
 ./usr/share/zoneinfo/posix/America/St_Johns
 ./usr/share/zoneinfo/posix/America/St_Kitts
@@ -4643,6 +4647,7 @@
 ./usr/share/zoneinfo/right/America/Mendoza
 ./usr/share/zoneinfo/right/America/Menominee
 ./usr/share/zoneinfo/right/America/Merida
+./usr/share/zoneinfo/right/America/Metlakatla
 ./usr/share/zoneinfo/right/America/Mexico_City
 ./usr/share/zoneinfo/right/America/Miquelon
 ./usr/share/zoneinfo/right/America/Moncton
@@ -4683,6 +4688,7 @@
 ./usr/share/zoneinfo/right/America/Sao_Paulo
 ./usr/share/zoneinfo/right/America/Scoresbysund
 ./usr/share/zoneinfo/right/America/Shiprock
+./usr/share/zoneinfo/right/America/Sitka
 ./usr/share/zoneinfo/right/America/St_Barthelemy
 ./usr/share/zoneinfo/right/America/St_Johns
 ./usr/share/zoneinfo/right/America/St_Kitts
