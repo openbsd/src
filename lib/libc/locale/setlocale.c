@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.17 2007/11/28 10:24:38 chl Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.18 2011/03/15 22:27:48 stsp Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -87,11 +87,6 @@ setlocale(int category, const char *locale)
 	int i, loadlocale_success;
 	size_t len;
 	const char *env, *r;
-
-	if (issetugid() != 0 ||
-	    ((!_PathLocale && !(_PathLocale = getenv("PATH_LOCALE"))) ||
-	     !*_PathLocale))
-		_PathLocale = _PATH_LOCALE;
 
 	if (category < 0 || category >= _LC_LAST)
 		return (NULL);
@@ -231,7 +226,7 @@ load_locale_sub(int category, const char *locname, int isspecial)
 		return -1;
 
 	len = snprintf(name, sizeof(name), "%s/%s/%s",
-		       _PathLocale, locname, categories[category]);
+		       _PATH_LOCALE, locname, categories[category]);
 	if (len < 0 || len >= sizeof(name))
 		return -1;
 
