@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.23 2010/11/05 16:09:50 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.24 2011/03/15 10:31:31 okan Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -557,10 +557,8 @@ filelist_done(void)
 	dbg_sync = 1;
 	dbg_flush();
 #endif
-	it.it_value.tv_sec = 0;
-	it.it_value.tv_usec = 0;
-	it.it_interval.tv_sec = 0;
-	it.it_interval.tv_usec = 0;
+	timerclear(&it.it_value);
+	timerclear(&it.it_interval);
 	if (setitimer(ITIMER_REAL, &it, NULL) < 0) {
 		perror("setitimer");
 		exit(1);
