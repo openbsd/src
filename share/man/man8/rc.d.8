@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.6 2011/03/13 02:00:28 schwarze Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.7 2011/03/15 12:21:08 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 13 2011 $
+.Dd $Mdocdate: March 15 2011 $
 .Dt RC.D 8
 .Os
 .Sh NAME
@@ -92,6 +92,17 @@ To run the daemon using a site-specific user account, define the following in
 .Pp
 Each script may define its own defaults, as explained in
 .Xr rc.subr 8 .
+.Pp
+.Va daemon_class
+is a special read-only variable.
+It is set to
+.Dq daemon
+unless there is a login class configured in
+.Xr login.conf 5
+with the same name as the
+.Nm rc.d
+script itself,
+in which case it will be set to that login class.
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa /etc/rc.d/
