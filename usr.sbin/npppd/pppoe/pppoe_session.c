@@ -1,4 +1,4 @@
-/* $OpenBSD: pppoe_session.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: pppoe_session.c,v 1.4 2011/03/16 09:48:45 okan Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 /**@file
  * Session management of PPPoE protocol
- * $Id: pppoe_session.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
+ * $Id: pppoe_session.c,v 1.4 2011/03/16 09:48:45 okan Exp $
  */
 
 #include <sys/types.h>
@@ -114,8 +114,7 @@ pppoe_session_disconnect(pppoe_session *_this)
 		pppoe_session_send_PADT(_this);
 
 		/* free process should be par event */
-		tv.tv_usec = 0;
-		tv.tv_sec = 0;
+		timerclear(&tv);
 		evtimer_add(&_this->ev_disposing, &tv);
 		_this->state = PPPOE_SESSION_STATE_DISPOSING;
 	}

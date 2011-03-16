@@ -1,4 +1,4 @@
-/* $OpenBSD: pptp_ctrl.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: pptp_ctrl.c,v 1.4 2011/03/16 09:48:45 okan Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.4 2011/03/16 09:48:45 okan Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -274,8 +274,8 @@ pptp_ctrl_reset_timeout(pptp_ctrl *_this)
 
 	switch (_this->state) {
 	case PPTP_CTRL_STATE_DISPOSING:
-		tv.tv_sec = 0;	/* call back immidiatly */
-		tv.tv_usec = 0;
+		/* call back immediately */
+		timerclear(&tv);
 		break;
 	default:
 		tv.tv_sec = PPTP_CTRL_TIMEOUT_IVAL_SEC;
