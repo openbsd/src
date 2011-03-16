@@ -1,4 +1,4 @@
-/* *	$OpenBSD: config.h,v 1.8 2003/05/19 06:30:56 pjanzen Exp $*/
+/* *	$OpenBSD: config.h,v 1.9 2011/03/16 18:11:37 deraadt Exp $*/
 /* *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $*/
 
 /*
@@ -93,6 +93,7 @@
  * (This might be preferable for security reasons.)
  * #define DEF_PAGER	".../mydir/mypager"
  */
+#define	DEF_PAGER	_PATH_PAGER
 
 /*
  * If you define MAIL, then the player will be notified of new mail

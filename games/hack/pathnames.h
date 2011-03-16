@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 2011/03/16 18:11:37 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/03/23 08:32:27 cgd Exp $	*/
 
 /*-
@@ -33,6 +33,7 @@
  */
 
 #define	_PATH_MAIL	"/usr/bin/mail"
+#define	_PATH_PAGER	"/usr/bin/more"
 #define	_PATH_QUEST	"/var/games/questdir"
 #define	_PATH_HACK	"/var/games/hackdir"
 

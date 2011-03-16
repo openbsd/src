@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.18 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.19 2011/03/16 18:11:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -66,6 +66,7 @@
    contact the outside world. */
 
 #include	<sys/types.h>
+#include	<libgen.h>
 #include	<signal.h>
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -145,7 +146,7 @@ page_more(FILE *fp, int strip)
 	while (fgets(bufr, CO, fp) && (!strip || *bufr == '\t') &&
 	    !got_intrup) {
 		bufr[strcspn(bufr, "\n")] = '\0';
-		if (*bufr == '\0' || page_line(bufr+strip)) {
+		if (page_line(bufr+strip)) {
 			set_pager(2);
 			goto ret;
 		}
@@ -381,7 +382,7 @@ page_file(char *fnam, boolean silent)
 		if(dup(fd)) {
 			if(!silent) printf("Cannot open %s as stdin.\n", fnam);
 		} else {
-			execl(catmore, "page", (char *) 0);
+			execlp(catmore, basename(catmore), (char *) 0);
 			if(!silent) printf("Cannot exec %s.\n", catmore);
 		}
 		exit(1);
@@ -415,7 +416,7 @@ dosh()
 
 	if(child(0)) {
 		if ((str = getenv("SHELL")))
-			execl(str, str, (char *) 0);
+			execlp(str, str, (char *) 0);
 		else
 			execl("/bin/sh", "sh", (char *) 0);
 		pline("sh: cannot execute.");
