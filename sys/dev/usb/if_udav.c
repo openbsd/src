@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.52 2011/03/16 07:39:22 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.53 2011/03/16 22:39:13 jasper Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1138,8 +1138,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done;
 	}
 
-	if (total_len < ETHERMIN ||
-	    total_len > ifp->if_hardmtu ||
+	if (total_len < sizeof(struct ether_header) ||
 	    h->pktstat & UDAV_RSR_ERR) {
 		ifp->if_ierrors++;
 		goto done;
