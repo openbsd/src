@@ -172,10 +172,10 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
-	    "       tcpbench [-v] [-u] [-B buf] [-k kvars] [-n connections]\n"
-	    "                [-p port] [-q] [-r rate] [-S space] [-V rtable] hostname\n"
-	    "       tcpbench -s [-v] [-u] [-B buf] [-k kvars] [-p port]\n"
-	    "                [-q] [-r rate] [-S space] [-V rtable]\n");
+	    "       tcpbench [-uv] [-B buf] [-k kvars] [-n connections] [-p port]\n"
+	    "                [-r interval] [-S space] [-V rtable] hostname\n"
+	    "       tcpbench -s [-uv] [-B buf] [-k kvars] [-p port]\n"
+	    "                [-r interval] [-S space] [-V rtable]\n");
 	exit(1);
 }
 
