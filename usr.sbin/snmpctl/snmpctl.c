@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.12 2009/12/16 22:17:53 deraadt Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.13 2011/03/16 15:30:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -148,12 +148,14 @@ main(int argc, char *argv[])
 		err(1, "connect: %s", sock);
 	}
 
-	if (res->ibuf != NULL)
+	if (res->ibuf != NULL) {
 		ibuf = res->ibuf;
-	else
+		ibuf->fd = ibuf->w.fd = ctl_sock;
+	} else {
 		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 			err(1, "malloc");
-	imsg_init(ibuf, ctl_sock);
+		imsg_init(ibuf, ctl_sock);
+	}
 	done = 0;
 
 	/* process user request */
