@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.13 2010/09/20 20:43:38 schwarze Exp $ */
+/*	$Id: chars.in,v 1.14 2011/03/16 22:16:25 naddy Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -187,7 +187,7 @@ CHAR(":U",			"U",		220)
 CHAR(":a",			"a",		228)
 CHAR(":e",			"e",		235)
 CHAR(":i",			"i",		239)
-CHAR(":o",			"o",		245)
+CHAR(":o",			"o",		246)
 CHAR(":u",			"u",		252)
 CHAR(":y",			"y",		255)
 CHAR("\'A",			"A",		193)
