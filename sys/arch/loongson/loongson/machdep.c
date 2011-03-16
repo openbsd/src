@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2010/10/24 15:40:03 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.25 2011/03/16 21:10:17 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -97,7 +97,7 @@ int	bufcachepercent = BUFCACHEPERCENT;
 /*
  * Even though the system is 64bit, the hardware is constrained to up
  * to 2G of contigous physical memory (direct 2GB DMA area), so there
- * is no particular constraint. paddr_t is long so: 
+ * is no particular constraint. paddr_t is long so:
  */
 struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
@@ -172,6 +172,7 @@ extern const struct platform yeeloong_platform;
 
 const struct bonito_flavour bonito_flavours[] = {
 	/* Lemote Fuloong 2F mini-PC */
+	{ "LM6002",	&fuloong_platform }, /* dual Ethernet, no prefix */
 	{ "LM6003",	&fuloong_platform },
 	{ "LM6004",	&fuloong_platform },
 	/* EMTEC Gdium Liberty 1000 */
@@ -309,6 +310,31 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 				sys_platform = f->platform;
 				break;
 			}
+
+		if (sys_platform == NULL) {
+			/*
+			 * Early Lemote designs shipped without a model prefix.
+			 * Hopefully these well be close enough to the first
+			 * generation Fuloong 2F design (LM6002); let's warn
+			 * the user and try this if version is 1.2.something
+			 * (1.3 onwards are expected to have a model prefix,
+			 *  and there are currently no reports of 1.1 and
+			 *  below being 2F systems).
+			 *
+			 * Note that this could be handled by adding a
+			 * "1.2." machine type entry to the flavours table,
+			 * but I prefer have it stand out.
+			 * LM6002 users are encouraged to add the system
+			 * model prefix to the `Version' variable.
+			 */
+			if (strncmp(envvar, "1.2.", 4) == 0) {
+				pmon_printf("No model prefix in version"
+				    " string \"%s\".\n"
+				    "Attempting to match as Lemote Fuloong\n",
+				    envvar);
+				sys_platform = &fuloong_platform;
+			}
+		}
 
 		if (sys_platform == NULL) {
 			pmon_printf("This kernel doesn't support model \"%s\"."
@@ -626,7 +652,7 @@ consinit()
 }
 
 /*
- * cpu_startup: allocate memory for variable-sized tables, initialize CPU, and 
+ * cpu_startup: allocate memory for variable-sized tables, initialize CPU, and
  * do auto-configuration.
  */
 void
@@ -799,7 +825,7 @@ dumpconf(void)
 		dumplo = nblks - btodb(ptoa(physmem));
 
 	/*
-	 * Don't dump on the first page in case the dump device includes a 
+	 * Don't dump on the first page in case the dump device includes a
 	 * disk label.
 	 */
 	if (dumplo < btodb(PAGE_SIZE))
