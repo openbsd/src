@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.8 2010/02/03 05:25:58 kevlo Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.9 2011/03/17 21:49:33 jasper Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -224,6 +224,7 @@
 #define CPU_ID_CORTEX_A8_MASK	0xff0fffe0
 #define CPU_ID_OMAP3430		0x411fc080
 #define CPU_ID_OMAP3530		0x411fc090      /* XXX */
+#define	CPU_ID_OMAP3630		0x413fc080
 
 
 
