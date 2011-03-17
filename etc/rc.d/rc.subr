@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.26 2011/03/14 11:28:44 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.27 2011/03/17 16:43:51 robert Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -23,6 +23,30 @@ rc_stop() {
 	pkill -f "^${pexp}"
 }
 
+rc_do() {
+	if [ X"${RC_DEBUG}" = X"1" ]; then
+		echo "doing $@" && "$@"
+	else
+		"$@" >/dev/null 2>&1
+	fi
+}
+
+rc_print() {
+	_ret=$?
+	echo ${INRC:+'-n'} "${INRC:+ }${_name}($1)"
+	return ${_ret}
+}
+
+rc_wait() {
+	i=0
+	while [ $i -lt 5 ]; do
+		rc_do rc_check || return 0
+		sleep 1
+		i=$((i+1))
+	done
+	return 1
+}
+
 rc_cmd() {
 	[ $(id -u) -eq 0 -o X"$1" = "Xcheck" ] || \
 		rc_err "$0: need root privileges"
@@ -34,36 +58,36 @@ rc_cmd() {
 
 	case "$1" in
 	check)
-		rc_check >/dev/null
+		rc_do rc_check
 		;;
 	start)
-		rc_check || \
+		rc_do rc_check || \
 			(
 			if type rc_pre >/dev/null; then
-				rc_pre
+				rc_do rc_pre
 			fi
-			[ $? -eq 0 ] && rc_start >/dev/null
+			[ $? -eq 0 ] && \
+				rc_do rc_start && \
+				rc_print ok || rc_print failed
 			)
 		;;
 	stop)
-		if rc_check; then rc_stop >/dev/null && \
+		if rc_do rc_check; then rc_do rc_stop || \
+			( rc_print failed ) && \
 			(
-			i=0
-			while [ $i -lt 5 ]; do
-				rc_check || break
-				sleep 1
-				i=$((i+1))
-			done
-			if [ $i -lt 5 ]; then
+				rc_do rc_wait &&
+				(
 				if type rc_post >/dev/null; then \
-					rc_post
+					rc_do rc_post
 				fi
-			fi
+				) && rc_print ok || rc_print failed
 			)
+		else
+			return 0
 		fi
 		;;
 	reload)
-		rc_check && rc_reload >/dev/null
+		rc_do rc_check && rc_do rc_reload
 		;;
 	restart)
 		/etc/rc.d/${_name} stop && /etc/rc.d/${_name} start

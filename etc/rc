@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.348 2011/01/14 00:05:42 deraadt Exp $
+#	$OpenBSD: rc,v 1.349 2011/03/17 16:43:51 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -152,6 +152,7 @@ trap : 2
 trap : 3	# shouldn't be needed
 
 HOME=/; export HOME
+INRC=1; export INRC
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 

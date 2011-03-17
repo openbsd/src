@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.shutdown,v 1.10 2010/11/26 08:09:35 ajacoutot Exp $
+#	$OpenBSD: rc.shutdown,v 1.11 2011/03/17 16:43:51 robert Exp $
 #
 # If it exists, this script is run at system-shutdown by reboot(8),
 # halt(8).  If the architecture supports keyboard requested halting,
@@ -12,7 +12,7 @@ echo -n 'stopping local daemons:'
 while [ -n "${rc_scripts}" ]; do
 	_r=${rc_scripts##* }
 	rc_scripts=${rc_scripts%%*( )${_r}}
-	[ -x /etc/rc.d/${_r} ] && echo -n " ${_r}" && /etc/rc.d/${_r} stop
+	[ -x /etc/rc.d/${_r} ] && /etc/rc.d/${_r} stop
 done
 
 # Add your local shutdown actions here.

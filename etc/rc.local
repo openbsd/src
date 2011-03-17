@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.41 2010/11/05 10:03:00 ajacoutot Exp $
+#	$OpenBSD: rc.local,v 1.42 2011/03/17 16:43:51 robert Exp $
 
 # Site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -8,7 +8,7 @@
 echo -n 'starting local daemons:'
 
 for _r in $rc_scripts; do
-	[ -x /etc/rc.d/${_r} ] && echo -n " ${_r}" && /etc/rc.d/${_r} start
+	[ -x /etc/rc.d/${_r} ] && /etc/rc.d/${_r} start
 done
 
 # Add your local startup actions here.
