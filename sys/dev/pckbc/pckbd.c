@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.30 2010/12/16 20:18:31 shadchin Exp $ */
+/* $OpenBSD: pckbd.c,v 1.31 2011/03/17 15:42:05 shadchin Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -280,9 +280,7 @@ pckbd_set_xtscancode(pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
 }
 
 static int
-pckbd_is_console(tag, slot)
-	pckbc_tag_t tag;
-	pckbc_slot_t slot;
+pckbd_is_console(pckbc_tag_t tag, pckbc_slot_t slot)
 {
 	return (pckbd_consdata.t_isconsole &&
 		(tag == pckbd_consdata.t_kbctag) &&
@@ -293,10 +291,7 @@ pckbd_is_console(tag, slot)
  * these are both bad jokes
  */
 int
-pckbdprobe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pckbdprobe(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pckbc_attach_args *pa = aux;
@@ -362,9 +357,7 @@ pckbdprobe(parent, match, aux)
 }
 
 void
-pckbdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbd_softc *sc = (void *)self;
 	struct pckbc_attach_args *pa = aux;
@@ -417,9 +410,7 @@ pckbdattach(parent, self, aux)
 }
 
 int
-pckbd_enable(v, on)
-	void *v;
-	int on;
+pckbd_enable(void *v, int on)
 {
 	struct pckbd_softc *sc = v;
 	u_char cmd[1];
@@ -797,11 +788,7 @@ pckbd_scancode_translate(struct pckbd_internal *id, int datain)
 }
 
 static int
-pckbd_decode(id, datain, type, dataout)
-	struct pckbd_internal *id;
-	int datain;
-	u_int *type;
-	int *dataout;
+pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 {
 	int key;
 	int releasing;
@@ -857,11 +844,8 @@ pckbd_decode(id, datain, type, dataout)
 }
 
 int
-pckbd_init(t, kbctag, kbcslot, console)
-	struct pckbd_internal *t;
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-	int console;
+pckbd_init(struct pckbd_internal *t, pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
+    int console)
 {
 	bzero(t, sizeof(struct pckbd_internal));
 
@@ -873,8 +857,7 @@ pckbd_init(t, kbctag, kbcslot, console)
 }
 
 static int
-pckbd_led_encode(led)
-	int led;
+pckbd_led_encode(int led)
 {
 	int res;
 
@@ -890,9 +873,7 @@ pckbd_led_encode(led)
 }
 
 void
-pckbd_set_leds(v, leds)
-	void *v;
-	int leds;
+pckbd_set_leds(void *v, int leds)
 {
 	struct pckbd_softc *sc = v;
 	u_char cmd[2];
@@ -910,9 +891,7 @@ pckbd_set_leds(v, leds)
  * the console processor wants to give us a character.
  */
 void
-pckbd_input(vsc, data)
-	void *vsc;
-	int data;
+pckbd_input(void *vsc, int data)
 {
 	struct pckbd_softc *sc = vsc;
 	int rc, type, key;
@@ -945,12 +924,7 @@ pckbd_input(vsc, data)
 }
 
 int
-pckbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pckbd_softc *sc = v;
 
@@ -991,9 +965,7 @@ pckbd_ioctl(v, cmd, data, flag, p)
 }
 
 void
-pckbd_bell(pitch, period, volume, poll)
-	u_int pitch, period, volume;
-	int poll;
+pckbd_bell(u_int pitch, u_int period, u_int volume, int poll)
 {
 
 	if (pckbd_bell_fn != NULL)
@@ -1002,9 +974,7 @@ pckbd_bell(pitch, period, volume, poll)
 }
 
 void
-pckbd_hookup_bell(fn, arg)
-	void (*fn)(void *, u_int, u_int, u_int, int);
-	void *arg;
+pckbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
 {
 
 	if (pckbd_bell_fn == NULL) {
@@ -1014,8 +984,7 @@ pckbd_hookup_bell(fn, arg)
 }
 
 int
-pckbd_cnattach(kbctag)
-	pckbc_tag_t kbctag;
+pckbd_cnattach(pckbc_tag_t kbctag)
 {
 	char cmd[1];
 	int res;
@@ -1041,10 +1010,7 @@ pckbd_cnattach(kbctag)
 
 /* ARGSUSED */
 void
-pckbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+pckbd_cngetc(void *v, u_int *type, int *data)
 {
         struct pckbd_internal *t = v;
 	int val;
@@ -1064,9 +1030,7 @@ pckbd_cngetc(v, type, data)
 }
 
 void
-pckbd_cnpollc(v, on)
-	void *v;
-        int on;
+pckbd_cnpollc(void *v, int on)
 {
 	struct pckbd_internal *t = v;
 
@@ -1074,9 +1038,7 @@ pckbd_cnpollc(v, on)
 }
 
 void
-pckbd_cnbell(v, pitch, period, volume)
-	void *v;
-	u_int pitch, period, volume;
+pckbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
 
 	pckbd_bell(pitch, period, volume, 1);
