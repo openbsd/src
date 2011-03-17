@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.198 2011/03/02 04:38:01 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.199 2011/03/17 21:30:24 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -783,14 +782,14 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	/*
 	 * Start with a READ CAPACITY(10).
 	 */
-	rdcap = malloc(sizeof(*rdcap), M_TEMP, ((flags & SCSI_NOSLEEP) ?
-	    M_NOWAIT : M_WAITOK) | M_ZERO);
+	rdcap = dma_alloc(sizeof(*rdcap), ((flags & SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
 	if (rdcap == NULL)
 		return (0);
 
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL) {
-		free(rdcap, M_TEMP);
+		dma_free(rdcap, sizeof(*rdcap));
 		return (0);
 	}
 	xs->cmdlen = sizeof(*cmd10);
@@ -807,14 +806,14 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	if (error) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY error (%#x)\n",
 		    error));
-		free(rdcap, M_TEMP);
+		dma_free(rdcap, sizeof(*rdcap));
 		return (0);
 	}
 
 	max_addr = _4btol(rdcap->addr);
 	if (blksize != NULL)
 		*blksize = _4btol(rdcap->length);
-	free(rdcap, M_TEMP);
+	dma_free(rdcap, sizeof(*rdcap));
 
 	if (SCSISPC(sc_link->inqdata.version) < 3 && max_addr != 0xffffffff)
 		goto exit;
@@ -823,14 +822,14 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	 * SCSI-3 devices, or devices reporting more than 2^32-1 sectors can
 	 * try READ CAPACITY(16).
 	 */
-	rdcap16 = malloc(sizeof(*rdcap16), M_TEMP, ((flags & SCSI_NOSLEEP) ?
-	    M_NOWAIT : M_WAITOK) | M_ZERO);
+	rdcap16 = dma_alloc(sizeof(*rdcap16), ((flags & SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
 	if (rdcap16 == NULL)
 		goto exit;
 
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL) {
-		free(rdcap16, M_TEMP);
+		dma_free(rdcap16, sizeof(*rdcap16));
 		goto exit;
 	}
 	xs->cmdlen = sizeof(*cmd);
@@ -848,7 +847,7 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	if (error) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY 16 error (%#x)\n",
 		    error));
-		free(rdcap16, M_TEMP);
+		dma_free(rdcap16, sizeof(*rdcap16));
 		goto exit;
 	}
 
@@ -856,7 +855,7 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	if (blksize != NULL)
 		*blksize = _4btol(rdcap16->length);
 	/* XXX The other READ CAPACITY(16) info could be stored away. */
-	free(rdcap16, M_TEMP);
+	dma_free(rdcap16, sizeof(*rdcap16));
 
 	return (max_addr + 1);
 
@@ -951,8 +950,6 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 	struct scsi_inquiry *cmd;
 	struct scsi_xfer *xs;
 	int error;
-
-	bzero(buf, buflen);
 
 	if (sc_link->flags & SDEV_UMASS)
 		return (EJUSTRETURN);

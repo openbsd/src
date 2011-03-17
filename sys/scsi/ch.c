@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.43 2010/08/30 02:47:56 matthew Exp $	*/
+/*	$OpenBSD: ch.c,v 1.44 2011/03/17 21:30:24 deraadt Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/chio.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 
@@ -580,8 +581,9 @@ ch_usergetelemstatus(sc, cesr)
 	 * we can allocate enough storage for all of them.  We assume
 	 * that the first one can fit into 1k.
 	 */
-	data = malloc(1024, M_DEVBUF, M_WAITOK);
-	error = ch_getelemstatus(sc, sc->sc_firsts[chet], 1, data, 1024,
+	size = 1024;
+	data = dma_alloc(size, PR_WAITOK);
+	error = ch_getelemstatus(sc, sc->sc_firsts[chet], 1, data, size,
 	    want_voltags);
 	if (error)
 		goto done;
@@ -590,16 +592,16 @@ ch_usergetelemstatus(sc, cesr)
 	pg_hdr = (struct read_element_status_page_header *) (st_hdr + 1);
 	desclen = _2btol(pg_hdr->edl);
 
-	size = sizeof(struct read_element_status_header) +
-	    sizeof(struct read_element_status_page_header) +
-	    (desclen * sc->sc_counts[chet]);
+	dma_free(data, size);
 
 	/*
 	 * Reallocate storage for descriptors and get them from the
 	 * device.
 	 */
-	free(data, M_DEVBUF);
-	data = malloc(size, M_DEVBUF, M_WAITOK);
+	size = sizeof(struct read_element_status_header) +
+	    sizeof(struct read_element_status_page_header) +
+	    (desclen * sc->sc_counts[chet]);
+	data = dma_alloc(size, PR_WAITOK);
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
 	    sc->sc_counts[chet], data, size, want_voltags);
 	if (error)
@@ -633,7 +635,7 @@ ch_usergetelemstatus(sc, cesr)
 
  done:
 	if (data != NULL)
-		free(data, M_DEVBUF);
+		dma_free(data, size);
 	if (user_data != NULL)
 		free(user_data, M_DEVBUF);
 	return (error);
@@ -693,7 +695,7 @@ ch_get_params(sc, flags)
 	int error, from;
 	u_int8_t *moves, *exchanges;
 
-	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	data = dma_alloc(sizeof(*data), PR_NOWAIT);
 	if (data == NULL)
 		return (ENOMEM);
 
@@ -709,7 +711,7 @@ ch_get_params(sc, flags)
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
 #endif
-		free(data, M_TEMP);
+		dma_free(data, sizeof(*data));
 		return (error);
 	}
 
@@ -736,7 +738,7 @@ ch_get_params(sc, flags)
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
 #endif
-		free(data, M_TEMP);
+		dma_free(data, sizeof(*data));
 		return (error);
 	}
 
@@ -750,7 +752,7 @@ ch_get_params(sc, flags)
 	}
 
 	sc->sc_link->flags |= SDEV_MEDIA_LOADED;
-	free(data, M_TEMP);
+	dma_free(data, sizeof(*data));
 	return (0);
 }
 

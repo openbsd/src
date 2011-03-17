@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.220 2011/02/21 20:51:02 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.221 2011/03/17 21:30:24 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
@@ -1010,7 +1011,9 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 int
 sd_ioctl_inquiry(struct sd_softc *sc, struct dk_inquiry *di)
 {
-	struct scsi_vpd_serial vpd;
+	struct scsi_vpd_serial *vpd;
+
+	vpd = dma_alloc(sizeof(*vpd), PR_WAITOK | PR_ZERO);
 
 	bzero(di, sizeof(struct dk_inquiry));
 	scsi_strvis(di->vendor, sc->sc_link->inqdata.vendor,
@@ -1021,12 +1024,13 @@ sd_ioctl_inquiry(struct sd_softc *sc, struct dk_inquiry *di)
 	    sizeof(sc->sc_link->inqdata.revision));
 
 	/* the serial vpd page is optional */
-	if (scsi_inquire_vpd(sc->sc_link, &vpd, sizeof(vpd),
+	if (scsi_inquire_vpd(sc->sc_link, vpd, sizeof(*vpd),
 	    SI_PG_SERIAL, 0) == 0)
-		scsi_strvis(di->serial, vpd.serial, sizeof(vpd.serial));
+		scsi_strvis(di->serial, vpd->serial, sizeof(vpd->serial));
 	else
-		strlcpy(di->serial, "(unknown)", sizeof(vpd.serial));
+		strlcpy(di->serial, "(unknown)", sizeof(vpd->serial));
 
+	dma_free(vpd, sizeof(*vpd));
 	return (0);
 }
 
@@ -1044,11 +1048,10 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 
 	/* see if the adapter has special handling */
 	rv = scsi_do_ioctl(sc->sc_link, cmd, (caddr_t)dkc, 0);
-	if (rv != ENOTTY) {
+	if (rv != ENOTTY)
 		return (rv);
-	}
 
-	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK|M_CANFAIL);
+	buf = dma_alloc(sizeof(*buf), PR_WAITOK);
 	if (buf == NULL)
 		return (ENOMEM);
 
@@ -1097,7 +1100,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	}
 
 done:
-	free(buf, M_TEMP);
+	dma_free(buf, sizeof(*buf));
 	return (rv);
 }
 
@@ -1417,7 +1420,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 
 	dp->disksize = scsi_size(sc->sc_link, flags, &sssecsize);
 
-	buf = malloc(sizeof(*buf), M_TEMP, M_NOWAIT);
+	buf = dma_alloc(sizeof(*buf), PR_NOWAIT);
 	if (buf == NULL)
 		goto validate;
 
@@ -1503,7 +1506,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 
 validate:
 	if (buf)
-		free(buf, M_TEMP);
+		dma_free(buf, sizeof(*buf));
 
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);

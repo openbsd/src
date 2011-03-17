@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.116 2010/12/24 02:45:33 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.117 2011/03/17 21:30:24 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/mtio.h>
@@ -1409,21 +1409,28 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 int
 st_read_block_limits(struct st_softc *st, int flags)
 {
-	struct scsi_block_limits_data block_limits;
+	struct scsi_block_limits_data *block_limits = NULL;
 	struct scsi_block_limits *cmd;
 	struct scsi_link *sc_link = st->sc_link;
 	struct scsi_xfer *xs;
-	int error;
+	int error = 0;
 
 	if ((sc_link->flags & SDEV_MEDIA_LOADED))
 		return (0);
 
-	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
-	if (xs == NULL)
+	block_limits = dma_alloc(sizeof(*block_limits), PR_NOWAIT);
+	if (block_limits == NULL)
 		return (ENOMEM);
+
+	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
+	if (xs == NULL) {
+		error = ENOMEM;
+		goto done;
+	}
+
 	xs->cmdlen = sizeof(*cmd);
-	xs->data = (void *)&block_limits;
-	xs->datalen = sizeof(block_limits);
+	xs->data = (void *)block_limits;
+	xs->datalen = sizeof(*block_limits);
 	xs->timeout = ST_CTL_TIME;
 
 	cmd = (struct scsi_block_limits *)xs->cmd;
@@ -1433,12 +1440,15 @@ st_read_block_limits(struct st_softc *st, int flags)
 	scsi_xs_put(xs);
 
 	if (error == 0) {
-		st->blkmin = _2btol(block_limits.min_length);
-		st->blkmax = _3btol(block_limits.max_length);
+		st->blkmin = _2btol(block_limits->min_length);
+		st->blkmax = _3btol(block_limits->max_length);
 		SC_DEBUG(sc_link, SDEV_DB3,
 		    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
 	}
 
+done:
+	if (block_limits)
+		dma_free(block_limits, sizeof(*block_limits));
 	return (error);
 }
 
@@ -1455,15 +1465,15 @@ st_read_block_limits(struct st_softc *st, int flags)
 int
 st_mode_sense(struct st_softc *st, int flags)
 {
-	union scsi_mode_sense_buf *data;
+	union scsi_mode_sense_buf *data = NULL;
 	struct scsi_link *sc_link = st->sc_link;
 	u_int64_t block_count;
 	u_int32_t density, block_size;
 	u_char *page0 = NULL;
 	u_int8_t dev_spec;
-	int error, big;
+	int error = 0, big;
 
-	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	data = dma_alloc(sizeof(*data), PR_NOWAIT);
 	if (data == NULL)
 		return (ENOMEM);
 
@@ -1472,10 +1482,8 @@ st_mode_sense(struct st_softc *st, int flags)
 	 */
 	error = scsi_do_mode_sense(sc_link, 0, data, (void **)&page0,
 	    &density, &block_count, &block_size, 1, flags | SCSI_SILENT, &big);
-	if (error != 0) {
-		free(data, M_TEMP);
-		return (error);
-	}
+	if (error != 0)
+		goto done;
 
 	/* It is valid for no page0 to be available. */
 
@@ -1502,8 +1510,10 @@ st_mode_sense(struct st_softc *st, int flags)
 
 	sc_link->flags |= SDEV_MEDIA_LOADED;
 
-	free(data, M_TEMP);
-	return (0);
+done:
+	if (data)
+		dma_free(data, sizeof(*data));
+	return (error);
 }
 
 /*
@@ -1513,19 +1523,21 @@ st_mode_sense(struct st_softc *st, int flags)
 int
 st_mode_select(struct st_softc *st, int flags)
 {
-	union scsi_mode_sense_buf *inbuf, *outbuf;
+	union scsi_mode_sense_buf *inbuf = NULL, *outbuf = NULL;
 	struct scsi_blk_desc general;
 	struct scsi_link *sc_link = st->sc_link;
 	u_int8_t *page0 = NULL;
-	int error, big, page0_size;
+	int error = 0, big, page0_size;
 
-	inbuf = malloc(sizeof(*inbuf), M_TEMP, M_NOWAIT);
-	if (inbuf == NULL)
-		return (ENOMEM);
-	outbuf = malloc(sizeof(*outbuf), M_TEMP, M_NOWAIT | M_ZERO);
+	inbuf = dma_alloc(sizeof(*inbuf), PR_NOWAIT);
+	if (inbuf == NULL) {
+		error = ENOMEM;
+		goto done;
+	}
+	outbuf = dma_alloc(sizeof(*outbuf), PR_NOWAIT | PR_ZERO);
 	if (outbuf == NULL) {
-		free(inbuf, M_TEMP);
-		return (ENOMEM);
+		error = ENOMEM;
+		goto done;
 	}
 
 	/*
@@ -1537,15 +1549,13 @@ st_mode_select(struct st_softc *st, int flags)
 		SC_DEBUG(sc_link, SDEV_DB3,
 		    ("not setting density 0x%x blksize 0x%x\n",
 		    st->density, st->blksize));
-		free(inbuf, M_TEMP);
-		free(outbuf, M_TEMP);
-		return (0);
+		error = 0;
+		goto done;
 	}
 
 	if (sc_link->flags & SDEV_ATAPI) {
-		free(inbuf, M_TEMP);
-		free(outbuf, M_TEMP);
-		return (0);
+		error = 0;
+		goto done;
 	}
 
 	bzero(&general, sizeof(general));
@@ -1559,11 +1569,8 @@ st_mode_select(struct st_softc *st, int flags)
 	 */
 	error = scsi_do_mode_sense(sc_link, 0, inbuf, (void **)&page0, NULL,
 	    NULL, NULL, 1, flags | SCSI_SILENT, &big);
-	if (error != 0) {
-		free(inbuf, M_TEMP);
-		free(outbuf, M_TEMP);
-		return (error);
-	}
+	if (error != 0)
+		goto done;
 
 	if (page0 == NULL) {
 		page0_size = 0;
@@ -1596,9 +1603,7 @@ st_mode_select(struct st_softc *st, int flags)
 		    &general, sizeof(general));
 		error = scsi_mode_select(st->sc_link, 0, &outbuf->hdr,
 		    flags, ST_CTL_TIME);
-		free(inbuf, M_TEMP);
-		free(outbuf, M_TEMP);
-		return (error);
+		goto done;
 	}
 
 	/* MODE SENSE (10) header was returned, so use MODE SELECT (10). */
@@ -1612,8 +1617,11 @@ st_mode_select(struct st_softc *st, int flags)
 
 	error = scsi_mode_select_big(st->sc_link, 0, &outbuf->hdr_big,
 	    flags, ST_CTL_TIME);
-	free(inbuf, M_TEMP);
-	free(outbuf, M_TEMP);
+done:
+	if (inbuf)
+		dma_free(inbuf, sizeof(*inbuf));
+	if (outbuf)
+		dma_free(outbuf, sizeof(*outbuf));
 	return (error);
 }
 
@@ -2108,16 +2116,18 @@ st_interpret_sense(struct scsi_xfer *xs)
 int
 st_touch_tape(struct st_softc *st)
 {
-	char *buf;
-	int readsize;
-	int error;
-
-	buf = malloc(1024, M_TEMP, M_NOWAIT);
-	if (!buf)
-		return ENOMEM;
+	char *buf = NULL;
+	int readsize, maxblksize = 1024;
+	int error = 0;
 
 	if ((error = st_mode_sense(st, 0)) != 0)
-		goto bad;
+		goto done;
+	buf = dma_alloc(maxblksize, PR_NOWAIT);
+	if (!buf) {
+		error = ENOMEM;
+		goto done;
+	}
+
 	st->blksize = 1024;
 	do {
 		switch (st->blksize) {
@@ -2131,16 +2141,14 @@ st_touch_tape(struct st_softc *st)
 			st->flags &= ~ST_FIXEDBLOCKS;
 		}
 		if ((error = st_mode_select(st, 0)) != 0)
-			goto bad;
+			goto done;
 		st_read(st, buf, readsize, SCSI_SILENT);	/* XXX */
-		if ((error = st_rewind(st, 0, 0)) != 0) {
-bad:			free(buf, M_TEMP);
-			return error;
-		}
+		if ((error = st_rewind(st, 0, 0)) != 0)
+			goto done;
 	} while (readsize != 1 && readsize > st->blksize);
-
-	free(buf, M_TEMP);
-	return 0;
+done:
+	dma_free(buf, maxblksize);
+	return (error);
 }
 
 int

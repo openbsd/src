@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.50 2010/08/30 02:47:56 matthew Exp $ */
+/*	$OpenBSD: ses.c,v 1.51 2011/03/17 21:30:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/device.h>
 #include <sys/scsiio.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
@@ -207,7 +208,7 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 	    && TAILQ_EMPTY(&sc->sc_slots)
 #endif
 	    ) {
-		free(sc->sc_buf, M_DEVBUF);
+		dma_free(sc->sc_buf, sc->sc_buflen);
 		sc->sc_buf = NULL;
 	}
 }
@@ -247,7 +248,7 @@ ses_detach(struct device *self, int flags)
 	}
 
 	if (sc->sc_buf != NULL)
-		free(sc->sc_buf, M_DEVBUF);
+		dma_free(sc->sc_buf, sc->sc_buflen);
 
 	rw_exit_write(&sc->sc_lock);
 
@@ -266,10 +267,10 @@ ses_read_config(struct ses_softc *sc)
 	struct ses_enc_hdr *enc;
 	struct scsi_xfer *xs;
 	u_char *buf, *p;
-	int error, i;
+	int error = 0, i;
 	int flags = 0, ntypes = 0, nelems = 0;
 
-	buf = malloc(SES_BUFLEN, M_DEVBUF, M_NOWAIT | M_ZERO);
+	buf = dma_alloc(SES_BUFLEN, PR_NOWAIT | PR_ZERO);
 	if (buf == NULL)
 		return (1);
 
@@ -277,8 +278,8 @@ ses_read_config(struct ses_softc *sc)
 		flags |= SCSI_AUTOCONF;
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL) {
-		free(buf, M_DEVBUF);
-		return (1);
+		error = 1;
+		goto done;
 	}
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = buf;
@@ -296,15 +297,15 @@ ses_read_config(struct ses_softc *sc)
 	scsi_xs_put(xs);
 
 	if (error) {
-		free(buf, M_DEVBUF);
-		return (1);
+		error = 1;
+		goto done;
 	}
 
 	cfg = (struct ses_config_hdr *)buf;
 	if (cfg->pgcode != SES_PAGE_CONFIG || betoh16(cfg->length) >
 	    SES_BUFLEN) {
-		free(buf, M_DEVBUF);
-		return (1);
+		error = 1;
+		goto done;
 	}
 
 	DPRINTF("%s: config: n_subenc: %d length: %d\n", DEVNAME(sc),
@@ -347,21 +348,23 @@ ses_read_config(struct ses_softc *sc)
 #endif /* SES_DEBUG */
 
 	sc->sc_buflen = SES_STAT_LEN(ntypes, nelems);
-	sc->sc_buf = malloc(sc->sc_buflen, M_DEVBUF, M_NOWAIT);
+	sc->sc_buf = dma_alloc(sc->sc_buflen, PR_NOWAIT);
 	if (sc->sc_buf == NULL) {
-		free(buf, M_DEVBUF);
-		return (1);
+		error = 1;
+		goto done;
 	}
 
 	/* get the status page and then use it to generate a list of sensors */
 	if (ses_make_sensors(sc, tdlist, ntypes) != 0) {
-		free(buf, M_DEVBUF);
-		free(sc->sc_buf, M_DEVBUF);
-		return (1);
+		dma_free(sc->sc_buf, sc->sc_buflen);
+		error = 1;
+		goto done;
 	}
 
-	free(buf, M_DEVBUF);
-	return (0);
+done:
+	if (buf)
+		dma_free(buf, SES_BUFLEN);
+	return (error);
 }
 
 int

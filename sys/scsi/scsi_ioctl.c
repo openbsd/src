@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.46 2010/07/22 05:32:10 matthew Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.47 2011/03/17 21:30:24 deraadt Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
@@ -116,9 +116,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	xs->cmdlen = screq->cmdlen;
 
 	if (screq->datalen > 0) {
-		/* XXX dma accessible */
-		xs->data = malloc(screq->datalen, M_TEMP,
-		    M_WAITOK | M_CANFAIL | M_ZERO);
+		xs->data = dma_alloc(screq->datalen, PR_WAITOK | PR_ZERO);
 		if (xs->data == NULL) {
 			err = ENOMEM;
 			goto err;
@@ -193,7 +191,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 
 err:
 	if (xs->data)
-		free(xs->data, M_TEMP);
+		dma_free(xs->data, screq->datalen);
 	scsi_xs_put(xs);
 
 	return (err);
@@ -240,9 +238,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	xs->cmdlen = sizeof(*cdb);
 
 	if (atareq->datalen > 0) {
-		/* XXX dma accessible */
-		xs->data = malloc(atareq->datalen, M_TEMP,
-		    M_WAITOK | M_CANFAIL | M_ZERO);
+		xs->data = dma_alloc(atareq->datalen, PR_WAITOK | PR_ZERO);
 		if (xs->data == NULL) {
 			err = ENOMEM;
 			goto err;
@@ -292,7 +288,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 
 err:
 	if (xs->data)
-		free(xs->data, M_TEMP);
+		dma_free(xs->data, atareq->datalen);
 	scsi_xs_put(xs);
 
 	return (err);
