@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.14 2011/03/15 14:00:26 krw Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.15 2011/03/17 12:53:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -45,12 +45,11 @@ static int biosdisk_errno(u_int);
 int CHS_rw (int, int, int, int, int, int, void *);
 static int EDD_rw (int, int, u_int32_t, u_int32_t, void *);
 
-static u_int findopenbsd(bios_diskinfo_t *, u_int, const char **, int *);
+static u_int findopenbsd(bios_diskinfo_t *, const char **);
 
 extern int debug;
 int bios_bootdev;
 int bios_cddev = -1;		/* Set by srt0 if coming from CD */
-u_int mbr_eoff;			/* Offset of MBR extended partition. */
 
 #if 0
 struct biosdisk {
@@ -349,15 +348,16 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
  * Try to read the bsd label on the given BIOS device
  */
 static u_int
-findopenbsd(bios_diskinfo_t *bd, u_int mbroff, const char **err, int *n)
+findopenbsd(bios_diskinfo_t *bd, const char **err)
 {
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
-	u_int start = (u_int)-1;
-	int error, i;
+	u_int mbroff = DOSBBSECTOR;
+	u_int mbr_eoff = DOSBBSECTOR;	/* Offset of MBR extended partition. */
+	int error, i, maxebr = DOS_MAXEBR, nextebr;
 
-	/* Limit the number of recursions */
-	if (!(*n)--) {
+again:
+	if (!maxebr--) {
 		*err = "too many extended partitions";
 		return (-1);
 	}
@@ -377,6 +377,7 @@ findopenbsd(bios_diskinfo_t *bd, u_int mbroff, const char **err, int *n)
 	}
 
 	/* Search for OpenBSD partition */
+	nextebr = 0;
 	for (i = 0; i < NDOSPART; i++) {
 		dp = &mbr.dmbr_parts[i];
 		if (!dp->dp_size)
@@ -392,24 +393,29 @@ findopenbsd(bios_diskinfo_t *bd, u_int mbroff, const char **err, int *n)
 		if (dp->dp_typ == DOSPTYP_OPENBSD) {
 			if (dp->dp_start > (dp->dp_start + mbroff))
 				continue;
-			start = dp->dp_start + mbroff;
-			break;
+			return (dp->dp_start + mbroff);
 		}
 
-		if (dp->dp_typ == DOSPTYP_EXTEND ||
-		    dp->dp_typ == DOSPTYP_EXTENDL) {
-			mbroff = dp->dp_start + mbr_eoff;
+		/*
+		 * Record location of next ebr if and only if this is the first
+		 * extended partition in this boot record!
+		 */
+		if (!nextebr && (dp->dp_typ == DOSPTYP_EXTEND ||
+		    dp->dp_typ == DOSPTYP_EXTENDL)) {
+			nextebr = dp->dp_start + mbr_eoff;
+			if (nextebr < dp->dp_start)
+				nextebr = (u_int)-1;
 			if (mbr_eoff == DOSBBSECTOR)
 				mbr_eoff = dp->dp_start;
-			if (mbroff < dp->dp_start)
-				continue;
-			start = findopenbsd(bd, mbroff, err, n);
-			if (start != (u_int)-1)
-				break;
 		}
 	}
 
-	return (start);
+	if (nextebr && nextebr != (u_int)-1) {
+		mbroff = nextebr;
+		goto again;
+	}
+
+	return (-1);
 }
 
 const char *
@@ -419,7 +425,6 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 	char *buf;
 	const char *err = NULL;
 	int error;
-	int n = 8;
 
 	/* Sanity check */
 	if (bd->bios_edd == -1 &&
@@ -428,8 +433,7 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 
 	/* MBR is a harddisk thing */
 	if (bd->bios_number & 0x80) {
-		mbr_eoff = DOSBBSECTOR;
-		start = findopenbsd(bd, DOSBBSECTOR, &err, &n);
+		start = findopenbsd(bd, &err);
 		if (start == (u_int)-1) {
 			if (err != NULL)
 				return (err);
