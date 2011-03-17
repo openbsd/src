@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_alloc.c,v 1.3 2010/07/15 03:20:47 deraadt Exp $	 */
+/*	$OpenBSD: dma_alloc.c,v 1.4 2011/03/17 20:54:17 deraadt Exp $	 */
 /*
  * Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -21,9 +21,11 @@
 
 static __inline int	 dma_alloc_index(size_t size);
 
-#define DMA_BUCKET_OFFSET 4
-static char dmanames[14 - DMA_BUCKET_OFFSET][8];
-struct pool dmapools[14 - DMA_BUCKET_OFFSET];
+/* Create dma pools from objects sized 2^4 to 2^16 */
+#define DMA_PAGE_SHIFT		16
+#define DMA_BUCKET_OFFSET	4
+static char dmanames[DMA_PAGE_SHIFT - DMA_BUCKET_OFFSET + 1][10];
+struct pool dmapools[DMA_PAGE_SHIFT - DMA_BUCKET_OFFSET + 1];
 
 void
 dma_alloc_init(void)
