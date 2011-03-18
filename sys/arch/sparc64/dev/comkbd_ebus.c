@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.20 2009/01/11 16:12:15 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.21 2011/03/18 21:01:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -483,6 +483,8 @@ comkbd_init(sc)
 		if (ltries == 0)
 			continue;
 
+		/* Some Sun<=>PS/2 converters need some delay here */
+		DELAY(5000);
 
 		/* Send layout request */
 		comkbd_putc(sc, SKBD_CMD_LAYOUT);

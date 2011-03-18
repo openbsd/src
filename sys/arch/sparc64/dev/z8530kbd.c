@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.23 2009/01/12 21:11:58 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.24 2011/03/18 21:01:17 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -538,6 +538,8 @@ zskbd_init(zst)
 		if (ltries == 0)
 			continue;
 
+		/* Some Sun<=>PS/2 converters need some delay here */
+		DELAY(5000);
 
 		/* Send layout request */
 		zskbd_putc(zst, SKBD_CMD_LAYOUT);
