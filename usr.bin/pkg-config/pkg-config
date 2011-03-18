@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.40 2011/03/18 15:26:11 jasper Exp $
+# $OpenBSD: pkg-config,v 1.41 2011/03/18 18:21:40 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -607,9 +607,12 @@ sub versionmatch
 sub mismatch
 {
 	my ($p, $cfg, $op, $v) = @_;
-	print STDERR "Requested '$p $op $v' but version of ",
-	    stringize($cfg->get_property('Name')), " is ",
-	    stringize($cfg->get_property('Version')), "\n";
+	my $name = stringize($cfg->get_property('Name'));
+	my $version = stringize($cfg->get_property('Version'));
+	my $url = stringize($cfg->get_property('URL'));
+
+	print STDERR "Requested '$p $op $v' but version of $name is $version\n";
+	print STDERR "You may find new versions of $name at $url\n" if $url;
 }
 
 sub simplify_and_reverse
