@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.20 2011/03/04 21:01:49 okan Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.21 2011/03/18 22:37:06 okan Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -294,7 +294,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int		 ch, i;
+	int		 ch;
 	struct passwd	*pw;
 	pcap_handler	 phandler = logpkt_handler;
 	int syncfd = 0;
@@ -323,7 +323,7 @@ main(int argc, char **argv)
 			break;
 		case 'W':
 			/* limit whiteexp to 2160 hours (90 days) */
-			i = strtonum(optarg, 1, (24 * 90), &errstr);
+			whiteexp = strtonum(optarg, 1, (24 * 90), &errstr);
 			if (errstr)
 				usage();
 			/* convert to seconds from hours */
