@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2011/03/18 03:10:47 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
-#include <machine/mtrr.h>
 
 void setredzone(struct proc *);
 
@@ -153,9 +152,6 @@ cpu_exit(struct proc *p)
 	/* If we were using the FPU, forget about it. */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
-
-	if (p->p_md.md_flags & MDP_USEDMTRR)
-		mtrr_clean(p);
 
 	pmap_deactivate(p);
 	sched_exit(p);

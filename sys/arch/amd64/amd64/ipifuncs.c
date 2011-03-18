@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.15 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.16 2011/03/18 03:10:47 guenther Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -53,7 +53,6 @@
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#include <machine/mtrr.h>
 #include <machine/fpu.h>
 
 #include <ddb/db_output.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.130 2011/01/13 20:34:04 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.131 2011/03/18 03:10:47 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -106,7 +106,6 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
-#include <machine/mtrr.h>
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
 #include <machine/reg.h>
@@ -227,8 +226,6 @@ paddr_t avail_end;
 
 void (*delay_func)(int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
-
-struct mtrr_funcs *mtrr_funcs;
 
 /*
  * Format of boot information passed to us by 32-bit /boot

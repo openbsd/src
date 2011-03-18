@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.8 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.9 2011/03/18 03:10:47 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/sysarch.h>
-#include <machine/mtrr.h>
 
 #if defined(PERFCTRS) && 0
 #include <machine/pmc.h>
