@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.15 2010/07/01 05:11:18 krw Exp $	*/
+/*	$OpenBSD: uk.c,v 1.16 2011/03/18 02:11:38 matthew Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -55,9 +56,10 @@ struct uk_softc {
 
 int	ukmatch(struct device *, void *, void *);
 void	ukattach(struct device *, struct device *, void *);
+int	ukdetach(struct device *, int);
 
 struct cfattach uk_ca = {
-	sizeof(struct uk_softc), ukmatch, ukattach
+	sizeof(struct uk_softc), ukmatch, ukattach, ukdetach
 };
 
 struct cfdriver uk_cd = {
@@ -89,6 +91,23 @@ ukattach(struct device *parent, struct device *self, void *aux)
 	sc_link->openings = 1;
 
 	printf("\n");
+}
+
+int
+ukdetach(struct device *self, int flags)
+{
+	int bmaj, cmaj, mn;
+
+	mn = self->dv_unit;
+
+	for (bmaj = 0; bmaj < nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == ukopen)
+			vdevgone(bmaj, mn, mn, VBLK);
+	for (cmaj = 0; cmaj < nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == ukopen)
+			vdevgone(cmaj, mn, mn, VCHR);
+
+	return (0);
 }
 
 /*
