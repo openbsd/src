@@ -1,8 +1,9 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.39 2011/03/18 15:20:22 jasper Exp $
+# $OpenBSD: pkg-config,v 1.40 2011/03/18 15:26:11 jasper Exp $
+# $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
-#$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
+# Copyright (c) 2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
