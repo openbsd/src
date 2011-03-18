@@ -773,7 +773,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mpbiosvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mpconfig.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mplock.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mtrr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mutex.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/param.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pcb.ph
