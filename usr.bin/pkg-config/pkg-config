@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.37 2011/03/18 15:14:59 jasper Exp $
+# $OpenBSD: pkg-config,v 1.38 2011/03/18 15:18:13 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -340,6 +340,7 @@ sub setup_self
 {
 	my $pkg_pc = OpenBSD::PkgConfig->new;
 	$pkg_pc->add_property('Version', $version);
+	$pkg_pc->add_variable('pc_path', join(":", @PKGPATH));
 	$configs{'pkg-config'} = $pkg_pc;
 }
 
