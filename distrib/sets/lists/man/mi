@@ -1510,7 +1510,6 @@
 ./usr/share/man/cat4/amd64/kmem.0
 ./usr/share/man/cat4/amd64/mem.0
 ./usr/share/man/cat4/amd64/mpbios.0
-./usr/share/man/cat4/amd64/mtrr.0
 ./usr/share/man/cat4/amd64/nvram.0
 ./usr/share/man/cat4/amd64/pctr.0
 ./usr/share/man/cat4/amdiic.0
