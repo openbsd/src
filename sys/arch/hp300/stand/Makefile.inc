@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2007/11/26 10:01:42 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2011/03/18 06:21:40 matthew Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -21,10 +21,8 @@ CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"
 ### Figure out what to use for libcommon
 COMMONDIR=		${.CURDIR}/../common
 
-.if exists(${COMMONDIR}/obj.${MACHINE})
-COMMONOBJDIR=		${COMMONDIR}/obj.${MACHINE}
-.elif exists(${COMMONDIR}/obj)
-COMMONOBJDIR=		${COMMONDIR}/obj
+.if exists(${COMMONDIR}/${__objdir})
+COMMONOBJDIR=		${COMMONDIR}/${__objdir}
 .else
 COMMONOBJDIR=		${COMMONDIR}
 .endif
@@ -34,10 +32,8 @@ LIBCOMMON=		${COMMONOBJDIR}/libcommon.a
 ### Figure out what to use for libsa
 LIBSADIR=		${.CURDIR}/../libsa
 
-.if exists(${LIBSADIR}/obj.${MACHINE})
-LIBSAOBJDIR=		${LIBSADIR}/obj.${MACHINE}
-.elif exists(${LIBSADIR}/obj)
-LIBSAOBJDIR=		${LIBSADIR}/obj
+.if exists(${LIBSADIR}/${__objdir})
+LIBSAOBJDIR=		${LIBSADIR}/${__objdir}
 .else
 LIBSAOBJDIR=		${LIBSADIR}
 .endif
@@ -47,10 +43,8 @@ LIBSA=			${LIBSAOBJDIR}/libsa.a
 ### Figure out what to use for libsaz
 LIBSAZDIR=		${.CURDIR}/../libsaz
 
-.if exists(${LIBSAZDIR}/obj.${MACHINE})
-LIBSAZOBJDIR=		${LIBSAZDIR}/obj.${MACHINE}
-.elif exists(${LIBSAZDIR}/obj)
-LIBSAZOBJDIR=		${LIBSAZDIR}/obj
+.if exists(${LIBSAZDIR}/${__objdir})
+LIBSAZOBJDIR=		${LIBSAZDIR}/${__objdir}
 .else
 LIBSAZOBJDIR=		${LIBSAZDIR}
 .endif
@@ -60,10 +54,8 @@ LIBSAZ=			${LIBSAZOBJDIR}/libsaz.a
 ### Figure out what to use for libz
 LIBZDIR=		${.CURDIR}/../libz
 
-.if exists(${LIBZDIR}/obj.${MACHINE})
-LIBZOBJDIR=		${LIBZDIR}/obj.${MACHINE}
-.elif exists(${LIBZDIR}/obj)
-LIBZOBJDIR=		${LIBZDIR}/obj
+.if exists(${LIBZDIR}/${__objdir})
+LIBZOBJDIR=		${LIBZDIR}/${__objdir}
 .else
 LIBZOBJDIR=		${LIBZDIR}
 .endif
@@ -73,10 +65,8 @@ LIBZ=			${LIBZOBJDIR}/libz.a
 ### Figure out what to use for mkboot
 MKBOOTDIR=		${.CURDIR}/../mkboot
 
-.if exists(${MKBOOTDIR}/obj.${MACHINE})
-MKBOOTOBJDIR=		${MKBOOTDIR}/obj.${MACHINE}
-.elif exists(${MKBOOTDIR}/obj)
-MKBOOTOBJDIR=		${MKBOOTDIR}/obj
+.if exists(${MKBOOTDIR}/${__objdir})
+MKBOOTOBJDIR=		${MKBOOTDIR}/${__objdir}
 .else
 MKBOOTOBJDIR=		${MKBOOTDIR}
 .endif
@@ -86,10 +76,8 @@ MKBOOT_PROG=		${MKBOOTOBJDIR}/mkboot
 ### Figure out what to use for stripboot
 STRIPBOOTDIR=		${.CURDIR}/../stripboot
 
-.if exists(${STRIPBOOTDIR}/obj.${MACHINE})
-STRIPBOOTOBJDIR=	${STRIPBOOTDIR}/obj.${MACHINE}
-.elif exists(${STRIPBOOTDIR}/obj)
-STRIPBOOTOBJDIR=	${STRIPBOOTDIR}/obj
+.if exists(${STRIPBOOTDIR}/${__objdir})
+STRIPBOOTOBJDIR=	${STRIPBOOTDIR}/${__objdir}
 .else
 STRIPBOOTOBJDIR=	${STRIPBOOTDIR}
 .endif
