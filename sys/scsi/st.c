@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.117 2011/03/17 21:30:24 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.118 2011/03/18 22:59:34 matthew Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -79,6 +79,9 @@
 
 #define STMODE(z)	( minor(z)	 & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
+
+#define STMINOR(unit, mode)	(((unit) << 4) + (mode))
+#define MAXSTMODES	16
 
 #define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
 #define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
@@ -369,22 +372,14 @@ stdetach(struct device *self, int flags)
 	bufq_drain(&st->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
-	mn = STUNIT(self->dv_unit);
+	mn = STMINOR(self->dv_unit, 0);
 
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == stopen) {
-			vdevgone(bmaj, mn, mn + 0, VBLK);
-			vdevgone(bmaj, mn, mn + 1, VBLK);
-			vdevgone(bmaj, mn, mn + 2, VBLK);
-			vdevgone(bmaj, mn, mn + 3, VBLK);
-		}
+		if (bdevsw[bmaj].d_open == stopen)
+			vdevgone(bmaj, mn, mn + MAXSTMODES - 1, VBLK);
 	for (cmaj = 0; cmaj < nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == stopen) {
-			vdevgone(cmaj, mn, mn + 0, VCHR);
-			vdevgone(cmaj, mn, mn + 1, VCHR);
-			vdevgone(cmaj, mn, mn + 2, VCHR);
-			vdevgone(cmaj, mn, mn + 3, VCHR);
-		}
+		if (cdevsw[cmaj].d_open == stopen)
+			vdevgone(cmaj, mn, mn + MAXSTMODES - 1, VCHR);
 
 	bufq_destroy(&st->sc_bufq);
 
