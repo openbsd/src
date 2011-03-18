@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.116 2011/03/15 13:10:31 jsing Exp $	*/
+/*	$OpenBSD: inet.c,v 1.117 2011/03/18 22:34:58 sthen Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -595,6 +595,8 @@ icmp_stats(char *name)
 	p(icps_tooshort, "\t%lu message%s < minimum length\n");
 	p(icps_checksum, "\t%lu bad checksum%s\n");
 	p(icps_badlen, "\t%lu message%s with bad length\n");
+	p(icps_bmcastecho, "\t%lu echo request%s to broadcast/multicast "
+	    "rejected\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat.icps_inhist[i] != 0) {
 			if (first) {
