@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.64 2011/02/22 20:05:03 kettenis Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.65 2011/03/18 06:05:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -396,8 +396,10 @@ rt2661_suspend(void *xsc)
 	struct rt2661_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	if (ifp->if_flags & IFF_RUNNING)
+	if (ifp->if_flags & IFF_RUNNING) {
 		rt2661_stop(ifp, 1);
+		sc->sc_flags &= ~RT2661_FWLOADED;
+	}
 }
 
 void
@@ -2464,11 +2466,14 @@ rt2661_init(struct ifnet *ifp)
 
 	rt2661_stop(ifp, 0);
 
-	if (rt2661_load_microcode(sc) != 0) {
-		printf("%s: could not load 8051 microcode\n",
-		    sc->sc_dev.dv_xname);
-		rt2661_stop(ifp, 1);
-		return EIO;
+	if (!(sc->sc_flags & RT2661_FWLOADED)) {
+		if (rt2661_load_microcode(sc) != 0) {
+			printf("%s: could not load 8051 microcode\n",
+			    sc->sc_dev.dv_xname);
+			rt2661_stop(ifp, 1);
+			return EIO;
+		}
+		sc->sc_flags |= RT2661_FWLOADED;
 	}
 
 	/* initialize Tx rings */
@@ -2631,7 +2636,7 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	if (disable && sc->sc_disable != NULL) {
 		if (sc->sc_flags & RT2661_ENABLED) {
 			(*sc->sc_disable)(sc);
-			sc->sc_flags &= ~RT2661_ENABLED;
+			sc->sc_flags &= ~(RT2661_ENABLED | RT2661_FWLOADED);
 		}
 	}
 }
