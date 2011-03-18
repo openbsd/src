@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.18 2011/03/14 08:35:08 jasper Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.19 2011/03/18 19:54:41 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2011 $
+.Dd $Mdocdate: March 18 2011 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -147,7 +147,7 @@ This will replace the default
 .Nm
 search directory.
 .It Ev PKG_CONFIG_LOGFILE
-This is used to specify a logfile to which
+This is used to specify a log file to which
 .Nm
 will write the passed arguments.
 .It Ev PKG_CONFIG_PATH
@@ -161,7 +161,7 @@ and
 .Fl L
 to use the target sysroot directory.
 Thus -I/usr/local/include will become -I/target/usr/local/include when
-PKG_CONFIG_SYSROOT_DIR is set to /target, which is useful when crosscompiling
+PKG_CONFIG_SYSROOT_DIR is set to /target, which is useful when cross compiling
 packages that use
 .Nm .
 .It Ev PKG_CONFIG_TOP_BUILD_DIR
