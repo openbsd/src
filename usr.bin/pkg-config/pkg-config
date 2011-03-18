@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.35 2011/03/18 14:55:32 espie Exp $
+# $OpenBSD: pkg-config,v 1.36 2011/03/18 15:13:33 jasper Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -413,7 +413,7 @@ sub do_cflags
 			}
 		});
 	if (defined($a) && defined($variables->{pc_sysrootdir})){
-		$a =~ s/^-I/$&$variables->{pc_sysrootdir}/g;
+		$a =~ s/[\w]?-I/$&$variables->{pc_sysrootdir}/g;
 	}
 
 	return $a;
@@ -442,7 +442,7 @@ sub do_libs
 		});
 
 	if (defined($variables->{pc_sysrootdir})){
-		$a =~ s/^-[lL]/$&$variables->{pc_sysrootdir}/g;
+		$a =~ s/[\w]?-[lL]/$&$variables->{pc_sysrootdir}/g;
 	}
 
 	if ($mode{libs} & 1) {
