@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.68 2010/07/01 22:16:20 eric Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.69 2011/03/19 23:40:11 okan Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -345,8 +345,7 @@ reset_adjtime(void)
 {
 	struct timeval	tv;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
+	timerclear(&tv);
 	if (adjtime(&tv, NULL) == -1)
 		log_warn("reset adjtime failed");
 }

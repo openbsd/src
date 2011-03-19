@@ -1,4 +1,4 @@
-/*	$OpenBSD: candidate.c,v 1.7 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: candidate.c,v 1.8 2011/03/19 23:40:11 okan Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -53,8 +53,7 @@ election(net)
  *	and give up.  This results in network storms when several machines
  *	do it at once.
  */
-	wait.tv_sec = 0;
-	wait.tv_usec = 0;
+	timerclear(&wait);
 	while (0 != readmsg(TSP_REFUSE, ANYADDR, &wait, net)) {
 		if (trace)
 			fprintf(fd, "election: discarded stale REFUSE\n");

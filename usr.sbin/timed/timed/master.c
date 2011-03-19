@@ -1,4 +1,4 @@
-/*	$OpenBSD: master.c,v 1.10 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: master.c,v 1.11 2011/03/19 23:40:11 okan Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -423,8 +423,7 @@ synch(long mydelta)
 				/*
 				 * ack messages periodically
 				 */
-				wait.tv_sec = 0;
-				wait.tv_usec = 0;
+				timerclear(&wait);
 				if (0 != readmsg(TSP_TRACEON,ANYADDR,
 						 &wait,0))
 					traceon();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.29 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: timed.c,v 1.30 2011/03/19 23:40:11 okan Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -477,7 +477,7 @@ lookformaster(struct netinfo *ntp)
 		 * slave, postponing election of a master until first
 		 * timer expires.
 		 */
-		ntime.tv_sec = ntime.tv_usec = 0;
+		timerclear(&ntime);
 		answer = readmsg(TSP_MASTERREQ, ANYADDR, &ntime, ntp);
 		if (answer != NULL) {
 			if (!good_host_name(answer->tsp_name)) {
@@ -487,7 +487,7 @@ lookformaster(struct netinfo *ntp)
 			return;
 		}
 
-		ntime.tv_sec = ntime.tv_usec = 0;
+		timerclear(&ntime);
 		answer = readmsg(TSP_MASTERUP, ANYADDR, &ntime, ntp);
 		if (answer != NULL) {
 			if (!good_host_name(answer->tsp_name)) {
@@ -497,7 +497,7 @@ lookformaster(struct netinfo *ntp)
 			return;
 		}
 
-		ntime.tv_sec = ntime.tv_usec = 0;
+		timerclear(&ntime);
 		answer = readmsg(TSP_ELECTION, ANYADDR, &ntime, ntp);
 		if (answer != NULL) {
 			if (!good_host_name(answer->tsp_name)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.16 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.17 2011/03/19 23:40:11 okan Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -167,7 +167,7 @@ again:
 		(void)gettimeofday(&rtime, 0);
 		timersub(&rtout, &rtime, &rwait);
 		if (rwait.tv_sec < 0)
-			rwait.tv_sec = rwait.tv_usec = 0;
+			timerclear(&rwait);
 		else if (rwait.tv_sec == 0
 			 && rwait.tv_usec < 1000000/CLK_TCK)
 			rwait.tv_usec = 1000000/CLK_TCK;
