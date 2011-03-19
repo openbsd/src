@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.60 2011/03/17 12:53:44 krw Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.61 2011/03/19 11:55:58 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -235,6 +235,10 @@ write_bootblocks(int devfd, struct disklabel *dl)
 		if (start == (u_int)-1)
  			errx(1, "no OpenBSD partition");
 	}
+
+	if (start + (protosize / DEV_BSIZE) > BOOTBIOS_MAXSEC)
+		errx(1, "invalid location: all of /boot must be < sector %u.",
+		    BOOTBIOS_MAXSEC);
 
 	if (verbose)
 		fprintf(stderr, "/boot will be written at sector %u\n", start);
