@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.42 2011/03/07 09:26:47 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.43 2011/03/19 12:06:11 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1122,7 +1122,7 @@ sub parse_and_run
 		    }
 	};
 	$state->{no_exports} = 1;
-	$state->handle_options('p:f:d:M:U:s:A:L:B:P:W:qQ',
+	$state->handle_options('p:f:d:M:U:s:A:B:P:W:qQ',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
 	    '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
