@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.542 2011/03/09 17:01:22 sthen Exp $
+$OpenBSD: usbdevs,v 1.543 2011/03/19 09:12:03 dcoppa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3135,6 +3135,7 @@ product ZTE CDMA_MSM		0x0001	CDMA Technologies MSM modem
 product ZTE MF633		0x0016	ZTE MF633 USUPA USB modem
 product ZTE MF637		0x0031	ZTE MF637 HSUPA USB modem
 product ZTE K3565Z		0x0063	ZTE K3565-Z USB MSM modem
+product ZTE MSA110UP		0x0091	ONDA MSA110UP USB MSM modem
 product	ZTE UMASS_INSTALLER2	0x0103	ZTE USB MSM installer 
 product ZTE MF112		0x0117	ZTE MF112 HSUPA USB modem
 product ZTE UMASS_INSTALLER	0x2000	ZTE USB MSM installer
