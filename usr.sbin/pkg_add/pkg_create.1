@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.73 2011/03/19 09:32:36 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.74 2011/03/19 09:39:39 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -118,10 +118,7 @@ to mean any architecture (e.g., arch-independent packages).
 Set
 .Ar pkg-destdir
 as the prefix to prepend to any file to select for the package.
-.It Xo
-.Fl D
-.Ar name Ns Op = Ns Ar value
-.Xc
+.It Fl D Ar name Ns Op = Ns Ar value
 Define
 .Ar name
 to

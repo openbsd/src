@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.36 2011/03/19 09:32:36 jmc Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.37 2011/03/19 09:39:39 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -25,10 +25,7 @@
 .Nm pkg_delete
 .Op Fl cIimnqsvx
 .Op Fl B Ar pkg-destdir
-.Oo Fl D Ar name
-.Ns Oo Ns = Ns Ar value
-.Oc
-.Oc
+.Op Fl D Ar name Ns Op = Ns Ar value
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
