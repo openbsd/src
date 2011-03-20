@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.31 2011/01/25 00:23:23 schwarze Exp $ */
+/*	$Id: roff.c,v 1.32 2011/03/20 23:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -60,6 +60,8 @@ enum	rofft {
 	ROFF_TS,
 	ROFF_TE,
 	ROFF_T_,
+	ROFF_EQ,
+	ROFF_EN,
 	ROFF_cblock,
 	ROFF_ccond, /* FIXME: remove this. */
 	ROFF_USERDEF,
@@ -89,6 +91,9 @@ struct	roff {
 	struct tbl_node	*first_tbl; /* first table parsed */
 	struct tbl_node	*last_tbl; /* last table parsed */
 	struct tbl_node	*tbl; /* current table being parsed */
+	struct eqn_node	*last_eqn; /* last equation parsed */
+	struct eqn_node	*first_eqn; /* first equation parsed */
+	struct eqn_node	*eqn; /* current equation being parsed */
 };
 
 struct	roffnode {
@@ -147,6 +152,8 @@ static	void		 roff_setstr(struct roff *,
 static	enum rofferr	 roff_so(ROFF_ARGS);
 static	enum rofferr	 roff_TE(ROFF_ARGS);
 static	enum rofferr	 roff_TS(ROFF_ARGS);
+static	enum rofferr	 roff_EQ(ROFF_ARGS);
+static	enum rofferr	 roff_EN(ROFF_ARGS);
 static	enum rofferr	 roff_T_(ROFF_ARGS);
 static	enum rofferr	 roff_userdef(ROFF_ARGS);
 
@@ -185,6 +192,8 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "TS", roff_TS, NULL, NULL, 0, NULL },
 	{ "TE", roff_TE, NULL, NULL, 0, NULL },
 	{ "T&", roff_T_, NULL, NULL, 0, NULL },
+	{ "EQ", roff_EQ, NULL, NULL, 0, NULL },
+	{ "EN", roff_EN, NULL, NULL, 0, NULL },
 	{ ".", roff_cblock, NULL, NULL, 0, NULL },
 	{ "\\}", roff_ccond, NULL, NULL, 0, NULL },
 	{ NULL, roff_userdef, NULL, NULL, 0, NULL },
@@ -307,14 +316,21 @@ static void
 roff_free1(struct roff *r)
 {
 	struct tbl_node	*t;
+	struct eqn_node	*e;
 
-	while (r->first_tbl) {
-		t = r->first_tbl;
+	while (NULL != (t = r->first_tbl)) {
 		r->first_tbl = t->next;
 		tbl_free(t);
 	}
 
 	r->first_tbl = r->last_tbl = r->tbl = NULL;
+
+	while (NULL != (e = r->first_eqn)) {
+		r->first_eqn = e->next;
+		eqn_free(e);
+	}
+
+	r->first_eqn = r->last_eqn = r->eqn = NULL;
 
 	while (r->last)
 		roffnode_pop(r);
@@ -473,6 +489,8 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 * First, if a scope is open and we're not a macro, pass the
 	 * text through the macro's filter.  If a scope isn't open and
 	 * we're not a macro, just let it through.
+	 * Finally, if there's an equation scope open, divert it into it
+	 * no matter our state.
 	 */
 
 	if (r->last && ! ROFF_CTL((*bufp)[pos])) {
@@ -481,18 +499,26 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 		e = (*roffs[t].text)
 			(r, t, bufp, szp, ln, pos, pos, offs);
 		assert(ROFF_IGN == e || ROFF_CONT == e);
-		if (ROFF_CONT == e && r->tbl)
-			return(tbl_read(r->tbl, ln, *bufp, *offs));
-		return(e);
-	} else if ( ! ROFF_CTL((*bufp)[pos])) {
+		if (ROFF_CONT != e)
+			return(e);
+		if (r->eqn)
+			return(eqn_read(&r->eqn, ln, *bufp, *offs));
 		if (r->tbl)
 			return(tbl_read(r->tbl, ln, *bufp, *offs));
 		return(ROFF_CONT);
-	}
+	} else if ( ! ROFF_CTL((*bufp)[pos])) {
+		if (r->eqn)
+			return(eqn_read(&r->eqn, ln, *bufp, *offs));
+		if (r->tbl)
+			return(tbl_read(r->tbl, ln, *bufp, *offs));
+		return(ROFF_CONT);
+	} else if (r->eqn)
+		return(eqn_read(&r->eqn, ln, *bufp, *offs));
 
 	/*
 	 * If a scope is open, go to the child handler for that macro,
 	 * as it may want to preprocess before doing anything with it.
+	 * Don't do so if an equation is open.
 	 */
 
 	if (r->last) {
@@ -527,6 +553,13 @@ roff_endparse(struct roff *r)
 	if (r->last)
 		(*r->msg)(MANDOCERR_SCOPEEXIT, r->data,
 				r->last->line, r->last->col, NULL);
+
+	if (r->eqn) {
+		(*r->msg)(MANDOCERR_SCOPEEXIT, r->data, 
+				r->eqn->eqn.line, r->eqn->eqn.pos, NULL);
+		eqn_end(r->eqn);
+		r->eqn = NULL;
+	}
 
 	if (r->tbl) {
 		(*r->msg)(MANDOCERR_SCOPEEXIT, r->data, 
@@ -1136,6 +1169,33 @@ roff_T_(ROFF_ARGS)
 
 /* ARGSUSED */
 static enum rofferr
+roff_EQ(ROFF_ARGS)
+{
+	struct eqn_node	*e;
+
+	assert(NULL == r->eqn);
+	e = eqn_alloc(ppos, ln);
+
+	if (r->last_eqn)
+		r->last_eqn->next = e;
+	else
+		r->first_eqn = r->last_eqn = e;
+
+	r->eqn = r->last_eqn = e;
+	return(ROFF_IGN);
+}
+
+/* ARGSUSED */
+static enum rofferr
+roff_EN(ROFF_ARGS)
+{
+
+	(*r->msg)(MANDOCERR_NOSCOPE, r->data, ln, ppos, NULL);
+	return(ROFF_IGN);
+}
+
+/* ARGSUSED */
+static enum rofferr
 roff_TS(ROFF_ARGS)
 {
 	struct tbl_node	*t;
@@ -1236,7 +1296,6 @@ roff_userdef(ROFF_ARGS)
 	   ROFF_REPARSE : ROFF_APPEND);
 }
 
-
 static char *
 roff_getname(struct roff *r, char **cpp, int ln, int pos)
 {
@@ -1269,7 +1328,6 @@ roff_getname(struct roff *r, char **cpp, int ln, int pos)
 	*cpp = cp;
 	return(name);
 }
-
 
 /*
  * Store *string into the user-defined string called *name.
@@ -1340,7 +1398,6 @@ roff_setstr(struct roff *r, const char *name, const char *string,
 	*c = '\0';
 }
 
-
 static const char *
 roff_getstrn(const struct roff *r, const char *name, size_t len)
 {
@@ -1352,7 +1409,6 @@ roff_getstrn(const struct roff *r, const char *name, size_t len)
 
 	return(n ? n->string : NULL);
 }
-
 
 static void
 roff_freestr(struct roff *r)
@@ -1374,4 +1430,11 @@ roff_span(const struct roff *r)
 {
 	
 	return(r->tbl ? tbl_span(r->tbl) : NULL);
+}
+
+const struct eqn *
+roff_eqn(const struct roff *r)
+{
+	
+	return(r->last_eqn ? &r->last_eqn->eqn : NULL);
 }

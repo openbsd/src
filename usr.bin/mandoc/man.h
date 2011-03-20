@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.35 2011/03/07 01:35:33 schwarze Exp $ */
+/*	$Id: man.h,v 1.36 2011/03/20 23:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -67,7 +67,8 @@ enum	man_type {
 	MAN_BLOCK,
 	MAN_HEAD,
 	MAN_BODY,
-	MAN_TBL
+	MAN_TBL,
+	MAN_EQN
 };
 
 /* 
@@ -102,6 +103,7 @@ struct	man_node {
 	struct man_node	*head; /* BLOCK node HEAD ptr */
 	struct man_node	*body; /* BLOCK node BODY ptr */
 	const struct tbl_span *span; /* TBL */
+	const struct eqn *eqn; /* EQN */
 };
 
 /*
@@ -121,6 +123,7 @@ int	 	  man_parseln(struct man *, int, char *, int);
 int		  man_endparse(struct man *);
 int		  man_addspan(struct man *,
 			const struct tbl_span *);
+int		  man_addeqn(struct man *, const struct eqn *);
 
 const struct man_node *man_node(const struct man *);
 const struct man_meta *man_meta(const struct man *);

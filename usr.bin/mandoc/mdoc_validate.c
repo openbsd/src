@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.89 2011/03/07 01:35:33 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.90 2011/03/20 23:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -334,6 +334,8 @@ mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 		/* FALLTHROUGH */
 	case (MDOC_TBL):
 		/* FALLTHROUGH */
+	case (MDOC_EQN):
+		/* FALLTHROUGH */
 	case (MDOC_ROOT):
 		return(1);
 	default:
@@ -362,6 +364,8 @@ mdoc_valid_post(struct mdoc *mdoc)
 
 	switch (mdoc->last->type) {
 	case (MDOC_TEXT):
+		/* FALLTHROUGH */
+	case (MDOC_EQN):
 		/* FALLTHROUGH */
 	case (MDOC_TBL):
 		return(1);

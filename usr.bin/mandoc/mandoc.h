@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.34 2011/03/07 01:35:33 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.35 2011/03/20 23:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -267,6 +267,13 @@ struct	tbl_span {
 #define	TBL_SPAN_LAST	 (1 << 1)
 	enum tbl_spant	  pos;
 	struct tbl_span	 *next;
+};
+
+struct	eqn {
+	size_t		  sz;
+	char		 *data;
+	int		  line; /* invocation line */
+	int		  pos; /* invocation position */
 };
 
 /*

@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.3,v 1.16 2011/01/09 13:16:48 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.17 2011/03/20 23:36:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,11 +15,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2011 $
+.Dd $Mdocdate: March 20 2011 $
 .Dt MDOC 3
 .Os
 .Sh NAME
 .Nm mdoc ,
+.Nm mdoc_addeqn ,
+.Nm mdoc_addspan ,
 .Nm mdoc_alloc ,
 .Nm mdoc_endparse ,
 .Nm mdoc_free ,
@@ -33,6 +35,11 @@
 .In mdoc.h
 .Vt extern const char * const * mdoc_macronames;
 .Vt extern const char * const * mdoc_argnames;
+.Ft int
+.Fo mdoc_addeqn
+.Fa "struct mdoc *mdoc"
+.Fa "const struct eqn *eqn"
+.Fc
 .Ft int
 .Fo mdoc_addspan 
 .Fa "struct mdoc *mdoc"
@@ -97,6 +104,7 @@ for details.
 .El
 .Ss Functions
 If
+.Fn mdoc_addeqn ,
 .Fn mdoc_addspan ,
 .Fn mdoc_parseln ,
 or
@@ -107,6 +115,9 @@ or
 .Fn mdoc_free
 will raise an assertion.
 .Bl -ohang
+.It Fn mdoc_addeqn
+Add an equation to the parsing stream.
+Returns 0 on failure, 1 on success.
 .It Fn mdoc_addspan
 Add a table span to the parsing stream.
 Returns 0 on failure, 1 on success.

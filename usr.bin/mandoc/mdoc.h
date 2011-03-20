@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.44 2011/03/07 01:35:33 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.45 2011/03/20 23:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -191,6 +191,7 @@ enum	mdoc_type {
 	MDOC_BODY,
 	MDOC_BLOCK,
 	MDOC_TBL,
+	MDOC_EQN,
 	MDOC_ROOT
 };
 
@@ -401,6 +402,7 @@ struct	mdoc_node {
 	struct mdoc_node *tail; /* BLOCK */
 	char		 *string; /* TEXT */
 	const struct tbl_span *span; /* TBL */
+	const struct eqn *eqn; /* EQN */
 	enum mdoc_endbody end; /* BODY */
 };
 
@@ -430,6 +432,8 @@ const struct mdoc_meta *mdoc_meta(const struct mdoc *);
 int		  mdoc_endparse(struct mdoc *);
 int		  mdoc_addspan(struct mdoc *,
 			const struct tbl_span *);
+int		  mdoc_addeqn(struct mdoc *,
+			const struct eqn *);
 
 __END_DECLS
 

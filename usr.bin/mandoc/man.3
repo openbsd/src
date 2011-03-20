@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.21 2011/01/09 13:16:48 schwarze Exp $
+.\"	$Id: man.3,v 1.22 2011/03/20 23:36:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,11 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2011 $
+.Dd $Mdocdate: March 20 2011 $
 .Dt MAN 3
 .Os
 .Sh NAME
 .Nm man ,
+.Nm man_addeqn ,
+.Nm man_addspan ,
 .Nm man_alloc ,
 .Nm man_endparse ,
 .Nm man_free ,
@@ -31,6 +33,11 @@
 .In mandoc.h
 .In man.h
 .Vt extern const char * const * man_macronames;
+.Ft int
+.Fo man_addeqn
+.Fa "struct man *man"
+.Fa "const struct eqn *eqn"
+.Fc
 .Ft int
 .Fo man_addspan
 .Fa "struct man *man"
@@ -106,6 +113,7 @@ for details.
 .El
 .Ss Functions
 If
+.Fn man_addeqn ,
 .Fn man_addspan ,
 .Fn man_parseln ,
 or
@@ -116,6 +124,9 @@ or
 .Fn man_free
 will raise an assertion.
 .Bl -ohang
+.It Fn man_addeqn
+Add an equation to the parsing stream.
+Returns 0 on failure, 1 on success.
 .It Fn man_addspan
 Add a table span to the parsing stream.
 Returns 0 on failure, 1 on success.

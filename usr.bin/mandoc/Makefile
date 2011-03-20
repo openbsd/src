@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2011/01/09 14:30:48 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.53 2011/03/20 23:36:42 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ CFLAGS+=-W -Wall -Wstrict-prototypes
 CFLAGS+=-Wno-unused-parameter
 .endif
 
-SRCS=	roff.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c mandoc.c
+SRCS=	roff.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c mandoc.c
 SRCS+=	mdoc_macro.c mdoc.c mdoc_hash.c mdoc_strings.c \
 	mdoc_argv.c mdoc_validate.c lib.c att.c \
 	arch.c vol.c msec.c st.c

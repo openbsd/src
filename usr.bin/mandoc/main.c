@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.73 2011/03/07 01:35:33 schwarze Exp $ */
+/*	$Id: main.c,v 1.74 2011/03/20 23:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -839,27 +839,35 @@ rerun:
 		 * currently open parse.  Since we only get here if
 		 * there does exist data (see tbl_data.c), we're
 		 * guaranteed that something's been allocated.
+		 * Do the same for ROFF_EQN.
 		 */
 
-		if (ROFF_TBL == rr) {
-			assert(curp->man || curp->mdoc);
+		rc = -1;
+
+		if (ROFF_TBL == rr)
 			while (NULL != (span = roff_span(curp->roff))) {
-				if (curp->man)
-					man_addspan(curp->man, span);
-				else
+				rc = curp->man ?
+					man_addspan(curp->man, span) :
 					mdoc_addspan(curp->mdoc, span);
+				if (0 == rc)
+					break;
 			}
-		} else if (curp->man || curp->mdoc) {
+		else if (ROFF_EQN == rr)
+			rc = curp->mdoc ? 
+				mdoc_addeqn(curp->mdoc, 
+					roff_eqn(curp->roff)) :
+				man_addeqn(curp->man,
+					roff_eqn(curp->roff));
+		else if (curp->man || curp->mdoc)
 			rc = curp->man ?
 				man_parseln(curp->man, 
 					curp->line, ln.buf, of) :
 				mdoc_parseln(curp->mdoc, 
 					curp->line, ln.buf, of);
 
-			if ( ! rc) {
-				assert(MANDOCLEVEL_FATAL <= file_status);
-				break;
-			}
+		if (0 == rc) {
+			assert(MANDOCLEVEL_FATAL <= file_status);
+			break;
 		}
 
 		/* Temporary buffers typically are not full. */

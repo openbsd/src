@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.65 2011/03/07 01:35:33 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.66 2011/03/20 23:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -891,6 +891,9 @@ print_man_node(DECL_ARGS)
 
 		if (MAN_EOS & n->flags)
 			p->flags |= TERMP_SENTENCE;
+		return;
+	case (MAN_EQN):
+		term_word(p, n->eqn->data);
 		return;
 	case (MAN_TBL):
 		/*

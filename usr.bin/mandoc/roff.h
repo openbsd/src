@@ -1,6 +1,6 @@
-/*	$Id: roff.h,v 1.7 2011/01/04 22:28:17 schwarze Exp $ */
+/*	$Id: roff.h,v 1.8 2011/03/20 23:36:42 schwarze Exp $ */
 /*
- * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@ enum	rofferr {
 	ROFF_SO, /* include another file */
 	ROFF_IGN, /* ignore current line */
 	ROFF_TBL, /* a table row was successfully parsed */
+	ROFF_EQN, /* an equation was successfully parsed */
 	ROFF_ERR /* badness: puke and stop */
 };
 
@@ -39,6 +40,7 @@ enum	rofferr	  roff_parseln(struct roff *, int,
 			char **, size_t *, int, int *);
 void		  roff_endparse(struct roff *);
 const struct tbl_span *roff_span(const struct roff *);
+const struct eqn *roff_eqn(const struct roff *);
 
 __END_DECLS
 
