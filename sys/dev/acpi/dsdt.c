@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.181 2011/01/02 04:56:57 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.182 2011/03/20 00:09:14 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1167,31 +1167,31 @@ aml_evalexpr(int64_t lhs, int64_t rhs, int opcode)
 
 		/* Logical/Comparison */
 	case AMLOP_LAND:
-		res = (lhs && rhs);
+		res = -(lhs && rhs);
 		break;
 	case AMLOP_LOR:
-		res = (lhs || rhs);
+		res = -(lhs || rhs);
 		break;
 	case AMLOP_LNOT:
-		res = (!lhs);
+		res = -(!lhs);
 		break;
 	case AMLOP_LNOTEQUAL:
-		res = (lhs != rhs);
+		res = -(lhs != rhs);
 		break;
 	case AMLOP_LLESSEQUAL:
-		res = (lhs <= rhs);
+		res = -(lhs <= rhs);
 		break;
 	case AMLOP_LGREATEREQUAL:
-		res = (lhs >= rhs);
+		res = -(lhs >= rhs);
 		break;
 	case AMLOP_LEQUAL:
-		res = (lhs == rhs);
+		res = -(lhs == rhs);
 		break;
 	case AMLOP_LGREATER:
-		res = (lhs > rhs);
+		res = -(lhs > rhs);
 		break;
 	case AMLOP_LLESS:
-		res = (lhs < rhs);
+		res = -(lhs < rhs);
 		break;
 	}
 
