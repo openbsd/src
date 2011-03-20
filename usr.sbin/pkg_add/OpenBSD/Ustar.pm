@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.70 2011/01/03 19:02:01 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.71 2011/03/20 08:17:24 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,10 +66,18 @@ sub new
 	    destdir => $destdir} , $class;
 }
 
+sub set_description
+{
+	my ($self, $d) = @_;
+	$self->{description} = $d;
+}
+
 sub fatal
 {
 	my ($self, $msg, @args) = @_;
-	$self->{state}->fatal("Ustar: $msg", @args);
+	$self->{state}->fatal("Ustar [#1][#2]: #3", 
+	    $self->{description} // '?', $self->{lastname} // '?', 
+	    $self->{state}->f($msg, @args));
 }
 
 sub new_object
@@ -157,6 +165,7 @@ sub next
 		$name = "$prefix/$name";
 	}
 
+	$self->{lastname} = $name;
 	$size = oct($size);
 	my $result= {
 	    name => $name,
