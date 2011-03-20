@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atq.1,v 1.5 2007/05/31 19:20:07 jmc Exp $
+.\"	$OpenBSD: atq.1,v 1.6 2011/03/20 22:12:59 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)atq.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 20 2011 $
 .Dt ATQ 1
 .Os
 .Sh NAME
@@ -63,6 +63,8 @@ Only print the total number of files that are currently in the queue.
 .It Fl q Ar queue
 Restrict output to jobs in the specified
 .Ar queue .
+A queue designation consists of a single letter.
+Valid queue designations range from
 .Sy a
 to
 .Sy z
