@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.131 2011/03/18 03:10:47 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.132 2011/03/20 21:44:08 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -655,9 +655,11 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		fpusave_proc(p, 0);
 
 	if (ksc.sc_fpstate) {
-		if ((error = copyin(ksc.sc_fpstate,
-		    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave, sizeof (struct fxsave64))))
+		struct fxsave64 *fx = &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave;
+
+		if ((error = copyin(ksc.sc_fpstate, fx, sizeof(*fx))))
 			return (error);
+		fx->fx_mxcsr &= fpu_mxcsr_mask;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
@@ -1504,6 +1506,7 @@ init_x86_64(paddr_t first_avail)
 	cpu_init_idt();
 
 	intr_default_setup();
+	fpuinit(&cpu_info_primary);
 
 	softintr_init();
 	splraise(IPL_IPI);

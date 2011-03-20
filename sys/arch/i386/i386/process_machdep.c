@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.26 2010/12/27 12:48:35 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.27 2011/03/20 21:44:08 guenther Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ process_fninit_xmm(struct savexmm *sxmm)
 	memset(sxmm, 0, sizeof(*sxmm));
 	sxmm->sv_env.en_cw = __OpenBSD_NPXCW__;
 	sxmm->sv_env.en_mxcsr = __INITIAL_MXCSR__;
+	sxmm->sv_env.en_mxcsr_mask = fpu_mxcsr_mask;
 	sxmm->sv_env.en_sw = 0x0000;
 	sxmm->sv_env.en_tw = 0x00;
 }
@@ -359,6 +360,7 @@ process_write_xmmregs(struct proc *p, const struct xmmregs *regs)
 		p->p_md.md_flags |= MDP_USEDFPU;
 
 	memcpy(&frame->sv_xmm, regs, sizeof(*regs));
+	frame->sv_xmm.sv_env.en_mxcsr &= fpu_mxcsr_mask;
 	return (0);
 }
 

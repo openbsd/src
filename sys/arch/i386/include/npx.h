@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.15 2010/09/29 15:11:31 joshe Exp $	*/
+/*	$OpenBSD: npx.h,v 1.16 2011/03/20 21:44:08 guenther Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ struct envxmm {
 	uint16_t en_fos;	/* FPU Data pointer selector */
 	uint16_t en_rsvd2;
 	uint32_t en_mxcsr;	/* MXCSR Register State */
-	uint32_t en_rsvd3;
+	uint32_t en_mxcsr_mask; /* Mask for valid MXCSR bits (may be 0) */
 };
 
 /* FPU regsters in the extended save format. */
@@ -141,7 +141,8 @@ struct	emcsts {
  * The default MXCSR value at reset is 0x1f80, IA-32 Instruction
  * Set Reference, pg. 3-369.
  */
-#define __INITIAL_MXCSR__       0x1f80
+#define	__INITIAL_MXCSR__	0x1f80
+#define	__INITIAL_MXCSR_MASK__	0xffbf
 
 /*
  * The standard control word from finit is 0x37F, giving:
@@ -157,6 +158,8 @@ void    process_s87_to_xmm(const struct save87 *, struct savexmm *);
 
 struct cpu_info;
 struct trapframe;
+
+extern uint32_t	fpu_mxcsr_mask;
 
 void	npxinit(struct cpu_info *);
 void	npxtrap(struct trapframe *);
