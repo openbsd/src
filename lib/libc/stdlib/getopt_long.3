@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.18 2011/03/05 22:10:11 guenther Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.19 2011/03/21 13:41:50 espie Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.Dd $Mdocdate: March 5 2011 $
+.Dd $Mdocdate: March 21 2011 $
 .Dt GETOPT_LONG 3
 .Os
 .Sh NAME
@@ -100,9 +100,9 @@ An exact match is always preferred for a defined long option.
 .Pp
 The
 .Fn getopt_long
-call requires a structure to be initialized describing the long
+call requires an array to be initialized describing the long
 options.
-The structure is:
+Each element of the array is a structure:
 .Bd -literal -offset indent
 struct option {
 	char *name;
