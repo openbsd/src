@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.24 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.25 2011/03/21 13:06:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -55,10 +55,12 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	/* get message content */
 	if ((msgfd = queue_open_message_file(messagep->message_id)) == -1)
 		goto fail;
-
+	
 	/* init smtp session */
-	if ((cc = calloc(1, sizeof(*cc))) == NULL)
+	if ((cc = calloc(1, sizeof(*cc))) == NULL) {
+		close(msgfd);
 		goto fail;
+	}
 	cc->pcb = client_init(fd, msgfd, env->sc_hostname, 1);
 	cc->env = env;
 	cc->m = *messagep;
@@ -105,7 +107,6 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 
 	return 1;
 fail:
-	close(msgfd);
 	if (cc && cc->pcb)
 		client_close(cc->pcb);
 	free(cc);
