@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.97 2010/11/29 15:25:55 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.98 2011/03/21 13:02:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -454,6 +454,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			res = SPLAY_FIND(ssltree, s->env->sc_ssl, &key);
 			if (res == NULL) {
 				client_close(pcb);
+				s->pcb = NULL;
 				mta_status(s, "190 certificate not found");
 				mta_enter_state(s, MTA_DONE, NULL);
 				break;
@@ -512,7 +513,6 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			TAILQ_REMOVE(&s->relays, relay, entry);
 			free(relay);
 		}
-		close(s->datafd);
 		free(s->secret);
 		free(s->host);
 		free(s->cert);
