@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.35 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.36 2011/03/21 09:21:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -124,6 +124,8 @@ queue_record_layout_envelope(char *queuepath, struct message *message)
 	FILE *fp;
 	int fd;
 
+	fp = NULL;
+
 again:
 	if (! bsnprintf(evpname, sizeof(evpname), "%s/%s%s/%s.%qu", queuepath,
 		message->message_id, PATH_ENVELOPES, message->message_id,
@@ -154,14 +156,20 @@ again:
 		fatal("queue_record_incoming_envelope: write");
 	}
 
-	if (! safe_fclose(fp))
+	if (! safe_fclose(fp)) {
+		fp = NULL;
+		fd = -1;
 		goto tempfail;
+	}
 
 	return 1;
 
 tempfail:
 	unlink(evpname);
-	close(fd);
+	if (fp)
+		fclose(fp);
+	else if (fd != -1)
+		close(fd);
 	message->creation = 0;
 	message->message_uid[0] = '\0';
 

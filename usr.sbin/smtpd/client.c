@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.33 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: client.c,v 1.34 2011/03/21 09:21:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -573,6 +573,7 @@ client_close(struct smtp_client *sp)
 		SSL_free(sp->ssl);
 #endif
 	close(sp->w.fd);
+	fclose(sp->body);
 	free(sp);
 }
 
@@ -690,6 +691,8 @@ client_getln(struct smtp_client *sp, int type)
 
 		if (ln[3] == ' ')
 			break;
+
+		free(ln);
 	}
 
 	/* validate reply code */
