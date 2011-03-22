@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.50 2010/07/09 07:10:55 sthen Exp $
+.\" $OpenBSD: bge.4,v 1.51 2011/03/22 08:11:13 sthen Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 9 2010 $
+.Dd $Mdocdate: March 22 2011 $
 .Dt BGE 4
 .Os
 .Sh NAME
@@ -193,9 +193,6 @@ For more information on configuring this device, see
 A fatal initialization error has occurred.
 .It "bge%d: couldn't map interrupt"
 A fatal initialization error has occurred.
-.It "bge%d: no memory for jumbo buffer queue!"
-The driver failed to allocate memory for jumbo frames during
-initialization.
 .It "bge%d: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
