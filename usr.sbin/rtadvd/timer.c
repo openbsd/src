@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.9 2008/04/21 20:40:55 rainer Exp $	*/
+/*	$OpenBSD: timer.c,v 1.10 2011/03/22 10:16:23 okan Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ rtadvd_check_timer()
 		return(NULL);
 	} else if (TIMEVAL_LT(timer_head.tm, now)) {
 		/* this may occur when the interval is too small */
-		returnval.tv_sec = returnval.tv_usec = 0;
+		timerclear(&returnval);
 	} else
 		TIMEVAL_SUB(&timer_head.tm, &now, &returnval);
 	return(&returnval);
@@ -157,7 +157,7 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 	gettimeofday(&now, NULL);
 	if (TIMEVAL_LEQ(timer->tm, now)) {
 		log_debug("a timer must be expired, but not yet");
-		returnval.tv_sec = returnval.tv_usec = 0;
+		timerclear(&returnval);
 	}
 	else
 		TIMEVAL_SUB(&timer->tm, &now, &returnval);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.45 2009/01/30 17:25:51 rainer Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.46 2011/03/22 10:16:23 okan Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ rtsol_check_timer(void)
 		return(NULL);
 	} else if (timercmp(&rtsol_timer, &now, <))
 		/* this may occur when the interval is too small */
-		returnval.tv_sec = returnval.tv_usec = 0;
+		timerclear(&returnval);
 	else
 		timersub(&rtsol_timer, &now, &returnval);
 

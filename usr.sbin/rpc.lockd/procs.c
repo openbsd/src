@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.13 2008/06/15 04:48:03 sturm Exp $	*/
+/*	$OpenBSD: procs.c,v 1.14 2011/03/22 10:16:23 okan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -204,8 +204,8 @@ transmit_result(int opcode, nlm_res *result, struct sockaddr_in *addr)
 	int success;
 
 	if ((cli = get_client(addr, NLM_VERS)) != NULL) {
-		timeo.tv_sec = 0; /* No timeout - not expecting response */
-		timeo.tv_usec = 0;
+		/* No timeout - not expecting response */
+		timerclear(&timeo);
 
 		success = clnt_call(cli, opcode, xdr_nlm_res,
 		    result, xdr_void, &dummy, timeo);
@@ -232,8 +232,8 @@ transmit4_result(int opcode, nlm4_res *result, struct sockaddr_in *addr)
 	int success;
 
 	if ((cli = get_client(addr, NLM_VERS4)) != NULL) {
-		timeo.tv_sec = 0; /* No timeout - not expecting response */
-		timeo.tv_usec = 0;
+		/* No timeout - not expecting response */
+		timerclear(&timeo);
 
 		success = clnt_call(cli, opcode, xdr_nlm4_res,
 		    result, xdr_void, &dummy, timeo);
@@ -360,8 +360,8 @@ nlm_test_msg_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
 	 */
 	addr = svc_getcaller(rqstp->rq_xprt);
 	if ((cli = get_client(addr, NLM_VERS)) != NULL) {
-		timeo.tv_sec = 0; /* No timeout - not expecting response */
-		timeo.tv_usec = 0;
+		/* No timeout - not expecting response */
+		timerclear(&timeo);
 
 		success = clnt_call(cli, NLM_TEST_RES, xdr_nlm_testres,
 		    &result, xdr_void, &dummy, timeo);
@@ -794,8 +794,8 @@ nlm4_test_msg_4_svc(nlm4_testargs *arg, struct svc_req *rqstp)
 	 */
 	addr = svc_getcaller(rqstp->rq_xprt);
 	if ((cli = get_client(addr, NLM_VERS4)) != NULL) {
-		timeo.tv_sec = 0; /* No timeout - not expecting response */
-		timeo.tv_usec = 0;
+		/* No timeout - not expecting response */
+		timerclear(&timeo);
 
 		success = clnt_call(cli, NLM4_TEST_RES, xdr_nlm4_testres,
 		    &result, xdr_void, &dummy, timeo);

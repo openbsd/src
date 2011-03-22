@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.73 2010/09/13 10:09:00 claudio Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.74 2011/03/22 10:16:23 okan Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -855,7 +855,7 @@ wait_for_reply(int sock, struct sockaddr_in *from, struct timeval *sent)
 		wait.tv_sec--;
 	}
 	if (wait.tv_sec < 0)
-		wait.tv_sec = wait.tv_usec = 0;
+		timerclear(&wait);
 
 	if (select(sock+1, fdsp, (fd_set *)0, (fd_set *)0, &wait) > 0)
 		cc = recvfrom(s, (char *)packet, sizeof(packet), 0,

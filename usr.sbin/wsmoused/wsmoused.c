@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.25 2009/06/21 16:13:18 jacekm Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.26 2011/03/22 10:16:23 okan Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -276,8 +276,7 @@ mouse_click(struct wscons_event *event)
 
 	if (event->type == WSCONS_EVENT_MOUSE_DOWN) {
 		if (timercmp(&max_date, &buttonstate[i].tv, >)) {
-			buttonstate[i].tv.tv_sec = 0;
-			buttonstate[i].tv.tv_usec = 0;
+			timerclear(&buttonstate[i].tv);
 			buttonstate[i].count = 1;
 		} else {
 			buttonstate[i].count++;

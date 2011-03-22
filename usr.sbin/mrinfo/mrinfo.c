@@ -419,7 +419,7 @@ main(int argc, char *argv[])
 				--tv.tv_sec;
 			}
 			if (tv.tv_sec < 0)
-				tv.tv_sec = tv.tv_usec = 0;
+				timerclear(&tv);
 
 			count = poll(pfd, 1, tv.tv_sec * 1000);
 
