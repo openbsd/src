@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2011/03/14 16:40:23 drahn Exp $
+#	$OpenBSD: Makefile,v 1.2 2011/03/22 17:34:56 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -21,14 +21,8 @@ VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 
-OBJARG=
-# XXX - the following for cross builds. shouldn't be here for native
-.if ${HOST} != ${TARGET}
-OBJARG=-O obj.${HOST}.${TARGET}
-.endif
 
 DISKTYPE=       rdroot2.5M
-#NBLKS=		8192
 NBLKS=		5120
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -i 4096
@@ -85,7 +79,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -E ${OBJARG} -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
@@ -109,7 +103,7 @@ clean cleandir:
 .ifdef RELEASEDIR
 install:
 	cp ${BSD_RD} ${RELEASEDIR}
-.endif
+.endif	# RELEASEDIR
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
