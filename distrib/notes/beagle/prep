@@ -1,0 +1,94 @@
+dnl	$OpenBSD: prep,v 1.1 2011/03/22 18:33:51 jasper Exp $
+
+Please be aware that OpenBSD support for this platform is far from
+complete and that these instructions may still be rough.
+
+If you are using a BeagleBoard xM you can use the following script to
+create a bootable SD card:
+
+#!/bin/sh
+#
+# Written by Dale Rahn <drahn@openbsd.org>, 2011.
+#
+# Create a bootable partition on ${DRIVE} for use with BeagleBoard xM.
+
+echo $#
+if (( $# < 3 ))
+then
+	echo fail
+	exit 4
+fi
+
+DRIVE=$1
+MLO=$2
+UBOOT=$3
+
+echo DRIVE ${DRIVE}
+echo MLO ${MLO}
+echo UBOOT ${UBOOT}
+
+SIZE=$(fdisk ${DRIVE} | grep Disk | awk '{ print $5 }' | sed -e 's/\[//')
+
+echo size ${SIZE}
+
+CYL=$(echo ${SIZE}/255/63|bc)
+echo cyl ${CYL}
+
+MAXCYL=$(echo  ${CYL} - 1 | bc)
+
+echo MAXCYL ${MAXCYL}
+
+CHS="-c ${CYL} -h 255 -s 63"
+
+echo CHS ${CHS}
+
+dd if=/dev/zero of=/dev/r${DRIVE}c bs=1m count=1 2>/dev/null
+
+fdisk ${CHS} -yi ${DRIVE} >/dev/null
+
+fdisk ${CHS} -e ${DRIVE} >/dev/null << DONE
+e 0
+C
+y
+0
+1
+1
+4
+254
+63
+f 0
+e 3
+A6
+y
+5
+0
+1
+${MAXCYL}
+254
+63
+w
+q
+DONE
+
+disklabel -c ${DRIVE}
+
+# if msdos partition is > 32MB make this FAT32, not FAT16
+newfs_msdos -F 16 -L boot /dev/r${DRIVE}i >/dev/null
+
+mount /dev/${DRIVE}i /mnt
+cp ${MLO} /mnt/MLO
+cp ${UBOOT} /mnt/u-boot.bin
+umount /mnt
+sync
+----------------------------EOF-----------------------------
+
+You can download the signed U-Boot image here: http://humppa.nl/xM/MLO .
+The U-boot binary can be downloaded here: http://humppa.nl/xM/u-boot.bin .
+
+Insert the card into your computer and call the script like:
+
+	# sh beagle_fmt_sd sd1 ./MLO ./u-boot.bin
+
+When you have connected the BeagleBoard to you computer, a command such
+as "tip -115200 tty00" (assuming tty00 is your serial port device) should
+connect you to the board's console.

@@ -1,0 +1,22 @@
+dnl	$OpenBSD: contents,v 1.1 2011/03/22 18:33:51 jasper Exp $
+TopPart
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+dnl not yet...
+dnl OpenBSDcd
+
+DistributionDescription(eleven)
+
+OpenBSDbase(56389686,167758358)
+
+OpenBSDcomp(88675105,252176109)
+
+OpenBSDetc(525342,1595961)
+
+OpenBSDgame(2668047,5974672)
+
+OpenBSDman(9463622,34570289)

@@ -1,0 +1,85 @@
+dnl     $OpenBSD: install,v 1.1 2011/03/22 18:33:51 jasper Exp $
+OpenBSDInstallPrelude
+
+Now you are ready to power up the board. It will print some hardware
+information and if your SD card has been properly setup the autoboot
+script will be loaded:
+
+	Hit any key to stop autoboot:  0 
+	mmc1 is available
+	The user button is currently NOT pressed.
+	reading boot.scr
+
+	123 bytes read
+	Running bootscript from mmc ...
+	## Executing script at 80200000
+	reading bsd.umg
+
+	2634332 bytes read
+
+	## Booting kernel from Legacy Image at 82800000 ...
+	   Image Name:   boot
+	   Image Type:   ARM Linux Kernel Image (uncompressed)
+	   Data Size:    2634268 Bytes =  2.5 MB
+	   Load Address: 80300000
+	   Entry Point:  80300000
+	   Verifying Checksum ... OK
+	   Loading Kernel Image ... OK
+	OK
+
+	Starting kernel ...
+
+	OpenBSD/beagle booting ...
+
+Alternatively you can manually boot OpenBSD when you hit any key
+during the time-out and you will be presented with the following
+prompt:
+
+	OMAP3 beagleboard.org #
+
+Now type 'mmc init' to check that the SD card has been found:
+
+	OMAP3 beagleboard.org # mmc init
+	mmc1 is available
+	OMAP3 beagleboard.org # 
+
+When the card has been found you should load the U-Boot image into memory:
+
+	OMAP3 beagleboard.org # fatload mmc 0 0x80800000 bsd.umg
+	reading bsd.umg
+
+	2634332 bytes read
+	OMAP3 beagleboard.org # 
+
+To load that image from memory and thus boot OpenBSD type:
+
+	OMAP3 beagleboard.org # bootm 0x80800000
+
+Note that no ramdisk kernels are provided at this moment, so you won't
+be able to actually install OpenBSD/MACHINE yet..
+
+OpenBSDInstallPart2
+
+OpenBSDInstallPart3(,"sd0")
+
+OpenBSDInstallPart4
+
+OpenBSDInstallMBRPart1
+
+OpenBSDInstallMBRPart2(indeed)
+
+OpenBSDInstallPart5
+
+OpenBSDInstallPart6({:-CD-ROM, -:})
+
+OpenBSDURLInstall
+
+OpenBSDCDROMInstall
+
+OpenBSDDISKInstall(,,{:-, Linux (ext2) or MS-DOS-:})
+
+OpenBSDCommonInstall
+
+OpenBSDInstallWrapup
+
+OpenBSDCongratulations

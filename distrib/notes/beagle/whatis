@@ -1,0 +1,5 @@
+dnl	$OpenBSD: whatis,v 1.1 2011/03/22 18:33:51 jasper Exp $
+
+OpenBSD/MACHINE runs on a the original BeagleBoard as well as the newer
+xM models. Hardware support is currently very limited, but this port is
+a heavy work in progress.
