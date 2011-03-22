@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.38 2011/02/07 00:02:50 schwarze Exp $
+.\"	$OpenBSD: awk.1,v 1.39 2011/03/22 15:55:43 jmc Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2011 $
+.Dd $Mdocdate: March 22 2011 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -628,7 +628,7 @@ The stream remains open until explicitly closed with a call to
 .Ic getline
 returns 1 for a successful input, 0 for end of file, and \-1 for an error.
 .It Fn fflush [expr]
-Flushes any buffered output for the file, pipe
+Flushes any buffered output for the file or pipe
 .Fa expr ,
 or all open files or pipes if
 .Fa expr
@@ -704,9 +704,9 @@ Performs a bitwise OR on integer arguments x and y.
 .It Fn xor x y
 Performs a bitwise Exclusive-OR on integer arguments x and y.
 .It Fn lshift x n
-Returns x shifted by n bits to the left.
+Returns integer argument x shifted by n bits to the left.
 .It Fn rshift x n
-Returns y shifted by n bits to the right.
+Returns integer argument x shifted by n bits to the right.
 .El
 .Sh EXIT STATUS
 .Ex -std awk
