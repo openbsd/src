@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2011/03/22 15:29:48 marco Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -216,7 +216,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_notdef(),			/* 19 */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
-	cdev_notdef(), 			/* 21 */
+	cdev_notdef(),			/* 21 */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
@@ -273,7 +273,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
 	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
-	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
+	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
 	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 67: keyboards */
@@ -293,7 +293,7 @@ struct cdevsw	cdevsw[] =
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 77: USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
- 	cdev_bio_init(NBIO,bio),	/* 79: ioctl tunnel */
+	cdev_bio_init(NBIO,bio),	/* 79: ioctl tunnel */
 	cdev_notdef(),			/* 80: gpr? XXX */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
@@ -309,7 +309,7 @@ struct cdevsw	cdevsw[] =
 };
 int	nchrdev = nitems(cdevsw);
 
-int	mem_no = 2; 	/* major device number of memory special file */
+int	mem_no = 2;	/* major device number of memory special file */
 
 /*
  * Swapdev is a fake device implemented
