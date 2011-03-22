@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.118 2010/09/23 04:45:15 yasuoka Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.119 2011/03/22 23:13:01 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -156,10 +156,10 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
     int flags, struct ip6_moptions *im6o, struct ifnet **ifpp, 
     struct inpcb *inp)
 {
-	struct ip6_hdr *ip6, *mhip6;
+	struct ip6_hdr *ip6;
 	struct ifnet *ifp, *origifp = NULL;
 	struct mbuf *m = m0;
-	int hlen, tlen, len, off;
+	int hlen, tlen;
 	struct route_in6 ip6route;
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *dst, dstsock;
@@ -893,9 +893,6 @@ reroute:
 		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
 	} else {
-		struct mbuf **mnext, *m_frgpart;
-		struct ip6_frag *ip6f;
-		u_int32_t id = htonl(ip6_randomid());
 		u_char nextproto;
 #if 0
 		struct ip6ctlparam ip6cp;
@@ -920,15 +917,6 @@ reroute:
 		    (void *)&ip6cp);
 #endif
 
-		len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
-		if (len < 8) {
-			error = EMSGSIZE;
-			in6_ifstat_inc(ifp, ifs6_out_fragfail);
-			goto bad;
-		}
-
-		mnext = &m->m_nextpkt;
-
 		/*
 		 * Change the next header field of the last header in the
 		 * unfragmentable part.
@@ -947,65 +935,25 @@ reroute:
 			ip6->ip6_nxt = IPPROTO_FRAGMENT;
 		}
 
-		/*
-		 * Loop through length of segment after first fragment,
-		 * make new header and copy data of each part and link onto
-		 * chain.
-		 */
 		m0 = m;
-		for (off = hlen; off < tlen; off += len) {
-			struct mbuf *mlast;
+		error = ip6_fragment(m0, hlen, nextproto, mtu);
 
-			MGETHDR(m, M_DONTWAIT, MT_HEADER);
-			if (!m) {
-				error = ENOBUFS;
-				ip6stat.ip6s_odropped++;
-				goto sendorfree;
-			}
-			m->m_pkthdr.rcvif = NULL;
-			m->m_flags = m0->m_flags & M_COPYFLAGS;
-			*mnext = m;
-			mnext = &m->m_nextpkt;
-			m->m_data += max_linkhdr;
-			mhip6 = mtod(m, struct ip6_hdr *);
-			*mhip6 = *ip6;
-			m->m_len = sizeof(*mhip6);
-			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
-			if (error) {
-				ip6stat.ip6s_odropped++;
-				goto sendorfree;
-			}
-			ip6f->ip6f_offlg = htons((u_int16_t)((off - hlen) & ~7));
-			if (off + len >= tlen)
-				len = tlen - off;
-			else
-				ip6f->ip6f_offlg |= IP6F_MORE_FRAG;
-			mhip6->ip6_plen = htons((u_int16_t)(len + hlen +
-			    sizeof(*ip6f) - sizeof(struct ip6_hdr)));
-			if ((m_frgpart = m_copy(m0, off, len)) == 0) {
-				error = ENOBUFS;
-				ip6stat.ip6s_odropped++;
-				goto sendorfree;
-			}
-			for (mlast = m; mlast->m_next; mlast = mlast->m_next)
-				;
-			mlast->m_next = m_frgpart;
-			m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
-			m->m_pkthdr.rcvif = (struct ifnet *)0;
-			ip6f->ip6f_reserved = 0;
-			ip6f->ip6f_ident = id;
-			ip6f->ip6f_nxt = nextproto;
-			ip6stat.ip6s_ofragments++;
-			in6_ifstat_inc(ifp, ifs6_out_fragcreat);
+		switch (error) {
+		case 0:
+			in6_ifstat_inc(ifp, ifs6_out_fragok);
+			break;
+		case EMSGSIZE:
+			in6_ifstat_inc(ifp, ifs6_out_fragfail);
+			break;
+		default:
+			ip6stat.ip6s_odropped++;
+			break;
 		}
-
-		in6_ifstat_inc(ifp, ifs6_out_fragok);
 	}
 
 	/*
 	 * Remove leading garbages.
 	 */
-sendorfree:
 	m = m0->m_nextpkt;
 	m0->m_nextpkt = 0;
 	m_freem(m0);
@@ -1013,6 +961,8 @@ sendorfree:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0) {
+			ip6stat.ip6s_ofragments++;
+			in6_ifstat_inc(ifp, ifs6_out_fragcreat);
 			error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
 		} else
 			m_freem(m);
@@ -1039,6 +989,67 @@ freehdrs:
 bad:
 	m_freem(m);
 	goto done;
+}
+
+int
+ip6_fragment(struct mbuf *m0, int hlen, u_char nextproto, u_long mtu)
+{
+	struct mbuf	*m, **mnext, *m_frgpart;
+	struct ip6_hdr	*mhip6;
+	struct ip6_frag	*ip6f;
+	u_int32_t	 id;
+	int		 tlen, len, off;
+	int		 error;
+
+	id = htonl(ip6_randomid());
+
+	mnext = &m0->m_nextpkt;
+	*mnext = NULL;
+
+	tlen = m0->m_pkthdr.len;
+	len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
+	if (len < 8)
+		return (EMSGSIZE);
+
+	/*
+	 * Loop through length of segment after first fragment,
+	 * make new header and copy data of each part and link onto
+	 * chain.
+	 */
+	for (off = hlen; off < tlen; off += len) {
+		struct mbuf *mlast;
+
+		if ((m = m_gethdr(M_DONTWAIT, MT_HEADER)) == NULL)
+			return (ENOBUFS);
+		*mnext = m;
+		mnext = &m->m_nextpkt;
+		if ((error = m_dup_pkthdr(m, m0)) != 0)
+			return (error);
+		m->m_data += max_linkhdr;
+		mhip6 = mtod(m, struct ip6_hdr *);
+		*mhip6 = *mtod(m0, struct ip6_hdr *);
+		m->m_len = sizeof(*mhip6);
+		if ((error = ip6_insertfraghdr(m0, m, hlen, &ip6f)) != 0)
+			return (error);
+		ip6f->ip6f_offlg = htons((u_int16_t)((off - hlen) & ~7));
+		if (off + len >= tlen)
+			len = tlen - off;
+		else
+			ip6f->ip6f_offlg |= IP6F_MORE_FRAG;
+		mhip6->ip6_plen = htons((u_int16_t)(len + hlen +
+		    sizeof(*ip6f) - sizeof(struct ip6_hdr)));
+		if ((m_frgpart = m_copym(m0, off, len, M_DONTWAIT)) == NULL)
+			return (ENOBUFS);
+		for (mlast = m; mlast->m_next; mlast = mlast->m_next)
+			;
+		mlast->m_next = m_frgpart;
+		m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
+		ip6f->ip6f_reserved = 0;
+		ip6f->ip6f_ident = id;
+		ip6f->ip6f_nxt = nextproto;
+	}
+
+	return (0);
 }
 
 int
