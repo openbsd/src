@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.15 2010/08/04 16:47:01 sthen Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.16 2011/03/22 17:31:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -520,15 +520,19 @@ ospf_print(register const u_char *bp, register u_int length,
 	/* value.  If it's not valid, say so and return */
 	TCHECK(op->ospf_type);
 	cp = tok2str(type2str, "type%d", op->ospf_type);
-	printf(" OSPFv%d-%s %d:", op->ospf_version, cp, length);
+	printf(" OSPFv%d-%s ", op->ospf_version, cp);
 	if (*cp == 't')
 		return;
 
 	TCHECK(op->ospf_len);
-	if (length != ntohs(op->ospf_len)) {
+	if (length < ntohs(op->ospf_len)) {
 		printf(" [len %d]", ntohs(op->ospf_len));
 		return;
-	}
+	} else if (length > ntohs(op->ospf_len)) {
+		printf(" %d[%d]:", ntohs(op->ospf_len), length);
+		length = ntohs(op->ospf_len);
+	} else
+		printf(" %d:", length);
 	dataend = bp + length;
 
 	/* Print the routerid if it is not the same as the source */
