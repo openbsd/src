@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.635 2011/02/25 12:55:45 krw Exp $
+#	$OpenBSD: install.sub,v 1.636 2011/03/22 19:20:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1950,11 +1950,11 @@ finish_up() {
 	)
 	echo "done."
 
-	md_installboot $ROOTDISK
-
 	populateusrlocal
 
 	[ -x /mnt/$MODE.site ] && /mnt/usr/sbin/chroot /mnt /$MODE.site
+
+	md_installboot $ROOTDISK
 
 	# Pat on the back.
 	cat <<__EOT
