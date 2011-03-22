@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.4 2010/09/07 16:21:37 deraadt Exp $ */
+/* $OpenBSD: omap_com.c,v 1.5 2011/03/22 17:46:02 deraadt Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -58,7 +58,6 @@
 int	omapuart_match(struct device *, void *, void *);
 void	omapuart_attach(struct device *, struct device *, void *);
 int	omapuart_activate(struct device *, int);
-void	omapuart_power(int why, void *);
 
 struct cfattach com_ahb_ca = {
         sizeof (struct com_softc), omapuart_match, omapuart_attach, NULL, 
@@ -144,11 +143,3 @@ omapuart_activate(struct device *self, int act)
 	}
 	return 0;
 }
-
-#if 0
-void
-omapuart_power(int why, void *arg)
-{
-	omapuart_activate(arg, why);
-}
-#endif
