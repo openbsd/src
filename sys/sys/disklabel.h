@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.49 2011/03/17 21:44:10 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.50 2011/03/22 19:26:55 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ struct partinfo {
 #define	DOSMBR_SIGNATURE_OFF	(0x1fe)
 
 /* Maximum number of Extended Boot Records (EBRs) to traverse. */
-#define	DOS_MAXEBR	8
+#define	DOS_MAXEBR	256
 
 struct dos_partition {
 	u_int8_t	dp_flag;	/* bootstrap flags */
