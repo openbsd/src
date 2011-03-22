@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1590 2011/01/26 07:09:09 kevlo Exp $
+$OpenBSD: pcidevs,v 1.1591 2011/03/22 03:52:09 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3696,6 +3696,7 @@ product NETMOS NM9835		0x9835	Nm9835
 product NETMOS NM9845		0x9845	Nm9845
 product NETMOS NM9865		0x9865	Nm9865
 product NETMOS NM9901		0x9901	Nm9901
+product NETMOS NM9922		0x9922	Nm9922
 
 /* Network Security Technologies */
 product NETSEC 7751		0x7751	7751
