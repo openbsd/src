@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.42 2011/02/17 16:12:22 jakemsr Exp $ */
+/*	$OpenBSD: umodem.c,v 1.43 2011/03/22 16:31:19 deraadt Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -457,8 +457,9 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		printf("%s: abnormal status: %s\n", sc->sc_dev.dv_xname,
-		       usbd_errstr(status));
+		DPRINTF(("%s: abnormal status: %s\n", sc->sc_dev.dv_xname,
+		       usbd_errstr(status)));
+		usbd_clear_endpoint_stall_async(sc->sc_notify_pipe);
 		return;
 	}
 

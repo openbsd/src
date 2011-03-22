@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.32 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.33 2011/03/22 16:31:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -696,12 +696,10 @@ ueagle_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 
-		printf("%s: abnormal interrupt status: %s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(status));
+		DPRINTF(("%s: abnormal interrupt status: %s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(status)));
 
-		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall_async(sc->pipeh_intr);
-
+		usbd_clear_endpoint_stall_async(sc->pipeh_intr);
 		return;
 	}
 
