@@ -770,8 +770,7 @@ asr_ctx_query(struct asr_ctx *ac, int type)
 void
 asr_done(struct asr *asr)
 {
-	if (asr_ctx_unref(asr->a_ctx))
-		return;
+	asr_ctx_unref(asr->a_ctx);
 	if (asr->a_path)
 		free(asr->a_path);
 	free(asr);
