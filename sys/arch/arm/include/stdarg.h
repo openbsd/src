@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.8 2011/03/02 18:31:58 matthew Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.9 2011/03/23 16:54:34 pirofti Exp $ */
 /*	$NetBSD: stdarg.h,v 1.7 2003/08/07 16:26:53 agc Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  *	from: @(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _ARM32_STDARG_H_
-#define	_ARM32_STDARG_H_
+#ifndef _ARM_STDARG_H_
+#define	_ARM_STDARG_H_
 
 #include <sys/cdefs.h>
 #include <machine/_types.h>
@@ -53,4 +53,4 @@ typedef __va_list	va_list;
 #define	va_end(ap)		__builtin_va_end((ap))
 #define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
 
-#endif /* !_ARM32_STDARG_H_ */
+#endif /* !_ARM_STDARG_H_ */

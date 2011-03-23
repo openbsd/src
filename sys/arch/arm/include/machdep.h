@@ -1,8 +1,8 @@
-/*	$OpenBSD: machdep.h,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 /* $NetBSD: machdep.h,v 1.7 2002/02/21 02:52:21 thorpej Exp $ */
 
-#ifndef _ARM32_BOOT_MACHDEP_H_
-#define _ARM32_BOOT_MACHDEP_H_
+#ifndef _ARM_MACHDEP_H_
+#define _ARM_MACHDEP_H_
 
 /* misc prototypes used by the many arm machdeps */
 void halt (void);

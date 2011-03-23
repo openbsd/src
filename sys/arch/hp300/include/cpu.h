@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2010/07/24 12:18:58 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.39 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -39,8 +39,8 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
-#ifndef _HP300_CPU_H_
-#define	_HP300_CPU_H_
+#ifndef _MACHINE_CPU_H_
+#define	_MACHINE_CPU_H_
 
 /*
  * Exported definitions unique to hp300/68k cpu support.
@@ -197,4 +197,4 @@ void	dumpconf(void);
 #define	MMU_FAULT	(MMU_PTF|MMU_PF|MMU_WPF|MMU_BERR)
 #define	MMU_ENAB	(MMU_UMEN|MMU_SMEN|MMU_IEN|MMU_FPE)
 
-#endif /* _HP300_CPU_H_ */
+#endif /* _MACHINE_CPU_H_ */

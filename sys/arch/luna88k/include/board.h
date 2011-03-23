@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.9 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: board.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -26,8 +26,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef __LUNA88K_BOARD_H__
-#define __LUNA88K_BOARD_H__
+#ifndef _MACHINE_BOARD_H_
+#define _MACHINE_BOARD_H_
 
 /*
  *      OMRON SX9100DT CPU board constants
@@ -190,4 +190,4 @@
 #define CMMU_I3		U(0xFFF01000) 	/* CMMU instruction cpu 3 */
 #define CMMU_D3		U(0xFFF00000) 	/* CMMU data cpu 3 */
 
-#endif /* __LUNA88K_BOARD_H__ */
+#endif /* _MACHINE_BOARD_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.h,v 1.1 2007/01/29 14:18:00 aoyama Exp $ */
+/* $OpenBSD: lcd.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $ */
 
 /* 
  * Copyright (c) 2007 Kenji AOYAMA <aoyama@nk-home.net>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _LUNA88K_LCD_H_
-#define _LUNA88K_LCD_H_
+#ifndef _MACHINE_LCD_H_
+#define _MACHINE_LCD_H_
 
 /*
  * OpenBSD/luna88k LCD driver
@@ -62,4 +62,4 @@
 #define	LCDMOVE_D_LEFT	0x18	/* display area shifts to left */
 #define	LCDMOVE_D_RIGHT	0x1c	/* display area shifts to right */
 
-#endif /* _LUNA88K_LCD_H_ */
+#endif /* _MACHINE_LCD_H_ */

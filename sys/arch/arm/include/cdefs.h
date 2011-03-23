@@ -1,7 +1,7 @@
-/*	$OpenBSD: cdefs.h,v 1.2 2005/11/24 20:46:44 deraadt Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 
-#ifndef	_MACHINE_CDEFS_H_
-#define	_MACHINE_CDEFS_H_
+#ifndef	_ARM_CDEFS_H_
+#define	_ARM_CDEFS_H_
 
 #if defined(lint)
 #define __indr_reference(sym,alias)	__lint_equal__(sym,alias)
@@ -16,4 +16,4 @@
 	    " ; .ascii \"" msg "\" ; .text")
 #endif
 
-#endif /* !_MACHINE_CDEFS_H_ */
+#endif /* !_ARM_CDEFS_H_ */

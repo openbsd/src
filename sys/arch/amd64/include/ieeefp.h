@@ -1,12 +1,12 @@
-/*	$OpenBSD: ieeefp.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.
  */
 
-#ifndef _I386_IEEEFP_H_
-#define _I386_IEEEFP_H_
+#ifndef _MACHINE_IEEEFP_H_
+#define _MACHINE_IEEEFP_H_
 
 typedef int fp_except;
 #define FP_X_INV	0x01	/* invalid operation exception */
@@ -23,4 +23,4 @@ typedef enum {
     FP_RZ=3			/* round to zero (truncate) */
 } fp_rnd;
 
-#endif /* _I386_IEEEFP_H_ */
+#endif /* _MACHINE_IEEEFP_H_ */

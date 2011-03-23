@@ -1,9 +1,9 @@
-/*	$OpenBSD: lock.h,v 1.2 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: lock.h,v 1.3 2011/03/23 16:54:37 pirofti Exp $	*/
 
 /* public domain */
 
-#ifndef	_VAX_LOCK_H_
-#define	_VAX_LOCK_H_
+#ifndef	_MACHINE_LOCK_H_
+#define	_MACHINE_LOCK_H_
 
 #include <machine/atomic.h>
 
@@ -53,4 +53,4 @@ __cpu_simple_unlock(__cpu_simple_lock_t *l)
 	*l = __SIMPLELOCK_UNLOCKED;
 }
 
-#endif	/* _VAX_LOCK_H_ */
+#endif	/* _MACHINE_LOCK_H_ */

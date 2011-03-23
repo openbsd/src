@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -62,8 +62,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM32_BUS_H_
-#define _ARM32_BUS_H_
+#ifndef _ARM_BUS_H_
+#define _ARM_BUS_H_
 
 /*
  * Addresses (in bus space).
@@ -889,4 +889,4 @@ bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
     !!! bus_space_write_raw_region_8 unimplemented !!!
 #endif
 
-#endif /* _ARM32_BUS_H_ */
+#endif /* _ARM_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.10 2010/04/24 20:14:03 miod Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.11 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_AVIION_DISKLABEL_H_
-#define	_AVIION_DISKLABEL_H_
+#ifndef	_MACHINE_DISKLABEL_H_
+#define	_MACHINE_DISKLABEL_H_
 
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
@@ -171,4 +171,4 @@ struct vdit_vdmremap_instance {
 	struct vdit_instance_id		remap_area;
 } __packed;
 
-#endif	/* _AVIION_DISKLABEL_H_ */
+#endif	/* _MACHINE_DISKLABEL_H_ */

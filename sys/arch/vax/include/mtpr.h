@@ -1,4 +1,4 @@
-/*      $OpenBSD: mtpr.h,v 1.5 2000/04/26 03:08:42 bjc Exp $     */
+/*      $OpenBSD: mtpr.h,v 1.6 2011/03/23 16:54:37 pirofti Exp $     */
 /*      $NetBSD: mtpr.h,v 1.12 1999/06/06 19:06:29 ragge Exp $     */
 
 /*
@@ -33,8 +33,8 @@
 
  /* All bugs are subject to removal without further notice */
 
-#ifndef	_VAX_MTPR_H_
-#define	_VAX_MTPR_H_
+#ifndef	_MACHINE_MTPR_H_
+#define	_MACHINE_MTPR_H_
 
 /******************************************************************************
 
@@ -175,4 +175,4 @@
 })
 #endif	/* _LOCORE */
 
-#endif /* _VAX_MTPR_H_ */
+#endif /* _MACHINE_MTPR_H_ */

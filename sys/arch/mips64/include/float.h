@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.6 2010/07/17 17:52:43 miod Exp $	*/
+/*	$OpenBSD: float.h,v 1.7 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,8 +31,8 @@
  *	@(#)float.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS_FLOAT_H_
-#define _MIPS_FLOAT_H_
+#ifndef _MIPS64_FLOAT_H_
+#define _MIPS64_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -74,4 +74,4 @@ __END_DECLS
 #define LDBL_MAX	1.18973149535723176508575932662800702e+4932L
 #define LDBL_MAX_10_EXP	4932
 
-#endif	/* !_MIPS_FLOAT_H_ */
+#endif	/* !_MIPS64_FLOAT_H_ */

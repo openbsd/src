@@ -1,4 +1,4 @@
-/*	$OpenBSD: reloc.h,v 1.4 2010/06/27 03:11:44 guenther Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.5 2011/03/23 16:54:37 pirofti Exp $	*/
 /* 
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  *   
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_MACH_RELOC_H_
-#define	_MACH_RELOC_H_
+#ifndef	_MACHINE_RELOC_H_
+#define	_MACHINE_RELOC_H_
 
 #define RELOC_NONE		0
 
@@ -33,4 +33,4 @@
 #define RELOC_TLS_TPOFF32	78
 #define RELOC_TLS_TPOFF64	79
 
-#endif	/* _MACH_RELOC_H_ */
+#endif	/* _MACHINE_RELOC_H_ */

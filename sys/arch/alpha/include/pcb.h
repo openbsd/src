@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.8 2005/10/30 20:55:50 miod Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.9 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: pcb.h,v 1.5 1996/11/13 22:21:00 cgd Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_PCB_H_
-#define _ALPHA_PCB_H_
+#ifndef _MACHINE_PCB_H_
+#define _MACHINE_PCB_H_
 
 #include <machine/frame.h>
 #include <machine/reg.h>
@@ -71,4 +71,4 @@ struct md_coredump {
 void savectx(struct pcb *);
 #endif
 
-#endif /* _ALPHA_PCB_H_ */
+#endif /* _MACHINE_PCB_H_ */

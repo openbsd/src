@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.6 2010/07/07 15:36:18 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.7 2011/03/23 16:54:37 pirofti Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SPARC64_ATOMIC_H_
-#define _SPARC64_ATOMIC_H_
+#ifndef _MACHINE_ATOMIC_H_
+#define _MACHINE_ATOMIC_H_
 
 #if defined(_KERNEL)
 
@@ -78,4 +78,4 @@ atomic_add_ulong(volatile unsigned long *ulp, unsigned long v)
 }
 
 #endif /* defined(_KERNEL) */
-#endif /* _SPARC64_ATOMIC_H_ */
+#endif /* _MACHINE_ATOMIC_H_ */

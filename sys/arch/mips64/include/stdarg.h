@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.7 2008/10/23 21:25:07 kettenis Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.8 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -31,8 +31,8 @@
  *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS_STDARG_H_
-#define	_MIPS_STDARG_H_
+#ifndef _MIPS64_STDARG_H_
+#define	_MIPS64_STDARG_H_
 
 #include <sys/cdefs.h>
 #include <machine/_types.h>
@@ -61,8 +61,8 @@ typedef char * __gnuc_va_list;
 
 /* If this is for internal libc use, don't define anything but __gnuc_va_list */
 
-#ifndef _VA_MIPS_H_ENUM
-#define _VA_MIPS_H_ENUM
+#ifndef _MIPS64_STDARG_H_
+#define _MIPS64_STDARG_H_
 enum {
   __no_type_class = -1,
   __void_type_class,
@@ -244,4 +244,4 @@ void va_end (__gnuc_va_list);		/* Defined in libgcc.a */
 /* Copy __gnuc_va_list into another variable of this type.  */
 #define __va_copy(dest, src) (dest) = (src)
 
-#endif /* !_MIPS_STDARG_H_ */
+#endif /* !_MIPS64_STDARG_H_ */

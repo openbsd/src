@@ -1,8 +1,8 @@
-/*	$OpenBSD: sysarch.h,v 1.6 2011/03/18 03:10:47 guenther Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.7 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 
-#ifndef _AMD64_SYSARCH_H_
-#define _AMD64_SYSARCH_H_
+#ifndef _MACHINE_SYSARCH_H_
+#define _MACHINE_SYSARCH_H_
 
 /*
  * Architecture specific syscalls (amd64)
@@ -73,4 +73,4 @@ int amd64_pmc_read(struct amd64_pmc_read_args *);
 int sysarch(int, void *);
 #endif
 
-#endif /* !_AMD64_SYSARCH_H_ */
+#endif /* !_MACHINE_SYSARCH_H_ */

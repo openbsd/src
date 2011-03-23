@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.7 2010/11/24 21:16:26 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.8 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,8 +34,8 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MIPS_PROC_H_
-#define	_MIPS_PROC_H_
+#ifndef	_MIPS64_PROC_H_
+#define	_MIPS64_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure.
@@ -77,4 +77,4 @@ struct mdproc {
 #define	MDP_WATCH2	0x00040000	/* Watch register 1 used */
 #define	MDP_FORKSAVE	0x0000ffff	/* Flags to save when forking */
 
-#endif	/* !_MIPS_PROC_H_ */
+#endif	/* !_MIPS64_PROC_H_ */

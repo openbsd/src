@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.13 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.14 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.6 1998/08/10 14:33:33 ragge Exp $	*/
 
 /* 
@@ -27,8 +27,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	_VAX_DB_MACHDEP_H_
-#define	_VAX_DB_MACHDEP_H_
+#ifndef	_MACHINE_DB_MACHDEP_H_
+#define	_MACHINE_DB_MACHDEP_H_
 
 /*
  * Machine-dependent defines for new kernel debugger.
@@ -78,4 +78,4 @@ void	kdb_trap(struct trapframe *);
  */
 #define	DB_AOUT_SYMBOLS
 
-#endif	/* _VAX_DB_MACHDEP_H_ */
+#endif	/* _MACHINE_DB_MACHDEP_H_ */

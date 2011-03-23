@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.11 2010/07/25 21:43:38 deraadt Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.12 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_I82489REG_H_
-#define _X86_I82489REG_H_
+#ifndef _MACHINE_I82489VAR_H_
+#define _MACHINE_I82489VAR_H_
 
 /*
  * Software definitions belonging to Local APIC driver.

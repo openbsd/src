@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.16 2006/09/17 22:23:40 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.17 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.8 1996/11/15 14:21:00 briggs Exp $	*/
 
 /*
@@ -73,8 +73,8 @@
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
  */
 
-#ifndef _MAC68K_VMPARAM_H_
-#define _MAC68K_VMPARAM_H_
+#ifndef _MACHINE_VMPARAM_H_
+#define _MACHINE_VMPARAM_H_
 
 /*
  * Machine dependent constants for mac68k -- mostly derived from hp300.
@@ -97,4 +97,4 @@
 #define	VM_PHYSSEG_MAX		8
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
-#endif	/* _MAC68K_VMPARAM_H_ */
+#endif	/* _MACHINE_VMPARAM_H_ */

@@ -1,5 +1,5 @@
 /*	$NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $	*/
-/*	$OpenBSD: bus_mi.h,v 1.12 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: bus_mi.h,v 1.13 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -94,8 +94,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_BUS_H_
-#define _POWERPC_BUS_H_
+#ifndef _MACHINE_BUS_MI_H_
+#define _MACHINE_BUS_MI_H_
 
 #include <machine/pio.h>
 
@@ -1133,4 +1133,4 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
 #endif /* _POWERPC_BUS_DMA_PRIVATE */
-#endif /* _POWERPC_BUS_H_ */
+#endif /* _MACHINE_BUS_MI_H_ */

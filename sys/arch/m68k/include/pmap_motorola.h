@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.21 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.22 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -36,8 +36,8 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_PMAP_MOTOROLA_H_
-#define	_PMAP_MOTOROLA_H_
+#ifndef	_M68K_M68K_M68K_PMAP_MOTOROLA_H_
+#define	_M68K_M68K_M68K_PMAP_MOTOROLA_H_
 
 #ifdef	_KERNEL
 
@@ -143,4 +143,4 @@ vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 
 #endif	/* _KERNEL */
 
-#endif /* !_PMAP_MOTOROLA_H_ */
+#endif /* !_M68K_M68K_M68K_PMAP_MOTOROLA_H_ */

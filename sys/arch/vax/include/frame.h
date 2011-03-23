@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.3 2001/08/25 13:33:36 hugh Exp $ */
+/*	$OpenBSD: frame.h,v 1.4 2011/03/23 16:54:37 pirofti Exp $ */
 /*	$NetBSD: frame.h,v 1.2 2000/06/04 19:30:15 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_FRAME_H_
-#define	_VAX_FRAME_H_
+#ifndef _MACHINE_FRAME_H_
+#define	_MACHINE_FRAME_H_
 
 /*
  * Description of calls frame on stack. This is the 

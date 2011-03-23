@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.1 2010/02/28 08:30:27 otto Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*
  *  Copyright (c) 2001 Alexander Guy
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * 
  */
-#ifndef _LOONGSON_APMVAR_H_
-#define _LOONGSON_APMVAR_H_
+#ifndef _MACHINE_APMVAR_H_
+#define _MACHINE_APMVAR_H_
 
 #include <sys/ioccom.h>
 
@@ -122,4 +122,4 @@ void apm_setinfohook(int (*)(struct apm_power_info *));
 int apm_record_event(u_int, const char *, const char *);
 #endif
 
-#endif /* _LOONGSON_APMVAR_H_ */
+#endif /* _MACHINE_APMVAR_H_ */

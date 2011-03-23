@@ -1,10 +1,10 @@
-/*	$OpenBSD: atomic.h,v 1.2 2008/11/27 20:51:48 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /* Public Domain */
 
-#ifndef __GUMSTIX_ATOMIC_H__
-#define __GUMSTIX_ATOMIC_H__
+#ifndef _MACHINE_ATOMIC_H_
+#define _MACHINE_ATOMIC_H_
 
 #include <arm/atomic.h>
 
-#endif /* __GUMSTIX_ATOMIC_H__ */
+#endif /* _MACHINE_ATOMIC_H_ */

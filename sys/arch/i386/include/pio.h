@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.9 2001/06/27 04:34:23 mickey Exp $	*/
+/*	$OpenBSD: pio.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: pio.h,v 1.13 1996/03/08 20:15:23 cgd Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_PIO_H_
-#define _I386_PIO_H_
+#ifndef _MACHINE_PIO_H_
+#define _MACHINE_PIO_H_
 
 /*
  * Functions to provide access to i386 programmed I/O instructions.
@@ -198,4 +198,4 @@ outsl(int port, const void *addr, int cnt)
 	    : "+S" (addr), "+c" (cnt) : "d" (port) : "cc");
 }
 
-#endif /* _I386_PIO_H_ */
+#endif /* _MACHINE_PIO_H_ */

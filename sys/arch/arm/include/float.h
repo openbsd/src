@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.3 2008/07/21 20:50:54 martynas Exp $	*/
+/*	$OpenBSD: float.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: float.h,v 1.1 2001/01/10 19:02:06 bjh21 Exp $	*/
 
 /*
@@ -45,8 +45,8 @@
  *	@(#)float.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _ARM32_FLOAT_H_
-#define _ARM32_FLOAT_H_
+#ifndef _ARM_FLOAT_H_
+#define _ARM_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -88,4 +88,4 @@ __END_DECLS
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#endif	/* _ARM32_FLOAT_H_ */
+#endif	/* _ARM_FLOAT_H_ */

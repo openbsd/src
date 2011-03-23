@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips_opcode.h,v 1.5 2010/09/19 23:34:33 miod Exp $	*/
+/*      $OpenBSD: mips_opcode.h,v 1.6 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,8 +34,8 @@
  *	from: @(#)mips_opcode.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS_MIPS_OPCODE_H_
-#define	_MIPS_MIPS_OPCODE_H_
+#ifndef _MIPS64_MIPS_OPCODE_H_
+#define	_MIPS64_MIPS_OPCODE_H_
 
 /*
  * Define the instruction formats and opcode values for the
@@ -336,4 +336,4 @@ typedef union {
 #define	OP_NMADD	06
 #define	OP_NMSUB	07
 
-#endif /* !_MIPS_MIPS_OPCODE_H_ */
+#endif /* !_MIPS64_MIPS_OPCODE_H_ */

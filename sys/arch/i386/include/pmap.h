@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.56 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.57 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -37,8 +37,8 @@
  * pmap.h: see pmap.c for the history of this pmap module.
  */
 
-#ifndef	_I386_PMAP_H_
-#define	_I386_PMAP_H_
+#ifndef	_MACHINE_PMAP_H_
+#define	_MACHINE_PMAP_H_
 
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
@@ -488,4 +488,4 @@ void	pmap_ldt_cleanup(struct proc *);
 #endif /* USER_LDT */
 
 #endif /* _KERNEL */
-#endif	/* _I386_PMAP_H_ */
+#endif	/* _MACHINE_PMAP_H_ */

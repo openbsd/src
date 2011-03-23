@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.14 2010/11/27 19:57:23 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.15 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -26,8 +26,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef  _M88K_DB_MACHDEP_H_
-#define  _M88K_DB_MACHDEP_H_
+#ifndef _M88K_DB_MACHDEP_H_
+#define _M88K_DB_MACHDEP_H_
 
 /* trap numbers used by ddb */
 #define	DDB_ENTRY_BKPT_NO	130

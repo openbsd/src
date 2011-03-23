@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.13 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: exec.h,v 1.14 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: exec.h,v 1.7 1994/11/20 20:53:02 deraadt Exp $ */
 
 /*
@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SPARC_EXEC_H_
-#define _SPARC_EXEC_H_
+#ifndef _MACHINE_EXEC_H_
+#define _MACHINE_EXEC_H_
 
 #define __LDPGSZ	8192	/* linker page size */
 
@@ -131,4 +131,4 @@ struct relocation_info_sparc {
 
 #define _KERN_DO_ELF
 
-#endif  /* _SPARC_EXEC_H_ */
+#endif  /* _MACHINE_EXEC_H_ */

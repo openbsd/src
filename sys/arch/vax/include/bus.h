@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.15 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.16 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -62,8 +62,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_BUS_H_
-#define _VAX_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define _MACHINE_BUS_H_
 
 /*
  * Bus address and size types
@@ -965,4 +965,4 @@ paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 #endif /* _VAX_BUS_DMA_PRIVATE */
 
-#endif /* _VAX_BUS_H_ */
+#endif /* _MACHINE_BUS_H_ */

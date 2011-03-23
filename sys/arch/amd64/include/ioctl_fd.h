@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioctl_fd.h,v 1.1 2005/09/19 01:28:04 deraadt Exp $	*/
+/*	$OpenBSD: ioctl_fd.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -29,8 +29,8 @@
  * From: Id: ioctl_fd.h,v 1.7 1994/10/30 19:17:39 joerg Exp
  */
 
-#ifndef _AMD64_IOCTL_FD_H_
-#define _AMD64_IOCTL_FD_H_
+#ifndef _MACHINE_IOCTL_FD_H_
+#define _MACHINE_IOCTL_FD_H_
 
 #include <sys/ioccom.h>
 
@@ -127,4 +127,4 @@ struct fd_type {
 #endif /* FDC_500KBPS */
 
 
-#endif /* !_AMD64_IOCTL_FD_H__ */
+#endif /* !_MACHINE_IOCTL_FD_H__ */

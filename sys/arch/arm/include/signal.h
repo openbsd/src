@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2006/05/26 20:31:25 miod Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: signal.h,v 1.5 2003/10/18 17:57:21 briggs Exp $	*/
 
 /*
@@ -44,8 +44,8 @@
  * Created      : 30/09/94
  */
 
-#ifndef _ARM32_SIGNAL_H_
-#define _ARM32_SIGNAL_H_
+#ifndef _ARM_SIGNAL_H_
+#define _ARM_SIGNAL_H_
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
@@ -90,4 +90,4 @@ struct sigcontext {
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #endif /* !_LOCORE */
 
-#endif	/* !_ARM32_SIGNAL_H_ */
+#endif	/* !_ARM_SIGNAL_H_ */

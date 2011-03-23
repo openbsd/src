@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.12 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.13 2011/03/23 16:54:36 pirofti Exp $	*/
 /*
  * Copyright (c) 1997-2004 Opsycon AB, Sweden (www.opsycon.se)
  *
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef _MIPS_ARCHTYPE_H_
-#define _MIPS_ARCHTYPE_H_
+#ifndef _MIPS64_ARCHTYPE_H_
+#define _MIPS64_ARCHTYPE_H_
 /*
  * Define architectural identities for the different Mips machines.
  */
@@ -89,4 +89,4 @@
 
 #define	ARCHCLASS(n)	((n) & 0xf0)
 
-#endif /* !_MIPS_ARCHTYPE_H_ */
+#endif /* !_MIPS64_ARCHTYPE_H_ */

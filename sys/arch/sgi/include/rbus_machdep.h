@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.1 2009/07/21 21:25:19 miod Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.2 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_SGI_RBUS_MACHDEP_H_
-#define	_SGI_RBUS_MACHDEP_H_
+#ifndef	_MACHINE_RBUS_MACHDEP_H_
+#define	_MACHINE_RBUS_MACHDEP_H_
 
 /*
  * RBUS mapping routines
@@ -57,4 +57,4 @@ md_space_unmap(rbus_tag_t rbt, bus_space_handle_t h, bus_size_t size,
 #define	pccbb_attach_hook(parent, self, paa)	\
 	do { /* nothing */} while (/*CONSTCOND*/0)
 
-#endif	/* _SGI_RBUS_MACHDEP_H_ */
+#endif	/* _MACHINE_RBUS_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 2010/07/21 15:40:04 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -39,8 +39,8 @@
  * Prototypes for device driver functions
  */
 
-#ifndef _LANDISK_CONF_H
-#define	_LANDISK_CONF_H
+#ifndef _MACHINE_CONF_H_
+#define	_MACHINE_CONF_H_
  
 
 #include <sys/conf.h>
@@ -74,4 +74,4 @@ cdev_decl(apm);
 cdev_decl(spkr);
 cdev_decl(scif);
 
-#endif	/* _LANDISK_CONF_H_ */
+#endif	/* _MACHINE_CONF_H_ */

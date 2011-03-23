@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: ieeefp.h,v 1.1 2001/01/10 19:02:06 bjh21 Exp $	*/
 
 /* 
@@ -6,8 +6,8 @@
  * Public domain.
  */
 
-#ifndef _ARM32_IEEEFP_H_
-#define _ARM32_IEEEFP_H_
+#ifndef _ARM_IEEEFP_H_
+#define _ARM_IEEEFP_H_
 
 /* FP exception codes */
 
@@ -38,4 +38,4 @@ typedef enum {
     FP_RZ=3			/* round to zero (truncate) */
 } fp_rnd;
 
-#endif /* _ARM32_IEEEFP_H_ */
+#endif /* _ARM_IEEEFP_H_ */

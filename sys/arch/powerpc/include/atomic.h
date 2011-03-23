@@ -1,9 +1,9 @@
-/*	$OpenBSD: atomic.h,v 1.3 2007/03/17 22:10:04 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /* Public Domain */
 
-#ifndef __POWERPC_ATOMIC_H__
-#define __POWERPC_ATOMIC_H__
+#ifndef _POWERPC_ATOMIC_H_
+#define _POWERPC_ATOMIC_H_
 
 #if defined(_KERNEL)
 
@@ -34,4 +34,4 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 #endif /* defined(_KERNEL) */
-#endif /* __POWERPC_ATOMIC_H__ */
+#endif /* _POWERPC_ATOMIC_H_ */

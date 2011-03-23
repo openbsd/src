@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.8 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.9 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.2 1996/06/07 10:27:19 briggs Exp $	*/
 
 /*
@@ -42,8 +42,8 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _MAC68K_Z8530VAR_H_
-#define _MAC68K_Z8530VAR_H_
+#ifndef _MACHINE_Z8530VAR_H_
+#define _MACHINE_Z8530VAR_H_
 
 #ifdef _KERNEL
 #include <mac68k/dev/z8530sc.h>

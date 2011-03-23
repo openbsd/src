@@ -1,4 +1,4 @@
-/*	$OpenBSD: regdef.h,v 1.3 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: regdef.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,8 +34,8 @@
  *
  *	@(#)regdef.h	8.1 (Berkeley) 6/10/93
  */
-#ifndef _MIPS_REGDEF_H_
-#define _MIPS_REGDEF_H_
+#ifndef _MIPS64_REGDEF_H_
+#define _MIPS64_REGDEF_H_
 
 #define zero	$0	/* always zero */
 #define AT	$at	/* assembler temp */
@@ -89,4 +89,4 @@
 #define s8	$30	/* one more callee saved */
 #define ra	$31	/* return address */
 
-#endif /* !_MIPS_REGDEF_H_ */
+#endif /* !_MIPS64_REGDEF_H_ */

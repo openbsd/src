@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.7 2008/07/21 20:50:55 martynas Exp $	*/
+/*	$OpenBSD: float.h,v 1.8 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: float.h,v 1.5 1998/10/10 02:13:55 matt Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  *	@(#)float.h     7.2 (Berkeley) 6/28/90
  */
 
-#ifndef _VAX_FLOAT_H_
-#define _VAX_FLOAT_H_
+#ifndef _MACHINE_FLOAT_H_
+#define _MACHINE_FLOAT_H_
 
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	1		/* FP addition rounds to nearest */
@@ -73,4 +73,4 @@
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#endif	/* _VAX_FLOAT_H_ */
+#endif	/* _MACHINE_FLOAT_H_ */

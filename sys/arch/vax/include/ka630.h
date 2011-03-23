@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka630.h,v 1.6 2003/06/02 23:27:57 millert Exp $ */
+/*	$OpenBSD: ka630.h,v 1.7 2011/03/23 16:54:37 pirofti Exp $ */
 /*	$NetBSD: ka630.h,v 1.5 2000/07/19 01:01:58 matt Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
@@ -31,8 +31,8 @@
  *	@(#)uvaxII.h	7.4 (Berkeley) 5/9/91
  */
 
-#ifndef _VAX_INCLUDE_KA630_H_
-#define	_VAX_INCLUDE_KA630_H_
+#ifndef _MACHINE_KA630_H_
+#define	_MACHINE_KA630_H_
 
 #define UVAXIISID	((u_long *)0x20040004)
 #define UVAXIICPU	((struct uvaxIIcpu *)0x20080000)
@@ -131,5 +131,5 @@ struct ka630clock {
 #define KA630_MINCOL	0x51
 #define KA630_MAXCOL	0x52
 
-#endif /* _VAX_INCLUDE_KA630_H_ */
+#endif /* _MACHINE_KA630_H_ */
 

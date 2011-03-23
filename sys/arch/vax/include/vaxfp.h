@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaxfp.h,v 1.1 2008/07/21 21:50:06 martynas Exp $	*/
+/*	$OpenBSD: vaxfp.h,v 1.2 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: vaxfp.h,v 1.7 2008/04/28 20:23:39 martin Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  * Only F_floating and D_floating types are defined here;
  * G_floating and H_floating are not supported by OpenBSD.
  */
-#ifndef _VAX_VAXFP_H_
-#define	_VAX_VAXFP_H_
+#ifndef _MACHINE_VAXFP_H_
+#define	_MACHINE_VAXFP_H_
 
 #define	FFLT_EXPBITS	8
 #define	FFLT_FRACHBITS	7
@@ -83,4 +83,4 @@ union vax_dfloating_u {
 	struct vax_d_floating	dfltu_dflt;
 };
 
-#endif /* _VAX_VAXFP_H_ */
+#endif /* _MACHINE_VAXFP_H_ */

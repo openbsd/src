@@ -1,4 +1,4 @@
-/* $OpenBSD: reloc.h,v 1.2 2010/06/27 03:11:44 guenther Exp $ */
+/* $OpenBSD: reloc.h,v 1.3 2011/03/23 16:54:35 pirofti Exp $ */
 
 /*
  * Copyright (c) 2002,2003 Dale Rahn
@@ -24,8 +24,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef  _MACH_RELOC_H 
-#define  _MACH_RELOC_H 
+#ifndef  _MACHINE_RELOC_H_
+#define  _MACHINE_RELOC_H_
 #define R_TYPE(X)       __CONCAT(RELOC_,X)
 
 
@@ -49,6 +49,4 @@
 #define RELOC_TLS_DTPOFF32	36 /* Offset in TLS block */
 #define RELOC_TLS_TPOFF32	37 /* Offset in static TLS block */
 
-#endif /* _MACH_RELOC_H */
-
-
+#endif /* _MACHINE_RELOC_H_ */

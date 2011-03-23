@@ -1,4 +1,4 @@
-/*	$OpenBSD: apicvar.h,v 1.5 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: apicvar.h,v 1.6 2011/03/23 16:54:35 pirofti Exp $	*/
 /* $NetBSD: apicvar.h,v 1.1.2.3 2000/02/27 20:25:00 sommerfeld Exp $ */
 
 /*-
@@ -32,8 +32,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_APICVAR_H_
-#define _I386_APICVAR_H_
+#ifndef _MACHINE_APICVAR_H_
+#define _MACHINE_APICVAR_H_
 
 struct apic_attach_args {
 	const char *aaa_name;
@@ -48,4 +48,4 @@ struct apic_attach_args {
 
 void apic_format_redir(char *, char *, int, u_int32_t, u_int32_t);
 
-#endif /* !_I386_APICVAR_H_ */
+#endif /* !_MACHINE_APICVAR_H_ */

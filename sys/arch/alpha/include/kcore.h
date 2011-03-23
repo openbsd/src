@@ -1,4 +1,4 @@
-/* $OpenBSD: kcore.h,v 1.3 2000/11/08 21:27:20 ericj Exp $ */
+/* $OpenBSD: kcore.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $ */
 /* $NetBSD: kcore.h,v 1.3 1998/02/14 00:17:57 cgd Exp $ */
 
 /*
@@ -28,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_KCORE_H_
-#define _ALPHA_KCORE_H_
+#ifndef _MACHINE_KCORE_H_
+#define _MACHINE_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
 	u_int64_t	lev1map_pa;		/* PA of Lev1map */
@@ -40,4 +40,4 @@ typedef struct cpu_kcore_hdr {
 #endif
 } cpu_kcore_hdr_t;
 
-#endif /* _ALPHA_KCORE_H_ */
+#endif /* _MACHINE_KCORE_H_ */

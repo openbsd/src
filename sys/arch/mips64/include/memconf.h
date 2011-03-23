@@ -1,4 +1,4 @@
-/*	$OpenBSD: memconf.h,v 1.5 2009/11/19 06:06:49 miod Exp $	*/
+/*	$OpenBSD: memconf.h,v 1.6 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -29,8 +29,8 @@
  * Memory config list used by pmap_bootstrap.
  */
 
-#ifndef _MIPS_MEMCONF_H_
-#define _MIPS_MEMCONF_H_
+#ifndef _MIPS64_MEMCONF_H_
+#define _MIPS64_MEMCONF_H_
 
 struct phys_mem_desc {
 	uint64_t	mem_first_page;
@@ -46,4 +46,4 @@ extern struct phys_mem_desc mem_layout[];
 int	memrange_register(uint64_t, uint64_t, uint64_t, unsigned int);
 #endif
 
-#endif /* !_MIPS_MEMCONF_H_ */
+#endif /* !_MIPS64_MEMCONF_H_ */

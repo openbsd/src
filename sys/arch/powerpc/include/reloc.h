@@ -1,4 +1,4 @@
-/*	$OpenBSD: reloc.h,v 1.3 2010/06/27 03:11:44 guenther Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: reloc.h,v 1.1 1996/09/30 16:34:33 ws Exp $	*/
 
 /*-
@@ -31,8 +31,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACH_RELOC_H_
-#define	_MACH_RELOC_H_
+#ifndef	_POWERPC_RELOC_H_
+#define	_POWERPC_RELOC_H_
 
 /*
  * Quite a number of relocation types
@@ -88,4 +88,4 @@ enum reloc_type {
 	RELOC_MAX
 };
 
-#endif	/* _MACH_RELOC_H_ */
+#endif	/* _POWERPC_RELOC_H_ */

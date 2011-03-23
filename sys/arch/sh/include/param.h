@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 2008/05/04 21:18:00 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: param.h,v 1.15 2006/08/28 13:43:35 yamt Exp $	*/
 
 /*-
@@ -124,4 +124,4 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
-#endif /* !_SH3_PARAM_H_ */
+#endif /* !_SH_PARAM_H_ */

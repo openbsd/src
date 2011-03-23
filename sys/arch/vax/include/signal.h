@@ -1,4 +1,4 @@
-/*      $OpenBSD: signal.h,v 1.6 2009/06/20 21:02:13 miod Exp $   */
+/*      $OpenBSD: signal.h,v 1.7 2011/03/23 16:54:37 pirofti Exp $   */
 /*      $NetBSD: signal.h,v 1.4 1995/01/10 19:01:52 jtc Exp $   */
 
 /*
@@ -34,8 +34,8 @@
 
  /* All bugs are subject to removal without further notice */
 
-#ifndef _VAX_SIGNAL_H_
-#define _VAX_SIGNAL_H_
+#ifndef _MACHINE_SIGNAL_H_
+#define _MACHINE_SIGNAL_H_
 
 #include <sys/cdefs.h>
 
@@ -60,4 +60,4 @@ struct	sigcontext {
 	int	sc_r[12];		/* registers to restore */
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
-#endif	/* !_VAX_SIGNAL_H_ */
+#endif	/* !_MACHINE_SIGNAL_H_ */

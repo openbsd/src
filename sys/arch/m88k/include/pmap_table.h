@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.h,v 1.3 2011/01/02 13:40:07 miod Exp $	*/
+/*	$OpenBSD: pmap_table.h,v 1.4 2011/03/23 16:54:35 pirofti Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -25,8 +25,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef __M88K_PMAP_TABLE_H__
-#define __M88K_PMAP_TABLE_H__
+#ifndef _M88K_PMAP_TABLE_H_
+#define _M88K_PMAP_TABLE_H_
 
 /*
  * Built-in mappings list.
@@ -42,4 +42,4 @@ struct pmap_table {
 
 const struct pmap_table *pmap_table_build(void);
 
-#endif	/* __M88K_PMAP_TABLE_H__ */
+#endif	/* _M88K_PMAP_TABLE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.36 2010/12/15 05:30:19 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.37 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -41,8 +41,8 @@
  *	@(#)vmparam.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _SPARC_VMPARAM_H_
-#define _SPARC_VMPARAM_H_
+#ifndef _MACHINE_VMPARAM_H_
+#define _MACHINE_VMPARAM_H_
 
 /*
  * Machine dependent constants for Sun-4c SPARC
@@ -140,4 +140,4 @@ vaddr_t		dvma_mapin_space(struct vm_map *, vaddr_t, int, int, int);
 void		dvma_mapout(vaddr_t, vaddr_t, int);
 #endif
 
-#endif /* _SPARC_VMPARAM_H_ */
+#endif /* _MACHINE_VMPARAM_H_ */

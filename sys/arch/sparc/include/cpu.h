@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2010/11/27 19:41:45 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.34 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -41,8 +41,8 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
-#ifndef _SPARC_CPU_H_
-#define _SPARC_CPU_H_
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 /*
  * CTL_MACHDEP definitions.
@@ -202,4 +202,4 @@ struct trapvec {
 extern struct trapvec *trapbase;	/* the 256 vectors */
 
 #endif /* _KERNEL */
-#endif /* _SPARC_CPU_H_ */
+#endif /* _MACHINE_CPU_H_ */

@@ -1,12 +1,12 @@
-/*	$OpenBSD: cdefs.h,v 1.3 2006/01/10 00:04:04 millert Exp $ */
+/*	$OpenBSD: cdefs.h,v 1.4 2011/03/23 16:54:35 pirofti Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
  * Public domain.
  */
 
-#ifndef	__MACHINE_CDEFS_H__
-#define	__MACHINE_CDEFS_H__
+#ifndef	_M88K_CDEFS_H_
+#define	_M88K_CDEFS_H_
 
 #if defined(lint)
 #define __indr_reference(sym,alias)	__lint_equal__(sym,alias)
@@ -23,4 +23,4 @@
 	__asm__(".weak _" #alias "; _" #alias "= _" __STRING(sym))
 #endif
 
-#endif /* __MACHINE_CDEFS_H__ */
+#endif /* _M88K_CDEFS_H_ */

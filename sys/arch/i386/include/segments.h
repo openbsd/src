@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.19 2011/03/12 03:52:26 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.20 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -42,8 +42,8 @@
  *	William F. Jolitz (william@ernie.berkeley.edu) 6/20/1989
  */
 
-#ifndef _I386_SEGMENTS_H_
-#define _I386_SEGMENTS_H_
+#ifndef _MACHINE_SEGMENTS_H_
+#define _MACHINE_SEGMENTS_H_
 
 /*
  * Selectors
@@ -231,4 +231,4 @@ void idt_vec_free(int);
  */
 #define	NLDT		17
 
-#endif /* _I386_SEGMENTS_H_ */
+#endif /* _MACHINE_SEGMENTS_H_ */

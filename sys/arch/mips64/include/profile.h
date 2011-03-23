@@ -1,4 +1,4 @@
-/*      $OpenBSD: profile.h,v 1.3 2009/12/11 05:10:17 miod Exp $	*/
+/*      $OpenBSD: profile.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -33,8 +33,8 @@
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/10/93
  */
-#ifndef	_MIPS_PROFILE_H_
-#define	_MIPS_PROFILE_H_
+#ifndef	_MIPS64_PROFILE_H_
+#define	_MIPS64_PROFILE_H_
 
 #define	_MCOUNT_DECL static void ___mcount
 
@@ -81,4 +81,4 @@
 #define	MCOUNT_EXIT	_splx(s)
 #endif /* _KERNEL */
 
-#endif /* !_MIPS_PROFILE_H_ */
+#endif /* !_MIPS64_PROFILE_H_ */

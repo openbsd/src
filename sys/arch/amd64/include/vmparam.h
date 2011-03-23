@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2010/12/15 05:30:19 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.14 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
 
-#ifndef _VMPARAM_H_
-#define _VMPARAM_H_
+#ifndef _MACHINE_VMPARAM_H_
+#define _MACHINE_VMPARAM_H_
 
 /*
  * Machine dependent constants for amd64.
@@ -125,4 +125,4 @@ struct vm_page_md {
 	(pg)->mdpage.pv_list = NULL;	\
 } while (0)
 
-#endif /* _VMPARAM_H_ */
+#endif /* _MACHINE_VMPARAM_H_ */

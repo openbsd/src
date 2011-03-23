@@ -1,6 +1,6 @@
-#ifndef	_MVME88K_M8820X_H_
-#define	_MVME88K_M8820X_H_
-/*	$OpenBSD: m8820x.h,v 1.15 2004/08/06 13:23:49 miod Exp $ */
+#ifndef	_MACHINE_M8820X_H_
+#define	_MACHINE_M8820X_H_
+/*	$OpenBSD: m8820x.h,v 1.16 2011/03/23 16:54:36 pirofti Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -70,4 +70,4 @@
 
 #include <m88k/m8820x.h>
 
-#endif	/* _MVME88K_M8820X_H_ */
+#endif	/* _MACHINE_M8820X_H_ */

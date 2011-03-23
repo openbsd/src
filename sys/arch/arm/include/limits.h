@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.4 2009/11/27 19:54:35 guenther Exp $	*/
+/*	$OpenBSD: limits.h,v 1.5 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: limits.h,v 1.4 2003/04/28 23:16:18 bjh21 Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
-#ifndef	_ARM32_LIMITS_H_
-#define	_ARM32_LIMITS_H_
+#ifndef	_ARM_LIMITS_H_
+#define	_ARM_LIMITS_H_
 
 #include <sys/cdefs.h>
 
@@ -53,4 +53,4 @@
 
 #endif /* __BSD_VISIBLE */
 
-#endif	/* _ARM32_LIMITS_H_ */
+#endif	/* _ARM_LIMITS_H_ */

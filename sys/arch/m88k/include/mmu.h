@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.11 2007/11/21 21:45:47 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.12 2011/03/23 16:54:35 pirofti Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -44,8 +44,8 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_MMU_H_
-#define	_MACHINE_MMU_H_
+#ifndef	_M88K_MMU_H_
+#define	_M88K_MMU_H_
 
 /*
  * Parameters which determine the 'geometry' of the m88K page tables in memory.
@@ -216,4 +216,4 @@ invalidate_pte(pt_entry_t *pte)
 	return oldpte;
 }
 
-#endif /* __MACHINE_MMU_H__ */
+#endif /* __M88K_MMU_H__ */

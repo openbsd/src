@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.50 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.51 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -44,8 +44,8 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef	_SPARC_PMAP_H_
-#define _SPARC_PMAP_H_
+#ifndef	_MACHINE_PMAP_H_
+#define _MACHINE_PMAP_H_
 
 #include <machine/pte.h>
 
@@ -400,4 +400,4 @@ extern void		(*pmap_changeprot_p)(pmap_t, vaddr_t,
 
 #endif /* _KERNEL */
 
-#endif /* _SPARC_PMAP_H_ */
+#endif /* _MACHINE_PMAP_H_ */

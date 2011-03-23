@@ -1,4 +1,4 @@
-/* $OpenBSD: lock.h,v 1.2 2008/06/26 05:42:08 ray Exp $	*/
+/* $OpenBSD: lock.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 /* $NetBSD: lock.h,v 1.16 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -35,8 +35,8 @@
  * Machine-dependent spin lock operations.
  */
 
-#ifndef _ALPHA_LOCK_H_
-#define	_ALPHA_LOCK_H_
+#ifndef _MACHINE_LOCK_H_
+#define	_MACHINE_LOCK_H_
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
@@ -151,4 +151,4 @@ do {									\
 } while (0)
 #endif /* MULTIPROCESSOR */
 
-#endif /* _ALPHA_LOCK_H_ */
+#endif /* _MACHINE_LOCK_H_ */

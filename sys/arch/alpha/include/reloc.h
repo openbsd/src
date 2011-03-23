@@ -1,7 +1,7 @@
-/*	$OpenBSD: reloc.h,v 1.2 2001/07/04 08:41:18 niklas Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 
-#ifndef	_MACH_RELOC_H_
-#define	_MACH_RELOC_H_
+#ifndef	_MACHINE_RELOC_H_
+#define	_MACHINE_RELOC_H_
 
 #define RELOC_NONE            0       /* No reloc */
 #define RELOC_REFLONG         1       /* Direct 32 bit */
@@ -34,4 +34,4 @@
 
 #define R_TYPE(X)	__CONCAT(RELOC_,X)
 
-#endif	/* _MACH_RELOC_H_ */
+#endif	/* _MACHINE_RELOC_H_ */

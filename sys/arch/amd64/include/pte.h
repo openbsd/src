@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.7 2010/05/08 16:54:07 oga Exp $	*/
+/*	$OpenBSD: pte.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_PTE_H_
-#define _AMD64_PTE_H_
+#ifndef _MACHINE_PTE_H_
+#define _MACHINE_PTE_H_
 
 /*
  * amd64 MMU hardware structure:
@@ -144,4 +144,4 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define PGEX_U		0x04	/* exception while in user mode (upl) */
 #define PGEX_I		0x10	/* instruction fetch blocked by NX */
 
-#endif /* _AMD64_PTE_H_ */
+#endif /* _MACHINE_PTE_H_ */

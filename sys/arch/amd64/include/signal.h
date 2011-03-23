@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2006/01/08 14:20:17 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  *	@(#)signal.h	7.16 (Berkeley) 3/17/91
  */
 
-#ifndef _AMD64_SIGNAL_H_
-#define _AMD64_SIGNAL_H_
+#ifndef _MACHINE_SIGNAL_H_
+#define _MACHINE_SIGNAL_H_
 
 #include <sys/cdefs.h>
 
@@ -85,4 +85,4 @@ struct sigcontext {
 	int	sc_mask;
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
-#endif	/* !_AMD64_SIGNAL_H_ */
+#endif	/* !_MACHINE_SIGNAL_H_ */

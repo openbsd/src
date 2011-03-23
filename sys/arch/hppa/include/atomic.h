@@ -1,9 +1,9 @@
-/*	$OpenBSD: atomic.h,v 1.4 2010/06/27 00:04:44 jsing Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /* Public Domain */
 
-#ifndef __HPPA_ATOMIC_H__
-#define __HPPA_ATOMIC_H__
+#ifndef _MACHINE_ATOMIC_H_
+#define _MACHINE_ATOMIC_H_
 
 #if defined(_KERNEL)
 
@@ -71,4 +71,4 @@ atomic_clearbits_long(__volatile unsigned long *uip, unsigned long v)
 }
 
 #endif /* defined(_KERNEL) */
-#endif /* __HPPA_ATOMIC_H__ */
+#endif /* _MACHINE_ATOMIC_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: alpha_cpu.h,v 1.9 2009/01/17 18:30:08 miod Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.10 2011/03/23 16:54:33 pirofti Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
@@ -28,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef __ALPHA_ALPHA_CPU_H__
-#define	__ALPHA_ALPHA_CPU_H__
+#ifndef _MACHINE_ALPHA_CPU_H_
+#define	_MACHINE_ALPHA_CPU_H_
 
 /*
  * Alpha CPU + OSF/1 PALcode definitions for use by the kernel.
@@ -541,4 +541,4 @@ alpha_pal_wrval(unsigned long val)
 
 #endif /* _KERNEL */
 
-#endif /* __ALPHA_ALPHA_CPU_H__ */
+#endif /* _MACHINE_ALPHA_CPU_H_ */

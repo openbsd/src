@@ -1,12 +1,12 @@
-/*	$OpenBSD: ieeefp.h,v 1.3 2010/09/21 20:29:17 miod Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
  * Public domain.
  */
 
-#ifndef _MIPS_IEEEFP_H_
-#define _MIPS_IEEEFP_H_
+#ifndef _MIPS64_IEEEFP_H_
+#define _MIPS64_IEEEFP_H_
 
 typedef int fp_except;
 #define FP_X_IMP	0x01	/* imprecise (loss of precision) */
@@ -43,4 +43,4 @@ typedef enum {
 
 #endif
 
-#endif /* !_MIPS_IEEEFP_H_ */
+#endif /* !_MIPS64_IEEEFP_H_ */

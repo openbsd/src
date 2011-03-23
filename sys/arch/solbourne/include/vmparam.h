@@ -1,8 +1,8 @@
-/* $OpenBSD: vmparam.h,v 1.2 2006/06/04 17:21:24 miod Exp $ */
+/* $OpenBSD: vmparam.h,v 1.3 2011/03/23 16:54:37 pirofti Exp $ */
 /* public domain */
 
-#ifndef _SOLBOURNE_VMPARAM_H_
-#define _SOLBOURNE_VMPARAM_H_
+#ifndef _MACHINE_VMPARAM_H_
+#define _MACHINE_VMPARAM_H_
 
 #include <sparc/vmparam.h>
 
@@ -24,4 +24,4 @@
 #undef	VM_PHYSSEG_STRAT
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
-#endif /* _SOLBOURNE_VMPARAM_H_ */
+#endif /* _MACHINE_VMPARAM_H_ */

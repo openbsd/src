@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86.h,v 1.1 2006/06/13 03:01:04 gwk Exp $ */
+/* $OpenBSD: kvm86.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gwk@openbsd.org>
  *
@@ -14,8 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef _I386_KVM86_H_
-#define _I386_KVM86_H_
+#ifndef _MACHINE_KVM86_H_
+#define _MACHINE_KVM86_H_
 
 struct kvm86regs {
 	uint32_t eax;

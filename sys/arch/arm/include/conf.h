@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.8 2010/11/28 20:48:46 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.9 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
@@ -40,8 +40,8 @@
  * Prototypes for device driver functions
  */
 
-#ifndef _ARM_CONF_H
-#define	_ARM_CONF_H
+#ifndef _ARM_CONF_H_
+#define	_ARM_CONF_H_
  
 
 #include <sys/conf.h>
@@ -70,4 +70,4 @@ cdev_decl(pci);
 cdev_decl(apm);
 cdev_decl(spkr);
 
-#endif	/* _ARM_CONF_H_ */
+#endif	/* _ARM_CONF_H__ */

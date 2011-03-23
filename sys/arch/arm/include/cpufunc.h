@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.7 2010/04/22 21:01:45 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -40,8 +40,8 @@
  * Prototypes for cpu, mmu and tlb related functions.
  */
 
-#ifndef _ARM32_CPUFUNC_H_
-#define _ARM32_CPUFUNC_H_
+#ifndef _ARM_CPUFUNC_H_
+#define _ARM_CPUFUNC_H_
 
 #ifdef _KERNEL
 
@@ -602,6 +602,6 @@ extern int	arm_dcache_align;
 extern int	arm_dcache_align_mask;
 
 #endif	/* _KERNEL */
-#endif	/* _ARM32_CPUFUNC_H_ */
+#endif	/* _ARM_CPUFUNC_H_ */
 
 /* End of cpufunc.h */

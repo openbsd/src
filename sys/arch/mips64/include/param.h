@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.27 2010/11/28 20:35:15 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.28 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,8 +37,8 @@
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS_PARAM_H_
-#define _MIPS_PARAM_H_
+#ifndef _MIPS64_PARAM_H_
+#define _MIPS64_PARAM_H_
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -109,4 +109,4 @@ void delay(int);
 #endif
 #endif /* _KERNEL */
 
-#endif /* !_MIPS_PARAM_H_ */
+#endif /* !_MIPS64_PARAM_H_ */

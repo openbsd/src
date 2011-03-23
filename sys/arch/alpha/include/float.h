@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.7 2008/07/21 20:50:54 martynas Exp $	*/
+/*	$OpenBSD: float.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: float.h,v 1.4 1995/06/20 20:45:22 jtc Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ALPHA_FLOAT_H_
-#define _ALPHA_FLOAT_H_
+#ifndef _MACHINE_FLOAT_H_
+#define _MACHINE_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -73,4 +73,4 @@ __END_DECLS
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#endif	/* _ALPHA_FLOAT_H_ */
+#endif	/* _MACHINE_FLOAT_H_ */

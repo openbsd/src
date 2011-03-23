@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.8 2010/01/13 09:10:33 jsg Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.9 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 06:43:05 haya Exp $	*/
 
 /*
@@ -26,8 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_RBUS_MACHDEP_H_
-#define _I386_RBUS_MACHDEP_H_
+#ifndef _MACHINE_RBUS_MACHDEP_H_
+#define _MACHINE_RBUS_MACHDEP_H_
 
 struct pci_attach_args;		/* XXX */
 
@@ -47,4 +47,4 @@ bus_addr_t	rbus_min_start_hint(void);
 void		pccbb_attach_hook(struct device *, struct device *,
 		    struct pci_attach_args *);
 
-#endif /* _I386_RBUS_MACHDEP_H_ */
+#endif /* _MACHINE_RBUS_MACHDEP_H_ */

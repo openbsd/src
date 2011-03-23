@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.9 2008/07/21 20:50:54 martynas Exp $	*/
+/*	$OpenBSD: float.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -31,8 +31,8 @@
  *	@(#)float.h	7.1 (Berkeley) 5/8/90
  */
 
-#ifndef _HPPA_FLOAT_H_
-#define _HPPA_FLOAT_H_
+#ifndef _MACHINE_FLOAT_H_
+#define _MACHINE_FLOAT_H_
 
 #include <sys/cdefs.h>
 

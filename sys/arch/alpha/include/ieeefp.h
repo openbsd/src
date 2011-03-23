@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.5 2007/12/29 16:57:19 miod Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: ieeefp.h,v 1.1 1995/04/29 01:09:17 cgd Exp $	*/
 
 /* 
@@ -6,8 +6,8 @@
  * Public domain.
  */
 
-#ifndef _ALPHA_IEEEFP_H_
-#define _ALPHA_IEEEFP_H_
+#ifndef _MACHINE_IEEEFP_H_
+#define _MACHINE_IEEEFP_H_
 
 typedef int fp_except;
 
@@ -50,4 +50,4 @@ typedef enum {
     FP_RP = 3			/* round toward positive infinity */
 } fp_rnd;
 
-#endif /* _ALPHA_IEEEFP_H_ */
+#endif /* _MACHINE_IEEEFP_H_ */

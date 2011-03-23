@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp300spu.h,v 1.8 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: hp300spu.h,v 1.9 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: hp300spu.h,v 1.2 1997/05/01 05:26:48 thorpej Exp $	*/
 
 /*-
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HP300_HP300SPU_H_
-#define	_HP300_HP300SPU_H_
+#ifndef _MACHINE_HP300SPU_H_
+#define	_MACHINE_HP300SPU_H_
 
 /*
  * This file describes various constants that describe and/or
@@ -75,4 +75,4 @@ extern	int cpuspeed;		/* CPU speed, in MHz */
 extern	int mmuid;		/* MMU id */
 #endif /* _KERNEL && ! _LOCORE */
 
-#endif /* _HP300_HP300SPU_H_ */
+#endif /* _MACHINE_HP300SPU_H_ */

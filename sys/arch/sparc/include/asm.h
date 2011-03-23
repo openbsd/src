@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 2003/06/04 22:08:17 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: asm.h,v 1.5 1997/07/16 15:16:43 christos Exp $ */
 
 /*
@@ -38,8 +38,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ASM_H_
-#define _ASM_H_
+#ifndef _MACHINE_ASM_H_
+#define _MACHINE_ASM_H_
 
 #ifdef __ELF__
 #define _C_LABEL(name)		name
@@ -121,4 +121,4 @@
 
 #define RCSID(name)		.asciz name
 
-#endif /* _ASM_H_ */
+#endif /* _MACHINE_ASM_H_ */

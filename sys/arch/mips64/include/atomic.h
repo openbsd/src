@@ -1,9 +1,9 @@
-/*	$OpenBSD: atomic.h,v 1.6 2009/12/28 06:55:27 syuu Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.7 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /* Public Domain */
 
-#ifndef __MIPS64_ATOMIC_H__
-#define __MIPS64_ATOMIC_H__
+#ifndef _MIPS64_ATOMIC_H_
+#define _MIPS64_ATOMIC_H_
 
 #if defined(_KERNEL)
 
@@ -84,4 +84,4 @@ atomic_add_uint64(__volatile uint64_t *uip, uint64_t v)
 		"r"(uip), "r"(v) : "memory");
 }
 #endif /* defined(_KERNEL) */
-#endif /* __MIPS64_ATOMIC_H__ */
+#endif /* _MIPS64_ATOMIC_H_ */

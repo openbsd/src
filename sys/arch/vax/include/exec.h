@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.8 2008/03/30 18:24:30 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.9 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: exec.h,v 1.4 1995/09/23 14:57:40 ragge Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_EXEC_H_
-#define _VAX_EXEC_H_
+#ifndef _MACHINE_EXEC_H_
+#define _MACHINE_EXEC_H_
 
 #define __LDPGSZ	4096
 
@@ -59,4 +59,4 @@ struct relocation_info_vax {
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_VAX
 
-#endif  /* _VAX_EXEC_H_ */
+#endif  /* _MACHINE_EXEC_H_ */

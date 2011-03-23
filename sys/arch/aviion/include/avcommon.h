@@ -1,4 +1,4 @@
-/*	$OpenBSD: avcommon.h,v 1.5 2010/04/21 19:33:47 miod Exp $	*/
+/*	$OpenBSD: avcommon.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -43,8 +43,8 @@
  *
  */
 
-#ifndef	__MACHINE_AVCOMMON_H__
-#define	__MACHINE_AVCOMMON_H__
+#ifndef	_MACHINE_AVCOMMON_H_
+#define	_MACHINE_AVCOMMON_H_
 
 /*
  * Common declarations for hardware level device registers and such,
@@ -140,4 +140,4 @@ extern u_int32_t ext_int_mask_val[NIPLS];
 
 #endif
 
-#endif	/* __MACHINE_AVCOMMON_H__ */
+#endif	/* _MACHINE_AVCOMMON_H_ */

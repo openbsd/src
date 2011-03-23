@@ -1,6 +1,6 @@
-#ifndef	_AVIION_M8820X_H_
-#define	_AVIION_M8820X_H_
-/*	$OpenBSD: m8820x.h,v 1.2 2006/05/20 11:58:35 miod Exp $ */
+#ifndef	_MACHINE_M8820X_H_
+#define	_MACHINE_M8820X_H_
+/*	$OpenBSD: m8820x.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -60,4 +60,4 @@
 
 #include <m88k/m8820x.h>
 
-#endif	/* _AVIION_M8820X_H_ */
+#endif	/* _MACHINE_M8820X_H_ */

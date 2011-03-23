@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.8 2006/01/09 18:18:37 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.9 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,8 +34,8 @@
  *	@(#)signal.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS_SIGNAL_H_
-#define _MIPS_SIGNAL_H_
+#ifndef _MIPS64_SIGNAL_H_
+#define _MIPS64_SIGNAL_H_
 
 #include <sys/cdefs.h>
 
@@ -81,4 +81,4 @@ struct	sigcontext {
 #define	SC_FPC_EIR	(71 * REGSZ)
 #endif /* __LANGUAGE_ASSEMBLY */
 
-#endif	/* !_MIPS_SIGNAL_H_ */
+#endif	/* !_MIPS64_SIGNAL_H_ */

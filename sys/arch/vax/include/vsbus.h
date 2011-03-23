@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.h,v 1.9 2006/12/13 21:11:23 miod Exp $ */
+/*	$OpenBSD: vsbus.h,v 1.10 2011/03/23 16:54:37 pirofti Exp $ */
 /*	$NetBSD: vsbus.h,v 1.13 2000/06/25 16:00:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -38,8 +38,8 @@
  * used by all VAXstations.
  */
 
-#ifndef _VAX_VSBUS_H_
-#define _VAX_VSBUS_H_
+#ifndef _MACHINE_VSBUS_H_
+#define _MACHINE_VSBUS_H_
 
 #include <machine/bus.h>
 #include <machine/sgmap.h>
@@ -105,4 +105,4 @@ void	vsbus_copyfromproc(struct proc *, caddr_t, caddr_t, int);
 void	vsbus_dma_start(struct vsbus_dma *);
 void	vsbus_dma_intr(void);
 #endif
-#endif /* _VAX_VSBUS_H_ */
+#endif /* _MACHINE_VSBUS_H_ */

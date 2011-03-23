@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioctl_fd.h,v 1.1 1997/06/24 09:50:58 downsj Exp $	*/
+/*	$OpenBSD: ioctl_fd.h,v 1.2 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	from: ioctl_fd.h,v 1.4 1995/06/29 03:49:32 jtk Exp 	*/
 
 /*
@@ -30,8 +30,8 @@
  * From: Id: ioctl_fd.h,v 1.7 1994/10/30 19:17:39 joerg Exp
  */
 
-#ifndef _SPARC_IOCTL_FD_H_
-#define _SPARC_IOCTL_FD_H_
+#ifndef _MACHINE_IOCTL_FD_H_
+#define _MACHINE_IOCTL_FD_H_
 
 #define FD_FORMAT_VERSION 110	/* used to validate before formatting */
 #define FD_MAX_NSEC 36		/* highest known number of spt - allow for */
@@ -127,4 +127,4 @@ struct fd_type {
 #endif /* FDC_500KBPS */
 
 
-#endif /* !_SPARC_IOCTL_FD_H__ */
+#endif /* !_MACHINE_IOCTL_FD_H__ */

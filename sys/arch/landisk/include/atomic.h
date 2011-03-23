@@ -1,10 +1,10 @@
-/*	$OpenBSD: atomic.h,v 1.2 2007/02/19 17:18:42 deraadt Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.3 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /* Public Domain */
 
-#ifndef __LANDISK_ATOMIC_H__
-#define __LANDISK_ATOMIC_H__
+#ifndef _MACHINE_ATOMIC_H_
+#define _MACHINE_ATOMIC_H_
 
 #include <sh/atomic.h>
 
-#endif /* __LANDISK_ATOMIC_H__ */
+#endif /* _MACHINE_ATOMIC_H_ */

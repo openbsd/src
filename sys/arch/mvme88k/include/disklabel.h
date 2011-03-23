@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.14 2007/06/20 18:15:45 deraadt Exp $ */
+/*	$OpenBSD: disklabel.h,v 1.15 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MACHINE_DISKLABEL_H__
-#define __MACHINE_DISKLABEL_H__
+#ifndef _MACHINE_DISKLABEL_H_
+#define _MACHINE_DISKLABEL_H_
 
 #define LABELSECTOR     0                       /* sector containing label */
 #define LABELOFFSET	0			/* offset of label in sector */
@@ -117,4 +117,4 @@ struct mvmedisklabel {
 	u_char		cfg_4[192];
 };
 
-#endif /* __MACHINE_DISKLABEL_H__ */
+#endif /* _MACHINE_DISKLABEL_H_ */

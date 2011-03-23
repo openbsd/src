@@ -1,9 +1,9 @@
-/*	$OpenBSD: atomic.h,v 1.4 2010/04/21 03:03:24 deraadt Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.5 2011/03/23 16:54:37 pirofti Exp $	*/
 
 /* Public Domain */
 
-#ifndef __SPARC_ATOMIC_H__
-#define __SPARC_ATOMIC_H__
+#ifndef _MACHINE_ATOMIC_H_
+#define _MACHINE_ATOMIC_H_
 
 #if defined(_KERNEL)
 
@@ -32,4 +32,4 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 #endif /* defined(_KERNEL) */
-#endif /* __SPARC_ATOMIC_H__ */
+#endif /* _MACHINE_ATOMIC_H_ */

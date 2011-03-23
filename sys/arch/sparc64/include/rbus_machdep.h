@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.3 2009/07/21 21:20:05 miod Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.4 2011/03/23 16:54:37 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SPARC64_RBUS_MACHDEP_H_
-#define _SPARC64_RBUS_MACHDEP_H_
+#ifndef _MACHINE_RBUS_MACHDEP_H_
+#define _MACHINE_RBUS_MACHDEP_H_
 
 struct pci_attach_args;
 
@@ -36,4 +36,4 @@ rbus_tag_t rbus_pccbb_parent_mem(struct device *, struct pci_attach_args *);
 void pccbb_attach_hook(struct device *, struct device *,
 	struct pci_attach_args *);
 
-#endif /* _SPARC64_RBUS_MACHDEP_H_ */
+#endif /* _MACHINE_RBUS_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.6 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: lock.h,v 1.7 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
@@ -34,8 +34,8 @@
  * Machine-dependent spin lock operations.
  */
 
-#ifndef _I386_LOCK_H_
-#define	_I386_LOCK_H_
+#ifndef _MACHINE_LOCK_H_
+#define	_MACHINE_LOCK_H_
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
@@ -115,4 +115,4 @@ extern int rw_cas_486(volatile unsigned long *, unsigned long, unsigned long);
 #define rw_cas rw_cas_486
 #endif
 
-#endif /* _I386_LOCK_H_ */
+#endif /* _MACHINE_LOCK_H_ */

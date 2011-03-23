@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.4 2005/11/28 22:21:15 miod Exp $ */
+/*	$OpenBSD: proc.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,8 @@
  * from: Header: proc.h,v 1.6 92/11/26 02:04:41 torek Exp  (LBL)
  */
 
-#ifndef __MACHINE_PROC_H__
-#define __MACHINE_PROC_H__
+#ifndef _M88K_PROC_H_
+#define _M88K_PROC_H_
 
 struct trapframe;
 
@@ -67,4 +67,4 @@ struct mdproc {
 	u_int	md_bp1save;
 };
 
-#endif /* __MACHINE_PROC_H__ */
+#endif /* _M88K_PROC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.62 2010/11/29 00:04:09 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.63 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  *	@(#)cpu.h	5.4 (Berkeley) 5/9/91
  */
 
-#ifndef _AMD64_CPU_H_
-#define _AMD64_CPU_H_
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 /*
  * Definitions unique to x86-64 cpu support.
@@ -370,4 +370,4 @@ void mp_setperf_init(void);
  */
 #define CR4_DEFAULT (CR4_PAE|CR4_PGE|CR4_PSE|CR4_OSFXSR|CR4_OSXMMEXCPT)
 
-#endif /* !_AMD64_CPU_H_ */
+#endif /* !_MACHINE_CPU_H_ */

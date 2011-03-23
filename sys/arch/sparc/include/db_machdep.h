@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.14 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.15 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.10 1997/08/31 21:23:40 pk Exp $ */
 
 /*
@@ -27,8 +27,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	_SPARC_DB_MACHDEP_H_
-#define	_SPARC_DB_MACHDEP_H_
+#ifndef	_MACHINE_DB_MACHDEP_H_
+#define	_MACHINE_DB_MACHDEP_H_
 
 /*
  * Machine-dependent defines for new kernel debugger.
@@ -98,4 +98,4 @@ typedef u_long		kgdb_reg_t;
 #define KGDB_PREPARE	fb_unblank()
 #define KGDB_ENTER	__asm("ta %0" :: "n" (T_KGDB_EXEC))
 
-#endif	/* _SPARC_DB_MACHDEP_H_ */
+#endif	/* _MACHINE_DB_MACHDEP_H_ */

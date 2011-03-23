@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2010/07/24 12:18:58 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.34 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -61,8 +61,8 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
-#ifndef _MVME68K_CPU_H_
-#define _MVME68K_CPU_H_
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 /*
  * Exported definitions unique to mvme68k cpu support.
@@ -216,4 +216,4 @@ int intr_findvec(int, int);
 paddr_t kvtop(vaddr_t);
 
 #endif	/* _KERNEL */
-#endif	/* _MVME68K_CPU_H_ */
+#endif	/* _MACHINE_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.9 2007/12/02 21:24:21 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,8 +27,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef __M88K_ASM_H__
-#define __M88K_ASM_H__
+#ifndef _M88K_ASM_H_
+#define _M88K_ASM_H_
 
 #ifdef __STDC__
 #define	_C_LABEL(name)		_ ## name
@@ -197,4 +197,4 @@
 
 #endif	/* _KERNEL */
 
-#endif	/* __M88K_ASM_H__ */
+#endif	/* _M88K_ASM_H_ */

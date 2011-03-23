@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.44 2009/03/15 20:39:53 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.45 2011/03/23 16:54:36 pirofti Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -37,8 +37,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef	_MVME88K_CPU_H_
-#define	_MVME88K_CPU_H_
+#ifndef	_MACHINE_CPU_H_
+#define	_MACHINE_CPU_H_
 
 #include <m88k/cpu.h>
 

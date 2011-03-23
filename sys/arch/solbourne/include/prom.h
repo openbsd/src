@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.1 2005/04/19 21:30:18 miod Exp $	*/
+/*	$OpenBSD: prom.h,v 1.2 2011/03/23 16:54:37 pirofti Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -24,8 +24,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SOLBOURNE_PROM_H_
-#define	_SOLBOURNE_PROM_H_
+#ifndef	_MACHINE_PROM_H_
+#define	_MACHINE_PROM_H_
 
 /*
  * The following describes the PROM communication structure,
@@ -105,4 +105,4 @@ extern int sysmodel;
 
 const char *prom_getenv(const char *);
 
-#endif	/* _SOLBOURNE_PROM_H_ */
+#endif	/* _MACHINE_PROM_H_ */

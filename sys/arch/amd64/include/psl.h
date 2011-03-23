@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.3 2007/02/11 20:29:20 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: psl.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  *	@(#)psl.h	5.2 (Berkeley) 1/18/91
  */
 
-#ifndef _X86_PSL_H_
-#define _X86_PSL_H_
+#ifndef _MACHINE_PSL_H_
+#define _MACHINE_PSL_H_
 
 /*
  * 386 processor status longword.
@@ -77,4 +77,4 @@
 #include <machine/intr.h>
 #endif
 
-#endif /* !_X86_PSL_H_ */
+#endif /* !_MACHINE_PSL_H_ */

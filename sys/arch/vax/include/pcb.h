@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.6 2003/11/10 21:05:06 miod Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.7 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 1996/02/02 18:08:26 mycroft Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
 
  /* All bugs are subject to removal without further notice */
 
-#ifndef _VAX_PCB_H_
-#define _VAX_PCB_H_
+#ifndef _MACHINE_PCB_H_
+#define _MACHINE_PCB_H_
 
 #include <machine/reg.h>
 #include <machine/pte.h>
@@ -70,5 +70,5 @@ struct	md_coredump {
 	struct reg md_reg;
 };
 
-#endif /* _VAX_PCB_H_ */
+#endif /* _MACHINE_PCB_H_ */
 

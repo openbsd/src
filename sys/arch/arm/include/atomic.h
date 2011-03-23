@@ -1,9 +1,9 @@
-/*	$OpenBSD: atomic.h,v 1.7 2010/04/22 21:03:17 drahn Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /* Public Domain */
 
-#ifndef __ARM_ATOMIC_H__
-#define __ARM_ATOMIC_H__
+#ifndef _ARM_ATOMIC_H_
+#define _ARM_ATOMIC_H_
 
 #if defined(_KERNEL)
 
@@ -16,4 +16,4 @@ void atomic_setbits_int(__volatile unsigned int *, unsigned int);
 void atomic_clearbits_int(__volatile unsigned int *, unsigned int);
 
 #endif /* defined(_KERNEL) */
-#endif /* __ARM_ATOMIC_H__ */
+#endif /* _ARM_ATOMIC_H_ */

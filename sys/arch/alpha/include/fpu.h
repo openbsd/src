@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.1 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: fpu.h,v 1.4 2001/04/26 03:10:46 ross Exp $	*/
 
 /*-
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ALPHA_FPU_H_
-#define _ALPHA_FPU_H_
+#ifndef _MACHINE_FPU_H_
+#define _MACHINE_FPU_H_
 
 #define	_FP_C_DEF(n) (1UL << (n))
 

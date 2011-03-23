@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_intr.h,v 1.6 2009/08/23 07:53:57 krw Exp $ */
+/*	$OpenBSD: armish_intr.h,v 1.7 2011/03/23 16:54:34 pirofti Exp $ */
 /*	$NetBSD: i80321_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /*
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I80321_INTR_H_
-#define _I80321_INTR_H_
+#ifndef _MACHINE_ARMISH_INTR_H_
+#define _MACHINE_ARMISH_INTR_H_
 
 #define	ARM_IRQ_HANDLER	_C_LABEL(i80321_irq_handler)
 
@@ -116,5 +116,5 @@ void i80321_splassert_check(int, const char *);
 
 #endif /* ! _LOCORE */
 
-#endif /* _I80321_INTR_H_ */
+#endif /* _MACHINE_ARMISH_INTR_H_ */
 

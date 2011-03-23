@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.43 2010/07/11 14:09:10 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.44 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -41,8 +41,8 @@
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _SPARC_PARAM_H_
-#define _SPARC_PARAM_H_
+#ifndef _MACHINE_PARAM_H_
+#define _MACHINE_PARAM_H_
 
 /*
  * Sun4M support by Aaron Brown, Harvard University.
@@ -257,4 +257,4 @@ extern int mmumod;
 				/* (CPU_ISSUN4D || CPU_ISSUN4M) */
 #endif
 
-#endif /* _SPARC_PARAM_H_ */
+#endif /* _MACHINE_PARAM_H_ */

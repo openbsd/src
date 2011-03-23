@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.5 2006/06/15 20:08:29 brad Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
  * Copyright (c) 1997
  */
 
-#ifndef	_ALPHA_CPUCONF_H_
-#define	_ALPHA_CPUCONF_H_
+#ifndef	_MACHINE_CPUCONF_H_
+#define	_MACHINE_CPUCONF_H_
 
 /*
  * Platform Specific Information and Function Hooks.
@@ -103,4 +103,4 @@ extern const struct cpuinit *platform_lookup(int);
 extern void platform_not_configured(void);
 extern void platform_not_supported(void);
 #endif /* _KERNEL */
-#endif /* ! _ALPHA_CPUCONF_H_ */
+#endif /* ! _MACHINE_CPUCONF_H_ */

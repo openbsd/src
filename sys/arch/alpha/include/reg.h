@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.5 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: reg.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: reg.h,v 1.2 1995/03/28 18:14:07 jtc Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_REG_H_
-#define	_ALPHA_REG_H_
+#ifndef _MACHINE_REG_H_
+#define	_MACHINE_REG_H_
 
 /*
  * XXX where did this info come from?
@@ -98,4 +98,4 @@ void	frametoreg(struct trapframe *, struct reg *);
 void	regtoframe(struct reg *, struct trapframe *);
 #endif
 
-#endif /* _ALPHA_REG_H_ */
+#endif /* _MACHINE_REG_H_ */

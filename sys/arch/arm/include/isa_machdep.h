@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.6 2010/11/22 21:07:40 miod Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.7 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.3 2002/01/07 22:58:07 chris Exp $	*/
 
 /*-
@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM32_ISA_MACHDEP_H_
-#define _ARM32_ISA_MACHDEP_H_
+#ifndef _ARM_ISA_MACHDEP_H_
+#define _ARM_ISA_MACHDEP_H_
 
 #include <machine/bus.h>
 #include <dev/isa/isadmavar.h>
@@ -173,4 +173,4 @@ void	isa_intr_init(void);
  */
 void isa_fillw(u_int val, void *addr, size_t len);
 
-#endif	/* _ARM32_ISA_MACHDEP_H_ XXX */
+#endif	/* _ARM_ISA_MACHDEP_H_ XXX */

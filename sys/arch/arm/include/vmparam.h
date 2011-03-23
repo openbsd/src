@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2010/12/15 05:30:19 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_ARM_VMPARAM_H_
-#define	_ARM_ARM_VMPARAM_H_
+#ifndef _ARM_VMPARAM_H_
+#define	_ARM_VMPARAM_H_
 
 #ifdef _KERNEL
 
@@ -134,4 +134,4 @@ do {									\
 
 #endif /* _KERNEL */
 
-#endif /* _ARM_ARM_VMPARAM_H_ */
+#endif /* _ARM_VMPARAM_H_ */

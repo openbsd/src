@@ -1,8 +1,8 @@
-/*	$OpenBSD: fpu.h,v 1.8 2011/03/20 21:44:08 guenther Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.9 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
-#ifndef	_AMD64_FPU_H_
-#define	_AMD64_FPU_H_
+#ifndef	_MACHINE_FPU_H_
+#define	_MACHINE_FPU_H_
 
 #include <sys/types.h>
 
@@ -62,4 +62,4 @@ void fpu_kernel_exit(void);
 
 #endif
 
-#endif /* _AMD64_FPU_H_ */
+#endif /* _MACHINE_FPU_H_ */

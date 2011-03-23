@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.37 2010/12/21 14:56:23 claudio Exp $ */
+/* $OpenBSD: intr.h,v 1.38 2011/03/23 16:54:34 pirofti Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -58,8 +58,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_INTR_H_
-#define _ALPHA_INTR_H_
+#ifndef _MACHINE_INTR_H_
+#define _MACHINE_INTR_H_
 
 #include <sys/evcount.h>
 #include <sys/lock.h>
@@ -299,4 +299,4 @@ void	scb_free(u_long);
 #define	SCB_ALLOC_FAILED	((u_long) -1)
 
 #endif /* _KERNEL */
-#endif /* ! _ALPHA_INTR_H_ */
+#endif /* ! _MACHINE_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2006/06/11 20:48:13 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.22 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: param.h,v 1.28 1997/03/01 06:57:45 scottr Exp $	*/
 
 /*
@@ -73,8 +73,8 @@
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
 
-#ifndef _MAC68K_PARAM_H_
-#define _MAC68K_PARAM_H_
+#ifndef _MACHINE_PARAM_H_
+#define _MACHINE_PARAM_H_
 
 /*
  * Machine dependent constants for Macintosh II-and-similar series.
@@ -97,4 +97,4 @@ void	delay(unsigned);
 #define DELAY(ms)	delay(ms)
 #endif	/* _KERNEL && !_LOCORE */
 
-#endif /* _MAC68K_PARAM_H_ */
+#endif /* _MACHINE_PARAM_H_ */

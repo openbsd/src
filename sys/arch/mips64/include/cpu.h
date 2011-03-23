@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.69 2010/11/24 21:16:26 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.70 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,8 +42,8 @@
  *	from: @(#)cpu.h	8.4 (Berkeley) 1/4/94
  */
 
-#ifndef _MIPS_CPU_H_
-#define	_MIPS_CPU_H_
+#ifndef _MIPS64_CPU_H_
+#define	_MIPS64_CPU_H_
 
 #ifndef _LOCORE
 
@@ -635,4 +635,4 @@ uint32_t getsr(void);
 uint32_t setsr(uint32_t);
 
 #endif /* _KERNEL && !_LOCORE */
-#endif /* !_MIPS_CPU_H_ */
+#endif /* !_MIPS64_CPU_H_ */

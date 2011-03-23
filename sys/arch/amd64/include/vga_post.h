@@ -1,5 +1,5 @@
 /* $NetBSD: vga_post.h,v 1.2 2008/03/29 17:40:22 jmcneill Exp $ */
-/* $OpenBSD: vga_post.h,v 1.1 2009/06/06 00:35:00 pirofti Exp $ */
+/* $OpenBSD: vga_post.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,8 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _X86_VGA_POST_H_
-#define _X86_VGA_POST_H_
+#ifndef _MACHINE_VGA_POST_H_
+#define _MACHINE_VGA_POST_H_
 
 #ifdef _KERNEL
 struct vga_post;

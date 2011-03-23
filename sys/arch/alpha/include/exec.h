@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.10 2010/06/30 20:38:49 tedu Exp $	*/
+/*	$OpenBSD: exec.h,v 1.11 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: exec.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_EXEC_H_
-#define	_ALPHA_EXEC_H_
+#ifndef _MACHINE_EXEC_H_
+#define	_MACHINE_EXEC_H_
 
 #define cpu_exec_aout_makecmds(p, epp)	ENOEXEC
 
@@ -49,4 +49,4 @@
 
 #define _KERN_DO_ELF64
 
-#endif /* !_ALPHA_EXEC_H_ */
+#endif /* !_MACHINE_EXEC_H_ */

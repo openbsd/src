@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.75 2010/12/21 14:56:24 claudio Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.76 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -41,8 +41,8 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
-#ifndef _CPU_H_
-#define _CPU_H_
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 /*
  * CTL_MACHDEP definitions.
@@ -325,4 +325,4 @@ extern void blink_led_register(struct blink_led *);
 #endif
 
 #endif /* _KERNEL */
-#endif /* _CPU_H_ */
+#endif /* _MACHINE_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.16 2009/08/19 19:47:51 miod Exp $ */
+/*	$OpenBSD: macros.h,v 1.17 2011/03/23 16:54:37 pirofti Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_) && !defined(lint)
-#define _VAX_MACROS_H_
+#if !defined(_MACHINE_MACROS_H_) && !defined(lint)
+#define _MACHINE_MACROS_H_
 
 /* Here general macros are supposed to be stored */
 
@@ -209,4 +209,4 @@ remqhi(void *header) {
 #define	Q_EMPTY		0	/* Queue is/was empty */
 #define	Q_OK		1	/* Inserted OK */
 
-#endif	/* _VAX_MACROS_H_ */
+#endif	/* _MACHINE_MACROS_H_ */

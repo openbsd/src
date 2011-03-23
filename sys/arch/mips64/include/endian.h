@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.6 2011/03/11 15:17:08 pirofti Exp $ */
+/*	$OpenBSD: endian.h,v 1.7 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _MACHINE_ENDIAN_H_
-#define _MACHINE_ENDIAN_H_
+#ifndef _MIPS64_ENDIAN_H_
+#define _MIPS64_ENDIAN_H_
 
 #if defined(__MIPSEL__)
 #define _BYTE_ORDER _LITTLE_ENDIAN
@@ -44,4 +44,4 @@
 
 #define	__STRICT_ALIGNMENT
 
-#endif /* _MACHINE_ENDIAN_H_ */
+#endif /* _MIPS64_ENDIAN_H_ */

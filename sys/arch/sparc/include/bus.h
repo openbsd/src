@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2009/12/25 20:51:43 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2011/03/23 16:54:37 pirofti Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -36,8 +36,8 @@
  *   own wrappers on a need-to-do basis.
  */
 
-#ifndef	_SPARC_BUS_H_
-#define	_SPARC_BUS_H_
+#ifndef	_MACHINE_BUS_H_
+#define	_MACHINE_BUS_H_
 
 #include <machine/autoconf.h>
 
@@ -681,4 +681,4 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 
 vaddr_t	_bus_dma_valloc_skewed(size_t, u_long, u_long, u_long);
 
-#endif	/* _SPARC_BUS_H_ */
+#endif	/* _MACHINE_BUS_H_ */

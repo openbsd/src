@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.16 2009/02/26 17:19:47 oga Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.17 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * 
  */
-#ifndef _I386_APMVAR_H_
-#define _I386_APMVAR_H_
+#ifndef _MACHINE_APMVAR_H_
+#define _MACHINE_APMVAR_H_
 
 #include <sys/ioccom.h>
 
@@ -299,4 +299,4 @@ int apm_set_powstate(u_int devid, u_int powstate);
 int apm_kqfilter(dev_t dev, struct knote *kn);
 #endif /* _KERNEL */
 
-#endif /* _I386_APMVAR_H_ */
+#endif /* _MACHINE_APMVAR_H_ */

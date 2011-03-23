@@ -1,6 +1,6 @@
-#ifndef __M88K_PROFILE_H__
-#define __M88K_PROFILE_H__
-/*	$OpenBSD: profile.h,v 1.4 2007/12/20 21:19:34 miod Exp $ */
+#ifndef _M88K_PROFILE_H_
+#define _M88K_PROFILE_H_
+/*	$OpenBSD: profile.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -49,4 +49,4 @@ mcount() \
 #define	MCOUNT_EXIT	set_psr(s)
 #endif /* _KERNEL */
 
-#endif /* __M88K_PROFILE_H__ */
+#endif /* _M88K_PROFILE_H_ */

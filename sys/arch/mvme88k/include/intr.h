@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.20 2009/03/15 20:39:53 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.21 2011/03/23 16:54:36 pirofti Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MVME88K_INTR_H_
-#define _MVME88K_INTR_H_
+#ifndef _MACHINE_INTR_H_
+#define _MACHINE_INTR_H_
 
 /*
  * IPL levels.
@@ -53,4 +53,4 @@
 
 #include <m88k/intr.h>
 
-#endif /* _MVME88K_INTR_H_ */
+#endif /* _MACHINE_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.3 2005/05/18 16:44:37 miod Exp $ */
+/*	$OpenBSD: ptrace.h,v 1.4 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1992, 1993
@@ -46,11 +46,11 @@
  * m88k-dependent ptrace definitions.
  */
 
-#ifndef __MACHINE_PTRACE_H__
-#define __MACHINE_PTRACE_H__
+#ifndef _M88K_PTRACE_H_
+#define _M88K_PTRACE_H_
 
 #define	PT_STEP		(PT_FIRSTMACH + 0)
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 
-#endif /* __MACHINE_PTRACE_H__ */
+#endif /* _M88K_PTRACE_H_ */

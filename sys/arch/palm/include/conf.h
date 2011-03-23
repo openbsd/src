@@ -1,8 +1,8 @@
-/*	$OpenBSD: conf.h,v 1.2 2010/11/28 20:49:47 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 2002/02/10 12:26:03 chris Exp $	*/
 
-#ifndef _PALM_CONF_H
-#define	_PALM_CONF_H
+#ifndef _MACHINE_CONF_H_
+#define	_MACHINE_CONF_H_
 
 #include <sys/conf.h>
 
@@ -12,4 +12,4 @@
 
 #include <arm/conf.h>
 
-#endif	/* _PALM_CONF_H */
+#endif	/* _MACHINE_CONF_H_ */

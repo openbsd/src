@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530.h,v 1.3 2010/04/24 18:46:55 miod Exp $	*/
+/*	$OpenBSD: av530.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 /*
  * Copyright (c) 2006, 2010 Miodrag Vallat
  *
@@ -24,8 +24,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	__MACHINE_AV530_H__
-#define	__MACHINE_AV530_H__
+#ifndef	_MACHINE_AV530_H_
+#define	_MACHINE_AV530_H_
 
 #define	AV530_PROM		0xffc00000
 #define	AV530_PROM_SIZE		0x00080000
@@ -242,4 +242,4 @@
 #define AV530_CMMU6_I6	0xfff0e000
 #define AV530_CMMU6_I7	0xfff0f000
 
-#endif	/* __MACHINE_AV530_H__ */
+#endif	/* _MACHINE_AV530_H_ */

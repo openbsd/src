@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.4 2009/07/21 21:20:03 miod Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -27,8 +27,8 @@
  */
 
 
-#if !defined _ARCH_HPPA_HPPA_RBUS_MACHDEP_H_
-#define _ARCH_HPPA_HPPA_RBUS_MACHDEP_H_
+#if !defined _MACHINE_RBUS_MACHDEP_H_
+#define _MACHINE_RBUS_MACHDEP_H_
 
 static __inline int
 md_space_map(rbus_tag_t rbt, bus_addr_t bpa, bus_size_t size, int flags,
@@ -49,4 +49,4 @@ struct pci_attach_args;
 
 #define pccbb_attach_hook(parent, self, pa)	/* nothing */
 
-#endif /* _ARCH_HPPA_HPPA_RBUS_MACHDEP_H_ */
+#endif /* _MACHINE_RBUS_MACHDEP_H_ */

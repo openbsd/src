@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.1 2004/08/06 20:56:02 pefo Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.2 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: kcore.h,v 1.1 1996/03/10 21:55:18 leo Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MIPS_KCORE_H_
-#define	_MIPS_KCORE_H_
+#ifndef _MIPS64_KCORE_H_
+#define	_MIPS64_KCORE_H_
 
 #define	NPHYS_RAM_SEGS	8
 
@@ -42,4 +42,4 @@ typedef struct cpu_kcore_hdr {
 	phys_ram_seg_t  ram_segs[NPHYS_RAM_SEGS];
 } cpu_kcore_hdr_t;
 
-#endif /* !_MIPS_KCORE_H_ */
+#endif /* !_MIPS64_KCORE_H_ */

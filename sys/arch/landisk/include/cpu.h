@@ -1,8 +1,8 @@
-/*	$OpenBSD: cpu.h,v 1.2 2007/04/29 17:53:37 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
-#ifndef	_LANDISK_CPU_H_
-#define	_LANDISK_CPU_H_
+#ifndef	_MACHINE_CPU_H_
+#define	_MACHINE_CPU_H_
 
 void machine_reset(void);
 
@@ -23,4 +23,4 @@ void machine_reset(void);
 	{ "led_blink",		CTLTYPE_INT }				\
 }
 
-#endif	/* _LANDISK_CPU_H_ */
+#endif	/* _MACHINE_CPU_H_ */

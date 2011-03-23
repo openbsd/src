@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.9 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: pte.h,v 1.10 2011/03/23 16:54:34 pirofti Exp $ */
 /* $NetBSD: pte.h,v 1.26 1999/04/09 00:38:11 thorpej Exp $ */
 
 /*-
@@ -58,8 +58,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_PTE_H_
-#define	_ALPHA_PTE_H_
+#ifndef _MACHINE_PTE_H_
+#define	_MACHINE_PTE_H_
 
 /*
  * Alpha page table entry.
@@ -140,4 +140,4 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 extern	pt_entry_t *kernel_lev1map;	/* kernel level 1 page table */
 #endif /* _KERNEL */
 
-#endif /* ! _ALPHA_PTE_H_ */
+#endif /* ! _MACHINE_PTE_H_ */

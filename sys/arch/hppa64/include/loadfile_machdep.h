@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.2 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.3 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPPA64_LOADFILE_MACHDEP_H_
-#define	_HPPA64_LOADFILE_MACHDEP_H_
+#ifndef _MACHINE_LOADFILE_MACHDEP_H_
+#define	_MACHINE_LOADFILE_MACHDEP_H_
 
 #define	BOOT_ELF
 #define	ELFSIZE	64
@@ -73,4 +73,4 @@ void vcopy(u_long, u_long, u_long *, size_t);
 void vzero(u_long, u_long *, size_t);
 
 #endif
-#endif /* ! _HPPA64_LOADFILE_MACHDEP_H_ */
+#endif /* ! _MACHINE_LOADFILE_MACHDEP_H_ */

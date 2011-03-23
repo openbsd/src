@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.h,v 1.5 2003/06/02 05:09:14 deraadt Exp $ */
+/*	$OpenBSD: nvram.h,v 1.6 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -25,8 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MVME68K_NVRAM_H_
-#define	_MVME68K_NVRAM_H_
+#ifndef	_MACHINE_NVRAM_H_
+#define	_MACHINE_NVRAM_H_
 
 struct nvram_147 {
 	u_char	user[0x400];

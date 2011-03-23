@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.h,v 1.5 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: bwx.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $ */
 /* $NetBSD: bwx.h,v 1.3 2000/06/08 02:55:37 thorpej Exp $ */
 
 /*-
@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ALPHA_BWX_H_
-#define	_ALPHA_BWX_H_
+#ifndef _MACHINE_BWX_H_
+#define	_MACHINE_BWX_H_
 
 /*
  * Alpha Byte/Word Extension instructions.
@@ -133,4 +133,4 @@ alpha_sextw(u_int16_t a0)
 	return (v0);
 }
 
-#endif /* _ALPHA_BWX_H_ */
+#endif /* _MACHINE_BWX_H_ */

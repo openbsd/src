@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.15 2011/03/12 03:52:26 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.16 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -40,8 +40,8 @@
  * Intel 386 process control block
  */
 
-#ifndef _I386_PCB_H_
-#define _I386_PCB_H_
+#ifndef _MACHINE_PCB_H_
+#define _MACHINE_PCB_H_
 
 #include <sys/signal.h>
 
@@ -93,4 +93,4 @@ struct md_coredump {
 	long	md_pad[8];
 };    
 
-#endif /* _I386_PCB_H_ */
+#endif /* _MACHINE_PCB_H_ */

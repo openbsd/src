@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.5 2008/12/04 15:48:19 weingart Exp $	*/
+/*	$OpenBSD: lock.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
@@ -34,8 +34,8 @@
  * Machine-dependent spin lock operations.
  */
 
-#ifndef _AMD64_LOCK_H_
-#define	_AMD64_LOCK_H_
+#ifndef _MACHINE_LOCK_H_
+#define	_MACHINE_LOCK_H_
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
@@ -112,4 +112,4 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 
 #define rw_cas(p, o, n) (x86_atomic_cas_ul(p, o, n) != o)
 
-#endif /* _AMD64_LOCK_H_ */
+#endif /* _MACHINE_LOCK_H_ */

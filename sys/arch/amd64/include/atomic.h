@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.7 2010/12/27 20:22:23 guenther Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_ATOMIC_H
-#define _AMD64_ATOMIC_H
+#ifndef _MACHINE_ATOMIC_H_
+#define _MACHINE_ATOMIC_H_
 
 /*
  * Perform atomic operations on memory. Should be atomic with respect
@@ -131,4 +131,4 @@ x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits)
 #undef LOCK
 
 #endif /* defined(_KERNEL) && !defined(_LOCORE) */
-#endif /* _AMD64_ATOMIC_H_ */
+#endif /* _MACHINE_ATOMIC_H_ */

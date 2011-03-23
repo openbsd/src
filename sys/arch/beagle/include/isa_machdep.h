@@ -1,8 +1,8 @@
-/* 	$OpenBSD: isa_machdep.h,v 1.1 2009/05/08 03:13:26 drahn Exp $	*/
+/* 	$OpenBSD: isa_machdep.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 /* $NetBSD: isa_machdep.h,v 1.4 2002/01/07 22:58:08 chris Exp $ */
 
-#ifndef _MPHONE_ISA_MACHDEP_H_
-#define _MPHONE_ISA_MACHDEP_H_
+#ifndef _MACHINE_ISA_MACHDEP_H_
+#define _MACHINE_ISA_MACHDEP_H_
 #include <arm/isa_machdep.h>
 
 #ifdef _KERNEL
@@ -10,4 +10,4 @@
 void	isa_footbridge_init(u_int, u_int);
 #endif /* _KERNEL */
 
-#endif /* _MPHONE_ISA_MACHDEP_H_ */
+#endif /* _MACHINE_ISA_MACHDEP_H_ */

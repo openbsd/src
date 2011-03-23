@@ -1,4 +1,4 @@
-/*	$OpenBSD: nexus.h,v 1.14 2008/08/18 23:19:24 miod Exp $	*/
+/*	$OpenBSD: nexus.h,v 1.15 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: nexus.h,v 1.17 2000/06/04 17:58:19 ragge Exp $	*/
 
 /*-
@@ -32,8 +32,8 @@
  *	@(#)nexus.h	7.3 (Berkeley) 5/9/91
  */
 
-#ifndef _VAX_NEXUS_H_
-#define _VAX_NEXUS_H_
+#ifndef _MACHINE_NEXUS_H_
+#define _MACHINE_NEXUS_H_
 
 #include <machine/bus.h>
 
@@ -194,4 +194,4 @@ struct bp_conf {
 #define	MCHK_PANIC	-1
 #define	MCHK_RECOVERED	0
 
-#endif /* _VAX_NEXUS_H_ */
+#endif /* _MACHINE_NEXUS_H_ */

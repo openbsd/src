@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.9 2009/03/01 17:43:23 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -27,8 +27,8 @@
 /*
  * Trap codes
  */
-#ifndef __M88K_TRAP_H__
-#define __M88K_TRAP_H__
+#ifndef _M88K_TRAP_H_
+#define _M88K_TRAP_H_
 
 /*
  * Trap type values
@@ -72,4 +72,4 @@ void	m88110_fpu_exception(struct trapframe *);
 
 #endif /* _LOCORE */
 
-#endif /* __M88K_TRAP_H__ */
+#endif /* _M88K_TRAP_H_ */

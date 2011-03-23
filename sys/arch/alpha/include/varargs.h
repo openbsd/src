@@ -1,4 +1,4 @@
-/*	$OpenBSD: varargs.h,v 1.5 2003/06/02 23:27:43 millert Exp $	*/
+/*	$OpenBSD: varargs.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: varargs.h,v 1.5 1996/10/09 21:13:05 cgd Exp $	*/
 
 /*-
@@ -37,8 +37,8 @@
  *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
-#ifndef _ALPHA_VARARGS_H_
-#define	_ALPHA_VARARGS_H_
+#ifndef _MACHINE_VARARGS_H_
+#define	_MACHINE_VARARGS_H_
 
 #include <machine/stdarg.h>
 
@@ -55,4 +55,4 @@
 #define	va_start(ap) \
 	((ap) = *(va_list *)__builtin_saveregs(), (ap).pad = 0)
 
-#endif /* !_ALPHA_VARARGS_H_ */
+#endif /* !_MACHINE_VARARGS_H_ */

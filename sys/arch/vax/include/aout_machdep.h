@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_machdep.h,v 1.3 2001/11/14 14:38:33 hugh Exp $	*/
+/*	$OpenBSD: aout_machdep.h,v 1.4 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: aout_machdep.h,v 1.4 1995/09/23 14:57:40 ragge Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_EXEC_H_
-#define _VAX_EXEC_H_
+#ifndef _MACHINE_AOUT_MACHDEP_H_
+#define _MACHINE_AOUT_MACHDEP_H_
 
 #define __LDPGSZ	4096
 
@@ -47,4 +47,4 @@ struct relocation_info_vax {
 };
 #define relocation_info	relocation_info_vax
 
-#endif  /* _VAX_EXEC_H_ */
+#endif  /* _MACHINE_AOUT_MACHDEP_H_ */

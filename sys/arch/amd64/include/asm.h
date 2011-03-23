@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  *	@(#)asm.h	5.5 (Berkeley) 5/7/91
  */
 
-#ifndef _AMD64_ASM_H_
-#define _AMD64_ASM_H_
+#ifndef _MACHINE_ASM_H_
+#define _MACHINE_ASM_H_
 
 #ifdef PIC
 #define PIC_PLT(x)	x@PLT
@@ -115,4 +115,4 @@
 	.stabs __STRING(sym),1,0,0,0
 #endif /* __STDC__ */
 
-#endif /* !_AMD64_ASM_H_ */
+#endif /* !_MACHINE_ASM_H_ */

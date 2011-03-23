@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 2009/07/30 21:39:54 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 2011/03/23 16:54:36 pirofti Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -33,8 +33,8 @@
  * the management functions.
  */
 
-#ifndef	_MVME68K_BUS_H_
-#define	_MVME68K_BUS_H_
+#ifndef	_MACHINE_BUS_H_
+#define	_MACHINE_BUS_H_
 
 #include <sys/types.h>
 
@@ -797,4 +797,4 @@ void	bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
 paddr_t bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 
-#endif	/* _MVME68K_BUS_H_ */
+#endif	/* _MACHINE_BUS_H_ */

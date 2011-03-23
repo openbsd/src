@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2009/03/15 19:40:40 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LANDISK_INTR_H_
-#define _LANDISK_INTR_H_
+#ifndef _MACHINE_INTR_H_
+#define _MACHINE_INTR_H_
 
 #include <sh/intr.h>
 
@@ -89,4 +89,4 @@ void extintr_enable(void *ih);
 void extintr_disable(void *ih);
 void extintr_disable_by_num(int irq);
 
-#endif /* !_LANDISK_INTR_H_ */
+#endif /* !_MACHINE_INTR_H_ */

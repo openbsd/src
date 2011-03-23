@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.h,v 1.7 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: svr4_machdep.h,v 1.8 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: svr4_machdep.h,v 1.4 1996/03/31 22:21:45 pk Exp $	 */
 
 /*
@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SPARC_SVR4_MACHDEP_H_
-#define	_SPARC_SVR4_MACHDEP_H_
+#ifndef	_MACHINE_SVR4_MACHDEP_H_
+#define	_MACHINE_SVR4_MACHDEP_H_
 
 #include <compat/svr4/svr4_types.h>
 
@@ -125,4 +125,4 @@ int svr4_trap(int, struct proc *);
 #define	SVR4_T_PAGEFLT		14
 #define	SVR4_T_ALIGNFLT		17
 
-#endif /* !_SPARC_SVR4_MACHDEP_H_ */
+#endif /* !_MACHINE_SVR4_MACHDEP_H_ */

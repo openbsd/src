@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.28 2009/12/25 20:52:32 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.29 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_BUS_H_
-#define	_ALPHA_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define	_MACHINE_BUS_H_
 
 /*
  * Addresses (in bus space).
@@ -678,4 +678,4 @@ paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 #endif /* _ALPHA_BUS_DMA_PRIVATE */
 
-#endif /* _ALPHA_BUS_H_ */
+#endif /* _MACHINE_BUS_H_ */

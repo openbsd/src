@@ -1,9 +1,9 @@
-/*	$OpenBSD: lock.h,v 1.3 2010/09/05 18:07:12 kettenis Exp $	*/
+/*	$OpenBSD: lock.h,v 1.4 2011/03/23 16:54:37 pirofti Exp $	*/
 
 /* public domain */
 
-#ifndef	_SPARC_LOCK_H_
-#define	_SPARC_LOCK_H_
+#ifndef	_MACHINE_LOCK_H_
+#define	_MACHINE_LOCK_H_
 
 #include <machine/atomic.h>
 
@@ -47,4 +47,4 @@ __cpu_simple_unlock(__cpu_simple_lock_t *l)
 	*l = __SIMPLELOCK_UNLOCKED;
 }
 
-#endif	/* _SPARC_LOCK_H_ */
+#endif	/* _MACHINE_LOCK_H_ */

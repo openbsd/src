@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.7 2010/11/22 21:08:57 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -57,8 +57,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LUNA88K_BUS_H_
-#define _LUNA88K_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define _MACHINE_BUS_H_
 
 /*
  * Bus address and size types
@@ -479,4 +479,4 @@ __LUNA88K_copy_N(4)
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
-#endif /* _LUNA88K_BUS_H_ */
+#endif /* _MACHINE_BUS_H_ */

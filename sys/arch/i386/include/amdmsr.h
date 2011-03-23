@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdmsr.h,v 1.3 2008/06/19 09:58:40 mbalmer Exp $ */
+/*	$OpenBSD: amdmsr.h,v 1.4 2011/03/23 16:54:35 pirofti Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SYS_AMDMSR_H_
-#define _SYS_AMDMSR_H_
+#ifndef _MACHINE_AMDMSR_H_
+#define _MACHINE_AMDMSR_H_
 
 struct amdmsr_req {
 	u_int32_t addr;	/* 32-bit MSR address */
@@ -31,4 +31,4 @@ struct amdmsr_req {
 int	amdmsr_probe(void);
 #endif
 
-#endif	/* !_SYS_AMDMSR_H_ */
+#endif	/* !_MACHINE_AMDMSR_H_ */

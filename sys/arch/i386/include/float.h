@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.7 2008/07/21 20:50:54 martynas Exp $	*/
+/*	$OpenBSD: float.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: float.h,v 1.8 1995/06/20 20:45:37 jtc Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  *	@(#)float.h	7.1 (Berkeley) 5/8/90
  */
 
-#ifndef _I386_FLOAT_H_
-#define _I386_FLOAT_H_
+#ifndef _MACHINE_FLOAT_H_
+#define _MACHINE_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -75,4 +75,4 @@ __END_DECLS
 #define LDBL_MAX	1.18973149535723176502e+4932L
 #define LDBL_MAX_10_EXP	4932
 
-#endif	/* _I386_FLOAT_H_ */
+#endif	/* _MACHINE_FLOAT_H_ */

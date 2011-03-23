@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400.h,v 1.7 2010/04/21 19:33:47 miod Exp $	*/
+/*	$OpenBSD: av400.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -43,8 +43,8 @@
  *
  */
 
-#ifndef	__MACHINE_AV400_H__
-#define	__MACHINE_AV400_H__
+#ifndef	_MACHINE_AV400_H_
+#define	_MACHINE_AV400_H_
 
 #define	AV400_PROM		0xffc00000
 #define	AV400_PROM_SIZE		0x00200000
@@ -139,4 +139,4 @@
 #define AV400_CMMU_D3	0xfff06000
 #define AV400_CMMU_I3	0xfff07000
 
-#endif	/* __MACHINE_AV400_H__ */
+#endif	/* _MACHINE_AV400_H_ */

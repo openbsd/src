@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.117 2010/10/02 23:13:28 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.118 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  *	@(#)cpu.h	5.4 (Berkeley) 5/9/91
  */
 
-#ifndef _I386_CPU_H_
-#define _I386_CPU_H_
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 /*
  * Definitions unique to i386 cpu support.
@@ -492,4 +492,4 @@ void	vm86_gpfault(struct proc *, int);
 #include <sys/mplock.h>
 #endif
 
-#endif /* !_I386_CPU_H_ */
+#endif /* !_MACHINE_CPU_H_ */

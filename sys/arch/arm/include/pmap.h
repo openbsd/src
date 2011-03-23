@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.16 2011/01/04 21:11:41 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.17 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -66,8 +66,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_PMAP_H_
-#define	_ARM32_PMAP_H_
+#ifndef	_ARM_PMAP_H_
+#define	_ARM_PMAP_H_
 
 #ifdef _KERNEL
 
@@ -624,4 +624,4 @@ extern uint32_t pmap_alias_bits;
 
 #endif /* _KERNEL */
 
-#endif	/* _ARM32_PMAP_H_ */
+#endif	/* _ARM_PMAP_H_ */

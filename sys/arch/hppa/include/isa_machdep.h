@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.3 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.4 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -26,8 +26,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ISA_MACHDEP_H_
-#define _ISA_MACHDEP_H_
+#ifndef _MACHINE_ISA_MACHDEP_H_
+#define _MACHINE_ISA_MACHDEP_H_
 /*
  * Types provided to machine-independent ISA code.
  */
@@ -56,4 +56,4 @@ struct hppa_isa_chipset {
 #define isa_intr_check(c, i, t)						\
     (*(c)->ic_intr_check)((c)->ic_v, (i), (t))
 
-#endif /* _ISA_MACHDEP_H_ */
+#endif /* _MACHINE_ISA_MACHDEP_H_ */

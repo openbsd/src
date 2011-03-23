@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.53 2010/09/06 19:05:48 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.54 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -63,8 +63,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_BUS_H_
-#define _I386_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define _MACHINE_BUS_H_
 
 #include <sys/mutex.h>
 #include <sys/tree.h>
@@ -686,4 +686,4 @@ int	sg_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
 	    bus_dma_segment_t *, int, int *, int);
 
 
-#endif /* _I386_BUS_H_ */
+#endif /* _MACHINE_BUS_H_ */

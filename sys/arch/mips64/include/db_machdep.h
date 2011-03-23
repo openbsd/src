@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.11 2010/11/27 19:57:23 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.12 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef	_MIPS_DB_MACHDEP_H_
-#define	_MIPS_DB_MACHDEP_H_
+#ifndef	_MIPS64_DB_MACHDEP_H_
+#define	_MIPS64_DB_MACHDEP_H_
 
 #include <machine/frame.h>
 #include <machine/trap.h>
@@ -82,4 +82,4 @@ extern struct mutex ddb_mp_mutex;
 #define DDB_STATE_RUNNING	1
 #define DDB_STATE_EXITING	2
 
-#endif	/* !_MIPS_DB_MACHDEP_H_ */
+#endif	/* !_MIPS64_DB_MACHDEP_H_ */

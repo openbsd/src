@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 2003/06/12 01:07:30 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -38,8 +38,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ASM_H_
-#define _ASM_H_
+#ifndef _MACHINE_ASM_H_
+#define _MACHINE_ASM_H_
 
 #ifndef _LOCORE
 #define _LOCORE
@@ -145,4 +145,4 @@
 #endif /* __STDC__ */
 #endif /* __ELF__ */
 
-#endif /* _ASM_H_ */
+#endif /* _MACHINE_ASM_H_ */

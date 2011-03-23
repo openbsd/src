@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.20 2010/04/23 03:50:22 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.21 2011/03/23 16:54:36 pirofti Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MVME68K_INTR_H_
-#define _MVME68K_INTR_H_
+#ifndef _MACHINE_INTR_H_
+#define _MACHINE_INTR_H_
 
 #include <machine/psl.h>
 
@@ -75,4 +75,4 @@
 int	spl0(void);
 
 #endif /* _KERNEL */
-#endif /* _MVME68K_INTR_H_ */
+#endif /* _MACHINE_INTR_H_ */

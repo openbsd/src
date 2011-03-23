@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.33 2009/03/08 16:03:05 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.34 2011/03/23 16:54:36 pirofti Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -43,8 +43,8 @@
  *
  */
 
-#ifndef	__MACHINE_MVME188_H__
-#define	__MACHINE_MVME188_H__
+#ifndef	_MACHINE_MVME188_H_
+#define	_MACHINE_MVME188_H_
 
 #define MVME188_EPROM		0xffc00000
 #define MVME188_EPROM_SIZE	0x00080000
@@ -223,4 +223,4 @@ extern u_int32_t pfsr_save_188_quad[];
 extern u_int32_t int_mask_val[NIPLS];
 #endif
 
-#endif	/* __MACHINE_MVME188_H__ */
+#endif	/* _MACHINE_MVME188_H_ */

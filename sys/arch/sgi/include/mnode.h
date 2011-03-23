@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.15 2010/04/06 19:09:44 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.16 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __MACHINE_MNODE_H__
-#define __MACHINE_MNODE_H__
+#ifndef _MACHINE_MNODE_H_
+#define _MACHINE_MNODE_H_
 
 /*
  * Definitions for Nodes set up in M-Mode. Some stuff here
@@ -482,4 +482,4 @@ extern klinfo_t *kl_glass_console;
 extern gda_t *gda;
 extern uint maxnodes;
 
-#endif /* __MACHINE_MNODE_H__ */
+#endif /* _MACHINE_MNODE_H_ */

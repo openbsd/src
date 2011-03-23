@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosvar.h,v 1.3 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: mpbiosvar.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 /* $NetBSD: mpbiosvar.h,v 1.2 2003/04/02 07:53:57 thorpej Exp $ */
 
 /*-
@@ -33,8 +33,8 @@
  */
 
 
-#ifndef _X86_MPBIOSVAR_H_
-#define _X86_MPBIOSVAR_H_
+#ifndef _MACHINE_MPBIOSVAR_H_
+#define _MACHINE_MPBIOSVAR_H_
 
 #define MP_TRAMPOLINE  (2 * PAGE_SIZE)
 
@@ -54,4 +54,4 @@ extern int mpbios_scanned;
 
 #endif
 
-#endif /* !_X86_MPBIOSVAR_H_ */
+#endif /* !_MACHINE_MPBIOSVAR_H_ */

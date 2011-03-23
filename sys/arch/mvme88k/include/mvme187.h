@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme187.h,v 1.9 2006/11/18 22:53:11 miod Exp $ */
+/*	$OpenBSD: mvme187.h,v 1.10 2011/03/23 16:54:36 pirofti Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -43,8 +43,8 @@
  * thereof, and that both notices appear in supporting documentation.
  *
  */
-#ifndef __MACHINE_MVME187_H__
-#define __MACHINE_MVME187_H__
+#ifndef _MACHINE_MVME187_H_
+#define _MACHINE_MVME187_H_
 
 #define BUG187_START	0xff800000	/* start of BUG PROM */
 #define BUG187_SIZE	0x00400000	/* size of BUG PROM */
@@ -67,4 +67,4 @@
 extern u_int32_t pfsr_save_187[];
 #endif
 
-#endif	/* __MACHINE_MVME187_H__ */
+#endif	/* _MACHINE_MVME187_H_ */

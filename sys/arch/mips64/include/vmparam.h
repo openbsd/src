@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.22 2010/12/15 05:30:19 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.23 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -38,8 +38,8 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
  */
 
-#ifndef _MIPS_VMPARAM_H_
-#define _MIPS_VMPARAM_H_
+#ifndef _MIPS64_VMPARAM_H_
+#define _MIPS64_VMPARAM_H_
 
 /*
  * Machine dependent constants mips processors.
@@ -140,4 +140,4 @@ struct vm_page_md {
 
 #endif	/* _KERNEL && !_LOCORE */
 
-#endif /* !_MIPS_VMPARAM_H_ */
+#endif /* !_MIPS64_VMPARAM_H_ */

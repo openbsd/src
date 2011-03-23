@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.8 2006/01/08 14:20:17 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.9 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: signal.h,v 1.4 1996/02/01 22:32:35 mycroft Exp $ */
 
 /*
@@ -41,8 +41,8 @@
  *	@(#)signal.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef	_SPARC_SIGNAL_H_
-#define _SPARC_SIGNAL_H_
+#ifndef	_MACHINE_SIGNAL_H_
+#define _MACHINE_SIGNAL_H_
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
@@ -94,4 +94,4 @@ struct sigcontext {
 #define	FPE_FLTOPERR_TRAP	0xd0	/* operand error */
 #define	FPE_FLTOVF_TRAP		0xd4	/* overflow */
 #endif /* _LOCORE || __BSD_VISIBLE */
-#endif	/* !_SPARC_SIGNAL_H_ */
+#endif	/* !_MACHINE_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: asm.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
  */
 
-#ifndef _ARM32_ASM_H_
-#define _ARM32_ASM_H_
+#ifndef _ARM_ASM_H_
+#define _ARM_ASM_H_
 
 #ifdef __ELF__
 # define _C_LABEL(x)	x

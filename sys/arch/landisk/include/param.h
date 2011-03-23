@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: param.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -39,8 +39,8 @@
  * Machine dependent constants for landisk
  */
 
-#ifndef _LANDISK_PARAM_H_
-#define _LANDISK_PARAM_H_
+#ifndef _MACHINE_PARAM_H_
+#define _MACHINE_PARAM_H_
 
 #include <sh/param.h>
 
@@ -55,4 +55,4 @@
 #define IOM_RAM_BEGIN	0x0c000000
 #define IOM_RAM_SIZE	0x04000000	/* 64MB */
 
-#endif /* _LANDISK_PARAM_H_ */
+#endif /* _MACHINE_PARAM_H_ */

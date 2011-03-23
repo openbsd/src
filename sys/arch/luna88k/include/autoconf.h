@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 2007/05/08 15:33:10 deraadt Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.6 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -34,8 +34,8 @@
  * Autoconfiguration information.
  */
 
-#ifndef _LUNA88K_AUTOCONF_H_
-#define _LUNA88K_AUTOCONF_H_
+#ifndef _MACHINE_AUTOCONF_H_
+#define _MACHINE_AUTOCONF_H_
 
 /* the following are from the prom/bootblocks */
 extern void	*bootaddr;	/* PA of boot device */

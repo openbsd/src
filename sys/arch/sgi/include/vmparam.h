@@ -1,7 +1,7 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2009/12/08 22:15:48 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.8 2011/03/23 16:54:36 pirofti Exp $ */
 /* public domain */
-#ifndef _SGI_VMPARAM_H_
-#define _SGI_VMPARAM_H_
+#ifndef _MACHINE_VMPARAM_H_
+#define _MACHINE_VMPARAM_H_
 
 #define	VM_PHYSSEG_MAX	32	/* Max number of physical memory segments */
 
@@ -21,4 +21,4 @@
 
 #include <mips64/vmparam.h>
 
-#endif	/* _SGI_VMPARAM_H_ */
+#endif	/* _MACHINE_VMPARAM_H_ */

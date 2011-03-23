@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.2 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -32,8 +32,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_I82093VAR_H_
-#define _X86_I82093VAR_H_
+#ifndef _MACHINE_I82093VAR_H_
+#define _MACHINE_I82093VAR_H_
 
 #include <machine/apicvar.h>
 
@@ -94,4 +94,4 @@ extern int ioapic_bsp_id;
 extern int nioapics;
 extern struct ioapic_softc *ioapics;
 
-#endif /* !_X86_I82093VAR_H_ */
+#endif /* !_MACHINE_I82093VAR_H_ */

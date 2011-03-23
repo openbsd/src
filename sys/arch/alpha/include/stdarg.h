@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.12 2010/12/30 05:01:36 tedu Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.13 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.4 1996/10/09 21:13:05 cgd Exp $	*/
 
 /*-
@@ -32,8 +32,8 @@
  *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _ALPHA_STDARG_H_
-#define	_ALPHA_STDARG_H_
+#ifndef _MACHINE_STDARG_H_
+#define	_MACHINE_STDARG_H_
 
 #include <sys/cdefs.h>
 #include <machine/_types.h>
@@ -62,4 +62,4 @@ typedef __va_list	va_list;
 
 #define	va_end(ap)	
 
-#endif /* !_ALPHA_STDARG_H_ */
+#endif /* !_MACHINE_STDARG_H_ */

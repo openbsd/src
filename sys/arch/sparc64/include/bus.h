@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.25 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.26 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -63,8 +63,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SPARC_BUS_H_
-#define _SPARC_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define _MACHINE_BUS_H_
 
 #include <machine/ctlreg.h>
 
@@ -83,7 +83,7 @@ extern int bus_space_debug;
 #define BSHDB_NO_ACCESS	0x02
 
 #if defined(BUS_SPACE_DEBUG)
-#ifndef __SYSTM_H__
+#ifndef _MACHINE_BUS_H_
 #include <sys/systm.h>
 #endif
 #define BUS_SPACE_PRINTF(l, s) do {				\
@@ -622,5 +622,5 @@ struct sparc_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#endif /* _SPARC_BUS_H_ */
+#endif /* _MACHINE_BUS_H_ */
 

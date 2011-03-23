@@ -1,5 +1,5 @@
 /*      $NetBSD: bus.h,v 1.6 2001/06/15 15:50:05 nonaka Exp $        */
-/*	$OpenBSD: bus.h,v 1.4 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -94,8 +94,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PREP_BUS_H_
-#define _PREP_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define _MACHINE_BUS_H_
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus_mi.h>
@@ -121,4 +121,4 @@ extern const struct ppc_bus_space prep_isa_mem_space_tag;
 void prep_bus_space_init(void);
 void prep_bus_space_mallocok(void);
 
-#endif /* _PREP_BUS_H_ */
+#endif /* _MACHINE_BUS_H_ */

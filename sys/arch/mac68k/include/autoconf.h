@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.14 2010/05/23 22:41:50 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.15 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.5 1996/12/17 06:47:40 scottr Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MAC68K_AUTOCONF_H_
-#define _MAC68K_AUTOCONF_H_
+#ifndef _MACHINE_AUTOCONF_H_
+#define _MACHINE_AUTOCONF_H_
 
 /*
  * Autoconfiguration information.
@@ -54,4 +54,4 @@ void	startrtclock(void);
 
 #endif	/* _KERNEL */
 
-#endif	/* _MAC68K_AUTOCONF_H_ */
+#endif	/* _MACHINE_AUTOCONF_H_ */

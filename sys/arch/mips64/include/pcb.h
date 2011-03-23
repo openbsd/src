@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.4 2010/02/13 14:04:45 miod Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.5 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,8 +37,8 @@
  *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS_PCB_H_
-#define _MIPS_PCB_H_
+#ifndef _MIPS64_PCB_H_
+#define _MIPS64_PCB_H_
 
 #include <machine/frame.h>
 
@@ -62,4 +62,4 @@ struct md_coredump {
 	long	md_pad[8];
 };
 
-#endif	/* !_MIPS_PCB_H_ */
+#endif	/* !_MIPS64_PCB_H_ */

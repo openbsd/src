@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.4 2010/12/23 20:05:08 miod Exp $	*/
+/*	$OpenBSD: prom.h,v 1.5 2011/03/23 16:54:34 pirofti Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -24,8 +24,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __AVIION_PROM_H__
-#define __AVIION_PROM_H__
+#ifndef _MACHINE_PROM_H_
+#define _MACHINE_PROM_H_
 
 #include <sys/cdefs.h>
 
@@ -82,4 +82,4 @@ void	scm_putcrlf(void);
 __dead void scm_reboot(const char *);
 u_int	scm_sysid(void);
 
-#endif /* __AVIION_PROM_H__ */
+#endif /* _MACHINE_PROM_H_ */

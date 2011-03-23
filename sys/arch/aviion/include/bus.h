@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 2010/04/20 22:53:24 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -25,8 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AVIION_BUS_H_
-#define _AVIION_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define _MACHINE_BUS_H_
 
 #include <machine/asm_macro.h>
 
@@ -362,4 +362,4 @@ void	bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
 paddr_t bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 
-#endif	/* _AVIION_BUS_H_ */
+#endif	/* _MACHINE_BUS_H_ */

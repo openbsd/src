@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.16 2006/06/04 17:20:39 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.17 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,8 +38,8 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/19/94
  */
 
-#ifndef _MVME68K_VMPARAM_H_
-#define _MVME68K_VMPARAM_H_
+#ifndef _MACHINE_VMPARAM_H_
+#define _MACHINE_VMPARAM_H_
 
 /*
  * Machine dependent constants for MVME68K
@@ -61,4 +61,4 @@
 #define	VM_PHYSSEG_MAX		1
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 
-#endif /* _MVME68K_VMPARAM_H_ */
+#endif /* _MACHINE_VMPARAM_H_ */

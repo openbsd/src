@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioctl_fd.h,v 1.3 1997/09/16 07:52:31 deraadt Exp $	*/
+/*	$OpenBSD: ioctl_fd.h,v 1.4 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	from: ioctl_fd.h,v 1.4 1995/06/29 03:49:32 jtk Exp 	*/
 
 /*
@@ -30,8 +30,8 @@
  * From: Id: ioctl_fd.h,v 1.7 1994/10/30 19:17:39 joerg Exp
  */
 
-#ifndef _I386_IOCTL_FD_H_
-#define _I386_IOCTL_FD_H_
+#ifndef _MACHINE_IOCTL_FD_H_
+#define _MACHINE_IOCTL_FD_H_
 
 #include <sys/ioccom.h>
 
@@ -128,4 +128,4 @@ struct fd_type {
 #endif /* FDC_500KBPS */
 
 
-#endif /* !_I386_IOCTL_FD_H__ */
+#endif /* !_MACHINE_IOCTL_FD_H__ */

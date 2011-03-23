@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.17 2009/03/01 22:08:13 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.18 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -25,8 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MVME68K_AUTOCONF_H_
-#define _MVME68K_AUTOCONF_H_
+#ifndef _MACHINE_AUTOCONF_H_
+#define _MACHINE_AUTOCONF_H_
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: idt.h,v 1.1 2005/04/19 21:30:17 miod Exp $	*/
+/*	$OpenBSD: idt.h,v 1.2 2011/03/23 16:54:37 pirofti Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -24,8 +24,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SOLBOURNE_IDT_H_
-#define	_SOLBOURNE_IDT_H_
+#ifndef	_MACHINE_IDT_H_
+#define	_MACHINE_IDT_H_
 
 /*
  * Definitions for the core chips found on the IDT motherboard.
@@ -185,4 +185,4 @@
 #define	OBIO_PA_START	0x80000000
 #define	OBIO_PA_END	0x80018000
 
-#endif	/* _SOLBOURNE_IDT_H_ */
+#endif	/* _MACHINE_IDT_H_ */

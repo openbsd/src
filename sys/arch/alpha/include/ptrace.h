@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.4 2002/03/12 11:58:14 art Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.5 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.1 1995/02/13 23:07:51 cgd Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MACHINE_PTRACE_H__
-#define __MACHINE_PTRACE_H__
+#ifndef _MACHINE_PTRACE_H_
+#define _MACHINE_PTRACE_H_
 
 /*
  * Alpha-dependent ptrace definitions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 2007/06/20 18:15:45 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,11 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MAC68K_DISKLABEL_H_
-#define _MAC68K_DISKLABEL_H_
+#ifndef _MACHINE_DISKLABEL_H_
+#define _MACHINE_DISKLABEL_H_
 
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
 #define	MAXPARTITIONS	16			/* number of partitions */
 
-#endif /* _MAC68K_DISKLABEL_H_ */
+#endif /* _MACHINE_DISKLABEL_H_ */

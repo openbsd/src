@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.h,v 1.13 2010/12/31 20:54:21 miod Exp $ */
+/*	$OpenBSD: m88410.h,v 1.14 2011/03/23 16:54:36 pirofti Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef	__M88410_H__
-#define	__M88410_H__
+#ifndef	_MACHINE_M88410_H_
+#define	_MACHINE_M88410_H_
 
 #ifdef _KERNEL
 
@@ -61,4 +61,4 @@ mc88410_present(void)
 
 #endif	/* _KERNEL */
 
-#endif	/* __M88410_H__ */
+#endif	/* _MACHINE_M88410_H_ */

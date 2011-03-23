@@ -1,4 +1,4 @@
-/*	$OpenBSD: varargs.h,v 1.2 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: varargs.h,v 1.3 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,8 +36,8 @@
  *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
-#ifndef _MIPS_VARARGS_H_
-#define	_MIPS_VARARGS_H_
+#ifndef _MIPS64_VARARGS_H_
+#define	_MIPS64_VARARGS_H_
 
 #include <machine/stdarg.h>
 
@@ -47,4 +47,4 @@
 #define	va_start(ap) \
 	ap = (char *)&va_alist
 
-#endif /* !_MIPS_VARARGS_H_ */
+#endif /* !_MIPS64_VARARGS_H_ */

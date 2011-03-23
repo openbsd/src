@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.19 2007/09/10 20:29:48 miod Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.20 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -38,8 +38,8 @@
 /*
  * Prototype VIA control definitions
  */
-#ifndef _MAC68K_VIAREG_H_
-#define _MAC68K_VIAREG_H_
+#ifndef _MACHINE_VIAREG_H_
+#define _MACHINE_VIAREG_H_
 
 /* VIA1 data register A */
 #define DA1I_vSCCWrReq	0x80
@@ -219,4 +219,4 @@ void	via1_register_irq(int, int (*)(void *), void *, const char *);
 int	via2_register_irq(struct via2hand *, const char *);
 #endif	/* _KERNEL */
 
-#endif	/* _MAC68K_VIAREG_H_ */
+#endif	/* _MACHINE_VIAREG_H_ */

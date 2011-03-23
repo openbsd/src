@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.52 2011/01/05 22:16:14 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.53 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -38,8 +38,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __M88K_CPU_H__
-#define __M88K_CPU_H__
+#ifndef _M88K_CPU_H_
+#define _M88K_CPU_H_
 
 /*
  * CTL_MACHDEP definitions.
@@ -286,4 +286,4 @@ void	set_vbr(register_t);
 extern register_t kernel_vbr;
 
 #endif /* _KERNEL */
-#endif /* __M88K_CPU_H__ */
+#endif /* _M88K_CPU_H_ */

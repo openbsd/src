@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.11 2009/11/04 19:14:10 kettenis Exp $	*/
+/*	$OpenBSD: _types.h,v 1.12 2011/03/23 16:54:37 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -32,8 +32,8 @@
  *	@(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef _SPARC__TYPES_H_
-#define _SPARC__TYPES_H_
+#ifndef _MACHINE__TYPES_H_
+#define _MACHINE__TYPES_H_
 
 #if defined(_KERNEL)
 typedef struct label_t {
@@ -116,4 +116,4 @@ typedef	int			__rune_t;
 typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
 
-#endif	/* _SPARC__TYPES_H_ */
+#endif	/* _MACHINE__TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.2 2007/05/10 18:08:13 art Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -25,8 +25,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#ifndef _ALPHA_MUTEX_H_
-#define _ALPHA_MUTEX_H_
+#ifndef _MACHINE_MUTEX_H_
+#define _MACHINE_MUTEX_H_
 
 /*
  * Simple non-mp implementation.
@@ -58,4 +58,4 @@ void mtx_init(struct mutex *, int);
 
 #define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
-#endif	/* _ALPHA_MUTEX_H_ */
+#endif	/* _MACHINE_MUTEX_H_ */

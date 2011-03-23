@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosreg.h,v 1.3 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: mpbiosreg.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 /* 	$NetBSD: mpbiosreg.h,v 1.3 2003/03/04 23:27:32 fvdl Exp $ */
 
 /*-
@@ -32,8 +32,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_MPBIOSREG_H_
-#define _X86_MPBIOSREG_H_
+#ifndef _MACHINE_MPBIOSREG_H_
+#define _MACHINE_MPBIOSREG_H_
 
 #define BIOS_BASE		(0xf0000)
 #define BIOS_SIZE		(0x10000)
@@ -153,4 +153,4 @@ struct mpbios_int {
 };
 
 
-#endif /* !_X86_MPBIOSREG_H_ */
+#endif /* !_MACHINE_MPBIOSREG_H_ */

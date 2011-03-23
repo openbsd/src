@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.23 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.24 2011/03/23 16:54:36 pirofti Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
 /*
  * Machine-dependent defines for new kernel debugger.
  */
-#ifndef	_PPC_DB_MACHDEP_H_
-#define	_PPC_DB_MACHDEP_H_
+#ifndef	_POWERPC_DB_MACHDEP_H_
+#define	_POWERPC_DB_MACHDEP_H_
 
 #include <sys/types.h>
 #include <uvm/uvm_param.h>
@@ -110,4 +110,4 @@ extern struct mutex ddb_mp_mutex;
 
 #endif /* _KERNEL */
 
-#endif	/* _PPC_DB_MACHDEP_H_ */
+#endif	/* _POWERPC_DB_MACHDEP_H_ */

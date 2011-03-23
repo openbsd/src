@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.6 2009/11/27 19:54:35 guenther Exp $	*/
+/*	$OpenBSD: limits.h,v 1.7 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -31,8 +31,8 @@
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
 
-#ifndef _MIPS_LIMITS_H_
-#define _MIPS_LIMITS_H_
+#ifndef _MIPS64_LIMITS_H_
+#define _MIPS64_LIMITS_H_
 
 #include <sys/cdefs.h>
 
@@ -53,4 +53,4 @@
 
 #endif /* __BSD_VISIBLE */
 
-#endif /* !_MIPS_LIMITS_H_ */
+#endif /* !_MIPS64_LIMITS_H_ */

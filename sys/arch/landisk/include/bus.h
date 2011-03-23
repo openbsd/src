@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.7 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -62,8 +62,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LANDISK_BUS_H_
-#define	_LANDISK_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define	_MACHINE_BUS_H_
 
 #include <sys/types.h>
 
@@ -589,4 +589,4 @@ paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 #endif	/* _LANDISK_BUS_DMA_PRIVATE */
 
-#endif	/* _LANDISK_BUS_H_ */
+#endif	/* _MACHINE_BUS_H_ */

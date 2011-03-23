@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: reg.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: reg.h,v 1.1 2001/02/11 14:51:55 bjh21 Exp $	*/
 
 /*
@@ -34,8 +34,8 @@
  *	@(#)reg.h	5.5 (Berkeley) 1/18/91
  */
 
-#ifndef _ARM32_REG_H_
-#define _ARM32_REG_H_
+#ifndef _ARM_REG_H_
+#define _ARM_REG_H_
 
 #include <machine/fp.h>
 
@@ -52,4 +52,4 @@ struct fpreg {
 	fp_reg_t fpr[8];
 };
 
-#endif /* !_ARM32_REG_H_ */
+#endif /* !_ARM_REG_H_ */

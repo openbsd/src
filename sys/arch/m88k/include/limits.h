@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.4 2009/11/27 19:54:35 guenther Exp $ */
+/*	$OpenBSD: limits.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,8 @@
  *	from: @(#)limits.h	8.3 (Berkeley) 1/4/94
  */
 
-#ifndef _MACHINE_LIMITS_H_
-#define _MACHINE_LIMITS_H_
+#ifndef _M88K_LIMITS_H_
+#define _M88K_LIMITS_H_
 
 #include <sys/cdefs.h>
 
@@ -52,4 +52,4 @@
 #define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
 #endif /* __BSD_VISIBLE */
 
-#endif /* _MACHINE_LIMITS_H_ */
+#endif /* _M88K_LIMITS_H_ */

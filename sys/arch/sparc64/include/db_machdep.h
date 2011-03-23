@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.12 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.13 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -27,8 +27,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	_SPARC_DB_MACHDEP_H_
-#define	_SPARC_DB_MACHDEP_H_
+#ifndef	_MACHINE_DB_MACHDEP_H_
+#define	_MACHINE_DB_MACHDEP_H_
 
 /*
  * Machine-dependent defines for new kernel debugger.
@@ -143,4 +143,4 @@ int kdb_trap(int, struct trapframe64 *);
 /* Register device-specific method for triggering XIRs. */
 void db_register_xir(void (*)(void *, int), void *);
 
-#endif	/* _SPARC_DB_MACHDEP_H_ */
+#endif	/* _MACHINE_DB_MACHDEP_H_ */

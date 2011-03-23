@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.8 2008/01/16 20:55:37 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.9 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: pcb.h,v 1.7 2000/12/29 17:12:05 eeh Exp $ */
 
 /*
@@ -41,8 +41,8 @@
  *	@(#)pcb.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _SPARC64_PCB_H_
-#define _SPARC64_PCB_H_
+#ifndef _MACHINE_PCB_H_
+#define _MACHINE_PCB_H_
 
 #include <machine/reg.h>
 
@@ -161,4 +161,4 @@ struct md_coredump {
 #define pcb_wim	pcb_cwp
 #endif /* _KERNEL */
 
-#endif /* _SPARC64_PCB_H_ */
+#endif /* _MACHINE_PCB_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_flag.h,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: boot_flag.h,v 1.3 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: boot_flag.h,v 1.3 2001/07/01 02:56:21 gmcgarry Exp $	*/
 
 /*-
@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_BOOT_FLAG_H_
-#define _SYS_BOOT_FLAG_H_
+#ifndef _MACHINE_BOOT_FLAG_H_
+#define _MACHINE_BOOT_FLAG_H_
 
 #include <sys/reboot.h>
 
@@ -65,4 +65,4 @@
 								\
 	} while (/* CONSTCOND */ 0)
 
-#endif /* _SYS_BOOT_FLAG_H_ */
+#endif /* _MACHINE_BOOT_FLAG_H_ */

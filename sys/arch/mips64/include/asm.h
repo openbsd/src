@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.13 2010/10/01 05:02:19 guenther Exp $ */
+/*	$OpenBSD: asm.h,v 1.14 2011/03/23 16:54:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -25,8 +25,8 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef _MIPS64_ASM_H
-#define _MIPS64_ASM_H
+#ifndef _MIPS64_ASM_H_
+#define _MIPS64_ASM_H_
 
 #include <machine/regdef.h>
 
@@ -311,4 +311,4 @@ x: ;				\
 	LA	ci, cpu_info_primary
 #endif /* MULTIPROCESSOR */
 
-#endif /* !_MIPS_ASM_H */
+#endif /* !_MIPS64_ASM_H_ */

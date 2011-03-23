@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.12 2010/09/06 14:44:19 jasper Exp $	*/
+/*	$OpenBSD: pte.h,v 1.13 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -41,8 +41,8 @@
  * to refer to a hardware manual.
  */
 
-#ifndef _I386_PTE_H_
-#define _I386_PTE_H_
+#ifndef _MACHINE_PTE_H_
+#define _MACHINE_PTE_H_
 
 /*
  * i386 MMU hardware structure:
@@ -201,4 +201,4 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define PGEX_U		0x04	/* exception while in user mode (upl) */
 #define PGEX_I		0x10	/* instruction fetch blocked by NX */
 
-#endif /* _I386_PTE_H_ */
+#endif /* _MACHINE_PTE_H_ */

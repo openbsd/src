@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.3 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: trap.h,v 1.4 2011/03/23 16:54:37 pirofti Exp $	*/
 /*	$NetBSD: exception.h,v 1.9 2006/07/22 21:58:29 uwe Exp $	*/
 
 /*-
@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH_EXCEPTION_H_
-#define	_SH_EXCEPTION_H_
+#ifndef _SH_TRAP_H_
+#define	_SH_TRAP_H_
 /*
  * SH3/SH4 Exception handling.
  */
@@ -178,4 +178,4 @@ extern const int exp_types;
 #endif /* !_LOCORE */
 
 #endif /* _KERNEL */
-#endif /* !_SH_EXCEPTION_H_ */
+#endif /* !_SH_TRAP_H_ */

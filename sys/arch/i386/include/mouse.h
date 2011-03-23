@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.h,v 1.2 1996/10/13 00:55:50 downsj Exp $	*/
+/*	$OpenBSD: mouse.h,v 1.3 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: mouse.h,v 1.4 1994/10/27 04:16:10 cgd Exp $	*/
 
 /*-
@@ -24,8 +24,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_MOUSE_H_
-#define _I386_MOUSE_H_
+#ifndef _MACHINE_MOUSE_H_
+#define _MACHINE_MOUSE_H_
 
 struct mouseinfo {
 	unsigned char status;
@@ -50,4 +50,4 @@ struct mouseinfo {
 #define MOUSEIOCSRAW	(MOUSEIOC|61)
 #define MOUSEIOCSCOOKED	(MOUSEIOC|62)
 
-#endif /* !_I386_MOUSE_H_ */
+#endif /* !_MACHINE_MOUSE_H_ */

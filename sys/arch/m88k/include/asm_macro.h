@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.6 2007/12/20 21:19:34 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.7 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -26,8 +26,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef __M88K_ASM_MACRO_H__
-#define __M88K_ASM_MACRO_H__
+#ifndef _M88K_ASM_MACRO_H_
+#define _M88K_ASM_MACRO_H_
 
 /*
  * Various compiler macros used for speed and efficiency.
@@ -75,4 +75,4 @@ static __inline__ u_int get_cpu_pid(void)
 	return (pid);
 }
 
-#endif /* __M88K_ASM_MACRO_H__ */
+#endif /* _M88K_ASM_MACRO_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.7 2006/01/08 14:20:17 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -23,8 +23,8 @@
  * 	Utah $Hdr: signal.h 1.3 94/12/16$
  */
 
-#ifndef	_HPPA_SIGNAL_H_
-#define	_HPPA_SIGNAL_H_
+#ifndef	_MACHINE_SIGNAL_H_
+#define	_MACHINE_SIGNAL_H_
 
 #include <sys/cdefs.h>
 
@@ -58,4 +58,4 @@ struct	sigcontext {
 	unsigned	sc_fpregs[64];
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
-#endif  /* !_HPPA_SIGNAL_H_ */
+#endif  /* !_MACHINE_SIGNAL_H_ */

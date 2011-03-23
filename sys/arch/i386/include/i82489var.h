@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.11 2010/07/25 21:43:37 deraadt Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.12 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_I82489VAR_H_
-#define _I386_I82489VAR_H_
+#ifndef _MACHINE_I82489VAR_H_
+#define _MACHINE_I82489VAR_H_
 
 static __inline__ u_int32_t i82489_readreg(int);
 static __inline__ void i82489_writereg(int, u_int32_t);

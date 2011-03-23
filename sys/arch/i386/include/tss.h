@@ -1,4 +1,4 @@
-/*	$OpenBSD: tss.h,v 1.7 2006/04/27 15:37:53 mickey Exp $	*/
+/*	$OpenBSD: tss.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: tss.h,v 1.6 1995/10/11 04:20:28 mycroft Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  *	@(#)tss.h	5.4 (Berkeley) 1/18/91
  */
 
-#ifndef _I386_TSS_H_
-#define _I386_TSS_H_
+#ifndef _MACHINE_TSS_H_
+#define _MACHINE_TSS_H_
 
 /*
  * Intel 386 Context Data Type
@@ -71,4 +71,4 @@ struct i386tss {
 	int	tss_ioopt;	/* options and I/O permission map offset */
 };
 
-#endif /* _I386_TSS_H_ */
+#endif /* _MACHINE_TSS_H_ */

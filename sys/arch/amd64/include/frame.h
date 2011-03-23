@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.4 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: frame.h,v 1.5 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: frame.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 /*-
@@ -68,8 +68,8 @@
  * Adapted for NetBSD/amd64 by fvdl@wasabisystems.com
  */
 
-#ifndef _AMD64_FRAME_H_
-#define _AMD64_FRAME_H_
+#ifndef _MACHINE_FRAME_H_
+#define _MACHINE_FRAME_H_
 
 #include <sys/signal.h>
 #include <machine/fpu.h>
@@ -160,4 +160,4 @@ struct switchframe {
 	int64_t	sf_rip;
 };
 
-#endif  /* _AMD64_FRAME_H_ */
+#endif  /* _MACHINE_FRAME_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.4 2006/01/10 00:04:04 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.5 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -27,8 +27,8 @@
  */
 
 
-#ifndef _MIPS_CDEFS_H_
-#define	_MIPS_CDEFS_H_
+#ifndef _MIPS64_CDEFS_H_
+#define	_MIPS64_CDEFS_H_
 
 #if defined(lint)
 #define __indr_reference(sym,alias)	__lint_equal__(sym,alias)
@@ -44,4 +44,4 @@
 #define	__indr_references(sym,msg)	/* nothing */
 #endif
 
-#endif /* !_MIPS_CDEFS_H_ */
+#endif /* !_MIPS64_CDEFS_H_ */

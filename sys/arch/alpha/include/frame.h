@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.3 1996/10/30 22:39:06 niklas Exp $	*/
+/*	$OpenBSD: frame.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: frame.h,v 1.3 1996/07/11 05:31:32 cgd Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_FRAME_H_
-#define	_ALPHA_FRAME_H_
+#ifndef _MACHINE_FRAME_H_
+#define	_MACHINE_FRAME_H_
 
 #include <machine/alpha_cpu.h>
 
@@ -92,4 +92,4 @@ struct trapframe {
 	unsigned long	tf_regs[FRAME_SIZE];	/* See above */
 };
 
-#endif /* _ALPHA_FRAME_H_ */
+#endif /* _MACHINE_FRAME_H_ */

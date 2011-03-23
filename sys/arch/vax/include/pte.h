@@ -1,4 +1,4 @@
-/*      $OpenBSD: pte.h,v 1.10 2006/07/25 21:05:31 miod Exp $      */
+/*      $OpenBSD: pte.h,v 1.11 2011/03/23 16:54:37 pirofti Exp $      */
 /*	$NetBSD: pte.h,v 1.21 2005/12/24 22:45:40 perry Exp $	  */
 
 /*
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_PTE_H_
-#define _VAX_PTE_H_
+#ifndef _MACHINE_PTE_H_
+#define _MACHINE_PTE_H_
 
 #ifndef _LOCORE
 

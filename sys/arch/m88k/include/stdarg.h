@@ -1,7 +1,7 @@
-/*	$OpenBSD: stdarg.h,v 1.2 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.3 2011/03/23 16:54:35 pirofti Exp $	*/
 
-#ifndef _M88K_STDARGS_H_
-#define _M88K_STDARGS_H_
+#ifndef _M88K_STDARG_H_
+#define _M88K_STDARG_H_
 
 #include <machine/_types.h>
 
@@ -13,4 +13,4 @@
 
 typedef	__va_list	va_list;
 
-#endif	/* _M88K_STDARGS_H_ */
+#endif	/* _M88K_STDARG_H_ */

@@ -1,9 +1,9 @@
-/*	$OpenBSD: lock.h,v 1.4 2011/01/12 21:11:12 kettenis Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $	*/
 
 /* public domain */
 
-#ifndef	_HPPA_LOCK_H_
-#define	_HPPA_LOCK_H_
+#ifndef	_MACHINE_LOCK_H_
+#define	_MACHINE_LOCK_H_
 
 #include <machine/atomic.h>
 
@@ -52,4 +52,4 @@ int	rw_cas_hppa(volatile unsigned long *, unsigned long, unsigned long);
 #define	rw_cas rw_cas_hppa
 #endif
 
-#endif	/* _HPPA_LOCK_H_ */
+#endif	/* _MACHINE_LOCK_H_ */

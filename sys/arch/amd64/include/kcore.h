@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.3 2007/11/16 17:09:17 mikeb Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: kcore.h,v 1.1 2003/04/26 18:39:43 fvdl Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * Wasabi Systems, Inc.
  */
 
-#ifndef _AMD64_KCORE_H_
-#define _AMD64_KCORE_H_
+#ifndef _MACHINE_KCORE_H_
+#define _MACHINE_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
 	u_int64_t	ptdpaddr;		/* PA of PML4 */
@@ -47,4 +47,4 @@ typedef struct cpu_kcore_hdr {
 #endif
 } cpu_kcore_hdr_t;
 
-#endif /* _AMD64_KCORE_H_ */
+#endif /* _MACHINE_KCORE_H_ */

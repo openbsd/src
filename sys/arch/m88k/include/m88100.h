@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.5 2009/02/21 18:37:47 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.6 2011/03/23 16:54:35 pirofti Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -25,8 +25,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef __M88K_M88100_H__
-#define __M88K_M88100_H__
+#ifndef _M88K_M88100_H_
+#define _M88K_M88100_H_
 
 /*
  *	88100 RISC definitions
@@ -75,4 +75,4 @@ void	m88100_smp_setup(struct cpu_info *);
 
 #endif
 
-#endif /* __M88K_M88100_H__ */
+#endif /* _M88K_M88100_H_ */

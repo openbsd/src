@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.16 2011/03/20 21:44:08 guenther Exp $	*/
+/*	$OpenBSD: npx.h,v 1.17 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -40,8 +40,8 @@
  * W. Jolitz 1/90
  */
 
-#ifndef	_I386_NPX_H_
-#define	_I386_NPX_H_
+#ifndef	_MACHINE_NPX_H_
+#define	_MACHINE_NPX_H_
 
 /* Environment information of floating point unit */
 struct	env87 {
@@ -166,4 +166,4 @@ void	npxtrap(struct trapframe *);
 void	fpu_kernel_enter(void);
 void	fpu_kernel_exit(void);
 
-#endif /* !_I386_NPX_H_ */
+#endif /* !_MACHINE_NPX_H_ */

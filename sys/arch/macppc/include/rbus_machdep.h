@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.5 2010/01/13 09:10:33 jsg Exp $ */
+/*	$OpenBSD: rbus_machdep.h,v 1.6 2011/03/23 16:54:36 pirofti Exp $ */
 /*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 06:43:05 haya Exp $	*/
 
 /*
@@ -27,8 +27,8 @@
  */
 
 
-#if !defined _ARCH_MACPPC_MACPPC_RBUS_MACHDEP_H_
-#define _ARCH_MACPPC_MACPPC_RBUS_MACHDEP_H_
+#if !defined _MACHINE_RBUS_MACHDEP_H_
+#define _MACHINE_RBUS_MACHDEP_H_
 
 struct pci_attach_args;		/* XXX */
 
@@ -59,4 +59,4 @@ rbus_tag_t rbus_pccbb_parent_mem(struct device *self,
 void	pccbb_attach_hook(struct device *, struct device *,
 	    struct pci_attach_args *);
 
-#endif /* _ARCH_MACPPC_MACPPC_RBUS_MACHDEP_H_ */
+#endif /* _MACHINE_RBUS_MACHDEP_H_ */

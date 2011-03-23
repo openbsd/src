@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 2011/03/23 16:54:35 pirofti Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -57,8 +57,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MAC68K_BUS_H_
-#define _MAC68K_BUS_H_
+#ifndef _MACHINE_BUS_H_
+#define _MACHINE_BUS_H_
 
 /*
  * Value for the mac68k bus space tag, not to be used directly by MI code.
@@ -431,4 +431,4 @@ void mac68k_bssr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 
 #define	bus_space_vaddr(t, h)			(void *)((h).base)
 
-#endif /* _MAC68K_BUS_H_ */
+#endif /* _MACHINE_BUS_H_ */

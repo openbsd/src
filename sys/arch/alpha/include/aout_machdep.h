@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_machdep.h,v 1.2 1997/11/10 15:53:09 niklas Exp $	*/
+/*	$OpenBSD: aout_machdep.h,v 1.3 2011/03/23 16:54:33 pirofti Exp $	*/
 /*	$NetBSD: aout_machdep.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -28,12 +28,12 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _ALPHA_EXEC_H_
-#define	_ALPHA_EXEC_H_
+#ifndef _MACHINE_AOUT_MACHDEP_H_
+#define	_MACHINE_AOUT_MACHDEP_H_
 
 #define cpu_exec_aout_makecmds(p, epp)	ENOEXEC
 
 /* Size of a page in an object file. */
 #define	__LDPGSZ	8192
 
-#endif /* !_ALPHA_EXEC_H_ */
+#endif /* !_MACHINE_AOUT_MACHDEP_H_ */

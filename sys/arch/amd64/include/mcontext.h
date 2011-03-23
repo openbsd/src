@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcontext.h,v 1.2 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: mcontext.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: mcontext.h,v 1.1 2003/04/26 18:39:44 fvdl Exp $	*/
 
 /*-
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_MCONTEXT_H_
-#define _AMD64_MCONTEXT_H_
+#ifndef _MACHINE_MCONTEXT_H_
+#define _MACHINE_MCONTEXT_H_
 
 /*
  * Layout of mcontext_t according to the System V Application Binary Interface,
@@ -98,4 +98,4 @@ typedef struct {
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP])
 #endif
 
-#endif	/* !_AMD64_MCONTEXT_H_ */
+#endif	/* !_MACHINE_MCONTEXT_H_ */

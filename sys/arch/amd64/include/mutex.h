@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.3 2005/07/18 02:43:24 fgsch Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -24,8 +24,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
-#ifndef _AMD64_MUTEX_H_
-#define _AMD64_MUTEX_H_
+#ifndef _MACHINE_MUTEX_H_
+#define _MACHINE_MUTEX_H_
 
 struct mutex {
 	int mtx_wantipl;

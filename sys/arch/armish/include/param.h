@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 2006/05/29 17:13:19 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: param.h,v 1.4 2002/02/12 06:58:19 thorpej Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARMISH_PARAM_H_
-#define	_ARMISH_PARAM_H_
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 /*
  * 1 page should be enough
@@ -48,4 +48,4 @@
 #define	_MACHINE	armish
 #define	MACHINE		"armish"
 
-#endif	/* _ARMISH_PARAM_H_ */
+#endif	/* _MACHINE_PARAM_H_ */

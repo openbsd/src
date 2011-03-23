@@ -1,4 +1,4 @@
-/* 	$OpenBSD: vmparam.h,v 1.5 2010/12/15 05:30:19 tedu Exp $	*/
+/* 	$OpenBSD: vmparam.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.23 2003/05/22 05:47:07 thorpej Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARMISH_VMPARAM_H_
-#define	_ARMISH_VMPARAM_H_
+#ifndef	_MACHINE_VMPARAM_H_
+#define	_MACHINE_VMPARAM_H_
 
 #define	ARM_KERNEL_BASE		0xc0000000
 
@@ -97,4 +97,4 @@
 #define	VM_FREELIST_DEFAULT	0
 
 
-#endif	/* _ARMISH_VMPARAM_H_ */
+#endif	/* _MACHINE_VMPARAM_H_ */

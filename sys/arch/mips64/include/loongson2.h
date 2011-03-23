@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2.h,v 1.2 2010/01/28 21:24:08 miod Exp $	*/
+/*	$OpenBSD: loongson2.h,v 1.3 2011/03/23 16:54:36 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_MACHINE_LOONGSON2_H_
-#define	_MACHINE_LOONGSON2_H_
+#ifndef	_MIPS64_LOONGSON2_H_
+#define	_MIPS64_LOONGSON2_H_
 
 /*
  * Loongson 2E/2F specific defines
@@ -57,4 +57,4 @@
 #define	COP_0_DIAG_BTB_CLEAR		0x02
 #define	COP_0_DIAG_RAS_DISABLE		0x01
 
-#endif	/* _MACHINE_LOONGSON2_H_ */
+#endif	/* _MIPS64_LOONGSON2_H_ */

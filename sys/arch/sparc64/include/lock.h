@@ -1,9 +1,9 @@
-/*	$OpenBSD: lock.h,v 1.5 2010/04/27 21:15:01 kettenis Exp $	*/
+/*	$OpenBSD: lock.h,v 1.6 2011/03/23 16:54:37 pirofti Exp $	*/
 
 /* public domain */
 
-#ifndef	_SPARC64_LOCK_H_
-#define	_SPARC64_LOCK_H_
+#ifndef	_MACHINE_LOCK_H_
+#define	_MACHINE_LOCK_H_
 
 #include <machine/atomic.h>
 #include <machine/ctlreg.h>
@@ -53,4 +53,4 @@ __cpu_simple_unlock(__cpu_simple_lock_t *l)
 
 #define	rw_cas(p, o, n)		(sparc64_casx(p, o, n) != o)
 
-#endif	/* _SPARC64_LOCK_H_ */
+#endif	/* _MACHINE_LOCK_H_ */
