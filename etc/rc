@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.349 2011/03/17 16:43:51 robert Exp $
+#	$OpenBSD: rc,v 1.350 2011/03/23 15:22:10 stevesk Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -607,38 +607,7 @@ if [ -x /usr/libexec/vi.recover ]; then
 	echo 'preserving editor files.';	/usr/libexec/vi.recover
 fi
 
-if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
-	echo -n "ssh-keygen: generating new DSA host key... "
-	if /usr/bin/ssh-keygen -q -t dsa -f /etc/ssh/ssh_host_dsa_key -N ''; then
-		echo done.
-	else
-		echo failed.
-	fi
-fi
-if [ ! -f /etc/ssh/ssh_host_ecdsa_key ]; then
-	echo -n "ssh-keygen: generating new ECDSA host key... "
-	if /usr/bin/ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N ''; then
-		echo done.
-	else
-		echo failed.
-	fi
-fi
-if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
-	echo -n "ssh-keygen: generating new RSA host key... "
-	if /usr/bin/ssh-keygen -q -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''; then
-		echo done.
-	else
-		echo failed.
-	fi
-fi
-if [ ! -f /etc/ssh/ssh_host_key ]; then
-	echo -n "ssh-keygen: generating new RSA1 host key... "
-	if /usr/bin/ssh-keygen -q -t rsa1 -f /etc/ssh/ssh_host_key -N ''; then
-		echo done.
-	else
-		echo failed.
-	fi
-fi
+/usr/bin/ssh-keygen -A
 
 echo -n starting network daemons:
 
