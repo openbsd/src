@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.50 2011/01/09 20:25:46 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.51 2011/03/23 09:26:12 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -381,19 +381,6 @@ reroute:
 	}
 #endif /* IPSEC */
 
-	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
-		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
-		if (mcopy) {
-			u_long mtu;
-
-			mtu = IN6_LINKMTU(rt->rt_ifp);
-
-			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
-		}
-		m_freem(m);
-		goto freert;
-	}
-
 	if (rt->rt_flags & RTF_GATEWAY)
 		dst = (struct sockaddr_in6 *)rt->rt_gateway;
 
@@ -496,6 +483,20 @@ reroute:
 		goto reroute;
 	}
 #endif 
+
+	/* Check the size after pf_test6 to give pf a chance to refragment. */
+	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
+		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
+		if (mcopy) {
+			u_long mtu;
+
+			mtu = IN6_LINKMTU(rt->rt_ifp);
+
+			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
+		}
+		m_freem(m);
+		goto freert;
+	}
 
 	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
 	if (error) {
