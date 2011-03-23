@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.245 2011/03/13 15:31:41 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.246 2011/03/23 18:36:41 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3204,7 +3204,7 @@ settunnelinst(const char *id, int param)
 	const char *errmsg = NULL;
 	int rdomainid;
 
-	rdomainid = strtonum(id, 0, 128, &errmsg);
+	rdomainid = strtonum(id, 0, RT_TABLEID_MAX, &errmsg);
 	if (errmsg)
 		errx(1, "rdomain %s: %s", id, errmsg);
 
