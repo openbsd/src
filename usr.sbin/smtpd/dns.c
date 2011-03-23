@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.30 2011/03/09 00:35:42 todd Exp $	*/
+/*	$OpenBSD: dns.c,v 1.31 2011/03/23 20:38:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -42,8 +42,6 @@
 #include "smtpd.h"
 #include "log.h"
 
-void	dns_setup(void);
-int	dns_resolver_updated(void);
 struct dnssession *dnssession_init(struct smtpd *, struct dns *);
 void	dnssession_destroy(struct smtpd *, struct dnssession *);
 void	dnssession_mx_insert(struct dnssession *, struct mx *);
@@ -105,54 +103,13 @@ dns_query_ptr(struct smtpd *env, struct sockaddr_storage *ss, u_int64_t id)
 }
 
 /* LKA interface */
-int
-dns_resolver_updated(void)
-{
-	struct stat sb;
-	static time_t mtime = 0;
-
-	/* first run, we need a resolver context */
-	if (mtime == 0)
-		return 1;
-
-	if (stat(_PATH_RESCONF, &sb) < 0) {
-		log_warnx("dns_resolver_updated: please check %s",
-			_PATH_RESCONF);
-		return 0;
-	}
-
-	/* no change since last time */
-	if (mtime == sb.st_mtime)
-		return 0;
-
-	/* resolv.conf has been updated */
-	mtime = sb.st_mtime;
-	return 1;
-}
-
-void
-dns_setup(void)
-{
-	if (asr)
-		asr_done(asr);
-
-	asr = asr_resolver(NULL);
-	if (asr == NULL)
-		log_warnx("dns_setup: unable to initialize resolver, "
-		    "please check /etc/resolv.conf");
-}
-
 void
 dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 {
 	struct dnssession *dnssession;
 
-	if (dns_resolver_updated())
-		dns_setup();
-
-	if (asr == NULL) {
-		log_warnx("dns_async: resolver is disabled, please check %s",
-		    _PATH_RESCONF);
+	if (asr == NULL && (asr = asr_resolver(NULL)) == NULL) {
+		log_warnx("dns_async: cannot create resolver");
 		goto noasr;
 	}
 
