@@ -1,0 +1,255 @@
+#!/usr/bin/perl -T
+
+# $OpenBSD: security,v 1.1 2011/03/23 21:13:27 schwarze Exp $
+#
+# Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+use warnings;
+use strict;
+
+use Fcntl qw(:mode);
+use File::Compare qw(compare);
+use File::Copy qw(cp);
+
+my $check_title;
+my $return_code = 0;
+
+sub nag ($$) {
+	my ($cond, $msg) = @_;
+	if ($cond) {
+		if ($check_title) {
+			print "\n$check_title:\n";
+			undef $check_title;
+		}
+		print "$msg\n";
+		$return_code = 1;
+	}
+	return $cond;
+}
+
+sub check_access_file {
+	my ($filename, $login) = @_;
+	return unless -e $filename;
+	my (undef, undef, $mode) = stat $filename;
+	nag !defined $mode,
+	    "stat: $filename: $!"
+	or nag $mode & (S_IRUSR | S_IRGRP | S_IROTH) && ! -O $filename,
+	    "Login $login is off but still has a valid shell " .
+	    "and alternate access files in\n" .
+	    "\t home directory are still readable.\n";
+}
+
+sub check_passwd {
+	my $filename = '/etc/master.passwd';
+	$check_title = "Checking the $filename file";
+	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
+	my (%logins, %uids);
+	while (my $line = <$fh>) {
+		chomp $line;
+		nag $line !~ /\S/,
+		    "Line $. is a blank line."
+		    and next;
+		my @f = split /:/, $line, -1;
+		nag @f != 10,
+		    "Line $. has the wrong number of fields:\n$line";
+		my ($name, $pwd, $uid, $gid, $class, $chg, $exp, $gecos,
+		    $home, $shell) = @f;
+		next if $name =~ /^[+-]/;  # skip YP lines
+		unless (nag $name eq '',
+		    "Line $. has an empty login field:\n$line") {
+			nag $name !~ /^[A-Za-z0-9_][-.A-Za-z0-9_]*\$?$/,
+			    "Login $name has non-alphanumeric characters.";
+			nag $logins{$name}++,
+			    "Duplicate login $name.";
+		}
+		nag length $name > 31,
+		    "Login $name has more than 31 characters.";
+		nag $pwd eq '',
+		    "Login $name has no password.";
+		if ($pwd ne '' &&
+		    $pwd ne 'skey' &&
+		    length $pwd != 13 &&
+		    $pwd !~ /^\$[0-9a-f]+\$/ &&
+		    ($shell eq '' || $shell =~ /sh$/)) {
+			nag -s "/etc/skey/$name",
+			    "Login $name is off but still has a valid " .
+			    "shell and an entry in /etc/skey.";
+			nag -d $home && ! -r $home,
+			    "Login $name is off but still has valid " .
+			    "shell and home directory is unreadable\n" .
+			    "\t by root; cannot check for existence " .
+			    "of alternate access files."
+			or check_access_file "$home/.$_", $name
+			    foreach qw(ssh rhosts shosts klogin);
+		}
+		nag $uid == 0 && $name ne 'root',
+		    "Login $name has a user ID of 0.";
+		nag $uid < 0,
+		    "Login $name has a negative user ID.";
+		nag $uids{$uid}++,
+		    "Login $name has duplicate user ID $uid.";
+		nag $gid < 0,
+		    "Login $name has a negative group ID.";
+		nag $exp != 0 && $exp < time,
+		    "Login $name has expired.";
+	}
+	close $fh;
+}
+
+# Backup the master password file; a special case, the normal backup
+# mechanisms also print out file differences and we don't want to do
+# that because this file has encrypted passwords in it.
+sub backup_passwd {
+	my $bdir = '/var/backups';
+	mkdir $bdir, 0700 unless -d $bdir;
+	my $base = 'master.passwd';
+	my $orig = "/etc/$base";
+	my $curr = "$bdir/$base.current";
+	if (!-s $curr) {
+		# nothing
+	} elsif (compare $curr, $orig) {
+		cp $curr, "$bdir/$base.backup";
+	} else {
+		return;
+	}
+	cp $orig, $curr;
+	chown 0, 0, $curr;
+}
+
+# Check the group file syntax.
+sub check_group {
+	my $filename = '/etc/group';
+	$check_title = "Checking the $filename file";
+	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
+	my %names;
+	while (my $line = <$fh>) {
+		chomp $line;
+		nag $line !~ /\S/,
+		    "Line $. is a blank line."
+		    and next;
+		my @f = split /:/, $line, -1;
+		nag @f != 4,
+		    "Line $. has the wrong number of fields:\n$line";
+		my ($name, $pwd, $gid, $members) = @f;
+		next if $name =~ /^[+-]/;  # skip YP lines
+		unless (nag $name eq '',
+		    "Line $. has an empty group name field:\n$line") {
+			nag $name !~ /^[A-Za-z0-9_][-.A-Za-z0-9_]*$/,
+			    "Group $name has non-alphanumeric characters.";
+			nag $names{$name}++,
+			    "Duplicate group name $name.";
+		}
+		nag length $name > 31,
+		    "Group $name has more than 31 characters.";
+		nag $gid =~ /[^\d]/,
+		    "Group $name has an invalid group ID.";
+	}
+	close $fh;
+}
+
+# Root and uucp should both be in /etc/ftpusers.
+sub check_ftpusers {
+	my $filename = '/etc/ftpusers';
+	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
+	my %banned = qw(root 1 uucp 1);
+	while (<$fh>) {
+		chomp;
+		delete $banned{$_};
+	}
+	nag 1, "\u$_ not listed in $filename file."
+	    foreach sort keys %banned;
+	close $fh;
+}
+
+# Uudecode should not be in the /etc/mail/aliases file.
+sub check_mail_aliases {
+	my $filename = '/etc/mail/aliases';
+	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
+	no warnings 'uninitialized';
+	nag /^((?:uu)?decode)/,
+	    "There is an entry for $1 in the $filename file."
+	    while <$fh>;
+	close $fh;
+}
+
+# hostname.if files may contain secrets and should not be world-readable.
+sub check_hostname_if {
+	while (my $filename = glob '/etc/hostname.*') {
+		next unless -e $filename;
+		my (undef, undef, $mode) = stat $filename;
+		nag !defined $mode,
+		    "stat: $filename: $!"
+		or nag $mode & S_IRWXO,
+		    "$filename is world readable.";
+	}
+}
+
+# Files that should not have + signs.
+sub check_hosts_equiv {
+	foreach my $base qw(hosts.equiv shosts.equiv hosts.lpd) {
+		my $filename = "/etc/$base";
+		next unless -s $filename;
+		nag !open(my $fh, '<', $filename),
+		    "open: $filename: $!"
+		    and next;
+		nag /^\+/ && !/^\+@/,
+		    "Plus sign in $filename file."
+		    while <$fh>;
+		close $fh;
+	}
+}
+
+sub find_homes {
+	my $filename = '/etc/passwd';
+	nag !open(my $fh, '<', $filename),
+	    "open: $filename: $!"
+	    and return [];
+	my $homes = [ map [ @{[split /:/]}[0,2,5] ], <$fh> ];
+	close $fh;
+	return $homes;
+}
+
+# Check for special users with .rhosts/.shosts files.
+# Only root should have .rhosts/.shosts files.
+# Also, .rhosts/.shosts files should not have plus signs.
+sub check_rhosts {
+	my ($name, $uid, $home) = @_;
+	return if $name =~ /^[+-]/;  # skip YP lines
+	foreach my $base qw(rhosts shosts) {
+		my $filename = "$home/.$base";
+		next unless -s $filename;
+		nag ! -O $filename &&
+		    ($name eq 'ftp' || $name eq 'uucp' ||
+		    ($uid < 100 && $name ne 'root')),
+		    "$filename ist not owned by root.";
+	}
+}
+
+# main program
+check_passwd;
+backup_passwd;
+check_group;
+$check_title = "Checking configuration files";
+check_ftpusers;
+check_mail_aliases;
+check_hostname_if;
+check_hosts_equiv;
+$check_title = "Checking for special users with .rhosts/.shosts files.";
+my $homes = find_homes;
+check_rhosts(@$_) foreach @$homes;
+$check_title = "Status";
+nag 'right now', 'not yet ready';
+
+exit $return_code;
