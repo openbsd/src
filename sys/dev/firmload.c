@@ -1,4 +1,4 @@
-/*	$OpenBSD: firmload.c,v 1.9 2008/03/08 19:15:26 espie Exp $	*/
+/*	$OpenBSD: firmload.c,v 1.10 2011/03/23 16:09:19 marco Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -45,7 +45,7 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 	path = malloc(MAXPATHLEN, M_TEMP, M_NOWAIT);
 	if (path == NULL)
 		return (ENOMEM);
-		
+
 	if (snprintf(path, MAXPATHLEN, "/etc/firmware/%s", name) >=
 	    MAXPATHLEN) {
 		error = ENAMETOOLONG;
