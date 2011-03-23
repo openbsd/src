@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.13 2009/01/30 17:25:51 rainer Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.14 2011/03/23 00:59:49 bluhm Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ extern int interface_status(struct ifinfo *);
 extern int lladdropt_length(struct sockaddr_dl *);
 extern void lladdropt_fill(struct sockaddr_dl *, struct nd_opt_hdr *);
 extern struct sockaddr_dl *if_nametosdl(char *);
-extern int getinet6sysctl(int);
-extern int setinet6sysctl(int, int);
+extern int getinet6sysctl(int, int);
+extern int setinet6sysctl(int, int, int);
 
 /* rtsol.c */
 extern int sockopen(void);
