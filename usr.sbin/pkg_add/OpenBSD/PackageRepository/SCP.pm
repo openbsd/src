@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.24 2010/07/02 11:50:50 espie Exp $
+# $OpenBSD: SCP.pm,v 1.25 2011/03/23 14:05:35 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -205,12 +205,18 @@ sub abort_batch()
 	print "\nABORTED $token\n";
 }
 
+sub expand_tilde
+{
+	my $arg = shift;
+	return (getpwnam($arg))[7]."/";
+}
 
 local $_;
 while (<STDIN>) {
 	chomp;
 	if (m/^LIST\s+(.*)$/o) {
 		my $dname = $1;
+		$dname =~ s/^\/\~(.*?)\//expand_tilde($1)/e;
 		batch(sub {
 			my $d;
 			if (opendir($d, $dname)) {
@@ -229,6 +235,7 @@ while (<STDIN>) {
 		});
 	} elsif (m/^GET\s+(.*)$/o) {
 		my $fname = $1;
+		$fname =~ s/^\/\~(.*?)\//expand_tilde($1)/e;
 		batch(sub {
 			if (open(my $fh, '<', $fname)) {
 				my $size = (stat $fh)[7];
