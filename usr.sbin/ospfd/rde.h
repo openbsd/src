@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.35 2009/01/07 21:16:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.36 2011/03/24 08:36:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -124,6 +124,9 @@ struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
 void		 lsa_init(struct lsa_tree *);
 int		 lsa_compare(struct vertex *, struct vertex *);
 void		 vertex_free(struct vertex *);
+void		 vertex_nexthop_clear(struct vertex *);
+void		 vertex_nexthop_add(struct vertex *, struct vertex *,
+		    u_int32_t);
 int		 lsa_newer(struct lsa_hdr *, struct lsa_hdr *);
 int		 lsa_check(struct rde_nbr *, struct lsa *, u_int16_t);
 int		 lsa_self(struct rde_nbr *, struct lsa *, struct vertex *);

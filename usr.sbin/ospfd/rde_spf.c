@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.69 2010/02/16 08:22:42 dlg Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.70 2011/03/24 08:36:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -35,8 +35,6 @@ RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
-void		 calc_nexthop_clear(struct vertex *);
-void		 calc_nexthop_add(struct vertex *, struct vertex *, u_int32_t);
 void		 calc_nexthop(struct vertex *, struct vertex *,
 		     struct area *, struct lsa_rtr_link *);
 void		 rt_nexthop_clear(struct rt_node *);
@@ -133,7 +131,7 @@ spf_calc(struct area *area)
 					continue;
 				if (d < w->cost) {
 					w->cost = d;
-					calc_nexthop_clear(w);
+					vertex_nexthop_clear(w);
 					calc_nexthop(w, v, area, rtr_link);
 					/*
 					 * need to readd to candidate list
@@ -147,7 +145,7 @@ spf_calc(struct area *area)
 			} else if (w->cost == LS_INFINITY && d < LS_INFINITY) {
 				w->cost = d;
 
-				calc_nexthop_clear(w);
+				vertex_nexthop_clear(w);
 				calc_nexthop(w, v, area, rtr_link);
 				cand_list_add(w);
 			}
@@ -237,9 +235,9 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 			return;
 
 		/* copy nexthops */
-		calc_nexthop_clear(v);	/* XXX needed ??? */
+		vertex_nexthop_clear(v);	/* XXX needed ??? */
 		TAILQ_FOREACH(vn, &w->nexthop, entry)
-			calc_nexthop_add(v, w, vn->nexthop.s_addr);
+			vertex_nexthop_add(v, w, vn->nexthop.s_addr);
 
 		v->cost = w->cost +
 		    (ntohl(v->lsa->data.sum.metric) & LSA_METRIC_MASK);
@@ -317,20 +315,20 @@ asext_calc(struct vertex *v)
 		adv_rtr.s_addr = htonl(v->adv_rtr);
 		addr.s_addr = htonl(v->ls_id) & v->lsa->data.asext.mask;
 
-		calc_nexthop_clear(v);
+		vertex_nexthop_clear(v);
 		TAILQ_FOREACH(rn, &r->nexthop, entry) {
 			if (rn->invalid)
 				continue;
 
 			if (rn->connected && r->d_type == DT_NET) {
 				if (v->lsa->data.asext.fw_addr != 0)
-					calc_nexthop_add(v, NULL,
+					vertex_nexthop_add(v, NULL,
 					    v->lsa->data.asext.fw_addr);
 				else
-					calc_nexthop_add(v, NULL,
+					vertex_nexthop_add(v, NULL,
 					    htonl(v->adv_rtr));
 			} else
-				calc_nexthop_add(v, NULL, rn->nexthop.s_addr);
+				vertex_nexthop_add(v, NULL, rn->nexthop.s_addr);
 		}
 
 		rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
@@ -350,37 +348,8 @@ spf_tree_clr(struct area *area)
 
 	RB_FOREACH(v, lsa_tree, tree) {
 		v->cost = LS_INFINITY;
-		calc_nexthop_clear(v);
+		vertex_nexthop_clear(v);
 	}
-}
-
-void
-calc_nexthop_clear(struct vertex *v)
-{
-	struct v_nexthop	*vn;
-
-	while ((vn = TAILQ_FIRST(&v->nexthop))) {
-		TAILQ_REMOVE(&v->nexthop, vn, entry);
-		free(vn);
-	}
-}
-
-void
-calc_nexthop_add(struct vertex *dst, struct vertex *parent, u_int32_t nexthop)
-{
-	struct v_nexthop	*vn;
-
-	if (nexthop == 0)
-		/* invalid nexthop, skip it */
-		return;
-
-	if ((vn = calloc(1, sizeof(*vn))) == NULL)
-		fatal("calc_nexthop_add");
-
-	vn->prev = parent;
-	vn->nexthop.s_addr = nexthop;
-
-	TAILQ_INSERT_TAIL(&dst->nexthop, vn, entry);
 }
 
 void
@@ -399,7 +368,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 				fatalx("inconsistent SPF tree");
 			LIST_FOREACH(iface, &area->iface_list, entry) {
 				if (rtr_link->data == iface->addr.s_addr) {
-					calc_nexthop_add(dst, parent,
+					vertex_nexthop_add(dst, parent,
 					    iface->dst.s_addr);
 					return;
 				}
@@ -416,7 +385,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 				    dst->lsa->data.net.mask) ==
 				    (rtr_link->data &
 				     dst->lsa->data.net.mask)) {
-					calc_nexthop_add(dst, parent,
+					vertex_nexthop_add(dst, parent,
 					    rtr_link->data);
 				}
 				break;
@@ -443,11 +412,11 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 					    parent->lsa->data.net.mask) ==
 					    (htonl(parent->ls_id) &
 					    parent->lsa->data.net.mask))
-						calc_nexthop_add(dst, parent,
+						vertex_nexthop_add(dst, parent,
 						    rtr_link->data);
 				}
 			} else {
-				calc_nexthop_add(dst, parent,
+				vertex_nexthop_add(dst, parent,
 				    vn->nexthop.s_addr);
 			}
 		}
@@ -456,7 +425,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 
 	/* case 3 */
 	TAILQ_FOREACH(vn, &parent->nexthop, entry)
-		calc_nexthop_add(dst, parent, vn->nexthop.s_addr);
+		vertex_nexthop_add(dst, parent, vn->nexthop.s_addr);
 }
 
 /* candidate list */

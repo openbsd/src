@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.41 2010/05/07 22:32:34 sthen Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.42 2011/03/24 08:35:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -342,7 +342,8 @@ nbr_del(struct nbr *nbr)
 	db_sum_list_clr(nbr);
 	ls_req_list_clr(nbr);
 
-	LIST_REMOVE(nbr, entry);
+	if (nbr->peerid != NBR_IDSELF)
+		LIST_REMOVE(nbr, entry);
 	LIST_REMOVE(nbr, hash);
 
 	free(nbr);

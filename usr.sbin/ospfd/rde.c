@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.91 2011/01/18 20:46:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.92 2011/03/24 08:35:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -59,6 +59,7 @@ void		 rde_req_list_free(struct rde_nbr *);
 struct iface	*rde_asext_lookup(u_int32_t, int);
 void		 rde_asext_get(struct kroute *);
 void		 rde_asext_put(struct kroute *);
+void		 rde_asext_free(void);
 struct lsa	*orig_asext_lsa(struct kroute *, u_int32_t, u_int16_t);
 
 struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
@@ -194,6 +195,7 @@ void
 rde_shutdown(void)
 {
 	struct area	*a;
+	struct vertex	*v, *nv;
 
 	stop_spf_timer(rdeconf);
 	cand_list_clr();
@@ -203,7 +205,13 @@ rde_shutdown(void)
 		LIST_REMOVE(a, entry);
 		area_del(a);
 	}
+	for (v = RB_MIN(lsa_tree, &asext_tree); v != NULL; v = nv) {
+		nv = RB_NEXT(lsa_tree, &asext_tree, v);
+		vertex_free(v);
+	}
+	rde_asext_free();
 	rde_nbr_free();
+	kr_shutdown();
 
 	msgbuf_clear(&iev_ospfe->ibuf.w);
 	free(iev_ospfe);
@@ -366,8 +374,11 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				if ((v = lsa_find(nbr->area,
 				    ntohl(req_hdr.type), req_hdr.ls_id,
 				    req_hdr.adv_rtr)) == NULL) {
-					imsg_compose_event(iev_ospfe, IMSG_LS_BADREQ,
-					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					log_debug("rde_dispatch_imsg: "
+					    "requested LSA not found");
+					imsg_compose_event(iev_ospfe,
+					    IMSG_LS_BADREQ, imsg.hdr.peerid,
+					    0, -1, NULL, 0);
 					continue;
 				}
 				imsg_compose_event(iev_ospfe, IMSG_LS_UPD,
@@ -396,7 +407,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			}
 
 			v = lsa_find(nbr->area, lsa->hdr.type, lsa->hdr.ls_id,
-				    lsa->hdr.adv_rtr);
+			    lsa->hdr.adv_rtr);
 			if (v == NULL)
 				db_hdr = NULL;
 			else
@@ -1198,6 +1209,18 @@ rde_asext_put(struct kroute *rr)
 
 	RB_REMOVE(asext_tree, &ast, an);
 	free(an);
+}
+
+void
+rde_asext_free(void)
+{
+	struct asext_node	*an, *nan;
+
+	for (an = RB_MIN(asext_tree, &ast); an != NULL; an = nan) {
+		nan = RB_NEXT(asext_tree, &ast, an);
+		RB_REMOVE(asext_tree, &ast, an);
+		free(an);
+	}
 }
 
 struct lsa *

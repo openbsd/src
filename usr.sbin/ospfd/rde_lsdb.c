@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.44 2010/07/19 09:11:08 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.45 2011/03/24 08:36:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -98,8 +98,38 @@ vertex_free(struct vertex *v)
 		RB_REMOVE(lsa_tree, &v->area->lsa_tree, v);
 
 	(void)evtimer_del(&v->ev);
+	vertex_nexthop_clear(v);
 	free(v->lsa);
 	free(v);
+}
+
+void
+vertex_nexthop_clear(struct vertex *v)
+{
+	struct v_nexthop	*vn;
+
+	while ((vn = TAILQ_FIRST(&v->nexthop))) {
+		TAILQ_REMOVE(&v->nexthop, vn, entry);
+		free(vn);
+	}
+}
+
+void
+vertex_nexthop_add(struct vertex *dst, struct vertex *parent, u_int32_t nexthop)
+{
+	struct v_nexthop	*vn;
+
+	if (nexthop == 0)
+		/* invalid nexthop, skip it */
+		return;
+
+	if ((vn = calloc(1, sizeof(*vn))) == NULL)
+		fatal("vertex_nexthop_add");
+
+	vn->prev = parent;
+	vn->nexthop.s_addr = nexthop;
+
+	TAILQ_INSERT_TAIL(&dst->nexthop, vn, entry);
 }
 
 /* returns -1 if a is older, 1 if newer and 0 if equal to b */

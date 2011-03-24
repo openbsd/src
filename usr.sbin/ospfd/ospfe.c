@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.78 2011/03/08 10:56:02 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.79 2011/03/24 08:35:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -223,6 +223,8 @@ ospfe_shutdown(void)
 		area_del(area);
 	}
 
+	nbr_del(nbr_find_peerid(NBR_IDSELF));
+	kr_shutdown();
 	close(oeconf->ospf_socket);
 
 	/* clean up */
