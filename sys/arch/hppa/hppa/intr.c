@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.37 2011/01/01 16:33:37 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.38 2011/03/24 10:52:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -276,11 +276,10 @@ cpu_intr(void *v)
 {
 	struct cpu_info *ci = curcpu();
 	struct trapframe *frame = v;
+	struct hppa_iv *iv;
+	int pri, r, s, bit;
 	u_long mask;
-#ifdef MULTIPROCESSOR
-	int pri;
-#endif
-	int s;
+	void *arg;
 
 	mtctl(0, CR_EIEM);
 
@@ -288,54 +287,55 @@ cpu_intr(void *v)
 	if (ci->ci_in_intr++)
 		frame->tf_flags |= TFF_INTR;
 
-	while ((mask = ci->ci_ipending & ~imask[s])) {
-		int r, bit = fls(mask) - 1;
+	/* Process higher priority interrupts first. */
+	for (pri = NIPL - 1; pri > s; pri--) {
+
+		mask = imask[pri] ^ imask[pri - 1];
+
+		while (ci->ci_ipending & mask) {
+			bit = fls(ci->ci_ipending & mask) - 1;
+			iv = &intr_table[bit];
+
+			ci->ci_ipending &= ~(1L << bit);
+
+			if (iv->flags & HPPA_IV_CALL)
+				continue;
+
+			uvmexp.intrs++;
+			if (iv->flags & HPPA_IV_SOFT)
+				uvmexp.softs++;
+
+			ci->ci_cpl = iv->pri;
+			mtctl(frame->tf_eiem, CR_EIEM);
 
 #ifdef MULTIPROCESSOR
-		/* XXX - Ensure that IPIs run first. */
-		if (mask & (1 << 30))
-			bit = 30;
+			if (pri < IPL_IPI && s < IPL_SCHED)
+				__mp_lock(&kernel_lock);
 #endif
 
-		struct hppa_iv *iv = &intr_table[bit];
-
-		ci->ci_ipending &= ~(1L << bit);
-		if (iv->flags & HPPA_IV_CALL)
-			continue;
-
-		uvmexp.intrs++;
-		if (iv->flags & HPPA_IV_SOFT)
-			uvmexp.softs++;
-
-		ci->ci_cpl = iv->pri;
-		mtctl(frame->tf_eiem, CR_EIEM);
-
-#ifdef MULTIPROCESSOR
-		pri = iv->pri;
-		if (pri < IPL_IPI && s < IPL_SCHED)
-			__mp_lock(&kernel_lock);
-#endif
-
-		for (r = iv->flags & HPPA_IV_SOFT;
-		    iv && iv->handler; iv = iv->next)
-			/* no arg means pass the frame */
-			if ((iv->handler)(iv->arg? iv->arg : v) == 1) {
-				if (iv->cnt)
-					iv->cnt->ec_count++;
-				r |= 1;
+			for (r = iv->flags & HPPA_IV_SOFT;
+			     iv && iv->handler; iv = iv->next) {
+				/* no arg means pass the frame */
+				arg = iv->arg ? iv->arg : v;
+				if ((iv->handler)(arg) == 1) {
+					if (iv->cnt)
+						iv->cnt->ec_count++;
+					r |= 1;
+				}
 			}
 #if 0	/* XXX this does not work, lasi gives us double ints */
-		if (!r) {
-			ci->ci_cpl = 0;
-			printf("stray interrupt %d\n", bit);
-		}
+			if (!r) {
+				ci->ci_cpl = 0;
+				printf("stray interrupt %d\n", bit);
+			}
 #endif
 
 #ifdef MULTIPROCESSOR
-		if (pri < IPL_IPI && s < IPL_SCHED)
-			__mp_unlock(&kernel_lock);
+			if (pri < IPL_IPI && s < IPL_SCHED)
+				__mp_unlock(&kernel_lock);
 #endif
-		mtctl(0, CR_EIEM);
+			mtctl(0, CR_EIEM);
+		}
 	}
 	ci->ci_in_intr--;
 	ci->ci_cpl = s;
