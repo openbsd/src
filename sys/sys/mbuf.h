@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.144 2010/11/05 15:17:50 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.145 2011/03/24 20:09:45 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ struct pkthdr_pf {
 #define	PF_TAG_DIVERTED			0x08
 #define	PF_TAG_DIVERTED_PACKET		0x10
 #define	PF_TAG_REROUTE			0x20
+#define	PF_TAG_REFRAGMENTED		0x40	/* refragmented ipv6 packet */
 
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
@@ -445,5 +446,6 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_DLT			0x0100 /* data link layer type */
 #define PACKET_TAG_PF_DIVERT		0x0200 /* pf(4) diverted packet */
 #define PACKET_TAG_PIPEX		0x0400 /* pipex context XXX */
+#define PACKET_TAG_PF_REASSEMBLED	0x0800 /* pf reassembled ipv6 packet */
 
 #endif

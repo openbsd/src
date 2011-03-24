@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.322 2011/03/07 23:30:19 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.323 2011/03/24 20:09:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,7 +58,7 @@ struct ip6_hdr;
 #endif
 #endif
 
-enum	{ PF_INOUT, PF_IN, PF_OUT };
+enum	{ PF_INOUT, PF_IN, PF_OUT, PF_FWD };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER,
 	  PF_MATCH, PF_DIVERT, PF_RT };
@@ -1771,6 +1771,7 @@ int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
 int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
+int	pf_refragment6(struct mbuf **, struct m_tag *mtag, int);
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *,
 	    struct pf_pdesc *);

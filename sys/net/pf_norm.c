@@ -1,8 +1,9 @@
-/*	$OpenBSD: pf_norm.c,v 1.129 2011/03/23 18:34:17 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.130 2011/03/24 20:09:44 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * Copyright 2009 Henning Brauer <henning@openbsd.org>
+ * Copyright 2011 Alexander Bluhm <bluhm@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +59,7 @@
 
 #ifdef INET6
 #include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 #endif /* INET6 */
 
 #include <net/pfvar.h>
@@ -124,6 +126,9 @@ struct pf_fragment	*pf_fillup_fragment(struct pf_fragment_cmp *,
 int			 pf_isfull_fragment(struct pf_fragment *);
 struct mbuf		*pf_join_fragment(struct pf_fragment *);
 int			 pf_reassemble(struct mbuf **, struct ip *, int,
+			    u_short *);
+int			 pf_reassemble6(struct mbuf **, struct ip6_hdr *,
+			    struct ip6_frag *, u_int16_t, u_int16_t, int,
 			    u_short *);
 
 /* Globals */
@@ -549,6 +554,190 @@ pf_reassemble(struct mbuf **m0, struct ip *ip, int dir, u_short *reason)
 	return (PF_PASS);
 }
 
+#ifdef INET6
+int
+pf_reassemble6(struct mbuf **m0, struct ip6_hdr *ip6, struct ip6_frag *fraghdr,
+    u_int16_t hdrlen, u_int16_t extoff, int dir, u_short *reason)
+{
+	struct mbuf		*m = *m0;
+	struct m_tag		*mtag;
+	struct pf_fragment_tag	*ftag;
+	struct pf_frent		*frent;
+	struct pf_fragment	*frag;
+	struct pf_fragment_cmp	 key;
+	int			 off;
+	u_int16_t		 total, maxlen;
+	u_int8_t		 proto;
+
+	/* Get an entry for the fragment queue */
+	if ((frent = pf_create_fragment(reason)) == NULL)
+		return (PF_DROP);
+
+	frent->fe_m = m;
+	frent->fe_hdrlen = hdrlen;
+	frent->fe_extoff = extoff;
+	frent->fe_len = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) - hdrlen;
+	frent->fe_off = ntohs(fraghdr->ip6f_offlg & IP6F_OFF_MASK);
+	frent->fe_mff = fraghdr->ip6f_offlg & IP6F_MORE_FRAG;
+
+	key.fr_src.v6 = ip6->ip6_src;
+	key.fr_dst.v6 = ip6->ip6_dst;
+	key.fr_af = AF_INET6;
+	/* Only the first fragment's protocol is relevant */
+	key.fr_proto = 0;
+	key.fr_id = fraghdr->ip6f_ident;
+	key.fr_direction = dir;
+
+	if ((frag = pf_fillup_fragment(&key, frent, reason)) == NULL)
+		return (PF_DROP);
+
+	/* The mbuf is part of the fragment entry, no direct free or access */
+	m = *m0 = NULL;
+
+	if (!pf_isfull_fragment(frag))
+		return (PF_PASS);  /* drop because *m0 is NULL, no error */
+
+	/* We have all the data */
+	extoff = frent->fe_extoff;
+	maxlen = frag->fr_maxlen;
+	frent = TAILQ_FIRST(&frag->fr_queue);
+	KASSERT(frent != NULL);
+	total = TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_off +
+	    TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_len;
+	hdrlen = frent->fe_hdrlen - sizeof(struct ip6_frag);
+
+	m = *m0 = pf_join_fragment(frag);
+	frag = NULL;
+
+	/* Take protocol from first fragment header */
+	if ((m = m_getptr(m, hdrlen + offsetof(struct ip6_frag, ip6f_nxt),
+	    &off)) == NULL)
+		panic("pf_reassemble6: short mbuf chain");
+	proto = *(mtod(m, caddr_t) + off);
+	m = *m0;
+
+	/* Delete frag6 header */
+	if (frag6_deletefraghdr(m, hdrlen) != 0)
+		goto fail;
+
+	if (m->m_flags & M_PKTHDR) {
+		int plen = 0;
+		for (m = *m0; m; m = m->m_next)
+			plen += m->m_len;
+		m = *m0;
+		m->m_pkthdr.len = plen;
+	}
+
+	if ((mtag = m_tag_get(PACKET_TAG_PF_REASSEMBLED, sizeof(struct
+	    pf_fragment_tag), M_NOWAIT)) == NULL)
+		goto fail;
+	ftag = (struct pf_fragment_tag *)(mtag + 1);
+	ftag->ft_hdrlen = hdrlen;
+	ftag->ft_extoff = extoff;
+	ftag->ft_maxlen = maxlen;
+	m_tag_prepend(m, mtag);
+
+	ip6 = mtod(m, struct ip6_hdr *);
+	ip6->ip6_plen = htons(hdrlen - sizeof(struct ip6_hdr) + total);
+	if (extoff) {
+		/* Write protocol into next field of last extension header */
+		if ((m = m_getptr(m, extoff + offsetof(struct ip6_ext,
+		    ip6e_nxt), &off)) == NULL)
+			panic("pf_reassemble6: short mbuf chain");
+		*(mtod(m, caddr_t) + off) = proto;
+		m = *m0;
+	} else
+		ip6->ip6_nxt = proto;
+
+	if (hdrlen - sizeof(struct ip6_hdr) + total > IPV6_MAXPACKET) {
+		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", total);
+		ip6->ip6_plen = 0;
+		REASON_SET(reason, PFRES_SHORT);
+		/* PF_DROP requires a valid mbuf *m0 in pf_test6() */
+		return (PF_DROP);
+	}
+
+	DPFPRINTF(LOG_NOTICE, "complete: %p(%d)", m, ntohs(ip6->ip6_plen));
+	return (PF_PASS);
+
+ fail:
+	REASON_SET(reason, PFRES_MEMORY);
+	/* PF_DROP requires a valid mbuf *m0 in pf_test6(), will free later */
+	return (PF_DROP);
+}
+
+int
+pf_refragment6(struct mbuf **m0, struct m_tag *mtag, int dir)
+{
+	struct mbuf		*m = *m0, *t;
+	struct pf_fragment_tag	*ftag = (struct pf_fragment_tag *)(mtag + 1);
+	u_int32_t		 mtu;
+	u_int16_t		 hdrlen, extoff, maxlen;
+	u_int8_t		 proto;
+	int			 error, action;
+
+	hdrlen = ftag->ft_hdrlen;
+	extoff = ftag->ft_extoff;
+	maxlen = ftag->ft_maxlen;
+	m_tag_delete(m, mtag);
+	mtag = NULL;
+	ftag = NULL;
+
+	if (extoff) {
+		int off;
+
+		/* Use protocol from next field of last extension header */
+		if ((m = m_getptr(m, extoff + offsetof(struct ip6_ext,
+		    ip6e_nxt), &off)) == NULL)
+			panic("pf_refragment6: short mbuf chain");
+		proto = *(mtod(m, caddr_t) + off);
+		*(mtod(m, caddr_t) + off) = IPPROTO_FRAGMENT;
+		m = *m0;
+	} else {
+		struct ip6_hdr *hdr;
+
+		hdr = mtod(m, struct ip6_hdr *);
+		proto = hdr->ip6_nxt;
+		hdr->ip6_nxt = IPPROTO_FRAGMENT;
+	}
+
+	/*
+	 * Maxlen may be less than 8 iff there was only a single
+	 * fragment.  As it was fragmented before, add a fragment
+	 * header also for a single fragment.  If total or maxlen
+	 * is less than 8, ip6_fragment() will return EMSGSIZE and
+	 * we drop the packet.
+	 */
+
+	mtu = hdrlen + sizeof(struct ip6_frag) + maxlen;
+	error = ip6_fragment(m, hdrlen, proto, mtu);
+
+	m = (*m0)->m_nextpkt;
+	(*m0)->m_nextpkt = NULL;
+	if (error == 0) {
+		/* The first mbuf contains the unfragmented packet */
+		m_freem(*m0);
+		*m0 = NULL;
+		action = PF_PASS;
+	} else {
+		/* Drop expects an mbuf to free */
+		DPFPRINTF(LOG_NOTICE, "refragment error %d", error);
+		action = PF_DROP;
+	}
+	for (t = m; m; m = t) {
+		t = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+		m->m_pkthdr.pf.flags |= PF_TAG_REFRAGMENTED;
+		if (error == 0)
+			ip6_forward(m, 0);
+		else
+			m_freem(m);
+	}
+
+	return (action);
+}
+#endif /* INET6 */
+
 int
 pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif,
     u_short *reason, struct pf_pdesc *pd)
@@ -621,13 +810,13 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 {
 	struct mbuf		*m = *m0;
 	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
-	int			 off;
 	struct ip6_ext		 ext;
 	struct ip6_opt		 opt;
 	struct ip6_opt_jumbo	 jumbo;
 	struct ip6_frag		 frag;
 	u_int32_t		 jumbolen = 0, plen;
-	u_int16_t		 fragoff = 0;
+	int			 extoff;
+	int			 off;
 	int			 optend;
 	int			 ooff;
 	u_int8_t		 proto;
@@ -637,6 +826,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET < m->m_pkthdr.len)
 		goto drop;
 
+	extoff = 0;
 	off = sizeof(struct ip6_hdr);
 	proto = h->ip6_nxt;
 	terminal = 0;
@@ -651,6 +841,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, off, &ext, sizeof(ext), NULL,
 			    NULL, AF_INET6))
 				goto shortpkt;
+			extoff = off;
 			if (proto == IPPROTO_AH)
 				off += (ext.ip6e_len + 2) * 4;
 			else
@@ -661,6 +852,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 			if (!pf_pull_hdr(m, off, &ext, sizeof(ext), NULL,
 			    NULL, AF_INET6))
 				goto shortpkt;
+			extoff = off;
 			optend = off + (ext.ip6e_len + 1) * 8;
 			ooff = off + sizeof(ext);
 			do {
@@ -710,10 +902,9 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	} while (!terminal);
 
 	/* jumbo payload option must be present, or plen > 0 */
-	if (ntohs(h->ip6_plen) == 0)
+	plen = ntohs(h->ip6_plen);
+	if (plen == 0)
 		plen = jumbolen;
-	else
-		plen = ntohs(h->ip6_plen);
 	if (plen == 0)
 		goto drop;
 	if (sizeof(struct ip6_hdr) + plen > m->m_pkthdr.len)
@@ -722,19 +913,26 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	return (PF_PASS);
 
  fragment:
-	if (ntohs(h->ip6_plen) == 0 || jumbolen)
-		goto drop;
+	/* jumbo payload packets cannot be fragmented */
 	plen = ntohs(h->ip6_plen);
+	if (plen == 0 || jumbolen)
+		goto drop;
+	if (sizeof(struct ip6_hdr) + plen > m->m_pkthdr.len)
+		goto shortpkt;
 
 	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, NULL, AF_INET6))
 		goto shortpkt;
-	fragoff = ntohs(frag.ip6f_offlg & IP6F_OFF_MASK);
-	if (fragoff + (sizeof(struct ip6_hdr) + plen - off - sizeof(frag)) >
-	    IPV6_MAXPACKET)
-		goto badfrag;
+	/* offset now points to data portion */
+	off += sizeof(frag);
 
-	/* do something about it */
-	/* remember to set pd->flags |= PFDESC_IP_REAS */
+	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
+	if (pf_reassemble6(m0, h, &frag, off, extoff, dir, reason) != PF_PASS)
+		return (PF_DROP);
+	m = *m0;
+	if (m == NULL)
+		return (PF_PASS);
+
+	pd->flags |= PFDESC_IP_REAS;
 	return (PF_PASS);
 
  shortpkt:
@@ -743,10 +941,6 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 
  drop:
 	REASON_SET(reason, PFRES_NORM);
-	return (PF_DROP);
-
- badfrag:
-	REASON_SET(reason, PFRES_FRAG);
 	return (PF_DROP);
 }
 #endif /* INET6 */

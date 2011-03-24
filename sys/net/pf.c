@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.729 2011/03/07 23:30:18 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.730 2011/03/24 20:09:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6051,12 +6051,13 @@ done:
 
 #ifdef INET6
 int
-pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
+pf_test6(int fwdir, struct ifnet *ifp, struct mbuf **m0,
     struct ether_header *eh)
 {
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0;
 	struct mbuf		*m = *m0;
+	struct m_tag		*mtag;
 	struct ip6_hdr		*h;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
 	struct pf_state		*s = NULL;
@@ -6064,6 +6065,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_pdesc		 pd;
 	union pf_headers	 hdrs;
 	int			 off, hdrlen;
+	int			 dir = (fwdir == PF_FWD) ? PF_OUT : fwdir;
 
 	if (!pf_status.running)
 		return (PF_PASS);
@@ -6101,8 +6103,14 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED_PACKET)
 		return (PF_PASS);
 
+	if (m->m_pkthdr.pf.flags & PF_TAG_REFRAGMENTED) {
+		m->m_pkthdr.pf.flags &= ~PF_TAG_REFRAGMENTED;
+		return (PF_PASS);
+	}
+
 	/* packet reassembly */
-	if (pf_normalize_ip6(m0, dir, kif, &reason, &pd) != PF_PASS) {
+	if (pf_status.reass &&
+	    pf_normalize_ip6(m0, fwdir, kif, &reason, &pd) != PF_PASS) {
 		action = PF_DROP;
 		goto done;
 	}
@@ -6307,6 +6315,11 @@ done:
 			pf_route6(m0, r, dir, kif->pfik_ifp, s);
 		break;
 	}
+
+	/* if reassembled packet passed, create new fragments */
+	if (pf_status.reass && action == PF_PASS && *m0 && fwdir == PF_FWD &&
+	    (mtag = m_tag_find(m, PACKET_TAG_PF_REASSEMBLED, NULL)) != NULL)
+		action = pf_refragment6(m0, mtag, fwdir);
 
 	return (action);
 }
