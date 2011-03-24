@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.68 2010/09/07 19:58:09 marco Exp $	*/
+/*	$OpenBSD: eval.c,v 1.69 2011/03/24 11:23:08 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -880,25 +880,11 @@ dosub(const char *argv[], int argc)
  * map every character of s1 that is specified in from
  * into s3 and replace in s. (source s1 remains untouched)
  *
- * This is a standard implementation of map(s,from,to) function of ICON
- * language. Within mapvec, we replace every character of "from" with
- * the corresponding character in "to". If "to" is shorter than "from",
- * than the corresponding entries are null, which means that those
- * characters dissapear altogether. Furthermore, imagine
- * map(dest, "sourcestring", "srtin", "rn..*") type call. In this case,
- * `s' maps to `r', `r' maps to `n' and `n' maps to `*'. Thus, `s'
- * ultimately maps to `*'. In order to achieve this effect in an efficient
- * manner (i.e. without multiple passes over the destination string), we
- * loop over mapvec, starting with the initial source character. if the
- * character value (dch) in this location is different than the source
- * character (sch), sch becomes dch, once again to index into mapvec, until
- * the character value stabilizes (i.e. sch = dch, in other words
- * mapvec[n] == n). Even if the entry in the mapvec is null for an ordinary
- * character, it will stabilize, since mapvec[0] == 0 at all times. At the
- * end, we restore mapvec* back to normal where mapvec[n] == n for
- * 0 <= n <= 127. This strategy, along with the restoration of mapvec, is
- * about 5 times faster than any algorithm that makes multiple passes over
- * destination string.
+ * This is derived from the a standard implementation of map(s,from,to) 
+ * function of ICON language. Within mapvec, we replace every character 
+ * of "from" with the corresponding character in "to". 
+ * If "to" is shorter than "from", than the corresponding entries are null, 
+ * which means that those characters dissapear altogether. 
  */
 static void
 map(char *dest, const char *src, const char *from, const char *to)
@@ -958,10 +944,6 @@ map(char *dest, const char *src, const char *from, const char *to)
 		while (*src) {
 			sch = (unsigned char)(*src++);
 			dch = mapvec[sch];
-			while (dch != sch) {
-				sch = dch;
-				dch = mapvec[sch];
-			}
 			if ((*dest = (char)dch))
 				dest++;
 		}
