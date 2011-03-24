@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.4 2011/01/25 20:53:18 naddy Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.5 2011/03/24 21:31:01 matthieu Exp $
 #
 # Generate pkg-config files for OpenSSL.
 
@@ -26,8 +26,8 @@ while getopts "c:ko:" flag; do
 done
 
 [ -n "${curdir}" ] || usage
-if [ ! -w "${curdir}" ]; then
-	echo "${0##*/}: ${curdir}: not found or not writable"
+if [ ! -d "${curdir}" ]; then
+	echo "${0##*/}: ${curdir}: not found"
 	exit 1
 fi
 [ -n "${objdir}" ] || usage
