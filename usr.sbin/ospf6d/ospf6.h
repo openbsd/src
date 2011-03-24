@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.17 2010/07/14 17:06:52 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.18 2011/03/24 10:00:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -100,9 +100,9 @@
 #define CHECK_AGE		300
 #define MAX_AGE_DIFF		900
 #define LS_INFINITY		0xffffff
-#define RESV_SEQ_NUM		0x80000000	/* reserved and "unused" */
-#define INIT_SEQ_NUM		0x80000001
-#define MAX_SEQ_NUM		0x7fffffff
+#define RESV_SEQ_NUM		0x80000000U	/* reserved and "unused" */
+#define INIT_SEQ_NUM		0x80000001U
+#define MAX_SEQ_NUM		0x7fffffffU
 
 /* OSPF header */
 struct ospf_hdr {
