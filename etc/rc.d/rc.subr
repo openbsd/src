@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.28 2011/03/19 19:03:57 ian Exp $
+#	$OpenBSD: rc.subr,v 1.29 2011/03/24 07:28:31 robert Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -50,6 +50,8 @@ rc_wait() {
 rc_cmd() {
 	[ $(id -u) -eq 0 ] || \
 		rc_err "$0: need root privileges"
+
+	[ X"${daemon_flags}" = X"NO" ] && exit 1
 
 	eval _enotsup=\${rc_${1}}
 	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
