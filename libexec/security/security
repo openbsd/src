@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.1 2011/03/23 21:13:27 schwarze Exp $
+# $OpenBSD: security,v 1.2 2011/03/24 21:54:32 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -233,7 +233,7 @@ sub check_rhosts {
 		nag ! -O $filename &&
 		    ($name eq 'ftp' || $name eq 'uucp' ||
 		    ($uid < 100 && $name ne 'root')),
-		    "$filename ist not owned by root.";
+		    "$filename is not owned by root.";
 	}
 }
 
