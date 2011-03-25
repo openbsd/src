@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.149 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.150 2011/03/25 20:05:20 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -553,7 +553,7 @@ uvideo_attach_hook(void *arg)
 
 	/* init mmap queue */
 	SIMPLEQ_INIT(&sc->sc_mmap_q);
-	sc->sc_mmap_cur = 0;
+	sc->sc_mmap_cur = -1;
 	sc->sc_mmap_count = 0;
 
 	DPRINTF(1, "uvideo_attach: doing video_attach_mi\n");
@@ -1594,6 +1594,12 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 		free(sc->sc_mmap_buffer, M_DEVBUF);
 		sc->sc_mmap_buffer = NULL;
 	}
+
+	while (!SIMPLEQ_EMPTY(&sc->sc_mmap_q))
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_mmap_q, q_frames);
+
+	sc->sc_mmap_cur = -1;
+	sc->sc_mmap_count = 0;
 }
 
 usbd_status
@@ -2099,6 +2105,10 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 void
 uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 {
+	if (sc->sc_mmap_cur < 0 || sc->sc_mmap_count == 0 ||
+	    sc->sc_mmap_buffer == NULL)
+		panic("%s: mmap buffers not allocated", __func__);
+
 	/* find a buffer which is ready for queueing */
 	while (sc->sc_mmap_cur < sc->sc_mmap_count) {
 		if (sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.flags &
@@ -2930,6 +2940,9 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	DPRINTF(1, "%s: %s: count=%d\n", DEVNAME(sc), __func__, rb->count);
 
+	if (sc->sc_mmap_count > 0 || sc->sc_mmap_buffer != NULL)
+		panic("%s: mmap buffers already allocated", __func__);
+
 	/* limit the buffers */
 	if (rb->count > UVIDEO_MAX_BUFFERS)
 		sc->sc_mmap_count = UVIDEO_MAX_BUFFERS;
@@ -2970,6 +2983,9 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	/* tell how many buffers we have really allocated */
 	rb->count = sc->sc_mmap_count;
+
+	/* start with the first buffer */
+	sc->sc_mmap_cur = 0;
 
 	return (0);
 }
