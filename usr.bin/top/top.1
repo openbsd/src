@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.57 2010/08/10 20:34:16 sobrado Exp $
+.\"	$OpenBSD: top.1,v 1.58 2011/03/25 12:53:09 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 10 2010 $
+.Dd $Mdocdate: March 25 2011 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -75,7 +75,8 @@ terminal.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 1
-Display CPU statistics on a single line instead of a line per CPU.
+Display combined CPU statistics for all processors on a single line
+instead of one line per CPU.
 .It Fl b
 Use
 .Em batch
@@ -282,7 +283,7 @@ or any process highlighting put in place by the
 .Sq P
 interactive command.
 .It 1
-Display CPU statistics on a single line instead of a line per CPU.
+Toggle the display of CPU statistics.
 .It C
 Toggle the display of process command line arguments.
 .It d Ar count
