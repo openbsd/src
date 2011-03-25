@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.19 2010/06/26 18:02:07 guenther Exp $ */
+/*	$OpenBSD: ospf.h,v 1.20 2011/03/25 08:52:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -29,8 +29,6 @@
 #define IPPROTO_OSPF		89
 #define AllSPFRouters		"224.0.0.5"
 #define AllDRouters		"224.0.0.6"
-
-#define PACKET_HDR		100 /* XXX used to calculate the IP payload */
 
 #define DEFAULT_METRIC		10
 #define DEFAULT_REDIST_METRIC	100

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.19 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: lsack.c,v 1.20 2011/03/25 08:52:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -31,44 +31,70 @@
 #include "log.h"
 #include "ospfe.h"
 
-void	 start_ls_ack_tx_timer_now(struct iface *);
+int		 send_ls_ack(struct iface *, struct in_addr, struct ibuf *);
+struct ibuf	*prepare_ls_ack(struct iface *);
+void		 start_ls_ack_tx_timer_now(struct iface *);
 
 /* link state acknowledgement packet handling */
-int
-send_ls_ack(struct iface *iface, struct in_addr addr, void *data, size_t len)
+struct ibuf *
+prepare_ls_ack(struct iface *iface)
 {
-	struct sockaddr_in	 dst;
-	struct ibuf		*buf;
-	int			 ret;
+	struct ibuf	*buf;
 
-	/* XXX IBUF_READ_SIZE */
-	if ((buf = ibuf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
-		fatal("send_ls_ack");
+	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL) {
+		log_warn("prepare_ls_ack");
+		return (NULL);
+	}
+
+	/* OSPF header */
+	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_ACK)) {
+		log_warn("prepare_ls_ack");
+		ibuf_free(buf);
+		return (NULL);
+	}
+
+	return (buf);
+}
+
+int
+send_ls_ack(struct iface *iface, struct in_addr addr, struct ibuf *buf)
+{
+	struct sockaddr_in	dst;
+	int			ret;
+
+	/* update authentication and calculate checksum */
+	if (auth_gen(buf, iface)) {
+		log_warn("send_ls_ack");
+		return (-1);
+	}
 
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr.s_addr = addr.s_addr;
 
-	/* OSPF header */
-	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_ACK))
-		goto fail;
+	ret = send_packet(iface, buf, &dst);
+	return (ret);
+}
+
+int
+send_direct_ack(struct iface *iface, struct in_addr addr, void *d, size_t len)
+{
+	struct ibuf	*buf;
+	int		 ret;
+
+	if ((buf = prepare_ls_ack(iface)) == NULL)
+		return (-1);
 
 	/* LS ack(s) */
-	if (ibuf_add(buf, data, len))
-		goto fail;
+	if (ibuf_add(buf, d, len)) {
+		log_warn("send_direct_ack");
+		ibuf_free(buf);
+		return (-1);
+	}
 
-	/* update authentication and calculate checksum */
-	if (auth_gen(buf, iface))
-		goto fail;
-
-	ret = send_packet(iface, buf, &dst);
-
+	ret = send_ls_ack(iface, addr, buf);
 	ibuf_free(buf);
 	return (ret);
-fail:
-	log_warn("send_ls_ack");
-	ibuf_free(buf);
-	return (-1);
 }
 
 void
@@ -168,12 +194,9 @@ ls_ack_list_add(struct iface *iface, struct lsa_hdr *lsa)
 	le->le_lsa = lsa;
 	iface->ls_ack_cnt++;
 
-	/* reschedule now if we have enough for a full packet */
-	if (iface->ls_ack_cnt >
-	    ((iface->mtu - PACKET_HDR) / sizeof(struct lsa_hdr))) {
+	/* reschedule now if we have enough for a reasonably sized packet */
+	if (iface->ls_ack_cnt > IP_MSS / sizeof(struct lsa_hdr))
 		start_ls_ack_tx_timer_now(iface);
-	}
-
 }
 
 void
@@ -212,40 +235,45 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 {
 	struct in_addr		 addr;
 	struct iface		*iface = arg;
-	struct lsa_hdr		*lsa_hdr;
 	struct lsa_entry	*le, *nle;
 	struct nbr		*nbr;
-	char			*buf;
-	char			*ptr;
-	int			 cnt = 0;
-
-	if ((buf = calloc(1, READ_BUF_SIZE)) == NULL)
-		fatal("ls_ack_tx_timer");
+	struct ibuf		*buf;
+	int			 cnt;
 
 	while (!ls_ack_list_empty(iface)) {
-		ptr = buf;
+		if ((buf = prepare_ls_ack(iface)) == NULL)
+			fatal("ls_ack_tx_timer");
 		cnt = 0;
-		for (le = TAILQ_FIRST(&iface->ls_ack_list); le != NULL &&
-		    (ptr - buf < iface->mtu - PACKET_HDR); le = nle) {
+
+		for (le = TAILQ_FIRST(&iface->ls_ack_list); le != NULL;
+		    le = nle) {
 			nle = TAILQ_NEXT(le, entry);
-			memcpy(ptr, le->le_lsa, sizeof(struct lsa_hdr));
-			ptr += sizeof(*lsa_hdr);
+			if (ibuf_left(buf) < sizeof(struct lsa_hdr) +
+			    MD5_DIGEST_LENGTH)
+				break;
+			if (ibuf_add(buf, le->le_lsa, sizeof(struct lsa_hdr)))
+				break;
 			ls_ack_list_free(iface, le);
 			cnt++;
+		}
+		if (cnt == 0) {
+			log_warnx("ls_ack_tx_timer: lost in space");
+			ibuf_free(buf);
+			return;
 		}
 
 		/* send LS ack(s) but first set correct destination */
 		switch (iface->type) {
 		case IF_TYPE_POINTOPOINT:
 			inet_aton(AllSPFRouters, &addr);
-			send_ls_ack(iface, addr, buf, ptr - buf);
+			send_ls_ack(iface, addr, buf);
 			break;
 		case IF_TYPE_BROADCAST:
 			if (iface->state & IF_STA_DRORBDR)
 				inet_aton(AllSPFRouters, &addr);
 			else
 				inet_aton(AllDRouters, &addr);
-			send_ls_ack(iface, addr, buf, ptr - buf);
+			send_ls_ack(iface, addr, buf);
 			break;
 		case IF_TYPE_NBMA:
 		case IF_TYPE_POINTOMULTIPOINT:
@@ -255,15 +283,14 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 					continue;
 				if (!(nbr->state & NBR_STA_FLOOD))
 					continue;
-				send_ls_ack(iface, nbr->addr, buf, ptr - buf);
+				send_ls_ack(iface, nbr->addr, buf);
 			}
 			break;
 		default:
 			fatalx("lsa_ack_tx_timer: unknown interface type");
 		}
+		ibuf_free(buf);
 	}
-
-	free(buf);
 }
 
 void
