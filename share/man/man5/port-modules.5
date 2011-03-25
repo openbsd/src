@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.86 2010/12/06 10:02:14 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.87 2011/03/25 09:28:30 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2010 $
+.Dd $Mdocdate: March 25 2011 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -365,6 +365,15 @@ post-install:
 	${MODCPAN_POST_INSTALL}
 .Ed
 .It devel/cmake
+.It devel/dconf
+Sets CONFIGURE_ARGS, BUILD_DEPENDS and RUN_DEPENDS.
+This module is used by ports installing gsettings schemas under
+.Pa ${PREFIX}/share/glib-2.0/schemas/ .
+It requires the following goo in the PLIST:
+.Bd -literal -offset indent
+@exec %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas
+@unexec-delete %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas
+.Ed
 .It devel/gconf2
 A link from
 .Xr gconftool-2 1
