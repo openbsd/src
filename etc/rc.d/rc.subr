@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.29 2011/03/24 07:28:31 robert Exp $
+#	$OpenBSD: rc.subr,v 1.30 2011/03/25 10:03:26 ajacoutot Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -39,7 +39,7 @@ rc_print() {
 
 rc_wait() {
 	i=0
-	while [ $i -lt 5 ]; do
+	while [ $i -lt 30 ]; do
 		rc_do rc_check || return 0
 		sleep 1
 		i=$((i+1))
