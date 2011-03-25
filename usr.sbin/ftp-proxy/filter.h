@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.h,v 1.5 2009/09/01 13:46:14 claudio Exp $ */
+/*	$OpenBSD: filter.h,v 1.6 2011/03/25 14:51:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -18,12 +18,13 @@
 
 #define	FTP_PROXY_ANCHOR "ftp-proxy"
 
-int add_nat(u_int32_t, struct sockaddr *, struct sockaddr *, u_int16_t,
+int add_nat(u_int32_t, struct sockaddr *, int, struct sockaddr *, u_int16_t,
     struct sockaddr *, u_int16_t, u_int16_t);
-int add_rdr(u_int32_t, struct sockaddr *, struct sockaddr *, u_int16_t,
-    struct sockaddr *, u_int16_t);
+int add_rdr(u_int32_t, struct sockaddr *, int, struct sockaddr *, u_int16_t,
+    struct sockaddr *, u_int16_t, int);
 int do_commit(void);
 int do_rollback(void);
 void init_filter(char *, char *, int);
 int prepare_commit(u_int32_t);
-int server_lookup(struct sockaddr *, struct sockaddr *, struct sockaddr *);
+int server_lookup(struct sockaddr *, struct sockaddr *, struct sockaddr *,
+    int *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.20 2009/09/01 13:46:14 claudio Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.21 2011/03/25 14:51:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -77,6 +77,7 @@ struct session {
 	char			 sbuf[MAX_LINE];
 	size_t			 sbuf_valid;
 	int			 cmd;
+	int			 client_rd;
 	u_int16_t		 port;
 	u_int16_t		 proxy_port;
 	LIST_ENTRY(session)	 entry;
@@ -427,7 +428,8 @@ handle_connection(const int listen_fd, short event, void *ev)
 		    strerror(errno));
 		goto fail;
 	}
-	if (server_lookup(client_sa, client_to_proxy_sa, server_sa) != 0) {
+	if (server_lookup(client_sa, client_to_proxy_sa, server_sa,
+	    &s->client_rd) != 0) {
 	    	logmsg(LOG_CRIT, "#%d server lookup failed (no rdr?)", s->id);
 		goto fail;
 	}
@@ -477,7 +479,7 @@ handle_connection(const int listen_fd, short event, void *ev)
 	}
 
 	logmsg(LOG_INFO, "#%d FTP session %d/%d started: client %s to server "
-	    "%s via proxy %s ", s->id, session_count, max_sessions,
+	    "%s via proxy %s", s->id, session_count, max_sessions,
 	    sock_ntop(client_sa), sock_ntop(server_sa),
 	    sock_ntop(proxy_to_server_sa));
 
@@ -973,13 +975,14 @@ allow_data_connection(struct session *s)
 
 		/* pass in from $client to $orig_server port $proxy_port
 		    rdr-to $server port $port */
-		if (add_rdr(s->id, client_sa, orig_sa, s->proxy_port,
-		    server_sa, s->port) == -1)
+		if (add_rdr(s->id, client_sa, s->client_rd, orig_sa,
+		    s->proxy_port, server_sa, s->port, getrtable()) == -1)
 			goto fail;
 
 		/* pass out from $client to $server port $port nat-to $proxy */
-		if (add_nat(s->id, client_sa, server_sa, s->port, proxy_sa,
-		    PF_NAT_PROXY_PORT_LOW, PF_NAT_PROXY_PORT_HIGH) == -1)
+		if (add_nat(s->id, client_sa, getrtable(), server_sa,
+		    s->port, proxy_sa, PF_NAT_PROXY_PORT_LOW,
+		    PF_NAT_PROXY_PORT_HIGH) == -1)
 			goto fail;
 	}
 
@@ -994,21 +997,21 @@ allow_data_connection(struct session *s)
 
 		/* pass in from $server to $proxy port $proxy_port
 		    rdr-to $client port $port */
-		if (add_rdr(s->id, server_sa, proxy_sa, s->proxy_port,
-		    client_sa, s->port) == -1)
+		if (add_rdr(s->id, server_sa, getrtable(), proxy_sa,
+		    s->proxy_port, client_sa, s->port, s->client_rd) == -1)
 			goto fail;
 
 		/* pass out from $server to $client port $port
 		    nat-to $orig_server port $natport */
 		if (rfc_mode && s->cmd == CMD_PORT) {
 			/* Rewrite sourceport to RFC mandated 20. */
-			if (add_nat(s->id, server_sa, client_sa, s->port,
-			    orig_sa, 20, 20) == -1)
+			if (add_nat(s->id, server_sa, s->client_rd, client_sa,
+			    s->port, orig_sa, 20, 20) == -1)
 				goto fail;
 		} else {
 			/* Let pf pick a source port from the standard range. */
-			if (add_nat(s->id, server_sa, client_sa, s->port,
-			    orig_sa, PF_NAT_PROXY_PORT_LOW,
+			if (add_nat(s->id, server_sa, s->client_rd, client_sa,
+			    s->port, orig_sa, PF_NAT_PROXY_PORT_LOW,
 			    PF_NAT_PROXY_PORT_HIGH) == -1)
 			    	goto fail;
 		}
