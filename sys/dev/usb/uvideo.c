@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.151 2011/03/25 21:23:54 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.152 2011/03/25 23:19:41 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1057,8 +1057,7 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 	uint32_t fbuf_size;
 
 	fmtidx = sc->sc_fmtgrp_idx;
-
-	frame_num = sc->sc_fmtgrp[fmtidx].frame_num + 1;
+	frame_num = sc->sc_fmtgrp[fmtidx].frame_num;
 	if (frame_num >= UVIDEO_MAX_FRAME) {
 		printf("%s: too many %s frame descriptors found!\n",
 		    DEVNAME(sc),
@@ -1066,19 +1065,11 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 		    "MJPEG" : "UNCOMPRESSED");
 		return (USBD_INVAL);
 	}
-	sc->sc_fmtgrp[fmtidx].frame_num = frame_num;
-
 	sc->sc_fmtgrp[fmtidx].frame[frame_num] = fd;
 
 	if (sc->sc_fmtgrp[fmtidx].frame_cur == NULL ||
-	    sc->sc_fmtgrp[fmtidx].format_dfidx == frame_num) {
+	    sc->sc_fmtgrp[fmtidx].format_dfidx == fd->bFrameIndex)
 		sc->sc_fmtgrp[fmtidx].frame_cur = fd;
-	}
-
-	if (sc->sc_fmtgrp[fmtidx].frame_num ==
-	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors) {
-		sc->sc_fmtgrp_idx++;
-	}
 
 	/*
 	 * On some broken device, dwMaxVideoFrameBufferSize is not correct.
@@ -1096,6 +1087,15 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 	/* store max value */
 	if (fbuf_size > sc->sc_max_fbuf_size)
 		sc->sc_max_fbuf_size = fbuf_size;
+
+	/*
+	 * Increment frame count.  If this is the last frame in the
+	 * format group, go on to next group.
+	 */
+	if (++sc->sc_fmtgrp[fmtidx].frame_num ==
+	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors) {
+		sc->sc_fmtgrp_idx++;
+	}
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1284,7 +1284,7 @@ uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
 
 	size_want = width * height;
 
-	for (i = 1; i <= sc->sc_fmtgrp[idx].frame_num; i++) {
+	for (i = 0; i < sc->sc_fmtgrp[idx].frame_num; i++) {
 		w = UGETW(sc->sc_fmtgrp[idx].frame[i]->wWidth);
 		h = UGETW(sc->sc_fmtgrp[idx].frame[i]->wHeight);
 		size_is = w * h;
@@ -1292,13 +1292,13 @@ uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
 			diff = size_is - size_want;
 		else
 			diff = size_want - size_is;
-		if (i == 1)
+		if (i == 0)
 			diff_best = diff;
 		if (diff <= diff_best) {
 			diff_best = diff;
 			r->width = w;
 			r->height = h;
-			r->fidx = sc->sc_fmtgrp[idx].frame[i]->bFrameIndex;
+			r->fidx = i;
 		}
 		DPRINTF(1, "%s: %s: frame index %d: width=%d, height=%d\n",
 		    DEVNAME(sc), __func__, i, w, h);
@@ -1325,7 +1325,7 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	bzero(probe_data, sizeof(probe_data));
 	USETW(pc->bmHint, 0x1);
 	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
-	pc->bFrameIndex = sc->sc_fmtgrp_cur->format_dfidx;
+	pc->bFrameIndex = sc->sc_fmtgrp_cur->frame_cur->bFrameIndex;
 	/* dwFrameInterval: 30fps=333333, 15fps=666666, 10fps=1000000 */
 	USETDW(pc->dwFrameInterval,
 	    UGETDW(sc->sc_fmtgrp_cur->frame_cur->dwDefaultFrameInterval));
@@ -2697,7 +2697,7 @@ int
 uvideo_enum_fsizes(void *v, struct v4l2_frmsizeenum *fsizes)
 {
 	struct uvideo_softc *sc = v;
-	int i, idx, found = 0;
+	int idx, found = 0;
 
 	for (idx = 0; idx < sc->sc_fmtgrp_num; idx++) {
 		if (sc->sc_fmtgrp[idx].pixelformat == fsizes->pixel_format) {
@@ -2708,16 +2708,14 @@ uvideo_enum_fsizes(void *v, struct v4l2_frmsizeenum *fsizes)
 	if (found == 0)
 		return (EINVAL);
 
-	i = fsizes->index + 1;
-	if (i > sc->sc_fmtgrp[idx].frame_num)
-		/* no more frames left */
+	if (fsizes->index >= sc->sc_fmtgrp[idx].frame_num)
 		return (EINVAL);
 
 	fsizes->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 	fsizes->un.discrete.width =
-	    UGETW(sc->sc_fmtgrp[idx].frame[i]->wWidth);
+	    UGETW(sc->sc_fmtgrp[idx].frame[fsizes->index]->wWidth);
 	fsizes->un.discrete.height =
-	    UGETW(sc->sc_fmtgrp[idx].frame[i]->wHeight);
+	    UGETW(sc->sc_fmtgrp[idx].frame[fsizes->index]->wHeight);
 
 	return (0);
 }
@@ -2787,7 +2785,7 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	/* set new format group */
 	sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[i];
 	sc->sc_fmtgrp[i].frame_cur = sc->sc_fmtgrp[i].frame[r.fidx];
-	sc->sc_fmtgrp[i].format_dfidx = r.fidx;
+
 	/* do device negotiation with commit */
 	error = uvideo_vs_negotiation(sc, 1);
 	if (error != USBD_NORMAL_COMPLETION) {
