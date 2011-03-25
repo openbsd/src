@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.51 2010/11/27 00:38:29 weerd Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.52 2011/03/25 21:23:54 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -343,8 +343,8 @@ struct usb_video_format_mjpeg_desc {
 	uByte	bCopyProtect;
 } __packed;
 
-/* Table 3-2: Motion-JPEG Video Frame Descriptor */
-struct usb_video_frame_mjpeg_desc {
+/* Table 3-2: Video Frame Descriptor (same for mjpeg and uncompressed)*/
+struct usb_video_frame_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
@@ -377,23 +377,6 @@ struct usb_video_format_uncompressed_desc {
 	uByte	bAspectRatioY;
 	uByte	bmInterlaceFlags;
 	uByte	bCopyProtect;
-} __packed;
-
-/* Table 3-2: Uncompressed Video Frame Descriptor */
-struct usb_video_frame_uncompressed_desc {
-	uByte	bLength;
-	uByte	bDescriptorType;
-	uByte	bDescriptorSubtype;
-	uByte	bFrameIndex;
-	uByte	bmCapabilities;
-	uWord	wWidth;
-	uWord	wHeight;
-	uDWord	dwMinBitRate;
-	uDWord	dwMaxBitRate;
-	uDWord	dwMaxVideoFrameBufferSize;
-	uDWord	dwDefaultFrameInterval;
-	uByte	bFrameIntervalType;
-	/* TODO add continous/discrete frame intervals (Table 3-3/3-4) */
 } __packed;
 
 /*
@@ -481,8 +464,8 @@ struct uvideo_format_group {
 	struct uvideo_format_desc		*format;
 	/* frame descriptors for mjpeg and uncompressed are identical */
 #define UVIDEO_MAX_FRAME			 32
-	struct usb_video_frame_mjpeg_desc	*frame_cur;
-	struct usb_video_frame_mjpeg_desc	*frame[UVIDEO_MAX_FRAME];
+	struct usb_video_frame_desc		*frame_cur;
+	struct usb_video_frame_desc		*frame[UVIDEO_MAX_FRAME];
 	int					 frame_num;
 };
 
