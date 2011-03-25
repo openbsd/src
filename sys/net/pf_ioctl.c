@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.236 2010/12/15 14:22:25 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.237 2011/03/25 10:54:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1511,6 +1511,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pnl->rsport = sk->port[sidx];
 				PF_ACPY(&pnl->rdaddr, &sk->addr[didx], sk->af);
 				pnl->rdport = sk->port[didx];
+				pnl->rrdomain = sk->rdomain;
 			} else
 				error = ENOENT;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.323 2011/03/24 20:09:44 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.324 2011/03/25 10:54:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1470,6 +1470,7 @@ struct pfioc_natlook {
 	struct pf_addr	 rsaddr;
 	struct pf_addr	 rdaddr;
 	u_int16_t	 rdomain;
+	u_int16_t	 rrdomain;
 	u_int16_t	 sport;
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
