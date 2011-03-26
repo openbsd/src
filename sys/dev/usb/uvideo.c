@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.156 2011/03/26 08:21:27 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.157 2011/03/26 08:24:52 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -634,7 +634,8 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 			break;
 		case UDESCSUB_VC_PROCESSING_UNIT:
 			/* XXX do correct length calculation */
-			if (desc->bLength < 25) {
+			if (desc->bLength <
+			    sizeof(struct usb_video_frame_desc)) {
 				(void)uvideo_vc_parse_desc_pu(sc, desc);
 			}
 			break;
