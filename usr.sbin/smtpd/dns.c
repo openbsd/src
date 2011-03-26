@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.33 2011/03/26 14:38:14 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.34 2011/03/26 21:40:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -279,6 +279,7 @@ dns_asr_handler(int fd, short event, void *arg)
 		 *
 		 * -- gilles@
 		 */
+		dnssession->mxfound = 0;
 		dnssession->mxcurrent = 0;
 		dnssession->aq = asr_query_host(asr,
 		    dnssession->mxarray[dnssession->mxcurrent].host, AF_UNSPEC);
@@ -321,32 +322,22 @@ dns_asr_mx_handler(int fd, short event, void *arg)
 		return;
 
 	case ASR_YIELD:
-	case ASR_DONE:
-		break;
-	}
-
-	query->error = EAI_AGAIN;
-
-	if (ret == ASR_YIELD) {
 		free(ar.ar_cname);
 		memcpy(&query->ss, &ar.ar_sa.sa, ar.ar_sa.sa.sa_len);
 		query->error = 0;
 		imsg_compose_event(query->asker, IMSG_DNS_HOST, 0, 0, -1, query,
 		    sizeof(*query));
+		dnssession->mxfound++;
 		dns_asr_mx_handler(-1, -1, dnssession);
 		return;
+
+	case ASR_DONE:
+		break;
 	}
 
-	/* ASR_DONE */
-	if (ar.ar_err) {
-		query->error = ar.ar_err;
+	if (++dnssession->mxcurrent == dnssession->mxarraysz)
 		goto end;
-	}
 
-	if (++dnssession->mxcurrent == dnssession->mxarraysz) {
-		query->error = 0;
-		goto end;
-	}
 	dnssession->aq = asr_query_host(asr,
 	    dnssession->mxarray[dnssession->mxcurrent].host, AF_UNSPEC);
 	if (dnssession->aq == NULL)
@@ -355,6 +346,10 @@ dns_asr_mx_handler(int fd, short event, void *arg)
 	return;
 
 end:
+	if (dnssession->mxfound == 0)
+		query->error = EAI_NONAME;
+	else
+		query->error = 0;
 	imsg_compose_event(query->asker, IMSG_DNS_HOST_END, 0, 0, -1, query,
 	    sizeof(*query));
 	dnssession_destroy(env, dnssession);
@@ -387,30 +382,21 @@ dnssession_destroy(struct smtpd *env, struct dnssession *dnssession)
 void
 dnssession_mx_insert(struct dnssession *dnssession, struct mx *mx)
 {
-        size_t i;
-        size_t j;
+	size_t i, j;
 
-	if (dnssession->mxarraysz > MAX_MX_COUNT)
-		dnssession->mxarraysz = MAX_MX_COUNT;
+	for (i = 0; i < dnssession->mxarraysz; i++)
+		if (mx->prio < dnssession->mxarray[i].prio)
+			break;
 
-        if (dnssession->mxarraysz == 0) {
-                dnssession->mxarray[0] = *mx;
+	if (i == MAX_MX_COUNT)
+		return;
+
+	if (dnssession->mxarraysz < MAX_MX_COUNT)
 		dnssession->mxarraysz++;
-                return;
-        }
 
-        for (i = 0; i < dnssession->mxarraysz; ++i)
-                if (mx->prio < dnssession->mxarray[i].prio)
-                        goto insert;
+	for (j = dnssession->mxarraysz - 1; j > i; j--)
+		dnssession->mxarray[j] = dnssession->mxarray[j - 1];
 
-        if (i < MAX_MX_COUNT)
-                dnssession->mxarray[i] = *mx;
-	dnssession->mxarraysz++;
-        return;
-
-insert:
-        for (j = dnssession->mxarraysz; j > i; --j)
-                dnssession->mxarray[j] = dnssession->mxarray[j - 1];
         dnssession->mxarray[i] = *mx;
 }
 
