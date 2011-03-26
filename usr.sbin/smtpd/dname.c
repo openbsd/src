@@ -158,62 +158,10 @@ dname_from_fqdn(const char *str, char *dst, size_t max)
 ssize_t
 dname_from_sockaddr(const struct sockaddr *sa, char *dst, size_t max)
 {
-	const struct in6_addr	*in6_addr;
-	in_addr_t		 addr;
-	char			 buf[80];
+	char	buf[80];
 
-	switch (sa->sa_family) {
-	case AF_INET:
-		addr = ((const struct sockaddr_in *)sa)->sin_addr.s_addr;
-		snprintf(buf, sizeof (buf),
-		    "%d.%d.%d.%d.in-addr.arpa.",
-		    (addr >> 24) & 0xff,
-		    (addr >> 16) & 0xff,
-		    (addr >> 8) & 0xff,
-		    addr & 0xff);
-		break;
-	case AF_INET6:
-		in6_addr = &((const struct sockaddr_in6 *)sa)->sin6_addr;
-		snprintf(buf, sizeof (buf),
-		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
-		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
-		    "ip6.arpa.",
-		    in6_addr->s6_addr[15] & 0xf,
-		    (in6_addr->s6_addr[15] >> 4) & 0xf,
-		    in6_addr->s6_addr[14] & 0xf,
-		    (in6_addr->s6_addr[14] >> 4) & 0xf,
-		    in6_addr->s6_addr[13] & 0xf,
-		    (in6_addr->s6_addr[13] >> 4) & 0xf,
-		    in6_addr->s6_addr[12] & 0xf,
-		    (in6_addr->s6_addr[12] >> 4) & 0xf,
-		    in6_addr->s6_addr[11] & 0xf,
-		    (in6_addr->s6_addr[11] >> 4) & 0xf,
-		    in6_addr->s6_addr[10] & 0xf,
-		    (in6_addr->s6_addr[10] >> 4) & 0xf,
-		    in6_addr->s6_addr[9] & 0xf,
-		    (in6_addr->s6_addr[9] >> 4) & 0xf,
-		    in6_addr->s6_addr[8] & 0xf,
-		    (in6_addr->s6_addr[8] >> 4) & 0xf,
-		    in6_addr->s6_addr[7] & 0xf,
-		    (in6_addr->s6_addr[7] >> 4) & 0xf,
-		    in6_addr->s6_addr[6] & 0xf,
-		    (in6_addr->s6_addr[6] >> 4) & 0xf,
-		    in6_addr->s6_addr[5] & 0xf,
-		    (in6_addr->s6_addr[5] >> 4) & 0xf,
-		    in6_addr->s6_addr[4] & 0xf,
-		    (in6_addr->s6_addr[4] >> 4) & 0xf,
-		    in6_addr->s6_addr[3] & 0xf,
-		    (in6_addr->s6_addr[3] >> 4) & 0xf,
-		    in6_addr->s6_addr[2] & 0xf,
-		    (in6_addr->s6_addr[2] >> 4) & 0xf,
-		    in6_addr->s6_addr[1] & 0xf,
-		    (in6_addr->s6_addr[1] >> 4) & 0xf,
-		    in6_addr->s6_addr[0] & 0xf,
-		    (in6_addr->s6_addr[0] >> 4) & 0xf);
-		break;
-	default:
+	if (sockaddr_as_fqdn(sa, buf, sizeof(buf)) == -1)
 		return (-1);
-	}
 
 	return dname_from_fqdn(buf, dst, max);
 }

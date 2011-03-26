@@ -80,3 +80,7 @@ struct asr_query *asr_query_addrinfo(struct asr*,
 				     const char*,
 				     const char*,
 				     const struct addrinfo*);
+
+struct asr_query *asr_query_cname(struct asr*,
+				  const struct sockaddr*,
+				  socklen_t);
