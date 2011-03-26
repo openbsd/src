@@ -21,11 +21,13 @@
 #include <netinet/in.h>
 
 enum {
-	ASR_NEED_READ,
-	ASR_NEED_WRITE,
+	ASR_COND,
 	ASR_YIELD,
 	ASR_DONE
 };
+
+#define ASR_READ	0x01
+#define ASR_WRITE	0x02
 
 #define ASR_NOREC	0x01
 
@@ -41,10 +43,13 @@ enum {
 };
 
 struct asr_result {
-	int		 ar_fd;
-	int		 ar_timeout;
 	int		 ar_err;
 	const char	*ar_errstr;
+
+	int		 ar_cond;
+	int		 ar_fd;
+	int		 ar_timeout;
+
 	int		 ar_count;
 	struct addrinfo	*ar_ai;
 	char		*ar_cname;

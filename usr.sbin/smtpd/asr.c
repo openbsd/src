@@ -318,8 +318,7 @@ struct kv kv_state[] = {
 };
 
 struct kv kv_transition[] = {
-	{ ASR_NEED_READ,		"ASR_NEED_READ"			},
-	{ ASR_NEED_WRITE,		"ASR_NEED_WRITE"		},
+	{ ASR_COND,			"ASR_COND"			},
 	{ ASR_YIELD,			"ASR_YIELD"			},
 	{ ASR_DONE,			"ASR_DONE"			},
         { 0, NULL }
@@ -452,12 +451,9 @@ asr_run_sync(struct asr_query *aq, struct asr_result *ar)
 	struct pollfd		 fds[1];
 	int			 r;
 
-	for(;;) {
-		r = asr_run(aq, ar);
-		if (r == ASR_DONE || r == ASR_YIELD)
-			break;
+	while((r = asr_run(aq, ar)) == ASR_COND) {
 		fds[0].fd = ar->ar_fd;
-		fds[0].events = (r == ASR_NEED_READ) ? POLLIN : POLLOUT;
+		fds[0].events = (ar->ar_cond == ASR_READ) ? POLLIN : POLLOUT;
 	again:
 		r = poll(fds, 1, ar->ar_timeout);
 		if (r == -1 && errno == EINTR)
@@ -466,7 +462,7 @@ asr_run_sync(struct asr_query *aq, struct asr_result *ar)
 			err(1, "poll");
 	}
 
-	return r;
+	return (r);
 }
 
 void
@@ -1451,9 +1447,10 @@ asr_run_dns(struct asr_query *aq, struct asr_result *ar)
 	case ASR_STATE_UDP_SEND:
 		if (asr_udp_send(aq) == 0) {
 			aq->aq_state = ASR_STATE_UDP_RECV;
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		}
 		aq->aq_state = ASR_STATE_NEXT_NS;
 		break;
@@ -1481,13 +1478,15 @@ asr_run_dns(struct asr_query *aq, struct asr_result *ar)
 			break;
 		case 0:
 			aq->aq_state = ASR_STATE_TCP_READ;
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		case 1:
+			ar->ar_cond = ASR_WRITE;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_WRITE);
+			return (ASR_COND);
 		}
 		break;
 
@@ -1505,9 +1504,10 @@ asr_run_dns(struct asr_query *aq, struct asr_result *ar)
 			aq->aq_state = ASR_STATE_PACKET;
 			break;
 		case 1:
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		}
 		break;
 
@@ -1727,9 +1727,10 @@ asr_run_host(struct asr_query *aq, struct asr_result *ar)
 	case ASR_STATE_UDP_SEND:
 		if (asr_udp_send(aq) == 0) {
 			aq->aq_state = ASR_STATE_UDP_RECV;
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		}
 		aq->aq_state = ASR_STATE_NEXT_NS;
 		break;
@@ -1757,13 +1758,15 @@ asr_run_host(struct asr_query *aq, struct asr_result *ar)
 			break;
 		case 0:
 			aq->aq_state = ASR_STATE_TCP_READ;
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		case 1:
+			ar->ar_cond = ASR_WRITE;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_WRITE);
+			return (ASR_COND);
 		}
 		break;
 
@@ -1781,9 +1784,10 @@ asr_run_host(struct asr_query *aq, struct asr_result *ar)
 			aq->aq_state = ASR_STATE_PACKET;
 			break;
 		case 1:
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		}
 		break;
 
@@ -2211,8 +2215,7 @@ asr_run_addrinfo(struct asr_query *aq, struct asr_result *ar)
 
 	case ASR_STATE_SUBQUERY:
 		switch ((r = asr_run(aq->aq_subq, ar))) {
-		case ASR_NEED_READ:
-		case ASR_NEED_WRITE:
+		case ASR_COND:
 			return (r);
 		case ASR_YIELD:
 			if ((r = asr_add_sockaddr(aq, &ar->ar_sa.sa))) {
@@ -2368,7 +2371,7 @@ asr_run_cname(struct asr_query *aq, struct asr_result *ar)
 			aq->aq_state = ASR_STATE_HALT;
 			break;
 		case -1:
-			ar->ar_err = EASR_NAME;
+			ar->ar_err = EASR_NAME; /* XXX impossible */
 			aq->aq_state = ASR_STATE_HALT;
 			break;
 		default:
@@ -2383,9 +2386,10 @@ asr_run_cname(struct asr_query *aq, struct asr_result *ar)
 	case ASR_STATE_UDP_SEND:
 		if (asr_udp_send(aq) == 0) {
 			aq->aq_state = ASR_STATE_UDP_RECV;
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		}
 		aq->aq_state = ASR_STATE_NEXT_NS;
 		break;
@@ -2413,13 +2417,15 @@ asr_run_cname(struct asr_query *aq, struct asr_result *ar)
 			break;
 		case 0:
 			aq->aq_state = ASR_STATE_TCP_READ;
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		case 1:
+			ar->ar_cond = ASR_WRITE;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_WRITE);
+			return (ASR_COND);
 		}
 		break;
 
@@ -2437,9 +2443,10 @@ asr_run_cname(struct asr_query *aq, struct asr_result *ar)
 			aq->aq_state = ASR_STATE_PACKET;
 			break;
 		case 1:
+			ar->ar_cond = ASR_READ;
 			ar->ar_fd = aq->aq_fd;
 			ar->ar_timeout = aq->aq_timeout;
-			return (ASR_NEED_READ);
+			return (ASR_COND);
 		}
 		break;
 

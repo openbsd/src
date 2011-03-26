@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.32 2011/03/26 10:54:22 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.33 2011/03/26 14:38:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -169,16 +169,10 @@ dns_asr_handler(int fd, short event, void *arg)
 	bzero(&ar, sizeof (ar));
 
 	switch ((ret = asr_run(dnssession->aq, &ar))) {
-	case ASR_NEED_READ:
+	case ASR_COND:
 		tv.tv_usec = ar.ar_timeout * 1000;
-		event_set(&dnssession->ev, ar.ar_fd, EV_READ,
-		    dns_asr_handler, dnssession);
-		event_add(&dnssession->ev, &tv);
-		return;
-
-	case ASR_NEED_WRITE:
-		tv.tv_usec = ar.ar_timeout * 1000;
-		event_set(&dnssession->ev, ar.ar_fd, EV_WRITE,
+		event_set(&dnssession->ev, ar.ar_fd,
+		    ar.ar_cond == ASR_READ ? EV_READ : EV_WRITE,
 		    dns_asr_handler, dnssession);
 		event_add(&dnssession->ev, &tv);
 		return;
@@ -318,16 +312,10 @@ dns_asr_mx_handler(int fd, short event, void *arg)
 	int ret;
 
 	switch ((ret = asr_run(dnssession->aq, &ar))) {
-	case ASR_NEED_READ:
+	case ASR_COND:
 		tv.tv_usec = ar.ar_timeout * 1000;
-		event_set(&dnssession->ev, ar.ar_fd, EV_READ,
-		    dns_asr_mx_handler, dnssession);
-		event_add(&dnssession->ev, &tv);
-		return;
-
-	case ASR_NEED_WRITE:
-		tv.tv_usec = ar.ar_timeout * 1000;
-		event_set(&dnssession->ev, ar.ar_fd, EV_WRITE,
+		event_set(&dnssession->ev, ar.ar_fd,
+		    ar.ar_cond == ASR_READ ? EV_READ : EV_WRITE,
 		    dns_asr_mx_handler, dnssession);
 		event_add(&dnssession->ev, &tv);
 		return;
