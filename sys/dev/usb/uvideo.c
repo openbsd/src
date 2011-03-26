@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.152 2011/03/25 23:19:41 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.153 2011/03/26 07:57:42 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2464,6 +2464,8 @@ void
 uvideo_dump_desc_frame(struct uvideo_softc *sc, const usb_descriptor_t *desc)
 {
 	struct usb_video_frame_desc *d;
+	uint8_t *p;
+	int length, i;
 
 	d = (struct usb_video_frame_desc *)(uint8_t *)desc;
 
@@ -2481,6 +2483,36 @@ uvideo_dump_desc_frame(struct uvideo_softc *sc, const usb_descriptor_t *desc)
 	printf("dwDefaultFrameInterval=%d\n",
 	    UGETDW(d->dwDefaultFrameInterval));
 	printf("bFrameIntervalType=0x%02x\n", d->bFrameIntervalType);
+
+	p = (uint8_t *)d;
+	p += sizeof(struct usb_video_frame_desc);
+
+	if (!d->bFrameIntervalType) {
+		/* continuous */
+		if (d->bLength < (sizeof(struct usb_video_frame_desc) +
+		    sizeof(uDWord) * 3)) {
+			printf("invalid frame descriptor length\n");
+		} else {
+			printf("dwMinFrameInterval = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+			printf("dwMaxFrameInterval = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+			printf("dwFrameIntervalStep = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+		}
+	} else {
+		/* discrete */
+		length = d->bLength - sizeof(struct usb_video_frame_desc);
+		for (i = 0; i < d->bFrameIntervalType; i++) {
+			if (length <= 0) {
+				printf("frame descriptor ended early\n");
+				break;
+			}
+			printf("dwFrameInterval = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+			length -= sizeof(uDWord);
+		}
+	}
 }
 
 void
