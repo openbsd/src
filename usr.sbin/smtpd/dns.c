@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.31 2011/03/23 20:38:56 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.32 2011/03/26 10:54:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -285,9 +285,9 @@ dns_asr_handler(int fd, short event, void *arg)
 		 *
 		 * -- gilles@
 		 */
-		dnssession->mxcurrent = &dnssession->mxarray[0];
+		dnssession->mxcurrent = 0;
 		dnssession->aq = asr_query_host(asr,
-		    dnssession->mxcurrent->host, AF_UNSPEC);
+		    dnssession->mxarray[dnssession->mxcurrent].host, AF_UNSPEC);
 		if (dnssession->aq == NULL)
 			goto err;
 
@@ -315,7 +315,6 @@ dns_asr_mx_handler(int fd, short event, void *arg)
 	struct smtpd *env = query->env;
 	struct asr_result ar;
 	struct timeval tv = { 0, 0 };
-	struct mx *lastmx;
 	int ret;
 
 	switch ((ret = asr_run(dnssession->aq, &ar))) {
@@ -356,15 +355,12 @@ dns_asr_mx_handler(int fd, short event, void *arg)
 		goto end;
 	}
 
-	lastmx = &dnssession->mxarray[dnssession->mxarraysz - 1];
-	if (dnssession->mxcurrent == lastmx) {
+	if (++dnssession->mxcurrent == dnssession->mxarraysz) {
 		query->error = 0;
 		goto end;
 	}
-
-	dnssession->mxcurrent++;
-	dnssession->aq = asr_query_host(asr, dnssession->mxcurrent->host,
-	    AF_UNSPEC);
+	dnssession->aq = asr_query_host(asr,
+	    dnssession->mxarray[dnssession->mxcurrent].host, AF_UNSPEC);
 	if (dnssession->aq == NULL)
 		goto end;
 	dns_asr_mx_handler(-1, -1, dnssession);

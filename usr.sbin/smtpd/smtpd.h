@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.202 2011/03/15 19:24:55 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.203 2011/03/26 10:54:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -800,7 +800,6 @@ struct lkasession {
 struct mx {
         char    host[MAXHOSTNAMELEN];
         int     prio;
-        struct mx *next;
 };
 
 struct dnssession {
@@ -811,7 +810,7 @@ struct dnssession {
         struct asr_query                *aq;
         struct mx                        mxarray[MAX_MX_COUNT];
         size_t                           mxarraysz;
-        struct mx                       *mxcurrent;
+        size_t                           mxcurrent;
 };
 
 enum mta_state {
