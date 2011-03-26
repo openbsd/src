@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.155 2011/03/26 08:15:07 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.156 2011/03/26 08:21:27 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2130,6 +2130,9 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 	/* copy frame to mmap buffer and report length */
 	bcopy(buf, sc->sc_mmap[sc->sc_mmap_cur].buf, len);
 	sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.bytesused = len;
+
+	/* timestamp it */
+	getmicrotime(&sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.timestamp);
 
 	/* queue it */
 	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, &sc->sc_mmap[sc->sc_mmap_cur],
