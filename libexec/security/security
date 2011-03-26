@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.3 2011/03/25 02:30:33 schwarze Exp $
+# $OpenBSD: security,v 1.4 2011/03/26 22:13:53 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -23,6 +23,10 @@ use strict;
 use Fcntl qw(:mode);
 use File::Compare qw(compare);
 use File::Copy qw(cp);
+
+$ENV{PATH} = '/bin:/usr/bin:/sbin:/usr/sbin';
+delete $ENV{ENV};
+umask 077;
 
 my $check_title;
 my $return_code = 0;
@@ -158,6 +162,118 @@ sub check_group {
 		    "Group $name has an invalid group ID.";
 	}
 	close $fh;
+}
+
+sub check_umask {
+	my $filename = shift;
+	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
+	my $umaskset;
+	while (<$fh>) {
+		next unless /^\s*umask\s+([0-7]+)/;
+		my $umask = "0$1";
+		$umaskset = 1;
+		my ($other, $group) = reverse split '', $umask;
+		nag $group =~ /^[0145]$/,
+		    "Root umask is group writable";
+		nag $other =~ /^[0145]$/,
+		    "Root umask is other writable";
+	}
+	close $fh;
+	return $umaskset;
+}
+
+# This type of test by spawning a shell is messy and fragile.
+# Instead, consider modifying the shells to warn about '.' in the PATH.
+sub check_root_path {
+	my ($path, $filename) = @_;
+	nag !($path =~ s/^PATH=[:\s]*//),
+	    "Failed to find PATH in $filename.";
+	foreach my $dir (split /[:\s]+/, $path) {
+		nag $dir eq '.', "The root path includes ." and next;
+		next unless -d $dir;
+		my $mode = (stat(_))[2];
+		nag $mode & S_IWGRP,
+		    "Root path directory $dir is group writable.";
+		nag $mode & S_IWOTH,
+		    "Root path directory $dir is other writable.";
+	}
+}
+
+# Check for umask values and root paths in startup files.
+sub check_csh {
+	my @list = qw(/etc/csh.cshrc /etc/csh.login /root/.cshrc /root/.login);
+	$check_title = "Checking root csh paths, umask values:\n@list";
+
+	my $umaskset = 0;
+	foreach my $filename (@list) {
+		next unless -s $filename;
+		$umaskset = 1 if check_umask $filename;
+
+		nag !open(my $fh, '-|', qw(/bin/csh -f -c),
+			"source $filename; echo PATH=\$path"),
+		    "cannot spawn /bin/csh: $!"
+		    and next;
+		my @output = <$fh>;
+		close $fh;
+		chomp @output;
+		check_root_path $output[-1], $filename;
+	}
+	nag !$umaskset,
+	    "\nRoot csh startup files do not set the umask.";
+}
+
+sub check_sh {
+	my @list = qw(/etc/profile /root/.profile);
+	$check_title = "Checking root sh paths, umask values:\n@list";
+
+	my @env_path;
+	my $umaskset = 0;
+	foreach my $filename (@list) {
+		next unless -s $filename;
+		$umaskset ||= check_umask($filename);
+
+		nag !open(my $fh, '-|', qw(/bin/sh -c),
+			". $filename; echo ENV=\$ENV; echo PATH=\$PATH"),
+		    "cannot spawn /bin/sh: $!"
+		    and next;
+		my @output = <$fh>;
+		close $fh;
+		chomp @output;
+		check_root_path $output[-1], $filename;
+
+		nag !($output[-2] =~ /^ENV=\s*(\S*)/),
+		    "Failed to find ENV in $filename."
+		    and next;
+		push @env_path, $1 if $1 ne '';
+	}
+	nag !$umaskset,
+	    "\nRoot sh startup files do not set the umask.";
+	return @env_path;
+}
+
+sub check_ksh {
+	my @list = ('/etc/ksh.kshrc', @_);
+	$check_title = "Checking root ksh paths, umask values:\n@list";
+
+	# Usually, we are at HOME anyway, but for the ENV check, this
+	# is particularly important, so make sure we are really there.
+	chdir '/root';
+
+	# A good .kshrc will not have a umask or path, 
+	# that being set in .profile; check anyway.
+	foreach my $filename (@list) {
+		next unless -s $filename;
+		check_umask($filename);
+
+		nag !open(my $fh, '-|', qw(/bin/ksh -c),
+			". $filename; echo PATH=\$PATH"),
+		    "cannot spawn /bin/ksh: $!"
+		    and next;
+		my @output = <$fh>;
+		close $fh;
+		chomp @output;
+		check_root_path $output[-1], $filename;
+	}
 }
 
 # Root and uucp should both be in /etc/ftpusers.
@@ -318,10 +434,18 @@ sub check_mailboxes {
 	closedir $dh;
 }
 
+
 # main program
 check_passwd;
 backup_passwd;
 check_group;
+
+open my $olderr, '>&', \*STDERR;
+open STDERR, '>', '/dev/null';
+check_csh;
+check_ksh(check_sh);
+open STDERR, '>&', $olderr;
+
 $check_title = "Checking configuration files";
 check_ftpusers;
 check_mail_aliases;
@@ -337,6 +461,7 @@ check_dot_readable(@$_) foreach @$homes;
 check_dot_writeable(@$_) foreach @$homes;
 $check_title = "Checking mailbox ownership.";
 check_mailboxes;
+
 $check_title = "Status";
 nag 'right now', 'not yet ready';
 
