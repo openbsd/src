@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.41 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.42 2011/03/26 10:59:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -196,7 +196,7 @@ enqueue(int argc, char *argv[])
 
 	/* init session */
 	rewind(fp);
-	msg.pcb = client_init(msg.fd, fileno(fp), "localhost", verbose);
+	msg.pcb = client_init(msg.fd, fp, "localhost", verbose);
 
 	/* set envelope from */
 	client_sender(msg.pcb, "%s", msg.from);
@@ -237,6 +237,7 @@ enqueue(int argc, char *argv[])
 		err(1, "event_dispatch");
 
 	client_close(msg.pcb);
+	fclose(fp);
 	exit(0);
 }
 

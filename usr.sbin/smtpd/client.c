@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.34 2011/03/21 09:21:57 gilles Exp $	*/
+/*	$OpenBSD: client.c,v 1.35 2011/03/26 10:59:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -50,7 +50,7 @@ int		 ssl_buf_write(SSL *, struct msgbuf *);
  * Initialize SMTP session.
  */
 struct smtp_client *
-client_init(int fd, int body, char *ehlo, int verbose)
+client_init(int fd, FILE *body, char *ehlo, int verbose)
 {
 	struct smtp_client	*sp = NULL;
 	struct client_cmd	*c;
@@ -76,8 +76,7 @@ client_init(int fd, int body, char *ehlo, int verbose)
 		sp->verbose = stdout;
 	else if ((sp->verbose = fopen("/dev/null", "a")) == NULL)
 		fatal("client_init: fopen");
-	if ((sp->body = fdopen(body, "r")) == NULL)
-		fatal("client_init: fdopen");
+	sp->body = body;
 	sp->timeout.tv_sec = 300;
 	msgbuf_init(&sp->w);
 	sp->w.fd = fd;

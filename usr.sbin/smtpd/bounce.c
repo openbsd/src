@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.25 2011/03/21 13:06:25 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.26 2011/03/26 10:59:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -43,6 +43,7 @@ struct client_ctx {
 	struct message		 m;
 	struct smtp_client	*pcb;
 	struct smtpd		*env;
+	FILE			*msgfp;
 };
 
 int
@@ -51,19 +52,22 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	struct client_ctx	*cc = NULL;
 	int			 msgfd = -1;
 	char			*reason;
+	FILE			*msgfp = NULL;
 
 	/* get message content */
 	if ((msgfd = queue_open_message_file(messagep->message_id)) == -1)
 		goto fail;
+	msgfp = fdopen(msgfd, "r");
+	if (msgfp == NULL)
+		fatal("fdopen");
 	
 	/* init smtp session */
-	if ((cc = calloc(1, sizeof(*cc))) == NULL) {
-		close(msgfd);
+	if ((cc = calloc(1, sizeof(*cc))) == NULL) 
 		goto fail;
-	}
-	cc->pcb = client_init(fd, msgfd, env->sc_hostname, 1);
+	cc->pcb = client_init(fd, msgfp, env->sc_hostname, 1);
 	cc->env = env;
 	cc->m = *messagep;
+	cc->msgfp = msgfp;
 
 	client_ssl_optional(cc->pcb);
 	client_sender(cc->pcb, "");
@@ -107,8 +111,10 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 
 	return 1;
 fail:
-	if (cc && cc->pcb)
-		client_close(cc->pcb);
+	if (cc)
+		fclose(cc->msgfp);
+	else if (msgfd != -1)
+		close(msgfd);
 	free(cc);
 	return 0;
 }
@@ -154,6 +160,7 @@ out:
 	cc->env->stats->runner.active--;
 	cc->env->stats->runner.bounces_active--;
 	client_close(cc->pcb);
+	fclose(cc->msgfp);
 	free(cc);
 	return;
 

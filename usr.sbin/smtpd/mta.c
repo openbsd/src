@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.98 2011/03/21 13:02:52 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.99 2011/03/26 10:59:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -76,7 +76,6 @@ mta_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			s->id = b->id;
 			s->state = MTA_INIT;
 			s->env = env;
-			s->datafd = -1;
 
 			/* establish host name */
 			if (b->rule.r_action == A_RELAYVIA) {
@@ -444,7 +443,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		 */
 		log_debug("mta: entering smtp phase");
 
-		pcb = client_init(s->fd, s->datafd, s->env->sc_hostname, 1);
+		pcb = client_init(s->fd, s->datafp, s->env->sc_hostname, 1);
 
 		/* lookup SSL certificate */
 		if (s->cert) {
@@ -513,6 +512,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			TAILQ_REMOVE(&s->relays, relay, entry);
 			free(relay);
 		}
+		fclose(s->datafp);
 		free(s->secret);
 		free(s->host);
 		free(s->cert);
@@ -567,11 +567,12 @@ mta_pickup(struct mta_session *s, void *p)
 
 	case MTA_DATA:
 		/* QUEUE replied to body fd request. */
-		s->datafd = *(int *)p;
-		if (s->datafd == -1)
+		if (*(int *)p == -1)
 			fatalx("mta cannot obtain msgfd");
-		else
-			mta_enter_state(s, MTA_CONNECT, NULL);
+		s->datafp = fdopen(*(int *)p, "r");
+		if (s->datafp == NULL)
+			fatal("fdopen");
+		mta_enter_state(s, MTA_CONNECT, NULL);
 		break;
 
 	case MTA_CONNECT:
