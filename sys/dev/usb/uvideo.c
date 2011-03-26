@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.154 2011/03/26 08:13:05 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.155 2011/03/26 08:15:07 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2817,20 +2817,61 @@ int
 uvideo_enum_fivals(void *v, struct v4l2_frmivalenum *fivals)
 {
 	struct uvideo_softc *sc = v;
-	int idx, found = 0;
+	int idx;
+	struct uvideo_format_group *fmtgrp = NULL;
+	struct usb_video_frame_desc *frame = NULL;
+	uint8_t *p;
 
 	for (idx = 0; idx < sc->sc_fmtgrp_num; idx++) {
 		if (sc->sc_fmtgrp[idx].pixelformat == fivals->pixel_format) {
-			found = 1;
+			fmtgrp = &sc->sc_fmtgrp[idx];
 			break;
 		}
 	}
-	if (found == 0)
+	if (fmtgrp == NULL)
 		return (EINVAL);
 
-	/* TODO */
+	for (idx = 0; idx < fmtgrp->frame_num; idx++) {
+		if (UGETW(fmtgrp->frame[idx]->wWidth) == fivals->width &&
+		    UGETW(fmtgrp->frame[idx]->wHeight) == fivals->height) {
+			frame = fmtgrp->frame[idx];
+			break;
+		}
+	}
+	if (frame == NULL)
+		return (EINVAL);
 
-	return (EINVAL);
+	/* byte-wise pointer to start of frame intervals */
+	p = (uint8_t *)frame;
+	p += sizeof(struct usb_video_frame_desc);
+
+	if (frame->bFrameIntervalType == 0) {
+		if (fivals->index != 0)
+			return (EINVAL);
+		fivals->type = V4L2_FRMIVAL_TYPE_STEPWISE;
+		fivals->un.stepwise.min.numerator = UGETDW(p);
+		fivals->un.stepwise.min.denominator = 10000000;
+		p += sizeof(uDWord);
+		fivals->un.stepwise.max.numerator = UGETDW(p);
+		fivals->un.stepwise.max.denominator = 10000000;
+		p += sizeof(uDWord);
+		fivals->un.stepwise.step.numerator = UGETDW(p);
+		fivals->un.stepwise.step.denominator = 10000000;
+		p += sizeof(uDWord);
+	} else {
+		if (fivals->index >= frame->bFrameIntervalType)
+			return (EINVAL);
+		p += sizeof(uDWord) * fivals->index;
+		if (p > frame->bLength + (uint8_t *)frame) {
+			printf("%s: frame desc too short?\n", __func__);
+			return (EINVAL);
+		}
+		fivals->type = V4L2_FRMIVAL_TYPE_DISCRETE;
+		fivals->un.discrete.numerator = UGETDW(p);
+		fivals->un.discrete.denominator = 10000000;
+	}
+
+	return (0);
 }
 
 int
