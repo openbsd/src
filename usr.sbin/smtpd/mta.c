@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.99 2011/03/26 10:59:59 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.100 2011/03/26 17:43:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -512,7 +512,10 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			TAILQ_REMOVE(&s->relays, relay, entry);
 			free(relay);
 		}
-		fclose(s->datafp);
+
+		if (s->datafp)
+			fclose(s->datafp);
+
 		free(s->secret);
 		free(s->host);
 		free(s->cert);
