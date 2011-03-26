@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.17 2008/10/05 20:36:00 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.18 2011/03/26 23:17:50 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 5 2008 $
+.Dd $Mdocdate: March 26 2011 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -143,7 +143,7 @@ The
 .Ic backoff-cutoff
 statement determines the maximum amount of time that the client is
 allowed to back off.
-It defaults to 15 seconds.
+It defaults to fifteen seconds.
 .It Ic initial-interval Ar time ;
 The
 .Ic initial-interval
@@ -153,14 +153,14 @@ Each time a message is sent, the interval between messages is incremented by
 twice the current interval multiplied by a random number between zero and one.
 If it is greater than the backoff-cutoff amount, it is set to that
 amount.
-It defaults to ten seconds.
+It defaults to three seconds.
 .It Ic link-timeout Ar time ;
 The
 .Ic link-timeout
 statement sets the amount of time to wait for an interface link before timing
 out.
-The default value is 10 seconds, but the special value 0 requests that dhclient
-not wait for a link state change before timing out.
+The default value is ten seconds. The value zero requests that
+dhclient not wait for a link state change before timing out.
 .El
 .Sh LEASE REQUIREMENTS AND REQUESTS
 The DHCP protocol allows the client to request that the server send it
