@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.157 2011/03/26 08:24:52 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.158 2011/03/26 19:50:52 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2976,10 +2976,13 @@ uvideo_s_parm(void *v, struct v4l2_streamparm *parm)
 		    parm->parm.capture.timeperframe.denominator == 0)
 			return (EINVAL);
 
-		/* only whole number frame rates for now */
+		/*
+		 * XXX Only whole number frame rates for now.  Frame
+		 * rate is the inverse of time per frame.
+		 */
 		sc->sc_frame_rate =
-		    parm->parm.capture.timeperframe.numerator /
-		    parm->parm.capture.timeperframe.denominator;
+		    parm->parm.capture.timeperframe.denominator /
+		    parm->parm.capture.timeperframe.numerator;
 	} else
 		return (EINVAL);
 
