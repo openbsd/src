@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.204 2011/03/26 10:59:59 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.205 2011/03/26 21:41:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -811,6 +811,7 @@ struct dnssession {
         struct mx                        mxarray[MAX_MX_COUNT];
         size_t                           mxarraysz;
         size_t                           mxcurrent;
+	size_t				 mxfound;
 };
 
 enum mta_state {
