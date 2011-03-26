@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.52 2011/03/25 21:23:54 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.53 2011/03/26 08:13:05 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -357,7 +357,7 @@ struct usb_video_frame_desc {
 	uDWord	dwMaxVideoFrameBufferSize;
 	uDWord	dwDefaultFrameInterval;
 	uByte	bFrameIntervalType;
-	/* TODO add continous/discrete frame intervals (Table 3-3/3-4) */
+	/* uDWord ivals[]; frame intervals, length varies */
 } __packed;
 
 /*
@@ -670,6 +670,7 @@ struct uvideo_softc {
 	int					 sc_dying;
 	int					 sc_max_fbuf_size;
 	int					 sc_negotiated_flag;
+	int					 sc_frame_rate;
 
 	struct uvideo_frame_buffer		 sc_frame_buffer;
 

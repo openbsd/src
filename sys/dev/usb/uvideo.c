@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.153 2011/03/26 07:57:42 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.154 2011/03/26 08:13:05 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -174,6 +174,8 @@ int		uvideo_enum_fsizes(void *, struct v4l2_frmsizeenum *);
 int		uvideo_enum_fivals(void *, struct v4l2_frmivalenum *);
 int		uvideo_s_fmt(void *, struct v4l2_format *);
 int		uvideo_g_fmt(void *, struct v4l2_format *);
+int		uvideo_s_parm(void *, struct v4l2_streamparm *);
+int		uvideo_g_parm(void *, struct v4l2_streamparm *);
 int		uvideo_enum_input(void *, struct v4l2_input *);
 int		uvideo_s_input(void *, int);
 int		uvideo_reqbufs(void *, struct v4l2_requestbuffers *);
@@ -221,6 +223,8 @@ struct video_hw_if uvideo_hw_if = {
 	uvideo_enum_fivals,	/* VIDIOC_ENUM_FRAMEINTERVALS */
 	uvideo_s_fmt,		/* VIDIOC_S_FMT */
 	uvideo_g_fmt,		/* VIDIOC_G_FMT */
+	uvideo_s_parm,		/* VIDIOC_S_PARM */
+	uvideo_g_parm,		/* VIDIOC_G_PARM */
 	uvideo_enum_input,	/* VIDIOC_ENUMINPUT */
 	uvideo_s_input,		/* VIDIOC_S_INPUT */
 	uvideo_reqbufs,		/* VIDIOC_REQBUFS */
@@ -1309,13 +1313,19 @@ usbd_status
 uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 {
 	struct usb_video_probe_commit *pc;
+	struct uvideo_format_group *fmtgrp;
+	uint8_t *p, *cur;
 	uint8_t probe_data[34];
+	uint32_t frame_ival, nivals, min, max, step, diff;
 	usbd_status error;
+	int i, ival_bytes;
 
 	pc = (struct usb_video_probe_commit *)probe_data;
 
+	fmtgrp = sc->sc_fmtgrp_cur;
+
 	/* check if the format descriptor contains frame descriptors */
-	if (sc->sc_fmtgrp_cur->frame_num == 0) {
+	if (fmtgrp->frame_num == 0) {
 		printf("%s: %s: no frame descriptors found!\n",
 		    __func__, DEVNAME(sc));
 		return (USBD_INVAL);
@@ -1323,12 +1333,63 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 
 	/* set probe */
 	bzero(probe_data, sizeof(probe_data));
+	/* hint that dwFrameInterval should be favored over other parameters */
 	USETW(pc->bmHint, 0x1);
-	pc->bFormatIndex = sc->sc_fmtgrp_cur->format->bFormatIndex;
-	pc->bFrameIndex = sc->sc_fmtgrp_cur->frame_cur->bFrameIndex;
+	pc->bFormatIndex = fmtgrp->format->bFormatIndex;
+	pc->bFrameIndex = fmtgrp->frame_cur->bFrameIndex;
 	/* dwFrameInterval: 30fps=333333, 15fps=666666, 10fps=1000000 */
-	USETDW(pc->dwFrameInterval,
-	    UGETDW(sc->sc_fmtgrp_cur->frame_cur->dwDefaultFrameInterval));
+	frame_ival = UGETDW(fmtgrp->frame_cur->dwDefaultFrameInterval);
+	if (sc->sc_frame_rate != 0) {
+		frame_ival = 10000000 / sc->sc_frame_rate;
+		/* find closest matching interval the device supports */
+		p = (uint8_t *)fmtgrp->frame_cur;
+		p += sizeof(struct usb_video_frame_desc);
+		nivals = fmtgrp->frame_cur->bFrameIntervalType;
+		ival_bytes = fmtgrp->frame_cur->bLength -
+		    sizeof(struct usb_video_frame_desc);
+		if (!nivals && (ival_bytes >= sizeof(uDWord) * 3)) {
+			/* continuous */
+			min = UGETDW(p);
+			p += sizeof(uDWord);
+			max = UGETDW(p);
+			p += sizeof(uDWord);
+			step = UGETDW(p);
+			p += sizeof(uDWord);
+			if (frame_ival <= min)
+				frame_ival = min;
+			else if (frame_ival >= max)
+				frame_ival = max;
+			else {
+				for (i = min; i + step/2 < frame_ival; i+= step)
+					;	/* nothing */
+				frame_ival = i;
+			}
+		} else if (nivals > 0 && ival_bytes >= sizeof(uDWord)) {
+			/* discrete */
+			cur = p;
+			min = UINT_MAX;
+			for (i = 0; i < nivals; i++) {
+				if (ival_bytes < sizeof(uDWord)) {
+					/* short descriptor ? */
+					break;
+				}
+				diff = abs(UGETDW(p) - frame_ival);
+				if (diff < min) {
+					min = diff;
+					cur = p;
+					if (diff == 0)
+						break;
+				}
+				p += sizeof(uDWord);
+				ival_bytes -= sizeof(uDWord);
+			}
+			frame_ival = UGETDW(cur);
+		} else {
+			DPRINTF(1, "%s: %s: bad frame ival descriptor\n",
+			    DEVNAME(sc), __func__);
+		}
+	}
+	USETDW(pc->dwFrameInterval, frame_ival);
 	error = uvideo_vs_set_probe(sc, probe_data);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
@@ -2855,6 +2916,53 @@ uvideo_g_fmt(void *v, struct v4l2_format *fmt)
 
 	DPRINTF(1, "%s: %s: current width=%d, height=%d\n",
 	    DEVNAME(sc), __func__, fmt->fmt.pix.width, fmt->fmt.pix.height);
+
+	return (0);
+}
+
+int
+uvideo_s_parm(void *v, struct v4l2_streamparm *parm)
+{
+	struct uvideo_softc *sc = v;
+	usbd_status error;
+
+	if (parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+		if (parm->parm.capture.timeperframe.numerator == 0 ||
+		    parm->parm.capture.timeperframe.denominator == 0)
+			return (EINVAL);
+
+		/* only whole number frame rates for now */
+		sc->sc_frame_rate =
+		    parm->parm.capture.timeperframe.numerator /
+		    parm->parm.capture.timeperframe.denominator;
+	} else
+		return (EINVAL);
+
+	/* renegotiate if necessary */
+	if (sc->sc_negotiated_flag) {
+		error = uvideo_vs_negotiation(sc, 1);
+		if (error != USBD_NORMAL_COMPLETION)
+			return (error);
+	}
+
+	return (0);
+}
+
+int
+uvideo_g_parm(void *v, struct v4l2_streamparm *parm)
+{
+	struct uvideo_softc *sc = v;
+	int ns;
+
+	ns = UGETDW(sc->sc_desc_probe.dwFrameInterval);
+	if (parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+		parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
+		parm->parm.capture.capturemode = 0;
+		parm->parm.capture.timeperframe.numerator =
+		    (ns == 0) ? 0 : 10000000 / ns;
+		parm->parm.capture.timeperframe.denominator = 1;
+	} else
+		return (EINVAL);
 
 	return (0);
 }

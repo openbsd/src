@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.26 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: video.c,v 1.27 2011/03/26 08:13:05 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -230,6 +230,16 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (sc->hw_if->g_fmt)
 			error = (sc->hw_if->g_fmt)(sc->hw_hdl,
 			    (struct v4l2_format *)data);
+		break;
+	case VIDIOC_S_PARM:
+		if (sc->hw_if->s_parm)
+			error = (sc->hw_if->s_parm)(sc->hw_hdl,
+			    (struct v4l2_streamparm *)data);
+		break;
+	case VIDIOC_G_PARM:
+		if (sc->hw_if->g_parm)
+			error = (sc->hw_if->g_parm)(sc->hw_hdl,
+			    (struct v4l2_streamparm *)data);
 		break;
 	case VIDIOC_ENUMINPUT:
 		if (sc->hw_if->enum_input)

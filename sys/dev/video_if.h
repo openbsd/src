@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.16 2008/08/24 11:05:02 mglocker Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.17 2011/03/26 08:13:05 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -40,6 +40,8 @@ struct video_hw_if {
 	int	(*enum_fivals)(void *, struct v4l2_frmivalenum *);
 	int	(*s_fmt)(void *, struct v4l2_format *);
 	int	(*g_fmt)(void *, struct v4l2_format *);
+	int	(*s_parm)(void *, struct v4l2_streamparm *);
+	int	(*g_parm)(void *, struct v4l2_streamparm *);
 	int	(*enum_input)(void *, struct v4l2_input *);
 	int	(*s_input)(void *, int);
 	int	(*reqbufs)(void *, struct v4l2_requestbuffers *);
