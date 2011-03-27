@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.308 2010/11/11 21:00:59 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.309 2011/03/27 14:15:02 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1760,6 +1760,8 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct rcs_line ***alines)
 	struct rcs_line *line, *nline;
 	struct rcs_lines *dlines, *plines;
 
+	hrdp = prdp = rdp = trdp = NULL;
+
 	if (rfp->rf_head == NULL ||
 	    (hrdp = rcs_findrev(rfp, rfp->rf_head)) == NULL)
 		fatal("rcs_rev_getlines: no HEAD revision");
@@ -1948,6 +1950,8 @@ rcs_annotate_getlines(RCSFILE *rfp, RCSNUM *frev, struct rcs_line ***alines)
 	struct rcs_line *line;
 	struct rcs_lines *dlines, *plines;
 
+	rdp = trdp = NULL;
+
 	if (!RCSNUM_ISBRANCHREV(frev))
 		fatal("rcs_annotate_getlines: branch revision expected");
 
@@ -2067,6 +2071,8 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 	struct rcs_line *lp, *nlp;
 	BUF *bp;
 
+	rdp = NULL;
+	expmode = RCS_KWEXP_NONE;
 	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev, NULL);
 	bp = buf_alloc(1024 * 16);
@@ -2120,6 +2126,8 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int _fd, int mode)
 	struct rcs_line *lp, *nlp;
 	extern int print_stdout;
 
+	rdp = NULL;
+	expmode = RCS_KWEXP_NONE;
 	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev, NULL);
 
