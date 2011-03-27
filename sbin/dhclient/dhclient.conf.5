@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.18 2011/03/26 23:17:50 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.19 2011/03/27 06:50:48 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 26 2011 $
+.Dd $Mdocdate: March 27 2011 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -159,7 +159,8 @@ The
 .Ic link-timeout
 statement sets the amount of time to wait for an interface link before timing
 out.
-The default value is ten seconds. The value zero requests that
+The default value is ten seconds.
+The value zero requests that
 dhclient not wait for a link state change before timing out.
 .El
 .Sh LEASE REQUIREMENTS AND REQUESTS
