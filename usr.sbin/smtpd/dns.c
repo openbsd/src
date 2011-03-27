@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.34 2011/03/26 21:40:14 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.35 2011/03/27 18:08:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,6 +45,7 @@
 struct dnssession *dnssession_init(struct smtpd *, struct dns *);
 void	dnssession_destroy(struct smtpd *, struct dnssession *);
 void	dnssession_mx_insert(struct dnssession *, struct mx *);
+void	dns_asr_event_set(struct dnssession *, struct asr_result *, void(*)(int, short, void*));
 void	dns_asr_handler(int, short, void *);
 void	dns_asr_mx_handler(int, short, void *);
 void	lookup_host(struct imsgev *, struct dns *, int, int);
@@ -151,6 +152,19 @@ noasr:
 }
 
 void
+dns_asr_event_set(struct dnssession *dnssession, struct asr_result *ar,
+		  void (*handler)(int, short, void*))
+{
+	struct timeval tv = { 0, 0 };
+	
+	tv.tv_usec = ar->ar_timeout * 1000;
+	event_set(&dnssession->ev, ar->ar_fd,
+	    ar->ar_cond == ASR_READ ? EV_READ : EV_WRITE,
+	    handler, dnssession);
+	event_add(&dnssession->ev, &tv);
+}
+
+void
 dns_asr_handler(int fd, short event, void *arg)
 {
 	struct dnssession *dnssession = arg;
@@ -161,7 +175,6 @@ dns_asr_handler(int fd, short event, void *arg)
 	struct query	q;
 	struct rr rr;
 	struct asr_result ar;
-	struct timeval tv = { 0, 0 };
 	char *p;
 	int cnt;
 	int ret;
@@ -170,11 +183,7 @@ dns_asr_handler(int fd, short event, void *arg)
 
 	switch ((ret = asr_run(dnssession->aq, &ar))) {
 	case ASR_COND:
-		tv.tv_usec = ar.ar_timeout * 1000;
-		event_set(&dnssession->ev, ar.ar_fd,
-		    ar.ar_cond == ASR_READ ? EV_READ : EV_WRITE,
-		    dns_asr_handler, dnssession);
-		event_add(&dnssession->ev, &tv);
+		dns_asr_event_set(dnssession, &ar, dns_asr_handler);
 		return;
 
 	case ASR_YIELD:
@@ -309,16 +318,11 @@ dns_asr_mx_handler(int fd, short event, void *arg)
 	struct dns *query = &dnssession->query;
 	struct smtpd *env = query->env;
 	struct asr_result ar;
-	struct timeval tv = { 0, 0 };
 	int ret;
 
 	switch ((ret = asr_run(dnssession->aq, &ar))) {
 	case ASR_COND:
-		tv.tv_usec = ar.ar_timeout * 1000;
-		event_set(&dnssession->ev, ar.ar_fd,
-		    ar.ar_cond == ASR_READ ? EV_READ : EV_WRITE,
-		    dns_asr_mx_handler, dnssession);
-		event_add(&dnssession->ev, &tv);
+		dns_asr_event_set(dnssession, &ar, dns_asr_mx_handler);
 		return;
 
 	case ASR_YIELD:
