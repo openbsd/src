@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.19 2010/12/01 20:25:15 chl Exp $	*/
+/*	$OpenBSD: buf.c,v 1.20 2011/03/27 18:20:14 jasper Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -220,26 +220,6 @@ buf_append(BUF *b, const void *data, size_t len)
 	b->cb_len += rlen;
 
 	return (rlen);
-}
-
-size_t
-buf_fappend(BUF *b, const char *fmt, ...)
-{
-	size_t ret;
-	int n;
-	char *str;
-	va_list vap;
-
-	va_start(vap, fmt);
-	n = vasprintf(&str, fmt, vap);
-	va_end(vap);
-
-	if (n == -1)
-		errx(1, "buf_fappend: failed to format data");
-
-	ret = buf_append(b, str, n);
-	xfree(str);
-	return (ret);
 }
 
 /*
