@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2011/03/27 18:59:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -257,11 +257,26 @@ ENTRY(pdc_call,160)
 	ldil	L%pdc_stack, %r1
 	ldd	R%pdc_stack(%r1), %r3
 	copy	%r3, %sp
-	std,ma	%r31, 32+12*4+12*8(%sp)	/* old frame+args+save(64) */
+	std,ma	%r31, 32+12*4+28*8(%sp)	/* old frame+args+save(64) */
 
 	mfctl	%eiem, %r1
 	mtctl	%r0, %eiem
 	std	%r1, 1*8(%r3)
+	std	%r4, 12*8(%r3)
+	std	%r5, 13*8(%r3)
+	std	%r6, 14*8(%r3)
+	std	%r7, 15*8(%r3)
+	std	%r8, 16*8(%r3)
+	std	%r9, 17*8(%r3)
+	std	%r10, 18*8(%r3)
+	std	%r11, 19*8(%r3)
+	std	%r12, 20*8(%r3)
+	std	%r13, 21*8(%r3)
+	std	%r14, 22*8(%r3)
+	std	%r15, 23*8(%r3)
+	std	%r16, 24*8(%r3)
+	std	%r17, 25*8(%r3)
+	std	%r18, 26*8(%r3)
 
 	copy	%arg0, %r31
 	/* copy arguments */
@@ -338,6 +353,21 @@ ENTRY(pdc_call,160)
 	copy	%arg1, %ret0
 
 	ldd	1*8(%r3), arg5	/* %eiem */
+	ldd	26*8(%r3), %r18
+	ldd	25*8(%r3), %r17
+	ldd	24*8(%r3), %r16
+	ldd	23*8(%r3), %r15
+	ldd	22*8(%r3), %r14
+	ldd	21*8(%r3), %r13
+	ldd	20*8(%r3), %r12
+	ldd	19*8(%r3), %r11
+	ldd	18*8(%r3), %r10
+	ldd	17*8(%r3), %r9
+	ldd	16*8(%r3), %r8
+	ldd	15*8(%r3), %r7
+	ldd	14*8(%r3), %r6
+	ldd	13*8(%r3), %r5
+	ldd	12*8(%r3), %r4
 	ldd	11*8(%r3), %sp
 	ldd	HPPA_FRAME_RP(%sp), %rp
 	ldd	0(%r3), %r3
