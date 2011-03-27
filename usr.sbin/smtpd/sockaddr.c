@@ -1,3 +1,4 @@
+/*	$OpenBSD: sockaddr.c,v 1.3 2011/03/27 17:39:17 eric Exp $	*/
 /*
  * Copyright (c) 2010		Eric Faurot	<eric@faurot.net>
  *

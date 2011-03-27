@@ -1,3 +1,4 @@
+/*	$OpenBSD: dnsdefs.h,v 1.2 2011/03/27 17:39:17 eric Exp $	*/
 /*
  * Copyright (c) 2009	Eric Faurot	<eric@faurot.net>
  *
