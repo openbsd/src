@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.137 2010/10/15 09:51:15 jsg Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.138 2011/03/27 12:15:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -495,7 +495,7 @@ state_reboot(void)
 	make_request(client->active);
 	client->destination = iaddr_broadcast;
 	client->first_sending = cur_time;
-	client->interval = config->initial_interval;
+	client->interval = 0;
 
 	/* Zap the medium list... */
 	client->medium = NULL;
@@ -518,7 +518,7 @@ state_init(void)
 	client->destination = iaddr_broadcast;
 	client->state = S_SELECTING;
 	client->first_sending = cur_time;
-	client->interval = config->initial_interval;
+	client->interval = 0;
 
 	/* Add an immediate timeout to cause the first DHCPDISCOVER packet
 	   to go out. */
@@ -599,7 +599,7 @@ freeit:
 	client->destination = iaddr_broadcast;
 	client->state = S_REQUESTING;
 	client->first_sending = cur_time;
-	client->interval = config->initial_interval;
+	client->interval = 0;
 
 	/* Make a DHCPREQUEST packet from the lease we picked. */
 	make_request(picked);
@@ -738,7 +738,7 @@ state_bound(void)
 		client->destination = iaddr_broadcast;
 
 	client->first_sending = cur_time;
-	client->interval = config->initial_interval;
+	client->interval = 0;
 	client->state = S_RENEWING;
 
 	/* Send the first packet immediately. */
@@ -841,7 +841,7 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 	/* If the selecting interval has expired, go immediately to
 	   state_selecting().  Otherwise, time out into
 	   state_selecting at the select interval. */
-	if (stop_selecting <= 0)
+	if (stop_selecting <= cur_time)
 		state_selecting();
 	else {
 		add_timeout(stop_selecting, state_selecting);

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.17 2010/06/02 09:57:16 phessler Exp $
+# $OpenBSD: dhclient-script,v 1.18 2011/03/27 12:15:46 krw Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -208,7 +208,13 @@ PREINIT6)
 	ifconfig $interface up
 	;;
 
-ARPCHECK|ARPSEND)
+ARPCHECK)
+	# Always succeed. i.e. accept lease.
+	;;
+
+ARPSEND)
+	# Always fail. i.e. don't wait for ARP packet here.
+	exit 1
 	;;
 
 BOUND|RENEW|REBIND|REBOOT)
