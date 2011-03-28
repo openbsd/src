@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.10 2010/12/30 23:16:18 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.11 2011/03/28 19:44:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@
 
 /* Return each item of the stack in turn. */
 struct paste_buffer *
-paste_walk_stack(struct paste_stack *ps, uint *idx)
+paste_walk_stack(struct paste_stack *ps, u_int *idx)
 {
 	struct paste_buffer	*pb;
 
