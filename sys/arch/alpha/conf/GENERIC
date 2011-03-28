@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.220 2011/03/07 07:05:50 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.221 2011/03/28 15:24:54 claudio Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -299,6 +299,7 @@ urlphy*	at mii?				# Realtek RTL8150L internal PHY
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
 ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 ipgphy*	at mii?				# IC Plus IP1000A PHYs
+mlphy*	at mii?				# Micro Linear 6692 PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 # sensors

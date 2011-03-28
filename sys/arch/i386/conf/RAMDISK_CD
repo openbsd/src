@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.183 2011/01/15 04:39:27 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.184 2011/03/28 15:24:54 claudio Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -436,6 +436,7 @@ jmphy*	at mii?				# JMicron JMP202/JMP211 PHYs
 ipgphy*	at mii?				# IC Plus IP1000A PHYs
 atphy*	at mii?				# Attansic F1 PHYs
 rdcphy*	at mii?				# RDC R6040 PHY
+mlphy*	at mii?				# Micro Linear 6692 PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback

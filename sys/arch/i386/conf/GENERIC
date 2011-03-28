@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.709 2011/02/17 20:14:30 miod Exp $
+#	$OpenBSD: GENERIC,v 1.710 2011/03/28 15:24:54 claudio Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -704,6 +704,7 @@ jmphy*	at mii?				# JMicron JMP202/JMP211 PHYs
 atphy*	at mii?				# Attansic F1 PHYs
 rdcphy*	at mii?				# RDC R6040 PHY
 ipgphy*	at mii?				# IC Plus IP1000A PHYs
+mlphy*	at mii?				# Micro Linear 6692 PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6	# Personal Sound System
