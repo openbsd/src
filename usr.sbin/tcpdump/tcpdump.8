@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.74 2011/03/28 07:56:13 giovanni Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.75 2011/03/28 09:37:03 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1039,7 +1039,7 @@ To print all ICMP packets that are not echo requests/replies
 .Pp
 .Dl # tcpdump 'icmp[0] != 8 and icmp[0] != 0'
 .Pp
-To print only echo requests ICMP packets:
+To print only echo request ICMP packets:
 .Pp
 .Dl # tcpdump 'icmp[icmptype] = icmp-echo'
 .Pp
