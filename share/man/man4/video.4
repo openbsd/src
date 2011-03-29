@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.8 2010/07/22 13:32:24 mglocker Exp $
+.\" $OpenBSD: video.4,v 1.9 2011/03/29 20:30:51 jakemsr Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: March 29 2011 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -150,6 +150,62 @@ Stop video stream.
 Try a data format.
 .Pp
 Same structure as for VIDIOC_S_FMT.
+.It VIDIOC_ENUM_FRAMEINTERVALS (struct v4l2_frmivalenum *)
+Enumerate frame intervals.
+.Bd -literal
+struct v4l2_frmivalemun {
+	u_int32_t		index;
+	u_int32_t		pixel_format;
+	u_int32_t		width;
+	u_int32_t		height;
+	u_int32_t		type;
+	union {
+		struct v4l2_fract		discrete;
+		struct v4l2_frmival_stepwise	stepwise;
+	} un;
+	u_int32_t		reserved[2];
+};
+
+struct v4l2_frmival_stepwise {
+	struct v4l2_fract min;
+	struct v4l2_fract max;
+	struct v4l2_fract step;
+};
+.Ed
+.It VIDIOC_S_PARM (struct v4l2_streamparm *)
+Set streaming parameters.
+.Bd -literal
+struct v4l2_streamparm {
+	enum v4l2_buf_type	type;
+	union {
+		struct v4l2_captureparm	capture;
+		struct v4l2_outputparm	output;
+		u_int8_t		raw_data[200];
+	} parm;
+};
+
+struct v4l2_captureparm	{
+	u_int32_t	capability;
+	u_int32_t	capturemode;
+	struct v4l2_fract	timeperframe;
+	u_int32_t	extendedmode;
+	u_int32_t	readbuffers;
+	u_int32_t	reserved[4];
+};
+
+struct v4l2_outputparm	{
+	u_int32_t	capability;
+	u_int32_t	outputmode;
+	struct v4l2_fract	timeperframe;
+	u_int32_t	extendedmode;
+	u_int32_t	writebuffers;
+	u_int32_t	reserved[4];
+};
+.Ed
+.It VIDIOC_G_PARM (struct v4l2_streamparm *)
+Get the streaming parameters.
+.Pp
+Same structures as for VIDIOC_S_PARM.
 .It VIDIOC_QUERYCTRL (struct v4l2_queryctrl *)
 Enumerate control items.
 .Bd -literal
@@ -195,6 +251,12 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_TYPE_INTEGER64 = 5,
 	V4L2_CTRL_TYPE_CTRL_CLASS = 6,
 };
+
+enum v4l2_frmivaltypes {
+	V4L2_FRMIVAL_TYPE_DISCRETE = 1,
+	V4L2_FRMIVAL_TYPE_CONTINUOUS = 2,
+	V4L2_FRMIVAL_TYPE_STEPWISE = 3,
+};
 .Ed
 .Pp
 Command independent structures are:
@@ -235,6 +297,11 @@ struct v4l2_sliced_vbi_format {
 	u_int16_t	service_lines[2][24];
 	u_int32_t	io_size;
 	u_int32_t	reserved[2];
+};
+
+struct v4l2_fract {
+	u_int32_t	numerator;
+	u_int32_t	denominator;
 };
 .Ed
 .Pp
