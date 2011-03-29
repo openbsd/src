@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.36 2011/03/29 08:14:12 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.37 2011/03/29 20:43:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -172,9 +172,9 @@ dns_asr_handler(int fd, short event, void *arg)
 	struct header	h;
 	struct query	q;
 	struct rr rr;
+	struct mx mx;
 	struct asr_result ar;
 	char *p;
-	int cnt;
 	int ret;
 
 	if (dnssession->query.type == IMSG_DNS_PTR) {
@@ -218,98 +218,67 @@ dns_asr_handler(int fd, short event, void *arg)
 		return;
 	}
 
+	/* MX */
 	packed_init(&pack, ar.ar_data, ar.ar_datalen);
 	if (unpack_header(&pack, &h) < 0 || unpack_query(&pack, &q) < 0)
 		goto err;
 
 	if (h.ancount == 0) {
-		if (query->type == IMSG_DNS_MX) {
-			/* we were looking for MX and got no answer,
-			 * fallback to host.
-			 */
-			query->type = IMSG_DNS_HOST;
-			dnssession->aq = asr_query_host(asr, query->host,
-			    AF_UNSPEC);
-			if (dnssession->aq == NULL)
-				goto err;
-			dns_asr_handler(-1, -1, dnssession);
-			return;
-		}
-		query->error = EAI_NONAME;
-		goto err;
+		/* we were looking for MX and got no answer,
+		 * fallback to host.
+		 */
+		query->type = IMSG_DNS_HOST;
+		dnssession->aq = asr_query_host(asr, query->host,
+		    AF_UNSPEC);
+		if (dnssession->aq == NULL)
+			goto err;
+		dns_asr_handler(-1, -1, dnssession);
+		return;
 	}
 
-	if (query->type == IMSG_DNS_PTR) {
-		if (h.ancount > 1) {
-			log_debug("dns_asr_handler: PTR query returned several answers.");
-			log_debug("dns_asr_handler: keeping only first result.");
-		}
+	for (; h.ancount; h.ancount--) {
 		if (unpack_rr(&pack, &rr) < 0)
 			goto err;
 
-		print_dname(rr.rr.ptr.ptrname, query->host, sizeof (query->host));
-		if ((p = strrchr(query->host, '.')) != NULL)
+		print_dname(rr.rr.mx.exchange, mx.host, sizeof (mx.host));
+		if ((p = strrchr(mx.host, '.')) != NULL)
 			*p = '\0';
-		free(ar.ar_data);
-		
-		query->error = 0;
-		imsg_compose_event(query->asker, IMSG_DNS_PTR, 0, 0, -1, query,
-		    sizeof(*query));
-		dnssession_destroy(env, dnssession);
-		return;
+		mx.prio =  rr.rr.mx.preference;
+
+		/* sorted insert that will not overflow MAX_MX_COUNT */
+		dnssession_mx_insert(dnssession, &mx);
 	}
+	free(ar.ar_data);
+	ar.ar_data = NULL;
 
-	if (query->type == IMSG_DNS_MX) {
-		struct mx mx;
-		
-		cnt = h.ancount;
-		for (; cnt; cnt--) {
-			if (unpack_rr(&pack, &rr) < 0)
-				goto err;
+	/* The T_MX scenario is a bit tricky.
+	 * Rather than forwarding the answers to the process that queried,
+	 * we retrieve a set of MX hosts ... that need to be resolved. The
+	 * loop above sorts them by priority, all we have left to do is to
+	 * perform T_A lookups on all of them sequentially and provide the
+	 * process that queried with the answers.
+	 *
+	 * To make it easier, we do this in another handler.
+	 *
+	 * -- gilles@
+	 */
+	dnssession->mxfound = 0;
+	dnssession->mxcurrent = 0;
+	dnssession->aq = asr_query_host(asr,
+	    dnssession->mxarray[dnssession->mxcurrent].host, AF_UNSPEC);
+	if (dnssession->aq == NULL)
+		goto err;
 
-			print_dname(rr.rr.mx.exchange, mx.host, sizeof (mx.host));
-			if ((p = strrchr(mx.host, '.')) != NULL)
-				*p = '\0';
-			mx.prio =  rr.rr.mx.preference;
-
-			/* sorted insert that will not overflow MAX_MX_COUNT */
-			dnssession_mx_insert(dnssession, &mx);
-		}
-		free(ar.ar_data);
-		ar.ar_data = NULL;
-
-		/* The T_MX scenario is a bit trickier than T_PTR and T_A lookups.
-		 * Rather than forwarding the answers to the process that queried,
-		 * we retrieve a set of MX hosts ... that need to be resolved. The
-		 * loop above sorts them by priority, all we have left to do is to
-		 * perform T_A lookups on all of them sequentially and provide the
-		 * process that queried with the answers.
-		 *
-		 * To make it easier, we do this in another handler.
-		 *
-		 * -- gilles@
-		 */
-		dnssession->mxfound = 0;
-		dnssession->mxcurrent = 0;
-		dnssession->aq = asr_query_host(asr,
-		    dnssession->mxarray[dnssession->mxcurrent].host, AF_UNSPEC);
-		if (dnssession->aq == NULL)
-			goto err;
-
-		dns_asr_mx_handler(-1, -1, dnssession);
-		return;
-	}
+	dns_asr_mx_handler(-1, -1, dnssession);
 	return;
 
 err:
 	free(ar.ar_data);
-	if (query->type != IMSG_DNS_PTR)
-		query->type = IMSG_DNS_HOST_END;
+	query->type = IMSG_DNS_HOST_END;
 	imsg_compose_event(query->asker, query->type, 0, 0, -1, query,
 	    sizeof(*query));
 	dnssession_destroy(env, dnssession);
 }
-
 
 /* only handle MX requests */
 void

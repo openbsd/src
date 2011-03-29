@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.39 2011/03/03 08:09:14 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.40 2011/03/29 20:43:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -219,76 +219,6 @@ ss_to_text(struct sockaddr_storage *ss)
 	}
 
 	return (buf);
-}
-
-char *
-ss_to_ptr(struct sockaddr_storage *ss)
-{
-	static char buffer[1024];
-
-	/* we need to construct a PTR query */
-	switch (ss->ss_family) {
-	case AF_INET: {
-		in_addr_t addr;
-		
-		addr = ((struct sockaddr_in *)ss)->sin_addr.s_addr;
-                addr = ntohl(addr);
-                bsnprintf(buffer, sizeof (buffer),
-                    "%d.%d.%d.%d.in-addr.arpa",
-                    addr & 0xff,
-                    (addr >> 8) & 0xff,
-                    (addr >> 16) & 0xff,
-                    (addr >> 24) & 0xff);
-		break;
-	}
-	case AF_INET6: {
-		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)ss;
-		struct in6_addr	*in6_addr;
-
-		in6_addr = &in6->sin6_addr;
-		bsnprintf(buffer, sizeof (buffer),
-		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
-		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
-		    "ip6.arpa",
-		    in6_addr->s6_addr[15] & 0xf,
-		    (in6_addr->s6_addr[15] >> 4) & 0xf,
-		    in6_addr->s6_addr[14] & 0xf,
-		    (in6_addr->s6_addr[14] >> 4) & 0xf,
-		    in6_addr->s6_addr[13] & 0xf,
-		    (in6_addr->s6_addr[13] >> 4) & 0xf,
-		    in6_addr->s6_addr[12] & 0xf,
-		    (in6_addr->s6_addr[12] >> 4) & 0xf,
-		    in6_addr->s6_addr[11] & 0xf,
-		    (in6_addr->s6_addr[11] >> 4) & 0xf,
-		    in6_addr->s6_addr[10] & 0xf,
-		    (in6_addr->s6_addr[10] >> 4) & 0xf,
-		    in6_addr->s6_addr[9] & 0xf,
-		    (in6_addr->s6_addr[9] >> 4) & 0xf,
-		    in6_addr->s6_addr[8] & 0xf,
-		    (in6_addr->s6_addr[8] >> 4) & 0xf,
-		    in6_addr->s6_addr[7] & 0xf,
-		    (in6_addr->s6_addr[7] >> 4) & 0xf,
-		    in6_addr->s6_addr[6] & 0xf,
-		    (in6_addr->s6_addr[6] >> 4) & 0xf,
-		    in6_addr->s6_addr[5] & 0xf,
-		    (in6_addr->s6_addr[5] >> 4) & 0xf,
-		    in6_addr->s6_addr[4] & 0xf,
-		    (in6_addr->s6_addr[4] >> 4) & 0xf,
-		    in6_addr->s6_addr[3] & 0xf,
-		    (in6_addr->s6_addr[3] >> 4) & 0xf,
-		    in6_addr->s6_addr[2] & 0xf,
-		    (in6_addr->s6_addr[2] >> 4) & 0xf,
-		    in6_addr->s6_addr[1] & 0xf,
-		    (in6_addr->s6_addr[1] >> 4) & 0xf,
-		    in6_addr->s6_addr[0] & 0xf,
-		    (in6_addr->s6_addr[0] >> 4) & 0xf);
-		break;
-	}
-	default:
-		fatalx("dns_query_ptr");
-	}
-
-	return buffer;
 }
 
 int
