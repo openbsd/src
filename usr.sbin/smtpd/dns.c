@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.35 2011/03/27 18:08:21 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.36 2011/03/29 08:14:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -48,6 +48,7 @@ void	dnssession_mx_insert(struct dnssession *, struct mx *);
 void	dns_asr_event_set(struct dnssession *, struct asr_result *, void(*)(int, short, void*));
 void	dns_asr_handler(int, short, void *);
 void	dns_asr_mx_handler(int, short, void *);
+void	dns_asr_dispatch_cname(struct dnssession *);
 void	lookup_host(struct imsgev *, struct dns *, int, int);
 void	lookup_mx(struct imsgev *, struct dns *);
 void	lookup_ptr(struct imsgev *, struct dns *);
@@ -95,10 +96,6 @@ dns_query_ptr(struct smtpd *env, struct sockaddr_storage *ss, u_int64_t id)
 	query.ss = *ss;
 	query.id = id;
 
-	if (strlcpy(query.host, ss_to_ptr(ss), sizeof (query.host))
-	    >= sizeof (query.host))
-		fatalx("dns_query_ptr");
-
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_DNS_PTR, 0, 0, -1, &query,
 	    sizeof(query));
 }
@@ -124,7 +121,8 @@ dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 		dnssession->aq = asr_query_host(asr, query->host, AF_UNSPEC);
 		break;
 	case IMSG_DNS_PTR:
-		dnssession->aq = asr_query_dns(asr, T_PTR, C_IN, query->host, 0);
+		dnssession->aq = asr_query_cname(asr,
+		    (struct sockaddr*)&query->ss, query->ss.ss_len);
 		break;
 	case IMSG_DNS_MX:
 		dnssession->aq = asr_query_dns(asr, T_MX, C_IN, query->host, 0);
@@ -179,7 +177,10 @@ dns_asr_handler(int fd, short event, void *arg)
 	int cnt;
 	int ret;
 
-	bzero(&ar, sizeof (ar));
+	if (dnssession->query.type == IMSG_DNS_PTR) {
+		dns_asr_dispatch_cname(dnssession);
+		return;
+	}
 
 	switch ((ret = asr_run(dnssession->aq, &ar))) {
 	case ASR_COND:
@@ -358,6 +359,33 @@ end:
 	    sizeof(*query));
 	dnssession_destroy(env, dnssession);
 	return;
+}
+
+void
+dns_asr_dispatch_cname(struct dnssession *dnssession)
+{
+	struct dns		*query = &dnssession->query;
+	struct asr_result	 ar;
+
+	switch (asr_run(dnssession->aq, &ar)) {
+	case ASR_COND:
+		dns_asr_event_set(dnssession, &ar, dns_asr_handler);
+		return;
+	case ASR_YIELD:
+		/* Only return the first answer */
+		query->error = 0;
+		strlcpy(query->host, ar.ar_cname, sizeof (query->host));
+		asr_abort(dnssession->aq);
+		free(ar.ar_cname);
+		break;
+	case ASR_DONE:
+		/* This is necessarily an error */
+		query->error = ar.ar_err;
+		break;
+	}
+	imsg_compose_event(query->asker, IMSG_DNS_PTR, 0, 0, -1, query,
+	    sizeof(*query));
+	dnssession_destroy(query->env, dnssession);
 }
 
 struct dnssession *
