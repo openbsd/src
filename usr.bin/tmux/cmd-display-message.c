@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.8 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.9 2011/03/29 19:30:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -30,8 +30,8 @@ int	cmd_display_message_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_display_message_entry = {
 	"display-message", "display",
-	"pt:", 0, 1,
-	"[-p] " CMD_TARGET_CLIENT_USAGE " [message]",
+	"c:pt:", 0, 1,
+	"[-p] [-c target-client] [-t target-pane] [message]",
 	0,
 	NULL,
 	NULL,
@@ -43,18 +43,31 @@ cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;
 	struct client		*c;
+	struct session		*s;
+	struct winlink		*wl;
+	struct window_pane	*wp;
 	const char		*template;
 	char			*msg;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
+	if ((c = cmd_find_client(ctx, args_get(args, 'c'))) == NULL)
 		return (-1);
+
+	if (args_has(args, 't') != NULL) {
+		wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp);
+		if (wl == NULL)
+			return (-1);
+	} else {
+		s = NULL;
+		wl = NULL;
+		wp = NULL;
+	}
 
 	if (args->argc == 0)
 		template = "[#S] #I:#W, current pane #P - (%H:%M %d-%b-%y)";
 	else
 		template = args->argv[0];
 
-	msg = status_replace(c, NULL, template, time(NULL), 0);
+	msg = status_replace(c, s, wl, wp, template, time(NULL), 0);
 	if (args_has(self->args, 'p'))
 		ctx->print(ctx, "%s", msg);
 	else
