@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2011/01/02 13:16:53 jsing Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2011/03/30 13:50:55 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -178,7 +178,7 @@ trap(type, frame)
 	const char *tts;
 	vm_fault_t fault = VM_FAULT_INVALID;
 #ifdef DIAGNOSTIC
-	long oldcpl;
+	long oldcpl = cpl;
 #endif
 
 	trapnum = type & ~T_USER;
@@ -584,7 +584,7 @@ syscall(struct trapframe *frame)
 	int retq, nsys, code, argsize, argoff, oerror, error;
 	register_t args[8], rval[2];
 #ifdef DIAGNOSTIC
-	long oldcpl;
+	long oldcpl = cpl;
 #endif
 
 	/* TODO syscall */
