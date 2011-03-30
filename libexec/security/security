@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.4 2011/03/26 22:13:53 schwarze Exp $
+# $OpenBSD: security,v 1.5 2011/03/30 21:41:28 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -35,7 +35,7 @@ sub nag ($$) {
 	my ($cond, $msg) = @_;
 	if ($cond) {
 		if ($check_title) {
-			print "\n$check_title:\n";
+			print "\n$check_title\n";
 			undef $check_title;
 		}
 		print "$msg\n";
@@ -47,7 +47,7 @@ sub nag ($$) {
 sub check_access_file {
 	my ($filename, $login) = @_;
 	return unless -e $filename;
-	my (undef, undef, $mode) = stat $filename;
+	my $mode = (stat(_))[2];
 	nag !defined $mode,
 	    "stat: $filename: $!"
 	or nag $mode & (S_IRUSR | S_IRGRP | S_IROTH) && ! -O $filename,
@@ -58,7 +58,7 @@ sub check_access_file {
 
 sub check_passwd {
 	my $filename = '/etc/master.passwd';
-	$check_title = "Checking the $filename file";
+	$check_title = "Checking the $filename file:";
 	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
 	my (%logins, %uids);
 	while (my $line = <$fh>) {
@@ -77,7 +77,7 @@ sub check_passwd {
 			nag $name !~ /^[A-Za-z0-9_][-.A-Za-z0-9_]*\$?$/,
 			    "Login $name has non-alphanumeric characters.";
 			nag $logins{$name}++,
-			    "Duplicate login $name.";
+			    "Duplicate user name $name.";
 		}
 		nag length $name > 31,
 		    "Login $name has more than 31 characters.";
@@ -136,7 +136,7 @@ sub backup_passwd {
 # Check the group file syntax.
 sub check_group {
 	my $filename = '/etc/group';
-	$check_title = "Checking the $filename file";
+	$check_title = "Checking the $filename file:";
 	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
 	my %names;
 	while (my $line = <$fh>) {
@@ -165,7 +165,7 @@ sub check_group {
 }
 
 sub check_umask {
-	my $filename = shift;
+	my ($filename) = @_;
 	nag !open(my $fh, '<', $filename), "open: $filename: $!" and return;
 	my $umaskset;
 	while (<$fh>) {
@@ -305,7 +305,7 @@ sub check_mail_aliases {
 sub check_hostname_if {
 	while (my $filename = glob '/etc/hostname.*') {
 		next unless -e $filename;
-		my (undef, undef, $mode) = stat $filename;
+		my $mode = (stat(_))[2];
 		nag !defined $mode,
 		    "stat: $filename: $!"
 		or nag $mode & S_IRWXO,
@@ -359,7 +359,7 @@ sub check_homedir {
 	my ($name, $uid, $home) = @_;
 	return if $name =~ /^[+-]/;  # skip YP lines
 	return unless -d $home;
-	my (undef, undef, $mode, undef, $fuid) = stat(_);
+	my ($mode, $fuid) = (stat(_))[2,4];
 	nag $fuid && $fuid != $uid,
 	    "user $name home directory is owned by " .
 	    ((getpwuid $fuid)[0] || $fuid);
@@ -378,7 +378,7 @@ sub check_dot_readable {
 	    .pgp/secring.pgp .shosts .ssh/identity .ssh/id_dsa .ssh/id_rsa
 	) {
 		next unless -e "$home/$f";
-		my (undef, undef, $mode, undef, $fuid) = stat(_);
+		my ($mode, $fuid) = (stat(_))[2,4];
 		nag $fuid && $fuid != $uid,
 		    "user $name $f file is owned by " .
 		    ((getpwuid $fuid)[0] || $fuid);
@@ -406,7 +406,7 @@ sub check_dot_writeable {
 	    .Xdefaults .Xauthority
         ) {
 		next unless -e "$home/$f";
-		my (undef, undef, $mode, undef, $fuid) = stat(_);
+		my ($mode, $fuid) = (stat(_))[2,4];
 		nag $fuid && $fuid != $uid,
 		    "user $name $f file is owned by " .
 		    ((getpwuid $fuid)[0] || $fuid);
@@ -423,7 +423,7 @@ sub check_mailboxes {
 	nag !opendir(my $dh, $dir), "opendir: $dir: $!" and return;
 	foreach my $name (readdir $dh) {
 		next if $name =~ /^\.\.?$/;
-		my (undef, undef, $mode, undef, $fuid) = stat "$dir/$name";
+		my ($mode, $fuid) = (stat "$dir/$name")[2,4];
 		my $fname = (getpwuid $fuid)[0] || $fuid;
 		nag $fname ne $name,
 		    "user $name mailbox is owned by $fname";
@@ -446,7 +446,7 @@ check_csh;
 check_ksh(check_sh);
 open STDERR, '>&', $olderr;
 
-$check_title = "Checking configuration files";
+$check_title = "Checking configuration files:";
 check_ftpusers;
 check_mail_aliases;
 check_hostname_if;
@@ -462,7 +462,7 @@ check_dot_writeable(@$_) foreach @$homes;
 $check_title = "Checking mailbox ownership.";
 check_mailboxes;
 
-$check_title = "Status";
+$check_title = "Status:";
 nag 'right now', 'not yet ready';
 
 exit $return_code;
