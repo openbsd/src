@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.168 2011/03/17 21:30:24 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.169 2011/03/31 18:42:48 jasper Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -984,7 +984,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 
 	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
 	    inqbuf, scsi_quirk_patterns,
-	    sizeof(scsi_quirk_patterns)/sizeof(scsi_quirk_patterns[0]),
+	    nitems(scsi_quirk_patterns),
 	    sizeof(scsi_quirk_patterns[0]), &priority);
 
 	/*

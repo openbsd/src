@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.44 2011/03/17 21:30:24 deraadt Exp $	*/
+/*	$OpenBSD: ch.c,v 1.45 2011/03/31 18:42:48 jasper Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ chmatch(parent, match, aux)
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    ch_patterns, sizeof(ch_patterns)/sizeof(ch_patterns[0]),
+	    ch_patterns, nitems(ch_patterns),
 	    sizeof(ch_patterns[0]), &priority);
 
 	return (priority);

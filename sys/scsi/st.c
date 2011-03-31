@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.118 2011/03/18 22:59:34 matthew Exp $	*/
+/*	$OpenBSD: st.c,v 1.119 2011/03/31 18:42:48 jasper Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ stmatch(struct device *parent, void *match, void *aux)
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    st_patterns, sizeof(st_patterns)/sizeof(st_patterns[0]),
+	    st_patterns, nitems(st_patterns),
 	    sizeof(st_patterns[0]), &priority);
 	return (priority);
 }
@@ -398,7 +398,7 @@ st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
 
 	finger = (const struct st_quirk_inquiry_pattern *)scsi_inqmatch(inqbuf,
 	    st_quirk_patterns,
-	    sizeof(st_quirk_patterns)/sizeof(st_quirk_patterns[0]),
+	    nitems(st_quirk_patterns),
 	    sizeof(st_quirk_patterns[0]), &priority);
 	if (priority != 0) {
 		st->quirkdata = &finger->quirkdata;
