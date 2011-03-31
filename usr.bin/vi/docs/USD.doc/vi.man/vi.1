@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.49 2011/03/17 11:34:53 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.50 2011/03/31 20:40:51 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: March 17 2011 $
+.Dd $Mdocdate: March 31 2011 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -317,6 +317,117 @@ The above commands work on
 characters and lines,
 i.e. they affect the entire line no matter how many screen lines it takes up
 and the entire character no matter how many screen columns it takes up.
+.Sh BUFFERS
+A buffer is an area where commands can save changed or deleted text
+for later use.
+.Nm vi
+buffers are named with a single character preceded by a double quote,
+for example
+.Pf \&" Ns Aq c ;
+.Nm ex
+buffers are the same,
+but without the double quote.
+.Nm nex Ns / Ns Nm nvi
+permits the use of any character without another meaning in the position where
+a buffer name is expected.
+Where a
+.Nm vi
+command synopsis shows both a
+.Bq Em buffer
+and a
+.Bq Em count ,
+they may be presented in any order.
+.Pp
+All buffers are either in
+.Em line mode
+or
+.Em character mode .
+Inserting a buffer in line mode into the text creates new lines for each of the
+lines it contains, while a buffer in character mode creates new lines for any
+lines
+.Em other
+than the first and last lines it contains.
+The first and last lines are inserted at the current cursor position, becoming
+part of the current line.
+If there is more than one line in the buffer,
+the current line itself will be split.
+All
+.Nm ex
+commands which store text into buffers do so in line mode.
+The
+.Nm ex
+command
+.Cm display buffers
+displays the current mode for each buffer.
+.Pp
+Buffers named
+.Sq a
+through
+.Sq z
+may be referred to using their uppercase equivalent, in which case new content
+will be appended to the buffer, instead of replacing it.
+.Pp
+Buffers named
+.Sq 1
+through
+.Sq 9
+are special.
+A region of text modified using the
+.Cm c
+.Pq change
+or
+.Cm d
+.Pq delete
+commands is placed into the numeric buffer
+.Sq 1
+if no other buffer is specified and if it meets one of the following conditions:
+.Bl -bullet -offset 6u
+.It
+It includes characters from more than one line.
+.It
+It is specified using a line-oriented motion.
+.It
+It is specified using one of the following motion commands:
+.Aq Cm control-A ,
+.Aq Cm character ,
+.Cm n ,
+.Cm N ,
+.Cm % ,
+.Cm / ,
+.Cm { ,
+.Cm } ,
+.Cm \&( ,
+.Cm \&) ,
+and
+.Cm \&? .
+.El
+.Pp
+Before this copy is done, the previous contents of buffer
+.Sq 1
+are moved into buffer
+.Sq 2 ,
+.Sq 2
+into buffer
+.Sq 3 ,
+and so on.
+The contents of buffer
+.Sq 9
+are discarded.
+Note that this rotation occurs
+.Em regardless
+of the user specifying another buffer.
+In
+.Nm vi ,
+text may be explicitly stored into the numeric buffers.
+In this case, the buffer rotation occurs before the replacement of the buffer's
+contents.
+The numeric buffers are only available in
+.Nm vi
+mode.
+.Pp
+There is also a buffer which the user cannot access.
+Commands that store text in a buffer use it automatically, while commands that
+take text from a buffer use it as a default source.
 .Sh VI COMMANDS
 The following section describes the commands available in the command
 mode of the
