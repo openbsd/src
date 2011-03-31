@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.54 2011/03/20 17:58:26 mk Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.55 2011/03/31 17:06:25 mk Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1128,18 +1128,25 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
+	if (total_len < UDAV_RX_HDRLEN) {
+		ifp->if_ierrors++;
+		goto done;
+	}
+	
 	h = (struct udav_rx_hdr *)c->udav_buf;
 	total_len = UGETW(h->length) - ETHER_CRC_LEN;
 	
-	DPRINTF(("%s: RX Status: 0x%02x\n", h->pktstat));
+	DPRINTF(("%s: RX Status: 0x%02x\n", sc->sc_dev.dv_xname, h->pktstat));
 
 	if (h->pktstat & UDAV_RSR_LCS) {
 		ifp->if_collisions++;
 		goto done;
 	}
 
+	/* RX status may still be correct but total_len is bogus */
 	if (total_len < sizeof(struct ether_header) ||
-	    h->pktstat & UDAV_RSR_ERR) {
+	    h->pktstat & UDAV_RSR_ERR ||
+	    total_len > UDAV_BUFSZ ) {
 		ifp->if_ierrors++;
 		goto done;
 	}
