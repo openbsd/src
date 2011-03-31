@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.68 2010/03/21 07:51:23 otto Exp $
+.\"	$OpenBSD: newfs.8,v 1.69 2011/03/31 11:17:58 sthen Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: March 21 2010 $
+.Dd $Mdocdate: March 31 2011 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -169,7 +169,7 @@ The expected average file size for the file system in bytes.
 The expected average number of files per directory on the file system.
 .It Fl i Ar bytes
 This specifies the density of inodes in the file system.
-The default is to create an inode for each 8192 bytes of data space.
+The default is to create an inode for every 4 fragments.
 If fewer inodes are desired, a larger number should be used;
 to create more inodes a smaller number should be given.
 .It Fl m Ar free-space
