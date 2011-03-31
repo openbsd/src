@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.18 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.19 2011/03/31 20:37:44 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -223,7 +223,7 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	 * We need to make sure we never try to access an unimplemented
 	 * register...
 	 */
-	if (loongson_ver == 0x2f)
+	if (loongson_ver >= 0x2f)
 		sc->sc_compatible = 0;
 	else
 		sc->sc_compatible = 1;
@@ -312,7 +312,7 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 		bonito_intem |= BONITO_INTRMASK_MASTERERR;
 	}
 
-	if (loongson_ver == 0x2f)
+	if (loongson_ver >= 0x2f)
 		set_intr(INTPRI_BONITO, CR_INT_4, bonito_intr_2f);
 	else
 		set_intr(INTPRI_BONITO, CR_INT_0, bonito_intr_2e);
@@ -1046,7 +1046,7 @@ bonito_mem_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
 	 * Try a PCIHI mapping first.
 	 */
 
-	if (loongson_ver == 0x2f) {
+	if (loongson_ver >= 0x2f) {
 		if (offs >= LS2F_PCIHI_BASE && end <= LS2F_PCIHI_TOP) {
 			*bshp = t->bus_base + offs;
 			return 0;

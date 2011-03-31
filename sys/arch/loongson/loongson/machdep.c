@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2011/03/27 15:28:54 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.27 2011/03/31 20:37:44 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -275,7 +275,20 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	prid = cp0_get_prid();
 	switch ((prid >> 8) & 0xff) {
 	case MIPS_LOONGSON2:
-		loongson_ver = 0x2c + (prid & 0xff);
+		switch (prid & 0xff) {
+		case 0x00:
+			loongson_ver = 0x2c;
+			break;
+		case 0x02:
+			loongson_ver = 0x2e;
+			break;
+		case 0x03:
+			loongson_ver = 0x2f;
+			break;
+		case 0x05:
+			loongson_ver = 0x3a;
+			break;
+		}
 		if (loongson_ver == 0x2e || loongson_ver == 0x2f)
 			break;
 		/* FALLTHROUGH */
@@ -389,7 +402,8 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 		goto unsupported;
 	}
 
-	if (memlo == 256) {
+	/* 3A PMON only reports up to 240MB as low memory */
+	if (memlo >= 240) {
 		envvar = pmon_getenv("highmemsize");
 		if (envvar == NULL)
 			memhi = 0;
@@ -412,6 +426,7 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 		break;
 	default:
 	case 0x2f:
+	case 0x3a:
 		loongson2f_setup(memlo, memhi);
 		break;
 	}

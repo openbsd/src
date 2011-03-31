@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.10 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.11 2011/03/31 20:37:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -257,7 +257,7 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 	 * Allow access to the low 256MB aliased region on 2F systems,
 	 * if we are accessing memory at 2GB onwards.
 	 */
-	if (pa < 0x10000000 && loongson_ver == 0x2f) {
+	if (pa < 0x10000000 && loongson_ver >= 0x2f) {
 		fp += mem_layout[0].mem_first_page - 1;
 		lp += mem_layout[0].mem_first_page - 1;
 	}

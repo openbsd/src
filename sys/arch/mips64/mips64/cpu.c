@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.36 2010/11/24 21:16:28 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.37 2011/03/31 20:37:44 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -166,7 +166,20 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf("PMC-Sierra RM9000 CPU");
 		break;
 	case MIPS_LOONGSON2:
-		printf("STC Loongson2%c CPU", 'C' + vers_min);
+		switch (ch->c0prid & 0xff) {
+		case 0x00:
+		case 0x02:
+		case 0x03:
+			printf("STC Loongson2%c CPU", 'C' + vers_min);
+			break;
+		case 0x05:
+			printf("STC Loongson3%c CPU", 'A' + vers_min - 5);
+			break;
+		default:
+			printf("Unknown STC Loongson CPU type (%02x)",
+			    ch->c0prid & 0xff);
+			break;
+		}
 		displayver = 0;
 		break;
 	case MIPS_OCTEON:
