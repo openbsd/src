@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.61 2011/03/23 13:40:42 claudio Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.62 2011/03/31 10:36:42 jasper Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ struct ip6protosw inet6sw[] = {
 struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0,
       (struct protosw *)inet6sw,
-      (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
+      (struct protosw *)&inet6sw[nitems(inet6sw)], 0,
 #ifndef SMALL_KERNEL
       rn_mpath_inithead,
 #else

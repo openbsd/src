@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.114 2011/02/14 12:53:27 tedu Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.115 2011/03/31 10:36:42 jasper Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1469,4 +1469,4 @@ struct protosw routesw[] = {
 
 struct domain routedomain =
     { PF_ROUTE, "route", route_init, 0, 0,
-      routesw, &routesw[sizeof(routesw)/sizeof(routesw[0])] };
+      routesw, &routesw[nitems(routesw)] };
