@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.38 2009/12/13 23:16:12 sthen Exp $
+.\"	$OpenBSD: ti.4,v 1.39 2011/03/31 20:47:36 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: December 13 2009 $
+.Dd $Mdocdate: March 31 2011 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ The
 .Nm
 driver supports revision 4 (Tigon 1) and revision 6 (Tigon 2) chips
 and has firmware only for those devices.
-.It "ti%d: watchdog timeout"
+.It "ti%d: watchdog timeout -- resetting"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
 .El
