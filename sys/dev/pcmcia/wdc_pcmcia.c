@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.24 2010/08/31 17:13:47 deraadt Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.25 2011/03/31 13:05:27 jasper Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -192,7 +192,7 @@ wdc_pcmcia_lookup(pa)
 	int i, cis_match;
 
 	for (wpp = wdc_pcmcia_pr;
-	    wpp < &wdc_pcmcia_pr[sizeof(wdc_pcmcia_pr)/sizeof(wdc_pcmcia_pr[0])];
+	    wpp < &wdc_pcmcia_pr[nitems(wdc_pcmcia_pr)];
 	    wpp++)
 		if ((wpp->wpp_vendor == PCMCIA_VENDOR_INVALID ||
 		     pa->manufacturer == wpp->wpp_vendor) &&

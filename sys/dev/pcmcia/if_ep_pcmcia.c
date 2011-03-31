@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.39 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.40 2011/03/31 13:05:27 jasper Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -168,7 +168,7 @@ ep_pcmcia_lookup(pa)
 {
 	int i;
 
-	for (i = 0; i < sizeof(ep_pcmcia_prod)/sizeof(ep_pcmcia_prod[0]); i++)
+	for (i = 0; i < nitems(ep_pcmcia_prod); i++)
 		if (pa->product == ep_pcmcia_prod[i].epp_product &&
 		    pa->pf->number == ep_pcmcia_prod[i].epp_expfunc)
 			return &ep_pcmcia_prod[i];

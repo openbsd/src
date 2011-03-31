@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.15 2006/06/03 01:51:54 martin Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.16 2011/03/31 13:05:27 jasper Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ aic_pcmcia_match(parent, match, aux)
 	struct pcmcia_attach_args *pa = aux;
 	int i;
 
-	for (i = 0; i < sizeof(aic_pcmcia_prod)/sizeof(aic_pcmcia_prod[0]); i++)
+	for (i = 0; i < nitems(aic_pcmcia_prod); i++)
 		if (pa->manufacturer == aic_pcmcia_prod[i].app_vendor &&
 		    pa->product == aic_pcmcia_prod[i].app_product &&
 		    pa->pf->number == aic_pcmcia_prod[i].app_expfunc)

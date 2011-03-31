@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.51 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.52 2011/03/31 13:05:27 jasper Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -189,8 +189,7 @@ com_pcmcia_match(parent, match, aux)
 		return 1;
 
 	/* 3. Is this a card we know about? */
-	for (i = 0; i < sizeof(com_pcmcia_prod)/sizeof(com_pcmcia_prod[0]);
-	    i++) {
+	for (i = 0; i < nitems(com_pcmcia_prod); i++) {
 		for (j = 0; j < 4; j++)
 			if (com_pcmcia_prod[i].cis1_info[j] &&
 			    pa->card->cis1_info[j] &&

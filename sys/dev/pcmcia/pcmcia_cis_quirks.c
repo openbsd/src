@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.8 2005/10/27 16:42:19 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.9 2011/03/31 13:05:27 jasper Exp $	*/
 /*	$NetBSD: pcmcia_cis_quirks.c,v 1.3 1998/12/29 09:00:28 marc Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ void pcmcia_check_cis_quirks(sc)
 	pf_last = NULL;
 
 	
-	for (i = 0; i < sizeof(pcmcia_cis_quirks)/sizeof(pcmcia_cis_quirks[0]);
+	for (i = 0; i < nitems(pcmcia_cis_quirks);
 	    i++) {
 		if ((sc->card.manufacturer == pcmcia_cis_quirks[i].manufacturer) &&
 			(sc->card.product == pcmcia_cis_quirks[i].product) &&
