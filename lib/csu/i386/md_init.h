@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2004/01/08 14:59:15 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2011/03/31 09:48:09 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -50,12 +50,13 @@
 	"	.type " #entry_pt ",@function	\n" \
 	#entry_pt":				\n" \
 	"	.align 16			\n" \
-	"	/* fall thru */			\n" \
+	"	subl	$8,%esp			\n" \
 	"	.previous")
 
 
 #define MD_SECTION_EPILOGUE(sect)		\
 	__asm (					\
 	".section "#sect",\"ax\",@progbits	\n" \
+	"	addl	$8,%esp			\n" \
 	"	ret				\n" \
 	"	.previous")
