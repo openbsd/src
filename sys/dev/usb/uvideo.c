@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.158 2011/03/26 19:50:52 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.159 2011/03/31 22:13:12 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3000,15 +3000,13 @@ int
 uvideo_g_parm(void *v, struct v4l2_streamparm *parm)
 {
 	struct uvideo_softc *sc = v;
-	int ns;
 
-	ns = UGETDW(sc->sc_desc_probe.dwFrameInterval);
 	if (parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
 		parm->parm.capture.capturemode = 0;
 		parm->parm.capture.timeperframe.numerator =
-		    (ns == 0) ? 0 : 10000000 / ns;
-		parm->parm.capture.timeperframe.denominator = 1;
+		    UGETDW(sc->sc_desc_probe.dwFrameInterval);
+		parm->parm.capture.timeperframe.denominator = 10000000;
 	} else
 		return (EINVAL);
 
