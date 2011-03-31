@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.57 2010/07/16 05:22:48 lum Exp $	 */
+/* $Id: main.c,v 1.58 2011/03/31 06:12:34 lum Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -53,6 +53,8 @@
 #include "engine.h"
 #include "systat.h"
 
+#define TIMEPOS 55
+
 double	dellave;
 
 kvm_t	*kd;
@@ -66,8 +68,9 @@ int	ut, hz, stathz;
 char    hostname[MAXHOSTNAMELEN];
 WINDOW  *wnd;
 int	CMDLINE;
+char	timebuf[26];
+char	uloadbuf[TIMEPOS];
 
-#define TIMEPOS 55
 
 int  ucount(void);
 void usage(void);
@@ -90,31 +93,40 @@ print_header(void)
 {
 	time_t now;
 	int start = dispstart + 1, end = dispstart + maxprint;
-	char tbuf[26];
+	char tmpbuf[TIMEPOS];
+	char header[MAX_LINE_BUF];
 
 	if (end > num_disp)
 		end = num_disp;
 
 	tb_start();
 
-	getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
+	if (!paused) {
+		getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
 
-	time(&now);
-	strlcpy(tbuf, ctime(&now), sizeof tbuf);
-	tbprintf("   %d users", ucount());
-	tbprintf("    Load %.2f %.2f %.2f", avenrun[0], avenrun[1], avenrun[2]);
-	if (num_disp && (start > 1 || end != num_disp))
-		tbprintf("  (%u-%u of %u)", start, end, num_disp);
+		snprintf(uloadbuf, sizeof(uloadbuf),
+		    "%5d users    Load %.2f %.2f %.2f", 
+		    ucount(), avenrun[0], avenrun[1], avenrun[2]);
 
-	if (paused)
-		tbprintf(" PAUSED");
-
-	if (rawmode) {
-		printf("\n\n%-55s%s\n", tmp_buf, tbuf);
-	} else {
-		mvprintw(0, 0, "%s", tmp_buf);
-		mvprintw(0, TIMEPOS, "%s", tbuf);
+		time(&now);
+		strlcpy(timebuf, ctime(&now), sizeof(timebuf));
 	}
+
+	if (num_disp && (start > 1 || end != num_disp))
+		snprintf(tmpbuf, sizeof(tmpbuf),
+		    "%s (%u-%u of %u) %s", uloadbuf, start, end, num_disp,
+		    paused ? "PAUSED" : "");
+	else
+		snprintf(tmpbuf, sizeof(tmpbuf), 
+		    "%s %s", uloadbuf,
+		    paused ? "PAUSED" : "");
+		
+	snprintf(header, sizeof(header), "%-55s%s", tmpbuf, timebuf);
+
+	if (rawmode)
+		printf("\n\n%s\n", header);
+	else
+		mvprintw(0, 0, "%s", header);
 
 	return (1);
 }
