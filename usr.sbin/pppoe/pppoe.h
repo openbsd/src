@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.7 2004/05/06 20:29:04 deraadt Exp $	*/
+/*	$OpenBSD: pppoe.h,v 1.8 2011/03/31 09:19:35 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -99,13 +99,10 @@ struct tag_node {
 };
 
 void tag_init(struct tag_list *);
-void tag_show(struct tag_list *);
 void tag_destroy(struct tag_list *);
 struct tag_node *tag_lookup(struct tag_list *, u_int16_t, int);
 int tag_add(struct tag_list *, u_int16_t, u_int16_t, u_int8_t *);
 int tag_pkt(struct tag_list *, u_long, u_int8_t *);
-void tag_hton(struct tag_list *);
-void tag_ntoh(struct tag_list *);
 
 struct pppoe_session {
 	LIST_ENTRY(pppoe_session)	s_next;

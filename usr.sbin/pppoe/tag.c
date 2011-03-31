@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.2 2003/06/04 04:46:13 jason Exp $	*/
+/*	$OpenBSD: tag.c,v 1.3 2011/03/31 09:19:35 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -142,40 +142,4 @@ tag_pkt(struct tag_list *l, u_long pktlen, u_int8_t *pkt)
 	if (pktlen != 0)
 		return (-1);
 	return (0);
-}
-
-void
-tag_show(struct tag_list *l)
-{
-	struct tag_node *p;
-	int i;
-
-	for (p = LIST_FIRST(&l->thelist); p; p = LIST_NEXT(p, next)) {
-		printf("\ttag type=0x%04x, length=%d", p->type, p->len);
-		for (i = 0; i < p->len; i++)
-			printf("%c%02x", (i == 0) ? ' ' : ':', p->val[i]);
-		printf("\n");
-	}
-}
-
-void
-tag_hton(struct tag_list *l)
-{
-	struct tag_node *p;
-
-	for (p = LIST_FIRST(&l->thelist); p; p = LIST_NEXT(p, next)) {
-		p->len = htons(p->len);
-		p->type = htons(p->type);
-	}
-}
-
-void
-tag_ntoh(struct tag_list *l)
-{
-	struct tag_node *p;
-
-	for (p = LIST_FIRST(&l->thelist); p; p = LIST_NEXT(p, next)) {
-		p->len = htons(p->len);
-		p->type = htons(p->type);
-	}
 }
