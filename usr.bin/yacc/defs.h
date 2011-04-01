@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.11 2005/06/08 03:18:59 pvalchev Exp $	*/
+/*	$OpenBSD: defs.h,v 1.12 2011/04/01 21:21:39 nicm Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -358,6 +358,8 @@ extern void lalr(void);
 
 extern void reader(void);
 extern void lr0(void);
+extern void free_nullable(void);
+extern void free_derives(void);
 extern void make_parser(void);
 extern void verbose(void);
 extern void output(void);

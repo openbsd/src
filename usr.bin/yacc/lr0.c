@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.9 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.10 2011/04/01 21:21:39 nicm Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ void save_reductions(void);
 void set_derives(void);
 void print_derives(void);
 void set_nullable(void);
-void free_derives(void);
-void free_nullable(void);
 
 static core **state_set;
 static core *this_state;
@@ -602,8 +600,7 @@ set_nullable(void)
     nullable = MALLOC(nsyms);
     if (nullable == 0) no_space();
 
-    for (i = 0; i < nsyms; ++i)
-	nullable[i] = 0;
+    memset(nullable, 0, nsyms);
 
     done = 0;
     while (!done)

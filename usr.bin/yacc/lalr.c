@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.9 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.10 2011/04/01 21:21:39 nicm Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -99,6 +99,8 @@ lalr(void)
     build_relations();
     compute_FOLLOWS();
     compute_lookaheads();
+    free_derives();
+    free_nullable();
 }
 
 
