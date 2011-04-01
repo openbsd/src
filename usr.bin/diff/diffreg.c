@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.79 2010/07/16 21:47:02 ray Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.80 2011/04/01 17:25:26 nicm Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -642,12 +642,15 @@ static int
 stone(int *a, int n, int *b, int *c, int flags)
 {
 	int i, k, y, j, l;
-	int oldc, tc, oldl;
-	u_int numtries;
+	int oldc, tc, oldl, sq;
+	u_int numtries, bound;
 
-	/* XXX move the isqrt() out of the macro to avoid multiple calls */
-	const u_int bound = (flags & D_MINIMAL) ? UINT_MAX :
-	    MAX(256, isqrt(n));
+	if (flags & D_MINIMAL)
+		bound = UINT_MAX;
+	else {
+		sq = isqrt(n);
+		bound = MAX(256, sq);
+	}
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
