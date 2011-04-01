@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.27 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: vector.S,v 1.28 2011/04/01 22:51:45 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -295,7 +295,7 @@ calltrap:
  *
  * The direct costs of setting up a trap frame are two pushq's (error code and
  * trap number), an addl to get rid of these, and pushing and popping the
- * callee-saved registers %esi, %edi, %ebx, and %ebp twice.
+ * callee-saved registers %ebx, %ebp, and %r1[2-5] twice.
  *
  * If the interrupt frame is made more flexible,  INTR can push %eax first and
  * decide the ipending case with less overhead, e.g., by avoiding loading the
