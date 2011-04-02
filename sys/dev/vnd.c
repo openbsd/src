@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.107 2011/02/15 20:02:11 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.108 2011/04/02 15:24:03 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -127,8 +127,6 @@ struct vnd_softc {
 	struct disk	 sc_dk;
 	char		 sc_dk_name[16];
 
-	struct bufq	 sc_bufq;
-
 	char		 sc_file[VNDNLEN];	/* file we're covering */
 	int		 sc_flags;		/* flags */
 	size_t		 sc_size;		/* size of vnd in sectors */
@@ -159,7 +157,7 @@ int numvnd = 0;
 void	vndattach(int);
 
 void	vndclear(struct vnd_softc *);
-void	vndstart(struct vnd_softc *);
+void	vndstart(struct vnd_softc *, struct buf *);
 int	vndsetcred(struct vnd_softc *, struct ucred *);
 void	vndiodone(struct buf *);
 void	vndshutdown(void);
@@ -445,64 +443,50 @@ vndstrategy(struct buf *bp)
 
 	/* No bypassing of buffer cache?  */
 	if (vndsimple(bp->b_dev)) {
-		/* Loop until all queued requests are handled.  */
-		for (;;) {
-			int part = DISKPART(bp->b_dev);
-			daddr64_t off = DL_SECTOBLK(vnd->sc_dk.dk_label,
-			    DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[part]));
-			aiov.iov_base = bp->b_data;
-			auio.uio_resid = aiov.iov_len = bp->b_bcount;
-			auio.uio_iov = &aiov;
-			auio.uio_iovcnt = 1;
-			auio.uio_offset = dbtob((off_t)(bp->b_blkno + off));
-			auio.uio_segflg = UIO_SYSSPACE;
-			auio.uio_procp = p;
+		int part = DISKPART(bp->b_dev);
+		daddr64_t off = DL_SECTOBLK(vnd->sc_dk.dk_label,
+		    DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[part]));
+		aiov.iov_base = bp->b_data;
+		auio.uio_resid = aiov.iov_len = bp->b_bcount;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = dbtob((off_t)(bp->b_blkno + off));
+		auio.uio_segflg = UIO_SYSSPACE;
+		auio.uio_procp = p;
 
-			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
-			if (bp->b_flags & B_READ) {
-				auio.uio_rw = UIO_READ;
-				bp->b_error = VOP_READ(vnd->sc_vp, &auio, 0,
-				    vnd->sc_cred);
-				if (vnd->sc_keyctx)
-					vndencrypt(vnd,	bp->b_data,
-					   bp->b_bcount, bp->b_blkno, 0);
-			} else {
-				if (vnd->sc_keyctx)
-					vndencrypt(vnd, bp->b_data,
-					   bp->b_bcount, bp->b_blkno, 1);
-				auio.uio_rw = UIO_WRITE;
-				/*
-				 * Upper layer has already checked I/O for
-				 * limits, so there is no need to do it again.
-				 */
-				bp->b_error = VOP_WRITE(vnd->sc_vp, &auio,
-				    IO_NOLIMIT, vnd->sc_cred);
-				/* Data in buffer cache needs to be in clear */
-				if (vnd->sc_keyctx)
-					vndencrypt(vnd, bp->b_data,
-					   bp->b_bcount, bp->b_blkno, 0);
-			}
-			VOP_UNLOCK(vnd->sc_vp, 0, p);
-			if (bp->b_error)
-				bp->b_flags |= B_ERROR;
-			bp->b_resid = auio.uio_resid;
-			s = splbio();
-			biodone(bp);
-			splx(s);
-
-			/* If nothing more is queued, we are done. */
-			if (!bufq_peek(&vnd->sc_bufq))
-				return;
-
+		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+		if (bp->b_flags & B_READ) {
+			auio.uio_rw = UIO_READ;
+			bp->b_error = VOP_READ(vnd->sc_vp, &auio, 0,
+			    vnd->sc_cred);
+			if (vnd->sc_keyctx)
+				vndencrypt(vnd,	bp->b_data,
+				   bp->b_bcount, bp->b_blkno, 0);
+		} else {
+			if (vnd->sc_keyctx)
+				vndencrypt(vnd, bp->b_data,
+				   bp->b_bcount, bp->b_blkno, 1);
+			auio.uio_rw = UIO_WRITE;
 			/*
-			 * Dequeue now since lower level strategy
-			 * routine might queue using same links.
+			 * Upper layer has already checked I/O for
+			 * limits, so there is no need to do it again.
 			 */
-			s = splbio();
-			bp = bufq_dequeue(&vnd->sc_bufq);
-			KASSERT(bp != NULL);
-			splx(s);
+			bp->b_error = VOP_WRITE(vnd->sc_vp, &auio,
+			    IO_NOLIMIT, vnd->sc_cred);
+			/* Data in buffer cache needs to be in clear */
+			if (vnd->sc_keyctx)
+				vndencrypt(vnd, bp->b_data,
+				   bp->b_bcount, bp->b_blkno, 0);
 		}
+		VOP_UNLOCK(vnd->sc_vp, 0, p);
+		if (bp->b_error)
+			bp->b_flags |= B_ERROR;
+		bp->b_resid = auio.uio_resid;
+		s = splbio();
+		biodone(bp);
+		splx(s);
+
+		return;
 	}
 
 	if (vnd->sc_vp->v_type != VREG || vnd->sc_keyctx != NULL) {
@@ -597,34 +581,15 @@ vndstrategy(struct buf *bp)
 			return;
 		}
 
-		bufq_queue(&vnd->sc_bufq, &nbp->vb_buf);
-		s = splbio();
-		vndstart(vnd);
-		splx(s);
+		vndstart(vnd, &nbp->vb_buf);
 		bn += sz;
 		addr += sz;
 	}
 }
 
-/*
- * Feed requests sequentially.
- * We do it this way to keep from flooding NFS servers if we are connected
- * to an NFS file.  This places the burden on the client rather than the
- * server.
- */
 void
-vndstart(struct vnd_softc *vnd)
+vndstart(struct vnd_softc *vnd, struct buf *bp)
 {
-	struct buf *bp;
-
-	/*
-	 * Dequeue now since lower level strategy routine might
-	 * queue using same links
-	 */
-	bp = bufq_dequeue(&vnd->sc_bufq);
-	if (bp == NULL)
-		return;
-
 	DNPRINTF(VDB_IO,
 	    "vndstart(%d): bp %p vp %p blkno %lld addr %p cnt %lx\n",
 	    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
@@ -671,12 +636,6 @@ vndiodone(struct buf *bp)
 	}
 
 out:
-	/*
-	 * A bufq_done call is actually done on this buf in the context
-	 * of the bufq for the device on which the vnd image resides on.
-	 * Meaning we have to do one ourselves too.
-	 */
-	bufq_done(&vnd->sc_bufq, bp);
 	putvndbuf(vbp);
 	disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid),
 	    (pbp->b_flags & B_READ));
@@ -877,7 +836,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		/* Attach the disk. */
 		vnd->sc_dk.dk_name = vnd->sc_dk_name;
 		disk_attach(&vnd->sc_dev, &vnd->sc_dk);
-		bufq_init(&vnd->sc_bufq, BUFQ_DEFAULT);
 
 		vndunlock(vnd);
 
@@ -914,7 +872,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		/* Detach the disk. */
-		bufq_destroy(&vnd->sc_bufq);
 		disk_detach(&vnd->sc_dk);
 
 		/* This must be atomic. */
