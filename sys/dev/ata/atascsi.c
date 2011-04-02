@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.101 2011/02/03 21:22:19 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.102 2011/04/02 15:23:36 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/pool.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -335,8 +336,8 @@ atascsi_probe(struct scsi_link *link)
 			xa = scsi_io_get(&ahp->ahp_iopool, SCSI_NOSLEEP);
 			if (xa == NULL)
 				panic("no free xfers on a new port");
-			/* XXX dma reachable */
-			identify = malloc(sizeof(*identify), M_TEMP, M_WAITOK);
+			identify = dma_alloc(sizeof(*identify),
+			    PR_WAITOK | PR_ZERO);
 			xa->pmp_port = ap->ap_pmp_port;
 			xa->data = identify;
 			xa->datalen = sizeof(*identify);
@@ -353,10 +354,10 @@ atascsi_probe(struct scsi_link *link)
 			if (rv == 0) {
 				bcopy(identify, &ap->ap_identify,
 				    sizeof(ap->ap_identify));
-				free(identify, M_TEMP);
+				dma_free(identify, sizeof(*identify));
 				break;
 			}
-			free(identify, M_TEMP);
+			dma_free(identify, sizeof(*identify));
 			delay(5000000);
 		} while (count--);
 
