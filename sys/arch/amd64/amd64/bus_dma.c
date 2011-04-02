@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.35 2010/12/26 15:40:58 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.36 2011/04/02 16:37:39 beck Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -100,7 +100,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include "ioapic.h"
 
@@ -332,6 +332,10 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 			sgsize = PAGE_SIZE - ((u_long)paddr & PGOFSET);
 			if (plen < sgsize)
 				sgsize = plen;
+
+			if (paddr > dma_constraint.ucr_high)
+				panic("Non dma-reachable buffer at paddr %p(raw)",
+				    paddr);
 
 			/*
 			 * Make sure we don't cross any boundaries.
@@ -585,6 +589,10 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * Get the physical address for this segment.
 		 */
 		pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
+
+		if (curaddr > dma_constraint.ucr_high)
+			panic("Non dma-reachable buffer at curaddr %p(raw)",
+			    curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
