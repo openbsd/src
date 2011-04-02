@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.38 2011/03/31 10:40:59 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.39 2011/04/02 16:40:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -112,11 +112,13 @@ dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 	switch (type) {
 	case IMSG_DNS_HOST:
 		dnssession_mx_insert(dnssession, query->host, 0);
+		env->stats->lka.queries_host++;
 		dns_asr_dispatch_host(dnssession);
 		return;
 	case IMSG_DNS_PTR:
 		dnssession->aq = asr_query_cname(asr,
 		    (struct sockaddr*)&query->ss, query->ss.ss_len);
+		env->stats->lka.queries_cname++;
 		if (dnssession->aq == NULL) {
 			log_debug("dns_async: asr_query_cname error");
 			break;
@@ -125,6 +127,7 @@ dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 		return;
 	case IMSG_DNS_MX:
 		dnssession->aq = asr_query_dns(asr, T_MX, C_IN, query->host, 0);
+		env->stats->lka.queries_mx++;
 		if (dnssession->aq == NULL) {
 			log_debug("dns_async: asr_query_dns error");
 			break;
@@ -136,6 +139,7 @@ dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 		break;
 	}
 
+	env->stats->lka.queries_failure++;
 	dnssession_destroy(env, dnssession);
 noasr:
 	query->error = EAI_AGAIN;
@@ -235,6 +239,8 @@ next:
 	while (dnssession->aq == NULL) {
 		if (dnssession->mxcurrent == dnssession->mxarraysz) {
 			query->error = (dnssession->mxfound) ? 0 : EAI_NONAME;
+			if (query->error)
+				query->env->stats->lka.queries_failure++;
 			imsg_compose_event(query->asker, IMSG_DNS_HOST_END, 0,
 			    0, -1, query, sizeof(*query));
 			dnssession_destroy(query->env, dnssession);
@@ -281,6 +287,7 @@ dns_asr_dispatch_cname(struct dnssession *dnssession)
 		break;
 	case ASR_DONE:
 		/* This is necessarily an error */
+		query->env->stats->lka.queries_failure++;
 		query->error = ar.ar_err;
 		break;
 	}
@@ -298,6 +305,12 @@ dnssession_init(struct smtpd *env, struct dns *query)
 	if (dnssession == NULL)
 		fatal("dnssession_init: calloc");
 
+	env->stats->lka.queries++;
+	env->stats->lka.queries_active++;
+	if (env->stats->lka.queries_active > env->stats->lka.queries_maxactive)
+		env->stats->lka.queries_maxactive = \
+		    env->stats->lka.queries_active;
+
 	dnssession->id = query->id;
 	dnssession->query = *query;
 	SPLAY_INSERT(dnstree, &env->dns_sessions, dnssession);
@@ -307,6 +320,7 @@ dnssession_init(struct smtpd *env, struct dns *query)
 void
 dnssession_destroy(struct smtpd *env, struct dnssession *dnssession)
 {
+	env->stats->lka.queries_active--;
 	SPLAY_REMOVE(dnstree, &env->dns_sessions, dnssession);
 	event_del(&dnssession->ev);
 	free(dnssession);

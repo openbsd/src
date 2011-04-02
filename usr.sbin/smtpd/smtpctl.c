@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.56 2011/03/09 20:59:22 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.57 2011/04/02 16:40:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -283,6 +283,14 @@ show_stats_output(struct imsg *imsg)
 	printf("mta.sessions=%zd\n", stats->mta.sessions);
 	printf("mta.sessions.active=%zd\n", stats->mta.sessions_active);
 	printf("mta.sessions.maxactive=%zd\n", stats->mta.sessions_maxactive);
+
+	printf("lka.queries=%zd\n", stats->lka.queries);
+	printf("lka.queries.active=%zd\n", stats->lka.queries_active);
+	printf("lka.queries.maxactive=%zd\n", stats->lka.queries_maxactive);
+	printf("lka.queries.mx=%zd\n", stats->lka.queries_mx);
+	printf("lka.queries.host=%zd\n", stats->lka.queries_host);
+	printf("lka.queries.cname=%zd\n", stats->lka.queries_cname);
+	printf("lka.queries.failure=%zd\n", stats->lka.queries_failure);
 
 	printf("parent.uptime=%d\n", time(NULL) - stats->parent.start);
 

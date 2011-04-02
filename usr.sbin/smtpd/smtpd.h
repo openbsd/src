@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.206 2011/03/29 20:43:51 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.207 2011/04/02 16:40:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -692,6 +692,16 @@ struct s_control {
 	size_t		sessions_maxactive;
 };
 
+struct s_lka {
+	size_t		queries;
+	size_t		queries_active;
+	size_t		queries_maxactive;
+	size_t		queries_mx;
+	size_t		queries_host;
+	size_t		queries_cname;
+	size_t		queries_failure;
+};
+
 struct stats {
 	struct s_parent		 parent;
 	struct s_queue		 queue;
@@ -700,6 +710,7 @@ struct stats {
 	struct s_mda		 mda;
 	struct s_session	 smtp;
 	struct s_control	 control;
+	struct s_lka		 lka;
 };
 
 struct sched {
