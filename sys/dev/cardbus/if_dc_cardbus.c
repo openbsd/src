@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.34 2010/08/31 17:01:15 deraadt Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.35 2011/04/02 17:47:04 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -115,8 +115,7 @@ int
 dc_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
-	    dc_cardbus_devices,
-	    sizeof(dc_cardbus_devices)/sizeof(dc_cardbus_devices[0])));
+	    dc_cardbus_devices, nitems(dc_cardbus_devices)));
 }
 
 void
