@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.186 2011/02/11 12:16:30 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.187 2011/04/02 14:38:09 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -688,10 +688,7 @@ in_iawithaddr(struct in_addr ina, struct mbuf *m, u_int rdomain)
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 		if (ia->ia_ifp->if_rdomain != rdomain)
 			continue;
-		if ((ina.s_addr == ia->ia_addr.sin_addr.s_addr) ||
-		    ((ia->ia_ifp->if_flags & (IFF_LOOPBACK|IFF_LINK1)) ==
-			(IFF_LOOPBACK|IFF_LINK1) &&
-		     ia->ia_net == (ina.s_addr & ia->ia_netmask)))
+		if (ina.s_addr == ia->ia_addr.sin_addr.s_addr)
 			return ia;
 		/* check ancient classful too, e. g. for rarp-based netboot */
 		if (((ip_directedbcast == 0) || (m && ip_directedbcast &&

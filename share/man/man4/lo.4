@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lo.4,v 1.26 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: lo.4,v 1.27 2011/04/02 14:38:09 henning Exp $
 .\"	$NetBSD: lo.4,v 1.3 1994/11/30 16:22:23 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 2 2011 $
 .Dt LO 4
 .Os
 .Sh NAME
@@ -70,33 +70,6 @@ The loopback should
 .Em never
 be configured first unless no hardware
 interfaces exist.
-.Pp
-Configuring a loopback interface for
-.Xr inet 4
-with the
-.Em link1
-flag set will make the interface answer to the whole set of
-addresses identified as being in super-net which is specified
-by the address and netmask.
-Obviously you should not set the
-.Em link1
-flag on interface
-.Nm lo0 ,
-but instead use another interface like
-.Nm lo1 .
-.Sh EXAMPLES
-.Bd -literal
-# ifconfig lo1 create
-# ifconfig lo1 inet 192.168.1.1 netmask 255.255.255.0 link1
-.Ed
-.Pp
-is equivalent to:
-.Bd -literal
-# ifconfig lo1 create
-# awk 'BEGIN {for(i=1;i<255;i++) \e
-	print "ifconfig lo1 inet 192.168.1."i" netmask 255.255.255.255 alias"}'| \e
-	sh
-.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It lo%d: can't handle af%d.
@@ -116,16 +89,8 @@ The
 .Nm
 device appeared in
 .Bx 4.2 .
-.Pp
-The wildcard functionality first appeared in
-.Ox 2.3 .
 .Sh BUGS
 Previous versions of the system enabled the loopback interface
 automatically, using a non-standard Internet address (127.1).
 Use of that address is now discouraged; a reserved host address
 for the local network should be used instead.
-.Pp
-Care should be taken when using NAT with interfaces that have the
-.Em link1
-flag set, because it may believe the packets are coming from a
-loopback address.
