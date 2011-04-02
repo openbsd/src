@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.4 2011/01/28 06:43:00 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.5 2011/04/02 11:49:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -653,6 +653,8 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	struct pipex_hash_head *chain;
 	struct ifnet *ifp;
 	int unit, s, error = 0;
+	struct in_ifaddr *ia;
+	struct sockaddr_in ifaddr;
 #ifdef PIPEX_PPPOE
 	struct ifnet *over_ifp = NULL;
 #endif
@@ -815,7 +817,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
 	ifp->if_mtu = req->pr_peer_mru;	/* XXX */
-	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
+	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST | IFF_UP;
 	ifp->if_start = pppx_if_start;
 	ifp->if_output = pppx_if_output;
 	ifp->if_ioctl = pppx_if_ioctl;
@@ -855,6 +857,44 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	if (RB_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
 		panic("pppx_ifs modified while lock was held");
 	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
+
+	/* XXX ipv6 support?  how does the caller indicate it wants ipv6
+	 * instead of ipv4?
+	 */
+	memset(&ifaddr, 0, sizeof(ifaddr));
+	ifaddr.sin_family = AF_INET;
+	ifaddr.sin_len = sizeof(ifaddr);
+	ifaddr.sin_addr = req->pr_ip_srcaddr;
+
+	ia = malloc(sizeof (*ia), M_IFADDR, M_WAITOK | M_ZERO);
+	TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
+
+	ia->ia_addr.sin_family = AF_INET;
+	ia->ia_addr.sin_len = sizeof(struct sockaddr_in);
+	ia->ia_addr.sin_addr = req->pr_ip_srcaddr;
+
+	ia->ia_dstaddr.sin_family = AF_INET;
+	ia->ia_dstaddr.sin_len = sizeof(struct sockaddr_in);
+	ia->ia_dstaddr.sin_addr = req->pr_ip_address;
+
+	ia->ia_sockmask.sin_family = AF_INET;
+	ia->ia_sockmask.sin_len = sizeof(struct sockaddr_in);
+	ia->ia_sockmask.sin_addr = req->pr_ip_netmask;
+
+	ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
+	ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
+	ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
+	ia->ia_ifa.ifa_ifp = ifp;
+	
+	ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr;
+
+	error = in_ifinit(ifp, ia, &ifaddr, 0, 1);
+	if (error) {
+		printf("pppx: unable to set addresses for %s, error=%d\n",
+		    ifp->if_xname, error);
+	} else {
+		dohooks(ifp->if_addrhooks, 0);
+	}
 	splx(s);
 
 out:
