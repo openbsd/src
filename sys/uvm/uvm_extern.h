@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.89 2010/07/02 01:25:06 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.90 2011/04/02 16:47:17 beck Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -583,6 +583,8 @@ struct vm_page		*uvm_pagealloc(struct uvm_object *,
 				voff_t, struct vm_anon *, int);
 vaddr_t			uvm_pagealloc_contig(vaddr_t, vaddr_t,
 				vaddr_t, vaddr_t);
+void			uvm_pagealloc_multi(struct uvm_object *, voff_t,
+    			    vsize_t, int);
 void			uvm_pagerealloc(struct vm_page *, 
 					     struct uvm_object *, voff_t);
 /* Actually, uvm_page_physload takes PF#s which need their own type */

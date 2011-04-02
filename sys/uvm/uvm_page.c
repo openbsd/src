@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.103 2011/04/02 12:38:37 ariane Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.104 2011/04/02 16:47:17 beck Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -801,6 +801,32 @@ uvm_pagealloc_pg(struct vm_page *pg, struct uvm_object *obj, voff_t off,
 	pg->owner_tag = NULL;
 #endif
 	UVM_PAGE_OWN(pg, "new alloc");
+}
+
+/*
+ * interface used by the buffer cache to allocate a buffer at a time.
+ * The pages are allocated wired in DMA accessible memory
+ */
+void
+uvm_pagealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size, int flags)
+{
+	struct pglist    plist;
+	struct vm_page  *pg;
+	int              i;
+
+
+	TAILQ_INIT(&plist);
+	(void) uvm_pglistalloc(size, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high, 0, 0, &plist, atop(round_page(size)),
+	    UVM_PLA_WAITOK);
+	i = 0;
+	while ((pg = TAILQ_FIRST(&plist)) != NULL) {
+		pg->wire_count = 1;
+		atomic_setbits_int(&pg->pg_flags, PG_CLEAN | PG_FAKE);
+		KASSERT((pg->pg_flags & PG_DEV) == 0);
+		TAILQ_REMOVE(&plist, pg, pageq);
+		uvm_pagealloc_pg(pg, obj, off + ptoa(i++), NULL);
+	}
 }
 
 /*

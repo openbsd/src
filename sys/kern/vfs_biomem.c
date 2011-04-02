@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.14 2010/04/30 21:56:39 oga Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.15 2011/04/02 16:47:17 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -259,11 +259,11 @@ buf_unmap(struct buf *bp)
 	return (va);
 }
 
+/* Always allocates in dma-reachable memory */
 void
 buf_alloc_pages(struct buf *bp, vsize_t size)
 {
-	struct vm_page *pg;
-	voff_t offs, i;
+	voff_t offs;
 	int s;
 
 	KASSERT(size == round_page(size));
@@ -277,22 +277,8 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 
 	KASSERT(buf_page_offset > 0);
 
-	for (i = 0; i < atop(size); i++) {
-#if defined(DEBUG) || 1
-		if ((pg = uvm_pagelookup(buf_object, offs + ptoa(i))))
-			panic("buf_alloc_pages: overlap buf: %p page: %p",
-			    bp, pg);
-#endif
-
-		while ((pg = uvm_pagealloc(buf_object, offs + ptoa(i),
-			    NULL, 0)) == NULL) {
-			uvm_wait("buf_alloc_pages");
-		}
-		pg->wire_count = 1;
-		atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
-		bcstats.numbufpages++;
-	}
-
+	uvm_pagealloc_multi(buf_object, offs, size, UVM_PLA_WAITOK);
+	bcstats.numbufpages += atop(size);
 	bp->b_pobj = buf_object;
 	bp->b_poffs = offs;
 	bp->b_bufsize = size;
