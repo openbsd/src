@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_iface.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_iface.h,v 1.4 2011/04/02 12:04:44 dlg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -54,6 +54,8 @@ typedef struct _npppd_iface {
  		 * <p>if 0, npppd_iface only refers IP address already set.</p>
  		 */
  		set_ip4addr:1,
+		/** set if using pppx(4) rather than tun(4) */
+		using_pppx:1,
  		/** initialized flag */
   		initialized:1;
 } npppd_iface;
@@ -66,7 +68,7 @@ typedef struct _npppd_iface {
 extern "C" {
 #endif
 
-void  npppd_iface_init (npppd_iface *, const char *);
+void  npppd_iface_init (npppd_iface *, const char *, int);
 int   npppd_iface_reinit (npppd_iface *);
 int   npppd_iface_start (npppd_iface *);
 void  npppd_iface_stop (npppd_iface *);

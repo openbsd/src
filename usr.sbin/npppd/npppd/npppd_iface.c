@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_iface.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_iface.c,v 1.5 2011/04/02 12:04:44 dlg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,10 +25,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.5 2011/04/02 12:04:44 dlg Exp $ */
 /**@file
  * The interface of npppd and kernel.
- * This is an implementation to use tun(4).
+ * This is an implementation to use tun(4) or pppx(4).
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,13 +100,15 @@ static int npppd_iface_pipex_disable(npppd_iface *_this);
 
 /** initialize npppd_iface */
 void
-npppd_iface_init(npppd_iface *_this, const char *ifname)
+npppd_iface_init(npppd_iface *_this, const char *ifname, int pppx_mode)
 {
 	NPPPD_IFACE_ASSERT(_this != NULL);
 	memset(_this, 0, sizeof(npppd_iface));
 
 	_this->devf = -1;
 	strlcpy(_this->ifname, ifname, sizeof(_this->ifname));
+
+	_this->using_pppx = pppx_mode;
 }
 
 static int
@@ -260,6 +262,9 @@ npppd_iface_reinit(npppd_iface *_this)
 	struct in_addr backup;
 	char buf0[128], buf1[128];
 
+	if (_this->using_pppx)
+		return 0;
+
 	backup = _this->ip4addr;
 	if ((rval = npppd_iface_setup_ip(_this)) != 0)
 		return rval;
@@ -301,32 +306,46 @@ npppd_iface_start(npppd_iface *_this)
 		goto fail;
 	}
 
-	x = IFF_BROADCAST;
-	if (ioctl(_this->devf, TUNSIFMODE, &x) != 0) {
-		npppd_iface_log(_this, LOG_ERR,
-		    "ioctl(TUNSIFMODE=IFF_BROADCAST) failed in %s(): %m",
-			__func__);
-		goto fail;
+	if (_this->using_pppx == 0) {
+		x = IFF_BROADCAST;
+		if (ioctl(_this->devf, TUNSIFMODE, &x) != 0) {
+			npppd_iface_log(_this, LOG_ERR,
+			    "ioctl(TUNSIFMODE=IFF_BROADCAST) failed in %s(): %m",
+				__func__);
+			goto fail;
+		}
 	}
 
 	event_set(&_this->ev, _this->devf, EV_READ | EV_PERSIST,
 	    npppd_iface_io_event_handler, _this);
 	event_add(&_this->ev, NULL);
 
-	if (npppd_iface_setup_ip(_this) != 0)
-		goto fail;
+	if (_this->using_pppx == 0) {
+		if (npppd_iface_setup_ip(_this) != 0)
+			goto fail;
+	}
 
 #ifdef USE_NPPPD_PIPEX
 	if (npppd_iface_pipex_enable(_this) != 0) {
 		log_printf(LOG_WARNING,
 		    "npppd_iface_pipex_enable() failed: %m");
 	}
+#else
+	if (_this->using_pppx) {
+		npppd_iface_log(_this, LOG_ERR,
+		    "pipex is required when using pppx interface");
+		goto fail;
+	}
 #endif /* USE_NPPPD_PIPEX */
 
-	npppd_iface_log(_this, LOG_INFO, "Started ip4addr=%s",
-		(npppd_iface_ip_is_ready(_this))?
-		    inet_ntop(AF_INET, &_this->ip4addr, buf, sizeof(buf))
-		    : "(not assigned)");
+	if (_this->using_pppx) {
+		npppd_iface_log(_this, LOG_INFO, "Started pppx");
+	} else {
+		npppd_iface_log(_this, LOG_INFO, "Started ip4addr=%s",
+			(npppd_iface_ip_is_ready(_this))?
+			    inet_ntop(AF_INET, &_this->ip4addr, buf, sizeof(buf))
+			    : "(not assigned)");
+	}
 
 	return 0;
 fail:

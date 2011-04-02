@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_config.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_config.c,v 1.6 2011/04/02 12:04:44 dlg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.6 2011/04/02 12:04:44 dlg Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
@@ -685,15 +685,20 @@ npppd_ifaces_load_config(npppd *_this)
 				break;
 			}
 
+			strlcpy(buf1, "interface.", sizeof(buf1));
+			strlcat(buf1, tok, sizeof(buf1));
+
 			if (_this->iface[n].initialized != 0)
 				nsession = _this->iface[n].nsession;
 			else {
-				npppd_iface_init(&_this->iface[n], tok);
+				int pppx;
+
+				pppx = npppd_config_str_equal(_this,
+				    config_key_prefix(buf1, "pppx_mode"),
+				    "true", 0);
+				npppd_iface_init(&_this->iface[n], tok, pppx);
 				nsession = 0;
 			}
-
-			strlcpy(buf1, "interface.", sizeof(buf1));
-			strlcat(buf1, tok, sizeof(buf1));
 
 			_this->iface[n].set_ip4addr = 0;
 			if ((val = npppd_config_str(_this,

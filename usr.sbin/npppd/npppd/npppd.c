@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.8 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $OpenBSD: npppd.c,v 1.9 2011/04/02 12:04:44 dlg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.8 2010/09/24 14:50:30 yasuoka Exp $
+ * $Id: npppd.c,v 1.9 2011/04/02 12:04:44 dlg Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -255,7 +255,9 @@ npppd_init(npppd *_this, const char *config_file)
 	long seed;
 
 	memset(_this, 0, sizeof(npppd));
+#ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
 	loop.s_addr = htonl(INADDR_LOOPBACK);
+#endif
 
 	NPPPD_ASSERT(config_file != NULL);
 
@@ -564,6 +566,9 @@ npppd_reset_routing_table(npppd *_this, int pool_only)
 {
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
 	slist rtlist0;
+
+	if (_this->iface[0].using_pppx) 
+		return 0;
 
 	slist_init(&rtlist0);
 	if (rd2slist(_this->rd, &rtlist0) != 0)
@@ -925,6 +930,7 @@ pipex_setup_common(npppd_ppp *ppp, struct pipex_session_req *req)
 	if (ppp->adjust_mss != 0)
 		req->pr_ppp_flags |= PIPEX_PPP_ADJUST_TCPMSS;
 
+	req->pr_ip_srcaddr = ppp->pppd->iface[0].ip4addr;
 	req->pr_ip_address = ppp->ppp_framed_ip_address;
 	req->pr_ip_netmask = ppp->ppp_framed_ip_netmask;
 	req->pr_peer_mru = ppp->peer_mru;
@@ -1075,6 +1081,19 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 			error = 0;
 		ppp->pipex_enabled = 0;
 		return error;
+	}
+
+	if (_this->iface[ppp->ifidx].using_pppx) {
+		struct pipex_session_descr_req descr_req;
+
+		descr_req.pdr_protocol = req.pr_protocol;
+		descr_req.pdr_session_id = req.pr_session_id;
+		memset(descr_req.pdr_descr, 0, sizeof(descr_req.pdr_descr));
+		strlcpy(descr_req.pdr_descr, ppp->username, sizeof(descr_req.pdr_descr));
+		error = ioctl(_this->iface[ppp->ifidx].devf, PIPEXSIFDESCR, &descr_req);
+		if (error != 0) {
+			log_printf(LOG_WARNING, "PIPEXSIFDESCR(%s) failed: %d\n", ppp->username, error);
+		}
 	}
 
 	ppp->pipex_enabled = 1;
@@ -1361,42 +1380,50 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 		}
 
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
-		if (ppp->snp.snp_next != NULL)
-			/*
-			 * There is a blackhole route that has same
-			 * address/mask.
-			 */
-			in_route_delete(&ppp->ppp_framed_ip_address,
-			    &ppp->ppp_framed_ip_netmask, &loop, RTF_BLACKHOLE);
-		/* See the comment for MRU_IPMTU() on ppp.h */
-		if (ppp->ppp_framed_ip_netmask.s_addr == 0xffffffffL) {
-			in_host_route_add(&ppp->ppp_framed_ip_address,
-			    &ppp_iface(ppp)->ip4addr, ppp_iface(ppp)->ifname,
-			    MRU_IPMTU(ppp->peer_mru));
-		} else {
-			in_route_add(&ppp->ppp_framed_ip_address,
-			    &ppp->ppp_framed_ip_netmask,
-			    &ppp_iface(ppp)->ip4addr, ppp_iface(ppp)->ifname, 0,
-			    MRU_IPMTU(ppp->peer_mru));
+		if (_this->iface[ppp->ifidx].using_pppx == 0) {
+			if (ppp->snp.snp_next != NULL)
+				/*
+				 * There is a blackhole route that has same
+				 * address/mask.
+				 */
+				in_route_delete(&ppp->ppp_framed_ip_address,
+				    &ppp->ppp_framed_ip_netmask, &loop,
+				    RTF_BLACKHOLE);
+			/* See the comment for MRU_IPMTU() on ppp.h */
+			if (ppp->ppp_framed_ip_netmask.s_addr == 0xffffffffL) {
+				in_host_route_add(&ppp->ppp_framed_ip_address,
+				    &ppp_iface(ppp)->ip4addr,
+				    ppp_iface(ppp)->ifname,
+				    MRU_IPMTU(ppp->peer_mru));
+			} else {
+				in_route_add(&ppp->ppp_framed_ip_address,
+				    &ppp->ppp_framed_ip_netmask,
+				    &ppp_iface(ppp)->ip4addr,
+				    ppp_iface(ppp)->ifname, 0,
+				    MRU_IPMTU(ppp->peer_mru));
+			}
 		}
 #endif
 	} else {
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
-		if (ppp->ppp_framed_ip_netmask.s_addr == 0xffffffffL) {
-			in_host_route_delete(&ppp->ppp_framed_ip_address,
-			    &ppp_iface(ppp)->ip4addr);
-		} else {
-			in_route_delete(&ppp->ppp_framed_ip_address,
-			    &ppp->ppp_framed_ip_netmask,
-			    &ppp_iface(ppp)->ip4addr, 0);
+		if (_this->iface[ppp->ifidx].using_pppx == 0) {
+			if (ppp->ppp_framed_ip_netmask.s_addr == 0xffffffffL) {
+				in_host_route_delete(&ppp->ppp_framed_ip_address,
+				    &ppp_iface(ppp)->ip4addr);
+			} else {
+				in_route_delete(&ppp->ppp_framed_ip_address,
+				    &ppp->ppp_framed_ip_netmask,
+				    &ppp_iface(ppp)->ip4addr, 0);
+			}
+			if (ppp->snp.snp_next != NULL)
+				/*
+				 * There is a blackhole route that has same
+				 * address/mask.
+				 */
+				in_route_add(&ppp->snp.snp_addr,
+				    &ppp->snp.snp_mask, &loop, LOOPBACK_IFNAME,
+				    RTF_BLACKHOLE, 0);
 		}
-		if (ppp->snp.snp_next != NULL)
-			/*
-			 * There is a blackhole route that has same
-			 * address/mask.
-			 */
-			in_route_add(&ppp->snp.snp_addr, &ppp->snp.snp_mask,
-			    &loop, LOOPBACK_IFNAME, RTF_BLACKHOLE, 0);
 #endif
 		if (ppp->username[0] != '\0') {
 			hl = hash_lookup(_this->map_user_ppp, ppp->username);
@@ -1713,27 +1740,31 @@ npppd_set_radish(npppd *_this, void *radish_head)
 	}
 	count = 0;
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
-	for (slist_itr_first(&rtlist0); slist_itr_has_next(&rtlist0);) {
-		radish = slist_itr_next(&rtlist0);
-		in_route_delete(&SIN(radish->rd_route)->sin_addr,
-		    &SIN(radish->rd_mask)->sin_addr, &loop, RTF_BLACKHOLE);
-		count++;
-	}
-	if (count > 0)
-		log_printf(LOG_INFO,
-		    "Deleted %d routes for old pool addresses", count);
+	if (_this->iface[0].using_pppx == 0) {
+		for (slist_itr_first(&rtlist0); slist_itr_has_next(&rtlist0);) {
+			radish = slist_itr_next(&rtlist0);
+			in_route_delete(&SIN(radish->rd_route)->sin_addr,
+			    &SIN(radish->rd_mask)->sin_addr, &loop,
+			    RTF_BLACKHOLE);
+			count++;
+		}
+		if (count > 0)
+			log_printf(LOG_INFO,
+			    "Deleted %d routes for old pool addresses", count);
 
-	count = 0;
-	for (slist_itr_first(&rtlist1); slist_itr_has_next(&rtlist1);) {
-		radish = slist_itr_next(&rtlist1);
-		in_route_add(&(SIN(radish->rd_route)->sin_addr),
-		    &SIN(radish->rd_mask)->sin_addr, &loop, LOOPBACK_IFNAME,
-		    RTF_BLACKHOLE, 0);
-		count++;
+		count = 0;
+		for (slist_itr_first(&rtlist1); slist_itr_has_next(&rtlist1);) {
+			radish = slist_itr_next(&rtlist1);
+			in_route_add(&(SIN(radish->rd_route)->sin_addr),
+			    &SIN(radish->rd_mask)->sin_addr, &loop,
+			    LOOPBACK_IFNAME, RTF_BLACKHOLE, 0);
+			count++;
+		}
+		if (count > 0)
+			log_printf(LOG_INFO,
+				    "Added %d routes for new pool addresses",
+				    count);
 	}
-	if (count > 0)
-		log_printf(LOG_INFO,
-		    "Added %d routes for new pool addresses", count);
 #endif
 	slist_fini(&rtlist0);
 	slist_fini(&rtlist1);
