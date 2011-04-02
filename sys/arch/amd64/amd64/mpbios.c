@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.19 2011/03/06 22:40:05 deraadt Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.20 2011/04/02 22:51:53 marco Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -131,10 +131,10 @@ static struct mpbios_ioapic default_ioapic = {
 
 /* descriptions of MP basetable entries */
 struct mpbios_baseentry {
-	u_int8_t  	type;
-	u_int8_t  	length;
+	u_int8_t	type;
+	u_int8_t	length;
 	u_int16_t	count;
-	const char    	*name;
+	const char	*name;
 };
 
 static const char *loc_where[] = {
@@ -145,10 +145,10 @@ static const char *loc_where[] = {
 
 struct mp_map
 {
-	vaddr_t 	baseva;
-	int	 	vsize;
-	paddr_t 	pa;
-	paddr_t 	pg;
+	vaddr_t		baseva;
+	int		vsize;
+	paddr_t		pa;
+	paddr_t		pg;
 	int		psize;
 };
 
