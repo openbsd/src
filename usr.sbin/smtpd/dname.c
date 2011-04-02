@@ -1,4 +1,4 @@
-/*	$OpenBSD: dname.c,v 1.3 2011/03/27 17:39:17 eric Exp $	*/
+/*	$OpenBSD: dname.c,v 1.4 2011/04/02 15:59:17 eric Exp $	*/
 /*
  * Copyright (c) 2009,2010	Eric Faurot	<eric@faurot.net>
  *
@@ -121,16 +121,25 @@ dname_from_fqdn(const char *str, char *dst, size_t max)
 	char	*d;
 
 	res = 0;
-	for(;;) {
+
+	/* special case: the root domain */
+	if (str[0] == '.') {
+		if (str[1] != '\0')
+			return (-1);
+		if (dst && max >= 1)
+			*dst = '\0';
+		return (1);
+	}
+
+	for(; *str; str = d + 1) {
 
 		d = strchr(str, '.');
-		if (d == NULL)
+		if (d == NULL || d == str)
 			return (-1);
 
 		l = (d - str);
-		if (l > 63)
-			return (-1);
-		if ((res || l) && (dname_check_label(str, l) == -1))
+
+		if (dname_check_label(str, l) == -1)
 			return (-1);
 
 		res += l + 1;
@@ -139,21 +148,19 @@ dname_from_fqdn(const char *str, char *dst, size_t max)
 			*dst++ = l;
 			max -= 1;
 			n = (l > max) ? max : l;
-			if (n)
-				memmove(dst, str, n);
+			memmove(dst, str, n);
 			max -= n;
 			if (max == 0)
 				dst = NULL;
 			else
 				dst += n;
 		}
-
-		str = d + 1;
-		if (*str == '\0')
-			break;
 	}
 
-	return (res);
+	if (dst)
+		*dst++ = '\0';
+
+	return (res + 1);
 }
 
 ssize_t
