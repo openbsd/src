@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.7 2011/04/02 11:37:10 dlg Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.8 2011/04/02 11:52:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -145,6 +145,12 @@ struct pppx_hdr {
 	u_int32_t	pppx_id;
 };
 
+struct pipex_session_descr_req {
+	int		pdr_protocol;		/* tunnel protocol */
+	uint16_t	pdr_session_id;		/* session-id */
+	char		pdr_descr[IFDESCRSIZE];	/* description */
+};
+
 
 /* PIPEX ioctls */
 #define PIPEXSMODE	_IOW ('p',  1, int)
@@ -154,6 +160,7 @@ struct pppx_hdr {
 #define PIPEXCSESSION	_IOW ('p',  5, struct pipex_session_config_req)
 #define PIPEXGSTAT	_IOWR('p',  6, struct pipex_session_stat_req)
 #define PIPEXGCLOSED	_IOR ('p',  7, struct pipex_session_list_req)
+#define PIPEXSIFDESCR	_IOW ('p',  8, struct pipex_session_descr_req)
 
 #ifdef _KERNEL
 

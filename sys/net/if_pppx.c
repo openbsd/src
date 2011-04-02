@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.5 2011/04/02 11:49:19 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.6 2011/04/02 11:52:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -166,6 +166,8 @@ int		pppx_add_session(struct pppx_dev *,
 		    struct pipex_session_req *);
 int		pppx_del_session(struct pppx_dev *,
 		    struct pipex_session_close_req *);
+int		pppx_set_session_descr(struct pppx_dev *,
+		    struct pipex_session_descr_req *);
 
 void		pppx_if_destroy(struct pppx_dev *, struct pppx_if *);
 void		pppx_if_start(struct ifnet *);
@@ -449,6 +451,11 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
         case PIPEXGCLOSED:
                 error = pipex_get_closed((struct pipex_session_list_req *)addr);
                 return (error);
+
+	case PIPEXSIFDESCR:
+		error = pppx_set_session_descr(pxd, (struct pipex_session_descr_req *)addr);
+		return (error);
+
 	case FIONBIO:
 	case FIOASYNC:
 	case FIONREAD:
@@ -915,6 +922,21 @@ pppx_del_session(struct pppx_dev *pxd, struct pipex_session_close_req *req)
 	req->pcr_stat = pxi->pxi_session.stat;
 
 	pppx_if_destroy(pxd, pxi);
+	return (0);
+}
+
+int
+pppx_set_session_descr(struct pppx_dev *pxd, struct pipex_session_descr_req *req)
+{
+	struct pppx_if *pxi;
+
+	pxi = pppx_if_find(pxd, req->pdr_session_id, req->pdr_protocol);
+	if (pxi == NULL)
+		return (EINVAL);
+
+	(void)memset(pxi->pxi_if.if_description, 0, IFDESCRSIZE);
+	strlcpy(pxi->pxi_if.if_description, req->pdr_descr, IFDESCRSIZE);
+
 	return (0);
 }
 
