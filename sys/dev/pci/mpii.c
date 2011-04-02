@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.39 2011/02/24 23:40:31 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.40 2011/04/02 14:36:45 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -4648,12 +4648,15 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	xs->status = sie->scsi_status;
 	switch (letoh16(sie->ioc_status) & MPII_IOCSTATUS_MASK) {
 	case MPII_IOCSTATUS_SCSI_DATA_UNDERRUN:
-		xs->resid = xs->datalen - letoh32(sie->transfer_count);
-		if (sie->scsi_state & MPII_SCSIIO_ERR_STATE_NO_SCSI_STATUS) {
+		switch (xs->status) {
+		case SCSI_OK:
+			xs->resid = xs->datalen - letoh32(sie->transfer_count);
+			break;
+		default:
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
-		/* FALLTHROUGH */
+		break;
 	case MPII_IOCSTATUS_SUCCESS:
 	case MPII_IOCSTATUS_SCSI_RECOVERED_ERROR:
 		switch (xs->status) {
