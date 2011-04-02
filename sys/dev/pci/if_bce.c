@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.31 2010/08/27 17:08:00 jsg Exp $ */
+/* $OpenBSD: if_bce.c,v 1.32 2011/04/02 11:18:26 claudio Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -196,7 +196,7 @@ void	bce_tick(void *);
 	if (bcedebug >= (n))		\
 		printf x;		\
 } while (/* CONSTCOND */ 0)
-int             bcedebug = 0;
+int	bcedebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -229,18 +229,18 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	const char     *intrstr = NULL;
-	caddr_t         kva;
+	const char *intrstr = NULL;
+	caddr_t kva;
 	bus_dma_segment_t seg;
-	int             rseg;
-	struct ifnet   *ifp;
-	pcireg_t        memtype;
-	bus_addr_t      memaddr;
-	bus_size_t      memsize;
-	int             pmreg;
-	pcireg_t        pmode;
-	int             error;
-	int             i;
+	int rseg;
+	struct ifnet *ifp;
+	pcireg_t memtype;
+	bus_addr_t memaddr;
+	bus_size_t memsize;
+	int pmreg;
+	pcireg_t pmode;
+	int error;
+	int i;
 
 	sc->bce_pa = *pa;
 	sc->bce_dmatag = pa->pa_dmat;
@@ -268,7 +268,7 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (pmode != 0) {
 			printf(": waking up from power state D%d\n",
-			       pmode);
+			    pmode);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
@@ -301,29 +301,25 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX PAGE_SIZE is wasteful; we only need 1KB + 1KB, but
 	 * due to the limition above. ??
 	 */
-	if ((error = bus_dmamem_alloc(sc->bce_dmatag,
-	    2 * PAGE_SIZE, PAGE_SIZE, 2 * PAGE_SIZE,
-				      &seg, 1, &rseg, BUS_DMA_NOWAIT))) {
+	if ((error = bus_dmamem_alloc(sc->bce_dmatag, 2 * PAGE_SIZE,
+	    PAGE_SIZE, 2 * PAGE_SIZE, &seg, 1, &rseg, BUS_DMA_NOWAIT))) {
 		printf(": unable to alloc space for ring descriptors, "
-		       "error = %d\n", error);
+		    "error = %d\n", error);
 		return;
 	}
 
 	/* map ring space to kernel */
 	if ((error = bus_dmamem_map(sc->bce_dmatag, &seg, rseg,
 	    2 * PAGE_SIZE, &kva, BUS_DMA_NOWAIT))) {
-		printf(": unable to map DMA buffers, error = %d\n",
-		    error);
+		printf(": unable to map DMA buffers, error = %d\n", error);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
 		return;
 	}
 
 	/* create a dma map for the ring */
-	if ((error = bus_dmamap_create(sc->bce_dmatag,
-	    2 * PAGE_SIZE, 1, 2 * PAGE_SIZE, 0, BUS_DMA_NOWAIT,
-				       &sc->bce_ring_map))) {
-		printf(": unable to create ring DMA map, error = %d\n",
-		    error);
+	if ((error = bus_dmamap_create(sc->bce_dmatag, 2 * PAGE_SIZE, 1,
+	    2 * PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->bce_ring_map))) {
+		printf(": unable to create ring DMA map, error = %d\n", error);
 		bus_dmamem_unmap(sc->bce_dmatag, kva, 2 * PAGE_SIZE);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
 		return;
@@ -340,13 +336,14 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* save the ring space in softc */
-	sc->bce_rx_ring = (struct bce_dma_slot *) kva;
-	sc->bce_tx_ring = (struct bce_dma_slot *) (kva + PAGE_SIZE);
+	sc->bce_rx_ring = (struct bce_dma_slot *)kva;
+	sc->bce_tx_ring = (struct bce_dma_slot *)(kva + PAGE_SIZE);
 
 	/* Create the transmit buffer DMA maps. */
 	for (i = 0; i < BCE_NTXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->bce_dmatag, MCLBYTES,
-		    BCE_NTXFRAGS, MCLBYTES, 0, 0, &sc->bce_cdata.bce_tx_map[i])) != 0) {
+		    BCE_NTXFRAGS, MCLBYTES, 0, 0,
+		    &sc->bce_cdata.bce_tx_map[i])) != 0) {
 			printf(": unable to create tx DMA map, error = %d\n",
 			    error);
 		}
@@ -457,8 +454,8 @@ bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
-	struct ifreq   *ifr = (struct ifreq *) data;
-	int             s, error = 0;
+	struct ifreq *ifr = (struct ifreq *) data;
+	int s, error = 0;
 
 	s = splnet();
 
@@ -480,14 +477,13 @@ bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if(ifp->if_flags & IFF_UP)
-			if(ifp->if_flags & IFF_RUNNING)
+		if (ifp->if_flags & IFF_UP)
+			if (ifp->if_flags & IFF_RUNNING)
 				bce_set_filter(ifp);
 			else
 				bce_init(ifp);
-		else if(ifp->if_flags & IFF_RUNNING)
+		else if (ifp->if_flags & IFF_RUNNING)
 			bce_stop(ifp, 0);
-
 		break;
 
 	case SIOCSIFMEDIA:
@@ -519,17 +515,17 @@ void
 bce_start(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
-	struct mbuf    *m0;
-	bus_dmamap_t    dmamap;
-	int             txstart;
-	int             txsfree;
-	int             newpkts = 0;
-	int             error;
+	struct mbuf *m0;
+	bus_dmamap_t dmamap;
+	int txstart;
+	int txsfree;
+	int newpkts = 0;
+	int error;
 
 	/*
-         * do not start another if currently transmitting, and more
-         * descriptors(tx slots) are needed for next packet.
-         */
+	 * do not start another if currently transmitting, and more
+	 * descriptors(tx slots) are needed for next packet.
+	 */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
@@ -540,12 +536,12 @@ bce_start(struct ifnet *ifp)
 		txsfree = sc->bce_txin - sc->bce_txsnext - 1;
 
 	/*
-         * Loop through the send queue, setting up transmit descriptors
-         * until we drain the queue, or use up all available transmit
-         * descriptors.
-         */
+	 * Loop through the send queue, setting up transmit descriptors
+	 * until we drain the queue, or use up all available transmit
+	 * descriptors.
+	 */
 	while (txsfree > 0) {
-		int             seg;
+		int seg;
 
 		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m0);
@@ -619,13 +615,13 @@ bce_start(struct ifnet *ifp)
 		}
 		/* sync descriptors being used */
 		bus_dmamap_sync(sc->bce_dmatag, sc->bce_ring_map,
-			  sizeof(struct bce_dma_slot) * txstart + PAGE_SIZE,
-			     sizeof(struct bce_dma_slot) * dmamap->dm_nsegs,
-				BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		    sizeof(struct bce_dma_slot) * txstart + PAGE_SIZE,
+		    sizeof(struct bce_dma_slot) * dmamap->dm_nsegs,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Give the packet to the chip. */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_DPTR,
-			     sc->bce_txsnext * sizeof(struct bce_dma_slot));
+		    sc->bce_txsnext * sizeof(struct bce_dma_slot));
 
 		newpkts++;
 
@@ -633,7 +629,7 @@ bce_start(struct ifnet *ifp)
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
-#endif				/* NBPFILTER > 0 */
+#endif
 	}
 	if (txsfree == 0) {
 		/* No more slots left; notify upper layer. */
@@ -664,10 +660,10 @@ int
 bce_intr(void *xsc)
 {
 	struct bce_softc *sc;
-	struct ifnet   *ifp;
+	struct ifnet *ifp;
 	u_int32_t intstatus;
-	int             wantinit;
-	int             handled = 0;
+	int wantinit;
+	int handled = 0;
 
 	sc = xsc;
 	ifp = &sc->bce_ac.ac_if;
@@ -706,10 +702,10 @@ bce_intr(void *xsc)
 			}
 			if (intstatus & I_RU)
 				printf("%s: receive descriptor underflow\n",
-				       sc->bce_dev.dv_xname);
+				    sc->bce_dev.dv_xname);
 			if (intstatus & I_DE)
 				printf("%s: descriptor protocol error\n",
-				       sc->bce_dev.dv_xname);
+				    sc->bce_dev.dv_xname);
 			if (intstatus & I_PD)
 				printf("%s: data error\n",
 				    sc->bce_dev.dv_xname);
@@ -736,12 +732,12 @@ bce_intr(void *xsc)
 void
 bce_rxintr(struct bce_softc *sc)
 {
-	struct ifnet   *ifp = &sc->bce_ac.ac_if;
-	struct rx_pph  *pph;
-	struct mbuf    *m;
-	int             curr;
-	int             len;
-	int             i;
+	struct ifnet *ifp = &sc->bce_ac.ac_if;
+	struct rx_pph *pph;
+	struct mbuf *m;
+	int curr;
+	int len;
+	int i;
 
 	/* get pointer to active receive slot */
 	curr = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXSTATUS)
@@ -776,8 +772,7 @@ bce_rxintr(struct bce_softc *sc)
 		pph->len = 0;
 		pph->flags = 0;
 		/* bump past pre header to packet */
-		sc->bce_cdata.bce_rx_chain[i]->m_data +=
-			BCE_PREPKT_HEADER_SIZE;
+		sc->bce_cdata.bce_rx_chain[i]->m_data += BCE_PREPKT_HEADER_SIZE;
 
  		/*
 		 * The chip includes the CRC with every packet.  Trim
@@ -802,17 +797,17 @@ bce_rxintr(struct bce_softc *sc)
 				goto dropit;
 			m->m_data += 2;
 			memcpy(mtod(m, caddr_t),
-			 mtod(sc->bce_cdata.bce_rx_chain[i], caddr_t), len);
+			    mtod(sc->bce_cdata.bce_rx_chain[i], caddr_t), len);
 			sc->bce_cdata.bce_rx_chain[i]->m_data -=
-				BCE_PREPKT_HEADER_SIZE;
+			    BCE_PREPKT_HEADER_SIZE;
 		} else {
 			m = sc->bce_cdata.bce_rx_chain[i];
 			if (bce_add_rxbuf(sc, i) != 0) {
-		dropit:
+dropit:
 				ifp->if_ierrors++;
 				/* continue to use old buffer */
 				sc->bce_cdata.bce_rx_chain[i]->m_data -=
-					BCE_PREPKT_HEADER_SIZE;
+				    BCE_PREPKT_HEADER_SIZE;
 				bus_dmamap_sync(sc->bce_dmatag,
 				    sc->bce_cdata.bce_rx_map[i], 0,
 				    sc->bce_cdata.bce_rx_map[i]->dm_mapsize,
@@ -832,7 +827,7 @@ bce_rxintr(struct bce_softc *sc)
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif				/* NBPFILTER > 0 */
+#endif
 
 		/* Pass it on. */
 		ether_input_mbuf(ifp, m);
@@ -852,17 +847,17 @@ void
 bce_txintr(struct bce_softc *sc)
 {
 	struct ifnet   *ifp = &sc->bce_ac.ac_if;
-	int             curr;
-	int             i;
+	int curr;
+	int i;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
-         * Go through the Tx list and free mbufs for those
-         * frames which have been transmitted.
-         */
-	curr = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_TXSTATUS) &
-		RS_CD_MASK;
+	 * Go through the Tx list and free mbufs for those
+	 * frames which have been transmitted.
+	 */
+	curr = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+	    BCE_DMA_TXSTATUS) & RS_CD_MASK;
 	curr = curr / sizeof(struct bce_dma_slot);
 	if (curr >= BCE_NTXDESC)
 		curr = BCE_NTXDESC - 1;
@@ -895,8 +890,8 @@ bce_init(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	u_int32_t reg_win;
-	int             error;
-	int             i;
+	int error;
+	int i;
 
 	/* Cancel any pending I/O. */
 	bce_stop(ifp, 0);
@@ -966,9 +961,9 @@ bce_init(struct ifnet *ifp)
 	    sc->bce_ring_map->dm_segs[0].ds_addr + PAGE_SIZE + 0x40000000);	/* MAGIC */
 
 	/*
-         * Give the receive ring to the chip, and
-         * start the receive DMA engine.
-         */
+	 * Give the receive ring to the chip, and
+	 * start the receive DMA engine.
+	 */
 	sc->bce_rxin = 0;
 
 	/* clear the rx descriptor ring */
@@ -1025,7 +1020,7 @@ bce_init(struct ifnet *ifp)
 void
 bce_add_mac(struct bce_softc *sc, u_int8_t *mac, unsigned long idx)
 {
-	int             i;
+	int i;
 	u_int32_t rval;
 
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_LOW,
@@ -1053,7 +1048,7 @@ int
 bce_add_rxbuf(struct bce_softc *sc, int idx)
 {
 	struct mbuf    *m;
-	int             error;
+	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -1089,7 +1084,7 @@ bce_add_rxbuf(struct bce_softc *sc, int idx)
 void
 bce_rxdrain(struct bce_softc *sc)
 {
-	int             i;
+	int i;
 
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if (sc->bce_cdata.bce_rx_chain[i] != NULL) {
@@ -1106,7 +1101,7 @@ void
 bce_stop(struct ifnet *ifp, int disable)
 {
 	struct bce_softc *sc = ifp->if_softc;
-	int             i;
+	int i;
 	u_int32_t val;
 
 	/* Stop the 1 second timer */
@@ -1160,7 +1155,7 @@ bce_reset(struct bce_softc *sc)
 {
 	u_int32_t val;
 	u_int32_t sbval;
-	int             i;
+	int i;
 
 	/* if SB core is up */
 	sbval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
@@ -1181,11 +1176,13 @@ bce_reset(struct bce_softc *sc)
 		}
 		if (i == 200)
 			printf("%s: timed out disabling ethernet mac\n",
-			       sc->bce_dev.dv_xname);
+			    sc->bce_dev.dv_xname);
 
 		/* reset the dma engines */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_TXCTL, 0);
-		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXSTATUS);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_TXCTL,
+		    0);
+		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_DMA_RXSTATUS);
 		/* if error on receive, wait to go idle */
 		if (val & RS_ERROR) {
 			for (i = 0; i < 100; i++) {
@@ -1214,7 +1211,7 @@ bce_reset(struct bce_softc *sc)
 		}
 		if (i == 200)
 			printf("%s: timed out resetting ethernet mac\n",
-			       sc->bce_dev.dv_xname);
+			    sc->bce_dev.dv_xname);
 	} else {
 		u_int32_t reg_win;
 
@@ -1230,18 +1227,16 @@ bce_reset(struct bce_softc *sc)
 		/* enable SB to PCI interrupt */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBINTVEC,
 		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-		        BCE_SBINTVEC) |
-		    SBIV_ENET0);
+		    BCE_SBINTVEC) | SBIV_ENET0);
 
 		/* enable prefetch and bursts for sonics-to-pci translation 2 */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SPCI_TR2,
 		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-			BCE_SPCI_TR2) |
-		    SBTOPCI_PREF | SBTOPCI_BURST);
+		    BCE_SPCI_TR2) | SBTOPCI_PREF | SBTOPCI_BURST);
 
 		/* restore to ethernet register space */
 		pci_conf_write(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag, BCE_REG_WIN,
-			       reg_win);
+		    reg_win);
 	}
 
 	/* disable SB core if not in reset */
@@ -1317,7 +1312,8 @@ bce_reset(struct bce_softc *sc)
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DEVCTL);
 	if (!(val & BCE_DC_IP)) {
 		/* select external phy */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL, EC_EP);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL,
+		    EC_EP);
 	} else if (val & BCE_DC_ER) {	/* internal, clear reset bit if on */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DEVCTL,
 		    val & ~BCE_DC_ER);
@@ -1379,11 +1375,12 @@ int
 bce_mii_read(struct device *self, int phy, int reg)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
-	int             i;
+	int i;
 	u_int32_t val;
 
 	/* clear mii_int */
-	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS, BCE_MIINTR);
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS,
+	    BCE_MIINTR);
 
 	/* Read the PHY register */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM,
@@ -1391,7 +1388,8 @@ bce_mii_read(struct device *self, int phy, int reg)
 	    (MII_COMMAND_ACK << 16) | BCE_MIPHY(phy) | BCE_MIREG(reg));	/* MAGIC */
 
 	for (i = 0; i < BCE_TIMEOUT; i++) {
-		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS);
+		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_MI_STS);
 		if (val & BCE_MIINTR)
 			break;
 		delay(10);
@@ -1410,7 +1408,7 @@ void
 bce_mii_write(struct device *self, int phy, int reg, int val)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
-	int             i;
+	int i;
 	u_int32_t rval;
 
 	/* clear mii_int */
@@ -1455,9 +1453,9 @@ bce_statchg(struct device *self)
 		    reg & ~EXC_FD);
 
 	/*
-         * Enable activity led.
-         * XXX This should be in a phy driver, but not currently.
-         */
+	 * Enable activity led.
+	 * XXX This should be in a phy driver, but not currently.
+	 */
 	bce_mii_write((struct device *) sc, 1, 26,	/* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	/* MAGIC */
 	/* enable traffic meter led mode */
