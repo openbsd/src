@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.47 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.48 2011/04/02 17:04:35 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -146,15 +146,14 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *	    gave us setuid/setgid privs (unless
 		 *	    you're root), or...
 		 * 
-		 *      [Note: once P_SUGID or P_SUGIDEXEC gets set in
+		 *      [Note: once PS_SUGID or PS_SUGIDEXEC gets set in
 		 *	execve(), they stay set until the process does
 		 *	another execve().  Hence this prevents a setuid
 		 *	process which revokes its special privileges using
 		 *	setuid() from being traced.  This is good security.]
 		 */
 		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-		    ISSET(t->p_flag, P_SUGIDEXEC) ||
-		    ISSET(t->p_flag, P_SUGID)) &&
+		    ISSET(t->p_p->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
 		    (error = suser(p, 0)) != 0)
 			return (error);
 
@@ -579,8 +578,7 @@ process_checkioperm(struct proc *p, struct proc *t)
 	int error;
 
 	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-	    ISSET(t->p_flag, P_SUGIDEXEC) ||
-	    ISSET(t->p_flag, P_SUGID)) &&
+	    ISSET(t->p_p->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
 	    (error = suser(p, 0)) != 0)
 		return (error);
 

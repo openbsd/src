@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.50 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.51 2011/04/02 17:04:35 guenther Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ procfs_getattr(void *v)
 		 * privilege, then rip away read/write permission so
 		 * that only root can gain access.
 		 */
-		if (procp->p_flag & P_SUGID)
+		if (procp->p_p->ps_flags & PS_SUGID)
 			vap->va_mode &= ~(S_IRUSR|S_IWUSR);
 		/* FALLTHROUGH */
 	case Pctl:

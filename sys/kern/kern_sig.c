@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.117 2011/03/07 07:07:13 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.118 2011/04/02 17:04:35 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 	 * Using kill(), only certain signals can be sent to setugid
 	 * child processes
 	 */
-	if (q->p_flag & P_SUGID) {
+	if (q->p_p->ps_flags & PS_SUGID) {
 		switch (signum) {
 		case 0:
 		case SIGKILL:
@@ -1395,8 +1395,8 @@ coredump(struct proc *p)
 	 * group privileges, unless the nosuidcoredump sysctl is set to 2,
 	 * in which case dumps are put into /var/crash/.
 	 */
-	if (((p->p_flag & P_SUGID) && (error = suser(p, 0))) ||
-	   ((p->p_flag & P_SUGID) && nosuidcoredump)) {
+	if (((p->p_p->ps_flags & PS_SUGID) && (error = suser(p, 0))) ||
+	   ((p->p_p->ps_flags & PS_SUGID) && nosuidcoredump)) {
 		if (nosuidcoredump == 2)
 			dir = "/var/crash/";
 		else

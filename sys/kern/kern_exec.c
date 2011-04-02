@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.114 2010/11/24 21:05:20 miod Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.115 2011/04/02 17:04:35 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -246,6 +246,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	struct ucred *cred = p->p_ucred;
 	char *argp;
 	char * const *cpp, *dp, *sp;
+	struct process *pr = p->p_p;
 	long argc, envc;
 	size_t len, sgap;
 #ifdef MACHINE_STACK_GROWS_UP
@@ -257,8 +258,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	char **tmpfap;
 	extern struct emul emul_native;
 #if NSYSTRACE > 0
-	int wassugid =
-	    ISSET(p->p_flag, P_SUGID) || ISSET(p->p_flag, P_SUGIDEXEC);
+	int wassugid = ISSET(pr->ps_flags, PS_SUGID | PS_SUGIDEXEC);
 	size_t pathbuflen;
 #endif
 	char *pathbuf = NULL;
@@ -468,22 +468,22 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	p->p_textvp = pack.ep_vp;
 
 	atomic_setbits_int(&p->p_flag, P_EXEC);
-	if (p->p_p->ps_mainproc->p_flag & P_PPWAIT) {
-		atomic_clearbits_int(&p->p_p->ps_mainproc->p_flag, P_PPWAIT);
-		wakeup(p->p_p->ps_pptr);
+	if (pr->ps_mainproc->p_flag & P_PPWAIT) {
+		atomic_clearbits_int(&pr->ps_mainproc->p_flag, P_PPWAIT);
+		wakeup(pr->ps_pptr);
 	}
 
 	/*
 	 * If process does execve() while it has a mismatched real,
-	 * effective, or saved uid/gid, we set P_SUGIDEXEC.
+	 * effective, or saved uid/gid, we set PS_SUGIDEXEC.
 	 */
 	if (p->p_ucred->cr_uid != p->p_cred->p_ruid ||
 	    p->p_ucred->cr_uid != p->p_cred->p_svuid ||
 	    p->p_ucred->cr_gid != p->p_cred->p_rgid ||
 	    p->p_ucred->cr_gid != p->p_cred->p_svgid)
-		atomic_setbits_int(&p->p_flag, P_SUGIDEXEC);
+		atomic_setbits_int(&pr->ps_flags, PS_SUGIDEXEC);
 	else
-		atomic_clearbits_int(&p->p_flag, P_SUGIDEXEC);
+		atomic_clearbits_int(&pr->ps_flags, PS_SUGIDEXEC);
 
 	/*
 	 * deal with set[ug]id.
@@ -492,7 +492,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if ((attr.va_mode & (VSUID | VSGID)) && proc_cansugid(p)) {
 		int i;
 
-		atomic_setbits_int(&p->p_flag, P_SUGID|P_SUGIDEXEC);
+		atomic_setbits_int(&pr->ps_flags, PS_SUGID|PS_SUGIDEXEC);
 
 #ifdef KTRACE
 		/*
@@ -573,11 +573,11 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			}
 		}
 	} else
-		atomic_clearbits_int(&p->p_flag, P_SUGID);
+		atomic_clearbits_int(&pr->ps_flags, PS_SUGID);
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
-	if (p->p_flag & P_SUGIDEXEC) {
+	if (pr->ps_flags & PS_SUGIDEXEC) {
 		int i, s = splclock();
 
 		timeout_del(&p->p_realit_to);
@@ -599,7 +599,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/*
 	 * notify others that we exec'd
 	 */
-	KNOTE(&p->p_p->ps_klist, NOTE_EXEC);
+	KNOTE(&pr->ps_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
 	if (pack.ep_emul->e_fixup != NULL) {
@@ -664,8 +664,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE) &&
-	    wassugid && !ISSET(p->p_flag, P_SUGID) &&
-	    !ISSET(p->p_flag, P_SUGIDEXEC))
+	    wassugid && !ISSET(pr->ps_flags, PS_SUGID | PS_SUGIDEXEC))
 		systrace_execve1(pathbuf, p);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.53 2010/07/21 18:44:01 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.54 2011/04/02 17:04:35 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -720,13 +720,12 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	 * but we wait until it executes something unprivileged.
 	 * A non-root user may only monitor if the real uid and
 	 * real gid match the monitored process.  Changing the
-	 * uid or gid causes P_SUGID to be set.
+	 * uid or gid causes PS_SUGID to be set.
 	 */
 	if (fst->issuser) {
 		maycontrol = 1;
 		issuser = 1;
-	} else if (!ISSET(p->p_flag, P_SUGID) &&
-	    !ISSET(p->p_flag, P_SUGIDEXEC)) {
+	} else if (!ISSET(p->p_p->ps_flags, PS_SUGID | PS_SUGIDEXEC)) {
 		maycontrol = fst->p_ruid == p->p_cred->p_ruid &&
 		    fst->p_rgid == p->p_cred->p_rgid;
 	}
@@ -846,7 +845,7 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 
 	systrace_replacefree(strp);
 
-	if (ISSET(p->p_flag, P_SUGID) || ISSET(p->p_flag, P_SUGIDEXEC)) {
+	if (ISSET(p->p_p->ps_flags, PS_SUGID | PS_SUGIDEXEC)) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
 			systrace_unlock();
 			return (error);
@@ -914,7 +913,7 @@ systrace_seteuid(struct proc *p,  uid_t euid)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_uid = euid;
-	atomic_setbits_int(&p->p_flag, P_SUGID);
+	atomic_setbits_int(&p->p_p->ps_flags, PS_SUGID);
 
 	return (oeuid);
 }
@@ -933,7 +932,7 @@ systrace_setegid(struct proc *p,  gid_t egid)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
-	atomic_setbits_int(&p->p_flag, P_SUGID);
+	atomic_setbits_int(&p->p_p->ps_flags, PS_SUGID);
 
 	return (oegid);
 }
@@ -1252,15 +1251,14 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	    gave us setuid/setgid privs (unless
 	 *	    you're root), or...
 	 *
-	 *      [Note: once P_SUGID or P_SUGIDEXEC gets set in execve(),
+	 *      [Note: once PS_SUGID or PS_SUGIDEXEC gets set in execve(),
 	 *      it stays set until the process does another execve(). Hence
 	 *	this prevents a setuid process which revokes its
 	 *	special privileges using setuid() from being
 	 *	traced. This is good security.]
 	 */
 	if ((proc->p_cred->p_ruid != p->p_cred->p_ruid ||
-		ISSET(proc->p_flag, P_SUGID) ||
-		ISSET(proc->p_flag, P_SUGIDEXEC)) &&
+		ISSET(proc->p_flag, PS_SUGID | PS_SUGIDEXEC)) &&
 	    (error = suser(p, 0)) != 0)
 		goto out;
 
@@ -1478,8 +1476,8 @@ systrace_scriptname(struct proc *p, char *dst)
 	rw_enter_write(&fst->lock);
 	systrace_unlock();
 
-	if (!fst->issuser && (ISSET(p->p_flag, P_SUGID) ||
-		ISSET(p->p_flag, P_SUGIDEXEC) ||
+	if (!fst->issuser &&
+		(ISSET(p->p_p->ps_flags, PS_SUGID | PS_SUGIDEXEC) ||
 		fst->p_ruid != p->p_cred->p_ruid ||
 		fst->p_rgid != p->p_cred->p_rgid)) {
 		error = EPERM;

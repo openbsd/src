@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.38 2010/08/02 19:54:07 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.39 2011/04/02 17:04:35 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -208,7 +208,7 @@ filt_procattach(struct knote *kn)
 	 */
 	if (p->p_p != curproc->p_p &&
 	    (p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
-	    (p->p_flag & P_SUGID)) && suser(curproc, 0) != 0)
+	    (p->p_p->ps_flags & PS_SUGID)) && suser(curproc, 0) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;

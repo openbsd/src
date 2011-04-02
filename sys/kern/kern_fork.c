@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.123 2010/10/31 00:03:44 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.124 2011/04/02 17:04:35 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -184,6 +184,7 @@ process_new(struct proc *newproc, struct proc *parentproc)
 	crhold(parent->ps_cred->pc_ucred);
 	pr->ps_limit->p_refcnt++;
 
+	pr->ps_flags = parent->ps_flags & (PS_SUGID | PS_SUGIDEXEC);
 	if (parent->ps_session->s_ttyvp != NULL &&
 	    parent->ps_flags & PS_CONTROLT)
 		atomic_setbits_int(&pr->ps_flags, PS_CONTROLT);
@@ -303,7 +304,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 */
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
-	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));
 	if (flags & FORK_PTRACE)
 		atomic_setbits_int(&p2->p_flag, p1->p_flag & P_TRACED);
 

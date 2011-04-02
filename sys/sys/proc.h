@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.133 2011/03/07 07:07:13 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.134 2011/04/02 17:04:35 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -322,7 +322,7 @@ struct proc {
 #define	P_PROFIL	0x000020	/* Has started profiling. */
 #define	P_SELECT	0x000040	/* Selecting; wakeup/waiting danger. */
 #define	P_SINTR		0x000080	/* Sleep is interruptible. */
-#define	P_SUGID		0x000100	/* Had set id privs since last exec. */
+#define	_P_SUGID	0x000100	/* Had set id privs since last exec. */
 #define	P_SYSTEM	0x000200	/* No sigs, stats or swapping. */
 #define	P_TIMEOUT	0x000400	/* Timing out during sleep. */
 #define	P_TRACED	0x000800	/* Debugged process being traced. */
@@ -336,7 +336,7 @@ struct proc {
 
 /* XXX Not sure what to do with these, yet. */
 #define	P_SSTEP		0x020000	/* proc needs single-step fixup ??? */
-#define	P_SUGIDEXEC	0x040000	/* last execve() was set[ug]id */
+#define	_P_SUGIDEXEC	0x040000	/* last execve() was set[ug]id */
 
 #define	P_NOCLDWAIT	0x080000	/* Let pid 1 wait for my children */
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
@@ -352,6 +352,8 @@ struct proc {
 
 #ifndef _KERNEL
 #define	P_CONTROLT	_P_CONTROLT
+#define	P_SUGID		_P_SUGID
+#define	P_SUGIDEXEC	_P_SUGIDEXEC
 #endif
 
 #define	P_BITS \
