@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.161 2011/03/02 12:02:26 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.162 2011/04/02 17:16:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1707,7 +1707,9 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 
 	splsoftassert(IPL_SOFTNET);
 
-	if (!sc->sc_defer || m->m_flags & (M_BCAST|M_MCAST))
+	if (!sc->sc_defer ||
+	    ISSET(st->state_flags, PFSTATE_NOSYNC) ||
+	    m->m_flags & (M_BCAST|M_MCAST))
 		return (0);
 
 	if (sc->sc_deferred >= 128)
