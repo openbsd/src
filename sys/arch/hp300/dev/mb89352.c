@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.25 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.26 2011/04/02 17:44:43 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -143,8 +143,8 @@ void	spc_setsync(struct spc_softc *, struct spc_tinfo *);
 void	spc_select	(struct spc_softc *, struct spc_acb *);
 void	spc_timeout	(void *);
 void	spc_scsi_reset	(struct spc_softc *);
-void	spc_free_acb	(struct spc_softc *, struct spc_acb *, int);
-struct spc_acb* spc_get_acb(struct spc_softc *, int);
+void	spc_acb_free	(void *, void *);
+void	*spc_acb_alloc(void *);
 int	spc_reselect	(struct spc_softc *, int);
 void	spc_sense	(struct spc_softc *, struct spc_acb *);
 void	spc_msgin	(struct spc_softc *);
@@ -276,6 +276,9 @@ spc_init(struct spc_softc *sc)
 		TAILQ_INIT(&sc->ready_list);
 		TAILQ_INIT(&sc->nexus_list);
 		TAILQ_INIT(&sc->free_list);
+		mtx_init(&sc->sc_acb_mtx, IPL_BIO);
+		scsi_iopool_init(&sc->sc_iopool, sc, spc_acb_alloc,
+		    spc_acb_free);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
 		bzero(acb, sizeof(sc->sc_acb));
@@ -322,44 +325,36 @@ spc_init(struct spc_softc *sc)
 }
 
 void
-spc_free_acb(struct spc_softc *sc, struct spc_acb *acb, int flags)
+spc_acb_free(void *xsc, void *xacb)
 {
-	int s;
+	struct spc_softc *sc = xsc;
+	struct spc_acb *acb = xacb;
 
-	SPC_TRACE(("spc_free_acb  "));
-	s = splbio();
+	SPC_TRACE(("spc_acb_free  "));
 
 	acb->flags = 0;
+
+	mtx_enter(&sc->sc_acb_mtx);
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (TAILQ_NEXT(acb, chain) == NULL)
-		wakeup(&sc->free_list);
-
-	splx(s);
+	mtx_leave(&sc->sc_acb_mtx);
 }
 
-struct spc_acb *
-spc_get_acb(struct spc_softc *sc, int flags)
+void *
+spc_acb_alloc(void *xsc)
 {
+	struct spc_softc *sc = xsc;
 	struct spc_acb *acb;
-	int s;
 
-	SPC_TRACE(("spc_get_acb  "));
-	s = splbio();
+	SPC_TRACE(("spc_acb_alloc  "));
 
-	while ((acb = TAILQ_FIRST(&sc->free_list)) == NULL &&
-	       (flags & SCSI_NOSLEEP) == 0)
-		tsleep(&sc->free_list, PRIBIO, "spcacb", 0);
+	mtx_enter(&sc->sc_acb_mtx);
+	acb = TAILQ_FIRST(&sc->free_list);
 	if (acb) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
 		acb->flags |= ACB_ALLOC;
 	}
+	mtx_leave(&sc->sc_acb_mtx);
 
-	splx(s);
 	return acb;
 }
 
@@ -402,11 +397,7 @@ spc_scsi_cmd(struct scsi_xfer *xs)
 	    sc_link->target));
 
 	flags = xs->flags;
-	if ((acb = spc_get_acb(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	acb = xs->io;
 
 	/* Initialize acb */
 	acb->xs = xs;
@@ -768,7 +759,6 @@ spc_done(struct spc_softc *sc, struct spc_acb *acb)
 	} else
 		spc_dequeue(sc, acb);
 
-	spc_free_acb(sc, acb, xs->flags);
 	ti->cmds++;
 	scsi_done(xs);
 }

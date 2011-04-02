@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.6 2010/04/04 17:40:14 miod Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.7 2011/04/02 17:44:43 krw Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -122,6 +122,8 @@ struct spc_softc {
 	struct spc_acb *sc_nexus;	/* current command */
 	struct spc_acb sc_acb[8];
 	struct spc_tinfo sc_tinfo[8];
+	struct mutex sc_acb_mtx;
+	struct scsi_iopool sc_iopool;
 
 	/* Data about the current nexus (updated for every cmd switch) */
 	u_char	*sc_dp;		/* Current data pointer */
