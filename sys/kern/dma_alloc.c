@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_alloc.c,v 1.4 2011/03/17 20:54:17 deraadt Exp $	 */
+/*	$OpenBSD: dma_alloc.c,v 1.5 2011/04/02 17:06:21 deraadt Exp $	 */
 /*
  * Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -38,6 +38,7 @@ dma_alloc_init(void)
 		pool_init(&dmapools[i], 1 << (i + DMA_BUCKET_OFFSET), 0, 0, 0,
 		    dmanames[i], NULL);
 		pool_set_constraints(&dmapools[i], &dma_constraint, 1);
+		pool_setipl(&dmapools[i], IPL_VM);
 		/* XXX need pool_setlowat(&dmapools[i], dmalowat); */
 	}
 }
