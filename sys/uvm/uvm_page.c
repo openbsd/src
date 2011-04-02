@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.102 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.103 2011/04/02 12:38:37 ariane Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1463,4 +1463,29 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 	KASSERT(lcv != -1);
 	return (vm_physmem[lcv].free_list);
 #endif
+}
+
+/*
+ * uvm_pagecount: count the number of physical pages in the address range.
+ */
+psize_t
+uvm_pagecount(struct uvm_constraint_range* constraint)
+{
+	int lcv;
+	psize_t sz;
+	paddr_t low, high;
+	paddr_t ps_low, ps_high;
+
+	/* Algorithm uses page numbers. */
+	low = atop(constraint->ucr_low);
+	high = atop(constraint->ucr_high);
+
+	sz = 0;
+	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
+		ps_low = MAX(low, vm_physmem[lcv].avail_start);
+		ps_high = MIN(high, vm_physmem[lcv].avail_end);
+		if (ps_low < ps_high)
+			sz += ps_high - ps_low;
+	}
+	return sz;
 }
