@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.133 2011/04/02 17:36:45 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.134 2011/04/02 18:16:50 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1314,10 +1314,6 @@ init_x86_64(paddr_t first_avail)
 			e1 = (1UL << 32) - 1;
 			if (s1 > e1)
 				continue;
-		} else if (bigmem && (e1 >= (1UL<<32))) {
-			extern int amdgart_enable;
-
-			amdgart_enable = 1;
 		}
 
 		/* Crop stuff into "640K hole" */

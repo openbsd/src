@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.60 2010/12/06 20:10:17 jasper Exp $
+#	$OpenBSD: files.amd64,v 1.61 2011/04/02 18:16:50 oga Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -112,7 +112,6 @@ file	arch/amd64/amd64/ioapic.c		ioapic needs-flag
 
 include	"dev/pci/files.pci"
 file	arch/amd64/pci/pci_machdep.c		pci
-file	arch/amd64/pci/iommu.c			pci
 file	arch/amd64/pci/pciide_machdep.c		pciide
 file	arch/amd64/pci/vga_post.c		vga_pci & x86emu
 

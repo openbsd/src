@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.40 2011/01/10 16:26:27 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.41 2011/04/02 18:16:50 oga Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -147,16 +147,10 @@ struct bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
-extern void amdgart_probe(struct pcibus_attach_args *);
-
 void
 pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
-#ifndef SMALL_KERNEL
-	if (pba->pba_bus == 0)
-		amdgart_probe(pba);
-#endif /* !SMALL_KERNEL */
 }
 
 int
