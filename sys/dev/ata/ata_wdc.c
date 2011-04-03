@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.35 2010/11/06 16:53:15 kettenis Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.36 2011/04/03 23:17:13 dlg Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ int wdcdebug_wd_mask = WDCDEBUG_WD_MASK;
 #define WDCDEBUG_PRINT(args, level)
 #endif
 
-#define ATA_DELAY 10000 /* 10s for a drive I/O */
+#define ATA_DELAY 45000 /* 45s for a drive I/O */
 
 struct cfdriver wdc_cd = {
 	NULL, "wdc", DV_DULL
