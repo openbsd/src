@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.54 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.55 2011/04/03 15:46:30 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -770,6 +770,7 @@ vga_doswitch(struct vga_config *vc)
 	struct vgascreen *scr, *oldscr;
 	struct vga_handle *vh = &vc->hdl;
 	const struct wsscreen_descr *type;
+	int s;
 
 	scr = vc->wantedscreen;
 	if (!scr) {
@@ -777,8 +778,12 @@ vga_doswitch(struct vga_config *vc)
 		(*vc->switchcb)(vc->switchcbarg, EIO, 0);
 		return;
 	}
+
 	type = scr->pcs.type;
 	oldscr = vc->active; /* can be NULL! */
+	if (scr == oldscr)
+		return;
+	s = spltty();
 #ifdef DIAGNOSTIC
 	if (oldscr) {
 		if (!oldscr->pcs.active)
@@ -786,11 +791,6 @@ vga_doswitch(struct vga_config *vc)
 		if (oldscr->pcs.type != vc->currenttype)
 			panic("vga_show_screen: bad type");
 	}
-#endif
-	if (scr == oldscr) {
-		return;
-	}
-#ifdef DIAGNOSTIC
 	if (scr->pcs.active)
 		panic("vga_show_screen: active");
 #endif
@@ -824,6 +824,7 @@ vga_doswitch(struct vga_config *vc)
 				scr->pcs.dispoffset, scr->pcs.mem,
 				type->ncols * type->nrows);
 	scr->pcs.active = 1;
+	splx(s);
 
 	vc->active = scr;
 
@@ -1007,10 +1008,12 @@ vga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	bus_space_handle_t memh = scr->pcs.hdl->ph_memh;
 	int ncols = scr->pcs.type->ncols;
 	bus_size_t srcoff, dstoff;
+	int s;
 
 	srcoff = srcrow * ncols + 0;
 	dstoff = dstrow * ncols + 0;
 
+	s = spltty();
 	if (scr->pcs.active) {
 		if (dstrow == 0 && (srcrow + nrows == scr->pcs.type->nrows)) {
 #ifdef PCDISPLAY_SOFTCURSOR
@@ -1053,6 +1056,7 @@ vga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	} else
 		bcopy(&scr->pcs.mem[srcoff], &scr->pcs.mem[dstoff],
 		      nrows * ncols * 2);
+	splx(s);
 
 	return 0;
 }
@@ -1251,11 +1255,16 @@ int
 vga_putchar(void *c, int row, int col, u_int uc, long attr)
 {
 	struct vgascreen *scr = c;
-
-	if (scr->pcs.visibleoffset != scr->pcs.dispoffset)
+	int rc;
+	int s;
+	
+	s = spltty();
+	if (scr->pcs.active && scr->pcs.visibleoffset != scr->pcs.dispoffset)
 		vga_scrollback(scr->cfg, scr, 0);
+	rc = pcdisplay_putchar(c, row, col, uc, attr);
+	splx(s);
 
-	return pcdisplay_putchar(c, row, col, uc, attr);
+	return rc;
 }
 
 void

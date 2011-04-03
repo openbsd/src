@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.9 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.10 2011/04/03 15:46:30 miod Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -88,6 +88,7 @@ pcdisplay_cursor(void *id, int on, int row, int col)
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
+	int s = spltty();
 
 	/* Remove old cursor image */
 	if (scr->cursoron) {
@@ -103,7 +104,7 @@ pcdisplay_cursor(void *id, int on, int row, int col)
 	scr->vc_ccol = col;
 
 	if ((scr->cursoron = on) == 0)
-		return 0;
+		goto done;
 
 	off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol);
 	if (scr->active) {
@@ -115,10 +116,13 @@ pcdisplay_cursor(void *id, int on, int row, int col)
 		scr->mem[off] = scr->cursortmp ^ 0x7700;
 	}
 
+	splx(s);
+done:
 	return 0;
 #else 	/* PCDISPLAY_SOFTCURSOR */
 	struct pcdisplayscreen *scr = id;
 	int pos;
+	int s = spltty();
 
 	scr->vc_crow = row;
 	scr->vc_ccol = col;
@@ -135,6 +139,7 @@ pcdisplay_cursor(void *id, int on, int row, int col)
 		pcdisplay_6845_write(scr->hdl, cursorl, pos);
 	}
 
+	splx(s);
 	return 0;
 #endif	/* PCDISPLAY_SOFTCURSOR */
 }
@@ -157,14 +162,17 @@ pcdisplay_putchar(void *id, int row, int col, u_int c, long attr)
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
+	int s;
 
 	off = row * scr->type->ncols + col;
 
+	s = spltty();
 	if (scr->active)
 		bus_space_write_2(memt, memh, scr->dispoffset + off * 2,
 				  c | (attr << 8));
 	else
 		scr->mem[off] = c | (attr << 8);
+	splx(s);
 
 	return 0;
 }
@@ -176,16 +184,19 @@ pcdisplay_getchar(void *id, int row, int col, struct wsdisplay_charcell *cell)
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
+	int s;
 	u_int16_t data;
 	
 	off = row * scr->type->ncols + col;
 	/* XXX bounds check? */
 	
+	s = spltty();
 	if (scr->active)
 		data = (bus_space_read_2(memt, memh, 
 					scr->dispoffset + off * 2));
 	else
 		data = (scr->mem[off]);
+	splx(s);
 
 	cell->uc = data & 0xff;
 	cell->attr = data >> 8;
@@ -200,11 +211,13 @@ pcdisplay_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	bus_size_t srcoff, dstoff;
+	int s;
 
 	srcoff = dstoff = row * scr->type->ncols;
 	srcoff += srccol;
 	dstoff += dstcol;
 
+	s = spltty();
 	if (scr->active)
 		bus_space_copy_2(memt, memh,
 					scr->dispoffset + srcoff * 2,
@@ -212,6 +225,7 @@ pcdisplay_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 					ncols);
 	else
 		bcopy(&scr->mem[srcoff], &scr->mem[dstoff], ncols * 2);
+	splx(s);
 
 	return 0;
 }
@@ -225,17 +239,19 @@ pcdisplay_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
 	bus_size_t off;
 	u_int16_t val;
 	int i;
+	int s;
 
 	off = row * scr->type->ncols + startcol;
-
 	val = (fillattr << 8) | ' ';
 
+	s = spltty();
 	if (scr->active)
 		bus_space_set_region_2(memt, memh, scr->dispoffset + off * 2,
 				       val, ncols);
 	else
 		for (i = 0; i < ncols; i++)
 			scr->mem[off + i] = val;
+	splx(s);
 
 	return 0;
 }
@@ -248,10 +264,12 @@ pcdisplay_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int ncols = scr->type->ncols;
 	bus_size_t srcoff, dstoff;
+	int s;
 
 	srcoff = srcrow * ncols + 0;
 	dstoff = dstrow * ncols + 0;
 
+	s = spltty();
 	if (scr->active)
 		bus_space_copy_2(memt, memh,
 					scr->dispoffset + srcoff * 2,
@@ -260,6 +278,7 @@ pcdisplay_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	else
 		bcopy(&scr->mem[srcoff], &scr->mem[dstoff],
 		      nrows * ncols * 2);
+	splx(s);
 
 	return 0;
 }
@@ -272,18 +291,20 @@ pcdisplay_eraserows(void *id, int startrow, int nrows, long fillattr)
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	bus_size_t off, count, n;
 	u_int16_t val;
+	int s;
 
 	off = startrow * scr->type->ncols;
 	count = nrows * scr->type->ncols;
-
 	val = (fillattr << 8) | ' ';
 
+	s = spltty();
 	if (scr->active)
 		bus_space_set_region_2(memt, memh, scr->dispoffset + off * 2,
 				       val, count);
 	else
 		for (n = 0; n < count; n++)
 			scr->mem[off + n] = val;
+	splx(s);
 
 	return 0;
 }
