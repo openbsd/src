@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.113 2010/07/09 15:44:20 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.114 2011/04/03 13:54:21 stsp Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1181,9 +1181,6 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
  * - joins NI group address at in6_ifattach() time only, does not cope
  *   with hostname changes by sethostname(3)
  */
-#ifndef offsetof		/* XXX */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
 struct mbuf *
 ni6_input(struct mbuf *m, int off)
 {

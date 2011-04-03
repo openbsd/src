@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.29 2010/05/11 09:36:07 claudio Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.30 2011/04/03 13:54:21 stsp Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -67,10 +67,6 @@
 #include "bridge.h"
 #if NBRIDGE > 0
 #include <netinet/ip_ether.h>
-#endif
-
-#ifndef offsetof
-#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 /*

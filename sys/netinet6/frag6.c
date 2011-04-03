@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.32 2011/03/06 19:55:54 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.33 2011/04/03 13:54:21 stsp Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -123,10 +123,6 @@ do {									\
 #endif
 
 #define	IP6Q_UNLOCK()		ip6q_unlock()
-
-#ifndef offsetof		/* XXX */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
 
 /*
  * Initialise reassembly queue and fragment identifier.
