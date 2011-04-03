@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.18 2010/08/28 22:27:47 miod Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.19 2011/04/03 22:07:37 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1833,3 +1833,95 @@ uvm_pmr_print(void)
 	printf("#ranges = %d\n", useq_len);
 }
 #endif
+
+#ifndef SMALL_KERNEL
+/*
+ * Zero all free memory.
+ */
+void
+uvm_pmr_zero_everything(void)
+{
+	struct uvm_pmemrange	*pmr;
+	struct vm_page		*pg;
+	int			 i;
+	psize_t			 zeroed = 0;
+
+	uvm_lock_fpageq();
+	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
+		/* Zero single pages. */
+		while ((pg = TAILQ_FIRST(&pmr->single[UVM_PMR_MEMTYPE_DIRTY]))
+		    != NULL) {
+			uvm_pmr_remove(pmr, pg);
+			uvm_pagezero(pg);
+			atomic_setbits_int(&pg->pg_flags, PG_ZERO);
+			uvmexp.zeropages++;
+			uvm_pmr_insert(pmr, pg, 0);
+
+			zeroed++; /* DEBUG */
+
+			if (zeroed % 1000)
+				printf("1");
+		}
+
+		/* Zero multi page ranges. */
+		while ((pg = RB_ROOT(&pmr->size[UVM_PMR_MEMTYPE_DIRTY]))
+		    != NULL) {
+			pg--; /* Size tree always has second page. */
+			uvm_pmr_remove(pmr, pg);
+			for (i = 0; i < pg->fpgsz; i++) {
+				uvm_pagezero(&pg[i]);
+				atomic_setbits_int(&pg[i].pg_flags, PG_ZERO);
+				uvmexp.zeropages++;
+			}
+			uvm_pmr_insert(pmr, pg, 0);
+
+			zeroed++; /* DEBUG */
+			if (zeroed % 100)
+				printf("L");
+		}
+	}
+	uvm_unlock_fpageq();
+}
+
+/*
+ * Allocate the biggest contig chunk of memory.
+ */
+int
+uvm_pmr_alloc_pig(paddr_t *addr, psize_t *sz)
+{
+	struct uvm_pmemrange	*pig_pmr, *pmr;
+	struct vm_page		*pig_pg, *pg;
+	int			 memtype;
+
+	uvm_lock_fpageq();
+	pig_pg = NULL;
+	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
+		for (memtype = 0; memtype < UVM_PMR_MEMTYPE_MAX; memtype++) {
+			/* Find biggest page in this memtype pmr. */
+			pg = RB_MAX(uvm_pmr_size, &pmr->size[memtype]);
+			if (pg == NULL)
+				pg = TAILQ_FIRST(&pmr->single[memtype]);
+
+			if (pig_pg == NULL || (pg != NULL && pig_pg != NULL &&
+			    pig_pg->fpgsz < pg->fpgsz)) {
+				pig_pmr = pmr;
+				pig_pg = pg;
+			}
+		}
+	}
+
+	/* Remove page from freelist. */
+	if (pig_pg != NULL) {
+		uvm_pmr_remove(pig_pmr, pig_pg);
+		uvmexp.free -= pig_pg->fpgsz;
+		if (pig_pg->pg_flags & PG_ZERO)
+			uvmexp.zeropages -= pig_pg->fpgsz;
+		*addr = VM_PAGE_TO_PHYS(pig_pg);
+		*sz = pig_pg->fpgsz;
+	}
+	uvm_unlock_fpageq();
+
+	/* Return. */
+	return (pig_pg != NULL ? 0 : ENOMEM);
+}
+#endif /* SMALL_KERNEL */

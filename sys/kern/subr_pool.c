@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.99 2010/11/03 17:49:42 mikeb Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.100 2011/04/03 22:07:37 ariane Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1067,6 +1067,18 @@ pool_reclaim(struct pool *pp)
 	}
 
 	return (1);
+}
+
+/*
+ * Release all complete pages that have not been used recently
+ * from all pools.
+ */
+void
+pool_reclaim_all(void)
+{
+	struct pool	*pp;
+	TAILQ_FOREACH(pp, &pool_head, pr_poollist)
+		pool_reclaim(pp);
 }
 
 #ifdef DDB

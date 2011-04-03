@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.36 2010/09/26 21:03:57 tedu Exp $	*/
+/*	$OpenBSD: pool.h,v 1.37 2011/04/03 22:07:37 ariane Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -157,6 +157,7 @@ void		pool_set_ctordtor(struct pool *, int (*)(void *, void *, int),
 void		*pool_get(struct pool *, int) __malloc;
 void		pool_put(struct pool *, void *);
 int		pool_reclaim(struct pool *);
+void		pool_reclaim_all(void);
 int		pool_prime(struct pool *, int);
 
 #ifdef DDB
