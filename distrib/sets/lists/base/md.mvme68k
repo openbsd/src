@@ -2344,7 +2344,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vnode.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vnode_if.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/wait.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/workq.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sysexits.ph

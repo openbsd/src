@@ -1598,7 +1598,6 @@
 ./usr/include/sys/videoio.h
 ./usr/include/sys/vmmeter.h
 ./usr/include/sys/vnode.h
-./usr/include/sys/vnode_if.h
 ./usr/include/sys/wait.h
 ./usr/include/sys/workq.h
 ./usr/include/sysexits.h

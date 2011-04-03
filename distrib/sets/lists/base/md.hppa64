@@ -2393,7 +2393,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/videoio.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/vnode.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/vnode_if.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/wait.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/workq.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sysexits.ph
