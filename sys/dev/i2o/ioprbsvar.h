@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbsvar.h,v 1.4 2011/04/03 16:53:20 dlg Exp $	*/
+/*	$OpenBSD: ioprbsvar.h,v 1.5 2011/04/03 17:55:07 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -73,8 +73,6 @@ struct ioprbs_softc {
 	/* commands which have been returned by the controller */
 	LIST_HEAD(, scsi_xfer) sc_queue;
 	struct scsi_xfer *sc_queuelast;
-	struct scsi_iopool sc_iopool;
-	struct mutex sc_ccb_mtx;
 };
 
 #define	IOPRBS_CLAIMED		0x01

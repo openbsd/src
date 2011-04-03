@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.26 2011/04/03 16:53:20 dlg Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.27 2011/04/03 17:55:07 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -99,8 +99,8 @@ struct scsi_xfer *ioprbs_dequeue(struct ioprbs_softc *);
 void	ioprbs_enqueue(struct ioprbs_softc *, struct scsi_xfer *, int);
 void	ioprbs_enqueue_ccb(struct ioprbs_softc *, struct ioprbs_ccb *);
 int	ioprbs_exec_ccb(struct ioprbs_ccb *);
-void	ioprbs_free_ccb(void *, void *);
-void	*ioprbs_get_ccb(void *);
+void	ioprbs_free_ccb(struct ioprbs_softc *, struct ioprbs_ccb *);
+struct ioprbs_ccb *ioprbs_get_ccb(struct ioprbs_softc *, int);
 void	ioprbs_internal_cache_cmd(struct scsi_xfer *);
 void	ioprbs_intr(struct device *, struct iop_msg *, void *);
 void	ioprbs_intr_event(struct device *, struct iop_msg *, void *);
@@ -186,8 +186,6 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_ccbq);
 	LIST_INIT(&sc->sc_queue);
-	mtx_init(&sc->sc_ccb_mtx);
-	scsi_iopool_init(&sc->sc_iopool, sc, iopbrs_get_ccb, iopbrs_free_ccb);
 
 	/* Initialize the ccbs */
 	for (i = 0; i < IOPRBS_MAX_CCBS; i++)
@@ -400,7 +398,7 @@ ioprbs_scsi_cmd(xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct ioprbs_softc *sc = link->adapter_softc;
-	struct ioprbs_ccb *ccb = xs->io;
+	struct ioprbs_ccb *ccb;
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
@@ -488,6 +486,18 @@ ioprbs_scsi_cmd(xs)
 				}
 			}
 
+			ccb = ioprbs_get_ccb(sc, xs->flags);
+
+			/*
+			 * We are out of commands, try again in a little while.
+			 */
+			if (ccb == NULL) {
+				xs->error = XS_NO_CCB;
+				scsi_done(xs);
+				splx(s);
+				return;
+			}
+
 			ccb->ic_blockno = blockno;
 			ccb->ic_blockcnt = blockcnt;
 			ccb->ic_xs = xs;
@@ -565,6 +575,7 @@ ioprbs_intr(struct device *dv, struct iop_msg *im, void *reply)
 	iop_msg_unmap(iop, im);
 	iop_msg_free(iop, im);
 	scsi_done(xs);
+	ioprbs_free_ccb(sc, ccb);
 }
 
 void
@@ -746,33 +757,55 @@ ioprbs_internal_cache_cmd(xs)
 	xs->error = XS_NOERROR;
 }
 
-void *
-ioprbs_get_ccb(void *cookie)
+struct ioprbs_ccb *
+ioprbs_get_ccb(sc, flags)
+	struct ioprbs_softc *sc;
+	int flags;
 {
-	struct iopbrs_softc *sc = cookie;
 	struct ioprbs_ccb *ccb;
+	int s;
 
-	mtx_enter(&sc->sc_ccb_mtx);
-	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
-	if (ccb)
-		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ic_chain);
-	mtx_leave(&sc->sc_ccb_mtx);
+	DPRINTF(("ioprbs_get_ccb(%p, 0x%x) ", sc, flags));
+
+	s = splbio();
+
+	for (;;) {
+		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+		if (ccb != NULL)
+			break;
+		if (flags & SCSI_NOSLEEP)
+			goto bail_out;
+		tsleep(&sc->sc_free_ccb, PRIBIO, "ioprbs_ccb", 0);
+	}
+
+	TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ic_chain);
 
 	/* initialise the command */
 	ccb->ic_flags = 0;
 
+ bail_out:
+	splx(s);
 	return (ccb);
 }
 
 void
-ioprbs_free_ccb(void *cookie, void *io)
+ioprbs_free_ccb(sc, ccb)
+	struct ioprbs_softc *sc;
+	struct ioprbs_ccb *ccb;
 {
-	struct iopbrs_softc *sc = cookie;
-	struct ioprbs_ccb *ccb = io;
+	int s;
 
-	mtx_enter(&sc->sc_ccb_mtx);
+	DPRINTF(("ioprbs_free_ccb(%p, %p) ", sc, ccb));
+
+	s = splbio();
+
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, ic_chain);
-	mtx_leave(&sc->sc_ccb_mtx);
+
+	/* If the free list was empty, wake up potential waiters. */
+	if (TAILQ_NEXT(ccb, ic_chain) == NULL)
+		wakeup(&sc->sc_free_ccb);
+
+	splx(s);
 }
 
 void
