@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.20 2010/12/26 15:41:00 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.21 2011/04/03 22:33:55 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,7 +61,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <mips64/archtype.h>
 #include <machine/cpu.h>
@@ -575,6 +575,13 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (pmap_extract(pmap, vaddr, &curaddr) == FALSE)
 			panic("_dmapmap_load_buffer: pmap_extract(%x, %x) failed!",
 			    pmap, vaddr);
+
+#ifdef DIAGNOSTIC
+		if (curaddr > dma_constraint.ucr_high ||
+		    curaddr < dma_constraint.ucr_low)
+			panic("Non DMA-reachable buffer at curaddr %p (raw)",
+			    curaddr);                                           
+#endif
 
 		/*
 		 * Compute the segment size, and adjust counts.
