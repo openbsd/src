@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.172 2011/01/28 06:32:31 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.173 2011/04/03 17:04:19 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/pool.h>
 
 #include <machine/bus.h>
 
@@ -391,7 +392,7 @@ struct ahci_port {
 	u_int32_t		ap_err_saved_active;
 	u_int32_t		ap_err_saved_active_cnt;
 
-	u_int8_t		ap_err_scratch[512];
+	u_int8_t		*ap_err_scratch;
 
 #ifdef AHCI_DEBUG
 	char			ap_name[16];
@@ -1094,6 +1095,12 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 		    DEVNAME(sc), port);
 		goto reterr;
 	}
+	ap->ap_err_scratch = dma_alloc(DEV_BSIZE, PR_NOWAIT | PR_ZERO);
+	if (ap->ap_err_scratch == NULL) {
+		printf("%s: unable to allocate DMA scratch buf for port %d\n",
+		    DEVNAME(sc), port);
+		goto freeport;
+	}
 
 #ifdef AHCI_DEBUG
 	snprintf(ap->ap_name, sizeof(ap->ap_name), "%s.%d",
@@ -1318,6 +1325,8 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 		ahci_dmamem_free(sc, ap->ap_dmamem_rfis);
 	if (ap->ap_dmamem_cmd_table)
 		ahci_dmamem_free(sc, ap->ap_dmamem_cmd_table);
+	if (ap->ap_err_scratch)
+		dma_free(ap->ap_err_scratch, DEV_BSIZE);
 
 	/* bus_space(9) says we dont free the subregions handle */
 
