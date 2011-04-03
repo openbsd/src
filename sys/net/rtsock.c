@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.115 2011/03/31 10:36:42 jasper Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.116 2011/04/03 17:01:23 jsing Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -403,7 +403,8 @@ route_input(struct mbuf *m0, ...)
 		if (last) {
 			struct mbuf *n;
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (sbappendaddr(&last->so_rcv, sosrc,
+				if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
+				    sbappendaddr(&last->so_rcv, sosrc,
 				    n, (struct mbuf *)0) == 0) {
 					/*
 					 * Flag socket as desync'ed and 
@@ -423,7 +424,8 @@ route_input(struct mbuf *m0, ...)
 		last = rp->rcb_socket;
 	}
 	if (last) {
-		if (sbappendaddr(&last->so_rcv, sosrc,
+		if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
+		    sbappendaddr(&last->so_rcv, sosrc,
 		    m, (struct mbuf *)0) == 0) {
 			/* Flag socket as desync'ed and flush required */
 			sotoroutecb(last)->flags |= 
