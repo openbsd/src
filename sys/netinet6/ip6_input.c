@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.98 2010/09/09 09:46:13 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.99 2011/04/03 13:56:05 stsp Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -974,8 +974,8 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 /*
  * Unknown option processing.
  * The third argument `off' is the offset from the IPv6 header to the option,
- * which is necessary if the IPv6 header the and option header and IPv6 header
- * is not continuous in order to return an ICMPv6 error.
+ * which allows returning an ICMPv6 error even if the IPv6 header and the
+ * option header are not continuous.
  */
 int
 ip6_unknown_opt(u_int8_t *optp, struct mbuf *m, int off)
