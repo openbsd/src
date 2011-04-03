@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.13 2006/04/20 03:25:36 ray Exp $	*/
+/*	$OpenBSD: screen.c,v 1.14 2011/04/03 10:25:59 dcoppa Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -80,7 +80,9 @@ static char
 	*LLstr,			/* last line, first column */
 	*pcstr,			/* pad character */
 	*TEstr,			/* end cursor motion mode */
-	*TIstr;			/* begin cursor motion mode */
+	*TIstr,			/* begin cursor motion mode */
+	*VIstr,			/* make cursor invisible */
+	*VEstr;			/* make cursor appear normal */
 char
 	*SEstr,			/* end standout mode */
 	*SOstr;			/* begin standout mode */
@@ -107,6 +109,8 @@ struct tcsinfo {		/* termcap string info; some abbrevs above */
 	{"so", &SOstr},
 	{"te", &TEstr},
 	{"ti", &TIstr},
+	{"vi", &VIstr},
+	{"ve", &VEstr},
 	{"up", &UP},		/* cursor up */
 	{ {0}, NULL}
 };
@@ -291,6 +295,8 @@ scr_set(void)
 	 */
 	if (TIstr)
 		putstr(TIstr);	/* termcap(5) says this is not padded */
+	if (VIstr)
+		putstr(VIstr);	/* termcap(5) says this is not padded */
 	if (tstp != SIG_IGN)
 		(void) signal(SIGTSTP, scr_stop);
 	if (ttou != SIG_IGN)
@@ -321,6 +327,8 @@ scr_end(void)
 	/* exit screen mode */
 	if (TEstr)
 		putstr(TEstr);	/* termcap(5) says this is not padded */
+	if (VEstr)
+		putstr(VEstr);	/* termcap(5) says this is not padded */
 	(void) fflush(stdout);
 	(void) tcsetattr(0, TCSADRAIN, &oldtt);
 	isset = 0;
