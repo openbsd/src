@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.24 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.25 2011/04/03 17:17:41 jsing Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/disk.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -167,6 +168,7 @@ ntfs_mount(
 	struct ntfs_args args;
 	size_t size;
 	mode_t amode;
+	char *fspec = NULL;
 
 	/*
 	 ***
@@ -204,7 +206,13 @@ ntfs_mount(
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+	fspec = malloc(MNAMELEN, M_MOUNT, M_WAITOK);
+	err = copyinstr(args.fspec, fspec, MNAMELEN - 1, &size);
+	if (err)
+		goto error_1;
+	disk_map(fspec, fspec, MNAMELEN, DM_OPENBLCK);
+
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fspec, p);
 	err = namei(ndp);
 	if (err) {
 		/* can't get devvp!*/
@@ -273,8 +281,8 @@ ntfs_mount(
 		(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1,
 		           &size);
 		bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-		(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, 
-		           MNAMELEN - 1, &size);
+
+		size = strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN - 1);
 		bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 		bcopy(&args, &mp->mnt_stat.mount_info.ntfs_args, sizeof(args));
 		if ( !err) {
@@ -304,6 +312,9 @@ error_2:	/* error with devvp held*/
 error_1:	/* no state to back out*/
 
 success:
+	if (fspec)
+		free(fspec, M_MOUNT);
+
 	return(err);
 }
 
@@ -572,7 +583,7 @@ ntfs_unmount(
 	/* free the toupper table, if this has been last mounted ntfs volume */
 	ntfs_toupper_unuse(p);
 
-	dprintf(("ntfs_umount: freeing memory...\n"));
+	dprintf(("ntfs_unmount: freeing memory...\n"));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	free(ntmp->ntm_ad, M_NTFSMNT);
