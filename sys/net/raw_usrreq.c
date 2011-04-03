@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.12 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.13 2011/04/03 16:09:09 blambert Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -85,6 +85,8 @@ raw_input(struct mbuf *m0, ...)
 
 	last = 0;
 	LIST_FOREACH(rp, &rawcb, rcb_list) {
+		if (rp->rcb_socket->so_state & SS_CANTRCVMORE)
+			continue;
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
 		if (rp->rcb_proto.sp_protocol  &&

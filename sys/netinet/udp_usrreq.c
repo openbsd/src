@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.138 2010/09/24 14:50:30 hsuenaga Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.139 2011/04/03 16:09:09 blambert Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -442,6 +442,8 @@ udp_input(struct mbuf *m, ...)
 		 */
 		last = NULL;
 		CIRCLEQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
+			if (inp->inp_socket->so_state & SS_CANTRCVMORE)
+				continue;
 #ifdef INET6
 			/* don't accept it if AF does not match */
 			if (ip6 && !(inp->inp_flags & INP_IPV6))
