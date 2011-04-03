@@ -1,9 +1,9 @@
 class AA {
 public:
-	AA(char *);
+	AA(const char *);
 	~AA();
 private:
-	char *_name;
+	const char *_name;
 };
 
 

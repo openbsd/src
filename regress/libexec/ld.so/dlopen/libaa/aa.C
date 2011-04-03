@@ -1,7 +1,7 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: aa.C,v 1.4 2005/09/19 18:39:37 deraadt Exp $
+ * $OpenBSD: aa.C,v 1.5 2011/04/03 22:29:50 drahn Exp $
  */
 
 #include <iostream>
@@ -10,7 +10,7 @@
 char strbuf[512];
 
 extern "C" { 
-char *libname = "libaa";
+const char *libname = "libaa";
 };
 
 extern "C" char *
@@ -23,7 +23,7 @@ lib_entry()
 	std::cout << "called into aa " << libname << " libname " << "\n";
 }
 
-AA::AA(char *arg)
+AA::AA(const char *arg)
 {
 	_name = arg;
 }
