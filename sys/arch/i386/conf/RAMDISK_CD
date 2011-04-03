@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.184 2011/03/28 15:24:54 claudio Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.185 2011/04/03 12:32:05 claudio Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -365,7 +365,7 @@ bnx*	at pci?				# Broadcom BCM5706/5708 GigE
 lge*	at pci?				# Level1 LXT1001 GigE
 mtd*	at pci?				# Myson MTD803
 hme*	at pci?				# Sun Happy Meal
-#bce*	at pci?				# Broadcom BCM4401
+bce*	at pci?				# Broadcom BCM4401
 vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet

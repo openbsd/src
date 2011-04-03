@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.314 2011/03/24 10:25:20 robert Exp $
+#	$OpenBSD: GENERIC,v 1.315 2011/04/03 12:32:05 claudio Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -469,7 +469,7 @@ xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 thtc*	at pci?				# Tehuti Networks 10Gb ethernet
 tht*	at thtc?
 gem*	at pci?				# Sun 'gem' ethernet
-#bce*	at pci?				# Broadcom BCM4401
+bce*	at pci?				# Broadcom BCM4401
 vic*	at pci?				# VMware VMXnet virtual interface
 et*	at pci?				# Agere/LSI ET1310
 age*	at pci?				# Attansic L1 Ethernet

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.115 2010/08/04 21:44:41 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.116 2011/04/03 12:32:05 claudio Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -287,7 +287,7 @@ hme*	at pci?			# Sun Happy Meal
 vge*	at pci?			# VIA VT612x
 nfe*	at pci?			# NVIDIA nForce Ethernet
 xge*	at pci?			# Neterion Xframe-I/II 10Gb ethernet
-#bce*	at pci?			# Broadcom BCM4401
+bce*	at pci?			# Broadcom BCM4401
 vic*	at pci?			# VMware VMXnet virtual interface
 et*	at pci?			# Agere/LSI ET1310
 age*	at pci?			# Attansic L1 Ethernet

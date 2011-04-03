@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.710 2011/03/28 15:24:54 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.711 2011/04/03 12:32:05 claudio Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -622,7 +622,7 @@ re*	at cardbus?			# Realtek 8169/8169S/8110S
 stge*	at pci?				# Sundance TC9021 GigE
 lge*	at pci?				# Level1 LXT1001 GigE
 hme*	at pci?				# Sun Happy Meal
-#bce*	at pci?				# Broadcom BCM4401
+bce*	at pci?				# Broadcom BCM4401
 vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
 musycc*	at pci?				# Conexant HDLC controller
