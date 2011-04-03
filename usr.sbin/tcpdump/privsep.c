@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.28 2009/04/17 22:31:24 jmc Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.29 2011/04/03 21:11:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -32,6 +32,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
@@ -161,6 +162,9 @@ priv_init(int argc, char **argv)
 		pw = getpwnam("_tcpdump");
 		if (pw == NULL)
 			errx(1, "unknown user _tcpdump");
+
+		/* set the locale before chrooting */
+		(void)setlocale(LC_CTYPE, "");
 
 		/* chroot, drop privs and return */
 		if (chroot(pw->pw_dir) != 0)
