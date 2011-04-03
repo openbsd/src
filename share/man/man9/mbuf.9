@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.50 2011/04/03 09:49:24 blambert Exp $
+.\"     $OpenBSD: mbuf.9,v 1.51 2011/04/03 12:33:47 blambert Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -94,7 +94,7 @@
 .Fn M_LEADINGSPACE "struct mbuf *m"
 .Fn M_TRAILINGSPACE "struct mbuf *m"
 .Ft int
-.Fn m_dup_pkthder "struct mbuf *to" "struct mbuf *from"
+.Fn m_dup_pkthdr "struct mbuf *to" "struct mbuf *from"
 .Bd -literal
 #define MLEN            (MSIZE - sizeof(struct m_hdr))
 #define MHLEN           (MLEN - sizeof(struct pkthdr))
