@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.10 2010/09/21 02:12:20 jakemsr Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.11 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ int
 auacer_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, auacer_pci_devices,
-	    sizeof(auacer_pci_devices)/sizeof(auacer_pci_devices[0])));
+	    nitems(auacer_pci_devices)));
 }
 
 void
@@ -541,7 +541,7 @@ auacer_fixup_rate(int rate)
 		8000, 11025, 12000, 16000, 22050, 32000, 44100, 48000
 	};
 
-	for (i = 0; i < sizeof(rates)/sizeof(rates[0]) - 1; i++)
+	for (i = 0; i < nitems(rates) - 1; i++)
 		if (rate <= (rates[i] + rates[i+1]) / 2)
 			return (rates[i]);
 	return (rates[i]);
@@ -983,7 +983,7 @@ auacer_allocmem(struct auacer_softc *sc, size_t size, size_t align,
 
 	p->size = size;
 	error = bus_dmamem_alloc(sc->dmat, p->size, align, 0, p->segs,
-	    sizeof(p->segs)/sizeof(p->segs[0]), &p->nsegs, BUS_DMA_NOWAIT);
+	    nitems(p->segs), &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		return (error);
 

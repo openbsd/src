@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.45 2009/08/13 14:24:47 jasper Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.46 2011/04/03 15:36:03 jasper Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -834,7 +834,7 @@ int
 ste_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, ste_devices,
-	    sizeof(ste_devices)/sizeof(ste_devices[0])));
+	    nitems(ste_devices)));
 }
 
 /*

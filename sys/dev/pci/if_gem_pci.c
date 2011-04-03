@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.31 2009/10/15 17:54:56 deraadt Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.32 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -113,7 +113,7 @@ int
 gem_match_pci(struct device *parent, void *cf, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, gem_pci_devices,
-	    sizeof(gem_pci_devices)/sizeof(gem_pci_devices[0])));
+	    nitems(gem_pci_devices)));
 }
 
 #define	PROMHDR_PTR_DATA	0x18

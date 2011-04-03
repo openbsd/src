@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_pci.c,v 1.10 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: bha_pci.c,v 1.11 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: bha_pci.c,v 1.16 1998/08/15 10:10:53 mycroft Exp $	*/
 
 /*-
@@ -77,8 +77,7 @@ bha_pci_match(parent, match, aux)
 	bus_size_t iosize;
 	int rv;
 
-	if (pci_matchbyid(pa, bha_pci_devices,
-	    sizeof(bha_pci_devices)/sizeof(bha_pci_devices[0])) == 0)
+	if (pci_matchbyid(pa, bha_pci_devices, nitems(bha_pci_devices)) == 0)
 		return (0);
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.26 2010/09/22 22:22:47 jakemsr Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.27 2011/04/03 15:36:02 jasper Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1505,7 +1505,7 @@ cs4281_allocmem(struct cs4281_softc *sc, size_t size, int pool, int flags,
 	if (!p->dum)
 		return (1);
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+				 p->segs, nitems(p->segs),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to allocate dma. error=%d\n",

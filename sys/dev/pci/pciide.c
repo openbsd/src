@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.323 2010/11/18 18:12:52 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.324 2011/04/03 15:36:03 jasper Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1231,43 +1231,43 @@ struct pciide_vendor_desc {
 
 const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_INTEL, pciide_intel_products,
-	  sizeof(pciide_intel_products)/sizeof(pciide_intel_products[0]) },
+	  nitems(pciide_intel_products) },
 	{ PCI_VENDOR_AMD, pciide_amd_products,
-	  sizeof(pciide_amd_products)/sizeof(pciide_amd_products[0]) },
+	  nitems(pciide_amd_products) },
 #ifdef notyet
 	{ PCI_VENDOR_OPTI, pciide_opti_products,
-	  sizeof(pciide_opti_products)/sizeof(pciide_opti_products[0]) },
+	  nitems(pciide_opti_products) },
 #endif
 	{ PCI_VENDOR_CMDTECH, pciide_cmd_products,
-	  sizeof(pciide_cmd_products)/sizeof(pciide_cmd_products[0]) },
+	  nitems(pciide_cmd_products) },
 	{ PCI_VENDOR_VIATECH, pciide_via_products,
-	  sizeof(pciide_via_products)/sizeof(pciide_via_products[0]) },
+	  nitems(pciide_via_products) },
 	{ PCI_VENDOR_CONTAQ, pciide_cypress_products,
-	  sizeof(pciide_cypress_products)/sizeof(pciide_cypress_products[0]) },
+	  nitems(pciide_cypress_products) },
 	{ PCI_VENDOR_SIS, pciide_sis_products,
-	  sizeof(pciide_sis_products)/sizeof(pciide_sis_products[0]) },
+	  nitems(pciide_sis_products) },
 	{ PCI_VENDOR_NS, pciide_natsemi_products,
-	  sizeof(pciide_natsemi_products)/sizeof(pciide_natsemi_products[0]) },
+	  nitems(pciide_natsemi_products) },
 	{ PCI_VENDOR_ALI, pciide_acer_products,
-	  sizeof(pciide_acer_products)/sizeof(pciide_acer_products[0]) },
+	  nitems(pciide_acer_products) },
 	{ PCI_VENDOR_TRIONES, pciide_triones_products,
-	  sizeof(pciide_triones_products)/sizeof(pciide_triones_products[0]) },
+	  nitems(pciide_triones_products) },
 	{ PCI_VENDOR_ACARD, pciide_acard_products,
-	  sizeof(pciide_acard_products)/sizeof(pciide_acard_products[0]) },
+	  nitems(pciide_acard_products) },
 	{ PCI_VENDOR_RCC, pciide_serverworks_products,
-	  sizeof(pciide_serverworks_products)/sizeof(pciide_serverworks_products[0]) },
+	  nitems(pciide_serverworks_products) },
 	{ PCI_VENDOR_PROMISE, pciide_promise_products,
-	  sizeof(pciide_promise_products)/sizeof(pciide_promise_products[0]) },
+	  nitems(pciide_promise_products) },
 	{ PCI_VENDOR_NVIDIA, pciide_nvidia_products,
-	  sizeof(pciide_nvidia_products)/sizeof(pciide_nvidia_products[0]) },
+	  nitems(pciide_nvidia_products) },
 	{ PCI_VENDOR_ITEXPRESS, pciide_ite_products,
-	  sizeof(pciide_ite_products)/sizeof(pciide_ite_products[0]) },
+	  nitems(pciide_ite_products) },
 	{ PCI_VENDOR_ATI, pciide_ati_products,
-	  sizeof(pciide_ati_products)/sizeof(pciide_ati_products[0]) },
+	  nitems(pciide_ati_products) },
 	{ PCI_VENDOR_JMICRON, pciide_jmicron_products,
-	  sizeof(pciide_jmicron_products)/sizeof(pciide_jmicron_products[0]) },
+	  nitems(pciide_jmicron_products) },
 	{ PCI_VENDOR_PHISON, pciide_phison_products,
-	  sizeof(pciide_phison_products)/sizeof(pciide_phison_products[0]) }
+	  nitems(pciide_phison_products) }
 };
 
 /* options passed via the 'flags' config keyword */
@@ -1301,13 +1301,11 @@ pciide_lookup_product(u_int32_t id)
 	const struct pciide_vendor_desc *vp;
 	int i;
 
-	for (i = 0, vp = pciide_vendors;
-	    i < sizeof(pciide_vendors)/sizeof(pciide_vendors[0]);
-	    vp++, i++)
+	for (i = 0, vp = pciide_vendors; i < nitems(pciide_vendors); vp++, i++)
 		if (PCI_VENDOR(id) == vp->ide_vendor)
 			break;
 
-	if (i == sizeof(pciide_vendors)/sizeof(pciide_vendors[0]))
+	if (i == nitems(pciide_vendors))
 		return (NULL);
 
 	for (pp = vp->ide_products, i = 0; i < vp->ide_nproducts; pp++, i++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.53 2009/11/07 14:49:02 miod Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.54 2011/04/03 15:36:03 jasper Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -438,7 +438,7 @@ isp_pci_probe(struct device *parent, void *match, void *aux)
                 }
 	}
 #endif
-	return (pci_matchbyid(pa, ispdev, sizeof(ispdev)/sizeof(ispdev[0])));
+	return (pci_matchbyid(pa, ispdev, nitems(ispdev)));
 }
 
 

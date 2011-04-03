@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.30 2010/10/09 09:11:13 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.31 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ int
 cmpci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, cmpci_devices,
-	    sizeof(cmpci_devices)/sizeof(cmpci_devices[0])));
+	    nitems(cmpci_devices)));
 }
 
 void
@@ -1339,7 +1339,7 @@ cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, int type, int flags,
 	n->cd_size = size;
 	error = bus_dmamem_alloc(n->cd_tag, n->cd_size,
 	    CMPCI_DMABUF_ALIGN, CMPCI_DMABUF_BOUNDARY, n->cd_segs,
-	    sizeof(n->cd_segs)/sizeof(n->cd_segs[0]), &n->cd_nsegs, w);
+	    nitems(n->cd_segs), &n->cd_nsegs, w);
 	if (error)
 		goto mfree;
 	error = bus_dmamem_map(n->cd_tag, n->cd_segs, n->cd_nsegs, n->cd_size,
@@ -1366,7 +1366,7 @@ cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, int type, int flags,
 	bus_dmamem_unmap(n->cd_tag, n->cd_addr, n->cd_size);
  dmafree:
 	bus_dmamem_free(n->cd_tag,
-			n->cd_segs, sizeof(n->cd_segs)/sizeof(n->cd_segs[0]));
+			n->cd_segs, nitems(n->cd_segs));
  mfree:
 	free(n, type);
  quit:
@@ -1385,7 +1385,7 @@ cmpci_free_dmamem(struct cmpci_softc *sc, caddr_t addr, int type)
 			bus_dmamap_destroy(n->cd_tag, n->cd_map);
 			bus_dmamem_unmap(n->cd_tag, n->cd_addr, n->cd_size);
 			bus_dmamem_free(n->cd_tag, n->cd_segs,
-			    sizeof(n->cd_segs)/sizeof(n->cd_segs[0]));
+			    nitems(n->cd_segs));
 			free(n, type);
 			return 0;
 		}
@@ -1980,8 +1980,7 @@ cmpci_mappage(void *handle, void *addr, off_t offset, int prot)
 		return -1;
 
 	return bus_dmamem_mmap(p->cd_tag, p->cd_segs,
-		   sizeof(p->cd_segs)/sizeof(p->cd_segs[0]),
-		   offset, prot, BUS_DMA_WAITOK);
+		   nitems(p->cd_segs), offset, prot, BUS_DMA_WAITOK);
 }
 
 /* ARGSUSED */

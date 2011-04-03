@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.9 2010/08/07 03:50:02 krw Exp $ */
+/*	$OpenBSD: if_che.c,v 1.10 2011/04/03 15:36:02 jasper Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -323,7 +323,7 @@ cheg_lookup(struct pci_attach_args *pa)
 	int i;
 	const struct cheg_device *cd;
 
-	for (i = 0; i < sizeof(che_devices)/sizeof(che_devices[0]); i++) {
+	for (i = 0; i < nitems(che_devices); i++) {
 		cd = &che_devices[i];
 		if (cd->cd_vendor == PCI_VENDOR(pa->pa_id) &&
 		    cd->cd_product == PCI_PRODUCT(pa->pa_id))

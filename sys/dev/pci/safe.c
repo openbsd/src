@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.31 2011/01/12 17:16:39 deraadt Exp $	*/
+/*	$OpenBSD: safe.c,v 1.32 2011/04/03 15:36:03 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -512,7 +512,7 @@ safe_process(struct cryptop *crp)
 		cmd0 |= SAFE_SA_CMD0_PAD_ZERO;
 
 		/* XXX assert key bufs have the same size */
-		for (i = 0; i < sizeof(sa->sa_key)/sizeof(sa->sa_key[0]); i++)
+		for (i = 0; i < nitems(sa->sa_key); i++)
 			sa->sa_key[i] = ses->ses_key[i];
 	}
 
@@ -533,7 +533,7 @@ safe_process(struct cryptop *crp)
 		 */
 		/* XXX assert digest bufs have the same size */
 		for (i = 0;
-		     i < sizeof(sa->sa_outdigest)/sizeof(sa->sa_outdigest[i]);
+		     i < nitems(sa->sa_outdigest);
 		     i++) {
 			sa->sa_indigest[i] = ses->ses_hminner[i];
 			sa->sa_outdigest[i] = ses->ses_hmouter[i];
@@ -1365,8 +1365,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		ses->ses_klen = encini->cri_klen;
 		bcopy(encini->cri_key, ses->ses_key, ses->ses_klen / 8);
 
-		for (i = 0;
-		     i < sizeof(ses->ses_key)/sizeof(ses->ses_key[0]); i++)
+		for (i = 0; i < nitems(ses->ses_key); i++)
 			ses->ses_key[i] = htole32(ses->ses_key[i]);
 	}
 

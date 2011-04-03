@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.250 2011/03/09 12:24:15 mpf Exp $ */
+/* $OpenBSD: if_em.c,v 1.251 2011/04/03 15:36:02 jasper Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -255,7 +255,7 @@ em_probe(struct device *parent, void *match, void *aux)
 	INIT_DEBUGOUT("em_probe: begin");
 
 	return (pci_matchbyid((struct pci_attach_args *)aux, em_devices,
-	    sizeof(em_devices)/sizeof(em_devices[0])));
+	    nitems(em_devices)));
 }
 
 void

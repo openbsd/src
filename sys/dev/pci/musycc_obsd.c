@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.9 2006/01/25 11:02:54 claudio Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.10 2011/04/03 15:36:03 jasper Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -67,7 +67,7 @@ int
 musycc_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, musycc_pci_devices,
-	    sizeof(musycc_pci_devices)/sizeof(musycc_pci_devices[0])));
+	    nitems(musycc_pci_devices)));
 }
 
 void

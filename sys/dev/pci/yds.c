@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.38 2010/09/17 07:55:52 jakemsr Exp $	*/
+/*	$OpenBSD: yds.c,v 1.39 2011/04/03 15:36:03 jasper Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1053,7 +1053,7 @@ yds_allocmem(sc, size, align, p)
 
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+				 p->segs, nitems(p->segs),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		return (error);

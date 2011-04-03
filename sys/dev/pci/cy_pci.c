@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.13 2004/06/13 17:30:27 pvalchev Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.14 2011/04/03 15:36:02 jasper Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -85,7 +85,7 @@ cy_pci_match(parent, match, aux)
 	void *match, *aux;
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, cy_pci_devices,
-	    sizeof(cy_pci_devices)/sizeof(cy_pci_devices[0])));
+	    nitems(cy_pci_devices)));
 }
 
 void

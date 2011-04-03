@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.93 2010/09/12 03:17:34 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.94 2011/04/03 15:36:02 jasper Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -372,7 +372,7 @@ auich_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 	int i;
 
-	for (i = sizeof(auich_devices)/sizeof(auich_devices[0]); i--;)
+	for (i = nitems(auich_devices); i--;)
 		if (PCI_VENDOR(pa->pa_id) == auich_devices[i].vendor &&
 		    PCI_PRODUCT(pa->pa_id) == auich_devices[i].product)
 			return 1;
@@ -463,7 +463,7 @@ auich_attach(parent, self, aux)
 		return;
 	}
 
-	for (i = sizeof(auich_devices)/sizeof(auich_devices[0]); i--;)
+	for (i = nitems(auich_devices); i--;)
 		if (PCI_PRODUCT(pa->pa_id) == auich_devices[i].product)
 			break;
 

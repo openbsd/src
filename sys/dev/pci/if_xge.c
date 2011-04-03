@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.52 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.53 2011/04/03 15:36:03 jasper Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ int
 xge_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, xge_devices,
-	    sizeof(xge_devices)/sizeof(xge_devices[0])));
+	    nitems(xge_devices)));
 }
 
 void
@@ -399,7 +399,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 		 * Resolve it by writing some magics to GPIO_CONTROL and 
 		 * force a chip reset to read in the serial eeprom again.
 		 */
-		for (i = 0; i < sizeof(fix_mac)/sizeof(fix_mac[0]); i++) {
+		for (i = 0; i < nitems(fix_mac); i++) {
 			PIF_WCSR(GPIO_CONTROL, fix_mac[i]);
 			PIF_RCSR(GPIO_CONTROL);
 		}

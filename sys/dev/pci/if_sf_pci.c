@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf_pci.c,v 1.7 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: if_sf_pci.c,v 1.8 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ int
 sf_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, sf_pci_products,
-	    sizeof(sf_pci_products)/sizeof(sf_pci_products[0])));
+	    nitems(sf_pci_products)));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.34 2010/09/19 09:22:58 deraadt Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.35 2011/04/03 15:36:03 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -140,7 +140,7 @@ int
 xl_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, xl_pci_devices,
-	    sizeof(xl_pci_devices)/sizeof(xl_pci_devices[0])));
+	    nitems(xl_pci_devices)));
 }
 
 void

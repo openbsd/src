@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.34 2011/04/03 14:29:08 claudio Exp $ */
+/* $OpenBSD: if_bce.c,v 1.35 2011/04/03 15:36:02 jasper Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -187,7 +187,7 @@ int
 bce_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, bce_devices,
-	    sizeof(bce_devices)/sizeof(bce_devices[0])));
+	    nitems(bce_devices)));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.53 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.54 2011/04/03 15:36:02 jasper Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -384,7 +384,7 @@ int
 lge_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, lge_devices,
-	    sizeof(lge_devices)/sizeof(lge_devices[0])));
+	    nitems(lge_devices)));
 }
 
 /*

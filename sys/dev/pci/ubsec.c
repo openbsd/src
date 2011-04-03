@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.150 2011/01/12 20:55:22 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.151 2011/04/03 15:36:03 jasper Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -146,7 +146,7 @@ int
 ubsec_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, ubsec_devices,
-	    sizeof(ubsec_devices)/sizeof(ubsec_devices[0])));
+	    nitems(ubsec_devices)));
 }
 
 void

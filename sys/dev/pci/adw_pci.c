@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw_pci.c,v 1.15 2008/06/26 05:42:17 ray Exp $ */
+/*	$OpenBSD: adw_pci.c,v 1.16 2011/04/03 15:36:02 jasper Exp $ */
 /* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
@@ -97,7 +97,7 @@ adw_pci_match(parent, match, aux)
 	void           *aux;
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, adw_pci_devices,
-	    sizeof(adw_pci_devices)/sizeof(adw_pci_devices[0])));
+	    nitems(adw_pci_devices)));
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.102 2011/02/15 19:10:19 kettenis Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.103 2011/04/03 15:36:02 jasper Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -861,7 +861,7 @@ int
 sis_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, sis_devices,
-	    sizeof(sis_devices)/sizeof(sis_devices[0])));
+	    nitems(sis_devices)));
 }
 
 /*

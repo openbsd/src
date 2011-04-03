@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.91 2010/11/17 10:43:23 kevlo Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.92 2011/04/03 15:36:02 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -666,7 +666,7 @@ int
 mskc_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, mskc_devices,
-	    sizeof(mskc_devices)/sizeof(mskc_devices[0])));
+	    nitems(mskc_devices)));
 }
 
 /*

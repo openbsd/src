@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.31 2010/05/02 22:19:27 miod Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.32 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -728,8 +728,7 @@ static const struct {
 		TULIP_SROM_ATTR_AUTOSENSE|TULIP_SROM_ATTR_NWAY },
     { TULIP_SROM_CONNTYPE_NOT_USED,		TULIP_MEDIA_UNKNOWN }
 };
-#define	TULIP_SROM_LASTCONNIDX	\
-		(sizeof(tulip_srom_conninfo)/sizeof(tulip_srom_conninfo[0]) - 1)
+#define	TULIP_SROM_LASTCONNIDX (nitems(tulip_srom_conninfo) - 1)
 
 static const struct {
     tulip_media_t sm_type;

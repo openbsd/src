@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.17 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.18 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ ne_pci_lookup(struct pci_attach_args *pa)
 	const struct ne_pci_product *npp;
 
 	for (npp = ne_pci_prod;
-	    npp < &ne_pci_prod[sizeof(ne_pci_prod)/sizeof(ne_pci_prod[0])];
+	    npp < &ne_pci_prod[nitems(ne_pci_prod)];
 	    npp++) {
 		if (PCI_VENDOR(pa->pa_id) == npp->npp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == npp->npp_product)

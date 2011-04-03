@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.57 2010/09/20 07:50:19 deraadt Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.58 2011/04/03 15:36:02 jasper Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -150,7 +150,7 @@ ixgb_probe(struct device *parent, void *match, void *aux)
 	INIT_DEBUGOUT("ixgb_probe: begin");
 
 	return (pci_matchbyid((struct pci_attach_args *)aux, ixgb_devices,
-	    sizeof(ixgb_devices)/sizeof(ixgb_devices[0])));
+	    nitems(ixgb_devices)));
 }
 
 /*********************************************************************

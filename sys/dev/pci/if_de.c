@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.106 2010/09/20 07:40:38 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.107 2011/04/03 15:36:02 jasper Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3607,7 +3607,7 @@ tulip_print_abnormal_interrupt(tulip_softc_t * const sc, u_int32_t csr)
     u_int32_t mask;
     const char thrsh[] = "72|128\0\0\0" "96|256\0\0\0" "128|512\0\0" "160|1024\0";
 
-    csr &= (1 << (sizeof(tulip_status_bits)/sizeof(tulip_status_bits[0]))) - 1;
+    csr &= (1 << (nitems(tulip_status_bits))) - 1;
     printf(TULIP_PRINTF_FMT ": abnormal interrupt:", TULIP_PRINTF_ARGS);
     for (sep = " ", mask = 1; mask <= csr; mask <<= 1, msgp++) {
 	if ((csr & mask) && *msgp != NULL) {

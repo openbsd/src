@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.19 2010/04/08 00:23:54 tedu Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.20 2011/04/03 15:36:03 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -102,7 +102,7 @@ int
 wdt_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, wdt_devices,
-	    sizeof(wdt_devices)/sizeof(wdt_devices[0])));
+	    nitems(wdt_devices)));
 }
 
 void

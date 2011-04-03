@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.22 2010/09/20 07:40:38 deraadt Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.23 2011/04/03 15:36:02 jasper Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -321,8 +321,7 @@ lmc_busdma_allocmem(
     bus_dma_segment_t segs[1];
     int nsegs, error;
     error = bus_dmamem_alloc(sc->lmc_dmatag, size, 1, NBPG,
-			     segs, sizeof(segs)/sizeof(segs[0]),
-			     &nsegs, BUS_DMA_NOWAIT);
+			     segs, nitems(segs), &nsegs, BUS_DMA_NOWAIT);
     if (error == 0) {
 	void *desc;
 	error = bus_dmamem_map(sc->lmc_dmatag, segs, nsegs, size,

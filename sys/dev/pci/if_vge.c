@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.48 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.49 2011/04/03 15:36:03 jasper Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -572,7 +572,7 @@ int
 vge_probe(struct device *dev, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, vge_devices,
-	    sizeof(vge_devices)/sizeof(vge_devices[0])));
+	    nitems(vge_devices)));
 }
 
 /*

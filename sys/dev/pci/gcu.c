@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcu.c,v 1.2 2009/12/03 11:07:46 dms Exp $	*/
+/*	$OpenBSD: gcu.c,v 1.3 2011/04/03 15:36:02 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -50,7 +50,7 @@ int
 gcu_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, gcu_devices,
-	    sizeof(gcu_devices)/sizeof(gcu_devices[0])));
+	    nitems(gcu_devices)));
 }
 
 void

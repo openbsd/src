@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.12 2006/08/25 04:35:03 brad Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.13 2011/04/03 15:36:03 jasper Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -65,7 +65,7 @@ twe_pci_match(parent, match, aux)
 	void *aux;
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, twe_pci_devices,
-	    sizeof(twe_pci_devices)/sizeof(twe_pci_devices[0])));
+	    nitems(twe_pci_devices)));
 }
 
 void

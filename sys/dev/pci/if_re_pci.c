@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.31 2011/03/13 15:35:20 stsp Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.32 2011/04/03 15:36:02 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -119,7 +119,7 @@ re_pci_probe(struct device *parent, void *match, void *aux)
 		return (1);
 
 	return (pci_matchbyid((struct pci_attach_args *)aux, re_pci_devices,
-	    sizeof(re_pci_devices)/sizeof(re_pci_devices[0])));
+	    nitems(re_pci_devices)));
 }
 
 /*

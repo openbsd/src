@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.90 2010/09/20 07:40:38 deraadt Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.91 2011/04/03 15:36:02 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -420,7 +420,7 @@ int
 bnx_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, bnx_devices,
-	    sizeof(bnx_devices)/sizeof(bnx_devices[0])));
+	    nitems(bnx_devices)));
 }
 
 void

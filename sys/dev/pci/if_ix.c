@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.46 2010/11/10 15:23:25 claudio Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.47 2011/04/03 15:36:02 jasper Exp $	*/
 
 /******************************************************************************
 
@@ -166,7 +166,7 @@ ixgbe_probe(struct device *parent, void *match, void *aux)
 	INIT_DEBUGOUT("ixgbe_probe: begin");
 
 	return (pci_matchbyid((struct pci_attach_args *)aux, ixgbe_devices,
-	    sizeof(ixgbe_devices)/sizeof(ixgbe_devices[0])));
+	    nitems(ixgbe_devices)));
 }
 
 /*********************************************************************

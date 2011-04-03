@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.31 2010/09/20 07:40:38 deraadt Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.32 2011/04/03 15:36:02 jasper Exp $	*/
 
 /*
  *
@@ -159,7 +159,7 @@ int
 cas_match(struct device *parent, void *cf, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, cas_pci_devices,
-	    sizeof(cas_pci_devices)/sizeof(cas_pci_devices[0])));
+	    nitems(cas_pci_devices)));
 }
 
 #define	PROMHDR_PTR_DATA	0x18

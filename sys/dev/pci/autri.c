@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.28 2010/09/21 02:53:14 jakemsr Exp $	*/
+/*	$OpenBSD: autri.c,v 1.29 2011/04/03 15:36:02 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -499,7 +499,7 @@ autri_match(parent, match, aux)
 	}
 
 	return (pci_matchbyid((struct pci_attach_args *)aux, autri_devices,
-	    sizeof(autri_devices)/sizeof(autri_devices[0])));
+	    nitems(autri_devices)));
 }
 
 void
@@ -882,8 +882,7 @@ autri_allocmem(sc, size, align, p)
 
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
-	    p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-	    &p->nsegs, BUS_DMA_NOWAIT);
+	    p->segs, nitems(p->segs), &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		return (error);
 
