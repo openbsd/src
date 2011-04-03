@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.33 2011/04/03 12:27:00 claudio Exp $ */
+/* $OpenBSD: if_bce.c,v 1.34 2011/04/03 14:29:08 claudio Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -73,7 +73,6 @@
 
 #include <dev/pci/if_bcereg.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 
 /* ring descriptor */
@@ -560,7 +559,7 @@ bce_start(struct ifnet *ifp)
 			break;
 
 		/*
-		 * copy mbuf chain int DMA memory buffer.
+		 * copy mbuf chain into DMA memory buffer.
 		 */
 		m_copydata(m0, 0, m0->m_pkthdr.len, sc->bce_data +
 		    (sc->bce_txsnext + BCE_NRXDESC) * MCLBYTES);
