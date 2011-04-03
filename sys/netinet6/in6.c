@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.89 2010/10/07 22:07:06 mpf Exp $	*/
+/*	$OpenBSD: in6.c,v 1.90 2011/04/03 13:55:36 stsp Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -910,14 +910,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 */
 	if (ia == NULL) {
 		hostIsNew = 1;
-		/*
-		 * When in6_update_ifa() is called in a process of a received
-		 * RA, it is called under an interrupt context.  So, we should
-		 * call malloc with M_NOWAIT.
-		 */
-		ia = malloc(sizeof(*ia), M_IFADDR, M_NOWAIT | M_ZERO);
-		if (ia == NULL)
-			return (ENOBUFS);
+		ia = malloc(sizeof(*ia), M_IFADDR, M_WAITOK | M_ZERO);
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
