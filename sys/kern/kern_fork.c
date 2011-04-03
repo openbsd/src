@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.124 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.125 2011/04/03 14:56:28 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -319,8 +319,10 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	else
 		p2->p_fd = fdcopy(p1);
 
-	if (flags & FORK_PPWAIT)
-		atomic_setbits_int(&p2->p_flag, P_PPWAIT);
+	if (flags & FORK_PPWAIT) {
+		atomic_setbits_int(&p2->p_p->ps_flags, PS_PPWAIT);
+		atomic_setbits_int(&p1->p_p->ps_flags, PS_ISPWAIT);
+	}
 	if (flags & FORK_NOZOMBIE)
 		atomic_setbits_int(&p2->p_flag, P_NOZOMBIE);
 
@@ -462,11 +464,13 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
-	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
-	 * process (in case of exit).
+	 * child to exec or exit, set PS_PPWAIT on child and PS_ISPWAIT
+	 * on ourselves, and sleep on our process for the latter flag
+	 * to go away.
+	 * XXX Need to stop other rthreads in the parent
 	 */
 	if (flags & FORK_PPWAIT)
-		while (p2->p_flag & P_PPWAIT)
+		while (p1->p_p->ps_flags & PS_ISPWAIT)
 			tsleep(p1->p_p, PWAIT, "ppwait", 0);
 
 	/*

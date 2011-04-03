@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.15 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.16 2011/04/03 14:56:28 guenther Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -210,7 +210,9 @@ child_return(void *arg)
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
 		ktrsysret(p,
-		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+		    (p->p_flag & P_THREAD) ? SYS_rfork :
+		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
+		    0, 0);
 		KERNEL_PROC_UNLOCK(p);
 	}
 #endif

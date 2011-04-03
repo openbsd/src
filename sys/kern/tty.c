@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.88 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.89 2011/04/03 14:56:28 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -749,7 +749,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSLTC:
 #endif
 		while (isbackground(pr, tp) &&
-		    (p->p_flag & P_PPWAIT) == 0 &&
+		    (pr->ps_flags & PS_PPWAIT) == 0 &&
 		    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
 		    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
 			if (pr->ps_pgrp->pg_jobc == 0)
@@ -1464,7 +1464,7 @@ loop:	lflag = tp->t_lflag;
 	if (isbackground(pr, tp)) {
 		if ((p->p_sigignore & sigmask(SIGTTIN)) ||
 		   (p->p_sigmask & sigmask(SIGTTIN)) ||
-		    p->p_flag & P_PPWAIT || pr->ps_pgrp->pg_jobc == 0) {
+		    pr->ps_flags & PS_PPWAIT || pr->ps_pgrp->pg_jobc == 0) {
 			error = EIO;
 			goto out;
 		}
@@ -1718,7 +1718,7 @@ loop:
 	p = curproc;
 	pr = p->p_p;
 	if (isbackground(pr, tp) &&
-	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
+	    ISSET(tp->t_lflag, TOSTOP) && (pr->ps_flags & PS_PPWAIT) == 0 &&
 	    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
 	    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
 		if (pr->ps_pgrp->pg_jobc == 0) {

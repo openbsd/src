@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.97 2010/08/02 19:54:07 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.98 2011/04/03 14:56:28 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -162,11 +162,13 @@ exit1(struct proc *p, int rv, int flags)
 		while (!TAILQ_EMPTY(&pr->ps_threads))
 			tsleep(&pr->ps_threads, PUSER, "thrdeath", 0);
 		/*
-		 * If parent is waiting for us to exit or exec, P_PPWAIT
+		 * If parent is waiting for us to exit or exec, PS_PPWAIT
 		 * is set; we wake up the parent early to avoid deadlock.
 		 */
-		if (p->p_flag & P_PPWAIT) {
-			atomic_clearbits_int(&p->p_flag, P_PPWAIT);
+		if (pr->ps_flags & PS_PPWAIT) {
+			atomic_clearbits_int(&pr->ps_flags, PS_PPWAIT);
+			atomic_clearbits_int(&pr->ps_pptr->ps_flags,
+			    PS_ISPWAIT);
 			wakeup(pr->ps_pptr);
 		}
 	}

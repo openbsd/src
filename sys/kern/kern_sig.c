@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.118 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.119 2011/04/03 14:56:28 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -938,7 +938,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * If a child holding parent blocked,
 			 * stopping could cause deadlock.
 			 */
-			if (p->p_flag & P_PPWAIT)
+			if (p->p_p->ps_flags & PS_PPWAIT)
 				goto out;
 			atomic_clearbits_int(&p->p_siglist, mask);
 			p->p_xstat = signum;
@@ -1056,7 +1056,7 @@ issignal(struct proc *p)
 
 	for (;;) {
 		mask = p->p_siglist & ~p->p_sigmask;
-		if (p->p_flag & P_PPWAIT)
+		if (p->p_p->ps_flags & PS_PPWAIT)
 			mask &= ~stopsigmask;
 		if (mask == 0)	 	/* no signal to send */
 			return (0);
@@ -1071,7 +1071,8 @@ issignal(struct proc *p)
 		if (mask & p->p_sigignore && (p->p_flag & P_TRACED) == 0)
 			continue;
 
-		if (p->p_flag & P_TRACED && (p->p_flag & P_PPWAIT) == 0) {
+		if (p->p_flag & P_TRACED &&
+		    (p->p_p->ps_flags & PS_PPWAIT) == 0) {
 			/*
 			 * If traced, always stop, and stay
 			 * stopped until released by the debugger.

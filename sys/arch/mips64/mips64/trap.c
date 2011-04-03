@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.72 2010/11/24 21:16:28 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.73 2011/04/03 14:56:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -846,7 +846,9 @@ child_return(arg)
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
 		ktrsysret(p,
-		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+		    (p->p_flag & P_THREAD) ? SYS_rfork :
+		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
+		    0, 0);
 		KERNEL_PROC_UNLOCK(p);
 	}
 #endif
