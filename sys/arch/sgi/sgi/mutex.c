@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.10 2011/04/03 18:46:40 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.11 2011/04/03 22:26:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -104,11 +104,14 @@ mtx_enter_try(struct mutex *mtx)
 void
 mtx_leave(struct mutex *mtx)
 {
+	int s;
+
 	MUTEX_ASSERT_LOCKED(mtx);
 #ifdef DIAGNOSTIC
 	curcpu()->ci_mutex_level--;
 #endif
-	mtx->mtx_lock = 0;
-	splx(mtx->mtx_oldipl);
+	s = mtx->mtx_oldipl;
 	mtx->mtx_owner = NULL;
+	mtx->mtx_lock = 0;
+	splx(s);
 }
