@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.30 2010/07/23 07:47:12 jsg Exp $      */
+/*      $OpenBSD: ata.c,v 1.31 2011/04/03 12:47:04 krw Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
+#include <sys/pool.h>
 
 #include <machine/bus.h>
 
@@ -85,7 +86,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		return CMD_ERR;
 	}
 
-	tb = malloc(ATAPARAMS_SIZE, M_DEVBUF, M_NOWAIT | M_ZERO); /* XXX dma reachable */
+	tb = dma_alloc(ATAPARAMS_SIZE, PR_NOWAIT | PR_ZERO);
 	if (tb == NULL)
 		return CMD_AGAIN;
 	wdc_c.flags = AT_READ | flags;
@@ -95,7 +96,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	if ((ret = wdc_exec_command(drvp, &wdc_c)) != WDC_COMPLETE) {
 		WDCDEBUG_PRINT(("%s: wdc_exec_command failed: %d\n",
 		    __func__, ret), DEBUG_PROBE);
-		free(tb, M_DEVBUF);
+		dma_free(tb, ATAPARAMS_SIZE);
 		return CMD_AGAIN;
 	}
 
@@ -103,7 +104,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		WDCDEBUG_PRINT(("%s: IDENTIFY failed: 0x%x\n", __func__,
 		    wdc_c.flags), DEBUG_PROBE);
 
-		free(tb, M_DEVBUF);
+		dma_free(tb, ATAPARAMS_SIZE);
 		return CMD_ERR;
 	} else {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -150,7 +151,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 			*p = swap16(*p);
 		}
 
-		free(tb, M_DEVBUF);
+		dma_free(tb, ATAPARAMS_SIZE);
 		return CMD_OK;
 	}
 }
