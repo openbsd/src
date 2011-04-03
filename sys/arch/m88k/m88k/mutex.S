@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.9 2010/09/28 20:27:55 miod Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.10 2011/04/03 18:46:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -54,9 +54,7 @@ ENTRY(mtx_enter)
 	st	r2,  r31, 0		/* save mtx */
 enter_again:
 	ld	r2,  r2,  MTX_WANTIPL
-	bcnd	eq0, r2,  1f
 	bsr	_C_LABEL(raiseipl)	/* raiseipl(mtx->mtx_wantipl) */
-1:
 	ld	r4,  r31, 0
 	or	r3,  r0,  1
 	xmem	r3,  r4,  r0		/* attempt to claim the lock, old */
@@ -76,8 +74,6 @@ enter_again:
 	 addu	r31, r31, 8
 
 enter_failed:	/* the lock is not ours... */
-	ld	r3,  r4,  MTX_WANTIPL
-	bcnd	eq0, r3,  2f
 	bcnd	ne0, r2,  1f		/* splx(oldipl) */
 	bsr.n	_C_LABEL(spl0)
 	 addu	r1,  r1,  2f - . - 4
@@ -111,9 +107,7 @@ enter_panic:
 
 	st	r2,  r31, 0		/* save mtx */
 	ld	r2,  r2,  MTX_WANTIPL
-	bcnd	eq0, r2,  1f
 	bsr	_C_LABEL(raiseipl)	/* raiseipl(mtx->mtx_wantipl) */
-1:
 	ld	r4,  r31, 0
 	ldcr	r3,  CPU
 	st	r3,  r4,  MTX_LOCK	/* locked! */
@@ -147,9 +141,7 @@ ENTRY(mtx_enter_try)
 	st	r2,  r31, 0		/* save mtx */
 enter_try_again:
 	ld	r2,  r2,  MTX_WANTIPL
-	bcnd	eq0, r2,  1f
 	bsr	_C_LABEL(raiseipl)	/* raiseipl(mtx->mtx_wantipl) */
-1:
 	ld	r4,  r31, 0
 	or	r3,  r0,  1
 	xmem	r3,  r4,  r0		/* attempt to claim the lock, old */
@@ -170,8 +162,6 @@ enter_try_again:
 	 addu	r31, r31, 8
 
 enter_try_failed:	/* the lock is not ours... */
-	ld	r3,  r4,  MTX_WANTIPL
-	bcnd	eq0, r3,  2f
 	bcnd	ne0, r2,  1f		/* splx(oldipl) */
 	bsr.n	_C_LABEL(spl0)
 	 addu	r1,  r1,  2f - . - 4
@@ -204,9 +194,7 @@ enter_try_panic:
 
 	st	r2,  r31, 0		/* save mtx */
 	ld	r2,  r2,  MTX_WANTIPL
-	bcnd	eq0, r2,  1f
 	bsr	_C_LABEL(raiseipl)	/* raiseipl(mtx->mtx_wantipl) */
-1:
 	ld	r4,  r31, 0
 	ldcr	r3,  CPU
 	st	r3,  r4,  MTX_LOCK	/* locked! */
@@ -234,7 +222,6 @@ enter_try_panic:
  */
 ENTRY(mtx_leave)
 	ld	r3,  r2,  MTX_OLDIPL
-	ld	r4,  r2,  MTX_WANTIPL
 #ifdef DIAGNOSTIC
 	ld	r5,  r2,  MTX_CPU
 	ld	r6,  r5,  CI_MUTEX_LEVEL
@@ -242,13 +229,10 @@ ENTRY(mtx_leave)
 	st	r6,  r5,  CI_MUTEX_LEVEL
 #endif
 	st	r0,  r2,  MTX_CPU		/* mtx->mtx_cpu = NULL */
-	bcnd.n	eq0, r4,  2f
-	 st	r0,  r2,  MTX_LOCK		/* mtx->mtx_lock = 0 */
+	st	r0,  r2,  MTX_LOCK		/* mtx->mtx_lock = 0 */
 
 	bcnd	ne0, r3,  1f			/* splx(mtx->mtx_oldipl) */
 	br	_C_LABEL(spl0)
 1:
 	br.n	_C_LABEL(setipl)
 	 or	r2,  r3,  r0
-2:
-	jmp	r1
