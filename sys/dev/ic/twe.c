@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.38 2010/09/20 06:17:49 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.39 2011/04/03 15:49:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -70,8 +70,8 @@ struct scsi_adapter twe_switch = {
 	twe_scsi_cmd, tweminphys, 0, 0,
 };
 
-static __inline struct twe_ccb *twe_get_ccb(struct twe_softc *sc);
-static __inline void twe_put_ccb(struct twe_ccb *ccb);
+void *twe_get_ccb(void *);
+void twe_put_ccb(void *, void *);
 void twe_dispose(struct twe_softc *sc);
 int  twe_cmd(struct twe_ccb *ccb, int flags, int wait);
 int  twe_start(struct twe_ccb *ccb, int wait);
@@ -80,28 +80,33 @@ int  twe_done(struct twe_softc *sc, struct twe_ccb *ccb);
 void twe_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 void twe_thread_create(void *v);
 void twe_thread(void *v);
+void twe_aen(void *, void *);
 
-
-static __inline struct twe_ccb *
-twe_get_ccb(sc)
-	struct twe_softc *sc;
+void *
+twe_get_ccb(void *xsc)
 {
+	struct twe_softc *sc = xsc;
 	struct twe_ccb *ccb;
 
+	mtx_enter(&sc->sc_ccb_mtx);
 	ccb = TAILQ_LAST(&sc->sc_free_ccb, twe_queue_head);
-	if (ccb)
+	if (ccb != NULL)
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
-	return ccb;
+	mtx_leave(&sc->sc_ccb_mtx);
+
+	return (ccb);
 }
 
-static __inline void
-twe_put_ccb(ccb)
-	struct twe_ccb *ccb;
+void
+twe_put_ccb(void *xsc, void *xccb)
 {
-	struct twe_softc *sc = ccb->ccb_sc;
+	struct twe_softc *sc = xsc;
+	struct twe_ccb *ccb = xccb;
 
 	ccb->ccb_state = TWE_CCB_FREE;
+	mtx_enter(&sc->sc_ccb_mtx);
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 void
@@ -176,6 +181,10 @@ twe_attach(sc)
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_done_ccb);
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, twe_get_ccb, twe_put_ccb);
+
+	scsi_ioh_set(&sc->sc_aen, &sc->sc_iopool, twe_aen, sc);
 
 	pa = sc->sc_cmdmap->dm_segs[0].ds_addr +
 	    sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);
@@ -238,9 +247,10 @@ twe_attach(sc)
 		/* drain aen queue */
 		for (veseen_srst = 0, aen = -1; aen != TWE_AEN_QEMPTY; ) {
 
-			if ((ccb = twe_get_ccb(sc)) == NULL) {
+			ccb = scsi_io_get(&sc->sc_iopool, 0);
+			if (ccb == NULL) {
 				errstr = ": out of ccbs\n";
-				continue;
+				break;
 			}
 
 			ccb->ccb_xs = NULL;
@@ -256,10 +266,13 @@ twe_attach(sc)
 			pb->param_id = 2;
 			pb->param_size = 2;
 
-			if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
+			error = twe_cmd(ccb, BUS_DMA_NOWAIT, 1);
+			scsi_io_put(&sc->sc_iopool, ccb);
+			if (error) {
 				errstr = ": error draining attention queue\n";
 				break;
 			}
+
 			aen = *(u_int16_t *)pb->data;
 			TWE_DPRINTF(TWE_D_AEN, ("aen=%x ", aen));
 			if (aen == TWE_AEN_SRST)
@@ -305,7 +318,8 @@ twe_attach(sc)
 		return 1;
 	}
 
-	if ((ccb = twe_get_ccb(sc)) == NULL) {
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	if (ccb == NULL) {
 		printf(": out of ccbs\n");
 		twe_dispose(sc);
 		return 1;
@@ -323,7 +337,10 @@ twe_attach(sc)
 	pb->table_id = TWE_PARAM_UC;
 	pb->param_id = TWE_PARAM_UC;
 	pb->param_size = TWE_MAX_UNITS;
-	if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
+
+	error = twe_cmd(ccb, BUS_DMA_NOWAIT, 1);
+	scsi_io_put(&sc->sc_iopool, ccb);
+	if (error) {
 		printf(": failed to fetch unit parameters\n");
 		twe_dispose(sc);
 		return 1;
@@ -336,7 +353,8 @@ twe_attach(sc)
 		if (pb->data[i] == 0)
 			continue;
 
-		if ((ccb = twe_get_ccb(sc)) == NULL) {
+		ccb = scsi_io_get(&sc->sc_iopool, 0);
+		if (ccb == NULL) {
 			printf(": out of ccbs\n");
 			twe_dispose(sc);
 			return 1;
@@ -354,14 +372,16 @@ twe_attach(sc)
 		cap->table_id = TWE_PARAM_UI + i;
 		cap->param_id = 4;
 		cap->param_size = 4;	/* 4 bytes */
+
 		lock = TWE_LOCK(sc);
-		if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
-			TWE_UNLOCK(sc, lock);
+		twe_cmd(ccb, BUS_DMA_NOWAIT, 1);
+		TWE_UNLOCK(sc, lock);
+		scsi_io_put(&sc->sc_iopool, ccb);
+		if (error) {
 			printf("%s: error fetching capacity for unit %d\n",
 			    sc->sc_dev.dv_xname, i);
 			continue;
 		}
-		TWE_UNLOCK(sc, lock);
 
 		nunits++;
 		sc->sc_hdr[i].hd_present = 1;
@@ -381,6 +401,7 @@ twe_attach(sc)
 	sc->sc_link.adapter_target = TWE_MAX_UNITS;
 	sc->sc_link.openings = TWE_MAXCMDS / nunits;
 	sc->sc_link.adapter_buswidth = TWE_MAX_UNITS;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -493,7 +514,6 @@ twe_cmd(ccb, flags, wait)
 		    BUS_DMA_NOWAIT);
 		if (error) {
 			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed(%d) ", error));
-			twe_put_ccb(ccb);
 			return (ENOMEM);
 		}
 
@@ -502,7 +522,6 @@ twe_cmd(ccb, flags, wait)
 		if (error) {
 			TWE_DPRINTF(TWE_D_DMA, ("2buf map failed(%d) ", error));
 			bus_dmamem_free(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg);
-			twe_put_ccb(ccb);
 			return (ENOMEM);
 		}
 		bcopy(ccb->ccb_realdata, ccb->ccb_data, ccb->ccb_length);
@@ -528,7 +547,6 @@ twe_cmd(ccb, flags, wait)
 				bus_dmamem_free(sc->dmat, ccb->ccb_2bseg,
 				    ccb->ccb_2nseg);
 			}
-			twe_put_ccb(ccb);
 			return error;
 		}
 		/* load addresses into command */
@@ -579,7 +597,6 @@ twe_cmd(ccb, flags, wait)
 			bus_dmamem_free(sc->dmat, ccb->ccb_2bseg,
 			    ccb->ccb_2nseg);
 		}
-		twe_put_ccb(ccb);
 		return (error);
 	}
 
@@ -728,7 +745,6 @@ twe_done(sc, ccb)
 	}
 
 	lock = TWE_LOCK(sc);
-	twe_put_ccb(ccb);
 
 	if (xs) {
 		xs->resid = 0;
@@ -771,7 +787,7 @@ twe_scsi_cmd(xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct twe_softc *sc = link->adapter_softc;
-	struct twe_ccb *ccb;
+	struct twe_ccb *ccb = xs->io;
 	struct twe_cmd *cmd;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
@@ -893,13 +909,6 @@ twe_scsi_cmd(xs)
 		default:		op = TWE_CMD_NOP;	break;
 		}
 
-		if ((ccb = twe_get_ccb(sc)) == NULL) {
-			xs->error = XS_NO_CCB;
-			scsi_done(xs);
-			TWE_UNLOCK(sc, lock);
-			return;
-		}
-
 		ccb->ccb_xs = xs;
 		ccb->ccb_data = xs->data;
 		ccb->ccb_length = xs->datalen;
@@ -940,9 +949,7 @@ twe_intr(v)
 {
 	struct twe_softc *sc = v;
 	struct twe_ccb	*ccb;
-	struct twe_cmd	*cmd;
 	u_int32_t	status;
-	twe_lock_t	lock;
 	int		rv = 0;
 
 	status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
@@ -993,8 +1000,6 @@ twe_intr(v)
 		wakeup(sc);
 
 	if (status & TWE_STAT_ATTNI) {
-		u_int16_t aen;
-
 		/*
 		 * we know no attentions of interest right now.
 		 * one of those would be mirror degradation i think.
@@ -1004,37 +1009,52 @@ twe_intr(v)
 		bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
 		    TWE_CTRL_CATTNI);
 
-		lock = TWE_LOCK(sc);
-		for (aen = -1; aen != TWE_AEN_QEMPTY; ) {
-			u_int8_t param_buf[2 * TWE_SECTOR_SIZE + TWE_ALIGN - 1];
-			struct twe_param *pb = (void *) (((u_long)param_buf +
-			    TWE_ALIGN - 1) & ~(TWE_ALIGN - 1));
-
-			if ((ccb = twe_get_ccb(sc)) == NULL)
-				break;
-
-			ccb->ccb_xs = NULL;
-			ccb->ccb_data = pb;
-			ccb->ccb_length = TWE_SECTOR_SIZE;
-			ccb->ccb_state = TWE_CCB_READY;
-			cmd = ccb->ccb_cmd;
-			cmd->cmd_unit_host = TWE_UNITHOST(0, 0);
-			cmd->cmd_op = TWE_CMD_GPARAM;
-			cmd->cmd_flags = 0;
-			cmd->cmd_param.count = 1;
-
-			pb->table_id = TWE_PARAM_AEN;
-			pb->param_id = 2;
-			pb->param_size = 2;
-			if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
-				printf(": error draining attention queue\n");
-				break;
-			}
-			aen = *(u_int16_t *)pb->data;
-			TWE_DPRINTF(TWE_D_AEN, ("aen=%x ", aen));
-		}
-		TWE_UNLOCK(sc, lock);
+		scsi_ioh_add(&sc->sc_aen);
 	}
 
 	return rv;
+}
+
+void
+twe_aen(void *cookie, void *io)
+{
+	struct twe_softc *sc = cookie;
+	struct twe_ccb *ccb = io;
+	struct twe_cmd *cmd = ccb->ccb_cmd;
+
+	u_int8_t param_buf[2 * TWE_SECTOR_SIZE + TWE_ALIGN - 1];
+	struct twe_param *pb = (void *) (((u_long)param_buf +
+	    TWE_ALIGN - 1) & ~(TWE_ALIGN - 1));
+	u_int16_t aen;
+
+	twe_lock_t lock;
+	int error;
+
+	ccb->ccb_xs = NULL;
+	ccb->ccb_data = pb;
+	ccb->ccb_length = TWE_SECTOR_SIZE;
+	ccb->ccb_state = TWE_CCB_READY;
+	cmd->cmd_unit_host = TWE_UNITHOST(0, 0);
+	cmd->cmd_op = TWE_CMD_GPARAM;
+	cmd->cmd_flags = 0;
+	cmd->cmd_param.count = 1;
+
+	pb->table_id = TWE_PARAM_AEN;
+	pb->param_id = 2;
+	pb->param_size = 2;
+
+	lock = TWE_LOCK(sc);
+	error = twe_cmd(ccb, BUS_DMA_NOWAIT, 1);
+	TWE_UNLOCK(sc, lock);
+	scsi_io_put(&sc->sc_iopool, ccb);
+
+	if (error) {
+		printf("%s: error draining attention queue\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	aen = *(u_int16_t *)pb->data;
+	if (aen != TWE_AEN_QEMPTY) 
+		scsi_ioh_add(&sc->sc_aen);
 }

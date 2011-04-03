@@ -1,4 +1,4 @@
-/*	$OpenBSD: twevar.h,v 1.9 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: twevar.h,v 1.10 2011/04/03 15:49:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -67,8 +67,12 @@ struct twe_softc {
 	twe_queue_head	sc_ccbq;
 	twe_queue_head	sc_ccb2q;
 	twe_queue_head	sc_done_ccb;
+	struct mutex	sc_ccb_mtx;
+	struct scsi_iopool sc_iopool;
 
 	struct timeout	sc_enqueue_tmo;
+
+	struct scsi_iohandler sc_aen;
 
 	struct {
 		int	hd_present;
