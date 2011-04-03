@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2010/07/27 16:59:03 stsp Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2011/04/03 20:21:38 stsp Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/locale ${LIBCSRCDIR}/locale
@@ -15,7 +15,7 @@ MAN+=	nl_langinfo.3 setlocale.3 iswalnum.3 towlower.3 \
 	btowc.3 mblen.3 mbrlen.3 mbrtowc.3 mbsinit.3 mbsrtowcs.3 \
 	mbstowcs.3 mbtowc.3 wcrtomb.3 wcsrtombs.3 wcstod.3 wcstol.3 \
 	wcstombs.3 wctob.3 wctomb.3 \
-	wctype.3 iswctype.3 wctrans.3 towctrans.3
+	wctype.3 iswctype.3 wctrans.3 towctrans.3 wcwidth.3
 MLINKS+=setlocale.3 localeconv.3 \
 	iswalnum.3 iswalpha.3 \
 	iswalnum.3 iswblank.3 \
