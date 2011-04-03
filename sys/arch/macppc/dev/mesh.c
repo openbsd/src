@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.28 2010/07/01 03:20:38 matthew Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.29 2011/04/03 12:42:36 krw Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -205,6 +205,9 @@ struct mesh_softc {
 	struct mesh_scb sc_scb[16];
 
 	struct timeout sc_tmo;
+
+	struct mutex		sc_scb_mtx;
+	struct scsi_iopool	sc_iopool;
 };
 
 /* mesh_msgout() values */
@@ -233,7 +236,8 @@ void mesh_reset(struct mesh_softc *);
 int mesh_stp(struct mesh_softc *, int);
 void mesh_setsync(struct mesh_softc *, struct mesh_tinfo *);
 struct mesh_scb *mesh_get_scb(struct mesh_softc *);
-void mesh_free_scb(struct mesh_softc *, struct mesh_scb *);
+void *mesh_scb_alloc(void *);
+void mesh_scb_free(void *, void *);
 void mesh_scsi_cmd(struct scsi_xfer *);
 void mesh_sched(struct mesh_softc *);
 int mesh_poll(struct scsi_xfer *);
@@ -329,6 +333,8 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->free_scb);
 	TAILQ_INIT(&sc->ready_scb);
+	mtx_init(&sc->sc_scb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, mesh_scb_alloc, mesh_scb_free);
 	for (i = 0; i < sizeof(sc->sc_scb)/sizeof(sc->sc_scb[0]); i++)
 		TAILQ_INSERT_TAIL(&sc->free_scb, &sc->sc_scb[i], chain);
 
@@ -350,6 +356,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = &mesh_switch;
 	sc->sc_link.openings = 2;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -1005,22 +1012,30 @@ mesh_setsync(struct mesh_softc *sc, struct mesh_tinfo *ti)
 	mesh_set_reg(sc, MESH_SYNC_PARAM, (offset << 4) | v);
 }
 
-struct mesh_scb *
-mesh_get_scb(struct mesh_softc *sc)
+void *
+mesh_scb_alloc(void *xsc)
 {
+	struct mesh_softc *sc = xsc;
 	struct mesh_scb *scb;
 
+	mtx_enter(&sc->sc_scb_mtx);
 	scb = TAILQ_FIRST(&sc->free_scb);
 	if (scb)
 		TAILQ_REMOVE(&sc->free_scb, scb, chain);
+	mtx_leave(&sc->sc_scb_mtx);
 
 	return scb;
 }
 
 void
-mesh_free_scb(struct mesh_softc *sc, struct mesh_scb *scb)
+mesh_scb_free(void *xsc, void *xscb)
 {
+	struct mesh_softc *sc = xsc;
+	struct mesh_scb *scb = xscb;
+
+	mtx_enter(&sc->sc_scb_mtx);
 	TAILQ_INSERT_TAIL(&sc->free_scb, scb, chain);
+	mtx_leave(&sc->sc_scb_mtx);
 }
 
 void
@@ -1033,15 +1048,8 @@ mesh_scsi_cmd(struct scsi_xfer *xs)
 	int s;
 
 	flags = xs->flags;
-	s = splbio();
-	scb = mesh_get_scb(sc);
-	if (scb == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		splx(s);
-		return;
-	}
-	splx(s);
+	scb = xs->io;
+
 	DPRINTF("cmdlen: %d\n", xs->cmdlen);
 	scb->xs = xs;
 	scb->flags = 0;
@@ -1139,7 +1147,6 @@ mesh_done(struct mesh_softc *sc, struct mesh_scb *scb)
 		mesh_sched(sc);
 
 	scsi_done(xs);
-	mesh_free_scb(sc, scb);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhavar.h,v 1.3 2010/06/30 19:06:16 mk Exp $	*/
+/*	$OpenBSD: uhavar.h,v 1.4 2011/04/03 12:42:36 krw Exp $	*/
 /*	$NetBSD: uhavar.h,v 1.3 1996/10/21 22:34:43 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,10 @@ struct uha_softc {
 
 	struct uha_mscp *sc_mscphash[MSCP_HASH_SIZE];
 	SLIST_HEAD(, uha_mscp) sc_free_mscp;
+
+	struct mutex		sc_mscp_mtx;
+	struct scsi_iopool	sc_iopool;
+
 	int sc_nummscps;
 	int sc_scsi_dev;		/* our scsi id */
 	struct scsi_link sc_link;

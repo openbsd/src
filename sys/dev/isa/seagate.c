@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.36 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.37 2011/04/03 12:42:36 krw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -202,6 +202,9 @@ struct sea_softc {
 	int numscbs;			/* number of scsi control blocks */
 	struct sea_scb scb[SCB_TABLE_SIZE];
 
+	struct mutex		sc_scb_mtx;
+	struct scsi_iopool	sc_iopool;
+
 	int our_id;			/* our scsi id */
 	u_char our_id_mask;
 	volatile u_char busy[8];	/* index=target, bit=lun, Keep track of
@@ -271,7 +274,7 @@ static const char *bases[] = {
 #define	nbases		(sizeof(bases) / sizeof(bases[0]))
 #endif
 
-struct		sea_scb *sea_get_scb(struct sea_softc *, int);
+void 		*sea_scb_alloc(void *);
 int		seaintr(void *);
 void		sea_scsi_cmd(struct scsi_xfer *);
 int 		sea_poll(struct sea_softc *, struct scsi_xfer *, int);
@@ -283,7 +286,7 @@ static void 	sea_main(void);
 static void 	sea_information_transfer(struct sea_softc *);
 void		sea_timeout(void *);
 void		sea_done(struct sea_softc *, struct sea_scb *);
-void		sea_free_scb(struct sea_softc *, struct sea_scb *, int);
+void		sea_scb_free(void *, void *);
 void 		sea_init(struct sea_softc *);
 void 		sea_send_scb(struct sea_softc *sea, struct sea_scb *scb);
 void		sea_reselect(struct sea_softc *sea);
@@ -427,6 +430,7 @@ seaattach(struct device *parent, struct device *self, void *aux)
 	sea->sc_link.adapter_target = sea->our_id;
 	sea->sc_link.adapter = &sea_switch;
 	sea->sc_link.openings = 1;
+	sea->sc_link.pool = &sea->sc_iopool;
 
 	printf("\n");
 
@@ -508,6 +512,9 @@ sea_init(struct sea_softc *sea)
 	TAILQ_INIT(&sea->ready_list);
 	TAILQ_INIT(&sea->nexus_list);
 	TAILQ_INIT(&sea->free_list);
+	mtx_init(&sea->sc_scb_mtx, IPL_BIO);
+	scsi_iopool_init(&sea->sc_iopool, sea, sea_scb_alloc, sea_scb_free);
+
 	for (i = 0; i < 8; i++)
 		sea->busy[i] = 0x00;
 
@@ -534,11 +541,7 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 	SC_DEBUG(sc_link, SDEV_DB2, ("sea_scsi_cmd\n"));
 
 	flags = xs->flags;
-	if ((scb = sea_get_scb(sea, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	scb = xs->io;
 	scb->flags = SCB_ACTIVE;
 	scb->xs = xs;
 	timeout_set(&scb->xs->stimeout, sea_timeout, scb);
@@ -590,42 +593,21 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 }
 
 /*
- * Get a free scb. If there are none, see if we can allocate a new one.  If so,
- * put it in the hash table too; otherwise return an error or sleep.
+ * Get a free scb.
  */
-struct sea_scb *
-sea_get_scb(struct sea_softc *sea, int flags)
+void *
+sea_scb_alloc(void *xsea)
 {
-	int s;
+	struct sea_softc *sea = xsea; 
 	struct sea_scb *scb;
 
-	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		scb = TAILQ_FIRST(&sea->free_list);
-		if (scb) {
-			TAILQ_REMOVE(&sea->free_list, scb, chain);
-			break;
-		}
-		if (sea->numscbs < SEA_SCB_MAX) {
-			scb = malloc(sizeof(*scb), M_TEMP, M_NOWAIT | M_ZERO);
-			if (scb) {
-				sea->numscbs++;
-			} else
-				printf("%s: can't malloc scb\n",
-				    sea->sc_dev.dv_xname);
-			break;
-		}
-		if ((flags & SCSI_NOSLEEP) != 0)
-			break;
-		tsleep(&sea->free_list, PRIBIO, "seascb", 0);
+	mtx_enter(&sea->sc_scb_mtx);
+	scb = TAILQ_FIRST(&sea->free_list);
+	if (scb) {
+		TAILQ_REMOVE(&sea->free_list, scb, chain);
 	}
+	mtx_leave(&sea->sc_scb_mtx);
 
-	splx(s);
 	return scb;
 }
 
@@ -749,23 +731,16 @@ loop:
 }
 
 void
-sea_free_scb(struct sea_softc *sea, struct sea_scb *scb, int flags)
+sea_scb_free(void *xsea, void *xscb)
 {
-	int s;
-
-	s = splbio();
+	struct sea_softc *sea = xsea;
+	struct sea_scb *scb = xscb;
 
 	scb->flags = SCB_FREE;
+
+	mtx_enter(&sea->sc_scb_mtx);
 	TAILQ_INSERT_HEAD(&sea->free_list, scb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (TAILQ_NEXT(scb, chain) == NULL)
-		wakeup((caddr_t)&sea->free_list);
-
-	splx(s);
+	mtx_leave(&sea->sc_scb_mtx);
 }
 
 void
@@ -1152,7 +1127,6 @@ sea_done(struct sea_softc *sea, struct sea_scb *scb)
 		if (scb->flags & SCB_ERROR)
 			xs->error = XS_DRIVER_STUFFUP;
 	}
-	sea_free_scb(sea, scb, xs->flags);
 	scsi_done(xs);
 }
 

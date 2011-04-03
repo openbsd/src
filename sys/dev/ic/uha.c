@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.21 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.22 2011/04/03 12:42:36 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -83,9 +83,9 @@
 #define KVTOPHYS(x)	vtophys((vaddr_t)x)
 
 integrate void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
-void uha_free_mscp(struct uha_softc *, struct uha_mscp *);
+void uha_mscp_free(void *, void *);
 integrate void uha_init_mscp(struct uha_softc *, struct uha_mscp *);
-struct uha_mscp *uha_get_mscp(struct uha_softc *, int);
+void *uha_mscp_alloc(void *);
 void uhaminphys(struct buf *, struct scsi_link *);
 void uha_scsi_cmd(struct scsi_xfer *);
 
@@ -129,6 +129,9 @@ uha_attach(sc)
 	(sc->init)(sc);
 	SLIST_INIT(&sc->sc_free_mscp);
 
+	mtx_init(&sc->sc_mscp_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, uha_mscp_alloc, uha_mscp_free);
+
 	/*
 	 * fill in the prototype scsi_link.
 	 */
@@ -136,6 +139,7 @@ uha_attach(sc)
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &uha_switch;
 	sc->sc_link.openings = 2;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -159,25 +163,17 @@ uha_reset_mscp(sc, mscp)
  * A mscp (and hence a mbx-out) is put onto the free list.
  */
 void
-uha_free_mscp(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+uha_mscp_free(xsc, xmscp)
+	void *xsc, *xmscp;
 {
-	int s;
-
-	s = splbio();
+	struct uha_softc *sc = xmscp;
+	struct uha_mscp *mscp;
 
 	uha_reset_mscp(sc, mscp);
+
+	mtx_enter(&sc->sc_mscp_mtx);
 	SLIST_INSERT_HEAD(&sc->sc_free_mscp, mscp, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (SLIST_NEXT(mscp, chain) == NULL)
-		wakeup(&sc->sc_free_mscp);
-
-	splx(s);
+	mtx_leave(&sc->sc_mscp_mtx);
 }
 
 integrate void
@@ -201,51 +197,22 @@ uha_init_mscp(sc, mscp)
 
 /*
  * Get a free mscp
- *
- * If there are none, see if we can allocate a new one.  If so, put it in the
- * hash table too otherwise either return an error or sleep.
  */
-struct uha_mscp *
-uha_get_mscp(sc, flags)
-	struct uha_softc *sc;
-	int flags;
+void *
+uha_mscp_alloc(xsc)
+	void *xsc;	
 {
+	struct uha_softc *sc = xsc;
 	struct uha_mscp *mscp;
-	int s;
 
-	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one
-	 */
-	for (;;) {
-		mscp = SLIST_FIRST(&sc->sc_free_mscp);
-		if (mscp) {
-			SLIST_REMOVE_HEAD(&sc->sc_free_mscp, chain);
-			break;
-		}
-		if (sc->sc_nummscps < UHA_MSCP_MAX) {
-			mscp = (struct uha_mscp *) malloc(sizeof(struct uha_mscp),
-			    M_TEMP, M_NOWAIT);
-			if (!mscp) {
-				printf("%s: can't malloc mscp\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			uha_init_mscp(sc, mscp);
-			sc->sc_nummscps++;
-			break;
-		}
-		if ((flags & SCSI_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_mscp, PRIBIO, "uhamsc", 0);
+	mtx_enter(&sc->sc_mscp_mtx);
+	mscp = SLIST_FIRST(&sc->sc_free_mscp);
+	if (mscp) {
+		SLIST_REMOVE_HEAD(&sc->sc_free_mscp, chain);
+		mscp->flags |= MSCP_ALLOC;
 	}
+	mtx_leave(&sc->sc_mscp_mtx);
 
-	mscp->flags |= MSCP_ALLOC;
-
-out:
-	splx(s);
 	return (mscp);
 }
 
@@ -319,7 +286,7 @@ uha_done(sc, mscp)
 		} else
 			xs->resid = 0;
 	}
-	uha_free_mscp(sc, mscp);
+
 	scsi_done(xs);
 }
 
@@ -355,11 +322,8 @@ uha_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if ((mscp = uha_get_mscp(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	mscp = xs->io;
+
 	mscp->xs = xs;
 	mscp->timeout = xs->timeout;
 	timeout_set(&xs->stimeout, uha_timeout, xs);
@@ -485,7 +449,6 @@ uha_scsi_cmd(xs)
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
 	scsi_done(xs);
-	uha_free_mscp(sc, mscp);
 	return;
 }
 

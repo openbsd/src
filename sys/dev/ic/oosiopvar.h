@@ -1,4 +1,4 @@
-/* $OpenBSD: oosiopvar.h,v 1.4 2010/04/20 20:21:56 miod Exp $ */
+/* $OpenBSD: oosiopvar.h,v 1.5 2011/04/03 12:42:36 krw Exp $ */
 /* $NetBSD: oosiopvar.h,v 1.2 2003/05/03 18:11:23 wiz Exp $ */
 
 /*
@@ -138,6 +138,9 @@ struct oosiop_softc {
 	/* Lists of command blocks */
 	TAILQ_HEAD(oosiop_cb_queue, oosiop_cb) sc_free_cb,
 					       sc_cbq;
+
+	struct mutex		sc_cb_mtx;
+	struct scsi_iopool	sc_iopool;
 
 	struct oosiop_cb *sc_curcb;	/* current command */
 	struct oosiop_cb *sc_lastcb;	/* last activated command */

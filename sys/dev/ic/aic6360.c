@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.25 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.26 2011/04/03 12:42:36 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -166,8 +166,8 @@ void	aic_timeout(void *);
 void	aic_sched(struct aic_softc *);
 void	aic_scsi_reset(struct aic_softc *);
 void	aic_reset(struct aic_softc *);
-void	aic_free_acb(struct aic_softc *, struct aic_acb *, int);
-struct aic_acb* aic_get_acb(struct aic_softc *, int);
+void	aic_acb_free(void *, void *);
+void	*aic_acb_alloc(void *);
 int	aic_reselect(struct aic_softc *, int);
 void	aic_sense(struct aic_softc *, struct aic_acb *);
 void	aic_msgin(struct aic_softc *);
@@ -280,6 +280,7 @@ aicattach(struct aic_softc *sc)
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &aic_switch;
 	sc->sc_link.openings = 2;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -381,6 +382,9 @@ aic_init(struct aic_softc *sc)
 		TAILQ_INIT(&sc->ready_list);
 		TAILQ_INIT(&sc->nexus_list);
 		TAILQ_INIT(&sc->free_list);
+		mtx_init(&sc->sc_acb_mtx, IPL_BIO);
+		scsi_iopool_init(&sc->sc_iopool, sc, aic_acb_alloc,
+		    aic_acb_free);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
 		bzero(acb, sizeof(sc->sc_acb));
@@ -429,45 +433,34 @@ aic_init(struct aic_softc *sc)
 }
 
 void
-aic_free_acb(struct aic_softc *sc, struct aic_acb *acb, int flags)
+aic_acb_free(void *xsc, void *xacb)
 {
-	int s;
+	struct aic_softc *sc = xsc;
+	struct aic_acb *acb = xacb;
 
-	s = splbio();
-
+	mtx_enter(&sc->sc_acb_mtx);
 	acb->flags = 0;
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (TAILQ_NEXT(acb, chain) == NULL)
-		wakeup(&sc->free_list);
-
-	splx(s);
+	mtx_leave(&sc->sc_acb_mtx);
 }
 
-struct aic_acb *
-aic_get_acb(struct aic_softc *sc, int flags)
+void *
+aic_acb_alloc(void *xsc)
 {
+	struct aic_softc *sc = xsc;
 	struct aic_acb *acb;
-	int s;
 
-	s = splbio();
-
-	while ((acb = TAILQ_FIRST(&sc->free_list)) == NULL &&
-	       (flags & SCSI_NOSLEEP) == 0)
-		tsleep(&sc->free_list, PRIBIO, "aicacb", 0);
+	mtx_enter(&sc->sc_acb_mtx);
+	acb = TAILQ_FIRST(&sc->free_list);
 	if (acb) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
 		acb->flags |= ACB_ALLOC;
 	}
+	mtx_leave(&sc->sc_acb_mtx);
 
-	splx(s);
 	return acb;
 }
-
+
 /*
  * DRIVER FUNCTIONS CALLABLE FROM HIGHER LEVEL DRIVERS
  */
@@ -507,11 +500,7 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 	    sc_link->target));
 
 	flags = xs->flags;
-	if ((acb = aic_get_acb(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	acb = xs->io;
 
 	/* Initialize acb */
 	acb->xs = xs;
@@ -856,7 +845,6 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 	} else
 		aic_dequeue(sc, acb);
 
-	aic_free_acb(sc, acb, xs->flags);
 	ti->cmds++;
 	scsi_done(xs);
 }

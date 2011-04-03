@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.37 2010/07/02 02:29:45 tedu Exp $	*/
+/*	$OpenBSD: wds.c,v 1.38 2011/04/03 12:42:36 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -120,6 +120,9 @@ struct wds_softc {
 	int sc_numscbs, sc_mbofull;
 	int sc_scsi_dev;
 	struct scsi_link sc_link;	/* prototype for subdevs */
+
+	struct mutex		sc_scb_mtx;
+	struct scsi_iopool	sc_iopool;
 };
 
 /* Define the bounce buffer length... */
@@ -146,10 +149,10 @@ int     wds_cmd(struct wds_softc *, u_char *, int);
 integrate void wds_finish_scbs(struct wds_softc *);
 int     wdsintr(void *);
 integrate void wds_reset_scb(struct wds_softc *, struct wds_scb *);
-void    wds_free_scb(struct wds_softc *, struct wds_scb *);
+void    wds_scb_free(void *, void *);
 void	wds_free_buf(struct wds_softc *, struct wds_buf *);
 integrate void wds_init_scb(struct wds_softc *, struct wds_scb *);
-struct	wds_scb *wds_get_scb(struct wds_softc *, int, int);
+void *wds_scb_alloc(void *);
 struct	wds_buf *wds_get_buf(struct wds_softc *, int);
 struct	wds_scb *wds_scb_phys_kv(struct wds_softc *, u_long);
 void	wds_queue_scb(struct wds_softc *, struct wds_scb *);
@@ -293,6 +296,9 @@ wdsattach(parent, self, aux)
 
 	TAILQ_INIT(&sc->sc_free_scb);
 	TAILQ_INIT(&sc->sc_waiting_scb);
+	mtx_init(&sc->sc_scb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, wds_scb_alloc, wds_scb_free);
+
 	wds_inquire_setup_information(sc);
 
 	/*
@@ -308,6 +314,7 @@ wdsattach(parent, self, aux)
 	/* I don't think the -ASE can handle openings > 1. */
 	/* It gives Vendor Error 26 whenever I try it.     */
 	sc->sc_link.openings = 1;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
@@ -435,35 +442,21 @@ wds_reset_scb(sc, scb)
  * Free the command structure, the outgoing mailbox and the data buffer.
  */
 void
-wds_free_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_scb_free(xsc, xscb)
+	void *xsc, *xscb;
 {
-	int s;
+	struct wds_softc *sc = xsc;
+	struct wds_scb *scb = xscb;
 
-	if (scb->buf != 0) {
+	if (scb->buf) {
 		wds_free_buf(sc, scb->buf);
-		scb->buf = 0;
+		scb->buf = NULL;
 	}
 
-	s = splbio();
-
-#ifdef notyet
-	if (scb->scb_phys[0].addr)
-	        isadma_unmap((caddr_t)scb, SCB_PHYS_SIZE, 1, scb->scb_phys);
-#endif
-
 	wds_reset_scb(sc, scb);
+	mtx_enter(&sc->sc_scb_mtx);
 	TAILQ_INSERT_HEAD(&sc->sc_free_scb, scb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (TAILQ_NEXT(scb, chain) == NULL)
-		wakeup(&sc->sc_free_scb);
-
-	splx(s);
+	mtx_leave(&sc->sc_scb_mtx);
 }
 
 void
@@ -509,84 +502,22 @@ wds_init_scb(sc, scb)
 
 /*
  * Get a free scb
- *
- * If there are none, see if we can allocate a new one.  If so, put it in
- * the hash table too otherwise either return an error or sleep.
  */
-struct wds_scb *
-wds_get_scb(sc, flags, needbuffer)
-	struct wds_softc *sc;
-	int flags;
-	int needbuffer;
+void *
+wds_scb_alloc(xsc)
+	void *xsc;
 {
+	struct wds_softc *sc = xsc;
 	struct wds_scb *scb;
-	int s;
-#ifdef notyet
-	int mflags, hashnum;
-#endif
 
-	s = splbio();
-
-#ifdef notyet
-	if (flags & SCSI_NOSLEEP)
-		mflags = ISADMA_MAP_BOUNCE;
-	else
-		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
-#endif
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		scb = TAILQ_FIRST(&sc->sc_free_scb);
-		if (scb) {
-			TAILQ_REMOVE(&sc->sc_free_scb, scb, chain);
-			break;
-		}
-		if (sc->sc_numscbs < WDS_SCB_MAX) {
-			scb = (struct wds_scb *) malloc(sizeof(struct wds_scb),
-			    M_TEMP, M_NOWAIT);
-			if (!scb) {
-				printf("%s: can't malloc scb\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			wds_init_scb(sc, scb);
-			sc->sc_numscbs++;
-			break;
-		}
-		if ((flags & SCSI_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_scb, PRIBIO, "wdsscb", 0);
+	mtx_enter(&sc->sc_scb_mtx);
+	scb = TAILQ_FIRST(&sc->sc_free_scb);
+	if (scb) {
+		TAILQ_REMOVE(&sc->sc_free_scb, scb, chain);
+		scb->flags |= SCB_ALLOC;
 	}
+	mtx_leave(&sc->sc_scb_mtx);
 
-	scb->flags |= SCB_ALLOC;
-
-#ifdef notyet
-	if (isadma_map((caddr_t)scb, SCB_PHYS_SIZE, scb->scb_phys,
-	    mflags | ISADMA_MAP_CONTIG) == 1) {
-		hashnum = SCB_HASH(scb->scb_phys[0].addr);
-		scb->nexthash = sc->sc_scbhash[hashnum];
-		sc->sc_scbhash[hashnum] = ccb;
-	} else {
-		scb->scb_phys[0].addr = 0;
-		wds_free_scb(sc, scb);
-		scb = 0;
-	}
-#else
-	if (needbuffer) {
-		scb->buf = wds_get_buf(sc, flags);
-		if (scb->buf == 0) {
-			wds_free_scb(sc, scb);
-			scb = 0;
-		}
-	}
-#endif
-
-
-out:
-	splx(s);
 	return (scb);
 }
 
@@ -834,7 +765,6 @@ wds_done(sc, scb, stat)
 		    scb->data_nseg, scb->data_phys);
 	}
 #endif
-	wds_free_scb(sc, scb);
 	scsi_done(xs);
 }
 
@@ -978,7 +908,8 @@ wds_inquire_setup_information(sc)
 	u_char *j;
 	int s;
 
-	if ((scb = wds_get_scb(sc, SCSI_NOSLEEP, 0)) == NULL) {
+	scb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
+	if (scb == NULL) {
 		printf("%s: no request slot available in getvers()!\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -1013,7 +944,7 @@ wds_inquire_setup_information(sc)
 
 out:
 	printf("\n");
-	wds_free_scb(sc, scb);
+	scsi_io_put(&sc->sc_iopool, scb);
 }
 
 void
@@ -1060,11 +991,7 @@ wds_scsi_cmd(xs)
 	else
 		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
 #endif
-	if ((scb = wds_get_scb(sc, flags, NEEDBUFFER(sc))) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	scb = xs->io;
 	scb->xs = xs;
 	scb->timeout = xs->timeout;
 
@@ -1227,7 +1154,6 @@ wds_scsi_cmd(xs)
 			isadma_unmap(xs->data, xs->datalen,
 			    scb->data_nseg, scb->data_phys);
 		}
-		wds_free_scb(sc, scb);
 		scsi_done(xs);
 		splx(s);
 		return;
@@ -1247,7 +1173,6 @@ wds_scsi_cmd(xs)
 
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
-	wds_free_scb(sc, scb);
 }
 
 /*

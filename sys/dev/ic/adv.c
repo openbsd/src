@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.33 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.34 2011/04/03 12:42:36 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -58,10 +58,10 @@
 
 static int adv_alloc_ccbs(ASC_SOFTC *);
 static int adv_create_ccbs(ASC_SOFTC *, ADV_CCB *, int);
-static void adv_free_ccb(ASC_SOFTC *, ADV_CCB *);
+void adv_ccb_free(void *, void *);
 static void adv_reset_ccb(ADV_CCB *);
 static int adv_init_ccb(ASC_SOFTC *, ADV_CCB *);
-static ADV_CCB *adv_get_ccb(ASC_SOFTC *, int);
+void *adv_ccb_alloc(void *);
 static void adv_queue_ccb(ASC_SOFTC *, ADV_CCB *);
 static void adv_start_ccbs(ASC_SOFTC *);
 
@@ -178,26 +178,18 @@ adv_create_ccbs(sc, ccbstore, count)
 /*
  * A ccb is put onto the free list.
  */
-static void
-adv_free_ccb(sc, ccb)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccb;
+void
+adv_ccb_free(xsc, xccb)
+	void *xsc, *xccb;
 {
-	int             s;
-
-	s = splbio();
+	ASC_SOFTC *sc = xsc;
+	ADV_CCB *ccb = xccb;
 
 	adv_reset_ccb(ccb);
+
+	mtx_enter(&sc->sc_ccb_mtx);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
-
-	/*
-         * If there were none, wake anybody waiting for one to come free,
-         * starting with queued entries.
-         */
-	if (TAILQ_NEXT(ccb, chain) == NULL)
-		wakeup(&sc->sc_free_ccb);
-
-	splx(s);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 
@@ -236,42 +228,24 @@ adv_init_ccb(sc, ccb)
 
 /*
  * Get a free ccb
- *
- * If there are none, see if we can allocate a new one
  */
-static ADV_CCB *
-adv_get_ccb(sc, flags)
-	ASC_SOFTC      *sc;
-	int             flags;
+void *
+adv_ccb_alloc(xsc)
+	void *xsc;
 {
-	ADV_CCB        *ccb = 0;
-	int             s;
+	ASC_SOFTC *sc = xsc;
+	ADV_CCB *ccb;
 
-	s = splbio();
-
-	/*
-         * If we can and have to, sleep waiting for one to come free
-         * but only if we can't allocate a new one.
-         */
-	for (;;) {
-		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
-		}
-		if ((flags & SCSI_NOSLEEP) != 0)
-			goto out;
-
-		tsleep(&sc->sc_free_ccb, PRIBIO, "advccb", 0);
+	mtx_enter(&sc->sc_ccb_mtx);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
+		ccb->flags |= CCB_ALLOC;
 	}
+	mtx_leave(&sc->sc_ccb_mtx);
 
-	ccb->flags |= CCB_ALLOC;
-
-out:
-	splx(s);
 	return (ccb);
 }
-
 
 /*
  * Queue a CCB to be sent to the controller, and send it if possible.
@@ -506,6 +480,11 @@ adv_attach(sc)
 		      sc->sc_dev.dv_xname);
 	}
 
+	TAILQ_INIT(&sc->sc_free_ccb);
+	TAILQ_INIT(&sc->sc_waiting_ccb);
+
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, adv_ccb_alloc, adv_ccb_free);
 
 	/*
          * fill in the prototype scsi_link.
@@ -514,12 +493,8 @@ adv_attach(sc)
 	sc->sc_link.adapter_target = sc->chip_scsi_id;
 	sc->sc_link.adapter = &adv_switch;
 	sc->sc_link.openings = 4;
+	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.adapter_buswidth = 7;
-
-
-	TAILQ_INIT(&sc->sc_free_ccb);
-	TAILQ_INIT(&sc->sc_waiting_ccb);
-
 
 	/*
          * Allocate the Control Blocks.
@@ -579,13 +554,7 @@ adv_scsi_cmd(xs)
          */
 
 	flags = xs->flags;
-	if ((ccb = adv_get_ccb(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		splx(s);
-		return;
-	}
-	splx(s);		/* done playing with the queue */
+	ccb = xs->io;
 
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
@@ -643,7 +612,6 @@ adv_scsi_cmd(xs)
 			}
 
 			xs->error = XS_DRIVER_STUFFUP;
-			adv_free_ccb(sc, ccb);
 			scsi_done(xs);
 			return;
 		}
@@ -914,7 +882,5 @@ adv_narrow_isr_callback(sc, qdonep)
 		break;
 	}
 
-
-	adv_free_ccb(sc, ccb);
 	scsi_done(xs);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360var.h,v 1.6 2006/06/03 01:51:54 martin Exp $	*/
+/*	$OpenBSD: aic6360var.h,v 1.7 2011/04/03 12:42:36 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -130,6 +130,9 @@ struct aic_softc {
 	struct aic_acb *sc_nexus;	/* current command */
 	struct aic_acb sc_acb[8];
 	struct aic_tinfo sc_tinfo[8];
+
+	struct mutex		sc_acb_mtx;
+	struct scsi_iopool	sc_iopool;
 
 	/* Data about the current nexus (updated for every cmd switch) */
 	u_char	*sc_dp;		/* Current data pointer */
