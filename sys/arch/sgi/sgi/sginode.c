@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.20 2010/09/17 00:04:30 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.21 2011/04/03 22:34:54 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -505,17 +505,6 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				physmem += atop(32 << 20);
 			}
 
-			/*
-			 * XXX Temporary until there is a way to cope with
-			 * XXX xbridge ATE shortage.
-			 */
-			if (fp >= atop(2UL << 30)) {
-#if 0
-				physmem += lp - fp;
-#endif
-				continue;
-			}
-
 			if (memrange_register(fp, lp,
 			    ~(atop(1UL << kl_n_shift) - 1),
 			    lp <= atop(2UL << 30) ?
@@ -566,17 +555,6 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				physmem += atop(64 << 20);
 			}
 
-			/*
-			 * XXX Temporary until there is a way to cope with
-			 * XXX xbridge ATE shortage.
-			 */
-			if (fp >= atop(2UL << 30)) {
-#if 0
-				physmem += lp - fp;
-#endif
-				goto skip;
-			}
-
 			if (memrange_register(fp, lp,
 			    ~(atop(1UL << kl_n_shift) - 1),
 			    lp <= atop(2UL << 30) ?
@@ -590,7 +568,6 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				    ptoa(np) >> 20);
 			}
 		}
-skip:
 		basepa += 1UL << 30;	/* 1 GB */
 	}
 }
