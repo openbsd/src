@@ -1,4 +1,4 @@
-/*	$OpenBSD: runeglue.c,v 1.1 2005/08/07 10:16:24 espie Exp $ */
+/*	$OpenBSD: runeglue.c,v 1.2 2011/04/03 21:07:34 stsp Exp $ */
 /*	$NetBSD: runeglue.c,v 1.10 2003/03/10 21:18:49 tshiozak Exp $	*/
 
 /*-
@@ -58,19 +58,29 @@
 int
 __make_ctype_tabs(_RuneLocale *rl)
 {
-	int i;
+	int i, limit;
 	struct old_tabs *p;
 
 	p = malloc(sizeof *p);
 	if (!p)
 		return -1;
 
+	/* By default, fill the ctype tab completely. */
+	limit = CTYPE_NUM_CHARS;
+
+	/* In UTF-8-encoded locales, the single-byte ctype functions
+	 * must only return non-zero values for ASCII characters.
+	 * Any non-ASCII single-byte character is not a valid UTF-8 sequence.
+	 */
+	if (strcmp(rl->rl_encoding, "UTF8") == 0)
+		limit = 128;
+
 	rl->rl_tabs = p;
 	p->ctype_tab[0] = 0;
 	p->toupper_tab[0] = EOF;
 	p->tolower_tab[0] = EOF;
-	for (i = 0; i < CTYPE_NUM_CHARS; i++) {
-		p->ctype_tab[i + 1]=0;
+	for (i = 0; i < limit; i++) {
+		p->ctype_tab[i + 1] = 0;
 		if (rl->rl_runetype[i] & _CTYPE_U)
 			p->ctype_tab[i + 1] |= _U;
 		if (rl->rl_runetype[i] & _CTYPE_L)
@@ -86,23 +96,22 @@ __make_ctype_tabs(_RuneLocale *rl)
 		if (rl->rl_runetype[i] & _CTYPE_X)
 			p->ctype_tab[i + 1] |= _X;
 		/*
-		 * TWEAK!  _B has been used incorrectly (or with older
-		 * declaration) in ctype.h isprint() macro.
+		 * _B has been used incorrectly (or with older declaration)
+		 * in ctype.h isprint() macro.
 		 * _B does not mean isblank, it means "isprint && !isgraph".
 		 * the following is okay since isblank() was hardcoded in
 		 * function (i.e. isblank() is inherently locale unfriendly).
 		 */
-#if 1
 		if ((rl->rl_runetype[i] & (_CTYPE_R | _CTYPE_G))
 		    == _CTYPE_R)
 			p->ctype_tab[i + 1] |= _B;
-#else
-		if (rl->rl_runetype[i] & _CTYPE_B)
-			p->ctype_tab[i + 1] |= _B;
-#endif
+
 		p->toupper_tab[i + 1] = (short)rl->rl_mapupper[i];
 		p->tolower_tab[i + 1] = (short)rl->rl_maplower[i];
 	}
+	for (i = limit; i < CTYPE_NUM_CHARS; i++)
+		p->ctype_tab[i + 1] = 0;
+
 	return 0;
 }
 
