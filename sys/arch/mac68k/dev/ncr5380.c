@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.39 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.40 2011/04/03 16:37:25 krw Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -77,6 +77,9 @@ static void	ncr5380_minphys(struct buf *bp, struct scsi_link *sl);
 static void	mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
+int	 ncr_sc_req_free(void *, void *);
+void	*ncr_sc_req_alloc(void *);
+
 struct scsi_adapter ncr5380_switch = {
 	mac68k_ncr5380_scsi_cmd,	/* scsi_cmd() */
 	ncr5380_minphys,		/* scsi_minphys() */
@@ -87,7 +90,6 @@ struct scsi_adapter ncr5380_switch = {
 
 static SC_REQ	req_queue[NREQ];
 static SC_REQ	*free_head = NULL;	/* Free request structures	*/
-
 
 /*
  * Inline functions:
@@ -156,7 +158,6 @@ extern __inline__ void nack_message(SC_REQ *reqp, u_char msg)
 
 extern __inline__ void finish_req(SC_REQ *reqp)
 {
-	int			sps;
 	struct scsi_xfer	*xs = reqp->xs;
 
 #ifdef REAL_DMA
@@ -174,15 +175,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 	if (reqp->xs->error != 0)
 		show_request(reqp, "ERR_RET");
 #endif
-	/*
-	 * Return request to free-q
-	 */
-	sps = splbio();
-	reqp->next = free_head;
-	free_head  = reqp;
-
 	scsi_done(xs);
-	splx(sps);
 }
 
 /*
@@ -205,6 +198,35 @@ struct cfattach CANAME(DRNAME) = {
 struct cfdriver CFNAME(DRNAME) = {
 	NULL, CFSTRING(DRNAME), DV_DULL
 };
+
+int
+ncr_sc_req_free(void *xsc, void *xsc_req)
+{
+	struct ncr_softc *sc = (ncr_softc *)xsc;
+	struct SC_REQ *sc_req = (SC_REQ *)xsc_req;
+
+	mtx_enter(&sc->sc_sc_req_mtx);
+	sc_req->next = free_head;
+	free_head = sc_req;
+	mtx_leave(&sc->sc_sc_req_mtx);
+}
+
+void *
+ncr_sc_req_alloc(void *xsc)
+{
+	struct ncr_softc *sc = (ncr_softc *)xsc;
+	struct SC_REQ *sc_req = NULL;
+
+	mtx_enter(&sc->sc_sc_req_mtx);
+	if (free_head) {
+		sc_req = free_head;
+		free_head = free_head->next;
+		sc_req->next = NULL;
+	}
+	mtx_leave(&sc->sc_sc_req_mtx);
+	
+	return (sc_req);
+}
 
 int
 ncr_match(parent, cf, aux)
@@ -231,6 +253,7 @@ void		*auxp;
 	sc->sc_link.adapter_target  = 7;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.openings        = NREQ - 1;
+	sc->sc_link_pool	    = &sc->sc_iopool;
 
 	/*
 	 * bitmasks
@@ -251,6 +274,12 @@ void		*auxp;
 		req_queue[i].next = free_head;
 		free_head = &req_queue[i];
 	}
+
+	/*
+	 * Initialize the iopool.
+	 */
+	mtx_init(&sc->sc_sc_req_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, ncr_sc_req_alloc, ncr_sc_req_free);
 
 	/*
 	 * Initialize the host adapter
@@ -295,19 +324,7 @@ mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	/*
-	 * Get a request block
-	 */
-	sps = splbio();
-	if ((reqp = free_head) == 0) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		splx(sps);
-		return;
-	}
-	free_head  = reqp->next;
-	reqp->next = NULL;
-	splx(sps);
+	reqp = xs->io;
 
 	/*
 	 * Initialize our private fields
