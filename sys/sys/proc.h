@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.135 2011/04/03 14:56:28 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.136 2011/04/04 13:00:13 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -330,7 +330,7 @@ struct proc {
 #define	P_WAITED	0x001000	/* Debugging proc has waited for child. */
 /* XXX - Should be merged with INEXEC */
 #define	P_WEXIT		0x002000	/* Working on exiting. */
-#define	P_EXEC		0x004000	/* Process called exec. */
+#define	_P_EXEC		0x004000	/* Process called exec. */
 
 /* Should be moved to machine-dependent areas. */
 #define	P_OWEUPC	0x008000	/* Owe proc an addupc() at next ast. */
@@ -356,6 +356,7 @@ struct proc {
 #define	P_CONTROLT	_P_CONTROLT
 #define	P_PPWAIT	_P_PPWAIT
 #define	P_SUGID		_P_SUGID
+#define	P_EXEC		_P_EXEC
 #define	P_SUGIDEXEC	_P_SUGIDEXEC
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.47 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.48 2011/04/04 13:00:13 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ sys_setpgid(struct proc *curp, void *v, register_t *retval)
 			error = EPERM;
 			goto out;
 		}
-		if (targpr->ps_mainproc->p_flag & P_EXEC) {
+		if (targpr->ps_flags & PS_EXEC) {
 			error = EACCES;
 			goto out;
 		}
