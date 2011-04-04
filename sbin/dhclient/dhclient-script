@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.20 2011/04/04 11:29:51 krw Exp $
+# $OpenBSD: dhclient-script,v 1.21 2011/04/04 12:22:41 krw Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -24,7 +24,7 @@
 delete_old_address() {
 	if [ -n "$old_ip_address" ]; then
 		ifconfig $interface inet $old_ip_address delete
-		route $rdomain delete "$old_ip_address" 127.0.0.1 >/dev/null 2>&1
+		route -q $rdomain delete "$old_ip_address" 127.0.0.1
 	fi
 }
 
@@ -41,7 +41,7 @@ add_new_address() {
 		broadcast $new_broadcast_address
 
 	# XXX Original TIMEOUT code did not do this unless $new_routers was set?
-	route $rdomain add $new_ip_address 127.0.0.1 >/dev/null 2>&1
+	route -q $rdomain add $new_ip_address 127.0.0.1
 }
 
 ip6_add_new_address() {
@@ -53,12 +53,12 @@ ip6_add_new_address() {
 delete_old_routes() {
 	# Delete existing default route. We only allow one, so no need to
 	# process $old_routers list.
-	route $rdomain -n flush -inet -iface $interface >/dev/null 2>&1
+	route -q $rdomain -n flush -inet -iface $interface
 
 	if [ -n "$old_static_routes" ]; then
 		set $old_static_routes
 		while [ $# -gt 1 ]; do
-			route $rdomain delete "$1" "$2"
+			route -q $rdomain delete "$1" "$2"
 			shift; shift
 		done
 	fi
@@ -67,12 +67,12 @@ delete_old_routes() {
 }
 
 add_new_routes() {
-	route $rdomain -n flush -inet -iface $interface >/dev/null 2>&1
+	route -q $rdomain -n flush -inet -iface $interface
 	for router in $new_routers; do
 		if [ "$new_ip_address" = "$router" ]; then
-			route $rdomain add default -iface $router >/dev/null 2>&1
+			route -q $rdomain add default -iface $router
 		else
-			route $rdomain add default $router >/dev/null 2>&1
+			route -q $rdomain add default $router
 		fi
 		# 2nd and subsequent default routers error out, so explicitly
 		# stop processing the list after the first one.
@@ -82,7 +82,7 @@ add_new_routes() {
 	if [ -n "$new_static_routes" ]; then
 		set $new_static_routes
 		while [ $# -gt 1 ]; do
-			route $rdomain add $1 $2
+			route -q $rdomain add $1 $2
 			shift; shift
 		done
 	fi
