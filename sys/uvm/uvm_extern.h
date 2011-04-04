@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.90 2011/04/02 16:47:17 beck Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.91 2011/04/04 11:24:45 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -527,9 +527,6 @@ vaddr_t			uvm_km_kmemalloc_pla(struct vm_map *,
 			    paddr_t, paddr_t, paddr_t, paddr_t, int);
 #define uvm_km_kmemalloc(map, obj, sz, flags)				\
 	uvm_km_kmemalloc_pla(map, obj, sz, 0, flags, 0, (paddr_t)-1, 0, 0, 0)
-struct vm_map		*uvm_km_suballoc(vm_map_t, vaddr_t *,
-				vaddr_t *, vsize_t, int,
-				boolean_t, vm_map_t);
 vaddr_t			uvm_km_valloc(vm_map_t, vsize_t);
 vaddr_t			uvm_km_valloc_try(vm_map_t, vsize_t);
 vaddr_t			uvm_km_valloc_wait(vm_map_t, vsize_t);
@@ -544,6 +541,101 @@ void			*uvm_km_getpage_pla(boolean_t, int *, paddr_t, paddr_t,
 	    (paddr_t)0, (paddr_t)-1, 0, 0)
 
 void			uvm_km_putpage(void *);
+
+struct vm_map		*uvm_km_suballoc(vm_map_t, vaddr_t *,
+				vaddr_t *, vsize_t, int,
+				boolean_t, vm_map_t);
+
+/*
+ * Allocation mode for virtual space.
+ *
+ *  kv_map - pointer to the pointer to the map we're allocating from.
+ *  kv_align - alignment.
+ *  kv_wait - wait for free space in the map if it's full. The default
+ *   allocators don't wait since running out of space in kernel_map and
+ *   kmem_map is usually fatal. Special maps like exec_map are specifically
+ *   limited, so waiting for space in them is necessary.
+ *  kv_singlepage - use the single page allocator.
+ *  kv_executable - map the physical pages with PROT_EXEC.
+ */
+struct kmem_va_mode {
+	struct vm_map **kv_map;
+	vsize_t kv_align;
+	int kv_wait;
+	int kv_singlepage;
+	int kv_executable;
+};
+
+/*
+ * Allocation mode for physical pages.
+ *
+ *  kp_constraint - allocation constraint for physical pages.
+ *  kp_object - if the pages should be allocated from an object.
+ *  kp_align - physical alignment of the first page in the allocation.
+ *  kp_boundary - boundary that the physical addresses can't cross if
+ *   the allocation is contiguous.
+ *  kp_nomem - don't allocate any backing pages.
+ *  kp_maxseg - maximal amount of contiguous segments.
+ *  kp_zero - zero the returned memory.
+ *  kp_pageable - allocate pageable memory.
+ */
+struct kmem_pa_mode {
+	struct uvm_constraint_range *kp_constraint;
+	struct uvm_object **kp_object;
+	paddr_t kp_align;
+	paddr_t kp_boundary;
+	int kp_nomem;
+	int kp_maxseg;
+	int kp_zero;
+	int kp_pageable;
+};
+
+/*
+ * Dynamic allocation parameters. Stuff that changes too often or too much
+ * to create separate va and pa modes for.
+ *
+ * kd_waitok - is it ok to sleep?
+ * kd_trylock - don't sleep on map locks.
+ * kd_prefer - offset to feed to PMAP_PREFER
+ * kd_slowdown - special parameter for the singlepage va allocator
+ *  that tells the caller to sleep if possible to let the singlepage
+ *  allocator catch up.
+ */
+struct kmem_dyn_mode {
+	int kd_waitok;
+	int kd_trylock;
+	voff_t kd_prefer;
+	int *kd_slowdown;
+};
+
+#define KMEM_DYN_INITIALIZER { 0, 0, UVM_UNKNOWN_OFFSET, NULL }
+
+/*
+ * Notice that for kv_ waiting has a different meaning. It's only supposed
+ * to be used for very space constrained maps where waiting is a way
+ * to throttle some other operation.
+ * The exception is kv_page which needs to wait relatively often.
+ * All kv_ except kv_intrsafe will potentially sleep.
+ */
+extern struct kmem_va_mode kv_any;
+extern struct kmem_va_mode kv_intrsafe;
+extern struct kmem_va_mode kv_page;
+
+extern struct kmem_pa_mode kp_dirty;
+extern struct kmem_pa_mode kp_zero;
+extern struct kmem_pa_mode kp_dma;
+extern struct kmem_pa_mode kp_dma_zero;
+extern struct kmem_pa_mode kp_pageable;
+extern struct kmem_pa_mode kp_none;
+
+extern struct kmem_dyn_mode kd_waitok;
+extern struct kmem_dyn_mode kd_nowait;
+extern struct kmem_dyn_mode kd_trylock;
+
+
+void *km_alloc(size_t, struct kmem_va_mode *, struct kmem_pa_mode *,
+    struct kmem_dyn_mode *);
+void km_free(void *, size_t, struct kmem_va_mode *, struct kmem_pa_mode *);
 
 /* uvm_map.c */
 #define	uvm_map(_m, _a, _sz, _u, _f, _al, _fl) uvm_map_p(_m, _a, _sz, _u, _f, _al, _fl, 0)

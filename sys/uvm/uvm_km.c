@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.86 2010/08/26 16:08:24 thib Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.87 2011/04/04 11:24:45 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -925,3 +925,247 @@ uvm_km_doputpage(struct uvm_km_free_page *fp)
 	return (nextfp);
 }
 #endif	/* !__HAVE_PMAP_DIRECT */
+
+void *
+km_alloc(size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp,
+    struct kmem_dyn_mode *kd)
+{
+	struct vm_map *map;
+	struct vm_page *pg;
+	struct pglist pgl;
+	int mapflags = 0;
+	vm_prot_t prot;
+	int pla_flags;
+	paddr_t pa;
+	vaddr_t va, sva;
+
+	KASSERT(sz == round_page(sz));
+
+	TAILQ_INIT(&pgl);
+
+	if (kp->kp_nomem || kp->kp_pageable)
+		goto alloc_va;
+
+	pla_flags = kd->kd_waitok ? UVM_PLA_WAITOK : UVM_PLA_NOWAIT;
+	pla_flags |= UVM_PLA_TRYCONTIG;
+	if (kp->kp_zero)
+		pla_flags |= UVM_PLA_ZERO;
+
+	if (uvm_pglistalloc(sz, kp->kp_constraint->ucr_low,
+	    kp->kp_constraint->ucr_high, kp->kp_align, kp->kp_boundary,
+	    &pgl, sz / PAGE_SIZE, pla_flags)) {	
+		return (NULL);
+	}
+
+#ifdef __HAVE_PMAP_DIRECT
+	if (kv->kv_align || kv->kv_executable)
+		goto alloc_va;
+#if 1	/* For now, because I'm lazy in free */
+	if (!kv->kv_singlepage)
+		goto alloc_va;
+#endif
+	/*
+	 * Dubious optimization. If we got a contig segment, just map it
+	 * through the direct map.
+	 */
+	TAILQ_FOREACH(pg, &pgl, pageq) {
+		if (pg != TAILQ_FIRST(&pgl) &&
+		    VM_PAGE_TO_PHYS(pg) != pa + PAGE_SIZE)
+			break;
+		pa = VM_PAGE_TO_PHYS(pg);
+	}
+	if (pg == NULL) {
+		TAILQ_FOREACH(pg, &pgl, pageq) {
+			vaddr_t v;
+			v = pmap_map_direct(pg);
+			if (pg == TAILQ_FIRST(&pgl))
+				va = v;
+		}
+		return ((void *)va);
+	}
+#endif
+alloc_va:
+	if (kv->kv_executable) {
+		prot = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
+	} else {
+		prot = VM_PROT_READ | VM_PROT_WRITE;
+	}
+
+	if (kp->kp_pageable) {
+		KASSERT(kp->kp_object);
+		KASSERT(!kv->kv_singlepage);
+	} else {
+		KASSERT(kp->kp_object == NULL);
+	}
+
+	if (kv->kv_singlepage) {
+		KASSERT(sz == PAGE_SIZE);
+#ifdef __HAVE_PMAP_DIRECT
+		KASSERT(0);
+#else
+		mtx_enter(&uvm_km_pages.mtx);
+		while (uvm_km_pages.free == 0) {
+			if (kd->kd_waitok == 0) {
+				mtx_leave(&uvm_km_pages.mtx);
+				uvm_pagefree(pg);
+				return NULL;
+			}
+			msleep(&uvm_km_pages.free, &uvm_km_pages.mtx, PVM,
+			    "getpage", 0);
+		}
+		va = uvm_km_pages.page[--uvm_km_pages.free];
+		if (uvm_km_pages.free < uvm_km_pages.lowat &&
+		    curproc != uvm_km_pages.km_proc) {
+			if (kd->kd_slowdown)
+				*kd->kd_slowdown = 1;
+			wakeup(&uvm_km_pages.km_proc);
+		}
+		mtx_leave(&uvm_km_pages.mtx);
+#endif
+	} else {
+		struct uvm_object *uobj = NULL;
+
+		if (kd->kd_trylock)
+			mapflags |= UVM_KMF_TRYLOCK;
+
+		if (kp->kp_object)
+			uobj = *kp->kp_object;
+try_map:
+		map = *kv->kv_map;
+		va = vm_map_min(map);
+		if (uvm_map(map, &va, sz, uobj, kd->kd_prefer,
+		    kv->kv_align, UVM_MAPFLAG(prot, prot, UVM_INH_NONE,
+		    UVM_ADV_RANDOM, mapflags))) {
+			if (kv->kv_wait && kd->kd_waitok) {
+				tsleep(map, PVM, "km_allocva", 0);
+				goto try_map;
+			}
+			return (NULL);
+		}
+	}
+	sva = va;
+	TAILQ_FOREACH(pg, &pgl, pageq) {
+		if (kp->kp_pageable)
+			pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pg),
+			    prot, prot | PMAP_WIRED);
+		else
+			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), prot);
+		va += PAGE_SIZE;
+	}
+	return ((void *)sva);
+}
+
+void
+km_free(void *v, size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp)
+{
+	vaddr_t sva, eva, va;
+	struct vm_page *pg;
+	struct pglist pgl;
+
+	sva = va = (vaddr_t)v;
+	eva = va + sz;
+
+	if (kp->kp_nomem) {
+		goto free_va;
+	}
+
+#ifdef __HAVE_PMAP_DIRECT
+	if (kv->kv_singlepage) {
+		pg = pmap_unmap_direct(va);
+		uvm_pagefree(pg);
+		return;
+	}
+#endif
+
+	if (kp->kp_pageable) {
+		pmap_remove(pmap_kernel(), sva, eva);
+	} else {
+		TAILQ_INIT(&pgl);
+		for (va = sva; va < eva; va += PAGE_SIZE) {
+			paddr_t pa;
+
+			if (!pmap_extract(pmap_kernel(), va, &pa))
+				continue;
+
+			pg = PHYS_TO_VM_PAGE(pa);
+			if (!pg) {
+				printf("pa: 0x%lx\n", pa);
+			}
+			KASSERT(pg);
+			uvm_pagefree(pg);
+		}
+		pmap_kremove(sva, sz);
+	}
+	pmap_update(pmap_kernel());
+free_va:
+	if (kv->kv_singlepage) {
+#ifdef __HAVE_PMAP_DIRECT
+		KASSERT(0);
+#else
+		mtx_enter(&uvm_km_pages.mtx);
+		if (uvm_km_pages.free < uvm_km_pages.hiwat)
+			uvm_km_pages.page[uvm_km_pages.free++] = va;
+		else    
+			uvm_unmap(kernel_map, va, eva);
+		mtx_leave(&uvm_km_pages.mtx);
+#endif
+	} else {
+		uvm_unmap(*kv->kv_map, sva, eva);
+		if (kv->kv_wait)
+			wakeup(*kv->kv_map);
+	}
+}
+
+struct kmem_va_mode kv_any = {
+	.kv_map = &kernel_map,
+};
+
+struct kmem_va_mode kv_intrsafe = {
+	.kv_map = &kmem_map,
+};
+
+struct kmem_va_mode kv_page = {
+	.kv_singlepage = 1
+};
+
+struct kmem_pa_mode kp_dirty = {
+	.kp_constraint = &no_constraint
+};
+
+struct kmem_pa_mode kp_dma = {
+	.kp_constraint = &dma_constraint
+};
+
+struct kmem_pa_mode kp_dma_zero = {
+	.kp_constraint = &dma_constraint,
+	.kp_zero = 1
+};
+
+struct kmem_pa_mode kp_zero = {
+	.kp_constraint = &no_constraint,
+	.kp_zero = 1
+};
+
+struct kmem_pa_mode kp_pageable = {
+	.kp_object = &uvm.kernel_object,
+	.kp_pageable = 1
+/* XXX - kp_nomem, maybe, but we'll need to fix km_free. */
+};
+
+struct kmem_pa_mode kp_none = {
+	.kp_nomem = 1
+};
+
+struct kmem_dyn_mode kd_waitok = {
+	.kd_waitok = 1,
+	.kd_prefer = UVM_UNKNOWN_OFFSET
+};
+
+struct kmem_dyn_mode kd_nowait = {
+	.kd_prefer = UVM_UNKNOWN_OFFSET
+};
+
+struct kmem_dyn_mode kd_trylock = {
+	.kd_trylock = 1,
+	.kd_prefer = UVM_UNKNOWN_OFFSET
+};
