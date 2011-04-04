@@ -1,4 +1,4 @@
-/*      $OpenBSD: gmac_test.c,v 1.1 2010/09/22 12:04:13 mikeb Exp $  */
+/*      $OpenBSD: gmac_test.c,v 1.2 2011/04/04 16:46:22 deraadt Exp $  */
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mikeb@openbsd.org>
@@ -640,4 +640,10 @@ main(void)
 		fail += run(i);
 
 	return (fail > 0 ? 1 : 0);
+}
+
+void
+explicit_bzero(void *b, size_t len)
+{
+	bzero(b, len);
 }

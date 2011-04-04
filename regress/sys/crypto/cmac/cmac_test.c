@@ -18,6 +18,7 @@
 #include <crypto/rijndael.h>
 #include <crypto/cmac.h>
 #include <stdio.h>
+#include <string.h>
 
 static void
 print_hex(char *str, unsigned char *buf, int len)
@@ -125,4 +126,10 @@ main(void)
       printf("--------------------------------------------------\n");
 
       return 0;
+}
+
+void
+explicit_bzero(void *b, size_t len)
+{
+	bzero(b, len);
 }

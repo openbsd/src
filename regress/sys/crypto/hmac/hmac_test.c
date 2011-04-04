@@ -90,3 +90,9 @@ main(void)
 
 	return 0;
 }
+
+void
+explicit_bzero(void *b, size_t len)
+{
+	bzero(b, len);
+}
