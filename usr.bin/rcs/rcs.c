@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.73 2011/03/27 18:22:50 jasper Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.74 2011/04/04 23:08:30 djm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1214,6 +1214,7 @@ rcs_delta_stats(struct rcs_delta *rdp, int *ladded, int *lremoved)
 			/* NUL-terminate line buffer for strtol() safety. */
 			tmp = lp->l_line[lp->l_len - 1];
 			lp->l_line[lp->l_len - 1] = '\0';
+			(void)strtol((lp->l_line + 1), &ep, 10);
 			ep++;
 			nbln = (int)strtol(ep, &ep, 10);
 			/* Restore the last byte of the buffer */
