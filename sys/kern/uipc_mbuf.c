@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.149 2011/01/29 13:15:39 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.150 2011/04/04 21:33:27 blambert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ static	char mclnames[MCLPOOLS][8];
 struct	pool mclpools[MCLPOOLS];
 
 int	m_clpool(u_int);
+
+struct mbuf *m_split_mbuf(struct mbuf *, int, int, struct mbuf *);
 
 int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */
@@ -1079,130 +1081,114 @@ m_getptr(struct mbuf *m, int loc, int *off)
 }
 
 /*
- * Inject a new mbuf chain of length siz in mbuf chain m0 at
- * position len0. Returns a pointer to the first injected mbuf, or
- * NULL on failure (m0 is left undisturbed). Note that if there is
- * enough space for an object of size siz in the appropriate position,
+ * Inject a new mbuf chain of length len in mbuf chain m at
+ * position off. Returns a pointer to the first injected mbuf, or
+ * NULL on failure (m is left undisturbed). Note that if there is
+ * enough space for an object of size len in the appropriate position,
  * no memory will be allocated. Also, there will be no data movement in
- * the first len0 bytes (pointers to that will remain valid).
+ * the first off bytes (pointers to that will remain valid).
  *
- * XXX It is assumed that siz is less than the size of an mbuf at the moment.
+ * XXX It is assumed that len is less than the size of an mbuf at the moment.
  */
 struct mbuf *
-m_inject(struct mbuf *m0, int len0, int siz, int wait)
+m_inject(struct mbuf *m, int off, int len, int wait)
 {
-	struct mbuf *m, *n, *n2 = NULL, *n3;
-	unsigned len = len0, remain;
+	struct mbuf *n, *o, *p;
+	int off1;
 
-	if ((siz >= MHLEN) || (len0 <= 0))
-	        return (NULL);
-	for (m = m0; m && len > m->m_len; m = m->m_next)
-		len -= m->m_len;
-	if (m == NULL)
+	if (len > MHLEN || len <= 0)
 		return (NULL);
-	remain = m->m_len - len;
-	if (remain == 0) {
-	        if ((m->m_next) && (M_LEADINGSPACE(m->m_next) >= siz)) {
-		        m->m_next->m_len += siz;
-			if (m0->m_flags & M_PKTHDR)
-				m0->m_pkthdr.len += siz;
-			m->m_next->m_data -= siz;
-			return m->m_next;
-		}
-	} else {
-	        n2 = m_copym2(m, len, remain, wait);
-		if (n2 == NULL)
-		        return (NULL);
-	}
 
-	MGET(n, wait, MT_DATA);
-	if (n == NULL) {
-	        if (n2)
-		        m_freem(n2);
+	if ((n = m_getptr(m, off, &off1)) == NULL)
+		return (NULL);
+
+	if ((o = m_get(wait, MT_DATA)) == NULL)
+		return (NULL);
+
+	if ((p = m_split_mbuf(n, off1, wait, NULL)) == NULL) {
+		m_freem(o);
 		return (NULL);
 	}
 
-	n->m_len = siz;
-	if (m0->m_flags & M_PKTHDR)
-		m0->m_pkthdr.len += siz;
-	m->m_len -= remain; /* Trim */
-	if (n2)	{
-	        for (n3 = n; n3->m_next != NULL; n3 = n3->m_next)
-		        ;
-		n3->m_next = n2;
-	} else
-	        n3 = n;
-	for (; n3->m_next != NULL; n3 = n3->m_next)
-	        ;
-	n3->m_next = m->m_next;
-	m->m_next = n;
-	return n;
+	o->m_len = len;
+	o->m_next = p;
+	n->m_next = o;
+
+	if (m->m_flags & M_PKTHDR)
+		m->m_pkthdr.len += len;
+
+	return (o);
 }
 
 /*
- * Partition an mbuf chain in two pieces, returning the tail --
- * all but the first len0 bytes.  In case of failure, it returns NULL and
- * attempts to restore the chain to its original state.
+ * Split a single mbuf, leaving the chain intact.
  */
 struct mbuf *
-m_split(struct mbuf *m0, int len0, int wait)
+m_split_mbuf(struct mbuf *m, int off, int wait, struct mbuf *mhdr)
 {
-	struct mbuf *m, *n;
-	unsigned len = len0, remain, olen;
+	struct mbuf *n;
+	int copyhdr;
 
-	for (m = m0; m && len > m->m_len; m = m->m_next)
-		len -= m->m_len;
-	if (m == NULL)
+	if (off > m->m_len)
 		return (NULL);
-	remain = m->m_len - len;
-	if (m0->m_flags & M_PKTHDR) {
-		MGETHDR(n, wait, m0->m_type);
-		if (n == NULL)
-			return (NULL);
-		if (m_dup_pkthdr(n, m0)) {
-			m_freem(n);
+
+	copyhdr = (mhdr && mhdr->m_flags & M_PKTHDR);
+
+	if (copyhdr)
+		n = m_gethdr(wait, MT_DATA);
+	else
+		n = m_get(wait, MT_DATA);
+	if (!n)
+		return (NULL);
+
+	if (m->m_len - off > (copyhdr ? MHLEN : MLEN)) {
+		MCLGET(n, wait);
+		if (!(n->m_flags & M_EXT)) {
+			m_free(n);
 			return (NULL);
 		}
-		n->m_pkthdr.len -= len0;
-		olen = m0->m_pkthdr.len;
-		m0->m_pkthdr.len = len0;
-		if (m->m_flags & M_EXT)
-			goto extpacket;
-		if (remain > MHLEN) {
-			/* m can't be the lead packet */
-			MH_ALIGN(n, 0);
-			n->m_next = m_split(m, len, wait);
-			if (n->m_next == NULL) {
-				(void) m_free(n);
-				m0->m_pkthdr.len = olen;
-				return (NULL);
-			} else
-				return (n);
-		} else
-			MH_ALIGN(n, remain);
-	} else if (remain == 0) {
-		n = m->m_next;
-		m->m_next = NULL;
-		return (n);
-	} else {
-		MGET(n, wait, m->m_type);
-		if (n == NULL)
-			return (NULL);
-		M_ALIGN(n, remain);
 	}
-extpacket:
-	if (m->m_flags & M_EXT) {
-		n->m_ext = m->m_ext;
-		MCLADDREFERENCE(m, n);
-		n->m_data = m->m_data + len;
-	} else {
-		bcopy(mtod(m, caddr_t) + len, mtod(n, caddr_t), remain);
+
+	if (copyhdr && m_dup_pkthdr(mhdr, n)) {
+		m_free(n);
+		return (NULL);
 	}
-	n->m_len = remain;
-	m->m_len = len;
+
+	bcopy(mtod(m, caddr_t) + off, mtod(n, caddr_t), m->m_len - off);
+
+	n->m_len = m->m_len - off;
+	m->m_len = off;
 	n->m_next = m->m_next;
-	m->m_next = NULL;
+	m->m_next = n;
+
 	return (n);
+}
+
+/*
+ * Break mbuf chain into two parts at the specified offset.
+ */
+struct mbuf *
+m_split(struct mbuf *m, int off, int wait)
+{
+	struct mbuf *n, *o;
+	int off1, copyhdr;
+
+	copyhdr = m->m_flags & M_PKTHDR;
+
+	if ((n = m_getptr(m, off, &off1)) == NULL)
+		return (NULL);
+
+	if ((o = m_split_mbuf(n, off1, wait, m)) == NULL)
+		return (NULL);
+
+	if (copyhdr) {
+		o->m_pkthdr.len = m->m_pkthdr.len - off;
+		m->m_pkthdr.len = off;
+	}
+
+	n->m_next = NULL;
+
+	return (o);
 }
 
 /*
