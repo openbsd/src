@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.88 2011/03/14 01:06:20 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.89 2011/04/04 11:10:26 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1371,6 +1371,10 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			switch (optname) {
 
 			case SO_SNDBUF:
+				if (so->so_state & SS_CANTSENDMORE) {
+					error = EINVAL;
+					goto bad;
+				}
 				if (sbcheckreserve(cnt, so->so_snd.sb_wat) ||
 				    sbreserve(&so->so_snd, cnt)) {
 					error = ENOBUFS;
@@ -1380,6 +1384,10 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				break;
 
 			case SO_RCVBUF:
+				if (so->so_state & SS_CANTRCVMORE) {
+					error = EINVAL;
+					goto bad;
+				}
 				if (sbcheckreserve(cnt, so->so_rcv.sb_wat) ||
 				    sbreserve(&so->so_rcv, cnt)) {
 					error = ENOBUFS;
@@ -1389,11 +1397,13 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				break;
 
 			case SO_SNDLOWAT:
-				so->so_snd.sb_lowat = (cnt > so->so_snd.sb_hiwat) ?
+				so->so_snd.sb_lowat =
+				    (cnt > so->so_snd.sb_hiwat) ?
 				    so->so_snd.sb_hiwat : cnt;
 				break;
 			case SO_RCVLOWAT:
-				so->so_rcv.sb_lowat = (cnt > so->so_rcv.sb_hiwat) ?
+				so->so_rcv.sb_lowat =
+				    (cnt > so->so_rcv.sb_hiwat) ?
 				    so->so_rcv.sb_hiwat : cnt;
 				break;
 			}
