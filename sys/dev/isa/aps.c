@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.23 2011/01/05 07:37:09 deraadt Exp $	*/
+/*	$OpenBSD: aps.c,v 1.24 2011/04/04 10:17:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -240,25 +240,17 @@ aps_do_io(bus_space_tag_t iot, bus_space_handle_t ioh,
 int
 aps_match(struct device *parent, void *match, void *aux)
 {
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
-	int iobase;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
+	int iobase = ia->ipa_io[0].base;
 	u_int8_t cr;
-
 	unsigned char iobuf[16];
-
-	iot = ia->ia_iot;
-	iobase = ia->ipa_io[0].base;
 
 	if (bus_space_map(iot, iobase, APS_ADDR_SIZE, 0, &ioh)) {
 		DPRINTF(("aps: can't map i/o space\n"));
 		return (0);
 	}
-
-
-	/* See if this machine has APS */
-
 	/* get APS mode */
 	iobuf[APS_CMD] = 0x13;
 	if (aps_do_io(iot, ioh, iobuf, APS_WRITE_0, APS_READ_1)) {
@@ -275,9 +267,14 @@ aps_match(struct device *parent, void *match, void *aux)
 	 */
 
 	cr = iobuf[APS_ARG1];
+	DPRINTF(("aps: state register 0x%x\n", cr));
+
+	if (aps_init(iot, ioh)) {
+		bus_space_unmap(iot, ioh, APS_ADDR_SIZE);
+		return (0);
+	}
 
 	bus_space_unmap(iot, ioh, APS_ADDR_SIZE);
-	DPRINTF(("aps: state register 0x%x\n", cr));
 
 	if (iobuf[APS_RET] != 0 || cr < 1 || cr > 5) {
 		DPRINTF(("aps0: unsupported state %d\n", cr));
@@ -289,7 +286,6 @@ aps_match(struct device *parent, void *match, void *aux)
 	ia->ipa_nmem = 0;
 	ia->ipa_nirq = 0;
 	ia->ipa_ndrq = 0;
-
 	return (1);
 }
 
@@ -313,9 +309,6 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	ioh = sc->aps_ioh;
 
 	printf("\n");
-
-	if (aps_init(iot, ioh))
-		goto out;
 
 	sc->sensors[APS_SENSOR_XACCEL].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_XACCEL].desc,
@@ -359,10 +352,6 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	/* Refresh sensor data every 0.5 seconds */
 	timeout_set(&aps_timeout, aps_refresh, sc);
 	timeout_add_msec(&aps_timeout, 500);
-	return;
-out:
-	printf("%s: failed to initialize\n", sc->sc_dev.dv_xname);
-	return;
 }
 
 int
@@ -379,22 +368,22 @@ aps_init(bus_space_tag_t iot, bus_space_handle_t ioh)
 		return (1);
 
 	if (iobuf[APS_RET] != 0 ||iobuf[APS_ARG3] != 0)
-		return (1);
+		return (2);
 
 	/* Test values from the Linux driver */
 	if ((iobuf[APS_ARG1] != 0 || iobuf[APS_ARG2] != 0x60) &&
 	    (iobuf[APS_ARG1] != 1 || iobuf[APS_ARG2] != 0))
-		return (1);
+		return (3);
 
 	/* command 0x14: set power */
 	iobuf[APS_CMD] = 0x14;
 	iobuf[APS_ARG1] = 0x01;
 
 	if (aps_do_io(iot, ioh, iobuf, APS_WRITE_1, APS_READ_0))
-		return (1);
+		return (4);
 
 	if (iobuf[APS_RET] != 0)
-		return (1);
+		return (5);
 
 	/* command 0x10: set config (sample rate and order) */
 	iobuf[APS_CMD] = 0x10;
@@ -403,17 +392,15 @@ aps_init(bus_space_tag_t iot, bus_space_handle_t ioh)
 	iobuf[APS_ARG3] = 0x02;
 
 	if (aps_do_io(iot, ioh, iobuf, APS_WRITE_3, APS_READ_0))
-		return (1);
+		return (6);
 
 	if (iobuf[APS_RET] != 0)
-		return (1);
+		return (7);
 
 	/* command 0x11: refresh data */
 	iobuf[APS_CMD] = 0x11;
 	if (aps_do_io(iot, ioh, iobuf, APS_WRITE_0, APS_READ_1))
-		return (1);
-	if (iobuf[APS_ARG1] != 0)
-		return (1);
+		return (8);
 
 	return (0);
 }
@@ -508,6 +495,10 @@ aps_activate(struct device *self, int act)
 	bus_space_handle_t ioh = sc->aps_ioh;
 	unsigned char iobuf[16];
 
+	/* check if we bombed during attach */
+	if (!timeout_initialized(&aps_timeout))
+		return (0);
+
 	switch (act) {
 	case DVACT_SUSPEND:
 		timeout_del(&aps_timeout);
@@ -520,11 +511,10 @@ aps_activate(struct device *self, int act)
 
 		/* get APS mode */
 		iobuf[APS_CMD] = 0x13;
-		if (aps_do_io(iot, ioh, iobuf, APS_WRITE_0, APS_READ_1) ||
-		    aps_init(iot, ioh))
-			printf("aps: failed to wake up\n");
-		else
-			timeout_add_msec(&aps_timeout, 500);
+		aps_do_io(iot, ioh, iobuf, APS_WRITE_0, APS_READ_1);
+
+		aps_init(iot, ioh);
+		timeout_add_msec(&aps_timeout, 500);
 		break;
 	}
 	return (0);
