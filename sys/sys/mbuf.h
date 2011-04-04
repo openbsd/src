@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.145 2011/03/24 20:09:45 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.146 2011/04/04 14:35:31 blambert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -284,11 +284,12 @@ struct mbuf {
 
 /*
  * Move just m_pkthdr from from to to,
- * remove M_PKTHDR and clean the tag for from.
+ * remove M_PKTHDR and clean flags/tags for from.
  */
 #define M_MOVE_HDR(to, from) do {					\
 	(to)->m_pkthdr = (from)->m_pkthdr;				\
 	(from)->m_flags &= ~M_PKTHDR;					\
+	SLIST_INIT(&(from)->m_pkthdr.tags);				\
 } while (/* CONSTCOND */ 0)
 
 /*
