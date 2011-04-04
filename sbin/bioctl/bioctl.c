@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.98 2010/12/01 19:40:18 ckuethe Exp $       */
+/* $OpenBSD: bioctl.c,v 1.99 2011/04/04 15:22:31 jcs Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -336,7 +336,7 @@ bio_inq(char *name)
 
 		if (!volheader) {
 			volheader = 1;
-			printf("%-7s %-10s %14s %-8s\n",
+			printf("%-11s %-10s %14s %-8s\n",
 			    "Volume", "Status", "Size", "Device");
 		}
 
@@ -389,12 +389,12 @@ bio_inq(char *name)
 				    bv.bv_size);
 			switch (bv.bv_level) {
 			case 'C':
-				printf("%7s %-10s %14s %-7s CRYPTO%s%s\n",
+				printf("%11s %-10s %14s %-7s CRYPTO%s%s\n",
 				    volname, status, size, bv.bv_dev,
 				    percent, seconds);
 				break;
 			default:
-				printf("%7s %-10s %14s %-7s RAID%u%s%s\n",
+				printf("%11s %-10s %14s %-7s RAID%u%s%s\n",
 				    volname, status, size, bv.bv_dev,
 				    bv.bv_level, percent, seconds);
 				break;
@@ -464,7 +464,7 @@ bio_inq(char *name)
 			else
 				strlcpy(serial, "unknown serial", sizeof serial);
 
-			printf("%7s %-10s %14s %-7s %-6s <%s>\n",
+			printf("%11s %-10s %14s %-7s %-6s <%s>\n",
 			    volname, status, size, scsiname, encname,
 			    bd.bd_vendor);
 			if (verbose)
