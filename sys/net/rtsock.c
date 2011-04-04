@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.116 2011/04/03 17:01:23 jsing Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.117 2011/04/04 20:25:35 blambert Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -900,8 +900,7 @@ fail:
 	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
 	if (rtm) {
-		m_copyback(m, 0, rtm->rtm_msglen, rtm, M_NOWAIT);
-		if (m->m_pkthdr.len < rtm->rtm_msglen) {
+		if (m_copyback(m, 0, rtm->rtm_msglen, rtm, M_NOWAIT)) {
 			m_freem(m);
 			m = NULL;
 		} else if (m->m_pkthdr.len > rtm->rtm_msglen)
@@ -1000,12 +999,11 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
-		m_copyback(m, len, dlen, sa, M_NOWAIT);
+		if (m_copyback(m, len, dlen, sa, M_NOWAIT)) {
+			m_freem(m);
+			return (NULL);
+		}
 		len += dlen;
-	}
-	if (m->m_pkthdr.len != len) {
-		m_freem(m);
-		return (NULL);
 	}
 	rtm->rtm_msglen = len;
 	rtm->rtm_hdrlen = hlen;
