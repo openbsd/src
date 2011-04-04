@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.129 2011/04/04 14:08:15 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.130 2011/04/04 16:06:13 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ rtfree(struct rtentry *rt)
 		if (rt->rt_flags & RTF_MPLS)
 			free(rt->rt_llinfo, M_TEMP);
 #endif
-		free(rt_key(rt), M_RTABLE);
+		Free(rt_key(rt));
 		pool_put(&rtentry_pool, rt);
 	}
 }
@@ -839,7 +839,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rt_maskedcopy(info->rti_info[RTAX_DST], ndst,
 			    info->rti_info[RTAX_NETMASK]);
 		} else
-			bcopy(info->rti_info[RTAX_DST], ndst,
+			Bcopy(info->rti_info[RTAX_DST], ndst,
 			    info->rti_info[RTAX_DST]->sa_len);
 #ifndef SMALL_KERNEL
 		if (rn_mpath_capable(rnh)) {
@@ -849,7 +849,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			    info->rti_flags & RTF_MPATH)) {
 				if (rt->rt_gwroute)
 					rtfree(rt->rt_gwroute);
-				free(rt_key(rt), M_RTABLE);
+				Free(rt_key(rt));
 				pool_put(&rtentry_pool, rt);
 				senderr(EEXIST);
 			}
@@ -881,13 +881,13 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			sa_mpls = (struct sockaddr_mpls *)
 			    info->rti_info[RTAX_SRC];
 
-			rt->rt_llinfo = malloc(sizeof(struct rt_mpls),
+			rt->rt_llinfo = (caddr_t)malloc(sizeof(struct rt_mpls),
 			    M_TEMP, M_NOWAIT|M_ZERO);
 
 			if (rt->rt_llinfo == NULL) {
 				if (rt->rt_gwroute)
 					rtfree(rt->rt_gwroute);
-				free(rt_key(rt), M_RTABLE);
+				Free(rt_key(rt));
 				pool_put(&rtentry_pool, rt);
 				senderr(ENOMEM);
 			}
@@ -958,7 +958,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
-			free(rt_key(rt), M_RTABLE);
+			Free(rt_key(rt));
 			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
@@ -1005,17 +1005,18 @@ rt_setgate(struct rtentry *rt0, struct sockaddr *dst, struct sockaddr *gate,
 
 	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
 		old = (caddr_t)rt_key(rt);
-		if ((new = malloc(sizeof(*new), M_RTABLE, M_NOWAIT)) == NULL)
+		R_Malloc(new, caddr_t, dlen + glen);
+		if (new == NULL)
 			return 1;
 		rt->rt_nodes->rn_key = new;
 	} else {
 		new = rt->rt_nodes->rn_key;
 		old = NULL;
 	}
-	bcopy(gate, (rt->rt_gateway = (struct sockaddr *)(new + dlen)), glen);
+	Bcopy(gate, (rt->rt_gateway = (struct sockaddr *)(new + dlen)), glen);
 	if (old) {
-		bcopy(dst, new, dlen);
-		free(old, M_RTABLE);
+		Bcopy(dst, new, dlen);
+		Free(old);
 	}
 	if (rt->rt_gwroute != NULL) {
 		rt = rt->rt_gwroute;
