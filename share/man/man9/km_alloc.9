@@ -1,4 +1,4 @@
-.\"	$OpenBSD: km_alloc.9,v 1.2 2011/04/04 11:51:20 art Exp $
+.\"	$OpenBSD: km_alloc.9,v 1.3 2011/04/04 14:43:56 jmc Exp $
 .\" Copyright (c) 2011 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
 .\"
@@ -46,7 +46,7 @@ The
 .Fa kv
 and
 .Fa kp
-arguments specifies the type of virtual and physical memory to be allocated.
+arguments specify the type of virtual and physical memory to be allocated.
 The
 .Fa kd
 argument specifies additional options for the allocation.
@@ -57,7 +57,8 @@ must match those that were used to obtain the space in
 .Pp
 Typically a user will use certain predefined modes for memory allocation.
 For virtual space the predefined modes are:
-.Bl -tag -width kv_intrsafe
+.Pp
+.Bl -tag -width kv_intrsafe -offset 3n -compact
 .It kv_any
 Allocates the virtual space anywhere.
 .It kv_intrsafe
@@ -67,7 +68,8 @@ Allocates single pages.
 .El
 .Pp
 For physical pages the predefined modes are:
-.Bl -tag -width kp_pageable
+.Pp
+.Bl -tag -width kp_pageable -offset 3n -compact
 .It kp_dirty
 Maps dirty pages into the allocation.
 .It kp_zero
@@ -83,7 +85,8 @@ Leaves the allocation unmapped.
 .El
 .Pp
 The other parameters for allocation are:
-.Bl -tag -width kd_trylock
+.Pp
+.Bl -tag -width kd_trylock -offset 3n -compact
 .It kd_waitok
 Sleeping for physical pages is allowed.
 .It kd_nowait
@@ -115,7 +118,7 @@ the allocation cannot be satisfied.
 .It kv_singlepage
 A flag indicating if the allocations will always be for single pages.
 .It kv_executable
-A falg indicating if the memory mapped should be mapped permitting execution.
+A flag indicating if the memory mapped should be mapped permitting execution.
 .El
 .Bd -literal
 struct kmem_pa_mode {
