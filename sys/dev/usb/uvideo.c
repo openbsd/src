@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.159 2011/03/31 22:13:12 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.160 2011/04/04 17:38:24 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2972,17 +2972,18 @@ uvideo_s_parm(void *v, struct v4l2_streamparm *parm)
 	usbd_status error;
 
 	if (parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-		if (parm->parm.capture.timeperframe.numerator == 0 ||
-		    parm->parm.capture.timeperframe.denominator == 0)
-			return (EINVAL);
-
 		/*
 		 * XXX Only whole number frame rates for now.  Frame
 		 * rate is the inverse of time per frame.
 		 */
-		sc->sc_frame_rate =
-		    parm->parm.capture.timeperframe.denominator /
-		    parm->parm.capture.timeperframe.numerator;
+		if (parm->parm.capture.timeperframe.numerator == 0 ||
+		    parm->parm.capture.timeperframe.denominator == 0) {
+			sc->sc_frame_rate = 0;
+		} else {
+			sc->sc_frame_rate =
+			    parm->parm.capture.timeperframe.denominator /
+			    parm->parm.capture.timeperframe.numerator;
+		}
 	} else
 		return (EINVAL);
 
