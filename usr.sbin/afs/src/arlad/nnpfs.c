@@ -315,7 +315,7 @@ nnpfs_send_message_wakeup_data (int fd, u_int seqnum, int error,
 
      if (sizeof(msg.msg) < size || size < 0) {
 	     errno = EINVAL;
-	     arla_warn (ADEBMSG,
+	     arla_warnx (ADEBMSG,
 		 "nnpfs_send_message_wakeup_data: invalid message size %d",
 		 size);
 	     return errno;
