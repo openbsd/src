@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.32 2010/06/29 21:43:21 sthen Exp $
+.\" $OpenBSD: gre.4,v 1.33 2011/04/04 15:54:07 claudio Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 29 2010 $
+.Dd $Mdocdate: April 4 2011 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -262,25 +262,6 @@ these packets.
 .Sh AUTHORS
 .An Heiko W.Rupp Aq hwr@pilhuhn.de
 .Sh BUGS
-The
-.Fn compute_route
-code in
-.Pa sys/net/if_gre.c
-toggles the last bit of the IP address to provoke the search for a less
-specific route than the one directly over the tunnel to prevent loops.
-This is possibly not the best solution.
-.Pp
-To avoid the address munging described above, turn on the
-.Cm link1
-flag on the
-.Xr ifconfig 8
-command line.
-This implies that the GRE packet destination and the remote host are not
-the same IP addresses, and that the GRE destination does not route over
-the
-.Nm Ns Ar X
-interface itself.
-.Pp
 GRE RFC not yet fully implemented (no GRE options).
 .Pp
 For the WCCP GRE encapsulated packets we can only reliably accept
