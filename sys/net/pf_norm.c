@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.130 2011/03/24 20:09:44 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.131 2011/04/04 14:14:53 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -756,12 +756,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif,
 		goto drop;
 
 	/* Clear IP_DF if we're in no-df mode */
-	if (pf_status.reass & PF_REASS_NODF && h->ip_off & htons(IP_DF)) {
-		u_int16_t ip_off = h->ip_off;
-
+	if (pf_status.reass & PF_REASS_NODF && h->ip_off & htons(IP_DF))
 		h->ip_off &= htons(~IP_DF);
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_off, h->ip_off, 0);
-	}
 
 	/* We will need other tests here */
 	if (!fragoff && !mff)
@@ -788,12 +784,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif,
 
  no_fragment:
 	/* At this point, only IP_DF is allowed in ip_off */
-	if (h->ip_off & ~htons(IP_DF)) {
-		u_int16_t ip_off = h->ip_off;
-
+	if (h->ip_off & ~htons(IP_DF))
 		h->ip_off &= htons(IP_DF);
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_off, h->ip_off, 0);
-	}
 
 	pd->flags |= PFDESC_IP_REAS;
 	return (PF_PASS);
@@ -1562,39 +1554,20 @@ pf_scrub_ip(struct mbuf **m0, u_int16_t flags, u_int8_t min_ttl, u_int8_t tos)
 	struct ip		*h = mtod(m, struct ip *);
 
 	/* Clear IP_DF if no-df was requested */
-	if (flags & PFSTATE_NODF && h->ip_off & htons(IP_DF)) {
-		u_int16_t ip_off = h->ip_off;
-
+	if (flags & PFSTATE_NODF && h->ip_off & htons(IP_DF))
 		h->ip_off &= htons(~IP_DF);
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_off, h->ip_off, 0);
-	}
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
-	if (min_ttl && h->ip_ttl < min_ttl) {
-		u_int16_t ip_ttl = h->ip_ttl;
-
+	if (min_ttl && h->ip_ttl < min_ttl)
 		h->ip_ttl = min_ttl;
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_ttl, h->ip_ttl, 0);
-	}
 
 	/* Enforce tos */
-	if (flags & PFSTATE_SETTOS) {
-		u_int16_t	ov, nv;
-
-		ov = *(u_int16_t *)h;
+	if (flags & PFSTATE_SETTOS)
 		h->ip_tos = tos;
-		nv = *(u_int16_t *)h;
-
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ov, nv, 0);
-	}
 
 	/* random-id, but not for fragments */
-	if (flags & PFSTATE_RANDOMID && !(h->ip_off & ~htons(IP_DF))) {
-		u_int16_t ip_id = h->ip_id;
-
+	if (flags & PFSTATE_RANDOMID && !(h->ip_off & ~htons(IP_DF)))
 		h->ip_id = htons(ip_randomid());
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_id, h->ip_id, 0);
-	}
 }
 
 #ifdef INET6
