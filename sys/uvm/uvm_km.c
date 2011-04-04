@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.90 2011/04/04 12:25:23 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.91 2011/04/04 21:16:31 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -1008,7 +1008,7 @@ alloc_va:
 	if (kv->kv_singlepage) {
 		KASSERT(sz == PAGE_SIZE);
 #ifdef __HAVE_PMAP_DIRECT
-		KASSERT(0);
+		panic("km_alloc: DIRECT single page");
 #else
 		mtx_enter(&uvm_km_pages.mtx);
 		while (uvm_km_pages.free == 0) {
@@ -1076,16 +1076,24 @@ km_free(void *v, size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp)
 		goto free_va;
 	}
 
-#ifdef __HAVE_PMAP_DIRECT
 	if (kv->kv_singlepage) {
+#ifdef __HAVE_PMAP_DIRECT
 		pg = pmap_unmap_direct(va);
 		uvm_pagefree(pg);
+#else
+		struct uvm_km_free_page *fp = v;
+		mtx_enter(&uvm_km_pages.mtx);
+		fp->next = uvm_km_pages.freelist;
+		if (uvm_km_pages.freelistlen++ > 16)
+			wakeup(&uvm_km_pages.km_proc);
+		mtx_leave(&uvm_km_pages.mtx);
+#endif
 		return;
 	}
-#endif
 
 	if (kp->kp_pageable) {
 		pmap_remove(pmap_kernel(), sva, eva);
+		pmap_update(pmap_kernel());
 	} else {
 		TAILQ_INIT(&pgl);
 		for (va = sva; va < eva; va += PAGE_SIZE) {
@@ -1095,32 +1103,19 @@ km_free(void *v, size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp)
 				continue;
 
 			pg = PHYS_TO_VM_PAGE(pa);
-			if (!pg) {
-				printf("pa: 0x%lx\n", pa);
+			if (pg == NULL) {
+				panic("km_free: unmanaged page 0x%lx\n", pa);
 			}
-			KASSERT(pg);
-			uvm_pagefree(pg);
+			TAILQ_INSERT_TAIL(&pgl, pg, pageq);
 		}
 		pmap_kremove(sva, sz);
+		pmap_update(pmap_kernel());
+		uvm_pglistfree(&pgl);
 	}
-	pmap_update(pmap_kernel());
 free_va:
-	if (kv->kv_singlepage) {
-#ifdef __HAVE_PMAP_DIRECT
-		KASSERT(0);
-#else
-		mtx_enter(&uvm_km_pages.mtx);
-		if (uvm_km_pages.free < uvm_km_pages.hiwat)
-			uvm_km_pages.page[uvm_km_pages.free++] = va;
-		else    
-			uvm_unmap(kernel_map, va, eva);
-		mtx_leave(&uvm_km_pages.mtx);
-#endif
-	} else {
-		uvm_unmap(*kv->kv_map, sva, eva);
-		if (kv->kv_wait)
-			wakeup(*kv->kv_map);
-	}
+	uvm_unmap(*kv->kv_map, sva, eva);
+	if (kv->kv_wait)
+		wakeup(*kv->kv_map);
 }
 
 struct kmem_va_mode kv_any = {
