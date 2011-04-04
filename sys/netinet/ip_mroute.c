@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.58 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.59 2011/04/04 17:44:43 henning Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1809,12 +1809,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	struct ip *ip_copy;
 	int i, len = ntohs(ip->ip_len) + sizeof(multicast_encap_iphdr);
 
-	/* Take care of delayed checksums */
-	if (m->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
-		in_delayed_cksum(m);
-		m->m_pkthdr.csum_flags &=
-		    ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
-	}
+	in_proto_cksum_out(m, NULL);
 
 	/*
 	 * copy the old packet & pullup its IP header into the
@@ -2743,12 +2738,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
 	struct mbuf *mb_copy = NULL;
 	int mtu;
 
-	/* Take care of delayed checksums */
-	if (m->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
-		in_delayed_cksum(m);
-		m->m_pkthdr.csum_flags &=
-		    ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
-	}
+	in_proto_cksum_out(m, NULL);
 
 	/*
 	 * Copy the old packet & pullup its IP header into the
