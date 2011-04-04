@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.h,v 1.1 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.2 2011/04/04 18:48:17 stsp Exp $	*/
 /*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@
 
 #define Strtol(p,e,b)   wcstol(p,e,b)
 
-#define Width(c)	wcwidth(c)
+#define Width(c)	(wcwidth(c) == -1 ? 0 : wcwidth(c))
 
 #else /* NARROW */
 

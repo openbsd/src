@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.1 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.2 2011/04/04 18:48:17 stsp Exp $	*/
 /*	$NetBSD: chartype.c,v 1.4 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -258,6 +258,9 @@ protected int
 ct_visual_width(Char c)
 {
 	int t = ct_chr_class(c);
+#ifdef WIDECHAR
+	int w;
+#endif
 	switch (t) {
 	case CHTYPE_ASCIICTL:
 		return 2; /* ^@ ^? etc. */
@@ -267,7 +270,8 @@ ct_visual_width(Char c)
 		return 0; /* Should this be 1 instead? */
 #ifdef WIDECHAR
 	case CHTYPE_PRINT:
-		return wcwidth(c);
+		w = wcwidth(c);
+		return (w == -1 ? 0 : w);
 	case CHTYPE_NONPRINT:
 		if (c > 0xffff) /* prefer standard 4-byte display over 5-byte */
 			return 8; /* \U+12345 */
