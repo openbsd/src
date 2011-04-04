@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.199 2011/04/02 16:47:17 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.200 2011/04/04 11:13:55 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -270,6 +270,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	extern int cryptodevallowsoft;
 #endif
 	extern int maxlocksperuid;
+	extern int pool_debug;
 
 	/* all sysctl names at this level are terminal except a ton of them */
 	if (namelen != 1) {
@@ -591,6 +592,15 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	case KERN_NETLIVELOCKS:
 		return (sysctl_rdint(oldp, oldlenp, newp, mcllivelocks));
+	case KERN_POOL_DEBUG: {
+		int old_pool_debug = pool_debug;
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &pool_debug);
+		if (error == 0 && pool_debug != old_pool_debug)
+			pool_reclaim_all();
+		return (error);
+	}
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.109 2011/03/12 04:54:28 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.110 2011/04/04 11:13:53 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -188,7 +188,8 @@ struct ctlname {
 #define	KERN_RTHREADS		74	/* kernel rthreads support enabled */
 #define	KERN_CONSDEV		75	/* dev_t: console terminal device */
 #define	KERN_NETLIVELOCKS	76	/* int: number of network livelocks */
-#define	KERN_MAXID		77	/* number of valid kern ids */
+#define	KERN_POOL_DEBUG		77	/* int: enable pool_debug */
+#define	KERN_MAXID		78	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -268,6 +269,7 @@ struct ctlname {
 	{ "rthreads", CTLTYPE_INT }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "netlivelocks", CTLTYPE_INT }, \
+	{ "pool_debug", CTLTYPE_INT }, \
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.100 2011/04/03 22:07:37 ariane Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.101 2011/04/04 11:13:55 deraadt Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #include <sys/sysctl.h>
 
 #include <uvm/uvm.h>
-
+#include <dev/rndvar.h>
 
 /*
  * Pool resource management utility.
@@ -74,6 +74,7 @@ struct pool_item_header {
 	caddr_t			ph_page;	/* this page's address */
 	caddr_t			ph_colored;	/* page's colored address */
 	int			ph_pagesize;
+	int			ph_magic;
 };
 
 struct pool_item {
@@ -88,6 +89,12 @@ struct pool_item {
 #define	PI_MAGIC DEADBEEF1
 #else
 #define	PI_MAGIC 0xdeafbeef
+#endif
+
+#ifdef POOL_DEBUG
+int	pool_debug = 1;
+#else
+int	pool_debug = 0;
 #endif
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
@@ -441,7 +448,8 @@ pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
 	else
 		ph = pool_get(&phpool, (flags & ~(PR_WAITOK | PR_ZERO)) |
 		    PR_NOWAIT);
-
+	if (pool_debug)
+		ph->ph_magic = PI_MAGIC;
 	return (ph);
 }
 
@@ -611,13 +619,15 @@ startover:
 		    "page %p; item addr %p; offset 0x%x=0x%x",
 		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
 #ifdef POOL_DEBUG
-	for (ip = (int *)pi, i = sizeof(*pi) / sizeof(int);
-	    i < pp->pr_size / sizeof(int); i++) {
-		if (ip[i] != PI_MAGIC) {
-			panic("pool_do_get(%s): free list modified: "
-			    "page %p; item addr %p; offset 0x%x=0x%x",
-			    pp->pr_wchan, ph->ph_page, pi,
-			    i * sizeof(int), ip[i]);
+	if (pool_debug && ph->ph_magic) {
+		for (ip = (int *)pi, i = sizeof(*pi) / sizeof(int);
+		    i < pp->pr_size / sizeof(int); i++) {
+			if (ip[i] != ph->ph_magic) {
+				panic("pool_do_get(%s): free list modified: "
+				    "page %p; item addr %p; offset 0x%x=0x%x",
+				    pp->pr_wchan, ph->ph_page, pi,
+				    i * sizeof(int), ip[i]);
+			}
 		}
 	}
 #endif /* POOL_DEBUG */
@@ -731,9 +741,11 @@ pool_do_put(struct pool *pp, void *v)
 #ifdef DIAGNOSTIC
 	pi->pi_magic = PI_MAGIC;
 #ifdef POOL_DEBUG
-	for (ip = (int *)pi, i = sizeof(*pi)/sizeof(int);
-	    i < pp->pr_size / sizeof(int); i++)
-		ip[i] = PI_MAGIC;
+	if (ph->ph_magic) {
+		for (ip = (int *)pi, i = sizeof(*pi)/sizeof(int);
+		    i < pp->pr_size / sizeof(int); i++)
+			ip[i] = ph->ph_magic;
+	}
 #endif /* POOL_DEBUG */
 #endif /* DIAGNOSTIC */
 
@@ -886,9 +898,11 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 #ifdef DIAGNOSTIC
 		pi->pi_magic = PI_MAGIC;
 #ifdef POOL_DEBUG
-		for (ip = (int *)pi, i = sizeof(*pi)/sizeof(int);
-		    i < pp->pr_size / sizeof(int); i++)
-			ip[i] = PI_MAGIC;
+		if (ph->ph_magic) {
+			for (ip = (int *)pi, i = sizeof(*pi)/sizeof(int);
+			    i < pp->pr_size / sizeof(int); i++)
+				ip[i] = ph->ph_magic;
+		}
 #endif /* POOL_DEBUG */
 #endif /* DIAGNOSTIC */
 		cp = (caddr_t)(cp + pp->pr_size);
@@ -1273,14 +1287,16 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 			    0, pi->pi_magic);
 		}
 #ifdef POOL_DEBUG
-		for (ip = (int *)pi, i = sizeof(*pi) / sizeof(int);
-		    i < pp->pr_size / sizeof(int); i++) {
-			if (ip[i] != PI_MAGIC) {
-				printf("pool(%s): free list modified: "
-				    "page %p; item ordinal %d; addr %p "
-				    "(p %p); offset 0x%x=0x%x\n",
-				    pp->pr_wchan, ph->ph_page, n, pi,
-				    page, i * sizeof(int), ip[i]);
+		if (pool_debug && ph->ph_magic) {
+			for (ip = (int *)pi, i = sizeof(*pi) / sizeof(int);
+			    i < pp->pr_size / sizeof(int); i++) {
+				if (ip[i] != ph->ph_magic) {
+					printf("pool(%s): free list modified: "
+					    "page %p; item ordinal %d; addr %p "
+					    "(p %p); offset 0x%x=0x%x\n",
+					    pp->pr_wchan, ph->ph_page, n, pi,
+					    page, i * sizeof(int), ip[i]);
+				}
 			}
 		}
 
