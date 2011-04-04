@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.89 2011/04/04 11:10:26 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.90 2011/04/04 21:08:26 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1567,15 +1567,17 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 				struct unpcb *unp = sotounpcb(so);
 
 				if (unp->unp_flags & UNP_FEIDS) {
-					*mp = m = m_get(M_WAIT, MT_SOOPTS);
 					m->m_len = sizeof(unp->unp_connid);
 					bcopy((caddr_t)(&(unp->unp_connid)),
 					    mtod(m, caddr_t),
-					    (unsigned)m->m_len);
-				} else
-					return (ENOTCONN);
-			} else
-				return (EOPNOTSUPP);
+					    m->m_len);
+					break;
+				}
+				(void)m_free(m);
+				return (ENOTCONN);
+			}
+			(void)m_free(m);
+			return (EOPNOTSUPP);
 			break;
 
 		default:
