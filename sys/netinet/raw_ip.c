@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.51 2011/04/03 16:09:09 blambert Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.52 2011/04/04 13:26:46 henning Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -424,8 +424,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		     (addr->sin_family != AF_IMPLINK)) ||
 		    (addr->sin_addr.s_addr &&
 		     (!(so->so_options & SO_BINDANY) &&
-		     in_iawithaddr(addr->sin_addr, NULL, inp->inp_rtableid) ==
-		     0))) {
+		    !ifa_ifwithaddr(sintosa(addr), inp->inp_rtableid)))) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
