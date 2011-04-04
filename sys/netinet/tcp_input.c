@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.240 2011/01/07 17:50:42 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.241 2011/04/04 13:56:11 blambert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1252,10 +1252,9 @@ after_listen:
 		 * peer is ECN capable.
 		 */
 		if (tcp_do_ecn) {
-			if ((tiflags & (TH_ACK|TH_ECE|TH_CWR))
-			    == (TH_ACK|TH_ECE) ||
-			    (tiflags & (TH_ACK|TH_ECE|TH_CWR))
-			    == (TH_ECE|TH_CWR)) {
+			switch (tiflags & (TH_ACK|TH_ECE|TH_CWR)) {
+			case TH_ACK|TH_ECE:
+			case TH_ECE|TH_CWR:
 				tp->t_flags |= TF_ECN_PERMIT;
 				tiflags &= ~(TH_ECE|TH_CWR);
 				tcpstat.tcps_ecn_accepts++;
