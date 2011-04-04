@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.19 2011/04/03 22:07:37 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.20 2011/04/04 22:58:48 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1844,7 +1844,6 @@ uvm_pmr_zero_everything(void)
 	struct uvm_pmemrange	*pmr;
 	struct vm_page		*pg;
 	int			 i;
-	psize_t			 zeroed = 0;
 
 	uvm_lock_fpageq();
 	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
@@ -1856,11 +1855,6 @@ uvm_pmr_zero_everything(void)
 			atomic_setbits_int(&pg->pg_flags, PG_ZERO);
 			uvmexp.zeropages++;
 			uvm_pmr_insert(pmr, pg, 0);
-
-			zeroed++; /* DEBUG */
-
-			if (zeroed % 1000)
-				printf("1");
 		}
 
 		/* Zero multi page ranges. */
@@ -1874,10 +1868,6 @@ uvm_pmr_zero_everything(void)
 				uvmexp.zeropages++;
 			}
 			uvm_pmr_insert(pmr, pg, 0);
-
-			zeroed++; /* DEBUG */
-			if (zeroed % 100)
-				printf("L");
 		}
 	}
 	uvm_unlock_fpageq();
