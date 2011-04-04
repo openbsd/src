@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.51 2010/09/24 02:59:45 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.52 2011/04/04 21:11:22 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -176,8 +176,16 @@ sonewconn(struct socket *head, int connstatus)
 	/*
 	 * Inherit watermarks but those may get clamped in low mem situations.
 	 */
+	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat)) {
+		pool_put(&socket_pool, so);
+		return ((struct socket *)0);
+	}
 	so->so_snd.sb_wat = head->so_snd.sb_wat;
+	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
+	so->so_snd.sb_timeo = head->so_snd.sb_timeo;
 	so->so_rcv.sb_wat = head->so_rcv.sb_wat;
+	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
+	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
 
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL, NULL,
@@ -353,6 +361,8 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 		goto bad;
 	if (sbreserve(&so->so_rcv, rcvcc))
 		goto bad2;
+	so->so_snd.sb_wat = sndcc;
+	so->so_rcv.sb_wat = rcvcc;
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
 	if (so->so_snd.sb_lowat == 0)

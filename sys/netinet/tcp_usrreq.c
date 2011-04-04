@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.105 2010/10/10 22:02:50 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.106 2011/04/04 21:11:22 claudio Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -652,16 +652,10 @@ tcp_attach(so)
 	struct inpcb *inp;
 	int error;
 
-	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-		/* if low on memory only allow smaller then default buffers */
-		if (so->so_snd.sb_wat == 0 ||
-		    sbcheckreserve(so->so_snd.sb_wat, tcp_sendspace))
-			so->so_snd.sb_wat = tcp_sendspace;
-		if (so->so_rcv.sb_wat == 0 ||
-		    sbcheckreserve(so->so_rcv.sb_wat, tcp_recvspace))
-			so->so_rcv.sb_wat = tcp_recvspace;
-
-		error = soreserve(so, so->so_snd.sb_wat, so->so_rcv.sb_wat);
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0 ||
+	    sbcheckreserve(so->so_snd.sb_wat, tcp_sendspace) ||
+	    sbcheckreserve(so->so_rcv.sb_wat, tcp_recvspace)) {
+		error = soreserve(so, tcp_sendspace, tcp_recvspace);
 		if (error)
 			return (error);
 	}
