@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.78 2010/09/22 04:57:55 matthew Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.79 2011/04/04 12:44:10 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -992,53 +992,6 @@ bad:
 	m_freem(m);
 	return (error);
 }
-
-#ifdef COMPAT_O47
-/*
- * Get eid of peer for connected socket.
- */
-/* ARGSUSED */
-int
-compat_o47_sys_getpeereid(struct proc *p, void *v, register_t *retval)
-{
-	struct compat_o47_sys_getpeereid_args /* {
-		syscallarg(int) fdes;
-		syscallarg(uid_t *) euid;
-		syscallarg(gid_t *) egid;
-	} */ *uap = v;
-	struct file *fp;
-	struct socket *so;
-	struct mbuf *m = NULL;
-	struct sockpeercred *id;
-	int error;
-
-	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
-		return (error);
-	so = fp->f_data;
-	if (so->so_proto != pffindtype(AF_LOCAL, SOCK_STREAM)) {
-		FRELE(fp);
-		return (EOPNOTSUPP);
-	}
-	m = m_getclr(M_WAIT, MT_SONAME);
-	if (m == NULL) {
-		error = ENOBUFS;
-		goto bad;
-	}	
-	error = (*so->so_proto->pr_usrreq)(so, PRU_PEEREID, 0, m, 0, p);
-	if (!error && m->m_len != sizeof(struct sockpeercred))
-		error = EOPNOTSUPP;
-	if (error)
-		goto bad;
-	id = mtod(m, struct sockpeercred *);
-	error = copyout(&(id->uid), SCARG(uap, euid), sizeof(uid_t));
-	if (error == 0)
-		error = copyout(&(id->gid), SCARG(uap, egid), sizeof(gid_t));
-bad:
-	FRELE(fp);
-	m_freem(m);
-	return (error);
-}
-#endif /* COMPAT_O47 */
 
 int
 sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
