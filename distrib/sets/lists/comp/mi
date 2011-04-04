@@ -6008,6 +6008,7 @@
 ./usr/share/man/cat3/wctrans.0
 ./usr/share/man/cat3/wctype.0
 ./usr/share/man/cat3/wcursyncup.0
+./usr/share/man/cat3/wcwidth.0
 ./usr/share/man/cat3/wdelch.0
 ./usr/share/man/cat3/wdeleteln.0
 ./usr/share/man/cat3/wecho_wchar.0
@@ -6470,7 +6471,7 @@
 ./usr/share/man/cat9/intro.0
 ./usr/share/man/cat9/kern.0
 ./usr/share/man/cat9/km_alloc.0
-./usr/share/man/cat9/km_free.9
+./usr/share/man/cat9/km_free.0
 ./usr/share/man/cat9/knote.0
 ./usr/share/man/cat9/kthread.0
 ./usr/share/man/cat9/kthread_create.0
