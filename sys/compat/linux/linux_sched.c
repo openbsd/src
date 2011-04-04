@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.8 2010/01/04 19:27:21 guenther Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.9 2011/04/04 23:24:58 pirofti Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -50,10 +50,7 @@
 #include <compat/linux/linux_syscallargs.h>
 
 int
-linux_sys_clone(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_clone(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_clone_args /* {
 		syscallarg(int) flags;
@@ -151,10 +148,7 @@ linux_sys_clone(p, v, retval)
 }
 
 int
-linux_sys_sched_setparam(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
+linux_sys_sched_setparam(struct proc *cp, void *v, register_t *retval)
 {
 	struct linux_sys_sched_setparam_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -193,10 +187,7 @@ linux_sys_sched_setparam(cp, v, retval)
 }
 
 int
-linux_sys_sched_getparam(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
+linux_sys_sched_getparam(struct proc *cp, void *v, register_t *retval)
 {
 	struct linux_sys_sched_getparam_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -231,10 +222,7 @@ linux_sys_sched_getparam(cp, v, retval)
 }
 
 int
-linux_sys_sched_setscheduler(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
+linux_sys_sched_setscheduler(struct proc *cp, void *v, register_t *retval)
 {
 	struct linux_sys_sched_setscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -280,10 +268,7 @@ linux_sys_sched_setscheduler(cp, v, retval)
 }
 
 int
-linux_sys_sched_getscheduler(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
+linux_sys_sched_getscheduler(struct proc *cp, void *v, register_t *retval)
 {
 	struct linux_sys_sched_getscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -318,20 +303,14 @@ linux_sys_sched_getscheduler(cp, v, retval)
 }
 
 int
-linux_sys_sched_yield(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
+linux_sys_sched_yield(struct proc *cp, void *v, register_t *retval)
 {
 	need_resched(curcpu());
 	return (0);
 }
 
 int
-linux_sys_sched_get_priority_max(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
+linux_sys_sched_get_priority_max(struct proc *cp, void *v, register_t *retval)
 {
 	struct linux_sys_sched_get_priority_max_args /* {
 		syscallarg(int) policy;
@@ -350,10 +329,7 @@ linux_sys_sched_get_priority_max(cp, v, retval)
 }
 
 int
-linux_sys_sched_get_priority_min(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
+linux_sys_sched_get_priority_min(struct proc *cp, void *v, register_t *retval)
 {
 	struct linux_sys_sched_get_priority_min_args /* {
 		syscallarg(int) policy;
