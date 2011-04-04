@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.89 2011/04/04 12:22:59 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.90 2011/04/04 12:25:23 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -936,7 +936,9 @@ km_alloc(size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp,
 	int mapflags = 0;
 	vm_prot_t prot;
 	int pla_flags;
-	paddr_t pa = 0;
+#ifdef __HAVE_PMAP_DIRECT
+	paddr_t pa;
+#endif
 	vaddr_t va, sva;
 
 	KASSERT(sz == round_page(sz));
