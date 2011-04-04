@@ -1,4 +1,4 @@
-/* $OpenBSD: cerror.S,v 1.7 2002/10/07 04:47:12 drahn Exp $ */
+/* $OpenBSD: cerror.S,v 1.8 2011/04/04 12:42:39 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -28,8 +28,10 @@
 #include "SYS.h"
 #include <machine/asm.h>
 
+WEAK_ALIAS(__cerror, ___cerror)
+
 	.text
-ASENTRY(__cerror)
+ASENTRY(___cerror)
 #if defined (PIC)
 	stwu	1, -16(1) 		/* follow the SVR4 ABI */
 	mflr	3			/* error value is in r0, use r3 */

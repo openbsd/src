@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.1 2005/04/01 10:54:27 mickey Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.2 2011/04/04 12:42:39 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -28,8 +28,10 @@
 
 #include "SYS.h"
 
+WEAK_ALIAS(__cerror, ___cerror)
+
 	.import errno, data
-ENTRY(__cerror,0)
+ENTRY(___cerror,0)
 #ifdef PIC
 	addil	LT%errno, r19
 	ldd	RT%errno(r1), r1
@@ -41,6 +43,6 @@ ENTRY(__cerror,0)
 	ldi	-1, ret0
 	bv	r0(rp)
 	ldi	-1, ret1
-EXIT(__cerror)
+EXIT(___cerror)
 
 	.end

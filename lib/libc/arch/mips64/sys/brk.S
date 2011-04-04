@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: brk.S,v 1.5 2011/04/04 12:42:39 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@ LEAF(brk, FRAMESZ)
 	PTR_ADDU sp, FRAMESZ
 	j	ra
 2:
-	LA	t9, _C_LABEL(cerror)
+	LA	t9, CERROR
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr	t9
@@ -83,7 +83,7 @@ LEAF(_brk, FRAMESZ)
 	PTR_ADDU sp, FRAMESZ
 	j	ra
 1:
-	LA	t9, _C_LABEL(cerror)
+	LA	t9, CERROR
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr	t9

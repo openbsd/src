@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2005/12/13 00:10:48 jsg Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2011/04/04 12:42:39 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,6 +62,7 @@
 #endif
 
 #define CERROR		_C_LABEL(__cerror)
+#define _CERROR		_C_LABEL(___cerror)
 #define CURBRK		_C_LABEL(__curbrk)
 
 #define _SYSCALL_NOERROR(x,y)						\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.3 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: cerror.S,v 1.4 2011/04/04 12:42:39 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,10 +36,13 @@
 FRAMESZ= MKFSIZ(1,1)
 GPOFF= FRAMESZ-2*REGSZ
 
+WEAK_ALIAS(cerror, _CERROR)
+WEAK_ALIAS(CERROR, _CERROR)
+
 	.globl	_C_LABEL(errno)
-LEAF(cerror, FRAMESZ)
+LEAF(CERROR, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
-	SETUP_GP64(GPOFF, cerror)
+	SETUP_GP64(GPOFF, CERROR)
 	.set	noreorder
 	sw	v0, _C_LABEL(errno)
 	li	v0, -1
@@ -47,4 +50,4 @@ LEAF(cerror, FRAMESZ)
 	PTR_ADDU sp, FRAMESZ
 	j	ra
 	li	v1, -1
-END(cerror)
+END(CERROR)

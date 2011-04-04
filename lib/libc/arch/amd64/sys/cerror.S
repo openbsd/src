@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.4 2005/12/13 00:10:48 jsg Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.5 2011/04/04 12:42:39 guenther Exp $	*/
 /*	$NetBSD: cerror.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -41,7 +41,9 @@
 
 	.globl	_C_LABEL(errno)
 
-_ENTRY(CERROR)
+WEAK_ALIAS(CERROR, _CERROR)
+
+_ENTRY(_CERROR)
 #ifdef PIC
 	movq	PIC_GOT(_C_LABEL(errno)), %rcx
 	movl	%eax, (%rcx)

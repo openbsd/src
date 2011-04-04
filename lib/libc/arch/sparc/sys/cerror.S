@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: cerror.S,v 1.6 2011/04/04 12:42:39 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,18 +36,17 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(errno)
+
+WEAK_ALIAS(__cerror, ___cerror)
+
+FUNC(_C_LABEL(___cerror))
 #ifdef PIC
-FUNC(_C_LABEL(__cerror))
 	ld	[%g1 + _C_LABEL(errno)], %g1
 	st	%o0, [%g1]
-	mov	-1, %o0
-	retl
-	 mov	-1, %o1
 #else
-FUNC(_C_LABEL(__cerror))
 	sethi	%hi(_C_LABEL(errno)), %g1
 	st	%o0, [%g1 + %lo(_C_LABEL(errno))]
+#endif
 	mov	-1, %o0
 	retl
 	 mov	-1, %o1
-#endif

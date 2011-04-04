@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.7 2005/08/07 11:30:38 espie Exp $ */
+/*	$OpenBSD: cerror.S,v 1.8 2011/04/04 12:42:39 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +34,10 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(errno)
-_ENTRY(CERROR)
+
+WEAK_ALIAS(CERROR, _CERROR)
+
+_ENTRY(_CERROR)
 #ifdef PIC
 	PIC_PROLOGUE
 	movl	PIC_GOT(_C_LABEL(errno)),%ecx

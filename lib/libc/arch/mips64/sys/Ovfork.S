@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.4 2009/07/13 21:28:45 miod Exp $ */
+/*	$OpenBSD: Ovfork.S,v 1.5 2011/04/04 12:42:39 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ SYSLEAF(vfork, FRAMESZ)
 	li	v0, SYS_vfork		# system call number for vfork
 	syscall
 	beq	a3, zero, 1f		# jump if no errors
-	LA	t9, cerror
+	LA	t9, CERROR
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr	t9
