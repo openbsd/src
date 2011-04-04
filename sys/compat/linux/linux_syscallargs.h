@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscallargs.h,v 1.58 2011/02/11 21:41:46 pirofti Exp $	*/
+/*	$OpenBSD: linux_syscallargs.h,v 1.59 2011/04/04 21:53:50 pirofti Exp $	*/
 
 /*
  * System call argument lists.
@@ -544,6 +544,14 @@ struct linux_sys_fcntl64_args {
 	syscallarg(void *) arg;
 };
 
+struct linux_sys_set_thread_area_args {
+	syscallarg(struct l_segment_descriptor *) desc;
+};
+
+struct linux_sys_get_thread_area_args {
+	syscallarg(struct l_segment_descriptor *) desc;
+};
+
 struct linux_sys_clock_gettime_args {
 	syscallarg(clockid_t) which;
 	syscallarg(struct l_timespec *) tp;
@@ -810,6 +818,8 @@ int	linux_sys_flistxattr(struct proc *, void *, register_t *);
 int	linux_sys_removexattr(struct proc *, void *, register_t *);
 int	linux_sys_lremovexattr(struct proc *, void *, register_t *);
 int	linux_sys_fremovexattr(struct proc *, void *, register_t *);
+int	linux_sys_set_thread_area(struct proc *, void *, register_t *);
+int	linux_sys_get_thread_area(struct proc *, void *, register_t *);
 int	linux_sys_fadvise64(struct proc *, void *, register_t *);
 int	sys_exit(struct proc *, void *, register_t *);
 int	linux_sys_clock_gettime(struct proc *, void *, register_t *);

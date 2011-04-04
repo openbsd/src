@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscall.h,v 1.56 2011/02/11 21:41:46 pirofti Exp $	*/
+/*	$OpenBSD: linux_syscall.h,v 1.57 2011/04/04 21:53:50 pirofti Exp $	*/
 
 /*
  * System call numbers.
@@ -717,6 +717,12 @@
 
 /* syscall: "fremovexattr" ret: "int" args: */
 #define	LINUX_SYS_fremovexattr	237
+
+/* syscall: "set_thread_area" ret: "int" args: "struct l_segment_descriptor *" */
+#define	LINUX_SYS_set_thread_area	243
+
+/* syscall: "get_thread_area" ret: "int" args: "struct l_segment_descriptor *" */
+#define	LINUX_SYS_get_thread_area	244
 
 /* syscall: "fadvise64" ret: "int" args: */
 #define	LINUX_SYS_fadvise64	250
