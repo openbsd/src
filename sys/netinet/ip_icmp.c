@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.92 2010/09/13 09:59:32 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.93 2011/04/04 16:33:52 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ icmp_input(struct mbuf *m, ...)
 	void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
 	int code;
 	extern u_char ip_protox[];
+	extern int ipforwarding;
 	int hlen;
 	va_list ap;
 	struct rtentry *rt;
@@ -558,7 +559,7 @@ reflect:
 		/* Free packet atttributes */
 		if (m->m_flags & M_PKTHDR)
 			m_tag_delete_chain(m);
-		if (icmp_rediraccept == 0)
+		if (icmp_rediraccept == 0 || ipforwarding == 1)
 			goto freeit;
 		if (code > 3)
 			goto badcode;
