@@ -1,4 +1,4 @@
-.\"	$OpenBSD: km_alloc.9,v 1.1 2011/04/04 11:26:51 art Exp $
+.\"	$OpenBSD: km_alloc.9,v 1.2 2011/04/04 11:51:20 art Exp $
 .\" Copyright (c) 2011 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
 .\"
@@ -53,7 +53,7 @@ argument specifies additional options for the allocation.
 The arguments passed to
 .Fn km_free
 must match those that were used to obtain the space in
-Fn km_alloc .
+.Fn km_alloc .
 .Pp
 Typically a user will use certain predefined modes for memory allocation.
 For virtual space the predefined modes are:
