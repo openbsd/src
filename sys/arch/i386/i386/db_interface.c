@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.26 2010/04/01 19:48:50 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.27 2011/04/04 22:37:30 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -136,6 +136,12 @@ kdb_trap(int type, int code, db_regs_t *regs)
 		ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
 		__asm__("movw %%ss,%w0" : "=r" (ddb_regs.tf_ss));
 	}
+	ddb_regs.tf_cs &= 0xffff;
+	ddb_regs.tf_ds &= 0xffff;
+	ddb_regs.tf_es &= 0xffff;
+	ddb_regs.tf_fs &= 0xffff;
+	ddb_regs.tf_gs &= 0xffff;
+	ddb_regs.tf_ss &= 0xffff;
 
 	s = splhigh();
 	db_active++;
