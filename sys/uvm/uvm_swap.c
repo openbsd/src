@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.100 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.101 2011/04/04 11:29:39 thib Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
 #endif
 
 #include <miscfs/specfs/specdev.h>
+
+#include "vnd.h"
 
 /*
  * uvm_swap.c: manage configuration and i/o to swap space.
@@ -911,6 +913,12 @@ swap_on(struct proc *p, struct swapdev *sdp)
 
 	vp = sdp->swd_vp;
 	dev = sdp->swd_dev;
+
+#if NVND > 0 
+	/* no swapping to vnds. */
+	if (bdevsw[major(dev)].d_strategy == vndstrategy)
+		return (EOPNOTSUPP);
+#endif
 
 	/*
 	 * open the swap file (mostly useful for block device files to
