@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.51 2010/10/12 00:53:32 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.52 2011/04/04 20:29:45 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -111,9 +111,6 @@ int	aac_alloc_commands(struct aac_softc *);
 void	aac_free_commands(struct aac_softc *);
 void	aac_unmap_command(struct aac_command *);
 
-#if 0
-int	aac_raw_scsi_cmd(struct scsi_xfer *);
-#endif
 void	aac_scsi_cmd(struct scsi_xfer *);
 void	aac_startio(struct aac_softc *);
 void	aac_startup(struct aac_softc *);
@@ -129,12 +126,6 @@ struct cfdriver aac_cd = {
 struct scsi_adapter aac_switch = {
 	aac_scsi_cmd, aacminphys, 0, 0,
 };
-
-#if 0
-struct scsi_adapter aac_raw_switch = {
-	aac_raw_scsi_cmd, aacminphys, 0, 0,
-};
-#endif
 
 /* Falcon/PPC interface */
 int	aac_fa_get_fwstatus(struct aac_softc *);
@@ -2488,24 +2479,6 @@ aacminphys(struct buf *bp, struct scsi_link *sl)
 	minphys(bp);
 }
 
-#if 0
-int
-aac_raw_scsi_cmd(struct scsi_xfer *xs)
-{
-#ifdef AAC_DEBUG
-	struct aac_softc *sc = xs->sc_link->adapter_softc;
-#endif
-	int s;
-
-	AAC_DPRINTF(AAC_D_CMD, ("%s: aac_raw_scsi_cmd\n",
-				sc->aac_dev.dv_xname));
-
-	/* XXX Not yet implemented */
-	xs->error = XS_DRIVER_STUFFUP;
-	scsi_done(xs);
-}
-#endif
-
 void
 aac_scsi_cmd(struct scsi_xfer *xs)
 {
@@ -2516,7 +2489,9 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
-	int s = splbio();
+	int s;
+
+	s = splbio();
 
 	xs->error = XS_NOERROR;
 
@@ -2526,9 +2501,9 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		 * XXX Should be XS_SENSE but that would require setting up a
 		 * faked sense too.
 		 */
+		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
