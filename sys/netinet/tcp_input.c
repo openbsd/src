@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.241 2011/04/04 13:56:11 blambert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.242 2011/04/04 22:25:24 blambert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@
 struct	tcpiphdr tcp_saveti;
 
 int tcp_mss_adv(struct ifnet *, int);
+int tcp_flush_queue(struct tcpcb *);
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -204,15 +205,6 @@ int
 tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 {
 	struct tcpqent *p, *q, *nq, *tiqe;
-	struct socket *so = tp->t_inpcb->inp_socket;
-	int flags;
-
-	/*
-	 * Call with th==0 after become established to
-	 * force pre-ESTABLISHED data up to user socket.
-	 */
-	if (th == 0)
-		goto present;
 
 	/*
 	 * Allocate a new queue entry, before we throw away any data.
@@ -302,7 +294,19 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 		TAILQ_INSERT_AFTER(&tp->t_segq, p, tiqe, tcpqe_q);
 	}
 
-present:
+	if (th->th_seq != tp->rcv_nxt)
+		return (0);
+
+	return (tcp_flush_queue(tp));
+}
+
+int
+tcp_flush_queue(struct tcpcb *tp)
+{
+	struct socket *so = tp->t_inpcb->inp_socket;
+	struct tcpqent *q, *nq;
+	int flags;
+
 	/*
 	 * Present data to user, advancing rcv_nxt through
 	 * completed sequence space.
@@ -1273,8 +1277,8 @@ after_listen:
 				tp->snd_scale = tp->requested_s_scale;
 				tp->rcv_scale = tp->request_r_scale;
 			}
-			(void) tcp_reass(tp, (struct tcphdr *)0,
-				(struct mbuf *)0, &tlen);
+			tcp_flush_queue(tp);
+
 			/*
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
@@ -1551,8 +1555,7 @@ trimthenstep6:
 			tp->rcv_scale = tp->request_r_scale;
 			tiwin = th->th_win << tp->snd_scale;
 		}
-		(void) tcp_reass(tp, (struct tcphdr *)0, (struct mbuf *)0,
-				 &tlen);
+		tcp_flush_queue(tp);
 		tp->snd_wl1 = th->th_seq - 1;
 		/* fall into ... */
 
