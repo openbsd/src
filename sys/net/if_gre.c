@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.52 2010/09/23 11:34:50 blambert Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.53 2011/04/04 15:50:18 claudio Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -675,29 +675,13 @@ void
 gre_compute_route(struct gre_softc *sc)
 {
 	struct route *ro;
-	u_int32_t a, b, c;
 
 	ro = &sc->route;
 
 	bzero(ro, sizeof(struct route));
-	((struct sockaddr_in *) &ro->ro_dst)->sin_addr = sc->g_dst;
 	ro->ro_dst.sa_family = AF_INET;
 	ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-
-	/*
-	 * toggle last bit, so our interface is not found, but a less
-	 * specific route. I'd rather like to specify a shorter mask,
- 	 * but this is not possible. Should work though. XXX
-	 * there is a simpler way ...
-	 */
-	if ((sc->sc_if.if_flags & IFF_LINK1) == 0) {
-		a = ntohl(sc->g_dst.s_addr);
-		b = a & 0x01;
-		c = a & 0xfffffffe;
-		b = b ^ 0x01;
-		a = b | c;
-		((struct sockaddr_in *) &ro->ro_dst)->sin_addr.s_addr = htonl(a);
-	}
+	((struct sockaddr_in *) &ro->ro_dst)->sin_addr = sc->g_dst;
 
 	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT | RT_NOCLONING,
 	    sc->g_rtableid);
@@ -714,13 +698,6 @@ gre_compute_route(struct gre_softc *sc)
 		ro->ro_rt = NULL;
 		return;
 	}
-
-	/*
-	 * now change it back - else ip_output will just drop
-	 * the route and search one to this interface ...
-	 */
-	if ((sc->sc_if.if_flags & IFF_LINK1) == 0)
-		((struct sockaddr_in *) &ro->ro_dst)->sin_addr = sc->g_dst;
 }
 
 /*
