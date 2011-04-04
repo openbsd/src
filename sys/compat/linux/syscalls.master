@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.53 2011/02/11 21:40:04 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.54 2011/04/04 21:50:41 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -383,8 +383,10 @@
 240	UNIMPL		linux_sys_futex
 241	UNIMPL		linux_sys_sched_setaffinity
 242	UNIMPL		linux_sys_sched_getaffinity
-243	UNIMPL		linux_sys_set_thread_area
-244	UNIMPL		linux_sys_get_thread_area
+243	STD		{ int linux_sys_set_thread_area(	\
+			    struct l_segment_descriptor *desc); }
+244	STD		{ int linux_sys_get_thread_area(	\
+			    struct l_segment_descriptor *desc); }
 245	UNIMPL		linux_sys_io_setup
 246	UNIMPL		linux_sys_io_destroy
 247	UNIMPL		linux_sys_io_getevents

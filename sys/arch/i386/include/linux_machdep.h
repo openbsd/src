@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.h,v 1.9 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: linux_machdep.h,v 1.10 2011/04/04 21:50:41 pirofti Exp $	*/
 /*	$NetBSD: linux_machdep.h,v 1.5 1996/05/03 19:26:28 christos Exp $	*/
 
 /*
@@ -121,5 +121,17 @@ dev_t linux_fakedev(dev_t);
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
 #define LINUX_VT_DISALLOCATE 0x5608
+
+struct l_segment_descriptor {
+	unsigned int	entry_number;
+	unsigned int	base_addr;
+	unsigned int	limit;
+	unsigned int	seg_32bit:1;
+	unsigned int	contents:2;
+	unsigned int	read_exec_only:1;
+	unsigned int	limit_in_pages:1;
+	unsigned int	seg_not_present:1;
+	unsigned int	useable:1;
+};
 
 #endif /* _LINUX_MACHDEP_H */
