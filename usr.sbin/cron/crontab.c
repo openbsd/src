@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.60 2011/02/11 07:14:49 guenther Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.61 2011/04/04 15:17:52 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -232,7 +232,6 @@ static void
 list_cmd(void) {
 	char n[MAX_FNAME];
 	FILE *f;
-	int ch;
 
 	log_it(RealUser, Pid, "LIST", User);
 	if (snprintf(n, sizeof n, "%s/%s", SPOOL_DIR, User) >= sizeof(n)) {
@@ -285,7 +284,7 @@ edit_cmd(void) {
 	char n[MAX_FNAME], q[MAX_TEMPSTR];
 	const char *tmpdir;
 	FILE *f;
-	int ch, t;
+	int t;
 	struct stat statbuf, xstatbuf;
 	struct timespec mtimespec;
 	struct timeval tv[2];
