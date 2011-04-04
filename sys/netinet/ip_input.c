@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.188 2011/04/04 13:30:03 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.189 2011/04/04 16:51:15 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -414,14 +414,14 @@ ipv4_input(m)
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
 
-		if (m->m_flags & M_EXT) {
-			if ((m = m_pullup(m, hlen)) == NULL) {
-				ipstat.ips_toosmall++;
-				return;
-			}
-			ip = mtod(m, struct ip *);
-		}
 		if (ipmforwarding && ip_mrouter) {
+			if (m->m_flags & M_EXT) {
+				if ((m = m_pullup(m, hlen)) == NULL) {
+					ipstat.ips_toosmall++;
+					return;
+				}
+				ip = mtod(m, struct ip *);
+			}
 			/*
 			 * If we are acting as a multicast router, all
 			 * incoming multicast packets are passed to the
