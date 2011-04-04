@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.47 2011/02/06 23:47:14 dlg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.48 2011/04/04 03:49:32 william Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -1579,6 +1579,10 @@ struct em_hw {
 
 #define E1000_CONNSW_ENRGSRC	0x4
 #define E1000_PCS_CFG_PCS_EN	8
+#define E1000_PCS_LCTL_FSV_1000		4
+#define E1000_PCS_LCTL_FDV_FULL		8
+#define E1000_PCS_LCTL_FSD		0x10
+#define E1000_PCS_LCTL_FORCE_FCTRL	0x80
 
 #define E1000_PCS_LSTS_LINK_OK		0x01
 #define E1000_PCS_LSTS_SPEED_100	0x02

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.60 2011/02/15 19:15:25 miod Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.61 2011/04/04 03:49:32 william Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1570,7 +1570,7 @@ em_power_up_serdes_link_82575(struct em_hw *hw)
 static int32_t
 em_setup_fiber_serdes_link(struct em_hw *hw)
 {
-	uint32_t ctrl, reg;
+	uint32_t ctrl, ctrl_ext, reg;
 	uint32_t status;
 	uint32_t txcw = 0;
 	uint32_t i;
@@ -1613,10 +1613,28 @@ em_setup_fiber_serdes_link(struct em_hw *hw)
 		/* set both sw defined pins on 82575/82576*/
 		ctrl |= E1000_CTRL_SWDPIN0 | E1000_CTRL_SWDPIN1;
 
-		/* Set switch control to serdes energy detect */
-		reg = E1000_READ_REG(hw, CONNSW);
-		reg |= E1000_CONNSW_ENRGSRC;
-		E1000_WRITE_REG(hw, CONNSW, reg);
+		ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
+		switch (ctrl_ext & E1000_CTRL_EXT_LINK_MODE_MASK) {
+		case E1000_CTRL_EXT_LINK_MODE_1000BASE_KX:
+		case E1000_CTRL_EXT_LINK_MODE_PCIE_SERDES:
+			/* the backplane is always connected */
+			reg = E1000_READ_REG(hw, PCS_LCTL);
+			reg |= E1000_PCS_LCTL_FORCE_FCTRL;
+			reg |= E1000_PCS_LCTL_FSV_1000 | E1000_PCS_LCTL_FDV_FULL;
+			reg |= E1000_PCS_LCTL_FSD;        /* Force Speed */
+			DEBUGOUT("Configuring Forced Link\n");
+			E1000_WRITE_REG(hw, PCS_LCTL, reg);
+			em_force_mac_fc(hw);
+			hw->autoneg_failed = 0;
+			return E1000_SUCCESS;
+			break;
+		default:
+			/* Set switch control to serdes energy detect */
+			reg = E1000_READ_REG(hw, CONNSW);
+			reg |= E1000_CONNSW_ENRGSRC;
+			E1000_WRITE_REG(hw, CONNSW, reg);
+			break;
+		}
 	}
 
 	/* Adjust VCO speed to improve BER performance */
