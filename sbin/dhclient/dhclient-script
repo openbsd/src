@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.19 2011/04/04 11:14:52 krw Exp $
+# $OpenBSD: dhclient-script,v 1.20 2011/04/04 11:29:51 krw Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -258,7 +258,7 @@ TIMEOUT)
 			fi
 		fi
 	fi
-	ifconfig $interface inet $new_ip_address delete $medium
+	ifconfig $interface inet $new_ip_address delete
 	# XXX Why not a delete_old_address as before all other invocations of
 	#     delete_old_routes?
 	delete_old_routes
